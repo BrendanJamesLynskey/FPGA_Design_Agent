@@ -7,77 +7,77 @@
    "job": "mdio.sby prove",
    "what": "frame position, MDC waveform, line releases and setup/hold: k-induction proof",
    "status": "PASS",
-   "seconds": 0.5
+   "seconds": 0.6
   },
   {
    "entry": "mdio_master",
    "job": "mdio.sby cover",
    "what": "a whole read frame completes",
    "status": "PASS",
-   "seconds": 5.6
+   "seconds": 6.8
   },
   {
    "entry": "arp_responder",
    "job": "arp.sby bmc",
    "what": "42-byte frames, AXI-Stream rules, lookups answered only when asked: bounded, 60 clocks",
    "status": "PASS",
-   "seconds": 72.3
+   "seconds": 87.7
   },
   {
    "entry": "arp_responder",
    "job": "arp.sby cover",
    "what": "a reply and a request leave",
    "status": "PASS",
-   "seconds": 21.6
+   "seconds": 28.4
   },
   {
    "entry": "icmp_echo",
    "job": "icmp.sby bmc",
-   "what": "AXI-Stream rules, no reply without a request: bounded, 40 clocks",
+   "what": "AXI-Stream rules, no reply without a request, the stored request never written while it waits or is sent: bounded, 40 clocks",
    "status": "PASS",
-   "seconds": 7.0
+   "seconds": 7.7
   },
   {
    "entry": "icmp_echo",
    "job": "icmp.sby cover",
    "what": "a whole reply to a minimal echo request",
    "status": "PASS",
-   "seconds": 14.6
+   "seconds": 18.2
   },
   {
    "entry": "ipv4_udp_rx",
    "job": "udp_rx.sby bmc",
    "what": "AXI-Stream rules with tuser, tdest and header fields; input held after a frame: bounded, 30 clocks",
    "status": "PASS",
-   "seconds": 3.8
+   "seconds": 4.5
   },
   {
    "entry": "ipv4_udp_rx",
    "job": "udp_rx.sby cover",
    "what": "a whole datagram parsed and passed on",
    "status": "PASS",
-   "seconds": 6.4
+   "seconds": 6.7
   },
   {
    "entry": "ipv4_udp_tx",
    "job": "udp_tx.sby bmc",
    "what": "frames of 42 bytes plus the payload, AXI-Stream rules, input held while sending: bounded, 60 clocks",
    "status": "PASS",
-   "seconds": 71.5
+   "seconds": 73.4
   },
   {
    "entry": "ipv4_udp_tx",
    "job": "udp_tx.sby cover",
    "what": "a two-byte datagram leaves",
    "status": "PASS",
-   "seconds": 3.6
+   "seconds": 3.3
   },
   {
    "entry": "igmp_join",
    "job": "igmp.sby bmc",
    "what": "46-byte frames, AXI-Stream rules: bounded, 60 clocks",
    "status": "PASS",
-   "seconds": 36.8
+   "seconds": 36.6
   },
   {
    "entry": "igmp_join",
@@ -91,7 +91,7 @@
    "job": "classify.sby bmc",
    "what": "the address filter's verdict equals the restated rule: bounded, 12 clocks",
    "status": "PASS",
-   "seconds": 75.4
+   "seconds": 75.1
   },
   {
    "entry": "eth_mac_rgmii",

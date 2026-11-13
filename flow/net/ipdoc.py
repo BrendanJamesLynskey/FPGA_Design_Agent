@@ -103,10 +103,17 @@ def readme(block: str) -> str:
           ". Reset: `rst`, active high, synchronous.", "", "## Latency and throughput", ""]
     L += [f"- {k}: {v}" for k, v in y["latency"].items()] + [f"- throughput: {y['throughput']}", "",
           "## Evidence", "",
-          (y['evidence'].get('summary') or "Bit-exact against the Python golden model (`flow/net/model.py`), file-driven bench (the brief-19 harness method), "
-           "Icarus Verilog 12.") + f" Tests: {', '.join('`' + t + '`' for t in y['evidence']['tests'])}.",
+          _sentence(y['evidence'].get('summary') or "Bit-exact against the Python golden model (`flow/net/model.py`), "
+                    "file-driven bench (the brief-19 harness method), Icarus Verilog 12") +
+          f" Tests: {', '.join('`' + t + '`' for t in y['evidence']['tests'])}.", "",
+          "Try it: `python3 -m pytest " + " ".join(y['evidence']['tests']) + "`" +
+          (" (the formal jobs need SymbiYosys on PATH; they are skipped without it)."
+           if any("formal" in t for t in y['evidence']['tests']) else "."), "",
           "Parameter points simulated: " + "; ".join("`" + (", ".join(f"{k}={v}" for k, v in p.items()) or "defaults") + "`"
                                                    for p in y["sweep_tested"]) + "."]
+    if block in NET63 + ["eth_mac_rgmii"]:
+        L += ["", "Terms (ARP, ICMP, IGMP, MDIO, RMII, RGMII, VLAN, pause, OOC, WNS, Fmax) are defined in "
+              "[the library's terms](../README.md#terms)."]
     if faults.exists():
         fl = yaml.safe_load(faults.read_text())["faults"]
         res = {}
@@ -121,6 +128,12 @@ def readme(block: str) -> str:
           f"- Part, board or pin: {b['part_specific']}.", f"- Depends on: {', '.join(y['depends']) or 'nothing'}.",
           f"- Limits: {y['limits']}.", "", "## Cost table", "", y["cost_table"] + ".", "", f"Licence: {y['licence']}.", ""]
     return "\n".join(L)
+
+
+def _sentence(t: str) -> str:
+    """Text ending in a full stop (the Evidence summary is followed by the tests on the same line)."""
+    t = t.rstrip()
+    return t if t.endswith((".", "!", "?")) else t + "."
 
 
 def _fmt(v) -> str:
@@ -195,6 +208,9 @@ def cost_section(block: str, y: dict) -> list[str]:
         L.append("| " + " | ".join(_fmt(r["params"][k]) for k in pk) + " | " +
                  " | ".join(_fmt(r.get(k)) for k in ("lut", "ff", "lutram", "bram_tiles", "dsp")) +
                  f" | {r['wns_ns']:.3f} | {r['fmax_mhz']:.1f} | {'-' if dyn is None else f'{dyn:.3f}'} |")
+    dflt = {k: v["default"] for k, v in (y.get("parameters") or {}).items() if k in pk}
+    L += ["", "Defaults: " + ", ".join(f"{k} {v}" for k, v in dflt.items()) + ". WNS is the worst negative slack (the "
+          "timing margin at the target clock; below zero the target is missed)."]
     L += ["", "Fmax is estimated from one routed run at the target clock (1000 / (period - WNS)); dynamic power is vectorless "
           "(default toggle rates). Regenerate with `python3 -m flow.ipchar " + block + "` (Vivado, minutes per point)."]
     return L

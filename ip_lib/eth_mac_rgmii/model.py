@@ -96,7 +96,7 @@ def count_rx(st: dict, frame_fcs: bytes, kind: str, c: FilterCfg, filter_on: boo
         st["rx_mcast"] += f["mcast"]
         st["rx_pause"] += pause_on and f["pause"]
         st["rx_vlan"] += f["vlan"]
-        st["rx_filtered"] += filter_on and not f["match"]
+        st["rx_filtered"] += filter_on and not f["match"] and not (pause_on and f["ctrl"])   # consumed control frames are not "filtered"
     else:
         st["rx_frames_bad"] += 1
     st["rx_fcs_err"] += kind == "fcs"

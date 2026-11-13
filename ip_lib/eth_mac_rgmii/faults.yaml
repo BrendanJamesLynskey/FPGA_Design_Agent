@@ -143,3 +143,17 @@ faults:
     class: width
     why: with jumbo frames the length counters stay 11 bits wide and saturate at 2047
     test: flow/net/tests/test_58_mac_rgmii_rtl.py -k v02_jumbo
+  - name: pause_zero_quanta_ignored
+    file: eth_mac_rgmii.sv
+    old: "if (rx_end_valid && rx_end_good && c_pause) ptimer"
+    new: "if (rx_end_valid && rx_end_good && c_pause && c_quanta != 0) ptimer"
+    class: protocol
+    why: a pause of zero quanta does not end a pause in progress (found by the independent review)
+    test: flow/net/tests/test_63d_adversarial_rtl.py -k pause
+  - name: pause_quanta_not_latched
+    file: eth_mac_rgmii.sv
+    old: "t_d <= pbyte(req_idx, mac_addr, pq_cur);"
+    new: "t_d <= pbyte(req_idx, mac_addr, pq);"
+    class: state
+    why: a pause request arriving while a pause frame is sent changes that frame's quanta bytes mid-frame
+    test: flow/net/tests/test_58_mac_rgmii_rtl.py -k v02_full

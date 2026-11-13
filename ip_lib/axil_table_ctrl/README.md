@@ -29,6 +29,9 @@ Clocks: `clk`. Reset: `rst`, active high, synchronous.
 ## Evidence
 
 Bit-exact against the Python golden model (`flow/net/model.py`), file-driven bench (the brief-19 harness method), Icarus Verilog 12. Tests: `flow/net/tests/test_40_tables_rtl.py`.
+
+Try it: `python3 -m pytest flow/net/tests/test_40_tables_rtl.py`.
+
 Parameter points simulated: `defaults`.
 
 ## Boundary and reuse

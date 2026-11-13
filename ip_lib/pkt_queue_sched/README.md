@@ -34,6 +34,9 @@ Clocks: `clk`. Reset: `rst`, active high, synchronous.
 ## Evidence
 
 Bit-exact against the Python golden model (`flow/net/model.py`), file-driven bench (the brief-19 harness method), Icarus Verilog 12. Tests: `flow/net/tests/test_40_queues_rtl.py`, `flow/net/tests/test_40_switch_rtl.py`.
+
+Try it: `python3 -m pytest flow/net/tests/test_40_queues_rtl.py flow/net/tests/test_40_switch_rtl.py`.
+
 Parameter points simulated: `NQ=4, QBYTES=8192, DESC=32`; `NQ=2, QBYTES=256, DESC=4, MAX_LEN=200`; `NQ=4, QBYTES=512, DESC=2, MAX_LEN=512`; `NQ=8, QBYTES=1024, DESC=8, MAX_LEN=1000`.
 
 Seeded faults (`faults.yaml`, run by `flow/net/faults.py`):

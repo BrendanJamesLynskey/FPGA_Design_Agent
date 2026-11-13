@@ -4,7 +4,7 @@ UDP over IPv4 transmit: stores one payload, then sends Ethernet, IPv4 (header ch
 
 Generated from `ip.yaml` by `flow/net/ipdoc.py`; do not edit by hand.
 
-Status: simulated against an RFC 791/768 model with scapy recomputing both checksums; framing checked by bounded model checking; built alone out of context on an Artix-7 with Vivado 2026.1; not yet run on a board (the Nexys A7 network design carries it behind eth_mac_rmii; built, the board run waits for the owner's cabling check).
+Status: Misses 125 MHz out of context (74-82 MHz estimated: needs pipelining before it sits behind the RGMII MAC); closes at 50 MHz. Simulated against an RFC 791/768 model with scapy recomputing both checksums; framing checked by bounded model checking; built alone out of context on an Artix-7 with Vivado 2026.1; not yet run on a board (the Nexys A7 network design carries it behind eth_mac_rmii; built, not yet run: a cable check comes first, see designs/b63d_nexys_net/host/PLAN.md).
 
 ## Parameters
 
@@ -33,8 +33,13 @@ Clocks: `clk`. Reset: `rst`, active high, synchronous.
 
 ## Evidence
 
-cocotb against ip_lib/ipv4_udp_tx/model.py (RFC 791, 768, 1071) with scapy recomputing both checksums of every frame: random lengths up to and over MAX_PAYLOAD, payloads whose checksum computes to zero (sent as 0xFFFF), unicast and multicast destinations, input gaps and back-pressure; Icarus Verilog 12. Formal (bounded): every frame 42 bytes plus its payload, the AXI-Stream rules of brief 59 on m_axis, the input held while a frame is prepared or sent Tests: `flow/net/tests/test_63d_udp_tx_rtl.py`, `flow/net/tests/test_63d_formal.py`.
+cocotb against ip_lib/ipv4_udp_tx/model.py (RFC 791, 768, 1071) with scapy recomputing both checksums of every frame: random lengths up to and over MAX_PAYLOAD, payloads whose checksum computes to zero (sent as 0xFFFF), unicast and multicast destinations, input gaps and back-pressure; Icarus Verilog 12. Formal (bounded): every frame 42 bytes plus its payload, the AXI-Stream protocol rules (valid held until ready, data steady while waiting) on m_axis, the input held while a frame is prepared or sent; an independent adversarial bench compares nine frames with scapy's own build. Tests: `flow/net/tests/test_63d_udp_tx_rtl.py`, `flow/net/tests/test_63d_adversarial_rtl.py`, `flow/net/tests/test_63d_formal.py`.
+
+Try it: `python3 -m pytest flow/net/tests/test_63d_udp_tx_rtl.py flow/net/tests/test_63d_adversarial_rtl.py flow/net/tests/test_63d_formal.py` (the formal jobs need SymbiYosys on PATH; they are skipped without it).
+
 Parameter points simulated: `MAX_PAYLOAD=1472, CSUM=1, TTL=64, RAM=bram`; `MAX_PAYLOAD=64, CSUM=0, TTL=1, RAM=lutram`; `MAX_PAYLOAD=8972, CSUM=1, TTL=255, RAM=bram`.
+
+Terms (ARP, ICMP, IGMP, MDIO, RMII, RGMII, VLAN, pause, OOC, WNS, Fmax) are defined in [the library's terms](../README.md#terms).
 
 Seeded faults (`faults.yaml`, run by `flow/net/faults.py`):
 

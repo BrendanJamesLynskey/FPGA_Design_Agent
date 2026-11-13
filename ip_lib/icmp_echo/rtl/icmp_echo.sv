@@ -10,7 +10,8 @@
 // own_mac), the IP addresses swapped, TTL set to TTL, ICMP type 0, and both checksums updated incrementally
 // (RFC 1624 equation 3). Identifier, sequence number and data are echoed unchanged. Length: 14 + IP total length.
 // One frame is held at a time: requests that arrive while a reply is waiting or being sent are not answered
-// (ev_busy). RAM selects the buffer's memory, "bram" or "lutram" (the implementation variants; same function).
+// (ev_busy). A frame may start on the clock right after a request's last byte (the input is always ready); it is not
+// stored over the request. RAM selects the buffer's memory, "bram" or "lutram" (the implementation variants; same function).
 
 module icmp_echo #(
     parameter int BUF_BYTES = 2048,     // the longest frame answered, bytes without FCS: a power of two, 128..16384
@@ -56,6 +57,8 @@ module icmp_echo #(
 
     // ---------------------------------------------------------------- receive and check
     logic          busy;                // a reply is waiting or being sent
+    logic          blocked;             // busy, or a request is being accepted this clock (a frame starting now
+                                        // must not overwrite it)
     logic          stored;              // this frame is being written to the buffer
     logic [15:0]   k;                   // index of the next byte (saturates)
     logic [47:0]   sa;
@@ -73,7 +76,7 @@ module icmp_echo #(
     logic [16:0] tl14;                  // the datagram's end in the frame, without overflow
     assign tl14 = {1'b0, tl} + 17'd14;
     logic we;
-    assign we = beat && (first ? !busy : stored) && k < 16'(BUF_BYTES);
+    assign we = beat && (first ? !blocked : stored) && k < 16'(BUF_BYTES);
     always_ff @(posedge clk) begin
         fin <= 1'b0;
         if (rst) begin
@@ -81,7 +84,7 @@ module icmp_echo #(
             ttl_rx <= '0; proto <= '0; typ <= '0; code <= '0; dst <= '0; ip_acc <= '0; ic_acc <= '0;
             f_bad <= 1'b0; f_store <= 1'b0; f_len <= '0;
         end else if (beat) begin
-            if (first) begin stored <= !busy; ip_acc <= '0; ic_acc <= '0; end
+            if (first) begin stored <= !blocked; ip_acc <= '0; ic_acc <= '0; end
             if (k >= 16'd6 && k <= 16'd11) sa <= {sa[39:0], s_axis_tdata};
             case (k)
                 16'd12, 16'd13: et      <= {et[7:0], s_axis_tdata};
@@ -100,12 +103,13 @@ module icmp_echo #(
             if (k >= 16'd14 && k <= 16'd33) ip_acc <= ip_acc + 32'(wv);
             if (k >= 16'd34 && {1'b0, k} < tl14) ic_acc <= ic_acc + 32'(wv);
             if (s_axis_tlast) begin
-                fin <= 1'b1; f_bad <= s_axis_tuser; f_len <= k + 16'd1; f_store <= first ? !busy : stored;
+                fin <= 1'b1; f_bad <= s_axis_tuser; f_len <= k + 16'd1; f_store <= first ? !blocked : stored;
                 k <= '0;
             end else if (k != 16'hFFFF) k <= k + 16'd1;
         end
     end
     logic echo_me, ok;
+    assign blocked = busy || (fin && ok && f_store);
     assign echo_me = et == 16'h0800 && vi == 8'h45 && proto == 8'd1 && dst == own_ip && typ == 8'd8;
     assign ok = echo_me && !f_bad && code == 8'd0 && ff[13:0] == 14'd0 && fold(ip_acc) == 16'hFFFF &&
                 fold(ic_acc) == 16'hFFFF && tl >= 16'd28 && {1'b0, f_len} >= tl14 && tl14 <= 17'(BUF_BYTES);
@@ -187,4 +191,11 @@ module icmp_echo #(
             if (m_axis_tvalid && m_axis_tready && m_axis_tlast) begin busy <= 1'b0; ev_reply <= 1'b1; end
         end
     end
+`ifdef FORMAL
+    // the stored request is not written while it waits or is being sent, nor on the clock it is accepted (checked by
+    // formal/icmp.sby; a frame starting right after the request's last byte must not overwrite it)
+    logic f_init = 1'b1;
+    always_ff @(posedge clk) f_init <= rst;
+    always_ff @(posedge clk) if (!f_init && !rst) assert (!(we && blocked));
+`endif
 endmodule

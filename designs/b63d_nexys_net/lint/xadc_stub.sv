@@ -10,7 +10,7 @@ module XADC #(
 ) (
     input DCLK, DEN, DWE, input [6:0] DADDR, input [15:0] DI, output [15:0] DO, output DRDY,
     input RESET, CONVST, CONVSTCLK, VP, VN, input [15:0] VAUXP, VAUXN,
-    output ALM, OT, BUSY, output [4:0] CHANNEL, output EOC, EOS, JTAGBUSY, JTAGLOCKED, JTAGMODIFIED, output [4:0] MUXADDR
+    output [7:0] ALM, output OT, BUSY, output [4:0] CHANNEL, output EOC, EOS, JTAGBUSY, JTAGLOCKED, JTAGMODIFIED, output [4:0] MUXADDR
 );
     assign {DO, DRDY, ALM, OT, BUSY, CHANNEL, EOC, EOS, JTAGBUSY, JTAGLOCKED, JTAGMODIFIED, MUXADDR} = '0;
 endmodule

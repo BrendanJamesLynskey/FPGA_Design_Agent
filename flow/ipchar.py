@@ -189,8 +189,9 @@ def run(blocks: list[str], part: str, only: set[str], dry: bool) -> int:
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(
         prog="python3 -m flow.ipchar",
-        description="Measure each implementation variant of an IP block with Vivado (built alone, no I/O constraints) "
-                    "and write ip_lib/<block>/char/<part>.json. Each point takes minutes: run one at a time.")
+        description="Measure each implementation variant of an IP block with Vivado 2026.1 (built alone, no I/O "
+                    "constraints) and write ip_lib/<block>/char/<part>.json. Requires Vivado 2026.1 installed. Each point "
+                    "takes minutes: run one at a time. Example: python3 -m flow.ipchar icmp_echo arp_responder")
     ap.add_argument("blocks", nargs="+", help="library entries to measure, e.g. fir dds_awg")
     ap.add_argument("--part", default=iv.DEFAULT_PART, help=f"device part (default {iv.DEFAULT_PART})")
     ap.add_argument("--only", default="", help="comma-separated variant names; rows of other variants are kept")

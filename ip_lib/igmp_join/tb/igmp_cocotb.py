@@ -112,6 +112,15 @@ async def igmp(dut):
     reps = frames_since(t0)
     assert len(reps) == 1 and reps[0][2] == g0 and reps[0][0] - t1 <= 3 * tick + 300, (reps, t1)
 
+    # 4b. ...and a longer Max Response Time does not restart it: the report still comes within the first query's time
+    t0 = now()
+    await src.send(model.query(*ROUTER, g0, 3))
+    await axis_tb.clocks(dut, tick // 2)
+    await src.send(model.query(*ROUTER, g0, 200))
+    await ticks(6)
+    reps = frames_since(t0)
+    assert len(reps) == 1 and reps[0][2] == g0 and reps[0][0] - t0 <= 3 * tick + 600, (reps, t0)
+
     # 5. a query with a bad IGMP checksum is ignored
     q = bytearray(model.query(*ROUTER, b"\x00" * 4, 2))
     q[40] ^= 0xFF

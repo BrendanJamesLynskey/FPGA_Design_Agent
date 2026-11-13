@@ -1,10 +1,11 @@
 # ip.yaml for eth_mac_rgmii: the declared parameter space and contract (the library's reuse rules).
 name: eth_mac_rgmii
 version: 0.2.0
-status: simulated (0.1.0 and 0.2.0 features); formal checks of the frame FSMs (bounded) and the address filter; built alone
-  out of context on an Artix-7 with Vivado 2026.1; 0.1.0 synthesised and routed inside the KR260 trading-path design; not
-  yet run on a board (the filter and statistics blocks are in the Nexys A7 network design behind eth_mac_rmii, built, not
-  yet run)
+status: Meets 125 MHz out of context with the block RAM buffer (139-141 MHz estimated); the LUT RAM buffer meets it only just
+  at 32768 bytes (WNS 0.04 ns; an earlier build of the same design missed by 7 ps). Simulated (0.1.0 and 0.2.0 features, with
+  an independent adversarial pause bench); formal checks of the frame FSMs (bounded) and the address filter; built alone on
+  an Artix-7 with Vivado 2026.1; 0.1.0 synthesised and routed inside the KR260 trading-path design; not yet run on a board
+  (its filter and statistics blocks are in the Nexys A7 network design behind eth_mac_rmii, built, not yet run)
 summary: 'Tri-mode (10/100/1000 Mb/s) Ethernet MAC for a PHY with an RGMII (reduced gigabit media-independent interface) link:
   cut-through receive (bytes passed on as they arrive) with the FCS (frame check sequence, the CRC at the end of a frame)
   verdict at the end, optional store-and-forward AXI-Stream receive, AXI-Stream transmit with padding, FCS and inter-frame
@@ -247,7 +248,12 @@ limits: formal checks of the frame state machines are bounded (20 and 40 clocks)
   by bounded model checking against the rule restated in the harness; full duplex only; no half duplex, no priority flow control
   (802.1Qbb), no IEEE 1588 timestamps beyond the SOF pulses; VLAN stripping removes one tag only and only from the store-and-forward
   output; the MDIO master is a separate entry (mdio_master); 10/100 nibble alignment needs the SFD; RGMII input timing is
-  closed only for the PHY's internal RX delay mode (board XDC); not yet run on a board
+  closed only for the PHY's internal RX delay mode (board XDC); not yet run on a board; the multicast hash bin is the 6 least
+  significant bits of the reflected CRC-32 register over the destination (ether_crc_le(6, addr) & 0x3f in Linux), not the
+  bit-reversed index some MACs use, so a driver filling mc_hash must use the same; VLAN = 2 strips only the outer tag of a
+  double-tagged frame (the inner tag stays in the frame; m_axis_tci is the outer TCI); a 64-byte tagged frame leaves the store-and-forward
+  output as 56 bytes, under the 60-byte Ethernet minimum (the consumer pads if it forwards it); with FILTER and PAUSE, consumed
+  pause frames are not counted as filtered
 resets:
 - name: rst
   polarity: high
@@ -257,9 +263,12 @@ evidence:
     a model of the 0.2 features written from IEEE 802.3 and 802.1Q (model.py), Icarus Verilog 12; 0.1.0's tests at 1000, 100
     and 10 Mb/s in both directions with every new feature off; the filter under three settings with frame-by-frame flags,
     the store-and-forward output with tags stripped, every statistics counter and a clear, pause honoured (hold time measured
-    in byte times at 1000 and 100 Mb/s) and sent ahead of waiting data, and 9000-byte MTU jumbo frames
+    in byte times at 1000 and 100 Mb/s) and sent ahead of waiting data, and 9000-byte MTU jumbo frames; an independent adversarial
+    bench adds a pause received mid-frame and a zero-quanta pause ending a long one, and a pause requested while a pause frame
+    is on the wire
   tests:
   - flow/net/tests/test_58_mac_rgmii_rtl.py
+  - flow/net/tests/test_63d_adversarial_rtl.py
   - flow/net/tests/test_63d_formal.py
   faults: ip_lib/eth_mac_rgmii/faults.yaml
   results: results/b58a/mac_rgmii_faults.json, results/b63d/faults.json, results/b58a/pins_sim.json, ip_lib/eth_mac_rgmii/char/xc7a100tcsg324-1.json
@@ -270,7 +279,7 @@ variant_param: RX_RAM
 variants:
   bram:
     summary: the store-and-forward buffer in block RAM
-    when: 'the default; measured: 1 block RAM tile at SF_DEPTH 4096, 8 at 32768, about 138-144 MHz'
+    when: 'the default; measured: 1 block RAM tile at SF_DEPTH 4096, 8 at 32768, about 139-141 MHz'
     uses:
       dsp: 0
       bram_tiles: 0 if CUT_THROUGH == 1 else max(0.5, SF_DEPTH / 4096)
@@ -278,8 +287,8 @@ variants:
     ii: 1
   lutram:
     summary: the store-and-forward buffer in LUT RAM
-    when: 'block RAM spoken for and small buffers; measured: 796 LUTs as RAM at 4096 (about 136 MHz), 6174 at 32768, where
-      it misses 125 MHz by 7 ps'
+    when: 'block RAM spoken for and small buffers; measured: 796 LUTs as RAM at 4096 (about 133 MHz), 6174 at 32768, where
+      it meets 125 MHz only just (WNS 0.04 ns)'
     uses:
       dsp: 0
       bram_tiles: 0

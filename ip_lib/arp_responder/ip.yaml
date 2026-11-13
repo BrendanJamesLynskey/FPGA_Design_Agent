@@ -1,11 +1,14 @@
 # ip.yaml for arp_responder: the declared parameter space and contract (the library's reuse rules; brief 63D).
 name: arp_responder
 version: 0.1.0
-status: simulated against an RFC 826 model with scapy as a second decoder; transmit framing checked by bounded model checking;
-  built alone out of context on an Artix-7 with Vivado 2026.1; not yet run on a board (the Nexys A7 network design carries
-  it behind eth_mac_rmii; built, the board run waits for the owner's cabling check)
-summary: 'ARP for one IPv4 address (RFC 826): answers requests for own_ip, learns senders into a small cache (round-robin
-  replacement, flush), and looks up next-hop MAC addresses for transmit, sending a rate-limited request on a miss.'
+status: 'Meets 125 MHz out of context with 4 cache entries (128 MHz estimated) but not with 16 (116 MHz); simulated against
+  an RFC 826 model, with scapy as a second decoder and an independent adversarial bench; transmit framing checked by bounded
+  model checking; built alone on an Artix-7 with Vivado 2026.1; not yet run on a board (the Nexys A7 network design carries
+  it behind eth_mac_rmii; built, not yet run: a cable check comes first, see designs/b63d_nexys_net/host/PLAN.md)'
+summary: 'Address Resolution Protocol (ARP, RFC 826): answers ''who has this IPv4 address?'' for one address, caches other
+  hosts'' MAC addresses (round-robin replacement, flush), and looks up next-hop MAC addresses for transmit, sending a rate-limited
+  request on a miss. A packet from another station claiming its own address is reported as a conflict (RFC 5227) and never
+  cached.'
 top: arp_responder
 rtl:
 - rtl/arp_responder.sv
@@ -34,7 +37,7 @@ interfaces:
   note: static
 - name: events
   type: native
-  signals: ev_rx_request, ev_rx_reply, ev_tx_reply, ev_tx_request, ev_learn, ev_drop
+  signals: ev_rx_request, ev_rx_reply, ev_tx_reply, ev_tx_request, ev_learn, ev_drop, ev_conflict
   note: one-clock pulses for counters
 clocks:
 - name: clk
@@ -84,16 +87,18 @@ boundary:
   registered_outputs: 'yes'
   cdc: none
   part_specific: none
-limits: 'Ethernet and IPv4 only; one own address; entries never age (flush from outside); no gratuitous ARP or address-conflict
-  detection (RFC 5227); one reply waits while one is sent, a third request is not answered; measured: 133 MHz with 4 cache
-  entries, 120 MHz with 16 (the parallel compare)'
+limits: Ethernet and IPv4 only; one own address; entries never age (flush from outside); address conflicts are reported (ev_conflict)
+  but not resolved (no RFC 5227 probing or announcing); one reply waits while one is sent, a third request is not answered;
+  meets 125 MHz with 4 cache entries (128 MHz estimated), misses it with 16 (116 MHz, the parallel compare)
 evidence:
   summary: 'cocotb against ip_lib/arp_responder/model.py (RFC 826, plain Python) with scapy decoding every frame sent: random
     requests, replies, probes, malformed packets, padded frames, bad and short frames, lookups and flushes under input gaps
     and back-pressure, then a dropped third reply and the request holdoff; Icarus Verilog 12. Formal (bounded): every frame
-    42 bytes and the AXI-Stream rules of brief 59 on m_axis'
+    42 bytes and the AXI-Stream protocol rules (valid held until ready, data steady while waiting) on m_axis; an independent
+    adversarial bench adds gratuitous ARPs from known and unknown hosts, probes, a full cache and an address conflict'
   tests:
   - flow/net/tests/test_63d_arp_rtl.py
+  - flow/net/tests/test_63d_adversarial_rtl.py
   - flow/net/tests/test_63d_formal.py
   faults: ip_lib/arp_responder/faults.yaml
   results: results/b63d/faults.json, results/b63d/formal.json, ip_lib/arp_responder/char/xc7a100tcsg324-1.json

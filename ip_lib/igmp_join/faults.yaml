@@ -37,3 +37,10 @@ faults:
     class: protocol
     why: reports leave with TTL 2 instead of 1
     test: flow/net/tests/test_63d_igmp_rtl.py -k g4
+  - name: igmp_timer_always_restarted
+    file: igmp_join.sv
+    old: "if (!run[i] || tmr[i] > q_mrt) begin"
+    new: "if (1'b1) begin"
+    class: protocol
+    why: a query with a longer Max Response Time restarts a running timer (found by the independent review)
+    test: flow/net/tests/test_63d_igmp_rtl.py -k g4

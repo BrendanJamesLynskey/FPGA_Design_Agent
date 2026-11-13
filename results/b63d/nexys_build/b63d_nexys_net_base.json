@@ -79,18 +79,18 @@
         },
         "warnings": [],
         "timing": {
-          "wns_ns": 2.648,
+          "wns_ns": 0.734,
           "tns_ns": 0.0,
           "tns_failing_endpoints": 0,
-          "tns_total_endpoints": 11894,
+          "tns_total_endpoints": 11949,
           "whs_ns": 0.033,
           "ths_ns": 0.0,
           "ths_failing_endpoints": 0,
-          "ths_total_endpoints": 11894,
+          "ths_total_endpoints": 11949,
           "wpws_ns": 3.0,
           "tpws_ns": 0.0,
           "tpws_failing_endpoints": 0,
-          "tpws_total_endpoints": 4336,
+          "tpws_total_endpoints": 4368,
           "timing_met": true
         },
         "check_timing": {
@@ -115,13 +115,19 @@
         "methodology": {
           "errors": 0,
           "critical_warnings": 0,
-          "warnings": 15,
+          "warnings": 17,
           "rules": [
             {
               "rule": "SYNTH-6",
               "severity": "Warning",
               "description": "Timing of a RAM block might be sub-optimal",
               "count": 4
+            },
+            {
+              "rule": "TIMING-28",
+              "severity": "Warning",
+              "description": "Auto-derived clock referenced by a timing constraint",
+              "count": 2
             },
             {
               "rule": "XDCH-2",
@@ -165,6 +171,10 @@
               "period": 10.0,
               "root": "sys_clk_pin"
             },
+            "eth_refclk": {
+              "period": 20.0,
+              "root": "sys_clk_pin"
+            },
             "fb": {
               "period": 10.0,
               "root": "sys_clk_pin"
@@ -174,10 +184,6 @@
               "root": "sys_clk_pin"
             },
             "c1": {
-              "period": 20.0,
-              "root": "sys_clk_pin"
-            },
-            "eth_refclk": {
               "period": 20.0,
               "root": "sys_clk_pin"
             }
@@ -190,19 +196,43 @@
           "status": "pass",
           "waived": 0,
           "waived_rules": [],
-          "exceptions": 2,
+          "exceptions": 4,
           "ignored": 0,
           "info": [],
           "covered": {
+            "7": 4,
             "8": 4,
-            "10": 8
+            "10": 4,
+            "12": 8
           },
           "failures": []
         },
         "io_timing": {
           "stage": "synth",
           "pass": true,
-          "interfaces": [],
+          "interfaces": [
+            {
+              "name": "rmii_rx",
+              "kind": "system_synchronous",
+              "ports": [
+                "ETH_CRSDV",
+                "ETH_RXD[0]",
+                "ETH_RXD[1]",
+                "ETH_RXERR"
+              ],
+              "clock": "eth_refclk"
+            },
+            {
+              "name": "rmii_tx",
+              "kind": "system_synchronous",
+              "ports": [
+                "ETH_TXD[0]",
+                "ETH_TXD[1]",
+                "ETH_TXEN"
+              ],
+              "clock": "eth_refclk"
+            }
+          ],
           "failures": [],
           "delays": 6,
           "clocks": {
@@ -212,6 +242,14 @@
               "virtual": false,
               "generated": false,
               "source": "CLK100MHZ",
+              "input_jitter": 0.0
+            },
+            "eth_refclk": {
+              "period": 20.0,
+              "waveform": "18.625 28.625",
+              "virtual": false,
+              "generated": true,
+              "source": "ETH_REFCLK",
               "input_jitter": 0.0
             },
             "fb": {
@@ -232,32 +270,24 @@
             },
             "c1": {
               "period": 20.0,
-              "waveform": "2.500 12.500",
+              "waveform": "18.625 28.625",
               "virtual": false,
               "generated": true,
               "source": "u_mmcm/CLKOUT1",
-              "input_jitter": 0.0
-            },
-            "eth_refclk": {
-              "period": 20.0,
-              "waveform": "2.500 12.500",
-              "virtual": false,
-              "generated": true,
-              "source": "ETH_REFCLK",
               "input_jitter": 0.0
             }
           },
           "worst": {
             "setup": {
-              "slack": 2.648,
-              "requirement": 10.0,
-              "start_clock": "c0",
+              "slack": 0.734,
+              "requirement": 21.375,
+              "start_clock": "eth_refclk",
               "end_clock": "c0",
               "corner": "Slow",
-              "uncertainty": 0.082,
+              "uncertainty": 0.202,
               "pessimism": 0.221,
-              "from": "ETH_TXD_reg[1]/C",
-              "to": "ETH_TXD[1]"
+              "from": "ETH_RXERR",
+              "to": "u_mac/er_q_reg/D"
             },
             "hold": {
               "slack": 0.033,
@@ -274,13 +304,13 @@
         },
         "resource_sanity": null,
         "utilization": {
-          "lut": 4166,
+          "lut": 4251,
           "lut_available": 63400,
           "lutram": 0,
           "lutram_available": 19000,
-          "ff": 4319,
+          "ff": 4351,
           "ff_available": 126800,
-          "carry4": 690,
+          "carry4": 704,
           "bram_tile": 2,
           "bram_tile_available": 135,
           "dsp": 0,
@@ -298,19 +328,19 @@
           "post_place_hold": true
         },
         "timing": {
-          "wns_ns": 0.268,
+          "wns_ns": 0.77,
           "tns_ns": 0.0,
           "tns_failing_endpoints": 0,
-          "tns_total_endpoints": 11894,
-          "whs_ns": -0.069,
-          "ths_ns": -0.498,
-          "ths_failing_endpoints": 17,
-          "ths_total_endpoints": 11894,
+          "tns_total_endpoints": 11949,
+          "whs_ns": 0.008,
+          "ths_ns": 0.0,
+          "ths_failing_endpoints": 0,
+          "ths_total_endpoints": 11949,
           "wpws_ns": 3.0,
           "tpws_ns": 0.0,
           "tpws_failing_endpoints": 0,
-          "tpws_total_endpoints": 4336,
-          "timing_met": false
+          "tpws_total_endpoints": 4368,
+          "timing_met": true
         },
         "pass": true
       },
@@ -338,19 +368,49 @@
           "status": "pass",
           "waived": 0,
           "waived_rules": [],
-          "exceptions": 2,
+          "exceptions": 4,
           "ignored": 0,
           "info": [],
           "covered": {
+            "7": 4,
             "8": 4,
-            "10": 8
+            "10": 4,
+            "12": 8
           },
           "failures": []
         },
         "io_timing": {
           "stage": "route",
           "pass": true,
-          "interfaces": [],
+          "interfaces": [
+            {
+              "name": "rmii_rx",
+              "kind": "system_synchronous",
+              "ports": [
+                "ETH_CRSDV",
+                "ETH_RXD[0]",
+                "ETH_RXD[1]",
+                "ETH_RXERR"
+              ],
+              "clock": "eth_refclk",
+              "setup_slack_ns": 1.569,
+              "hold_slack_ns": 1.603,
+              "iob_packed": true
+            },
+            {
+              "name": "rmii_tx",
+              "kind": "system_synchronous",
+              "ports": [
+                "ETH_TXD[0]",
+                "ETH_TXD[1]",
+                "ETH_TXEN"
+              ],
+              "clock": "eth_refclk",
+              "setup_slack_ns": 3.702,
+              "hold_slack_ns": 8.733,
+              "iob_packed": true
+            }
+          ],
           "failures": [],
           "delays": 6,
           "clocks": {
@@ -360,6 +420,14 @@
               "virtual": false,
               "generated": false,
               "source": "CLK100MHZ",
+              "input_jitter": 0.0
+            },
+            "eth_refclk": {
+              "period": 20.0,
+              "waveform": "18.625 28.625",
+              "virtual": false,
+              "generated": true,
+              "source": "ETH_REFCLK",
               "input_jitter": 0.0
             },
             "fb": {
@@ -380,55 +448,47 @@
             },
             "c1": {
               "period": 20.0,
-              "waveform": "2.500 12.500",
+              "waveform": "18.625 28.625",
               "virtual": false,
               "generated": true,
               "source": "u_mmcm/CLKOUT1",
-              "input_jitter": 0.0
-            },
-            "eth_refclk": {
-              "period": 20.0,
-              "waveform": "2.500 12.500",
-              "virtual": false,
-              "generated": true,
-              "source": "ETH_REFCLK",
               "input_jitter": 0.0
             }
           },
           "worst": {
             "setup": {
-              "slack": 0.651,
-              "requirement": 10.0,
-              "start_clock": "c0",
+              "slack": 1.569,
+              "requirement": 21.375,
+              "start_clock": "eth_refclk",
               "end_clock": "c0",
               "corner": "Slow",
-              "uncertainty": 0.082,
+              "uncertainty": 0.202,
               "pessimism": 0.147,
-              "from": "ETH_TXD_reg[1]/C",
-              "to": "ETH_TXD[1]"
+              "from": "ETH_RXERR",
+              "to": "u_mac/er_q_reg/D"
             },
             "hold": {
-              "slack": 0.054,
+              "slack": 0.012,
               "requirement": 0.0,
               "start_clock": "c0",
               "end_clock": "c0",
               "corner": "Fast",
               "uncertainty": null,
               "pessimism": -0.283,
-              "from": "n_uok_reg[6]/C",
-              "to": "n_uok_reg[12]/D"
+              "from": "v_port_reg[2]/C",
+              "to": "u_udptx/dp_reg[2]/D"
             }
           },
           "uncertainty": {
             "setup": {
-              "total_ns": 0.082,
+              "total_ns": 0.202,
               "formula": "((TSJ^2 + DJ^2)^1/2) / 2 + PE",
               "tsj_ns": 0.071,
               "dj_ns": 0.147,
-              "pe_ns": 0.0,
+              "pe_ns": 0.12,
               "pessimism_ns": 0.147,
-              "requirement_ns": 10.0,
-              "slack_ns": 0.651
+              "requirement_ns": 21.375,
+              "slack_ns": 1.569
             },
             "hold": null
           }
@@ -452,18 +512,18 @@
       }
     },
     "timing": {
-      "wns_ns": 0.651,
+      "wns_ns": 1.569,
       "tns_ns": 0.0,
       "tns_failing_endpoints": 0,
-      "tns_total_endpoints": 11894,
-      "whs_ns": 0.054,
+      "tns_total_endpoints": 11949,
+      "whs_ns": 0.012,
       "ths_ns": 0.0,
       "ths_failing_endpoints": 0,
-      "ths_total_endpoints": 11894,
+      "ths_total_endpoints": 11949,
       "wpws_ns": 3.0,
       "tpws_ns": 0.0,
       "tpws_failing_endpoints": 0,
-      "tpws_total_endpoints": 4336,
+      "tpws_total_endpoints": 4368,
       "timing_met": true
     },
     "check_timing": {
@@ -481,13 +541,13 @@
       "latch_loops": 0
     },
     "utilization": {
-      "lut": 4093,
+      "lut": 4186,
       "lut_available": 63400,
       "lutram": 0,
       "lutram_available": 19000,
-      "ff": 4312,
+      "ff": 4344,
       "ff_available": 126800,
-      "carry4": 690,
+      "carry4": 704,
       "bram_tile": 2,
       "bram_tile_available": 135,
       "dsp": 0,
@@ -506,13 +566,19 @@
     "methodology": {
       "errors": 0,
       "critical_warnings": 0,
-      "warnings": 15,
+      "warnings": 17,
       "rules": [
         {
           "rule": "SYNTH-6",
           "severity": "Warning",
           "description": "Timing of a RAM block might be sub-optimal",
           "count": 4
+        },
+        {
+          "rule": "TIMING-28",
+          "severity": "Warning",
+          "description": "Auto-derived clock referenced by a timing constraint",
+          "count": 2
         },
         {
           "rule": "XDCH-2",
@@ -540,15 +606,15 @@
       ]
     },
     "power": {
-      "total_w": 0.251,
+      "total_w": 0.25,
       "dynamic_w": 0.134,
       "static_w": 0.117,
       "confidence": "Low",
-      "clocks_w": 0.008,
+      "clocks_w": 0.007,
       "slice_logic_w": 0.005,
       "signals_w": 0.006,
       "io_w": 0.008,
-      "core_w": 0.1265
+      "core_w": 0.1255
     },
     "power_environment": {
       "junction_c": 44.6,
@@ -562,47 +628,47 @@
     },
     "bitstream": {
       "file": "b63d_nexys_net_top.bit",
-      "bytes": 1344372
+      "bytes": 1051220
     },
-    "build_stamp": "4c5e2b7a",
-    "sources_sha256": "4c5e2b7ad6a599db64d44de22804398b74e684d6607dbb3ff442a0f5b91ba335"
+    "build_stamp": "63c11ecf",
+    "sources_sha256": "63c11ecf4bb617fc2a6046f0c468bad53e79ad892d47a9751dbab8f9c83b0b1f"
   },
   "run": {
     "design": "designs/b63d_nexys_net",
     "variant": "base",
     "exit_code": 0,
-    "wall_s": 291.5,
-    "vivado_peak_rss_mib": 3054,
-    "scope_memory_peak_mib": 2448,
-    "scope_anon_peak_mib": 2390,
+    "wall_s": 299.5,
+    "vivado_peak_rss_mib": 3064,
+    "scope_memory_peak_mib": 2447,
+    "scope_anon_peak_mib": 2400,
     "scope_swap_peak_mib": 0,
     "scope_cap_hits": 0,
     "scope_oom_kills": 0,
     "memory_cap": "6G",
     "max_threads": 2,
     "nice": 15,
-    "scope_unit": "fda-vivado-3170253-base",
+    "scope_unit": "fda-vivado-3284069-base",
     "vivado_version": "2026.1",
-    "git_commit": "4de1e2c81d853998d697a0999ebdfeab6a7d90fb",
-    "git_dirty": false,
-    "build_stamp": "4c5e2b7a",
-    "sources_sha256": "4c5e2b7ad6a599db64d44de22804398b74e684d6607dbb3ff442a0f5b91ba335",
+    "git_commit": "c4d2bb44a4ea8c0312007524cf7ab3d72e9f3e26",
+    "git_dirty": true,
+    "build_stamp": "63c11ecf",
+    "sources_sha256": "63c11ecf4bb617fc2a6046f0c468bad53e79ad892d47a9751dbab8f9c83b0b1f",
     "stages_s": {
-      "read": 6.4,
-      "elaborate": 24.6,
-      "rtl_reports": 25.0,
-      "synth": 121.4,
-      "synth_reports": 136.7,
-      "opt": 143.6,
-      "place": 169.0,
-      "phys_opt": 171.2,
-      "place_reports": 174.2,
-      "route": 219.5,
-      "reports": 239.4,
-      "bitstream": 284.1
+      "read": 6.5,
+      "elaborate": 24.1,
+      "rtl_reports": 24.5,
+      "synth": 126.1,
+      "synth_reports": 141.9,
+      "opt": 149.2,
+      "place": 176.1,
+      "phys_opt": 178.3,
+      "place_reports": 181.4,
+      "route": 226.5,
+      "reports": 247.3,
+      "bitstream": 292.0
     },
     "cache": "fresh",
-    "flow_key": "9a00a96b0d2c7d6d4141c3bdc5b1a620e1294c1dc4c85106a61342f86cb1ee64",
-    "build_id": "3ea9db5b"
+    "flow_key": "1c8a39e075574d3a56677a4278e58da33f2250d8d3dc45eaa82eed11158edc36",
+    "build_id": "e096b9b2"
   }
 }

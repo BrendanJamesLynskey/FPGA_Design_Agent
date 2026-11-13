@@ -1,11 +1,12 @@
 # ip.yaml for mdio_master: the declared parameter space and contract (the library's reuse rules; brief 63D).
 name: mdio_master
 version: 0.1.0
-status: simulated against a clause 22 PHY model; frame timing proved by k-induction (SymbiYosys); built alone out of context
-  on an Artix-7 with Vivado 2026.1; first written for designs/b58a_trigger (its copy is used there); not yet run on a board
-  as a library entry
-summary: 'IEEE 802.3 clause 22 management (MDC/MDIO) master: one read or write of a PHY register at a time, MDC = clk / (2
-  x DIV), the line released for the PHY in a read from the turnaround on.'
+status: Meets 125 MHz out of context (285-307 MHz estimated at a 250 MHz target); simulated against a clause 22 PHY model
+  at DIV 2, 5 and 32; frame timing proved by k-induction at DIV 2 (SymbiYosys); built alone on an Artix-7 with Vivado 2026.1;
+  first written for designs/b58a_trigger (its own copy is used there); not yet run on a board as a library entry
+summary: 'PHY management (MDIO, IEEE 802.3 clause 22): the two-wire bus (MDC clock, MDIO data) that reads and writes an Ethernet
+  PHY chip''s registers; one access at a time, MDC = clk / (2 x DIV), the line released for the PHY in a read from the turnaround
+  on.'
 top: mdio_master
 rtl:
 - rtl/mdio_master.sv

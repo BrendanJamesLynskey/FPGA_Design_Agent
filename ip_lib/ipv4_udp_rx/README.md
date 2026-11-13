@@ -4,7 +4,7 @@ IPv4 and UDP receive: header checksum and length checks, options skipped, fragme
 
 Generated from `ip.yaml` by `flow/net/ipdoc.py`; do not edit by hand.
 
-Status: simulated against an RFC 791/768 model with scapy checking the bench's frames; output protocol checked by bounded model checking; built alone out of context on an Artix-7 with Vivado 2026.1; not yet run on a board (the Nexys A7 network design carries it behind eth_mac_rmii; built, the board run waits for the owner's cabling check).
+Status: Misses 125 MHz out of context (75-81 MHz estimated: needs pipelining before it sits behind the RGMII MAC); closes at 50 MHz. Simulated against an RFC 791/768 model with scapy checking the bench's frames; output protocol checked by bounded model checking; built alone out of context on an Artix-7 with Vivado 2026.1; not yet run on a board (the Nexys A7 network design carries it behind eth_mac_rmii; built, not yet run: a cable check comes first, see designs/b63d_nexys_net/host/PLAN.md).
 
 ## Parameters
 
@@ -33,8 +33,13 @@ Clocks: `clk`. Reset: `rst`, active high, synchronous.
 
 ## Evidence
 
-cocotb against ip_lib/ipv4_udp_rx/model.py (RFC 791, 768, 1071), frames built in plain Python with scapy recomputing the bench's own UDP checksums: unicast, broadcast, multicast and foreign destinations; enabled, disabled, duplicated and unknown ports; right, wrong and absent UDP checksums; IP options, fragments, other protocols, bad header checksums, short and long UDP lengths, zero and non-zero Ethernet padding, bad and truncated frames, empty payloads; input gaps and back-pressure; every event counter compared; Icarus Verilog 12. Formal (bounded): the AXI-Stream rules of brief 59 on m_axis with tuser, tdest and the header fields, and a cover of a whole datagram Tests: `flow/net/tests/test_63d_udp_rx_rtl.py`, `flow/net/tests/test_63d_formal.py`.
+cocotb against ip_lib/ipv4_udp_rx/model.py (RFC 791, 768, 1071), frames built in plain Python with scapy recomputing the bench's own UDP checksums: unicast, broadcast, multicast and foreign destinations; enabled, disabled, duplicated and unknown ports; right, wrong and absent UDP checksums; IP options, fragments, other protocols, bad header checksums, short and long UDP lengths, zero and non-zero Ethernet padding, bad and truncated frames, empty payloads; input gaps and back-pressure; every event counter compared; Icarus Verilog 12. Formal (bounded): the AXI-Stream protocol rules (valid held until ready, data steady while waiting) on m_axis with tuser, tdest and the header fields, and a cover of a whole datagram; an independent adversarial bench adds last fragments, IHL 15, odd checksums and short UDP lengths. Tests: `flow/net/tests/test_63d_udp_rx_rtl.py`, `flow/net/tests/test_63d_adversarial_rtl.py`, `flow/net/tests/test_63d_formal.py`.
+
+Try it: `python3 -m pytest flow/net/tests/test_63d_udp_rx_rtl.py flow/net/tests/test_63d_adversarial_rtl.py flow/net/tests/test_63d_formal.py` (the formal jobs need SymbiYosys on PATH; they are skipped without it).
+
 Parameter points simulated: `N_PORTS=4, CHECK_UDP=1, ACCEPT_BCAST=1, ACCEPT_MCAST=1`; `N_PORTS=1, CHECK_UDP=0, ACCEPT_BCAST=0, ACCEPT_MCAST=0`; `N_PORTS=8, CHECK_UDP=1, ACCEPT_BCAST=0, ACCEPT_MCAST=1`.
+
+Terms (ARP, ICMP, IGMP, MDIO, RMII, RGMII, VLAN, pause, OOC, WNS, Fmax) are defined in [the library's terms](../README.md#terms).
 
 Seeded faults (`faults.yaml`, run by `flow/net/faults.py`):
 
@@ -45,6 +50,7 @@ Seeded faults (`faults.yaml`, run by `flow/net/faults.py`):
 | `udp_rx_padding_passed` | bytes after the datagram (Ethernet padding) are passed on as payload | caught |
 | `udp_rx_fragments_passed` | fragments are taken as whole datagrams | caught |
 | `udp_rx_options_not_skipped` | IP options are read as the UDP header | caught |
+| `udp_rx_last_fragment_passed` | a last fragment (MF 0, offset not 0) is taken as a whole datagram (found by the independent review) | caught |
 
 ## Cost (out of context)
 
@@ -54,6 +60,8 @@ Built alone (out of context) on an Artix-7, xc7a100tcsg324-1, for a 8.0 ns clock
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | 4 | 1 | 1 | 1 | 491 | 416 | 0 | 0 | 0 | -5.412 | 74.6 | 0.006 |
 | 8 | 1 | 1 | 1 | 527 | 418 | 0 | 0 | 0 | -4.336 | 81.1 | 0.006 |
+
+Defaults: N_PORTS 4, CHECK_UDP 1, ACCEPT_BCAST 1, ACCEPT_MCAST 1. WNS is the worst negative slack (the timing margin at the target clock; below zero the target is missed).
 
 Fmax is estimated from one routed run at the target clock (1000 / (period - WNS)); dynamic power is vectorless (default toggle rates). Regenerate with `python3 -m flow.ipchar ipv4_udp_rx` (Vivado, minutes per point).
 

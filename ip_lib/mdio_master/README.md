@@ -1,10 +1,10 @@
 # mdio_master 0.1.0
 
-IEEE 802.3 clause 22 management (MDC/MDIO) master: one read or write of a PHY register at a time, MDC = clk / (2 x DIV), the line released for the PHY in a read from the turnaround on.
+PHY management (MDIO, IEEE 802.3 clause 22): the two-wire bus (MDC clock, MDIO data) that reads and writes an Ethernet PHY chip's registers; one access at a time, MDC = clk / (2 x DIV), the line released for the PHY in a read from the turnaround on.
 
 Generated from `ip.yaml` by `flow/net/ipdoc.py`; do not edit by hand.
 
-Status: simulated against a clause 22 PHY model; frame timing proved by k-induction (SymbiYosys); built alone out of context on an Artix-7 with Vivado 2026.1; first written for designs/b58a_trigger (its copy is used there); not yet run on a board as a library entry.
+Status: Meets 125 MHz out of context (285-307 MHz estimated at a 250 MHz target); simulated against a clause 22 PHY model at DIV 2, 5 and 32; frame timing proved by k-induction at DIV 2 (SymbiYosys); built alone on an Artix-7 with Vivado 2026.1; first written for designs/b58a_trigger (its own copy is used there); not yet run on a board as a library entry.
 
 ## Parameters
 
@@ -28,8 +28,13 @@ Clocks: `clk` (any; DIV sets MDC (at 125 MHz, DIV 32 gives 1.95 MHz, under the 2
 
 ## Evidence
 
-cocotb against a clause 22 PHY written from IEEE 802.3 clause 22.2.4.5 (ip_lib/mdio_master/model.py) that samples on rising MDC and answers reads after a random clock-to-output delay; every bit driven, the releases, MDIO steady a clock either side of each rising MDC edge, the MDC period, the frame length and the values read; Icarus Verilog 12. Formal: the frame position, the MDC waveform, the releases and the setup and hold rule proved by k-induction at DIV 2, and a whole read covered Tests: `flow/net/tests/test_63d_mdio_rtl.py`, `flow/net/tests/test_63d_formal.py`.
+cocotb against a clause 22 PHY written from IEEE 802.3 clause 22.2.4.5 (ip_lib/mdio_master/model.py) that samples on rising MDC and answers reads after a random clock-to-output delay; every bit driven, the releases, MDIO steady a clock either side of each rising MDC edge, the MDC period, the frame length and the values read; Icarus Verilog 12. Formal: the frame position, the MDC waveform, the releases and the setup and hold rule proved by k-induction at DIV 2, and a whole read covered. Tests: `flow/net/tests/test_63d_mdio_rtl.py`, `flow/net/tests/test_63d_formal.py`.
+
+Try it: `python3 -m pytest flow/net/tests/test_63d_mdio_rtl.py flow/net/tests/test_63d_formal.py` (the formal jobs need SymbiYosys on PATH; they are skipped without it).
+
 Parameter points simulated: `DIV=32`; `DIV=2`; `DIV=5`.
+
+Terms (ARP, ICMP, IGMP, MDIO, RMII, RGMII, VLAN, pause, OOC, WNS, Fmax) are defined in [the library's terms](../README.md#terms).
 
 Seeded faults (`faults.yaml`, run by `flow/net/faults.py`):
 
@@ -48,6 +53,8 @@ Built alone (out of context) on an Artix-7, xc7a100tcsg324-1, for a 4.0 ns clock
 |---|---|---|---|---|---|---|---|---|
 | 2 | 101 | 167 | 0 | 0 | 0 | 0.487 | 284.7 | 0.003 |
 | 32 | 99 | 162 | 0 | 0 | 0 | 0.738 | 306.6 | 0.002 |
+
+Defaults: DIV 32. WNS is the worst negative slack (the timing margin at the target clock; below zero the target is missed).
 
 Fmax is estimated from one routed run at the target clock (1000 / (period - WNS)); dynamic power is vectorless (default toggle rates). Regenerate with `python3 -m flow.ipchar mdio_master` (Vivado, minutes per point).
 

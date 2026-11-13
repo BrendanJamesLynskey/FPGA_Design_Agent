@@ -37,3 +37,17 @@ faults:
     class: missing check
     why: repeated misses for one address send a request each time
     test: flow/net/tests/test_63d_arp_rtl.py -k cache4
+  - name: arp_learns_gratuitous_unknown
+    file: arp_responder.sv
+    old: "assign learn = fin && arp_ok && spa != 32'd0 && spa != own_ip && (for_me || known);"
+    new: "assign learn = fin && arp_ok && spa != 32'd0 && spa != own_ip && (for_me || known || tpa == spa);"
+    class: protocol
+    why: a gratuitous ARP from an unknown host is learnt (RFC 826 merges only known senders; found by the independent review)
+    test: flow/net/tests/test_63d_adversarial_rtl.py -k arp
+  - name: arp_learns_own_ip_claim
+    file: arp_responder.sv
+    old: "assign learn = fin && arp_ok && spa != 32'd0 && spa != own_ip && (for_me || known);"
+    new: "assign learn = fin && arp_ok && spa != 32'd0 && (for_me || known);"
+    class: protocol
+    why: another station claiming own_ip is cached (RFC 5227 address conflict; found by the independent review)
+    test: flow/net/tests/test_63d_adversarial_rtl.py -k arp

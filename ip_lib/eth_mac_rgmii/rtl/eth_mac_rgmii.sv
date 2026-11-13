@@ -206,20 +206,20 @@ module eth_mac_rgmii #(
     // pause: the receive timer (byte times), the pending request and the source of the current frame
     logic [21:0]   ptimer;
     logic          pend_p, src_p;
-    logic [15:0]   pq;
+    logic [15:0]   pq, pq_cur;            // the requested quanta; the quanta of the pause frame being sent
     logic          want_p, want_u, start;
     assign tx_paused = (PAUSE != 0) && ptimer != '0;
     assign want_p    = (PAUSE != 0) && pend_p;
     assign want_u    = s_axis_tvalid && !bad && !tx_paused;
     assign start     = want_p || want_u;
     always_ff @(posedge clk) begin
-        if (rst || PAUSE == 0) begin ptimer <= '0; pend_p <= 1'b0; src_p <= 1'b0; pq <= '0; end
+        if (rst || PAUSE == 0) begin ptimer <= '0; pend_p <= 1'b0; src_p <= 1'b0; pq <= '0; pq_cur <= '0; end
         else begin
             if (rx_end_valid && rx_end_good && c_pause) ptimer <= {c_quanta, 6'd0};        // quanta x 64 byte times
             else if (ce && ptimer != '0) ptimer <= ptimer - 22'd1;
             if (ce && ready && start) begin
                 src_p <= want_p;
-                if (want_p) pend_p <= 1'b0;
+                if (want_p) begin pend_p <= 1'b0; pq_cur <= pq; end    // a request during the frame waits for the next
             end
             if (pause_req) begin pend_p <= 1'b1; pq <= pause_quanta; end
         end
@@ -242,7 +242,7 @@ module eth_mac_rgmii #(
         if (rst) begin t_d <= '0; t_last <= 1'b0; bad <= 1'b0; end
         else begin
             if (ce && req_valid) begin
-                if (src_p) begin t_d <= pbyte(req_idx, mac_addr, pq); t_last <= (req_idx == LW'(59)); end
+                if (src_p) begin t_d <= pbyte(req_idx, mac_addr, pq_cur); t_last <= (req_idx == LW'(59)); end
                 else if (bad) begin t_d <= 8'h00; t_last <= 1'b1; end
                 else if (s_axis_tvalid) begin
                     t_d <= s_axis_tdata; t_last <= s_axis_tlast;
@@ -281,7 +281,7 @@ module eth_mac_rgmii #(
         eth_mac_stats #(.STAT_W(STAT_W), .LEN_W(LW)) u_stats (.clk, .rst, .clear(stat_clear),
             .rx_ev(rx_end_valid), .rx_len(rx_end_len), .rx_good(rx_end_good), .rx_fcs_err(rx_end_fcs_err),
             .rx_runt(rx_end_runt), .rx_giant(rx_end_giant), .rx_phy_err(rx_end_er), .rx_bcast(c_bcast),
-            .rx_mcast(c_mcast), .rx_pause(rx_end_pause), .rx_vlan(c_vlan), .rx_filtered(filtered),
+            .rx_mcast(c_mcast), .rx_pause(rx_end_pause), .rx_vlan(c_vlan), .rx_filtered(filtered && !consumed),
             .rx_dropped(rx_sf_overflow), .rx_fifo_ovf(rx_fifo_ovf),
             .tx_ev(last_pulse), .tx_len(t_len), .tx_good(!tx_last_poisoned), .tx_bcast(!src_p && t_ones && tn >= LW'(6)),
             .tx_mcast(src_p || t_g), .tx_pause(src_p), .tx_underrun(tx_underrun),

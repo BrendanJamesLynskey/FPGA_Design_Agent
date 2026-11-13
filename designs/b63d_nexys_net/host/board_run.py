@@ -1,21 +1,27 @@
 #!/usr/bin/env python3
-"""Board run of designs/b63d_nexys_net on the Nexys A7-100T (brief 63D). Two phases:
+"""Board run of designs/b63d_nexys_net on the Nexys A7-100T. Two phases:
 
-  loopback  no network cable: the PHY's near-end loopback (MDIO, BMCR bit 14) returns every frame the design sends.
-            The host injects an ARP request, an echo request and a UDP datagram from an invented PC address and reads
-            back the design's answers with the frame capture, each checked against the library models.
-  link      an isolated cable to a PC (never the home network): the PC pings the board, reads its ARP entry, asks the
-            UDP statistics service for the counters, and sends to a multicast group before and after the board joins it.
-            Refused unless --isolated-link-confirmed is given (the owner confirms the cabling first).
+  loopback  no network cable in the board's Ethernet jack (J4): the PHY's near-end loopback (set over MDIO, BMCR bit
+            14) is expected to return every frame the design sends. The host injects an ARP request, an echo request
+            and a UDP datagram from an invented PC address and reads back the design's answers with the frame capture,
+            each checked against the library models.
+  link      one cable from J4 straight to a PC interface that is on no other network. Before any traffic the script
+            checks the isolation itself (isolation_check) and refuses if the interface has a default route, carries the
+            default route, has any address but 192.168.63.1/24, or if anything but the board answers on the subnet.
+            Every socket is bound to that interface (SO_BINDTODEVICE when allowed, else its source address), and the
+            multicast socket sends through it with TTL 1. Then: ping, the board's neighbour entry, the UDP statistics
+            service, and a datagram to a multicast group before and after the board joins it.
 
-Operating conditions (XADC Tj, VCCINT, VCCAUX, VCCBRAM) are read at the start, between steps and at the end, and
-written with the results: python3 -m designs.b63d_nexys_net.host.board_run --port /dev/ttyUSB1 --phase loopback
---out results/b63d/board_loopback.json
+Operating conditions (XADC Tj, VCCINT, VCCAUX, VCCBRAM and the alarms the design latches between polls) are read at
+the start, between steps and at the end, and written with the results. Example:
+    python3 designs/b63d_nexys_net/host/board_run.py --port /dev/ttyUSB1 --phase loopback --out board_loopback.json
 """
 from __future__ import annotations
 
 import argparse
+import ipaddress
 import json
+import re
 import socket
 import struct
 import subprocess
@@ -26,6 +32,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
 from flow.net import inet  # noqa: E402
+from flow.program import ROC  # noqa: E402  (the recommended operating conditions the flow already checks)
 from hil.instruments.shell_instruments import xadc_temp_c, xadc_volts  # noqa: E402
 from ip_lib.arp_responder import model as arpm  # noqa: E402
 from ip_lib.eth_mac_rgmii import model as macm  # noqa: E402
@@ -33,18 +40,27 @@ from ip_lib.icmp_echo import model as icmpm  # noqa: E402
 
 W = 0x80
 DESIGN_ID = 0x4E363344
-BOARD_IP, BOARD_MAC = "192.168.63.2", "02:00:00:00:00:63"
+BOARD_IP, BOARD_MAC = "192.168.63.2", "02:00:00:00:00:63"      # locally administered example address
+PC_IP = "192.168.63.1"
+SUBNET = ipaddress.ip_network("192.168.63.0/24")
+GROUP = "239.63.0.1"
 PHY_ADDR = 1                                   # the board's RXER/PHYAD0 pull-up (boards/nexys_a7_100t/inventory.yaml)
-from flow.program import ROC  # noqa: E402  (the recommended operating conditions the flow already checks)
 LIMITS = {"tj_c": (-40.0, ROC["TEMPERATURE"][1]), "vccint_v": ROC["VCCINT"], "vccaux_v": ROC["VCCAUX"],
           "vccbram_v": ROC["VCCBRAM"]}
+ALARMS = ["tj", "vccint", "vccaux", "vccbram", "over_temperature"]
+SO_BINDTODEVICE = getattr(socket, "SO_BINDTODEVICE", 25)
 
 
-def conditions(sh) -> dict:
+# ------------------------------------------------------------------------------------------------ board access
+def conditions(sh, label: str) -> dict:
+    """One sample: the XADC codes and the alarms latched since the last sample (then cleared)."""
     c = [sh.read(W + 0x38 + i) & 0xFFF for i in range(4)]
-    d = {"t": time.time(), "tj_c": round(xadc_temp_c(c[0]), 2), "vccint_v": round(xadc_volts(c[1]), 4),
-         "vccaux_v": round(xadc_volts(c[2]), 4), "vccbram_v": round(xadc_volts(c[3]), 4)}
-    d["inside_roc"] = all(lo <= d[k] <= hi for k, (lo, hi) in LIMITS.items())
+    alm = sh.read(W + 0x3C) & 0x1F
+    sh.write(W + 0x3C, 0)
+    d = {"label": label, "t": time.time(), "tj_c": round(xadc_temp_c(c[0]), 2), "vccint_v": round(xadc_volts(c[1]), 4),
+         "vccaux_v": round(xadc_volts(c[2]), 4), "vccbram_v": round(xadc_volts(c[3]), 4),
+         "alarms": [a for i, a in enumerate(ALARMS) if alm >> i & 1]}
+    d["inside_roc"] = all(lo <= d[k] <= hi for k, (lo, hi) in LIMITS.items()) and not d["alarms"]
     return d
 
 
@@ -86,47 +102,118 @@ def stats(sh) -> dict:
     return {n: sh.read(W + 0x10 + i) for i, n in enumerate(macm.STAT_NAMES)}
 
 
+# ------------------------------------------------------------------------------------------------ loopback phase
 def loopback(sh, out: dict) -> bool:
     own_mac, own_ip = inet.mac_b(BOARD_MAC), inet.ip_b(BOARD_IP)
-    pc_mac, pc_ip = inet.mac_b("02:00:00:00:00:01"), inet.ip_b("192.168.63.1")
-    ok = True
+    pc_mac, pc_ip = inet.mac_b("02:00:00:00:00:01"), inet.ip_b(PC_IP)
     out["phy_id"] = [hex(mdio(sh, 2)), hex(mdio(sh, 3))]
     out["bmsr"] = hex(mdio(sh, 1))
     mdio(sh, 0, 0x6100)                         # loopback, 100 Mb/s, full duplex (BMCR, IEEE 802.3 clause 22)
     time.sleep(0.1)
     sh.write(W + 9, 1)                          # clear the counters
     checks = []
-    # ARP: the design sees its own injected request (looped) and answers; the answer loops back too
     req = inet.eth(arpm.BCAST, pc_mac, 0x0806, inet.arp(1, pc_mac, pc_ip, b"\x00" * 6, own_ip))
     got = capture(sh, 1, lambda: inject(sh, req))
     want = arpm.reply(own_mac, own_ip, {"sha": pc_mac, "spa": pc_ip}).ljust(60, b"\x00")
     checks.append({"step": "arp", "ok": got == want, "got": got.hex()})
-    # ping
+    out["conditions"].append(conditions(sh, "after arp"))
     ping = icmpm.request(pc_mac, own_mac, pc_ip, own_ip, 0x63D, 1, bytes(range(32)))
     got = capture(sh, 1, lambda: inject(sh, ping))
     want = icmpm.reply(ping, own_mac, own_ip, 64)[0].ljust(60, b"\x00")
     checks.append({"step": "ping", "ok": got == want, "got": got.hex()})
-    # the UDP statistics service (the PC's MAC is in the ARP cache from the request above)
+    out["conditions"].append(conditions(sh, "after ping"))
     u = inet.udp(pc_ip, own_ip, 40000, 5000, b"stats")
     dg = inet.eth(own_mac, pc_mac, 0x0800, inet.ipv4(pc_ip, own_ip, 17, u))
     got = capture(sh, 1, lambda: inject(sh, dg))
     good = len(got) >= 42 + 88 and got[:6] == pc_mac and got[42:46] == b"N63D" and inet.ok(got[14:34])
     checks.append({"step": "udp_service", "ok": good, "got": got.hex()})
+    out["conditions"].append(conditions(sh, "after udp service"))
     out["checks"] = checks
     out["stats"] = stats(sh)
     mdio(sh, 0, 0x3100)                         # loopback off, auto-negotiation on, restarted
-    ok = all(c["ok"] for c in checks)
-    return ok
+    return all(c["ok"] for c in checks)
+
+
+# ------------------------------------------------------------------------------------------------ link phase
+def _run(*cmd: str) -> str:
+    return subprocess.run(list(cmd), capture_output=True, text=True).stdout
+
+
+def isolation_check(iface: str, runner=_run) -> list[str]:
+    """Reasons the interface is not an isolated link to the board (empty: isolated). Run before any traffic, and
+    again after the first ping, when the neighbour table can show other hosts. `runner` runs a command and returns
+    its standard output (a stand-in in the tests)."""
+    why = []
+    addrs = re.findall(r"inet (\d+\.\d+\.\d+\.\d+)/(\d+)", runner("ip", "-4", "-o", "addr", "show", "dev", iface))
+    if not addrs:
+        why.append(f"{iface} has no IPv4 address")
+    for a, n in addrs:
+        if ipaddress.ip_interface(f"{a}/{n}").network != SUBNET or a != PC_IP:
+            why.append(f"{iface} has {a}/{n}; only {PC_IP}/24 is allowed")
+    defaults = runner("ip", "-4", "route", "show", "default")
+    if re.search(rf"\bdev {re.escape(iface)}\b", defaults):
+        why.append(f"{iface} carries a default route")
+    if re.search(rf"\bdev {re.escape(iface)}\b", runner("ip", "-4", "route", "show", "table", "all", "default")):
+        why.append(f"{iface} has a default route in some routing table")
+    for dst in (BOARD_IP, GROUP):
+        m = re.search(r"\bdev (\S+)", runner("ip", "-4", "route", "get", dst, "oif", iface))
+        if not m or m.group(1) != iface:
+            why.append(f"{dst} would not leave by {iface}")
+    m = re.search(r"\bdev (\S+)", runner("ip", "-4", "route", "get", BOARD_IP))
+    if not m or m.group(1) != iface:
+        why.append(f"the routing table sends {BOARD_IP} by {m.group(1) if m else 'nothing'}, not {iface}")
+    for line in runner("ip", "-4", "neigh", "show", "dev", iface).splitlines():
+        ip = line.split()[0] if line.split() else ""
+        if ip and ip != BOARD_IP and "FAILED" not in line and "INCOMPLETE" not in line:
+            why.append(f"another host answers on {iface}: {line.strip()}")
+    return why
+
+
+def ping_ok(text: str, count: int) -> bool:
+    """True only when every echo request was answered (a numeric parse: '100% packet loss' is a failure)."""
+    m = re.search(r"(\d+) packets transmitted, (\d+) (?:packets )?received", text)
+    loss = re.search(r"(\d+(?:\.\d+)?)% packet loss", text)
+    return bool(m and loss) and int(m.group(1)) == count and int(m.group(2)) == count and float(loss.group(1)) == 0.0
+
+
+def bound_socket(iface: str, multicast: bool = False) -> socket.socket:
+    """A UDP socket that can only use `iface`: SO_BINDTODEVICE when the kernel allows it, and in any case bound to
+    the PC's address on that interface (isolation_check has made sure no other interface has it); multicast leaves by
+    that interface with TTL 1 and no loopback."""
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        s.setsockopt(socket.SOL_SOCKET, SO_BINDTODEVICE, iface.encode() + b"\0")
+    except PermissionError:
+        pass
+    s.bind((PC_IP, 0))
+    if multicast:
+        s.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_IF, socket.inet_aton(PC_IP))
+        s.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 1)
+        s.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_LOOP, 0)
+    s.settimeout(1.0)
+    return s
 
 
 def link(sh, out: dict, iface: str) -> bool:
     """On an isolated link with the PC at 192.168.63.1/24 on `iface`."""
-    r = subprocess.run(["ping", "-c", "5", "-W", "1", "-I", iface, BOARD_IP], capture_output=True, text=True)
-    out["ping"] = r.stdout.strip().splitlines()[-2:] if r.stdout else r.stderr
-    neigh = subprocess.run(["ip", "neigh", "show", BOARD_IP, "dev", iface], capture_output=True, text=True).stdout
-    out["arp"] = neigh.strip()
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.settimeout(1.0)
+    why = isolation_check(iface)
+    if why:
+        out["refused"] = why
+        return False
+    broadcast = _run("ping", "-b", "-c", "2", "-W", "1", "-I", iface, str(SUBNET.broadcast_address))
+    if re.search(r"bytes from (?!" + re.escape(BOARD_IP) + r"\b)", broadcast):
+        out["refused"] = [f"another host answers a broadcast ping on {iface}"]
+        return False
+    r = _run("ping", "-c", "5", "-W", "1", "-I", iface, BOARD_IP)
+    out["ping"] = r.strip().splitlines()[-2:]
+    out["ping_ok"] = ping_ok(r, 5)
+    why = isolation_check(iface)                # the neighbour table after the first exchange
+    if why:
+        out["refused"] = why
+        return False
+    out["conditions"].append(conditions(sh, "after ping"))
+    out["arp"] = _run("ip", "neigh", "show", BOARD_IP, "dev", iface).strip()
+    s = bound_socket(iface)
     s.sendto(b"stats", (BOARD_IP, 5000))
     try:
         data, _ = s.recvfrom(2048)
@@ -134,15 +221,13 @@ def link(sh, out: dict, iface: str) -> bool:
                               "counters": dict(zip(macm.STAT_NAMES, struct.unpack(">21I", data[4:88])))}
     except socket.timeout:
         out["udp_service"] = None
-    # multicast: not answered before the board joins 239.63.0.1, answered after
-    m = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    m.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 1)
-    m.settimeout(1.0)
+    out["conditions"].append(conditions(sh, "after udp service"))
+    m = bound_socket(iface, multicast=True)
     res = {}
     for joined in (False, True):
         sh.write(W + 7, int(joined))
         time.sleep(0.5)
-        m.sendto(b"stats", ("239.63.0.1", 5000))
+        m.sendto(b"stats", (GROUP, 5000))
         try:
             m.recvfrom(2048)
             res[str(joined)] = True
@@ -150,32 +235,39 @@ def link(sh, out: dict, iface: str) -> bool:
             res[str(joined)] = False
     out["multicast_answered"] = res
     sh.write(W + 7, 0)
-    return ("0% packet loss" in " ".join(out["ping"] or [])) and BOARD_MAC in out["arp"].lower() and \
-        out["udp_service"] is not None and res == {"False": False, "True": True}
+    out["conditions"].append(conditions(sh, "after multicast"))
+    return out["ping_ok"] and BOARD_MAC in out["arp"].lower() and out["udp_service"] is not None and \
+        res == {"False": False, "True": True}
 
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--port", required=True)
+    ap.add_argument("--port", required=True, help="the test shell's UART device, e.g. /dev/ttyUSB1")
     ap.add_argument("--phase", choices=["loopback", "link"], required=True)
     ap.add_argument("--iface", default="", help="link phase: the PC's interface on the isolated link")
     ap.add_argument("--isolated-link-confirmed", action="store_true",
-                    help="the owner has confirmed the cable goes only to this PC's isolated interface")
-    ap.add_argument("--out", required=True)
+                    help="you confirm the cable goes only from J4 to this PC's isolated interface (the script also "
+                         "checks the interface's addresses and routes before sending anything)")
+    ap.add_argument("--out", required=True, help="JSON results file")
     a = ap.parse_args()
     if a.phase == "link" and not (a.isolated_link_confirmed and a.iface):
-        sys.exit("link phase: needs --iface and --isolated-link-confirmed (the owner checks the cabling first)")
+        sys.exit("link phase: needs --iface and --isolated-link-confirmed")
+    if a.phase == "link":
+        why = isolation_check(a.iface)
+        if why:
+            sys.exit("link phase refused: " + "; ".join(why))
     from shell.host.fpga_shell import FpgaShell
     sh = FpgaShell.open(a.port)
     assert sh.read(0) == DESIGN_ID, "not the b63d_nexys_net bitstream"
-    out = {"phase": a.phase, "conditions": [conditions(sh)]}
+    sh.write(W + 0x3C, 0)                       # clear any alarm latched before this run
+    out = {"phase": a.phase, "conditions": [conditions(sh, "start")]}
     ok = loopback(sh, out) if a.phase == "loopback" else link(sh, out, a.iface)
-    out["conditions"].append(conditions(sh))
+    out["conditions"].append(conditions(sh, "end"))
     out["inside_roc"] = all(c["inside_roc"] for c in out["conditions"])
     out["pass"] = bool(ok)
     Path(a.out).parent.mkdir(parents=True, exist_ok=True)
     Path(a.out).write_text(json.dumps(out, indent=1) + "\n")
-    print(json.dumps({k: out[k] for k in ("phase", "pass", "inside_roc")}))
+    print(json.dumps({k: out.get(k) for k in ("phase", "pass", "inside_roc", "refused")}))
     return 0 if ok else 1
 
 

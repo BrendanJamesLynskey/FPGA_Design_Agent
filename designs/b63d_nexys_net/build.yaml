@@ -17,3 +17,11 @@ sources:
 constraints:
   - designs/b63d_nexys_net/design.xdc
 generics: {}            # board values are the RTL defaults; BUILD_STAMP is added by the flow
+# The RMII interfaces (flow/io_check.py): both are timed against eth_refclk, the clock the FPGA forwards to the PHY on
+# ETH_REFCLK, with the RMII rev 1.2 values. Declaring them makes IO-CLOCK fail a delay written against any other clock
+# (the first build referenced the MMCM output and so missed the forwarded clock's delay) and IO-VALUE a wrong number.
+io_interfaces:
+  - {name: rmii_rx, kind: system_synchronous, direction: in, ports: [ETH_CRSDV, ETH_RXERR, "ETH_RXD[*]"],
+     clock: eth_refclk, clock_period_ns: 20.0, iob: true, data_sheet: {tco_min_ns: 2.0, tco_max_ns: 14.0}}
+  - {name: rmii_tx, kind: system_synchronous, direction: out, ports: [ETH_TXEN, "ETH_TXD[*]"],
+     clock: eth_refclk, clock_period_ns: 20.0, iob: true, data_sheet: {tsu_ns: 4.0, th_ns: 2.0}}

@@ -170,4 +170,13 @@ async def network(dut):
     await sh.write(W + 4, (1 << 21) | (0 << 16) | 0x3100)
     await ClockCycles(dut.ETH_REFCLK, 64 * 26 + 50)
     assert not (await sh.read(W + 4)) >> 31
+    # the XADC alarm latch: a short alarm between polls stays set until cleared
+    assert await sh.read(W + 0x3C) == 0
+    dut.u_xadc.alm_force.value = 1
+    await ClockCycles(dut.ETH_REFCLK, 3)
+    dut.u_xadc.alm_force.value = 0
+    await ClockCycles(dut.ETH_REFCLK, 10)
+    assert await sh.read(W + 0x3C) == 1
+    await sh.write(W + 0x3C, 0)
+    assert await sh.read(W + 0x3C) == 0
     dut._log.info(f"network: {len(phy.tx)} frames sent by the design, all checked; statistics {stats}")

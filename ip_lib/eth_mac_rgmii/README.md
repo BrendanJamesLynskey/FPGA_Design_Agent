@@ -4,7 +4,7 @@ Tri-mode (10/100/1000 Mb/s) Ethernet MAC for a PHY with an RGMII (reduced gigabi
 
 Generated from `ip.yaml` by `flow/net/ipdoc.py`; do not edit by hand.
 
-Status: simulated (0.1.0 and 0.2.0 features); formal checks of the frame FSMs (bounded) and the address filter; built alone out of context on an Artix-7 with Vivado 2026.1; 0.1.0 synthesised and routed inside the KR260 trading-path design; not yet run on a board (the filter and statistics blocks are in the Nexys A7 network design behind eth_mac_rmii, built, not yet run).
+Status: Meets 125 MHz out of context with the block RAM buffer (139-141 MHz estimated); the LUT RAM buffer meets it only just at 32768 bytes (WNS 0.04 ns; an earlier build of the same design missed by 7 ps). Simulated (0.1.0 and 0.2.0 features, with an independent adversarial pause bench); formal checks of the frame FSMs (bounded) and the address filter; built alone on an Artix-7 with Vivado 2026.1; 0.1.0 synthesised and routed inside the KR260 trading-path design; not yet run on a board (its filter and statistics blocks are in the Nexys A7 network design behind eth_mac_rmii, built, not yet run).
 
 ## Parameters
 
@@ -47,8 +47,13 @@ Clocks: `clk` (125 MHz at every speed), `clk90` (clk, 90 degrees later (forms TX
 
 ## Evidence
 
-cocotb against a Python RGMII PHY model written from RGMII v2.0 and IEEE 802.3 (zlib's CRC-32 for the FCS) and a model of the 0.2 features written from IEEE 802.3 and 802.1Q (model.py), Icarus Verilog 12; 0.1.0's tests at 1000, 100 and 10 Mb/s in both directions with every new feature off; the filter under three settings with frame-by-frame flags, the store-and-forward output with tags stripped, every statistics counter and a clear, pause honoured (hold time measured in byte times at 1000 and 100 Mb/s) and sent ahead of waiting data, and 9000-byte MTU jumbo frames Tests: `flow/net/tests/test_58_mac_rgmii_rtl.py`, `flow/net/tests/test_63d_formal.py`.
+cocotb against a Python RGMII PHY model written from RGMII v2.0 and IEEE 802.3 (zlib's CRC-32 for the FCS) and a model of the 0.2 features written from IEEE 802.3 and 802.1Q (model.py), Icarus Verilog 12; 0.1.0's tests at 1000, 100 and 10 Mb/s in both directions with every new feature off; the filter under three settings with frame-by-frame flags, the store-and-forward output with tags stripped, every statistics counter and a clear, pause honoured (hold time measured in byte times at 1000 and 100 Mb/s) and sent ahead of waiting data, and 9000-byte MTU jumbo frames; an independent adversarial bench adds a pause received mid-frame and a zero-quanta pause ending a long one, and a pause requested while a pause frame is on the wire. Tests: `flow/net/tests/test_58_mac_rgmii_rtl.py`, `flow/net/tests/test_63d_adversarial_rtl.py`, `flow/net/tests/test_63d_formal.py`.
+
+Try it: `python3 -m pytest flow/net/tests/test_58_mac_rgmii_rtl.py flow/net/tests/test_63d_adversarial_rtl.py flow/net/tests/test_63d_formal.py` (the formal jobs need SymbiYosys on PATH; they are skipped without it).
+
 Parameter points simulated: `CUT_THROUGH=1`; `CUT_THROUGH=0, SF_DEPTH=4096`; `CUT_THROUGH=0, SF_DEPTH=2048, MIN_FRAME=60, MAX_FRAME=1000, MIN_DATA=46, IFG_BYTES=16`; `CUT_THROUGH=0, FILTER=1, VLAN=2, PAUSE=1, STATS=1`; `CUT_THROUGH=0, SF_DEPTH=2048, MAX_FRAME=1000, RX_RAM=lutram, FILTER=1, MC_EXACT=1, VLAN=1, STATS=1, STAT_W=16`; `CUT_THROUGH=1, FILTER=1, MC_EXACT=0, VLAN=1, PAUSE=1, STATS=1`; `CUT_THROUGH=0, MAX_FRAME=9216, SF_DEPTH=32768, VLAN=2, STATS=1`.
+
+Terms (ARP, ICMP, IGMP, MDIO, RMII, RGMII, VLAN, pause, OOC, WNS, Fmax) are defined in [the library's terms](../README.md#terms).
 
 Seeded faults (`faults.yaml`, run by `flow/net/faults.py`):
 
@@ -74,6 +79,8 @@ Seeded faults (`faults.yaml`, run by `flow/net/faults.py`):
 | `stats_octets_without_fcs` | the good-octet counter leaves out the FCS | caught |
 | `stats_mcast_counts_broadcast` | broadcast frames are also counted as multicast | caught |
 | `jumbo_length_11_bits` | with jumbo frames the length counters stay 11 bits wide and saturate at 2047 | caught |
+| `pause_zero_quanta_ignored` | a pause of zero quanta does not end a pause in progress (found by the independent review) | caught |
+| `pause_quanta_not_latched` | a pause request arriving while a pause frame is sent changes that frame's quanta bytes mid-frame | caught |
 
 ## Variants
 
@@ -81,15 +88,15 @@ Selected by `RX_RAM`; every variant has the same ports, the same bit-exact resul
 
 | Variant | What | Latency | II | Use when |
 |---|---|---|---|---|
-| `bram` | the store-and-forward buffer in block RAM | `4` | `1` | the default; measured: 1 block RAM tile at SF_DEPTH 4096, 8 at 32768, about 138-144 MHz |
-| `lutram` | the store-and-forward buffer in LUT RAM | `4` | `1` | block RAM spoken for and small buffers; measured: 796 LUTs as RAM at 4096 (about 136 MHz), 6174 at 32768, where it misses 125 MHz by 7 ps |
+| `bram` | the store-and-forward buffer in block RAM | `4` | `1` | the default; measured: 1 block RAM tile at SF_DEPTH 4096, 8 at 32768, about 139-141 MHz |
+| `lutram` | the store-and-forward buffer in LUT RAM | `4` | `1` | block RAM spoken for and small buffers; measured: 796 LUTs as RAM at 4096 (about 133 MHz), 6174 at 32768, where it meets 125 MHz only just (WNS 0.04 ns) |
 
 Measured at CUT_THROUGH 0, MIN_FRAME 64, MAX_FRAME 1522, MIN_DATA 60, IFG_BYTES 12, SF_DEPTH 4096, FILTER 1, MC_EXACT 4, VLAN 2, PAUSE 1, STATS 1, STAT_W 32, IO_FAMILY 7series: built alone (out of context) on an Artix-7, xc7a100tcsg324-1, for a 8.0 ns clock (125 MHz), Vivado 2026.1 (build 6511674). Not run on a board.
 
 | Variant | DSP | Block RAM tiles | LUT | Fmax estimate (MHz) | II | Latency |
 |---|---|---|---|---|---|---|
-| `bram` | 0 | 1 | 1013 | 144 | 1 | 4 |
-| `lutram` | 0 | 0 | 1990 | 136 | 1 | 4 |
+| `bram` | 0 | 1 | 1015 | 139 | 1 | 4 |
+| `lutram` | 0 | 0 | 1989 | 133 | 1 | 4 |
 
 Fmax is estimated from one routed run at the target clock (1000 / (period - WNS)); it is not a closure at that frequency. WNS (worst slack against the clock) below zero means the target was missed.
 
@@ -97,10 +104,10 @@ Fmax is estimated from one routed run at the target clock (1000 / (period - WNS)
 
 | Variant | CUT_THROUGH | MIN_FRAME | MAX_FRAME | MIN_DATA | IFG_BYTES | SF_DEPTH | FILTER | MC_EXACT | VLAN | PAUSE | STATS | STAT_W | IO_FAMILY | LUT | FF | LUT RAM | Block RAM tiles | DSP | WNS (ns) | Fmax estimate (MHz) | Dynamic power (W) | Latency | II |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| `bram` | 0 | 64 | 1522 | 60 | 12 | 4096 | 1 | 4 | 2 | 1 | 1 | 32 | 7series | 1013 | 1564 | 28 | 1 | 0 | 1.046 | 143.8 | 0.021 | 4 | 1 |
-| `bram` | 0 | 64 | 9216 | 60 | 12 | 32768 | 1 | 4 | 2 | 1 | 1 | 32 | 7series | 1028 | 1597 | 30 | 8 | 0 | 0.750 | 137.9 | 0.030 | 4 | 1 |
-| `lutram` | 0 | 64 | 1522 | 60 | 12 | 4096 | 1 | 4 | 2 | 1 | 1 | 32 | 7series | 1990 | 2092 | 796 | 0 | 0 | 0.669 | 136.4 | 0.029 | 4 | 1 |
-| `lutram` | 0 | 64 | 9216 | 60 | 12 | 32768 | 1 | 4 | 2 | 1 | 1 | 32 | 7series | 9026 | 5955 | 6174 | 0 | 0 | -0.007 | 124.9 | 0.092 | 4 | 1 |
+| `bram` | 0 | 64 | 1522 | 60 | 12 | 4096 | 1 | 4 | 2 | 1 | 1 | 32 | 7series | 1015 | 1580 | 28 | 1 | 0 | 0.802 | 138.9 | 0.021 | 4 | 1 |
+| `bram` | 0 | 64 | 9216 | 60 | 12 | 32768 | 1 | 4 | 2 | 1 | 1 | 32 | 7series | 1028 | 1613 | 30 | 8 | 0 | 0.901 | 140.9 | 0.030 | 4 | 1 |
+| `lutram` | 0 | 64 | 1522 | 60 | 12 | 4096 | 1 | 4 | 2 | 1 | 1 | 32 | 7series | 1989 | 2108 | 796 | 0 | 0 | 0.473 | 132.9 | 0.029 | 4 | 1 |
+| `lutram` | 0 | 64 | 9216 | 60 | 12 | 32768 | 1 | 4 | 2 | 1 | 1 | 32 | 7series | 9027 | 5993 | 6174 | 0 | 0 | 0.040 | 125.6 | 0.092 | 4 | 1 |
 
 Dynamic power is vectorless (default toggle rates, no simulation activity): use it to rank variants, not as a measurement. Regenerate with `python3 -m flow.ipchar eth_mac_rgmii` (Vivado, minutes per point).
 
@@ -112,7 +119,7 @@ Dynamic power is vectorless (default toggle rates, no simulation activity): use 
 - Clock crossings: one crossing, RX_CLK to clk: an xpm_fifo_async (16 entries, 2 synchroniser stages), the receive reset by xpm_cdc_sync_rst and the speed setting by xpm_cdc_array_single; TXC's waveform moves from clk to clk90 through one register.
 - Part, board or pin: IDDRE1/ODDRE1 (IO_FAMILY ultrascale) or IDDR/ODDR (IO_FAMILY 7series) under `ifdef SYNTHESIS`; the input delay (IDELAYE3) is UltraScale only. Pins, IO standards, RGMII delay mode and the RX clock buffer are the board's (the project knowledge base, board/kr260/ethernet).
 - Depends on: eth_mac_rmii.
-- Limits: formal checks of the frame state machines are bounded (20 and 40 clocks), not proofs, and the address filter is checked by bounded model checking against the rule restated in the harness; full duplex only; no half duplex, no priority flow control (802.1Qbb), no IEEE 1588 timestamps beyond the SOF pulses; VLAN stripping removes one tag only and only from the store-and-forward output; the MDIO master is a separate entry (mdio_master); 10/100 nibble alignment needs the SFD; RGMII input timing is closed only for the PHY's internal RX delay mode (board XDC); not yet run on a board.
+- Limits: formal checks of the frame state machines are bounded (20 and 40 clocks), not proofs, and the address filter is checked by bounded model checking against the rule restated in the harness; full duplex only; no half duplex, no priority flow control (802.1Qbb), no IEEE 1588 timestamps beyond the SOF pulses; VLAN stripping removes one tag only and only from the store-and-forward output; the MDIO master is a separate entry (mdio_master); 10/100 nibble alignment needs the SFD; RGMII input timing is closed only for the PHY's internal RX delay mode (board XDC); not yet run on a board; the multicast hash bin is the 6 least significant bits of the reflected CRC-32 register over the destination (ether_crc_le(6, addr) & 0x3f in Linux), not the bit-reversed index some MACs use, so a driver filling mc_hash must use the same; VLAN = 2 strips only the outer tag of a double-tagged frame (the inner tag stays in the frame; m_axis_tci is the outer TCI); a 64-byte tagged frame leaves the store-and-forward output as 56 bytes, under the 60-byte Ethernet minimum (the consumer pads if it forwards it); with FILTER and PAUSE, consumed pause frames are not counted as filtered.
 
 ## Cost table
 

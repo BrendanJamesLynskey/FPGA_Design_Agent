@@ -8,7 +8,8 @@
 //     and own_ip as the sender, the requester as the target.
 //   - The sender's mapping is learnt when the packet is addressed to own_ip (request or reply), and updated when the
 //     sender is already in the cache (RFC 826's merge step). A sender address of 0.0.0.0 (an address probe) is never
-//     learnt.
+//     learnt, and neither is own_ip: a packet from another station that claims own_ip raises ev_conflict instead
+//     (an address conflict, RFC 5227); a request for own_ip is still answered, which defends the address.
 //   - One reply waits while another is being sent; a request that finds both busy is not answered (ev_drop).
 // Cache: CACHE_N entries of {IPv4, MAC}, fully associative. A new entry takes a free slot, else the slots in turn
 // (round robin). flush empties it. Entries do not age: flush them from outside when a timeout is needed.
@@ -50,7 +51,8 @@ module arp_responder #(
     output logic        ev_tx_reply,
     output logic        ev_tx_request,
     output logic        ev_learn,
-    output logic        ev_drop
+    output logic        ev_drop,
+    output logic        ev_conflict     // another station claims own_ip (RFC 5227 address conflict); never learnt
 );
     initial begin
         if (CACHE_N < 1 || CACHE_N > 16) $error("arp_responder: CACHE_N must be in 1..16 (got %0d)", CACHE_N);
@@ -114,7 +116,8 @@ module arp_responder #(
         end
     end
     logic learn;
-    assign learn = fin && arp_ok && spa != 32'd0 && (for_me || known);
+    assign learn = fin && arp_ok && spa != 32'd0 && spa != own_ip && (for_me || known);
+    always_ff @(posedge clk) ev_conflict <= !rst && fin && arp_ok && spa == own_ip && sha != own_mac;
     always_ff @(posedge clk) begin
         ev_learn <= 1'b0;
         if (rst || flush) begin

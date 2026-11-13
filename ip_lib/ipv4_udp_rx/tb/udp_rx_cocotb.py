@@ -36,7 +36,7 @@ def make(rng: random.Random, ports):
     dport = rng.choice([p for p, _ in ports] * 3 + [rng.randrange(65536)])
     n = rng.choice([0, 1, 2, 5, 17, 18, 64, 300, rng.randrange(1473)])
     pay = bytes(rng.randrange(256) for _ in range(n))
-    kind = rng.choice(["ok"] * 10 + ["nocs", "badcs", "opts", "frag", "proto", "ipcs", "short_ulen", "bad", "trunc",
+    kind = rng.choice(["ok"] * 10 + ["nocs", "badcs", "opts", "frag", "lastfrag", "proto", "ipcs", "short_ulen", "bad", "trunc",
                                      "big_ulen", "tiny_ulen"])
     u = bytearray(inet.udp(src, dst, rng.randrange(1, 65536), dport, pay, checksum=kind != "nocs"))
     if kind == "badcs":
@@ -51,7 +51,7 @@ def make(rng: random.Random, ports):
     if kind == "tiny_ulen":
         u[4:6] = struct.pack(">H", rng.randrange(8))
     ip = inet.ipv4(src, dst, 6 if kind == "proto" else 17, bytes(u) + extra, ident=rng.randrange(65536),
-                   flags_frag=0x2000 if kind == "frag" else 0x4000 * rng.randrange(2),
+                   flags_frag=0x2000 if kind == "frag" else 0x0010 if kind == "lastfrag" else 0x4000 * rng.randrange(2),
                    options=b"\x01\x01\x01\x00\x01\x01\x01\x00" if kind == "opts" else b"")
     ip = bytearray(ip)
     if kind == "ipcs":

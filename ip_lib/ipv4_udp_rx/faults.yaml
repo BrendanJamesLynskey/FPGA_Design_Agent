@@ -37,3 +37,10 @@ faults:
     class: protocol
     why: IP options are read as the UDP header
     test: flow/net/tests/test_63d_udp_rx_rtl.py -k p4
+  - name: udp_rx_last_fragment_passed
+    file: ipv4_udp_rx.sv
+    old: "assign frag   = ff[13:0] != 14'd0;"
+    new: "assign frag   = ff[13];"
+    class: missing check
+    why: a last fragment (MF 0, offset not 0) is taken as a whole datagram (found by the independent review)
+    test: flow/net/tests/test_63d_udp_rx_rtl.py flow/net/tests/test_63d_adversarial_rtl.py -k p4 or udprx

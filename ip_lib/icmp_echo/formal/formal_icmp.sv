@@ -1,4 +1,4 @@
-// formal_icmp.sv: icmp_echo (BUF_BYTES 128) under any input bytes and back-pressure: the AXI-Stream rules of brief 59
+// formal_icmp.sv: icmp_echo (BUF_BYTES 128) under any input bytes and back-pressure: the AXI-Stream rules of the AXI checker
 // (axis_rules) on m_axis; a reply never starts without a request and the busy flag covers it. Bounded (bmc), plus a
 // cover of a whole reply leaving (a minimal echo request accepted: checksums, addresses and lengths right).
 module formal_icmp (

@@ -1,10 +1,10 @@
 # igmp_join 0.1.0
 
-IGMPv2 host membership (RFC 2236) for up to 8 configured multicast groups: unsolicited reports on joining, reports in answer to general, group-specific and version 3 queries after a random delay, suppression by other hosts' reports, leaves; version 3 reports are later work.
+Multicast group membership for a host (IGMPv2, RFC 2236) for up to 8 configured groups: unsolicited reports on joining, reports in answer to general, group-specific and version 3 queries after a random delay, suppression by other hosts' reports, leaves. IGMPv2 only: IGMPv3 reports are not implemented (a version 3 query is answered as version 2).
 
 Generated from `ip.yaml` by `flow/net/ipdoc.py`; do not edit by hand.
 
-Status: simulated against RFC 2236 (directed sequence, every frame compared with the model, scapy decoding); transmit framing checked by bounded model checking; built alone out of context on an Artix-7 with Vivado 2026.1; not yet run on a board (the Nexys A7 network design carries it behind eth_mac_rmii; built, the board run waits for the owner's cabling check).
+Status: Misses 125 MHz out of context (71-80 MHz estimated: needs pipelining before it sits behind the RGMII MAC); closes at 50 MHz. Simulated against RFC 2236 (directed sequence, every frame compared with the model, scapy decoding); transmit framing checked by bounded model checking; built alone out of context on an Artix-7 with Vivado 2026.1; not yet run on a board (the Nexys A7 network design carries it behind eth_mac_rmii; built, not yet run: a cable check comes first, see designs/b63d_nexys_net/host/PLAN.md).
 
 ## Parameters
 
@@ -32,8 +32,13 @@ Clocks: `clk`. Reset: `rst`, active high, synchronous.
 
 ## Evidence
 
-cocotb, a directed sequence written from RFC 2236 with short ticks: joins (a report at once and one repeat), general, group-specific and version 3 queries answered within the Max Response Time, the timer-restart rule, a query with a bad checksum ignored, suppression by another host's report, leaves only after being the last reporter; every frame compared byte for byte with ip_lib/igmp_join/model.py and decoded by scapy; Icarus Verilog 12. Formal (bounded): every frame 46 bytes and the AXI-Stream rules of brief 59 on m_axis Tests: `flow/net/tests/test_63d_igmp_rtl.py`, `flow/net/tests/test_63d_formal.py`.
+cocotb, a directed sequence written from RFC 2236 with short ticks: joins (a report at once and one repeat), general, group-specific and version 3 queries answered within the Max Response Time, the timer-restart rule, a query with a bad checksum ignored, suppression by another host's report, leaves only after being the last reporter; every frame compared byte for byte with ip_lib/igmp_join/model.py and decoded by scapy; Icarus Verilog 12. Formal (bounded): every frame 46 bytes and the AXI-Stream protocol rules (valid held until ready, data steady while waiting) on m_axis; an independent adversarial bench adds report timing in ticks, version 1 queries and scapy-built frames. Tests: `flow/net/tests/test_63d_igmp_rtl.py`, `flow/net/tests/test_63d_adversarial_rtl.py`, `flow/net/tests/test_63d_formal.py`.
+
+Try it: `python3 -m pytest flow/net/tests/test_63d_igmp_rtl.py flow/net/tests/test_63d_adversarial_rtl.py flow/net/tests/test_63d_formal.py` (the formal jobs need SymbiYosys on PATH; they are skipped without it).
+
 Parameter points simulated: `N_GROUPS=4, TICK_CLKS=40, UNSOL_TICKS=10`; `N_GROUPS=1, TICK_CLKS=25, UNSOL_TICKS=1`; `N_GROUPS=8, TICK_CLKS=60, UNSOL_TICKS=20`.
+
+Terms (ARP, ICMP, IGMP, MDIO, RMII, RGMII, VLAN, pause, OOC, WNS, Fmax) are defined in [the library's terms](../README.md#terms).
 
 Seeded faults (`faults.yaml`, run by `flow/net/faults.py`):
 
@@ -44,6 +49,7 @@ Seeded faults (`faults.yaml`, run by `flow/net/faults.py`):
 | `igmp_leave_always` | a leave is sent even when another host sent the last report | caught |
 | `igmp_timer_never_restarted` | a query with a shorter Max Response Time does not shorten a running timer | caught |
 | `igmp_ttl_two` | reports leave with TTL 2 instead of 1 | caught |
+| `igmp_timer_always_restarted` | a query with a longer Max Response Time restarts a running timer (found by the independent review) | caught |
 
 ## Cost (out of context)
 
@@ -53,6 +59,8 @@ Built alone (out of context) on an Artix-7, xc7a100tcsg324-1, for a 8.0 ns clock
 |---|---|---|---|---|---|---|---|---|---|---|
 | 4 | 12500000 | 100 | 1075 | 430 | 0 | 0 | 0 | -4.529 | 79.8 | 0.020 |
 | 8 | 12500000 | 100 | 1628 | 491 | 0 | 0 | 0 | -6.033 | 71.3 | 0.033 |
+
+Defaults: N_GROUPS 4, TICK_CLKS 12500000, UNSOL_TICKS 100. WNS is the worst negative slack (the timing margin at the target clock; below zero the target is missed).
 
 Fmax is estimated from one routed run at the target clock (1000 / (period - WNS)); dynamic power is vectorless (default toggle rates). Regenerate with `python3 -m flow.ipchar igmp_join` (Vivado, minutes per point).
 

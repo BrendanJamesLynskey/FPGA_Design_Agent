@@ -549,6 +549,24 @@ async def pause(dut):
         assert phy.tx_frames[1][8:-4] == user + bytes(max(0, min_data - len(user)))
         M.count_tx(st, M.pause_frame(OWN, 0x1234), True, min_data, pause=True)
         M.count_tx(st, user, True, min_data)
+        # 1b. a second request while a pause frame is on the wire: that frame keeps its quanta, the next carries the new
+        n1 = len(phy.tx_frames)
+        dut.pause_quanta.value = 0x0101
+        dut.pause_req.value = 1
+        await RisingEdge(dut.clk)
+        dut.pause_req.value = 0
+        for _ in range(16 * bt):                          # into the first pause frame, before its quanta bytes
+            await RisingEdge(dut.clk)
+        dut.pause_quanta.value = 0x0202
+        dut.pause_req.value = 1
+        await RisingEdge(dut.clk)
+        dut.pause_req.value = 0
+        for _ in range(250 * bt):
+            await RisingEdge(dut.clk)
+        assert [f[8:-4] for f in phy.tx_frames[n1:]] == [M.pause_frame(OWN, 0x0101), M.pause_frame(OWN, 0x0202)], \
+            [f[8:28].hex() for f in phy.tx_frames[n1:]]
+        M.count_tx(st, M.pause_frame(OWN, 0x0101), True, min_data, pause=True)
+        M.count_tx(st, M.pause_frame(OWN, 0x0202), True, min_data, pause=True)
         # 2. a received pause holds the next frame back for quanta x 64 byte times
         for q in (3, 0):
             pf = M.pause_frame(M.PAUSE_DA, q)[:6] + bytes.fromhex("021111111111") + M.pause_frame(OWN, q)[12:]

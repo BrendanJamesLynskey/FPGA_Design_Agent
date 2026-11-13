@@ -30,6 +30,9 @@ Clocks: `clk`. Reset: `rst`, active high, synchronous.
 ## Evidence
 
 Bit-exact against the Python models in `hil/instruments/models.py` (plain Python written from the definitions, not from the RTL); cocotb with Icarus Verilog 12. Tests: `hil/tests/test_30_ip_rtl.py`, `designs/b30_hil_audio/tests/test_hil_audio_rtl.py`.
+
+Try it: `python3 -m pytest hil/tests/test_30_ip_rtl.py designs/b30_hil_audio/tests/test_hil_audio_rtl.py`.
+
 Parameter points simulated: `GATE_CLKS=2000, CNT_W=16`; `GATE_CLKS=777, CNT_W=12`.
 
 Seeded faults (`faults.yaml`, run by `hil/ip_faults.py`):

@@ -1,15 +1,26 @@
-# b63d_nexys_net: the brief 63D network blocks on the Nexys A7-100T
+# b63d_nexys_net: a small network stack on the Nexys A7-100T
 
-The library's network blocks behind the board's RMII PHY (LAN8720A) and the 10/100 MAC `eth_mac_rmii`:
-`arp_responder`, `icmp_echo`, `ipv4_udp_rx`, `ipv4_udp_tx`, `igmp_join`, the address filter (`eth_rx_classify`) and the
-statistics counters (`eth_mac_stats`) of `eth_mac_rgmii` 0.2, and `mdio_master`, with a UDP statistics service on
-port 5000, a host frame injector and a frame capture for checking the stack in PHY loopback without a cable. The
-register map is in the header of [rtl/b63d_nexys_net_top.sv](rtl/b63d_nexys_net_top.sv).
+An FPGA design that answers ping and ARP, receives and sends UDP, joins an IGMP multicast group and counts frames, all
+on the board's 10/100 Ethernet PHY (a LAN8720A on an RMII interface). Simulated and built with Vivado 2026.1;
+**not yet run on a board**.
 
-- Simulation: [tests/test_b63d_nexys_net_rtl.py](tests/test_b63d_nexys_net_rtl.py) (cocotb, Icarus Verilog 12): a model
-  RMII PHY sends an ARP request, an echo request, a frame for another station, a UDP datagram and a frame to capture;
-  the shell joins an IGMP group and sends an injected frame; every frame the design sends is compared with the library
-  models, and the counters are read back.
-- Build: Vivado 2026.1, `flow/run_vivado.sh designs/b63d_nexys_net base`; results in [results/b63d](../../results/b63d/README.md).
-- Board: not yet run. The plan, including the cabling the owner must confirm before the link phase, is in
-  [host/PLAN.md](host/PLAN.md); the host script is [host/board_run.py](host/board_run.py).
+What is in it (the register map is in the header of [rtl/b63d_nexys_net_top.sv](rtl/b63d_nexys_net_top.sv)):
+
+- the 10/100 MAC `eth_mac_rmii`, and the address filter and statistics counters of `eth_mac_rgmii`;
+- `arp_responder` (address resolution), `icmp_echo` (ping), `ipv4_udp_rx` and `ipv4_udp_tx` (UDP), `igmp_join`
+  (multicast membership) and `mdio_master` (PHY registers), all from [ip_lib](../../ip_lib/README.md);
+- a UDP service on port 5000 that answers any datagram with "N63D" and the 21 counters;
+- a frame injector and a frame capture, so the host can check the stack with the PHY looping frames back, no cable;
+- the XADC's temperature and supply readings, with alarms latched between the host's polls.
+
+Try it:
+
+```
+python3 -m pytest designs/b63d_nexys_net/tests            # simulation through the test shell, I/O constraint checks, host safety checks
+flow/run_vivado.sh designs/b63d_nexys_net base            # build (Vivado 2026.1)
+```
+
+The build ([results/b63d](../../results/b63d/README.md)) passes every flow gate at 50 MHz, with the RMII receive and
+transmit constraints referenced to the clock the FPGA forwards to the PHY. On the board: see [host/PLAN.md](host/PLAN.md),
+which includes the isolated-cable check that must be confirmed first; the host script is
+[host/board_run.py](host/board_run.py).

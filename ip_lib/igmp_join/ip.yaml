@@ -1,12 +1,13 @@
 # ip.yaml for igmp_join: the declared parameter space and contract (the library's reuse rules; brief 63D).
 name: igmp_join
 version: 0.1.0
-status: simulated against RFC 2236 (directed sequence, every frame compared with the model, scapy decoding); transmit framing
-  checked by bounded model checking; built alone out of context on an Artix-7 with Vivado 2026.1; not yet run on a board (the
-  Nexys A7 network design carries it behind eth_mac_rmii; built, the board run waits for the owner's cabling check)
-summary: 'IGMPv2 host membership (RFC 2236) for up to 8 configured multicast groups: unsolicited reports on joining, reports
-  in answer to general, group-specific and version 3 queries after a random delay, suppression by other hosts'' reports, leaves;
-  version 3 reports are later work.'
+status: 'Misses 125 MHz out of context (71-80 MHz estimated: needs pipelining before it sits behind the RGMII MAC); closes
+  at 50 MHz. Simulated against RFC 2236 (directed sequence, every frame compared with the model, scapy decoding); transmit
+  framing checked by bounded model checking; built alone out of context on an Artix-7 with Vivado 2026.1; not yet run on a
+  board (the Nexys A7 network design carries it behind eth_mac_rmii; built, not yet run: a cable check comes first, see designs/b63d_nexys_net/host/PLAN.md)'
+summary: 'Multicast group membership for a host (IGMPv2, RFC 2236) for up to 8 configured groups: unsolicited reports on joining,
+  reports in answer to general, group-specific and version 3 queries after a random delay, suppression by other hosts'' reports,
+  leaves. IGMPv2 only: IGMPv3 reports are not implemented (a version 3 query is answered as version 2).'
 top: igmp_join
 rtl:
 - rtl/igmp_join.sv
@@ -99,9 +100,11 @@ evidence:
     group-specific and version 3 queries answered within the Max Response Time, the timer-restart rule, a query with a bad
     checksum ignored, suppression by another host''s report, leaves only after being the last reporter; every frame compared
     byte for byte with ip_lib/igmp_join/model.py and decoded by scapy; Icarus Verilog 12. Formal (bounded): every frame 46
-    bytes and the AXI-Stream rules of brief 59 on m_axis'
+    bytes and the AXI-Stream protocol rules (valid held until ready, data steady while waiting) on m_axis; an independent
+    adversarial bench adds report timing in ticks, version 1 queries and scapy-built frames'
   tests:
   - flow/net/tests/test_63d_igmp_rtl.py
+  - flow/net/tests/test_63d_adversarial_rtl.py
   - flow/net/tests/test_63d_formal.py
   faults: ip_lib/igmp_join/faults.yaml
   results: results/b63d/faults.json, results/b63d/formal.json, ip_lib/igmp_join/char/xc7a100tcsg324-1.json

@@ -1,10 +1,10 @@
 # icmp_echo 0.1.0
 
-Answers ICMP echo requests (ping) to one IPv4 address: stores the frame, checks both checksums, and sends the echo reply with addresses swapped, a fresh TTL and incrementally updated checksums (RFC 792, RFC 1624).
+Answers ping (ICMP echo, RFC 792) for one IPv4 address: stores the frame, checks both checksums, and sends the echo reply with addresses swapped, a fresh TTL and incrementally updated checksums (RFC 1624).
 
 Generated from `ip.yaml` by `flow/net/ipdoc.py`; do not edit by hand.
 
-Status: simulated against a model that computes the reply's checksums from scratch, scapy as a second decoder; reply protocol checked by bounded model checking; built alone out of context on an Artix-7 with Vivado 2026.1; not yet run on a board (the Nexys A7 network design carries it behind eth_mac_rmii; built, the board run waits for the owner's cabling check).
+Status: Misses 125 MHz out of context (89-116 MHz estimated); closes at 50 MHz. Simulated against a model that computes the reply's checksums from scratch, scapy as a second decoder; reply protocol checked by bounded model checking; built alone out of context on an Artix-7 with Vivado 2026.1; not yet run on a board (the Nexys A7 network design carries it behind eth_mac_rmii; built, not yet run: a cable check comes first, see designs/b63d_nexys_net/host/PLAN.md).
 
 ## Parameters
 
@@ -32,8 +32,13 @@ Clocks: `clk`. Reset: `rst`, active high, synchronous.
 
 ## Evidence
 
-cocotb against ip_lib/icmp_echo/model.py (RFC 792 and 791; the model recomputes both checksums from scratch while the RTL updates them incrementally, RFC 1624) with scapy re-deriving the checksums of every reply: random request lengths with zero and non-zero Ethernet padding, other addresses, bad checksums, fragments, options, other types and codes, bad and truncated frames, frames too long for the buffer, then a request arriving while a reply is held; Icarus Verilog 12. Formal (bounded): the AXI-Stream rules of brief 59 on m_axis, no reply without a request, and a cover of a whole reply Tests: `flow/net/tests/test_63d_icmp_rtl.py`, `flow/net/tests/test_63d_formal.py`.
+cocotb against ip_lib/icmp_echo/model.py (RFC 792 and 791; the model recomputes both checksums from scratch while the RTL updates them incrementally, RFC 1624) with scapy re-deriving the checksums of every reply: random request lengths with zero and non-zero Ethernet padding, other addresses, bad checksums, fragments, options, other types and codes, bad and truncated frames, frames too long for the buffer, then a request arriving while a reply is held; Icarus Verilog 12. Formal (bounded): the AXI-Stream protocol rules (valid held until ready, data steady while waiting) on m_axis, no reply without a request, and a cover of a whole reply; an independent adversarial bench adds odd lengths, last and first fragments, DF and a frame arriving on the clock after a request. Tests: `flow/net/tests/test_63d_icmp_rtl.py`, `flow/net/tests/test_63d_adversarial_rtl.py`, `flow/net/tests/test_63d_formal.py`.
+
+Try it: `python3 -m pytest flow/net/tests/test_63d_icmp_rtl.py flow/net/tests/test_63d_adversarial_rtl.py flow/net/tests/test_63d_formal.py` (the formal jobs need SymbiYosys on PATH; they are skipped without it).
+
 Parameter points simulated: `BUF_BYTES=2048, TTL=64, RAM=bram`; `BUF_BYTES=128, TTL=255, RAM=lutram`; `BUF_BYTES=16384, TTL=128, RAM=bram`.
+
+Terms (ARP, ICMP, IGMP, MDIO, RMII, RGMII, VLAN, pause, OOC, WNS, Fmax) are defined in [the library's terms](../README.md#terms).
 
 Seeded faults (`faults.yaml`, run by `flow/net/faults.py`):
 
@@ -44,6 +49,7 @@ Seeded faults (`faults.yaml`, run by `flow/net/faults.py`):
 | `icmp_answers_fragments` | a first fragment (MF set) is answered as if it were the whole request | caught |
 | `icmp_sum_over_padding` | the ICMP checksum is checked over the Ethernet padding too | caught |
 | `icmp_addresses_not_swapped` | the reply's IP source stays the requester's address | caught |
+| `icmp_back_to_back_overwrite` | a frame starting on the clock after a request's last byte is stored over the request (found by the independent review) | caught |
 
 ## Variants
 
@@ -51,15 +57,15 @@ Selected by `RAM`; every variant has the same ports, the same bit-exact result a
 
 | Variant | What | Latency | II | Use when |
 |---|---|---|---|---|
-| `bram` | the frame buffer in block RAM | `4` | `1` | the default; measured: one RAMB18 at BUF_BYTES 2048, 4 RAMB36 at 16384, about 114 MHz |
-| `lutram` | the frame buffer in LUT RAM | `4` | `1` | block RAM spoken for; measured: 384 LUTs as RAM at BUF_BYTES 2048 (3072 at 16384) and slower (109 and 103 MHz) |
+| `bram` | the frame buffer in block RAM | `4` | `1` | the default; measured: one RAMB18 at BUF_BYTES 2048, 4 RAMB36 at 16384, about 114-116 MHz |
+| `lutram` | the frame buffer in LUT RAM | `4` | `1` | block RAM spoken for; measured: 384 LUTs as RAM at BUF_BYTES 2048 (3072 at 16384) and slower (106 and 89 MHz) |
 
 Measured at BUF_BYTES 2048, TTL 64: built alone (out of context) on an Artix-7, xc7a100tcsg324-1, for a 8.0 ns clock (125 MHz), Vivado 2026.1 (build 6511674). Not run on a board.
 
 | Variant | DSP | Block RAM tiles | LUT | Fmax estimate (MHz) | II | Latency |
 |---|---|---|---|---|---|---|
-| `bram` | 0 | 0.5 | 377 | 114 | 1 | 4 |
-| `lutram` | 0 | 0 | 871 | 109 | 1 | 4 |
+| `bram` | 0 | 0.5 | 391 | 116 | 1 | 4 |
+| `lutram` | 0 | 0 | 897 | 106 | 1 | 4 |
 
 Fmax is estimated from one routed run at the target clock (1000 / (period - WNS)); it is not a closure at that frequency. WNS (worst slack against the clock) below zero means the target was missed.
 
@@ -67,10 +73,10 @@ Fmax is estimated from one routed run at the target clock (1000 / (period - WNS)
 
 | Variant | BUF_BYTES | TTL | LUT | FF | LUT RAM | Block RAM tiles | DSP | WNS (ns) | Fmax estimate (MHz) | Dynamic power (W) | Latency | II |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| `bram` | 2048 | 64 | 377 | 443 | 0 | 0.5 | 0 | -0.733 | 114.5 | 0.007 | 4 | 1 |
-| `bram` | 16384 | 64 | 379 | 443 | 0 | 4 | 0 | -0.815 | 113.4 | 0.011 | 4 | 1 |
-| `lutram` | 2048 | 64 | 871 | 455 | 384 | 0 | 0 | -1.157 | 109.2 | 0.019 | 4 | 1 |
-| `lutram` | 16384 | 64 | 4405 | 517 | 3072 | 0 | 0 | -1.723 | 102.8 | 0.062 | 4 | 1 |
+| `bram` | 2048 | 64 | 391 | 443 | 0 | 0.5 | 0 | -0.590 | 116.4 | 0.007 | 4 | 1 |
+| `bram` | 16384 | 64 | 398 | 443 | 0 | 4 | 0 | -0.742 | 114.4 | 0.010 | 4 | 1 |
+| `lutram` | 2048 | 64 | 897 | 455 | 384 | 0 | 0 | -1.437 | 106.0 | 0.020 | 4 | 1 |
+| `lutram` | 16384 | 64 | 4557 | 513 | 3072 | 0 | 0 | -3.285 | 88.6 | 0.065 | 4 | 1 |
 
 Dynamic power is vectorless (default toggle rates, no simulation activity): use it to rank variants, not as a measurement. Regenerate with `python3 -m flow.ipchar icmp_echo` (Vivado, minutes per point).
 
@@ -82,7 +88,7 @@ Dynamic power is vectorless (default toggle rates, no simulation activity): use 
 - Clock crossings: none.
 - Part, board or pin: none (memories inferred; ram_style steers the variants).
 - Depends on: nothing.
-- Limits: requests with IP options are not answered; one request held at a time; no other ICMP messages (no destination unreachable, no timestamp); measured Fmax estimates 103-115 MHz out of context: below the RGMII MAC's 125 MHz.
+- Limits: requests with IP options are not answered; one request held at a time; no other ICMP messages (no destination unreachable, no timestamp); measured Fmax estimates 89-116 MHz out of context: below the RGMII MAC's 125 MHz.
 
 ## Cost table
 

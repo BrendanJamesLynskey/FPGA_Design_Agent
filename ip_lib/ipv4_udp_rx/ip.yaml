@@ -1,9 +1,10 @@
 # ip.yaml for ipv4_udp_rx: the declared parameter space and contract (the library's reuse rules; brief 63D).
 name: ipv4_udp_rx
 version: 0.1.0
-status: simulated against an RFC 791/768 model with scapy checking the bench's frames; output protocol checked by bounded
+status: 'Misses 125 MHz out of context (75-81 MHz estimated: needs pipelining before it sits behind the RGMII MAC); closes
+  at 50 MHz. Simulated against an RFC 791/768 model with scapy checking the bench''s frames; output protocol checked by bounded
   model checking; built alone out of context on an Artix-7 with Vivado 2026.1; not yet run on a board (the Nexys A7 network
-  design carries it behind eth_mac_rmii; built, the board run waits for the owner's cabling check)
+  design carries it behind eth_mac_rmii; built, not yet run: a cable check comes first, see designs/b63d_nexys_net/host/PLAN.md)'
 summary: 'IPv4 and UDP receive: header checksum and length checks, options skipped, fragments refused, destination by own
   address, broadcast or multicast, UDP checksum with the pseudo-header, demultiplexed by destination port; the payload streams
   out with its header fields.'
@@ -112,10 +113,12 @@ evidence:
     the bench''s own UDP checksums: unicast, broadcast, multicast and foreign destinations; enabled, disabled, duplicated
     and unknown ports; right, wrong and absent UDP checksums; IP options, fragments, other protocols, bad header checksums,
     short and long UDP lengths, zero and non-zero Ethernet padding, bad and truncated frames, empty payloads; input gaps and
-    back-pressure; every event counter compared; Icarus Verilog 12. Formal (bounded): the AXI-Stream rules of brief 59 on
-    m_axis with tuser, tdest and the header fields, and a cover of a whole datagram'
+    back-pressure; every event counter compared; Icarus Verilog 12. Formal (bounded): the AXI-Stream protocol rules (valid
+    held until ready, data steady while waiting) on m_axis with tuser, tdest and the header fields, and a cover of a whole
+    datagram; an independent adversarial bench adds last fragments, IHL 15, odd checksums and short UDP lengths'
   tests:
   - flow/net/tests/test_63d_udp_rx_rtl.py
+  - flow/net/tests/test_63d_adversarial_rtl.py
   - flow/net/tests/test_63d_formal.py
   faults: ip_lib/ipv4_udp_rx/faults.yaml
   results: results/b63d/faults.json, results/b63d/formal.json, ip_lib/ipv4_udp_rx/char/xc7a100tcsg324-1.json

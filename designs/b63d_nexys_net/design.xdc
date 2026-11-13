@@ -34,21 +34,26 @@ set_property CFGBVS VCCO [current_design];
 set_property CONFIG_VOLTAGE 3.3 [current_design];
 set_property BITSTREAM.GENERAL.COMPRESS TRUE [current_design];
 
-## RMII timing (RMII specification rev 1.2: the PHY's outputs change 2 to 14 ns after REF_CLK rises; its inputs need
-## 4 ns setup and 2 ns hold). REF_CLK leaves the FPGA 45 degrees (2.5 ns) after the logic clock, so relative to the
-## logic clock the receive data arrive 4.5 to 16.5 ns after its edge, and the PHY samples the transmit data 2.5 ns after
-## it. Board traces are short and left out. The receive registers and the transmit registers (falling edge of the
-## logic clock, so the data change 10 ns after it and well clear of the PHY's 2 ns hold) sit in the IOBs.
-set clk50 [get_clocks -of_objects [get_pins u_mmcm/CLKOUT0]]
-set_input_delay -clock $clk50 -max 16.5 [get_ports {ETH_CRSDV ETH_RXERR ETH_RXD[*]}]
-set_input_delay -clock $clk50 -min 4.5  [get_ports {ETH_CRSDV ETH_RXERR ETH_RXD[*]}]
-set_output_delay -clock $clk50 -max 1.5  [get_ports {ETH_TXEN ETH_TXD[*]}]
-set_output_delay -clock $clk50 -min -4.5 [get_ports {ETH_TXEN ETH_TXD[*]}]
-set_property IOB TRUE [get_ports {ETH_CRSDV ETH_RXERR ETH_RXD[*] ETH_TXEN ETH_TXD[*]}]
-
-## Asynchronous or slow: reset button, UART, MDIO (2 MHz, synchronised in the design), PHY reset, LEDs; REF_CLK is a
-## forwarded clock from an ODDR (its phase is set by the MMCM), declared as a clock on its pin, not a data output
+## RMII timing (RMII specification rev 1.2: the PHY's outputs change 2 to 14 ns after REF_CLK rises at the PHY; its
+## inputs need 4 ns setup and 2 ns hold). Both are referenced to eth_refclk, the clock forwarded on the ETH_REFCLK pin
+## (defined below), so Vivado includes the forwarded clock's own delay: MMCM output, BUFG, ODDR and output buffer.
+## Board traces are short and left out. The receive registers and the falling-edge transmit registers sit in the IOBs.
 create_generated_clock -name eth_refclk -source [get_pins u_refclk/C] -divide_by 1 [get_ports ETH_REFCLK]
+set_input_delay  -clock [get_clocks eth_refclk] -max 14.0 [get_ports {ETH_CRSDV ETH_RXERR ETH_RXD[*]}]
+set_input_delay  -clock [get_clocks eth_refclk] -min 2.0  [get_ports {ETH_CRSDV ETH_RXERR ETH_RXD[*]}]
+set_output_delay -clock [get_clocks eth_refclk] -max 4.0  [get_ports {ETH_TXEN ETH_TXD[*]}]
+set_output_delay -clock [get_clocks eth_refclk] -min -2.0 [get_ports {ETH_TXEN ETH_TXD[*]}]
+set_property IOB TRUE [get_ports {ETH_CRSDV ETH_RXERR ETH_RXD[*] ETH_TXEN ETH_TXD[*]}]
+## eth_refclk leaves the MMCM 1.375 ns before the logic clock (335.25 degrees), so its edge just before a logic-clock
+## edge is 18.625 ns into the previous period. Vivado's default pairs that launch with the very next logic-clock edge
+## (1.375 ns later), but the data the PHY launches on it take 2-14 ns plus the clock's own delay to the PHY and arrive
+## for the logic-clock edge after that one: a one-period shift of the capture edge (setup 2). Hold is then checked
+## against the edge 1.375 ns after the launch, which still holds the previous data: that is the real hold condition, so
+## the hold multicycle is stated as 0 (unchanged; Vivado's XDCH-1 asks for the hold relationship to be stated).
+set_multicycle_path -setup 2 -from [get_ports {ETH_CRSDV ETH_RXERR ETH_RXD[*]}] -to [get_clocks c0]
+set_multicycle_path -hold 0 -from [get_ports {ETH_CRSDV ETH_RXERR ETH_RXD[*]}] -to [get_clocks c0]
+
+## Asynchronous or slow: reset button, UART, MDIO (2 MHz, synchronised in the design), PHY reset, LEDs
 set async_in [get_ports {CPU_RESETN UART_TXD_IN ETH_MDIO}]
 set_input_delay -clock sys_clk_pin 0.000 $async_in
 set_false_path -from $async_in

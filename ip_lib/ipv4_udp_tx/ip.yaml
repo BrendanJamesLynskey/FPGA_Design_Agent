@@ -1,9 +1,10 @@
 # ip.yaml for ipv4_udp_tx: the declared parameter space and contract (the library's reuse rules; brief 63D).
 name: ipv4_udp_tx
 version: 0.1.0
-status: simulated against an RFC 791/768 model with scapy recomputing both checksums; framing checked by bounded model checking;
-  built alone out of context on an Artix-7 with Vivado 2026.1; not yet run on a board (the Nexys A7 network design carries
-  it behind eth_mac_rmii; built, the board run waits for the owner's cabling check)
+status: 'Misses 125 MHz out of context (74-82 MHz estimated: needs pipelining before it sits behind the RGMII MAC); closes
+  at 50 MHz. Simulated against an RFC 791/768 model with scapy recomputing both checksums; framing checked by bounded model
+  checking; built alone out of context on an Artix-7 with Vivado 2026.1; not yet run on a board (the Nexys A7 network design
+  carries it behind eth_mac_rmii; built, not yet run: a cable check comes first, see designs/b63d_nexys_net/host/PLAN.md)'
 summary: 'UDP over IPv4 transmit: stores one payload, then sends Ethernet, IPv4 (header checksum, counting identification)
   and UDP headers (checksum over the pseudo-header, or none) followed by the payload.'
 top: ipv4_udp_tx
@@ -123,9 +124,11 @@ evidence:
   summary: 'cocotb against ip_lib/ipv4_udp_tx/model.py (RFC 791, 768, 1071) with scapy recomputing both checksums of every
     frame: random lengths up to and over MAX_PAYLOAD, payloads whose checksum computes to zero (sent as 0xFFFF), unicast and
     multicast destinations, input gaps and back-pressure; Icarus Verilog 12. Formal (bounded): every frame 42 bytes plus its
-    payload, the AXI-Stream rules of brief 59 on m_axis, the input held while a frame is prepared or sent'
+    payload, the AXI-Stream protocol rules (valid held until ready, data steady while waiting) on m_axis, the input held while
+    a frame is prepared or sent; an independent adversarial bench compares nine frames with scapy''s own build'
   tests:
   - flow/net/tests/test_63d_udp_tx_rtl.py
+  - flow/net/tests/test_63d_adversarial_rtl.py
   - flow/net/tests/test_63d_formal.py
   faults: ip_lib/ipv4_udp_tx/faults.yaml
   results: results/b63d/faults.json, results/b63d/formal.json, ip_lib/ipv4_udp_tx/char/xc7a100tcsg324-1.json

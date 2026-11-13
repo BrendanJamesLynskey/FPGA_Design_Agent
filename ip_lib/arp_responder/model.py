@@ -50,7 +50,7 @@ class Arp:
             return []
         for_me = p["tpa"] == self.ip
         i = self.find(p["spa"])
-        if p["spa"] != b"\x00" * 4 and (for_me or i is not None):
+        if p["spa"] != b"\x00" * 4 and p["spa"] != self.ip and (for_me or i is not None):
             if i is not None:
                 self.slots[i] = (p["spa"], p["sha"])
             elif None in self.slots:

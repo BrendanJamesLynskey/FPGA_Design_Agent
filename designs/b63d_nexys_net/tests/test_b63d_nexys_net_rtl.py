@@ -12,7 +12,7 @@ IP = ROOT / "ip_lib"
 
 
 def test_nexys_net() -> None:
-    sources = (cocotb_run.SHELL_RTL + [ROOT / "designs" / "b30_hil_audio" / "tests" / "xadc_sim.sv"] +
+    sources = (cocotb_run.SHELL_RTL + [HERE / "xadc_sim.sv"] +
                sorted((IP / "eth_mac_rmii" / "rtl").glob("*.sv")) +
                [IP / "eth_mac_rgmii" / "rtl" / "eth_rx_classify.sv", IP / "eth_mac_rgmii" / "rtl" / "eth_mac_stats.sv"] +
                [f for b in ("arp_responder", "icmp_echo", "igmp_join", "ipv4_udp_rx", "ipv4_udp_tx", "mdio_master")

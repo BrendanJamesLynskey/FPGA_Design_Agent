@@ -1,4 +1,4 @@
-// b63d_nexys_net_top.sv: brief 63D's network blocks on the Nexys A7-100T, behind the board's RMII PHY (LAN8720A).
+// b63d_nexys_net_top.sv: the library's network blocks on the Nexys A7-100T, behind the board's RMII PHY (LAN8720A).
 //
 // The library entries in the receive and transmit paths:
 //   eth_mac_rmii (10/100 MAC) -> eth_rx_classify (the address filter of eth_mac_rgmii 0.2: own MAC, broadcast,
@@ -11,8 +11,12 @@
 //   and drops the datagram (the sender retries).
 //   A frame capture (2 KB) records one received frame (after `skip` others) for the host, and the injector sends a
 //   frame the host wrote: with the PHY in loopback (MDIO, BMCR bit 14) the stack can be checked without a cable.
-// Clocks: CLK100MHZ -> MMCM -> 50 MHz for all logic and, 45 degrees later (the board manual's advice), ETH_REFCLK
-// (the PHY's reference clock in REF_CLK-in mode) through an ODDR. Simulation divides CLK100MHZ by two instead.
+// Clocks: CLK100MHZ -> MMCM -> 50 MHz for all logic, and ETH_REFCLK (the PHY's reference clock in REF_CLK-in mode)
+// through an ODDR from a second MMCM output at 335.25 degrees (1.375 ns before the logic clock's edge). The phase was
+// chosen from Vivado's timing of the RMII pins against the forwarded clock: at the board manual's 45 degrees the clock
+// reaches the PHY so late (MMCM, BUFG, ODDR, output buffer) that receive data missed setup by 2.3 ns with 5.5 ns of hold
+// to spare; 335.25 degrees moves the PHY's clock earlier by 3.875 ns to centre the receive window. Simulation divides
+// CLK100MHZ by two instead.
 // Window registers (address = ADDR - 0x80), 32 bit:
 //   0x00 CTRL      RW  [0] promisc, [1] bcast_en (1), [2] mcast_all, [3] PHY reset (ETH_RSTN low), [4] 100 Mb/s (1)
 //   0x01 MAC_HI    RW  [15:0] own MAC bytes 0-1 (reset 0x0200)        0x02 MAC_LO  RW  bytes 2-5 (0x00000063)
@@ -23,8 +27,10 @@
 //   0x10-0x24      R   the 21 statistics counters of eth_mac_stats (its address order)
 //   0x30 EV0 {ARP requests for us, ARP replies sent}  0x31 EV1 {echo requests, echo replies}
 //   0x32 EV2 {UDP datagrams passed, UDP discarded}    0x33 EV3 {IGMP queries, IGMP reports and leaves sent}
-//   0x34 EV4 {service replies, service ARP misses}    (16 bits each, wrapping)
+//   0x34 EV4 {service replies, service ARP misses}    0x35 EV5 {0, ARP address conflicts}   (16 bits each, wrapping)
 //   0x38-0x3B      R   raw XADC codes: Tj, VCCINT, VCCAUX, VCCBRAM (UG480)
+//   0x3C ALARMS    R   latched XADC alarms since the last clear: [0] Tj, [1] VCCINT, [2] VCCAUX, [3] VCCBRAM, [4] OT;
+//                      W: any value clears them
 //   0x40 INJ_CTRL  W: [10:0] length, [31] send; R: [31] busy      0x41 INJ_DATA W: 4 bytes (first in [31:24]) at the
 //   word pointer, which then advances     0x42 INJ_PTR W: the word pointer
 //   0x48 CAP_CTRL  W: [0] arm, [7:4] frames to skip; R: [31] done, [30] the frame's tuser, [10:0] length
@@ -57,7 +63,7 @@ module b63d_nexys_net_top #(
 `ifdef SYNTHESIS
     logic fb, c0, c1, clk45;
     MMCME2_BASE #(.CLKIN1_PERIOD(10.0), .CLKFBOUT_MULT_F(10.0), .DIVCLK_DIVIDE(1), .CLKOUT0_DIVIDE_F(20.0),
-                  .CLKOUT1_DIVIDE(20), .CLKOUT1_PHASE(45.0)) u_mmcm (
+                  .CLKOUT1_DIVIDE(20), .CLKOUT1_PHASE(335.25)) u_mmcm (
         .CLKIN1(CLK100MHZ), .CLKFBIN(fb), .CLKFBOUT(fb), .CLKOUT0(c0), .CLKOUT1(c1), .LOCKED(locked), .RST(1'b0),
         .PWRDWN(1'b0), .CLKFBOUTB(), .CLKOUT0B(), .CLKOUT1B(), .CLKOUT2(), .CLKOUT2B(), .CLKOUT3(), .CLKOUT3B(),
         .CLKOUT4(), .CLKOUT5(), .CLKOUT6());
@@ -132,8 +138,9 @@ module b63d_nexys_net_top #(
     logic [7:0] rx_d, tx_d;
     logic       rx_v, rx_l, rx_u, tx_v, tx_r, tx_l;
     logic       ev_rx_ok, ev_rx_bad, ev_rx_fcs, ev_rx_runt, ev_tx_sent, ev_tx_underrun;
-    // transmit pins from falling-edge registers: half a clock of hold margin at the PHY, whose REF_CLK rises 2.5 ns
-    // after the logic clock (the RMII hold time is 2 ns; a rising-edge launch arrived about 2.6 ns after the edge)
+    // transmit pins from falling-edge registers: the data change half a clock after the logic clock's edge, which keeps
+    // them clear of the PHY's sampling edge (its REF_CLK reaches it several ns after the logic clock, see above) with
+    // margin for both setup and hold (the timing report in results/b63d gives the slack)
     logic       mac_txen;
     logic [1:0] mac_txd;
     always_ff @(negedge clk) begin ETH_TXEN <= mac_txen; ETH_TXD <= mac_txd; end
@@ -171,13 +178,13 @@ module b63d_nexys_net_top #(
     logic        lk_valid, lk_done, lk_hit;
     logic [31:0] lk_ip;
     logic [47:0] lk_mac;
-    logic        e_arp_req, e_arp_rep, e_arp_tx_rep, e_arp_tx_req, e_arp_learn, e_arp_drop;
+    logic        e_arp_req, e_arp_rep, e_arp_tx_rep, e_arp_tx_req, e_arp_learn, e_arp_drop, e_arp_conflict;
     arp_responder #(.CACHE_N(4), .HOLDOFF(ARP_HOLDOFF)) u_arp (.clk, .rst, .own_mac, .own_ip,
         .s_axis_tdata(rx_d), .s_axis_tvalid(rx_v), .s_axis_tready(), .s_axis_tlast(rx_l), .s_axis_tuser(rx_uf),
         .m_axis_tdata(a_d), .m_axis_tvalid(a_v), .m_axis_tready(a_r), .m_axis_tlast(a_l),
         .lk_valid, .lk_ip, .lk_ready(), .lk_done, .lk_hit, .lk_mac, .flush(1'b0),
         .ev_rx_request(e_arp_req), .ev_rx_reply(e_arp_rep), .ev_tx_reply(e_arp_tx_rep), .ev_tx_request(e_arp_tx_req),
-        .ev_learn(e_arp_learn), .ev_drop(e_arp_drop));
+        .ev_learn(e_arp_learn), .ev_drop(e_arp_drop), .ev_conflict(e_arp_conflict));
     logic e_ping, e_pong, e_ping_busy, e_ping_bad;
     icmp_echo #(.BUF_BYTES(2048), .TTL(64), .RAM("bram")) u_icmp (.clk, .rst, .own_mac, .own_ip,
         .s_axis_tdata(rx_d), .s_axis_tvalid(rx_v), .s_axis_tready(), .s_axis_tlast(rx_l), .s_axis_tuser(rx_uf),
@@ -388,18 +395,21 @@ module b63d_nexys_net_top #(
     end
 
     // ------------------------------------------------------------------ event counters, XADC, LEDs
-    logic [15:0] n_arq, n_arp, n_ping, n_pong, n_uok, n_ubad, n_q, n_rep;
+    logic [15:0] n_arq, n_arp, n_ping, n_pong, n_uok, n_ubad, n_q, n_rep, n_conf;
     always_ff @(posedge clk) begin
         if (rst || stat_clear) begin n_arq <= '0; n_arp <= '0; n_ping <= '0; n_pong <= '0; n_uok <= '0; n_ubad <= '0;
-                                     n_q <= '0; n_rep <= '0; end
+                                     n_q <= '0; n_rep <= '0; n_conf <= '0; end
         else begin
             n_arq <= n_arq + 16'(e_arp_req); n_arp <= n_arp + 16'(e_arp_tx_rep);
             n_ping <= n_ping + 16'(e_ping); n_pong <= n_pong + 16'(e_pong);
             n_uok <= n_uok + 16'(e_u_ok); n_ubad <= n_ubad + 16'(e_u_bad);
             n_q <= n_q + 16'(e_query); n_rep <= n_rep + 16'(e_report) + 16'(e_leave);
+            n_conf <= n_conf + 16'(e_arp_conflict);
         end
     end
     logic [15:0] do_x;
+    logic [7:0]  x_alm;
+    logic        x_ot;
     logic        drdy, den = 1'b0;
     logic [6:0]  daddr = 7'h00;
     logic [11:0] xcode [0:3];
@@ -416,7 +426,7 @@ module b63d_nexys_net_top #(
     ) u_xadc (
         .DCLK(clk), .DEN(den), .DWE(1'b0), .DADDR(daddr), .DI(16'h0000), .DO(do_x), .DRDY(drdy),
         .RESET(1'b0), .CONVST(1'b0), .CONVSTCLK(1'b0), .VP(1'b0), .VN(1'b0), .VAUXP(16'h0000), .VAUXN(16'h0000),
-        .ALM(), .OT(), .BUSY(), .CHANNEL(), .EOC(), .EOS(), .JTAGBUSY(), .JTAGLOCKED(), .JTAGMODIFIED(), .MUXADDR());
+        .ALM(x_alm), .OT(x_ot), .BUSY(), .CHANNEL(), .EOC(), .EOS(), .JTAGBUSY(), .JTAGLOCKED(), .JTAGMODIFIED(), .MUXADDR());
     /* verilator lint_on PINCONNECTEMPTY */
     always_ff @(posedge clk) begin
         den <= 1'b0;
@@ -426,6 +436,16 @@ module b63d_nexys_net_top #(
             den   <= 1'b1;
         end
         if (drdy) begin xcode[xsel] <= do_x[15:4]; xsel <= xsel + 1'b1; end
+    end
+    // alarms latched between the host's polls (thresholds INIT_50-5C: Tj 85 C, VCCINT 0.97-1.03 V, VCCAUX 1.75-1.89 V,
+    // VCCBRAM 0.95-1.05 V, over-temperature 125 C); any write to 0x3C clears them
+    logic [4:0] alm_l;
+    (* ASYNC_REG = "TRUE" *) logic [4:0] alm_s1, alm_s2;
+    always_ff @(posedge clk) begin
+        alm_s1 <= {x_ot, x_alm[3:0]};
+        alm_s2 <= alm_s1;
+        if (rst || (win_wr && win_addr == 7'h3C)) alm_l <= '0;
+        else alm_l <= alm_l | alm_s2;
     end
     logic [25:0] beat = '0;
     logic [21:0] rx_led = '0, tx_led = '0;
@@ -454,10 +474,12 @@ module b63d_nexys_net_top #(
             7'h32: win_rdata <= {n_uok, n_ubad};
             7'h33: win_rdata <= {n_q, n_rep};
             7'h34: win_rdata <= {n_svc, n_miss};
+            7'h35: win_rdata <= {16'b0, n_conf};
             7'h38: win_rdata <= {20'b0, xcode[0]};
             7'h39: win_rdata <= {20'b0, xcode[1]};
             7'h3A: win_rdata <= {20'b0, xcode[2]};
             7'h3B: win_rdata <= {20'b0, xcode[3]};
+            7'h3C: win_rdata <= {27'b0, alm_l};
             7'h40: win_rdata <= {inj_busy, 20'b0, inj_len};
             7'h48: win_rdata <= {cap_done, cap_user, 19'b0, cap_len};
             7'h4A: win_rdata <= {24'b0, cap_q};

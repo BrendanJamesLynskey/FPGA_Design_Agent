@@ -317,7 +317,8 @@ jobs:
         # these jobs use the boolector engine; Ubuntu's boolector package (1.5, 2012) is too old for yosys-smtbmc, so this
         # step uses the pinned OSS CAD Suite release the jobs were developed with (yosys, sby, boolector together)
         run: |
-          curl -sL -o /tmp/oss.tgz https://github.com/YosysHQ/oss-cad-suite-build/releases/download/2026-11-12/oss-cad-suite-linux-x64-20261112.tgz
+          curl -fsSL -o /tmp/oss.tgz https://github.com/YosysHQ/oss-cad-suite-build/releases/download/2026-11-12/oss-cad-suite-linux-x64-20261112.tgz
+          echo "346499255e3e5e6e9bf67e1d378a4e6bc249abd3de3b0caf5b57604bc8ba1752  /tmp/oss.tgz" | sha256sum -c -
           tar xzf /tmp/oss.tgz -C /tmp
           export PATH=/tmp/oss-cad-suite/bin:$PATH
           yosys -V; boolector --version

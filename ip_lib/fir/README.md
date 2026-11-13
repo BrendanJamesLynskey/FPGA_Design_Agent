@@ -38,6 +38,9 @@ Clocks: `clk`. Reset: `rst`, active high, synchronous.
 ## Evidence
 
 Bit-exact against `ip_lib/fir/model.py` (plain Python written from the definition, not from the RTL); cocotb with Icarus Verilog 12. Every variant at four parameter points with random input gaps and output back-pressure, a coefficient reload mid-stream and the full-precision corner; the measured latency and II equal the declared ones; a differential test feeds every variant the same values and compares their outputs; an adversarial bench (written by an independent reviewer) interleaves coefficient beats with samples, reloads with results in flight and resets mid-stream, rebuilding the expected outputs from the handshakes. Tests: `ip_lib/fir/tb/test_fir_rtl.py`.
+
+Try it: `python3 -m pytest ip_lib/fir/tb/test_fir_rtl.py`.
+
 Parameter points simulated: `IMPL=['dsp_bram', 'dist_ram', 'serial', 'lut_mult'], TAPS=16, DATA_W=16, COEF_W=16, FOLD=4`; `IMPL=['dsp_bram', 'dist_ram', 'serial', 'lut_mult'], TAPS=7, DATA_W=12, COEF_W=10, FOLD=3`; `IMPL=['dsp_bram', 'dist_ram', 'serial', 'lut_mult'], TAPS=33, DATA_W=18, COEF_W=18, FOLD=8`; `IMPL=['dsp_bram', 'dist_ram', 'serial', 'lut_mult'], TAPS=2, DATA_W=4, COEF_W=4, FOLD=2`.
 
 Seeded faults (`faults.yaml`, run by `hil/ip_faults.py --blocks fir`):

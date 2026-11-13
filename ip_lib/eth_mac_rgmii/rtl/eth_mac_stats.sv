@@ -18,7 +18,7 @@
 //   8    rx_mcast         good multicast frames (broadcast excluded)
 //   9    rx_pause         good pause frames
 //   10   rx_vlan          good tagged frames
-//   11   rx_filtered      good frames the address filter rejected
+//   11   rx_filtered      good frames the address filter rejected (MAC control frames consumed by PAUSE excluded)
 //   12   rx_dropped       good, kept frames lost for want of buffer room (store-and-forward)
 //   13   rx_fifo_ovf      clock-crossing FIFO overflows
 //   14   tx_frames_good   frames sent with a good FCS

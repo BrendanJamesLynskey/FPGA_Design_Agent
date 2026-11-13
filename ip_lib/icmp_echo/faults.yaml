@@ -37,3 +37,10 @@ faults:
     class: protocol
     why: the reply's IP source stays the requester's address
     test: flow/net/tests/test_63d_icmp_rtl.py -k bram_2048
+  - name: icmp_back_to_back_overwrite
+    file: icmp_echo.sv
+    old: "assign blocked = busy || (fin && ok && f_store);"
+    new: "assign blocked = busy;"
+    class: timing
+    why: a frame starting on the clock after a request's last byte is stored over the request (found by the independent review)
+    test: flow/net/tests/test_63d_adversarial_rtl.py -k icmp

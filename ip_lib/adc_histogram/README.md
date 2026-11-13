@@ -35,6 +35,9 @@ Clocks: `clk`. Reset: `rst`, active high, synchronous.
 ## Evidence
 
 Bit-exact against the Python models in `hil/instruments/models.py` (plain Python written from the definitions, not from the RTL); cocotb with Icarus Verilog 12. Tests: `hil/tests/test_30_ip_rtl.py`.
+
+Try it: `python3 -m pytest hil/tests/test_30_ip_rtl.py`.
+
 Parameter points simulated: `SAMP_W=12, BIN_W=6, CNT_W=16`; `SAMP_W=8, BIN_W=8, CNT_W=12`; `IMPL=bram, SAMP_W=12, BIN_W=6, CNT_W=16`; `IMPL=bram, SAMP_W=8, BIN_W=8, CNT_W=12`.
 
 Seeded faults (`faults.yaml`, run by `hil/ip_faults.py`):
