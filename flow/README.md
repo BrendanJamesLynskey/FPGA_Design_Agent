@@ -84,8 +84,9 @@ flow scripts, the Tcl settings file with paths normalised, thread count, directi
 version). It covers more than the build stamp (the flow, the settings and the tool, not only the sources) and lives in
 the bitstream, not the netlist: `build.tcl` sets `BITSTREAM.CONFIG.USR_ACCESS` just before `write_bitstream`, and the
 hardware manager reads it back as `REGISTER.USR_ACCESS`. `program.py` compares that value with the manifest after
-programming, and `board_check.py` / `bringup.py` compare the build stamp read over the UART with the manifest's stamp
-(the test shell is fixed, so the UART check uses the stamp); a mismatch stops the run before any board test.
+programming, and `board_check.py` / `bringup.py` read the shell's BUILD_ID register (0x05, protocol 1.1: the same word,
+read by the design through `USR_ACCESSE2`) over the UART and compare it, and the build stamp, with the manifest (a 1.0
+shell has no BUILD_ID register, so only its stamp is compared); a mismatch stops the run before any board test.
 [docs/reproducibility.md](../docs/reproducibility.md)
 
 ## Gates (`gates.py`)

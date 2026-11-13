@@ -184,6 +184,13 @@ def block(name, d):
         return loop_block(name, d)
     if name == "exception_figure":
         return exception_figure()
+    if name == "blockdesign_index":
+        rows = []
+        for g in d.get("blockdesigns", {}).get("designs", []):
+            b = g.get("build")
+            rows.append(f'<li><a href="blockdesign/{html.escape(g["design"])}.html"><code>{html.escape(g["design"])}</code></a>: '
+                        f'{html.escape(g["summary"])}' + (f' Built for the {html.escape(g["part"])} with Vivado {html.escape(b["tool"])}.' if b else "") + "</li>")
+        return "<ul>" + "".join(rows) + "</ul>" if rows else "<p>None yet.</p>"
     raise KeyError(name)
 
 
@@ -437,6 +444,17 @@ def build(outdir: Path, d, check_numbers=True):
             pages[fn] = layout("problems.html", T["heading"], desc, body, ["trace"], pd, css, js, prefix="../", current="problems.html",
                                pager='<div class="pager"><a href="../problems.html">&larr; All problems</a><span></span></div>')
             page_data[fn] = {"shared": {k: v for k, v in shared.items() if k != "catalogue_index"}, "task": T}
+    if str(ROOT) not in sys.path:
+        sys.path.insert(0, str(ROOT))
+    from flow.blockdesign import viewer as bdviewer        # one page per block design, drawn by the viewer
+    for g in d.get("blockdesigns", {}).get("designs", []):
+        fn = f'blockdesign/{g["design"]}.html'
+        pd = dict(shared); pd["bd_graph"] = g
+        body = (f'<p class="eyebrow">Block design</p><h1>{html.escape(g["design"])}</h1>' + bdviewer.body(g, "bd_graph"))
+        desc = f'The block design {g["design"]}: {g["summary"]} Its blocks, buses, clock domains, crossings and address map, drawn from the design file.'
+        pages[fn] = layout("how.html", f'Block design {g["design"]}', desc, body, ["bd_graph"], pd, css, js, prefix="../", current="how.html",
+                           pager='<div class="pager"><a href="../how.html#block-designs">&larr; How it works</a><span></span></div>')
+        page_data[fn] = {"shared": shared, "graph": g}
     import showcase
     for P in [p for p in d.get("showcase", {}).get("projects", []) if p["status"] == "published"]:
         fn = f'showcase/{P["id"]}.html'
@@ -451,7 +469,7 @@ def build(outdir: Path, d, check_numbers=True):
         allow = allow_tokens()
         cache = {}
         for fname, page in pages.items():
-            key = fname if fname.startswith(("problems/", "showcase/")) or fname == "showcase.html" else "_shared"
+            key = fname if fname.startswith(("problems/", "showcase/", "blockdesign/")) or fname == "showcase.html" else "_shared"
             if key not in cache:
                 cache[key] = data_tokens(page_data[fname]) | allow
             ok = cache[key]
@@ -507,7 +525,13 @@ def main():
         stale += [f for f, b in static.items() if not (out / f).exists() or (out / f).read_bytes() != b]
         known = set(pages) | set(static)
         extra = [p.relative_to(out).as_posix() for p in out.rglob("*") if p.is_file() and p.relative_to(out).as_posix() not in known]
-        if stale or extra:
+        # a block design with a build record that is not on its page: the record was made for another graph
+        # (flow/blockdesign/viewer.py merges a build only when graph_sha256 matches), so re-annotate after regenerating
+        lost = [g["design"] for g in d.get("blockdesigns", {}).get("designs", [])
+                if (ROOT / "results" / "blockdesign" / g["design"] / "build.json").is_file() and not g.get("build")]
+        if lost:
+            print("block designs whose build record does not match the graph (run flow.blockdesign annotate):", lost)
+        if stale or extra or lost:
             print("stale:", stale, "unexpected:", extra)
             sys.exit(1)
         print("ok:", len(pages), "pages, numbers all in data")

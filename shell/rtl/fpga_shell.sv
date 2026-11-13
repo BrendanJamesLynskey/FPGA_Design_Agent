@@ -1,12 +1,20 @@
 // fpga_shell.sv: the reusable on-board test shell. A design embeds one of
 // these, connects the board's USB-UART pins and maps its own registers into
 // the window (addresses 0x80-0xFF). See shell/PROTOCOL.md for the protocol.
+//
+// BUILD_ID (register 0x05, brief 54) is the bitstream's USR_ACCESS word, read
+// from the configuration logic through the USR_ACCESSE2 primitive (7 series and
+// UltraScale; AMD XAPP1232). The flow writes the build ID there with
+// BITSTREAM.CONFIG.USR_ACCESS, so the register reports the bitstream actually
+// loaded, not a constant compiled into the netlist: the netlist does not depend
+// on the build ID. In simulation (no SYNTHESIS macro) it is SIM_BUILD_ID.
 
 module fpga_shell #(
     parameter int          CLKS_PER_BIT   = 868,       // 100 MHz / 115200 baud
     parameter int          TIMEOUT_CYCLES = 100_000,   // 1 ms at 100 MHz
     parameter logic [31:0] DESIGN_ID      = 32'h0,
-    parameter logic [31:0] BUILD_STAMP    = 32'h0
+    parameter logic [31:0] BUILD_STAMP    = 32'h0,
+    parameter logic [31:0] SIM_BUILD_ID   = 32'h0
 ) (
     input  logic        clk,
     input  logic        rst,          // synchronous, active high
@@ -20,6 +28,14 @@ module fpga_shell #(
 );
     logic       rx_valid, rx_frame_err, tx_start, tx_busy;
     logic [7:0] rx_data, tx_data;
+    logic [31:0] build_id;
+
+`ifdef SYNTHESIS
+    // static after configuration; CFGCLK and DATAVALID matter only when USR_ACCESS is rewritten through ICAP or JTAG
+    USR_ACCESSE2 u_usr_access (.CFGCLK(), .DATA(build_id), .DATAVALID());
+`else
+    assign build_id = SIM_BUILD_ID;
+`endif
 
     uart_rx #(.CLKS_PER_BIT(CLKS_PER_BIT)) u_rx (
         .clk(clk), .rst(rst), .rx(uart_rx),
@@ -32,7 +48,7 @@ module fpga_shell #(
     shell_core #(
         .TIMEOUT_CYCLES(TIMEOUT_CYCLES), .DESIGN_ID(DESIGN_ID), .BUILD_STAMP(BUILD_STAMP)
     ) u_core (
-        .clk(clk), .rst(rst),
+        .clk(clk), .rst(rst), .build_id(build_id),
         .rx_valid(rx_valid), .rx_data(rx_data), .rx_frame_err(rx_frame_err),
         .tx_start(tx_start), .tx_data(tx_data), .tx_busy(tx_busy),
         .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd),

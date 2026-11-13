@@ -35,7 +35,7 @@ the public repo lists them by id and hash only, and publishes their `spec.md` on
 - The design is a board top named `<id>_top`, with the port names of Digilent's master XDC
   (`boards/nexys_a7_100t/Nexys-A7-100T-Master.xdc`). Pmod and indexed pins are scalar ports: `JA1`, `QSPI_DQ0`,
   `ACL_INT1` (`tools/board_xdc.py` maps them).
-- Every design embeds the test shell (`shell/`, PROTOCOL.md 1.0) on the USB-UART, with the task's DESIGN_ID, and
+- Every design embeds the test shell (`shell/`, PROTOCOL.md 1.1 since 2026-11-12, see AMENDMENTS.md; 1.0 before) on the USB-UART, with the task's DESIGN_ID, and
   puts its registers in the shell window (offsets = shell address - 0x80). Exception: a task whose subject is the
   USB-UART itself says so.
 - Time constants are integer clock counts exposed as top-level parameters with the names `spec.md` gives under

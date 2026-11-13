@@ -44,16 +44,18 @@ def run_one(block: str, m: dict, tmp: Path) -> dict:
     shutil.copytree(IP / block / "rtl", d)
     src = d / m["file"]
     text = src.read_text()
-    n = text.count(m["old"])
-    if n != 1:
-        return {"name": m["name"], "block": block, "status": "invalid", "why": f"old string occurs {n} times"}
-    src.write_text(text.replace(m["old"], m["new"]))
+    for e in m.get("edits") or [{"old": m["old"], "new": m["new"]}]:     # one edit, or several applied together
+        n = text.count(e["old"])
+        if n != 1:
+            return {"name": m["name"], "block": block, "status": "invalid", "why": f"old string occurs {n} times"}
+        text = text.replace(e["old"], e["new"])
+    src.write_text(text)
     env = dict(os.environ, **{f"HIL_RTL_{block.upper()}": str(d)}, HIL_BUILD=str(tmp / "build"))
     t0 = time.time()
     cmd = [sys.executable, "-m", "pytest", "-q", "-x", "-p", "no:cacheprovider", *m["test"].split(" -k ")[0].split(), "-k", m["test"].split(" -k ")[1]]
     r = subprocess.run(cmd, cwd=ROOT, env=env, capture_output=True, text=True, timeout=1800)
     tail = (r.stdout + r.stderr).strip().splitlines()[-1:] or [""]
-    if "iverilog failed" in r.stdout:
+    if "iverilog failed" in r.stdout or ("CalledProcessError" in r.stdout and "iverilog" in r.stdout):
         return {"name": m["name"], "block": block, "status": "invalid", "why": "the faulty copy does not compile"}
     return {"name": m["name"], "block": block, "class": m.get("class"), "why": m.get("why"),
             "status": "caught" if r.returncode != 0 else "SURVIVED", "seconds": round(time.time() - t0, 1),

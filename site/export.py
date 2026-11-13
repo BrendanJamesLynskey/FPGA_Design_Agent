@@ -444,6 +444,15 @@ def flow_notes():
     }
 
 
+def blockdesigns():
+    """Every designs/*/blockdesign.yaml that has been generated: its graph, merged with its build (flow/blockdesign)."""
+    if str(ROOT) not in sys.path:
+        sys.path.insert(0, str(ROOT))
+    from flow.blockdesign import viewer
+    out = [viewer.load_graph(p.parent) for p in sorted((ROOT / "designs").glob("*/blockdesign.yaml")) if (p.parent / "gen" / "graph.json").is_file()]
+    return {"designs": out}
+
+
 def main():
     runs = dev_runs()
     sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -459,6 +468,7 @@ def main():
     out["loop"] = loop.build(dict(out["agent_graph"], vivado=out["board"]["vivado"]))     # brief 47: the home page's feedback loop
     import showcase
     out["showcase"] = showcase.build()                                   # brief 61: the Showcase section, from site/showcase/*.yaml
+    out["blockdesigns"] = blockdesigns()                                # brief 65A: every block design's graph, with its build
     out.update({f"tasks/{k}": v for k, v in pages.items()})
     (OUT / "tasks").mkdir(exist_ok=True)
     bad = 0
