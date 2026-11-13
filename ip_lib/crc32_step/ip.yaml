@@ -1,0 +1,82 @@
+# ip.yaml for crc32_step: the declared parameter space and contract (the library's reuse rules), with a function-unit
+# contract (brief 64A+) that hwsw/cfu.py reads to wrap the entry as a CPU custom instruction.
+name: crc32_step
+version: 0.1.0
+status: 'simulated bit-exact against model.py and zlib in both variants; built into a pinned copy of the BRV32P RV32 core as a custom instruction and run there in simulation (results/64a_hwsw); not run on a board'
+summary: 'One CRC-32 update (IEEE 802.3, reflected, polynomial 0xEDB88320) by a 32-bit word: two operands, one result, no state; the shape of a CPU custom instruction.'
+top: crc32_step
+rtl:
+- rtl/crc32_step.sv
+depends: []
+interfaces:
+- name: operation
+  type: native
+  signals: in_valid, crc_in, data_in -> out_valid, crc_out (LATENCY clocks later)
+clocks:
+- name: clk
+parameters:
+  IMPL:
+    type: string
+    default: word
+    set:
+    - word
+    - byte
+    note: implementation variant (see variants)
+latency:
+  result: the variant's latency (1 or 4 clocks) from the in_valid pulse to the out_valid pulse
+throughput: the variant's II (a new word every clock, or every 4 clocks)
+guards:
+- IMPL: nibble
+sweep_tested:
+- IMPL: [word, byte]
+variant_param: IMPL
+variants:
+  word:
+    summary: the 32-bit update in one clock (an XOR network)
+    when: 'measured: 95 LUTs and 33 flip-flops out of context; the lowest latency, so the custom-instruction variant and the word-per-clock stream'
+    uses:
+      bram_tiles: 0
+      dsp: 0
+    latency: 1
+    ii: 1
+  byte:
+    summary: one byte per clock through an 8-bit update, four clocks per word
+    when: 'measured: no saving at 32 bits (96 LUTs and 92 flip-flops against 95 and 33 for word), so word is better on every count here; kept as the multi-cycle case of the custom-instruction wrapper (a 4-clock stall per instruction)'
+    uses:
+      bram_tiles: 0
+      dsp: 0
+    latency: 4
+    ii: 4
+characterisation:
+  part: xc7a100tcsg324-1
+  clock_ns: 4.0
+  points:
+  - {}
+function_unit:                       # brief 64A+: how a CPU custom-instruction wrapper drives this entry (hwsw/cfu.py)
+  operation: crc32.w
+  summary: rd = CRC-32 update of rs1 by the 4 bytes of rs2, least significant byte first (no inversion)
+  operands: {rs1: crc_in, rs2: data_in}
+  result: {rd: crc_out}
+  issue: in_valid                    # one-clock pulse with the operands
+  done: out_valid                    # one-clock pulse with the result, `latency` clocks later (the variant's)
+  state: none
+  model: ip_lib/crc32_step/model.py:crc32_word
+boundary:
+  registered_outputs: 'yes'
+  cdc: none
+  part_specific: none
+limits: 'the word variant has a combinational XOR network from the operand inputs to the result register: out of context the input path is not timed, so its Fmax must be judged where the inputs come from registers (inside a CPU: results/64a_hwsw)'
+resets:
+- name: rst
+  polarity: high
+  style: synchronous
+evidence:
+  tests:
+  - ip_lib/crc32_step/tb/test_crc32_step_rtl.py
+  faults: ip_lib/crc32_step/faults.yaml
+  results: results/b64a/faults.json, results/64a_hwsw/
+  simulator: Icarus Verilog 12 (local and CI)
+  summary: Bit-exact against `model.py` (written from the CRC definition, not from the RTL) and against zlib over whole buffers; latency and II measured; cocotb with Icarus Verilog 12.
+cost_table: 'measured costs are in the Variants section above'
+constraints: []
+licence: MIT (this repository)

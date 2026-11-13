@@ -343,6 +343,11 @@ cloud/       the AWS EC2 burst runner for Vivado batches (brief 33): fda_cloud.p
 axi_tx/      the on-chip AXI transactor: rtl/ (sequencer, AXI4-Lite master, stream source and sink, rule monitors,
              counters, scoreboard, demo targets), host/ (program format, model, host, board runner), programs/, tests/,
              formal/ (rule proofs and checker mutants), vivado/ (AMD IP probe, resource table); board design designs/b59a_axi_tx
+hwsw/        the HW/SW interface (brief 64A, [docs/hwsw.md](docs/hwsw.md)): regmap.py (one YAML -> AXI4-Lite register block,
+             C header, Python driver, markdown, and the check that they agree), partition.py (the cost model: software,
+             custom instruction, accelerator; break-even, Amdahl, decision), cfu.py (an ip_lib entry with a function-unit
+             contract -> a CPU custom-instruction unit), cfu_core/ (a pinned copy of the BRV32P RV32 core, the patch
+             that wires a unit in, the benchmark), examples/, tests/
 hil/         hardware-in-the-loop ([hil/README.md](hil/README.md)): cdc_soak/ (the CDC soak rig, brief 11b: RTL, simulation, Vivado builds, run plan);
              instruments/ (drivers: board lock, shell instruments, audio, sysmon, M2K, Pluto analyser, Red Pitaya, decode, models), ip tests
 site/        the showcase site (static, Vercel): export.py (results -> data), build.py (pages, number check),
@@ -368,6 +373,7 @@ docs/        methodology.md (UG949 -> flow stages, gates, deviations, the agent'
              fsm.md (brief 24: the reference controller, the FSM coverage check, the drills);
              vhdl.md (VHDL-2008 designs: how to ask for one, the language boundary with the SystemVerilog shell, what runs where);
              project_layer.md (brief 27 P0 and P1: the design.yaml and contract.yaml formats, status, the contract test, phase 0);
+             hwsw.md (brief 64A: the register-map single source, the partitioning cost model, IP library entries as custom instructions);
              debug_playbook.md (for humans: what each gate rule ID means); debug.md (brief 50A: plain-English debug requests on the board); img/ photos (metadata stripped);
              eval/eval1_preregistration.md (the eval-1 held-out evaluation, fixed before any scored run)
 ```
