@@ -70,10 +70,25 @@ Fmax is estimated from one routed run at the target clock (1000 / (period - WNS)
 - Clock crossings: none.
 - Part, board or pin: none.
 - Depends on: nothing.
-- Limits: IGMPv2 host side only: no IGMPv3 reports or source filtering (a version 3 query is answered as a version 2 query, RFC 3376 7.2.1); no version 1 router compatibility timer; the random delay comes from a 16-bit LFSR; measured Fmax estimates 71-80 MHz out of context: below the RGMII MAC's 125 MHz (the frame's checksums are summed in one clock).
 
 ## Cost table
 
 measured out of context: see the Cost section above.
 
 Licence: MIT (this repository).
+
+## Known gaps and limits
+
+- IGMPv2 host side only: no IGMPv3 reports or source filtering (a version 3 query is answered as a version 2 query, RFC 3376 7.2.1); no version 1 router compatibility timer; the random delay comes from a 16-bit LFSR; measured Fmax estimates 71-80 MHz out of context: below the RGMII MAC's 125 MHz (the frame's checksums are summed in one clock).
+- Board: no board run of this entry is recorded; its evidence is simulation and out-of-context builds.
+
+## Next steps
+
+1. Pipeline the block before it sits behind the RGMII MAC (it closes at 50 MHz, not 125 MHz).
+2. Run designs/b63d_nexys_net on the board and record the joins on a switch.
+
+## History
+
+- 0.1.0 (2026-11-12): Initial version: simulated against a Python model, seeded faults caught, formal checks (bounded except where the README says proved), out-of-context cost on an Artix-7 (Vivado 2026.1); not run on a board. See README.md.
+
+Full entries: [CHANGELOG.md](CHANGELOG.md).

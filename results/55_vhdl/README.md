@@ -141,3 +141,39 @@ Provider-reported, $0.6873 in total ([../spend_ledger.csv](../spend_ledger.csv))
 
 Two further agent launches were stopped within a minute of starting because they pointed at the wrong knowledge-bank path. No
 model role finished in them, and they are not counted as runs.
+
+## Records
+
+| Path | What |
+|---|---|
+| `scores/` | Hidden-test scores per task: `A_*` and `B_*` for arms A and B, `Adiag_*` for the diagnostic renaming (never counted), `agent_*` and `agentkb_*` for the end-to-end agent's VHDL; `A_blocks.json`, `B_blocks.json` for the block designs |
+| `translations/` | The model's VHDL per arm (`A`, `B`), the diagnostic copies (`A_diag`), the hand fix of `cdcfx_c8` (`hand_fix`), and the translation logs |
+| `vivado/` | One JSON per task and language (`<task>__sv.json`, `<task>__vhdl.json`): gates, timing, utilisation, power and the standards result of the Vivado 2026.1 pair builds |
+| `blocks.json` | Out-of-context synthesis of the three block designs (made by `collect_blocks.py`) |
+| `board/t1_gray_stepper__vhdl.json` | The board run of the VHDL gray stepper |
+| `drill_grades/` | The pin grader's verdict for `d24_registered_outputs` |
+| `mutation_*.json`, `mutation_design/` | The two mutation runs and the design copy the container run used |
+| `agent_runs/` | The four end-to-end agent runs (run records, role usage, the RTL each left) and two run logs |
+| `prereg.md`, `table.md`, `make_table.py`, `collect_blocks.py` | The pre-registration, the translation table and the scripts that make it and `blocks.json` |
+
+## Reproduce
+
+- Scores (no Vivado, no model): `python3 -m flow.vhdl_score <task_dir> --rtl <dir with *.vhd>` per task; blocks:
+  `python3 tools/vhdl_block_checks.py --cdc <dir> --axi <dir> --axi-tests <dir>` (the AXI test is in the private knowledge bank).
+- Table and block summary from the committed files: `python3 results/55_vhdl/make_table.py > results/55_vhdl/table.md`;
+  `python3 results/55_vhdl/collect_blocks.py <dir of block runs>` (needs the raw block run directories, which are not committed).
+- Translations need a paid model call: `python3 tools/vhdl_translate.py --sv <files> --out <dir> [--skill ...] [--block]`
+  (model `openai/gpt-6-luna` through OpenRouter). Results can differ on a re-run.
+- Vivado pair builds need a heavy slot: `python3 tools/vhdl_pair_build.py stage <task_dir> <vhdl rtl dir>`, then
+  `flow/run_vivado.sh <dir> base` on each of the two printed directories, then `... summary <task_dir> <out dir>`.
+- The board run needs the Nexys A7-100T and the board lock. The four end-to-end agent runs are paid and not repeatable exactly.
+- Mutation: `flow/mutate.py` (the container run uses the `fda-sim:2-ghdl` image).
+
+## Known gaps and limits
+
+- One run per arm and task: no rates. Arm B was made after arm A's mistakes were known, so it is exploratory.
+- Only five board tasks and three block designs; one model. The end-to-end agent passed 0 of 4 runs.
+- One board run (the gray stepper); the other four VHDL tasks were not run on the board.
+- The block designs have out-of-context synthesis only, with no hidden tests or full gates; `cdcfx_c8` still fails as translated.
+- The 28 extra LUTs of the VHDL AXI4-Lite slave were not investigated; no code coverage and no UVVM for VHDL.
+- The Vivado builds ran on a working tree with uncommitted changes (stated under Provenance).

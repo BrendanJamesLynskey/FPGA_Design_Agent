@@ -1,0 +1,350 @@
+# Brief 68 handover: the facts behind README.md and AGENT.md (docs/documentation_standard.md).
+# Measurement values and every sha256 are filled from the records by `python -m flow.handover fill`;
+# do not type them. Render with `python -m flow.handover write <this directory>`.
+schema: fda-handover/1
+id: b59a_axi_tx
+title: AXI transactor, protocol checker and scoreboard on the Nexys A7
+kind: showcase
+produced_by: human
+summary: Board demonstration of an on-chip AXI4-Lite and AXI4-Stream traffic generator, protocol checker and scoreboard.
+  A program loaded over the UART shell drives a vendor block-RAM controller or our own peripheral and stream FIFO, which
+  carry run-time seeded bugs. Ten AXI4-Lite and five AXI4-Stream rules are watched and counted, a capture records the bus
+  around the first violation, and AMD's AXI Protocol Checker watches the same AXI4-Lite bus as a cross-check.
+scope_not:
+- full AXI4 (bursts, IDs, several transactions in flight), a slave side, a DMA target or a soak mode
+- a hunt for bugs in a third-party core; the peripheral, the FIFO and their bugs are ours and deliberately simple
+target:
+  part: xc7a100tcsg324-1
+  board: Nexys A7-100T
+  top: b59a_axi_tx_top
+  tool: Vivado 2026.1
+  note: core RTL is in axi_tx/rtl; this folder holds the board top, constraints and AMD IP Tcl
+clocks:
+- name: CLK100MHZ
+  mhz: 100
+  source: designs/b59a_axi_tx/design.xdc
+  note: the only clock
+resets:
+- name: CPU_RESETN
+  active: low
+  note: the reset button, synchronised; the host can hold the targets' ARESETn low through SYS_CTRL bit 12
+interfaces:
+- name: UART register window
+  type: test shell, 8N1 UART at 115200 baud
+  doc: shell/PROTOCOL.md
+  note: shell addresses 0x80-0xFF; offsets 0x00-0x3F transactor (axi_tx/host/regs.py), 0x40-0x4C XADC, 0x50-0x55 AMD checker
+    status; other offsets read 0
+- name: Transactor, checker and scoreboard
+  type: AXI4-Lite master with monitors; AXI4-Stream source and sink
+  doc: docs/axi_tx.md
+  note: program format, rules, counters, capture; one AXI4-Lite transaction outstanding, 32-bit stream data
+- name: Target 0 (board)
+  type: AMD AXI BRAM Controller 4.1 with Block Memory Generator 8.4, AXI4-Lite
+  doc: docs/axi_tx.md
+  note: 8 KB; only address bits 12:0 reach it, so a higher address wraps rather than errors
+- name: Target 1 (board)
+  type: axil_demo_periph, AXI4-Lite
+  doc: docs/axi_tx.md
+  note: ID, R0-R3, COUNT, WCOUNT, BUG; write to a read-only register answers SLVERR; address 0x20 up answers DECERR (reads
+    0); AxPROT ignored
+parameters:
+- name: CLKS_PER_BIT
+  value: 868
+  legal: positive integer; 868 gives 115200 baud
+  note: UART bit period in clocks
+- name: SDATA_W
+  value: 32
+  legal: 32 only
+  note: core refuses other widths at elaboration
+- name: program RAM
+  value: 256 instructions of four 32-bit words
+  legal: loops nest 4 deep
+  note: loaded over the UART
+files:
+- path: designs/b59a_axi_tx/rtl/b59a_axi_tx_top.sv
+  what: board top
+  sha256: 4d042b962a8a181b6f2e144adc8dbbc22407c2382ac4bf7749ef68a7e91996b8
+- path: designs/b59a_axi_tx/design.xdc
+  what: pins and clock
+  sha256: 62d07a852542107d7e07752e38bd565fb53ab7d5befa943de87c781ecb5d2eab
+- path: designs/b59a_axi_tx/ip/amd_ip.tcl
+  what: creates the AMD IP (hash-listed in flow/ip_tcl_allow.yaml)
+  sha256: 13744aab591d7889c6fc433bac3bf980233b85742a396390800c36b699cc6f8e
+- path: docs/axi_tx.md
+  what: interface datasheet
+  sha256: a436f81e388cf96541da2334062c06e427f59b86174586aeac2d9dc143ba528a
+- path: axi_tx/tests/test_59a_rtl.py
+  what: cocotb tests
+  sha256: 0ad2ec372f7cae8a8eee12217ebfdfd984c0bebef6b10a5445dd62c09e66c474
+- path: axi_tx/programs/board_plan.yaml
+  what: pre-registered board plan
+  sha256: e56a3dcaeb8c178028d5a243e667deddc35ea0f13f2d6b00bc8144b66644c705
+commands:
+- what: simulate every program, seeded bug and memory fault
+  cmd: python -m pytest -q axi_tx/tests/test_59a_rtl.py
+  heavy: false
+  minutes: 1
+  needs: Icarus Verilog 12 and cocotb 2.0.1
+- what: formal proofs and checker mutants to depth 20
+  cmd: python axi_tx/formal/run_formal.py --depth 20
+  heavy: false
+  minutes: 19
+  needs: Yosys, z3 and SymbiYosys
+- what: build the board design
+  cmd: flow/run_vivado.sh designs/b59a_axi_tx base
+  heavy: true
+  minutes: 12
+  needs: local Vivado 2026.1 (Basic tier) and a heavy slot (take_heavy_slot.sh)
+- what: run the board plan
+  cmd: python3 axi_tx/host/run_board.py --plan axi_tx/programs/board_plan.yaml --json results/59a_axi_tx/board_run.json
+  heavy: false
+  minutes: 8
+  needs: the Nexys A7 on wall power and the board lock
+evidence:
+- id: E1
+  activity: simulation
+  result: pass
+  how: ci
+  what: 'cocotb on Icarus: clean runs fire no rule, each seeded bug fires its rule, a WSTRB-ignoring memory is caught by
+    the scoreboard'
+  record: axi_tx/tests/test_59a_rtl.py
+  sha256: 0ad2ec372f7cae8a8eee12217ebfdfd984c0bebef6b10a5445dd62c09e66c474
+- id: E2
+  activity: formal
+  result: pass
+  what: 'SymbiYosys to depth 20: rules quiet on legal traffic, fire alone on their violation; every checker mutant fails
+    a proof'
+  record: results/59a_axi_tx/formal.json
+  sha256: 1e66e6a1b029da68da83ba7da8faaa0bf4ae5e97f68855a6473edb58a80bd3b3
+- id: E3
+  activity: faults
+  result: pass
+  what: 11 legal but unusual scenarios; no rule fired
+  record: results/59a_axi_tx/false_fire.json
+  sha256: 5202b178241e6b29c4aae3f3f000e840d57a77a56bfbc22978103aa6295f2e91
+- id: E4
+  activity: build
+  result: pass
+  what: whole-board build, Basic tier; every gate passes
+  record: results/59a_axi_tx/board_build.json
+  sha256: 0a91499e629c80525d6576bc7e89f60b83e97e05b5b3da1716e3a189299cde31
+- id: E5
+  activity: board
+  result: pass
+  runs: 17
+  what: pre-registered plan on the final bitstream, clean commit; each verdict as planned
+  record: results/59a_axi_tx/board_run.json
+  conditions: wall power; power gate before programming; JTAG XADC before and after, fabric XADC after every run, inside
+    the operating conditions; JTAG build ID matched; fast supply droop not seen
+  sha256: ab761ea3eac25fea16a7e5886c6644a25fa3a313179cd9b262144c9ded59699e
+measurements:
+- id: M1
+  what: LUTs, whole board design
+  category: resources
+  key: lut
+  unit: LUT
+  record: results/59a_axi_tx/board_build.json
+  field: utilization.lut
+  conditions: routed whole-board build, Vivado 2026.1
+  value: 7043
+  sha256: 0a91499e629c80525d6576bc7e89f60b83e97e05b5b3da1716e3a189299cde31
+- id: M2
+  what: flip-flops, whole board design
+  category: resources
+  key: ff
+  unit: FF
+  record: results/59a_axi_tx/board_build.json
+  field: utilization.ff
+  conditions: as M1
+  value: 7308
+  sha256: 0a91499e629c80525d6576bc7e89f60b83e97e05b5b3da1716e3a189299cde31
+- id: M3
+  what: worst setup slack
+  category: timing
+  key: wns_ns
+  unit: ns
+  record: results/59a_axi_tx/board_build.json
+  field: timing.wns_ns
+  conditions: routed, 100 MHz clock
+  value: 0.169
+  sha256: 0a91499e629c80525d6576bc7e89f60b83e97e05b5b3da1716e3a189299cde31
+- id: M4
+  what: worst hold slack
+  category: timing
+  key: whs_ns
+  unit: ns
+  record: results/59a_axi_tx/board_build.json
+  field: timing.whs_ns
+  conditions: routed, 100 MHz clock
+  value: 0.035
+  sha256: 0a91499e629c80525d6576bc7e89f60b83e97e05b5b3da1716e3a189299cde31
+- id: M5
+  what: total on-chip power estimate
+  category: power
+  key: power_w
+  unit: W
+  record: results/59a_axi_tx/board_build.json
+  field: power.total_w
+  conditions: report_power after routing, vectorless, confidence Medium
+  value: 0.185
+  sha256: 0a91499e629c80525d6576bc7e89f60b83e97e05b5b3da1716e3a189299cde31
+- id: M6
+  what: minimum AXI4-Lite write latency to the block-RAM target
+  category: latency
+  key: write_min
+  unit: clocks
+  record: results/59a_axi_tx/summary.json
+  field: bram_write_latency_min
+  conditions: one run (bram_random_rw) on the board; clocks as counted by axil_mon
+  value: 2
+  sha256: 25f8f05aa09c7059b0d0d95589995883f371b78af8cb7660f2c54ad2b330c7d0
+- id: M7
+  what: maximum AXI4-Lite write latency to the block-RAM target
+  category: latency
+  key: write_max
+  unit: clocks
+  record: results/59a_axi_tx/summary.json
+  field: bram_write_latency_max
+  conditions: as M6; includes injected back-pressure
+  value: 12
+  sha256: 25f8f05aa09c7059b0d0d95589995883f371b78af8cb7660f2c54ad2b330c7d0
+- id: M8
+  what: minimum AXI4-Lite read latency to the block-RAM target
+  category: latency
+  key: read_min
+  unit: clocks
+  record: results/59a_axi_tx/summary.json
+  field: bram_read_latency_min
+  conditions: as M6
+  value: 1
+  sha256: 25f8f05aa09c7059b0d0d95589995883f371b78af8cb7660f2c54ad2b330c7d0
+- id: M9
+  what: maximum AXI4-Lite read latency to the block-RAM target
+  category: latency
+  key: read_max
+  unit: clocks
+  record: results/59a_axi_tx/summary.json
+  field: bram_read_latency_max
+  conditions: as M7
+  value: 8
+  sha256: 25f8f05aa09c7059b0d0d95589995883f371b78af8cb7660f2c54ad2b330c7d0
+- id: M10
+  what: board runs that passed
+  category: board
+  unit: runs
+  record: results/59a_axi_tx/summary.json
+  field: runs_pass
+  conditions: of 17 planned runs, one bitstream (44b780c9)
+  value: 17
+  sha256: 25f8f05aa09c7059b0d0d95589995883f371b78af8cb7660f2c54ad2b330c7d0
+- id: M11
+  what: runs against our own peripheral and FIFO whose digest and cycle count equal the simulation's
+  category: board
+  unit: runs
+  record: results/59a_axi_tx/summary.json
+  field: parity_digest_equal
+  conditions: of 13 such runs; 0 differences in logged transactions
+  value: 13
+  sha256: 25f8f05aa09c7059b0d0d95589995883f371b78af8cb7660f2c54ad2b330c7d0
+- id: M12
+  what: runs on which AMD's checker asserted, all of them runs on which ours flagged an AXI4-Lite rule
+  category: board
+  unit: runs
+  record: results/59a_axi_tx/summary.json
+  field: amd_asserted
+  conditions: AXI4-Lite only; its status bits not decoded to rule names
+  value: 5
+  sha256: 25f8f05aa09c7059b0d0d95589995883f371b78af8cb7660f2c54ad2b330c7d0
+- id: M13
+  what: formal proofs passed
+  category: verification
+  unit: proofs
+  record: results/59a_axi_tx/summary.json
+  field: formal_proofs_pass
+  conditions: of 32, depth 20, Yosys 0.33
+  value: 32
+  sha256: 25f8f05aa09c7059b0d0d95589995883f371b78af8cb7660f2c54ad2b330c7d0
+- id: M14
+  what: checker mutants killed by at least one proof
+  category: verification
+  unit: mutants
+  record: results/59a_axi_tx/summary.json
+  field: formal_mutants_killed
+  conditions: of 53 (17 semantic), depth 12
+  value: 53
+  sha256: 25f8f05aa09c7059b0d0d95589995883f371b78af8cb7660f2c54ad2b330c7d0
+- id: M15
+  what: false-alarm scenarios that fired a rule
+  category: verification
+  unit: scenarios
+  record: results/59a_axi_tx/false_fire.json
+  match: '"fired":\s*(\d+)'
+  conditions: of 11 scenarios, simulation
+  value: 0
+  sha256: 5202b178241e6b29c4aae3f3f000e840d57a77a56bfbc22978103aa6295f2e91
+gaps:
+- about: throughput
+  text: Not measured as a data rate; the records give transaction counts and latencies, not bytes per second on either bus.
+- about: latency
+  text: Latency is from one run (bram_random_rw) with random back-pressure; none for the peripheral target or without back-pressure.
+- about: E3
+  text: The 11 scenarios were chosen by the checker's author; they show those legal cases are quiet, not that no legal traffic
+    can fire a rule.
+- about: amd_ip
+  text: The AMD IP build test (amd_ip_probe.json) shows the five cores build on Vivado 2026.1 without a licence; the AMD
+    traffic generator and stream checker were not used on the board.
+- about: verification
+  text: Proofs are bounded to 20 cycles and the properties were written by the checker's author; AMD's checker agreeing
+    on hardware is the independent evidence. The clean Verilator lint run has no record in results/.
+- about: board
+  text: BRAM-target runs are compared with a transaction-level model, not with simulation cycle for cycle (Icarus cannot
+    run the AMD core); block RAM keeps contents across runs, so unwritten words are unknown to the model.
+- about: build identity
+  text: Board evidence is tied to commit e562dd3 (build ID 44b780c9); later commits changed build inputs, not logic, so
+    the current tree has another build ID and no rebuild or board re-run was made.
+- about: operating conditions
+  text: The XADC samples about 1 MSPS with alarms latched between reads, so a shorter supply droop is not seen.
+- about: behaviour
+  text: 'Guessable wrongly (RTL and docs/axi_tx.md): the target select is a static mux, change it only while no program
+    runs; rules 0-8 are not evaluated while ARESETn is low; a READY-to-VALID path shows only as a VALID that drops or changes;
+    outstanding counts saturate at 255; a read of an unwritten word counts as unchecked, not matched; whether a write to
+    an unlisted window offset is ignored was not checked.'
+- about: scope
+  text: One AXI4-Lite transaction in flight, no IDs, bursts, slave side or soak mode; stream data 32-bit only; AMD's checker
+    does not watch the stream.
+- about: readout speed
+  text: A board run reads every counter and the log over 115200-baud UART, taking 7 to 33 seconds; no faster readout is
+    built.
+next_steps:
+- Decode the AMD checker's pc_status bits to rule names using the AMD protocol-checker guide's table, and add them to the
+  run record.
+- Add the full AXI4 transactor, the slave side and a soak mode that steers random traffic toward untested combinations.
+- Root-cause the 64-bit stream synthesis trim, or keep the core 32-bit only and say so at every interface.
+- Run the board plan again on a bitstream built from the current tree, so the evidence and the build ID agree.
+open_questions:
+- Is a faster readout (JTAG-AXI or a higher baud rate) worth building before the next board plan?
+history:
+- date: '2026-11-12'
+  brief: 59A
+  note: transactor, checker, scoreboard, formal proofs, board demonstration and showcase page (site/showcase/axi_transactor.yaml);
+    review rounds added rule 9 and re-ran the whole plan; 17 of 17 board runs pass
+- date: '2026-11-13'
+  brief: '68'
+  note: handover written to the documentation standard
+numbers_allow:
+- token: 8N1
+  reason: UART framing of the test shell (shell/PROTOCOL.md)
+- token: 0x40-0x4C
+  reason: register offsets from docs/axi_tx.md
+- token: 0x50-0x55
+  reason: register offsets from docs/axi_tx.md
+- token: '0x20'
+  reason: first unmapped peripheral offset, from docs/axi_tx.md
+state:
+  stage: board-verified
+  gates:
+    build_2026_1: pass
+    board_plan: pass
+  vivado: '2026.1'
+  kb_pin: 1fc7ed8
+  build_id: 84dd185a

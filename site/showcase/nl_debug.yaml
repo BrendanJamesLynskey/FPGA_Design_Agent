@@ -56,6 +56,7 @@ values:
   t_cycle: {source: results/50a_nl_debug/hero.json, expr: "get:marks.0.x"}
 headline: "Nexys A7-100T (xc7a100tcsg324-1), Vivado 2026.1: {passed} of {runs} known-answer requests on one design, written in plain English, were answered from captures on the board. Every answer matched the known result, and the value read back over the serial link where a register was read back."
 description: "A plain-English request becomes a probe plan, an on-chip logic analyser build, a capture on the Nexys A7 and an answer that quotes only the capture: measured on one design with known answers."
+docs: results/50a_nl_debug/README.md
 hero: {kind: wave, source: results/50a_nl_debug/hero.json, path: "", caption: "One real run replayed: the request, the plan, the build, then the capture filling in sample by sample around the trigger, and the answer read from it."}
 story:
   problem: "An on-chip logic analyser (ILA: logic added to the design that records chosen signals into on-chip memory, one sample per clock) shows what a design really does on the board, but setting one up is slow: choosing signals that survive synthesis, packing them into the analyser's ports, writing the trigger, rebuilding and reading the waveform. On the free Basic licence tier of Vivado the analyser is also limited: one analyser per design, so one clock; at most {ports} probe ports (groups of wires into the analyser); and one comparator per port (the hardware that tests a port against the trigger value). A request that does not fit fails late, after a long build."

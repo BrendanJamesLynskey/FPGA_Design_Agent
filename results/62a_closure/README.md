@@ -85,3 +85,17 @@ Each closure folder holds:
 - `summary.json`: the stop reason, unmet goals, iterations and cost;
 - `llm_replay.json`: every model call;
 - `rtl_final/`: the RTL as the run left it.
+
+## Reproduce
+
+- A closure case: `python3 -m agent.graph.closure_task benchmark/course/tasks/c13_hough_lines ...` (other tasks the same way; the
+  full arguments are in [docs/closure_loop.md](../../docs/closure_loop.md)). Each run needs whole-board Vivado 2026.1 builds
+  under a heavy slot and paid calls to `openai/gpt-6-luna` through OpenRouter; results can differ on a re-run.
+- The plan: `python3 -m flow.timing_plan <design dir>`, or `python -m agent run <spec.md> --design-plan --closure on`.
+- The latency check is `python3 results/62a_closure/latency/run_latency.py` (simulation only).
+
+## Known gaps and limits
+
+The section "What this does not show" above is the list of limits: one run per case, no rates, the plan's 6-clock latency
+not measured, the in-graph loop tested with fakes, no calibration rows, no first-build comparison on other designs, no
+board run, and two runs that predate the synthesis guard.

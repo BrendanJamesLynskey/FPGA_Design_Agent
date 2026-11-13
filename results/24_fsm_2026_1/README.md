@@ -21,3 +21,20 @@ paths -1.286 to -0.660 ns, register-to-output -1.544 to -1.859 ns), `sep_in1` an
 routed run each; such moves are run-to-run placement differences, not a trend. Of the summary numbers only the decoded-output slack
 changed (-1.544 to -1.859 ns). Coverage (simulation) and formal results are tool-independent and are read from `results/24_fsm`.
 The I/O study, the family runs and the drills of brief 24 were not re-run.
+
+## Records
+
+The table above lists each file. `synth/*.kv` and `impl/*.kv` are the raw per-variant results; `make_tables.py` builds the tables.
+
+## Reproduce
+
+The three commands above (Vivado 2026.1, a heavy slot, one Vivado per variant). The simulator survey in `simprobe/` is
+re-run by the survey script in the earlier folder's `simprobe/`. No board or paid agent run.
+
+## Known gaps and limits
+
+- One routed run per variant: the three moved variants are placement differences, not a trend.
+- Out of context (no I/O, no board); synthesis-only numbers carry unplaced wire delay.
+- Coverage and formal results are not re-run here; the I/O study, family runs and drills were not repeated.
+- The xsim report tool `xcrg` stops for want of a simulator licence on the Basic tier, so xsim coverage reports are not available.
+- Supersedes `results/24_fsm` for the Vivado tables.

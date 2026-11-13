@@ -17,6 +17,15 @@ self-check, the matrix in the review index, the fixed baseline) are covered by u
 re-traced after their tags were migrated by tool. An end-to-end agent run with traceability on is a follow-up: at V3
 the agent's stage 2 needs a Verilator coverage build and a Vivado synthesis, so it cannot run as a simulation-only job.
 
+## Records
+
+| Path | What |
+|---|---|
+| `summary.json` | every number the prose quotes |
+| `t1_dimmer_counter_*`, `c11_nco_mixer_*`, `c12_nexys_pwm_audio_*` | per design: `_trace.json` (matrix), `_trace.md`, `_trace.txt` (gate output), `_lint.json` and `_lint.txt` (FDA-HDL v1.0) |
+| `c11_nco_mixer_tags.diff`, `c12_nexys_pwm_audio_tags.diff` | the tags inserted into the two agent designs from their testplans |
+| `known_bad/` | the three deliberately broken T1 runs: `kb<N>.diff`, `kb<N>_trace.txt`, `kb<N>_trace.json` |
+
 ## The three designs
 
 | Design | Source | Requirements (methods) | Methods passing | Pending | Tests and properties (cite a requirement / structural / untagged) | Coverage holes (justified) | Matrix gates | FDA-HDL v1.0 |
@@ -114,3 +123,12 @@ python3 flow/lint_ruleset.py designs/t1_dimmer_counter --gates designs/t1_dimmer
 The matrices are baselines: a later `flow/traceability.py ... --baseline results/53_traceability/t1_dimmer_counter_trace.json`
 lists what changed since, and fails `changed_requirements_reverified` for a requirement whose text changed while its
 evidence did not.
+
+## Known gaps and limits
+
+- The agent-side pieces (clarify-stage quality check, tagging prompt and self-check, review-index matrix, fixed baseline) are covered by unit tests only; no end-to-end agent run with traceability on was made.
+- c11 and c12 are earlier agent runs re-traced after their tags were migrated by tool, and copies of their run directories; neither was run on the board, so their hardware rows are pending.
+- T1's hardware evidence is the earlier bring-up of a bitstream that predates this work; the RTL has changed since only by comment lines, which that record cannot prove (a build ID read back from the board would).
+- c11 fails two I/O-constraint gates added to the flow after its run, and no requirement names them, so its matrix does not show it; c12 has 75 toggle holes with no justification and its hidden tests failed (a spec-interpretation escape): a complete matrix does not show that the spec was read wrongly.
+- T1's one open coverage gap (bits 7:4 of the press counters) is justified by similarity, which is weaker than a test.
+- Three designs only. The known-bad runs defer coverage (kb1, kb2) and analysis (all three). DO-254-style evidence, not a claim of compliance with any standard.

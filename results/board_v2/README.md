@@ -12,3 +12,22 @@ Each design was built with `flow/run_vivado.sh` and run 3 times with `python3 fl
 Times per run (s): b2_tmp_adt7420: 40.4, 37.5, 34.3; b2_acl_adxl362: 35.2, 35.1, 35.2; b2_qspi_jedec: 34.9, 34.6, 34.7; b2_mic_pdm: 36.3, 36.3, 42.5
 
 The cable serial appears only as its last 4 characters; no `/dev` path is written.
+
+## Records
+
+- `b2_*.json` (the four designs in the table): the final invocation's 3 board runs of that design, with the steps, the power gate and the self-check measurements.
+- `t1_*.json`, `t2_*.json` (sixteen development-task reference designs built under `build/bench/`, from the brief 06a benchmark bring-up): one passing board run each, in the same format.
+- `runs/`: all 30 runs, written by the same command. It is git-ignored (private runs) and is not in the repository; only the final-invocation JSON files are committed.
+
+## Reproduce
+
+Needs the Nexys A7-100T, the board lock and the design's Vivado build (`flow/run_vivado.sh designs/<name>` under a heavy slot):
+`python3 flow/board_check.py designs/<name> --runs 3` (the `t1_*`/`t2_*` records name `build/bench/<id>` designs). The records cannot be regenerated without the board.
+
+## Known gaps and limits
+
+- The table above covers only the four `b2_*` designs; the sixteen `t1_*` and `t2_*` records are a single run each, and their pass rules live in each task's own checks, not in this README.
+- SRAM programming only, over JTAG; no flash was written.
+- The bitstreams of the earlier runs were built with an earlier Vivado release; the build stamp is the same in every run of a design.
+- Each design's pass rule is its `selfcheck.py` docstring, written before the board runs; the checks are known-answer checks of one sensor or interface, not a sweep of conditions.
+- 12 of the 30 runs came from an uncommitted tree and 6 had an uncommitted documentation edit (see above); those runs are not committed.

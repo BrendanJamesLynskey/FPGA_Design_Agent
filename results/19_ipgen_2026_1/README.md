@@ -16,3 +16,23 @@ Compared with the earlier release:
 - **Read-back:** identical, except that 2026.1 reports a new `CONFIG.MEMORY_OPTIMIZATION` (true) on the Block Memory Generator, and the
   DDS read-back `C_PHASE_INCREMENT_VALUE` is the same value for `dds` and `dds_no_margin` (it differed on the earlier release) while
   their simulated outputs are unchanged. Not investigated further.
+
+## Records
+
+Each example directory (`fir`, `cic`, `chain_fir`, `bmg_sine`, `dds`, `dds_no_margin`, `dds_coherent`) holds `spec.yaml`,
+`design.json`, `readback.json`, `sim.json`, `ooc.json`, the stamped `ooc_*.rpt` files and the IP data and stimulus files,
+as described in the earlier folder's README; `chain/` holds `chain.yaml`, `chain.svg`, `chain_results.json` and
+`output_spectrum.csv`.
+
+## Reproduce
+
+The commands are in the second paragraph: one `flow.ipgen.run` per example (Vivado 2026.1 and xsim, heavy slot) and
+`flow.ipgen.chain` for the chain (Python only). `flow/ipgen/tests/test_19_results.py` recomputes the golden outputs from the committed stimulus and output files.
+
+## Known gaps and limits
+
+- Out-of-context synthesis is an upper bound on Fmax: no routing, no board.
+- The new `CONFIG.MEMORY_OPTIMIZATION` read-back and the DDS `C_PHASE_INCREMENT_VALUE` change were not investigated.
+- Only the DDS, FIR, CIC and Block Memory Generator adapters exist; the cascade was simulated stage by stage, not as one run.
+- The chain figures come from a Python model of the chain, not from a board or a measured microphone.
+- Supersedes `results/19_ipgen`.

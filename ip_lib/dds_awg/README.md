@@ -85,10 +85,25 @@ Dynamic power is vectorless (default toggle rates, no simulation activity): use 
 - Clock crossings: none.
 - Part, board or pin: none (the sine table is built in an initial block with $sin; Vivado 2026.1 synthesises it; rom_style attributes steer the variants).
 - Depends on: nothing.
-- Limits: no table interpolation: the sine's spurs are set by LUT_W (about -6 dB per bit below the carrier, 8 bits: SFDR near 48 dB for the table alone); no phase offset input.
 
 ## Cost table
 
 measured costs are in the Variants section above; in context inside b30_hil_audio the 0.1.0 design measured 115 LUT, 48 FF, 1 RAMB18 at PHASE_W 32, LUT_W 8, OUT_W 16 (Vivado 2026.1, xc7a100t -1, timing met at 100 MHz; results/vivado_2026_1_remeasure/b30_hil_audio.json).
 
 Licence: MIT (this repository).
+
+## Known gaps and limits
+
+- No table interpolation: the sine's spurs are set by LUT_W (about -6 dB per bit below the carrier, 8 bits: SFDR near 48 dB for the table alone); no phase offset input.
+- The 0.2.0 variants have not been run on a board; the board measurement is of the 0.1.0 single-table design.
+
+## Next steps
+
+1. Run the 0.2.0 variants on the Nexys A7 inside b30_hil_audio and repeat the audio-jack tone measurement.
+
+## History
+
+- 0.2.0 (2026-11-12): Implementation variants: `IMPL = "bram"` (default; the sine table read one clock early at the next phase into a block RAM register) and `IMPL = "lut"` (asynchronous LUT ROM). Same ports, function and latency; both bit-exact against the model; measured out of context (built alone, no I/O constraints) on the xc7a100t. Seeded faults for both variants.
+- 0.1.0 (2026-11-11): First version: simulated against the Python models, seeded faults caught, measured on the Nexys A7-100T inside designs/b30_hil_audio where noted in README.md.
+
+Full entries: [CHANGELOG.md](CHANGELOG.md).

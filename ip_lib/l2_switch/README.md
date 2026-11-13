@@ -53,10 +53,26 @@ Seeded faults (`faults.yaml`, run by `flow/net/faults.py`):
 - Clock crossings: none.
 - Part, board or pin: none.
 - Depends on: match_exact, pkt_queue_sched.
-- Limits: no egress tag push/pop (use pkt_rewrite); no STP; ingress filter only; tested at NP 4 only.
 
 ## Cost table
 
 pending: OOC synthesis sweep deferred (no heavy slot free on 2026-11-11).
 
 Licence: MIT (this repository).
+
+## Known gaps and limits
+
+- No egress tag push/pop (use pkt_rewrite); no STP; ingress filter only; tested at NP 4 only.
+- Board: no board run of this entry is recorded; its evidence is simulation.
+- Cost: no out-of-context characterisation (no `characterisation:` in ip.yaml), so resources, Fmax and power are not measured for this entry.
+
+## Next steps
+
+1. Measure the out-of-context cost with python -m flow.ipchar l2_switch after adding a characterisation entry.
+2. Test at port counts other than NP 4.
+
+## History
+
+- 0.1.0 (2026-11-11): First version (brief 40): simulated bit-exact against the Python golden model; see README.md.
+
+Full entries: [CHANGELOG.md](CHANGELOG.md).

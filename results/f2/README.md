@@ -1,6 +1,10 @@
 # results/f2
 
-Brief 05a: the agent core driven directly (no LLM) on T1 with real tools, by `python -m agent.core.smoke --hardware --record agent/tests/fixtures/t1_episode.json`.
+This folder holds the run records of the agent core and the live agent runs (Deep Agents with a low-cost model and Claude Code with Haiku, Sonnet and Opus) on T1, `designs/t1_dimmer_counter`, from briefs 05a to 05n. Brief 05a: the agent core driven directly (no LLM) on T1 with real tools, by `python -m agent.core.smoke --hardware --record agent/tests/fixtures/t1_episode.json`.
+
+## Records
+
+The tables below list every file by the brief that made it, newest briefs last.
 
 | File | What |
 |---|---|
@@ -115,3 +119,18 @@ results measure nothing about the models. Single runs on `t1_dimmer_counter`, or
 
 At V2 all three arms reach a bitstream on T1 (single runs, not scored). After PRs #34, #35, #39 and #40, Sonnet reached a valid V3 pass on T1 in 1 of 2 runs (single runs, not scored). The 05g Deep Agents cvdp run that passed stage 2 ran at V1, so
 compare the two arms only at the same `--verif-level`.
+
+## Reproduce
+
+- Brief 05a: `python -m agent.core.smoke --hardware --record agent/tests/fixtures/t1_episode.json` (Vivado, the Nexys A7-100T and the board lock).
+- Agent runs (05b onward): `python -m agent run designs/t1_dimmer_counter/spec.md --interview oracle --review off [--profile cvdp] [--verif-level V1|V2|V3]`; the Claude Code arm adds `--cc-model <model>`. Each run is a paid OpenRouter call or a plan-billed Claude Code session, needs Vivado under a heavy slot, and gives a different result each time.
+- The records cannot be regenerated exactly; the settings of each run are in its JSON.
+
+## Known gaps and limits
+
+- Single runs on one task (`t1_dimmer_counter`): no rates, and arms are comparable only at the same `--verif-level`.
+- Most first-round runs are nulls (stopped at stage 1 or 2) and many stops were harness defects, fixed afterwards; the records keep the first-round files next to the reruns.
+- The Claude Code arm results before the tool-text fix (PR #23) say nothing about the models, as the section above states.
+- No agent-designed bitstream has completed board bring-up: run 7 paused at hardware approval and was then run by hand with two failures, and later runs stop at the stage-9 pause with the board not programmed.
+- Cost for the Claude Code arm is the plan's own estimate; some runs record no weekly-usage reading.
+- The early records quote build figures (WNS, power, junction temperature) from an earlier Vivado release; read them as run outcomes, not as published numbers.

@@ -49,10 +49,25 @@ Seeded faults (`faults.yaml`, run by `flow/net/faults.py`):
 - Clock crossings: none.
 - Part, board or pin: none.
 - Depends on: nothing.
-- Limits: no IPv6 address rewrite; the action word is 160 bits (tables usually store an index into an action RAM).
 
 ## Cost table
 
 pending: OOC synthesis sweep deferred (no heavy slot free on 2026-11-11).
 
 Licence: MIT (this repository).
+
+## Known gaps and limits
+
+- No IPv6 address rewrite; the action word is 160 bits (tables usually store an index into an action RAM).
+- Board: no board run of this entry is recorded; its evidence is simulation.
+- Cost: no out-of-context characterisation (no `characterisation:` in ip.yaml), so resources, Fmax and power are not measured for this entry.
+
+## Next steps
+
+1. Measure the out-of-context cost with python -m flow.ipchar pkt_rewrite after adding a characterisation entry.
+
+## History
+
+- 0.1.0 (2026-11-11): First version (brief 40): simulated bit-exact against the Python golden model; see README.md.
+
+Full entries: [CHANGELOG.md](CHANGELOG.md).

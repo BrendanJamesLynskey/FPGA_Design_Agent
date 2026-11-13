@@ -58,3 +58,18 @@ heavy slot for its whole length (about an hour when it goes well), so three seed
 Both references: `reference_d24_*.json` (hidden bench passes, mutants killed, routed through `ref_build.py`: WNS +4.24 and +3.54 ns, the grader reads the pin drivers: all flops for the first, all LUTs for the second).
 One seed each says nothing about a rate; it says the drills are gradeable and that the agent without the new skills picked the registered decode when the spec said flip-flops and the
 combinational/Mealy form when the spec said no added latency.
+
+## Reproduce
+
+The commands are the `Reproduce:` line above. The controller variants need Vivado and a heavy slot (superseded: use
+`results/24_fsm_2026_1`); `make_coverage.py`, `run_formal.py` (SymbiYosys with z3), `equivalence.txt` and `simprobe/run_probe.sh`
+need no Vivado. The drill runs were paid agent runs and are not regenerated from the repository.
+
+## Known gaps and limits
+
+- The Vivado variant tables are superseded by `results/24_fsm_2026_1`; do not cite their numbers from this folder.
+- Drills: one seed of the first drill, one of the second (not finished); three seeds each were planned. They were run without the brief's new skills and say nothing about a rate.
+- Routed numbers for encodings, reset styles and the other-clock input were not run (synthesis only); the Zynq-7000 and K26 probes are synthesis only, with no I/O-block flop probe on UltraScale+.
+- Formal and latency figures are one run each on a loaded machine; one controller, one tool version.
+- The coverage check is evidence only: not an agent tool, not on by default, and the agent does not write `verif/fsm.yaml`; the agent's own V2 coverage was not graded for run A1.
+- xsim cover-property hit counts were not found in its report tool.

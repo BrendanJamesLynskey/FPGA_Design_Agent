@@ -17,6 +17,8 @@ Re-measured result folders (each has its own README and says how it compares wit
 | [19_ipgen_2026_1](../19_ipgen_2026_1/README.md) | the IP-generation worked examples |
 | [33_vivado_speed_2026_1](../33_vivado_speed_2026_1/README.md) | build speed by thread count and the build cache |
 
+## Records
+
 In this folder:
 
 | File | What |
@@ -37,3 +39,15 @@ from the earlier release), the paired cost of the UltraFast reports, the FSM I/O
 the brief 35 clock-pessimism figures in the course. Board and instrument outcomes (UART tests, captures, audio, frames) and agent-run
 outcomes (hidden tests, turns, hours, cost) are not Vivado numbers and are kept as recorded; where their bitstreams came from the
 earlier release the pages say so without naming it.
+
+## Reproduce
+
+- `python3 results/vivado_2026_1_remeasure/collect.py <xpm before dir> <xpm after dir>` writes the three collected JSON files from the builds.
+- The builds are `flow/run_vivado.sh <design> base` (for the development rebuilds with `FDA_BUILD_CACHE=0`), `benchmark/tools/ref_build.py <task dir>` for the course references and the QR1 probe with and without `flow/xpm_cdc.tcl` (`FDA_XPM_CDC=0`). Vivado 2026.1, heavy slots, a 6 GB scope each. The re-measured folders each carry their own commands.
+- The development rebuilds used saved designs under `runs/<run_id>/<task>` that are not committed, so they cannot be re-run from a clean checkout.
+
+## Known gaps and limits
+
+- The list of withdrawn figures above is the limit: those numbers were not re-run and are not shown on the published pages.
+- One build per case; slack and placement differences between releases are single-run differences, not a trend.
+- Board and instrument outcomes and agent-run outcomes are kept as recorded; where their bitstreams came from the earlier release they are not re-measured.

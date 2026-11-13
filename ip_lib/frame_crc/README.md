@@ -48,10 +48,24 @@ Seeded faults (`faults.yaml`, run by `hil/ip_faults.py`):
 - Clock crossings: none (one clock; the pixel clock is the caller's).
 - Part, board or pin: none.
 - Depends on: nothing.
-- Limits: the CRC is bitwise per word (a combinational loop of PIX_W steps), fine to about 150 MHz at PIX_W 24 on a -1 part; frame_start must precede the first pixel by at least zero clocks.
 
 ## Cost table
 
 in-context cost (not an OOC sweep): 275 LUT, 257 FF at PIX_W 24 inside b30_hil_audio (Vivado 2026.1, xc7a100t -1, 100 MHz met; results/vivado_2026_1_remeasure/b30_hil_audio.json); the OOC sweep is still to do.
 
 Licence: MIT (this repository).
+
+## Known gaps and limits
+
+- The CRC is bitwise per word (a combinational loop of PIX_W steps), fine to about 150 MHz at PIX_W 24 on a -1 part; frame_start must precede the first pixel by at least zero clocks.
+- Cost: no out-of-context characterisation (no `characterisation:` in ip.yaml), so resources, Fmax and power are not measured for this entry.
+
+## Next steps
+
+1. Pipeline the per-word CRC if a design needs it above about 150 MHz at PIX_W 24.
+
+## History
+
+- 0.1.0 (2026-11-11): First version (brief 30): simulated against the Python models, seeded faults caught, measured on the Nexys A7-100T inside designs/b30_hil_audio where noted in README.md.
+
+Full entries: [CHANGELOG.md](CHANGELOG.md).

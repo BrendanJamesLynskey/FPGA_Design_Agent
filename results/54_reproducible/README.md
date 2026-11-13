@@ -98,3 +98,24 @@ runs `flow/release.py check` on it.
 | `conditions.tcl` | sensor conditions over JTAG (now, latched min/max, flags) and USR_ACCESS, read-only |
 | `raw/<label>/` | each build's `manifest.json`, `run.json`, `gates.json`, `result_hash.json`, `stages.txt`, `tool.txt`, `rc.txt` (no bitstreams, no reports) |
 | `board/` | the read-back records (cable serial removed) |
+| `board_shell11/` | a separate fresh T1 build with the protocol 1.1 shell, its read-back over JTAG and the UART, and 8 of 8 hardware tests (its own README) |
+| `sample_bundle/` | the sample release bundle described above |
+
+## Reproduce
+
+    results/54_reproducible/repro.sh <jobs file> <raw dir>     # one fresh Vivado 2026.1 build per line, run one at a time
+    python3 results/54_reproducible/compare.py <raw dir>       # results.md, results.json, raw/<label>/
+
+Each jobs-file line is `<label> <tree> <design dir> <threads>`, where each `<tree>` is a clean checkout of the same commit in a
+different directory. A rerun needs Vivado 2026.1, a heavy slot and nothing else building (about 6 GB each). The board records
+need a Nexys A7-100T attached and `conditions.tcl`; they cannot be regenerated from the committed files. The build IDs here are
+from commit `41264bf` and will not reappear at the current head. The jobs file used is not committed.
+
+## Known gaps and limits
+
+- Two designs (T1 and the c13 course reference) and one commit; one build per label, so only equality or difference of single builds is shown.
+- `SW_CRC` and `SW_HDR_SHA256` were not reproduced from the file bytes: they follow the configuration data in every pair, which is all that is known.
+- The build ID includes the thread count although varying it was measured harmless; whether to drop it is undecided.
+- c13 was built from an untracked staging copy, so its manifests say `dirty: true`.
+- The board read-back is one board; the sensor cannot see nanosecond supply droop, and the shell 1.1 record's latched minimum and maximum cover only the time up to programming, not the test window.
+- UltraScale+ and Zynq PS-loaded USR_ACCESS behaviour is documented, not measured. The sample bundle has no traceability matrix or review pages.

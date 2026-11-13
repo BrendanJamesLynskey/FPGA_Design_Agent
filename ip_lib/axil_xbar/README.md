@@ -62,10 +62,26 @@ Seeded faults (`faults.yaml`, run by `hil/ip_faults.py --blocks axil_xbar`):
 - Clock crossings: none (one clock; put a clock converter on a link that crosses domains).
 - Part, board or pin: none.
 - Depends on: nothing.
-- Limits: AXI4-Lite only (no bursts or IDs); 32-bit data; waits for both AWVALID and WVALID before it accepts a write; no register slices or timeouts (a slave that never answers stalls its master); fixed round robin, no priorities or QoS.
 
 ## Cost table
 
 in-context cost inside designs/b65a_axil_soc (one master, three slaves): see results/65a_blockdesign; the OOC sweep is still to do.
 
 Licence: MIT (this repository).
+
+## Known gaps and limits
+
+- AXI4-Lite only (no bursts or IDs); 32-bit data; waits for both AWVALID and WVALID before it accepts a write; no register slices or timeouts (a slave that never answers stalls its master); fixed round robin, no priorities or QoS.
+- Board: no board run of this entry is recorded; its evidence is simulation.
+- Cost: no out-of-context characterisation (no `characterisation:` in ip.yaml), so resources, Fmax and power are not measured for this entry.
+
+## Next steps
+
+1. Measure the out-of-context cost at two to four slaves with python -m flow.ipchar axil_xbar.
+2. Run designs/b65a_axil_soc on the board so the crossbar has hardware evidence.
+
+## History
+
+- 0.1.0 (2026-11-13): First version: N_M x N_S AXI4-Lite crossbar for the block-design generator's connection automation; simulated with the AXI4-Lite protocol checker (axi_tx/rtl/axil_checker.sv) on every link; write fairness, a reset with transfers in flight and two more seeded faults added after an independent review; see README.md.
+
+Full entries: [CHANGELOG.md](CHANGELOG.md).

@@ -54,10 +54,26 @@ Seeded faults (`faults.yaml`, run by `flow/net/faults.py`):
 - Clock crossings: none (one clock).
 - Part, board or pin: none in RTL; the 50 MHz clock, its 45-degree copy to the PHY and the pins are the board's (KB board/nexys_a7_100t/ethernet).
 - Depends on: nothing.
-- Limits: full duplex only; no pause frames, no MDIO, no half-duplex collision handling.
 
 ## Cost table
 
 pending: OOC synthesis sweep deferred (no heavy slot free on 2026-11-11).
 
 Licence: MIT (this repository).
+
+## Known gaps and limits
+
+- Full duplex only; no pause frames, no MDIO, no half-duplex collision handling.
+- Board: no board run of this entry is recorded; its evidence is simulation.
+- Cost: no out-of-context characterisation (no `characterisation:` in ip.yaml), so resources, Fmax and power are not measured for this entry.
+
+## Next steps
+
+1. Measure the out-of-context cost with python -m flow.ipchar eth_mac_rmii after adding a characterisation entry.
+2. Run designs/b63d_nexys_net on the board with a cable to a host.
+
+## History
+
+- 0.1.0 (2026-11-11): First version (brief 40): simulated bit-exact against the Python golden model; see README.md.
+
+Full entries: [CHANGELOG.md](CHANGELOG.md).

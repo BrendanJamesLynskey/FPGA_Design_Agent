@@ -78,10 +78,25 @@ Dynamic power is vectorless (default toggle rates, no simulation activity): use 
 - Clock crossings: none.
 - Part, board or pin: none.
 - Depends on: nothing.
-- Limits: the word variant has a combinational XOR network from the operand inputs to the result register: out of context that path has no register before it, so no Fmax is recorded there. Inside a core, synthesis can merge the logic that drives the operands into the network, so the unit's line in a hierarchy report overstates it (283 LUTs in the BRV32P core, 97 with its hierarchy kept, 95 out of context); read the cost as the whole core's growth (371 LUTs: results/64a_hwsw/core_ooc.json).
 
 ## Cost table
 
 measured costs are in the Variants section above.
 
 Licence: MIT (this repository).
+
+## Known gaps and limits
+
+- The word variant has a combinational XOR network from the operand inputs to the result register: out of context that path has no register before it, so no Fmax is recorded there. Inside a core, synthesis can merge the logic that drives the operands into the network, so the unit's line in a hierarchy report overstates it (283 LUTs in the BRV32P core, 97 with its hierarchy kept, 95 out of context); read the cost as the whole core's growth (371 LUTs: results/64a_hwsw/core_ooc.json).
+- Board: no board run of this entry is recorded; its evidence is simulation and out-of-context builds.
+
+## Next steps
+
+1. Run the BRV32P core with the custom instruction on a board and compare its CRC results with zlib.
+2. Register the word variant's operand path if it must meet a faster clock inside the core.
+
+## History
+
+- 0.1.0 (2026-11-13): First version (brief 64A+): two implementation variants (`word`, `byte`) behind one contract, bit-exact against `model.py` and zlib, latency and II measured, seeded faults, and a `function_unit` contract that `hwsw/cfu.py` turns into a CPU custom instruction.
+
+Full entries: [CHANGELOG.md](CHANGELOG.md).

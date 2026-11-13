@@ -4,6 +4,8 @@ The F1B cheap-model screen, run with the CVDP RTL Agent's harness in GitHub Acti
 dispatched from `aa7404c`, G from `main` `d9e9ca4`). Read [REPORT.md](REPORT.md) first. `CVDP_DIR=<clone of CVDP_RTL_Agent> bash results/f1b/tables.sh`
 remakes every table below from the CSVs here, with the CVDP tools at `aa7404c`.
 
+## Records
+
 | File | What |
 |---|---|
 | [PREREG.md](PREREG.md) | The pre-registration (committed before the first scored run) and its five dated deviations |
@@ -21,3 +23,17 @@ remakes every table below from the CSVs here, with the CVDP tools at `aa7404c`.
 | `tables.sh` | Remakes the tables |
 
 Spend: [../spend_ledger.csv](../spend_ledger.csv).
+
+## Reproduce
+
+- Every table from the committed CSVs (no model calls): `CVDP_DIR=<clone of CVDP_RTL_Agent> bash results/f1b/tables.sh`.
+- The runs were dispatched in GitHub Actions on the CVDP agent image named above and paid through OpenRouter; they are not repeatable exactly, and the dispatch commands are in PREREG.md and REPORT.md, not here.
+
+## Known gaps and limits
+
+- Three dispatched arms ran with fewer repeats than planned: G has 2 scored runs, not 3, and MiniMax-M3.1-Flash has none; luna has one run on this image.
+- D3 lost 8 problem-runs to the account's 402 errors; the conclusion is stated to hold without it.
+- The run guards were set too tight four times; those runs are void and kept apart in `void/`.
+- The reliability measures come from this brief's own tool and were not validated against hand labels.
+- Claude Code with a non-Anthropic model is outside the owner's rule, so only smoke runs exist.
+- Cost is provider-reported spend.

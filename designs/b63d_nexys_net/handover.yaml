@@ -1,0 +1,279 @@
+# Brief 68 handover: the facts behind README.md and AGENT.md (docs/documentation_standard.md).
+# Measurement values and every sha256 are filled from the records by `python -m flow.handover fill`;
+# do not type them. Render with `python -m flow.handover write <this directory>`.
+schema: fda-handover/1
+id: b63d_nexys_net
+title: Small network stack on the Nexys A7-100T
+kind: demonstration
+produced_by: human
+summary: Answers ARP and ping, receives and sends UDP, joins IGMP multicast groups and counts frames on the Nexys A7's 10/100
+  Ethernet PHY (LAN8720A, RMII). A UDP service on port 5000 replies with the tag N63D and 21 statistics counters. A frame
+  injector and capture let the host check the stack through the PHY's loopback with no cable. Built and simulated; it has
+  not been run on a board.
+scope_not:
+- a gigabit design; the RGMII MAC in ip_lib cannot run on this board, whose PHY is RMII
+- a board-verified design; no board run exists
+target:
+  part: xc7a100tcsg324-1
+  board: Nexys A7-100T
+  top: b63d_nexys_net_top
+  tool: Vivado 2026.1
+  note: the blocks come from ip_lib; this folder holds the top, constraints, tests and the host script
+clocks:
+- name: CLK100MHZ
+  mhz: 100
+  source: designs/b63d_nexys_net/design.xdc
+  note: board oscillator; an MMCM makes the 50 MHz logic clock (generated clocks c0 and eth_refclk, 20 ns) and a second
+    50 MHz output at 335.25 degrees that is forwarded to the PHY as ETH_REFCLK
+resets:
+- name: CPU_RESETN
+  active: low
+  note: the reset button; the PHY has its own reset (ETH_RSTN), held low by CTRL bit 3
+interfaces:
+- name: UART register window
+  type: test shell, 8N1 UART at 115200 baud (CLKS_PER_BIT 434 at 50 MHz)
+  doc: shell/PROTOCOL.md
+  note: control, own MAC and IP, MDIO, IGMP groups, 21 statistics counters, event counters, XADC codes and latched alarms,
+    frame injector and capture; the map is in the header of rtl/b63d_nexys_net_top.sv; unlisted offsets read 0
+- name: RMII PHY
+  type: LAN8720A on ETH_CRSDV, ETH_RXERR, ETH_RXD[1:0], ETH_TXEN, ETH_TXD[1:0], ETH_REFCLK, MDC and MDIO (LVCMOS33)
+  doc: designs/b63d_nexys_net/host/PLAN.md
+  note: REF_CLK-in mode, 10/100 only; pin timing is constrained against the forwarded eth_refclk with the RMII rev 1.2 figures
+- name: UDP statistics service
+  type: UDP, port 5000 (UDP_PORT register, reset 5000)
+  doc: designs/b63d_nexys_net/rtl/b63d_nexys_net_top.sv
+  note: any good datagram is answered with N63D and the counters, big-endian, to the sender's address and port; on an ARP
+    cache miss it sends an ARP request and drops the datagram, so the sender must retry
+- name: LEDs
+  type: LED[3:0] (LVCMOS33)
+  note: LED0 heartbeat, LED1 receive activity, LED2 transmit activity, LED3 on once any echo reply has been sent
+parameters:
+- name: own MAC
+  value: 02:00:00:00:00:63
+  legal: any; registers MAC_HI and MAC_LO
+  note: reset value, locally administered
+- name: own IPv4
+  value: 192.168.63.2
+  legal: any; register IP
+  note: reset value
+- name: IGMP groups
+  value: 239.63.0.1 and 239.63.0.2
+  legal: registers GROUP0, GROUP1; enabled by GROUP_EN, reset 0
+  note: the filter's exact multicast table is fed from them
+- name: CLKS_PER_BIT
+  value: 434
+  legal: positive integer
+  note: UART bit period at the 50 MHz logic clock
+files:
+- path: designs/b63d_nexys_net/rtl/b63d_nexys_net_top.sv
+  what: top; register map in its header
+  sha256: a98078554475a17e89fdff88e99a98aac235d501643f8640fc3f02f924d800e4
+- path: designs/b63d_nexys_net/design.xdc
+  what: pins, clocks and the RMII timing constraints
+  sha256: 82fd75943ad82116af904924124754e75f893eb9ea852c0625441912244556a6
+- path: designs/b63d_nexys_net/build.yaml
+  what: sources, and the RMII io_interfaces checked by the flow
+  sha256: ab1aff8c91efd63a46472eecc9d1bd0c709b66be3ae4ebce4b01763f724a1bed
+- path: designs/b63d_nexys_net/tests/test_b63d_nexys_net_rtl.py
+  what: simulation through the shell against the library models
+  sha256: 60427e5970ce4537e8553f21ae769fd3c3ff9423c83ff5dda001a2ec25f03eba
+- path: designs/b63d_nexys_net/host/board_run.py
+  what: board run script (loopback and link phases) with the isolation checks
+  sha256: 2dfebc90621a0528f1cbb5e97ba2f5c95a29f7787d598d6c001b6f5fef5554d5
+- path: designs/b63d_nexys_net/host/PLAN.md
+  what: board-run plan and expected results
+  sha256: cebc366a8dcb2508381b10a8105887ce5bfd8e867fef230d476010d1e4086904
+commands:
+- what: simulate through the shell, check the I/O constraints and the host safety checks
+  cmd: python3 -m pytest -q designs/b63d_nexys_net/tests
+  heavy: false
+  minutes: 3
+  needs: Icarus Verilog and cocotb 2.0.1
+- what: build the design
+  cmd: flow/run_vivado.sh designs/b63d_nexys_net base
+  heavy: true
+  minutes: 5
+  needs: local Vivado 2026.1 and a heavy slot (take_heavy_slot.sh)
+- what: board run phase 1, PHY loopback, no cable
+  cmd: python3 designs/b63d_nexys_net/host/board_run.py --port <shell UART> --phase loopback --out board_loopback.json
+  heavy: false
+  minutes: null
+  needs: the board programmed with flow/run_vivado.sh designs/b63d_nexys_net program, and no cable in J4; not yet run
+evidence:
+- id: E1
+  activity: simulation
+  result: pass
+  how: ci
+  what: cocotb through the shell; frames sent by the design equal the library models, counters read back
+  record: designs/b63d_nexys_net/tests/test_b63d_nexys_net_rtl.py
+  sha256: 60427e5970ce4537e8553f21ae769fd3c3ff9423c83ff5dda001a2ec25f03eba
+- id: E2
+  activity: simulation
+  result: pass
+  how: ci
+  what: host-side network safety checks against stand-in command outputs; no traffic is sent
+  record: designs/b63d_nexys_net/tests/test_b63d_host_safety.py
+  sha256: a7a4d918059d66a697aa2548b417a78d75c59ff01fabfe8933fe5141c2985dce
+- id: E3
+  activity: build
+  result: pass
+  what: whole-board build on Vivado 2026.1; every gate passes at 50 MHz, including the I/O timing against the forwarded
+    clock
+  record: results/b63d/nexys_build/b63d_nexys_net_base.json
+  sha256: 0e12f4f40d2452b894da4142d2f8811895e98c793c445797793b8ef98ac6d535
+- id: E4
+  activity: faults
+  result: pass
+  what: seeded faults in the library blocks and the MAC this design uses, each caught by its bench
+  record: results/b63d/faults.json
+  sha256: 3d7e1c4f74bc1cc848e87a695452ac4c2a2fc78942423162081e3ab6fdca1b8a
+- id: E5
+  activity: formal
+  result: pass
+  what: SymbiYosys jobs on the library blocks (one k-induction proof, the rest bounded)
+  record: results/b63d/formal.json
+  sha256: 3c1e137a0507f75ce8cdd2f3a2144ea894bd3a861e4a39fac4c3c615e3de326a
+measurements:
+- id: M1
+  what: LUTs, whole board design
+  category: resources
+  key: lut
+  unit: LUT
+  record: results/b63d/nexys_build/b63d_nexys_net_base.json
+  field: gates.utilization.lut
+  conditions: routed whole-board build, Vivado 2026.1, including the test shell
+  value: 4188
+  sha256: 0e12f4f40d2452b894da4142d2f8811895e98c793c445797793b8ef98ac6d535
+- id: M2
+  what: flip-flops, whole board design
+  category: resources
+  key: ff
+  unit: FF
+  record: results/b63d/nexys_build/b63d_nexys_net_base.json
+  field: gates.utilization.ff
+  conditions: as M1
+  value: 4344
+  sha256: 0e12f4f40d2452b894da4142d2f8811895e98c793c445797793b8ef98ac6d535
+- id: M3
+  what: block RAM tiles, whole board design
+  category: resources
+  key: bram_tile
+  unit: tiles
+  record: results/b63d/nexys_build/b63d_nexys_net_base.json
+  field: gates.utilization.bram_tile
+  conditions: as M1
+  value: 2
+  sha256: 0e12f4f40d2452b894da4142d2f8811895e98c793c445797793b8ef98ac6d535
+- id: M4
+  what: worst setup slack
+  category: timing
+  key: wns_ns
+  unit: ns
+  record: results/b63d/nexys_build/b63d_nexys_net_base.json
+  field: gates.timing.wns_ns
+  conditions: routed, 50 MHz logic clock
+  value: 1.569
+  sha256: 0e12f4f40d2452b894da4142d2f8811895e98c793c445797793b8ef98ac6d535
+- id: M5
+  what: worst hold slack
+  category: timing
+  key: whs_ns
+  unit: ns
+  record: results/b63d/nexys_build/b63d_nexys_net_base.json
+  field: gates.timing.whs_ns
+  conditions: routed, 50 MHz logic clock; an internal path in arp_responder
+  value: 0.035
+  sha256: 0e12f4f40d2452b894da4142d2f8811895e98c793c445797793b8ef98ac6d535
+- id: M6
+  what: worst RMII setup slack at the pins
+  category: timing
+  key: rmii_setup_ns
+  unit: ns
+  record: results/b63d/nexys_build/b63d_nexys_net_base.json
+  field: gates.stages.post_route.io_timing.worst.setup.slack
+  conditions: ETH_RXERR into the logic clock, measured from the forwarded eth_refclk with the RMII rev 1.2 figures, slow
+    corner
+  value: 1.569
+  sha256: 0e12f4f40d2452b894da4142d2f8811895e98c793c445797793b8ef98ac6d535
+- id: M7
+  what: total on-chip power estimate
+  category: power
+  key: power_w
+  unit: W
+  record: results/b63d/nexys_build/b63d_nexys_net_base.json
+  field: gates.power.total_w
+  conditions: report_power after routing, vectorless, confidence Low
+  value: 0.251
+  sha256: 0e12f4f40d2452b894da4142d2f8811895e98c793c445797793b8ef98ac6d535
+- id: M8
+  what: seeded faults caught
+  category: verification
+  unit: faults
+  record: results/b63d/faults.json
+  field: caught
+  conditions: of 56, in the library blocks and MAC
+  value: 56
+  sha256: 3d7e1c4f74bc1cc848e87a695452ac4c2a2fc78942423162081e3ab6fdca1b8a
+gaps:
+- about: board_run
+  text: No board run exists. The PHY loopback phase needs no cable but must not start with a cable in J4. The link phase
+    needs one cable from J4 to an isolated PC interface at 192.168.63.1/24, and the board owner's confirmation of the cabling
+    (host/PLAN.md). Everything about the PHY, the pin timing in practice and the stack against a real host is unobserved.
+- about: latency
+  text: Not measured on the design. The block benches declare latencies (ARP 3, ICMP 4, UDP transmit 4 clocks) but no record
+    times the design end to end.
+- about: throughput
+  text: Not measured; the design counts frames, and no record gives a frame rate or a bit rate.
+- about: timing
+  text: The pin timing uses RMII rev 1.2 figures (output change 2 to 14 ns after the clock, input setup 4 ns and hold 2
+    ns), not the LAN8720A data sheet's REF_CLK-in table, which is not in the knowledge bank and must be checked before the
+    board run. Board traces are ignored. The forwarded clock phase (335.25 degrees) was chosen from the tool's timing, not
+    from a measurement.
+- about: power
+  text: Power is vectorless with confidence Low, and the junction temperature in the build record is a prediction; no XADC
+    reading exists.
+- about: E2
+  text: The host safety checks use stand-in command outputs; the script cannot see past the cable, so a quiet network on
+    the far side is not detected and the cabling still needs confirming by a person.
+- about: E4
+  text: The faults and formal records cover the library blocks the design uses, not this top. Only the MDIO frame is proved
+    (k-induction); the other jobs are bounded model checks to 12 to 64 clocks, and the ICMP property checks one copied byte,
+    not every byte.
+- about: library
+  text: No half duplex, no PFC, one VLAN tag, ARP entries do not age, one ICMP or UDP-transmit frame held at a time, IGMPv3
+    reports not implemented, UDP receive has no reassembly. The 125 MHz target of the RGMII MAC is not met by several blocks,
+    but this design runs at 50 MHz.
+- about: behaviour
+  text: A UDP datagram to the service on an ARP cache miss is dropped and an ARP request goes out, so the first datagram
+    after boot is unanswered; IGMP reports start only after GROUP_EN is set (reset 0); the idle board sends nothing unsolicited;
+    event counters are 16 bits and wrap; offsets of the register window not in the map read 0.
+next_steps:
+- Check the LAN8720A REF_CLK-in input timing against its data sheet, and cite it in build.yaml and design.xdc.
+- With the owner's cabling confirmation, run phase 1 (loopback) and then phase 2 (isolated link) and add the records under
+  results/.
+- Pipeline ipv4_udp_rx, ipv4_udp_tx, igmp_join and icmp_echo toward 125 MHz before they sit behind an RGMII MAC on another
+  board.
+open_questions:
+- Does the LAN8720A accept the REF_CLK phase chosen from tool timing, with real board traces?
+history:
+- date: '2026-11-12'
+  brief: 63D
+  note: library network blocks and the Nexys A7 design simulated through the shell and built on Vivado 2026.1; not run on
+    a board
+- date: '2026-11-13'
+  brief: 63D
+  note: review rounds fixed the RMII timing reference, the host isolation checks and the seeded-fault coverage
+- date: '2026-11-13'
+  brief: '68'
+  note: handover written to the documentation standard
+numbers_allow:
+- token: 8N1
+  reason: UART framing of the test shell (shell/PROTOCOL.md)
+state:
+  stage: built
+  gates:
+    build_2026_1: pass
+    board_run: not-run
+  vivado: '2026.1'
+  kb_pin: 1fc7ed8
+  build_id: 5d855695

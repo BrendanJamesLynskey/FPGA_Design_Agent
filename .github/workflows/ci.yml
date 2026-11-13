@@ -46,6 +46,8 @@ jobs:
             boto3==1.44.0 moto==5.2.5
       - name: pytest (no simulator; agent core + the 05b agent graph - isolation, interview, review, rewind, T1 episode)
         run: python -m pytest -q --ignore-glob='*_rtl.py'
+      - name: Documentation standard (brief 68) - every design, ip_lib entry and results folder; renderings current, numbers from records
+        run: python flow/doccheck.py --check --strict
       - name: Check build manifests and the sample release bundle (no Vivado)
         run: |
           for y in designs/*/build.yaml; do

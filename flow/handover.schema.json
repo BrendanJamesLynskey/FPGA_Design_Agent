@@ -1,0 +1,92 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/flow/handover.schema.json",
+  "title": "handover.yaml: the one source of a design's documentation (brief 68)",
+  "description": "Facts only. README.md (human) and AGENT.md (agent) are rendered from this by flow/handover.py; numbers in measurements are read from the cited record by code (python -m flow.handover fill), never typed. See docs/documentation_standard.md.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "id", "title", "kind", "produced_by", "summary", "scope_not", "target", "clocks", "resets",
+               "interfaces", "parameters", "files", "commands", "evidence", "measurements", "gaps", "next_steps",
+               "open_questions", "history", "state"],
+  "$defs": {
+    "text": {"type": "string", "minLength": 3},
+    "path": {"type": "string", "pattern": "^[A-Za-z0-9_./*-]+$", "not": {"pattern": "(^/|\\.\\.)"}},
+    "sha": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
+    "result": {"enum": ["pass", "fail", "partial", "not-run", "waived"]},
+    "category": {"enum": ["resources", "timing", "power", "latency", "throughput", "board", "verification", "cost", "other"]}
+  },
+  "properties": {
+    "schema": {"const": "fda-handover/1"},
+    "id": {"type": "string", "pattern": "^[a-z0-9_]+$"},
+    "title": {"$ref": "#/$defs/text"},
+    "kind": {"enum": ["board-selfcheck", "demonstration", "showcase", "example", "agent-run"]},
+    "produced_by": {"enum": ["human", "agent", "human+agent"]},
+    "summary": {"$ref": "#/$defs/text"},
+    "scope_not": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/text"}},
+    "target": {
+      "type": "object", "additionalProperties": false, "required": ["part", "board", "tool", "top"],
+      "properties": {"part": {"type": "string"}, "board": {"type": "string"}, "tool": {"type": "string"},
+                     "top": {"type": "string"}, "note": {"type": "string"}}
+    },
+    "clocks": {"type": "array", "items": {
+      "type": "object", "additionalProperties": false, "required": ["name", "mhz", "source"],
+      "properties": {"name": {"type": "string"}, "mhz": {"type": "number"}, "source": {"$ref": "#/$defs/path"},
+                     "note": {"type": "string"}}}},
+    "resets": {"type": "array", "items": {
+      "type": "object", "additionalProperties": false, "required": ["name", "active", "note"],
+      "properties": {"name": {"type": "string"}, "active": {"enum": ["high", "low"]}, "note": {"$ref": "#/$defs/text"}}}},
+    "interfaces": {"type": "array", "minItems": 1, "items": {
+      "type": "object", "additionalProperties": false, "required": ["name", "type", "note"],
+      "properties": {"name": {"type": "string"}, "type": {"type": "string"}, "doc": {"type": "string"},
+                     "note": {"$ref": "#/$defs/text"}}}},
+    "parameters": {"type": "array", "items": {
+      "type": "object", "additionalProperties": false, "required": ["name", "value", "legal", "note"],
+      "properties": {"name": {"type": "string"}, "value": {}, "legal": {"type": "string"}, "note": {"type": "string"}}}},
+    "files": {"type": "array", "minItems": 1, "items": {
+      "type": "object", "additionalProperties": false, "required": ["path", "what"],
+      "properties": {"path": {"$ref": "#/$defs/path"}, "what": {"$ref": "#/$defs/text"}, "sha256": {"$ref": "#/$defs/sha"}}}},
+    "commands": {"type": "array", "minItems": 1, "items": {
+      "type": "object", "additionalProperties": false, "required": ["what", "cmd", "heavy", "minutes"],
+      "properties": {"what": {"$ref": "#/$defs/text"}, "cmd": {"type": "string", "minLength": 3},
+                     "heavy": {"type": "boolean"}, "minutes": {"type": ["number", "null"]},
+                     "needs": {"type": "string"}}}},
+    "evidence": {"type": "array", "minItems": 1, "items": {
+      "type": "object", "additionalProperties": false, "required": ["id", "activity", "result", "what", "record"],
+      "properties": {"id": {"type": "string", "pattern": "^E[0-9]+$"},
+                     "activity": {"enum": ["simulation", "formal", "faults", "cdc", "lint", "build", "board", "review", "model"]},
+                     "result": {"$ref": "#/$defs/result"}, "what": {"$ref": "#/$defs/text"},
+                     "record": {"$ref": "#/$defs/path"}, "sha256": {"$ref": "#/$defs/sha"},
+                     "how": {"enum": ["record", "ci"]}, "runs": {"type": "integer", "minimum": 0},
+                     "conditions": {"type": "string"}}}},
+    "measurements": {"type": "array", "items": {
+      "type": "object", "additionalProperties": false, "required": ["id", "what", "category", "unit", "record", "conditions"],
+      "oneOf": [{"required": ["field"]}, {"required": ["match"]}],
+      "properties": {"id": {"type": "string", "pattern": "^M[0-9]+$"}, "what": {"$ref": "#/$defs/text"},
+                     "category": {"$ref": "#/$defs/category"}, "key": {"type": "string"},
+                     "value": {"type": ["number", "string", "boolean", "null"]}, "unit": {"type": "string"},
+                     "record": {"$ref": "#/$defs/path"}, "field": {"type": "string"}, "match": {"type": "string"},
+                     "sha256": {"$ref": "#/$defs/sha"}, "conditions": {"$ref": "#/$defs/text"},
+                     "runs": {"type": "integer", "minimum": 1}}}},
+    "gaps": {"type": "array", "minItems": 1, "items": {
+      "type": "object", "additionalProperties": false, "required": ["about", "text"],
+      "properties": {"about": {"type": "string"}, "text": {"$ref": "#/$defs/text"}}}},
+    "next_steps": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/text"}},
+    "open_questions": {"type": "array", "items": {"$ref": "#/$defs/text"}},
+    "history": {"type": "array", "minItems": 1, "items": {
+      "type": "object", "additionalProperties": false, "required": ["date", "note"],
+      "properties": {"date": {"type": "string", "pattern": "^20[0-9]{2}-[0-9]{2}-[0-9]{2}$"}, "brief": {"type": "string"},
+                     "pr": {"type": ["integer", "null"]}, "note": {"$ref": "#/$defs/text"}}}},
+    "agent_run": {"type": "object", "additionalProperties": false, "required": ["run_id", "record"],
+                  "properties": {"run_id": {"type": "string"}, "record": {"$ref": "#/$defs/path"}, "note": {"type": "string"}}},
+    "numbers_allow": {"type": "array", "items": {
+      "type": "object", "additionalProperties": false, "required": ["token", "reason"],
+      "properties": {"token": {"type": "string"}, "reason": {"$ref": "#/$defs/text"}}}},
+    "state": {
+      "type": "object", "additionalProperties": false, "required": ["stage", "gates", "vivado", "kb_pin", "build_id"],
+      "properties": {"stage": {"enum": ["spec", "rtl", "simulated", "built", "board-verified", "signed-off"]},
+                     "gates": {"type": "object", "additionalProperties": {"$ref": "#/$defs/result"}},
+                     "vivado": {"type": "string"}, "kb_pin": {"type": ["string", "null"]},
+                     "build_id": {"type": ["string", "null"]}, "variant": {"type": "string"}}
+    }
+  }
+}

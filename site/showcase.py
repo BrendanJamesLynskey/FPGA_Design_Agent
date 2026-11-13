@@ -158,11 +158,11 @@ def load(directory: Path = DIR) -> list[dict]:
 ALLOWED = {"planned": {"id", "order", "status", "title", "one_line"},
            "in_progress": {"id", "order", "status", "title", "one_line", "board", "part", "what_it_will_show"},
            "published": {"id", "order", "status", "title", "one_line", "board", "part", "vivado", "values", "headline", "description",
-                         "hero", "story", "evidence", "limits", "try_it", "fixture"}}
+                         "hero", "story", "evidence", "limits", "try_it", "fixture", "docs"}}
 #: published fields whose strings are not page text checked for typed numbers: value expressions, file paths, the command
 NOT_TEXT = {("story", "table", "source"), ("story", "table", "path"), ("story", "table", "link"),
             ("values",), ("hero", "source"), ("hero", "path"), ("hero", "kind"), ("evidence", "path"), ("evidence", "kind"),
-            ("try_it", "command"), ("id",), ("status",), ("order",), ("vivado",), ("fixture",)}
+            ("try_it", "command"), ("id",), ("status",), ("order",), ("vivado",), ("fixture",), ("docs",)}
 
 
 def _check_tree(name: str, node, path=()):
@@ -204,6 +204,11 @@ def resolve(name: str, y: dict, allow_fixtures: bool = False) -> dict:
         for e in y.get("evidence", []):
             if e.get("kind") == "record" and not e.get("path"):
                 raise ContractError(f"{name}: an evidence record needs a path")
+        # showcase standard item 7 (owner, 2026-11-13): the page links the project's engineering documentation, the README
+        # written to docs/documentation_standard.md (brief 68)
+        d = str(y.get("docs", ""))
+        if not y.get("fixture") and not (re.fullmatch(r"(designs|results)/[\w.-]+/README\.md", d) and (ROOT / d).is_file()):
+            raise ContractError(f"{name}: docs must name the project's README.md (docs/documentation_standard.md)")
     r = {"id": y["id"], "title": y["title"], "status": st, "status_label": STATUS[st], "order": y.get("order", 99)}
     if st != "published":
         for k in ("title", "one_line", "what_it_will_show", "board", "part"):
@@ -272,6 +277,8 @@ def resolve(name: str, y: dict, allow_fixtures: bool = False) -> dict:
     if "try_it" in y:
         r["try_it"] = {"command": y["try_it"]["command"], "note": f("try_it", y["try_it"].get("note", ""))}
     r["description"] = f("description", y.get("description", y["one_line"]))
+    if y.get("docs"):
+        r["docs"] = y["docs"]
     return r
 
 
@@ -417,6 +424,9 @@ def page_body(p: dict) -> str:
         tri = (f'<h2 id="try">Try it</h2><pre><code>{E(p["try_it"]["command"])}</code></pre>' +
                (f'<p>{E(p["try_it"]["note"])}</p>' if p["try_it"]["note"] else ""))
     arch = f'<figure>{arch_svg(S["architecture"], p["id"])}</figure>' if S.get("architecture") else ""
+    docs = (f'<p class="sc-docs">For the next engineer: {_link(p["docs"], "the engineering documentation")} gives the full '
+            f'technical parameters, how to build and reproduce, what was verified and measured with its records, the known gaps '
+            f'and the next steps. This page summarises; that document hands the work over.</p>') if p.get("docs") else ""
     table = ""
     if S.get("table"):
         T = S["table"]
@@ -456,4 +466,5 @@ def page_body(p: dict) -> str:
 <details class="more" id="evidence"><summary>Evidence: run records, captures, operating conditions, versions and requirements</summary>{ev}</details>
 <h2 id="limits">Limits</h2>
 {limits}
+{docs}
 {tri}</div>"""

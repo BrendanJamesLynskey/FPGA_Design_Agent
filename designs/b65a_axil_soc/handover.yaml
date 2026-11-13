@@ -1,0 +1,299 @@
+# Brief 68 handover: the facts behind README.md and AGENT.md (docs/documentation_standard.md).
+# Measurement values and every sha256 are filled from the records by `python -m flow.handover fill`;
+# do not type them. Render with `python -m flow.handover write <this directory>`.
+schema: fda-handover/1
+id: b65a_axil_soc
+title: Generated block-design sample, a tone generator on an AXI4-Lite crossbar
+kind: example
+produced_by: human
+summary: The brief 65A sample block design. A DDS tone generator and a frequency and duty counter (grouped as the tone hierarchy)
+  and a logic analyser, all from ip_lib, sit behind a generated AXI4-Lite crossbar that the host reaches through the UART
+  test shell. blockdesign.yaml and tone.yaml are the source; everything under gen/ (top, wrappers, address map, graph) is
+  generated from them. It shows the block-design format, its checks and the generator, and was built; it has not been run
+  on a board.
+scope_not:
+- a showcase or a board-verified design; the bitstream was built, not programmed
+- a general interconnect; generation covers AXI4-Lite only, 32-bit data and one clock domain
+target:
+  part: xc7a100tcsg324-1
+  board: Nexys A7-100T
+  top: b65a_axil_soc_top
+  tool: Vivado 2026.1
+  note: the block diagram is drawn from gen/graph.json by the 65A viewer; docs/blockdesign.md is the user guide to the format
+clocks:
+- name: CLK100MHZ
+  mhz: 100
+  source: designs/b65a_axil_soc/design.xdc
+  note: the only clock domain (sys); one reset synchroniser per domain is generated
+resets:
+- name: CPU_RESETN
+  active: low
+  note: the reset button; synchronised into the sys domain, where the generated blocks see a synchronous active-high rst
+interfaces:
+- name: UART register window
+  type: test shell, 8N1 UART at 115200 baud
+  doc: shell/PROTOCOL.md
+  note: the window is an AXI4-Lite master (bd_win_axil_master); window registers ADDR, WDATA, CTRL, STATUS, RDATA at offsets
+    0x00-0x04; one transfer at a time, ignored while busy
+- name: Address map
+  type: AXI4-Lite slaves behind axil_xbar
+  doc: designs/b65a_axil_soc/gen/address_map.md
+  note: tone.s_dds 0x40000000, tone.s_fd 0x40001000, la.s_axil 0x40010000, 4 KB each; the register layout of each block
+    is in that file
+- name: LEDs
+  type: LED[15:0] (LVCMOS33)
+  note: LED[15:8] show the high byte of the DDS sample; LED[7:0] are tied to 0
+parameters:
+- name: CLKS_PER_BIT
+  value: 868
+  legal: derived from the clock; raised to a top-module parameter
+  note: UART bit period in clocks, so the simulation can shorten it
+- name: tone.fd.GATE_CLKS
+  value: 1000000
+  legal: a positive integer; raised to a top-module parameter
+  note: the frequency counter's gate length in clocks, 10 ms at 100 MHz
+- name: la ADDR_W
+  value: 8
+  legal: per ip_lib/logic_analyser
+  note: 256 samples; the window exposes 128 words
+- name: dds
+  value: PHASE_W 32, LUT_W 8, OUT_W 16, variant bram
+  legal: per ip_lib/dds_awg
+  note: block RAM sine table
+files:
+- path: designs/b65a_axil_soc/blockdesign.yaml
+  what: the source; instances, connections, interconnect, address map
+  sha256: 336ec09a35dc06d7eac8aa3c9acd446be0d3e350becd2ff1cf65264cf2e0429d
+- path: designs/b65a_axil_soc/tone.yaml
+  what: the tone hierarchy; DDS and frequency counter with their register definitions
+  sha256: ae1887c1f955a5e3f16c4a19104987a66a4086594d77b3ff297f8efd6443f571
+- path: designs/b65a_axil_soc/gen/address_map.md
+  what: generated address map and register tables
+  sha256: eb433bdfb0782caea0096aa5ddcdb67d07a230fc7b94574f1a8f89bca484196d
+- path: designs/b65a_axil_soc/gen/graph.json
+  what: generated graph that the viewer draws
+  sha256: f235b29f94bc3aecca074dd3ad5c261d84fc068f4bdd0ddedfb073eea7e2809b
+- path: designs/b65a_axil_soc/gen/manifest.json
+  what: generated; input and output hashes, components, diagnostics
+  sha256: 37f1d568bb957ccacd11bdaaeded46539a095dd96db4ae3eb47880e51ef12207
+- path: designs/b65a_axil_soc/design.xdc
+  what: pins and the 100 MHz clock
+  sha256: a0619232b1a4694856609236c1e002d3feab14d3208366a032ac5a4a521156b9
+- path: designs/b65a_axil_soc/tests/test_b65a_rtl.py
+  what: generated design simulated end to end through the UART shell
+  sha256: c69ba5a936a7e9afe0db60ac5ed4c95cefb87575ad6c94bc75c9532802b50d99
+- path: docs/blockdesign.md
+  what: user guide to the format, validation and generator
+  sha256: 500c66d77b6acf454a1ae1c44ff447c325482e7b9cb880f70b9134c5cfa37a16
+commands:
+- what: validate the block design
+  cmd: python3 -m flow.blockdesign validate designs/b65a_axil_soc
+  heavy: false
+  minutes: null
+- what: regenerate gen/ from the two YAML files
+  cmd: python3 -m flow.blockdesign generate designs/b65a_axil_soc
+  heavy: false
+  minutes: null
+  needs: do not edit gen/ by hand
+- what: check gen/ against the sources
+  cmd: python3 -m flow.blockdesign check designs/b65a_axil_soc
+  heavy: false
+  minutes: null
+- what: simulate end to end
+  cmd: python -m pytest -q designs/b65a_axil_soc/tests/test_b65a_rtl.py
+  heavy: false
+  minutes: 1
+  needs: Icarus Verilog 12 and cocotb 2.0.1
+- what: build
+  cmd: flow/run_vivado.sh designs/b65a_axil_soc
+  heavy: true
+  minutes: 4
+  needs: local Vivado 2026.1 and a heavy slot (take_heavy_slot.sh)
+evidence:
+- id: E1
+  activity: simulation
+  result: pass
+  how: ci
+  what: generated top under cocotb and Icarus through the UART shell, with the AXI4-Lite protocol checker on every top-level
+    link; reset values, strobes, error responses, the tone counted and the analyser samples checked
+  record: designs/b65a_axil_soc/tests/test_b65a_rtl.py
+  sha256: c69ba5a936a7e9afe0db60ac5ed4c95cefb87575ad6c94bc75c9532802b50d99
+- id: E2
+  activity: review
+  result: pass
+  how: ci
+  what: pure-Python tests of the block-design validator and generator, an adversarial case per rule, including the generated
+    files matching their sources
+  record: flow/blockdesign/tests/test_65a_blockdesign.py
+  sha256: 87d41b298c9eb4dbdf436cf602e585cea91af303552ab7a786b9095df220097a
+- id: E3
+  activity: faults
+  result: pass
+  what: seeded faults in the crossbar ip_lib/axil_xbar, each caught by its bench
+  record: results/65a_blockdesign/faults.json
+  sha256: 987ffa05708a304d15c4fd435f3924b62281f3483402c23c6377c0f435a54e6c
+- id: E4
+  activity: build
+  result: pass
+  what: whole-board build on Vivado 2026.1; every gate passes
+  record: results/65a_blockdesign/vivado_build/gates.json
+  sha256: 476929e068972284ea0a83b672b233164d95b278b04e10ff92284bccf5589380
+- id: E5
+  activity: model
+  result: pass
+  what: the viewer's graph against the synthesised netlist; all 14 expected instances found, the crossbar's address ranges
+    equal the built RTL's
+  record: results/blockdesign/b65a_axil_soc/build.json
+  sha256: 0f94c01fe9030d392accae7358550c7c7f3a5e801576f6be47ca7d9c60aa54ea
+measurements:
+- id: M1
+  what: LUTs, whole board design
+  category: resources
+  key: lut
+  unit: LUT
+  record: results/65a_blockdesign/vivado_build/gates.json
+  field: utilization.lut
+  conditions: routed whole-board build, Vivado 2026.1, including the test shell
+  value: 1093
+  sha256: 476929e068972284ea0a83b672b233164d95b278b04e10ff92284bccf5589380
+- id: M2
+  what: flip-flops, whole board design
+  category: resources
+  key: ff
+  unit: FF
+  record: results/65a_blockdesign/vivado_build/gates.json
+  field: utilization.ff
+  conditions: as M1
+  value: 1150
+  sha256: 476929e068972284ea0a83b672b233164d95b278b04e10ff92284bccf5589380
+- id: M3
+  what: block RAM tiles, whole board design
+  category: resources
+  key: bram_tile
+  unit: tiles
+  record: results/65a_blockdesign/vivado_build/gates.json
+  field: utilization.bram_tile
+  conditions: as M1
+  value: 0.5
+  sha256: 476929e068972284ea0a83b672b233164d95b278b04e10ff92284bccf5589380
+- id: M4
+  what: worst setup slack
+  category: timing
+  key: wns_ns
+  unit: ns
+  record: results/65a_blockdesign/vivado_build/gates.json
+  field: timing.wns_ns
+  conditions: routed, 100 MHz clock
+  value: 2.933
+  sha256: 476929e068972284ea0a83b672b233164d95b278b04e10ff92284bccf5589380
+- id: M5
+  what: worst hold slack
+  category: timing
+  key: whs_ns
+  unit: ns
+  record: results/65a_blockdesign/vivado_build/gates.json
+  field: timing.whs_ns
+  conditions: routed, 100 MHz clock
+  value: 0.076
+  sha256: 476929e068972284ea0a83b672b233164d95b278b04e10ff92284bccf5589380
+- id: M6
+  what: total on-chip power estimate
+  category: power
+  key: power_w
+  unit: W
+  record: results/65a_blockdesign/vivado_build/gates.json
+  field: power.total_w
+  conditions: report_power after routing, vectorless, confidence Medium
+  value: 0.13
+  sha256: 476929e068972284ea0a83b672b233164d95b278b04e10ff92284bccf5589380
+- id: M7
+  what: AXI4-Lite transfers in the end-to-end simulation
+  category: verification
+  unit: transfers
+  record: results/65a_blockdesign/sim_end_to_end.json
+  field: axi_transfers
+  conditions: simulation, with no protocol rule broken on the four top-level links
+  value: 86
+  sha256: 82ca2d20f8fc79b2fe67b488bf68622654cad590bc261bb5eb79f525893b473c
+- id: M8
+  what: rising edges the frequency counter read in the gate
+  category: verification
+  unit: edges
+  record: results/65a_blockdesign/sim_end_to_end.json
+  field: edges
+  conditions: simulation, a 4000-clock gate for a 64-clock tone, so 62.5 expected
+  value: 62
+  sha256: 82ca2d20f8fc79b2fe67b488bf68622654cad590bc261bb5eb79f525893b473c
+- id: M9
+  what: crossbar seeded faults caught
+  category: verification
+  unit: faults
+  record: results/65a_blockdesign/faults.json
+  field: caught
+  conditions: of 10, the crossbar alone
+  value: 10
+  sha256: 987ffa05708a304d15c4fd435f3924b62281f3483402c23c6377c0f435a54e6c
+gaps:
+- about: board_run
+  text: No board run was attempted. A smoke run reading the three blocks over the UART would put it on hardware; nothing
+    in the records shows the UART, the DDS output or the LEDs working on the device.
+- about: latency
+  text: Not measured. The records count transfers, not clocks per transfer through the shell master and crossbar.
+- about: throughput
+  text: Not measured. The shell master does one transfer at a time over a 115200-baud link, so the rate is set by the UART;
+    no record times it.
+- about: power
+  text: Vectorless estimate only; the tone generator's real switching activity is not in it.
+- about: E1
+  text: The end-to-end bench exercises the generated design in simulation only, with a shortened UART bit time and a shortened
+    gate; the full-length parameters were built but not simulated.
+- about: E2
+  text: There is no seeded-fault run against the generator's own output or the support RTL (the shell master, the window
+    adapter and the register bank); the end-to-end test covers them functionally only.
+- about: E3
+  text: Faults cover the crossbar alone. The parameter guards of the crossbar and the support RTL run in simulation only;
+    Vivado ignores them.
+- about: E5
+  text: The graph check compares 6 of the 7 links; the inverted sample bit that feeds the frequency counter goes through
+    logic and is not compared.
+- about: build identity
+  text: The recorded build was made from a tree with uncommitted changes (git_dirty is true in run.json), at 2 threads;
+    the build ID covers the thread count and the inputs, so it changes when either does.
+- about: scope
+  text: Generation covers AXI4-Lite with 32-bit data and a single clock domain; AXI4 and AXI4-Stream links are checked and
+    wired point to point only; no interrupt concatenation and no debug-core automation.
+- about: behaviour
+  text: 'From the generated gen/address_map.md: addresses between the blocks'' ranges (0x40002000 to 0x4000FFFF) get DECERR
+    from the crossbar; inside the register-bank blocks an offset with no register, and a write to a read-only register,
+    answer SLVERR with read data 0, which that file says differs from the house convention (OKAY, read 0); la.s_axil answers
+    SLVERR from offset 0x200. Byte strobes are honoured on control registers. fd offset 0x000 is a SCRATCH register with
+    no block input. The master keeps one write and one read in flight.'
+next_steps:
+- Add a board smoke run over the UART that reads the three blocks and checks the reset values, and record it with its operating
+  conditions.
+- Decide the response for an unmapped offset inside a generated register bank, then regenerate gen/ and the docs.
+- Use the viewer as the how-it-works diagram on other showcase pages, and add the remaining items in docs/blockdesign.md
+  under Not yet.
+open_questions:
+- Should an unmapped offset inside a block answer SLVERR as the generated bank does now, or OKAY with read 0 as the house
+  convention does? The owner has not decided; gen/address_map.md states the current generated behaviour only.
+- The register-map format is 65A's own; should brief 64A's single source consume or replace it?
+history:
+- date: '2026-11-13'
+  brief: 65A
+  note: block-design format, validator, generator, crossbar ip_lib/axil_xbar and viewer built; this sample validated, generated,
+    simulated and built on Vivado 2026.1
+- date: '2026-11-13'
+  brief: '68'
+  note: handover written to the documentation standard
+numbers_allow:
+- token: '62.5'
+  reason: the expected count, 4000-clock gate times a 64-clock tone period, worked out in the same sentence
+state:
+  stage: built
+  gates:
+    build_2026_1: pass
+    board_run: not-run
+  vivado: '2026.1'
+  kb_pin: 1fc7ed8
+  build_id: de292461

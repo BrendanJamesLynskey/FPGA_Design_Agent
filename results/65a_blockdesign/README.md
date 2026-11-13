@@ -18,6 +18,22 @@ Scope: AXI4-Lite only, one 100 MHz clock domain; built with Vivado 2026.1, not r
 | Viewer graph against the build | 14 of 14 RTL instances (the 14 include the generated wrappers) found in the synthesised netlist with the module the graph names, and no netlist cell inside the top, the hierarchy or a wrapper missing from the graph; 6 of the 7 links between blocks found as nets in the direction drawn, in a second synthesis of the same sources that keeps the hierarchy, and no net between two blocks left undrawn (the 7th, an inverted bit, goes through logic and is not compared); the crossbar's 3 address ranges equal the built RTL's | [../blockdesign/b65a_axil_soc/build.json](../blockdesign/b65a_axil_soc/build.json) |
 | Viewer in a browser (Chrome, puppeteer) | stand-alone page and site page at 390 and 1280 px, light and dark: no console errors, no horizontal overflow, no overlapping or overflowing diagram text, text at least 11 px, every block's details panel opens | `flow/blockdesign/tests/e2e_viewer.js` |
 
+## Records
+
+| Path | What |
+|---|---|
+| `faults.json` | The crossbar's seeded faults and whether each was caught |
+| `sim_end_to_end.json` | The generated design simulated through the UART shell |
+| `vivado_build/` | The build's gate, run, manifest and timing, utilisation, hierarchical utilisation and power reports |
+| `interop/` | The IP Integrator export probe: per-run JSON, the Vivado batch log, and the SVG layouts |
+
+## Reproduce
+
+- Validate, generate, drift check and tests (no Vivado): `python3 -m flow.blockdesign validate designs/b65a_axil_soc`, `... generate ...`, `... check ...`, `python3 -m pytest flow/blockdesign/tests`.
+- Crossbar faults: `python3 hil/ip_faults.py --blocks axil_xbar --json results/65a_blockdesign/faults.json`.
+- Build: `flow/run_vivado.sh designs/b65a_axil_soc` (Vivado 2026.1, heavy slot). The viewer check is `flow/blockdesign/tests/e2e_viewer.js` (puppeteer).
+- Interop probe: `flow/blockdesign/vivado/bd_export_probe.tcl` in Vivado batch mode, and in GUI mode under `xvfb-run`.
+
 ## Interop: IP Integrator export on Vivado 2026.1 (a check only)
 
 Records [interop/](interop) (each run's JSON and its Vivado log), made by `flow/blockdesign/vivado/bd_export_probe.tcl`
@@ -35,9 +51,12 @@ on a two-slave AXI4-Lite block design (two AXI GPIO cores behind an AXI crossbar
 
 Importing a `.bd` for viewing is a later phase.
 
-## Not measured
+## Known gaps and limits
 
 - Nothing here has run on the board; the bitstream was built, not programmed.
 - Power is `report_power` without activity files.
 - The crossbar has no out-of-context cost sweep; its in-context cost is in the build table above.
 - The parameter guards of the crossbar and the support RTL run in simulation only; Vivado ignores them.
+- The interop result is a probe on a two-slave example, not an import of a `.bd`; the GUI-mode layout export was seen on a virtual display only.
+- The viewer's graph check compares 6 of the 7 links; the inverted-bit link is not compared.
+- One build, one run each; the build ID changes when build inputs change.

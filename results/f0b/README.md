@@ -7,6 +7,8 @@ Bring-up of T1 on the owner's Nexys A7-100T (USB-powered), milestone F0B. Builds
 `4587566`, clean tree, Vivado 2025.2, build stamp `dfd4624e`. The cable serial appears only as its last 4
 characters.
 
+## Records
+
 | File | What |
 |---|---|
 | `t1_dimmer_counter_bringup.json` | The last `flow/bringup.py designs/t1_dimmer_counter` run: every step's pass/fail and time, the power gate, tool versions, the ILA comparison results and the rule text |
@@ -30,3 +32,16 @@ written before the captures, with all error counters 0. The ILA results were ide
 COUNT write landed at sample 64 (the trigger position) and the count changed on the next sample; at DUTY 0x08,
 0x40 and 0xA0 each lit LED (COUNT 0x8421: LEDs 0, 5, 10, 15) was on for 32, 256 and 640 of the 1024 samples,
 equal to `model.led_on_clocks()`, with 0 violations of the per-clock LED rule.
+
+## Reproduce
+
+`python3 flow/bringup.py designs/t1_dimmer_counter` on the Nexys A7-100T with the board lock held (SRAM programming over JTAG). It
+programs the builds of [results/f0a](../f0a/README.md) and needs the board; with the current install it writes the Vivado 2026.1
+records in [results/f0b_2026_1](../f0b_2026_1/README.md) instead of these.
+
+## Known gaps and limits
+
+- Superseded by [results/f0b_2026_1](../f0b_2026_1/README.md); these bitstreams came from an earlier Vivado release.
+- Three runs in a row on one board and one design; the runs differ only in time.
+- USB power here, not wall power; the power gate limit differs from the 2026.1 run.
+- `manual_checks.md` (the owner's checks of these bitstreams) was not repeated on the 2026.1 bitstreams.

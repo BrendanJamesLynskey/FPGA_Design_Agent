@@ -1,0 +1,200 @@
+# Brief 68 handover: the facts behind README.md and AGENT.md (docs/documentation_standard.md).
+# Measurement values and every sha256 are filled from the records by `python -m flow.handover fill`;
+# do not type them. Render with `python -m flow.handover write <this directory>`.
+schema: fda-handover/1
+id: b30_hil_audio_pinfault
+title: Hardware-in-the-loop seeded pin fault (audio on the wrong pin)
+kind: demonstration
+produced_by: human
+summary: The seeded-fault twin of b30_hil_audio. It builds from the same RTL, but its constraint file puts the audio output
+  AUD_PWM on the pin of LED 0, so the tone never reaches the audio jack. It passes simulation and every check made inside
+  the FPGA, and only the measurement at the jack fails, which is the point of the demonstration. The hardware-in-the-loop
+  run of this design therefore reports a failure by intent.
+scope_not:
+- a working design; the audio output is deliberately miswired and the design is not meant to pass the check at the jack
+- a general fault library; it seeds one fault, a wrong pin, to show the class of defect that simulation and in-FPGA self-checks
+  cannot see
+target:
+  part: xc7a100tcsg324-1
+  board: Nexys A7-100T
+  top: b30_hil_audio_top
+  tool: Vivado 2026.1
+  note: the RTL is designs/b30_hil_audio/rtl/b30_hil_audio_top.sv; only design.xdc differs from b30_hil_audio
+clocks:
+- name: CLK100MHZ
+  mhz: 100
+  source: designs/b30_hil_audio_pinfault/design.xdc
+  note: the only clock, as in b30_hil_audio
+resets:
+- name: CPU_RESETN
+  active: low
+  note: the board's reset button, synchronised by the test shell's reset synchroniser; reset behaviour is as in b30_hil_audio
+interfaces:
+- name: UART register window
+  type: test shell, 8N1 UART at 115200 baud
+  doc: shell/PROTOCOL.md
+  note: the same register map as b30_hil_audio (header of designs/b30_hil_audio/rtl/b30_hil_audio_top.sv)
+- name: Audio output (miswired)
+  type: AUD_PWM on pin H17, the pin b30_hil_audio uses for LED 0; AUD_SD stays on its audio-amplifier pin
+  doc: boards/nexys_a7_100t/inventory.yaml
+  note: the PWM tone is generated as in b30_hil_audio but leaves on the wrong pin, so the audio stage gets no tone; LED[0]
+    is moved to pin J13 so the two ports do not share a pin
+parameters:
+- name: CLKS_PER_BIT
+  value: 868
+  legal: set by the shell's UART; the board value is 868
+  note: as in b30_hil_audio
+- name: FD_GATE_CLKS
+  value: 50000000
+  legal: 1 or more; the board value is 50,000,000
+  note: as in b30_hil_audio (0.5 s at 100 MHz)
+files:
+- path: designs/b30_hil_audio/rtl/b30_hil_audio_top.sv
+  what: the top, shared with b30_hil_audio (this design has no RTL of its own)
+  sha256: 308b6cba65b8aa2d1df5fc34051106d5b1c4c5a83fdb096030d5214894cddab7
+- path: designs/b30_hil_audio_pinfault/design.xdc
+  what: the constraint file with the seeded fault (AUD_PWM on H17, LED[0] on J13); its first line says so
+  sha256: ae07766b5002416e581c1caa53bfdae551d66a0886dc67136eb773240969f2fd
+- path: designs/b30_hil_audio_pinfault/build.yaml
+  what: how flow/run_vivado.sh builds the design; sources are those of b30_hil_audio with this constraint file
+  sha256: 3268f3bc4a58f14b48113cfae67d00cfd82cf31d122b8c52e4aa8f56c1b43e29
+- path: designs/b30_hil_audio_pinfault/hil.yaml
+  what: the same eight checks as b30_hil_audio; the tone_at_the_jack check must fail here
+  sha256: 1fee6a6ba89b254e16b171c94226e7ebb28389399d38c40cdc97d6c816ab3684
+- path: designs/b30_hil_audio_pinfault/lint/xadc_stub.sv
+  what: lint-only stand-in for the XADC primitive
+  sha256: 9379bc0d792c5ed3b1d90a2f3b4e1dc0c22a1ce548f82ed75d8103309f69dc91
+commands:
+- what: simulate the shared RTL (the simulation cannot see the constraint file)
+  cmd: python3 -m pytest -q designs/b30_hil_audio/tests/test_hil_audio_rtl.py
+  heavy: false
+  minutes: 2
+  needs: Icarus Verilog 12 and cocotb 2.0.1
+- what: build and run the gates
+  cmd: flow/run_vivado.sh designs/b30_hil_audio_pinfault base
+  heavy: true
+  minutes: 4
+  needs: local Vivado 2026.1 and a heavy slot (take_heavy_slot.sh)
+- what: program the SRAM and run the hardware-in-the-loop checks (expected overall result fail, from the audio check)
+  cmd: python3 flow/hil.py designs/b30_hil_audio_pinfault
+  heavy: false
+  minutes: 1
+  needs: the Nexys A7 on wall power, the board lock, and an audio interface cabled from the Nexys audio jack
+evidence:
+- id: E1
+  activity: simulation
+  result: pass
+  how: ci
+  what: the shared RTL passes its simulation against the golden models; the seeded fault is in the constraint file, which
+    simulation does not read
+  record: designs/b30_hil_audio/tests/test_hil_audio_rtl.py
+  sha256: 074480dd34f86043e0de79c4ac596bc5fb203cbdb1236a8d89535ff2cfcd7ed8
+- id: E2
+  activity: build
+  result: not-run
+  what: not rebuilt on Vivado 2026.1 (an earlier-release build is not cited); the build inputs are listed here
+  record: designs/b30_hil_audio_pinfault/build.yaml
+  sha256: 3268f3bc4a58f14b48113cfae67d00cfd82cf31d122b8c52e4aa8f56c1b43e29
+- id: E3
+  activity: board
+  result: pass
+  runs: 1
+  what: one hardware-in-the-loop run; the seeded fault is caught, since the audio check fails on level, distortion and SINAD
+    while the other seven checks pass; the run's overall result is fail by design
+  record: results/b30/hil_runs/b30_hil_audio_pinfault.hil.json
+  conditions: wall power; power gate passed before programming; die temperature and rails read by the XADC and by JTAG sysmon
+    agreed within tolerance; audio captured by a USB interface at gain about 50 percent, uncalibrated; ambient not recorded
+  sha256: 6434637459af7716e05bf0521f09523a5a2445fd1aeff0d6ecfb4a66b912def4
+measurements:
+- id: M1
+  what: tone level at the audio jack, relative to full scale of the capture interface
+  category: board
+  unit: dBFS
+  record: results/b30/hil_runs/b30_hil_audio_pinfault.hil.json
+  field: checks.tone_at_the_jack.measured.level_dbfs_rms
+  conditions: USB audio capture of the right channel; gain about 50 percent, not calibrated; pass threshold at least -75
+    dBFS, so this fails
+  value: -90.5
+  sha256: 6434637459af7716e05bf0521f09523a5a2445fd1aeff0d6ecfb4a66b912def4
+- id: M2
+  what: total harmonic distortion measured at the audio jack
+  category: board
+  unit: '%'
+  record: results/b30/hil_runs/b30_hil_audio_pinfault.hil.json
+  field: checks.tone_at_the_jack.measured.thd_percent
+  conditions: same capture as M1; with no tone this is distortion of the noise; pass threshold at most 5 percent, so this
+    fails
+  value: 72.36
+  sha256: 6434637459af7716e05bf0521f09523a5a2445fd1aeff0d6ecfb4a66b912def4
+- id: M3
+  what: signal to noise and distortion ratio at the audio jack
+  category: board
+  unit: dB
+  record: results/b30/hil_runs/b30_hil_audio_pinfault.hil.json
+  field: checks.tone_at_the_jack.measured.sinad_db
+  conditions: same capture as M1; pass threshold at least 15 dB, so this fails
+  value: -2.89
+  sha256: 6434637459af7716e05bf0521f09523a5a2445fd1aeff0d6ecfb4a66b912def4
+- id: M4
+  what: tone frequency measured inside the FPGA
+  category: board
+  unit: Hz
+  record: results/b30/hil_runs/b30_hil_audio_pinfault.hil.json
+  field: checks.tone_frequency_in_fpga.measured
+  conditions: 0.5 s gate on the sample sign bit; passes although the tone never reaches the jack, which is why the in-FPGA
+    check cannot see this fault
+  value: 1000.0
+  sha256: 6434637459af7716e05bf0521f09523a5a2445fd1aeff0d6ecfb4a66b912def4
+gaps:
+- about: resources
+  text: Not measured on Vivado 2026.1; only the earlier release built this design, and brief 49 withdrew those numbers.
+    The RTL is the same as b30_hil_audio, whose 2026.1 numbers are in that design's handover, but the placed design was
+    not measured.
+- about: timing
+  text: Not measured on Vivado 2026.1 (see resources). The pin constraint differs from b30_hil_audio, so its slack is not
+    assumed equal.
+- about: power
+  text: Not measured on Vivado 2026.1 (see resources).
+- about: latency
+  text: Not measured; no record times a window read or the tone path.
+- about: throughput
+  text: Not applicable; the design is an instrument carrier with a deliberate fault.
+- about: E2
+  text: The earlier-release build passed its gates, but the design was not rebuilt on 2026.1.
+- about: build_2026_1
+  text: The 2026.1 build gate was never run for this design; re-run flow/run_vivado.sh designs/b30_hil_audio_pinfault base.
+- about: E3
+  text: The board run used a bitstream built on the earlier Vivado release and was one run, so there is no spread. The run's
+    overall result is fail by intent; the evidence shows the fault is caught, not that the design works.
+- about: audio calibration
+  text: The audio level is relative to the capture interface's full scale at an uncalibrated gain; the noise floor of the
+    interface alone was not recorded, and the pass thresholds were not tuned on a no-tone capture.
+- about: fault coverage
+  text: One fault in one class (a wrong pin) was seeded. No record shows what the audio stage does with the signal on the
+    LED pin beyond the capture at the jack, and no other pin or constraint fault was tried.
+- about: behaviour
+  text: Everything the design does on the register window is as in b30_hil_audio, including its gaps; the LED[0] indicator
+    is on a different pin from that design's, and nothing reads it.
+next_steps:
+- Rebuild on Vivado 2026.1 and re-run flow/hil.py on that bitstream.
+- Capture the audio interface with no tone, so the check's thresholds can be shown to separate a working design from a silent
+  one with margin.
+- Seed further faults of the same class (a swapped or floating pin) if the repair loop is to be tested on them.
+open_questions:
+- Should the hardware-in-the-loop stage feed this failure back to the agent's repair loop, and what constraint change should
+  it suggest?
+history:
+- date: '2026-11-11'
+  brief: '30'
+  note: created as the seeded-fault twin of b30_hil_audio; one board run caught the fault at the audio jack
+- date: '2026-11-13'
+  brief: '68'
+  note: handover written to the documentation standard
+state:
+  stage: built
+  gates:
+    build_2026_1: not-run
+    hil_fault_caught: pass
+  vivado: '2026.1'
+  kb_pin: 1fc7ed8
+  build_id: d2f00de4

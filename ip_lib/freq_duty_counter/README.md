@@ -49,10 +49,24 @@ Seeded faults (`faults.yaml`, run by `hil/ip_faults.py`):
 - Clock crossings: one: sig through a two-flop ASYNC_REG synchroniser.
 - Part, board or pin: none.
 - Depends on: nothing.
-- Limits: frequency resolution is f_clk / GATE_CLKS; input edges closer than two clocks are missed; no hysteresis or glitch filter.
 
 ## Cost table
 
 in-context cost (not an OOC sweep): 12 LUT, 165 FF at GATE_CLKS 50 000 000, CNT_W 26 inside b30_hil_audio (Vivado 2026.1, xc7a100t -1; results/vivado_2026_1_remeasure/b30_hil_audio.json); the OOC sweep is still to do.
 
 Licence: MIT (this repository).
+
+## Known gaps and limits
+
+- Frequency resolution is f_clk / GATE_CLKS; input edges closer than two clocks are missed; no hysteresis or glitch filter.
+- Cost: no out-of-context characterisation (no `characterisation:` in ip.yaml), so resources, Fmax and power are not measured for this entry.
+
+## Next steps
+
+1. Add an optional glitch filter and test it against inputs with edges closer than two clocks.
+
+## History
+
+- 0.1.0 (2026-11-11): First version (brief 30): simulated against the Python models, seeded faults caught, measured on the Nexys A7-100T inside designs/b30_hil_audio where noted in README.md.
+
+Full entries: [CHANGELOG.md](CHANGELOG.md).

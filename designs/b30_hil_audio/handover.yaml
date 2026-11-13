@@ -1,0 +1,309 @@
+# Brief 68 handover: the facts behind README.md and AGENT.md (docs/documentation_standard.md).
+# Measurement values and every sha256 are filled from the records by `python -m flow.handover fill`;
+# do not type them. Render with `python -m flow.handover write <this directory>`.
+schema: fda-handover/1
+id: b30_hil_audio
+title: Hardware-in-the-loop demonstration design (audio tone and instruments)
+kind: demonstration
+produced_by: human
+summary: One design on the Nexys A7 that carries four library instruments (a tone generator, a frequency and duty counter,
+  a logic analyser and a frame CRC) and an XADC readout behind the test shell, so that every sensing path of the brief 30
+  hardware-in-the-loop stage has something to read. The tone leaves the board as PWM audio, and `hil.yaml` lists eight checks
+  that compare the board with Python golden models, including a measurement of the tone at the audio jack.
+scope_not:
+- a product design; its job is to give the hardware-in-the-loop checks a known answer on every path
+- a test of the instruments' own correctness; the library blocks are tested in ip_lib and hil/tests
+- the video, analogue-input, M2K, Pluto, RTL-SDR and Red Pitaya paths, which no run covered
+target:
+  part: xc7a100tcsg324-1
+  board: Nexys A7-100T
+  top: b30_hil_audio_top
+  tool: Vivado 2026.1
+  note: brief 30 built it from the library entries dds_awg, freq_duty_counter, logic_analyser and frame_crc plus the test
+    shell
+clocks:
+- name: CLK100MHZ
+  mhz: 100
+  source: designs/b30_hil_audio/design.xdc
+  note: the only clock; the 48.008 kHz sample tick, the PWM carrier and the frame timing are enables or counters derived
+    from it
+resets:
+- name: CPU_RESETN
+  active: low
+  note: the board's reset button, synchronised by the test shell's reset synchroniser (assert asynchronous, release synchronous);
+    reset turns the tone on, clears the pixel-fault switch and sets the DDS step back to its 1 kHz value
+interfaces:
+- name: UART register window
+  type: test shell, 8N1 UART at 115200 baud
+  doc: shell/PROTOCOL.md
+  note: 32-bit registers at shell addresses 0x80 plus the offset in the header of rtl/b30_hil_audio_top.sv (CTRL 0x00, STEP
+    0x01, WAVE 0x02, SAMPLE 0x03, frequency counter 0x10 to 0x13, logic analyser 0x20 to 0x28, XADC 0x40 to 0x43, frame
+    CRC 0x50 to 0x55); read data is valid the clock after the read strobe; offsets with no register read 0
+- name: Audio output
+  type: AUD_PWM (PWM, 10-bit duty, offset binary) and AUD_SD (held high), LVCMOS33
+  doc: boards/nexys_a7_100t/inventory.yaml
+  note: the line is driven low for the low part of each PWM period and released for the high part, because the board's audio
+    stage pulls it up; the board's low-pass filter and 3.5 mm jack follow
+- name: LEDs
+  type: LED[0] is the tone-on bit and LED[1] is a slow heartbeat, LVCMOS33
+  note: indicators only; no check reads them
+parameters:
+- name: CLKS_PER_BIT
+  value: 868
+  legal: set by the shell's UART; the board value is 868
+  note: UART bit period in clocks (115200 baud at 100 MHz); the simulation uses 8
+- name: FD_GATE_CLKS
+  value: 50000000
+  legal: 1 or more; the board value is 50,000,000
+  note: gate length of the frequency and duty counter in clocks (0.5 s at 100 MHz); the simulation shrinks it to 40,000
+- name: STEP (reset value)
+  value: 89463225
+  legal: a 32-bit DDS phase step, writable at offset 0x01
+  note: gives a 1 kHz tone at the 48.008 kHz sample rate
+files:
+- path: designs/b30_hil_audio/rtl/b30_hil_audio_top.sv
+  what: the top, with the register map in its header (tone, instruments, XADC, frame generator and the read mux)
+  sha256: 308b6cba65b8aa2d1df5fc34051106d5b1c4c5a83fdb096030d5214894cddab7
+- path: designs/b30_hil_audio/design.xdc
+  what: pins (AUD_PWM on A11), the 100 MHz clock and the false paths on the asynchronous inputs and slow outputs
+  sha256: e9b9ecb91a3ba5afc4f21922fffc3623abb6c9226a353abbf85796688a285534
+- path: designs/b30_hil_audio/build.yaml
+  what: how flow/run_vivado.sh builds the design, with the library sources it pulls in
+  sha256: fe43c5592c6ec6c64adb85f939cbb23112063163721bc42ac3306322b5f75dd4
+- path: designs/b30_hil_audio/hil.yaml
+  what: the eight hardware-in-the-loop checks, their stimulus, expected results and tolerances
+  sha256: 91f21090d81ed4238834c98886fa0e0ac2ac19e9ff9328e504b4fca5006f3424
+- path: designs/b30_hil_audio/tests/hil_audio_cocotb.py
+  what: cocotb test of every instrument's registers against the Python golden models
+  sha256: 194d16964a5462ad185760c9c3e0db28cf82d4b2ebc64fc219dad0dfa75dbb4b
+- path: designs/b30_hil_audio/tests/test_hil_audio_rtl.py
+  what: pytest entry that runs the cocotb test with Icarus Verilog (8-clock UART bit, a 40,000-clock gate)
+  sha256: 074480dd34f86043e0de79c4ac596bc5fb203cbdb1236a8d89535ff2cfcd7ed8
+commands:
+- what: simulate every instrument against the golden models
+  cmd: python3 -m pytest -q designs/b30_hil_audio/tests/test_hil_audio_rtl.py
+  heavy: false
+  minutes: 2
+  needs: Icarus Verilog 12 and cocotb 2.0.1
+- what: build and run the gates
+  cmd: flow/run_vivado.sh designs/b30_hil_audio base
+  heavy: true
+  minutes: 4
+  needs: local Vivado 2026.1 and a heavy slot (take_heavy_slot.sh)
+- what: program the SRAM and run the hardware-in-the-loop checks
+  cmd: python3 flow/hil.py designs/b30_hil_audio
+  heavy: false
+  minutes: 1
+  needs: the Nexys A7 on wall power, the board lock, and an audio interface cabled from the Nexys audio jack for the audio
+    check (the check is skipped, not passed, if it is missing)
+evidence:
+- id: E1
+  activity: simulation
+  result: pass
+  how: ci
+  what: every instrument's registers read through the shell in simulation and compared with the Python golden models
+  record: designs/b30_hil_audio/tests/test_hil_audio_rtl.py
+  sha256: 074480dd34f86043e0de79c4ac596bc5fb203cbdb1236a8d89535ff2cfcd7ed8
+- id: E2
+  activity: build
+  result: pass
+  what: whole-board build on Vivado 2026.1; every gate passes (built, not programmed)
+  record: results/vivado_2026_1_remeasure/b30_hil_audio.json
+  sha256: d96edd32f12577509232e0288a1173d09ee40f25dbaffa9619f698511a31eb36
+- id: E3
+  activity: board
+  result: pass
+  runs: 1
+  what: one hardware-in-the-loop run; all eight checks pass (design ID, frame CRC known answer, seeded pixel fault seen,
+    tone frequency in the FPGA, logic analyser against the DDS model, pre-trigger, XADC against JTAG sysmon, tone at the
+    audio jack)
+  record: results/b30/hil_runs/b30_hil_audio.hil.json
+  conditions: wall power; power gate passed before programming; die temperature and rails read by the XADC and by JTAG sysmon
+    agreed within tolerance (M11, M12); audio captured by a USB interface at gain about 50 percent, uncalibrated; ambient
+    not recorded
+  sha256: f9a662c1e2f5eb07f59fb6894b2133f64818d544c4e498b4d6f50f93d1e88b90
+measurements:
+- id: M1
+  what: LUTs, whole board design
+  category: resources
+  key: lut
+  unit: LUT
+  record: results/vivado_2026_1_remeasure/b30_hil_audio.json
+  field: lut
+  conditions: routed whole-board build, Vivado 2026.1, xc7a100tcsg324-1, including the test shell
+  value: 1233
+  sha256: d96edd32f12577509232e0288a1173d09ee40f25dbaffa9619f698511a31eb36
+- id: M2
+  what: flip-flops, whole board design
+  category: resources
+  key: ff
+  unit: FF
+  record: results/vivado_2026_1_remeasure/b30_hil_audio.json
+  field: ff
+  conditions: routed whole-board build, Vivado 2026.1, including the test shell
+  value: 1158
+  sha256: d96edd32f12577509232e0288a1173d09ee40f25dbaffa9619f698511a31eb36
+- id: M3
+  what: block RAM tiles (36 kb equivalents)
+  category: resources
+  key: bram36
+  unit: tile
+  record: results/vivado_2026_1_remeasure/b30_hil_audio.json
+  field: bram36
+  conditions: routed whole-board build, Vivado 2026.1; the DDS wave table uses one 18 kb block RAM
+  value: 0.5
+  sha256: d96edd32f12577509232e0288a1173d09ee40f25dbaffa9619f698511a31eb36
+- id: M4
+  what: worst setup slack
+  category: timing
+  key: wns_ns
+  unit: ns
+  record: results/vivado_2026_1_remeasure/b30_hil_audio.json
+  field: wns_ns
+  conditions: routed, at the 100 MHz board clock
+  value: 2.436
+  sha256: d96edd32f12577509232e0288a1173d09ee40f25dbaffa9619f698511a31eb36
+- id: M5
+  what: worst hold slack
+  category: timing
+  key: whs_ns
+  unit: ns
+  record: results/vivado_2026_1_remeasure/b30_hil_audio.json
+  field: whs_ns
+  conditions: routed, at the 100 MHz board clock
+  value: 0.048
+  sha256: d96edd32f12577509232e0288a1173d09ee40f25dbaffa9619f698511a31eb36
+- id: M6
+  what: total on-chip power estimate
+  category: power
+  key: power_w
+  unit: W
+  record: results/vivado_2026_1_remeasure/b30_hil_audio.json
+  field: power_w
+  conditions: report_power after routing, vectorless (default toggle rates), the board's thermal environment
+  value: 0.128
+  sha256: d96edd32f12577509232e0288a1173d09ee40f25dbaffa9619f698511a31eb36
+- id: M7
+  what: CRC-32 of the generated 128-pixel frame, read from the board
+  category: board
+  unit: ''
+  record: results/b30/hil_runs/b30_hil_audio.hil.json
+  field: checks.frame_crc_known_answer.measured.crc
+  conditions: equals the golden model's CRC; the pass rule is exact equality with no new mismatches
+  value: 93c30c48
+  sha256: f9a662c1e2f5eb07f59fb6894b2133f64818d544c4e498b4d6f50f93d1e88b90
+- id: M8
+  what: tone frequency measured inside the FPGA
+  category: board
+  unit: Hz
+  record: results/b30/hil_runs/b30_hil_audio.hil.json
+  field: checks.tone_frequency_in_fpga.measured
+  conditions: 0.5 s gate on the sample sign bit, resolution 2 Hz; pass range 1000 Hz plus or minus 4 Hz
+  value: 1000.0
+  sha256: f9a662c1e2f5eb07f59fb6894b2133f64818d544c4e498b4d6f50f93d1e88b90
+- id: M9
+  what: tone level at the audio jack, relative to full scale of the capture interface
+  category: board
+  unit: dBFS
+  record: results/b30/hil_runs/b30_hil_audio.hil.json
+  field: checks.tone_at_the_jack.measured.level_dbfs_rms
+  conditions: USB audio capture of the right channel; gain about 50 percent, not calibrated; pass threshold at least -75
+    dBFS
+  value: -29.27
+  sha256: f9a662c1e2f5eb07f59fb6894b2133f64818d544c4e498b4d6f50f93d1e88b90
+- id: M10
+  what: total harmonic distortion of the tone at the audio jack
+  category: board
+  unit: '%'
+  record: results/b30/hil_runs/b30_hil_audio.hil.json
+  field: checks.tone_at_the_jack.measured.thd_percent
+  conditions: same capture as M9, through the board's PWM filter and the interface; pass threshold at most 5 percent
+  value: 1.32
+  sha256: f9a662c1e2f5eb07f59fb6894b2133f64818d544c4e498b4d6f50f93d1e88b90
+- id: M11
+  what: die temperature read by the in-design XADC
+  category: board
+  unit: C
+  record: results/b30/hil_runs/b30_hil_audio.hil.json
+  field: checks.xadc_vs_jtag.measured.tj_c
+  conditions: fabric DRP readout; the JTAG sysmon read 25.6 C in the same run; pass tolerance 2 C and at most 85 C
+  value: 25.716
+  sha256: f9a662c1e2f5eb07f59fb6894b2133f64818d544c4e498b4d6f50f93d1e88b90
+- id: M12
+  what: VCCINT read by the in-design XADC
+  category: board
+  unit: V
+  record: results/b30/hil_runs/b30_hil_audio.hil.json
+  field: checks.xadc_vs_jtag.measured.vccint_v
+  conditions: fabric DRP readout against JTAG sysmon, tolerance 0.02 V
+  value: 1.0063
+  sha256: f9a662c1e2f5eb07f59fb6894b2133f64818d544c4e498b4d6f50f93d1e88b90
+gaps:
+- about: latency
+  text: Not measured; no record times a window read or the tone path.
+- about: throughput
+  text: Not applicable; the design is an instrument carrier, and the logic analyser captures one 256-sample buffer at the
+    48.008 kHz sample rate per arm.
+- about: E3
+  text: The board run used a bitstream built on the earlier Vivado release; the 2026.1 build (E2) was not programmed. It
+    was one run, so there is no spread.
+- about: audio calibration
+  text: The audio level is relative to the capture interface's full scale at an uncalibrated gain, not a voltage at the
+    jack; the THD includes the board's filter and the interface, which no run measured alone.
+- about: paths not run
+  text: No run used the M2K, Pluto, RTL-SDR, Red Pitaya, HDMI capture, I2S audio or an XADC analogue input; their host drivers
+    are tested only on synthetic data or a fake server (results/b30/README.md).
+- about: agent loop
+  text: The hardware-in-the-loop stage (flow/hil.py) is not wired into the agent's repair loop or gates.
+- about: behaviour
+  text: Writes to read-only offsets are ignored and offsets with no register read 0. Offsets 0x20 to 0x2F all go to the
+    logic analyser, beyond the nine registers its header lists. After reset the frame CRC expected value (0x54) is 0, so
+    every frame counts as a mismatch until the host writes the model's CRC. CTRL bit 1 flips one pixel bit of every frame
+    until cleared.
+- about: instrument limits
+  text: The frequency counter gates 0.5 s, so a tone change takes up to a gate to show; the logic analyser samples at the
+    tone tick, not at 100 MHz.
+next_steps:
+- Re-run flow/hil.py on a Vivado 2026.1 bitstream, with the XADC and JTAG sysmon read at the start and end, and repeat it
+  several times for a spread.
+- Calibrate the audio path once (interface alone, then the board) so the level and THD can be quoted in volts and in the
+  board's own contribution.
+- Run the paths that were not connected (M2K, Pluto, RTL-SDR, Red Pitaya, HDMI capture) when the hardware is attached, as
+  results/b30/README.md lists.
+open_questions:
+- Should the hardware-in-the-loop stage be wired into the agent's gates, and what should it do when the audio interface
+  is absent (skip and report, as now)?
+history:
+- date: '2026-11-11'
+  brief: '30'
+  note: written with the HIL instruments and stage; one board run, all eight checks pass; its seeded-fault twin fails the
+    audio check
+- date: '2026-11-11'
+  brief: '49'
+  note: rebuilt on Vivado 2026.1; every gate passes (not programmed)
+- date: '2026-11-13'
+  brief: '68'
+  note: handover written to the documentation standard
+numbers_allow:
+- token: '16'
+  reason: a constant in rtl/b30_hil_audio_top.sv (sample width, pixel width, frame period in clocks)
+- token: '24'
+  reason: a constant in rtl/b30_hil_audio_top.sv (sample width, pixel width, frame period in clocks)
+- token: '4096'
+  reason: a constant in rtl/b30_hil_audio_top.sv (sample width, pixel width, frame period in clocks)
+- token: '0x28'
+  reason: an instrument register offset inside the design's shell window, from the register decode in the design's RTL
+- token: '0x2F'
+  reason: an instrument register offset inside the design's shell window, from the register decode in the design's RTL
+- token: '36'
+  reason: block RAM tile size in Kb (a device fact, AMD UG473)
+- token: '85'
+  reason: board junction-temperature limit in C, from the house power rule (flow/hw.py power gate)
+state:
+  stage: board-verified
+  gates:
+    build_2026_1: pass
+    hil_board: pass
+  vivado: '2026.1'
+  kb_pin: 1fc7ed8
+  build_id: efa287bc

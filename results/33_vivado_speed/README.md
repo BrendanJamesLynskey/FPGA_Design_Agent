@@ -44,3 +44,24 @@ reports getting its synthesis and implementation licence for each device from th
 device outside the no-cost edition was not possible: this installation has only the no-cost device set (Zynq
 UltraScale+ up to ZU7, xck24/xck26, no Virtex UltraScale+). The `foreach` list in `licence_check.tcl` was made
 overridable (`LC_PARTS`) after the run; the default list is the one that ran.
+
+## Records
+
+The table near the top lists each file group: `measure.sh`, `jobs_*.txt`, `batch*.log`, `raw/<label>/`, the rig records,
+`hash_dcp.tcl`, `raw/t1_*` and the licence-check files. `results.md` and `summary.json` are generated from `raw/` by
+`summarise.py`; `raw_discarded/` holds the stopped first rig attempt and is not used in any table.
+
+## Reproduce
+
+`measure.sh <jobs file>` per `jobs_*.txt`, one build at a time under a heavy slot marked "Vivado impl" (Vivado, a
+multi-hour job), then `python3 results/33_vivado_speed/summarise.py`. `licence_check.sh` runs the licence check. The
+discarded and deleted records cannot be regenerated, and this release's results are superseded: see
+`results/33_vivado_speed_2026_1`.
+
+## Known gaps and limits
+
+- Superseded by `results/33_vivado_speed_2026_1`; do not cite the build times, memory peaks or the licence-check outcome from this folder.
+- Another session's job ran during the measurements, so every wall time carries that load; one machine only.
+- The first rig attempt (with the full result dump) was stopped and is kept apart; the first-version and committed-version hashes are only comparable within one version.
+- The licence check had no control with a device outside the no-cost edition (none installed).
+- Lean reports, OOC module caching, parallel simulation and seeds were not implemented by this brief.

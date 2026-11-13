@@ -1,0 +1,251 @@
+# Brief 68 handover: the facts behind README.md and AGENT.md (docs/documentation_standard.md).
+# Measurement values and every sha256 are filled from the records by `python -m flow.handover fill`;
+# do not type them. Render with `python -m flow.handover write <this directory>`.
+schema: fda-handover/1
+id: b2_tmp_adt7420
+title: ADT7420 temperature sensor board self-check
+kind: board-selfcheck
+produced_by: human
+summary: Reads the Nexys A7's ADT7420 temperature sensor over I2C (address 0x4B, 100 kHz) from a small register block in
+  the test shell. The host reads the ID register and the temperature, and the pass rule checks the ID, that no byte was
+  not acknowledged and that the temperature is plausible. The design only sets the register pointer and reads, so it cannot
+  change the sensor's configuration. `selfcheck.py` holds the on-board pass rule, written before any board run.
+scope_not:
+- 'a temperature measurement: the pass range (10 to 40 C) only shows the sensor answers with a plausible value, not that
+  it is accurate'
+- an agent benchmark task; it was written by hand to prove the board inventory on hardware
+target:
+  part: xc7a100tcsg324-1
+  board: Nexys A7-100T
+  top: b2_tmp_adt7420_top
+  tool: Vivado 2026.1
+clocks:
+- name: CLK100MHZ
+  mhz: 100
+  source: designs/b2_tmp_adt7420/design.xdc
+  note: the only clock; SCL is made from it (four quarters of QUARTER clocks a bit) and both I2C lines are synchronised
+    into it
+resets:
+- name: CPU_RESETN
+  active: low
+  note: the board's reset button, synchronised by the test shell's reset synchroniser (assert asynchronous, release synchronous)
+interfaces:
+- name: UART register window
+  type: test shell, 8N1 UART at 115200 baud
+  doc: shell/PROTOCOL.md
+  note: four registers at shell addresses 0x80 to 0x83 (CTRL, STATUS, RDATA, INFO); the map is in the header of rtl/tmp_regs.sv;
+    other window addresses read 0, and writes to any address but CTRL are ignored
+- name: ADT7420 I2C
+  type: TMP_SCL and TMP_SDA, open drain with the board's pull-ups, LVCMOS33
+  doc: boards/nexys_a7_100t/inventory.yaml
+  note: START, address and write, pointer byte, repeated START, address and read, one or two bytes, STOP; the master waits
+    while the device stretches SCL; a byte that is not acknowledged sets nack and the transfer ends with a STOP
+parameters:
+- name: QUARTER
+  value: 250
+  legal: 1 to 65535 (16-bit divider); the board value is 250
+  note: a quarter of an I2C bit in 100 MHz clocks; 250 gives a 100 kHz SCL
+- name: DEV_ADDR
+  value: 75
+  legal: 7-bit address; the board value is 0x4B (75)
+  note: the sensor's address with both address pins high on this board
+- name: CLKS_PER_BIT
+  value: 868
+  legal: set by the shell's UART; the board value is 868
+  note: UART bit period in clocks (115200 baud at 100 MHz)
+files:
+- path: designs/b2_tmp_adt7420/rtl/i2c_ptr_read.sv
+  what: I2C master that sets a register pointer then reads one or two bytes; it never writes a data byte
+  sha256: 59cc6685aad975b6e17ab36f6940f4f12e9b13e06d9f274b3e26830c2ed35c21
+- path: designs/b2_tmp_adt7420/rtl/tmp_regs.sv
+  what: the registers in the shell window, with the register map in its header
+  sha256: 6eb149b90313812666d63385a9b4474c7d91b4a792aaa8eedd6dc45efa94adea
+- path: designs/b2_tmp_adt7420/rtl/b2_tmp_adt7420_top.sv
+  what: board top (test shell, open-drain pins, line synchroniser and the register block)
+  sha256: d517769e4f46528fb700a2e708963dfe24420e2a0e1b55d779f42e85034c80a5
+- path: designs/b2_tmp_adt7420/design.xdc
+  what: pins, the 100 MHz clock and the false paths on the asynchronous inputs and slow outputs
+  sha256: 84ced0fed654cf8192a04664d3ec1027251e4b914accabe0df886cc5fe7e16ba
+- path: designs/b2_tmp_adt7420/build.yaml
+  what: how flow/run_vivado.sh builds the design
+  sha256: 629b82eb19d2bb78491143beaf06125b4dc0dbd83ff5906a324203aacddc7242
+- path: designs/b2_tmp_adt7420/selfcheck.py
+  what: the on-board check and its pass rule (docstring), pre-registered before any board run
+  sha256: 1cb403454fc372ef351b55855303ba5c178fe24c5fb2a2f646e8c9637d971279
+- path: designs/b2_tmp_adt7420/verif/fsm.yaml
+  what: the state table of the I2C engine, read by the FSM coverage check
+  sha256: 7993de31e521b67d1144890e2e7893e223c495584b6fef742a179e01ae9670d3
+- path: designs/b2_tmp_adt7420/tests/tmp_cocotb.py
+  what: cocotb tests against an ADT7420 model that loses its pointer on a STOP, NACKs a wrong address and stretches SCL
+  sha256: 421b81e94f63e5943617e24ea676516619b294b7abbdb2ebfd2f20eeff269d1b
+- path: designs/b2_tmp_adt7420/tests/test_tmp_rtl.py
+  what: pytest entry that runs the cocotb tests with Icarus Verilog
+  sha256: 9e86a9ff6b5633b1cd10f3994ff498bc649f1b39218eb5ac0e4fdeb878b9c1c3
+commands:
+- what: simulate against the ADT7420 model
+  cmd: python3 -m pytest -q designs/b2_tmp_adt7420/tests/test_tmp_rtl.py
+  heavy: false
+  minutes: 1
+  needs: Icarus Verilog 12 and cocotb 2.0.1
+- what: build and run the gates
+  cmd: flow/run_vivado.sh designs/b2_tmp_adt7420 base
+  heavy: true
+  minutes: 4
+  needs: local Vivado 2026.1 and a heavy slot (take_heavy_slot.sh)
+- what: power gate, program SRAM, self-check, three times
+  cmd: python3 flow/board_check.py designs/b2_tmp_adt7420 --runs 3
+  heavy: false
+  minutes: 2
+  needs: the Nexys A7 on wall power and the board lock
+evidence:
+- id: E1
+  activity: simulation
+  result: pass
+  how: ci
+  what: register-level tests against an ADT7420 model; ID and temperature reads, a wrong address is not acknowledged and
+    the bus is released, clock stretching, repeated one and two byte reads, and no data byte is ever written to the sensor
+  record: designs/b2_tmp_adt7420/tests/test_tmp_rtl.py
+  sha256: 9e86a9ff6b5633b1cd10f3994ff498bc649f1b39218eb5ac0e4fdeb878b9c1c3
+- id: E2
+  activity: build
+  result: pass
+  what: whole-board build on Vivado 2026.1; every gate passes (built, not programmed)
+  record: results/vivado_2026_1_remeasure/b2_builds.json
+  sha256: 2ab9aafe7a17bffd120d9ed952fbf962bbd7738f5982809abe26b876c11ccb3f
+- id: E3
+  activity: board
+  result: pass
+  runs: 3
+  what: three self-check runs on the board, from a clean committed tree; each passes the pre-registered rule (ID 0xCB with
+    no NACK, temperature inside the range)
+  record: results/board_v2/b2_tmp_adt7420.json
+  conditions: wall power; the power gate (report_power total and junction temperature against the 2.0 W and 85 C limits)
+    passed before programming; XADC rails and die temperature were not read during these runs; no reference thermometer
+    was used
+  sha256: ddf2c0fb486f3cd418158a46e8aeace3f145634d644380748dd6dee166f8db1f
+measurements:
+- id: M1
+  what: LUTs, whole board design
+  category: resources
+  key: lut
+  unit: LUT
+  record: results/vivado_2026_1_remeasure/b2_builds.json
+  field: builds.b2_tmp_adt7420.lut
+  conditions: routed whole-board build, Vivado 2026.1, xc7a100tcsg324-1, including the test shell
+  value: 413
+  sha256: 2ab9aafe7a17bffd120d9ed952fbf962bbd7738f5982809abe26b876c11ccb3f
+- id: M2
+  what: flip-flops, whole board design
+  category: resources
+  key: ff
+  unit: FF
+  record: results/vivado_2026_1_remeasure/b2_builds.json
+  field: builds.b2_tmp_adt7420.ff
+  conditions: routed whole-board build, Vivado 2026.1, including the test shell
+  value: 341
+  sha256: 2ab9aafe7a17bffd120d9ed952fbf962bbd7738f5982809abe26b876c11ccb3f
+- id: M3
+  what: worst setup slack
+  category: timing
+  key: wns_ns
+  unit: ns
+  record: results/vivado_2026_1_remeasure/b2_builds.json
+  field: builds.b2_tmp_adt7420.wns_ns
+  conditions: routed, at the 100 MHz board clock
+  value: 4.08
+  sha256: 2ab9aafe7a17bffd120d9ed952fbf962bbd7738f5982809abe26b876c11ccb3f
+- id: M4
+  what: worst hold slack
+  category: timing
+  key: whs_ns
+  unit: ns
+  record: results/vivado_2026_1_remeasure/b2_builds.json
+  field: builds.b2_tmp_adt7420.whs_ns
+  conditions: routed, at the 100 MHz board clock
+  value: 0.122
+  sha256: 2ab9aafe7a17bffd120d9ed952fbf962bbd7738f5982809abe26b876c11ccb3f
+- id: M5
+  what: total on-chip power estimate
+  category: power
+  key: power_w
+  unit: W
+  record: results/vivado_2026_1_remeasure/b2_builds.json
+  field: builds.b2_tmp_adt7420.power_w
+  conditions: report_power after routing, vectorless (default toggle rates), the board's thermal environment
+  value: 0.116
+  sha256: 2ab9aafe7a17bffd120d9ed952fbf962bbd7738f5982809abe26b876c11ccb3f
+- id: M6
+  what: temperature read from the sensor, first recorded run
+  category: board
+  unit: C
+  record: results/board_v2/b2_tmp_adt7420.json
+  field: results[0].steps.selfcheck.temperature_c
+  conditions: 13-bit power-on mode, 0.0625 C a step; room temperature not recorded; pass range 10 to 40 C
+  value: 18.875
+  sha256: ddf2c0fb486f3cd418158a46e8aeace3f145634d644380748dd6dee166f8db1f
+- id: M7
+  what: ID register value, first recorded run
+  category: board
+  unit: ''
+  record: results/board_v2/b2_tmp_adt7420.json
+  field: results[0].steps.selfcheck.id
+  conditions: register 0x0B read with no NACK; the pass rule requires 0xCB
+  value: '0xCB'
+  sha256: ddf2c0fb486f3cd418158a46e8aeace3f145634d644380748dd6dee166f8db1f
+gaps:
+- about: latency
+  text: Not measured. A read takes nine bit periods for each of the address, pointer and address-read bytes plus nine for
+    each data byte at 100 kHz by construction; no record times it.
+- about: throughput
+  text: Not applicable; the block moves one or two bytes per host request.
+- about: E3
+  text: The board runs used bitstreams built on the earlier Vivado release; the 2026.1 build (E2) was not programmed. Re-run
+    the board check on a 2026.1 bitstream to close this.
+- about: operating conditions
+  text: The board runs predate the house rule of 2026-11-11 that every board run records its operating conditions from the
+    XADC; die temperature and the VCCINT, VCCAUX and VCCBRAM rails were not read from the XADC, so the runs cannot be shown
+    to be inside the recommended operating conditions.
+- about: accuracy
+  text: The temperature was not compared with a reference, and the room temperature was not recorded; the range check shows
+    the sensor answers plausibly, not that the reading is accurate. Only the 13-bit power-on mode is decoded.
+- about: behaviour
+  text: GO written while a transfer runs is ignored (i2c_ptr_read.sv takes GO only when idle), but no test covers it. A
+    CTRL write while a transfer runs still changes the pointer and byte-count registers; the engine loads the pointer byte
+    after the address is acknowledged, so a write before that point changes the pointer sent, while the byte count is taken
+    at GO. A byte count other than 2 reads one byte. After a NACK the transfer ends with a STOP, nack stays set until the
+    next GO and RDATA is 0. A 2-byte read puts the first byte in bits 15 to 8. STATUS and RDATA reads of undefined addresses
+    return 0 with no error.
+- about: reset
+  text: Reset clears the registers, DONE, NACK and the pointer, and releases both I2C lines. A reset in the middle of a
+    transfer releases the lines at once without a STOP, which can leave a device mid-byte.
+next_steps:
+- Re-run the board check on a Vivado 2026.1 bitstream with the XADC read at the start and end of each run.
+- Add tests for GO written while busy and for a CTRL write during a transfer, and state the behaviour in the register map
+  header.
+- Compare the temperature with a reference thermometer once, and record the room temperature.
+open_questions:
+- Should the 16-bit (high resolution) configuration be supported, which would need a configuration write that this design
+  deliberately cannot do?
+history:
+- date: '2026-10-31'
+  brief: 04c
+  note: written with the board inventory, power budget and power gate; 3 of 3 board runs pass
+- date: '2026-11-11'
+  brief: '49'
+  note: rebuilt on Vivado 2026.1; every gate passes (not programmed)
+- date: '2026-11-13'
+  brief: '68'
+  note: handover written to the documentation standard
+numbers_allow:
+- token: '0x83'
+  reason: 'shell window address: base 0x80 (shell/PROTOCOL.md) plus the register offset in rtl/*_regs.sv'
+- token: '85'
+  reason: board junction-temperature limit in C, from the house power rule (flow/hw.py power gate)
+state:
+  stage: board-verified
+  gates:
+    build_2026_1: pass
+    board_selfcheck: pass
+  vivado: '2026.1'
+  kb_pin: 1fc7ed8
+  build_id: 75af5be3
