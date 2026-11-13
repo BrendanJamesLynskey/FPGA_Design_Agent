@@ -185,5 +185,5 @@ function unit, docs/hwsw.md). An entry whose logic sits only between its input p
 register-to-register path out of context: its row records no WNS and no Fmax estimate. Inside a design its line in
 the hierarchy report can be far above the out-of-context count, because synthesis merges the logic that drives it into
 it (`crc32_step` `word`: 95 LUTs out of context, 283 in the BRV32P core's report, 97 there with its hierarchy kept;
-the core grows by 371 either way: results/64a_hwsw/core_ooc.json). Measure such a block by the growth of the design
+the core grows by 371 (387 with the hierarchy kept): results/64a_hwsw/core_ooc.json). Measure such a block by the growth of the design
 around it.

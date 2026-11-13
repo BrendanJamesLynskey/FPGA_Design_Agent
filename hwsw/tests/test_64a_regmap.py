@@ -112,6 +112,15 @@ BREAKS = [
     ("port name clash", lambda d: d["registers"].append({"name": "CTRL_MODE", "offset": 0x0F0, "fields": [
         {"name": "X", "lsb": 0, "width": 1, "access": "RW"}]}) or _reg(d, "CTRL")["fields"].append(
         {"name": "MODE_X", "lsb": 31, "width": 1, "access": "RW"}), "port name ctrl_mode_x"),
+    # a register's own signal against another register's field port: A_O makes wr_a_o, WR field A makes port wr_a_o
+    ("register signal meets a field port", lambda d: d["registers"].extend([
+        {"name": "A_O", "offset": 0x0F0, "fields": [{"name": "X", "lsb": 0, "width": 1, "access": "RW"}]},
+        {"name": "WR", "offset": 0x0F4, "fields": [{"name": "A", "lsb": 0, "width": 1, "access": "RW"}]}]),
+     "its signal wr_a_o is also the port made by WR.A"),
+    # the full names: field B's `_set_i` port is field B_SET's `_i` port
+    ("full port names meet", lambda d: d["registers"].append({"name": "Q", "offset": 0x0F0, "fields": [
+        {"name": "B", "lsb": 0, "width": 1, "access": "W1S"}, {"name": "B_SET", "lsb": 1, "width": 1, "access": "RO"}]}),
+     "q_b_set_i is also made by Q.B"),
     ("C name clash", lambda d: d["registers"].append({"name": "CTRL_MODE", "offset": 0x0F0, "fields": [
         {"name": "Y", "lsb": 0, "width": 1, "access": "RW"}]}), "is also made by register"),
     ("generated-name clash", lambda d: _reg(d, "CTRL")["fields"][1].update(name="RW_MASK"), "clashes with a generated"),
