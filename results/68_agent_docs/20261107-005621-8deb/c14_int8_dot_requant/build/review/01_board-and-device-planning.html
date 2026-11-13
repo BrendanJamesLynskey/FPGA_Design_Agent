@@ -1,0 +1,129 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>01 board-and-device-planning</title><style>
+:root{--bg:#fff;--fg:#111;--mut:#555;--line:#ccc;--pass:#111;--fail:#111;--chip:#eee;--add:#d4d4d4;--del:#bbb}
+@media (prefers-color-scheme:dark){:root{--bg:#111;--fg:#eee;--mut:#aaa;--line:#444;--chip:#222;--add:#3a3a3a;--del:#555}}
+body{background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,Segoe UI,sans-serif;margin:0;padding:16px}
+main{max-width:980px;margin:auto}h1{font-size:1.4em;margin:.2em 0}h2{font-size:1.1em;border-bottom:1px solid var(--line);
+padding-bottom:4px;margin-top:1.6em}table{border-collapse:collapse;width:100%;font-size:.92em}td,th{border:1px solid var(--line);
+padding:4px 6px;text-align:left;vertical-align:top}pre{background:var(--chip);padding:8px;overflow-x:auto;font-size:.85em}
+.mut{color:var(--mut)}.chip{display:inline-block;padding:0 6px;border:1px solid var(--fg);border-radius:3px;font-size:.85em}
+.fail{background:var(--fg);color:var(--bg)}svg{max-width:100%;height:auto}svg text{fill:var(--fg);font:11px monospace}
+svg .w{stroke:var(--fg);fill:none;stroke-width:1.2}a{color:var(--fg)}.wrap{overflow-x:auto}
+svg .bus{stroke:var(--fg);fill:none;stroke-width:1.2}svg .bv{font:10px monospace;text-anchor:middle}
+.diff{font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;white-space:pre;overflow-x:auto;background:var(--chip);padding:6px;margin:4px 0}
+.diff span.add{background:var(--add)}.diff span.del{background:var(--del)}.diff .hunk{color:var(--mut)}
+.k{font-weight:bold}.c{color:var(--mut);font-style:italic}.n{text-decoration:underline dotted}.s{text-decoration:underline}
+.code{font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;white-space:pre;overflow-x:auto;background:var(--chip);padding:6px}
+.who-owner{font-weight:bold}.who-auto{font-style:italic}
+</style></head><body><main><h1>Stage 1: board-and-device-planning</h1><p class="mut">c14_int8_dot_requant; visit 2; 2026-11-07 00:58:50</p><h2>Exit gates</h2><div class="wrap"><table><tr><th>gate</th><th>result</th><th>detail</th></tr><tr><td>arch_note</td><td><span class="chip">PASS</span></td><td></td></tr><tr><td>arch_yaml</td><td><span class="chip">PASS</span></td><td></td></tr><tr><td>inventory</td><td><span class="chip">PASS</span></td><td></td></tr></table></div><h2>Inputs and outputs</h2><div class="wrap"><table><tr><td>inputs</td><td>*</td></tr><tr><td>outputs</td><td>ARCHITECTURE.md, BUILD_NOTE.md, __init__.py, architecture.yaml, design.xdc, spec.md, spec.yaml, verif/checkers/v_macros.svh</td></tr></table></div><h2>Spec summary</h2><div class="wrap"><table><tr><td>title</td><td>Quantised-layer arithmetic unit (8-way int8 dot product, bias, requantise, clamp) behind the test shell</td></tr><tr><td>top</td><td>c14_int8_dot_requant_top</td></tr><tr><td>clocks</td><td>CLK100MHZ 100 MHz</td></tr><tr><td>ports</td><td>5</td></tr><tr><td>open questions</td><td>0</td></tr><tr><td>resolved questions</td><td>6</td></tr></table></div><h2>Block diagram</h2><pre> UART_TXD_IN --&gt; [fpga_shell] --win_*--&gt; [dotq_regs] --core_*--&gt; [dotq_core]
+ UART_RXD_OUT &lt;-- [fpga_shell] &lt;--rdata-- [dotq_regs] &lt;--y,acc,done-- [dotq_core]
+ CPU_RESETN --&gt; [reset_sync] --rst--&gt; all blocks
+ dotq_regs.ready --&gt; LED0
+</pre><h2>Testplan and coverage</h2><div class="wrap"><table><tr><td>testplan items</td><td>-</td></tr></table></div><h2>RTL diff against the previous stage</h2><h3>ARCHITECTURE.md</h3><div class="diff"><span class="hunk">@@ -0,0 +1,35 @@</span>
+<span class="add">+# c14_int8_dot_requant architecture</span>
+<span class="add">+</span>
+<span class="add">+Quantised-layer unit: acc = sum(act[i]*wgt[i]) + bias; y = clamp(round(acc*mult / <span class="n">2</span>^shift)), behind the UART test shell on the Nexys A7-100T.</span>
+<span class="add">+</span>
+<span class="add">+## Block diagram</span>
+<span class="add">+</span>
+<span class="add">+```text</span>
+<span class="add">+ UART_TXD_IN --&gt; [fpga_shell] --win_*--&gt; [dotq_regs] --core_*--&gt; [dotq_core]</span>
+<span class="add">+ UART_RXD_OUT &lt;-- [fpga_shell] &lt;--rdata-- [dotq_regs] &lt;--y,acc,done-- [dotq_core]</span>
+<span class="add">+ CPU_RESETN --&gt; [reset_sync] --rst--&gt; all blocks</span>
+<span class="add">+ dotq_regs.ready --&gt; LED0</span>
+<span class="add">+```</span>
+<span class="add">+</span>
+<span class="add">+- dotq_regs: operand registers (A_LO..CTRL), GO write makes a one-cycle `go` pulse, clears READY; on `done` latches y/acc <span class="k">and</span> sets READY. Y/ACC read <span class="n">0</span> while READY=<span class="n">0</span>.</span>
+<span class="add">+- dotq_core: stage <span class="n">1</span> eight 8x8 products; stage <span class="n">2</span> adder tree + bias (<span class="n">32</span>-<span class="k">bit</span> acc); stage <span class="n">3</span> acc*mult (<span class="n">48</span>/<span class="n">49</span>-<span class="k">bit</span> <span class="k">signed</span>); stage <span class="n">4</span> add rounding constant <span class="n">2</span>^(shift-<span class="n">1</span>) <span class="k">and</span> arithmetic shift; stage <span class="n">5</span> clamp (relu aware); done asserted within <span class="n">8</span> clocks of go.</span>
+<span class="add">+</span>
+<span class="add">+## Clock plan</span>
+<span class="add">+</span>
+<span class="add">+Single domain CLK100MHZ, <span class="n">100</span> MHz (<span class="n">10</span> ns), no MMCM/PLL. Synchronous reset: CPU_RESETN (active low, async button) goes through a <span class="n">2</span>-flop reset_sync to an active-high sync reset, applied within <span class="n">2</span> cycles. UART_TXD_IN is synchronised inside the shell. CLKS_PER_BIT = <span class="n">868</span>, TIMEOUT_CYCLES = <span class="n">100000000</span>, BUILD_STAMP top <span class="k">parameter</span> <span class="k">default</span> <span class="n">0</span>.</span>
+<span class="add">+</span>
+<span class="add">+## Pin list</span>
+<span class="add">+</span>
+<span class="add">+| Port | Dir | Pin | Role |</span>
+<span class="add">+|---|---|---|---|</span>
+<span class="add">+| CLK100MHZ | in | E3 | <span class="n">100</span> MHz clock |</span>
+<span class="add">+| CPU_RESETN | in | C12 | reset, active low |</span>
+<span class="add">+| UART_TXD_IN | in | C4 | host to FPGA serial |</span>
+<span class="add">+| UART_RXD_OUT | out | D4 | FPGA to host serial |</span>
+<span class="add">+| LED[<span class="n">0</span>] | out | H17 | READY flag (LED declared as a bus; only <span class="k">bit</span> <span class="n">0</span> used) |</span>
+<span class="add">+</span>
+<span class="add">+Pins <span class="k">and</span> I/O standards come from the master XDC through board_constraints; I/O delay lines are appended in design.xdc.</span>
+<span class="add">+</span>
+<span class="add">+## Resource prediction</span>
+<span class="add">+</span>
+<span class="add">+LUT <span class="n">300</span>-<span class="n">1400</span>, FF <span class="n">350</span>-<span class="n">1300</span>, BRAM <span class="n">0</span>, DSP <span class="n">0</span>-<span class="n">12</span> (<span class="n">8</span> products plus the acc*mult multiplier may map to DSP48 <span class="k">or</span> fabric).</span></div><h3>architecture.yaml</h3><div class="diff"><span class="hunk">@@ -0,0 +1,51 @@</span>
+<span class="add">+schema: fpga-design-agent/architecture/v1</span>
+<span class="add">+design: c14_int8_dot_requant</span>
+<span class="add">+blocks:</span>
+<span class="add">+- name: c14_int8_dot_requant_top</span>
+<span class="add">+  <span class="k">function</span>: Board top; synchronises CPU_RESETN, instantiates fpga_shell <span class="k">and</span> register block, drives LED0 with ready.</span>
+<span class="add">+- name: fpga_shell</span>
+<span class="add">+  <span class="k">function</span>: Test shell, UART <span class="n">115200</span> 8N1 to register window.</span>
+<span class="add">+- name: dotq_regs</span>
+<span class="add">+  <span class="k">function</span>: Register map 0x00-0x0A, operand storage, GO one-clock pulse, result hold, READY flag.</span>
+<span class="add">+- name: dotq_core</span>
+<span class="add">+  <span class="k">function</span>: Pipelined <span class="n">8</span>-way int8 dot product plus bias, multiply by mult, round shift, clamp; result within <span class="n">8</span> clocks of GO.</span>
+<span class="add">+- name: reset_sync</span>
+<span class="add">+  <span class="k">function</span>: Two-flop synchroniser <span class="k">for</span> active-low CPU_RESETN into the CLK100MHZ domain.</span>
+<span class="add">+interfaces:</span>
+<span class="add">+- name: shell_window</span>
+<span class="add">+  between: [fpga_shell, dotq_regs]</span>
+<span class="add">+  protocol: simple</span>
+<span class="add">+  prefix: win</span>
+<span class="add">+  <span class="k">module</span>: fpga_shell</span>
+<span class="add">+- name: uart</span>
+<span class="add">+  between: [c14_int8_dot_requant_top, fpga_shell]</span>
+<span class="add">+  protocol: uart</span>
+<span class="add">+  prefix: uart</span>
+<span class="add">+  <span class="k">module</span>: fpga_shell</span>
+<span class="add">+- name: core_operands</span>
+<span class="add">+  between: [dotq_regs, dotq_core]</span>
+<span class="add">+  protocol: simple</span>
+<span class="add">+  prefix: core</span>
+<span class="add">+  <span class="k">module</span>: dotq_core</span>
+<span class="add">+clock_domains:</span>
+<span class="add">+- name: sys</span>
+<span class="add">+  clock: CLK100MHZ</span>
+<span class="add">+  freq_mhz: <span class="n">100</span></span>
+<span class="add">+reset:</span>
+<span class="add">+  synchronisers: [reset_sync]</span>
+<span class="add">+crossings:</span>
+<span class="add">+- from: async</span>
+<span class="add">+  to: sys</span>
+<span class="add">+  signal: CPU_RESETN</span>
+<span class="add">+  primitive: reset_sync</span>
+<span class="add">+  inline_in: reset_sync</span>
+<span class="add">+- from: async</span>
+<span class="add">+  to: sys</span>
+<span class="add">+  signal: UART_TXD_IN</span>
+<span class="add">+  primitive: sync_2ff</span>
+<span class="add">+  inline_in: fpga_shell</span>
+<span class="add">+predicted_resources:</span>
+<span class="add">+  lut: [<span class="n">300</span>, <span class="n">1400</span>]</span>
+<span class="add">+  ff: [<span class="n">350</span>, <span class="n">1300</span>]</span>
+<span class="add">+  bram_tile: <span class="n">0</span></span>
+<span class="add">+  dsp: [<span class="n">0</span>, <span class="n">12</span>]</span></div><h2>Corner cases hit</h2><p class="mut">No coverage detail yet (V2 evidence has not run).</p><h2>Traceability: requirement, proof method, artefact, result</h2><p class="mut">No traceability table yet.</p><h2>Design standards (v1.0)</h2><p class="mut">The standards checker has not run yet.</p><h2>Constraints for approval</h2><div class="code">## design.xdc: generated by the core&#x27;s board_constraints tool from the board&#x27;s master XDC
+## (Nexys-A7-100T-Master.xdc). Pins and I/O standards are the board&#x27;s; do not edit pin numbers.
+
+set_property -dict { PACKAGE_PIN E3   IOSTANDARD LVCMOS33 } [get_ports { CLK100MHZ }];  # CLK100MHZ
+create_clock -add -name sys_clk_pin -period 10.00 -waveform {0 5} [get_ports { CLK100MHZ }];
+set_property -dict { PACKAGE_PIN C12  IOSTANDARD LVCMOS33 } [get_ports { CPU_RESETN }];  # CPU_RESETN
+set_property -dict { PACKAGE_PIN H17  IOSTANDARD LVCMOS33 } [get_ports { LED[0] }];  # LED[0]
+set_property -dict { PACKAGE_PIN D4   IOSTANDARD LVCMOS33 } [get_ports { UART_RXD_OUT }];  # UART_RXD_OUT
+set_property -dict { PACKAGE_PIN C4   IOSTANDARD LVCMOS33 } [get_ports { UART_TXD_IN }];  # UART_TXD_IN
+
+## Asynchronous inputs (reset button, UART serial in): synchronised inside the design;
+## the delay only gives the ports a defined arrival time (FDA-CON-5).
+set ASYNC_IN [get_ports {CPU_RESETN UART_TXD_IN}]
+set_input_delay -clock sys_clk_pin -max 2.0 $ASYNC_IN
+set_input_delay -clock sys_clk_pin -min 0.0 $ASYNC_IN
+
+## Outputs (UART serial out, ready LED): slow board-level signals, no external timing
+## requirement; a nominal output delay constrains them against the clock (FDA-CON-5).
+set SLOW_OUT [get_ports {UART_RXD_OUT LED[0]}]
+set_output_delay -clock sys_clk_pin -max 2.0 $SLOW_OUT
+set_output_delay -clock sys_clk_pin -min 0.0 $SLOW_OUT
+</div><h3>Pins traced to the board inventory</h3><div class="wrap"><table><tr><th>port</th><th>pin</th><th>master XDC</th><th>board inventory entry</th></tr><tr><td>CLK100MHZ</td><td>E3</td><td>master XDC port CLK100MHZ (LVCMOS33)</td><td>clock: 100 MHz oscillator on E3 (MRCC, bank 35)</td></tr><tr><td>CPU_RESETN</td><td>C12</td><td>master XDC port CPU_RESETN (LVCMOS33)</td><td>cpu_reset: CPU_RESETN, active low, 4.7 kohm pull-up</td></tr><tr><td>LED[0]</td><td>H17</td><td>master XDC port LED[0] (LVCMOS33)</td><td>leds: 16 LEDs, active high through 330 ohm</td></tr><tr><td>UART_RXD_OUT</td><td>D4</td><td>master XDC port UART_RXD_OUT (LVCMOS33)</td><td>usb_uart: FT2232HQ channel B UART (see usb_uart_jtag)</td></tr><tr><td>UART_TXD_IN</td><td>C4</td><td>master XDC port UART_TXD_IN (LVCMOS33)</td><td>usb_uart: FT2232HQ channel B UART (see usb_uart_jtag)</td></tr></table></div><h2>Waveform</h2><p class="mut">No waveform for this stage.</p><h2>Budget</h2><div class="wrap"><table><tr><th></th><th>used</th><th>limit</th></tr><tr><td>turns</td><td>5</td><td>30</td></tr><tr><td>seconds</td><td>0.0</td><td>1800</td></tr><tr><td>usd</td><td>0.0</td><td>0.4</td></tr></table></div><h2>Models by role</h2><div class="wrap"><table><tr><th>role</th><th>harness</th><th>model</th><th>effort</th><th>use this stage</th></tr><tr><td>clarify</td><td>claude_code</td><td>claude-sonnet-5-5</td><td>medium</td><td>-</td></tr><tr><td>model</td><td>claude_code</td><td>claude-sonnet-5-5</td><td>medium</td><td>-</td></tr><tr><td>tests</td><td>claude_code</td><td>claude-sonnet-5-5</td><td>medium</td><td>-</td></tr><tr><td>rtl</td><td>claude_code</td><td>claude-sonnet-5-5</td><td>medium</td><td>11 turns, 125295 tokens, 58 s, $0.0000 reported, $0.1910 plan estimate</td></tr></table></div><h2>Review</h2><div class="wrap"><table><tr><td>decision</td><td>approve</td></tr><tr><td>by</td><td>auto</td></tr><tr><td>note</td><td>-</td></tr></table></div><h2>Who did what</h2><div class="wrap"><table><tr><th>#</th><th>who</th><th>stage</th><th>what</th><th>detail</th></tr><tr><td>1</td><td><span class="who-agent">agent</span></td><td>clarify</td><td>stage 0 work, visit 1</td><td>5 files in the design</td></tr><tr><td>2</td><td><span class="who-agent">agent</span></td><td>clarify</td><td>stage 0 work, visit 2</td><td>5 files in the design</td></tr><tr><td>3</td><td><span class="who-auto">auto</span></td><td>clarify</td><td>interview</td><td>answered: What is the register map (offset, width, reset value and access of every register) of the shell-facing block? -&gt; A_LO: offset 0x00, RW, reset 0: [31:0] activations 0..3, a_i in bits [8i+7:8i]
+A</td></tr><tr><td>4</td><td><span class="who-auto">auto</span></td><td>clarify</td><td>interview</td><td>answered: Is acc allowed to overflow 32 bits when bias is near its limit? -&gt; The specification does not allow overflow: it says the sum never overflows for t</td></tr><tr><td>5</td><td><span class="who-auto">auto</span></td><td>clarify</td><td>interview</td><td>answered: Is ready cleared when a new go is accepted, and are results held until then? -&gt; Yes. A write to GO clears READY and presents the operands for one clock; READY b</td></tr><tr><td>6</td><td><span class="who-auto">auto</span></td><td>clarify</td><td>interview</td><td>defaulted: What are the TIMEOUT_CYCLES default and BUILD_STAMP default values? -&gt; TIMEOUT_CYCLES = 100000000 (1 s at 100 MHz), BUILD_STAMP = 0 overridden by the f</td></tr><tr><td>7</td><td><span class="who-auto">auto</span></td><td>clarify</td><td>interview</td><td>defaulted: How is the DOTQ design ID presented by the shell? -&gt; Four ASCII bytes D,O,T,Q read as 0x444F5451 at ID register offset 0x00, if the s</td></tr><tr><td>8</td><td><span class="who-auto">auto</span></td><td>clarify</td><td>interview</td><td>defaulted: Does a &#x27;go&#x27; with the ready flag already set restart the computation using the currently loaded operands? -&gt; Yes, always accepted.</td></tr><tr><td>9</td><td><span class="who-auto">auto</span></td><td>clarify</td><td>approved (review off)</td><td></td></tr><tr><td>10</td><td><span class="who-agent">agent</span></td><td>board-and-device-planning</td><td>stage 1 work, visit 1</td><td>7 files in the design</td></tr><tr><td>11</td><td><span class="who-agent">agent</span></td><td>board-and-device-planning</td><td>stage 1 work, visit 2</td><td>8 files in the design</td></tr></table></div></main></body></html>

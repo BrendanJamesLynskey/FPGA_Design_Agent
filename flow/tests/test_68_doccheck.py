@@ -326,4 +326,4 @@ def test_results_repeated_heading_fails(tmp_path):
 
 def test_whole_tree_check_runs():
     e, w, cov = D.run()
-    assert set(cov) == {"designs", "ip_lib", "results"}
+    assert set(cov) == {"designs", "agent runs", "ip_lib", "results"}

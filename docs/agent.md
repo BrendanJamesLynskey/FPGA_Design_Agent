@@ -15,7 +15,7 @@ Vivado checkpoints of each stage end), `checkpoints.sqlite` (LangGraph), `summar
 
 ## The graph
 
-`work -> gate -> review -> advance`, looped over stages 0-9 (`agent/graph/run.py`).
+`work -> gate -> review -> advance`, looped over stages 0-9 (`agent/graph/run.py`), then `document` at the end of the run.
 
 | Node | Does | Decided by |
 |---|---|---|
@@ -23,10 +23,28 @@ Vivado checkpoints of each stage end), `checkpoints.sqlite` (LangGraph), `summar
 | gate | runs the flow's checks (lint, simulate in the container, build, gates, verif gates, bring-up) and `exit_check` | the flow's gate output only (`agent/graph/stages.py`) |
 | review | writes `build/review/<nn>_<stage>.html` and `review_index.html`, snapshots files + `.dcp`, pauses for approve / edit / rewind when `--review on` | the reviewer (human, planner script, or `auto`), recorded in `BUILD_NOTE.md` |
 | advance | next stage on pass; on a failure, the stage that owns the cause (`route_failure`) | the stage machine |
+| document | at the end of every run (brief 68 C, `--docs on`, the CLI default): code drafts `handover.yaml` from the run's records, the Designer writes its prose, the flow renders `README.md` and `AGENT.md`; the DOC gate must pass (up to three Designer passes). Writes `summary.json` first (the handover cites it) and `doc.json` (the DOC result and `signed_off`) | code for every fact and gate result; the model for the prose only |
 
 Limits: turns, seconds and USD per stage visit (`stages.MACHINE`) and per run (`RUN_LIMITS`), enforced before each
 model call by the `Meter` (`agent/graph/llm.py`); at most 4 visits per stage. Cost is only what the provider reports.
 Vivado builds are reused when the sources are unchanged and the earlier build went far enough.
+
+### Documentation and resume (brief 68 parts C and D)
+
+- `python -m agent document <run-dir>` runs the DOC step on a finished run (from its `summary.json`); `--replay
+  <doc_calls.jsonl>` replays recorded Designer replies. What the code owns and what the Designer writes:
+  [documentation_standard.md](documentation_standard.md#agent-produced-designs).
+- `python -m agent resume <design-dir> ["<change request>"]` picks up older work from its handover
+  (`agent/graph/pickup.py`). It reads `AGENT.md`, runs `flow.handover.freshness(deep=True)` and refuses a handover with
+  errors. It then enters the graph at the earliest of: the change request's stage (keyword classes, earliest match;
+  `--kind` overrides), the stage of every changed file and stale record, stage 3 when the recorded builds used another
+  Vivado release or the build ID changed, and the first stage not yet passed (`--from-stage N` overrides the rule;
+  `--dry-run` only reports). Every later stage runs again, so stale evidence is re-run, never trusted. The design is
+  copied into a new run (renderings and `build/` left out, its old path rewritten in `build.yaml` and the test plan), the
+  architecture approval is carried when the entry is after stage 1, and the change goes to the owning role as the owner's
+  note and, for stage-2 roles, as a repair reason. Only designs in the agent's layout (`spec.md` and `spec.yaml`) can be
+  resumed. A changed knowledge-bank pin is reported, not re-run. The minimal stage entry is the initial graph state
+  (`stage`, `owners`, `note`, `note_role`, `resumed_from`); brief 62B's closure loop should reuse it.
 
 ## Separation (`agent/graph/roles.py`)
 

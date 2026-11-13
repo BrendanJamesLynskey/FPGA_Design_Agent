@@ -3,6 +3,9 @@
     python -m agent run <spec.md> --board nexys_a7_100t [--interview on|oracle|off] [--review on|off]
                         [--model openai/gpt-6-luna] [--hidden-spec <full spec>] [--replies <json>]
     python -m agent resume <run-id> [--rewind N] [--reply '<json>'] [--replies <json>]
+    python -m agent resume <design-dir> ["<change request>"] [--kind K] [--from-stage N] [--dry-run] [--stop-after N]
+                                                                   (brief 68 D: pick up older work from its handover)
+    python -m agent document <run-dir> [--cc-model M] [--replay doc_calls.jsonl]   (brief 68 C: the DOC step on a finished run)
     python -m agent project check|status|hash|gen-tests <dir> ...     (the project layer, project/cli.py)
 
 A paused run (an interview question or a stage review) prints what it waits for; answer with ``resume --reply``
@@ -39,8 +42,11 @@ def _drive(graph, rt, cfg_lg, first_input, replies: list) -> dict:
         reply = replies.pop(0)
         print(json.dumps({"interrupt": pending[0].get("kind"), "stage": pending[0].get("stage"), "reply": reply}))
         inp = Command(resume=reply)
-    s = summary(rt, snap.values)
-    (rt.run_dir / "summary.json").write_text(json.dumps(s, indent=1))
+    if snap.values.get("doc") and (rt.run_dir / "summary.json").is_file():    # brief 68 C: frozen by the document node
+        s = {**json.loads((rt.run_dir / "summary.json").read_text()), "doc": snap.values["doc"]}
+    else:
+        s = summary(rt, snap.values)
+        (rt.run_dir / "summary.json").write_text(json.dumps(s, indent=1))
     print(json.dumps(s, indent=1))
     return s
 
@@ -117,7 +123,89 @@ def config_from_json(c: dict):
                   router_k=int(c.get("router_k", 8)),
                   harness_arms=c.get("harness_arms", "") if c.get("harness_arms") not in (None, "None") else "",
                   hdl=c.get("hdl", "sv") or "sv",
-                  design_plan=flag("design_plan"), closure=c.get("closure", "off") or "off")     # closure loop
+                  design_plan=flag("design_plan"), closure=c.get("closure", "off") or "off",     # closure loop
+                  docs=c.get("docs", "off") or "off")                                            # brief 68 C
+
+
+def document_cmd(a) -> int:
+    """Brief 68 C: the DOC step on a finished run (its summary.json gives the gates and the stop reason)."""
+    from agent.graph import document
+    rd = a.run_dir.resolve()
+    s = json.loads((rd / "summary.json").read_text())
+    log = rd / "doc_calls.jsonl"
+    if a.replay:
+        llm = document.replay_llm(a.replay)
+        log = None if a.replay.resolve() == log else log
+    else:
+        from agent.graph.spectest import cc_llm
+        llm = cc_llm(a.cc_model, a.cc_effort, rd / "doc_claude_code_calls.jsonl", "doc")
+    res = document.document(rd / s["design"], rd, llm, run_id=s["run_id"], board=a.board, gates_last=s.get("gates_last"),
+                            stop=s.get("stop"), verif_level=a.verif_level, resumed_from=s.get("resumed_from"),
+                            carried=s.get("gates_carried"), log=log)
+    gl, car = s.get("gates_last") or {}, s.get("gates_carried") or []
+    res["signed_off"] = bool(res["ok"] and all(gl.get(n) is True or n in car for n in document.STAGE_NAMES))
+    (rd / "doc.json").write_text(json.dumps(res, indent=1) + "\n")
+    print(json.dumps(res, indent=1))
+    return 0 if res["ok"] else 1
+
+
+def pickup_cmd(a) -> int:
+    """Brief 68 D: resume a design from its handover (agent.graph.pickup)."""
+    from agent.graph import pickup
+    from agent.graph.role_models import parse_roles
+    from agent.graph.run import Config, build_graph, checkpointer_for, new_runtime
+    ddir = Path(a.run_id).resolve()
+    try:
+        ld = pickup.load(ddir)
+    except pickup.PickupError as e:
+        print(f"resume: {e}", file=sys.stderr)
+        return 2
+    fresh = ld["fresh"]
+    report = {"design": fresh["design"], "agent_md_tokens": ld["agent_tokens"], "design_files_tokens": ld["files_tokens"],
+              "errors": fresh["errors"], "stale": fresh["stale"], "changed_files": fresh["changed_files"],
+              "added_files": fresh.get("added_files"),
+              "kb_pin": fresh["kb_pin"], "vivado": fresh["vivado"], "build_id": fresh.get("build_id")}
+    if fresh["errors"]:
+        print(json.dumps({**report, "resume": "refused: the handover has errors; fix them first"}, indent=1))
+        return 2
+    try:
+        entry = pickup.entry_stage(ld["handover"], fresh, a.change, a.kind, a.from_stage)
+    except pickup.PickupError as e:
+        print(f"resume: {e}", file=sys.stderr)
+        return 2
+    report["entry"] = {"stage": entry["stage"], "kind": entry["kind"], "notes": entry.get("notes") or [],
+                       "reasons": [{"stage": s, "why": w} for s, w in entry["reasons"]]}
+    if a.dry_run or entry["stage"] >= pickup.DOC_ONLY:
+        report["resume"] = "dry run" if a.dry_run else "nothing to re-run: the handover is current"
+        print(json.dumps(report, indent=1))
+        return 0
+    hb = (ld["handover"].get("target") or {}).get("board")
+    board = a.board or (hb if hb and (ROOT / "boards" / str(hb)).is_dir() else "nexys_a7_100t")
+    ar = ld["handover"].get("agent_run") or {}
+    old_cfg = (ROOT / ar["record"]).parent / "config.json" if ar.get("record") else None
+    verif = a.verif_level or (json.loads(old_cfg.read_text()).get("verif_level") if old_cfg and old_cfg.is_file() else None) or "V3"
+    report["settings"] = {"board": board, "verif_level": verif}
+    cfg = Config(spec_md=ddir / "spec.md", name=ddir.name, board=board, model=a.model, stop_after=a.stop_after,
+                 harness=a.harness, cc_model=a.cc_model, cc_effort=a.cc_effort, verif_level=verif,
+                 profile=a.profile, roles=parse_roles(a.roles), docs=a.docs)
+    cfg.role_models()
+    if a.max_usd is not None:
+        cfg.run_limits["usd"] = a.max_usd
+    client, oracle_llm = _clients(cfg, a)
+    rt = new_runtime(cfg, client, oracle_llm=oracle_llm)
+    rt.client_for = (lambda m: _client(m, a.replay, None)) if cfg.oracle == "openrouter" else _no_openrouter
+    try:
+        state = pickup.prepare(ddir, rt, entry, a.change)
+    except pickup.PickupError as e:
+        print(f"resume: {e}", file=sys.stderr)
+        return 2
+    report["run_id"] = rt.run_id
+    (rt.run_dir / "resume.json").write_text(json.dumps(report, indent=1))
+    print(json.dumps(report, indent=1))
+    replies = json.loads(a.replies.read_text()) if a.replies else []
+    graph = build_graph(checkpointer_for(rt.run_dir), routing=cfg.skill_routing != "off")
+    _drive(graph, rt, {"configurable": {"thread_id": rt.run_id}}, state, replies)
+    return 0
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -182,6 +270,9 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("--closure", choices=["on", "off"], default="off",
                    help="after the build, loop on timing, area and power, re-checking simulation after every change, until all hold "
                         "or the loop stalls (stage 6; tested with fakes only; default off)")
+    r.add_argument("--docs", choices=["on", "off"], default="on",
+                   help="brief 68: at the end of the run the Designer writes handover.yaml and the flow renders README.md and "
+                        "AGENT.md; the DOC gate (flow/handover.py checks) must pass for sign-off (doc.json)")
     r.add_argument("--hdl", choices=["sv", "vhdl"], default="sv",
                    help="the design language; vhdl = VHDL-2008 RTL (GHDL lint, GHDL netlist or GHDL simulation, "
                         "read_vhdl -vhdl2008 in Vivado); the test shell stays SystemVerilog")
@@ -191,10 +282,36 @@ def main(argv: list[str] | None = None) -> int:
         p.add_argument("--replay", help="LLM replay fixture (no network)")
         p.add_argument("--record", help="record LLM calls to this fixture")
     rs = sub._name_parser_map["resume"]
-    rs.add_argument("run_id")
+    rs.add_argument("run_id", help="a run id under runs/, or a design directory with handover.yaml (brief 68 D)")
+    rs.add_argument("change", nargs="?", help="design resume: the change request")
     rs.add_argument("--rewind", type=int)
     rs.add_argument("--max-usd", type=float, help="cost cap for this resumed process (the meter starts at 0)")
+    rs.add_argument("--kind", choices=sorted(__import__("agent.graph.pickup", fromlist=["x"]).STAGE_OF_KIND),
+                    help="design resume: the change's class, instead of the keyword classifier")
+    rs.add_argument("--from-stage", type=int, help="design resume: enter at this stage, overriding the rule")
+    rs.add_argument("--dry-run", action="store_true", help="design resume: report the freshness and the entry stage only")
+    rs.add_argument("--stop-after", type=int)
+    rs.add_argument("--board", help="design resume: default the handover's target.board when it names a board directory")
+    rs.add_argument("--model", default="openai/gpt-6-luna")
+    rs.add_argument("--harness", choices=["deepagents", "claude_code"], default="deepagents")
+    rs.add_argument("--cc-model", default="claude-haiku-5-5")
+    rs.add_argument("--cc-effort", default="medium", choices=["low", "medium", "high", "xhigh", "max"])
+    rs.add_argument("--profile", default="single")
+    rs.add_argument("--roles")
+    rs.add_argument("--verif-level", choices=["V1", "V2", "V3"], help="design resume: default the original run's, else V3")
+    rs.add_argument("--docs", choices=["on", "off"], default="on")
+    dc = sub.add_parser("document", help="brief 68 C: the DOC step on a finished run directory")
+    dc.add_argument("run_dir", type=Path)
+    dc.add_argument("--board", default="nexys_a7_100t")
+    dc.add_argument("--cc-model", default="claude-sonnet-5-5")
+    dc.add_argument("--cc-effort", default="medium")
+    dc.add_argument("--verif-level", help="default: the run's config.json, else V3")
+    dc.add_argument("--replay", type=Path, help="replay the replies of a recorded doc_calls.jsonl (no model call)")
     a = ap.parse_args(argv)
+    if a.cmd == "document":
+        return document_cmd(a)
+    if a.cmd == "resume" and (Path(a.run_id) / "handover.yaml").is_file():
+        return pickup_cmd(a)
     replies = json.loads(a.replies.read_text()) if a.replies else []
     if a.reply:
         replies.insert(0, json.loads(a.reply))
@@ -211,7 +328,7 @@ def main(argv: list[str] | None = None) -> int:
                      spectest_model=a.spectest_model, spectest_max_loops=a.spectest_max_loops,
                      skill_routing=a.skill_routing, router_model=a.router_model, router_k=a.router_k,
                      harness_arms=a.harness_arm, hdl=a.hdl,
-                     design_plan=a.design_plan, closure=a.closure)          # closure loop
+                     design_plan=a.design_plan, closure=a.closure, docs=a.docs)          # closure loop; brief 68 C
         cfg.role_models()                                     # fail early on an unknown profile, role or forbidden model
         if a.max_usd is not None:
             cfg.run_limits["usd"] = a.max_usd

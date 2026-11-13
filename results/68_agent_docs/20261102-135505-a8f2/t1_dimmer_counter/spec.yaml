@@ -1,0 +1,306 @@
+name: t1_led_dimmer_counter
+title: T1 LED dimmer and push-button counter
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: t1_led_dimmer_counter
+clocks:
+  sys_clk:
+    port: clk
+    board_pin: W5
+    frequency_hz: 100000000
+    purpose: Main clock for counter, UART, PWM, debounce, and display scanning.
+reset:
+  port: cpu_resetn
+  board_pin: C12
+  polarity: active_low
+  behavior: Asynchronous assertion with synchronized deassertion to sys_clk; resets
+    design state and output-control registers.
+parameters:
+  DEBOUNCE_CYCLES: 1000000
+  PWM_PERIOD_CYCLES: 4096
+  DISPLAY_DIGIT_CYCLES: 100000
+  UART_BAUD_DIVIDER_CYCLES: 868
+ports:
+- name: clk
+  direction: input
+  width: 1
+  board_pin_role: 100 MHz oscillator input, W5
+- name: cpu_resetn
+  direction: input
+  width: 1
+  board_pin_role: Active-low CPU reset button, C12
+- name: btn_up
+  direction: input
+  width: 1
+  board_pin_role: Up push-button BTNU, M18
+- name: btn_down
+  direction: input
+  width: 1
+  board_pin_role: Down push-button BTND, P18
+- name: btn_center
+  direction: input
+  width: 1
+  board_pin_role: Centre push-button BTNC, N17
+- name: switches
+  direction: input
+  width: 8
+  board_pin_role: Rightmost eight slide switches SW[7:0], J15, L16, M13, R15, R17,
+    T18, U18, R13
+- name: leds
+  direction: output
+  width: 16
+  board_pin_role: User LEDs LED[15:0], H17, K15, J13, N14, R18, V17, U17, U16, V16,
+    T15, U14, T16, V15, V14, V12, V11
+- name: seg
+  direction: output
+  width: 7
+  board_pin_role: Seven-segment segments abcdefg, active low, T10, R10, K16, K13,
+    P15, T11, L18
+- name: dp
+  direction: output
+  width: 1
+  board_pin_role: Seven-segment decimal point, active low, H15
+- name: an
+  direction: output
+  width: 8
+  board_pin_role: Active-low digit enables AN[7:0], J17, J18, T9, J14, P14, T14, K2,
+    U13
+- name: uart_rxd
+  direction: input
+  width: 1
+  board_pin_role: USB-UART receive into FPGA, C4
+- name: uart_txd
+  direction: output
+  width: 1
+  board_pin_role: USB-UART transmit from FPGA, D4
+behaviour:
+  counter:
+  - Maintain a 16-bit unsigned counter initialized to zero by reset.
+  - A debounced up-button press increments the counter exactly once, wrapping modulo
+    65536.
+  - A debounced down-button press decrements the counter exactly once, wrapping modulo
+    65536.
+  - A debounced centre-button press clears the counter to zero.
+  - A software write to COUNTER sets the counter to the written 16-bit value.
+  - If a software write and button event coincide, the software write takes priority;
+    for simultaneous button events, centre takes priority over up, then down.
+  brightness_and_leds:
+  - Present the counter bits on LEDs, gated by a PWM waveform to set brightness without
+    visible flicker.
+  - Select brightness from BRIGHTNESS unless CONTROL bit 0 is set, in which case switches[7:0]
+    provide brightness without changing BRIGHTNESS.
+  - Brightness zero means LEDs off; 255 means full brightness; intermediate values
+    scale on-time linearly.
+  - Repeat PWM phase every PWM_PERIOD_CYCLES sys_clk cycles.
+  seven_segment_display:
+  - Show the 16-bit counter as four hexadecimal digits on the four rightmost digits
+    AN[3:0].
+  - Show the selected 8-bit brightness as two hexadecimal digits on the two leftmost
+    digits AN[7:6].
+  - Keep middle digits AN[5:4] off.
+  - Scan enabled digits one at a time; segment and anode outputs are active low.
+  - CONTROL bit 1 disables all digits; reset leaves the display enabled.
+  - Keep the decimal point inactive.
+  uart_and_register_access:
+  - Provide a 115200-baud USB-UART interface for the standard test shell.
+  - Expose counter, brightness, button and switch status, per-button press counts,
+    display control, and design ID through the register map.
+  - Permit read and write operations according to each register's access field.
+  - UART framing and test-shell command syntax are not specified; the map defines
+    the logical device interface.
+  button_press_counters:
+  - Count each debounced up, down, and centre press independently.
+  - Increment once per accepted press and wrap modulo 2^32.
+  - Clear all press counters on reset.
+registers:
+  map:
+  - offset: 0
+    name: COUNTER
+    access: RW
+    reset: 0
+    bits: 16
+  - offset: 4
+    name: BRIGHTNESS
+    access: RW
+    reset: 255
+    bits: 8
+  - offset: 8
+    name: CONTROL
+    access: RW
+    reset: 0
+    bits: 2
+  - offset: 12
+    name: INPUT_STATUS
+    access: RO
+    reset: 0
+    bits: 11
+  - offset: 16
+    name: UP_PRESS_COUNT
+    access: RO
+    reset: 0
+    bits: 32
+  - offset: 20
+    name: DOWN_PRESS_COUNT
+    access: RO
+    reset: 0
+    bits: 32
+  - offset: 24
+    name: CENTRE_PRESS_COUNT
+    access: RO
+    reset: 0
+    bits: 32
+  - offset: 28
+    name: DESIGN_ID
+    access: RO
+    reset: 1412514883
+    bits: 32
+timing:
+  units: All *_CYCLES parameters are integer counts of sys_clk cycles.
+  debounce: 1000000 sys_clk cycles of stable input, approximately 10 ms at 100 MHz.
+  pwm_period: 4096 sys_clk cycles, approximately 24.4 kHz at 100 MHz; selected to
+    avoid visible flicker.
+  display_scan: 100000 sys_clk cycles per digit, approximately 1 ms per digit and
+    125 Hz for an eight-digit scan.
+  uart: 115200 baud with UART_BAUD_DIVIDER_CYCLES=868, the nearest integer divider
+    for a 100 MHz clock.
+  latency:
+    button_to_counter: A qualified debounced press updates the counter on the next
+      sys_clk edge.
+    uart_read: Completion follows the test-shell protocol, which is not specified
+      by the request.
+    pwm_output: A brightness change affects LED duty at the next PWM comparison interval.
+    display_update: Changed display content appears on the next digit-scan slot.
+resources_expected:
+  logic: Small design comprising control/status registers, debounce filters, UART
+    and test-shell interface, PWM and display-scan counters, and hexadecimal decode.
+  memory: No block RAM expected; register storage uses flip-flops.
+  dsp: No DSP blocks expected.
+  io: Clock, reset, three buttons, eight switches, sixteen LEDs, seven segment outputs,
+    decimal point, eight digit enables, and two UART signals.
+assumptions:
+- statement: Use the Nexys A7-100T 100 MHz oscillator, XC7A100T package, and standard
+    board signal assignments listed on each port.
+  reason: The request names the board but supplies no constraints file or pin-level
+    interface.
+- statement: The counter buttons are BTNU, BTND, and BTNC; they are active high and
+    synchronized before debounce processing.
+  reason: The request names button functions but does not specify polarity or board
+    signal names.
+- statement: Use SW[7:0] for manual brightness when CONTROL bit 0 is set; switch input
+    does not overwrite the stored brightness register.
+  reason: The request says switches take over when a control bit is flipped but does
+    not define selection or storage behavior.
+- statement: CONTROL bit 0 selects switch brightness and bit 1 disables the seven-segment
+    display.
+  reason: The required control functions are stated but their bit assignments are
+    not.
+- statement: Brightness is an unsigned linear PWM value, with 0 off, 255 full on,
+    and reset value 255.
+  reason: The request does not define brightness encoding, transfer function, or reset
+    value.
+- statement: Maintain separate 32-bit unsigned wrapping press counts for up, down,
+    and centre events.
+  reason: The request asks for counts but does not specify their widths or overflow
+    behavior.
+- statement: The display is enabled after reset, hexadecimal letters use uppercase
+    glyphs, and decimal points remain off.
+  reason: The request does not specify startup state, glyph convention, or decimal-point
+    behavior.
+- statement: Return DESIGN_ID as ASCII T1DC packed into a 32-bit value 0x54314443.
+  reason: The design ID text is specified but its register encoding is not.
+- statement: Use a byte-addressed, 32-bit-aligned register map with sub-32-bit values
+    in the least-significant bits.
+  reason: The request asks for register access but provides no address map or bus
+    convention.
+- statement: Use conventional 8-N-1 UART framing and the nearest integer baud divider.
+  reason: The baud rate is given, but framing and divider rounding are not.
+open_questions: []
+resolved_questions:
+- question: What exact test-shell protocol, command syntax, and register transaction
+    framing should the USB-UART use?
+  answer: Use the project's standard test shell over 115200-baud 8-N-1 UART with the
+    logical register map below.
+  status: defaulted
+  by: oracle
+  default_reason: The request names a standard test shell without defining its protocol;
+    the default allows scripted access while relying on the platform convention.
+- question: What register addresses and access semantics should the test shell expose?
+  answer: Use the byte offsets and RW/RO semantics in registers.map.
+  status: defaulted
+  by: oracle
+  default_reason: No addresses or register widths are provided, so a compact aligned
+    map is proposed for the requested functions.
+- question: What debounce interval should qualify a button press?
+  answer: Require 1,000,000 consecutive stable sys_clk cycles, approximately 10 ms
+    at 100 MHz.
+  status: answered
+  by: oracle
+  default_reason: Bounce immunity is required but no interval is given; 10 ms is a
+    practical push-button debounce interval.
+- question: What PWM period and brightness transfer function should be used?
+  answer: Use a 4096-cycle period and linearly map brightness 0 through 255 to off
+    through full on.
+  status: defaulted
+  by: oracle
+  default_reason: The request requires adjustable, non-flickering brightness but specifies
+    neither frequency nor scale; this period is about 24.4 kHz and linear scaling
+    is intuitive.
+- question: How quickly should the display scan each digit?
+  answer: Each digit should be lit for 2^17 sys_clk cycles (131,072 cycles, approximately
+    1.31 ms at 100 MHz), rather than 100,000 cycles.
+  status: answered
+  by: oracle
+  default_reason: No refresh timing is specified; this provides a sufficiently fast
+    multiplexed display refresh.
+- question: What should the brightness register reset value and numerical scale be?
+  answer: Reset to 0xFF and map 0 to off and 255 to full brightness.
+  status: defaulted
+  by: oracle
+  default_reason: Startup brightness and numerical scale are not given; full brightness
+    makes the board visible immediately after reset.
+- question: Which switches select brightness, and does manual selection alter the
+    stored UART brightness?
+  answer: SW[7:0] select the effective brightness when CTRL.DUTY_SRC is 1. Whether
+    this changes the stored DUTY value is not specified.
+  status: answered
+  by: oracle
+  default_reason: The request says the eight right-hand switches take control but
+    does not specify the selector bit or whether the register changes.
+- question: Which control-register bits select manual brightness and disable the display?
+  answer: CONTROL bit 0 selects switch brightness; bit 1 disables all seven-segment
+    digits.
+  status: defaulted
+  by: oracle
+  default_reason: Both controls are requested, but their register locations and bit
+    assignments are unspecified.
+- question: Should press counters include the centre button, and what widths and overflow
+    behavior should they use?
+  answer: "Press counters include the centre (clear) button. They are separate 8-bit\
+    \ counts for up, down, and clear presses, each wrapping at 256\u2014not 32-bit\
+    \ counts."
+  status: answered
+  by: oracle
+  default_reason: The request says each button and asks for press counts, but does
+    not define widths or overflow behavior.
+- question: How should the design ID T1DC be encoded in the register?
+  answer: Return ASCII bytes packed as 0x54314443 in a 32-bit register.
+  status: defaulted
+  by: oracle
+  default_reason: The visible ID is specified, but no byte order or register representation
+    is provided.
+- question: What UART framing and exact baud-divider rounding should be used?
+  answer: UART framing is not specified. The specified board-build bit divider is
+    868 cycles.
+  status: answered
+  by: oracle
+  default_reason: Only 115200 baud is specified; conventional framing and nearest-integer
+    division provide a concrete implementation.
+- question: What should happen if button events and a software counter write occur
+    in the same cycle?
+  answer: A software write to COUNT wins over a button press on the same clock, but
+    the press still counts in PRESSES. If button presses coincide, priority is clear
+    (BTNC), then up (BTNU), then down (BTND).
+  status: answered
+  by: oracle
+  default_reason: The request does not define simultaneous-event arbitration; deterministic
+    priority removes ambiguity.

@@ -47,6 +47,11 @@ def collect() -> dict[str, str]:
     out["floors_text"] = _h(gr.floors_text())
     out["repair_note"] = _h(gr.repair_note("tests", ["a failure", "another"]))
     out["oracle_system"] = _h(interview.SpecOracle.SYSTEM)
+    try:                                       # brief 68 C: the DOC step's prompt (absent before brief 68)
+        from agent.graph import document
+        out["doc_system"] = _h(document.DOC_SYSTEM)
+    except ImportError:
+        pass
     out["roles_rules"] = _h(roles.ROLES)
     out["roles_tools"] = _h({k: sorted(v) if v else v for k, v in roles.ROLE_TOOLS.items()})
     out["role_models_profiles"] = _h(role_models.PROFILES)

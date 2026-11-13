@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any
 
 MODEL_CONTRACT = """\
-Model API contract (identical for the model writer and the test writer; the graph checks it before simulating):
+Model API contract (identical for the Modeller and the Verifier; the graph checks it before simulating):
 - model.py defines exactly one class, named `Model`, with no other public entry point.
 - `Model(**params)`: keyword arguments named EXACTLY as the keys of spec.yaml `parameters` (same spelling and case),
   each defaulting to the spec's value. No positional arguments. Timing parameters are integer cycle counts.
@@ -22,7 +22,7 @@ Model API contract (identical for the model writer and the test writer; the grap
   names) to ints; an absent port keeps its previous value. The result maps output port names to ints, as sampled
   after the clock edge, and is always a dict (an empty one is allowed only if the design has no outputs).
 - `read_reg(offset)` -> int and `write_reg(offset, value)` -> None for the register window (spec.yaml `registers`).
-- The test writer uses only these names: `from model import Model; m = Model(**params)`.
+- The Verifier uses only these names: `from model import Model; m = Model(**params)`.
 """
 
 _SNIPPET = r"""

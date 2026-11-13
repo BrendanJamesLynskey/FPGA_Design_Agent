@@ -1,0 +1,203 @@
+{
+  "design": "c14_int8_dot_requant",
+  "mode": "generic",
+  "mutant_source": "generated",
+  "rng_seed": 1,
+  "baseline_seconds": 364.2,
+  "sandbox": "container",
+  "caps": {
+    "max_mutants": 20,
+    "sample": 17,
+    "wall_s": 6919,
+    "wall_auto": true,
+    "mutant_timeout_s": 600,
+    "min_evaluated": 10
+  },
+  "candidates": 32,
+  "sampled": 17,
+  "evaluated": 17,
+  "killed": 17,
+  "survived": 0,
+  "timed_out": 0,
+  "skipped": 0,
+  "invalid": 0,
+  "score_pct": 100.0,
+  "survivors": [],
+  "survivor_text": [],
+  "timed_out_text": [],
+  "skipped_text": [],
+  "note": "score = killed / (killed + survived + timed_out); invalid and skipped mutants are excluded and listed; an equivalent mutant (no visible behaviour change) shows as a survivor",
+  "wall_seconds": 1261.7,
+  "rows": [
+    {
+      "name": "dotq_core_L47_ne_to_eq_19",
+      "file": "dotq_core.sv",
+      "line": 47,
+      "class": "ne_to_eq",
+      "why": "'!=' replaced by '=='",
+      "change": "rtl/dotq_core.sv line 47: `if (shift4 != 5'd0) rounded = rounded + (50'sd1 <<< (shift4 - 5'd1));` became `if (shift4 == 5'd0) rounded = rounded + (50'sd1 <<< (shift4 - 5'd1));` ('!=' replaced by '==')",
+      "status": "killed",
+      "seconds": 76.7
+    },
+    {
+      "name": "dotq_core_L47_minus_to_plus_67",
+      "file": "dotq_core.sv",
+      "line": 47,
+      "class": "minus_to_plus",
+      "why": "'-' replaced by '+'",
+      "change": "rtl/dotq_core.sv line 47: `if (shift4 != 5'd0) rounded = rounded + (50'sd1 <<< (shift4 - 5'd1));` became `if (shift4 != 5'd0) rounded = rounded + (50'sd1 <<< (shift4 + 5'd1));` ('-' replaced by '+')",
+      "status": "killed",
+      "seconds": 65.4
+    },
+    {
+      "name": "dotq_core_L52_lt_to_ge_25",
+      "file": "dotq_core.sv",
+      "line": 52,
+      "class": "lt_to_ge",
+      "why": "'<' replaced by '>='",
+      "change": "rtl/dotq_core.sv line 52: `for (int i = 0; i < 8; i++) begin` became `for (int i = 0; i >= 8; i++) begin` ('<' replaced by '>=')",
+      "status": "killed",
+      "seconds": 32.3
+    },
+    {
+      "name": "dotq_core_L68_plus_to_minus_29",
+      "file": "dotq_core.sv",
+      "line": 68,
+      "class": "plus_to_minus",
+      "why": "'+' replaced by '-'",
+      "change": "rtl/dotq_core.sv line 68: `acc3   <= ((32'(s[0]) + 32'(s[1])) + (32'(s[2]) + 32'(s[3]))) + bias2;` became `acc3   <= ((32'(s[0]) - 32'(s[1])) + (32'(s[2]) + 32'(s[3]))) + bias2;` ('+' replaced by '-')",
+      "status": "killed",
+      "seconds": 71.2
+    },
+    {
+      "name": "dotq_core_L68_plus_to_minus_55",
+      "file": "dotq_core.sv",
+      "line": 68,
+      "class": "plus_to_minus",
+      "why": "'+' replaced by '-'",
+      "change": "rtl/dotq_core.sv line 68: `acc3   <= ((32'(s[0]) + 32'(s[1])) + (32'(s[2]) + 32'(s[3]))) + bias2;` became `acc3   <= ((32'(s[0]) + 32'(s[1])) + (32'(s[2]) - 32'(s[3]))) + bias2;` ('+' replaced by '-')",
+      "status": "killed",
+      "seconds": 77.8
+    },
+    {
+      "name": "dotq_core_L85_bit0_to_1_30",
+      "file": "dotq_core.sv",
+      "line": 85,
+      "class": "bit0_to_1",
+      "why": "constant 1'b0 replaced by 1'b1",
+      "change": "rtl/dotq_core.sv line 85: `v1 <= 1'b0; v2 <= 1'b0; v3 <= 1'b0; v4 <= 1'b0; v5 <= 1'b0;` became `v1 <= 1'b0; v2 <= 1'b1; v3 <= 1'b0; v4 <= 1'b0; v5 <= 1'b0;` (constant 1'b0 replaced by 1'b1)",
+      "status": "killed",
+      "seconds": 7.5
+    },
+    {
+      "name": "dotq_core_L85_bit0_to_1_54",
+      "file": "dotq_core.sv",
+      "line": 85,
+      "class": "bit0_to_1",
+      "why": "constant 1'b0 replaced by 1'b1",
+      "change": "rtl/dotq_core.sv line 85: `v1 <= 1'b0; v2 <= 1'b0; v3 <= 1'b0; v4 <= 1'b0; v5 <= 1'b0;` became `v1 <= 1'b0; v2 <= 1'b0; v3 <= 1'b0; v4 <= 1'b1; v5 <= 1'b0;` (constant 1'b0 replaced by 1'b1)",
+      "status": "killed",
+      "seconds": 7.7
+    },
+    {
+      "name": "dotq_core_L85_bit0_to_1_66",
+      "file": "dotq_core.sv",
+      "line": 85,
+      "class": "bit0_to_1",
+      "why": "constant 1'b0 replaced by 1'b1",
+      "change": "rtl/dotq_core.sv line 85: `v1 <= 1'b0; v2 <= 1'b0; v3 <= 1'b0; v4 <= 1'b0; v5 <= 1'b0;` became `v1 <= 1'b0; v2 <= 1'b0; v3 <= 1'b0; v4 <= 1'b0; v5 <= 1'b1;` (constant 1'b0 replaced by 1'b1)",
+      "status": "killed",
+      "seconds": 7.2
+    },
+    {
+      "name": "dotq_core_L96_not_removed_22",
+      "file": "dotq_core.sv",
+      "line": 96,
+      "class": "not_removed",
+      "why": "a logical negation '!' removed",
+      "change": "rtl/dotq_core.sv line 96: `if (v5 && !go) begin` became `if (v5 && go) begin` (a logical negation '!' removed)",
+      "status": "killed",
+      "seconds": 34.0
+    },
+    {
+      "name": "dotq_core_L100_and_to_or_31",
+      "file": "dotq_core.sv",
+      "line": 100,
+      "class": "and_to_or",
+      "why": "'&&' replaced by '||'",
+      "change": "rtl/dotq_core.sv line 100: `else if (relu5 && scaled5 < 49'sd0)` became `else if (relu5 || scaled5 < 49'sd0)` ('&&' replaced by '||')",
+      "status": "killed",
+      "seconds": 76.9
+    },
+    {
+      "name": "dotq_core_L100_lt_to_ge_41",
+      "file": "dotq_core.sv",
+      "line": 100,
+      "class": "lt_to_ge",
+      "why": "'<' replaced by '>='",
+      "change": "rtl/dotq_core.sv line 100: `else if (relu5 && scaled5 < 49'sd0)` became `else if (relu5 && scaled5 >= 49'sd0)` ('<' replaced by '>=')",
+      "status": "killed",
+      "seconds": 79.5
+    },
+    {
+      "name": "dotq_core_L102_lt_to_ge_42",
+      "file": "dotq_core.sv",
+      "line": 102,
+      "class": "lt_to_ge",
+      "why": "'<' replaced by '>='",
+      "change": "rtl/dotq_core.sv line 102: `else if (!relu5 && scaled5 < -49'sd128)` became `else if (!relu5 && scaled5 >= -49'sd128)` ('<' replaced by '>=')",
+      "status": "killed",
+      "seconds": 51.0
+    },
+    {
+      "name": "dotq_core_L102_not_removed_25",
+      "file": "dotq_core.sv",
+      "line": 102,
+      "class": "not_removed",
+      "why": "a logical negation '!' removed",
+      "change": "rtl/dotq_core.sv line 102: `else if (!relu5 && scaled5 < -49'sd128)` became `else if (relu5 && scaled5 < -49'sd128)` (a logical negation '!' removed)",
+      "status": "killed",
+      "seconds": 81.2
+    },
+    {
+      "name": "dotq_regs_L37_bit0_to_1_21",
+      "file": "dotq_regs.sv",
+      "line": 37,
+      "class": "bit0_to_1",
+      "why": "constant 1'b0 replaced by 1'b1",
+      "change": "rtl/dotq_regs.sv line 37: `relu  <= 1'b0;` became `relu  <= 1'b1;` (constant 1'b0 replaced by 1'b1)",
+      "status": "killed",
+      "seconds": 86.4
+    },
+    {
+      "name": "dotq_regs_L39_bit0_to_1_21",
+      "file": "dotq_regs.sv",
+      "line": 39,
+      "class": "bit0_to_1",
+      "why": "constant 1'b0 replaced by 1'b1",
+      "change": "rtl/dotq_regs.sv line 39: `ready <= 1'b0;` became `ready <= 1'b1;` (constant 1'b0 replaced by 1'b1)",
+      "status": "killed",
+      "seconds": 7.3
+    },
+    {
+      "name": "dotq_regs_L42_bit1_to_0_31",
+      "file": "dotq_regs.sv",
+      "line": 42,
+      "class": "bit1_to_0",
+      "why": "constant 1'b1 replaced by 1'b0",
+      "change": "rtl/dotq_regs.sv line 42: `if (done) ready <= 1'b1;` became `if (done) ready <= 1'b0;` (constant 1'b1 replaced by 1'b0)",
+      "status": "killed",
+      "seconds": 33.0
+    },
+    {
+      "name": "dotq_regs_L57_bit0_to_1_33",
+      "file": "dotq_regs.sv",
+      "line": 57,
+      "class": "bit0_to_1",
+      "why": "constant 1'b0 replaced by 1'b1",
+      "change": "rtl/dotq_regs.sv line 57: `ready <= 1'b0;` became `ready <= 1'b1;` (constant 1'b0 replaced by 1'b1)",
+      "status": "killed",
+      "seconds": 51.0
+    }
+  ]
+}

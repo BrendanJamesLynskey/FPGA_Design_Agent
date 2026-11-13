@@ -1,0 +1,288 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>02 rtl-design-creation</title><style>
+:root{--bg:#fff;--fg:#111;--mut:#555;--line:#ccc;--pass:#111;--fail:#111;--chip:#eee;--add:#d4d4d4;--del:#bbb}
+@media (prefers-color-scheme:dark){:root{--bg:#111;--fg:#eee;--mut:#aaa;--line:#444;--chip:#222;--add:#3a3a3a;--del:#555}}
+body{background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,Segoe UI,sans-serif;margin:0;padding:16px}
+main{max-width:980px;margin:auto}h1{font-size:1.4em;margin:.2em 0}h2{font-size:1.1em;border-bottom:1px solid var(--line);
+padding-bottom:4px;margin-top:1.6em}table{border-collapse:collapse;width:100%;font-size:.92em}td,th{border:1px solid var(--line);
+padding:4px 6px;text-align:left;vertical-align:top}pre{background:var(--chip);padding:8px;overflow-x:auto;font-size:.85em}
+.mut{color:var(--mut)}.chip{display:inline-block;padding:0 6px;border:1px solid var(--fg);border-radius:3px;font-size:.85em}
+.fail{background:var(--fg);color:var(--bg)}svg{max-width:100%;height:auto}svg text{fill:var(--fg);font:11px monospace}
+svg .w{stroke:var(--fg);fill:none;stroke-width:1.2}a{color:var(--fg)}.wrap{overflow-x:auto}
+svg .bus{stroke:var(--fg);fill:none;stroke-width:1.2}svg .bv{font:10px monospace;text-anchor:middle}
+.diff{font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;white-space:pre;overflow-x:auto;background:var(--chip);padding:6px;margin:4px 0}
+.diff span.add{background:var(--add)}.diff span.del{background:var(--del)}.diff .hunk{color:var(--mut)}
+.k{font-weight:bold}.c{color:var(--mut);font-style:italic}.n{text-decoration:underline dotted}.s{text-decoration:underline}
+.code{font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;white-space:pre;overflow-x:auto;background:var(--chip);padding:6px}
+.who-owner{font-weight:bold}.who-auto{font-style:italic}
+</style></head><body><main><h1>Stage 2: rtl-design-creation</h1><p class="mut">c14_int8_dot_requant; visit 5; 2026-11-07 02:23:01</p><h2>Exit gates</h2><div class="wrap"><table><tr><th>gate</th><th>result</th><th>detail</th></tr><tr><td>V3 cover_properties_pct: cover properties not hit: C_led_fall, C_led_high, C_led_rise, C_rx_start, C_tx_start: add or extend a test that drives the design into each, or correct the `V_COVER` expression if it can never be true [value 0.0, need 100]</td><td><span class="chip fail">FAIL</span></td><td></td></tr><tr><td>V3 cover_properties_unhit: cover properties not hit: C_led_fall, C_led_high, C_led_rise, C_rx_start, C_tx_start: add or extend a test that drives the design into each, or correct the `V_COVER` expression if it can never be true [value [5] C_led_fall, C_led_high, C_led_rise, C_rx_start, C_tx_start, need []]</td><td><span class="chip fail">FAIL</span></td><td></td></tr></table></div><h2>Inputs and outputs</h2><div class="wrap"><table><tr><td>inputs</td><td>*</td></tr><tr><td>outputs</td><td>ARCHITECTURE.md, BUILD_NOTE.md, __init__.py, __pycache__/__init__.cpython-312.pyc, __pycache__/model.cpython-312-pytest-9.2.0.pyc, __pycache__/model.cpython-312.pyc, architecture.yaml, build.yaml, design.xdc, model.py, rtl/c14_int8_dot_requant_top.sv, rtl/dotq_core.sv, rtl/dotq_regs.sv, rtl/reset_sync.sv, spec.md, spec.yaml, tests/__pycache__/c14_bench.cpython-312-pytest-9.2.0.pyc, tests/__pycache__/c14_bench.cpython-312.pyc, tests/__pycache__/test_c14_int8_dot_requant_rtl.cpython-312-pytest-9.2.0.pyc, tests/__pycache__/test_c14_int8_dot_requant_rtl.cpython-312.pyc, tests/c14_bench.py, tests/test_c14_int8_dot_requant_rtl.py, verif/checkers/c14_int8_dot_requant_checker.sv, verif/checkers/v_macros.svh, verif/testplan.yaml</td></tr></table></div><h2>Spec summary</h2><div class="wrap"><table><tr><td>title</td><td>Quantised-layer arithmetic unit (8-way int8 dot product, bias, requantise, clamp) behind the test shell</td></tr><tr><td>top</td><td>c14_int8_dot_requant_top</td></tr><tr><td>clocks</td><td>CLK100MHZ 100 MHz</td></tr><tr><td>ports</td><td>5</td></tr><tr><td>open questions</td><td>0</td></tr><tr><td>resolved questions</td><td>6</td></tr></table></div><h2>Block diagram</h2><pre> UART_TXD_IN --&gt; [fpga_shell] --win_*--&gt; [dotq_regs] --core_*--&gt; [dotq_core]
+ UART_RXD_OUT &lt;-- [fpga_shell] &lt;--rdata-- [dotq_regs] &lt;--y,acc,done-- [dotq_core]
+ CPU_RESETN --&gt; [reset_sync] --rst--&gt; all blocks
+ dotq_regs.ready --&gt; LED0
+</pre><h2>Testplan and coverage</h2><div class="wrap"><table><tr><td>testplan items</td><td>10</td></tr><tr><td>verification reached</td><td>V2</td></tr><tr><td>first failed</td><td>V3</td></tr></table></div><h2>RTL diff against the previous stage</h2><h3>rtl/c14_int8_dot_requant_top.sv</h3><div class="diff"><span class="hunk">@@ -0,0 +1,51 @@</span>
+<span class="add">+<span class="c">// Board top: reset synchroniser, test shell, register block, arithmetic core.</span></span>
+<span class="add">+<span class="k">module</span> c14_int8_dot_requant_top #(</span>
+<span class="add">+    <span class="k">parameter</span> <span class="k">int</span>          CLKS_PER_BIT   = <span class="n">868</span>,</span>
+<span class="add">+    <span class="k">parameter</span> <span class="k">int</span>          TIMEOUT_CYCLES = <span class="n">100000000</span>,</span>
+<span class="add">+    <span class="k">parameter</span> <span class="k">logic</span> [<span class="n">31</span>:<span class="n">0</span>] BUILD_STAMP    = <span class="n">32&#x27;h0</span></span>
+<span class="add">+) (</span>
+<span class="add">+    <span class="k">input</span>  <span class="k">logic</span>       CLK100MHZ,</span>
+<span class="add">+    <span class="k">input</span>  <span class="k">logic</span>       CPU_RESETN,</span>
+<span class="add">+    <span class="k">input</span>  <span class="k">logic</span>       UART_TXD_IN,</span>
+<span class="add">+    <span class="k">output</span> <span class="k">logic</span>       UART_RXD_OUT,</span>
+<span class="add">+    <span class="k">output</span> <span class="k">logic</span> [<span class="n">0</span>:<span class="n">0</span>] LED</span>
+<span class="add">+);</span>
+<span class="add">+    <span class="k">localparam</span> <span class="k">logic</span> [<span class="n">31</span>:<span class="n">0</span>] DESIGN_ID = <span class="n">32&#x27;h444F5451</span>;  <span class="c">// &quot;DOTQ&quot;</span></span>
+<span class="add">+</span>
+<span class="add">+    <span class="k">logic</span>        rst;</span>
+<span class="add">+    <span class="k">logic</span> [<span class="n">6</span>:<span class="n">0</span>]  win_addr;</span>
+<span class="add">+    <span class="k">logic</span>        win_wr, win_rd;</span>
+<span class="add">+    <span class="k">logic</span> [<span class="n">31</span>:<span class="n">0</span>] win_wdata, win_rdata;</span>
+<span class="add">+    <span class="k">logic</span>        go, done, ready, relu;</span>
+<span class="add">+    <span class="k">logic</span> [<span class="n">63</span>:<span class="n">0</span>] act, wgt;</span>
+<span class="add">+    <span class="k">logic</span> [<span class="n">31</span>:<span class="n">0</span>] bias, acc;</span>
+<span class="add">+    <span class="k">logic</span> [<span class="n">15</span>:<span class="n">0</span>] mult;</span>
+<span class="add">+    <span class="k">logic</span> [<span class="n">4</span>:<span class="n">0</span>]  shift;</span>
+<span class="add">+    <span class="k">logic</span> [<span class="n">7</span>:<span class="n">0</span>]  y;</span>
+<span class="add">+    <span class="k">logic</span>        LED0;</span>
+<span class="add">+</span>
+<span class="add">+    reset_sync u_rst (.clk(CLK100MHZ), .rst_n_async(CPU_RESETN), .rst(rst));</span>
+<span class="add">+</span>
+<span class="add">+    fpga_shell #(</span>
+<span class="add">+        .CLKS_PER_BIT(CLKS_PER_BIT), .TIMEOUT_CYCLES(TIMEOUT_CYCLES),</span>
+<span class="add">+        .DESIGN_ID(DESIGN_ID), .BUILD_STAMP(BUILD_STAMP)</span>
+<span class="add">+    ) u_shell (</span>
+<span class="add">+        .clk(CLK100MHZ), .rst(rst), .uart_rx(UART_TXD_IN), .uart_tx(UART_RXD_OUT),</span>
+<span class="add">+        .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd),</span>
+<span class="add">+        .win_wdata(win_wdata), .win_rdata(win_rdata));</span>
+<span class="add">+</span>
+<span class="add">+    dotq_regs u_regs (</span>
+<span class="add">+        .clk(CLK100MHZ), .rst(rst),</span>
+<span class="add">+        .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd),</span>
+<span class="add">+        .win_wdata(win_wdata), .win_rdata(win_rdata),</span>
+<span class="add">+        .go(go), .act(act), .wgt(wgt), .bias(bias), .mult(mult),</span>
+<span class="add">+        .shift(shift), .relu(relu), .done(done), .y(y), .acc(acc), .ready(ready));</span>
+<span class="add">+</span>
+<span class="add">+    dotq_core u_core (</span>
+<span class="add">+        .clk(CLK100MHZ), .rst(rst), .go(go), .act(act), .wgt(wgt), .bias(bias),</span>
+<span class="add">+        .mult(mult), .shift(shift), .relu(relu), .done(done), .y(y), .acc(acc));</span>
+<span class="add">+</span>
+<span class="add">+    <span class="c">// LED0 (spec name) is the ready flag; LED is the master-XDC bus, bit 0 only.</span></span>
+<span class="add">+    <span class="k">assign</span> LED0   = ready;</span>
+<span class="add">+    <span class="k">assign</span> LED[<span class="n">0</span>] = LED0;</span>
+<span class="add">+<span class="k">endmodule</span></span></div><h3>rtl/dotq_core.sv</h3><div class="diff"><span class="hunk">@@ -0,0 +1,109 @@</span>
+<span class="add">+<span class="c">// dotq_core: 8-way int8 dot product + bias, times mult, round-shift, clamp.</span></span>
+<span class="add">+<span class="c">// Pipeline: go -&gt; products -&gt; pair sums -&gt; acc -&gt; acc*mult -&gt; scaled -&gt; y.</span></span>
+<span class="add">+<span class="c">// done pulses with y/acc valid; y/acc then hold until the next go.</span></span>
+<span class="add">+<span class="k">module</span> dotq_core (</span>
+<span class="add">+    <span class="k">input</span>  <span class="k">logic</span>        clk,</span>
+<span class="add">+    <span class="k">input</span>  <span class="k">logic</span>        rst,        <span class="c">// synchronous, active high</span></span>
+<span class="add">+    <span class="k">input</span>  <span class="k">logic</span>        go,         <span class="c">// one-cycle pulse, operands valid</span></span>
+<span class="add">+    <span class="k">input</span>  <span class="k">logic</span> [<span class="n">63</span>:<span class="n">0</span>] act,</span>
+<span class="add">+    <span class="k">input</span>  <span class="k">logic</span> [<span class="n">63</span>:<span class="n">0</span>] wgt,</span>
+<span class="add">+    <span class="k">input</span>  <span class="k">logic</span> [<span class="n">31</span>:<span class="n">0</span>] bias,</span>
+<span class="add">+    <span class="k">input</span>  <span class="k">logic</span> [<span class="n">15</span>:<span class="n">0</span>] mult,</span>
+<span class="add">+    <span class="k">input</span>  <span class="k">logic</span> [<span class="n">4</span>:<span class="n">0</span>]  shift,</span>
+<span class="add">+    <span class="k">input</span>  <span class="k">logic</span>        relu,</span>
+<span class="add">+    <span class="k">output</span> <span class="k">logic</span>        done,</span>
+<span class="add">+    <span class="k">output</span> <span class="k">logic</span> [<span class="n">7</span>:<span class="n">0</span>]  y,</span>
+<span class="add">+    <span class="k">output</span> <span class="k">logic</span> [<span class="n">31</span>:<span class="n">0</span>] acc</span>
+<span class="add">+);</span>
+<span class="add">+    <span class="k">logic</span> v1, v2, v3, v4, v5;</span>
+<span class="add">+</span>
+<span class="add">+    <span class="c">// stage 1</span></span>
+<span class="add">+    <span class="k">logic</span> <span class="k">signed</span> [<span class="n">15</span>:<span class="n">0</span>] p [<span class="n">8</span>];</span>
+<span class="add">+    <span class="k">logic</span> <span class="k">signed</span> [<span class="n">31</span>:<span class="n">0</span>] bias1;</span>
+<span class="add">+    <span class="k">logic</span>        [<span class="n">15</span>:<span class="n">0</span>] mult1;</span>
+<span class="add">+    <span class="k">logic</span>        [<span class="n">4</span>:<span class="n">0</span>]  shift1, shift2, shift3;</span>
+<span class="add">+    <span class="k">logic</span>               relu1, relu2, relu3;</span>
+<span class="add">+    <span class="c">// stage 2</span></span>
+<span class="add">+    <span class="k">logic</span> <span class="k">signed</span> [<span class="n">16</span>:<span class="n">0</span>] s [<span class="n">4</span>];</span>
+<span class="add">+    <span class="k">logic</span> <span class="k">signed</span> [<span class="n">31</span>:<span class="n">0</span>] bias2;</span>
+<span class="add">+    <span class="k">logic</span>        [<span class="n">15</span>:<span class="n">0</span>] mult2;</span>
+<span class="add">+    <span class="c">// stage 3</span></span>
+<span class="add">+    <span class="k">logic</span> <span class="k">signed</span> [<span class="n">31</span>:<span class="n">0</span>] acc3;</span>
+<span class="add">+    <span class="k">logic</span>        [<span class="n">15</span>:<span class="n">0</span>] mult3;</span>
+<span class="add">+    <span class="c">// stage 4</span></span>
+<span class="add">+    <span class="k">logic</span> <span class="k">signed</span> [<span class="n">48</span>:<span class="n">0</span>] prod4;</span>
+<span class="add">+    <span class="k">logic</span>        [<span class="n">4</span>:<span class="n">0</span>]  shift4;</span>
+<span class="add">+    <span class="k">logic</span>               relu4;</span>
+<span class="add">+    <span class="k">logic</span> <span class="k">signed</span> [<span class="n">31</span>:<span class="n">0</span>] acc4, acc5;</span>
+<span class="add">+    <span class="c">// stage 5</span></span>
+<span class="add">+    <span class="k">logic</span> <span class="k">signed</span> [<span class="n">48</span>:<span class="n">0</span>] scaled5;</span>
+<span class="add">+    <span class="k">logic</span>               relu5;</span>
+<span class="add">+</span>
+<span class="add">+    <span class="k">logic</span> <span class="k">signed</span> [<span class="n">49</span>:<span class="n">0</span>] rounded;</span>
+<span class="add">+    <span class="k">logic</span> <span class="k">signed</span> [<span class="n">48</span>:<span class="n">0</span>] shifted;</span>
+<span class="add">+</span>
+<span class="add">+    <span class="k">always_comb</span> <span class="k">begin</span></span>
+<span class="add">+        rounded = <span class="n">50</span>&#x27;(prod4);</span>
+<span class="add">+        <span class="k">if</span> (shift4 != <span class="n">5&#x27;d0</span>) rounded = rounded + (<span class="n">50&#x27;sd1</span> &lt;&lt;&lt; (shift4 - <span class="n">5&#x27;d1</span>));</span>
+<span class="add">+        shifted = <span class="n">49</span>&#x27;(rounded &gt;&gt;&gt; shift4);</span>
+<span class="add">+    <span class="k">end</span></span>
+<span class="add">+</span>
+<span class="add">+    <span class="k">always_ff</span> @(<span class="k">posedge</span> clk) <span class="k">begin</span></span>
+<span class="add">+        <span class="k">for</span> (<span class="k">int</span> i = <span class="n">0</span>; i &lt; <span class="n">8</span>; i++) <span class="k">begin</span></span>
+<span class="add">+            p[i] &lt;= $<span class="k">signed</span>(act[<span class="n">8</span>*i +: <span class="n">8</span>]) * $<span class="k">signed</span>(wgt[<span class="n">8</span>*i +: <span class="n">8</span>]);</span>
+<span class="add">+        <span class="k">end</span></span>
+<span class="add">+        bias1  &lt;= bias;</span>
+<span class="add">+        mult1  &lt;= mult;</span>
+<span class="add">+        shift1 &lt;= shift;</span>
+<span class="add">+        relu1  &lt;= relu;</span>
+<span class="add">+</span>
+<span class="add">+        <span class="k">for</span> (<span class="k">int</span> i = <span class="n">0</span>; i &lt; <span class="n">4</span>; i++) <span class="k">begin</span></span>
+<span class="add">+            s[i] &lt;= <span class="n">17</span>&#x27;(p[<span class="n">2</span>*i]) + <span class="n">17</span>&#x27;(p[<span class="n">2</span>*i+<span class="n">1</span>]);</span>
+<span class="add">+        <span class="k">end</span></span>
+<span class="add">+        bias2  &lt;= bias1;</span>
+<span class="add">+        mult2  &lt;= mult1;</span>
+<span class="add">+        shift2 &lt;= shift1;</span>
+<span class="add">+        relu2  &lt;= relu1;</span>
+<span class="add">+</span>
+<span class="add">+        acc3   &lt;= ((<span class="n">32</span>&#x27;(s[<span class="n">0</span>]) + <span class="n">32</span>&#x27;(s[<span class="n">1</span>])) + (<span class="n">32</span>&#x27;(s[<span class="n">2</span>]) + <span class="n">32</span>&#x27;(s[<span class="n">3</span>]))) + bias2;</span>
+<span class="add">+        mult3  &lt;= mult2;</span>
+<span class="add">+        shift3 &lt;= shift2;</span>
+<span class="add">+        relu3  &lt;= relu2;</span>
+<span class="add">+</span>
+<span class="add">+        prod4  &lt;= acc3 * $<span class="k">signed</span>({<span class="n">1&#x27;b0</span>, mult3});</span>
+<span class="add">+        shift4 &lt;= shift3;</span>
+<span class="add">+        relu4  &lt;= relu3;</span>
+<span class="add">+        acc4   &lt;= acc3;</span>
+<span class="add">+</span>
+<span class="add">+        scaled5 &lt;= shifted;</span>
+<span class="add">+        relu5   &lt;= relu4;</span>
+<span class="add">+        acc5    &lt;= acc4;</span>
+<span class="add">+    <span class="k">end</span></span>
+<span class="add">+</span>
+<span class="add">+    <span class="k">always_ff</span> @(<span class="k">posedge</span> clk) <span class="k">begin</span></span>
+<span class="add">+        <span class="k">if</span> (rst) <span class="k">begin</span></span>
+<span class="add">+            v1 &lt;= <span class="n">1&#x27;b0</span>; v2 &lt;= <span class="n">1&#x27;b0</span>; v3 &lt;= <span class="n">1&#x27;b0</span>; v4 &lt;= <span class="n">1&#x27;b0</span>; v5 &lt;= <span class="n">1&#x27;b0</span>;</span>
+<span class="add">+            done &lt;= <span class="n">1&#x27;b0</span>;</span>
+<span class="add">+            y    &lt;= <span class="n">8&#x27;d0</span>;</span>
+<span class="add">+            acc  &lt;= <span class="n">32&#x27;d0</span>;</span>
+<span class="add">+        <span class="k">end</span> <span class="k">else</span> <span class="k">begin</span></span>
+<span class="add">+            v1   &lt;= go;</span>
+<span class="add">+            v2   &lt;= v1 &amp; ~go;</span>
+<span class="add">+            v3   &lt;= v2 &amp; ~go;</span>
+<span class="add">+            v4   &lt;= v3 &amp; ~go;</span>
+<span class="add">+            v5   &lt;= v4 &amp; ~go;</span>
+<span class="add">+            done &lt;= v5 &amp; ~go;</span>
+<span class="add">+            <span class="k">if</span> (v5 &amp;&amp; !go) <span class="k">begin</span></span>
+<span class="add">+                acc &lt;= acc5;</span>
+<span class="add">+                <span class="k">if</span> (scaled5 &gt; <span class="n">49&#x27;sd127</span>)</span>
+<span class="add">+                    y &lt;= <span class="n">8&#x27;d127</span>;</span>
+<span class="add">+                <span class="k">else</span> <span class="k">if</span> (relu5 &amp;&amp; scaled5 &lt; <span class="n">49&#x27;sd0</span>)</span>
+<span class="add">+                    y &lt;= <span class="n">8&#x27;d0</span>;</span>
+<span class="add">+                <span class="k">else</span> <span class="k">if</span> (!relu5 &amp;&amp; scaled5 &lt; -<span class="n">49&#x27;sd128</span>)</span>
+<span class="add">+                    y &lt;= <span class="n">8&#x27;h80</span>;</span>
+<span class="add">+                <span class="k">else</span></span>
+<span class="add">+                    y &lt;= scaled5[<span class="n">7</span>:<span class="n">0</span>];</span>
+<span class="add">+            <span class="k">end</span></span>
+<span class="add">+        <span class="k">end</span></span>
+<span class="add">+    <span class="k">end</span></span>
+<span class="add">+<span class="k">endmodule</span></span></div><h3>rtl/dotq_regs.sv</h3><div class="diff"><span class="hunk">@@ -0,0 +1,84 @@</span>
+<span class="add">+<span class="c">// dotq_regs: register map 0x00-0x0A of the shell window, GO pulse, READY flag.</span></span>
+<span class="add">+<span class="k">module</span> dotq_regs (</span>
+<span class="add">+    <span class="k">input</span>  <span class="k">logic</span>        clk,</span>
+<span class="add">+    <span class="k">input</span>  <span class="k">logic</span>        rst,</span>
+<span class="add">+    <span class="k">input</span>  <span class="k">logic</span> [<span class="n">6</span>:<span class="n">0</span>]  win_addr,</span>
+<span class="add">+    <span class="k">input</span>  <span class="k">logic</span>        win_wr,</span>
+<span class="add">+    <span class="k">input</span>  <span class="k">logic</span>        win_rd,</span>
+<span class="add">+    <span class="k">input</span>  <span class="k">logic</span> [<span class="n">31</span>:<span class="n">0</span>] win_wdata,</span>
+<span class="add">+    <span class="k">output</span> <span class="k">logic</span> [<span class="n">31</span>:<span class="n">0</span>] win_rdata,</span>
+<span class="add">+    <span class="c">// to the core</span></span>
+<span class="add">+    <span class="k">output</span> <span class="k">logic</span>        go,</span>
+<span class="add">+    <span class="k">output</span> <span class="k">logic</span> [<span class="n">63</span>:<span class="n">0</span>] act,</span>
+<span class="add">+    <span class="k">output</span> <span class="k">logic</span> [<span class="n">63</span>:<span class="n">0</span>] wgt,</span>
+<span class="add">+    <span class="k">output</span> <span class="k">logic</span> [<span class="n">31</span>:<span class="n">0</span>] bias,</span>
+<span class="add">+    <span class="k">output</span> <span class="k">logic</span> [<span class="n">15</span>:<span class="n">0</span>] mult,</span>
+<span class="add">+    <span class="k">output</span> <span class="k">logic</span> [<span class="n">4</span>:<span class="n">0</span>]  shift,</span>
+<span class="add">+    <span class="k">output</span> <span class="k">logic</span>        relu,</span>
+<span class="add">+    <span class="k">input</span>  <span class="k">logic</span>        done,</span>
+<span class="add">+    <span class="k">input</span>  <span class="k">logic</span> [<span class="n">7</span>:<span class="n">0</span>]  y,</span>
+<span class="add">+    <span class="k">input</span>  <span class="k">logic</span> [<span class="n">31</span>:<span class="n">0</span>] acc,</span>
+<span class="add">+    <span class="k">output</span> <span class="k">logic</span>        ready</span>
+<span class="add">+);</span>
+<span class="add">+    <span class="k">logic</span> [<span class="n">31</span>:<span class="n">0</span>] a_lo, a_hi, w_lo, w_hi;</span>
+<span class="add">+</span>
+<span class="add">+    <span class="k">assign</span> act = {a_hi, a_lo};</span>
+<span class="add">+    <span class="k">assign</span> wgt = {w_hi, w_lo};</span>
+<span class="add">+</span>
+<span class="add">+    <span class="k">always_ff</span> @(<span class="k">posedge</span> clk) <span class="k">begin</span></span>
+<span class="add">+        <span class="k">if</span> (rst) <span class="k">begin</span></span>
+<span class="add">+            a_lo  &lt;= <span class="n">32&#x27;d0</span>;</span>
+<span class="add">+            a_hi  &lt;= <span class="n">32&#x27;d0</span>;</span>
+<span class="add">+            w_lo  &lt;= <span class="n">32&#x27;d0</span>;</span>
+<span class="add">+            w_hi  &lt;= <span class="n">32&#x27;d0</span>;</span>
+<span class="add">+            bias  &lt;= <span class="n">32&#x27;d0</span>;</span>
+<span class="add">+            mult  &lt;= <span class="n">16&#x27;d0</span>;</span>
+<span class="add">+            shift &lt;= <span class="n">5&#x27;d1</span>;</span>
+<span class="add">+            relu  &lt;= <span class="n">1&#x27;b0</span>;</span>
+<span class="add">+            go    &lt;= <span class="n">1&#x27;b0</span>;</span>
+<span class="add">+            ready &lt;= <span class="n">1&#x27;b0</span>;</span>
+<span class="add">+        <span class="k">end</span> <span class="k">else</span> <span class="k">begin</span></span>
+<span class="add">+            go &lt;= <span class="n">1&#x27;b0</span>;</span>
+<span class="add">+            <span class="k">if</span> (done) ready &lt;= <span class="n">1&#x27;b1</span>;</span>
+<span class="add">+            <span class="k">if</span> (win_wr) <span class="k">begin</span></span>
+<span class="add">+                <span class="k">case</span> (win_addr)</span>
+<span class="add">+                    <span class="n">7&#x27;h00</span>: a_lo  &lt;= win_wdata;</span>
+<span class="add">+                    <span class="n">7&#x27;h01</span>: a_hi  &lt;= win_wdata;</span>
+<span class="add">+                    <span class="n">7&#x27;h02</span>: w_lo  &lt;= win_wdata;</span>
+<span class="add">+                    <span class="n">7&#x27;h03</span>: w_hi  &lt;= win_wdata;</span>
+<span class="add">+                    <span class="n">7&#x27;h04</span>: bias  &lt;= win_wdata;</span>
+<span class="add">+                    <span class="n">7&#x27;h05</span>: mult  &lt;= win_wdata[<span class="n">15</span>:<span class="n">0</span>];</span>
+<span class="add">+                    <span class="n">7&#x27;h06</span>: <span class="k">begin</span></span>
+<span class="add">+                        shift &lt;= win_wdata[<span class="n">4</span>:<span class="n">0</span>];</span>
+<span class="add">+                        relu  &lt;= win_wdata[<span class="n">8</span>];</span>
+<span class="add">+                    <span class="k">end</span></span>
+<span class="add">+                    <span class="n">7&#x27;h07</span>: <span class="k">begin</span></span>
+<span class="add">+                        go    &lt;= <span class="n">1&#x27;b1</span>;</span>
+<span class="add">+                        ready &lt;= <span class="n">1&#x27;b0</span>;</span>
+<span class="add">+                    <span class="k">end</span></span>
+<span class="add">+                    <span class="k">default</span>: ;</span>
+<span class="add">+                <span class="k">endcase</span></span>
+<span class="add">+            <span class="k">end</span></span>
+<span class="add">+        <span class="k">end</span></span>
+<span class="add">+    <span class="k">end</span></span>
+<span class="add">+</span>
+<span class="add">+    <span class="k">always_ff</span> @(<span class="k">posedge</span> clk) <span class="k">begin</span></span>
+<span class="add">+        <span class="k">if</span> (rst) <span class="k">begin</span></span>
+<span class="add">+            win_rdata &lt;= <span class="n">32&#x27;d0</span>;</span>
+<span class="add">+        <span class="k">end</span> <span class="k">else</span> <span class="k">if</span> (win_rd) <span class="k">begin</span></span>
+<span class="add">+            <span class="k">case</span> (win_addr)</span>
+<span class="add">+                <span class="n">7&#x27;h00</span>: win_rdata &lt;= a_lo;</span>
+<span class="add">+                <span class="n">7&#x27;h01</span>: win_rdata &lt;= a_hi;</span>
+<span class="add">+                <span class="n">7&#x27;h02</span>: win_rdata &lt;= w_lo;</span>
+<span class="add">+                <span class="n">7&#x27;h03</span>: win_rdata &lt;= w_hi;</span>
+<span class="add">+                <span class="n">7&#x27;h04</span>: win_rdata &lt;= bias;</span>
+<span class="add">+                <span class="n">7&#x27;h05</span>: win_rdata &lt;= {<span class="n">16&#x27;d0</span>, mult};</span>
+<span class="add">+                <span class="n">7&#x27;h06</span>: win_rdata &lt;= {<span class="n">23&#x27;d0</span>, relu, <span class="n">3&#x27;d0</span>, shift};</span>
+<span class="add">+                <span class="n">7&#x27;h08</span>: win_rdata &lt;= ready ? {<span class="n">24&#x27;d0</span>, y} : <span class="n">32&#x27;d0</span>;</span>
+<span class="add">+                <span class="n">7&#x27;h09</span>: win_rdata &lt;= ready ? acc : <span class="n">32&#x27;d0</span>;</span>
+<span class="add">+                <span class="n">7&#x27;h0A</span>: win_rdata &lt;= {<span class="n">31&#x27;d0</span>, ready};</span>
+<span class="add">+                <span class="k">default</span>: win_rdata &lt;= <span class="n">32&#x27;d0</span>;</span>
+<span class="add">+            <span class="k">endcase</span></span>
+<span class="add">+        <span class="k">end</span></span>
+<span class="add">+    <span class="k">end</span></span>
+<span class="add">+<span class="k">endmodule</span></span></div><h3>rtl/reset_sync.sv</h3><div class="diff"><span class="hunk">@@ -0,0 +1 @@</span>
+<span class="add">+<span class="c">// Intentionally empty: the design uses shell/rtl/reset_sync.sv (same behaviour).</span></span></div><h2>Corner cases hit</h2><div class="wrap"><table><tr><th>requirement</th><th>tests that discharge it</th><th>bins hit / total</th></tr><tr><td>REQ-01</td><td>c14_bench.test_arith_a, c14_bench.test_arith_b, c14_bench.test_arith_random, c14_bench.test_regs_rw</td><td>top.acc_class 5/5</td></tr><tr><td>REQ-02</td><td>c14_bench.test_arith_b, c14_bench.test_shift_sweep, c14_bench.test_arith_random, c14_bench.test_regs_rw</td><td>top.round_class 3/3; top.shift_class 3/3; top.mult_class 4/4</td></tr><tr><td>REQ-03</td><td>c14_bench.test_arith_a, c14_bench.test_arith_b</td><td>top.clamp_class 6/6; top.relu 2/2</td></tr><tr><td>REQ-04</td><td>c14_bench.test_smoke, c14_bench.test_arith_a, c14_bench.test_go_timing</td><td>top.reg_access 22/22</td></tr><tr><td>REQ-05</td><td>c14_bench.test_go_timing, c14_bench.test_reset</td><td>top.go_class 2/2</td></tr><tr><td>REQ-06</td><td>c14_bench.test_reset</td><td>top.rst_class 3/3</td></tr><tr><td>REQ-07</td><td>c14_bench.test_go_timing, c14_bench.test_reset, c14_bench.test_smoke</td><td>-</td></tr><tr><td>REQ-08</td><td>c14_bench.test_baud, c14_bench.test_shell_protocol</td><td>-</td></tr><tr><td>REQ-09</td><td>c14_bench.test_smoke, c14_bench.test_shell_protocol</td><td>-</td></tr><tr><td>REQ-12</td><td>c14_bench.test_alias_unmapped, c14_bench.test_regs_rw, c14_bench.test_smoke</td><td>top.reg_access 22/22</td></tr></table></div><h2>Traceability: requirement, proof method, artefact, result</h2><div class="wrap"><table><tr><th>requirement</th><th>method</th><th>artefact</th><th>result</th><th>detail</th></tr><tr><td>REQ-01</td><td>simulation</td><td>c14_bench.test_arith_random</td><td><span class="chip">PASS</span></td><td>passed on 3 seed(s)</td></tr><tr><td>REQ-01</td><td>formal</td><td>c14_bench.test_arith_random</td><td><span class="chip">PASS</span></td><td>re-planned from formal to simulation (SymbiYosys is not installed here, so exactness of acc is checked by directed extremes and random cases against the model.): passed on 3 seed(s)</td></tr><tr><td>REQ-02</td><td>simulation</td><td>c14_bench.test_shift_sweep</td><td><span class="chip">PASS</span></td><td>passed on 3 seed(s)</td></tr><tr><td>REQ-02</td><td>formal</td><td>c14_bench.test_shift_sweep</td><td><span class="chip">PASS</span></td><td>re-planned from formal to simulation (SymbiYosys is not installed here, so rounding for every shift 1..31 is swept in simulation with exact-half cases.): passed on 3 seed(s)</td></tr><tr><td>REQ-03</td><td>simulation</td><td>c14_bench.test_arith_a</td><td><span class="chip">PASS</span></td><td>passed on 3 seed(s)</td></tr><tr><td>REQ-03</td><td>formal</td><td>c14_bench.test_arith_b</td><td><span class="chip">PASS</span></td><td>re-planned from formal to simulation (SymbiYosys is not installed here, so both clamp ends and relu are covered by directed simulation cases.): passed on 3 seed(s)</td></tr><tr><td>REQ-04</td><td>simulation</td><td>c14_bench.test_arith_a</td><td><span class="chip">PASS</span></td><td>passed on 3 seed(s)</td></tr><tr><td>REQ-04</td><td>hardware</td><td>uart_tests</td><td><span class="chip">not run</span></td><td>no bring-up result</td></tr><tr><td>REQ-05</td><td>simulation</td><td>c14_bench.test_go_timing</td><td><span class="chip">PASS</span></td><td>passed on 3 seed(s)</td></tr><tr><td>REQ-05</td><td>formal</td><td>c14_bench.test_go_timing</td><td><span class="chip">PASS</span></td><td>re-planned from formal to simulation (SymbiYosys is not installed here, so the GO-to-READY latency of at most 8 clocks is measured on LED0 in simulation.): passed on 3 seed(s)</td></tr><tr><td>REQ-06</td><td>simulation</td><td>c14_bench.test_reset</td><td><span class="chip">PASS</span></td><td>passed on 3 seed(s)</td></tr><tr><td>REQ-06</td><td>formal</td><td>c14_bench.test_reset</td><td><span class="chip">PASS</span></td><td>re-planned from formal to simulation (SymbiYosys is not installed here, so reset clearing, including reset in mid-computation, is checked in simulation.): passed on 3 seed(s)</td></tr><tr><td>REQ-06</td><td>hardware</td><td>uart_tests</td><td><span class="chip">not run</span></td><td>no bring-up result</td></tr><tr><td>REQ-07</td><td>simulation</td><td>c14_bench.test_go_timing</td><td><span class="chip">PASS</span></td><td>passed on 3 seed(s)</td></tr><tr><td>REQ-07</td><td>hardware</td><td>uart_tests</td><td><span class="chip">not run</span></td><td>no bring-up result</td></tr><tr><td>REQ-08</td><td>simulation</td><td>c14_bench.test_baud</td><td><span class="chip">PASS</span></td><td>passed on 3 seed(s)</td></tr><tr><td>REQ-08</td><td>hardware</td><td>uart_tests</td><td><span class="chip">not run</span></td><td>no bring-up result</td></tr><tr><td>REQ-09</td><td>simulation</td><td>c14_bench.test_smoke</td><td><span class="chip">PASS</span></td><td>passed on 3 seed(s)</td></tr><tr><td>REQ-09</td><td>hardware</td><td>uart_tests</td><td><span class="chip">not run</span></td><td>no bring-up result</td></tr><tr><td>REQ-10</td><td>analysis</td><td>post_synth:post_synth_resources_in_range</td><td><span class="chip">PASS</span></td><td>gate post_synth:post_synth_resources_in_range = True</td></tr><tr><td>REQ-11</td><td>analysis</td><td>post_route:setup</td><td><span class="chip fail">FAIL</span></td><td>gate post_route:setup = None</td></tr><tr><td>REQ-12</td><td>simulation</td><td>c14_bench.test_alias_unmapped</td><td><span class="chip">PASS</span></td><td>passed on 3 seed(s)</td></tr></table></div><h2>Design standards (v1.0)</h2><div class="wrap"><table><tr><th>rule</th><th>text</th><th>result</th><th>findings</th></tr><tr><td>STD-ARCH-00</td><td>architecture.yaml exists and has the shape the checker reads</td><td><span class="chip">PASS</span></td><td></td></tr><tr><td>STD-CLK-01</td><td>no derived or gated clocks: every clock a register uses is a clock input, an alias of one, or the output of a clock-network primitive (MMCM, PLL, BUFG)</td><td><span class="chip">PASS</span></td><td></td></tr><tr><td>STD-CLK-02</td><td>every clock of the top module is declared in architecture.yaml clock_domains</td><td><span class="chip">PASS</span></td><td></td></tr><tr><td>STD-CLK-03</td><td>every clock source in the synthesised design&#x27;s clock network is a declared domain</td><td><span class="chip">PASS</span></td><td></td></tr><tr><td>STD-RST-01</td><td>synchronous reset: a reset is not in a sensitivity list (the bank&#x27;s reset-strategy skill: follow the spec; FPGA default synchronous), except in a declared reset synchroniser</td><td><span class="chip">PASS</span></td><td></td></tr><tr><td>STD-LATCH-01</td><td>no latches</td><td><span class="chip">PASS</span></td><td></td></tr><tr><td>STD-LOOP-01</td><td>no combinational loops</td><td><span class="chip">PASS</span></td><td></td></tr><tr><td>STD-INIT-01</td><td>no initial blocks in synthesisable RTL except ROM initialisation ($readmemh/$readmemb)</td><td><span class="chip">PASS</span></td><td></td></tr><tr><td>STD-CDC-01</td><td>every clock-domain crossing is a named CDC primitive from the bank, listed in architecture.yaml crossings, and instantiated; no module mixes two clocks outside one</td><td><span class="chip">PASS</span></td><td></td></tr><tr><td>STD-CDC-02</td><td>report_cdc on the synthesised netlist has no Critical row</td><td><span class="chip">PASS</span></td><td></td></tr><tr><td>STD-METH-01</td><td>report_methodology on the synthesised netlist has no Critical Warning</td><td><span class="chip">PASS</span></td><td></td></tr><tr><td>STD-AXI-01</td><td>a new block interface is AXI4-Lite or AXI4-Stream with AMBA port names (prefix_awvalid, prefix_tdata ...) and the right direction</td><td><span class="chip">PASS</span></td><td></td></tr><tr><td>STD-AXI-02</td><td>ports named like an AXI interface belong to a declared interface</td><td><span class="chip">PASS</span></td><td></td></tr><tr><td>STD-WAIVE-01</td><td>every waiver states a reason</td><td><span class="chip">PASS</span></td><td></td></tr><tr><td>STD-REV-01</td><td>a multi-bit crossing uses Gray code, a handshake or an asynchronous FIFO, never a bit-by-bit synchroniser</td><td><span class="chip">review only</span></td><td></td></tr><tr><td>STD-REV-02</td><td>AXI protocol semantics: valid is not withdrawn before ready, no combinational ready-to-valid loop</td><td><span class="chip">review only</span></td><td></td></tr><tr><td>STD-REV-03</td><td>reset values and enables follow the spec and the bank&#x27;s reset-strategy skill</td><td><span class="chip">review only</span></td><td></td></tr></table></div><h2>Constraints for approval</h2><div class="code">## design.xdc: generated by the core&#x27;s board_constraints tool from the board&#x27;s master XDC
+## (Nexys-A7-100T-Master.xdc). Pins and I/O standards are the board&#x27;s; do not edit pin numbers.
+
+set_property -dict { PACKAGE_PIN E3   IOSTANDARD LVCMOS33 } [get_ports { CLK100MHZ }];  # CLK100MHZ
+create_clock -add -name sys_clk_pin -period 10.00 -waveform {0 5} [get_ports { CLK100MHZ }];
+set_property -dict { PACKAGE_PIN C12  IOSTANDARD LVCMOS33 } [get_ports { CPU_RESETN }];  # CPU_RESETN
+set_property -dict { PACKAGE_PIN H17  IOSTANDARD LVCMOS33 } [get_ports { LED[0] }];  # LED[0]
+set_property -dict { PACKAGE_PIN D4   IOSTANDARD LVCMOS33 } [get_ports { UART_RXD_OUT }];  # UART_RXD_OUT
+set_property -dict { PACKAGE_PIN C4   IOSTANDARD LVCMOS33 } [get_ports { UART_TXD_IN }];  # UART_TXD_IN
+
+## Asynchronous inputs (reset button, UART serial in): synchronised inside the design;
+## the delay only gives the ports a defined arrival time (FDA-CON-5).
+set ASYNC_IN [get_ports {CPU_RESETN UART_TXD_IN}]
+set_input_delay -clock sys_clk_pin -max 2.0 $ASYNC_IN
+set_input_delay -clock sys_clk_pin -min 0.0 $ASYNC_IN
+
+## Outputs (UART serial out, ready LED): slow board-level signals, no external timing
+## requirement; a nominal output delay constrains them against the clock (FDA-CON-5).
+set SLOW_OUT [get_ports {UART_RXD_OUT LED[0]}]
+set_output_delay -clock sys_clk_pin -max 2.0 $SLOW_OUT
+set_output_delay -clock sys_clk_pin -min 0.0 $SLOW_OUT
+</div><h3>Pins traced to the board inventory</h3><div class="wrap"><table><tr><th>port</th><th>pin</th><th>master XDC</th><th>board inventory entry</th></tr><tr><td>CLK100MHZ</td><td>E3</td><td>master XDC port CLK100MHZ (LVCMOS33)</td><td>clock: 100 MHz oscillator on E3 (MRCC, bank 35)</td></tr><tr><td>CPU_RESETN</td><td>C12</td><td>master XDC port CPU_RESETN (LVCMOS33)</td><td>cpu_reset: CPU_RESETN, active low, 4.7 kohm pull-up</td></tr><tr><td>LED[0]</td><td>H17</td><td>master XDC port LED[0] (LVCMOS33)</td><td>leds: 16 LEDs, active high through 330 ohm</td></tr><tr><td>UART_RXD_OUT</td><td>D4</td><td>master XDC port UART_RXD_OUT (LVCMOS33)</td><td>usb_uart: FT2232HQ channel B UART (see usb_uart_jtag)</td></tr><tr><td>UART_TXD_IN</td><td>C4</td><td>master XDC port UART_TXD_IN (LVCMOS33)</td><td>usb_uart: FT2232HQ channel B UART (see usb_uart_jtag)</td></tr></table></div><h2>Waveform</h2><p class="mut">No waveform for this stage.</p><h2>Budget</h2><div class="wrap"><table><tr><th></th><th>used</th><th>limit</th></tr><tr><td>turns</td><td>7</td><td>80</td></tr><tr><td>seconds</td><td>0.1</td><td>3600</td></tr><tr><td>usd</td><td>0.0</td><td>0.8</td></tr></table></div><h2>Models by role</h2><div class="wrap"><table><tr><th>role</th><th>harness</th><th>model</th><th>effort</th><th>use this stage</th></tr><tr><td>clarify</td><td>claude_code</td><td>claude-sonnet-5-5</td><td>medium</td><td>-</td></tr><tr><td>model</td><td>claude_code</td><td>claude-sonnet-5-5</td><td>medium</td><td>2 turns, 16105 tokens, 22 s, $0.0000 reported, $0.0535 plan estimate</td></tr><tr><td>tests</td><td>claude_code</td><td>claude-sonnet-5-5</td><td>medium</td><td>28 turns, 1125445 tokens, 579 s, $0.0000 reported, $1.6772 plan estimate</td></tr><tr><td>rtl</td><td>claude_code</td><td>claude-sonnet-5-5</td><td>medium</td><td>53 turns, 1169497 tokens, 582 s, $0.0000 reported, $0.7977 plan estimate</td></tr></table></div><h2>Review</h2><div class="wrap"><table><tr><td>decision</td><td>approve</td></tr><tr><td>by</td><td>auto</td></tr><tr><td>note</td><td>-</td></tr></table></div><h2>Who did what</h2><div class="wrap"><table><tr><th>#</th><th>who</th><th>stage</th><th>what</th><th>detail</th></tr><tr><td>1</td><td><span class="who-agent">agent</span></td><td>clarify</td><td>stage 0 work, visit 1</td><td>5 files in the design</td></tr><tr><td>2</td><td><span class="who-agent">agent</span></td><td>clarify</td><td>stage 0 work, visit 2</td><td>5 files in the design</td></tr><tr><td>3</td><td><span class="who-auto">auto</span></td><td>clarify</td><td>interview</td><td>answered: What is the register map (offset, width, reset value and access of every register) of the shell-facing block? -&gt; A_LO: offset 0x00, RW, reset 0: [31:0] activations 0..3, a_i in bits [8i+7:8i]
+A</td></tr><tr><td>4</td><td><span class="who-auto">auto</span></td><td>clarify</td><td>interview</td><td>answered: Is acc allowed to overflow 32 bits when bias is near its limit? -&gt; The specification does not allow overflow: it says the sum never overflows for t</td></tr><tr><td>5</td><td><span class="who-auto">auto</span></td><td>clarify</td><td>interview</td><td>answered: Is ready cleared when a new go is accepted, and are results held until then? -&gt; Yes. A write to GO clears READY and presents the operands for one clock; READY b</td></tr><tr><td>6</td><td><span class="who-auto">auto</span></td><td>clarify</td><td>interview</td><td>defaulted: What are the TIMEOUT_CYCLES default and BUILD_STAMP default values? -&gt; TIMEOUT_CYCLES = 100000000 (1 s at 100 MHz), BUILD_STAMP = 0 overridden by the f</td></tr><tr><td>7</td><td><span class="who-auto">auto</span></td><td>clarify</td><td>interview</td><td>defaulted: How is the DOTQ design ID presented by the shell? -&gt; Four ASCII bytes D,O,T,Q read as 0x444F5451 at ID register offset 0x00, if the s</td></tr><tr><td>8</td><td><span class="who-auto">auto</span></td><td>clarify</td><td>interview</td><td>defaulted: Does a &#x27;go&#x27; with the ready flag already set restart the computation using the currently loaded operands? -&gt; Yes, always accepted.</td></tr><tr><td>9</td><td><span class="who-auto">auto</span></td><td>clarify</td><td>approved (review off)</td><td></td></tr><tr><td>10</td><td><span class="who-agent">agent</span></td><td>board-and-device-planning</td><td>stage 1 work, visit 1</td><td>7 files in the design</td></tr><tr><td>11</td><td><span class="who-agent">agent</span></td><td>board-and-device-planning</td><td>stage 1 work, visit 2</td><td>8 files in the design</td></tr><tr><td>12</td><td><span class="who-auto">auto</span></td><td>board-and-device-planning</td><td>approved (review off)</td><td></td></tr><tr><td>13</td><td><span class="who-auto">auto</span></td><td>board-and-device-planning</td><td>architecture approved</td><td>source: agent</td></tr><tr><td>14</td><td><span class="who-agent">agent</span></td><td>rtl-design-creation</td><td>stage 2 work, visit 1</td><td>18 files in the design</td></tr><tr><td>15</td><td><span class="who-agent">agent</span></td><td>rtl-design-creation</td><td>stage 2 work, visit 2</td><td>18 files in the design</td></tr><tr><td>16</td><td><span class="who-agent">agent</span></td><td>rtl-design-creation</td><td>stage 2 work, visit 3</td><td>18 files in the design</td></tr><tr><td>17</td><td><span class="who-agent">agent</span></td><td>rtl-design-creation</td><td>stage 2 work, visit 4</td><td>18 files in the design</td></tr></table></div></main></body></html>

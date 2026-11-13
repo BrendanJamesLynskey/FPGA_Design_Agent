@@ -1091,7 +1091,7 @@ def program(s: Session, variant: str = "base", target: str = "sram") -> dict:
     return {"ok": r.returncode == 0, "output": _text_out(r), "returncode": r.returncode, "program": data, **pre}
 
 
-@tool("bringup", "Run the design's bring-up on the board: program base, UART tests against the blind model, program "
+@tool("bringup", "Run the design's bring-up on the board: program base, UART tests against the reference model, program "
                  "ila, ILA captures, check the design is still alive (flow/bringup.py). Same preconditions as program.",
       {}, hardware=True)
 def bringup(s: Session) -> dict:

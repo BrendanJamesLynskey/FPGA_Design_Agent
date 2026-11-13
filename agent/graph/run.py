@@ -81,6 +81,9 @@ class State(TypedDict, total=False):
     hand_edit_only: bool  # the owner edited by hand and gave no prompt: re-run the gates on their files, no agent turn
     skill_shortlist: dict  # brief 36 (skill routing on): this stage's ranked skill names + descriptions, never bodies
     skill_notes: list     # brief 36: {stage, skill, heading} citations of what earlier stages loaded
+    doc: dict             # brief 68 C: the DOC step's result (agent.graph.document), set by the document node
+    resumed_from: str     # brief 68 D: the handover a resumed run started from (agent.graph.pickup)
+    carried: list         # brief 68 D: stages before the entry that passed in the handover (inputs unchanged): not re-run
 
 
 @dataclass
@@ -115,6 +118,7 @@ class Config:
     hdl: str = "sv"                 # brief 55: the design language, sv (SystemVerilog) | vhdl (VHDL-2008; the test shell stays SystemVerilog)
     design_plan: bool = False       # closure loop: stage 1 declares datapaths; flow/timing_plan.py maps and pipelines them before any build
     closure: str = "off"            # closure loop: on = stage 6 runs the closure controller (agent/graph/closure.py)
+    docs: str = "off"               # brief 68 C: on = the document node writes handover.yaml, README.md, AGENT.md at the end (the CLI default is on)
 
     @property
     def arms(self) -> tuple[str, ...]:
@@ -148,6 +152,7 @@ class Runtime:
     spectest_triage_llm: Callable[[str, str], str] | None = None
     skill_shortlist: dict | None = None                     # brief 36: set by node_route_skills, read by run_role
     skill_notes: list = field(default_factory=list)
+    doc_llm: Callable[[str, str], str] | None = None        # brief 68 C: the DOC step's model call (None: the Designer's model)
 
 
 _RT: dict[str, Runtime] = {}
@@ -163,7 +168,7 @@ PROMPTS = {
                "default, reason}} (the default you propose and why). Use only spec.md and the knowledge tools. "
                "requirements: a list of {{id, text, proof}}, one per checkable requirement of the request (id unique, for example "
                "REQ-01); proof is a list of the methods that will discharge it, from simulation (a cocotb test against the "
-               "blind model), formal (a SymbiYosys property), hardware (a bring-up check on the board) and analysis (a flow "
+               "reference model), formal (a SymbiYosys property), hardware (a bring-up check on the board) and analysis (a flow "
                "gate or report: timing, resources, power); propose the method you think fits, and leave proof out only if "
                "you cannot tell (the interview will ask). "
                "REGISTER MAP: if spec.md names registers, the test shell, the USB-UART host interface or reading values back, but gives no register offsets (a hex constant such as a seed or an I2C address is not an offset), you do NOT know the "
@@ -178,10 +183,10 @@ PROMPTS = {
                "PWM_PERIOD_CYCLES: 1024; put the rate or duration only in a comment or in timing. Never a rate "
                "(_HZ, _MS) or a fraction as a parameter. If spec.yaml already exists it is shown below with the "
                "gate's message: fix it in place.",
-    "model": "You are the blind golden model writer. From spec.yaml alone write model.py: a pure-Python, cycle-level "
+    "model": "You are the Modeller. From spec.yaml alone write model.py: a pure-Python, cycle-level "
              "reference model of the design's externally visible behaviour (no HDL, no simulator imports).\n"
              + MODEL_CONTRACT,
-    "tests": "You write the cocotb tests for the design from spec.yaml and the blind model model.py (you never see "
+    "tests": "You are the Verifier. You write the cocotb tests for the design from spec.yaml and the Modeller's reference model model.py (you never see "
              "the RTL). Write tests/test_{name}_rtl.py (pytest entry calling flow.cocotb_run) and the cocotb bench; "
              "import the model with sys.path.insert(0, str(Path(__file__).resolve().parents[1])); import model. "
              "Also write verif/testplan.yaml tracing every spec item to a test: call spec_items for the exact ids "
@@ -192,10 +197,10 @@ PROMPTS = {
              "ila_captures) or step:case, for analysis a flow gate (stage:gate, for example post_route:setup, "
              "post_synth:post_synth_resources_in_range).\n" + MODEL_CONTRACT,
     "hwtests": "You write the board bring-up tests and ILA capture checks for the design (stage 9), from spec.yaml, the "
-               "blind model model.py, probes.yaml and BRINGUP.md. You never see the RTL. Write tests/test_{name}_hw.py "
+               "Modeller's reference model model.py, probes.yaml and BRINGUP.md. You never see the RTL. Write tests/test_{name}_hw.py "
                "and hw_checks.py. Paths are relative to the design directory (/tests/..., /hw_checks.py). "
                "Problems found by the bring-up artefact check: {fails}\n",
-    "rtl": "You are the RTL and implementation engineer for stage {stage} ({stage_name}) of the UltraFast flow on the "
+    "rtl": "You are the Designer, the RTL engineer for stage {stage} ({stage_name}) of the UltraFast flow on the "
            "{board}. Do only what this stage allows: {allowed}. The flow's gates decide when the stage is done, "
            "not you; when you think your part is complete, stop and reply DONE. Failures so far: {fails}. "
            "Reviewer note: {note}",
@@ -220,7 +225,7 @@ Bring-up files (stage 9; flow/bringup.py runs them on the board once the owner a
   `FpgaShell.open(request.config.getoption("--hw-port"), timeout_s=0.2)`; the bitstream's build stamp comes from
   `request.config.getoption("--hw-stamp")` (hex text). Registers are read and written through the shell window,
   `sh.read(p.WINDOW_BASE + offset)` / `sh.write(p.WINDOW_BASE + offset, value)` with `from shell.host import
-  protocol as p` (@shell/PROTOCOL.md has the frames). Compare every answer with the blind model (model.py). Leave the
+  protocol as p` (@shell/PROTOCOL.md has the frames). Compare every answer with the reference model (model.py). Leave the
   design at its reset values afterwards, and keep LED duty and count low (the board's power rule).
 - hw_checks.py: the ILA capture checks, run on the ILA build. A module-level `CAPTURES: list[Capture]` where you define
   `Capture` as a dataclass with name, condition ("AND" or "OR"), position (int, trigger position in the 1024-sample
@@ -377,7 +382,7 @@ Flow conventions (fixed by the repo; follow them exactly):
 - Design standards v1.0 (checked by flow/standards_check.py; gates(kind="standards") shows the rules and findings):
 {standards}
 - ARCHITECTURE.md must have a "## Block diagram" section with a fenced text diagram, the clock plan and the pin list.
-- Tests (test writer): tests/test_{name}_rtl.py is a pytest entry that calls
+- Tests (Verifier): tests/test_{name}_rtl.py is a pytest entry that calls
   flow.cocotb_run.run(name, toplevel, sources, test_module, test_dir, parameters=..., seed=...), where
   sources = flow.cocotb_run.SHELL_RTL + sorted((design_dir / "rtl").glob("*.sv")); the cocotb bench module sits
   next to it in tests/ and checks the RTL against model.py. Do not add verif/checkers/*.sv to sources: cocotb_run.run
@@ -448,7 +453,7 @@ def tests_conventions_text(fmt: dict) -> str:
     verification stages. The rest (constraints, probes, architecture files, standards) is addressed to the Designer and
     names tools (board_constraints, gates) the tests role does not have, so it is not shown to the tests role."""
     head, *bullets = CONVENTIONS.split("\n- ")
-    keep = [b for b in bullets if b.startswith(("File tool paths", "Tests (test writer)", "Stage 2 ends only"))]
+    keep = [b for b in bullets if b.startswith(("File tool paths", "Tests (Verifier)", "Stage 2 ends only"))]
     return conventions_text(fmt, "\n- ".join([head, *keep]))
 
 
@@ -1454,8 +1459,39 @@ def _stage_diff(rt: Runtime, n: int) -> list[dict]:
 
 def route(state: State) -> str:
     if state.get("stop"):
-        return "end"
+        return "end"                   # through the document node (brief 68 C), which does nothing with docs off
     return "work"
+
+
+def gates_last(state: dict) -> dict:
+    return {h["stage"]: h["passed"] for h in state.get("history") or []}
+
+
+def node_document(state: State) -> dict:
+    """Brief 68 C: the DOC step at the end of a run (agent.graph.document). summary.json is written first and frozen (the
+    handover cites it); the DOC result and the sign-off go to doc.json. Never raises: a failure is a failed DOC gate."""
+    rt = _rt(state)
+    stop = state.get("stop") or ""
+    if rt.cfg.docs != "on" or stop.startswith("claude_code blocked"):
+        return {}
+    s = summary(rt, state)
+    if state.get("resumed_from"):                          # brief 68 D: what the DOC step and doccheck need to re-derive
+        s.update(resumed_from=state["resumed_from"], gates_carried=list(state.get("carried") or []))
+    (rt.run_dir / "summary.json").write_text(json.dumps(s, indent=1))
+    from agent.graph import document
+    gl = gates_last(state)
+    try:
+        llm = rt.doc_llm or document.designer_llm(rt)
+        res = document.document(rt.design, rt.run_dir, llm, run_id=rt.run_id, board=rt.cfg.board, gates_last=gl,
+                                stop=stop, verif_level=rt.cfg.verif_level, resumed_from=state.get("resumed_from"),
+                                carried=state.get("carried"),
+                                log=rt.run_dir / "doc_calls.jsonl")
+    except Exception as e:                                 # noqa: BLE001 (the run has ended; record why the docs did not)
+        res = {"ok": False, "passes": 0, "problems": [f"DOC step error: {type(e).__name__}: {e}"[:600]]}
+    res["signed_off"] = bool(res["ok"] and gl.get(MACHINE[-1].name) is True and all(
+        gl.get(s.name) is True or s.name in (state.get("carried") or ()) for s in MACHINE))
+    (rt.run_dir / "doc.json").write_text(json.dumps(res, indent=1))
+    return {"doc": res}
 
 
 def node_advance(state: State) -> dict:
@@ -1526,6 +1562,7 @@ def build_graph(checkpointer, routing: bool = False):
     g.add_node("gate", node_gate)
     g.add_node("review", node_review)
     g.add_node("advance", node_advance)
+    g.add_node("document", node_document)
     first = "work"
     if routing:
         g.add_node("route_skills", node_route_skills)
@@ -1535,7 +1572,8 @@ def build_graph(checkpointer, routing: bool = False):
     g.add_edge("work", "gate")
     g.add_edge("gate", "review")
     g.add_edge("review", "advance")
-    g.add_conditional_edges("advance", route, {"work": first, "end": END})
+    g.add_conditional_edges("advance", route, {"work": first, "end": "document"})
+    g.add_edge("document", END)
     return g.compile(checkpointer=checkpointer)
 
 

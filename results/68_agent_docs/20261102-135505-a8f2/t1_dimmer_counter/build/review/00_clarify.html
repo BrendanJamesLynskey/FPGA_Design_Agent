@@ -1,0 +1,137 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>00 clarify</title><style>
+:root{--bg:#fff;--fg:#111;--mut:#555;--line:#ccc;--pass:#111;--fail:#111;--chip:#eee}
+@media (prefers-color-scheme:dark){:root{--bg:#111;--fg:#eee;--mut:#aaa;--line:#444;--chip:#222}}
+body{background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,Segoe UI,sans-serif;margin:0;padding:16px}
+main{max-width:980px;margin:auto}h1{font-size:1.4em;margin:.2em 0}h2{font-size:1.1em;border-bottom:1px solid var(--line);
+padding-bottom:4px;margin-top:1.6em}table{border-collapse:collapse;width:100%;font-size:.92em}td,th{border:1px solid var(--line);
+padding:4px 6px;text-align:left;vertical-align:top}pre{background:var(--chip);padding:8px;overflow-x:auto;font-size:.85em}
+.mut{color:var(--mut)}.chip{display:inline-block;padding:0 6px;border:1px solid var(--fg);border-radius:3px;font-size:.85em}
+.fail{background:var(--fg);color:var(--bg)}svg{max-width:100%;height:auto}svg text{fill:var(--fg);font:11px monospace}
+svg .w{stroke:var(--fg);fill:none;stroke-width:1.2}a{color:var(--fg)}.wrap{overflow-x:auto}
+</style></head><body><main><h1>Stage 0: clarify</h1><p class="mut">t1_dimmer_counter; visit 1; 2026-11-02 13:57:52</p><h2>Exit gates</h2><div class="wrap"><table><tr><th>gate</th><th>result</th><th>detail</th></tr><tr><td>spec_signed</td><td><span class="chip">PASS</span></td><td></td></tr></table></div><h2>Inputs and outputs</h2><div class="wrap"><table><tr><td>inputs</td><td>spec.md</td></tr><tr><td>outputs</td><td>__init__.py, spec.md, spec.yaml</td></tr></table></div><h2>Spec summary</h2><div class="wrap"><table><tr><td>title</td><td>T1 LED dimmer and push-button counter</td></tr><tr><td>top</td><td>t1_led_dimmer_counter</td></tr><tr><td>clocks</td><td>-</td></tr><tr><td>ports</td><td>12</td></tr><tr><td>open questions</td><td>0</td></tr><tr><td>resolved questions</td><td>12</td></tr></table></div><h2>Block diagram</h2><p class="mut">No ARCHITECTURE.md yet.</p><h2>Testplan and coverage</h2><div class="wrap"><table><tr><td>testplan items</td><td>-</td></tr></table></div><h2>Waveform</h2><p class="mut">No waveform for this stage.</p><h2>Budget</h2><div class="wrap"><table><tr><th></th><th>used</th><th>limit</th></tr><tr><td>turns</td><td>4</td><td>20</td></tr><tr><td>seconds</td><td>80.2</td><td>900</td></tr><tr><td>usd</td><td>0.006059</td><td>0.2</td></tr></table></div><h2>Review</h2><div class="wrap"><table><tr><td>decision</td><td>approve</td></tr><tr><td>by</td><td>auto</td></tr><tr><td>note</td><td>-</td></tr></table></div><h2>Notes</h2><pre>{
+ &quot;asked&quot;: 12,
+ &quot;answered&quot;: 6,
+ &quot;defaulted&quot;: 6,
+ &quot;questions&quot;: [
+  {
+   &quot;id&quot;: &quot;q1&quot;,
+   &quot;text&quot;: &quot;What exact test-shell protocol, command syntax, and register transaction framing should the USB-UART use?&quot;,
+   &quot;default&quot;: &quot;Use the project&#x27;s standard test shell over 115200-baud 8-N-1 UART with the logical register map below.&quot;,
+   &quot;reason&quot;: &quot;The request names a standard test shell without defining its protocol; the default allows scripted access while relying on the platform convention.&quot;,
+   &quot;answer&quot;: &quot;Use the project&#x27;s standard test shell over 115200-baud 8-N-1 UART with the logical register map below.&quot;,
+   &quot;status&quot;: &quot;defaulted&quot;,
+   &quot;by&quot;: &quot;oracle&quot;,
+   &quot;evidence&quot;: null
+  },
+  {
+   &quot;id&quot;: &quot;q2&quot;,
+   &quot;text&quot;: &quot;What register addresses and access semantics should the test shell expose?&quot;,
+   &quot;default&quot;: &quot;Use the byte offsets and RW/RO semantics in registers.map.&quot;,
+   &quot;reason&quot;: &quot;No addresses or register widths are provided, so a compact aligned map is proposed for the requested functions.&quot;,
+   &quot;answer&quot;: &quot;Use the byte offsets and RW/RO semantics in registers.map.&quot;,
+   &quot;status&quot;: &quot;defaulted&quot;,
+   &quot;by&quot;: &quot;oracle&quot;,
+   &quot;evidence&quot;: null
+  },
+  {
+   &quot;id&quot;: &quot;q3&quot;,
+   &quot;text&quot;: &quot;What debounce interval should qualify a button press?&quot;,
+   &quot;default&quot;: &quot;Require 1000000 stable sys_clk cycles, approximately 10 ms at 100 MHz.&quot;,
+   &quot;reason&quot;: &quot;Bounce immunity is required but no interval is given; 10 ms is a practical push-button debounce interval.&quot;,
+   &quot;answer&quot;: &quot;Require 1,000,000 consecutive stable sys_clk cycles, approximately 10 ms at 100 MHz.&quot;,
+   &quot;status&quot;: &quot;answered&quot;,
+   &quot;by&quot;: &quot;oracle&quot;,
+   &quot;evidence&quot;: &quot;  DEBOUNCE_CYCLES: 1000000     # 10 ms&quot;
+  },
+  {
+   &quot;id&quot;: &quot;q4&quot;,
+   &quot;text&quot;: &quot;What PWM period and brightness transfer function should be used?&quot;,
+   &quot;default&quot;: &quot;Use a 4096-cycle period and linearly map brightness 0 through 255 to off through full on.&quot;,
+   &quot;reason&quot;: &quot;The request requires adjustable, non-flickering brightness but specifies neither frequency nor scale; this period is about 24.4 kHz and linear scaling is intuitive.&quot;,
+   &quot;answer&quot;: &quot;Use a 4096-cycle period and linearly map brightness 0 through 255 to off through full on.&quot;,
+   &quot;status&quot;: &quot;defaulted&quot;,
+   &quot;by&quot;: &quot;oracle&quot;,
+   &quot;evidence&quot;: null
+  },
+  {
+   &quot;id&quot;: &quot;q5&quot;,
+   &quot;text&quot;: &quot;How quickly should the display scan each digit?&quot;,
+   &quot;default&quot;: &quot;Use 100000 sys_clk cycles per digit, approximately 1 ms per digit.&quot;,
+   &quot;reason&quot;: &quot;No refresh timing is specified; this provides a sufficiently fast multiplexed display refresh.&quot;,
+   &quot;answer&quot;: &quot;Each digit should be lit for 2^17 sys_clk cycles (131,072 cycles, approximately 1.31 ms at 100 MHz), rather than 100,000 cycles.&quot;,
+   &quot;status&quot;: &quot;answered&quot;,
+   &quot;by&quot;: &quot;oracle&quot;,
+   &quot;evidence&quot;: &quot;  REFRESH_BITS: 17             # each display digit is lit for 2^17 clocks = 1.31 ms; 8 digits = 10.5 ms (95 Hz)&quot;
+  },
+  {
+   &quot;id&quot;: &quot;q6&quot;,
+   &quot;text&quot;: &quot;What should the brightness register reset value and numerical scale be?&quot;,
+   &quot;default&quot;: &quot;Reset to 0xFF and map 0 to off and 255 to full brightness.&quot;,
+   &quot;reason&quot;: &quot;Startup brightness and numerical scale are not given; full brightness makes the board visible immediately after reset.&quot;,
+   &quot;answer&quot;: &quot;Reset to 0xFF and map 0 to off and 255 to full brightness.&quot;,
+   &quot;status&quot;: &quot;defaulted&quot;,
+   &quot;by&quot;: &quot;oracle&quot;,
+   &quot;evidence&quot;: null
+  },
+  {
+   &quot;id&quot;: &quot;q7&quot;,
+   &quot;text&quot;: &quot;Which switches select brightness, and does manual selection alter the stored UART brightness?&quot;,
+   &quot;default&quot;: &quot;Use SW[7:0] when CONTROL bit 0 is set, without changing BRIGHTNESS.&quot;,
+   &quot;reason&quot;: &quot;The request says the eight right-hand switches take control but does not specify the selector bit or whether the register changes.&quot;,
+   &quot;answer&quot;: &quot;SW[7:0] select the effective brightness when CTRL.DUTY_SRC is 1. Whether this changes the stored DUTY value is not specified.&quot;,
+   &quot;status&quot;: &quot;answered&quot;,
+   &quot;by&quot;: &quot;oracle&quot;,
+   &quot;evidence&quot;: &quot;- DUTY_EFF = SW[7:0] (synchronised) if CTRL.DUTY_SRC = 1, else the DUTY register.&quot;
+  },
+  {
+   &quot;id&quot;: &quot;q8&quot;,
+   &quot;text&quot;: &quot;Which control-register bits select manual brightness and disable the display?&quot;,
+   &quot;default&quot;: &quot;CONTROL bit 0 selects switch brightness; bit 1 disables all seven-segment digits.&quot;,
+   &quot;reason&quot;: &quot;Both controls are requested, but their register locations and bit assignments are unspecified.&quot;,
+   &quot;answer&quot;: &quot;CONTROL bit 0 selects switch brightness; bit 1 disables all seven-segment digits.&quot;,
+   &quot;status&quot;: &quot;defaulted&quot;,
+   &quot;by&quot;: &quot;oracle&quot;,
+   &quot;evidence&quot;: null
+  },
+  {
+   &quot;id&quot;: &quot;q9&quot;,
+   &quot;text&quot;: &quot;Should press counters include the centre button, and what widths and overflow behavior should they use?&quot;,
+   &quot;default&quot;: &quot;Maintain separate 32-bit wrapping counts for up, down, and centre debounced presses.&quot;,
+   &quot;reason&quot;: &quot;The request says each button and asks for press counts, but does not define widths or overflow behavior.&quot;,
+   &quot;answer&quot;: &quot;Press counters include the centre (clear) button. They are separate 8-bit counts for up, down, and clear presses, each wrapping at 256\u2014not 32-bit counts.&quot;,
+   &quot;status&quot;: &quot;answered&quot;,
+   &quot;by&quot;: &quot;oracle&quot;,
+   &quot;evidence&quot;: &quot;- {offset: 0x04, name: PRESSES, access: RO, reset: 0,      bits: \&quot;[7:0] up presses, [15:8] down, [23:16] clear; each wraps at 256\&quot;}&quot;
+  },
+  {
+   &quot;id&quot;: &quot;q10&quot;,
+   &quot;text&quot;: &quot;How should the design ID T1DC be encoded in the register?&quot;,
+   &quot;default&quot;: &quot;Return ASCII bytes packed as 0x54314443 in a 32-bit register.&quot;,
+   &quot;reason&quot;: &quot;The visible ID is specified, but no byte order or register representation is provided.&quot;,
+   &quot;answer&quot;: &quot;Return ASCII bytes packed as 0x54314443 in a 32-bit register.&quot;,
+   &quot;status&quot;: &quot;defaulted&quot;,
+   &quot;by&quot;: &quot;oracle&quot;,
+   &quot;evidence&quot;: null
+  },
+  {
+   &quot;id&quot;: &quot;q11&quot;,
+   &quot;text&quot;: &quot;What UART framing and exact baud-divider rounding should be used?&quot;,
+   &quot;default&quot;: &quot;Use 8-N-1 framing and a fixed 868-cycle bit divider at 100 MHz.&quot;,
+   &quot;reason&quot;: &quot;Only 115200 baud is specified; conventional framing and nearest-integer division provide a concrete implementation.&quot;,
+   &quot;answer&quot;: &quot;UART framing is not specified. The specified board-build bit divider is 868 cycles.&quot;,
+   &quot;status&quot;: &quot;answered&quot;,
+   &quot;by&quot;: &quot;oracle&quot;,
+   &quot;evidence&quot;: &quot;  CLKS_PER_BIT: 868            # UART 115200 baud at 100 MHz (shell)&quot;
+  },
+  {
+   &quot;id&quot;: &quot;q12&quot;,
+   &quot;text&quot;: &quot;What should happen if button events and a software counter write occur in the same cycle?&quot;,
+   &quot;default&quot;: &quot;Give software writes priority; for simultaneous button events, centre takes priority over up, then down.&quot;,
+   &quot;reason&quot;: &quot;The request does not define simultaneous-event arbitration; deterministic priority removes ambiguity.&quot;,
+   &quot;answer&quot;: &quot;A software write to COUNT wins over a button press on the same clock, but the press still counts in PRESSES. If button presses coincide, priority is clear (BTNC), then up (BTNU), then down (BTND).&quot;,
+   &quot;status&quot;: &quot;answered&quot;,
+   &quot;by&quot;: &quot;oracle&quot;,
+   &quot;evidence&quot;: &quot;- If several presses land on the same clock, only the highest priority acts - clear, then up, then down.\n    - A shell write to COUNT on the same clock as a press wins; the press still counts in PRESSES.&quot;
+  }
+ ]
+}</pre></main></body></html>

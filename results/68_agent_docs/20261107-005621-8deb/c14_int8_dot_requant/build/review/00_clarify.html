@@ -1,0 +1,83 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>00 clarify</title><style>
+:root{--bg:#fff;--fg:#111;--mut:#555;--line:#ccc;--pass:#111;--fail:#111;--chip:#eee;--add:#d4d4d4;--del:#bbb}
+@media (prefers-color-scheme:dark){:root{--bg:#111;--fg:#eee;--mut:#aaa;--line:#444;--chip:#222;--add:#3a3a3a;--del:#555}}
+body{background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,Segoe UI,sans-serif;margin:0;padding:16px}
+main{max-width:980px;margin:auto}h1{font-size:1.4em;margin:.2em 0}h2{font-size:1.1em;border-bottom:1px solid var(--line);
+padding-bottom:4px;margin-top:1.6em}table{border-collapse:collapse;width:100%;font-size:.92em}td,th{border:1px solid var(--line);
+padding:4px 6px;text-align:left;vertical-align:top}pre{background:var(--chip);padding:8px;overflow-x:auto;font-size:.85em}
+.mut{color:var(--mut)}.chip{display:inline-block;padding:0 6px;border:1px solid var(--fg);border-radius:3px;font-size:.85em}
+.fail{background:var(--fg);color:var(--bg)}svg{max-width:100%;height:auto}svg text{fill:var(--fg);font:11px monospace}
+svg .w{stroke:var(--fg);fill:none;stroke-width:1.2}a{color:var(--fg)}.wrap{overflow-x:auto}
+svg .bus{stroke:var(--fg);fill:none;stroke-width:1.2}svg .bv{font:10px monospace;text-anchor:middle}
+.diff{font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;white-space:pre;overflow-x:auto;background:var(--chip);padding:6px;margin:4px 0}
+.diff span.add{background:var(--add)}.diff span.del{background:var(--del)}.diff .hunk{color:var(--mut)}
+.k{font-weight:bold}.c{color:var(--mut);font-style:italic}.n{text-decoration:underline dotted}.s{text-decoration:underline}
+.code{font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;white-space:pre;overflow-x:auto;background:var(--chip);padding:6px}
+.who-owner{font-weight:bold}.who-auto{font-style:italic}
+</style></head><body><main><h1>Stage 0: clarify</h1><p class="mut">c14_int8_dot_requant; visit 2; 2026-11-07 00:57:51</p><h2>Exit gates</h2><div class="wrap"><table><tr><th>gate</th><th>result</th><th>detail</th></tr><tr><td>spec_signed</td><td><span class="chip">PASS</span></td><td></td></tr></table></div><h2>Inputs and outputs</h2><div class="wrap"><table><tr><td>inputs</td><td>spec.md</td></tr><tr><td>outputs</td><td>BUILD_NOTE.md, __init__.py, spec.md, spec.yaml, verif/checkers/v_macros.svh</td></tr></table></div><h2>Spec summary</h2><div class="wrap"><table><tr><td>title</td><td>Quantised-layer arithmetic unit (8-way int8 dot product, bias, requantise, clamp) behind the test shell</td></tr><tr><td>top</td><td>c14_int8_dot_requant_top</td></tr><tr><td>clocks</td><td>CLK100MHZ 100 MHz</td></tr><tr><td>ports</td><td>5</td></tr><tr><td>open questions</td><td>0</td></tr><tr><td>resolved questions</td><td>6</td></tr></table></div><h2>Block diagram</h2><p class="mut">No ARCHITECTURE.md yet.</p><h2>Testplan and coverage</h2><div class="wrap"><table><tr><td>testplan items</td><td>-</td></tr></table></div><h2>RTL diff against the previous stage</h2><p class="mut">No change to the RTL, constraints or architecture since the previous stage.</p><h2>Corner cases hit</h2><p class="mut">No coverage detail yet (V2 evidence has not run).</p><h2>Traceability: requirement, proof method, artefact, result</h2><p class="mut">No traceability table yet.</p><h2>Design standards (v1.0)</h2><p class="mut">The standards checker has not run yet.</p><h2>Constraints for approval</h2><p class="mut">No design.xdc yet.</p><h2>Waveform</h2><p class="mut">No waveform for this stage.</p><h2>Budget</h2><div class="wrap"><table><tr><th></th><th>used</th><th>limit</th></tr><tr><td>turns</td><td>2</td><td>20</td></tr><tr><td>seconds</td><td>0.0</td><td>900</td></tr><tr><td>usd</td><td>0.0</td><td>0.2</td></tr></table></div><h2>Models by role</h2><div class="wrap"><table><tr><th>role</th><th>harness</th><th>model</th><th>effort</th><th>use this stage</th></tr><tr><td>clarify</td><td>claude_code</td><td>claude-sonnet-5-5</td><td>medium</td><td>7 turns, 46585 tokens, 76 s, $0.0000 reported, $0.1839 plan estimate</td></tr><tr><td>model</td><td>claude_code</td><td>claude-sonnet-5-5</td><td>medium</td><td>-</td></tr><tr><td>tests</td><td>claude_code</td><td>claude-sonnet-5-5</td><td>medium</td><td>-</td></tr><tr><td>rtl</td><td>claude_code</td><td>claude-sonnet-5-5</td><td>medium</td><td>-</td></tr></table></div><h2>Review</h2><div class="wrap"><table><tr><td>decision</td><td>approve</td></tr><tr><td>by</td><td>auto</td></tr><tr><td>note</td><td>-</td></tr></table></div><h2>Who did what</h2><div class="wrap"><table><tr><th>#</th><th>who</th><th>stage</th><th>what</th><th>detail</th></tr><tr><td>1</td><td><span class="who-agent">agent</span></td><td>clarify</td><td>stage 0 work, visit 1</td><td>5 files in the design</td></tr><tr><td>2</td><td><span class="who-agent">agent</span></td><td>clarify</td><td>stage 0 work, visit 2</td><td>5 files in the design</td></tr></table></div><h2>Notes</h2><pre>{
+ &quot;asked&quot;: 6,
+ &quot;answered&quot;: 3,
+ &quot;defaulted&quot;: 3,
+ &quot;questions&quot;: [
+  {
+   &quot;id&quot;: &quot;q1&quot;,
+   &quot;text&quot;: &quot;What is the register map (offset, width, reset value and access of every register) of the shell-facing block?&quot;,
+   &quot;default&quot;: &quot;The map in registers.map: ID 0x00 RO, ACT_LO/HI 0x04/0x08, WGT_LO/HI 0x0C/0x10, BIAS 0x14, MULT_SHIFT 0x18, CTRL 0x1C (go), STATUS 0x20, Y 0x24, ACC 0x28; 32-bit words, reset 0 except ID.&quot;,
+   &quot;reason&quot;: &quot;The request names the shell and loading but gives no offsets, so the map is a proposal.&quot;,
+   &quot;answer&quot;: &quot;A_LO: offset 0x00, RW, reset 0: [31:0] activations 0..3, a_i in bits [8i+7:8i]\nA_HI: offset 0x01, RW, reset 0: [31:0] activations 4..7, a_(4+i) in bits [8i+7:8i]\nW_LO: offset 0x02, RW, reset 0: [31:0] weights 0..3, same packing\nW_HI: offset 0x03, RW, reset 0: [31:0] weights 4..7, same packing\nBIAS: offset 0x04, RW, reset 0: [31:0] signed bias\nMULT: offset 0x05, RW, reset 0: [15:0] unsigned multiplier; [31:16] read 0\nCTRL: offset 0x06, RW, reset 1: [4:0] shift (1..31), [8] relu; other bits read 0\nGO: offset 0x07, WO, reset 0: any write starts one computation; reads 0\nY: offset 0x08, RO, reset 0: [7:0] limited answer (two&#x27;s complement); [31:8] read 0\nACC: offset 0x09, RO, reset 0: [31:0] the signed accumulator including the bias\nSTATUS: offset 0x0A, RO, reset 0: [0] READY; other bits 0\nshell: shell/PROTOCOL.md (version 1.0)\nunmapped: offsets 0x0B-0x7F read 0; writes to them and to RO registers are ignored&quot;,
+   &quot;status&quot;: &quot;answered&quot;,
+   &quot;by&quot;: &quot;oracle&quot;,
+   &quot;evidence&quot;: &quot;A_LO: offset 0x00, RW, reset 0: [31:0] activations 0..3, a_i in bits [8i+7:8i]&quot;
+  },
+  {
+   &quot;id&quot;: &quot;q2&quot;,
+   &quot;text&quot;: &quot;Is acc allowed to overflow 32 bits when bias is near its limit?&quot;,
+   &quot;default&quot;: &quot;Wrap in 32 bits; the reported acc and the scaling both use the wrapped value.&quot;,
+   &quot;reason&quot;: &quot;The request calls acc signed 32-bit and gives no saturation rule.&quot;,
+   &quot;answer&quot;: &quot;The specification does not allow overflow: it says the sum never overflows for the allowed inputs. It does not define whether a bias near its limit counts as an allowed input, and it does not specify any wrap behaviour, so the proposed 32-bit wrap default is not supported by the spec.&quot;,
+   &quot;status&quot;: &quot;answered&quot;,
+   &quot;by&quot;: &quot;oracle&quot;,
+   &quot;evidence&quot;: &quot;acc = sum over i&lt;8 of a_i * w_i + bias (signed arithmetic; a_i and w_i signed 8-bit, bias signed 32-bit; the sum never overflows for the allowed inputs)&quot;
+  },
+  {
+   &quot;id&quot;: &quot;q3&quot;,
+   &quot;text&quot;: &quot;Is ready cleared when a new go is accepted, and are results held until then?&quot;,
+   &quot;default&quot;: &quot;Yes, ready drops on go and rises when the new y and acc are valid; results held otherwise.&quot;,
+   &quot;reason&quot;: &quot;The request only says ready indicates a result, not what happens on a second go.&quot;,
+   &quot;answer&quot;: &quot;Yes. A write to GO clears READY and presents the operands for one clock; READY becomes 1 within 8 clocks and stays 1 until the next GO; Y and ACC hold the result until the next GO and read 0 while READY is 0.&quot;,
+   &quot;status&quot;: &quot;answered&quot;,
+   &quot;by&quot;: &quot;oracle&quot;,
+   &quot;evidence&quot;: &quot;A write to GO (any value) clears READY and presents the loaded operands to the arithmetic for one clock; READY becomes 1 within 8 clocks and stays 1 until the next GO; Y and ACC hold the result until the next GO and read 0 while READY is 0.&quot;
+  },
+  {
+   &quot;id&quot;: &quot;q4&quot;,
+   &quot;text&quot;: &quot;What are the TIMEOUT_CYCLES default and BUILD_STAMP default values?&quot;,
+   &quot;default&quot;: &quot;TIMEOUT_CYCLES = 100000000 (1 s at 100 MHz), BUILD_STAMP = 0 overridden by the flow.&quot;,
+   &quot;reason&quot;: &quot;The request names these test-shell parameters but gives no values.&quot;,
+   &quot;answer&quot;: &quot;TIMEOUT_CYCLES = 100000000 (1 s at 100 MHz), BUILD_STAMP = 0 overridden by the flow.&quot;,
+   &quot;status&quot;: &quot;defaulted&quot;,
+   &quot;by&quot;: &quot;oracle&quot;,
+   &quot;evidence&quot;: null
+  },
+  {
+   &quot;id&quot;: &quot;q5&quot;,
+   &quot;text&quot;: &quot;How is the DOTQ design ID presented by the shell?&quot;,
+   &quot;default&quot;: &quot;Four ASCII bytes D,O,T,Q read as 0x444F5451 at ID register offset 0x00, if the shell does not already supply its own ID mechanism.&quot;,
+   &quot;reason&quot;: &quot;The request gives the ID string but not the encoding or location.&quot;,
+   &quot;answer&quot;: &quot;Four ASCII bytes D,O,T,Q read as 0x444F5451 at ID register offset 0x00, if the shell does not already supply its own ID mechanism.&quot;,
+   &quot;status&quot;: &quot;defaulted&quot;,
+   &quot;by&quot;: &quot;oracle&quot;,
+   &quot;evidence&quot;: null
+  },
+  {
+   &quot;id&quot;: &quot;q6&quot;,
+   &quot;text&quot;: &quot;Does a &#x27;go&#x27; with the ready flag already set restart the computation using the currently loaded operands?&quot;,
+   &quot;default&quot;: &quot;Yes, always accepted.&quot;,
+   &quot;reason&quot;: &quot;No busy state is described.&quot;,
+   &quot;answer&quot;: &quot;Yes, always accepted.&quot;,
+   &quot;status&quot;: &quot;defaulted&quot;,
+   &quot;by&quot;: &quot;oracle&quot;,
+   &quot;evidence&quot;: null
+  }
+ ]
+}</pre></main></body></html>

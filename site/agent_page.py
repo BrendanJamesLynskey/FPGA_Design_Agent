@@ -71,8 +71,10 @@ def both(wide, narrow):
 # ---------------------------------------------------------------- 1. the LangGraph controller, from get_graph()
 
 GPOS = {  # hand-tuned centres per node id: wide (row) and narrow (column)
-    "wide": {"__start__": (34, 96), "work": (176, 96), "gate": (360, 96), "review": (544, 96), "advance": (728, 96), "__end__": (904, 96)},
-    "narrow": {"__start__": (130, 22), "work": (130, 92), "gate": (130, 186), "review": (130, 280), "advance": (130, 374), "__end__": (130, 466)},
+    "wide": {"__start__": (34, 96), "work": (176, 96), "gate": (360, 96), "review": (544, 96), "advance": (728, 96),
+             "document": (952, 96), "__end__": (1126, 96)},
+    "narrow": {"__start__": (130, 22), "work": (130, 92), "gate": (130, 186), "review": (130, 280), "advance": (130, 374),
+               "document": (130, 468), "__end__": (130, 560)},
 }
 NW, NH = 124, 46
 
@@ -105,7 +107,7 @@ def _gedge(e, pos, lay, p):
 def langgraph(G, lay):
     p = f"lg{lay[0]}"
     pos = GPOS[lay]
-    W, H = (940, 200) if lay == "wide" else (360, 492)
+    W, H = (1160, 200) if lay == "wide" else (360, 586)
     out = []
     for e in G["edges"]:
         d, (lx, ly, an) = _gedge(e, pos, lay, p)
@@ -126,7 +128,7 @@ def langgraph(G, lay):
                        + (text(x, y + 28, n["label"], "s", "middle") if lay == "wide" else text(x + 18, y + 4, n["label"], "s")) + "</g>")
         else:
             out.append(f'<g data-n="{E(n["id"])}">{box(x - NW / 2, y - NH / 2, NW, NH)}{text(x, y + 5, n["label"], "t", "middle")}</g>')
-    return svg(p, W, H, "".join(out), "The agent's LangGraph: start, work, gate, review, advance, then work again or end; read from the compiled graph", "lg")
+    return svg(p, W, H, "".join(out), "The agent's LangGraph: start, work, gate, review, advance, then work again or, at the end, document; read from the compiled graph", "lg")
 
 
 # ---------------------------------------------------------------- 2. architecture
