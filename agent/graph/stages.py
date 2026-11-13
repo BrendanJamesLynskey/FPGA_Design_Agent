@@ -106,10 +106,15 @@ _DRC_RULES = {"drc_clean", "cdc_no_critical", "methodology_no_critical"}
 
 
 def _stage_pass(gates: dict | None, flow_stage: str, only: set[str] | None = None,
-                skip: set[str] | None = None) -> tuple[bool, list[str]]:
+                skip: set[str] | None = None, label: str | None = None) -> tuple[bool, list[str]]:
+    """``label`` names the build when it is not the base one (68F: "bitstream: did not run" alone did not say which
+    build; the base build's own record had passed). The wording keeps "did not run": ``classify`` reads it."""
     st = ((gates or {}).get("stages") or {}).get(flow_stage) or {}
     if not st.get("ran"):
-        return False, [f"{flow_stage}: did not run"]
+        who = f"{flow_stage} ({label})" if label else flow_stage
+        err = (gates or {}).get("error")
+        return False, [f"{who}: did not run" + (f" (its gates record is unreadable: {str(err)[:160]})" if err else
+                                                 " (no gates record)" if not gates else "")]
     g = st.get("gates") or {}
     if only is not None and not only <= set(g):
         return False, [f"{flow_stage}:{n} missing" for n in sorted(only - set(g))]
@@ -212,7 +217,7 @@ def exit_check(stage: Stage, ev: dict[str, Any]) -> tuple[bool, list[str]]:
             ok2, w2 = _stage_pass(ev.get("gates_base"), "post_route", only=_DRC_RULES)
             ok, why = ok1 and ok2, w1 + w2
         elif g == "bitstream_ila":
-            ok, why = _stage_pass(ev.get("gates_ila"), "bitstream")
+            ok, why = _stage_pass(ev.get("gates_ila"), "bitstream", label="debug build with the ILA")
         elif g == "bringup_ready":
             r = ev.get("bringup_ready") or {}
             ok = bool(r.get("ok"))

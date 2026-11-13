@@ -5,6 +5,19 @@ finding), the change and the new hash. Only **development** tasks are amended; n
 v1 and course units are re-recorded with `freeze.py refreeze`; v2 development tasks through a hash-chained `amend` entry in `v2/ledger.jsonl`.
 Reviews: `reports/12_quality_review_area2.md` (planner repository), items R2, R5-R9, B2, Q2.
 
+## 2026-11-13: the DOC step's prompt (request golden re-pin, brief 68F)
+
+**Amended 2026-11-13 (planner brief 68F, after the independent re-review of the three agent-written handovers; eval-1 was
+stopped with no score, so no comparison is lost).** What: `agent/graph/document.py` DOC_SYSTEM now tells the Designer to answer
+from the files before it writes an open question (the build's full source list, shared shell files included, is in its prompt),
+to count latencies and rates from the RTL, to state masking and priorities, to say when cover properties and functional bins
+disagree, and to make re-measuring the first next step for a build from an earlier Vivado release. Only the DOC step's request
+changed (`doc_system`); no role prompt, tool, task, grader, test or split changed, and no eval-1 request path differs.
+
+Re-recorded: the request golden `agent/tests/fixtures/b68f_request_golden.json` (one deliberate re-pin; `b68_request_golden.json`
+stays as history). Not comparable on request text: DOC steps recorded before this date (the three runs in
+`results/68_agent_docs/` were documented again with the new prompt).
+
 ## 2026-11-13: role names in the text sent to models (request golden re-pin, brief 68 C)
 
 **Amended 2026-11-13 (planner decision in brief 68 under "Benchmarks do not block improvements"; eval-1 was stopped with no

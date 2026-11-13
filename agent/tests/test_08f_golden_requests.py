@@ -33,7 +33,10 @@ Goldens, oldest first:
   names the roles as the site and docs do since brief 67 (the Modeller, the Verifier, the Designer, the Clarifier; "reference
   model" for "blind model"; never "implementer"), in PROMPTS, CONVENTIONS ("Tests (Verifier)"), HW_FORMAT, MODEL_CONTRACT, the
   ``bringup`` tool description (schema 1.11.1) and the spec-test prompts (not hashed). The DOC step's prompt is new
-  (``doc_system``). Eval-1 was stopped with no score, so no comparison is lost; runs before this belong to the earlier goldens."""
+  (``doc_system``). Eval-1 was stopped with no score, so no comparison is lost; runs before this belong to the earlier goldens.
+- ``b68f_request_golden.json`` (brief 68F, 2026-11-13, one deliberate re-pin; benchmark/AMENDMENTS.md): only the DOC step's prompt
+  changed (``doc_system``: answer from the files before asking, count latencies from the RTL, say when covers and bins disagree,
+  re-measure first after an earlier-release build, say each fact once). Every other hash equals the brief 68 golden's."""
 
 from __future__ import annotations
 
@@ -44,7 +47,7 @@ from agent.tests.request_golden import collect
 
 FIXTURES = Path(__file__).parent / "fixtures"
 EVAL1 = FIXTURES / "eval1_request_golden.json"
-GOLDEN = FIXTURES / "b68_request_golden.json"           # the newest golden
+GOLDEN = FIXTURES / "b68f_request_golden.json"          # the newest golden
 #: the hashes that differ from eval-1's, and the brief that changed each (an intended change is listed here, with why)
 CHANGED_SINCE_EVAL1 = {"tool_registry": "brief 36: skill_index, skill_excerpt, load_skill(name=); brief 42 H9: report_digest; "
                                         "brief 50A: debug_plan, debug_capture, debug_query; brief 59A: axi_program_check, axi_simulate, axi_board_run; brief 56A: gt_plan; "

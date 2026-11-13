@@ -73,11 +73,24 @@ the flow keeps its own copy of them whatever you write. You write the prose fiel
 - Where spec.yaml, the interview answers and ARCHITECTURE.md disagree with the RTL or design.xdc (pins, widths, reset
   style, reset values, periods, unmapped accesses, priorities), the RTL and XDC are what was built: state what they do and
   name the file, and add a gap saying the spec disagrees. Do not leave as an open question what the RTL answers.
+- Answer from the files before you ask: the build reads the sources listed under SOURCES THE BUILD READS, shared shell files
+  included (shown below as far as they fit). Never write that a source was not found or not reviewed when it is shown, and do
+  not put in open_questions what the RTL, the XDC, those sources or the spec settle. When the spec promises a latency, a
+  rate or a width, count it from the RTL (pipeline stages, counter periods), state the count and the file, and say so when it
+  differs from the promise. State any masking, gating or priority between control signals that a user could guess wrong.
+  State the rates the spec gives for the parameters (its timing section) in the parameter notes.
+- If cover properties are unhit while functional bins are hit, the draft says the two disagree: say so too, and put "compare
+  the cover results with the functional coverage" before any new stimulus in next_steps.
+- If a build was made under an earlier Vivado release, the first next_steps entry is to re-measure with python -m agent
+  resume; publish no number from that build and never name the earlier release.
 - gaps: keep every gap listed. Add a gap (about: a short key) for each behaviour a user could guess wrong that spec.yaml or the
   RTL settles and the draft does not state: reset values, unmapped or reserved register accesses, read side effects, partial
   writes, same-cycle priorities, latency. Also add any assumption the run made.
 - next_steps: what the next engineer should do first, in order (the first one from the earliest gap). open_questions: what is
   still undecided.
+Say each fact once, in the field where it belongs (a reset in resets, a pin or port in interfaces, a behaviour a user could guess
+wrong in one gap) and do not repeat it in the summary or in another note; a note is one or two sentences. The summary is a short
+paragraph.
 Rules: write no number that is not in the draft, spec.yaml or a cited record (every number is checked against them); no
 placeholder text; plain, measured words; never say a check passed unless its evidence entry says pass; say "the Designer",
 "the Modeller", "the Verifier" and "the Clarifier" for the roles. Reply with the complete handover.yaml in one ```yaml block and
@@ -105,6 +118,170 @@ def build_release(design: Path, variant: str = "base") -> str | None:
     return r.get("vivado_version")
 
 
+#: stage name -> the flat ``gates`` of build/base/gates.json that stage's exit check reads (agent/graph/stages.py); stages
+#: that read per-flow-stage structure (constraints, synthesis, implementation) are not listed
+STAGE_BASE_GATES = {"timing-closure": ("setup", "hold", "pulse_width"), "power-closure": ("power_junction_ok",),
+                    "drc-closure": ("post_synth_drc_clean", "drc_clean", "cdc_no_critical", "methodology_no_critical")}
+RECON = "Build records:"          # a gap that quotes a gate detail the records contradict carries this reconciliation
+
+
+def records_verdict(design: Path, stage: str) -> bool | None:
+    """True when the base build's record shows every gate this stage reads passing, False when one fails, None when the
+    record does not say (no record, or a stage that reads per-flow-stage structure)."""
+    keys = STAGE_BASE_GATES.get(stage)
+    g = (_json(design / "build" / "base" / "gates.json") or {}).get("gates")
+    if not keys or not isinstance(g, dict) or not all(k in g for k in keys):
+        return None
+    return all(bool(g[k]) for k in keys)
+
+
+def build_state(design: Path, variant: str) -> dict:
+    """What a variant's records say: whether gates.json exists, an error stub (and its message), the flow stages that ran,
+    whether run.json exists, and the pass and bitstream flags."""
+    g = _json(design / "build" / variant / "gates.json")
+    return {"present": isinstance(g, dict), "error": (g or {}).get("error") if isinstance(g, dict) else None,
+            "ran": [k for k, v in ((g or {}).get("stages") or {}).items() if (v or {}).get("ran")],
+            "run_json": (design / "build" / variant / "run.json").is_file(),
+            "pass": (g or {}).get("pass") if isinstance(g, dict) else None,
+            "bitstream": ((g or {}).get("gates") or {}).get("bitstream_present") if isinstance(g, dict) else None}
+
+
+def reconcile(design: Path, stage: str, why: str) -> str:
+    """The build records set beside a failing gate's detail (68F). Where the detail says a flow stage "did not run" and the
+    records contradict it (or place it in another build), the reconciliation says what the records show; else ''."""
+    if "did not run" not in why:
+        return ""
+    base, ila = build_state(design, "base"), build_state(design, "ila")
+    base_ok = "bitstream" in base["ran"] and base["bitstream"] is True
+    if stage == "configuration-and-debug":
+        if not base_ok:
+            return ""
+        out = [f"{RECON} build/base/gates.json shows the base build's bitstream stage ran and its bitstream_present gate is true"]
+        if not ila["present"]:
+            out.append("there is no build/ila record, so the debug build with the ILA left no result")
+        elif ila["error"] and not ila["ran"]:
+            out.append(f"build/ila/gates.json is an error stub ({str(ila['error'])[:120]}) with no flow stages"
+                       + (" and there is no build/ila/run.json" if not ila["run_json"] else ""))
+        elif "bitstream" not in ila["ran"]:
+            out.append("the debug build with the ILA did not reach its bitstream stage")
+        else:
+            return ""
+        return "; ".join(out) + ". The build that did not complete is the debug build with the ILA, not the base build."
+    if STAGE_BASE_GATES.get(stage) and records_verdict(design, stage) is True:
+        return (f"{RECON} the detail names a bitstream gate, which stage {stage} does not check; build/base/gates.json shows "
+                f"the gates of this stage ({', '.join(STAGE_BASE_GATES[stage])}) passing. The detail is a stale copy of "
+                "another stage's failure.")
+    return ""
+
+
+def contradictions(design: Path, h: dict) -> list[str]:
+    """For the DOC gate and doccheck: a gap that quotes a "did not run" gate detail the same run's build records contradict,
+    without carrying the reconciliation."""
+    out = []
+    for g in h.get("gaps") or []:
+        a, t = g.get("about"), str(g.get("text") or "")
+        if a in STAGE_NAMES and "did not run" in t and RECON not in t and (r := reconcile(design, a, t)):
+            out.append(f"gap about {a!r} quotes a gate detail that the build records contradict and does not say so: {r[:200]}")
+    return out
+
+
+V_MEANS = {"V0": "the test plan, the model and the benches exist",
+           "V1": "every spec item is traced to a check and the benches use the blind model",
+           "V2": "simulation: seeded runs, a constrained-random test, bound assertions and formal tasks",
+           "V3": "coverage (line, toggle, functional bins, cover properties), three seeds and the mutation score"}
+
+
+def _vv(v) -> str:
+    if v is None:
+        return "not measured"
+    if isinstance(v, list):
+        return ", ".join(str(x) for x in v[:6]) + (" ..." if len(v) > 6 else "") if v else "none"
+    return str(v)
+
+
+def verif_text(vg: dict, level: str) -> str:
+    """What the verification record says (68F): the V-stage reached, what it means, and what did not run or pass above it, so
+    no entry reads "simulation, pass" for a run that stopped at V1."""
+    reached = vg.get("reached")
+    st = vg.get("stages") or {}
+    out = [f"verification (flow/verif_gates.py) against the Modeller's reference model reached {reached or 'none'} of V3; the "
+           f"run asked for {level}"]
+    if reached:
+        out.append(f"{reached} means {V_MEANS[reached]}")
+    for k in ("V2", "V3"):
+        if reached and k <= reached and (st.get(k) or {}).get("pass"):
+            continue
+        shown = [(n, c) for n, c in ((st.get(k) or {}).get("checks") or {}).items()
+                 if not c.get("pass") and (c.get("threshold") not in ([], None) or (isinstance(c.get("value"), list) and c["value"]))]
+        if shown:
+            out.append(f"{k} ({V_MEANS[k]}) did not pass: " + "; ".join(
+                f"{n.replace('_', ' ')} {_vv(c.get('value'))}" + (f" (needs {_vv(c.get('threshold'))})" if c.get("threshold") not in ([], None) else "")
+                for n, c in shown[:8]))
+    if not (st.get("V-HW") or {}).get("pass"):
+        out.append("no board result (V-HW) is recorded")
+    return "; ".join(out)
+
+
+def cover_diagnosis(design: Path, vg: dict) -> str:
+    """A cover property read at 0 % while the functional bins were all hit: the records show an inconsistency, not a stimulus
+    shortfall. Says so (68F), names what was bound, and checks the bound names exist in the top. '' when it does not apply."""
+    v3 = ((vg.get("stages") or {}).get("V3") or {}).get("checks") or {}
+    unhit = (v3.get("cover_properties_unhit") or {}).get("value") or []
+    pct = (v3.get("cover_properties_pct") or {}).get("value")
+    bins = v3.get("functional_bins_pct") or {}
+    if not unhit or not bins.get("pass") or str(pct) not in ("0", "0.0"):
+        return ""
+    out = [f"cover properties {', '.join(unhit)} read {pct} % while the functional bins were all hit ({bins.get('value')}) and "
+           f"{(v3.get('seeds_run') or {}).get('value')} seeds ran. The benches did drive the design, so a missing stimulus is "
+           "unlikely to be the whole cause; the cover results and the functional coverage disagree. Compare the two before "
+           "proposing any new stimulus."]
+    for chk in sorted((design / "verif" / "checkers").glob("*.sv")):
+        t = chk.read_text(errors="replace")
+        mb = re.search(r"\bbind\s+(\w+)\s+(\w+)\s+\w+\s*\((.*?)\)\s*;", t, re.S)
+        if not mb:
+            continue
+        top_txt = "".join(q.read_text(errors="replace") for q in sorted((design / "rtl").glob("*.sv")) if mb.group(1) in q.read_text(errors="replace"))
+        binds = re.findall(r"\.(\w+)\(\s*!?(\w+)\s*\)", mb.group(3))
+        miss = [b for _, b in binds if not re.search(rf"\b{re.escape(b)}\b", top_txt)]
+        out.append(f"The checker {chk.name} binds " + ", ".join(f"{a} to {b}" for a, b in binds) + f" into {mb.group(1)}"
+                   + (" (outside Icarus only)." if "__ICARUS__" in t else "."))
+        out.append("Every bound name is declared in the top RTL, so a misspelt binding is not the cause." if not miss else
+                   "These bound names are not declared in the top RTL: " + ", ".join(miss) + " (a wrong binding).")
+        break
+    out.append("The cause is not settled by the records.")
+    return " ".join(out)
+
+
+def _spec_timing(spec: dict, name: str) -> str:
+    """The spec's own timing sentence for a parameter (its ``timing`` section; matched on the first word of the names)."""
+    tim = spec.get("timing")
+    if not isinstance(tim, dict):
+        return ""
+    w = name.lower().split("_")[0]
+    for k, v in tim.items():
+        if isinstance(v, str) and str(k).lower().split("_")[0] == w:
+            return " ".join(v.split())
+    return ""
+
+
+def agent_facts(S: dict) -> dict:
+    """The run's provenance, from summary.json: model, harness, loops, turns, wall time, tokens and cost."""
+    f: dict[str, Any] = {}
+    for k in ("model", "harness", "stop"):
+        if isinstance(S.get(k), str) and S[k]:
+            f[k] = S[k]
+    for k in ("loops", "turns", "tokens"):
+        if isinstance(S.get(k), int) and not isinstance(S.get(k), bool):
+            f[k] = S[k]
+    if isinstance(S.get("wall_s"), (int, float)):
+        f["wall_s"] = S["wall_s"]
+    if isinstance(S.get("cost_usd"), (int, float)) and S.get("harness") == "deepagents":
+        f["cost_usd"] = S["cost_usd"]                      # provider-reported (plan runs report none)
+    if isinstance(S.get("plan_cost_estimate_usd"), (int, float)):
+        f["plan_cost_estimate_usd"] = S["plan_cost_estimate_usd"]
+    return f
+
+
 def _clocks(design: Path) -> list[dict]:
     x = design / "design.xdc"
     if not x.is_file():
@@ -115,13 +292,66 @@ def _clocks(design: Path) -> list[dict]:
     return out
 
 
+def _is_empty(p: Path) -> bool:
+    """A source file with no code: blank, or only comments (a placeholder)."""
+    try:
+        lines = p.read_text(errors="replace").splitlines()
+    except OSError:
+        return False
+    return not any(l.strip() and not l.strip().startswith(("//", "/*", "*", "--", "#")) for l in lines)
+
+
+def build_sources(design: Path) -> list[Path]:
+    """The files build.yaml lists as sources (globs relative to the repo root), existing ones, in order."""
+    try:
+        bld = yaml.safe_load((design / "build.yaml").read_text()) or {}
+    except (OSError, yaml.YAMLError):
+        return []
+    out: list[Path] = []
+    for pat in bld.get("sources") or []:
+        for q in sorted(ROOT.glob(str(pat))):
+            if q.is_file() and q not in out:
+                out.append(q)
+    return out
+
+
+def _is_shared(q: Path, design: Path) -> bool:
+    """A build source the agent did not write: outside the design directory and outside any run or result tree (a design
+    copied to another place still lists its own sources by their old path)."""
+    return design not in q.parents and H.rel(q).split("/", 1)[0] not in ("runs", "results")
+
+
+def _probe_text(p: Path) -> str:
+    try:
+        y = yaml.safe_load(p.read_text()) or {}
+    except (OSError, yaml.YAMLError):
+        return ""
+    ps = [x for x in y.get("probes") or [] if isinstance(x, dict) and x.get("name")]
+    if not ps:
+        return ""
+    ila = y.get("ila") or {}
+    return (f"; ILA {ila.get('name', '')} on {ila.get('clock_net', 'its clock')}"
+            + (f", depth {ila['depth']}" if ila.get("depth") else "") + "; probes: "
+            + ", ".join(f"{x['name']} ({x['width']} bits)" if x.get("width") else str(x["name"]) for x in ps))
+
+
 def _files(design: Path) -> list[dict]:
     seen, out = set(), []
+    shared = {q.name: q for q in build_sources(design) if _is_shared(q, design) and q.suffix in (".sv", ".v", ".vhd")}
     for pat, what in FILE_KINDS:
         for p in sorted(design.glob(pat)):
             if p.is_file() and p not in seen and "__pycache__" not in p.parts and p.suffix not in (".pyc",):
                 seen.add(p)
-                out.append({"path": H.rel(p), "what": what})
+                w = what
+                if p.name == "probes.yaml":
+                    w += _probe_text(p)
+                if p.name == "build.yaml" and shared:
+                    w += ("; its sources also include shared shell files the agent did not write (read from the repository, "
+                          "not copied here): " + ", ".join(H.rel(q) for q in shared.values()))
+                if p.parent.name == "rtl" and _is_empty(p):
+                    w += (" (empty: it holds no code" + (f"; the build reads {H.rel(shared[p.name])} for this module instead"
+                                                          if p.name in shared else "") + ")")
+                out.append({"path": H.rel(p), "what": w})
     return out
 
 
@@ -175,15 +405,30 @@ def draft(design: Path, run_dir: Path, *, run_id: str, board: str, gates_last: d
         if res.get(s) == "not-run":
             res[s] = "pass"
     summ = run_dir / "summary.json"
+    S = _json(summ) or {}
+    ungated_note = ""
+    m_stop = re.match(r"stage (\d+) visited more than", str(stop or ""))
+    if m_stop and int(m_stop.group(1)) < len(STAGE_NAMES):
+        sn = STAGE_NAMES[int(m_stop.group(1))]
+        if res.get(sn) == "fail" and "ungated_entries" not in S and records_verdict(design, sn) is True:
+            # a run recorded before 68F: the visit limit refused the final entry into this stage before any gate ran, and
+            # the old summary wrote that entry as a failure; the build records show this stage's gates passing
+            res[sn] = "pass"
+            ungated_note = (f"; the final entry into stage {sn} was refused by the visit limit before any gate ran (summary "
+                            f"stop), and the build records show its gates passing, so it is counted as passed")
     ev, ms, gaps = [], [], []
 
     def gap(about: str, text: str) -> None:
         if about not in {g["about"] for g in gaps}:
             gaps.append({"about": about, "text": text})
 
-    def e(activity: str, result: str, what: str, rec: Path, **kw) -> str:
+    short: dict[str, str] = {}              # evidence ID -> a shorter text for its gap (the long text stays in the evidence row)
+
+    def e(activity: str, result: str, what: str, rec: Path, short_gap: str | None = None, **kw) -> str:
         i = f"E{len(ev) + 1}"
         ev.append({"id": i, "activity": activity, "result": result, "what": what, "record": H.rel(rec), **kw})
+        if short_gap:
+            short[i] = short_gap
         return i
 
     def m(what: str, category: str, unit: str, rec: Path, field: str, cond: str, key: str | None = None) -> None:
@@ -199,9 +444,10 @@ def draft(design: Path, run_dir: Path, *, run_id: str, board: str, gates_last: d
     if vg:
         reached = vg.get("reached")
         ok = bool(reached) and reached >= verif_level
-        e("simulation", "pass" if ok else ("partial" if reached else "fail"),
-          f"verification stages (flow/verif_gates.py) against the Modeller's reference model; reached {reached or 'none'}, "
-          f"the run asked for {verif_level}", vg_p)
+        full = bool(reached) and reached >= "V3"
+        e("simulation", "pass" if ok and full else ("partial" if reached else "fail"), verif_text(vg, verif_level), vg_p,
+          short_gap=f"verification reached {reached or 'no stage'} of V3 (the run asked for {verif_level}); the checks that did "
+                    "not pass or did not run are listed in the evidence row")
         open_rows: dict[str, list[str]] = {}
         for row in vg.get("traceability") or []:
             if row.get("result") != "pass":
@@ -211,11 +457,24 @@ def draft(design: Path, run_dir: Path, *, run_id: str, board: str, gates_last: d
                     f"{row.get('method')} ({row.get('artefact')}) is {res_r}: {det[:200]}")
         for req, why in open_rows.items():
             gap(req, f"{req} has no passing evidence for every proof method: " + "; ".join(why))
+        v3 = ((vg.get("stages") or {}).get("V3") or {}).get("checks") or {}
+        if isinstance(v3.get("seeds_run", {}).get("value"), int) and v3["seeds_run"]["value"] > 0:
+            for what, k, unit in (("simulation seeds run", "seeds_run", ""), ("line coverage", "line_pct", "%"),
+                                  ("toggle coverage", "toggle_pct", "%"), ("functional coverage bins hit", "functional_bins_pct", ""),
+                                  ("cover properties hit", "cover_properties_pct", "%")):
+                if v3.get(k, {}).get("value") is not None:
+                    m(what, "verification", unit, vg_p, f"stages.V3.checks.{k}.value",
+                      "Verilator coverage simulation of the RTL against the Modeller's model, every seed the bench ran")
+        diag = cover_diagnosis(design, vg)
+        if diag:
+            gap("cover_properties", diag)
     mu_p = design / "build" / "verif" / "mutation.json"
     mu = _json(mu_p)
     if mu and mu.get("evaluated"):
         e("faults", "pass" if not mu.get("survived") and not mu.get("timed_out") else "partial",
-          "generated mutants of the RTL run against the Verifier's benches; each must make a test fail", mu_p)
+          f"generated mutants of the RTL run against the Verifier's benches, each of which must make a test fail: "
+          f"{mu.get('sampled')} sampled of {mu.get('candidates')} candidates, {mu.get('evaluated')} evaluated, "
+          f"{mu.get('killed')} killed, {mu.get('survived')} survived, {mu.get('timed_out')} timed out", mu_p)
         m("mutation score of the Verifier's benches", "verification", "%", mu_p, "score_pct",
           "generated mutants sampled from the RTL, run in the simulation sandbox")
     rel_now = H.VIVADO
@@ -226,13 +485,27 @@ def draft(design: Path, run_dir: Path, *, run_id: str, board: str, gates_last: d
             continue
         rel_b = build_release(design, variant)
         current = rel_b == rel_now
+        bs = build_state(design, variant)
+        if bs["error"] and not bs["ran"]:               # an error stub: the build did not complete
+            i = e("build", "fail", f"Vivado {label}: its gates record is an error stub ({str(bs['error'])[:120]}) with no flow "
+                  "stages" + ("" if bs["run_json"] else f", and the build has no run record (build/{variant}/run.json)")
+                  + ": the build did not complete", gp)
+            gap(i, f"the {label} did not complete: build/{variant}/gates.json is an error stub, so there is no gate result for it")
+            continue
         result = ("pass" if g.get("pass") else "fail") if current else "partial"
-        ran = [k for k, v in (g.get("stages") or {}).items() if (v or {}).get("ran")]
-        i = e("build", result, f"Vivado {label}; flow stages that ran: " + (", ".join(ran) or "none")
-              + ("" if current else "; built with an earlier Vivado release than the pinned one, so the result is not current"), gp)
+        ran = bs["ran"]
+        if current:
+            i = e("build", result, f"Vivado {label}; flow stages that ran: " + (", ".join(ran) or "none"), gp)
+        else:
+            met = all(((g.get("gates") or {}).get(k) is True) for k in ("setup", "hold", "pulse_width"))
+            i = e("build", result, f"Vivado {label} under an earlier Vivado release than the pinned one: it reached "
+                  f"{ran[-1] if ran else 'no flow stage'}, the gates of the stages it ran {'all passed' if g.get('pass') else 'did not all pass'}"
+                  + (" and its timing was met" if met else "") + "; every number from that build is withdrawn (it cannot be "
+                  f"re-measured on Vivado {rel_now} without a rebuild), so none is published", gp)
         if not current:
-            gap(i, f"the {label} was made with an earlier Vivado release than {rel_now}: rebuild it before relying on its "
-                "gates or numbers")
+            gap(i, f"the {label} was made under an earlier Vivado release than {rel_now}: its result is not current and no "
+                f"number from it is published. Re-measure first, with the resume command in How to build (python -m agent "
+                f"resume), and only then rely on its gates")
         if variant == "base" and current:
             if (g.get("timing") or {}).get("wns_ns") is not None:
                 m("worst setup slack after routing", "timing", "ns", gp, "timing.wns_ns",
@@ -252,12 +525,13 @@ def draft(design: Path, run_dir: Path, *, run_id: str, board: str, gates_last: d
           "read by this run's bring-up")
     for x in ev:
         if x["result"] != "pass":
-            gap(x["id"], f"{x['activity']} evidence is {x['result']}: {x['what']}")
+            gap(x["id"], f"{x['activity']} evidence is {x['result']}: {short.get(x['id'], x['what'])}")
     for s, r in res.items():
         if r == "fail":
             why = failing_gates(design, s)
+            rec = reconcile(design, s, why)
             gap(s, f"stage {s} did not pass its gates in this run" + (f"; at its last visit: {why}" if why else
-                "; the run summary and the review pages under build/review/ give the failures"))
+                "; the run summary and the review pages under build/review/ give the failures") + (f". {rec}" if rec else ""))
         elif r == "not-run":
             why = ("the run resumed after this stage; its inputs had not changed since the handover"
                    if resumed_from and STAGE_NAMES.index(s) < _first_visited(gates_last) else
@@ -276,6 +550,10 @@ def draft(design: Path, run_dir: Path, *, run_id: str, board: str, gates_last: d
         if isinstance(s.get("cost_usd"), (int, float)) and s.get("harness") == "deepagents":   # plan runs report no USD
             m("model cost of the run, provider-reported", "cost", "USD", summ, "cost_usd",
               "every role and the interview oracle, as the run summary records it")
+    rj = _json(design / "build" / "base" / "run.json") or {}      # build time and memory: only a build on the pinned release
+    base_min = round(rj["wall_s"] / 60, 1) if rj.get("vivado_version") == rel_now and isinstance(rj.get("wall_s"), (int, float)) else None
+    base_mem = (f"; peak memory {rj['scope_anon_peak_mib']} MiB (anonymous, the systemd scope)"
+                if rj.get("vivado_version") == rel_now and isinstance(rj.get("scope_anon_peak_mib"), int) else "")
     required = [g["about"] for g in gaps]
     passed = [s for s, r in res.items() if r == "pass"]
     stage = ("signed-off" if all(r == "pass" for r in res.values()) else
@@ -288,7 +566,8 @@ def draft(design: Path, run_dir: Path, *, run_id: str, board: str, gates_last: d
          "target": {"part": bld.get("part") or spec.get("part") or "unknown", "board": board, "tool": f"Vivado {rel_now}",
                     "top": bld.get("top") or spec.get("top") or "unknown"},
          "clocks": _clocks(design), "resets": [], "interfaces": [],
-         "parameters": [{"name": str(k), "value": v, "legal": "WRITE", "note": "WRITE"}
+         "parameters": [{"name": str(k), "value": v, "legal": "WRITE", "note": "WRITE",
+                         **({"_spec_timing": t} if (t := _spec_timing(spec, str(k))) else {})}
                         for k, v in (spec.get("parameters") or {}).items()] if isinstance(spec.get("parameters"), dict) else [],
          "files": _files(design) + _failed_review_pages(design, res),
          "commands": [
@@ -302,13 +581,13 @@ def draft(design: Path, run_dir: Path, *, run_id: str, board: str, gates_last: d
                  "needs": "Icarus Verilog and cocotb, or the simulation container"}]
                if (design / "tests" / f"test_{design.name}_rtl.py").is_file() else []),
              {"what": "rebuild the bitstream with the flow", "cmd": f"flow/run_vivado.sh {rd} base", "heavy": True,
-              "minutes": None, "needs": f"Vivado {rel_now} and a heavy slot"}],
+              "minutes": base_min, "needs": f"Vivado {rel_now} and a heavy slot" + base_mem}],
          "evidence": ev, "measurements": ms, "gaps": gaps, "next_steps": ["WRITE"], "open_questions": [],
          "history": [{"date": _date(run_id), "brief": "agent run",
                       "note": ("resumed from an earlier handover (summary.json resumed_from names it); " if resumed_from else "")
                       + "produced by the agent graph; stages that passed: " + (", ".join(passed) or "none")
-                      + (f"; carried from the handover: {', '.join(carried)}" if carried else "")}],
-         "agent_run": {"run_id": run_id, "record": H.rel(summ if summ.is_file() else run_dir / "config.json")},
+                      + (f"; carried from the handover: {', '.join(carried)}" if carried else "") + ungated_note}],
+         "agent_run": {"run_id": run_id, "record": H.rel(summ if summ.is_file() else run_dir / "config.json"), **agent_facts(S)},
          "state": {"stage": stage, "gates": res, "vivado": rel_now, "kb_pin": None, "build_id": None,
                    "evidence_vivado": ("none" if not evv else "current" if evv == {rel_now} else "earlier")}}
     return h, required
@@ -335,6 +614,17 @@ def user_prompt(design: Path, h: dict, problems: list[str]) -> str:
             src += f"\n--- {p.relative_to(design)} ---\n{body}\n"
     if src:
         out += "\nWHAT WAS BUILT (design.xdc and the RTL):" + src
+    shared = [q for q in build_sources(design) if _is_shared(q, design)]
+    if shared:
+        out += ("\nSOURCES THE BUILD READS (build.yaml; shared files the agent did not write):\n"
+                + "\n".join(f"- {H.rel(q)}" + (" (empty)" if _is_empty(q) else "") for q in shared) + "\n")
+        shown = ""
+        for q in sorted(shared, key=lambda q: q.stat().st_size):          # small modules first: the most files fit
+            body = q.read_text(errors="replace")
+            if len(body) <= 9000 and len(shown) + len(body) <= 24000:
+                shown += f"\n--- {H.rel(q)} ---\n{body}\n"
+        if shown:
+            out += "\nSHARED SOURCES (as far as they fit):" + shown
     if problems:
         out += ("\nThe documentation check (flow/handover.py) found these problems in your last reply; fix them and reply with "
                 "the whole file again:\n" + "\n".join(f"- {p[:400]}" for p in problems[:40]) + "\n")
@@ -365,6 +655,10 @@ def merge(draft_h: dict, reply: dict, required: list[str]) -> dict:
         for k in ("legal", "note"):
             if isinstance(q.get(k), str) and q[k].strip():
                 p[k] = q[k]
+    for p in h["parameters"]:                                   # 68F: the spec's own rate for a parameter, in its note
+        t = (p.pop("_spec_timing", None) or "").strip()
+        if t and t not in p["note"]:
+            p["note"] = f"{p['note'].rstrip()} Spec timing: {t}"
     have = {g["about"] for g in h["gaps"]}
     for g in reply.get("gaps") or []:
         if isinstance(g, dict) and isinstance(g.get("about"), str) and g["about"] not in have and isinstance(g.get("text"), str):
@@ -420,7 +714,10 @@ def recheck(ddir: Path) -> list[str]:
             errs.append(f"gap about {g['about']!r} is required by the run's records and missing")
         elif texts[g["about"]] != g["text"]:
             errs.append(f"gap about {g['about']!r}: its text is not the run's (a required gap is never reworded)")
-    return errs + overclaims(h)
+    for k in ("model", "harness", "loops", "turns", "wall_s", "tokens", "cost_usd", "plan_cost_estimate_usd", "stop"):
+        if (h.get("agent_run") or {}).get(k) != d["agent_run"].get(k):
+            errs.append(f"agent_run.{k}: {(h.get('agent_run') or {}).get(k)!r} is not the run record's {d['agent_run'].get(k)!r}")
+    return errs + overclaims(h) + contradictions(ddir, h)
 
 
 SUCCESS = re.compile(r"\b((the |this )?(design|run|project|work) (is|was|has been) signed[ -]off|all (the )?(stages|gates|checks|tests) (passed|pass)|fully verified|timing (is )?(met|closed)|"
@@ -462,7 +759,18 @@ def doc_gate(design: Path, required: list[str]) -> list[str]:
     have = {g.get("about") for g in h.get("gaps") or []}
     errs += [f"gap about {r!r} is required (a stage, evidence entry, requirement or quantity without a pass) and missing"
              for r in required if r not in have]
-    return errs + stale + unwritten(h) + overclaims(h)
+    return errs + stale + unwritten(h) + overclaims(h) + contradictions(design, h) + remeasure_first(h)
+
+
+def remeasure_first(h: dict) -> list[str]:
+    """Builds made under an earlier Vivado release: re-measuring (resume) is the first next step (68F)."""
+    if (h.get("state") or {}).get("evidence_vivado") != "earlier":
+        return []
+    ns = h.get("next_steps") or []
+    if not ns or "resume" not in str(ns[0]).lower():
+        return ["next_steps: a build was made under an earlier Vivado release, so the first next step must be to re-measure it "
+                "with python -m agent resume"]
+    return []
 
 
 def write_handover(design: Path, h: dict) -> None:

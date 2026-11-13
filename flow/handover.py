@@ -576,6 +576,25 @@ def _block(name: str, prose: dict) -> list[str]:
             + f"<!-- /prose:{name} -->"]
 
 
+def run_line(ar: dict) -> str:
+    """The provenance of an agent run (68F), from the run record: model, loops, turns, wall time, tokens, cost."""
+    bits = []
+    if ar.get("model"):
+        bits.append(f"model {ar['model']}" + (f" ({ar['harness']} harness)" if ar.get("harness") else ""))
+    for k, w in (("loops", "loops"), ("turns", "turns"), ("tokens", "tokens")):
+        if ar.get(k) is not None:
+            bits.append(f"{fmt(ar[k])} {w}")
+    if ar.get("wall_s") is not None:
+        bits.append(f"{fmt(ar['wall_s'])} s wall time")
+    if ar.get("cost_usd") is not None:
+        bits.append(f"{fmt(ar['cost_usd'])} USD model cost (provider-reported)")
+    if ar.get("plan_cost_estimate_usd") is not None:
+        bits.append(f"{fmt(ar['plan_cost_estimate_usd'])} USD plan-cost estimate (not billed)")
+    if ar.get("stop"):
+        bits.append(f"stopped because: {ar['stop']}")
+    return ", ".join(bits)
+
+
 def render_readme(h: dict, ddir: Path, prose: dict, svgs: dict) -> str:
     rid = rel(ddir)
     byk = {m.get("key"): m for m in h["measurements"] if m.get("key")}
@@ -588,6 +607,8 @@ def render_readme(h: dict, ddir: Path, prose: dict, svgs: dict) -> str:
     L += ["", f"Kind: {h['kind']}; {who[h['produced_by']]}"
           + (f" (agent run `{h['agent_run']['run_id']}`, [record]({_link(h['agent_run']['record'], ddir)}))"
              if h.get("agent_run") else "") + f". State: {h['state']['stage']}. For an agent: [AGENT.md](AGENT.md)."]
+    if run_line(h.get("agent_run") or {}):
+        L += ["", "Run: " + run_line(h["agent_run"]) + " (from the run record)."]
     if "architecture.svg" in svgs:
         L += ["", "![Block diagram: the design's blocks and the links between them](docs/handover/architecture.svg)"]
     L += _block("what", prose)
@@ -690,6 +711,8 @@ def render_agent(h: dict, ddir: Path) -> str:
          f"kind={h['kind']} produced_by={h['produced_by']} part={t['part']} board={t['board']} top={t['top']} tool={t['tool']}"]
     if h.get("agent_run"):
         L.append(f"agent_run={h['agent_run']['run_id']} record={h['agent_run']['record']}")
+        if run_line(h["agent_run"]):
+            L.append("run: " + run_line(h["agent_run"]))
     L += ["", "## summary", " ".join(h["summary"].split()), "not: " + "; ".join(h["scope_not"]),
           "", "## state", f"stage={st['stage']} vivado={st['vivado']} kb_pin={st.get('kb_pin')} build_id={st.get('build_id')}"]
     if st.get("gates"):
@@ -699,14 +722,17 @@ def render_agent(h: dict, ddir: Path) -> str:
     L += [f"rst {r['name']} active-{r['active']}: {r['note']}" for r in h["resets"]]
     L += [f"if {i['name']} {i['type']}: {i['note']}" + (f" doc={i['doc']}" if i.get("doc") else "") for i in h["interfaces"]]
     L += [f"param {p['name']}={fmt(p['value'])} legal={p['legal']}" for p in h["parameters"]]
-    L += ["", "## files"] + [f"{f['path']} {s(f.get('sha256'))}: {f['what']}" for f in h["files"]]
+    compact = h.get("produced_by") == "agent"        # 68F: agent-produced handovers only (hand-written ones keep their rendering)
+    short = (lambda p: p[len(rid) + 1:] if p.startswith(rid + "/") else p) if compact else (lambda p: p)
+    L += ["", "## files (paths under the design directory are relative to it)" if compact else "## files"] \
+        + [f"{short(f['path'])} {s(f.get('sha256'))}: {f['what']}" for f in h["files"]]
     L += ["", "## commands"] + [f"{'[heavy] ' if c['heavy'] else ''}{c['what']}"
                                 + (f" (~{fmt(c['minutes'])}min)" if c["minutes"] is not None else "") + f": {c['cmd']}"
                                 for c in h["commands"]]
     recs = {}
     for c in h["evidence"] + h["measurements"]:
         recs.setdefault(c["record"], (f"R{len(recs) + 1}", c.get("sha256")))
-    L += ["", "## records (path sha256-prefix; claims below cite R<n>)"] + [f"{r} {p} {s(sh)}" for p, (r, sh) in recs.items()]
+    L += ["", "## records (path sha256-prefix; claims below cite R<n>)"] + [f"{r} {short(p)} {s(sh)}" for p, (r, sh) in recs.items()]
     L += ["", "## evidence"] + [f"{e['id']} {e['activity']} {e['result']}" + (f" x{e['runs']}" if e.get("runs") else "")
                                 + f" {recs[e['record']][0]}{' ci' if e.get('how') == 'ci' else ''}: {e['what']}"
                                 + (f" | cond: {e['conditions']}" if e.get("conditions") else "") for e in h["evidence"]]
@@ -717,7 +743,18 @@ def render_agent(h: dict, ddir: Path) -> str:
         ms.append(f"{m['id']} {m['category']} {m.get('key') or '-'}={fmt(m.get('value'))}{m['unit'] and ' ' + m['unit']}"
                   f" {recs[m['record']][0]}#{m.get('field') or 're'}: {m['what']} | {cond}")
     L += ["", "## measured"] + (ms or ["none"])
-    L += ["", "## gaps"] + [f"[{g['about']}] {g['text']}" for g in h["gaps"]]
+    L += ["", "## gaps"]
+    groups: dict[str, list[dict]] = {}
+    pointer = {e["id"]: f"{e['activity']} evidence is {e['result']}: " for e in h["evidence"]} if compact else {}
+    for g in h["gaps"]:         # gaps that differ only in their subject ("stage X was not run ...") are one line
+        if g["about"] in pointer and g["text"].startswith(pointer[g["about"]]) and "listed in the evidence row" in g["text"]:
+            continue            # a gap that only points at an evidence row, which the evidence section above already carries
+        groups.setdefault(g["text"].replace(g["about"], "\u00a7", 1) if g["about"] in g["text"] else g["text"], []).append(g)
+    for key, gs in groups.items():
+        if compact and len(gs) > 1 and "\u00a7" in key:
+            L.append(f"[{', '.join(g['about'] for g in gs)}] " + key.replace("\u00a7", "(each of these)"))
+        else:
+            L += [f"[{g['about']}] {g['text']}" for g in gs]
     L += ["", "## next_actions"] + [f"{i}. {x}" for i, x in enumerate(h["next_steps"], 1)]
     if h["open_questions"]:
         L += ["", "## open_questions"] + [f"- {q}" for q in h["open_questions"]]

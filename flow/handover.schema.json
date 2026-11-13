@@ -77,7 +77,11 @@
       "properties": {"date": {"type": "string", "pattern": "^20[0-9]{2}-[0-9]{2}-[0-9]{2}$"}, "brief": {"type": "string"},
                      "pr": {"type": ["integer", "null"]}, "note": {"$ref": "#/$defs/text"}}}},
     "agent_run": {"type": "object", "additionalProperties": false, "required": ["run_id", "record"],
-                  "properties": {"run_id": {"type": "string"}, "record": {"$ref": "#/$defs/path"}, "note": {"type": "string"}}},
+                  "properties": {"run_id": {"type": "string"}, "record": {"$ref": "#/$defs/path"}, "note": {"type": "string"},
+                                 "model": {"type": "string"}, "harness": {"type": "string"}, "loops": {"type": "integer"},
+                                 "turns": {"type": "integer"}, "wall_s": {"type": "number"}, "tokens": {"type": "integer"},
+                                 "cost_usd": {"type": "number"}, "plan_cost_estimate_usd": {"type": "number"},
+                                 "stop": {"type": "string"}}},
     "numbers_allow": {"type": "array", "items": {
       "type": "object", "additionalProperties": false, "required": ["token", "reason"],
       "properties": {"token": {"type": "string"}, "reason": {"$ref": "#/$defs/text"}}}},
