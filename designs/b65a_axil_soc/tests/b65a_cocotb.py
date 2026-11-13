@@ -89,7 +89,7 @@ def find_run(got, step):
     return None
 
 
-@cocotb.test()
+@cocotb.test(timeout_time=40, timeout_unit="ms")      # about 4 ms of simulated time is needed
 async def end_to_end(dut):
     clk = dut.CLK100MHZ
     cocotb.start_soon(Clock(clk, 10, unit="ns").start())
@@ -127,8 +127,12 @@ async def end_to_end(dut):
     await h.wr(reg(dds, "WAVE"), 0)     # sine, full amplitude
     gate = int(dut.TONE_FD_GATE_CLKS.value)
     g0 = await h.rd(reg(fd, "GATES"))
-    while await h.rd(reg(fd, "GATES")) < g0 + 2:     # a whole gate after the change
+    for _ in range(40):                              # a whole gate after the change (a few gates at most)
+        if await h.rd(reg(fd, "GATES")) >= g0 + 2:
+            break
         await ClockCycles(clk, gate // 4)
+    else:
+        raise AssertionError("the frequency counter's gate count did not advance")
     edges = await h.rd(reg(fd, "EDGES"))
     high = await h.rd(reg(fd, "HIGH"))
     exp = gate / 64

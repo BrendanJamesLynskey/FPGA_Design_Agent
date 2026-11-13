@@ -10,7 +10,6 @@ the graph (``merge``); every number it shows from the build comes from that comm
 from __future__ import annotations
 
 import json
-import os
 import subprocess
 from pathlib import Path
 
@@ -37,14 +36,7 @@ def block_paths(g: dict) -> dict:
 
 def vivado_bin() -> str:
     from flow import version_pin
-    for name in ("vivado_path", "vivado_bin", "VIVADO"):
-        v = getattr(version_pin, name, None)
-        if callable(v):
-            try:
-                return str(v())
-            except Exception:                 # noqa: BLE001 (fall back to the documented install)
-                pass
-    return os.environ.get("VIVADO", "/opt/Xilinx/2026.1/Vivado/bin/vivado")
+    return version_pin.vivado_path()
 
 
 def run_tcl(dcp: Path, out: Path, paths: list[str]) -> dict:
