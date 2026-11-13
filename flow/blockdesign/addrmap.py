@@ -125,8 +125,9 @@ def register_banks(E) -> dict:
                                      "fields": r["fields"]})
                     out[key] = regs
                 else:
-                    out[key] = [{"name": "WINDOW", "offset": 0, "access": "RW", "reset": None, "fields": [],
-                                 "doc": f"the {b.comp.name} register window: word w at offset 4 x w (see ip_lib/{b.comp.name})"}]
+                    out[key] = [{"name": "WINDOW", "offset": 0, "access": "RW", "reset": None, "fields": [], "words": 128,
+                                 "doc": f"the {b.comp.name} register window: word w (0 to 127) at offset 4 x w, 0x000 to 0x1FC "
+                                        f"(see ip_lib/{b.comp.name}); 0x200 to the end of the range answer SLVERR"}]
     walk(E, "", {})
     return out
 
@@ -148,6 +149,8 @@ def c_header(E) -> str:
         L += [f"#define {p}_BASE 0x{r['base']:08X}u", f"#define {p}_SIZE 0x{r['size']:08X}u"]
         for g2 in r["registers"]:
             if g2["name"] == "WINDOW":
+                L += [f"#define {p}_WINDOW_OFFSET 0x000u   /* RW: word w at WINDOW_OFFSET + 4 x w */",
+                      f"#define {p}_WINDOW_WORDS {g2['words']}u   /* offsets 0x{4 * g2['words']:03X} and above answer SLVERR */"]
                 continue
             L.append(f"#define {p}_{g2['name']}_OFFSET 0x{g2['offset']:03X}u   /* {g2['access']}: {g2['doc']} */")
         L.append("")

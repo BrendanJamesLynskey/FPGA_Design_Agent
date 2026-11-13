@@ -4,7 +4,7 @@ AXI4-Lite crossbar, N_M masters to N_S slaves: a write and a read arbiter per sl
 
 Generated from `ip.yaml` by `flow/net/ipdoc.py`; do not edit by hand.
 
-Status: simulated (brief 65A, with brief 59's AXI4-Lite checker on every link); built inside designs/b65a_axil_soc.
+Status: simulated (with the AXI4-Lite protocol checker axi_tx/rtl/axil_checker.sv on every link); built inside designs/b65a_axil_soc.
 
 ## Parameters
 
@@ -31,7 +31,7 @@ Clocks: `clk`. Reset: `rst`, active high, synchronous.
 
 ## Evidence
 
-Python masters and slaves with random VALID gaps and READY stalls drive the crossbar at five parameter points; every write must reach exactly the owning slave with the same address, data, strobes and protection, every read must return the data and response the owning slave produced for it, unmapped addresses must get DECERR from the crossbar, and brief 59's AXI4-Lite checker (axi_tx/rtl/axil_checker.sv) watches every master and slave link for rule violations. Round-robin fairness under full contention, and the elaboration guards (misaligned or overlapping map) are tested too. Tests: `ip_lib/axil_xbar/tb/test_axil_xbar_rtl.py`.
+Python masters and slaves with random VALID gaps and READY stalls drive the crossbar at five parameter points; every write must reach exactly the owning slave with the same address, data, strobes and protection, every read must return the data and response the owning slave produced for it, unmapped addresses must get DECERR from the crossbar, and the AXI4-Lite protocol checker (axi_tx/rtl/axil_checker.sv) watches every master and slave link for rule violations. Round-robin fairness of reads and of writes under full contention, a reset with a write and a read in flight (nothing stale after it), and the parameter guards (misaligned or overlapping map; simulation only, synthesis ignores them) are tested too. Tests: `ip_lib/axil_xbar/tb/test_axil_xbar_rtl.py`.
 Parameter points simulated: `N_M=1, N_S=1, ADDR_W=32`; `N_M=2, N_S=3, ADDR_W=32`; `N_M=3, N_S=4, ADDR_W=32`; `N_M=4, N_S=2, ADDR_W=16`; `N_M=2, N_S=5, ADDR_W=12`.
 
 Seeded faults (`faults.yaml`, run by `hil/ip_faults.py --blocks axil_xbar`):
@@ -46,6 +46,8 @@ Seeded faults (`faults.yaml`, run by `hil/ip_faults.py --blocks axil_xbar`):
 | `awvalid_waits_for_wready` | AWVALID depends on the slave's WREADY and drops when it falls (IHI 0022H A3.2.1, A3.3.1) | caught |
 | `b_before_slave_response` | the master sees BVALID while the write is still being forwarded | caught |
 | `wstrb_forced` | byte strobes are lost, so a partial write becomes a full-word write | caught |
+| `write_round_robin_stuck` | the write arbiter never moves on, so the lowest-numbered master wins every write contest (from the review) | caught |
+| `busy_not_reset` | the slaves' busy flags start at 0 at power-up but a reset does not clear them, so a reset with a transfer in flight leaves a stale request (from the review) | caught |
 
 ## Boundary and reuse
 

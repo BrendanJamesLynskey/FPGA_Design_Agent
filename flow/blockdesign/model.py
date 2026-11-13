@@ -13,8 +13,9 @@ The order (each step can add diagnostics; later steps still run so one pass repo
 4. connections: endpoints, directions, slices; width propagation (a sink whose width follows a parameter that was not
    set takes the driver's width);
 5. connection automation: one AXI4-Lite crossbar per ``interconnect`` entry; the address editor assigns the map;
-6. clock and reset automation: every unconnected clock and reset input is tied to its domain's clock and to the
-   domain's synchronised reset, in the polarity the input needs (one reset synchroniser per domain);
+6. clock and reset automation: each box's domain clock (its first clock input) and every reset input, if unconnected,
+   are tied to its domain's clock and to the domain's synchronised reset, in the polarity the input needs (one reset
+   synchroniser per domain); a second clock input (``clk90``, a receive clock) is never tied: it must be wired by hand;
 7. checks: unconnected inputs and bus interfaces, multiple drivers, interface type and width mismatches, clock and
    reset domain crossings without a synchroniser, parameters outside the declared space, address overlaps and holes.
 """
@@ -315,7 +316,8 @@ def _instance(E: Elab, iname: str, spec: dict, stack: tuple):
             E.err("BD-HIER-01", w, f"{spec['design']} is not kind: hierarchy")
         b = Box(iname, "hierarchy", None, S.mprefix, domain=dom, sub=S)
         for p in S.ports.values():
-            b.ports[p.name] = BPort(p.name, p.dir, p.width, p.kind, p.polarity, False)
+            b.ports[p.name] = BPort(p.name, p.dir, p.width, p.kind, p.polarity, p.async_ok)   # async: the hierarchy
+            # synchronises it inside (its own check makes an async boundary port reach a synchroniser)
         for ifn, (inst, ifc) in S.exports.items():
             ib = S.boxes[inst].ifaces[ifc]
             ports = {sig: f"{ifn}_{sig}" for sig in ib.ports}
@@ -350,6 +352,13 @@ def _instance(E: Elab, iname: str, spec: dict, stack: tuple):
         if k not in names:
             E.err("BD-PARAM-01", w, f"{comp.name} has no parameter {k} (it has {', '.join(sorted(names)) or 'none'})")
             del given[k]
+            continue
+        v = _param_value(comp, k, given[k])
+        if isinstance(v, str) and k != comp.variant_param and _param_kind(comp, k) != "string":
+            E.err("BD-PARAM-01", w, f"{k}={given[k]!r} is not an integer: give a number or a Verilog literal (8'h8, 32'h4000_0000)")
+            del given[k]
+            continue
+        given[k] = v
     b.given = dict(given)
     b.origin = {k: "given" for k in given}
     if b.variant:
@@ -361,6 +370,23 @@ def _instance(E: Elab, iname: str, spec: dict, stack: tuple):
     if spec.get("axi_lite"):
         _wrap(E, b, spec["axi_lite"], w)
     E.boxes[iname] = b
+
+
+def _param_kind(comp: C.Component, k: str) -> str:
+    p = next((q for q in comp.module.params if q.name == k), None)
+    t = str((comp.param_space.get(k) or {}).get("type", ""))
+    return "string" if t == "string" or (p is not None and p.kind == "string") else "int"
+
+
+def _param_value(comp: C.Component, k: str, v):
+    """A given parameter as the HDL will see it: a string for an integer parameter is read as a Verilog literal or a
+    constant expression (``8'h8`` is 8, ``$clog2(256)`` is 8); one that is neither stays a string (refused above)."""
+    if not isinstance(v, str) or _param_kind(comp, k) == "string" or k == comp.variant_param:
+        return v
+    try:
+        return hdl.eval_expr(v, {})
+    except (hdl.HdlError, ValueError, ZeroDivisionError):
+        return v
 
 
 def _derive(E: Elab, b: Box, w: str):
@@ -544,6 +570,14 @@ def ref_text(ref: tuple) -> str:
     return f"{ref[1]}.{ref[2]}" if ref[0] == "box" else ref[1]
 
 
+def _bus_port(E: Elab, ref) -> str | None:
+    """The bus interface (AXI4, AXI4-Lite, AXI4-Stream, register window) that a box port belongs to, or None."""
+    if ref is None or ref[0] != "box":
+        return None
+    b = E.boxes[ref[1]]
+    return next((i.name for i in b.ifaces.values() if i.kind in BUS and ref[2] in i.ports.values()), None)
+
+
 def _connections(E: Elab):
     pending = []
     for i, c in enumerate(E.data.get("connections") or []):
@@ -571,7 +605,7 @@ def _connections(E: Elab):
             else:
                 pending.append((w, s, None, c, d))
     # width propagation: a sink port whose width follows an unset parameter takes the driver's width
-    for _ in range(4):
+    for _ in range(len(pending) + 1):     # each pass settles at least one more sink, so this reaches the fixed point
         changed = False
         for (w, s, _, c, d) in pending:
             if s is None or "to_bits" in c or d[0] != "box":
@@ -585,7 +619,8 @@ def _connections(E: Elab):
                 continue
             want = (c["bits"][0] - c["bits"][1] + 1) if "bits" in c else sp.width
             par = hdl.width_param(mp)
-            if par and par not in b.given and b.ports[d[2]].width != want and want > 0:
+            settable = par and (par not in b.given or str(b.origin.get(par, "")).startswith("propagated"))
+            if settable and b.ports[d[2]].width != want and want > 0:     # re-propagated if the driver's width changed
                 b.given[par] = want
                 b.origin[par] = f"propagated from {ref_text(s)} ({want} bits)"
                 _resolve(b)
@@ -816,6 +851,8 @@ def _clock_reset(E: Elab):
             if d is None:
                 continue
             if p.kind == "clock":
+                if p.name != domain_clock(b):
+                    continue                      # a second clock (clk90, a receive clock): wired by hand, else BD-UNCONN-01
                 E.segs.append(Seg(("box", b.name, p.name), 0, 1, ("ext", d.clk), auto="clock", where="clock automation"))
             else:
                 if E.kind == "top" and not d.reset_port:
@@ -823,6 +860,16 @@ def _clock_reset(E: Elab):
                 src = ("ext", "rst") if E.kind == "hierarchy" else ("box", f"rst_sync_{d.name}", "rst")
                 E.segs.append(Seg(("box", b.name, p.name), 0, 1, src, invert=(p.polarity == "low"), auto="reset",
                                   where="reset automation"))
+
+
+def domain_clock(b: Box) -> str | None:
+    """The clock input that runs a box in its domain: the component's first clock (ip.yaml or overlay ``clocks``), the
+    hierarchy's ``clk``. Clock automation ties only this one; any other clock input must be connected by hand."""
+    if b.kind == "hierarchy":
+        return "clk"
+    if b.comp is not None and b.comp.clocks:
+        return b.comp.clocks[0] if b.comp.clocks[0] in b.ports else None
+    return "clk" if "clk" in b.ports and b.ports["clk"].kind == "clock" else None
 
 
 def _driven_bits(E: Elab) -> set:
@@ -880,18 +927,31 @@ def _check(E: Elab):
                       f"{_seg_src(prev)} ({prev.where}) and {_seg_src(s)}")
             else:
                 bits[key] = s
+    linked = _linked(E)
+    tied = {(r[1], _bus_port(E, r)) for s in E.segs for r in (s.src, s.dst) if _bus_port(E, r)}   # tied off port by port
+    for s in E.segs:                       # a plain connection on a port of a linked or exported bus interface
+        for ref in (s.src, s.dst):
+            ifn = _bus_port(E, ref)
+            if ifn and (ref[1], ifn) in linked:
+                E.err("BD-IF-03", s.where, f"{ref_text(ref)} belongs to the bus interface {ref[1]}.{ifn}, which is already "
+                      "connected; connect the interface, not its ports",
+                      "a bus port is wired by its interface's link, interconnect or export; a second connection would be a "
+                      "second driver")
     for b in E.boxes.values():
         for p in b.ports.values():
             if p.dir != "in":
                 continue
-            if any(p.name in i.ports.values() for i in b.ifaces.values() if i.kind in BUS):
-                continue
+            if any(p.name in i.ports.values() and ((b.name, i.name) in linked or (b.name, i.name) not in tied)
+                   for i in b.ifaces.values() if i.kind in BUS):
+                continue                   # wired by its link, or reported once as BD-UNCONN-02
             missing = [i for i in range(p.width) if (("box", b.name, p.name), i) not in bits]
             if missing and ("box", b.name, p.name) not in E.attempted:
                 what = "all" if len(missing) == p.width else f"bits {_ranges(missing)}"
                 E.err("BD-UNCONN-01", f"instances/{b.name}", f"input {b.name}.{p.name} ({p.width} bits): {what} not driven",
                       "connect it, or tie it with const:" if p.kind == "data" else
-                      ("give the design a clock domain" if p.kind == "clock" else "give the domain a reset port"))
+                      (("give the design a clock domain" if p.name == domain_clock(b) else
+                        "a second clock input is never tied automatically: connect it to the clock it needs")
+                       if p.kind == "clock" else "give the domain a reset port"))
     for p in E.ports.values():
         if p.dir == "out":
             missing = [i for i in range(p.width) if (("ext", p.name), i) not in bits]
@@ -910,18 +970,12 @@ def _check(E: Elab):
             if p.dir == "out" and ("box", b.name, p.name) not in used_src and p.name not in observed and not any(
                     p.name in i.ports.values() for i in b.ifaces.values() if i.kind in BUS):
                 E.info("BD-OPEN-01", f"instances/{b.name}", f"output {b.name}.{p.name} is left open")
-    # ---- bus interfaces must be on a link
-    linked = set()
-    for L in E.links:
-        linked.add(L.master)
-        linked.add(L.slave)
-    for (inst, ifc) in E.exports.values():
-        linked.add((inst, ifc))
+    # ---- bus interfaces must be on a link (or tied off port by port)
     for b in E.boxes.values():
         if b.kind == "interconnect":
             continue
         for i in b.ifaces.values():
-            if i.kind in BUS and (b.name, i.name) not in linked:
+            if i.kind in BUS and (b.name, i.name) not in linked and (b.name, i.name) not in tied:
                 E.err("BD-UNCONN-02", f"instances/{b.name}", f"{i.kind} {i.role} interface {b.name}.{i.name} is not connected",
                       "connect it, or list it on an interconnect")
     for L in E.links:
@@ -938,10 +992,24 @@ def _check(E: Elab):
     for s in E.segs:
         if s.src is None or s.auto == "clock":
             continue
+        dp = port_of(E, s.dst)
+        if s.dst[0] == "box" and dp is not None and dp.kind == "clock" and not s.auto:
+            _check_hand_clock(E, s)
+            continue
         sd = _src_domain(E, s.src)
         dd, async_ok = _dst_domain(E, s.dst)
         if s.auto == "reset":
             continue
+        if async_ok and s.width > 1 and sd is not None and dd is not None and sd != dd:
+            b = E.boxes[s.dst[1]]
+            bitwise = b.comp is not None and b.comp.cdc
+            (E.err if bitwise else E.warn)(
+                "BD-CDC-04", s.where,
+                f"{s.width} bits of {ref_text(s.src)} ({'asynchronous' if sd == 'async' else 'domain ' + sd}) cross into "
+                f"{ref_text(s.dst)} (domain {dd}) through a {'bit-wise synchroniser' if bitwise else 'per-input synchroniser'}: "
+                "the bits can arrive in different clocks",
+                "use a handshake, a gray-coded count or an asynchronous FIFO; for independent level signals, connect each bit "
+                "on its own (bits: [i, i])")
         if sd == "async" and dd is not None and not async_ok:
             E.err("BD-CDC-02", s.where, f"{ref_text(s.src)} is asynchronous and drives {ref_text(s.dst)} in domain {dd} with no synchroniser",
                   "route it through a sync2 instance, or into an input that has its own synchroniser")
@@ -955,6 +1023,31 @@ def _check(E: Elab):
         if a and b and a.domain and b.domain and a.domain != b.domain:
             E.err("BD-CDC-03", L.where, f"bus link {L.master[0]}.{L.master[1]} (domain {a.domain}) to {L.slave[0]}.{L.slave[1]} "
                   f"(domain {b.domain}) crosses clock domains", "put the slave in the master's domain; a clock converter is not generated yet")
+
+
+def _check_hand_clock(E: Elab, s: Seg):
+    """A clock input wired by hand. The box's domain clock must be its domain's clock: a box declared in one domain
+    but clocked from another would hide every crossing into it. A second clock input may come from any clock."""
+    b = E.boxes[s.dst[1]]
+    d = E.domains.get(b.domain) if b.domain else None
+    if d is None or s.dst[2] != domain_clock(b):
+        return
+    if s.src != ("ext", d.clk) or s.invert:
+        other = next((o.name for o in E.domains.values() if s.src == ("ext", o.clk)), None)
+        E.err("BD-CLK-02", s.where, f"{ref_text(s.dst)} is wired to {ref_text(s.src)}"
+              + (f" (the clock of domain {other})" if other else "") + f", but {b.name} is in domain {d.name} (clock {d.clk})",
+              f"put {b.name} in domain {other}" if other else "leave the clock unconnected; clock automation ties it to the domain's clock")
+
+
+def _linked(E: Elab) -> set:
+    """(box, interface) of every bus interface on a link, an interconnect or a hierarchy export."""
+    out = set()
+    for L in E.links:
+        out.add(L.master)
+        out.add(L.slave)
+    for (inst, ifc) in E.exports.values():
+        out.add((inst, ifc))
+    return out
 
 
 def _seg_src(s: Seg) -> str:

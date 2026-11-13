@@ -15,7 +15,12 @@ What is checked (the expected values come from the address map and the slave log
   itself, with read data 0, and no slave sees them;
 - every transfer completes (no deadlock) and no link breaks an AXI4-Lite rule (the checkers' sticky flags);
 - with several masters and slaves, transfers to different slaves do overlap in time (the crossbar is not a shared bus),
-  and under full contention for one slave the round-robin arbiter serves every master equally (counts within one).
+  and under full contention for one slave the round-robin arbiter serves every master equally (counts within one),
+  for reads and for writes;
+- a reset with a write and a read in flight leaves no VALID during the reset, no stale response or request after it,
+  and the next write completes.
+The write-fairness and reset tests came from the independent review of the crossbar (each caught a mutant the other
+tests missed: a stuck write arbiter, and busy flags left out of the reset).
 
 Configuration comes in XBAR_CFG (JSON), set by test_axil_xbar_rtl.py.
 """
@@ -353,3 +358,127 @@ async def xbar_fairness(dut):
     assert min(served) > 0
     assert int(dut.chk_any.value) == 0
     dut._log.info(f"served per master: {served}")
+
+
+# ---------------------------------------------------------------- from the independent review
+async def _quiet_setup(dut):
+    cocotb.start_soon(Clock(dut.clk, 10, unit="ns").start())
+    for name in ("s_axil_awaddr", "s_axil_awprot", "s_axil_awvalid", "s_axil_wdata", "s_axil_wstrb", "s_axil_wvalid",
+                 "s_axil_bready", "s_axil_araddr", "s_axil_arprot", "s_axil_arvalid", "s_axil_rready",
+                 "m_axil_awready", "m_axil_wready", "m_axil_bresp", "m_axil_bvalid", "m_axil_arready", "m_axil_rdata",
+                 "m_axil_rresp", "m_axil_rvalid"):
+        getattr(dut, name).value = 0
+    dut.rst.value = 1
+    await ClockCycles(dut.clk, 4)
+    await FallingEdge(dut.clk)
+    dut.rst.value = 0
+    await FallingEdge(dut.clk)
+
+
+@cocotb.test()
+async def write_fairness(dut):
+    """Every master hammers slave 0 with back-to-back writes (AW and W together); slave 0 answers at once."""
+    c = cfg()
+    N_M, N_S, AW = c["n_m"], c["n_s"], c["addr_w"]
+    await _quiet_setup(dut)
+    dut.s_axil_awaddr.value = sum(c["bases"][0] << (m * AW) for m in range(N_M))
+    dut.s_axil_bready.value = (1 << N_M) - 1
+    dut.m_axil_awready.value = (1 << N_S) - 1
+    dut.m_axil_wready.value = (1 << N_S) - 1
+    dut.s_axil_wstrb.value = (1 << (4 * N_M)) - 1
+    served = [0] * N_M
+    aw_pend = 0
+    w_pend = 0
+    bpend = 0
+    for _ in range(80 * N_M):
+        dut.s_axil_awvalid.value = (1 << N_M) - 1
+        dut.s_axil_wvalid.value = (1 << N_M) - 1
+        dut.m_axil_bvalid.value = bpend
+        await ReadOnly()
+        bv = int(dut.s_axil_bvalid.value)
+        mawv, mwv = int(dut.m_axil_awvalid.value), int(dut.m_axil_wvalid.value)
+        for m in range(N_M):
+            served[m] += (bv >> m) & 1
+        aw_pend |= mawv
+        w_pend |= mwv
+        nb = aw_pend & w_pend & ~bpend
+        bpend = nb
+        aw_pend &= ~nb
+        w_pend &= ~nb
+        await FallingEdge(dut.clk)
+    dut._log.info(f"write served per master: {served}")
+    assert max(served) - min(served) <= 1, f"write round robin unequal: {served}"
+    assert min(served) > 0
+    assert int(dut.chk_any.value) == 0
+
+
+@cocotb.test()
+async def reset_mid_transfer(dut):
+    """Writes and reads in flight to stalled slaves; reset; then the crossbar must start clean: no VALID during reset,
+    no stale B or R afterwards, and a new transfer completes."""
+    c = cfg()
+    N_M, N_S, AW = c["n_m"], c["n_s"], c["addr_w"]
+    await _quiet_setup(dut)
+    # master 0 writes slave 0 and reads slave 1 (or slave 0); slaves accept the address but never answer
+    tgt_r = 1 if N_S > 1 else 0
+    dut.s_axil_awaddr.value = c["bases"][0]
+    dut.s_axil_araddr.value = c["bases"][tgt_r]
+    dut.s_axil_wstrb.value = 0xF
+    dut.s_axil_awvalid.value = 1
+    dut.s_axil_wvalid.value = 1
+    dut.s_axil_arvalid.value = 1
+    dut.m_axil_awready.value = (1 << N_S) - 1
+    dut.m_axil_wready.value = (1 << N_S) - 1
+    dut.m_axil_arready.value = (1 << N_S) - 1
+    dut.s_axil_bready.value = 1
+    dut.s_axil_rready.value = 1
+    for _ in range(3):
+        await ReadOnly()
+        if int(dut.s_axil_awready.value) & 1:
+            pass
+        await FallingEdge(dut.clk)
+    dut.s_axil_awvalid.value = 0
+    dut.s_axil_wvalid.value = 0
+    dut.s_axil_arvalid.value = 0
+    for _ in range(4):
+        await FallingEdge(dut.clk)
+    # reset with both transfers outstanding at the slaves
+    dut.rst.value = 1
+    for _ in range(3):
+        await FallingEdge(dut.clk)
+        await ReadOnly()
+        assert int(dut.m_axil_awvalid.value) == 0 and int(dut.m_axil_wvalid.value) == 0 and int(dut.m_axil_arvalid.value) == 0
+        assert int(dut.s_axil_bvalid.value) == 0 and int(dut.s_axil_rvalid.value) == 0
+    await FallingEdge(dut.clk)
+    dut.rst.value = 0
+    # the old slaves' late responses must not reach the master (slaves were reset too: they never answer)
+    for _ in range(10):
+        await FallingEdge(dut.clk)
+        await ReadOnly()
+        assert int(dut.s_axil_bvalid.value) == 0, "stale B after reset"
+        assert int(dut.s_axil_rvalid.value) == 0, "stale R after reset"
+        assert int(dut.m_axil_awvalid.value) == 0 and int(dut.m_axil_arvalid.value) == 0, "stale request after reset"
+    await FallingEdge(dut.clk)
+    # a new write after reset completes with OKAY
+    dut.s_axil_awvalid.value = 1
+    dut.s_axil_wvalid.value = 1
+    done = False
+    got_aw = got_w = False
+    for _ in range(20):
+        await ReadOnly()
+        acc = int(dut.s_axil_awready.value) & 1
+        maw, mw = int(dut.m_axil_awvalid.value) & 1, int(dut.m_axil_wvalid.value) & 1
+        b = int(dut.s_axil_bvalid.value) & 1
+        await FallingEdge(dut.clk)
+        if acc:
+            dut.s_axil_awvalid.value = 0
+            dut.s_axil_wvalid.value = 0
+        got_aw |= bool(maw)
+        got_w |= bool(mw)
+        dut.m_axil_bvalid.value = 1 if (got_aw and got_w) else 0
+        if b:
+            done = True
+            break
+    assert done, "a write after reset did not complete"
+    dut.m_axil_bvalid.value = 0
+    await ClockCycles(dut.clk, 3)

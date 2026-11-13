@@ -1,11 +1,15 @@
-# bd_export_probe.tcl (brief 65A, interop check only): can this Vivado install make a small IP Integrator block design
+# bd_export_probe.tcl (interop check only): can this Vivado install make a small IP Integrator block design
 # and export it with write_bd_tcl and write_bd_layout? Writes <out>/probe.json with each step's result and whether each
 # file was written (write_bd_layout only warns when it cannot draw). Run it twice: in batch mode, and in GUI mode on a
 # virtual display (xvfb-run), which write_bd_layout needs:
 #   vivado -mode batch -source flow/blockdesign/vivado/bd_export_probe.tcl -tclargs <out dir> batch
 #   xvfb-run -a vivado -mode gui -source flow/blockdesign/vivado/bd_export_probe.tcl -tclargs <out dir> gui
+# A third argument, noregen, leaves out regenerate_bd_layout (to see whether write_bd_layout needs it); the record is
+# then probe_<mode>_noregen.json and the files probe_*_<mode>_noregen.*.
 set out [lindex $argv 0]
 set mode [lindex $argv 1]
+set regen [expr {[lindex $argv 2] ne "noregen"}]
+if {!$regen} { set mode "${mode}_noregen" }
 file mkdir $out
 set_param general.maxThreads 1
 set res {}
@@ -37,7 +41,7 @@ step add_cells {
 step assign_address { assign_bd_address }
 step validate_bd_design { validate_bd_design }
 step write_bd_tcl { write_bd_tcl -force $out/probe_bd_$mode.tcl }
-step regenerate_bd_layout { regenerate_bd_layout }
+if {$regen} { step regenerate_bd_layout { regenerate_bd_layout } }
 step write_bd_layout_svg { write_bd_layout -force -format svg $out/probe_layout_$mode.svg }
 step write_bd_layout_pdf { write_bd_layout -force -format pdf $out/probe_layout_$mode.pdf }
 set files {}
@@ -47,4 +51,4 @@ foreach f [list probe_bd_$mode.tcl probe_layout_$mode.svg probe_layout_$mode.pdf
 set f [open $out/probe_$mode.json w]
 puts $f "\{\"tool\": \"[version -short]\", \"mode\": \"$mode\", \"steps\": \{[join $res {, }]\}, \"file_bytes\": \{[join $files {, }]\}\}"
 close $f
-if {$mode eq "gui"} { exit }
+if {[string match gui* $mode]} { exit }

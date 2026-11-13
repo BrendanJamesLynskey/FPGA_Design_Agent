@@ -1,6 +1,6 @@
 """ip_lib/axil_xbar under cocotb + Icarus Verilog 12: random traffic from Python masters to Python slaves through the
 crossbar, brief 59's AXI4-Lite checker on every link, at several points of the parameter space; round-robin
-fairness; and the elaboration guards (a misaligned or overlapping map, out-of-range counts). HIL_RTL_AXIL_XBAR points
+read and write fairness; a reset in the middle of transfers; and the guards (a misaligned or overlapping map, out-of-range counts). HIL_RTL_AXIL_XBAR points
 the tests at a seeded-fault copy of rtl/ (hil/ip_faults.py)."""
 from __future__ import annotations
 
@@ -94,6 +94,18 @@ def test_traffic(point, traffic, seed):
 @pytest.mark.parametrize("point", ["m2s3_holes", "m3s4", "m4s2_aw16"])
 def test_fairness(point):
     _run(f"{point}_fair", POINTS[point], "xbar_fairness", {"seed": 0})
+
+
+@pytest.mark.parametrize("point", ["m2s3_holes", "m3s4", "m4s2_aw16"])
+def test_write_fairness(point):
+    """Every master writes one slave back to back: the write arbiter serves them equally (counts within one)."""
+    _run(f"{point}_wfair", POINTS[point], "write_fairness", {})
+
+
+@pytest.mark.parametrize("point", ["m1s1", "m2s3_holes"])
+def test_reset_mid_transfer(point):
+    """A reset with a write and a read in flight: nothing stale afterwards, and the next write completes."""
+    _run(f"{point}_rst", POINTS[point], "reset_mid_transfer", {})
 
 
 GUARDS = [

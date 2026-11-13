@@ -982,7 +982,7 @@
     });
     show(2);
   });
-  /* block-design viewer (brief 65A): level tabs and the per-block drawer, from the graph in a data block */
+  /* block-design viewer: level tabs and the per-block details panel, from the graph in a data block */
   function mountBlockDesign(sec) {
     var g = D[sec.dataset.key]; if (!g) return;
     var drawer = sec.querySelector(".bddrawer"), blocks = {};
@@ -996,15 +996,29 @@
       rows.forEach(function (r) { var tr = el("tr"); r.forEach(function (c) { tr.appendChild(el("td", {text: fmt(c)})); }); tb.appendChild(tr); });
       return el("div", {"class": "tablewrap", tabindex: "0"}, [t]);
     }
+    function ptable(rows) {
+      var t = el("table", {"class": "bdparams"}), th = el("tr"); ["Name", "Value", "Where the value came from"].forEach(function (h) { th.appendChild(el("th", {text: h})); });
+      t.appendChild(el("thead", {}, [th])); var tb = el("tbody"); t.appendChild(tb);
+      rows.forEach(function (p) { var tr = el("tr"); tr.appendChild(el("td", {"class": "nm", text: p.name})); tr.appendChild(el("td", {"class": "vl", text: fmt(p.shown != null ? p.shown : p.value)})); tr.appendChild(el("td", {"class": "og", text: p.origin})); tb.appendChild(tr); });
+      return el("div", {"class": "tablewrap", tabindex: "0"}, [t]);
+    }
+    var sheet = function () { return window.matchMedia && window.matchMedia("(max-width: 640px)").matches; };
+    var beside = function () { return window.matchMedia && window.matchMedia("(min-width: 1900px)").matches; };
+    var cur = null;
     function showLevel(k) {
       sec.querySelectorAll(".bdlevel").forEach(function (d) { d.hidden = d.dataset.level !== k; });
       sec.querySelectorAll(".bdtab").forEach(function (t) { t.setAttribute("aria-pressed", t.dataset.level === k ? "true" : "false"); });
     }
     sec.querySelectorAll(".bdtab").forEach(function (t) { t.addEventListener("click", function () { showLevel(t.dataset.level); }); });
-    function show(id) {
+    function show(id, opt) {
       var b = blocks[id]; if (!b) return;
+      opt = opt || {}; cur = id;
+      if (opt.open && sheet()) drawer.classList.add("open");
       sec.querySelectorAll(".bdblk").forEach(function (x) { x.classList.toggle("sel", x.dataset.id === id); x.setAttribute("aria-pressed", x.dataset.id === id ? "true" : "false"); });
       drawer.textContent = "";
+      var back = el("button", {type: "button", "class": "bdback", text: "Back to diagram"});
+      back.addEventListener("click", function () { drawer.classList.remove("open"); focusBlock(id); });
+      drawer.appendChild(back);
       var kind = {block: "block", hierarchy: "hierarchy", interconnect: "generated interconnect", reset: "generated reset synchroniser"}[b.kind] || b.kind;
       drawer.appendChild(el("h3", {text: b.id + " "}, [el("span", {"class": "tag", text: kind})]));
       if (b.summary) drawer.appendChild(el("p", {text: b.summary}));
@@ -1020,7 +1034,7 @@
         ob.addEventListener("click", function () { showLevel(b.id); var f = sec.querySelector('.bdlevel[data-level="' + b.id + '"]'); if (f) f.scrollIntoView({block: "nearest"}); });
         drawer.appendChild(ob);
       }
-      if (b.params && b.params.length) { drawer.appendChild(el("h4", {text: "Parameters"})); drawer.appendChild(tbl(["Name", "Value", "Where the value came from"], b.params.map(function (p) { return [p.name, p.value, p.origin]; }))); }
+      if (b.params && b.params.length) { drawer.appendChild(el("h4", {text: "Parameters"})); drawer.appendChild(ptable(b.params)); }
       if (b.ifaces && b.ifaces.length) { drawer.appendChild(el("h4", {text: "Bus interfaces"})); drawer.appendChild(tbl(["Name", "Type", "Role", "Data bits", "Address bits"], b.ifaces.map(function (i) { return [i.name, i.kind, i.role, i.data_w || "", i.addr_w || ""]; }))); }
       if (b.ports && b.ports.length) { drawer.appendChild(el("h4", {text: "Other ports"})); drawer.appendChild(tbl(["Name", "Direction", "Bits", "Kind"], b.ports.map(function (p) { return [p.name + (p.async_ok ? " (own synchroniser)" : ""), p.dir, p.width, p.kind]; }))); }
       var rg = (g.address_map.ranges || []).filter(function (r) { return r.slave.split(".")[0] === id; });
@@ -1046,13 +1060,29 @@
           ["Worst setup slack", bb.wns_ns == null ? "no timed path ends inside it" : (bb.wns_ns >= 0 ? "+" : "") + bb.wns_ns.toFixed(3) + " ns"],
           ["Paths ending inside", bb.endpoints == null ? "" : bb.endpoints]]));
       }
-      if (window.matchMedia && window.matchMedia("(max-width: 819px)").matches) drawer.scrollIntoView({block: "nearest"});
+      if (opt.open && !sheet() && !beside() && drawer.getBoundingClientRect().top > window.innerHeight * 0.85) drawer.scrollIntoView({block: "nearest"});
+      else if (opt.open && sheet()) drawer.scrollTop = 0;
     }
+    function focusBlock(id) { var x = sec.querySelector('.bdblk[data-id="' + id + '"]'); if (x && x.getBoundingClientRect().width) x.focus(); }
+    function visibleBlocks() { return Array.prototype.filter.call(sec.querySelectorAll(".bdblk"), function (x) { return x.getBoundingClientRect().width > 0; }); }
+    var first = g.levels[""].blocks.filter(function (b) { return b.kind === "interconnect"; })[0] || g.levels[""].blocks[0];
     sec.querySelectorAll(".bdblk").forEach(function (x) {
       x.setAttribute("aria-pressed", "false");
-      x.addEventListener("click", function () { show(x.dataset.id); });
-      x.addEventListener("keydown", function (ev) { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); show(x.dataset.id); } });
+      x.addEventListener("click", function () { show(x.dataset.id, {open: true}); });
+      x.addEventListener("keydown", function (ev) {
+        if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); show(x.dataset.id, {open: true}); return; }
+        var d = {ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1}[ev.key];
+        if (!d) return;
+        var vs = visibleBlocks(), i = vs.indexOf(x); if (i < 0) return;
+        ev.preventDefault(); var n = vs[(i + d + vs.length) % vs.length]; n.focus(); show(n.dataset.id, {});
+      });
     });
+    sec.addEventListener("keydown", function (ev) {
+      if (ev.key !== "Escape") return;
+      if (sheet()) { if (drawer.classList.contains("open")) { drawer.classList.remove("open"); if (cur) focusBlock(cur); } }
+      else if (first && cur !== first.id) { showLevel(""); show(first.id, {}); focusBlock(first.id); }
+    });
+    if (first) show(first.id, {});
   }
   document.querySelectorAll("section.bd[data-key]").forEach(mountBlockDesign);
   mountDev(); mountEval1();

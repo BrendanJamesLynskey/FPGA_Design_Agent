@@ -45,6 +45,28 @@ def _cost(b: M.Box, part: str) -> dict | None:
     return out
 
 
+def _shown(E: M.Elab, name: str, v, origin: str):
+    """How a parameter value is written for the reader: hex stays hex when the design file gives it as hex, and the
+    packed values the address editor makes are shown in hex too. ``None`` means the plain value is fine."""
+    import re
+    if isinstance(v, bool) or not isinstance(v, int):
+        return None
+    if origin == "the address editor":
+        return f"0x{v:X}"
+    try:
+        txt = E.path.read_text()
+    except OSError:
+        return None
+    m = re.search(rf"\b{re.escape(name)}\s*:\s*(0[xX][0-9A-Fa-f_]+)\b", txt)
+    return m.group(1) if m and int(m.group(1).replace("_", ""), 16) == v else None
+
+
+def _slice(name: str, bits: list | None) -> str:
+    if not bits:
+        return name
+    return f"{name} bit {bits[0]}" if bits[0] == bits[1] else f"{name} bits {bits[0]}:{bits[1]}"
+
+
 def _block(E: M.Elab, b: M.Box, prefix: str, rtl_prefix: str, part: str, dom_freq: dict) -> dict:
     kind = {"component": "block", "wrapped": "block", "hierarchy": "hierarchy", "interconnect": "interconnect",
             "reset_sync": "reset"}[b.kind]
@@ -55,7 +77,8 @@ def _block(E: M.Elab, b: M.Box, prefix: str, rtl_prefix: str, part: str, dom_fre
            "variant": b.variant, "variants": b.comp.variants if b.comp else [], "module": b.module,
            "rtl_path": f"{rtl_prefix}u_{b.name}", "domain": b.domain, "freq_mhz": dom_freq.get(b.domain),
            "generated": b.generated, "note": b.note,
-           "params": [{"name": k, "value": (v if isinstance(v, (int, str)) else str(v)), "origin": b.origin.get(k, "default")}
+           "params": [{"name": k, "value": (v if isinstance(v, (int, str)) else str(v)), "origin": b.origin.get(k, "default"),
+                       **({"shown": sh} if (sh := _shown(E, k, v, b.origin.get(k, "default"))) else {})}
                       for k, v in b.params.items() if not (isinstance(v, str) and v.startswith(("'", "{")))],
            "ports": [{"name": p.name, "dir": p.dir, "width": p.width, "kind": p.kind,
                       **({"async_ok": True} if p.async_ok else {})} for p in b.ports.values()
@@ -102,7 +125,8 @@ def _level(E: M.Elab, prefix: str, rtl_prefix: str, part: str, dom_freq: dict, o
                              **({"invert": True} if s.invert else {})})
         e["width"] += s.width
     for e in agg.values():
-        e["label"] = "; ".join(f"{x['from']} -> {x['to']}" for x in e["signals"]) + f" ({e['width']} bit{'s' if e['width'] > 1 else ''})"
+        e["label"] = ("; ".join(f"{_slice(x['from'], x.get('bits'))}{' (inverted)' if x.get('invert') else ''} -> {_slice(x['to'], x.get('to_bits'))}"
+                              for x in e["signals"]) + f" ({e['width']} bit{'s' if e['width'] > 1 else ''})")
         links.append(e)
     ports = [{"name": p.name, "dir": p.dir, "width": p.width, "kind": p.kind,
               **({"async": True} if E.port_meta.get(p.name, {}).get("async") else {})} for p in E.ports.values()]

@@ -1,4 +1,4 @@
-// axil_xbar.sv: AXI4-Lite crossbar, N_M masters to N_S slaves (brief 65A).
+// axil_xbar.sv: AXI4-Lite crossbar, N_M masters to N_S slaves.
 //
 // Each slave has its own write arbiter and its own read arbiter (round robin), so a write and a read, or transfers
 // from different masters to different slaves, proceed at the same time. Each master has at most one write and one
@@ -7,8 +7,10 @@
 // read data 0), without touching any slave.
 //
 // Address map: slave s owns the 2**S_BITS[s] bytes from S_BASE[s] (S_BASE[s] a multiple of the size). The block
-// design generator (flow/blockdesign) assigns the map and checks it; the elaboration guards below refuse a
-// misaligned or overlapping map as well.
+// design generator (flow/blockdesign) assigns the map and checks it (BD-ADDR-01, BD-ADDR-03) before it writes the
+// parameters. The guards below repeat those checks for anyone who instantiates the crossbar by hand, but they are
+// `initial` blocks: they stop a simulation (Icarus, Verilator --binary) at time 0, and synthesis ignores them, so a
+// bad map given to Vivado directly is not refused there.
 //
 // Timing, per transfer: write accepted (AWREADY and WREADY together) in the cycle both AWVALID and WVALID are seen
 // and the target is free; forwarded from the next cycle; the slave's B is registered and handed back one cycle after
@@ -72,7 +74,7 @@ module axil_xbar #(
     localparam logic [1:0] ST_IDLE = 2'd0, ST_FWD = 2'd1, ST_RESP = 2'd2;
     localparam logic [1:0] DECERR = 2'b11;
 
-    // ---------------------------------------------------------------- elaboration guards
+    // ---------------------------------------------------------------- guards (simulation only; see the header)
     initial begin
         if (N_M < 1 || N_M > 16) $error("axil_xbar: N_M %0d outside 1..16", N_M);
         if (N_S < 1 || N_S > 32) $error("axil_xbar: N_S %0d outside 1..32", N_S);

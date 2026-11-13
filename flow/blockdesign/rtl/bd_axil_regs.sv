@@ -1,4 +1,4 @@
-// bd_axil_regs.sv: a generic AXI4-Lite register bank (brief 65A block-design support). The generator wraps a block
+// bd_axil_regs.sv: a generic AXI4-Lite register bank (block-design support). The generator wraps a block
 // that has plain ports in it: each control register drives inputs of the block, each status register reads outputs.
 //   word 0 .. N_RW-1            control registers, read/write, reset to RW_RESET; byte strobes honoured
 //   word N_RW .. N_RW+N_RO-1    status registers, read only (a write answers SLVERR)
@@ -36,6 +36,7 @@ module bd_axil_regs #(
     output logic [N_RW-1:0]    rw_wr,
     input  logic [N_RO*32-1:0] ro_d
 );
+    // Parameter guard: an initial block, so it stops a simulation; synthesis ignores it (the generator checks first).
     initial begin
         if (N_RW < 1 || N_RW > 64) $error("bd_axil_regs: N_RW %0d outside 1..64", N_RW);
         if (N_RO < 1 || N_RO > 64) $error("bd_axil_regs: N_RO %0d outside 1..64", N_RO);

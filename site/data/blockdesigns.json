@@ -164,11 +164,12 @@
       "registers": [
        {
         "access": "RW",
-        "doc": "the logic_analyser register window: word w at offset 4 x w (see ip_lib/logic_analyser)",
+        "doc": "the logic_analyser register window: word w (0 to 127) at offset 4 x w, 0x000 to 0x1FC (see ip_lib/logic_analyser); 0x200 to the end of the range answer SLVERR",
         "fields": [],
         "name": "WINDOW",
         "offset": 0,
-        "reset": null
+        "reset": null,
+        "words": 128
        }
       ],
       "size": 4096,
@@ -180,17 +181,24 @@
    },
    "board": "Digilent Nexys A7-100T",
    "build": {
-    "build_id": "cf30a039",
+    "build_id": "ad946e1a",
     "first_failed_stage": null,
     "gates_pass": true,
     "tool": "2026.1",
-    "wns_ns": 2.076
+    "wns_ns": 2.04
    },
    "check": {
+    "edges_expected": 7,
+    "edges_matched": 6,
+    "edges_not_visible": [
+     "tone/dds -> tone/fd (sample bit 15 (inverted) -> sig (1 bit)): through logic (inverted), not a direct net"
+    ],
     "expected": 14,
     "matched": 14,
     "mismatches": [],
-    "pass": true
+    "netlist_required": 14,
+    "pass": true,
+    "ranges_checked": 3
    },
    "crossings": [
     {
@@ -250,11 +258,11 @@
         "dsp": 0,
         "endpoints": 738,
         "ff": 246,
-        "lut": 386,
+        "lut": 384,
         "lutram": 0,
         "source": "report_utilization -hierarchical",
         "srl": 0,
-        "wns_ns": 3.149
+        "wns_ns": 3.098
        },
        "component": "test_shell",
        "component_top": "fpga_shell",
@@ -290,6 +298,7 @@
         {
          "name": "DESIGN_ID",
          "origin": "given",
+         "shown": "0x42363541",
          "value": 1110848833
         },
         {
@@ -341,7 +350,7 @@
         "lutram": 0,
         "source": "report_utilization -hierarchical",
         "srl": 0,
-        "wns_ns": 2.551
+        "wns_ns": 3.522
        },
        "component": "bd_win_axil_master",
        "component_top": "bd_win_axil_master",
@@ -403,11 +412,11 @@
         "dsp": 0,
         "endpoints": 1390,
         "ff": 440,
-        "lut": 235,
+        "lut": 234,
         "lutram": 0,
         "source": "report_utilization -hierarchical",
         "srl": 0,
-        "wns_ns": 2.261
+        "wns_ns": 2.274
        },
        "component": "tone",
        "component_top": null,
@@ -473,13 +482,13 @@
        "build": {
         "bram": 0.0,
         "dsp": 0,
-        "endpoints": 688,
-        "ff": 200,
-        "lut": 287,
+        "endpoints": 691,
+        "ff": 201,
+        "lut": 291,
         "lutram": 88,
         "source": "report_utilization -hierarchical",
         "srl": 0,
-        "wns_ns": 2.076
+        "wns_ns": 2.04
        },
        "component": "logic_analyser",
        "component_top": "logic_analyser",
@@ -564,11 +573,11 @@
         "dsp": 0,
         "endpoints": 315,
         "ff": 105,
-        "lut": 104,
+        "lut": 111,
         "lutram": 0,
         "source": "report_utilization -hierarchical",
         "srl": 0,
-        "wns_ns": 3.151
+        "wns_ns": 3.116
        },
        "component": "axil_xbar",
        "component_top": "axil_xbar",
@@ -638,11 +647,13 @@
         {
          "name": "S_BASE",
          "origin": "the address editor",
+         "shown": "0x400100004000100040000000",
          "value": 19808249558997402639247867904
         },
         {
          "name": "S_BITS",
          "origin": "the address editor",
+         "shown": "0xC0C0C",
          "value": 789516
         }
        ],
@@ -677,7 +688,7 @@
         "dsp": 0,
         "endpoints": 4,
         "ff": 2,
-        "lut": 5,
+        "lut": 6,
         "lutram": null,
         "source": "cell count",
         "srl": null,
@@ -842,7 +853,7 @@
        "from": "tone",
        "id": "tone->LED",
        "kind": "conduit",
-       "label": "sample -> LED (8 bits)",
+       "label": "sample bits 15:8 -> LED bits 15:8 (8 bits)",
        "signals": [
         {
          "bits": [
@@ -865,7 +876,7 @@
        "from": "const",
        "id": "const->LED",
        "kind": "conduit",
-       "label": "0 -> LED (8 bits)",
+       "label": "0 -> LED bits 7:0 (8 bits)",
        "signals": [
         {
          "from": "0",
@@ -929,7 +940,7 @@
         "lutram": 0,
         "source": "report_utilization -hierarchical",
         "srl": 0,
-        "wns_ns": 2.261
+        "wns_ns": 2.803
        },
        "component": "dds_awg",
        "component_top": "dds_awg",
@@ -1076,11 +1087,11 @@
         "dsp": 0,
         "endpoints": 657,
         "ff": 219,
-        "lut": 38,
+        "lut": 37,
         "lutram": 0,
         "source": "report_utilization -hierarchical",
         "srl": 0,
-        "wns_ns": 2.263
+        "wns_ns": 2.274
        },
        "component": "freq_duty_counter",
        "component_top": "freq_duty_counter",
@@ -1213,7 +1224,7 @@
        "from": "tone/dds",
        "id": "tone/tone/dds->tone/fd",
        "kind": "conduit",
-       "label": "sample -> sig (1 bit)",
+       "label": "sample bit 15 (inverted) -> sig (1 bit)",
        "signals": [
         {
          "bits": [

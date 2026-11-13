@@ -446,12 +446,12 @@ def build(outdir: Path, d, check_numbers=True):
             page_data[fn] = {"shared": {k: v for k, v in shared.items() if k != "catalogue_index"}, "task": T}
     if str(ROOT) not in sys.path:
         sys.path.insert(0, str(ROOT))
-    from flow.blockdesign import viewer as bdviewer        # brief 65A: one page per block design, drawn by the viewer
+    from flow.blockdesign import viewer as bdviewer        # one page per block design, drawn by the viewer
     for g in d.get("blockdesigns", {}).get("designs", []):
         fn = f'blockdesign/{g["design"]}.html'
         pd = dict(shared); pd["bd_graph"] = g
         body = (f'<p class="eyebrow">Block design</p><h1>{html.escape(g["design"])}</h1>' + bdviewer.body(g, "bd_graph"))
-        desc = f'The block design {g["design"]}: its blocks, buses, clock domains, crossings and address map, drawn from the design file.'
+        desc = f'The block design {g["design"]}: {g["summary"]} Its blocks, buses, clock domains, crossings and address map, drawn from the design file.'
         pages[fn] = layout("how.html", f'Block design {g["design"]}', desc, body, ["bd_graph"], pd, css, js, prefix="../", current="how.html",
                            pager='<div class="pager"><a href="../how.html#block-designs">&larr; How it works</a><span></span></div>')
         page_data[fn] = {"shared": shared, "graph": g}

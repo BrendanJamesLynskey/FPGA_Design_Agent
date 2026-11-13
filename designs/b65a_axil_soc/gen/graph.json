@@ -49,7 +49,8 @@
       {
        "name": "DESIGN_ID",
        "value": 1110848833,
-       "origin": "given"
+       "origin": "given",
+       "shown": "0x42363541"
       },
       {
        "name": "BUILD_STAMP",
@@ -328,12 +329,14 @@
       {
        "name": "S_BASE",
        "value": 19808249558997402639247867904,
-       "origin": "the address editor"
+       "origin": "the address editor",
+       "shown": "0x400100004000100040000000"
       },
       {
        "name": "S_BITS",
        "value": 789516,
-       "origin": "the address editor"
+       "origin": "the address editor",
+       "shown": "0xC0C0C"
       }
      ],
      "ports": [
@@ -571,7 +574,7 @@
       }
      ],
      "width": 8,
-     "label": "sample -> LED (8 bits)"
+     "label": "sample bits 15:8 -> LED bits 15:8 (8 bits)"
     },
     {
      "id": "const->LED",
@@ -590,7 +593,7 @@
       }
      ],
      "width": 8,
-     "label": "0 -> LED (8 bits)"
+     "label": "0 -> LED bits 7:0 (8 bits)"
     }
    ],
    "ports": [
@@ -908,7 +911,7 @@
       }
      ],
      "width": 1,
-     "label": "sample -> sig (1 bit)"
+     "label": "sample bit 15 (inverted) -> sig (1 bit)"
     },
     {
      "id": "tone/tone/dds->tick",
@@ -1145,7 +1148,8 @@
       "access": "RW",
       "reset": null,
       "fields": [],
-      "doc": "the logic_analyser register window: word w at offset 4 x w (see ip_lib/logic_analyser)"
+      "words": 128,
+      "doc": "the logic_analyser register window: word w (0 to 127) at offset 4 x w, 0x000 to 0x1FC (see ip_lib/logic_analyser); 0x200 to the end of the range answer SLVERR"
      }
     ]
    }

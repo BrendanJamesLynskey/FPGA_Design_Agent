@@ -2,5 +2,6 @@
 
 ## 0.1.0 (2026-11-13)
 
-- First version (brief 65A): N_M x N_S AXI4-Lite crossbar for the block-design generator's connection automation;
-  simulated with brief 59's AXI4-Lite checker on every link; see README.md.
+- First version: N_M x N_S AXI4-Lite crossbar for the block-design generator's connection automation; simulated with
+  the AXI4-Lite protocol checker (axi_tx/rtl/axil_checker.sv) on every link; write fairness, a reset with transfers in
+  flight and two more seeded faults added after an independent review; see README.md.

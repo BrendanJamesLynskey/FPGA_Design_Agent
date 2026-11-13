@@ -1,4 +1,4 @@
-// bd_win_axil_master.sv: the test shell's register window as an AXI4-Lite master (brief 65A block-design support).
+// bd_win_axil_master.sv: the test shell's register window as an AXI4-Lite master (block-design support).
 // The host reaches every slave of a block design through five window registers; one AXI4-Lite transfer at a time:
 //   0x00 ADDR   RW  byte address of the next transfer
 //   0x01 WDATA  RW  write data
@@ -39,6 +39,7 @@ module bd_win_axil_master #(
     input  logic              m_axil_rvalid,
     output logic              m_axil_rready
 );
+    // Parameter guard: an initial block, so it stops a simulation; synthesis ignores it (the generator checks first).
     initial if (ADDR_W < 12 || ADDR_W > 32) $error("bd_win_axil_master: ADDR_W %0d outside 12..32", ADDR_W);
 
     logic [31:0] addr, wdata, rdata;

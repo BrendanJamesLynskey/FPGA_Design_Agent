@@ -1,4 +1,4 @@
-# Seeded faults (brief 65A); run by hil/ip_faults.py: each must make the block's tests fail.
+# Seeded faults; run by hil/ip_faults.py: each must make the block's tests fail. A fault with edits: applies them all.
 runner: hil/ip_faults.py
 faults:
 - name: decode_double_range
@@ -57,3 +57,20 @@ faults:
   class: value
   why: byte strobes are lost, so a partial write becomes a full-word write
   test: ip_lib/axil_xbar/tb/test_axil_xbar_rtl.py -k test_traffic and busy
+- name: write_round_robin_stuck
+  file: axil_xbar.sv
+  old: if (ws_g[s]) begin ws_busy[s] <= 1'b1; ws_own[s] <= ws_gm[s]; ws_rr[s] <= ws_gm[s]; end
+  new: if (ws_g[s]) begin ws_busy[s] <= 1'b1; ws_own[s] <= ws_gm[s]; end
+  class: arbitration
+  why: the write arbiter never moves on, so the lowest-numbered master wins every write contest (from the review)
+  test: ip_lib/axil_xbar/tb/test_axil_xbar_rtl.py -k test_write_fairness
+- name: busy_not_reset
+  file: axil_xbar.sv
+  edits:
+  - old: "ws_busy[s] <= 1'b0; rs_busy[s] <= 1'b0;\n"
+    new: "\n"
+  - old: "    logic              ws_busy [N_S], rs_busy [N_S];"
+    new: "    logic              ws_busy [N_S], rs_busy [N_S];\n    initial for (int i = 0; i < N_S; i++) begin ws_busy[i] = 1'b0; rs_busy[i] = 1'b0; end"
+  class: reset
+  why: the slaves' busy flags start at 0 at power-up but a reset does not clear them, so a reset with a transfer in flight leaves a stale request (from the review)
+  test: ip_lib/axil_xbar/tb/test_axil_xbar_rtl.py -k test_reset_mid_transfer

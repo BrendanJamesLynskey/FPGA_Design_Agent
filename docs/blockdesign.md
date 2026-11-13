@@ -14,6 +14,7 @@ python3 -m flow.blockdesign validate designs/b65a_axil_soc     # the checks; exi
 python3 -m flow.blockdesign generate designs/b65a_axil_soc     # gen/ and build.yaml; gen/viewer.html to open in a browser
 python3 -m flow.blockdesign check designs/b65a_axil_soc        # exit 1 if the committed gen/ differs from the generator
 python3 -m pytest flow/blockdesign/tests                       # the adversarial tests, one or more per rule
+python3 -m flow.blockdesign <command> --help                   # what each command does, with an example
 ```
 
 ## Words used here
@@ -81,18 +82,20 @@ top_params: [shell.CLKS_PER_BIT, tone.fd.GATE_CLKS]             # raised to the 
 ## Validation (IP Integrator's validate, and more)
 
 Every rule has its own code, a message that names the culprit and, where there is one, the fix. The tests in
-[test_65a_blockdesign.py](../flow/blockdesign/tests/test_65a_blockdesign.py) build an adversarial design for each.
+[test_65a_blockdesign.py](../flow/blockdesign/tests/test_65a_blockdesign.py) build an adversarial design for each, and
+[test_65a_adversarial.py](../flow/blockdesign/tests/test_65a_adversarial.py) holds the designs an independent review found
+that an earlier version got wrong.
 
 | Code | Severity | What |
 |---|---|---|
 | BD-SCHEMA | error | the file breaks the schema (the path of the bad key is given) |
 | BD-COMP-01, -02 | error | unknown component; unknown variant |
-| BD-PARAM-01 | error | unknown parameter, or a value outside the entry's declared range or set, including one reached by propagation |
+| BD-PARAM-01 | error | unknown parameter; a value outside the entry's declared range or set, including one reached by propagation or derived from the clock; a string for an integer parameter that is not a Verilog literal or constant expression (`8'h8` and `$clog2(256)` are read as 8) |
 | BD-PARAM-02 | error | a parameter given in the file contradicts the one derived from the clock (for example the shell's baud divider) |
 | BD-REF-01, -02 | error | an endpoint that does not exist; a name used twice |
 | BD-IF-01 | error | interface types differ (AXI4-Stream into AXI4-Lite), an interrupt into a data input or the reverse, a bus type the interconnect does not join |
 | BD-IF-02 | error | master to master, or slave to slave |
-| BD-IF-03 | error | an interface connected to a plain port |
+| BD-IF-03 | error | an interface connected to a plain port; a plain connection to a port of a bus interface that is already on a link, an interconnect or an export (it would be a second driver). A bus interface on no link may be tied off port by port |
 | BD-WIDTH-01 | error | widths differ on a signal; the hint says which parameter was set by hand and blocks propagation |
 | BD-WIDTH-02 | error | bus data widths differ, or the slave's ID width cannot hold the master's |
 | BD-WIDTH-03, -04 | error | a slice outside its port; a register field that does not fit 32 bits |
@@ -104,9 +107,10 @@ Every rule has its own code, a message that names the culprit and, where there i
 | BD-CDC-01 | error | a signal from one clock domain into another with no synchroniser |
 | BD-CDC-02 | error | an asynchronous input (`async: true`) into an input that has no synchroniser of its own |
 | BD-CDC-03 | error | a bus link between two domains (no clock converter is generated yet) |
+| BD-CDC-04 | error, warning | several bits from another domain (or asynchronous) into one synchroniser input: an error through a bit-wise synchroniser (`sync2`), a warning into a block's own per-input synchroniser. The bits can arrive in different clocks: use a handshake, a gray-coded count or an asynchronous FIFO; for independent level signals, connect each bit on its own |
 | BD-RST-01 | error | reset polarities differ on a hand-made connection without `invert` |
 | BD-RST-02 | error | a reset from another domain's synchroniser |
-| BD-CLK-01..-04 | error, warning | a clock input driven by a non-clock; an unknown domain; an instance in no or an ambiguous domain; a clock with no frequency |
+| BD-CLK-01..-04 | error, warning | a clock input driven by a non-clock; an unknown domain, or a block's domain clock wired by hand to a clock other than its domain's (that would hide every crossing into it); an instance in no or an ambiguous domain; a clock with no frequency |
 | BD-ADDR-01 | error | address ranges overlap |
 | BD-ADDR-02 | warning | a hole between ranges (an access there gets DECERR) |
 | BD-ADDR-03 | error | a base not aligned to its size (the hint gives the two nearest legal bases) |
@@ -121,12 +125,14 @@ Errors stop generation. A width mismatch is not then reported a second time as a
 
 - **Connection automation.** Each `interconnect` entry becomes an `ip_lib/axil_xbar` instance (N masters to M slaves,
   a round-robin write and read arbiter per slave, DECERR for unmapped addresses), with its address width propagated
-  from the masters and its map from the address editor. Verified on its own with brief 59's AXI4-Lite checker on every
-  link and eight seeded faults ([ip_lib/axil_xbar](../ip_lib/axil_xbar/README.md)).
-- **Clock and reset.** Every unconnected clock input gets its domain's clock; every unconnected reset input gets the
-  domain's synchronised reset, inverted for an active-low input. One `reset_sync` per domain that has a reset port.
+  from the masters and its map from the address editor. Verified on its own with the AXI4-Lite protocol checker
+  (`axi_tx/rtl/axil_checker.sv`) on every link and ten seeded faults ([ip_lib/axil_xbar](../ip_lib/axil_xbar/README.md)).
+- **Clock and reset.** A block's domain clock (its first clock input, or a hierarchy's `clk`), if unconnected, gets its
+  domain's clock; any other clock input (`clk90`, a receive clock) is never tied automatically and is reported
+  unconnected until it is wired by hand. Every unconnected reset input gets the domain's synchronised reset, inverted
+  for an active-low input. One `reset_sync` per domain that has a reset port.
 - **Parameter propagation.** A sink port whose width is `[P-1:0]` with `P` not set takes its driver's width (`la.WIDTH`
-  from the tone's 16-bit sample); the interconnect takes the masters' address width; a component's clock-derived
+  from the tone's 16-bit sample), repeated until nothing changes, so a chain of any length settles; the interconnect takes the masters' address width; a component's clock-derived
   parameters follow its domain's frequency (`test_shell.CLKS_PER_BIT = round(f / 115200)`). The viewer shows, for
   every parameter, where its value came from.
 - **Address editor.** Fixed bases are kept; the rest are placed at the lowest free aligned address from `base`, at the
@@ -143,7 +149,11 @@ with its version, variant and parameters, every output's SHA-256 and the diagnos
 
 The support RTL in [flow/blockdesign/rtl](../flow/blockdesign/rtl): `bd_win_axil_master` (the shell's window as an
 AXI4-Lite master: ADDR, WDATA, CTRL, STATUS and RDATA registers), `bd_axil_win` (an AXI4-Lite slave in front of a
-register window) and `bd_axil_regs` (the register bank).
+register window) and `bd_axil_regs` (the register bank). `bd_axil_win` decodes its whole 4 KB range: window word w is
+at offset 4 x w (0x000 to 0x1FC), and an access from 0x200 up answers SLVERR, so the rest of the range never aliases the
+window (the C header gives `<SLAVE>_WINDOW_OFFSET` and `<SLAVE>_WINDOW_WORDS`). The parameter guards in this RTL and in
+`axil_xbar` are `initial` blocks: they stop a simulation, and synthesis ignores them; the generator's own checks run
+first.
 
 ## The viewer
 
@@ -154,10 +164,23 @@ the variant (`flow/ipvariants`), and, after a build, the block's LUT, FF, block 
 of the paths ending inside it. `python3 -m flow.blockdesign view` writes a stand-alone page; the site has one page
 per block design.
 
-`python3 -m flow.blockdesign annotate designs/<name> --build <build dir>` reads the routed checkpoint (Vivado) and
-writes `results/blockdesign/<name>/build.json`, including the **hierarchy check**: every block of the graph must be in
-the synthesised netlist at its instance path with the module the graph names, and nothing directly inside the top, a
-hierarchy or a wrapper may be missing from the graph.
+`python3 -m flow.blockdesign annotate designs/<name> --build <build dir>` reads the routed checkpoint (Vivado), runs a
+second synthesis of the same sources with the hierarchy kept (for the connectivity, which the routed netlist's rebuilt
+boundaries hide), and writes `results/blockdesign/<name>/build.json` with the **graph check** (`hiercheck.py`). The check
+takes nothing about the design's structure from the graph itself:
+
+- **instances:** every block of the graph (and each wrapper's library block and register bank or window adapter) is in
+  the synthesised netlist at its instance path with the module the graph names; every netlist cell directly inside the
+  top or inside a generated module (a hierarchy or a wrapper, known from `gen/rtl`, not from the graph) is in the graph;
+- **links:** each link the graph draws between two blocks is a net between their cells in the direction drawn (the
+  master's `AWVALID` out to the slave's; each signal bit from its source to its sink), and every net between two blocks'
+  cells is drawn. A link through logic (an inverted bit) or whose pins synthesis removed is counted as not visible, not
+  passed; the reset synchroniser's fan-out is not drawn and not compared;
+- **address map:** each crossbar slave's base and size in the graph equal the `S_BASE` and `S_BITS` of the generated top
+  that was built (its SHA-256 is in the build record; a changed file fails the check).
+
+`python3 -m flow.blockdesign hiercheck designs/<name> --record results/blockdesign/<name>/build.json` re-runs the check
+without Vivado. Links to the design's own ports and constants are not compared.
 
 ## Not yet
 

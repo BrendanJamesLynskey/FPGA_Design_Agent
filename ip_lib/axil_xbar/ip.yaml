@@ -1,7 +1,7 @@
-# ip.yaml for axil_xbar: the declared parameter space and contract (brief 28 rules; brief 65A entry).
+# ip.yaml for axil_xbar: the declared parameter space and contract.
 name: axil_xbar
 version: 0.1.0
-status: simulated (brief 65A, with brief 59's AXI4-Lite checker on every link); built inside designs/b65a_axil_soc
+status: simulated (with the AXI4-Lite protocol checker axi_tx/rtl/axil_checker.sv on every link); built inside designs/b65a_axil_soc
 summary: 'AXI4-Lite crossbar, N_M masters to N_S slaves: a write and a read arbiter per slave (round robin), so transfers to
   different slaves overlap; one write and one read in flight per master; DECERR from the crossbar for unmapped addresses.'
 top: axil_xbar
@@ -84,9 +84,10 @@ evidence:
   simulator: Icarus Verilog 12 (local and CI)
   summary: 'Python masters and slaves with random VALID gaps and READY stalls drive the crossbar at five parameter points; every
     write must reach exactly the owning slave with the same address, data, strobes and protection, every read must return the
-    data and response the owning slave produced for it, unmapped addresses must get DECERR from the crossbar, and brief 59''s
-    AXI4-Lite checker (axi_tx/rtl/axil_checker.sv) watches every master and slave link for rule violations. Round-robin fairness
-    under full contention, and the elaboration guards (misaligned or overlapping map) are tested too.'
+    data and response the owning slave produced for it, unmapped addresses must get DECERR from the crossbar, and the
+    AXI4-Lite protocol checker (axi_tx/rtl/axil_checker.sv) watches every master and slave link for rule violations. Round-robin
+    fairness of reads and of writes under full contention, a reset with a write and a read in flight (nothing stale after
+    it), and the parameter guards (misaligned or overlapping map; simulation only, synthesis ignores them) are tested too.'
 cost_table: 'in-context cost inside designs/b65a_axil_soc (one master, three slaves): see results/65a_blockdesign; the OOC sweep is still to do'
 constraints: []
 licence: MIT (this repository)

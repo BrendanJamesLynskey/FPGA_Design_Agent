@@ -21,6 +21,8 @@
 
 #define B65A_AXIL_SOC_LA_S_AXIL_BASE 0x40010000u
 #define B65A_AXIL_SOC_LA_S_AXIL_SIZE 0x00001000u
+#define B65A_AXIL_SOC_LA_S_AXIL_WINDOW_OFFSET 0x000u   /* RW: word w at WINDOW_OFFSET + 4 x w */
+#define B65A_AXIL_SOC_LA_S_AXIL_WINDOW_WORDS 128u   /* offsets 0x200 and above answer SLVERR */
 
 #define B65A_AXIL_SOC_REG(base, off) (*(volatile uint32_t *)((uintptr_t)(base) + (off)))
 

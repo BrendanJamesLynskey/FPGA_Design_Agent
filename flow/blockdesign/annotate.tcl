@@ -1,4 +1,4 @@
-# annotate.tcl (brief 65A): read a routed checkpoint and write, as JSON, what the block-design viewer shows per block
+# annotate.tcl: read a routed checkpoint and write, as JSON, what the block-design viewer shows per block
 # and what hiercheck.py compares: every hierarchical cell (path and module), and for each instance path given, its
 # utilisation and the worst setup slack of the timed paths that end inside it.
 #   vivado -mode batch -source flow/blockdesign/annotate.tcl -tclargs <post_route.dcp> <out.json> <path> [<path> ...]

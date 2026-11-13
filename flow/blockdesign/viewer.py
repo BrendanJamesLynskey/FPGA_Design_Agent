@@ -19,10 +19,6 @@ from pathlib import Path
 from flow.blockdesign import model as M
 
 REPO = "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent"
-BW, LH = 156, 15                 # block width, text line height
-WG, WVG = 60, 30                 # wide layout: gap between columns, between blocks in a column
-NG, NVG = 24, 46                 # narrow layout: gap between blocks in a row, between rows
-NARROW_W = 360
 STYLE = {"axi4lite": "bdl-bus", "axi4": "bdl-bus", "axis": "bdl-bus", "window": "bdl-win", "conduit": "bdl-sig"}
 
 
@@ -35,20 +31,25 @@ def _fmt_hex(v: int, w: int = 8) -> str:
 
 
 # ------------------------------------------------------------------------------------------------- the level model
+def _size_txt(n: int) -> str:
+    return f"{n // 1024} KB" if n % 1024 == 0 and n >= 1024 else f"{n} B"
+
+
+def _range_of(g: dict, slave: str) -> dict | None:
+    return next((r for r in g["address_map"]["ranges"] if r["slave"] == slave), None)
+
+
+def _bits_txt(n: int) -> str:
+    return f"{n}b"
+
+
 def _nodes(g: dict, key: str) -> tuple[list[dict], list[dict]]:
-    """Nodes (blocks, plus a hierarchy's boundary ports) and edges of one level, with each node's text lines."""
+    """Nodes (blocks, a hierarchy's boundary ports, and at the top the board pins) and edges of one level, with text lines."""
     lv = g["levels"][key]
-    pre = f"{key}/" if key else ""
     nodes, edges = [], []
-    pins: dict = {}
-    for L in lv["links"]:
-        if L["kind"] != "conduit":
-            continue
-        for s in L["signals"]:
-            if L["from"].startswith("port:") and not key:
-                pins.setdefault(L["to"], []).append(f"{L['from'][5:]} in")
-            if L["to"].startswith("port:") and not key:
-                pins.setdefault(L["from"], []).append(f"{L['to'][5:]}" + (f"[{s['to_bits'][0]}:{s['to_bits'][1]}]" if s.get("to_bits") else "") + " out")
+    top = not key
+    pinw = {p["name"]: p for p in lv["ports"]}
+    clk_ports = {d["clock_port"] for d in g["domains"]}
     for b in lv["blocks"]:
         lines = [(b["name"] + (" (hierarchy)" if b["kind"] == "hierarchy" else ""), "bdn")]
         comp = b["component"] if b["kind"] != "hierarchy" else f"{b['component']}.yaml"
@@ -60,16 +61,21 @@ def _nodes(g: dict, key: str) -> tuple[list[dict], list[dict]]:
         if b.get("domain") and b["kind"] != "hierarchy":
             f = b.get("freq_mhz")
             lines.append((f"{b['domain']}" + (f", {f:g} MHz" if f else ""), "bdd"))
-        if b["kind"] == "reset" and not key:
-            dom = next((d for d in g["domains"] if d.get("reset_sync") == b["name"]), None)
-            if dom:
-                lines.append((f"{dom['reset_port']} in", "bdp"))
-        for p in pins.get(b["id"], []):
-            lines.append((p, "bdp"))
+        anchors = {}
+        if b["kind"] == "interconnect":                      # one row per slave port: its name, base address and size
+            for k, s in enumerate(b["slaves"]):
+                r = _range_of(g, s)
+                if r:
+                    anchors[f"m{k}"] = len(lines)
+                    lines.append((f"{s.split('.')[-1]} {_fmt_hex(r['base'])} {_size_txt(r['size'])}", "bda"))
+            for h in g["address_map"]["holes"]:
+                if h.get("xbar") == b["name"]:
+                    lines.append((f"hole {_fmt_hex(h['base'])}-{_fmt_hex(h['base'] + h['size'] - 1)}", "bdp"))
         if b.get("build"):
             bb = b["build"]
             lines.append((f"{bb.get('lut', 0)} LUT, {bb.get('ff', 0)} FF", "bdu"))
-        nodes.append({"id": b["id"], "lines": lines, "kind": b["kind"], "block": True, "generated": b.get("generated")})
+        nodes.append({"id": b["id"], "lines": lines, "kind": b["kind"], "block": True, "generated": b.get("generated"),
+                      "anchors": anchors, "domain": b.get("domain")})
     if key:
         for x in lv["exports"]:
             nodes.append({"id": f"in:{x['name']}", "lines": [(x["name"], "bdn"), ("AXI4-Lite in", "bdc")],
@@ -80,19 +86,60 @@ def _nodes(g: dict, key: str) -> tuple[list[dict], list[dict]]:
                 nodes.append({"id": f"port:{p['name']}", "lines": [(p["name"], "bdn"), (f"boundary out, {p['width']} bit" + ("s" if p["width"] > 1 else ""), "bdc")],
                               "kind": "port", "block": False})
     ids = {n["id"] for n in nodes}
+    used_pins: dict = {}
+
+    def end(s: str) -> str:
+        if top and s.startswith("port:"):
+            used_pins[s[5:]] = True
+            return "pin:" + s[5:]
+        return s
     for L in lv["links"]:
-        if L["from"] in ids and L["to"] in ids:
-            edges.append({"from": L["from"], "to": L["to"], "kind": L["kind"],
-                          "label": str(L.get("width", "")) if L["kind"] == "conduit" else "",
-                          "title": L["label"]})
-    del pre
+        a, b = end(L["from"]), end(L["to"])
+        if top:
+            ids |= {x for x in (a, b) if x.startswith("pin:")}
+        if a in ids and b in ids:
+            if L["kind"] in ("axi4lite", "axi4"):
+                lab = _bits_txt(L["data_w"])
+            elif L["kind"] == "conduit":
+                lab = _bits_txt(L["width"])
+            else:
+                lab = ""
+            edges.append({"from": a, "to": b, "kind": L["kind"], "label": lab, "title": L["label"],
+                          "from_if": L.get("from_if"), "to_if": L.get("to_if")})
+    if top:
+        for d in g["domains"]:                                # the reset pin feeds its synchroniser; the clock pin feeds the rail
+            rs = next((n for n in nodes if n["id"] == d.get("reset_sync")), None)
+            if rs and d["reset_port"] in pinw:
+                used_pins[d["reset_port"]] = True
+                edges.append({"from": f"pin:{d['reset_port']}", "to": rs["id"], "kind": "conduit", "label": "1b",
+                              "title": f"{d['reset_port']} -> {rs['id']}"})
+        for p in lv["ports"]:
+            if p["kind"] == "clock" or p["name"] in clk_ports:
+                used_pins[p["name"]] = True
+        for name in used_pins:
+            p = pinw.get(name)
+            if not p:
+                continue
+            w = p["width"]
+            nodes.append({"id": f"pin:{name}", "lines": [(name, "bdn"), (f"{p['dir']} pin" + (f", {w} bits" if w > 1 else ""), "bdc")],
+                          "kind": "pin", "block": False, "dir": p["dir"], "clock": p["kind"] == "clock", "reset": p["kind"] == "reset"})
+        edges = [x for x in edges if x["from"] in {n["id"] for n in nodes} and x["to"] in {n["id"] for n in nodes}]
     return nodes, edges
 
 
+CW = 7.7                         # width of one character of the 12.5 px monospace used in the boxes
+
+
+def _w(n: dict) -> float:
+    base = max(len(t) * CW for t, _ in n["lines"]) + 18
+    return max(base, 108 if n["kind"] == "pin" else 136)
+
+
 def _ranks(nodes: list[dict], edges: list[dict]) -> dict:
-    """Column per node: depth along the bus links (and boundary links); signal links only place the boundary outputs."""
-    r = {n["id"]: 0 for n in nodes}
-    bus = [x for x in edges if x["kind"] != "conduit"]
+    """Column per node: depth along the bus links (and boundary links); signal links only place the boundary outputs.
+    Board pins sit outside the columns: -1 is the left edge, and the number of columns the right edge."""
+    r = {n["id"]: 0 for n in nodes if n["kind"] != "pin"}
+    bus = [x for x in edges if x["kind"] != "conduit" and x["from"] in r and x["to"] in r]
     for _ in range(len(nodes) + 1):
         ch = False
         for x in bus:
@@ -101,25 +148,36 @@ def _ranks(nodes: list[dict], edges: list[dict]) -> dict:
                 ch = True
         if not ch:
             break
-    outs = [n["id"] for n in nodes if n["id"].startswith("port:")]
+    outs = [i for i in r if i.startswith("port:")]
     if outs:
-        last = max([r[n["id"]] for n in nodes if not n["id"].startswith("port:")] + [0]) + 1
+        last = max([v for i, v in r.items() if not i.startswith("port:")] + [0]) + 1
         for o in outs:
             r[o] = last
+    ncol = max(r.values()) + 1
+    for n in nodes:
+        if n["kind"] != "pin":
+            continue
+        nb = [x["to"] if x["from"] == n["id"] else x["from"] for x in edges if n["id"] in (x["from"], x["to"])]
+        col = r.get(nb[0], 0) if nb else 0
+        r[n["id"]] = -1 if (n["dir"] == "in" and col == 0) or (not nb) or col == 0 else ncol
     return r
 
 
 def _order(nodes, edges, ranks) -> dict:
-    """Index within a column: by the mean position of the node's bus predecessors, then as listed."""
+    """Index within a column: by the mean position of the node's bus predecessors, then as listed; a reset synchroniser last."""
     pos: dict = {}
     for c in sorted(set(ranks.values())):
         col = [n["id"] for n in nodes if ranks[n["id"]] == c]
+        kind = {n["id"]: n["kind"] for n in nodes}
         def key(i):
             preds = [pos[x["from"]] for x in edges if x["to"] == i and x["from"] in pos]
-            return (sum(preds) / len(preds) if preds else 1e9, col.index(i))
+            return (kind[i] == "reset", sum(preds) / len(preds) if preds else 1e9, col.index(i))
         for k, i in enumerate(sorted(col, key=key)):
             pos[i] = k
     return pos
+
+
+LH = 16
 
 
 def _box_h(n: dict) -> int:
@@ -128,114 +186,224 @@ def _box_h(n: dict) -> int:
 
 # ---------------------------------------------------------------------------------------------------------- drawing
 def _box_svg(n: dict, x: float, y: float, title: str) -> str:
-    h = _box_h(n)
-    cls = {"hierarchy": "bdb bdh", "interconnect": "bdb bdx", "port": "bdb bdport", "reset": "bdb bdr"}.get(n["kind"], "bdb")
+    h, w = _box_h(n), n["w"]
+    cls = {"hierarchy": "bdb bdh", "interconnect": "bdb bdx", "port": "bdb bdport", "reset": "bdb bdr", "pin": "bdb bdpin"}.get(n["kind"], "bdb")
     if n.get("generated"):
         cls += " bdgen"
     out = []
     if n["block"]:
         out.append(f'<g class="bdblk" tabindex="0" role="button" data-id="{e(n["id"])}" aria-label="{e(title)}">')
+        out.append(f'<rect class="bdfocus" x="{x - 4:.0f}" y="{y - 4:.0f}" width="{w + 8:.0f}" height="{h + 8}"/>')
     else:
         out.append('<g class="bdpt">')
-    out.append(f'<rect class="{cls}" x="{x:.0f}" y="{y:.0f}" width="{BW}" height="{h}"/>')
+    out.append(f'<rect class="{cls}" x="{x:.0f}" y="{y:.0f}" width="{w:.0f}" height="{h}"/>')
     if n["kind"] == "hierarchy":
-        out.append(f'<rect class="bdh2" x="{x + 3:.0f}" y="{y + 3:.0f}" width="{BW - 6}" height="{h - 6}"/>')
+        out.append(f'<rect class="bdh2" x="{x + 3:.0f}" y="{y + 3:.0f}" width="{w - 6:.0f}" height="{h - 6}"/>')
     for i, (t, c) in enumerate(n["lines"]):
-        out.append(f'<text class="{c}" x="{x + 8:.0f}" y="{y + 16 + i * LH:.0f}">{e(t)}</text>')
+        out.append(f'<text class="{c}" x="{x + 9:.0f}" y="{y + 17 + i * LH:.0f}">{e(t)}</text>')
     out.append("</g>")
     return "".join(out)
 
 
-def _edge_svg(x: dict, d: str, lx=None, ly=None) -> str:
+def _arrow(x: float, y: float, d: str, cls: str) -> str:
+    """An arrowhead with its tip at (x, y) pointing right, left or down."""
+    pts = {"r": f"{x - 8:.1f},{y - 4:.1f} {x:.1f},{y:.1f} {x - 8:.1f},{y + 4:.1f}",
+           "l": f"{x + 8:.1f},{y - 4:.1f} {x:.1f},{y:.1f} {x + 8:.1f},{y + 4:.1f}",
+           "d": f"{x - 4:.1f},{y - 8:.1f} {x:.1f},{y:.1f} {x + 4:.1f},{y - 8:.1f}"}[d]
+    return f'<polygon class="bda-{cls}" points="{pts}"/>'
+
+
+def _edge_svg(x: dict, d: str, tip: tuple, lab: tuple | None) -> str:
     cls = STYLE.get(x["kind"], "bdl-sig")
-    s = f'<path class="{cls}" d="{d}"><title>{e(x["title"])}</title></path>'
-    if x["label"] and lx is not None:
-        s += f'<text class="bdw" x="{lx:.0f}" y="{ly:.0f}">{e(x["label"])}</text>'
+    s = f'<g class="bde"><path class="{cls}" d="{d}"/>' + _arrow(tip[0], tip[1], tip[2], "sig" if cls == "bdl-sig" else "bus")
+    s += f'<title>{e(x["title"])}</title></g>'
+    if x["label"] and lab is not None:
+        s += f'<text class="bdw" x="{lab[0]:.0f}" y="{lab[1]:.0f}" text-anchor="{lab[2]}">{e(x["label"])}</text>'
     return s
+
+
+def _spread(i: int, n: int, y0: float, h: float) -> float:
+    return y0 + h * (i + 1) / (n + 1)
 
 
 def svg_level(g: dict, key: str, lay: str) -> str:
     nodes, edges = _nodes(g, key)
     if not nodes:
         return ""
+    for n in nodes:
+        n["w"] = _w(n)
     ranks = _ranks(nodes, edges)
     order = _order(nodes, edges, ranks)
     byid = {n["id"]: n for n in nodes}
     place: dict = {}
-    ncol = max(ranks.values()) + 1
-    if lay == "wide":
-        y_of_col = {}
-        for c in range(ncol):
+    cols = sorted(set(ranks.values()))
+    ncol = max(v for v in ranks.values() if v >= 0) + 1
+    domains = [d for d in g["domains"]] if not key else []
+    narrow = lay != "wide"
+    if narrow:                                    # a pin goes in the rank of the block it connects to: inputs before it, outputs after it
+        for n in nodes:
+            if n["kind"] == "pin":
+                nb = [x["to"] if x["from"] == n["id"] else x["from"] for x in edges if n["id"] in (x["from"], x["to"])]
+                nb = [m for m in nb if m in ranks and not m.startswith("pin:")]
+                ranks[n["id"]] = ranks[nb[0]] if nb else min(v for v in ranks.values())
+        cols = sorted(set(ranks.values()))
+        order = _order(nodes, edges, ranks)
+        for n in nodes:
+            if n["kind"] == "pin":
+                order[n["id"]] = (-1 if n["dir"] == "in" else 99) + order[n["id"]] / 100
+            elif n["kind"] == "reset":
+                order[n["id"]] = 50
+    if not narrow:
+        WG = 64
+        cx, x = {}, 8
+        for c in cols:
+            cx[c] = x
+            x += max(byid[i]["w"] for i in ranks if ranks[i] == c) + WG
+        width = x - WG + 8
+        for c in cols:
             y = 8
-            for i in sorted([n for n in ranks if ranks[n] == c], key=lambda i: order[i]):
-                place[i] = (8 + c * (BW + WG), y)
-                y += _box_h(byid[i]) + WVG
-            y_of_col[c] = y
-        width = 16 + ncol * BW + (ncol - 1) * WG
+            for i in sorted([i for i in ranks if ranks[i] == c], key=lambda i: order[i]):
+                place[i] = (cx[c], y)
+                y += _box_h(byid[i]) + 28
+        for c in (-1, ncol):                                  # pins: next to what they connect to, clock last
+            pcol = sorted([i for i in ranks if ranks[i] == c], key=lambda i: order[i])
+            if not pcol:
+                continue
+            def tgt_y(i):
+                nb = [x["to"] if x["from"] == i else x["from"] for x in edges if i in (x["from"], x["to"])]
+                nb = [m for m in nb if m in place]
+                return place[nb[0]][1] if nb else 1e9
+            y = 8
+            for i in sorted(pcol, key=lambda i: (byid[i].get("clock", False), byid[i].get("reset", False), tgt_y(i))):
+                yy = max(y, tgt_y(i)) if tgt_y(i) < 1e9 else y
+                if byid[i].get("clock"):
+                    yy = max(y, 0)
+                place[i] = (cx[c], yy)
+                y = yy + _box_h(byid[i]) + 14
+        bottom = max(place[i][1] + _box_h(byid[i]) for i in place)
     else:
+        NG, NVG = 24, 44
+        width = 360
+        rows_of: dict = {}
         y = 8
-        for c in range(ncol):
-            col = sorted([n for n in ranks if ranks[n] == c], key=lambda i: order[i])
-            per = max(1, (NARROW_W - 16 + NG) // (BW + NG))
-            for k in range(0, len(col), per):
-                row = col[k:k + per]
-                tot = len(row) * BW + (len(row) - 1) * NG
-                x0 = (NARROW_W - tot) / 2
-                hmax = 0
-                for j, i in enumerate(row):
-                    place[i] = (x0 + j * (BW + NG), y)
-                    hmax = max(hmax, _box_h(byid[i]))
-                y += hmax + NVG
-        width = NARROW_W
-    bottom = max(place[i][1] + _box_h(byid[i]) for i in place)
-    parts = []
-    chan = bottom + 14
-    nchan = 0
-    srcs_in_gap: dict = {}
-    for x in edges:
-        a, b = place[x["from"]], place[x["to"]]
-        ha, hb = _box_h(byid[x["from"]]), _box_h(byid[x["to"]])
-        if lay == "wide":
-            ra, rb = ranks[x["from"]], ranks[x["to"]]
-            if rb == ra + 1:
-                k = srcs_in_gap.setdefault((ra, x["from"]), len([s for s in srcs_in_gap if s[0] == ra]))
-                sx, sy = a[0] + BW, a[1] + ha / 2
-                tx, ty = b[0], b[1] + hb / 2
-                xm = sx + WG / 2 + (k - 0) * 6 - 6
-                parts.append(_edge_svg(x, f"M{sx:.0f} {sy:.0f} H{xm:.0f} V{ty:.0f} H{tx:.0f}", tx - 16, ty - 5))
+        for c in cols:
+            col = sorted([i for i in ranks if ranks[i] == c], key=lambda i: order[i])
+            k = 0
+            while k < len(col):
+                row, tot = [col[k]], byid[col[k]]["w"]
+                k += 1
+                while k < len(col) and tot + NG + byid[col[k]]["w"] <= width - 16:
+                    row.append(col[k])
+                    tot += NG + byid[col[k]]["w"]
+                    k += 1
+                x0 = (width - tot) / 2
+                for i in row:
+                    place[i] = (x0, y)
+                    rows_of[i] = y
+                    x0 += byid[i]["w"] + NG
+                y += max(_box_h(byid[i]) for i in row) + NVG
+        bottom = max(place[i][1] + _box_h(byid[i]) for i in place)
+
+    # edges ---------------------------------------------------------------------------------------------------------
+    outs: dict = {}
+    ins: dict = {}
+    for k, x in enumerate(edges):
+        outs.setdefault(x["from"], []).append(k)
+        ins.setdefault(x["to"], []).append(k)
+    parts, chan, nchan, gapn, margn = [], bottom + 14, 0, {}, 0
+    for k, x in enumerate(edges):
+        A, B = byid[x["from"]], byid[x["to"]]
+        a, b = place[A["id"]], place[B["id"]]
+        ha, hb = _box_h(A), _box_h(B)
+        ia, ib = outs[A["id"]].index(k), ins[B["id"]].index(k)
+        na, nb = len(outs[A["id"]]), len(ins[B["id"]])
+        ra, rb = ranks[A["id"]], ranks[B["id"]]
+        anchor = A.get("anchors", {}).get(x.get("from_if"))
+        if not narrow:
+            sy = a[1] + 12 + LH * anchor + 2 if anchor is not None else _spread(ia, na, a[1], ha)
+            ty = _spread(ib, nb, b[1], hb)
+            if rb > ra and (rb == ra + 1 or (rb == ncol and ra == ncol - 1)) or (ra == -1 and rb == 0):
+                sx, tx = a[0] + A["w"], b[0]
+                gk = (ra, rb)
+                gapn[gk] = gapn.get(gk, 0) + 1
+                xm = sx + 10 + (gapn[gk] - 1) * 7
+                parts.append(_edge_svg(x, f"M{sx:.0f} {sy:.0f} H{xm:.0f} V{ty:.0f} H{tx:.0f}", (tx, ty, "r"), (tx - 12, ty - 5, "end")))
+            elif rb < ra and ra - rb == 1:                          # back to a pin on the left edge
+                sx, tx = a[0], b[0] + B["w"]
+                gk = (rb, ra, "back")
+                gapn[gk] = gapn.get(gk, 0) + 1
+                xm = sx - 10 - (gapn[gk] - 1) * 7
+                parts.append(_edge_svg(x, f"M{sx:.0f} {sy:.0f} H{xm:.0f} V{ty:.0f} H{tx:.0f}", (tx, ty, "l"), (tx + 12, ty - 5, "start")))
             elif ra == rb and b[1] > a[1]:
-                lx = a[0] + BW - 24
-                parts.append(_edge_svg(x, f"M{lx:.0f} {a[1] + ha:.0f} V{b[1]:.0f}", lx + 5, (a[1] + ha + b[1]) / 2 + 4))
+                lx = a[0] + A["w"] - 24 - 14 * ia
+                parts.append(_edge_svg(x, f"M{lx:.0f} {a[1] + ha:.0f} V{b[1]:.0f}", (lx, b[1], "d"), (lx + 8, b[1] - 8, "start")))
             else:
                 yc = chan + nchan * 8
                 nchan += 1
-                sx, sy = a[0] + BW, a[1] + ha / 2
-                tx, ty = b[0], b[1] + hb / 2
-                parts.append(_edge_svg(x, f"M{sx:.0f} {sy:.0f} H{sx + 12:.0f} V{yc:.0f} H{tx - 12:.0f} V{ty:.0f} H{tx:.0f}", tx - 16, ty - 5))
+                sx, tx = a[0] + A["w"], b[0]
+                ty = _spread(ib, nb, b[1], hb)
+                if tx < sx:                                        # target left of the source: leave and enter on the left
+                    sx, tx = a[0], b[0] + B["w"]
+                    parts.append(_edge_svg(x, f"M{sx:.0f} {sy:.0f} H{sx - 12:.0f} V{yc:.0f} H{tx + 12:.0f} V{ty:.0f} H{tx:.0f}", (tx, ty, "l"), (tx + 12, ty - 5, "start")))
+                else:
+                    parts.append(_edge_svg(x, f"M{sx:.0f} {sy:.0f} H{sx + 12:.0f} V{yc:.0f} H{tx - 12:.0f} V{ty:.0f} H{tx:.0f}", (tx, ty, "r"), (tx - 12, ty - 5, "end")))
         else:
-            sx, sy = a[0] + BW / 2, a[1] + ha
-            tx, ty = b[0] + BW / 2, b[1]
-            if abs(a[1] - b[1]) < 1:                         # side by side in one row
+            sx, tx = a[0] + A["w"] * (ia + 1) / (na + 1), b[0] + B["w"] * (ib + 1) / (nb + 1)
+            if abs(a[1] - b[1]) < 1:                               # side by side in one row
                 l, r = (a, b) if a[0] < b[0] else (b, a)
+                lw = A["w"] if l is a else B["w"]
                 yy = a[1] + min(ha, hb) / 2
-                parts.append(_edge_svg(x, f"M{l[0] + BW:.0f} {yy:.0f} H{r[0]:.0f}", l[0] + BW + 4, yy - 5))
-            elif b[1] > a[1] + ha:
-                ym = a[1] + ha + NVG / 2 - 4
-                parts.append(_edge_svg(x, f"M{sx:.0f} {sy:.0f} V{ym:.0f} H{tx:.0f} V{ty:.0f}", tx + 5, ty - 6))
-            else:
-                yc = chan + nchan * 8
-                nchan += 1
-                parts.append(_edge_svg(x, f"M{a[0]:.0f} {a[1] + ha / 2:.0f} H6 V{b[1] + hb / 2:.0f} H{b[0]:.0f}", None, None))
+                if a[0] < b[0]:
+                    parts.append(_edge_svg(x, f"M{l[0] + lw:.0f} {yy:.0f} H{r[0]:.0f}", (r[0], yy, "r"), (r[0] - 3, yy - 5, "end")))
+                else:
+                    parts.append(_edge_svg(x, f"M{r[0]:.0f} {yy:.0f} H{l[0] + lw:.0f}", (l[0] + lw, yy, "l"), (l[0] + lw + 3, yy - 5, "start")))
+            elif b[1] > a[1] + ha and b[1] - (a[1] + ha) < NVG + 1:
+                gk = round(a[1])
+                gapn[gk] = gapn.get(gk, 0) + 1
+                ym = a[1] + ha + 12 + (gapn[gk] - 1) * 6
+                parts.append(_edge_svg(x, f"M{sx:.0f} {a[1] + ha:.0f} V{ym:.0f} H{tx:.0f} V{b[1]:.0f}", (tx, b[1], "d"), (tx + 6, b[1] - 10, "start")))
+            else:                                                  # not the next row: down the left margin
+                margn += 1
+                m = 4 + 5 * margn
+                ay, by = a[1] + 22 + 4 * ia, b[1] + 22 + 4 * ib
+                parts.append(_edge_svg(x, f"M{a[0]:.0f} {ay:.0f} H{m:.0f} V{by:.0f} H{b[0]:.0f}", (b[0], by, "r"), (b[0] - 10, by - 5, "end")))
     height = (chan + nchan * 8 + 6) if nchan else bottom + 10
+    # the clock and reset rail: the domain's clock, and the reset the synchroniser makes from the reset pin ---------------
+    rail_svg = ""
+    if domains:
+        d = domains[0]
+        yc, yr = height + 10, height + 22
+        rail_svg += f'<path class="bdl-clk" d="M5 {yc:.0f} H{width - 5:.0f}"/><path class="bdl-rst" d="M5 {yr:.0f} H{width - 5:.0f}"/>'
+        f = f"{d['freq_mhz']:g} MHz" if d.get("freq_mhz") else ""
+        rail_svg += (f'<text class="bdp" x="8" y="{yr + 17:.0f}">clock {e(d["clock_port"])}{", " + f if f else ""}, all blocks in {e(d["name"])}</text>')
+        rs = byid.get(d.get("reset_sync"))
+        if rs:
+            rail_svg += (f'<text class="bdp" x="8" y="{yr + 17 + LH:.0f}">reset from {e(d["reset_port"])} via {e(rs["id"])}</text>')
+        ck = next((n for n in nodes if n["kind"] == "pin" and n.get("clock")), None)
+        if ck:                                                     # the clock pin down the left margin to the clock line
+            px, py = place[ck["id"]]
+            mx = 3
+            rail_svg += f'<path class="bdl-clk" d="M{px:.0f} {py + _box_h(ck) / 2:.0f} H{mx} V{yc:.0f}"/><circle class="bddot" cx="{mx}" cy="{yc:.0f}" r="2.5"/>'
+        if rs:
+            px, py = place[rs["id"]]
+            if narrow:
+                mx = 4 + 5 * (margn + 1)
+                rail_svg += (f'<path class="bdl-rst" d="M{px:.0f} {py + _box_h(rs) - 12:.0f} H{mx} V{yr:.0f}"/><circle class="bddot" cx="{mx}" cy="{yr:.0f}" r="2.5"/>')
+            else:
+                sx = px + rs["w"] / 2
+                rail_svg += (f'<path class="bdl-rst" d="M{sx:.0f} {py + _box_h(rs):.0f} V{yr:.0f}"/><circle class="bddot" cx="{sx:.0f}" cy="{yr:.0f}" r="2.5"/>')
+        height = yr + 17 + LH + 8 if rs else yr + 20
     boxes = []
     for n in nodes:
         t = " ".join(t for t, _ in n["lines"][:2])
         boxes.append(_box_svg(n, place[n["id"]][0], place[n["id"]][1], f"{t}: show details"))
     lvname = g["levels"][key]["name"]
-    title = f"{'Top level' if not key else 'Hierarchy ' + key} of {g['design']}" if not key else f"Hierarchy {key} ({lvname})"
-    desc = f"{sum(1 for n in nodes if n['block'])} blocks and {len(edges)} links"
-    return (f'<svg class="bdsvg" viewBox="0 0 {width:.0f} {height:.0f}" style="max-width:{width:.0f}px" role="group" '
-            f'aria-label="{e(title)}: {e(desc)}"><title>{e(title)}</title>' + "".join(parts) + "".join(boxes) + "</svg>")
+    title = f"Top level of {g['design']}" if not key else f"Hierarchy {key} ({lvname})"
+    nbl = sum(1 for n in nodes if n["block"])
+    npin = sum(1 for n in nodes if n["kind"] == "pin")
+    desc = f"{nbl} block{'s' if nbl != 1 else ''}" + (f", {npin} board pins" if npin else "") + f" and {len(edges)} links"
+    return (f'<svg class="bdsvg" viewBox="0 0 {width:.0f} {height:.0f}" role="group" '
+            f'aria-label="{e(title)}: {e(desc)}"><title>{e(title)}</title>' + "".join(parts) + rail_svg + "".join(boxes) + "</svg>")
 
 
 def addr_svg(g: dict) -> str:
@@ -276,6 +444,63 @@ def _table(head, rows, num=()) -> str:
     return f'<div class="tablewrap" tabindex="0"><table><thead><tr>{h}</tr></thead><tbody>{b}</tbody></table></div>'
 
 
+def count_blocks(g: dict) -> tuple[int, int, dict]:
+    """(all blocks, blocks at the top, blocks inside each hierarchy): every box in the diagram, a hierarchy counting as one."""
+    top = len(g["levels"][""]["blocks"])
+    inside = {k: len(lv["blocks"]) for k, lv in g["levels"].items() if k}
+    return top + sum(inside.values()), top, inside
+
+
+def count_text(g: dict) -> str:
+    total, top, inside = count_blocks(g)
+    parts = [f"{top} at the top"] + [f"{n} inside {k}" for k, n in inside.items()]
+    return f"blocks ({', '.join(parts)})"
+
+
+def check_text(chk: dict) -> str:
+    """What the hierarchy check proved, in the words of what it looked for (build.json's ``check``)."""
+    t = (f"RTL instances found in the synthesised netlist with the module the diagram names (the {chk['expected']} include the generated wrappers)")
+    if not chk.get("pass"):
+        t = "MISMATCH: " + t
+    if chk.get("edges_expected"):
+        t += (f"; {chk.get('edges_matched', 0)} of {chk['edges_expected']} links between blocks found as nets, in the "
+              "direction drawn, and no net between two blocks left undrawn")
+        nv = chk.get("edges_not_visible") or []
+        nv = len(nv) if isinstance(nv, list) else int(nv)
+        if nv:
+            t += f" ({nv} not compared: {'it goes' if nv == 1 else 'they go'} through logic or synthesis removed the pins)"
+    if chk.get("ranges_checked"):
+        t += f"; the crossbar's {chk['ranges_checked']} address ranges equal the built RTL's"
+    return t
+
+
+def scope_line(g: dict) -> str:
+    """The design's limits in one line, from the data: the buses used, the clock domains, the tool that built it."""
+    kinds = {L["kind"] for lv in g["levels"].values() for L in lv["links"]} - {"conduit", "window", "interrupt"}
+    bus = " and ".join(KIND_LABEL_BUS[k] for k in sorted(kinds)) + " only" if kinds else ""
+    doms = g["domains"]
+    num = {1: "one"}.get(len(doms), str(len(doms)))
+    freqs = sorted({f"{d['freq_mhz']:g} MHz" for d in doms if d.get("freq_mhz")})
+    dom = f"{num} {' / '.join(freqs)} clock domain" + ("s" if len(doms) != 1 else "")
+    built = (f"built with Vivado {g['build']['tool']} but not yet run on the board" if g.get("build") else "not yet built")
+    return f'<p class="scope"><b>Scope:</b> {e(", ".join(x for x in (bus, dom, built) if x))}.</p>'
+
+
+KIND_LABEL_BUS = {"axi4lite": "AXI4-Lite", "axi4": "AXI4", "axis": "AXI4-Stream"}
+
+
+def terms() -> str:
+    return ('<dl class="bdterms"><div><dt><code>ip_lib</code></dt><dd>the project\'s own library of verified hardware blocks; each has a '
+            'description, tests and measured cost.</dd></div>'
+            '<div><dt>UART test shell</dt><dd>the fixed wrapper that lets a PC read and write the design\'s registers over the board\'s '
+            'USB-UART.</dd></div></dl>')
+
+
+def _endpoint(s: str, port: str | None) -> str:
+    s = s.replace("port:", "")
+    return f"{s}.{port}" if port else s
+
+
 def body(g: dict, key: str = "bd_graph", repo_links: bool = True) -> str:
     """The viewer's HTML (without the page frame). ``key`` names the JSON data block the script reads."""
     levels = list(g["levels"])
@@ -288,36 +513,45 @@ def body(g: dict, key: str = "bd_graph", repo_links: bool = True) -> str:
     chk = g.get("check")
     build = g.get("build")
     head = []
-    nb = sum(1 for lv in g["levels"].values() for b in lv["blocks"] if b["kind"] != "hierarchy")
     s = f'<p class="lede">{e(g["summary"])}</p>' if g.get("summary") else ""
-    facts = [f'<div class="fact"><div class="n">{nb}</div><p>blocks in {len(levels)} level{"s" if len(levels) > 1 else ""}, '
-             f'generated from <code>{e(g["levels"][""]["file"])}</code></p></div>']
+    s += scope_line(g)
+    facts = [f'<div class="fact"><div class="n">{count_blocks(g)[0]}</div><p>{e(count_text(g))}, generated from '
+             f'<code>{e(g["levels"][""]["file"])}</code></p></div>']
     if build:
         facts.append(f'<div class="fact"><div class="n">{build["wns_ns"]:+.3f} ns</div><p>worst setup slack after routing on the '
                      f'{e(g["part"])}, Vivado {e(build["tool"])}; timing, DRC and methodology gates {"passed" if build["gates_pass"] else "FAILED"}</p></div>')
     if chk:
-        facts.append(f'<div class="fact"><div class="n">{chk["matched"]} of {chk["expected"]}</div><p>blocks found in the synthesised '
-                     f'hierarchy, each with the module the diagram names: {"the diagram matches the netlist" if chk["pass"] else "MISMATCH"}</p></div>')
-    head.append(s + '<div class="facts">' + "".join(facts) + "</div>")
-    legend = ('<div class="legend bdlegend"><span><svg viewBox="0 0 30 10" class="bdkey"><path class="bdl-bus" d="M0 5 H30"/></svg> AXI4-Lite bus</span>'
-              '<span><svg viewBox="0 0 30 10" class="bdkey"><path class="bdl-win" d="M0 5 H30"/></svg> register window</span>'
-              '<span><svg viewBox="0 0 30 10" class="bdkey"><path class="bdl-sig" d="M0 5 H30"/></svg> signals (the number is the bits)</span>'
+        short = "RTL instances found in the synthesised netlist with the module the diagram names" + (
+            f"; {chk.get('edges_matched', 0)} of {chk['edges_expected']} links found as nets" if chk.get("edges_expected") else "")
+        facts.append(f'<div class="fact"><div class="n">{chk["matched"]} of {chk["expected"]}</div><p>{e(short)} '
+                     '(<a href="#build">what was checked</a>)</p></div>')
+    head.append(s + '<div class="facts">' + "".join(facts) + "</div>" + terms())
+    kk = lambda c, d: f'<svg viewBox="0 0 30 10" class="bdkey"><path class="{c}" d="{d}"/></svg>'
+    legend = ('<div class="legend bdlegend">'
+              f'<span>{kk("bdl-bus", "M0 5 H30")} AXI4-Lite bus, arrow from master to slave, labelled with its data width</span>'
+              f'<span>{kk("bdl-win", "M0 5 H30")} register window</span>'
+              f'<span>{kk("bdl-sig", "M0 5 H30")} signals, labelled with their width in bits</span>'
+              f'<span>{kk("bdl-clk", "M0 5 H30")} clock rail</span><span>{kk("bdl-rst", "M0 5 H30")} reset rail</span>'
               '<span><svg viewBox="0 0 30 12" class="bdkey"><rect class="bdb bdgen" x="1" y="1" width="28" height="10"/></svg> added by automation</span>'
-              '<span><svg viewBox="0 0 30 12" class="bdkey"><rect class="bdb bdh" x="1" y="1" width="28" height="10"/></svg> hierarchy</span></div>')
+              '<span><svg viewBox="0 0 30 12" class="bdkey"><rect class="bdb bdh" x="1" y="1" width="28" height="10"/></svg> hierarchy</span>'
+              '<span><svg viewBox="0 0 30 12" class="bdkey"><rect class="bdb bdpin" x="1" y="1" width="28" height="10"/></svg> board pin</span></div>')
     out = ['<div class="bdpage">', "".join(head),
            '<section class="bd" data-key="' + e(key) + '">',
            '<h2 id="diagram">The diagram</h2>',
            '<p>Click or tab to a block to see its variant, parameters (and where each value came from), measured cost and, '
-           'from the build, its share of the logic and its worst slack. A hierarchy opens as its own level.</p>',
+           'from the build, its share of the logic and its worst slack. Arrow keys move between blocks and Esc goes back to the crossbar. '
+           'A hierarchy opens as its own level.</p>',
+           '<div class="bdmain"><div class="bdfig">',
            f'<div class="bdtabs" role="group" aria-label="Design level">{tabs}</div>',
-           "".join(figs), legend,
-           '<div class="bddrawer panel" id="bd-drawer" aria-live="polite" tabindex="-1"><p class="muted">No block selected.</p></div>',
+           "".join(figs), legend, "</div>",
+           '<aside class="bddrawer panel" id="bd-drawer" role="region" aria-label="Block details" aria-live="polite" tabindex="-1">'
+           '<p class="muted">Select a block in the diagram to see its details here.</p></aside></div>',
            "</section>"]
     # connections
     rows = []
     for k, lv in g["levels"].items():
         for L in lv["links"]:
-            rows.append([e(k or "top"), f'<code>{e(L["from"].replace("port:", ""))}</code>', f'<code>{e(L["to"].replace("port:", ""))}</code>', e(L["label"])])
+            rows.append([e(k or "top"), f'<code>{e(_endpoint(L["from"], L.get("from_if")))}</code>', f'<code>{e(_endpoint(L["to"], L.get("to_if")))}</code>', e(L["label"])])
     out.append('<h2 id="links">Links</h2>' + _table(["Level", "From", "To", "What"], rows))
     # domains and crossings
     drows = [[e(d["name"]), f'<code>{e(d["clock_port"])}</code>', e(f'{d["freq_mhz"]:g}' if d.get("freq_mhz") else ""),
@@ -354,6 +588,8 @@ def body(g: dict, key: str = "bd_graph", repo_links: bool = True) -> str:
                    f'<p>Built with Vivado {e(build["tool"])} for the {e(g["part"])} ({e(g["board"])}), build ID <code>{e(build["build_id"])}</code>. '
                    'Per block: its share of the routed design (cells inside its instance, from the hierarchical utilisation '
                    'report) and the worst setup slack of the paths that end inside it.</p>'
+                   + (f'<p><strong>Diagram against the build{"" if chk.get("pass") else " (MISMATCH)"}:</strong> '
+                      f'{chk["matched"]} of {chk["expected"]} {e(check_text(chk)).replace("MISMATCH: ", "")}.</p>' if chk else '')
                    + _table(["Block", "Component", "LUT", "FF", "Block RAM tiles", "DSP", "Worst setup slack (ns)"], brows, num=(2, 3, 4, 5, 6)))
     # validation
     drows = [[e(d["severity"]), f'<code>{e(d["code"])}</code>', e(d["where"]), e(d["msg"])] for d in g["diagnostics"]]

@@ -149,6 +149,10 @@ async def end_to_end(dut):
     await h.wr(LA + 4 * 4, 0)           # PRE 0
     assert await h.rd(LA + 4 * 5) == 256, "DEPTH is not 2**ADDR_W"
     assert await h.write(LA + 4 * 2, 0, strb=0b0011) == SLVERR, "the window adapter must refuse partial writes"
+    for off in (0x200, 0x208, 0xFFC):   # above the 128-word window: SLVERR, never an alias of a window word
+        assert await h.read(LA + off) == (SLVERR, 0), f"read at window offset {off:#x} must answer SLVERR"
+        assert await h.write(LA + off, 0xFFFFFFFF) == SLVERR, f"write at window offset {off:#x} must answer SLVERR"
+    assert await h.rd(LA + 4 * 2) == 0, "a write above the window reached the window"
     await h.wr(LA + 4 * 0, 1)           # arm
     for _ in range(40):
         st = await h.rd(LA + 4 * 1)

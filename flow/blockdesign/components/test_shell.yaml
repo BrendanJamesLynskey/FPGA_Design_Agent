@@ -9,3 +9,6 @@ async_inputs: [uart_rx]             # through sync2 inside uart_rx
 derive:                             # parameter propagation: from the clock frequency of the shell's domain
   CLKS_PER_BIT: round(clk_hz / 115200)
   TIMEOUT_CYCLES: clk_hz // 1000
+parameters:                         # the derived values must still make a working shell
+  CLKS_PER_BIT: {type: int, range: [4, 1048575]}
+  TIMEOUT_CYCLES: {type: int, range: [1, 2147483647]}

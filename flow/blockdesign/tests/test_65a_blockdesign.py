@@ -563,21 +563,105 @@ def test_viewer_draws_every_block_and_fits_its_text():
         for n in nodes:
             for t, cls in n["lines"]:
                 px = (7.3 if cls == "bdn" else 6.7) * len(t)          # monospace at 12 px (names) and 11 px
-                assert px <= viewer.BW - 12, f"{n['id']}: {t!r} is too long for a block"
+                assert px <= viewer._w(n) - 12, f"{n['id']}: {t!r} is too long for its block"
+
+
+# ------------------------------------------------------------------------------------- the graph against the netlist
+RECORD = ROOT / "results" / "blockdesign" / "b65a_axil_soc" / "build.json"
+
+
+def _graph_and_record():
+    from flow.blockdesign import hiercheck
+    g = json.loads((SAMPLE / "gen" / "graph.json").read_text())
+    rec = json.loads(RECORD.read_text())
+    return hiercheck, g, rec
+
+
+def test_hiercheck_passes_on_the_committed_build():
+    hc, g, rec = _graph_and_record()
+    r = hc.check_record(SAMPLE, g, rec)
+    assert r["pass"], r["mismatches"]
+    assert (r["matched"], r["expected"]) == (14, 14) and r["edges_expected"] == r["edges_matched"] + len(r["edges_not_visible"])
+    assert r["edges_matched"] >= 6 and r["ranges_checked"] == 3
+    assert rec["check"]["pass"] and rec["check"]["matched"] == r["matched"]       # the record agrees with a re-check
 
 
 def test_hiercheck_catches_a_missing_and_an_extra_block():
-    from flow.blockdesign import hiercheck
-    g = json.loads((SAMPLE / "gen" / "graph.json").read_text())
-    ann = json.loads((ROOT / "results" / "blockdesign" / "b65a_axil_soc" / "build.json").read_text())
-    assert hiercheck.check(g, ann["hier"])["pass"]
-    lost = [h for h in ann["hier"] if not h["path"].startswith("u_xbar")]
-    r = hiercheck.check(g, lost)
+    hc, g, rec = _graph_and_record()
+    lost = dict(rec, hier=[h for h in rec["hier"] if not h["path"].startswith("u_xbar")])
+    r = hc.check_record(SAMPLE, g, lost)
     assert not r["pass"] and any("u_xbar (axil_xbar) is in the diagram but not" in m for m in r["mismatches"])
-    extra = ann["hier"] + [{"path": "u_tone/u_spare", "module": "sync2", "ref": "sync2"}]
-    assert any("u_tone/u_spare" in m for m in hiercheck.check(g, extra)["mismatches"])
-    renamed = [dict(h, module="fir") if h["path"] == "u_tone/u_dds/u_ip" else h for h in ann["hier"]]
-    assert any("the diagram says dds_awg, the netlist has fir" in m for m in hiercheck.check(g, renamed)["mismatches"])
+    extra = dict(rec, hier=rec["hier"] + [{"path": "u_tone/u_spare", "module": "sync2", "ref": "sync2"}])
+    assert any("u_tone/u_spare" in m for m in hc.check_record(SAMPLE, g, extra)["mismatches"])
+    renamed = dict(rec, hier=[dict(h, module="fir") if h["path"] == "u_tone/u_dds/u_ip" else h for h in rec["hier"]])
+    assert any("the diagram says dds_awg, the netlist has fir" in m for m in hc.check_record(SAMPLE, g, renamed)["mismatches"])
+
+
+# the independent review's wrong graphs (each passed the first version of the check)
+def _wrong_edges(g):
+    top = g["levels"][""]
+    for L in top["links"]:
+        L["from"], L["to"] = L["to"], L["from"]
+        if "from_if" in L:
+            L["from_if"], L["to_if"] = L["to_if"], L["from_if"]
+    top["links"] = top["links"][:1]
+
+
+def _hidden_hierarchy(g):
+    for b in g["levels"][""]["blocks"]:
+        if b["id"] == "tone":
+            b["kind"] = "block"
+    for k in [k for k in g["levels"] if k]:
+        del g["levels"][k]
+
+
+def _hidden_wrapper(g):
+    for b in g["levels"][""]["blocks"]:
+        if b["id"] == "la":
+            b.pop("wrapper", None)
+            b["kind"] = "block"
+
+
+def _wrong_address(g):
+    g["address_map"]["ranges"][0]["base"] = 0x50000000
+
+
+def _reversed_one_bus(g):
+    for L in g["levels"][""]["links"]:
+        if L["id"] == "xbar_m2":
+            L["from"], L["to"], L["from_if"], L["to_if"] = L["to"], L["from"], L["to_if"], L["from_if"]
+
+
+def _dropped_signal_link(g):
+    g["levels"][""]["links"] = [L for L in g["levels"][""]["links"] if L["id"] != "tone->la"]
+
+
+@pytest.mark.parametrize("wrong,expect", [
+    (_wrong_edges, "the diagram draws no link"), (_hidden_hierarchy, "inside the generated module b65a_axil_soc_tone"),
+    (_hidden_wrapper, "inside the generated module b65a_axil_soc_la_wrap"), (_wrong_address, "the built RTL decodes"),
+    (_reversed_one_bus, "the other way round"), (_dropped_signal_link, "u_tone drives u_la in the netlist")],
+    ids=["edges_reversed_and_dropped", "hierarchy_hidden", "wrapper_hidden", "address_changed", "bus_reversed", "link_dropped"])
+def test_hiercheck_fails_on_a_wrong_graph(wrong, expect):
+    hc, g, rec = _graph_and_record()
+    wrong(g)
+    r = hc.check_record(SAMPLE, g, rec)
+    assert not r["pass"] and any(expect in m for m in r["mismatches"]), r["mismatches"]
+
+
+def test_hiercheck_fails_when_the_rtl_changed_since_the_build():
+    hc, g, rec = _graph_and_record()
+    rec = dict(rec, rtl_sha256=dict(rec["rtl_sha256"], **{"b65a_axil_soc_top.sv": "0" * 64}))
+    r = hc.check_record(SAMPLE, g, rec)
+    assert not r["pass"] and any("changed since the build" in m for m in r["mismatches"])
+
+
+def test_cli_help_per_command(capsys):
+    from flow.blockdesign import __main__ as cli
+    for c in ("validate", "generate", "check", "view", "annotate", "hiercheck"):
+        with pytest.raises(SystemExit):
+            cli.main([c, "--help"])
+        out = capsys.readouterr().out
+        assert "Example: python3 -m flow.blockdesign " + c in out.replace("\n", " "), c
 
 
 @pytest.mark.skipif("FDA_E2E" not in __import__("os").environ, reason="browser test: set FDA_E2E=1 (a heavy job; take a slot)")

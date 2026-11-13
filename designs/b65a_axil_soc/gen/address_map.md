@@ -33,4 +33,4 @@ Holes (an access gets DECERR from the crossbar): `0x40002000`-`0x4000FFFF`.
 
 | Offset | Name | Access | Reset | What |
 |---|---|---|---|---|
-| `0x000` | WINDOW | RW |  | the logic_analyser register window: word w at offset 4 x w (see ip_lib/logic_analyser) |
+| `0x000` | WINDOW | RW |  | the logic_analyser register window: word w (0 to 127) at offset 4 x w, 0x000 to 0x1FC (see ip_lib/logic_analyser); 0x200 to the end of the range answer SLVERR |
