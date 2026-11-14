@@ -40,6 +40,8 @@ How the agent was built, evaluated and improved (a timeline, an experiment card 
 evaluation, the method and the improvement loop): the site's "How it was built" page, source `site/story/story.yaml`, with the
 measured lessons in [docs/agent_lessons.md](docs/agent_lessons.md).
 
+How the designs are verified (simulation, hidden tests, coverage, mutation testing, protocol checkers, formal proofs, clock-crossing checks, static checks, the board and traceability, each with what it cannot find and its measured evidence): the site's "Verification" page, source `site/verification/verification.yaml`.
+
 Showcase pages for projects built with the agent follow one template: [docs/showcase_pages.md](docs/showcase_pages.md).
 Every design, `ip_lib` entry and results folder is documented for the next engineer to
 [docs/documentation_standard.md](docs/documentation_standard.md) (brief 68): each design has one `handover.yaml` (the facts,
