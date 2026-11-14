@@ -9,7 +9,7 @@ A Kria KR260 design that drives one UltraScale+ GTH transceiver (quad 224, chann
 not: a protocol or a link layer (RAW data, PRBS only); no Aurora or Ethernet core (10G/25G Ethernet is refused by the Basic licence); multi-lane work, meaning channel bonding, lane deskew, PCIe x4 and 40G are simulation-only on this one-lane board
 
 ## state
-stage=built vivado=2026.1 kb_pin=1fc7ed8 build_id=cdb9eeef
+stage=built vivado=2026.1 kb_pin=20d73e8 build_id=d61c218c
 gates: build_2026_1=pass
 
 ## interface
@@ -22,7 +22,7 @@ param line rate=10.3125 Gb/s legal=0.5 to 12.5 Gb/s on this part (-2LV), subject
 param user data width=64 bits on a 32-bit internal path legal=32/64 pairs allowed by DS925 table 104
 
 ## files
-designs/b56a_gth_serdes/rtl/gth_serdes_core.sv 1c0fe7acf1: GT Wizard wrapper, registers, snapshot, DRP and SYSMON windows
+designs/b56a_gth_serdes/rtl/gth_serdes_core.sv 6b12ad9c2e: GT Wizard wrapper, registers, snapshot, DRP and SYSMON windows
 designs/b56a_gth_serdes/rtl/prbs64.sv 9b8dfb6fd1: fabric PRBS generator and checker
 designs/b56a_gth_serdes/rtl/kr260_gth_top.sv b69b051f3a: board top (MMCM, SYSMON, pins)
 designs/b56a_gth_serdes/design.xdc 60018c8f19: pins, clocks, slow-pin constraints
@@ -37,9 +37,9 @@ simulate the PRBS blocks and the core against the Wizard stand-in (~1min): pytho
 
 ## records (path sha256-prefix; claims below cite R<n>)
 R1 designs/b56a_gth_serdes/tests/test_b56a_core_sim_rtl.py d7bd3da661
-R2 results/56a_serdes/gt_build/gates.json 6e3accd275
-R3 results/56a_serdes/README.md 6f5635a12a
-R4 results/56a_serdes/gt_build/run.json 4bc1a348be
+R2 results/56a_serdes/gt_build/gates.json 0305a74bc0
+R3 results/56a_serdes/README.md f9bc061b62
+R4 results/56a_serdes/gt_build/run.json 2f1302a663
 
 ## evidence
 E1 simulation pass R1 ci: fabric PRBS generator and checker against an independent model (exact error counting, lock, loss of lock); register block, bring-up, counting, injection, snapshots, I2C, SYSMON and DRP windows against a behavioural stand-in of the Wizard
@@ -48,11 +48,11 @@ E3 review pass R3: one independent correctness review (Sonnet) and one fix round
 
 ## measured
 M1 resources lut=973 LUT R2#utilization.lut: LUTs | routed, Vivado 2026.1
-M2 resources ff=3106 FF R2#utilization.ff: registers | as M1
-M3 timing wns_ns=2.156 ns R2#timing.wns_ns: worst setup slack | routed, user clocks 161.133 MHz and 100 MHz
+M2 resources ff=3113 FF R2#utilization.ff: registers | as M1
+M3 timing wns_ns=2.246 ns R2#timing.wns_ns: worst setup slack | routed, user clocks 161.133 MHz and 100 MHz
 M4 timing whs_ns=0.016 ns R2#timing.whs_ns: worst hold slack | as M3
 M5 power power_w=0.764 W R2#power.total_w: total on-chip power estimate | report_power after routing, vectorless, confidence Medium
-M6 other -=4235 MiB R4#vivado_peak_rss_mib: Vivado peak resident memory of the first GT build | 2 threads, MemoryMax=8G, alone on the machine, one run
+M6 other -=4289 MiB R4#vivado_peak_rss_mib: Vivado peak resident memory of the GT build (rebuilt 2026-11-14 for brief 70, resets from registers) | 2 threads, MemoryMax=8G, alone on the machine, one run
 
 ## gaps
 [latency] Not measured; the design has no data path latency requirement and the stand-in has no transceiver latency. Board work (56B) is the first chance.

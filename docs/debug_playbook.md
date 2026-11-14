@@ -111,6 +111,7 @@ Rule meanings from UG906 (v2026.1) Appendix A; resolution steps mined from Ross
 | XDCH-2 | same min and max delay on an I/O port | expected with this flow's zero-delay pattern for asynchronous pins (seen on T1, warning only) |
 | XDCB-5 | runtime-inefficient way of finding pin objects in an XDC | prefer `get_ports`/`get_cells` over broad `get_pins` patterns (seen as a warning on the ILA build) |
 | LUTAR-1 | a LUT drives an asynchronous reset | register the reset (reset synchroniser) so no logic sits on the reset path |
+| REQP-1840 (DRC) | a block-RAM control pin (reset, enable) is driven by a register with an asynchronous set or reset, for example a reset synchroniser's output | the RAM must not take its reset or enable from that register: add one plain register (no asynchronous reset) after the synchroniser for the RAM's reset, and keep the reset out of the enable (measured, brief 70: `results/70_resets`) |
 | SYNTH-6, -11, -12, -13 | RAMB or DSP primitive without its optional pipeline registers | enable the registers if the path is critical (not reported when slack is ample, UG906 ch. 5) |
 
 Version note: Ross's TIMING skill declares "Requires Vivado 2026.1+", the release this flow uses; the TIMING-n IDs and

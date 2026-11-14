@@ -15,9 +15,10 @@
 # A finding that no rule maps lands in the catch-all rule of its tool (HDL-LINT-00, HDL-VIV-00, HDL-STD-00), so nothing is lost.
 # Waivers: designs/<d>/lint/waivers.yaml, {rule, match (a glob over the finding key), reason, owner, date}.
 standard: FDA-HDL
-version: "1.2"            # 1.0 2026-11-12 (first release); 1.1 2026-11-14 (brief 71: reset rules split into HDL-RST-01..05,
+version: "1.3"            # 1.0 2026-11-12 (first release); 1.1 2026-11-14 (brief 71: reset rules split into HDL-RST-01..05,
                           # HDL-CLK-02, HDL-VER-01, HDL-IF-02/03, HDL-GT-01, HDL-DOC-01; check-suite tool keys; fix and skill);
-                          # 1.2 2026-11-14 (brief 73: HDL-IF-04..06, the axi_profile check)
+                          # 1.2 2026-11-14 (brief 73: HDL-IF-04..06, the axi_profile check);
+                          # 1.3 2026-11-14 (brief 70: REQP-1840 in HDL-RST-03, HDL-RST-06 AMD IP resets)
 date: 2026-11-14
 rules:
   - id: HDL-SYN-01
@@ -101,11 +102,15 @@ rules:
     fix: choose one polarity inside the design (active high), invert once where the reset enters (aresetn only at AXI ports)
     skill: control-sets-resets-and-enables
   - id: HDL-RST-03
-    title: No asynchronous reset on a register that belongs in a DSP or block RAM
+    title: No asynchronous reset or set on a register that belongs in a DSP or block RAM, and none driving a block-RAM control pin
     rationale: The DSP48 and block-RAM registers have synchronous resets only, so an asynchronous reset keeps the register
-      in the fabric, costing flip-flops and the primitive's fast internal path.
-    checks: {vivado: ["DPIR-*", "DPOR-*", "RMIR-*", "RMOR-*", "RROR-*"], resets: [RST-DSPRAM-01]}
-    fix: give the pipeline and output registers around the DSP or RAM a synchronous reset, or none
+      in the fabric, costing flip-flops and the primitive's fast internal path. A block-RAM control pin (reset, enable)
+      driven by a register with an asynchronous set or reset can corrupt the memory contents, and the default timing
+      analysis does not time it (AMD DRC REQP-1840; seen when a reset synchroniser's output fed a RAM's reset pin).
+    checks: {vivado: ["DPIR-*", "DPOR-*", "RMIR-*", "RMOR-*", "RROR-*", "REQP-1840"], resets: [RST-DSPRAM-01]}
+    fix: give the pipeline and output registers around the DSP or RAM a synchronous reset, or none; do not let a register with
+      an asynchronous reset drive a block-RAM reset or enable pin (read the reset into the address logic, or add a register
+      with no asynchronous reset in front of the pin)
     skill: control-sets-resets-and-enables
   - id: HDL-RST-04
     title: A reset enters each clock domain through a synchroniser
@@ -121,6 +126,14 @@ rules:
     checks: {verilator: [CDCRSTLOGIC], vivado: ["LUTAR-*"], resets: [RST-LUT-01]}
     fix: drive an asynchronous reset only from a register (a synchroniser output) or a device pin, never from a LUT
     skill: reset-strategy
+  - id: HDL-RST-06
+    title: AMD IP gets the reset it needs
+    rationale: Each AMD IP has its own reset port, polarity and minimum pulse (measured, brief 70); the Processor System Reset
+      ignores a pulse shorter than its filter, the AXI interconnects need every interface reset together and do not
+      resynchronise it, and the DMA needs 16 clocks. Advice, not a failure.
+    checks: {resets: [RST-IP-01]}
+    fix: drive each IP's reset from a synchronised, sufficiently long reset of its own clock domain (a Processor System Reset per clock)
+    skill: amd-ip-reset-map
   - id: HDL-CDC-01
     title: Every clock-domain crossing through a named, declared primitive
     rationale: An unsynchronised crossing fails rarely and randomly; only structure, not simulation, shows it.

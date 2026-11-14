@@ -88,16 +88,30 @@ module gth_serdes_core #(
     // a fall event in the clock of a STICKY write is kept (set wins over the clear of that bit)
     always_comb sticky_set = {2'b00, hl_q && !hard_locked_c, fl_q && !fab_locked_c, rx_q && !rx_done, tx_q && !tx_done};
     // user-clock helpers are held in reset until the PMA of each direction is out of reset (wizard example design)
-    assign utx_rst = ~txpmadone;
-    assign urx_rst = ~rxpmadone;
+    // The wizard's reset inputs come straight from registers, never from logic (the wizard guide's rule; AMD methodology
+    // check LUTAR-1 fires on a LUT that drives them; brief 70). Each costs one clock of latency, which the reset pulses
+    // (held for 8 clocks) and the wizard's own synchronisers tolerate. The two user-clock resets start asserted (INIT 1).
+    logic wz_all, wz_txpll, wz_rxpll, wz_txdp, wz_rxdp;
+    logic wz_utx = 1'b1, wz_urx = 1'b1;
+    always_ff @(posedge clk) begin
+        wz_all   <= rst || (rs_all != 4'd0);
+        wz_txpll <= (rs_txpll != 4'd0);
+        wz_rxpll <= (rs_rxpll != 4'd0);
+        wz_txdp  <= (rs_txdp != 4'd0);
+        wz_rxdp  <= (rs_rxdp != 4'd0);
+        wz_utx   <= ~txpmadone;
+        wz_urx   <= ~rxpmadone;
+    end
+    assign utx_rst = wz_utx;
+    assign urx_rst = wz_urx;
     gth_wiz u_gt (
         .gtwiz_userclk_tx_reset_in(utx_rst), .gtwiz_userclk_tx_srcclk_out(), .gtwiz_userclk_tx_usrclk_out(),
         .gtwiz_userclk_tx_usrclk2_out(txusr2), .gtwiz_userclk_tx_active_out(utx_act_t),
         .gtwiz_userclk_rx_reset_in(urx_rst), .gtwiz_userclk_rx_srcclk_out(), .gtwiz_userclk_rx_usrclk_out(),
         .gtwiz_userclk_rx_usrclk2_out(rxusr2), .gtwiz_userclk_rx_active_out(urx_act_r),
-        .gtwiz_reset_clk_freerun_in(clk), .gtwiz_reset_all_in(rst || (rs_all != 4'd0)),
-        .gtwiz_reset_tx_pll_and_datapath_in(rs_txpll != 4'd0), .gtwiz_reset_tx_datapath_in(rs_txdp != 4'd0),
-        .gtwiz_reset_rx_pll_and_datapath_in(rs_rxpll != 4'd0), .gtwiz_reset_rx_datapath_in(rs_rxdp != 4'd0),
+        .gtwiz_reset_clk_freerun_in(clk), .gtwiz_reset_all_in(wz_all),
+        .gtwiz_reset_tx_pll_and_datapath_in(wz_txpll), .gtwiz_reset_tx_datapath_in(wz_txdp),
+        .gtwiz_reset_rx_pll_and_datapath_in(wz_rxpll), .gtwiz_reset_rx_datapath_in(wz_rxdp),
         .gtwiz_reset_rx_cdr_stable_out(cdr_stable_c), .gtwiz_reset_tx_done_out(tx_done_t),
         .gtwiz_reset_rx_done_out(rx_done_r),
         .gtwiz_userdata_tx_in(tx_data), .gtwiz_userdata_rx_out(rx_data),

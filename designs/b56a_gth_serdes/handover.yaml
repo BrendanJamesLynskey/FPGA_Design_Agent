@@ -56,7 +56,7 @@ parameters:
 files:
 - path: designs/b56a_gth_serdes/rtl/gth_serdes_core.sv
   what: GT Wizard wrapper, registers, snapshot, DRP and SYSMON windows
-  sha256: 1c0fe7acf1b2bd71d070f3fe336d209775add88d16b4cc2a2a880f581bc6741a
+  sha256: 6b12ad9c2e66a402d0ee834acb6daece12b9d298686b883bf6f14fc103917766
 - path: designs/b56a_gth_serdes/rtl/prbs64.sv
   what: fabric PRBS generator and checker
   sha256: 9b8dfb6fd156e6fcb4fa2b07d1b0238af6ade0951785bfa8382cec8ee47870da
@@ -103,13 +103,13 @@ evidence:
   result: pass
   what: synthesis, implementation and bitstream on the Basic tier; every flow gate and every GT gate passes
   record: results/56a_serdes/gt_build/gates.json
-  sha256: 6e3accd275adfa32f5b5e6085ad816da869dae91eace7f2d557b1f41eae911f3
+  sha256: 0305a74bc04ed067fcaa2d9f65ceb7dddb844517940b3748ec0f582d1d3bbb24
 - id: E3
   activity: review
   result: pass
   what: one independent correctness review (Sonnet) and one fix round
   record: results/56a_serdes/README.md
-  sha256: 6f5635a12ac523821aec0bc500169e6ba4eeeac11de69ec569df3ed86b8bc3fd
+  sha256: f9bc061b62c89b66d6f5bd23468c072bcbed61efa5b1dc84e996b9f2f76d85e9
 measurements:
 - id: M1
   what: LUTs
@@ -120,7 +120,7 @@ measurements:
   field: utilization.lut
   conditions: routed, Vivado 2026.1
   value: 973
-  sha256: 6e3accd275adfa32f5b5e6085ad816da869dae91eace7f2d557b1f41eae911f3
+  sha256: 0305a74bc04ed067fcaa2d9f65ceb7dddb844517940b3748ec0f582d1d3bbb24
 - id: M2
   what: registers
   category: resources
@@ -129,8 +129,8 @@ measurements:
   record: results/56a_serdes/gt_build/gates.json
   field: utilization.ff
   conditions: as M1
-  value: 3106
-  sha256: 6e3accd275adfa32f5b5e6085ad816da869dae91eace7f2d557b1f41eae911f3
+  value: 3113
+  sha256: 0305a74bc04ed067fcaa2d9f65ceb7dddb844517940b3748ec0f582d1d3bbb24
 - id: M3
   what: worst setup slack
   category: timing
@@ -139,8 +139,8 @@ measurements:
   record: results/56a_serdes/gt_build/gates.json
   field: timing.wns_ns
   conditions: routed, user clocks 161.133 MHz and 100 MHz
-  value: 2.156
-  sha256: 6e3accd275adfa32f5b5e6085ad816da869dae91eace7f2d557b1f41eae911f3
+  value: 2.246
+  sha256: 0305a74bc04ed067fcaa2d9f65ceb7dddb844517940b3748ec0f582d1d3bbb24
 - id: M4
   what: worst hold slack
   category: timing
@@ -150,7 +150,7 @@ measurements:
   field: timing.whs_ns
   conditions: as M3
   value: 0.016
-  sha256: 6e3accd275adfa32f5b5e6085ad816da869dae91eace7f2d557b1f41eae911f3
+  sha256: 0305a74bc04ed067fcaa2d9f65ceb7dddb844517940b3748ec0f582d1d3bbb24
 - id: M5
   what: total on-chip power estimate
   category: power
@@ -160,16 +160,16 @@ measurements:
   field: power.total_w
   conditions: report_power after routing, vectorless, confidence Medium
   value: 0.764
-  sha256: 6e3accd275adfa32f5b5e6085ad816da869dae91eace7f2d557b1f41eae911f3
+  sha256: 0305a74bc04ed067fcaa2d9f65ceb7dddb844517940b3748ec0f582d1d3bbb24
 - id: M6
-  what: Vivado peak resident memory of the first GT build
+  what: Vivado peak resident memory of the GT build (rebuilt 2026-11-14 for brief 70, resets from registers)
   category: other
   unit: MiB
   record: results/56a_serdes/gt_build/run.json
   field: vivado_peak_rss_mib
   conditions: 2 threads, MemoryMax=8G, alone on the machine, one run
-  value: 4235
-  sha256: 4bc1a348be4dc46fac1baa91bf108d11578821c50d4e951e90a8f07d5a396b96
+  value: 4289
+  sha256: 2f1302a663c02fffdecb3a06855c2beb9fb29de037bc7194cae786679596638a
 gaps:
 - about: latency
   text: Not measured; the design has no data path latency requirement and the stand-in has no transceiver latency. Board
@@ -217,5 +217,5 @@ state:
   gates:
     build_2026_1: pass
   vivado: '2026.1'
-  kb_pin: 1fc7ed8
-  build_id: cdb9eeef
+  kb_pin: 20d73e8
+  build_id: d61c218c

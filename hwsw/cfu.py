@@ -155,7 +155,7 @@ module cfu_{block} (
 `endif
     {fu['top']}{params} u_unit ({', '.join(conn)});
 
-    always_ff @(posedge clk or negedge rst_n) begin
+    always_ff @(posedge clk) begin   // synchronous reset (house rule, brief 70)
         if (!rst_n) begin
             have <= 1'b0;
             res_q <= 32'd0;
@@ -223,7 +223,7 @@ module cfu_{block} (
 `endif
     {fu['top']}{params} u_unit ({', '.join(conn)});
 
-    always_ff @(posedge clk or negedge rst_n) begin
+    always_ff @(posedge clk) begin   // synchronous reset (house rule, brief 70)
         if (!rst_n) begin
             active <= 1'b0;
             have <= 1'b0;

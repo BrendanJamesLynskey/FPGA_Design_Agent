@@ -4,8 +4,8 @@
  "variant": "base",
  "top": "kr260_gth_top",
  "part": "xck26-sfvc784-2LV-c",
- "build_id": "cdb9eeef",
- "build_id_sha256": "cdb9eeef8ff54f107ad40323d8968cf06700a267fdbb75b81ab302851fcfd805",
+ "build_id": "d61c218c",
+ "build_id_sha256": "d61c218c6e64b152fc29e0e002c994ccb6a89e19292e1a1d3f6be66f53b829e7",
  "build_id_covers": [
   "schema",
   "design",
@@ -20,13 +20,14 @@
  "inputs": {
   "designs/b58a_trigger/rtl/jtag_bus.sv": "c56593b3f63925965c62cb79260ffbe068df0b28fd0c10b1ed30de6763c20215",
   "designs/b56a_gth_serdes/rtl/prbs64.sv": "9b8dfb6fd156e6fcb4fa2b07d1b0238af6ade0951785bfa8382cec8ee47870da",
-  "designs/b56a_gth_serdes/rtl/gth_serdes_core.sv": "1c0fe7acf1b2bd71d070f3fe336d209775add88d16b4cc2a2a880f581bc6741a",
+  "designs/b56a_gth_serdes/rtl/gth_serdes_core.sv": "6b12ad9c2e66a402d0ee834acb6daece12b9d298686b883bf6f14fc103917766",
   "designs/b56a_gth_serdes/rtl/kr260_gth_top.sv": "b69b051f3a7e3c16935bbc0f9b576b4103de516400b48a25e08466e7473e33f0",
   "designs/b56a_gth_serdes/design.xdc": "60018c8f19a591db5614f65869d5c01d5bedd8f8790d598528a9fca95dba7e44",
   "designs/b56a_gth_serdes/ip/amd_ip.tcl": "66d54de6a5fc2bf6ffc7b2cebd9992f1c60b53ad13d007c9dfbe1626d722090d",
   "designs/b56a_gth_serdes/build.yaml": "0f5e121f13fe3e51a153e5c4996c88a17640c678915a5117f3b1257b534d81c3",
-  "flow/build.tcl": "5efc4931d25547ef59b447a958b422a001264936491ce5e5ac8ba1e1f9f8b3c3",
+  "flow/build.tcl": "367295345613117cc90ca6a7d7249f230e088a4fffcf29491fa17894a9d91719",
   "flow/xpm_cdc.tcl": "3cf82037b885b9191f44dfb9f45f6a9fe42e351cdc3f73b3387e6447317f9244",
+  "flow/checks/vivado_checks.tcl": "a23a49f837773f4105ff9a85cc035552be66c76e7eb2ad40691adfb50ceccc4e",
   "flow/cdc_paths.tcl": "018799c6af7fd219551a3aa2b6d775cad5c31391a1e6c5acabc05458db4a8158",
   "flow/mcp_paths.tcl": "5e9fc71305b667e408afe8f1748522e2c3a0e022daebdb9e53a5c636372be8c1",
   "flow/io_paths.tcl": "d071501fd49e4de7118afe2f59c466bc6621932e93dd408e212b40900ad4df0e",
@@ -48,6 +49,7 @@
   "designs/b56a_gth_serdes/build.yaml": "build_yaml",
   "flow/build.tcl": "tcl",
   "flow/xpm_cdc.tcl": "tcl",
+  "flow/checks/vivado_checks.tcl": "tcl",
   "flow/cdc_paths.tcl": "tcl",
   "flow/mcp_paths.tcl": "tcl",
   "flow/io_paths.tcl": "tcl",
@@ -65,7 +67,7 @@
   "set sources [list {$ROOT/designs/b58a_trigger/rtl/jtag_bus.sv} {$ROOT/designs/b56a_gth_serdes/rtl/prbs64.sv} {$ROOT/designs/b56a_gth_serdes/rtl/gth_serdes_core.sv} {$ROOT/designs/b56a_gth_serdes/rtl/kr260_gth_top.sv}]",
   "set constraints [list {$ROOT/designs/b56a_gth_serdes/design.xdc}]",
   "set ip_tcls [list {$OUT/ip_tcl/00_amd_ip.tcl}]",
-  "set generics [list {BUILD_STAMP=32'heb6aa02c}]",
+  "set generics [list {BUILD_STAMP=32'h7c90a81a}]",
   "set ila 0",
   "set power_env {-airflow 0 -heatsink none -board medium -board_layers 8to11 -ambient_temp 40.0}",
   "set timing_margin_ns 0"
@@ -85,7 +87,7 @@
    "FDA_ILA_INSERT": "ip"
   },
   "incremental_ref_sha256": null,
-  "build_stamp": "eb6aa02c"
+  "build_stamp": "7c90a81a"
  },
  "settings_recorded": {
   "commands": {
@@ -112,7 +114,7 @@
   "report_switches": {
    "FDA_XPROBE": "",
    "FDA_RESULT_HASH": "",
-   "FDA_BUILD_CACHE": "0"
+   "FDA_BUILD_CACHE": ""
   },
   "stop_after": "bitstream",
   "incremental_ref": null,
@@ -121,51 +123,34 @@
  "tools": {
   "vivado": "2026.1",
   "python": "3.12.3",
-  "pyyaml": "6.0.3",
+  "pyyaml": "6.0.1",
   "vivado_ran": "2026.1",
   "vivado_sw_build": "6511674",
   "vivado_licence_tier": "BASIC"
  },
- "kb_pin": "1fc7ed8",
+ "kb_pin": "20d73e8",
  "flow": {
-  "commit": "d9e05eaa6da8",
-  "commit_full": "d9e05eaa6da835cfda31d2c405851862e144fd3f",
+  "commit": "0234d7bc4173",
+  "commit_full": "0234d7bc41734cde9a920e0c46badc3f2f6e4452",
   "dirty": true,
   "dirty_files": [
-   ".github/workflows/ci.yml",
-   "agent/core/registry.py",
-   "agent/core/tools.py",
-   "agent/graph/spec_schema.py",
-   "agent/tests/fixtures/tool_schemas.json",
-   "agent/tests/test_08f_golden_requests.py",
-   "boards/kr260/board.yaml",
-   "docs/agent_core.md",
-   "flow/exceptions_check.py",
-   "flow/gates.py",
-   "flow/ip_tcl_allow.yaml"
+   "results/70_resets/records/bd_wiring.tsv"
   ],
-  "inputs_untracked": [
-   "designs/b56a_gth_serdes/rtl/prbs64.sv",
-   "designs/b56a_gth_serdes/rtl/gth_serdes_core.sv",
-   "designs/b56a_gth_serdes/rtl/kr260_gth_top.sv",
-   "designs/b56a_gth_serdes/design.xdc",
-   "designs/b56a_gth_serdes/ip/amd_ip.tcl",
-   "designs/b56a_gth_serdes/build.yaml"
-  ]
+  "inputs_untracked": []
  },
- "build_dir": "/tmp/claude-1000/-home-brendan-Claude-sandbox/a33f10a6-b2fd-499a-bb8d-a80193f95456/scratchpad/pub/designs/b56a_gth_serdes/build/base",
- "created": "2026-11-13T18:15:34+00:00",
+ "build_dir": "/tmp/claude-1000/-home-brendan-Claude-sandbox/a33f10a6-b2fd-499a-bb8d-a80193f95456/scratchpad/b70/pub/designs/b56a_gth_serdes/build/base",
+ "created": "2026-11-14T08:27:52+00:00",
  "tools_consistent": true,
  "outputs": {
   "bit": {
    "file": "kr260_gth_top.bit",
-   "sha256": "0b7a4ecf45fe6fe37d46d47e13449f7965f5dca2a44cb706aef007504dca256b",
-   "usr_access": "CDB9EEEF"
+   "sha256": "509cc37dbefb1b8ab21368f02d2846ecb67fd8aa49d19482b150f601f4b66aa4",
+   "usr_access": "D61C218C"
   }
  },
  "cache": {
-  "flow_key": "5a69a62b6be9ac05e4c58eb23da9307e22b849d0d4cd37b32f25781fbc623ba1",
-  "synth_key": "6facf0b5db1e1a90407152d2bcf8a477301a6978b9ec9a27f7aea04c59b0fb98",
+  "flow_key": "57b89868fa89770bd94c793e34f948fd84b69027f92877f664298ba7d6e4a5c3",
+  "synth_key": "c413d18a159b8c2533ab9cd294823dddb864140fbe78371ed4161067ab566547",
   "action": "fresh"
  },
  "incremental": {
@@ -174,5 +159,5 @@
   "consistent": true,
   "status": "not incremental"
  },
- "finalised": "2026-11-13T18:21:31+00:00"
+ "finalised": "2026-11-14T08:33:38+00:00"
 }

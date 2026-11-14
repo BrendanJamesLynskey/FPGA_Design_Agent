@@ -3,8 +3,8 @@ runner: hil/ip_faults.py          # the fault runner that owns this block's faul
 faults:
 - name: sine_wrong_slice
   file: dds_awg.sv
-  old: 'rom[phase_next[PHASE_W-1 -: LUT_W]]'
-  new: 'rom[phase_next[PHASE_W-2 -: LUT_W]]'
+  old: '= tick ? phase_next[PHASE_W-1 -: LUT_W] :'
+  new: '= tick ? phase_next[PHASE_W-2 -: LUT_W] :'
   class: value
   why: the table address skips the top phase bit, so the sine runs at twice the frequency (bram variant)
   test: hil/tests/test_30_ip_rtl.py -k test_block and dds_awg
@@ -17,8 +17,8 @@ faults:
   test: hil/tests/test_30_ip_rtl.py -k test_block and dds_awg and lut
 - name: bram_next_entry
   file: dds_awg.sv
-  old: 'else if (tick) sine <= rom[phase_next[PHASE_W-1 -: LUT_W]];'
-  new: 'else if (tick) sine <= rom[phase_next[PHASE_W-1 -: LUT_W] + 1''b1];'
+  old: '= tick ? phase_next[PHASE_W-1 -: LUT_W] :'
+  new: '= tick ? phase_next[PHASE_W-1 -: LUT_W] + 1''b1 :'
   class: value
   why: the registered table read is one entry ahead of the phase (bram variant)
   test: hil/tests/test_30_ip_rtl.py -k test_block and dds_awg

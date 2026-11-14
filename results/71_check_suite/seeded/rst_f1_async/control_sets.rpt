@@ -1,12 +1,12 @@
 Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 | Tool Version : Vivado v.2026.1 (lin64) Build 6511674 Tue Jun 16 11:01:26 MDT 2026
-| Date         : Sat Nov 14 01:09:08 2026
+| Date         : Sat Nov 14 08:21:23 2026
 | Host         : bren-ubuntu24-04 running 64-bit Ubuntu 24.04.4 LTS
-| Command      : report_control_sets -verbose -file /tmp/claude-1000/-home-brendan-Claude-sandbox/a33f10a6-b2fd-499a-bb8d-a80193f95456/scratchpad/b71run/seeded/out3/rst_f1_async/control_sets.rpt
+| Command      : report_control_sets -verbose -file /tmp/claude-1000/-home-brendan-Claude-sandbox/a33f10a6-b2fd-499a-bb8d-a80193f95456/scratchpad/b70/seeded/out/rst_f1_async/control_sets.rpt
 | Design       : rst_f1_async
 | Device       : xc7a100t
----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 Control Set Information
 
@@ -23,11 +23,11 @@ Table of Contents
 +----------------------------------------------------------+-------+
 |                          Status                          | Count |
 +----------------------------------------------------------+-------+
-| Total control sets                                       |     4 |
-|    Minimum number of control sets                        |     4 |
+| Total control sets                                       |     5 |
+|    Minimum number of control sets                        |     5 |
 |    Addition due to synthesis replication                 |     0 |
 |    Addition due to physical synthesis replication        |     0 |
-| Unused register locations in slices containing registers |    12 |
+| Unused register locations in slices containing registers |    19 |
 +----------------------------------------------------------+-------+
 * Control sets can be merged at opt_design using control_set_merge or merge_equivalent_drivers
 ** Run report_qor_suggestions for automated merging and remapping suggestions
@@ -39,8 +39,8 @@ Table of Contents
 +--------------------+-------+
 |       Fanout       | Count |
 +--------------------+-------+
-| Total control sets |     4 |
-| >= 0 to < 4        |     2 |
+| Total control sets |     5 |
+| >= 0 to < 4        |     3 |
 | >= 4 to < 6        |     0 |
 | >= 6 to < 8        |     0 |
 | >= 8 to < 10       |     0 |
@@ -58,7 +58,7 @@ Table of Contents
 +--------------+-----------------------+------------------------+-----------------+--------------+
 | Clock Enable | Synchronous Set/Reset | Asynchronous Set/Reset | Total Registers | Total Slices |
 +--------------+-----------------------+------------------------+-----------------+--------------+
-| No           | No                    | No                     |               0 |            0 |
+| No           | No                    | No                     |               1 |            0 |
 | No           | No                    | Yes                    |              20 |            0 |
 | No           | Yes                   | No                     |              16 |            0 |
 | Yes          | No                    | No                     |               0 |            0 |
@@ -73,6 +73,7 @@ Table of Contents
 +--------------+---------------+-----------------------+------------------+----------------+--------------+
 | Clock Signal | Enable Signal |    Set/Reset Signal   | Slice Load Count | Bel Load Count | Bels / Slice |
 +--------------+---------------+-----------------------+------------------+----------------+--------------+
+|  clk_a       |               |                       |                0 |              1 |           NA |
 |  clk_b       |               | u_sync_b/q[1]_i_1_n_0 |                0 |              2 |           NA |
 |  clk_a       |               | u_sync_a/reset_pol    |                0 |              2 |           NA |
 |  clk_b       |               | u_sync_b/q[1]         |                0 |             16 |           NA |

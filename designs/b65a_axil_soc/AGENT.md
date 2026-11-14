@@ -9,7 +9,7 @@ The brief 65A sample block design. A DDS tone generator and a frequency and duty
 not: a showcase or a board-verified design; the bitstream was built, not programmed; a general interconnect; generation covers AXI4-Lite only, 32-bit data and one clock domain
 
 ## state
-stage=built vivado=2026.1 kb_pin=20d73e8 build_id=2b28c63c
+stage=built vivado=2026.1 kb_pin=20d73e8 build_id=d5b615b6
 gates: build_2026_1=pass board_run=not-run
 
 ## interface
@@ -44,7 +44,7 @@ simulate end to end (~1min): python -m pytest -q designs/b65a_axil_soc/tests/tes
 R1 designs/b65a_axil_soc/tests/test_b65a_rtl.py 583424fc10
 R2 flow/blockdesign/tests/test_65a_blockdesign.py 87d41b298c
 R3 results/65a_blockdesign/faults.json 987ffa0570
-R4 results/65a_blockdesign/vivado_build/gates.json 476929e068
+R4 results/65a_blockdesign/vivado_build/gates.json 2f065946f7
 R5 results/blockdesign/b65a_axil_soc/build.json 0f94c01fe9
 R6 results/65a_blockdesign/sim_end_to_end.json 82ca2d20f8
 
@@ -56,11 +56,11 @@ E4 build pass R4: whole-board build on Vivado 2026.1; every gate passes
 E5 model pass R5: the viewer's graph against the synthesised netlist; all 14 expected instances found, the crossbar's address ranges equal the built RTL's
 
 ## measured
-M1 resources lut=1093 LUT R4#utilization.lut: LUTs, whole board design | routed whole-board build, Vivado 2026.1, including the test shell
-M2 resources ff=1150 FF R4#utilization.ff: flip-flops, whole board design | as M1
+M1 resources lut=1105 LUT R4#utilization.lut: LUTs, whole board design | routed whole-board build, Vivado 2026.1, including the test shell
+M2 resources ff=1151 FF R4#utilization.ff: flip-flops, whole board design | as M1
 M3 resources bram_tile=0.5 tiles R4#utilization.bram_tile: block RAM tiles, whole board design | ditto
-M4 timing wns_ns=2.933 ns R4#timing.wns_ns: worst setup slack | routed, 100 MHz clock
-M5 timing whs_ns=0.076 ns R4#timing.whs_ns: worst hold slack | ditto
+M4 timing wns_ns=2.855 ns R4#timing.wns_ns: worst setup slack | routed, 100 MHz clock
+M5 timing whs_ns=0.017 ns R4#timing.whs_ns: worst hold slack | ditto
 M6 power power_w=0.13 W R4#power.total_w: total on-chip power estimate | report_power after routing, vectorless, confidence Medium
 M7 verification -=86 transfers R6#axi_transfers: AXI4-Lite transfers in the end-to-end simulation | simulation, with no protocol rule broken on the four top-level links
 M8 verification -=62 edges R6#edges: rising edges the frequency counter read in the gate | simulation, a 4000-clock gate for a 64-clock tone, so 62.5 expected

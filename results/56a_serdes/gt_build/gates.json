@@ -1,12 +1,12 @@
 {
-  "build_dir": "designs/b56a_gth_serdes/build/base",
+  "build_dir": "/tmp/claude-1000/-home-brendan-Claude-sandbox/a33f10a6-b2fd-499a-bb8d-a80193f95456/scratchpad/b70/pub/designs/b56a_gth_serdes/build/base",
   "vivado_version": "2026.1",
   "kb_measured_version": "2026.1",
   "kb_version_match": true,
   "top": "kr260_gth_top",
   "variant": "base",
-  "pass": true,
-  "first_failed_stage": null,
+  "pass": false,
+  "first_failed_stage": "post_synth",
   "gates": {
     "rtl_methodology_no_critical": true,
     "post_synth_no_unconstrained_endpoints": true,
@@ -23,6 +23,7 @@
     "post_synth_gt_reset_sequence": true,
     "post_synth_gt_user_clocks_timed": true,
     "post_synth_gt_drc_clean": true,
+    "post_synth_resets_clean": false,
     "post_synth_resources_in_range": true,
     "post_place_hold": true,
     "setup": true,
@@ -94,6 +95,7 @@
         "post_synth_gt_reset_sequence": true,
         "post_synth_gt_user_clocks_timed": true,
         "post_synth_gt_drc_clean": true,
+        "post_synth_resets_clean": false,
         "post_synth_resources_in_range": true
       },
       "warnings": [],
@@ -101,15 +103,15 @@
         "wns_ns": 2.226,
         "tns_ns": 0.0,
         "tns_failing_endpoints": 0,
-        "tns_total_endpoints": 7074,
+        "tns_total_endpoints": 7082,
         "whs_ns": -0.455,
-        "ths_ns": -78.623,
-        "ths_failing_endpoints": 2199,
-        "ths_total_endpoints": 6770,
+        "ths_ns": -78.624,
+        "ths_failing_endpoints": 2200,
+        "ths_total_endpoints": 6778,
         "wpws_ns": 0.381,
         "tpws_ns": 0.0,
         "tpws_failing_endpoints": 0,
-        "tpws_total_endpoints": 3154,
+        "tpws_total_endpoints": 3161,
         "timing_met": false
       },
       "check_timing": {
@@ -130,13 +132,13 @@
       "methodology": {
         "errors": 0,
         "critical_warnings": 0,
-        "warnings": 17,
+        "warnings": 15,
         "rules": [
           {
             "rule": "LUTAR-1",
             "severity": "Warning",
             "description": "LUT drives async reset alert",
-            "count": 7
+            "count": 5
           },
           {
             "rule": "XDCH-2",
@@ -669,7 +671,7 @@
           {
             "cell": "u_core/u_gt/inst/gen_gtwizard_gthe4_top.gth_wiz_gtwizard_gthe4_inst/gen_gtwizard_gthe4.gen_rx_user_clocking_internal.gen_single_instance.gtwiz_userclk_rx_inst/gen_gtwiz_userclk_rx_main.gtwiz_userclk_rx_active_meta_reg",
             "pin": "CLR",
-            "src": "u_core/u_s_rp/syncstages_ff_reg[3]",
+            "src": "u_core/wz_urx_reg",
             "src_clock": "clk_u",
             "dst_clock": "rxusr2",
             "class": "reset bridge",
@@ -683,7 +685,7 @@
           {
             "cell": "u_core/u_gt/inst/gen_gtwizard_gthe4_top.gth_wiz_gtwizard_gthe4_inst/gen_gtwizard_gthe4.gen_rx_user_clocking_internal.gen_single_instance.gtwiz_userclk_rx_inst/gen_gtwiz_userclk_rx_main.gtwiz_userclk_rx_active_sync_reg",
             "pin": "CLR",
-            "src": "u_core/u_s_rp/syncstages_ff_reg[3]",
+            "src": "u_core/wz_urx_reg",
             "src_clock": "clk_u",
             "dst_clock": "rxusr2",
             "class": "reset bridge",
@@ -695,7 +697,7 @@
           {
             "cell": "u_core/u_gt/inst/gen_gtwizard_gthe4_top.gth_wiz_gtwizard_gthe4_inst/gen_gtwizard_gthe4.gen_tx_user_clocking_internal.gen_single_instance.gtwiz_userclk_tx_inst/gen_gtwiz_userclk_tx_main.gtwiz_userclk_tx_active_meta_reg",
             "pin": "CLR",
-            "src": "u_core/u_s_tp/syncstages_ff_reg[3]",
+            "src": "u_core/wz_utx_reg",
             "src_clock": "clk_u",
             "dst_clock": "txusr2",
             "class": "reset bridge",
@@ -709,7 +711,7 @@
           {
             "cell": "u_core/u_gt/inst/gen_gtwizard_gthe4_top.gth_wiz_gtwizard_gthe4_inst/gen_gtwizard_gthe4.gen_tx_user_clocking_internal.gen_single_instance.gtwiz_userclk_tx_inst/gen_gtwiz_userclk_tx_main.gtwiz_userclk_tx_active_sync_reg",
             "pin": "CLR",
-            "src": "u_core/u_s_tp/syncstages_ff_reg[3]",
+            "src": "u_core/wz_utx_reg",
             "src_clock": "clk_u",
             "dst_clock": "txusr2",
             "class": "reset bridge",
@@ -98794,11 +98796,33 @@
         "not_applicable": {},
         "pass": true
       },
+      "resets": {
+        "status": "fail",
+        "parts": {
+          "source": "ran",
+          "amd_methodology": "ran",
+          "amd_drc": "ran",
+          "amd_cdc": "ran",
+          "netlist": "ran",
+          "netlist_clocks": "ran",
+          "polarity": "ran"
+        },
+        "n_findings": 1,
+        "findings": [
+          {
+            "rule": "HDL-RST-05",
+            "code": "LUTAR-1",
+            "where": "report_methodology@post_synth",
+            "message": "LUT drives async reset alert (x5)",
+            "fix": "drive an asynchronous reset only from a register (a synchroniser output) or a device pin, never from a LUT"
+          }
+        ]
+      },
       "resource_sanity": {
         "factor": 2.0,
         "resources": {
           "lut": {
-            "used": 994,
+            "used": 996,
             "predicted": [
               700.0,
               2000.0
@@ -98811,7 +98835,7 @@
             "direction": null
           },
           "ff": {
-            "used": 3139,
+            "used": 3146,
             "predicted": [
               2500.0,
               5000.0
@@ -98863,14 +98887,14 @@
         "iob_available": 189,
         "bufg": 0,
         "bufg_available": 32,
-        "lut": 994,
+        "lut": 996,
         "lut_available": 117120,
-        "ff": 3139,
+        "ff": 3146,
         "ff_available": 234240,
         "carry8": 45,
         "carry8_available": 14640
       },
-      "pass": true
+      "pass": false
     },
     "post_place": {
       "ran": true,
@@ -98878,18 +98902,18 @@
         "post_place_hold": true
       },
       "timing": {
-        "wns_ns": 2.147,
+        "wns_ns": 2.197,
         "tns_ns": 0.0,
         "tns_failing_endpoints": 0,
-        "tns_total_endpoints": 7041,
-        "whs_ns": -0.293,
-        "ths_ns": -9.833,
-        "ths_failing_endpoints": 111,
-        "ths_total_endpoints": 6737,
+        "tns_total_endpoints": 7049,
+        "whs_ns": -0.335,
+        "ths_ns": -12.502,
+        "ths_failing_endpoints": 104,
+        "ths_total_endpoints": 6745,
         "wpws_ns": 0.511,
         "tpws_ns": 0.0,
         "tpws_failing_endpoints": 0,
-        "tpws_total_endpoints": 3121,
+        "tpws_total_endpoints": 3128,
         "timing_met": false
       },
       "pass": true
@@ -99062,26 +99086,26 @@
         },
         "worst": {
           "setup": {
-            "slack": 2.156,
+            "slack": 2.246,
             "requirement": 3.103,
             "start_clock": "gen_gtwizard_gthe4.rxoutclkpcs_int[0]",
             "end_clock": "gen_gtwizard_gthe4.rxoutclkpcs_int[0]",
             "corner": "Slow",
             "uncertainty": 0.035,
-            "pessimism": 0.781,
-            "from": "u_core/u_gt/inst/gen_gtwizard_gthe4_top.gth_wiz_gtwizard_gthe4_inst/gen_gtwizard_gthe4.gen_pwrgood_delay_inst[0].delay_powergood_inst/gen_powergood_delay.intclk_rrst_n_r_reg[4]/C",
+            "pessimism": 0.789,
+            "from": "u_core/u_gt/inst/gen_gtwizard_gthe4_top.gth_wiz_gtwizard_gthe4_inst/gen_gtwizard_gthe4.gen_pwrgood_delay_inst[0].delay_powergood_inst/gen_powergood_delay.int_pwr_on_fsm_reg/C",
             "to": "u_core/u_gt/inst/gen_gtwizard_gthe4_top.gth_wiz_gtwizard_gthe4_inst/gen_gtwizard_gthe4.gen_pwrgood_delay_inst[0].delay_powergood_inst/gen_powergood_delay.wait_cnt_reg[0]/CE"
           },
           "hold": {
             "slack": 0.016,
             "requirement": 0.0,
-            "start_clock": "rxusr2",
-            "end_clock": "rxusr2",
+            "start_clock": "clk_u",
+            "end_clock": "clk_u",
             "corner": "Slow",
             "uncertainty": null,
-            "pessimism": -0.034,
-            "from": "u_core/h_cyc_reg[5]/C",
-            "to": "u_core/src_vec_reg[69]/D"
+            "pessimism": 0.286,
+            "from": "u_core/u_snap/dest_hsdata_ff_reg[247]/C",
+            "to": "u_core/live_reg[247]/D"
           }
         },
         "uncertainty": {
@@ -99092,9 +99116,9 @@
             "tij_ns": 0.0,
             "dj_ns": 0.0,
             "pe_ns": 0.0,
-            "pessimism_ns": 0.781,
+            "pessimism_ns": 0.789,
             "requirement_ns": 3.103,
-            "slack_ns": 2.156
+            "slack_ns": 2.246
           },
           "hold": null
         }
@@ -99114,18 +99138,18 @@
     }
   },
   "timing": {
-    "wns_ns": 2.156,
+    "wns_ns": 2.246,
     "tns_ns": 0.0,
     "tns_failing_endpoints": 0,
-    "tns_total_endpoints": 7041,
+    "tns_total_endpoints": 7049,
     "whs_ns": 0.016,
     "ths_ns": 0.0,
     "ths_failing_endpoints": 0,
-    "ths_total_endpoints": 6737,
+    "ths_total_endpoints": 6745,
     "wpws_ns": 0.528,
     "tpws_ns": 0.0,
     "tpws_failing_endpoints": 0,
-    "tpws_total_endpoints": 3121,
+    "tpws_total_endpoints": 3128,
     "timing_met": true
   },
   "check_timing": {
@@ -99155,7 +99179,7 @@
     "bufg_available": 32,
     "lut": 973,
     "lut_available": 117120,
-    "ff": 3106,
+    "ff": 3113,
     "ff_available": 234240,
     "carry8": 45,
     "carry8_available": 14640
@@ -99169,13 +99193,13 @@
   "methodology": {
     "errors": 0,
     "critical_warnings": 0,
-    "warnings": 17,
+    "warnings": 15,
     "rules": [
       {
         "rule": "LUTAR-1",
         "severity": "Warning",
         "description": "LUT drives async reset alert",
-        "count": 7
+        "count": 5
       },
       {
         "rule": "XDCH-2",
@@ -99216,7 +99240,7 @@
   },
   "power": {
     "total_w": 0.764,
-    "dynamic_w": 0.388,
+    "dynamic_w": 0.389,
     "static_w": 0.376,
     "confidence": "Medium",
     "clocks_w": 0.012,
@@ -99238,6 +99262,6 @@
     "file": "kr260_gth_top.bit",
     "bytes": 7797904
   },
-  "build_stamp": "eb6aa02c",
-  "sources_sha256": "eb6aa02c359ab242f1b2909ebae6097ac4f9bdcaa173f33d6a3245737684dde0"
+  "build_stamp": "7c90a81a",
+  "sources_sha256": "7c90a81add5600de574b90490be3c48836eb5a8f1d5d06afae912058cf83f20d"
 }

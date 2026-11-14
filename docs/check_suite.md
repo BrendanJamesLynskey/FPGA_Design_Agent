@@ -34,7 +34,7 @@ python3 -m flow.checks designs/<d> [--names all|resets,cdc,...] [--scope auto|rt
 |---|---|---|---|
 | `lint` | ours (Verilator) | rtl, synth, route | Verilator `--lint-only -Wall`; in a session the `lint` tool unchanged (Icarus elaboration, FDA-CON-8/9) |
 | `standards` | ours | rtl, synth, route | `flow/standards_check.py`; post-synthesis rules at synth/route |
-| `resets` | AMD reports and ours | rtl, synth, route | source part (elaboration); AMD LUTAR/DPIR/DPOR/RMIR/RMOR/RROR/ROAS rows and report_cdc's reset rows; our netlist scan `reset_scan_synth.tsv` |
+| `resets` | AMD reports and ours | rtl, synth, route | source part (elaboration); AMD LUTAR/DPIR/DPOR/RMIR/RMOR/RROR/ROAS/REQP-1840 rows and report_cdc's reset rows; our netlist scan `reset_scan_synth.tsv` |
 | `cdc` | AMD report and ours | synth, route | report_cdc (Critical rows fail) and, after synthesis, `flow/cdc_structure.py` |
 | `methodology` | AMD | rtl, synth, route | report_methodology: Critical Warnings fail, Warnings are advisory |
 | `drc` | AMD | synth, route | report_drc: Errors and Critical Warnings fail |
@@ -54,7 +54,7 @@ python3 -m flow.checks designs/<d> [--names all|resets,cdc,...] [--scope auto|rt
 ## Where the knowledge lives
 
 - How to detect: the check's code (`flow/checks/`, and the checker it wraps).
-- What a violation is, why, the one-line fix and the waiver policy: `flow/hdl_rules.yaml` (FDA-HDL v1.2). Every code a
+- What a violation is, why, the one-line fix and the waiver policy: `flow/hdl_rules.yaml` (FDA-HDL v1.3). Every code a
   check can raise maps to a rule there, and every rule is covered by a check or marked `manual`
   (`flow/tests/test_71_check_suite.py` fails otherwise).
 - The background: the KB skill each rule names (`skill`), shown in the digest.
@@ -156,9 +156,10 @@ python3 -m flow.checks designs/<d> [--names all|resets,cdc,...] [--scope auto|rt
 |---|---|---|
 | HDL-RST-01 asynchronous reset only in a synchroniser or from a declared external input | RST-ASYNC-01 (netlist FDCE/FDPE; source sensitivity list) | ROAS-1 (both asynchronous set and reset) |
 | HDL-RST-02 one polarity per reset | RST-POL-01 (netlist: one root, both polarities, FD and DSP/RAM reset pins), RST-POL-02 (source) | none |
-| HDL-RST-03 no asynchronous reset on DSP or block-RAM registers | RST-DSPRAM-01 | DPIR-1, DPIR-2 (methodology), DPIR-3, DPOR-1..3 (DRC), RMIR-1, RMOR-1, RROR-1 (Advisory) |
+| HDL-RST-03 no asynchronous reset on DSP or block-RAM registers, none driving a block-RAM control pin | RST-DSPRAM-01 | DPIR-1, DPIR-2 (methodology), DPIR-3, DPOR-1..3, REQP-1840 (DRC), RMIR-1, RMOR-1, RROR-1 (Advisory) |
 | HDL-RST-04 a reset enters each clock domain through a synchroniser | RST-CDC-01 (a reset register on one clock resets registers on another; a device pin reaches registers directly) | CDC-7, CDC-8 (report_cdc) |
 | HDL-RST-05 no logic drives an asynchronous reset | RST-LUT-01 | LUTAR-1 |
+| HDL-RST-06 AMD IP gets the reset it needs (advice, never a failure) | RST-IP-01 (`flow/amd_ip_resets.py`: the IP found in scripts, block designs and sources, with its reset port, polarity, internal style and what to provide) | none |
 
 AMD ids were checked against `get_methodology_checks` and `get_drc_checks` on Vivado 2026.1
 (`results/71_check_suite/rule_catalogue_2026_1.tsv`); report_cdc has no catalogue command, so CDC-7 was confirmed by a

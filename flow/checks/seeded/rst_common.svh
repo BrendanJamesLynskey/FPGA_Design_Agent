@@ -33,14 +33,21 @@
         if (we) mem[waddr] <= wdata;
         rd <= mem[raddr];
     end
+    // the synchroniser's output is a register with an asynchronous set or reset: it must not drive a block-RAM control pin
+    // (AMD DRC REQP-1840), so the RAM's output register takes its synchronous reset from one plain register after it (brief 70)
+    logic rst_ram;
+    always_ff @(posedge clk_a) rst_ram <= rst_a;
 `ifdef F3B_BRAM_ASYNC
     always_ff @(posedge clk_a or posedge rst_a) begin
-`else
-    always_ff @(posedge clk_a) begin
-`endif
         if (rst_a) rq <= '0;
         else       rq <= rd;
     end
+`else
+    always_ff @(posedge clk_a) begin
+        if (rst_ram) rq <= '0;
+        else         rq <= rd;
+    end
+`endif
     assign rdata = rq;
 
     // clk_b counter
