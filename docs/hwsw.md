@@ -270,13 +270,17 @@ What a user could guess wrong in the strict settings, each stated in the generat
 **The check.** The `check` tool's `axi_profile` check (`flow/checks/axi_profile.py`; rules `HDL-IF-04` to `HDL-IF-06`)
 does not trust a block's `// PROFILE` claim. For every generated `*_regs.sv` in the design it finds the block's source
 map, resolves the profile as above under the design's `interfaces:`, regenerates the RTL and compares it with the file:
-a block that claims `strict` and behaves as `house` fails (`AXI-PROFILE-DRIFT`), a block generated under another profile
-than its design declares fails (`AXI-PROFILE-MISMATCH`), an invalid `interfaces:` section fails (`AXI-PROFILE-SPEC`).
-It flags, without failing: a map that names its own profile in a design that did not say so (`AXI-PROFILE-MIX`), a block
-generated before profiles (`AXI-PROFILE-STALE`), a block with no source map (`AXI-PROFILE-NOSRC`), and AMD IP of brief
-69's list in a design with a strict block or a strict design profile unless listed under `amd_ip_acknowledged`
-(`AXI-PROFILE-AMD-STRICT`: those blocks answer a hole with OKAY and ignore strobes, so a strict driver's expectations do
-not hold for them). It does not read hand-written blocks (their conventions are in their `ip.yaml`), and it cannot see an
+a block that claims `strict` and behaves as `house` fails (`AXI-PROFILE-DRIFT`), as does a file with a `// PROFILE` line and
+no generator banner; a block generated under another profile than its design declares fails (`AXI-PROFILE-MISMATCH`); a
+setting the block has that its profile (plus the design's `blocks:` entry) does not give it fails (`AXI-PROFILE-OVERRIDE`:
+a map's own `partial_write: accept` in a strict design must be declared as `interfaces.blocks.<name>.partial_write`, and a
+map that names its own profile ignores the design's block settings); a block with no `// PROFILE` line (`AXI-PROFILE-STALE`)
+or no source map (`AXI-PROFILE-NOSRC`) fails because its claim cannot be compared; an invalid or unparseable `interfaces:`
+section, or a `blocks:` key naming no block, fails (`AXI-PROFILE-SPEC`). Every `.sv` or `.v` file of the design is scanned,
+whatever it is called. It flags, without failing: a map that names its own profile in a design that chose none (with a
+design profile chosen it fails, `AXI-PROFILE-MIX`), and AMD IP of brief 69's list in a design with a strict block or
+a strict design profile unless listed under `amd_ip_acknowledged` (`AXI-PROFILE-AMD-STRICT`: those blocks answer a hole
+with OKAY and ignore strobes, so a strict driver's expectations do not hold for them). It does not read hand-written blocks (their conventions are in their `ip.yaml`), and it cannot see an
 interconnect between a strict master and an AMD slave: the AMD rule is by presence in the design.
 
 **Cost** (Vivado 2026.1, xc7a100t, 10 ns, out of context, the same map under each profile, one run each,

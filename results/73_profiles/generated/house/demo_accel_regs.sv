@@ -9,7 +9,7 @@
 // no side effects. A hardware set beats a same-clock W1C clear; a W1S set beats a same-clock hardware clear.
 // Every access to an unmapped address is recorded in ERR_ADDR and ERR_STATUS (error capture, docs/hwsw.md).
 // Only address bits [11:2] are decoded: the window repeats every 0x1000 bytes.
-// Writes to read-only bits are ignored with OKAY. Reset: synchronous, active low (aresetn).
+// Writes to read-only bits are ignored with OKAY (strict: unless the write puts a 1 in a reserved bit). Reset: synchronous, active low (aresetn).
 //
 // PROFILE house
 // SETTINGS unmapped=split error_capture=on partial_write=accept unaligned=ignore reserved_write=ignore wide_values=optional

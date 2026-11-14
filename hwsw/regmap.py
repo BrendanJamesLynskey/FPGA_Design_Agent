@@ -329,7 +329,7 @@ def interfaces_errors(ifs) -> list[str]:
     if set(ifs) - INTERFACE_KEYS:
         errs.append(f"unknown keys {sorted(set(ifs) - INTERFACE_KEYS)} (allowed: {', '.join(sorted(INTERFACE_KEYS))})")
     p = ifs.get("axi_lite_profile")
-    if p is not None and p not in PROFILES:
+    if p is not None and not (isinstance(p, str) and p in PROFILES):
         errs.append(f"axi_lite_profile: {p!r} must be one of {', '.join(PROFILES)}")
     blocks = ifs.get("blocks", {})
     if not isinstance(blocks, dict):
@@ -341,10 +341,10 @@ def interfaces_errors(ifs) -> list[str]:
             continue
         for k, v in b.items():
             if k == "profile":
-                if v not in PROFILES:
+                if not (isinstance(v, str) and v in PROFILES):
                     errs.append(f"blocks.{n}.profile: {v!r} must be one of {', '.join(PROFILES)}")
             elif k in SETTING_CHOICES:
-                if v not in SETTING_CHOICES[k]:
+                if not (isinstance(v, str) and v in SETTING_CHOICES[k]):
                     errs.append(f"blocks.{n}.{k}: {v!r} must be one of {', '.join(SETTING_CHOICES[k])}")
             else:
                 errs.append(f"blocks.{n}.{k}: unknown (a profile or one of {', '.join(SETTING_CHOICES)})")
@@ -620,7 +620,7 @@ def _profile(d: dict, inherit: dict | None, doc_only: bool) -> tuple[str, dict, 
         return "", {}, []
     errs: list[str] = []
     own = d.get("profile")
-    if own is not None and own not in PROFILES:
+    if own is not None and not (isinstance(own, str) and own in PROFILES):
         errs.append(f"profile: {own!r} must be one of {', '.join(PROFILES)} (docs/hwsw.md)")
         own = None
     inh = inherit or {}
@@ -646,6 +646,11 @@ def wide_value_problems(regs, snaps) -> list[str]:
     for lo, hi in WIDE_PAIRS:
         for n, r in names.items():
             if n.endswith(lo) and n[:-len(lo)] + hi in names:
+                grp = {next((i for i, sn in enumerate(snaps) if (rr.name, f.name) in sn.fields), None)
+                       for rr in (r, names[n[:-len(lo)] + hi]) for f in rr.fields if f.hw_input}
+                if len(grp) > 1 and None not in grp:
+                    errs.append(f"registers {r.name} and {n[:-len(lo)] + hi} look like the two halves of one value but are "
+                                "in different snapshot groups: put both halves in one group")
                 for reg in (r, names[n[:-len(lo)] + hi]):
                     bad = [f.name for f in reg.fields if f.hw_input and (reg.name, f.name) not in in_snap]
                     if bad:
@@ -671,7 +676,7 @@ def _error_capture(d: dict, aw, doc_only: bool, errs: list[str], profile_mode: s
     if not isinstance(raw, dict) or set(raw) - ECAP_KEYS:
         errs.append("error_capture: must be true, false or {offset: <ERR_ADDR byte offset>, interrupt: true|false}")
         return None
-    irq = raw.get("interrupt", False)
+    irq = raw.get("interrupt", profile_mode == "on+irq")      # placing the capture does not drop its profile's interrupt
     if not isinstance(irq, bool):
         errs.append("error_capture.interrupt: must be true or false")
         irq = False
@@ -906,10 +911,10 @@ def emit_sv(m: RegMap) -> str:
          "// BREADY. Byte strobes (WSTRB) are honoured bit by bit. Read data is registered at the AR handshake.",
          f"// Unmapped addresses: {_unmapped_comment(m.unmapped)}. Reads have",
          "// no side effects. A hardware set beats a same-clock W1C clear; a W1S set beats a same-clock hardware clear.",
-         *(["// Every access to an unmapped address is recorded in ERR_ADDR and ERR_STATUS (error capture, docs/hwsw.md)."]
+         *(["// Every access to an unmapped address" + (", and every access this profile rejects," if rejects(m) else "") + " is recorded in ERR_ADDR and ERR_STATUS (error capture, docs/hwsw.md)."]
            if m.error_capture else []),
          f"// Only address bits [{aw - 1}:2] are decoded: the window repeats every 0x{m.window_bytes:x} bytes.",
-         "// Writes to read-only bits are ignored with OKAY. Reset: synchronous, active low (aresetn).",
+         "// Writes to read-only bits are ignored with OKAY (strict: unless the write puts a 1 in a reserved bit). Reset: synchronous, active low (aresetn).",
          *_profile_comment(m),
          "",
          f"module {m.name}_regs (",
@@ -1698,7 +1703,8 @@ def behaviour(m: RegMap) -> list[tuple[str, str]]:
             f"(here {_names(rmw)}), or it clears, sets or pulses them: write back only the RW bits of what was read. "
             if rmw else "so a debugger, a retried read or a read-modify-write is safe. ")
     out.append(("side_effects", "**Reads have no side effects.** Reading any register changes nothing, " + safe + act +
-                " A write to a read-only register is answered OKAY and ignored."))
+                " A write to a read-only register is answered OKAY and ignored" +
+                (", unless it puts a 1 in a reserved bit of that register (see Reserved bits)." if c.reserved_write == "slverr" else ".")))
     w1c, w1s = by_acc("W1C"), by_acc("W1S")
     pri = []
     if w1c:

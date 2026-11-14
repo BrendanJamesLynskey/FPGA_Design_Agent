@@ -674,7 +674,8 @@ register(Check("fsm", "records", ALL, {"fsm": ("FSM-STATE", "FSM-TRANS", "FSM-UN
 register(Check("axi", "source", ALL, {"axi": ("AXI-AMD-IP",)},
                "AMD AXI4-Lite IP beside our register blocks: the measured differences (flow/amd_ip_notes.py, brief 69)", _axi))
 register(Check("axi_profile", "source", ALL, {"axi_profile": ("AXI-PROFILE-SPEC", "AXI-PROFILE-MISMATCH", "AXI-PROFILE-DRIFT", "AXI-PROFILE-MIX",
-                                                         "AXI-PROFILE-STALE", "AXI-PROFILE-NOSRC", "AXI-PROFILE-AMD-STRICT")},
+                                                         "AXI-PROFILE-STALE", "AXI-PROFILE-NOSRC", "AXI-PROFILE-OVERRIDE",
+                                                         "AXI-PROFILE-AMD-STRICT")},
                "AXI4-Lite interface profiles (brief 73): each generated register block is what its map generates under the "
                "design's declared profile; mixed profiles and AMD IP behind a strict region are flagged",
                _axi_profile, applies=_axi_profile_applies))
