@@ -309,6 +309,255 @@
   ],
   "standard": "FDA-HDL v1.3"
  },
+ "closure": {
+  "by_goal": {
+   "CHK": 2,
+   "G2": 8,
+   "G3": 12,
+   "G4": 6
+  },
+  "by_stage": {
+   "architecture": 3,
+   "constraints": 3,
+   "rtl": 21,
+   "spec": 1
+  },
+  "hard": 8,
+  "strategies": [
+   {
+    "goal": "G2",
+    "hard": true,
+    "id": "t_plan_map",
+    "phase": "ready",
+    "stage": "rtl",
+    "title": "implement the plan's resource mapping"
+   },
+   {
+    "goal": "G2",
+    "hard": true,
+    "id": "t_dsp_map",
+    "phase": "ready",
+    "stage": "rtl",
+    "title": "map a multiply built in LUTs to a DSP48E1 with its pipeline registers"
+   },
+   {
+    "goal": "G2",
+    "hard": false,
+    "id": "t_pipeline",
+    "phase": "ready",
+    "stage": "rtl",
+    "title": "pipeline the long path (add a register stage)"
+   },
+   {
+    "goal": "G2",
+    "hard": false,
+    "id": "t_fanout",
+    "phase": "ready",
+    "stage": "rtl",
+    "title": "register or replicate a high-fanout net on the path"
+   },
+   {
+    "goal": "G2",
+    "hard": false,
+    "id": "t_tree",
+    "phase": "ready",
+    "stage": "rtl",
+    "title": "balance a deep adder or comparator tree"
+   },
+   {
+    "goal": "G2",
+    "hard": false,
+    "id": "t_retime",
+    "phase": "ready",
+    "stage": "rtl",
+    "title": "retime: move an existing register across logic"
+   },
+   {
+    "goal": "G2",
+    "hard": false,
+    "id": "t_exception",
+    "phase": "gated",
+    "stage": "constraints",
+    "title": "multicycle or false-path exception (only where the protocol proves it)"
+   },
+   {
+    "goal": "G2",
+    "hard": false,
+    "id": "t_impl",
+    "phase": "later",
+    "stage": "constraints",
+    "title": "implementation directives or strategies"
+   },
+   {
+    "goal": "G3",
+    "hard": true,
+    "id": "a_ram",
+    "phase": "ready",
+    "stage": "rtl",
+    "title": "infer block RAM instead of registers"
+   },
+   {
+    "goal": "G3",
+    "hard": true,
+    "id": "a_dsp",
+    "phase": "ready",
+    "stage": "rtl",
+    "title": "move multiplies built in LUTs onto DSP48E1 slices"
+   },
+   {
+    "goal": "G3",
+    "hard": true,
+    "id": "a_srl",
+    "phase": "ready",
+    "stage": "rtl",
+    "title": "use SRL shift registers for delay lines"
+   },
+   {
+    "goal": "G3",
+    "hard": true,
+    "id": "a_bram_merge",
+    "phase": "ready",
+    "stage": "rtl",
+    "title": "use both ports of one block RAM instead of two RAMs"
+   },
+   {
+    "goal": "G3",
+    "hard": false,
+    "id": "a_lutram",
+    "phase": "ready",
+    "stage": "rtl",
+    "title": "move a small memory from block RAM to distributed (LUT) RAM"
+   },
+   {
+    "goal": "G3",
+    "hard": false,
+    "id": "a_dsp_share",
+    "phase": "ready",
+    "stage": "rtl",
+    "title": "share one DSP48E1 across cycles (time-multiplex)"
+   },
+   {
+    "goal": "G3",
+    "hard": false,
+    "id": "a_lut_mult",
+    "phase": "ready",
+    "stage": "rtl",
+    "title": "build a small multiply in LUTs instead of a DSP48E1"
+   },
+   {
+    "goal": "G3",
+    "hard": false,
+    "id": "a_narrow",
+    "phase": "ready",
+    "stage": "rtl",
+    "title": "narrow an over-wide datapath or memory"
+   },
+   {
+    "goal": "G3",
+    "hard": false,
+    "id": "a_unused",
+    "phase": "ready",
+    "stage": "rtl",
+    "title": "remove logic the design does not use"
+   },
+   {
+    "goal": "G3",
+    "hard": false,
+    "id": "a_latch",
+    "phase": "ready",
+    "stage": "rtl",
+    "title": "remove an inferred latch"
+   },
+   {
+    "goal": "G3",
+    "hard": false,
+    "id": "a_io",
+    "phase": "gated",
+    "stage": "spec",
+    "title": "fewer I/O pins (a spec change)"
+   },
+   {
+    "goal": "G4",
+    "hard": true,
+    "id": "p_bram_en",
+    "phase": "ready",
+    "stage": "rtl",
+    "title": "enable block RAM only when it is accessed"
+   },
+   {
+    "goal": "G4",
+    "hard": false,
+    "id": "p_gate",
+    "phase": "ready",
+    "stage": "rtl",
+    "title": "gate data on valid (operand isolation)"
+   },
+   {
+    "goal": "G4",
+    "hard": false,
+    "id": "p_ce",
+    "phase": "ready",
+    "stage": "rtl",
+    "title": "clock enables instead of free-running registers"
+   },
+   {
+    "goal": "G4",
+    "hard": true,
+    "id": "p_dsp",
+    "phase": "ready",
+    "stage": "rtl",
+    "title": "move a multiply from LUTs to a DSP48E1 (less switching)"
+   },
+   {
+    "goal": "G4",
+    "hard": false,
+    "id": "p_clock",
+    "phase": "gated",
+    "stage": "constraints",
+    "title": "a lower clock (only if the spec allows it)"
+   },
+   {
+    "goal": "CHK",
+    "hard": false,
+    "id": "c_constraints",
+    "phase": "ready",
+    "stage": "constraints",
+    "title": "fix the constraints the routed checks flag"
+   },
+   {
+    "goal": "CHK",
+    "hard": false,
+    "id": "c_rtl_check",
+    "phase": "ready",
+    "stage": "rtl",
+    "title": "fix the RTL a routed check flags"
+   },
+   {
+    "goal": "G2",
+    "hard": false,
+    "id": "x_replan_timing",
+    "phase": "ready",
+    "stage": "architecture",
+    "title": "re-plan the architecture for timing"
+   },
+   {
+    "goal": "G3",
+    "hard": false,
+    "id": "x_replan_area",
+    "phase": "ready",
+    "stage": "architecture",
+    "title": "re-plan the architecture for the resource budget"
+   },
+   {
+    "goal": "G4",
+    "hard": false,
+    "id": "x_replan_power",
+    "phase": "ready",
+    "stage": "architecture",
+    "title": "re-plan the architecture for the power budget"
+   }
+  ]
+ },
  "defaults": {
   "cc_model": "claude-haiku-5-5",
   "harness": "deepagents",

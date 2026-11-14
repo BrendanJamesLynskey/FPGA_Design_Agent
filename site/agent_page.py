@@ -364,6 +364,81 @@ def pipeline(A, lay):
     return svg(p, W, H, "".join(out), "The stages from interview to the board, the gates of each, their budgets, and where a failure goes back to", "pipe")
 
 
+# ---------------------------------------------------------------- 4b. the closure loop (one loop, back to any stage)
+
+LOOP_BACK = (("spec", "0 Spec"), ("architecture", "1 Architecture"), ("rtl", "2 RTL and simulation (G1)"),
+             ("constraints", "3 Constraints"))
+
+
+def closure_loop(A, lay):
+    """The joint closure loop drawn as a loop: the stages, the early check after synthesis, one routed checkpoint, one
+    planner, and its arcs back to each earlier stage (counted from agent/graph/closure_playbook.py), then the sign-off."""
+    wide = lay == "wide"
+    p = f"cl{lay[0]}"
+    C = A["closure"]
+    n = C["by_stage"]
+    out = []
+    fixes = {k: (f"{n[k]} fix{'es' if n[k] != 1 else ''}" + (", handed back" if k in ("spec", "architecture") else ", in the loop"))
+             for k, _ in LOOP_BACK}
+    if wide:
+        W, H, bw, bh = 940, 470, 168, 56
+        xs = [16, 200, 384, 568]
+        for (k, label), x in zip(LOOP_BACK, xs):
+            out.append(box(x, 20, bw, bh) + text(x + 12, 44, label, "t" if len(label) < 16 else "") +
+                       text(x + 12, 64, fixes[k], "s"))
+        for x0, x1 in zip(xs, xs[1:]):
+            out.append(edge(f"M{x0 + bw} 48 L{x1 - 2} 48", p))
+        out.append(box(756, 20, bw, bh) + text(768, 44, "4 Synthesis", "t") + text(768, 64, "early check: area, plan", "s"))
+        out.append(edge(f"M{568 + bw} 48 L754 48", p))
+        out.append(box(756, 130, bw, 92) + text(768, 154, "5 Implementation", "t") +
+                   lines(768, 174, ["one routed checkpoint:", "timing, power, DRC,", "methodology"], "s"))
+        out.append(edge("M840 76 L840 128", p))
+        out.append(box(380, 286, 356, 92, "nd", 6, ' style="stroke-width:2.5"') + text(394, 310, "Joint planner", "t") +
+                   lines(394, 330, ["diagnoses every violation together; picks fixes", "that do not conflict, hard resources first;",
+                                    "keeps a change only if no goal gets worse"], "s"))
+        out.append(edge("M840 222 C840 300, 790 330, 738 330", p))
+        out.append(edge("M922 48 C960 48, 960 330, 738 342", p, "ed", ' stroke-dasharray="5 4"'))
+        out.append(text(930, 266, "rejected after", "s", "end") + text(930, 280, "synthesis", "s", "end"))
+        for (k, _), x, px in zip(LOOP_BACK, xs, (400, 470, 540, 610)):
+            cx = x + bw / 2
+            dash = ' stroke-dasharray="5 4"' if k in ("spec", "architecture") else ""
+            out.append(edge(f"M{px} 286 C{px} 200, {cx} 160, {cx} {20 + bh + 2}", p, "ed", dash))
+        out.append(box(190, 300, 160, 64) + text(202, 324, "Sign-off", "t") + lines(202, 344, ["bench again, every", "flow gate, same files"], "s"))
+        out.append(edge("M380 332 L352 332", p))
+        out.append(text(366, 400, "all goals met", "s", "middle"))
+        out.append(box(16, 300, 150, 64) + text(28, 324, "9 Board (G5)", "t") + lines(28, 344, ["checks on the", "Nexys A7"], "s"))
+        out.append(edge("M190 332 L168 332", p))
+        out.append(text(16, 430, f"Solid arcs: the loop applies the fix itself. Dashed: the plan hands the design back to that stage. "
+                                 f"{C['hard']} of the strategies move work onto a DSP, block RAM or SRL.", "s"))
+    else:
+        W, bw, bh, L = 360, 300, 50, 50
+        rows = [(k, label, fixes[k]) for k, label in LOOP_BACK] + [
+            ("synth", "4 Synthesis", "early check: area, plan"),
+            ("impl", "5 Implementation", "one checkpoint: timing, power, DRC, methodology"),
+            ("plan", "Joint planner", "every violation; fixes that do not conflict"),
+            ("signoff", "Sign-off", "bench again, every flow gate"),
+            ("board", "9 Board (G5)", "checks on the Nexys A7")]
+        ys = {}
+        y = 8
+        for k, label, sub in rows:
+            out.append(box(L, y, bw, bh, "nd", 6, ' style="stroke-width:2.5"' if k == "plan" else "")
+                       + text(L + 12, y + 21, label, "t") + text(L + 12, y + 40, sub, "s"))
+            ys[k] = y
+            y += bh + 18
+        for a, b in zip(rows, rows[1:]):
+            out.append(edge(f"M{L + bw / 2} {ys[a[0]] + bh} L{L + bw / 2} {ys[b[0]] - 2}", p))
+        yp = ys["plan"] + bh / 2
+        for i, (k, _) in enumerate(LOOP_BACK):
+            yt = ys[k] + bh / 2
+            bulge = L - 10 - 9 * (4 - i)
+            dash = ' stroke-dasharray="5 4"' if k in ("spec", "architecture") else ""
+            out.append(edge(f"M{L} {yp} C{bulge} {yp}, {bulge} {yt}, {L - 2} {yt}", p, "ed", dash))
+        H = y + 40
+        out.append(lines(0, y + 6, ["Solid arcs: the loop applies the fix. Dashed: handed", "back to that stage."], "s"))
+    return svg(p, W, H, "".join(out), "The closure loop: spec, architecture, RTL, constraints, synthesis with an early check, one routed "
+               "checkpoint, one joint planner that goes back to any earlier stage, then the sign-off and the board", "cloop")
+
+
 def _role_label(A, r):
     return {x["id"]: x["label"] for x in A["roles"]}[r]
 
