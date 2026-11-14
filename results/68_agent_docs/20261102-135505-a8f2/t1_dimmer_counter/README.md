@@ -1,18 +1,19 @@
-# t1_dimmer_counter: T1 LED dimmer and push-button counter for the Nexys A7-100T
+# t1_dimmer_counter: T1 LED dimmer and push-button counter (Nexys A7-100T)
 
 <!-- Generated from handover.yaml by flow/handover.py (brief 68). Edit handover.yaml, or the text between the prose markers, then run: python -m flow.handover write results/68_agent_docs/20261102-135505-a8f2/t1_dimmer_counter -->
 
-A single-clock design for the Nexys A7-100T. A 16-bit counter is stepped by three debounced push-buttons (up, down, centre-clear) or set by a register write. The counter value is shown on the 16 LEDs gated by a PWM waveform, and as four hexadecimal digits on the seven-segment display, with the selected 8-bit brightness shown on the two leftmost digits. Brightness comes from a register or from the eight switches, chosen by CONTROL bit 0. A USB-UART test shell (the fpga_shell module) gives read and write access to an eight-register map: counter, brightness, control, input status, three press counts and a design ID. How far the run got: the specification, planning, RTL, constraints, synthesis, implementation, timing, power and DRC stages passed their gates, and the Verifier's simulation reached V1 (E2, pass). Stage configuration-and-debug failed its gates (the bitstream did not run in that stage). The base and debug builds were made with an earlier Vivado release than 2026.1, so no current resource, timing or power figure exists.
+The design keeps a 16-bit up/down/clear counter driven by three debounced push-buttons or by writes through the USB-UART test shell. It shows the counter on 16 LEDs gated by a PWM dimmer. Brightness comes from a register or from the eight right-hand switches. The counter and the brightness appear on a multiplexed seven-segment display. It also keeps three per-button press counters, a control register and a design ID, all in the shell's register window. The run reached a base bitstream under an earlier Vivado release than the pinned one, so no number from that build is published. Verification reached V1 of V3, and the debug build with the ILA did not complete. The specification and architecture were accepted by a model with no human review.
 
 Not in scope:
 
-- It is not a verified hardware result: no current Vivado build, no passing bitstream gate and no on-board test is recorded.
-- It does not define UART framing or test-shell command syntax itself; that lives in the external fpga_shell module, whose source is not in this run's file list.
-- It has one clock domain only (clk); there are no derived clocks and no clock-domain crossings other than the input synchronizers.
-- It does not use block RAM or DSP blocks; the register storage is flip-flops.
-- It does not drive the decimal point or the middle display digits AN[5:4]; both stay off.
+- Not a general UART peripheral. UART framing, command syntax and register transactions come from the shared test shell (shell/rtl), not from this design.
+- No board result (V-HW) is recorded. The design has not been shown working on hardware.
+- Not a timing-, resource- or power-characterised design. No current Vivado measurement exists.
+- No interrupts, no bus other than the shell's register window, and no decimal-point or middle-digit (AN[5:4]) output.
 
 Kind: agent-run; produced by the agent (agent run `20261102-135505-a8f2`, [record](../summary.json)). State: built. For an agent: [AGENT.md](AGENT.md).
+
+Run: model openai/gpt-6-luna (deepagents harness), 5 loops, 208 turns, 6,466,831 tokens, 3623.4 s wall time, 0.164748 USD model cost (provider-reported), stopped because: stage 9 visited more than 4 times (from the run record).
 
 <!-- prose:what -->
 <!-- /prose:what -->
@@ -32,24 +33,37 @@ Clocks:
 
 Resets:
 
-- `cpu_resetn`, active low: Board CPU reset button. In rtl/t1_led_dimmer_counter.sv the counter, brightness, control, press counts, debouncers, PWM and display scan reset synchronously on clk from ~cpu_resetn (not synchronized, so assertion and release are sampled by clk). A two-flop synchronizer (async assert, synchronous release) drives only the shell reset. Reset values: COUNTER 0, BRIGHTNESS 255, CONTROL 0, all press counts 0, display enabled.
+- `cpu_resetn`, active low: Active-low CPU reset button. In t1_led_dimmer_counter.sv the design registers use ~cpu_resetn directly as a synchronous reset, with no synchroniser. Only the shell gets a two-flop synchronised release.
 
 Interfaces:
 
-- `clk` (clock input): 100 MHz board oscillator; the XDC maps it to pin E3 and creates clock sys_clk_pin with a 10.00 ns period.
-- `cpu_resetn` (reset input): Active-low CPU reset button, pin C12.
-- `btn_up, btn_down, btn_center` (push-button inputs): BTNU, BTND and BTNC, assumed active high. Each passes a two-stage synchronizer and a stable-count debouncer before it counts as a press.
-- `switches` (slide-switch input, 8 bits): SW[7:0]. They give the effective brightness when CONTROL bit 0 is set and are readable in INPUT_STATUS bits 7:0.
-- `leds` (LED output, 16 bits): Counter bits gated by the PWM waveform; all off when the effective brightness is zero.
-- `seg, dp, an` (seven-segment display outputs (7, 1 and 8 bits)): All active low. seg holds segments a to g, dp is held high (off), an selects one digit at a time. The XDC pins are the board ones.
-- `uart_rxd, uart_txd` (UART): USB-UART into and out of the FPGA, pins C4 and D4. Both are connected to the fpga_shell instance; CLKS_PER_BIT is set from UART_BAUD_DIVIDER_CYCLES.
+- `clk` (clock input): 100 MHz oscillator. design.xdc puts it on pin E3 and creates the clock with a 10.00 ns period.
+- `btn_up, btn_down, btn_center` (push-button inputs, active high): Increment, decrement and clear. They pass two flops and a per-button debounce before they act. Pins are in design.xdc.
+- `switches[7:0]` (slide-switch inputs): Manual brightness source when CONTROL bit 0 is set. Also readable in INPUT_STATUS.
+- `leds[15:0]` (LED outputs): Counter bits, forced to zero while the PWM waveform is off.
+- `seg[6:0], dp` (seven-segment outputs, active low): dp is held inactive. See the gap on seg bit order.
+- `an[7:0]` (digit enables, active low): AN[3:0] show the counter, AN[7:6] show the brightness, and AN[5:4] stay off.
+- `uart_rxd, uart_txd` (USB-UART): 8-N-1 at the shell's divider, connected to the embedded fpga_shell. The shell maps the design's registers into its register window (set by address bit 7 in shell_core.sv).
+
+Registers (from spec.yaml; where the RTL differs, the gaps say so):
+
+| Offset | Name | Access | Reset | Bits |
+|---|---|---|---|---|
+| 0 | `COUNTER` | RW | 0 | 16 |
+| 4 | `BRIGHTNESS` | RW | 255 | 8 |
+| 8 | `CONTROL` | RW | 0 | 2 |
+| 12 | `INPUT_STATUS` | RO | 0 | 11 |
+| 16 | `UP_PRESS_COUNT` | RO | 0 | 32 |
+| 20 | `DOWN_PRESS_COUNT` | RO | 0 | 32 |
+| 24 | `CENTRE_PRESS_COUNT` | RO | 0 | 32 |
+| 28 | `DESIGN_ID` | RO | 1412514883 | 32 |
 
 | Parameter | Value | Legal range | Note |
 |---|---|---|---|
-| `DEBOUNCE_CYCLES` | 1,000,000 | positive integer count of clk cycles; only the built value was exercised | Number of consecutive stable clk cycles before a button change is accepted (about 10 ms at 100 MHz). It also sets the debounce counter width. |
-| `PWM_PERIOD_CYCLES` | 4096 | positive integer count of clk cycles; only the built value was exercised | Length of one PWM period in clk cycles. The on-time threshold is the brightness scaled to this period and rounded up; brightness 255 is always on and 0 always off. |
-| `DISPLAY_DIGIT_CYCLES` | 100,000 | positive integer count of clk cycles; only the built value was exercised | Time each of the eight digit slots stays active. The interview answer asked for 131072 instead; the RTL keeps 100000 (see gaps). |
-| `UART_BAUD_DIVIDER_CYCLES` | 868 | positive integer; 868 gives 115200 baud from 100 MHz | Passed to the shell as CLKS_PER_BIT. Change it only together with the clock frequency. |
+| `DEBOUNCE_CYCLES` | 1,000,000 | positive integer count of clk cycles. Only the default was exercised. | Stable-input time before a press or release is accepted: about 10 ms at 100 MHz (spec timing). It sizes the per-button counter. Spec timing: 1000000 sys_clk cycles of stable input, approximately 10 ms at 100 MHz. |
+| `PWM_PERIOD_CYCLES` | 4096 | positive integer count of clk cycles. Only the default was exercised. | PWM period: about 24.4 kHz at 100 MHz, chosen to avoid visible flicker (spec timing). On-time is ceil(brightness * period / 255), with 255 always on and 0 always off. Spec timing: 4096 sys_clk cycles, approximately 24.4 kHz at 100 MHz; selected to avoid visible flicker. |
+| `DISPLAY_DIGIT_CYCLES` | 100,000 | positive integer count of clk cycles. Only the default was exercised. | Time per digit slot: about 1 ms per digit and 125 Hz for the eight-digit scan (spec timing). The RTL uses this value, not the 131072 cycles in one interview answer. Spec timing: 100000 sys_clk cycles per digit, approximately 1 ms per digit and 125 Hz for an eight-digit scan. |
+| `UART_BAUD_DIVIDER_CYCLES` | 868 | integer clk cycles per UART bit. Only the default was exercised, and the receiver halves it, so a tiny divider is unlikely to work. | Passed to the shell as CLKS_PER_BIT. 115200 baud at 100 MHz, the nearest integer divider (spec timing). Spec timing: 115200 baud with UART_BAUD_DIVIDER_CYCLES=868, the nearest integer divider for a 100 MHz clock. |
 
 | Quantity | Value | Source |
 |---|---|---|
@@ -71,21 +85,21 @@ Interfaces:
 | run the Verifier's simulation tests; needs Icarus Verilog and cocotb, or the simulation container | `python -m pytest -q results/68_agent_docs/20261102-135505-a8f2/t1_dimmer_counter/tests/test_t1_dimmer_counter_rtl.py` | no | - |
 | rebuild the bitstream with the flow; needs Vivado 2026.1 and a heavy slot | `flow/run_vivado.sh results/68_agent_docs/20261102-135505-a8f2/t1_dimmer_counter base` | yes | - |
 
-Tool: Vivado 2026.1. Build ID of the inputs at handover: `f966b384` (`python flow/manifest.py show results/68_agent_docs/20261102-135505-a8f2/t1_dimmer_counter`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `1fc7ed8`.
+Tool: Vivado 2026.1. Build ID of the inputs at handover: `f966b384` (`python flow/manifest.py show results/68_agent_docs/20261102-135505-a8f2/t1_dimmer_counter`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `aa71844`.
 
 | File | What |
 |---|---|
 | [`results/68_agent_docs/20261102-135505-a8f2/t1_dimmer_counter/spec.md`](spec.md) | the request the run started from |
-| [`results/68_agent_docs/20261102-135505-a8f2/t1_dimmer_counter/spec.yaml`](spec.yaml) | the signed-off specification written by the Clarifier |
-| [`results/68_agent_docs/20261102-135505-a8f2/t1_dimmer_counter/ARCHITECTURE.md`](ARCHITECTURE.md) | the architecture note approved before any RTL |
+| [`results/68_agent_docs/20261102-135505-a8f2/t1_dimmer_counter/spec.yaml`](spec.yaml) | the specification the Clarifier wrote, accepted automatically by a model (no human review) |
+| [`results/68_agent_docs/20261102-135505-a8f2/t1_dimmer_counter/ARCHITECTURE.md`](ARCHITECTURE.md) | the architecture note, accepted automatically before any RTL (no human review) |
 | [`results/68_agent_docs/20261102-135505-a8f2/t1_dimmer_counter/rtl/t1_led_dimmer_counter.sv`](rtl/t1_led_dimmer_counter.sv) | RTL written by the Designer |
 | [`results/68_agent_docs/20261102-135505-a8f2/t1_dimmer_counter/design.xdc`](design.xdc) | pin, I/O standard and timing constraints |
-| [`results/68_agent_docs/20261102-135505-a8f2/t1_dimmer_counter/build.yaml`](build.yaml) | the build description read by the flow |
+| [`results/68_agent_docs/20261102-135505-a8f2/t1_dimmer_counter/build.yaml`](build.yaml) | the build description read by the flow; its sources also include shared shell files the agent did not write (read from the repository, not copied here): shell/rtl/fpga_shell.sv, shell/rtl/reset_sync.sv, shell/rtl/shell_core.sv, shell/rtl/sync2.sv, shell/rtl/uart_rx.sv, shell/rtl/uart_tx.sv |
 | [`results/68_agent_docs/20261102-135505-a8f2/t1_dimmer_counter/model.py`](model.py) | the Modeller's reference model of the visible behaviour |
 | [`results/68_agent_docs/20261102-135505-a8f2/t1_dimmer_counter/tests/t1_dimmer_counter_bench.py`](tests/t1_dimmer_counter_bench.py) | the Verifier's cocotb benches and pytest entries |
 | [`results/68_agent_docs/20261102-135505-a8f2/t1_dimmer_counter/tests/test_t1_dimmer_counter_rtl.py`](tests/test_t1_dimmer_counter_rtl.py) | the Verifier's cocotb benches and pytest entries |
 | [`results/68_agent_docs/20261102-135505-a8f2/t1_dimmer_counter/verif/testplan.yaml`](verif/testplan.yaml) | the test plan and mutant list read by the verification gates |
-| [`results/68_agent_docs/20261102-135505-a8f2/t1_dimmer_counter/probes.yaml`](probes.yaml) | the ILA probe list of the debug build |
+| [`results/68_agent_docs/20261102-135505-a8f2/t1_dimmer_counter/probes.yaml`](probes.yaml) | the ILA probe list of the debug build; ILA t1_counter_ila on clk_IBUF_BUFG, depth 512; probes: counter (16 bits), pwm_phase (12 bits), display_digit (3 bits) |
 | [`results/68_agent_docs/20261102-135505-a8f2/t1_dimmer_counter/build/review/09_configuration-and-debug.html`](build/review/09_configuration-and-debug.html) | the review page of stage configuration-and-debug: its exit gates and their failures at the last visit |
 
 <!-- prose:build -->
@@ -97,10 +111,10 @@ Tool: Vivado 2026.1. Build ID of the inputs at handover: `f966b384` (`python flo
 
 | ID | Activity | Result | What | Evidence | Conditions |
 |---|---|---|---|---|---|
-| E1 | review | pass | spec.yaml was signed off after the interview; the questions asked, answered and defaulted are in the run summary | [`results/68_agent_docs/20261102-135505-a8f2/summary.json`](../summary.json) | - |
-| E2 | simulation | pass | verification stages (flow/verif_gates.py) against the Modeller's reference model; reached V1, the run asked for V1 | [`results/68_agent_docs/20261102-135505-a8f2/t1_dimmer_counter/build/verif/verif_gates.json`](build/verif/verif_gates.json) | - |
-| E3 | build | partial | Vivado base build; flow stages that ran: rtl, post_synth, post_place, post_route, bitstream; built with an earlier Vivado release than the pinned one, so the result is not current | [`results/68_agent_docs/20261102-135505-a8f2/t1_dimmer_counter/build/base/gates.json`](build/base/gates.json) | - |
-| E4 | build | partial | Vivado debug build with the ILA; flow stages that ran: none; built with an earlier Vivado release than the pinned one, so the result is not current | [`results/68_agent_docs/20261102-135505-a8f2/t1_dimmer_counter/build/ila/gates.json`](build/ila/gates.json) | - |
+| E1 | review | partial | the specification and the architecture were approved automatically by a model, with no human review (review off; interview oracle not recorded); the interview asked 12 questions, 6 answered and 6 defaulted | [`results/68_agent_docs/20261102-135505-a8f2/summary.json`](../summary.json) | - |
+| E2 | simulation | partial | verification (flow/verif_gates.py) against the Modeller's reference model reached V1 of V3; the run asked for V1; V1 means every spec item is traced to a check and the benches use the blind model; V2 (simulation: seeded runs, a constrained-random test, bound assertions and formal tasks) did not pass: seeds run none (needs >=1); constrained random test ran False (needs True); assertions bound zero failures none (needs bound in the run; no failure); V3 (coverage (line, toggle, functional bins, cover properties), three seeds and the mutation score) did not pass: seeds run 0 (needs >=3); functional bins pct 0.0 (0/0) (needs 100); cover properties pct 0.0 (needs 100); line pct not measured (needs 95); toggle pct not measured (needs 80); mutation score pct not measured (needs 80); no board result (V-HW) is recorded | [`results/68_agent_docs/20261102-135505-a8f2/t1_dimmer_counter/build/verif/verif_gates.json`](build/verif/verif_gates.json) | - |
+| E3 | build | partial | Vivado base build under an earlier Vivado release than the pinned one: it reached bitstream, the gates of the stages it ran all passed and its timing was met; every number from that build is withdrawn (it cannot be re-measured on Vivado 2026.1 without a rebuild), so none is published | [`results/68_agent_docs/20261102-135505-a8f2/t1_dimmer_counter/build/base/gates.json`](build/base/gates.json) | - |
+| E4 | build | fail | Vivado debug build with the ILA: its gates record is an error stub (JSONDecodeError: Expecting value: line 2 column 1 (char 1)) with no flow stages, and the build has no run record (build/ila/run.json): the build did not complete | [`results/68_agent_docs/20261102-135505-a8f2/t1_dimmer_counter/build/ila/gates.json`](build/ila/gates.json) | - |
 
 Gates at handover: `clarify` pass, `board-and-device-planning` pass, `rtl-design-creation` pass, `constraints` pass, `synthesis` pass, `implementation` pass, `timing-closure` pass, `power-closure` pass, `drc-closure` pass, `configuration-and-debug` fail.
 
@@ -120,48 +134,45 @@ Every value is read from the record by `python -m flow.handover fill`, not typed
 
 ## Known gaps and limits
 
-- **E3**: the base build was made with an earlier Vivado release than 2026.1: rebuild it before relying on its gates or numbers
-- **E4**: the debug build with the ILA was made with an earlier Vivado release than 2026.1: rebuild it before relying on its gates or numbers
-- **configuration-and-debug**: stage configuration-and-debug did not pass its gates in this run; at its last visit: bitstream: did not run FAIL
+- **E3**: the base build was made under an earlier Vivado release than 2026.1: its result is not current and no number from it is published. Re-measure it, when the flow reaches the build again, with the resume command in How to build (python -m agent resume), and only then rely on its gates
+- **E4**: the debug build with the ILA did not complete: build/ila/gates.json is an error stub, so there is no gate result for it
+- **E1**: review evidence is partial: the specification and the architecture were approved automatically by a model, with no human review (review off; interview oracle not recorded); the interview asked 12 questions, 6 answered and 6 defaulted
+- **E2**: simulation evidence is partial: verification reached V1 of V3 (the run asked for V1); the checks that did not pass or did not run are listed in the evidence row
+- **configuration-and-debug**: stage configuration-and-debug did not pass its gates in this run; at its last visit: bitstream: did not run FAIL. Build records: build/base/gates.json shows the base build's bitstream stage ran and its bitstream_present gate is true; build/ila/gates.json is an error stub (JSONDecodeError: Expecting value: line 2 column 1 (char 1)) with no flow stages and there is no build/ila/run.json. The failing build is the debug build with the ILA, not the base build.
 - **resources**: resources not measured: no current Vivado build of this design has been recorded
 - **timing**: timing not measured: no current Vivado build of this design has been recorded
 - **power**: power not measured: no current Vivado build of this design has been recorded
 - **latency**: latency not measured: the run measured no latency; the spec's latency promise is checked only by the benches
 - **throughput**: throughput not measured: the run measured no throughput
-- **clock_pin**: spec.yaml gives the clock board pin as W5; design.xdc, which was built, places clk on E3 (CLK100MHZ) with a 10.00 ns period. Treat E3 as what the build uses and correct the spec.
-- **display_scan_period**: the interview answer asked for 2^17 (131072) clk cycles per digit, but spec.yaml, ARCHITECTURE.md and the RTL use DISPLAY_DIGIT_CYCLES = 100000. The RTL scans at 100000 cycles per digit; the spec disagrees with itself.
-- **press_count_width**: an interview answer asked for 8-bit press counts wrapping at 256, but spec.yaml and the RTL use 32-bit counts (up_count, down_count, center_count) wrapping modulo 2^32. The RTL is what was built.
-- **reset_style**: spec.yaml says asynchronous assertion with synchronized deassertion for all design state. In the RTL only the shell reset (shell_rst, from the two-flop reset_sync) has that style. The counter, registers, debouncers, PWM and display scan use a synchronous reset on rst = ~cpu_resetn, which is not synchronized, so releasing the button near a clk edge is unprotected for that logic. Constraints mark cpu_resetn as a false path, so timing analysis does not check it.
-- **io_timing_constraints**: design.xdc sets input and output delays but then declares false paths from every input and to every output, so static timing analysis does not check the board I/O paths.
-- **reset_values**: after reset: COUNTER 0, BRIGHTNESS 255 (0xFF), CONTROL 0 (switch brightness off, display enabled), all three press counts 0, win_rdata 0. DESIGN_ID always reads 1412514883 (0x54314443, ASCII T1DC).
-- **unmapped_registers**: a read of any offset other than 0, 4, 8, 12, 16, 20, 24 or 28 returns 0. A write to an unmapped offset or to a read-only register (INPUT_STATUS, the press counts, DESIGN_ID) changes no register.
-- **write_blocks_buttons**: in the RTL any write strobe (win_wr), even to an unmapped or read-only offset, takes the priority branch and suppresses the button update of COUNTER in that cycle. Press counts still increment. A write to COUNTER wins over buttons as spec.yaml says; a write to another address also costs a coincident button step.
-- **button_priority**: when several buttons qualify in the same cycle, COUNTER follows centre first, then up, then down; the losing buttons still increment their own press counts. Presses are counted when the press is accepted (after DEBOUNCE_CYCLES stable cycles), not on release, and the counter changes in that same cycle.
-- **input_status_raw**: INPUT_STATUS reads bits 7:0 as the switches, bit 8 as btn_up, bit 9 as btn_down and bit 10 as btn_center, taken directly from the top-level pins: they are neither synchronized nor debounced. Upper bits read 0.
-- **partial_writes**: writes use the low bits only: COUNTER takes bits 15:0, BRIGHTNESS bits 7:0, CONTROL bits 1:0. Higher write-data bits are ignored. Reads are zero-extended to 32 bits.
-- **read_latency**: win_rdata is a register loaded in the cycle win_rd is high, so read data is valid the cycle after the read strobe. It holds its value until the next read, and is cleared by reset.
-- **brightness_display**: the seven-segment display and the LED PWM both use the effective brightness, so with CONTROL bit 0 set the two leftmost digits show the switch value, while BRIGHTNESS keeps its stored value. Digit AN[7] shows the high nibble and AN[6] the low nibble; AN[3:0] show the counter, AN[0] the lowest nibble.
-- **fpga_shell_source**: the RTL instantiates fpga_shell with TIMEOUT_CYCLES 100000 and BUILD_STAMP 0, but the shell source is not in this run's file list. UART framing and command syntax come from that module and were not reviewed here.
-- **assumption_buttons**: assumption carried from the spec: BTNU, BTND and BTNC are active high; 8-N-1 framing and the nearest integer baud divider are assumed; the register map is byte-addressed with 32-bit alignment.
+- **seg_bit_order**: Likely wrong glyphs on the board. The glyph table in rtl/t1_led_dimmer_counter.sv (4'h0 gives 7'h01, 4'h1 gives 7'h4f) is written with bit 6 as segment a and bit 0 as segment g. design.xdc puts seg[0] on T10 (CA, segment a) and seg[6] on L18 (CG, segment g), and the spec's pin list agrees with the XDC. Unless the table is reversed, each digit shows a bit-reversed segment pattern. No simulation or board run checked this.
+- **clock_pin**: spec.yaml gives the clock pin as W5. design.xdc, which is what was built, puts clk on E3. The Designer did not change the XDC.
+- **reset_style**: spec.yaml says reset asserts asynchronously with a synchronised release for the whole design. The RTL does that only for the shell (reset_sync[1] drives its rst). Counter, brightness, control, press counts, debounce, PWM and scan state use ~cpu_resetn sampled by a synchronous always_ff, so their reset is not synchronised. The shared reset_sync.sv module is not instantiated.
+- **press_count_width**: One interview answer says the press counters are 8-bit and wrap at 256. spec.yaml and the RTL use 32-bit counters wrapping modulo 2^32, and the RTL is what was built.
+- **display_interval**: One interview answer says 2^17 cycles per digit, and ARCHITECTURE.md notes the conflict without settling it. The RTL uses DISPLAY_DIGIT_CYCLES=100000.
+- **counter_priority**: Counter update priority in the RTL is a software write to COUNTER, then centre (clear), then up, then down. A button event that loses to a write or to a higher-priority button is dropped for the counter, but each button's press count still increments. Only a press changes the counter. A release is debounced but has no effect on it.
+- **register_access**: Window writes to read-only or unmapped offsets are ignored, and the shell still answers with OK status. Reads of unmapped offsets, or of offsets that are not multiples of 4, return 0. Register reads have no side effects. Writes take the low bits only (COUNTER 16, BRIGHTNESS 8, CONTROL 2) and there are no byte enables. The shell address space outside the window is the shell's own.
+- **input_status**: INPUT_STATUS is {btn_center, btn_down, btn_up, switches[7:0]}, with centre in bit 10, down in bit 9, up in bit 8 and the switches in bits 7:0. In the RTL it reads the raw button pins, so the values are neither synchronised nor debounced. The switches are also read raw.
+- **brightness_selection**: CONTROL bit 0 selects switches[7:0] as the effective brightness for both the PWM and the two brightness digits. BRIGHTNESS is not overwritten. CONTROL bit 1 turns off all digits, including AN[7:6]. AN[5:4] are always off but still take their scan slots, so six digits are lit in a scan of eight slots.
+- **button_latency**: The spec promises that a qualified press updates the counter on the next clk edge. In the RTL the press passes two synchroniser flops and then the DEBOUNCE_CYCLES count. The counter, the debounce state and the press count all update on the same edge that qualifies the press, so the promise holds from the qualification point, not from the pin. A UART read returns data registered one cycle after the shell's read strobe, as the shell requires.
+- **debounce_on_shell_timeout**: The shell's frame timeout is fixed at 100000 cycles in the RTL and is not one of the design parameters. Only the UART baud divider is passed through.
+- **assumption_reset_first**: Assumption by the run: the design is used with cpu_resetn applied once at power-up, since the design's reset is unsynchronised. Reset applied while a button is held is not characterised.
 
 <!-- prose:gaps -->
 <!-- /prose:gaps -->
 
 ## Next steps
 
-1. Run python -m flow.handover fresh on the run directory, then rebuild the base build with Vivado 2026.1 (flow/run_vivado.sh ... base) so that E3 is current and resources, timing and power can be recorded.
-2. Rebuild the debug build with the ILA and read build/review/09_configuration-and-debug.html to find why the bitstream did not run in stage configuration-and-debug.
-3. Decide the open spec disagreements (clock pin, display scan period, press-count width, reset style), then fix spec.yaml and ARCHITECTURE.md or the RTL so they agree.
-4. Locate the fpga_shell source, review its framing and timeout behaviour, and add it to the file list.
-5. Re-run the Verifier's simulation tests and check that they cover a write to an unmapped offset coinciding with a button press.
-6. Test on the board: UART register reads and writes, button counting, PWM brightness from the switches, and display scan.
+1. Verification first: bring it to V2 and then V3 (seeded runs, a constrained-random test, bound assertions, three seeds, coverage and mutation score). Run python -m pytest -q on tests/test_t1_dimmer_counter_rtl.py. Compare the cover results with the functional coverage before adding any new stimulus.
+2. Settle seg_bit_order: add a bench that checks the glyph for each hex digit against the pin order in design.xdc, then fix the table or the XDC mapping.
+3. Decide the spec disagreements (clock pin, reset style, press-counter width, display interval) and update spec.yaml and ARCHITECTURE.md to match the RTL, or change the RTL.
+4. Investigate why the debug build with the ILA left only an error stub in build/ila/gates.json, and rerun it. The run stopped because stage 9 was visited more than 4 times.
+5. When the flow reaches the build again, re-measure the base build on Vivado 2026.1 with python -m agent resume. Publish no resource, timing or power number from the earlier build.
 
 Open questions:
 
-- Should the display scan interval be 100000 cycles (as built) or 131072 cycles (as in the interview answer)?
-- Should the press counts be 32-bit (as built) or 8-bit with wrap at 256?
-- Should the counter, registers and debouncers use a synchronized reset release, as spec.yaml requires, rather than the unsynchronized synchronous reset in the RTL?
-- Should a write to an unmapped or read-only address still suppress a coincident button update of COUNTER?
+- Should the glyph table or the seg pin mapping change, and which of the two files is the reference for seg bit order?
+- Which display interval is intended, the 100000 cycles in spec.yaml and the RTL or the 2^17 cycles in one interview answer?
+- Should the design reset be synchronised on release, as spec.yaml says, or left as built?
 
 <!-- prose:next -->
 <!-- /prose:next -->

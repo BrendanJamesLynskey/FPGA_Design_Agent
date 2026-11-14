@@ -4,45 +4,57 @@ source: results/68_agent_docs/20261107-005621-8deb/c14_int8_dot_requant/handover
 ## identity
 kind=agent-run produced_by=agent part=xc7a100tcsg324-1 board=nexys_a7_100t top=c14_int8_dot_requant_top tool=Vivado 2026.1
 agent_run=20261107-005621-8deb record=results/68_agent_docs/20261107-005621-8deb/summary.json
+run: model claude-sonnet-5-5 (claude_code harness), 6 loops, 101 turns, 2,482,927 tokens, 3379 s wall time, 2.9032 USD plan-cost estimate (not billed), stopped because: stage 2 visited more than 4 times
 
 ## summary
-The design takes eight signed 8-bit activations and eight signed 8-bit weights, a signed 32-bit bias, an unsigned 16-bit multiplier, a 5-bit shift and a relu bit, all loaded through registers. A write to GO runs a pipelined computation: acc is the sum of the eight products plus bias, the scaled value is acc times mult divided by two to the power shift (rounded to nearest, exact halves towards plus infinity), and y is that value clamped to -128..127, or to 0..127 when relu is set. The registers are reached through the UART test shell at 115200 baud (shell/PROTOCOL.md version 1.0). LED0 shows the READY flag. The design uses one clock, CLK100MHZ, and a synchronous reset derived from CPU_RESETN. The run got as far as RTL and the first verification stages. The Clarifier's specification was signed off and board and device planning passed. The RTL stage did not pass its gates. Simulation evidence reached V2 but the run asked for V3, and five cover properties were never hit. The run stopped because stage 2 had been visited too often. Constraints, synthesis, implementation, timing, power, DRC and bring-up were not run. The only Vivado build (stages rtl and post_synth) used an earlier release than 2026.1. The design has no measured resources, timing, power or latency.
-not: Not a general matrix or convolution engine. It computes one eight-element dot product per GO and nothing else.; Not safe against operand writes while a result is being computed. The run assumed this is not required.; Not defined for shift outside 1..31, for weights of -128, or for an acc that overflows 32 bits. None of these is tested.; Not a clock-domain-crossing design. There is a single clock, and no MMCM or PLL is used.; Not proven on hardware. No bring-up result exists.
+The design computes an 8-way signed int8 dot product plus a 32-bit bias, multiplies the sum by a 16-bit unsigned multiplier, applies a rounding right shift (halves round towards plus infinity) and clamps the result to a signed 8-bit value, with an optional ReLU. It sits behind the reusable UART test shell on the Nexys A7-100T (xc7a100tcsg324-1) and is driven by register reads and writes over the USB-UART. The run reached simulation level V2 of V3: verification stopped at V3 because five cover properties were never hit, so no synthesis, implementation or hardware result exists. The specification and architecture were accepted automatically by a model, with no human review.
+not: Not a general neural-network layer: one 8-element dot product per GO, with no streaming, batching or accumulation across calls.; Not a design with a defined overflow or wrap behaviour: acc overflow and shift outside 1..31 are out of contract and untested.; Not hardware-verified, not timing-closed and not measured for resources or power; none of those stages ran.
 
 ## state
-stage=rtl vivado=2026.1 kb_pin=1fc7ed8 build_id=b27eac2c
+stage=rtl vivado=2026.1 kb_pin=aa71844 build_id=b27eac2c
 gates: clarify=pass board-and-device-planning=pass rtl-design-creation=fail constraints=not-run synthesis=not-run implementation=not-run timing-closure=not-run power-closure=not-run drc-closure=not-run configuration-and-debug=not-run
 
 ## interface
 clk CLK100MHZ 100MHz
-rst CPU_RESETN active-low: Board CPU reset button (pin C12), asynchronous. It goes through reset_sync into an active-high synchronous reset used by the shell, the register block and the core. The reset clears the operand registers, bias, mult, the READY flag, the GO pulse, the core's y, acc and done, and the read-data register. CTRL resets to shift 1 and relu 0. The core's pipeline data registers are not reset, only its valid bits. rtl/reset_sync.sv in this design is an intentionally empty file, and the design uses shell/rtl/reset_sync.sv instead, which was not reviewed in this run.
-if CLK100MHZ clock input, 100 MHz board oscillator (pin E3): Single clock domain for the shell and the arithmetic. The XDC creates clock sys_clk_pin with a 10 ns period.
-if UART_TXD_IN serial input, host to FPGA (pin C4): USB-UART at 115200 baud, 8N1. Asynchronous, synchronised inside the shell. design.xdc gives it a nominal input delay only so that it has a defined arrival time. doc=shell/PROTOCOL.md
-if UART_RXD_OUT serial output, FPGA to host (pin D4): USB-UART transmit side of the shell. design.xdc gives it a nominal output delay. doc=shell/PROTOCOL.md
-if LED0 LED output (pin H17), the READY flag: In the RTL and XDC the port is the one-bit bus LED[0] (top port LED, declared [0:0]), not a scalar named LED0. The spec names it LED0.
-param CLKS_PER_BIT=868 legal=Positive integer equal to the clock frequency divided by the baud rate. 868 gives 115200 baud at 100 MHz. Any other value changes the baud rate.
-param TIMEOUT_CYCLES=100,000,000 legal=Positive integer number of CLK100MHZ cycles. It is the shell's timeout; see shell/PROTOCOL.md for its meaning.
+rst CPU_RESETN active-low: Board button on pin C12. rtl/c14_int8_dot_requant_top.sv passes it through shell/rtl/reset_sync.sv: assertion is asynchronous, release is synchronous after two clock edges, and the resulting active-high reset is applied synchronously in all blocks. It clears the operand registers, y, acc and READY, and sets CTRL to shift 1, relu 0.
+if CLK100MHZ clock input: Board 100 MHz oscillator on pin E3, LVCMOS33; the single clock for shell and arithmetic, constrained at a 10.00 ns period in design.xdc.
+if UART_TXD_IN UART serial input (8N1, 115200 baud): Pin C4: data from the host into the FPGA. Asynchronous; it is synchronised in the shell by sync2. design.xdc gives it a 2.0 max / 0.0 min input delay.
+if UART_RXD_OUT UART serial output (8N1, 115200 baud): Pin D4: data from the FPGA to the host. The shell protocol is shell/PROTOCOL.md. design.xdc gives it a 2.0 max / 0.0 min output delay.
+if LED0 LED output: Shows the READY flag. The built top-level port is the bus LED[0] on pin H17 (rtl/c14_int8_dot_requant_top.sv, design.xdc); the spec calls it LED0, which is only an internal net in the RTL.
+reg 0x00 A_LO RW reset=0x00000000 [31:0] activations 0..3, a_i in bits [8i+7:8i]
+reg 0x01 A_HI RW reset=0x00000000 [31:0] activations 4..7, a_(4+i) in bits [8i+7:8i]
+reg 0x02 W_LO RW reset=0x00000000 [31:0] weights 0..3, same packing
+reg 0x03 W_HI RW reset=0x00000000 [31:0] weights 4..7, same packing
+reg 0x04 BIAS RW reset=0x00000000 [31:0] signed bias
+reg 0x05 MULT RW reset=0x00000000 [15:0] unsigned multiplier; [31:16] read 0
+reg 0x06 CTRL RW reset=0x00000001 [4:0] shift (1..31), [8] relu; other bits read 0
+reg 0x07 GO WO reset=0x00000000 any write starts one computation; reads 0
+reg 0x08 Y RO reset=0x00000000 [7:0] limited answer (two's complement); [31:8] read 0
+reg 0x09 ACC RO reset=0x00000000 [31:0] the signed accumulator including the bias
+reg 0x0A STATUS RO reset=0x00000000 [0] READY; other bits 0
+param CLKS_PER_BIT=868 legal=Positive integer; only 868 (100 MHz / 115200 baud) was designed for and tested.
+param TIMEOUT_CYCLES=100,000,000 legal=Positive integer.
 param BUILD_STAMP=0 legal=Any 32-bit value.
-param DESIGN_ID=DOTQ legal=Fixed. It is the 32-bit value 0x444F5451 (ASCII D,O,T,Q) and cannot be changed from outside.
+param DESIGN_ID=DOTQ legal=Fixed: 0x444F5451 (ASCII D,O,T,Q).
 
-## files
-results/68_agent_docs/20261107-005621-8deb/c14_int8_dot_requant/spec.md 811b45683a: the request the run started from
-results/68_agent_docs/20261107-005621-8deb/c14_int8_dot_requant/spec.yaml 021c577206: the signed-off specification written by the Clarifier
-results/68_agent_docs/20261107-005621-8deb/c14_int8_dot_requant/ARCHITECTURE.md faac760747: the architecture note approved before any RTL
-results/68_agent_docs/20261107-005621-8deb/c14_int8_dot_requant/architecture.yaml 9f1e645344: the machine-checked architecture: blocks, clocks, predicted resources
-results/68_agent_docs/20261107-005621-8deb/c14_int8_dot_requant/rtl/c14_int8_dot_requant_top.sv 76b83756ea: RTL written by the Designer
-results/68_agent_docs/20261107-005621-8deb/c14_int8_dot_requant/rtl/dotq_core.sv e64485f983: RTL written by the Designer
-results/68_agent_docs/20261107-005621-8deb/c14_int8_dot_requant/rtl/dotq_regs.sv 917bee15a9: RTL written by the Designer
-results/68_agent_docs/20261107-005621-8deb/c14_int8_dot_requant/rtl/reset_sync.sv d37a35dba1: RTL written by the Designer
-results/68_agent_docs/20261107-005621-8deb/c14_int8_dot_requant/design.xdc 56a8767e19: pin, I/O standard and timing constraints
-results/68_agent_docs/20261107-005621-8deb/c14_int8_dot_requant/build.yaml c11f5ef0f7: the build description read by the flow
-results/68_agent_docs/20261107-005621-8deb/c14_int8_dot_requant/model.py 5f4842bfdf: the Modeller's reference model of the visible behaviour
-results/68_agent_docs/20261107-005621-8deb/c14_int8_dot_requant/tests/c14_bench.py 899941e8db: the Verifier's cocotb benches and pytest entries
-results/68_agent_docs/20261107-005621-8deb/c14_int8_dot_requant/tests/test_c14_int8_dot_requant_rtl.py 5dc93c61cd: the Verifier's cocotb benches and pytest entries
-results/68_agent_docs/20261107-005621-8deb/c14_int8_dot_requant/verif/testplan.yaml 06edae4f30: the test plan and mutant list read by the verification gates
-results/68_agent_docs/20261107-005621-8deb/c14_int8_dot_requant/verif/checkers/c14_int8_dot_requant_checker.sv 58a6f7fcfa: bound assertion and cover checkers
-results/68_agent_docs/20261107-005621-8deb/c14_int8_dot_requant/verif/checkers/v_macros.svh 013c1a5444: bound assertion and cover checkers
-results/68_agent_docs/20261107-005621-8deb/c14_int8_dot_requant/build/review/02_rtl-design-creation.html ec65614105: the review page of stage rtl-design-creation: its exit gates and their failures at the last visit
+## files (paths under the design directory are relative to it)
+spec.md 811b45683a: the request the run started from
+spec.yaml 021c577206: the specification the Clarifier wrote, accepted automatically by a model (no human review)
+ARCHITECTURE.md faac760747: the architecture note, accepted automatically before any RTL (no human review)
+architecture.yaml 9f1e645344: the machine-checked architecture: blocks, clocks, predicted resources
+rtl/c14_int8_dot_requant_top.sv 76b83756ea: RTL written by the Designer
+rtl/dotq_core.sv e64485f983: RTL written by the Designer
+rtl/dotq_regs.sv 917bee15a9: RTL written by the Designer
+rtl/reset_sync.sv d37a35dba1: RTL written by the Designer (empty: it holds no code; the build reads shell/rtl/reset_sync.sv for this module instead)
+design.xdc 56a8767e19: pin, I/O standard and timing constraints
+build.yaml c11f5ef0f7: the build description read by the flow; its sources also include shared shell files the agent did not write (read from the repository, not copied here): shell/rtl/fpga_shell.sv, shell/rtl/reset_sync.sv, shell/rtl/shell_core.sv, shell/rtl/sync2.sv, shell/rtl/uart_rx.sv, shell/rtl/uart_tx.sv
+model.py 5f4842bfdf: the Modeller's reference model of the visible behaviour
+tests/c14_bench.py 899941e8db: the Verifier's cocotb benches and pytest entries
+tests/test_c14_int8_dot_requant_rtl.py 5dc93c61cd: the Verifier's cocotb benches and pytest entries
+verif/testplan.yaml 06edae4f30: the test plan and mutant list read by the verification gates
+verif/checkers/c14_int8_dot_requant_checker.sv 58a6f7fcfa: bound assertion and cover checkers
+verif/checkers/v_macros.svh 013c1a5444: bound assertion and cover checkers
+build/review/02_rtl-design-creation.html ec65614105: the review page of stage rtl-design-creation: its exit gates and their failures at the last visit
 
 ## commands
 what changed since this handover (stale records, changed files, tool and knowledge-bank pins): python -m flow.handover fresh results/68_agent_docs/20261107-005621-8deb/c14_int8_dot_requant
@@ -52,66 +64,62 @@ run the Verifier's simulation tests: python -m pytest -q results/68_agent_docs/2
 
 ## records (path sha256-prefix; claims below cite R<n>)
 R1 results/68_agent_docs/20261107-005621-8deb/summary.json 1f328382cc
-R2 results/68_agent_docs/20261107-005621-8deb/c14_int8_dot_requant/build/verif/verif_gates.json f2370412ee
-R3 results/68_agent_docs/20261107-005621-8deb/c14_int8_dot_requant/build/verif/mutation.json 13e1631e0d
-R4 results/68_agent_docs/20261107-005621-8deb/c14_int8_dot_requant/build/base/gates.json 8a45ae63f9
+R2 build/verif/verif_gates.json f2370412ee
+R3 build/verif/mutation.json 13e1631e0d
+R4 build/base/gates.json 8a45ae63f9
 
 ## evidence
-E1 review pass R1: spec.yaml was signed off after the interview; the questions asked, answered and defaulted are in the run summary
-E2 simulation partial R2: verification stages (flow/verif_gates.py) against the Modeller's reference model; reached V2, the run asked for V3
-E3 faults pass R3: generated mutants of the RTL run against the Verifier's benches; each must make a test fail
-E4 build partial R4: Vivado base build; flow stages that ran: rtl, post_synth; built with an earlier Vivado release than the pinned one, so the result is not current
+E1 review partial R1: the specification and the architecture were approved automatically by a model, with no human review (review off; interview oracle claude-haiku-5-5); the interview asked 6 questions, 3 answered and 3 defaulted
+E2 simulation partial R2: verification (flow/verif_gates.py) against the Modeller's reference model reached V2 of V3; the run asked for V3; V2 means simulation: seeded runs, a constrained-random test, bound assertions and formal tasks; V3 (coverage (line, toggle, functional bins, cover properties), three seeds and the mutation score) did not pass: cover properties pct 0.0 (needs 100); cover properties unhit C_led_fall, C_led_high, C_led_rise, C_rx_start, C_tx_start; no board result (V-HW) is recorded
+E3 faults pass R3: generated mutants of the RTL run against the Verifier's benches, each of which must make a test fail: 17 sampled of 32 candidates, 17 evaluated, 17 killed, 0 survived, 0 timed out
+E4 build partial R4: Vivado base build under an earlier Vivado release than the pinned one: it reached post_synth, the gates of the stages it ran all passed; every number from that build is withdrawn (it cannot be re-measured on Vivado 2026.1 without a rebuild), so none is published
 
 ## measured
-M1 verification -=100 % R3#score_pct: mutation score of the Verifier's benches | generated mutants sampled from the RTL, run in the simulation sandbox
+M1 verification -=3 R2#stages.V3.checks.seeds_run.value: simulation seeds run | Verilator coverage simulation of the RTL against the Modeller's model, every seed the bench ran
+M2 verification -=100 % R2#stages.V3.checks.line_pct.value: line coverage | ditto
+M3 verification -=100 % R2#stages.V3.checks.toggle_pct.value: toggle coverage | ditto
+M4 verification -=100.0 (50/50) R2#stages.V3.checks.functional_bins_pct.value: functional coverage bins hit | ditto
+M5 verification -=0.0 % R2#stages.V3.checks.cover_properties_pct.value: cover properties hit | ditto
+M6 verification -=100 % R3#score_pct: mutation score of the Verifier's benches | generated mutants sampled from the RTL, run in the simulation sandbox
 
 ## gaps
-[REQ-04] REQ-04 has no passing evidence for every proof method: hardware (uart_tests) is pending: no bring-up result
-[REQ-06] REQ-06 has no passing evidence for every proof method: hardware (uart_tests) is pending: no bring-up result
-[REQ-07] REQ-07 has no passing evidence for every proof method: hardware (uart_tests) is pending: no bring-up result
-[REQ-08] REQ-08 has no passing evidence for every proof method: hardware (uart_tests) is pending: no bring-up result
-[REQ-09] REQ-09 has no passing evidence for every proof method: hardware (uart_tests) is pending: no bring-up result
+[REQ-04, REQ-06, REQ-07, REQ-08, REQ-09] (each of these) has no passing evidence for every proof method: hardware (uart_tests) is pending: no bring-up result
 [REQ-11] REQ-11 has no passing evidence for every proof method: analysis (post_route:setup) is not run (the stage that makes this evidence did not run): gate post_route:setup = None
-[E4] the base build was made with an earlier Vivado release than 2026.1: rebuild it before relying on its gates or numbers
-[E2] simulation evidence is partial: verification stages (flow/verif_gates.py) against the Modeller's reference model; reached V2, the run asked for V3
+[cover_properties] cover properties C_led_fall, C_led_high, C_led_rise, C_rx_start, C_tx_start read 0.0 % while the functional bins were all hit (100.0 (50/50)) and 3 seeds ran. The benches did drive the design, so a missing stimulus is unlikely to be the whole cause; the cover results and the functional coverage disagree. Compare the two before proposing any new stimulus. The checker c14_int8_dot_requant_checker.sv binds clk to CLK100MHZ, rst to CPU_RESETN, led to LED0, rxd_out to UART_RXD_OUT, txd_in to UART_TXD_IN into c14_int8_dot_requant_top (outside Icarus only). Every bound name is declared in the top RTL, so a misspelt binding is not the cause. The cause is not settled by the records.
+[E4] the base build was made under an earlier Vivado release than 2026.1: its result is not current and no number from it is published. Re-measure it, when the flow reaches the build again, with the resume command in How to build (python -m agent resume), and only then rely on its gates
+[E1] review evidence is partial: the specification and the architecture were approved automatically by a model, with no human review (review off; interview oracle claude-haiku-5-5); the interview asked 6 questions, 3 answered and 3 defaulted
 [rtl-design-creation] stage rtl-design-creation did not pass its gates in this run; at its last visit: V3 cover_properties_pct: cover properties not hit: C_led_fall, C_led_high, C_led_rise, C_rx_start, C_tx_start: add or extend a test that drives the design into each, or correct the `V_COVER` expression if it can never be true [value 0.0, need 100] FAIL V3 cover_properties_unhit: cover properties not hit: C_led_fall, C_led_high, C_led_rise, C_rx_start, C_tx_start: add or extend a test that drives t ...
-[constraints] stage constraints was not run: the run stopped before this stage (stage 2 visited more than 4 times)
-[synthesis] stage synthesis was not run: the run stopped before this stage (stage 2 visited more than 4 times)
-[implementation] stage implementation was not run: the run stopped before this stage (stage 2 visited more than 4 times)
-[timing-closure] stage timing-closure was not run: the run stopped before this stage (stage 2 visited more than 4 times)
-[power-closure] stage power-closure was not run: the run stopped before this stage (stage 2 visited more than 4 times)
-[drc-closure] stage drc-closure was not run: the run stopped before this stage (stage 2 visited more than 4 times)
-[configuration-and-debug] stage configuration-and-debug was not run: the run stopped before this stage (stage 2 visited more than 4 times)
-[resources] resources not measured: no current Vivado build of this design has been recorded
-[timing] timing not measured: no current Vivado build of this design has been recorded
-[power] power not measured: no current Vivado build of this design has been recorded
+[constraints, synthesis, implementation, timing-closure, power-closure, drc-closure, configuration-and-debug] stage (each of these) was not run: the run stopped before this stage (stage 2 visited more than 4 times)
+[oracle_record] BUILD_NOTE.md names the interview oracle as openai/gpt-6-luna, while summary.json names claude-haiku-5-5; the two records disagree and neither is confirmed, so the specification's provenance is uncertain
+[formal] formal checks were planned for REQ-01, REQ-02, REQ-03, REQ-05, REQ-06 and did not run; each was replaced by a simulation check (verif/testplan.yaml replan). Reason recorded: SymbiYosys is not installed here, so exactness of acc is checked by directed extremes and random cases against the model.
+[assertions] assertions that cannot fail: A_led_boolean (c14_int8_dot_requant_checker.sv:20) asserts that led is 0 or 1, which is always true; A_tx_boolean (c14_int8_dot_requant_checker.sv:21) asserts that rxd_out is 0 or 1, which is always true. They show only that the signal exists, not that the design behaves
+[resources, timing, power] (each of these) not measured: no current Vivado build of this design has been recorded
 [latency] latency not measured: the run measured no latency; the spec's latency promise is checked only by the benches
 [throughput] throughput not measured: the run measured no throughput
-[led_port_name] spec.yaml names the output port LED0 with width 1. The RTL and design.xdc (pin H17) use the one-bit bus LED[0] (top port LED, declared [0:0]), and an internal signal LED0 is assigned to it. The spec disagrees with what was built. The RTL and XDC are authoritative.
-[design_id_parameter] spec.yaml lists DESIGN_ID as a parameter. In c14_int8_dot_requant_top.sv it is a localparam of 32'h444F5451 and cannot be overridden. Only CLKS_PER_BIT, TIMEOUT_CYCLES and BUILD_STAMP are top-level parameters, which matches REQ-10.
-[reset_sync_source] rtl/reset_sync.sv in this design is an intentionally empty file with a comment. The reset synchroniser actually used is shell/rtl/reset_sync.sv, which this run did not review. ARCHITECTURE.md calls it a 2-flop synchroniser, but the RTL here does not show it. The spec's promise that outputs clear within 2 cycles of CPU_RESETN asserting was not measured.
-[reset_values] After reset every operand register, bias and mult read 0, CTRL reads 1 (shift 1, relu 0), READY and the GO pulse are 0, and the core's y and acc registers are 0. The reset is synchronous and active high inside the design. The pipeline data registers in dotq_core (products, sums, and so on) are not reset, only the valid bits.
-[unmapped_and_ro_access] In dotq_regs.sv a read of any offset without a case arm returns 0. This covers 0x07 (GO), 0x0B and above, and the unused offsets. A write to an unmapped offset or to an RO register (Y, ACC, STATUS) is ignored by the default arm. This matches the spec.
-[partial_writes_and_bit_masks] Writes are whole 32-bit words with no byte strobes. MULT keeps only wdata[15:0]. CTRL keeps wdata[4:0] as shift and wdata[8] as relu and drops the other bits, which read back 0. Reads of MULT bits [31:16] return 0. The write data of a GO write is ignored. The shift field is not range-checked, so shift 0 can be stored. With shift 0 the core adds no rounding term and passes acc*mult through. Shift 0 is out of contract and untested.
-[read_side_effects] Reads have no side effects. The read-data register changes only on a shell read strobe and otherwise holds its value. Y and ACC read 0 while READY is 0 because the read is gated by ready in dotq_regs.sv. The core's own y and acc registers are not cleared by GO. They are overwritten when the next result is valid.
-[go_priority_and_restart] A GO write clears READY and is registered into a one-cycle go pulse to the core. If READY is being set by done in the same cycle as the GO write, the GO write wins and READY is 0. Inside the core a go pulse clears the valid bits of results in flight, so a GO while a computation is running restarts it with the loaded operands. A GO is also accepted when READY is already set.
-[go_done_race] Reading dotq_regs.sv and dotq_core.sv, a done pulse can reach dotq_regs in the same cycle as the registered go pulse, if a GO write lands one cycle before done. READY would then be set again, with the old y and acc, until the new done arrives. The run did not test or simulate this case. It could break the spec's rule that READY is set only when y and acc are valid for the latest GO. The shell's UART access time makes it unlikely in practice.
-[latency_structure] READY follows the registered go pulse through a fixed chain of valid bits in dotq_core (one per pipeline stage), then a registered done, then the READY flag. The spec promises READY within 8 clocks of GO. The run did not measure this, and it is not counted from the shell write strobe, which adds one clock for the registered go pulse. Only the Verifier's benches check the promise, and verification did not reach V3.
-[operand_sampling] The core samples the operand registers every clock and carries mult, shift, relu and bias with the data through the pipeline. An operand write during the computation may be mixed into a result in flight or ignored. The spec does not require it to be safe and the run did not test it.
-[assumptions] Assumptions from the interview, kept as made. The clock is the 100 MHz board oscillator, so CLKS_PER_BIT is 868. Weights are never -128, though the design should still compute them correctly. acc never overflows 32 bits for the inputs tested. Operand writes during a computation need not be safe. Shift outside 1..31 is out of contract. TIMEOUT_CYCLES and BUILD_STAMP defaults and the DOTQ ID presentation were defaulted by the oracle, not decided by a user.
+[latency_count] Counted from rtl/dotq_core.sv and rtl/dotq_regs.sv: with the one-cycle go pulse in cycle 0, v1..v5 follow, done is high in cycle 6 and READY is high in cycle 7, so READY rises 7 clocks after the go pulse, or 8 clocks after the shell write strobe because dotq_regs registers go. This meets the spec's "within 8 clocks" only if the count starts at the go pulse or the write strobe exactly; it has no margin. ARCHITECTURE.md describes five stages, but the RTL has a sixth register stage (the y/acc output register) before done.
+[go_priority] A GO write always wins over a simultaneous done in dotq_regs.sv (READY ends 0). A new go while a computation is in flight also cancels it in dotq_core.sv: every valid stage is gated with ~go, so the earlier result is dropped, and the new computation restarts from the loaded operands. Operand writes during a computation are not blocked and can corrupt that result; the spec calls this out of contract.
+[result_visibility] Y and ACC are not cleared by GO; the core keeps the old values and dotq_regs.sv only masks them to 0 on reads while READY is 0. The y/acc registers in the core are overwritten when a computation completes, slightly before READY rises.
+[unmapped_access] Reads of GO and of every offset above STATUS return 0; writes to the RO registers (Y, ACC, STATUS) and to every offset above STATUS are ignored with no error response (dotq_regs.sv default branches). A write to any address other than GO never starts a computation. Writes to MULT keep only bits [15:0]; writes to CTRL keep only bits [4:0] and [8].
+[window_address] The register offsets in this document are window-relative. The shell reaches the design only for shell addresses with bit 7 set, and the window offset is the low 7 bits (shell_core.sv: win_addr is addr[6:0]), so A_LO is at shell address 0x80 and each later register follows at the next address. Shell addresses with bit 7 clear are the shell's own registers (design ID, version, build stamp, scratch, error counters, build ID). A window read returns its data after a registered read, one cycle after win_rd.
+[ctrl_shift_range] CTRL accepts any 5-bit shift. The RTL handles shift 0 (no rounding constant is added, so the result is the plain product) although the spec only defines 1..31. Reset value of shift is 1, of relu 0.
+[clamp_order] dotq_core.sv checks the upper clamp (127) first, then relu (below 0 gives 0), then the lower clamp (-128 gives the byte 0x80). Y is returned as 8 bits, zero-extended in the register read; a negative y therefore reads as its two's-complement byte in bits [7:0] with bits [31:8] zero, not sign-extended.
+[port_name_spec] spec.yaml names the LED port LED0; the built top-level port is the bus LED[0] (rtl/c14_int8_dot_requant_top.sv, design.xdc, pin H17). The RTL and XDC are what was built. LED0 exists only as an internal net, which is what the checker binds to.
+[reset_timing] The spec says outputs and READY clear within 2 cycles of CPU_RESETN asserting. In the RTL (shell/rtl/reset_sync.sv) assertion of rst is asynchronous, but the design flops clear on the next clock edge while rst is high; release needs two clock edges after the button is let go. The 2-cycle figure was not measured.
+[design_id_parameter] The spec lists DESIGN_ID among the parameters; in the RTL it is a localparam in the top file and cannot be set from outside. It reaches the shell at address 0x00.
+[assumptions] Assumptions made by the run (spec.yaml): the clock is 100 MHz so CLKS_PER_BIT is 868; weights are never -128 (the design still computes correctly with them); acc never overflows 32 bits for the tested inputs; operand writes during a computation are not required to be safe; shift outside 1..31 is out of contract. TIMEOUT_CYCLES and BUILD_STAMP defaults and the DOTQ ID presentation were defaulted by the oracle, not answered.
 
 ## next_actions
-1. Open build/review/02_rtl-design-creation.html and the verif_gates record. Make the five unhit cover properties (C_led_fall, C_led_high, C_led_rise, C_rx_start, C_tx_start) hit. Either extend the Verifier's benches so the shell traffic and a READY rise and fall drive them, or correct the V_COVER expressions if they can never be true. Then re-run the simulation tests until V3 passes.
-2. Write or run a directed test for the go_done_race gap (a GO write one cycle before done) and fix dotq_regs.sv or dotq_core.sv if READY is set with stale results.
-3. Review shell/rtl/reset_sync.sv, since the design's own reset_sync.sv is empty, and confirm the clear-within-2-cycles claim. Decide whether the spec should name the LED port LED[0] and DESIGN_ID as a localparam.
-4. Run python -m flow.handover fresh, then resume the flow so the constraints, synthesis, implementation, timing, power and DRC stages run with Vivado 2026.1. This replaces the earlier-release base build.
-5. Measure latency from the GO write to READY, plus resources, timing and power, from a current build. Check REQ-11 against the post-route setup gate.
-6. Do hardware bring-up over the UART to produce the pending evidence for REQ-04, REQ-06, REQ-07, REQ-08 and REQ-09.
+1. First, compare the cover results with the functional coverage before any new stimulus: the five cover properties (C_led_fall, C_led_high, C_led_rise, C_rx_start, C_tx_start) read 0.0 % while all functional bins were hit. Check the V_COVER expressions and the checker bindings (including the clk/rst names and the polarity of CPU_RESETN) in verif/checkers/c14_int8_dot_requant_checker.sv, then fix the checker or add stimulus, and re-run V3.
+2. Replace or strengthen the two assertions that cannot fail (A_led_boolean, A_tx_boolean) with checks on READY timing, the GO/done priority and the reads-0-while-not-ready rule.
+3. Re-run verification until V3 passes (coverage, three seeds, mutation score), then let the flow continue to constraints, synthesis, implementation and the closure stages.
+4. When the flow reaches the build again, re-measure it on Vivado 2026.1 with python -m agent resume; publish no number from the existing base build.
+5. Have a human review spec.yaml and ARCHITECTURE.md, since both were accepted automatically by a model, and settle which interview oracle record (BUILD_NOTE.md or summary.json) is right.
+6. After a successful build, run the shell bring-up tests on the board for REQ-04, REQ-06, REQ-07, REQ-08 and REQ-09, and record the actual READY latency.
 
 ## open_questions
-- Should the spec keep the port name LED0, or adopt the built LED[0] bus, given the master XDC?
-- Is the go_done_race case acceptable as is, because UART access is slow, or must READY be strictly tied to the latest GO?
-- Should an out-of-contract shift value (0, or a value above the legal range) be rejected, ignored or left undefined?
+- Why do the five cover properties read 0.0 % while the functional bins were all hit? The records do not settle it.
+- Is READY at 7 clocks after the go pulse (8 after the write strobe) acceptable as "within 8 clocks", or does the spec intend a stricter count?
+- Should the spec's port name LED0 be corrected to LED[0] to match the master XDC?
 
 ## history
 2026-11-07 agent run pr=-: produced by the agent graph; stages that passed: clarify, board-and-device-planning

@@ -9,11 +9,14 @@ stage of any run was re-run and no new design work was done: these are the runs 
 | Run | Design | How the run ended | Agent README | DOC gate |
 |---|---|---|---|---|
 | [20261107-005621-8deb](20261107-005621-8deb/) | `c14_int8_dot_requant` (course task) | stage 2 (RTL and verification) failed its gates; verification reached V2 of V3 | [README](20261107-005621-8deb/c14_int8_dot_requant/README.md), [AGENT](20261107-005621-8deb/c14_int8_dot_requant/AGENT.md) | passed on the first Designer pass ([doc.json](20261107-005621-8deb/doc.json)) |
-| [20261102-135505-a8f2](20261102-135505-a8f2/) | `t1_dimmer_counter` | stages 0 to 8 passed; stage 9 (bring-up) failed | [README](20261102-135505-a8f2/t1_dimmer_counter/README.md), [AGENT](20261102-135505-a8f2/t1_dimmer_counter/AGENT.md) | passed on the second Designer pass ([doc.json](20261102-135505-a8f2/doc.json)) |
-| [20261102-114228-5a32](20261102-114228-5a32/) | `t1_dimmer_counter` | timing closure (stage 6) failed after its visits | [README](20261102-114228-5a32/t1_dimmer_counter/README.md), [AGENT](20261102-114228-5a32/t1_dimmer_counter/AGENT.md) | passed on the second Designer pass ([doc.json](20261102-114228-5a32/doc.json)) |
+| [20261102-135505-a8f2](20261102-135505-a8f2/) | `t1_dimmer_counter` | stages 0 to 8 passed; stage 9 (configuration and debug) failed because the debug build with the ILA left only an error stub | [README](20261102-135505-a8f2/t1_dimmer_counter/README.md), [AGENT](20261102-135505-a8f2/t1_dimmer_counter/AGENT.md) | passed on the second Designer pass ([doc.json](20261102-135505-a8f2/doc.json)) |
+| [20261102-114228-5a32](20261102-114228-5a32/) | `t1_dimmer_counter` | stage 9 failed (no debug-build record) and the run stopped at the visit limit; the old summary counted the refused final entry into stage 6 (timing closure) as a failure, which the build records contradict (see the handover) | [README](20261102-114228-5a32/t1_dimmer_counter/README.md), [AGENT](20261102-114228-5a32/t1_dimmer_counter/AGENT.md) | passed on the second Designer pass ([doc.json](20261102-114228-5a32/doc.json)) |
 
 All three runs built with a Vivado release earlier than 2026.1, so their READMEs publish no timing, resource or power
-number: the build evidence is `partial` and each of those quantities is a known gap.
+number: the build evidence is `partial` and each of those quantities is a known gap. Re-measuring (`python -m agent resume`)
+is the first next step in each. The READMEs were regenerated in brief 68F (a second round, after an independent re-review): the
+code now puts each failing gate's detail beside the run's own build records, names the V-stage reached, and fills the run's
+provenance (model, loops, turns, wall time, tokens, cost), coverage, mutation sample and ILA probes from the records.
 
 ## Records
 
@@ -56,5 +59,6 @@ python3 flow/doccheck.py --check --strict
   READMEs; its findings are in the brief 68 report.
 - One DOC step per run (one or two Designer passes), one model (`claude-sonnet-5-5`). How often a first pass fails the gate, and how other models do,
   was not measured.
-- `AGENT.md` for these runs is larger than for the hand-written designs (about three thousand tokens, characters / 4),
-  because every stage not passed and every requirement without passing evidence is listed as its own gap.
+- `AGENT.md` for these runs is larger than for the hand-written designs (3,488 to 3,793 tokens, characters / 4, against a target of 2,000),
+  because the gaps now carry the behaviours the RTL settles, each failing gate's detail and the run's provenance. Stages not
+  run and quantities not measured are grouped on one line each in `AGENT.md`, and paths are relative to the design.

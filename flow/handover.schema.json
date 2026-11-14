@@ -77,7 +77,15 @@
       "properties": {"date": {"type": "string", "pattern": "^20[0-9]{2}-[0-9]{2}-[0-9]{2}$"}, "brief": {"type": "string"},
                      "pr": {"type": ["integer", "null"]}, "note": {"$ref": "#/$defs/text"}}}},
     "agent_run": {"type": "object", "additionalProperties": false, "required": ["run_id", "record"],
-                  "properties": {"run_id": {"type": "string"}, "record": {"$ref": "#/$defs/path"}, "note": {"type": "string"}}},
+                  "properties": {"run_id": {"type": "string"}, "record": {"$ref": "#/$defs/path"}, "note": {"type": "string"},
+                                 "model": {"type": "string"}, "harness": {"type": "string"}, "loops": {"type": "integer"},
+                                 "turns": {"type": "integer"}, "wall_s": {"type": "number"}, "tokens": {"type": "integer"},
+                                 "cost_usd": {"type": "number"}, "plan_cost_estimate_usd": {"type": "number"},
+                                 "stop": {"type": "string"}}},
+    "registers": {"type": "array", "items": {
+      "type": "object", "additionalProperties": false, "required": ["offset", "name", "access"],
+      "properties": {"offset": {"type": ["string", "integer"]}, "name": {"type": "string"}, "access": {"type": "string"},
+                     "reset": {"type": ["string", "integer"]}, "bits": {"type": ["string", "integer"]}}}},
     "numbers_allow": {"type": "array", "items": {
       "type": "object", "additionalProperties": false, "required": ["token", "reason"],
       "properties": {"token": {"type": "string"}, "reason": {"$ref": "#/$defs/text"}}}},
@@ -87,7 +95,8 @@
                      "gates": {"type": "object", "additionalProperties": {"$ref": "#/$defs/result"}},
                      "vivado": {"type": "string"}, "kb_pin": {"type": ["string", "null"]},
                      "build_id": {"type": ["string", "null"]}, "variant": {"type": "string"},
-                     "evidence_vivado": {"enum": ["current", "earlier", "none"]}}
+                     "evidence_vivado": {"enum": ["current", "earlier", "none"]},
+                     "gate_notes": {"type": "object", "additionalProperties": {"type": "string"}}}
     }
   }
 }

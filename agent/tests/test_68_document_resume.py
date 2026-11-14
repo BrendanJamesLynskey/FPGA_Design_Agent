@@ -64,7 +64,7 @@ def test_unusable_replies_fail_the_gate_after_the_passes(run_copy) -> None:
 
 
 def test_invented_number_in_prose_fails_then_repair_passes(run_copy) -> None:
-    good = json.loads((REC / C14 / "doc_calls.jsonl").read_text().splitlines()[0])["reply"]
+    good = json.loads((REC / C14 / "doc_calls.jsonl").read_text().splitlines()[-1])["reply"]   # the reply that passed the gate
     y = D.parse_reply(good)
     y["summary"] = y["summary"] + " It closes timing at 731.25 MHz."
     bad = "```yaml\n" + yaml.safe_dump(y) + "```"
@@ -280,7 +280,7 @@ def test_prepare_rebuilds_the_run_state() -> None:
 def test_review_round_defeats_are_closed(run_copy) -> None:
     """Fix round of the adversarial review: laundering numbers through model-written names, success claims against failed
     gates, a non-dict target, rewording a required gap after the fact."""
-    good = json.loads((REC / C14 / "doc_calls.jsonl").read_text().splitlines()[0])["reply"]
+    good = json.loads((REC / C14 / "doc_calls.jsonl").read_text().splitlines()[-1])["reply"]   # the reply that passed the gate
     y = D.parse_reply(good)
     for bad in ({"interfaces": (y.get("interfaces") or []) + [{"name": "clk 731.25 MHz", "type": "clock", "note": "a clock pin"}]},
                 {"summary": y["summary"] + " The design was signed off and meets timing."},

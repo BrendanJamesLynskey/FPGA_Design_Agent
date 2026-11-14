@@ -147,7 +147,15 @@ The same `handover.yaml` and renderings as any design, with `produced_by: agent`
   its own (behaviour a user could guess wrong, assumptions).
 - **Vivado release.** Build numbers (timing, resources, power) are published only from a build made with the release
   the flow pins (2026.1). A recorded build from an earlier release is a `partial` evidence entry with a gap, its numbers
-  are withdrawn, and `state.evidence_vivado: earlier` makes a resume rebuild it.
+  are withdrawn, and `state.evidence_vivado: earlier` makes a resume rebuild it. The evidence entry says, without numbers, what
+  the earlier build reached; re-measuring (`python -m agent resume`) is the first next step, and the DOC gate requires it.
+- **What the records must not be contradicted by (68F).** A gap that quotes a gate detail the same run's build records contradict
+  (for example "bitstream: did not run" while `build/base/gates.json` shows the bitstream stage ran) must carry the
+  reconciliation ("Build records: ..."), which names the build that did fail; `document.contradictions` checks it in the DOC
+  gate and in `doccheck`. A stop before the gate (the visit limit, the run budget) is not a failure of that stage: the review
+  entry is marked `gated: false` and `gates_last` leaves it out. Verification evidence names the V-stage reached and what did
+  not run; it is `pass` only at V3. Coverage numbers, the mutation sample, the ILA probes and the run's provenance (model, loops,
+  turns, wall time, tokens, cost) are filled from the records; build time and peak memory only for a build on the pinned release.
 - **Where records may live.** For an agent run a measurement's record must be one the flow wrote for that run
   (`flow.handover.in_run_records`): a file of the run directory (the directory of `agent_run.record`) outside the design
   directory, or a file under the design's `build/`, which the path jail denies to every role. The design directory must be

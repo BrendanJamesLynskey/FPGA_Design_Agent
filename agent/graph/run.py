@@ -1345,8 +1345,12 @@ def node_review(state: State) -> dict:
     rt, n = _rt(state), state["stage"]
     st = MACHINE[n]
     hist = list(state.get("history") or [])
-    passed = not state.get("fails") and not state.get("stop")
-    gates = [[f, False, ""] for f in state.get("fails") or []] or [[g, True, ""] for g in st.gates]
+    # 68F: a stop set before the gate ran (the visit limit, the run budget) means this stage was not gated at this entry;
+    # `fails` is then still the previous stage's list, and must not be written up as this stage's failure.
+    ungated = bool(state.get("stop"))
+    passed = not state.get("fails") and not ungated
+    gates = ([["not gated", False, f"{state['stop']}; this entry ran no gate"]] if ungated else
+             [[f, False, ""] for f in state.get("fails") or []] or [[g, True, ""] for g in st.gates])
     ev = state.get("evidence") or {}
     info = {"gates": gates, "visits": (state.get("visits") or {}).get(str(n), 1), "used": rt.meter.stage,
             "limits": st.limits, "inputs": list(ROLES["rtl"]["read"]) if n else ["spec.md"],
@@ -1362,8 +1366,12 @@ def node_review(state: State) -> dict:
         "hardware: awaiting approval before programming"]
     decision = {"decision": "approve", "by": "auto", "note": ""}
     key = f"{n}:{len(hist)}"                       # LangGraph re-runs this node on resume: one agent snapshot per visit
-    page = rv.write_page(rt.design, n, st.name, {**info, "approval": None})
-    snap = rt.snaps.take(n, st.name, note="pass" if passed else "; ".join(state.get("fails") or [])[:150], key=key)
+    prior = rt.design / "build" / "review" / f"{n:02d}_{st.name}.html"
+    if ungated and prior.is_file():                # keep the page of the last visit that was gated
+        page = prior
+    else:
+        page = rv.write_page(rt.design, n, st.name, {**info, "approval": None})
+    snap = rt.snaps.take(n, st.name, note="pass" if passed else (f"not gated: {state['stop']}" if ungated else "; ".join(state.get("fails") or [])[:150]), key=key)
     if n == 0 and passed and state.get("interview") and not any(r["what"] == "interview" for r in ownership.load(rt.design)):
         for q in state["interview"].get("questions", []):
             ownership.record(rt.design, _who(q.get("by") or "default"), st.name, "interview",
@@ -1394,9 +1402,11 @@ def node_review(state: State) -> dict:
             if decision["decision"] in ("approve", "supply"):        # edited files are not yet gated: gates run again
                 decision["decision"], hand_only = "edit", not decision["note"]
                 decision["note"] = decision["note"] or "owner hand edit: " + ", ".join(edits)[:150]
-    rv.write_page(rt.design, n, st.name, {**info, "approval": decision})
+    if not (ungated and page == prior):
+        rv.write_page(rt.design, n, st.name, {**info, "approval": decision})
     hist.append({"n": n, "stage": st.name, "page": str(page), "passed": passed, "approval": decision,
-                 "snapshot": snap["commit"], "visit": info["visits"], "used": dict(rt.meter.stage)})
+                 "snapshot": snap["commit"], "visit": info["visits"], "used": dict(rt.meter.stage),
+                 **({"gated": False} if ungated else {})})
     if n >= 2:                                    # brief 53: refresh the matrix with this stage's evidence for the index
         trace_record(rt.design, rt.session.root)
     rv.write_index(rt.design, hist, rt.cfg.role_models())
@@ -1464,7 +1474,7 @@ def route(state: State) -> str:
 
 
 def gates_last(state: dict) -> dict:
-    return {h["stage"]: h["passed"] for h in state.get("history") or []}
+    return {h["stage"]: h["passed"] for h in state.get("history") or [] if h.get("gated", True)}
 
 
 def node_document(state: State) -> dict:
@@ -1800,7 +1810,7 @@ def summary(rt: Runtime, state: dict) -> dict:
             "tokens": rt.meter.run["tokens"], "cost_usd": rt.meter.run["usd"], "unreported_cost_calls": rt.meter.unreported,
             "turns": rt.meter.run["turns"], "wall_s": rt.meter.run["seconds"],
             "questions": (state.get("interview") or {}), "stop": state.get("stop"),
-            "gates_last": {h["stage"]: h["passed"] for h in hist},
+            "gates_last": {h["stage"]: h["passed"] for h in hist if h.get("gated", True)},   # 68F: not an entry that ran no gate
             "approvals": [{"n": h["n"], **h["approval"]} for h in hist],
             "bringup": ((state.get("evidence") or {}).get("bringup") or {}).get("pass"),
             **({"spec_test": __import__("agent.graph.spectest", fromlist=["x"]).record(rt.design)} if rt.cfg.spec_tests else {})}
