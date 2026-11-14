@@ -48,7 +48,7 @@ def test_every_rule_is_covered_by_a_check_or_marked_manual() -> None:
 def test_rule_set_shape_fix_and_skill() -> None:
     rs = LR.load_rules()
     assert not LR.rule_problems(rs)
-    assert rs["version"] == "1.1"
+    assert rs["version"] == "1.2"
     for r in rs["rules"]:
         assert str(r.get("fix") or "").strip(), f"{r['id']}: no fix"
         sk = str(r.get("skill") or "")
@@ -272,7 +272,7 @@ def test_vivado_session_is_one_call_for_all_missing_reports(tmp_path: Path) -> N
 def test_select_all_skips_checks_that_do_not_apply(tmp_path: Path) -> None:
     chosen, skipped = C.select("all", "rtl", tmp_path)
     assert "lint" in chosen and "cdc" not in chosen
-    assert set(skipped) == {"fsm", "gt_plan", "doc"}
+    assert set(skipped) == {"fsm", "gt_plan", "doc", "axi_profile"}
     with pytest.raises(KeyError):
         C.select(["nope"], "rtl", tmp_path)
 

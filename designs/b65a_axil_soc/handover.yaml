@@ -81,7 +81,7 @@ files:
   sha256: a0619232b1a4694856609236c1e002d3feab14d3208366a032ac5a4a521156b9
 - path: designs/b65a_axil_soc/tests/test_b65a_rtl.py
   what: generated design simulated end to end through the UART shell
-  sha256: c69ba5a936a7e9afe0db60ac5ed4c95cefb87575ad6c94bc75c9532802b50d99
+  sha256: 583424fc10773bfa88930da27ffb1a419db86d4485b63e8513a43b6eaabdd419
 - path: docs/blockdesign.md
   what: user guide to the format, validation and generator
   sha256: 500c66d77b6acf454a1ae1c44ff447c325482e7b9cb880f70b9134c5cfa37a16
@@ -114,10 +114,11 @@ evidence:
   activity: simulation
   result: pass
   how: ci
-  what: generated top under cocotb and Icarus through the UART shell, with the AXI4-Lite protocol checker on every top-level
-    link; reset values, strobes, error responses, the tone counted and the analyser samples checked
+  what: generated top under cocotb and Icarus through the UART shell, with the AXI4-Lite protocol checker and the missing-response
+    monitor (brief 71) on every top-level link; reset values, strobes, error responses, the tone counted and the analyser
+    samples checked
   record: designs/b65a_axil_soc/tests/test_b65a_rtl.py
-  sha256: c69ba5a936a7e9afe0db60ac5ed4c95cefb87575ad6c94bc75c9532802b50d99
+  sha256: 583424fc10773bfa88930da27ffb1a419db86d4485b63e8513a43b6eaabdd419
 - id: E2
   activity: review
   result: pass
@@ -296,5 +297,5 @@ state:
     build_2026_1: pass
     board_run: not-run
   vivado: '2026.1'
-  kb_pin: 1fc7ed8
-  build_id: de292461
+  kb_pin: 20d73e8
+  build_id: 2b28c63c

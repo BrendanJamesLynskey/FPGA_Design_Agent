@@ -18,6 +18,8 @@
 #include <stdint.h>
 
 #define DEMO_ACCEL_REGMAP_SHA256 "c9dd954f8696a3f6ddd67e36a5c021e55b09b3965dccec23d1a0910006267030"
+#define DEMO_ACCEL_PROFILE "house"
+#define DEMO_ACCEL_SETTINGS "unmapped=split error_capture=on partial_write=accept unaligned=ignore reserved_write=ignore wide_values=optional"
 #define DEMO_ACCEL_WINDOW_BYTES 0x1000u
 
 #define DEMO_ACCEL_ACCESS_RW  0u

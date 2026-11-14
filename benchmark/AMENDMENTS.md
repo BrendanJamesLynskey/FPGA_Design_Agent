@@ -36,6 +36,20 @@ change have no scan and keep their gate outcomes (replayed: results/71_check_sui
 Re-recorded: the request golden `agent/tests/fixtures/b71_request_golden.json` (one deliberate re-pin; earlier goldens stay
 as history). Not comparable on request text: agent runs recorded before 2026-11-14.
 
+## 2026-11-14: AXI4-Lite interface profiles in the text sent to models (request golden re-pin, brief 73)
+
+**Amended 2026-11-14 (planner decision in brief 73 under "Benchmarks do not block improvements").** What: the Clarifier's
+prompt has a paragraph on the AXI4-Lite interface profile, which spec.yaml `interfaces: {axi_lite_profile: house |
+amd_compatible | strict}` chooses (when to pick each: `amd_compatible` when software already written for AMD IP will drive
+the block, `strict` for bring-up, safety or verification-heavy work, `house` otherwise); the Designer's prompt has two
+sentences on it and the new check name; the `check` tool's name list gained `axi_profile` (registry schema 1.12.1,
+`agent/tests/fixtures/tool_schemas.json` regenerated). Changed: `agent/graph/run.py` PROMPTS, `agent/core/tools.py`
+CHECK_NAMES and the tool description, `agent/core/registry.py` SCHEMA_VERSION. No task spec, reference RTL, test, mutant,
+grader or split changed; the Modeller's and the Verifier's requests are unchanged.
+
+Re-recorded: the request golden `agent/tests/fixtures/b73_request_golden.json` (one deliberate re-pin; earlier goldens stay
+as history). Not comparable on request text: agent runs recorded before 2026-11-14 (brief 73).
+
 ## 2026-11-13: role names in the text sent to models (request golden re-pin, brief 68 C)
 
 **Amended 2026-11-13 (planner decision in brief 68 under "Benchmarks do not block improvements"; eval-1 was stopped with no

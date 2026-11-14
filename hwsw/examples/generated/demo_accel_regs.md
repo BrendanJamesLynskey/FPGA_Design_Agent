@@ -4,6 +4,10 @@
 
 Control and status of a stream accelerator with a descriptor ring and one interrupt. This block follows the house register conventions (docs/hwsw.md); the Behaviour section states each one.
 
+Interface profile: `house` (the default: a read of a hole answers SLVERR and a write OKAY, the error-capture registers are on, byte strobes are honoured, a write of 1 to a reserved bit is ignored). No setting differs from the profile.
+
+Settings: `unmapped=split error_capture=on partial_write=accept unaligned=ignore reserved_write=ignore wide_values=optional`.
+
 AXI4-Lite, 32-bit registers, a 0x1000-byte window (address bits [11:2] decoded). Unmapped addresses: a read answers SLVERR with data 0 and a write answers OKAY and changes nothing. Version 0.1.0; model sha256 `c9dd954f8696a3f6`.
 
 ## Register map
@@ -41,6 +45,7 @@ Reset is what a read returns after reset with every hardware input low.
 
 ## Behaviour
 
+- **Interface profile.** `house` (the default: a read of a hole answers SLVERR and a write OKAY, the error-capture registers are on, byte strobes are honoured, a write of 1 to a reserved bit is ignored). No setting differs from the profile. The profile is chosen once per design (spec.yaml `interfaces:`) and may be overridden per block and per setting; the settings it bundles are listed in docs/hwsw.md.
 - **Unmapped addresses.** An address inside this block's 0x1000-byte window that holds no register: a read answers SLVERR with data 0, and a write answers OKAY and changes nothing (split response). The read is made visible because it reports at the load on an Arm CPU (expected: a synchronous external abort); the write is quiet because a SLVERR on a posted write is expected to reach the CPU late and imprecisely, where it is hard to attribute. What an Arm CPU does with these responses is expected, not yet measured on this project's platforms (docs/hwsw.md). Addresses outside the window belong to the interconnect (an AXI crossbar answers DECERR there).
 - **Error capture.** Every access to an unmapped address is recorded, whatever the response above. ERR_STATUS.STICKY (0xffc) is set by the first one since the last clear; ERR_ADDR (0xff8) then holds its word-aligned address inside the window (the address bits the block decodes) and ERR_STATUS.IS_WRITE says whether it was a write. Later bad accesses do not replace them: ERR_STATUS.COUNT counts every one, saturating at 255. Write 1 to STICKY to clear the record (STICKY and COUNT go to 0; ERR_ADDR and IS_WRITE keep their last values and are meaningful only while STICKY is 1). A bad access in the same clock as that clear is not lost: it starts the new record (STICKY 1, COUNT 1). A bad read and a bad write in the same clock count 2 and the read is the one recorded. Reads of the capture registers have no side effects. The capture raises no interrupt.
 - **Reserved bits.** Bits that belong to no field read 0 and ignore writes. Write them as 0, so that a later version can give them a meaning.

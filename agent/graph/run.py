@@ -210,12 +210,23 @@ PROMPTS = {
 PROMPTS["clarify"] += (" Each requirement is ONE checkable statement: no ';' or ', and' joining two statements (split them, "
                        "each with its own id), and no vague word (should, fast, robust, appropriate, support, etc): state a "
                        "value, a count of clocks or an exact behaviour.")
+# brief 73: the AXI4-Lite interface profile, chosen once in spec.yaml (hwsw/regmap.py, docs/hwsw.md)
+PROMPTS["clarify"] += (" INTERFACE PROFILE: only if the design has an AXI4-Lite register block, add `interfaces: "
+                       "{{axi_lite_profile: house}}` (a profile bundles what a driver writer could guess wrong: the answer to a "
+                       "hole, strobes, unaligned and reserved accesses, error capture). Choose amd_compatible when software "
+                       "already written for AMD IP will drive the block (a hole reads OKAY and 0, no error-capture registers); "
+                       "strict for bring-up, safety or verification-heavy work (every access the block cannot take answers "
+                       "SLVERR, error capture with an interrupt, wide values need a snapshot group); house otherwise (the "
+                       "default; a hole answers SLVERR to a read and OKAY to a write). Leave interfaces out when there is "
+                       "no register block.")
 # brief 71: the check suite, one tool for the Designer (flow/checks)
 PROMPTS["rtl"] += (" The `check` tool runs the design checks and returns a short digest (each check pass, fail, partial or "
                    "not run; each finding with its rule, place, one-line fix and the KB skill to load): call it with "
                    "names [\"all\"] before you reply DONE and after a build, or name one check (resets, cdc, lint, standards, "
-                   "methodology, drc, exceptions, io, clocking, dsp_ram_mapping, control_sets, fsm, axi, gt_plan, doc) "
-                   "to look into a failure. Resets are synchronous; an asynchronous reset belongs only in a reset synchroniser.")
+                   "methodology, drc, exceptions, io, clocking, dsp_ram_mapping, control_sets, fsm, axi, axi_profile, gt_plan, doc) "
+                   "to look into a failure. Resets are synchronous; an asynchronous reset belongs only in a reset synchroniser. "
+                   "A generated AXI4-Lite register block must be the profile spec.yaml `interfaces:` declares (axi_profile "
+                   "regenerates it and compares); never edit a generated block, regenerate it from its map.")
 PROMPTS["tests"] += ("\nTag every check with the spec.yaml requirement ids it verifies (brief 53, flow/traceability.py): a "
                      "`# req: REQ-01, REQ-02` comment directly above each @cocotb.test() (or @req(\"REQ-01\") from flow.req, "
                      "above @cocotb.test()), `// req: REQ-01` on the line of each `V_*(...)` assertion or cover, and a "

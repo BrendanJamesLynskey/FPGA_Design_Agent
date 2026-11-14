@@ -10,6 +10,9 @@
 // Every access to an unmapped address is recorded in ERR_ADDR and ERR_STATUS (error capture, docs/hwsw.md).
 // Only address bits [11:2] are decoded: the window repeats every 0x1000 bytes.
 // Writes to read-only bits are ignored with OKAY. Reset: synchronous, active low (aresetn).
+//
+// PROFILE house
+// SETTINGS unmapped=split error_capture=on partial_write=accept unaligned=ignore reserved_write=ignore wide_values=optional
 
 module demo_accel_regs (
     input  logic        aclk,
