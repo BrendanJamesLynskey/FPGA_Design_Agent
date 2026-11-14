@@ -1,0 +1,207 @@
+{
+ "design": "t1_dimmer_counter",
+ "scope": "synth",
+ "variant": "base",
+ "level": "summary",
+ "standard": "FDA-HDL",
+ "version": "1.1",
+ "checks": [
+  {
+   "check": "lint",
+   "status": "not_run",
+   "why": "verilator is not on PATH",
+   "findings": [],
+   "parts": {},
+   "records": []
+  },
+  {
+   "check": "standards",
+   "status": "pass",
+   "incomplete": [],
+   "parts": {},
+   "findings": [],
+   "records": [
+    "build/checks/base/synth/standards.json"
+   ],
+   "why": ""
+  },
+  {
+   "check": "resets",
+   "status": "pass",
+   "incomplete": [],
+   "parts": {
+    "source_unread": "ran",
+    "source": "ran",
+    "amd_methodology": "ran",
+    "amd_drc": "ran",
+    "amd_cdc": "ran",
+    "netlist": "ran",
+    "netlist_clocks": "ran",
+    "polarity": "ran"
+   },
+   "findings": [],
+   "records": [
+    "build/base/methodology_synth.rpt",
+    "build/base/drc_synth.rpt",
+    "build/base/cdc_synth.rpt",
+    "build/checks/base/synth/reset_scan.tsv"
+   ],
+   "why": ""
+  },
+  {
+   "check": "cdc",
+   "status": "pass",
+   "incomplete": [],
+   "parts": {
+    "report_cdc": "ran",
+    "structure": "ran"
+   },
+   "findings": [],
+   "records": [
+    "build/base/cdc_synth.rpt",
+    "build/base/cdc_paths_synth.rpt"
+   ],
+   "why": ""
+  },
+  {
+   "check": "methodology",
+   "status": "pass",
+   "incomplete": [],
+   "parts": {},
+   "findings": [
+    {
+     "rule": "HDL-XDC-01",
+     "tool": "vivado",
+     "code": "XDCH-2",
+     "severity": "Warning",
+     "where": "methodology_synth.rpt@post_synth",
+     "key": "vivado:XDCH-2@post_synth",
+     "message": "Same min and max delay values on IO port (x54)",
+     "fix": "constrain every clock and I/O from the data sheet; an exception must cover the paths it names and no others",
+     "skill": "xdc-coverage-and-audit-checks",
+     "blocking": false,
+     "count": 54,
+     "waived": {
+      "reason": "The asynchronous inputs and slow outputs get a zero input or output delay so that check_timing counts them as constrained, and a false path so that timing ignores them (design.xdc, the async_in and slow_out groups). Equal min and max delays (XDCH-2, Warning) are the expected consequence of that pattern (docs/debug_playbook.md).",
+      "owner": "flow maintainer (owner review pending)",
+      "date": "2026-11-11"
+     }
+    }
+   ],
+   "records": [
+    "build/base/methodology_synth.rpt"
+   ],
+   "why": ""
+  },
+  {
+   "check": "drc",
+   "status": "pass",
+   "incomplete": [],
+   "parts": {},
+   "findings": [],
+   "records": [
+    "build/base/drc_synth.rpt"
+   ],
+   "why": ""
+  },
+  {
+   "check": "exceptions",
+   "status": "pass",
+   "incomplete": [],
+   "parts": {},
+   "findings": [],
+   "records": [],
+   "why": ""
+  },
+  {
+   "check": "io",
+   "status": "pass",
+   "incomplete": [],
+   "parts": {},
+   "findings": [],
+   "records": [],
+   "why": ""
+  },
+  {
+   "check": "clocking",
+   "status": "pass",
+   "incomplete": [],
+   "parts": {
+    "methodology": "ran",
+    "cmt": "ran"
+   },
+   "findings": [],
+   "records": [
+    "build/base/methodology_synth.rpt",
+    "build/checks/base/synth/cmt.rpt"
+   ],
+   "why": ""
+  },
+  {
+   "check": "dsp_ram_mapping",
+   "status": "pass",
+   "incomplete": [],
+   "parts": {
+    "methodology": "ran",
+    "drc": "ran",
+    "utilization": "ran"
+   },
+   "findings": [],
+   "records": [
+    "build/base/methodology_synth.rpt",
+    "build/base/drc_synth.rpt",
+    "build/base/utilization_synth.rpt"
+   ],
+   "why": ""
+  },
+  {
+   "check": "control_sets",
+   "status": "pass",
+   "incomplete": [],
+   "parts": {
+    "report_control_sets": "ran",
+    "methodology": "ran"
+   },
+   "findings": [],
+   "records": [
+    "build/checks/base/synth/control_sets.rpt"
+   ],
+   "why": ""
+  },
+  {
+   "check": "axi",
+   "status": "pass",
+   "incomplete": [],
+   "parts": {},
+   "findings": [],
+   "records": [],
+   "why": ""
+  },
+  {
+   "check": "doc",
+   "status": "pass",
+   "incomplete": [],
+   "parts": {},
+   "findings": [],
+   "records": [
+    "handover.yaml"
+   ],
+   "why": ""
+  }
+ ],
+ "skipped": {
+  "fsm": "no verif/fsm.yaml (the design declares no state machine to cover)",
+  "gt_plan": "no link: section in spec.yaml or link_spec.yaml (no transceiver link)"
+ },
+ "vivado": null,
+ "bad_waivers": [],
+ "seconds": 0.7,
+ "extra": {
+  "control_sets": 34,
+  "dsp_ram_util": {
+   "dsp": 0,
+   "dsp_available": 240
+  }
+ },
+ "pass": false
+}

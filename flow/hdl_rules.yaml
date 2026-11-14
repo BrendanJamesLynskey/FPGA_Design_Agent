@@ -7,89 +7,205 @@
 #   vivado:    rule-ID patterns (fnmatch) from report_methodology, report_drc and report_cdc in the build's gates.json;
 #              severities Error, Critical Warning and Warning count, Info and Advisory do not
 #   standards: rule ids of flow/standards_check.py (docs/design_standards.md), status fail or not_run
+#   resets, cdc_structure, exceptions, io, clocking, fsm, axi, gt, doc: the codes the check suite's checks raise
+#              (flow/checks, brief 71; `python3 -m flow.checks`); axi_checker: a simulation monitor's rule (axi_tx/rtl)
+# Each rule also names `fix` (one line, shown in the check digest) and `skill` (the KB skill with the background and the
+# fix). Every code a check can raise maps to a rule here, and every rule is covered by a check or marked `manual: true`
+# (flow/tests/test_71_check_suite.py).
 # A finding that no rule maps lands in the catch-all rule of its tool (HDL-LINT-00, HDL-VIV-00, HDL-STD-00), so nothing is lost.
 # Waivers: designs/<d>/lint/waivers.yaml, {rule, match (a glob over the finding key), reason, owner, date}.
 standard: FDA-HDL
-version: "1.0"            # first release; revised in review (one rule added, rationales reworded) before it was released
-date: 2026-11-12
+version: "1.1"            # 1.0 2026-11-12 (first release); 1.1 2026-11-14 (brief 71: reset rules split into HDL-RST-01..05,
+                          # HDL-CLK-02, HDL-VER-01, HDL-IF-02/03, HDL-GT-01, HDL-DOC-01; check-suite tool keys; fix and skill)
+date: 2026-11-14
 rules:
   - id: HDL-SYN-01
     title: No latches
     rationale: A latch is level-sensitive storage; static timing analysis handles it with special cases, and in a
       synchronous design it almost always comes from an incomplete combinational assignment, where simulation can look correct.
     checks: {verilator: [LATCH, NOLATCH], standards: [STD-LATCH-01]}
+    fix: assign every output of a combinational block on every path (a default at the top of always_comb)
+    skill: sequential-and-combinational-coding
   - id: HDL-SYN-02
     title: No combinational loops
     rationale: A loop through logic has no defined value; simulation may settle where silicon oscillates.
     checks: {verilator: [UNOPTFLAT, ALWCOMBORDER], vivado: ["LUTLP-*"], standards: [STD-LOOP-01]}
+    fix: break the loop with a register, or remove the feedback through logic
+    skill: sequential-and-combinational-coding
   - id: HDL-SYN-03
     title: Complete, non-overlapping case statements
     rationale: An incomplete case infers a latch or a priority the author did not mean; an overlapping or X case item
       simulates differently from what synthesis builds.
     checks: {verilator: [CASEINCOMPLETE, CASEOVERLAP, CASEX, CASEWITHX]}
+    fix: add a default item and make the case items distinct (unique case where it holds)
+    skill: sequential-and-combinational-coding
   - id: HDL-SYN-04
     title: Blocking assignments in combinational logic, non-blocking in clocked logic
     rationale: Mixing them gives race conditions between simulators and a mismatch between simulation and the netlist.
     checks: {verilator: [BLKSEQ, COMBDLY, BLKANDNBLK, ASSIGNDLY, INITIALDLY]}
+    fix: blocking (=) in always_comb, non-blocking (<=) in always_ff
+    skill: sequential-and-combinational-coding
   - id: HDL-SYN-05
     title: One driver per signal
     rationale: Two drivers is a short in hardware and an X or a last-writer-wins in simulation.
     checks: {verilator: [MULTIDRIVEN, PROCASSWIRE, CONTASSREG], vivado: ["MDRV-*"]}
+    fix: drive each signal from one always block or one assign
+    skill: sequential-and-combinational-coding
   - id: HDL-SYN-06
     title: No initial blocks except ROM initialisation
     rationale: Initial values are not a reset; a design that relies on them cannot be reset back to a known state.
     checks: {standards: [STD-INIT-01]}
+    fix: set start values with the reset, not an initial block (ROM contents excepted)
+    skill: synthesisable-subset-and-parameters
   - id: HDL-WID-01
     title: Widths match
     rationale: A silent extension or truncation is the commonest arithmetic bug; the reader of the code cannot see it.
     checks: {verilator: [WIDTH, WIDTHEXPAND, WIDTHTRUNC, WIDTHXZEXPAND, WIDTHCONCAT, SELRANGE, ASCRANGE, LITENDIAN, CMPCONST, UNSIGNED]}
+    fix: size both sides of the assignment or comparison explicitly
+    skill: arithmetic-and-widths
   - id: HDL-SIG-01
     title: Every signal is driven and used, every port connected
     rationale: An undriven signal is a constant the author did not choose; an unused one is often a missed connection.
     checks: {verilator: [UNDRIVEN, UNUSED, UNUSEDSIGNAL, UNUSEDPARAM, UNUSEDGENVAR, PINMISSING, PINCONNECTEMPTY, PINNOCONNECT, IMPLICIT]}
+    fix: drive or remove the signal, connect every port (or waive a deliberate open with a reason)
+    skill: sequential-and-combinational-coding
   - id: HDL-CLK-01
     title: Synchronous design on declared clocks; no derived or gated clocks
     rationale: A clock made in logic has skew the tools cannot close; a clock enable on the declared clock does the
       same job safely. Declared domains let the tools and the reviewer see every crossing.
     checks: {verilator: [GENCLK], vivado: ["CLKC-*", "PLHOLDVIO-*"], standards: [STD-CLK-01, STD-CLK-02, STD-CLK-03]}
+    fix: use a clock enable on a declared clock, and declare every clock domain in architecture.yaml
+    skill: clock-enables-not-gated-clocks
+  - id: HDL-CLK-02
+    title: MMCM and PLL settings inside the data sheet's VCO and PFD ranges
+    rationale: Neither report_drc nor report_methodology rejects a hand-instantiated MMCME2 or PLLE2 outside its VCO or
+      PFD range (measured, brief 18); the clock then does not lock or drifts on the board.
+    checks: {clocking: [CMT-RANGE-01]}
+    fix: choose DIVCLK_DIVIDE and CLKFBOUT_MULT so the VCO and PFD sit inside the speed grade's range (flow/mmcm_search.py)
+    skill: artix7-mmcm-pll-configuration
   - id: HDL-RST-01
-    title: Reset as the spec and the reset-strategy skill say; asynchronous inputs synchronised
-    rationale: A reset released asynchronously can leave flip-flops in different states; logic driving an
-      asynchronous reset glitches.
-    checks: {verilator: [SYNCASYNCNET, CDCRSTLOGIC], vivado: ["LUTAR-*"], standards: [STD-RST-01]}
+    title: Synchronous resets; an asynchronous reset only in a reset synchroniser or from a declared external asynchronous input
+    rationale: AMD recommends synchronous resets (UG949); an asynchronous reset is released at an arbitrary time relative
+      to the clock and stops registers packing into DSP and block RAM. The owner's rule (2026-11-13) allows it only in
+      reset and CDC synchronisers and where an external device's reset is asynchronous.
+    checks: {verilator: [SYNCASYNCNET], vivado: ["ROAS-*"], standards: [STD-RST-01], resets: [RST-ASYNC-01]}
+    fix: reset the register synchronously (if (rst) inside always_ff @(posedge clk)); keep asynchronous resets inside a
+      synchroniser (xpm_cdc_async_rst, reset_sync), or declare the external input in architecture.yaml reset.async_inputs
+    skill: reset-strategy
+  - id: HDL-RST-02
+    title: One polarity per reset
+    rationale: A reset used active high in one place and active low in another becomes two nets and two control sets,
+      which costs placement freedom and invites a mismatched release.
+    checks: {resets: [RST-POL-01, RST-POL-02]}
+    fix: choose one polarity inside the design (active high), invert once where the reset enters (aresetn only at AXI ports)
+    skill: control-sets-resets-and-enables
+  - id: HDL-RST-03
+    title: No asynchronous reset on a register that belongs in a DSP or block RAM
+    rationale: The DSP48 and block-RAM registers have synchronous resets only, so an asynchronous reset keeps the register
+      in the fabric, costing flip-flops and the primitive's fast internal path.
+    checks: {vivado: ["DPIR-*", "DPOR-*", "RMIR-*", "RMOR-*", "RROR-*"], resets: [RST-DSPRAM-01]}
+    fix: give the pipeline and output registers around the DSP or RAM a synchronous reset, or none
+    skill: control-sets-resets-and-enables
+  - id: HDL-RST-04
+    title: A reset enters each clock domain through a synchroniser
+    rationale: A reset made in one clock domain and released in another without a synchroniser can release different
+      registers on different cycles, or violate recovery and removal timing.
+    checks: {vivado: [CDC-7, CDC-8], resets: [RST-CDC-01]}
+    fix: synchronise the reset into each clock domain (one xpm_cdc_async_rst or reset_sync per domain)
+    skill: reset-strategy
+  - id: HDL-RST-05
+    title: No logic drives an asynchronous reset
+    rationale: A glitch on combinational logic driving an asynchronous reset resets the register; AMD's methodology check
+      LUTAR-1 flags it.
+    checks: {verilator: [CDCRSTLOGIC], vivado: ["LUTAR-*"], resets: [RST-LUT-01]}
+    fix: drive an asynchronous reset only from a register (a synchroniser output) or a device pin, never from a LUT
+    skill: reset-strategy
   - id: HDL-CDC-01
     title: Every clock-domain crossing through a named, declared primitive
     rationale: An unsynchronised crossing fails rarely and randomly; only structure, not simulation, shows it.
-    checks: {vivado: ["CDC-*"], standards: [STD-CDC-01, STD-CDC-02]}
+    checks: {vivado: ["CDC-*"], standards: [STD-CDC-01, STD-CDC-02], cdc_structure: ["U*"]}
+    fix: cross through a named synchroniser (xpm_cdc_single, xpm_cdc_gray, xpm_cdc_handshake, an asynchronous FIFO) and list it in architecture.yaml crossings
+    skill: clock-domain-crossing
   - id: HDL-XDC-01
     title: Complete timing and I/O constraints
     rationale: An unconstrained or wrongly constrained path is unchecked by timing analysis, so its slack means nothing.
-    checks: {vivado: ["TIMING-*", "XDCH-*", "XDCC-*", "XDCB-*", "XDCV-*"]}
+    checks: {vivado: ["TIMING-*", "XDCH-*", "XDCC-*", "XDCB-*", "XDCV-*"], exceptions: ["EXC-*"], io: ["IO-*"]}
+    fix: constrain every clock and I/O from the data sheet; an exception must cover the paths it names and no others
+    skill: xdc-coverage-and-audit-checks
   - id: HDL-METH-01
     title: Methodology findings on the synthesised and routed design fixed or waived
     rationale: The vendor methodology checks are the tool's own list of constructs it handles badly.
-    checks: {vivado: ["SYNTH-*", "DPIP-*", "DPOP-*", "HPDR-*", "RTRES-*"], standards: [STD-METH-01]}
+    checks: {vivado: ["SYNTH-*", "DPIP-*", "DPOP-*", "HPDR-*", "RTRES-*", "RBOR-*", "ULMTCS-*"], standards: [STD-METH-01]}
+    fix: fix the construct the methodology row names (pipeline the DSP or RAM, reduce control sets), or waive it with a reason
+    skill: vivado-timing-methodology-checks
   - id: HDL-DRC-01
     title: No design-rule violation
     rationale: A DRC error blocks the bitstream or describes an electrical problem on the board.
     checks: {vivado: ["NSTD-*", "UCIO-*", "PDRC-*", "RTSTAT-*", "BIVC-*", "IOSTDTYPE-*", "REQP-*", "CFGBVS-*"]}
+    fix: fix the pin, I/O standard or primitive setting the DRC row names
+    skill: drc-closure
   - id: HDL-IF-01
     title: Standard interfaces with AMBA names
     rationale: Standard interfaces make blocks reusable and checkable by protocol checkers.
     checks: {standards: [STD-AXI-01, STD-AXI-02, STD-ARCH-00]}
+    fix: use AXI4-Lite or AXI4-Stream with AMBA port names and declare the interface in architecture.yaml
+    skill: bus-and-register-interfaces
   - id: HDL-WAIVE-01
     title: Every waiver has a reason, an owner and a date
     rationale: A waiver is a decision; without who and why it cannot be reviewed or revisited.
     checks: {standards: [STD-WAIVE-01]}
+    fix: give the waiver a reason, an owner and a date
+    skill: vivado-rtl-lint
+  - id: HDL-IF-02
+    title: AMD AXI4-Lite IP next to our register blocks is used with its measured conventions in mind
+    rationale: AMD's AXI4-Lite peripherals answer holes with OKAY, ignore byte strobes, alias registers and may pop on
+      read (measured, brief 69); software written for our blocks' conventions misbehaves on them. Advice, not a failure.
+    checks: {axi: [AXI-AMD-IP]}
+    fix: write whole words to AMD IP, do not read FIFO or status words speculatively, and say in the datasheet where conventions differ
+    skill: amd-axi4-lite-ip-register-behaviour
+  - id: HDL-IF-03
+    title: Every accepted AXI request gets exactly one response within a bounded wait
+    rationale: A slave that drops a response hangs the master for ever (the AXI DMA register port returned one B for two
+      writes, brief 69); no other rule of the checker sees a response that never comes.
+    checks: {axi_checker: [RESP_LOST]}
+    fix: answer every accepted write with one B and every accepted read with one R; never accept more requests than you can answer
+    skill: axi4-lite-common-bugs-and-checks
+  - id: HDL-VER-01
+    title: Every FSM state and listed transition is covered in simulation
+    rationale: A state or transition never reached in simulation is behaviour no test has checked; the coverage comes from
+      the trace, not from the simulator's own coverage (none of the free simulators has FSM coverage).
+    checks: {fsm: [FSM-STATE, FSM-TRANS, FSM-UNLISTED]}
+    fix: add a test that reaches the state or transition, or waive it in verif/fsm.yaml with a reason
+    skill: fsm-coverage
+  - id: HDL-GT-01
+    title: A transceiver link the part, speed grade and board can build
+    rationale: A line rate outside the speed grade's window, a reference the board does not provide or more lanes than it
+      has cannot be built; the plan says so before any RTL is written.
+    checks: {gt: [GT-PLAN]}
+    fix: change the link in spec.yaml (rate, lanes, reference) to one gt_plan accepts
+    skill: gth-design-gates-for-the-agent
+  - id: HDL-DOC-01
+    title: The design's handover documents what was built, verified and measured
+    rationale: The next engineer needs every number traced to a record and every gap stated (owner, 2026-11-13; the DOC
+      gate of brief 68).
+    checks: {doc: [DOC-PROBLEM]}
+    fix: correct handover.yaml (records, gaps, prose) and re-run flow/handover.py write
+    skill: docs/documentation_standard.md
   - id: HDL-LINT-00
     title: Verilator -Wall clean (any warning no other rule maps)
     rationale: A new Verilator warning code is never dropped for want of a rule; it is fixed or waived with a reason.
     checks: {verilator: ["*"]}
+    fix: fix the Verilator warning, or waive it in lint/waivers.yaml with a reason
+    skill: vivado-rtl-lint
   - id: HDL-VIV-00
     title: Vivado methodology, DRC and CDC clean (any finding no other rule maps)
     rationale: A vendor rule ID no other rule names is still fixed or waived with a reason, not ignored.
     checks: {vivado: ["*"]}
+    fix: fix the construct the Vivado rule names, or waive it with a reason
+    skill: vivado-timing-methodology-checks
   - id: HDL-STD-00
     title: Design-standards checker clean (any rule no other maps)
     rationale: A design-standards rule added later still reaches the coding standard instead of being dropped.
     checks: {standards: ["*"]}
+    fix: fix the design-standards finding, or waive it with a reason
+    skill: vivado-rtl-lint

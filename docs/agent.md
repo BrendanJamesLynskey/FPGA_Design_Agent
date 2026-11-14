@@ -46,6 +46,17 @@ Vivado builds are reused when the sources are unchanged and the earlier build we
   resumed. A changed knowledge-bank pin is reported, not re-run. The minimal stage entry is the initial graph state
   (`stage`, `owners`, `note`, `note_role`, `resumed_from`); brief 62B's closure loop should reuse it.
 
+## The check suite (`flow/checks`, brief 71)
+
+The Designer (and the closure loop) has one tool for design checks, `check(names, scope, level)`, over a registry:
+`lint`, `standards`, `resets`, `cdc`, `methodology`, `drc`, `exceptions`, `io`, `clocking`, `dsp_ram_mapping`,
+`control_sets`, `fsm`, `axi`, `gt_plan`, `doc`. It returns a digest (each check pass, fail, partial or not run with the
+reason; each finding's rule, place, one-line fix and KB skill) and writes the full result to `build/checks/`. Source
+checks run concurrently; reports a build did not write are made in one Vivado session on the stage's checkpoint. The
+sign-off gates call the same registry: `post_synth_resets_clean` (builds with the reset scan) and the DOC gate. The
+older tools (`lint`, `gates`, `check_constraints`, `report_digest`) stay, because the graph's gates and the recorded runs
+call them. The Designer also gets `gt_plan` at stages 1 to 3. Details: [check_suite.md](check_suite.md).
+
 ## Separation (`agent/graph/roles.py`)
 
 | Sub-agent | Reads | Writes |

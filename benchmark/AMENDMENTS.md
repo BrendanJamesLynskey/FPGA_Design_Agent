@@ -18,6 +18,24 @@ Re-recorded: the request golden `agent/tests/fixtures/b68f_request_golden.json` 
 stays as history). Not comparable on request text: DOC steps recorded before this date (the three runs in
 `results/68_agent_docs/` were documented again with the new prompt).
 
+## 2026-11-14: the check suite tool offered to the Designer (request golden re-pin, brief 71)
+
+**Amended 2026-11-14 (brief 71, under "Benchmarks do not block improvements").** What: the agent tool registry gained
+`check` (the check suite, `flow/checks`; registry schema 1.12.0, `agent/tests/fixtures/tool_schemas.json` regenerated).
+The Designer is offered `check` at stages 1 to 9 and the brief 56A `gt_plan` tool at stages 1 to 3
+(`agent/graph/stages.py`, `FLOW_TOOLS` in `agent/graph/run.py`), and the rtl prompt has a few lines on `check`. Why: the
+owner asked for checks behind one tool the Designer can call without spending its own context. No task spec, reference
+RTL, test, mutant, grader or split changed; the Modeller's and the Verifier's requests are unchanged.
+
+Also new for builds made after this change: `flow/build.tcl` writes the reset netlist scan and report_control_sets after
+synthesis, and `flow/gates.py` adds the gate `post_synth_resets_clean` for such builds (FDA-HDL v1.1 HDL-RST-01..05).
+A design with an asynchronous reset outside a synchroniser, a reset in two polarities, a reset crossing domains without
+a synchroniser, or a LUT driving an asynchronous reset now fails the post-synthesis stage. Builds recorded before the
+change have no scan and keep their gate outcomes (replayed: results/71_check_suite/replay.json).
+
+Re-recorded: the request golden `agent/tests/fixtures/b71_request_golden.json` (one deliberate re-pin; earlier goldens stay
+as history). Not comparable on request text: agent runs recorded before 2026-11-14.
+
 ## 2026-11-13: role names in the text sent to models (request golden re-pin, brief 68 C)
 
 **Amended 2026-11-13 (planner decision in brief 68 under "Benchmarks do not block improvements"; eval-1 was stopped with no

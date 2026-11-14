@@ -55,6 +55,8 @@ proc stage {name} {
 
 # procs of the flow (definitions only)
 source $flow_dir/xpm_cdc.tcl
+set ::fda_checks_lib 1
+source $flow_dir/checks/vivado_checks.tcl
 source $flow_dir/cdc_paths.tcl
 source $flow_dir/mcp_paths.tcl
 source $flow_dir/io_paths.tcl
@@ -106,7 +108,7 @@ proc fda_qor {out stage} {
     }
 }
 # every file the rtl and post_synth stages write (the gates read these)
-set synth_files {methodology_rtl.rpt *_synth.rpt *_synth.txt post_synth.dcp}
+set synth_files {methodology_rtl.rpt *_synth.rpt *_synth.txt *_synth.tsv post_synth.dcp}
 if {$resume_from ni {"" synth route}} { error "build.tcl: resume_from must be synth or route, not '$resume_from'" }
 
 if {$resume_from eq ""} {
@@ -147,6 +149,12 @@ if {$resume_from eq ""} {
     report_cdc -details   -file $out/cdc_synth.rpt
     # brief 16: every asynchronous register-to-register path of the netlist, for flow/cdc_structure.py (gate post_synth_cdc_structure_clean)
     cdc_dump_paths $out/cdc_paths_synth.rpt
+    # brief 71: the reset check's netlist scan (flow/checks/resets.py; gate post_synth_resets_clean) and the control sets
+    # (flow/checks control_sets); a scan error is recorded, never fatal to the build
+    if {[catch {fda_reset_scan $out/reset_scan_synth.tsv} err]} {
+        set f [open $out/reset_scan_synth.not_run.txt w]; puts $f $err; close $f
+    }
+    report_control_sets -verbose -file $out/control_sets_synth.rpt
     report_drc            -file $out/drc_synth.rpt
     fda_qor $out synth
     report_utilization    -file $out/utilization_synth.rpt

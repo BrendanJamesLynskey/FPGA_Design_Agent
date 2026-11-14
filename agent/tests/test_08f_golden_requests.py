@@ -36,7 +36,13 @@ Goldens, oldest first:
   (``doc_system``). Eval-1 was stopped with no score, so no comparison is lost; runs before this belong to the earlier goldens.
 - ``b68f_request_golden.json`` (brief 68F, 2026-11-13, one deliberate re-pin; benchmark/AMENDMENTS.md): only the DOC step's prompt
   changed (``doc_system``: answer from the files before asking, count latencies from the RTL, say when covers and bins disagree,
-  re-measure first after an earlier-release build, say each fact once). Every other hash equals the brief 68 golden's."""
+  re-measure first after an earlier-release build, say each fact once). Every other hash equals the brief 68 golden's.
+- ``b71_request_golden.json`` (brief 71, 2026-11-14, one deliberate re-pin; benchmark/AMENDMENTS.md): the registry gained ``check``
+  (the check suite, schema 1.12.0); the Designer is offered ``check`` at stages 1-9 and ``gt_plan`` (brief 56A) at stages 1-3, and
+  the rtl prompt has a few lines on ``check``. Hence ``prompts`` (rtl only), the formatted prompts, ``tool_registry``,
+  ``tools_rtl_1..9``, the rtl plans, Claude Code argv and MCP arguments. ``tools_clarify_1..9`` and the clarify plan, argv and MCP
+  hashes move too: the golden hashes the clarify role at stages it never runs at (it runs only at stage 0, whose tools are
+  unchanged), where role_allowed hands it the stage's tools. The Modeller's and the Verifier's requests are unchanged."""
 
 from __future__ import annotations
 
@@ -47,12 +53,13 @@ from agent.tests.request_golden import collect
 
 FIXTURES = Path(__file__).parent / "fixtures"
 EVAL1 = FIXTURES / "eval1_request_golden.json"
-GOLDEN = FIXTURES / "b68f_request_golden.json"          # the newest golden
+GOLDEN = FIXTURES / "b71_request_golden.json"           # the newest golden
 #: the hashes that differ from eval-1's, and the brief that changed each (an intended change is listed here, with why)
 CHANGED_SINCE_EVAL1 = {"tool_registry": "brief 36: skill_index, skill_excerpt, load_skill(name=); brief 42 H9: report_digest; "
                                         "brief 50A: debug_plan, debug_capture, debug_query; brief 59A: axi_program_check, axi_simulate, axi_board_run; brief 56A: gt_plan; "
-                                        "brief 68: bringup description (reference model)",
-                       "prompts": "brief 53: requirement quality (clarify) and requirement tags (tests); brief 68: role names",
+                                        "brief 68: bringup description (reference model); brief 71: check",
+                       "prompts": "brief 53: requirement quality (clarify) and requirement tags (tests); brief 68: role names; "
+                                  "brief 71: the check tool (rtl)",
                        "conventions": "brief 68: role names (Tests (Verifier))",
                        "conventions_text_noshell_False": "brief 68: as conventions",
                        "conventions_text_noshell_True": "brief 68: as conventions",
@@ -65,7 +72,37 @@ CHANGED_SINCE_EVAL1 = {"tool_registry": "brief 36: skill_index, skill_excerpt, l
                        "plan_tests_False": "shell 1.1 (BUILD_ID at 0x05): the tests role reads the shell's protocol and driver",
                        "plan_tests_True": "shell 1.1: as plan_tests_False",
                        "cli_argv_tests_False": "shell 1.1: as plan_tests_False",
-                       "cli_argv_tests_True": "shell 1.1: as plan_tests_False"}
+                       "cli_argv_tests_True": "shell 1.1: as plan_tests_False",
+                       "cli_argv_clarify_False": "brief 71: check and gt_plan offered to the Designer (clarify: at stages it never runs at)",
+                       "cli_argv_clarify_True": "brief 71: check and gt_plan offered to the Designer (clarify: at stages it never runs at)",
+                       "cli_argv_rtl_False": "brief 71: check and gt_plan offered to the Designer",
+                       "cli_argv_rtl_True": "brief 71: check and gt_plan offered to the Designer",
+                       "mcp_args_clarify_False": "brief 71: check and gt_plan offered to the Designer (clarify: at stages it never runs at)",
+                       "mcp_args_clarify_True": "brief 71: check and gt_plan offered to the Designer (clarify: at stages it never runs at)",
+                       "mcp_args_rtl_False": "brief 71: check and gt_plan offered to the Designer",
+                       "mcp_args_rtl_True": "brief 71: check and gt_plan offered to the Designer",
+                       "plan_clarify_False": "brief 71: check and gt_plan offered to the Designer (clarify: at stages it never runs at)",
+                       "plan_clarify_True": "brief 71: check and gt_plan offered to the Designer (clarify: at stages it never runs at)",
+                       "plan_rtl_False": "brief 71: check and gt_plan offered to the Designer",
+                       "plan_rtl_True": "brief 71: check and gt_plan offered to the Designer",
+                       "tools_clarify_1": "brief 71: check and gt_plan offered to the Designer (clarify: at stages it never runs at)",
+                       "tools_clarify_2": "brief 71: check and gt_plan offered to the Designer (clarify: at stages it never runs at)",
+                       "tools_clarify_3": "brief 71: check and gt_plan offered to the Designer (clarify: at stages it never runs at)",
+                       "tools_clarify_4": "brief 71: check and gt_plan offered to the Designer (clarify: at stages it never runs at)",
+                       "tools_clarify_5": "brief 71: check and gt_plan offered to the Designer (clarify: at stages it never runs at)",
+                       "tools_clarify_6": "brief 71: check and gt_plan offered to the Designer (clarify: at stages it never runs at)",
+                       "tools_clarify_7": "brief 71: check and gt_plan offered to the Designer (clarify: at stages it never runs at)",
+                       "tools_clarify_8": "brief 71: check and gt_plan offered to the Designer (clarify: at stages it never runs at)",
+                       "tools_clarify_9": "brief 71: check and gt_plan offered to the Designer (clarify: at stages it never runs at)",
+                       "tools_rtl_1": "brief 71: check and gt_plan offered to the Designer",
+                       "tools_rtl_2": "brief 71: check and gt_plan offered to the Designer",
+                       "tools_rtl_3": "brief 71: check and gt_plan offered to the Designer",
+                       "tools_rtl_4": "brief 71: check and gt_plan offered to the Designer",
+                       "tools_rtl_5": "brief 71: check and gt_plan offered to the Designer",
+                       "tools_rtl_6": "brief 71: check and gt_plan offered to the Designer",
+                       "tools_rtl_7": "brief 71: check and gt_plan offered to the Designer",
+                       "tools_rtl_8": "brief 71: check and gt_plan offered to the Designer",
+                       "tools_rtl_9": "brief 71: check and gt_plan offered to the Designer"}
 #: request paths added since eval-1 (absent from its golden), and the brief that added each
 NEW_SINCE_EVAL1 = {"doc_system": "brief 68 C: the DOC step at the end of a run (agent.graph.document)"}
 

@@ -1,0 +1,450 @@
+{
+ "design": "b56a_gth_serdes",
+ "scope": "synth",
+ "variant": "base",
+ "level": "summary",
+ "standard": "FDA-HDL",
+ "version": "1.1",
+ "checks": [
+  {
+   "check": "lint",
+   "status": "not_run",
+   "why": "verilator is not on PATH",
+   "findings": [],
+   "parts": {},
+   "records": []
+  },
+  {
+   "check": "standards",
+   "status": "fail",
+   "incomplete": [],
+   "parts": {},
+   "findings": [
+    {
+     "rule": "HDL-CLK-01",
+     "tool": "standards",
+     "code": "STD-CLK-01",
+     "severity": "fail",
+     "where": "rtl/gth_serdes_core.sv:151",
+     "key": "standards:STD-CLK-01 rtl/gth_serdes_core.sv:151",
+     "message": "module gth_serdes_core: clock rxusr2 is driven inside the module (driver not found): a derived or gated clock; use a clock enable on the declared clock",
+     "fix": "use a clock enable on a declared clock, and declare every clock domain in architecture.yaml",
+     "skill": "clock-enables-not-gated-clocks",
+     "blocking": true,
+     "count": 1
+    },
+    {
+     "rule": "HDL-CLK-01",
+     "tool": "standards",
+     "code": "STD-CLK-01",
+     "severity": "fail",
+     "where": "rtl/gth_serdes_core.sv:168",
+     "key": "standards:STD-CLK-01 rtl/gth_serdes_core.sv:168",
+     "message": "module gth_serdes_core: clock rxusr2 is driven inside the module (driver not found): a derived or gated clock; use a clock enable on the declared clock",
+     "fix": "use a clock enable on a declared clock, and declare every clock domain in architecture.yaml",
+     "skill": "clock-enables-not-gated-clocks",
+     "blocking": true,
+     "count": 1
+    },
+    {
+     "rule": "HDL-CLK-01",
+     "tool": "standards",
+     "code": "STD-CLK-01",
+     "severity": "fail",
+     "where": "rtl/gth_serdes_core.sv:179",
+     "key": "standards:STD-CLK-01 rtl/gth_serdes_core.sv:179",
+     "message": "module gth_serdes_core: clock rxusr2 is driven inside the module (driver not found): a derived or gated clock; use a clock enable on the declared clock",
+     "fix": "use a clock enable on a declared clock, and declare every clock domain in architecture.yaml",
+     "skill": "clock-enables-not-gated-clocks",
+     "blocking": true,
+     "count": 1
+    },
+    {
+     "rule": "HDL-CLK-01",
+     "tool": "standards",
+     "code": "STD-CLK-01",
+     "severity": "fail",
+     "where": "rtl/gth_serdes_core.sv:158",
+     "key": "standards:STD-CLK-01 rtl/gth_serdes_core.sv:158",
+     "message": "instance u_gen (prbs_gen64): clock port clk is connected to txusr2, which is driven inside gth_serdes_core (driver not found): a derived clock",
+     "fix": "use a clock enable on a declared clock, and declare every clock domain in architecture.yaml",
+     "skill": "clock-enables-not-gated-clocks",
+     "blocking": true,
+     "count": 1
+    },
+    {
+     "rule": "HDL-CLK-01",
+     "tool": "standards",
+     "code": "STD-CLK-01",
+     "severity": "fail",
+     "where": "rtl/gth_serdes_core.sv:165",
+     "key": "standards:STD-CLK-01 rtl/gth_serdes_core.sv:165",
+     "message": "instance u_chk (prbs_chk64): clock port clk is connected to rxusr2, which is driven inside gth_serdes_core (driver not found): a derived clock",
+     "fix": "use a clock enable on a declared clock, and declare every clock domain in architecture.yaml",
+     "skill": "clock-enables-not-gated-clocks",
+     "blocking": true,
+     "count": 1
+    },
+    {
+     "rule": "HDL-CLK-01",
+     "tool": "standards",
+     "code": "STD-CLK-01",
+     "severity": "fail",
+     "where": "rtl/kr260_gth_top.sv:71",
+     "key": "standards:STD-CLK-01 rtl/kr260_gth_top.sv:71",
+     "message": "instance u_core (gth_serdes_core): clock port clk is connected to an expression (nothing): a derived clock",
+     "fix": "use a clock enable on a declared clock, and declare every clock domain in architecture.yaml",
+     "skill": "clock-enables-not-gated-clocks",
+     "blocking": true,
+     "count": 1
+    },
+    {
+     "rule": "HDL-CLK-01",
+     "tool": "standards",
+     "code": "STD-CLK-01",
+     "severity": "fail",
+     "where": "rtl/kr260_gth_top.sv:71",
+     "key": "standards:STD-CLK-01 rtl/kr260_gth_top.sv:71",
+     "message": "instance u_core (gth_serdes_core): clock port refclk is connected to an expression (nothing): a derived clock",
+     "fix": "use a clock enable on a declared clock, and declare every clock domain in architecture.yaml",
+     "skill": "clock-enables-not-gated-clocks",
+     "blocking": true,
+     "count": 1
+    },
+    {
+     "rule": "HDL-CLK-01",
+     "tool": "standards",
+     "code": "STD-CLK-03",
+     "severity": "fail",
+     "where": "build/base/clock_networks_synth.rpt:23",
+     "key": "standards:STD-CLK-03 build/base/clock_networks_synth.rpt:23",
+     "message": "clock sfp_mgt_refclk from port sfp_mgt_refclk_p is not a declared clock domain",
+     "fix": "use a clock enable on a declared clock, and declare every clock domain in architecture.yaml",
+     "skill": "clock-enables-not-gated-clocks",
+     "blocking": true,
+     "count": 1
+    },
+    {
+     "rule": "HDL-SYN-06",
+     "tool": "standards",
+     "code": "STD-INIT-01",
+     "severity": "fail",
+     "where": "rtl/gth_serdes_core.sv:187",
+     "key": "standards:STD-INIT-01 rtl/gth_serdes_core.sv:187",
+     "message": "initial block in synthesisable RTL (only $readmemh/$readmemb ROM initialisation is allowed)",
+     "fix": "set start values with the reset, not an initial block (ROM contents excepted)",
+     "skill": "synthesisable-subset-and-parameters",
+     "blocking": true,
+     "count": 1
+    },
+    {
+     "rule": "HDL-CDC-01",
+     "tool": "standards",
+     "code": "STD-CDC-01",
+     "severity": "fail",
+     "where": "rtl/gth_serdes_core.sv:13",
+     "key": "standards:STD-CDC-01 rtl/gth_serdes_core.sv:13",
+     "message": "module gth_serdes_core uses clocks clk, rxusr2: a crossing that is not through a listed CDC primitive",
+     "fix": "cross through a named synchroniser (xpm_cdc_single, xpm_cdc_gray, xpm_cdc_handshake, an asynchronous FIFO) and list it in architecture.yaml crossings",
+     "skill": "clock-domain-crossing",
+     "blocking": true,
+     "count": 1
+    }
+   ],
+   "records": [
+    "build/checks/base/synth/standards.json"
+   ],
+   "why": ""
+  },
+  {
+   "check": "resets",
+   "status": "fail",
+   "incomplete": [],
+   "parts": {
+    "source_unread": "ran",
+    "source": "ran",
+    "amd_methodology": "ran",
+    "amd_drc": "ran",
+    "amd_cdc": "ran",
+    "netlist": "ran",
+    "netlist_clocks": "ran",
+    "polarity": "ran"
+   },
+   "findings": [
+    {
+     "rule": "HDL-RST-05",
+     "tool": "vivado",
+     "code": "LUTAR-1",
+     "severity": "Warning",
+     "where": "report_methodology@post_synth",
+     "key": "vivado:LUTAR-1@post_synth",
+     "message": "LUT drives async reset alert (x7)",
+     "fix": "drive an asynchronous reset only from a register (a synchroniser output) or a device pin, never from a LUT",
+     "skill": "reset-strategy",
+     "blocking": true,
+     "count": 7
+    },
+    {
+     "rule": "HDL-RST-05",
+     "tool": "resets",
+     "code": "RST-LUT-01",
+     "severity": "error",
+     "where": "u_core/u_gt_i_3",
+     "key": "resets:RST-LUT-01 u_core/u_gt_i_3",
+     "message": "LUT5 u_core/u_gt_i_3 drives the PRE pin of registers (5 registers, e.g. u_core/u_gt/inst/gen_gtwizard_gthe4_top.gth_wiz_gtwizard_gthe4_inst/gen_gtwizard_gthe4.gen_reset_controller_internal.gen_single_instance.gtwiz_reset_inst/reset_synchronizer_gtwiz_reset_all_inst/rst_in_meta_reg)",
+     "fix": "drive asynchronous resets only from a register (a synchroniser output) or a pin, never from logic",
+     "skill": "reset-strategy",
+     "blocking": true,
+     "count": 5
+    },
+    {
+     "rule": "HDL-RST-05",
+     "tool": "resets",
+     "code": "RST-LUT-01",
+     "severity": "error",
+     "where": "u_core/u_gt_i_5",
+     "key": "resets:RST-LUT-01 u_core/u_gt_i_5",
+     "message": "LUT4 u_core/u_gt_i_5 drives the PRE pin of registers (5 registers, e.g. u_core/u_gt/inst/gen_gtwizard_gthe4_top.gth_wiz_gtwizard_gthe4_inst/gen_gtwizard_gthe4.gen_reset_controller_internal.gen_single_instance.gtwiz_reset_inst/reset_synchronizer_gtwiz_reset_tx_datapath_inst/rst_in_meta_reg)",
+     "fix": "drive asynchronous resets only from a register (a synchroniser output) or a pin, never from logic",
+     "skill": "reset-strategy",
+     "blocking": true,
+     "count": 5
+    }
+   ],
+   "records": [
+    "build/base/methodology_synth.rpt",
+    "build/base/drc_synth.rpt",
+    "build/base/cdc_synth.rpt",
+    "build/checks/base/synth/reset_scan.tsv"
+   ],
+   "why": ""
+  },
+  {
+   "check": "cdc",
+   "status": "pass",
+   "incomplete": [],
+   "parts": {
+    "report_cdc": "ran",
+    "structure": "ran"
+   },
+   "findings": [
+    {
+     "rule": "HDL-CDC-01",
+     "tool": "vivado",
+     "code": "CDC-3",
+     "severity": "Info",
+     "where": "cdc_synth.rpt@post_synth",
+     "key": "vivado:CDC-3@post_synth",
+     "message": "1-bit synchronized with ASYNC_REG property (x13)",
+     "fix": "cross through a named synchroniser (xpm_cdc_single, xpm_cdc_gray, xpm_cdc_handshake, an asynchronous FIFO) and list it in architecture.yaml crossings",
+     "skill": "clock-domain-crossing",
+     "blocking": false,
+     "count": 13
+    },
+    {
+     "rule": "HDL-CDC-01",
+     "tool": "vivado",
+     "code": "CDC-6",
+     "severity": "Warning",
+     "where": "cdc_synth.rpt@post_synth",
+     "key": "vivado:CDC-6@post_synth",
+     "message": "Multi-bit synchronized with ASYNC_REG property (x5)",
+     "fix": "cross through a named synchroniser (xpm_cdc_single, xpm_cdc_gray, xpm_cdc_handshake, an asynchronous FIFO) and list it in architecture.yaml crossings",
+     "skill": "clock-domain-crossing",
+     "blocking": false,
+     "count": 5
+    },
+    {
+     "rule": "HDL-CDC-01",
+     "tool": "vivado",
+     "code": "CDC-9",
+     "severity": "Info",
+     "where": "cdc_synth.rpt@post_synth",
+     "key": "vivado:CDC-9@post_synth",
+     "message": "Asynchronous reset synchronized with ASYNC_REG property (x4)",
+     "fix": "cross through a named synchroniser (xpm_cdc_single, xpm_cdc_gray, xpm_cdc_handshake, an asynchronous FIFO) and list it in architecture.yaml crossings",
+     "skill": "clock-domain-crossing",
+     "blocking": false,
+     "count": 4
+    },
+    {
+     "rule": "HDL-CDC-01",
+     "tool": "vivado",
+     "code": "CDC-15",
+     "severity": "Warning",
+     "where": "cdc_synth.rpt@post_synth",
+     "key": "vivado:CDC-15@post_synth",
+     "message": "Clock enable controlled CDC structure detected (x304)",
+     "fix": "cross through a named synchroniser (xpm_cdc_single, xpm_cdc_gray, xpm_cdc_handshake, an asynchronous FIFO) and list it in architecture.yaml crossings",
+     "skill": "clock-domain-crossing",
+     "blocking": false,
+     "count": 304
+    }
+   ],
+   "records": [
+    "build/base/cdc_synth.rpt",
+    "build/base/cdc_paths_synth.rpt"
+   ],
+   "why": ""
+  },
+  {
+   "check": "methodology",
+   "status": "pass",
+   "incomplete": [],
+   "parts": {},
+   "findings": [
+    {
+     "rule": "HDL-XDC-01",
+     "tool": "vivado",
+     "code": "XDCH-2",
+     "severity": "Warning",
+     "where": "methodology_synth.rpt@post_synth",
+     "key": "vivado:XDCH-2@post_synth",
+     "message": "Same min and max delay values on IO port (x10)",
+     "fix": "constrain every clock and I/O from the data sheet; an exception must cover the paths it names and no others",
+     "skill": "xdc-coverage-and-audit-checks",
+     "blocking": false,
+     "count": 10
+    }
+   ],
+   "records": [
+    "build/base/methodology_synth.rpt"
+   ],
+   "why": ""
+  },
+  {
+   "check": "drc",
+   "status": "pass",
+   "incomplete": [],
+   "parts": {},
+   "findings": [],
+   "records": [
+    "build/base/drc_synth.rpt"
+   ],
+   "why": ""
+  },
+  {
+   "check": "exceptions",
+   "status": "pass",
+   "incomplete": [],
+   "parts": {},
+   "findings": [],
+   "records": [],
+   "why": ""
+  },
+  {
+   "check": "io",
+   "status": "pass",
+   "incomplete": [],
+   "parts": {},
+   "findings": [],
+   "records": [],
+   "why": ""
+  },
+  {
+   "check": "clocking",
+   "status": "pass",
+   "incomplete": [],
+   "parts": {
+    "methodology": "ran",
+    "cmt": "ran"
+   },
+   "findings": [
+    {
+     "rule": "HDL-CLK-01",
+     "tool": "vivado",
+     "code": "CLKC-40",
+     "severity": "Advisory",
+     "where": "methodology_synth.rpt@post_synth",
+     "key": "vivado:CLKC-40@post_synth",
+     "message": "Substitute PLLE4 for MMCME4 check (x1)",
+     "fix": "use a clock enable on a declared clock, and declare every clock domain in architecture.yaml",
+     "skill": "clock-enables-not-gated-clocks",
+     "blocking": false,
+     "count": 1
+    }
+   ],
+   "records": [
+    "build/base/methodology_synth.rpt",
+    "build/checks/base/synth/cmt.rpt"
+   ],
+   "why": ""
+  },
+  {
+   "check": "dsp_ram_mapping",
+   "status": "pass",
+   "incomplete": [],
+   "parts": {
+    "methodology": "ran",
+    "drc": "ran",
+    "utilization": "ran"
+   },
+   "findings": [],
+   "records": [
+    "build/base/methodology_synth.rpt",
+    "build/base/drc_synth.rpt",
+    "build/base/utilization_synth.rpt"
+   ],
+   "why": ""
+  },
+  {
+   "check": "control_sets",
+   "status": "pass",
+   "incomplete": [],
+   "parts": {
+    "report_control_sets": "ran",
+    "methodology": "ran"
+   },
+   "findings": [],
+   "records": [
+    "build/checks/base/synth/control_sets.rpt"
+   ],
+   "why": ""
+  },
+  {
+   "check": "axi",
+   "status": "pass",
+   "incomplete": [],
+   "parts": {},
+   "findings": [],
+   "records": [],
+   "why": ""
+  },
+  {
+   "check": "gt_plan",
+   "status": "pass",
+   "incomplete": [],
+   "parts": {},
+   "findings": [],
+   "records": [
+    "link_spec.yaml"
+   ],
+   "why": ""
+  },
+  {
+   "check": "doc",
+   "status": "pass",
+   "incomplete": [],
+   "parts": {},
+   "findings": [],
+   "records": [
+    "handover.yaml"
+   ],
+   "why": ""
+  }
+ ],
+ "skipped": {
+  "fsm": "no verif/fsm.yaml (the design declares no state machine to cover)"
+ },
+ "vivado": null,
+ "bad_waivers": [],
+ "seconds": 2.82,
+ "extra": {
+  "control_sets": 76,
+  "dsp_ram_util": {
+   "dsp": 0,
+   "dsp_available": 1248
+  }
+ },
+ "pass": false
+}

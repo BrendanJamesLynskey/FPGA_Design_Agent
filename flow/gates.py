@@ -418,6 +418,26 @@ def _gt(d: Path, g: dict[str, bool]) -> dict[str, Any] | None:
     return r
 
 
+def _resets(d: Path, g: dict[str, bool]) -> dict[str, Any] | None:
+    """Brief 71: the check suite's ``resets`` check (flow/checks/resets.py: AMD's reset rows and our netlist scan) as gate
+    ``post_synth_resets_clean``, the same function the agent's ``check`` tool runs. Only for a build that ran the scan
+    (reset_scan_synth.tsv, or reset_scan_synth.not_run.txt when the scan failed); older builds have no such gate."""
+    if not (d / "reset_scan_synth.tsv").is_file() and not (d / "reset_scan_synth.not_run.txt").is_file():
+        return None
+    if (d / "reset_scan_synth.not_run.txt").is_file():
+        g["post_synth_resets_clean"] = False
+        return {"status": "not_run", "why": (d / "reset_scan_synth.not_run.txt").read_text(errors="replace")[:300], "findings": []}
+    root = str(Path(__file__).resolve().parents[1])
+    if root not in sys.path:
+        sys.path.insert(0, root)
+    from flow import checks as C
+    r = C.run_one("resets", d.parent.parent, "synth", d.name)
+    g["post_synth_resets_clean"] = r["status"] == "pass" and (r.get("parts") or {}).get("netlist") == "ran"
+    keep = [f for f in r.get("findings") or [] if f["blocking"] and "waived" not in f]
+    return {"status": r["status"], "parts": r.get("parts"), "n_findings": len(keep),
+            "findings": [{k: f[k] for k in ("rule", "code", "where", "message", "fix")} for f in keep[:20]]}
+
+
 def _exceptions(d: Path, stage: str, strict: bool, g: dict[str, bool], name: str) -> dict[str, Any] | None:
     """Brief 20: flow/exceptions_check.py for one stage (``synth`` or ``route``) into gate ``name``. A build of this flow
     version (``strict``) that lacks the reports fails it; an older build without them skips it."""
@@ -558,6 +578,7 @@ def evaluate(build_dir: Path, architecture: Path | None = None) -> dict[str, Any
         exc_s = _exceptions(d, "synth", strict, g, "post_synth_exceptions_clean")
         io_s = _io(d, "synth", strict, g, "post_synth_io_constraints_clean")
         gt_s = _gt(d, g)                   # brief 56A: the GT gates, only for a design with a GT Wizard core
+        rst_s = _resets(d, g)              # brief 71: the reset check, for a build made with the reset scan
         util_s = parse_utilization(_read(d, "utilization_synth.rpt")) if (d / "utilization_synth.rpt").exists() else {}
         arch = _architecture_for(d, architecture)
         sanity = None
@@ -572,7 +593,7 @@ def evaluate(build_dir: Path, architecture: Path | None = None) -> dict[str, Any
                                 "unconstrained_ports": parse_check_timing_ports(c_s_text),
                                 "methodology": _rule_summary(m_s), "drc": _rule_summary(d_s), "qor_assessment": q_s,
                                 "cdc": cdc_s, "cdc_structure": cdc_struct, "exceptions": exc_s, "io_timing": io_s,
-                                "gt": gt_s, "resource_sanity": sanity,
+                                "gt": gt_s, "resets": rst_s, "resource_sanity": sanity,
                                 "utilization": util_s}
     else:
         stages["post_synth"] = {"ran": False, "gates": {}}

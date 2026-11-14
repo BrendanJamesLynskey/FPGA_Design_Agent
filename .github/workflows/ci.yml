@@ -112,6 +112,8 @@ jobs:
           python -m pytest -q ip_lib/axil_xbar/tb/test_axil_xbar_rtl.py
           python hil/ip_faults.py --blocks axil_xbar
           python -m pytest -q designs/b65a_axil_soc/tests/test_b65a_rtl.py
+      - name: AXI missing-response rule (brief 71) - seeded faults for axil_resp_rules (Icarus)
+        run: python -m pytest -q axi_tx/tests/test_71_resp_rules_rtl.py
       - name: GT serdes design (brief 56A) - the fabric PRBS generator and checker against a model, the register block against a stand-in for the GT Wizard (Icarus)
         run: python -m pytest -q designs/b56a_gth_serdes/tests/test_b56a_prbs_rtl.py designs/b56a_gth_serdes/tests/test_b56a_core_sim_rtl.py
       - name: CDC soak rig (brief 11b) - checkers, host reader, the rig with metastability injection and reset storms (one copy a variant)

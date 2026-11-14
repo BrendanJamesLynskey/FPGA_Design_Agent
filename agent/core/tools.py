@@ -802,6 +802,43 @@ def report_digest(s: Session, name: str, variant: str = "base", level: str = "su
     return {"output": d["output"], "kind": d["kind"], "verdict": d["verdict"], "report": d["report"]}
 
 
+CHECK_NAMES = ("all", "lint", "standards", "resets", "cdc", "methodology", "drc", "exceptions", "io", "clocking",
+               "dsp_ram_mapping", "control_sets", "fsm", "axi", "gt_plan", "doc")
+
+
+@tool("check", "Run design checks from the check suite (flow/checks) and get a compact digest: per check pass, fail, "
+               "partial or not run (with the reason), then findings with rule id, where, a one-line fix and the KB skill to "
+               "load. names: [\"all\"] (every check that applies at the scope) or any of lint, standards, resets, cdc, "
+               "methodology, drc, exceptions, io, clocking, dsp_ram_mapping, control_sets, fsm, axi, gt_plan, doc. scope: rtl "
+               "(sources only), synth or route (the build's reports; reports the build did not write are made in one Vivado "
+               "session on the checkpoint), auto (the latest build stage). level: summary, standard (5 findings per check) or "
+               "detail (30). The full result is written under build/checks/ and named in the digest; read it with read_file.",
+      {"names": {"type": "array", "items": {"type": "string", "enum": list(CHECK_NAMES)}, "maxItems": 16},
+       "scope": {"type": "string", "enum": ["auto", "rtl", "synth", "route"]},
+       "level": {"type": "string", "enum": ["summary", "standard", "detail"]},
+       "variant": {"type": "string", "enum": ["base", "ila"]}})
+def check(s: Session, names: list[str] | None = None, scope: str = "auto", level: str = "standard", variant: str = "base") -> dict:
+    """Brief 71: one tool over the check registry. The lint check calls the ``lint`` tool unchanged; the checker scripts
+    and the one Vivado session go through the session's runner (fixed argv, memory-capped Vivado)."""
+    from flow import checks as C
+    names = list(names or ["all"])
+    if "all" in names and len(names) > 1:
+        names = ["all"]
+
+    def vivado_hook(dcp: Path, out: Path, reports: list[str]) -> tuple[int, str]:
+        r = s.runner.run("check-vivado", [str(s.root / "flow" / "checks" / "run_vivado_checks.sh"), str(dcp), str(out),
+                                          ",".join(reports)], s.root, timeout=3600)
+        return r.returncode, _text_out(r)
+
+    def cmd_hook(kind: str, argv: list[str], timeout: int) -> int:
+        return s.runner.run(kind, argv, s.root, timeout=timeout).returncode
+
+    rep = C.run(s.design, names, scope, level, variant, root=s.root, lint=lambda: lint(s), vivado=vivado_hook, cmd=cmd_hook)
+    return {"ok": rep["pass"], "output": rep["digest"], "report": rep["report_path"], "scope": rep["scope"],
+            "checks": {c["check"]: ("partial" if c["status"] == "pass" and c.get("incomplete") else c["status"])
+                       for c in rep["checks"]}}
+
+
 @tool("check_constraints", "Check design.xdc against the board: clocks only on the board's clock input, no "
                            "CLOCK_DEDICATED_ROUTE FALSE, pins and I/O standards as in the master XDC, commands in the "
                            "XDC allow-list.", {})

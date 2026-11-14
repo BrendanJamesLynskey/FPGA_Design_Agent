@@ -279,7 +279,11 @@ standard.
 - **Requirement quality.** The clarify stage rejects compound and vague requirements; T1's three compound ones were split.
 - **Change record.** [flow/change_record.py](flow/change_record.py): input hashes, tool versions, knowledge-bank pin
   and flow commit (from the build manifest when present), and what changed since a baseline.
-- **HDL coding standard FDA-HDL v1.0.** [docs/hdl_coding_standard.md](docs/hdl_coding_standard.md),
+- **Check suite (brief 71).** One agent tool, `check`, over a registry of every design check (lint, standards, resets,
+  CDC, methodology, DRC, exceptions, I/O, clocking, DSP/RAM mapping, control sets, FSM coverage, AMD IP notes, link plan,
+  DOC gate), returning a short digest; the sign-off gates call the same registry: [docs/check_suite.md](docs/check_suite.md),
+  [flow/checks](flow/checks), results in [results/71_check_suite](results/71_check_suite/README.md).
+- **HDL coding standard FDA-HDL v1.1.** [docs/hdl_coding_standard.md](docs/hdl_coding_standard.md),
   [flow/hdl_rules.yaml](flow/hdl_rules.yaml), checked by [flow/lint_ruleset.py](flow/lint_ruleset.py) (Verilator lint,
   Vivado methodology, DRC and CDC, the design-standards checker), with waivers recorded.
 - **Tool-assessment notes** for Vivado 2026.1, Icarus, Verilator, SymbiYosys, cocotb and our gates:
@@ -380,7 +384,7 @@ knowledge/   PACKS.md: names, sizes and hashes of the private knowledge packs (n
 docs/        methodology.md (UG949 -> flow stages, gates, deviations, the agent's stage machine);
              verification.md (V-stages, proof methods, the simulator-portable stack, gates, mutation);
              design_standards.md (v1.0: the rule table and how each rule is checked);
-             traceability.md (the requirements matrix, tags, gates, change record); hdl_coding_standard.md (FDA-HDL v1.0);
+             traceability.md (the requirements matrix, tags, gates, change record); hdl_coding_standard.md (FDA-HDL v1.1); check_suite.md (the check tool and its registry);
              tool_assessment/ (one page per tool: used for, independent checks, limits);
              agent_core.md (tools, MCP server, security rules, traces); agent.md (the 05b agent graph; benchmark tasks as agent runs, 07a2-prep); claude_code_arm.md (the 05c Claude Code arm); role_models.md (the 05f per-role model routing); test_writer.md (the 05g Verifier diagnosis, turn trace, formal re-plan, QoR gate);
              project_mode_parity.md (what project mode and the wizards give that non-project mode does not, measured; cross-probing);

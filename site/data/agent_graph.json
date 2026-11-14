@@ -78,6 +78,220 @@
   "skills": 258,
   "units": 25
  },
+ "check_suite": {
+  "checks": [
+   {
+    "by": "ours",
+    "kind": "source",
+    "name": "lint",
+    "rules": [
+     "pass-through of its tool"
+    ],
+    "scopes": [
+     "rtl",
+     "synth",
+     "route"
+    ],
+    "what": "Verilator --lint-only -Wall (in a session: the lint tool, with Icarus elaboration and the top-port rules)"
+   },
+   {
+    "by": "ours",
+    "kind": "source",
+    "name": "standards",
+    "rules": [
+     "pass-through of its tool"
+    ],
+    "scopes": [
+     "rtl",
+     "synth",
+     "route"
+    ],
+    "what": "the design-standards checker (flow/standards_check.py; post-synthesis rules at synth/route)"
+   },
+   {
+    "by": "AMD reports and ours",
+    "kind": "vivado",
+    "name": "resets",
+    "rules": [
+     "HDL-RST-01",
+     "HDL-RST-02",
+     "HDL-RST-03",
+     "HDL-RST-04",
+     "HDL-RST-05"
+    ],
+    "scopes": [
+     "rtl",
+     "synth",
+     "route"
+    ],
+    "what": "the house reset rules: AMD's LUTAR/DPIR/DPOR/RMIR/RMOR/RROR/ROAS and report_cdc reset rows, plus our source scan and netlist scan (flow/checks/resets.py)"
+   },
+   {
+    "by": "AMD report",
+    "kind": "records",
+    "name": "cdc",
+    "rules": [
+     "HDL-CDC-01"
+    ],
+    "scopes": [
+     "synth",
+     "route"
+    ],
+    "what": "report_cdc (Critical rows fail) and the structural CDC check after synthesis (flow/cdc_structure.py)"
+   },
+   {
+    "by": "AMD report",
+    "kind": "records",
+    "name": "methodology",
+    "rules": [
+     "pass-through of its tool"
+    ],
+    "scopes": [
+     "rtl",
+     "synth",
+     "route"
+    ],
+    "what": "report_methodology: Critical Warnings fail (as the stage gates), Warnings listed"
+   },
+   {
+    "by": "AMD report",
+    "kind": "records",
+    "name": "drc",
+    "rules": [
+     "pass-through of its tool"
+    ],
+    "scopes": [
+     "synth",
+     "route"
+    ],
+    "what": "report_drc: Errors and Critical Warnings fail (as the stage gates)"
+   },
+   {
+    "by": "ours",
+    "kind": "records",
+    "name": "exceptions",
+    "rules": [
+     "HDL-XDC-01"
+    ],
+    "scopes": [
+     "synth",
+     "route"
+    ],
+    "what": "timing exceptions (flow/exceptions_check.py: ignored, covering no path, dropped by an XDC message)"
+   },
+   {
+    "by": "ours",
+    "kind": "records",
+    "name": "io",
+    "rules": [
+     "HDL-XDC-01"
+    ],
+    "scopes": [
+     "synth",
+     "route"
+    ],
+    "what": "I/O timing constraints (flow/io_check.py: invented delays, -min/-max from the data sheet, IOB packing)"
+   },
+   {
+    "by": "AMD reports and ours",
+    "kind": "vivado",
+    "name": "clocking",
+    "rules": [
+     "HDL-CLK-01",
+     "HDL-CLK-02"
+    ],
+    "scopes": [
+     "synth",
+     "route"
+    ],
+    "what": "AMD's CLKC methodology rows and the MMCM/PLL VCO and PFD range check (flow/cmt_check.tcl)"
+   },
+   {
+    "by": "AMD report",
+    "kind": "records",
+    "name": "dsp_ram_mapping",
+    "rules": [
+     "HDL-METH-01",
+     "HDL-RST-03"
+    ],
+    "scopes": [
+     "synth",
+     "route"
+    ],
+    "what": "DSP and block-RAM mapping advice (AMD DPIP/DPOP/SYNTH/RBOR rows) and their utilisation"
+   },
+   {
+    "by": "AMD report",
+    "kind": "vivado",
+    "name": "control_sets",
+    "rules": [
+     "HDL-METH-01"
+    ],
+    "scopes": [
+     "synth",
+     "route"
+    ],
+    "what": "report_control_sets (count of unique control sets) and AMD's ULMTCS rows"
+   },
+   {
+    "by": "ours",
+    "kind": "records",
+    "name": "fsm",
+    "rules": [
+     "HDL-VER-01"
+    ],
+    "scopes": [
+     "rtl",
+     "synth",
+     "route"
+    ],
+    "what": "FSM state and transition coverage from the simulation traces (flow/fsm_coverage.py)"
+   },
+   {
+    "by": "ours",
+    "kind": "source",
+    "name": "axi",
+    "rules": [
+     "HDL-IF-02"
+    ],
+    "scopes": [
+     "rtl",
+     "synth",
+     "route"
+    ],
+    "what": "AMD AXI4-Lite IP beside our register blocks: the measured differences (flow/amd_ip_notes.py, brief 69)"
+   },
+   {
+    "by": "ours",
+    "kind": "source",
+    "name": "gt_plan",
+    "rules": [
+     "HDL-GT-01"
+    ],
+    "scopes": [
+     "rtl",
+     "synth",
+     "route"
+    ],
+    "what": "the transceiver link plan (flow/gt_plan.py, brief 56A): every reason the link cannot be built"
+   },
+   {
+    "by": "ours",
+    "kind": "records",
+    "name": "doc",
+    "rules": [
+     "HDL-DOC-01"
+    ],
+    "scopes": [
+     "rtl",
+     "synth",
+     "route"
+    ],
+    "what": "the DOC gate (brief 68: flow/handover.py problems, required gaps, over-claims)"
+   }
+  ],
+  "standard": "FDA-HDL v1.1"
+ },
  "defaults": {
   "cc_model": "claude-haiku-5-5",
   "harness": "deepagents",
@@ -694,7 +908,9 @@
         "load_skill",
         "board_constraints",
         "check_constraints",
-        "gates"
+        "gates",
+        "check",
+        "gt_plan"
        ],
        "role": "rtl",
        "tools": {}
@@ -725,7 +941,9 @@
         "load_skill",
         "board_constraints",
         "check_constraints",
-        "gates"
+        "gates",
+        "check",
+        "gt_plan"
        ],
        "role": "rtl",
        "tools": {}
@@ -778,7 +996,9 @@
         "lint",
         "simulate",
         "formal",
-        "gates"
+        "gates",
+        "check",
+        "gt_plan"
        ],
        "role": "rtl",
        "tools": {}
@@ -831,7 +1051,9 @@
         "lint",
         "simulate",
         "formal",
-        "gates"
+        "gates",
+        "check",
+        "gt_plan"
        ],
        "role": "rtl",
        "tools": {}
@@ -884,7 +1106,9 @@
         "lint",
         "simulate",
         "formal",
-        "gates"
+        "gates",
+        "check",
+        "gt_plan"
        ],
        "role": "rtl",
        "tools": {}
@@ -917,7 +1141,9 @@
         "check_constraints",
         "build",
         "gates",
-        "report"
+        "report",
+        "check",
+        "gt_plan"
        ],
        "role": "rtl",
        "tools": {}
@@ -948,7 +1174,8 @@
         "load_skill",
         "build",
         "gates",
-        "report"
+        "report",
+        "check"
        ],
        "role": "rtl",
        "tools": {}
@@ -979,7 +1206,8 @@
         "load_skill",
         "build",
         "gates",
-        "report"
+        "report",
+        "check"
        ],
        "role": "rtl",
        "tools": {}
@@ -1010,7 +1238,8 @@
         "load_skill",
         "build",
         "gates",
-        "report"
+        "report",
+        "check"
        ],
        "role": "rtl",
        "tools": {}
@@ -1041,7 +1270,8 @@
         "load_skill",
         "build",
         "gates",
-        "report"
+        "report",
+        "check"
        ],
        "role": "rtl",
        "tools": {}
@@ -1072,7 +1302,8 @@
         "load_skill",
         "build",
         "gates",
-        "report"
+        "report",
+        "check"
        ],
        "role": "rtl",
        "tools": {}
@@ -1103,7 +1334,8 @@
         "load_skill",
         "build",
         "gates",
-        "report"
+        "report",
+        "check"
        ],
        "role": "rtl",
        "tools": {}
@@ -1146,7 +1378,8 @@
         "load_skill",
         "build",
         "gates",
-        "report"
+        "report",
+        "check"
        ],
        "role": "rtl",
        "tools": {}
@@ -1249,7 +1482,9 @@
         "load_skill",
         "board_constraints",
         "check_constraints",
-        "gates"
+        "gates",
+        "check",
+        "gt_plan"
        ],
        "refused": {
         "arguments": 2,
@@ -1345,7 +1580,9 @@
         "lint",
         "simulate",
         "formal",
-        "gates"
+        "gates",
+        "check",
+        "gt_plan"
        ],
        "refused": {
         "build-yaml": 2,
@@ -1393,7 +1630,9 @@
         "lint",
         "simulate",
         "formal",
-        "gates"
+        "gates",
+        "check",
+        "gt_plan"
        ],
        "refused": {},
        "repair": true,
@@ -1437,7 +1676,9 @@
         "lint",
         "simulate",
         "formal",
-        "gates"
+        "gates",
+        "check",
+        "gt_plan"
        ],
        "refused": {},
        "repair": true,
@@ -1507,7 +1748,9 @@
         "lint",
         "simulate",
         "formal",
-        "gates"
+        "gates",
+        "check",
+        "gt_plan"
        ],
        "refused": {},
        "repair": true,
@@ -1810,7 +2053,9 @@
     "load_skill",
     "board_constraints",
     "check_constraints",
-    "gates"
+    "gates",
+    "check",
+    "gt_plan"
    ],
    "tools": {
     "rtl": [
@@ -1821,7 +2066,9 @@
      "load_skill",
      "board_constraints",
      "check_constraints",
-     "gates"
+     "gates",
+     "check",
+     "gt_plan"
     ]
    },
    "ultrafast": true,
@@ -1884,7 +2131,9 @@
     "lint",
     "simulate",
     "formal",
-    "gates"
+    "gates",
+    "check",
+    "gt_plan"
    ],
    "tools": {
     "model": [
@@ -1900,7 +2149,9 @@
      "lint",
      "simulate",
      "formal",
-     "gates"
+     "gates",
+     "check",
+     "gt_plan"
     ],
     "tests": [
      "read_file",
@@ -1946,7 +2197,9 @@
     "check_constraints",
     "build",
     "gates",
-    "report"
+    "report",
+    "check",
+    "gt_plan"
    ],
    "tools": {
     "rtl": [
@@ -1959,7 +2212,9 @@
      "check_constraints",
      "build",
      "gates",
-     "report"
+     "report",
+     "check",
+     "gt_plan"
     ]
    },
    "ultrafast": true,
@@ -2000,7 +2255,8 @@
     "load_skill",
     "build",
     "gates",
-    "report"
+    "report",
+    "check"
    ],
    "tools": {
     "rtl": [
@@ -2011,7 +2267,8 @@
      "load_skill",
      "build",
      "gates",
-     "report"
+     "report",
+     "check"
     ]
    },
    "ultrafast": true,
@@ -2050,7 +2307,8 @@
     "load_skill",
     "build",
     "gates",
-    "report"
+    "report",
+    "check"
    ],
    "tools": {
     "rtl": [
@@ -2061,7 +2319,8 @@
      "load_skill",
      "build",
      "gates",
-     "report"
+     "report",
+     "check"
     ]
    },
    "ultrafast": true,
@@ -2098,7 +2357,8 @@
     "load_skill",
     "build",
     "gates",
-    "report"
+    "report",
+    "check"
    ],
    "tools": {
     "rtl": [
@@ -2109,7 +2369,8 @@
      "load_skill",
      "build",
      "gates",
-     "report"
+     "report",
+     "check"
     ]
    },
    "ultrafast": true,
@@ -2145,7 +2406,8 @@
     "load_skill",
     "build",
     "gates",
-    "report"
+    "report",
+    "check"
    ],
    "tools": {
     "rtl": [
@@ -2156,7 +2418,8 @@
      "load_skill",
      "build",
      "gates",
-     "report"
+     "report",
+     "check"
     ]
    },
    "ultrafast": true,
@@ -2192,7 +2455,8 @@
     "load_skill",
     "build",
     "gates",
-    "report"
+    "report",
+    "check"
    ],
    "tools": {
     "rtl": [
@@ -2203,7 +2467,8 @@
      "load_skill",
      "build",
      "gates",
-     "report"
+     "report",
+     "check"
     ]
    },
    "ultrafast": true,
@@ -2258,6 +2523,7 @@
     "build",
     "gates",
     "report",
+    "check",
     "program",
     "bringup"
    ],
@@ -2270,7 +2536,8 @@
      "load_skill",
      "build",
      "gates",
-     "report"
+     "report",
+     "check"
     ],
     "tests": [
      "read_file",
@@ -2369,6 +2636,18 @@
    "model_may_call": true,
    "name": "report",
    "what": "read a Vivado report"
+  },
+  {
+   "group": "Checks",
+   "model_may_call": true,
+   "name": "check",
+   "what": "the check suite: every design check, one digest"
+  },
+  {
+   "group": "Checks",
+   "model_may_call": true,
+   "name": "gt_plan",
+   "what": "plan a transceiver link"
   },
   {
    "group": "Board",

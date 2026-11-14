@@ -220,6 +220,10 @@ def agent_block(name, d):
         return (t + f'<p>By default every role runs on OpenAI <code>{html.escape(A["defaults"]["model"])}</code> through Deep Agents; a second profile '
                 'puts each role on an Anthropic Claude model instead.</p>'
                 '<details class="more"><summary>Details: the model and the stage-2 tools of each role</summary>' + tm + tl + "</details>")
+    if name == "agent_checks":
+        cs = A["check_suite"]
+        rows = [[c["name"], c["by"], c["kind"], "/".join(c["scopes"]), c["what"], ", ".join(c["rules"])] for c in cs["checks"]]
+        return table(["Check", "Decided by", "Kind", "Scopes", "What it runs", "Rules (" + html.escape(cs["standard"]) + ")"], rows)
     if name == "agent_runs":
         names = {"claude_code": "Claude Code", "deepagents": "Deep Agents", "mixed": "mixed"}
         return table(["Runs", "Harness", "Models", "Run records"], [[r["set"], names[r["harness"]], r["models"], r["records"]] for r in A["runs"]], num=(3,))

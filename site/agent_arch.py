@@ -93,6 +93,7 @@ TOOL_GROUPS = [
     ("Knowledge", ["search_docs", "load_skill"]),
     ("Verification", ["lint", "simulate", "formal", "spec_items"]),
     ("Vivado", ["board_constraints", "check_constraints", "build", "gates", "report"]),
+    ("Checks", ["check", "gt_plan"]),
     ("Board", ["program", "bringup"]),
 ]
 TOOL_WORDS = {
@@ -101,7 +102,8 @@ TOOL_WORDS = {
     "lint": "Verilator lint", "simulate": "cocotb tests on a simulator", "formal": "SymbiYosys proofs",
     "spec_items": "the spec items to trace", "board_constraints": "pins from the board file",
     "check_constraints": "check the XDC", "build": "run Vivado to a stage", "gates": "parse reports into gates",
-    "report": "read a Vivado report", "program": "program the board (harness only)", "bringup": "board tests (harness only)",
+    "report": "read a Vivado report", "check": "the check suite: every design check, one digest",
+    "gt_plan": "plan a transceiver link", "program": "program the board (harness only)", "bringup": "board tests (harness only)",
 }
 #: brief 42's experimental arms, as variants of the pipeline. No arm has a result yet.
 ARMS = [
@@ -437,6 +439,21 @@ def bank(skills):
             "layers": [{"layer": k, "skills": by[k]} for k in order if k in by]}
 
 
+def checks():
+    """Brief 71: the check suite's registry (flow/checks), for the /agent page."""
+    from flow import checks as C
+    from flow.lint_ruleset import load_rules, rule_for
+    rs = load_rules()
+    out = []
+    for n, c in C.CHECKS.items():
+        rules = sorted({rid for tool, codes in c.codes.items() for code in codes if code != "*"
+                        for rid in [rule_for(rs, tool, code)] if not rid.endswith("-00")})
+        out.append({"name": n, "kind": c.kind, "scopes": list(c.scopes), "by": "AMD report" if c.amd else
+                    ("ours" if not any(t == "vivado" for t in c.codes) else "AMD reports and ours"),
+                    "what": c.summary, "rules": rules or ["pass-through of its tool"]})
+    return {"checks": out, "standard": f'{rs["standard"]} v{rs["version"]}'}
+
+
 def build(replay, skills):
     TOOLS, roles_mod, run, PROFILES, MACHINE, RUN_LIMITS, visit_limit = _imports()
     nodes, edges = graph_from_code()
@@ -449,7 +466,7 @@ def build(replay, skills):
                             for s, t, c, k in edges]},
         "inner": (inner := inner_from_code()),
         "stages": st, "run_limits": limits,
-        "roles": roles(), "tools": _tools_list(),
+        "roles": roles(), "tools": _tools_list(), "check_suite": checks(),
         "defaults": {"harness": cfg.harness, "model": cfg.model, "cc_model": cfg.cc_model,
                      "profiles": {k: v for k, v in PROFILES.items()}},
         "runs": runs_table(),

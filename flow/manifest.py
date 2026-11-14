@@ -161,7 +161,7 @@ def flow_tcl(root: Path) -> list[str]:
     """flow/build.tcl and every flow script it sources (``source $flow_dir/<name>.tcl``): the Tcl that makes the
     bitstream. The board-side scripts (program.tcl, ila_capture.tcl, ...) are not inputs of a build."""
     build = root / "flow" / "build.tcl"
-    names = re.findall(r"source\s+\$flow_dir/([\w.]+\.tcl)", build.read_text())
+    names = re.findall(r"source\s+\$flow_dir/([\w./]+\.tcl)", build.read_text())   # brief 71: checks/vivado_checks.tcl
     out = ["flow/build.tcl"]
     for n in names:
         if (root / "flow" / n).is_file() and f"flow/{n}" not in out:

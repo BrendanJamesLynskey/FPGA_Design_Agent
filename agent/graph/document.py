@@ -856,6 +856,12 @@ def unwritten(h: dict) -> list[str]:
     return out
 
 
+def registry_doc_gate(design: Path, required: list[str]) -> list[str]:
+    """Brief 71: the DOC gate as the check suite's ``doc`` entry (flow/checks), so the gate and the ``check`` tool agree."""
+    from flow import checks as C
+    return C.doc_gate(design, required)
+
+
 def doc_gate(design: Path, required: list[str]) -> list[str]:
     """The DOC gate: flow.handover's problems and stale claims, every required gap present, nothing left unwritten."""
     try:
@@ -912,7 +918,7 @@ def document(design: Path, run_dir: Path, llm: LLM, *, run_id: str, board: str, 
         try:
             last = merge(h0, parse_reply(text), required)
             write_handover(design, last)
-            problems = doc_gate(design, required)
+            problems = registry_doc_gate(design, required)   # brief 71: the registry's doc check (same problems)
         except (ValueError, yaml.YAMLError, SystemExit, KeyError, TypeError, AttributeError) as ex:
             last = h0 if n == 1 else last
             problems = [f"the reply could not be used: {ex}"[:600]]

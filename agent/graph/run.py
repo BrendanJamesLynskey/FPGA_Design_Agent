@@ -54,7 +54,8 @@ from flow import srcorder
 
 RUNS = ROOT / "runs"
 FLOW_TOOLS = ("read_file", "list_files", "lint", "simulate", "formal", "mutate", "build", "gates", "report", "check_constraints", "search_docs",
-              "load_skill", "board_constraints", "spec_items", "skill_index", "skill_excerpt", "report_digest")
+              "load_skill", "board_constraints", "spec_items", "skill_index", "skill_excerpt", "report_digest",
+              "check", "gt_plan")                         # brief 71: the check suite; the 56A link planner
 
 
 class ArmBlocked(Exception):
@@ -209,6 +210,12 @@ PROMPTS = {
 PROMPTS["clarify"] += (" Each requirement is ONE checkable statement: no ';' or ', and' joining two statements (split them, "
                        "each with its own id), and no vague word (should, fast, robust, appropriate, support, etc): state a "
                        "value, a count of clocks or an exact behaviour.")
+# brief 71: the check suite, one tool for the Designer (flow/checks)
+PROMPTS["rtl"] += (" The `check` tool runs the design checks and returns a short digest (each check pass, fail, partial or "
+                   "not run; each finding with its rule, place, one-line fix and the KB skill to load): call it with "
+                   "names [\"all\"] before you reply DONE and after a build, or name one check (resets, cdc, lint, standards, "
+                   "methodology, drc, exceptions, io, clocking, dsp_ram_mapping, control_sets, fsm, axi, gt_plan, doc) "
+                   "to look into a failure. Resets are synchronous; an asynchronous reset belongs only in a reset synchroniser.")
 PROMPTS["tests"] += ("\nTag every check with the spec.yaml requirement ids it verifies (brief 53, flow/traceability.py): a "
                      "`# req: REQ-01, REQ-02` comment directly above each @cocotb.test() (or @req(\"REQ-01\") from flow.req, "
                      "above @cocotb.test()), `// req: REQ-01` on the line of each `V_*(...)` assertion or cover, and a "
