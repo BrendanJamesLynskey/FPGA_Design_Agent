@@ -279,3 +279,59 @@ def test_digest_reads_drc_and_methodology(tmp_path):
     v = cl.goal_vector({"pass": True}, d, cl.goals_from_spec(SPEC))
     assert v["CHK"]["met"] is False and not cl.all_met(v)
     assert pb.applicable("CHK", d, v)[0][0].id == "c_constraints"
+
+
+# --- review fixes: no closure by a slower clock, and no sign-off on a synthesis-only build ---------------------------
+
+def test_timing_is_judged_at_the_spec_clock(dg):
+    d = copy.deepcopy(dg)
+    d["timing"]["period_ns"] = 12.0                    # the XDC was slowed to 83 MHz: WNS looks fine
+    v = vec_of(d)
+    assert v["G2"]["met"] is False and "slower than the spec's 10.0 ns" in v["G2"]["detail"]
+    spec = {**SPEC, "clocks": [{"name": "clk", "freq_mhz": 100, "min_freq_mhz": 80}]}
+    assert cl.goal_vector({"pass": True}, d, cl.goals_from_spec(spec))["G2"]["met"] is True   # the spec allows 80 MHz
+
+
+def test_clock_edit_is_reverted(tmp_path, dg):
+    ws = _ws(tmp_path)
+    assert cl.clock_lines_changed({"design.xdc": "create_clock -period 10 [get_ports clk]\n"},
+                                  {"design.xdc": "create_clock -period 12 [get_ports clk]\n"})
+    assert not cl.clock_lines_changed({"design.xdc": "create_clock -period 10 x\n"},
+                                      {"design.xdc": "create_clock -period 10 x\nset_property IOSTANDARD LVCMOS33 [get_ports a]\n"})
+    d = copy.deepcopy(dg)
+    d["methodology"] = {"errors": 0, "critical_warnings": 1, "rules": [
+        {"rule": "TIMING-18", "severity": "Critical Warning", "description": "Missing input or output delay", "count": 3}]}
+
+    def edit(req):
+        assert "design.xdc" in req.files                   # a constraints fix: the XDC is offered
+        return cl.EditResult(files={"design.xdc": "create_clock -period 20 [get_ports clk]\n"}, usd=0.0, calls=1)
+    c = cl.Closure(ws=ws, goals=cl.goals_from_spec(SPEC), g1=lambda r: {"pass": True}, build=lambda _d: copy.deepcopy(d),
+                   editor=edit, contract="", spec=SPEC, max_iter=1, record=tmp_path / "rec", log=lambda s: None)
+    r = c.run()
+    assert r["strategies"] == [("c_constraints", "revert")] and "-period 10" in (tmp_path / "design.xdc").read_text()
+    row = json.loads((tmp_path / "rec" / "closure_actions.jsonl").read_text().splitlines()[0])
+    assert row["result"]["outcome"] == "clock_edit" and row["result"]["worsened"] == ["G2"]
+
+
+def test_gates_signoff_needs_a_routed_build(tmp_path):
+    from agent.graph.closure_task import gates_signoff
+    b = tmp_path / "build" / "base"
+    b.mkdir(parents=True)
+    (b / "gates.json").write_text(json.dumps({"pass": True, "gates": {"post_synth_drc_clean": True},
+                                              "stages": {"post_synth": {"ran": True}, "post_route": {"ran": False}}}))
+    s = gates_signoff(tmp_path)({})
+    assert not s["pass"] and "stage post_route not run" in s["failed"]
+    (b / "gates.json").write_text(json.dumps({"pass": True, "gates": {"a": True},
+                                              "stages": {"post_route": {"ran": True}, "bitstream": {"ran": True}}}))
+    assert gates_signoff(tmp_path)({})["pass"]
+
+
+def test_action_log_outcomes(tmp_path, dg):
+    b = Builds(dg, [2])
+    c = cl.Closure(ws=_ws(tmp_path), goals=cl.goals_from_spec({**SPEC, "budget": {"bram": 1}}), g1=lambda r: {"pass": True},
+                   build=b.build, editor=_editor(), contract="", spec=SPEC, synth=b.syn, max_iter=1,
+                   record=tmp_path / "rec", log=lambda s: None)
+    c.run()
+    row = json.loads((tmp_path / "rec" / "closure_actions.jsonl").read_text().splitlines()[0])
+    assert row["result"]["outcome"] == "early_reject" and row["result"]["improved"] == []
+    assert row["design"]["rtl_files"] == 3                     # RTL only, not the XDC

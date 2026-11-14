@@ -79,7 +79,8 @@ def goals_from_spec(spec: dict[str, Any], board: str = "nexys_a7_100t") -> dict[
             why[k] = f"no budget in spec.yaml: default {int(DEFAULT_SHARE * 100)} % of the part"
         else:
             g3[k], why[k] = float(v), "spec.yaml budget"
-    clocks = [{"name": c.get("name"), "freq_mhz": c.get("freq_mhz"), "period_ns": round(1000 / float(c["freq_mhz"]), 3)}
+    clocks = [{"name": c.get("name"), "freq_mhz": c.get("freq_mhz"), "period_ns": round(1000 / float(c["freq_mhz"]), 3),
+               **({"min_freq_mhz": c["min_freq_mhz"]} if c.get("min_freq_mhz") else {})}
               for c in spec.get("clocks") or [] if c.get("freq_mhz")]
     pw = b.get("power_w")
     return {
@@ -115,10 +116,18 @@ def goal_vector(g1: dict[str, Any] | None, dg: dict[str, Any] | None, goals: dic
             v[k] = {"met": None, "value": None, "target": None, "shortfall": None, "detail": "no build"}
     else:
         t = dg.get("timing") or {}
-        period = t.get("period_ns") or ((goals["G2"]["clocks"] or [{}])[0].get("period_ns")) or 10.0
+        spec_clk = (goals["G2"]["clocks"] or [{}])[0]
+        spec_period = spec_clk.get("period_ns")
+        period = t.get("period_ns") or spec_period or 10.0
         wns, whs = t.get("wns_ns"), t.get("whs_ns")
         gates = dg.get("gates") or {}
         cons_ok = all(gates.get(k, True) for k in ("no_unconstrained_endpoints", "exceptions_clean", "io_timing_clean", "pulse_width"))
+        # the build must be timed at the spec's clock: a slower clock in the XDC would turn any WNS positive. A period up
+        # to 1000 / min_freq_mhz is allowed only when spec.yaml states min_freq_mhz (the gated lower-clock strategy)
+        max_period = (1000.0 / float(spec_clk["min_freq_mhz"])) if spec_clk.get("min_freq_mhz") else spec_period
+        slow_clock = bool(spec_period and t.get("period_ns") and float(t["period_ns"]) > float(max_period) * 1.001 + 1e-6)
+        if slow_clock:
+            cons_ok = False
         sf = (max(0.0, -(wns or 0)) + max(0.0, -(whs or 0))) / period
         met2 = wns is not None and whs is not None and wns >= 0 and whs >= 0 and cons_ok
         if not cons_ok and sf == 0:
@@ -126,7 +135,9 @@ def goal_vector(g1: dict[str, Any] | None, dg: dict[str, Any] | None, goals: dic
         v["G2"] = {"met": met2, "value": {"wns_ns": wns, "whs_ns": whs, "tns_ns": t.get("tns_ns"),
                                           "failing_endpoints": t.get("failing_endpoints")},
                    "target": {"wns_ns": 0.0, "whs_ns": 0.0, "period_ns": period}, "shortfall": round(sf, 5),
-                   "detail": "" if cons_ok else "constraints: unconstrained endpoints, exceptions or I/O timing not clean"}
+                   "detail": "" if cons_ok else (f"the build is timed at {t.get('period_ns')} ns, slower than the spec's "
+                                                 f"{spec_period} ns clock" if slow_clock else
+                                                 "constraints: unconstrained endpoints, exceptions or I/O timing not clean")}
         u = dg.get("utilization") or {}
         bud = goals["G3"]["budget"]
         used = {k: u.get(k) for k in RES}
@@ -461,7 +472,6 @@ class Closure:
         from agent.graph import closure_plan as cp
         t0 = time.monotonic()
         snap = self.ws.read()
-        tags = cp.design_tags(self.spec, snap, self.case)
         g1 = self.g1(self.ws.rtl)
         tb = time.monotonic()
         dg = self.build(self.ws.root) if g1.get("pass") else None
@@ -484,8 +494,8 @@ class Closure:
             if all_met(vec):
                 signoff = self._signoff(dg, snap, built)
                 if signoff is None or signoff["pass"]:
-                    stop = "all goals met (G1-G4; G5, the board, not run yet)" + (
-                        "; sign-off passed" if signoff else "; sign-off not run")
+                    stop = ("all goals met (G1-G4; G5, the board, not run yet); sign-off passed" if signoff else
+                            "goals met on the loop's measures (G1-G4); sign-off not run, closure not claimed")
                 else:
                     stop = ("goals met on the loop's measures, but the sign-off failed: "
                             + ", ".join(signoff.get("failed") or [])[:300] + "; closure not claimed")
@@ -510,6 +520,11 @@ class Closure:
                 stop = f"loop back to the {joint['target_stage']} stage: " + "; ".join(
                     f"{a['goal']} {a['id']}" for a in joint["actions"])
                 self._rec({"iter": it + 1, "kind": "loopback", "plan": joint, "reentry": reent})
+                self._act(cp.action_record(run=str(self.record.name if self.record else self.case), iteration=it + 1,
+                                           tags=cp.design_tags(self.spec, self.ws.read(), self.case), dg_before=dg,
+                                           vec_before=vec, joint=joint, decision="loopback", reason=stop,
+                                           outcome="loopback", improved=[], worsened=[], dg_after=None, vec_after=vec,
+                                           early=None, usd=0.0, tokens=0, build_seconds=None, synth_seconds=None))
                 break
             acts = [(pb.BY_ID[a["id"]], a["goal"], a["why"]) for a in joint["actions"]]
             strat, goal, why = acts[0]
@@ -551,13 +566,18 @@ class Closure:
             after_files = self.ws.read()
             diff = unified_diff(snap, after_files)
             early, synth_s, build_s = None, None, None
+            clock_edit = clock_lines_changed(snap, after_files) and not any(s.id == "p_clock" for s, _, _ in acts)
             if not res.files or not diff:
                 decision, imp, wor, vec2, dg2 = "revert", [], [], vec, dg
-                summary = "the writer changed nothing"
+                summary, outcome = "the writer changed nothing", "no_change"
+            elif clock_edit:
+                decision, imp, wor, vec2, dg2 = "revert", [], ["G2"], vec, dg
+                summary, outcome = "the change edits a clock definition in the XDC, which no chosen fix allows", "clock_edit"
             elif not g1n.get("pass"):
                 vec2 = goal_vector(g1n, None, self.goals)
                 vec2 = {**vec, "G1": vec2["G1"]}
                 decision, imp, wor, dg2 = "revert", [], ["G1"], dg
+                outcome = "g1_fail"
                 summary = f"G1 failed after {retries} functional retr{'y' if retries == 1 else 'ies'}: {vec2['G1']['value']}"
             else:
                 if self.synth is not None:
@@ -567,7 +587,7 @@ class Closure:
                     synth_s = round(time.monotonic() - ts, 1)
                 if early and early["reject"]:
                     decision, imp, wor, vec2, dg2 = "revert", [], list(early.get("worsened") or []), vec, dg
-                    summary = "early check after synthesis: " + early["reason"]
+                    summary, outcome = "early check after synthesis: " + early["reason"], "early_reject"
                     built = None                         # build/ now holds a synthesis-only build of the rejected change
                 else:
                     tb = time.monotonic()
@@ -576,6 +596,7 @@ class Closure:
                     built = after_files
                     vec2 = goal_vector(g1n, dg2, self.goals, self._plan_fails(dg2), base_synth)
                     decision, imp, wor = judge(vec, vec2)
+                    outcome = "accepted" if decision == "accept" else "built_reverted"
                     summary = vector_line(vec2) + "".join(f"; {g}: {vec2[g]['detail'][:300]}" for g in wor if vec2[g].get("detail"))
             delta = _delta(vec, vec2)
             row = {"iter": it, "kind": "iteration", "goal": goal, "strategy": strat.id, "class": strat.cls, "why": why,
@@ -586,8 +607,10 @@ class Closure:
                    "build_seconds": build_s, "synth_seconds": synth_s}
             attempts.append(row)
             self._rec(row)
-            self._act(cp.action_record(run=str(self.record.name if self.record else self.case), iteration=it, tags=tags,
+            self._act(cp.action_record(run=str(self.record.name if self.record else self.case), iteration=it,
+                                       tags=cp.design_tags(self.spec, files, self.case),
                                        dg_before=dg, vec_before=vec, joint=joint, decision=decision, reason=summary,
+                                       outcome=outcome, improved=imp, worsened=wor,
                                        dg_after=dg2 if dg2 is not dg else None, vec_after=vec2, early=early,
                                        usd=self.usd - usd0, tokens=self.tokens - tok0, build_seconds=build_s,
                                        synth_seconds=synth_s))
@@ -667,6 +690,16 @@ class Closure:
                 "usd": round(self.usd, 6), "tokens": self.tokens, "llm_calls": self.calls, "seconds": round(secs, 1)}
 
 
+def clock_lines_changed(a: dict[str, str], b: dict[str, str]) -> bool:
+    """True when an XDC's clock definitions differ (create_clock, create_generated_clock, set_clock_groups): the loop
+    must not close timing by slowing or regrouping the clocks the spec fixes."""
+    pat = re.compile(r"^\s*(?:create_clock|create_generated_clock|set_clock_groups)\b.*$", re.M)
+    for p in set(a) | set(b):
+        if p.endswith(".xdc") and pat.findall(a.get(p) or "") != pat.findall(b.get(p) or ""):
+            return True
+    return False
+
+
 def early_check(syn: dict[str, Any] | None, dg: dict[str, Any] | None, vec: dict[str, Any], goals: dict[str, Any],
                 acts: list[tuple[pb.Strategy, str, str]], plan_fails: list[str] | None,
                 base_synth: dict[str, Any] | None) -> dict[str, Any]:
@@ -690,7 +723,7 @@ def early_check(syn: dict[str, Any] | None, dg: dict[str, Any] | None, vec: dict
     reasons, worse = [], []
     for k in ("bram_tile", "dsp"):
         if u.get(k) is not None and bud.get(k) is not None and float(u[k]) > float(bud[k]) \
-                and float((dg or {}).get("utilization", {}).get(k) or 0) <= float(bud[k]):
+                and float(((dg or {}).get("utilization") or {}).get(k) or 0) <= float(bud[k]):
             reasons.append(f"{k} {u[k]} over its budget {bud[k]} (was within it)")
             worse.append("G3")
     for s, g, _ in acts:

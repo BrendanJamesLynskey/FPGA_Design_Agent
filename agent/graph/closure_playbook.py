@@ -283,7 +283,7 @@ def _area(dg, vec, spec):
 def _power(dg, vec, spec):
     p = dg.get("power") or {}
     comp = p.get("components") or {}
-    dyn = p.get("dynamic_w") or sum(v for k, v in comp.items() if k not in ("Static Power", "Total") and not k.startswith(" "))
+    dyn = p.get("dynamic_w") or sum((v or 0) for k, v in comp.items() if k not in ("Static Power", "Total") and not k.startswith(" "))
     dyn = dyn or 1e-9
     share = {k: (v or 0) / dyn for k, v in comp.items() if k not in ("Static Power", "Total")}
     f = dg.get("setup_features") or {}

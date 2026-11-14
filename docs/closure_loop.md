@@ -117,13 +117,13 @@ Since the second phase the loop works on every goal at once instead of one goal 
    - cost slack while timing fails, or while the slack is under 0.3 ns;
    - push a DSP, BRAM or tight resource the opposite way to a fix already chosen.
 
-   Among the fixes the reports support equally, one that uses a hard resource (DSP slice, block RAM, SRL, carry chain)
-   ranks first. Every skipped fix is recorded with its reason. The chosen fixes go to the Designer in one prompt and one
+   A fix that uses a hard resource (DSP slice, block RAM, SRL, carry chain) gets a small bonus in the ranking (5
+   points on a 0 to 100 scale), so it comes first when the reports support it about as well as a general-logic fix. Every skipped fix is recorded with its reason. The chosen fixes go to the Designer in one prompt and one
    change.
 4. **Back to the earliest stage the plan changes.** Each strategy names the stage it changes:
    - RTL and constraints (the design's XDC) fixes are made inside the loop;
-   - a spec fix (for example fewer I/O pins) or an architecture fix (re-plan the datapath once every RTL strategy for a
-     goal is used up) is not made by the loop. The loop stops, and the report carries `reentry`: the agent graph's
+   - a spec fix (for example fewer I/O pins) or an architecture fix (re-plan the datapath when no RTL strategy for a
+     goal is left: each was tried twice without progress, or each conflicts with another goal) is not made by the loop. The loop stops, and the report carries `reentry`: the agent graph's
      state for that stage (`stage`, `note`, `note_role`, `owners`, the shape `agent/graph/pickup.py` uses to resume).
      In the agent graph, stage 6 hands this to the graph, which goes back to that stage; every later stage then runs
      again.
@@ -140,7 +140,8 @@ Since the second phase the loop works on every goal at once instead of one goal 
 6. **The sign-off.** When every goal holds, the loop:
    - runs the independent bench again;
    - rebuilds if `build/` holds another attempt;
-   - requires every gate of the flow's gates.json to pass on exactly the accepted files.
+   - requires every gate of the flow's gates.json to pass on exactly the accepted files, from a build that reached
+     routing and the bitstream (a synthesis-only build's gates.json is refused).
 
    Only then does the summary say `closure_claimed: true`. Without a sign-off step (in tests, or `--signoff off`)
    closure is never claimed.
@@ -180,11 +181,12 @@ Every attempt writes one line to `closure_actions.jsonl` beside `history.jsonl`,
 | `violations` | the diagnosis (goal, kind, value, target) |
 | `actions` / `skipped` | the fixes chosen (id, class, goal, stage, hard, reason, predicted effects) and the ones left out, each with its reason |
 | `target_stage` | the earliest stage the plan changes |
-| `result` | `accept` or `revert`, the reason, whether the early check rejected it and its estimate, each goal after, the goals improved, and the build's features after |
+| `result` | `accept`, `revert` or `loopback`; `outcome` (`accepted`, `built_reverted`, `early_reject`, `g1_fail`, `no_change`, `clock_edit`, `loopback`); `improved` and `worsened` as the controller judged them (a reverted change can still list the goal it helped); the reason, whether the early check rejected it and its estimate, each goal after, the goals improved, and the build's features after |
 | `cost` | model cost in USD (provider-reported), tokens, synthesis and build seconds |
 
-A record is written for every attempt, kept or undone, so each line is a labelled example: what the reports showed,
-what was tried, and what happened.
+A record is written for every attempt, kept or undone, and for a loop-back; a stop because no strategy is left writes
+none. Each line is a labelled example: what the reports showed, what was tried, and what happened. `design` is
+computed from the files the attempt started from.
 
 ### What a user could guess wrong
 
@@ -198,6 +200,9 @@ what was tried, and what happened.
   where to go back and why; the agent graph acts on it, and the task driver only reports it.
 - **One change may carry several fixes.** A joint change is kept or undone as a whole. Each fix's stall counter moves
   with the result for its own goal.
+- **Timing is judged at the spec's clock.** A build timed at a slower clock than spec.yaml gives fails G2, whatever
+  its WNS. A change that edits a clock definition in an XDC (`create_clock`, `create_generated_clock`,
+  `set_clock_groups`) is undone, unless the gated lower-clock fix chose it and the spec states `min_freq_mhz`.
 - **The power goal is an estimate.** It uses Vivado's vectorless toggle rates (12.5 % on inputs) unless a SAIF is read.
   A power fix that is real on the board may not show in it, and the other way round.
 

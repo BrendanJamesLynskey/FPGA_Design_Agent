@@ -176,6 +176,11 @@ def gates_signoff(d: Path):
         except (OSError, ValueError) as e:
             return {"pass": False, "failed": [f"no gates.json ({type(e).__name__})"]}
         failed = sorted(k for k, v in (g.get("gates") or {}).items() if not v)
+        st = g.get("stages") or {}
+        # a synthesis-only build also writes gates.json with pass true: the sign-off needs the routed and bitstream stages
+        failed += [f"stage {s} not run" for s in ("post_route", "bitstream") if not (st.get(s) or {}).get("ran")]
+        if not g.get("gates"):
+            failed.append("no gates in gates.json")
         return {"pass": bool(g.get("pass")) and not failed, "failed": failed, "gates": len(g.get("gates") or {}),
                 "first_failed_stage": g.get("first_failed_stage")}
     return signoff

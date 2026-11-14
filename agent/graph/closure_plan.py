@@ -173,7 +173,8 @@ def reentry(p: dict[str, Any]) -> dict[str, Any] | None:
 def design_tags(spec: dict[str, Any] | None, files: dict[str, str] | None, case: str | None = None) -> dict[str, Any]:
     """What kind of design this is, from spec.yaml and the RTL text (no build needed)."""
     spec = spec or {}
-    text = "\n".join((files or {}).values())
+    files = {k: v for k, v in (files or {}).items() if not k.endswith(".xdc")}
+    text = "\n".join(files.values())
     clocks = [c.get("freq_mhz") for c in spec.get("clocks") or []]
     return {"case": case, "top": spec.get("top"), "part": spec.get("part", "xc7a100tcsg324-1"),
             "clocks_mhz": clocks, "budget_given": sorted((spec.get("budget") or {}).keys()),
@@ -218,20 +219,21 @@ def goal_state(vec: dict[str, Any]) -> dict[str, Any]:
 
 
 def action_record(*, run: str, iteration: int, tags: dict[str, Any], dg_before: dict[str, Any] | None,
-                  vec_before: dict[str, Any], joint: dict[str, Any], decision: str, reason: str,
+                  vec_before: dict[str, Any], joint: dict[str, Any], decision: str, reason: str, outcome: str,
+                  improved: list[str], worsened: list[str],
                   dg_after: dict[str, Any] | None, vec_after: dict[str, Any], early: dict[str, Any] | None,
                   usd: float, tokens: int, build_seconds: float | None, synth_seconds: float | None) -> dict[str, Any]:
-    """One row of ``closure_actions.jsonl`` (schema ``fda.closure_action/1``)."""
-    imp = [g for g in ("G1", *GOALS_ACT) if (vec_before.get(g) or {}).get("met") is False
-           and ((vec_after.get(g) or {}).get("met") or ((vec_after.get(g) or {}).get("shortfall") or 0)
-                < ((vec_before.get(g) or {}).get("shortfall") or 0))]
+    """One row of ``closure_actions.jsonl`` (schema ``fda.closure_action/1``). ``outcome`` is one of ``accepted``,
+    ``built_reverted`` (built, judged and undone), ``early_reject``, ``g1_fail``, ``no_change``, ``clock_edit`` and
+    ``loopback``; ``improved`` / ``worsened`` are the controller's own judgement (the goals that moved, with its
+    tolerances), so a reverted change can still show which goal it helped."""
     return {"schema": SCHEMA, "run": run, "iter": iteration, "design": tags,
             "features": report_features(dg_before, vec_before), "goals_before": goal_state(vec_before),
             "violations": [{k: v for k, v in x.items() if k in ("goal", "kind", "value", "target", "ratio")}
                            for x in joint.get("violations") or []],
             "actions": joint.get("actions") or [], "skipped": joint.get("skipped") or [],
             "target_stage": joint.get("target_stage"),
-            "result": {"decision": decision, "reason": reason[:400], "early_reject": bool(early and early.get("reject")),
-                       "early": early, "goals_after": goal_state(vec_after), "improved": imp,
+            "result": {"decision": decision, "outcome": outcome, "reason": reason[:400], "worsened": list(worsened), "early_reject": bool(early and early.get("reject")),
+                       "early": early, "goals_after": goal_state(vec_after), "improved": list(improved),
                        "features_after": report_features(dg_after, vec_after) if dg_after else None},
             "cost": {"usd": round(usd, 6), "tokens": tokens, "build_seconds": build_seconds, "synth_seconds": synth_seconds}}
