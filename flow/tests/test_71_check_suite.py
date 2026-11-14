@@ -179,7 +179,8 @@ def test_source_part(tmp_path: Path) -> None:
     fs = R.source_findings(tmp_path, [f], {"synchronisers": set(R.RECOGNISED), "async_inputs": set()})
     codes = sorted((x["code"], x["line"]) for x in fs)
     # line 16: a user file that defines reset_sync (a recognised synchroniser name) is reported (review fix)
-    assert codes == [("RST-ASYNC-01", 3), ("RST-ASYNC-01", 16), ("RST-POL-02", 11)], codes
+    # line 18: its asynchronous edge too, since an impostor is not exempt (review round 2)
+    assert codes == [("RST-ASYNC-01", 3), ("RST-ASYNC-01", 16), ("RST-ASYNC-01", 18), ("RST-POL-02", 11)], codes
 
 
 def test_source_every_async_edge_is_checked(tmp_path: Path) -> None:
@@ -188,7 +189,7 @@ def test_source_every_async_edge_is_checked(tmp_path: Path) -> None:
     f.write_text("module m (input logic clk, input logic ext_rst_n, input logic soft_rst_n, input logic d, output logic q);\n"
                  "    always_ff @(negedge ext_rst_n or posedge clk or negedge soft_rst_n) begin\n"
                  "        if (!ext_rst_n) q <= 1'b0;\n        else q <= d;\n    end\nendmodule\n")
-    fs = R.source_findings(tmp_path, [f], {"synchronisers": set(R.RECOGNISED), "async_inputs": {"ext_rst_n"}})
+    fs = R.source_findings(tmp_path, [f], {"synchronisers": set(R.RECOGNISED), "async_inputs": {"ext_rst_n"}}, top="m")
     assert [x["message"].split(":")[1].strip().split(" in ")[0] for x in fs] == ["negedge soft_rst_n"]
 
 
@@ -295,3 +296,59 @@ def test_agent_check_tool_is_registered_and_offered_to_the_designer() -> None:
     assert "gt_plan" in RUN.effective_tools("rtl", 2, "V3")
     for old in ("lint", "gates", "check_constraints", "report_digest"):      # thin aliases kept: recorded runs call them
         assert old in TOOLS
+
+
+# ---- review round 2: the re-review's designs, kept as regression cases (flow/tests/data/b71_resets) -------------------
+REG = Path(__file__).parent / "data" / "b71_resets"
+#: each design and what the source part must do: the reset rules it raises, or "unread" (the part fails closed: PARTIAL)
+REGRESSION = {
+    "d_base": {"HDL-RST-01"}, "d_gen": {"HDL-RST-01"}, "d_glob": {"HDL-RST-01"}, "d_iface": {"HDL-RST-01"},
+    "d_iffp": "unread", "d_incl": {"HDL-RST-01"}, "d_latch": {"HDL-RST-01"}, "d_macro": "unread",
+    "d_macromod": {"HDL-RST-01"}, "d_multi": {"HDL-RST-01"}, "d_multi2": {"HDL-RST-01"},
+    "d_name_declared": {"HDL-RST-01"},          # async_inputs exempt only the top module's own ports
+    "d_pol_alias": set(),                       # rst_p = ~rst_n: both blocks reset on rst_n low, one polarity (correct pass)
+    "d_pol_eq0": {"HDL-RST-02"}, "d_pol_eqeq": {"HDL-RST-02"}, "d_pol_name": {"HDL-RST-02"}, "d_pol_plain": {"HDL-RST-02"},
+    "d_pol_second": {"HDL-RST-02"}, "d_pol_struct": {"HDL-RST-02"}, "d_prim": {"HDL-RST-01"},
+    "d_reset_sync": {"HDL-RST-01"}, "d_vhdl_mixed": {"HDL-RST-01", "vhdl"}, "d_xpmname": {"HDL-RST-01"},
+}
+
+
+@pytest.mark.parametrize("name", sorted(REGRESSION))
+def test_review_round_2_regressions(name: str) -> None:
+    d = REG / name
+    r = C.run_one("resets", d, "rtl", root=d)
+    rules = {f["rule"] for f in r["findings"] if f["blocking"]}
+    want = REGRESSION[name]
+    if want == "unread":
+        assert not rules and r["parts"]["source_unread"].startswith("not run:") and "source_unread" in r["incomplete"]
+    else:
+        assert rules == want - {"vhdl"}, (name, r["findings"])
+        if "vhdl" in want:
+            assert "source_vhdl" in r["incomplete"]
+    assert r["parts"]["polarity"].startswith("not run:")      # at scope rtl the polarity rule is never a clean pass
+
+
+def test_source_list_is_the_builds_own_expansion() -> None:
+    """The check reads exactly the files flow/prepare.py builds (``**`` recurses there and here)."""
+    from flow import prepare
+    for d in (ROOT / "designs").iterdir():
+        if not (d / "build.yaml").is_file():
+            continue
+        pats = (yaml.safe_load((d / "build.yaml").read_text()) or {}).get("sources") or []
+        try:
+            want = list(dict.fromkeys(prepare.expand(pats)))
+        except SystemExit:
+            continue
+        assert C.build_sources(d) == want, d.name
+    g = REG / "d_glob"
+    assert {p.name for p in C.build_sources(g, root=g)} == {"x.sv", "y.sv"}
+
+
+def test_stale_session_report_without_a_checkpoint(tmp_path: Path) -> None:
+    import os
+    d = _mini(tmp_path, "rst_clean")
+    out = d / "build" / "checks" / "base" / "synth"
+    out.mkdir(parents=True)
+    (out / "cmt.rpt").write_text("CMT u MMCM VCO 1 PFD 1 VIOLATION old\n")
+    os.utime(out / "cmt.rpt", (1, 1))                          # older than the build's reports
+    assert C.Ctx(d, "synth").report("cmt") is None

@@ -93,11 +93,13 @@ class Ctx:
             return self.build / f
         if (self.out / f"{name}.not_run.txt").is_file():       # the session refused or failed it: never read a partial file
             return None
-        dcp = self.build / DCP.get(self.scope, "post_synth.dcp")
+        refs = [q for q in (self.build / DCP.get(self.scope, "post_synth.dcp"), self.build / "run.json",
+                            self.build / "timing_summary_synth.rpt") if q.is_file()]
         for ext in ("rpt", "tsv"):
             p = self.out / f"{name}.{ext}"
-            # a session's report older than the checkpoint belongs to an earlier build: never read it (review fix)
-            if p.is_file() and not (dcp.is_file() and p.stat().st_mtime < dcp.stat().st_mtime):
+            # a session's report older than the build (its checkpoint, run.json or synthesis report) belongs to an
+            # earlier build; with no build to compare against it is stale too (review fixes)
+            if p.is_file() and refs and p.stat().st_mtime >= max(q.stat().st_mtime for q in refs):
                 return p
         return None
 
@@ -188,12 +190,22 @@ def _not_run(why: str) -> dict[str, Any]:
 
 
 def build_sources(design: Path, root: Path = ROOT) -> list[Path]:
-    import glob
+    """The build's own source list: flow/prepare.py's expansion (pathlib glob, so ``**`` recurses), no duplicates."""
     try:
         b = yaml.safe_load((design / "build.yaml").read_text()) or {}
     except (OSError, yaml.YAMLError):
-        return sorted(design.glob("rtl/*.sv")) + sorted(design.glob("rtl/*.v"))
-    return [Path(f) for g in b.get("sources") or [] for f in sorted(glob.glob(str(root / g)))]
+        return sorted(design.glob("rtl/**/*.sv")) + sorted(design.glob("rtl/**/*.v"))
+    out: list[Path] = []
+    for g in b.get("sources") or []:
+        out += [p for p in sorted(root.glob(g)) if p not in out]
+    return out
+
+
+def build_top(design: Path) -> str | None:
+    try:
+        return str((yaml.safe_load((design / "build.yaml").read_text()) or {}).get("top") or "") or None
+    except (OSError, yaml.YAMLError):
+        return None
 
 
 # ---- the checks ----------------------------------------------------------------------------------------------------
@@ -266,12 +278,13 @@ def _resets(ctx: Ctx) -> dict[str, Any]:
     cfg = R.reset_config(ctx.design)
     parts: dict[str, str] = {}
     fs = []
-    srcs = [p for p in build_sources(ctx.design, ctx.root) if p.suffix in (".sv", ".v")]
+    srcs = [p for p in build_sources(ctx.design, ctx.root) if p.suffix.lower() in (".sv", ".v", ".vhd", ".vhdl")]
     if srcs:
-        fs += R.source_findings(ctx.design, srcs, cfg)
-        parts["source"] = "ran"
+        fs += R.source_findings(ctx.design, srcs, cfg, root=ctx.root, top=build_top(ctx.design), parts=parts)
+        parts["source"] = "ran" if any(p.suffix.lower() in (".sv", ".v") for p in srcs) else \
+            "not run: no SystemVerilog sources (a VHDL design is checked by the netlist part)"
     else:
-        parts["source"] = "not run: no SystemVerilog sources (a VHDL design is checked by the netlist part)"
+        parts["source"] = "not run: no sources in build.yaml"
     records = []
     if ctx.scope == "rtl":
         parts["amd"] = parts["netlist"] = "not run: scope rtl (needs a synthesised design)"
@@ -294,6 +307,9 @@ def _resets(ctx: Ctx) -> dict[str, Any]:
             records.append(scan)
         else:
             parts["netlist"] = "not run: " + ctx.not_run_reason("reset_scan")
+    # polarity: the netlist rule backs it; the source rule alone sees only simple tests (review round 2)
+    parts["polarity"] = "ran" if parts.get("netlist") == "ran" else ("not run: one polarity per reset is judged on the "
+                        "netlist; the source rule alone sees only simple if-tests within one module")
     return _result(fs, parts, records)
 
 

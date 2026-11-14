@@ -87,7 +87,8 @@ local run directories, not committed either.
   stayed silent on the small case was not investigated.
 - Polarity (HDL-RST-02) is seen only on reset pins: a reset that synthesis folds into the D logic, or two polarities in
   different modules joined through ports with renaming, are found only by the source part within one module.
-- The source part does not evaluate `` `ifdef``, and reads SystemVerilog only.
+- The source part does not evaluate `` `ifdef`` (both branches are read) and does not scan VHDL (it says so: PARTIAL).
+  The second review's 23 bypass designs are kept as regression cases in `flow/tests/data/b71_resets/`.
 - A device pin used as a synchronous reset is reported (HDL-RST-04) only when an IBUF is on its path, so out-of-context
   builds, whose ports have none, are not checked for it.
 - The token figure is characters / 4, not a model's tokenizer.

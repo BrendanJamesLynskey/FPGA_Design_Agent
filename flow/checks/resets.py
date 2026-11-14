@@ -78,61 +78,185 @@ def _f(file: str, line: int, code: str, msg: str, where: str | None = None, coun
 
 
 # ---- source ------------------------------------------------------------------------------------------------------
-_IF = re.compile(r"^\s*(?:begin\s*(?::\s*\w+)?\s*)?if\s*\(\s*(!|~)?\s*(\w+)\s*(?:(==|!=)\s*1'b([01])\s*)?\)")
+#: the shell's own synchroniser, exempt by its file (not by its module name: review round 2)
+SHELL_SYNCS = ("shell/rtl/reset_sync.sv",)
+_UNIT = re.compile(r"\b(module|macromodule|interface|program)\s+(?:automatic\s+|static\s+)?(\w+)")
+_ALWAYS = re.compile(r"\balways(_ff|_comb|_latch)?\b\s*(@\s*)?")
+_PRIM = re.compile(r"\b(FDCE|FDPE|LDCE|LDPE)\b\s*(?:#\s*\([^;]*?\)\s*)?(\w+)\s*\(")
+_RSTNAME = re.compile(r"(?i)rst|reset|clr|clear")
+_INCLUDE = re.compile(r'`include\s+"([^"]+)"')
+#: a reset test in an if: (neg?) name (cmp value)?, with any number of parentheses around it
+_TEST = re.compile(r"^\(*\s*(!|~)?\s*\(*\s*(\w+)\s*\)*\s*(?:(==|!=|===|!==)\s*(?:1'[bB])?([01])\s*)?\)*$")
 
 
-def source_findings(design: Path, files: list[Path], cfg: dict[str, Any]) -> list[dict[str, Any]]:
-    from flow.standards_check import parse_modules, strip_comments
+def _paren(text: str, k: int) -> tuple[str, int] | None:
+    """The balanced (...) starting at text[k] == '(': (inside, index after it), or None."""
+    if k >= len(text) or text[k] != "(":
+        return None
+    depth = 0
+    for i in range(k, min(len(text), k + 4000)):
+        depth += text[i] == "("
+        depth -= text[i] == ")"
+        if depth == 0:
+            return text[k + 1:i], i + 1
+    return None
+
+
+def _expand_includes(text: str, f: Path, dirs: list[Path], depth: int = 0) -> tuple[str, list[str]]:
+    """Inline `include "x" from the file's folder or the source folders; the names that could not be found."""
+    missing: list[str] = []
+
+    def sub(m):
+        name = m.group(1)
+        for d in [f.parent, *dirs]:
+            q = d / name
+            if q.is_file() and depth < 8:
+                t, mm = _expand_includes(q.read_text(errors="replace"), q, dirs, depth + 1)
+                missing.extend(mm)
+                return t.replace("\n", " ")              # inlined on one line, so the file's line numbers hold
+        missing.append(name)
+        return " "
+    return _INCLUDE.sub(sub, text), missing
+
+
+def _line(text: str, pos: int) -> int:
+    return text.count("\n", 0, pos) + 1
+
+
+def _test_of(cond: str, aliases: dict[str, tuple[str, int]]) -> tuple[str, int] | None:
+    """(root reset signal, active_low) for a simple reset test, through `assign a = ~b` aliases; None otherwise."""
+    m = _TEST.match(cond.strip())
+    if not m:
+        return None
+    neg, sig, op, bit = m.groups()
+    low = bool(neg)
+    if op in ("==", "===") and bit == "0" or op in ("!=", "!==") and bit == "1":
+        low = not low
+    inv = 0
+    seen = 0
+    while sig in aliases and seen < 8:
+        sig, i_ = aliases[sig]
+        inv ^= i_
+        seen += 1
+    return sig, int(low) ^ inv
+
+
+def source_findings(design: Path, files: list[Path], cfg: dict[str, Any], root: Path | None = None,
+                    top: str | None = None, parts: dict[str, str] | None = None) -> list[dict[str, Any]]:
+    """The source part (review round 2: a raw-text scan that fails closed). Each module, macromodule, interface and
+    program of the SystemVerilog sources (with `include files inlined): every edge signal of a sensitivity list except the
+    clock is an asynchronous reset; a list it cannot read (a macro, iff, nested parentheses) is reported as unread
+    (``parts['source_unread']``); direct FDCE/FDPE/LDCE/LDPE instances and always_latch blocks with a reset test count as
+    asynchronous resets. ``reset.async_inputs`` exempt only edges on the top module's own ports. VHDL files are not
+    scanned (``parts['source_vhdl']``), but an entity named like a recognised synchroniser is still reported."""
+    from flow.standards_check import strip_comments
+    parts = parts if parts is not None else {}
+    root = root or Path(__file__).resolve().parents[2]
     out: list[dict[str, Any]] = []
+    unread: list[str] = []
+    vhdl: list[str] = []
+    dirs = sorted({f.parent for f in files})
+    shell = {(root / x).resolve() for x in SHELL_SYNCS}
+    declared = cfg.get("declared", set())
     for f in files:
-        if f.suffix not in (".sv", ".v"):
-            continue
-        try:
-            text = f.read_text(errors="replace")
-        except OSError:
-            continue
         rel = _rel(f, design)
-        shell = "shell/rtl/" in f.resolve().as_posix()
-        for mod in parse_modules(text, str(f)):
-            if not shell and (mod.name in RECOGNISED or XPM.match(mod.name)) and mod.name not in cfg.get("declared", set()):
-                out.append(_f(rel, mod.line, "RST-ASYNC-01", f"module {mod.name} takes the name of a recognised synchroniser or "
-                                                             f"XPM macro; the netlist rules would exempt it: rename it, or "
-                                                             f"declare it in architecture.yaml reset.synchronisers"))
-            body = mod.body
+        try:
+            raw = f.read_text(errors="replace")
+        except OSError:
+            unread.append(f"{rel}: unreadable")
+            continue
+        if f.suffix.lower() in (".vhd", ".vhdl"):
+            vhdl.append(rel)
+            for m in re.finditer(r"(?im)^\s*entity\s+(\w+)\s+is", raw):
+                if (m.group(1) in RECOGNISED or XPM.match(m.group(1))) and m.group(1) not in declared:
+                    cfg.setdefault("impostors", set()).add(m.group(1))
+                    out.append(_f(rel, _line(raw, m.start()), "RST-ASYNC-01", f"VHDL entity {m.group(1)} takes the name of a "
+                                  "recognised synchroniser or XPM macro, and VHDL is not scanned here: rename it, or declare it "
+                                  "in architecture.yaml reset.synchronisers"))
+            continue
+        if f.suffix.lower() not in (".sv", ".v", ".svh", ".vh"):
+            continue
+        is_shell = f.resolve() in shell
+        text, missing = _expand_includes(raw, f, dirs)
+        text, _ = strip_comments(text)
+        unread += [f"{rel}: `include \"{n}\" not found" for n in missing]
+        units = [(m.start(), m.group(1), m.group(2)) for m in _UNIT.finditer(text)]
+        for n, (u0, kind, name) in enumerate(units):
+            u1 = units[n + 1][0] if n + 1 < len(units) else len(text)
+            body = text[u0:u1]
+            exempt = (name in cfg["synchronisers"] and (name in declared or is_shell))
+            if not is_shell and (name in RECOGNISED or XPM.match(name)) and name not in declared:
+                cfg.setdefault("impostors", set()).add(name)
+                out.append(_f(rel, _line(text, u0), "RST-ASYNC-01", f"{kind} {name} takes the name of a recognised "
+                              "synchroniser or XPM macro; the netlist rules would exempt it: rename it, or declare it in "
+                              "architecture.yaml reset.synchronisers"))
+            if name in declared and "ASYNC_REG" not in body and "xpm_cdc_" not in body:
+                out.append(_f(rel, _line(text, u0), "RST-ASYNC-01", f"{kind} {name} is declared a reset synchroniser but has "
+                              "no ASYNC_REG register and no xpm_cdc instance: a synchroniser exempts its whole subtree, so "
+                              "it must be one"))
+            ports = set(re.findall(r"\b(\w+)\s*[,)]", (_paren(body, body.find("(")) or ("", 0))[0])) if name == top else set()
+            aliases = {a: (b, int(bool(neg))) for a, neg, b in
+                       re.findall(r"(?:\bassign\s+|\bwire\s+(?:logic\s+)?)(\w+)\s*=\s*(!|~)?\s*(\w+)\s*;", body)}
+            for pm in _PRIM.finditer(body):
+                if not exempt:
+                    out.append(_f(rel, _line(text, u0 + pm.start()), "RST-ASYNC-01", f"{kind} {name}: a {pm.group(1)} primitive "
+                                  f"({pm.group(2)}) has an asynchronous clear or preset"))
+            alw = list(_ALWAYS.finditer(body))
             pol: dict[str, dict[int, int]] = {}
-            for a in mod.always:
-                edges = a.get("edges") or []
-                if len(edges) > 1 and mod.name not in cfg["synchronisers"]:
-                    # the clock is the edge signal the block's first if does not test; every other edge is a reset
-                    start0 = _offset_of_line(body, a["line"] - mod.body_line0)
-                    seg0 = body[start0:start0 + 400]
-                    k0 = seg0.find(")", seg0.find("@"))
-                    m0 = _IF.match(seg0[k0 + 1:]) if k0 >= 0 else None
-                    tested = m0.group(2) if m0 else None
-                    clk_sig = next((s_ for _, s_ in edges if s_ != tested), edges[0][1])
-                    for e, sig in edges:
-                        if sig != clk_sig and sig not in cfg["async_inputs"]:
-                            out.append(_f(rel, a["line"], "RST-ASYNC-01",
-                                          f"module {mod.name}: {e} {sig} in the sensitivity list: an asynchronous reset "
-                                          f"outside a recognised synchroniser"))
+            for k, a in enumerate(alw):
+                blk_end = alw[k + 1].start() if k + 1 < len(alw) else len(body)
+                ln = _line(text, u0 + a.start())
+                kind_a = a.group(1) or ""
+                sens = None
+                after = a.end()
+                if a.group(2):
+                    ps = _paren(body, after)
+                    if ps is None:
+                        if body[after:after + 1] != "*":
+                            unread.append(f"{rel}:{ln}: sensitivity list not read")
+                        continue
+                    sens, after = ps
+                blk = body[after:blk_end]
+                tests = [c for c in (_paren(blk, mm.end() - 1) for mm in re.finditer(r"\bif\s*\(", blk)) if c]
+                if kind_a == "_latch":
+                    t0 = _test_of(tests[0][0], aliases) if tests else None
+                    if t0 and _RSTNAME.search(t0[0]) and not exempt:
+                        out.append(_f(rel, ln, "RST-ASYNC-01", f"{kind} {name}: always_latch with a reset test on {t0[0]}: "
+                                      "a latch with an asynchronous reset"))
+                    continue
+                if sens is None:
+                    continue
+                if "`" in sens or re.search(r"\biff\b|\(", sens) or not re.fullmatch(
+                        r"\s*(?:(?:posedge|negedge)\s+\w+(?:\s*\[\s*\d+\s*\])?|\*|\w+)(?:\s*(?:or|,)\s*(?:(?:posedge|negedge)\s+\w+"
+                        r"(?:\s*\[\s*\d+\s*\])?|\w+))*\s*", sens):
+                    unread.append(f"{rel}:{ln}: sensitivity list '{' '.join(sens.split())[:60]}' not read")
+                    continue
+                edges = re.findall(r"(posedge|negedge)\s+(\w+)", sens)
                 if not edges:
                     continue
-                # the first statement of the block: its if-condition is the reset test (clock-edge blocks only)
-                start = _offset_of_line(body, a["line"] - mod.body_line0)
-                seg = body[start:start + 400]
-                k = seg.find(")", seg.find("@"))
-                m = _IF.match(seg[k + 1:]) if k >= 0 else None
-                if not m:
-                    continue
-                neg, sig, op, bit = m.groups()
-                if not re.search(r"(?i)rst|reset", sig):
-                    continue
-                active_low = bool(neg) ^ (op == "==" and bit == "0") ^ (op == "!=" and bit == "1")
-                pol.setdefault(sig, {})[int(active_low)] = a["line"]
+                first = _test_of(tests[0][0], aliases) if tests else None
+                tested = first[0] if first else None
+                if len(edges) > 1 and not exempt:
+                    clk_sig = next((s_ for _, s_ in edges if s_ != tested), edges[0][1])
+                    for e, sig in edges:
+                        if sig == clk_sig:
+                            continue
+                        if sig in cfg["async_inputs"] and name == top and sig in ports:
+                            continue
+                        out.append(_f(rel, ln, "RST-ASYNC-01", f"{kind} {name}: {e} {sig} in the sensitivity list: an "
+                                      "asynchronous reset outside a recognised synchroniser"))
+                for cond, _ in tests:
+                    t = _test_of(cond, aliases)
+                    if t and _RSTNAME.search(t[0]):
+                        pol.setdefault(t[0], {})[t[1]] = ln
             for sig, p in pol.items():
-                if len(p) == 2 and sig not in cfg["synchronisers"]:
-                    out.append(_f(rel, p[1], "RST-POL-02", f"module {mod.name}: {sig} is tested active high (line {p[0]}) "
+                if len(p) == 2 and not exempt:
+                    out.append(_f(rel, p[1], "RST-POL-02", f"{kind} {name}: {sig} is tested active high (line {p[0]}) "
                                                             f"and active low (line {p[1]})"))
+    parts["source_unread"] = ("not run: " + "; ".join(unread[:4]) + (f"; {len(unread) - 4} more" if len(unread) > 4 else "")) \
+        if unread else "ran"
+    if vhdl:
+        parts["source_vhdl"] = "not run: VHDL is not scanned by the source part (" + ", ".join(vhdl[:3]) + "); the netlist part covers it"
     return out
 
 
@@ -172,8 +296,7 @@ def _in(hier: str, names: set[str]) -> bool:
 
 def _vendor(hier: str, ip_names: set[str]) -> bool:
     parts = _parts(hier)
-    return any((XPM.match(p) and p not in RECOGNISED) or p in ip_names for p in parts) or \
-        any(p.startswith(n + "_") for p in parts for n in ip_names)        # the IP's own generated submodules
+    return any((XPM.match(p) and p not in RECOGNISED) or p in ip_names for p in parts)   # exact names (review round 2)
 
 
 def _clocks(s: str) -> set[str]:
@@ -182,7 +305,7 @@ def _clocks(s: str) -> set[str]:
 
 def netlist_findings(rows: list[dict[str, str]], cfg: dict[str, Any], ip_names: set[str] = frozenset()) -> list[dict[str, Any]]:
     """Group the scan's rows into findings (one per rule and root/module, with a register count)."""
-    syncs = cfg["synchronisers"]
+    syncs = cfg["synchronisers"] - cfg.get("impostors", set())     # a user module or entity named like one is not one
     groups: dict[tuple[str, str], dict[str, Any]] = {}
 
     def add(code: str, key: str, where: str, msg: str, cell: str) -> None:

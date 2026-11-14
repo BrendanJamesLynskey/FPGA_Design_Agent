@@ -85,7 +85,7 @@ python3 -m flow.checks designs/<d> [--names all|resets,cdc,...] [--scope auto|rt
   architecture decision, frozen at approval: `architecture.yaml` `reset.synchronisers` (modules allowed an asynchronous
   reset) and `reset.async_inputs` (top-level ports from an external device whose reset is asynchronous).
 - **Vendor IP** internals are left out of the reset rules: cells under one of the build's IP cores
-  (`build/<variant>/ip/<name>` and its generated `<name>_*` submodules) or under a named XPM macro (`xpm_cdc_*`,
+  (an ancestor module named exactly as an IP in `build/<variant>/ip/`) or under a named XPM macro (`xpm_cdc_*`,
   `xpm_fifo_*`, `xpm_memory_*`). A user module is never vendor by its name alone. A LUT outside the IP driving an
   asynchronous reset inside it is still RST-LUT-01. A user source that defines a module named like a recognised
   synchroniser (`reset_sync`, an XPM macro) is reported, unless architecture.yaml declares it.
@@ -100,8 +100,22 @@ python3 -m flow.checks designs/<d> [--names all|resets,cdc,...] [--scope auto|rt
 - **Heavy slots**: the agent's `check` tool, like its `build` tool, starts Vivado through the session's runner without
   taking a heavy slot; the script refuses while `FDA_VIVADO_MAX` Vivado jobs already run (a check-then-start test, not a
   lock). A person running `--vivado auto` on the shared PC takes a slot first.
-- **The reset source scan** reads SystemVerilog with the design-standards scanner; it does not evaluate `` `ifdef``, and
-  a VHDL design is checked by the netlist part only.
+- **The reset source part fails closed** (review round 2). It reads every module, macromodule, interface and program
+  of the build's own source list (flow/prepare.py's expansion, so `rtl/**/*.sv` recurses), with `` `include`` files
+  inlined. A sensitivity list it cannot read (a macro, `iff`, nested parentheses), or an include it cannot find, makes
+  the check PARTIAL (`source_unread`) instead of passing. Direct FDCE/FDPE/LDCE/LDPE instances and `always_latch` blocks
+  with a reset test count as asynchronous resets. VHDL files are not scanned (`source_vhdl`, PARTIAL; the netlist part
+  covers them), but a VHDL entity named like a recognised synchroniser is still reported and loses the netlist exemption.
+- **`reset.async_inputs` exempt only the top module's own ports.** A submodule edge on a signal of the same name is
+  reported; a submodule that legitimately takes the external reset asynchronously is declared in
+  `reset.synchronisers` instead.
+- **A declared synchroniser exempts its whole subtree**, so it must look like one: a module in `reset.synchronisers`
+  with no `ASYNC_REG` register and no `xpm_cdc_*` instance is reported. The shell's `reset_sync` is exempt by its file
+  (`shell/rtl/reset_sync.sv`), not by its name.
+- **Polarity (HDL-RST-02) is judged on the netlist.** The source rule sees simple tests (`!r`, `~r`, `r == 0`,
+  `r === 1'b0`, extra parentheses, any `if` of a clocked block, aliases through `assign a = ~b`) on reset-like names
+  (rst, reset, clr, clear) within one module. Without a netlist scan the `polarity` part is "not run", so the check is
+  PARTIAL at scope rtl, never a clean pass.
 - The full result is `build/checks/<variant>/<scope>.json` (named in the digest's first line); the tool never returns it
   whole.
 
