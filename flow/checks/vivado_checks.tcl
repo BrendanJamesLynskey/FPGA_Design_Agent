@@ -31,6 +31,28 @@ proc fda_hier_refs {cell} {
     return $name
 }
 
+proc fda_sync_struct {cell} {
+    # brief 71B: the parents (module names, "/"-joined like fda_hier_refs) that look like a reset synchroniser: they contain an
+    # xpm_cdc_async_rst or xpm_cdc_sync_rst instance, or a register with ASYNC_REG. A module is exempt from the reset rules by its
+    # name only if it also has this structure, so a user module called reset_sync is not exempt.
+    global fda_scache
+    set parent [get_property -quiet PARENT $cell]
+    if {$parent eq ""} { return "" }
+    if {[info exists fda_scache($parent)]} { return $fda_scache($parent) }
+    set pc [get_cells -quiet $parent]
+    set res ""
+    if {$pc ne ""} {
+        set name [get_property -quiet ORIG_REF_NAME $pc]
+        if {$name eq ""} { set name [get_property -quiet REF_NAME $pc] }
+        set kids [get_cells -quiet -hierarchical -filter "NAME =~ $parent/* && (ASYNC_REG == TRUE || REF_NAME == xpm_cdc_async_rst || ORIG_REF_NAME == xpm_cdc_async_rst || REF_NAME == xpm_cdc_sync_rst || ORIG_REF_NAME == xpm_cdc_sync_rst)"]
+        set res [expr {[llength $kids] ? $name : ""}]
+        set up [fda_sync_struct $pc]
+        if {$up ne ""} { set res [expr {$res eq "" ? $up : "$res/$up"}] }
+    }
+    set fda_scache($parent) $res
+    return $res
+}
+
 proc fda_walk {net} {
     # {kind root root_ref inverted path}: the reset net's root driver, through buffers and LUT1 cells
     set inv 0
@@ -69,15 +91,26 @@ proc fda_reset_scan {fname} {
     # renamed at the end, so an error never leaves a partial scan that looks complete.
     global fda_hcache
     array unset fda_hcache
+    global fda_scache
+    array unset fda_scache
     set f [open $fname.part w]
-    puts $f [join {cell ref pin pin_inverted clock hier root_kind root root_ref root_inverted path root_clock root_async_reg root_hier d_ref q_refs} "\t"]
+    puts $f [join {cell ref pin pin_inverted clock hier root_kind root root_ref root_inverted path root_clock root_async_reg root_hier d_ref q_refs sync_struct} "\t"]
     array set walk {}
     array set clk {}
     set pinof [dict create FDRE R FDSE S FDCE CLR FDPE PRE LDCE CLR LDPE PRE]
+    # registers (FD*, LD*) by their one reset pin; IDDR and ODDR with SRTYPE ASYNC by their R and S pins (brief 71B: an IDDR or
+    # ODDR set up as asynchronous is a register with an asynchronous reset the FD*/LD* list alone would miss)
+    set items {}
     foreach c [get_cells -quiet -hierarchical -filter {IS_PRIMITIVE && (REF_NAME =~ FD* || REF_NAME =~ LD*)}] {
         set ref [get_property REF_NAME $c]
-        if {![dict exists $pinof $ref]} { continue }
-        set pn [dict get $pinof $ref]
+        if {[dict exists $pinof $ref]} { lappend items [list $c [dict get $pinof $ref]] }
+    }
+    foreach c [get_cells -quiet -hierarchical -filter {IS_PRIMITIVE && (REF_NAME == IDDR || REF_NAME == ODDR)}] {
+        if {[get_property -quiet SRTYPE $c] eq "ASYNC"} { lappend items [list $c R] [list $c S] }
+    }
+    foreach item $items {
+        lassign $item c pn
+        set ref [get_property REF_NAME $c]
         set pin [get_pins -quiet $c/$pn]
         set net [get_nets -quiet -of_objects $pin]
         if {$net eq ""} { continue }
@@ -87,6 +120,7 @@ proc fda_reset_scan {fname} {
         set pinv [get_property -quiet IS_${pn}_INVERTED $c]
         if {$pinv eq ""} { set pinv 0 }
         set cpin [lindex [get_pins -quiet -of_objects $c -filter {REF_PIN_NAME == C || REF_PIN_NAME == G}] 0]
+        if {$cpin eq ""} { set cpin $pin }
         set cnet [get_nets -quiet -of_objects $cpin]
         if {![info exists clk($cnet)]} { set clk($cnet) [join [get_clocks -quiet -of_objects $cpin] ","] }
         set rclk ""; set rasync ""; set rhier ""
@@ -104,7 +138,7 @@ proc fda_reset_scan {fname} {
             set qn [get_nets -quiet -of_objects [get_pins -quiet $c/Q]]
             if {$qn ne ""} { set qrefs [join [lsort -unique [get_property -quiet REF_NAME [get_cells -quiet -of_objects [get_pins -quiet -leaf -of_objects $qn -filter {DIRECTION == IN && REF_PIN_NAME !~ RST* && REF_PIN_NAME !~ *RST*}]]]] ","] }
         }
-        puts $f [join [list $c $ref $pn $pinv $clk($cnet) [fda_hier_refs $c] $kind $root $rref $rinv [join $path ">"] $rclk $rasync $rhier $dref $qrefs] "\t"]
+        puts $f [join [list $c $ref $pn $pinv $clk($cnet) [fda_hier_refs $c] $kind $root $rref $rinv [join $path ">"] $rclk $rasync $rhier $dref $qrefs [fda_sync_struct $c]] "\t"]
     }
     foreach c [get_cells -quiet -hierarchical -filter {IS_PRIMITIVE && (REF_NAME =~ DSP48* || REF_NAME =~ RAMB*)}] {
         set ref [get_property REF_NAME $c]
@@ -127,7 +161,7 @@ proc fda_reset_scan {fname} {
                 }
                 set rhier [fda_hier_refs $root]
             }
-            puts $f [join [list $c $ref $pn $pinv $cks [fda_hier_refs $c] $kind $root $rref $rinv [join $path ">"] $rclk $rasync $rhier "" ""] "\t"]
+            puts $f [join [list $c $ref $pn $pinv $cks [fda_hier_refs $c] $kind $root $rref $rinv [join $path ">"] $rclk $rasync $rhier "" "" [fda_sync_struct $c]] "\t"]
         }
     }
     close $f

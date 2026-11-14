@@ -1,0 +1,217 @@
+# brief 71B: the 212 attack cases of the third review (flow/tests/data/b71b_cases), each with its expected outcome.
+#   RST-code list = the source part raises exactly these rules; clean = ran and found nothing (reason noted);
+#   partial = the source part could not elaborate or read a file, so the check is PARTIAL, never a pass.
+# Several hidden flops were completed to `if (!rst_n) q<=0; else q<=d;` (the reviewer's were unsynthesisable and a real
+# front end rightly rejects them); the originals are in the review hand-off.
+always_at_ident: clean  # a level-sensitive event, no reset
+always_attr_before: HDL-RST-01
+always_begin_at: partial
+always_comb_edge: HDL-RST-01
+always_comment_between: HDL-RST-01
+always_ff_bare: partial
+always_ff_label_then: HDL-RST-01
+always_ifdef_at: clean  # the `else branch is built (A is not defined): synchronous
+always_latch_begin: partial
+always_latch_nonrst: partial
+always_level_sens: HDL-RST-01
+always_star_latch: clean  # combinational: every branch assigns, so no latch
+always_star_paren: clean  # combinational
+always_star_rst: clean  # combinational
+apos_not_str: partial
+arch_exempt_internal_same_name: HDL-RST-01
+arch_exempt_top_ports_pre_ansi: clean  # declared external input on a top port
+arch_exempt_top_with_params: clean  # declared external input on a top port
+arch_top_wrong_module_same_name_exempt: clean  # the submodule reset comes from the declared top port (traced through the hierarchy)
+assign_async_clk_gate_reset: HDL-RST-01
+async_after_endmodule_no_unit: partial
+async_in_include_cmt: partial
+async_in_include_h_at_top_only: HDL-RST-01
+async_in_nonreset_name: partial
+async_latch_ldce_arr: HDL-RST-01
+async_name_nonmatch: partial
+async_set_only_one_edge_with_clk_in_body: clean  # a register clocked by rst_n (a clock, not an asynchronous reset pin)
+attr: HDL-RST-01
+attr_after_always: HDL-RST-01
+bad_yaml: HDL-RST-01
+bind_checker: partial
+blockcmt_hides: clean  # the async list is in a comment
+blockcmt_multi: HDL-RST-01
+char_slash: HDL-RST-01
+class: clean  # a class is not synthesised
+class_module_decl_sync: clean  # synchronous
+class_then_mod_always: HDL-RST-01
+clean_sync: clean  # synchronous reset
+clk_second: HDL-RST-01
+cmt_backslash_nl: HDL-RST-01
+cmt_cr_only: HDL-RST-01
+cmt_endmodule: HDL-RST-01
+cmt_module_before: HDL-RST-01
+cmt_nested_open: HDL-RST-01
+cmt_tick_in_define: partial
+comma: HDL-RST-01
+config_block: clean  # no registers
+define_edge: HDL-RST-01
+define_whole_always: HDL-RST-01
+dir_as_sv: partial
+dot_star_inst: partial  # the module is not defined in the build and is not an AMD primitive: its body is not judged
+dpi_import: HDL-RST-01
+dsp_async_inst_primitive_lc: HDL-RST-01
+dup_listed: HDL-RST-01
+edge_kw: partial
+escaped_ident: HDL-RST-01
+ext_sv2: HDL-RST-01
+ext_sverilog: HDL-RST-01
+ext_upper: HDL-RST-01
+ext_vh_only: partial
+func_in_always: HDL-RST-01
+gated_async_two_always: HDL-RST-01
+generate_always_star_latch: partial
+genfor: HDL-RST-01
+hier_edge: partial
+ifdef_define_build: HDL-RST-01
+ifdef_module_hdr: HDL-RST-01
+ifdef_skip: clean  # FOO is not defined: synchronous
+iff: partial
+ifndef: HDL-RST-01
+inc_abs: partial
+inc_angle: HDL-RST-01
+inc_block_cmt: HDL-RST-01
+inc_block_cmt_open: partial
+inc_cmt_with_quote: HDL-RST-01
+inc_commented: HDL-RST-01
+inc_cycle: partial
+inc_defines_then_module_in_include: HDL-RST-01
+inc_dir_search_sibling: partial
+inc_empty_after: HDL-RST-01
+inc_hdr_with_license_then_modules: HDL-RST-01
+inc_ifdef_guard: HDL-RST-01
+inc_in_dir_other: HDL-RST-01
+inc_leading_cmt: HDL-RST-01
+inc_leading_cmt2: HDL-RST-01
+inc_line_cmt_in_middle: HDL-RST-01
+inc_macro_name: HDL-RST-01
+inc_nested: HDL-RST-01
+inc_nocr_nl_end_cmt: HDL-RST-01
+inc_svh_only_module_listed: HDL-RST-01
+inc_trailing_line_cmt_in_x: HDL-RST-01
+include_dup_guard_double: HDL-RST-01
+interface_modport: partial
+ip_xci: partial
+latch_name_clr: partial
+latch_name_nonmatch: partial
+level_in_sens_edge_alias: partial
+mac_arg_dff: HDL-RST-01
+mac_arg_inside: HDL-RST-01
+mac_define_inside_mod: HDL-RST-01
+mac_in_header: HDL-RST-01
+mac_in_module: HDL-RST-01
+module_in_macro: HDL-RST-01
+module_ws_name_dollar: HDL-RST-01
+multi_mod: clean  # module y is never instantiated by the top x
+newline_in_sens: HDL-RST-01
+no_files: partial
+no_if_async: HDL-RST-01
+no_sources_key: partial
+nomodule_always: partial
+nonutf8: HDL-RST-01
+odd_ws: HDL-RST-01
+only_svh: partial
+package: clean  # no registers
+param_edge: HDL-RST-01
+pkg_always_after: HDL-RST-01
+pol_and_cond: partial
+pol_both_in_nested: clean  # the second block is an enable, not a reset
+pol_bus_bit: partial
+pol_cond_ternary: clean  # one reset use only
+pol_in_case: clean  # one block is a case on rst_n: an enable
+pol_inst_ports: partial  # the module is not defined in the build and is not an AMD primitive: its body is not judged
+pol_two_modules_fine: clean  # y is not instantiated
+pol_unless_paren: partial
+prim_FDCE_1: HDL-RST-01
+prim_FDCE_no_params_paren_in_param: HDL-RST-01
+prim_FDCPE: HDL-RST-01
+prim_FDPE_1: HDL-RST-01
+prim_LDCE_1: HDL-RST-01
+prim_arr: HDL-RST-01
+prim_arr_ws: HDL-RST-01
+prim_fdcpe: HDL-RST-01
+prim_fdre_async_set: HDL-RST-01
+prim_generate: HDL-RST-01
+prim_in_decl_unit_before: HDL-RST-01
+prim_in_macro: HDL-RST-01
+prim_ldce_1: HDL-RST-01
+prim_lowercase: partial  # the module is not defined in the build and is not an AMD primitive: its body is not judged
+prim_no_inst_name_arr: HDL-RST-01
+prim_param_after: partial
+prim_param_nested_paren: HDL-RST-01
+prim_unisim_bare: HDL-RST-01
+program_blk: clean  # a program block is a test bench construct
+sens_array: partial
+sens_async_only_one_edge: clean  # a register clocked by rst_n
+sens_at_star_comb_edge: HDL-RST-01
+sens_at_star_spaced: clean  # combinational
+sens_clock_hier: partial
+sens_clock_hier_both: partial
+sens_ddr: partial
+sens_expr_index: partial
+sens_in_comment_end_str: HDL-RST-01
+sens_neg_edge_both_nonreset: partial
+sens_notest_first_edge_is_reset: partial
+sens_param_idx: partial
+sens_posedge_two_where_tested_clk: partial
+sens_slice: partial
+sens_tested_is_clk_misleading: partial
+sens_tested_is_rst_so_clk_is_rst: partial
+sens_tested_rst_n_clk_first_edge_bad: HDL-RST-01
+sens_wait_fork_inside_always: partial
+sources_dict_form: HDL-RST-01
+sources_glob_miss_case: partial
+sources_missing_file: partial
+sources_str_not_list: partial
+str_block: HDL-RST-01
+str_cmt_in_str: HDL-RST-01
+str_esc_quote: HDL-RST-01
+str_in_include_path: HDL-RST-01
+str_module: HDL-RST-01
+str_triple: partial
+str_unterminated_before: partial
+str_with_slashes: HDL-RST-01
+sub_in_dotsv_symlink_outside: clean  # no registers
+sub_in_sv_nonrtl: clean  # module y is listed but never instantiated by the top x
+sub_in_sverilog: HDL-RST-01
+sub_in_svp: partial
+sub_with_async_in_other_file_listed_vlg: HDL-RST-01
+sv_plus_vlg_clean: clean  # module y is never instantiated by the top x
+sync_block_with_inner_async: HDL-RST-01
+sync_declared_comment_xpm: HDL-RST-01
+sync_declared_only_impostor_name: partial
+sync_declared_second_module_leak: HDL-RST-01
+sync_declared_xpm_in_str: HDL-RST-01
+sync_declared_xpm_wrong_inst: HDL-RST-01
+sync_reset_sync_in_shell_path: HDL-RST-01
+sync_two_async_in_declared_synchroniser: partial
+sync_via_substring: clean  # declared synchroniser that contains an xpm_cdc_async_rst: its subtree is exempt (documented)
+synchroniser_declared_fake: partial
+synchroniser_declared_str: partial
+task: clean  # a task never called
+tested_is_clk_two_edges_only_rst_reversed: partial
+top_in_header_cmt_exempt: HDL-RST-01
+top_in_second_file_arch: clean  # declared external input on a top port
+top_inc_macro: HDL-RST-01
+top_internal_decl_after_params_nonansi: partial
+top_port_in_default_expr: HDL-RST-01
+top_ports_from_first_paren_is_param: HDL-RST-01
+two_clock_noreset: partial
+uc_posedge: partial
+unisim_comp_decl: HDL-RST-01
+unit_in_string_start: HDL-RST-01
+unit_kw_extern: HDL-RST-01
+unit_kw_in_ident: HDL-RST-01
+unterminated_cmt: partial
+upper_ws: partial
+vhdl_only: partial
+wait_event_in_always: clean  # a register clocked by rst_n
+wait_style_async: clean  # a register clocked by rst_n
+xdc_only_extra_ip_verilog: clean  # no registers
+xpm_reg_async: clean  # only an XPM reset synchroniser
+xpm_wrong: clean  # no reset
