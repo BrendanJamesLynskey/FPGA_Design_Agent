@@ -36,6 +36,10 @@ The flow itself was proven first, by hand on one small design, with machine-chec
 it (the first two milestones, F0A for the build and F0B for the board). Everything the agent produces has the same
 shape as `designs/t1_dimmer_counter/`.
 
+How the agent was built, evaluated and improved (a timeline, an experiment card for each test including the nulls and the stopped
+evaluation, the method and the improvement loop): the site's "How it was built" page, source `site/story/story.yaml`, with the
+measured lessons in [docs/agent_lessons.md](docs/agent_lessons.md).
+
 Showcase pages for projects built with the agent follow one template: [docs/showcase_pages.md](docs/showcase_pages.md).
 Every design, `ip_lib` entry and results folder is documented for the next engineer to
 [docs/documentation_standard.md](docs/documentation_standard.md) (brief 68): each design has one `handover.yaml` (the facts,

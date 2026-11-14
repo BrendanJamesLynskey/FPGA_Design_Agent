@@ -29,6 +29,7 @@ REPO = "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent"
 PAGES = [  # file, nav label, title, description, data keys inlined
     ("index.html", "Home", "FPGA Design Agent", "An agentic FPGA design environment: from a plain-English request to a bitstream proven on the board. Language-model agents write the spec, tests and RTL; code-run gates, hidden tests and the board judge them; every number is read from a committed result file.", ["loop", "dev"]),
     ("agent.html", "The agent", "The agent", "The agent itself: a LangGraph controller over Deep Agents or Claude Code role agents, drawn from its code, with a recorded run replayed through the diagrams.", ["agent_graph"]),
+    ("story.html", "How it was built", "How the agent was built", "How the agent was designed, measured and corrected: a timeline, an experiment card for every test including the nulls and the stopped evaluation, the method, the improvement loop and the lessons, with every number read from a committed result file.", []),
     ("how.html", "How it works", "How it works", "The stages, the verification gates V0 to V3, mutation testing, the knowledge bank and the tools, with a stage walk-through replayed from a real run record.", ["replay"]),
     ("flow-notes.html", "Beyond the flow", "Beyond the standard flow", "Where the agent's flow goes further than the standard Vivado flow: missing CDC constraints, crossings report_cdc cannot see, timing exceptions that hide failures, and more, each with its evidence and status.", ["flow_notes"]),
     ("expertise.html", "Expertise", "Areas of expertise", "What the agent knows, what its flow checks and what has been measured, area by area, in drawers; each area states how far its evidence goes.", []),
@@ -178,6 +179,9 @@ def block(name, d):
     if name in ("expertise_levels", "expertise_ladder", "expertise_drawers"):
         import expertise_page
         return getattr(expertise_page, name.split("_", 1)[1])(d["expertise"])
+    if name == "story_body":
+        import story_page
+        return story_page.body(d["story"])
     if name.startswith("agent_") or name.startswith("harness_"):
         return agent_block(name, d)
     if name.startswith("loop_"):
@@ -425,7 +429,7 @@ def build(outdir: Path, d, check_numbers=True):
     js = (SRC / "app.js").read_text()
     # the showcase projects' own text never enters the number check (it would vouch for its own numbers); the showcase
     # pages are checked against the shared data plus each project's resolved values and hero data
-    shared = {k: v for k, v in d.items() if k not in ("tasks", "showcase")}
+    shared = {k: v for k, v in d.items() if k not in ("tasks", "showcase", "story")}
     sc_values = {P["id"]: {"values": P["values"], "hero": P["hero"]["data"]}
                  for P in d.get("showcase", {}).get("projects", []) if P["status"] == "published"}
     if "catalogue" in d:
@@ -434,7 +438,8 @@ def build(outdir: Path, d, check_numbers=True):
     for fname, label, title, desc, keys in PAGES:
         body = render_template((SRC / fname).read_text(), d)
         pages[fname] = layout(fname, title, desc, body, keys, shared, css, js)
-        page_data[fname] = {"shared": shared, "showcase_values": sc_values} if fname == "showcase.html" else shared
+        page_data[fname] = ({"shared": shared, "showcase_values": sc_values} if fname == "showcase.html"
+                            else {"shared": shared, "story": d["story"]["check"]} if fname == "story.html" else shared)
     if "catalogue" in d:
         order = task_order(d)
         for i, r in enumerate(order):
@@ -473,7 +478,7 @@ def build(outdir: Path, d, check_numbers=True):
         allow = allow_tokens()
         cache = {}
         for fname, page in pages.items():
-            key = fname if fname.startswith(("problems/", "showcase/", "blockdesign/")) or fname == "showcase.html" else "_shared"
+            key = fname if fname.startswith(("problems/", "showcase/", "blockdesign/")) or fname in ("showcase.html", "story.html") else "_shared"
             if key not in cache:
                 cache[key] = data_tokens(page_data[fname]) | allow
             ok = cache[key]
