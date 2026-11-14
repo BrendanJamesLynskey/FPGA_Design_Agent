@@ -104,6 +104,7 @@ def test_v2_manifest_matches_the_task_and_the_ledger(task: Path) -> None:
 
 def test_public_v2_tasks_are_exactly_the_ledger_development_tasks() -> None:
     dev = {d["task"] for e in S.read_ledger() if e["kind"] == "draw" for d in e["dev"]}
+    dev |= {e["task"] for e in S.read_ledger() if e["kind"] == "move" and "manifest" in e}      # family moves
     assert {d.name for d in V2} == dev, "benchmark/v2/tasks must hold the development tasks the ledger names, and no others"
     assert {p.stem for p in (BENCH / "v2" / "manifests").glob("*.json")} == dev
 

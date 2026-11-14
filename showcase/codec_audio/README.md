@@ -9,8 +9,11 @@ are phases 2 and 3 of [the brief](../../README.md).
 
 **Status of phase 1 (2026-11-14): complete.** Six benchmark tasks (five probes of one block each and one for the whole path,
 domain O, board Nexys A7-100T) were written to the v2 layout, checked, frozen, submitted to the split ledger and drawn: in each
-cell of three, one is held out. The four development tasks are in [benchmark/v2/tasks](../../benchmark/v2/tasks) (`v2_o_gain_ramp`,
-`v2_o_peak_meter`, `v2_o_i2s_tx`, `v2_o_audio_path`); the two held-out ones are by design neither named nor quoted here. Nothing in
+cell of three, one was drawn as held out. The six tasks form one task family (the whole-path task contains the block
+tasks and they share benches, tops and spec text above the leak-guard threshold), so on 2026-11-14 the family was re-drawn as a
+unit and all six are development tasks (dated amendment in [benchmark/AMENDMENTS.md](../../benchmark/AMENDMENTS.md)): `v2_o_gain_ramp`,
+`v2_o_peak_meter`, `v2_o_rms_meter`, `v2_o_i2s_rx`, `v2_o_i2s_tx` and `v2_o_audio_path` are in [benchmark/v2/tasks](../../benchmark/v2/tasks).
+Domain O therefore has no held-out task. Nothing in
 this folder quotes a hidden test.
 
 ## What is here

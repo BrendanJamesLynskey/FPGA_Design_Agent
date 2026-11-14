@@ -391,6 +391,20 @@ def catalogue(runs):
                     rows.append({k: pg[k] for k in ("id", "set", "tier", "title", "heading", "board", "domain", "showcase")} |
                                 {"runs": len(pg["runs"]), "hidden_passes": sum(1 for r in pg["runs"] if r["hidden_pass"]),
                                  "mutants": len(pg["mutants"]), "trace_steps": len(pg["trace"]["x"]) if pg["trace"] else 0})
+    for e in ledger():                       # brief 83: a v2 held-out task moved to development (family re-draw)
+        if e["kind"] == "move" and "manifest" in e:
+            d = next(x for x in ledger() if x["kind"] == "draw" and x["held_out"]["manifest"] == e["manifest"])
+            c = v2cells[f'{d["domain"]}/{d["tier"]}']
+            c["held_out"] -= 1
+            c["dev"] += 1
+            tdir = V2 / "tasks" / e["task"]
+            if tdir.exists() and e["task"] in cy["tasks"] and e["task"] in desc:
+                cat = dict(cy["tasks"][e["task"]]); cat["_showcase"] = cy["showcase"]
+                pg = task_page("v2", d["tier"], e["task"], tdir, cat, desc[e["task"]], runs)
+                pages[e["task"]] = pg
+                rows.append({k: pg[k] for k in ("id", "set", "tier", "title", "heading", "board", "domain", "showcase")} |
+                            {"runs": len(pg["runs"]), "hidden_passes": sum(1 for r in pg["runs"] if r["hidden_pass"]),
+                             "mutants": len(pg["mutants"]), "trace_steps": len(pg["trace"]["x"]) if pg["trace"] else 0})
     held_ids = {h["id"] for h in held}
     assert not held_ids & set(pages), "a held-out task has a page"
     idx = {

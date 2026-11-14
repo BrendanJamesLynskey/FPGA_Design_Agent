@@ -114,7 +114,7 @@ def test_a_task_cannot_be_submitted_twice_or_without_a_seed(tmp_path) -> None:
 
 def test_committed_ledger_and_seen_five() -> None:
     assert not S.verify_ledger()
-    moved = {e["task"] for e in S.read_ledger() if e["kind"] == "move"}
+    moved = {e["task"] for e in S.read_ledger() if e["kind"] == "move" and "manifest" not in e}
     assert moved == set(S.SEEN) and len(moved) == 5
     eff = S.effective()
     held = {i for k, v in eff.items() if k != "pending" for i in v["held_out"]}
@@ -144,3 +144,18 @@ def test_seeds_published_for_every_domain_and_tier() -> None:
     assert all(sorted(v) == ["T1", "T2", "T3", "T4", "drill"] for v in seeds.values())
     flat = [v for d in seeds.values() for v in d.values()]
     assert len(flat) == 100 and len(set(flat)) == 100
+
+
+def test_family_move_records_a_held_out_manifest_and_makes_it_development(tmp_path: Path) -> None:
+    led = tmp_path / "l.jsonl"
+    for i in range(3):
+        S.submit("b", "A", "T1", _m(i), f"t{i}", seeds=SEEDS, path=led, private_dir=tmp_path / "p")
+    held = next(e for e in S.read_ledger(led) if e["kind"] == "draw")["held_out"]["manifest"]
+    with pytest.raises(SystemExit):
+        S.move_dev_v2("x", _m(9), "family", path=led)                       # not a held-out manifest
+    S.move_dev_v2("held", held, "shares structure with development tasks", path=led)
+    with pytest.raises(SystemExit):
+        S.move_dev_v2("held", held, "again", path=led)
+    assert not S.verify_ledger(led, SEEDS)
+    assert S.current_manifests(S.read_ledger(led))["held"] == held
+    assert held not in S.effective(path=led)["v2:A/T1"]["held_out"] and "held" in S.effective(path=led)["v2:A/T1"]["dev"]
