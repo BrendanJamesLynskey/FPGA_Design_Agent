@@ -1,0 +1,81 @@
+# Formal specification of the streaming power-spectrum core (brief 79, ladder project 5). Planner's copy: the agent is given request.md only,
+# and a spec oracle answers its questions from this file.
+schema: fpga-design-agent/spec/v0
+name: fft_analyser
+title: Streaming FFT power-spectrum core with windowing and averaging
+source: request.md
+tier: T3
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: fft_analyser_top
+design_id: 0x46465432          # "FFT2"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised
+  effect: settings, memory, results, DONE and the elapsed count cleared
+
+parameters:
+  N_MAX: 1024                 # largest frame; 64, 256 and 1024 are supported
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+
+product_numbers:
+  sizes: "64, 256, 1024 points; log2(N) / 2 radix-2^2 stages or log2(N) radix-2 stages, one single-path delay-feedback stage per halving"
+  windows: "rectangular, Hann, Hamming (tables in the behaviour section)"
+  averaging: "1, 2, 4, 8, 16 frames"
+  throughput: "one sample per clock, no gaps: K frames take at least N K and at most N K + N + 64 clocks"
+  accuracy_vs_float: "each output component within 2.0 least-significant bits of the floating-point FFT scaled by 1/N, for a 0.9 full-scale tone with a Hann window at every size"
+  sfdr: "a coherent 0.9 full-scale tone with a Hann window, 8 frames averaged: the largest spur is at least 70 dB below the tone, bins within 2 of it excluded"
+  noise_floor: "the quantisation noise of the transform, measured as the rms error against the float FFT, below 0.5 least-significant bit at every size"
+  latency: "the spectrum of a frame is complete N - 1 samples after the frame's last sample (one frame of delay in a single-path delay-feedback pipeline) plus a few clocks"
+
+behaviour:
+  windows:
+    - "Hann w[i] = min(32767, floor(16384 (1 - cos(2 pi i / N)) + 0.5)); Hamming w[i] = floor(32767 (0.54 - 0.46 cos(2 pi i / N)) + 0.5); double precision; windowed sample (x w + 16384) >> 15, ties up; rectangular passes the sample."
+  fft:
+    - "Radix-2 decimation in frequency, log2(N) stages in place; per butterfly S = (a + b + 1) >> 1 per part and T = ((a - b) W + 32768) >> 16 per part with W = (floor(32767 cos(2 pi t / M) + 0.5), -floor(32767 sin(2 pi t / M) + 0.5)); limited to 16 bits (the scaling makes the limit unreachable for 16-bit inputs). Overall scaling 1/N. Natural-order bin k is the array element at the bit reversal of k. A radix-2^2 pipeline may change where a rounding happens and is accepted if it meets the accuracy and SFDR numbers; the reference model is the radix-2 arithmetic above."
+  power:
+    - "P[k] = re^2 + im^2, exact, unsigned. Averaged result R[k] = (sum of P over K frames + K / 2) >> log2 K for k = 0 .. N/2 - 1."
+  run:
+    - "The core replays a memory of N samples K times (frame f is the memory rotated by 5 f samples), one sample per clock, and gives the K-frame averaged spectrum and the number of clocks the run took."
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  async_inputs: CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: slow registered outputs
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.1)
+  map:
+    - {offset: 0x00, name: CTRL, access: WO, reset: 0, bits: "[0] GO; [1] CLEAR"}
+    - {offset: 0x01, name: CFG, access: RW, reset: 0, bits: "[1:0] window; [3:2] size (0: 64, 1: 256, 2: 1024); [6:4] log2 of the frames averaged (0..4)"}
+    - {offset: 0x02, name: STATUS, access: RO, reset: 0, bits: "[0] BUSY; [1] DONE"}
+    - {offset: 0x03, name: BIN, access: RW, reset: 0, bits: "[9:0] bin read through BIN_VAL"}
+    - {offset: 0x04, name: BIN_VAL, access: RO, reset: 0, bits: "[31:0] averaged power of bin BIN, 0 until DONE"}
+    - {offset: 0x05, name: ELAPSED, access: RO, reset: 0, bits: "[31:0] clocks of the last run"}
+    - {offset: 0x40, name: STIM, access: RW, reset: 0, bits: "sample memory window (64 words on the UART shell's 7-bit window; larger sizes are loaded through STIM_ADDR)"}
+    - {offset: 0x06, name: STIM_ADDR, access: RW, reset: 0, bits: "[9:0] base of the 64-word STIM window"}
+
+requirements:
+  - {id: REQ-01, text: "The averaged bins equal the reference model's bit for bit for every size, window and averaging setting (radix-2 arithmetic), or meet REQ-02 and REQ-03 if a different arithmetic is used", proof: [simulation]}
+  - {id: REQ-02, text: "Every output component of a frame is within 2.0 LSB of the floating-point FFT scaled by 1/N", proof: [simulation]}
+  - {id: REQ-03, text: "A coherent 0.9 full-scale tone with a Hann window, 8 frames averaged, has a spurious-free range of at least 70 dB", proof: [simulation]}
+  - {id: REQ-04, text: "A run of K frames of N samples takes between N K and N K + N + 64 clocks, with the input accepted on every clock", proof: [simulation]}
+  - {id: REQ-05, text: "The design closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+  - {id: REQ-06, text: "On the board a replayed memory gives the same bins as the simulation", proof: [hardware]}
+
+assumptions:
+  - assumption: the benchmark task for this project (written separately, not in this folder) uses 64-point frames because the shell's window addresses 64 words directly.
+    reason: this specification states the product; the task is a slice of it.
+
+open_questions: []
