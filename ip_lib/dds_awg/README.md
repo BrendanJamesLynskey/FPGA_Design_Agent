@@ -23,7 +23,7 @@ Out-of-space values fail at elaboration with `$error` (tested: `LUT_W=2`, `IMPL=
 
 - `sample`: native; tick, step, wave, amp_shift -> sample (signed), phase_o
 
-Clocks: `clk`. Reset: `rst`, active high, synchronous.
+Clocks: `clk`. Reset: `rst`, active high, synchronous. In the `bram` variant `rst` is not a pin of the block RAM: the reset and the tick choose the read address (reset reads entry 0, which is zero; a tick reads the next phase's entry; otherwise the current entry is read again), so the RAM has no reset or enable driven by the reset (AMD DRC REQP-1840: a block-RAM control pin must not come from a register with an asynchronous set or reset, and the shell's reset bridge is one). Behaviour is unchanged (brief 70, 2026-11-14).
 
 ## Latency and throughput
 

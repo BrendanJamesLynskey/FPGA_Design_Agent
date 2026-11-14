@@ -311,6 +311,14 @@ def _resets(ctx: Ctx) -> dict[str, Any]:
                                 unmatched=unmatched, ip_names=_ip_names(ctx))
     else:
         parts["source"] = "not run: no sources in build.yaml"
+    # AMD IP in the design: what its resets need (flow/amd_ip_resets.py, brief 70); advice, never a failure
+    from flow import amd_ip_resets as AIR
+    for name, files in sorted(AIR.scan([ctx.design]).items()):
+        fs.append({"tool": "resets", "code": "RST-IP-01", "rule": "HDL-RST-06", "severity": "warning", "file": None, "line": None,
+                   "where": ", ".join(Path(f).name for f in files[:2]) or name, "key": f"resets:RST-IP-01 {name}", "count": 1,
+                   "message": f"{AIR.MAP[name]['title']}: " + "; ".join(AIR.notes_for(name)[:3])[:400],
+                   "fix": "give the IP the reset it needs (polarity, synchronised to its clock, held long enough); see the KB skill amd-ip-reset-map",
+                   "blocking": False})
     records = []
     if ctx.scope == "rtl":
         parts["amd"] = parts["netlist"] = "not run: scope rtl (needs a synthesised design)"
@@ -333,6 +341,15 @@ def _resets(ctx: Ctx) -> dict[str, Any]:
             records.append(scan)
         else:
             parts["netlist"] = "not run: " + ctx.not_run_reason("reset_scan")
+    # the measured cost behind each of our findings (results/70_resets, flow/checks/reset_costs.json), for the design's family
+    try:
+        part = str((yaml.safe_load((ctx.design / "build.yaml").read_text()) or {}).get("part") or "")
+    except (OSError, yaml.YAMLError):
+        part = ""
+    for f in fs:
+        note = R.cost_note(str(f.get("code", "")), part)
+        if note:
+            f["cost"] = note
     # polarity (HDL-RST-02): judged on the elaborated source (every reset pin of every register, traced to its root signal)
     # and again on the netlist; it ran when either did
     parts["polarity"] = "ran" if parts.get("source") == "ran" or parts.get("netlist") == "ran" else \
@@ -639,8 +656,8 @@ register(Check("lint", "source", ALL, {"verilator": ("*",)},
 register(Check("standards", "source", ALL, {"standards": ("*",)},
                "the design-standards checker (flow/standards_check.py; post-synthesis rules at synth/route)", _standards))
 register(Check("resets", "vivado", ALL, {"resets": ("RST-ASYNC-01", "RST-POL-01", "RST-POL-02", "RST-DSPRAM-01", "RST-CDC-01",
-                                                    "RST-LUT-01"),
-                                         "vivado": ("LUTAR-1", "DPIR-1", "DPIR-2", "DPIR-3", "DPOR-1", "DPOR-2", "DPOR-3",
+                                                    "RST-LUT-01", "RST-IP-01"),
+                                         "vivado": ("LUTAR-1", "DPIR-1", "DPIR-2", "DPIR-3", "DPOR-1", "DPOR-2", "DPOR-3", "REQP-1840",
                                                     "RMIR-1", "RMOR-1", "RROR-1", "ROAS-1", "CDC-7", "CDC-8")},
                "the house reset rules: AMD's LUTAR/DPIR/DPOR/RMIR/RMOR/RROR/ROAS and report_cdc reset rows, plus our source "
                "scan and netlist scan (flow/checks/resets.py)", _resets, reports=("methodology", "drc", "cdc", "reset_scan"),
@@ -737,6 +754,7 @@ def _finish(name: str, raw: dict[str, Any], rs: dict[str, Any], waivers: list[di
                    "where": f.get("where", ""), "key": key, "message": f.get("message", ""),
                    "fix": f.get("fix") or rule.get("fix", ""), "skill": rule.get("skill", ""),
                    "blocking": bool(f.get("blocking", True)), "count": f.get("count", 1),
+                   **({"cost": f["cost"]} if f.get("cost") else {}),
                    **({"waived": {"reason": w["reason"], "owner": w["owner"], "date": str(w["date"])}} if w else {})})
     open_ = [f for f in fs if f["blocking"] and ("waived" not in f or CHECKS[name].gate_mirror)]
     for f in fs:
@@ -900,6 +918,7 @@ def digest(rep: dict[str, Any], level: str = "summary") -> str:
                 tag = "waived" if "waived" in f else ("" if f["blocking"] else "advisory")
                 lines.append(f"  {f['rule']} {f['code']} {f['where'][:70]}{' [' + tag + ']' if tag else ''}: {f['message'][:160]}"
                              + (f" | fix: {f['fix'][:140]}" if f.get("fix") and f["blocking"] else "")
+                             + (f" | {f['cost'][:150]}" if f.get("cost") and f["blocking"] else "")
                              + (f" | skill: {f['skill']}" if f.get("skill") else ""))
             if len(fs) > n:
                 lines.append(f"  ... {len(fs) - n} more in the full report")

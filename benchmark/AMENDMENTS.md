@@ -50,6 +50,19 @@ grader or split changed; the Modeller's and the Verifier's requests are unchange
 Re-recorded: the request golden `agent/tests/fixtures/b73_request_golden.json` (one deliberate re-pin; earlier goldens stay
 as history). Not comparable on request text: agent runs recorded before 2026-11-14 (brief 73).
 
+## 2026-11-14: the Designer's reset rules in the text sent to models (request golden re-pin, brief 70)
+
+**Amended 2026-11-14 (planner decision in brief 70 under "Benchmarks do not block improvements"; owner rule of 2026-11-13, "Follow
+AMD's design recommendations; resets are synchronous").** What: the Designer's prompt states the reset rules: follow AMD's design
+recommendations (UG949); resets are synchronous, an asynchronous reset only in a reset or CDC synchroniser or where an external
+device's reset is asynchronous; reset only what needs it; one polarity per reset inside the design (`aresetn` at AXI ports, active high
+inside, inverted once); the DSP and block-RAM registers take a synchronous reset or none and no asynchronous register or logic drives
+their reset pins. Changed: `agent/graph/run.py` PROMPTS["rtl"] only. No task spec, reference RTL, test, mutant, grader or split changed;
+the clarify, Modeller and Verifier requests and the tool registry are unchanged.
+
+Re-recorded: the request golden `agent/tests/fixtures/b70_request_golden.json` (one deliberate re-pin; earlier goldens stay as history).
+Not comparable on request text: agent runs recorded before 2026-11-14 (brief 70).
+
 ## 2026-11-13: role names in the text sent to models (request golden re-pin, brief 68 C)
 
 **Amended 2026-11-13 (planner decision in brief 68 under "Benchmarks do not block improvements"; eval-1 was stopped with no

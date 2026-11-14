@@ -16,7 +16,9 @@ run):
   ids, verified against ``get_methodology_checks``/``get_drc_checks``: results/71_check_suite/rule_catalogue_2026_1.tsv):
   LUTAR-1 (a LUT drives an asynchronous reset), DPIR-1/-2 and DPIR-3/DPOR-1..3 (asynchronous registers next to a DSP),
   RMIR-1, RMOR-1, RROR-1 (multiplier and RAM registers with an asynchronous reset; Advisory, so reported, not counted by
-  the lint ruleset), ROAS-1 (both asynchronous set and reset), and report_cdc's asynchronous-reset rows.
+  the lint ruleset), REQP-1840 (a block-RAM control pin driven by a register with an asynchronous set or reset: a second
+  form of HDL-RST-03, brief 70; seen on a reset synchroniser's output feeding a RAM's reset pin), ROAS-1 (both asynchronous
+  set and reset), and report_cdc's asynchronous-reset rows.
 - **netlist**: ``reset_scan.tsv`` (flow/checks/vivado_checks.tcl: one row per register with a reset pin that is not
   tied off, its root driver traced through buffers and LUT1 cells). RST-ASYNC-01 (an FDCE/FDPE outside a recognised
   synchroniser, not reset by a declared external asynchronous input), RST-POL-01 (one root reset used in both
@@ -49,7 +51,7 @@ XPM = re.compile(r"^xpm_(cdc_(single|array_single|gray|handshake|pulse|sync_rst|
                  r"fifo_(sync|async|axis|axif|axil|base|rst|reg_bit|reg_vec|counter_updn)|memory_\w+)$")
 #: the AMD rule ids the reset check reads (verified on Vivado 2026.1, see the module docstring)
 AMD_METHODOLOGY = ("LUTAR-1", "DPIR-1", "DPIR-2", "RMIR-1", "RMOR-1", "RROR-1", "ROAS-1")
-AMD_DRC = ("DPIR-3", "DPOR-1", "DPOR-2", "DPOR-3")
+AMD_DRC = ("DPIR-3", "DPOR-1", "DPOR-2", "DPOR-3", "REQP-1840")
 AMD_CDC = ("CDC-7", "CDC-8")
 FIX = {
     "RST-ASYNC-01": "make the register's reset synchronous (if (rst) inside always_ff @(posedge clk)); keep asynchronous "
@@ -64,6 +66,53 @@ CODE_RULE = {"RST-ASYNC-01": "HDL-RST-01", "RST-POL-01": "HDL-RST-02", "RST-POL-
              "RST-DSPRAM-01": "HDL-RST-03", "RST-CDC-01": "HDL-RST-04", "RST-LUT-01": "HDL-RST-05"}
 #: every code the reset check can raise, by the hdl_rules.yaml tool key it belongs to
 CODES = {"resets": tuple(CODE_RULE), "vivado": AMD_METHODOLOGY + AMD_DRC + AMD_CDC}
+
+
+# ---- measured costs (brief 70) -------------------------------------------------------------------------------------------------
+#: ``reset_costs.json`` is written by results/70_resets/summary.py from the committed matrix records (Vivado 2026.1, one run each,
+#: xc7a100tcsg324-1 and xck26-sfvc784-2LV-c); flow/tests/test_70_resets.py fails if it differs from what the records give.
+COSTS_FILE = Path(__file__).with_name("reset_costs.json")
+_PARTS = (("xc7", "xc7a100tcsg324-1"), ("xck26", "xck26-sfvc784-2LV-c"), ("xczu", "xck26-sfvc784-2LV-c"))
+
+
+def _costs() -> dict[str, Any]:
+    try:
+        import json
+        return json.loads(COSTS_FILE.read_text())
+    except (OSError, ValueError):
+        return {}
+
+
+def cost_note(code: str, part: str | None) -> str:
+    """One line with the measured cost behind a finding (what the same fault cost on the bench, on the design's family), or ''."""
+    c = _costs().get("parts", {})
+    key = next((v for k, v in _PARTS if (part or "").startswith(k)), "xc7a100tcsg324-1")
+    m = c.get(key)
+    if not m:
+        return ""
+    fam = "UltraScale+" if key.startswith("xck") else "7-series"
+    a = m.get("async_vs_sync_all") or {}
+    if code == "RST-ASYNC-01" and a:
+        return (f"measured, Vivado 2026.1 {fam} bench: an asynchronous reset on every register costs {a['luts']:+d} LUTs and "
+                f"{a['ffs']:+d} flip-flops against a synchronous one (results/70_resets)")
+    if code == "RST-DSPRAM-01" and a:
+        return (f"measured, {fam}: with an asynchronous reset the DSP block's A, B and M registers stay in fabric "
+                f"({a['dsp_block_ffs_async']} flip-flops against {a['dsp_block_ffs_sync']}) and the RAM's output register too "
+                f"({a['ram_block_ffs_async']} against {a['ram_block_ffs_sync']}); results/70_resets")
+    if code in ("RST-POL-01", "RST-POL-02"):
+        p, t = m.get("active_low_vs_active_high_sync_all") or {}, m.get("two_levels_sync_vs_active_low") or {}
+        if p:
+            if key.startswith("xck"):
+                absorbed = "place and route removes the inverter (UG574: the slice inputs have programmable polarity)"
+                two = (f"; one signal tested at both levels adds {t['control_sets']:+d} control set after synthesis and "
+                       f"{t['after_route_control_sets']:+d} after place and route" if t else "")
+            else:
+                absorbed = (f"the inverter stays and reset-pin slack fell from {p['wns_to_reset_pin_active_high']} to "
+                            f"{p['wns_to_reset_pin_active_low']} ns on a 692-load net")
+                two = f"; one signal tested at both levels adds {t['control_sets']:+d} control set" if t else ""
+            return (f"measured, {fam}: an active-low reset is one LUT1 inverter ({p['luts']:+d} LUT, {p['control_sets']:+d} control sets "
+                    f"after synthesis); {absorbed}{two}")
+    return ""
 
 
 def reset_config(design: Path) -> dict[str, Any]:
@@ -363,7 +412,10 @@ def elab_findings(el: Any, design: Path, cfg: dict[str, Any], root: Path, parts:
                     else:
                         add(rel, ln, "RST-ASYNC-01", f"module {base}: {what} has an asynchronous reset or set from {kd} "
                             f"{nm}: an asynchronous reset outside a recognised synchroniser")
-                if not here and kd != "undriven":
+                if not here and kd != "undriven" and not nm.endswith("<unnamed net>"):
+                    # an unnamed net is a different signal at every place, so two of them say nothing about one reset (brief
+                    # 70: b59a's data mux `sel < N ? x : 0` became a synchronous-reset flop that shared the unnamed key
+                    # with the real reset)
                     pol.setdefault((kd, nm), {}).setdefault(eff, (rel, ln))
     for nt, post in ((net, False), (_Net(el.sync_modules, el.top), True)):
         inst = {c["type"] for mod in nt.m.values() for c in mod["cells"].values() if nt.is_inst(c)}

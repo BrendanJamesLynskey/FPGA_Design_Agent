@@ -29,8 +29,27 @@ module dds_awg #(
 
     localparam int N = 1 << LUT_W;
     localparam real PI = 3.14159265358979323846;
+    // The sine table as one constant: entry i is sin(2*pi*i/N) scaled to the output range and truncated toward zero. It is
+    // computed by a constant function, so the tools evaluate it at elaboration (the reset check's front end cannot run
+    // real arithmetic inside an initial block; brief 70). The cast int'(real) rounds, so the function undoes the rounding
+    // when it went away from zero: the same values as truncating with $rtoi.
+    function automatic logic [N*OUT_W-1:0] make_table();
+        real v;
+        int  t;
+        logic [N*OUT_W-1:0] r;
+        r = '0;
+        for (int i = 0; i < N; i++) begin
+            v = $sin(2.0 * PI * i / N) * ((1 << (OUT_W - 1)) - 1);
+            t = int'(v);
+            if (v >= 0.0 && real'(t) > v) t = t - 1;
+            else if (v < 0.0 && real'(t) < v) t = t + 1;
+            r[i*OUT_W +: OUT_W] = OUT_W'(t);
+        end
+        return r;
+    endfunction
+    localparam logic [N*OUT_W-1:0] TABLE = make_table();
     function automatic logic signed [OUT_W-1:0] sine_entry(input int i);
-        return OUT_W'($rtoi($sin(2.0 * PI * i / N) * ((1 << (OUT_W - 1)) - 1)));
+        return TABLE[i*OUT_W +: OUT_W];
     endfunction
 
     logic [PHASE_W-1:0] phase, phase_next;
@@ -45,10 +64,12 @@ module dds_awg #(
         end else begin : g_bram
             (* rom_style = "block" *) logic signed [OUT_W-1:0] rom [0:N-1];
             initial for (int i = 0; i < N; i++) rom[i] = sine_entry(i);
-            always_ff @(posedge clk) begin
-                if (rst) sine <= '0;                                   // entry 0 (phase 0) is zero
-                else if (tick) sine <= rom[phase_next[PHASE_W-1 -: LUT_W]];
-            end
+            // The block RAM has no reset and no enable pin driven from the reset (AMD DRC REQP-1840: a block-RAM control pin
+            // must not come from a register with an asynchronous set or reset, and our reset comes from the shell's reset
+            // bridge). The reset and the tick choose the address instead: reset reads entry 0 (zero), a tick reads the next
+            // phase's entry, otherwise the current entry is read again, so the register holds. Same values as before.
+            wire [LUT_W-1:0] rom_addr = rst ? '0 : tick ? phase_next[PHASE_W-1 -: LUT_W] : phase[PHASE_W-1 -: LUT_W];
+            always_ff @(posedge clk) sine <= rom[rom_addr];
         end
     endgenerate
     logic signed [OUT_W-1:0] raw;
