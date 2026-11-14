@@ -557,11 +557,60 @@ svg .bdtick { stroke: var(--ink-3); }
   .bdparams td.og::before { content: "Source: "; }
   .bdparams td.vl { overflow-wrap: anywhere; }
 }
+
+/* story page (brief 76): timeline, experiment cards, forest plots, ledger; static, no animation */
+.jump { display: flex; flex-wrap: wrap; gap: 4px 6px; margin: 0 0 8px; }
+.jump a { padding: 10px 12px; border: 1px solid var(--rule); background: var(--panel); text-decoration: none; min-height: 44px; display: inline-flex; align-items: center; }
+.sfig svg { max-width: 640px; }
+.sfig text { fill: var(--ink-2); font: 12px var(--f-body); }
+.sfig .flab { fill: var(--ink); font-size: 13px; }
+.sfig .fval, .sfig .sval { font: 12px var(--f-mono); fill: var(--ink-2); }
+.sfig .slab { fill: var(--ink-2); font-size: 11px; }
+.sfig .rule { stroke: var(--rule); stroke-width: 1; }
+.sfig .sbar { fill: var(--ink-3); }
+.sfig .sbox { fill: none; stroke: var(--rule); }
+.sfig .fsig { stroke: var(--ink); stroke-width: 2; }
+.sfig .fnull { stroke: var(--ink-3); stroke-width: 2; stroke-dasharray: 5 2; }
+.sfig .fnullm, .sfig .mfnull { fill: var(--ink-3); }
+.sfig .mfsig { fill: var(--ink); }
+.sfig .mfnull { fill: none; stroke: var(--ink-3); stroke-width: 1.5; }
+.sfig rect.fsigm { fill: none; stroke: var(--ink); stroke-width: 1.5; }
+.tl { list-style: none; margin: 1em 0; padding: 0; border-left: 2px solid var(--rule); }
+.tl li { display: grid; grid-template-columns: 4.5em 1fr; gap: 0 12px; padding: 0 0 22px 14px; position: relative; max-width: none; }
+.tl li::before { content: ""; position: absolute; left: -7px; top: .45em; width: 12px; height: 12px; background: var(--bg); border: 2px solid var(--ink); }
+.tld { font: 600 .85rem var(--f-mono); color: var(--ink-3); padding-top: .2em; }
+.tl h3 { margin: 0 0 .3em; }
+.tl p { margin: 0 0 .45em; }
+.evl { font-size: .85rem; color: var(--ink-3); }
+.vstrip { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 18px; }
+.vstrip .tag { text-decoration: none; text-transform: none; letter-spacing: 0; font-size: .8rem; padding: 6px 9px; min-height: 36px; display: inline-flex; align-items: center; }
+.vt.v-win { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.vt.v-stopped { border-style: dashed; border-width: 2px; }
+.vt.v-null, .vt.v-negative { border-width: 2px; }
+.vt.v-mixed { border-style: dotted; border-width: 2px; }
+.xcards { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); }
+.xcard { min-width: 0; border: 1px solid var(--rule); background: var(--panel); padding: 14px 16px; max-width: none; }
+.xcard.v-stopped { border-style: dashed; }
+.xcard h3 { margin: .4em 0 .6em; }
+.xhead { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.xd { margin: 0 0 .6em; display: grid; grid-template-columns: 9.5em 1fr; gap: 6px 14px; }
+.xd dt { font: 600 .78rem var(--f-mono); text-transform: uppercase; letter-spacing: .05em; color: var(--ink-3); padding-top: .25em; }
+.xd dd { margin: 0; max-width: 70ch; }
+.mgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+.mcard { border: 1px solid var(--rule); background: var(--panel); padding: 4px 16px 6px; }
+.mcard h3 { margin: .8em 0 .3em; font-size: 1rem; }
+.lessons li { margin-bottom: .7em; }
+@media (max-width: 560px) {
+  .xd { grid-template-columns: 1fr; gap: 0; }
+  .xd dt { padding-top: .7em; }
+  .tl li { grid-template-columns: 1fr; }
+  .tld { padding: 0 0 .1em; }
+}
 </style>
 </head>
 <body>
 <a class="visually-hidden" href="#main">Skip to content</a>
-<header class="bar"><div class="wrap"><a class="brand" href="index.html">FPGA Design Agent</a><nav aria-label="Pages"><a href="agent.html">The agent</a><a class="sub" href="agent.html#harness">Harness</a><a href="how.html" aria-current="page">How it works</a><a href="flow-notes.html">Beyond the flow</a><a href="expertise.html">Expertise</a><a href="examples.html">Examples</a><a href="showcase.html">Showcase</a><a href="problems.html">Problems</a><a href="evaluation.html">Evaluation</a><a href="results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
+<header class="bar"><div class="wrap"><a class="brand" href="index.html">FPGA Design Agent</a><nav aria-label="Pages"><a href="agent.html">The agent</a><a class="sub" href="agent.html#harness">Harness</a><a href="story.html">How it was built</a><a href="how.html" aria-current="page">How it works</a><a href="flow-notes.html">Beyond the flow</a><a href="expertise.html">Expertise</a><a href="examples.html">Examples</a><a href="showcase.html">Showcase</a><a href="problems.html">Problems</a><a href="evaluation.html">Evaluation</a><a href="results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
 <main id="main" class="wrap">
 <h1>How it works</h1>
 <p class="lede">A design moves through fixed stages, and each stage ends in a gate: a check run by code, not by the model. The model proposes; the tools judge. <a href="agent.html">The agent</a> shows the controller and the role agents that do this; a short glossary closes the page.</p>
@@ -639,7 +688,7 @@ svg .bdtick { stroke: var(--ink-3); }
 </dl>
 <p class="next">Next: <a href="flow-notes.html">Beyond the flow</a> shows where Vivado run from a script does less than a careful engineer would, and what the environment adds.</p>
 
-<div class="pager"><a href="agent.html">&larr; The agent</a><a href="flow-notes.html">Beyond the flow &rarr;</a></div>
+<div class="pager"><a href="story.html">&larr; How it was built</a><a href="flow-notes.html">Beyond the flow &rarr;</a></div>
 </main>
 <footer><div class="wrap"><p>Designed by Brendan Lynskey. Code and results: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent">github.com/BrendanJamesLynskey/FPGA_Design_Agent</a> (MIT licence). Every number on these pages is read from a committed result file; development results are labelled as such and are not the held-out score.</p></div></footer>
 <script type="application/json" data-key="replay">{"date":"2026-11-07","hidden":"6 of 6","model":"claude-sonnet-5-5","run":5,"stages":["clarify","board-and-device-planning","rtl-design-creation","constraints","synthesis","implementation","timing-closure","power-closure","drc-closure","configuration-and-debug"],"steps":[{"fact":"6 questions asked; 3 answered by the oracle, 3 defaulted; the register map was asked for and the final spec carries 11 registers.","stage":"clarify","stage_no":0,"visit":1,"visits":2},{"fact":"6 questions asked; 3 answered by the oracle, 3 defaulted; the register map was asked for and the final spec carries 11 registers.","stage":"clarify","stage_no":0,"visit":2,"visits":2},{"fact":"Architecture, clocking plan, resource budget on the xc7a100t.","stage":"board-and-device-planning","stage_no":1,"visit":1,"visits":2},{"fact":"Architecture, clocking plan, resource budget on the xc7a100t.","stage":"board-and-device-planning","stage_no":1,"visit":2,"visits":2},{"fact":"RTL, constraints and the independent bench are written; the checks V0 to V3 run here. V3: pass; mutation score 95.0%: 19 killed of 20 evaluated, 0 survived.","stage":"rtl-design-creation","stage_no":2,"visit":1,"visits":3},{"fact":"RTL, constraints and the independent bench are written; the checks V0 to V3 run here. V3: pass; mutation score 95.0%: 19 killed of 20 evaluated, 0 survived.","stage":"rtl-design-creation","stage_no":2,"visit":2,"visits":3},{"fact":"RTL, constraints and the independent bench are written; the checks V0 to V3 run here. V3: pass; mutation score 95.0%: 19 killed of 20 evaluated, 0 survived.","stage":"rtl-design-creation","stage_no":2,"visit":3,"visits":3},{"fact":"Pin and clock constraints checked against the board's master XDC.","stage":"constraints","stage_no":3,"visit":1,"visits":1},{"fact":"Synthesis gates: all pass by the end of the run.","stage":"synthesis","stage_no":4,"visit":1,"visits":1},{"fact":"Place and route; bitstream built.","stage":"implementation","stage_no":5,"visit":1,"visits":1},{"fact":"The run's timing gates passed. Its saved design rebuilt on Vivado 2026.1: post-route setup slack +0.495 ns, hold slack +0.099 ns at 100 MHz.","stage":"timing-closure","stage_no":6,"visit":1,"visits":1},{"fact":"The run's power gate passed. Rebuilt on Vivado 2026.1: vectorless power estimate 0.118 W.","stage":"power-closure","stage_no":7,"visit":1,"visits":1},{"fact":"The run's design-rule gates passed. Rebuilt on Vivado 2026.1: 774 LUT, 753 FF, 12 DSP, 0 BRAM after place and route (test shell included). The rebuild fails one gate added after the run: the I/O-constraint check, because the run's XDC gives slow pins invented input delays.","stage":"drc-closure","stage_no":8,"visit":1,"visits":1},{"fact":"Stops here: hardware: awaiting approval before programming (no board in this run).","stage":"configuration-and-debug","stage_no":9,"visit":1,"visits":2},{"fact":"Stops here: hardware: awaiting approval before programming (no board in this run).","stage":"configuration-and-debug","stage_no":9,"visit":2,"visits":2}],"task":"c14_int8_dot_requant","turns":152,"wall_h":1.42}</script>

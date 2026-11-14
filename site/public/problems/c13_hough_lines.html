@@ -557,11 +557,60 @@ svg .bdtick { stroke: var(--ink-3); }
   .bdparams td.og::before { content: "Source: "; }
   .bdparams td.vl { overflow-wrap: anywhere; }
 }
+
+/* story page (brief 76): timeline, experiment cards, forest plots, ledger; static, no animation */
+.jump { display: flex; flex-wrap: wrap; gap: 4px 6px; margin: 0 0 8px; }
+.jump a { padding: 10px 12px; border: 1px solid var(--rule); background: var(--panel); text-decoration: none; min-height: 44px; display: inline-flex; align-items: center; }
+.sfig svg { max-width: 640px; }
+.sfig text { fill: var(--ink-2); font: 12px var(--f-body); }
+.sfig .flab { fill: var(--ink); font-size: 13px; }
+.sfig .fval, .sfig .sval { font: 12px var(--f-mono); fill: var(--ink-2); }
+.sfig .slab { fill: var(--ink-2); font-size: 11px; }
+.sfig .rule { stroke: var(--rule); stroke-width: 1; }
+.sfig .sbar { fill: var(--ink-3); }
+.sfig .sbox { fill: none; stroke: var(--rule); }
+.sfig .fsig { stroke: var(--ink); stroke-width: 2; }
+.sfig .fnull { stroke: var(--ink-3); stroke-width: 2; stroke-dasharray: 5 2; }
+.sfig .fnullm, .sfig .mfnull { fill: var(--ink-3); }
+.sfig .mfsig { fill: var(--ink); }
+.sfig .mfnull { fill: none; stroke: var(--ink-3); stroke-width: 1.5; }
+.sfig rect.fsigm { fill: none; stroke: var(--ink); stroke-width: 1.5; }
+.tl { list-style: none; margin: 1em 0; padding: 0; border-left: 2px solid var(--rule); }
+.tl li { display: grid; grid-template-columns: 4.5em 1fr; gap: 0 12px; padding: 0 0 22px 14px; position: relative; max-width: none; }
+.tl li::before { content: ""; position: absolute; left: -7px; top: .45em; width: 12px; height: 12px; background: var(--bg); border: 2px solid var(--ink); }
+.tld { font: 600 .85rem var(--f-mono); color: var(--ink-3); padding-top: .2em; }
+.tl h3 { margin: 0 0 .3em; }
+.tl p { margin: 0 0 .45em; }
+.evl { font-size: .85rem; color: var(--ink-3); }
+.vstrip { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 18px; }
+.vstrip .tag { text-decoration: none; text-transform: none; letter-spacing: 0; font-size: .8rem; padding: 6px 9px; min-height: 36px; display: inline-flex; align-items: center; }
+.vt.v-win { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.vt.v-stopped { border-style: dashed; border-width: 2px; }
+.vt.v-null, .vt.v-negative { border-width: 2px; }
+.vt.v-mixed { border-style: dotted; border-width: 2px; }
+.xcards { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); }
+.xcard { min-width: 0; border: 1px solid var(--rule); background: var(--panel); padding: 14px 16px; max-width: none; }
+.xcard.v-stopped { border-style: dashed; }
+.xcard h3 { margin: .4em 0 .6em; }
+.xhead { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.xd { margin: 0 0 .6em; display: grid; grid-template-columns: 9.5em 1fr; gap: 6px 14px; }
+.xd dt { font: 600 .78rem var(--f-mono); text-transform: uppercase; letter-spacing: .05em; color: var(--ink-3); padding-top: .25em; }
+.xd dd { margin: 0; max-width: 70ch; }
+.mgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+.mcard { border: 1px solid var(--rule); background: var(--panel); padding: 4px 16px 6px; }
+.mcard h3 { margin: .8em 0 .3em; font-size: 1rem; }
+.lessons li { margin-bottom: .7em; }
+@media (max-width: 560px) {
+  .xd { grid-template-columns: 1fr; gap: 0; }
+  .xd dt { padding-top: .7em; }
+  .tl li { grid-template-columns: 1fr; }
+  .tld { padding: 0 0 .1em; }
+}
 </style>
 </head>
 <body>
 <a class="visually-hidden" href="#main">Skip to content</a>
-<header class="bar"><div class="wrap"><a class="brand" href="../index.html">FPGA Design Agent</a><nav aria-label="Pages"><a href="../agent.html">The agent</a><a class="sub" href="../agent.html#harness">Harness</a><a href="../how.html">How it works</a><a href="../flow-notes.html">Beyond the flow</a><a href="../expertise.html">Expertise</a><a href="../examples.html">Examples</a><a href="../showcase.html">Showcase</a><a href="../problems.html" aria-current="page">Problems</a><a href="../evaluation.html">Evaluation</a><a href="../results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
+<header class="bar"><div class="wrap"><a class="brand" href="../index.html">FPGA Design Agent</a><nav aria-label="Pages"><a href="../agent.html">The agent</a><a class="sub" href="../agent.html#harness">Harness</a><a href="../story.html">How it was built</a><a href="../how.html">How it works</a><a href="../flow-notes.html">Beyond the flow</a><a href="../expertise.html">Expertise</a><a href="../examples.html">Examples</a><a href="../showcase.html">Showcase</a><a href="../problems.html" aria-current="page">Problems</a><a href="../evaluation.html">Evaluation</a><a href="../results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
 <main id="main" class="wrap">
 <p class="crumbs small"><a href="../problems.html">Problems</a> / <a href="../problems.html#dom-S">S. Computer vision</a></p>
 <h1>Hough line accumulator behind the test shell</h1>
