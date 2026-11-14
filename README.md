@@ -283,6 +283,8 @@ standard.
   CDC, methodology, DRC, exceptions, I/O, clocking, DSP/RAM mapping, control sets, FSM coverage, AMD IP notes, link plan,
   DOC gate, AXI4-Lite interface profiles), returning a short digest; the sign-off gates call the same registry: [docs/check_suite.md](docs/check_suite.md),
   [flow/checks](flow/checks), results in [results/71_check_suite](results/71_check_suite/README.md).
+- **Reset conventions (brief 70).** Measured costs of reset polarity and style on Artix-7 and UltraScale+, a survey of how AMD's own IP
+  and generated block designs use resets, an audit of our RTL, and the `resets` check's cost notes: [results/70_resets](results/70_resets/README.md).
 - **HDL coding standard FDA-HDL v1.2.** [docs/hdl_coding_standard.md](docs/hdl_coding_standard.md),
   [flow/hdl_rules.yaml](flow/hdl_rules.yaml), checked by [flow/lint_ruleset.py](flow/lint_ruleset.py) (Verilator lint,
   Vivado methodology, DRC and CDC, the design-standards checker), with waivers recorded.

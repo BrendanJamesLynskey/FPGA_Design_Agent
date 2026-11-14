@@ -594,14 +594,32 @@ def netlist_findings(rows: list[dict[str, str]], cfg: dict[str, Any], ip_names: 
     return out
 
 
+LUTAR_CELL = re.compile(r"^LUT cell (\S+?),? with ", re.M)
+
+
+def _ip_internal(cell: str) -> bool:
+    """A cell path inside AMD IP: below an instance's ``inst`` level (every generated IP wrapper puts its core there) or inside
+    an XPM macro. Brief 70: the GT Wizard's own reset synchronisers show five LUTAR-1 rows that are not ours to change."""
+    parts = [p for p in cell.split("/") if p]
+    return "inst" in parts[:-1] or any(XPM.match(p) and p not in RECOGNISED for p in parts)
+
+
 def amd_findings(meth: list[dict[str, Any]] | None, drc: list[dict[str, Any]] | None,
-                 cdc: dict[str, Any] | None, stage: str) -> list[dict[str, Any]]:
-    """The reset-related rows of AMD's own reports (parsed by flow/gates.py's parsers)."""
+                 cdc: dict[str, Any] | None, stage: str, meth_text: str | None = None) -> list[dict[str, Any]]:
+    """The reset-related rows of AMD's own reports (parsed by flow/gates.py's parsers). ``meth_text`` is the methodology
+    report's text: when given, LUTAR-1 rows whose LUT is inside AMD IP are not counted (they are the vendor's, as in the
+    netlist walk)."""
     out = []
+    lut_cells = LUTAR_CELL.findall(meth_text or "")
     for src, ids, rows in (("report_methodology", AMD_METHODOLOGY, meth), ("report_drc", AMD_DRC, drc),
                            ("report_cdc", AMD_CDC, (cdc or {}).get("rules"))):
         for r in rows or []:
             if r.get("rule") in ids:
+                if r["rule"] == "LUTAR-1" and lut_cells:
+                    n_user = sum(1 for c in lut_cells if not _ip_internal(c))
+                    if n_user == 0:
+                        continue
+                    r = {**r, "count": n_user}
                 out.append({"tool": "vivado", "code": r["rule"], "severity": str(r.get("severity", "")),
                             "where": f"{src}@{stage}", "message": f"{r.get('description', '')} (x{r.get('count', 1)})",
                             "count": r.get("count", 1), "file": None, "line": None})

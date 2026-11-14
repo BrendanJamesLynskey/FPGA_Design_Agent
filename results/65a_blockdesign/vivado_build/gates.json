@@ -1,5 +1,5 @@
 {
-  "build_dir": "/tmp/claude-1000/-home-brendan-Claude-sandbox/4a9bf707-8d35-4a84-a3ae-1e3802ba8b4e/scratchpad/b65fix/designs/b65a_axil_soc/build/base",
+  "build_dir": "/tmp/claude-1000/-home-brendan-Claude-sandbox/a33f10a6-b2fd-499a-bb8d-a80193f95456/scratchpad/b70/pub/designs/b65a_axil_soc/build/base",
   "vivado_version": "2026.1",
   "kb_measured_version": "2026.1",
   "kb_version_match": true,
@@ -16,6 +16,7 @@
     "post_synth_cdc_structure_clean": true,
     "post_synth_exceptions_clean": true,
     "post_synth_io_constraints_clean": true,
+    "post_synth_resets_clean": true,
     "post_place_hold": true,
     "setup": true,
     "hold": true,
@@ -66,7 +67,8 @@
         "post_synth_cdc_no_critical": true,
         "post_synth_cdc_structure_clean": true,
         "post_synth_exceptions_clean": true,
-        "post_synth_io_constraints_clean": true
+        "post_synth_io_constraints_clean": true,
+        "post_synth_resets_clean": true
       },
       "warnings": [],
       "timing": {
@@ -81,7 +83,7 @@
         "wpws_ns": 3.75,
         "tpws_ns": 0.0,
         "tpws_failing_endpoints": 0,
-        "tpws_total_endpoints": 1232,
+        "tpws_total_endpoints": 1233,
         "timing_met": true
       },
       "check_timing": {
@@ -121,15 +123,8 @@
       "drc": {
         "errors": 0,
         "critical_warnings": 0,
-        "warnings": 2,
-        "rules": [
-          {
-            "rule": "REQP-1840",
-            "severity": "Warning",
-            "description": "RAMB18 async control check",
-            "count": 2
-          }
-        ]
+        "warnings": 0,
+        "rules": []
       },
       "qor_assessment": null,
       "cdc": {
@@ -205,13 +200,28 @@
           }
         }
       },
+      "gt": null,
+      "resets": {
+        "status": "pass",
+        "parts": {
+          "source": "ran",
+          "amd_methodology": "ran",
+          "amd_drc": "ran",
+          "amd_cdc": "ran",
+          "netlist": "ran",
+          "netlist_clocks": "ran",
+          "polarity": "ran"
+        },
+        "n_findings": 0,
+        "findings": []
+      },
       "resource_sanity": null,
       "utilization": {
-        "lut": 1103,
+        "lut": 1119,
         "lut_available": 63400,
         "lutram": 88,
         "lutram_available": 19000,
-        "ff": 1142,
+        "ff": 1143,
         "ff_available": 126800,
         "carry4": 89,
         "bram_tile": 0.5,
@@ -231,19 +241,19 @@
         "post_place_hold": true
       },
       "timing": {
-        "wns_ns": 2.558,
+        "wns_ns": 3.001,
         "tns_ns": 0.0,
         "tns_failing_endpoints": 0,
-        "tns_total_endpoints": 3947,
-        "whs_ns": 0.131,
-        "ths_ns": 0.0,
-        "ths_failing_endpoints": 0,
-        "ths_total_endpoints": 3947,
+        "tns_total_endpoints": 3948,
+        "whs_ns": -0.027,
+        "ths_ns": -0.027,
+        "ths_failing_endpoints": 1,
+        "ths_total_endpoints": 3948,
         "wpws_ns": 3.75,
         "tpws_ns": 0.0,
         "tpws_failing_endpoints": 0,
-        "tpws_total_endpoints": 1240,
-        "timing_met": true
+        "tpws_total_endpoints": 1241,
+        "timing_met": false
       },
       "pass": true
     },
@@ -298,26 +308,26 @@
         },
         "worst": {
           "setup": {
-            "slack": 2.933,
+            "slack": 2.855,
             "requirement": 10.0,
             "start_clock": "sys_clk_pin",
             "end_clock": "sys_clk_pin",
             "corner": "Slow",
             "uncertainty": 0.035,
             "pessimism": 0.259,
-            "from": "u_tone/u_dds/u_ip/g_bram.sine_reg/CLKARDCLK",
-            "to": "u_tone/u_dds/u_ip/sample_reg[8]_lopt_replica/D"
+            "from": "u_tone/u_dds/u_ip/g_bram.sine_raw_reg/CLKARDCLK",
+            "to": "u_tone/u_dds/u_ip/sample_reg[13]_lopt_replica/D"
           },
           "hold": {
-            "slack": 0.076,
+            "slack": 0.017,
             "requirement": 0.0,
             "start_clock": "sys_clk_pin",
             "end_clock": "sys_clk_pin",
             "corner": "Fast",
             "uncertainty": null,
-            "pessimism": -0.5,
-            "from": "u_la/u_ip/wptr_reg[0]/C",
-            "to": "u_la/u_ip/mem_reg_128_191_3_5/RAMA/WADR0"
+            "pessimism": -0.245,
+            "from": "u_host/wdata_reg[30]/C",
+            "to": "u_xbar/w_data_reg[0][30]/D"
           }
         },
         "uncertainty": {
@@ -330,7 +340,7 @@
             "pe_ns": 0.0,
             "pessimism_ns": 0.259,
             "requirement_ns": 10.0,
-            "slack_ns": 2.933
+            "slack_ns": 2.855
           },
           "hold": null
         }
@@ -350,18 +360,18 @@
     }
   },
   "timing": {
-    "wns_ns": 2.933,
+    "wns_ns": 2.855,
     "tns_ns": 0.0,
     "tns_failing_endpoints": 0,
-    "tns_total_endpoints": 3947,
-    "whs_ns": 0.076,
+    "tns_total_endpoints": 3948,
+    "whs_ns": 0.017,
     "ths_ns": 0.0,
     "ths_failing_endpoints": 0,
-    "ths_total_endpoints": 3947,
+    "ths_total_endpoints": 3948,
     "wpws_ns": 3.75,
     "tpws_ns": 0.0,
     "tpws_failing_endpoints": 0,
-    "tpws_total_endpoints": 1240,
+    "tpws_total_endpoints": 1241,
     "timing_met": true
   },
   "check_timing": {
@@ -379,11 +389,11 @@
     "latch_loops": 0
   },
   "utilization": {
-    "lut": 1093,
+    "lut": 1105,
     "lut_available": 63400,
     "lutram": 88,
     "lutram_available": 19000,
-    "ff": 1150,
+    "ff": 1151,
     "ff_available": 126800,
     "carry4": 89,
     "bram_tile": 0.5,
@@ -398,13 +408,13 @@
   "drc": {
     "errors": 0,
     "critical_warnings": 0,
-    "warnings": 2,
+    "warnings": 1,
     "rules": [
       {
         "rule": "REQP-1840",
         "severity": "Warning",
         "description": "RAMB18 async control check",
-        "count": 2
+        "count": 1
       }
     ]
   },
@@ -454,8 +464,8 @@
   },
   "bitstream": {
     "file": "b65a_axil_soc_top.bit",
-    "bytes": 634079
+    "bytes": 783631
   },
-  "build_stamp": "ae31a50b",
-  "sources_sha256": "ae31a50b1962c9380f636a2de746a76db16af28dffebd9f7bfcc80ac76e8e5bc"
+  "build_stamp": "87e999c6",
+  "sources_sha256": "87e999c68f16abcf3f90a4951b4bae1cb6c7793fef594fe7b15215d235758588"
 }

@@ -52,8 +52,8 @@ Interfaces:
 
 | Quantity | Value | Source |
 |---|---|---|
-| Resources | LUTs, whole board design: 1093 LUT; flip-flops, whole board design: 1150 FF; block RAM tiles, whole board design: 0.5 tiles | M1, M2, M3 |
-| Timing | worst setup slack: 2.933 ns; worst hold slack: 0.076 ns | M4, M5 |
+| Resources | LUTs, whole board design: 1105 LUT; flip-flops, whole board design: 1151 FF; block RAM tiles, whole board design: 0.5 tiles | M1, M2, M3 |
+| Timing | worst setup slack: 2.855 ns; worst hold slack: 0.017 ns | M4, M5 |
 | Power | total on-chip power estimate: 0.13 W | M6 |
 | Latency | not measured | [Known gaps](#known-gaps-and-limits) |
 | Throughput | not measured | [Known gaps](#known-gaps-and-limits) |
@@ -73,7 +73,7 @@ Interfaces:
 | simulate end to end; needs Icarus Verilog 12 and cocotb 2.0.1 | `python -m pytest -q designs/b65a_axil_soc/tests/test_b65a_rtl.py` | no | about 1 min |
 | build; needs local Vivado 2026.1 and a heavy slot (take_heavy_slot.sh) | `flow/run_vivado.sh designs/b65a_axil_soc` | yes | about 4 min |
 
-Tool: Vivado 2026.1. Build ID of the inputs at handover: `2b28c63c` (`python flow/manifest.py show designs/b65a_axil_soc`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `20d73e8`.
+Tool: Vivado 2026.1. Build ID of the inputs at handover: `d5b615b6` (`python flow/manifest.py show designs/b65a_axil_soc`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `20d73e8`.
 
 | File | What |
 |---|---|
@@ -112,11 +112,11 @@ Every value is read from the record by `python -m flow.handover fill`, not typed
 
 | ID | What | Value | Runs | Source | Conditions |
 |---|---|---|---|---|---|
-| M1 | LUTs, whole board design | 1093 LUT | 1 | [`results/65a_blockdesign/vivado_build/gates.json`](../../results/65a_blockdesign/vivado_build/gates.json) `utilization.lut` | routed whole-board build, Vivado 2026.1, including the test shell |
-| M2 | flip-flops, whole board design | 1150 FF | 1 | [`results/65a_blockdesign/vivado_build/gates.json`](../../results/65a_blockdesign/vivado_build/gates.json) `utilization.ff` | as M1 |
+| M1 | LUTs, whole board design | 1105 LUT | 1 | [`results/65a_blockdesign/vivado_build/gates.json`](../../results/65a_blockdesign/vivado_build/gates.json) `utilization.lut` | routed whole-board build, Vivado 2026.1, including the test shell |
+| M2 | flip-flops, whole board design | 1151 FF | 1 | [`results/65a_blockdesign/vivado_build/gates.json`](../../results/65a_blockdesign/vivado_build/gates.json) `utilization.ff` | as M1 |
 | M3 | block RAM tiles, whole board design | 0.5 tiles | 1 | [`results/65a_blockdesign/vivado_build/gates.json`](../../results/65a_blockdesign/vivado_build/gates.json) `utilization.bram_tile` | as M1 |
-| M4 | worst setup slack | 2.933 ns | 1 | [`results/65a_blockdesign/vivado_build/gates.json`](../../results/65a_blockdesign/vivado_build/gates.json) `timing.wns_ns` | routed, 100 MHz clock |
-| M5 | worst hold slack | 0.076 ns | 1 | [`results/65a_blockdesign/vivado_build/gates.json`](../../results/65a_blockdesign/vivado_build/gates.json) `timing.whs_ns` | routed, 100 MHz clock |
+| M4 | worst setup slack | 2.855 ns | 1 | [`results/65a_blockdesign/vivado_build/gates.json`](../../results/65a_blockdesign/vivado_build/gates.json) `timing.wns_ns` | routed, 100 MHz clock |
+| M5 | worst hold slack | 0.017 ns | 1 | [`results/65a_blockdesign/vivado_build/gates.json`](../../results/65a_blockdesign/vivado_build/gates.json) `timing.whs_ns` | routed, 100 MHz clock |
 | M6 | total on-chip power estimate | 0.13 W | 1 | [`results/65a_blockdesign/vivado_build/gates.json`](../../results/65a_blockdesign/vivado_build/gates.json) `power.total_w` | report_power after routing, vectorless, confidence Medium |
 | M7 | AXI4-Lite transfers in the end-to-end simulation | 86 transfers | 1 | [`results/65a_blockdesign/sim_end_to_end.json`](../../results/65a_blockdesign/sim_end_to_end.json) `axi_transfers` | simulation, with no protocol rule broken on the four top-level links |
 | M8 | rising edges the frequency counter read in the gate | 62 edges | 1 | [`results/65a_blockdesign/sim_end_to_end.json`](../../results/65a_blockdesign/sim_end_to_end.json) `edges` | simulation, a 4000-clock gate for a 64-clock tone, so 62.5 expected |

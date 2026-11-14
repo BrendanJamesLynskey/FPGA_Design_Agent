@@ -324,7 +324,8 @@ def _resets(ctx: Ctx) -> dict[str, Any]:
         parts["amd"] = parts["netlist"] = "not run: scope rtl (needs a synthesised design)"
     else:
         meth, drc, cdc = ctx.report("methodology"), ctx.report("drc"), ctx.report("cdc")
-        for r in R.amd_findings(_parse_rules(meth), _parse_rules(drc), _parse_cdc(cdc), GATE_STAGE[ctx.scope]):
+        for r in R.amd_findings(_parse_rules(meth), _parse_rules(drc), _parse_cdc(cdc), GATE_STAGE[ctx.scope],
+                                 meth_text=meth.read_text(errors="replace") if meth else None):
             fs.append({**r, "key": f"vivado:{r['code']}@{GATE_STAGE[ctx.scope]}",
                        "blocking": r["severity"].lower() not in ("advisory", "info")})
         for nm, pth in (("methodology", meth), ("drc", drc), ("cdc", cdc)):

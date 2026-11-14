@@ -64,12 +64,21 @@ module dds_awg #(
         end else begin : g_bram
             (* rom_style = "block" *) logic signed [OUT_W-1:0] rom [0:N-1];
             initial for (int i = 0; i < N; i++) rom[i] = sine_entry(i);
-            // The block RAM has no reset and no enable pin driven from the reset (AMD DRC REQP-1840: a block-RAM control pin
-            // must not come from a register with an asynchronous set or reset, and our reset comes from the shell's reset
-            // bridge). The reset and the tick choose the address instead: reset reads entry 0 (zero), a tick reads the next
-            // phase's entry, otherwise the current entry is read again, so the register holds. Same values as before.
-            wire [LUT_W-1:0] rom_addr = rst ? '0 : tick ? phase_next[PHASE_W-1 -: LUT_W] : phase[PHASE_W-1 -: LUT_W];
-            always_ff @(posedge clk) sine <= rom[rom_addr];
+            // The block RAM has no reset, and nothing it reads from is combinational on the reset: AMD DRC REQP-1840 flags
+            // a block-RAM pin that is driven (even through a LUT) by a register with an asynchronous set or reset, and
+            // our reset comes from the shell's reset bridge. The address uses only the tick (a tick reads the next
+            // phase's entry, otherwise the current entry is read again, so the value holds). The reset acts on the
+            // plain register `zero`, which masks the output: set by reset, cleared by a tick, as the old output
+            // register's reset and enable did. Same values and the same timing as before.
+            logic signed [OUT_W-1:0] sine_raw;
+            logic zero;
+            wire [LUT_W-1:0] rom_addr = tick ? phase_next[PHASE_W-1 -: LUT_W] : phase[PHASE_W-1 -: LUT_W];
+            always_ff @(posedge clk) sine_raw <= rom[rom_addr];
+            always_ff @(posedge clk) begin
+                if (rst) zero <= 1'b1;                                 // entry 0 (phase 0) is zero
+                else if (tick) zero <= 1'b0;
+            end
+            assign sine = zero ? '0 : sine_raw;
         end
     endgenerate
     logic signed [OUT_W-1:0] raw;

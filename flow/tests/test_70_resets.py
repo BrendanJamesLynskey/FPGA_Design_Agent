@@ -143,3 +143,18 @@ def test_the_check_quotes_a_cost_with_each_finding_it_can_cost() -> None:
         for part in ("xc7a100tcsg324-1", "xck26-sfvc784-2LV-c"):
             assert R.cost_note(code, part).startswith("measured"), (code, part)
     assert R.cost_note("RST-LUT-01", "xc7a100tcsg324-1") == ""
+
+
+def test_lutar_1_inside_amd_ip_is_not_ours() -> None:
+    # the GT Wizard's own reset synchronisers carry LUTAR-1 rows (brief 70, b56a): a LUT below an instance's `inst` level
+    # is the vendor's; a LUT in our own hierarchy still counts, and the count drops by the vendor rows
+    txt = ("LUTAR-1#1 Warning\nLUT drives async reset alert  \nLUT cell u_core/u_gt/inst/gen_x/rst_in_meta_i_1, with 2 or more "
+           "inputs, drives asynchronous preset/clear pin(s) a/PRE. The LUT may glitch.\n\n"
+           "LUTAR-1#2 Warning\nLUT drives async reset alert  \nLUT cell u_mine/rst_i_1, with 2 or more inputs, drives "
+           "asynchronous preset/clear pin(s) b/PRE. The LUT may glitch.\n")
+    rows = [{"rule": "LUTAR-1", "severity": "Warning", "description": "LUT drives async reset alert", "count": 2}]
+    out = R.amd_findings(rows, None, None, "synth", meth_text=txt)
+    assert [f["count"] for f in out] == [1]
+    out = R.amd_findings(rows, None, None, "synth", meth_text=txt.split("LUTAR-1#2")[0])
+    assert out == []
+    assert [f["count"] for f in R.amd_findings(rows, None, None, "synth")] == [2]

@@ -18,8 +18,8 @@ a stand-in. Nothing here was run on a board. The design is [designs/b56a_gth_ser
 
 ## Measured
 
-- Build of `designs/b56a_gth_serdes` (one run, 2 threads, `MemoryMax=8G`, nothing else running): 341.7 s wall; **Vivado peak resident memory 4235 MiB, the scope's anonymous peak 3538 MiB**, no cap hits (`gt_build/run.json`). The first GT build alone, as the brief asked.
-- Timing at the 161.133 MHz user clocks and the 100 MHz clock: WNS 2.156 ns, WHS 0.016 ns, 0 failing endpoints; 973 LUTs, 3106 registers, 0 BRAM, 0 DSP; total on-chip power 0.764 W, vectorless, confidence Medium (`gt_build/gates.json`).
+- Build of `designs/b56a_gth_serdes` (one run, 2 threads, `MemoryMax=8G`, under the heavy slot): 331.6 s wall; **Vivado peak resident memory 4289 MiB, the scope's anonymous peak 3591 MiB**, no cap hits (`gt_build/run.json`). This is the rebuild for brief 70 ( the Wizard's reset inputs now come from registers); the first build's figures are in the git history.
+- Timing at the 161.133 MHz user clocks and the 100 MHz clock: WNS 2.246 ns, WHS 0.016 ns, 0 failing endpoints; 973 LUTs, 3113 registers, 0 BRAM, 0 DSP; total on-chip power 0.764 W, vectorless, confidence Medium (`gt_build/gates.json`).
 - The free Vivado Simulator refuses the Wizard model: 54716 instances against a limit of 50000 (`xsim_refusal.txt`).
 - `xxv_ethernet` is refused at synthesis; the Wizard builds to a bitstream (`licences.md`).
 

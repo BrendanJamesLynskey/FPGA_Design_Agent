@@ -29,10 +29,8 @@ VARIANTS = {
     "sB_all": "synchronous, one signal tested at both levels (two polarities of one reset), reset all",
     "aB_all": "asynchronous, one signal tested at both levels (two polarities of one reset), reset all",
     "rH_all_fo_default": "synchronous, active high, reset registered, no fan-out limit",
-    "rH_all_fo_50": "synchronous, active high, reset registered, synth_design -fanout_limit 50",
     "rH_all_mf50": "synchronous, active high, reset registered, MAX_FANOUT = 50 on the register",
     "rL_all_fo_default": "synchronous, active low, reset registered, no fan-out limit",
-    "rL_all_fo_50": "synchronous, active low, reset registered, synth_design -fanout_limit 50",
     "rL_all_mf50": "synchronous, active low, reset registered, MAX_FANOUT = 50 on the register",
 }
 BLOCKS = {"1": "register bank", "2": "counter", "4": "DSP", "8": "block RAM", "15": "all four"}
@@ -150,11 +148,14 @@ def costs(s: dict) -> dict:
     if fd and sh:
         out["registered_reset_vs_direct_sync_all"] = {"ffs": fd["ffs"] - sh["ffs"], "luts": fd["luts"] - sh["luts"],
                                                       "control_sets": fd["control_sets"] - sh["control_sets"]}
-    for tag, name in (("rH_all_fo_50", "synth_fanout_limit_option_50_vs_none"), ("rH_all_mf50", "max_fanout_attribute_50_vs_none")):
-        f50 = g(tag)
-        if fd and f50:
-            out[name] = {"ffs": f50["ffs"] - fd["ffs"], "control_sets": f50["control_sets"] - fd["control_sets"],
-                         "luts": f50["luts"] - fd["luts"]}
+    # the *_fo_50 arms (synth_design -fanout_limit 50) are void: the option is deprecated and changed nothing (review finding);
+    # their records stay in the files, and the *_mf50 arms (MAX_FANOUT on the reset register) replace them
+    for tag, base, name in (("rH_all_mf50", "rH_all_fo_default", "max_fanout_attribute_50_vs_none_active_high"),
+                            ("rL_all_mf50", "rL_all_fo_default", "max_fanout_attribute_50_vs_none_active_low")):
+        f50, b0 = g(tag), g(base)
+        if b0 and f50:
+            out[name] = {"ffs": f50["ffs"] - b0["ffs"], "control_sets": f50["control_sets"] - b0["control_sets"],
+                         "luts": f50["luts"] - b0["luts"]}
     return out
 
 
@@ -181,6 +182,9 @@ def main() -> int:
     ap.add_argument("--check", action="store_true")
     a = ap.parse_args()
     res = {"vivado": "2026.1", "runs": "one each", "parts": {p: summarise(p) for p in PARTS}}
+    res["parts"] = {p: {v: b for v, b in e.items() if not v.endswith("_fo_50")} for p, e in res["parts"].items()}
+    res["voided_arms"] = "rH_all_fo_50 and rL_all_fo_50 (synth_design -fanout_limit 50: deprecated, changed nothing); " \
+                         "the xck26 rL_all_fo_50 record (53 LUTs, 149 flip-flops) did not reproduce in records/xck26-sfvc784-2LV-c_rerun.tsv"
     res["costs"] = {p: costs(res["parts"][p]) for p in PARTS if res["parts"][p]}
     text = json.dumps(res, indent=1, sort_keys=True) + "\n"
     f = REC / "matrix_summary.json"

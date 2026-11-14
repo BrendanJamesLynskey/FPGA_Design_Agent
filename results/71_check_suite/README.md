@@ -26,6 +26,9 @@ the new reset gate is absent in all of them).
 
   `flow/tests/test_71_check_suite.py` reads these records in CI and requires exactly these rules for each case (every case
   compiled; a case that does not compile writes `synth_failed.txt` and fails the test).
+  The seeded records were made again in brief 70 (one Vivado 2026.1 session, `flow/checks/seeded/seeded.tcl`): `rst_clean` no longer
+  raises AMD DRC REQP-1840 (the RAM's output register now takes its synchronous reset from one plain register after the synchroniser, in `flow/checks/seeded/rst_common.svh`), and the
+  rules above are unchanged.
 - `rule_catalogue_2026_1.tsv`: every methodology and DRC rule Vivado 2026.1 knows (`get_methodology_checks`,
   `get_drc_checks`: kind, id, severity, description); the test checks every AMD id the reset check reads is in it.
 - `tokens.json`: for T1 (`t1_dimmer_counter`), the brief 65A AXI4-Lite SoC (`b65a_axil_soc`) and the brief 56A GTH link

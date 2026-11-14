@@ -12,7 +12,7 @@ import argparse
 import re
 from pathlib import Path
 
-SKIP = ("results/", "benchmark", "flow/tests/", "flow/checks/seeded", ".git/", "site/", "docs/", "node_modules", ".venv")
+SKIP = ("results/", "/build/", "benchmark", "flow/tests/", "flow/checks/seeded", ".git/", "site/", "docs/", "node_modules", ".venv")
 SV = re.compile(r"always(?:_ff)?\s*@\s*\(([^)]*)\)", re.S)
 VH = re.compile(r"process\s*\(([^)]*)\)", re.I | re.S)
 

@@ -48,8 +48,8 @@ Interfaces:
 
 | Quantity | Value | Source |
 |---|---|---|
-| Resources | LUTs: 973 LUT; registers: 3106 FF | M1, M2 |
-| Timing | worst setup slack: 2.156 ns; worst hold slack: 0.016 ns | M3, M4 |
+| Resources | LUTs: 973 LUT; registers: 3113 FF | M1, M2 |
+| Timing | worst setup slack: 2.246 ns; worst hold slack: 0.016 ns | M3, M4 |
 | Power | total on-chip power estimate: 0.764 W | M5 |
 | Latency | not measured | [Known gaps](#known-gaps-and-limits) |
 | Throughput | not measured | [Known gaps](#known-gaps-and-limits) |
@@ -66,7 +66,7 @@ Interfaces:
 | simulate the PRBS blocks and the core against the Wizard stand-in; needs Icarus Verilog and cocotb 2.0.1 | `python -m pytest -q designs/b56a_gth_serdes/tests` | no | about 1 min |
 | build the design and run all gates; needs local Vivado 2026.1 (Basic tier) and a heavy slot (take_heavy_slot.sh), MEM_MAX=8G | `flow/run_vivado.sh designs/b56a_gth_serdes base` | yes | about 7 min |
 
-Tool: Vivado 2026.1. Build ID of the inputs at handover: `cdb9eeef` (`python flow/manifest.py show designs/b56a_gth_serdes`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `1fc7ed8`.
+Tool: Vivado 2026.1. Build ID of the inputs at handover: `d61c218c` (`python flow/manifest.py show designs/b56a_gth_serdes`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `20d73e8`.
 
 | File | What |
 |---|---|
@@ -104,11 +104,11 @@ Every value is read from the record by `python -m flow.handover fill`, not typed
 | ID | What | Value | Runs | Source | Conditions |
 |---|---|---|---|---|---|
 | M1 | LUTs | 973 LUT | 1 | [`results/56a_serdes/gt_build/gates.json`](../../results/56a_serdes/gt_build/gates.json) `utilization.lut` | routed, Vivado 2026.1 |
-| M2 | registers | 3106 FF | 1 | [`results/56a_serdes/gt_build/gates.json`](../../results/56a_serdes/gt_build/gates.json) `utilization.ff` | as M1 |
-| M3 | worst setup slack | 2.156 ns | 1 | [`results/56a_serdes/gt_build/gates.json`](../../results/56a_serdes/gt_build/gates.json) `timing.wns_ns` | routed, user clocks 161.133 MHz and 100 MHz |
+| M2 | registers | 3113 FF | 1 | [`results/56a_serdes/gt_build/gates.json`](../../results/56a_serdes/gt_build/gates.json) `utilization.ff` | as M1 |
+| M3 | worst setup slack | 2.246 ns | 1 | [`results/56a_serdes/gt_build/gates.json`](../../results/56a_serdes/gt_build/gates.json) `timing.wns_ns` | routed, user clocks 161.133 MHz and 100 MHz |
 | M4 | worst hold slack | 0.016 ns | 1 | [`results/56a_serdes/gt_build/gates.json`](../../results/56a_serdes/gt_build/gates.json) `timing.whs_ns` | as M3 |
 | M5 | total on-chip power estimate | 0.764 W | 1 | [`results/56a_serdes/gt_build/gates.json`](../../results/56a_serdes/gt_build/gates.json) `power.total_w` | report_power after routing, vectorless, confidence Medium |
-| M6 | Vivado peak resident memory of the first GT build | 4235 MiB | 1 | [`results/56a_serdes/gt_build/run.json`](../../results/56a_serdes/gt_build/run.json) `vivado_peak_rss_mib` | 2 threads, MemoryMax=8G, alone on the machine, one run |
+| M6 | Vivado peak resident memory of the GT build (rebuilt 2026-11-14 for brief 70, resets from registers) | 4289 MiB | 1 | [`results/56a_serdes/gt_build/run.json`](../../results/56a_serdes/gt_build/run.json) `vivado_peak_rss_mib` | 2 threads, MemoryMax=8G, alone on the machine, one run |
 
 <!-- prose:measured -->
 <!-- /prose:measured -->

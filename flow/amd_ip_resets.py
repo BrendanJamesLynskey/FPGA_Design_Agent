@@ -68,9 +68,10 @@ MAP: dict[str, dict] = {
                  "style": "as AXI DMA: synchronous resets, xpm_cdc_sync_rst between clocks, mixed polarities inside",
                  "needs": "a synchronous aresetn in the lite clock domain", "source": "survey"},
     "axi_register_slice": {"title": "AXI Register Slice", "port": "aresetn (active low)",
-                           "style": "the reset is registered once and then used as an ASYNCHRONOUS clear (assertion immediate) by the "
-                                    "shift registers that track the reset state of each channel: an asynchronous reset outside a synchroniser, "
-                                    "driven from a register (the one place in this survey where AMD's own IP departs from its guidance)",
+                           "style": "the readable source registers the reset once and uses it as an ASYNCHRONOUS clear (assertion immediate) in the "
+                                    "shift registers that track each channel's reset state: an asynchronous reset outside a synchroniser, driven "
+                                    "from a register. The default configuration's synthesised netlist (records/ip_netlists.tsv) holds no asynchronous "
+                                    "flip-flop, so this shows in the source and in some configurations only",
                            "needs": "aresetn synchronous to aclk; do not drive other block-RAM control pins from a copy of it",
                            "source": "survey + netlist"},
     "fifo_generator": {"title": "FIFO Generator", "port": "rst (asynchronous, independent clocks; active high) or srst (synchronous, common clock)",
