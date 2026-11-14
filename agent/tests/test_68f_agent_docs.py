@@ -226,13 +226,14 @@ def test_cover_properties_at_zero_with_all_bins_hit_are_diagnosed() -> None:
 def test_approval_is_stated_as_automatic_and_prose_may_not_say_signed_off() -> None:
     h, req = _draft(C14)
     e1 = next(e for e in h["evidence"] if e["activity"] == "review")
-    assert e1["result"] == "partial" and "approved automatically by a model, with no human review" in e1["what"]
+    assert e1["result"] == "partial" and "approved automatically, with no human review" in e1["what"] and "by a model" not in e1["what"]
+    assert "only answered the interview questions" in e1["what"]
     assert "E1" in req
     d = REC / C14 / DESIGN[C14]
     bad = copy.deepcopy(h)
     bad["summary"] = "The specification was signed off and the design is documented here."
     assert any("without saying it was automatic" in x for x in D.prose_claims(d, bad))
-    bad["summary"] = "The specification was approved automatically by a model, with no human review."
+    bad["summary"] = "The specification was approved automatically, with no human review."
     assert D.prose_claims(d, bad) == []
 
 
@@ -263,3 +264,51 @@ def test_a_gate_the_summary_calls_failed_is_reconciled_on_its_own_line() -> None
     bad = copy.deepcopy(h)
     bad["summary"] = "The ILA debug build did not complete in this run and the stage failed."
     assert any("none was attempted" in x for x in D.prose_claims(d, bad))
+
+
+# --- brief 80: the 68F leftovers ---------------------------------------------------------------------------------------
+
+def test_c14_simulated_parameters_are_a_stated_gap() -> None:
+    h, req = _draft(C14)
+    g = next(g for g in h["gaps"] if g["about"] == "simulated_parameters")["text"]
+    assert "CLKS_PER_BIT is simulated at 8" in g and "spec.yaml gives 868" in g and "test_c14_int8_dot_requant_rtl.py:17" in g
+    assert "not simulated at that value" in g and "simulated_parameters" in req
+    h5, _ = _draft(S5A32)                                      # the t1 bench scales four parameters down too
+    assert "UART_BAUD_DIVIDER is simulated at 8" in next(g for g in h5["gaps"] if g["about"] == "simulated_parameters")["text"]
+
+
+def test_c14_cover_next_step_names_the_coverage_command() -> None:
+    h, _ = _draft(C14)
+    rd = f"results/68_agent_docs/{C14}/{DESIGN[C14]}"
+    cmd = f"SIM=verilator FDA_COVERAGE=1 FDA_SIM_RESULTS_DIR={rd}/build/verif/sim python -m pytest -q -x {rd}/tests/test_{DESIGN[C14]}_rtl.py"
+    assert cmd in next(g for g in h["gaps"] if g["about"] == "cover_properties")["text"]
+    assert any(c["cmd"].startswith(cmd) and "flow/verif_gates.py" in c["cmd"] for c in h["commands"])
+
+
+def test_c14_earlier_release_build_says_its_timing_was_not_met_without_a_figure() -> None:
+    h, _ = _draft(C14)
+    b = next(e for e in h["evidence"] if e["activity"] == "build")["what"]
+    assert "its timing record says timing was not met after synthesis" in b and "figures are withdrawn" in b
+    assert not re.search(r"-?\d+\.\d+\s*ns|0\.011|1\.033", b)
+
+
+def test_a8f2_mirrored_seven_segment_table_is_a_gap_and_an_open_question_with_file_and_line() -> None:
+    h, _ = _draft(A8F2)
+    g = next(g for g in h["gaps"] if g["about"] == "seg_bit_order")["text"]
+    assert "is the mirror of" in g and "rtl/t1_led_dimmer_counter.sv:85" in g and "design.xdc" in g
+    assert "7'h01" in g and "7'h40" in g and "model.py:" in g and "cannot catch this" in g
+    assert any("t1_led_dimmer_counter.sv:85" in q and "design.xdc, line 35 to line 41" in q for q in h["open_questions"])
+    reply = {"open_questions": ["Is the display interval intended?"]}
+    m = D.merge(h, reply | {"gaps": []}, [])
+    assert m["open_questions"][0] == h["open_questions"][0] and "Is the display interval intended?" in m["open_questions"]
+    h14, _ = _draft(C14)                                       # no seven-segment output: nothing to say
+    assert "seg_bit_order" not in {g["about"] for g in h14["gaps"]} and h14["open_questions"] == []
+
+
+def test_segment_order_is_quiet_when_the_table_matches_the_pins(run_copy) -> None:
+    run, dst = run_copy
+    d = dst / DESIGN[run]
+    rtl = d / "rtl" / "t1_led_dimmer_counter.sv"
+    t = rtl.read_text()
+    rtl.write_text(t.replace("4'h0: seg=7'h01;", "4'h0: seg=7'h40;"))
+    assert D.segment_order(d) == ("", "")

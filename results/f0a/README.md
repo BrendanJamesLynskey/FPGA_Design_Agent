@@ -12,8 +12,8 @@ of the branch at commit `98d2de3`, then collected with `flow/summarise.py`. Viva
 | [t1_dimmer_counter.md](t1_dimmer_counter.md) | The summary table: gates, timing, utilisation, ILA cost, power, run time, memory |
 | `t1_dimmer_counter_base.json`, `t1_dimmer_counter_ila.json` | Everything the table is made from: `gates` (flow/gates.py) and `run` (the runner's run.json) |
 | `t1_dimmer_counter_ila_probe_map.txt` | Which signal is on which ILA probe port in the ILA build |
-| `t1_dimmer_counter_rebuilds.json` | Every recorded build of the same sources (build stamp `dfd4624e`): three base builds from two commits and two clones, and two ILA builds, with identical timing and utilisation |
-| `t1_dimmer_counter_ila_run_before_thread_pinning.json` | The ILA build before `synth.maxThreads` and `chipscope.maxJobs` were pinned to 1: peak anonymous memory 5946 MiB against the 6 GiB cap, cap reached 111 times (no OOM kill). After pinning: 4238 MiB, cap never reached |
+| `t1_dimmer_counter_rebuilds.json` | Every recorded build of the same sources (build stamp `dfd4624e`): three base builds from two commits and two clones, and two ILA builds, with identical timing and utilisation (figures from an earlier release: not quoted here) |
+| `t1_dimmer_counter_ila_run_before_thread_pinning.json` | The ILA build before `synth.maxThreads` and `chipscope.maxJobs` were pinned to 1 (`flow/build.tcl` sets both today). Its memory figures came from an earlier Vivado release and are withdrawn, not re-measured; the record is kept as made |
 
 ## Reproduce
 

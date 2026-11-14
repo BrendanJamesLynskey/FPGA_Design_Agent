@@ -45,7 +45,7 @@ STAGE_NAMES = ("clarify", "board-and-device-planning", "rtl-design-creation", "c
 MODEL_KEYS = ("title", "summary", "scope_not", "resets", "interfaces", "next_steps", "open_questions")
 #: design files listed in the handover, with what each is (globs relative to the design directory)
 FILE_KINDS = (("spec.md", "the request the run started from"),
-              ("spec.yaml", "the specification the Clarifier wrote, accepted automatically by a model (no human review)"),
+              ("spec.yaml", "the specification the Clarifier wrote, approved automatically with no human review"),
               ("ARCHITECTURE.md", "the architecture note, accepted automatically before any RTL (no human review)"),
               ("architecture.yaml", "the machine-checked architecture: blocks, clocks, predicted resources"),
               ("rtl/*", "RTL written by the Designer"),
@@ -84,11 +84,16 @@ the flow keeps its own copy of them whatever you write. You write the prose fiel
 - The first next_steps entry addresses the earliest stage that failed or did not reach its level (for example verification,
   before any rebuild). If a build was made under an earlier Vivado release, one later step re-measures it with python -m agent
   resume when the flow reaches the build again; publish no number from that build and never name the earlier release.
-- Approval: the draft says the specification and architecture were approved automatically by a model with no human review. Never
-  write "signed off" or "approved" without saying that. If the draft says no debug build was attempted or recorded, do not write
+- Approval: the draft says the specification and architecture were approved automatically, with no human review (review was off;
+  the interview oracle only answered the interview questions and approved nothing). Never write "signed off" or "approved" without
+  saying that, and never write that a model approved them. If the draft says no debug build was attempted or recorded, do not write
   that it failed or did not complete.
 - For a seven-segment or other multi-pin output, check the RTL's bit order against design.xdc (which pin each bit drives). If
-  they disagree, or the files cannot settle it, say so as a gap or an open question with the file and line.
+  they disagree, or the files cannot settle it, say so as a gap or an open question with the file and line. When the draft
+  already lists a seg_bit_order gap and open question (found by the flow from the glyph table and the XDC), keep them and add what you
+  know, once.
+- If the draft lists a simulated_parameters gap, the benches ran at a parameter value other than the spec's: say in that parameter's
+  note that the spec's value was not simulated, never that it was tested.
 - gaps: keep every gap listed. Add a gap (about: a short key) for each behaviour a user could guess wrong that spec.yaml or the
   RTL settles and the draft does not state: reset values, unmapped or reserved register accesses, read side effects, partial
   writes, same-cycle priorities, latency. Also add any assumption the run made.
@@ -193,8 +198,8 @@ def approval_text(S: dict, design: Path | None = None) -> str:
             oracle = f"{m.group(1)}, per BUILD_NOTE.md" if m else None
         except OSError:
             pass
-    who = (f"approved automatically by a model, with no human review (review off; interview oracle "
-           f"{oracle or 'not recorded'})" if auto else "reviewed by a person (see the run summary)")
+    who = (f"approved automatically, with no human review (review off; the interview oracle "
+           f"{oracle or 'not recorded'} only answered the interview questions)" if auto else "reviewed by a person (see the run summary)")
     return (f"the specification and the architecture were {who}; the interview asked {q.get('asked')} questions, "
             f"{q.get('answered')} answered and {q.get('defaulted')} defaulted") if auto else \
         f"spec.yaml was {who}; the questions asked, answered and defaulted are in the run summary"
@@ -237,6 +242,109 @@ def tautologies(design: Path) -> list[str]:
     return out
 
 
+def simulated_parameters(design: Path, spec: dict) -> str:
+    """Parameters the benches simulate at a value other than the spec's (80): ``PARAMS = {...}`` or ``parameters={...}`` in
+    tests/test_*_rtl.py against spec.yaml ``parameters``. '' when none differ. The spec's value is then untested."""
+    import ast
+    want = spec.get("parameters") if isinstance(spec.get("parameters"), dict) else {}
+    out = []
+    at_spec: set[str] = set()                       # parameters some dict of the benches gives the spec's value
+    for t in sorted((design / "tests").glob("test_*_rtl.py")):
+        try:
+            tree = ast.parse(t.read_text(errors="replace"))
+        except SyntaxError:
+            continue
+        consts = {n.targets[0].id: n.value for n in ast.walk(tree) if isinstance(n, ast.Assign) and len(n.targets) == 1
+                  and isinstance(n.targets[0], ast.Name) and isinstance(n.value, ast.Dict)}
+        for call in (c for c in ast.walk(tree) if isinstance(c, ast.Call)):
+            for kw in call.keywords:
+                d = consts.get(kw.value.id) if kw.arg == "parameters" and isinstance(kw.value, ast.Name) else \
+                    kw.value if kw.arg == "parameters" and isinstance(kw.value, ast.Dict) else None
+                if d is None:
+                    continue
+                for k, v in zip(d.keys, d.values):
+                    try:
+                        name, val = ast.literal_eval(k), ast.literal_eval(v)
+                    except (ValueError, TypeError):
+                        continue
+                    if str(name) in want and val == want[str(name)]:
+                        at_spec.add(str(name))
+                    if str(name) in want and isinstance(val, (int, float)) and isinstance(want[str(name)], (int, float)) \
+                            and not isinstance(val, bool) and not isinstance(want[str(name)], bool) and val != want[str(name)]:
+                        out.append(f"{name} is simulated at {val} ({H.rel(t)}:{v.lineno}) while spec.yaml gives {want[str(name)]}")
+    out = [o for o in out if o.split(" ", 1)[0] not in at_spec]
+    if not out:
+        return ""
+    return ("the benches simulate at values other than the spec's (scaled for simulation speed or otherwise): "
+            + "; ".join(dict.fromkeys(out)) + ". Behaviour that depends on the spec's value, such as a divider's timing "
+            "against the clock, was not simulated at that value; it is stated here, not shown, unless another record covers it")
+
+
+_SEG = re.compile(r"4'[hHdD]0\s*:\s*\w+\s*=\s*(?:\d+)?'[hH]([0-9a-fA-F]+)")
+
+
+def segment_order(design: Path) -> tuple[str, str]:
+    """A seven-segment glyph table whose bit order disagrees with design.xdc (80, from the a8f2 record): (gap text, open
+    question), or ('', ''). Reads the XDC's ``seg[i]`` pins with their ``# CA``..``# CG`` comments, the RTL's case entry for
+    4'h0 and 4'h8 (8 lights every segment, which gives the polarity), and says where the model shares the table."""
+    try:
+        xdc = (design / "design.xdc").read_text(errors="replace").splitlines()
+    except OSError:
+        return "", ""
+    idx: dict[str, int] = {}
+    xline: dict[str, int] = {}
+    for n, ln in enumerate(xdc, 1):
+        m = re.search(r"get_ports\s*\{\s*seg\[(\d)\]\s*\}.*#\s*C([A-G])\b", ln)
+        if m:
+            idx[m.group(2)] = int(m.group(1))
+            xline[m.group(2)] = n
+    if len(idx) != 7:
+        return "", ""
+    for rtl in sorted((design / "rtl").glob("*.sv")):
+        lines = rtl.read_text(errors="replace").splitlines()
+        v0 = v8 = None
+        l0 = 0
+        for n, ln in enumerate(lines, 1):
+            m0 = _SEG.search(ln)
+            m8 = re.search(r"4'[hHdD]8\s*:\s*\w+\s*=\s*(?:\d+)?'[hH]([0-9a-fA-F]+)", ln)
+            if m0 and v0 is None:
+                v0, l0 = int(m0.group(1), 16) & 0x7F, n
+            if m8 and v8 is None:
+                v8 = int(m8.group(1), 16) & 0x7F
+        if v0 is None or v8 is None or v8 not in (0x00, 0x7F):
+            continue
+        low = v8 == 0x00
+        lit_bits = sum(1 << idx[c] for c in "ABCDEF")                 # digit 0 lights a-f, not g
+        want = (0x7F ^ lit_bits) if low else lit_bits
+        if v0 == want:
+            return "", ""
+        mirrored = int(f"{v0:07b}"[::-1], 2) == want
+        mline = ""
+        try:
+            mt = (design / "model.py").read_text(errors="replace").splitlines()
+            for n, ln in enumerate(mt, 1):
+                if re.search(rf"0x{v0:02x}\b", ln, re.I):
+                    mline = f" model.py:{n} holds the same table, so the bench compares the design with a copy of its own table and cannot catch this."
+                    break
+        except OSError:
+            pass
+        where = f"{H.rel(rtl)}:{l0}"
+        txt = (f"the seven-segment glyph table ({where}: digit 0 is 7'h{v0:02x}) {'is the mirror of' if mirrored else 'does not match'} "
+               f"the order design.xdc wires (seg[{idx['A']}] is CA, line {xline['A']}; seg[{idx['G']}] is CG, line {xline['G']}): with "
+               f"segments {'active low' if low else 'active high'}, digit 0 should be 7'h{want:02x}.{mline} No simulation or board run checked the glyphs.")
+        return txt, (f"Which is right for the seven-segment order, the glyph table ({where}) or the pin map (design.xdc, line {xline['A']} to line "
+                     f"{xline['G']})?")
+    return "", ""
+
+
+def cover_command(design: Path) -> str:
+    """The command that re-runs the Verilator coverage simulation the V3 gate reads (80): the agent's own ``simulate(coverage=True)``
+    environment (agent/core/tools.py), then the gate."""
+    rd = H.rel(design)
+    return (f"SIM=verilator FDA_COVERAGE=1 FDA_SIM_RESULTS_DIR={rd}/build/verif/sim python -m pytest -q -x {rd}/tests/test_{design.name}_rtl.py"
+            f" && python3 flow/verif_gates.py {rd} --runs {rd}/build/verif/sim")
+
+
 def registers_from_spec(spec: dict) -> list[dict]:
     reg = spec.get("registers")
     rows = reg.get("map") if isinstance(reg, dict) else reg
@@ -258,8 +366,8 @@ def prose_claims(design: Path, h: dict) -> list[str]:
                                                      "interfaces", "resets", "target")}):
         for sent in re.split(r"(?<=[.;])\s+", t):
             if auto and re.search(r"\b(signed[- ]off|approved)\b", sent, re.I) and not re.search(
-                    r"automatic|no human|by a model|\bnot\b|\bnor\b|\bnever\b|before|until", sent, re.I):
-                out.append(f"{path}: says approved or signed off without saying it was automatic, by a model, with no human review")
+                    r"automatic|no human|\bnot\b|\bnor\b|\bnever\b|before|until", sent, re.I):
+                out.append(f"{path}: says approved or signed off without saying it was automatic, with no human review")
             if (not ila["present"] and not (design / "probes.yaml").is_file()
                     and re.search(r"(debug|ILA)[^.;]{0,80}(did not complete|failed to build|build failed|failed)", sent, re.I)):
                 out.append(f"{path}: says the debug build failed or did not complete, but the records show none was attempted or recorded")
@@ -341,6 +449,8 @@ def cover_diagnosis(design: Path, vg: dict) -> str:
                    "These bound names are not declared in the top RTL: " + ", ".join(miss) + " (a wrong binding).")
         break
     out.append("The cause is not settled by the records.")
+    if (design / "tests" / f"test_{design.name}_rtl.py").is_file():
+        out.append(f"To re-run the coverage simulation: {cover_command(design)}")
     return " ".join(out)
 
 
@@ -482,6 +592,23 @@ def _date(run_id: str) -> str:
     return f"{m.group(1)}-{m.group(2)}-{m.group(3)}" if m else _dt.date.today().isoformat()
 
 
+def post_timing_note(g: dict) -> str:
+    """An earlier-release build whose timing was not met in a stage: said without a figure (80; the numbers are withdrawn). ''
+    when no stage's record says so (nothing is claimed then)."""
+    for name, st in (g.get("stages") or {}).items():
+        t = (st or {}).get("timing") if isinstance(st, dict) else None
+        if isinstance(t, dict) and t.get("timing_met") is False:
+            kind = "after synthesis" if name == "post_synth" else f"in the {name} stage"
+            return f" but its timing record says timing was not met {kind} (the figures are withdrawn)"
+    return ""
+
+
+def cited_lines(*texts: str) -> list[dict]:
+    """numbers_allow entries for the line numbers (``file.ext:12``, ``file.ext:3-9``, ``line 4``) in the flow's own gap texts."""
+    nums = {x for t in re.findall(r"\.\w+:(\d+)(?:-(\d+))?|\bline (\d+)", " ".join(texts)) for x in t if x}
+    return [{"token": n, "reason": "line number of a file the flow cites in a gap or open question it wrote"} for n in sorted(nums)]
+
+
 def draft(design: Path, run_dir: Path, *, run_id: str, board: str, gates_last: dict | None, stop: str | None,
           verif_level: str | None = None, resumed_from: str | None = None,
           carried: list[str] | None = None) -> tuple[dict, list[str]]:
@@ -595,7 +722,8 @@ def draft(design: Path, run_dir: Path, *, run_id: str, board: str, gates_last: d
             met = all(((g.get("gates") or {}).get(k) is True) for k in ("setup", "hold", "pulse_width"))
             i = e("build", result, f"Vivado {label} under an earlier Vivado release than the pinned one: it reached "
                   f"{ran[-1] if ran else 'no flow stage'}, the gates of the stages it ran {'all passed' if g.get('pass') else 'did not all pass'}"
-                  + (" and its timing was met" if met else "") + "; every number from that build is withdrawn (it cannot be "
+                  + (" and its timing was met" if met else "") + (post_timing_note(g) if not met else "")
+                  + "; every number from that build is withdrawn (it cannot be "
                   f"re-measured on Vivado {rel_now} without a rebuild), so none is published", gp)
         if not current:
             gap(i, f"the {label} was made under an earlier Vivado release than {rel_now}: its result is not current and no "
@@ -636,6 +764,12 @@ def draft(design: Path, run_dir: Path, *, run_id: str, board: str, gates_last: d
         gap("oracle_record", oc)
     if (fg := formal_gap(design)):
         gap("formal", fg)
+    sp_gap = simulated_parameters(design, spec)
+    if sp_gap:
+        gap("simulated_parameters", sp_gap)
+    seg_gap, seg_q = segment_order(design)
+    if seg_gap:
+        gap("seg_bit_order", seg_gap)
     if (tl := tautologies(design)):
         gap("assertions", "assertions that cannot fail: " + "; ".join(tl) + ". They show only that the signal exists, not that the design behaves")
     cats = {x["category"] for x in ms}
@@ -682,9 +816,14 @@ def draft(design: Path, run_dir: Path, *, run_id: str, board: str, gates_last: d
                  "cmd": f"python -m pytest -q {rd}/tests/test_{design.name}_rtl.py", "heavy": False, "minutes": None,
                  "needs": "Icarus Verilog and cocotb, or the simulation container"}]
                if (design / "tests" / f"test_{design.name}_rtl.py").is_file() else []),
+             *([{"what": "re-run the Verilator coverage simulation and the verification gates (line, toggle, functional and cover results)",
+                 "cmd": cover_command(design), "heavy": False, "minutes": None,
+                 "needs": "Verilator 5.036 or later and cocotb (the simulation container has them)"}]
+               if vg and (design / "tests" / f"test_{design.name}_rtl.py").is_file() else []),
              {"what": "rebuild the bitstream with the flow", "cmd": f"flow/run_vivado.sh {rd} base", "heavy": True,
               "minutes": base_min, "needs": f"Vivado {rel_now} and a heavy slot" + base_mem}],
-         "evidence": ev, "measurements": ms, "gaps": gaps, "next_steps": ["WRITE"], "open_questions": [],
+         "evidence": ev, "measurements": ms, "gaps": gaps, "next_steps": ["WRITE"], "open_questions": [seg_q] if seg_q else [],
+         **({"numbers_allow": cited_lines(seg_gap, seg_q, sp_gap)} if (seg_gap or sp_gap) else {}),
          "history": [{"date": _date(run_id), "brief": "agent run",
                       "note": ("resumed from an earlier handover (summary.json resumed_from names it); " if resumed_from else "")
                       + "produced by the agent graph; stages that passed: " + (", ".join(passed) or "none")
@@ -747,9 +886,12 @@ def merge(draft_h: dict, reply: dict, required: list[str]) -> dict:
     """The draft with the Designer's prose fields. Code-owned fields come from the draft; parameter names and values come
     from the draft; required gaps keep the draft's text; the Designer may only add gaps with a new ``about``."""
     h = copy.deepcopy(draft_h)
+    code_oq = [q for q in draft_h.get("open_questions") or [] if isinstance(q, str)]
     for k in MODEL_KEYS:
         if k in reply and reply[k] is not None:
             h[k] = reply[k]
+    if code_oq and isinstance(h.get("open_questions"), list):          # 80: a question the flow found stays, once
+        h["open_questions"] = code_oq + [q for q in h["open_questions"] if q not in code_oq]
     if isinstance(reply.get("target"), dict) and isinstance(reply["target"].get("note"), str):
         h["target"]["note"] = reply["target"]["note"]
     rp = {str(p.get("name")): p for p in reply.get("parameters") or [] if isinstance(p, dict)}

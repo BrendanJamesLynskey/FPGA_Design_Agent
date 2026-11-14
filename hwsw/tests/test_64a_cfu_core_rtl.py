@@ -44,3 +44,22 @@ def test_crc32_custom_instruction_in_the_core(tmp_path: Path) -> None:
         pytest.skip(f"tools differ from the committed record ({old['compiler']}, {old['simulator']}): cycles not compared")
     for cfg, c in old["configs"].items():
         assert rec["configs"][cfg]["kernels"] == c["kernels"], f"{cfg}: cycle counts differ from {COMMITTED}"
+
+
+def test_synchronous_reset_patch_changes_nothing_in_the_benches() -> None:
+    """Brief 80: brv32p_sync_reset.patch (the core's 37 asynchronous-reset blocks made synchronous, our pinned copy only)
+    leaves every committed result as it was: the CRC program, the trap and the interrupts pass, the kernel cycles equal the
+    committed ones, and the stale-prediction program gives the same verdicts."""
+    src = run_bench.PATCH_SYNC.read_text()
+    import re
+    gone = re.findall(r"^-\s*always @\(posedge clk or negedge rst_n\)", src, re.M)
+    assert len(gone) == 37 == len(re.findall(r"^\+\s*always @\(posedge clk\) begin", src, re.M)), len(gone)   # the brief's 37 blocks
+    assert "negedge" not in "".join(ln for ln in src.splitlines() if ln.startswith("+"))
+    rec = run_bench.run(["word"], baseline=True, sync_reset=True)
+    assert rec["reset_style"].startswith("synchronous")
+    st = rec["stale_btb"]["results"]
+    assert st["cfu_word_pinned"].startswith("RESULT FAIL") and st["cfu_word_fixed"].startswith("RESULT PASS"), st
+    assert st["cfu_word_mem_fixed"].startswith("RESULT PASS"), st
+    old = json.loads(COMMITTED.read_text())
+    for cfg in ("baseline", "cfu_word", "cfu_word_mem"):
+        assert rec["configs"][cfg]["kernels"] == old["configs"][cfg]["kernels"], f"{cfg}: cycles differ with synchronous reset"

@@ -19,4 +19,7 @@ custom-instruction unit into the core live in `brv32p_cfu.patch`, applied to a c
 - `rtl/core/brv32p_core.v`: the unit instance in EX (start, hold = memory stall, kill = EX flush, forwarded operands),
   its result on the WB_DSP path, and its busy ORed into the divider's stall input of the hazard unit.
 
+Two further patches apply to the same build copy: `brv32p_mispredict_hold.patch` (a mispredict is held while EX is stalled) and
+`brv32p_sync_reset.patch` (brief 80: the core's 37 asynchronous-reset blocks become synchronous; `run_bench.py --sync-reset`).
+
 Any change to the copy must be a new pin (a fresh `git archive` of a named commit), never an edit in place.
