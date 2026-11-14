@@ -6,7 +6,13 @@
      setup_path: <flow.digest.timing record> | None, setup_features: {...}, hold_path: ...,
      utilization: {lut, ff, bram_tile, dsp, iob, carry4, ... and *_available}, util_top: {lut: [...], ff: [...]},
      power: {total_w, dynamic_w, static_w, junction_c, components: {...}, hierarchy: [...]},
-     synth: {latches, ram_in_registers, clean}, gates: {name: bool}, files: [reports read]}
+     synth: {latches, ram_in_registers, clean}, gates: {name: bool}, files: [reports read],
+     drc: {errors, critical_warnings, warnings, rules}, methodology: {...}  (the routed checkpoint's report_drc and
+     report_methodology, as flow/gates.py summarises them), post_synth: {utilization, timing, drc, methodology}}
+
+``digest_synth(d)`` is the early check's view of a synthesis-only build (``FDA_STOP_AFTER=synth``): the post-synthesis
+utilisation (BRAM and DSP counts are final; LUT and FF are a little above the routed counts), the estimated timing, DRC,
+methodology and the synthesis messages. It never reads the routed reports, which belong to an earlier build.
 
 ``digest_text(dg)`` is the short text the repair prompt gets (a few hundred words at most).
 """
@@ -72,8 +78,30 @@ def digest_build(d: Path) -> dict[str, Any]:
     out["synth"] = synth.scan(log) if log else {"latches": [], "ram_in_registers": [], "clean": True, "unread": True}
     if log:
         files.append("vivado.log")
+    out["drc"] = g.get("drc")
+    out["methodology"] = g.get("methodology")
+    ps = (g.get("stages") or {}).get("post_synth") or {}
+    out["post_synth"] = {"utilization": ps.get("utilization") or {}, "timing": ps.get("timing") or {},
+                         "drc": ps.get("drc"), "methodology": ps.get("methodology")} if ps.get("ran") else None
     out["files"] = files
     return out
+
+
+def digest_synth(d: Path) -> dict[str, Any]:
+    """A synthesis-only build (or the synthesis stage of any build): ``{ran, utilization, timing, drc, methodology,
+    synth}``. ``ran`` is false when the build stopped before its post-synthesis reports."""
+    d = Path(d)
+    try:
+        g = json.loads((d / "gates.json").read_text())
+    except (OSError, ValueError):
+        g = {}
+    ps = (g.get("stages") or {}).get("post_synth") or {}
+    if not ps.get("ran"):
+        return {"ran": False}
+    log = _read(d, "vivado.log")
+    return {"ran": True, "utilization": ps.get("utilization") or {}, "timing": ps.get("timing") or {},
+            "drc": ps.get("drc"), "methodology": ps.get("methodology"),
+            "synth": synth.scan(log) if log else {"unread": True}}
 
 
 def digest_text(dg: dict[str, Any], goal: str | None = None) -> str:
