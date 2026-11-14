@@ -50,12 +50,20 @@ Vivado builds are reused when the sources are unchanged and the earlier build we
 
 The Designer (and the closure loop) has one tool for design checks, `check(names, scope, level)`, over a registry:
 `lint`, `standards`, `resets`, `cdc`, `methodology`, `drc`, `exceptions`, `io`, `clocking`, `dsp_ram_mapping`,
-`control_sets`, `fsm`, `axi`, `gt_plan`, `doc`. It returns a digest (each check pass, fail, partial or not run with the
+`control_sets`, `fsm`, `axi`, `axi_profile`, `gt_plan`, `doc`. It returns a digest (each check pass, fail, partial or not run with the
 reason; each finding's rule, place, one-line fix and KB skill) and writes the full result to `build/checks/`. Source
 checks run concurrently; reports a build did not write are made in one Vivado session on the stage's checkpoint. The
 sign-off gates call the same registry: `post_synth_resets_clean` (builds with the reset scan) and the DOC gate. The
 older tools (`lint`, `gates`, `check_constraints`, `report_digest`) stay, because the graph's gates and the recorded runs
 call them. The Designer also gets `gt_plan` at stages 1 to 3. Details: [check_suite.md](check_suite.md).
+
+**AXI4-Lite interface profile (brief 73).** A design with an AXI4-Lite register block states one profile in `spec.yaml`:
+`interfaces: {axi_lite_profile: house | amd_compatible | strict}`, optionally with `blocks:` (a profile and single
+settings per register map) and `amd_ip_acknowledged:`. The Clarifier's prompt says when to choose each (`amd_compatible`
+when software already written for AMD IP will drive the block, `strict` for bring-up, safety or verification-heavy work,
+`house` otherwise); `spec_schema.validate` refuses a bad section; the Designer's `axi_profile` check regenerates each
+generated block under that profile and compares it with the file, so a block cannot claim a profile and behave as
+another. The profiles, their settings and costs: [hwsw.md](hwsw.md#interface-profiles-brief-73).
 
 ## Separation (`agent/graph/roles.py`)
 

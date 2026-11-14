@@ -222,6 +222,13 @@ def validate(spec: dict[str, Any], allow_rates: bool = False, need_proof: bool =
         except ImportError:
             from gt_plan import link_errors      # run as a script: flow/ is on sys.path
         errs += [f"spec.yaml {e}" for e in link_errors(spec["link"])]
+    if "interfaces" in spec:                         # brief 73: the AXI4-Lite interface profile (hwsw/regmap.py)
+        try:
+            from hwsw.regmap import interfaces_errors
+        except ImportError:
+            interfaces_errors = None
+        if interfaces_errors is not None:
+            errs += [f"spec.yaml interfaces: {e}" for e in interfaces_errors(spec["interfaces"])]
     params = spec.get("parameters") or {}
     if not isinstance(params, dict):
         errs.append("'parameters' must be a mapping")

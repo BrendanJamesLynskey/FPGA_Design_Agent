@@ -87,6 +87,7 @@ What success looks like (the last line of each):
 
 ```yaml
 regmap: 1
+profile: house              # optional: house (default) | amd_compatible | strict; see "Interface profiles". The settings below override it
 name: demo_accel            # lower case; the module is demo_accel_regs, the C prefix DEMO_ACCEL_
 version: 0.1.0
 addr_width: 12              # a 4 KB window (only address bits [11:2] are decoded)
@@ -126,7 +127,7 @@ snapshot:                   # a value wider than the bus, read consistently
 
 ### House conventions (owner, 2026-11-13)
 
-Every generated block follows these, and its generated document states each one in a Behaviour section, written from
+Every generated block follows these unless its design chose another profile (next section), and its generated document states each one in a Behaviour section, written from
 the map's settings (`behaviour()` in `hwsw/regmap.py`; `hwsw/tests/test_64a_regmap.py` checks that each sentence
 follows its setting). A hand-written block's datasheet (the "Registers" section of an `ip_lib` README) states the same
 topics, and says in its first paragraph where the block differs from these conventions.
@@ -172,7 +173,7 @@ topics, and says in its first paragraph where the block differs from these conve
   the same clock; reads of those fields return the copy, so the parts always belong to one instant. A read without a
   new snapshot returns the last copy (stale), and the document says so. The C header gets a helper
   (`demo_accel_snapshot_job_cycles(base)`) and the Python driver `snapshot("JOB_CYCLES")`.
-- **Byte strobes are honoured; access is 32-bit**; address bits [1:0] are not decoded.
+- **Byte strobes are honoured; access is 32-bit**; address bits [1:0] are not decoded (house; `strict` rejects what it cannot take as asked, see the profiles).
 - **Reset is `aresetn`, synchronous, active low**; every stored field has a reset value; RO fields read their input.
 - **The interrupt** `irq_o` is a level output from a register: high while any status bit is set together with its
   enable bit, one clock after the cause; a W1C clear drops it one clock later.
@@ -195,8 +196,110 @@ the generated register-level names, two registers whose C names would meet, an i
 a snapshot whose trigger is not a one-bit W1P field, whose parts are not RO hardware inputs, are in another group, or
 exceed 64 bits,
 register names the block uses for its own signals (`HIT`, `COMMIT`, `VALUE`: `wr_hit`, `wr_commit`, `rd_value`), and
-text that would break an output: a newline or other control character, `*/`, `/*`, `"""`, a backslash or `|` in a
+an unknown profile or setting value, a strict profile with the two halves of a wide value (`NAME_LO`/`NAME_HI` and the other
+recognised pairs) read outside a snapshot group, a profile in a documentation-only map, and text that would break an output: a newline or other control character, `*/`, `/*`, `"""`, a backslash or `|` in a
 summary, or a version that is not letters, digits and `. + _ -`. `gen` checks the text again before it writes.
+
+### Interface profiles (brief 73)
+
+A **profile** is a named bundle of the settings of a register block. `house` is the default and is the convention set
+described above; `amd_compatible` and `strict` are the other two. A design chooses one once, in `spec.yaml`, and may
+override it per block and per setting:
+
+```yaml
+interfaces:
+  axi_lite_profile: house          # house | amd_compatible | strict; the design's default
+  blocks:                          # optional: one entry per register map, by the map's name
+    demo_accel: {profile: strict, unmapped: okay}     # a block's profile, and single settings of it
+  amd_ip_acknowledged: [axi_gpio]  # AMD IP the design uses beside a strict block; see "The check"
+```
+
+A map names no profile of its own unless it wants to (`profile: strict` at the top of the regmap YAML), and each of its
+settings can be given by name (`unmapped:`, `error_capture:`, `partial_write:`, `unaligned:`, `reserved_write:`,
+`wide_values:`). **Resolution, most specific first:** the map's own setting, the map's own profile, the design's entry for
+the block (`interfaces.blocks.<name>`: its settings, then its profile), the design's `axi_lite_profile`, `house`. A map
+that names its own profile is not changed by the design's block entry (the `axi_profile` check reports the
+disagreement). `python3 -m hwsw.regmap gen|check <map>.yaml --spec designs/<d>/spec.yaml` applies the design's choice;
+without `--spec` a map that names no profile is `house`. The datasheet names the profile and lists every setting that
+differs from it. Maps that name no profile and no new setting generate the same model hash as before profiles existed.
+
+| Setting | `house` (default) | `amd_compatible` | `strict` |
+|---|---|---|---|
+| `unmapped`: a hole inside the block | SLVERR on read, OKAY on write (`split`) | OKAY and read 0 (`okay`) | SLVERR on read and write (`slverr`) |
+| `error_capture` | on | off (no registers take address space) | on, with the interrupt (`on+irq`) |
+| `partial_write`: strobes cover part of a multi-byte field | accepted (`accept`) | accepted | SLVERR, nothing changes (`slverr`) |
+| `unaligned`: address bits [1:0] not 0 | not decoded: reaches the word (`ignore`) | not decoded | SLVERR (`slverr`) |
+| `reserved_write`: a 1 written to a reserved bit | ignored (`ignore`) | ignored | SLVERR, nothing changes (`slverr`) |
+| `wide_values` | a snapshot group is available (`optional`) | available | required for the LO/HI pairs the generator recognises (`snapshot`) |
+| Reserved bits read | 0 | 0 | 0 |
+| Read side effects | none (W1P pops) | none | none |
+| W1C/W1S same-clock priority | the hardware event wins | the hardware event wins | the hardware event wins |
+| Byte strobes | honoured | honoured | honoured |
+| Interrupt output | level, registered | level | level |
+| Outstanding transactions | one per direction | one per direction | one per direction |
+
+The last six rows are the same in every profile; no profile can change them. **`amd_compatible` means driver-visible
+compatibility, never copied defects.** It copies only what a driver written for AMD IP can rely on, as measured in
+[brief 69](../results/69_amd_ip_conventions/README.md): a hole answers OKAY and reads 0, and no error-capture registers
+take address space. It does not copy what brief 69 found to be defects or hazards: registers that alias, a lost event in
+a same-clock race, a 64-bit read that tears, a read that pops or clears, a lost write response, or ignored byte strobes
+(honouring them cannot break a driver that writes whole words).
+
+What a user could guess wrong in the strict settings, each stated in the generated datasheet:
+
+- **`partial_write: slverr`.** AXI4-Lite has no transfer size, so a CPU's byte or halfword store arrives as a word write
+  with fewer strobes. A write is rejected when its strobes cover some but not all byte lanes of a **writable field that
+  spans more than one lane** (a 12-bit field over lanes 2 and 3 with only lane 2 strobed, for example). The whole write
+  is rejected: SLVERR and no field of the register changes, not even the ones the strobes cover wholly. A write that
+  covers every lane of such a field, or none of its lanes, is accepted; so is any strobe pattern on a field inside one
+  byte lane; a write with all strobes 0 changes nothing and answers OKAY. Only RW, W1C, W1S and W1P fields count (a
+  strobe pattern over a read-only field is ignored as before).
+- **`unaligned: slverr`.** AXI4-Lite reads cannot be narrow, so this is only the address: bits [1:0] not 0 answer SLVERR
+  to a read (data 0) and to a write (nothing changes), whatever the word would be, an unmapped one included.
+- **`reserved_write: slverr`.** A write that has a 1 in a reserved bit (a bit that belongs to no field of that register),
+  in a byte lane whose strobe is 1, answers SLVERR and changes nothing at all. Reserved bits still read 0, so writing
+  back what was read is safe; the error-capture and read-only registers have reserved bits too (a write of all ones to
+  ERR_ADDR is rejected, not ignored).
+- **Error capture records every rejected access**, not only unmapped ones, because it is the one place a bring-up
+  engineer looks; it does not say which cause (a follow-up could add a cause field). The interrupt is on in `strict`.
+- **`wide_values: snapshot`.** The generator cannot see which registers form one value, so it recognises the naming
+  pairs `NAME_LO`/`NAME_HI`, `_LOW`/`_HIGH`, `_LSW`/`_MSW`, `_L`/`_H`: every hardware-input field of such a pair must be in
+  a snapshot group, or the map is refused with the way out (`wide_values: optional`). A wide value named another way is
+  the author's to put in a group; the profile cannot enforce it.
+
+**The check.** The `check` tool's `axi_profile` check (`flow/checks/axi_profile.py`; rules `HDL-IF-04` to `HDL-IF-06`)
+does not trust a block's `// PROFILE` claim. For every generated `*_regs.sv` in the design it finds the block's source
+map, resolves the profile as above under the design's `interfaces:`, regenerates the RTL and compares it with the file:
+a block that claims `strict` and behaves as `house` fails (`AXI-PROFILE-DRIFT`), as does a file with a `// PROFILE` line and
+no generator banner; a block generated under another profile than its design declares fails (`AXI-PROFILE-MISMATCH`); a
+setting the block has that its profile (plus the design's `blocks:` entry) does not give it fails (`AXI-PROFILE-OVERRIDE`:
+a map's own `partial_write: accept` in a strict design must be declared as `interfaces.blocks.<name>.partial_write`, and a
+map that names its own profile ignores the design's block settings); a block with no `// PROFILE` line (`AXI-PROFILE-STALE`)
+or no source map (`AXI-PROFILE-NOSRC`) fails because its claim cannot be compared; an invalid or unparseable `interfaces:`
+section, or a `blocks:` key naming no block, fails (`AXI-PROFILE-SPEC`). Every `.sv` or `.v` file of the design is scanned,
+whatever it is called. It flags, without failing: a map that names its own profile in a design that chose none (with a
+design profile chosen it fails, `AXI-PROFILE-MIX`), and AMD IP of brief 69's list in a design with a strict block or
+a strict design profile unless listed under `amd_ip_acknowledged` (`AXI-PROFILE-AMD-STRICT`: those blocks answer a hole
+with OKAY and ignore strobes, so a strict driver's expectations do not hold for them). It does not read hand-written blocks (their conventions are in their `ip.yaml`), and it cannot see an
+interconnect between a strict master and an AMD slave: the AMD rule is by presence in the design.
+
+**Cost** (Vivado 2026.1, xc7a100t, 10 ns, out of context, the same map under each profile, one run each,
+[results/73_profiles](../results/73_profiles/README.md)):
+
+| Profile | LUTs | Flip-flops | WNS at 10 ns |
+|---|---|---|---|
+| `house` | 248 | 262 | 5.147 ns |
+| `amd_compatible` | 180 (68 fewer: no capture registers) | 241 (21 fewer) | 5.634 ns |
+| `strict` | 286 (38 more) | 266 (4 more) | 2.567 ns |
+
+The strict block's slack is 2.6 ns smaller (probably the rejection tests in front of the register write strobes; not
+investigated) and it still closes at 10 ns. The `amd_compatible` figures reproduce brief 64A3's `okay` build, `house` its `split` with the capture.
+
+**What would carry over to other interfaces.** The mechanism (a named bundle of settings, one choice per design with
+per-block overrides, a datasheet that lists the differences, and a check that regenerates and compares) does not depend on
+AXI4-Lite. A later profile for AXI4-Stream would reuse `interfaces:` with its own key, the same resolution order and the
+same check shape; its settings (what `TKEEP`/`TSTRB` mean, `TLAST` rules, back-pressure on `TREADY`) belong to its own
+convention brief. Resets are not a profile: they are synchronous, by owner decision.
 
 ### What is generated
 
@@ -225,7 +328,7 @@ checks that the loader refuses each.
 
 ### How the generated RTL is verified
 
-`hwsw/tests/test_64a_regmap_rtl.py` simulates four maps under cocotb and Icarus Verilog 12: the example `demo_accel`
+`hwsw/tests/test_64a_regmap_rtl.py` simulates four maps under cocotb (and, since brief 73, the demo map under each of the three profiles, below) and Icarus Verilog 12: the example `demo_accel`
 (13 registers of its own, every access type, an interrupt, a 64-bit snapshot group, the split response, the error capture
 at its default place), a map of awkward layouts (fields across byte lanes, a 32-bit field, multi-bit W1C, W1S and W1P
 fields, a register at the top of a 64-byte window, SLVERR for both channels, the error capture with its interrupt at an
@@ -265,6 +368,17 @@ random order of AW and W, and random BREADY and RREADY back-pressure. The brief 
   accelerator answers START with BUSY and then DONE, and the driver completes three polled and three interrupt-driven
   jobs, then reads JOB_CYCLES (counted across a carry into the high half) through the generated snapshot helper. The
   same driver source compiles for the Cortex-A9 with `arm-none-eabi-gcc -mcpu=cortex-a9`.
+
+The same bench runs on the demo map under each interface profile (`hwsw/examples/profiles/spec_<profile>.yaml` as the
+design's choice), with the reference model taking each profile's rejections from the resolved settings, and one more test,
+`profile_settings`, exercises every setting in the direction the map has it: an unaligned read and write (SLVERR, data 0,
+nothing changes, the capture counts them), every strobe pattern over each multi-byte RW field (rejected unless all or none
+of the field's lanes are strobed, and a rejected write leaves the other fields alone), a 1 written to a reserved bit (rejected,
+and accepted when its byte lane is not strobed). Eleven seeded faults in the strict RTL must each fail it: an unaligned write
+accepted or answered OKAY, an unaligned read answered OKAY or returning data, a partial write accepted, a rejected write that
+still applies or answers OKAY, a reserved-bit write accepted, a reserved-bit check that ignores the strobes, and the capture
+missing a rejected write or an unaligned read. Brief 71's missing-response monitor (`axi_tx/rtl/axil_resp_rules.sv`) is on the
+wires of this bench and of the b65a bench; a response that never comes fails the test.
 
 Twenty-two seeded faults in the generated RTL must each fail the bench; all twenty-two do. Eight are earlier: a clear that beats
 a set, byte strobes ignored, B before W, a lost doorbell, an interrupt that ignores its enable, a pulse that stays high,

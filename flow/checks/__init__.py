@@ -554,11 +554,25 @@ def _axi(ctx: Ctx) -> dict[str, Any]:
     from flow import amd_ip_notes as N
     r = N.scan([ctx.design])
     fs = []
-    for name, info in sorted((r.get("found") or {}).items()):
+    for name, info in sorted((r.get("ips") or {}).items()):
         fs.append({"tool": "axi", "code": "AXI-AMD-IP", "severity": "warning", "where": ", ".join(info.get("files", [])[:2]) or name,
                    "key": f"axi:AXI-AMD-IP {name}", "message": f"{info.get('ip', name)}: " + "; ".join(info.get("notes", [])[:3])[:300],
                    "blocking": False})
     return _result(fs)
+
+
+def _axi_profile(ctx: Ctx) -> dict[str, Any]:
+    """Every generated AXI4-Lite register block has the interface profile its design declares and behaves as it says
+    (flow/checks/axi_profile.py, brief 73): the block's source map is resolved under the design's `interfaces:`, the RTL
+    regenerated and compared with the file."""
+    from flow.checks import axi_profile as AP
+    fs = AP.run_checks(ctx.design, ctx.root)
+    return _result(fs, records=[p for p in (ctx.design / "spec.yaml",) if p.is_file()])
+
+
+def _axi_profile_applies(design: Path) -> str | None:
+    from flow.checks import axi_profile as AP
+    return AP.applies(design, ROOT)
 
 
 def _link(design: Path) -> tuple[dict[str, Any] | None, str]:
@@ -659,6 +673,12 @@ register(Check("fsm", "records", ALL, {"fsm": ("FSM-STATE", "FSM-TRANS", "FSM-UN
                "FSM state and transition coverage from the simulation traces (flow/fsm_coverage.py)", _fsm, applies=_fsm_applies))
 register(Check("axi", "source", ALL, {"axi": ("AXI-AMD-IP",)},
                "AMD AXI4-Lite IP beside our register blocks: the measured differences (flow/amd_ip_notes.py, brief 69)", _axi))
+register(Check("axi_profile", "source", ALL, {"axi_profile": ("AXI-PROFILE-SPEC", "AXI-PROFILE-MISMATCH", "AXI-PROFILE-DRIFT", "AXI-PROFILE-MIX",
+                                                         "AXI-PROFILE-STALE", "AXI-PROFILE-NOSRC", "AXI-PROFILE-OVERRIDE",
+                                                         "AXI-PROFILE-AMD-STRICT")},
+               "AXI4-Lite interface profiles (brief 73): each generated register block is what its map generates under the "
+               "design's declared profile; mixed profiles and AMD IP behind a strict region are flagged",
+               _axi_profile, applies=_axi_profile_applies))
 register(Check("gt_plan", "source", ALL, {"gt": ("GT-PLAN",)},
                "the transceiver link plan (flow/gt_plan.py, brief 56A): every reason the link cannot be built", _gt,
                applies=_gt_applies))

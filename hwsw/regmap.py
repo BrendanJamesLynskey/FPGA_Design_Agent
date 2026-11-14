@@ -13,6 +13,10 @@ port list and its address and reset constants. What the register block *does* (a
 values, unmapped responses, the interrupt) is checked in simulation: hwsw/tests/test_64a_regmap_rtl.py drives it with
 the generated Python driver and a C driver over a model bus, with the brief 59A AXI4-Lite checker on the wires.
 
+An interface profile (house, amd_compatible or strict; brief 73) names a bundle of the settings below; a map or a design
+chooses one and may override single settings. `--spec designs/<d>/spec.yaml` reads the design's choice
+(`interfaces: {axi_lite_profile: ..., blocks: {<map name>: {...}}}`).
+
 The format, the access types and the generated names are in docs/hwsw.md. Plain Python and PyYAML; `check` also needs
 a C compiler (gcc or cc) for the header probe.
 """
@@ -21,7 +25,6 @@ from __future__ import annotations
 import argparse
 import dataclasses
 import hashlib
-import importlib.util
 import json
 import pprint
 import re
@@ -29,6 +32,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import types
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -67,18 +71,52 @@ class Conventions:
     reset_active: str = "low"          # low | high
     reset_style: str = "synchronous"   # synchronous | asynchronous
     clock: str = "aclk"                # the clock every field is in
+    partial_write: str = "accept"      # accept | slverr: a write whose strobes cover part of a multi-byte field (brief 73)
+    unaligned: str = "ignore"          # ignore (address bits [1:0] are not decoded) | slverr: an address that is not word-aligned
+    reserved_write: str = "ignore"     # ignore | slverr: a write of 1 to a reserved bit
+    wide_values: str = "optional"      # optional | snapshot: a value in two registers must be a snapshot group
 
 
 HOUSE = Conventions()
 UNMAPPED_CHOICES = ("split", "okay", "slverr")
 CONV_CHOICES = {"unmapped": UNMAPPED_CHOICES, "reserved": ("zero", "undefined"), "strobes": ("honoured", "ignored"),
-                "reset_active": ("low", "high"), "reset_style": ("synchronous", "asynchronous")}
+                "reset_active": ("low", "high"), "reset_style": ("synchronous", "asynchronous"),
+                "partial_write": ("accept", "slverr"), "unaligned": ("ignore", "slverr"),
+                "reserved_write": ("ignore", "slverr"), "wide_values": ("optional", "snapshot")}
+# ---- interface profiles (brief 73): a named bundle of the settings above, chosen once per design -------------------
+# error_capture is a mode here: off | on | on+irq (the capture's place in the window is not part of a profile).
+PROFILES = {
+    "house": {"unmapped": "split", "error_capture": "on", "partial_write": "accept", "unaligned": "ignore",
+              "reserved_write": "ignore", "wide_values": "optional"},
+    "amd_compatible": {"unmapped": "okay", "error_capture": "off", "partial_write": "accept", "unaligned": "ignore",
+                       "reserved_write": "ignore", "wide_values": "optional"},
+    "strict": {"unmapped": "slverr", "error_capture": "on+irq", "partial_write": "slverr", "unaligned": "slverr",
+               "reserved_write": "slverr", "wide_values": "snapshot"},
+}
+NEW_SETTINGS = ("partial_write", "unaligned", "reserved_write", "wide_values")         # added by brief 73
+PROFILE_SETTINGS = tuple(PROFILES["house"])                    # the settings a profile sets, in the order shown
+SETTING_CHOICES = {**{k: CONV_CHOICES[k] for k in PROFILE_SETTINGS if k != "error_capture"},
+                   "error_capture": ("off", "on", "on+irq")}
+PROFILE_TEXT = {
+    "house": "the default: a read of a hole answers SLVERR and a write OKAY, the error-capture registers are on, byte "
+             "strobes are honoured, a write of 1 to a reserved bit is ignored",
+    "amd_compatible": "driver-visible compatibility with the AMD AXI4-Lite peripherals measured in brief 69: a hole "
+                      "answers OKAY and reads 0, and no error-capture registers take address space; it copies none of "
+                      "their defects (aliasing, lost events, tearing reads, read side effects, a lost write response)",
+    "strict": "for bring-up, safety or verification-heavy work: every access the block cannot take as asked answers "
+              "SLVERR (a hole, an unaligned address, a partial write to a multi-byte field, a write of 1 to a reserved "
+              "bit), the error-capture registers are on with their interrupt, and a value wider than the bus must be a "
+              "snapshot group",
+}
+INTERFACE_KEYS = {"axi_lite_profile", "blocks", "amd_ip_acknowledged"}
+WIDE_PAIRS = (("_LO", "_HI"), ("_LOW", "_HIGH"), ("_LSW", "_MSW"), ("_L", "_H"))
 NAME_RE = re.compile(r"^[a-z][a-z0-9_]*$")
 REG_RE = re.compile(r"^[A-Z][A-Z0-9_]*$")
 C_RESERVED = {"OFFSET", "RESET", "RW_MASK", "RO_MASK", "W1C_MASK", "W1S_MASK", "W1P_MASK"}   # register-level suffixes
+PROFILE_KEYS = {"profile", "partial_write", "unaligned", "reserved_write", "wide_values"}   # generated blocks only
 MODEL_KEYS = {"regmap", "name", "version", "summary", "data_width", "addr_width", "unmapped", "interrupt", "registers",
-              "snapshot", "error_capture"}
-DOC_MODEL_KEYS = MODEL_KEYS | {"conventions", "staging"}       # documentation-only maps (an ip.yaml register_map)
+              "snapshot", "error_capture"} | PROFILE_KEYS
+DOC_MODEL_KEYS = (MODEL_KEYS - PROFILE_KEYS) | {"conventions", "staging"}   # documentation-only maps (an ip.yaml register_map)
 REG_KEYS = {"name", "offset", "summary", "fields"}
 SNAP_KEYS = {"name", "trigger", "fields", "summary"}
 GROUP_KEY = object()          # set only by the count: expansion of a documentation-only map; no YAML key can equal it
@@ -208,6 +246,7 @@ class RegMap:
     doc_only: bool = False
     conventions: Conventions = HOUSE
     error_capture: dict | None = None      # {offset, interrupt} of the generated error-capture registers, or None
+    profile: str = ""                      # the interface profile (brief 73); "" for a documentation-only map
 
     @property
     def window_bytes(self) -> int:
@@ -240,6 +279,10 @@ class RegMap:
                                        "reset": f.reset, "const": f.const} for f in r.fields]}
                           for r in self.registers],
             **({"error_capture": self.error_capture} if self.error_capture else {}),
+            # only a map that leaves the house profile or its new settings changes its hash (older outputs stay current)
+            **({"interface": {"profile": self.profile, **{k: getattr(self.conventions, k) for k in NEW_SETTINGS}}}
+               if self.profile and (self.profile != "house" or any(getattr(self.conventions, k) != getattr(HOUSE, k)
+                                                                   for k in NEW_SETTINGS)) else {}),
             **({"snapshot": [{"name": s.name, "trigger": ".".join(s.trigger), "fields": [".".join(x) for x in s.fields]}
                              for s in self.snapshots]} if self.snapshots else {}),
         }
@@ -253,17 +296,74 @@ def _int(v, what: str, errs: list[str]) -> int | None:
     return v
 
 
-def load(path: str | Path) -> RegMap:
-    """Read and validate a regmap YAML file. Raises RegmapError with every problem found."""
+def load(path: str | Path, spec: str | Path | None = None) -> RegMap:
+    """Read and validate a regmap YAML file. Raises RegmapError with every problem found. `spec`: the design's spec.yaml;
+    a map that names no profile of its own takes the one the design chose for it (`interfaces:`, see inherit_for)."""
     p = Path(path)
     try:
         d = yaml.safe_load(p.read_text())
     except yaml.YAMLError as ex:
         raise RegmapError(f"{p}: not valid YAML: {ex}") from None
-    return from_dict(d, source=str(p))
+    inherit = None
+    if spec is not None:
+        try:
+            sp = yaml.safe_load(Path(spec).read_text()) or {}
+        except (OSError, yaml.YAMLError) as ex:
+            raise RegmapError(f"{spec}: cannot be read: {ex}") from None
+        ifs = sp.get("interfaces") if isinstance(sp, dict) else None
+        errs = interfaces_errors(ifs)
+        if errs:
+            raise RegmapError(f"{spec}: interfaces:\n  " + "\n  ".join(errs))
+        inherit = inherit_for(ifs, d.get("name") if isinstance(d, dict) else None)
+    return from_dict(d, source=str(p), inherit=inherit)
 
 
-def from_dict(d, source: str = "<dict>", doc_only: bool = False) -> RegMap:
+def interfaces_errors(ifs) -> list[str]:
+    """Why a spec.yaml `interfaces:` section is not valid ([] = fine, or absent)."""
+    if ifs is None:
+        return []
+    if not isinstance(ifs, dict):
+        return ["must be a mapping: {axi_lite_profile: house|amd_compatible|strict, blocks: {<map name>: {profile: ..., "
+                "<setting>: ...}}, amd_ip_acknowledged: [<AMD IP name>, ...]}"]
+    errs = []
+    if set(ifs) - INTERFACE_KEYS:
+        errs.append(f"unknown keys {sorted(set(ifs) - INTERFACE_KEYS)} (allowed: {', '.join(sorted(INTERFACE_KEYS))})")
+    p = ifs.get("axi_lite_profile")
+    if p is not None and not (isinstance(p, str) and p in PROFILES):
+        errs.append(f"axi_lite_profile: {p!r} must be one of {', '.join(PROFILES)}")
+    blocks = ifs.get("blocks", {})
+    if not isinstance(blocks, dict):
+        errs.append("blocks: must be a mapping from a register map's name to its profile and settings")
+        blocks = {}
+    for n, b in blocks.items():
+        if not isinstance(b, dict):
+            errs.append(f"blocks.{n}: must be a mapping (profile and/or settings)")
+            continue
+        for k, v in b.items():
+            if k == "profile":
+                if not (isinstance(v, str) and v in PROFILES):
+                    errs.append(f"blocks.{n}.profile: {v!r} must be one of {', '.join(PROFILES)}")
+            elif k in SETTING_CHOICES:
+                if not (isinstance(v, str) and v in SETTING_CHOICES[k]):
+                    errs.append(f"blocks.{n}.{k}: {v!r} must be one of {', '.join(SETTING_CHOICES[k])}")
+            else:
+                errs.append(f"blocks.{n}.{k}: unknown (a profile or one of {', '.join(SETTING_CHOICES)})")
+    ack = ifs.get("amd_ip_acknowledged", [])
+    if not isinstance(ack, list) or not all(isinstance(x, str) for x in ack):
+        errs.append("amd_ip_acknowledged: must be a list of AMD IP names (for example axi_gpio)")
+    return errs
+
+
+def inherit_for(ifs: dict | None, name: str | None) -> dict:
+    """What a map named `name` takes from the design's `interfaces:` when it names no profile itself: the profile (the
+    block's own entry, else the design's, else None = house) and the block's single-setting overrides."""
+    ifs = ifs or {}
+    b = (ifs.get("blocks") or {}).get(name) or {}
+    return {"profile": b.get("profile") or ifs.get("axi_lite_profile"),
+            "settings": {k: v for k, v in b.items() if k != "profile"}}
+
+
+def from_dict(d, source: str = "<dict>", doc_only: bool = False, inherit: dict | None = None) -> RegMap:
     """Validate a regmap. doc_only: the map documents a hand-written block (an ip_lib entry's ip.yaml register_map),
     so it may also use WO registers, `count:` (DATA0..DATAn-1), RO fields with a known hardware reset, `conventions:`
     and `staging:`; nothing is generated from it but the datasheet."""
@@ -273,8 +373,10 @@ def from_dict(d, source: str = "<dict>", doc_only: bool = False) -> RegMap:
     extra = set(d) - (DOC_MODEL_KEYS if doc_only else MODEL_KEYS)
     if extra:
         errs.append(f"unknown top-level keys {sorted(extra)}" +
-                    (" (conventions and staging are for documentation-only maps; a generated block has the house "
-                     "conventions, docs/hwsw.md)" if extra & {"conventions", "staging"} else ""))
+                    (" (conventions and staging are for documentation-only maps; a generated block takes its conventions "
+                     "from an interface profile, docs/hwsw.md)" if extra & {"conventions", "staging"} else "") +
+                    (" (a profile and its settings are for generated blocks; a documentation-only map states the "
+                     "hand-written block's own under conventions:)" if extra & PROFILE_KEYS else ""))
     access_ok = ACCESS + tuple(DOC_ACCESS) if doc_only else ACCESS
     if d.get("regmap") != 1:
         errs.append("regmap: must be 1 (the format version)")
@@ -293,10 +395,17 @@ def from_dict(d, source: str = "<dict>", doc_only: bool = False) -> RegMap:
     if doc_only and "unmapped" not in d:
         errs.append("unmapped: a documentation-only map states the hand-written block's response (split, okay or "
                     "slverr): there is no default to assume")
-    unmapped = d.get("unmapped", HOUSE.unmapped)
+    prof, prof_set, errs_p = _profile(d, inherit, doc_only)
+    errs += errs_p
+    unmapped = d.get("unmapped", prof_set["unmapped"] if prof else HOUSE.unmapped)
     if unmapped not in UNMAPPED_CHOICES:
         errs.append(f"unmapped: {unmapped!r} must be one of {', '.join(UNMAPPED_CHOICES)}")
     conv = {"unmapped": unmapped}
+    if prof:
+        for k in NEW_SETTINGS:
+            conv[k] = d.get(k, prof_set[k])
+            if conv[k] not in CONV_CHOICES[k]:
+                errs.append(f"{k}: {conv[k]!r} must be one of {', '.join(CONV_CHOICES[k])}")
     if doc_only and d.get("conventions") is not None:
         c = d["conventions"]
         if not isinstance(c, dict) or set(c) - set(Conventions.__dataclass_fields__) - {"unmapped"}:
@@ -310,7 +419,7 @@ def from_dict(d, source: str = "<dict>", doc_only: bool = False) -> RegMap:
                 elif not isinstance(v, str) or not NAME_RE.match(v) and k in ("reset", "clock"):
                     errs.append(f"conventions.{k}: {v!r} must be a signal name")
             conv.update({k: v for k, v in c.items() if k != "unmapped"})
-    cap = _error_capture(d, aw, doc_only, errs)
+    cap = _error_capture(d, aw, doc_only, errs, prof_set["error_capture"] if prof else None)
     regs_in = d.get("registers")
     if not isinstance(regs_in, list) or not regs_in:
         errs.append("registers: must be a non-empty list")
@@ -490,19 +599,71 @@ def from_dict(d, source: str = "<dict>", doc_only: bool = False) -> RegMap:
             irq = {"status": irq["status"], "enable": irq["enable"]}
     snaps = _snapshots(d.get("snapshot"), regs, cnames, name, errs)
     stag = _staging(d.get("staging"), regs, errs) if doc_only else ()
+    if prof and conv.get("wide_values") == "snapshot":
+        errs += wide_value_problems(regs, snaps)
     if errs:
         raise RegmapError(f"{source}:\n  " + "\n  ".join(errs))
     m = RegMap(name, str(d.get("version", "0.0.0")), str(d.get("summary", "")), aw, unmapped,
                tuple(sorted(regs, key=lambda x: x.offset)), irq, snapshots=snaps, staging=stag, doc_only=doc_only,
-               conventions=Conventions(**conv), error_capture=cap)
+               conventions=Conventions(**conv), error_capture=cap, profile=prof)
     h = hashlib.sha256(json.dumps(m.canonical(), sort_keys=True).encode()).hexdigest()
     return dataclasses.replace(m, sha256=h)
 
 
-def _error_capture(d: dict, aw, doc_only: bool, errs: list[str]) -> dict | None:
+CAPTURE_RAW = {"off": False, "on": True, "on+irq": {"interrupt": True}}
+
+
+def _profile(d: dict, inherit: dict | None, doc_only: bool) -> tuple[str, dict, list[str]]:
+    """The map's interface profile and its settings (before the map's own single-setting keys): its `profile:` key, else
+    what the design's spec.yaml chose for it (`inherit`, see inherit_for), else house. A documentation-only map has none."""
+    if doc_only:
+        return "", {}, []
+    errs: list[str] = []
+    own = d.get("profile")
+    if own is not None and not (isinstance(own, str) and own in PROFILES):
+        errs.append(f"profile: {own!r} must be one of {', '.join(PROFILES)} (docs/hwsw.md)")
+        own = None
+    inh = inherit or {}
+    name = own or inh.get("profile") or "house"
+    base = dict(PROFILES[name])
+    if own is None:                      # a map that names its own profile is not changed by the design's block entry
+        base.update(inh.get("settings") or {})
+    return name, base, errs
+
+
+def _capture_mode(cap: dict | None) -> str:
+    return "off" if cap is None else "on+irq" if cap["interrupt"] else "on"
+
+
+def wide_value_problems(regs, snaps) -> list[str]:
+    """Wide values under wide_values: snapshot. A value wider than the bus is two or more registers; the generator cannot
+    see which registers belong together, so it recognises the naming pairs NAME_LO/NAME_HI, _LOW/_HIGH, _LSW/_MSW and
+    _L/_H: every hardware-input (RO) field in such a pair must be in a snapshot group. Any other wide value is the
+    author's to put in a group; the datasheet says so."""
+    names = {r.name: r for r in regs}
+    in_snap = {x for sn in snaps for x in sn.fields}
+    errs = []
+    for lo, hi in WIDE_PAIRS:
+        for n, r in names.items():
+            if n.endswith(lo) and n[:-len(lo)] + hi in names:
+                grp = {next((i for i, sn in enumerate(snaps) if (rr.name, f.name) in sn.fields), None)
+                       for rr in (r, names[n[:-len(lo)] + hi]) for f in rr.fields if f.hw_input}
+                if len(grp) > 1 and None not in grp:
+                    errs.append(f"registers {r.name} and {n[:-len(lo)] + hi} look like the two halves of one value but are "
+                                "in different snapshot groups: put both halves in one group")
+                for reg in (r, names[n[:-len(lo)] + hi]):
+                    bad = [f.name for f in reg.fields if f.hw_input and (reg.name, f.name) not in in_snap]
+                    if bad:
+                        errs.append(f"registers {r.name} and {n[:-len(lo)] + hi} look like the two halves of one value "
+                                    f"and {reg.name} reads a hardware input ({', '.join(bad)}) outside a snapshot group: "
+                                    "the profile requires one (a read of the halves can tear), or set wide_values: optional")
+    return sorted(set(errs))
+
+
+def _error_capture(d: dict, aw, doc_only: bool, errs: list[str], profile_mode: str | None = None) -> dict | None:
     """The `error_capture:` setting: absent or true = on at the top two words of the window, false = left out,
     {offset: 0x.., interrupt: true|false} = placed and/or with an interrupt. Returns {offset, interrupt} or None."""
-    raw = d.get("error_capture", None if doc_only else True)
+    raw = d.get("error_capture", None if doc_only else CAPTURE_RAW[profile_mode or "on"])
     if doc_only:
         if "error_capture" in d:
             errs.append("error_capture: a documentation-only map describes a hand-written block; it has no generated "
@@ -515,7 +676,7 @@ def _error_capture(d: dict, aw, doc_only: bool, errs: list[str]) -> dict | None:
     if not isinstance(raw, dict) or set(raw) - ECAP_KEYS:
         errs.append("error_capture: must be true, false or {offset: <ERR_ADDR byte offset>, interrupt: true|false}")
         return None
-    irq = raw.get("interrupt", False)
+    irq = raw.get("interrupt", profile_mode == "on+irq")      # placing the capture does not drop its profile's interrupt
     if not isinstance(irq, bool):
         errs.append("error_capture.interrupt: must be true or false")
         irq = False
@@ -683,6 +844,45 @@ def capture_irq(m: RegMap) -> bool:
     return bool(m.error_capture and m.error_capture["interrupt"])
 
 
+def settings(m: RegMap) -> dict[str, str]:
+    """The profile's settings as this map has them (after the map's own overrides), in the profile's order."""
+    c = m.conventions
+    return {"unmapped": m.unmapped, "error_capture": _capture_mode(m.error_capture), "partial_write": c.partial_write,
+            "unaligned": c.unaligned, "reserved_write": c.reserved_write, "wide_values": c.wide_values}
+
+
+def settings_text(m: RegMap) -> str:
+    return " ".join(f"{k}={v}" for k, v in settings(m).items())
+
+
+def profile_overrides(m: RegMap) -> list[tuple[str, str, str]]:
+    """(setting, this map's value, the profile's value) for every setting that differs from the map's profile."""
+    return [(k, v, PROFILES[m.profile][k]) for k, v in settings(m).items() if v != PROFILES[m.profile][k]]
+
+
+def rejects(m: RegMap) -> bool:
+    """True when the block can answer SLVERR to an access to a mapped address (the strict settings)."""
+    c = m.conventions
+    return "slverr" in (c.partial_write, c.unaligned, c.reserved_write)
+
+
+def lanes(f: Field) -> int:
+    """The byte lanes a field occupies, as a 4-bit mask."""
+    return sum(1 << b for b in range(4) if f.mask >> (8 * b) & 0xFF)
+
+
+def multilane_fields(r: Register) -> list[Field]:
+    """Writable fields that span more than one byte lane: a partial write could tear them."""
+    return [f for f in r.fields if f.access != "RO" and bin(lanes(f)).count("1") > 1]
+
+
+def reserved_mask(r: Register) -> int:
+    used = 0
+    for f in r.fields:
+        used |= f.mask
+    return ~used & 0xFFFFFFFF
+
+
 def file_names(m: RegMap) -> dict[str, str]:
     return {k: f"{m.name}_regs.{k}" for k in ("sv", "h", "py", "md")}
 
@@ -699,6 +899,8 @@ def _w(width: int) -> str:
 # ---- SystemVerilog -------------------------------------------------------------------------------------------------
 def emit_sv(m: RegMap) -> str:
     aw = m.addr_width
+    c = m.conventions
+    unal, rej = c.unaligned == "slverr", rejects(m)
     resp_rd = "2'b10" if m.unmapped in ("slverr", "split") else "2'b00"    # split: a read of a hole is an error ...
     resp_wr = "2'b10" if m.unmapped == "slverr" else "2'b00"               # ... a write to a hole is not
     L = [_banner(m, "//").rstrip("\n"),
@@ -709,10 +911,11 @@ def emit_sv(m: RegMap) -> str:
          "// BREADY. Byte strobes (WSTRB) are honoured bit by bit. Read data is registered at the AR handshake.",
          f"// Unmapped addresses: {_unmapped_comment(m.unmapped)}. Reads have",
          "// no side effects. A hardware set beats a same-clock W1C clear; a W1S set beats a same-clock hardware clear.",
-         *(["// Every access to an unmapped address is recorded in ERR_ADDR and ERR_STATUS (error capture, docs/hwsw.md)."]
+         *(["// Every access to an unmapped address" + (", and every access this profile rejects," if rejects(m) else "") + " is recorded in ERR_ADDR and ERR_STATUS (error capture, docs/hwsw.md)."]
            if m.error_capture else []),
          f"// Only address bits [{aw - 1}:2] are decoded: the window repeats every 0x{m.window_bytes:x} bytes.",
-         "// Writes to read-only bits are ignored with OKAY. Reset: synchronous, active low (aresetn).",
+         "// Writes to read-only bits are ignored with OKAY (strict: unless the write puts a 1 in a reserved bit). Reset: synchronous, active low (aresetn).",
+         *_profile_comment(m),
          "",
          f"module {m.name}_regs (",
          "    input  logic        aclk,",
@@ -748,15 +951,18 @@ def emit_sv(m: RegMap) -> str:
         L.append(f"    localparam logic [31:0] RESET_{r.name} = 32'h{r.reset:08x};")
     L.append("    /* verilator lint_on UNUSEDPARAM */")
     L += ["    localparam logic [1:0] RESP_OKAY = 2'b00;",
+          *(["    localparam logic [1:0] RESP_SLVERR = 2'b10;   // a mapped access this profile rejects"] if rej else []),
           f"    localparam logic [1:0] RESP_UNMAPPED_RD = {resp_rd};   // a read of an unmapped address",
           f"    localparam logic [1:0] RESP_UNMAPPED_WR = {resp_wr};   // a write to an unmapped address",
           "",
           "    // ---- write channel: capture AW and W independently, commit when both are held ----",
           "    logic            aw_got, w_got;",
           f"    logic [{aw - 3}:0]  aw_word;",
+          *(["    logic [1:0]      aw_lo;           // address bits [1:0] of the write (strict: not 0 is an error)"] if unal else []),
           "    logic [31:0]     w_data, w_bits;",
           "    logic [3:0]      w_strb;",
           "    logic            wr_commit, wr_hit;",
+          *(["    logic            wr_rej;          // a write to a mapped address that this profile rejects"] if rej else []),
           "    assign s_axil_awready = !aw_got && !s_axil_bvalid;",
           "    assign s_axil_wready  = !w_got && !s_axil_bvalid;",
           "    assign wr_commit      = aw_got && w_got && !s_axil_bvalid;",
@@ -768,6 +974,7 @@ def emit_sv(m: RegMap) -> str:
           "            aw_got <= 1'b0;",
           "            w_got <= 1'b0;",
           "            aw_word <= '0;",
+          *(["            aw_lo <= '0;"] if unal else []),
           "            w_data <= '0;",
           "            w_strb <= '0;",
           "            s_axil_bvalid <= 1'b0;",
@@ -776,6 +983,7 @@ def emit_sv(m: RegMap) -> str:
           "            if (s_axil_awvalid && s_axil_awready) begin",
           "                aw_got <= 1'b1;",
           f"                aw_word <= s_axil_awaddr[{aw - 1}:2];",
+          *(["                aw_lo <= s_axil_awaddr[1:0];"] if unal else []),
           "            end",
           "            if (s_axil_wvalid && s_axil_wready) begin",
           "                w_got <= 1'b1;",
@@ -786,7 +994,8 @@ def emit_sv(m: RegMap) -> str:
           "                aw_got <= 1'b0;",
           "                w_got <= 1'b0;",
           "                s_axil_bvalid <= 1'b1;",
-          "                s_axil_bresp <= wr_hit ? RESP_OKAY : RESP_UNMAPPED_WR;",
+          ("                s_axil_bresp <= !wr_hit ? RESP_UNMAPPED_WR : wr_rej ? RESP_SLVERR : RESP_OKAY;" if rej else
+           "                s_axil_bresp <= wr_hit ? RESP_OKAY : RESP_UNMAPPED_WR;"),
           "            end else if (s_axil_bvalid && s_axil_bready) begin",
           "                s_axil_bvalid <= 1'b0;",
           "            end",
@@ -794,23 +1003,46 @@ def emit_sv(m: RegMap) -> str:
           "    end",
           ""]
     # write decode
-    L.append("    // write decode: one strobe per register")
+    L.append("    // write decode: one strobe per register" + ("; a write this profile rejects raises wr_rej and no strobe" if rej else ""))
     wregs = [r for r in m.registers if any(f.access != "RO" for f in r.fields)]
     for r in wregs:
         L.append(f"    logic wr_{r.name.lower()};")
     L.append("    always_comb begin")
     L.append("        wr_hit = 1'b0;")
+    if rej:
+        L.append("        wr_rej = 1'b0;")
     for r in wregs:
         L.append(f"        wr_{r.name.lower()} = 1'b0;")
     L.append("        if (wr_commit) begin")
-    L.append("            case (aw_word)")
+    ind = "            "
+    if unal:
+        L.append("            if (aw_lo != 2'b00) begin   // unaligned address: rejected whatever it addresses")
+        L.append("                wr_hit = 1'b1;")
+        L.append("                wr_rej = 1'b1;")
+        L.append("            end else begin")
+        ind = "                "
+    L.append(f"{ind}case (aw_word)")
     for r in m.registers:
-        if r in wregs:
-            L.append(f"                ADDR_{r.name}: begin wr_hit = 1'b1; wr_{r.name.lower()} = 1'b1; end")
+        bad = _reject_terms(m, r)
+        if not bad:
+            if r in wregs:
+                L.append(f"{ind}    ADDR_{r.name}: begin wr_hit = 1'b1; wr_{r.name.lower()} = 1'b1; end")
+            else:
+                L.append(f"{ind}    ADDR_{r.name}: wr_hit = 1'b1;   // read-only: the write is ignored")
         else:
-            L.append(f"                ADDR_{r.name}: wr_hit = 1'b1;   // read-only: the write is ignored")
-    L.append("                default: wr_hit = 1'b0;")
-    L.append("            endcase")
+            L.append(f"{ind}    ADDR_{r.name}: begin")
+            L.append(f"{ind}        wr_hit = 1'b1;")
+            L.append(f"{ind}        // rejected: " + ", or ".join(
+                [f"strobes cover part of {f.name}" for f in multilane_fields(r)] * (c.partial_write == "slverr") +
+                ["a 1 in a reserved bit"] * (c.reserved_write == "slverr" and bool(reserved_mask(r)))))
+            L.append(f"{ind}        wr_rej = " + f"\n{ind}                 || ".join(bad) + ";")
+            if r in wregs:
+                L.append(f"{ind}        wr_{r.name.lower()} = !wr_rej;")
+            L.append(f"{ind}    end")
+    L.append(f"{ind}    default: wr_hit = 1'b0;")
+    L.append(f"{ind}endcase")
+    if unal:
+        L.append("            end")
     L.append("        end")
     L.append("    end")
     L.append("")
@@ -891,6 +1123,8 @@ def emit_sv(m: RegMap) -> str:
         L.append("    end")
     L += ["    logic [31:0] rd_value;",
           "    logic        rd_hit;",
+          *(["    logic        rd_unal;           // an unaligned read address (strict: SLVERR, data 0)",
+             "    assign rd_unal = s_axil_araddr[1:0] != 2'b00;"] if unal else []),
           "    always_comb begin",
           "        rd_hit = 1'b1;",
           f"        case (s_axil_araddr[{aw - 1}:2])"]
@@ -907,8 +1141,9 @@ def emit_sv(m: RegMap) -> str:
           "            s_axil_rresp <= RESP_OKAY;",
           "        end else if (s_axil_arvalid && s_axil_arready) begin",
           "            s_axil_rvalid <= 1'b1;",
-          "            s_axil_rdata <= rd_value;",
-          "            s_axil_rresp <= rd_hit ? RESP_OKAY : RESP_UNMAPPED_RD;",
+          ("            s_axil_rdata <= rd_unal ? 32'h0 : rd_value;" if unal else "            s_axil_rdata <= rd_value;"),
+          ("            s_axil_rresp <= rd_unal ? RESP_SLVERR : rd_hit ? RESP_OKAY : RESP_UNMAPPED_RD;" if unal else
+           "            s_axil_rresp <= rd_hit ? RESP_OKAY : RESP_UNMAPPED_RD;"),
           "        end else if (s_axil_rvalid && s_axil_rready) begin",
           "            s_axil_rvalid <= 1'b0;",
           "        end",
@@ -931,11 +1166,41 @@ def emit_sv(m: RegMap) -> str:
               f"        else irq_o <= {' | '.join(terms)};",
               "    end"]
     L += ["",
-          "    // AxPROT is accepted and not used; the unused address bits [1:0] are word-aligned by the protocol",
+          ("    // AxPROT is accepted and not used; address bits [1:0] are checked (strict), not decoded" if unal else
+           "    // AxPROT is accepted and not used; the unused address bits [1:0] are word-aligned by the protocol"),
           "    logic unused_ok;",
-          "    assign unused_ok = ^{s_axil_awprot, s_axil_arprot, s_axil_awaddr[1:0], s_axil_araddr[1:0]};",
+          ("    assign unused_ok = ^{s_axil_awprot, s_axil_arprot};" if unal else
+           "    assign unused_ok = ^{s_axil_awprot, s_axil_arprot, s_axil_awaddr[1:0], s_axil_araddr[1:0]};"),
           "endmodule", ""]
     return "\n".join(L)
+
+
+def _reject_terms(m: RegMap, r: Register) -> list[str]:
+    """The SystemVerilog terms, ORed, that make a write to register r a rejected one (strict): a strobe pattern that
+    covers part of a multi-lane field, a 1 written to a reserved bit."""
+    c, t = m.conventions, []
+    if c.partial_write == "slverr":
+        for f in multilane_fields(r):
+            ln = lanes(f)
+            t.append(f"((w_strb & 4'b{ln:04b}) != 4'b0000 && (w_strb & 4'b{ln:04b}) != 4'b{ln:04b})")
+    if c.reserved_write == "slverr" and reserved_mask(r):
+        t.append(f"((w_data & w_bits & 32'h{reserved_mask(r):08x}) != 32'h0)")
+    return t
+
+
+def _profile_comment(m: RegMap) -> list[str]:
+    """The profile and its settings, in a form the check tool reads back (flow/checks/axi_profile.py)."""
+    if not m.profile:
+        return []
+    L = ["//", f"// PROFILE {m.profile}", f"// SETTINGS {settings_text(m)}"]
+    c = m.conventions
+    if c.unaligned == "slverr":
+        L.append("// An access whose address bits [1:0] are not 0 answers SLVERR (a read returns 0; a write changes nothing).")
+    if c.partial_write == "slverr":
+        L.append("// A write whose strobes cover part of a field that spans several byte lanes answers SLVERR and changes nothing.")
+    if c.reserved_write == "slverr":
+        L.append("// A write of 1 to a reserved bit (in a strobed byte) answers SLVERR and changes nothing.")
+    return L
 
 
 def _unmapped_comment(u: str) -> str:
@@ -968,8 +1233,10 @@ def _emit_capture(m: RegMap) -> list[str]:
          "    // The first one since the last clear sets STICKY and is kept; later ones only add to COUNT (saturating).",
          "    // A write of 1 to STICKY clears the record; a bad access in the clock of that clear is not lost: it starts",
          "    // the new record. A bad read and a bad write in the same clock count 2 and the read is the one recorded.",
-         "    assign ecap_bad_wr = wr_commit && !wr_hit;",
-         "    assign ecap_bad_rd = s_axil_arvalid && s_axil_arready && !rd_hit;",
+         ("    assign ecap_bad_wr = wr_commit && (!wr_hit || wr_rej);" if rejects(m) else
+          "    assign ecap_bad_wr = wr_commit && !wr_hit;"),
+         ("    assign ecap_bad_rd = s_axil_arvalid && s_axil_arready && (!rd_hit || rd_unal);" if m.conventions.unaligned == "slverr" else
+          "    assign ecap_bad_rd = s_axil_arvalid && s_axil_arready && !rd_hit;"),
          "    assign ecap_clr    = wr_err_status && w_data[0] && w_bits[0];",
          "    assign ecap_first  = ecap_clr || !ecap_sticky;"]
     L += [f"    assign ecap_sum = {{1'b0, ecap_clr ? {cb}'h0 : ecap_count}} + {{{cb}'h0, ecap_bad_rd}} + {{{cb}'h0, ecap_bad_wr}};",
@@ -1015,6 +1282,7 @@ def emit_c(m: RegMap) -> str:
          " */",
          f"#ifndef {g}", f"#define {g}", "", "#include <stdint.h>", "",
          f"#define {P}_REGMAP_SHA256 \"{m.sha256}\"",
+         *([f"#define {P}_PROFILE \"{m.profile}\"", f"#define {P}_SETTINGS \"{settings_text(m)}\""] if m.profile else []),
          f"#define {P}_WINDOW_BYTES 0x{m.window_bytes:x}u", "",
          f"#define {P}_ACCESS_RW  0u", f"#define {P}_ACCESS_RO  1u", f"#define {P}_ACCESS_W1C 2u",
          f"#define {P}_ACCESS_W1S 3u", f"#define {P}_ACCESS_W1P 4u", ""]
@@ -1095,6 +1363,8 @@ NAME = {m.name!r}
 REGMAP_SHA256 = {m.sha256!r}
 WINDOW_BYTES = 0x{m.window_bytes:x}
 UNMAPPED = {m.unmapped!r}
+PROFILE = {m.profile!r}
+SETTINGS = {settings(m) if m.profile else {}!r}
 ERROR_CAPTURE = {m.error_capture!r}
 INTERRUPT = {m.interrupt!r}
 REGISTERS = {pprint.pformat(table, sort_dicts=False, width=110)}
@@ -1311,6 +1581,15 @@ def differences(m: RegMap) -> list[str]:
                    f"{_unmapped_short(h.unmapped)})")
     if m.error_capture is None:
         out.append("it records no unmapped accesses (house: the ERR_ADDR and ERR_STATUS error-capture registers)")
+    elif capture_irq(m):
+        out.append("the error capture has an interrupt (house: none)")
+    if c.partial_write != h.partial_write:
+        out.append("a write whose strobes cover part of a multi-byte field answers SLVERR and changes nothing (house: "
+                   "accepted, only the strobed bytes change)")
+    if c.unaligned != h.unaligned:
+        out.append("an access whose address bits [1:0] are not 0 answers SLVERR (house: the low bits are not decoded)")
+    if c.reserved_write != h.reserved_write:
+        out.append("a write of 1 to a reserved bit answers SLVERR and changes nothing (house: ignored)")
     if c.reserved != h.reserved:
         out.append("reserved bits read an undefined value (house: they read 0)")
     if c.strobes != h.strobes:
@@ -1319,6 +1598,19 @@ def differences(m: RegMap) -> list[str]:
         out.append(f"the reset is `{c.reset}`, {c.reset_style}, active {c.reset_active} (house: `{h.reset}`, "
                    f"{h.reset_style}, active {h.reset_active})")
     return out
+
+
+def profile_sentence(m: RegMap) -> str:
+    """The profile the block follows, and every setting of the map that differs from it (generated blocks only)."""
+    if not m.profile:
+        return ""
+    ov = profile_overrides(m)
+    t = f"Interface profile: `{m.profile}` ({PROFILE_TEXT[m.profile]})."
+    if ov:
+        t += " Settings that differ from the profile: " + "; ".join(f"{k} = {v} (profile: {pv})" for k, v, pv in ov) + "."
+    else:
+        t += " No setting differs from the profile."
+    return t
 
 
 def convention_sentence(m: RegMap) -> str:
@@ -1336,6 +1628,10 @@ def behaviour(m: RegMap) -> list[tuple[str, str]]:
     ref = lambda r, f: f"{r.name}.{f.name}"                                    # noqa: E731
     by_acc = lambda a: [ref(r, f) for r in m.registers for f in r.fields if f.access == a]   # noqa: E731
     out = []
+    if m.profile:
+        out.append(("profile", "**" + profile_sentence(m).replace("Interface profile: ", "Interface profile.** ", 1) +
+                    " The profile is chosen once per design (spec.yaml `interfaces:`) and may be overridden per block "
+                    "and per setting; the settings it bundles are listed in docs/hwsw.md."))
     win = f"0x{m.window_bytes:x}-byte window"
     outside = "Addresses outside the window belong to the interconnect (an AXI crossbar answers DECERR there)."
     exp = " What an Arm CPU does with these responses is expected, not yet measured on this project's platforms (docs/hwsw.md)."
@@ -1359,8 +1655,11 @@ def behaviour(m: RegMap) -> list[tuple[str, str]]:
         irq = ("ERR_STATUS.IRQ_EN (reset 0) enables the interrupt: `irq_o` is high while STICKY is 1 and IRQ_EN is 1 "
                "(registered, one clock after the cause)." if capture_irq(m) else
                "The capture raises no interrupt.")
+        also = (" An access this profile answers with SLVERR (an unaligned address, a rejected write: see Partial writes, "
+                "Access width and alignment, Reserved bits) is recorded in the same way, so the registers do not say "
+                "which cause it was." if rejects(m) else "")
         out.append(("error_capture", f"**Error capture.** Every access to an unmapped address is recorded, whatever "
-                    f"the response above. ERR_STATUS.STICKY (0x{s.offset:03x}) is set by the first one since the last "
+                    f"the response above.{also} ERR_STATUS.STICKY (0x{s.offset:03x}) is set by the first one since the last "
                     f"clear; ERR_ADDR (0x{a.offset:03x}) then holds its word-aligned address inside the window (the "
                     "address bits the block decodes) and ERR_STATUS.IS_WRITE says whether it was a write. Later bad "
                     f"accesses do not replace them: ERR_STATUS.COUNT counts every one, saturating at "
@@ -1372,7 +1671,12 @@ def behaviour(m: RegMap) -> list[tuple[str, str]]:
     else:
         out.append(("error_capture", "**Error capture.** None: this block records nothing about accesses to unmapped "
                     "addresses."))
-    if c.reserved == "zero":
+    if c.reserved == "zero" and c.reserved_write == "slverr":
+        out.append(("reserved", "**Reserved bits.** Bits that belong to no field read 0. A write that has 1 in a "
+                    "reserved bit (in a byte lane whose strobe is 1) answers SLVERR and changes nothing at all, not even "
+                    "the other fields of the register: write reserved bits as 0, or write back only what you read "
+                    "(reserved bits read 0). A 0 in a reserved bit is accepted."))
+    elif c.reserved == "zero":
         out.append(("reserved", "**Reserved bits.** Bits that belong to no field read 0 and ignore writes. Write them "
                     "as 0, so that a later version can give them a meaning."))
     else:
@@ -1399,7 +1703,8 @@ def behaviour(m: RegMap) -> list[tuple[str, str]]:
             f"(here {_names(rmw)}), or it clears, sets or pulses them: write back only the RW bits of what was read. "
             if rmw else "so a debugger, a retried read or a read-modify-write is safe. ")
     out.append(("side_effects", "**Reads have no side effects.** Reading any register changes nothing, " + safe + act +
-                " A write to a read-only register is answered OKAY and ignored."))
+                " A write to a read-only register is answered OKAY and ignored" +
+                (", unless it puts a 1 in a reserved bit of that register (see Reserved bits)." if c.reserved_write == "slverr" else ".")))
     w1c, w1s = by_acc("W1C"), by_acc("W1S")
     pri = []
     if w1c:
@@ -1410,7 +1715,16 @@ def behaviour(m: RegMap) -> list[tuple[str, str]]:
                    "is not lost.")
     out.append(("priority", "**Same-clock priority (the house convention).** " + (" ".join(pri) if pri else
                 "None applies: this block has no W1C or W1S bits.")))
-    if c.strobes == "honoured":
+    if c.strobes == "honoured" and c.partial_write == "slverr":
+        ml = [f"{r.name}.{f.name}" for r in m.registers for f in multilane_fields(r)]
+        out.append(("strobes", "**Partial writes.** Byte strobes (WSTRB) are honoured: a byte whose strobe is 0 keeps "
+                    "its value, and in it W1C, W1S and W1P bits count as 0 (nothing is cleared, set or pulsed). A write "
+                    "whose strobes cover only part of a writable field that spans several byte lanes answers SLVERR and "
+                    "changes nothing (the whole write is rejected), because the field would be written torn; such "
+                    "fields: " + (_names(ml) if ml else "none in this block") + ". A write that covers every lane of "
+                    "such a field, or none of its lanes, is accepted, and so is any strobe pattern on a field inside "
+                    "one byte lane. A write with all strobes 0 changes nothing and answers OKAY."))
+    elif c.strobes == "honoured":
         out.append(("strobes", "**Partial writes.** Byte strobes (WSTRB) are honoured on every register: a byte whose "
                     "strobe is 0 keeps its value, and in it W1C, W1S and W1P bits count as 0 (nothing is cleared, set "
                     "or pulsed)."))
@@ -1418,11 +1732,14 @@ def behaviour(m: RegMap) -> list[tuple[str, str]]:
         out.append(("strobes", "**Partial writes.** Byte strobes (WSTRB) are ignored on every register: every write "
                     "changes the whole 32-bit word, so a CPU's byte or halfword store overwrites the other bytes. Use "
                     "32-bit stores only."))
+    al = ("An address whose bits [1:0] are not 0 answers SLVERR: a read returns 0 and a write changes nothing, "
+          "whatever it would address, even an unmapped word; " if c.unaligned == "slverr" else
+          "Address bits [1:0] are not decoded, so an unaligned address reaches the word that holds it; ")
     out.append(("access", f"**Access width and alignment.** 32-bit registers on a {m.data_width}-bit AXI4-Lite bus. "
                 "AXI4-Lite has no transfer size: a CPU's byte or halfword load reads the whole word, and its store "
-                "arrives as a word write with fewer strobes (see Partial writes). Address bits [1:0] are not decoded, "
-                f"so an unaligned address reaches the word that holds it; only bits [{m.addr_width - 1}:2] are "
-                f"decoded, so the window repeats every 0x{m.window_bytes:x} bytes. Use aligned 32-bit accesses."))
+                "arrives as a word write with fewer strobes (see Partial writes). " + al +
+                f"only bits [{m.addr_width - 1}:2] are decoded, so the window repeats every 0x{m.window_bytes:x} bytes. "
+                "Use aligned 32-bit accesses."))
     mw = []
     for s in m.snapshots:
         parts = ", then ".join(".".join(x) for x in s.fields)
@@ -1440,6 +1757,10 @@ def behaviour(m: RegMap) -> list[tuple[str, str]]:
     elif not m.staging:
         mw.append("No snapshot groups: every register is read on its own, so a value split across two registers (a "
                   "HI and a LO) can tear if it changes between the two reads. Give such a value a snapshot group.")
+    if c.wide_values == "snapshot":
+        mw.append("This profile requires a snapshot group for a hardware value wider than the bus; the generator "
+                  "recognises the register pairs NAME_LO/NAME_HI, _LOW/_HIGH, _LSW/_MSW and _L/_H, so name the halves "
+                  "that way or put the value in a group yourself.")
     out.append(("multiword", "**Values wider than 32 bits.** " + " ".join(mw)))
     hw = [ref(r, f) for r in m.registers for f in r.fields if f.hw_input and not f.hw_reset and not
           m.snapshot_of(r.name, f.name)]
@@ -1526,6 +1847,7 @@ def datasheet(m: RegMap, level: int = 2) -> list[str]:
 def emit_md(m: RegMap) -> str:
     L = [f"# {m.name} registers", "", f"<!-- {_banner(m, '').strip()} -->".replace("\n", " "), "",
          f"{m.summary} {convention_sentence(m)}".strip(), "",
+         *([profile_sentence(m), "", f"Settings: `{settings_text(m)}`.", ""] if m.profile else []),
          f"AXI4-Lite, 32-bit registers, a 0x{m.window_bytes:x}-byte window (address bits [{m.addr_width - 1}:2] "
          f"decoded). Unmapped addresses: {_unmapped_short(m.unmapped)}. "
          f"Version {m.version}; model sha256 `{m.sha256[:16]}`.", ""]
@@ -1600,6 +1922,8 @@ def read_c(m: RegMap, header: Path, cc: str | None = None) -> dict:
                      f'(unsigned){S}_WIDTH);')
         lines.append(f'  {{ unsigned long long v = {m.name}_snapshot_{s.name.lower()}(0); printf("V {s.name} %llx %lu %u\\n", '
                      'v, (unsigned long)probe_wa, (unsigned)probe_wv); }')
+    if m.profile:
+        lines += [f'  printf("P %s\\n", {P}_PROFILE);', f'  printf("T %s\\n", {P}_SETTINGS);']
     lines += [f'  printf("W %u\\n", (unsigned){P}_WINDOW_BYTES);', "  return 0;", "}"]
     with tempfile.TemporaryDirectory() as td:
         src = Path(td) / "probe.c"
@@ -1625,6 +1949,10 @@ def read_c(m: RegMap, header: Path, cc: str | None = None) -> dict:
                 got[t[1]]["fields"][t[2]]["mask_mismatch"] = mk
         elif t[0] == "W":
             got["__window__"] = int(t[1])
+        elif t[0] == "P":
+            got["__profile__"] = t[1]
+        elif t[0] == "T":
+            got["__settings__"] = " ".join(t[1:])
         elif t[0] == "V":
             got.setdefault("__snapcall__", {})[t[1]] = (int(t[2], 16), int(t[3]), int(t[4]))
         elif t[0] == "S":
@@ -1641,13 +1969,15 @@ def read_c(m: RegMap, header: Path, cc: str | None = None) -> dict:
 
 
 def read_py(m: RegMap, module: Path) -> dict:
-    spec = importlib.util.spec_from_file_location(f"_regmap_probe_{m.name}", module)
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
+    mod = types.ModuleType(f"_regmap_probe_{m.name}")          # from the source text, never a cached .pyc of an older edit
+    exec(compile(Path(module).read_text(), str(module), "exec"), mod.__dict__)   # noqa: S102 (our own generated driver)
     got = {n: {"offset": r["offset"], "reset": r["reset"],
                "fields": {fn: {k: f[k] for k in ("lsb", "width", "access", "reset")} for fn, f in r["fields"].items()}}
            for n, r in mod.REGISTERS.items()}
     got["__window__"] = mod.WINDOW_BYTES
+    if mod.PROFILE:
+        got["__profile__"] = mod.PROFILE
+        got["__settings__"] = " ".join(f"{k}={v}" for k, v in mod.SETTINGS.items())
     got["__snap__"] = {n: {"trigger": ".".join(s["trigger"]), "fields": [".".join(x) for x in s["fields"]]}
                        for n, s in getattr(mod, "SNAPSHOTS", {}).items()}
     if mod.REGMAP_SHA256 != m.sha256:
@@ -1659,6 +1989,12 @@ def read_md(md: Path) -> dict:
     got: dict = {}
     cur = None
     for ln in md.read_text().splitlines():
+        mp = re.match(r"^Interface profile: `([a-z_]+)`", ln)
+        if mp:
+            got["__profile__"] = mp.group(1)
+        mp = re.match(r"^Settings: `([^`]*)`\.$", ln)
+        if mp:
+            got["__settings__"] = mp.group(1)
         mt = re.match(r"^\| 0x([0-9a-f]+) \| ([A-Z][A-Z0-9_]*) \| 0x([0-9a-f]{8}) \|", ln)
         if mt:
             got[mt.group(2)] = {"offset": int(mt.group(1), 16), "reset": int(mt.group(3), 16), "fields": {}}
@@ -1697,6 +2033,11 @@ def read_sv(m: RegMap, sv: Path) -> dict:
     got["__ports__"] = pl
     mw = re.search(r"input\s+logic \[(\d+):0\] s_axil_awaddr", t)
     got["__window__"] = 1 << (int(mw.group(1)) + 1) if mw else None
+    mp, ms = re.search(r"^// PROFILE (\w+)$", t, re.M), re.search(r"^// SETTINGS (.*)$", t, re.M)
+    if mp:
+        got["__profile__"] = mp.group(1)
+    if ms:
+        got["__settings__"] = ms.group(1).strip()
     return got
 
 
@@ -1752,6 +2093,9 @@ def agreement(m: RegMap, out: Path) -> list[str]:
             errs.append(f"{kind}: registers the YAML does not declare: {sorted(extra)}")
         if "__window__" in got and got["__window__"] != m.window_bytes:
             errs.append(f"{kind}: window {got['__window__']} bytes, the YAML says {m.window_bytes}")
+        if m.profile and (got.get("__profile__"), got.get("__settings__")) != (m.profile, settings_text(m)):
+            errs.append(f"{kind}: profile and settings are {got.get('__profile__')!r} {got.get('__settings__')!r}, the "
+                        f"YAML resolves to {m.profile!r} {settings_text(m)!r}")
 
     try:
         c = read_c(m, out / names["h"])
@@ -1827,8 +2171,8 @@ def drift(m: RegMap, out: Path) -> list[str]:
     return errs
 
 
-def check(path: str | Path, out: str | Path) -> list[str]:
-    m = load(path)
+def check(path: str | Path, out: str | Path, spec: str | Path | None = None) -> list[str]:
+    m = load(path, spec=spec)
     return drift(m, Path(out)) + agreement(m, Path(out))
 
 
@@ -1837,12 +2181,14 @@ def main(argv=None) -> int:
     ap.add_argument("cmd", choices=["validate", "gen", "check"])
     ap.add_argument("yaml", nargs="+")
     ap.add_argument("--out", default=None, help="output folder (default: generated/ next to the YAML)")
+    ap.add_argument("--spec", default=None, help="the design's spec.yaml: a map that names no profile takes the one its "
+                    "`interfaces:` section chose for it")
     a = ap.parse_args(argv)
     rc = 0
     for y in a.yaml:
         out = Path(a.out) if a.out else Path(y).parent / "generated"
         try:
-            m = load(y)
+            m = load(y, spec=a.spec)
         except RegmapError as ex:
             print(ex)
             rc = 1

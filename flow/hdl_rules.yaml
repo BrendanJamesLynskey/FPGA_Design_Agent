@@ -15,8 +15,9 @@
 # A finding that no rule maps lands in the catch-all rule of its tool (HDL-LINT-00, HDL-VIV-00, HDL-STD-00), so nothing is lost.
 # Waivers: designs/<d>/lint/waivers.yaml, {rule, match (a glob over the finding key), reason, owner, date}.
 standard: FDA-HDL
-version: "1.1"            # 1.0 2026-11-12 (first release); 1.1 2026-11-14 (brief 71: reset rules split into HDL-RST-01..05,
-                          # HDL-CLK-02, HDL-VER-01, HDL-IF-02/03, HDL-GT-01, HDL-DOC-01; check-suite tool keys; fix and skill)
+version: "1.2"            # 1.0 2026-11-12 (first release); 1.1 2026-11-14 (brief 71: reset rules split into HDL-RST-01..05,
+                          # HDL-CLK-02, HDL-VER-01, HDL-IF-02/03, HDL-GT-01, HDL-DOC-01; check-suite tool keys; fix and skill);
+                          # 1.2 2026-11-14 (brief 73: HDL-IF-04..06, the axi_profile check)
 date: 2026-11-14
 rules:
   - id: HDL-SYN-01
@@ -170,6 +171,29 @@ rules:
     checks: {axi_checker: [RESP_LOST]}
     fix: answer every accepted write with one B and every accepted read with one R; never accept more requests than you can answer
     skill: axi4-lite-common-bugs-and-checks
+  - id: HDL-IF-04
+    title: A generated AXI4-Lite register block has the interface profile its design declares and behaves as it says
+    rationale: A profile (house, amd_compatible, strict) fixes what a driver writer could guess wrong (holes, strobes,
+      unaligned and reserved accesses, the error capture). A block that claims one and behaves as another, or a map that
+      names a profile its design did not choose, gives software wrong expectations that no protocol checker sees.
+    checks: {axi_profile: [AXI-PROFILE-SPEC, AXI-PROFILE-MISMATCH, AXI-PROFILE-DRIFT, AXI-PROFILE-OVERRIDE, AXI-PROFILE-STALE, AXI-PROFILE-NOSRC]}
+    fix: regenerate the block with python3 -m hwsw.regmap gen (--spec the design's spec.yaml), and make the map, the
+      interfaces section and the RTL agree; never edit a generated block
+    skill: register-maps-for-software
+  - id: HDL-IF-05
+    title: A design that mixes interface profiles says so
+    rationale: One design with a strict block and a house block gives the driver two sets of rules; the datasheets state each,
+      but the design should state the mix. A block generated before profiles existed states no profile at all.
+    checks: {axi_profile: [AXI-PROFILE-MIX]}
+    fix: name the block under interfaces.blocks in spec.yaml
+    skill: register-maps-for-software
+  - id: HDL-IF-06
+    title: AMD IP in a design with a strict AXI4-Lite profile is acknowledged
+    rationale: AMD's AXI4-Lite peripherals answer holes with OKAY and read 0, ignore byte strobes and accept unaligned
+      addresses (measured, brief 69); a driver written for strict blocks expects SLVERR and must allow for that. Advice, not a failure.
+    checks: {axi_profile: [AXI-PROFILE-AMD-STRICT]}
+    fix: write the driver for the AMD block's conventions (whole words, aligned, no SLVERR) and list the IP under interfaces.amd_ip_acknowledged
+    skill: amd-axi4-lite-ip-register-behaviour
   - id: HDL-VER-01
     title: Every FSM state and listed transition is covered in simulation
     rationale: A state or transition never reached in simulation is behaviour no test has checked; the coverage comes from

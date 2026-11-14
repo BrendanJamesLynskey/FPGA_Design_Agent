@@ -22,8 +22,16 @@ LEAN = HERE / "data" / "lean.yaml"
 LEAN_NOCAP = HERE / "data" / "lean_nocap.yaml"
 
 
-def _prepare(yaml_path: Path, tag: str, sv_text: str | None = None) -> tuple[regmap.RegMap, dict, list[Path]]:
-    m = regmap.load(yaml_path)
+PROFILES = ROOT / "hwsw" / "examples" / "profiles"
+
+
+def _prepare(yaml_path: Path, tag: str, sv_text: str | None = None,
+             spec: Path | None = None) -> tuple[regmap.RegMap, dict, list[Path]]:
+    if spec is not None:                      # the demo map under a design's profile (it names none and no `unmapped`)
+        yaml_path = BUILD / f"{tag}_map.yaml"
+        yaml_path.parent.mkdir(parents=True, exist_ok=True)
+        yaml_path.write_text("".join(ln for ln in DEMO.read_text().splitlines(True) if not ln.startswith("unmapped:")))
+    m = regmap.load(yaml_path, spec=spec)
     out = BUILD / tag
     if out.exists():
         shutil.rmtree(out)
@@ -31,7 +39,8 @@ def _prepare(yaml_path: Path, tag: str, sv_text: str | None = None) -> tuple[reg
     if sv_text is not None:                                     # a mutant of the generated RTL
         (out / f"{m.name}_regs.sv").write_text(sv_text)
     tb, lay = regmap_tb.write(m, out)
-    env = {"REGMAP_YAML": str(yaml_path), "REGMAP_OUT": str(out), "REGMAP_LAYOUT": str(lay)}
+    env = {"REGMAP_YAML": str(yaml_path), "REGMAP_OUT": str(out), "REGMAP_LAYOUT": str(lay),
+           "REGMAP_SPEC": str(spec) if spec else ""}
     return m, env, [out / f"{m.name}_regs.sv", tb, *regmap_tb.CHECKER_SRC]
 
 
@@ -60,6 +69,15 @@ def test_okay_setting_with_and_without_the_capture(y: Path) -> None:
     once with it left out; demo_accel simulates split, stress slverr."""
     m, env, src = _prepare(y, y.stem)
     cocotb_run.run(f"regmap_64a_{y.stem}", f"{m.name}_regs_tb", src, "regmap_cocotb", HERE, seed=1, extra_env=env)
+
+
+@pytest.mark.parametrize("profile", ["house", "amd_compatible", "strict"])
+def test_each_interface_profile_on_the_demo_map(profile: str) -> None:
+    """Brief 73: the same map under each profile, through the 59A transactor with the protocol checker on the wires and
+    the model built from the resolved settings (including the profile_settings test, which exercises every setting)."""
+    m, env, src = _prepare(DEMO, f"profile_{profile}", spec=PROFILES / f"spec_{profile}.yaml")
+    assert m.profile == profile
+    cocotb_run.run(f"regmap_73_{profile}", f"{m.name}_regs_tb", src, "regmap_cocotb", HERE, seed=1, extra_env=env)
 
 
 # Seeded faults in the generated RTL: (id, map, text to replace, replacement, the tests that must catch it).
@@ -133,4 +151,40 @@ def test_rtl_mutant_is_caught(mid, yaml_path, old, new, tests) -> None:
     env["REGMAP_OPS"] = "200"
     with pytest.raises(AssertionError):
         cocotb_run.run(f"regmap_64a_mut_{mid}", f"{m.name}_regs_tb", src, "regmap_cocotb", HERE, testcase=tests, seed=1,
+                       extra_env=env)
+
+
+# Brief 73: seeded faults in the strict profile's RTL, one per setting and response; each must fail the bench's
+# profile_settings test (or the capture's count). Same shape as MUTANTS, with the demo map under the strict profile.
+STRICT_SPEC = PROFILES / "spec_strict.yaml"
+STRICT_MUTANTS = [
+    ("unaligned_write_accepted", "if (aw_lo != 2'b00) begin", "if (1'b0) begin", ["profile_settings"]),
+    ("unaligned_write_answers_okay", "wr_rej = 1'b1;\n            end else begin", "wr_rej = 1'b0;\n            end else begin",
+     ["profile_settings"]),
+    ("unaligned_read_answers_okay", "s_axil_rresp <= rd_unal ? RESP_SLVERR : rd_hit ? RESP_OKAY : RESP_UNMAPPED_RD;",
+     "s_axil_rresp <= rd_hit ? RESP_OKAY : RESP_UNMAPPED_RD;", ["profile_settings"]),
+    ("unaligned_read_returns_data", "s_axil_rdata <= rd_unal ? 32'h0 : rd_value;", "s_axil_rdata <= rd_value;",
+     ["profile_settings"]),
+    ("partial_write_accepted", "wr_rej = ((w_strb & 4'b1100) != 4'b0000 && (w_strb & 4'b1100) != 4'b1100)",
+     "wr_rej = (1'b0 && (w_strb & 4'b1100) != 4'b1100)", ["profile_settings"]),
+    ("rejected_write_still_applies", "wr_ctrl = !wr_rej;", "wr_ctrl = 1'b1;", ["profile_settings"]),
+    ("rejected_write_answers_okay", "!wr_hit ? RESP_UNMAPPED_WR : wr_rej ? RESP_SLVERR : RESP_OKAY;",
+     "!wr_hit ? RESP_UNMAPPED_WR : RESP_OKAY;", ["profile_settings"]),
+    ("reserved_write_accepted", "32'hf000fe8e) != 32'h0)", "32'h00000000) != 32'h0)", ["profile_settings"]),
+    ("reserved_check_ignores_strobe", "(w_data & w_bits & 32'hf000fe8e)", "(w_data & 32'hf000fe8e)", ["profile_settings"]),
+    ("capture_misses_rejected_writes", "assign ecap_bad_wr = wr_commit && (!wr_hit || wr_rej);",
+     "assign ecap_bad_wr = wr_commit && !wr_hit;", ["profile_settings"]),
+    ("capture_misses_unaligned_reads", "(!rd_hit || rd_unal);", "!rd_hit;", ["profile_settings"]),
+]
+
+
+@pytest.mark.parametrize("mid,old,new,tests", STRICT_MUTANTS, ids=[x[0] for x in STRICT_MUTANTS])
+def test_strict_rtl_mutant_is_caught(mid, old, new, tests) -> None:
+    m, env, src = _prepare(DEMO, f"smut_{mid}", spec=STRICT_SPEC)
+    good = regmap.emit_sv(m)
+    assert good.count(old) == 1, f"mutant {mid}: the text to replace is not in the generated RTL exactly once"
+    m, env, src = _prepare(DEMO, f"smut_{mid}", good.replace(old, new), spec=STRICT_SPEC)
+    env["REGMAP_OPS"] = "200"
+    with pytest.raises(AssertionError):
+        cocotb_run.run(f"regmap_73_mut_{mid}", f"{m.name}_regs_tb", src, "regmap_cocotb", HERE, testcase=tests, seed=1,
                        extra_env=env)

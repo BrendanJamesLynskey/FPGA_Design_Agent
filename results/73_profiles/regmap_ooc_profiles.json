@@ -1,0 +1,71 @@
+{
+ "schema": "regmap_ooc/1",
+ "series": "73",
+ "map": "hwsw/examples/demo_accel.yaml (its own `unmapped:` removed in series 73)",
+ "part": "xc7a100tcsg324-1",
+ "clock_ns": 10.0,
+ "date": "2026-11-14",
+ "tcl": "hwsw/regmap_ooc.tcl",
+ "flow": "out-of-context synth_design (clock read first), opt_design, place_design, route_design of the generated block alone; one thread; one run per setting",
+ "settings": {
+  "house": {
+   "profile": "house",
+   "status": "ok",
+   "settings": {
+    "unmapped": "split",
+    "error_capture": "on",
+    "partial_write": "accept",
+    "unaligned": "ignore",
+    "reserved_write": "ignore",
+    "wide_values": "optional"
+   },
+   "tool": "Vivado 2026.1 (build 6511674)",
+   "regmap_sha256": "c9dd954f8696a3f6ddd67e36a5c021e55b09b3965dccec23d1a0910006267030",
+   "lut": 248,
+   "ff": 262,
+   "wns_ns": 5.147
+  },
+  "amd_compatible": {
+   "profile": "amd_compatible",
+   "status": "ok",
+   "settings": {
+    "unmapped": "okay",
+    "error_capture": "off",
+    "partial_write": "accept",
+    "unaligned": "ignore",
+    "reserved_write": "ignore",
+    "wide_values": "optional"
+   },
+   "tool": "Vivado 2026.1 (build 6511674)",
+   "regmap_sha256": "87122da40ad4ff6b0499005836532cac988c07a3b0e50ebcaa0d89a313e1a8de",
+   "lut": 180,
+   "ff": 241,
+   "wns_ns": 5.634
+  },
+  "strict": {
+   "profile": "strict",
+   "status": "ok",
+   "settings": {
+    "unmapped": "slverr",
+    "error_capture": "on+irq",
+    "partial_write": "slverr",
+    "unaligned": "slverr",
+    "reserved_write": "slverr",
+    "wide_values": "snapshot"
+   },
+   "tool": "Vivado 2026.1 (build 6511674)",
+   "regmap_sha256": "e5832198fae5fdbdd3437b65db3f2cb5aa338b51c2a6cd2a28571e5eb2a538c7",
+   "lut": 286,
+   "ff": 266,
+   "wns_ns": 2.567
+  }
+ },
+ "amd_compatible_minus_house": {
+  "lut": -68,
+  "ff": -21
+ },
+ "strict_minus_house": {
+  "lut": 38,
+  "ff": 4
+ }
+}

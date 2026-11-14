@@ -1,5 +1,6 @@
 """pytest entry: the generated b65a_axil_soc_top under cocotb + Icarus, end to end through the UART test shell (8 clocks a
-bit), with brief 59's AXI4-Lite checker on every AXI4-Lite link of the top level (the bench is written from
+bit), with brief 59's AXI4-Lite checker and brief 71's missing-response monitor (axil_resp_rules, TIMEOUT 400 clocks)
+on every AXI4-Lite link of the top level (the bench is written from
 gen/graph.json, so a link the generator adds is watched without editing this file)."""
 from __future__ import annotations
 
@@ -15,7 +16,7 @@ HERE = Path(__file__).parent
 DESIGN = HERE.parent
 ROOT = DESIGN.parents[1]
 BUILD = ROOT / "build" / "sim" / "b65a_tb"
-CHECKER = [ROOT / "axi_tx" / "rtl" / f for f in ("axil_checker.sv", "axil_rules.sv", "axi_viol_log.sv")]
+CHECKER = [ROOT / "axi_tx" / "rtl" / f for f in ("axil_checker.sv", "axil_rules.sv", "axi_viol_log.sv", "axil_resp_rules.sv")]
 PARAMS = {"SHELL_CLKS_PER_BIT": 8, "SHELL_TIMEOUT_CYCLES": 400, "TONE_FD_GATE_CLKS": 4000}
 SIGS = ["awaddr", "awprot", "awvalid", "awready", "wdata", "wstrb", "wvalid", "wready", "bresp", "bvalid", "bready",
         "araddr", "arprot", "arvalid", "arready", "rdata", "rresp", "rvalid", "rready"]
@@ -31,11 +32,18 @@ def write_tb() -> tuple[Path, list[str]]:
          "    output logic UART_RXD_OUT, output logic [15:0] LED,",
          f"    output logic [{len(links) - 1}:0] chk_any", ");",
          "    b65a_axil_soc_top #(" + ", ".join(f".{k}({k})" for k in PARAMS) + ") dut (.*);",
-         "    logic [31:0] now = '0;", "    always_ff @(posedge CLK100MHZ) now <= now + 1'b1;"]
+         "    logic [31:0] now = '0;", "    always_ff @(posedge CLK100MHZ) now <= now + 1'b1;",
+         f"    logic [{len(links) - 1}:0] chk_raw, lost_any;", "    assign chk_any = chk_raw | lost_any;   // a lost response is a violation too"]
     for i, ln in enumerate(links):
         conn = ", ".join(f".{s}(dut.{ln}__{s})" for s in SIGS)
         L.append(f"    axil_checker #(.ADDR_W(32), .DATA_W(32)) u_chk_{ln} (.aclk(CLK100MHZ), .aresetn(!dut.rst_sync_sys__rst), "
-                 f".clear(1'b0), .en(10'h3FF), .now(now), {conn}, .viol(), .trig(), .any(chk_any[{i}]), .rd_sel(6'd0), .rd_data());")
+                 f".clear(1'b0), .en(10'h3FF), .now(now), {conn}, .viol(), .trig(), .any(chk_raw[{i}]), .rd_sel(6'd0), .rd_data());")
+        rconn = ", ".join(f".{s}(dut.{ln}__{s})" for s in ("awvalid", "awready", "wvalid", "wready", "bvalid", "bready",
+                                                           "arvalid", "arready", "rvalid", "rready"))
+        L.append(f"    logic [1:0] lost_{ln};")
+        L.append(f"    axil_resp_rules #(.TIMEOUT(400)) u_resp_{ln} (.aclk(CLK100MHZ), .aresetn(!dut.rst_sync_sys__rst), {rconn}, "
+                 f".lost(lost_{ln}));")
+        L.append(f"    assign lost_any[{i}] = |lost_{ln};")
     L.append("endmodule\n")
     BUILD.mkdir(parents=True, exist_ok=True)
     p = BUILD / "b65a_tb.sv"

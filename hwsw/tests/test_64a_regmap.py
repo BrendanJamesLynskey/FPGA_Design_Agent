@@ -395,7 +395,8 @@ def test_each_behaviour_sentence_follows_its_setting(topic, a, b, in_a, in_b) ->
 def test_every_topic_is_stated_and_differences_lead_the_document() -> None:
     topics = ["unmapped", "error_capture", "reserved", "side_effects", "priority", "strobes", "access", "multiword", "reset", "interrupt",
               "clock"]
-    assert [k for k, _ in regmap.behaviour(regmap.from_dict(_demo()))] == topics
+    assert [k for k, _ in regmap.behaviour(regmap.from_dict(_demo()))] == ["profile"] + topics      # a generated block names its profile
+    assert [k for k, _ in regmap.behaviour(regmap.from_dict(_doc(), doc_only=True))] == topics
     m = regmap.from_dict(_doc(unmapped="split", strobes="ignored", reset="rst", reset_active="high", clock="clk"),
                          doc_only=True)
     first = regmap.convention_sentence(m)

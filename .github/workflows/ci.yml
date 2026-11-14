@@ -302,7 +302,7 @@ jobs:
         run: |
           python -m hwsw.regmap check hwsw/examples/demo_accel.yaml
           python -m hwsw.cfu --check
-          python -m pytest -q hwsw/tests/test_64a_regmap.py hwsw/tests/test_64a_partition.py
+          python -m pytest -q hwsw/tests/test_64a_regmap.py hwsw/tests/test_73_profiles.py hwsw/tests/test_64a_partition.py
       - name: Generated register blocks in simulation (Python and C drivers, AXI4-Lite checker, seeded RTL faults)
         run: python -m pytest -q hwsw/tests/test_64a_regmap_rtl.py
       - name: Formal - AXI4-Lite slave rules on the generated blocks (bounded, depth 20), cover, seeded handshake faults

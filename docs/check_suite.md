@@ -22,7 +22,7 @@ python3 -m flow.checks designs/<d> [--names all|resets,cdc,...] [--scope auto|rt
 
 | Argument | Values | Meaning |
 |---|---|---|
-| `names` | `all`, or any of the checks below | `all` runs every check whose scopes include the scope and that applies to the design (`fsm` needs `verif/fsm.yaml`, `gt_plan` a `link:` section in spec.yaml, `doc` a `handover.yaml`); the digest lists the ones left out and why. A named check always runs. |
+| `names` | `all`, or any of the checks below | `all` runs every check whose scopes include the scope and that applies to the design (`fsm` needs `verif/fsm.yaml`, `gt_plan` a `link:` section in spec.yaml, `doc` a `handover.yaml`, `axi_profile` a generated `*_regs.sv` or an `interfaces:` section in spec.yaml); the digest lists the ones left out and why. A named check always runs. |
 | `scope` | `rtl`, `synth`, `route`, `auto` | `rtl`: the sources only. `synth`/`route`: the build's reports in `build/<variant>/` for that stage. `auto`: the latest stage the build reached. |
 | `level` | `summary`, `standard`, `detail` | findings shown per check in the digest: 0, 5 or 30. The full result always has all of them. |
 | `variant` | `base`, `ila` | which build directory is read. |
@@ -45,6 +45,7 @@ python3 -m flow.checks designs/<d> [--names all|resets,cdc,...] [--scope auto|rt
 | `control_sets` | AMD | synth, route | report_control_sets (count of unique control sets); ULMTCS rows |
 | `fsm` | ours | rtl, synth, route | `flow/fsm_coverage.py` on the VCDs under `build/verif` |
 | `axi` | ours | rtl, synth, route | `flow/amd_ip_notes.py` (brief 69): AMD AXI4-Lite IP next to our register blocks; advice only |
+| `axi_profile` | ours | rtl, synth, route | `flow/checks/axi_profile.py` (brief 73): each generated AXI4-Lite register block regenerated from its map under the design's `interfaces:` profile and compared with the file; mixed profiles, old blocks and AMD IP beside a strict block flagged; see [hwsw.md](hwsw.md#interface-profiles-brief-73) |
 | `gt_plan` | ours | rtl, synth, route | `flow/gt_plan.py` (brief 56A): every reason the spec's link cannot be built |
 | `doc` | ours | rtl, synth, route | the DOC gate (`agent/graph/document.py` `doc_gate`, brief 68) |
 
@@ -53,7 +54,7 @@ python3 -m flow.checks designs/<d> [--names all|resets,cdc,...] [--scope auto|rt
 ## Where the knowledge lives
 
 - How to detect: the check's code (`flow/checks/`, and the checker it wraps).
-- What a violation is, why, the one-line fix and the waiver policy: `flow/hdl_rules.yaml` (FDA-HDL v1.1). Every code a
+- What a violation is, why, the one-line fix and the waiver policy: `flow/hdl_rules.yaml` (FDA-HDL v1.2). Every code a
   check can raise maps to a rule there, and every rule is covered by a check or marked `manual`
   (`flow/tests/test_71_check_suite.py` fails otherwise).
 - The background: the KB skill each rule names (`skill`), shown in the digest.
@@ -149,7 +150,7 @@ python3 -m flow.checks designs/<d> [--names all|resets,cdc,...] [--scope auto|rt
 - The full result is `build/checks/<variant>/<scope>.json` (named in the digest's first line); the tool never returns it
   whole.
 
-## The reset rules (FDA-HDL v1.1, owner rule of 2026-11-13: resets are synchronous)
+## The reset rules (FDA-HDL v1.1 onwards, owner rule of 2026-11-13: resets are synchronous)
 
 | Rule | Ours | AMD (Vivado 2026.1, verified) |
 |---|---|---|
@@ -171,4 +172,5 @@ the run function (it gets a `Ctx` with the design, scope, build directory and `r
 Vivado reports it needs (if any), and optionally `applies(design)` and `waivable`. Then add the rule(s) to
 `flow/hdl_rules.yaml` with `fix` and `skill`, and the name to `CHECK_NAMES` in `agent/core/tools.py` (the tool's enum;
 a change to the model-facing schema is a golden re-pin). Brief 73's `axi_profile` check is that: a source check over the
-design's interface profiles, codes under a new `axi_profile` tool key, rules `HDL-IF-04..`.
+design's interface profiles (`flow/checks/axi_profile.py`), codes under the `axi_profile` tool key, rules `HDL-IF-04` to
+`HDL-IF-06`, the name in `CHECK_NAMES` (schema 1.12.1, one golden re-pin).

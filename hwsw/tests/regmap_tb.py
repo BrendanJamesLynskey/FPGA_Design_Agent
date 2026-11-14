@@ -9,7 +9,8 @@ from pathlib import Path
 from hwsw import regmap
 
 ROOT = Path(__file__).resolve().parents[2]
-CHECKER_SRC = [ROOT / "axi_tx" / "rtl" / n for n in ("axil_checker.sv", "axil_rules.sv", "axi_viol_log.sv")]
+CHECKER_SRC = [ROOT / "axi_tx" / "rtl" / n for n in ("axil_checker.sv", "axil_rules.sv", "axi_viol_log.sv",
+                                                       "axil_resp_rules.sv")]
 
 
 def layout(m: regmap.RegMap) -> dict:
@@ -44,6 +45,7 @@ def tb_text(m: regmap.RegMap) -> str:
          "    logic [31:0] now = 32'd0;",
          "    always @(posedge aclk) now <= now + 32'd1;",
          "    logic [9:0] viol;",
+         "    logic [1:0] lost;      // brief 71: a write or a read that never gets its response (axil_resp_rules)",
          "    logic chk_trig, chk_any;",
          "    logic [31:0] chk_rd;"]
     conn = []
@@ -71,6 +73,10 @@ def tb_text(m: regmap.RegMap) -> str:
     L.append("        .araddr(s_axil_araddr), .arprot(s_axil_arprot), .arvalid(s_axil_arvalid), .arready(s_axil_arready),")
     L.append("        .rdata(s_axil_rdata), .rresp(s_axil_rresp), .rvalid(s_axil_rvalid), .rready(s_axil_rready),")
     L.append("        .viol(viol), .trig(chk_trig), .any(chk_any), .rd_sel(6'd0), .rd_data(chk_rd));")
+    L.append("    axil_resp_rules #(.TIMEOUT(64)) u_resp (.aclk(aclk), .aresetn(aresetn),")
+    L.append("        .awvalid(s_axil_awvalid), .awready(s_axil_awready), .wvalid(s_axil_wvalid), .wready(s_axil_wready),")
+    L.append("        .bvalid(s_axil_bvalid), .bready(s_axil_bready), .arvalid(s_axil_arvalid), .arready(s_axil_arready),")
+    L.append("        .rvalid(s_axil_rvalid), .rready(s_axil_rready), .lost(lost));")
     L.append("endmodule")
     return "\n".join(L) + "\n"
 

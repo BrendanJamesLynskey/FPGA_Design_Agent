@@ -283,7 +283,7 @@ def test_trace_tag_migrates_from_the_testplan(mini):
 def test_rule_set_is_well_formed():
     rs = lr.load_rules()
     assert lr.rule_problems(rs) == []
-    assert rs["standard"] == "FDA-HDL" and rs["version"] == "1.1"      # brief 71: v1.1
+    assert rs["standard"] == "FDA-HDL" and rs["version"] == "1.2"      # brief 73: v1.2
     assert lr.rule_for(rs, "verilator", "LATCH") == "HDL-SYN-01"
     assert lr.rule_for(rs, "verilator", "WIDTHTRUNC") == "HDL-WID-01"
     assert lr.rule_for(rs, "verilator", "SOMETHINGNEW") == "HDL-LINT-00"

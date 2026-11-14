@@ -73,7 +73,7 @@ Interfaces:
 | simulate end to end; needs Icarus Verilog 12 and cocotb 2.0.1 | `python -m pytest -q designs/b65a_axil_soc/tests/test_b65a_rtl.py` | no | about 1 min |
 | build; needs local Vivado 2026.1 and a heavy slot (take_heavy_slot.sh) | `flow/run_vivado.sh designs/b65a_axil_soc` | yes | about 4 min |
 
-Tool: Vivado 2026.1. Build ID of the inputs at handover: `de292461` (`python flow/manifest.py show designs/b65a_axil_soc`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `1fc7ed8`.
+Tool: Vivado 2026.1. Build ID of the inputs at handover: `2b28c63c` (`python flow/manifest.py show designs/b65a_axil_soc`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `20d73e8`.
 
 | File | What |
 |---|---|
@@ -95,7 +95,7 @@ Tool: Vivado 2026.1. Build ID of the inputs at handover: `de292461` (`python flo
 
 | ID | Activity | Result | What | Evidence | Conditions |
 |---|---|---|---|---|---|
-| E1 | simulation | pass | generated top under cocotb and Icarus through the UART shell, with the AXI4-Lite protocol checker on every top-level link; reset values, strobes, error responses, the tone counted and the analyser samples checked | [`designs/b65a_axil_soc/tests/test_b65a_rtl.py`](tests/test_b65a_rtl.py) (run in CI) | - |
+| E1 | simulation | pass | generated top under cocotb and Icarus through the UART shell, with the AXI4-Lite protocol checker and the missing-response monitor (brief 71) on every top-level link; reset values, strobes, error responses, the tone counted and the analyser samples checked | [`designs/b65a_axil_soc/tests/test_b65a_rtl.py`](tests/test_b65a_rtl.py) (run in CI) | - |
 | E2 | review | pass | pure-Python tests of the block-design validator and generator, an adversarial case per rule, including the generated files matching their sources | [`flow/blockdesign/tests/test_65a_blockdesign.py`](../../flow/blockdesign/tests/test_65a_blockdesign.py) (run in CI) | - |
 | E3 | faults | pass | seeded faults in the crossbar ip_lib/axil_xbar, each caught by its bench | [`results/65a_blockdesign/faults.json`](../../results/65a_blockdesign/faults.json) | - |
 | E4 | build | pass | whole-board build on Vivado 2026.1; every gate passes | [`results/65a_blockdesign/vivado_build/gates.json`](../../results/65a_blockdesign/vivado_build/gates.json) | - |

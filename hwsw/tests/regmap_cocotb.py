@@ -21,7 +21,7 @@ from cocotb.triggers import FallingEdge, RisingEdge
 
 from hwsw import regmap
 
-M = regmap.load(os.environ["REGMAP_YAML"])
+M = regmap.load(os.environ["REGMAP_YAML"], spec=os.environ.get("REGMAP_SPEC") or None)
 LAY = json.loads(Path(os.environ["REGMAP_LAYOUT"]).read_text())
 _spec = importlib.util.spec_from_file_location("drv", Path(os.environ["REGMAP_OUT"]) / f"{M.name}_regs.py")
 DRV = importlib.util.module_from_spec(_spec)
@@ -33,6 +33,9 @@ UNMAPPED_RD = SLVERR if M.unmapped in ("slverr", "split") else OKAY
 UNMAPPED_WR = SLVERR if M.unmapped == "slverr" else OKAY
 USER = [r for r in M.registers if not r.internal]       # the map's own registers (the error capture has its own tests)
 CAP = M.error_capture
+CONV = M.conventions
+STRICT_RSVD = CONV.reserved_write == "slverr"
+NO_RSVD = lambda rn, v: v & ~regmap.reserved_mask(M.reg(rn)) if STRICT_RSVD else v      # noqa: E731 (a value with no 1 in a reserved bit)
 
 
 # ---- the bus ---------------------------------------------------------------------------------------------------------
@@ -157,6 +160,11 @@ class Checker:
     async def _run(self):
         while True:
             await RisingEdge(self.d.aclk)
+            if int(self.d.lost.value):
+                self.fired.append((int(self.d.now.value), -1))
+                raise AssertionError(f"AXI4-Lite missing-response monitor fired at cycle {int(self.d.now.value)}: lost "
+                                     f"{int(self.d.lost.value):#04b} (axi_tx/rtl/axil_resp_rules.sv, rule 10: a write or read "
+                                     "was never answered)")
             v = int(self.d.viol.value)
             if v:
                 self.fired.append((int(self.d.now.value), v))
@@ -201,6 +209,18 @@ class Model:
                 k = (rn, f.name)
                 v |= (f.reset if f.const else self.shadow[k] if k in self.shadow else self.ro[k]) << f.lsb
         return v
+
+    def rejected(self, rn: str, value: int, strb: int) -> bool:
+        """True when the profile answers this write SLVERR and changes nothing (brief 73): the strobes cover part of a
+        writable field that spans several byte lanes, or a 1 lands in a reserved bit of a strobed byte."""
+        r = M.reg(rn)
+        bits = sum(0xFF << (8 * b) for b in range(4) if strb >> b & 1)
+        if CONV.partial_write == "slverr":
+            for f in regmap.multilane_fields(r):
+                ln = regmap.lanes(f)
+                if strb & ln and (strb & ln) != ln:
+                    return True
+        return CONV.reserved_write == "slverr" and bool(value & bits & regmap.reserved_mask(r))
 
     def write(self, rn: str, value: int, strb: int):
         bits = 0
@@ -285,8 +305,9 @@ async def field_access_types(dut):
                             await drv.pulse(*s.trigger)
                             tr = M.reg(s.trigger[0])
                             model.write(tr.name, (model.read(tr.name) & tr.mask("RW")) | M.field(*s.trigger).mask, 0xF)
-                    await drv.write(r.name, 0xFFFFFFFF ^ (r.mask("W1C") | r.mask("W1S") | r.mask("W1P")) )
-                    model.write(r.name, 0xFFFFFFFF ^ (r.mask("W1C") | r.mask("W1S") | r.mask("W1P")), 0xF)
+                    wv = NO_RSVD(r.name, 0xFFFFFFFF ^ (r.mask("W1C") | r.mask("W1S") | r.mask("W1P")))
+                    await drv.write(r.name, wv)
+                    model.write(r.name, wv, 0xF)
                     want = f.reset if f.const else val
                     assert await drv.get(r.name, f.name) == want, f"{r.name}.{f.name}: a write changed a RO field"
                 elif f.access == "W1C":
@@ -372,9 +393,14 @@ async def byte_strobes(dut):
         for _ in range(8):
             strb = rng.getrandbits(4)
             v = rng.getrandbits(32)
+            if STRICT_RSVD and rng.random() < 0.7:
+                v = NO_RSVD(r.name, v)
             await bus.write32(r.offset, v, strb)
-            assert bus.last_bresp == OKAY
-            model.write(r.name, v, strb)
+            if model.rejected(r.name, v, strb):
+                assert bus.last_bresp == SLVERR, f"{r.name}: strobe {strb:04b} value {v:#010x} should be rejected"
+            else:
+                assert bus.last_bresp == OKAY
+                model.write(r.name, v, strb)
             got = await drv.read(r.name)
             assert got == model.read(r.name), f"{r.name}: strobe {strb:04b} value {v:#010x}: read {got:#010x}, " \
                                               f"model {model.read(r.name):#010x}"
@@ -439,13 +465,13 @@ async def error_capture_records_the_first_and_counts(dut):
     assert await _capture(drv) == (1, h1, 0, 2), "the first bad access was overwritten"
     for _ in range(3):                                                    # reads have no side effect
         assert await _capture(drv) == (1, h1, 0, 2)
-    await bus.write32(M.reg("ERR_ADDR").offset, 0xFFFFFFFF)               # read-only registers: OKAY, ignored
+    await bus.write32(M.reg("ERR_ADDR").offset, NO_RSVD("ERR_ADDR", 0xFFFFFFFF))   # read-only registers: OKAY, ignored
     assert bus.last_bresp == OKAY
     stt = M.reg("ERR_STATUS")
-    await bus.write32(stt.offset, 0xFFFFFFFF & ~(stt.mask("W1C") | stt.mask("RW")))   # only its read-only bits
+    await bus.write32(stt.offset, NO_RSVD("ERR_STATUS", 0xFFFFFFFF & ~(stt.mask("W1C") | stt.mask("RW"))))   # only its read-only bits
     assert bus.last_bresp == OKAY
     assert await _capture(drv) == (1, h1, 0, 2), "a write to the read-only capture bits changed the record"
-    await bus.write32(M.reg("ERR_STATUS").offset, 0xFFFFFFFF, strb=0b1110)  # byte 0 not written: no clear
+    await bus.write32(M.reg("ERR_STATUS").offset, NO_RSVD("ERR_STATUS", 0xFFFFFFFF), strb=0b1110)  # byte 0 not written: no clear
     assert (await _capture(drv))[0] == 1
     await drv.clear("ERR_STATUS", "STICKY")
     assert (await drv.get("ERR_STATUS", "STICKY"), await drv.get("ERR_STATUS", "COUNT")) == (0, 0)
@@ -543,11 +569,15 @@ async def read_while_response_pending_and_unaligned(dut):
     d = dut
     r1 = next(r for r in USER if r.mask("RW"))
     v1 = 0xA5C3_5A3C & r1.mask("RW")
-    await bus.write32(r1.offset + 2, v1)                     # unaligned write: lands in r1
-    assert bus.last_bresp == OKAY
-    model.write(r1.name, v1, 0xF)
-    assert await bus.read32(r1.offset + 1) == model.read(r1.name), "unaligned read did not reach the word"
-    assert bus.last_rresp == OKAY
+    if CONV.unaligned == "ignore":
+        await bus.write32(r1.offset + 2, v1)                 # unaligned write: lands in r1
+        assert bus.last_bresp == OKAY
+        model.write(r1.name, v1, 0xF)
+        assert await bus.read32(r1.offset + 1) == model.read(r1.name), "unaligned read did not reach the word"
+        assert bus.last_rresp == OKAY
+    else:                                                    # strict: the profile test checks the rejection itself
+        await bus.write32(r1.offset, v1)
+        model.write(r1.name, v1, 0xF)
     r2 = next(r for r in USER if r is not r1 and model.read(r.name) != model.read(r1.name))
     await FallingEdge(d.aclk)
     d.s_axil_rready.value = 0
@@ -584,6 +614,94 @@ async def read_while_response_pending_and_unaligned(dut):
     await RisingEdge(d.aclk)
     await FallingEdge(d.aclk)
     d.s_axil_rready.value = 0
+    chk.assert_quiet()
+
+
+async def _bad_count(drv) -> int:
+    return await drv.get("ERR_STATUS", "COUNT") if CAP else 0
+
+
+@cocotb.test(timeout_time=4, timeout_unit="ms")
+async def profile_settings(dut):
+    """Each setting of the interface profile (brief 73), in the direction the map has it: an unaligned address, a partial
+    write to a multi-byte field, a 1 written to a reserved bit. strict: SLVERR and nothing changes (the other fields
+    of the same write included), and the error capture counts it; house and amd_compatible: accepted as before. Every
+    case reads the registers back to show that a rejected write changed nothing and an accepted one did."""
+    rng, bus, drv, hw, pulses, chk = await boot(dut, 21)
+    model = Model()
+    plain = [r for r in USER if r.mask("RW") and not r.mask("W1C") and not r.mask("W1S") and not r.mask("W1P")]
+    # -- unaligned addresses
+    for r in rng.sample(plain, min(3, len(plain))):
+        v0 = 0xFFFFFFFF & r.mask("RW")                       # a value that shows (non-zero) if an unaligned access gets through
+        await bus.write32(r.offset, v0)
+        model.write(r.name, v0, 0xF)
+        before = await _bad_count(drv)
+        for lo in (1, 2, 3):
+            if CONV.unaligned == "slverr":
+                assert await bus.read32(r.offset + lo) == 0, f"{r.name}+{lo}: an unaligned read must return 0"
+                assert bus.last_rresp == SLVERR
+                await bus.write32(r.offset + lo, 0)
+                assert bus.last_bresp == SLVERR, f"{r.name}+{lo}: an unaligned write must answer SLVERR"
+                assert await drv.read(r.name) == model.read(r.name), f"{r.name}: an unaligned write changed the register"
+            else:
+                assert await bus.read32(r.offset + lo) == model.read(r.name) and bus.last_rresp == OKAY
+        if CONV.unaligned == "slverr" and CAP:
+            assert await _bad_count(drv) == min(before + 6, 255), "the capture did not count the unaligned accesses"
+    if CONV.unaligned == "slverr":                           # an unaligned address in a hole is SLVERR on a write too
+        holes = _holes()
+        if holes:
+            await bus.write32(holes[0] + 1, 0)
+            assert bus.last_bresp == SLVERR
+    # -- partial writes to a multi-byte field
+    for r in USER:
+        for f in regmap.multilane_fields(r):
+            ln = regmap.lanes(f)
+            if f.access != "RW":
+                continue
+            old = model.read(r.name)
+            for strb in range(1, 16):
+                part = strb & ln
+                if not part or part == ln:
+                    continue
+                v = NO_RSVD(r.name, 0xFFFFFFFF) & r.mask("RW") & f.mask
+                await bus.write32(r.offset, v, strb)
+                if CONV.partial_write == "slverr":
+                    assert bus.last_bresp == SLVERR, f"{r.name}.{f.name} strobe {strb:04b}: a partial write must be rejected"
+                    assert await drv.read(r.name) == old, f"{r.name}: a rejected partial write changed the register"
+                else:
+                    assert bus.last_bresp == OKAY
+                    model.write(r.name, v, strb)
+                    assert await drv.read(r.name) == model.read(r.name)
+                    old = model.read(r.name)
+            for strb in (ln, 0xF, 0):                        # all its lanes, or none of them: accepted
+                v = rng.getrandbits(32) & r.mask("RW") & f.mask
+                await bus.write32(r.offset, v, strb)
+                assert bus.last_bresp == OKAY
+                model.write(r.name, v, strb)
+                assert await drv.read(r.name) == model.read(r.name)
+                old = model.read(r.name)
+    # -- reserved bits
+    for r in USER:
+        rs = regmap.reserved_mask(r)
+        if not rs or not (r.mask("RW") or r.mask("W1C")):
+            continue
+        bit = rs & -rs
+        lane = next(b for b in range(4) if (bit >> (8 * b)) & 0xFF)
+        w = NO_RSVD(r.name, 0) | (model.read(r.name) & r.mask("RW"))
+        old = model.read(r.name)
+        await bus.write32(r.offset, w | bit, 0xF)
+        if STRICT_RSVD:
+            assert bus.last_bresp == SLVERR, f"{r.name}: a 1 in a reserved bit must be rejected"
+            assert await drv.read(r.name) == old, f"{r.name}: a rejected write changed the register"
+            if not any(regmap.lanes(f) >> lane & 1 for f in regmap.multilane_fields(r)):   # (else that write is a torn one)
+                await bus.write32(r.offset, w | bit, 0xF & ~(1 << lane))    # the reserved bit's byte is not written
+                assert bus.last_bresp == OKAY, f"{r.name}: the strobe of the reserved bit's byte is 0: nothing is reserved-written"
+            await bus.write32(r.offset, w, 0xF)                          # 0 in the reserved bits: accepted
+            assert bus.last_bresp == OKAY
+        else:
+            assert bus.last_bresp == OKAY, f"{r.name}: a 1 in a reserved bit is ignored, answered OKAY"
+        assert await drv.read(r.name) & rs == 0, f"{r.name}: a reserved bit reads 1"
+        model.write(r.name, w & r.mask("RW"), 0xF)
     chk.assert_quiet()
 
 
@@ -703,8 +821,14 @@ async def random_soak_against_model(dut):
             assert got == model.read(r.name), f"op {i}: {r.name} read {got:#010x}, model {model.read(r.name):#010x}"
         elif k < 0.7:
             v, strb = rng.getrandbits(32), rng.choice([0xF, 0xF, rng.getrandbits(4)])
+            if STRICT_RSVD and rng.random() < 0.7:
+                v = NO_RSVD(r.name, v)                         # mostly writes this profile accepts, some it rejects
             await bus.write32(r.offset, v, strb)
-            model.write(r.name, v, strb)
+            if model.rejected(r.name, v, strb):
+                assert bus.last_bresp == SLVERR, f"op {i}: write {r.name} {v:#010x} strobe {strb:04b} not rejected"
+            else:
+                assert bus.last_bresp == OKAY, f"op {i}: write {r.name} {v:#010x} strobe {strb:04b} answered {bus.last_bresp}"
+                model.write(r.name, v, strb)
             check_outputs(dut, model, f"op {i} write {r.name}")
         elif k < 0.85:
             ins = [(rr, f) for rr in USER for f in rr.fields if f.access in ("W1C", "W1S")]

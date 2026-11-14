@@ -53,13 +53,13 @@ from agent.tests.request_golden import collect
 
 FIXTURES = Path(__file__).parent / "fixtures"
 EVAL1 = FIXTURES / "eval1_request_golden.json"
-GOLDEN = FIXTURES / "b71_request_golden.json"           # the newest golden
+GOLDEN = FIXTURES / "b73_request_golden.json"           # the newest golden
 #: the hashes that differ from eval-1's, and the brief that changed each (an intended change is listed here, with why)
 CHANGED_SINCE_EVAL1 = {"tool_registry": "brief 36: skill_index, skill_excerpt, load_skill(name=); brief 42 H9: report_digest; "
                                         "brief 50A: debug_plan, debug_capture, debug_query; brief 59A: axi_program_check, axi_simulate, axi_board_run; brief 56A: gt_plan; "
-                                        "brief 68: bringup description (reference model); brief 71: check",
+                                        "brief 68: bringup description (reference model); brief 71: check; brief 73: check name axi_profile",
                        "prompts": "brief 53: requirement quality (clarify) and requirement tags (tests); brief 68: role names; "
-                                  "brief 71: the check tool (rtl)",
+                                  "brief 71: the check tool (rtl); brief 73: the interface profile (clarify, rtl)",
                        "conventions": "brief 68: role names (Tests (Verifier))",
                        "conventions_text_noshell_False": "brief 68: as conventions",
                        "conventions_text_noshell_True": "brief 68: as conventions",
@@ -67,8 +67,8 @@ CHANGED_SINCE_EVAL1 = {"tool_registry": "brief 36: skill_index, skill_excerpt, l
                        "tests_conventions_text_noshell_True": "brief 68: as conventions",
                        "hw_format": "brief 68: reference model for blind model",
                        "model_contract": "brief 68: the Modeller and the Verifier",
-                       "prompts_formatted_noshell_False": "brief 53: as prompts",
-                       "prompts_formatted_noshell_True": "brief 53: as prompts",
+                       "prompts_formatted_noshell_False": "brief 53: as prompts; brief 73: as prompts",
+                       "prompts_formatted_noshell_True": "brief 53: as prompts; brief 73: as prompts",
                        "plan_tests_False": "shell 1.1 (BUILD_ID at 0x05): the tests role reads the shell's protocol and driver",
                        "plan_tests_True": "shell 1.1: as plan_tests_False",
                        "cli_argv_tests_False": "shell 1.1: as plan_tests_False",

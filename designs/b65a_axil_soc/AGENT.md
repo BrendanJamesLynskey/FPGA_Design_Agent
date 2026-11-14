@@ -9,7 +9,7 @@ The brief 65A sample block design. A DDS tone generator and a frequency and duty
 not: a showcase or a board-verified design; the bitstream was built, not programmed; a general interconnect; generation covers AXI4-Lite only, 32-bit data and one clock domain
 
 ## state
-stage=built vivado=2026.1 kb_pin=1fc7ed8 build_id=de292461
+stage=built vivado=2026.1 kb_pin=20d73e8 build_id=2b28c63c
 gates: build_2026_1=pass board_run=not-run
 
 ## interface
@@ -30,7 +30,7 @@ designs/b65a_axil_soc/gen/address_map.md 598c086cd3: generated address map and r
 designs/b65a_axil_soc/gen/graph.json f235b29f94: generated graph that the viewer draws
 designs/b65a_axil_soc/gen/manifest.json 810abcec95: generated; input and output hashes, components, diagnostics
 designs/b65a_axil_soc/design.xdc a0619232b1: pins and the 100 MHz clock
-designs/b65a_axil_soc/tests/test_b65a_rtl.py c69ba5a936: generated design simulated end to end through the UART shell
+designs/b65a_axil_soc/tests/test_b65a_rtl.py 583424fc10: generated design simulated end to end through the UART shell
 docs/blockdesign.md 500c66d77b: user guide to the format, validation and generator
 
 ## commands
@@ -41,7 +41,7 @@ simulate end to end (~1min): python -m pytest -q designs/b65a_axil_soc/tests/tes
 [heavy] build (~4min): flow/run_vivado.sh designs/b65a_axil_soc
 
 ## records (path sha256-prefix; claims below cite R<n>)
-R1 designs/b65a_axil_soc/tests/test_b65a_rtl.py c69ba5a936
+R1 designs/b65a_axil_soc/tests/test_b65a_rtl.py 583424fc10
 R2 flow/blockdesign/tests/test_65a_blockdesign.py 87d41b298c
 R3 results/65a_blockdesign/faults.json 987ffa0570
 R4 results/65a_blockdesign/vivado_build/gates.json 476929e068
@@ -49,7 +49,7 @@ R5 results/blockdesign/b65a_axil_soc/build.json 0f94c01fe9
 R6 results/65a_blockdesign/sim_end_to_end.json 82ca2d20f8
 
 ## evidence
-E1 simulation pass R1 ci: generated top under cocotb and Icarus through the UART shell, with the AXI4-Lite protocol checker on every top-level link; reset values, strobes, error responses, the tone counted and the analyser samples checked
+E1 simulation pass R1 ci: generated top under cocotb and Icarus through the UART shell, with the AXI4-Lite protocol checker and the missing-response monitor (brief 71) on every top-level link; reset values, strobes, error responses, the tone counted and the analyser samples checked
 E2 review pass R2 ci: pure-Python tests of the block-design validator and generator, an adversarial case per rule, including the generated files matching their sources
 E3 faults pass R3: seeded faults in the crossbar ip_lib/axil_xbar, each caught by its bench
 E4 build pass R4: whole-board build on Vivado 2026.1; every gate passes
