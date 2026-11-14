@@ -525,7 +525,13 @@ wire a unit in are patches applied to a copy in `build/`, one per integration st
   stall, and the custom instruction added to the hazard unit's multiply-use hazard, so a dependent next instruction
   waits one clock and takes the value from WB;
 - both also get [brv32p_mispredict_hold.patch](../hwsw/cfu_core/brv32p_mispredict_hold.patch) (see "A mispredict
-  while EX is stalled", below).
+  while EX is stalled", below);
+- optionally ([brv32p_sync_reset.patch](../hwsw/cfu_core/brv32p_sync_reset.patch), `run_bench.py --sync-reset`, brief 80):
+  the core's 37 asynchronous-reset blocks (`always @(posedge clk or negedge rst_n)`) become synchronous
+  (`always @(posedge clk)`), the `if (!rst_n)` bodies unchanged, so the reset is still active low. It is applied first, to
+  the pinned text. The CRC program, the trap, the interrupts and the stale-prediction program pass and the kernel cycles
+  equal the committed ones (`hwsw/tests/test_64a_cfu_core_rtl.py`); the area and Fmax effect of the synchronous reset on
+  the core was not measured.
 
 `python3 hwsw/cfu_core/run_bench.py` compiles one program
 ([crc_bench.c](../hwsw/cfu_core/bench/crc_bench.c), GCC 13.2, `-O2`) that computes zlib's CRC-32 four ways at four
@@ -605,6 +611,16 @@ memory stall. The MEM style never stalls EX, so it cannot meet the case. By read
 divider has the same exposure; that is not simulated, so unconfirmed. The patch covers it too in our patched copies, and
 it changes no cycle count on the CRC benchmark (the EX-style numbers above, 1.54 and 2.29, are with it, equal to 64A's); the core's own repository
 is another project's and is not changed here.
+
+**Note for the RV32 core session (brief 80; do not act from here).** In `RISCV_RV32IMC_5stage` at `8d53700`,
+`branch_mispredict_ex` (`brv32p_core.v:507`) is not gated by `stall_ex`. With the divider (or any unit that stalls EX) in EX
+and a stale BTB entry predicting it taken, the mispredict fires while EX is stalled, `flush_ex` kills the stalled instruction
+and fetch is redirected past it: the instruction never completes. Suggested fix: add `!stall_ex` to the gate, as
+[brv32p_mispredict_hold.patch](../hwsw/cfu_core/brv32p_mispredict_hold.patch) does. Shown in simulation for a custom
+instruction only (`bench/stale_btb.c`); the divider case is by reading the RTL, not simulated. `bp_update_en` is not gated by
+`stall_ex` either, so a stalled instruction at a hardware-loop end would update the predictor on every stall clock
+(pre-existing, not tested). The same core has 37 asynchronous-reset blocks; [brv32p_sync_reset.patch](../hwsw/cfu_core/brv32p_sync_reset.patch)
+makes them synchronous for our copy.
 
 ### What the unit costs the core (Vivado 2026.1)
 

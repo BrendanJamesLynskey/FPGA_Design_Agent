@@ -5,6 +5,19 @@ finding), the change and the new hash. Only **development** tasks are amended; n
 v1 and course units are re-recorded with `freeze.py refreeze`; v2 development tasks through a hash-chained `amend` entry in `v2/ledger.jsonl`.
 Reviews: `reports/12_quality_review_area2.md` (planner repository), items R2, R5-R9, B2, Q2.
 
+## 2026-11-14: Claude Code 2.1.321 and the DOC step's wording (request golden re-pin, brief 80)
+
+**Amended 2026-11-14 (planner brief 80 under "Benchmarks do not block improvements").** What: the agent's Claude Code arm accepts CLI
+2.1.321 (`ACCEPTED_CLI`, hashed as `arm_constants`) after the tool-text check (89 successful tool results, none without text, 33 of them
+read_file); and `agent/graph/document.py` DOC_SYSTEM says the specification and architecture were approved automatically with no human
+review (no longer "by a model": the interview oracle only answered the questions) and describes two gaps the flow now finds
+(`seg_bit_order`, `simulated_parameters`). Only `arm_constants` and `doc_system` changed; no role prompt, tool, task, grader, test or
+split changed.
+
+Re-recorded: the request golden `agent/tests/fixtures/b80_request_golden.json` (one deliberate re-pin; `b70_request_golden.json`
+stays as history). Not comparable on request text: DOC steps recorded before this date (the three runs in `results/68_agent_docs/` were
+documented again with the new prompt).
+
 ## 2026-11-13: the DOC step's prompt (request golden re-pin, brief 68F)
 
 **Amended 2026-11-13 (planner brief 68F, after the independent re-review of the three agent-written handovers; eval-1 was

@@ -50,6 +50,7 @@ PINNED = HERE / "brv32p"
 PATCH = HERE / "brv32p_cfu.patch"
 PATCH_MEM = HERE / "brv32p_cfu_mem.patch"
 PATCH_HOLD = HERE / "brv32p_mispredict_hold.patch"
+PATCH_SYNC = HERE / "brv32p_sync_reset.patch"
 STYLES = ("ex", "mem")
 BUILD = ROOT / "build" / "64a" / "cfu"
 SIZES = [16, 64, 256, 1024]
@@ -92,12 +93,14 @@ def cfg_name(variant: str, style: str) -> str:
     return f"cfu_{variant}" + ("" if style == "ex" else f"_{style}")
 
 
-def prepare(cfg: str, variant: str | None, style: str = "ex", hold_fix: bool = True) -> Path:
+def prepare(cfg: str, variant: str | None, style: str = "ex", hold_fix: bool = True, sync_reset: bool = False) -> Path:
     d = BUILD / cfg
     if d.exists():
         shutil.rmtree(d)
     shutil.copytree(PINNED, d)
     (d / "rtl" / "cfu").mkdir()
+    if sync_reset:                                     # brief 80: first, to the pinned text, so the other patches see its output
+        sh(["patch", "-p1", "-s", "-i", PATCH_SYNC], cwd=d)
     if variant:
         sh(["patch", "-p1", "-s", "-i", PATCH if style == "ex" else PATCH_MEM], cwd=d)
         if hold_fix:
@@ -141,9 +144,9 @@ def build_stale_btb(d: Path) -> tuple[Path, str]:
     return b, tohost
 
 
-def stale_btb(variant: str, style: str, hold_fix: bool) -> str:
+def stale_btb(variant: str, style: str, hold_fix: bool, sync_reset: bool = False) -> str:
     """Run the directed stale-prediction program on one configuration; returns its RESULT line."""
-    d = prepare(f"stale_{cfg_name(variant, style)}_{'fixed' if hold_fix else 'pinned'}", variant, style, hold_fix)
+    d = prepare(f"stale_{cfg_name(variant, style)}_{'fixed' if hold_fix else 'pinned'}", variant, style, hold_fix, sync_reset)
     prog, tohost = build_stale_btb(d)
     return simulate(d, prog, tohost, True)["result"]
 
@@ -201,10 +204,11 @@ def kernels(marks: dict, with_cfu: bool) -> dict:
     return out
 
 
-def run(variants: list[str], baseline: bool, styles: tuple[str, ...] = STYLES, stale: bool = True) -> dict:
+def run(variants: list[str], baseline: bool, styles: tuple[str, ...] = STYLES, stale: bool = True,
+        sync_reset: bool = False) -> dict:
     tool = {"gcc": sh([f"{CROSS}gcc", "--version"]).splitlines()[0], "iverilog": sh(["iverilog", "-V"]).splitlines()[0]}
     pinned = (HERE / "PINNED.md").read_text().split("commit ")[1].split()[0] if (HERE / "PINNED.md").exists() else "?"
-    rec = {"schema": "cfu_bench/1", "core": f"BRV32P (RISCV_RV32IMC_5stage) at {pinned}, pinned copy in hwsw/cfu_core/brv32p",
+    rec = {"schema": "cfu_bench/1", "reset_style": "synchronous (brv32p_sync_reset.patch)" if sync_reset else "as pinned (asynchronous)", "core": f"BRV32P (RISCV_RV32IMC_5stage) at {pinned}, pinned copy in hwsw/cfu_core/brv32p",
            "unit": "ip_lib/crc32_step via hwsw/cfu.py, custom-2 opcode, funct3 0, funct7 0",
            "program": "hwsw/cfu_core/bench/crc_bench.c, -O2, rv32imc_zicsr (clmul kernel: + zbkb_zbkc)",
            "simulator": tool["iverilog"], "compiler": tool["gcc"], "sizes_bytes": SIZES,
@@ -215,7 +219,7 @@ def run(variants: list[str], baseline: bool, styles: tuple[str, ...] = STYLES, s
            "configs": {}}
     cfgs = ([("baseline", None, None)] if baseline else []) + [(cfg_name(v, s), v, s) for s in styles for v in variants]
     for cfg, v, s in cfgs:
-        d = prepare(cfg, v, s or "ex")
+        d = prepare(cfg, v, s or "ex", sync_reset=sync_reset)
         prog, tohost = build_program(d, v is not None)
         sim = simulate(d, prog, tohost, v is not None)
         if not sim["result"].startswith("RESULT PASS"):
@@ -236,7 +240,7 @@ def run(variants: list[str], baseline: bool, styles: tuple[str, ...] = STYLES, s
         # the mispredict-while-stalled check: the EX style without the hold patch (the pinned core's behaviour) must
         # lose the instruction, so the program can reach the case; every patched configuration must pass
         v = variants[0]
-        res = {f"{cfg_name(v, s)}_{'fixed' if f else 'pinned'}": stale_btb(v, s, f) for s in styles for f in (False, True)}
+        res = {f"{cfg_name(v, s)}_{'fixed' if f else 'pinned'}": stale_btb(v, s, f, sync_reset) for s in styles for f in (False, True)}
         rec["stale_btb"] = {"program": "hwsw/cfu_core/bench/stale_btb.c", "variant": v, "results": res}
         for k, r in res.items():
             want = "FAIL" if k == f"{cfg_name(v, 'ex')}_pinned" else "PASS"
@@ -251,17 +255,20 @@ def main(argv=None) -> int:
     ap.add_argument("--variants", default="word,byte")
     ap.add_argument("--styles", default="ex,mem")
     ap.add_argument("--no-stale", action="store_true", help="skip the directed stale-prediction program")
+    ap.add_argument("--sync-reset", action="store_true",
+                    help="apply brv32p_sync_reset.patch first (the core's 37 asynchronous-reset blocks become synchronous)")
     ap.add_argument("--no-baseline", action="store_true")
-    ap.add_argument("--out", default=str(ROOT / "results" / "64a_hwsw" / "cfu_crc32.json"))
+    ap.add_argument("--out", default=None, help="default results/64a_hwsw/cfu_crc32.json (cfu_crc32_sync_reset.json with --sync-reset)")
     a = ap.parse_args(argv)
     rec = run([v for v in a.variants.split(",") if v], not a.no_baseline, tuple(s for s in a.styles.split(",") if s),
-              not a.no_stale)
-    Path(a.out).parent.mkdir(parents=True, exist_ok=True)
-    Path(a.out).write_text(json.dumps(rec, indent=1) + "\n")
+              not a.no_stale, a.sync_reset)
+    out = Path(a.out) if a.out else ROOT / "results" / "64a_hwsw" / ("cfu_crc32_sync_reset.json" if a.sync_reset else "cfu_crc32.json")
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(rec, indent=1) + "\n")
     for cfg, c in rec["configs"].items():
         for k, by in c["kernels"].items():
             print(f"{cfg:12s} {k:8s} " + "  ".join(f"{n:>5}B {v['cycles_per_byte']:7.3f} c/B" for n, v in by.items()))
-    print("wrote", a.out)
+    print("wrote", out)
     return 0
 
 

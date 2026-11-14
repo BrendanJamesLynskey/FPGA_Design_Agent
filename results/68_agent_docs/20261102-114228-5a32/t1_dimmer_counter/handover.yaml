@@ -3,21 +3,20 @@
 # do not type them. Render with `python -m flow.handover write <this directory>`.
 schema: fda-handover/1
 id: t1_dimmer_counter
-title: T1 LED dimmer and push-button counter
+title: T1 LED dimmer and push-button counter for the Nexys A7-100T
 kind: agent-run
 produced_by: agent
-summary: A Nexys A7-100T design with a 16-bit up/down/clear counter driven by three debounced push-buttons. The counter
-  is shown on the 16 LEDs, gated by an 8-bit linear PWM brightness taken from a UART register or from the eight switches,
-  and as hexadecimal on the seven-segment display (brightness on the two leftmost digits). The repository test shell exposes
-  the counter, brightness, control, button and switch state and three press counts over USB-UART. The run reached a base-build
-  bitstream, but only under an earlier Vivado release, so it must be re-measured. Verification reached V1 of V3, and stage
-  configuration-and-debug did not pass.
+summary: The design drives 16 LEDs with a 16-bit up/down counter gated by 8-bit PWM brightness, and shows the counter and
+  the active brightness on the eight-digit seven-segment display. Three debounced buttons change the counter (up, down,
+  centre clear) and keep their own 32-bit press counts. Registers are reachable over the repository test shell on the USB-UART,
+  which gives access to the counter, brightness, control, button and switch state, and press counts. The run reached a bitstream
+  under an earlier Vivado release than the pinned one, so that build is not current. Verification reached V1 of V3, the
+  configuration-and-debug stage did not pass, and nothing has been run on a board.
 scope_not:
-- Not a verified design beyond V1. No seeded simulation, constrained-random test, coverage or mutation result is recorded,
-  and no board result exists.
-- Not measured for resources, timing, power, latency or throughput on Vivado 2026.1.
-- No repeat on a held button, no hardware-selectable debounce time and no UART access wider than 32-bit aligned registers.
-- No integrated logic analyzer (ILA) debug build exists.
+- not a general-purpose UART core; the serial link exists only for the repository test shell protocol
+- no auto-repeat on a held button; each debounced rising edge counts once
+- no decimal-point or AN5/AN4 output; the decimal point stays off and AN5 and AN4 show nothing
+- not board-tested, and no ILA debug build was attempted or recorded
 target:
   part: xc7a100tcsg324-1
   board: nexys_a7_100t
@@ -30,42 +29,46 @@ clocks:
 resets:
 - name: cpu_reset_n
   active: low
-  note: Pin C12. rtl/t1_led_dimmer_counter.sv asserts it asynchronously and releases it synchronously through its own two-flop
-    bridge. The internal active-high reset also drives the shell. design.xdc marks the input as a false path.
+  note: In rtl/t1_led_dimmer_counter.sv it asserts asynchronously and releases through two flops on clk. The resulting internal
+    active-high reset is synchronous and also resets the shell. Every register in the register map resets to its listed
+    value, leds to 0, and segments_n and digit_enable_n to all ones (display dark) until the first clock after release.
 interfaces:
 - name: clk
-  type: input, 1 bit
-  note: Pin E3, 100 MHz board oscillator; design.xdc creates a 10.00 ns clock on it. All logic runs in this one domain.
+  type: clock input
+  note: Pin E3, LVCMOS33, 10.00 ns period in design.xdc.
+- name: cpu_reset_n
+  type: reset input
+  note: Pin C12, active-low push-button. design.xdc sets input delays and a false path from it.
 - name: button_up
-  type: input, 1 bit, active high
-  note: Pin M18. Two-flop synchronised, then debounced, one event per debounced rising edge.
+  type: input, 1 bit
+  note: Pin M18, active high. Two-flop synchroniser, then debounce.
 - name: button_down
-  type: input, 1 bit, active high
-  note: Pin P18. Same path as button_up.
+  type: input, 1 bit
+  note: Pin P18, active high. Two-flop synchroniser, then debounce.
 - name: button_center
-  type: input, 1 bit, active high
-  note: Pin N17. Same path as button_up.
+  type: input, 1 bit
+  note: Pin N17, active high. Two-flop synchroniser, then debounce.
 - name: switches
   type: input, 8 bits
-  note: SW0 to SW7 on J15, L16, M13, R15, R17, T18, U18, R13. Registered once in the top, not twice (see gap switch_sync).
+  note: SW0..SW7 on J15, L16, M13, R15, R17, T18, U18, R13. Passed through a single register stage in the RTL.
 - name: uart_rx
   type: input, 1 bit
-  note: Pin C4 in design.xdc (UART_TXD_IN), host to FPGA, 115200 baud shell protocol. ARCHITECTURE.md swaps C4 and D4; the
-    XDC and spec.yaml agree.
+  note: Pin C4 (UART_TXD_IN) in design.xdc, to the shell receiver at UART_BAUD_DIVIDER clocks per bit.
 - name: uart_tx
   type: output, 1 bit
-  note: Pin D4 in design.xdc, FPGA to host. Registered, idle high.
+  note: Pin D4 (UART_RXD_OUT) in design.xdc, from the shell transmitter. Registered output, idle high.
 - name: leds
-  type: output, 16 bits, active high
-  note: 'LD0 to LD15, H17 through V11 as listed in design.xdc. Registered: counter value gated by PWM.'
+  type: output, 16 bits
+  note: LD0..LD15 on H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11, active high. Registered.
 - name: segments_n
-  type: output, 8 bits, active low
-  note: Bit 0 to bit 7 drive CA, CB, CC, CD, CE, CF, CG, DP (T10, R10, K16, K13, P15, T11, L18, H15). The RTL segment bit
-    order matches the XDC; DP is never lit.
+  type: output, 8 bits
+  note: Active low and registered. Bit 0 is CA (T10) through bit 6 CG (L18), bit 7 is DP (H15). The glyph table in the RTL
+    uses the same order, with bit 0 as segment a.
 - name: digit_enable_n
-  type: output, 8 bits, active low
-  note: Bit n drives ANn (J17, J18, T9, J14, P14, T14, K2, U13). AN0 to AN3 show the counter from least to most significant
-    nibble, AN6 and AN7 show the active brightness low and high nibble, AN4 and AN5 are blank.
+  type: output, 8 bits
+  note: Bit n drives AN[n] (J17, J18, T9, J14, P14, T14, K2, U13), active low. AN3..AN0 show the counter with the most significant
+    nibble at AN3, AN7 and AN6 show the active brightness with the high nibble at AN7, and AN5 and AN4 are enabled with
+    all segments off.
 registers:
 - offset: 0
   name: DESIGN_ID
@@ -115,31 +118,33 @@ registers:
 parameters:
 - name: DEBOUNCE_CYCLES
   value: 1000000
-  legal: Positive integer; a value of 1 or less removes the filtering. Only the default was built.
-  note: 'About 10 ms at 100 MHz. A new level is accepted after the synchronised input has differed from the debounced level
-    for this many clock cycles. Spec timing: DEBOUNCE_CYCLES = 1,000,000 cycles, approximately 10 ms at 100 MHz.'
+  legal: integer of 1 or more; 0 or 1 removes the qualification delay
+  note: 'Spec rate: approximately 10 ms at 100 MHz. The benches simulate it at 4, so the spec''s value was not simulated.
+    Spec timing: DEBOUNCE_CYCLES = 1,000,000 cycles, approximately 10 ms at 100 MHz.'
 - name: PWM_PERIOD_CYCLES
   value: 256
-  legal: Positive integer. 256 is special-cased in the RTL; other values use a scaled threshold that was not exercised.
-  note: 'One PWM phase step per clock, so the period is 256 clocks, about 390.625 kHz at 100 MHz, above visible flicker.
-    Spec timing: PWM_PERIOD_CYCLES = 256 cycles, approximately 390.625 kHz at 100 MHz; this is above visible flicker rates.'
+  legal: integer of 2 or more; only 256 uses the direct brightness-to-phase compare, other values use a scaled threshold
+  note: 'Spec rate: approximately 390.625 kHz at 100 MHz, above visible flicker. The benches simulate it at 16, so the spec''s
+    value was not simulated. Spec timing: PWM_PERIOD_CYCLES = 256 cycles, approximately 390.625 kHz at 100 MHz; this is
+    above visible flicker rates.'
 - name: DISPLAY_SCAN_CYCLES
   value: 100000
-  legal: Positive integer; only the default was built.
-  note: 'Clock cycles per digit selection, giving about 125 Hz full-frame refresh over eight digits at 100 MHz. Spec timing:
-    DISPLAY_SCAN_CYCLES = 100,000 cycles per digit selection, approximately 125 Hz full-frame refresh for eight digits at
-    100 MHz.'
+  legal: integer of 1 or more
+  note: 'Spec rate: 100,000 cycles per digit, approximately 125 Hz full-frame refresh for eight digits at 100 MHz. The benches
+    simulate it at 3, so the spec''s value was not simulated. Spec timing: DISPLAY_SCAN_CYCLES = 100,000 cycles per digit
+    selection, approximately 125 Hz full-frame refresh for eight digits at 100 MHz.'
 - name: UART_BAUD_DIVIDER
   value: 868
-  legal: Positive integer, passed to the shell as clocks per bit; only the default was built.
-  note: 'About 115207 baud at 100 MHz, close to 115200 baud. The shell frame timeout is fixed at 100000 cycles in the top.
-    Spec timing: UART_BAUD_DIVIDER = 868 clk cycles per bit, approximately 115207 baud at 100 MHz, close to 115200 baud.'
+  legal: integer of 2 or more, because the receiver samples at half a bit
+  note: 'Spec rate: 868 clk cycles per bit, approximately 115207 baud at 100 MHz. The benches simulate it at 8, so the spec''s
+    value was not simulated. Spec timing: UART_BAUD_DIVIDER = 868 clk cycles per bit, approximately 115207 baud at 100 MHz,
+    close to 115200 baud.'
 files:
 - path: results/68_agent_docs/20261102-114228-5a32/t1_dimmer_counter/spec.md
   what: the request the run started from
   sha256: 27829433c209cc34c4196ce9d2c1f3e268142802df9e2e750b69c83dd9406d94
 - path: results/68_agent_docs/20261102-114228-5a32/t1_dimmer_counter/spec.yaml
-  what: the specification the Clarifier wrote, accepted automatically by a model (no human review)
+  what: the specification the Clarifier wrote, approved automatically with no human review
   sha256: 24bff847ef49cda49c01b7370332fa4f6e584fdfef04eb93c94585d55447e3ed
 - path: results/68_agent_docs/20261102-114228-5a32/t1_dimmer_counter/ARCHITECTURE.md
   what: the architecture note, accepted automatically before any RTL (no human review)
@@ -182,6 +187,13 @@ commands:
   heavy: false
   minutes: null
   needs: Icarus Verilog and cocotb, or the simulation container
+- what: re-run the Verilator coverage simulation and the verification gates (line, toggle, functional and cover results)
+  cmd: SIM=verilator FDA_COVERAGE=1 FDA_SIM_RESULTS_DIR=results/68_agent_docs/20261102-114228-5a32/t1_dimmer_counter/build/verif/sim
+    python -m pytest -q -x results/68_agent_docs/20261102-114228-5a32/t1_dimmer_counter/tests/test_t1_dimmer_counter_rtl.py
+    && python3 flow/verif_gates.py results/68_agent_docs/20261102-114228-5a32/t1_dimmer_counter --runs results/68_agent_docs/20261102-114228-5a32/t1_dimmer_counter/build/verif/sim
+  heavy: false
+  minutes: null
+  needs: Verilator 5.036 or later and cocotb (the simulation container has them)
 - what: rebuild the bitstream with the flow
   cmd: flow/run_vivado.sh results/68_agent_docs/20261102-114228-5a32/t1_dimmer_counter base
   heavy: true
@@ -191,8 +203,8 @@ evidence:
 - id: E1
   activity: review
   result: partial
-  what: the specification and the architecture were approved automatically by a model, with no human review (review off;
-    interview oracle not recorded); the interview asked 10 questions, 4 answered and 6 defaulted
+  what: the specification and the architecture were approved automatically, with no human review (review off; the interview
+    oracle not recorded only answered the interview questions); the interview asked 10 questions, 4 answered and 6 defaulted
   record: results/68_agent_docs/20261102-114228-5a32/summary.json
   sha256: 41b003d46690edf304e83de07980f483f3842fc950e2bf20a15cd33347603989
 - id: E2
@@ -231,8 +243,9 @@ gaps:
     it is published. Re-measure it, when the flow reaches the build again, with the resume command in How to build (python
     -m agent resume), and only then rely on its gates'
 - about: E1
-  text: 'review evidence is partial: the specification and the architecture were approved automatically by a model, with
-    no human review (review off; interview oracle not recorded); the interview asked 10 questions, 4 answered and 6 defaulted'
+  text: 'review evidence is partial: the specification and the architecture were approved automatically, with no human review
+    (review off; the interview oracle not recorded only answered the interview questions); the interview asked 10 questions,
+    4 answered and 6 defaulted'
 - about: E2
   text: 'simulation evidence is partial: verification reached V1 of V3 (the run asked for V1); the checks that did not pass
     or did not run are listed in the evidence row'
@@ -241,6 +254,14 @@ gaps:
     Build records: build/base/gates.json shows the base build''s bitstream stage ran and its bitstream_present gate is true;
     there is no build/ila record and no probes.yaml, so the records show no debug build with the ILA was attempted or recorded.
     The base build is not the one that failed.'
+- about: simulated_parameters
+  text: 'the benches simulate at values other than the spec''s (scaled for simulation speed or otherwise): DEBOUNCE_CYCLES
+    is simulated at 4 (results/68_agent_docs/20261102-114228-5a32/t1_dimmer_counter/tests/test_t1_dimmer_counter_rtl.py:11)
+    while spec.yaml gives 1000000; PWM_PERIOD_CYCLES is simulated at 16 (results/68_agent_docs/20261102-114228-5a32/t1_dimmer_counter/tests/test_t1_dimmer_counter_rtl.py:12)
+    while spec.yaml gives 256; DISPLAY_SCAN_CYCLES is simulated at 3 (results/68_agent_docs/20261102-114228-5a32/t1_dimmer_counter/tests/test_t1_dimmer_counter_rtl.py:13)
+    while spec.yaml gives 100000; UART_BAUD_DIVIDER is simulated at 8 (results/68_agent_docs/20261102-114228-5a32/t1_dimmer_counter/tests/test_t1_dimmer_counter_rtl.py:14)
+    while spec.yaml gives 868. Behaviour that depends on the spec''s value, such as a divider''s timing against the clock,
+    was not simulated at that value; it is stated here, not shown, unless another record covers it'
 - about: resources
   text: 'resources not measured: no current Vivado build of this design has been recorded'
 - about: timing
@@ -251,59 +272,68 @@ gaps:
   text: 'latency not measured: the run measured no latency; the spec''s latency promise is checked only by the benches'
 - about: throughput
   text: 'throughput not measured: the run measured no throughput'
-- about: reset_values
-  text: The RTL resets COUNTER, BRIGHTNESS, CONTROL and the press counts to zero, so the display is enabled and brightness
-    is 0 (LEDs dark) after reset; this matches the spec.yaml register map. An interview answer in spec.yaml says DUTY resets
-    to 0x40 and CTRL to 0x2; the RTL (rtl/t1_led_dimmer_counter.sv) does not do that.
-- about: pwm_rate
-  text: An interview answer in spec.yaml gives a 1024-cycle PWM period (about 97.7 kHz). The RTL advances the phase every
-    clock, so the period is 256 cycles, about 390.625 kHz, as in the spec timing section.
 - about: uart_pins
-  text: ARCHITECTURE.md lists uart_rx on D4 and uart_tx on C4. design.xdc and spec.yaml put uart_rx on C4 and uart_tx on
-    D4; the XDC is what was built.
-- about: unmapped_access
-  text: Reads of unmapped window offsets return 0. Writes to unmapped or read-only offsets (DESIGN_ID, BUTTON_STATE, SWITCH_STATE
-    and the three press counts) change nothing, yet the shell still answers with OK status because the window has no error
-    path. The shell treats addresses below 0x80 as its own registers.
-- about: control_bits
-  text: CONTROL stores and reads back all 32 written bits, including the reserved ones; only bit 0 (switch brightness) and
-    bit 1 (blank display) have an effect.
-- about: counter_priority
-  text: A button event is one pulse per debounced rising edge; holding does not repeat. Centre clear beats up and down;
-    simultaneous up and down cancel. A UART write to COUNTER in the same cycle beats any button action on the counter, though
-    the press counts still increment. The press counts wrap at 32 bits and the counter at 16 bits.
-- about: brightness_source
-  text: In switch mode the switches set the active brightness and the display shows it. The stored BRIGHTNESS register is
-    not overwritten, remains writable and readable, and is used again when CONTROL bit 0 is cleared. Brightness 255 forces
-    the LEDs fully on; 0 gives none.
+  text: ARCHITECTURE.md lists uart_rx on D4 and uart_tx on C4. design.xdc, which is what was built, and spec.yaml put uart_rx
+    on C4 (UART_TXD_IN) and uart_tx on D4 (UART_RXD_OUT). Trust the XDC; the architecture table is wrong.
+- about: reset_values
+  text: the interview answer says BRIGHTNESS resets to 0x40 and CONTROL to 0x2. spec.yaml's register map and rtl/t1_led_dimmer_counter.sv
+    reset both to 0, and CONTROL bit 1 set means display disabled, so the display is enabled after reset. The RTL is what
+    was built.
+- about: pwm_period
+  text: 'the interview answer says a 256-count phase with a prescale gives 1024 clock cycles and about 97.7 kHz. The RTL
+    has no prescale: the phase counter advances every clock and wraps at PWM_PERIOD_CYCLES, so the period is 256 clocks,
+    which matches the spec timing section.'
+- about: pwm_scale
+  text: with PWM_PERIOD_CYCLES at 256 the LEDs are on while phase < brightness, so brightness b gives duty b/256 for b below
+    255. Brightness 255 is a special case that keeps the LEDs on continuously and 0 is always off. The scale is therefore
+    not exactly linear over the whole brightness range.
+- about: pwm_threshold_wrap
+  text: for PWM_PERIOD_CYCLES other than 256, the scaled threshold is cast to the phase counter width. When the period is
+    a power of two, brightness values just below 255 give a threshold equal to the period, which wraps to 0, so the LEDs
+    would go off at high brightness. Read from the RTL only, not simulated at the spec's value, and the spec gives no other
+    period.
+- about: button_events
+  text: each button gives one event per debounced rising edge; releases are debounced but make no event. Centre clear beats
+    simultaneous up and down; simultaneous up and down cancel, so the counter is unchanged. Every simultaneous event still
+    increments its own press count. A UART write to COUNTER in the same cycle beats any button change to the counter. A
+    button held through reset release produces one press after the debounce interval, because the debounced level resets
+    to 0.
+- about: unmapped_accesses
+  text: a window read of any offset not in the register map returns 0 with an OK status. A window write to a read-only or
+    unmapped offset is ignored and the shell still answers OK; the READ_ONLY status applies only to the shell's own registers
+    below 0x80. Host address is 0x80 plus the register offset.
+- about: register_widths
+  text: a COUNTER write keeps bits 15:0 and a BRIGHTNESS write keeps bits 7:0. CONTROL stores all 32 written bits and reads
+    them back, though only bits 0 and 1 have an effect. Reads of BRIGHTNESS return the stored UART value, not the switch-selected
+    active brightness; in switch mode the stored value is kept and the display shows the switch value.
 - about: latency_count
-  text: 'Counted from the RTL: LEDs, segments, digit enables and the register read data each add one registered stage. Button
-    events need two synchroniser flops plus DEBOUNCE_CYCLES minus one stable cycles before the pulse, and release is debounced
-    the same way. A full display frame is 8 times DISPLAY_SCAN_CYCLES clocks, as the spec says.'
+  text: 'counted from the RTL: a button press reaches the counter register DEBOUNCE_CYCLES plus 2 clocks after the pin changes
+    (two synchroniser flops, then the debounce count), and leds and the display outputs follow one clock later (registered).
+    A full display frame is 8 times DISPLAY_SCAN_CYCLES clocks, as the spec says. Not measured on hardware.'
 - about: switch_sync
-  text: Switches pass through a single register stage (switches_sync) in rtl/t1_led_dimmer_counter.sv, not a two-flop synchroniser,
-    although the spec text says buttons and switches are synchronised. design.xdc treats them as a false path. The shared
-    sync2.sv is used only by the UART receiver.
-- about: display_glyphs
-  text: Hex digits B and D are drawn as the lowercase shapes (segment codes 7C and 5E); other letters are uppercase. AN4
-    and AN5 remain enabled but have all segments off.
-- about: assumption_reset_bridge
-  text: The top builds its own two-flop reset bridge and does not instantiate shell/rtl/reset_sync.sv, which build.yaml
-    still lists as a source. The run assumed the two are equivalent.
+  text: switches pass through one register stage (switches_sync) in the RTL, whereas the buttons use two flops. Asynchronous
+    switch changes therefore have less metastability margin than the spec's synchronisation wording suggests.
+- about: xdc_io_constraints
+  text: design.xdc false-paths all asynchronous inputs and sets output delays of max -3.000 and min 0.000 ns on the outputs.
+    The negative max output delay was not reviewed and no current timing run has checked it.
+- about: unused_reset_module
+  text: build.yaml reads shell/rtl/reset_sync.sv and sync2.sv, but the top-level RTL builds its own two-flop reset bridge
+    and one-flop switch stage; only the shell's UART receiver uses sync2.
 next_steps:
-- 'Run the Verifier again to reach V2, then V3: seeded runs, the constrained-random test and bound assertions first, then
-  coverage, three seeds and mutation. If cover properties and functional bins disagree, compare the cover results with the
-  functional coverage before adding any new stimulus.'
-- Decide the reset values and PWM period the spec text and the interview answers disagree on (see gaps reset_values and
-  pwm_rate), and update spec.yaml or the RTL so they agree; also fix the pin table in ARCHITECTURE.md.
-- Decide whether the switches need a second synchroniser stage (see gap switch_sync) and, if so, change the RTL and rerun
-  simulation.
-- When the flow reaches the build again, run python -m agent resume to re-measure the base build under Vivado 2026.1, then
-  work on stage configuration-and-debug and read its review page. Publish no resource, timing or power number until that
-  is done.
+- 'Verification first: compare the cover results with the functional coverage before any new stimulus, then re-run the Verilator
+  coverage command in the commands list. Get seeded runs, the constrained-random test and bound assertions (V2), then three
+  seeds, 100 percent functional bins and cover properties, and line, toggle and mutation scores (V3). Add a check for the
+  spec parameter values, or a long enough run at them, since the benches use scaled values.'
+- Fix or document the PWM threshold wrap for periods other than 256, and settle the ARCHITECTURE.md and interview disagreements
+  (UART pins, reset values, PWM period) in those documents so they match the RTL.
+- Resume the flow with python -m agent resume when it reaches the build again, so the base build is re-measured on Vivado
+  2026.1. Publish resources, timing and power only from that build.
+- 'Then work on stage configuration-and-debug: get its bitstream gate to run, and decide whether an ILA debug build is wanted.'
+- Load the bitstream on a Nexys A7-100T and check the register map over the UART, the button counts and the display digit
+  order by hand.
 open_questions:
-- Are the spec.yaml register map values (reset to zero, display enabled) or the interview answers (DUTY 0x40, CTRL 0x2)
-  the intended reset state? No human has reviewed either.
+- Is any PWM_PERIOD_CYCLES other than 256 meant to be supported? The spec gives only 256, and the scaled path has the wrap
+  noted in the gaps.
 history:
 - date: '2026-11-02'
   brief: agent run
@@ -336,8 +366,8 @@ state:
     drc-closure: pass
     configuration-and-debug: fail
   vivado: '2026.1'
-  kb_pin: aa71844
-  build_id: b566fd35
+  kb_pin: 0959c27
+  build_id: 8ab2611c
   evidence_vivado: earlier
   gate_notes:
     timing-closure: 'Build records: summary.json records this stage as failed only because the visit limit refused its final

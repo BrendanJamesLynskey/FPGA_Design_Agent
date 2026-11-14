@@ -73,7 +73,7 @@ Interfaces:
 | build the base and the ILA bitstreams; needs local Vivado 2026.1 and a heavy slot (take_heavy_slot.sh) | `flow/run_vivado.sh designs/t1_dimmer_counter both` | yes | about 10 min |
 | board bring-up, UART tests and ILA captures against the model; needs the Nexys A7-100T on wall power, both builds present and the board lock | `python3 flow/bringup.py designs/t1_dimmer_counter` | no | about 3 min |
 
-Tool: Vivado 2026.1. Build ID of the inputs at handover: `595c2767` (`python flow/manifest.py show designs/t1_dimmer_counter`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `1fc7ed8`.
+Tool: Vivado 2026.1. Build ID of the inputs at handover: `7eeb3bf5` (`python flow/manifest.py show designs/t1_dimmer_counter`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `0959c27`.
 
 | File | What |
 |---|---|
