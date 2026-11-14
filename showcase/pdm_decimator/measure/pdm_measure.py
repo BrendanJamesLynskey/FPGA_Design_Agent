@@ -99,14 +99,11 @@ class SimBoard(Board):
         self.run = value & RUN
 
     def read(self, off: int) -> int:
-        if off == CTRL:
-            return self.run
-        if off == STATUS:
-            return int(self.done) | int(self.armed) << 1 | self.sat
-        if off == COUNT:
-            return self.count
-        if off >= CAP0:
-            return (self.cap[off - CAP0] & 0xFFFF_FFFF) if self.done else 0
+        regs = {CTRL: self.run, STATUS: int(self.done) | int(self.armed) << 1 | self.sat, COUNT: self.count}
+        if off in regs:
+            return regs[off]
+        if off >= CAP0 and self.done:
+            return self.cap[off - CAP0] & 0xFFFF_FFFF
         return 0
 
 
