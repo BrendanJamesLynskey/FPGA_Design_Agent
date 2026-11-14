@@ -1079,6 +1079,21 @@
      "topic": "VHDL-2008 acceptance and VHDL warnings in synthesis",
      "summary": "No family difference found: 22 VHDL probes (2008 features, drivers, latches, resets, INIT, FSM, mixed language, port case) gave the same results on xc7a100t, xc7z020 and xck26 in Vivado 2026.1.",
      "confirmed": "tool"
+    },
+    {
+     "topic": "Active-low reset and the slice inverter",
+     "summary": "An active-low synchronous reset costs one LUT1 inverter on 7-series; on UltraScale+ the placed design absorbs the inversion in the slice.",
+     "confirmed": "tool"
+    },
+    {
+     "topic": "Asynchronous reset and DSP or block-RAM registers",
+     "summary": "No family difference found: an asynchronous reset keeps the DSP and RAM registers out of the primitive on both, at a measured cost of 71 LUTs and 138 flip-flops on the same 692-flip-flop bench.",
+     "confirmed": "tool"
+    },
+    {
+     "topic": "Resetting only control registers",
+     "summary": "No family difference found: resetting control registers only removes 15 LUTs and adds 2 control sets on both families (same bench).",
+     "confirmed": "tool"
     }
    ],
    "docs": {
