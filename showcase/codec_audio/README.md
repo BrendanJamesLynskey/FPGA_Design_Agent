@@ -7,11 +7,11 @@ will receive, the formal specification, a bit-exact Python model, the register m
 measurement scripts with a dry-run mode. The agent has not been run on any of it, and the board has not been used: those
 are phases 2 and 3 of [the brief](../../README.md).
 
-**Status of phase 1 (2026-11-14): complete for everything in this folder; the benchmark half is written but not frozen.**
-Six benchmark tasks (five probes of one block each and one for the whole path) were written to the v2 task layout in the
-private repository and pass their own checks, but they have not been frozen, submitted to the split ledger or drawn: the
-batch's pre-freeze leak check still reports shared scaffolding text between sibling tasks, and how to treat it is for the
-planner to decide (see "Known gaps"). Nothing in this folder names those tasks or quotes their hidden tests.
+**Status of phase 1 (2026-11-14): complete.** Six benchmark tasks (five probes of one block each and one for the whole path,
+domain O, board Nexys A7-100T) were written to the v2 layout, checked, frozen, submitted to the split ledger and drawn: in each
+cell of three, one is held out. The four development tasks are in [benchmark/v2/tasks](../../benchmark/v2/tasks) (`v2_o_gain_ramp`,
+`v2_o_peak_meter`, `v2_o_i2s_tx`, `v2_o_audio_path`); the two held-out ones are by design neither named nor quoted here. Nothing in
+this folder quotes a hidden test.
 
 ## What is here
 
@@ -74,14 +74,14 @@ datasheet limits used to attribute a measurement to the codec are not yet filled
 ## Known gaps and limits
 
 - The agent has not built any of this and the board has not been touched (phases 2 and 3).
-- The six benchmark tasks are unfrozen. The pre-freeze check ran `site/leak_guard.py`'s windowing between the six pending
-  tasks (each in turn as the secret) and found 80-byte runs shared between sibling tasks in standard scaffolding: the
-  opening and port rows of a hidden `spec.yaml`, the board top's parameter list, the register-window read multiplexer of a
-  reference design, the identity-and-reset skeleton of a hidden test. Task-specific text (spec wording, models, mutants, the
-  logic of the reference designs, test bodies) was reworded until it no longer matched. Publishing the shared scaffolding
-  as public text, so that the guard would clear it, was not done, because it would make the guard pass without making
-  the tasks differ. The planner needs to decide between rewording the scaffolding in each task (more effort, no change to
-  the guard) and a documented allowance in the guard.
+- Each task's hidden bench runs at two or more parameter sets (a wrapper testbench holds copies of the design with different
+  `RAMP_STEP` and `RMS_LOG2`, one with no override, so the documented defaults are simulated) and the I2S tasks at bit-clock
+  ratios 8, 50 and 100 (the spec's range); the whole-path task also with the bit clock stopped between the two slots of a frame.
+  Counter and register widths above 16 bits (the wrap of the frame and block counts at 65 536) are not testable through the
+  UART shell and are not tested.
+- Pre-freeze leak check: each of the six tasks in turn as the secret against the other five and against this folder and the
+  bench helpers: 0 hits (80-byte windows, `site/leak_guard.py`). It took rewording the scaffolding of every task (field order,
+  stock sentences, port rows, board tops, test skeletons, comments) so that no 80-byte run is shared; no allowance was added to the guard.
 - The benchmark harness is Nexys A7-100T only (the test shell is on its USB-UART), so the six tasks use the Nexys board and
   Pmod JA for the I2S pins; the ZedBoard realisation is the project in this folder. The ZedBoard board pack is not on
   `main` yet (it is on branch `b64b-zedboard`).
@@ -94,8 +94,7 @@ datasheet limits used to attribute a measurement to the codec are not yet filled
 
 ## Next steps
 
-1. Planner: decide how sibling-task scaffolding is handled, then freeze, submit and draw the six tasks (batch order and
-   commands are in the brief's report), and add the development ones to `benchmark/v2/tasks`.
+1. Planner: review and merge the branch (it carries the ledger entries; rebase on main first if other v2 batches merged).
 2. Phase 2 (after the weekly reset): the agent builds the five probes and the whole-path task, k = 3 repeats each; record
    pass@1, pass@k, cost and the failure profile.
 3. Phase 3: after the ZedBoard is power-cycled and bring-up is complete, run the best build, take the baseline with the PC

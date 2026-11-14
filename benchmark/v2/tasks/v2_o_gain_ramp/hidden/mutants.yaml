@@ -1,0 +1,23 @@
+# Mutants and the trap for v2_o_gain_ramp (benchmark/tools/check_task.py)
+mutants:
+  - {name: no_smoothing, file: gain_ramp.sv, find: "wire  [15:0] nxt     = slewed;", replace: "wire  [15:0] nxt     = eff;", why: "the gain jumps to the target at once: the click this task exists to prevent"}
+  - {name: step_one_short, file: gain_ramp.sv, find: "localparam int STEP = RAMP_STEP;", replace: "localparam int STEP = RAMP_STEP - 1;", why: "the ramp moves 15 per sample, not RAMP_STEP"}
+  - {name: mute_not_smoothed, file: gain_ramp.sv, find: "* $signed({1'b0, nxt});", replace: "* $signed({1'b0, mute ? 16'd0 : nxt});", why: "mute silences the output at once while the gain still ramps"}
+  - {name: shift_eleven, file: gain_ramp.sv, find: "prod >>> 12;", replace: "prod >>> 11;", why: "output is twice too loud (wrong fixed-point shift)"}
+  - {name: truncate_toward_zero, file: gain_ramp.sv, find: "wire signed [40:0] sh   = prod >>> 12;", replace: "wire signed [40:0] sh   = (prod < 0) ? -((-prod) >>> 12) : (prod >>> 12);", why: "negative products round toward zero instead of flooring"}
+  - {name: no_clamp, file: gain_ramp.sv, find: "wire signed [23:0] ys = (sh > 41'sd8388607) ? 24'sh7FFFFF : (sh < -41'sd8388608) ? 24'sh800000 : sh[23:0];", replace: "wire signed [23:0] ys = sh[23:0];", why: "an overflowing sample wraps round instead of limiting"}
+  - {name: sat_flag_positive_only, file: gain_ramp.sv, find: "wire         over    = (sh > 41'sd8388607) || (sh < -41'sd8388608);", replace: "wire         over    = (sh > 41'sd8388607);", why: "SAT misses a negative clamp"}
+  - {name: ramping_ignores_mute, file: gain_ramp.sv, find: "wire         ramping = (cur != eff);", replace: "wire         ramping = (cur != target);", why: "RAMPING compares with the setting, not with the target that mute makes zero"}
+  - {name: mute_bit_one, file: gain_ramp.sv, find: "7'h01: mute   <= win_wdata[0];", replace: "7'h01: mute   <= win_wdata[1];", why: "mute is taken from bit 1"}
+  - {name: cur_not_reset, file: gain_ramp.sv, find: "target <= 16'h1000; cur <= 16'h1000; mute <= 1'b0;", replace: "target <= 16'h1000; mute <= 1'b0;", why: "the applied gain survives CPU_RESETN"}
+  - {name: led_low_bits, file: gain_ramp.sv, find: "assign led = y[23:8];", replace: "assign led = y[15:0];", why: "LED shows the wrong 16 bits of the output"}
+  - {name: gain_treated_as_signed, file: gain_ramp.sv, find: "wire signed [40:0] prod = $signed(win_wdata[23:0]) * $signed({1'b0, nxt});", replace: "wire signed [40:0] prod = $signed(win_wdata[23:0]) * $signed(nxt);", why: "a gain of 0x8000 or more is taken as negative"}
+  - {name: slew_sum_wraps, file: gain_ramp.sv, find: "wire  [16:0] up      = {1'b0, cur} + 17'(STEP);", replace: "wire  [16:0] up      = {1'b0, cur + 16'(STEP)};", why: "cur + step wraps past 0xFFFF instead of stopping on the target"}
+  - {name: step_fixed_at_16, file: gain_ramp.sv, find: "localparam int STEP = RAMP_STEP;", replace: "localparam int STEP = 16;", why: "the RAMP_STEP parameter is ignored"}
+  - {name: led_shows_input, file: gain_ramp.sv, find: "assign led = y[23:8];", replace: "assign led = last_in[23:8];", why: "the LEDs show the sample that came in, not the scaled one"}
+trap:
+  twin: "textbook one-pole smoother: the gain moves an eighth of the way to the target on each sample"
+  why: "an exponential smoother never lands exactly on the target (it stalls just below it when rising) and its step depends on the distance; the spec asks for a constant step that stops exactly on the target"
+  edits:
+    - {file: gain_ramp.sv, find: "wire  [15:0] nxt     = slewed;", replace: "wire  [15:0] nxt     = cur + 16'(($signed({1'b0, eff}) - $signed({1'b0, cur})) >>> 3);"}
+  must_fail: [test_gain_ramp_is_linear_and_exact]
