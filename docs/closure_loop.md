@@ -14,7 +14,12 @@ stages each datapath needs, so the loop starts from a design that is already clo
 - **Nulls:** the Designer working from the plan failed the hidden bench 6 times out of 6. The first with-plan loop run
   accepted a design that synthesis had removed; it is not counted, and it led to the synthesis guard described below.
 
-The numbers and caveats are in [results/62a_closure/README.md](../results/62a_closure/README.md).
+- **Area and power (the joint loop):** the c13 reference given a block RAM budget of 1 tile closed in 3 iterations
+  (memories moved to LUT RAM). Given a power budget of 0.145 W, it closed in 4 iterations (data gated on enables,
+  multiplies moved to DSP slices). Both were signed off.
+
+The numbers and caveats are in [results/62a_closure/README.md](../results/62a_closure/README.md) and
+[results/62b_closure/README.md](../results/62b_closure/README.md).
 
 ## Try it
 
