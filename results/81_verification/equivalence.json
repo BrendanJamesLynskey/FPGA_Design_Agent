@@ -1,0 +1,49 @@
+{
+ "tool": {
+  "yosys": "Yosys 0.70+385 (git sha1 098e46a36, Release, Clang /usr/bin/clang++ 21.1.8)",
+  "eqy": "eqy from the same OSS CAD Suite release"
+ },
+ "depth": 5,
+ "top": "demo_accel_regs",
+ "cases": [
+  {
+   "case": "house_before_after_73",
+   "gold": "results/81_verification/demo_accel_regs_before_73.sv",
+   "gate": "hwsw/examples/generated/demo_accel_regs.sv",
+   "expected_equivalent": true,
+   "equivalent": true,
+   "as_expected": true,
+   "unproven_partitions": [],
+   "seconds": 323.3,
+   "returncode": 0,
+   "unproven_lines": []
+  },
+  {
+   "case": "house_vs_amd_compatible",
+   "gold": "results/73_profiles/generated/house/demo_accel_regs.sv",
+   "gate": "results/73_profiles/generated/amd_compatible/demo_accel_regs.sv",
+   "expected_equivalent": false,
+   "equivalent": false,
+   "as_expected": true,
+   "unproven_partitions": [],
+   "seconds": 256.9,
+   "returncode": 1,
+   "unproven_lines": []
+  },
+  {
+   "case": "house_vs_strict",
+   "gold": "results/73_profiles/generated/house/demo_accel_regs.sv",
+   "gate": "results/73_profiles/generated/strict/demo_accel_regs.sv",
+   "expected_equivalent": false,
+   "equivalent": false,
+   "as_expected": true,
+   "unproven_partitions": [
+    "partition"
+   ],
+   "seconds": 220.7,
+   "returncode": 2,
+   "unproven_lines": []
+  }
+ ],
+ "all_as_expected": true
+}
