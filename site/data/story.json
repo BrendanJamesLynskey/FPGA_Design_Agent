@@ -143,7 +143,7 @@
     "title": "One task, five runs, a fix after each"
    },
    "harness": {
-    "note": "",
+    "note": "Interval level 95 percent. H1 wall time includes zero once the blocks with a run stopped by the time limit are left out.",
     "rows": [
      {
       "est": -32.8,
@@ -210,10 +210,10 @@
      }
     ],
     "title": "Paired change against the baseline, per arm",
-    "unit": "percent change in the median (negative is lower), 95 percent interval"
+    "unit": "percent change in the median (negative is lower)"
    },
    "models": {
-    "note": "",
+    "note": "Interval level 97.5 percent.",
     "rows": [
      {
       "est": -4.1,
@@ -485,6 +485,7 @@
    "h9_wall_lo": -44.8,
    "h_bar": 30,
    "h_base_pass": 5,
+   "h_level": 95,
    "h_repeats": 3,
    "h_runs": 12,
    "h_started": 51,
@@ -647,7 +648,7 @@
      }
     ],
     "question": "Can one of the cheaper open-weight models (z-ai/glm-5.3-flash or deepseek/deepseek-v4.1-flash-1017) replace the base model openai/gpt-6-luna for writing RTL at lower cost?",
-    "result": "Paired against the base (61.6 percent pass rate), glm-5.3-flash differed by -4.1 points (interval -13.4 to 5.8), which is no detectable difference. deepseek-v4.1-flash-1017 was worse, by -12.4 points (interval -21.7 to -3.5), with a pooled pass rate of 49.2 percent.",
+    "result": "Paired against the base (61.6 percent pass rate), glm-5.3-flash differed by -4.1 points (interval -13.4 to 5.8), which is no detectable difference. deepseek-v4.1-flash-1017 was worse, by 12.4 points (interval -21.7 to -3.5), with a pooled pass rate of 49.2 percent.",
     "setup": "The 86 CVDP evaluation problems, the same LangGraph agent harness for every arm, the base model run once and each candidate two or three times. Pre-registered before any scored run: the problems, the settings and the rule for picking. Pass rate is the hidden benches' verdict; no language model scores anything.",
     "title": "Does a cheaper open-weight model match the base model?",
     "verdict": "negative"
@@ -678,8 +679,8 @@
      }
     ],
     "question": "Which of two open-weight code models is the better base for a later fine-tune?",
-    "result": "Every run was stopped by the spend guard on 65, 52 and 42 of 86 problems. Under the pre-registered rule all runs are void, so no model is recommended.",
-    "setup": "Each model run through the same harness on the same 86 problems through a paid inference service, with a per-run spend guard. Pre-registered, including the rule that a run stopped by the guard is void.",
+    "result": "The spend guard ended 65, 52 and 42 of the 86 problems in the three runs. Under the pre-registered rule all runs are void, so no model is recommended.",
+    "setup": "Two open-weight models (qwen3.6-35b-a3b and qwen3-coder-30b-a3b-instruct, the latter run twice) through the same harness on the same 86 problems through a paid inference service, with a per-run spend guard. Pre-registered, including the rule that a run stopped by the guard is void.",
     "title": "Which open-weight model to fine-tune",
     "verdict": "inconclusive"
    },
@@ -691,7 +692,7 @@
     ],
     "id": "x_mutation",
     "interval": "One design, one seed, hand-written mutants. A score, not an estimate with an interval.",
-    "lesson": "A bench can look complete and miss a whole class of fault. Measure it with mutants, and report the score from before the bench was fixed.",
+    "lesson": "A bench can look complete and miss reset-state faults. Measure it with mutants, and report the score from before the bench was fixed.",
     "links": [
      {
       "path": "results/04f/mutation_t1.json",
@@ -738,7 +739,7 @@
     "detail": [],
     "id": "x_devruns",
     "interval": "Development tasks, changed between runs: no interval is meaningful, and none is claimed as a pass rate for new tasks.",
-    "lesson": "A model's test shares the model's misreading, so passing needs a check the model did not write. The five runs of one task show the loop working (below).",
+    "lesson": "A model's test shares the model's misreading, so passing needs a check the model did not write. The runs of one task show the loop working (below).",
     "links": [
      {
       "path": "results/course/c14_int8_dot_requant",
@@ -810,13 +811,13 @@
     ],
     "question": "Would a router that picks skills for each role, and a hybrid keyword and vector index, help the agent find the right knowledge?",
     "result": "Retrieval recall at six skills was 0.394 for the plain index, 0.306 for the hybrid index and 0.1 for the router's classifier. End to end, hidden-test passes were 0 with the router off and 0 on; stage 2 gates passed in 1 and 0 runs.",
-    "setup": "Retrieval on 12 labelled development tasks against a catalogue of 157 skills, then an end-to-end comparison with the router off and on, 3 runs per arm, a low-cost model, stopping after stage 2. Pre-registered; later arms marked post hoc.",
+    "setup": "Retrieval on 12 labelled development tasks against a catalogue of 157 skills, then an end-to-end comparison with the router off and on, 3 runs per arm, the low-cost model gpt-6-luna, stopping after stage 2. Pre-registered; later arms marked post hoc.",
     "title": "Does routing the right skill to a role help?",
     "verdict": "null"
    },
    {
     "date": "2026-11-12",
-    "decision": "No arm was adopted by the pre-registered rule. The owner then made H1 the default for development runs after seeing the data, which is recorded as a decision made after the data. Re-measure on more tasks before quoting a saving.",
+    "decision": "No arm was adopted by the pre-registered rule. The project owner then made H1 the default for development runs after seeing the data, which is recorded as a decision made after the data. Re-measure on more tasks before quoting a saving.",
     "detail": [],
     "id": "x_harness",
     "interval": "Percentile bootstrap over the 12 blocks, paired against the baseline. With this few blocks only a very large effect is visible.",
@@ -852,8 +853,8 @@
      }
     ],
     "question": "Do context management (H1), hang protection (H2) or typed report digests (H9) cut tokens, cost or wall time without losing hidden-test passes?",
-    "result": "H1 lowered cost by 32.8 percent (interval -53.3 to -4.3) but tokens by 65.6 percent with an interval that includes zero (to +0.9), so it met the rule on one reading and not the other. H2 changed cost by -1.5 percent (interval -31.4 to 12.6): no difference. H9 lowered cost by 16.1 percent, below the bar. Hidden-test passes in the 12 blocks: 5 for the baseline, 5 for H1.",
-    "setup": "4 tasks, 3 repeats, four arms (the baseline A0 and H1, H2, H9), 48 valid runs of 51, a low-cost model, stopping after stage 2 (no Vivado). Each task and repeat is a block with all four arms in rotated order. Pre-registered adopt rule: a primary metric at least 30 percent better with an interval that excludes zero, and no loss of tests passed.",
+    "result": "H1 lowered cost by 32.8 percent (interval -53.3 to -4.3) but tokens by 65.6 percent with an interval that includes zero (to +0.9), so it met the rule on one reading and not the other. Its wall time fell 18.1 percent but the interval includes zero once the blocks with a run stopped by the time limit are left out. H2 lowered cost by 1.5 percent (interval -31.4 to 12.6): no difference detectable. H9 lowered cost by 16.1 percent, below the bar. 5 of 12 blocks passed the hidden tests in the baseline and 5 in H1; two of the 4 tasks were passed by no arm.",
+    "setup": "4 tasks, 3 repeats, four arms (the baseline A0 and H1, H2, H9), 48 valid runs of 51, the low-cost model gpt-6-luna, stopping after stage 2 (no Vivado). Each task and repeat is a block with all four arms in rotated order. Pre-registered adopt rule: a primary metric at least 30 percent better with an interval that excludes zero, and no loss of tests passed.",
     "title": "Does changing the harness around the model change cost and success?",
     "verdict": "mixed"
    },
@@ -862,7 +863,7 @@
     "decision": "The gate was merged into the flow and replaces reliance on the tool's report alone.",
     "detail": [],
     "id": "x_cdc",
-    "interval": "Fixtures are small hand-written designs, not a sample of real designs, so this is a detection table, not a rate. The simulation injection is cycle-level with no timing window.",
+    "interval": "Fixtures are small hand-written designs, not a sample of real designs, so this is a detection table, not a rate. The simulation injection is cycle-level with no timing window. Faults found in the soak rig (M9 and M11) were not re-run on Vivado 2026.1 and are withdrawn.",
     "lesson": "Where the standard tool is silent, a small deterministic check can be decisive. Seed the fault yourself and show which check sees it.",
     "links": [
      {
@@ -882,7 +883,7 @@
       "title": "Stronger CDC gate: structure of every asynchronous path + simulation with synchroniser-delay injection (brief 16)"
      }
     ],
-    "question": "Does a gate that checks the structure of every asynchronous path and simulates with injected synchroniser delay catch clock-crossing faults that the tool's own CDC report does not?",
+    "question": "Does a gate that checks the structure of the asynchronous paths and simulates with injected synchroniser delay catch clock-crossing faults that the tool's own CDC report does not?",
     "result": "The tool's CDC report alone flagged 5 of the 10 faulty designs. The new gate flagged 10 of 10, with 0 false alarms on the 12 correct designs. The table was identical on the re-measurement on Vivado 2026.1.",
     "setup": "12 correct and 10 deliberately faulty small designs (fixtures), synthesised on Vivado 2026.1, xc7a100tcsg324-1. Columns: the tool's CDC report alone, a structure check, a cycle-level simulation with injected delay (three seeds) and the new gate.",
     "title": "Does a deterministic CDC gate beat the tool's own report?",
@@ -933,7 +934,7 @@
     "detail": [],
     "id": "x_closure",
     "interval": "None: one run per case, so these are illustrations, not rates. Two builds of the same unchanged RTL differed by about 0.05 ns of slack.",
-    "lesson": "An early with-plan run accepted a design whose core synthesis had removed; Icarus allowed two blocks driving the same registers and Vivado tied them to ground. That run is not counted, and it is why a synthesis guard exists. A passing simulation is not a passing build.",
+    "lesson": "An early with-plan run accepted a design whose core had been removed by synthesis; Icarus allowed two blocks driving the same registers and Vivado tied them to ground. That run is not counted, and it is why a synthesis guard exists. A passing simulation is not a passing build.",
     "links": [
      {
       "path": "results/62a_closure/README.md",
@@ -991,11 +992,11 @@
    },
    {
     "date": "2026-11-09",
-    "decision": "The owner stopped it, because it could not finish in time and the benchmark was too small for the goals. This was a scope decision, not a reaction to results. The tag stays as a record. Later evaluations pin the CLI binary with a version check, and a new tag and pre-registration come with a baseline evaluation on the larger benchmark.",
+    "decision": "The project owner stopped it, because it could not finish in time and the benchmark was too small for the goals. This was a scope decision, not a reaction to results. The tag stays as a record. Later evaluations pin the CLI binary with a version check, and a new tag and pre-registration come with a baseline evaluation on the larger benchmark.",
     "detail": [],
     "id": "x_eval1",
     "interval": "None. No score exists.",
-    "lesson": "Pin every tool that is not under test, including the one that runs the agent. Five held-out tasks had their pass counts seen, so they moved to development, and no fix was derived from them.",
+    "lesson": "Pin every tool that is not under test, including the one that runs the agent. Some held-out tasks had their pass counts seen, so they moved to development, and no fix was derived from them.",
     "links": [
      {
       "path": "docs/eval/eval1_preregistration.md",
@@ -1205,7 +1206,7 @@
     ]
    },
    {
-    "claim": "A test bench that looks complete can miss a class of fault.",
+    "claim": "A test bench that looks complete can miss reset-state faults.",
     "evidence": "The first full mutation run killed 90.48 percent of 21 mutants; the survivors were both reset-state faults.",
     "links": [
      {
@@ -1216,7 +1217,7 @@
    },
    {
     "claim": "A cheaper model is not evidence of equal quality.",
-    "evidence": "Paired over 86 problems, one cheaper model was -12.4 points worse (interval -21.7 to -3.5) and the other showed no detectable difference.",
+    "evidence": "Paired over 86 problems, one cheaper model was 12.4 points worse (interval -21.7 to -3.5) and the other showed no detectable difference.",
     "links": [
      {
       "path": "results/f1b/paired_eval86.md",
@@ -1281,7 +1282,7 @@
     "title": "Hidden tests decide"
    },
    {
-    "text": "The agent is stochastic, so every task runs several times (3 in the first evaluation) and two versions of the agent are compared on the same tasks, with an interval, not two means. With 19 tasks a pass rate is known to about plus or minus 17.5 points, which shows a large difference and not a small one.",
+    "text": "The agent is stochastic, so every task runs several times (3 in the first evaluation) and two versions of the agent are compared on the same tasks, with an interval, not two means. With 19 tasks a pass rate was planned to be known to about plus or minus 17.5 points, which shows a large difference and not a small one.",
     "title": "Repeats and pairs"
    },
    {
@@ -1352,7 +1353,7 @@
     "title": "One task, five runs, a fix after each"
    },
    "harness": {
-    "note": "",
+    "note": "Interval level 95 percent. H1 wall time includes zero once the blocks with a run stopped by the time limit are left out.",
     "rows": [
      {
       "est": -32.8,
@@ -1419,10 +1420,10 @@
      }
     ],
     "title": "Paired change against the baseline, per arm",
-    "unit": "percent change in the median (negative is lower), 95 percent interval"
+    "unit": "percent change in the median (negative is lower)"
    },
    "models": {
-    "note": "",
+    "note": "Interval level 97.5 percent.",
     "rows": [
      {
       "est": -4.1,
@@ -1444,10 +1445,12 @@
    }
   },
   "text": {
+   "best": "Best result: a deterministic CDC gate flagged 10 of 10 faulty designs where the tool's own report flagged 5, with 0 false alarms on 12 correct designs. Not proven: how often the agent solves a task it has never seen. The first held-out evaluation was stopped with no score, and the baseline evaluation has not been run.",
    "fine_tune": "A fine-tuning experiment on a narrow sub-problem (choosing a closure strategy when timing is tight) is planned and has not been run. It will be added here as one more card, whatever it finds, including a no.",
-   "lede": "How the FPGA Design Agent was designed, measured and corrected, step by step. Each experiment is written up the same way: hypothesis, setup, result with its uncertainty, decision and what it taught. Nulls and negative results get the same space as wins, and the held-out evaluation that was stopped is shown as it was: stopped, with no score.",
+   "glossary": "Terms used below: CVDP is a public set of RTL-writing problems. CDC is a signal crossing between two clocks. A mutant is a design with one deliberate fault, used to test whether the tests notice. An escape is a run whose own checks passed while the hidden tests failed. Slack is how much timing margin a path has; negative means it fails. V0 to V3 are the four verification stages. H1, H2 and H9 are three harness changes (context management, hang protection, report digests). Slack and WNS both mean timing margin. An oracle answers the agent's clarifying questions from the hidden spec. ILA is an on-chip logic analyser. MCP is the protocol the agent's tools speak. Stage 2 is the RTL and tests stage. The Clarifier, Modeller, Verifier and Designer are the agent's four roles. The models are named as the provider lists them.",
+   "lede": "How the FPGA Design Agent was designed, measured and corrected. The agent turns a plain-English request into a design checked by hidden tests, code-run gates and a board. This page shows how that was built and tested, one experiment at a time, including the ones that found nothing.",
    "limits": "The grouping of the timeline and the cause class of each finding are the author's reading of the pull request text, not a measurement. The findings listed are the ones with a recorded fix, not a complete count of the agent's faults. Most experiments ran one model on a small task set, and each card says so. Results measured on an earlier Vivado release and not repeated on Vivado 2026.1 are not shown. The list of merged pull requests is a snapshot from the day the page was built.",
-   "scope": "Everything here is development work. 11 experiments are on this page; the agent has no held-out score yet. Where a run was single or the sample small, the card says so and claims no rate."
+   "scope": "11 experiments are written up below, each in the same form. Where a run was single or the sample small, the card says so and claims no rate."
   },
   "timeline": [
    {
@@ -1508,7 +1511,7 @@
       "title": "P0: open-weight base screen (inconclusive; all runs guard-truncated)"
      }
     ],
-    "showed": "No cheaper model matched the base. One was worse by a margin its interval excludes from zero (card below).",
+    "showed": "Neither cheaper model beat the base, and one was worse by a margin its interval excludes from zero (card below).",
     "title": "Which model writes the RTL",
     "why": "Cost decides how many runs the project can afford, so the model choice was measured rather than assumed."
    },
@@ -1570,7 +1573,7 @@
       "title": "05c2: finish T1 - agent and tool fixes, first bitstream (luna run 7)"
      }
     ],
-    "showed": "The first runs failed at stage 2 for harness reasons (spec items lost silently, stale test files, a model API mismatch). Four fixes came out of one diagnosis.",
+    "showed": "The first runs failed at stage 2 for harness reasons (spec items lost silently, stale test files, a model API mismatch). The fixes came out of one diagnosis.",
     "title": "A graph of stages and roles, two ways to run a role",
     "why": "Keeping the stage order in code, not in a prompt, makes each stage gate-able. Two harnesses let the same task be run on different models without changing the graph."
    },
@@ -1679,7 +1682,7 @@
     ],
     "showed": "The floors are now fixed numbers in a file the agent never writes (mutation score floor 70 percent, at least 10 mutants evaluated).",
     "title": "Gates the agent cannot lower",
-    "why": "A live run set its own mutation threshold low in its own test plan and passed V3 on a handful of evaluated mutants."
+    "why": "A live run set its own mutation threshold low in its own test plan and passed V3 with few mutants evaluated."
    },
    {
     "changed": "Runs of course tasks on the Claude Code arm, each followed by a fix to the agent for the fault it exposed.",
@@ -1747,7 +1750,7 @@
      }
     ],
     "showed": "6 of 21 development runs were escapes: the agent's own checks passed and the hidden tests failed (card below).",
-    "title": "Development runs expose faults, seven fixes follow",
+    "title": "Development runs expose faults, and a fix follows each",
     "why": "Reading single failed runs generates hypotheses cheaply. A fix that corrects a measuring-instrument fault needs no statistics."
    },
    {
@@ -1865,7 +1868,7 @@
       "title": "Make harness arm H1 the default for development runs"
      }
     ],
-    "showed": "Routing was a null, one harness arm lowered cost, one did nothing, and the build cache saved most of the build time with identical results.",
+    "showed": "Routing was a null. H1 and H9 lowered cost and H2 showed no difference. The build cache cut the build sequence against a modelled no-cache time, with identical results.",
     "title": "Routing knowledge, harness arms and faster builds",
     "why": "Each is a plausible gain, and each was measured before it was adopted."
    },
@@ -1923,7 +1926,7 @@
       "title": "Brief 62A: closure loop, timing playbook, report digests and design-time timing plan"
      }
     ],
-    "showed": "One case closed in a single iteration both with and without the plan; two seeded cases stopped at the iteration limit (card below).",
+    "showed": "One case closed in a single iteration both with and without the plan, one seeded case also closed, and two seeded cases stopped at the iteration limit (card below).",
     "title": "A closure loop and a design-time timing plan",
     "why": "Timing repairs are routine work that the agent should do itself."
    },
@@ -2069,6 +2072,7 @@
    "h9_wall_lo": -44.8,
    "h_bar": 30,
    "h_base_pass": 5,
+   "h_level": 95,
    "h_repeats": 3,
    "h_runs": 12,
    "h_started": 51,

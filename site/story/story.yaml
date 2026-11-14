@@ -42,6 +42,7 @@ values:
   h_repeats: {source: results/42_workflows/README.md, expr: 're:On \d+ tasks, (\d+) repeats'}
   h_valid: {source: results/42_workflows/README.md, expr: 're:(\d+) valid runs of \d+'}
   h_started: {source: results/42_workflows/README.md, expr: 're:\d+ valid runs of (\d+)'}
+  h_level: {source: results/42_workflows/analysis.md, expr: 're:(\d+) % percentile bootstrap'}
   h_bar: {source: results/42_workflows/README.md, expr: 're:asks for a (\d+) % saving'}
   h_base_pass: {source: results/42_workflows/analysis.md, expr: 're:\| A0 \| 12 \| (\d+) \|'}
   # CDC gate
@@ -90,12 +91,21 @@ values:
 
 text:
   lede: >-
-    How the FPGA Design Agent was designed, measured and corrected, step by step. Each experiment is written up the same
-    way: hypothesis, setup, result with its uncertainty, decision and what it taught. Nulls and negative results get the
-    same space as wins, and the held-out evaluation that was stopped is shown as it was: stopped, with no score.
+    How the FPGA Design Agent was designed, measured and corrected. The agent turns a plain-English request into a design
+    checked by hidden tests, code-run gates and a board. This page shows how that was built and tested, one experiment at a
+    time, including the ones that found nothing.
+  best: >-
+    Best result: a deterministic CDC gate flagged {c_gate} of {c_mut} faulty designs where the tool's own report flagged
+    {c_tool}, with {c_false} false alarms on {c_ok} correct designs. Not proven: how often the agent solves a task it has
+    never seen. The first held-out evaluation was stopped with no score, and the baseline evaluation has not been run.
   scope: >-
-    Everything here is development work. {exp_n} experiments are on this page; the agent has no held-out score yet. Where a
-    run was single or the sample small, the card says so and claims no rate.
+    {exp_n} experiments are written up below, each in the same form. Where a run was single or the sample small, the card
+    says so and claims no rate.
+  glossary: >-
+    Terms used below: CVDP is a public set of RTL-writing problems. CDC is a signal crossing between two clocks. A mutant is a design with one deliberate fault, used to test
+    whether the tests notice. An escape is a run whose own checks passed while the hidden tests failed. Slack is how much
+    timing margin a path has; negative means it fails. V0 to V3 are the four verification stages. H1, H2 and H9 are three
+    harness changes (context management, hang protection, report digests). Slack and WNS both mean timing margin. An oracle answers the agent's clarifying questions from the hidden spec. ILA is an on-chip logic analyser. MCP is the protocol the agent's tools speak. Stage 2 is the RTL and tests stage. The Clarifier, Modeller, Verifier and Designer are the agent's four roles. The models are named as the provider lists them.
   limits: >-
     The grouping of the timeline and the cause class of each finding are the author's reading of the pull request text,
     not a measurement. The findings listed are the ones with a recorded fix, not a complete count of the agent's faults.
@@ -120,7 +130,7 @@ timeline:
     title: Which model writes the RTL
     changed: A pre-registered screen of cheap open-weight models against the base model on {f1_probs} problems.
     why: Cost decides how many runs the project can afford, so the model choice was measured rather than assumed.
-    showed: No cheaper model matched the base. One was worse by a margin its interval excludes from zero (card below).
+    showed: Neither cheaper model beat the base, and one was worse by a margin its interval excludes from zero (card below).
     prs: [4, 6, 10]
     experiment: x_models
     links: [results/f1b]
@@ -138,7 +148,7 @@ timeline:
     title: A graph of stages and roles, two ways to run a role
     changed: A harness-neutral agent core with an MCP tool server, a stage machine in plain code, role agents (Clarifier, Modeller, Verifier, Designer) on Deep Agents, and a second arm that drives the same roles through Claude Code.
     why: Keeping the stage order in code, not in a prompt, makes each stage gate-able. Two harnesses let the same task be run on different models without changing the graph.
-    showed: The first runs failed at stage 2 for harness reasons (spec items lost silently, stale test files, a model API mismatch). Four fixes came out of one diagnosis.
+    showed: The first runs failed at stage 2 for harness reasons (spec items lost silently, stale test files, a model API mismatch). The fixes came out of one diagnosis.
     prs: [12, 13, 14, 15]
     links: [docs/agent_core.md, docs/agent.md]
   - id: t_roles
@@ -161,13 +171,13 @@ timeline:
     date: "2026-11-05"
     title: Gates the agent cannot lower
     changed: The harness runs coverage and mutation testing itself, gate messages name what is missing, and V3 thresholds have floors the agent's plan cannot lower.
-    why: A live run set its own mutation threshold low in its own test plan and passed V3 on a handful of evaluated mutants.
+    why: A live run set its own mutation threshold low in its own test plan and passed V3 with few mutants evaluated.
     showed: The floors are now fixed numbers in a file the agent never writes (mutation score floor {fl_mut} percent, at least {fl_mineval} mutants evaluated).
     prs: [27, 31, 34, 40, 41]
     links: [flow/verif_floors.yaml, results/05l]
   - id: t_devruns
     date: "2026-11-06"
-    title: Development runs expose faults, seven fixes follow
+    title: Development runs expose faults, and a fix follows each
     changed: Runs of course tasks on the Claude Code arm, each followed by a fix to the agent for the fault it exposed.
     why: Reading single failed runs generates hypotheses cheaply. A fix that corrects a measuring-instrument fault needs no statistics.
     showed: "{d_esc} of {d_runs} development runs were escapes: the agent's own checks passed and the hidden tests failed (card below)."
@@ -197,7 +207,7 @@ timeline:
     title: Routing knowledge, harness arms and faster builds
     changed: Skill routing and retrieval behind a flag, three pre-registered harness arms (H1, H2, H9), and a build cache for Vivado.
     why: Each is a plausible gain, and each was measured before it was adopted.
-    showed: Routing was a null, one harness arm lowered cost, one did nothing, and the build cache saved most of the build time with identical results.
+    showed: Routing was a null. H1 and H9 lowered cost and H2 showed no difference. The build cache cut the build sequence against a modelled no-cache time, with identical results.
     prs: [114, 115, 118, 123, 130, 145]
     experiment: x_routing
     links: [results/36_skill_routing, results/42_workflows, results/33_vivado_speed_2026_1]
@@ -214,7 +224,7 @@ timeline:
     title: A closure loop and a design-time timing plan
     changed: When a design passes simulation but misses timing, a loop edits the RTL, re-checks it on an independent bench, rebuilds and repeats; a plan chooses DSP and block RAM use before the first build.
     why: Timing repairs are routine work that the agent should do itself.
-    showed: One case closed in a single iteration both with and without the plan; two seeded cases stopped at the iteration limit (card below).
+    showed: One case closed in a single iteration both with and without the plan, one seeded case also closed, and two seeded cases stopped at the iteration limit (card below).
     prs: [140]
     experiment: x_closure
     links: [results/62a_closure, docs/closure_loop.md]
@@ -243,7 +253,7 @@ experiments:
     title: Does a cheaper open-weight model match the base model?
     question: Can one of the cheaper open-weight models (z-ai/glm-5.3-flash or deepseek/deepseek-v4.1-flash-1017) replace the base model openai/gpt-6-luna for writing RTL at lower cost?
     setup: "The {f1_probs} CVDP evaluation problems, the same LangGraph agent harness for every arm, the base model run once and each candidate two or three times. Pre-registered before any scored run: the problems, the settings and the rule for picking. Pass rate is the hidden benches' verdict; no language model scores anything."
-    result: "Paired against the base ({f1_base} percent pass rate), glm-5.3-flash differed by {f1_g_est|plus} points (interval {f1_g_lo} to {f1_g_hi}), which is no detectable difference. deepseek-v4.1-flash-1017 was worse, by {f1_d_est} points (interval {f1_d_lo} to {f1_d_hi}), with a pooled pass rate of {f1_d_pool} percent."
+    result: "Paired against the base ({f1_base} percent pass rate), glm-5.3-flash differed by {f1_g_est|plus} points (interval {f1_g_lo} to {f1_g_hi}), which is no detectable difference. deepseek-v4.1-flash-1017 was worse, by {f1_d_est|abs} points (interval {f1_d_lo} to {f1_d_hi}), with a pooled pass rate of {f1_d_pool} percent."
     interval: "{f1_level} percent paired bootstrap over problems. Cost was reported incompletely for the candidates, so its comparison is a lower bound only."
     decision: The base model stays. The screen's rule picked it.
     lesson: A cheaper model's price advantage is not evidence of equal quality. Pair the comparison on the same problems and read the interval, not the two means.
@@ -258,8 +268,8 @@ experiments:
     order: 2
     title: Which open-weight model to fine-tune
     question: Which of two open-weight code models is the better base for a later fine-tune?
-    setup: Each model run through the same harness on the same {p0_n} problems through a paid inference service, with a per-run spend guard. Pre-registered, including the rule that a run stopped by the guard is void.
-    result: "Every run was stopped by the spend guard on {p0_a}, {p0_b} and {p0_c} of {p0_n} problems. Under the pre-registered rule all runs are void, so no model is recommended."
+    setup: Two open-weight models (qwen3.6-35b-a3b and qwen3-coder-30b-a3b-instruct, the latter run twice) through the same harness on the same {p0_n} problems through a paid inference service, with a per-run spend guard. Pre-registered, including the rule that a run stopped by the guard is void.
+    result: "The spend guard ended {p0_a}, {p0_b} and {p0_c} of the {p0_n} problems in the three runs. Under the pre-registered rule all runs are void, so no model is recommended."
     interval: None. No paired comparison was made, because every run was void.
     decision: No base was chosen. The result is recorded as inconclusive.
     lesson: A guard that is too tight turns an experiment into noise. Size the guard from a pilot, not from a budget.
@@ -275,7 +285,7 @@ experiments:
     result: "The first full run killed {m_first} percent of the mutants ({m_surv} survived, both reset-state faults no test looked at). The bound checkers killed none that the bench missed ({m_first_chk} percent). After a test for reset state was added, {m_final} percent."
     interval: One design, one seed, hand-written mutants. A score, not an estimate with an interval.
     decision: The first-run figure is the unbiased one. The harness now runs mutation testing itself, and V3 floors that the agent's plan cannot lower are fixed in a file.
-    lesson: A bench can look complete and miss a whole class of fault. Measure it with mutants, and report the score from before the bench was fixed.
+    lesson: A bench can look complete and miss reset-state faults. Measure it with mutants, and report the score from before the bench was fixed.
     detail:
       - "A live run later set its own mutation threshold low in its test plan and passed V3 on few evaluated mutants. The floors are {fl_mut} percent mutation score and {fl_toggle} percent toggle coverage, with at least {fl_mineval} mutants evaluated."
     prs: [11, 31, 34, 40]
@@ -290,7 +300,7 @@ experiments:
     result: "{d_pass} of {d_runs} runs passed every hidden test. {d_esc} were escapes: the agent's own checks passed and the hidden tests failed, every one from reading the spec differently from the tests."
     interval: "Development tasks, changed between runs: no interval is meaningful, and none is claimed as a pass rate for new tasks."
     decision: The agent's own testbench never counts as a pass. Escapes went to the spec interview, to gates in code, and to the benchmark itself where a task left a behaviour unstated.
-    lesson: A model's test shares the model's misreading, so passing needs a check the model did not write. The five runs of one task show the loop working (below).
+    lesson: A model's test shares the model's misreading, so passing needs a check the model did not write. The runs of one task show the loop working (below).
     plot: c14_runs
     prs: [45, 47, 49, 52]
     links: [results/course/c14_int8_dot_requant, results/course]
@@ -300,7 +310,7 @@ experiments:
     order: 5
     title: Does routing the right skill to a role help?
     question: Would a router that picks skills for each role, and a hybrid keyword and vector index, help the agent find the right knowledge?
-    setup: "Retrieval on {r_tasks} labelled development tasks against a catalogue of {r_skills} skills, then an end-to-end comparison with the router off and on, {r_runs} runs per arm, a low-cost model, stopping after stage 2. Pre-registered; later arms marked post hoc."
+    setup: "Retrieval on {r_tasks} labelled development tasks against a catalogue of {r_skills} skills, then an end-to-end comparison with the router off and on, {r_runs} runs per arm, the low-cost model gpt-6-luna, stopping after stage 2. Pre-registered; later arms marked post hoc."
     result: "Retrieval recall at six skills was {r_t0} for the plain index, {r_hyb} for the hybrid index and {r_r1} for the router's classifier. End to end, hidden-test passes were {r_off_pass} with the router off and {r_router_pass} on; stage 2 gates passed in {r_off_gate} and {r_router_gate} runs."
     interval: Three runs per arm cannot show a difference in pass rate, and none is claimed.
     decision: The router stays behind a flag and is not adopted.
@@ -313,10 +323,10 @@ experiments:
     order: 6
     title: Does changing the harness around the model change cost and success?
     question: Do context management (H1), hang protection (H2) or typed report digests (H9) cut tokens, cost or wall time without losing hidden-test passes?
-    setup: "{h_tasks} tasks, {h_repeats} repeats, four arms (the baseline A0 and H1, H2, H9), {h_valid} valid runs of {h_started}, a low-cost model, stopping after stage 2 (no Vivado). Each task and repeat is a block with all four arms in rotated order. Pre-registered adopt rule: a primary metric at least {h_bar} percent better with an interval that excludes zero, and no loss of tests passed."
-    result: "H1 lowered cost by {h1_cost_est|abs} percent (interval {h1_cost_lo} to {h1_cost_hi}) but tokens by {h1_tok_est|abs} percent with an interval that includes zero (to {h1_tok_hi|plus}), so it met the rule on one reading and not the other. H2 changed cost by {h2_cost_est} percent (interval {h2_cost_lo} to {h2_cost_hi}): no difference. H9 lowered cost by {h9_cost_est|abs} percent, below the bar. Hidden-test passes in the {h_runs} blocks: {h_base_pass} for the baseline, {h1_pass} for H1."
+    setup: "{h_tasks} tasks, {h_repeats} repeats, four arms (the baseline A0 and H1, H2, H9), {h_valid} valid runs of {h_started}, the low-cost model gpt-6-luna, stopping after stage 2 (no Vivado). Each task and repeat is a block with all four arms in rotated order. Pre-registered adopt rule: a primary metric at least {h_bar} percent better with an interval that excludes zero, and no loss of tests passed."
+    result: "H1 lowered cost by {h1_cost_est|abs} percent (interval {h1_cost_lo} to {h1_cost_hi}) but tokens by {h1_tok_est|abs} percent with an interval that includes zero (to {h1_tok_hi|plus}), so it met the rule on one reading and not the other. Its wall time fell {h1_wall_est|abs} percent but the interval includes zero once the blocks with a run stopped by the time limit are left out. H2 lowered cost by {h2_cost_est|abs} percent (interval {h2_cost_lo} to {h2_cost_hi}): no difference detectable. H9 lowered cost by {h9_cost_est|abs} percent, below the bar. {h_base_pass} of {h_runs} blocks passed the hidden tests in the baseline and {h1_pass} in H1; two of the {h_tasks} tasks were passed by no arm."
     interval: Percentile bootstrap over the {h_runs} blocks, paired against the baseline. With this few blocks only a very large effect is visible.
-    decision: No arm was adopted by the pre-registered rule. The owner then made H1 the default for development runs after seeing the data, which is recorded as a decision made after the data. Re-measure on more tasks before quoting a saving.
+    decision: No arm was adopted by the pre-registered rule. The project owner then made H1 the default for development runs after seeing the data, which is recorded as a decision made after the data. Re-measure on more tasks before quoting a saving.
     lesson: The adopt rule said "tokens per run (and cost)" without saying how to read "and". Write the rule so it cannot be read two ways. H2 solved a problem that was too rare in the round to compare.
     plot: harness
     prs: [123, 130, 145]
@@ -326,10 +336,10 @@ experiments:
     date: "2026-11-10"
     order: 7
     title: Does a deterministic CDC gate beat the tool's own report?
-    question: Does a gate that checks the structure of every asynchronous path and simulates with injected synchroniser delay catch clock-crossing faults that the tool's own CDC report does not?
+    question: Does a gate that checks the structure of the asynchronous paths and simulates with injected synchroniser delay catch clock-crossing faults that the tool's own CDC report does not?
     setup: "{c_ok} correct and {c_mut} deliberately faulty small designs (fixtures), synthesised on Vivado 2026.1, xc7a100tcsg324-1. Columns: the tool's CDC report alone, a structure check, a cycle-level simulation with injected delay (three seeds) and the new gate."
     result: "The tool's CDC report alone flagged {c_tool} of the {c_mut} faulty designs. The new gate flagged {c_gate} of {c_mut}, with {c_false} false alarms on the {c_ok} correct designs. The table was identical on the re-measurement on Vivado 2026.1."
-    interval: Fixtures are small hand-written designs, not a sample of real designs, so this is a detection table, not a rate. The simulation injection is cycle-level with no timing window.
+    interval: Fixtures are small hand-written designs, not a sample of real designs, so this is a detection table, not a rate. The simulation injection is cycle-level with no timing window. Faults found in the soak rig (M9 and M11) were not re-run on Vivado 2026.1 and are withdrawn.
     decision: The gate was merged into the flow and replaces reliance on the tool's report alone.
     lesson: Where the standard tool is silent, a small deterministic check can be decisive. Seed the fault yourself and show which check sees it.
     prs: [85]
@@ -357,7 +367,7 @@ experiments:
     result: "c13_hough_lines closed in one iteration, from {cl_np_start} to {cl_np_end} ns of worst slack without the plan. Of {cl_seed_n} seeded misses, {cl_seed_closed} closed; c14_int8_dot_requant stopped at the {cl_c14_it}-iteration limit at {cl_c14_end} ns (from {cl_c14_start}) and c11_nco_mixer at {cl_c11_end} ns (from {cl_c11_start}). When the RTL was written with the plan, none of {cl_w_attempts} attempts passed the hidden bench, so no first build with the plan exists."
     interval: "None: one run per case, so these are illustrations, not rates. Two builds of the same unchanged RTL differed by about {cl_noise} ns of slack."
     decision: The loop stays as a repair tool with its limits stated. The plan's comparison on other designs is not run.
-    lesson: An early with-plan run accepted a design whose core synthesis had removed; Icarus allowed two blocks driving the same registers and Vivado tied them to ground. That run is not counted, and it is why a synthesis guard exists. A passing simulation is not a passing build.
+    lesson: An early with-plan run accepted a design whose core had been removed by synthesis; Icarus allowed two blocks driving the same registers and Vivado tied them to ground. That run is not counted, and it is why a synthesis guard exists. A passing simulation is not a passing build.
     prs: [140]
     links: [results/62a_closure/README.md, results/62a_closure]
   - id: x_speed
@@ -382,8 +392,8 @@ experiments:
     setup: "Pre-registered before any scored run: {e_tasks} tasks, {e_reps} runs each, scored by hidden tests, a task-level bootstrap, with a planned half-width of {e_half} points. The agent, knowledge bank and benchmark were frozen at the tag eval-1."
     result: "Stopped before analysis. {e_launched} of the {e_slots} run slots had been launched and {e_scored} runs were scored; {e_notrun} ended as not run because Claude Code updated itself between two launches and the agent refuses an untested CLI version. No result is reported."
     interval: None. No score exists.
-    decision: The owner stopped it, because it could not finish in time and the benchmark was too small for the goals. This was a scope decision, not a reaction to results. The tag stays as a record. Later evaluations pin the CLI binary with a version check, and a new tag and pre-registration come with a baseline evaluation on the larger benchmark.
-    lesson: Pin every tool that is not under test, including the one that runs the agent. Five held-out tasks had their pass counts seen, so they moved to development, and no fix was derived from them.
+    decision: The project owner stopped it, because it could not finish in time and the benchmark was too small for the goals. This was a scope decision, not a reaction to results. The tag stays as a record. Later evaluations pin the CLI binary with a version check, and a new tag and pre-registration come with a baseline evaluation on the larger benchmark.
+    lesson: Pin every tool that is not under test, including the one that runs the agent. Some held-out tasks had their pass counts seen, so they moved to development, and no fix was derived from them.
     prs: [73, 75, 77]
     links: [docs/eval/eval1_preregistration.md, benchmark/AMENDMENTS.md]
 
@@ -391,12 +401,14 @@ plots:
   models:
     title: Pass-rate effect against the base model
     unit: points of pass rate, paired over the same problems
+    note: "Interval level {f1_level} percent."
     rows:
       - {label: glm-5.3-flash, est: f1_g_est, lo: f1_g_lo, hi: f1_g_hi}
       - {label: deepseek-v4.1-flash-1017, est: f1_d_est, lo: f1_d_lo, hi: f1_d_hi}
   harness:
     title: Paired change against the baseline, per arm
-    unit: percent change in the median (negative is lower), 95 percent interval
+    unit: percent change in the median (negative is lower)
+    note: "Interval level {h_level} percent. H1 wall time includes zero once the blocks with a run stopped by the time limit are left out."
     rows:
       - {label: H1 cost, est: h1_cost_est, lo: h1_cost_lo, hi: h1_cost_hi}
       - {label: H1 tokens, est: h1_tok_est, lo: h1_tok_lo, hi: h1_tok_hi}
@@ -423,7 +435,7 @@ method:
   - title: Hidden tests decide
     text: A task's tests are written from its spec and never shown to the agent. Passing means the hidden tests pass, the code-run gates pass and, for hardware tasks, the board agrees. The agent's own testbench never counts, and no language model ever produces a score.
   - title: Repeats and pairs
-    text: The agent is stochastic, so every task runs several times ({e_reps} in the first evaluation) and two versions of the agent are compared on the same tasks, with an interval, not two means. With {e_tasks} tasks a pass rate is known to about plus or minus {e_half} points, which shows a large difference and not a small one.
+    text: The agent is stochastic, so every task runs several times ({e_reps} in the first evaluation) and two versions of the agent are compared on the same tasks, with an interval, not two means. With {e_tasks} tasks a pass rate was planned to be known to about plus or minus {e_half} points, which shows a large difference and not a small one.
   - title: Development and held-out
     text: Development tasks are for finding and fixing faults. Held-out tasks decide, are touched rarely, and a fix is never derived from them. Where one was seen, as in eval-1, it moves to development.
   - title: Nothing leaks
@@ -463,11 +475,11 @@ lessons:
   - claim: Where the standard tool is silent, a deterministic gate can see the fault.
     evidence: "The tool's own CDC report alone flagged {c_tool} of {c_mut} faulty designs; the gate flagged {c_gate}, with {c_false} false alarms on {c_ok} correct designs."
     links: [results/16_cdc_gate_2026_1/mutant_table.md]
-  - claim: A test bench that looks complete can miss a class of fault.
+  - claim: A test bench that looks complete can miss reset-state faults.
     evidence: "The first full mutation run killed {m_first} percent of {m_n} mutants; the survivors were both reset-state faults."
     links: [results/04f/mutation_t1.json]
   - claim: A cheaper model is not evidence of equal quality.
-    evidence: "Paired over {f1_probs} problems, one cheaper model was {f1_d_est} points worse (interval {f1_d_lo} to {f1_d_hi}) and the other showed no detectable difference."
+    evidence: "Paired over {f1_probs} problems, one cheaper model was {f1_d_est|abs} points worse (interval {f1_d_lo} to {f1_d_hi}) and the other showed no detectable difference."
     links: [results/f1b/paired_eval86.md]
   - claim: A tool the roles do not use cannot be measured.
     evidence: "With the router on, end-to-end hidden passes were {r_router_pass} and with it off {r_off_pass}; the roles hardly called the new tools."

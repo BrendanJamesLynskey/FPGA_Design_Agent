@@ -31,7 +31,7 @@ PROSE_OK = re.compile(
     r"\bVivado 2026\.1\b|\bclaude-(?:sonnet|haiku|opus)-5-5\b|\bgpt-6-luna\b|\bglm-5\.3-flash\b|\bdeepseek-v4\.1-flash-1017\b|"
     r"\bqwen3(?:\.6)?(?:-35b-a3b|-coder-30b-a3b-instruct)?\b|\bbge-small-en-v1\.5\b|\b[ct]\d+_\w+|\bd\d+_\w+|\beval-[12]\b|"
     r"\b[HA][0-9]\b|\bG[1-5]\b|\bV[0-3]\b|\bFDA-CON-\d\b|\bUG949\b|\bpass@1\b|\bxc7a100t(?:csg324-1)?\b|\bNexys A7\b|\bAXI4-Lite\b|"
-    r"\bT[12]\b|\bLED0\b|\bc\d+\b|\bstages? \d\b|\b(?:one|two|three|four|five|six|seven)\b|\bKR260\b|\bXPM\b|\bF2\b|\bCDC\b|\b0 to 1\b", re.I)
+    r"\bT[12]\b|\bM(?:9|11)\b|\bLED0\b|\bc\d+\b|\bstages? \d\b|\b(?:one|two|three|four|five|six|seven)\b|\bKR260\b|\bXPM\b|\bF2\b|\bCDC\b|\b0 to 1\b", re.I)
 NUM = re.compile(r"-?\d+(?:[.,]\d+)*")
 VERDICTS = {"win": "Win", "mixed": "Mixed", "null": "Null", "negative": "Negative", "inconclusive": "Inconclusive",
             "stopped": "Stopped, no score"}
