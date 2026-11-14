@@ -40,6 +40,18 @@ proc zb_run {ps7init bit elf} {
     dow $elf
     con
 }
+# Light reload: only a processor reset and a new ELF; no ps7_init, no PL reconfiguration (use after one full zb_run since power-up).
+# Added after two PS wedges (DAP AHB error on the first SLCR/DEVCFG access of a full reload, board idle or just after a clean run)
+# to cut the number of PS-reset-class operations per run; whether the full reload is the trigger is not proven.
+proc zb_run_light {elf} {
+    zb_sel "ARM Cortex-A9 MPCore #0"
+    catch {stop}
+    rst -processor
+    mwr 0x03000000 0
+    mwr 0x03000004 0
+    dow $elf
+    con
+}
 proc zb_log {} {
     zb_sel "ARM Cortex-A9 MPCore #0"
     set w [mrd -value 0x03000004]

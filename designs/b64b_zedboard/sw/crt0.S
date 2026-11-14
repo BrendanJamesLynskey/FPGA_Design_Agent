@@ -1,5 +1,6 @@
 /* Cortex-A9 start-up: vectors, stacks, MMU/cache set-up is done in C (rt.c). */
     .section .vectors, "ax"
+    .balign 32                       @ VBAR needs a 32-byte aligned table; without this the table sat at +4 and data aborts entered the prefetch-abort handler
     .arm
     .global _start
 _start:
@@ -60,8 +61,9 @@ dabt_h:
     mov r2, lr
     mrs r3, spsr
     bl dabt_c                        @ returns the number of bytes to add to lr (4: skip the faulting instruction, 0: retry)
-    add lr, lr, r0
-    str lr, [sp, #(13*4)]
+    ldr r1, [sp, #(13*4)]            @ the saved (adjusted) lr: bl dabt_c has clobbered lr itself
+    add r1, r1, r0
+    str r1, [sp, #(13*4)]
     ldmfd sp!, {r0-r12, pc}^
 pabt_h:
     sub lr, lr, #4

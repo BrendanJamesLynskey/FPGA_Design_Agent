@@ -96,6 +96,15 @@ void app_main(void) {
         map_pl(SEC_SO);
         uart_puts("ID "); uart_puts(blk[b].n); uart_putc(' '); uart_hex(rd32(blk[b].base + 0x000)); uart_puts("\n");
     }
+    /* One access type per run (build -DSEL=<target 0..4> -DSELW=<0 read, 1 write> -DSELA=<0 SO, 1 DEV, 2 NC>); without SEL the whole matrix. */
+    uart_puts("REBOOT_STATUS "); uart_hex(rd32(0xF8000258)); uart_puts(" BOOT_MODE "); uart_hex(rd32(0xF800025C)); uart_puts("\n");
+#ifdef SEL
+    {
+        static const char *tn[5] = {"hole_okay", "hole_slverr", "hole_split", "outside_decerr", "outside_decerr2"};
+        uint32_t ad = SEL < 3 ? blk[SEL].base + 0x100 : (SEL == 3 ? PL_BASE + 0x1000u : PL_BASE + 0x80000u);
+        experiment(tn[SEL], ad, SEL < 3 ? blk[SEL].base : 0, SELW, att[SELA].a, att[SELA].n, N);
+    }
+#else
     for (int a = 0; a < 3; a++) {
         for (int w = 0; w < 2; w++) {
             for (int b = 0; b < 3; b++) {
@@ -107,6 +116,7 @@ void app_main(void) {
             experiment("outside_decerr2", PL_BASE + 0x80000u, 0, w, att[a].a, att[a].n, N);        /* above the last window */
         }
     }
+#endif
     map_pl(SEC_SO);
     xadc_report("end");
     uart_puts("DONE\n");

@@ -135,11 +135,15 @@ void rt_init(int caches) {
 }
 
 /* ---------------------------------------------------------------- aborts */
+int g_abort_trace = 6;     /* the first few data aborts are also written to the (non-cacheable) console log: JTAG reads of cached DDR can be stale */
 uint32_t dabt_c(uint32_t dfsr, uint32_t dfar, uint32_t lr, uint32_t spsr) {
     g_dabt.dfsr = dfsr; g_dabt.dfar = dfar; g_dabt.lr = lr; g_dabt.spsr = spsr; g_dabt.count++;
+    if (g_abort_trace > 0) { g_abort_trace--; uart_puts("DABT dfsr="); uart_hex(dfsr); uart_puts(" dfar="); uart_hex(dfar); uart_puts(" lr="); uart_hex(lr); uart_puts(" spsr="); uart_hex(spsr); uart_putc('\n'); }
     return (uint32_t)g_dabt_skip;
 }
-void pabt_c(uint32_t ifsr, uint32_t ifar, uint32_t lr) { g_pabt.ifsr = ifsr; g_pabt.ifar = ifar; g_pabt.lr = lr; g_pabt.count++; for (;;) { } }
+void pabt_c(uint32_t ifsr, uint32_t ifar, uint32_t lr) { g_pabt.ifsr = ifsr; g_pabt.ifar = ifar; g_pabt.lr = lr; g_pabt.count++;
+    uart_puts("PABT ifsr="); uart_hex(ifsr); uart_puts(" ifar="); uart_hex(ifar); uart_puts(" lr="); uart_hex(lr); uart_puts("\n");
+    for (;;) { } }
 void async_abort_enable(void)  { __asm__ volatile("cpsie a" ::: "memory"); }
 void async_abort_disable(void) { __asm__ volatile("cpsid a" ::: "memory"); }
 
