@@ -1,0 +1,256 @@
+{
+ "meta": {
+  "vivado": "2026.1",
+  "vlnv": "xilinx.com:ip:axi_interconnect:2.1",
+  "requires_license": "0",
+  "slaves": [
+   "xilinx.com:ip:axi_gpio:2.0",
+   "xilinx.com:ip:axi_uartlite:2.0"
+  ]
+ },
+ "probes": [
+  {
+   "probe": "sanity_gpio_through_ic",
+   "text": "TRI=0 DATA=0xA5 read=0x000000a5 resp=OKAY chk=0x000",
+   "values": {
+    "TRI": "0",
+    "DATA": "0xA5",
+    "read": "0x000000a5",
+    "resp": "OKAY",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "map_edges_read",
+   "text": "0x00000000=0xdec0de1c/DECERR 0x00000ffc=0xdec0de1c/DECERR 0x00001000=0x000000a5/OKAY 0x00001ffc=0x00000000/OKAY 0x00002008=0x00000004/OKAY 0x00002ffc=0x00000000/OKAY 0x00003000=0xdec0de1c/DECERR 0x00008000=0xdec0de1c/DECERR 0x80000000=0xdec0de1c/DECERR 0xfffffffc=0xdec0de1c/DECERR  chk=0x000",
+   "values": {
+    "0x00000000": "0xdec0de1c/DECERR",
+    "0x00000ffc": "0xdec0de1c/DECERR",
+    "0x00001000": "0x000000a5/OKAY",
+    "0x00001ffc": "0x00000000/OKAY",
+    "0x00002008": "0x00000004/OKAY",
+    "0x00002ffc": "0x00000000/OKAY",
+    "0x00003000": "0xdec0de1c/DECERR",
+    "0x00008000": "0xdec0de1c/DECERR",
+    "0x80000000": "0xdec0de1c/DECERR",
+    "0xfffffffc": "0xdec0de1c/DECERR",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "map_edges_write",
+   "text": "0x00000000=DECERR 0x00000ffc=DECERR 0x00002ffc=OKAY 0x00003000=DECERR 0x00008000=DECERR 0x80000000=DECERR 0xfffffffc=DECERR GPIO_DATA_after=0x000000a5 GPIO_TRI_after=0x00000000 chk=0x000",
+   "values": {
+    "0x00000000": "DECERR",
+    "0x00000ffc": "DECERR",
+    "0x00002ffc": "OKAY",
+    "0x00003000": "DECERR",
+    "0x00008000": "DECERR",
+    "0x80000000": "DECERR",
+    "0xfffffffc": "DECERR",
+    "GPIO_DATA_after": "0x000000a5",
+    "GPIO_TRI_after": "0x00000000",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "slave_error_passthrough",
+   "text": "uart_rx_empty_read=SLVERR data=0x000000xx uart_txf_read=OKAY chk=0x000",
+   "values": {
+    "uart_rx_empty_read": "SLVERR",
+    "data": "0x000000xx",
+    "uart_txf_read": "OKAY",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "inside_window_beyond_slave_decode",
+   "text": "GPIO(512 B decode) DATA=0xA5: read_+0x200=0x000000a5 +0x400=0x000000a5 +0x800=0x000000a5 +0xC00=0x000000a5 chk=0x000",
+   "values": {
+    "DATA": "0xA5:",
+    "0x200": "0x000000a5",
+    "0x400": "0x000000a5",
+    "0x800": "0x000000a5",
+    "0xC00": "0x000000a5",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "hole_inside_slave_through_ic",
+   "text": "read_GPIO+0x10=0x00000000/OKAY read_GPIO+0x100=0x00000000/OKAY (standalone: holes read 0/OKAY) chk=0x000",
+   "values": {
+    "0x10": "0x00000000/OKAY",
+    "0x100": "0x00000000/OKAY",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "alias_through_ic",
+   "text": "wrote_GIER=0x80000000 at +0x11C: read_+0x11C=0x80000000 read_+0x15C=0x80000000 (standalone GPIO aliases +0x15C to GIER) chk=0x000",
+   "values": {
+    "wrote_GIER": "0x80000000",
+    "0x11C": "0x80000000",
+    "0x15C": "0x80000000",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "outstanding_rd_two_slaves",
+   "text": "ar_accepted_while_rready_low=1 r_valid_while_low=1 first=0x000000a5/OKAY second=0x00000014/OKAY chk=0x000",
+   "values": {
+    "ar_accepted_while_rready_low": "1",
+    "r_valid_while_low": "1",
+    "first": "0x000000a5/OKAY",
+    "second": "0x00000014/OKAY",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "outstanding_rd_same_slave",
+   "text": "ar_accepted_while_rready_low=1 r_valid_while_low=1 first=0x000000a5/OKAY second=0x00000000/OKAY chk=0x000",
+   "values": {
+    "ar_accepted_while_rready_low": "1",
+    "r_valid_while_low": "1",
+    "first": "0x000000a5/OKAY",
+    "second": "0x00000000/OKAY",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "outstanding_rd_unmapped_then_mapped",
+   "text": "ar_accepted_while_rready_low=1 r_valid_while_low=1 first=0xdec0de1c/DECERR second=0x000000a5/OKAY chk=0x000",
+   "values": {
+    "ar_accepted_while_rready_low": "1",
+    "r_valid_while_low": "1",
+    "first": "0xdec0de1c/DECERR",
+    "second": "0x000000a5/OKAY",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "outstanding_wr_unmapped_then_mapped",
+   "text": "aw_accepted_while_bready_low=1 w_accepted_while_bready_low=1 b_valid_while_low=1 b_total=2 b0=DECERR b1=OKAY GPIO_TRI=0x00000002 chk=0x000",
+   "values": {
+    "aw_accepted_while_bready_low": "1",
+    "w_accepted_while_bready_low": "1",
+    "b_valid_while_low": "1",
+    "b_total": "2",
+    "b0": "DECERR",
+    "b1": "OKAY",
+    "GPIO_TRI": "0x00000002",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "latency",
+   "text": "write=9 read=10 chk=0x000",
+   "values": {
+    "write": "9",
+    "read": "10",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "aw_w_order",
+   "text": "aw_first=0x00000001 w_first=0x00000002 hung=0 chk=0x000",
+   "values": {
+    "aw_first": "0x00000001",
+    "w_first": "0x00000002",
+    "hung": "0",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "wstrb",
+   "text": "not_observable=1 (both slaves ignore WSTRB, so a forwarded strobe cannot be told from a dropped one) chk=0x000",
+   "values": {
+    "not_observable": "1",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "unaligned_write",
+   "text": "write_at_wa+1_reads_wa=0x00000003 write_at_wa+2_reads_wa=0x00000003 write_at_wa+3_reads_wa=0x00000003 chk=0x000",
+   "values": {
+    "1_reads_wa": "0x00000003",
+    "2_reads_wa": "0x00000003",
+    "3_reads_wa": "0x00000003",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "unaligned_read",
+   "text": "wa_holds_3: read_wa+1=0x00000003 read_wa+2=0x00000003 read_wa+3=0x00000003 chk=0x000",
+   "values": {
+    "1": "0x00000003",
+    "2": "0x00000003",
+    "3": "0x00000003",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "outstanding_rd",
+   "text": "ar_accepted_while_rready_low=1 r_valid_while_low=1 first=0x00000000/OKAY second=0x00000000/OKAY chk=0x000",
+   "values": {
+    "ar_accepted_while_rready_low": "1",
+    "r_valid_while_low": "1",
+    "first": "0x00000000/OKAY",
+    "second": "0x00000000/OKAY",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "outstanding_wr",
+   "text": "aw_accepted_while_bready_low=1 w_accepted_while_bready_low=1 b_valid_while_low=1 b_total=2 wa=0x00000001 wb=0x00000000 chk=0x000",
+   "values": {
+    "aw_accepted_while_bready_low": "1",
+    "w_accepted_while_bready_low": "1",
+    "b_valid_while_low": "1",
+    "b_total": "2",
+    "wa": "0x00000001",
+    "wb": "0x00000000",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "aw_alone",
+   "text": "aw_accepted=1 b_without_w=0 wa_after_completion=0x00000001 chk=0x000",
+   "values": {
+    "aw_accepted": "1",
+    "b_without_w": "0",
+    "wa_after_completion": "0x00000001",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "w_alone",
+   "text": "w_accepted=0 b_without_aw=0 wa_after_completion=0x00000002 chk=0x000",
+   "values": {
+    "w_accepted": "0",
+    "b_without_aw": "0",
+    "wa_after_completion": "0x00000002",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "reset_through_ic",
+   "text": "GPIO_TRI_after_reset=0x000000f0 chk=0x000",
+   "values": {
+    "GPIO_TRI_after_reset": "0x000000f0",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "done",
+   "text": "ok=1",
+   "values": {
+    "ok": "1"
+   }
+  }
+ ],
+ "ip": "axi_interconnect",
+ "bench": "amd_ip_probe/tb/tb_ic.sv",
+ "bench_sha256": "dbac68ea62550dc0",
+ "returncode": 0,
+ "errors": []
+}

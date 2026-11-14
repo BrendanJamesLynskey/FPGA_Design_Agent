@@ -1,0 +1,382 @@
+{
+ "meta": {
+  "vivado": "2026.1",
+  "vlnv": "xilinx.com:ip:axi_intc:4.1",
+  "requires_license": "0",
+  "config": {
+   "CONFIG.C_ADDR_WIDTH": "32",
+   "CONFIG.C_ASYNC_INTR": "0xffffffff",
+   "CONFIG.C_CASCADE_MASTER": "0",
+   "CONFIG.C_DISABLE_SYNCHRONIZERS": "1",
+   "CONFIG.C_ENABLE_ASYNC": "0",
+   "CONFIG.C_EN_CASCADE_MODE": "0",
+   "CONFIG.C_HAS_CIE": "1",
+   "CONFIG.C_HAS_FAST": "0",
+   "CONFIG.C_HAS_ILR": "0",
+   "CONFIG.C_HAS_IPR": "1",
+   "CONFIG.C_HAS_IVR": "1",
+   "CONFIG.C_HAS_SIE": "1",
+   "CONFIG.C_IRQ_ACTIVE": "0x1",
+   "CONFIG.C_IRQ_CONNECTION": "0",
+   "CONFIG.C_IRQ_IS_LEVEL": "1",
+   "CONFIG.C_IVAR_RESET_VALUE": "0x0000000000000010",
+   "CONFIG.C_KIND_OF_EDGE": "0xFFFFFFFF",
+   "CONFIG.C_KIND_OF_INTR": "0x00000003",
+   "CONFIG.C_KIND_OF_LVL": "0xFFFFFFFF",
+   "CONFIG.C_MB_CLK_NOT_CONNECTED": "1",
+   "CONFIG.C_NUM_INTR_INPUTS": "4",
+   "CONFIG.C_NUM_SW_INTR": "0",
+   "CONFIG.C_NUM_SYNC_FF": "2",
+   "CONFIG.C_PROCESSOR_CLK_FREQ_MHZ": "100.0",
+   "CONFIG.C_S_AXI_ACLK_FREQ_MHZ": "100.0",
+   "CONFIG.Component_Name": "dut_intc",
+   "CONFIG.PROC_CLOCK.INSERT_VIP": "0",
+   "CONFIG.PROC_RESET.INSERT_VIP": "0",
+   "CONFIG.S_AXI.INSERT_VIP": "0",
+   "CONFIG.S_AXI_ACLK.INSERT_VIP": "0",
+   "CONFIG.S_RESETN.INSERT_VIP": "0",
+   "CONFIG.Sense_of_IRQ_Edge_Type": "Rising",
+   "CONFIG.Sense_of_IRQ_Level_Type": "Active_High"
+  }
+ },
+ "probes": [
+  {
+   "probe": "reset_values",
+   "text": "ISR=0x00000000/OKAY IPR=0x00000000/OKAY IER=0x00000000/OKAY IVR=0xffffffff/OKAY MER=0x00000000/OKAY IMR=0x00000000/OKAY ILR=0xffffffff/OKAY IVAR0=0x00000000/OKAY SIE_read=0x00000000 CIE_read=0x00000000 IAR_read=0x00000000 chk=0x000",
+   "values": {
+    "ISR": "0x00000000/OKAY",
+    "IPR": "0x00000000/OKAY",
+    "IER": "0x00000000/OKAY",
+    "IVR": "0xffffffff/OKAY",
+    "MER": "0x00000000/OKAY",
+    "IMR": "0x00000000/OKAY",
+    "ILR": "0xffffffff/OKAY",
+    "IVAR0": "0x00000000/OKAY",
+    "SIE_read": "0x00000000",
+    "CIE_read": "0x00000000",
+    "IAR_read": "0x00000000",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "window_read_scan_reset",
+   "text": "zero_okay_words=126 o18=0xffffffff/OKAY o24=0xffffffff/OKAY  chk=0x000",
+   "values": {
+    "zero_okay_words": "126",
+    "o18": "0xffffffff/OKAY",
+    "o24": "0xffffffff/OKAY",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "window_read_scan_nonzero",
+   "text": "zero_okay_words=123 o0=0x00000003/OKAY o4=0x00000003/OKAY o8=0x0000000f/OKAY o1c=0x00000001/OKAY o24=0xffffffff/OKAY  chk=0x000",
+   "values": {
+    "zero_okay_words": "123",
+    "o0": "0x00000003/OKAY",
+    "o4": "0x00000003/OKAY",
+    "o8": "0x0000000f/OKAY",
+    "o1c": "0x00000001/OKAY",
+    "o24": "0xffffffff/OKAY",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "window_write_scan",
+   "text": "from_reset pattern=0xFFFFFFFF holes_only changed_or_non_okay:  chk=0x000",
+   "values": {
+    "pattern": "0xFFFFFFFF",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "reserved_bits",
+   "text": "IER=0x0000000f MER=0x00000003 IMR=0x00000000 ILR=0xffffffff chk=0x000",
+   "values": {
+    "IER": "0x0000000f",
+    "MER": "0x00000003",
+    "IMR": "0x00000000",
+    "ILR": "0xffffffff",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "sie_cie",
+   "text": "SIE_5=0x00000005 SIE_2_adds=0x00000007 CIE_1_clears=0x00000006 CIE_0_nochange=0x00000006 chk=0x000",
+   "values": {
+    "SIE_5": "0x00000005",
+    "SIE_2_adds": "0x00000007",
+    "CIE_1_clears": "0x00000006",
+    "CIE_0_nochange": "0x00000006",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "sie_zero_no_change",
+   "text": "IER=0x0000000f chk=0x000",
+   "values": {
+    "IER": "0x0000000f",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "isr_write_before_hie",
+   "text": "ISR=0x00000003 IPR=0x00000000 chk=0x000",
+   "values": {
+    "ISR": "0x00000003",
+    "IPR": "0x00000000",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "iar_clears",
+   "text": "after_IAR_1=0x00000002 IAR_0_nochange=0x00000002 after_IAR_2=0x00000000 chk=0x000",
+   "values": {
+    "after_IAR_1": "0x00000002",
+    "IAR_0_nochange": "0x00000002",
+    "after_IAR_2": "0x00000000",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "isr_write_after_hie",
+   "text": "MER=0x00000002 ISR_after_write_3=0x00000000 chk=0x000",
+   "values": {
+    "MER": "0x00000002",
+    "ISR_after_write_3": "0x00000000",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "edge_input_1clk_pulse",
+   "text": "ISR=0x00000001 irq=1 chk=0x000",
+   "values": {
+    "ISR": "0x00000001",
+    "irq": "1",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "edge_ack",
+   "text": "ISR=0x00000000 irq=0 chk=0x000",
+   "values": {
+    "ISR": "0x00000000",
+    "irq": "0",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "level_input_high_ack",
+   "text": "ISR=0x00000004 ack_while_high=0x00000004 irq=1 chk=0x000",
+   "values": {
+    "ISR": "0x00000004",
+    "ack_while_high": "0x00000004",
+    "irq": "1",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "level_input_released",
+   "text": "ISR=0x00000004 IPR=0x00000004 (input low, no IAR write since) chk=0x000",
+   "values": {
+    "ISR": "0x00000004",
+    "IPR": "0x00000004",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "level_input_released_then_ack",
+   "text": "ISR=0x00000000 chk=0x000",
+   "values": {
+    "ISR": "0x00000000",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "ivr",
+   "text": "only_input3=0x00000003 inputs_0_and_3=0x00000000 again=0x00000000 after_ack_0=0x00000003 chk=0x000",
+   "values": {
+    "only_input3": "0x00000003",
+    "inputs_0_and_3": "0x00000000",
+    "again": "0x00000000",
+    "after_ack_0": "0x00000003",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "ivr_none_pending",
+   "text": "IVR=0xffffffff chk=0x000",
+   "values": {
+    "IVR": "0xffffffff",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "irq_mer_off",
+   "text": "irq=0 ISR=0x00000000 chk=0x000",
+   "values": {
+    "irq": "0",
+    "ISR": "0x00000000",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "irq_mer_on",
+   "text": "irq=1 after_read=1 20_later=1 chk=0x000",
+   "values": {
+    "irq": "1",
+    "after_read": "1",
+    "20_later": "1",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "irq_after_ack",
+   "text": "irq=0 chk=0x000",
+   "values": {
+    "irq": "0",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "irq_lags",
+   "text": "input_edge_to_irq_rise=6 IAR_write_edge_to_irq_fall=3 coincident_rel=-3 (assumes the same path to irq both ways) chk=0x000",
+   "values": {
+    "input_edge_to_irq_rise": "6",
+    "IAR_write_edge_to_irq_fall": "3",
+    "coincident_rel": "-3",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "race_iar_clear_vs_edge",
+   "text": "new rising edge on input 0 against an IAR clear; rel = edge sampled minus IAR W edge: rel-14=lost rel-13=lost rel-12=lost rel-11=lost rel-10=lost rel-9=lost rel-8=lost rel-7=lost rel-6=lost rel-5=lost rel-4=lost rel-3=lost rel-2=lost rel-1=kept rel0=kept rel1=kept rel2=kept  chk=0x000",
+   "values": {
+    "14": "lost",
+    "13": "lost",
+    "12": "lost",
+    "11": "lost",
+    "10": "lost",
+    "9": "lost",
+    "8": "lost",
+    "7": "lost",
+    "6": "lost",
+    "5": "lost",
+    "4": "lost",
+    "3": "lost",
+    "2": "lost",
+    "1": "kept",
+    "rel0": "kept",
+    "rel1": "kept",
+    "rel2": "kept",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "latency",
+   "text": "write=6 read=6 chk=0x000",
+   "values": {
+    "write": "6",
+    "read": "6",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "aw_w_order",
+   "text": "aw_first=0x00000001 w_first=0x00000002 chk=0x000",
+   "values": {
+    "aw_first": "0x00000001",
+    "w_first": "0x00000002",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "wstrb_IER",
+   "text": "write_0xF_strb0000=0x0000000f then_strb0001_from_0=0x0000000f chk=0x000",
+   "values": {
+    "write_0xF_strb0000": "0x0000000f",
+    "then_strb0001_from_0": "0x0000000f",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "unaligned",
+   "text": "write_0x09 IER=0x00000003 read_0x0B=0x00000003 chk=0x000",
+   "values": {
+    "IER": "0x00000003",
+    "read_0x0B": "0x00000003",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "outstanding_rd",
+   "text": "ar_accepted_while_rready_low=1 r_valid_while_low=1 first=0x00000000/OKAY second=0x00000000/OKAY chk=0x000",
+   "values": {
+    "ar_accepted_while_rready_low": "1",
+    "r_valid_while_low": "1",
+    "first": "0x00000000/OKAY",
+    "second": "0x00000000/OKAY",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "outstanding_wr",
+   "text": "aw_accepted_while_bready_low=1 w_accepted_while_bready_low=1 b_valid_while_low=1 b_total=2 IER=0x00000006 chk=0x000",
+   "values": {
+    "aw_accepted_while_bready_low": "1",
+    "w_accepted_while_bready_low": "1",
+    "b_valid_while_low": "1",
+    "b_total": "2",
+    "IER": "0x00000006",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "aw_alone",
+   "text": "aw_accepted=0 b_without_w=0 IER_after=0x00000009 chk=0x000",
+   "values": {
+    "aw_accepted": "0",
+    "b_without_w": "0",
+    "IER_after": "0x00000009",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "w_alone",
+   "text": "w_accepted=0 b_without_aw=0 IER_after=0x0000000a chk=0x000",
+   "values": {
+    "w_accepted": "0",
+    "b_without_aw": "0",
+    "IER_after": "0x0000000a",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "reset_after_writes",
+   "text": "ISR=0x00000000 IPR=0x00000000 IER=0x00000000 IVR=0xffffffff MER=0x00000000 IMR=0x00000000 ILR=0xffffffff IVAR0=0x00000000  chk=0x000",
+   "values": {
+    "ISR": "0x00000000",
+    "IPR": "0x00000000",
+    "IER": "0x00000000",
+    "IVR": "0xffffffff",
+    "MER": "0x00000000",
+    "IMR": "0x00000000",
+    "ILR": "0xffffffff",
+    "IVAR0": "0x00000000",
+    "chk": "0x000"
+   }
+  },
+  {
+   "probe": "done",
+   "text": "ok=1",
+   "values": {
+    "ok": "1"
+   }
+  }
+ ],
+ "ip": "intc",
+ "bench": "amd_ip_probe/tb/tb_intc.sv",
+ "bench_sha256": "43fc53e56b7f00c9",
+ "returncode": 0,
+ "errors": []
+}
