@@ -31,6 +31,7 @@ PAGES = [  # file, nav label, title, description, data keys inlined
     ("agent.html", "The agent", "The agent", "The agent itself: a LangGraph controller over Deep Agents or Claude Code role agents, drawn from its code, with a recorded run replayed through the diagrams.", ["agent_graph"]),
     ("story.html", "How it was built", "How the agent was built", "How the agent was designed, measured and corrected: a timeline, an experiment card for every test including the nulls and the stopped evaluation, the method, the improvement loop and the lessons, with every number read from a committed result file.", []),
     ("how.html", "How it works", "How it works", "The stages, the verification gates V0 to V3, mutation testing, the knowledge bank and the tools, with a stage walk-through replayed from a real run record.", ["replay"]),
+    ("verification.html", "Verification", "How the designs are verified", "Each verification technique the agent and the flow use, simulation, hidden tests, coverage, mutation testing, protocol checkers, formal proofs, clock-crossing checks, static checks, the board and traceability: what it finds and cannot find, where it runs, and the measured evidence, with every number read from a committed result file.", []),
     ("flow-notes.html", "Beyond the flow", "Beyond the standard flow", "Where the agent's flow goes further than the standard Vivado flow: missing CDC constraints, crossings report_cdc cannot see, timing exceptions that hide failures, and more, each with its evidence and status.", ["flow_notes"]),
     ("expertise.html", "Expertise", "Areas of expertise", "What the agent knows, what its flow checks and what has been measured, area by area, in drawers; each area states how far its evidence goes.", []),
     ("examples.html", "Examples", "Examples", "Development tasks end to end: spec, clarify, gates, timing and area, and a hand-built design on the board.", ["board"]),
@@ -179,6 +180,9 @@ def block(name, d):
     if name in ("expertise_levels", "expertise_ladder", "expertise_drawers"):
         import expertise_page
         return getattr(expertise_page, name.split("_", 1)[1])(d["expertise"])
+    if name == "verification_body":
+        import verification_page
+        return verification_page.body(d["verification"])
     if name == "story_body":
         import story_page
         return story_page.body(d["story"])
@@ -429,7 +433,7 @@ def build(outdir: Path, d, check_numbers=True):
     js = (SRC / "app.js").read_text()
     # the showcase projects' own text never enters the number check (it would vouch for its own numbers); the showcase
     # pages are checked against the shared data plus each project's resolved values and hero data
-    shared = {k: v for k, v in d.items() if k not in ("tasks", "showcase", "story")}
+    shared = {k: v for k, v in d.items() if k not in ("tasks", "showcase", "story", "verification")}
     sc_values = {P["id"]: {"values": P["values"], "hero": P["hero"]["data"]}
                  for P in d.get("showcase", {}).get("projects", []) if P["status"] == "published"}
     if "catalogue" in d:
@@ -439,7 +443,8 @@ def build(outdir: Path, d, check_numbers=True):
         body = render_template((SRC / fname).read_text(), d)
         pages[fname] = layout(fname, title, desc, body, keys, shared, css, js)
         page_data[fname] = ({"shared": shared, "showcase_values": sc_values} if fname == "showcase.html"
-                            else {"shared": shared, "story": d["story"]["check"]} if fname == "story.html" else shared)
+                            else {"shared": shared, "story": d["story"]["check"]} if fname == "story.html"
+                            else {"shared": shared, "verification": d["verification"]["check"]} if fname == "verification.html" else shared)
     if "catalogue" in d:
         order = task_order(d)
         for i, r in enumerate(order):
@@ -478,7 +483,7 @@ def build(outdir: Path, d, check_numbers=True):
         allow = allow_tokens()
         cache = {}
         for fname, page in pages.items():
-            key = fname if fname.startswith(("problems/", "showcase/", "blockdesign/")) or fname in ("showcase.html", "story.html") else "_shared"
+            key = fname if fname.startswith(("problems/", "showcase/", "blockdesign/")) or fname in ("showcase.html", "story.html", "verification.html") else "_shared"
             if key not in cache:
                 cache[key] = data_tokens(page_data[fname]) | allow
             ok = cache[key]
