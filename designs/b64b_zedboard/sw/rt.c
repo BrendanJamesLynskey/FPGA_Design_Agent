@@ -4,7 +4,7 @@ abort_rec_t g_dabt, g_pabt;
 volatile int g_dabt_skip = 4;
 void (*g_irq_hook)(int id);
 
-/* ---------------------------------------------------------------- UART1 (PS), 115200 8N1 from the 50 MHz UART clock */
+/* ---------------------------------------------------------------- UART1 (PS), 115200 8N1 from the 100 MHz UART clock (IO PLL 1600 MHz / 16, ps7_init of this design) */
 /* Console log kept in DDR as well (read over JTAG: the host's UART device may not be readable): 16-byte header
  * {magic 'LOG1', write index, size, reserved} then the characters. */
 #define LOG_BASE 0x03000000u
@@ -32,8 +32,8 @@ void uart_dec(int64_t v) {
 }
 static void uart_init(void) {
     REG(UART1_BASE + 0x00) = 0x28;      /* disable TX, RX */
-    REG(UART1_BASE + 0x18) = 62;        /* BAUDGEN */
-    REG(UART1_BASE + 0x34) = 6;         /* BAUDDIV: 50 MHz / (62 * 7) = 115207 baud */
+    REG(UART1_BASE + 0x18) = 124;       /* BAUDGEN */
+    REG(UART1_BASE + 0x34) = 6;         /* BAUDDIV: 100 MHz / (124 * 7) = 115207 baud */
     REG(UART1_BASE + 0x00) = 0x03;      /* reset TX and RX */
     REG(UART1_BASE + 0x04) = 0x20;      /* 8N1, normal */
     REG(UART1_BASE + 0x00) = 0x14;      /* enable TX and RX */
