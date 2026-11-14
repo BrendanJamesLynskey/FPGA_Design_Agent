@@ -267,6 +267,8 @@ jobs:
     name: AXI transactor (brief 59A) - cocotb on Icarus, seeded bugs, scoreboard mutant, formal rule proofs and checker mutants
     runs-on: ubuntu-24.04
     timeout-minutes: 60
+    env:
+      FDA_REQUIRE_FORMAL: "1"      # a formal test that skips for a missing tool fails (brief 81)
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -287,6 +289,8 @@ jobs:
     name: HW/SW interface - register maps, generated block, formal handshake, crc32_step as a custom instruction
     runs-on: ubuntu-24.04
     timeout-minutes: 90
+    env:
+      FDA_REQUIRE_FORMAL: "1"      # a formal test that skips for a missing tool fails (brief 81)
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -347,6 +351,7 @@ jobs:
     timeout-minutes: 90
     env:
       PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      FDA_REQUIRE_FORMAL: "1"      # a formal test that skips for a missing tool fails (brief 81)
     steps:
       - uses: actions/checkout@v4
       - name: Fetch the pull request base (for the task selection)

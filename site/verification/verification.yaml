@@ -1,0 +1,485 @@
+# The verification page (brief 81). Prose holds no typed numbers: every figure is a {name} read from a committed file.
+# A value is {source, expr}: expr is one of site/expertise.py's expressions, or str:REGEX (the first group of REGEX in the
+# source's text, kept as text: tool versions such as 5.048). `derived` values are computed by site/verification.py from
+# the named record, by the stated formula.
+values:
+  # simulation, the V stages, coverage (T1, the hand-written reference design)
+  t_ghdl: {source: results/55_vhdl/README.md, expr: 'str:(GHDL \d+\.\d+\.\d+)'}
+  t_icarus: {source: results/55_vhdl/README.md, expr: 'str:(Icarus \d+)'}
+  t_cocotb: {source: results/55_vhdl/README.md, expr: 'str:(cocotb \d+\.\d+\.\d+)'}
+  t_verilator: {source: results/04f/README.md, expr: 'str:5\.020 \(apt\) and (5\.\d+)'}
+  s_seeds: {source: results/04f/t1_verif_gates.json, expr: 'get:stages.V2.checks.seeds_run.value'}
+  s_tests: {source: results/04f/README.md, expr: 're:\*\*V2:\*\* (\d+) cocotb tests'}
+  s_asserts: {source: results/04f/README.md, expr: 're:bound\s+checkers \((\d+) assertions'}
+  s_items: {source: results/04f/t1_verif_gates.json, expr: 'str:"spec_items_traced": \{\s*"value": "(\d+/\d+)"'}
+  vhdl_agent_ok: {source: results/55_vhdl/README.md, expr: 're:end-to-end agent: (\d+) of \d+'}
+  vhdl_agent_n: {source: results/55_vhdl/README.md, expr: 're:end-to-end agent: \d+ of (\d+)'}
+  vhdl_first_ok: {source: results/55_vhdl/README.md, expr: 're:Arm A: (\d+) of \d+ board tasks'}
+  vhdl_first_n: {source: results/55_vhdl/README.md, expr: 're:Arm A: \d+ of (\d+) board tasks'}
+  cov_bins_hit: {source: results/04f/t1_verif_gates.json, expr: 're:functional_bins_pct[^}]*?\((\d+)/\d+\)'}
+  cov_bins_n: {source: results/04f/t1_verif_gates.json, expr: 're:functional_bins_pct[^}]*?\(\d+/(\d+)\)'}
+  cov_line: {source: results/04f/t1_verif_gates.json, expr: 'get:code_coverage.line.pct'}
+  cov_toggle: {source: results/04f/t1_verif_gates.json, expr: 'get:code_coverage.toggle.pct'}
+  cov_toggle_hit: {source: results/04f/t1_verif_gates.json, expr: 'get:code_coverage.toggle.hit'}
+  cov_toggle_n: {source: results/04f/t1_verif_gates.json, expr: 'get:code_coverage.toggle.points'}
+  cov_branch: {source: results/04f/t1_verif_gates.json, expr: 'get:code_coverage.branch.pct'}
+  cov_unhit: {source: results/04f/t1_verif_gates.json, expr: 'count@code_coverage_unhit.toggle:'}
+  fl_bins: {source: flow/verif_floors.yaml, expr: 're:^functional_bins_pct: (\d+)'}
+  fl_cover: {source: flow/verif_floors.yaml, expr: 're:^cover_properties_pct: (\d+)'}
+  fl_line: {source: flow/verif_floors.yaml, expr: 're:^line_pct: (\d+)'}
+  fl_toggle: {source: flow/verif_floors.yaml, expr: 're:^toggle_pct: (\d+)'}
+  fl_mut: {source: flow/verif_floors.yaml, expr: 're:^mutation_score_pct: (\d+)'}
+  fl_seeds: {source: flow/verif_floors.yaml, expr: 're:^seeds_min: (\d+)'}
+  fl_mineval: {source: flow/verif_floors.yaml, expr: 're:^mutation_min_evaluated: (\d+)'}
+  # mutation testing
+  m_n: {source: results/04f/mutation_t1.json, expr: 'get:mutants'}
+  m_first: {source: results/04f/mutation_t1.json, expr: 'get:first_run.score_pct'}
+  m_first_chk: {source: results/04f/mutation_t1.json, expr: 'get:first_run.score_with_checkers_pct'}
+  m_surv: {source: results/04f/mutation_t1.json, expr: 'count@first_run.survivors'}
+  m_final: {source: results/04f/mutation_t1.json, expr: 'get:score_pct'}
+  m_generic_n: {source: results/05k/mutation_t1_generic.json, expr: 'get:evaluated'}
+  m_generic_killed: {source: results/05k/mutation_t1_generic.json, expr: 'get:killed'}
+  # tests of the IP benches: faults seeded into the RTL, each must fail the bench
+  fx_net_n: {source: results/b63d/faults.json, expr: 'get:valid'}
+  fx_net_c: {source: results/b63d/faults.json, expr: 'get:caught'}
+  fx_mac_n: {source: results/b63a/faults.json, expr: 'get:valid'}
+  fx_mac_c: {source: results/b63a/faults.json, expr: 'get:caught'}
+  fx_cfu_n: {source: results/b64a/faults.json, expr: 'get:valid'}
+  fx_cfu_c: {source: results/b64a/faults.json, expr: 'get:caught'}
+  fx_hil_n: {source: results/b30/faults.json, expr: 'get:valid'}
+  fx_hil_c: {source: results/b30/faults.json, expr: 'get:caught'}
+  # hidden tests and independent checking
+  d_tasks: {source: site/data/dev.json, expr: 'get:tasks'}
+  d_runs: {source: site/data/dev.json, expr: 'get:runs'}
+  d_pass: {source: site/data/dev.json, expr: 'get:hidden_pass'}
+  d_esc: {source: site/data/dev.json, expr: 'get:escapes'}
+  d_repaired: {source: site/data/dev.json, expr: 'get:outcomes.caught_and_repaired'}
+  d_stopped: {source: site/data/dev.json, expr: 'get:outcomes.internal_stop_hidden_pass'}
+  sp_caught: {source: results/08f/README.md, expr: 'str:counting three further saved escapes, (one of five)'}
+  sp_false: {source: results/08f/README.md, expr: 're:No correct design was\s+failed \((\d+) of \d+\)'}
+  sp_false_n: {source: results/08f/README.md, expr: 're:No correct design was\s+failed \(\d+ of (\d+)\)'}
+  lg_window: {source: site/leak_guard.py, expr: 're:^W = (\d+)'}
+  # protocol checkers: on the board, in simulation, and proved
+  ax_runs: {source: results/59a_axi_tx/board_run.json, expr: 'count@runs:'}
+  ax_pass: {source: results/59a_axi_tx/board_run.json, expr: 'count@runs:pass=true'}
+  ax_roc: {source: results/59a_axi_tx/board_run.json, expr: 'get:inside_roc'}
+  ax_vivado: {source: results/59a_axi_tx/board_run.json, expr: 'str:"vivado_version": "([\d.]+)"'}
+  ax_amd_runs: {source: results/59a_axi_tx/board_run.json, expr: 'count@runs:amd_pc_asserted=true'}
+  fa_depth: {source: results/59a_axi_tx/formal.json, expr: 'get:depth'}
+  fa_mutant_depth: {source: results/59a_axi_tx/formal.json, expr: 'get:mutant_depth'}
+  fa_axil_ok: {source: results/59a_axi_tx/formal.json, expr: 'get:units.axil.summary.proofs_pass'}
+  fa_axil_n: {source: results/59a_axi_tx/formal.json, expr: 'get:units.axil.summary.proofs'}
+  fa_axil_mk: {source: results/59a_axi_tx/formal.json, expr: 'get:units.axil.summary.mutants_killed'}
+  fa_axil_mn: {source: results/59a_axi_tx/formal.json, expr: 'get:units.axil.summary.mutants'}
+  fa_axil_sem: {source: results/59a_axi_tx/formal.json, expr: 'get:units.axil.summary.semantic'}
+  fa_axis_ok: {source: results/59a_axi_tx/formal.json, expr: 'get:units.axis.summary.proofs_pass'}
+  fa_axis_n: {source: results/59a_axi_tx/formal.json, expr: 'get:units.axis.summary.proofs'}
+  fa_axis_mk: {source: results/59a_axi_tx/formal.json, expr: 'get:units.axis.summary.mutants_killed'}
+  fa_axis_mn: {source: results/59a_axi_tx/formal.json, expr: 'get:units.axis.summary.mutants'}
+  fa_tool: {source: results/59a_axi_tx/formal.json, expr: 'str:"tool": "(Yosys \d+\.\d+)'}
+  fk_depth: {source: results/b58a/formal.json, expr: 're:"method": "k-induction, depth (\d+)"'}
+  fk_unknown: {source: results/b58a/formal.json, expr: 'str:(k-induction of the MAC FSMs)'}
+  fn_step: {source: results/b63d/formal.json, expr: 're:fails at step (\d+)'}
+  fn_tool: {source: results/b63d/formal.json, expr: 'str:"tool": "(Yosys \d+\.\d+)'}
+  fn_jobs: {source: results/b63d/formal.json, expr: 'count@jobs:'}
+  fn_pass: {source: results/b63d/formal.json, expr: 'count@jobs:status=PASS'}
+  # unbounded proofs, equivalence checking and the recorded counterexample (brief 81)
+  u_pdr_ok: {source: results/81_verification/unbounded.json, expr: 'count@attempts:method=pdr,status=PASS'}
+  u_pdr_n: {source: results/81_verification/unbounded.json, expr: 'count@attempts:method=pdr'}
+  u_ind_unknown: {source: results/81_verification/unbounded.json, expr: 'count@attempts:method=k-induction,status=UNKNOWN'}
+  u_ind_n: {source: results/81_verification/unbounded.json, expr: 'count@attempts:method=k-induction'}
+  u_tool: {source: results/81_verification/unbounded.json, expr: 'str:"tool": "(Yosys \d+\.\d+)'}
+  eq_n: {source: results/81_verification/equivalence.json, expr: 'count@cases:'}
+  eq_ok: {source: results/81_verification/equivalence.json, expr: 'count@cases:as_expected=true'}
+  eq_depth: {source: results/81_verification/equivalence.json, expr: 'get:depth'}
+  cex_step: {source: results/81_verification/counterexample.json, expr: 'get:failing_step'}
+  cex_depth: {source: results/81_verification/counterexample.json, expr: 'get:depth'}
+  # CDC
+  c_mut: {source: results/16_cdc_gate_2026_1/mutant_table.json, expr: 'count@rows:kind=mutant'}
+  c_ok: {source: results/16_cdc_gate_2026_1/mutant_table.json, expr: 'count@rows:kind=correct'}
+  c_tool: {source: results/16_cdc_gate_2026_1/mutant_table.json, expr: 'count@rows:kind=mutant,report_cdc_alone_flags=true'}
+  c_struct: {source: results/16_cdc_gate_2026_1/mutant_table.json, expr: 'count@rows:kind=mutant,structure_flags=true'}
+  c_sim: {source: results/16_cdc_gate_2026_1/mutant_table.json, expr: 'count@rows:kind=mutant,sim_flags=true'}
+  c_gate: {source: results/16_cdc_gate_2026_1/mutant_table.json, expr: 'count@rows:kind=mutant,gate_flags=true'}
+  c_false: {source: results/16_cdc_gate_2026_1/mutant_table.json, expr: 'count@rows:kind=correct,gate_flags=true'}
+  c_vivado: {source: results/16_cdc_gate_2026_1/mutant_table.json, expr: 'get:vivado'}
+  c_seeds: {source: results/16_cdc_gate_2026_1/mutant_table.json, expr: 'get:seeds'}
+  # static checks and the adversarial rounds
+  r_adv: {source: results/71b_netlist_scans/README.md, expr: 're:^(\d+) small attack designs'}
+  r_vivado: {source: results/71b_netlist_scans/tool_version.txt, expr: 'str:(2026\.1)'}
+  r_rounds: {source: docs/check_suite.md, expr: 'str:(three) review rounds'}
+  st_findings: {source: site/data/story.json, expr: 'get:content.values.findings_n'}
+  # traceability
+  tr_req: {source: results/53_traceability/summary.json, expr: 'get:designs.t1_dimmer_counter.requirements'}
+  tr_methods: {source: results/53_traceability/summary.json, expr: 'get:designs.t1_dimmer_counter.methods'}
+  tr_art: {source: results/53_traceability/summary.json, expr: 'get:designs.t1_dimmer_counter.artefacts.total'}
+  tr_cite: {source: results/53_traceability/summary.json, expr: 'get:designs.t1_dimmer_counter.artefacts.citing'}
+  tr_kb: {source: results/53_traceability/known_bad/kb*_trace.json, expr: 'nfiles'}
+  # hardware: the seeded pin fault
+  pf_level: {source: results/b30/hil_runs/b30_hil_audio_pinfault.hil.json, expr: 'get:checks.tone_at_the_jack.measured.level_dbfs_rms'}
+  pf_thd: {source: results/b30/hil_runs/b30_hil_audio_pinfault.hil.json, expr: 'get:checks.tone_at_the_jack.measured.thd_percent'}
+  pf_sinad: {source: results/b30/hil_runs/b30_hil_audio_pinfault.hil.json, expr: 'get:checks.tone_at_the_jack.measured.sinad_db'}
+  pf_min_level: {source: results/b30/hil_runs/b30_hil_audio_pinfault.hil.json, expr: 'get:checks.tone_at_the_jack.expected.min_level_dbfs'}
+  pf_max_thd: {source: results/b30/hil_runs/b30_hil_audio_pinfault.hil.json, expr: 'get:checks.tone_at_the_jack.expected.max_thd_percent'}
+
+text:
+  lede: >-
+    Every design the agent makes is checked by several techniques that fail in different ways, and none is trusted alone.
+  best: >-
+    Best evidence, each from deliberately seeded faults written by the project's own author: a wrong-pin fault that passes
+    simulation and every check inside the FPGA was found only by measuring the board's audio output; and a gate for crossings
+    between clocks flagged {c_gate} of {c_mut} such faulty designs where the vendor tool's own report flagged {c_tool}, with {c_false} false
+    alarms on {c_ok} correct designs. The gate was built after these faults were known, so this is not a held-out result.
+  nulls: >-
+    Nulls and gaps, stated first: the agent's own tests let {d_esc} of {d_runs} development runs through that the hidden
+    tests then failed; the independent spec-only test writer caught {sp_caught} known escapes; mutation testing
+    found {m_surv} survivors the bench missed on its first run; and the formal proofs are bounded, so they say nothing
+    beyond the depth they were run to.
+  how_to_read: >-
+    Terms: a seeded fault is a deliberate defect put into a design to see whether a check notices it. T1 is the hand-written
+    reference design. V0 to V3 are the four verification stages, and a gate is a check run by code that stops a stage if it
+    fails. The Modeller, Verifier and Designer are the agent's roles for the reference model, the tests and the RTL. A
+    scoreboard compares a design's outputs with a model. Toggle coverage counts signal bits that changed.
+    Each technique below has the same three parts: what it is and what it can and cannot find, where the agent and the flow
+    use it, and the measured evidence. Engineering detail is in the drawers. Every number is read from a committed result
+    file, which shows where it came from, not that the method is sound.
+  map_intro: >-
+    Rows are techniques, columns are the stages of one agent run; each cell names the check
+    in the flow's code that uses the technique there. Hidden tests run only when a benchmark task is scored, never
+    inside the agent's loop.
+  catch_intro: >-
+    From the seeded-fault records. A filled square means the technique flagged the fault; a
+    hollow square means it did not. A dash means the technique cannot see that kind of fault by design.
+  cdc_note: >-
+    Fixtures are small hand-written designs, not a sample of real designs. The report and the structural check read Vivado
+    {c_vivado} output; the injected simulation adds an extra synchroniser cycle at random, over {c_seeds} seeds.
+  axi_note: >-
+    Seeded into the board design and run on the Nexys A7 board. The vendor's checker watches only the AXI4-Lite bus, so on
+    the stream runs it is shown as a dash. The same plan was run in simulation, and the digests and cycle counts matched.
+  pin_intro: >-
+    One fault, three levels of checking. The design's RTL is identical to a working one; only the constraint file differs,
+    so the audio output is routed to the wrong pin.
+  pin_note: >-
+    The check at the jack passes only above {pf_min_level} dBFS rms and below {pf_max_thd} % distortion. A simulation-only
+    flow, or one that trusted the design's own self-checks, would ship this.
+  closure_intro: >-
+    How close the hand-written reference design (T1) is to each floor the flow will not let a plan lower. The bar is the
+    measured value, the tick is the floor.
+  closure_note: >-
+    The one recorded closure step is in mutation testing: {m_first} % on the first full run, {m_final} % after a test was added
+    for the two survivors. Report the first-run figure as the result.
+  depth_intro: >-
+    A bounded proof checks every input sequence up to N clock cycles and says nothing about cycle N plus one. An unbounded
+    proof covers every cycle. k-induction shows that if the property holds for k cycles in a row it holds on the next one,
+    but it needs the block's internal state to be constrained enough to make that step true. PDR (property-directed
+    reachability) searches for that constraint itself.
+  unb_intro: >-
+    Unbounded attempts on the AXI4-Lite checker, the stream checker and a generated register block, run with {u_tool} and
+    recorded whatever they returned. k-induction returned unknown on {u_ind_unknown} of {u_ind_n}: it could not show the step
+    case without a hand-written invariant, and the cause was not investigated further. PDR proved {u_pdr_ok} of {u_pdr_n}, so for these blocks the properties hold for every
+    cycle, not only to a depth. The property for the checkers is that they never fire on legal traffic; for the register
+    block it is the slave's side of the bus rules. The assumptions are the ones the bounded proofs use, and those proofs have
+    cover tasks that reach the interesting events, so the assumptions are not contradictory.
+  eq_intro: >-
+    Equivalence checking asks a different question: are two versions of a design the same? eqy compared the generated
+    register block before and after the interface-profile change, and two profiles that are meant to differ. A pair that is
+    meant to be equal must prove equal, and a pair that is meant to differ must be reported different.
+  eq_note: >-
+    The comparison matches registers by name and checks the pair to depth {eq_depth}; it does not show that two designs with
+    different registers behave alike. {eq_ok} of {eq_n} cases came out as expected.
+  cex_intro: >-
+    A real formal failure. The checker was given one deliberate fault: it counts a write response as early only when no
+    address has been seen, ignoring the write data. The proof "whenever the rule is broken, the checker must flag it" then
+    fails at step {cex_step} of the search to depth {cex_depth}. Drag the slider to replay the trace the solver found.
+  cex_note: >-
+    The checker flags at step {cex_flag_step}, when the response comes with the address, and is silent from step {cex_silent_step} on, although the write
+    response is still waiting and no write data was ever sent. The solver found it without being told where to look; a
+    directed test would need someone to think of the case.
+  formal_note: >-
+    A null: {fk_unknown} returned unknown and those tasks were removed, so the MAC state machines are proved only to a bounded depth.
+  limits: >-
+    Everything here is measured on small blocks and a few designs: the hand-written T1 reference, the AXI checker and the
+    network blocks. A technique that caught every seeded fault shows the faults were findable by it, not that no other
+    fault exists; faults written by the same author as the checks share their blind spots, which is why the
+    hidden tests and the board are kept separate. Formal results are bounded unless stated. Results not repeated on
+    Vivado 2026.1 are not shown. The map of techniques to checks is the
+    author's reading of the flow's code; the checks it names exist and the test suite verifies that.
+
+# technique -> stage map. Each cell names a check in the flow's code (verified to exist by site/tests/test_verification.py).
+stages:
+  - {id: s_plan, label: "Clarify and plan"}
+  - {id: s_rtl, label: "Stage 2: tests and RTL, V0 to V3"}
+  - {id: s_syn, label: "Synthesis and implementation gates"}
+  - {id: s_hw, label: "Stage 9: the board"}
+  - {id: s_score, label: "Benchmark scoring"}
+map:
+  - {technique: sim, cells: {s_rtl: [failing_tests, all_seeds_pass]}}
+  - {technique: hidden, cells: {s_score: ["hidden tests"]}}
+  - {technique: random, cells: {s_rtl: [constrained_random_test_ran, functional_bins_pct, line_pct, toggle_pct]}}
+  - {technique: mutation, cells: {s_rtl: [mutation_score_pct]}}
+  - {technique: assertions, cells: {s_rtl: [assertions_bound_zero_failures]}}
+  - {technique: formal, cells: {s_plan: [proof_methods_discharged], s_rtl: [formal_tasks_not_passing]}}
+  - {technique: cdc, cells: {s_rtl: [cdc_injection_clean], s_syn: [post_synth_cdc_structure_clean]}}
+  - {technique: static, cells: {s_syn: [post_synth_resets_clean]}}
+  - {technique: board, cells: {s_hw: [bringup_pass]}}
+  - {technique: trace, cells: {s_plan: [requirements_have_proof_method], s_rtl: [requirements_verified]}}
+
+techniques:
+  - id: sim
+    title: Directed and self-checking simulation
+    what: >-
+      A test drives a design's inputs and compares its outputs with a reference model, so the test says pass or fail by
+      itself. The tests are written in Python with cocotb and run on Icarus and Verilator for SystemVerilog, and VHDL runs
+      through GHDL. The reference model is written by a separate role, the Modeller, which never sees the RTL.
+    catches: >-
+      Wrong behaviour on the cases the tests drive: wrong values, wrong timing against the model, missing features.
+    cannot: >-
+      Anything no test drives, and any misreading of the spec that the test author shares with the designer, because the
+      model, tests and RTL can all agree on the wrong reading.
+    how: >-
+      Stage 2 writes the model first, then the tests, then the RTL; the V2 gate requires every planned test to pass on
+      every seed. The Verifier role writes the tests, the Designer repairs the RTL, and code runs the gates.
+    evidence: >-
+      On the T1 reference design {s_tests} tests pass on seeds {s_seeds_txt} under Verilator {t_verilator} and under {t_icarus}, with {s_asserts} assertions bound and
+      none failing. VHDL ({t_ghdl}) is a gap: a model's first translations passed {vhdl_first_ok} of {vhdl_first_n} board tasks, all
+      failing on one naming mistake, and the end-to-end agent writing VHDL has passed {vhdl_agent_ok} of {vhdl_agent_n} runs.
+    detail:
+      - The simulator matrix decided the stack. Covergroups are unsupported in every free simulator but one, so the bench is Python and runs everywhere.
+      - The V1 gate fails unless the bench uses the blind model. The check is bench_uses_blind_model.
+      - GHDL's back end has no code coverage for VHDL, so VHDL designs have no coverage figures.
+    links: [docs/verification.md, docs/tool_assessment/cocotb.md, results/04f, results/55_vhdl]
+
+  - id: hidden
+    title: Hidden tests decide the result, not the agent's own tests
+    what: >-
+      On benchmark tasks, a design counts as passing only if tests written by a separate author, against an independent
+      model of the full spec, pass. The agent never sees them. Its own testbench never counts, because a model's tests
+      share its misreading of the spec.
+    catches: >-
+      A design that satisfies the agent's reading of the spec but not the real one.
+    cannot: >-
+      It cannot tell the agent why it failed, and it can only judge tasks that have hidden tests.
+    how: >-
+      Used only when scoring benchmark runs, outside the agent's loop. In the loop the agent can add an optional extra
+      test writer, the spec-test role, which writes its own bench from the spec alone and never sees the RTL.
+    evidence: >-
+      On {d_tasks} development tasks, {d_pass} of {d_runs} runs passed every hidden test, and {d_esc} runs were
+      escapes: the agent's own checks passed and the hidden tests failed. {d_repaired} more runs had a gate fail, were
+      repaired and then passed, and {d_stopped} were stopped by the agent's own gates although the hidden tests would have passed. The
+      spec-test role, replayed on saved designs, caught {sp_caught} known escapes and failed {sp_false} of {sp_false_n}
+      correct designs.
+    detail:
+      - Held-out tasks are kept in a private repository, and a leak guard fails the site build if a {lg_window}-byte window of that material appears in it.
+      - Every escape so far has one cause, a spec-interpretation difference. The development tasks are the ones used to find and fix faults, so these rates are not a held-out score.
+      - The spec-test role is off by default. Its replay used saved final designs and no RTL repair.
+    links: [docs/verification.md, benchmark/README.md, results/08f, site/leak_guard.py]
+
+  - id: random
+    title: Constrained-random stimulus, functional coverage and code coverage
+    what: >-
+      Random stimulus within legal limits finds cases a person would not write. Coverage measures what was exercised:
+      functional bins (planned events), line, branch and toggle coverage of the RTL, and cover properties that must be reached.
+      The verification stages V1 to V3 say what each requires: V1 traces every spec item to a check, V2 needs the tests and
+      the constrained-random test to pass with the assertions bound, V3 needs coverage at the floors on several seeds.
+    catches: >-
+      Untested code and untested events, and, by the unreached cover properties, assertions that can never trigger.
+    cannot: >-
+      It cannot show that what was exercised was also checked. A bin is a count of events the bench caused, not evidence it
+      compared them with anything.
+    how: >-
+      V3 sits inside stage 2. The floors are in a fixed file the agent cannot write; a plan may raise a threshold, never lower it.
+      Only a waiver with a reason excuses a named bin or cover property.
+    evidence: >-
+      T1 reaches V3: {cov_bins_hit} of {cov_bins_n} functional bins, line coverage {cov_line} %, branch {cov_branch} %,
+      toggle {cov_toggle} % ({cov_toggle_hit} of {cov_toggle_n} points). The {cov_unhit} unhit toggle points are structural: bits no
+      register drives and blank display digits.
+    detail:
+      - The floors are functional bins {fl_bins} %, cover properties {fl_cover} %, line {fl_line} %, toggle {fl_toggle} %, mutation {fl_mut} %, and at least {fl_seeds} seeds.
+      - The thresholds were set after seeing the first run, so they are defaults for later benches, not a calibrated standard.
+    links: [docs/verification.md, flow/verif_floors.yaml, results/04f]
+
+  - id: mutation
+    title: Mutation testing
+    what: >-
+      Seed one small fault into a copy of the design, run the tests, and see whether they fail. A fault the tests miss shows
+      a gap in the tests. It is used on the agent's own tests, on the IP benches and on the hidden tests of the benchmark.
+    catches: >-
+      Tests that run the code but do not check what it does, such as reset states no test looked at.
+    cannot: >-
+      It cannot count a fault that changes nothing visible as caught. Such an equivalent mutant shows as a survivor, so a score below the top is not always a weak bench.
+    how: >-
+      Stage 2's V3 gate, through the mutate step the harness runs itself. A mutant counts as caught only when its run fails.
+      A mutant whose copy does not compile is excluded, never counted as caught, and a score counts only when at least {fl_mineval} mutants were evaluated.
+    evidence: >-
+      T1: {m_n} mutants, {m_first} % killed on the first full run by the bench alone; the bound checkers killed none the bench missed.
+      The {m_surv} survivors were reset-state faults, so a test was added and the final score is {m_final} %. The generic tool
+      agrees: {m_generic_killed} of {m_generic_n} killed. Faults seeded into the IP benches: {fx_net_c} of {fx_net_n} in the network blocks,
+      {fx_mac_c} of {fx_mac_n} in the MAC, {fx_cfu_c} of {fx_cfu_n} in the CRC instruction and {fx_hil_c} of {fx_hil_n} in the instrument library were caught.
+    detail:
+      - One design, one seed and hand-written mutants for the first figure. The IP-bench faults were written by the same agent that wrote the benches, so a full catch rate there shows the benches are not blind to the faults their author thought of.
+      - Mutation is a heavy local job and is not in CI; CI gates read the committed result.
+    links: [docs/verification.md, results/04f, results/05k, results/b63d, results/b30]
+
+  - id: assertions
+    title: Assertions and protocol checkers
+    what: >-
+      An assertion is a rule written beside the design that must always hold, for example "a response never arrives before
+      its data". A protocol checker is a set of such rules for a bus. The AXI4-Lite and AXI4-Stream checker here is a
+      block that runs in simulation and in the FPGA, and was compared with AMD's own checker. A separate monitor flags a
+      response that never comes.
+    catches: >-
+      Protocol violations at the cycle they occur, including those a data comparison would never see, such as a held request dropped.
+    cannot: >-
+      It cannot see data errors. A wrong byte on a legal transfer passes every protocol rule; that is the scoreboard's job. A rule that never fires may be broken, which is why every rule is also shown firing on its seeded violation.
+    how: >-
+      Bound into the bench at V2 (the check is assertions_bound_zero_failures). The same checker is built into the board
+      design and reports rule counts over the serial shell. The missing-response rule exists because AMD's checker has no
+      such rule and did not flag a lost response on AMD's own DMA core.
+    evidence: >-
+      On the board, {ax_pass} of {ax_runs} planned runs passed. Of {ax_bugs} seeded bugs, the rules built here flagged {ax_rules}, the data checks
+      {ax_data}, and AMD's checker {ax_amd_runs} (it watches only the AXI4-Lite bus, and the byte-strobe bug breaks no protocol rule). Every data
+      bug was caught by the scoreboard or the stream receiver instead (matrix above).
+    detail:
+      - The checker's own proofs and its mutants are in the formal section below.
+      - The missing-response monitor is bound into the register-block bench; a response that never comes fails the test.
+    links: [docs/axi_tx.md, results/59a_axi_tx, results/69_amd_ip_conventions, axi_tx/rtl/axil_resp_rules.sv]
+
+  - id: formal
+    title: Formal verification with SymbiYosys
+    what: >-
+      A solver searches every input sequence, not a sample, for one that breaks a property. Bounded proofs cover up to N
+      clock cycles; cover tasks show the property can be reached; and k-induction proves a property for all cycles when the
+      block's state is constrained enough. The checker is proved, then attacked: each copy of it with one deliberate fault must fail some proof.
+    catches: >-
+      Corner cases no one thought to simulate, such as a rare back-to-back sequence, and a checker that is silent because it is broken.
+    cannot: >-
+      A bounded proof says nothing about cycles beyond the depth of a bounded proof, or about a datapath too large for the solver. Time constants
+      are shrunk for the proof, so the proof is of the structure at that parameter, not of the board value. The solver
+      reads a subset of SystemVerilog.
+    how: >-
+      A formal method per requirement is planned at clarify and discharged at V2 only when both its bounded and cover
+      tasks pass. When SymbiYosys is not installed the flow never claims a proof: the method must be re-planned, with a reason.
+    evidence: >-
+      AXI4-Lite rules: {fa_axil_ok} of {fa_axil_n} proofs pass at depth {fa_depth} and {fa_axil_mk} of {fa_axil_mn} checker mutants are killed ({fa_axil_sem} of them
+      semantic). Stream rules: {fa_axis_ok} of {fa_axis_n} proofs and {fa_axis_mk} of {fa_axis_mn} mutants. A k-induction proof of the trading interlocks at depth {fk_depth}
+      and of the MDIO frame logic hold for all cycles. PDR proved {u_pdr_ok} of {u_pdr_n} further blocks for all cycles. A fault restored in the ICMP echo block fails its proof at step {fn_step}.
+    detail:
+      - "{fn_pass} of {fn_jobs} network-block jobs pass; the table below lists each with its method."
+      - The checker mutants are attacked at depth {fa_mutant_depth}, lower than the {fa_depth} of the proofs on the unmodified checker.
+      - "The tools differ by record: {fa_tool} for the checker proofs and {fn_tool} for the network blocks."
+    links: [docs/tool_assessment/symbiyosys.md, results/59a_axi_tx, results/b58a, results/b63d, results/81_verification, flow/formal.sh]
+
+  - id: cdc
+    title: Clock-domain-crossing verification
+    what: >-
+      A signal that crosses between two unrelated clocks can be sampled mid-change. Three checks look for unsafe crossings: AMD's
+      report_cdc, a structural check of the synthesised netlist, and a simulation that randomly delays each
+      synchroniser by one cycle to expose designs that only work when the crossing is lucky. Reset synchronisers get the same treatment.
+    catches: >-
+      A bus crossed bit by bit, two synchronisers whose outputs are combined, a pulse into a level synchroniser, a reset used across clocks.
+    cannot: >-
+      It cannot model real metastability or route skew; the simulation adds a whole cycle and has no timing window. A design with no crossing passes at once.
+    how: >-
+      The structural check is a synthesis gate (post_synth_cdc_structure_clean); the injected simulation runs the design's own tests
+      plain and with injection in the V3 stage (cdc_injection_clean).
+    evidence: >-
+      Of {c_mut} faulty designs, report_cdc alone flagged {c_tool}, the structural check {c_struct}, the injected simulation {c_sim}, and the gate, which runs the structural check and the injected simulation,
+      flagged {c_gate}, with {c_false} false alarms on {c_ok} correct designs. The table is from Vivado {c_vivado}.
+    detail:
+      - Synthesis-only reports; no place and route, no board.
+      - The soak rig's report_cdc results were not re-run on Vivado 2026.1 and are withdrawn from this site.
+    links: [results/16_cdc_gate_2026_1, flow/cdc_structure.py, flow/cdc_inject_run.py]
+
+  - id: static
+    title: Static checks
+    what: >-
+      Rules checked without running the design: lint (the FDA-HDL coding standard), AMD's methodology and DRC reports, and a
+      single agent tool, check, that runs all of them and returns a short digest instead of the raw reports.
+      The reset check decides from the elaborated design, and a netlist scan after synthesis catches resets that elaboration cannot see.
+    catches: >-
+      Asynchronous resets, mixed reset polarities, resets crossing clocks, logic driving a reset, and other rules a simulator never executes.
+    cannot: >-
+      A synchronous reset folded into the data logic leaves no row in the scan. A passing check does not mean the design is correct, only that it follows the rules.
+    how: >-
+      The sign-off gate post_synth_resets_clean and the Designer's check tool share one registry, so a finding means the same thing in the loop and at sign-off.
+    evidence: >-
+      The reset check's netlist part was attacked with {r_adv} small designs built with Vivado {r_vivado}. The reset source check went through {r_rounds} review rounds that broke
+      its earlier text scanner, which is now replaced by elaboration; both wrong passes the attacks found were fixed.
+    detail:
+      - A module exempt by its name alone let a user module called reset_sync pass; both of those wrong passes were fixed and are covered by regression cases.
+      - Findings that are not rule failures are listed in the results README.
+    links: [docs/check_suite.md, results/71_check_suite, results/71b_netlist_scans, docs/hdl_coding_standard.md]
+
+  - id: board
+    title: Hardware-in-the-loop and board verification
+    what: >-
+      The design is built, programmed on a Nexys A7 board and tested against the same model the simulation used. Seeded hardware
+      faults check that the checks fail when they should, and the board's temperature and rails are recorded as evidence that
+      the run was inside its operating conditions.
+    catches: >-
+      Faults only a real board shows: a wrong pin, a clock that behaves differently, a bus at speed.
+    cannot: >-
+      It cannot reach internal state beyond what the shell and the on-chip logic analyser can read, or measure what no instrument was connected for.
+    how: >-
+      Stage 9 (V-HW). The run always stops for a person before anything touches the board. Runs are planned before the board is used, and each passes when its verdict is the one the plan expects.
+    evidence: >-
+      The AXI plan passed {ax_pass} of {ax_runs} runs on Vivado {ax_vivado}, inside the recommended operating conditions at every sample.
+      The same programs in simulation gave the same transaction digest and cycle count on {px_equal} of the {px_n} runs against our own logic; the other
+      {px_vendor} use a vendor block-RAM core on the board and are compared by transactions and verdicts only. The pin fault (below) passed {pf_inside} of {pf_checks} self-checks and failed only at the jack.
+    detail:
+      - Runs on the vendor's block RAM core are compared by transactions and verdicts only; the simulation uses a memory model there.
+      - Instruments that were not connected (a logic analyser, a scope, a spectrum analyser) were not measured; their drivers are tested on synthetic data only.
+    links: [results/59a_axi_tx, results/b30, results/f0b_2026_1]
+
+  - id: trace
+    title: Requirements traceability
+    what: >-
+      Every requirement in the spec names how it will be shown to hold, and a table links each one to the test or proof that
+      shows it, the result, and the coverage. Gates name any requirement, test or coverage hole left without evidence.
+    catches: >-
+      A requirement nobody tested, a test that checks nothing in the spec, and evidence that went stale after a requirement changed.
+    cannot: >-
+      It cannot show a design meets requirements nobody wrote. It is a record of what was verified; it is not a claim of compliance with any standard.
+    how: >-
+      Recorded, not a stage-exit gate: a run can finish with failing traceability gates and the review page shows them. The clarify gate rejects vague or compound requirements.
+    evidence: >-
+      T1: {tr_req} requirements with {tr_methods} proof methods, {tr_cite} of {tr_art} tests and properties citing a requirement. {tr_kb} deliberately broken
+      T1 runs were each caught by exactly one traceability gate, while every simulation still passed.
+    detail:
+      - The three broken runs deleted a requirement's only test, added an untagged test, and added an RTL branch no test reaches.
+      - The agent-side pieces are covered by unit tests only; no new agent run used them yet.
+    links: [docs/traceability.md, results/53_traceability]
+
+  - id: adversarial
+    title: Adversarial review of the checkers themselves
+    what: >-
+      A check that passes everything is worse than none, so each checker is attacked: reviewers and the author try to build a
+      design it should flag and does not. A wrong pass is fixed, and the attack becomes a regression case.
+    catches: >-
+      A checker that is exempted by a name, misses a primitive, or folds a fault away.
+    cannot: >-
+      It cannot find a fault in the attackers' own blind spots. Rounds of review on the reset check found faults each time, so another is not ruled out.
+    how: >-
+      Part of building each check; the findings are in the improvement loop of the how-it-was-built page, which lists {st_findings} faults with a recorded fix.
+    evidence: >-
+      The {r_adv} attack designs of the static-checks card are one such attack; the how-it-was-built page lists every finding and its fix.
+    detail:
+      - Findings in the measuring instrument itself are fixed on one case, with no statistics.
+    links: [results/71b_netlist_scans, results/71_check_suite, docs/agent_lessons.md]
+
+# board runs of the AXI plan with a seeded fault: which checks flagged each (results/59a_axi_tx/board_run.json)
+axi_rows:
+  - {tag: periph_regs_b_early, label: "Write response before its data"}
+  - {tag: periph_regs_r_live, label: "Read data changes while the master waits (live)"}
+  - {tag: periph_regs_r_glitch, label: "Read data changes while the master waits (glitch)"}
+  - {tag: periph_regs_exokay, label: "Exclusive-access response, not allowed on AXI4-Lite"}
+  - {tag: master_inject, label: "Master drops or changes a request before it is accepted"}
+  - {tag: periph_regs_no_strb, label: "Byte strobes ignored (a data bug)"}
+  - {tag: stream_packets_lose_last, label: "Stream loses its last-beat marker (a data bug)"}
+  - {tag: stream_packets_keep_wire, label: "Stream data changes while the receiver waits"}
+
+pin_fault:
+  working: designs/b30_hil_audio
+  faulty: designs/b30_hil_audio_pinfault
+  record: results/b30/hil_runs/b30_hil_audio_pinfault.hil.json
+  audio_check: tone_at_the_jack

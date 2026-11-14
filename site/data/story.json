@@ -437,7 +437,7 @@
    "e_scored": 2,
    "e_slots": 57,
    "e_tasks": 19,
-   "exp_n": 11,
+   "exp_n": 12,
    "f1_base": 61.6,
    "f1_d_est": -12.4,
    "f1_d_hi": -3.5,
@@ -501,6 +501,8 @@
    "p0_b": 52,
    "p0_c": 42,
    "p0_n": 86,
+   "q_n": 3,
+   "q_ok": 3,
    "r_hyb": 0.306,
    "r_off_gate": 1,
    "r_off_pass": 0,
@@ -512,8 +514,12 @@
    "r_t0": 0.394,
    "r_tasks": 12,
    "span_days": 16,
+   "u_ind_n": 3,
+   "u_ind_unknown": 3,
+   "u_pdr_n": 3,
+   "u_pdr_ok": 3,
    "v_inconclusive": 1,
-   "v_mixed": 4,
+   "v_mixed": 5,
    "v_negative": 1,
    "v_null": 1,
    "v_stopped": 1,
@@ -1028,6 +1034,38 @@
     "setup": "Pre-registered before any scored run: 19 tasks, 3 runs each, scored by hidden tests, a task-level bootstrap, with a planned half-width of 17.5 points. The agent, knowledge bank and benchmark were frozen at the tag eval-1.",
     "title": "The first held-out evaluation (eval-1): stopped, no score",
     "verdict": "stopped"
+   },
+   {
+    "date": "2026-11-14",
+    "decision": "PDR is the method for unbounded proofs of these blocks, and the Verification page states which proofs are bounded and which are not. k-induction without written invariants is not used.",
+    "detail": [
+     "The state machines of the Ethernet MAC were not attempted with PDR, so they stay bounded."
+    ],
+    "id": "x_unbounded",
+    "interval": "One run each on three blocks. No statistics; a proof is a yes or no under its assumptions.",
+    "lesson": "An unbounded proof needs a method that finds its own invariant. Record the attempt that returned unknown as well as the one that proved.",
+    "links": [
+     {
+      "path": "results/81_verification/README.md",
+      "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/81_verification/README.md"
+     },
+     {
+      "path": "results/81_verification/unbounded.json",
+      "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/81_verification/unbounded.json"
+     },
+     {
+      "path": "results/81_verification/equivalence.json",
+      "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/81_verification/equivalence.json"
+     }
+    ],
+    "order": 20,
+    "plot": "",
+    "prs": [],
+    "question": "Can k-induction or PDR prove, for all clock cycles, that the AXI4-Lite checker, the stream checker and a generated register block keep their rules, where earlier proofs held only to a bounded depth?",
+    "result": "k-induction returned unknown on 3 of 3 blocks. PDR proved 3 of 3 for every cycle. eqy gave the expected answer on 3 of 3 pairs: the block before and after an interface change proved equivalent, two profiles meant to differ came out different.",
+    "setup": "Both methods on three blocks with the assumptions of the bounded proofs, and eqy on 3 pairs of generated register blocks. One run each, recorded whatever it returned.",
+    "title": "Can the protocol checkers be proved for every cycle, not only to a depth?",
+    "verdict": "mixed"
    }
   ],
   "findings": [
@@ -1450,7 +1488,7 @@
    "glossary": "Terms used below: CVDP is a public set of RTL-writing problems. CDC is a signal crossing between two clocks. A mutant is a design with one deliberate fault, used to test whether the tests notice. An escape is a run whose own checks passed while the hidden tests failed. Slack is how much timing margin a path has; negative means it fails. V0 to V3 are the four verification stages. H1, H2 and H9 are three harness changes (context management, hang protection, report digests). Slack and WNS both mean timing margin. An oracle answers the agent's clarifying questions from the hidden spec. ILA is an on-chip logic analyser. MCP is the protocol the agent's tools speak. Stage 2 is the RTL and tests stage. The Clarifier, Modeller, Verifier and Designer are the agent's four roles. The models are named as the provider lists them.",
    "lede": "How the FPGA Design Agent was designed, measured and corrected. The agent turns a plain-English request into a design checked by hidden tests, code-run gates and a board. This page shows how that was built and tested, one experiment at a time, including the ones that found nothing.",
    "limits": "The grouping of the timeline and the cause class of each finding are the author's reading of the pull request text, not a measurement. The findings listed are the ones with a recorded fix, not a complete count of the agent's faults. Most experiments ran one model on a small task set, and each card says so. Results measured on an earlier Vivado release and not repeated on Vivado 2026.1 are not shown. The list of merged pull requests is a snapshot from the day the page was built.",
-   "scope": "11 experiments are written up below, each in the same form. Where a run was single or the sample small, the card says so and claims no rate."
+   "scope": "12 experiments are written up below, each in the same form. Where a run was single or the sample small, the card says so and claims no rate."
   },
   "timeline": [
    {
@@ -2024,7 +2062,7 @@
    "e_scored": 2,
    "e_slots": 57,
    "e_tasks": 19,
-   "exp_n": 11,
+   "exp_n": 12,
    "f1_base": 61.6,
    "f1_d_est": -12.4,
    "f1_d_hi": -3.5,
@@ -2088,6 +2126,8 @@
    "p0_b": 52,
    "p0_c": 42,
    "p0_n": 86,
+   "q_n": 3,
+   "q_ok": 3,
    "r_hyb": 0.306,
    "r_off_gate": 1,
    "r_off_pass": 0,
@@ -2099,8 +2139,12 @@
    "r_t0": 0.394,
    "r_tasks": 12,
    "span_days": 16,
+   "u_ind_n": 3,
+   "u_ind_unknown": 3,
+   "u_pdr_n": 3,
+   "u_pdr_ok": 3,
    "v_inconclusive": 1,
-   "v_mixed": 4,
+   "v_mixed": 5,
    "v_negative": 1,
    "v_null": 1,
    "v_stopped": 1,
