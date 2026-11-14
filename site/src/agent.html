@@ -40,6 +40,11 @@
 <figure>{{!agent_pipeline}}
 <figcaption>Select a stage to show where its failures may go back to. A stage that has used its visits ends the run.</figcaption></figure>
 
+<h2 id="checks">The check suite: one tool, one registry</h2>
+<p>The Designer and the closure loop run every design check through one tool, <code>check</code>, instead of a tool per checker. It takes the check names (or <code>all</code>: every check that applies at the stage), the scope (<code>rtl</code>, <code>synth</code> or <code>route</code>) and a level, and returns a short digest: each check pass, fail, partial or not run with the reason, and each finding with its coding-standard rule, its place, a one-line fix and the knowledge-bank skill that explains it. The full result goes to a file named in the digest. Source checks run at the same time; checks that need a Vivado report the build did not write share one Vivado session on the stage's checkpoint. The sign-off gates call the same registry, so a finding means the same thing in the Designer's loop and at sign-off. AMD's own reports decide wherever one covers the rule; our code covers the house rules no AMD report does (the reset netlist scan, the structural CDC check, the exception and I/O checks, the MMCM range check). The older tools (<code>lint</code>, <code>gates</code>, <code>check_constraints</code>, <code>report_digest</code>) stay: the graph's gates and the recorded runs call them.</p>
+{{!agent_checks}}
+<p class="small muted">From <code>flow/checks</code> and <code>flow/hdl_rules.yaml</code>; every code a check can raise maps to a rule there, and a test fails for a rule no check covers. Details in <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/docs/check_suite.md">docs/check_suite.md</a>.</p>
+
 <h2 id="replay">A recorded run, replayed</h2>
 <p>Choose a run. The first passed every hidden test and stopped at the board, as none was attached; its record keeps how often each stage was visited, not the order of the repeats, so repeats are shown back to back. The second is a Deep Agents run that recorded the order of its visits and every tool call of every role; it could not get stage 2 to pass and gave up.</p>
 <div class="player agplay" id="agent-replay" aria-label="Replay of a recorded run through the agent's diagrams">

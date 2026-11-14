@@ -80,6 +80,8 @@ def addressed_texts(sby) -> list[tuple[str, int, str, str, str]]:
 #: writer to call board_constraints, a tool only stages 1 and 3 have, at stages 2 and 4-9. Listing it keeps a NEW
 #: mismatch failing; fixing it means deleting the entries.
 KNOWN_GAPS = {("rtl", n, "conventions"): {"board_constraints"} for n in (2, 4, 5, 6, 7, 8, 9)}
+#: brief 71: HW_FORMAT's ``check(samples)`` is the hw_checks.py function the Verifier writes, not the ``check`` tool
+KNOWN_GAPS[("tests", 9, "HW_FORMAT")] = {"check"}
 
 
 def test_every_text_names_only_tools_its_role_has(sby):

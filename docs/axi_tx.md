@@ -98,6 +98,7 @@ AXI4-Lite rules, cited to Arm IHI 0022H (issue H) by section, in our words:
 | 7 | RESET | AWVALID, WVALID and ARVALID are low at the first edge at which reset is seen released (a BVALID or RVALID there breaks rule 5 or 6, which fires instead) | A3.1.2 |
 | 8 | EXOKAY | no EXOKAY response on AXI4-Lite, which has no exclusive access | B1.1 |
 | 9 | IN_RESET | every VALID is low while ARESETn is held low, from the second edge of a reset (a design with a synchronous reset clears its VALID at the first edge at which it sees reset) | A3.1.2 |
+| 10 | RESP_LOST | brief 71, a separate monitor (`axi_tx/rtl/axil_resp_rules.sv`, placed beside `axil_rules`): while a write (AW and W both accepted) or a read (AR accepted) is unanswered, its B or R comes within `TIMEOUT` clocks (a parameter, default 256) of that moment or of the previous response; `lost[0]` (writes) or `lost[1]` (reads) is high every cycle past the bound. The case it exists for: brief 69's AXI DMA register port accepted a second write while the first B waited and returned one B for both. A slave legally slower than `TIMEOUT` fires it, so set `TIMEOUT` from the slave's documented worst case. Not part of `axil_checker`'s 10-bit `viol` (its users and their logs keep their width); seeded faults in `axi_tx/tests/test_71_resp_rules_rtl.py` | A3.3 |
 
 AXI4-Stream rules, cited to Arm IHI 0051B:
 

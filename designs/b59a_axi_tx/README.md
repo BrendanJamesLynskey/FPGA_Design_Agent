@@ -70,7 +70,7 @@ Interfaces:
 | build the board design; needs local Vivado 2026.1 (Basic tier) and a heavy slot (take_heavy_slot.sh) | `flow/run_vivado.sh designs/b59a_axi_tx base` | yes | about 12 min |
 | run the board plan; needs the Nexys A7 on wall power and the board lock | `python3 axi_tx/host/run_board.py --plan axi_tx/programs/board_plan.yaml --json results/59a_axi_tx/board_run.json` | no | about 8 min |
 
-Tool: Vivado 2026.1. Build ID of the inputs at handover: `84dd185a` (`python flow/manifest.py show designs/b59a_axi_tx`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `1fc7ed8`.
+Tool: Vivado 2026.1. Build ID of the inputs at handover: `55b4d5dd` (`python flow/manifest.py show designs/b59a_axi_tx`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `20d73e8`.
 
 | File | What |
 |---|---|

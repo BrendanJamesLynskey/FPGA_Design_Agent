@@ -1,0 +1,235 @@
+{
+ "design": "b65a_axil_soc",
+ "scope": "synth",
+ "variant": "base",
+ "level": "summary",
+ "standard": "FDA-HDL",
+ "version": "1.1",
+ "checks": [
+  {
+   "check": "lint",
+   "status": "not_run",
+   "why": "verilator is not on PATH",
+   "findings": [],
+   "parts": {},
+   "records": []
+  },
+  {
+   "check": "standards",
+   "status": "fail",
+   "incomplete": [],
+   "parts": {},
+   "findings": [
+    {
+     "rule": "HDL-IF-01",
+     "tool": "standards",
+     "code": "STD-ARCH-00",
+     "severity": "fail",
+     "where": "architecture.yaml:1",
+     "key": "standards:STD-ARCH-00 architecture.yaml:1",
+     "message": "architecture.yaml does not exist",
+     "fix": "use AXI4-Lite or AXI4-Stream with AMBA port names and declare the interface in architecture.yaml",
+     "skill": "bus-and-register-interfaces",
+     "blocking": true,
+     "count": 1
+    }
+   ],
+   "records": [
+    "build/checks/base/synth/standards.json"
+   ],
+   "why": ""
+  },
+  {
+   "check": "resets",
+   "status": "pass",
+   "incomplete": [],
+   "parts": {
+    "source": "ran",
+    "amd": "ran",
+    "netlist": "ran"
+   },
+   "findings": [],
+   "records": [
+    "build/base/methodology_synth.rpt",
+    "build/base/drc_synth.rpt",
+    "build/base/cdc_synth.rpt",
+    "build/checks/base/synth/reset_scan.tsv"
+   ],
+   "why": ""
+  },
+  {
+   "check": "cdc",
+   "status": "pass",
+   "incomplete": [],
+   "parts": {
+    "report_cdc": "ran",
+    "structure": "ran"
+   },
+   "findings": [],
+   "records": [
+    "build/base/cdc_synth.rpt",
+    "build/base/cdc_paths_synth.rpt"
+   ],
+   "why": ""
+  },
+  {
+   "check": "methodology",
+   "status": "pass",
+   "incomplete": [],
+   "parts": {},
+   "findings": [
+    {
+     "rule": "HDL-XDC-01",
+     "tool": "vivado",
+     "code": "XDCH-2",
+     "severity": "Warning",
+     "where": "methodology_synth.rpt@post_synth",
+     "key": "vivado:XDCH-2@post_synth",
+     "message": "Same min and max delay values on IO port (x19)",
+     "fix": "constrain every clock and I/O from the data sheet; an exception must cover the paths it names and no others",
+     "skill": "xdc-coverage-and-audit-checks",
+     "blocking": false,
+     "count": 19
+    }
+   ],
+   "records": [
+    "build/base/methodology_synth.rpt"
+   ],
+   "why": ""
+  },
+  {
+   "check": "drc",
+   "status": "pass",
+   "incomplete": [],
+   "parts": {},
+   "findings": [
+    {
+     "rule": "HDL-DRC-01",
+     "tool": "vivado",
+     "code": "REQP-1840",
+     "severity": "Warning",
+     "where": "drc_synth.rpt@post_synth",
+     "key": "vivado:REQP-1840@post_synth",
+     "message": "RAMB18 async control check (x2)",
+     "fix": "fix the pin, I/O standard or primitive setting the DRC row names",
+     "skill": "drc-closure",
+     "blocking": false,
+     "count": 2
+    }
+   ],
+   "records": [
+    "build/base/drc_synth.rpt"
+   ],
+   "why": ""
+  },
+  {
+   "check": "exceptions",
+   "status": "pass",
+   "incomplete": [],
+   "parts": {},
+   "findings": [],
+   "records": [],
+   "why": ""
+  },
+  {
+   "check": "io",
+   "status": "pass",
+   "incomplete": [],
+   "parts": {},
+   "findings": [],
+   "records": [],
+   "why": ""
+  },
+  {
+   "check": "clocking",
+   "status": "pass",
+   "incomplete": [],
+   "parts": {
+    "methodology": "ran",
+    "cmt": "ran"
+   },
+   "findings": [],
+   "records": [
+    "build/base/methodology_synth.rpt",
+    "build/checks/base/synth/cmt.rpt"
+   ],
+   "why": ""
+  },
+  {
+   "check": "dsp_ram_mapping",
+   "status": "pass",
+   "incomplete": [],
+   "parts": {
+    "methodology": "ran",
+    "drc": "ran"
+   },
+   "findings": [
+    {
+     "rule": "HDL-METH-01",
+     "tool": "vivado",
+     "code": "SYNTH-6",
+     "severity": "Warning",
+     "where": "methodology_synth.rpt@post_synth",
+     "key": "vivado:SYNTH-6@post_synth",
+     "message": "Timing of a RAM block might be sub-optimal (x1)",
+     "fix": "fix the construct the methodology row names (pipeline the DSP or RAM, reduce control sets), or waive it with a reason",
+     "skill": "vivado-timing-methodology-checks",
+     "blocking": false,
+     "count": 1
+    }
+   ],
+   "records": [
+    "build/base/methodology_synth.rpt",
+    "build/base/drc_synth.rpt",
+    "build/base/utilization_synth.rpt"
+   ],
+   "why": ""
+  },
+  {
+   "check": "control_sets",
+   "status": "pass",
+   "incomplete": [],
+   "parts": {},
+   "findings": [],
+   "records": [
+    "build/checks/base/synth/control_sets.rpt"
+   ],
+   "why": ""
+  },
+  {
+   "check": "axi",
+   "status": "pass",
+   "incomplete": [],
+   "parts": {},
+   "findings": [],
+   "records": [],
+   "why": ""
+  },
+  {
+   "check": "doc",
+   "status": "pass",
+   "incomplete": [],
+   "parts": {},
+   "findings": [],
+   "records": [
+    "handover.yaml"
+   ],
+   "why": ""
+  }
+ ],
+ "skipped": {
+  "fsm": "no verif/fsm.yaml (the design declares no state machine to cover)",
+  "gt_plan": "no link: section in spec.yaml or link_spec.yaml (no transceiver link)"
+ },
+ "vivado": null,
+ "bad_waivers": [],
+ "seconds": 0.62,
+ "extra": {
+  "control_sets": 68,
+  "dsp_ram_util": {
+   "dsp": 0,
+   "dsp_available": 240
+  }
+ },
+ "pass": false
+}

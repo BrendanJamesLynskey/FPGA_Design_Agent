@@ -9,7 +9,7 @@ Board demonstration of an on-chip AXI4-Lite and AXI4-Stream traffic generator, p
 not: full AXI4 (bursts, IDs, several transactions in flight), a slave side, a DMA target or a soak mode; a hunt for bugs in a third-party core; the peripheral, the FIFO and their bugs are ours and deliberately simple
 
 ## state
-stage=board-verified vivado=2026.1 kb_pin=1fc7ed8 build_id=84dd185a
+stage=board-verified vivado=2026.1 kb_pin=20d73e8 build_id=55b4d5dd
 gates: build_2026_1=pass board_plan=pass
 
 ## interface
@@ -27,7 +27,7 @@ param program RAM=256 instructions of four 32-bit words legal=loops nest 4 deep
 designs/b59a_axi_tx/rtl/b59a_axi_tx_top.sv 4d042b962a: board top
 designs/b59a_axi_tx/design.xdc 62d07a8525: pins and clock
 designs/b59a_axi_tx/ip/amd_ip.tcl 13744aab59: creates the AMD IP (hash-listed in flow/ip_tcl_allow.yaml)
-docs/axi_tx.md a436f81e38: interface datasheet
+docs/axi_tx.md 6cd2f9dcfc: interface datasheet
 axi_tx/tests/test_59a_rtl.py 0ad2ec372f: cocotb tests
 axi_tx/programs/board_plan.yaml e56a3dcaeb: pre-registered board plan
 

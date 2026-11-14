@@ -31,18 +31,18 @@ _L = {"turns": 30, "seconds": 1800, "usd": 0.40}
 
 MACHINE: tuple[Stage, ...] = (
     Stage(0, "clarify", FILES, ("spec_signed",), (), {"turns": 20, "seconds": 900, "usd": 0.20}),
-    Stage(1, "board-and-device-planning", (*FILES, "board_constraints", "check_constraints", "gates"),
+    Stage(1, "board-and-device-planning", (*FILES, "board_constraints", "check_constraints", "gates", "check", "gt_plan"),
           ("arch_note", "arch_yaml", "inventory"), (0,), _L),
-    Stage(2, "rtl-design-creation", (*FILES, "lint", "simulate", "formal", "gates"),
+    Stage(2, "rtl-design-creation", (*FILES, "lint", "simulate", "formal", "gates", "check", "gt_plan"),
           ("arch_approved", "lint", "model_contract", "simulate", "standards_rtl", "verif_v3", "stage_rtl"), (0, 1),
           {"turns": 80, "seconds": 3600, "usd": 0.80}),      # 05g: 60 -> 80, the tests role keeps a reserve (run.ROLE_TURN_RESERVE)
-    Stage(3, "constraints", (*FILES, "board_constraints", "check_constraints", "build", "gates", "report"), ("constraints_post_synth",), (2,), _L),   # f2-stage3-io: + report
-    Stage(4, "synthesis", (*FILES, "build", "gates", "report"), ("stage_post_synth", "standards_post_synth"), (1, 2, 3), _L),
-    Stage(5, "implementation", (*FILES, "build", "gates", "report"), ("stage_post_place", "stage_post_route"), (6,), _L),
-    Stage(6, "timing-closure", (*FILES, "build", "gates", "report"), ("timing",), (3, 2, 5), _L),
-    Stage(7, "power-closure", (*FILES, "build", "gates", "report"), ("power",), (2, 0), _L),
-    Stage(8, "drc-closure", (*FILES, "build", "gates", "report"), ("drc",), (3, 2), _L),
-    Stage(9, "configuration-and-debug", (*FILES, "build", "gates", "report", "program", "bringup"),
+    Stage(3, "constraints", (*FILES, "board_constraints", "check_constraints", "build", "gates", "report", "check", "gt_plan"), ("constraints_post_synth",), (2,), _L),   # f2-stage3-io: + report
+    Stage(4, "synthesis", (*FILES, "build", "gates", "report", "check"), ("stage_post_synth", "standards_post_synth"), (1, 2, 3), _L),
+    Stage(5, "implementation", (*FILES, "build", "gates", "report", "check"), ("stage_post_place", "stage_post_route"), (6,), _L),
+    Stage(6, "timing-closure", (*FILES, "build", "gates", "report", "check"), ("timing",), (3, 2, 5), _L),
+    Stage(7, "power-closure", (*FILES, "build", "gates", "report", "check"), ("power",), (2, 0), _L),
+    Stage(8, "drc-closure", (*FILES, "build", "gates", "report", "check"), ("drc",), (3, 2), _L),
+    Stage(9, "configuration-and-debug", (*FILES, "build", "gates", "report", "check", "program", "bringup"),
           ("bitstream_base", "bitstream_ila", "bringup_ready", "bringup", "signoff"), (6, 2, 0), {"turns": 45, "seconds": 3600, "usd": 0.40}),   # 05g: 30 -> 45, 15 held for the tests role
 )
 assert tuple(s.name for s in MACHINE) == STAGES
@@ -125,6 +125,11 @@ def _stage_pass(gates: dict | None, flow_stage: str, only: set[str] | None = Non
         bad = [b + (f" ({unconstrained_text(st['unconstrained_ports'])})" if "unconstrained" in b else "") for b in bad]
     if st.get("exceptions"):                   # brief 20: which exception, where in the XDC, and Vivado's words
         bad = [b + (f" ({exceptions_text(st)})" if b.endswith("exceptions_clean") else "") for b in bad]
+    if st.get("resets"):                       # brief 71: which reset rule, where, and the one-line fix
+        rs_ = st["resets"]
+        txt = "; ".join(f"{f['rule']} {f['code']} {f['where']}: {f['message'][:160]}" for f in (rs_.get("findings") or [])[:6]) \
+            or str(rs_.get("why", ""))[:200]
+        bad = [b + (f" ({txt})" if b.endswith("resets_clean") else "") for b in bad]
     if st.get("io_timing"):                    # brief 20 part B: which delay, where in the XDC, and why
         bad = [b + (f" ({io_text(st)})" if b.endswith(("io_timing_clean", "io_constraints_clean")) else "") for b in bad]
     xp = (gates or {}).get("xprobe")           # brief 18: present only for a build run with FDA_XPROBE=1

@@ -3,14 +3,17 @@
 docs/hdl_coding_standard.md).
 
     python3 flow/lint_ruleset.py designs/<d> [--gates build/base/gates.json] [--standards build/standards.json]
-        [--no-verilator] [--json OUT]
+        [--checks build/checks/base/synth.json] [--no-verilator] [--json OUT]
 
-Three sources of findings, each mapped to a rule:
+Four sources of findings, each mapped to a rule:
 
 - Verilator ``--lint-only -Wall`` on the build's sources (build.yaml) and the design's lint stubs (``lint/*.sv``);
 - the Vivado findings in the build's ``gates.json`` (report_methodology, report_drc and report_cdc rule lists of every
   stage) at severity Warning or above;
-- ``flow/standards_check.py``'s result (a rule that failed or could not run).
+- ``flow/standards_check.py``'s result (a rule that failed or could not run);
+- the reset check's findings from a check-suite result (brief 71, ``python3 -m flow.checks``), counted only when its
+  netlist part ran. Rules whose checks name only other check-suite tools (fsm, axi, gt, doc, ...) are reported by the
+  suite and left out here.
 
 A finding is waived by an entry of ``lint/waivers.yaml`` whose ``rule`` is its rule id and whose ``match`` (a glob)
 matches its key (glob with literal brackets, or ``re:<regex>``: ``verilator:CODE file:line``, ``vivado:RULE-ID@stage``, ``standards:STD-ID file:line``); the waiver
@@ -65,7 +68,7 @@ def rule_problems(rs: dict[str, Any]) -> list[str]:
             out.append(f"{rid}: no rationale")
         if not r.get("title"):
             out.append(f"{rid}: no title")
-        if not r.get("checks") or not any(r["checks"].get(k) for k in ("verilator", "vivado", "standards")):
+        if not r.get("manual") and (not r.get("checks") or not any(r["checks"].values())):
             out.append(f"{rid}: maps to no tool check")
     for tool in ("verilator", "vivado", "standards"):
         n = sum(1 for r in rs.get("rules") or [] if "*" in ((r.get("checks") or {}).get(tool) or []))
@@ -170,11 +173,27 @@ def load_waivers(design: Path) -> tuple[list[dict[str, Any]], list[str]]:
     return good, bad
 
 
+#: the finding sources this script reads; a rule whose checks name none of them belongs to another check of the suite
+#: (flow/checks: fsm, axi, gt, doc, ...) and is left out here
+TOOLS = ("verilator", "vivado", "standards", "resets")
+
+
+def checks_findings(rep: dict[str, Any], tool: str) -> list[dict[str, Any]]:
+    """Findings of one tool key from a check-suite result (flow/checks, brief 71: build/checks/<variant>/<scope>.json)."""
+    out = []
+    for c in rep.get("checks") or []:
+        for f in c.get("findings") or []:
+            if f.get("tool") == tool and f.get("blocking", True):
+                out.append({"tool": tool, "code": f["code"], "key": f.get("key") or f"{tool}:{f['code']} {f.get('where')}",
+                            "severity": f.get("severity", "error"), "message": f.get("message", "")})
+    return out
+
+
 def evaluate(design: Path, gates: Path | None, standards: Path | None, run_verilator: bool = True,
-             rs: dict[str, Any] | None = None) -> dict[str, Any]:
+             rs: dict[str, Any] | None = None, checks: Path | None = None) -> dict[str, Any]:
     rs = rs or load_rules()
     findings: list[dict[str, Any]] = []
-    ran = {"verilator": False, "vivado": False, "standards": False}
+    ran = {"verilator": False, "vivado": False, "standards": False, "resets": False}
     notes = {}
     if run_verilator:
         vf, note = verilator_findings(design)
@@ -195,13 +214,25 @@ def evaluate(design: Path, gates: Path | None, standards: Path | None, run_veril
         ran["standards"] = True
     else:
         notes["standards"] = "no standards.json given or found"
+    if checks and checks.is_file():                    # brief 71: the reset check's own findings
+        rep = json.loads(checks.read_text())
+        rc = next((c for c in rep.get("checks") or [] if c.get("check") == "resets"), None)
+        if rc and rc.get("status") != "not_run" and (rc.get("parts") or {}).get("netlist") == "ran":
+            findings += checks_findings(rep, "resets")
+            ran["resets"] = True
+        else:
+            notes["resets"] = "the check suite's reset check did not run its netlist part"
+    else:
+        notes["resets"] = "no check-suite result given (python3 -m flow.checks <design> --names resets --scope synth)"
     waivers, bad_waivers = load_waivers(design)
     for f in findings:
         f["rule"] = rule_for(rs, f["tool"], f["code"])
         f["waived_by"] = next((w for w in waivers if w["rule"] == f["rule"] and match_item(f["key"], str(w["match"]))), None)
     rules = []
     for r in rs["rules"]:
-        tools = [t for t in ("verilator", "vivado", "standards") if (r.get("checks") or {}).get(t)]
+        tools = [t for t in TOOLS if (r.get("checks") or {}).get(t)]
+        if not tools:
+            continue
         fs = [f for f in findings if f["rule"] == r["id"]]
         open_ = [f for f in fs if not f["waived_by"]]
         if r["id"] == "HDL-WAIVE-01" and bad_waivers:
@@ -235,6 +266,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("design")
     ap.add_argument("--gates")
     ap.add_argument("--standards")
+    ap.add_argument("--checks", help="a check-suite result (build/checks/<variant>/<scope>.json) for the reset rules")
     ap.add_argument("--no-verilator", action="store_true")
     ap.add_argument("--json")
     a = ap.parse_args(argv)
@@ -244,7 +276,7 @@ def main(argv: list[str] | None = None) -> int:
     if probs:
         print("rule set problems:\n  " + "\n  ".join(probs))
         return 2
-    rep = evaluate(rel(a.design), rel(a.gates), rel(a.standards), not a.no_verilator, rs)
+    rep = evaluate(rel(a.design), rel(a.gates), rel(a.standards), not a.no_verilator, rs, rel(a.checks))
     print(f"{rep['standard']} v{rep['version']} on {rep['design']}: ran {', '.join(k for k, v in rep['ran'].items() if v) or 'nothing'}")
     for k, v in rep["notes"].items():
         print(f"  note {k}: {v}")
