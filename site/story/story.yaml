@@ -1,0 +1,486 @@
+# The story page (brief 76). Prose holds no typed numbers: every figure is a {name} read from a committed file.
+values:
+  # cheap-model screen (CVDP problems, paired against the base model)
+  f1_g_est: {source: results/f1b/paired_eval86.md, expr: 're:\| G \| no detectable effect \| (-?[\d.]+) \['}
+  f1_g_lo: {source: results/f1b/paired_eval86.md, expr: 're:\| G \| no detectable effect \| -?[\d.]+ \[(-?[\d.]+),'}
+  f1_g_hi: {source: results/f1b/paired_eval86.md, expr: 're:\| G \| no detectable effect \| -?[\d.]+ \[-?[\d.]+, \+?(-?[\d.]+)\]'}
+  f1_d_est: {source: results/f1b/paired_eval86.md, expr: 're:\| D \| worse than base \| (-?[\d.]+) \['}
+  f1_d_lo: {source: results/f1b/paired_eval86.md, expr: 're:\| D \| worse than base \| -?[\d.]+ \[(-?[\d.]+),'}
+  f1_d_hi: {source: results/f1b/paired_eval86.md, expr: 're:\| D \| worse than base \| -?[\d.]+ \[-?[\d.]+, \+?(-?[\d.]+)\]'}
+  f1_probs: {source: results/f1b/paired_eval86.md, expr: 're:\| G \| no detectable effect \| [^|]+\| [^|]+\| [^|]+\| (\d+) \|'}
+  f1_level: {source: results/f1b/paired_eval86.md, expr: 're:Effect \[([\d.]+)%\]'}
+  f1_base: {source: results/f1b/paired_eval86.md, expr: 're:\| L \(base\) \| 1: ([\d.]+)%'}
+  f1_g_pool: {source: results/f1b/paired_eval86.md, expr: 're:\| G \| [^|]+\| \d+/\d+ = ([\d.]+)%'}
+  f1_d_pool: {source: results/f1b/paired_eval86.md, expr: 're:\| D \| [^|]+\| \d+/\d+ = ([\d.]+)%'}
+  # open-weight base screen
+  p0_n: {source: results/p0/SUMMARY.md, expr: 're:Q36_\S+ \| [^|]+\| (?:\d+)/(\d+) \|'}
+  p0_a: {source: results/p0/SUMMARY.md, expr: 're:Q36_\S+ \| [^|]+\| [^|]+\| run_budget_exhausted (\d+)'}
+  p0_b: {source: results/p0/SUMMARY.md, expr: 're:Q3C_41242996907_void \| [^|]+\| [^|]+\| run_budget_exhausted (\d+)'}
+  p0_c: {source: results/p0/SUMMARY.md, expr: 're:Q3C_41247458070_void \| [^|]+\| [^|]+\| run_budget_exhausted (\d+)'}
+  # mutation testing of the agent's own tests
+  m_n: {source: results/04f/mutation_t1.json, expr: 'get:mutants'}
+  m_first: {source: results/04f/mutation_t1.json, expr: 'get:first_run.score_pct'}
+  m_first_chk: {source: results/04f/mutation_t1.json, expr: 'get:first_run.score_with_checkers_pct'}
+  m_surv: {source: results/04f/mutation_t1.json, expr: 'count@first_run.survivors'}
+  m_final: {source: results/04f/mutation_t1.json, expr: 'get:score_pct'}
+  fl_mut: {source: flow/verif_floors.yaml, expr: 're:^mutation_score_pct: (\d+)'}
+  fl_toggle: {source: flow/verif_floors.yaml, expr: 're:^toggle_pct: (\d+)'}
+  fl_mineval: {source: flow/verif_floors.yaml, expr: 're:^mutation_min_evaluated: (\d+)'}
+  # skill routing
+  r_runs: {source: results/36_skill_routing/e2e.md, expr: 're:\| off \| (\d+) \|'}
+  r_off_pass: {source: results/36_skill_routing/e2e.md, expr: 're:\| off \| 3 \| (\d+) \|'}
+  r_router_pass: {source: results/36_skill_routing/e2e.md, expr: 're:\| router \| 3 \| (\d+) \|'}
+  r_off_gate: {source: results/36_skill_routing/e2e.md, expr: 're:\| off \| 3 \| \d+ \| (\d+) \|'}
+  r_router_gate: {source: results/36_skill_routing/e2e.md, expr: 're:\| router \| 3 \| \d+ \| (\d+) \|'}
+  r_tasks: {source: results/36_skill_routing/retrieval.md, expr: 're:^(\d+) labelled'}
+  r_skills: {source: results/36_skill_routing/retrieval.md, expr: 're:catalogue (\d+) skills'}
+  r_t0: {source: results/36_skill_routing/retrieval.md, expr: 're:\| T0 \| [\d.]+ \| ([\d.]+) \|'}
+  r_r1: {source: results/36_skill_routing/retrieval.md, expr: 're:\| R1 \| [\d.]+ \| ([\d.]+) \|'}
+  r_hyb: {source: results/36_skill_routing/retrieval.md, expr: 're:\| I-hybrid \| [\d.]+ \| ([\d.]+) \|'}
+  # harness arms
+  h_tasks: {source: results/42_workflows/README.md, expr: 're:On (\d+) tasks'}
+  h_repeats: {source: results/42_workflows/README.md, expr: 're:On \d+ tasks, (\d+) repeats'}
+  h_valid: {source: results/42_workflows/README.md, expr: 're:(\d+) valid runs of \d+'}
+  h_started: {source: results/42_workflows/README.md, expr: 're:\d+ valid runs of (\d+)'}
+  h_bar: {source: results/42_workflows/README.md, expr: 're:asks for a (\d+) % saving'}
+  h_base_pass: {source: results/42_workflows/analysis.md, expr: 're:\| A0 \| 12 \| (\d+) \|'}
+  # CDC gate
+  c_mut: {source: results/16_cdc_gate_2026_1/mutant_table.json, expr: 'count@rows:kind=mutant'}
+  c_ok: {source: results/16_cdc_gate_2026_1/mutant_table.json, expr: 'count@rows:kind=correct'}
+  c_tool: {source: results/16_cdc_gate_2026_1/mutant_table.json, expr: 'count@rows:kind=mutant,report_cdc_alone_flags=true'}
+  c_gate: {source: results/16_cdc_gate_2026_1/mutant_table.json, expr: 'count@rows:kind=mutant,gate_flags=true'}
+  c_false: {source: results/16_cdc_gate_2026_1/mutant_table.json, expr: 'count@rows:kind=correct,gate_flags=true'}
+  # timing exceptions
+  x_n: {source: results/20_timing_exceptions_2026_1/exceptions_table.json, expr: 'count@rows:as_expected?'}
+  x_rows: {source: results/20_timing_exceptions_2026_1/exceptions_table.json, expr: 'count@rows'}
+  x_ok: {source: results/20_timing_exceptions_2026_1/exceptions_table.json, expr: 'count@rows:as_expected=true'}
+  x_flag: {source: results/20_timing_exceptions_2026_1/exceptions_table.json, expr: 'count@rows:expect_flag=true'}
+  # closure loop
+  cl_np_start: {source: results/62a_closure/c13_orig_noplan/summary.json, expr: 'get:start.G2.value.wns_ns'}
+  cl_np_end: {source: results/62a_closure/c13_orig_noplan/summary.json, expr: 'get:final.G2.value.wns_ns'}
+  cl_c14_start: {source: results/62a_closure/seed_c14_int8_dot_requant_150mhz/summary.json, expr: 'get:start.G2.value.wns_ns'}
+  cl_c14_end: {source: results/62a_closure/seed_c14_int8_dot_requant_150mhz/summary.json, expr: 'get:final.G2.value.wns_ns'}
+  cl_c14_it: {source: results/62a_closure/seed_c14_int8_dot_requant_150mhz/summary.json, expr: 'get:iterations'}
+  cl_c11_start: {source: results/62a_closure/seed_c11_nco_mixer_200mhz/summary.json, expr: 'get:start.G2.value.wns_ns'}
+  cl_c11_end: {source: results/62a_closure/seed_c11_nco_mixer_200mhz/summary.json, expr: 'get:final.G2.value.wns_ns'}
+  cl_seed_n: {source: 'results/62a_closure/seed_*/summary.json', expr: 'n'}
+  cl_seed_closed: {source: 'results/62a_closure/seed_*/summary.json', expr: 'count:all_met=true'}
+  cl_w_attempts: {source: 'results/62a_closure/c13_write_plan*/write_summary.json', expr: 'sum:attempts'}
+  cl_w_pass: {source: 'results/62a_closure/c13_write_plan*/write_summary.json', expr: 'count:g1.pass=true'}
+  cl_noise: {source: results/62a_closure/README.md, expr: 're:Placement noise at this size is about ([\d.]+) ns'}
+  # build speed
+  b_c13_t1: {source: results/33_vivado_speed_2026_1/README.md, expr: 're:c13: (\d+) s at 1 thread'}
+  b_c13_t4: {source: results/33_vivado_speed_2026_1/README.md, expr: 're:against (\d+) s at 4'}
+  b_cap: {source: results/33_vivado_speed_2026_1/README.md, expr: 're:under a \*\*(\d+) GB\*\* cap'}
+  b_c10_save: {source: results/33_vivado_speed_2026_1/README.md, expr: 're:on c10 \((\d+) % saved\)'}
+  b_c13_save: {source: results/33_vivado_speed_2026_1/README.md, expr: 're:on c13 \((\d+) %\);'}
+  # development runs
+  d_runs: {source: site/data/dev.json, expr: 'get:runs'}
+  d_tasks: {source: site/data/dev.json, expr: 'get:tasks'}
+  d_esc: {source: site/data/dev.json, expr: 'get:escapes'}
+  d_pass: {source: site/data/dev.json, expr: 'get:hidden_pass'}
+  # eval-1
+  e_slots: {source: docs/eval/eval1_preregistration.md, expr: 're:of the (\d+) slots'}
+  e_launched: {source: docs/eval/eval1_preregistration.md, expr: 're:(\d+) of the \d+ slots'}
+  e_scored: {source: docs/eval/eval1_preregistration.md, expr: 're:(\d+) runs were scored'}
+  e_notrun: {source: docs/eval/eval1_preregistration.md, expr: 're:(\d+) had ended as not run'}
+  e_tasks: {source: site/data/eval.json, expr: 'get:tasks'}
+  e_reps: {source: site/data/eval.json, expr: 'get:runs_per_task'}
+  e_half: {source: site/data/eval.json, expr: 'get:planned_halfwidth'}
+
+text:
+  lede: >-
+    How the FPGA Design Agent was designed, measured and corrected, step by step. Each experiment is written up the same
+    way: hypothesis, setup, result with its uncertainty, decision and what it taught. Nulls and negative results get the
+    same space as wins, and the held-out evaluation that was stopped is shown as it was: stopped, with no score.
+  scope: >-
+    Everything here is development work. {exp_n} experiments are on this page; the agent has no held-out score yet. Where a
+    run was single or the sample small, the card says so and claims no rate.
+  limits: >-
+    The grouping of the timeline and the cause class of each finding are the author's reading of the pull request text,
+    not a measurement. The findings listed are the ones with a recorded fix, not a complete count of the agent's faults.
+    Most experiments ran one model on a small task set, and each card says so. Results measured on an earlier Vivado
+    release and not repeated on Vivado 2026.1 are not shown. The list of merged pull requests is a snapshot from the day
+    the page was built.
+  fine_tune: >-
+    A fine-tuning experiment on a narrow sub-problem (choosing a closure strategy when timing is tight) is planned and has
+    not been run. It will be added here as one more card, whatever it finds, including a no.
+
+timeline:
+  - id: t_flow
+    date: "2026-10-30"
+    title: A flow that a board can check
+    changed: The Vivado flow, its gates, an ILA debug core and a test shell on the Nexys A7 board, then automated bring-up that programs the board by its JTAG serial number and runs tests against a model.
+    why: A design only counts when hardware shows it behaving as specified. Everything later is judged against that bar.
+    showed: The first design, T1 (a dimmer and counter), went from source to bitstream to a board test with no hand steps.
+    prs: [1, 2, 9]
+    links: [results/f0b, docs/methodology.md]
+  - id: t_models
+    date: "2026-10-31"
+    title: Which model writes the RTL
+    changed: A pre-registered screen of cheap open-weight models against the base model on {f1_probs} problems.
+    why: Cost decides how many runs the project can afford, so the model choice was measured rather than assumed.
+    showed: No cheaper model matched the base. One was worse by a margin its interval excludes from zero (card below).
+    prs: [4, 6, 10]
+    experiment: x_models
+    links: [results/f1b]
+  - id: t_verif
+    date: "2026-11-01"
+    title: Verification stages V0 to V3
+    changed: A verification backbone of four stages, from requirements tracing to coverage and mutation testing, on a simulator-portable stack.
+    why: The agent's own testbench never counts as a pass. A model's test shares its misreading of the spec, so checks must come from code and from tests the agent does not see.
+    showed: Mutation testing of T1's tests found two survivors that no test looked at, both reset-state faults (card below).
+    prs: [11]
+    experiment: x_mutation
+    links: [results/04f, docs/verification.md]
+  - id: t_graph
+    date: "2026-11-02"
+    title: A graph of stages and roles, two ways to run a role
+    changed: A harness-neutral agent core with an MCP tool server, a stage machine in plain code, role agents (Clarifier, Modeller, Verifier, Designer) on Deep Agents, and a second arm that drives the same roles through Claude Code.
+    why: Keeping the stage order in code, not in a prompt, makes each stage gate-able. Two harnesses let the same task be run on different models without changing the graph.
+    showed: The first runs failed at stage 2 for harness reasons (spec items lost silently, stale test files, a model API mismatch). Four fixes came out of one diagnosis.
+    prs: [12, 13, 14, 15]
+    links: [docs/agent_core.md, docs/agent.md]
+  - id: t_roles
+    date: "2026-11-03"
+    title: Per-role models and the test writer
+    changed: Each role picks its own model and effort. The test-writer role's failures were diagnosed from run records and fixed in code.
+    why: One role spent the whole stage budget so the Verifier never got a turn, and a repair visit deleted the Verifier's own files.
+    showed: The fixes are plain code (a turn reserve, files kept across repair), not prompt wording.
+    prs: [18, 21]
+    links: [docs/role_models.md, docs/test_writer.md]
+  - id: t_bench
+    date: "2026-11-04"
+    title: A frozen benchmark with hidden tests
+    changed: Benchmark tasks with a spec, hidden tests the agent never sees, reference RTL and mutants, split into development and held-out, then reviewed and re-frozen; a course tier of larger projects added.
+    why: Success has to be decided by something the agent cannot influence. Development tasks are for fixing the agent; held-out tasks are for deciding.
+    showed: Review found blockers and fixed them before any scored run. Every later change to frozen content has a dated amendment.
+    prs: [19, 32, 33, 42]
+    links: [benchmark/AMENDMENTS.md, benchmark/FROZEN.md]
+  - id: t_floors
+    date: "2026-11-05"
+    title: Gates the agent cannot lower
+    changed: The harness runs coverage and mutation testing itself, gate messages name what is missing, and V3 thresholds have floors the agent's plan cannot lower.
+    why: A live run set its own mutation threshold low in its own test plan and passed V3 on a handful of evaluated mutants.
+    showed: The floors are now fixed numbers in a file the agent never writes (mutation score floor {fl_mut} percent, at least {fl_mineval} mutants evaluated).
+    prs: [27, 31, 34, 40, 41]
+    links: [flow/verif_floors.yaml, results/05l]
+  - id: t_devruns
+    date: "2026-11-06"
+    title: Development runs expose faults, seven fixes follow
+    changed: Runs of course tasks on the Claude Code arm, each followed by a fix to the agent for the fault it exposed.
+    why: Reading single failed runs generates hypotheses cheaply. A fix that corrects a measuring-instrument fault needs no statistics.
+    showed: "{d_esc} of {d_runs} development runs were escapes: the agent's own checks passed and the hidden tests failed (card below)."
+    prs: [45, 47, 49, 52, 55, 56, 57, 58, 59, 60, 61, 69, 70]
+    experiment: x_devruns
+    links: [results/course]
+  - id: t_eval1
+    date: "2026-11-09"
+    title: Grader check, pre-registration, and a held-out evaluation that was stopped
+    changed: A check of the graders found two faults in the benchmark's own bench and spec; eval-1 was pre-registered and started, then stopped before any result was analysed.
+    why: A scored evaluation is only worth running once the measuring instrument is trusted, and its method is fixed in advance.
+    showed: eval-1 has no score. Later evaluations pin the CLI binary and turn off its auto-update.
+    prs: [72, 73, 75, 77]
+    experiment: x_eval1
+    links: [docs/eval/eval1_preregistration.md]
+  - id: t_beyond
+    date: "2026-11-10"
+    title: Gates where the standard flow is silent
+    changed: A review of the agent's core and gates, a stronger CDC gate, and measured timing-exception checks.
+    why: Where the standard tool flow reports nothing, the agent can pass a design that fails on the board.
+    showed: The tool's own CDC report alone flags {c_tool} of {c_mut} faulty designs; the new gate flags {c_gate} (card below).
+    prs: [83, 85, 99, 110]
+    experiment: x_cdc
+    links: [results/16_cdc_gate_2026_1, results/20_timing_exceptions_2026_1]
+  - id: t_kb
+    date: "2026-11-11"
+    title: Routing knowledge, harness arms and faster builds
+    changed: Skill routing and retrieval behind a flag, three pre-registered harness arms (H1, H2, H9), and a build cache for Vivado.
+    why: Each is a plausible gain, and each was measured before it was adopted.
+    showed: Routing was a null, one harness arm lowered cost, one did nothing, and the build cache saved most of the build time with identical results.
+    prs: [114, 115, 118, 123, 130, 145]
+    experiment: x_routing
+    links: [results/36_skill_routing, results/42_workflows, results/33_vivado_speed_2026_1]
+  - id: t_2026_1
+    date: "2026-11-12"
+    title: Vivado 2026.1 for everything published
+    changed: The flow moved to Vivado 2026.1 and every published number was re-measured on it or withdrawn.
+    why: A number measured on an older release does not describe the tool the reader will use.
+    showed: Some results were identical on the new release; some could not be repeated and were withdrawn. Vivado 2026.1 needs its free licence installed to start at all, which the earlier release did not.
+    prs: [126, 128, 134]
+    links: [results/33_vivado_speed_2026_1, results/vivado_2026_1_remeasure]
+  - id: t_closure
+    date: "2026-11-12"
+    title: A closure loop and a design-time timing plan
+    changed: When a design passes simulation but misses timing, a loop edits the RTL, re-checks it on an independent bench, rebuilds and repeats; a plan chooses DSP and block RAM use before the first build.
+    why: Timing repairs are routine work that the agent should do itself.
+    showed: One case closed in a single iteration both with and without the plan; two seeded cases stopped at the iteration limit (card below).
+    prs: [140]
+    experiment: x_closure
+    links: [results/62a_closure, docs/closure_loop.md]
+  - id: t_doc
+    date: "2026-11-13"
+    title: The agent documents its own work
+    changed: A documentation standard and checker, a handover file that code fills from the run's records, and a DOC step in which the Designer writes the prose.
+    why: Anything the agent produces is held to the standard of a human engineer's hand-over, so the next engineer can pick it up.
+    showed: An independent re-review of three agent-written handovers found claims the records did not support, and the DOC step's prompt and checks were tightened.
+    prs: [154, 157, 159]
+    links: [docs/documentation_standard.md, results/68_agent_docs]
+  - id: t_checks
+    date: "2026-11-14"
+    title: One check tool with a registry
+    changed: A single check tool and registry, with reset rules; the first version of the reset check read source text with regular expressions.
+    why: Gates should be code with tests. A text scanner is not a sound HDL front end.
+    showed: Three adversarial reviews each defeated the regular-expression scan, so it was replaced by elaboration with Yosys and slang or GHDL, failing closed.
+    prs: [163, 164]
+    links: [flow/doccheck.py]
+
+experiments:
+  - id: x_models
+    verdict: negative
+    date: "2026-10-31"
+    order: 1
+    title: Does a cheaper open-weight model match the base model?
+    question: Can one of the cheaper open-weight models (z-ai/glm-5.3-flash or deepseek/deepseek-v4.1-flash-1017) replace the base model openai/gpt-6-luna for writing RTL at lower cost?
+    setup: "The {f1_probs} CVDP evaluation problems, the same LangGraph agent harness for every arm, the base model run once and each candidate two or three times. Pre-registered before any scored run: the problems, the settings and the rule for picking. Pass rate is the hidden benches' verdict; no language model scores anything."
+    result: "Paired against the base ({f1_base} percent pass rate), glm-5.3-flash differed by {f1_g_est|plus} points (interval {f1_g_lo} to {f1_g_hi}), which is no detectable difference. deepseek-v4.1-flash-1017 was worse, by {f1_d_est} points (interval {f1_d_lo} to {f1_d_hi}), with a pooled pass rate of {f1_d_pool} percent."
+    interval: "{f1_level} percent paired bootstrap over problems. Cost was reported incompletely for the candidates, so its comparison is a lower bound only."
+    decision: The base model stays. The screen's rule picked it.
+    lesson: A cheaper model's price advantage is not evidence of equal quality. Pair the comparison on the same problems and read the interval, not the two means.
+    plot: models
+    detail:
+      - "glm-5.3-flash pooled pass rate: {f1_g_pool} percent over its runs; the interval includes zero, so this is a null, not a tie."
+    prs: [4, 6]
+    links: [results/f1b/PREREG.md, results/f1b/paired_eval86.md]
+  - id: x_base
+    verdict: inconclusive
+    date: "2026-11-01"
+    order: 2
+    title: Which open-weight model to fine-tune
+    question: Which of two open-weight code models is the better base for a later fine-tune?
+    setup: Each model run through the same harness on the same {p0_n} problems through a paid inference service, with a per-run spend guard. Pre-registered, including the rule that a run stopped by the guard is void.
+    result: "Every run was stopped by the spend guard on {p0_a}, {p0_b} and {p0_c} of {p0_n} problems. Under the pre-registered rule all runs are void, so no model is recommended."
+    interval: None. No paired comparison was made, because every run was void.
+    decision: No base was chosen. The result is recorded as inconclusive.
+    lesson: A guard that is too tight turns an experiment into noise. Size the guard from a pilot, not from a budget.
+    prs: [10]
+    links: [results/p0/REPORT.md, results/p0/SUMMARY.md]
+  - id: x_mutation
+    verdict: win
+    date: "2026-11-01"
+    order: 3
+    title: Do the agent's own tests detect broken designs?
+    question: Does a test bench that passes on the correct design also fail on a design with a deliberate fault?
+    setup: "{m_n} hand-written mutants (operator, constant, condition and reset faults) of T1, run against the bench alone and against the bench with the bound assertion checkers. First full run, then a re-run after one new test."
+    result: "The first full run killed {m_first} percent of the mutants ({m_surv} survived, both reset-state faults no test looked at). The bound checkers killed none that the bench missed ({m_first_chk} percent). After a test for reset state was added, {m_final} percent."
+    interval: One design, one seed, hand-written mutants. A score, not an estimate with an interval.
+    decision: The first-run figure is the unbiased one. The harness now runs mutation testing itself, and V3 floors that the agent's plan cannot lower are fixed in a file.
+    lesson: A bench can look complete and miss a whole class of fault. Measure it with mutants, and report the score from before the bench was fixed.
+    detail:
+      - "A live run later set its own mutation threshold low in its test plan and passed V3 on few evaluated mutants. The floors are {fl_mut} percent mutation score and {fl_toggle} percent toggle coverage, with at least {fl_mineval} mutants evaluated."
+    prs: [11, 31, 34, 40]
+    links: [results/04f/mutation_t1.json, results/05l/mutation_t1_harness.json, flow/verif_floors.yaml]
+  - id: x_devruns
+    verdict: mixed
+    date: "2026-11-09"
+    order: 4
+    title: Does the agent's own check catch a misread spec?
+    question: When the agent's own tests and gates pass, do the hidden tests also pass?
+    setup: "{d_runs} development runs on {d_tasks} course tasks, one model (claude-sonnet-5-5 through Claude Code). Hidden tests the agent never sees decide the outcome. The agent was changed between runs to fix what each run exposed, so the runs are not independent samples."
+    result: "{d_pass} of {d_runs} runs passed every hidden test. {d_esc} were escapes: the agent's own checks passed and the hidden tests failed, every one from reading the spec differently from the tests."
+    interval: "Development tasks, changed between runs: no interval is meaningful, and none is claimed as a pass rate for new tasks."
+    decision: The agent's own testbench never counts as a pass. Escapes went to the spec interview, to gates in code, and to the benchmark itself where a task left a behaviour unstated.
+    lesson: A model's test shares the model's misreading, so passing needs a check the model did not write. The five runs of one task show the loop working (below).
+    plot: c14_runs
+    prs: [45, 47, 49, 52]
+    links: [results/course/c14_int8_dot_requant, results/course]
+  - id: x_routing
+    verdict: "null"
+    date: "2026-11-11"
+    order: 5
+    title: Does routing the right skill to a role help?
+    question: Would a router that picks skills for each role, and a hybrid keyword and vector index, help the agent find the right knowledge?
+    setup: "Retrieval on {r_tasks} labelled development tasks against a catalogue of {r_skills} skills, then an end-to-end comparison with the router off and on, {r_runs} runs per arm, a low-cost model, stopping after stage 2. Pre-registered; later arms marked post hoc."
+    result: "Retrieval recall at six skills was {r_t0} for the plain index, {r_hyb} for the hybrid index and {r_r1} for the router's classifier. End to end, hidden-test passes were {r_off_pass} with the router off and {r_router_pass} on; stage 2 gates passed in {r_off_gate} and {r_router_gate} runs."
+    interval: Three runs per arm cannot show a difference in pass rate, and none is claimed.
+    decision: The router stays behind a flag and is not adopted.
+    lesson: In the traces the roles hardly used the new tools and kept calling the old one, so the intervention was never exercised. Check that a tool is used before measuring what it does. The by-product was a bug where a multi-skill load silently dropped the middle of each skill, fixed on one case.
+    prs: [114, 115]
+    links: [results/36_skill_routing/PREREG.md, results/36_skill_routing/e2e.md, results/36_skill_routing/retrieval.md]
+  - id: x_harness
+    verdict: mixed
+    date: "2026-11-12"
+    order: 6
+    title: Does changing the harness around the model change cost and success?
+    question: Do context management (H1), hang protection (H2) or typed report digests (H9) cut tokens, cost or wall time without losing hidden-test passes?
+    setup: "{h_tasks} tasks, {h_repeats} repeats, four arms (the baseline A0 and H1, H2, H9), {h_valid} valid runs of {h_started}, a low-cost model, stopping after stage 2 (no Vivado). Each task and repeat is a block with all four arms in rotated order. Pre-registered adopt rule: a primary metric at least {h_bar} percent better with an interval that excludes zero, and no loss of tests passed."
+    result: "H1 lowered cost by {h1_cost_est|abs} percent (interval {h1_cost_lo} to {h1_cost_hi}) but tokens by {h1_tok_est|abs} percent with an interval that includes zero (to {h1_tok_hi|plus}), so it met the rule on one reading and not the other. H2 changed cost by {h2_cost_est} percent (interval {h2_cost_lo} to {h2_cost_hi}): no difference. H9 lowered cost by {h9_cost_est|abs} percent, below the bar. Hidden-test passes in the {h_runs} blocks: {h_base_pass} for the baseline, {h1_pass} for H1."
+    interval: Percentile bootstrap over the {h_runs} blocks, paired against the baseline. With this few blocks only a very large effect is visible.
+    decision: No arm was adopted by the pre-registered rule. The owner then made H1 the default for development runs after seeing the data, which is recorded as a decision made after the data. Re-measure on more tasks before quoting a saving.
+    lesson: The adopt rule said "tokens per run (and cost)" without saying how to read "and". Write the rule so it cannot be read two ways. H2 solved a problem that was too rare in the round to compare.
+    plot: harness
+    prs: [123, 130, 145]
+    links: [results/42_workflows/README.md, results/42_workflows/analysis.md, results/42_workflows/prereg.md]
+  - id: x_cdc
+    verdict: win
+    date: "2026-11-10"
+    order: 7
+    title: Does a deterministic CDC gate beat the tool's own report?
+    question: Does a gate that checks the structure of every asynchronous path and simulates with injected synchroniser delay catch clock-crossing faults that the tool's own CDC report does not?
+    setup: "{c_ok} correct and {c_mut} deliberately faulty small designs (fixtures), synthesised on Vivado 2026.1, xc7a100tcsg324-1. Columns: the tool's CDC report alone, a structure check, a cycle-level simulation with injected delay (three seeds) and the new gate."
+    result: "The tool's CDC report alone flagged {c_tool} of the {c_mut} faulty designs. The new gate flagged {c_gate} of {c_mut}, with {c_false} false alarms on the {c_ok} correct designs. The table was identical on the re-measurement on Vivado 2026.1."
+    interval: Fixtures are small hand-written designs, not a sample of real designs, so this is a detection table, not a rate. The simulation injection is cycle-level with no timing window.
+    decision: The gate was merged into the flow and replaces reliance on the tool's report alone.
+    lesson: Where the standard tool is silent, a small deterministic check can be decisive. Seed the fault yourself and show which check sees it.
+    prs: [85]
+    links: [results/16_cdc_gate_2026_1/mutant_table.md, results/16_cdc_gate_2026_1]
+  - id: x_exceptions
+    verdict: win
+    date: "2026-11-11"
+    order: 8
+    title: Do timing exceptions hide failures, and can a gate see them?
+    question: Can a timing exception (a false path or multicycle path) hide a real failure, and does a gate flag the harmful ones without flagging the correct ones?
+    setup: "{x_rows} drill designs on Vivado 2026.1, each with an exception that is either correct or harmful (too broad, a typo that matches nothing, a false path over a binary bus), re-timed without the exception and after routing."
+    result: "The gate's verdict matched the expected verdict on {x_ok} of {x_n} drills, of which {x_flag} were expected to be flagged. A further row of the {x_rows} is an alternative design with no exception and no expected verdict."
+    interval: Fixtures, one run each. The drills show the gate's logic; they say nothing about how often real designs have such exceptions.
+    decision: The exceptions gate is part of the build flow. A later fix stopped it failing every build with a debug core, whose own ignored exceptions it had counted as the design's.
+    lesson: A gate that fails every build is as broken as one that passes every build. Test it on a clean design and on a faulty one.
+    prs: [99, 110, 120]
+    links: [results/20_timing_exceptions_2026_1/exceptions_table.md, results/20_timing_exceptions_2026_1]
+  - id: x_closure
+    verdict: mixed
+    date: "2026-11-12"
+    order: 9
+    title: Can the agent repair a timing miss by itself?
+    question: Can a loop that edits the RTL, re-checks it on an independent bench and rebuilds close a timing miss, and does a design-time plan help?
+    setup: "Vivado 2026.1, xc7a100tcsg324-1, whole-board builds. The RTL writer was gpt-6-luna. One run per case: c13_hough_lines with and without the plan, and {cl_seed_n} seeded misses made by raising a task's clock. The hidden bench is always the acceptance check."
+    result: "c13_hough_lines closed in one iteration, from {cl_np_start} to {cl_np_end} ns of worst slack without the plan. Of {cl_seed_n} seeded misses, {cl_seed_closed} closed; c14_int8_dot_requant stopped at the {cl_c14_it}-iteration limit at {cl_c14_end} ns (from {cl_c14_start}) and c11_nco_mixer at {cl_c11_end} ns (from {cl_c11_start}). When the RTL was written with the plan, none of {cl_w_attempts} attempts passed the hidden bench, so no first build with the plan exists."
+    interval: "None: one run per case, so these are illustrations, not rates. Two builds of the same unchanged RTL differed by about {cl_noise} ns of slack."
+    decision: The loop stays as a repair tool with its limits stated. The plan's comparison on other designs is not run.
+    lesson: An early with-plan run accepted a design whose core synthesis had removed; Icarus allowed two blocks driving the same registers and Vivado tied them to ground. That run is not counted, and it is why a synthesis guard exists. A passing simulation is not a passing build.
+    prs: [140]
+    links: [results/62a_closure/README.md, results/62a_closure]
+  - id: x_speed
+    verdict: mixed
+    date: "2026-11-11"
+    order: 10
+    title: Do more threads or a build cache make Vivado runs faster?
+    question: Does the thread count change results or time, and can a cache and resumed builds cut an agent run's build time without changing the result?
+    setup: Fresh builds of three designs on Vivado 2026.1, one at a time under a {b_cap} GB memory cap, at one, two and four threads, and one agent run's build sequence replayed with and without the cache.
+    result: "Placement and routing hashes and slack were identical at every thread count. The mid-size design c13 took {b_c13_t1} s at one thread and {b_c13_t4} s at four; the small design c10 showed no measurable gain. The cache cut one agent run's build sequence by {b_c10_save} percent on c10 and {b_c13_save} percent on c13, with identical hashes and slack."
+    interval: Two runs per thread count, other jobs shared the PC that night, so wall times carry that load. The no-cache time is modelled from the measured fresh-build stages.
+    decision: The build cache is part of the flow. Threads stay at one under the memory cap, since results are identical and the gain was small.
+    lesson: Check the result is identical before you celebrate a speed-up. Several figures from the earlier release were withdrawn because they could not be repeated under the new memory cap.
+    prs: [118]
+    links: [results/33_vivado_speed_2026_1/README.md, results/33_vivado_speed_2026_1/results.md]
+  - id: x_eval1
+    verdict: stopped
+    date: "2026-11-09"
+    order: 11
+    title: "The first held-out evaluation (eval-1): stopped, no score"
+    question: What fraction of {e_tasks} held-out tasks does the agent solve, with {e_reps} runs each?
+    setup: "Pre-registered before any scored run: {e_tasks} tasks, {e_reps} runs each, scored by hidden tests, a task-level bootstrap, with a planned half-width of {e_half} points. The agent, knowledge bank and benchmark were frozen at the tag eval-1."
+    result: "Stopped before analysis. {e_launched} of the {e_slots} run slots had been launched and {e_scored} runs were scored; {e_notrun} ended as not run because Claude Code updated itself between two launches and the agent refuses an untested CLI version. No result is reported."
+    interval: None. No score exists.
+    decision: The owner stopped it, because it could not finish in time and the benchmark was too small for the goals. This was a scope decision, not a reaction to results. The tag stays as a record. Later evaluations pin the CLI binary with a version check, and a new tag and pre-registration come with a baseline evaluation on the larger benchmark.
+    lesson: Pin every tool that is not under test, including the one that runs the agent. Five held-out tasks had their pass counts seen, so they moved to development, and no fix was derived from them.
+    prs: [73, 75, 77]
+    links: [docs/eval/eval1_preregistration.md, benchmark/AMENDMENTS.md]
+
+plots:
+  models:
+    title: Pass-rate effect against the base model
+    unit: points of pass rate, paired over the same problems
+    rows:
+      - {label: glm-5.3-flash, est: f1_g_est, lo: f1_g_lo, hi: f1_g_hi}
+      - {label: deepseek-v4.1-flash-1017, est: f1_d_est, lo: f1_d_lo, hi: f1_d_hi}
+  harness:
+    title: Paired change against the baseline, per arm
+    unit: percent change in the median (negative is lower), 95 percent interval
+    rows:
+      - {label: H1 cost, est: h1_cost_est, lo: h1_cost_lo, hi: h1_cost_hi}
+      - {label: H1 tokens, est: h1_tok_est, lo: h1_tok_lo, hi: h1_tok_hi}
+      - {label: H1 wall time, est: h1_wall_est, lo: h1_wall_lo, hi: h1_wall_hi}
+      - {label: H2 cost, est: h2_cost_est, lo: h2_cost_lo, hi: h2_cost_hi}
+      - {label: H2 tokens, est: h2_tok_est, lo: h2_tok_lo, hi: h2_tok_hi}
+      - {label: H2 wall time, est: h2_wall_est, lo: h2_wall_lo, hi: h2_wall_hi}
+      - {label: H9 cost, est: h9_cost_est, lo: h9_cost_lo, hi: h9_cost_hi}
+      - {label: H9 tokens, est: h9_tok_est, lo: h9_tok_lo, hi: h9_tok_hi}
+      - {label: H9 wall time, est: h9_wall_est, lo: h9_wall_lo, hi: h9_wall_hi}
+
+runs_plot:
+  title: One task, five runs, a fix after each
+  source: site/data/dev.json
+  list: runs_list
+  where: task=c14_int8_dot_requant
+  fix_after:
+    1: [45, "Ask for a register map that is not given; do not invent one"]
+    2: [47, "Top-level port names must be board constraint names"]
+    3: [49, "Show the first simulator exception, and import-check test files"]
+    4: [52, "Put the assertion checkers in every Verilator build"]
+
+method:
+  - title: Hidden tests decide
+    text: A task's tests are written from its spec and never shown to the agent. Passing means the hidden tests pass, the code-run gates pass and, for hardware tasks, the board agrees. The agent's own testbench never counts, and no language model ever produces a score.
+  - title: Repeats and pairs
+    text: The agent is stochastic, so every task runs several times ({e_reps} in the first evaluation) and two versions of the agent are compared on the same tasks, with an interval, not two means. With {e_tasks} tasks a pass rate is known to about plus or minus {e_half} points, which shows a large difference and not a small one.
+  - title: Development and held-out
+    text: Development tasks are for finding and fixing faults. Held-out tasks decide, are touched rarely, and a fix is never derived from them. Where one was seen, as in eval-1, it moves to development.
+  - title: Nothing leaks
+    text: Knowledge comes from documentation, never from the benchmark. A leak guard fails the site build if text from private tasks appears, and during scored runs the agent searches only a frozen library.
+  - title: Pre-register, then pin
+    text: Before a scored run the arms, tasks, repeats, comparisons and stopping rules are written down and committed. The CLI, model and tool versions are pinned and recorded with every run.
+  - title: Change one thing
+    text: A measurement changes one thing at a time. When several changes ship together, nothing is attributed to any of them. A correctness bug in the measuring instrument is the exception, and is fixed on one case.
+  - title: Retire, do not delete
+    text: An evaluation is retired when it is saturated, no longer measures what is wanted, is contaminated, is not comparable after a change to the tools, or is too noisy. It becomes a regression suite. eval-1 was retired by a scope decision before it produced a score.
+
+findings:
+  - {pr: 14, cause: Harness or instrument, finding: "Spec items were lost silently, the reference model and the RTL disagreed on an interface, and stale test files stayed in the build.", fix: "A schema so no spec item is lost, one model contract with a check, and superseded tests deleted."}
+  - {pr: 21, cause: Cost or budget, finding: "The RTL writer used a stage's whole budget so the Verifier never got a turn.", fix: "A turn reserve per role, and files kept across repair visits."}
+  - {pr: 40, cause: Verification, finding: "A live run set its own V3 thresholds low in its own plan and passed.", fix: "Fixed floors in a file the agent never writes, and a minimum number of evaluated mutants."}
+  - {pr: 45, cause: Spec and clarification, finding: "The agent invented a register map that only the hidden spec held, and never asked for it.", fix: "The Clarifier must ask for a map that is not given, and the oracle answers with the whole map."}
+  - {pr: 47, cause: Constraints and closure, finding: "A top-level port was named LED0 where the board constraints and the bench use the bus LED.", fix: "Rule FDA-CON-7: a port must be a master-constraints name or a bus of one."}
+  - {pr: 49, cause: Tools, finding: "The simulate summary showed a follow-on error and hid the first exception.", fix: "The first exception is put at the head, and test files are import-checked before pytest starts."}
+  - {pr: 52, cause: Verification, finding: "The assertion checkers were not in the Verilator builds, so cover properties read as zero.", fix: "Checkers are added to every Verilator build, and stage 2 gets more visits."}
+  - {pr: 64, cause: Tools, finding: "The Claude Code CLI updated itself and the arm refused the untested version.", fix: "The accepted version list was updated after a live tool-text check; later evaluations pin the binary."}
+  - {pr: 72, cause: Harness or instrument, finding: "A hidden bench read a high-impedance value from a legal design (a pull-up the simulator drops on a variable port), and a spec left a weight encoding unstated.", fix: "The bench resolves the pull for both port styles, the spec states the encoding, and a pin scan covers every bench.", kind: instrument}
+  - {pr: 83, cause: Constraints and closure, finding: "Scoped XPM constraints were not applied, so a clock crossing showed negative slack with no exception.", fix: "A script applies them after synthesis, and a probe design records the effect."}
+  - {pr: 83, cause: Verification, finding: "Skipped and expected-fail tests were counted as passing tests.", fix: "The gate counts them as not passing."}
+  - {pr: 83, cause: Tools, finding: "A timed-out build left Vivado running.", fix: "The runner gets its own process group and kills it."}
+  - {pr: 115, cause: Knowledge bank, finding: "A call that loaded several skills overflowed the output limit and silently cut the middle out of each.", fix: "Whole skills are returned up to the limit, and those held back are named."}
+  - {pr: 120, cause: Tools, finding: "The exceptions gate failed every build with a debug core, whose own ignored exceptions it counted as the design's.", fix: "Those are information, and the design's own still fail."}
+  - {pr: 132, cause: Tools, finding: "A test run moved the checkout it ran from.", fix: "A session guard compares branch and head, and git variables are scrubbed from child processes."}
+  - {pr: 134, cause: RTL, finding: "A benchmark reference design missed timing on Vivado 2026.1.", fix: "Two pipeline stages were added under a dated amendment, with the acceptance tests and mutants unchanged."}
+  - {pr: 140, cause: Verification, finding: "A closure run accepted a design whose core synthesis had removed.", fix: "A synthesis guard, and the run was marked invalid and not counted."}
+  - {pr: 159, cause: Prompts and context, finding: "Independent review found claims in agent-written handovers that the records did not support.", fix: "The DOC step's request and checks were tightened, and the handovers regenerated."}
+  - {pr: 164, cause: Tools, finding: "Three adversarial reviews each defeated the regular-expression source scan of the reset check.", fix: "Replaced by elaboration, failing closed, with a regression set and attack designs."}
+
+lessons:
+  - claim: The agent's own checks are not a pass.
+    evidence: "{d_esc} of {d_runs} development runs passed their own checks and failed the hidden tests, each from a spec read differently."
+    links: [site/data/dev.json]
+  - claim: Where the standard tool is silent, a deterministic gate can see the fault.
+    evidence: "The tool's own CDC report alone flagged {c_tool} of {c_mut} faulty designs; the gate flagged {c_gate}, with {c_false} false alarms on {c_ok} correct designs."
+    links: [results/16_cdc_gate_2026_1/mutant_table.md]
+  - claim: A test bench that looks complete can miss a class of fault.
+    evidence: "The first full mutation run killed {m_first} percent of {m_n} mutants; the survivors were both reset-state faults."
+    links: [results/04f/mutation_t1.json]
+  - claim: A cheaper model is not evidence of equal quality.
+    evidence: "Paired over {f1_probs} problems, one cheaper model was {f1_d_est} points worse (interval {f1_d_lo} to {f1_d_hi}) and the other showed no detectable difference."
+    links: [results/f1b/paired_eval86.md]
+  - claim: A tool the roles do not use cannot be measured.
+    evidence: "With the router on, end-to-end hidden passes were {r_router_pass} and with it off {r_off_pass}; the roles hardly called the new tools."
+    links: [results/36_skill_routing/e2e.md]
+  - claim: Few blocks show only large effects, and a rule needs one reading.
+    evidence: "H1 lowered cost by {h1_cost_est|abs} percent (interval {h1_cost_lo} to {h1_cost_hi}) and tokens by {h1_tok_est|abs} percent (interval to {h1_tok_hi|plus}), so the adopt rule gave two answers."
+    links: [results/42_workflows/analysis.md]
+  - claim: One run per case is an illustration, not a rate.
+    evidence: "{cl_seed_closed} of {cl_seed_n} seeded timing misses closed, and none of {cl_w_attempts} attempts to write RTL with the design-time plan passed its hidden bench."
+    links: [results/62a_closure/README.md]
+  - claim: Pin every tool that is not under test.
+    evidence: "{e_notrun} of the {e_slots} eval-1 slots ended as not run after an automatic CLI update."
+    links: [docs/eval/eval1_preregistration.md]
+  - claim: A speed-up counts only with an identical result.
+    evidence: "The build cache cut an agent run's build sequence by {b_c10_save} and {b_c13_save} percent on two designs with identical placement and routing hashes."
+    links: [results/33_vivado_speed_2026_1/README.md]

@@ -468,6 +468,8 @@ def main():
     out["loop"] = loop.build(dict(out["agent_graph"], vivado=out["board"]["vivado"]))     # brief 47: the home page's feedback loop
     import showcase
     out["showcase"] = showcase.build()                                   # brief 61: the Showcase section, from site/showcase/*.yaml
+    import story
+    out["story"] = story.build()                                         # brief 76: how the agent was built, from site/story/story.yaml
     out["blockdesigns"] = blockdesigns()                                # brief 65A: every block design's graph, with its build
     out.update({f"tasks/{k}": v for k, v in pages.items()})
     (OUT / "tasks").mkdir(exist_ok=True)
