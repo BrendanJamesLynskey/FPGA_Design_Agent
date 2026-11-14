@@ -17,21 +17,13 @@ characters.
 | `t1_dimmer_counter_ila_probe_map.txt` | Which signal is on which ILA probe port |
 | `captures/` | The first recorded run's raw ILA captures (CSV and VCD, 1024 samples each), the probe maps needed to read them, the capture plan, and the UART test log. CI re-checks these CSVs against `designs/t1_dimmer_counter/hw_checks.py` and shows that corrupted copies fail (`flow/tests/test_hw_flow.py`) |
 
-## The three runs
+## The three runs: figures withdrawn
 
-| Run | Result | Total (s) | discover | program base | UART tests | program ILA | ILA captures |
-|---|---|---|---|---|---|---|---|
-| 21:45:40 | PASS | 114.6 | 19.9 | 18.1 | 38.7 | 18.0 | 19.3 |
-| 21:47:35 | PASS | 111.0 | 16.7 | 18.0 | 38.6 | 18.1 | 19.1 |
-| 21:49:26 | PASS | 110.7 | 16.7 | 17.8 | 38.6 | 18.0 | 19.1 |
-
-Each run: power gate (base 0.133 W, ILA 0.149 W total on-chip, vectorless, limit 0.5 W) pass; one target, an
-xc7a100t (IDCODE 13631093); DONE pin 1 after each programming; 8 of 8 UART tests passed (0 failed, 0 skipped);
-4 of 4 ILA captures passed; the design still answered with the same build stamp and kept the scratch value
-written before the captures, with all error counters 0. The ILA results were identical in all three runs: the
-COUNT write landed at sample 64 (the trigger position) and the count changed on the next sample; at DUTY 0x08,
-0x40 and 0xA0 each lit LED (COUNT 0x8421: LEDs 0, 5, 10, 15) was on for 32, 256 and 640 of the 1024 samples,
-equal to `model.led_on_clocks()`, with 0 violations of the per-clock LED rule.
+The three recorded runs (all PASS: eight of eight UART tests and four of four ILA captures each, the same ILA results in all
+three) were made on bitstreams from an earlier Vivado release and on USB power. Their timings and power figures cannot be
+re-measured, so they are withdrawn from this README rather than relabelled; the raw records stay in
+`runs/` and `t1_dimmer_counter_bringup.json`. The current bring-up result, on the Vivado 2026.1 builds and wall power, is in
+[results/f0b_2026_1](../f0b_2026_1/README.md).
 
 ## Reproduce
 
