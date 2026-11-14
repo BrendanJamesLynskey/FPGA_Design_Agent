@@ -63,8 +63,12 @@ python3 -m flow.checks designs/<d> [--names all|resets,cdc,...] [--scope auto|rt
 - **`pass`** means every part of the check that ran found nothing blocking. **`PARTIAL`** in the digest (`incomplete`
   in the JSON) means a part could not run, for example the reset netlist scan with no Vivado; the suite's overall verdict
   is then not a pass. **`not run`** always carries its reason.
-- **Advisory findings never fail a check**: report_methodology Warnings (the stage gates fail only on Critical
-  Warnings), Advisory rows, and the `axi` notes. They are listed after the blocking ones.
+- **Advisory findings never fail a check**: in the checks that mirror a stage gate (methodology, drc, cdc), Warnings
+  are advisory because the gates fail only on Critical Warnings (or Errors); Advisory and Info rows and the `axi` notes
+  are advisory everywhere. **The `resets` check is stricter**: AMD's reset rows at Warning (LUTAR-1, DPIR, DPOR, CDC-8)
+  block there, because the house rule forbids what they describe.
+- **A waiver never makes a gate-mirroring check pass** (methodology, drc, cdc, exceptions, io): a waived blocking row is
+  shown as waived "the stage gate still fails on it", and the check fails as the gate does.
 - **synth and route scopes read the build, not the current RTL.** After an RTL change, build again before trusting them.
   Reports the build already wrote are read, not re-run.
 - **The route scope reads the post-synthesis reset scan** (`reset_scan_synth.tsv`): resets do not change in
@@ -80,8 +84,22 @@ python3 -m flow.checks designs/<d> [--names all|resets,cdc,...] [--scope auto|rt
   except for `resets` and `doc`, which take no waivers: the Designer may write `lint/`. A reset exception is an
   architecture decision, frozen at approval: `architecture.yaml` `reset.synchronisers` (modules allowed an asynchronous
   reset) and `reset.async_inputs` (top-level ports from an external device whose reset is asynchronous).
-- **Vendor IP** internals (cells under an IP core, a debug core or an `xpm_` macro) are left out of the reset rules,
-  except that a LUT outside the IP driving an asynchronous reset inside it is still RST-LUT-01.
+- **Vendor IP** internals are left out of the reset rules: cells under one of the build's IP cores
+  (`build/<variant>/ip/<name>` and its generated `<name>_*` submodules) or under a named XPM macro (`xpm_cdc_*`,
+  `xpm_fifo_*`, `xpm_memory_*`). A user module is never vendor by its name alone. A LUT outside the IP driving an
+  asynchronous reset inside it is still RST-LUT-01. A user source that defines a module named like a recognised
+  synchroniser (`reset_sync`, an XPM macro) is reported, unless architecture.yaml declares it.
+- **Latches** (LDCE/LDPE) with a clear or preset count as asynchronous resets. Other primitives with asynchronous
+  resets (IDDR/ODDR with SRTYPE ASYNC, SERDES, FIFO) are not scanned.
+- **A register whose reset comes from a register with no timed clock** cannot be judged for HDL-RST-04: the check is
+  PARTIAL (`netlist_clocks`) and says how many; constrain every clock.
+- **A reset made by logic (a LUT) from several registers** is not traced back to them for HDL-RST-04 (a known gap).
+- **A session's reports older than the checkpoint are not read**: after a rebuild the next call makes them again.
+- **The source part reads the current RTL; the netlist and AMD parts read the build.** After an RTL edit, rebuild before
+  reading the two together.
+- **Heavy slots**: the agent's `check` tool, like its `build` tool, starts Vivado through the session's runner without
+  taking a heavy slot; the script refuses while `FDA_VIVADO_MAX` Vivado jobs already run (a check-then-start test, not a
+  lock). A person running `--vivado auto` on the shared PC takes a slot first.
 - **The reset source scan** reads SystemVerilog with the design-standards scanner; it does not evaluate `` `ifdef``, and
   a VHDL design is checked by the netlist part only.
 - The full result is `build/checks/<variant>/<scope>.json` (named in the digest's first line); the tool never returns it

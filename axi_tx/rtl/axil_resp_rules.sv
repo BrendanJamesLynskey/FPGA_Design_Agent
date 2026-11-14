@@ -49,8 +49,9 @@ module axil_resp_rules #(
             aw_pend <= upd(aw_pend, awhs, bhs);
             w_pend  <= upd(w_pend,  whs,  bhs);
             ar_pend <= upd(ar_pend, arhs, rhs);
-            wage <= (bhs || !wpend) ? '0 : ((wage == MAXA) ? wage : wage + 1'b1);
-            rage <= (rhs || !rpend) ? '0 : ((rage == MAXA) ? rage : rage + 1'b1);
+            // a response on the bus (VALID high, the master not yet ready) has arrived: master back-pressure is legal
+            wage <= (bhs || bvalid || !wpend) ? '0 : ((wage == MAXA) ? wage : wage + 1'b1);
+            rage <= (rhs || rvalid || !rpend) ? '0 : ((rage == MAXA) ? rage : rage + 1'b1);
         end
     end
     assign lost[0] = aresetn && wpend && (wage >= AW'(TIMEOUT));

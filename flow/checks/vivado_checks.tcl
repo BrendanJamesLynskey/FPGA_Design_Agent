@@ -73,8 +73,8 @@ proc fda_reset_scan {fname} {
     puts $f [join {cell ref pin pin_inverted clock hier root_kind root root_ref root_inverted path root_clock root_async_reg root_hier d_ref q_refs} "\t"]
     array set walk {}
     array set clk {}
-    set pinof [dict create FDRE R FDSE S FDCE CLR FDPE PRE]
-    foreach c [get_cells -quiet -hierarchical -filter {IS_PRIMITIVE && REF_NAME =~ FD*}] {
+    set pinof [dict create FDRE R FDSE S FDCE CLR FDPE PRE LDCE CLR LDPE PRE]
+    foreach c [get_cells -quiet -hierarchical -filter {IS_PRIMITIVE && (REF_NAME =~ FD* || REF_NAME =~ LD*)}] {
         set ref [get_property REF_NAME $c]
         if {![dict exists $pinof $ref]} { continue }
         set pn [dict get $pinof $ref]
@@ -86,8 +86,9 @@ proc fda_reset_scan {fname} {
         if {$kind eq "const"} { continue }
         set pinv [get_property -quiet IS_${pn}_INVERTED $c]
         if {$pinv eq ""} { set pinv 0 }
-        set cnet [get_nets -quiet -of_objects [get_pins -quiet $c/C]]
-        if {![info exists clk($cnet)]} { set clk($cnet) [join [get_clocks -quiet -of_objects [get_pins -quiet $c/C]] ","] }
+        set cpin [lindex [get_pins -quiet -of_objects $c -filter {REF_PIN_NAME == C || REF_PIN_NAME == G}] 0]
+        set cnet [get_nets -quiet -of_objects $cpin]
+        if {![info exists clk($cnet)]} { set clk($cnet) [join [get_clocks -quiet -of_objects $cpin] ","] }
         set rclk ""; set rasync ""; set rhier ""
         if {$kind eq "cell"} {
             if {[string match FD* $rref]} {
@@ -97,7 +98,7 @@ proc fda_reset_scan {fname} {
             set rhier [fda_hier_refs $root]
         }
         set dref ""; set qrefs ""
-        if {$ref eq "FDCE" || $ref eq "FDPE"} {
+        if {$ref in {FDCE FDPE LDCE LDPE}} {
             set dn [get_nets -quiet -of_objects [get_pins -quiet $c/D]]
             if {$dn ne ""} { set dref [join [lsort -unique [get_property -quiet REF_NAME [get_cells -quiet -of_objects [get_pins -quiet -leaf -of_objects $dn -filter {DIRECTION == OUT}]]]] ","] }
             set qn [get_nets -quiet -of_objects [get_pins -quiet $c/Q]]

@@ -3,7 +3,8 @@
 This folder holds the evidence for brief 71's check suite (`flow/checks`, [docs/check_suite.md](../../docs/check_suite.md)):
 the reset check's seeded faults synthesised with Vivado 2026.1, the release's rule catalogue used to verify every AMD rule
 id the suite reads, the digest size against the raw reports it replaces on three designs, and a replay of recorded runs
-showing the gates did not move.
+showing that the gate code change moves no gate of a build made before it (those builds have no reset scan, so
+the new reset gate is absent in all of them).
 
 ## Records
 
@@ -91,5 +92,8 @@ local run directories, not committed either.
   builds, whose ports have none, are not checked for it.
 - The token figure is characters / 4, not a model's tokenizer.
 - The replayed runs are Vivado 2025.2 builds; they test that the gate code did not change, not anything about 2026.1.
+- After the review (2026-11-14) the scan also covers latches (LDCE/LDPE); the committed seeded scans were made just
+  before that change and contain no latches, so they are unaffected.
+- A synchronous reset made by a LUT from registers on several clocks is not traced for HDL-RST-04.
 - The DSP/RAM rule (HDL-RST-03) uses neighbours of the register (D from, or Q to, a DSP or RAM data pin); a register two
   stages away from the primitive is not reported.

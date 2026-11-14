@@ -26,7 +26,7 @@ def _run(mode: int, tmp: Path) -> tuple[int, int]:
 
 
 @pytest.mark.skipif(shutil.which("iverilog") is None, reason="iverilog is not installed")
-@pytest.mark.parametrize("mode,want", [(0, "none"), (1, "write"), (2, "read"), (3, "none")])
+@pytest.mark.parametrize("mode,want", [(0, "none"), (1, "write"), (2, "read"), (3, "none"), (4, "none")])
 def test_missing_response_rule(mode: int, want: str, tmp_path: Path) -> None:
     w, r = _run(mode, tmp_path)
     assert (w > 0, r > 0) == {"none": (False, False), "write": (True, False), "read": (False, True)}[want], (mode, w, r)

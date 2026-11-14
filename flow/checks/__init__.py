@@ -93,9 +93,11 @@ class Ctx:
             return self.build / f
         if (self.out / f"{name}.not_run.txt").is_file():       # the session refused or failed it: never read a partial file
             return None
+        dcp = self.build / DCP.get(self.scope, "post_synth.dcp")
         for ext in ("rpt", "tsv"):
             p = self.out / f"{name}.{ext}"
-            if p.is_file():
+            # a session's report older than the checkpoint belongs to an earlier build: never read it (review fix)
+            if p.is_file() and not (dcp.is_file() and p.stat().st_mtime < dcp.stat().st_mtime):
                 return p
         return None
 
@@ -129,6 +131,9 @@ class Check:
     #: architecture decisions (architecture.yaml reset.synchronisers / reset.async_inputs, frozen at approval); the DOC
     #: gate has none.
     waivable: bool = True
+    #: True: the check mirrors a stage gate; a waiver is shown but a blocking row still fails the check, as it fails the
+    #: gate (review fix: the Designer may write lint/waivers.yaml)
+    gate_mirror: bool = False
 
 
 CHECKS: dict[str, Check] = {}
@@ -272,21 +277,20 @@ def _resets(ctx: Ctx) -> dict[str, Any]:
         parts["amd"] = parts["netlist"] = "not run: scope rtl (needs a synthesised design)"
     else:
         meth, drc, cdc = ctx.report("methodology"), ctx.report("drc"), ctx.report("cdc")
-        if meth or drc or cdc:
-            for r in R.amd_findings(_parse_rules(meth), _parse_rules(drc), _parse_cdc(cdc), GATE_STAGE[ctx.scope]):
-                rule = r["code"]
-                fs.append({**r, "key": f"vivado:{rule}@{GATE_STAGE[ctx.scope]}",
-                           "blocking": r["severity"].lower() not in ("advisory", "info")})
-            parts["amd"] = "ran"
-            records += [meth, drc, cdc]
-        else:
-            parts["amd"] = "not run: " + ctx.not_run_reason("methodology")
+        for r in R.amd_findings(_parse_rules(meth), _parse_rules(drc), _parse_cdc(cdc), GATE_STAGE[ctx.scope]):
+            fs.append({**r, "key": f"vivado:{r['code']}@{GATE_STAGE[ctx.scope]}",
+                       "blocking": r["severity"].lower() not in ("advisory", "info")})
+        for nm, pth in (("methodology", meth), ("drc", drc), ("cdc", cdc)):
+            parts[f"amd_{nm}"] = "ran" if pth else "not run: " + ctx.not_run_reason(nm)
+        records += [x for x in (meth, drc, cdc) if x]
         scan = ctx.report("reset_scan")
         if scan:
             ips = {p.stem for p in (ctx.build / "ip").glob("*") if p.is_dir()} if (ctx.build / "ip").is_dir() else set()
-            fs += [{**f, "key": f"resets:{f['code']} {f['where']}", "blocking": True}
-                   for f in R.netlist_findings(R.read_scan(scan), cfg, ips)]
+            nf = R.netlist_findings(R.read_scan(scan), cfg, ips)
+            fs += [{**f, "key": f"resets:{f['code']} {f['where']}", "blocking": True} for f in nf if not f.get("incomplete")]
             parts["netlist"] = "ran"
+            unk = [f for f in nf if f.get("incomplete")]
+            parts["netlist_clocks"] = ("not run: " + unk[0]["message"]) if unk else "ran"
             records.append(scan)
         else:
             parts["netlist"] = "not run: " + ctx.not_run_reason("reset_scan")
@@ -444,6 +448,7 @@ def _dsp_ram(ctx: Ctx) -> dict[str, Any]:
         parts[rep] = "ran"
         recs.append(p)
     u = ctx.report("utilization")
+    parts["utilization"] = "ran" if u else "not run: " + ctx.not_run_reason("utilization")
     if u:
         from flow.gates import parse_utilization
         used = parse_utilization(u.read_text(errors="replace"))
@@ -468,7 +473,8 @@ def _control_sets(ctx: Ctx) -> dict[str, Any]:
     for r in _parse_rules(mp) or []:
         if r["rule"].startswith("ULMTCS-"):
             fs.append(_vrow(r, ctx, mp.name, _crit(r["severity"])))
-    return _result(fs, records=[p])
+    parts = {"report_control_sets": "ran", "methodology": "ran" if mp else "not run: " + ctx.not_run_reason("methodology")}
+    return _result(fs, parts, records=[p])
 
 
 def _fsm(ctx: Ctx) -> dict[str, Any]:
@@ -584,18 +590,18 @@ register(Check("resets", "vivado", ALL, {"resets": ("RST-ASYNC-01", "RST-POL-01"
                waivable=False))
 register(Check("cdc", "records", POST, {"vivado": ("CDC-*",), "cdc_structure": ("U*",)},
                "report_cdc (Critical rows fail) and the structural CDC check after synthesis (flow/cdc_structure.py)", _cdc,
-               reports=("cdc",), amd=True))
+               reports=("cdc",), amd=True, gate_mirror=True))
 register(Check("methodology", "records", ALL, {"vivado": ("*",)},
                "report_methodology: Critical Warnings fail (as the stage gates), Warnings listed",
-               _rows_check("methodology", None, _crit), reports=("methodology",), amd=True))
+               _rows_check("methodology", None, _crit), reports=("methodology",), amd=True, gate_mirror=True))
 register(Check("drc", "records", POST, {"vivado": ("*",)}, "report_drc: Errors and Critical Warnings fail (as the stage gates)",
-               _rows_check("drc", None, _err_or_crit), reports=("drc",), amd=True))
+               _rows_check("drc", None, _err_or_crit), reports=("drc",), amd=True, gate_mirror=True))
 register(Check("exceptions", "records", POST, {"exceptions": ("EXC-*",)},
                "timing exceptions (flow/exceptions_check.py: ignored, covering no path, dropped by an XDC message)",
-               _gate_backed("exceptions")))
+               _gate_backed("exceptions"), gate_mirror=True))
 register(Check("io", "records", POST, {"io": ("IO-*",)},
                "I/O timing constraints (flow/io_check.py: invented delays, -min/-max from the data sheet, IOB packing)",
-               _gate_backed("io")))
+               _gate_backed("io"), gate_mirror=True))
 register(Check("clocking", "vivado", POST, {"vivado": ("CLKC-*",), "clocking": ("CMT-RANGE-01",)},
                "AMD's CLKC methodology rows and the MMCM/PLL VCO and PFD range check (flow/cmt_check.tcl)", _clocking,
                reports=("methodology", "cmt")))
@@ -669,7 +675,10 @@ def _finish(name: str, raw: dict[str, Any], rs: dict[str, Any], waivers: list[di
                    "fix": f.get("fix") or rule.get("fix", ""), "skill": rule.get("skill", ""),
                    "blocking": bool(f.get("blocking", True)), "count": f.get("count", 1),
                    **({"waived": {"reason": w["reason"], "owner": w["owner"], "date": str(w["date"])}} if w else {})})
-    open_ = [f for f in fs if f["blocking"] and "waived" not in f]
+    open_ = [f for f in fs if f["blocking"] and ("waived" not in f or CHECKS[name].gate_mirror)]
+    for f in fs:
+        if CHECKS[name].gate_mirror and f["blocking"] and "waived" in f:
+            f["waived"]["note"] = "the stage gate still fails on it"
     parts = raw.get("parts") or {}
     incomplete = [k for k, v in parts.items() if v != "ran"]
     verdict = raw.get("verdict")

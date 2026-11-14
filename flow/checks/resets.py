@@ -38,7 +38,10 @@ from pathlib import Path
 from typing import Any
 
 RECOGNISED = ("xpm_cdc_async_rst", "xpm_cdc_sync_rst", "reset_sync")
-VENDOR = re.compile(r"^(xpm_\w+|dbg_hub\w*|ila\w*|vio\w*|\w*_wiz\w*|gtwizard\w*|\w*_gt_\w*|mig_\w*|axi_\w+_v\d\w*)$")
+#: vendor hierarchy: AMD's XPM macros by their exact names, and the build's IP cores (build/<variant>/ip/<name>, passed in as
+#: ``ip_names``) and everything generated under them. A user module is never vendor by its name alone (review fix).
+XPM = re.compile(r"^xpm_(cdc_(single|array_single|gray|handshake|pulse|sync_rst|async_rst|low_latency_handshake)|"
+                 r"fifo_(sync|async|axis|axif|axil|base|rst|reg_bit|reg_vec|counter_updn)|memory_\w+)$")
 #: the AMD rule ids the reset check reads (verified on Vivado 2026.1, see the module docstring)
 AMD_METHODOLOGY = ("LUTAR-1", "DPIR-1", "DPIR-2", "RMIR-1", "RMOR-1", "RROR-1", "ROAS-1")
 AMD_DRC = ("DPIR-3", "DPOR-1", "DPOR-2", "DPOR-3")
@@ -66,7 +69,7 @@ def reset_config(design: Path) -> dict[str, Any]:
         arch = {}
     r = arch.get("reset") or {}
     return {"synchronisers": set(RECOGNISED) | set(r.get("synchronisers") or []),
-            "async_inputs": set(r.get("async_inputs") or [])}
+            "declared": set(r.get("synchronisers") or []), "async_inputs": set(r.get("async_inputs") or [])}
 
 
 def _f(file: str, line: int, code: str, msg: str, where: str | None = None, count: int = 1) -> dict[str, Any]:
@@ -89,17 +92,29 @@ def source_findings(design: Path, files: list[Path], cfg: dict[str, Any]) -> lis
         except OSError:
             continue
         rel = _rel(f, design)
+        shell = "shell/rtl/" in f.resolve().as_posix()
         for mod in parse_modules(text, str(f)):
+            if not shell and (mod.name in RECOGNISED or XPM.match(mod.name)) and mod.name not in cfg.get("declared", set()):
+                out.append(_f(rel, mod.line, "RST-ASYNC-01", f"module {mod.name} takes the name of a recognised synchroniser or "
+                                                             f"XPM macro; the netlist rules would exempt it: rename it, or "
+                                                             f"declare it in architecture.yaml reset.synchronisers"))
             body = mod.body
             pol: dict[str, dict[int, int]] = {}
             for a in mod.always:
                 edges = a.get("edges") or []
                 if len(edges) > 1 and mod.name not in cfg["synchronisers"]:
-                    sig = edges[1][1]
-                    if sig not in cfg["async_inputs"]:
-                        out.append(_f(rel, a["line"], "RST-ASYNC-01",
-                                      f"module {mod.name}: {edges[1][0]} {sig} in the sensitivity list: an asynchronous reset "
-                                      f"outside a recognised synchroniser"))
+                    # the clock is the edge signal the block's first if does not test; every other edge is a reset
+                    start0 = _offset_of_line(body, a["line"] - mod.body_line0)
+                    seg0 = body[start0:start0 + 400]
+                    k0 = seg0.find(")", seg0.find("@"))
+                    m0 = _IF.match(seg0[k0 + 1:]) if k0 >= 0 else None
+                    tested = m0.group(2) if m0 else None
+                    clk_sig = next((s_ for _, s_ in edges if s_ != tested), edges[0][1])
+                    for e, sig in edges:
+                        if sig != clk_sig and sig not in cfg["async_inputs"]:
+                            out.append(_f(rel, a["line"], "RST-ASYNC-01",
+                                          f"module {mod.name}: {e} {sig} in the sensitivity list: an asynchronous reset "
+                                          f"outside a recognised synchroniser"))
                 if not edges:
                     continue
                 # the first statement of the block: its if-condition is the reset test (clock-edge blocks only)
@@ -156,7 +171,9 @@ def _in(hier: str, names: set[str]) -> bool:
 
 
 def _vendor(hier: str, ip_names: set[str]) -> bool:
-    return any((VENDOR.match(p) and p not in RECOGNISED) or p in ip_names for p in _parts(hier))
+    parts = _parts(hier)
+    return any((XPM.match(p) and p not in RECOGNISED) or p in ip_names for p in parts) or \
+        any(p.startswith(n + "_") for p in parts for n in ip_names)        # the IP's own generated submodules
 
 
 def _clocks(s: str) -> set[str]:
@@ -173,18 +190,20 @@ def netlist_findings(rows: list[dict[str, str]], cfg: dict[str, Any], ip_names: 
         g["cells"].append(cell)
 
     pol: dict[str, dict[int, list[str]]] = {}
+    unknown: set[str] = set()
     for r in rows:
         hier, cell, ref = r.get("hier", ""), r["cell"], r["ref"]
-        is_async = ref in ("FDCE", "FDPE")
+        is_async = ref in ("FDCE", "FDPE", "LDCE", "LDPE")
         vendor = _vendor(hier, ip_names)
         in_sync = _in(hier, syncs)
         root, kind, rref = r.get("root", ""), r.get("root_kind", ""), r.get("root_ref", "")
         mod = (_parts(hier) or ["<top>"])[0]
-        if is_async and kind == "cell" and re.match(r"^LUT[2-6]$", rref) and not _vendor(r.get("root_hier", ""), ip_names):
+        if is_async and kind == "cell" and re.match(r"^LUT(?!1$)", rref) and not _vendor(r.get("root_hier", ""), ip_names):
             add("RST-LUT-01", root, root, f"{rref} {root} drives the {r['pin']} pin of registers", cell)
         if vendor:
             continue
-        if is_async and not in_sync and not (kind == "port" and root in cfg["async_inputs"]):
+        port_base = re.sub(r"\[\d+\]$", "", root)
+        if is_async and not in_sync and not (kind == "port" and port_base in cfg["async_inputs"]):
             add("RST-ASYNC-01", f"{mod}|{root}", cell, f"asynchronous {r['pin']} from {kind} {root or '?'} on registers in "
                                                          f"{mod if mod != '<top>' else 'the top module'}", cell)
         if is_async and not in_sync and (re.match(r"^(DSP48|RAMB)", r.get("d_ref", "")) or
@@ -193,6 +212,8 @@ def netlist_findings(rows: list[dict[str, str]], cfg: dict[str, Any], ip_names: 
                                                         f"Q to {r.get('q_refs') or '-'}) have an asynchronous {r['pin']}", cell)
         if not in_sync:
             rclk, clk = _clocks(r.get("root_clock", "")), _clocks(r.get("clock", ""))
+            if kind == "cell" and rref.startswith("FD") and (not rclk or not clk):
+                unknown.add(cell)
             if kind == "cell" and rref.startswith("FD") and rclk and clk and not (rclk & clk):
                 add("RST-CDC-01", f"{root}|{','.join(sorted(clk))}", root,
                     f"reset made by {root} on {','.join(sorted(rclk))} resets registers on {','.join(sorted(clk))} "
@@ -214,6 +235,12 @@ def netlist_findings(rows: list[dict[str, str]], cfg: dict[str, Any], ip_names: 
         out.append({"tool": "resets", "code": code, "rule": CODE_RULE[code], "severity": "error", "where": g["where"],
                     "message": g["msg"] + f" ({n} register{'s' if n != 1 else ''}, e.g. {g['cells'][0]})", "count": n,
                     "fix": FIX[code], "file": None, "line": None})
+    if unknown:              # not a finding, but the clock-domain rule could not be judged for these registers
+        out.append({"tool": "resets", "code": "RST-CDC-01", "rule": CODE_RULE["RST-CDC-01"], "severity": "unknown",
+                    "where": "netlist", "message": f"{len(unknown)} register(s) whose reset comes from a register with no "
+                    f"timed clock on one side (e.g. {sorted(unknown)[0]}): the clock-domain rule was not judged; constrain "
+                    "every clock", "count": len(unknown), "fix": "create_clock on every clock", "file": None, "line": None,
+                    "incomplete": True})
     return out
 
 

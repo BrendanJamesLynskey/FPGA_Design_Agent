@@ -1,6 +1,7 @@
 // resp_rules_tb: seeded faults for axil_resp_rules (brief 71). MODE 0: a clean slave (one B per write, one R per read,
 // 1-6 clocks late); 1: the AXI DMA register port's fault (brief 69: a second write accepted while the first B waits, one
-// B for both); 2: a read accepted and never answered; 3: a legal slave just inside the bound (B after TIMEOUT-1 clocks).
+// B for both); 2: a read accepted and never answered; 3: a legal slave just inside the bound (B after TIMEOUT-1 clocks);
+// 4: master back-pressure: BREADY low for 3*TIMEOUT clocks while the B waits (legal, must not fire).
 // Prints "RESULT lost_w=<n> lost_r=<n>" (cycles with each bit high) and finishes.
 `timescale 1ns/1ps
 module resp_rules_tb;
@@ -40,6 +41,10 @@ module resp_rules_tb;
         end
         if (MODE == 1) begin write_req(); write_req(); b_resp(2); end      // two writes accepted, one B
         if (MODE == 2) read(0, 0);                                         // a read never answered
+        if (MODE == 4) begin
+            write_req(); bready <= 0; repeat (2) @(posedge aclk); bvalid <= 1;
+            repeat (3 * TIMEOUT) @(posedge aclk); bready <= 1; @(posedge aclk); bvalid <= 0;
+        end
         repeat (3 * TIMEOUT) @(posedge aclk);
         $display("RESULT lost_w=%0d lost_r=%0d", lost_w, lost_r);
         $finish;

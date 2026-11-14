@@ -120,12 +120,33 @@ def test_declared_external_async_input_is_allowed() -> None:
 
 
 def test_vendor_ip_cells_are_left_out_but_a_lut_outside_is_not() -> None:
-    row = {"cell": "u_gt/x_reg", "ref": "FDCE", "pin": "CLR", "pin_inverted": "0", "clock": "c", "hier": "gtwizard_ultrascale_v1_7",
-           "root_kind": "cell", "root": "u_or", "root_ref": "LUT2", "root_inverted": "0", "path": "", "root_clock": "",
-           "root_async_reg": "", "root_hier": "", "d_ref": "", "q_refs": ""}
-    assert {f["code"] for f in R.netlist_findings([row], {"synchronisers": set(R.RECOGNISED), "async_inputs": set()})} == {"RST-LUT-01"}
-    inside = {**row, "root_hier": "gtwizard_ultrascale_v1_7"}
-    assert R.netlist_findings([inside], {"synchronisers": set(R.RECOGNISED), "async_inputs": set()}) == []
+    row = {"cell": "u_gt/x_reg", "ref": "FDCE", "pin": "CLR", "pin_inverted": "0", "clock": "c",
+           "hier": "gth_wiz_gtwizard_top/gth_wiz", "root_kind": "cell", "root": "u_or", "root_ref": "LUT2", "root_inverted": "0",
+           "path": "", "root_clock": "", "root_async_reg": "", "root_hier": "", "d_ref": "", "q_refs": ""}
+    cfg = {"synchronisers": set(R.RECOGNISED), "async_inputs": set()}
+    assert {f["code"] for f in R.netlist_findings([row], cfg, {"gth_wiz"})} == {"RST-LUT-01"}
+    assert R.netlist_findings([{**row, "root_hier": "gth_wiz"}], cfg, {"gth_wiz"}) == []
+
+
+@pytest.mark.parametrize("hier", ["vio_x", "violation_ctl", "ila_ne", "xpm_mine", "my_wiz", "axi_dma_v7_1"])
+def test_a_user_module_is_never_vendor_by_its_name(hier: str) -> None:
+    """Review fix: only the build's IP cores and the named XPM macros are vendor hierarchy."""
+    row = {"cell": "q_reg", "ref": "FDCE", "pin": "CLR", "pin_inverted": "0", "clock": "c", "hier": hier, "root_kind": "cell",
+           "root": "r_reg", "root_ref": "FDRE", "root_inverted": "0", "path": "", "root_clock": "c", "root_async_reg": "",
+           "root_hier": "", "d_ref": "", "q_refs": ""}
+    assert "RST-ASYNC-01" in {f["code"] for f in R.netlist_findings([row], {"synchronisers": set(R.RECOGNISED), "async_inputs": set()})}
+
+
+def test_latches_and_unknown_clocks() -> None:
+    cfg = {"synchronisers": set(R.RECOGNISED), "async_inputs": set()}
+    latch = {"cell": "l_reg", "ref": "LDCE", "pin": "CLR", "pin_inverted": "0", "clock": "", "hier": "", "root_kind": "port",
+             "root": "rst", "root_ref": "", "root_inverted": "0", "path": "IBUF", "root_clock": "", "root_async_reg": "",
+             "root_hier": "", "d_ref": "", "q_refs": ""}
+    assert {f["code"] for f in R.netlist_findings([latch], cfg)} == {"RST-ASYNC-01"}
+    noclk = {**latch, "ref": "FDRE", "pin": "R", "root_kind": "cell", "root": "r_reg", "root_ref": "FDRE", "root_clock": "",
+             "clock": "c", "path": ""}
+    fs = R.netlist_findings([noclk], cfg)
+    assert [f.get("incomplete") for f in fs] == [True]
 
 
 # ---- the source part ------------------------------------------------------------------------------------------------
@@ -157,7 +178,18 @@ def test_source_part(tmp_path: Path) -> None:
     f.write_text(SRC)
     fs = R.source_findings(tmp_path, [f], {"synchronisers": set(R.RECOGNISED), "async_inputs": set()})
     codes = sorted((x["code"], x["line"]) for x in fs)
-    assert codes == [("RST-ASYNC-01", 3), ("RST-POL-02", 11)], codes
+    # line 16: a user file that defines reset_sync (a recognised synchroniser name) is reported (review fix)
+    assert codes == [("RST-ASYNC-01", 3), ("RST-ASYNC-01", 16), ("RST-POL-02", 11)], codes
+
+
+def test_source_every_async_edge_is_checked(tmp_path: Path) -> None:
+    """Review fix: a second asynchronous reset hides behind a declared one no more, and the clock is never called a reset."""
+    f = tmp_path / "m.sv"
+    f.write_text("module m (input logic clk, input logic ext_rst_n, input logic soft_rst_n, input logic d, output logic q);\n"
+                 "    always_ff @(negedge ext_rst_n or posedge clk or negedge soft_rst_n) begin\n"
+                 "        if (!ext_rst_n) q <= 1'b0;\n        else q <= d;\n    end\nendmodule\n")
+    fs = R.source_findings(tmp_path, [f], {"synchronisers": set(R.RECOGNISED), "async_inputs": {"ext_rst_n"}})
+    assert [x["message"].split(":")[1].strip().split(" in ")[0] for x in fs] == ["negedge soft_rst_n"]
 
 
 # ---- the runner and the digest -------------------------------------------------------------------------------------------
