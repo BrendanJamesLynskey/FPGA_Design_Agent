@@ -206,6 +206,8 @@ def agent_block(name, d):
         return ap.both(ap.architecture(A, "wide"), ap.architecture(A, "narrow"))
     if name == "agent_langgraph":
         return ap.both(ap.langgraph(A["graph"], "wide"), ap.langgraph(A["graph"], "narrow"))
+    if name == "agent_closure":
+        return ap.both(ap.closure_loop(A, "wide"), ap.closure_loop(A, "narrow"))
     if name == "agent_pipeline":
         return ap.both(ap.pipeline(A, "wide"), ap.pipeline(A, "narrow"))
     if name == "agent_live":

@@ -13,6 +13,15 @@ Goals (all must hold to finish):
 - **G4** power: Vivado's total on-chip power within ``budget.power_w`` (else the board limit, 2.0 W on the Nexys A7 on
   wall power) and junction temperature within 85 C.
 - **G5** hardware: not evaluated yet (no board in this phase; ``met: None``).
+- **CHK** the routed checkpoint's DRC and methodology checks: no Error and no Critical Warning (``met: None`` when the
+  build reported neither, as in a trimmed fixture).
+
+The joint loop (default): every build's reports are diagnosed together and one plan picks a set of fixes that do not
+conflict, preferring hard resources (``agent.graph.closure_plan``); each attempt is checked first after synthesis (the
+early check: utilisation and the plan's primitives, before any implementation run), then built in full; when every goal
+holds, the flow's sequential gates and the independent bench run once more on the accepted design as the **sign-off**,
+and closure is claimed only if they pass. A plan that needs the spec or the architecture changed stops the loop with the
+agent graph's re-entry state for that stage (``reentry`` in the report).
 
 The controller (:class:`Closure`):
 
@@ -43,11 +52,12 @@ from typing import Any, Callable
 
 from agent.graph import closure_playbook as pb
 
-GOALS = ("G1", "G2", "G3", "G4", "G5")
+GOALS = ("G1", "G2", "G3", "G4", "G5", "CHK")
+JUDGED = ("G1", "G2", "G3", "G4", "CHK")
 DEFAULT_SHARE = 0.80
 BOARD_POWER_W = {"nexys_a7_100t": 2.0}      # house rules: wall power, report_power total on-chip <= 2.0 W
 TJ_MAX_C = 85.0
-EPS = {"G1": 1e-9, "G2": 0.0005, "G3": 0.0005, "G4": 0.0005}     # a shortfall change below this is no change
+EPS = {"G1": 1e-9, "G2": 0.0005, "G3": 0.0005, "G4": 0.0005, "CHK": 1e-9}     # a shortfall change below this is no change
 RES = ("lut", "ff", "bram_tile", "dsp", "iob")
 _AVAIL = {"lut": "lut_available", "ff": "ff_available", "bram_tile": "bram_tile_available", "dsp": "dsp_available",
           "iob": "iob_available"}
@@ -145,7 +155,20 @@ def goal_vector(g1: dict[str, Any] | None, dg: dict[str, Any] | None, goals: dic
                        "detail": f"synthesis disagrees with simulation: {new_multi} new multi-driven net messages, "
                                  f"newly removed instances {new_removed[:3]}"}
     v["G5"] = {"met": None, "value": None, "target": "board checks", "shortfall": None, "detail": "not run yet (no board in this phase)"}
+    v["CHK"] = check_goal(dg)
     return v
+
+
+def check_goal(dg: dict[str, Any] | None) -> dict[str, Any]:
+    """CHK: the routed DRC and methodology reports (one checkpoint): no Error and no Critical Warning."""
+    if not dg or not dg.get("ran") or (dg.get("drc") is None and dg.get("methodology") is None):
+        return {"met": None, "value": None, "target": "no Error or Critical Warning", "shortfall": None,
+                "detail": "not reported"}
+    bad = [f"{k} {r['rule']} x{r['count']}" for k in ("drc", "methodology") for r in ((dg.get(k) or {}).get("rules") or [])
+           if r.get("severity") in ("Error", "Critical Warning")]
+    n = sum((dg.get(k) or {}).get(s) or 0 for k in ("drc", "methodology") for s in ("errors", "critical_warnings"))
+    return {"met": n == 0, "value": {"blocking": n}, "target": "no Error or Critical Warning",
+            "shortfall": round(min(1.0, 0.01 * n), 5), "detail": "; ".join(bad)[:400]}
 
 
 def synth_regressions(syn: dict[str, Any], baseline: dict[str, Any] | None) -> tuple[int, list[str]]:
@@ -161,7 +184,8 @@ def synth_regressions(syn: dict[str, Any], baseline: dict[str, Any] | None) -> t
 
 
 def all_met(v: dict[str, Any]) -> bool:
-    return all(v[g]["met"] for g in ("G1", "G2", "G3", "G4"))
+    """G1 to G4 hold, and CHK holds or was not reported (the sign-off gates then decide)."""
+    return all(v[g]["met"] for g in ("G1", "G2", "G3", "G4")) and (v.get("CHK") or {}).get("met") is not False
 
 
 def choose_goal(v: dict[str, Any], skip: set[str] = frozenset()) -> str | None:
@@ -169,7 +193,7 @@ def choose_goal(v: dict[str, Any], skip: set[str] = frozenset()) -> str | None:
     strategy left, so a goal the loop cannot act on never hides one it can)."""
     if v["G1"]["met"] is False:
         return "G1"
-    unmet = [(v[g]["shortfall"] or 0, g) for g in ("G2", "G3", "G4") if v[g]["met"] is False and g not in skip]
+    unmet = [(v[g]["shortfall"] or 0, g) for g in ("G2", "G3", "G4", "CHK") if (v.get(g) or {}).get("met") is False and g not in skip]
     return max(unmet)[1] if unmet else None
 
 
@@ -177,7 +201,9 @@ def judge(before: dict[str, Any], after: dict[str, Any]) -> tuple[str, list[str]
     """(decision, improved goals, worsened goals). ``accept`` when an unmet goal improved (or became met) and no goal
     worsened; a met goal that stays met is not 'worsened' (a few more FFs inside the budget are fine)."""
     imp, wor = [], []
-    for g in ("G1", "G2", "G3", "G4"):
+    for g in JUDGED:
+        if g not in before or g not in after:
+            continue
         b, a = before[g], after[g]
         if a["met"] is None or b["met"] is None:
             continue
@@ -205,8 +231,10 @@ def vector_line(v: dict[str, Any]) -> str:
             val = f"LUT {val.get('lut')} FF {val.get('ff')} BRAM {val.get('bram_tile')} DSP {val.get('dsp')}"
         elif g == "G4" and isinstance(val, dict):
             val = f"{val.get('total_w')} W"
+        elif g == "CHK" and isinstance(val, dict):
+            val = f"{val.get('blocking')} blocking"
         return f"{g} {'met' if x['met'] else 'NOT met'} ({val})"
-    return "; ".join(f(g) for g in GOALS)
+    return "; ".join(f(g) for g in GOALS if g in v)
 
 
 # --- the Designer -----------------------------------------------------------------------------------------------
@@ -223,6 +251,7 @@ class EditRequest:
     plan: str = ""
     history: list[str] = field(default_factory=list)
     failure: str = ""                     # a G1 failure of the previous attempt in this iteration (the functional retry)
+    also: list[tuple[pb.Strategy, str, str]] = field(default_factory=list)   # joint plan: (strategy, goal, why) made together
 
 
 @dataclass
@@ -234,7 +263,7 @@ class EditResult:
     calls: int = 0
 
 
-SYSTEM = ("You are the RTL engineer in an FPGA timing-closure loop (Vivado 2026.1, Artix-7 -1). The flow, not you, decides "
+SYSTEM = ("You are the RTL engineer in an FPGA closure loop (timing, area and power) (Vivado 2026.1, Artix-7 -1). The flow, not you, decides "
           "whether a change worked: it re-runs an independent simulation bench you cannot see and rebuilds the design. "
           "Make one focused change of the kind asked for. Reply with every file you change in full, each as\n"
           "=== FILE: <path> ===\n```systemverilog\n<whole file>\n```\nand nothing else after the last block except one line "
@@ -242,7 +271,11 @@ SYSTEM = ("You are the RTL engineer in an FPGA timing-closure loop (Vivado 2026.
 
 
 def edit_prompt(r: EditRequest) -> str:
-    parts = [f"GOAL {r.goal}. Strategy: {r.strategy.title}.\nWhy this strategy: {r.why}\n\n{r.strategy.instructions}",
+    parts = [f"GOAL {r.goal}. Strategy: {r.strategy.title}.\nWhy this strategy: {r.why}\n\n{r.strategy.instructions}"]
+    for s, g, why in r.also:
+        parts.append(f"\nALSO, IN THE SAME CHANGE (the planner checked the two do not conflict): GOAL {g}. Strategy: "
+                     f"{s.title}.\nWhy: {why}\n\n{s.instructions}")
+    parts += [
              "\nWHAT MUST NOT CHANGE:\n" + r.contract,
              "\nREPORT DIGEST (from the last build):\n" + r.digest]
     if r.plan:
@@ -250,10 +283,10 @@ def edit_prompt(r: EditRequest) -> str:
     if r.history:
         parts.append("\nEARLIER ITERATIONS (do not repeat a change that was reverted):\n" + "\n".join(r.history[-6:]))
     if r.failure:
-        parts.append("\nYOUR LAST CHANGE FAILED THE INDEPENDENT BENCH. Fix it, keeping the timing change:\n" + r.failure[:2500])
+        parts.append("\nYOUR LAST CHANGE FAILED THE INDEPENDENT BENCH. Fix it, keeping the closure change:\n" + r.failure[:2500])
     parts.append("\nOther design files (not shown; do not change them): " + (", ".join(r.other_files) or "none"))
     for p, t in r.files.items():
-        parts.append(f"\n=== FILE: {p} ===\n```systemverilog\n{t}\n```")
+        parts.append(f"\n=== FILE: {p} ===\n```{'tcl' if p.endswith('.xdc') else 'systemverilog'}\n{t}\n```")
     return "\n".join(parts)
 
 
@@ -280,6 +313,7 @@ def llm_editor(client: Callable, log: list | None = None, meter: Any = None) -> 
         if meter is not None:
             meter.add(rep)
         files, note = parse_reply(rep.text, set(r.files) | {f for f in r.other_files if f.endswith((".sv", ".v"))})
+        files = {k: v for k, v in files.items() if not k.endswith(".xdc") or k in r.files}   # the XDC only when offered
         usd = rep.cost if rep.cost is not None else 0.05          # unreported cost counts at the ceiling (llm.py rule)
         if log is not None:
             log.append({"goal": r.goal, "strategy": r.strategy.id, "cost": rep.cost, "prompt_tokens": rep.prompt_tokens,
@@ -301,7 +335,10 @@ class Workspace:
         return self.root / "rtl"
 
     def read(self) -> dict[str, str]:
-        return {f"rtl/{p.name}": p.read_text() for p in sorted(self.rtl.glob("*.sv"))}
+        """rtl/*.sv, and the design's own XDC files (a constraints fix changes them; restored like the RTL)."""
+        out = {f"rtl/{p.name}": p.read_text() for p in sorted(self.rtl.glob("*.sv"))}
+        out.update({p.name: p.read_text() for p in sorted(self.root.glob("*.xdc"))})
+        return out
 
     def write(self, files: dict[str, str]) -> None:
         for rel, text in files.items():
@@ -341,7 +378,7 @@ def files_for_path(dg: dict[str, Any], files: dict[str, str], hier_modules: dict
         mod = hier_modules.get(inst or "")
         if mod and mod in mf and mf[mod] not in want:
             want.append(mf[mod])
-    return want or sorted(files)
+    return want or sorted(p for p in files if p.startswith("rtl/"))
 
 
 @dataclass
@@ -362,6 +399,14 @@ class Closure:
     g1_retries: int = 1
     record: Path | None = None
     log: Callable[[str], None] = print
+    # the joint loop (agent.graph.closure_plan): fixes for several goals in one change; off = one goal per iteration
+    joint: bool = True
+    max_actions: int = 3
+    # the early check: design dir -> flow.digest.build.digest_synth(...) of a synthesis-only build (None: skipped)
+    synth: Callable[[Path], dict[str, Any]] | None = None
+    # the sign-off: the accepted design's full digest -> {pass, failed: [gate names]} (None: not run, never claimed)
+    signoff: Callable[[dict[str, Any]], dict[str, Any]] | None = None
+    case: str = ""
 
     history: list[dict[str, Any]] = field(default_factory=list)
     usd: float = 0.0
@@ -375,6 +420,13 @@ class Closure:
             with (self.record / "history.jsonl").open("a") as f:
                 f.write(json.dumps(row, default=str) + "\n")
 
+    def _act(self, row: dict[str, Any]) -> None:
+        """One row of the action log (closure_actions.jsonl, schema fda.closure_action/1)."""
+        if self.record:
+            self.record.mkdir(parents=True, exist_ok=True)
+            with (self.record / "closure_actions.jsonl").open("a") as f:
+                f.write(json.dumps(row, default=str) + "\n")
+
     def _hier_modules(self, dg: dict[str, Any]) -> dict[str, str]:
         mods = {}
         for k in ("lut", "ff"):
@@ -382,20 +434,47 @@ class Closure:
                 mods[r["path"]] = r["module"]
         return {**mods, **(dg.get("hier_modules") or {})}
 
+    def _choose(self, vec, dg, tried) -> dict[str, Any]:
+        """The plan for this iteration: the joint plan, or (``joint=False``) 62A's one goal and one strategy."""
+        plan_fails = self._plan_fails(dg)
+        if self.joint:
+            from agent.graph import closure_plan as cp
+            exhausted = {k for k, n in tried.items() if n >= self.stall_n}
+            return cp.plan(vec, dg, self.spec, plan_fails, exhausted, self.max_actions)
+        skip: set[str] = set()
+        while True:                          # the worst goal that still has a strategy; skip the ones that have none
+            g = choose_goal(vec, skip)
+            if g is None:
+                return {"actions": [], "skipped": [], "target_stage": "rtl", "violations": []}
+            cands = [(s, why) for s, why in pb.applicable(g, dg or {}, vec, self.spec, plan_fails)
+                     if s.phase == "ready" and tried.get((g, s.cls), 0) < self.stall_n]
+            if cands:
+                s, why = cands[0]
+                return {"actions": [{"id": s.id, "cls": s.cls, "goal": g, "stage": s.stage, "hard": s.hard, "why": why,
+                                     "predicted": dict(s.predicted)}],
+                        "skipped": [], "target_stage": s.stage, "violations": []}
+            if g == "G1":
+                return {"actions": [], "skipped": [], "target_stage": "rtl", "violations": []}
+            skip.add(g)
+
     def run(self) -> dict[str, Any]:
+        from agent.graph import closure_plan as cp
         t0 = time.monotonic()
         snap = self.ws.read()
+        tags = cp.design_tags(self.spec, snap, self.case)
         g1 = self.g1(self.ws.rtl)
+        tb = time.monotonic()
         dg = self.build(self.ws.root) if g1.get("pass") else None
+        build_s = round(time.monotonic() - tb, 1)
         vec = goal_vector(g1, dg, self.goals, self._plan_fails(dg))
         base_synth = (dg or {}).get("synth") or {}
+        built = snap                                     # the files the last full build in build/ was made from
         start = {"vector": vec, "digest": _small(dg)}
         self.log(f"[closure] start: {vector_line(vec)}")
-        self._rec({"iter": 0, "kind": "start", "vector": vec, "digest": _small(dg)})
-        best = vec
+        self._rec({"iter": 0, "kind": "start", "vector": vec, "digest": _small(dg), "build_seconds": build_s})
         tried: dict[tuple[str, str], int] = {}          # (goal, class) -> iterations without progress
         attempts: list[dict[str, Any]] = []
-        stop = None
+        stop, reent, signoff = None, None, None
         if not g1.get("pass"):
             stop = "G1 fails at the start: functional repair belongs to stage 2, not the closure loop"
         elif dg is not None and not dg.get("ran"):
@@ -403,7 +482,13 @@ class Closure:
         it = 0
         while stop is None:
             if all_met(vec):
-                stop = "all goals met (G1-G4; G5, the board, not run yet)"
+                signoff = self._signoff(dg, snap, built)
+                if signoff is None or signoff["pass"]:
+                    stop = "all goals met (G1-G4; G5, the board, not run yet)" + (
+                        "; sign-off passed" if signoff else "; sign-off not run")
+                else:
+                    stop = ("goals met on the loop's measures, but the sign-off failed: "
+                            + ", ".join(signoff.get("failed") or [])[:300] + "; closure not claimed")
                 break
             if it >= self.max_iter:
                 stop = f"iteration limit {self.max_iter} reached"
@@ -414,38 +499,38 @@ class Closure:
             if time.monotonic() - t0 > self.max_seconds:
                 stop = f"time limit {self.max_seconds} s reached"
                 break
-            plan_fails = self._plan_fails(dg)
-            skip: set[str] = set()
-            goal, cands = None, []
-            while True:                          # the worst goal that still has a strategy; skip the ones that have none
-                g = choose_goal(vec, skip)
-                if g is None:
-                    break
-                cands = [(s, why) for s, why in pb.applicable(g, dg or {}, vec, self.spec, plan_fails)
-                         if s.phase == "ready" and tried.get((g, s.cls), 0) < self.stall_n]
-                if cands or g == "G1":
-                    goal = g
-                    break
-                skip.add(g)
-            if goal is None:
-                unmet = [g for g in ("G2", "G3", "G4") if vec[g]["met"] is False]
+            joint = self._choose(vec, dg, tried)
+            if not joint["actions"]:
+                unmet = [g for g in ("G2", "G3", "G4", "CHK") if (vec.get(g) or {}).get("met") is False]
                 stop = (f"goal {', '.join(unmet)} not met; strategy classes exhausted" if unmet
                         else "no unmet goal this loop can act on")
                 break
-            if not cands:
-                stop = f"goal {goal} not met; strategy classes exhausted"
+            if joint["target_stage"] in ("spec", "architecture"):
+                reent = cp.reentry(joint)
+                stop = f"loop back to the {joint['target_stage']} stage: " + "; ".join(
+                    f"{a['goal']} {a['id']}" for a in joint["actions"])
+                self._rec({"iter": it + 1, "kind": "loopback", "plan": joint, "reentry": reent})
                 break
-            strat, why = cands[0]
+            acts = [(pb.BY_ID[a["id"]], a["goal"], a["why"]) for a in joint["actions"]]
+            strat, goal, why = acts[0]
             it += 1
             files = self.ws.read()
             hm = self._hier_modules(dg or {})
             want = files_for_path(dg or {}, files, hm)
+            if any(s.stage == "constraints" for s, _, _ in acts):      # a constraints fix: the design's XDC is offered too
+                want += [p for p in files if p.endswith(".xdc") and p not in want]
             from flow.digest.build import digest_text
-            req = EditRequest(goal=goal, strategy=strat, why=why, digest=digest_text(dg or {}, goal),
+            digest = digest_text(dg or {}, goal) if goal in ("G2", "G3", "G4") else digest_text(dg or {})
+            if any(g == "CHK" for _, g, _ in acts) or (vec.get("CHK") or {}).get("met") is False:
+                digest += "\nCHECKS (routed DRC and methodology): " + str((vec.get("CHK") or {}).get("detail") or "none")
+            req = EditRequest(goal=goal, strategy=strat, why=why, digest=digest,
                               files={p: files[p] for p in want}, other_files=[p for p in files if p not in want],
-                              contract=self.contract, plan=self.plan_text,
-                              history=[f"iteration {a['iter']}: {a['strategy']} -> {a['decision']} ({a['summary']})" for a in attempts])
-            self.log(f"[closure] iteration {it}: goal {goal}, strategy {strat.id} ({why[:120]})")
+                              contract=self.contract, plan=self.plan_text, also=[(s, g, w) for s, g, w in acts[1:]],
+                              history=[f"iteration {a['iter']}: {'+'.join(a['strategies_all'])} -> {a['decision']} ({a['summary']})"
+                                       for a in attempts])
+            self.log(f"[closure] iteration {it}: " + "; ".join(f"goal {g} strategy {s.id}" for s, g, _ in acts)
+                     + (f" (skipped: {', '.join(x['id'] + ' ' + x['why'] for x in joint['skipped'])[:200]})" if joint["skipped"] else ""))
+            usd0, tok0 = self.usd, self.tokens
             res = self.editor(req)
             self._spend(res)
             g1n, retries = None, 0
@@ -465,6 +550,7 @@ class Closure:
                     g1n = self.g1(self.ws.rtl)
             after_files = self.ws.read()
             diff = unified_diff(snap, after_files)
+            early, synth_s, build_s = None, None, None
             if not res.files or not diff:
                 decision, imp, wor, vec2, dg2 = "revert", [], [], vec, dg
                 summary = "the writer changed nothing"
@@ -474,33 +560,75 @@ class Closure:
                 decision, imp, wor, dg2 = "revert", [], ["G1"], dg
                 summary = f"G1 failed after {retries} functional retr{'y' if retries == 1 else 'ies'}: {vec2['G1']['value']}"
             else:
-                dg2 = self.build(self.ws.root)
-                vec2 = goal_vector(g1n, dg2, self.goals, self._plan_fails(dg2), base_synth)
-                decision, imp, wor = judge(vec, vec2)
-                summary = vector_line(vec2) + "".join(f"; {g}: {vec2[g]['detail'][:300]}" for g in wor if vec2[g].get("detail"))
+                if self.synth is not None:
+                    ts = time.monotonic()
+                    early = early_check(self.synth(self.ws.root), dg, vec, self.goals, acts,
+                                        self._plan_fails_synth(), base_synth)
+                    synth_s = round(time.monotonic() - ts, 1)
+                if early and early["reject"]:
+                    decision, imp, wor, vec2, dg2 = "revert", [], list(early.get("worsened") or []), vec, dg
+                    summary = "early check after synthesis: " + early["reason"]
+                    built = None                         # build/ now holds a synthesis-only build of the rejected change
+                else:
+                    tb = time.monotonic()
+                    dg2 = self.build(self.ws.root)
+                    build_s = round(time.monotonic() - tb, 1)
+                    built = after_files
+                    vec2 = goal_vector(g1n, dg2, self.goals, self._plan_fails(dg2), base_synth)
+                    decision, imp, wor = judge(vec, vec2)
+                    summary = vector_line(vec2) + "".join(f"; {g}: {vec2[g]['detail'][:300]}" for g in wor if vec2[g].get("detail"))
             delta = _delta(vec, vec2)
             row = {"iter": it, "kind": "iteration", "goal": goal, "strategy": strat.id, "class": strat.cls, "why": why,
+                   "strategies_all": [s.id for s, _, _ in acts], "plan": joint,
                    "note": res.note, "g1_retries": retries, "decision": decision, "improved": imp, "worsened": wor,
-                   "vector_before": vec, "vector_after": vec2, "delta": delta, "diff": diff, "summary": summary,
-                   "digest_after": _small(dg2), "usd_total": round(self.usd, 6), "tokens_total": self.tokens}
+                   "early": early, "vector_before": vec, "vector_after": vec2, "delta": delta, "diff": diff, "summary": summary,
+                   "digest_after": _small(dg2), "usd_total": round(self.usd, 6), "tokens_total": self.tokens,
+                   "build_seconds": build_s, "synth_seconds": synth_s}
             attempts.append(row)
             self._rec(row)
+            self._act(cp.action_record(run=str(self.record.name if self.record else self.case), iteration=it, tags=tags,
+                                       dg_before=dg, vec_before=vec, joint=joint, decision=decision, reason=summary,
+                                       dg_after=dg2 if dg2 is not dg else None, vec_after=vec2, early=early,
+                                       usd=self.usd - usd0, tokens=self.tokens - tok0, build_seconds=build_s,
+                                       synth_seconds=synth_s))
             self.log(f"[closure] iteration {it}: {decision}; {summary}")
+            for s, g, _ in acts:
+                if decision == "accept" and g in imp:
+                    tried[(g, s.cls)] = 0
+                else:
+                    tried[(g, s.cls)] = tried.get((g, s.cls), 0) + 1
             if decision == "accept":
                 snap, vec, dg = after_files, vec2, dg2
-                if goal in imp:
-                    tried[(goal, strat.cls)] = 0
-                else:
-                    tried[(goal, strat.cls)] = tried.get((goal, strat.cls), 0) + 1
-                best = vec
             else:
                 self.ws.restore(snap)
-                tried[(goal, strat.cls)] = tried.get((goal, strat.cls), 0) + 1
         report = self.stop_report(stop or "stopped", start, vec, attempts, time.monotonic() - t0)
+        report["signoff"] = signoff
+        report["closure_claimed"] = bool(all_met(vec) and signoff is not None and signoff.get("pass"))
+        report["reentry"] = reent
         if self.record:
             (self.record / "summary.json").write_text(json.dumps(report, indent=1, default=str) + "\n")
         self.log(f"[closure] stop: {report['stop']}")
         return report
+
+    def _signoff(self, dg: dict[str, Any] | None, snap: dict[str, str], built: dict[str, str] | None) -> dict[str, Any] | None:
+        """The final sign-off on the accepted design: the independent bench once more, a full build of exactly these
+        files (rebuilt when build/ holds another attempt), and the flow's sequential gates."""
+        if self.signoff is None:
+            return None
+        g1 = self.g1(self.ws.rtl)
+        if built != snap:
+            self.log("[closure] sign-off: rebuilding the accepted design (build/ holds another attempt)")
+            dg = self.build(self.ws.root)
+        out = dict(self.signoff(dg or {}))
+        out["rebuilt"] = built != snap
+        if not g1.get("pass"):
+            out["pass"] = False
+            out["failed"] = ["G1 (independent bench)"] + list(out.get("failed") or [])
+        vec = goal_vector(g1, dg, self.goals, self._plan_fails(dg))
+        if not all_met(vec):
+            out["pass"] = False
+            out["failed"] = list(out.get("failed") or []) + [f"goal vector on the rebuilt design: {vector_line(vec)}"]
+        return out
 
     def _plan_fails(self, dg: dict[str, Any] | None) -> list[str]:
         if not (self.plan_check and dg and dg.get("ran")):
@@ -510,6 +638,14 @@ class Closure:
         except Exception as e:                       # noqa: BLE001 (a plan check must never stop the loop)
             return [f"plan: check not run ({type(e).__name__})"]
 
+    def _plan_fails_synth(self) -> list[str] | None:
+        if not self.plan_check:
+            return None
+        try:
+            return list(self.plan_check({"ran": True}))
+        except Exception:                            # noqa: BLE001
+            return None
+
     def _spend(self, r: EditResult) -> None:
         self.usd += r.usd
         self.tokens += r.tokens
@@ -517,20 +653,74 @@ class Closure:
 
     def stop_report(self, stop: str, start: dict, vec: dict, attempts: list[dict], secs: float) -> dict[str, Any]:
         unmet = {g: {"best": vec[g]["value"], "target": vec[g]["target"],
-                     "tried": [f"{a['strategy']} ({a['decision']})" for a in attempts if a["goal"] == g]}
-                 for g in ("G1", "G2", "G3", "G4") if vec[g]["met"] is False}
+                     "tried": [f"{'+'.join(a.get('strategies_all') or [a['strategy']])} ({a['decision']})" for a in attempts
+                               if g in [x["goal"] for x in (a.get("plan") or {}).get("actions") or [{"goal": a["goal"]}]]]}
+                 for g in JUDGED if (vec.get(g) or {}).get("met") is False}
         text = [f"goal {g} not met; best value {u['best']}; tried: {', '.join(u['tried']) or 'nothing'}" for g, u in unmet.items()]
         return {"stop": stop, "all_met": all_met(vec), "start": start["vector"], "final": vec,
                 "start_line": vector_line(start["vector"]), "final_line": vector_line(vec), "unmet": unmet, "unmet_text": text,
                 "iterations": len(attempts), "accepted": sum(a["decision"] == "accept" for a in attempts),
                 "reverted": sum(a["decision"] == "revert" for a in attempts),
+                "early_rejected": sum(bool((a.get("early") or {}).get("reject")) for a in attempts),
                 "strategies": [(a["strategy"], a["decision"]) for a in attempts],
+                "strategies_all": [(a.get("strategies_all") or [a["strategy"]], a["decision"]) for a in attempts],
                 "usd": round(self.usd, 6), "tokens": self.tokens, "llm_calls": self.calls, "seconds": round(secs, 1)}
+
+
+def early_check(syn: dict[str, Any] | None, dg: dict[str, Any] | None, vec: dict[str, Any], goals: dict[str, Any],
+                acts: list[tuple[pb.Strategy, str, str]], plan_fails: list[str] | None,
+                base_synth: dict[str, Any] | None) -> dict[str, Any]:
+    """The post-synthesis estimate of a change, before any implementation run. Rejects (revert without implementing)
+    only on what synthesis already knows exactly or nearly so:
+
+    - a block RAM or DSP count over its budget that was within it (these counts do not change in implementation);
+    - an area fix aimed at BRAM or DSP that did not lower that count, or one aimed at LUT/FF whose post-synthesis count
+      did not fall below the last build's post-synthesis count;
+    - LUT or FF more than 10 % over a budget that was met (implementation trims little);
+    - new multi-driven nets or newly removed instances (the netlist is not the simulated design);
+    - a planned DSP or BRAM the netlist does not have.
+
+    Timing and power after synthesis are estimates: recorded, never a reason to reject."""
+    if not syn or not syn.get("ran"):
+        return {"reject": False, "reason": "no post-synthesis reports", "estimate": None}
+    u = syn.get("utilization") or {}
+    bud = goals["G3"]["budget"]
+    before = ((dg or {}).get("post_synth") or {}).get("utilization") or {}
+    met3 = (vec.get("G3") or {}).get("met")
+    reasons, worse = [], []
+    for k in ("bram_tile", "dsp"):
+        if u.get(k) is not None and bud.get(k) is not None and float(u[k]) > float(bud[k]) \
+                and float((dg or {}).get("utilization", {}).get(k) or 0) <= float(bud[k]):
+            reasons.append(f"{k} {u[k]} over its budget {bud[k]} (was within it)")
+            worse.append("G3")
+    for s, g, _ in acts:
+        if g != "G3":
+            continue
+        for k in ("bram_tile", "dsp", "lut", "ff"):
+            if s.predicted.get(k) == "-" and k in pb.over_budget(vec) and u.get(k) is not None and before.get(k) is not None \
+                    and float(u[k]) >= float(before[k]):
+                reasons.append(f"{s.id} was to lower {k}, but synthesis still has {u[k]} (was {before[k]})")
+    for k in ("lut", "ff"):
+        if met3 and u.get(k) is not None and bud.get(k) and float(u[k]) > 1.10 * float(bud[k]):
+            reasons.append(f"{k} {u[k]} more than 10 % over its budget {bud[k]}")
+            worse.append("G3")
+    nm, nr = synth_regressions(syn.get("synth") or {}, base_synth)
+    if nm or nr:
+        reasons.append(f"synthesis disagrees with simulation: {nm} new multi-driven net messages, newly removed {nr[:3]}")
+        worse.append("G1")
+    if plan_fails:
+        reasons.append("; ".join(plan_fails)[:300])
+    est = {"utilization": {k: u.get(k) for k in (*RES, "carry4")}, "wns_est_ns": (syn.get("timing") or {}).get("wns_ns"),
+           "drc": syn.get("drc"), "methodology": syn.get("methodology")}
+    return {"reject": bool(reasons), "reason": "; ".join(reasons) or "within the post-synthesis estimates",
+            "worsened": sorted(set(worse)), "estimate": est}
 
 
 def _delta(a: dict[str, Any], b: dict[str, Any]) -> dict[str, Any]:
     out = {}
-    for g in ("G1", "G2", "G3", "G4"):
+    for g in JUDGED:
+        if g not in a or g not in b:
+            continue
         x, y = a[g]["value"], b[g]["value"]
         if isinstance(x, dict) and isinstance(y, dict):
             out[g] = {k: (round(y[k] - x[k], 4) if isinstance(x.get(k), (int, float)) and isinstance(y.get(k), (int, float)) else None)
@@ -589,7 +779,8 @@ def graph_stage(rt: Any, state: dict[str, Any]) -> dict[str, Any]:
                 plan_check=(lambda _dg: timing_plan.post_synth_failures(rt.design, json.loads((rt.design / "build" / "base" / "gates.json").read_text())))
                 if plan else None,
                 max_iter=int(rt.cfg.run_limits.get("closure_iter", 6)), max_usd=float(rt.cfg.run_limits.get("closure_usd", 1.0)),
-                record=rt.run_dir / "closure")
+                record=rt.run_dir / "closure", case=rt.cfg.name)
+    # sign-off: stages 7 (power) and 8 (DRC) and the stage gates still run after this stage, as the sequential sign-off
     from agent.graph.llm import BudgetExceeded
     try:
         rep = c.run()
@@ -597,6 +788,8 @@ def graph_stage(rt: Any, state: dict[str, Any]) -> dict[str, Any]:
         if str(e).startswith("run "):
             return {"stop": f"budget: {e}"}
         return {"note": "", "detail": f"[closure] stage visit ended: {e}"}
+    if rep.get("reentry"):                          # the plan needs the spec or the architecture changed: go back there
+        return {"note": "", "loopback": rep["reentry"], "detail": "[closure] " + rep["stop"]}
     return {"note": "", "detail": "[closure] " + rep["stop"] + "; " + rep["final_line"]}
 
 

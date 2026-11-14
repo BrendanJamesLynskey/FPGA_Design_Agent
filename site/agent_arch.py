@@ -454,6 +454,19 @@ def checks():
     return {"checks": out, "standard": f'{rs["standard"]} v{rs["version"]}'}
 
 
+def closure():
+    """The joint closure loop (agent/graph/closure_plan.py, closure_playbook.py) for the /agent page's loop figure: each
+    strategy with its goal, the stage it changes and whether it uses a hard resource, counted from the code."""
+    from agent.graph import closure_playbook as pb
+    strategies = [{"id": s.id, "goal": s.goal, "stage": s.stage, "hard": s.hard, "phase": s.phase, "title": s.title}
+                  for s in pb.ALL]
+    ready = [x for x in strategies if x["phase"] != "later"]
+    return {"strategies": strategies,
+            "by_stage": {st: sum(1 for x in ready if x["stage"] == st) for st in pb.STAGES},
+            "by_goal": {g: sum(1 for x in ready if x["goal"] == g) for g in ("G2", "G3", "G4", "CHK")},
+            "hard": sum(1 for x in ready if x["hard"])}
+
+
 def build(replay, skills):
     TOOLS, roles_mod, run, PROFILES, MACHINE, RUN_LIMITS, visit_limit = _imports()
     nodes, edges = graph_from_code()
@@ -466,7 +479,7 @@ def build(replay, skills):
                             for s, t, c, k in edges]},
         "inner": (inner := inner_from_code()),
         "stages": st, "run_limits": limits,
-        "roles": roles(), "tools": _tools_list(), "check_suite": checks(),
+        "roles": roles(), "tools": _tools_list(), "check_suite": checks(), "closure": closure(),
         "defaults": {"harness": cfg.harness, "model": cfg.model, "cc_model": cfg.cc_model,
                      "profiles": {k: v for k, v in PROFILES.items()}},
         "runs": runs_table(),
