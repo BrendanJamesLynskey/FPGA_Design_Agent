@@ -1,0 +1,34 @@
+# Mutants and the trap for v2_e_tlm_pacer (benchmark/tools/check_task.py)
+mutants:
+- {name: period_off_by_one, file: tlm_pacer.sv, find: '({1''b0, cnt} + 17''d1 == {1''b0, eff})', replace: '({1''b0, cnt} + 17''d2 == {1''b0, eff})', why: a frame falls due one tick early}
+- {name: period_one_late, file: tlm_pacer.sv, find: '({1''b0, cnt} + 17''d1 == {1''b0, eff})', replace: '({1''b0, cnt} == {1''b0, eff})', why: a frame falls due one tick late}
+- {name: counter_not_restarted, file: tlm_pacer.sv, find: 'if (en) cnt <= reached ? 16''d0 : cnt + 16''d1;', replace: if (en) cnt <= cnt + 16'd1;, why: 'the count is not cleared at a frame: the frame falls due once and never again'}
+- {name: no_clamp, file: tlm_pacer.sv, find: 'wire [15:0] req_clamped = (req < 16''(PERIOD_MIN)) ? 16''(PERIOD_MIN) : req;', replace: 'wire [15:0] req_clamped = req;', why: a request below the minimum is used as asked}
+- {name: clamp_fixed_four, file: tlm_pacer.sv, find: '(req < 16''(PERIOD_MIN)) ? 16''(PERIOD_MIN) : req;', replace: '(req < 16''d4) ? 16''d4 : req;', why: the PERIOD_MIN parameter is ignored}
+- {name: clamp_overwrites_request, file: tlm_pacer.sv, find: '7''h01: req <= win_wdata[15:0];', replace: '7''h01: req <= (win_wdata[15:0] < 16''(PERIOD_MIN)) ? 16''(PERIOD_MIN) : win_wdata[15:0];', why: 'the request register shows the raised
+    value, not what was asked'}
+- {name: period_change_at_once, file: tlm_pacer.sv, find: '7''h01: req <= win_wdata[15:0];', replace: '7''h01: begin req <= win_wdata[15:0]; if (en) eff <= (win_wdata[15:0] < 16''(PERIOD_MIN)) ? 16''(PERIOD_MIN) : win_wdata[15:0]; end', why: a
+    new request disturbs the count in progress}
+- {name: period_never_reloaded, file: tlm_pacer.sv, find: "eff <= req_clamped;   // woxitu\n                    if (pending)", replace: if (pending), why: a new request takes effect only at switch-on}
+- {name: overrun_queued, file: tlm_pacer.sv, find: "if (pending) overruns <= overruns + 16'd1;   // bewe\n                    else begin pending <= 1'b1; frames <= frames + 16'd1; end", replace: begin pending <= 1'b1; frames <= frames + 16'd1;
+    if (pending) overruns <= overruns + 16'd1; end, why: a frame that falls due while one waits replaces it and is counted as a frame}
+- {name: overrun_not_counted, file: tlm_pacer.sv, find: if (pending) overruns <= overruns + 16'd1;, replace: if (pending) overruns <= overruns;, why: dropped frames are not counted}
+- {name: take_clears_nothing, file: tlm_pacer.sv, find: '7''h04: pending <= 1''b0;', replace: '7''h04: ;', why: the transmitter cannot take the waiting frame}
+- {name: off_keeps_pending, file: tlm_pacer.sv, find: en <= 1'b0; cnt <= '0; pending <= 1'b0; end, replace: en <= 1'b0; cnt <= '0; end, why: a waiting frame survives switching off}
+- {name: off_keeps_count, file: tlm_pacer.sv, find: en <= 1'b0; cnt <= '0; pending <= 1'b0; end, replace: en <= 1'b0; pending <= 1'b0; end, why: the count survives switching off}
+- {name: enable_restarts_count, file: tlm_pacer.sv, find: 'if (win_wdata[0] && !en) begin en <= 1''b1; cnt <= ''0; eff <= req_clamped; end', replace: 'if (win_wdata[0]) begin en <= 1''b1; cnt <= ''0; eff <= req_clamped; end', why: writing 1 while
+    on restarts the count}
+- {name: counts_while_off, file: tlm_pacer.sv, find: 'if (en) cnt <= reached ? 16''d0 : cnt + 16''d1;', replace: 'cnt <= reached ? 16''d0 : cnt + 16''d1;', why: the counter runs while reporting is off}
+- {name: enable_any_bit, file: tlm_pacer.sv, find: 'if (win_wdata[0] && !en)', replace: if (win_wdata != 32'd0 && !en), why: any non-zero write switches on}
+- {name: totals_cleared_on_off, file: tlm_pacer.sv, find: en <= 1'b0; cnt <= '0; pending <= 1'b0; end, replace: en <= 1'b0; cnt <= '0; pending <= 1'b0; frames <= '0; overruns <= '0; end, why: the totals are cleared by switching off}
+- {name: tick_count_ignored, file: tlm_pacer.sv, find: '7''h03: todo <= win_wdata[7:0];', replace: '7''h03: todo <= (win_wdata[7:0] != 8''d0) ? 8''d1 : 8''d0;', why: a tick write makes one tick whatever the number}
+- {name: status_swapped, file: tlm_pacer.sv, find: '7''h05:   win_rdata <= {30''d0, en, pending};', replace: '7''h05:   win_rdata <= {30''d0, pending, en};', why: the status bits are swapped}
+- {name: led_shows_overruns, file: tlm_pacer.sv, find: assign led = frames;, replace: assign led = overruns;, why: the LEDs show the wrong total}
+- {name: reset_period_not_100, file: tlm_pacer.sv, find: req <= 16'd100; eff <= 16'd100;, replace: req <= 16'd100; eff <= 16'd50;, why: the period in force after reset is not the requested one}
+trap:
+  twin: 'a free-running prescaler: one frame every PERIOD ticks counted from reset, not from the switch-on, with a queue of waiting frames'
+  why: the spec counts from the switch-on and drops rather than queues; a free-running counter gives the wrong first frame and a queue makes the rate exceed one per period after a stall
+  edits:
+  - {file: tlm_pacer.sv, find: 'if (win_wdata[0] && !en) begin en <= 1''b1; cnt <= ''0; eff <= req_clamped; end', replace: 'if (win_wdata[0] && !en) begin en <= 1''b1; eff <= req_clamped; end'}
+  - {file: tlm_pacer.sv, find: 'if (en) cnt <= reached ? 16''d0 : cnt + 16''d1;', replace: 'cnt <= reached ? 16''d0 : cnt + 16''d1;'}
+  must_fail: [test_pace_switch_off_forgets_the_waiting_frame_and_keeps_the_totals]

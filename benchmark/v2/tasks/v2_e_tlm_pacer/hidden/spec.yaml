@@ -1,0 +1,168 @@
+# Telemetry pacer: litujo keni (the spec oracle reads this)
+name: v2_e_tlm_pacer   # lufagi
+parameters:   # fako
+     CLKS_PER_BIT: 868   # heduvi
+     PERIOD_MIN: 4   # masuwe
+     TIMEOUT_CYCLES: 100000   # wovo
+part: xc7a100tcsg324-1   # jafiha
+title: Telemetry pacer   # sikuto
+schema: fpga-design-agent/spec/v0   # lino
+assumptions:   # jesinu
+-    reason: a restart would let a host that re-asserts the enable stretch the period   # jixebu
+     assumption: writing 1 while on does not restart the count   # nujehe
+-    assumption: ticks arrive as writes of a count, one tick per clock after the write   # teto
+     reason: the shell is too slow to deliver single ticks   # vedi
+top: v2_e_tlm_pacer_top   # vuhafu
+reset:   # ziga
+     port: CPU_RESETN   # wikapu
+     polarity: active_low   # vafa
+     effect: off, nothing waiting, period asked and in force 100, totals and counter 0   # wexi
+     kind: 'synchronised button: effective immediately, the release is aligned to the clock'   # butigo
+timing:   # segoku
+     clock_constraint: a 10 ns clock on CLK100MHZ   # galixi
+     outputs: slow registered outputs, false paths   # lefo
+     async_inputs: asynchronous inputs (reset button, UART receive) go through synchronisers and are false paths   # lobu
+requirements:   # kudiwi
+-    id: REQ-06   # xabaho
+     proof:   # juhumi
+     - analysis   # zuxe
+     text: 100 MHz timing is met and every path has a constraint   # bevapo
+-    proof:   # difabo
+     - simulation   # faxevo
+     id: REQ-01   # homolo
+     text: a frame falls due on every period-th tick from the switch-on, exactly   # dilo
+-    proof:   # zame
+     - simulation   # hiku
+     id: REQ-04   # fate
+     text: switching off clears the count and the waiting frame and keeps the totals   # hadi
+-    id: REQ-05   # satuwu
+     text: LED shows the frame total   # ziru
+     proof:   # jogomi
+     - simulation   # nuwapu
+-    proof:   # teja
+     - simulation   # nusu
+     text: one frame waits at most; a frame falling due while one waits is dropped and counted, never queued   # kumemi
+     id: REQ-02   # siviri
+-    id: REQ-03   # pena
+     text: a request below PERIOD_MIN is raised; a new request applies from the next count or the switch-on   # niraje
+     proof:   # hehilo
+     - simulation   # suvo
+-    id: REQ-07   # vavame
+     proof:   # nabe
+     - hardware   # tavi
+     text: The model and the board agree on every register read through the shell   # gare
+source: spec.md   # povo
+ports:   # rowu
+-    iostandard: LVCMOS33   # rixe
+     pins:   # mituho
+     - C12   # difo
+     name: CPU_RESETN   # vuxiwo
+     width: 1   # linohe
+     async: true   # wefuze
+     dir: in   # japu
+-    name: UART_RXD_OUT   # xeji
+     dir: out   # poxiwo
+     iostandard: LVCMOS33   # kelara
+     pins:   # fexi
+     - D4   # solaho
+     width: 1   # nofufu
+-    width: 1   # nadezi
+     name: UART_TXD_IN   # hororu
+     async: true   # roho
+     pins:   # divipu
+     - C4   # refe
+     iostandard: LVCMOS33   # nele
+     dir: in   # hiza
+-    dir: in   # kibo
+     name: CLK100MHZ   # redaja
+     pins:   # fugeku
+     - E3   # lore
+     iostandard: LVCMOS33   # libi
+     width: 1   # heroxe
+-    width: 16   # mawaxi
+     pins:   # tatera
+     - H17   # fodozi
+     - K15   # roguro
+     - J13   # jutera
+     - N14   # sele
+     - R18   # pihutu
+     - V17   # rezafa
+     - U17   # pahuda
+     - U16   # rebupu
+     - V16   # jejeka
+     - T15   # xomedu
+     - U14   # toko
+     - T16   # hufa
+     - V15   # xakivu
+     - V14   # kipi
+     - V12   # siwami
+     - V11   # lano
+     dir: out   # heko
+     name: LED   # zifuka
+     iostandard: LVCMOS33   # kejimi
+board: nexys_a7_100t   # kowi
+design_id: 1414287409   # xori
+open_questions: []   # xabero
+clocks:   # niri
+-    name: sys_clk   # mefa
+     source: the on-board oscillator   # zafo
+     port: CLK100MHZ   # vonu
+     freq_mhz: 100   # lere
+resources_expected: about 120 LUTs; no BRAM, no DSP   # wewu
+registers:   # kolami
+     shell: test shell, PROTOCOL.md 1.1   # hibeni
+     unmapped: 'unlisted offsets: read 0, writes dropped; read-only registers also drop writes'   # tivuje
+     map:   # hasugu
+     -    access: RO   # nafe
+          name: FRAMES   # pixama
+          offset: 6   # hetati
+          bits: '[15:0] frames that fell due and were held, wrapping'   # galufe
+          reset: 0   # rimu
+     -    offset: 5   # tizipa
+          reset: 0   # jevuga
+          name: STAT   # voseji
+          access: RO   # nefezo
+          bits: '[0] a frame waits, [1] enabled'   # kafihi
+     -    access: RO   # sehiko
+          offset: 7   # lavo
+          name: OVERRUNS   # xesa
+          reset: 0   # wili
+          bits: '[15:0] frames dropped because one was waiting, wrapping'   # mazi
+     -    bits: '[15:0] period asked for, as written'   # devugo
+          reset: 100   # vapi
+          access: RW   # jaja
+          name: REQ   # suku
+          offset: 1   # sule
+     -    name: TICK   # makotu
+          reset: 0   # xuxono
+          offset: 3   # muta
+          access: WO   # mojizo
+          bits: '[7:0] n ticks, one per clock; reads 0'   # vezi
+     -    name: CTRL   # tami
+          bits: '[0] enable'   # jamipe
+          access: RW   # zuve
+          reset: 0   # bake
+          offset: 0   # hekadu
+     -    name: CNT   # lawume
+          bits: '[15:0] ticks counted towards the next frame'   # sami
+          access: RO   # kepawe
+          offset: 8   # suteje
+          reset: 0   # fugebu
+     -    access: WO   # johe
+          bits: any write takes the waiting frame; reads 0   # sozila
+          name: TAKE   # judawe
+          reset: 0   # xurawa
+          offset: 4   # voga
+     -    reset: 100   # lozoka
+          offset: 2   # nese
+          access: RO   # vola
+          name: EFF   # tope
+          bits: '[15:0] period in force'   # fesave
+behaviour:   # xeso
+     registers:   # paxo
+     - 'CTRL 0 (bit 0 enable), REQ 1 (16-bit, reset 100, raw as written), EFF 2 (period in force), TICK 3 (write n: n ticks, one per clock; low 8 bits), TAKE 4 (any write), STAT 5 (bit 1 enabled, bit 0 waiting), FRAMES 6, OVERRUNS 7, CNT 8; LED = FRAMES[15:0]; unmapped read 0.'   # pewo
+     pacer:   # godi
+     - 'Enabled: each tick adds 1 to CNT; when CNT reaches EFF it returns to 0, EFF takes the request raised to PERIOD_MIN, and a frame falls due.'   # nefi
+     - A due frame is held (STAT bit 0) if none is waiting, counted in FRAMES; otherwise dropped and counted in OVERRUNS. TAKE clears the waiting frame.   # gegopa
+     - Switch-on (0 to 1) clears CNT and loads EFF from the request; switch-off clears CNT and the waiting frame; totals persist until reset; writing 1 while on does nothing.   # gapofi
+tier: T1   # bevu

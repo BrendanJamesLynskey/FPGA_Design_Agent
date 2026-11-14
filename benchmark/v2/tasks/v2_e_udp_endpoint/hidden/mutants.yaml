@@ -1,0 +1,50 @@
+# Mutants and the trap for v2_e_udp_endpoint (benchmark/tools/check_task.py)
+mutants:
+- {name: accepts_bad_crc, file: ep_core.sv, find: if (crc != RES_Kzzz) begin, replace: if (1'b0) begin, why: a packet with a wrong check is accepted}
+- {name: truncated_leaves_parser_part_way, file: ep_core.sv, find: 'cnt + 8''d1 < 8''d8 + pkt[1]) reject(2);', replace: 'cnt + 8''d1 < 8''d8 + pkt[1]) begin reject(2); cnt <= cnt + 8''d1; end', why: 'a truncated packet is not forgotten: the next
+    packet is glued onto it (the parser hangs on it)'}
+- {name: sequence_order_lost, file: ep_core.sv, find: "last_seq <= t_seq; have_seq <= 1'b1;   // wimoxa\n                        if (", replace: "have_seq <= 1'b1;\n                        if (", why: the last accepted number is never recorded}
+- {name: replay_accepted, file: ep_core.sv, find: end else if (have_seq && t_dlt == 16'd0) begin, replace: end else if (1'b0) begin, why: a repeated number runs again}
+- {name: old_number_accepted, file: ep_core.sv, find: 'end else if (have_seq && t_dlt[15]) begin', replace: end else if (1'b0) begin, why: an old number runs}
+- {name: old_number_checked_on_first, file: ep_core.sv, find: 'end else if (have_seq && t_dlt[15]) begin', replace: 'end else if (t_dlt[15]) begin', why: the first packet after reset is compared with number 0}
+- {name: half_span_wrong, file: ep_core.sv, find: 'end else if (have_seq && t_dlt[15]) begin', replace: end else if (have_seq && t_dlt > 16'h8000) begin, why: exactly 0x8000 ahead counts as new}
+- {name: seq_moved_by_type_error, file: ep_core.sv, find: reject(6); t_stat = 8'd1;, replace: reject(6); t_stat = 8'd1; last_seq <= t_seq; have_seq <= 1'b1;, why: a refused packet moves the sequence state}
+- {name: addr_error_gives_number_back, file: ep_core.sv, find: begin reject(6); t_stat = 8'd3; end, replace: begin reject(6); t_stat = 8'd3; last_seq <= last_seq; have_seq <= have_seq; end, why: a register error does not use up its sequence number}
+- {name: bad_check_gets_a_reply, file: ep_core.sv, find: reject(1); st <= S_IDLE;, replace: reject(1);, why: a packet with a bad check is answered}
+- {name: short_not_detected, file: ep_core.sv, find: 'else if (cnt + 8''d1 < 8''d4 || cnt + 8''d1 < 8''d8 + pkt[1]) reject(2);', replace: else if (cnt + 8'd1 < 8'd4) reject(2);, why: a packet that ends before its announced size goes on to the
+    check}
+- {name: length_nine_not_oversize, file: ep_core.sv, find: 'if (cnt == 8''d3 && pkt[1] > 8''d8) over <= 1''b1;', replace: 'if (cnt == 8''d3 && pkt[1] > 8''d9) over <= 1''b1;', why: a length byte of 9 is let through}
+- {name: type_zero_known, file: ep_core.sv, find: t_typ < 8'd1 || t_typ > 8'd5, replace: t_typ > 8'd5, why: type 0 is taken as a command}
+- {name: write_ro_allowed, file: ep_core.sv, find: 't_addr[2:0] == 3''d0 || t_addr[2:0] >= 3''d4', replace: 't_addr[2:0] == 3''d0', why: the counters can be written}
+- {name: addr_low_bits, file: ep_core.sv, find: t_addr > 16'd7, replace: 't_addr[7:0] > 8''d7', why: register 256 is taken as register 0}
+- {name: write_value_byte_order, file: ep_core.sv, find: '{pkt[6], pkt[7], pkt[8], pkt[9]}', replace: '{pkt[9], pkt[8], pkt[7], pkt[6]}', why: the written value is taken low byte first}
+- {name: read_counts_itself, file: ep_core.sv, find: '3''d4: bank_v = n_ok;', replace: '3''d4: bank_v = n_ok + 32''d1;', why: a read of the commands register includes the read}
+- {name: status_counts_itself, file: ep_core.sv, find: 'bld[5] <= n_ok[15:8]; bld[6] <= n_ok[7:0];', replace: 'bld[5] <= (n_ok + 32''d1) >> 8; bld[6] <= n_ok[7:0] + 8''d1;', why: the status reply includes the status command}
+- {name: status_counter_order, file: ep_core.sv, find: 'bld[7] <= ctr[1][15:8]; bld[8] <= ctr[1][7:0]; bld[9] <= ctr[2][15:8]; bld[10] <= ctr[2][7:0];', replace: 'bld[7] <= ctr[2][15:8]; bld[8] <= ctr[2][7:0]; bld[9] <= ctr[1][15:8]; bld[10]
+    <= ctr[1][7:0];', why: two counters swapped in the status reply}
+- {name: stale_not_in_refused, file: ep_core.sv, find: "n_err <= n_err + 32'd1;   // kuro\n    endtask", replace: "n_err <= n_err + ((which == 5) ? 32'd0 : 32'd1);\n    endtask", why: out-of-order packets are not in the refused-packets register}
+- {name: period_not_raised, file: ep_core.sv, find: '(t_addr < 16''d4) ? 16''d4 : t_addr;', replace: t_addr;, why: a period below 4 is used}
+- {name: period_zero_sets, file: ep_core.sv, find: 'if (t_addr != 16''d0) period <= (t_addr < 16''d4) ? 16''d4 : t_addr;', replace: 'period <= (t_addr < 16''d4) ? 16''d4 : t_addr;', why: a zero period is raised to 4 instead of keeping the period}
+- {name: start_does_not_restart_count, file: ep_core.sv, find: tlm_on <= 1'b1; tcnt <= '0;, replace: tlm_on <= 1'b1;, why: telemetry start does not restart the count}
+- {name: stop_keeps_held_frame, file: ep_core.sv, find: begin tlm_on <= 1'b0; tlm_req <= 1'b0; tlen <= '0; end, replace: begin tlm_on <= 1'b0; end, why: telemetry stop leaves a held frame}
+- {name: overrun_replaces_frame, file: ep_core.sv, find: if (tlen != 6'd0 || tlm_req) ;, replace: if (1'b0) ;, why: a frame falling due while one is held replaces it}
+- {name: period_one_early, file: ep_core.sv, find: '{1''b0, tcnt} + 17''d1 >= {1''b0, period}', replace: '{1''b0, tcnt} + 17''d2 >= {1''b0, period}', why: a frame falls due one tick early}
+- {name: tlm_seq_stuck, file: ep_core.sv, find: tseq <= tseq + 16'd1;, replace: tseq <= tseq;, why: every telemetry frame carries sequence 0}
+- {name: tlm_uptime_stale, file: ep_core.sv, find: snap_up <= uptime + 32'd1;, replace: snap_up <= uptime;, why: the frame shows the tick before the one that made it due}
+- {name: tlm_status_nonzero, file: ep_core.sv, find: 'bld[0] <= 8''hC0; bld[1] <= 8''h00;', replace: 'bld[0] <= 8''hC0; bld[1] <= 8''h01;', why: telemetry status byte is not zero}
+- {name: tlm_refused_count_zero, file: ep_core.sv, find: snap_err <= n_err;, replace: snap_err <= 32'd0;, why: the frame's refused count is zero}
+- {name: reply_crc_high_first, file: ep_core.sv, find: 'rsp[e] <= ~crc >> (8 * (e - blen));', replace: 'rsp[e] <= ~crc >> (8 * (6''d3 - (e - blen)));', why: reply check goes high byte first}
+- {name: reply_without_flag, file: ep_core.sv, find: 'bld[0] <= t_typ | 8''h80;', replace: 'bld[0] <= t_typ;', why: the reply type lacks its top bit}
+- {name: take_does_nothing, file: ep_core.sv, find: '7''h08: tlen <= ''0;', replace: '7''h08: ;', why: the held frame cannot be taken}
+- {name: tick_count_ignored, file: ep_core.sv, find: '7''h01: todo <= win_wdata[7:0];', replace: '7''h01: todo <= (win_wdata[7:0] == 8''d0) ? 8''d0 : 8''d1;', why: a tick write of any non-zero number makes a single tick}
+- {name: uptime_only_when_on, file: ep_core.sv, find: "uptime <= uptime + 32'd1;   // xedo\n                if (tlm_on) begin", replace: "if (tlm_on) uptime <= uptime + 32'd1;\n                if (tlm_on) begin", why: ticks count towards uptime
+    only while telemetry is on}
+- {name: led_shows_refused, file: ep_core.sv, find: 'assign led = n_ok[15:0];', replace: 'assign led = n_err[15:0];', why: the LEDs show the wrong count}
+- {name: stat_bits_swapped, file: ep_core.sv, find: '{30''d0, (st != S_IDLE) || tlm_req, tlm_on}', replace: '{30''d0, tlm_on, (st != S_IDLE) || tlm_req}', why: status bits swapped}
+- {name: reset_period, file: ep_core.sv, find: last_seq <= '0; period <= 16'd100;, replace: last_seq <= '0; period <= 16'd10;, why: period after reset is 10}
+trap:
+  twin: endpoint that orders sequence numbers with a plain greater-than test (no wrap)
+  why: a plain compare refuses every number after 0xFFFF; the spec asks for modular order with a first packet that may carry any number
+  edits:
+  - {file: ep_core.sv, find: t_dlt = t_seq - last_seq;, replace: 't_dlt = (t_seq > last_seq) ? 16''d1 : ((t_seq == last_seq) ? 16''d0 : 16''hFFFF);'}
+  must_fail: [test_ep_sequence_rules]

@@ -8,7 +8,7 @@ network blocks of brief 63D ([ip_lib](../../ip_lib/README.md): the RMII MAC, `ip
 datasheet, a bit-exact Python model, a host client and a fuzzer with a dry-run mode, and benchmark tasks derived from the
 design. The FPGA Design Agent has not been run on any of it and no board has been used: those are phases 2 and 3.
 
-**Status of phase 1 (2026-11-14): complete.** TASKS_STATUS
+**Status of phase 1 (2026-11-14): complete.** Six benchmark tasks (domain E, board Nexys A7-100T, three in tier T1 and three in T2) were written to the v2 layout, checked, frozen, submitted to the split ledger and drawn: in each cell of three, one is held out. The four development tasks are in [benchmark/v2/tasks](../../benchmark/v2/tasks): `v2_e_crc32_unit` and `v2_e_tlm_pacer` (T1), `v2_e_cmd_exec` and `v2_e_udp_endpoint` (T2, the whole endpoint at the payload level). The two held-out ones (one per cell) are by design neither named nor quoted here. Nothing in this folder quotes a hidden test. The requested probes map as: command parser (held out), CRC check and generate (`v2_e_crc32_unit`), telemetry rate limiter (`v2_e_tlm_pacer`), response builder (held out), executor (`v2_e_cmd_exec`), whole endpoint (`v2_e_udp_endpoint`).
 
 ## What is here
 
@@ -64,6 +64,9 @@ clock in, three to decide, one per clock out), not measurements.
 ## Known gaps and limits
 
 - The agent has not built any of this and no board has been used (phases 2 and 3).
+- Task benches use the Nexys shell (about 1 200 clocks per register access), so counters wider than 8 bits and the 65 536 wrap are only partly exercised: byte counts reach 262, not 65 536. The 8-bit counter mutants of the parser, the executor and the pacer were dropped for that reason (they need hundreds of packets).
+- Mutant sweeps were run once on the final files, with one exception: the endpoint's `test_ep_sequence_rules` gained one check (the refused-packets register after an out-of-order packet) after the first sweep chunks; only the mutant that needed it was re-run (killed), the others cannot be un-killed by an added check.
+- Pre-freeze leak check: each of the six tasks in turn as the secret against the other five, this folder, the bench helpers, the existing v2 tasks, the shell and the CRC and UDP entries of `ip_lib`: 0 hits (80-byte windows, `site/leak_guard.py`, no allowance). It took per-task rewording and a unique trailing comment on every code line of the reference and hidden Python.
 - The benchmark tasks work at the payload level through the Nexys test shell; the Ethernet blocks, ARP, ping and the
   RMII PHY are not in them. The whole-endpoint task therefore tests the endpoint's behaviour, not the integration with `ip_lib`.
 - Counter widths above 16 bits (the wrap at 65 536 commands) are not testable through the UART shell and are not tested.

@@ -1,0 +1,282 @@
+{
+ "task": "v2_e_cmd_exec",
+ "sim": "icarus",
+ "date": "2026-11-14",
+ "ref": {
+  "pass": true,
+  "tests": {
+   "test_exec_identity_reset_state_and_the_view": true,
+   "test_exec_read_and_write_the_scratch_registers": true,
+   "test_exec_refusals_and_what_they_change": true,
+   "test_exec_counters_read_before_counting_themselves": true,
+   "test_exec_telemetry_commands_and_period": true,
+   "test_exec_ticks_refused_and_register_rules": true,
+   "test_exec_a_failed_command_leaves_the_result_of_the_last_one_visible_only_as_a_code": true,
+   "test_exec_random_mix": true,
+   "test_exec_reset_clears_every_register_and_unmapped_writes_do_nothing": true,
+   "test_exec_register_number_is_checked_only_for_read_and_write": true
+  }
+ },
+ "mutants": [
+  {
+   "name": "write_ro_allowed",
+   "why": "the counters can be written",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_exec_refusals_and_what_they_change",
+    "test_exec_counters_read_before_counting_themselves",
+    "test_exec_telemetry_commands_and_period",
+    "test_exec_random_mix"
+   ]
+  },
+  {
+   "name": "addr_check_low_bits",
+   "why": "register 256 is taken as register 0",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_exec_refusals_and_what_they_change"
+   ]
+  },
+  {
+   "name": "bad_addr_still_counts_ok",
+   "why": "a refused read also counts as a success",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_exec_refusals_and_what_they_change",
+    "test_exec_counters_read_before_counting_themselves",
+    "test_exec_reset_clears_every_register_and_unmapped_writes_do_nothing"
+   ]
+  },
+  {
+   "name": "unknown_type_code",
+   "why": "wrong code for an unknown type",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_exec_refusals_and_what_they_change",
+    "test_exec_random_mix",
+    "test_exec_reset_clears_every_register_and_unmapped_writes_do_nothing",
+    "test_exec_register_number_is_checked_only_for_read_and_write"
+   ]
+  },
+  {
+   "name": "read_counts_itself",
+   "why": "a read of CMDS includes the read itself",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_exec_counters_read_before_counting_themselves"
+   ]
+  },
+  {
+   "name": "period_not_raised",
+   "why": "the period is not raised to 4",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_exec_telemetry_commands_and_period"
+   ]
+  },
+  {
+   "name": "stop_does_not_stop",
+   "why": "telemetry stop leaves it on",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_exec_telemetry_commands_and_period",
+    "test_exec_random_mix",
+    "test_exec_register_number_is_checked_only_for_read_and_write"
+   ]
+  },
+  {
+   "name": "write_low_half_only",
+   "why": "only 16 bits of the value are stored",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_exec_read_and_write_the_scratch_registers",
+    "test_exec_random_mix"
+   ]
+  },
+  {
+   "name": "refused_adds_two",
+   "why": "the value written to the refused register matters",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_exec_ticks_refused_and_register_rules"
+   ]
+  },
+  {
+   "name": "view_offset_shift",
+   "why": "the uptime view is wrong",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_exec_identity_reset_state_and_the_view",
+    "test_exec_read_and_write_the_scratch_registers",
+    "test_exec_refusals_and_what_they_change",
+    "test_exec_telemetry_commands_and_period",
+    "test_exec_ticks_refused_and_register_rules",
+    "test_exec_a_failed_command_leaves_the_result_of_the_last_one_visible_only_as_a_code",
+    "test_exec_random_mix",
+    "test_exec_reset_clears_every_register_and_unmapped_writes_do_nothing",
+    "test_exec_register_number_is_checked_only_for_read_and_write"
+   ]
+  },
+  {
+   "name": "period_reset_wrong",
+   "why": "the period after reset is 10",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_exec_identity_reset_state_and_the_view",
+    "test_exec_read_and_write_the_scratch_registers",
+    "test_exec_refusals_and_what_they_change",
+    "test_exec_telemetry_commands_and_period",
+    "test_exec_ticks_refused_and_register_rules",
+    "test_exec_a_failed_command_leaves_the_result_of_the_last_one_visible_only_as_a_code",
+    "test_exec_random_mix",
+    "test_exec_reset_clears_every_register_and_unmapped_writes_do_nothing",
+    "test_exec_register_number_is_checked_only_for_read_and_write"
+   ]
+  },
+  {
+   "name": "id_writable",
+   "why": "the ID register can be overwritten (as scratch0 slot)",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_exec_refusals_and_what_they_change",
+    "test_exec_reset_clears_every_register_and_unmapped_writes_do_nothing"
+   ]
+  },
+  {
+   "name": "addr_limit_nine",
+   "why": "register 8 is taken as register 0",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_exec_refusals_and_what_they_change",
+    "test_exec_counters_read_before_counting_themselves",
+    "test_exec_reset_clears_every_register_and_unmapped_writes_do_nothing"
+   ]
+  },
+  {
+   "name": "failure_not_counted",
+   "why": "unknown types are not counted as errors",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_exec_refusals_and_what_they_change",
+    "test_exec_random_mix",
+    "test_exec_reset_clears_every_register_and_unmapped_writes_do_nothing",
+    "test_exec_register_number_is_checked_only_for_read_and_write"
+   ]
+  },
+  {
+   "name": "type_six_known",
+   "why": "type 6 acts as telemetry stop",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_exec_refusals_and_what_they_change"
+   ]
+  },
+  {
+   "name": "rdata_kept_on_failure",
+   "why": "the old read value stays after a refused or other command",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_exec_read_and_write_the_scratch_registers",
+    "test_exec_counters_read_before_counting_themselves",
+    "test_exec_telemetry_commands_and_period",
+    "test_exec_a_failed_command_leaves_the_result_of_the_last_one_visible_only_as_a_code",
+    "test_exec_random_mix"
+   ]
+  },
+  {
+   "name": "period_zero_sets",
+   "why": "a zero period resets it to 4 instead of keeping it",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_exec_telemetry_commands_and_period",
+    "test_exec_random_mix"
+   ]
+  },
+  {
+   "name": "start_does_not_start",
+   "why": "telemetry start leaves it off",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_exec_telemetry_commands_and_period",
+    "test_exec_random_mix",
+    "test_exec_reset_clears_every_register_and_unmapped_writes_do_nothing",
+    "test_exec_register_number_is_checked_only_for_read_and_write"
+   ]
+  },
+  {
+   "name": "tick_adds_one",
+   "why": "a tick write adds one whatever the number",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_exec_ticks_refused_and_register_rules",
+    "test_exec_random_mix",
+    "test_exec_reset_clears_every_register_and_unmapped_writes_do_nothing"
+   ]
+  },
+  {
+   "name": "p0_wide",
+   "why": "the first parameter keeps 8 bits",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_exec_refusals_and_what_they_change",
+    "test_exec_telemetry_commands_and_period",
+    "test_exec_ticks_refused_and_register_rules",
+    "test_exec_register_number_is_checked_only_for_read_and_write"
+   ]
+  },
+  {
+   "name": "led_swapped",
+   "why": "the LED halves are swapped",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_exec_identity_reset_state_and_the_view",
+    "test_exec_read_and_write_the_scratch_registers",
+    "test_exec_refusals_and_what_they_change",
+    "test_exec_counters_read_before_counting_themselves",
+    "test_exec_telemetry_commands_and_period",
+    "test_exec_ticks_refused_and_register_rules",
+    "test_exec_a_failed_command_leaves_the_result_of_the_last_one_visible_only_as_a_code",
+    "test_exec_random_mix",
+    "test_exec_reset_clears_every_register_and_unmapped_writes_do_nothing",
+    "test_exec_register_number_is_checked_only_for_read_and_write"
+   ]
+  }
+ ],
+ "mutants_killed": 21,
+ "mutants_total": 21,
+ "trap": {
+  "twin": "executor that treats a register number above 7 as a wrap onto the bank (address taken modulo 8)",
+  "why": "the common cheap decode uses the low three bits; the spec refuses register numbers of 8 or more",
+  "must_fail": [
+   "test_exec_refusals_and_what_they_change"
+  ],
+  "failed_tests": [
+   "test_exec_refusals_and_what_they_change",
+   "test_exec_counters_read_before_counting_themselves",
+   "test_exec_a_failed_command_leaves_the_result_of_the_last_one_visible_only_as_a_code",
+   "test_exec_reset_clears_every_register_and_unmapped_writes_do_nothing"
+  ],
+  "trap_fires": true
+ }
+}

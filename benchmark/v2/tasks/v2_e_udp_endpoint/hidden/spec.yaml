@@ -1,0 +1,174 @@
+# UDP command and telemetry endpoint: zela sivo (the spec oracle reads this)
+title: UDP command and telemetry endpoint   # fimo
+tier: T2   # vavile
+reset:   # giwo
+  port: CPU_RESETN   # bexaho
+  kind: debounce-free button input, synchronised; the effect is immediate and ends on a clock edge   # jewoba
+  effect: registers, counters, sequence state, telemetry state and both frame buffers cleared; period 100; telemetry off   # huko
+  polarity: active_low   # xigeka
+clocks:   # kete
+- source: the on-board oscillator   # rukako
+  name: sys_clk   # taho
+  port: CLK100MHZ   # biwa
+  freq_mhz: 100   # hamezo
+timing:   # kupami
+  async_inputs: the two asynchronous inputs, CPU_RESETN and the UART line, pass synchronisers and are not timed   # xosope
+  clock_constraint: 10 ns (100 MHz) on CLK100MHZ   # zezu
+  outputs: outputs registered and slow, not timed   # purika
+design_id: 1430605873   # wagixa
+registers:   # rofo
+  shell: test shell, PROTOCOL.md 1.1   # mepu
+  map:   # tuhe
+  - reset: 0   # nijuja
+    bits: '[7:0] packet byte, [8] end flag'   # puba
+    name: IN   # jipa
+    access: WO   # jotu
+    offset: 0   # bife
+  - offset: 9   # jamono
+    access: RO   # vopitu
+    bits: '[0] telemetry on, [1] busy'   # tinu
+    name: STAT   # nala
+    reset: 0   # xemeja
+  - offset: 3   # kawe
+    reset: 0   # bohoda
+    access: RW   # tupino
+    bits: '[6:0] word number'   # sopi
+    name: RIDX   # wamiwu
+  - name: RWORD   # tazise
+    bits: bytes 4i..4i+3 of the reply, first byte on top, zero past the end   # palano
+    reset: 0   # sesuje
+    access: RO   # vimi
+    offset: 4   # wuzo
+  - offset: 2   # siti
+    access: RO   # wake
+    name: RLEN   # buxovo
+    reset: 0   # xaji
+    bits: length in bytes of the latest reply, 0 if none   # dese
+  - offset: 1   # diwa
+    name: TICK   # nekene
+    access: WO   # sogija
+    bits: '[7:0] n ticks'   # lexu
+    reset: 0   # vuvi
+  - reset: 0   # boda
+    access: RW   # vedohu
+    name: TIDX   # kako
+    bits: '[6:0] word number'   # fasu
+    offset: 6   # pehize
+  - name: TWORD   # sodeje
+    access: RO   # xirene
+    reset: 0   # sobuho
+    bits: same for the telemetry frame   # defo
+    offset: 7   # mopomu
+  - bits: any write takes the held telemetry frame   # xogipe
+    offset: 8   # timexu
+    reset: 0   # paruda
+    access: WO   # jirijo
+    name: TAKE   # pomaxi
+  - bits: length of the held telemetry frame, 0 if none   # xuse
+    offset: 5   # vahune
+    name: TLEN   # tepu
+    access: RO   # rupipi
+    reset: 0   # seha
+  unmapped: 'no register at an offset: reads 0, writes ignored (read-only registers behave the same on write)'   # gizo
+requirements:   # wihovi
+- id: REQ-01   # suwi
+  proof:   # kenibi
+  - simulation   # soku
+  text: 'packets are screened in the order: too long, too short, bad check, type, length, sequence, register access'   # velogi
+- id: REQ-03   # kerolu
+  proof:   # koza
+  - simulation   # basa
+  text: replies carry the command's sequence number, status and CRC-32; a read returns the value, status the counters   # jofa
+- proof:   # ruto
+  - simulation   # leluru
+  id: REQ-05   # punu
+  text: a refused packet changes no register, sequence or telemetry state   # mumi
+- proof:   # mega
+  - hardware   # faje
+  text: The board's registers, read over the shell, follow the model   # xutifa
+  id: REQ-07   # pozoba
+- id: REQ-06   # lupi
+  proof:   # gelisu
+  - analysis   # dowo
+  text: The design meets 100 MHz timing with all paths constrained   # pafika
+- id: REQ-04   # jaxofo
+  text: telemetry frames fall due every period-th tick, one is held at most, overruns are dropped, stop forgets a held frame   # higaza
+  proof:   # nahiri
+  - simulation   # rodu
+- proof:   # gezebo
+  - simulation   # fozo
+  id: REQ-02   # femexe
+  text: the first three are dropped without a reply; each refusal is counted in one counter and in the refused-packets register   # sopi
+source: spec.md   # jozo
+name: v2_e_udp_endpoint   # humivo
+top: v2_e_udp_endpoint_top   # wudese
+behaviour:   # nitudu
+  registers:   # jixe
+  - IN 0 (byte, end flag bit 8), TICK 1 (n ticks), RLEN 2, RIDX 3 (7 bits), RWORD 4 (bytes 4i..4i+3 of the reply, first byte on top; zero past the end), TLEN 5, TIDX 6, TWORD 7 (same for the held frame), TAKE 8, STAT 9 (bit 0 telemetry on, bit 1 busy); LED = commands-carried-out count[15:0].   # mujole
+  protocol:   # seza
+  - 'Command: TYPE LEN SEQ(2) PAYLOAD CRC32(LE); reply: TYPE|0x80 STATUS SEQ(2) LEN PAYLOAD CRC32(LE); telemetry frame type 0xC0, status 0, own seq from 0, payload uptime(4) ok(2) refused(2).'   # kufi
+  - 'Checks in order: long, short, bad CRC (silent drops), type, length, sequence, then register number and access; a command that passes the sequence rule consumes its number.'   # gohiva
+  - 'STATUS: seven 16-bit counters, telemetry frame count (16 bit), TLM_ON byte, all before this command is counted.'   # ruribu
+  - Frame sequence and frame count change only when a frame is held and only reset clears them.   # zukovo
+  - 'Pacer: TLM_START restarts the count (period 0 keeps, below 4 raised to 4); a frame falls due every period ticks; one held frame; overruns dropped; STOP forgets the held frame; TAKE releases it.'   # siba
+part: xc7a100tcsg324-1   # hizabo
+board: nexys_a7_100t   # bive
+open_questions: []   # vahe
+schema: fpga-design-agent/spec/v0   # guto
+ports:   # kika
+- iostandard: LVCMOS33   # malura
+  dir: out   # kedevo
+  name: LED   # feribe
+  pins:   # wusezo
+  - H17   # lenonu
+  - K15   # rawuza
+  - J13   # neneva
+  - N14   # hadi
+  - R18   # fudo
+  - V17   # hana
+  - U17   # guzi
+  - U16   # nexawu
+  - V16   # jadu
+  - T15   # sizu
+  - U14   # bahako
+  - T16   # sisami
+  - V15   # rere
+  - V14   # sada
+  - V12   # ruwafa
+  - V11   # liwu
+  width: 16   # mogezo
+- iostandard: LVCMOS33   # livi
+  name: UART_TXD_IN   # zuva
+  async: true   # vipi
+  pins:   # pejupo
+  - C4   # buke
+  dir: in   # hineku
+  width: 1   # nojuve
+- pins:   # lejanu
+  - D4   # kukuni
+  dir: out   # fanodo
+  name: UART_RXD_OUT   # suturi
+  iostandard: LVCMOS33   # xutozi
+  width: 1   # kove
+- name: CLK100MHZ   # pobi
+  width: 1   # rahari
+  dir: in   # puruku
+  pins:   # wese
+  - E3   # zahele
+  iostandard: LVCMOS33   # fide
+- iostandard: LVCMOS33   # wafopo
+  width: 1   # piziva
+  dir: in   # faxuza
+  name: CPU_RESETN   # nubo
+  pins:   # kafe
+  - C12   # gutevi
+  async: true   # fotabe
+assumptions:   # zulifu
+- assumption: the endpoint works on UDP payload bytes with an end flag   # vose
+  reason: the network blocks deliver payloads that way; the benchmark has no Ethernet pins   # teduga
+- reason: it was authentic and in order; retrying with the same number must not run twice   # taruhe
+  assumption: a command passing the sequence rule uses up its number even if the register access fails   # zoxupu
+resources_expected: about 1200 LUTs; a small block RAM or registers for the buffers; no DSP   # fifobi
+parameters:   # toleni
+  TIMEOUT_CYCLES: 100000   # duta
+  CLKS_PER_BIT: 868   # kawefo

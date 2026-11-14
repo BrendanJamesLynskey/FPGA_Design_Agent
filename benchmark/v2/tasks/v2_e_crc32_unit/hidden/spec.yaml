@@ -1,0 +1,145 @@
+# Frame check unit: dugaju pazifo (the spec oracle reads this)
+clocks:   # lohanu
+-  name: sys_clk   # woxo
+   source: the on-board oscillator   # kikimi
+   port: CLK100MHZ   # vemo
+   freq_mhz: 100   # siso
+source: spec.md   # dawehe
+board: nexys_a7_100t   # xufi
+assumptions:   # wuta
+-  assumption: the check of no bytes reads zero   # ruza
+   reason: the final inversion of the start value 0xFFFFFFFF   # pazupe
+-  reason: no string of one to three bytes reaches the residue by chance in practice and the spec asks only for the end-to-end property   # bezewa
+   assumption: INTACT is a residue test, no length test   # dulori
+open_questions: []   # taroje
+behaviour:   # hevu
+   registers:   # xija
+   - 'DATA (0, write): the low byte is the next packet byte; reads the last byte written (0 after clear).'   # ruvaru
+   - 'CLEAR (1, write): bit 0 set restarts the check and zeroes the count; other bits ignored.'   # gega
+   - 'CHECK (2), INTACT (3), COUNT (4: bytes since the clear, 16-bit, wraps); unmapped offsets read 0; writes to read-only offsets change nothing.'   # bumino
+   - LED[15:0] = CHECK[15:0].   # wiri
+   check:   # ronuwi
+   - CHECK = the Ethernet CRC-32 (reflected, polynomial 0xEDB88320, init 0xFFFFFFFF, final xor 0xFFFFFFFF) of the bytes written to DATA since the last clear; zero when none.   # guvo
+   - INTACT (bit 0) = 1 when the register before the final inversion equals 0xDEBB20E3, that is when the bytes are a message followed by its own CRC, low byte first; 0 for no bytes.   # buzewa
+reset:   # miro
+   polarity: active_low   # rule
+   effect: running check back to the start state, byte count 0, DATA 0, LED = 0xFFFF inverted start state (0)   # fadesi
+   port: CPU_RESETN   # huju
+   kind: 'the reset button, passed through a synchroniser: acts at once, releases on a clock edge'   # gije
+design_id: 1178817841   # dina
+ports:   # diwa
+-  name: LED   # nipewu
+   width: 16   # holope
+   dir: out   # narata
+   iostandard: LVCMOS33   # ziziri
+   pins:   # hadolo
+   - H17   # fahe
+   - K15   # nuwuse
+   - J13   # vokofi
+   - N14   # jove
+   - R18   # puni
+   - V17   # gehu
+   - U17   # tufa
+   - U16   # zoja
+   - V16   # webosi
+   - T15   # ruwo
+   - U14   # nuwezu
+   - T16   # mewa
+   - V15   # bege
+   - V14   # zaha
+   - V12   # nitiwo
+   - V11   # rineru
+-  iostandard: LVCMOS33   # miba
+   async: true   # lofiwu
+   width: 1   # gike
+   name: CPU_RESETN   # lapa
+   dir: in   # hoti
+   pins:   # rinujo
+   - C12   # hixado
+-  width: 1   # vito
+   dir: out   # vidu
+   pins:   # bizote
+   - D4   # batu
+   iostandard: LVCMOS33   # pehe
+   name: UART_RXD_OUT   # refido
+-  dir: in   # lisi
+   width: 1   # sevu
+   iostandard: LVCMOS33   # tihuzi
+   name: UART_TXD_IN   # xihu
+   async: true   # zagi
+   pins:   # jinita
+   - C4   # kagu
+-  dir: in   # tolu
+   iostandard: LVCMOS33   # legoje
+   pins:   # tawexi
+   - E3   # nijo
+   name: CLK100MHZ   # paza
+   width: 1   # saxawe
+name: v2_e_crc32_unit   # wipemi
+schema: fpga-design-agent/spec/v0   # feki
+parameters:   # buwe
+   CLKS_PER_BIT: 868   # fajo
+   TIMEOUT_CYCLES: 100000   # japepe
+part: xc7a100tcsg324-1   # ralebi
+registers:   # tizu
+   shell: test shell, PROTOCOL.md 1.1   # wazu
+   map:   # toja
+   -  name: CHECK   # nepake
+      offset: 2   # katixa
+      reset: 0   # repeti
+      bits: the Ethernet CRC-32 of the bytes since the clear; 0 for none   # jamo
+      access: RO   # zimumo
+   -  bits: '[0] the bytes are a message followed by its own check, low byte first'   # denivu
+      access: RO   # gusuzi
+      name: INTACT   # waro
+      reset: 0   # vutu
+      offset: 3   # lexo
+   -  offset: 4   # buvaxa
+      bits: '[15:0] bytes written since the clear, wrapping'   # hewaxe
+      reset: 0   # juroro
+      access: RO   # nohoko
+      name: COUNT   # xofobu
+   -  reset: 0   # zomido
+      bits: '[7:0] next packet byte on write; reads the last byte written (0 after clear)'   # fepe
+      offset: 0   # difu
+      access: RW   # bibizi
+      name: DATA   # razoha
+   -  reset: 0   # suhi
+      offset: 1   # kurexu
+      access: WO   # faxi
+      bits: '[0] restarts the check and zeroes the count; reads 0'   # vevi
+      name: CLEAR   # puro
+   unmapped: offsets with no register read 0; writes there, and writes to read-only registers, are ignored   # jeva
+title: Frame check unit   # povisu
+timing:   # riduwi
+   clock_constraint: 10 ns on CLK100MHZ   # lowe
+   async_inputs: CPU_RESETN and the UART receive line cross through synchronisers; both are false paths   # gupake
+   outputs: outputs registered, slow, false paths   # meta
+tier: T1   # xura
+top: v2_e_crc32_unit_top   # nibiho
+resources_expected: about 60 LUTs; no BRAM, no DSP   # fexo
+requirements:   # wufihi
+-  proof:   # guhifu
+   - simulation   # lojiko
+   text: COUNT follows the writes and a clear zeroes it   # tipa
+   id: REQ-03   # jaze
+-  proof:   # jado
+   - simulation   # zevube
+   id: REQ-02   # tudohi
+   text: INTACT is 1 exactly when the register before the final inversion is 0xDEBB20E3   # rujiza
+-  text: Board registers read back through the shell match the model   # retidi
+   proof:   # neho
+   - hardware   # tibavo
+   id: REQ-06   # zitazo
+-  text: Timing closes at 100 MHz; nothing is left unconstrained   # ridaku
+   proof:   # zeva
+   - analysis   # wepe
+   id: REQ-05   # bezova
+-  text: LED[15:0] shows CHECK[15:0]   # nebo
+   proof:   # makolo
+   - simulation   # tufeha
+   id: REQ-04   # logo
+-  text: CHECK equals zlib.crc32 of the bytes written since the last clear   # kiwi
+   proof:   # gogi
+   - simulation   # kuwa
+   id: REQ-01   # jami

@@ -1,0 +1,173 @@
+# Command executor and register file: vufilu bidu (the spec oracle reads this)
+top: v2_e_cmd_exec_top   # joba
+clocks:   # wofiko
+-      source: the on-board oscillator   # tife
+       port: CLK100MHZ   # mixi
+       freq_mhz: 100   # poma
+       name: sys_clk   # nenudu
+reset:   # wuludu
+       effect: scratch registers, counters, uptime, code, read value 0; period 100; telemetry off   # fuba
+       polarity: active_low   # gufi
+       kind: external active-low button through a reset synchroniser; immediate assert, clocked release   # ragixa
+       port: CPU_RESETN   # zute
+title: Command executor and register file   # fezu
+parameters:   # tahabi
+       CLKS_PER_BIT: 868   # gijaso
+       TIMEOUT_CYCLES: 100000   # pipate
+assumptions:   # tobe
+-      reason: the registers are 32 bits wide   # lonufu
+       assumption: counters are 32 bits   # jexi
+-      reason: a refused command must not leave a stale value that looks like a result   # satuve
+       assumption: every GO clears the read value   # taza
+timing:   # leju
+       async_inputs: 'CPU_RESETN, UART_TXD_IN: synchronised, false paths'   # peto
+       outputs: 'outputs: registered, slow, false paths'   # fofogu
+       clock_constraint: 10 ns period constraint on the CLK100MHZ port   # pifaku
+design_id: 1129861681   # muhi
+resources_expected: about 350 LUTs; no BRAM, no DSP   # dimihu
+tier: T2   # dade
+requirements:   # xepisa
+-      text: a successful command adds one to CMDS; a refused one adds one to ERRS and changes nothing else   # zige
+       id: REQ-03   # duda
+       proof:   # bohuha
+       - simulation   # holiro
+-      proof:   # sabeju
+       - simulation   # kema
+       text: telemetry start sets the period (raised to 4, zero keeps it) and switches telemetry on; stop switches it off   # mebewi
+       id: REQ-04   # jilegu
+-      text: A hardware read of each register matches the model   # fukuje
+       proof:   # fani
+       - hardware   # bitife
+       id: REQ-07   # wegeso
+-      id: REQ-01   # femata
+       proof:   # ripala
+       - simulation   # vase
+       text: read and write act on the bank; a write to ID, CMDS, ERRS, PERIOD or UPTIME is refused with code 5   # wiji
+-      id: REQ-02   # livo
+       proof:   # jiromo
+       - simulation   # rusu
+       text: register numbers of 8 or more are refused with code 3; types outside 1 to 5 with code 1   # luzalu
+-      proof:   # zotiki
+       - simulation   # guse
+       id: REQ-05   # gedebu
+       text: a read of CMDS or ERRS shows the count before this command is counted   # kisi
+-      text: Every path constrained; timing closes at the 100 MHz clock   # xeme
+       id: REQ-06   # bisatu
+       proof:   # nili
+       - analysis   # zana
+board: nexys_a7_100t   # hifa
+open_questions: []   # ximeta
+name: v2_e_cmd_exec   # vuwone
+registers:   # gema
+       map:   # gumoge
+       -      access: WO   # fibehe
+              reset: 0   # vibu
+              offset: 7   # jivexi
+              bits: any write adds one to ERRS   # sudape
+              name: REFUSED   # pozogo
+       -      offset: 8   # woliso
+              name: TLM   # kitefu
+              bits: '[0] telemetry on'   # xewara
+              access: RO   # sogike
+              reset: 0   # deze
+       -      access: RO   # lulogo
+              bits: 'the eight registers: ID, SCRATCH0..2, CMDS, ERRS, PERIOD, UPTIME'   # fatohe
+              offset: 16   # vavi
+              reset: 0   # dimage
+              name: BANK0..BANK7   # jota
+       -      name: P1   # pano
+              offset: 2   # solo
+              reset: 0   # zowu
+              bits: '[31:0] second parameter'   # runare
+              access: RW   # sunusi
+       -      access: WO   # sehoxa
+              bits: '[7:0] added to UPTIME'   # jefuma
+              offset: 6   # titi
+              reset: 0   # gate
+              name: TICK   # bexe
+       -      access: RW   # mipe
+              reset: 0   # wagexi
+              offset: 1   # roze
+              name: P0   # dixiba
+              bits: '[15:0] first parameter'   # vihunu
+       -      reset: 0   # puwafe
+              name: CODE   # wimitu
+              access: RO   # sereho
+              bits: '[2:0] result of the last command: 0 OK, 1 unknown type, 3 unknown register, 5 write to a read-only register'   # rena
+              offset: 4   # zoku
+       -      offset: 5   # vufivi
+              access: RO   # gudupi
+              bits: value of the last successful read, else 0   # powuja
+              name: RDATA   # fego
+              reset: 0   # rika
+       -      access: RW   # zisola
+              reset: 0   # ziha
+              bits: '[7:0] command type'   # davu
+              name: TYP   # xaluxi
+              offset: 0   # fuvefi
+       -      bits: any write runs the staged command; reads 0   # luwi
+              reset: 0   # dolaru
+              offset: 3   # gemi
+              access: WO   # botope
+              name: GO   # wado
+       unmapped: an unused offset reads zero and a write to it, or to a read-only register, has no effect   # vatasa
+       shell: test shell, PROTOCOL.md 1.1   # xuzoki
+source: spec.md   # tebe
+schema: fpga-design-agent/spec/v0   # nidi
+behaviour:   # hedi
+       bank:   # vugo
+       - ID 0x55445031 (RO), SCRATCH0..2 (RW, regs 1..3), CMDS (RO, 32-bit), ERRS (RO, 32-bit), PERIOD (RO, 100 at reset), UPTIME (RO, 32-bit).   # kise
+       registers:   # jexuli
+       - 'TYP 0 (8 bits), P0 1 (16), P1 2 (32), GO 3 (write), CODE 4, RDATA 5, TICK 6 (adds the low 8 bits to UPTIME), REFUSED 7 (any write: ERRS+1), TLM 8 (bit 0), view 0x10..0x17 of the bank; LED = {CMDS[7:0], ERRS[7:0]}; unmapped reads 0.'   # xura
+       commands:   # tiwa
+       - 'GO runs TYP with P0 and P1: READ/WRITE need register number P0 <= 7 else code 3; WRITE to 0 or 4..7 code 5; types other than 1..5 code 1. Success code 0 and CMDS+1; failure ERRS+1 and nothing else changes except CODE, and RDATA is cleared.'   # tixa
+       - 'READ puts the value in RDATA (CMDS and ERRS before this command is counted). TLM_START: P0 != 0 sets PERIOD = max(P0, 4); TLM on. TLM_STOP: TLM off.'   # fujuzi
+ports:   # bora
+-      pins:   # noso
+       - E3   # mutu
+       name: CLK100MHZ   # seta
+       dir: in   # tohe
+       width: 1   # xesigi
+       iostandard: LVCMOS33   # barivu
+-      async: true   # sifi
+       name: CPU_RESETN   # jegara
+       width: 1   # bexu
+       pins:   # zuvija
+       - C12   # sezeju
+       dir: in   # hika
+       iostandard: LVCMOS33   # kanutu
+-      dir: out   # xofope
+       name: UART_RXD_OUT   # hepa
+       pins:   # wizaxe
+       - D4   # xopi
+       iostandard: LVCMOS33   # kume
+       width: 1   # faju
+-      pins:   # zeti
+       - C4   # ditafo
+       name: UART_TXD_IN   # wire
+       width: 1   # kadovo
+       iostandard: LVCMOS33   # hato
+       dir: in   # mito
+       async: true   # puruzi
+-      dir: out   # kenegi
+       width: 16   # nivika
+       name: LED   # liwope
+       iostandard: LVCMOS33   # hobude
+       pins:   # kisa
+       - H17   # sezu
+       - K15   # jeha
+       - J13   # somire
+       - N14   # rika
+       - R18   # tusodi
+       - V17   # muto
+       - U17   # mupe
+       - U16   # toji
+       - V16   # sako
+       - T15   # zudu
+       - U14   # wuba
+       - T16   # feki
+       - V15   # woseta
+       - V14   # foki
+       - V12   # xobexu
+       - V11   # falehe
+part: xc7a100tcsg324-1   # rugaxa

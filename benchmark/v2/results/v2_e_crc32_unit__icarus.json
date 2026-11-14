@@ -1,0 +1,205 @@
+{
+ "task": "v2_e_crc32_unit",
+ "sim": "icarus",
+ "date": "2026-11-14",
+ "ref": {
+  "pass": true,
+  "tests": {
+   "test_fcu_identity_and_reset_state": true,
+   "test_fcu_check_value_of_the_standard_string": true,
+   "test_fcu_each_byte_extends_the_check": true,
+   "test_fcu_intact_flag": true,
+   "test_fcu_clear_and_register_rules": true,
+   "test_fcu_count_is_sixteen_bits_and_survives_a_long_stream": true,
+   "test_fcu_unmapped_writes_change_nothing": true
+  }
+ },
+ "mutants": [
+  {
+   "name": "wrong_polynomial",
+   "why": "the unreflected polynomial value in a reflected engine",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_fcu_check_value_of_the_standard_string",
+    "test_fcu_each_byte_extends_the_check",
+    "test_fcu_intact_flag",
+    "test_fcu_clear_and_register_rules",
+    "test_fcu_count_is_sixteen_bits_and_survives_a_long_stream",
+    "test_fcu_unmapped_writes_change_nothing"
+   ]
+  },
+  {
+   "name": "no_final_inversion",
+   "why": "the check is not inverted at the end",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_fcu_identity_and_reset_state",
+    "test_fcu_check_value_of_the_standard_string",
+    "test_fcu_each_byte_extends_the_check",
+    "test_fcu_intact_flag",
+    "test_fcu_clear_and_register_rules",
+    "test_fcu_count_is_sixteen_bits_and_survives_a_long_stream",
+    "test_fcu_unmapped_writes_change_nothing"
+   ]
+  },
+  {
+   "name": "start_zero",
+   "why": "start value zero after reset",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_fcu_identity_and_reset_state",
+    "test_fcu_check_value_of_the_standard_string",
+    "test_fcu_each_byte_extends_the_check",
+    "test_fcu_clear_and_register_rules",
+    "test_fcu_count_is_sixteen_bits_and_survives_a_long_stream",
+    "test_fcu_unmapped_writes_change_nothing"
+   ]
+  },
+  {
+   "name": "clear_to_zero",
+   "why": "a clear restores the wrong start value",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_fcu_check_value_of_the_standard_string",
+    "test_fcu_intact_flag",
+    "test_fcu_clear_and_register_rules"
+   ]
+  },
+  {
+   "name": "clear_ignores_bit",
+   "why": "any non-zero write clears, not only bit 0",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_fcu_clear_and_register_rules"
+   ]
+  },
+  {
+   "name": "clear_keeps_count",
+   "why": "the byte count survives a clear",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_fcu_check_value_of_the_standard_string",
+    "test_fcu_intact_flag",
+    "test_fcu_clear_and_register_rules"
+   ]
+  },
+  {
+   "name": "msb_first",
+   "why": "the bits of each byte are taken in the wrong order",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_fcu_check_value_of_the_standard_string",
+    "test_fcu_each_byte_extends_the_check",
+    "test_fcu_intact_flag",
+    "test_fcu_clear_and_register_rules",
+    "test_fcu_count_is_sixteen_bits_and_survives_a_long_stream",
+    "test_fcu_unmapped_writes_change_nothing"
+   ]
+  },
+  {
+   "name": "byte_in_high_lane",
+   "why": "the byte is merged at the wrong end of the register",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_fcu_check_value_of_the_standard_string",
+    "test_fcu_each_byte_extends_the_check",
+    "test_fcu_intact_flag",
+    "test_fcu_clear_and_register_rules",
+    "test_fcu_count_is_sixteen_bits_and_survives_a_long_stream",
+    "test_fcu_unmapped_writes_change_nothing"
+   ]
+  },
+  {
+   "name": "wrong_residue",
+   "why": "the intact flag compares with the residue of the unreflected CRC",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_fcu_intact_flag"
+   ]
+  },
+  {
+   "name": "intact_on_zero_bytes",
+   "why": "an empty packet counts as intact",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_fcu_identity_and_reset_state",
+    "test_fcu_check_value_of_the_standard_string",
+    "test_fcu_clear_and_register_rules"
+   ]
+  },
+  {
+   "name": "count_eight_bits",
+   "why": "the byte count wraps at 256",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_fcu_count_is_sixteen_bits_and_survives_a_long_stream"
+   ]
+  },
+  {
+   "name": "data_wide",
+   "why": "bits 15:8 of the write are mixed into the byte",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_fcu_clear_and_register_rules"
+   ]
+  },
+  {
+   "name": "led_high_bits",
+   "why": "the LEDs show the wrong half of the check",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_fcu_check_value_of_the_standard_string",
+    "test_fcu_each_byte_extends_the_check",
+    "test_fcu_intact_flag",
+    "test_fcu_clear_and_register_rules",
+    "test_fcu_count_is_sixteen_bits_and_survives_a_long_stream",
+    "test_fcu_unmapped_writes_change_nothing"
+   ]
+  },
+  {
+   "name": "reset_keeps_run",
+   "why": "CPU_RESETN leaves the running check alone",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_fcu_identity_and_reset_state",
+    "test_fcu_check_value_of_the_standard_string",
+    "test_fcu_each_byte_extends_the_check",
+    "test_fcu_clear_and_register_rules",
+    "test_fcu_count_is_sixteen_bits_and_survives_a_long_stream",
+    "test_fcu_unmapped_writes_change_nothing"
+   ]
+  }
+ ],
+ "mutants_killed": 14,
+ "mutants_total": 14,
+ "trap": {
+  "twin": "table-less CRC-16/CCITT-style engine: the common short check instead of the Ethernet CRC-32",
+  "why": "a model told 'cyclic redundancy check' often builds a 16-bit or MSB-first one; the spec fixes reflected, 0xEDB88320, init and final inversion, and a residue test",
+  "must_fail": [
+   "test_fcu_check_value_of_the_standard_string"
+  ],
+  "failed_tests": [
+   "test_fcu_check_value_of_the_standard_string",
+   "test_fcu_each_byte_extends_the_check",
+   "test_fcu_intact_flag",
+   "test_fcu_clear_and_register_rules",
+   "test_fcu_count_is_sixteen_bits_and_survives_a_long_stream",
+   "test_fcu_unmapped_writes_change_nothing"
+  ],
+  "trap_fires": true
+ }
+}

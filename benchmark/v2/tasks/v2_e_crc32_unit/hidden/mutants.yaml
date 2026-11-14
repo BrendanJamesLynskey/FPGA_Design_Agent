@@ -1,0 +1,25 @@
+# Mutants and the trap for v2_e_crc32_unit (benchmark/tools/check_task.py)
+mutants:
+- {name: wrong_polynomial, file: crc_unit.sv, find: 'localparam logic [31:0] PLYeee    = 32''hEDB88320;', replace: 'localparam logic [31:0] PLYeee    = 32''h04C11DB7;', why: the unreflected polynomial value in a reflected engine}
+- {name: no_final_inversion, file: crc_unit.sv, find: '7''h02:   win_rdata <= ~run;', replace: '7''h02:   win_rdata <= run;', why: the check is not inverted at the end}
+- {name: start_zero, file: crc_unit.sv, find: "if (rst) begin   // jiri\n            run <= 32'hFFFF_FFFF;", replace: "if (rst) begin\n            run <= 32'h0000_0000;", why: start value zero after reset}
+- {name: clear_to_zero, file: crc_unit.sv, find: '7''h01: if (win_wdata[0]) begin run <= 32''hFFFF_FFFF; nbytes <= ''0; last_byte <= ''0; end', replace: '7''h01: if (win_wdata[0]) begin run <= 32''h0000_0000; nbytes <= ''0; last_byte <= ''0;
+    end', why: a clear restores the wrong start value}
+- {name: clear_ignores_bit, file: crc_unit.sv, find: '7''h01: if (win_wdata[0]) begin', replace: '7''h01: if (win_wdata != 32''d0) begin', why: 'any non-zero write clears, not only bit 0'}
+- {name: clear_keeps_count, file: crc_unit.sv, find: '7''h01: if (win_wdata[0]) begin run <= 32''hFFFF_FFFF; nbytes <= ''0; last_byte <= ''0; end', replace: '7''h01: if (win_wdata[0]) begin run <= 32''hFFFF_FFFF; last_byte <= ''0; end', why: the
+    byte count survives a clear}
+- {name: msb_first, file: crc_unit.sv, find: 'x = c ^ {24''d0, b};', replace: 'x = c ^ {24''d0, b[0], b[1], b[2], b[3], b[4], b[5], b[6], b[7]};', why: the bits of each byte are taken in the wrong order}
+- {name: byte_in_high_lane, file: crc_unit.sv, find: 'x = c ^ {24''d0, b};', replace: 'x = c ^ {b, 24''d0};', why: the byte is merged at the wrong end of the register}
+- {name: wrong_residue, file: crc_unit.sv, find: 'localparam logic [31:0] RES_Keee = 32''hDEBB20E3;', replace: 'localparam logic [31:0] RES_Keee = 32''hC704DD7B;', why: the intact flag compares with the residue of the unreflected CRC}
+- {name: intact_on_zero_bytes, file: crc_unit.sv, find: '7''h03:   win_rdata <= {31''d0, run == RES_Keee};', replace: '7''h03:   win_rdata <= {31''d0, (run == RES_Keee) | (nbytes == 16''d0)};', why: an empty packet counts as intact}
+- {name: count_eight_bits, file: crc_unit.sv, find: '7''h04:   win_rdata <= {16''d0, nbytes};', replace: '7''h04:   win_rdata <= {24''d0, nbytes[7:0]};', why: the byte count wraps at 256}
+- {name: data_wide, file: crc_unit.sv, find: 'run <= crcbeee(run, win_wdata[7:0]);', replace: 'run <= crcbeee(run, win_wdata[7:0] ^ win_wdata[15:8]);', why: 'bits 15:8 of the write are mixed into the byte'}
+- {name: led_high_bits, file: crc_unit.sv, find: 'assign led = ~run[15:0];', replace: 'assign led = ~run[31:16];', why: the LEDs show the wrong half of the check}
+- {name: reset_keeps_run, file: crc_unit.sv, find: "if (rst) begin   // jiri\n            run <= 32'hFFFF_FFFF;", replace: "if (rst) begin\n           ", why: CPU_RESETN leaves the running check alone}
+trap:
+  twin: 'table-less CRC-16/CCITT-style engine: the common short check instead of the Ethernet CRC-32'
+  why: a model told 'cyclic redundancy check' often builds a 16-bit or MSB-first one; the spec fixes reflected, 0xEDB88320, init and final inversion, and a residue test
+  edits:
+  - {file: crc_unit.sv, find: 'x = c ^ {24''d0, b};', replace: 'x = c ^ {b, 24''d0};'}
+  - {file: crc_unit.sv, find: 'for (int i = 0; i < 8; i++) x = x[0] ? ((x >> 1) ^ PLYeee) : (x >> 1);', replace: 'for (int i = 0; i < 8; i++) x = x[31] ? ((x << 1) ^ 32''h04C11DB7) : (x << 1);'}
+  must_fail: [test_fcu_check_value_of_the_standard_string]
