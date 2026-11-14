@@ -39,11 +39,20 @@ def slot_value(bits: list[int]) -> int:
     return sext24(u)
 
 
+def set_ratio(ratio: int) -> None:
+    """Make the bit clock ``ratio`` board clocks long (an even number from 8 to 100); the codec's data change lands a quarter
+    of a bit clock after the falling edge. ``set_ratio(12)`` is the default."""
+    global HALF, DATA_DELAY
+    HALF = ratio // 2
+    DATA_DELAY = max(1, HALF * 2 // 3)
+
+
 async def i2s_slot(dut, channel: int, data: list[int] | None = None, read_sdo: bool = False, lrck: str = "JA1",
                    bclk: str = "JA2", sdi: str = "JA3", sdo: str = "JA4") -> list[int]:
     """One slot on the bus. ``channel`` is the word-select level (0 left, 1 right); ``data`` the 32 values for the design's
     data input (None: leave it alone); with ``read_sdo`` the design's data output is sampled one nanosecond before each rising
-    edge and returned. The caller is aligned to the falling edge of the board clock on entry."""
+    edge and returned, and again one nanosecond before the next falling edge: the two must agree, because a codec samples on
+    the rising edge and the line must not move after it. The caller is aligned to the falling edge of the board clock."""
     seen: list[int] = []
     for k in range(SLOT_BITS):
         getattr(dut, bclk).value = 0
@@ -57,8 +66,34 @@ async def i2s_slot(dut, channel: int, data: list[int] | None = None, read_sdo: b
             seen.append(int(getattr(dut, sdo).value))
             await Timer(1, "ns")
         getattr(dut, bclk).value = 1
-        await Timer(HALF * 10, "ns")
+        if read_sdo:
+            await Timer(HALF * 10 - 1, "ns")
+            late = int(getattr(dut, sdo).value)
+            assert late == seen[-1], f"the data line moved after the rising edge of bit clock {k} of the slot"
+            await Timer(1, "ns")
+        else:
+            await Timer(HALF * 10, "ns")
     return seen
+
+
+class Inst:
+    """One of several copies of a design in a wrapper testbench, each with its own parameters: the bench's ``Board`` and
+    helpers see it as a plain design. A port ``X`` is the wrapper's signal ``X_<suffix>`` (the clock is shared); a parameter
+    listed in ``params`` reads as that value."""
+
+    class _Const:
+        def __init__(self, v: int) -> None:
+            self.value = v
+
+    def __init__(self, dut, suffix: str, **params: int) -> None:
+        self._dut, self._sfx, self._params = dut, suffix, params
+
+    def __getattr__(self, name: str):
+        if name in self._params:
+            return Inst._Const(self._params[name])
+        if name == "CLK100MHZ":
+            return self._dut.CLK100MHZ
+        return getattr(self._dut, f"{name}_{self._sfx}")
 
 
 async def align(clk) -> None:
