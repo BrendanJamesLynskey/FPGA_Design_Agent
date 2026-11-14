@@ -167,6 +167,10 @@ Change: `ref/rtl/hough.sv` splits that stage in two registered stages (table ent
 Affected: `ref/rtl/hough.sv`; `hidden/mutants.yaml` (`no_rounding` re-anchored on `px_r + py_r + 64) >>> 7)`, the same rounding term); the unit digest in `MANIFEST.json` (`df6e2378...` -> `28bd5a2de19c740868482995c1de7a67c6205994ee1577e01e70f073679801a9`); `hidden/reference_qor.md` (new 2026.1 numbers, [results/61_c13_amend_2026_1](../results/61_c13_amend_2026_1/)); the published copy `site/public/problems/c13_hough_lines/hough.sv`. `GRADER_DEPS.json` and `split.yaml` are unchanged. The private manifest entry is for the owner to re-record (`freeze.py refreeze c13_hough_lines --private-manifest ...`).
 Comparability: no scored run of this task is recorded in the repository, so no earlier result is affected; a later scoring sees a reference that is two clocks slower per vote.
 
+## 2026-11-14: `shared:lib` gains `net_bench.py` (brief 82)
+
+**Amended 2026-11-14 (planner-approved dated amendment of shared bench code; before any scored run of the new tasks), `shared:lib`.** Reason: the domain-E network-endpoint tasks (`v2_e_*`) import a shared helper for the register-window environment, several copies of one design in a wrapper testbench, a seeded random generator, and the byte layout of a command packet (the Ethernet CRC-32 through `zlib`). Change: one new file, `benchmark/lib/net_bench.py`; no existing file in `benchmark/lib` changed. Digest of the unit re-recorded in `MANIFEST.json` (`freeze.py refreeze shared:lib`) and in `course/MANIFEST.json` (`shared:benchmark/lib`). The static quality test also accepts a wrapper testbench as a task's toplevel (`bench.yaml` `wrapper:`); this is the same edit brief 78 makes, so the two branches merge without a conflict in that file. Comparability: no earlier task imports the new file, so no earlier result is affected. The private manifests list the same shared unit; their entry is for the owner to re-record. If brief 78 merges first, the two `shared:lib` digests in both manifests are re-recorded once more after the merge.
+
 ## New hashes
 
 v1 and course units (SHA-256 of the unit's sorted file lines, as in MANIFEST.json):

@@ -71,7 +71,12 @@ def test_v2_task_well_formed(task: Path) -> None:
     assert validate(spec) == [], validate(spec)
     assert spec["name"] == task.name and spec["top"] == f"{task.name}_top"
     bench = yaml.safe_load((task / "hidden" / "bench.yaml").read_text())
-    assert bench["toplevel"] == spec["top"] and len(bench.get("phrases") or []) >= 3
+    if bench.get("wrapper"):          # a wrapper testbench (several copies of the design with different parameters) is the toplevel
+        wrapper = (task / "hidden" / bench["wrapper"]).read_text()
+        assert f"module {bench['toplevel']}" in wrapper and spec["top"] in wrapper, "the wrapper must define the toplevel and instantiate the design's top"
+    else:
+        assert bench["toplevel"] == spec["top"]
+    assert len(bench.get("phrases") or []) >= 3
     text = " ".join((task / "spec.md").read_text().split()).lower()
     for ph in bench["phrases"]:
         assert " ".join(ph.split()).lower() in text, f"phrase not verbatim in spec.md: {ph!r}"
