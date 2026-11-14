@@ -12,13 +12,15 @@ xc7a100tcsg324-1 (Nexys A7-100T), 100 MHz. G1 is the task's hidden acceptance be
 writer's own test. The cases, budgets and success rule were registered before the first run in
 [PREREGISTRATION.md](PREREGISTRATION.md).
 
-## How to reproduce
+## Reproduce
 
 ```
 FDA_BUILD_LOCK_CMD=<lock command> python3 -m agent.graph.closure_task benchmark/course/tasks/c13_hough_lines \
     --rtl benchmark/course/tasks/c13_hough_lines/ref/rtl --case c13_bram1 --budget bram=1 --max-iter 6 --max-usd 1.0
 # case B: --case c13_power145 --budget power_w=0.145
 ```
+
+## Records
 
 Each folder holds:
 - `history.jsonl`: every iteration, with the goal vector before and after, the plan, the diff and the early check;
@@ -66,7 +68,7 @@ Model use: case A made 3 calls (21,261 tokens, $0.00715); case B made 4 calls (2
   Neither fix adds latency: the bench's timing checks pass, and the writer's notes say 0 clocks. Latency was not
   measured separately.
 
-## What this does not show
+## Known gaps and limits
 
 - **Two cases on one design,** each run once. These are not rates.
 - **The power numbers are Vivado's vectorless estimates.** Nothing was measured on the board. Case B met its budget
