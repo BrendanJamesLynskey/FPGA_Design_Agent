@@ -1,0 +1,38 @@
+# ps7_zedboard.tcl: PS7 settings for the ZedBoard (xc7z020clg484-1), written from the ZedBoard Hardware User's Guide v2.2
+# (section 2.2.1 and Tables 1-2) and the KB skills zedboard-ps-ddr3 and zedboard-ps-uart-usb. No Vivado board file is used.
+# Proc: zb_config_ps7 <cell> <variant args as a dict>
+proc zb_config_ps7 {ps extra} {
+    set base [list \
+        CONFIG.PCW_CRYSTAL_PERIPHERAL_FREQMHZ {33.333333} \
+        CONFIG.PCW_APU_PERIPHERAL_FREQMHZ {666.666666} \
+        CONFIG.PCW_UIPARAM_DDR_ENABLE {1} \
+        CONFIG.PCW_UIPARAM_DDR_FREQ_MHZ {533.333333} \
+        CONFIG.PCW_UIPARAM_DDR_BUS_WIDTH {32 Bit} \
+        CONFIG.PCW_UIPARAM_DDR_PARTNO {MT41J128M16 HA-15E} \
+        CONFIG.PCW_UIPARAM_DDR_DEVICE_CAPACITY {2048 MBits} \
+        CONFIG.PCW_UIPARAM_DDR_DRAM_WIDTH {16 Bits} \
+        CONFIG.PCW_UIPARAM_DDR_SPEED_BIN {DDR3_1066F} \
+        CONFIG.PCW_UIPARAM_DDR_TRAIN_WRITE_LEVEL {1} \
+        CONFIG.PCW_UIPARAM_DDR_TRAIN_READ_GATE {1} \
+        CONFIG.PCW_UIPARAM_DDR_TRAIN_DATA_EYE {1} \
+        CONFIG.PCW_UIPARAM_DDR_USE_INTERNAL_VREF {0} \
+        CONFIG.PCW_UIPARAM_DDR_DQS_TO_CLK_DELAY_0 {0.025} \
+        CONFIG.PCW_UIPARAM_DDR_DQS_TO_CLK_DELAY_1 {0.028} \
+        CONFIG.PCW_UIPARAM_DDR_DQS_TO_CLK_DELAY_2 {0} \
+        CONFIG.PCW_UIPARAM_DDR_DQS_TO_CLK_DELAY_3 {0} \
+        CONFIG.PCW_UIPARAM_DDR_BOARD_DELAY0 {0.410} \
+        CONFIG.PCW_UIPARAM_DDR_BOARD_DELAY1 {0.411} \
+        CONFIG.PCW_UIPARAM_DDR_BOARD_DELAY2 {0.341} \
+        CONFIG.PCW_UIPARAM_DDR_BOARD_DELAY3 {0.358} \
+        CONFIG.PCW_PRESET_BANK0_VOLTAGE {LVCMOS 3.3V} \
+        CONFIG.PCW_PRESET_BANK1_VOLTAGE {LVCMOS 1.8V} \
+        CONFIG.PCW_UART1_PERIPHERAL_ENABLE {1} \
+        CONFIG.PCW_UART1_UART1_IO {MIO 48 .. 49} \
+        CONFIG.PCW_UART1_BAUD_RATE {115200} \
+        CONFIG.PCW_EN_CLK0_PORT {1} \
+        CONFIG.PCW_FPGA0_PERIPHERAL_FREQMHZ {100} \
+        CONFIG.PCW_EN_RST0_PORT {1} \
+        CONFIG.PCW_USE_M_AXI_GP0 {1} \
+    ]
+    set_property -dict [concat $base $extra] $ps
+}
