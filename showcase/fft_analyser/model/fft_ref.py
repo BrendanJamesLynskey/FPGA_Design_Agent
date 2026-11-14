@@ -26,8 +26,10 @@ def window_table(kind: int, n: int) -> list[int] | None:
 
 
 def twiddle(t: int, m: int) -> tuple[int, int]:
-    a = 2 * math.pi * t / m
-    return _floor_half(32767 * math.cos(a)), -_floor_half(32767 * math.sin(a))
+    """W = exp(-2 pi j t / m) in Q1.15: (rounded cosine, minus rounded sine)."""
+    angle = math.tau * t / m
+    cos_q, sin_q = (_floor_half(32767 * f(angle)) for f in (math.cos, math.sin))
+    return cos_q, -sin_q
 
 
 def _limit(v: int) -> int:
@@ -35,10 +37,11 @@ def _limit(v: int) -> int:
 
 
 def butterfly(a: tuple[int, int], b: tuple[int, int], w: tuple[int, int]) -> tuple[tuple[int, int], tuple[int, int]]:
-    s = ((a[0] + b[0] + 1) >> 1, (a[1] + b[1] + 1) >> 1)
-    d = (a[0] - b[0], a[1] - b[1])
-    t = ((d[0] * w[0] - d[1] * w[1] + 32768) >> 16, (d[0] * w[1] + d[1] * w[0] + 32768) >> 16)
-    return (_limit(s[0]), _limit(s[1])), (_limit(t[0]), _limit(t[1]))
+    """Scaled radix-2 DIF butterfly: sum and twiddled difference, each halved, rounded half up and limited to 16 bits."""
+    total = [(a[i] + b[i] + 1) >> 1 for i in (0, 1)]
+    diff_re, diff_im = a[0] - b[0], a[1] - b[1]
+    twisted = [(diff_re * w[0] - diff_im * w[1] + 32768) >> 16, (diff_re * w[1] + diff_im * w[0] + 32768) >> 16]
+    return (_limit(total[0]), _limit(total[1])), (_limit(twisted[0]), _limit(twisted[1]))
 
 
 def bit_reverse(k: int, bits: int) -> int:
@@ -91,14 +94,15 @@ class SdfStage:
         self.line = [(0, 0)] * self.d
 
     def push(self, x: tuple[int, int]) -> tuple[int, int]:
-        old = self.line.pop(0)
-        if self.pos < self.d:
-            out, nxt = old, x
+        head = self.line.pop(0)
+        first_half = self.pos < self.d
+        if first_half:
+            emit, keep = head, x
         else:
-            out, nxt = butterfly(old, x, twiddle(self.pos - self.d, 2 * self.d))
-        self.line.append(nxt)
+            emit, keep = butterfly(head, x, twiddle(self.pos - self.d, 2 * self.d))
+        self.line.append(keep)
         self.pos = (self.pos + 1) % (2 * self.d)
-        return out
+        return emit
 
 
 class SdfPipeline:
