@@ -69,6 +69,36 @@ jobs:
           done
           exit $rc
 
+  reset-elab:
+    name: Reset check by elaboration (brief 71B) - OSS CAD Suite 20261112 (Yosys + slang + ghdl plugins), 23 + 212 regression designs
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      FDA_OSS_CAD: ${{ github.workspace }}/oss-cad-suite
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Cache the OSS CAD Suite
+        id: oss
+        uses: actions/cache@v4
+        with:
+          path: oss-cad-suite
+          key: oss-cad-suite-20261112
+      - name: Download the pinned OSS CAD Suite (release 2026-11-12, build 20261112)
+        if: steps.oss.outputs.cache-hit != 'true'
+        run: |
+          curl -fsSL -o oss.tgz https://github.com/YosysHQ/oss-cad-suite-build/releases/download/2026-11-12/oss-cad-suite-linux-x64-20261112.tgz
+          tar -xzf oss.tgz
+          rm oss.tgz
+      - name: Install
+        run: pip install pyyaml pytest jsonschema
+      - name: The pinned tool is the one installed
+        run: $FDA_OSS_CAD/bin/yosys -V
+      - name: Reset check regression designs, fail-closed tests and the check suite's own tests
+        run: python -m pytest -q flow/tests/test_71b_reset_elab.py flow/tests/test_71_check_suite.py
+
   rtl-sim:
     name: RTL tests (cocotb + Icarus) and mutants
     runs-on: ubuntu-24.04

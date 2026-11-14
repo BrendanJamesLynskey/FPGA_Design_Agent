@@ -34,7 +34,7 @@ python3 -m flow.checks designs/<d> [--names all|resets,cdc,...] [--scope auto|rt
 |---|---|---|---|
 | `lint` | ours (Verilator) | rtl, synth, route | Verilator `--lint-only -Wall`; in a session the `lint` tool unchanged (Icarus elaboration, FDA-CON-8/9) |
 | `standards` | ours | rtl, synth, route | `flow/standards_check.py`; post-synthesis rules at synth/route |
-| `resets` | AMD reports and ours | rtl, synth, route | source scan; AMD LUTAR/DPIR/DPOR/RMIR/RMOR/RROR/ROAS rows and report_cdc's reset rows; our netlist scan `reset_scan_synth.tsv` |
+| `resets` | AMD reports and ours | rtl, synth, route | source part (elaboration); AMD LUTAR/DPIR/DPOR/RMIR/RMOR/RROR/ROAS rows and report_cdc's reset rows; our netlist scan `reset_scan_synth.tsv` |
 | `cdc` | AMD report and ours | synth, route | report_cdc (Critical rows fail) and, after synthesis, `flow/cdc_structure.py` |
 | `methodology` | AMD | rtl, synth, route | report_methodology: Critical Warnings fail, Warnings are advisory |
 | `drc` | AMD | synth, route | report_drc: Errors and Critical Warnings fail |
@@ -89,8 +89,13 @@ python3 -m flow.checks designs/<d> [--names all|resets,cdc,...] [--scope auto|rt
   `xpm_fifo_*`, `xpm_memory_*`). A user module is never vendor by its name alone. A LUT outside the IP driving an
   asynchronous reset inside it is still RST-LUT-01. A user source that defines a module named like a recognised
   synchroniser (`reset_sync`, an XPM macro) is reported, unless architecture.yaml declares it.
-- **Latches** (LDCE/LDPE) with a clear or preset count as asynchronous resets. Other primitives with asynchronous
-  resets (IDDR/ODDR with SRTYPE ASYNC, SERDES, FIFO) are not scanned.
+- **Latches** (LDCE/LDPE) and IDDR/ODDR with SRTYPE ASYNC count as asynchronous resets. Other primitives with
+  asynchronous resets (SERDES, FIFO) are not scanned.
+- **A module is exempt as a synchroniser by name and structure**: its name is in the recognised set and it contains an
+  `xpm_cdc_async_rst`/`xpm_cdc_sync_rst` instance or an ASYNC_REG register (scan column `sync_struct`). It is not checked that the
+  chain drives the reset.
+- **A synchronous reset the tool folds into the D logic** (typically one-bit registers) has no reset pin and is not seen by the
+  reset scan; a cross-domain one shows as CDC-1 in `report_cdc`, which the `cdc` check blocks on.
 - **A register whose reset comes from a register with no timed clock** cannot be judged for HDL-RST-04: the check is
   PARTIAL (`netlist_clocks`) and says how many; constrain every clock.
 - **A reset made by logic (a LUT) from several registers** is not traced back to them for HDL-RST-04 (a known gap).
@@ -100,15 +105,40 @@ python3 -m flow.checks designs/<d> [--names all|resets,cdc,...] [--scope auto|rt
 - **Heavy slots**: the agent's `check` tool, like its `build` tool, starts Vivado through the session's runner without
   taking a heavy slot; the script refuses while `FDA_VIVADO_MAX` Vivado jobs already run (a check-then-start test, not a
   lock). A person running `--vivado auto` on the shared PC takes a slot first.
-- **The reset source part fails closed** (review round 2). It reads every module, macromodule, interface and program
-  of the build's own source list (flow/prepare.py's expansion, so `rtl/**/*.sv` recurses), with `` `include`` files
-  inlined. A sensitivity list it cannot read (a macro, `iff`, nested parentheses), or an include it cannot find, makes
-  the check PARTIAL (`source_unread`) instead of passing. Direct FDCE/FDPE/LDCE/LDPE instances and `always_latch` blocks
-  with a reset test count as asynchronous resets. VHDL files are not scanned (`source_vhdl`, PARTIAL; the netlist part
-  covers them), but a VHDL entity named like a recognised synchroniser is still reported and loses the netlist exemption.
-- **`reset.async_inputs` exempt only the top module's own ports.** A submodule edge on a signal of the same name is
-  reported; a submodule that legitimately takes the external reset asynchronously is declared in
-  `reset.synchronisers` instead.
+- **The reset source part is elaboration, and fails closed** (brief 71B; three review rounds broke the earlier text scanner,
+  which is gone). Every file of the build's source list (flow/prepare.py's expansion, so `rtl/**/*.sv` recurses) is read by
+  Yosys with the `slang` plugin (SystemVerilog: preprocessing, `include`, macros, `ifdef` with the build's `defines`,
+  generate, parameters, elaboration of the top) or the `ghdl` plugin (VHDL), `proc` lowers the processes, and the
+  storage cells are judged: every flip-flop or latch with an asynchronous control (`$adff`, `$aldff`, `$dffsr`, `$adlatch`
+  and the AMD primitives FDC/FDP/FDCE/FDPE/FDCPE/LDC/LDP/LDCE/LDPE with their `_1` variants, read as blackboxes with their pin
+  lists), a latch whose enable or data depends on a reset-named signal, and one root reset signal used in both polarities
+  (synchronous reset pins are recovered with `opt_dff`). Each cell is mapped back to its source line by the tool's `src`
+  attribute, and the reset net is traced up through the hierarchy and through buffers and inverters to a top-level port or a
+  register. Only what the top module instantiates is judged (a module nothing instantiates is not built).
+  The source part is PARTIAL, never a pass, when the tool is missing, a file of the list is not read (a pattern that matches
+  nothing, a directory, a file of another kind such as `.svp`), a header (`.svh`, `.vh`) is listed without any module source,
+  or the elaboration fails: the part then names the tool's message (`source`). A design the front end rejects, such as a block
+  with two asynchronous resets, an asynchronous edge without a reset test, an unsynthesisable timing control, or a
+  reference to an undeclared signal, is therefore PARTIAL with the reason, which is the honest answer. Modules the build
+  does not define (XPM, IP, other unisims) are read as empty blackboxes declared from their instantiation sites; only the
+  flip-flop and latch primitives carry their real ports. The tool is the OSS CAD Suite (`FDA_OSS_CAD` or
+  `~/.local/opt/oss-cad-suite`, then `PATH`), pinned to release 20261112 (`flow/checks/elab.py`, `PIN_YOSYS`); CI installs it in the
+  `reset-elab` job. Polarity is judged on the elaborated source too, so the `polarity` part is "ran" when the source part ran.
+  The sign-off gate `post_synth_resets_clean` reads the findings of all parts but is not made false by a PARTIAL source part: its
+  netlist part is the one that decides, and the netlist attack results (`results/71b_netlist_attack/`) show what it does and
+  does not catch.
+- **What the source part still cannot see** (the independent re-review of 71B, after its HIGH findings were closed): asynchronous
+  state built from a combinational loop (`assign q = rst ? 0 : (en ? d : q)`, cross-coupled gates) has no storage cell; a declared
+  synchroniser is exempt as a whole subtree and only has to contain an ASYNC_REG register or an XPM reset macro, so a decoy inside
+  it hides an unrelated asynchronous flop; polarity is not judged for a reset value that is not a constant, nor for a reset folded
+  into other logic (`~(rst|rst2)`, a multi-bit compare), which is a distinct root. Modules the tool declares itself (XPM, AMD primitives
+  and build IP by name) are never judged inside; any other module the build does not define makes the part PARTIAL, as does a
+  `blackbox` attribute on a user module, a VHDL entity with several architectures or a configuration. The elaborator rejects a few
+  constructs Vivado accepts (for example `$rtoi` in dds_awg, so `b65a_axil_soc` reads PARTIAL at scope rtl): PARTIAL is the honest answer.
+  Every latch is treated as an asynchronous element, whatever its signals are called.
+- **`reset.async_inputs` exempt the nets they name**, wherever those nets are used: a flop in a submodule whose reset input is
+  wired (through ports, buffers and inverters) to a declared top-level input is exempt, as in the netlist rule; a reset that
+  is computed (`a & b`), registered, or an undriven internal signal of the same name is reported.
 - **A declared synchroniser exempts its whole subtree**, so it must look like one: a module in `reset.synchronisers`
   with no `ASYNC_REG` register and no `xpm_cdc_*` instance is reported. The shell's `reset_sync` is exempt by its file
   (`shell/rtl/reset_sync.sv`), not by its name.

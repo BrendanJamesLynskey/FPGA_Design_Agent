@@ -8,9 +8,10 @@ the background and the fixes are in the KB skills ``reset-strategy`` and ``contr
 Three parts, each reported separately (a part that cannot run says why; the check is never a pass on a part that did not
 run):
 
-- **source**: the SystemVerilog sources (build.yaml), read with the design-standards scanner. RST-ASYNC-01: an edge
-  signal besides the clock in a sequential block, outside a recognised synchroniser module. RST-POL-02: one module tests
-  the same reset signal in both polarities.
+- **source**: the sources of build.yaml, elaborated by Yosys with the slang (SystemVerilog) and ghdl (VHDL) plugins (brief
+  71B; ``flow/checks/elab.py``: no text scanner, and a design the tool cannot read is PARTIAL, never a pass). RST-ASYNC-01: a
+  flip-flop or latch with an asynchronous control, outside a recognised synchroniser module and not reset by a declared
+  external input. RST-POL-02: one root reset signal used in both polarities.
 - **amd**: AMD's own rule rows from the stage's ``report_methodology``, ``report_drc`` and ``report_cdc`` (Vivado 2026.1
   ids, verified against ``get_methodology_checks``/``get_drc_checks``: results/71_check_suite/rule_catalogue_2026_1.tsv):
   LUTAR-1 (a LUT drives an asynchronous reset), DPIR-1/-2 and DPIR-3/DPOR-1..3 (asynchronous registers next to a DSP),
@@ -33,9 +34,13 @@ the LUT itself is outside the IP.
 from __future__ import annotations
 
 import csv
+import os
 import re
+import shutil
 from pathlib import Path
 from typing import Any
+
+from flow.checks.elab import ASYNC_PRIMS, DDR_PRIMS
 
 RECOGNISED = ("xpm_cdc_async_rst", "xpm_cdc_sync_rst", "reset_sync")
 #: vendor hierarchy: AMD's XPM macros by their exact names, and the build's IP cores (build/<variant>/ip/<name>, passed in as
@@ -77,197 +82,365 @@ def _f(file: str, line: int, code: str, msg: str, where: str | None = None, coun
             "where": where or f"{file}:{line}", "message": msg, "count": count, "fix": FIX[code]}
 
 
-# ---- source ------------------------------------------------------------------------------------------------------
+# ---- source (by elaboration, brief 71B) ----------------------------------------------------------------------------
 #: the shell's own synchroniser, exempt by its file (not by its module name: review round 2)
 SHELL_SYNCS = ("shell/rtl/reset_sync.sv",)
-_UNIT = re.compile(r"\b(module|macromodule|interface|program)\s+(?:automatic\s+|static\s+)?(\w+)")
-_ALWAYS = re.compile(r"\balways(_ff|_comb|_latch)?\b\s*(@\s*)?")
-_PRIM = re.compile(r"\b(FDCE|FDPE|LDCE|LDPE)\b\s*(?:#\s*\([^;]*?\)\s*)?(\w+)\s*\(")
 _RSTNAME = re.compile(r"(?i)rst|reset|clr|clear")
-_INCLUDE = re.compile(r'`include\s+"([^"]+)"')
-#: a reset test in an if: (neg?) name (cmp value)?, with any number of parentheses around it
-_TEST = re.compile(r"^\(*\s*(!|~)?\s*\(*\s*(\w+)\s*\)*\s*(?:(==|!=|===|!==)\s*(?:1'[bB])?([01])\s*)?\)*$")
+ASYNC_CELLS = ("$adff", "$adffe", "$aldff", "$aldffe", "$dffsr", "$dffsre", "$adlatch", "$dlatchsr")
+SYNC_CELLS = ("$sdff", "$sdffe", "$sdffce")
+_NOT = ("$not", "$_NOT_", "$logic_not")
+_PASS = ("$buf", "$pos", "$_BUF_")
 
 
-def _paren(text: str, k: int) -> tuple[str, int] | None:
-    """The balanced (...) starting at text[k] == '(': (inside, index after it), or None."""
-    if k >= len(text) or text[k] != "(":
-        return None
-    depth = 0
-    for i in range(k, min(len(text), k + 4000)):
-        depth += text[i] == "("
-        depth -= text[i] == ")"
-        if depth == 0:
-            return text[k + 1:i], i + 1
-    return None
+def _f(file: str, line: int, code: str, msg: str, where: str | None = None, count: int = 1) -> dict[str, Any]:
+    return {"tool": "resets", "code": code, "rule": CODE_RULE[code], "severity": "error", "file": file, "line": line,
+            "where": where or f"{file}:{line}", "message": msg, "count": count, "fix": FIX[code]}
 
 
-def _expand_includes(text: str, f: Path, dirs: list[Path], depth: int = 0) -> tuple[str, list[str]]:
-    """Inline `include "x" from the file's folder or the source folders; the names that could not be found."""
-    missing: list[str] = []
-
-    def sub(m):
-        name = m.group(1)
-        for d in [f.parent, *dirs]:
-            q = d / name
-            if q.is_file() and depth < 8:
-                t, mm = _expand_includes(q.read_text(errors="replace"), q, dirs, depth + 1)
-                missing.extend(mm)
-                return t.replace("\n", " ")              # inlined on one line, so the file's line numbers hold
-        missing.append(name)
-        return " "
-    return _INCLUDE.sub(sub, text), missing
+def _str(v: Any) -> str:
+    """A yosys JSON string parameter (an ASCII bit string) decoded, or the string itself."""
+    v = str(v)
+    if v and set(v) <= {"0", "1"} and len(v) % 8 == 0:
+        return bytes(int(v[i:i + 8], 2) for i in range(0, len(v), 8)).decode("latin1")
+    return v
 
 
-def _line(text: str, pos: int) -> int:
-    return text.count("\n", 0, pos) + 1
+def _bit(v: Any) -> int:
+    """A yosys JSON parameter value (a binary string or an int) as an int."""
+    if isinstance(v, int):
+        return v
+    try:
+        return int(str(v), 2)
+    except ValueError:
+        return 0
 
 
-def _test_of(cond: str, aliases: dict[str, tuple[str, int]]) -> tuple[str, int] | None:
-    """(root reset signal, active_low) for a simple reset test, through `assign a = ~b` aliases; None otherwise."""
-    m = _TEST.match(cond.strip())
-    if not m:
-        return None
-    neg, sig, op, bit = m.groups()
-    low = bool(neg)
-    if op in ("==", "===") and bit == "0" or op in ("!=", "!==") and bit == "1":
-        low = not low
-    inv = 0
-    seen = 0
-    while sig in aliases and seen < 8:
-        sig, i_ = aliases[sig]
-        inv ^= i_
-        seen += 1
-    return sig, int(low) ^ inv
+class _Net:
+    """The elaborated hierarchy (yosys JSON): drivers, names, and a root-signal trace through the hierarchy."""
+
+    def __init__(self, modules: dict[str, Any], top: str):
+        self.m, self.top = modules, top
+        self._drv: dict[str, dict[Any, tuple[str, str, int]]] = {}
+        self._nm: dict[str, dict[Any, str]] = {}
+
+    def is_inst(self, cell: dict[str, Any]) -> bool:
+        t = cell["type"]
+        return t in self.m and "blackbox" not in self.m[t].get("attributes", {})
+
+    def drivers(self, mod: str) -> dict[Any, tuple[str, str, int]]:
+        if mod not in self._drv:
+            d = {}
+            for cn, c in self.m[mod]["cells"].items():
+                pd = c.get("port_directions", {})
+                for port, bits in c["connections"].items():
+                    if pd.get(port) == "output":
+                        for i, b in enumerate(bits):
+                            if isinstance(b, int):
+                                d[b] = (cn, port, i)
+            self._drv[mod] = d
+        return self._drv[mod]
+
+    def name(self, mod: str, bit: Any) -> str:
+        return self._name(mod, bit) or "<unnamed net>"
+
+    def _name(self, mod: str, bit: Any) -> str:
+        if mod not in self._nm:
+            nm: dict[Any, str] = {}
+            for n, v in self.m[mod]["netnames"].items():
+                if n.startswith("$"):
+                    continue
+                for i, b in enumerate(v["bits"]):
+                    if isinstance(b, int) and (b not in nm or len(n) < len(nm[b].split("[")[0])):
+                        nm[b] = n if len(v["bits"]) == 1 else f"{n}[{i}]"
+            self._nm[mod] = nm
+        return self._nm[mod].get(bit, "")
+
+    def root(self, frames: list[tuple[str, str]], bit: Any) -> tuple[str, str, int]:
+        """(kind, name, inverted) of the signal that ultimately drives ``bit`` seen from the module at frames[-1]
+        (frames: (module, instance name in the parent)): kind is const, port (a top-level port), reg (a storage cell's
+        output), blackbox, logic or undriven. Buffers and inverters are looked through, and so are module ports."""
+        frames = list(frames)
+        inv = 0
+        for _ in range(400):
+            if not isinstance(bit, int):
+                return "const", str(bit), inv
+            mod = frames[-1][0]
+            d = self.drivers(mod).get(bit)
+            path = ".".join(f[1] for f in frames[1:])
+            if d:
+                cn, port, idx = d
+                c = self.m[mod]["cells"][cn]
+                t = c["type"]
+                a = c["connections"].get("A", [])
+                if t in _PASS + _NOT and idx < len(a) and (t != "$logic_not" or len(a) == 1):
+                    inv ^= int(t in _NOT)
+                    bit = a[idx]
+                    continue
+                if t in ("$reduce_or", "$reduce_and", "$reduce_bool", "$reduce_xor") and len(a) == 1:
+                    bit = a[0]
+                    continue
+                if t in ("$eq", "$eqx", "$ne", "$nex"):          # r == 1'b0, r === 1'b1, r != 1'b0 ... on a one-bit signal
+                    ab, bb = c["connections"].get("A", []), c["connections"].get("B", [])
+                    for sig, k in ((ab, bb), (bb, ab)):
+                        if len(sig) == 1 and len(k) == 1 and k[0] in ("0", "1") and isinstance(sig[0], int):
+                            inv ^= int((k[0] == "0") == (t in ("$eq", "$eqx")))
+                            bit = sig[0]
+                            break
+                    else:
+                        return "logic", (path + "." if path else "") + self.name(mod, bit), inv
+                    continue
+                if self.is_inst(c):
+                    cm = self.m[t]
+                    frames.append((t, cn))
+                    bit = cm["ports"][port]["bits"][idx]
+                    continue
+                nm = (path + "." if path else "") + self.name(mod, bit)
+                kind = "reg" if (t.startswith("$") and ("dff" in t or "latch" in t)) or t in ASYNC_PRIMS else \
+                    "logic" if t.startswith("$") else "blackbox"
+                return kind, nm, inv
+            ports = self.m[mod]["ports"]
+            hit = next(((p, i) for p, pv in ports.items() if pv["direction"] != "output"
+                        for i, b in enumerate(pv["bits"]) if b == bit), None)
+            if hit is None:
+                return "undriven", (path + "." if path else "") + self.name(mod, bit), inv
+            if len(frames) == 1:
+                pn = hit[0]
+                return "port", pn if len(ports[pn]["bits"]) == 1 else f"{pn}[{hit[1]}]", inv
+            inst = self.m[frames[-2][0]]["cells"][frames[-1][1]]
+            frames.pop()
+            cb = inst["connections"].get(hit[0], [])
+            if hit[1] >= len(cb):                    # the port is left unconnected at this instance
+                return "undriven", (path + "." if path else "") + self.name(mod, bit), inv
+            bit = cb[hit[1]]
+        return "logic", "?", inv
+
+    def leaves(self, mod: str, bits: list[Any], depth: int = 12) -> set[str]:
+        """Names of the signals in the combinational cone of ``bits`` (stops at registers, ports and instances)."""
+        seen: set[Any] = set()
+        names: set[str] = set()
+        stack = [(b, 0) for b in bits]
+        drv = self.drivers(mod)
+        while stack:
+            b, k = stack.pop()
+            if not isinstance(b, int) or b in seen:
+                continue
+            seen.add(b)
+            names.add(self.name(mod, b))
+            d = drv.get(b)
+            if not d or k > depth:
+                continue
+            c = self.m[mod]["cells"][d[0]]
+            if c["type"].startswith("$") and "dff" not in c["type"] and "latch" not in c["type"]:
+                pd = c.get("port_directions", {})
+                for port, bs in c["connections"].items():
+                    if pd.get(port) == "input":
+                        stack += [(x, k + 1) for x in bs]
+        return names
+
+
+_YOSYS_CWD = [Path.cwd()]      # the folder the front end ran in: its src paths are relative to it (set by source_findings)
+
+
+def _src(attrs: dict[str, Any]) -> tuple[str, int]:
+    """(absolute file, first line) of a yosys src attribute ('a.sv:3.2-3.9|b.sv:1.1')."""
+    s = str(attrs.get("src", "")).split("|")[0]
+    m = re.match(r"^(.*?):(\d+)(?:\.\d+)?(?:-\d+(?:\.\d+)?)?$", s)
+    f, ln = (m.group(1), int(m.group(2))) if m else (s, 0)
+    if f and not Path(f).is_absolute():
+        f = os.path.normpath(_YOSYS_CWD[0] / f)
+    return f, ln
+
+
+def _modname(m: str) -> str:
+    return m.split("$")[0]
+
+
+def elab_findings(el: Any, design: Path, cfg: dict[str, Any], root: Path, parts: dict[str, str]) -> list[dict[str, Any]]:
+    """The findings of the elaborated design (the source part): every storage cell with an asynchronous control, a latch with
+    a reset in its cone, and one root reset signal used in both polarities, outside a recognised synchroniser."""
+    net = _Net(el.modules, el.top)
+    out: dict[tuple[str, int, str], dict[str, Any]] = {}
+    declared = cfg.get("declared", set())
+    shell = {(root / x).resolve() for x in SHELL_SYNCS}
+    top = net.top
+
+    def add(rel: str, ln: int, code: str, msg: str) -> None:
+        k = (rel, ln, code)
+        if k in out:
+            out[k]["count"] += 1
+        else:
+            out[k] = _f(rel, ln, code, msg)
+
+    pol: dict[tuple[str, str], dict[int, tuple[str, int]]] = {}
+    for mname, mod in net.m.items():
+        if "blackbox" in mod.get("attributes", {}):
+            continue
+        base = _modname(mname)
+        if base in el.stubbed:
+            continue                              # a module the tool declared for a blackbox (XPM, IP): not user source
+        mfile = _src(mod.get("attributes", {}))[0] or cfg.get("vhdl_files", {}).get(base.lower(), "")
+        mfile_abs = (Path(mfile) if Path(mfile).is_absolute() else root / mfile).resolve() if mfile else None
+        if (base in RECOGNISED or XPM.match(base)) and base not in declared and mfile_abs not in shell:
+            cfg.setdefault("impostors", set()).add(base)
+            out[(mfile, _src(mod["attributes"])[1], "impostor")] = _f(
+                _rel(Path(mfile), design), _src(mod["attributes"])[1], "RST-ASYNC-01",
+                f"{'entity' if mfile.lower().endswith(('.vhd', '.vhdl')) else 'module'} {base} takes the name of a recognised synchroniser or XPM macro; the "
+                "netlist rules would exempt it: rename it, or declare it in architecture.yaml reset.synchronisers")
+        if base in declared and not _has_sync_content(net, mname):
+            out[(mfile, 0, "declared")] = _f(_rel(Path(mfile), design) if mfile else base, _src(mod["attributes"])[1],
+                                             "RST-ASYNC-01", f"module {base} is declared a reset synchroniser but has no "
+                                             "ASYNC_REG register and no xpm_cdc instance: a synchroniser exempts its whole "
+                                             "subtree, so it must be one")
+    # walk the instance tree from the top (a module may be reached more than once)
+    visited: set[tuple[str, tuple[str, ...], bool]] = set()
+
+    def walk(net: _Net, mname: str, frames: list[tuple[str, str]], exempt: bool, post: bool) -> None:
+        key = (mname, tuple(f[1] for f in frames), post)
+        if key in visited or len(frames) > 60:
+            return
+        visited.add(key)
+        mod = net.m[mname]
+        base = _modname(mname)
+        mfile = _src(mod.get("attributes", {}))[0]
+        mfile_abs = (Path(mfile) if Path(mfile).is_absolute() else root / mfile).resolve() if mfile else None
+        here = exempt or (base in cfg["synchronisers"] and (base in declared or mfile_abs in shell)
+                          and base not in cfg.get("impostors", set()) - declared)
+        for cn, c in mod["cells"].items():
+            t = c["type"]
+            if net.is_inst(c):
+                walk(net, t, frames + [(t, cn)], here, post)
+                continue
+            if (t in SYNC_CELLS) != post:
+                continue                    # asynchronous pins from the netlist before opt_dff, synchronous ones after it
+            rel_f, ln = _src(c.get("attributes", {}))
+            if not rel_f:
+                rel_f, ln = _src(mod.get("attributes", {}))
+            if not rel_f:
+                rel_f = cfg.get("vhdl_files", {}).get(base.lower(), "")
+            rel = _rel(Path(rel_f), design) if rel_f else mname
+            cc = c["connections"]
+            pars = c.get("parameters", {})
+            pins: list[tuple[str, Any, int]] = []        # (kind, bit, active-high polarity)
+            what = "latch" if "latch" in t else "flip-flop"
+            if t in ASYNC_CELLS:
+                if t in ("$adff", "$adffe", "$adlatch"):
+                    pins = [("async", b, _bit(pars.get("ARST_POLARITY", "1"))) for b in cc.get("ARST", [])]
+                elif t in ("$aldff", "$aldffe"):
+                    pins = [("async", b, _bit(pars.get("ALOAD_POLARITY", "1"))) for b in cc.get("ALOAD", [])]
+                else:                                      # $dffsr, $dffsre, $dlatchsr
+                    pins = [("async", b, _bit(pars.get("SET_POLARITY", "1"))) for b in cc.get("SET", [])]
+                    pins += [("async", b, _bit(pars.get("CLR_POLARITY", "1"))) for b in cc.get("CLR", [])]
+            elif t in SYNC_CELLS:
+                pins = [("sync", b, _bit(pars.get("SRST_POLARITY", "1"))) for b in cc.get("SRST", [])]
+            elif t in ASYNC_PRIMS:
+                for p in ASYNC_PRIMS[t]:
+                    inv = _bit(pars.get(f"IS_{p}_INVERTED", "0"))
+                    pins += [("async", b, 0 if inv else 1) for b in cc.get(p, [])]
+                what = f"{t} primitive ({cn})"
+            elif t == "$dlatch":
+                if not here:
+                    add(rel, ln, "RST-ASYNC-01", f"module {base}: a latch (an LDCE/LDPE-style cell: its enable and data are "
+                        "asynchronous controls): treated as an asynchronous element whatever its signals are called")
+                continue
+            elif t in DDR_PRIMS:
+                sr = c.get("parameters", {}).get("SRTYPE")
+                if sr is not None and "SYNC" in _str(sr) and "ASYNC" not in _str(sr):
+                    continue
+                pins = [("async", b, 1) for p_ in DDR_PRIMS[t] for b in cc.get(p_, [])]
+                what = f"{t} primitive ({cn})"
+            else:
+                continue
+            for kind, b, hi in pins:
+                kd, nm, inv = net.root(frames, b)
+                if kd == "const" and nm in ("0", "1"):
+                    continue                              # tied off
+                if kd == "const":                         # x or z: an undriven signal reaching a reset pin
+                    kd, nm = "undriven", "(an undriven signal)"
+                eff = hi ^ inv
+                if kind == "async" and not here:
+                    if kd == "port" and re.sub(r"\[\d+\]$", "", nm) in cfg["async_inputs"] and len(frames) >= 1:
+                        pass                                  # a declared external asynchronous input (top-level port)
+                    else:
+                        add(rel, ln, "RST-ASYNC-01", f"module {base}: {what} has an asynchronous reset or set from {kd} "
+                            f"{nm}: an asynchronous reset outside a recognised synchroniser")
+                if not here and kd != "undriven":
+                    pol.setdefault((kd, nm), {}).setdefault(eff, (rel, ln))
+    for nt, post in ((net, False), (_Net(el.sync_modules, el.top), True)):
+        inst = {c["type"] for mod in nt.m.values() for c in mod["cells"].values() if nt.is_inst(c)}
+        roots = el.tops or sorted(m for m, v in nt.m.items() if "blackbox" not in v.get("attributes", {}) and m not in inst)
+        for r_ in roots:
+            if r_ in nt.m:
+                walk(nt, r_, [(r_, "")], False, post)
+    for (kd, nm), p in sorted(pol.items()):
+        if len(p) == 2:
+            (r1, l1), (r0, l0) = p[1], p[0]
+            out[(r0, l0, "pol" + nm)] = _f(r0, l0, "RST-POL-02", f"{nm} is used as an active-high reset ({r1}:{l1}) and as an "
+                                                               f"active-low reset ({r0}:{l0})")
+    return list(out.values())
+
+
+def _has_sync_content(net: _Net, mname: str, depth: int = 0) -> bool:
+    mod = net.m[mname]
+    if any("ASYNC_REG" in v.get("attributes", {}) for v in mod["netnames"].values()):
+        return True
+    for c in mod["cells"].values():
+        if _modname(c["type"]) in ("xpm_cdc_async_rst", "xpm_cdc_sync_rst") or "ASYNC_REG" in c.get("attributes", {}):
+            return True
+        if net.is_inst(c) and depth < 8 and _has_sync_content(net, c["type"], depth + 1):
+            return True
+    return False
 
 
 def source_findings(design: Path, files: list[Path], cfg: dict[str, Any], root: Path | None = None,
-                    top: str | None = None, parts: dict[str, str] | None = None) -> list[dict[str, Any]]:
-    """The source part (review round 2: a raw-text scan that fails closed). Each module, macromodule, interface and
-    program of the SystemVerilog sources (with `include files inlined): every edge signal of a sensitivity list except the
-    clock is an asynchronous reset; a list it cannot read (a macro, iff, nested parentheses) is reported as unread
-    (``parts['source_unread']``); direct FDCE/FDPE/LDCE/LDPE instances and always_latch blocks with a reset test count as
-    asynchronous resets. ``reset.async_inputs`` exempt only edges on the top module's own ports. VHDL files are not
-    scanned (``parts['source_vhdl']``), but an entity named like a recognised synchroniser is still reported."""
-    from flow.standards_check import strip_comments
+                    top: str | None = None, parts: dict[str, str] | None = None,
+                    defines: list[str] | None = None, unmatched: list[str] | None = None, ip_names: set[str] | None = None) -> list[dict[str, Any]]:
+    """The source part by elaboration (brief 71B): Yosys + slang (SystemVerilog) and ghdl (VHDL) read every file of the build's
+    source list, ``proc`` lowers the processes, and the storage cells are judged (see ``elab_findings``). Fails closed:
+    ``parts['source']`` says "not run: ..." with the tool's message when the tool is missing, a file is not read, or the
+    elaboration fails, and the check is then PARTIAL, never a clean pass. There is no text-scanner fallback."""
+    from flow.checks import elab
     parts = parts if parts is not None else {}
     root = root or Path(__file__).resolve().parents[2]
+    sv, vh, hdr, other = elab.classify(files)
+    problems: list[str] = [f"no file matches build.yaml sources entry '{g}'" for g in unmatched or []]
+    problems += [f"{_rel(f, design)} is not a file" for f in files if not f.is_file()]
+    sv, vh, hdr = ([f for f in g if f.is_file()] for g in (sv, vh, hdr))
+    if other:
+        problems.append("file(s) of a kind the front end does not read: " + ", ".join(_rel(f, design) for f in other[:3]))
+    if elab.find_tool() is None:
+        problems.append("yosys (OSS CAD Suite) not found; set FDA_OSS_CAD or install it under ~/.local/opt/oss-cad-suite "
+                        "(the sign-off netlist part is unaffected)")
+        parts["source"] = "not run: " + "; ".join(problems)
+        return []
+    if not (sv or vh):
+        parts["source"] = "not run: " + (problems[0] if problems else "no HDL source file in the build list")
+        return []
+    cfg["vhdl_files"] = {}
+    for f in vh:
+        for e in elab._vhdl_entities([f]):
+            cfg["vhdl_files"][e.lower()] = str(f)
+    work = elab.workdir()
     out: list[dict[str, Any]] = []
-    unread: list[str] = []
-    vhdl: list[str] = []
-    dirs = sorted({f.parent for f in files})
-    shell = {(root / x).resolve() for x in SHELL_SYNCS}
-    declared = cfg.get("declared", set())
-    for f in files:
-        rel = _rel(f, design)
-        try:
-            raw = f.read_text(errors="replace")
-        except OSError:
-            unread.append(f"{rel}: unreadable")
-            continue
-        if f.suffix.lower() in (".vhd", ".vhdl"):
-            vhdl.append(rel)
-            for m in re.finditer(r"(?im)^\s*entity\s+(\w+)\s+is", raw):
-                if (m.group(1) in RECOGNISED or XPM.match(m.group(1))) and m.group(1) not in declared:
-                    cfg.setdefault("impostors", set()).add(m.group(1))
-                    out.append(_f(rel, _line(raw, m.start()), "RST-ASYNC-01", f"VHDL entity {m.group(1)} takes the name of a "
-                                  "recognised synchroniser or XPM macro, and VHDL is not scanned here: rename it, or declare it "
-                                  "in architecture.yaml reset.synchronisers"))
-            continue
-        if f.suffix.lower() not in (".sv", ".v", ".svh", ".vh"):
-            continue
-        is_shell = f.resolve() in shell
-        text, missing = _expand_includes(raw, f, dirs)
-        text, _ = strip_comments(text)
-        unread += [f"{rel}: `include \"{n}\" not found" for n in missing]
-        units = [(m.start(), m.group(1), m.group(2)) for m in _UNIT.finditer(text)]
-        for n, (u0, kind, name) in enumerate(units):
-            u1 = units[n + 1][0] if n + 1 < len(units) else len(text)
-            body = text[u0:u1]
-            exempt = (name in cfg["synchronisers"] and (name in declared or is_shell))
-            if not is_shell and (name in RECOGNISED or XPM.match(name)) and name not in declared:
-                cfg.setdefault("impostors", set()).add(name)
-                out.append(_f(rel, _line(text, u0), "RST-ASYNC-01", f"{kind} {name} takes the name of a recognised "
-                              "synchroniser or XPM macro; the netlist rules would exempt it: rename it, or declare it in "
-                              "architecture.yaml reset.synchronisers"))
-            if name in declared and "ASYNC_REG" not in body and "xpm_cdc_" not in body:
-                out.append(_f(rel, _line(text, u0), "RST-ASYNC-01", f"{kind} {name} is declared a reset synchroniser but has "
-                              "no ASYNC_REG register and no xpm_cdc instance: a synchroniser exempts its whole subtree, so "
-                              "it must be one"))
-            ports = set(re.findall(r"\b(\w+)\s*[,)]", (_paren(body, body.find("(")) or ("", 0))[0])) if name == top else set()
-            aliases = {a: (b, int(bool(neg))) for a, neg, b in
-                       re.findall(r"(?:\bassign\s+|\bwire\s+(?:logic\s+)?)(\w+)\s*=\s*(!|~)?\s*(\w+)\s*;", body)}
-            for pm in _PRIM.finditer(body):
-                if not exempt:
-                    out.append(_f(rel, _line(text, u0 + pm.start()), "RST-ASYNC-01", f"{kind} {name}: a {pm.group(1)} primitive "
-                                  f"({pm.group(2)}) has an asynchronous clear or preset"))
-            alw = list(_ALWAYS.finditer(body))
-            pol: dict[str, dict[int, int]] = {}
-            for k, a in enumerate(alw):
-                blk_end = alw[k + 1].start() if k + 1 < len(alw) else len(body)
-                ln = _line(text, u0 + a.start())
-                kind_a = a.group(1) or ""
-                sens = None
-                after = a.end()
-                if a.group(2):
-                    ps = _paren(body, after)
-                    if ps is None:
-                        if body[after:after + 1] != "*":
-                            unread.append(f"{rel}:{ln}: sensitivity list not read")
-                        continue
-                    sens, after = ps
-                blk = body[after:blk_end]
-                tests = [c for c in (_paren(blk, mm.end() - 1) for mm in re.finditer(r"\bif\s*\(", blk)) if c]
-                if kind_a == "_latch":
-                    t0 = _test_of(tests[0][0], aliases) if tests else None
-                    if t0 and _RSTNAME.search(t0[0]) and not exempt:
-                        out.append(_f(rel, ln, "RST-ASYNC-01", f"{kind} {name}: always_latch with a reset test on {t0[0]}: "
-                                      "a latch with an asynchronous reset"))
-                    continue
-                if sens is None:
-                    continue
-                if "`" in sens or re.search(r"\biff\b|\(", sens) or not re.fullmatch(
-                        r"\s*(?:(?:posedge|negedge)\s+\w+(?:\s*\[\s*\d+\s*\])?|\*|\w+)(?:\s*(?:or|,)\s*(?:(?:posedge|negedge)\s+\w+"
-                        r"(?:\s*\[\s*\d+\s*\])?|\w+))*\s*", sens):
-                    unread.append(f"{rel}:{ln}: sensitivity list '{' '.join(sens.split())[:60]}' not read")
-                    continue
-                edges = re.findall(r"(posedge|negedge)\s+(\w+)", sens)
-                if not edges:
-                    continue
-                first = _test_of(tests[0][0], aliases) if tests else None
-                tested = first[0] if first else None
-                if len(edges) > 1 and not exempt:
-                    clk_sig = next((s_ for _, s_ in edges if s_ != tested), edges[0][1])
-                    for e, sig in edges:
-                        if sig == clk_sig:
-                            continue
-                        if sig in cfg["async_inputs"] and name == top and sig in ports:
-                            continue
-                        out.append(_f(rel, ln, "RST-ASYNC-01", f"{kind} {name}: {e} {sig} in the sensitivity list: an "
-                                      "asynchronous reset outside a recognised synchroniser"))
-                for cond, _ in tests:
-                    t = _test_of(cond, aliases)
-                    if t and _RSTNAME.search(t[0]):
-                        pol.setdefault(t[0], {})[t[1]] = ln
-            for sig, p in pol.items():
-                if len(p) == 2 and not exempt:
-                    out.append(_f(rel, p[1], "RST-POL-02", f"{kind} {name}: {sig} is tested active high (line {p[0]}) "
-                                                            f"and active low (line {p[1]})"))
-    parts["source_unread"] = ("not run: " + "; ".join(unread[:4]) + (f"; {len(unread) - 4} more" if len(unread) > 4 else "")) \
-        if unread else "ran"
-    if vhdl:
-        parts["source_vhdl"] = "not run: VHDL is not scanned by the source part (" + ", ".join(vhdl[:3]) + "); the netlist part covers it"
+    try:
+        els = []
+        vh_tops = {m for m in elab._vhdl_entities(vh)} if vh else set()
+        if sv:
+            els.append(elab.run_sv(sv, hdr, top if top and top not in vh_tops else None, defines or [], work, cwd=root, ip_names=set(ip_names or ()) | vh_tops))
+        if vh:
+            els.append(elab.run_vhdl(vh, top, work, cwd=root))
+        for el in els:
+            problems += el.errors[:3]
+            if el.ok:
+                out += elab_findings(el, design, cfg, root, parts)
+        if hdr and not sv:
+            problems.append("header file(s) listed without any module source: " + ", ".join(_rel(f, design) for f in hdr[:3]))
+        stubbed = sorted(set().union(*(e.stubbed for e in els)))
+        cfg["blackboxes"] = stubbed                  # read as empty blackboxes (XPM, IP, unisims): not a part status
+    finally:
+        shutil.rmtree(work, ignore_errors=True)
+    parts["source"] = ("not run: " + "; ".join(problems[:4]) + (f"; {len(problems) - 4} more" if len(problems) > 4 else "")) \
+        if problems else "ran"
     return out
-
-
-def _offset_of_line(body: str, n: int) -> int:
-    pos = 0
-    for _ in range(max(n, 0)):
-        nxt = body.find("\n", pos)
-        if nxt < 0:
-            break
-        pos = nxt + 1
-    return pos
 
 
 def _rel(f: Path, design: Path) -> str:
@@ -316,9 +489,11 @@ def netlist_findings(rows: list[dict[str, str]], cfg: dict[str, Any], ip_names: 
     unknown: set[str] = set()
     for r in rows:
         hier, cell, ref = r.get("hier", ""), r["cell"], r["ref"]
-        is_async = ref in ("FDCE", "FDPE", "LDCE", "LDPE")
+        is_async = ref in ("FDCE", "FDPE", "LDCE", "LDPE", "IDDR", "ODDR")   # IDDR/ODDR rows are only written for SRTYPE ASYNC
         vendor = _vendor(hier, ip_names)
-        in_sync = _in(hier, syncs)
+        # a module counts as a synchroniser by its name AND its structure (an xpm_cdc_*_rst instance or ASYNC_REG registers inside
+        # it, column sync_struct, brief 71B); scans made before that column existed are judged by name alone
+        in_sync = _in(hier, syncs if "sync_struct" not in r else syncs & set(_parts(r["sync_struct"])))
         root, kind, rref = r.get("root", ""), r.get("root_kind", ""), r.get("root_ref", "")
         mod = (_parts(hier) or ["<top>"])[0]
         if is_async and kind == "cell" and re.match(r"^LUT(?!1$)", rref) and not _vendor(r.get("root_hier", ""), ip_names):

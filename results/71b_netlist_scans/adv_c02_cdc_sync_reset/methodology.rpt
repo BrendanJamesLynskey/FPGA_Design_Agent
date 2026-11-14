@@ -1,0 +1,62 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2026.1 (lin64) Build 6511674 Tue Jun 16 11:01:26 MDT 2026
+| Date         : Sat Nov 14 03:25:59 2026
+| Host         : bren-ubuntu24-04 running 64-bit Ubuntu 24.04.4 LTS
+| Command      : report_methodology -file /tmp/claude-1000/-home-brendan-Claude-sandbox/a33f10a6-b2fd-499a-bb8d-a80193f95456/scratchpad/b71b/results/71b_netlist_scans/adv_c02_cdc_sync_reset/methodology.rpt
+| Design       : adv_c02_cdc_sync_reset
+| Device       : xc7a100tcsg324-1
+| Speed File   : -1
+| Design State : Synthesized
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Report Methodology
+
+Table of Contents
+-----------------
+1. REPORT SUMMARY
+2. REPORT DETAILS
+
+1. REPORT SUMMARY
+-----------------
+            Netlist: adv_c02_cdc_sync_reset
+          Floorplan: design_1
+      Design limits: <entire design considered>
+             Max checks: <unlimited>
+             Checks found: 5
++-----------+----------+----------------------------------+--------+
+| Rule      | Severity | Description                      | Checks |
++-----------+----------+----------------------------------+--------+
+| TIMING-9  | Warning  | Unknown CDC Logic                | 1      |
+| TIMING-10 | Warning  | Missing property on synchronizer | 1      |
+| TIMING-18 | Warning  | Missing input or output delay    | 3      |
++-----------+----------+----------------------------------+--------+
+
+2. REPORT DETAILS
+-----------------
+TIMING-9#1 Warning
+Unknown CDC Logic  
+One or more asynchronous Clock Domain Crossing has been detected between 2 clock domains through a set_false_path or a set_clock_groups or set_max_delay -datapath_only constraint but no double-registers logic synchronizer has been found on the side of the capture clock. It is recommended to run report_cdc for a complete and detailed CDC coverage. Please consider using XPM_CDC to avoid Critical severities
+Related violations: <none>
+
+TIMING-10#1 Warning
+Missing property on synchronizer  
+One or more logic synchronizer has been detected between 2 clock domains but the synchronizer does not have the property ASYNC_REG defined on one or both registers. It is recommended to run report_cdc for a complete and detailed CDC coverage
+Related violations: <none>
+
+TIMING-18#1 Warning
+Missing input or output delay  
+An input delay is missing on d relative to the rising and/or falling clock edge(s) of clk_b.
+Related violations: <none>
+
+TIMING-18#2 Warning
+Missing input or output delay  
+An input delay is missing on rst_n_btn relative to the rising and/or falling clock edge(s) of clk_a.
+Related violations: <none>
+
+TIMING-18#3 Warning
+Missing input or output delay  
+An output delay is missing on q relative to the rising and/or falling clock edge(s) of clk_b.
+Related violations: <none>
+
+

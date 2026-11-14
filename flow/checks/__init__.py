@@ -35,6 +35,7 @@ never returned whole.
 from __future__ import annotations
 
 import json
+import re
 import time
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
@@ -273,16 +274,41 @@ def _standards(ctx: Ctx) -> dict[str, Any]:
     return _result(fs, records=[out])
 
 
+def _ip_names(ctx: Ctx) -> set[str]:
+    """Names of the build's IP cores (generated, so not in the source list): build/<variant>/ip/<name> and design ip/ stems."""
+    names: set[str] = set()
+    for base in ctx.design.glob("build/*/ip"):
+        names |= {p.stem for p in base.glob("*")}
+    ipd = ctx.design / "ip"
+    if ipd.is_dir():
+        names |= {p.stem for p in ipd.glob("*")}
+    try:                                  # IP created by the build's ip_tcl scripts: ``fda_ip <vlnv> <name> ...`` or -module_name
+        for t in (yaml.safe_load((ctx.design / "build.yaml").read_text()) or {}).get("ip_tcl") or []:
+            txt = (ctx.root / str(t)).read_text(errors="replace")
+            names |= set(re.findall(r"(?m)^\s*fda_ip\s+\S+\s+(\w+)\b", txt)) | set(re.findall(r"-module_name\s+(\w+)", txt))
+    except (OSError, yaml.YAMLError):
+        pass
+    return names
+
+
 def _resets(ctx: Ctx) -> dict[str, Any]:
     from flow.checks import resets as R
     cfg = R.reset_config(ctx.design)
     parts: dict[str, str] = {}
     fs = []
-    srcs = [p for p in build_sources(ctx.design, ctx.root) if p.suffix.lower() in (".sv", ".v", ".vhd", ".vhdl")]
+    srcs = build_sources(ctx.design, ctx.root)         # every file of the build list: the front end reports what it cannot read
     if srcs:
-        fs += R.source_findings(ctx.design, srcs, cfg, root=ctx.root, top=build_top(ctx.design), parts=parts)
-        parts["source"] = "ran" if any(p.suffix.lower() in (".sv", ".v") for p in srcs) else \
-            "not run: no SystemVerilog sources (a VHDL design is checked by the netlist part)"
+        try:
+            defines = [str(x) for x in (yaml.safe_load((ctx.design / "build.yaml").read_text()) or {}).get("defines") or []]
+        except (OSError, yaml.YAMLError):
+            defines = []
+        try:
+            pats = [str(g) for g in (yaml.safe_load((ctx.design / "build.yaml").read_text()) or {}).get("sources") or []]
+        except (OSError, yaml.YAMLError):
+            pats = []
+        unmatched = [g for g in pats if not list(ctx.root.glob(g))]
+        fs += R.source_findings(ctx.design, srcs, cfg, root=ctx.root, top=build_top(ctx.design), parts=parts, defines=defines,
+                                unmatched=unmatched, ip_names=_ip_names(ctx))
     else:
         parts["source"] = "not run: no sources in build.yaml"
     records = []
@@ -307,9 +333,10 @@ def _resets(ctx: Ctx) -> dict[str, Any]:
             records.append(scan)
         else:
             parts["netlist"] = "not run: " + ctx.not_run_reason("reset_scan")
-    # polarity: the netlist rule backs it; the source rule alone sees only simple tests (review round 2)
-    parts["polarity"] = "ran" if parts.get("netlist") == "ran" else ("not run: one polarity per reset is judged on the "
-                        "netlist; the source rule alone sees only simple if-tests within one module")
+    # polarity (HDL-RST-02): judged on the elaborated source (every reset pin of every register, traced to its root signal)
+    # and again on the netlist; it ran when either did
+    parts["polarity"] = "ran" if parts.get("source") == "ran" or parts.get("netlist") == "ran" else \
+        (parts.get("source") or "not run: no source and no netlist scan")
     return _result(fs, parts, records)
 
 

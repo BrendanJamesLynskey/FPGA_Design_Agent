@@ -13,6 +13,9 @@ from flow import checks as C
 from flow import lint_ruleset as LR
 from flow.checks import resets as R
 
+from flow.checks import elab as _elab
+
+needs_elab = pytest.mark.skipif(_elab.find_tool() is None, reason="yosys (OSS CAD Suite 20261112) not installed; the reset-elab CI job runs these")
 ROOT = Path(__file__).resolve().parents[2]
 SEEDED = ROOT / "results" / "71_check_suite" / "seeded"
 KB = ROOT.parent / "FPGA_Design_Agent_Knowledge"
@@ -173,6 +176,7 @@ endmodule
 """
 
 
+@needs_elab
 def test_source_part(tmp_path: Path) -> None:
     f = tmp_path / "m.sv"
     f.write_text(SRC)
@@ -183,14 +187,19 @@ def test_source_part(tmp_path: Path) -> None:
     assert codes == [("RST-ASYNC-01", 3), ("RST-ASYNC-01", 16), ("RST-ASYNC-01", 18), ("RST-POL-02", 11)], codes
 
 
-def test_source_every_async_edge_is_checked(tmp_path: Path) -> None:
-    """Review fix: a second asynchronous reset hides behind a declared one no more, and the clock is never called a reset."""
+def test_source_two_asynchronous_resets_in_one_block_is_rejected_not_passed(tmp_path: Path) -> None:
+    """A block with two asynchronous resets is not synthesisable as one flip-flop: the front end rejects it, so the source part
+    is PARTIAL with the tool's message (it used to be reported by the text scanner). Brief 71B."""
+    from flow.checks import elab
+    if elab.find_tool() is None:
+        pytest.skip("yosys (OSS CAD Suite) not installed")
     f = tmp_path / "m.sv"
     f.write_text("module m (input logic clk, input logic ext_rst_n, input logic soft_rst_n, input logic d, output logic q);\n"
-                 "    always_ff @(negedge ext_rst_n or posedge clk or negedge soft_rst_n) begin\n"
+                 "    always_ff @(posedge clk or negedge ext_rst_n or negedge soft_rst_n) begin\n"
                  "        if (!ext_rst_n) q <= 1'b0;\n        else q <= d;\n    end\nendmodule\n")
-    fs = R.source_findings(tmp_path, [f], {"synchronisers": set(R.RECOGNISED), "async_inputs": {"ext_rst_n"}}, top="m")
-    assert [x["message"].split(":")[1].strip().split(" in ")[0] for x in fs] == ["negedge soft_rst_n"]
+    parts: dict[str, str] = {}
+    R.source_findings(tmp_path, [f], {"synchronisers": set(R.RECOGNISED), "async_inputs": {"ext_rst_n"}}, top="m", parts=parts)
+    assert parts["source"].startswith("not run: ")
 
 
 # ---- the runner and the digest -------------------------------------------------------------------------------------------
@@ -239,6 +248,7 @@ def test_reset_findings_are_not_waivable_by_lint_waivers(tmp_path: Path) -> None
     assert C.run(d, ["resets"], "synth")["checks"][0]["status"] == "fail"
 
 
+@needs_elab
 def test_vivado_session_is_one_call_for_all_missing_reports(tmp_path: Path) -> None:
     d = _mini(tmp_path, "rst_clean")
     (d / "build" / "base" / "reset_scan_synth.tsv").unlink()
@@ -298,34 +308,8 @@ def test_agent_check_tool_is_registered_and_offered_to_the_designer() -> None:
         assert old in TOOLS
 
 
-# ---- review round 2: the re-review's designs, kept as regression cases (flow/tests/data/b71_resets) -------------------
+# review rounds 2 and 3: the regression designs are in flow/tests/test_71b_reset_elab.py (brief 71B)
 REG = Path(__file__).parent / "data" / "b71_resets"
-#: each design and what the source part must do: the reset rules it raises, or "unread" (the part fails closed: PARTIAL)
-REGRESSION = {
-    "d_base": {"HDL-RST-01"}, "d_gen": {"HDL-RST-01"}, "d_glob": {"HDL-RST-01"}, "d_iface": {"HDL-RST-01"},
-    "d_iffp": "unread", "d_incl": {"HDL-RST-01"}, "d_latch": {"HDL-RST-01"}, "d_macro": "unread",
-    "d_macromod": {"HDL-RST-01"}, "d_multi": {"HDL-RST-01"}, "d_multi2": {"HDL-RST-01"},
-    "d_name_declared": {"HDL-RST-01"},          # async_inputs exempt only the top module's own ports
-    "d_pol_alias": set(),                       # rst_p = ~rst_n: both blocks reset on rst_n low, one polarity (correct pass)
-    "d_pol_eq0": {"HDL-RST-02"}, "d_pol_eqeq": {"HDL-RST-02"}, "d_pol_name": {"HDL-RST-02"}, "d_pol_plain": {"HDL-RST-02"},
-    "d_pol_second": {"HDL-RST-02"}, "d_pol_struct": {"HDL-RST-02"}, "d_prim": {"HDL-RST-01"},
-    "d_reset_sync": {"HDL-RST-01"}, "d_vhdl_mixed": {"HDL-RST-01", "vhdl"}, "d_xpmname": {"HDL-RST-01"},
-}
-
-
-@pytest.mark.parametrize("name", sorted(REGRESSION))
-def test_review_round_2_regressions(name: str) -> None:
-    d = REG / name
-    r = C.run_one("resets", d, "rtl", root=d)
-    rules = {f["rule"] for f in r["findings"] if f["blocking"]}
-    want = REGRESSION[name]
-    if want == "unread":
-        assert not rules and r["parts"]["source_unread"].startswith("not run:") and "source_unread" in r["incomplete"]
-    else:
-        assert rules == want - {"vhdl"}, (name, r["findings"])
-        if "vhdl" in want:
-            assert "source_vhdl" in r["incomplete"]
-    assert r["parts"]["polarity"].startswith("not run:")      # at scope rtl the polarity rule is never a clean pass
 
 
 def test_source_list_is_the_builds_own_expansion() -> None:
