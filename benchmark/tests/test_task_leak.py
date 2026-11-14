@@ -89,3 +89,37 @@ def test_site_guard_sees_through_trailing_comments(tmp_path: Path) -> None:
     r = subprocess.run([sys.executable, str(ROOT / "site" / "leak_guard.py"), "--private", str(tmp_path / "none"),
                         "--private-v2", str(tmp_path / "priv" / "v2"), str(tgt)], capture_output=True, text=True)
     assert r.returncode == 1 and "LEAK window" in r.stdout, r.stdout
+
+
+def _leak_into(tmp_path: Path, name: str, content: str, extra_copies: int = 0) -> subprocess.CompletedProcess:
+    secret, other = TASKS[0], TASKS[1]
+    sec, tgt = tmp_path / "sec", tmp_path / "tgt"
+    shutil.copytree(secret, sec / secret.name)
+    shutil.copytree(other, tgt / other.name)
+    (tgt / other.name / "ref" / "rtl" / name).write_text(content, encoding="latin-1")
+    for i in range(extra_copies):                       # padding: the same leak in more tasks under test
+        shutil.copytree(tgt / other.name, tgt / f"pad{i}" )
+    return _guard(sec, tgt)
+
+
+def _core() -> str:
+    return (TASKS[0] / "ref" / "rtl" / "bit_count.sv").read_text()
+
+
+@pytest.mark.parametrize("name,wrap", [
+    ("c1.sv", lambda t: "/*\n" + t.replace("*/", "* /") + "\n*/"),
+    ("c2.sv", lambda t: "\n".join("// " + ln for ln in t.splitlines())),
+    ("c3.sv", lambda t: 'string s = "' + t.replace('"', "'").replace("\n", " ") + '";'),
+    ("c4.sv.bak", lambda t: t),
+    ("c5.svp", lambda t: t),
+    ("Makefile", lambda t: t),
+    ("c6.sv", lambda t: t + "\n// caf\xe9"),
+    ("c7.sv", lambda t: "\n".join(ln + "\n  zz = 1'b0;" for ln in t.splitlines())),
+])
+def test_hiding_places_are_caught(tmp_path: Path, name: str, wrap) -> None:
+    r = _leak_into(tmp_path, name, wrap(_core()))
+    assert r.returncode == 1, (name, r.stdout)
+
+
+def test_a_few_extra_copies_of_a_leak_do_not_exempt_it(tmp_path: Path) -> None:
+    assert _leak_into(tmp_path, "c.sv", _core(), extra_copies=2).returncode == 1

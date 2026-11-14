@@ -27,8 +27,10 @@ import io
 import keyword
 import re
 import tokenize
+from pathlib import Path
 
-SV = {".sv", ".svh", ".v", ".vh"}
+LONG_STR = 40                                  # a string this long is text that can carry code or a spec
+SV = {".sv", ".svh", ".v", ".vh", ".svp", ".sva", ".vp"}
 VHDL = {".vhd", ".vhdl"}
 PY = {".py"}
 HASH = {".yaml", ".yml", ".tcl", ".xdc", ".sh", ".toml", ".cfg", ".ini", ".txt"}
@@ -56,6 +58,20 @@ _TOKEN = re.compile(r"\s*(?:(?P<id>[A-Za-z_\\][A-Za-z0-9_$]*)|(?P<num>\d)|(?P<op
                     r"|[<>=!]=|<<|>>|&&|\|\||\*\*|\+:|-:|::|=>|<=|:=|\S))")
 
 
+BACKUP = {".bak", ".orig", ".old", ".tmp", ".save", ".swp", ".rej", ".txt~", "~"}
+
+
+def eff_suffix(name: str) -> str:
+    """Suffix of a file name with a backup ending (.bak, .orig, ~) looked through: x.sv.bak counts as .sv."""
+    p = Path(name)
+    suf = p.suffix.lower()
+    while suf in BACKUP or name.endswith("~"):
+        name = name[:-len(suf)] if suf in BACKUP else name[:-1]
+        p = Path(name)
+        suf = p.suffix.lower()
+    return suf
+
+
 def _scan(text: str, line: str | None, block: bool, vhdl: bool, hashc: bool) -> list[tuple[str, str]]:
     """Split into ('code'|'str', chunk); comments are dropped.  A small scanner, not a regex, so a quote inside a
     comment or a comment marker inside a string does the right thing."""
@@ -73,18 +89,24 @@ def _scan(text: str, line: str | None, block: bool, vhdl: bool, hashc: bool) -> 
         two = text[i:i + 2]
         if hashc and c == "#" and (i == 0 or text[i - 1] in " \t\n"):
             j = text.find("\n", i)
-            i = n if j < 0 else j
-            buf.append(" ")
+            j = n if j < 0 else j
+            flush()
+            out.append(("comment", text[i + 1:j]))
+            i = j
             continue
         if line and text.startswith(line, i):
             j = text.find("\n", i)
-            i = n if j < 0 else j
-            buf.append(" ")
+            j = n if j < 0 else j
+            flush()
+            out.append(("comment", text[i + len(line):j]))
+            i = j
             continue
         if block and two == "/*":
             j = text.find("*/", i + 2)
+            j2 = n if j < 0 else j
+            flush()
+            out.append(("comment", text[i + 2:j2]))
             i = n if j < 0 else j + 2
-            buf.append(" ")
             continue
         if c == '"':
             j = i + 1
@@ -123,6 +145,18 @@ def _chunks(text: str, suffix: str) -> list[tuple[str, str]]:
     if s in HASH:
         return _scan(text, None, False, False, True)
     return [("code", text)]
+
+
+def _py_hidden(text: str) -> str:
+    """Comments and long string literals of Python source, for the hidden-text pass."""
+    parts = []
+    try:
+        for t in tokenize.generate_tokens(io.StringIO(text).readline):
+            if t.type == tokenize.COMMENT or (t.type == tokenize.STRING and len(t.string) >= LONG_STR):
+                parts.append(t.string)
+    except (tokenize.TokenError, IndentationError, SyntaxError):
+        pass
+    return "\n".join(parts)
 
 
 def _py_tokens(text: str) -> list[str] | None:
@@ -180,13 +214,25 @@ def strip_text(text: str, suffix: str) -> str:
             return " ".join(out)
         text = "\n".join(re.sub(r"(?<![\"'])#.*", " ", ln) for ln in text.splitlines())
         return re.sub(r"\s+", " ", text).strip()
-    joined = " ".join(c if k == "code" else '""' for k, c in _chunks(text, s))
+    joined = " ".join(c if k == "code" else ('""' if k == "str" else " ") for k, c in _chunks(text, s))
     joined = re.sub(r"\s+", " ", joined).strip()
     return joined.lower() if s in VHDL else joined
 
 
+def hidden_text(text: str, suffix: str) -> str:
+    """Comment text and long string literals: code or a spec hidden there is still visible to the agent."""
+    s = suffix.lower()
+    if s in PY:
+        return _py_hidden(text)
+    return "\n".join(c for k, c in _chunks(text, s) if k == "comment" or (k == "str" and len(c) >= LONG_STR))
+
+
 def code_tokens(text: str, suffix: str) -> list[str]:
     """Token stream for winnowing: identifiers -> I, numbers -> N, strings dropped, comments dropped."""
+    return drop_dead(_code_tokens(text, suffix))
+
+
+def _code_tokens(text: str, suffix: str) -> list[str]:
     s = suffix.lower()
     if s in PY:
         toks = _py_tokens(text)
@@ -215,19 +261,39 @@ def code_tokens(text: str, suffix: str) -> list[str]:
     return out
 
 
+_DEAD = re.compile(r"I (?:=|<=) N(?: ;)?(?= (?:;|I|N|if|end|begin|else|for|while|return|\Z|[)}]))|\bif \( N \)|\bif N :")
+
+
+def drop_dead(toks: list[str]) -> list[str]:
+    """Remove padding statements such as `x = 0;` and `if (0)`: a dead statement every few tokens breaks every k-gram."""
+    s = " " + " ".join(toks) + " "
+    for _ in range(2):
+        s = _DEAD.sub(" ", s)
+    return s.split()
+
+
 def prose_tokens(text: str) -> list[str]:
     return re.findall(r"[a-z0-9_]+", text.lower())
 
 
-def tokens_for(text: str, suffix: str) -> tuple[str, list[str]]:
-    """('code'|'prose', tokens) for one file."""
+def tokens_for(text: str, suffix: str) -> list[tuple[str, list[str]]]:
+    """[(mode, tokens)] for one file: 'code' and 'prose' streams.  Comment text and long strings are scored as a
+    second stream of the same file (code-shaped and word-shaped); an unknown suffix is read as code and as prose."""
     s = suffix.lower()
+    out: list[tuple[str, list[str]]] = []
     if s in CODE:
-        return "code", code_tokens(text, s)
-    if s in HASH:
-        body = " ".join(c for k, c in _chunks(text, s) if k == "code")
-        return "prose", prose_tokens(body)
-    return "prose", prose_tokens(text)
+        out.append(("code", code_tokens(text, s)))
+    elif s in HASH:
+        out.append(("prose", prose_tokens(" ".join(c for k, c in _chunks(text, s) if k == "code"))))
+    else:
+        out.append(("prose", prose_tokens(text)))
+        if s not in {".md", ".json", ".jsonl", ".csv"}:
+            out.append(("code", code_tokens(text, ".sv")))
+    h = hidden_text(text, s) if s in CODE | HASH else ""
+    if h.strip():
+        out.append(("code", code_tokens(h, ".sv")))
+        out.append(("prose", prose_tokens(h)))
+    return out
 
 
 def fingerprints(toks: list[str], k: int, w: int) -> set[int]:

@@ -58,11 +58,12 @@ def alnum(b):
 def stripped(f, b):
     """The file with comments and string literals removed (code and `#`-comment files), whitespace collapsed; b'' for
     other files. A window match on this text is not beaten by a trailing comment on every line (brief 83)."""
-    if f.suffix.lower() not in leak_norm.CODE | leak_norm.HASH:
+    if leak_norm.eff_suffix(f.name) not in leak_norm.CODE | leak_norm.HASH:
         return b""
     try:
-        return leak_norm.strip_text(b.decode("utf-8"), f.suffix).encode()
-    except UnicodeDecodeError:
+        return (leak_norm.strip_text(b.decode("utf-8", errors="replace"), leak_norm.eff_suffix(f.name))
+                + " " + leak_norm.hidden_text(b.decode("utf-8", errors="replace"), leak_norm.eff_suffix(f.name))).lower().encode()
+    except Exception:
         return b""
 
 

@@ -36,13 +36,15 @@ import leak_norm as N  # noqa: E402
 W = 80
 K, WIN = 12, 4
 FRAC, WINDOWS = 0.30, 100
+DUP = 0.8                        # raw overlap (no idiom exemption) at which two tasks are near-duplicates
 IDIOM_DF = 3                     # in this many tasks of the corpus: stock scaffolding, not task-identifying
 MIN_FP = 5                       # fewer fingerprints than this in the smaller side: the score is not meaningful
 
 
 def files(p: Path):
     for f in sorted(p.rglob("*")):
-        if f.is_file() and not ({"__pycache__", ".git", "build", "runs"} & set(f.parts)) and f.suffix.lower() in N.SCANNED:
+        if f.is_file() and not ({"__pycache__", ".git", "build", "runs"} & set(f.parts)) \
+                and f.suffix.lower() not in (".png", ".jpg", ".gif", ".pdf", ".zip", ".gz", ".pyc", ".bin", ".so", ".o"):
             yield f
 
 
@@ -66,25 +68,34 @@ class Prof:
         srcs = [(root, f) for f in files(root)] if root else [(m, f) for m in many for f in (files(m) if m.is_dir() else [m])]
         for base, f in srcs:
             try:
-                text = f.read_text(errors="strict")
-            except (UnicodeDecodeError, OSError):
+                raw = f.read_bytes()
+            except OSError:
                 continue
-            s = N.strip_text(text, f.suffix).encode()
+            if b"\0" in raw[:2000]:
+                continue
+            text = raw.decode("utf-8", errors="replace")        # one stray byte must not hide a file
+            suf = N.eff_suffix(f.name)
+            s = (N.strip_text(text, suf) + " " + N.hidden_text(text, suf)).encode()
+            s = re.sub(rb"\s+", b" ", s)
             rel = str(f.relative_to(base)) if base and base.is_dir() else f.name
             for i in range(0, max(0, len(s) - W + 1)):
                 self.windows.setdefault(hash(s[i:i + W]), rel)
-            mode, toks = N.tokens_for(text, f.suffix)
-            fp = N.fingerprints(toks, k, w)
-            self.fp[mode] |= fp
-            self.byfile[rel] = {mode: fp}
+            self.byfile[rel] = {}
+            for mode, toks in N.tokens_for(text, suf):
+                fp = N.fingerprints(toks, k, w)
+                self.fp[mode] |= fp
+                self.byfile[rel][mode] = self.byfile[rel].get(mode, set()) | fp
 
 
-def compare(sec: Prof, tgt: Prof, pub: Prof, secret_name: str, target_name: str, idiom_w=frozenset(), idiom_f=frozenset()) -> dict:
-    wins = [h for h in sec.windows if h in tgt.windows and h not in pub.windows and h not in idiom_w]
+def compare(sec: Prof, tgt: Prof, pub: Prof, secret_name: str, target_name: str, dfw, dff, df_min, off=0) -> dict:
+    # stock idiom: found in df_min or more tasks of the counting set (see main)
+    wins = [h for h in sec.windows if h in tgt.windows and h not in pub.windows and dfw[h] - off < df_min]
+    common = lambda h: dff[h] - off >= df_min  # noqa: E731
     files_hit = sorted({sec.windows[h] for h in wins})
     r = {"secret": secret_name, "target": target_name, "windows": len(wins), "files": files_hit[:5], "scores": {}}
     for mode in ("code", "prose"):
-        a, b = sec.fp[mode] - pub.fp[mode] - idiom_f, tgt.fp[mode] - pub.fp[mode] - idiom_f
+        a = {h for h in sec.fp[mode] if h not in pub.fp[mode] and not common(h)}
+        b = {h for h in tgt.fp[mode] if h not in pub.fp[mode] and not common(h)}
         sh = a & b
         if min(len(a), len(b)) < MIN_FP:
             r["scores"][mode] = {"secret_in_target": 0.0, "target_in_secret": 0.0, "shared": len(sh), "small": True}
@@ -96,13 +107,16 @@ def compare(sec: Prof, tgt: Prof, pub: Prof, secret_name: str, target_name: str,
     for side, other, tag in ((sec, tgt, "secret"), (tgt, sec, "target")):
         for rel, d in side.byfile.items():
             for mode, fp in d.items():
-                fp = fp - pub.fp[mode] - idiom_f
+                fp = {h for h in fp if h not in pub.fp[mode] and not common(h)}
                 if len(fp) < MIN_FP:
                     continue
                 c = len(fp & other.fp[mode]) / len(fp)
                 if c > best[0]:
                     best = (round(c, 3), f"{tag}:{rel}")
     r["file_max"], r["file_max_where"] = best
+    raw = max((len(sec.fp[m] & tgt.fp[m]) / max(1, min(len(sec.fp[m]), len(tgt.fp[m]))) for m in ("code", "prose")
+               if min(len(sec.fp[m]), len(tgt.fp[m])) >= 20), default=0.0)
+    r["raw_overlap"] = round(raw, 3)
     return r
 
 
@@ -140,14 +154,14 @@ def main() -> int:
         pairs = [("S:" + s, "T:" + t) for s in S for t in T if s != t]
     here = {n.split(":")[-1] for n in prof}          # a corpus copy of a task under test would count it twice
     corpus = [Prof(p, a.k, a.w) for n, p in tasks(a.corpus).items() if n not in here] if a.corpus else []
-    allp = list(prof.values()) + corpus
+    # Idiom count: tasks of the corpus and of the set under test. With --corpus the two tasks of the pair do not count
+    # (off = 2): a stock idiom is in IDIOM_DF other tasks; a leak is exempt only if the secret was padded into that
+    # many more tasks (the README states the limit). Without --corpus (baseline mode) the pair counts.
     dfw, dff = Counter(), Counter()
-    for pr in allp:
+    for pr in (corpus + list(prof.values())):
         dfw.update(pr.windows.keys())
         dff.update(pr.fp["code"] | pr.fp["prose"])
-    idiom_w = frozenset(h for h, n in dfw.items() if n >= a.idiom_df)
-    idiom_f = frozenset(h for h, n in dff.items() if n >= a.idiom_df)
-    res = [compare(prof[s], prof[t], pub, s, t, idiom_w, idiom_f) for s, t in pairs]
+    res = [compare(prof[s], prof[t], pub, s, t, dfw, dff, a.idiom_df, 2 if corpus else 0) for s, t in pairs]
     if a.baseline:
         sc = sorted(score(r) for r in res)
         wn = sorted(r["windows"] for r in res)
@@ -156,7 +170,7 @@ def main() -> int:
               f"p99 {q(sc, .99)}, max {sc[-1]}; windows median {q(wn, .5)}, max {wn[-1]}")
         for r in sorted(res, key=lambda r: -score(r))[:8]:
             print(f"  {score(r):.3f} windows {r['windows']}  {r['secret']} ~ {r['target']}")
-    bad = [r for r in res if r["windows"] > a.windows or score(r) >= a.frac]
+    bad = [r for r in res if r["windows"] > a.windows or score(r) >= a.frac or r['raw_overlap'] >= DUP]
     if a.json:
         a.json.write_text(json.dumps({"k": a.k, "w": a.w, "frac": a.frac, "windows": a.windows, "pairs": res}, indent=1) + "\n")
     print(f"task leak: {len(res)} pairs, {len(bad)} hits (frac {a.frac}, windows {a.windows}, k {a.k}, w {a.w}): "

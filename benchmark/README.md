@@ -76,16 +76,16 @@ Nothing the agent can see (a development task's spec, reference RTL, tests) may 
 
 - `tools/task_leak.py --pairwise <task roots> [--corpus <roots>]` (pre-freeze: each task in turn is the secret, every other
   task a target; `--secret/--target` for a held-out set against public tasks). Every text file of a task is compared.
-  Comments and string literals are removed, whitespace collapsed, VHDL lower-cased (`tools/leak_norm.py`; SystemVerilog,
+  Comments and string literals are removed (and then scored as a second stream, so code or a spec hidden in a comment or a long string is still caught; padding statements such as `x = 0;` are dropped, unknown file types and backup names such as `.sv.bak` are read as code and prose), whitespace collapsed, VHDL lower-cased (`tools/leak_norm.py`; SystemVerilog,
   Verilog, VHDL, Python through the real tokenizer, `#` comment files). Then (1) 80-byte windows of the stripped text and
   (2) winnowing on a token stream with identifiers and numbers normalised (k 12, w 4; code and prose scored apart): the
   share of a secret file or task found in the target, and the reverse. Windows and fingerprints present in three or more
-  tasks of the corpus are stock idioms (board tops, test skeletons) and do not count.
+  tasks of the corpus other than the pair compared (`--corpus`: always pass the existing tasks) are stock idioms. Limit: a secret padded into three or more further tasks of the same run would exempt itself; the run's other pairs show those copies as hits against the secret only if they also differ elsewhere, so review any task that is near-identical to another (`raw_overlap` 0.8 or more fails on its own) (board tops, test skeletons) and do not count.
 - `site/leak_guard.py` (80-byte windows against everything to be published) now also matches on comment- and
   string-stripped text.
 
 **Thresholds** (`task_leak.py --baseline` over all 62 existing tasks, public and private, v1, v2 and course; 3 782 ordered
-pairs, idiom filter on): winnowing score median 0.00, 95th percentile 0.07, 99th 0.25; windows median 0. A pair fails at a
+pairs, idiom filter on): winnowing score median 0.00, 95th percentile 0.06, 99th 0.26; windows median 0. A pair fails at a
 score of 0.30 or more (the file-level maximum counts) or more than 100 shared windows (a copied ten-line block gives about
 400). The 2 % of existing pairs above that are real sibling tasks that share a module on purpose (the two VGA tasks,
 RMSNorm and softmax, the AES and SHA UART tasks, the I2C master and ADT7420, sat_add and mini_alu); they are frozen and not
@@ -96,3 +96,8 @@ renamed identifiers, different indentation, number radix and key order are never
 the visible files so that the structure differs, and re-freeze through the dated amendment log. A guard allowance for
 shared scaffolding is a planner decision, written down. Stock scaffolding is exempt only by appearing in three or more
 tasks, never by editing it.
+
+Known limits, stated so nobody guesses: a re-expression of the same logic (a different algorithm, another language such as a
+VHDL or Python port of the RTL) is not detected, nor is a paraphrase of a spec that keeps no eight-word run; both need a
+reviewer. Heavy padding (many dead statements of other shapes between every few tokens) lowers the score; the dead-statement
+filter covers constant assignments and `if (0)` only.
