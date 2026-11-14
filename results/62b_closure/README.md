@@ -14,6 +14,8 @@ writer's own test. The cases, budgets and success rule were registered before th
 
 ## Reproduce
 
+Needs Vivado 2026.1, Icarus Verilog and an OpenRouter key. Without a build lock on a shared machine, pass `--no-lock` instead of setting the lock command. The model's replies differ between runs, so a rerun follows its own path:
+
 ```
 FDA_BUILD_LOCK_CMD=<lock command> python3 -m agent.graph.closure_task benchmark/course/tasks/c13_hough_lines \
     --rtl benchmark/course/tasks/c13_hough_lines/ref/rtl --case c13_bram1 --budget bram=1 --max-iter 6 --max-usd 1.0
