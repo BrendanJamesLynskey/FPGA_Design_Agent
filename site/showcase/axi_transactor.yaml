@@ -3,7 +3,7 @@
 id: axi_transactor
 order: 2
 status: published
-title: An on-chip AXI traffic generator and protocol checker
+title: An on-chip AXI4-Lite and AXI4-Stream traffic generator and protocol checker
 one_line: "A block that sits on the chip beside the design under test, drives AXI4-Lite and AXI4-Stream traffic from a program loaded at run time, and checks a set of named protocol rules in hardware while the traffic runs."
 description: "An on-chip AXI4-Lite and AXI4-Stream traffic generator, protocol checker and scoreboard on the Nexys A7: seeded bugs caught on the board, the same traffic cycle for cycle in simulation, the checker checked formally to a bounded depth."
 board: Digilent Nexys A7-100T
@@ -54,7 +54,7 @@ values:
   later_commit: {source: results/59a_axi_tx/board_build.json, expr: "get:later_build.commit"}
   later_id: {source: results/59a_axi_tx/board_build.json, expr: "get:later_build.build_id"}
   stream_bits: {source: axi_tx/rtl/axi_tx_core.sv, expr: "re:SDATA_W != (\\d+)"}
-headline: "A hardware checker that watches an AXI bus and names the rule a bug breaks. On the Digilent Nexys A7-100T (xc7a100tcsg324-1, Vivado 2026.1) it flagged the expected rule in all {bug_runs} runs with a seeded protocol bug ({faults} faults), and against our own peripheral and stream FIFO the board's traffic matched simulation cycle for cycle in {parity_eq} of {parity} runs."
+headline: "A hardware checker that watches an AXI4-Lite bus and an AXI4-Stream link and names the rule a bug breaks. On the Digilent Nexys A7-100T (xc7a100tcsg324-1, Vivado 2026.1) it flagged the expected rule in all {bug_runs} runs with a seeded protocol bug ({faults} faults), and against our own peripheral and stream FIFO the board's traffic matched simulation cycle for cycle in {parity_eq} of {parity} runs."
 docs: designs/b59a_axi_tx/README.md
 hero:
   kind: wave
@@ -62,10 +62,10 @@ hero:
   path: wave
   caption: "One capture from the board, one seeded bug: our peripheral raises the write-response valid signal (BVALID) before any write data has arrived, and the checker flags it in that cycle."
 story:
-  problem: "AXI is the on-chip bus defined by the AMBA specification IHI 0022H (its stream variant: IHI 0051B). A bus interface that breaks its handshake rules often passes a quick test and fails in a system: read data that is not held while the master stalls, or a write response sent before the data. Such bugs show only under the right timing, and a logic analyser shows the waveform but not which rule it breaks.\n\nThe hard part is the checker, not the traffic. A wrong checker passes bad designs or flags good ones, so this one is checked formally, attacked with deliberately broken copies of itself, and compared on the board with AMD's own checker.\n\nThe other hard part is making the board and the simulation see identical traffic: every random choice has to be seeded, and every counter has to start with the run."
+  problem: "AXI is the family of on-chip buses in Arm's AMBA specifications. This project covers two of them: **AXI4-Lite**, the single-beat register-access subset of AXI4 (AMBA AXI and ACE Protocol Specification, Arm IHI 0022H.c), and **AXI4-Stream**, the one-way data stream (AMBA AXI4-Stream Protocol Specification, Arm IHI 0051B). It does not cover full AXI4 (bursts, transaction IDs, several transactions in flight), the older or newer AXI versions, or the ACE coherency extensions. A bus interface that breaks its handshake rules often passes a quick test and fails in a system: read data that is not held while the master stalls, or a write response sent before the data. Such bugs show only under the right timing, and a logic analyser shows the waveform but not which rule it breaks.\n\nThe hard part is the checker, not the traffic. A wrong checker passes bad designs or flags good ones, so this one is checked formally, attacked with deliberately broken copies of itself, and compared on the board with AMD's own checker.\n\nThe other hard part is making the board and the simulation see identical traffic: every random choice has to be seeded, and every counter has to start with the run."
   how: "A transaction program, written in plain YAML and loaded over the serial link, drives AXI4-Lite traffic (a simple register-access bus) and AXI4-Stream traffic (a packet stream) with seeded random addresses, data and byte-enables (which bytes of a word to write), pauses by the sender and refusals by the receiver (back-pressure).\n\nMonitors that watch only the bus wires check {lite_rules} AXI4-Lite and {stream_rules} AXI4-Stream rules every cycle. A reference copy of the memory checks reads of every word written in the run, counters record latency, stalls and which cases were covered, and the first violation starts a capture. The same program runs on the board and in simulation."
   architecture:
-    blocks: [[host, Host (serial)], [seq, Sequencer], [eng, AXI masters], [dut, Targets], [chk, Checkers], [cap, Capture]]
+    blocks: [[host, Host (serial)], [seq, Sequencer], [eng, AXI4-Lite and AXI4-Stream masters], [dut, Targets], [chk, Checkers], [cap, Capture]]
     links: [[host, seq, YAML], [seq, eng, txns], [eng, dut, AXI], [dut, chk, bus], [chk, cap, trigger], [chk, host, verdicts]]
   results:
     - "{runs_pass} of {runs} board runs, written in a plan before the board was used, gave the verdict the plan expected. The table says what each kind of run was checked against."
