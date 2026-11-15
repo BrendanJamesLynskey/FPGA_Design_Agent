@@ -1,0 +1,77 @@
+# Answer key for the half-band stage: the oracle may say only what this file says about the half-band stage (brief 79, ladder); never shown to the agent.
+schema: fpga-design-agent/spec/v0
+name: v2_b_halfband_dec
+title: Half-band decimate-by-two stage
+source: spec.md
+tier: T2
+level: L1
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: v2_b_halfband_dec_top
+design_id: 0x48424443          # "HBDC"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: history, sample parity, queue, SAT and OVR all clear
+
+parameters:
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+
+behaviour:
+  filter:
+    - "Coefficients, tap 0 applies to the newest sample: C = [-1, 0, 9, 16, 9, 0, -1]; their sum is 32."
+    - "Samples are numbered 1, 2, 3, ... from reset or clear. For sample n (16-bit signed, bits [15:0] of the written word; history x[n-1]..x[n-6] starts at 0): ACC(n) = sum over k = 0..6 of C[k] * x[n-k], an exact integer."
+    - "A result is produced for every even n (the 2nd, 4th, 6th, ... sample written), from ACC(n); the odd samples only enter the history. ODD tells which parity is next: ODD = 1 after an odd number of samples."
+    - "Q = ACC >> 5 (floor), R = ACC - 32 * Q (0..31). Y = Q if R < 16; Y = Q + 1 if R > 16; if R = 16 (an exact tie) Y = Q when Q is even and Q + 1 when Q is odd, so that ties go to the even neighbour. Examples: ACC = 16 gives 0, 48 gives 2, -16 gives 0, -48 gives -2."
+    - "A Y above 32767 gives 32767 and a Y below -32768 gives -32768 in the half-band decimator; SAT goes up whenever either happens and stays set until CLEAR or reset. The history holds the written samples."
+    - "A result is in the queue within 16 clocks of the write of its sample."
+  queue:
+    - "Depth 8. Once 8 decimated samples wait, any further decimated sample is lost, the queued ones stay, and OVR goes up until CLEAR or reset."
+    - "COUNT tells how many decimated samples wait. RESULT shows the oldest decimated sample as a 32-bit sign-extended number, or 0 if no decimated sample waits; a write to NEXT discards that decimated sample (ignored with nothing queued). Reading RESULT leaves the half-band decimator's queue as it is."
+  clear:
+    - "A write to CTRL with bit 0 = 1 clears the history, the sample count (so the next sample is number 1), the queue, SAT and OVR. CTRL reads 0."
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.1)
+  map:
+    - {offset: 0x00, name: CTRL, note: half-band-stage, access: WO, reset: 0, bits: "[0] CLEAR the half-band decimator (write 1); other bits ignored; reads 0"}
+    - {offset: 0x01, name: SAMPLE, note: half-band-stage, access: WO, reset: 0, bits: "[15:0] signed input of the half-band decimator; [31:16] ignored; reads 0"}
+    - {offset: 0x02, name: STATUS, note: half-band-stage, access: RO, reset: 0, bits: "[3:0] COUNT (0..8); [4] OVR; [5] SAT; [6] ODD; others 0"}
+    - {offset: 0x03, name: RESULT, note: half-band-stage, access: RO, reset: 0, bits: "[31:0] the oldest queued decimated sample, sign-extended; 0 when empty"}
+    - {offset: 0x04, name: NEXT, note: half-band-stage, access: WO, reset: 0, bits: "decimated sample queue: any write discards the oldest one; reads 0"}
+  unmapped: offsets 0x05-0x7F read 0; writes to them and to RO registers are ignored
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  async_inputs: CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: slow registered outputs, false-pathed
+
+requirements:
+  - {id: REQ-01, note: half-band-stage, text: "Each result equals the model: seven-tap half-band, exact accumulation, a result for every even sample", proof: [simulation]}
+  - {id: REQ-02, note: half-band-stage, text: "Rounding is convergent: ties go to the even neighbour, for positive and negative sums", proof: [simulation]}
+  - {id: REQ-03, note: half-band-stage, text: "Results saturate at the 16-bit limits and SAT latches", proof: [simulation]}
+  - {id: REQ-04, note: half-band-stage, text: "The queue holds 8, drops a new decimated sample when full and sets OVR; CLEAR and reset restore the starting state, parity included", proof: [simulation]}
+  - {id: REQ-05, note: half-band-stage, text: "Each register of the half-band decimator reads and writes as its listed offset, reset value and access rule say", proof: [simulation]}
+  - {id: REQ-06, note: half-band-stage, text: "The half-band decimator closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+  - {id: REQ-07, note: half-band-stage, text: "On the board the half-band decimator registers answer as the model predicts", proof: [hardware]}
+
+resources_expected: "about 150 LUTs; no BRAM"
+
+assumptions:
+  - assumption: the result is made at the second sample of each pair, not the first.
+    reason: "the request leaves it open; it makes the first result depend on two real samples."
+
+open_questions: []

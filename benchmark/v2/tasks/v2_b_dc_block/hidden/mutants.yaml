@@ -1,0 +1,101 @@
+# Mutants and the trap for v2_b_dc_block (benchmark/tools/check_task.py)
+mutants:
+- name: shift_logical
+  file: dc_block.sv
+  find: (32'(yp_db) >>> 7)
+  replace: (32'(yp_db) >> 7)
+  why: 'a logical shift on a sign-extended word: negative outputs do not decay properly'
+- name: shift_toward_zero
+  file: dc_block.sv
+  find: '- (32''(yp_db) >>> 7);'
+  replace: '- ((32''(yp_db) + (yp_db[15] ? 32''sd127 : 32''sd0)) >>> 7);'
+  why: the pole term is truncated toward zero (symmetric), so small positive offsets fade too
+- name: pole_shift_8
+  file: dc_block.sv
+  find: (32'(yp_db) >>> 7)
+  replace: (32'(yp_db) >>> 8)
+  why: pole 1 - 2^-8
+- name: pole_shift_6
+  file: dc_block.sv
+  find: (32'(yp_db) >>> 7)
+  replace: (32'(yp_db) >>> 6)
+  why: pole 1 - 2^-6
+- name: input_not_differenced
+  file: dc_block.sv
+  find: wire signed [31:0] w_db  = 32'(x0_db) - 32'(xp_db) + 32'(yp_db) - (32'(yp_db) >>> 7);
+  replace: wire signed [31:0] w_db  = 32'(x0_db) + 32'(yp_db) - (32'(yp_db) >>> 7);
+  why: 'the previous input is not subtracted: a leaky integrator'
+- name: feedback_unlimited
+  file: dc_block.sv
+  find: yp_db <= y_db;
+  replace: yp_db <= w_db[15:0];
+  why: the feedback is the wrapped sum, not the limited result
+- name: wrap_not_saturate
+  file: dc_block.sv
+  find: 'wire signed [15:0] y_db  = hi_db ? 16''sh7FFF : lo_db ? 16''sh8000 : w_db[15:0];'
+  replace: wire signed [15:0] y_db  = w_db[15:0];
+  why: results wrap instead of stopping at the limits
+- name: sat_not_latched
+  file: dc_block.sv
+  find: if (hi_db || lo_db) sat_db <= 1'b1;
+  replace: sat_db <= hi_db || lo_db;
+  why: SAT follows the last sample
+- name: sat_low_limit_wrong
+  file: dc_block.sv
+  find: lo_db ? 16'sh8000
+  replace: lo_db ? 16'sh8001
+  why: negative limit -32767
+- name: xp_not_updated_by_limited
+  file: dc_block.sv
+  find: xp_db <= x0_db;
+  replace: xp_db <= y_db;
+  why: the previous input is replaced by the limited output
+- name: lost_without_discard
+  file: dc_block.sv
+  find: "rp_db   <= rp_db + 2'd1;\n                    lost_db <= 1'b1;"
+  replace: lost_db <= 1'b1;
+  why: a full queue overwrites a slot but reads still start at the old oldest
+- name: clear_keeps_history
+  file: dc_block.sv
+  find: xp_db <= '0; yp_db <= '0; rp_db <= '0;
+  replace: 'xp_db <= rst_db ? 16''sd0 : xp_db; yp_db <= rst_db ? 16''sd0 : yp_db; rp_db <= ''0;'
+  why: CLEAR leaves xp and yp
+- name: sample_unsigned
+  file: dc_block.sv
+  find: wire signed [15:0] x0_db = win_wdata_db[15:0];
+  replace: wire signed [15:0] x0_db = {1'b0, win_wdata_db[14:0]};
+  why: bit 15 of the sample dropped
+- name: lost_not_cleared_by_clear
+  file: dc_block.sv
+  find: "sat_db <= 1'b0; lost_db <= 1'b0;\n        end else begin"
+  replace: "sat_db <= 1'b0; lost_db <= rst_db ? 1'b0 : lost_db;\n        end else begin"
+  why: CLEAR leaves LOST
+- name: status_bits_swapped
+  file: dc_block.sv
+  find: '{27''d0, lost_db, sat_db, cnt_db}'
+  replace: '{27''d0, sat_db, lost_db, cnt_db}'
+  why: SAT and LOST exchanged
+- name: result_read_pops
+  file: dc_block.sv
+  find: wire pop_db  = win_wr_db && win_addr_db == 7'h04 && cnt_db != 3'd0;
+  replace: wire pop_db  = ((win_wr_db && win_addr_db == 7'h04) || (win_rd_db && win_addr_db == 7'h03)) && cnt_db != 3'd0;
+  why: reading RESULT removes the entry
+- name: next_on_empty_underflows
+  file: dc_block.sv
+  find: wire pop_db  = win_wr_db && win_addr_db == 7'h04 && cnt_db != 3'd0;
+  replace: wire pop_db  = win_wr_db && win_addr_db == 7'h04;
+  why: NEXT on empty underflows
+- name: clr_any_ctrl_write
+  file: dc_block.sv
+  find: wire clr_db  = win_wr_db && win_addr_db == 7'h00 && win_wdata_db[0];
+  replace: wire clr_db  = win_wr_db && win_addr_db == 7'h00;
+  why: any CTRL write clears
+trap:
+  twin: textbook DC blocker with a truncate-toward-zero (symmetric) pole term
+  why: with a floor shift a positive output below 128 never decays; a symmetric rule makes it fade, which the hidden spec says is not the behaviour
+  edits:
+  - file: dc_block.sv
+    find: '- (32''(yp_db) >>> 7);'
+    replace: '- ((32''(yp_db) + (yp_db[15] ? 32''sd127 : 32''sd0)) >>> 7);'
+  must_fail:
+  - test_small_positive_offsets_stay

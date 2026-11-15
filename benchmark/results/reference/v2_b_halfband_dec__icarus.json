@@ -1,0 +1,282 @@
+{
+  "task": "v2_b_halfband_dec",
+  "sim": "icarus",
+  "date": "2026-11-14",
+  "ref": {
+    "pass": true,
+    "tests": {
+      "test_model_is_convergent": true,
+      "test_identity_and_reset": true,
+      "test_a_result_for_every_second_sample": true,
+      "test_impulse_at_both_phases": true,
+      "test_ties_go_to_even": true,
+      "test_random_samples": true,
+      "test_saturation": true,
+      "test_queue_drops_new_results": true,
+      "test_clear_restarts_the_pairing": true,
+      "test_register_rules": true,
+      "test_saturation_is_decided_after_rounding": true
+    }
+  },
+  "mutants": [
+    {
+      "name": "phase_first_sample",
+      "why": "the result is made at the first sample of each pair instead of the second",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_identity_and_reset",
+        "test_a_result_for_every_second_sample",
+        "test_impulse_at_both_phases",
+        "test_ties_go_to_even",
+        "test_random_samples",
+        "test_saturation",
+        "test_queue_drops_new_results",
+        "test_clear_restarts_the_pairing",
+        "test_register_rules",
+        "test_saturation_is_decided_after_rounding"
+      ]
+    },
+    {
+      "name": "round_truncate",
+      "why": "no rounding: floor",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_a_result_for_every_second_sample",
+        "test_ties_go_to_even",
+        "test_random_samples",
+        "test_saturation",
+        "test_clear_restarts_the_pairing",
+        "test_register_rules",
+        "test_saturation_is_decided_after_rounding"
+      ]
+    },
+    {
+      "name": "round_half_up",
+      "why": "ties round up, not to even",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_ties_go_to_even",
+        "test_random_samples",
+        "test_saturation",
+        "test_saturation_is_decided_after_rounding"
+      ]
+    },
+    {
+      "name": "round_half_down",
+      "why": "ties round down, not to even",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_ties_go_to_even",
+        "test_saturation"
+      ]
+    },
+    {
+      "name": "round_tie_to_odd",
+      "why": "ties go to the odd neighbour",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_ties_go_to_even",
+        "test_random_samples",
+        "test_saturation",
+        "test_saturation_is_decided_after_rounding"
+      ]
+    },
+    {
+      "name": "wrap_not_saturate",
+      "why": "results wrap instead of stopping at the limits",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_saturation",
+        "test_saturation_is_decided_after_rounding"
+      ]
+    },
+    {
+      "name": "sat_not_latched",
+      "why": "SAT follows the last result",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_saturation"
+      ]
+    },
+    {
+      "name": "sat_low_limit_wrong",
+      "why": "negative limit -32767",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_saturation"
+      ]
+    },
+    {
+      "name": "centre_coef_wrong",
+      "why": "centre tap 15",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_identity_and_reset",
+        "test_a_result_for_every_second_sample",
+        "test_impulse_at_both_phases",
+        "test_ties_go_to_even",
+        "test_random_samples",
+        "test_saturation",
+        "test_queue_drops_new_results",
+        "test_clear_restarts_the_pairing",
+        "test_saturation_is_decided_after_rounding"
+      ]
+    },
+    {
+      "name": "outer_tap_missing",
+      "why": "the oldest tap is dropped",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_impulse_at_both_phases",
+        "test_random_samples",
+        "test_saturation",
+        "test_queue_drops_new_results"
+      ]
+    },
+    {
+      "name": "tap_wrong_delay",
+      "why": "a coefficient 9 on the wrong delay",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_a_result_for_every_second_sample",
+        "test_impulse_at_both_phases",
+        "test_ties_go_to_even",
+        "test_random_samples",
+        "test_saturation",
+        "test_queue_drops_new_results",
+        "test_saturation_is_decided_after_rounding"
+      ]
+    },
+    {
+      "name": "queue_overwrites",
+      "why": "a full queue replaces the oldest entry",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_queue_drops_new_results"
+      ]
+    },
+    {
+      "name": "ovr_cleared_by_pop",
+      "why": "OVR is not sticky",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_queue_drops_new_results"
+      ]
+    },
+    {
+      "name": "clear_keeps_parity",
+      "why": "CLEAR leaves the pairing parity",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_queue_drops_new_results",
+        "test_clear_restarts_the_pairing"
+      ]
+    },
+    {
+      "name": "clear_keeps_history",
+      "why": "CLEAR leaves the sample history",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_saturation",
+        "test_clear_restarts_the_pairing",
+        "test_saturation_is_decided_after_rounding"
+      ]
+    },
+    {
+      "name": "sample_unsigned",
+      "why": "bit 15 of the sample dropped",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_identity_and_reset",
+        "test_ties_go_to_even",
+        "test_random_samples",
+        "test_saturation"
+      ]
+    },
+    {
+      "name": "odd_flag_inverted",
+      "why": "ODD reads the wrong way round",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_identity_and_reset",
+        "test_a_result_for_every_second_sample",
+        "test_impulse_at_both_phases",
+        "test_ties_go_to_even",
+        "test_random_samples",
+        "test_saturation",
+        "test_queue_drops_new_results",
+        "test_clear_restarts_the_pairing",
+        "test_register_rules",
+        "test_saturation_is_decided_after_rounding"
+      ]
+    },
+    {
+      "name": "result_read_pops",
+      "why": "reading RESULT removes the entry",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_random_samples",
+        "test_saturation",
+        "test_queue_drops_new_results"
+      ]
+    },
+    {
+      "name": "next_on_empty_underflows",
+      "why": "NEXT on empty underflows",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_register_rules"
+      ]
+    },
+    {
+      "name": "clr_any_ctrl_write",
+      "why": "any CTRL write clears",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_clear_restarts_the_pairing"
+      ]
+    }
+  ],
+  "mutants_killed": 20,
+  "mutants_total": 20,
+  "trap": {
+    "twin": "textbook polyphase decimator that keeps the output of the first sample of each pair",
+    "why": "which of the two samples produces the result is a convention; the request leaves it open and the oracle answers 'the second'",
+    "must_fail": [
+      "test_a_result_for_every_second_sample"
+    ],
+    "failed_tests": [
+      "test_identity_and_reset",
+      "test_a_result_for_every_second_sample",
+      "test_impulse_at_both_phases",
+      "test_ties_go_to_even",
+      "test_random_samples",
+      "test_saturation",
+      "test_queue_drops_new_results",
+      "test_clear_restarts_the_pairing",
+      "test_register_rules",
+      "test_saturation_is_decided_after_rounding"
+    ],
+    "trap_fires": true
+  }
+}

@@ -1,0 +1,111 @@
+# Mutants and the trap for v2_b_pdm_front (benchmark/tools/check_task.py)
+mutants:
+- name: clock_half_short
+  file: pdm_front.sv
+  find: if (div_pf == 16'(CLK_HALF - 1)) begin
+  replace: if (div_pf == 16'(CLK_HALF - 2)) begin
+  why: M_CLK half period is one board clock short
+- name: clock_free_running
+  file: pdm_front.sv
+  find: if (!run_pf || (ctrl_wr_pf && !win_wdata_pf[0])) begin
+  replace: if (1'b0) begin
+  why: M_CLK keeps toggling while RUN = 0
+- name: lrsel_high
+  file: pdm_front.sv
+  find: assign m_lrsel_pf = 1'b0;
+  replace: assign m_lrsel_pf = 1'b1;
+  why: M_LRSEL is driven high
+- name: sample_too_late
+  file: pdm_front.sv
+  find: wire rise_pf    = run_pf && !m_clk_pf && div_pf == 16'(CLK_HALF - 1);
+  replace: wire rise_pf    = run_pf && m_clk_pf && div_pf == 16'd2;
+  why: the bit is taken three clocks after the rising edge, when the line is no longer valid
+- name: msb_first
+  file: pdm_front.sv
+  find: wire [31:0] word_pf = {d1_pf, sh_pf[31:1]};
+  replace: wire [31:0] word_pf = {sh_pf[30:0], d1_pf};
+  why: the first bit taken goes to the highest bit
+- name: partial_kept_on_stop
+  file: pdm_front.sv
+  find: rise_d1_pf <= 1'b0; bcnt_pf <= '0; runlen_pf <= '0;
+  replace: rise_d1_pf <= 1'b0; runlen_pf <= '0;
+  why: switching RUN off keeps the half-built word
+- name: stuck_run_kept_on_stop
+  file: pdm_front.sv
+  find: rise_d1_pf <= 1'b0; bcnt_pf <= '0; runlen_pf <= '0;
+  replace: rise_d1_pf <= 1'b0; bcnt_pf <= '0;
+  why: switching RUN off keeps the stuck-run counter
+- name: overflow_keeps_newest
+  file: pdm_front.sv
+  find: if (cnt_pf == 3'd4) ovr_pf <= 1'b1;
+  replace: if (cnt_pf == 3'd4) begin ovr_pf <= 1'b1; q_pf[wp_pf] <= word_pf; wp_pf <= wp_pf + 2'd1; rp_pf <= rp_pf + 2'd1; end
+  why: a word finished at a full queue replaces the oldest
+- name: ovr_cleared_by_pop
+  file: pdm_front.sv
+  find: if (pop_pf) rp_pf <= rp_pf + 2'd1;
+  replace: if (pop_pf) begin rp_pf <= rp_pf + 2'd1; ovr_pf <= 1'b0; end
+  why: OVR is not sticky
+- name: words_skip_dropped
+  file: pdm_front.sv
+  find: words_pf <= words_pf + 32'd1;
+  replace: words_pf <= words_pf + {31'd0, cnt_pf != 3'd4};
+  why: WORDS does not count dropped words
+- name: stuck_at_39
+  file: pdm_front.sv
+  find: if (rl_pf >= 8'(STUCK_N)) begin
+  replace: if (rl_pf >= 8'(STUCK_N - 1)) begin
+  why: a run of 39 already sets the flag
+- name: stuck_at_41
+  file: pdm_front.sv
+  find: if (rl_pf >= 8'(STUCK_N)) begin
+  replace: if (rl_pf >= 8'(STUCK_N + 1)) begin
+  why: a run of 40 does not set the flag yet
+- name: stuck_not_sticky
+  file: pdm_front.sv
+  find: "if (rl_pf >= 8'(STUCK_N)) begin\n                        if (d1_pf) hi_pf <= 1'b1; else lo_pf <= 1'b1;\n                    end"
+  replace: "hi_pf <= (rl_pf >= 8'(STUCK_N)) && d1_pf;\n                    lo_pf <= (rl_pf >= 8'(STUCK_N)) && !d1_pf;"
+  why: the flags follow the current run instead of latching
+- name: stuck_run_breaks_at_word
+  file: pdm_front.sv
+  find: runlen_pf  <= rl_pf;
+  replace: 'runlen_pf  <= done_pf ? 8''d0 : rl_pf;'
+  why: the run counter restarts at every word boundary
+- name: clear_clears_words
+  file: pdm_front.sv
+  find: "if (clr_pf) begin\n                rp_pf <= '0;"
+  replace: "if (clr_pf) begin\n                words_pf <= '0; rp_pf <= '0;"
+  why: CLEAR also zeroes WORDS
+- name: led_swapped
+  file: pdm_front.sv
+  find: assign led_pf = {14'd0, hi_pf | lo_pf, run_pf};
+  replace: assign led_pf = {14'd0, run_pf, hi_pf | lo_pf};
+  why: LED[0] and LED[1] exchanged
+- name: result_read_pops
+  file: pdm_front.sv
+  find: wire pop_pf     = win_wr_pf && win_addr_pf == 7'h03 && cnt_pf != 3'd0;
+  replace: wire pop_pf     = ((win_wr_pf && win_addr_pf == 7'h03) || (win_rd_pf && win_addr_pf == 7'h02)) && cnt_pf != 3'd0;
+  why: reading DATA removes the word
+- name: next_on_empty_underflows
+  file: pdm_front.sv
+  find: wire pop_pf     = win_wr_pf && win_addr_pf == 7'h03 && cnt_pf != 3'd0;
+  replace: wire pop_pf     = win_wr_pf && win_addr_pf == 7'h03;
+  why: NEXT on an empty queue underflows the count
+- name: status_flags_swapped
+  file: pdm_front.sv
+  find: '{25''d0, lo_pf, hi_pf, ovr_pf, 1''b0, cnt_pf}'
+  replace: '{25''d0, hi_pf, lo_pf, ovr_pf, 1''b0, cnt_pf}'
+  why: STUCK_HI and STUCK_LO exchanged
+- name: clear_on_run_bit
+  file: pdm_front.sv
+  find: wire clr_pf     = ctrl_wr_pf && win_wdata_pf[1];
+  replace: wire clr_pf     = ctrl_wr_pf && win_wdata_pf[0];
+  why: writing RUN = 1 clears the queue and flags
+trap:
+  twin: textbook PDM reader that takes the bit at the falling edge of the clock (the right edge for the other channel)
+  why: the microphone's valid window depends on the channel select; with M_LRSEL low the data are valid around the rising edge and the line is invalid at the falling edge
+  edits:
+  - file: pdm_front.sv
+    find: wire rise_pf    = run_pf && !m_clk_pf && div_pf == 16'(CLK_HALF - 1);
+    replace: wire rise_pf    = run_pf && m_clk_pf && div_pf == 16'(CLK_HALF - 1);
+  must_fail:
+  - test_words_hold_the_microphone_bits

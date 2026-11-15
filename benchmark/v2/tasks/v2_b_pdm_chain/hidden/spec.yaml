@@ -1,0 +1,100 @@
+# Answer key for the audio path: the oracle may say only what this file says about the audio path (brief 79, ladder); never shown to the agent.
+schema: fpga-design-agent/spec/v0
+name: v2_b_pdm_chain
+title: PDM microphone to 48 kHz audio
+source: spec.md
+tier: T2
+level: L2
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: v2_b_pdm_chain_top
+design_id: 0x50444D43          # "PDMC"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator, note: "M_CLK is a registered data output, not a fabric clock"}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: RUN = 0, ARMED, DONE, SAT and COUNT clear, M_CLK low; the chain state is cleared again at every RUN start
+
+parameters:
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+  CLK_HALF: 16                  # M_CLK half period in board clocks: 100 MHz / 32 = 3.125 MHz
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: M_CLK, dir: out, width: 1, pins: [J5], iostandard: LVCMOS33}
+  - {name: M_DATA, dir: in, width: 1, async: true, pins: [H5], iostandard: LVCMOS33}
+  - {name: M_LRSEL, dir: out, width: 1, pins: [F5], iostandard: LVCMOS33}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+
+product_numbers:
+  # Every figure is measured on the bit-exact model (benchmark test_product_numbers_of_the_model) with a 2nd-order
+  # delta-sigma bit stream at 3.125 MHz; the requirement is the figure with margin.
+  output_rate: "100 MHz / 2048 = 48.828125 kHz exactly (M_CLK 3.125 MHz divided by 64); not 48.000 kHz, which would need a clock the board does not have without a PLL"
+  passband: "200 Hz to 15 kHz: flat within +-1.0 dB of the 1 kHz level (model: within +-0.4 dB)"
+  stopband: "a tone above 40 kHz whose alias lands in 0..15 kHz appears at least 35 dB below its input level (model: at least 36 dB, worst at 63.8 kHz)"
+  snr: "1 kHz tone, -6 dBFS, 100 Hz..15 kHz (the band above the DC blocker's corner of about 60 Hz): at least 70 dB (model: 76 dB)"
+  latency: "output sample j is available when PDM sample 96 + 64 * j has been taken, plus at most 16 board clocks of processing"
+  full_scale: "an all-ones or all-zeros stream saturates the first stage (+-4096 * 8) and sets SAT; this is the specified behaviour at digital full scale"
+  resources: "about 700 LUTs, one or two DSP slices or none, no BRAM (64-word capture in distributed RAM)"
+
+behaviour:
+  clock:
+    - "While RUN = 1, M_CLK toggles every CLK_HALF board clocks, starting low. While RUN = 0 it is low. M_LRSEL is low at all times."
+  sampling:
+    - "Same sampling rule as a microphone with M_LRSEL low: the bit for each rising edge of M_CLK is taken at the board clock edge at which M_CLK goes low to high, or one clock after it. Sample 0 is the first rising edge after RUN goes 0 to 1."
+  chain:
+    - "Stage 1, CIC: input bit 1 = +1, 0 = -1. Integrators I1 += s; I2 += I1; I3 += I2 (new values used by the next stage, start 0). After every 16th sample V = I3 enters three combs: C1 = V - D1, D1 = V; C2 = C1 - D2, D2 = C1; C3 = C2 - D3, D3 = C2 (delays start 0). The comb output C3 is output k = 0, 1, 2, ... of the CIC; outputs 0 and 1 are fills and are dropped; output k >= 2 goes on. Values are exact, between -4096 and +4096."
+    - "Stage 2, scale: S = C3 * 8, limited to -32768..32767 (SAT is set if the limit acted)."
+    - "Stages 3 and 4, half-band decimators (two identical stages in series): coefficients C = [-1, 0, 9, 16, 9, 0, -1], tap 0 newest, history 0 at start. Samples are numbered 1, 2, ... per stage; the stage makes a result for every even n: ACC = sum C[k] * x[n-k]; Q = ACC >> 5 (floor); R = ACC - 32 Q; Y = Q if R < 16, Q + 1 if R > 16, and for R = 16 Y = Q if Q is even, else Q + 1 (ties to even); Y limited to -32768..32767 (SAT if it acted)."
+    - "Stage 5, compensating FIR, one result per input: C = [2, -6, 16, -48, 584, -48, 16, -6, 2] (sum 512), tap 0 newest, history 0 at start. ACC = sum C[k] * x[n-k]; Y = (ACC + 256) >> 9 (floor after adding 256: ties up); limited to -32768..32767 (SAT if it acted); the history holds the unlimited inputs."
+    - "Stage 6, DC blocker, one result per input: W = x - xp + yp - (yp >> 7) (arithmetic shift), Y = W limited to -32768..32767 (SAT if it acted), yp = Y, xp = x, both 0 at start."
+    - "The output of stage 6 is audio sample j = 0, 1, 2, ... of the run. Chain state is cleared when RUN goes 0 to 1."
+  capture:
+    - "ARM (CTRL bit 1, written as 1): when RUN is 0 before the write (the same write may set RUN), it arms a capture: ARMED = 1, DONE = 0. An ARM written while RUN is already 1 is ignored."
+    - "An armed capture stores audio samples 0..63 of the run into CAP[0..63] and sets DONE = 1 (ARMED returns to 0) when CAP[63] is stored. Later samples are not stored. DONE and CAP stay after RUN goes 0, until the next ARM. A capture that is not done restarts at CAP[0] at the next RUN start."
+    - "CAP[i] reads as the stored sample, sign-extended to 32 bits, while DONE = 1; it reads 0 whenever DONE = 0."
+  flags:
+    - "SAT is set when any stage of the chain limited a value, stays set after RUN goes 0, and is cleared at the next RUN start. COUNT counts audio samples since the RUN start (32 bit, kept after RUN goes 0, cleared at the next RUN start)."
+  leds:
+    - "LED[0] = RUN, LED[1] = DONE, LED[2] = SAT, LED[15:3] = 0."
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.1)
+  map:
+    - {offset: 0x00, name: CTRL, note: audio-path, access: RW, reset: 0, bits: "[0] RUN; [1] ARM (write 1, reads 0); others read 0, ignored on write"}
+    - {offset: 0x01, name: STATUS, note: audio-path, access: RO, reset: 0, bits: "[0] DONE; [1] ARMED; [2] SAT; others 0"}
+    - {offset: 0x02, name: COUNT, note: audio-path, access: RO, reset: 0, bits: "[31:0] audio samples since the last RUN start"}
+    - {offset: 0x40, name: CAP0, note: audio-path, access: RO, reset: 0, bits: "offset 0x40 + i (i = 0..63) is CAP[i], sign-extended; reads 0 while DONE = 0"}
+  unmapped: offsets 0x03-0x3F read 0; writes to them and to RO registers are ignored
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  async_inputs: the audio path synchronises CPU_RESETN, UART RX and M_DATA, and the paths from them are false-pathed
+  outputs: M_CLK and M_LRSEL are registered outputs
+
+requirements:
+  - {id: REQ-01, note: audio-path, text: "The 64 captured samples equal the model's first 64 audio samples for the bit stream the microphone sent, bit for bit", proof: [simulation]}
+  - {id: REQ-02, note: audio-path, text: "Digital full scale (all ones, all zeros) saturates as specified and sets SAT", proof: [simulation]}
+  - {id: REQ-03, note: audio-path, text: "RUN start clears the chain; ARM rules (idle or with RUN, ignored while running); DONE and CAP behaviour", proof: [simulation]}
+  - {id: REQ-04, note: audio-path, text: "The audio path clocks the microphone at CLK_HALF board clocks per half period; M_CLK stays low while RUN = 0 and M_LRSEL is low at all times", proof: [simulation]}
+  - {id: REQ-05, note: audio-path, text: "Product numbers: flat within +-1.0 dB 200 Hz..15 kHz, alias attenuation at least 35 dB, SNR at least 70 dB (checked on the model that REQ-01 ties the design to)", proof: [simulation, analysis]}
+  - {id: REQ-06, note: audio-path, text: "The audio path closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+  - {id: REQ-07, note: audio-path, text: "On the board the captured audio of a 1 kHz tone from a loudspeaker shows the tone and a noise floor consistent with the SNR figure", proof: [hardware]}
+
+resources_expected: "about 700 LUTs, a few DSP slices or none; no BRAM"
+
+assumptions:
+  - assumption: output rate 48.828125 kHz rather than 48 kHz.
+    reason: M_CLK = 100 MHz / 32 = 3.125 MHz is inside the microphone's clock range and a total decimation of 64 gives 48.828125 kHz; exactly 48 kHz needs a PLL.
+  - assumption: no stuck-microphone detector in this block (the front-end task covers it).
+    reason: keeps the chain's observable behaviour to the audio.
+
+open_questions: []

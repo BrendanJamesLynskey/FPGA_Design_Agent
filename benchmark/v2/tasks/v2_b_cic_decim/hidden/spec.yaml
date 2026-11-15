@@ -1,0 +1,77 @@
+# Answer key for the CIC filter: the oracle may say only what this file says about the CIC filter (brief 79, ladder); never shown to the agent.
+schema: fpga-design-agent/spec/v0
+name: v2_b_cic_decim
+title: CIC cascade for a one-bit audio stream
+source: spec.md
+tier: T2
+level: L1
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: v2_b_cic_decim_top
+design_id: 0x43494344          # "CICD"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: integrators, comb delays, phase and warm-up counters, the queue, OVR and the feed state all clear
+
+parameters:
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+
+behaviour:
+  decimator:
+    - "Input bit b maps to s = +1 if b = 1, s = -1 if b = 0. Per input bit, in this order with the new values used by the next stage: I1 = I1 + s; I2 = I2 + I1; I3 = I3 + I2. All integrators start at 0."
+    - "After every 16th input bit counted since reset or clear (bits 16, 32, 48, ...), V = I3 (the value just computed) enters the comb chain: C1 = V - D1, D1 = V; C2 = C1 - D2, D2 = C1; C3 = C2 - D3, D3 = C2. Comb delays start at 0. The comb output C3 is the k-th output (k = 0, 1, 2, ...)."
+    - "C3 is the exact filter output, a signed integer between -4096 and +4096 (all ones in steady state gives +4096, all zeros -4096). Integrator and comb registers are at least 14 bits wide (two's complement wrap is harmless from there)."
+    - "Outputs k = 0 and 1 are fills of the filter (their 46-bit window reaches back before the first input bit), not results: they are discarded. Output k >= 2 is a result and is pushed into the queue."
+  feed:
+    - "A write to BITS loads 32 bits; bit 0 is fed first, one per clock, starting the clock after the write. BUSY is high while bits are still being fed (32 clocks). A write to BITS while BUSY is ignored."
+  queue:
+    - "Queue depth 16. A result arriving while the queue holds 16 is dropped (the old entries stay) and OVR is set. OVR stays set until CLEAR or reset."
+    - "COUNT is the number of entries; RESULT reads the oldest entry as a 32-bit sign-extended number, 0 when empty; a write to NEXT removes the oldest entry (ignored when empty). Reading RESULT does not remove anything."
+  clear:
+    - "A write to CTRL with bit 0 = 1 clears the integrators, comb delays, the 16-bit phase counter, the output counter, the queue and OVR. The bits being fed at that moment are abandoned. CTRL reads 0."
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.1)
+  map:
+    - {offset: 0x00, name: CTRL, note: CIC-filter, access: WO, reset: 0, bits: "[0] CLEAR the CIC cascade (write 1); other bits ignored; reads 0"}
+    - {offset: 0x01, name: BITS, note: CIC-filter, access: WO, reset: 0, bits: "[31:0] 32 input bits, bit 0 first; reads 0"}
+    - {offset: 0x02, name: STATUS, note: CIC-filter, access: RO, reset: 0, bits: "[7:0] COUNT (0..16); [8] OVR; [9] BUSY; others 0"}
+    - {offset: 0x03, name: RESULT, note: CIC-filter, access: RO, reset: 0, bits: "[31:0] the oldest queued filter result, sign-extended; 0 when empty"}
+    - {offset: 0x04, name: NEXT, note: CIC-filter, access: WO, reset: 0, bits: "filter result queue: any write discards the oldest one; reads 0"}
+  unmapped: offsets 0x05-0x7F read 0; writes to them and to RO registers are ignored
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  async_inputs: CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: slow registered outputs, false-pathed
+
+requirements:
+  - {id: REQ-01, note: CIC-filter, text: "Each result equals the model's exact CIC output (3 integrators, decimation 16, 3 combs, +1/-1 mapping, no scaling)", proof: [simulation]}
+  - {id: REQ-02, note: CIC-filter, text: "The first two outputs after reset or clear are not results", proof: [simulation]}
+  - {id: REQ-03, note: CIC-filter, text: "Full-scale input gives +4096 and -4096 exactly (register width)", proof: [simulation]}
+  - {id: REQ-04, note: CIC-filter, text: "The queue holds 16 results, drops a new filter result when full and sets OVR; CLEAR and reset restore the CIC cascade's start state", proof: [simulation]}
+  - {id: REQ-05, note: CIC-filter, text: "Every CIC cascade register answers with the listed map, reset value and access rule of the CIC cascade", proof: [simulation]}
+  - {id: REQ-06, note: CIC-filter, text: "The CIC cascade closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+  - {id: REQ-07, note: CIC-filter, text: "On the board the CIC cascade registers answer as the model predicts", proof: [hardware]}
+
+resources_expected: "about 150 LUTs; no BRAM, no DSP"
+
+assumptions:
+  - assumption: the filter starts from all-zero state, not from a state that looks like 'all -1 before the start'.
+    reason: this makes the first outputs depend on the start rather than the signal, which is why they are discarded.
+
+open_questions: []

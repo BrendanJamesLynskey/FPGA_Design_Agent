@@ -1,0 +1,205 @@
+{
+  "task": "v2_b_comp_fir",
+  "sim": "icarus",
+  "date": "2026-11-14",
+  "ref": {
+    "pass": true,
+    "tests": {
+      "test_identity_and_reset": true,
+      "test_impulse_gives_the_coefficients": true,
+      "test_rounding_is_half_up": true,
+      "test_random_samples": true,
+      "test_saturation": true,
+      "test_history_keeps_the_samples_not_the_saturated_results": true,
+      "test_queue_keeps_the_newest": true,
+      "test_clear_and_register_rules": true,
+      "test_saturation_is_decided_after_rounding": true
+    }
+  },
+  "mutants": [
+    {
+      "name": "wrap_not_saturate",
+      "why": "results wrap round instead of stopping at the limits",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_random_samples",
+        "test_saturation",
+        "test_history_keeps_the_samples_not_the_saturated_results",
+        "test_saturation_is_decided_after_rounding"
+      ]
+    },
+    {
+      "name": "sat_not_latched",
+      "why": "SAT follows the last result instead of latching",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_random_samples",
+        "test_saturation",
+        "test_history_keeps_the_samples_not_the_saturated_results"
+      ]
+    },
+    {
+      "name": "sat_low_limit_wrong",
+      "why": "the negative limit is -32767",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_random_samples",
+        "test_saturation",
+        "test_history_keeps_the_samples_not_the_saturated_results"
+      ]
+    },
+    {
+      "name": "center_coef_off",
+      "why": "centre coefficient 583, so DC gain is not 1",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_identity_and_reset",
+        "test_impulse_gives_the_coefficients",
+        "test_rounding_is_half_up",
+        "test_random_samples",
+        "test_saturation",
+        "test_queue_keeps_the_newest",
+        "test_saturation_is_decided_after_rounding"
+      ]
+    },
+    {
+      "name": "tap_misplaced",
+      "why": "one coefficient applied to the wrong delay",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_identity_and_reset",
+        "test_impulse_gives_the_coefficients",
+        "test_rounding_is_half_up",
+        "test_random_samples",
+        "test_saturation",
+        "test_history_keeps_the_samples_not_the_saturated_results",
+        "test_queue_keeps_the_newest",
+        "test_clear_and_register_rules",
+        "test_saturation_is_decided_after_rounding"
+      ]
+    },
+    {
+      "name": "history_saturated",
+      "why": "the history stores the saturated result when it saturates",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_random_samples",
+        "test_saturation",
+        "test_history_keeps_the_samples_not_the_saturated_results"
+      ]
+    },
+    {
+      "name": "lost_without_discard",
+      "why": "a full queue overwrites a slot but still reads from the old oldest",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_queue_keeps_the_newest"
+      ]
+    },
+    {
+      "name": "clear_keeps_history",
+      "why": "CLEAR leaves the sample history",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_queue_keeps_the_newest",
+        "test_clear_and_register_rules",
+        "test_saturation_is_decided_after_rounding"
+      ]
+    },
+    {
+      "name": "sample_unsigned",
+      "why": "bit 15 of the sample is dropped instead of being the sign",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_identity_and_reset",
+        "test_rounding_is_half_up",
+        "test_random_samples",
+        "test_saturation",
+        "test_history_keeps_the_samples_not_the_saturated_results",
+        "test_clear_and_register_rules",
+        "test_saturation_is_decided_after_rounding"
+      ]
+    },
+    {
+      "name": "result_read_pops",
+      "why": "reading RESULT removes the entry",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_random_samples",
+        "test_saturation",
+        "test_queue_keeps_the_newest",
+        "test_clear_and_register_rules"
+      ]
+    },
+    {
+      "name": "next_on_empty_underflows",
+      "why": "NEXT on an empty queue underflows the count",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_clear_and_register_rules"
+      ]
+    },
+    {
+      "name": "clr_any_ctrl_write",
+      "why": "any write to CTRL clears",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_clear_and_register_rules"
+      ]
+    },
+    {
+      "name": "status_bits_swapped",
+      "why": "SAT and LOST exchanged",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_random_samples",
+        "test_saturation",
+        "test_history_keeps_the_samples_not_the_saturated_results",
+        "test_queue_keeps_the_newest",
+        "test_saturation_is_decided_after_rounding"
+      ]
+    },
+    {
+      "name": "lost_not_cleared_by_clear",
+      "why": "CLEAR leaves LOST",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_queue_keeps_the_newest"
+      ]
+    }
+  ],
+  "mutants_killed": 14,
+  "mutants_total": 14,
+  "trap": {
+    "twin": "textbook fixed-point FIR that truncates (arithmetic shift, no rounding offset)",
+    "why": "the request says round to the nearest; a bare shift rounds ties and half-LSB values down",
+    "must_fail": [
+      "test_rounding_is_half_up"
+    ],
+    "failed_tests": [
+      "test_identity_and_reset",
+      "test_rounding_is_half_up",
+      "test_random_samples",
+      "test_saturation",
+      "test_history_keeps_the_samples_not_the_saturated_results",
+      "test_queue_keeps_the_newest",
+      "test_clear_and_register_rules",
+      "test_saturation_is_decided_after_rounding"
+    ],
+    "trap_fires": true
+  }
+}

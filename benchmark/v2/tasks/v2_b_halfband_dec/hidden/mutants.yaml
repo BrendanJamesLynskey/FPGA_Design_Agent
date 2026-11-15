@@ -1,0 +1,111 @@
+# Mutants and the trap for v2_b_halfband_dec (benchmark/tools/check_task.py)
+mutants:
+- name: phase_first_sample
+  file: halfband_dec.sv
+  find: wire               res_hb = smp_hb && odd_hb;
+  replace: wire               res_hb = smp_hb && !odd_hb;
+  why: the result is made at the first sample of each pair instead of the second
+- name: round_truncate
+  file: halfband_dec.sv
+  find: 'wire signed [31:0] rnd_hb = qf_hb + (up_hb ? 32''sd1 : 32''sd0);'
+  replace: wire signed [31:0] rnd_hb = qf_hb;
+  why: 'no rounding: floor'
+- name: round_half_up
+  file: halfband_dec.sv
+  find: wire               up_hb  = (rem_hb > 5'd16) || (rem_hb == 5'd16 && qf_hb[0]);
+  replace: wire               up_hb  = (rem_hb >= 5'd16);
+  why: ties round up, not to even
+- name: round_half_down
+  file: halfband_dec.sv
+  find: wire               up_hb  = (rem_hb > 5'd16) || (rem_hb == 5'd16 && qf_hb[0]);
+  replace: wire               up_hb  = (rem_hb > 5'd16);
+  why: ties round down, not to even
+- name: round_tie_to_odd
+  file: halfband_dec.sv
+  find: wire               up_hb  = (rem_hb > 5'd16) || (rem_hb == 5'd16 && qf_hb[0]);
+  replace: wire               up_hb  = (rem_hb > 5'd16) || (rem_hb == 5'd16 && !qf_hb[0]);
+  why: ties go to the odd neighbour
+- name: wrap_not_saturate
+  file: halfband_dec.sv
+  find: 'wire signed [15:0] y_hb   = hi_hb ? 16''sh7FFF : lo_hb ? 16''sh8000 : rnd_hb[15:0];'
+  replace: wire signed [15:0] y_hb   = rnd_hb[15:0];
+  why: results wrap instead of stopping at the limits
+- name: sat_not_latched
+  file: halfband_dec.sv
+  find: if (hi_hb || lo_hb) sat_hb <= 1'b1;
+  replace: sat_hb <= hi_hb || lo_hb;
+  why: SAT follows the last result
+- name: sat_low_limit_wrong
+  file: halfband_dec.sv
+  find: lo_hb ? 16'sh8000
+  replace: lo_hb ? 16'sh8001
+  why: negative limit -32767
+- name: centre_coef_wrong
+  file: halfband_dec.sv
+  find: 32'sd16 * h_hb[2]
+  replace: 32'sd15 * h_hb[2]
+  why: centre tap 15
+- name: outer_tap_missing
+  file: halfband_dec.sv
+  find: '- 32''sd1 * h_hb[5];'
+  replace: '- 32''sd0 * h_hb[5];'
+  why: the oldest tap is dropped
+- name: tap_wrong_delay
+  file: halfband_dec.sv
+  find: + 32'sd9 * h_hb[3]
+  replace: + 32'sd9 * h_hb[4]
+  why: a coefficient 9 on the wrong delay
+- name: queue_overwrites
+  file: halfband_dec.sv
+  find: if (cnt_hb == 4'd8) ovr_hb <= 1'b1;
+  replace: if (cnt_hb == 4'd8) begin ovr_hb <= 1'b1; q_hb[wp_hb] <= y_hb; wp_hb <= wp_hb + 3'd1; rp_hb <= rp_hb + 3'd1; end
+  why: a full queue replaces the oldest entry
+- name: ovr_cleared_by_pop
+  file: halfband_dec.sv
+  find: "rp_hb  <= rp_hb + 3'd1;\n                cnt_hb <= cnt_hb - 4'd1;"
+  replace: "rp_hb  <= rp_hb + 3'd1;\n                cnt_hb <= cnt_hb - 4'd1;\n                ovr_hb <= 1'b0;"
+  why: OVR is not sticky
+- name: clear_keeps_parity
+  file: halfband_dec.sv
+  find: rp_hb <= '0; wp_hb <= '0; cnt_hb <= '0; odd_hb <= 1'b0; sat_hb <= 1'b0; ovr_hb <= 1'b0;
+  replace: 'rp_hb <= ''0; wp_hb <= ''0; cnt_hb <= ''0; odd_hb <= rst_hb ? 1''b0 : odd_hb; sat_hb <= 1''b0; ovr_hb <= 1''b0;'
+  why: CLEAR leaves the pairing parity
+- name: clear_keeps_history
+  file: halfband_dec.sv
+  find: for (int i_hb = 0; i_hb < 6; i_hb++) h_hb[i_hb] <= '0;
+  replace: 'for (int i_hb = 0; i_hb < 6; i_hb++) h_hb[i_hb] <= rst_hb ? 16''sd0 : h_hb[i_hb];'
+  why: CLEAR leaves the sample history
+- name: sample_unsigned
+  file: halfband_dec.sv
+  find: wire signed [15:0] x0_hb = win_wdata_hb[15:0];
+  replace: wire signed [15:0] x0_hb = {1'b0, win_wdata_hb[14:0]};
+  why: bit 15 of the sample dropped
+- name: odd_flag_inverted
+  file: halfband_dec.sv
+  find: '{25''d0, odd_hb, sat_hb, ovr_hb, cnt_hb}'
+  replace: '{25''d0, ~odd_hb, sat_hb, ovr_hb, cnt_hb}'
+  why: ODD reads the wrong way round
+- name: result_read_pops
+  file: halfband_dec.sv
+  find: wire pop_hb  = win_wr_hb && win_addr_hb == 7'h04 && cnt_hb != 4'd0;
+  replace: wire pop_hb  = ((win_wr_hb && win_addr_hb == 7'h04) || (win_rd_hb && win_addr_hb == 7'h03)) && cnt_hb != 4'd0;
+  why: reading RESULT removes the entry
+- name: next_on_empty_underflows
+  file: halfband_dec.sv
+  find: wire pop_hb  = win_wr_hb && win_addr_hb == 7'h04 && cnt_hb != 4'd0;
+  replace: wire pop_hb  = win_wr_hb && win_addr_hb == 7'h04;
+  why: NEXT on empty underflows
+- name: clr_any_ctrl_write
+  file: halfband_dec.sv
+  find: wire clr_hb  = win_wr_hb && win_addr_hb == 7'h00 && win_wdata_hb[0];
+  replace: wire clr_hb  = win_wr_hb && win_addr_hb == 7'h00;
+  why: any CTRL write clears
+trap:
+  twin: textbook polyphase decimator that keeps the output of the first sample of each pair
+  why: which of the two samples produces the result is a convention; the request leaves it open and the oracle answers 'the second'
+  edits:
+  - file: halfband_dec.sv
+    find: wire               res_hb = smp_hb && odd_hb;
+    replace: wire               res_hb = smp_hb && !odd_hb;
+  must_fail:
+  - test_a_result_for_every_second_sample
