@@ -49,6 +49,8 @@ class Config:
     hidden: int = 16                                          # width of each neuron's inner float network
     depth: int = 2                                            # hidden layers inside each neuron
     batchnorm: bool = True                                    # BatchNorm before each quantiser
+    freeze_bn: int = 0                                        # last epochs with BatchNorm statistics frozen
+    learn_temperature: bool = False                           # loss on scores x a learned positive scale
     epochs: int = 20
     lr: float = 3e-3
     batch: int = 1024
@@ -198,6 +200,9 @@ def train(cfg: Config, Xtr, ytr, Xv, yv, log=print) -> dict:
                     self.W.append(torch.nn.Parameter(torch.randn(sp["n"], a, b) * math.sqrt(2.0 / a)))
                     self.B.append(torch.nn.Parameter(torch.zeros(sp["n"], b)))
                 self.bn.append(torch.nn.BatchNorm1d(sp["n"]) if cfg.batchnorm else torch.nn.Identity())
+            # the integer scores are argmax-ed in hardware, so any positive scale leaves the class unchanged; for the
+            # loss a learned scale lets small logit differences be expressed with integer scores
+            self.log_tau = torch.nn.Parameter(torch.tensor(math.log(0.25)), requires_grad=cfg.learn_temperature)
 
         def layer(self, li, x, quant=True):
             """x: (B, n_in) codes of the previous layer -> (B, n) outputs of layer li (codes or scores)."""
@@ -236,10 +241,16 @@ def train(cfg: Config, Xtr, ytr, Xv, yv, log=print) -> dict:
     best, hist = None, []
     for ep in range(cfg.epochs):
         net.train()
+        if ep >= cfg.epochs - cfg.freeze_bn:              # train against the statistics the tables will use
+            for b in net.bn:
+                b.eval()
         perm = torch.randperm(len(ct), generator=g)
         for j in range(0, len(ct), cfg.batch):
             b = perm[j:j + cfg.batch]
-            loss = torch.nn.functional.cross_entropy(net(ct[b]).float(), yt[b])
+            sc = net(ct[b]).float()
+            if cfg.learn_temperature:
+                sc = sc * torch.exp(net.log_tau)
+            loss = torch.nn.functional.cross_entropy(sc, yt[b])
             opt.zero_grad()
             loss.backward()
             opt.step()

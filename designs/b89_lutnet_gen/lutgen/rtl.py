@@ -118,19 +118,26 @@ def emit(m: dict, name: str, fbits: list[int], pipe="layer", reg_encoder: bool =
     sw = last["bits"] + _w(pc - 1) if pc > 1 else last["bits"]
     a("    // class scores (signed) and argmax, ties to the lowest class index")
     for c in range(nc):
-        terms = " + ".join(f"$signed({src[c * pc + i]})" for i in range(pc))
-        a(f"    wire logic signed [{sw - 1}:0] s{c} = {terms};")
+        ext = []
+        for i in range(pc):
+            v = src[c * pc + i]
+            if sw > last["bits"]:
+                a(f"    wire logic signed [{sw - 1}:0] x{c}_{i} = {{{{{sw - last['bits']}{{{v}[{last['bits'] - 1}]}}}}, {v}}};")
+                ext.append(f"x{c}_{i}")
+            else:
+                ext.append(f"$signed({v})")
+        a(f"    wire logic signed [{sw - 1}:0] s{c} = {' + '.join(ext)};")
     a("    wire logic       ge10 = s1 > s0;")
     a("    wire logic signed [" + str(sw - 1) + ":0] m01 = ge10 ? s1 : s0;")
     a("    wire logic [1:0] c01 = ge10 ? 2'd1 : 2'd0;")
     a("    wire logic [1:0] cls = (s2 > m01) ? 2'd2 : c01;")
-    a(f"    logic [{latency - 1}:0] vpipe;")
+    a("    logic [LATENCY-1:0] vpipe;")
     a("    always_ff @(posedge clk) begin")
     a("        out_cls <= cls;")
-    a(f"        if (rst) vpipe <= '0; else vpipe <= {{vpipe[{latency - 2}:0], in_v}};" if latency > 1 else
+    a("        if (rst) vpipe <= '0; else vpipe <= {vpipe[LATENCY-2:0], in_v};" if latency > 1 else
       "        if (rst) vpipe <= '0; else vpipe <= in_v;")
     a("    end")
-    a(f"    assign out_v = vpipe[{latency - 1}];")
+    a("    assign out_v = vpipe[LATENCY-1];")
     a("endmodule")
     a("`default_nettype wire")
     if nc != 3:
