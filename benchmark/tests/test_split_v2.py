@@ -159,3 +159,86 @@ def test_family_move_records_a_held_out_manifest_and_makes_it_development(tmp_pa
     assert not S.verify_ledger(led, SEEDS)
     assert S.current_manifests(S.read_ledger(led))["held"] == held
     assert held not in S.effective(path=led)["v2:A/T1"]["held_out"] and "held" in S.effective(path=led)["v2:A/T1"]["dev"]
+
+
+# ---- family draw (brief 79, strategy section 12a) ---------------------------------------------------------------------
+
+def _fam_ledger(tmp_path, n=6, tier="T1"):
+    led, priv = tmp_path / "l.jsonl", tmp_path / "p"
+    for i in range(n):
+        S.submit("nexys", "B", tier, _m(100 + i), f"fam_task_{i}", seeds=SEEDS, path=led, private_dir=priv, defer_draw=True)
+    return led, priv
+
+
+def _fams(e1=True, e2=True, e3=None):
+    out = [{"name": "alpha", "tasks": ["fam_task_0", "fam_task_1", "fam_task_2"], "eligible": e1, "reason": "no public overlap" if e1 else "overlaps a public task"},
+           {"name": "beta", "tasks": ["fam_task_3", "fam_task_4", "fam_task_5"], "eligible": e2, "reason": "no public overlap" if e2 else "overlaps a public task"}]
+    return out
+
+
+def test_deferred_submits_are_not_block_drawn_and_a_family_draw_takes_them(tmp_path) -> None:
+    led, priv = _fam_ledger(tmp_path)
+    assert not any(e["kind"] == "draw" for e in S.read_ledger(led)) and len(S.pending(S.read_ledger(led))[("B", "T1")]) == 6
+    e = S.family_draw("B", "T1", "g", _fams(), private_dir=priv, seeds=SEEDS, path=led, date="2026-11-15")
+    assert e["rule"] == "random among the eligible families" and len(e["held_out"]) == 3 and len(e["dev"]) == 3
+    assert not S.pending(S.read_ledger(led)) and not S.verify_ledger(led, SEEDS)
+    assert all("task" not in h for h in e["held_out"]) and all("tasks" not in f for f in e["families"])
+    names = {d["task"] for d in e["dev"]}
+    assert names in ({"fam_task_0", "fam_task_1", "fam_task_2"}, {"fam_task_3", "fam_task_4", "fam_task_5"})
+    assert set(S.current_manifests(S.read_ledger(led))) == names
+    eff = S.effective(path=led)["v2:B/T1"]
+    assert sorted(eff["dev"]) == sorted(names) and len(eff["held_out"]) == 3
+
+
+def test_family_draw_is_deterministic_and_keyed_on_the_manifests(tmp_path) -> None:
+    runs = []
+    for sub in ("a", "b"):
+        led, priv = _fam_ledger(tmp_path / sub)
+        runs.append(S.family_draw("B", "T1", "g", _fams(), private_dir=priv, seeds=SEEDS, path=led)["held_out_family"])
+    assert runs[0] == runs[1]
+
+
+def test_an_ineligible_family_is_never_held_out_and_one_eligible_is_held_out_by_rule(tmp_path) -> None:
+    led, priv = _fam_ledger(tmp_path)
+    e = S.family_draw("B", "T1", "g", _fams(e1=False), private_dir=priv, seeds=SEEDS, path=led)
+    assert e["rule"] == "only one eligible family: held out by rule"
+    assert {f["name"] for f in e["families"] if f["role"] == "development"} == {"alpha"}
+    led2, priv2 = _fam_ledger(tmp_path / "x")
+    e2 = S.family_draw("B", "T1", "g", _fams(e1=False, e2=False), private_dir=priv2, seeds=SEEDS, path=led2)
+    assert e2["held_out_family"] is None and not e2["held_out"] and len(e2["dev"]) == 6
+    assert not S.verify_ledger(led, SEEDS) and not S.verify_ledger(led2, SEEDS)
+
+
+def test_family_draw_refuses_bad_input(tmp_path) -> None:
+    led, priv = _fam_ledger(tmp_path)
+    with pytest.raises(SystemExit):
+        S.family_draw("B", "T1", "g", [{"name": "a", "tasks": ["nope"], "eligible": True, "reason": "x"}], private_dir=priv, seeds=SEEDS, path=led)
+    with pytest.raises(SystemExit):
+        S.family_draw("B", "T1", "g", [{"name": "a", "tasks": ["fam_task_0"], "eligible": True, "reason": " "}], private_dir=priv, seeds=SEEDS, path=led)
+    with pytest.raises(SystemExit):
+        S.family_draw("B", "T1", "g", [{"name": "a", "tasks": ["fam_task_0"], "eligible": True, "reason": "r"},
+                                       {"name": "b", "tasks": ["fam_task_0"], "eligible": True, "reason": "r"}], private_dir=priv, seeds=SEEDS, path=led)
+    assert not S.read_ledger(led)[-1]["kind"] == "family_draw"
+
+
+def test_family_draw_is_tamper_evident_and_cannot_be_steered(tmp_path) -> None:
+    led, priv = _fam_ledger(tmp_path)
+    S.family_draw("B", "T1", "g", _fams(), private_dir=priv, seeds=SEEDS, path=led)
+    lines = led.read_text().splitlines()
+    last = len(lines) - 1
+    # any edit of the draw entry is caught by the hash chain
+    t = [json.loads(x) for x in lines]
+    t[last]["rule"] = "edited"
+    led.write_text("\n".join(json.dumps(x, sort_keys=True) for x in t) + "\n")
+    assert S.verify_ledger(led, SEEDS)
+    # re-hashing an edited entry (steering the choice by hand) is caught by the rule check
+    t = [json.loads(x) for x in lines]
+    e = t[last]
+    other = next(f["digest"] for f in e["families"] if f["digest"] != e["held_out_family"])
+    for f in e["families"]:
+        f["role"] = "held_out" if f["digest"] == other else "development"
+    e["held_out_family"] = other
+    body = {k: v for k, v in e.items() if k != "hash"}
+    e["hash"] = S.entry_hash(e["prev"], body)
+    led.write_text("\n".join(json.dumps(x, sort_keys=True) for x in t) + "\n")
+    assert any("published draw rule" in m or "differ" in m for m in S.verify_ledger(led, SEEDS))

@@ -101,7 +101,7 @@ def pending(entries: list[dict]) -> dict[tuple[str, str], list[dict]]:
         k = (e.get("domain"), e.get("tier"))
         if e["kind"] == "submit":
             out.setdefault(k, []).append(e)
-        elif e["kind"] == "draw":
+        elif e["kind"] in ("draw", "family_draw"):
             taken = set(e["manifests"])
             out[k] = [x for x in out.get(k, []) if x["manifest"] not in taken]
     return {k: v for k, v in out.items() if v}
@@ -130,7 +130,7 @@ def _private_write(d: Path, rec: dict) -> None:
 
 
 def submit(board: str, domain: str, tier: str, manifest: str, task: str, *, private_dir: Path, seeds: dict | None = None,
-           path: Path = LEDGER) -> tuple[dict, dict | None]:
+           path: Path = LEDGER, defer_draw: bool = False) -> tuple[dict, dict | None]:
     """Record a frozen task as pending (its id goes only to the private file). When this is the third pending task of the
     cell, the block is drawn in the same call and the draw entry is returned second."""
     seeds = seeds if seeds is not None else load_seeds()
@@ -141,7 +141,7 @@ def submit(board: str, domain: str, tier: str, manifest: str, task: str, *, priv
     if manifest in seen:
         raise SystemExit("this manifest is already in the ledger")
     if any(r["task"] == task for r in _private_read(private_dir)) or \
-            any(e["kind"] == "draw" and task in [d.get("task") for d in e["dev"]] for e in entries):
+            any(e["kind"] in ("draw", "family_draw") and task in [d.get("task") for d in e["dev"]] for e in entries):
         raise SystemExit(f"task {task!r} is already in the ledger")
     # Everything the draw needs must be known before the ledger is touched: a draw that fails after the third submit has
     # been appended would leave three pending entries and a private file with no way to complete the block.
@@ -155,7 +155,7 @@ def submit(board: str, domain: str, tier: str, manifest: str, task: str, *, priv
     e = _append({"kind": "submit", "board": board, "domain": domain, "tier": tier, "manifest": manifest}, path)
     _private_write(private_dir, {"seq": e["seq"], "task": task, "manifest": manifest, "board": board, "domain": domain, "tier": tier})
     cell = pending(read_ledger(path)).get((domain, tier), [])
-    if len(cell) < BLOCK:
+    if defer_draw or len(cell) < BLOCK:
         return e, None
     block = sum(1 for x in read_ledger(path) if x["kind"] == "draw" and x["domain"] == domain and x["tier"] == tier)
     ms = sorted(x["manifest"] for x in cell[:BLOCK])
@@ -166,6 +166,88 @@ def submit(board: str, domain: str, tier: str, manifest: str, task: str, *, priv
     d = _append({"kind": "draw", "domain": domain, "tier": tier, "block": block, "manifests": ms,
                  "held_out": {"manifest": h, "board": boards[h]}, "dev": dev}, path)
     return e, d
+
+
+
+def family_digest(manifests: list[str]) -> str:
+    return hashlib.sha256("".join(sorted(manifests)).encode()).hexdigest()
+
+
+def family_choice(seed: int, domain: str, tier: str, k: int, eligible_digests: list[str]) -> tuple[str | None, str]:
+    """(held-out family digest or None, rule). Same seeded source as the block draw: a Random keyed on the published seed, the cell,
+    the draw's index and the sorted eligible family digests (which depend on every member's frozen manifest)."""
+    ds = sorted(eligible_digests)
+    if not ds:
+        return None, "no eligible family: nothing held out"
+    if len(ds) == 1:
+        return ds[0], "only one eligible family: held out by rule"
+    return ds[random.Random(f"{seed}:{domain}:{tier}:family{k}:" + "".join(ds)).randrange(len(ds))], "random among the eligible families"
+
+
+def family_draw(domain: str, tier: str, group: str, families: list[dict], *, private_dir: Path, seeds: dict | None = None,
+                path: Path = LEDGER, date: str | None = None) -> dict:
+    """Draw a held-out FAMILY (brief 79, strategy section 12a). ``families``: [{"name", "tasks": [ids], "eligible": bool,
+    "reason": text}]. Every member must be a pending submit of the cell (``submit --defer-draw``). A family that overlaps a public or
+    development task above the leak threshold is not eligible (development only). One eligible family is held out by rule; several:
+    one is chosen by the ledger's seeded randomness; none: nothing is held out. Development members are named, held-out ones are not."""
+    seeds = seeds if seeds is not None else load_seeds()
+    if tier not in seeds.get(domain, {}):
+        raise SystemExit(f"no published seed for domain {domain!r} tier {tier!r}")
+    entries = read_ledger(path)
+    pend = {x["manifest"] for x in pending(entries).get((domain, tier), [])}
+    recs = {r["task"]: r for r in _private_read(private_dir)}
+    boards = {x["manifest"]: x["board"] for x in entries if x["kind"] == "submit"}
+    fams, used = [], set()
+    for f in families:
+        if not str(f.get("reason", "")).strip():
+            raise SystemExit(f"family {f.get('name')!r} needs an eligibility reason")
+        mans = []
+        for t in f["tasks"]:
+            r = recs.get(t)
+            if r is None or r["manifest"] not in pend or r["manifest"] in used:
+                raise SystemExit(f"task {t!r} is not a pending submit of {domain}/{tier} (or is in two families)")
+            mans.append(r["manifest"])
+            used.add(r["manifest"])
+        fams.append({"name": f["name"], "tasks": list(f["tasks"]), "manifests": sorted(mans), "digest": family_digest(mans),
+                     "eligible": bool(f["eligible"]), "reason": f["reason"]})
+    k = sum(1 for x in entries if x["kind"] == "family_draw" and x["domain"] == domain and x["tier"] == tier)
+    held, rule = family_choice(seeds[domain][tier], domain, tier, k, [f["digest"] for f in fams if f["eligible"]])
+    dev = [{"manifest": recs[t]["manifest"], "task": t, "board": boards[recs[t]["manifest"]]}
+           for f in fams if f["digest"] != held for t in f["tasks"]]
+    out_f = [{"digest": f["digest"], "manifests": f["manifests"], "eligible": f["eligible"], "reason": f["reason"],
+              **({"role": "held_out"} if f["digest"] == held else {"role": "development", "name": f["name"]})} for f in fams]
+    return _append({"kind": "family_draw", "domain": domain, "tier": tier, "group": group, "k": k, "dated": date or time.strftime("%Y-%m-%d"),
+                    "manifests": sorted(used), "families": out_f, "rule": rule, "held_out_family": held,
+                    "dev": dev, "held_out": [{"manifest": m, "board": boards[m]} for f in fams if f["digest"] == held for m in f["manifests"]]}, path)
+
+
+def _verify_family_draw(entries: list[dict], i: int, seeds: dict) -> list[str]:
+    e, bad = entries[i], []
+    cell = {x["manifest"] for x in pending(entries[:i]).get((e["domain"], e["tier"]), [])}
+    if not set(e["manifests"]) <= cell or sorted(e["manifests"]) != e["manifests"]:
+        bad.append("family draw members are not pending submits of the cell")
+    if e["tier"] not in seeds.get(e["domain"], {}):
+        return bad + ["no published seed"]
+    allm = [m for f in e["families"] for m in f["manifests"]]
+    if sorted(allm) != e["manifests"]:
+        bad.append("families do not partition the members")
+    if any(f["digest"] != family_digest(f["manifests"]) for f in e["families"]):
+        bad.append("a family digest does not match its manifests")
+    if any(not str(f.get("reason", "")).strip() for f in e["families"]):
+        bad.append("a family has no eligibility reason")
+    k = sum(1 for x in entries[:i] if x["kind"] == "family_draw" and x["domain"] == e["domain"] and x["tier"] == e["tier"])
+    held, rule = family_choice(seeds[e["domain"]][e["tier"]], e["domain"], e["tier"], k, [f["digest"] for f in e["families"] if f["eligible"]])
+    if e.get("k") != k or e["held_out_family"] != held or e["rule"] != rule:
+        bad.append("held-out family differs from the published draw rule")
+    if {f["digest"] for f in e["families"] if f["role"] == "held_out"} != ({held} if held else set()):
+        bad.append("family roles do not match the draw")
+    ho = sorted(m for f in e["families"] if f["role"] == "held_out" for m in f["manifests"])
+    dv = sorted(m for f in e["families"] if f["role"] == "development" for m in f["manifests"])
+    if sorted(h["manifest"] for h in e["held_out"]) != ho or sorted(d["manifest"] for d in e["dev"]) != dv:
+        bad.append("dev or held-out lists differ from the family roles")
+    if any("task" in h for h in e["held_out"]) or any("tasks" in f or "task" in f for f in e["families"]):
+        bad.append("a held-out or family entry names a task")
+    return bad
 
 
 def listed_held_out(bench: Path | None = None) -> set[str]:
@@ -243,6 +325,13 @@ def verify_ledger(path: Path = LEDGER, seeds: dict | None = None) -> list[str]:
                 if d["task"] in names:
                     bad.append(f"entry {i}: task named twice")
                 names.add(d["task"])
+        elif e["kind"] == "family_draw":
+            for msg in _verify_family_draw(entries, i, seeds):
+                bad.append(f"entry {i}: {msg}")
+            for d in e["dev"]:
+                if d["task"] in names:
+                    bad.append(f"entry {i}: task named twice")
+                names.add(d["task"])
         elif e["kind"] == "amend":
             now = current_manifests(entries[:i])
             if e.get("task") not in now:
@@ -280,7 +369,7 @@ def verify_shell(entries: list[dict] | None = None, grader_shell: Path | None = 
 
 def current_manifests(entries: list[dict]) -> dict[str, str]:
     """Development task -> the SHA-256 of the manifest it is frozen at now: the draw's, or the latest ``amend`` entry's."""
-    out = {d["task"]: d["manifest"] for e in entries if e["kind"] == "draw" for d in e["dev"]}
+    out = {d["task"]: d["manifest"] for e in entries if e["kind"] in ("draw", "family_draw") for d in e["dev"]}
     for e in entries:
         if e["kind"] == "move" and "manifest" in e:          # a v2 held-out task moved to development (family re-draw)
             out[e["task"]] = e["manifest"]
@@ -344,6 +433,10 @@ def effective(bench: Path | None = None, path: Path = LEDGER) -> dict:
             v = out.setdefault(f"v2:{e['domain']}/{e['tier']}", {"held_out": [], "dev": []})
             v["held_out"].append(e["held_out"]["manifest"])
             v["dev"] += [d["task"] for d in e["dev"]]
+        elif e["kind"] == "family_draw":
+            v = out.setdefault(f"v2:{e['domain']}/{e['tier']}", {"held_out": [], "dev": []})
+            v["held_out"] += [h["manifest"] for h in e["held_out"]]
+            v["dev"] += [d["task"] for d in e["dev"]]
     out["pending"] = {f"{d}/{t}": [x["manifest"] for x in v] for (d, t), v in pending(entries).items()}
     return out
 
@@ -356,6 +449,12 @@ def main_v2(argv: list[str]) -> int:
         a.add_argument(f"--{k}", required=True)
     a.add_argument("--manifest", type=Path, required=True)
     a.add_argument("--private-dir", type=Path, required=True)
+    a.add_argument("--defer-draw", action="store_true", help="do not draw a block of three; the task waits for a family draw")
+    fd = sub.add_parser("draw-family")
+    for k in ("domain", "tier", "group"):
+        fd.add_argument(f"--{k}", required=True)
+    fd.add_argument("--private-dir", type=Path, required=True)
+    fd.add_argument("--families", type=Path, required=True, help="YAML: a list of {name, tasks: [ids], eligible: bool, reason: text}")
     m = sub.add_parser("move-dev")
     m.add_argument("--task", required=True)
     m.add_argument("--reason", required=True)
@@ -372,8 +471,11 @@ def main_v2(argv: list[str]) -> int:
     am.add_argument("--reason", required=True)
     r = ap.parse_args(argv)
     if r.cmd == "submit":
-        e, d = submit(r.board, r.domain, r.tier, manifest_hash(r.manifest), r.task, private_dir=r.private_dir)
+        e, d = submit(r.board, r.domain, r.tier, manifest_hash(r.manifest), r.task, private_dir=r.private_dir, defer_draw=r.defer_draw)
         print(f"{r.domain}/{r.tier}: pending" + (f", block {d['block']} drawn" if d else ""))
+    elif r.cmd == "draw-family":
+        e = family_draw(r.domain, r.tier, r.group, yaml.safe_load(r.families.read_text()), private_dir=r.private_dir)
+        print(f"{r.domain}/{r.tier} family draw {e['k']}: {e['rule']}; development tasks {len(e['dev'])}, held-out tasks {len(e['held_out'])}")
     elif r.cmd == "move-dev":
         if r.manifest:
             move_dev_v2(r.task, manifest_hash(r.manifest), r.reason)
@@ -402,7 +504,7 @@ def main_v2(argv: list[str]) -> int:
 
 
 def main() -> int:
-    if len(sys.argv) > 1 and sys.argv[1] in {"submit", "move-dev", "verify", "effective", "shell-freeze", "amend"}:
+    if len(sys.argv) > 1 and sys.argv[1] in {"submit", "move-dev", "verify", "effective", "shell-freeze", "amend", "draw-family"}:
         return main_v2(sys.argv[1:])
     ap = argparse.ArgumentParser()
     sub = ap.add_subparsers(dest="cmd", required=True)
