@@ -8,7 +8,7 @@ Vivado 2026.1 build `zb_hwsw`; ps7_init DDR3 settings from the ZedBoard guide; o
 rails nominal, no alarm).
 
 All 30 runs (5 targets x read/write x 3 mappings) were made on 2026-11-15 after a power cycle, a single full load (hello program) and light
-reloads only; none wedged the PS. The first five SO runs of 2026-11-14 (e_000 to e_300 except e_310) are from the earlier session. Records:
+reloads only; none wedged the PS. The SO runs e_000, e_010, e_100, e_110, e_200, e_210 and e_300 were made in the earlier session (2026-11-14, before the PS wedged); the rest on 2026-11-15. Records:
 `summary.json` (`bus_errors`) is read from these logs by `designs/b64b_zedboard/make_summary.py`.
 
 ## Reads and writes with the strongly ordered mapping (precise)
@@ -28,7 +28,7 @@ reloads only; none wedged the PS. The first five SO runs of 2026-11-14 (e_000 to
 
 | access | result of 200 attempts |
 |---|---|
-| read hole `slverr` or `split`, DEV or NC | 200 aborts, each an **imprecise** external abort: DFSR 0x1406 (FS 0b10110, ExT=1), taken at the `isb` after the load (return address 8 bytes after it), DFAR **not** the faulting address (a stale value), the load returned 0 |
+| read hole `slverr` or `split`, DEV or NC | 200 aborts, each an **imprecise** external abort: DFSR 0x1406 (FS 0b10110, ExT=1), taken at the `isb` after the load (return address 8 bytes after it), DFAR unreliable (in six of the eight runs it is a stale value, in the two above-window runs it happens to equal the address), the load returned 0 |
 | read outside every block (DECERR), DEV or NC | 200 imprecise aborts, DFSR 0x406 (ExT=0), same timing, stale DFAR |
 | read hole `okay`, DEV or NC | no abort, value 0 |
 | **write** to any hole or outside address (`okay`, `slverr`, `split`, DECERR), DEV or NC | **no abort at all** in 200 attempts, although `dsb` and a delay of about 1-2 us follow every store; the error-capture block did record the writes (STICKY set, IS_WRITE set) for the holes |

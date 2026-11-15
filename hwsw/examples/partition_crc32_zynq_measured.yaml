@@ -14,7 +14,7 @@ options:
     label: Cortex-A9, table-driven CRC in C
     f_cpu_hz: {value: 666.67e6, source: "ZedBoard PS clock setting (assumption: the default 667 MHz CPU clock)"}
     cycles_per_item: {value: [2.7, 10.0], source: "measured, results/64b_zedboard/sweeps/crc32_sweep.log: 4 KB, slice-by-8 16.76 us = 2.7 cycles per byte, byte-wise 61.5 us = 10.0"}
-    cycles_per_call: {value: [30, 120], source: "measured: a 16 byte call takes 105 ns (slice-by-8) to 261 ns (byte-wise), timer overhead 39 ns included"}
+    cycles_per_call: {value: [30, 120], source: "measured, rounded: a 16 byte call takes 105 ns (slice-by-8) to 261 ns (byte-wise) including 39 ns timer overhead, which is 44 to 148 cycles at 667 MHz with the 16 bytes' own work inside"}
     power_w: {value: [0.3, 0.6], source: assumption (one A9 core busy, increment over idle)}
   accel:
     label: CRC block in the PL, AXI-Stream from AXI DMA (simple mode) on S_AXI_HP0, polled
@@ -26,12 +26,12 @@ options:
     dma_bytes_per_s: {value: [350e6, 396e6], source: "measured, fabric job clocks: 4 KB in 11.7 us (350 MB/s), 64 KB in 165.3 us (396 MB/s); 32-bit stream at 100 MHz"}
     mmio_writes: {value: 6, source: "DMA control, source address, length; block mode and start (regmap demo_accel style)"}
     mmio_reads: {value: 2, source: DMA status and the CRC result}
-    mmio_write_s: {value: [0.2e-6, 0.26e-6], source: "measured, results/64b_zedboard/bringup/gp_latency_run*.log: strongly ordered write plus dsb about 238 ns"}
+    mmio_write_s: {value: [0.2e-6, 0.26e-6], source: "measured, results/64b_zedboard/bringup/gp_latency_run*.log: strongly ordered write plus dsb about 237 ns (median)"}
     mmio_read_s: {value: [0.17e-6, 0.21e-6], source: "measured: uncached GP read of a PL register 207 ns per timed pair including 39 ns timer overhead"}
     completion: poll
     polls: {value: 1, source: the spin overlaps the transfer; one final read is extra}
     coherent: false
-    flush_bytes_per_s: {value: [0.33e9, 0.40e9], source: "measured by difference (HP total minus fabric job time) for a buffer left dirty by the CPU, 4 KB to 64 KB: about 0.36 GB/s, far below the guess"}
+    flush_bytes_per_s: {value: [0.30e9, 0.36e9], source: "measured by difference (HP total minus fabric job time, so it also holds the result read and job set-up) for a buffer left dirty by the CPU: 0.31 GB/s at 4 KB, 0.35 GB/s at 64 KB and 256 KB; far below the guess"}
     invalidate_bytes_per_s: {value: [1e9, 4e9], source: assumption (nothing to invalidate here; output is 0 bytes)}
     overlap: true
     power_w: {value: [0.4, 0.9], source: assumption (PL block, DMA, HP port and the A9 spinning)}

@@ -28,4 +28,4 @@ regenerated without the board. `python3 designs/b64b_zedboard/make_summary.py` r
 One board, one bitstream, one power-up (2026-11-15); the earlier bring-up logs are from 2026-11-14. Operating conditions were inside the
 recommended range with no latched alarm in every log, but the XADC cannot see fast supply droop. Medians come with the min, 95th percentile
 and max, not with confidence intervals. No Linux measurement and no power measurement exist. The normal non-cacheable error-capture count and
-the lost posted-write error are observed but not explained (see `bus_errors/README.md`). The sweep buffers sit in DDR; the L2 cache is 512 KB, so the 1 MB case also measures capacity effects.
+the lost posted-write error are observed but not explained (see `bus_errors/README.md`). The sweep buffers sit in DDR; the L2 cache is 512 KB, so the 1 MB case may also include capacity effects (not isolated).

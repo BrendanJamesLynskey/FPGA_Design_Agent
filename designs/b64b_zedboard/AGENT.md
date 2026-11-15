@@ -43,7 +43,7 @@ rebuild the summary record and the sweep tables (~1min): python3 designs/b64b_ze
 R1 designs/b64b_zedboard/tb/zb_accel_tb.sv 12e8e58d33
 R2 results/64b_zedboard/builds/full/timing.rpt 669c4f0579
 R3 results/64b_zedboard/sweeps/crc32_sweep.log 7af7eb5977
-R4 results/64b_zedboard/bus_errors/README.md 858d01820d
+R4 results/64b_zedboard/bus_errors/README.md 1ddc931ef1
 R5 results/64b_zedboard/summary.json de263e4aea
 
 ## evidence
@@ -74,7 +74,7 @@ M16 throughput fir_acp_ns=294456 ns R5#fir16.acp_fir16.65536.p50_ns: 16-tap FIR 
 [board_run] Linux was not run. UIO interrupt-to-user latency, access through devmem or UIO mmap and a kernel driver reacting to an error response are unmeasured, and SD-card writes need the owner's yes.
 [E1] The accelerator testbench is not run by CI, and its result is the first executor's report, not a committed log.
 [power] Power is the tool's estimate (confidence Medium) and no board power measurement was made; energy per result is not given.
-[behaviour] With the normal non-cacheable mapping the error-capture count read 255 (it saturates) for 200 accesses, so more accesses reached the slave than the core issued; the cause is not known. DFAR is not the faulting address for an imprecise abort. A write error with a device or non-cacheable mapping produced no abort in any run, so its only trace is the slave's capture register.
+[behaviour] With the normal non-cacheable mapping the error-capture count read 255 (it saturates) for 200 accesses, so more accesses reached the slave than the core issued; the cause is not known. DFAR is not reliable for an imprecise abort (stale in six of eight read runs). A write error with a device or non-cacheable mapping produced no abort in any run, so its only trace is the slave's capture register.
 [statistics] Each timing is a median with min, 95th percentile and max over the repetitions in the log (hundreds at small sizes, a dozen at 1 MB); no confidence interval is computed, and one board, one bitstream and one power-up were used.
 [wedges] The PS wedged three times on 2026-11-14 on full reloads. None occurred on 2026-11-15 with one full load after the power cycle and light reloads only, but the cause is not proven, so the first load and light-reload procedure in tcl/zb.tcl is a precaution.
 

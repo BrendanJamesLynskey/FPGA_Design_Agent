@@ -140,7 +140,7 @@ evidence:
   what: 30 bus-error runs of 200 accesses each, five targets, read and write, three memory mappings; the board stayed healthy
   record: results/64b_zedboard/bus_errors/README.md
   conditions: as E3, the readings are in each run's log
-  sha256: 858d01820d6159211405c8a13a979e66ea7451ffa1c8dd08334d0594c3116808
+  sha256: 1ddc931ef198b808672a0f124365c42ff07fcc2f3fff766b0651dcaef4e8f5ad
 measurements:
 - id: M1
   what: LUTs
@@ -313,9 +313,9 @@ gaps:
     given.
 - about: behaviour
   text: With the normal non-cacheable mapping the error-capture count read 255 (it saturates) for 200 accesses, so more
-    accesses reached the slave than the core issued; the cause is not known. DFAR is not the faulting address for an imprecise
-    abort. A write error with a device or non-cacheable mapping produced no abort in any run, so its only trace is the slave's
-    capture register.
+    accesses reached the slave than the core issued; the cause is not known. DFAR is not reliable for an imprecise abort
+    (stale in six of eight read runs). A write error with a device or non-cacheable mapping produced no abort in any run,
+    so its only trace is the slave's capture register.
 - about: statistics
   text: Each timing is a median with min, 95th percentile and max over the repetitions in the log (hundreds at small sizes,
     a dozen at 1 MB); no confidence interval is computed, and one board, one bitstream and one power-up were used.
