@@ -141,6 +141,6 @@ async def echo(dut):
     await src.send(r2)
     await axis_tb.clocks(dut, 200)
     n = lat.clocks()
-    assert n == LATENCY, n
+    assert axis_tb.lat_ok(n, LATENCY), (n, LATENCY, axis_tb.LAT_EXTRA)
     dut._log.info(f"latency: {n} clocks from the request's last byte to the reply's first")
     sink.stop()

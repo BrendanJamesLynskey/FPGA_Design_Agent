@@ -55,7 +55,7 @@ def sources(y: dict) -> list[str]:
     return out + [str(iv.IP / y["name"] / f) for f in y["rtl"]]
 
 
-def jobs(block: str, part: str, only: set[str]) -> list[dict]:
+def jobs(block: str, part: str, only: set[str], clock_ns: float | None = None) -> list[dict]:
     y = yaml.safe_load((iv.IP / block / "ip.yaml").read_text())
     ch, vp = y["characterisation"], y.get("variant_param")
     out = []
@@ -67,7 +67,7 @@ def jobs(block: str, part: str, only: set[str]) -> list[dict]:
             params = {k: v for k, v in full.items() if k != vp}
             gen = {k: (f'"{v}"' if isinstance(v, str) else v) for k, v in full.items()}
             out.append({"block": block, "variant": name, "params": params, "generics": gen, "top": y["top"],
-                        "clock_ns": ch["clock_ns"], "wd": BUILD / block / f"{name}_{point_id(params)}",
+                        "clock_ns": clock_ns or ch["clock_ns"], "wd": BUILD / block / (part if part != iv.DEFAULT_PART else "") / f"{name}_{point_id(params)}",
                         "sources": sources(y)})
     return out
 
@@ -120,7 +120,17 @@ def parse(wd: Path, clock_ns: float) -> dict:
     # "inf"/"NA": no constrained register-to-register path (logic only between input ports and output registers,
     # which an out-of-context run does not time): no Fmax estimate, recorded as None
     r["wns_ns"] = float(m.group(1)) if m and m.group(1) not in ("inf", "NA") else None
-    r["fmax_mhz"] = round(1000.0 / (clock_ns - r["wns_ns"]), 1) if r["wns_ns"] is not None else None
+    # hold and pulse-width slack from the same summary row (brief 88: pulse width, not setup, can bind a fast block;
+    # an Fmax read from WNS alone is then flattering)
+    hm = re.search(r"WNS\(ns\)\s+TNS\(ns\)[^\n]*\n\s*-+[^\n]*\n\s*([^\n]+)", t)
+    cells = hm.group(1).split() if hm else []
+    num = lambda i: float(cells[i]) if len(cells) > i and re.fullmatch(r"-?\d+\.\d+", cells[i]) else None
+    r["whs_ns"], r["wpws_ns"] = num(4), num(8)
+    r["fmax_setup_mhz"] = round(1000.0 / (clock_ns - r["wns_ns"]), 1) if r["wns_ns"] is not None else None
+    r["fmax_mhz"] = r["fmax_setup_mhz"]
+    if r["wpws_ns"] is not None and r["wpws_ns"] < 0 and r["fmax_mhz"] is not None:
+        # a 50 % duty clock: the high and low pulses are each period/2, so the period must grow by 2 x the shortfall
+        r["fmax_mhz"] = min(r["fmax_mhz"], round(1000.0 / (clock_ns - 2 * r["wpws_ns"]), 1))
     p = (wd / "power.rpt").read_text()
     pw = {}
     for key, label in (("total", "Total On-Chip Power (W)"), ("dynamic", "Dynamic (W)"), ("static", "Device Static (W)")):
@@ -154,7 +164,7 @@ def record(block: str, part: str, js: list[dict]) -> Path:
             r["latency"], r["ii"] = pr.get("latency"), pr.get("ii")
         if r["status"] != "not run":
             rows[(j["variant"], json.dumps(j["params"], sort_keys=True))] = r
-    out = {"schema": iv.SCHEMA, "block": block, "version": y["version"], "part": part, "clock_ns": ch["clock_ns"],
+    out = {"schema": iv.SCHEMA, "block": block, "version": y["version"], "part": part, "clock_ns": js[0]["clock_ns"] if js else ch["clock_ns"],
            "tool": tool_version() if js else old.get("tool"),
            "date": datetime.date.today().isoformat(),
            "flow": "out-of-context synth_design, opt_design, place_design, route_design; one thread; clock on port clk "
@@ -167,9 +177,9 @@ def record(block: str, part: str, js: list[dict]) -> Path:
     return f
 
 
-def run(blocks: list[str], part: str, only: set[str], dry: bool) -> int:
-    js = [j for b in blocks for j in jobs(b, part, only)]
-    batch = BUILD / ("batch_" + "_".join(blocks))
+def run(blocks: list[str], part: str, only: set[str], dry: bool, clock_ns: float | None = None) -> int:
+    js = [j for b in blocks for j in jobs(b, part, only, clock_ns)]
+    batch = BUILD / ("batch_" + "_".join(blocks) + ("" if part == iv.DEFAULT_PART else "_" + part))
     write_jobs(js, part, batch / "jobs.tcl")
     print(f"ipchar: {len(js)} jobs ({', '.join(blocks)}) listed in {batch / 'jobs.tcl'}")
     if dry:
@@ -197,6 +207,7 @@ def main(argv=None) -> int:
     ap.add_argument("blocks", nargs="+", help="library entries to measure, e.g. fir dds_awg")
     ap.add_argument("--part", default=iv.DEFAULT_PART, help=f"device part (default {iv.DEFAULT_PART})")
     ap.add_argument("--only", default="", help="comma-separated variant names; rows of other variants are kept")
+    ap.add_argument("--clock-ns", type=float, default=None, help="override the target period (default: the entry's characterisation clock_ns)")
     ap.add_argument("--dry-run", action="store_true", help="list the jobs, run nothing")
     ap.add_argument("--parse-only", action="store_true", help="rebuild the JSON from earlier reports, run nothing")
     a = ap.parse_args(argv)
@@ -205,7 +216,7 @@ def main(argv=None) -> int:
         for b in a.blocks:
             print("ipchar: wrote", record(b, a.part, jobs(b, a.part, only)).relative_to(ROOT))
         return 0
-    return run(a.blocks, a.part, only, a.dry_run)
+    return run(a.blocks, a.part, only, a.dry_run, a.clock_ns)
 
 
 if __name__ == "__main__":

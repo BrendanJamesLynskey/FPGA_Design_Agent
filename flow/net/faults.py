@@ -28,6 +28,7 @@ IP = ROOT / "ip_lib"
 
 
 RUNNER = "flow/net/faults.py"
+RTL_DIR: Path | None = None          # --rtl-dir: apply the faults to this RTL directory (with --only naming one block's faults)
 
 
 def faults():
@@ -50,7 +51,7 @@ def pytest_args(test: str) -> list[str]:
 
 def run_one(block: str, m: dict, tmp: Path) -> dict:
     d = tmp / f"{block}_{m['name']}"
-    shutil.copytree(IP / block / "rtl", d)
+    shutil.copytree(RTL_DIR or IP / block / "rtl", d)
     src = d / m["file"]
     text = src.read_text()
     n = text.count(m["old"])
@@ -73,7 +74,10 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--only", default="")
     ap.add_argument("--json", default="")
+    ap.add_argument("--rtl-dir", type=Path, default=None, help="apply the faults to this RTL directory instead of ip_lib/<block>/rtl (brief 88: a pipelined candidate)")
     a = ap.parse_args()
+    global RTL_DIR
+    RTL_DIR = a.rtl_dir.resolve() if a.rtl_dir else None
     only = set(filter(None, a.only.split(",")))
     out = []
     with tempfile.TemporaryDirectory(prefix="b40faults_") as t:

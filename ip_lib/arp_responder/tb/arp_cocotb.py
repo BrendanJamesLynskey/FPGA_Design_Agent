@@ -162,6 +162,6 @@ async def arp(dut):
     await src.send(inet.eth(model.BCAST, h[0], 0x0806, inet.arp(1, h[0], h[1], b"\x00" * 6, OWN_IP)))
     await axis_tb.clocks(dut, 100)
     n = lat.clocks()
-    assert n == LATENCY, n
+    assert axis_tb.lat_ok(n, LATENCY), (n, LATENCY, axis_tb.LAT_EXTRA)
     dut._log.info(f"latency: {n} clocks from the request's last byte to the reply's first")
     sink.stop()
