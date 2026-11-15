@@ -215,3 +215,11 @@ def test_rv32_example_matches_the_measured_records() -> None:
     assert d["traits"]["core_fmax_hz"] == pytest.approx(base * 1e6) and "unit_fmax_hz" not in d["traits"]
     out, dec = P.run(ROOT / "hwsw" / "examples" / "partition_crc32_rv32.yaml")
     assert dec["choice"] == "ci" and dec["ci_eligible"]
+
+
+def test_zynq_measured_example_brackets_the_board_sweep() -> None:
+    """Brief 64B: the model with measured ranges must contain the measured 4 KB HP time (25.03 us, results/64b_zedboard/sweeps)."""
+    out, dec = P.run(ROOT / "hwsw" / "examples" / "partition_crc32_zynq_measured.yaml")
+    row = [r for r in out["rows"] if r["n"] == 4096][0]
+    assert dec["choice"] == "measure"
+    assert row["t_accel_s"][0] <= 25.03e-6 <= row["t_accel_s"][1]
