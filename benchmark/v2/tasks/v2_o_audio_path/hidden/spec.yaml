@@ -1,0 +1,223 @@
+# path: stereo path with meters; the oracle that answers the agent's questions reads this file (wajeve).
+part: xc7a100tcsg324-1
+title: Stereo audio path with metering
+resources_expected: about 900 LUTs and 4 DSPs; no BRAM
+behaviour:
+  processing: ["Per channel and per processed sample: the applied gain moves one step toward the target (target = 0 when the channel is muted, else the channel's GAIN): current + RAMP_STEP not past the target, or current - RAMP_STEP not below it; a constant step, landing exactly on the target. The step is taken before the gain is used on the same sample.", Y = clamp24((X * applied gain) >> 12) with an arithmetic shift (floor) and clamp24 limiting to -8388608 .. 8388607. X is the received sample., "Latency: the processed Y of the sample received in frame k is the sample sent in frame k+1 (left in the left slot, right in the right slot). The sample sent in frame 0 after reset, and while no sample has been received, is 0.", 'MCLK (JA7) = a square wave at sys_clk / 8, 50 % duty (4 clocks high, 4 low), running whenever the design is out of reset.']
+  meters: ['Meters see Y (after gain, mute and limiting), never X.', "Peak, per channel: MAG = |Y| (the most negative Y has magnitude 0x800000). If MAG >= PEAK: PEAK = MAG and the hold timer = HOLD. Else if the timer is not zero: timer = timer - 1. Else PEAK = PEAK - max(1, PEAK >> 5). One HOLD setting, read at the reload.", "Clips, per channel: every Y equal to 8388607 or -8388608 adds one to CLIPS (16 bits, stops at 0xFFFF).", "RMS, per channel: N = 2**RMS_LOG2; every Y adds Y*Y to a sum at full width; at the N-th Y of a block RMS = floor(sqrt(floor(sum / N))) and the sum restarts. RMS holds until the next block completes.", 'WINDOWS = the number of completed RMS blocks of the left channel (16 bits, wrapping). FRAMES = the number of right samples received (16 bits, wrapping).', "CLR (W1P): bit 0 PEAK_L and its hold timer to 0; bit 1 the same for the right channel; bit 2 CLIPS_L to 0; bit 3 CLIPS_R to 0. Other bits do nothing; reads 0."]
+  format: ['Both directions use Philips I2S with 24-bit words. JA1 is the word select (0 is left), JA2 the bit clock, JA3 data in, JA4 data out. Inputs are sampled on rising bit-clock edges and JA4 changes only after falling edges. In each 32-clock slot the top bit comes one bit clock after the word-select edge, then 23 more bits, then zero padding.', 'A sample is received when its last bit (R24 of the slot) has been captured, and processed at once (within 40 sys_clk clocks).', 'The bit clock can pause, held high, between bursts of frames; a burst begins at its first word-select edge, and word select idles high.']
+  leds: ['LED[7:0] = PEAK_L[23:16]; LED[15:8] = PEAK_R[23:16].']
+open_questions: []
+registers:
+  unmapped: offsets 0x0F-0x7F read 0; writes to them and to RO registers are ignored
+  map:
+  - offset: 0
+    bits: "[15:0] target gain, left, Q4.12; [31:16] read 0"
+    name: GAIN_L
+    reset: 4096
+    access: RW
+  - offset: 1
+    name: GAIN_R
+    bits: "[15:0] target gain, right"
+    access: RW
+    reset: 4096
+  - name: CTRL
+    access: RW
+    bits: "[0] MUTE_L; [1] MUTE_R; other bits read 0"
+    offset: 2
+    reset: 0
+  - name: HOLD
+    offset: 3
+    access: RW
+    reset: 32
+    bits: "[15:0] peak hold time in samples"
+  - offset: 4
+    reset: 0
+    name: PEAK_L
+    bits: "[23:0]"
+    access: RO
+  - reset: 0
+    access: RO
+    bits: "[23:0]"
+    name: PEAK_R
+    offset: 5
+  - offset: 6
+    reset: 0
+    name: RMS_L
+    access: RO
+    bits: "[23:0]"
+  - name: RMS_R
+    offset: 7
+    reset: 0
+    bits: "[23:0]"
+    access: RO
+  - name: CLIPS_L
+    reset: 0
+    bits: "[15:0]"
+    access: RO
+    offset: 8
+  - access: RO
+    bits: "[15:0]"
+    offset: 9
+    reset: 0
+    name: CLIPS_R
+  - bits: "[0] PEAK_L; [1] PEAK_R; [2] CLIPS_L; [3] CLIPS_R; reads 0"
+    name: CLR
+    access: W1P
+    reset: 0
+    offset: 10
+  - bits: "[15:0]"
+    reset: 0
+    name: FRAMES
+    access: RO
+    offset: 11
+  - name: WINDOWS
+    reset: 0
+    access: RO
+    bits: "[15:0]"
+    offset: 12
+  - offset: 13
+    reset: 4096
+    name: CUR_L
+    access: RO
+    bits: "[15:0] gain applied to the last left sample"
+  - name: CUR_R
+    reset: 4096
+    access: RO
+    bits: "[15:0] gain applied to the last right sample"
+    offset: 14
+  shell: shell protocol 1.1 (shell/PROTOCOL.md)
+reset:
+  effect: gains 0x1000 and applied gains 0x1000, mutes off, HOLD 32, peaks, RMS, clips, FRAMES and WINDOWS 0, the held output samples 0 (silence), LED 0
+  kind: reset button, async assert and synchronous release
+  port: CPU_RESETN
+  polarity: active_low
+source: spec.md
+clocks:
+- freq_mhz: 100
+  name: sys_clk
+  port: CLK100MHZ
+  source: the board clock source
+- source: external codec (asynchronous to sys_clk; sampled
+  freq_mhz: 3.072
+  name: i2s_bclk
+  port: JA2
+  never used as a clock): null
+- freq_mhz: 12.5
+  port: JA7
+  name: mclk_out
+  source: sys_clk divided by 8 (a data output
+  not a generated clock the design uses): null
+timing:
+  async_inputs: JA1, JA2, JA3, asynchronous CPU_RESETN and UART RX, synchronised and excluded from timing
+  outputs: JA4 and JA7 are registered outputs; their timing against the codec is documented, not constrained to a vendor interface
+  clock_constraint: CLK100MHZ constrained to 10 ns
+board: nexys_a7_100t
+tier: T2
+design_id: 1095783496
+name: v2_o_audio_path
+top: v2_o_audio_path_top
+requirements:
+- proof: [simulation]
+  id: REQ-01
+  text: I2S in and out as specified, with a one-frame latency and silence before the first frame has passed
+- proof: [simulation]
+  id: REQ-02
+  text: Gain changes and mute slide by RAMP_STEP per sample and stop exactly on the target
+- proof: [simulation]
+  id: REQ-03
+  text: Y is the floored product clamped to 24 bits
+- text: Peak hold and decay on Y, per channel, with one HOLD
+  proof: [simulation]
+  id: REQ-04
+- id: REQ-05
+  proof: [simulation]
+  text: Clip counter counts every sample at either rail, per channel, 16 bits, saturating
+- proof: [simulation]
+  id: REQ-06
+  text: RMS per block on Y, exact
+- text: CLR clears the right peak or clip count and only that
+  id: REQ-07
+  proof: [simulation]
+- proof: [simulation]
+  text: MCLK is sys_clk / 8
+  id: REQ-08
+- proof: [simulation]
+  text: A host reading the window after reset sees the listed map and values
+  id: REQ-09
+- id: REQ-10
+  proof: [analysis]
+  text: The clock-domain crossings are synchronised; the design closes timing at 100 MHz with no unconstrained path
+- text: On the ZedBoard with the codec, a played tone returns at the line output with the gain applied
+  proof: [hardware]
+  id: REQ-11
+schema: fpga-design-agent/spec/v0
+ports:
+- iostandard: LVCMOS33
+  width: 1
+  dir: in
+  pins: [E3]
+  name: CLK100MHZ
+- async: true
+  iostandard: LVCMOS33
+  pins: [C12]
+  width: 1
+  dir: in
+  name: CPU_RESETN
+- dir: in
+  iostandard: LVCMOS33
+  width: 1
+  pins: [C17]
+  name: JA1
+  async: true
+- iostandard: LVCMOS33
+  name: JA2
+  width: 1
+  async: true
+  pins: [D18]
+  dir: in
+- dir: in
+  width: 1
+  async: true
+  iostandard: LVCMOS33
+  pins: [E18]
+  name: JA3
+- width: 1
+  dir: out
+  iostandard: LVCMOS33
+  pins: [G17]
+  name: JA4
+- pins: [D17]
+  width: 1
+  dir: out
+  iostandard: LVCMOS33
+  name: JA7
+- pins: [H17, K15, J13, N14, R18, V17, U17, U16,  # woderu
+      V16, T15, U14, T16, V15, V14, V12, V11]
+  dir: out
+  width: 16
+  name: LED
+  iostandard: LVCMOS33
+- pins: [C4]
+  dir: in
+  width: 1
+  name: UART_TXD_IN
+  async: true
+  iostandard: LVCMOS33
+- name: UART_RXD_OUT
+  width: 1
+  iostandard: LVCMOS33
+  dir: out
+  pins: [D4]
+parameters:
+  RAMP_STEP: 16
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+  RMS_LOG2: 8
+assumptions:
+- assumption: meters measure the processed signal.
+  reason: a meter that shows the input would not show a muted or turned-down channel and would not reveal clipping caused by gain.
+- assumption: one frame of latency.
+  reason: it is the smallest delay that lets the right channel be processed after its slot has been received.
+- assumption: WINDOWS follows the left channel.
+  reason: both channels complete a block in the same frame; one counter is enough and the left channel is the first.

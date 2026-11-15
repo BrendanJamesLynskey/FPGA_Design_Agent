@@ -10,6 +10,11 @@ space collapsed), unless that window also occurs in --public text (idioms, share
 Also fails if a held-out task name appears. Prints counts and file names, never the matched text. Default PATH: site/.
 Exit 1 on any hit.
 
+Matching is comment- and string-insensitive for code and `#`-comment files (benchmark/tools/leak_norm.py): windows are
+taken from raw text and from text with comments and string literals removed, so a unique comment on every line clears
+nothing. Renamed identifiers are caught by benchmark/tools/task_leak.py (winnowing); cosmetic changes are never a way to
+clear a hit.
+
 Two exemptions, both counted in the summary (brief 09b S2):
 - a window hit is cleared when the same text, compared on letters and digits only, is in the --public text (public spec
   text re-quoted in JSON differs from the YAML only in punctuation);
@@ -21,6 +26,9 @@ import argparse
 import re
 import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "benchmark" / "tools"))
+import leak_norm  # noqa: E402  (comment/string stripping, brief 83)
 
 W = 80
 WS = re.compile(rb"\s+")
@@ -45,6 +53,18 @@ ALNUM = re.compile(rb"[^0-9A-Za-z]+")
 
 def alnum(b):
     return ALNUM.sub(b"", b).lower()
+
+
+def stripped(f, b):
+    """The file with comments and string literals removed (code and `#`-comment files), whitespace collapsed; b'' for
+    other files. A window match on this text is not beaten by a trailing comment on every line (brief 83)."""
+    if leak_norm.eff_suffix(f.name) not in leak_norm.CODE | leak_norm.HASH:
+        return b""
+    try:
+        return (leak_norm.strip_text(b.decode("utf-8", errors="replace"), leak_norm.eff_suffix(f.name))
+                + " " + leak_norm.hidden_text(b.decode("utf-8", errors="replace"), leak_norm.eff_suffix(f.name))).lower().encode()
+    except Exception:
+        return b""
 
 
 def windows(b):
@@ -85,7 +105,7 @@ def main():
                 continue
             if b"\0" in b[:2000]:
                 continue
-            secret |= windows(norm(b))
+            secret |= windows(norm(b)) | windows(stripped(f, b))
             nfiles += 1
     public, pub_text = set(), []
     for p in a.public:
@@ -96,7 +116,7 @@ def main():
                 continue
             if b"\0" in b[:2000]:
                 continue
-            public |= windows(norm(b))
+            public |= windows(norm(b)) | windows(stripped(f, b))
             pub_text.append(alnum(b))
     secret -= public
     pub_text = b"\x00".join(pub_text)
@@ -106,9 +126,12 @@ def main():
         for f in files(p):
             if f.suffix in (".jpg", ".png", ".pyc") or f.name == "leak_guard.py":
                 continue
-            b = norm(f.read_bytes())
+            raw = f.read_bytes()
+            b = norm(raw)
             scanned += 1
             bad = [i for i in range(0, max(0, len(b) - W + 1)) if hash(b[i:i + W]) in secret]
+            sb = stripped(f, raw)           # comment-insensitive pass: the same windows, on stripped text
+            bad += [i for i in range(0, max(0, len(sb) - W + 1)) if hash(sb[i:i + W]) in secret]
             keep = [i for i in bad if alnum(b[i:i + W]) not in pub_text]
             cleared += len(bad) - len(keep)
             bad = keep

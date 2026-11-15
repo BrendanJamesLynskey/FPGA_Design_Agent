@@ -1,0 +1,20 @@
+# Mutants and the trap for v2_o_i2s_rx (benchmark/tools/check_task.py)
+mutants:
+  - {name: channels_swapped, file: i2s_rx.sv, find: "if (wsync[1] == 1'b0) smp_l <= frame_word;", replace: "if (wsync[1] == 1'b1) smp_l <= frame_word;", why: "left and right are exchanged"}
+  - {name: no_sign_extension, file: i2s_rx.sv, find: "7'h00:   win_rdata <= 32'(smp_l);", replace: "7'h00:   win_rdata <= {8'd0, smp_l};", why: "a negative left sample reads as a large positive number"}
+  - {name: lsb_first, file: i2s_rx.sv, find: "wire [23:0] frame_word    = {bit_acc[22:0], dsync[1]};", replace: "wire [23:0] frame_word    = {dsync[1], bit_acc[23:1]};", why: "bits are assembled least significant first"}
+  - {name: falling_edge_sampling, file: i2s_rx.sv, find: "wire        bclk_rise    = bsync[1] & ~bsync[2];", replace: "wire        bclk_rise    = ~bsync[1] & bsync[2];", why: "data is taken on the falling edge, when it is changing"}
+  - {name: frames_both_channels, file: i2s_rx.sv, find: "if (wsync[1] == 1'b1) frames <= frames + 16'd1;", replace: "if (1'b1) frames <= frames + 16'd1;", why: "FRAMES counts every slot, so it runs at twice the frame rate"}
+  - {name: frames_wraps_early, file: i2s_rx.sv, find: "frames <= frames + 16'd1;", replace: "frames <= {8'd0, frames[7:0] + 8'd1};", why: "the received-frame count rolls over after 255 instead of 65535"}
+  - {name: clear_ignored, file: i2s_rx.sv, find: "if (win_wdata[0]) frames <= '0;", replace: "if (1'b0) frames <= '0;", why: "CTRL does not clear FRAMES"}
+  - {name: clear_wipes_samples, file: i2s_rx.sv, find: "if (win_wdata[0]) frames <= '0;", replace: "if (win_wdata[0]) begin frames <= '0; smp_l <= '0; end", why: "clearing the count also clears LEFT"}
+  - {name: captured_one_early, file: i2s_rx.sv, find: "if (slot_pos_n == 6'(DATA_START + 23)) begin", replace: "if (slot_pos_n == 6'(DATA_START + 22)) begin", why: "the sample is registered one bit clock before its last bit"}
+  - {name: left_not_reset, file: i2s_rx.sv, find: "smp_l <= '0; smp_r <= '0; frames <= '0;", replace: "smp_r <= '0; frames <= '0;", why: "LEFT survives CPU_RESETN"}
+  - {name: led_shows_right, file: i2s_rx.sv, find: "assign led = smp_l[23:8];", replace: "assign led = smp_r[23:8];", why: "the LEDs show the right channel instead of the left"}
+  - {name: samples_late_in_the_bit, file: i2s_rx.sv, find: "wire        bclk_rise    = bsync[1] & ~bsync[2];", replace: "wire        bclk_rise    = bsync[2] & ~bsync[1];", why: "data is taken on the falling edge, before it has settled"}
+trap:
+  twin: "a left-justified receiver, which expects the top bit on the first bit clock after the word-select edge"
+  why: "left-justified is the common textbook receiver; true I2S sends the top bit one clock later, so this variant reads every sample one bit early, doubling it or flipping its sign"
+  edits:
+    - {file: i2s_rx.sv, find: "localparam int DATA_START = 1;", replace: "localparam int DATA_START = 0;   // left-justified"}
+  must_fail: [test_rx_walking_ones_and_the_bit_alignment]

@@ -1,0 +1,379 @@
+{
+  "task": "v2_o_audio_path",
+  "sim": "icarus",
+  "date": "2026-11-14",
+  "ref": {
+    "pass": true,
+    "tests": {
+      "test_path_identity_reset_and_mclk": true,
+      "test_path_passthrough_latency_and_bit_alignment": true,
+      "test_path_gain_step_is_smoothed": true,
+      "test_path_mute_and_unmute_slide": true,
+      "test_path_saturation_and_clip_counts": true,
+      "test_path_clip_count_is_wider_than_a_byte": true,
+      "test_path_peak_hold_decay_and_clear": true,
+      "test_path_rms_blocks_per_channel": true,
+      "test_path_reset_in_the_middle_of_a_stream": true,
+      "test_path_register_rules": true,
+      "test_path_design_defaults_ramp_and_block": true,
+      "test_path_bit_clock_ratios": true,
+      "test_path_bit_clock_stops_in_the_middle_of_a_frame": true
+    }
+  },
+  "mutants": [
+    {
+      "name": "gain_step_without_smoothing",
+      "why": "the gain jumps to its target at once: the click the path must not make",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_path_gain_step_is_smoothed",
+        "test_path_mute_and_unmute_slide",
+        "test_path_saturation_and_clip_counts",
+        "test_path_peak_hold_decay_and_clear",
+        "test_path_reset_in_the_middle_of_a_stream",
+        "test_path_design_defaults_ramp_and_block",
+        "test_path_bit_clock_stops_in_the_middle_of_a_frame"
+      ]
+    },
+    {
+      "name": "mute_not_smoothed",
+      "why": "mute cuts the signal at once while the gain still ramps",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_path_mute_and_unmute_slide"
+      ]
+    },
+    {
+      "name": "ramp_step_plus_one",
+      "why": "the ramp is one step per sample too fast",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_path_gain_step_is_smoothed",
+        "test_path_mute_and_unmute_slide",
+        "test_path_saturation_and_clip_counts",
+        "test_path_peak_hold_decay_and_clear",
+        "test_path_reset_in_the_middle_of_a_stream",
+        "test_path_design_defaults_ramp_and_block",
+        "test_path_bit_clock_stops_in_the_middle_of_a_frame"
+      ]
+    },
+    {
+      "name": "shift_thirteen",
+      "why": "the output is half as loud as the gain says",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_path_identity_reset_and_mclk",
+        "test_path_passthrough_latency_and_bit_alignment",
+        "test_path_gain_step_is_smoothed",
+        "test_path_mute_and_unmute_slide",
+        "test_path_saturation_and_clip_counts",
+        "test_path_clip_count_is_wider_than_a_byte",
+        "test_path_peak_hold_decay_and_clear",
+        "test_path_rms_blocks_per_channel",
+        "test_path_reset_in_the_middle_of_a_stream",
+        "test_path_design_defaults_ramp_and_block",
+        "test_path_bit_clock_ratios",
+        "test_path_bit_clock_stops_in_the_middle_of_a_frame"
+      ]
+    },
+    {
+      "name": "no_limiter",
+      "why": "an overflowing sample wraps round",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_path_saturation_and_clip_counts",
+        "test_path_clip_count_is_wider_than_a_byte"
+      ]
+    },
+    {
+      "name": "clip_misses_negative_rail",
+      "why": "the clip counter misses a clip at the negative end of the range",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_path_saturation_and_clip_counts",
+        "test_path_rms_blocks_per_channel"
+      ]
+    },
+    {
+      "name": "clip_counts_runs_once",
+      "why": "a run of equal clipped samples counts once, so a long clip is under-reported",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_path_saturation_and_clip_counts",
+        "test_path_clip_count_is_wider_than_a_byte",
+        "test_path_rms_blocks_per_channel"
+      ]
+    },
+    {
+      "name": "clip_counter_eight_bits",
+      "why": "the clip counter wraps at 256",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_path_clip_count_is_wider_than_a_byte"
+      ]
+    },
+    {
+      "name": "peak_magnitude_23_bits",
+      "why": "the most negative sample has magnitude 0",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_path_saturation_and_clip_counts",
+        "test_path_rms_blocks_per_channel"
+      ]
+    },
+    {
+      "name": "peak_hold_ignored",
+      "why": "the peak falls at once, with no hold",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_path_gain_step_is_smoothed",
+        "test_path_mute_and_unmute_slide",
+        "test_path_saturation_and_clip_counts",
+        "test_path_peak_hold_decay_and_clear",
+        "test_path_design_defaults_ramp_and_block",
+        "test_path_bit_clock_ratios",
+        "test_path_bit_clock_stops_in_the_middle_of_a_frame"
+      ]
+    },
+    {
+      "name": "peak_decay_stalls",
+      "why": "the peak stops falling at 31 and never reaches zero",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_path_peak_returns_to_zero"
+      ],
+      "note": "survived the first sweep; the test was added and this mutant re-run alone (killed)"
+    },
+    {
+      "name": "rms_block_scaled_wrong",
+      "why": "the mean is divided by N/2",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_path_peak_hold_decay_and_clear",
+        "test_path_rms_blocks_per_channel",
+        "test_path_design_defaults_ramp_and_block"
+      ]
+    },
+    {
+      "name": "rms_unsigned_square",
+      "why": "negative samples are squared as large unsigned numbers",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_path_rms_blocks_per_channel",
+        "test_path_design_defaults_ramp_and_block"
+      ]
+    },
+    {
+      "name": "rms_sum_too_narrow",
+      "why": "a block at full scale overflows the sum of squares",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_path_rms_blocks_per_channel"
+      ]
+    },
+    {
+      "name": "left_clear_hits_right",
+      "why": "CLR bit 0 clears the wrong channel's peak",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_path_peak_hold_decay_and_clear"
+      ]
+    },
+    {
+      "name": "output_channels_swapped",
+      "why": "left and right leave in each other's slots",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_path_identity_reset_and_mclk",
+        "test_path_passthrough_latency_and_bit_alignment",
+        "test_path_gain_step_is_smoothed",
+        "test_path_mute_and_unmute_slide",
+        "test_path_saturation_and_clip_counts",
+        "test_path_clip_count_is_wider_than_a_byte",
+        "test_path_peak_hold_decay_and_clear",
+        "test_path_rms_blocks_per_channel",
+        "test_path_reset_in_the_middle_of_a_stream",
+        "test_path_design_defaults_ramp_and_block",
+        "test_path_bit_clock_ratios",
+        "test_path_bit_clock_stops_in_the_middle_of_a_frame",
+        "test_path_peak_returns_to_zero"
+      ]
+    },
+    {
+      "name": "rx_one_bit_early",
+      "why": "a sample is taken one bit clock before its last bit",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_path_identity_reset_and_mclk",
+        "test_path_passthrough_latency_and_bit_alignment",
+        "test_path_gain_step_is_smoothed",
+        "test_path_mute_and_unmute_slide",
+        "test_path_saturation_and_clip_counts",
+        "test_path_clip_count_is_wider_than_a_byte",
+        "test_path_peak_hold_decay_and_clear",
+        "test_path_rms_blocks_per_channel",
+        "test_path_reset_in_the_middle_of_a_stream",
+        "test_path_design_defaults_ramp_and_block",
+        "test_path_bit_clock_ratios",
+        "test_path_bit_clock_stops_in_the_middle_of_a_frame",
+        "test_path_peak_returns_to_zero"
+      ]
+    },
+    {
+      "name": "tx_left_justified",
+      "why": "the output is left-justified: one bit clock early",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_path_identity_reset_and_mclk",
+        "test_path_passthrough_latency_and_bit_alignment",
+        "test_path_gain_step_is_smoothed",
+        "test_path_mute_and_unmute_slide",
+        "test_path_saturation_and_clip_counts",
+        "test_path_clip_count_is_wider_than_a_byte",
+        "test_path_peak_hold_decay_and_clear",
+        "test_path_rms_blocks_per_channel",
+        "test_path_reset_in_the_middle_of_a_stream",
+        "test_path_design_defaults_ramp_and_block",
+        "test_path_bit_clock_ratios",
+        "test_path_bit_clock_stops_in_the_middle_of_a_frame",
+        "test_path_peak_returns_to_zero"
+      ]
+    },
+    {
+      "name": "mclk_divided_by_four",
+      "why": "the master clock is twice too fast",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_path_identity_reset_and_mclk"
+      ]
+    },
+    {
+      "name": "right_gain_resets_to_zero",
+      "why": "the right gain starts at 0 after reset",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_path_identity_reset_and_mclk",
+        "test_path_passthrough_latency_and_bit_alignment",
+        "test_path_gain_step_is_smoothed",
+        "test_path_mute_and_unmute_slide",
+        "test_path_rms_blocks_per_channel",
+        "test_path_reset_in_the_middle_of_a_stream",
+        "test_path_design_defaults_ramp_and_block",
+        "test_path_bit_clock_ratios",
+        "test_path_peak_returns_to_zero"
+      ]
+    },
+    {
+      "name": "hold_not_reset",
+      "why": "the hold time resets to 0",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_path_identity_reset_and_mclk",
+        "test_path_gain_step_is_smoothed",
+        "test_path_mute_and_unmute_slide",
+        "test_path_saturation_and_clip_counts",
+        "test_path_reset_in_the_middle_of_a_stream",
+        "test_path_design_defaults_ramp_and_block",
+        "test_path_bit_clock_ratios",
+        "test_path_bit_clock_stops_in_the_middle_of_a_frame"
+      ]
+    },
+    {
+      "name": "applied_gain_not_reset",
+      "why": "the applied gain survives CPU_RESETN",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_path_identity_reset_and_mclk",
+        "test_path_passthrough_latency_and_bit_alignment",
+        "test_path_gain_step_is_smoothed",
+        "test_path_mute_and_unmute_slide",
+        "test_path_saturation_and_clip_counts",
+        "test_path_clip_count_is_wider_than_a_byte",
+        "test_path_peak_hold_decay_and_clear",
+        "test_path_rms_blocks_per_channel",
+        "test_path_reset_in_the_middle_of_a_stream",
+        "test_path_register_rules",
+        "test_path_design_defaults_ramp_and_block",
+        "test_path_bit_clock_ratios",
+        "test_path_bit_clock_stops_in_the_middle_of_a_frame",
+        "test_path_peak_returns_to_zero"
+      ]
+    },
+    {
+      "name": "led_swapped",
+      "why": "the two peak bar graphs are exchanged",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_path_gain_step_is_smoothed",
+        "test_path_peak_hold_decay_and_clear"
+      ]
+    },
+    {
+      "name": "ramp_step_fixed_at_64",
+      "why": "the RAMP_STEP parameter is ignored",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_path_design_defaults_ramp_and_block"
+      ]
+    },
+    {
+      "name": "block_fixed_at_8_frames",
+      "why": "the RMS block is always 8 frames, whatever RMS_LOG2 says",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_path_design_defaults_ramp_and_block"
+      ]
+    },
+    {
+      "name": "hold_register_eight_bits",
+      "why": "only the low byte of a hold time written by the host is kept (both channels)",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_path_register_rules"
+      ],
+      "note": "survived the first sweep; the test was added and this mutant re-run alone (killed)"
+    }
+  ],
+  "mutants_killed": 26,
+  "mutants_total": 26,
+  "trap": {
+    "twin": "textbook level meter: tap the signal before the gain stage",
+    "why": "a meter on the input does not move when the gain or mute changes and does not see clipping the gain causes; the spec puts the meters after gain, mute and limiting",
+    "must_fail": [
+      "test_path_gain_step_is_smoothed"
+    ],
+    "failed_tests": [
+      "test_path_gain_step_is_smoothed",
+      "test_path_peak_hold_decay_and_clear",
+      "test_path_design_defaults_ramp_and_block",
+      "test_path_bit_clock_stops_in_the_middle_of_a_frame"
+    ],
+    "trap_fires": true
+  }
+}

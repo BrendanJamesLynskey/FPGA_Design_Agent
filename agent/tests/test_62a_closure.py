@@ -171,7 +171,8 @@ def test_closure_reverts_and_stalls(tmp_path, dg):
     assert not r["all_met"] and r["accepted"] == 0 and (ws.rtl / "hough.sv").read_text() == orig      # every change reverted
     classes = [pb.BY_ID[s].cls for s, _ in r["strategies"]]
     assert all(classes.count(k) == 2 for k in set(classes))                     # the stall rule: two tries per class
-    assert r["stop"] == "goal G2 not met; strategy classes exhausted"
+    # every RTL class used up: the joint loop (62B) hands the design back to the architecture stage
+    assert r["stop"] == "loop back to the architecture stage: G2 x_replan_timing" and r["reentry"]["stage"] == 1
     assert r["unmet_text"][0].startswith("goal G2 not met; best value {'wns_ns': -0.166")
 
 

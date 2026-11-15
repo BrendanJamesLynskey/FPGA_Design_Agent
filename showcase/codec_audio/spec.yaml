@@ -1,0 +1,124 @@
+# Formal specification of the ZedBoard codec audio path (brief 78). The plain-English request is request.md.
+# This is the planner's copy: the agent is given request.md and its own interview, never this file or anything under tests/.
+schema: fpga-design-agent/spec/v0
+name: codec_audio
+title: Stereo codec audio path with gain, mute and metering on the ZedBoard
+source: request.md
+tier: showcase
+board: zedboard
+part: xc7z020clg484-1
+top: codec_audio_top
+
+# Pin facts from the knowledge bank (board/zedboard/audio/zedboard-adau1761-codec, ZedBoard Hardware User's Guide v2.2 and the
+# Avnet master constraints); none is read from the board yet. Bank 13, 3.3 V.
+clocks:
+  - {name: fclk0, source: "Zynq PS FCLK_CLK0", freq_mhz: 100, use: "AXI4-Lite control, metering readout, and the audio datapath (the audio samples are synchronised from the codec's bit clock into this domain)"}
+  - {name: mclk, port: AC_MCLK, freq_mhz: 12.288, source: "MMCM in the logic, from FCLK0 or the 100 MHz oscillator (GCLK, Y9)", use: "256 x 48 kHz master clock to the codec; the codec derives BCLK and LRCLK from it"}
+  - {name: bclk, port: AC_GPIO2, freq_mhz: 3.072, source: "ADAU1761 (master), 64 x 48 kHz", use: "sampled by the logic as data, never used as a clock"}
+
+reset:
+  port: "PS FCLK_RESET0_N"
+  polarity: active_low
+  kind: "from the processor system, synchronised per clock domain"
+  effect: "gains 0x1000, mutes off, HOLD 32, meters zero, the held output samples zero (silence)"
+
+parameters:
+  FRAME_CLKS: 2083         # 100 MHz / 48 kHz: the nominal clocks per frame (the codec sets the real rate)
+  SAMPLE_BITS: 24
+  RAMP_STEP: 16            # Q4.12 gain units per sample: unity to silence in 256 samples (5.33 ms)
+  RMS_LOG2: 8              # RMS block of 256 samples (5.33 ms)
+  DECAY_SHIFT: 5
+  HOLD_RESET: 32
+
+ports:
+  - {name: AC_MCLK, dir: out, width: 1, pins: [AB2], iostandard: LVCMOS33}
+  - {name: AC_SCK, dir: out, width: 1, pins: [AB4], iostandard: LVCMOS33, note: "I2C clock (open drain, with the board's pull-up)"}
+  - {name: AC_SDA, dir: inout, width: 1, pins: [AB5], iostandard: LVCMOS33, note: "I2C data (open drain)"}
+  - {name: AC_ADR0, dir: out, width: 1, pins: [AB1], iostandard: LVCMOS33}
+  - {name: AC_ADR1, dir: out, width: 1, pins: [Y5], iostandard: LVCMOS33}
+  - {name: AC_GPIO0, dir: out, width: 1, pins: [Y8], iostandard: LVCMOS33, note: "serial data to the DAC"}
+  - {name: AC_GPIO1, dir: in, width: 1, async: true, pins: [AA7], iostandard: LVCMOS33, note: "serial data from the ADC"}
+  - {name: AC_GPIO2, dir: in, width: 1, async: true, pins: [AA6], iostandard: LVCMOS33, note: "bit clock"}
+  - {name: AC_GPIO3, dir: in, width: 1, async: true, pins: [Y6], iostandard: LVCMOS33, note: "left/right clock"}
+
+interfaces:
+  axi_lite_profile: house
+
+behaviour:
+  codec:
+    - "ADAU1761, 48 kHz, 24-bit I2S, codec as clock master, MCLK 12.288 MHz from the logic. Control over I2C from the PS (bare metal) or a PL I2C master; the design picks one and records why in its datasheet (the chosen default: the PS, because the sequence is a short fixed list of register writes and the Arm already runs the application)."
+    - "The codec starts muted and unconfigured. The start-up sequence sets the PLL/clock registers, the serial port (I2S, 24 bit, master), routes line in to the ADC and the DAC to line out and headphones, then unmutes at a low output level."
+    - "The I2C address bits AC_ADR0 and AC_ADR1 are driven by the logic and set before the first access."
+  format:
+    - "Philips I2S: 32 bit clocks per channel slot, 24 data bits MSB first, the MSB one bit clock after the LRCLK edge, LRCLK low = left; the logic samples the serial data on the rising edge of BCLK and changes its own data after the falling edge."
+  processing:
+    - "As in model/audio_ref.py: per channel and per sample, the applied gain moves one RAMP_STEP toward its target (0 when muted), is used on the same sample, the product is shifted right by 12 with the floor and clamped to 24 bits."
+    - "Latency of the digital path: one frame; the frame received in one frame period leaves in the next, and the first frame out after reset is silence."
+  meters:
+    - "On the processed signal: peak with hold and decay (peak - max(1, peak >> DECAY_SHIFT) after the hold), clip counter (every sample at either end of the range, 16 bits, saturating), RMS over blocks of 2**RMS_LOG2 samples (floor of the root of the floor of the mean square)."
+  clock_domains:
+    - "Three: the audio domain (the codec's BCLK sampled in the 100 MHz domain by a two-flop synchroniser, so the datapath is in the 100 MHz domain), the AXI domain (FCLK0, the same clock), and MCLK (a clock output from an MMCM, no logic crosses into it). If the audio datapath is put on a separate clock, every crossing goes through a documented synchroniser or a handshake and the CDC check passes."
+
+registers:
+  file: regmap/codec_audio.yaml
+  datasheet: regmap/generated/codec_audio_regs.md
+  note: "AXI4-Lite, 4 KB window, house profile; this list is derived from the register file (tests/test_regmap.py checks names, offsets and reset values; CUR_L and CUR_R read the hardware, which resets them to unity); every behaviour a driver writer could guess wrong is in the generated datasheet."
+  map:
+    - {offset: 0x000, name: ID, access: RO, reset: 0x78A00100, bits: "[31:16] MAGIC; [15:0] VERSION"}
+    - {offset: 0x004, name: CTRL, access: RW, reset: 0x0, bits: "[0] MUTE_L; [1] MUTE_R"}
+    - {offset: 0x008, name: GAIN_L, access: RW, reset: 0x1000, bits: "[15:0] VALUE"}
+    - {offset: 0x00C, name: GAIN_R, access: RW, reset: 0x1000, bits: "[15:0] VALUE"}
+    - {offset: 0x010, name: CUR_L, access: RO, reset: 0x1000, bits: "[15:0] VALUE"}
+    - {offset: 0x014, name: CUR_R, access: RO, reset: 0x1000, bits: "[15:0] VALUE"}
+    - {offset: 0x018, name: HOLD, access: RW, reset: 0x20, bits: "[15:0] SAMPLES"}
+    - {offset: 0x01C, name: CLR, access: W1P, reset: 0x0, bits: "[0] PEAK_L; [1] PEAK_R; [2] CLIPS_L; [3] CLIPS_R"}
+    - {offset: 0x020, name: PEAK_L, access: RO, reset: 0x0, bits: "[23:0] VALUE"}
+    - {offset: 0x024, name: PEAK_R, access: RO, reset: 0x0, bits: "[23:0] VALUE"}
+    - {offset: 0x028, name: RMS_L, access: RO, reset: 0x0, bits: "[23:0] VALUE"}
+    - {offset: 0x02C, name: RMS_R, access: RO, reset: 0x0, bits: "[23:0] VALUE"}
+    - {offset: 0x030, name: CLIPS_L, access: RO, reset: 0x0, bits: "[15:0] VALUE"}
+    - {offset: 0x034, name: CLIPS_R, access: RO, reset: 0x0, bits: "[15:0] VALUE"}
+    - {offset: 0x038, name: FRAMES, access: RO, reset: 0x0, bits: "[15:0] VALUE"}
+    - {offset: 0x03C, name: WINDOWS, access: RO, reset: 0x0, bits: "[15:0] VALUE"}
+  unmapped: "inside the window the house profile applies: a read of a hole answers SLVERR and a write OKAY, ERR_ADDR and ERR_STATUS at 0xFF8 and 0xFFC record it"
+
+timing:
+  clock_constraint: "10 ns on FCLK0; MCLK as a generated clock; BCLK, LRCLK and the serial data inputs are asynchronous and false-pathed after their synchronisers"
+  outputs: "AC_MCLK from an output register or an MMCM output; AC_GPIO0 registered"
+
+measurement:
+  rig: "the owner's PC line output to the board's line in and the board's line out to the PC line in (SRAM/JTAG loading only; the owner sets the jumpers; line-out starts low and the owner is warned before any tone plays through headphones)"
+  script: measure/run_measure.py
+  items:
+    - {id: M-FR, what: "frequency response, 20 Hz to 20 kHz, relative to 1 kHz"}
+    - {id: M-THD, what: "THD+N of a 1 kHz tone, level recorded"}
+    - {id: M-NOISE, what: "noise floor with silence in"}
+    - {id: M-XT, what: "crosstalk, left to right and right to left, at 1 kHz"}
+    - {id: M-LAT, what: "latency in samples, analogue in to analogue out, by correlation"}
+    - {id: M-CLICK, what: "click energy of a gain step, the smoothed design against an unsmoothed control"}
+  limits: "a figure that the codec or the PC interface limits is reported as that limit (baseline with the interface alone, and the codec datasheet), never as the design's"
+  conditions: "die temperature and rails (XADC), the interface's gain setting and the levels, recorded at the start and end of each run"
+
+requirements:
+  - {id: REQ-01, text: "I2S in and out as specified, one frame of digital latency, silence in the first frame", proof: [simulation]}
+  - {id: REQ-02, text: "Gain changes and mute slide by RAMP_STEP per sample and land exactly on the target", proof: [simulation]}
+  - {id: REQ-03, text: "The product is floored and limited to 24 bits", proof: [simulation]}
+  - {id: REQ-04, text: "Peak hold with decay, clip counter and RMS meters on the processed signal, per channel", proof: [simulation]}
+  - {id: REQ-05, text: "The register block follows the house profile and is generated from regmap/codec_audio.yaml with its datasheet", proof: [simulation, analysis]}
+  - {id: REQ-06, text: "The clock-domain crossings are synchronised and the CDC gate passes", proof: [analysis]}
+  - {id: REQ-07, text: "Timing closes at 100 MHz with no unconstrained path", proof: [analysis]}
+  - {id: REQ-08, text: "The codec is configured over I2C and acknowledges; a tone from the PC returns at the line output", proof: [hardware]}
+  - {id: REQ-09, text: "The six board measurements are taken with operating conditions recorded, and limited figures are attributed", proof: [hardware]}
+
+resources_expected: "about 1000 LUTs and 4 DSPs in the logic; no BRAM"
+
+assumptions:
+  - assumption: the codec is the I2S clock master and the logic is the slave.
+    reason: the default in the knowledge bank (ADAU1761, MCLK from the logic); the logic then never needs to generate BCLK or LRCLK.
+  - assumption: meters measure the processed signal.
+    reason: a meter on the input would not show the effect of the gain or the mute.
+  - assumption: the digital path has one frame of latency.
+    reason: the right channel can only be processed after its slot has been received.
+
+open_questions:
+  - "Whether the ADAU1761's own volume and mute registers stay at their defaults (yes in this plan: all level control is in the logic, so that it is the logic that is measured)."

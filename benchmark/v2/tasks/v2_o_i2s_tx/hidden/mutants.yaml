@@ -1,0 +1,24 @@
+# Mutants and the trap for v2_o_i2s_tx (benchmark/tools/check_task.py)
+mutants:
+  - {name: slots_swapped, file: i2s_tx.sv, find: "wire [23:0] live_word     = wq[1] ? tx_r : tx_l;", replace: "wire [23:0] live_word     = wq[1] ? tx_l : tx_r;", why: "left and right are exchanged on the wire"}
+  - {name: lsb_first, file: i2s_tx.sv, find: "live_word[23 - (ph_next - 6'(FIRST))]", replace: "live_word[ph_next - 6'(FIRST)]", why: "bits go out least significant first"}
+  - {name: padding_repeats_sign, file: i2s_tx.sv, find: "live_word[23 - (ph_next - 6'(FIRST))] : 1'b0;", replace: "live_word[23 - (ph_next - 6'(FIRST))] : live_word[23];", why: "the padding bits carry the sign instead of zero"}
+  - {name: staged_values_sent_without_commit, file: i2s_tx.sv, find: "if (armed) begin\n                        tx_l    <= hold_l;\n                        tx_r    <= hold_r;", replace: "if (1'b1) begin\n                        tx_l    <= reg_l;\n                        tx_r    <= reg_r;", why: "whatever is staged goes out at the next frame, with or without a commit"}
+  - {name: snapshot_at_frame_start, file: i2s_tx.sv, find: "tx_l    <= hold_l;\n                        tx_r    <= hold_r;", replace: "tx_l    <= reg_l;\n                        tx_r    <= reg_r;", why: "the pair is taken from the staging registers at the frame start, not at the commit"}
+  - {name: update_mid_frame, file: i2s_tx.sv, find: "hold_l   <= reg_l;\n                            hold_r   <= reg_r;\n                            armed <= 1'b1;", replace: "tx_l    <= reg_l;\n                            tx_r    <= reg_r;\n                            armed <= 1'b0;", why: "a commit changes the pair on the spot, in the middle of a frame"}
+  - {name: frames_every_slot, file: i2s_tx.sv, find: "if (slot_edge && wq[1] == 1'b0) begin\n                    frame_ctr <= frame_ctr + 16'd1;", replace: "if (slot_edge) frame_ctr <= frame_ctr + 16'd1;\n                if (slot_edge && wq[1] == 1'b0) begin", why: "FRAMES counts both slots of a frame"}
+  - {name: frame_count_wraps_early, file: i2s_tx.sv, find: "frame_ctr <= frame_ctr + 16'd1;", replace: "frame_ctr <= {8'd0, frame_ctr[7:0] + 8'd1};", why: "the count of frames begun wraps after 255 where 65535 is right"}
+  - {name: clear_ignored, file: i2s_tx.sv, find: "if (win_wdata[1]) frame_ctr <= '0;", replace: "if (1'b0) frame_ctr <= '0;", why: "CTRL bit 1 does not clear FRAMES"}
+  - {name: commit_bit_one, file: i2s_tx.sv, find: "if (win_wdata[0]) begin\n                            hold_l   <= reg_l;", replace: "if (win_wdata[1]) begin\n                            hold_l   <= reg_l;", why: "the commit is on the clear bit"}
+  - {name: act_not_reset, file: i2s_tx.sv, find: "tx_l <= '0; tx_r <= '0; frame_ctr <= '0;", replace: "frame_ctr <= '0;", why: "the sent pair survives CPU_RESETN"}
+  - {name: staged_unsigned_readback, file: i2s_tx.sv, find: "7'h00:   win_rdata <= 32'(reg_l);", replace: "7'h00:   win_rdata <= {8'd0, reg_l};", why: "a negative staged sample reads back as a positive number"}
+  - {name: staging_23_bits, file: i2s_tx.sv, find: "7'h01: reg_r <= win_wdata[23:0];", replace: "7'h01: reg_r <= {win_wdata[23], win_wdata[22:0]} & 24'h7FFFFF;", why: "the top bit of the right sample is dropped"}
+  - {name: led_shows_right, file: i2s_tx.sv, find: "assign led = tx_l[23:8];", replace: "assign led = tx_r[23:8];", why: "the LEDs follow the right sample of the pair instead of the left"}
+  - {name: led_shows_staged_sample, file: i2s_tx.sv, find: "assign led = tx_l[23:8];", replace: "assign led = reg_l[23:8];", why: "the LEDs show the staged left sample instead of the one being sent"}
+  - {name: data_changes_on_rising_edge, file: i2s_tx.sv, find: "wire        bclk_dn     = ~bq[1] & bq[2];", replace: "wire        bclk_dn     = bq[1] & ~bq[2];", why: "the data line moves on the rising edge of the bit clock, where the codec samples it"}
+trap:
+  twin: "a left-justified transmitter, which puts the top bit on the bit clock straight after the word-select edge"
+  why: "left-justified is the other widespread 24-bit format; I2S waits one more bit clock, so this transmitter is a bit early and an I2S receiver reads every sample doubled"
+  edits:
+    - {file: i2s_tx.sv, find: "localparam int FIRST = 1;", replace: "localparam int FIRST = 0;"}
+  must_fail: [test_tx_walking_ones_and_the_bit_alignment]

@@ -5,6 +5,19 @@ finding), the change and the new hash. Only **development** tasks are amended; n
 v1 and course units are re-recorded with `freeze.py refreeze`; v2 development tasks through a hash-chained `amend` entry in `v2/ledger.jsonl`.
 Reviews: `reports/12_quality_review_area2.md` (planner repository), items R2, R5-R9, B2, Q2.
 
+## 2026-11-14: Claude Code 2.1.321 and the DOC step's wording (request golden re-pin, brief 80)
+
+**Amended 2026-11-14 (planner brief 80 under "Benchmarks do not block improvements").** What: the agent's Claude Code arm accepts CLI
+2.1.321 (`ACCEPTED_CLI`, hashed as `arm_constants`) after the tool-text check (89 successful tool results, none without text, 33 of them
+read_file); and `agent/graph/document.py` DOC_SYSTEM says the specification and architecture were approved automatically with no human
+review (no longer "by a model": the interview oracle only answered the questions) and describes two gaps the flow now finds
+(`seg_bit_order`, `simulated_parameters`). Only `arm_constants` and `doc_system` changed; no role prompt, tool, task, grader, test or
+split changed.
+
+Re-recorded: the request golden `agent/tests/fixtures/b80_request_golden.json` (one deliberate re-pin; `b70_request_golden.json`
+stays as history). Not comparable on request text: DOC steps recorded before this date (the three runs in `results/68_agent_docs/` were
+documented again with the new prompt).
+
 ## 2026-11-13: the DOC step's prompt (request golden re-pin, brief 68F)
 
 **Amended 2026-11-13 (planner brief 68F, after the independent re-review of the three agent-written handovers; eval-1 was
@@ -153,6 +166,21 @@ Reason: on Vivado 2026.1 the whole-board reference misses 100 MHz (WNS -0.166 ns
 Change: `ref/rtl/hough.sv` splits that stage in two registered stages (table entries, then the two products), so `busy` stays high two clocks longer; the arithmetic is unchanged. Acceptance still passes 5/5 unchanged and all 8 mutants are killed (run with `check_task.py`).
 Affected: `ref/rtl/hough.sv`; `hidden/mutants.yaml` (`no_rounding` re-anchored on `px_r + py_r + 64) >>> 7)`, the same rounding term); the unit digest in `MANIFEST.json` (`df6e2378...` -> `28bd5a2de19c740868482995c1de7a67c6205994ee1577e01e70f073679801a9`); `hidden/reference_qor.md` (new 2026.1 numbers, [results/61_c13_amend_2026_1](../results/61_c13_amend_2026_1/)); the published copy `site/public/problems/c13_hough_lines/hough.sv`. `GRADER_DEPS.json` and `split.yaml` are unchanged. The private manifest entry is for the owner to re-record (`freeze.py refreeze c13_hough_lines --private-manifest ...`).
 Comparability: no scored run of this task is recorded in the repository, so no earlier result is affected; a later scoring sees a reference that is two clocks slower per vote.
+
+## 2026-11-14: `shared:lib` gains `audio_bench.py` (brief 78)
+
+**Amended 2026-11-14 (planner-approved dated amendment of shared bench code; before any scored run of the new tasks), `shared:lib`.** Reason: the domain-O audio tasks (`v2_o_*`) import a shared helper for the I2S slot geometry, a register-window environment and a wrapper that holds several copies of a design with different parameters. Change: one new file, `benchmark/lib/audio_bench.py`; no existing file in `benchmark/lib` changed. Digest of the unit re-recorded in `MANIFEST.json` (`freeze.py refreeze shared:lib`) and in `course/MANIFEST.json` (`shared:benchmark/lib`). Comparability: no earlier task imports the new file, so no earlier result is affected. The private manifests list the same shared unit; their entry is for the owner to re-record. The static quality test also accepts a wrapper testbench as a task's toplevel (`bench.yaml` `wrapper:`).
+
+## 2026-11-14: family re-draw of the domain-O audio tasks (brief 83)
+
+**Amended 2026-11-14 (planner rule, agent_learning_strategy section 12: splits are drawn by task family; before any scored run).** The hardened leak guard
+(`benchmark/tools/task_leak.py`, comment-, string- and identifier-insensitive) found that the six `v2_o_*` tasks share benches, tops, test
+skeletons and spec text above its threshold (for example `v2_o_gain_ramp` and `v2_o_rms_meter`: a shared bench file at 0.50 and 366 shared
+windows; the whole-path task `v2_o_audio_path` shares with every block task). They are one family, so the family is drawn as a unit. The
+original draw had held out `v2_o_rms_meter` (cell O/T1) and `v2_o_i2s_rx` (O/T2); both moved to development through two `move` entries that
+carry the held-out manifest hash the draw recorded (`split.py move-dev --manifest`), so all six are development tasks and domain O has no
+held-out task. Files, hidden tests, manifests and check results of the two tasks are unchanged and now public. Not comparable: nothing
+(no scored run of any domain-O task exists). The draw itself is not redone and no other task changes.
 
 ## New hashes
 

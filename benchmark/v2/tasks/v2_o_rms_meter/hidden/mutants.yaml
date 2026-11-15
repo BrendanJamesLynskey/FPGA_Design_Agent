@@ -1,0 +1,22 @@
+# Mutants and the trap for v2_o_rms_meter (benchmark/tools/check_task.py)
+mutants:
+  - {name: block_one_long, file: rms_meter.sv, find: "wire               last  = (fill == 16'((1 << RMS_LOG2) - 1));", replace: "wire               last  = (fill == 16'(1 << RMS_LOG2));", why: "a block has N+1 samples"}
+  - {name: shift_one_short, file: rms_meter.sv, find: "wire        [46:0] mean  = 47'(acc_n >> RMS_LOG2);", replace: "wire        [46:0] mean  = 47'(acc_n >> (RMS_LOG2 - 1));", why: "the mean is divided by N/2: the reading is about 41 percent high"}
+  - {name: mean_rounded, file: rms_meter.sv, find: "wire        [46:0] mean  = 47'(acc_n >> RMS_LOG2);", replace: "wire        [46:0] mean  = 47'((acc_n + ACCW'(1 << (RMS_LOG2 - 1))) >> RMS_LOG2);", why: "the mean square is rounded to nearest instead of floored"}
+  - {name: root_rounded, file: rms_meter.sv, find: "rms     <= root_n;", replace: "rms     <= (rem_n > {2'b00, root_n}) ? root_n + 24'd1 : root_n;", why: "the square root is rounded to nearest instead of floored"}
+  - {name: unsigned_square, file: rms_meter.sv, find: "wire signed [47:0] sq_s  = x * x;", replace: "wire signed [47:0] sq_s  = $unsigned(win_wdata[23:0]) * $unsigned(win_wdata[23:0]);", why: "negative samples are squared as large unsigned numbers"}
+  - {name: sum_too_narrow, file: rms_meter.sv, find: "localparam int ACCW = 47 + RMS_LOG2;", replace: "localparam int ACCW = 46 + RMS_LOG2;", why: "the sum overflows for a block at full scale"}
+  - {name: sqrt_one_step_short, file: rms_meter.sv, find: "cnt  <= 5'd24;", replace: "cnt  <= 5'd23;", why: "the square root stops one bit early: wrong for large readings"}
+  - {name: restart_keeps_sum, file: rms_meter.sv, find: "                    7'h04: if (win_wdata[0]) begin\n                        acc  <= '0;\n                        fill <= '0;", replace: "                    7'h04: if (win_wdata[0]) begin\n                        fill <= '0;", why: "abandoning the block leaves its squares in the sum"}
+  - {name: restart_on_any_write, file: rms_meter.sv, find: "7'h04: if (win_wdata[0]) begin", replace: "7'h04: if (1'b1) begin", why: "CTRL restarts whatever bit is written"}
+  - {name: fill_not_reset, file: rms_meter.sv, find: "acc <= '0; fill <= '0; windows <= '0;", replace: "acc <= '0; windows <= '0;", why: "the block position survives CPU_RESETN"}
+  - {name: led_low_bits, file: rms_meter.sv, find: "assign led = rms[23:8];", replace: "assign led = rms[15:0];", why: "LED shows the wrong bits"}
+  - {name: block_length_fixed_at_8, file: rms_meter.sv, find: "wire               last  = (fill == 16'((1 << RMS_LOG2) - 1));", replace: "wire               last  = (fill == 16'd7);", why: "blocks are 8 samples long whatever RMS_LOG2 is set to"}
+  - {name: sum_width_for_short_blocks, file: rms_meter.sv, find: "localparam int ACCW = 47 + RMS_LOG2;", replace: "localparam int ACCW = 47 + 3;", why: "the sum is wide enough for blocks of 8 but overflows for 256"}
+trap:
+  twin: "textbook pre-scaling: divide each square by N before adding it, to keep the sum narrow"
+  why: "shifting each square throws away its low bits before the sum, so the reading is biased low (eight samples of 3 give a mean square of 8, not 9); the spec asks for the sum at full width and one division at the end"
+  edits:
+    - {file: rms_meter.sv, find: "wire  [ACCW-1:0]   acc_n = acc + ACCW'(sq);", replace: "wire  [ACCW-1:0]   acc_n = acc + ACCW'(sq >> RMS_LOG2);"}
+    - {file: rms_meter.sv, find: "wire        [46:0] mean  = 47'(acc_n >> RMS_LOG2);", replace: "wire        [46:0] mean  = 47'(acc_n);"}
+  must_fail: [test_rms_floor_of_mean_and_of_root]

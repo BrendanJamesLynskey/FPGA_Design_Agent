@@ -1,0 +1,145 @@
+# peak: peak and clip meter; the oracle that answers the agent's questions reads this file (muxuwe).
+tier: T1
+schema: fpga-design-agent/spec/v0
+resources_expected: about 120 LUTs; no BRAM, no DSP
+clocks:
+- freq_mhz: 100
+  port: CLK100MHZ
+  source: board crystal oscillator
+  name: sys_clk
+design_id: 1346715979
+requirements:
+- text: PEAK rises at once to a louder (or equal) sample's magnitude and reloads the hold timer
+  id: REQ-01
+  proof: [simulation]
+- text: After the hold PEAK falls by max(1, PEAK >> 5) per sample down to zero
+  id: REQ-02
+  proof: [simulation]
+- text: The magnitude of the most negative sample is 0x800000
+  proof: [simulation]
+  id: REQ-03
+- proof: [simulation]
+  id: REQ-04
+  text: CLIPS counts every sample at either end of the range
+- id: REQ-05
+  proof: [simulation]
+  text: CTRL clears PEAK and CLIPS independently
+- proof: [simulation]
+  id: REQ-06
+  text: LED[15:0] shows PEAK[23:8]
+- text: The window of registers follows the map above, reset values included
+  proof: [simulation]
+  id: REQ-07
+- proof: [analysis]
+  id: REQ-08
+  text: The 100 MHz clock meets timing; every path is constrained
+- proof: [hardware]
+  text: Reading the window on the hardware gives what the model says
+  id: REQ-09
+behaviour:
+  clips: [A sample is a clip if it equals 8388607 or -8388608. CLIPS counts every such sample (a run of five rail samples adds five) and stops at 0xFFFF., 'CLIPS is not affected by the peak clear, and PEAK is not affected by the clip clear.']
+  controls: ["CTRL (W1P, reads 0): bit 0 sets PEAK = 0 and the hold timer = 0; bit 1 sets CLIPS = 0. Both bits together do both. Taken on the clock of the write."]
+  leds: ['LED[15:0] = PEAK[23:8].']
+  peak: ["For each sample x: MAG = |x| as an unsigned 24-bit number (the most negative sample, -8388608, has magnitude 0x800000, which fits).", "If MAG >= PEAK: PEAK = MAG and the hold timer is reloaded with HOLD. An equal magnitude counts: it re-arms the hold.", "Else if the hold timer is not zero: the timer counts down by one and PEAK is unchanged.", "Else PEAK = PEAK - max(1, PEAK >> 5): a fall of a thirty-second of itself, and at least one, so it always reaches zero.", STATUS.HOLDING (offset 0x05 bit 0) = 1 while the hold timer is not zero (live)., HOLD is read when the timer is reloaded; writing HOLD does not touch a running timer.]
+top: v2_o_peak_meter_top
+assumptions:
+- assumption: the clip counter counts samples, not runs of samples.
+  reason: the count then says how much of the signal was lost, which a run count does not.
+- reason: a pure shift stalls at 31 and the reading would never return to zero.
+  assumption: the fall is a thirty-second per sample with a floor of one.
+parameters:
+  TIMEOUT_CYCLES: 100000
+  CLKS_PER_BIT: 868
+registers:
+  unmapped: offsets 0x06-0x7F read 0; writes to them and to RO registers are ignored
+  shell: window of the test shell (shell/PROTOCOL.md, v1.1)
+  map:
+  - name: SAMPLE
+    offset: 0
+    bits: "a write of a signed 24-bit sample is one sample period; a read returns the previous sample sign-extended to 32 bits"
+    access: RW
+    reset: 0
+  - access: RO
+    offset: 1
+    reset: 0
+    bits: "[23:0] the meter reading"
+    name: PEAK
+  - reset: 0
+    access: RO
+    offset: 2
+    name: CLIPS
+    bits: "[15:0] clip count"
+  - name: HOLD
+    access: RW
+    bits: "[15:0] hold time in samples; [31:16] read 0, ignored on write"
+    offset: 3
+    reset: 32
+  - reset: 0
+    bits: "[0] clear PEAK and the hold timer; [1] clear CLIPS; reads 0"
+    access: W1P
+    name: CTRL
+    offset: 4
+  - access: RO
+    reset: 0
+    offset: 5
+    bits: "[0] HOLDING"
+    name: STATUS
+name: v2_o_peak_meter
+ports:
+- iostandard: LVCMOS33
+  pins: [E3]
+  width: 1
+  dir: in
+  name: CLK100MHZ
+- iostandard: LVCMOS33
+  async: true
+  name: CPU_RESETN
+  width: 1
+  dir: in
+  pins: [C12]
+- dir: out
+  pins:
+  - H17   # duqiro
+  - K15   # puziha
+  - J13   # kinevo
+  - N14   # vefulo
+  - R18   # fixanu
+  - V17   # cibame
+  - U17   # zelufu
+  - U16   # rihohu
+  - V16   # gejozi
+  - T15   # dokupe
+  - U14   # viqaza
+  - T16   # tivuru
+  - V15   # jenabi
+  - V14   # gurobo
+  - V12   # sijulo
+  - V11   # tereva
+  iostandard: LVCMOS33
+  width: 16
+  name: LED
+- dir: in
+  pins: [C4]
+  width: 1
+  name: UART_TXD_IN
+  async: true
+  iostandard: LVCMOS33
+- iostandard: LVCMOS33
+  width: 1
+  name: UART_RXD_OUT
+  pins: [D4]
+  dir: out
+open_questions: []
+part: xc7a100tcsg324-1
+board: nexys_a7_100t
+timing:
+  async_inputs: synchronisers on CPU_RESETN and UART RX, both false paths
+  clock_constraint: CLK100MHZ at 10 ns
+  outputs: outputs come from registers and are false paths
+source: spec.md
+title: Peak meter with hold and a clip counter
+reset:
+  port: CPU_RESETN
+  effect: PEAK = 0, CLIPS = 0, HOLD = 32, hold timer = 0, SAMPLE = 0, LED = 0
+  kind: push-button; asynchronous assertion, release aligned to the clock
+  polarity: active_low

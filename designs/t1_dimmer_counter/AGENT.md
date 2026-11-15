@@ -9,7 +9,7 @@ A 16-bit up/down/clear counter on the Nexys A7-100T. Debounced buttons step it, 
 not: an agent run; the RTL, model and tests were written by hand; a gamma-corrected or auto-repeating dimmer; brightness is linear in the duty and one press is one step; a claim of compliance with any standard; the traceability record is DO-254-style evidence only
 
 ## state
-stage=board-verified vivado=2026.1 kb_pin=1fc7ed8 build_id=595c2767
+stage=board-verified vivado=2026.1 kb_pin=0959c27 build_id=7eeb3bf5
 gates: build_2026_1=pass board_bringup=pass
 
 ## interface
@@ -27,7 +27,7 @@ param CLKS_PER_BIT=868 legal=shell parameter
 designs/t1_dimmer_counter/spec.md 27829433c2: the natural-language spec
 designs/t1_dimmer_counter/spec.yaml 89f4fcc7db: structured spec with assumptions, register map and REQ-01 to REQ-11
 designs/t1_dimmer_counter/architecture.yaml 7ba0324624: blocks, crossings, predicted resources
-designs/t1_dimmer_counter/BRINGUP.md e55b2a9427: bring-up guide for a tester
+designs/t1_dimmer_counter/BRINGUP.md 9c9673487f: bring-up guide for a tester
 designs/t1_dimmer_counter/rtl/t1_dimmer_counter_top.sv 4ee0684c27: board top (shell plus design)
 designs/t1_dimmer_counter/rtl/dimmer_counter.sv 2b37e3497c: counter, PWM, display scan, registers
 designs/t1_dimmer_counter/rtl/debounce.sv e7dd140726: synchroniser and debounce per button

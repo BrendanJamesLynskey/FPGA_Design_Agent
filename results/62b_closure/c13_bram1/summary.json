@@ -1,0 +1,216 @@
+{
+ "stop": "all goals met (G1-G4; G5, the board, not run yet); sign-off passed",
+ "all_met": true,
+ "start": {
+  "G1": {
+   "met": true,
+   "value": "5/5",
+   "target": "all pass",
+   "shortfall": 0.0,
+   "detail": ""
+  },
+  "G2": {
+   "met": true,
+   "value": {
+    "wns_ns": 1.901,
+    "whs_ns": 0.081,
+    "tns_ns": 0.0,
+    "failing_endpoints": 0
+   },
+   "target": {
+    "wns_ns": 0.0,
+    "whs_ns": 0.0,
+    "period_ns": 10.0
+   },
+   "shortfall": 0.0,
+   "detail": ""
+  },
+  "G3": {
+   "met": false,
+   "value": {
+    "lut": 3073,
+    "ff": 1992,
+    "bram_tile": 2,
+    "dsp": 0,
+    "iob": 20
+   },
+   "target": {
+    "lut": 50720.0,
+    "ff": 101440.0,
+    "bram_tile": 1.0,
+    "dsp": 192.0,
+    "iob": 168.0
+   },
+   "shortfall": 1.0,
+   "detail": ""
+  },
+  "G4": {
+   "met": true,
+   "value": {
+    "total_w": 0.149,
+    "junction_c": 42.7
+   },
+   "target": {
+    "power_w": 2.0,
+    "tj_max_c": 85.0
+   },
+   "shortfall": 0.0,
+   "detail": "vectorless estimate, confidence Medium"
+  },
+  "G5": {
+   "met": null,
+   "value": null,
+   "target": "board checks",
+   "shortfall": null,
+   "detail": "not run yet (no board in this phase)"
+  },
+  "CHK": {
+   "met": true,
+   "value": {
+    "blocking": 0
+   },
+   "target": "no Error or Critical Warning",
+   "shortfall": 0.0,
+   "detail": ""
+  }
+ },
+ "final": {
+  "G1": {
+   "met": true,
+   "value": "5/5",
+   "target": "all pass",
+   "shortfall": 0.0,
+   "detail": ""
+  },
+  "G2": {
+   "met": true,
+   "value": {
+    "wns_ns": 0.935,
+    "whs_ns": 0.061,
+    "tns_ns": 0.0,
+    "failing_endpoints": 0
+   },
+   "target": {
+    "wns_ns": 0.0,
+    "whs_ns": 0.0,
+    "period_ns": 10.0
+   },
+   "shortfall": 0.0,
+   "detail": ""
+  },
+  "G3": {
+   "met": true,
+   "value": {
+    "lut": 4377,
+    "ff": 2094,
+    "bram_tile": 0,
+    "dsp": 0,
+    "iob": 20
+   },
+   "target": {
+    "lut": 50720.0,
+    "ff": 101440.0,
+    "bram_tile": 1.0,
+    "dsp": 192.0,
+    "iob": 168.0
+   },
+   "shortfall": 0.0,
+   "detail": ""
+  },
+  "G4": {
+   "met": true,
+   "value": {
+    "total_w": 0.163,
+    "junction_c": 43.0
+   },
+   "target": {
+    "power_w": 2.0,
+    "tj_max_c": 85.0
+   },
+   "shortfall": 0.0,
+   "detail": "vectorless estimate, confidence Medium"
+  },
+  "G5": {
+   "met": null,
+   "value": null,
+   "target": "board checks",
+   "shortfall": null,
+   "detail": "not run yet (no board in this phase)"
+  },
+  "CHK": {
+   "met": true,
+   "value": {
+    "blocking": 0
+   },
+   "target": "no Error or Critical Warning",
+   "shortfall": 0.0,
+   "detail": ""
+  }
+ },
+ "start_line": "G1 met (5/5); G2 met (WNS 1.901 WHS 0.081); G3 NOT met (LUT 3073 FF 1992 BRAM 2 DSP 0); G4 met (0.149 W); G5 -; CHK met (0 blocking)",
+ "final_line": "G1 met (5/5); G2 met (WNS 0.935 WHS 0.061); G3 met (LUT 4377 FF 2094 BRAM 0 DSP 0); G4 met (0.163 W); G5 -; CHK met (0 blocking)",
+ "unmet": {},
+ "unmet_text": [],
+ "iterations": 3,
+ "accepted": 1,
+ "reverted": 2,
+ "early_rejected": 1,
+ "strategies": [
+  [
+   "a_bram_merge",
+   "revert"
+  ],
+  [
+   "a_bram_merge",
+   "revert"
+  ],
+  [
+   "a_lutram",
+   "accept"
+  ]
+ ],
+ "strategies_all": [
+  [
+   [
+    "a_bram_merge"
+   ],
+   "revert"
+  ],
+  [
+   [
+    "a_bram_merge"
+   ],
+   "revert"
+  ],
+  [
+   [
+    "a_lutram"
+   ],
+   "accept"
+  ]
+ ],
+ "usd": 0.00715,
+ "tokens": 21261,
+ "llm_calls": 3,
+ "seconds": 5192.6,
+ "signoff": {
+  "pass": true,
+  "failed": [],
+  "gates": 22,
+  "first_failed_stage": null,
+  "rebuilt": false
+ },
+ "closure_claimed": true,
+ "reentry": null,
+ "case": "c13_bram1",
+ "task": "c13_hough_lines",
+ "model": "openai/gpt-6-luna",
+ "rtl_in": "benchmark/course/tasks/c13_hough_lines/ref/rtl",
+ "plan": false,
+ "budget_override": {
+  "bram": 1.0
+ },
+ "joint": "on",
+ "early": "on",
+ "clock_mhz": 100
+}

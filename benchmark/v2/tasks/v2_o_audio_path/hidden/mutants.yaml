@@ -1,0 +1,34 @@
+# Mutants and the trap for v2_o_audio_path (benchmark/tools/check_task.py)
+mutants:
+  - {name: gain_step_without_smoothing, file: ap_chan.sv, find: "wire  [15:0] g_nxt = (gap <= STEP16) ? aim : ((aim > cur_gain) ? (cur_gain + STEP16) : (cur_gain - STEP16));", replace: "wire  [15:0] g_nxt = aim;", why: "the gain jumps to its target at once: the click the path must not make"}
+  - {name: mute_not_smoothed, file: ap_chan.sv, find: "* $signed({1'b0, g_nxt});", replace: "* $signed({1'b0, muted ? 16'd0 : g_nxt});", why: "mute cuts the signal at once while the gain still ramps"}
+  - {name: ramp_step_plus_one, file: ap_chan.sv, find: "localparam logic [15:0] STEP16 = 16'(RAMP_STEP);", replace: "localparam logic [15:0] STEP16 = 16'(RAMP_STEP) + 16'd1;", why: "the ramp is one step per sample too fast"}
+  - {name: shift_thirteen, file: ap_chan.sv, find: "wire signed [40:0] scaled = mul >>> 12;", replace: "wire signed [40:0] scaled = mul >>> 13;", why: "the output is half as loud as the gain says"}
+  - {name: no_limiter, file: ap_chan.sv, find: "wire signed [23:0] ylim  = (scaled > 41'sd8388607) ? 24'sh7FFFFF\n                             : (scaled < -41'sd8388608) ? 24'sh800000 : scaled[23:0];", replace: "wire signed [23:0] ylim  = scaled[23:0];", why: "an overflowing sample wraps round"}
+  - {name: clip_misses_negative_rail, file: ap_chan.sv, find: "wire               at_end = (ylim == 24'sh7FFFFF) || (ylim == 24'sh800000);", replace: "wire               at_end = (ylim == 24'sh7FFFFF);", why: "the clip counter misses a clip at the negative end of the range"}
+  - {name: clip_counts_runs_once, file: ap_chan.sv, find: "if (at_end && clip_o != 16'hFFFF) clip_o <= clip_o + 16'd1;", replace: "if (at_end && dout != ylim && clip_o != 16'hFFFF) clip_o <= clip_o + 16'd1;", why: "a run of equal clipped samples counts once, so a long clip is under-reported"}
+  - {name: clip_counter_eight_bits, file: ap_chan.sv, find: "clip_o <= clip_o + 16'd1;", replace: "clip_o <= {8'd0, clip_o[7:0] + 8'd1};", why: "the clip counter wraps at 256"}
+  - {name: peak_magnitude_23_bits, file: ap_chan.sv, find: "wire        [23:0] ymag  = ylim[23] ? (24'd0 - ylim) : ylim[23:0];", replace: "wire        [23:0] ymag  = {1'b0, ylim[23] ? (23'd0 - ylim[22:0]) : ylim[22:0]};", why: "the most negative sample has magnitude 0"}
+  - {name: peak_hold_ignored, file: ap_chan.sv, find: "end else if (hold_ctr != 16'd0) begin", replace: "end else if (1'b0) begin", why: "the peak falls at once, with no hold"}
+  - {name: peak_decay_stalls, file: ap_chan.sv, find: "wire        [23:0] fall_by = (peak_o[23:5] == 19'd0) ? 24'd1 : {5'd0, peak_o[23:5]};", replace: "wire        [23:0] fall_by = {5'd0, peak_o[23:5]};", why: "the peak stops falling at 31 and never reaches zero"}
+  - {name: rms_block_scaled_wrong, file: ap_chan.sv, find: "radic <= {1'b0, 47'(sum_nx >> RMS_LOG2)};", replace: "radic <= {1'b0, 47'(sum_nx >> (RMS_LOG2 - 1))};", why: "the mean is divided by N/2"}
+  - {name: rms_unsigned_square, file: ap_chan.sv, find: "wire signed [47:0] ysq_s  = ylim * ylim;", replace: "wire signed [47:0] ysq_s  = $unsigned(ylim) * $unsigned(ylim);", why: "negative samples are squared as large unsigned numbers"}
+  - {name: rms_sum_too_narrow, file: ap_chan.sv, find: "localparam int SUMW = 47 + RMS_LOG2;", replace: "localparam int SUMW = 46 + RMS_LOG2;", why: "a block at full scale overflows the sum of squares"}
+  - {name: left_clear_hits_right, file: ap_core.sv, find: ".clr_peak(clr[0]), .clr_clip(clr[2])", replace: ".clr_peak(clr[1]), .clr_clip(clr[2])", why: "CLR bit 0 clears the wrong channel's peak"}
+  - {name: output_channels_swapped, file: ap_core.sv, find: "txw <= ls[1] ? out_r : out_l;", replace: "txw <= ls[1] ? out_l : out_r;", why: "left and right leave in each other's slots"}
+  - {name: rx_one_bit_early, file: ap_core.sv, find: "if (pos_n == 6'd24) begin", replace: "if (pos_n == 6'd23) begin", why: "a sample is taken one bit clock before its last bit"}
+  - {name: tx_left_justified, file: ap_core.sv, find: "sdo <= (pos_n >= 6'd1 && pos_n <= 6'd24) ? txw[24 - pos_n] : 1'b0;", replace: "sdo <= (pos_n <= 6'd23) ? txw[23 - pos_n] : 1'b0;", why: "the output is left-justified: one bit clock early"}
+  - {name: mclk_divided_by_four, file: ap_core.sv, find: "assign mclk = mdiv[2];", replace: "assign mclk = mdiv[1];", why: "the master clock is twice too fast"}
+  - {name: right_gain_resets_to_zero, file: ap_core.sv, find: "gain_l <= 16'h1000; gain_r <= 16'h1000;", replace: "gain_l <= 16'h1000; gain_r <= 16'h0000;", why: "the right gain starts at 0 after reset"}
+  - {name: hold_not_reset, file: ap_core.sv, find: "hold_cfg <= 16'd32;", replace: "hold_cfg <= 16'd0;", why: "the hold time resets to 0"}
+  - {name: applied_gain_not_reset, file: ap_chan.sv, find: "cur_gain <= 16'h1000; dout <= '0; peak_o <= '0;", replace: "dout <= '0; peak_o <= '0;", why: "the applied gain survives CPU_RESETN"}
+  - {name: led_swapped, file: ap_core.sv, find: "assign led  = {peak_r[23:16], peak_l[23:16]};", replace: "assign led  = {peak_l[23:16], peak_r[23:16]};", why: "the two peak bar graphs are exchanged"}
+  - {name: ramp_step_fixed_at_64, file: ap_chan.sv, find: "localparam logic [15:0] STEP16 = 16'(RAMP_STEP);", replace: "localparam logic [15:0] STEP16 = 16'd64;", why: "the RAMP_STEP parameter is ignored"}
+  - {name: block_fixed_at_8_frames, file: ap_chan.sv, find: "wire               blk_end = (seen == 16'((1 << RMS_LOG2) - 1));", replace: "wire               blk_end = (seen == 16'd7);", why: "the RMS block is always 8 frames, whatever RMS_LOG2 says"}
+  - {name: hold_register_eight_bits, file: ap_core.sv, find: "7'h03: hold_cfg <= win_wdata[15:0];", replace: "7'h03: hold_cfg <= win_wdata[15:0] & 16'h00FF;", why: "only the low byte of a hold time written by the host is kept (both channels)"}
+trap:
+  twin: "textbook level meter: tap the signal before the gain stage"
+  why: "a meter on the input does not move when the gain or mute changes and does not see clipping the gain causes; the spec puts the meters after gain, mute and limiting"
+  edits:
+    - {file: ap_chan.sv, find: "wire        [23:0] ymag  = ylim[23] ? (24'd0 - ylim) : ylim[23:0];", replace: "wire        [23:0] ymag  = din[23] ? (24'd0 - din) : din[23:0];"}
+  must_fail: [test_path_gain_step_is_smoothed]

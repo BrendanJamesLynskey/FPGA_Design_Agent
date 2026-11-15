@@ -21,7 +21,7 @@ and its UART), checks the USB-power gate, programs the base build into SRAM, run
 error responses and counters, sync hunting, frame timeout, framing error, the T1 registers against `model.py`),
 programs the ILA build, captures four ILA windows and checks them against the model (`hw_checks.py`: a COUNT
 write, and the PWM at three dimmer levels), and checks the design is still running. It writes
-`t1_dimmer_counter_bringup.json` to its `--out` folder (default `results/f0b/`) and exits non-zero on any failure. Sections 1-6 are the same checks
+`t1_dimmer_counter_bringup.json` to its `--out` folder (default `results/f0b/`; the committed record from the Vivado 2026.1 builds is `results/f0b_2026_1/`, which a run for that record passes as `--out`) and exits non-zero on any failure. Sections 1-6 are the same checks
 by hand, and what a person checks that the script cannot (buttons, what the display and LEDs look like).
 
 **Power.** Written when the board was powered from its PROG/UART USB cable. A bitstream is programmed only if

@@ -1,0 +1,97 @@
+# regmap/1 (brief 78): the control and metering block of the ZedBoard codec audio path. AXI4-Lite, house profile.
+# python3 -m hwsw.regmap gen showcase/codec_audio/regmap/codec_audio.yaml --out showcase/codec_audio/regmap/generated
+# python3 -m hwsw.regmap check showcase/codec_audio/regmap/codec_audio.yaml --out showcase/codec_audio/regmap/generated
+# The meanings (gain format, ramp, peak and RMS definitions, clip rule) are those of model/audio_ref.py; the registers are
+# the ones of the benchmark's whole-path task, moved from the test shell to AXI4-Lite and given a 4 KB window.
+regmap: 1
+name: codec_audio
+version: 0.1.0
+summary: Gain, mute and metering of a stereo 48 kHz, 24-bit codec audio path, read and written from the Arm over AXI4-Lite.
+addr_width: 12
+unmapped: split
+registers:
+- name: ID
+  offset: 0x000
+  summary: Block identity; software checks it before touching anything else.
+  fields:
+  - {name: MAGIC, lsb: 16, width: 16, access: RO, const: 0x78A0, summary: "fixed pattern 0x78A0"}
+  - {name: VERSION, lsb: 0, width: 16, access: RO, const: 0x0100, summary: "register-map version 1.0"}
+- name: CTRL
+  offset: 0x004
+  summary: Mute switches; a mute is a slide of the applied gain to zero, not a cut.
+  fields:
+  - {name: MUTE_L, lsb: 0, width: 1, access: RW, reset: 0, summary: "1 slides the left channel to silence at the ramp rate; 0 slides it back to GAIN_L"}
+  - {name: MUTE_R, lsb: 1, width: 1, access: RW, reset: 0, summary: "the same for the right channel"}
+- name: GAIN_L
+  offset: 0x008
+  summary: Target gain of the left channel, unsigned Q4.12 (0x1000 is 1.0).
+  fields:
+  - {name: VALUE, lsb: 0, width: 16, access: RW, reset: 0x1000, summary: "target gain; the applied gain moves toward it by RAMP_STEP per sample"}
+- name: GAIN_R
+  offset: 0x00C
+  summary: Target gain of the right channel, unsigned Q4.12.
+  fields:
+  - {name: VALUE, lsb: 0, width: 16, access: RW, reset: 0x1000, summary: "target gain"}
+- name: CUR_L
+  offset: 0x010
+  summary: The gain applied to the last left sample.
+  fields:
+  - {name: VALUE, lsb: 0, width: 16, access: RO, summary: "applied gain, Q4.12"}
+- name: CUR_R
+  offset: 0x014
+  summary: The gain applied to the last right sample.
+  fields:
+  - {name: VALUE, lsb: 0, width: 16, access: RO, summary: "applied gain, Q4.12"}
+- name: HOLD
+  offset: 0x018
+  summary: Peak hold time, one setting for both channels.
+  fields:
+  - {name: SAMPLES, lsb: 0, width: 16, access: RW, reset: 32, summary: "samples a peak is held before it falls; read when the hold is reloaded"}
+- name: CLR
+  offset: 0x01C
+  summary: Clears; reading returns 0.
+  fields:
+  - {name: PEAK_L, lsb: 0, width: 1, access: W1P, summary: "left peak and its hold timer to 0"}
+  - {name: PEAK_R, lsb: 1, width: 1, access: W1P, summary: "right peak and its hold timer to 0"}
+  - {name: CLIPS_L, lsb: 2, width: 1, access: W1P, summary: "left clip count to 0"}
+  - {name: CLIPS_R, lsb: 3, width: 1, access: W1P, summary: "right clip count to 0"}
+- name: PEAK_L
+  offset: 0x020
+  summary: Left peak meter reading (magnitude of the processed sample, held, then falling).
+  fields:
+  - {name: VALUE, lsb: 0, width: 24, access: RO, summary: "peak, 24-bit magnitude"}
+- name: PEAK_R
+  offset: 0x024
+  summary: Right peak meter reading.
+  fields:
+  - {name: VALUE, lsb: 0, width: 24, access: RO, summary: "peak"}
+- name: RMS_L
+  offset: 0x028
+  summary: Left RMS of the last completed block of RMS_LOG2 samples.
+  fields:
+  - {name: VALUE, lsb: 0, width: 24, access: RO, summary: "floor of the square root of the floor of the mean square"}
+- name: RMS_R
+  offset: 0x02C
+  summary: Right RMS of the last completed block.
+  fields:
+  - {name: VALUE, lsb: 0, width: 24, access: RO, summary: "same definition"}
+- name: CLIPS_L
+  offset: 0x030
+  summary: Left clip count (processed samples at either end of the 24-bit range), saturating at 0xFFFF.
+  fields:
+  - {name: VALUE, lsb: 0, width: 16, access: RO, summary: "count"}
+- name: CLIPS_R
+  offset: 0x034
+  summary: Right clip count.
+  fields:
+  - {name: VALUE, lsb: 0, width: 16, access: RO, summary: "count"}
+- name: FRAMES
+  offset: 0x038
+  summary: Frames received since reset.
+  fields:
+  - {name: VALUE, lsb: 0, width: 16, access: RO, summary: "count, wrapping"}
+- name: WINDOWS
+  offset: 0x03C
+  summary: RMS blocks completed on the left channel since reset.
+  fields:
+  - {name: VALUE, lsb: 0, width: 16, access: RO, summary: "count, wrapping"}

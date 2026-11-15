@@ -1,0 +1,127 @@
+# gain: slide-and-scale gain stage; the oracle that answers the agent's questions reads this file (nekipe).
+open_questions: []
+title: Click-free gain control
+board: nexys_a7_100t
+clocks:
+- source: the on-board oscillator
+  name: sys_clk
+  freq_mhz: 100
+  port: CLK100MHZ
+design_id: 1196576080
+behaviour:
+  scaling: ["OUT = clamp24((SAMPLE * current gain) >> 12), where >> is an arithmetic shift (floor: -1 * 0x0800 >> 12 = -1) and clamp24 limits to -8388608 .. 8388607.", STATUS.SAT (bit 1) = 1 when the clamp changed the value of the last sample (the unclamped value did not fit); it is replaced on every sample and is not sticky., "STATUS.RAMPING (bit 0) = 1 while the current gain differs from the present target (live: it follows a write of GAIN or MUTE at once, not only after the next sample)."]
+  leds: ['LED[15:0] = OUT[23:8], registered with OUT.']
+  smoother: ['target = 0 when MUTE = 1, else GAIN (a 16-bit unsigned Q4.12 number, 0x1000 = 1.0). The target is read at the moment a sample is processed.', "Each processed sample first moves the current gain one step toward the target: current + RAMP_STEP, but not past the target; or current - RAMP_STEP, but not below the target. A constant step, linear in time (not exponential), and the current gain lands exactly on the target. The step is applied before the gain is used on the same sample.", "Muting and un-muting use the same slide: mute is only a different target."]
+resources_expected: about 150 LUTs and 1 DSP; no BRAM
+parameters:
+  RAMP_STEP: 16
+  TIMEOUT_CYCLES: 100000
+  CLKS_PER_BIT: 868
+assumptions:
+- assumption: the ramp is a constant step, not a one-pole filter.
+  reason: a one-pole filter never lands exactly on the target and its first step depends on the distance; the product's click-energy check needs the exact length.
+- assumption: the step is applied before the gain is used on the same sample.
+  reason: the first sample after a gain change is then already one step along.
+name: v2_o_gain_ramp
+ports:
+- dir: in
+  pins: [E3]
+  iostandard: LVCMOS33
+  name: CLK100MHZ
+  width: 1
+- dir: in
+  pins: [C12]
+  iostandard: LVCMOS33
+  name: CPU_RESETN
+  async: true
+  width: 1
+- pins: [H17, K15, J13, N14, R18, V17, U17, U16,  # nehehi
+      V16, T15, U14, T16, V15, V14, V12, V11]
+  dir: out
+  name: LED
+  iostandard: LVCMOS33
+  width: 16
+- name: UART_TXD_IN
+  width: 1
+  async: true
+  dir: in
+  iostandard: LVCMOS33
+  pins: [C4]
+- pins: [D4]
+  width: 1
+  name: UART_RXD_OUT
+  iostandard: LVCMOS33
+  dir: out
+schema: fpga-design-agent/spec/v0
+top: v2_o_gain_ramp_top
+source: spec.md
+timing:
+  outputs: registered outputs, slow, false paths
+  clock_constraint: 10 ns period on CLK100MHZ
+  async_inputs: CPU_RESETN and the UART receive line pass synchronisers and are false paths
+tier: T1
+requirements:
+- id: REQ-01
+  text: The applied gain moves toward the target by RAMP_STEP per sample and stops exactly on it, linearly
+  proof: [simulation]
+- id: REQ-02
+  proof: [simulation]
+  text: Mute and un-mute slide through the same ramp
+- proof: [simulation]
+  text: OUT is the floor of the product shifted by 12, clamped to 24 bits; SAT reports a clamp
+  id: REQ-03
+- text: RAMPING is live against the present target
+  id: REQ-04
+  proof: [simulation]
+- proof: [simulation]
+  text: LED[15:0] shows OUT[23:8]
+  id: REQ-05
+- id: REQ-06
+  proof: [simulation]
+  text: Registers sit at the listed offsets and come out of reset with the listed values
+- id: REQ-07
+  proof: [analysis]
+  text: Timing closes at 100 MHz and no path is left unconstrained
+- text: The registers read on the board agree with the model
+  proof: [hardware]
+  id: REQ-08
+registers:
+  shell: test shell, PROTOCOL.md 1.1
+  map:
+  - access: RW
+    bits: "[15:0] target gain, Q4.12; [31:16] read 0, ignored on write"
+    name: GAIN
+    offset: 0
+    reset: 4096
+  - offset: 1
+    name: CTRL
+    reset: 0
+    access: RW
+    bits: "[0] MUTE; other bits read 0, ignored on write"
+  - name: SAMPLE
+    bits: "writing [23:0] pushes one signed sample through (one sample period); reading gives the last sample written, sign-extended"
+    reset: 0
+    offset: 2
+    access: RW
+  - reset: 0
+    name: OUT
+    offset: 3
+    access: RO
+    bits: the last scaled sample, sign-extended to 32 bits
+  - access: RO
+    name: CUR
+    reset: 4096
+    offset: 4
+    bits: "[15:0] the gain applied to the last sample (the current gain)"
+  - reset: 0
+    offset: 5
+    bits: "[0] RAMPING; [1] SAT; other bits 0"
+    access: RO
+    name: STATUS
+  unmapped: offsets 0x06-0x7F read 0; writes to them and to RO registers are ignored
+reset:
+  effect: GAIN = 0x1000, MUTE = 0, current gain = 0x1000, SAMPLE = 0, OUT = 0, STATUS = 0, LED = 0
+  port: CPU_RESETN
+  kind: "button input, synchronised: it takes effect immediately and ends on a clock edge"
+  polarity: active_low
+part: xc7a100tcsg324-1

@@ -557,11 +557,95 @@ svg .bdtick { stroke: var(--ink-3); }
   .bdparams td.og::before { content: "Source: "; }
   .bdparams td.vl { overflow-wrap: anywhere; }
 }
+
+/* story page (brief 76): timeline, experiment cards, forest plots, ledger; static, no animation */
+.jump { display: flex; flex-wrap: wrap; gap: 4px 6px; margin: 0 0 8px; }
+.jump a { padding: 10px 12px; border: 1px solid var(--rule); background: var(--panel); text-decoration: none; min-height: 44px; display: inline-flex; align-items: center; }
+.sfig svg { max-width: 640px; }
+.sfig text { fill: var(--ink-2); font: 12px var(--f-body); }
+.sfig .flab { fill: var(--ink); font-size: 13px; }
+.sfig .fval, .sfig .sval { font: 12px var(--f-mono); fill: var(--ink-2); }
+.sfig .slab { fill: var(--ink-2); font-size: 11px; }
+.sfig .rule { stroke: var(--rule); stroke-width: 1; }
+.sfig .sbar { fill: var(--ink-3); }
+.sfig .sbox { fill: none; stroke: var(--rule); }
+.sfig .fsig { stroke: var(--ink); stroke-width: 2; }
+.sfig .fnull { stroke: var(--ink-3); stroke-width: 2; stroke-dasharray: 5 2; }
+.sfig .fnullm, .sfig .mfnull { fill: var(--ink-3); }
+.sfig .mfsig { fill: var(--ink); }
+.sfig .mfnull { fill: none; stroke: var(--ink-3); stroke-width: 1.5; }
+.sfig rect.fsigm { fill: none; stroke: var(--ink); stroke-width: 1.5; }
+.tl { list-style: none; margin: 1em 0; padding: 0; border-left: 2px solid var(--rule); }
+.tl li { display: grid; grid-template-columns: 4.5em 1fr; gap: 0 12px; padding: 0 0 22px 14px; position: relative; max-width: none; }
+.tl li::before { content: ""; position: absolute; left: -7px; top: .45em; width: 12px; height: 12px; background: var(--bg); border: 2px solid var(--ink); }
+.tld { font: 600 .85rem var(--f-mono); color: var(--ink-3); padding-top: .2em; }
+.tl h3 { margin: 0 0 .3em; }
+.tl p { margin: 0 0 .45em; }
+.evl { font-size: .85rem; color: var(--ink-3); }
+.vstrip { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 18px; }
+.vstrip .tag { text-decoration: none; text-transform: none; letter-spacing: 0; font-size: .8rem; padding: 6px 9px; min-height: 36px; display: inline-flex; align-items: center; }
+.vt.v-win { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.vt.v-stopped { border-style: dashed; border-width: 2px; }
+.vt.v-null, .vt.v-negative { border-width: 2px; }
+.vt.v-mixed { border-style: dotted; border-width: 2px; }
+.xcards { display: grid; gap: 14px; grid-template-columns: minmax(0, 1fr); }
+.xcard { min-width: 0; border: 1px solid var(--rule); background: var(--panel); padding: 14px 16px; max-width: none; }
+.xcard.v-stopped { border-style: dashed; }
+.xcard h3 { margin: .4em 0 .6em; }
+.xhead { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.xd { margin: 0 0 .6em; display: grid; grid-template-columns: 9.5em 1fr; gap: 6px 14px; }
+.xd dt { font: 600 .78rem var(--f-mono); text-transform: uppercase; letter-spacing: .05em; color: var(--ink-3); padding-top: .25em; }
+.xd dd { margin: 0; max-width: 70ch; }
+.mgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+.mcard { border: 1px solid var(--rule); background: var(--panel); padding: 4px 16px 6px; }
+.mcard h3 { margin: .8em 0 .3em; font-size: 1rem; }
+.lessons li { margin-bottom: .7em; }
+@media (max-width: 560px) {
+  .xd { grid-template-columns: 1fr; gap: 0; }
+  .xd dt { padding-top: .7em; }
+  .tl li { grid-template-columns: 1fr; }
+  .tld { padding: 0 0 .1em; }
+}
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.mx td.mk, .mx th.mk { text-align: center; white-space: normal; min-width: 6.5em; position: relative; }
+.mx th[scope="row"] { font-weight: 400; color: var(--ink); min-width: 14em; }
+.mx tfoot th, .mx tfoot td { border-top: 2px solid var(--ink); font-weight: 600; }
+.sq { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--ink); vertical-align: middle; line-height: 12px; text-align: center; box-sizing: border-box; }
+.sq.y { background: var(--ink); }
+.sq.n { background: transparent; border-color: var(--ink-3); border-style: dashed; }
+.sq.na { border: 0; color: var(--ink-3); }
+.map code { white-space: normal; overflow-wrap: anywhere; display: inline-block; margin: 0 4px 4px 0; font-size: .75rem; }
+.map th[scope="row"] { min-width: 12em; font-weight: 600; }
+.map td { min-width: 8em; }
+.map { table-layout: auto; }
+.pin { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.pstep { border: 1px solid var(--rule); background: var(--panel); padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; max-width: none; }
+.pstep.bad { border: 2px solid var(--warn); }
+.ptag { font: 700 .75rem var(--f-mono); text-transform: uppercase; color: var(--ink-3); }
+.pstep.bad .ptag { color: var(--warn); }
+.sfig .sbad { fill: var(--warn); }
+.sfig .ftick { stroke: var(--ink); stroke-width: 2.5; }
+.sfig .sunk { fill: none; stroke: var(--ink-3); stroke-dasharray: 4 3; }
+.sfig .sbar2 { fill: var(--ink); }
+.mxfig td.num { font-family: var(--f-mono); }
+.cexfig .cxh { fill: var(--ink); }
+.cexfig .cxl { fill: var(--ink-3); }
+.cexfig .cxfut { fill: var(--bg); opacity: .85; }
+.cexfig .ctl { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+.mx th[scope="row"] { min-width: 10em; }
+@media (max-width: 700px) {
+  .map thead { display: none; }
+  .map, .map tbody, .map tr, .map td, .map th { display: block; min-width: 0; width: 100%; }
+  .map tr { border-bottom: 2px solid var(--rule); padding: 6px 0; }
+  .map td { border: 0; padding: 2px 10px; }
+  .map td:not(:has(code)) { display: none; }
+  .map td::before { content: attr(data-label) ": "; font-size: .78rem; color: var(--ink-3); display: block; }
+}
 </style>
 </head>
 <body>
 <a class="visually-hidden" href="#main">Skip to content</a>
-<header class="bar"><div class="wrap"><a class="brand" href="../index.html">FPGA Design Agent</a><nav aria-label="Pages"><a href="../agent.html">The agent</a><a class="sub" href="../agent.html#harness">Harness</a><a href="../how.html">How it works</a><a href="../flow-notes.html">Beyond the flow</a><a href="../expertise.html">Expertise</a><a href="../examples.html">Examples</a><a href="../showcase.html">Showcase</a><a href="../problems.html" aria-current="page">Problems</a><a href="../evaluation.html">Evaluation</a><a href="../results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
+<header class="bar"><div class="wrap"><a class="brand" href="../index.html">FPGA Design Agent</a><nav aria-label="Pages"><a href="../agent.html">The agent</a><a class="sub" href="../agent.html#harness">Harness</a><a href="../story.html">How it was built</a><a href="../how.html">How it works</a><a href="../verification.html">Verification</a><a href="../flow-notes.html">Beyond the flow</a><a href="../expertise.html">Expertise</a><a href="../examples.html">Examples</a><a href="../showcase.html">Showcase</a><a href="../problems.html" aria-current="page">Problems</a><a href="../evaluation.html">Evaluation</a><a href="../results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
 <main id="main" class="wrap">
 <p class="crumbs small"><a href="../problems.html">Problems</a> / <a href="../problems.html#dom-S">S. Computer vision</a></p>
 <h1>Blob finder behind the test shell</h1>
@@ -2207,6 +2291,20 @@ PTR, DATA, GO, STATUS, AREA, CX, CY = range(7)
   }
   openHash();
   window.addEventListener("hashchange", openHash);
+})();
+
+// brief 81: replay of a recorded counterexample: the slider hides the steps after the chosen one
+(function () {
+  document.querySelectorAll('.cexfig').forEach(function (f) {
+    var r = f.querySelector('input[type=range]'), fut = f.querySelector('.cxfut'), pos = f.querySelector('.cexpos'), lab = f.querySelector('.cxstep');
+    var n = +f.dataset.cycles, lx = +f.dataset.lx, cw = +f.dataset.cw, w = +f.dataset.w;
+    function set() {
+      var k = +r.value, x = lx + (k + 1) * cw;
+      fut.setAttribute('x', x); fut.setAttribute('width', Math.max(0, w - x));
+      pos.textContent = k; if (lab) lab.textContent = 'step ' + k;
+    }
+    r.addEventListener('input', set); set();
+  });
 })();
 </script>
 </body>

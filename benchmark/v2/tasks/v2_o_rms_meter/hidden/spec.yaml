@@ -1,0 +1,133 @@
+# rms: block RMS meter; the oracle that answers the agent's questions reads this file (xodudo).
+design_id: 1380799309
+behaviour:
+  leds: ['LED[15:0] = RMS[23:8].']
+  rms: ['N = 2**RMS_LOG2. Each sample x adds x*x (the square of the signed value, up to 2**46) to a sum, with no loss of bits (the sum is at least 47 + RMS_LOG2 bits wide), and FILL counts up.', "When the N-th sample of a block arrives: MEANSQ = floor(sum / N) (the integer shift of the whole sum, the squares are never shifted before they are added); RMS = floor(sqrt(MEANSQ)) (the integer square root, rounded down); WINDOWS = WINDOWS + 1 (16 bits, wrapping); the sum and FILL restart at zero for the next block.", RMS is published together with WINDOWS and held until the next block completes. It is available no later than 40 clocks after the write of the N-th sample (the bench reads it a UART transfer later)., For a block entirely at -8388608 the mean square is exactly 2**46 and RMS = 0x800000., "CTRL (W1P, reads 0), bit 0: abandon the block in progress (sum = 0, FILL = 0). RMS and WINDOWS are not touched. A write with bit 0 clear does nothing."]
+clocks:
+- freq_mhz: 100
+  name: sys_clk
+  source: 100 MHz oscillator of the board
+  port: CLK100MHZ
+reset:
+  port: CPU_RESETN
+  kind: external button, asserted asynchronously and released synchronously
+  polarity: active_low
+  effect: RMS = 0, WINDOWS = 0, FILL = 0, partial sum = 0, SAMPLE = 0, LED = 0
+source: spec.md
+ports:
+- pins: [E3]
+  dir: in
+  name: CLK100MHZ
+  iostandard: LVCMOS33
+  width: 1
+- pins: [C12]
+  async: true
+  dir: in
+  width: 1
+  iostandard: LVCMOS33
+  name: CPU_RESETN
+- dir: out
+  name: LED
+  iostandard: LVCMOS33
+  pins:
+  - H17   # magelo
+  - K15   # lofaxa
+  - J13   # bofiga
+  - N14   # nuduwu
+  - R18   # fuxozi
+  - V17   # zegaco
+  - U17   # haseba
+  - U16   # buseji
+  - V16   # qiwuru
+  - T15   # watucu
+  - U14   # cozugo
+  - T16   # qijogi
+  - V15   # xicujo
+  - V14   # qiwahe
+  - V12   # mixija
+  - V11   # vadeta
+  width: 16
+- async: true
+  pins: [C4]
+  dir: in
+  name: UART_TXD_IN
+  width: 1
+  iostandard: LVCMOS33
+- dir: out
+  iostandard: LVCMOS33
+  pins: [D4]
+  width: 1
+  name: UART_RXD_OUT
+name: v2_o_rms_meter
+part: xc7a100tcsg324-1
+registers:
+  unmapped: offsets 0x05-0x7F read 0; writes to them and to RO registers are ignored
+  shell: the shell register window, protocol 1.1
+  map:
+  - access: RW
+    offset: 0
+    name: SAMPLE
+    bits: "write a 24-bit signed sample to run one sample period; reads return the last sample, sign-extended over 32 bits"
+    reset: 0
+  - bits: "[23:0] the reading of the last completed block"
+    name: RMS
+    reset: 0
+    offset: 1
+    access: RO
+  - bits: "[15:0] completed blocks, wrapping"
+    offset: 2
+    reset: 0
+    access: RO
+    name: WINDOWS
+  - access: RO
+    bits: "[15:0] samples already in the block in progress, 0 .. N-1"
+    reset: 0
+    name: FILL
+    offset: 3
+  - name: CTRL
+    access: W1P
+    reset: 0
+    bits: "[0] restart the block; reads 0"
+    offset: 4
+parameters:
+  CLKS_PER_BIT: 868
+  RMS_LOG2: 8
+  TIMEOUT_CYCLES: 100000
+timing:
+  clock_constraint: a 10 ns clock on CLK100MHZ
+  outputs: false-pathed registered outputs (they are slow)
+  async_inputs: UART RX and CPU_RESETN cross through synchronisers; false paths
+title: RMS level meter
+assumptions:
+- assumption: both roundings are down (floor of the mean, floor of the root).
+  reason: integer results with a single stated rounding make the reading exactly checkable.
+- assumption: squares are summed at full width and divided once, at the end of the block.
+  reason: shifting each square first loses the low bits of every term and biases the reading low.
+tier: T1
+schema: fpga-design-agent/spec/v0
+requirements:
+- text: RMS = floor(sqrt(floor(sum of squares / N))) for each block of N samples, exact over the full 24-bit range
+  id: REQ-01
+  proof: [simulation]
+- id: REQ-02
+  proof: [simulation]
+  text: The reading and WINDOWS change only when a block completes
+- id: REQ-03
+  text: FILL counts the samples in the current block; CTRL abandons it without touching RMS or WINDOWS
+  proof: [simulation]
+- proof: [simulation]
+  id: REQ-04
+  text: LED[15:0] shows RMS[23:8]
+- text: Every listed register is at its offset and resets to its listed value
+  id: REQ-05
+  proof: [simulation]
+- proof: [analysis]
+  id: REQ-06
+  text: Setup and hold are met at 100 MHz with all paths constrained
+- text: On hardware, register reads match the golden model
+  proof: [hardware]
+  id: REQ-07
+board: nexys_a7_100t
+open_questions: []
+resources_expected: about 300 LUTs and 1 DSP (or a multiplier made of fabric); no BRAM
+top: v2_o_rms_meter_top
