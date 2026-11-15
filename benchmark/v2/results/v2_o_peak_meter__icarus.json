@@ -1,0 +1,216 @@
+{
+  "task": "v2_o_peak_meter",
+  "sim": "icarus",
+  "date": "2026-11-14",
+  "ref": {
+    "pass": true,
+    "tests": {
+      "test_peak_identity_and_reset": true,
+      "test_peak_peak_rises_holds_and_decays": true,
+      "test_peak_decay_reaches_zero": true,
+      "test_peak_negative_samples_and_the_extremes": true,
+      "test_peak_clip_count_is_per_sample": true,
+      "test_peak_clears_are_independent": true,
+      "test_peak_random_and_register_rules": true,
+      "test_peak_clip_count_and_hold_are_wider_than_a_byte": true
+    }
+  },
+  "mutants": [
+    {
+      "name": "magnitude_23_bits",
+      "why": "the most negative sample gets magnitude 0 (a 23-bit absolute value overflows)",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_peak_negative_samples_and_the_extremes",
+        "test_peak_clip_count_is_per_sample",
+        "test_peak_clears_are_independent",
+        "test_peak_random_and_register_rules",
+        "test_peak_clip_count_and_hold_are_wider_than_a_byte"
+      ]
+    },
+    {
+      "name": "positive_samples_only",
+      "why": "the meter ignores negative samples",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_peak_negative_samples_and_the_extremes",
+        "test_peak_clip_count_is_per_sample",
+        "test_peak_clears_are_independent",
+        "test_peak_random_and_register_rules",
+        "test_peak_clip_count_and_hold_are_wider_than_a_byte"
+      ]
+    },
+    {
+      "name": "hold_ignored",
+      "why": "the reading falls at once, with no hold",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_peak_peak_rises_holds_and_decays",
+        "test_peak_negative_samples_and_the_extremes",
+        "test_peak_clip_count_is_per_sample",
+        "test_peak_clears_are_independent",
+        "test_peak_random_and_register_rules",
+        "test_peak_clip_count_and_hold_are_wider_than_a_byte"
+      ]
+    },
+    {
+      "name": "hold_one_short",
+      "why": "the hold lasts one sample too few",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_peak_peak_rises_holds_and_decays",
+        "test_peak_random_and_register_rules",
+        "test_peak_clip_count_and_hold_are_wider_than_a_byte"
+      ]
+    },
+    {
+      "name": "decay_stalls",
+      "why": "the fall stops at 31 and never reaches zero",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_peak_decay_reaches_zero"
+      ]
+    },
+    {
+      "name": "decay_sixteenth",
+      "why": "the fall is twice as fast",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_peak_peak_rises_holds_and_decays",
+        "test_peak_decay_reaches_zero",
+        "test_peak_random_and_register_rules",
+        "test_peak_clip_count_and_hold_are_wider_than_a_byte"
+      ]
+    },
+    {
+      "name": "equal_does_not_rearm",
+      "why": "an equal magnitude does not reload the hold",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_peak_peak_rises_holds_and_decays",
+        "test_peak_decay_reaches_zero",
+        "test_peak_random_and_register_rules"
+      ]
+    },
+    {
+      "name": "clip_runs",
+      "why": "a run of rail samples counts once",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_peak_negative_samples_and_the_extremes",
+        "test_peak_clip_count_is_per_sample",
+        "test_peak_clears_are_independent",
+        "test_peak_random_and_register_rules",
+        "test_peak_clip_count_and_hold_are_wider_than_a_byte"
+      ]
+    },
+    {
+      "name": "clip_positive_only",
+      "why": "the counter misses the negative end of the range",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_peak_negative_samples_and_the_extremes",
+        "test_peak_clip_count_is_per_sample",
+        "test_peak_clears_are_independent",
+        "test_peak_random_and_register_rules",
+        "test_peak_clip_count_and_hold_are_wider_than_a_byte"
+      ]
+    },
+    {
+      "name": "clip_near_rail",
+      "why": "a sample near the rail counts as a clip",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_peak_negative_samples_and_the_extremes",
+        "test_peak_clip_count_is_per_sample"
+      ]
+    },
+    {
+      "name": "clear_bits_swapped",
+      "why": "the clip clear is on the wrong bit",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_peak_clears_are_independent"
+      ]
+    },
+    {
+      "name": "clear_peak_keeps_hold",
+      "why": "clearing the peak leaves the hold timer running",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_peak_clears_are_independent"
+      ]
+    },
+    {
+      "name": "hold_not_reset",
+      "why": "HOLD survives CPU_RESETN",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_peak_identity_and_reset"
+      ]
+    },
+    {
+      "name": "led_wrong_bits",
+      "why": "LED shows the wrong bits",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_peak_peak_rises_holds_and_decays",
+        "test_peak_decay_reaches_zero",
+        "test_peak_negative_samples_and_the_extremes",
+        "test_peak_clip_count_is_per_sample",
+        "test_peak_clears_are_independent",
+        "test_peak_random_and_register_rules",
+        "test_peak_clip_count_and_hold_are_wider_than_a_byte"
+      ]
+    },
+    {
+      "name": "clip_count_eight_bits",
+      "why": "the clip counter stops at 255",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_peak_clip_count_and_hold_are_wider_than_a_byte"
+      ]
+    },
+    {
+      "name": "hold_eight_bits",
+      "why": "HOLD stores just the bottom 8 bits of what is written",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_peak_clip_count_and_hold_are_wider_than_a_byte"
+      ]
+    }
+  ],
+  "mutants_killed": 16,
+  "mutants_total": 16,
+  "trap": {
+    "twin": "textbook cheap absolute value: invert the sign bit's bits (one's complement) instead of negating",
+    "why": "inverting without adding one is off by one for every negative sample, so a -1 reads as 0 and the meter is a count low on one polarity",
+    "must_fail": [
+      "test_peak_negative_samples_and_the_extremes"
+    ],
+    "failed_tests": [
+      "test_peak_negative_samples_and_the_extremes",
+      "test_peak_clip_count_is_per_sample",
+      "test_peak_clears_are_independent",
+      "test_peak_random_and_register_rules",
+      "test_peak_clip_count_and_hold_are_wider_than_a_byte"
+    ],
+    "trap_fires": true
+  }
+}

@@ -1,0 +1,206 @@
+{
+  "task": "v2_o_i2s_tx",
+  "sim": "icarus",
+  "date": "2026-11-14",
+  "ref": {
+    "pass": true,
+    "tests": {
+      "test_tx_identity_reset_and_silence": true,
+      "test_tx_commit_repeat_and_staging_after_commit": true,
+      "test_tx_walking_ones_and_the_bit_alignment": true,
+      "test_tx_commit_is_atomic_while_the_clock_runs": true,
+      "test_tx_frame_counter": true,
+      "test_tx_register_rules": true,
+      "test_tx_bit_clock_ratios": true
+    }
+  },
+  "mutants": [
+    {
+      "name": "slots_swapped",
+      "why": "left and right are exchanged on the wire",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_tx_commit_repeat_and_staging_after_commit",
+        "test_tx_walking_ones_and_the_bit_alignment",
+        "test_tx_commit_is_atomic_while_the_clock_runs",
+        "test_tx_bit_clock_ratios"
+      ]
+    },
+    {
+      "name": "lsb_first",
+      "why": "bits go out least significant first",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_tx_commit_repeat_and_staging_after_commit",
+        "test_tx_walking_ones_and_the_bit_alignment",
+        "test_tx_commit_is_atomic_while_the_clock_runs",
+        "test_tx_bit_clock_ratios"
+      ]
+    },
+    {
+      "name": "padding_repeats_sign",
+      "why": "the padding bits carry the sign instead of zero",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_tx_commit_repeat_and_staging_after_commit",
+        "test_tx_walking_ones_and_the_bit_alignment",
+        "test_tx_commit_is_atomic_while_the_clock_runs",
+        "test_tx_bit_clock_ratios"
+      ]
+    },
+    {
+      "name": "staged_values_sent_without_commit",
+      "why": "whatever is staged goes out at the next frame, with or without a commit",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_tx_identity_reset_and_silence",
+        "test_tx_commit_repeat_and_staging_after_commit",
+        "test_tx_commit_is_atomic_while_the_clock_runs"
+      ]
+    },
+    {
+      "name": "snapshot_at_frame_start",
+      "why": "the pair is taken from the staging registers at the frame start, not at the commit",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_tx_commit_repeat_and_staging_after_commit"
+      ]
+    },
+    {
+      "name": "update_mid_frame",
+      "why": "a commit changes the pair on the spot, in the middle of a frame",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_tx_commit_repeat_and_staging_after_commit",
+        "test_tx_commit_is_atomic_while_the_clock_runs"
+      ]
+    },
+    {
+      "name": "frames_every_slot",
+      "why": "FRAMES counts both slots of a frame",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_tx_identity_reset_and_silence",
+        "test_tx_commit_repeat_and_staging_after_commit",
+        "test_tx_frame_counter",
+        "test_tx_bit_clock_ratios"
+      ]
+    },
+    {
+      "name": "frame_count_wraps_early",
+      "why": "the count of frames begun wraps after 255 where 65535 is right",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_tx_frame_counter"
+      ]
+    },
+    {
+      "name": "clear_ignored",
+      "why": "CTRL bit 1 does not clear FRAMES",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_tx_frame_counter"
+      ]
+    },
+    {
+      "name": "commit_bit_one",
+      "why": "the commit is on the clear bit",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_tx_commit_repeat_and_staging_after_commit",
+        "test_tx_walking_ones_and_the_bit_alignment",
+        "test_tx_commit_is_atomic_while_the_clock_runs",
+        "test_tx_bit_clock_ratios"
+      ]
+    },
+    {
+      "name": "act_not_reset",
+      "why": "the sent pair survives CPU_RESETN",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_tx_identity_reset_and_silence",
+        "test_tx_frame_counter"
+      ]
+    },
+    {
+      "name": "staged_unsigned_readback",
+      "why": "a negative staged sample reads back as a positive number",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_tx_register_rules"
+      ]
+    },
+    {
+      "name": "staging_23_bits",
+      "why": "the top bit of the right sample is dropped",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_tx_identity_reset_and_silence",
+        "test_tx_commit_repeat_and_staging_after_commit",
+        "test_tx_walking_ones_and_the_bit_alignment",
+        "test_tx_commit_is_atomic_while_the_clock_runs",
+        "test_tx_register_rules",
+        "test_tx_bit_clock_ratios"
+      ]
+    },
+    {
+      "name": "led_shows_right",
+      "why": "the LEDs follow the right sample of the pair instead of the left",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_tx_commit_repeat_and_staging_after_commit"
+      ]
+    },
+    {
+      "name": "led_shows_staged_sample",
+      "why": "the LEDs show the staged left sample instead of the one being sent",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_tx_commit_repeat_and_staging_after_commit"
+      ]
+    },
+    {
+      "name": "data_changes_on_rising_edge",
+      "why": "the data line moves on the rising edge of the bit clock, where the codec samples it",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_tx_commit_repeat_and_staging_after_commit",
+        "test_tx_walking_ones_and_the_bit_alignment",
+        "test_tx_commit_is_atomic_while_the_clock_runs",
+        "test_tx_bit_clock_ratios"
+      ]
+    }
+  ],
+  "mutants_killed": 16,
+  "mutants_total": 16,
+  "trap": {
+    "twin": "a left-justified transmitter, which puts the top bit on the bit clock straight after the live_word-select edge",
+    "why": "left-justified is the other widespread 24-bit format; I2S waits one more bit clock, so this transmitter is a bit early and an I2S receiver reads every sample doubled",
+    "must_fail": [
+      "test_tx_walking_ones_and_the_bit_alignment"
+    ],
+    "failed_tests": [
+      "test_tx_commit_repeat_and_staging_after_commit",
+      "test_tx_walking_ones_and_the_bit_alignment",
+      "test_tx_commit_is_atomic_while_the_clock_runs",
+      "test_tx_bit_clock_ratios"
+    ],
+    "trap_fires": true
+  }
+}

@@ -167,6 +167,21 @@ Change: `ref/rtl/hough.sv` splits that stage in two registered stages (table ent
 Affected: `ref/rtl/hough.sv`; `hidden/mutants.yaml` (`no_rounding` re-anchored on `px_r + py_r + 64) >>> 7)`, the same rounding term); the unit digest in `MANIFEST.json` (`df6e2378...` -> `28bd5a2de19c740868482995c1de7a67c6205994ee1577e01e70f073679801a9`); `hidden/reference_qor.md` (new 2026.1 numbers, [results/61_c13_amend_2026_1](../results/61_c13_amend_2026_1/)); the published copy `site/public/problems/c13_hough_lines/hough.sv`. `GRADER_DEPS.json` and `split.yaml` are unchanged. The private manifest entry is for the owner to re-record (`freeze.py refreeze c13_hough_lines --private-manifest ...`).
 Comparability: no scored run of this task is recorded in the repository, so no earlier result is affected; a later scoring sees a reference that is two clocks slower per vote.
 
+## 2026-11-14: `shared:lib` gains `audio_bench.py` (brief 78)
+
+**Amended 2026-11-14 (planner-approved dated amendment of shared bench code; before any scored run of the new tasks), `shared:lib`.** Reason: the domain-O audio tasks (`v2_o_*`) import a shared helper for the I2S slot geometry, a register-window environment and a wrapper that holds several copies of a design with different parameters. Change: one new file, `benchmark/lib/audio_bench.py`; no existing file in `benchmark/lib` changed. Digest of the unit re-recorded in `MANIFEST.json` (`freeze.py refreeze shared:lib`) and in `course/MANIFEST.json` (`shared:benchmark/lib`). Comparability: no earlier task imports the new file, so no earlier result is affected. The private manifests list the same shared unit; their entry is for the owner to re-record. The static quality test also accepts a wrapper testbench as a task's toplevel (`bench.yaml` `wrapper:`).
+
+## 2026-11-14: family re-draw of the domain-O audio tasks (brief 83)
+
+**Amended 2026-11-14 (planner rule, agent_learning_strategy section 12: splits are drawn by task family; before any scored run).** The hardened leak guard
+(`benchmark/tools/task_leak.py`, comment-, string- and identifier-insensitive) found that the six `v2_o_*` tasks share benches, tops, test
+skeletons and spec text above its threshold (for example `v2_o_gain_ramp` and `v2_o_rms_meter`: a shared bench file at 0.50 and 366 shared
+windows; the whole-path task `v2_o_audio_path` shares with every block task). They are one family, so the family is drawn as a unit. The
+original draw had held out `v2_o_rms_meter` (cell O/T1) and `v2_o_i2s_rx` (O/T2); both moved to development through two `move` entries that
+carry the held-out manifest hash the draw recorded (`split.py move-dev --manifest`), so all six are development tasks and domain O has no
+held-out task. Files, hidden tests, manifests and check results of the two tasks are unchanged and now public. Not comparable: nothing
+(no scored run of any domain-O task exists). The draw itself is not redone and no other task changes.
+
 ## New hashes
 
 v1 and course units (SHA-256 of the unit's sorted file lines, as in MANIFEST.json):

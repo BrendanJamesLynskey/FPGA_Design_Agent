@@ -71,7 +71,12 @@ def test_v2_task_well_formed(task: Path) -> None:
     assert validate(spec) == [], validate(spec)
     assert spec["name"] == task.name and spec["top"] == f"{task.name}_top"
     bench = yaml.safe_load((task / "hidden" / "bench.yaml").read_text())
-    assert bench["toplevel"] == spec["top"] and len(bench.get("phrases") or []) >= 3
+    if bench.get("wrapper"):          # a wrapper testbench (several copies of the design with different parameters) is the toplevel
+        wrapper = (task / "hidden" / bench["wrapper"]).read_text()
+        assert f"module {bench['toplevel']}" in wrapper and spec["top"] in wrapper, "the wrapper must define the toplevel and instantiate the design's top"
+    else:
+        assert bench["toplevel"] == spec["top"]
+    assert len(bench.get("phrases") or []) >= 3
     text = " ".join((task / "spec.md").read_text().split()).lower()
     for ph in bench["phrases"]:
         assert " ".join(ph.split()).lower() in text, f"phrase not verbatim in spec.md: {ph!r}"
@@ -99,6 +104,7 @@ def test_v2_manifest_matches_the_task_and_the_ledger(task: Path) -> None:
 
 def test_public_v2_tasks_are_exactly_the_ledger_development_tasks() -> None:
     dev = {d["task"] for e in S.read_ledger() if e["kind"] in ("draw", "family_draw") for d in e["dev"]}
+    dev |= {e["task"] for e in S.read_ledger() if e["kind"] == "move" and "manifest" in e}      # family moves
     assert {d.name for d in V2} == dev, "benchmark/v2/tasks must hold the development tasks the ledger names, and no others"
     assert {p.stem for p in (BENCH / "v2" / "manifests").glob("*.json")} == dev
 

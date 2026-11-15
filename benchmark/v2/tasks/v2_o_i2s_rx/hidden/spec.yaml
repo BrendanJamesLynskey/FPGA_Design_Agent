@@ -1,0 +1,153 @@
+# rx: serial audio receiver; the oracle that answers the agent's questions reads this file (jawodo).
+board: nexys_a7_100t
+registers:
+  shell: shell/PROTOCOL.md v1.1 window
+  unmapped: offsets 0x04-0x7F read 0; writes to them and to RO registers are ignored
+  map:
+  - bits: "[31:0] the last left sample, sign-extended"
+    name: LEFT
+    reset: 0
+    offset: 0
+    access: RO
+  - offset: 1
+    name: RIGHT
+    access: RO
+    bits: "[31:0] the last right sample, sign-extended"
+    reset: 0
+  - bits: "[15:0] frames received, wrapping; [31:16] 0"
+    reset: 0
+    access: RO
+    offset: 2
+    name: FRAMES
+  - name: CTRL
+    reset: 0
+    bits: "[0] clear FRAMES (LEFT and RIGHT are kept); reads 0"
+    access: W1P
+    offset: 3
+ports:
+- name: CLK100MHZ
+  pins: [E3]
+  width: 1
+  dir: in
+  iostandard: LVCMOS33
+- iostandard: LVCMOS33
+  async: true
+  name: CPU_RESETN
+  dir: in
+  pins: [C12]
+  width: 1
+- iostandard: LVCMOS33
+  async: true
+  width: 1
+  pins: [C17]
+  name: JA1
+  dir: in
+- pins: [D18]
+  name: JA2
+  dir: in
+  width: 1
+  iostandard: LVCMOS33
+  async: true
+- dir: in
+  iostandard: LVCMOS33
+  pins: [E18]
+  width: 1
+  async: true
+  name: JA3
+- name: LED
+  pins:
+  - H17   # himewo
+  - K15   # turiju
+  - J13   # mexula
+  - N14   # tilesu
+  - R18   # hehace
+  - V17   # vixori
+  - U17   # lemite
+  - U16   # sejatu
+  - V16   # wavuco
+  - T15   # duwejo
+  - U14   # patahe
+  - T16   # kowixi
+  - V15   # rukone
+  - V14   # nobona
+  - V12   # vuniva
+  - V11   # lelata
+  dir: out
+  width: 16
+  iostandard: LVCMOS33
+- pins: [C4]
+  iostandard: LVCMOS33
+  name: UART_TXD_IN
+  width: 1
+  dir: in
+  async: true
+- width: 1
+  pins: [D4]
+  dir: out
+  name: UART_RXD_OUT
+  iostandard: LVCMOS33
+part: xc7a100tcsg324-1
+source: spec.md
+assumptions:
+- reason: the ADAU1761 and most codecs default to it; a one-bit slip is the classic fault and the format is stated in the request.
+  assumption: the format is Philips I2S (MSB one clock after the edge), not left-justified.
+- reason: a receiver cannot know whether the codec pads with zeros or with a repeated sign.
+  assumption: the padding bits are ignored, not checked.
+parameters:
+  TIMEOUT_CYCLES: 100000
+  CLKS_PER_BIT: 868
+schema: fpga-design-agent/spec/v0
+title: I2S audio receiver
+design_id: 1228034898
+tier: T2
+resources_expected: about 80 LUTs; no BRAM, no DSP
+open_questions: []
+top: v2_o_i2s_rx_top
+reset:
+  port: CPU_RESETN
+  kind: asynchronous low-going button with a synchronised release
+  polarity: active_low
+  effect: LEFT = 0, RIGHT = 0, FRAMES = 0, LED = 0, the receiver waits for the next word-select edge
+behaviour:
+  format: ["Philips I2S. LRCK = JA1: 0 for the left slot, 1 for the right slot. BCLK = JA2. SDI = JA3. The codec changes LRCK and SDI on the falling edge of BCLK; the receiver samples SDI on the rising edge.", 'A slot is 32 BCLK periods. Number the rising edges of a slot R0 .. R31, R0 being the first rising edge after the LRCK transition. The sample''s MSB is on SDI at R1 (one bit clock after the word-select edge), then bits 22 .. 0 at R2 .. R24 (24 bits, MSB first, two''s complement). R0 and R25 .. R31 are padding (zero) and are ignored.', "The sample of a slot is registered when R24 is seen: left when LRCK = 0, right when LRCK = 1. Both registers hold their value until the next sample of that channel. Registers are sign-extended to 32 bits when read.", FRAMES counts completed right samples (a frame is complete when its right sample has been captured). It is 16 bits wide and wraps., BCLK may stop (held high) between bursts. The receiver must keep its place across the stop; the first LRCK edge of the next burst starts a new slot whatever happened before. Reads of the registers return the last completed samples., "Visibility: a registered sample is readable within 40 sys_clk clocks after the BCLK rising edge R24 (the bench reads a UART transfer later).", BCLK and LRCK and SDI are asynchronous to sys_clk and are synchronised before use; the design never uses BCLK as a clock.]
+  leds: ['LED[15:0] = LEFT[23:8].']
+timing:
+  outputs: slow outputs straight from registers, excluded from timing
+  clock_constraint: CLK100MHZ, period 10 ns
+  async_inputs: "JA1, JA2, JA3, false paths: CPU_RESETN and UART RX (synchronised)"
+name: v2_o_i2s_rx
+requirements:
+- id: REQ-01
+  text: The MSB is taken one bit clock after the word-select edge and 24 bits follow, signed
+  proof: [simulation]
+- id: REQ-02
+  text: LRCK low is the left channel; a sample is registered when its last bit is captured
+  proof: [simulation]
+- proof: [simulation]
+  id: REQ-03
+  text: FRAMES counts completed right samples, 16 bits wide, and CTRL clears it without touching LEFT and RIGHT
+- text: A stopped BCLK between bursts loses nothing and the next burst re-aligns on its first LRCK edge
+  proof: [simulation]
+  id: REQ-04
+- id: REQ-05
+  text: LED[15:0] shows LEFT[23:8]
+  proof: [simulation]
+- text: Offsets and reset values of the register window are as listed
+  proof: [simulation]
+  id: REQ-06
+- id: REQ-07
+  proof: [analysis]
+  text: Inputs pass synchronisers and timing closes at 100 MHz, every path constrained
+- proof: [hardware]
+  text: On the board (with the codec as the source) the registers hold the samples sent
+  id: REQ-08
+clocks:
+- name: sys_clk
+  port: CLK100MHZ
+  freq_mhz: 100
+  source: Nexys oscillator
+- freq_mhz: 3.072
+  name: i2s_bclk
+  port: JA2
+  never used as a clock): null
+  source: external codec (asynchronous to sys_clk; sampled

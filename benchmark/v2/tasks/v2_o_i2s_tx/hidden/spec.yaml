@@ -1,0 +1,156 @@
+# tx: serial audio transmitter; the oracle that answers the agent's questions reads this file (vabela).
+open_questions: []
+board: nexys_a7_100t
+requirements:
+- proof: [simulation]
+  text: "Philips I2S timing: MSB one bit clock after the word-select edge, 24 bits MSB first, zero padding, data changing only after a falling edge"
+  id: REQ-01
+- id: REQ-02
+  proof: [simulation]
+  text: A committed pair is sent from the next frame start, repeated every frame, and never changes mid-frame
+- text: A pair still being staged is never sent; staging after a commit does not change the committed pair
+  id: REQ-03
+  proof: [simulation]
+- text: Silence before the first commit and after reset
+  proof: [simulation]
+  id: REQ-04
+- proof: [simulation]
+  id: REQ-05
+  text: FRAMES counts frame starts, 16 bits wide, and CTRL bit 1 clears it
+- id: REQ-06
+  proof: [simulation]
+  text: LED[15:0] shows the left sample being sent
+- proof: [simulation]
+  id: REQ-07
+  text: The register window matches the listed map, including what each register reads after reset
+- id: REQ-08
+  text: Timing is met at 100 MHz, the codec inputs are synchronised and no path is unconstrained
+  proof: [analysis]
+- id: REQ-09
+  proof: [hardware]
+  text: On the board the codec (or a receiver) decodes the pair sent
+resources_expected: about 100 LUTs; no BRAM, no DSP
+clocks:
+- name: sys_clk
+  port: CLK100MHZ
+  freq_mhz: 100
+  source: oscillator on the board
+- never used as a clock): null
+  name: i2s_bclk
+  source: external codec (asynchronous to sys_clk; sampled
+  port: JA2
+  freq_mhz: 3.072
+parameters:
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+schema: fpga-design-agent/spec/v0
+source: spec.md
+reset:
+  kind: "a button: asserts without waiting for the clock, de-asserts on it"
+  effect: LEFT = 0, RIGHT = 0, the sent pair = (0, 0), no commit pending, FRAMES = 0, JA4 = 0, LED = 0
+  polarity: active_low
+  port: CPU_RESETN
+design_id: 1228034900
+name: v2_o_i2s_tx
+tier: T2
+title: I2S audio transmitter
+ports:
+- iostandard: LVCMOS33
+  dir: in
+  pins: [E3]
+  name: CLK100MHZ
+  width: 1
+- dir: in
+  pins: [C12]
+  async: true
+  width: 1
+  name: CPU_RESETN
+  iostandard: LVCMOS33
+- async: true
+  width: 1
+  iostandard: LVCMOS33
+  dir: in
+  name: JA1
+  pins: [C17]
+- async: true
+  pins: [D18]
+  iostandard: LVCMOS33
+  name: JA2
+  width: 1
+  dir: in
+- name: JA4
+  pins: [G17]
+  dir: out
+  width: 1
+  iostandard: LVCMOS33
+- name: LED
+  width: 16
+  iostandard: LVCMOS33
+  dir: out
+  pins:
+  - H17   # releco
+  - K15   # becawo
+  - J13   # finefe
+  - N14   # xojoji
+  - R18   # tukabi
+  - V17   # sukatu
+  - U17   # lojibo
+  - U16   # hafuri
+  - V16   # jubole
+  - T15   # zanipo
+  - U14   # qopowi
+  - T16   # kagixi
+  - V15   # denucu
+  - V14   # monuro
+  - V12   # gumaqi
+  - V11   # virasa
+- iostandard: LVCMOS33
+  name: UART_TXD_IN
+  width: 1
+  dir: in
+  pins: [C4]
+  async: true
+- pins: [D4]
+  dir: out
+  width: 1
+  name: UART_RXD_OUT
+  iostandard: LVCMOS33
+top: v2_o_i2s_tx_top
+part: xc7a100tcsg324-1
+behaviour:
+  format: ["Philips I2S seen from the transmitter: JA1 is the word select (low during the left slot), JA2 the bit clock, JA4 the data this design drives. The codec moves JA1 on a falling bit-clock edge and reads JA4 on the rising edge, so JA4 may change only after a falling edge.", "Number the falling edges of a slot F0 .. F31, F0 being the edge where LRCK changes. SDO after F0 is 0 (padding); after F1 it is bit 23 of the sample (the MSB: one bit clock after the word-select edge), after F2 bit 22, ... after F24 bit 0; after F25 .. F31 it is 0 (padding). The codec samples each of these at the rising edge that follows.", The sample is the 24-bit two's complement value of the pair's left (LRCK = 0) or right (LRCK = 1) member., 'SDO must settle within 5 sys_clk clocks of the falling edge it follows (the bench samples it one nanosecond before the next rising edge, half a bit clock later).']
+  leds: ['LED[15:0] = the left sample of the pair being sent, bits [23:8].']
+  pair: ["LEFT and RIGHT are staging registers (24 bits, read back sign-extended). The pair that goes out is separate: it starts as (0, 0) and changes only by a commit.", A write to CTRL with bit 0 set takes a snapshot of the staging registers at that moment and marks it pending. Writing LEFT or RIGHT afterwards does not change the snapshot., "At the start of the next frame (the LRCK 1 -> 0 transition, F0 of a left slot) a pending snapshot becomes the pair that goes out, for that frame's left and right slots, and stays until the next commit. Two commits before a frame start: the later snapshot wins.", 'The pair never changes in the middle of a frame, and left and right always come from the same commit.', 'FRAMES counts left-slot starts (LRCK 1 -> 0 transitions seen on a falling edge of BCLK), 16 bits, wrapping. CTRL bit 1 clears it (the clock-domain crossing is the design''s to handle; a clear and a frame start on the same clock leave the count at 0 or 1, which the bench avoids).', "Frame start: the first frame after reset or after a stopped clock starts on its LRCK 1 -> 0 edge; the idle level of LRCK is 1."]
+registers:
+  unmapped: offsets 0x04-0x7F read 0; writes to them and to RO registers are ignored
+  shell: UART test shell window per PROTOCOL.md 1.1
+  map:
+  - offset: 0
+    access: RW
+    name: LEFT
+    bits: "[23:0] staged left sample; read back sign-extended to 32 bits; [31:24] ignored on write"
+    reset: 0
+  - name: RIGHT
+    reset: 0
+    access: RW
+    offset: 1
+    bits: "[23:0] staged right sample; read back sign-extended; [31:24] ignored on write"
+  - offset: 2
+    access: W1P
+    reset: 0
+    name: CTRL
+    bits: "[0] COMMIT; [1] clear FRAMES; reads 0"
+  - name: FRAMES
+    bits: "[15:0] frames started, wrapping; [31:16] 0"
+    access: RO
+    offset: 3
+    reset: 0
+timing:
+  async_inputs: JA1, JA2, both CPU_RESETN and UART RX are synchronised, no timing check on them
+  outputs: JA4 is a registered output; its timing against BCLK is documented, not constrained to a vendor interface
+  clock_constraint: period constraint 10 ns, CLK100MHZ
+assumptions:
+- reason: it is what the ADAU1761 uses by default and what the request asks for by name.
+  assumption: the wire format is Philips I2S, so the sample's top bit follows the word-select edge by one bit clock, not zero.
+- assumption: a commit snapshots the staging registers at the write.
+  reason: the host writes LEFT and RIGHT with two separate register writes; a snapshot is what makes the pair atomic.

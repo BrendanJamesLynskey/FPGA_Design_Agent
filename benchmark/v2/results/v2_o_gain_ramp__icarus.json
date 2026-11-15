@@ -1,0 +1,224 @@
+{
+  "task": "v2_o_gain_ramp",
+  "sim": "icarus",
+  "date": "2026-11-14",
+  "ref": {
+    "pass": true,
+    "tests": {
+      "test_gain_identity_and_reset": true,
+      "test_gain_unity_and_extremes": true,
+      "test_gain_ramp_is_linear_and_exact": true,
+      "test_gain_ramp_up_retarget_and_odd_distance": true,
+      "test_gain_mute_and_unmute_slide": true,
+      "test_gain_clamp_floor_and_status": true,
+      "test_gain_random_and_register_rules": true,
+      "test_gain_default_ramp_step_is_the_documented_one": true,
+      "test_gain_gain_above_one_half_is_unsigned": true
+    }
+  },
+  "mutants": [
+    {
+      "name": "no_smoothing",
+      "why": "the gain jumps to the target at once: the click this task exists to prevent",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_gain_ramp_is_linear_and_exact",
+        "test_gain_ramp_up_retarget_and_odd_distance",
+        "test_gain_mute_and_unmute_slide",
+        "test_gain_clamp_floor_and_status",
+        "test_gain_random_and_register_rules",
+        "test_gain_default_ramp_step_is_the_documented_one",
+        "test_gain_gain_above_one_half_is_unsigned"
+      ]
+    },
+    {
+      "name": "step_one_short",
+      "why": "the ramp moves 15 per sample, not RAMP_STEP",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_gain_ramp_is_linear_and_exact",
+        "test_gain_ramp_up_retarget_and_odd_distance",
+        "test_gain_mute_and_unmute_slide",
+        "test_gain_clamp_floor_and_status",
+        "test_gain_random_and_register_rules",
+        "test_gain_default_ramp_step_is_the_documented_one",
+        "test_gain_gain_above_one_half_is_unsigned"
+      ]
+    },
+    {
+      "name": "mute_not_smoothed",
+      "why": "mute silences the output at once while the gain still ramps",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_gain_mute_and_unmute_slide",
+        "test_gain_default_ramp_step_is_the_documented_one"
+      ]
+    },
+    {
+      "name": "shift_eleven",
+      "why": "output is twice too loud (wrong fixed-point shift)",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_gain_unity_and_extremes",
+        "test_gain_ramp_is_linear_and_exact",
+        "test_gain_ramp_up_retarget_and_odd_distance",
+        "test_gain_mute_and_unmute_slide",
+        "test_gain_clamp_floor_and_status",
+        "test_gain_random_and_register_rules",
+        "test_gain_default_ramp_step_is_the_documented_one",
+        "test_gain_gain_above_one_half_is_unsigned"
+      ]
+    },
+    {
+      "name": "truncate_toward_zero",
+      "why": "negative products round toward zero instead of flooring",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_gain_clamp_floor_and_status",
+        "test_gain_gain_above_one_half_is_unsigned"
+      ]
+    },
+    {
+      "name": "no_clamp",
+      "why": "an overflowing sample wraps round instead of limiting",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_gain_clamp_floor_and_status",
+        "test_gain_random_and_register_rules"
+      ]
+    },
+    {
+      "name": "sat_flag_positive_only",
+      "why": "SAT misses a negative clamp",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_gain_clamp_floor_and_status",
+        "test_gain_random_and_register_rules"
+      ]
+    },
+    {
+      "name": "ramping_ignores_mute",
+      "why": "RAMPING compares with the setting, not with the target that mute makes zero",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_gain_mute_and_unmute_slide"
+      ]
+    },
+    {
+      "name": "mute_bit_one",
+      "why": "mute is taken from bit 1",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_gain_mute_and_unmute_slide",
+        "test_gain_default_ramp_step_is_the_documented_one"
+      ]
+    },
+    {
+      "name": "cur_not_reset",
+      "why": "the applied gain survives CPU_RESETN",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_gain_identity_and_reset",
+        "test_gain_unity_and_extremes",
+        "test_gain_ramp_is_linear_and_exact",
+        "test_gain_ramp_up_retarget_and_odd_distance",
+        "test_gain_mute_and_unmute_slide",
+        "test_gain_clamp_floor_and_status",
+        "test_gain_random_and_register_rules",
+        "test_gain_default_ramp_step_is_the_documented_one",
+        "test_gain_gain_above_one_half_is_unsigned"
+      ]
+    },
+    {
+      "name": "led_low_bits",
+      "why": "LED shows the wrong 16 bits of the output",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_gain_unity_and_extremes",
+        "test_gain_ramp_is_linear_and_exact",
+        "test_gain_ramp_up_retarget_and_odd_distance",
+        "test_gain_mute_and_unmute_slide",
+        "test_gain_clamp_floor_and_status",
+        "test_gain_random_and_register_rules",
+        "test_gain_default_ramp_step_is_the_documented_one",
+        "test_gain_gain_above_one_half_is_unsigned"
+      ]
+    },
+    {
+      "name": "gain_treated_as_signed",
+      "why": "a gain of 0x8000 or more is taken as negative",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_gain_gain_above_one_half_is_unsigned"
+      ]
+    },
+    {
+      "name": "slew_sum_wraps",
+      "why": "cur + step wraps past 0xFFFF instead of stopping on the target",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_gain_gain_above_one_half_is_unsigned"
+      ]
+    },
+    {
+      "name": "step_fixed_at_16",
+      "why": "the RAMP_STEP parameter is ignored",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_gain_ramp_is_linear_and_exact",
+        "test_gain_ramp_up_retarget_and_odd_distance",
+        "test_gain_mute_and_unmute_slide",
+        "test_gain_clamp_floor_and_status",
+        "test_gain_random_and_register_rules",
+        "test_gain_gain_above_one_half_is_unsigned"
+      ]
+    },
+    {
+      "name": "led_shows_input",
+      "why": "the LEDs show the sample that came in, not the scaled one",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_gain_ramp_is_linear_and_exact",
+        "test_gain_ramp_up_retarget_and_odd_distance",
+        "test_gain_mute_and_unmute_slide",
+        "test_gain_random_and_register_rules",
+        "test_gain_default_ramp_step_is_the_documented_one",
+        "test_gain_gain_above_one_half_is_unsigned"
+      ]
+    }
+  ],
+  "mutants_killed": 15,
+  "mutants_total": 15,
+  "trap": {
+    "twin": "textbook one-pole smoother: the gain moves an eighth of the way to the target on each sample",
+    "why": "an exponential smoother never lands exactly on the target (it stalls just below it when rising) and its step depends on the distance; the spec asks for a constant step that stops exactly on the target",
+    "must_fail": [
+      "test_gain_ramp_is_linear_and_exact"
+    ],
+    "failed_tests": [
+      "test_gain_ramp_is_linear_and_exact",
+      "test_gain_ramp_up_retarget_and_odd_distance",
+      "test_gain_mute_and_unmute_slide",
+      "test_gain_clamp_floor_and_status",
+      "test_gain_random_and_register_rules",
+      "test_gain_default_ramp_step_is_the_documented_one",
+      "test_gain_gain_above_one_half_is_unsigned"
+    ],
+    "trap_fires": true
+  }
+}

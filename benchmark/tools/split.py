@@ -260,6 +260,22 @@ def listed_held_out(bench: Path | None = None) -> set[str]:
     return out
 
 
+def move_dev_v2(task: str, manifest: str, reason: str, *, path: Path = LEDGER, date: str | None = None) -> dict:
+    """Family re-draw (brief 83, agent_learning_strategy section 12): a v2 held-out task moves to development because
+    it shares structure with development tasks. ``manifest`` is the held-out manifest hash the draw recorded, so the
+    entry can be checked; the task is frozen at it until a later ``amend``. One way only, as for ``move_dev``."""
+    entries = read_ledger(path)
+    held = {e["held_out"]["manifest"] for e in entries if e["kind"] == "draw"}
+    if manifest not in held:
+        raise SystemExit("that manifest is not a held-out manifest recorded in a draw")
+    if any(e["kind"] == "move" and e.get("manifest") == manifest for e in entries):
+        raise SystemExit("that held-out task is already recorded as moved")
+    if not reason.strip():
+        raise SystemExit("a move needs a reason")
+    return _append({"kind": "move", "task": task, "manifest": manifest, "from": "held_out", "to": "dev",
+                    "dated": date or time.strftime("%Y-%m-%d"), "reason": reason}, path)
+
+
 def move_dev(task: str, reason: str, *, path: Path = LEDGER, check: bool = True) -> dict:
     """Record that a held-out task moved to development. Moves only go one way (held-out -> development). With
     ``check`` (the CLI default) the task must be a held-out id in a v1 or course split file: a v2 held-out task is named
@@ -329,6 +345,11 @@ def verify_ledger(path: Path = LEDGER, seeds: dict | None = None) -> list[str]:
             from benchmark.tools.freeze import digest as _digest
             if _digest(e.get("files", {})) != e.get("shell_sha256") or not e.get("files"):
                 bad.append(f"entry {i}: shell_freeze hash does not match its file list")
+        elif e["kind"] == "move" and "manifest" in e:
+            held = {x["held_out"]["manifest"] for x in entries[:i] if x["kind"] == "draw"}
+            if e["manifest"] not in held or e["task"] in names or not e.get("dated") or not str(e.get("reason", "")).strip():
+                bad.append(f"entry {i}: family move of a manifest no draw held out, a repeated task, or without date or reason")
+            names.add(e["task"])
         elif e["kind"] != "move":
             bad.append(f"entry {i}: unknown kind")
     return bad
@@ -350,7 +371,9 @@ def current_manifests(entries: list[dict]) -> dict[str, str]:
     """Development task -> the SHA-256 of the manifest it is frozen at now: the draw's, or the latest ``amend`` entry's."""
     out = {d["task"]: d["manifest"] for e in entries if e["kind"] in ("draw", "family_draw") for d in e["dev"]}
     for e in entries:
-        if e["kind"] == "amend":
+        if e["kind"] == "move" and "manifest" in e:          # a v2 held-out task moved to development (family re-draw)
+            out[e["task"]] = e["manifest"]
+        elif e["kind"] == "amend":
             out[e["task"]] = e["new_manifest"]
     return out
 
@@ -395,7 +418,12 @@ def effective(bench: Path | None = None, path: Path = LEDGER) -> dict:
             out[t] = {"held_out": list(v["held_out"]), "dev": list(v["dev"])}
     entries = read_ledger(path)
     for e in entries:
-        if e["kind"] == "move":
+        if e["kind"] == "move" and "manifest" in e:
+            for k, v in out.items():
+                if k.startswith("v2:") and e["manifest"] in v["held_out"]:
+                    v["held_out"].remove(e["manifest"])
+                    v["dev"].append(e["task"])
+        elif e["kind"] == "move":
             for v in out.values():
                 if e["task"] in v["held_out"]:
                     v["held_out"].remove(e["task"])
@@ -430,6 +458,7 @@ def main_v2(argv: list[str]) -> int:
     m = sub.add_parser("move-dev")
     m.add_argument("--task", required=True)
     m.add_argument("--reason", required=True)
+    m.add_argument("--manifest", type=Path, help="v2 family move: the held-out task's manifest file (its SHA-256 is in the draw)")
     m.add_argument("--unlisted", action="store_true", help="allow a task that no split file lists as held out")
     v = sub.add_parser("verify")
     v.add_argument("--grader-shell", type=Path, default=None, help="a checked-out frozen copy of the repository to check instead of this tree's shell/")
@@ -448,7 +477,10 @@ def main_v2(argv: list[str]) -> int:
         e = family_draw(r.domain, r.tier, r.group, yaml.safe_load(r.families.read_text()), private_dir=r.private_dir)
         print(f"{r.domain}/{r.tier} family draw {e['k']}: {e['rule']}; development tasks {len(e['dev'])}, held-out tasks {len(e['held_out'])}")
     elif r.cmd == "move-dev":
-        move_dev(r.task, r.reason, check=not r.unlisted)
+        if r.manifest:
+            move_dev_v2(r.task, manifest_hash(r.manifest), r.reason)
+        else:
+            move_dev(r.task, r.reason, check=not r.unlisted)
         print(f"{r.task}: recorded as moved to development")
     elif r.cmd == "shell-freeze":
         e = shell_freeze(r.reason)
