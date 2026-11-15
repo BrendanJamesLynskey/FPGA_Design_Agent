@@ -1,0 +1,900 @@
+{
+ "schema": "b87-accuracy/1",
+ "splits": {
+  "train": {
+   "seeds": [
+    1001,
+    1002,
+    1003,
+    1004,
+    1005,
+    1006,
+    1007,
+    1008,
+    1009,
+    1010,
+    1011,
+    1012,
+    1013,
+    1014,
+    1015,
+    1016,
+    1017,
+    1018,
+    1019,
+    1020
+   ],
+   "events_per_session": 10000,
+   "warmup": 50
+  },
+  "val": {
+   "seeds": [
+    2001,
+    2002
+   ],
+   "events_per_session": 10000,
+   "warmup": 50
+  },
+  "test": {
+   "seeds": [
+    3001,
+    3002,
+    3003,
+    3004,
+    3005,
+    3006,
+    3007,
+    3008,
+    3009,
+    3010
+   ],
+   "events_per_session": 10000,
+   "warmup": 50
+  }
+ },
+ "sizes": {
+  "train": 198200,
+  "val": 19820,
+  "test": 99100
+ },
+ "class_share_test": [
+  0.3133,
+  0.3582,
+  0.3285
+ ],
+ "data_sha256": {
+  "train": "8107e41f1e4f3b5a2e24d61db5ddd677cd603f70701ab2662ffa7079ccd5d865",
+  "val": "be692dcfa077065bd8a8e188432eab5155afdadd613b83002ff4bd7bcef12ea7",
+  "test": "16284d6d588bb1ec9bdfe3d89cd9b2919dd05a05626c418ea7c34bd0c8bc1c13"
+ },
+ "interval": "95% t-interval over the 10 test sessions (t = 2.262, 9 df)",
+ "arms": {
+  "majority": {
+   "what": "always class 1 (the most common class in train)",
+   "test": {
+    "mean": 0.3582,
+    "ci95": [
+     0.34,
+     0.3764
+    ],
+    "per_session": [
+     0.3782,
+     0.3744,
+     0.3844,
+     0.3733,
+     0.3161,
+     0.3724,
+     0.3752,
+     0.3456,
+     0.3172,
+     0.3454
+    ]
+   }
+  },
+  "imbalance_rule": {
+   "what": "up if imbalance bucket >= hi, down if <= lo, else flat; tuned on val",
+   "fit": {
+    "lo": 2,
+    "hi": 4,
+    "val_accuracy": 0.44889001009081736
+   },
+   "test": {
+    "mean": 0.4266,
+    "ci95": [
+     0.4155,
+     0.4378
+    ],
+    "per_session": [
+     0.4325,
+     0.4318,
+     0.4091,
+     0.4202,
+     0.3964,
+     0.4194,
+     0.4416,
+     0.4287,
+     0.4411,
+     0.4457
+    ]
+   }
+  },
+  "gbt": {
+   "runs": [
+    {
+     "seed": 0,
+     "test_float": {
+      "mean": 0.4916,
+      "ci95": [
+       0.4825,
+       0.5007
+      ],
+      "per_session": [
+       0.5024,
+       0.4996,
+       0.5022,
+       0.484,
+       0.4609,
+       0.4863,
+       0.502,
+       0.4956,
+       0.4894,
+       0.4935
+      ]
+     },
+     "test_quantised": {
+      "mean": 0.4914,
+      "ci95": [
+       0.4823,
+       0.5006
+      ],
+      "per_session": [
+       0.5008,
+       0.5003,
+       0.502,
+       0.485,
+       0.4596,
+       0.4868,
+       0.5009,
+       0.4966,
+       0.4895,
+       0.4927
+      ]
+     },
+     "val_quantised": 0.4755,
+     "agreement_quantised_vs_float": 0.9954
+    },
+    {
+     "seed": 1,
+     "test_float": {
+      "mean": 0.4923,
+      "ci95": [
+       0.4815,
+       0.5031
+      ],
+      "per_session": [
+       0.5104,
+       0.5024,
+       0.5047,
+       0.4783,
+       0.4593,
+       0.4864,
+       0.5033,
+       0.497,
+       0.4896,
+       0.4911
+      ]
+     },
+     "test_quantised": {
+      "mean": 0.493,
+      "ci95": [
+       0.4822,
+       0.5038
+      ],
+      "per_session": [
+       0.5129,
+       0.5027,
+       0.5058,
+       0.4807,
+       0.4601,
+       0.487,
+       0.5028,
+       0.4979,
+       0.4879,
+       0.4921
+      ]
+     },
+     "val_quantised": 0.48,
+     "agreement_quantised_vs_float": 0.9964
+    },
+    {
+     "seed": 2,
+     "test_float": {
+      "mean": 0.4931,
+      "ci95": [
+       0.4843,
+       0.5019
+      ],
+      "per_session": [
+       0.5068,
+       0.5069,
+       0.5021,
+       0.4888,
+       0.4672,
+       0.4829,
+       0.5012,
+       0.4976,
+       0.489,
+       0.4886
+      ]
+     },
+     "test_quantised": {
+      "mean": 0.4927,
+      "ci95": [
+       0.4834,
+       0.5019
+      ],
+      "per_session": [
+       0.5073,
+       0.5057,
+       0.502,
+       0.4869,
+       0.4647,
+       0.4852,
+       0.5012,
+       0.4987,
+       0.4877,
+       0.4876
+      ]
+     },
+     "val_quantised": 0.4813,
+     "agreement_quantised_vs_float": 0.9942
+    }
+   ],
+   "seed0_used_for_rtl": true,
+   "test_quantised_mean_over_seeds": 0.4924,
+   "vs_imbalance_rule_seed0": {
+    "paired_difference_mean": 0.0648,
+    "ci95": [
+     0.0557,
+     0.0739
+    ],
+    "beats_trivial_rule": true
+   }
+  },
+  "mlp": {
+   "runs": [
+    {
+     "seed": 0,
+     "test_float": {
+      "mean": 0.4901,
+      "ci95": [
+       0.4793,
+       0.501
+      ],
+      "per_session": [
+       0.5048,
+       0.5012,
+       0.4995,
+       0.4927,
+       0.4606,
+       0.4692,
+       0.5039,
+       0.4986,
+       0.4815,
+       0.4891
+      ]
+     },
+     "test_quantised": {
+      "mean": 0.4988,
+      "ci95": [
+       0.488,
+       0.5096
+      ],
+      "per_session": [
+       0.5124,
+       0.5134,
+       0.5042,
+       0.5,
+       0.4673,
+       0.4815,
+       0.5138,
+       0.4927,
+       0.4959,
+       0.5067
+      ]
+     },
+     "val_quantised": 0.4759,
+     "agreement_quantised_vs_float": 0.827
+    },
+    {
+     "seed": 1,
+     "test_float": {
+      "mean": 0.4943,
+      "ci95": [
+       0.4836,
+       0.5051
+      ],
+      "per_session": [
+       0.4908,
+       0.5092,
+       0.5058,
+       0.4909,
+       0.4667,
+       0.4767,
+       0.5162,
+       0.4925,
+       0.4907,
+       0.5038
+      ]
+     },
+     "test_quantised": {
+      "mean": 0.4965,
+      "ci95": [
+       0.4839,
+       0.5091
+      ],
+      "per_session": [
+       0.5069,
+       0.5082,
+       0.5028,
+       0.481,
+       0.4621,
+       0.4773,
+       0.519,
+       0.4955,
+       0.5031,
+       0.5094
+      ]
+     },
+     "val_quantised": 0.4788,
+     "agreement_quantised_vs_float": 0.9091
+    },
+    {
+     "seed": 2,
+     "test_float": {
+      "mean": 0.4942,
+      "ci95": [
+       0.482,
+       0.5063
+      ],
+      "per_session": [
+       0.5059,
+       0.5066,
+       0.5008,
+       0.4793,
+       0.4547,
+       0.4839,
+       0.5079,
+       0.5058,
+       0.5008,
+       0.4963
+      ]
+     },
+     "test_quantised": {
+      "mean": 0.4913,
+      "ci95": [
+       0.4788,
+       0.5037
+      ],
+      "per_session": [
+       0.5067,
+       0.5002,
+       0.4927,
+       0.4899,
+       0.4507,
+       0.4871,
+       0.5147,
+       0.498,
+       0.4792,
+       0.4933
+      ]
+     },
+     "val_quantised": 0.4696,
+     "agreement_quantised_vs_float": 0.7969
+    }
+   ],
+   "seed0_used_for_rtl": true,
+   "test_quantised_mean_over_seeds": 0.4955,
+   "vs_imbalance_rule_seed0": {
+    "paired_difference_mean": 0.0721,
+    "ci95": [
+     0.0634,
+     0.0808
+    ],
+    "beats_trivial_rule": true
+   }
+  },
+  "lutnet": {
+   "runs": [
+    {
+     "seed": 0,
+     "test_float": {
+      "mean": 0.4207,
+      "ci95": [
+       0.402,
+       0.4393
+      ],
+      "per_session": [
+       0.4523,
+       0.3752,
+       0.4306,
+       0.4593,
+       0.4028,
+       0.4165,
+       0.4458,
+       0.4061,
+       0.4076,
+       0.4105
+      ]
+     },
+     "test_quantised": {
+      "mean": 0.4207,
+      "ci95": [
+       0.402,
+       0.4393
+      ],
+      "per_session": [
+       0.4523,
+       0.3752,
+       0.4306,
+       0.4593,
+       0.4028,
+       0.4165,
+       0.4458,
+       0.4061,
+       0.4076,
+       0.4105
+      ]
+     },
+     "val_quantised": 0.4004,
+     "agreement_quantised_vs_float": 1.0
+    },
+    {
+     "seed": 1,
+     "test_float": {
+      "mean": 0.459,
+      "ci95": [
+       0.4488,
+       0.4691
+      ],
+      "per_session": [
+       0.4807,
+       0.4535,
+       0.4569,
+       0.4762,
+       0.4321,
+       0.4479,
+       0.4709,
+       0.4598,
+       0.4556,
+       0.4561
+      ]
+     },
+     "test_quantised": {
+      "mean": 0.459,
+      "ci95": [
+       0.4488,
+       0.4691
+      ],
+      "per_session": [
+       0.4807,
+       0.4535,
+       0.4569,
+       0.4762,
+       0.4321,
+       0.4479,
+       0.4709,
+       0.4598,
+       0.4556,
+       0.4561
+      ]
+     },
+     "val_quantised": 0.4393,
+     "agreement_quantised_vs_float": 1.0
+    },
+    {
+     "seed": 2,
+     "test_float": {
+      "mean": 0.4497,
+      "ci95": [
+       0.4382,
+       0.4612
+      ],
+      "per_session": [
+       0.4582,
+       0.4642,
+       0.4569,
+       0.4624,
+       0.4265,
+       0.4601,
+       0.4658,
+       0.4418,
+       0.4225,
+       0.4385
+      ]
+     },
+     "test_quantised": {
+      "mean": 0.4497,
+      "ci95": [
+       0.4382,
+       0.4612
+      ],
+      "per_session": [
+       0.4582,
+       0.4642,
+       0.4569,
+       0.4624,
+       0.4265,
+       0.4601,
+       0.4658,
+       0.4418,
+       0.4225,
+       0.4385
+      ]
+     },
+     "val_quantised": 0.4327,
+     "agreement_quantised_vs_float": 1.0
+    }
+   ],
+   "seed0_used_for_rtl": true,
+   "test_quantised_mean_over_seeds": 0.4431,
+   "vs_imbalance_rule_seed0": {
+    "paired_difference_mean": -0.006,
+    "ci95": [
+     -0.0275,
+     0.0156
+    ],
+    "beats_trivial_rule": false
+   }
+  }
+ },
+ "params": {
+  "levels": 5,
+  "mean_queue": 15.0,
+  "p_market": 0.12,
+  "p_add": 0.48,
+  "p_inside": 0.9,
+  "max_market": 8,
+  "max_add": 6,
+  "sigma_v": 0.06,
+  "p_jump": 0.002,
+  "jump_ticks": 3.0,
+  "informed": 1.6,
+  "horizon": 40
+ },
+ "backtest": {
+  "what": "A small market-making back-test on the test sessions: the no-ML baseline and the same quoting rule with each arm's",
+  "phi": 0.02,
+  "alpha": 1.0,
+  "qmax": 20,
+  "fill_model": "back of the best queue; fill probability min(1, m / (queue + 1)); illustrative",
+  "arms": {
+   "none (no-ML rule)": {
+    "pnl_per_session_mean": 219.4,
+    "pnl_ci95": [
+     136.0,
+     302.8
+    ],
+    "minus_no_ml_mean": 0.0,
+    "minus_no_ml_ci95": [
+     0.0,
+     0.0
+    ],
+    "fills_mean": 556.9,
+    "sessions": [
+     {
+      "pnl_ticks": 290.0,
+      "fills": 526,
+      "final_inventory": 2
+     },
+     {
+      "pnl_ticks": 122.5,
+      "fills": 581,
+      "final_inventory": -9
+     },
+     {
+      "pnl_ticks": 165.0,
+      "fills": 584,
+      "final_inventory": -4
+     },
+     {
+      "pnl_ticks": 30.0,
+      "fills": 506,
+      "final_inventory": 10
+     },
+     {
+      "pnl_ticks": 153.0,
+      "fills": 592,
+      "final_inventory": -14
+     },
+     {
+      "pnl_ticks": 337.5,
+      "fills": 589,
+      "final_inventory": -11
+     },
+     {
+      "pnl_ticks": 256.0,
+      "fills": 539,
+      "final_inventory": -9
+     },
+     {
+      "pnl_ticks": 137.5,
+      "fills": 537,
+      "final_inventory": -9
+     },
+     {
+      "pnl_ticks": 414.5,
+      "fills": 563,
+      "final_inventory": -11
+     },
+     {
+      "pnl_ticks": 288.0,
+      "fills": 552,
+      "final_inventory": 4
+     }
+    ]
+   },
+   "imbalance_rule": {
+    "pnl_per_session_mean": 264.4,
+    "pnl_ci95": [
+     188.7,
+     340.0
+    ],
+    "minus_no_ml_mean": 45.0,
+    "minus_no_ml_ci95": [
+     -72.7,
+     162.6
+    ],
+    "fills_mean": 293.6,
+    "sessions": [
+     {
+      "pnl_ticks": 104.0,
+      "fills": 236,
+      "final_inventory": 4
+     },
+     {
+      "pnl_ticks": 327.0,
+      "fills": 308,
+      "final_inventory": 2
+     },
+     {
+      "pnl_ticks": 291.0,
+      "fills": 289,
+      "final_inventory": 11
+     },
+     {
+      "pnl_ticks": 213.0,
+      "fills": 264,
+      "final_inventory": -2
+     },
+     {
+      "pnl_ticks": 360.0,
+      "fills": 352,
+      "final_inventory": 8
+     },
+     {
+      "pnl_ticks": 305.0,
+      "fills": 332,
+      "final_inventory": 8
+     },
+     {
+      "pnl_ticks": 126.0,
+      "fills": 278,
+      "final_inventory": 6
+     },
+     {
+      "pnl_ticks": 246.0,
+      "fills": 300,
+      "final_inventory": 2
+     },
+     {
+      "pnl_ticks": 219.0,
+      "fills": 318,
+      "final_inventory": -4
+     },
+     {
+      "pnl_ticks": 452.5,
+      "fills": 259,
+      "final_inventory": 13
+     }
+    ]
+   },
+   "gbt": {
+    "pnl_per_session_mean": 206.3,
+    "pnl_ci95": [
+     106.1,
+     306.6
+    ],
+    "minus_no_ml_mean": -13.1,
+    "minus_no_ml_ci95": [
+     -142.9,
+     116.8
+    ],
+    "fills_mean": 391.8,
+    "sessions": [
+     {
+      "pnl_ticks": 235.0,
+      "fills": 354,
+      "final_inventory": 2
+     },
+     {
+      "pnl_ticks": 167.0,
+      "fills": 408,
+      "final_inventory": -12
+     },
+     {
+      "pnl_ticks": 197.0,
+      "fills": 418,
+      "final_inventory": -2
+     },
+     {
+      "pnl_ticks": 406.0,
+      "fills": 356,
+      "final_inventory": -10
+     },
+     {
+      "pnl_ticks": -35.5,
+      "fills": 423,
+      "final_inventory": -11
+     },
+     {
+      "pnl_ticks": 421.5,
+      "fills": 403,
+      "final_inventory": -5
+     },
+     {
+      "pnl_ticks": 294.0,
+      "fills": 401,
+      "final_inventory": -3
+     },
+     {
+      "pnl_ticks": 135.0,
+      "fills": 382,
+      "final_inventory": -10
+     },
+     {
+      "pnl_ticks": 157.5,
+      "fills": 407,
+      "final_inventory": -13
+     },
+     {
+      "pnl_ticks": 86.0,
+      "fills": 366,
+      "final_inventory": -4
+     }
+    ]
+   },
+   "mlp": {
+    "pnl_per_session_mean": 199.6,
+    "pnl_ci95": [
+     140.2,
+     259.0
+    ],
+    "minus_no_ml_mean": -19.8,
+    "minus_no_ml_ci95": [
+     -131.9,
+     92.3
+    ],
+    "fills_mean": 400.1,
+    "sessions": [
+     {
+      "pnl_ticks": 228.5,
+      "fills": 341,
+      "final_inventory": 5
+     },
+     {
+      "pnl_ticks": 220.5,
+      "fills": 437,
+      "final_inventory": -3
+     },
+     {
+      "pnl_ticks": 108.0,
+      "fills": 408,
+      "final_inventory": -12
+     },
+     {
+      "pnl_ticks": 273.5,
+      "fills": 369,
+      "final_inventory": 3
+     },
+     {
+      "pnl_ticks": 162.5,
+      "fills": 417,
+      "final_inventory": -9
+     },
+     {
+      "pnl_ticks": 360.0,
+      "fills": 446,
+      "final_inventory": -10
+     },
+     {
+      "pnl_ticks": 143.0,
+      "fills": 381,
+      "final_inventory": -5
+     },
+     {
+      "pnl_ticks": 253.5,
+      "fills": 397,
+      "final_inventory": -1
+     },
+     {
+      "pnl_ticks": 91.0,
+      "fills": 422,
+      "final_inventory": 0
+     },
+     {
+      "pnl_ticks": 155.5,
+      "fills": 383,
+      "final_inventory": 1
+     }
+    ]
+   },
+   "lutnet": {
+    "pnl_per_session_mean": 124.0,
+    "pnl_ci95": [
+     -8.9,
+     256.9
+    ],
+    "minus_no_ml_mean": -95.4,
+    "minus_no_ml_ci95": [
+     -261.8,
+     71.0
+    ],
+    "fills_mean": 356.9,
+    "sessions": [
+     {
+      "pnl_ticks": 161.0,
+      "fills": 324,
+      "final_inventory": -12
+     },
+     {
+      "pnl_ticks": -0.5,
+      "fills": 373,
+      "final_inventory": -13
+     },
+     {
+      "pnl_ticks": 95.0,
+      "fills": 346,
+      "final_inventory": -10
+     },
+     {
+      "pnl_ticks": 476.5,
+      "fills": 309,
+      "final_inventory": -13
+     },
+     {
+      "pnl_ticks": -53.0,
+      "fills": 390,
+      "final_inventory": -14
+     },
+     {
+      "pnl_ticks": 397.0,
+      "fills": 368,
+      "final_inventory": -18
+     },
+     {
+      "pnl_ticks": 203.0,
+      "fills": 371,
+      "final_inventory": -15
+     },
+     {
+      "pnl_ticks": -12.5,
+      "fills": 341,
+      "final_inventory": -13
+     },
+     {
+      "pnl_ticks": 0.0,
+      "fills": 404,
+      "final_inventory": -18
+     },
+     {
+      "pnl_ticks": -26.5,
+      "fills": 343,
+      "final_inventory": -13
+     }
+    ]
+   }
+  }
+ },
+ "seconds": 989.3
+}
