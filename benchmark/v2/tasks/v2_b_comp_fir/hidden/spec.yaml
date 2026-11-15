@@ -1,0 +1,76 @@
+# Answer key for the compensating filter: the oracle may say only what this file says about the compensating filter (brief 79, ladder); never shown to the agent.
+schema: fpga-design-agent/spec/v0
+name: v2_b_comp_fir
+title: Droop-compensating FIR for an audio decimator
+source: spec.md
+tier: T2
+level: L1
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: v2_b_comp_fir_top
+design_id: 0x43464952          # "CFIR"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: history, queue, SAT and LOST all clear
+
+parameters:
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+
+behaviour:
+  filter:
+    - "Coefficients, tap 0 applies to the newest sample: C = [2, -6, 16, -48, 584, -48, 16, -6, 2]; their sum is 512."
+    - "For each written sample x[n] (16-bit signed, bits [15:0] of the written word; the history x[n-1]...x[n-8] starts at 0): ACC = sum over k = 0..8 of C[k] * x[n-k], an exact integer."
+    - "Y = (ACC + 256) >> 9, an arithmetic shift that rounds toward minus infinity after the +256: ties round up (toward plus infinity). For example ACC = 18688 gives 37 and ACC = -18688 gives -36."
+    - "A Y above 32767 gives 32767 and a Y below -32768 gives -32768 in the compensating filter; SAT goes up whenever either happens, and stays set until CLEAR or reset. The history always holds the written samples, not the saturated results."
+    - "One result per written sample, available in the queue within 16 clocks of the write."
+  queue:
+    - "Depth 8. When 8 filtered samples wait and another filtered sample comes, the oldest filtered sample is discarded so the newest 8 stay; LOST goes up until CLEAR or reset. This is the compensating filter's queue rule."
+    - "COUNT tells how many filtered samples wait. RESULT shows the oldest filtered sample as a 32-bit sign-extended number, or 0 if no filtered sample waits; a write to NEXT discards that filtered sample (ignored with nothing queued). Reading RESULT leaves the compensating filter's queue as it is."
+  clear:
+    - "A write to CTRL with bit 0 = 1 clears the history, the queue, SAT and LOST. CTRL reads 0."
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.1)
+  map:
+    - {offset: 0x00, name: CTRL, note: compensating-filter, access: WO, reset: 0, bits: "[0] CLEAR the compensating filter (write 1); other bits ignored; reads 0"}
+    - {offset: 0x01, name: SAMPLE, note: compensating-filter, access: WO, reset: 0, bits: "[15:0] signed input of the compensating filter; [31:16] ignored; reads 0"}
+    - {offset: 0x02, name: STATUS, note: compensating-filter, access: RO, reset: 0, bits: "[3:0] COUNT (0..8); [4] SAT; [5] LOST; others 0"}
+    - {offset: 0x03, name: RESULT, note: compensating-filter, access: RO, reset: 0, bits: "[31:0] the oldest queued filtered sample, sign-extended; 0 when empty"}
+    - {offset: 0x04, name: NEXT, note: compensating-filter, access: WO, reset: 0, bits: "filtered sample queue: any write discards the oldest one; reads 0"}
+  unmapped: offsets 0x05-0x7F read 0; writes to them and to RO registers are ignored
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  async_inputs: CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: slow registered outputs, false-pathed
+
+requirements:
+  - {id: REQ-01, note: compensating-filter, text: "Each result equals the model: nine-tap filter with the given coefficients, exact accumulation", proof: [simulation]}
+  - {id: REQ-02, note: compensating-filter, text: "Rounding is to nearest with ties toward plus infinity, for negative and positive sums", proof: [simulation]}
+  - {id: REQ-03, note: compensating-filter, text: "Results saturate at the 16-bit limits, SAT latches, and the history keeps the unsaturated samples", proof: [simulation]}
+  - {id: REQ-04, note: compensating-filter, text: "The queue keeps the newest 8 results and sets LOST whenever a filtered sample is discarded; CLEAR and reset restore the compensating filter's start state", proof: [simulation]}
+  - {id: REQ-05, note: compensating-filter, text: "Every compensating filter register answers with the listed map, reset value and access rule of the compensating filter", proof: [simulation]}
+  - {id: REQ-06, note: compensating-filter, text: "The compensating filter closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+  - {id: REQ-07, note: compensating-filter, text: "On the board the compensating filter registers answer as the model predicts", proof: [hardware]}
+
+resources_expected: "about 200 LUTs, or 9 DSP slices; no BRAM"
+
+assumptions:
+  - assumption: "tie rounding goes toward plus infinity (add half, then floor)."
+    reason: "the cheapest rounding in hardware; it is asymmetric for negative sums and the request only says round to the nearest."
+
+open_questions: []

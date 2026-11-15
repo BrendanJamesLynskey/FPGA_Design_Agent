@@ -1,0 +1,113 @@
+mutants:
+mutants:
+- name: scale_gain_4
+  file: pdm_chain.sv
+  find: 32'(in_x_pc) * 32'sd8
+  replace: 32'(in_x_pc) * 32'sd4
+  why: the CIC output is scaled by 4, not 8
+- name: scale_wraps
+  file: pdm_chain.sv
+  find: 'if (in_v_pc) oy_pc <= hi_pc ? 16''sh7FFF : lo_pc ? 16''sh8000 : v_pc[15:0];'
+  replace: if (in_v_pc) oy_pc <= v_pc[15:0];
+  why: digital full scale wraps instead of stopping at the limit
+- name: hb_ties_up
+  file: pdm_chain.sv
+  find: wire               up_pc  = (rem_pc > 5'd16) || (rem_pc == 5'd16 && qf_pc[0]);
+  replace: wire               up_pc  = (rem_pc >= 5'd16);
+  why: half-band ties round up instead of to even
+- name: hb_first_of_pair
+  file: pdm_chain.sv
+  find: wire               res_pc = in_v_pc && odd_pc;
+  replace: wire               res_pc = in_v_pc && !odd_pc;
+  why: half-band keeps the first sample of each pair
+- name: fir_no_rounding
+  file: pdm_chain.sv
+  find: wire signed [31:0] rnd_pc = (acc_pc + 32'sd256) >>> 9;
+  replace: wire signed [31:0] rnd_pc = (acc_pc) >>> 9;
+  why: FIR truncates
+- name: fir_centre_tap
+  file: pdm_chain.sv
+  find: 32'sd584 * h_pc[3]
+  replace: 32'sd583 * h_pc[3]
+  why: FIR centre coefficient 583
+- name: dc_pole_8
+  file: pdm_chain.sv
+  find: (32'(yp_pc) >>> 7)
+  replace: (32'(yp_pc) >>> 8)
+  why: DC blocker pole 1 - 2^-8
+- name: dc_not_differencing
+  file: pdm_chain.sv
+  find: 32'(in_x_pc) - 32'(xp_pc) + 32'(yp_pc)
+  replace: 32'(in_x_pc) + 32'(yp_pc)
+  why: DC blocker without the previous-input term
+- name: cic_integrator_pipelined
+  file: pdm_chain.sv
+  find: wire signed [15:0] n3_pc = i3_pc + n2_pc;
+  replace: wire signed [15:0] n3_pc = i3_pc + i2_pc;
+  why: third integrator adds the old second one
+- name: run_start_keeps_state
+  file: pdm_chain.sv
+  find: wire clr_pc     = rst_pc || start_pc;
+  replace: wire clr_pc     = rst_pc;
+  why: starting RUN does not clear the chain
+- name: count_not_cleared
+  file: pdm_chain.sv
+  find: "if (start_pc) count_pc <= '0;\n            else if (dv_pc)"
+  replace: "if (1'b0) count_pc <= '0;\n            else if (dv_pc)"
+  why: COUNT is not cleared at the RUN start
+- name: captures_before_dc_blocker
+  file: pdm_chain.sv
+  find: cap_pc[idx_pc] <= dy_pc;
+  replace: cap_pc[idx_pc] <= fy_pc;
+  why: the capture takes the FIR output, not the DC blocker output
+- name: done_one_early
+  file: pdm_chain.sv
+  find: if (idx_pc == 6'd63) begin
+  replace: if (idx_pc == 6'd62) begin
+  why: DONE is set before CAP[63] is stored
+- name: cap_reads_before_done
+  file: pdm_chain.sv
+  find: 'win_rdata_pc <= done_pc ? 32''(cap_pc[win_addr_pc[5:0]]) : 32''d0;'
+  replace: win_rdata_pc <= 32'(cap_pc[win_addr_pc[5:0]]);
+  why: CAP does not read 0 while DONE = 0
+- name: arm_while_running
+  file: pdm_chain.sv
+  find: wire arm_ok_pc  = ctrl_wr_pc && win_wdata_pc[1] && !run_pc;
+  replace: wire arm_ok_pc  = ctrl_wr_pc && win_wdata_pc[1];
+  why: ARM is honoured while RUN is 1
+- name: partial_capture_not_restarted
+  file: pdm_chain.sv
+  find: '            if (start_pc && armed_pc && !done_pc) idx_pc <= ''0;
+
+    '
+  replace: ''
+  why: a partial capture continues at the old index after a new RUN start
+- name: clock_half_short
+  file: pdm_chain.sv
+  find: if (div_pc == 16'(CLK_HALF - 1)) begin
+  replace: if (div_pc == 16'(CLK_HALF - 2)) begin
+  why: M_CLK half period one board clock short
+- name: clock_free_running
+  file: pdm_chain.sv
+  find: if (!run_pc || (ctrl_wr_pc && !win_wdata_pc[0])) begin
+  replace: if (1'b0) begin
+  why: M_CLK keeps toggling while RUN = 0
+- name: lrsel_high
+  file: pdm_chain.sv
+  find: assign m_lrsel_pc = 1'b0;
+  replace: assign m_lrsel_pc = 1'b1;
+  why: M_LRSEL driven high
+- name: sample_too_late
+  file: pdm_chain.sv
+  find: wire rise_pc    = run_pc && !m_clk_pc && div_pc == 16'(CLK_HALF - 1);
+  replace: wire rise_pc    = run_pc && m_clk_pc && div_pc == 16'd2;
+  why: the bit is taken three clocks after the rising edge, outside the valid window
+trap:
+  twin: textbook CIC chain that passes on every decimated output, including the first two while the filter is still filling
+  why: the first two CIC outputs mix real bits with the empty start state; the spec drops them, and a chain that keeps them shifts every audio sample by two CIC outputs
+  edits:
+  - file: pdm_chain.sv
+    find: if (w1_pc) begin
+    replace: if (1'b1) begin
+  must_fail:
+  - test_capture_of_a_tone

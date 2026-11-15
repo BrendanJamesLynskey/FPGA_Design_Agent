@@ -1,0 +1,200 @@
+{
+  "task": "v2_b_cic_decim",
+  "sim": "icarus",
+  "date": "2026-11-14",
+  "ref": {
+    "pass": true,
+    "tests": {
+      "test_identity_and_reset": true,
+      "test_full_scale_exact": true,
+      "test_fill_outputs_are_not_results": true,
+      "test_random_bits": true,
+      "test_queue_overflow": true,
+      "test_clear_restarts_the_filter": true,
+      "test_register_rules": true
+    }
+  },
+  "mutants": [
+    {
+      "name": "width_12",
+      "why": "registers are 12 bits wide: the +4096 and -4096 steady states wrap",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_identity_and_reset",
+        "test_full_scale_exact",
+        "test_fill_outputs_are_not_results",
+        "test_random_bits",
+        "test_register_rules"
+      ]
+    },
+    {
+      "name": "phase_early",
+      "why": "the comb chain takes its sample one input bit early",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_full_scale_exact",
+        "test_random_bits",
+        "test_queue_overflow",
+        "test_clear_restarts_the_filter"
+      ]
+    },
+    {
+      "name": "map_zero_for_zero",
+      "why": "a 0 bit counts as 0, not -1",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_identity_and_reset",
+        "test_full_scale_exact",
+        "test_random_bits",
+        "test_queue_overflow",
+        "test_clear_restarts_the_filter"
+      ]
+    },
+    {
+      "name": "integrator_pipelined",
+      "why": "the third integrator adds the old second integrator, a one-clock-late cascade",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_full_scale_exact",
+        "test_random_bits",
+        "test_queue_overflow",
+        "test_clear_restarts_the_filter"
+      ]
+    },
+    {
+      "name": "comb_tap_wrong",
+      "why": "the third comb delays the wrong signal",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_identity_and_reset",
+        "test_full_scale_exact",
+        "test_fill_outputs_are_not_results",
+        "test_random_bits",
+        "test_queue_overflow",
+        "test_clear_restarts_the_filter",
+        "test_register_rules"
+      ]
+    },
+    {
+      "name": "fill_discard_one",
+      "why": "only the first output is discarded",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_identity_and_reset",
+        "test_full_scale_exact",
+        "test_fill_outputs_are_not_results",
+        "test_random_bits",
+        "test_queue_overflow",
+        "test_clear_restarts_the_filter",
+        "test_register_rules"
+      ]
+    },
+    {
+      "name": "overflow_overwrites",
+      "why": "a result arriving at a full queue overwrites an old entry",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_random_bits",
+        "test_queue_overflow"
+      ]
+    },
+    {
+      "name": "ovr_cleared_by_pop",
+      "why": "OVR is not sticky: a pop clears it",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_queue_overflow"
+      ]
+    },
+    {
+      "name": "clear_keeps_ovr",
+      "why": "CLEAR leaves OVR set",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_queue_overflow"
+      ]
+    },
+    {
+      "name": "result_read_pops",
+      "why": "reading RESULT removes the entry",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_identity_and_reset",
+        "test_full_scale_exact",
+        "test_fill_outputs_are_not_results",
+        "test_random_bits",
+        "test_queue_overflow",
+        "test_clear_restarts_the_filter",
+        "test_register_rules"
+      ]
+    },
+    {
+      "name": "next_on_empty_underflows",
+      "why": "NEXT on an empty queue drives the count below zero",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_register_rules"
+      ]
+    },
+    {
+      "name": "bit_order_msb_first",
+      "why": "the 32 bits are fed bit 31 first",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_random_bits",
+        "test_queue_overflow",
+        "test_clear_restarts_the_filter"
+      ]
+    },
+    {
+      "name": "clr_any_ctrl_write",
+      "why": "any write to CTRL clears, not only bit 0 = 1",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_register_rules"
+      ]
+    },
+    {
+      "name": "status_count_off",
+      "why": "COUNT includes the OVR flag",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_random_bits",
+        "test_queue_overflow"
+      ]
+    }
+  ],
+  "mutants_killed": 14,
+  "mutants_total": 14,
+  "trap": {
+    "twin": "textbook CIC that outputs from the first decimation instant",
+    "why": "after reset the first outputs mix real bits with the empty start state; the request says only fully made results count",
+    "must_fail": [
+      "test_fill_outputs_are_not_results"
+    ],
+    "failed_tests": [
+      "test_identity_and_reset",
+      "test_full_scale_exact",
+      "test_fill_outputs_are_not_results",
+      "test_random_bits",
+      "test_queue_overflow",
+      "test_clear_restarts_the_filter",
+      "test_register_rules"
+    ],
+    "trap_fires": true
+  }
+}

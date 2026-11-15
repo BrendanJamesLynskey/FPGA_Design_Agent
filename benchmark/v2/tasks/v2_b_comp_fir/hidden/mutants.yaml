@@ -1,0 +1,81 @@
+# Mutants and the trap for v2_b_comp_fir (benchmark/tools/check_task.py)
+mutants:
+- name: wrap_not_saturate
+  file: comp_fir.sv
+  find: 'wire signed [15:0] y_cf   = hi_cf ? 16''sh7FFF : lo_cf ? 16''sh8000 : rnd_cf[15:0];'
+  replace: wire signed [15:0] y_cf   = rnd_cf[15:0];
+  why: results wrap round instead of stopping at the limits
+- name: sat_not_latched
+  file: comp_fir.sv
+  find: if (hi_cf || lo_cf) sat_cf <= 1'b1;
+  replace: sat_cf <= hi_cf || lo_cf;
+  why: SAT follows the last result instead of latching
+- name: sat_low_limit_wrong
+  file: comp_fir.sv
+  find: lo_cf ? 16'sh8000
+  replace: lo_cf ? 16'sh8001
+  why: the negative limit is -32767
+- name: center_coef_off
+  file: comp_fir.sv
+  find: 32'sd584 * h_cf[3]
+  replace: 32'sd583 * h_cf[3]
+  why: centre coefficient 583, so DC gain is not 1
+- name: tap_misplaced
+  file: comp_fir.sv
+  find: + 32'sd16 * h_cf[1]
+  replace: + 32'sd16 * h_cf[0]
+  why: one coefficient applied to the wrong delay
+- name: history_saturated
+  file: comp_fir.sv
+  find: h_cf[0] <= x0_cf;
+  replace: 'h_cf[0] <= (hi_cf || lo_cf) ? y_cf : x0_cf;'
+  why: the history stores the saturated result when it saturates
+- name: lost_without_discard
+  file: comp_fir.sv
+  find: "rp_cf   <= rp_cf + 3'd1;\n                    lost_cf <= 1'b1;"
+  replace: lost_cf <= 1'b1;
+  why: a full queue overwrites a slot but still reads from the old oldest
+- name: clear_keeps_history
+  file: comp_fir.sv
+  find: for (int i_cf = 0; i_cf < 8; i_cf++) h_cf[i_cf] <= '0;
+  replace: 'for (int i_cf = 0; i_cf < 8; i_cf++) h_cf[i_cf] <= rst_cf ? 16''sd0 : h_cf[i_cf];'
+  why: CLEAR leaves the sample history
+- name: sample_unsigned
+  file: comp_fir.sv
+  find: wire signed [15:0] x0_cf = win_wdata_cf[15:0];
+  replace: wire signed [15:0] x0_cf = {1'b0, win_wdata_cf[14:0]};
+  why: bit 15 of the sample is dropped instead of being the sign
+- name: result_read_pops
+  file: comp_fir.sv
+  find: wire pop_cf  = win_wr_cf && win_addr_cf == 7'h04 && cnt_cf != 4'd0;
+  replace: wire pop_cf  = ((win_wr_cf && win_addr_cf == 7'h04) || (win_rd_cf && win_addr_cf == 7'h03)) && cnt_cf != 4'd0;
+  why: reading RESULT removes the entry
+- name: next_on_empty_underflows
+  file: comp_fir.sv
+  find: wire pop_cf  = win_wr_cf && win_addr_cf == 7'h04 && cnt_cf != 4'd0;
+  replace: wire pop_cf  = win_wr_cf && win_addr_cf == 7'h04;
+  why: NEXT on an empty queue underflows the count
+- name: clr_any_ctrl_write
+  file: comp_fir.sv
+  find: wire clr_cf  = win_wr_cf && win_addr_cf == 7'h00 && win_wdata_cf[0];
+  replace: wire clr_cf  = win_wr_cf && win_addr_cf == 7'h00;
+  why: any write to CTRL clears
+- name: status_bits_swapped
+  file: comp_fir.sv
+  find: '{26''d0, lost_cf, sat_cf, cnt_cf}'
+  replace: '{26''d0, sat_cf, lost_cf, cnt_cf}'
+  why: SAT and LOST exchanged
+- name: lost_not_cleared_by_clear
+  file: comp_fir.sv
+  find: sat_cf <= 1'b0; lost_cf <= 1'b0;
+  replace: 'sat_cf <= 1''b0; lost_cf <= rst_cf ? 1''b0 : lost_cf;'
+  why: CLEAR leaves LOST
+trap:
+  twin: textbook fixed-point FIR that truncates (arithmetic shift, no rounding offset)
+  why: the request says round to the nearest; a bare shift rounds ties and half-LSB values down
+  edits:
+  - file: comp_fir.sv
+    find: (acc_cf + 32'sd256) >>> 9
+    replace: (acc_cf) >>> 9
+  must_fail:
+  - test_rounding_is_half_up
