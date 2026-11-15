@@ -12,7 +12,9 @@ module trigger_core #(
     parameter logic [31:0] BUILD_STAMP = 32'h0,
     parameter int          BUILD_MODE  = 0,     // order_ctl: 0 pre-built headers, 1 assemble then send
     parameter int          NINST       = 256,
-    parameter int          MDIO_DIV    = 32
+    parameter int          MDIO_DIV    = 32,
+    parameter int          ML_ARM      = 0      // decision model behind the rules: 0 none (no added logic), 1 gbt_comb,
+                                                // 2 lutnet, 3 mlp_hand (designs/b87_ml_trading; register 0x02A)
 ) (
     input  logic        clk,
     input  logic        rst,
@@ -153,14 +155,62 @@ module trigger_core #(
     logic [31:0] fire_qty, fire_px, fire_ref, rules_rd;
     logic [31:0] fire_seq;
     logic        fire_noref;
+    // the rule table's decision (r_*); with ML_ARM = 0 it is the decision (fire_*) unchanged
+    logic        r_fire_v, r_fire_order, r_fire_side, r_fire_pin_en, r_fire_pin_idx, r_fire_log, r_fire_noref;
+    logic [2:0]  r_fire_rule;
+    logic [15:0] r_fire_ver, r_fire_inst;
+    logic [31:0] r_fire_qty, r_fire_px, r_fire_ref;
     rules #(.NR(8)) u_rules (.clk, .rst, .h_we(rules_we), .h_addr({2'b00, h_addr[5:0]}), .h_wdata(h_wdata),
         .h_commit(rules_commit), .version(rules_ver), .h_rdata(rules_rd),
         .msg_px_v(m_px_v), .msg_type(m_type), .msg_side(m_side), .msg_inst(m_inst), .msg_px(m_px),
         .bk_valid(bk_valid), .bk_bid_px(bk_bpx), .bk_bid_sz(bk_bsz), .bk_ask_px(bk_apx), .bk_ask_sz(bk_asz),
         .bk_last(bk_last),
-        .fire_v(fire_v), .fire_rule(fire_rule), .fire_ver(fire_ver), .fire_order(fire_order), .fire_side(fire_side),
-        .fire_qty(fire_qty), .fire_px(fire_px), .fire_ref_px(fire_ref), .fire_noref(fire_noref), .fire_inst(fire_inst),
-        .fire_pin_en(fire_pin_en), .fire_pin_idx(fire_pin_idx), .fire_log(fire_log), .ev_holdoff(ev_hold));
+        .fire_v(r_fire_v), .fire_rule(r_fire_rule), .fire_ver(r_fire_ver), .fire_order(r_fire_order),
+        .fire_side(r_fire_side), .fire_qty(r_fire_qty), .fire_px(r_fire_px), .fire_ref_px(r_fire_ref),
+        .fire_noref(r_fire_noref), .fire_inst(r_fire_inst), .fire_pin_en(r_fire_pin_en),
+        .fire_pin_idx(r_fire_pin_idx), .fire_log(r_fire_log), .ev_holdoff(ev_hold));
+
+    // optional decision model (ML_ARM > 0): features from the book read (ml_feat), the arm, then ml_gate holds the
+    // rule's decision until the model's class for the same message and vetoes an order whose side disagrees.
+    // Register 0x02A ML_CTRL: [0] enable, [31:16] tracked instrument; 0x02B ML_LAST_CLASS (RO); 0x02C ML_VETOES (RO).
+    logic        ml_en;
+    logic [15:0] ml_inst;
+    logic [31:0] ml_vetoes;
+    logic [1:0]  ml_last;
+    localparam int RW = 3 + 16 + 32 + 32 + 32 + 1 + 16 + 3;
+    if (ML_ARM == 0) begin : g_no_ml
+        assign {fire_v, fire_order, fire_side} = {r_fire_v, r_fire_order, r_fire_side};
+        assign {fire_rule, fire_ver, fire_qty, fire_px, fire_ref, fire_noref, fire_inst, fire_pin_en, fire_pin_idx,
+                fire_log} = {r_fire_rule, r_fire_ver, r_fire_qty, r_fire_px, r_fire_ref, r_fire_noref, r_fire_inst,
+                             r_fire_pin_en, r_fire_pin_idx, r_fire_log};
+        assign ml_vetoes = '0;
+        assign ml_last = 2'd1;
+    end else begin : g_ml
+        logic        feat_v, cls_v;
+        logic [37:0] feat;
+        logic [1:0]  cls;
+        ml_feat u_feat (.clk, .rst, .ml_inst, .msg_px_v(m_px_v), .msg_type(m_type), .msg_side(m_side),
+            .msg_inst(m_inst), .bk_valid(bk_valid), .bk_bid_px(bk_bpx), .bk_bid_sz(bk_bsz), .bk_ask_px(bk_apx),
+            .bk_ask_sz(bk_asz), .feat_v(feat_v), .feat(feat));
+        if (ML_ARM == 1) begin : g_arm
+            gbt_comb u_arm (.clk, .rst, .in_v(feat_v), .in_f(feat), .out_v(cls_v), .out_cls(cls));
+            initial if (u_arm.LATENCY > 8) $error("trigger_core: ML arm latency must be <= 8 clocks");
+        end else if (ML_ARM == 2) begin : g_arm
+            lutnet u_arm (.clk, .rst, .in_v(feat_v), .in_f(feat), .out_v(cls_v), .out_cls(cls));
+            initial if (u_arm.LATENCY > 8) $error("trigger_core: ML arm latency must be <= 8 clocks");
+        end else begin : g_arm
+            mlp_hand u_arm (.clk, .rst, .in_v(feat_v), .in_f(feat), .out_v(cls_v), .out_cls(cls));
+            initial if (u_arm.LATENCY > 8) $error("trigger_core: ML arm latency must be <= 8 clocks");
+        end
+        ml_gate #(.FW(RW)) u_gate (.clk, .rst, .en(ml_en), .track(feat_v), .fire_v(r_fire_v),
+            .fire_order(r_fire_order), .fire_side(r_fire_side),
+            .fire_rest({r_fire_rule, r_fire_ver, r_fire_qty, r_fire_px, r_fire_ref, r_fire_noref, r_fire_inst,
+                        r_fire_pin_en, r_fire_pin_idx, r_fire_log}),
+            .cls_v(cls_v), .cls(cls), .o_fire_v(fire_v), .o_fire_order(fire_order), .o_fire_side(fire_side),
+            .o_fire_rest({fire_rule, fire_ver, fire_qty, fire_px, fire_ref, fire_noref, fire_inst, fire_pin_en,
+                          fire_pin_idx, fire_log}),
+            .vetoes(ml_vetoes), .last_cls(ml_last));
+    end
     always_ff @(posedge clk) if (m_px_v) fire_seq <= m_seq;
 
     // interlocks
@@ -365,6 +415,7 @@ module trigger_core #(
             gen_en <= 1'b0; gen_interval <= 32'd1250; gen_npkts <= '0; gen_nmsg <= 8'd1; gen_inst_mask <= 16'h7;
             gen_base_px <= 32'd10000; gen_px_mask <= 32'hFF; gen_bad_every <= '0; gen_gap_every <= '0;
             commit_ts <= '0; book_inst <= '0; a_mdio_cmd <= '0; b_mdio_cmd <= '0;
+            ml_en <= 1'b0; ml_inst <= '0;
         end else begin
             if (rules_commit) commit_ts <= ts;
             if (h_we) begin
@@ -392,6 +443,7 @@ module trigger_core #(
                     12'h023: bucket  <= h_wdata[15:0];
                     12'h024: refill  <= h_wdata;
                     12'h025: pin_width <= h_wdata;
+                    12'h02A: begin ml_en <= h_wdata[0]; ml_inst <= h_wdata[31:16]; end
                     12'h030: book_inst <= h_wdata[15:0];
                     12'h180: begin a_mdio_cmd <= h_wdata; a_mdio_go <= 1'b1; end
                     12'h182: begin b_mdio_cmd <= h_wdata; b_mdio_go <= 1'b1; end
@@ -444,6 +496,9 @@ module trigger_core #(
                 12'h017: rd = {16'd0, dst_port};
                 12'h020: rd = max_qty;
                 12'h021: rd = band;
+                12'h02A: rd = {ml_inst, 15'd0, ml_en};
+                12'h02B: rd = {30'd0, ml_last};
+                12'h02C: rd = ml_vetoes;
                 12'h022: rd = max_pos;
                 12'h023: rd = {16'd0, bucket};
                 12'h024: rd = refill;

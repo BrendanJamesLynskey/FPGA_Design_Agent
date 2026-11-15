@@ -86,9 +86,11 @@ class FeatureState:
 
     def features(self) -> list[int]:
         pb, qb, pa, qa = self.prev
-        b, a = min(qb, 255), min(qa, 255)
+        b = 0 if pb == 0 else min(qb, 255)            # an empty side (price 0; only in the 58A book) has size 0
+        a = 0 if pa == 0 else min(qa, 255)
+        spread = 15 if (pb == 0 or pa == 0 or pa < pb) else min(pa - pb, 15)
         ofi = max(-127, min(127, sum(self.ofi)))
-        return [b, a, min(pa - pb, 15), imb_bucket(b, a), sum(self.trades) + 8, ofi + 128, self.last_dir]
+        return [b, a, spread, imb_bucket(b, a), sum(self.trades) + 8, ofi + 128, self.last_dir]
 
 
 def simulate(seed: int, n_events: int, p: Params = Params()) -> dict:
