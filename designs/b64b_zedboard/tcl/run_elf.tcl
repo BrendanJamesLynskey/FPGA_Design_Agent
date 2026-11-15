@@ -4,7 +4,7 @@
 source [file join [file dirname [info script]] zb.tcl]
 lassign $argv xdir bitname elf logfile tmo
 zb_connect
-if {[info exists ::env(ZB_LIGHT)] && $::env(ZB_LIGHT) eq "1"} { zb_run_light $elf } else { zb_run $xdir/ps7_init.tcl $xdir/$bitname $elf }
+if {[info exists ::env(ZB_LIGHT)] && $::env(ZB_LIGHT) eq "1"} { zb_run_light $elf } elseif {[info exists ::env(ZB_FIRST)] && $::env(ZB_FIRST) eq "1"} { zb_first $xdir/ps7_init.tcl $xdir/$bitname $elf } else { zb_run $xdir/ps7_init.tcl $xdir/$bitname $elf }
 set t0 [clock seconds]
 set last ""
 while {[expr {[clock seconds] - $t0}] < $tmo} {
