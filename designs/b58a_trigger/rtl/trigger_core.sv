@@ -193,15 +193,15 @@ module trigger_core #(
         ml_feat u_feat (.clk, .rst, .ml_inst, .msg_px_v(m_px_v), .msg_type(m_type), .msg_side(m_side),
             .msg_inst(m_inst), .bk_valid(bk_valid), .bk_bid_px(bk_bpx), .bk_bid_sz(bk_bsz), .bk_ask_px(bk_apx),
             .bk_ask_sz(bk_asz), .feat_v(feat_v), .feat(feat));
+        // each arm's LATENCY (rtl/gen/*.sv; the integration test checks the gate delay against the source): at most 8
+        localparam int ML_LAT = (ML_ARM == 1) ? 1 : (ML_ARM == 2) ? 3 : 13;
+        initial if (ML_LAT > 8) $error("trigger_core: ML arm latency %0d > 8 clocks (ML_ARM %0d)", ML_LAT, ML_ARM);
         if (ML_ARM == 1) begin : g_arm
             gbt_comb u_arm (.clk, .rst, .in_v(feat_v), .in_f(feat), .out_v(cls_v), .out_cls(cls));
-            initial if (u_arm.LATENCY > 8) $error("trigger_core: ML arm latency must be <= 8 clocks");
         end else if (ML_ARM == 2) begin : g_arm
             lutnet u_arm (.clk, .rst, .in_v(feat_v), .in_f(feat), .out_v(cls_v), .out_cls(cls));
-            initial if (u_arm.LATENCY > 8) $error("trigger_core: ML arm latency must be <= 8 clocks");
         end else begin : g_arm
             mlp_hand u_arm (.clk, .rst, .in_v(feat_v), .in_f(feat), .out_v(cls_v), .out_cls(cls));
-            initial if (u_arm.LATENCY > 8) $error("trigger_core: ML arm latency must be <= 8 clocks");
         end
         ml_gate #(.FW(RW)) u_gate (.clk, .rst, .en(ml_en), .track(feat_v), .fire_v(r_fire_v),
             .fire_order(r_fire_order), .fire_side(r_fire_side),
