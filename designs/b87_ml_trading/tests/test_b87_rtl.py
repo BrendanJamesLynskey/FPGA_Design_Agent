@@ -20,7 +20,9 @@ from designs.b87_ml_trading.model import lobsim as L
 
 HERE = Path(__file__).resolve().parents[1]
 MODELS = G.MODELS
-ARMS = {"imb_rule": "imbalance_rule", "gbt_comb": "gbt", "gbt_pipe": "gbt", "mlp_hand": "mlp", "lutnet": "lutnet"}
+ARMS = {"imb_rule": "imbalance_rule", "gbt_comb": "gbt", "gbt_pipe": "gbt", "mlp_hand": "mlp", "lutnet": "lutnet",
+        "mlp_hls4ml_wrap": "mlp"}
+HLS_V = G.ROOT / "build" / "b87" / "hls4ml_rtl"     # Vitis HLS output (not committed; see rtl/mlp_hls4ml_wrap.sv)
 PRED = {"imbalance_rule": A.imbalance_rule_predict, "gbt": A.gbt_predict_int, "mlp": A.mlp_predict_int, "lutnet": A.lut_predict_int}
 _results: dict = {}
 
@@ -46,14 +48,19 @@ def test_generated_rtl_is_current():
 
 @pytest.mark.parametrize("arm", list(ARMS))
 def test_arm_matches_model_and_latency_is_fixed(arm, test_split, tmp_path):
+    extra = []
+    if arm == "mlp_hls4ml_wrap":
+        if not HLS_V.exists():
+            pytest.skip("no Vitis HLS output in build/b87/hls4ml_rtl (needs the hls4ml_arm --synth step)")
+        extra = sorted(str(p) for p in HLS_V.glob("*.v"))
     q = json.loads((MODELS / f"{ARMS[arm]}.json").read_text())
     X = test_split
     exp = PRED[ARMS[arm]](q, X)
     (tmp_path / "v.hex").write_text("\n".join(pack(X, exp)) + "\n")
-    src = HERE / "rtl" / "gen" / f"{arm}.sv"
+    src = HERE / "rtl" / ("mlp_hls4ml_wrap.sv" if extra else f"gen/{arm}.sv")
     lat = int(re.search(r"localparam int LATENCY = (\d+);", src.read_text()).group(1))
     subprocess.run(["iverilog", "-g2012", f"-DARM={arm}", "-o", str(tmp_path / "sim"), str(HERE / "tb" / "tb_arm.sv"),
-                    str(src)], check=True)
+                    str(src)] + extra, check=True)
     subprocess.run(["vvp", "-n", str(tmp_path / "sim"), f"+VEC={tmp_path / 'v.hex'}", f"+N={len(X)}",
                     f"+OUT={tmp_path / 's.txt'}"], check=True, capture_output=True)
     s = dict(zip(*[iter((tmp_path / "s.txt").read_text().split())] * 2))

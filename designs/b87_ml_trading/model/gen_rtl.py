@@ -137,12 +137,42 @@ def gbt(q: dict, pipelined: bool) -> str:
 
 
 # ---------------------------------------------------------------------------------------------------------- MLP
+TREE_R = 2      # adder levels between registers in the MLP's adder trees
+
+
+def tree_regs(n: int) -> int:
+    return math.ceil(math.ceil(math.log2(n)) / TREE_R) if n > 1 else 1
+
+
+def tree(s: list, name: str, terms: list[str], w: int) -> tuple[str, int]:
+    """A balanced adder tree over `terms`, a register after every TREE_R levels and after the last; an odd term
+    passes a level unchanged (and through its registers), so every path has the same number of registers."""
+    lvl, regs, cur = 0, 0, terms
+    nlev = math.ceil(math.log2(len(terms))) if len(terms) > 1 else 0
+    while True:
+        if len(cur) > 1:
+            nxt = []
+            for j in range(0, len(cur), 2):
+                nxt.append(f"({' + '.join(cur[j:j + 2])})" if j + 1 < len(cur) else cur[j])
+            cur, lvl = nxt, lvl + 1
+        if lvl % TREE_R == 0 or lvl == nlev:
+            names = []
+            for j, e in enumerate(cur):
+                nm = f"{name}_r{regs}_{j}"
+                s.append(f"    logic signed [{w-1}:0] {nm};\n    always_ff @(posedge clk) {nm} <= {e};\n")
+                names.append(nm)
+            cur, regs = names, regs + 1
+            if len(cur) == 1:
+                assert regs == tree_regs(len(terms)), (regs, len(terms))
+                return cur[0], regs
 def mlp(q: dict) -> str:
     name = "mlp_hand"
     nl = len(q["W"])
-    lat = 2 * nl + 1
+    sizes = q["sizes"]
+    lat = sum(1 + tree_regs(sizes[i] + 1) + (1 if i < nl - 1 else 0) for i in range(nl)) + 1
     what = (f"Arm (b), hand RTL: MLP {'-'.join(map(str, q['sizes']))}, int8 weights, uint8 activations; per layer one "
-            "clock for the products and one for the sum, bias, shift and saturation; one clock for the argmax.")
+            f"clock for the products, a balanced adder tree (bias included) with a register every {TREE_R} adder "
+            "levels, one clock for the shift and saturation; one clock for the argmax.")
     s = [HEAD.format(name=name, model="mlp", what=what, lat=lat), ports(name, lat)]
     off = q["offsets"]
     s.append("    // layer 0 input: the features minus their offsets, signed\n")
@@ -165,18 +195,17 @@ def mlp(q: dict) -> str:
                 w = W[o][i]
                 s.append(f"    logic signed [{pw-1}:0] p{li}_{o}_{i};\n"
                          f"    always_ff @(posedge clk) p{li}_{o}_{i} <= x{li}_{i} * {'-' if w < 0 else ''}{pw}'sd{abs(w)};\n")
-            terms = " + ".join(f"{aw}'(p{li}_{o}_{i})" for i in range(nin))
             bias = f"{'-' if b[o] < 0 else ''}{aw}'sd{abs(b[o])}"
+            root, nreg = tree(s, f"t{li}_{o}", [f"{aw}'(p{li}_{o}_{i})" for i in range(nin)] + [bias], aw)
             if li < nl - 1:
                 sh = q["fw"][li] + q["fin"][li] - q["fa"][li]
-                s.append(f"    logic signed [{aw-1}:0] acc{li}_{o};\n    assign acc{li}_{o} = {terms} + {bias};\n"
-                         f"    logic signed [{aw-1}:0] sh{li}_{o};\n"
-                         f"    assign sh{li}_{o} = {'acc%d_%d >>> %d' % (li, o, sh) if sh >= 0 else 'acc%d_%d <<< %d' % (li, o, -sh)};\n"
+                s.append(f"    logic signed [{aw-1}:0] sh{li}_{o};\n"
+                         f"    assign sh{li}_{o} = {'%s >>> %d' % (root, sh) if sh >= 0 else '%s <<< %d' % (root, -sh)};\n"
                          f"    logic signed [8:0] x{li+1}_{o};   // uint8 activation in a signed container\n"
                          f"    always_ff @(posedge clk) x{li+1}_{o} <= sh{li}_{o} < 0 ? 9'sd0 : "
                          f"(sh{li}_{o} > {aw}'sd255 ? 9'sd255 : 9'(sh{li}_{o}));\n")
             else:
-                s.append(f"    logic signed [{aw-1}:0] z{o};\n    always_ff @(posedge clk) z{o} <= {terms} + {bias};\n")
+                s.append(f"    logic signed [{aw-1}:0] z{o};\n    assign z{o} = {root};\n")
         nin = nout
     s.append(f"    always_ff @(posedge clk) out_cls <= {argmax3('z0', 'z1', 'z2')};\nendmodule\n")
     return "".join(s)

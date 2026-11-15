@@ -43,18 +43,18 @@ def torch_model(q):
     m = M()
     with torch.no_grad():
         for i, fc in enumerate((m.fc0, m.fc1, m.fc2)):
-            fc.weight[:] = torch.tensor(np.array(q["W"][i]) / 2.0 ** q["fw"][i], dtype=torch.float64)
-            fc.bias[:] = torch.tensor(np.array(q["b"][i]) / 2.0 ** (q["fw"][i] + q["fin"][i]), dtype=torch.float64)
-    return m.double().eval()
+            fc.weight[:] = torch.tensor(np.array(q["W"][i]) / 2.0 ** q["fw"][i], dtype=torch.float32)
+            fc.bias[:] = torch.tensor(np.array(q["b"][i]) / 2.0 ** (q["fw"][i] + q["fin"][i]), dtype=torch.float32)
+    return m.eval()
 
 
 def config(q):
     def fx(w, frac, signed=True, extra=""):
         return f"ap_{'' if signed else 'u'}fixed<{w},{w - frac}{extra}>"
 
-    c = {"Model": {"Precision": "ap_fixed<24,12>", "ReuseFactor": 1, "Strategy": "Latency"}, "LayerName": {}}
+    c = {"Model": {"Precision": "ap_fixed<40,20>", "ReuseFactor": 1, "Strategy": "Latency"}, "LayerName": {}}
     ln = c["LayerName"]
-    ln["fc0_input"] = {"Precision": {"result": fx(10, q["fin"][0])}}
+    ln["x"] = {"Precision": {"result": fx(10, q["fin"][0])}}
     for i in range(3):
         fw, fin = q["fw"][i], q["fin"][i]
         acc = fx(26, fw + fin)
@@ -74,8 +74,16 @@ def main():
     import hls4ml
     q = json.loads((ROOT / "results" / "b87" / "models" / "mlp.json").read_text())
     m = torch_model(q)
-    cfg = config(q)
-    hm = hls4ml.converters.convert_from_pytorch_model(m, input_shape=(None, 7), hls_config=cfg, output_dir=a.out,
+    # start from hls4ml's own per-layer config (a hand-built dict without its other keys was not bit-exact: measured,
+    # see the report), then set every layer's types from config(q)
+    cfg = hls4ml.utils.config_from_pytorch_model(m, input_shape=(7,), granularity="name", backend="Vitis",
+                                                 default_precision="ap_fixed<40,20>")
+    for n, v in config(q)["LayerName"].items():
+        cfg["LayerName"][n]["Precision"] = dict(v["Precision"])
+        cfg["LayerName"][n]["ReuseFactor"] = 1
+    cfg["Model"]["Strategy"] = "Latency"
+    cfg["Model"]["ReuseFactor"] = 1
+    hm = hls4ml.converters.convert_from_pytorch_model(m, hls_config=cfg, output_dir=a.out,
                                                       backend="Vitis", part=PART, clock_period=a.clock,
                                                       io_type="io_parallel", project_name="mlp_hls4ml")
     hm.compile()

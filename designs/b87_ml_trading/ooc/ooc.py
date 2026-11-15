@@ -58,13 +58,14 @@ def parse(wd: Path, clock_ns: float) -> dict:
         return {"status": "not run"}
     u = (wd / "utilization.rpt").read_text()
     t = (wd / "timing_summary.rpt").read_text()
-    m = re.search(r"WNS\(ns\)\s+TNS\(ns\).*?\n\s*-+.*?\n\s*(-?\d+\.\d+)\s+(-?\d+\.\d+)\s+\d+\s+\d+\s+(-?\d+\.\d+)", t, re.S)
+    m = re.search(r"WNS\(ns\)\s+TNS\(ns\).*?\n\s*-+.*?\n\s*(-?\d+\.\d+)\s+(-?\d+\.\d+)\s+\d+\s+\d+\s+(-?\d+\.\d+)\s+(-?\d+\.\d+)\s+\d+\s+\d+\s+(-?\d+\.\d+)", t, re.S)
     r = {"status": "ok", "clock_ns": clock_ns,
          "lut": _row(u, "CLB LUTs"), "ff": _row(u, "CLB Registers"), "carry8": _row(u, "CARRY8"),
          "dsp": _row(u, "DSPs"), "bram_tiles": _row(u, "Block RAM Tile"),
          "wns_ns": float(m.group(1)) if m else None, "whs_ns": float(m.group(3)) if m else None,
+         "wpws_ns": float(m.group(5)) if m else None,
          "build_seconds": int((wd / "done.txt").read_text().strip())}
-    r["closed"] = r["wns_ns"] is not None and r["wns_ns"] >= 0 and r["whs_ns"] >= 0
+    r["closed"] = r["wns_ns"] is not None and r["wns_ns"] >= 0 and r["whs_ns"] >= 0 and r["wpws_ns"] >= 0
     return r
 
 
@@ -101,22 +102,43 @@ def main(argv=None) -> int:
     ap.add_argument("--start", type=float, default=2.0)
     ap.add_argument("--passes", type=int, default=4)
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--fresh", action="store_true", help="forget earlier passes (the arm's RTL changed)")
     a = ap.parse_args(argv)
     OUT.mkdir(parents=True, exist_ok=True)
     hist = {arm: [] for arm in a.arms}
+    for arm in a.arms:                       # keep the passes of earlier searches (same RTL unless --fresh)
+        f = OUT / f"{arm}.json"
+        if f.exists() and not a.fresh:
+            hist[arm] = json.loads(f.read_text())["passes"]
     todo = {arm: a.start for arm in a.arms}
     for p in range(a.passes):
         if not todo:
             break
-        res = run_pass(sorted(todo.items()), f"pass{p + 1}", a.dry_run)
+        tag = f"pass{p + 1}"
+        k = 2
+        while (BUILD / tag).exists() and p == 0:
+            tag, k = f"run{k}_pass1", k + 1
+        if p > 0:
+            tag = tag_base + f"_pass{p + 1}"
+        tag_base = tag.rsplit("_pass", 1)[0] if p == 0 else tag_base
+        res = run_pass(sorted(todo.items()), tag, a.dry_run)
         if a.dry_run:
             return 0
         nxt = {}
         for arm, r in res.items():
             hist[arm].append(r)
-            if r["status"] != "ok" or r["closed"]:
+            if r["status"] != "ok":
                 continue
-            nxt[arm] = math.ceil((r["clock_ns"] - r["wns_ns"]) * 20 - 1e-6) / 20 + (0.05 if p >= 1 else 0.0)
+            t = math.ceil((r["clock_ns"] - r["wns_ns"]) * 20 - 1e-6) / 20
+            if r["closed"]:                  # closed with slack to spare: try the period the slack implies
+                fails = [x["clock_ns"] for x in hist[arm] if x.get("status") == "ok" and not x["closed"]]
+                if t <= r["clock_ns"] - 0.05 and not any(f >= t for f in fails):
+                    nxt[arm] = t
+                continue
+            closed = [x["clock_ns"] for x in hist[arm] if x.get("closed")]
+            t = t + (0.05 if p >= 1 else 0.0)
+            if not closed or t < min(closed):
+                nxt[arm] = t
         todo = nxt
     ver = "unknown"
     for log in sorted(BUILD.glob("pass*/vivado.log")):
