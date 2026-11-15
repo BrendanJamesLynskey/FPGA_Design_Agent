@@ -40,6 +40,16 @@
      "topic": "PL-to-PS interrupt numbers",
      "summary": "The PL interrupt lines reach the GIC at different IDs: Zynq-7000 IRQ_F2P[7:0] are 61-68 and [15:8] are 84-91; Zynq UltraScale+ pl_ps_irq0 is 121-128 and pl_ps_irq1 136-143 (device-tree SPI number = ID - 32).",
      "confirmed": "doc"
+    },
+    {
+     "topic": "Arm core reaction to AXI error responses from the PL",
+     "summary": "Zynq-7000 Cortex-A9: PL SLVERR or DECERR is a precise abort for strongly ordered accesses, imprecise for device or non-cacheable reads, and lost for such writes; the Cortex-A53 is not measured.",
+     "confirmed": "tool"
+    },
+    {
+     "topic": "ACP against HP for CPU-produced buffers",
+     "summary": "Zynq-7000: the ACP beat an HP DMA with software cache maintenance at every size from 16 bytes to 1 MB (HP time beyond the fabric job ran near 0.3 GB/s); ZU+ HPC and ACP are not measured.",
+     "confirmed": "tool"
     }
    ],
    "docs": {

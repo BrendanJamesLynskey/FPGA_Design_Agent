@@ -1,0 +1,30 @@
+# regmap/1 (brief 64B): a small register block whose only purpose is the bus-error experiment: reads and writes to the holes
+# inside its 4 KB window answer as set by unmapped: split (item 5 of the brief: what the Arm cores do with SLVERR).
+regmap: 1
+name: zb_hole_split
+version: 0.1.0
+summary: A four-register block for the unmapped-response experiment, set to split.
+addr_width: 12
+unmapped: split
+registers:
+- name: ID
+  offset: 0x000
+  summary: Block identity.
+  fields:
+  - {name: MAGIC, lsb: 16, width: 16, access: RO, const: 0x64B2, summary: fixed pattern 0x64B2}
+  - {name: VERSION, lsb: 0, width: 16, access: RO, const: 0x0100, summary: register-map version 1.0}
+- name: CTRL
+  offset: 0x004
+  summary: A read/write register.
+  fields:
+  - {name: VALUE, lsb: 0, width: 32, access: RW, reset: 0, summary: free word}
+- name: STATUS
+  offset: 0x008
+  summary: A read-only register with a constant value.
+  fields:
+  - {name: VALUE, lsb: 0, width: 32, access: RO, const: 0x600DF00D, summary: constant}
+- name: SCRATCH
+  offset: 0x0FC
+  summary: Free read/write word for bus tests.
+  fields:
+  - {name: VALUE, lsb: 0, width: 32, access: RW, reset: 0}

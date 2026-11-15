@@ -1,0 +1,57 @@
+# regmap/1 (brief 64B): the latency probe on the ZedBoard. A free-running 100 MHz counter stamps the moment a command reaches the
+# fabric (T_FIRE) and the moment the Arm's interrupt handler clears the interrupt (T_ACK), so interrupt-to-handler latency is
+# measured in one clock domain, with no Arm-side timing in it. NOW is read by the Arm to measure an uncached GP-port read.
+regmap: 1
+name: zb_lat
+version: 0.1.0
+summary: Latency probe - a free-running counter, a command that raises an interrupt, and the two timestamps.
+addr_width: 12
+unmapped: split
+interrupt: {status: IRQ_STATUS, enable: IRQ_ENABLE}
+registers:
+- name: ID
+  offset: 0x000
+  summary: Block identity.
+  fields:
+  - {name: MAGIC, lsb: 16, width: 16, access: RO, const: 0x64B1, summary: fixed pattern 0x64B1}
+  - {name: VERSION, lsb: 0, width: 16, access: RO, const: 0x0100, summary: register-map version 1.0}
+- name: CMD
+  offset: 0x004
+  summary: Commands; reading returns 0.
+  fields:
+  - {name: FIRE, lsb: 0, width: 1, access: W1P, summary: "stamp T_FIRE now, wait DELAY clocks, then set IRQ_STATUS.DONE (and so raise the interrupt)"}
+- name: DELAY
+  offset: 0x008
+  summary: Clocks between the FIRE command and the interrupt (lets the CPU reach its wait loop first).
+  fields:
+  - {name: CLOCKS, lsb: 0, width: 16, access: RW, reset: 0, summary: delay in fabric clocks}
+- name: NOW
+  offset: 0x00C
+  summary: The free-running counter, at the clock the read is accepted (counts fabric clocks from reset).
+  fields:
+  - {name: VALUE, lsb: 0, width: 32, access: RO, summary: counter}
+- name: T_FIRE
+  offset: 0x010
+  summary: Counter value at the clock the FIRE pulse was seen.
+  fields:
+  - {name: VALUE, lsb: 0, width: 32, access: RO, summary: counter at FIRE}
+- name: T_ACK
+  offset: 0x014
+  summary: Counter value at the clock IRQ_STATUS.DONE was cleared by software (the register write committed).
+  fields:
+  - {name: VALUE, lsb: 0, width: 32, access: RO, summary: counter at the clear}
+- name: IRQ_STATUS
+  offset: 0x018
+  summary: Interrupt cause; write 1 to clear.
+  fields:
+  - {name: DONE, lsb: 0, width: 1, access: W1C, summary: the delay after FIRE has elapsed}
+- name: IRQ_ENABLE
+  offset: 0x01C
+  summary: Interrupt enable.
+  fields:
+  - {name: DONE, lsb: 0, width: 1, access: RW, reset: 0}
+- name: SCRATCH
+  offset: 0x0FC
+  summary: Free read/write word for bus tests.
+  fields:
+  - {name: VALUE, lsb: 0, width: 32, access: RW, reset: 0}

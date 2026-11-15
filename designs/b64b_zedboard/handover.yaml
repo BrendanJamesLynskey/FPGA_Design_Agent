@@ -1,0 +1,361 @@
+# Brief 68 handover: the facts behind README.md and AGENT.md (docs/documentation_standard.md).
+# Measurement values and every sha256 are filled from the records by `python -m flow.handover fill`;
+# do not type them. Render with `python -m flow.handover write <this directory>`.
+schema: fda-handover/1
+id: b64b_zedboard
+title: HW/SW partitioning demo on the ZedBoard (Zynq-7000), bare metal
+kind: demonstration
+produced_by: human
+summary: Measures what a Cortex-A9 and the fabric of a Zynq-7000 cost each other, bare metal, on the ZedBoard. A PS7 with
+  GP0, HP0 and ACP ports drives two AXI DMA to accelerator chains (CRC-32 or a 16-tap FIR) and a register plane with a latency
+  probe and three bus-error blocks. Software against the HP path with cache maintenance against the coherent ACP path is
+  swept over buffer sizes, and the A9's reaction to AXI SLVERR and DECERR responses is recorded for each memory mapping.
+scope_not:
+- Linux, UIO, device-tree or kernel-driver measurements; bare metal only
+- the KR260 and the Cortex-A53; this folder is Zynq-7000 only
+- a power or energy measurement; the only power figure is the tool's estimate
+target:
+  part: xc7z020clg484-1
+  board: ZedBoard
+  top: zb_hwsw_wrapper
+  tool: Vivado 2026.1
+  note: the block design is built by vivado/build_full.tcl with the PS7 settings in vivado/ps7_zedboard.tcl (DDR3 from the
+    board guide, no board file); the register blocks are generated from regmaps/
+clocks:
+- name: clk_fpga_0
+  mhz: 100
+  source: results/64b_zedboard/builds/full/timing.rpt
+  note: PS FCLK_CLK0; every fabric block, the DMAs, the HP0 and ACP ports and the GP0 master run on it
+resets:
+- name: FCLK_RESET0_N
+  active: low
+  note: from the PS, through a processor system reset block to every fabric block as aresetn (synchronous, active low)
+interfaces:
+- name: GP0 register plane
+  type: AXI3 from the PS through a protocol converter to AXI4-Lite, our axil_xbar, generated register blocks
+  doc: designs/b64b_zedboard/gen/regs/zb_lat_regs.md
+  note: latency probe, error blocks and the accelerator control registers at the window base 0x40000000; accesses outside
+    every block get DECERR from the crossbar, holes inside a block follow its unmapped setting
+- name: Bus-error blocks
+  type: three generated register blocks, one per unmapped setting (okay, slverr, split)
+  doc: designs/b64b_zedboard/gen/regs/zb_hole_split_regs.md
+  note: each has an error-capture register pair at offsets 0xFF8 and 0xFFC; the other two blocks have the same layout
+- name: DMA and accelerator chains
+  type: AXI DMA simple mode, 32-bit AXI4-Stream into zb_accel, chain 0 on HP0 and chain 1 on the ACP
+  doc: designs/b64b_zedboard/gen/regs/zb_accel_regs.md
+  note: the ACP chain drives AxUSER 1 and AxCACHE 0011 so its accesses are coherent; the HP chain needs software cache maintenance
+- name: Console and logs
+  type: PS UART1 at 115200 baud, 8N1 on the board's USB-UART; a copy of the console text is kept in DDR and read over JTAG
+  note: the DDR copy is the record because the UART has one reader at a time
+parameters:
+- name: accelerator mode
+  value: CRC-32 or 16-tap FIR
+  legal: register ACC_CTRL 0 or 1 (designs/b64b_zedboard/gen/regs/zb_accel_regs.md)
+  note: the FIR uses the library fir block in its lut_mult variant
+- name: stream width
+  value: 32 bit
+  legal: fixed
+  note: the DMA streams are 32 bits wide, which caps the transfer rate near 400 MB/s at 100 MHz
+files:
+- path: designs/b64b_zedboard/vivado/build_full.tcl
+  what: block design and implementation script
+  sha256: cd7fc70cec7d0697c9d46ccfd23304e549ad4b4a6183709e3b33b8a416c1c364
+- path: designs/b64b_zedboard/vivado/ps7_zedboard.tcl
+  what: PS7 configuration for the ZedBoard
+  sha256: 2dc453be732ab9f26f7c0f099e1757044d0bcd76fd7cebe75055dad0612d4c18
+- path: designs/b64b_zedboard/rtl/zb_ctrl.sv
+  what: register plane
+  sha256: 16dce53dabb5a8f754be8038254c02deb39c7ffef03210b1899b18bbd07fce32
+- path: designs/b64b_zedboard/rtl/zb_accel.sv
+  what: CRC-32 or FIR accelerator on a stream
+  sha256: aab15b8e30a9ddbbc977e38667e3b9b9f8ce45d7e54e02e0194180acdd2ef005
+- path: designs/b64b_zedboard/sw/rt.c
+  what: bare-metal runtime (MMU, caches, UART, interrupts, abort handlers)
+  sha256: 3455d06e38a40b5c439487989e6868e2c6b660416f4b9cc82cf1c69c1b5baed9
+- path: designs/b64b_zedboard/sw/t_err.c
+  what: bus-error experiment
+  sha256: f401cda3f135ee8f305b63601fbc74138d7701fe870e9f94e4f7a625a9340e6d
+- path: designs/b64b_zedboard/sw/acc_bench.h
+  what: shared CRC and FIR offload benchmark
+  sha256: c8e0a77b0eef607c0711f0b671254453b115a9c69555cef4793c7025dbc48dbd
+- path: designs/b64b_zedboard/tcl/zb.tcl
+  what: xsdb helpers (first load, light reload, DDR log read)
+  sha256: 3726c0c7cad57488b0d2994342a57db01a040ec486c7a4c30e060264f7caec6d
+- path: designs/b64b_zedboard/make_summary.py
+  what: reads the committed reports and logs into results/64b_zedboard/summary.json
+  sha256: 9e0e2e8002bf0181940942ed405c4ad8bc243cea0d5968699a5853e3d8430b34
+commands:
+- what: build the bitstream and the XSA
+  cmd: vivado -mode batch -source designs/b64b_zedboard/vivado/build_full.tcl -tclargs <out dir> <repo root>
+  heavy: true
+  minutes: 16
+  needs: Vivado 2026.1 and a heavy slot (take_heavy_slot.sh)
+- what: build the bare-metal programs
+  cmd: make -C designs/b64b_zedboard/sw t_crc.elf t_fir.elf hello.elf && bash designs/b64b_zedboard/sw/build_err.sh
+  heavy: false
+  minutes: 1
+  needs: the arm-none-eabi GCC from the Vitis 2026.1 install
+- what: run one program on the board (first load after a power cycle, then ZB_LIGHT=1)
+  cmd: ZB_SERIAL=<cable serial> XSA_DIR=<unzipped XSA> ZB_FIRST=1 designs/b64b_zedboard/run_elf.sh designs/b64b_zedboard/sw/hello.elf
+    out.log 60
+  heavy: false
+  minutes: 1
+  needs: the ZedBoard on its own supply with the JTAG boot straps, hw_server running, the board lock; read the board rules
+    in the house rules first
+- what: rebuild the summary record and the sweep tables
+  cmd: python3 designs/b64b_zedboard/make_summary.py && python3 designs/b64b_zedboard/summarise_sweeps.py results/64b_zedboard/sweeps/crc32_sweep.log
+    results/64b_zedboard/sweeps/fir16_sweep.log
+  heavy: false
+  minutes: 1
+evidence:
+- id: E1
+  activity: simulation
+  result: pass
+  how: record
+  what: accelerator testbench against independent references for the CRC and the FIR; run once by the first executor, not
+    in CI
+  record: designs/b64b_zedboard/tb/zb_accel_tb.sv
+  sha256: 12e8e58d33d1c4819aabec1dda57d76ae92a5f2ad94c8b82be07821834aa4e69
+- id: E2
+  activity: build
+  result: pass
+  how: record
+  what: whole design implemented on Vivado 2026.1; setup and hold slack positive at the PS clock
+  record: results/64b_zedboard/builds/full/timing.rpt
+  sha256: 669c4f057983a00b66d6dedadc6c02557786c751948c5b4cf1abd86c3379ca86
+- id: E3
+  activity: board
+  result: pass
+  how: record
+  what: CRC-32 and FIR sweeps; every output checked against the software result on every repetition, no mismatch in any
+    size
+  record: results/64b_zedboard/sweeps/crc32_sweep.log
+  conditions: ZedBoard on its 12 V supply, junction temperature in the high thirties C, VCCINT 0.99 V, VCCAUX 1.80 V, VCCBRAM
+    0.99 V, no latched alarm (printed in the log)
+  sha256: 7af7eb5977eb9b01cc6ded4e71da2b36ddb4dde8ab9c6625d873d519e0469e14
+- id: E4
+  activity: board
+  result: pass
+  how: record
+  what: 30 bus-error runs of 200 accesses each, five targets, read and write, three memory mappings; the board stayed healthy
+  record: results/64b_zedboard/bus_errors/README.md
+  conditions: as E3, the readings are in each run's log
+  sha256: 1ddc931ef198b808672a0f124365c42ff07fcc2f3fff766b0651dcaef4e8f5ad
+measurements:
+- id: M1
+  what: LUTs
+  category: resources
+  key: lut
+  unit: LUT
+  record: results/64b_zedboard/summary.json
+  field: build.lut
+  conditions: routed, Vivado 2026.1, xc7z020clg484-1, includes the DMA, interconnect and both accelerators
+  value: 17335
+  sha256: de263e4aeac7bc1002544f8bbb801a3b454ca3b5d9dba89d677eb08417251468
+- id: M2
+  what: flip-flops
+  category: resources
+  key: ff
+  unit: FF
+  record: results/64b_zedboard/summary.json
+  field: build.ff
+  conditions: as M1
+  value: 15935
+  sha256: de263e4aeac7bc1002544f8bbb801a3b454ca3b5d9dba89d677eb08417251468
+- id: M3
+  what: block RAM tiles
+  category: resources
+  key: bram_tile
+  unit: tiles
+  record: results/64b_zedboard/summary.json
+  field: build.bram_tile
+  conditions: as M1
+  value: 6
+  sha256: de263e4aeac7bc1002544f8bbb801a3b454ca3b5d9dba89d677eb08417251468
+- id: M4
+  what: DSP slices
+  category: resources
+  key: dsp
+  unit: DSP
+  record: results/64b_zedboard/summary.json
+  field: build.dsp
+  conditions: as M1; the FIR is built from LUTs
+  value: 0
+  sha256: de263e4aeac7bc1002544f8bbb801a3b454ca3b5d9dba89d677eb08417251468
+- id: M5
+  what: worst setup slack
+  category: timing
+  key: wns_ns
+  unit: ns
+  record: results/64b_zedboard/summary.json
+  field: build.wns_ns
+  conditions: routed, 100 MHz PS clock
+  value: 0.856
+  sha256: de263e4aeac7bc1002544f8bbb801a3b454ca3b5d9dba89d677eb08417251468
+- id: M6
+  what: worst hold slack
+  category: timing
+  key: whs_ns
+  unit: ns
+  record: results/64b_zedboard/summary.json
+  field: build.whs_ns
+  conditions: as M5
+  value: 0.012
+  sha256: de263e4aeac7bc1002544f8bbb801a3b454ca3b5d9dba89d677eb08417251468
+- id: M7
+  what: total on-chip power estimate
+  category: power
+  key: power_w
+  unit: W
+  record: results/64b_zedboard/summary.json
+  field: build.power_w
+  conditions: report_power after routing, confidence Medium; the PS is included
+  value: 1.765
+  sha256: de263e4aeac7bc1002544f8bbb801a3b454ca3b5d9dba89d677eb08417251468
+- id: M8
+  what: uncached GP-port read of a PL register, median per timed pair
+  category: latency
+  key: gp_read_ns
+  unit: ns
+  record: results/64b_zedboard/summary.json
+  field: gp.gp_read_id.p50_ns
+  conditions: strongly ordered mapping, 4096 reads, includes a timer overhead of 39 ns, A9 global timer ticks of 3 ns
+  value: 207.0
+  sha256: de263e4aeac7bc1002544f8bbb801a3b454ca3b5d9dba89d677eb08417251468
+- id: M9
+  what: PL interrupt to bare-metal handler, median
+  category: latency
+  key: irq_ns
+  unit: ns
+  record: results/64b_zedboard/summary.json
+  field: irq.caches_on_busy_loop.p50_ns
+  conditions: MMU and caches on, busy loop, 2000 events timed by a PL counter on the 100 MHz clock
+  value: 250.0
+  sha256: de263e4aeac7bc1002544f8bbb801a3b454ca3b5d9dba89d677eb08417251468
+- id: M10
+  what: PL interrupt to handler with MMU and caches off, median
+  category: latency
+  key: irq_nocache_ns
+  unit: ns
+  record: results/64b_zedboard/summary.json
+  field: irq.caches_off.p50_ns
+  conditions: as M9 but MMU and caches off
+  value: 1670.0
+  sha256: de263e4aeac7bc1002544f8bbb801a3b454ca3b5d9dba89d677eb08417251468
+- id: M11
+  what: CRC-32 of 64 KB, software slice-by-8, median
+  category: throughput
+  key: crc_sw_ns
+  unit: ns
+  record: results/64b_zedboard/summary.json
+  field: crc32.sw_crc_slice8.65536.p50_ns
+  conditions: 96 repetitions, input left dirty in the caches before each call
+  value: 350943.0
+  sha256: de263e4aeac7bc1002544f8bbb801a3b454ca3b5d9dba89d677eb08417251468
+- id: M12
+  what: CRC-32 of 64 KB, HP path with cache maintenance, median
+  category: throughput
+  key: crc_hp_ns
+  unit: ns
+  record: results/64b_zedboard/summary.json
+  field: crc32.hp_crc.65536.p50_ns
+  conditions: as M11; clean of the input and the DMA job and the result read are in the timed region
+  value: 351588.0
+  sha256: de263e4aeac7bc1002544f8bbb801a3b454ca3b5d9dba89d677eb08417251468
+- id: M13
+  what: CRC-32 of 64 KB, coherent ACP path, median
+  category: throughput
+  key: crc_acp_ns
+  unit: ns
+  record: results/64b_zedboard/summary.json
+  field: crc32.acp_crc.65536.p50_ns
+  conditions: as M12 without cache maintenance
+  value: 166791.0
+  sha256: de263e4aeac7bc1002544f8bbb801a3b454ca3b5d9dba89d677eb08417251468
+- id: M14
+  what: 16-tap FIR of 64 KB, software, median
+  category: throughput
+  key: fir_sw_ns
+  unit: ns
+  record: results/64b_zedboard/summary.json
+  field: fir16.sw_fir16.65536.p50_ns
+  conditions: 96 repetitions, input left dirty in the caches before each call
+  value: 1783929.002
+  sha256: de263e4aeac7bc1002544f8bbb801a3b454ca3b5d9dba89d677eb08417251468
+- id: M15
+  what: 16-tap FIR of 64 KB, HP path with cache maintenance, median
+  category: throughput
+  key: fir_hp_ns
+  unit: ns
+  record: results/64b_zedboard/summary.json
+  field: fir16.hp_fir16.65536.p50_ns
+  conditions: as M14; the whole output is read back
+  value: 681765.001
+  sha256: de263e4aeac7bc1002544f8bbb801a3b454ca3b5d9dba89d677eb08417251468
+- id: M16
+  what: 16-tap FIR of 64 KB, coherent ACP path, median
+  category: throughput
+  key: fir_acp_ns
+  unit: ns
+  record: results/64b_zedboard/summary.json
+  field: fir16.acp_fir16.65536.p50_ns
+  conditions: as M15 without cache maintenance
+  value: 294456.0
+  sha256: de263e4aeac7bc1002544f8bbb801a3b454ca3b5d9dba89d677eb08417251468
+gaps:
+- about: board_run
+  text: Linux was not run. UIO interrupt-to-user latency, access through devmem or UIO mmap and a kernel driver reacting
+    to an error response are unmeasured, and SD-card writes need the owner's yes.
+- about: E1
+  text: The accelerator testbench is not run by CI, and its result is the first executor's report, not a committed log.
+- about: power
+  text: Power is the tool's estimate (confidence Medium) and no board power measurement was made; energy per result is not
+    given.
+- about: behaviour
+  text: With the normal non-cacheable mapping the error-capture count read 255 (it saturates) for 200 accesses, so more
+    accesses reached the slave than the core issued; the cause is not known. DFAR is not reliable for an imprecise abort
+    (stale in six of eight read runs). A write error with a device or non-cacheable mapping produced no abort in any run,
+    so its only trace is the slave's capture register.
+- about: statistics
+  text: Each timing is a median with min, 95th percentile and max over the repetitions in the log (hundreds at small sizes,
+    a dozen at 1 MB); no confidence interval is computed, and one board, one bitstream and one power-up were used.
+- about: wedges
+  text: The PS wedged three times on 2026-11-14 on full reloads. None occurred on 2026-11-15 with one full load after the
+    power cycle and light reloads only, but the cause is not proven, so the first load and light-reload procedure in tcl/zb.tcl
+    is a precaution.
+next_steps:
+- Run the same three-way comparison on Linux (UIO latency, devmem and driver behaviour on an error response).
+- Find why the normal non-cacheable mapping shows more accesses at the slave than the core issued.
+- Put the same bus-error test on the KR260 Cortex-A53 and compare SError against the A9's abort.
+open_questions:
+- Is the posted-write error lost in the PS interconnect for every non-strongly-ordered mapping, or only for these buffering
+  settings?
+history:
+- date: '2026-11-13'
+  brief: 64B
+  note: design, first bring-up and latency measurements
+- date: '2026-11-14'
+  brief: 64B
+  note: PS wedges during full reloads; abort-path bugs fixed in the runtime
+- date: '2026-11-15'
+  brief: 64B
+  note: bus-error matrix, CRC and FIR sweeps, cost-model update and handover
+numbers_allow:
+- token: 8N1
+  reason: UART framing
+- token: '115200'
+  reason: UART baud rate
+- token: '0x40000000'
+  reason: base address of the PL window in the PS address map (rtl and sw/rt.h)
+- token: '0xFF8'
+  reason: error-capture register offset in the generated register blocks
+- token: '0xFFC'
+  reason: error-capture register offset in the generated register blocks
+state:
+  stage: board-verified
+  gates:
+    build_2026_1: pass
+    board_run: pass
+  vivado: '2026.1'
+  kb_pin: 0959c27
+  build_id: null

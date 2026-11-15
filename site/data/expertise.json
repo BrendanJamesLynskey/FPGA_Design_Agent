@@ -1272,7 +1272,7 @@
     "enforced": 1,
     "evidence": 1,
     "sections": 17,
-    "skills": 22
+    "skills": 23
    },
    "evidence": [
     {
@@ -1415,6 +1415,10 @@
     },
     {
      "items": [
+      {
+       "description": "Choosing between software, an HP-port DMA with cache maintenance and an ACP DMA for a 4 KB to 1 MB buffer on a Zynq-7000 ...",
+       "name": "zynq7000-acp-vs-hp-measured-crossover"
+      },
       {
        "description": "Sizing or debugging PL masters on the Zynq-7000 HP and ACP ports: AXI3 limits, 32 versus 64-bit mode, command expansion versus upsizing and the AxCACHE[1] bit, write store-and-forward ...",
        "name": "zynq7000-hp-and-acp-port-behaviour"
@@ -1789,7 +1793,7 @@
     "enforced": 2,
     "evidence": 0,
     "sections": 12,
-    "skills": 31
+    "skills": 33
    },
    "evidence": [],
    "family": {
@@ -1847,6 +1851,16 @@
       "confirmed": "doc",
       "summary": "The PL interrupt lines reach the GIC at different IDs: Zynq-7000 IRQ_F2P[7:0] are 61-68 and [15:8] are 84-91; Zynq UltraScale+ pl_ps_irq0 is 121-128 and pl_ps_irq1 136-143 (device-tree SPI number = ID - 32).",
       "topic": "PL-to-PS interrupt numbers"
+     },
+     {
+      "confirmed": "tool",
+      "summary": "Zynq-7000 Cortex-A9: PL SLVERR or DECERR is a precise abort for strongly ordered accesses, imprecise for device or non-cacheable reads, and lost for such writes; the Cortex-A53 is not measured.",
+      "topic": "Arm core reaction to AXI error responses from the PL"
+     },
+     {
+      "confirmed": "tool",
+      "summary": "Zynq-7000: the ACP beat an HP DMA with software cache maintenance at every size from 16 bytes to 1 MB (HP time beyond the fabric job ran near 0.3 GB/s); ZU+ HPC and ACP are not measured.",
+      "topic": "ACP against HP for CPU-produced buffers"
      }
     ]
    },
@@ -1924,6 +1938,10 @@
       {
        "description": "A design uses AMD IP (Processor System Reset, AXI GPIO, UART Lite, Timer, INTC, IIC, Quad SPI, AXI DMA, AXI Interconnect, SmartConnect, FIFO Generator ...",
        "name": "amd-ip-reset-map"
+      },
+      {
+       "description": "A PL slave answers SLVERR or DECERR (a hole in a register block, an address no block decodes) and you need to know what the Arm core does: abort type, precise or imprecise, DFSR and DFAR ...",
+       "name": "axi-error-responses-reach-arm-cores"
       }
      ],
      "section": "ip-cores",
@@ -1969,6 +1987,10 @@
     },
     {
      "items": [
+      {
+       "description": "Choosing between software, an HP-port DMA with cache maintenance and an ACP DMA for a 4 KB to 1 MB buffer on a Zynq-7000 ...",
+       "name": "zynq7000-acp-vs-hp-measured-crossover"
+      },
       {
        "description": "Sizing or debugging PL masters on the Zynq-7000 HP and ACP ports: AXI3 limits, 32 versus 64-bit mode, command expansion versus upsizing and the AxCACHE[1] bit, write store-and-forward ...",
        "name": "zynq7000-hp-and-acp-port-behaviour"
@@ -2083,7 +2105,7 @@
     "enforced": 0,
     "evidence": 2,
     "sections": 3,
-    "skills": 16
+    "skills": 17
    },
    "evidence": [
     {
@@ -2260,6 +2282,10 @@
       {
        "description": "A design uses AMD IP (Processor System Reset, AXI GPIO, UART Lite, Timer, INTC, IIC, Quad SPI, AXI DMA, AXI Interconnect, SmartConnect, FIFO Generator ...",
        "name": "amd-ip-reset-map"
+      },
+      {
+       "description": "A PL slave answers SLVERR or DECERR (a hole in a register block, an address no block decodes) and you need to know what the Arm core does: abort type, precise or imprecise, DFSR and DFAR ...",
+       "name": "axi-error-responses-reach-arm-cores"
       }
      ],
      "section": "ip-cores",
@@ -4281,7 +4307,7 @@
    "means": "Development-task runs of the agent, recorded in committed run files, exercised the area."
   }
  ],
- "pin": "0959c27",
- "skills_total": 261,
- "skills_used": 204
+ "pin": "2338b83",
+ "skills_total": 263,
+ "skills_used": 206
 }

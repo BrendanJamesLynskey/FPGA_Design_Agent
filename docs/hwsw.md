@@ -433,6 +433,11 @@ Two worked inputs, with their outputs in [results/64a_hwsw](../results/64a_hwsw/
   input is an assumption with a wide range. The accelerator is faster from 82 to 451 bytes in 512 of the 1024 input
   corners and never in the other 512 (where the A9 at 2 cycles per byte outruns a 32-bit DMA port). The application
   speed-up at 1500 bytes is 0.44 to 1.81 against a ceiling of 1.43 to 2.5. Verdict: **measure**, the A9's cycles per byte first.
+- `hwsw/examples/partition_crc32_zynq_measured.yaml`: the same example with the ranges replaced by what brief 64B measured on the
+  ZedBoard (results in [results/64b_zedboard](../results/64b_zedboard/README.md)). The software CRC is 2.7 to 10 cycles per byte, the
+  DMA stream tops out near 400 MB/s, and cleaning a dirty buffer runs at only about 0.31 to 0.35 GB/s, so the HP path with cache maintenance
+  only ties the best software CRC near 64 KB while the coherent ACP path wins from about 4 KB; for the 16-tap FIR both paths
+  win from a few hundred bytes. The model's 4 KB accelerator time contains the measured one (tested).
 - `hwsw/examples/partition_crc32_rv32.yaml`: the three options on the BRV32P core. Software and the custom instruction use
   the measured cycles and Fmax of section 3; the accelerator (the SoC has no DMA yet) is all assumptions. The custom
   instruction is 3.35 to 7.33 times the table-driven C over the sizes. The application gain at 256 bytes is 1.34 to 2.05

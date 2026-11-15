@@ -1,0 +1,27 @@
+Kernel: CRC-32 (IEEE 802.3) over an N-byte buffer; item = one byte (1024 input corners)
+
+N | t_sw | t_accel | speed-up accel
+16 | 110 ns .. 420 ns | 1.87 us .. 2.36 us | 0.0464 .. 0.225
+64 | 304 ns .. 1.14 us | 2.11 us .. 2.65 us | 0.115 .. 0.54
+256 | 1.08 us .. 4.02 us | 3.08 us .. 3.78 us | 0.286 .. 1.31
+1024 | 4.19 us .. 15.5 us | 6.94 us .. 8.3 us | 0.505 .. 2.24
+1500 | 6.12 us .. 22.7 us | 9.33 us .. 11.1 us | 0.551 .. 2.43
+4096 | 16.6 us .. 61.6 us | 22.4 us .. 26.4 us | 0.63 .. 2.75
+65536 | 265 us .. 983 us | 331 us .. 388 us | 0.684 .. 2.97
+1048576 | 4.25 ms .. 15.7 ms | 5.27 ms .. 6.18 ms | 0.688 .. 2.98
+
+accel faster than sw: from N = 161 .. 244 in 512 of 1024 corners; not at large N in 512 corners
+sw faster than accel: at every N in 512 corners; not at large N in 512 corners
+Amdahl bound (kernel time to zero): 1.43 .. 2.5
+app_speedup_accel_at_typical_n: 0.672 .. 1.55
+
+What moves the kernel speed-up at N = 1500 most (one input at each end, the others mid-range):
+  accel: sw.cycles_per_item: 0.609 .. 2.23
+  accel: accel.flush_bytes_per_s: 1.36 .. 1.47
+  accel: accel.dma_bytes_per_s: 1.38 .. 1.45
+  accel: accel.mmio_write_s: 1.44 .. 1.39
+  accel: accel.mmio_read_s: 1.43 .. 1.41
+
+Decision: measure
+  - accelerator unsure: 1500 bytes per call is above its break-even at best (161 bytes) but not at worst (it never breaks even in 512 of 1024 corners): it cannot be chosen until the inputs are measured
+  - undecided: accel gives 0.67 .. 1.55, which straddles 1.1 or rests on an unsure break-even: measure the uncertain inputs (the widest ranges) before choosing
