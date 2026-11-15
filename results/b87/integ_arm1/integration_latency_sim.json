@@ -1,0 +1,77 @@
+{
+ "ml_arm": "gbt",
+ "clock_ns": 8,
+ "instrument": 3,
+ "points": {
+  "price_complete_in": "the clock the last price byte enters mac_rx (core side)",
+  "decision": "fire_v into the interlocks (after ml_gate when the model is on)",
+  "first_byte_out": "mac_tx's first preamble byte (core side)",
+  "resolution": "one clock, 8 ns"
+ },
+ "modes": {
+  "speculative_model_off": {
+   "model_enabled": false,
+   "class": 2,
+   "vetoed": 0,
+   "order_kept": true,
+   "stages_cycles": {
+    "mac_rx + feed_rx (price byte in -> msg_px_v)": 2,
+    "rules (msg_px_v -> rule fire)": 1,
+    "model gate (rule fire -> decision)": 0,
+    "interlocks (decision -> grant)": 1,
+    "order_ctl (grant -> tx_start)": 2,
+    "mac_tx (tx_start -> first preamble byte)": 2
+   },
+   "tick_to_decision": 3,
+   "decision_to_first_byte": 8
+  },
+  "speculative_model_on": {
+   "model_enabled": true,
+   "class": 2,
+   "vetoed": 0,
+   "order_kept": true,
+   "stages_cycles": {
+    "mac_rx + feed_rx (price byte in -> msg_px_v)": 2,
+    "rules (msg_px_v -> rule fire)": 1,
+    "model gate (rule fire -> decision)": 1,
+    "interlocks (decision -> grant)": 1,
+    "order_ctl (grant -> tx_start)": 2,
+    "mac_tx (tx_start -> first preamble byte)": 2
+   },
+   "tick_to_decision": 4,
+   "decision_to_first_byte": 9
+  },
+  "safe_model_off": {
+   "model_enabled": false,
+   "class": 2,
+   "vetoed": 0,
+   "order_kept": true,
+   "stages_cycles": {
+    "mac_rx + feed_rx (price byte in -> msg_px_v)": 2,
+    "rules (msg_px_v -> rule fire)": 1,
+    "model gate (rule fire -> decision)": 0,
+    "interlocks (decision -> grant)": 1,
+    "order_ctl (grant -> tx_start)": 12,
+    "mac_tx (tx_start -> first preamble byte)": 2
+   },
+   "tick_to_decision": 3,
+   "decision_to_first_byte": 18
+  },
+  "safe_model_on": {
+   "model_enabled": true,
+   "class": 2,
+   "vetoed": 0,
+   "order_kept": true,
+   "stages_cycles": {
+    "mac_rx + feed_rx (price byte in -> msg_px_v)": 2,
+    "rules (msg_px_v -> rule fire)": 1,
+    "model gate (rule fire -> decision)": 1,
+    "interlocks (decision -> grant)": 1,
+    "order_ctl (grant -> tx_start)": 11,
+    "mac_tx (tx_start -> first preamble byte)": 2
+   },
+   "tick_to_decision": 4,
+   "decision_to_first_byte": 18
+  }
+ }
+}

@@ -1,6 +1,6 @@
 """pytest entry: the 58A trigger_core with the decision model behind the rules (cocotb + Icarus).
 
-B87_RECORD=<dir> writes integration_latency_sim.json and integration_twin_sim.json there."""
+B87_RECORD=<absolute dir> writes integration_latency_sim.json and integration_twin_sim.json there."""
 from __future__ import annotations
 
 import os
