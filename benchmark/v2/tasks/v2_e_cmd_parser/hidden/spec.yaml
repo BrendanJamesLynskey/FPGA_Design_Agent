@@ -1,0 +1,173 @@
+# Command packet screener (the spec oracle reads this)
+schema: fpga-design-agent/spec/v0
+top: v2_e_cmd_parser_top
+open_questions: []
+source: spec.md
+clocks:
+-   port: CLK100MHZ
+    source: the on-board oscillator
+    freq_mhz: 100
+    name: sys_clk
+title: Command packet screener
+ports:
+-   pins:
+    - H17
+    - K15
+    - J13
+    - N14
+    - R18
+    - V17
+    - U17
+    - U16
+    - V16
+    - T15
+    - U14
+    - T16
+    - V15
+    - V14
+    - V12
+    - V11
+    dir: out
+    width: 16
+    name: LED
+    iostandard: LVCMOS33
+-   async: true
+    dir: in
+    width: 1
+    iostandard: LVCMOS33
+    name: CPU_RESETN
+    pins:
+    - C12
+-   width: 1
+    iostandard: LVCMOS33
+    pins:
+    - D4
+    name: UART_RXD_OUT
+    dir: out
+-   iostandard: LVCMOS33
+    pins:
+    - E3
+    name: CLK100MHZ
+    dir: in
+    width: 1
+-   name: UART_TXD_IN
+    async: true
+    dir: in
+    iostandard: LVCMOS33
+    pins:
+    - C4
+    width: 1
+name: v2_e_cmd_parser
+tier: T1
+registers:
+    shell: test shell, PROTOCOL.md 1.1
+    map:
+    -   reset: 0
+        name: BUSY
+        access: RO
+        bits: '[0] a packet is part-way'
+        offset: 7
+    -   offset: 16
+        bits: 0x10 good, 0x11 bad check, 0x12 short, 0x13 long, 0x14 repeat, 0x15 stale, 0x16 type or length; 16 bits, wrapping
+        reset: 0
+        name: CTR_GOOD..CTR_PROTO
+        access: RO
+    -   access: RO
+        name: LASTSEQ
+        reset: 0
+        offset: 6
+        bits: '[15:0] last accepted number, [16] one once a packet was accepted'
+    -   reset: 0
+        bits: sequence number of the last good packet
+        name: SEQ
+        offset: 3
+        access: RO
+    -   name: PAY0
+        bits: first two payload bytes of the last good packet, big-endian, zero filled
+        access: RO
+        reset: 0
+        offset: 4
+    -   offset: 0
+        bits: '[7:0] packet byte, [8] end flag; reads the last 9 bits written'
+        access: RW
+        reset: 0
+        name: BYTE
+    -   access: RO
+        reset: 0
+        bits: next four payload bytes, big-endian, zero filled when a good packet has fewer
+        offset: 5
+        name: PAY1
+    -   reset: 0
+        bits: type of the last good packet
+        name: TYPE
+        access: RO
+        offset: 2
+    -   bits: 'class of the last packet: 0 none, 1 good, 2 bad check, 3 short, 4 long, 5 repeat, 6 stale, 7 bad type, 8 bad length'
+        access: RO
+        offset: 1
+        reset: 0
+        name: RESULT
+    unmapped: any offset not listed reads as 0 and ignores writes, as do the read-only registers
+design_id: 1129337649
+assumptions:
+-   reason: a packet that is not a valid command is not a command in order
+    assumption: a type or length error does not move the sequence state
+-   assumption: oversize is decided when the fourth byte arrives or when too many bytes arrive
+    reason: the rest of an oversize packet cannot be trusted and is discarded to the end flag
+timing:
+    clock_constraint: CLK100MHZ at 10 ns
+    outputs: registered outputs; slow; false paths
+    async_inputs: the reset button and the UART receive pin are synchronised and declared false paths
+requirements:
+-   text: every packet ends in exactly one class; the first applicable rule decides
+    proof:
+    - simulation
+    id: REQ-01
+-   id: REQ-06
+    text: All paths are constrained and 100 MHz timing is met
+    proof:
+    - analysis
+-   text: LED shows last number low byte and good count low byte
+    id: REQ-05
+    proof:
+    - simulation
+-   proof:
+    - simulation
+    id: REQ-04
+    text: the byte with the end flag always ends the packet
+-   proof:
+    - hardware
+    text: On the board, a shell read of every register agrees with the model
+    id: REQ-07
+-   proof:
+    - simulation
+    id: REQ-03
+    text: a refused packet changes only its counter and RESULT
+-   text: sequence order is modular with a half-span window; the first packet after reset has no predecessor
+    proof:
+    - simulation
+    id: REQ-02
+board: nexys_a7_100t
+resources_expected: about 450 LUTs; no BRAM, no DSP
+parameters:
+    CLKS_PER_BIT: 868
+    TIMEOUT_CYCLES: 100000
+part: xc7a100tcsg324-1
+reset:
+    effect: every register, counter and the part-way flag to 0; no sequence number accepted yet
+    port: CPU_RESETN
+    kind: push-button input with a two-flop synchroniser; asserts immediately, releases on the next clock edge
+    polarity: active_low
+behaviour:
+    registers:
+    - 'BYTE (0 write): bits 7:0 byte, bit 8 end flag; reads the last 9 bits written.'
+    - 'RESULT 1 (0 none after reset, else the class codes above), TYPE 2, SEQ 3, PAY0 4 (first two payload bytes, big-endian), PAY1 5 (next four, big-endian; zero fill and zeroed by every new packet), LASTSEQ 6 ({have at bit 16, last number}), BUSY 7 (bit 0: part-way).'
+    - Counters 0x10 good, 0x11 bad check, 0x12 short, 0x13 long, 0x14 repeat, 0x15 stale, 0x16 protocol (type and length), 16-bit wrapping.
+    - LED = {last number[7:0], good count[7:0]}; unmapped offsets read 0.
+    classes:
+    - 'LONG (4): length byte > 8, or more bytes than 4 + LEN + 4 (decided as soon as known; the rest of the packet is discarded to the end flag).'
+    - 'SHORT (3): ends before 4 + LEN + 4 bytes, or before 4 bytes.'
+    - 'BADCRC (2): the CRC-32 of the whole packet including its check bytes is not the constant 0x2144DF1C.'
+    - BADTYPE (7) for a type outside 1..5, BADLEN (8) for a payload length the type does not need; both counted in the protocol counter.
+    - REPEAT (5) when the number equals the last accepted one, STALE (6) when (seq - last) mod 65536 >= 0x8000; first packet after reset skips this check.
+    - 'GOOD (1): fields and last number updated.'

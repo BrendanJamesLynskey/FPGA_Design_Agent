@@ -182,6 +182,14 @@ carry the held-out manifest hash the draw recorded (`split.py move-dev --manifes
 held-out task. Files, hidden tests, manifests and check results of the two tasks are unchanged and now public. Not comparable: nothing
 (no scored run of any domain-O task exists). The draw itself is not redone and no other task changes.
 
+## 2026-11-15: domain E (UDP endpoint) drawn by task family (brief 82R, replaces the 2026-11-14 block draw of brief 82)
+
+**Amended 2026-11-15 (planner-approved re-draw before any scored run).** Reason: brief 82 drew its six domain-E tasks by blocks of three under the old line-text leak guard, and reached "0 hits" partly by a unique trailing comment on every code line. The hardened guard (brief 83, `benchmark/tools/task_leak.py`) ignores comments and identifiers and found real overlap inside the project (`cmd_parser` ~ `udp_endpoint`, score 0.32, 246 shared windows), so rule 12 (splits are drawn by task family) applies. The earlier 82 branch (`b82-udp-endpoint`) was never merged and its ledger entries were never on main; this change is a fresh submit and draw on current main, not a move.
+
+Changes: (1) the padding comments were removed from every reference RTL and hidden Python file, the per-line YAML comments and the nonsense words in task headers; the mutants' `find` strings were edited to match; (2) the `v2_e_tlm_pacer` wrapper testbench was restructured (a lane module, `logic` declarations, positional connections) after a 0.50 hit against the public task `v2_o_rms_meter`; (3) a review fix round added checks to `v2_e_cmd_exec` (a telemetry start with period 0 keeps a period set earlier) and `v2_e_tlm_pacer` (a request written while off leaves the period in force alone; a 1100-tick period) and one clause to `v2_e_udp_endpoint/spec.md` (the telemetry uptime includes the tick that made the frame due); (4) the six tasks were submitted with `split.py submit --defer-draw` in the order crc32_unit, cmd_parser, tlm_pacer, resp_builder, cmd_exec, udp_endpoint, all in cell E/T2 (a family cannot span two cells), and one `family_draw` entry was appended (group `ladder-3`). Families: `command_path` (cmd_parser, cmd_exec, udp_endpoint), `crc32_unit`, `tlm_pacer`, `resp_builder`, all eligible. `shared:lib` digests (both manifests) re-recorded for `net_bench.py`. `site/export.py` now counts `family_draw` entries in the catalogue cells (this also corrects the cell counts of the brief 79 family draws).
+
+Comparability: no scored or agent run exists for any domain-E task, so no earlier result is affected.
+
 ## New hashes
 
 v1 and course units (SHA-256 of the unit's sorted file lines, as in MANIFEST.json):

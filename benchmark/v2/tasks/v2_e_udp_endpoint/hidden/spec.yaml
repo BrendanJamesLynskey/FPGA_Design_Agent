@@ -1,0 +1,174 @@
+# UDP command and telemetry endpoint (the spec oracle reads this)
+title: UDP command and telemetry endpoint
+tier: T2
+reset:
+  port: CPU_RESETN
+  kind: debounce-free button input, synchronised; the effect is immediate and ends on a clock edge
+  effect: registers, counters, sequence state, telemetry state and both frame buffers cleared; period 100; telemetry off
+  polarity: active_low
+clocks:
+- source: the on-board oscillator
+  name: sys_clk
+  port: CLK100MHZ
+  freq_mhz: 100
+timing:
+  async_inputs: the two asynchronous inputs, CPU_RESETN and the UART line, pass synchronisers and are not timed
+  clock_constraint: 10 ns (100 MHz) on CLK100MHZ
+  outputs: outputs registered and slow, not timed
+design_id: 1430605873
+registers:
+  shell: test shell, PROTOCOL.md 1.1
+  map:
+  - reset: 0
+    bits: '[7:0] packet byte, [8] end flag'
+    name: IN
+    access: WO
+    offset: 0
+  - offset: 9
+    access: RO
+    bits: '[0] telemetry on, [1] busy'
+    name: STAT
+    reset: 0
+  - offset: 3
+    reset: 0
+    access: RW
+    bits: '[6:0] word number'
+    name: RIDX
+  - name: RWORD
+    bits: bytes 4i..4i+3 of the reply, first byte on top, zero past the end
+    reset: 0
+    access: RO
+    offset: 4
+  - offset: 2
+    access: RO
+    name: RLEN
+    reset: 0
+    bits: length in bytes of the latest reply, 0 if none
+  - offset: 1
+    name: TICK
+    access: WO
+    bits: '[7:0] n ticks'
+    reset: 0
+  - reset: 0
+    access: RW
+    name: TIDX
+    bits: '[6:0] word number'
+    offset: 6
+  - name: TWORD
+    access: RO
+    reset: 0
+    bits: same for the telemetry frame
+    offset: 7
+  - bits: any write takes the held telemetry frame
+    offset: 8
+    reset: 0
+    access: WO
+    name: TAKE
+  - bits: length of the held telemetry frame, 0 if none
+    offset: 5
+    name: TLEN
+    access: RO
+    reset: 0
+  unmapped: 'no register at an offset: reads 0, writes ignored (read-only registers behave the same on write)'
+requirements:
+- id: REQ-01
+  proof:
+  - simulation
+  text: 'packets are screened in the order: too long, too short, bad check, type, length, sequence, register access'
+- id: REQ-03
+  proof:
+  - simulation
+  text: replies carry the command's sequence number, status and CRC-32; a read returns the value, status the counters
+- proof:
+  - simulation
+  id: REQ-05
+  text: a refused packet changes no register, sequence or telemetry state
+- proof:
+  - hardware
+  text: The board's registers, read over the shell, follow the model
+  id: REQ-07
+- id: REQ-06
+  proof:
+  - analysis
+  text: The design meets 100 MHz timing with all paths constrained
+- id: REQ-04
+  text: telemetry frames fall due every period-th tick, one is held at most, overruns are dropped, stop forgets a held frame
+  proof:
+  - simulation
+- proof:
+  - simulation
+  id: REQ-02
+  text: the first three are dropped without a reply; each refusal is counted in one counter and in the refused-packets register
+source: spec.md
+name: v2_e_udp_endpoint
+top: v2_e_udp_endpoint_top
+behaviour:
+  registers:
+  - IN 0 (byte, end flag bit 8), TICK 1 (n ticks), RLEN 2, RIDX 3 (7 bits), RWORD 4 (bytes 4i..4i+3 of the reply, first byte on top; zero past the end), TLEN 5, TIDX 6, TWORD 7 (same for the held frame), TAKE 8, STAT 9 (bit 0 telemetry on, bit 1 busy); LED = commands-carried-out count[15:0].
+  protocol:
+  - 'Command: TYPE LEN SEQ(2) PAYLOAD CRC32(LE); reply: TYPE|0x80 STATUS SEQ(2) LEN PAYLOAD CRC32(LE); telemetry frame type 0xC0, status 0, own seq from 0, payload uptime(4) ok(2) refused(2).'
+  - 'Checks in order: long, short, bad CRC (silent drops), type, length, sequence, then register number and access; a command that passes the sequence rule consumes its number.'
+  - 'STATUS: seven 16-bit counters, telemetry frame count (16 bit), TLM_ON byte, all before this command is counted.'
+  - Frame sequence and frame count change only when a frame is held and only reset clears them.
+  - 'Pacer: TLM_START restarts the count (period 0 keeps, below 4 raised to 4); a frame falls due every period ticks; one held frame; overruns dropped; STOP forgets the held frame; TAKE releases it.'
+part: xc7a100tcsg324-1
+board: nexys_a7_100t
+open_questions: []
+schema: fpga-design-agent/spec/v0
+ports:
+- iostandard: LVCMOS33
+  dir: out
+  name: LED
+  pins:
+  - H17
+  - K15
+  - J13
+  - N14
+  - R18
+  - V17
+  - U17
+  - U16
+  - V16
+  - T15
+  - U14
+  - T16
+  - V15
+  - V14
+  - V12
+  - V11
+  width: 16
+- iostandard: LVCMOS33
+  name: UART_TXD_IN
+  async: true
+  pins:
+  - C4
+  dir: in
+  width: 1
+- pins:
+  - D4
+  dir: out
+  name: UART_RXD_OUT
+  iostandard: LVCMOS33
+  width: 1
+- name: CLK100MHZ
+  width: 1
+  dir: in
+  pins:
+  - E3
+  iostandard: LVCMOS33
+- iostandard: LVCMOS33
+  width: 1
+  dir: in
+  name: CPU_RESETN
+  pins:
+  - C12
+  async: true
+assumptions:
+- assumption: the endpoint works on UDP payload bytes with an end flag
+  reason: the network blocks deliver payloads that way; the benchmark has no Ethernet pins
+- reason: it was authentic and in order; retrying with the same number must not run twice
+  assumption: a command passing the sequence rule uses up its number even if the register access fails
+resources_expected: about 1200 LUTs; a small block RAM or registers for the buffers; no DSP
+parameters:
+  TIMEOUT_CYCLES: 100000
+  CLKS_PER_BIT: 868
