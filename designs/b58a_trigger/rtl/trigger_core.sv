@@ -14,7 +14,8 @@ module trigger_core #(
     parameter int          NINST       = 256,
     parameter int          MDIO_DIV    = 32,
     parameter int          ML_ARM      = 0      // decision model behind the rules: 0 none (no added logic), 1 gbt_comb,
-                                                // 2 lutnet, 3 mlp_hand (designs/b87_ml_trading; register 0x02A)
+                                                // 2 lutnet; 3 mlp_hand is refused (LATENCY 13 > 8)
+                                                // (designs/b87_ml_trading; register 0x02A)
 ) (
     input  logic        clk,
     input  logic        rst,

@@ -8,7 +8,7 @@
 //         passes through unchanged in the same clock. Added clocks with en = 1: the arm's LATENCY plus 0 (the
 //         features are registered in the same clock as the rule's own fire register).
 // One decision at a time: the next message's decision point is at least 16 clocks later (one Bench Feed message is
-// 16 bytes), so the hold register cannot be overwritten while LATENCY < 16 (checked at elaboration in trigger_core).
+// 16 bytes), so the hold register cannot be overwritten while LATENCY < 16; trigger_core allows at most 8 (see docs/arms.md).
 // Changing en while a decision is held: the held decision is still released by its class.
 
 module ml_gate #(

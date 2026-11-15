@@ -67,10 +67,17 @@ def twin(msgs: list[bf.Msg]) -> tuple[list[list[int]], list[int]]:
                 book[0], book[1] = m.price, m.size
             else:
                 book[2], book[3] = m.price, m.size
+        elif m.type == bf.CANCEL:                      # 58A: the side becomes empty
+            if m.side == bf.BID:
+                book[0], book[1] = 0, 0
+            else:
+                book[2], book[3] = 0, 0
         elif m.type == bf.TRADE:
             i = 1 if m.side == bf.BID else 3
-            if m.price == book[i - 1]:
+            if m.price == book[i - 1] and book[i] != 0:   # 58A: an emptied side gets price 0 too
                 book[i] = max(0, book[i] - m.size)
+                if book[i] == 0:
+                    book[i - 1] = 0
     import numpy as np
     X = np.array(feats, dtype=np.int64)
     return feats, ARM_MODEL[1](model(), X).tolist()
@@ -86,6 +93,57 @@ async def watch(dut, out: list):
             out.append(("f", [(v >> lo) & ((1 << w) - 1) for lo, w in zip(FLO, L.FEATURE_BITS)]))
         if int(g.cls_v.value):
             out.append(("c", int(g.cls.value)))
+
+
+def stress_msgs(n: int, seed: int = 87) -> list[bf.Msg]:
+    """Random messages that reach the feature unit's edge cases: sizes above 255, spreads above 15, crossed and
+    empty sides (a TRADE that takes a side's whole size), large order-flow terms that clip at +/-127."""
+    import random
+    rng = random.Random(seed)
+    msgs = []
+    for _ in range(n):
+        t = rng.choice([bf.ADD, bf.ADD, bf.TRADE, bf.CANCEL])
+        side = rng.choice([bf.BID, bf.ASK])
+        px = 10000 + rng.choice([-40, -20, -3, -1, 0, 1, 3, 20, 40])
+        sz = rng.choice([1, 5, 200, 300, 1000, 70000])
+        msgs.append(bf.Msg(t, side, INST, px, sz))
+    return msgs
+
+
+@cocotb.test()
+async def ml_features_match_on_edge_cases(dut):
+    b = Bench(dut)
+    await b.start()
+    await b.config(Config(spec_en=True, bucket=100, max_pos=100000), None)
+    await b.wr(0x02A, 1 | INST << 16)
+    msgs = stress_msgs(300)
+    seen: list = []
+    cocotb.start_soon(watch(dut, seen))
+    seq = 1
+    for i in range(0, len(msgs), 8):
+        part = msgs[i:i + 8]
+        b.send(bf.with_fcs(bf.feed_frame(seq, part)), gap=200)
+        seq += len(part)
+    await b.drain(1500)
+    exp_f, exp_c = twin(msgs)
+    got_f = [x for k, x in seen if k == "f"]
+    got_c = [x for k, x in seen if k == "c"]
+    assert len(got_f) == len(msgs) == len(got_c), (len(got_f), len(msgs), len(got_c))
+    bad = [i for i in range(len(msgs)) if got_f[i] != exp_f[i]]
+    assert not bad, "; ".join(f"{i}: got {got_f[i]} want {exp_f[i]} prev {msgs[i-1]}" for i in bad[:3])
+    assert got_c == exp_c
+    import numpy as np
+    F = np.array(exp_f)
+    reach = {"size_saturated": int((F[:, 0] == 255).sum() + (F[:, 1] == 255).sum()), "spread_15": int((F[:, 2] == 15).sum()),
+             "ofi_clipped": int(((F[:, 5] == 1) | (F[:, 5] == 255)).sum()), "empty_side": int(((F[:, 0] == 0) | (F[:, 1] == 0)).sum())}
+    dut._log.info(f"edge cases reached: {reach}")
+    assert all(v > 0 for v in reach.values()), reach
+    out = os.environ.get("B87_TWIN_OUT")
+    if out:
+        p = out.replace(".json", "_edge_cases.json")
+        with open(p, "w") as f:
+            json.dump({"messages": len(msgs), "features_match": True, "classes_match": True, "edge_cases_reached": reach}, f,
+                      indent=1)
 
 
 @cocotb.test()
@@ -142,7 +200,7 @@ async def stage_latency_with_and_without_model(dut):
             if int(dut.fire_v.value):
                 gated.append(n)
     cocotb.start_soon(mon())
-    res = {"ml_arm": ARM_MODEL[0], "clock_ns": 8, "instrument": INST,
+    res = {"ml_arm": ARM_MODEL[0], "clock_ns": 8, "clock_mhz": 125, "instrument": INST,
            "points": {"price_complete_in": "the clock the last price byte enters mac_rx (core side)",
                       "decision": "fire_v into the interlocks (after ml_gate when the model is on)",
                       "first_byte_out": "mac_tx's first preamble byte (core side)", "resolution": "one clock, 8 ns"},
@@ -183,9 +241,13 @@ async def stage_latency_with_and_without_model(dut):
             if not en:
                 assert r["stages_cycles"]["model gate (rule fire -> decision)"] == 0, r
     dut._log.info(json.dumps(res, indent=1))
-    lat = int(dut.g_ml.g_arm.u_arm.LATENCY.value) if hasattr(dut.g_ml.g_arm.u_arm, "LATENCY") else None
+    import re
+    from designs.b87_ml_trading.model.gen_rtl import OUT as GEN
+    arm_file = {1: "gbt_comb", 2: "lutnet", 3: "mlp_hand"}[ML_ARM]
+    lat = int(re.search(r"LATENCY = (\d+);", (GEN / f"{arm_file}.sv").read_text()).group(1))
+    res["arm_latency_clocks"] = lat
     for k, r in res["modes"].items():
-        if r["model_enabled"] and lat is not None:
+        if r["model_enabled"]:
             assert r["stages_cycles"]["model gate (rule fire -> decision)"] == lat, (k, r, lat)
     out = os.environ.get("B87_INTEG_OUT")
     if out:
@@ -195,27 +257,37 @@ async def stage_latency_with_and_without_model(dut):
 
 @cocotb.test()
 async def veto_when_the_model_disagrees(dut):
-    """A sell rule on a book the model reads as "up": with the model on, the decision still arrives but its order is
-    dropped and counted (0x02C); with the model off, the same frame sends the order."""
+    """A buy rule and a sell rule (one at a time) on the same kind of book: with the model on, each decision arrives
+    and its order is sent only if the class agrees with its side, otherwise dropped and counted (0x02C); at least one
+    of the two disagrees whatever the class. With the model off the same frame always sends."""
     b = Bench(dut)
     await b.start()
-    rules = [{"match": {"types": ["ADD"], "side": "bid", "instrument": INST, "price": {"op": ">", "value": "99.00"}},
-              "action": {"order": {"side": "sell", "qty": 1, "price": {"mode": "message"}}}}]
-    table = rl.table_words(rl.validate_table(rules))
-    await b.config(Config(spec_en=True, bucket=100, max_pos=100000), table)
-    seq, got = 700000, {}
-    for en in (1, 0):
-        await b.wr(0x02A, en | INST << 16)
-        b.send(bf.with_fcs(bf.feed_frame(seq, [bf.Msg(bf.ADD, bf.BID, INST, 9900, 200),
-                                               bf.Msg(bf.ADD, bf.ASK, INST, 10000, 5)])), gap=300)
-        seq += 2
-        await b.drain(300)
-        n_first, v0 = len(b.events["first"]), await b.rd(0x02C)
-        b.send(bf.with_fcs(bf.feed_frame(seq, [bf.Msg(bf.ADD, bf.BID, INST, 9950, 1)])), gap=400)
-        seq += 1
-        await b.drain(600)
-        got[en] = {"class": await b.rd(0x02B), "vetoed": await b.rd(0x02C) - v0,
-                   "sent": len(b.events["first"]) - n_first}
+    seq, got, vetoes = 700000, [], 0
+    for side, bside, px in (("sell", "bid", 9950), ("buy", "ask", 9950)):
+        rules = [{"match": {"types": ["ADD"], "side": bside, "instrument": INST,
+                            "price": {"op": ">" if side == "sell" else "<", "value": "99.00" if side == "sell" else "100.00"}},
+                  "action": {"order": {"side": side, "qty": 1, "price": {"mode": "message"}}}}]
+        await b.config(Config(spec_en=True, bucket=100, max_pos=100000), rl.table_words(rl.validate_table(rules)))
+        for en in (1, 0):
+            await b.wr(0x02A, en | INST << 16)
+            b.send(bf.with_fcs(bf.feed_frame(seq, [bf.Msg(bf.ADD, bf.BID, INST, 9900, 200),
+                                                   bf.Msg(bf.ADD, bf.ASK, INST, 10000, 5)])), gap=300)
+            seq += 2
+            await b.drain(300)
+            n_first, v0 = len(b.events["first"]), await b.rd(0x02C)
+            trig = bf.Msg(bf.ADD, bf.BID if side == "sell" else bf.ASK, INST, px, 1)
+            b.send(bf.with_fcs(bf.feed_frame(seq, [trig])), gap=400)
+            seq += 1
+            await b.drain(600)
+            cls = await b.rd(0x02B)
+            r = {"side": side, "en": en, "class": cls, "vetoed": await b.rd(0x02C) - v0,
+                 "sent": len(b.events["first"]) - n_first}
+            got.append(r)
+            agree = cls == (2 if side == "buy" else 0)
+            if en:
+                assert r["sent"] == int(agree) and r["vetoed"] == int(not agree), r
+                vetoes += r["vetoed"]
+            else:
+                assert r["sent"] == 1 and r["vetoed"] == 0, r
     dut._log.info(f"veto test: {got}")
-    assert got[1]["class"] == 2 and got[1]["vetoed"] == 1 and got[1]["sent"] == 0, got
-    assert got[0]["vetoed"] == 0 and got[0]["sent"] == 1, got
+    assert vetoes >= 1, got

@@ -129,7 +129,7 @@ def main(argv=None) -> int:
             hist[arm].append(r)
             if r["status"] != "ok":
                 continue
-            t = math.ceil((r["clock_ns"] - r["wns_ns"]) * 20 - 1e-6) / 20
+            t = math.ceil((r["clock_ns"] - min(r["wns_ns"], 2 * (r["wpws_ns"] or 0.0))) * 20 - 1e-6) / 20
             if r["closed"]:                  # closed with slack to spare: try the period the slack implies
                 fails = [x["clock_ns"] for x in hist[arm] if x.get("status") == "ok" and not x["closed"]]
                 if t <= r["clock_ns"] - 0.05 and not any(f >= t for f in fails):

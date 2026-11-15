@@ -19,6 +19,10 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[1]
 GEN = ROOT / "designs" / "b87_ml_trading" / "rtl" / "gen"
+# Out of context the clock is a port: no clock buffer, no MMCM jitter. A tiny design then "closes" at the flip-flops'
+# minimum period (0.55 ns), which no clock network delivers. Every latency is quoted at no faster than 2.0 ns
+# (500 MHz); the raw closed period is kept in closed_at_ns.
+FLOOR_NS = 2.0
 ARMS = [("imb_rule", "imbalance_rule", "trivial rule (imbalance threshold)"),
         ("gbt_comb", "gbt", "(a) boosted trees, combinational"),
         ("gbt_pipe", "gbt", "(a) boosted trees, one clock per level"),
@@ -53,13 +57,16 @@ def build() -> dict:
                      "test_accuracy": a["mean"], "test_accuracy_ci95": a["ci95"],
                      "latency_clocks": lat, "initiation_interval": 1,
                      "closed_at_ns": oc["closed_at_ns"], "closed_at_mhz": oc["closed_at_mhz"],
-                     "latency_ns": round(lat * oc["closed_at_ns"], 2) if oc["closed_at_ns"] else None,
+                     "quoted_period_ns": max(oc["closed_at_ns"], FLOOR_NS) if oc["closed_at_ns"] else None,
+                     "latency_ns": round(lat * max(oc["closed_at_ns"], FLOOR_NS), 2) if oc["closed_at_ns"] else None,
                      "lut": b.get("lut"), "ff": b.get("ff"), "dsp": b.get("dsp"), "bram_tiles": b.get("bram_tiles"),
                      "wns_ns": b.get("wns_ns"), "whs_ns": b.get("whs_ns"),
                      "bit_exact_and_fixed_latency_over_test_split": det_ok})
     return {"schema": "b87-summary/1", "part": "xck26-sfvc784-2LV-c",
             "note": "accuracy: seed-0 quantised model, test split, 95% t-interval over 10 sessions; latency: "
-                    "LATENCY clocks x closed period, out of context, post-route; the 58A path runs at 8 ns",
+                    "LATENCY clocks x max(closed period, 2.0 ns), out of context, post-route; in the 58A path every "
+                    "arm runs at 8 ns, so there its latency is LATENCY x 8 ns",
+            "floor_ns": FLOOR_NS,
             "rows": rows}
 
 

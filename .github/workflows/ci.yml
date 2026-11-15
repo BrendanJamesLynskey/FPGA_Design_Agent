@@ -249,13 +249,19 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y iverilog
-          pip install pyyaml pytest cocotb==2.0.1 jsonschema
+          pip install pyyaml pytest cocotb==2.0.1 jsonschema numpy==2.4.3
       - name: Model, rule validator, recorded natural-language rules (no simulator)
         run: python -m pytest -q designs/b58a_trigger/tests/test_b58a_model.py designs/b58a_trigger/tests/test_b58a_records.py
       - name: trigger_core against the model; assemble-then-send comparison; kr260_top RGMII loop
         run: python -m pytest -q designs/b58a_trigger/tests/test_b58a_rtl.py
       - name: Review regression tests (bad-frame undo, slot drain, soft reset in flight, frame-counter wrap)
         run: python -m pytest -q designs/b58a_trigger/tests/test_rev_adv_rtl.py designs/b58a_trigger/tests/test_rev2_rtl.py designs/b58a_trigger/tests/test_rev3_rtl.py
+      - name: Decision models (brief 87) - every arm against its integer model over the test split, fixed latency; the model behind the rules in trigger_core (both arms)
+        run: |
+          python -m pytest -q designs/b87_ml_trading/tests/test_b87_rtl.py
+          B87_ML_ARM=1 python -m pytest -q designs/b87_ml_trading/tests/test_b87_integ_rtl.py
+          B87_ML_ARM=2 python -m pytest -q designs/b87_ml_trading/tests/test_b87_integ_rtl.py
+          python3 results/b87/summary.py --check
       - name: Upload simulation logs
         if: always()
         uses: actions/upload-artifact@v4
