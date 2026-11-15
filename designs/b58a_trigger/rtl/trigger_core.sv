@@ -178,7 +178,6 @@ module trigger_core #(
     logic [15:0] ml_inst;
     logic [31:0] ml_vetoes;
     logic [1:0]  ml_last;
-    localparam int RW = 3 + 16 + 32 + 32 + 32 + 1 + 16 + 3;
     if (ML_ARM == 0) begin : g_no_ml
         assign {fire_v, fire_order, fire_side} = {r_fire_v, r_fire_order, r_fire_side};
         assign {fire_rule, fire_ver, fire_qty, fire_px, fire_ref, fire_noref, fire_inst, fire_pin_en, fire_pin_idx,
@@ -187,6 +186,7 @@ module trigger_core #(
         assign ml_vetoes = '0;
         assign ml_last = 2'd1;
     end else begin : g_ml
+        localparam int RW = 3 + 16 + 32 + 32 + 32 + 1 + 16 + 3;   // packed rule-decision fields
         logic        feat_v, cls_v;
         logic [37:0] feat;
         logic [1:0]  cls;
