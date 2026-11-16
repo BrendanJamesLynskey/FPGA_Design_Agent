@@ -51,3 +51,15 @@ Sound plans: 8 of 21 (0.381). Per request: P1 1/3; P2 0/3; P3 0/3; P4 3/3; P5 2/
 The failures were of two kinds: runs with no usable plan, and requests the reviewer judged unmeasurable (or measurable) where the benchmark expected the opposite. The expected labels were the executor's, not fixed by any authority.
 
 Other records: [usefulness_rating.md](usefulness_rating.md), [adjudication.md](adjudication.md), [leak_guard.txt](leak_guard.txt), [real/](real) (reviews of five of our own network blocks; the "produced by review" handovers were not committed), [AMENDMENTS.md](AMENDMENTS.md).
+
+## Records
+
+`prereg.md`, `freeze.json`, `preflight_agent_heldout.json` (pins); `score_agent_heldout.json`, `score_baseline_heldout.json`, `plan_scores.json` (scores); `private_records.sha256` (hashes of the raw reviews, kept in the private repo); `leak_guard.txt`; `usefulness_rating.md`; `adjudication.md`; `real/` (reviews of five of our own blocks).
+
+## Reproduce
+
+Needs the private benchmark (`FPGA_Design_Agent_Knowledge`, branch `b84-review`, `benchmark_private/review84`), Verilator 5.048, the OSS CAD suite, and Claude Code 2.1.321 on the plan. `python3 benchmark/review/run_bench.py --bench <review84> --arm agent --split heldout --k 3 --out <dir> --claude-bin <pinned>`, then `python3 benchmark/review/score.py --truth <review84> --reviews <dir> --arm agent --split heldout --k 3 --out results/84_review`. Reviews differ run to run; the committed scores are of the recorded run.
+
+## Known gaps and limits
+
+RTL scope only (no synthesis, simulation, coverage or mutation run); checklist-aware recall; each class rests on one or two designs; seven plan cases with executor-set labels; the scorer fixes after the harness review were not re-reviewed; one control bench was not perfectly clean (adjudication.md); the reviewer sees only the design directory, not files its proofs include.
