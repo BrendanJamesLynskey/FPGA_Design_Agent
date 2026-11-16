@@ -60,6 +60,9 @@ ROUNDS = {
         "t_add_noh_3b_tree_k2": dict(in_bits=[3] * 7, thresholds="tree", layers=[], output="additive", per_class=8,
                                      out_fan_in=2, out_bits=4, **T),
     },
+    # not a design round: the cost curve for the write-up (LUTs against fan-in), lg_add's configuration at fan-in 1-4
+    "fanin": {f"fanin{k}": dict(in_bits=[3] * 7, thresholds="tree", layers=[], output="additive", per_class=8,
+                                out_fan_in=k, out_bits=4, **T) for k in (1, 2, 3, 4)},
 }
 
 
@@ -83,9 +86,10 @@ def main(argv=None):
     ap.add_argument("round")
     ap.add_argument("--workers", type=int, default=3)
     ap.add_argument("--only", nargs="*")
+    ap.add_argument("--seeds", nargs="*", type=int, default=list(SEEDS))
     a = ap.parse_args(argv)
     cfgs = {k: v for k, v in ROUNDS[a.round].items() if not a.only or k in a.only}
-    jobs = [(a.round, n, kw, s) for n, kw in cfgs.items() for s in SEEDS]
+    jobs = [(a.round, n, kw, s) for n, kw in cfgs.items() for s in a.seeds]
     OUT.mkdir(parents=True, exist_ok=True)
     f = OUT / f"{a.round}.json"
     rec = json.loads(f.read_text()) if f.exists() else {"round": a.round, "splits_used": ["train", "val"], "configs": {}}
