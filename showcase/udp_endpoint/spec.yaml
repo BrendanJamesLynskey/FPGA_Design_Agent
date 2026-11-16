@@ -1,0 +1,49 @@
+# Formal specification of the UDP command and telemetry endpoint (brief 82). The plain-English request is request.md.
+# Planner's copy: the agent is given request.md and its own interview, never this file or the benchmark tasks derived from it.
+schema: fpga-design-agent/spec/v0
+name: udp_endpoint
+title: UDP command and telemetry endpoint on the Nexys A7-100T
+source: request.md
+tier: showcase
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: udp_endpoint_top
+
+clock_hz: 100000000
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, use: "datapath, parser, pacer"}
+  - {name: eth_ref, source: "50 MHz RMII reference from the logic", use: "the Ethernet PHY interface (eth_mac_rmii); crossing into sys_clk through the MAC's own FIFO"}
+
+parameters:
+  MAX_PAYLOAD: 8
+  N_REGS: 8
+  PERIOD_DEFAULT: 100
+  PERIOD_MIN: 4
+  UDP_PORT: 5005
+  COUNTER_BITS: 16
+
+blocks_reused:
+  - {entry: ip_lib/eth_mac_rmii, role: "RMII MAC, frame filter, FCS"}
+  - {entry: ip_lib/ipv4_udp_rx, role: "payload bytes with a last flag; ev_* counters feed the packet statistics"}
+  - {entry: ip_lib/ipv4_udp_tx, role: "responses and telemetry frames, one datagram each"}
+  - {entry: ip_lib/arp_responder, role: "answers who-has for the board's address"}
+  - {entry: ip_lib/icmp_echo, role: "answers ping"}
+  - {entry: ip_lib/crc32_step, role: "the byte-wide CRC update (the endpoint's CRC-32 is the Ethernet polynomial)"}
+
+protocol: protocol.md          # generated from model/udp_ref.py; the model is the executable specification
+
+behaviour:
+  parser: "byte-serial: one payload byte per clock, a last flag at the end of the datagram; decisions after the last byte (CRC needs the whole packet)"
+  never_hangs: "every datagram, however damaged, ends with the parser idle and ready for the next one; an oversize packet is discarded until its last byte"
+  rejected_packets: "change no register, no sequence state and no telemetry state; counted in exactly one counter"
+  telemetry: "one frame every PERIOD ticks from TLM_START; at most one frame held; a frame due while one is held is an overrun, dropped and counted"
+  flood: "the receive path never blocks the MAC: bytes of a datagram that arrives while the parser is busy are dropped at the input FIFO and counted in the MAC's own counters, not in the endpoint's"
+
+numbers:                        # design targets from the model's cycle formula (udp_ref.cycles_per_command); measured in phase 3, not before
+  read_cycles: 26               # command bytes in + 3 + response bytes out, READ
+  write_cycles: 26
+  max_command_rate_per_s: 3846153        # the logic's limit (1 / 26 clocks); the link's limit below is lower
+  link_command_rate_per_s: 164473        # one 64-byte frame plus the inter-frame gap is 6.08 us at 100 Mbit/s
+  response_latency_cycles: 3    # last byte of the command to the first byte of the reply, after the CRC is checked
+  telemetry_jitter_ticks: 0     # frames are due exactly PERIOD ticks apart; transmit delay adds at most one frame time
+  link_limit: "a 64-byte frame occupies 5.12 us of a 100 Mbit/s link (6.08 us with the gap), so the link, not the logic, limits a flood"

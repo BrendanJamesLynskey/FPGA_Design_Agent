@@ -1,0 +1,275 @@
+# Brief 68 handover: the facts behind README.md and AGENT.md (docs/documentation_standard.md).
+# Measurement values and every sha256 are filled from the records by `python -m flow.handover fill`;
+# do not type them. Render with `python -m flow.handover write <this directory>`.
+schema: fda-handover/1
+id: b89_lutnet_gen
+title: A LUT-network generator, built and measured against the brief 87 arms and TreeLUT
+kind: showcase
+produced_by: human
+summary: Our own generator of LUT networks for nanosecond inference. It trains a sparse network with its quantisers in the
+  loop, enumerates every neuron into a truth table, and emits SystemVerilog plus a bit-exact Python twin, with a choice
+  of pipelining. On the brief 87 synthetic order-flow data its best network beats the trivial rule and equals the 87 boosted
+  trees on the test split; it is built out of context on the K26 and the Artix-7 100T beside TreeLUT, the published tree-to-LUT
+  tool, as the reference.
+scope_not:
+- real market data; the data are brief 87's seeded synthetic order flow with a planted signal
+- a board run or a full-design build; every hardware number is an out-of-context, post-route Vivado 2026.1 build
+- a general-purpose tool; the argmax is written for three classes, and the generator has been measured on one data set
+target:
+  part: xck26-sfvc784-2LV-c
+  board: Kria KR260 (K26 SOM); also xc7a100tcsg324-1 (Nexys A7) out of context
+  top: ooc_wrap (one generated network with an input register), out of context
+  tool: Vivado 2026.1
+  note: no board top; the networks have the brief 87 arm ports, so they drop into the 58A decision stage the same way
+clocks:
+- name: clk
+  mhz: 202.0
+  source: results/b89/ooc/k26/lg_add_comb.json
+  note: lg_add_comb's closed clock on the K26; every module's closed clock is in results/b89/ooc/<part>/<module>.json
+resets:
+- name: rst
+  active: high
+  note: synchronous; clears only the valid pipeline, never the datapath (out_cls is undefined until the first out_v)
+interfaces:
+- name: network ports
+  type: clk, rst, in_v, in_f[37:0] (packed 87 features, feature 0 in the low bits), out_v, out_cls[1:0]
+  doc: designs/b89_lutnet_gen/docs/generator.md
+  note: out_v follows in_v by exactly LATENCY clocks for every input; one input a clock; ties go to the lower class
+- name: generator API and options
+  type: Python (lutgen.model.Config, train, twin_predict; lutgen.rtl.emit)
+  doc: designs/b89_lutnet_gen/docs/generator.md
+  note: every option with its default and the behaviours a user could guess wrong (table address order, pass-through codes,
+    best-validation epoch, pipelining definition)
+parameters:
+- name: pipe
+  value: comb and layer (both built)
+  legal: comb, layer, or a positive integer N (a register after every N-th LUT layer)
+  note: LATENCY is 1 for comb and LUT layers + 1 for layer; reg_encoder adds one
+- name: arm
+  value: lg_add, lg_small, lg_b87 (results/b89/frozen.json)
+  legal: any configuration of lutgen.model.Config; tables of at most 2^12 entries
+  note: lg_add is the pre-registered main result; the built seed is the best of three on validation
+files:
+- path: designs/b89_lutnet_gen/lutgen/model.py
+  what: training, encoder, wiring, enumeration, twin
+  sha256: 7cec5eabcd4a807a2a57f33c98d64afee7e0f400b31c8ca3ce7317836cb24744
+- path: designs/b89_lutnet_gen/lutgen/rtl.py
+  what: SystemVerilog emitter
+  sha256: 7edb6e722b35f708f28c78cec7a433f3a47ccb3d612d2d3f9934a0c16e40d5c9
+- path: designs/b89_lutnet_gen/lutgen/cli.py
+  what: trains the frozen arms, emits rtl/gen
+  sha256: 65570849ed3adc77778a54a0403ef96a83df9f8a339f6857c603a39c9e02e386
+- path: designs/b89_lutnet_gen/lutgen/evaluate.py
+  what: test-split scoring
+  sha256: 85f75e581c24284e443572718eaa8fcfd2c293f051725302bee623cd4ff77300
+- path: designs/b89_lutnet_gen/diag/diagnose.py
+  what: the diagnosis of the 87 network
+  sha256: b8b335f50bbc6eea418e47660e391346d4ecd8e821c16e996e2fa1888aabf4fc
+- path: designs/b89_lutnet_gen/treelut_ref/run_treelut.py
+  what: TreeLUT reference (pinned)
+  sha256: 7aaa76f5e349fc7e843a8491cebc5c9ad96a0e340ffcfb967f6c1fa4b2c1a97c
+- path: designs/b89_lutnet_gen/ooc/ooc.py
+  what: out-of-context clock search on both parts
+  sha256: 441d9a2b5d87e04fd4a51a70344ad3f87b73728a37905dc86b387b9342fe79f5
+- path: designs/b89_lutnet_gen/docs/preregistration.md
+  what: pre-registration
+  sha256: 19c3a745fb98059a83ce93f7168a77fc62015ae780cfa60539fc14224c656afb
+commands:
+- what: diagnosis of the 87 network (train and validation only)
+  cmd: python3 -m designs.b89_lutnet_gen.diag.diagnose
+  heavy: false
+  minutes: 45
+  needs: numpy, scikit-learn, torch (CPU); a 5 GB memory scope
+- what: a design round on validation (r1, r2, r3, fanin)
+  cmd: python3 -m designs.b89_lutnet_gen.lutgen.explore r3
+  heavy: false
+  minutes: 15
+  needs: torch (CPU); a 5 GB memory scope
+- what: train the frozen arms, emit the RTL, score the test split
+  cmd: python3 -m designs.b89_lutnet_gen.lutgen.cli train && python3 -m designs.b89_lutnet_gen.lutgen.cli rtl && python3
+    -m designs.b89_lutnet_gen.lutgen.evaluate
+  heavy: false
+  minutes: 10
+  needs: torch (CPU); results/b89/treelut/test_predictions.npz from the TreeLUT step
+- what: TreeLUT reference (its own venv)
+  cmd: ~/Claude_sandbox/_worktrees/89-treelut/venv/bin/python -m designs.b89_lutnet_gen.treelut_ref.run_treelut tune
+  heavy: false
+  minutes: 5
+  needs: TreeLUT at commit ad9e70a9, xgboost-cpu 3.1.3 (docs/treelut.md); then build, score, random
+- what: RTL against the twins, lint
+  cmd: B89_RECORD=results/b89 python3 -m pytest -q designs/b89_lutnet_gen/tests/test_b89_rtl.py
+  heavy: false
+  minutes: 2
+  needs: Icarus Verilog 12, Verilator 5 (lint test skips without it)
+- what: out-of-context builds and clock search on both parts
+  cmd: python3 -m designs.b89_lutnet_gen.ooc.ooc --part xck26-sfvc784-2LV-c --arms lg_add_comb lg_add_layer lg_small_comb
+    lg_small_layer lg_b87_comb lg_b87_layer treelut_arm
+  heavy: true
+  minutes: 90
+  needs: Vivado 2026.1 and a heavy slot; repeat with --part xc7a100tcsg324-1
+evidence:
+- id: E1
+  activity: simulation
+  result: pass
+  how: ci
+  what: every generated network equals its twin on all 99,100 test samples and 20,000 random packed inputs with one fixed
+    latency; every table cell in the RTL equals the model; Verilator -Wall clean; TreeLUT's Verilog equals TreeLUT
+  record: designs/b89_lutnet_gen/tests/test_b89_rtl.py
+  sha256: bb21ec30c0b1b9b7dbe3613d6b40e9c7109284be6459fd6d414f471bc3543046
+- id: E2
+  activity: build
+  result: pass
+  what: out-of-context, post-route builds on the K26 and the Artix-7 100T with a clock search; every recorded clock closed
+    setup, hold and pulse width
+  record: results/b89/summary.json
+  sha256: 48b73dd7e43cef15383113c4970fbdc272a9f4561e9b019431df3a2f81945ba4
+measurements:
+- id: M1
+  what: lg_add (built seed), test accuracy
+  category: other
+  key: lg_add_acc
+  unit: fraction
+  record: results/b89/accuracy.json
+  field: arms.lg_add.runs[0].test.mean
+  conditions: 99,100 test samples in 10 sessions; synthetic order flow
+  value: 0.4913
+  sha256: b2f23ad7c2a11b09b2ecd03f6fc68a2d38f4716486ad3a69f4089d19978db8e9
+- id: M2
+  what: lg_add minus the 87 trivial rule, paired test difference
+  category: other
+  key: lg_add_vs_rule
+  unit: fraction
+  record: results/b89/accuracy.json
+  field: arms.lg_add.paired_vs.trivial_rule_87.difference_mean
+  conditions: as M1; 95% interval in the record
+  value: 0.0646
+  sha256: b2f23ad7c2a11b09b2ecd03f6fc68a2d38f4716486ad3a69f4089d19978db8e9
+- id: M3
+  what: lg_add minus the 87 boosted trees, paired test difference
+  category: other
+  key: lg_add_vs_trees
+  unit: fraction
+  record: results/b89/accuracy.json
+  field: arms.lg_add.paired_vs.trees_87.difference_mean
+  conditions: as M1
+  value: -0.0002
+  sha256: b2f23ad7c2a11b09b2ecd03f6fc68a2d38f4716486ad3a69f4089d19978db8e9
+- id: M4
+  what: TreeLUT seed 0, test accuracy
+  category: other
+  key: treelut_acc
+  unit: fraction
+  record: results/b89/accuracy.json
+  field: treelut.seed0.mean
+  conditions: as M1
+  value: 0.4983
+  sha256: b2f23ad7c2a11b09b2ecd03f6fc68a2d38f4716486ad3a69f4089d19978db8e9
+- id: M5
+  what: lg_add_comb, K26 latency
+  category: latency
+  key: lg_add_k26_lat
+  unit: ns
+  record: results/b89/summary.json
+  field: rows[0].k26.latency_ns
+  conditions: 1 clock at the closed period, out of context, Vivado 2026.1, one thread
+  value: 4.95
+  sha256: 48b73dd7e43cef15383113c4970fbdc272a9f4561e9b019431df3a2f81945ba4
+- id: M6
+  what: lg_add_comb, K26 LUTs
+  category: resources
+  key: lg_add_k26_lut
+  unit: LUT
+  record: results/b89/summary.json
+  field: rows[0].k26.lut
+  conditions: as M5
+  value: 882
+  sha256: 48b73dd7e43cef15383113c4970fbdc272a9f4561e9b019431df3a2f81945ba4
+- id: M7
+  what: lg_small_comb, K26 latency
+  category: latency
+  key: lg_small_k26_lat
+  unit: ns
+  record: results/b89/summary.json
+  field: rows[2].k26.latency_ns
+  conditions: as M5
+  value: 4.5
+  sha256: 48b73dd7e43cef15383113c4970fbdc272a9f4561e9b019431df3a2f81945ba4
+- id: M8
+  what: lg_small_comb, K26 LUTs
+  category: resources
+  key: lg_small_k26_lut
+  unit: LUT
+  record: results/b89/summary.json
+  field: rows[2].k26.lut
+  conditions: as M5
+  value: 325
+  sha256: 48b73dd7e43cef15383113c4970fbdc272a9f4561e9b019431df3a2f81945ba4
+- id: M9
+  what: TreeLUT (pipeline [0,1,1] + output register), K26 latency
+  category: latency
+  key: treelut_k26_lat
+  unit: ns
+  record: results/b89/summary.json
+  field: rows[6].k26.latency_ns
+  conditions: 3 clocks at the closed period, as M5
+  value: 7.5
+  sha256: 48b73dd7e43cef15383113c4970fbdc272a9f4561e9b019431df3a2f81945ba4
+- id: M10
+  what: TreeLUT, K26 LUTs
+  category: resources
+  key: treelut_k26_lut
+  unit: LUT
+  record: results/b89/summary.json
+  field: rows[6].k26.lut
+  conditions: as M5
+  value: 869
+  sha256: 48b73dd7e43cef15383113c4970fbdc272a9f4561e9b019431df3a2f81945ba4
+- id: M11
+  what: lg_add_comb, Artix-7 100T latency
+  category: latency
+  key: lg_add_a7_lat
+  unit: ns
+  record: results/b89/summary.json
+  field: rows[0].a7.latency_ns
+  conditions: xc7a100tcsg324-1, as M5
+  value: 13.85
+  sha256: 48b73dd7e43cef15383113c4970fbdc272a9f4561e9b019431df3a2f81945ba4
+gaps:
+- about: board_run
+  text: Not run on a board and not built inside the 58A top; out of context only.
+- about: timing
+  text: Out of context the clock has no buffer or jitter, so every latency is quoted at no faster than 2.0 ns.
+- about: power
+  text: Not measured; the out-of-context builds have no power report.
+- about: throughput
+  text: Every network accepts one input a clock (the RTL test streams half the inputs back to back); no separate throughput
+    figure is recorded.
+- about: data
+  text: One synthetic data set; the generator's ranking against trees and MLPs may not hold elsewhere.
+- about: treelut
+  text: TreeLUT is tuned for accuracy on a small grid with 8-bit inputs; a cost-tuned point could be smaller, and only its
+    seed 0 is built while our built seed is chosen on validation.
+- about: behaviour
+  text: 'Guessable wrongly: the model returned by training is the best validation epoch, not the last; narrow features pass
+    through exactly and use fewer code bits than asked; class-score ties go to the lower class (their share of test rows
+    is tie_share_test_built_seed in results/b89/accuracy.json).'
+next_steps:
+- Learned wiring (pruning and regrowth) in place of random triples.
+- Put lg_small behind the 58A rule table in place of the 87 LUT network and build the KR260 top.
+- A cost-tuned TreeLUT point for an area comparison at equal accuracy.
+open_questions:
+- Is the remaining 0.007 to the MLP and TreeLUT worth more tables, or is the label noise the limit?
+history:
+- date: '2026-11-16'
+  brief: '89'
+  note: diagnosis, generator, three design rounds, pre-registered test scoring, TreeLUT reference, out-of-context builds
+numbers_allow: []
+state:
+  stage: built
+  gates:
+    rtl_equals_twin: pass
+    ooc_build_2026_1: pass
+    board_run: not-run
+  vivado: '2026.1'
+  kb_pin: 2338b83
+  build_id: null

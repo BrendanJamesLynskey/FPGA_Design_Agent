@@ -1,0 +1,168 @@
+# Telemetry pacer (the spec oracle reads this)
+name: v2_e_tlm_pacer
+parameters:
+     CLKS_PER_BIT: 868
+     PERIOD_MIN: 4
+     TIMEOUT_CYCLES: 100000
+part: xc7a100tcsg324-1
+title: Telemetry pacer
+schema: fpga-design-agent/spec/v0
+assumptions:
+-    reason: a restart would let a host that re-asserts the enable stretch the period
+     assumption: writing 1 while on does not restart the count
+-    assumption: ticks arrive as writes of a count, one tick per clock after the write
+     reason: the shell is too slow to deliver single ticks
+top: v2_e_tlm_pacer_top
+reset:
+     port: CPU_RESETN
+     polarity: active_low
+     effect: off, nothing waiting, period asked and in force 100, totals and counter 0
+     kind: 'synchronised button: effective immediately, the release is aligned to the clock'
+timing:
+     clock_constraint: a 10 ns clock on CLK100MHZ
+     outputs: slow registered outputs, false paths
+     async_inputs: asynchronous inputs (reset button, UART receive) go through synchronisers and are false paths
+requirements:
+-    id: REQ-06
+     proof:
+     - analysis
+     text: 100 MHz timing is met and every path has a constraint
+-    proof:
+     - simulation
+     id: REQ-01
+     text: a frame falls due on every period-th tick from the switch-on, exactly
+-    proof:
+     - simulation
+     id: REQ-04
+     text: switching off clears the count and the waiting frame and keeps the totals
+-    id: REQ-05
+     text: LED shows the frame total
+     proof:
+     - simulation
+-    proof:
+     - simulation
+     text: one frame waits at most; a frame falling due while one waits is dropped and counted, never queued
+     id: REQ-02
+-    id: REQ-03
+     text: a request below PERIOD_MIN is raised; a new request applies from the next count or the switch-on
+     proof:
+     - simulation
+-    id: REQ-07
+     proof:
+     - hardware
+     text: The model and the board agree on every register read through the shell
+source: spec.md
+ports:
+-    iostandard: LVCMOS33
+     pins:
+     - C12
+     name: CPU_RESETN
+     width: 1
+     async: true
+     dir: in
+-    name: UART_RXD_OUT
+     dir: out
+     iostandard: LVCMOS33
+     pins:
+     - D4
+     width: 1
+-    width: 1
+     name: UART_TXD_IN
+     async: true
+     pins:
+     - C4
+     iostandard: LVCMOS33
+     dir: in
+-    dir: in
+     name: CLK100MHZ
+     pins:
+     - E3
+     iostandard: LVCMOS33
+     width: 1
+-    width: 16
+     pins:
+     - H17
+     - K15
+     - J13
+     - N14
+     - R18
+     - V17
+     - U17
+     - U16
+     - V16
+     - T15
+     - U14
+     - T16
+     - V15
+     - V14
+     - V12
+     - V11
+     dir: out
+     name: LED
+     iostandard: LVCMOS33
+board: nexys_a7_100t
+design_id: 1414287409
+open_questions: []
+clocks:
+-    name: sys_clk
+     source: the on-board oscillator
+     port: CLK100MHZ
+     freq_mhz: 100
+resources_expected: about 120 LUTs; no BRAM, no DSP
+registers:
+     shell: test shell, PROTOCOL.md 1.1
+     unmapped: 'unlisted offsets: read 0, writes dropped; read-only registers also drop writes'
+     map:
+     -    access: RO
+          name: FRAMES
+          offset: 6
+          bits: '[15:0] frames that fell due and were held, wrapping'
+          reset: 0
+     -    offset: 5
+          reset: 0
+          name: STAT
+          access: RO
+          bits: '[0] a frame waits, [1] enabled'
+     -    access: RO
+          offset: 7
+          name: OVERRUNS
+          reset: 0
+          bits: '[15:0] frames dropped because one was waiting, wrapping'
+     -    bits: '[15:0] period asked for, as written'
+          reset: 100
+          access: RW
+          name: REQ
+          offset: 1
+     -    name: TICK
+          reset: 0
+          offset: 3
+          access: WO
+          bits: '[7:0] n ticks, one per clock; reads 0'
+     -    name: CTRL
+          bits: '[0] enable'
+          access: RW
+          reset: 0
+          offset: 0
+     -    name: CNT
+          bits: '[15:0] ticks counted towards the next frame'
+          access: RO
+          offset: 8
+          reset: 0
+     -    access: WO
+          bits: any write takes the waiting frame; reads 0
+          name: TAKE
+          reset: 0
+          offset: 4
+     -    reset: 100
+          offset: 2
+          access: RO
+          name: EFF
+          bits: '[15:0] period in force'
+behaviour:
+     registers:
+     - 'CTRL 0 (bit 0 enable), REQ 1 (16-bit, reset 100, raw as written), EFF 2 (period in force), TICK 3 (write n: n ticks, one per clock; low 8 bits), TAKE 4 (any write), STAT 5 (bit 1 enabled, bit 0 waiting), FRAMES 6, OVERRUNS 7, CNT 8; LED = FRAMES[15:0]; unmapped read 0.'
+     pacer:
+     - 'Enabled: each tick adds 1 to CNT; when CNT reaches EFF it returns to 0, EFF takes the request raised to PERIOD_MIN, and a frame falls due.'
+     - A due frame is held (STAT bit 0) if none is waiting, counted in FRAMES; otherwise dropped and counted in OVERRUNS. TAKE clears the waiting frame.
+     - Switch-on (0 to 1) clears CNT and loads EFF from the request; switch-off clears CNT and the waiting frame; totals persist until reset; writing 1 while on does nothing.
+tier: T1

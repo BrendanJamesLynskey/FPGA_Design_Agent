@@ -1,0 +1,173 @@
+# Command executor and register file (the spec oracle reads this)
+top: v2_e_cmd_exec_top
+clocks:
+-      source: the on-board oscillator
+       port: CLK100MHZ
+       freq_mhz: 100
+       name: sys_clk
+reset:
+       effect: scratch registers, counters, uptime, code, read value 0; period 100; telemetry off
+       polarity: active_low
+       kind: external active-low button through a reset synchroniser; immediate assert, clocked release
+       port: CPU_RESETN
+title: Command executor and register file
+parameters:
+       CLKS_PER_BIT: 868
+       TIMEOUT_CYCLES: 100000
+assumptions:
+-      reason: the registers are 32 bits wide
+       assumption: counters are 32 bits
+-      reason: a refused command must not leave a stale value that looks like a result
+       assumption: every GO clears the read value
+timing:
+       async_inputs: 'CPU_RESETN, UART_TXD_IN: synchronised, false paths'
+       outputs: 'outputs: registered, slow, false paths'
+       clock_constraint: 10 ns period constraint on the CLK100MHZ port
+design_id: 1129861681
+resources_expected: about 350 LUTs; no BRAM, no DSP
+tier: T2
+requirements:
+-      text: a successful command adds one to CMDS; a refused one adds one to ERRS and changes nothing else
+       id: REQ-03
+       proof:
+       - simulation
+-      proof:
+       - simulation
+       text: telemetry start sets the period (raised to 4, zero keeps it) and switches telemetry on; stop switches it off
+       id: REQ-04
+-      text: A hardware read of each register matches the model
+       proof:
+       - hardware
+       id: REQ-07
+-      id: REQ-01
+       proof:
+       - simulation
+       text: read and write act on the bank; a write to ID, CMDS, ERRS, PERIOD or UPTIME is refused with code 5
+-      id: REQ-02
+       proof:
+       - simulation
+       text: register numbers of 8 or more are refused with code 3; types outside 1 to 5 with code 1
+-      proof:
+       - simulation
+       id: REQ-05
+       text: a read of CMDS or ERRS shows the count before this command is counted
+-      text: Every path constrained; timing closes at the 100 MHz clock
+       id: REQ-06
+       proof:
+       - analysis
+board: nexys_a7_100t
+open_questions: []
+name: v2_e_cmd_exec
+registers:
+       map:
+       -      access: WO
+              reset: 0
+              offset: 7
+              bits: any write adds one to ERRS
+              name: REFUSED
+       -      offset: 8
+              name: TLM
+              bits: '[0] telemetry on'
+              access: RO
+              reset: 0
+       -      access: RO
+              bits: 'the eight registers: ID, SCRATCH0..2, CMDS, ERRS, PERIOD, UPTIME'
+              offset: 16
+              reset: 0
+              name: BANK0..BANK7
+       -      name: P1
+              offset: 2
+              reset: 0
+              bits: '[31:0] second parameter'
+              access: RW
+       -      access: WO
+              bits: '[7:0] added to UPTIME'
+              offset: 6
+              reset: 0
+              name: TICK
+       -      access: RW
+              reset: 0
+              offset: 1
+              name: P0
+              bits: '[15:0] first parameter'
+       -      reset: 0
+              name: CODE
+              access: RO
+              bits: '[2:0] result of the last command: 0 OK, 1 unknown type, 3 unknown register, 5 write to a read-only register'
+              offset: 4
+       -      offset: 5
+              access: RO
+              bits: value of the last successful read, else 0
+              name: RDATA
+              reset: 0
+       -      access: RW
+              reset: 0
+              bits: '[7:0] command type'
+              name: TYP
+              offset: 0
+       -      bits: any write runs the staged command; reads 0
+              reset: 0
+              offset: 3
+              access: WO
+              name: GO
+       unmapped: an unused offset reads zero and a write to it, or to a read-only register, has no effect
+       shell: test shell, PROTOCOL.md 1.1
+source: spec.md
+schema: fpga-design-agent/spec/v0
+behaviour:
+       bank:
+       - ID 0x55445031 (RO), SCRATCH0..2 (RW, regs 1..3), CMDS (RO, 32-bit), ERRS (RO, 32-bit), PERIOD (RO, 100 at reset), UPTIME (RO, 32-bit).
+       registers:
+       - 'TYP 0 (8 bits), P0 1 (16), P1 2 (32), GO 3 (write), CODE 4, RDATA 5, TICK 6 (adds the low 8 bits to UPTIME), REFUSED 7 (any write: ERRS+1), TLM 8 (bit 0), view 0x10..0x17 of the bank; LED = {CMDS[7:0], ERRS[7:0]}; unmapped reads 0.'
+       commands:
+       - 'GO runs TYP with P0 and P1: READ/WRITE need register number P0 <= 7 else code 3; WRITE to 0 or 4..7 code 5; types other than 1..5 code 1. Success code 0 and CMDS+1; failure ERRS+1 and nothing else changes except CODE, and RDATA is cleared.'
+       - 'READ puts the value in RDATA (CMDS and ERRS before this command is counted). TLM_START: P0 != 0 sets PERIOD = max(P0, 4); TLM on. TLM_STOP: TLM off.'
+ports:
+-      pins:
+       - E3
+       name: CLK100MHZ
+       dir: in
+       width: 1
+       iostandard: LVCMOS33
+-      async: true
+       name: CPU_RESETN
+       width: 1
+       pins:
+       - C12
+       dir: in
+       iostandard: LVCMOS33
+-      dir: out
+       name: UART_RXD_OUT
+       pins:
+       - D4
+       iostandard: LVCMOS33
+       width: 1
+-      pins:
+       - C4
+       name: UART_TXD_IN
+       width: 1
+       iostandard: LVCMOS33
+       dir: in
+       async: true
+-      dir: out
+       width: 16
+       name: LED
+       iostandard: LVCMOS33
+       pins:
+       - H17
+       - K15
+       - J13
+       - N14
+       - R18
+       - V17
+       - U17
+       - U16
+       - V16
+       - T15
+       - U14
+       - T16
+       - V15
+       - V14
+       - V12
+       - V11
+part: xc7a100tcsg324-1

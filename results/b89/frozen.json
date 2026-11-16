@@ -1,0 +1,123 @@
+{
+ "from_round": "r3",
+ "rule": {
+  "lg_add": "highest mean validation accuracy over seeds 0-2 (ties to smaller table)",
+  "lg_small": "smallest table size with mean validation accuracy within 0.002 of lg_add",
+  "lg_b87": "t_b87_shape (the 87 network's shape, brief 89 training)"
+ },
+ "arms": {
+  "lg_add": {
+   "round3_name": "t_add_noh_3b_tree",
+   "config": {
+    "in_bits": [
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3
+    ],
+    "thresholds": "tree",
+    "layers": [],
+    "out_fan_in": 3,
+    "out_bits": 4,
+    "output": "additive",
+    "per_class": 8,
+    "wiring": "random",
+    "hidden": 16,
+    "depth": 2,
+    "batchnorm": true,
+    "freeze_bn": 4,
+    "learn_temperature": true,
+    "epochs": 20,
+    "lr": 0.003,
+    "batch": 1024,
+    "n_classes": 3
+   },
+   "pipes": [
+    "comb",
+    "layer"
+   ]
+  },
+  "lg_small": {
+   "round3_name": "t_add_noh_3b_tree_k2",
+   "config": {
+    "in_bits": [
+     3,
+     3,
+     3,
+     3,
+     3,
+     3,
+     3
+    ],
+    "thresholds": "tree",
+    "layers": [],
+    "out_fan_in": 2,
+    "out_bits": 4,
+    "output": "additive",
+    "per_class": 8,
+    "wiring": "random",
+    "hidden": 16,
+    "depth": 2,
+    "batchnorm": true,
+    "freeze_bn": 4,
+    "learn_temperature": true,
+    "epochs": 20,
+    "lr": 0.003,
+    "batch": 1024,
+    "n_classes": 3
+   },
+   "pipes": [
+    "comb",
+    "layer"
+   ]
+  },
+  "lg_b87": {
+   "round3_name": "t_b87_shape",
+   "config": {
+    "in_bits": [
+     2,
+     2,
+     2,
+     2,
+     2,
+     2,
+     2
+    ],
+    "thresholds": "quantile",
+    "layers": [
+     [
+      16,
+      3,
+      2
+     ],
+     [
+      8,
+      3,
+      2
+     ]
+    ],
+    "out_fan_in": 4,
+    "out_bits": 4,
+    "output": "direct",
+    "per_class": 1,
+    "wiring": "random",
+    "hidden": 16,
+    "depth": 2,
+    "batchnorm": true,
+    "freeze_bn": 4,
+    "learn_temperature": true,
+    "epochs": 20,
+    "lr": 0.003,
+    "batch": 1024,
+    "n_classes": 3
+   },
+   "pipes": [
+    "comb",
+    "layer"
+   ]
+  }
+ }
+}

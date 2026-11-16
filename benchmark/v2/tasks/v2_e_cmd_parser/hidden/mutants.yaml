@@ -1,0 +1,33 @@
+# Mutants and the trap for v2_e_cmd_parser (benchmark/tools/check_task.py)
+mutants:
+- {name: accepts_bad_check, file: cmd_parser.sv, find: else if (cn != RES_Kbbb)                      cls = C_CRC;, replace: else if (1'b0)                               cls = C_CRC;, why: a packet with a wrong check is accepted}
+- {name: check_skips_last_byte, file: cmd_parser.sv, find: 'cn  = crcbbbb(mid ? crc : 32''hFFFF_FFFF, b);', replace: 'cn  = fin ? (mid ? crc : 32''hFFFF_FFFF) : crcbbbb(mid ? crc : 32''hFFFF_FFFF, b);', why: 'the last check byte is not folded
+    in, so only some wrong checks are seen'}
+- {name: hangs_on_short, file: cmd_parser.sv, find: mid <= 1'b0; cnt <= '0; over <= 1'b0; crc <= 32'hFFFF_FFFF;, replace: 'mid <= (total < 8''d8 + h_len) && !ov; cnt <= (total < 8''d8 + h_len) && !ov ? total : 8''d0; over <= 1''b0; crc <= 32''hFFFF_FFFF;',
+  why: a truncated packet leaves the parser part-way; the next packet is glued on}
+- {name: oversize_not_discarded, file: cmd_parser.sv, find: over <= ov;, replace: over <= 1'b0;, why: 'the oversize flag is forgotten after the first byte that raised it, so the rest of the packet is classed as a short or bad one'}
+- {name: seq_not_remembered, file: cmd_parser.sv, find: last_seq <= h_seq; have_seq <= 1'b1;, replace: have_seq <= 1'b1;, why: 'the last accepted number is never updated: the sequence order is lost'}
+- {name: seq_updated_on_bad, file: cmd_parser.sv, find: result <= cls;, replace: result <= cls; if (cls == C_LEN || cls == C_TYPE) last_seq <= h_seq;, why: a rejected packet moves the sequence state}
+- {name: replay_accepted, file: cmd_parser.sv, find: else if (have_seq && dlt == 16'd0)           cls = C_REPLAY;, replace: else if (1'b0)                               cls = C_REPLAY;, why: the repeated number is run again}
+- {name: old_half_span_wrong, file: cmd_parser.sv, find: 'else if (have_seq && dlt[15])                cls = C_OLD;', replace: else if (have_seq && dlt > 16'h8000)         cls = C_OLD;, why: exactly 0x8000 ahead counts as new}
+- {name: no_wrap, file: cmd_parser.sv, find: dlt = sq - last_seq;, replace: 'dlt = (sq >= last_seq) ? (sq - last_seq) : 16''hFFFF;', why: the number does not wrap past 0xFFFF}
+- {name: first_packet_needs_zero, file: cmd_parser.sv, find: 'else if (have_seq && dlt[15])                cls = C_OLD;', replace: 'else if (dlt[15])                            cls = C_OLD;', why: after reset the first packet is checked against
+    number 0 and a high number is out of order}
+- {name: type_range_wrong, file: cmd_parser.sv, find: type_ok = (h_type >= 8'd1) && (h_type <= 8'd5);, replace: type_ok = (h_type >= 8'd1) && (h_type <= 8'd6);, why: type 6 is taken as known}
+- {name: write_len_four, file: cmd_parser.sv, find: '8''d2:       need_len = 8''d6;', replace: '8''d2:       need_len = 8''d4;', why: a write needs 4 payload bytes instead of 6}
+- {name: len_check_dropped, file: cmd_parser.sv, find: else if (h_len != need_len)                  cls = C_LEN;, replace: else if (1'b0)                               cls = C_LEN;, why: a wrong payload length is accepted}
+- {name: length_limit_nine, file: cmd_parser.sv, find: (n == 8'd3 && h_len > 8'd8), replace: (n == 8'd3 && h_len > 8'd9), why: length 9 is not oversize}
+- {name: trailing_bytes_ignored, file: cmd_parser.sv, find: '|| (n >= 8''d4 && ({1''b0, n} + 9''d1) > ({1''b0, h_len} + 9''d8));', replace: ;, why: bytes after the check are not an error}
+- {name: short_by_header_only, file: cmd_parser.sv, find: else if (total < 8'd4 || (total < (8'd8 + h_len))) cls = C_SHORT;, replace: else if (total < 8'd4)                       cls = C_SHORT;, why: a packet that ends before its announced size
+    is not short}
+- {name: payload_second_field_short, file: cmd_parser.sv, find: 'o_p0 <= {pb[0], pb[1]}; o_p1 <= {pb[2], pb[3], pb[4], pb[5]};', replace: 'o_p0 <= {pb[0], pb[1]}; o_p1 <= {pb[3], pb[2], pb[4], pb[5]};', why: value bytes in the wrong order}
+- {name: stale_payload_kept, file: cmd_parser.sv, find: "for (int i = 0; i < 6; i++) pb[i] <= '0;\n            end", replace: end, why: payload bytes of the previous packet show through when the new one is shorter}
+- {name: seq_bytes_swapped, file: cmd_parser.sv, find: 'if (n == 8''d2) h_seq[15:8] <= b;', replace: 'if (n == 8''d2) h_seq[7:0] <= b;', why: the sequence number is read low byte first}
+- {name: type_error_counted_as_length, file: cmd_parser.sv, find: 'default:  ctr[6] <= ctr[6] + 16''d1;', replace: "C_TYPE:   ctr[6] <= ctr[6] + 16'd1;\n                    default:  ctr[0] <= ctr[0];", why: length errors are not counted}
+- {name: result_not_updated_on_reject, file: cmd_parser.sv, find: result <= cls;, replace: if (cls == C_OK) result <= cls;, why: the result register shows only good packets}
+trap:
+  twin: parser that checks the CRC over the payload only, and treats sequence numbers as 'strictly greater than the last'
+  why: a plain greater-than test loses the wrap at 0xFFFF and accepts nothing after it; the spec asks for modular order
+  edits:
+  - {file: cmd_parser.sv, find: dlt = sq - last_seq;, replace: 'dlt = (sq > last_seq) ? 16''d1 : ((sq == last_seq) ? 16''d0 : 16''hFFFF);'}
+  must_fail: [test_screen_first_packet_may_carry_any_number_and_the_number_wraps]

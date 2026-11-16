@@ -160,6 +160,35 @@ jobs:
         run: python -m pytest -q flow/tests/test_55_vhdl_rtl.py
       - name: Mutants (each deliberate bug must fail the T1 tests)
         run: PYTHON=python designs/t1_dimmer_counter/tests/run_mutants.sh
+      - name: Upload simulation logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sim-logs
+          path: build/sim/*/sim.log
+
+  bench-v1:
+    name: Benchmark v1 development tasks - reference RTL, every mutant killed, every trap fires (split from the RTL job, 2026-11-16)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 330
+    env:
+      PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch the pull request base (for the task selection)
+        if: github.event_name == 'pull_request'
+        run: git fetch --depth=1 origin ${{ github.event.pull_request.base.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y iverilog
+          # GHDL for the VHDL path, pinned to the Ubuntu 24.04 package used locally and in fda-sim:2-ghdl (mcode; about 8.5 MB installed)
+          sudo apt-get install -y --no-install-recommends ghdl=4.1.0+dfsg-0ubuntu2.1 ghdl-mcode=4.1.0+dfsg-0ubuntu2.1 ghdl-common=4.1.0+dfsg-0ubuntu2.1
+          ghdl --version | head -1
+          pip install pyyaml pyserial pytest cocotb==2.0.1 cocotb-coverage numpy==2.4.3   # numpy: the pdm_chain task bench (brief 79)
       - name: Benchmark v1 development tasks - reference RTL, every mutant killed, every trap fires (brief 06a)
         run: |
           rc=0
@@ -168,6 +197,35 @@ jobs:
           echo "v1 tasks: $sel"
           for t in $dirs; do python benchmark/tools/check_task.py "$t" --out build/bench_ci || rc=1; done
           exit $rc
+      - name: Upload simulation logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sim-logs-bench-v1
+          path: build/sim/*/sim.log
+
+  bench-v2:
+    name: Benchmark v2 development tasks - reference RTL, every mutant killed, every trap fires (split from the RTL job, 2026-11-16)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 330
+    env:
+      PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch the pull request base (for the task selection)
+        if: github.event_name == 'pull_request'
+        run: git fetch --depth=1 origin ${{ github.event.pull_request.base.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y iverilog
+          # GHDL for the VHDL path, pinned to the Ubuntu 24.04 package used locally and in fda-sim:2-ghdl (mcode; about 8.5 MB installed)
+          sudo apt-get install -y --no-install-recommends ghdl=4.1.0+dfsg-0ubuntu2.1 ghdl-mcode=4.1.0+dfsg-0ubuntu2.1 ghdl-common=4.1.0+dfsg-0ubuntu2.1
+          ghdl --version | head -1
+          pip install pyyaml pyserial pytest cocotb==2.0.1 cocotb-coverage numpy==2.4.3   # numpy: the pdm_chain task bench (brief 79)
       - name: Benchmark v2 development tasks - reference RTL, every mutant killed, every trap fires (quality review 12)
         run: |
           rc=0
@@ -180,7 +238,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: sim-logs
+          name: sim-logs-bench-v2
           path: build/sim/*/sim.log
 
   course-tier:
@@ -262,6 +320,11 @@ jobs:
           B87_ML_ARM=1 python -m pytest -q designs/b87_ml_trading/tests/test_b87_integ_rtl.py
           B87_ML_ARM=2 python -m pytest -q designs/b87_ml_trading/tests/test_b87_integ_rtl.py
           python3 results/b87/summary.py --check
+      - name: LUT-network generator (brief 89) - generated RTL against its twin (test split, random inputs, every table cell), fixed latency, Verilator -Wall; TreeLUT reference RTL against TreeLUT
+        run: |
+          sudo apt-get install -y verilator
+          python -m pytest -q designs/b89_lutnet_gen/tests/test_b89_rtl.py flow/tests/test_89_lutgen_rtl.py
+          python3 results/b89/summary.py --check
       - name: Upload simulation logs
         if: always()
         uses: actions/upload-artifact@v4
