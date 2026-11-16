@@ -1,0 +1,415 @@
+{
+ "schema_version": "1",
+ "review_id": "icmp_echo",
+ "design": {
+  "name": "icmp_echo",
+  "path_label": "icmp_echo",
+  "sha256": "93ab8705e205aaef6d4231c15d47510b0ded79a4ce352e16db6c07dfb24cab89",
+  "unchanged": true,
+  "had_build_yaml": false,
+  "inferred_top": "formal_icmp"
+ },
+ "intent": {
+  "given": false,
+  "source": "",
+  "text": ""
+ },
+ "understanding": {
+  "summary": "icmp_echo answers ICMP echo requests for one IPv4 address on a byte-wide AXI-Stream link. It stores each received frame in a RAM (block or LUT RAM) while checking the Ethernet, IP and ICMP fields and both checksums. If the frame is a valid echo request and the buffer is free, it replays the stored frame with addresses swapped, a fixed TTL, ICMP type 0 and RFC 1624 incrementally updated checksums. Only one request is held at a time; a request arriving while a reply is pending is dropped and flagged with ev_busy. Evidence is cocotb against a Python model with scapy, SymbiYosys bounded checks and an out-of-context Artix-7 build. The design has not been run on a board.",
+  "interfaces": "s_axis: 8-bit AXI-Stream in, tready tied to 1, tuser marks a bad frame, frames carry no FCS. m_axis: 8-bit AXI-Stream out with tvalid/tready/tlast and registered outputs. own_mac and own_ip are static configuration inputs. Four one-clock event pulses: ev_request, ev_reply, ev_busy, ev_bad. Parameters are BUF_BYTES (power of two, 128..16384), TTL (1..255) and RAM (bram or lutram).",
+  "clocks_resets": "One clock, clk, and one synchronous active-high reset, rst. There are no clock crossings and no asynchronous resets. Control state and header/accumulator registers are reset. The RAM and the read data register rq are not, which is fine. The event pulses default to 0 and are cleared in reset.",
+  "architecture": "A receive side counts bytes with k (saturating) and captures header fields at fixed offsets. It accumulates the IP header sum (ip_acc) and the ICMP sum (ic_acc, limited to the IP total length). It writes the frame into mem. `fin` pulses one clock after tlast, and `ok` is then evaluated combinationally from the captured fields. `blocked` stops a frame that starts right after a request's last byte from being stored over the request. The reply side starts at fin&&ok&&f_store and sets busy. It computes the new IP and ICMP checksums incrementally and reads the RAM with an address swap for the IP source and destination (offsets 26..33). A small skid-style pipeline (rq, rv, rj, take) feeds m_axis, and out_byte substitutes the MACs, TTL, checksums and ICMP type.",
+  "facts": {
+   "top": "formal_icmp",
+   "modules": [
+    {
+     "name": "formal_icmp",
+     "file": "formal/formal_icmp.sv",
+     "line": 1,
+     "params": {},
+     "ports": [
+      {
+       "dir": "input",
+       "width": "",
+       "name": "clk"
+      },
+      {
+       "dir": "input",
+       "width": "[7:0]",
+       "name": "s_axis_tdata"
+      },
+      {
+       "dir": "input",
+       "width": "",
+       "name": "s_axis_tvalid"
+      },
+      {
+       "dir": "input",
+       "width": "",
+       "name": "m_axis_tready"
+      }
+     ],
+     "clocks": [
+      "clk"
+     ],
+     "async_reset_edges": [],
+     "instances": [
+      {
+       "module": "icmp_echo",
+       "name": "dut"
+      }
+     ],
+     "loc": 61
+    },
+    {
+     "name": "icmp_echo",
+     "file": "rtl/icmp_echo.sv",
+     "line": 1,
+     "params": {
+      "BUF_BYTES": "2048",
+      "TTL": "64",
+      "RAM": "\"bram\""
+     },
+     "ports": [
+      {
+       "dir": "input",
+       "width": "",
+       "name": "clk"
+      },
+      {
+       "dir": "input",
+       "width": "",
+       "name": "rst"
+      },
+      {
+       "dir": "input",
+       "width": "[47:0]",
+       "name": "own_mac"
+      },
+      {
+       "dir": "input",
+       "width": "[31:0]",
+       "name": "own_ip"
+      },
+      {
+       "dir": "input",
+       "width": "[7:0]",
+       "name": "s_axis_tdata"
+      },
+      {
+       "dir": "input",
+       "width": "",
+       "name": "s_axis_tvalid"
+      },
+      {
+       "dir": "output",
+       "width": "",
+       "name": "s_axis_tready"
+      },
+      {
+       "dir": "input",
+       "width": "",
+       "name": "s_axis_tlast"
+      },
+      {
+       "dir": "input",
+       "width": "",
+       "name": "s_axis_tuser"
+      },
+      {
+       "dir": "output",
+       "width": "[7:0]",
+       "name": "m_axis_tdata"
+      },
+      {
+       "dir": "output",
+       "width": "",
+       "name": "m_axis_tvalid"
+      },
+      {
+       "dir": "input",
+       "width": "",
+       "name": "m_axis_tready"
+      },
+      {
+       "dir": "output",
+       "width": "",
+       "name": "m_axis_tlast"
+      },
+      {
+       "dir": "output",
+       "width": "",
+       "name": "ev_request"
+      },
+      {
+       "dir": "output",
+       "width": "",
+       "name": "ev_reply"
+      },
+      {
+       "dir": "output",
+       "width": "",
+       "name": "ev_busy"
+      },
+      {
+       "dir": "output",
+       "width": "",
+       "name": "ev_bad"
+      }
+     ],
+     "clocks": [
+      "clk"
+     ],
+     "async_reset_edges": [],
+     "instances": [],
+     "loc": 195
+    }
+   ],
+   "clock_domains": [
+    "clk"
+   ],
+   "rtl_files": [
+    "formal/formal_icmp.sv",
+    "rtl/icmp_echo.sv"
+   ],
+   "test_files": [
+    "tb/icmp_cocotb.py"
+   ],
+   "constraint_files": [],
+   "doc_files": [
+    "CHANGELOG.md",
+    "README.md"
+   ],
+   "hierarchy": "formal_icmp (formal/formal_icmp.sv:1, 61 lines; clocks clk)\n  dut : icmp_echo (rtl/icmp_echo.sv:1, 195 lines; clocks clk)",
+   "diagram": "block_diagram.svg"
+  }
+ },
+ "findings": [
+  {
+   "id": "F-5117d0",
+   "title": "Formal reply-content check covers one byte and one RAM variant",
+   "severity": "minor",
+   "category": "verification",
+   "location": {
+    "file": "formal/formal_icmp.sv",
+    "line": 53,
+    "end_line": null,
+    "object": "assert (m_axis_tdata == f_rq[7:0])"
+   },
+   "evidence": "The reply content is checked only at byte index 13. The formal instance is fixed to BUF_BYTES 128 and RAM \"lutram\". Reset is only the initial f_past pulse (line 13). The README admits the one-byte limit.",
+   "rule": "A formal check of data integrity should cover the whole copied region, or the gap should be covered by directed tests that are known to hit it.",
+   "fix": "Use a solver-chosen byte if it can be made to converge (for example with a small BUF and k-induction), or add a second instance with RAM=bram. Add mid-stream reset in the formal bench.",
+   "confidence": "high",
+   "source": "judge",
+   "refs": []
+  },
+  {
+   "id": "F-5f28ce",
+   "title": "Long combinational path from the checksum compare into the RAM write enable",
+   "severity": "minor",
+   "category": "timing",
+   "location": {
+    "file": "rtl/icmp_echo.sv",
+    "line": 112,
+    "end_line": 115,
+    "object": "blocked / ok / we"
+   },
+   "evidence": "`blocked = busy || (fin && ok && f_store)`, and `ok` includes fold(ip_acc)==FFFF, fold(ic_acc)==FFFF and a 17-bit length compare. `blocked` feeds `we` (line 79) and `stored`. The out-of-context runs fail 125 MHz (WNS -0.59 to -3.3 ns).",
+   "rule": "Wide arithmetic compares should be registered rather than feeding memory enables and control state combinationally.",
+   "fix": "Register `ok` in a stage after fin, and block a new frame's first byte by a conservative flag (for example fin&&echo_me&&f_store) or a delayed start. Pipeline the folds, as the README's next steps already say.",
+   "confidence": "medium",
+   "source": "judge",
+   "refs": []
+  },
+  {
+   "id": "F-bd4754",
+   "title": "Ethernet destination MAC is not checked",
+   "severity": "minor",
+   "category": "functional",
+   "location": {
+    "file": "rtl/icmp_echo.sv",
+    "line": 113,
+    "end_line": null,
+    "object": "echo_me"
+   },
+   "evidence": "echo_me tests EtherType, version/IHL, protocol, dst IP and ICMP type only. own_mac is used just as the reply's source address (line 183). The header comment's list of conditions has no MAC check.",
+   "rule": "A host answering ping should only answer frames addressed to its MAC, or broadcast/multicast where intended. If the MAC layer does not filter, frames for other stations are answered.",
+   "fix": "Add a check on bytes 0..5 against own_mac or broadcast. Alternatively, document that the upstream MAC must filter.",
+   "confidence": "medium",
+   "source": "judge",
+   "refs": []
+  },
+  {
+   "id": "F-809e1d",
+   "title": "Runt frames after a ping raise a spurious ev_bad (stale header registers)",
+   "severity": "minor",
+   "category": "functional",
+   "location": {
+    "file": "rtl/icmp_echo.sv",
+    "line": 170,
+    "end_line": 171,
+    "object": "echo_me / ev_bad"
+   },
+   "evidence": "The header registers (et, vi, proto, dst, typ) are only reset by rst and are not cleared at the start of a frame (line 87 clears only ip_acc and ic_acc). A frame shorter than 35 bytes that follows a request keeps the old values, so echo_me stays true. ic_acc is 0, so ok is false and `if (!ok) ev_bad <= 1'b1` fires.",
+   "rule": "An event flag should depend only on the current frame's data.",
+   "fix": "Clear the captured fields, or a per-frame 'seen typ/dst' flag, when first is true. Alternatively gate echo_me with f_len > 37.",
+   "confidence": "medium",
+   "source": "judge",
+   "refs": []
+  },
+  {
+   "id": "F-a6996d",
+   "title": "Testbench corners not exercised",
+   "severity": "minor",
+   "category": "verification",
+   "location": {
+    "file": "tb/icmp_cocotb.py",
+    "line": 97,
+    "end_line": null,
+    "object": "echo"
+   },
+   "evidence": "The random tests do not hit tl14 == BUF_BYTES exactly, since lengths are random below min(buf, 9000). TTL is 64, 255 and 128 only. There is no reset while a frame or reply is in flight, no runt frame after a request, and no test with the sink stalled during the reply tail.",
+   "rule": "Boundary and reset-in-flight cases are where counter and handshake bugs hide.",
+   "fix": "Add directed cases for datagram length exactly BUF_BYTES-14 and BUF_BYTES-13, TTL=1, runt frames after a request, and a reset during a reply. Also check that ev_bad stays 0 for frames not meant for us.",
+   "confidence": "medium",
+   "source": "judge",
+   "refs": []
+  }
+ ],
+ "dismissed": [
+  {
+   "id": "F-a29de9",
+   "reason": "axis_rules is an external AXI checker module from the library, not part of this block's files. It is a layout complaint for a formal-only wrapper."
+  },
+  {
+   "id": "F-fadf62",
+   "reason": "The initial block holds only $error elaboration guards for parameters. It is simulation and elaboration checking, not synthesised state, and is documented and tested."
+  },
+  {
+   "id": "F-663ce4",
+   "reason": "The architecture.yaml file belongs to the agent's own layout; not applicable to this block."
+  },
+  {
+   "id": "F-be3956",
+   "reason": "Naming-prefix complaint (s_axis/m_axis); not applicable."
+  },
+  {
+   "id": "F-a67be0",
+   "reason": "Naming-prefix complaint (s_axis/m_axis); not applicable."
+  },
+  {
+   "id": "F-0a658d",
+   "reason": "Naming-prefix complaint (s_axis/m_axis); not applicable."
+  },
+  {
+   "id": "F-af5a80",
+   "reason": "Naming-prefix complaint (s_axis/m_axis); not applicable."
+  },
+  {
+   "id": "F-e00242",
+   "reason": "Naming-prefix complaint (s_axis/m_axis); not applicable."
+  },
+  {
+   "id": "F-26b534",
+   "reason": "Naming-prefix complaint (s_axis/m_axis); not applicable."
+  },
+  {
+   "id": "F-c4f568",
+   "reason": "Naming-prefix complaint (s_axis/m_axis); not applicable."
+  },
+  {
+   "id": "F-ba5502",
+   "reason": "Naming-prefix complaint (s_axis/m_axis); not applicable."
+  }
+ ],
+ "sound": [
+  "Incremental checksum updates match RFC 1624 eqn 3: the IP checksum for the TTL change, and the ICMP checksum for type 8 to 0. The IP address swap leaves the IP sum unchanged.",
+  "The read-address swap for bytes 26..33 and the out_byte substitutions at 0..11, 22, 24/25, 34 and 36/37 are consistent with the header layout.",
+  "The output pipeline (take, rv, rd_en) holds tdata and tvalid stable while m_axis_tready is low and loses no byte.",
+  "`blocked` protects the stored request against a frame starting on the clock after the last byte and against frames during a reply. The tail-overwrite fault is caught by the adversarial bench.",
+  "The ICMP sum is limited to the IP total length, so Ethernet padding is excluded. The length checks (tl>=28, f_len>=tl+14, tl+14<=BUF_BYTES) and the saturating k prevent overflow.",
+  "Parameter guards exist and are tested. Reset policy follows the house convention."
+ ],
+ "questions": [
+  "Does the upstream MAC filter frames by destination MAC, so this block need not?",
+  "Should a ping to the broadcast address or from a broadcast/multicast source be answered or suppressed?"
+ ],
+ "verification_gap": {
+  "covered": [
+   "Random request lengths with padding, wrong addresses, bad checksums, fragments, options, other types and codes, bad and truncated frames, and oversize frames, checked against the model and scapy under random gaps and back-pressure.",
+   "A request arriving while a reply is held (ev_busy), and the declared 4-clock latency.",
+   "AXI-Stream protocol rules on m_axis, no reply without a request, and byte 13 of the reply, all by bounded model checking.",
+   "Seven seeded faults, all caught."
+  ],
+  "missed": [
+   "Reset in flight.",
+   "Datagram length exactly at the buffer limit.",
+   "TTL=1.",
+   "Runt frames after a request (stale fields).",
+   "Formal coverage of the bram variant and of reply bytes other than 13.",
+   "Behaviour on frames addressed to another MAC."
+  ],
+  "faults_not_caught": [
+   "The ev_bad stale-field behaviour (spurious ev_bad on a runt frame) would pass the tests, which check only ev_busy==0 and the request/reply counts.",
+   "A fault in the tl14 <= BUF_BYTES boundary (off by one at exactly BUF_BYTES) is probably not caught.",
+   "An error in a copied byte other than 13 that appears only for particular lengths (for example stale data past the current frame) is checked only by random simulation."
+  ]
+ },
+ "checks": {
+  "scope": "rtl",
+  "ran": {
+   "lint": "fail",
+   "standards": "fail",
+   "resets": "not_run",
+   "methodology": "not_run",
+   "axi": "pass"
+  },
+  "not_run": {
+   "resets": "",
+   "methodology": "no methodology report for scope rtl"
+  },
+  "skipped": {
+   "fsm": "no verif/fsm.yaml (the design declares no state machine to cover)",
+   "axi_profile": "no generated AXI4-Lite register blocks and no interfaces: section in spec.yaml",
+   "gt_plan": "no link: section in spec.yaml or link_spec.yaml (no transceiver link)",
+   "doc": "no handover.yaml (the DOC step writes it at the end of a run)"
+  },
+  "digest": "checks FAIL at scope rtl (base): 1 pass, 0 partial, 2 fail, 2 not run. Full report: build/checks/base/rtl.json\nFAIL     lint: 1 blocking (HDL-LINT-00)\n  HDL-LINT-00 MODMISSING runs/review/icmp_echo-93ab8705/design/formal/formal_icmp.sv:20: Cannot find file containing module: 'axis_rules' | fix: fix the Verilator warning, or waive it in lint/waivers.yaml with a reason | skill: vivado-rtl-lint\nFAIL     standards: 10 blocking (HDL-IF-01, HDL-SYN-06)\n  HDL-IF-01 STD-ARCH-00 architecture.yaml:1: architecture.yaml does not exist | fix: use AXI4-Lite or AXI4-Stream with AMBA port names and declare the interface in architecture.yaml | skill: bus-and-register-interfaces\n  HDL-SYN-06 STD-INIT-01 rtl/icmp_echo.sv:40: initial block in synthesisable RTL (only $readmemh/$readmemb ROM initialisation is allowed) | fix: set start values with the reset, not an initial block (ROM contents excepted) | skill: synthesisable-subset-and-parameters\n  HDL-IF-01 STD-AXI-02 rtl/icmp_echo.sv:16: port s_axis_tdata of icmp_echo looks like an AXI port but prefix s_axis is not a declared interface | fix: use AXI4-Lite or AXI4-Stream with AMBA port names and declare the interface in architecture.yaml | skill: bus-and-register-interfaces\n  HDL-IF-01 STD-AXI-02 rtl/icmp_echo.sv:16: port s_axis_tvalid of icmp_echo looks like an AXI port but prefix s_axis is not a declared interface | fix: use AXI4-Lite or AXI4-Stream with AMBA port names and declare the interface in architecture.yaml | skill: bus-and-register-interfaces\n  HDL-IF-01 STD-AXI-02 rtl/icmp_echo.sv:16: port s_axis_tready of icmp_echo looks like an AXI port but prefix s_axis is not a declared interface | fix: use AXI4-Lite or AXI4-Stream with AMBA port names and declare the interface in architecture.yaml | skill: bus-and-register-interfaces\n  HDL-IF-01 STD-AXI-02 rtl/icmp_echo.sv:16: port s_axis_tlast of icmp_echo looks like an AXI port but prefix s_axis is not a declared interface | fix: use AXI4-Lite or AXI4-Stream with AMBA port names and declare the interface in architecture.yaml | skill: bus-and-register-interfaces\n  HDL-IF-01 STD-AXI-02 rtl/icmp_echo.sv:16: port m_axis_tdata of icmp_echo looks like an AXI port but prefix m_axis is not a declared interface | fix: use AXI4-Lite or AXI4-Stream with AMBA port names and declare the interface in architecture.yaml | skill: bus-and-register-interfaces\n  HDL-IF-01 STD-AXI-02 rtl/icmp_echo.sv:16: port m_axis_tvalid of icmp_echo looks like an AXI port but prefix m_axis is not a declared interface | fix: use AXI4-Lite or AXI4-Stream with AMBA port names and declare the interface in architecture.yaml | skill: bus-and-register-interfaces\n  HDL-IF-01 STD-AXI-02 rtl/icmp_echo.sv:16: port m_axis_tready of icmp_echo looks like an AXI port but prefix m_axis is not a declared interface | fix: use AXI4-Lite or AXI4-Stream with AMBA port names and declare the interface in architecture.yaml | skill: bus-and-register-interfaces\n  HDL-IF-01 STD-AXI-02 rtl/icmp_echo.sv:16: port m_axis_tlast of icmp_echo looks like an AXI port but prefix m_axis is not a declared interface | fix: use AXI4-Lite or AXI4-Stream with AMBA port names and declare the interface in architecture.yaml | skill: bus-and-register-interfaces\nNOT_RUN  resets: \nNOT_RUN  methodology: no methodology report for scope rtl\nPASS     axi\nnot applicable: fsm (no verif/fsm.yaml (the design declares no state machine to c); axi_profile (no generated AXI4-Lite register blocks and no interfaces: se); gt_plan (no link: section in spec.yaml or link_spec.yaml (no transcei); doc (no handover.yaml (the DOC step writes it at the end of a run)",
+  "standard": "FDA-HDL"
+ },
+ "judge": {
+  "ran": true,
+  "why": "",
+  "call": {
+   "usage": {
+    "input_tokens": 2,
+    "cache_read_input_tokens": 1735,
+    "cache_creation_input_tokens": 23819,
+    "output_tokens": 8072,
+    "total_tokens": 33628,
+    "cost_usd": "unreported",
+    "plan_cost_estimate_usd": 0.17617349999999998,
+    "num_turns": 1,
+    "models_served": [
+     "claude-sonnet-5-5"
+    ],
+    "is_error": false,
+    "subtype": "success"
+   },
+   "wall_s": 66.1,
+   "version": "2.1.321 (Claude Code)",
+   "model_requested": "claude-sonnet-5-5",
+   "effort": "medium"
+  },
+  "prompt_chars": 49212,
+  "prompt_version": "2"
+ },
+ "judge_problems": [],
+ "improvements": null,
+ "handover": {
+  "yaml": "handover/handover.yaml",
+  "readme": "handover/README.md",
+  "agent": "handover/AGENT.md"
+ },
+ "seconds": 66.6
+}
