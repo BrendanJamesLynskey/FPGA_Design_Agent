@@ -1,0 +1,54 @@
+{
+ "caught": 4,
+ "valid": 4,
+ "faults": [
+  {
+   "name": "igmp_no_router_alert",
+   "block": "igmp_join",
+   "class": "protocol",
+   "why": "the Router Alert option is missing from reports and leaves",
+   "status": "caught",
+   "seconds": 1.2,
+   "pytest": "1 failed, 7 deselected in 0.91s"
+  },
+  {
+   "name": "igmp_no_suppression",
+   "block": "igmp_join",
+   "class": "protocol",
+   "why": "another host's report does not cancel our pending report",
+   "status": "caught",
+   "seconds": 3.0,
+   "pytest": "1 failed, 7 deselected in 2.73s"
+  },
+  {
+   "name": "igmp_leave_always",
+   "block": "igmp_join",
+   "class": "protocol",
+   "why": "a leave is sent even when another host sent the last report",
+   "status": "caught",
+   "seconds": 3.1,
+   "pytest": "1 failed, 7 deselected in 2.80s"
+  },
+  {
+   "name": "igmp_timer_never_restarted",
+   "block": "igmp_join",
+   "status": "invalid",
+   "why": "old string occurs 0 times"
+  },
+  {
+   "name": "igmp_ttl_two",
+   "block": "igmp_join",
+   "class": "protocol",
+   "why": "reports leave with TTL 2 instead of 1",
+   "status": "caught",
+   "seconds": 1.2,
+   "pytest": "1 failed, 7 deselected in 0.91s"
+  },
+  {
+   "name": "igmp_timer_always_restarted",
+   "block": "igmp_join",
+   "status": "invalid",
+   "why": "old string occurs 0 times"
+  }
+ ]
+}

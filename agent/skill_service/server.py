@@ -83,6 +83,8 @@ def handler_for(idx):
 
 
 def main() -> int:
+    from agent.access import require_or_exit
+    require_or_exit('agent.skill_service')
     idx = make_index()
     port = int(os.environ.get("PORT", "8088"))
     print(json.dumps({"listening": port, "mode": idx.mode, "skills": len(idx.entries)}), flush=True)

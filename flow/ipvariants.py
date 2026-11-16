@@ -38,7 +38,7 @@ TOOL = "Vivado 2026.1"                                               # every mea
 COST_KEYS = ("lut", "ff", "lutram", "srl", "bram_tiles", "ramb36", "ramb18", "dsp")
 RESOURCE_KEYS = ("lut", "ff", "lutram", "bram_tiles", "dsp")       # what `uses` and a budget may name
 VARIANT_KEYS = {"summary", "uses", "latency", "ii", "when", "params", "requires", "rtl", "fmax_hint", "notes"}
-ROW_KEYS = {"variant", "params", "status", *COST_KEYS, "wns_ns", "fmax_mhz", "power_w", "latency", "ii"}
+ROW_KEYS = {"variant", "params", "status", *COST_KEYS, "wns_ns", "whs_ns", "wpws_ns", "fmax_setup_mhz", "fmax_mhz", "power_w", "latency", "ii"}
 
 
 # ---- expressions ---------------------------------------------------------------------------------------------------

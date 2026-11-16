@@ -1,10 +1,10 @@
-# ipv4_udp_rx 0.1.0
+# ipv4_udp_rx 0.2.0
 
 IPv4 and UDP receive: header checksum and length checks, options skipped, fragments refused, destination by own address, broadcast or multicast, UDP checksum with the pseudo-header, demultiplexed by destination port; the payload streams out with its header fields.
 
 Generated from `ip.yaml` by `flow/net/ipdoc.py`; do not edit by hand.
 
-Status: Misses 125 MHz out of context (75-81 MHz estimated: needs pipelining before it sits behind the RGMII MAC); closes at 50 MHz. Simulated against an RFC 791/768 model with scapy checking the bench's frames; output protocol checked by bounded model checking; built alone out of context on an Artix-7 with Vivado 2026.1; not yet run on a board (the Nexys A7 network design carries it behind eth_mac_rmii; built, not yet run: a cable check comes first, see designs/b63d_nexys_net/host/PLAN.md).
+Status: Meets 125 MHz out of context on xc7a100t-1 (Fmax estimates 133 MHz at 4 and 8 ports) and with margin on xck26-2LV (216-244 MHz). Version 0.2.0 delays the last payload byte to 6 clocks after the frame's last input beat (was 2) and holds the input for 5 clocks after each frame (was 1). Simulated against an RFC 791/768 model with scapy checking the bench's frames; built alone out of context with Vivado 2026.1 (single runs at 8 ns, estimates); not yet run on a board (the Nexys A7 network design carries it behind eth_mac_rmii; built, not yet run: a cable check comes first, see designs/b63d_nexys_net/host/PLAN.md).
 
 ## Parameters
 
@@ -28,8 +28,8 @@ Clocks: `clk`. Reset: `rst`, active high, synchronous.
 
 ## Latency and throughput
 
-- payload: each payload byte leaves one input byte later (one byte held back to place tlast); the last one 1 clock after the frame's last byte
-- throughput: a byte a clock, less one clock per frame
+- payload: each payload byte leaves one input byte later (one byte held back to place tlast); the last one 6 clocks after the frame's last input beat (0.1.0 had 2); the input is held for 5 clocks after each frame
+- throughput: a byte a clock, less 5 clocks per frame (0.1.0 had 1)
 
 ## Evidence
 
@@ -58,8 +58,8 @@ Built alone (out of context) on an Artix-7, xc7a100tcsg324-1, for a 8.0 ns clock
 
 | N_PORTS | CHECK_UDP | ACCEPT_BCAST | ACCEPT_MCAST | LUT | FF | LUT RAM | Block RAM tiles | DSP | WNS (ns) | Fmax estimate (MHz) | Dynamic power (W) |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| 4 | 1 | 1 | 1 | 491 | 416 | 0 | 0 | 0 | -5.412 | 74.6 | 0.006 |
-| 8 | 1 | 1 | 1 | 527 | 418 | 0 | 0 | 0 | -4.336 | 81.1 | 0.006 |
+| 4 | 1 | 1 | 1 | 469 | 573 | 0 | 0 | 0 | 0.514 | 133.6 | 0.008 |
+| 8 | 1 | 1 | 1 | 509 | 576 | 0 | 0 | 0 | 0.459 | 132.6 | 0.008 |
 
 Defaults: N_PORTS 4, CHECK_UDP 1, ACCEPT_BCAST 1, ACCEPT_MCAST 1. WNS is the worst negative slack (the timing margin at the target clock; below zero the target is missed).
 
@@ -80,16 +80,17 @@ Licence: MIT (this repository).
 
 ## Known gaps and limits
 
-- No reassembly (fragments are counted and dropped); no VLAN tags (strip them in the MAC); a datagram with no payload produces no output; the UDP checksum verdict comes on tlast, so a consumer acting on the bytes early must undo on tuser; measured Fmax estimates 75-81 MHz out of context: it closes at the RMII MAC's 50 MHz but not at the RGMII MAC's 125 MHz (header index compares and checksum folds are not pipelined).
+- No reassembly (fragments are counted and dropped); no VLAN tags (strip them in the MAC); a datagram with no payload produces no output; the UDP checksum verdict comes on tlast, so a consumer acting on the bytes early must undo on tuser; measured Fmax estimates 133 MHz (xc7a100t-1) out of context; the input is held for 5 clocks after each frame while the verdict settles (a frame every 6 clocks at most); the added pipeline stage moves some decisions one clock later, so a same-clock race between a frame's verdict and a free-running input (a tick, a flush, a lookup, an output handshake) resolves one clock later than in 0.1.0 (no bench reaches these races; the CHANGELOG lists them); the formal checks were written for 0.1.0 and run in CI on 0.2.0.
 - Board: no board run of this entry is recorded; its evidence is simulation and out-of-context builds.
 
 ## Next steps
 
-1. Pipeline the header checks so the block meets 125 MHz behind the RGMII MAC.
+1. Time the block in context behind eth_mac_rgmii on the KR260 (out-of-context numbers are single runs).
 2. Run designs/b63d_nexys_net on the board with a host sending datagrams.
 
 ## History
 
+- 0.2.0 (2026-11-16): Pipelined to meet 125 MHz out of context on xc7a100t-1 (brief 88; Vivado 2026.1, single runs). Behaviour is unchanged apart from latency: see the status line and the latency entry in ip.yaml. Same-clock races between a frame's verdict and free-running inputs (a tick, a flush, a lookup, an output handshake) resolve one clock later than in 0.1.0; no bench reaches them. Seeded faults re-expressed for the new RTL.
 - 0.1.0 (2026-11-12): Initial version: simulated against a Python model, seeded faults caught, formal checks (bounded except where the README says proved), out-of-context cost on an Artix-7 (Vivado 2026.1); not run on a board. See README.md.
 
 Full entries: [CHANGELOG.md](CHANGELOG.md).

@@ -1,0 +1,277 @@
+{
+  "task": "v2_e_cmd_parser",
+  "sim": "icarus",
+  "date": "2026-11-15",
+  "ref": {
+    "pass": true,
+    "tests": {
+      "test_screen_identity_reset_and_a_good_packet": true,
+      "test_screen_first_packet_may_carry_any_number_and_the_number_wraps": true,
+      "test_screen_repeat_and_stale_numbers_change_nothing_but_their_counter": true,
+      "test_screen_bad_check_and_framing_classes": true,
+      "test_screen_oversize_is_discarded_to_its_end_flag": true,
+      "test_screen_type_and_length_checks_come_after_the_check_and_before_the_number": true,
+      "test_screen_fields_and_register_rules": true,
+      "test_screen_random_mix": true,
+      "test_screen_boundaries_first_refused_and_reset_state": true,
+      "test_screen_unmapped_writes_change_nothing": true
+    }
+  },
+  "mutants": [
+    {
+      "name": "accepts_bad_check",
+      "why": "a packet with a wrong check is accepted",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_screen_bad_check_and_framing_classes",
+        "test_screen_type_and_length_checks_come_after_the_check_and_before_the_number",
+        "test_screen_random_mix"
+      ]
+    },
+    {
+      "name": "check_skips_last_byte",
+      "why": "the last check byte is not folded in, so only some wrong checks are seen",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_screen_identity_reset_and_a_good_packet",
+        "test_screen_first_packet_may_carry_any_number_and_the_number_wraps",
+        "test_screen_repeat_and_stale_numbers_change_nothing_but_their_counter",
+        "test_screen_bad_check_and_framing_classes",
+        "test_screen_oversize_is_discarded_to_its_end_flag",
+        "test_screen_type_and_length_checks_come_after_the_check_and_before_the_number",
+        "test_screen_fields_and_register_rules",
+        "test_screen_random_mix",
+        "test_screen_boundaries_first_refused_and_reset_state",
+        "test_screen_unmapped_writes_change_nothing"
+      ]
+    },
+    {
+      "name": "hangs_on_short",
+      "why": "a truncated packet leaves the parser part-way; the next packet is glued on",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_screen_bad_check_and_framing_classes",
+        "test_screen_fields_and_register_rules",
+        "test_screen_random_mix"
+      ]
+    },
+    {
+      "name": "oversize_not_discarded",
+      "why": "the oversize flag is forgotten after the first byte that raised it, so the rest of the packet is classed as a short or bad one",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_screen_oversize_is_discarded_to_its_end_flag"
+      ]
+    },
+    {
+      "name": "seq_not_remembered",
+      "why": "the last accepted number is never updated: the sequence order is lost",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_screen_identity_reset_and_a_good_packet",
+        "test_screen_first_packet_may_carry_any_number_and_the_number_wraps",
+        "test_screen_repeat_and_stale_numbers_change_nothing_but_their_counter",
+        "test_screen_bad_check_and_framing_classes",
+        "test_screen_oversize_is_discarded_to_its_end_flag",
+        "test_screen_type_and_length_checks_come_after_the_check_and_before_the_number",
+        "test_screen_fields_and_register_rules",
+        "test_screen_random_mix",
+        "test_screen_boundaries_first_refused_and_reset_state",
+        "test_screen_unmapped_writes_change_nothing"
+      ]
+    },
+    {
+      "name": "seq_updated_on_bad",
+      "why": "a rejected packet moves the sequence state",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_screen_type_and_length_checks_come_after_the_check_and_before_the_number",
+        "test_screen_boundaries_first_refused_and_reset_state"
+      ]
+    },
+    {
+      "name": "replay_accepted",
+      "why": "the repeated number is run again",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_screen_repeat_and_stale_numbers_change_nothing_but_their_counter"
+      ]
+    },
+    {
+      "name": "old_half_span_wrong",
+      "why": "exactly 0x8000 ahead counts as new",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_screen_first_packet_may_carry_any_number_and_the_number_wraps"
+      ]
+    },
+    {
+      "name": "no_wrap",
+      "why": "the number does not wrap past 0xFFFF",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_screen_first_packet_may_carry_any_number_and_the_number_wraps"
+      ]
+    },
+    {
+      "name": "first_packet_needs_zero",
+      "why": "after reset the first packet is checked against number 0 and a high number is out of order",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_screen_first_packet_may_carry_any_number_and_the_number_wraps",
+        "test_screen_boundaries_first_refused_and_reset_state"
+      ]
+    },
+    {
+      "name": "type_range_wrong",
+      "why": "type 6 is taken as known",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_screen_type_and_length_checks_come_after_the_check_and_before_the_number"
+      ]
+    },
+    {
+      "name": "write_len_four",
+      "why": "a write needs 4 payload bytes instead of 6",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_screen_identity_reset_and_a_good_packet",
+        "test_screen_repeat_and_stale_numbers_change_nothing_but_their_counter",
+        "test_screen_bad_check_and_framing_classes",
+        "test_screen_fields_and_register_rules",
+        "test_screen_random_mix",
+        "test_screen_unmapped_writes_change_nothing"
+      ]
+    },
+    {
+      "name": "len_check_dropped",
+      "why": "a wrong payload length is accepted",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_screen_type_and_length_checks_come_after_the_check_and_before_the_number",
+        "test_screen_boundaries_first_refused_and_reset_state"
+      ]
+    },
+    {
+      "name": "length_limit_nine",
+      "why": "length 9 is not oversize",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_screen_oversize_is_discarded_to_its_end_flag"
+      ]
+    },
+    {
+      "name": "trailing_bytes_ignored",
+      "why": "bytes after the check are not an error",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_screen_bad_check_and_framing_classes",
+        "test_screen_oversize_is_discarded_to_its_end_flag",
+        "test_screen_random_mix",
+        "test_screen_boundaries_first_refused_and_reset_state"
+      ]
+    },
+    {
+      "name": "short_by_header_only",
+      "why": "a packet that ends before its announced size is not short",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_screen_bad_check_and_framing_classes",
+        "test_screen_random_mix"
+      ]
+    },
+    {
+      "name": "payload_second_field_short",
+      "why": "value bytes in the wrong order",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_screen_identity_reset_and_a_good_packet",
+        "test_screen_bad_check_and_framing_classes",
+        "test_screen_fields_and_register_rules",
+        "test_screen_random_mix"
+      ]
+    },
+    {
+      "name": "stale_payload_kept",
+      "why": "payload bytes of the previous packet show through when the new one is shorter",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_screen_identity_reset_and_a_good_packet",
+        "test_screen_first_packet_may_carry_any_number_and_the_number_wraps",
+        "test_screen_fields_and_register_rules",
+        "test_screen_random_mix"
+      ]
+    },
+    {
+      "name": "seq_bytes_swapped",
+      "why": "the sequence number is read low byte first",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_screen_identity_reset_and_a_good_packet",
+        "test_screen_first_packet_may_carry_any_number_and_the_number_wraps",
+        "test_screen_repeat_and_stale_numbers_change_nothing_but_their_counter",
+        "test_screen_random_mix",
+        "test_screen_boundaries_first_refused_and_reset_state"
+      ]
+    },
+    {
+      "name": "type_error_counted_as_length",
+      "why": "length errors are not counted",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_screen_type_and_length_checks_come_after_the_check_and_before_the_number",
+        "test_screen_boundaries_first_refused_and_reset_state"
+      ]
+    },
+    {
+      "name": "result_not_updated_on_reject",
+      "why": "the result register shows only good packets",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_screen_first_packet_may_carry_any_number_and_the_number_wraps",
+        "test_screen_repeat_and_stale_numbers_change_nothing_but_their_counter",
+        "test_screen_bad_check_and_framing_classes",
+        "test_screen_oversize_is_discarded_to_its_end_flag",
+        "test_screen_type_and_length_checks_come_after_the_check_and_before_the_number",
+        "test_screen_fields_and_register_rules",
+        "test_screen_random_mix",
+        "test_screen_boundaries_first_refused_and_reset_state"
+      ]
+    }
+  ],
+  "mutants_killed": 21,
+  "mutants_total": 21,
+  "trap": {
+    "twin": "parser that checks the CRC over the payload only, and treats sequence numbers as 'strictly greater than the last'",
+    "why": "a plain greater-than test loses the wrap at 0xFFFF and accepts nothing after it; the spec asks for modular order",
+    "must_fail": [
+      "test_screen_first_packet_may_carry_any_number_and_the_number_wraps"
+    ],
+    "failed_tests": [
+      "test_screen_first_packet_may_carry_any_number_and_the_number_wraps",
+      "test_screen_repeat_and_stale_numbers_change_nothing_but_their_counter"
+    ],
+    "trap_fires": true
+  }
+}

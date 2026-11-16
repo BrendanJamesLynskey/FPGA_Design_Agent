@@ -54,6 +54,8 @@ def write_core(client, spec_yaml: str, name: str, module: str, hdr: str, others:
 
 
 def main(argv: list[str] | None = None) -> int:
+    from agent.access import require_or_exit
+    require_or_exit('agent.graph.plan_arm')
     ap = argparse.ArgumentParser()
     ap.add_argument("task", type=Path)
     ap.add_argument("--rtl", type=Path, help="the RTL directory whose other files are kept (default: the task's ref/rtl)")

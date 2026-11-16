@@ -29,7 +29,10 @@ foreach job $ipchar(jobs) {
         place_design
         route_design
         report_utilization -file $wd/utilization.rpt
-        report_timing_summary -delay_type max -max_paths 3 -file $wd/timing_summary.rpt
+        report_timing_summary -max_paths 3 -file $wd/timing_summary.rpt
+        report_timing -delay_type max -max_paths 1 -file $wd/timing_worst_setup.rpt
+        report_timing -delay_type min -max_paths 1 -file $wd/timing_worst_hold.rpt
+        report_utilization -hierarchical -file $wd/utilization_hier.rpt
         report_power -file $wd/power.rpt
         set f [open $wd/done.txt w]; puts $f [expr {[clock seconds] - $t0}]; close $f
     } err]} {

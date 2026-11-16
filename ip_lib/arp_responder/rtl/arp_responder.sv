@@ -117,19 +117,50 @@ module arp_responder #(
     end
     logic learn;
     assign learn = fin && arp_ok && spa != 32'd0 && spa != own_ip && (for_me || known);
-    always_ff @(posedge clk) ev_conflict <= !rst && fin && arp_ok && spa == own_ip && sha != own_mac;
+
+    // Capture the per-frame verdict and all values/indices used by its actions.
+    logic          learn_q, req_q, rep_q, conflict_q;
+    logic          known_q, have_free_q;
+    logic [CW-1:0] known_i_q, free_i_q, rr_q;
+    logic [47:0]   sha_q;
+    logic [31:0]   spa_q;
+    always_ff @(posedge clk) begin
+        if (rst) begin
+            learn_q <= 1'b0; req_q <= 1'b0; rep_q <= 1'b0; conflict_q <= 1'b0;
+            known_q <= 1'b0; have_free_q <= 1'b0;
+            known_i_q <= '0; free_i_q <= '0; rr_q <= '0;
+            sha_q <= '0; spa_q <= '0;
+        end else begin
+            learn_q <= learn && !flush;
+            req_q <= fin && is_req;
+            rep_q <= fin && is_rep;
+            conflict_q <= fin && arp_ok && spa == own_ip && sha != own_mac;
+            if (fin) begin
+                known_q <= known;
+                have_free_q <= have_free;
+                known_i_q <= known_i;
+                free_i_q <= free_i;
+                rr_q <= rr;
+                sha_q <= sha;
+                spa_q <= spa;
+            end
+        end
+    end
+    always_ff @(posedge clk) ev_conflict <= !rst && conflict_q;
+
     always_ff @(posedge clk) begin
         ev_learn <= 1'b0;
         if (rst || flush) begin
             for (int i = 0; i < CACHE_N; i++) begin c_v[i] <= 1'b0; c_ip[i] <= '0; c_mac[i] <= '0; end
             rr <= '0;
-        end else if (learn) begin
+        end else if (learn_q) begin
             ev_learn <= 1'b1;
-            if (known) c_mac[known_i] <= sha;
-            else if (have_free) begin c_v[free_i] <= 1'b1; c_ip[free_i] <= spa; c_mac[free_i] <= sha; end
-            else begin
-                c_ip[rr] <= spa; c_mac[rr] <= sha;
-                rr <= (int'(rr) == CACHE_N - 1) ? '0 : rr + 1'b1;
+            if (known_q) c_mac[known_i_q] <= sha_q;
+            else if (have_free_q) begin
+                c_v[free_i_q] <= 1'b1; c_ip[free_i_q] <= spa_q; c_mac[free_i_q] <= sha_q;
+            end else begin
+                c_ip[rr_q] <= spa_q; c_mac[rr_q] <= sha_q;
+                rr <= (int'(rr_q) == CACHE_N - 1) ? '0 : rr_q + 1'b1;
             end
         end
     end
@@ -176,13 +207,13 @@ module arp_responder #(
             6'd15: arp_byte = 8'h01;      6'd16: arp_byte = 8'h08;      6'd17: arp_byte = 8'h00;
             6'd18: arp_byte = 8'h06;      6'd19: arp_byte = 8'h04;      6'd20: arp_byte = 8'h00;
             6'd21: arp_byte = rep ? 8'h02 : 8'h01;
-            6'd22: arp_byte = sm[47:40];  6'd23: arp_byte = sm[39:32];  6'd24: arp_byte = sm[31:24];
-            6'd25: arp_byte = sm[23:16];  6'd26: arp_byte = sm[15:8];   6'd27: arp_byte = sm[7:0];
-            6'd28: arp_byte = sp[31:24];  6'd29: arp_byte = sp[23:16];  6'd30: arp_byte = sp[15:8];
+            6'd22: arp_byte = sm[47:40]; 6'd23: arp_byte = sm[39:32]; 6'd24: arp_byte = sm[31:24];
+            6'd25: arp_byte = sm[23:16]; 6'd26: arp_byte = sm[15:8];   6'd27: arp_byte = sm[7:0];
+            6'd28: arp_byte = sp[31:24]; 6'd29: arp_byte = sp[23:16]; 6'd30: arp_byte = sp[15:8];
             6'd31: arp_byte = sp[7:0];
             6'd32: arp_byte = tha[47:40]; 6'd33: arp_byte = tha[39:32]; 6'd34: arp_byte = tha[31:24];
             6'd35: arp_byte = tha[23:16]; 6'd36: arp_byte = tha[15:8];  6'd37: arp_byte = tha[7:0];
-            6'd38: arp_byte = tp[31:24];  6'd39: arp_byte = tp[23:16];  6'd40: arp_byte = tp[15:8];
+            6'd38: arp_byte = tp[31:24]; 6'd39: arp_byte = tp[23:16]; 6'd40: arp_byte = tp[15:8];
             default: arp_byte = tp[7:0];
         endcase
     endfunction
@@ -216,13 +247,13 @@ module arp_responder #(
                     j <= j + 6'd1;
                 end
             end
-            // a request for own_ip: queue the reply
-            if (fin && is_req) begin
+            // Act on the registered end-of-frame verdict.
+            if (req_q) begin
                 ev_rx_request <= 1'b1;
-                if (!rep_pend || start_rep) begin rep_pend <= 1'b1; rep_tha <= sha; rep_tpa <= spa; end
+                if (!rep_pend || start_rep) begin rep_pend <= 1'b1; rep_tha <= sha_q; rep_tpa <= spa_q; end
                 else ev_drop <= 1'b1;
             end
-            if (fin && is_rep) ev_rx_reply <= 1'b1;
+            if (rep_q) ev_rx_reply <= 1'b1;
             if (ask) begin req_pend <= 1'b1; req_tpa <= lk_ip; end
         end
     end

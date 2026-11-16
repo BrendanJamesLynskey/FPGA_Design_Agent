@@ -76,15 +76,22 @@ module icmp_echo #(
     logic [16:0] tl14;                  // the datagram's end in the frame, without overflow
     assign tl14 = {1'b0, tl} + 17'd14;
     logic we;
-    assign we = beat && (first ? !blocked : stored) && k < 16'(BUF_BYTES);
+    // Bytes 0..11 (the Ethernet addresses) are never read back: the reply writes them from sa and own_mac. They are
+    // therefore written whatever the buffer's state, and `stored` (is this frame being kept) is settled by byte 12, which
+    // lets the accept decision of the frame before sit one clock later without a path from the checksums to the write.
+    assign we = beat && (k < 16'd12 || stored) && k < 16'(BUF_BYTES);
+    logic chk0;                         // this frame's first byte came on the very clock `fin` was high: whether the
+                                        // request just checked takes the buffer is known one clock later (accept)
     always_ff @(posedge clk) begin
         fin <= 1'b0;
+        if (chk0) begin chk0 <= 1'b0; stored <= stored && !accept; end
         if (rst) begin
+            chk0 <= 1'b0;
             k <= '0; stored <= 1'b0; sa <= '0; et <= '0; tl <= '0; ff <= '0; isum_rx <= '0; csum_rx <= '0; vi <= '0;
             ttl_rx <= '0; proto <= '0; typ <= '0; code <= '0; dst <= '0; ip_acc <= '0; ic_acc <= '0;
             f_bad <= 1'b0; f_store <= 1'b0; f_len <= '0;
         end else if (beat) begin
-            if (first) begin stored <= !blocked; ip_acc <= '0; ic_acc <= '0; end
+            if (first) begin stored <= !blocked; chk0 <= fin; ip_acc <= '0; ic_acc <= '0; end
             if (k >= 16'd6 && k <= 16'd11) sa <= {sa[39:0], s_axis_tdata};
             case (k)
                 16'd12, 16'd13: et      <= {et[7:0], s_axis_tdata};
@@ -103,13 +110,20 @@ module icmp_echo #(
             if (k >= 16'd14 && k <= 16'd33) ip_acc <= ip_acc + 32'(wv);
             if (k >= 16'd34 && {1'b0, k} < tl14) ic_acc <= ic_acc + 32'(wv);
             if (s_axis_tlast) begin
-                fin <= 1'b1; f_bad <= s_axis_tuser; f_len <= k + 16'd1; f_store <= first ? !blocked : stored;
+                fin <= 1'b1; f_bad <= s_axis_tuser; f_len <= k + 16'd1; f_store <= first ? (!blocked && !fin) : stored;
                 k <= '0;
             end else if (k != 16'hFFFF) k <= k + 16'd1;
         end
     end
     logic echo_me, ok;
-    assign blocked = busy || (fin && ok && f_store);
+    // the verdict is registered (fin2 holds one clock after fin) and the request is taken a clock later than before
+    logic fin2, ok2, echo2, fs2, accept;
+    always_ff @(posedge clk) begin
+        if (rst) begin fin2 <= 1'b0; ok2 <= 1'b0; echo2 <= 1'b0; fs2 <= 1'b0; end
+        else begin fin2 <= fin; ok2 <= ok; echo2 <= echo_me; fs2 <= f_store; end
+    end
+    assign accept  = fin2 && echo2 && ok2 && fs2;
+    assign blocked = busy || accept;
     assign echo_me = et == 16'h0800 && vi == 8'h45 && proto == 8'd1 && dst == own_ip && typ == 8'd8;
     assign ok = echo_me && !f_bad && code == 8'd0 && ff[13:0] == 14'd0 && fold(ip_acc) == 16'hFFFF &&
                 fold(ic_acc) == 16'hFFFF && tl >= 16'd28 && {1'b0, f_len} >= tl14 && tl14 <= 17'(BUF_BYTES);
@@ -138,6 +152,9 @@ module icmp_echo #(
     logic        sending;
     logic [15:0] j, rj;                 // next byte to read; the byte in rq
     logic        rv;
+    logic        acc2;
+    logic [15:0] t_is, t_cs;
+    logic [7:0]  t_proto, t_code;
     logic        take;
     assign take  = !m_axis_tvalid || m_axis_tready;
     assign rd_en = sending && (take || !rv);
@@ -164,19 +181,27 @@ module icmp_echo #(
     always_ff @(posedge clk) begin
         ev_request <= 1'b0; ev_reply <= 1'b0; ev_busy <= 1'b0; ev_bad <= 1'b0;
         if (rst) begin
-            busy <= 1'b0; sending <= 1'b0; j <= '0; rj <= '0; rv <= 1'b0; r_da <= '0; r_isum <= '0; r_csum <= '0;
+            busy <= 1'b0; sending <= 1'b0; acc2 <= 1'b0; t_is <= '0; t_cs <= '0; t_proto <= '0; t_code <= '0; j <= '0; rj <= '0; rv <= 1'b0; r_da <= '0; r_isum <= '0; r_csum <= '0;
             r_len <= '0; m_axis_tvalid <= 1'b0; m_axis_tdata <= '0; m_axis_tlast <= 1'b0;
         end else begin
-            if (fin && echo_me) begin
-                if (!ok) ev_bad <= 1'b1;
-                else if (!f_store) ev_busy <= 1'b1;
+            if (fin2 && echo2) begin
+                if (!ok2) ev_bad <= 1'b1;
+                else if (!fs2) ev_busy <= 1'b1;
                 else begin
                     ev_request <= 1'b1;
                     busy <= 1'b1; sending <= 1'b1; j <= '0; rv <= 1'b0; r_da <= sa; r_len <= 16'd14 + tl;
-                    // RFC 1624 eqn 3: HC' = ~(~HC + ~m + m'), m the old 16-bit field, m' the new one
-                    r_isum <= ~oc_add(oc_add(~isum_rx, ~{ttl_rx, proto}), {8'(TTL), proto});
-                    r_csum <= ~oc_add(oc_add(~csum_rx, ~{typ, code}), {8'd0, code});
+                    // RFC 1624 eqn 3: HC' = ~(~HC + ~m + m'), m the old 16-bit field, m' the new one. The first
+                    // ones' complement add is registered here, the second one clock later (acc2): the checksums
+                    // are first read as reply bytes 24 and 36, tens of clocks after the accept.
+                    t_is <= oc_add(~isum_rx, ~{ttl_rx, proto});
+                    t_cs <= oc_add(~csum_rx, ~{typ, code});
+                    t_proto <= proto; t_code <= code; acc2 <= 1'b1;
                 end
+            end
+            if (acc2) begin
+                acc2 <= 1'b0;
+                r_isum <= ~oc_add(t_is, {8'(TTL), t_proto});
+                r_csum <= ~oc_add(t_cs, {8'd0, t_code});
             end
             if (take) begin
                 m_axis_tvalid <= rv;

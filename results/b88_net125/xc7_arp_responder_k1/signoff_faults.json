@@ -1,0 +1,66 @@
+{
+ "caught": 6,
+ "valid": 6,
+ "faults": [
+  {
+   "name": "arp_reply_wrong_opcode",
+   "block": "arp_responder",
+   "class": "protocol",
+   "why": "replies go out with the request opcode",
+   "status": "caught",
+   "seconds": 7.2,
+   "pytest": "1 failed, 6 deselected in 6.89s"
+  },
+  {
+   "name": "arp_answers_any_address",
+   "block": "arp_responder",
+   "class": "missing check",
+   "why": "requests for other hosts' addresses are answered",
+   "status": "caught",
+   "seconds": 2.3,
+   "pytest": "1 failed, 6 deselected in 1.98s"
+  },
+  {
+   "name": "arp_round_robin_stuck",
+   "block": "arp_responder",
+   "status": "invalid",
+   "why": "old string occurs 0 times"
+  },
+  {
+   "name": "arp_bad_frames_accepted",
+   "block": "arp_responder",
+   "class": "missing check",
+   "why": "frames that ended with tuser (bad FCS) are answered and learnt",
+   "status": "caught",
+   "seconds": 2.9,
+   "pytest": "1 failed, 6 deselected in 2.58s"
+  },
+  {
+   "name": "arp_no_holdoff",
+   "block": "arp_responder",
+   "class": "missing check",
+   "why": "repeated misses for one address send a request each time",
+   "status": "caught",
+   "seconds": 7.6,
+   "pytest": "1 failed, 6 deselected in 7.25s"
+  },
+  {
+   "name": "arp_learns_gratuitous_unknown",
+   "block": "arp_responder",
+   "class": "protocol",
+   "why": "a gratuitous ARP from an unknown host is learnt (RFC 826 merges only known senders; found by the independent review)",
+   "status": "caught",
+   "seconds": 3.1,
+   "pytest": "1 failed, 5 deselected in 2.57s"
+  },
+  {
+   "name": "arp_learns_own_ip_claim",
+   "block": "arp_responder",
+   "class": "protocol",
+   "why": "another station claiming own_ip is cached (RFC 5227 address conflict; found by the independent review)",
+   "status": "caught",
+   "seconds": 3.1,
+   "pytest": "1 failed, 5 deselected in 2.57s"
+  }
+ ]
+}

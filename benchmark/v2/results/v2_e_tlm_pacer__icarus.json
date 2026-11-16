@@ -1,0 +1,286 @@
+{
+  "task": "v2_e_tlm_pacer",
+  "sim": "icarus",
+  "date": "2026-11-15",
+  "ref": {
+    "pass": true,
+    "tests": {
+      "test_pace_identity_defaults_and_reset": true,
+      "test_pace_one_frame_exactly_every_period": true,
+      "test_pace_overruns_are_dropped_not_queued": true,
+      "test_pace_period_clamp_and_deferred_change": true,
+      "test_pace_switch_off_forgets_the_waiting_frame_and_keeps_the_totals": true,
+      "test_pace_long_period_and_counter_reads": true,
+      "test_pace_random_mix": true,
+      "test_pace_second_period_floor": true,
+      "test_pace_reset_clears_request_and_totals_and_unmapped_writes_do_nothing": true
+    }
+  },
+  "mutants": [
+    {
+      "name": "period_off_by_one",
+      "why": "a frame falls due one tick early",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_pace_one_frame_exactly_every_period",
+        "test_pace_overruns_are_dropped_not_queued",
+        "test_pace_period_clamp_and_deferred_change",
+        "test_pace_switch_off_forgets_the_waiting_frame_and_keeps_the_totals",
+        "test_pace_long_period_and_counter_reads",
+        "test_pace_random_mix",
+        "test_pace_second_period_floor",
+        "test_pace_reset_clears_request_and_totals_and_unmapped_writes_do_nothing"
+      ]
+    },
+    {
+      "name": "period_one_late",
+      "why": "a frame falls due one tick late",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_pace_one_frame_exactly_every_period",
+        "test_pace_overruns_are_dropped_not_queued",
+        "test_pace_period_clamp_and_deferred_change",
+        "test_pace_switch_off_forgets_the_waiting_frame_and_keeps_the_totals",
+        "test_pace_long_period_and_counter_reads",
+        "test_pace_random_mix",
+        "test_pace_second_period_floor",
+        "test_pace_reset_clears_request_and_totals_and_unmapped_writes_do_nothing"
+      ]
+    },
+    {
+      "name": "counter_not_restarted",
+      "why": "the count is not cleared at a frame: the frame falls due once and never again",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_pace_one_frame_exactly_every_period",
+        "test_pace_overruns_are_dropped_not_queued",
+        "test_pace_period_clamp_and_deferred_change",
+        "test_pace_switch_off_forgets_the_waiting_frame_and_keeps_the_totals",
+        "test_pace_long_period_and_counter_reads",
+        "test_pace_random_mix",
+        "test_pace_second_period_floor",
+        "test_pace_reset_clears_request_and_totals_and_unmapped_writes_do_nothing"
+      ]
+    },
+    {
+      "name": "no_clamp",
+      "why": "a request below the minimum is used as asked",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_pace_period_clamp_and_deferred_change",
+        "test_pace_random_mix",
+        "test_pace_second_period_floor"
+      ]
+    },
+    {
+      "name": "clamp_fixed_four",
+      "why": "the PERIOD_MIN parameter is ignored",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_pace_second_period_floor"
+      ]
+    },
+    {
+      "name": "clamp_overwrites_request",
+      "why": "the request register shows the raised value, not what was asked",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_pace_period_clamp_and_deferred_change",
+        "test_pace_random_mix",
+        "test_pace_second_period_floor"
+      ]
+    },
+    {
+      "name": "period_change_at_once",
+      "why": "a new request disturbs the count in progress",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_pace_period_clamp_and_deferred_change",
+        "test_pace_second_period_floor"
+      ]
+    },
+    {
+      "name": "period_never_reloaded",
+      "why": "a new request takes effect only at switch-on",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_pace_period_clamp_and_deferred_change",
+        "test_pace_second_period_floor"
+      ]
+    },
+    {
+      "name": "overrun_queued",
+      "why": "a frame that falls due while one waits replaces it and is counted as a frame",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_pace_overruns_are_dropped_not_queued",
+        "test_pace_period_clamp_and_deferred_change",
+        "test_pace_switch_off_forgets_the_waiting_frame_and_keeps_the_totals",
+        "test_pace_random_mix",
+        "test_pace_second_period_floor",
+        "test_pace_reset_clears_request_and_totals_and_unmapped_writes_do_nothing"
+      ]
+    },
+    {
+      "name": "overrun_not_counted",
+      "why": "dropped frames are not counted",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_pace_overruns_are_dropped_not_queued",
+        "test_pace_period_clamp_and_deferred_change",
+        "test_pace_switch_off_forgets_the_waiting_frame_and_keeps_the_totals",
+        "test_pace_random_mix",
+        "test_pace_second_period_floor",
+        "test_pace_reset_clears_request_and_totals_and_unmapped_writes_do_nothing"
+      ]
+    },
+    {
+      "name": "take_clears_nothing",
+      "why": "the transmitter cannot take the waiting frame",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_pace_one_frame_exactly_every_period",
+        "test_pace_overruns_are_dropped_not_queued",
+        "test_pace_period_clamp_and_deferred_change",
+        "test_pace_random_mix"
+      ]
+    },
+    {
+      "name": "off_keeps_pending",
+      "why": "a waiting frame survives switching off",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_pace_period_clamp_and_deferred_change",
+        "test_pace_switch_off_forgets_the_waiting_frame_and_keeps_the_totals",
+        "test_pace_long_period_and_counter_reads"
+      ]
+    },
+    {
+      "name": "off_keeps_count",
+      "why": "the count survives switching off",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_pace_switch_off_forgets_the_waiting_frame_and_keeps_the_totals"
+      ]
+    },
+    {
+      "name": "enable_restarts_count",
+      "why": "writing 1 while on restarts the count",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_pace_switch_off_forgets_the_waiting_frame_and_keeps_the_totals",
+        "test_pace_random_mix"
+      ]
+    },
+    {
+      "name": "counts_while_off",
+      "why": "the counter runs while reporting is off",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_pace_switch_off_forgets_the_waiting_frame_and_keeps_the_totals",
+        "test_pace_random_mix"
+      ]
+    },
+    {
+      "name": "enable_any_bit",
+      "why": "any non-zero write switches on",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_pace_switch_off_forgets_the_waiting_frame_and_keeps_the_totals"
+      ]
+    },
+    {
+      "name": "totals_cleared_on_off",
+      "why": "the totals are cleared by switching off",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_pace_period_clamp_and_deferred_change",
+        "test_pace_switch_off_forgets_the_waiting_frame_and_keeps_the_totals",
+        "test_pace_long_period_and_counter_reads"
+      ]
+    },
+    {
+      "name": "tick_count_ignored",
+      "why": "a tick write makes one tick whatever the number",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_pace_one_frame_exactly_every_period",
+        "test_pace_overruns_are_dropped_not_queued",
+        "test_pace_period_clamp_and_deferred_change",
+        "test_pace_switch_off_forgets_the_waiting_frame_and_keeps_the_totals",
+        "test_pace_long_period_and_counter_reads",
+        "test_pace_random_mix",
+        "test_pace_second_period_floor",
+        "test_pace_reset_clears_request_and_totals_and_unmapped_writes_do_nothing"
+      ]
+    },
+    {
+      "name": "status_swapped",
+      "why": "the status bits are swapped",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_pace_one_frame_exactly_every_period",
+        "test_pace_overruns_are_dropped_not_queued",
+        "test_pace_period_clamp_and_deferred_change",
+        "test_pace_switch_off_forgets_the_waiting_frame_and_keeps_the_totals",
+        "test_pace_long_period_and_counter_reads",
+        "test_pace_random_mix",
+        "test_pace_second_period_floor"
+      ]
+    },
+    {
+      "name": "led_shows_overruns",
+      "why": "the LEDs show the wrong total",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_pace_one_frame_exactly_every_period"
+      ]
+    },
+    {
+      "name": "reset_period_not_100",
+      "why": "the period in force after reset is not the requested one",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_pace_identity_defaults_and_reset",
+        "test_pace_random_mix",
+        "test_pace_second_period_floor",
+        "test_pace_reset_clears_request_and_totals_and_unmapped_writes_do_nothing"
+      ]
+    }
+  ],
+  "mutants_killed": 21,
+  "mutants_total": 21,
+  "trap": {
+    "twin": "a free-running prescaler: one frame every PERIOD ticks counted from reset, not from the switch-on, with a queue of waiting frames",
+    "why": "the spec counts from the switch-on and drops rather than queues; a free-running counter gives the wrong first frame and a queue makes the rate exceed one per period after a stall",
+    "must_fail": [
+      "test_pace_switch_off_forgets_the_waiting_frame_and_keeps_the_totals"
+    ],
+    "failed_tests": [
+      "test_pace_switch_off_forgets_the_waiting_frame_and_keeps_the_totals",
+      "test_pace_random_mix"
+    ],
+    "trap_fires": true
+  }
+}

@@ -84,6 +84,8 @@ def mcp_config(rt, plan: dict[str, Any]) -> dict[str, Any]:
             env[k] = os.environ[k]
     tf = Path.home() / ".config" / "fpga_design_agent" / "tools.yaml"
     env.setdefault("FDA_TOOLS_FILE", str(tf))
+    if os.environ.get("FDA_ACCESS_KEY"):                          # brief 94: a reference, never the value, in the config file
+        env["FDA_ACCESS_KEY"] = "${FDA_ACCESS_KEY}"
     if getattr(rt.cfg, "skill_routing", "off") != "off":        # brief 36: only when on, so the off path is unchanged
         env["FDA_SKILL_ROUTING"] = rt.cfg.skill_routing
     return {"mcpServers": {MCP_NAME: {
@@ -104,7 +106,8 @@ def cli_argv(rt, plan: dict[str, Any], mcp_file: Path, model: str, effort: str, 
 
 def isolated_env(home: Path, token: str) -> dict[str, str]:
     """Nothing from the user's environment but PATH: an empty HOME and config dir, the plan's token."""
-    return {"PATH": os.environ.get("PATH", os.defpath), "HOME": str(home), "CLAUDE_CONFIG_DIR": str(home / ".claude"),
+    key = {"FDA_ACCESS_KEY": os.environ["FDA_ACCESS_KEY"]} if os.environ.get("FDA_ACCESS_KEY") else {}   # brief 94: only the MCP tools run, no shell
+    return {**key, "PATH": os.environ.get("PATH", os.defpath), "HOME": str(home), "CLAUDE_CONFIG_DIR": str(home / ".claude"),
             "CLAUDE_CODE_OAUTH_TOKEN": token, "DISABLE_AUTOUPDATER": "1",
             "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1", "LANG": os.environ.get("LANG", "C.UTF-8")}
 
@@ -171,6 +174,8 @@ def init_report(init: dict | None) -> dict[str, Any]:
 
 def run_subagent_cc(rt, plan: dict[str, Any]) -> dict[str, str]:
     """One sub-agent turn through ``claude -p``. Raises ArmBlocked when it cannot run at all."""
+    from agent.access import require_or_exit
+    require_or_exit("claude_code_arm")
     from agent.graph.run import ArmBlocked, drop_superseded
     if shutil.which("claude") is None:
         raise ArmBlocked("the claude CLI is not on PATH")

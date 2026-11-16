@@ -96,6 +96,17 @@ values:
   e_reps: {source: site/data/eval.json, expr: 'get:runs_per_task'}
   e_half: {source: site/data/eval.json, expr: 'get:planned_halfwidth'}
 
+  # design review mode (brief 84)
+  rv_b_found: {source: results/84_review/README.md, expr: 're:\| Recall \(issues found / issue-reviews\) \| (\d+)/\d+'}
+  rv_b_n: {source: results/84_review/README.md, expr: 're:\| Recall \(issues found / issue-reviews\) \| \d+/(\d+)'}
+  rv_a_found: {source: results/84_review/README.md, expr: 're:\| Recall \(issues found / issue-reviews\) \| [^|]+\| (\d+)/\d+'}
+  rv_a_n: {source: results/84_review/README.md, expr: 're:\| Recall \(issues found / issue-reviews\) \| [^|]+\| \d+/(\d+)'}
+  rv_a_fa: {source: results/84_review/README.md, expr: 're:\| False alarms \| \d+ \| (\d+)'}
+  rv_b_fa: {source: results/84_review/README.md, expr: 're:\| False alarms \| (\d+) \|'}
+  rv_a_prec: {source: results/84_review/README.md, expr: 're:\| Precision \(found / \(found \+ false alarms\)\) \| [\d.]+ \| ([\d.]+)'}
+  rv_b_prec: {source: results/84_review/README.md, expr: 're:\| Precision \(found / \(found \+ false alarms\)\) \| ([\d.]+)'}
+  rv_plan_ok: {source: results/84_review/plan_scores.json, expr: 'get:sound'}
+  rv_plan_n: {source: results/84_review/plan_scores.json, expr: 'get:plans'}
 text:
   lede: >-
     How the FPGA Design Agent was designed, measured and corrected. The agent turns a plain-English request into a design
@@ -418,6 +429,18 @@ experiments:
     detail:
       - The state machines of the Ethernet MAC were not attempted with PDR, so they stay bounded.
     links: [results/81_verification/README.md, results/81_verification/unbounded.json, results/81_verification/equivalence.json]
+  - id: x_review
+    verdict: mixed
+    date: "2026-11-16"
+    order: 21
+    title: Can the agent review a design it did not write?
+    question: Given a design with planted problems and clean controls, how many does a review find, how many false alarms does it raise, and what does the reviewing model add over the check suite alone?
+    setup: "Held-out set of small designs written for the test (most with planted problems, three clean controls), pre-registered and frozen before any held-out review. Arm one: the check suite alone at RTL scope. Arm two: the suite plus one reviewer call (claude-sonnet-5-5, no tools), three repeats per design. Scored by code against private ground truth."
+    result: "The check suite alone found {rv_b_found} of {rv_b_n} planted issues, with {rv_b_fa} false alarms (precision {rv_b_prec}). With the reviewer, {rv_a_found} of {rv_a_n} were found, with {rv_a_fa} false alarms (precision {rv_a_prec}). Improvement-request plans: {rv_plan_ok} of {rv_plan_n} were sound."
+    interval: "Each problem class rests on one or two designs, so this is a detection table, not a rate. The reviewer's prompt carries a checklist that names most of the classes, so recall measures following a checklist, not discovering unknown kinds of defect. On real blocks an independent rater found about a third of the findings restated documented facts or were wrong."
+    decision: Review mode ships as an opt-in, read-only tool with its precision stated. Carrying out requested improvements is the next phase.
+    lesson: Recall alone is the easy half. A reviewer that finds every planted problem and buries it among several false alarms a review costs the reader time, so precision and an independent rating of real blocks matter as much.
+    links: [results/84_review/README.md, results/84_review/prereg.md, docs/review.md]
 
 plots:
   models:

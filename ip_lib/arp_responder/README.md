@@ -1,10 +1,10 @@
-# arp_responder 0.1.0
+# arp_responder 0.2.0
 
 Address Resolution Protocol (ARP, RFC 826): answers 'who has this IPv4 address?' for one address, caches other hosts' MAC addresses (round-robin replacement, flush), and looks up next-hop MAC addresses for transmit, sending a rate-limited request on a miss. A packet from another station claiming its own address is reported as a conflict (RFC 5227) and never cached.
 
 Generated from `ip.yaml` by `flow/net/ipdoc.py`; do not edit by hand.
 
-Status: Meets 125 MHz out of context with 4 cache entries (128 MHz estimated) but not with 16 (116 MHz); simulated against an RFC 826 model, with scapy as a second decoder and an independent adversarial bench; transmit framing checked by bounded model checking; built alone on an Artix-7 with Vivado 2026.1; not yet run on a board (the Nexys A7 network design carries it behind eth_mac_rmii; built, not yet run: a cable check comes first, see designs/b63d_nexys_net/host/PLAN.md).
+Status: Meets 125 MHz out of context on xc7a100t-1 with 4 and 16 cache entries (Fmax estimates 151 and 127 MHz; 16 entries by +0.15 ns only) and with margin on xck26-2LV (228-288 MHz). Version 0.2.0 sends the first reply byte 4 clocks after the request's last byte (was 3). Simulated against an RFC 826 model, with scapy as a second decoder and an independent adversarial bench; built alone out of context with Vivado 2026.1 (single runs at 8 ns, estimates); not yet run on a board (the Nexys A7 network design carries it behind eth_mac_rmii; built, not yet run: a cable check comes first, see designs/b63d_nexys_net/host/PLAN.md).
 
 ## Parameters
 
@@ -27,7 +27,7 @@ Clocks: `clk`. Reset: `rst`, active high, synchronous.
 
 ## Latency and throughput
 
-- reply: the first reply byte on m_axis 3 clocks after the request's last byte when idle (measured in the bench)
+- reply: the first reply byte on m_axis 4 clocks after the request's last byte when idle (measured in the bench)
 - lookup: 1 clock
 - throughput: one reply waiting while another is sent; requests in the receive stream at line rate are parsed without back-pressure
 
@@ -59,8 +59,8 @@ Built alone (out of context) on an Artix-7, xc7a100tcsg324-1, for a 8.0 ns clock
 
 | CACHE_N | HOLDOFF | LUT | FF | LUT RAM | Block RAM tiles | DSP | WNS (ns) | Fmax estimate (MHz) | Dynamic power (W) |
 |---|---|---|---|---|---|---|---|---|---|
-| 4 | 1000 | 497 | 867 | 0 | 0 | 0 | 0.214 | 128.4 | 0.015 |
-| 16 | 1000 | 1148 | 1841 | 0 | 0 | 0 | -0.648 | 115.6 | 0.009 |
+| 4 | 1000 | 514 | 959 | 0 | 0 | 0 | 1.385 | 151.2 | 0.017 |
+| 16 | 1000 | 1126 | 1939 | 0 | 0 | 0 | 0.146 | 127.3 | 0.012 |
 
 Defaults: CACHE_N 4, HOLDOFF 1000. WNS is the worst negative slack (the timing margin at the target clock; below zero the target is missed).
 
@@ -81,16 +81,17 @@ Licence: MIT (this repository).
 
 ## Known gaps and limits
 
-- Ethernet and IPv4 only; one own address; entries never age (flush from outside); address conflicts are reported (ev_conflict) but not resolved (no RFC 5227 probing or announcing); one reply waits while one is sent, a third request is not answered; meets 125 MHz with 4 cache entries (128 MHz estimated), misses it with 16 (116 MHz, the parallel compare).
+- Ethernet and IPv4 only; one own address; entries never age (flush from outside); address conflicts are reported (ev_conflict) but not resolved (no RFC 5227 probing or announcing); one reply waits while one is sent, a third request is not answered; meets 125 MHz with 4 and 16 cache entries (151 and 127 MHz estimated on xc7a100t-1; 16 entries by 0.15 ns); the added pipeline stage moves some decisions one clock later, so a same-clock race between a frame's verdict and a free-running input (a tick, a flush, a lookup, an output handshake) resolves one clock later than in 0.1.0 (no bench reaches these races; the CHANGELOG lists them); the formal checks were written for 0.1.0 and run in CI on 0.2.0.
 - Board: no board run of this entry is recorded; its evidence is simulation and out-of-context builds.
 
 ## Next steps
 
 1. Run the Nexys A7 network design (designs/b63d_nexys_net) on the board with a cable to a host and record the ARP replies.
-2. Pipeline the cache lookup if 16 entries must meet 125 MHz behind the RGMII MAC.
+2. Time the block in context behind eth_mac_rgmii on the KR260 (out-of-context numbers are single runs).
 
 ## History
 
+- 0.2.0 (2026-11-16): Pipelined to meet 125 MHz out of context on xc7a100t-1 (brief 88; Vivado 2026.1, single runs). Behaviour is unchanged apart from latency: see the status line and the latency entry in ip.yaml. Same-clock races between a frame's verdict and free-running inputs (a tick, a flush, a lookup, an output handshake) resolve one clock later than in 0.1.0; no bench reaches them. Seeded faults re-expressed for the new RTL.
 - 0.1.0 (2026-11-12): Initial version: simulated against a Python model, seeded faults caught, formal checks (bounded except where the README says proved), out-of-context cost on an Artix-7 (Vivado 2026.1); not run on a board. See README.md.
 
 Full entries: [CHANGELOG.md](CHANGELOG.md).
