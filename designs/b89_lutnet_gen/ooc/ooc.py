@@ -78,7 +78,9 @@ def main(argv=None) -> int:
         f = out / f"{arm}.json"
         if f.exists() and not a.fresh:
             hist[arm] = json.loads(f.read_text())["passes"]
-    todo = {arm: a.start for arm in a.arms}
+    # an arm whose earlier search already closed is not rebuilt (same RTL unless --fresh), so a part can be run by a
+    # second runner without repeating its work
+    todo = {arm: a.start for arm in a.arms if a.fresh or not any(r.get("closed") for r in hist[arm])}
     ver = "unknown"
     base = f"run{len(list((ROOT / 'build' / 'b89' / 'ooc' / PARTS[a.part]).glob('run*_pass1')))+1}"
     for p in range(a.passes):
