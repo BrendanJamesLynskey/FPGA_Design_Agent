@@ -85,6 +85,8 @@ def _access_gate_bypass(request: pytest.FixtureRequest):
     does not fail when the secret is absent. The gate's own tests are marked ``access_gate`` and run it for real."""
     from agent import access
     old = access._TEST_BYPASS
+    access.CURRENT = None                       # a gate test's admitted name must not leak into later tests' audit logs
     access._TEST_BYPASS = request.node.get_closest_marker("access_gate") is None
     yield
     access._TEST_BYPASS = old
+    access.CURRENT = None
