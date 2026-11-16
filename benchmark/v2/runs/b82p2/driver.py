@@ -156,8 +156,17 @@ def one_run(code: Path, binp: Path, task: str, rep: int, tag: str, retry: int) -
         if cf.is_file() and json.loads(cf.read_text()).get("name") == task:
             rid = n
             break
-    rec = {"task": task, "level": LEVEL[task], "repeat": rep, "attempt": retry, "run_id": rid, "rc": p.returncode, "wall_s": wall,
+    return finish(code, task, rep, tag, retry, rid, p.returncode, wall, hard, t0, out)
+
+
+def finish(code: Path, task: str, rep: int, tag: str, retry: int, rid: str | None, rc, wall: float, hard: bool, t0: float,
+           out: str, reconstructed: bool = False) -> dict:
+    runs = code / "runs"
+    rec = {"task": task, "level": LEVEL[task], "repeat": rep, "attempt": retry, "run_id": rid, "rc": rc, "wall_s": wall,
            "hard_limit": hard, "worker": tag, "code": FROZEN, "claude_cli": CLI, "started": time.strftime("%F %T", time.localtime(t0))}
+    if reconstructed:
+        rec["reconstructed"] = ("record rebuilt from the finished run directory after the driver's first version failed to write it "
+                                "(records/ did not exist); wall = run directory creation to summary.json mtime, rc unknown")
     summ = runs / str(rid) / "summary.json" if rid else None
     if summ and summ.is_file():
         s = json.loads(summ.read_text())
@@ -203,7 +212,20 @@ def one_run(code: Path, binp: Path, task: str, rep: int, tag: str, retry: int) -
     return rec
 
 
+def rebuild(code: Path, task: str, rep: int, rid: str) -> int:
+    """Build the record of a finished run whose record the first driver version failed to write (amendment 1)."""
+    REC.mkdir(exist_ok=True)
+    rd = code / "runs" / rid
+    t0 = time.mktime(time.strptime(rid[:15], "%Y%m%d-%H%M%S"))
+    end = (rd / "summary.json").stat().st_mtime
+    rec = finish(code, task, rep, "rebuilt", 1, rid, None, round(end - t0, 1), False, t0, "", reconstructed=True)
+    rec_path(task, rep).write_text(json.dumps(rec, indent=1))
+    print(json.dumps({k: rec.get(k) for k in ("task", "repeat", "run_id", "wall_s", "stop", "score")}))
+    return 0
+
+
 def run_all(code: Path, binp: Path, tag: str) -> int:
+    REC.mkdir(exist_ok=True)
     for task, rep in order():
         if (HERE / "STOP").exists():
             print("STOP file: no new run", flush=True)
@@ -313,11 +335,16 @@ def table() -> int:
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
-    ap.add_argument("cmd", choices=["run", "table"])
+    ap.add_argument("cmd", choices=["run", "table", "rebuild"])
+    ap.add_argument("--task")
+    ap.add_argument("--repeat", type=int)
+    ap.add_argument("--run-id")
     ap.add_argument("--code", type=Path)
     ap.add_argument("--bin", type=Path)
     ap.add_argument("--tag", default="w1")
     a = ap.parse_args()
     if a.cmd == "table":
         raise SystemExit(table())
+    if a.cmd == "rebuild":
+        raise SystemExit(rebuild(a.code.resolve(), a.task, a.repeat, a.run_id))
     raise SystemExit(run_all(a.code.resolve(), a.bin.resolve(), a.tag))

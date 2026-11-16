@@ -90,3 +90,12 @@ but hidden pass). Tests passed of tests total is also recorded.
 - Scoring has its own light lock; one score at a time.
 - **Held-out hygiene:** the run uses only the five public development tasks. The harness copies no `ref/` or `hidden/` file
   to the agent; `hidden/spec.yaml` reaches only the oracle process.
+
+## Amendment 1 (2026-11-16 15:58, harness only; before the third run's result; no effect on scoring)
+
+The first driver version never created `records/`, so the two first runs (`v2_e_cmd_parser` r1, `20261116-134454-d48e`, and
+`v2_e_cmd_exec` r1, `20261116-134601-83c4`) finished, were scored and archived under `artifacts/`, and then the workers crashed
+writing the record. Both workers were restarted and the two records rebuilt from the finished run directories with
+`driver.py rebuild` (scoring repeated on the same RTL; wall time = run-directory creation to `summary.json` mtime, so it is a
+reconstruction and the record says so). The two workers stood idle from about 14:32 to 15:58; that is lost wall time, not a result.
+Nothing about the agent, knowledge, prompts, benchmark or the runs' configuration changed.
