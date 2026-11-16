@@ -95,6 +95,8 @@ def emit(m: dict, name: str, fbits: list[int], pipe="comb", source: str = "") ->
     flo = [sum(fbits[:i]) for i in range(len(fbits))]
     if len(th) != len(fbits):
         raise ValueError(f"fbits has {len(fbits)} widths; the model has {len(th)} features")
+    if any(x >= 1 << fb for fb, t in zip(fbits, th) for x in t):
+        raise ValueError("a threshold does not fit its feature width")
     nL = len(layers)
     latency = 1 + (nL if pipe == "layer" else 0)
     L = []

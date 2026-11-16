@@ -1,0 +1,364 @@
+# Brief 68 handover: the facts behind README.md and AGENT.md (docs/documentation_standard.md).
+# Measurement values and every sha256 are filled from the records by `python -m flow.handover fill`;
+# do not type them. Render with `python -m flow.handover write <this directory>`.
+schema: fda-handover/1
+id: b91_lowbit
+title: Low-bit weight formats (binary, ternary, INT4, MXFP4-style, our power-of-two formats) for nanosecond inference, measured
+kind: showcase
+produced_by: human
+summary: 'A generator and a measurement of eight weight formats for tiny integer networks: binary, ternary, INT4, an MXFP4-style
+  E2M1 format with a power-of-two scale, our power-of-two format log4 (with and without a zero) and a two-term log4+1. Each
+  is trained with its quantiser in the loop, exported to integers, checked against a bit-exact Python twin and generated
+  RTL, and built out of context on the K26 and the Artix-7 100T. On the brief 87 synthetic order flow the 4-bit-weight formats
+  match the 89 LUT network and the 87 trees on accuracy but need about four times the LUTs, so no format is on the accuracy-against-area
+  or accuracy-against-latency front.'
+scope_not:
+- real market data; the data are brief 87's seeded synthetic order flow with a planted signal
+- a board run or a full-design build; every hardware number is an out-of-context, post-route Vivado 2026.1 build
+- 'weights held in block RAM (the phase-2 student): phase 1 weights are constants; docs/stage2_plan.md is a plan only'
+- a general-purpose tool; the argmax is written for three classes and the networks have at most two hidden layers
+target:
+  part: xck26-sfvc784-2LV-c
+  board: Kria KR260 (K26 SOM); also xc7a100tcsg324-1 (Nexys A7) out of context
+  top: ooc_wrap (one generated network with an input register), out of context
+  tool: Vivado 2026.1
+  note: no board top; the networks have the brief 87 arm ports, so they drop into the 58A decision stage the same way
+clocks:
+- name: clk
+  mhz: 98.0
+  source: results/b91/ooc/k26/lb_log4_h16x8_a4_comb.json
+  note: closed clocks differ per module; every module's closed clock is in results/b91/ooc/<part>/<module>.json
+resets:
+- name: rst
+  active: high
+  note: synchronous; clears only the valid pipeline, never the datapath (out_cls is undefined until the first out_v)
+interfaces:
+- name: network ports
+  type: clk, rst, in_v, in_f[37:0] (packed 87 features, feature 0 in the low bits), out_v, out_cls[1:0]
+  doc: designs/b91_lowbit/docs/generator.md
+  note: out_v follows in_v by exactly LATENCY clocks for every input; one input a clock; ties go to the lower class
+- name: generator API and options
+  type: Python (lowbit.model.Config, train, twin_predict; lowbit.rtl.emit) and flow/lowbit.py
+  doc: designs/b91_lowbit/docs/generator.md
+  note: every option with its default and the behaviours a user could guess wrong (rounding, zero, scale as a shift, floor,
+    tie to lowest class)
+parameters:
+- name: format
+  value: binary_t3, binary_t7, ternary, int4, mxfp4, log4, log4_nz, log4p1
+  legal: the same
+  note: element tables in docs/design.md section 3
+- name: pipe
+  value: comb and layer (A = 4 networks); comb only for the A = 2 and 8 sweep
+  legal: comb, layer
+  note: LATENCY is 1 for comb and layers + 1 for layer
+- name: act_bits
+  value: '4 (binary: 1); 2 and 8 for log4 and mxfp4'
+  legal: any positive width up to the 8-bit feature width
+  note: also the input code width
+files:
+- path: designs/b91_lowbit/lowbit/formats.py
+  what: 'the formats: element grids, rounding, CSD'
+  sha256: bad7171fd980d3371907180d812a5aaa2cc73ec85334ed635e2f6f975280b0ab
+- path: designs/b91_lowbit/lowbit/model.py
+  what: trainer, exporter, integer twin, accumulator bounds
+  sha256: f93660b3c423130bc1727d955d706877ec752df5c8309dd09098a942137e2f89
+- path: designs/b91_lowbit/lowbit/rtl.py
+  what: SystemVerilog emitter
+  sha256: ce48e1f084113a7f59edf5356cd6a6a8356f0ca1f032da4729f25e35ec116ce6
+- path: designs/b91_lowbit/lowbit/cli.py
+  what: stage 1, selection, stage 2, freeze, RTL
+  sha256: 29c3a4f74f955e6e62d9ae54bb8326c85d2e5a5537dc8c1558a0bc73ff83671a
+- path: designs/b91_lowbit/lowbit/evaluate.py
+  what: test-split scoring (pre-registered)
+  sha256: a22df91a93987cae0ebd89153d8e01b2b6d57c8ab0fe318cece3602d34f0a8ed
+- path: designs/b91_lowbit/lowbit/seedmean.py
+  what: post-hoc seed-mean comparison
+  sha256: e58da4229f4eea6543fb7ffbe9e3cda05d68e3c54bf3be522c463f50cafb9b74
+- path: designs/b91_lowbit/ooc/ooc.py
+  what: out-of-context clock search
+  sha256: f2024cd5cd6fc838f0931caa33ec05d0f94b02ad9c306415865f6bea383c85fc
+- path: designs/b91_lowbit/docs/design.md
+  what: design note
+  sha256: 388ef95201fc44b8b50ed882104ab6d0c549af595f7f1b02e1196df17c1b7c6a
+- path: designs/b91_lowbit/docs/preregistration.md
+  what: pre-registration
+  sha256: 0fd6397ecae572a3ad920625fb0747f3c6f8ab93168af3964ad58801d3c01440
+- path: designs/b91_lowbit/docs/what_we_found.md
+  what: the write-up
+  sha256: ba539b960437bcc95319157b6bcb0927184e99856109710b0c20366ce3d9783f
+- path: designs/b91_lowbit/docs/stage2_plan.md
+  what: 'plan: FP4 hardware for the phase-2 student'
+  sha256: 71bfdf7f35465b22c4b61bb7dd8c0bc41d604c717aa4933cd4054d5f0b0cae8b
+- path: flow/lowbit.py
+  what: 'flow tool: train, emit, predict'
+  sha256: 8c56739accccfc99d2a939d78443d4c1a9cba86c2823bb56bc2af90ed97bcc9e
+commands:
+- what: train all stage 1 networks, select, sweep, freeze, emit RTL
+  cmd: python3 -m designs.b91_lowbit.lowbit.cli stage1 && python3 -m designs.b91_lowbit.lowbit.cli select && python3 -m
+    designs.b91_lowbit.lowbit.cli stage2 && python3 -m designs.b91_lowbit.lowbit.cli freeze && python3 -m designs.b91_lowbit.lowbit.cli
+    rtl
+  heavy: false
+  minutes: 75
+  needs: torch (CPU); a 5 GB memory scope; two workers
+- what: score the test split (after frozen.json is committed)
+  cmd: python3 -m designs.b91_lowbit.lowbit.evaluate && python3 -m designs.b91_lowbit.lowbit.seedmean
+  heavy: false
+  minutes: 2
+  needs: torch not needed
+- what: RTL against the twins, lint
+  cmd: B91_RECORD=results/b91 python3 -m pytest -q designs/b91_lowbit/tests flow/tests/test_91_lowbit.py
+  heavy: false
+  minutes: 6
+  needs: Icarus Verilog 12, Verilator 5 (the lint test skips without it)
+- what: out-of-context builds and clock search on both parts
+  cmd: python3 -m designs.b91_lowbit.ooc.ooc --part xck26-sfvc784-2LV-c --arms <modules> --start 3.0
+  heavy: true
+  minutes: 480
+  needs: Vivado 2026.1 and a heavy slot; repeat with --part xc7a100tcsg324-1 --start 12.0 --passes 3
+- what: summary, figures and tables
+  cmd: python3 results/b91/summary.py && python3 results/b91/tables.py
+  heavy: false
+  minutes: 1
+  needs: python 3.12
+evidence:
+- id: E1
+  activity: simulation
+  result: pass
+  how: ci
+  what: every generated network equals its twin on all 99,100 test samples and 20,000 random packed inputs with one fixed
+    latency; accumulators stay inside their computed bounds; binary XNOR form equals the integer form; Verilator -Wall clean
+  record: designs/b91_lowbit/tests/test_b91_rtl.py
+  sha256: ecaaa4a511e6512cfc73e29ccb160c185a164d183b95668833eb68eab92f836f
+- id: E2
+  activity: build
+  result: pass
+  what: out-of-context, post-route builds on the K26 and the Artix-7 100T with a clock search; every recorded clock closed
+    setup, hold and pulse width
+  record: results/b91/summary.json
+  sha256: 39837661bcfb8db3b1e826fc4531920eb4f432f5e98f8eb69fbd7be39f228b88
+measurements:
+- id: M1
+  what: log4 test accuracy
+  category: other
+  key: log4_acc
+  unit: fraction
+  record: results/b91/accuracy.json
+  field: networks.log4_h16x8_a4.runs[0].test.mean
+  conditions: 99,100 test samples in 10 sessions; synthetic order flow; built seed
+  value: 0.4884
+  sha256: f2b0902973f5fcdbe4010e281c7fc0fb22681c8ed08769f18070380dcd049e70
+- id: M2
+  what: log4_nz test accuracy
+  category: other
+  key: log4_nz_acc
+  unit: fraction
+  record: results/b91/accuracy.json
+  field: networks.log4_nz_h16x8_a4.runs[0].test.mean
+  conditions: 99,100 test samples in 10 sessions; synthetic order flow; built seed
+  value: 0.4919
+  sha256: f2b0902973f5fcdbe4010e281c7fc0fb22681c8ed08769f18070380dcd049e70
+- id: M3
+  what: int4 test accuracy
+  category: other
+  key: int4_acc
+  unit: fraction
+  record: results/b91/accuracy.json
+  field: networks.int4_h16x8_a4.runs[1].test.mean
+  conditions: 99,100 test samples in 10 sessions; synthetic order flow; built seed
+  value: 0.489
+  sha256: f2b0902973f5fcdbe4010e281c7fc0fb22681c8ed08769f18070380dcd049e70
+- id: M4
+  what: mxfp4 test accuracy
+  category: other
+  key: mxfp4_acc
+  unit: fraction
+  record: results/b91/accuracy.json
+  field: networks.mxfp4_h16x8_a4.runs[0].test.mean
+  conditions: 99,100 test samples in 10 sessions; synthetic order flow; built seed
+  value: 0.4878
+  sha256: f2b0902973f5fcdbe4010e281c7fc0fb22681c8ed08769f18070380dcd049e70
+- id: M5
+  what: binary_t3 test accuracy
+  category: other
+  key: binary_t3_acc
+  unit: fraction
+  record: results/b91/accuracy.json
+  field: networks.binary_t3_h8_a4.runs[0].test.mean
+  conditions: 99,100 test samples in 10 sessions; synthetic order flow; built seed
+  value: 0.4733
+  sha256: f2b0902973f5fcdbe4010e281c7fc0fb22681c8ed08769f18070380dcd049e70
+- id: M6
+  what: log4 minus the 87 trivial rule, paired
+  category: other
+  key: log4_vs_rule
+  unit: fraction
+  record: results/b91/accuracy.json
+  field: networks.log4_h16x8_a4.paired_vs.trivial_rule_87.difference_mean
+  conditions: 99,100 test samples in 10 sessions; synthetic order flow; built seed; 95% interval in the record
+  value: 0.0618
+  sha256: f2b0902973f5fcdbe4010e281c7fc0fb22681c8ed08769f18070380dcd049e70
+- id: M7
+  what: log4 seed-mean minus lg_small, paired (post hoc)
+  category: other
+  key: log4_vs_lgsmall_seedmean
+  unit: fraction
+  record: results/b91/accuracy_seedmean.json
+  field: networks.log4_h16x8_a4.paired_vs.lg_small.difference_mean
+  conditions: mean of 3 seeds per session; 95% interval in the record
+  value: -0.0015
+  sha256: f0841f2ed75af6fa874edcdfcdd2b50d747e20f5551c60b7967c8737063d7178
+- id: M8
+  what: log4 comb, K26 LUTs
+  category: resources
+  key: log4_h16x8_a4_comb_k26_lut
+  unit: LUT
+  record: results/b91/summary.json
+  field: rows[13].k26.lut
+  conditions: out of context, post-route, Vivado 2026.1, one thread
+  value: 1591
+  sha256: 39837661bcfb8db3b1e826fc4531920eb4f432f5e98f8eb69fbd7be39f228b88
+- id: M9
+  what: log4 comb, K26 latency
+  category: latency
+  key: log4_h16x8_a4_comb_k26_lat
+  unit: ns
+  record: results/b91/summary.json
+  field: rows[13].k26.latency_ns
+  conditions: clocks x max(closed period, 2.0 ns); out of context, Vivado 2026.1
+  value: 10.2
+  sha256: 39837661bcfb8db3b1e826fc4531920eb4f432f5e98f8eb69fbd7be39f228b88
+- id: M10
+  what: int4 comb, K26 LUTs
+  category: resources
+  key: int4_h16x8_a4_comb_k26_lut
+  unit: LUT
+  record: results/b91/summary.json
+  field: rows[6].k26.lut
+  conditions: out of context, post-route, Vivado 2026.1, one thread
+  value: 2068
+  sha256: 39837661bcfb8db3b1e826fc4531920eb4f432f5e98f8eb69fbd7be39f228b88
+- id: M11
+  what: int4 comb, K26 latency
+  category: latency
+  key: int4_h16x8_a4_comb_k26_lat
+  unit: ns
+  record: results/b91/summary.json
+  field: rows[6].k26.latency_ns
+  conditions: clocks x max(closed period, 2.0 ns); out of context, Vivado 2026.1
+  value: 10.05
+  sha256: 39837661bcfb8db3b1e826fc4531920eb4f432f5e98f8eb69fbd7be39f228b88
+- id: M12
+  what: mxfp4 comb, K26 LUTs
+  category: resources
+  key: mxfp4_h16x8_a4_comb_k26_lut
+  unit: LUT
+  record: results/b91/summary.json
+  field: rows[9].k26.lut
+  conditions: out of context, post-route, Vivado 2026.1, one thread
+  value: 2056
+  sha256: 39837661bcfb8db3b1e826fc4531920eb4f432f5e98f8eb69fbd7be39f228b88
+- id: M13
+  what: mxfp4 comb, K26 latency
+  category: latency
+  key: mxfp4_h16x8_a4_comb_k26_lat
+  unit: ns
+  record: results/b91/summary.json
+  field: rows[9].k26.latency_ns
+  conditions: clocks x max(closed period, 2.0 ns); out of context, Vivado 2026.1
+  value: 11.25
+  sha256: 39837661bcfb8db3b1e826fc4531920eb4f432f5e98f8eb69fbd7be39f228b88
+- id: M14
+  what: log4_nz comb, K26 LUTs
+  category: resources
+  key: log4_nz_h16x8_a4_comb_k26_lut
+  unit: LUT
+  record: results/b91/summary.json
+  field: rows[16].k26.lut
+  conditions: out of context, post-route, Vivado 2026.1, one thread
+  value: 1406
+  sha256: 39837661bcfb8db3b1e826fc4531920eb4f432f5e98f8eb69fbd7be39f228b88
+- id: M15
+  what: log4_nz comb, K26 latency
+  category: latency
+  key: log4_nz_h16x8_a4_comb_k26_lat
+  unit: ns
+  record: results/b91/summary.json
+  field: rows[16].k26.latency_ns
+  conditions: clocks x max(closed period, 2.0 ns); out of context, Vivado 2026.1
+  value: 11.0
+  sha256: 39837661bcfb8db3b1e826fc4531920eb4f432f5e98f8eb69fbd7be39f228b88
+- id: M16
+  what: binary_t3 comb, K26 LUTs
+  category: resources
+  key: binary_t3_h8_a4_comb_k26_lut
+  unit: LUT
+  record: results/b91/summary.json
+  field: rows[0].k26.lut
+  conditions: out of context, post-route, Vivado 2026.1, one thread
+  value: 209
+  sha256: 39837661bcfb8db3b1e826fc4531920eb4f432f5e98f8eb69fbd7be39f228b88
+- id: M17
+  what: binary_t3 comb, K26 latency
+  category: latency
+  key: binary_t3_h8_a4_comb_k26_lat
+  unit: ns
+  record: results/b91/summary.json
+  field: rows[0].k26.latency_ns
+  conditions: clocks x max(closed period, 2.0 ns); out of context, Vivado 2026.1
+  value: 3.3
+  sha256: 39837661bcfb8db3b1e826fc4531920eb4f432f5e98f8eb69fbd7be39f228b88
+- id: M18
+  what: log4_nz comb, Artix-7 100T latency
+  category: latency
+  key: log4_nz_a7_lat
+  unit: ns
+  record: results/b91/summary.json
+  field: rows[16].a7.latency_ns
+  conditions: xc7a100tcsg324-1, as the K26 rows
+  value: 29.5
+  sha256: 39837661bcfb8db3b1e826fc4531920eb4f432f5e98f8eb69fbd7be39f228b88
+gaps:
+- about: board_run
+  text: Not run on a board and not built inside the 58A top; out of context only.
+- about: timing
+  text: Out of context the clock has no buffer or jitter, so every latency is quoted at no faster than 2.0 ns.
+- about: power
+  text: Not measured; the out-of-context builds have no power report.
+- about: data
+  text: One synthetic data set and one planted signal; the ranking of formats may not hold elsewhere.
+- about: scale
+  text: Scales are powers of two; a real-valued per-neuron scale was not tried, so the accuracy price of the restriction
+    is unknown.
+- about: comparison
+  text: The formats use two shapes and the rule chose different shapes per format, so cross-format area compares format
+    and size together; the networks are not tuned per format.
+- about: phase2
+  text: Weights here are constants. Where weights live in block RAM the cost of each format changes; docs/stage2_plan.md
+    is a plan, not a measurement.
+- about: throughput
+  text: Every network accepts one input a clock (the RTL test streams half the inputs back to back); no separate throughput
+    figure is recorded.
+- about: behaviour
+  text: 'Guessable wrongly: rounding is linear nearest with ties to the even code index; the scale is a right shift that
+    floors; class-score ties go to the lowest class; binary and log4_nz have no zero weight.'
+next_steps:
+- 'A LUT-network hybrid: enumerate quantised neurons into tables.'
+- Trained sparsity and narrower accumulators for ternary and log4.
+- A real-valued per-neuron scale as an ablation.
+- The stage 2 plan for weights in block RAM.
+open_questions:
+- Is the gap to the 89 LUT networks the adder trees alone, or also the missing table-level nonlinearity?
+history:
+- date: '2026-11-16'
+  brief: '91'
+  note: design, generator, pre-registered scoring, out-of-context builds on both parts, write-up
+numbers_allow: []
+state:
+  stage: built
+  gates:
+    rtl_equals_twin: pass
+    ooc_build_2026_1: pass
+    board_run: not-run
+  vivado: '2026.1'
+  kb_pin: 2338b83
+  build_id: null

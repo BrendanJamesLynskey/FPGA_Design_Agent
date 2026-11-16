@@ -85,10 +85,10 @@ def build():
             "rounds": {f.stem: j(f) for f in sorted((R / "rounds").glob("*.json"))}}
 
 
-CSS = ("<style>text{font:12px sans-serif;fill:#222}.ax{stroke:#222;stroke-width:1}.g{stroke:#ccc;stroke-width:.5}"
+CSS = ("<style>.bg{fill:#fff}text{font:12px sans-serif;fill:#222}.ax{stroke:#222;stroke-width:1}.g{stroke:#ccc;stroke-width:.5}"
        ".m{fill:#222;stroke:#222;stroke-width:1.2}.o{fill:#fff;stroke:#222;stroke-width:1.2}.d{stroke:#888;stroke-dasharray:4 3}"
        ".f{stroke:#222;stroke-width:1;fill:none}"
-       "@media (prefers-color-scheme:dark){text{fill:#ddd}.ax{stroke:#ddd}.m{fill:#ddd;stroke:#ddd}.o{fill:#111;stroke:#ddd}"
+       "@media (prefers-color-scheme:dark){.bg{fill:#111}text{fill:#ddd}.ax{stroke:#ddd}.m{fill:#ddd;stroke:#ddd}.o{fill:#111;stroke:#ddd}"
        ".g{stroke:#444}.f{stroke:#ddd}}</style>")
 
 
@@ -111,7 +111,7 @@ def plot(title, xs, ys, pts, xlab, ylab, hl, logx, frontline):
     fx = (lambda v: math.log10(v)) if logx else (lambda v: v)
     X = lambda v: L + (fx(v) - fx(xs[0])) / (fx(xs[1]) - fx(xs[0])) * (W - L - Rm)
     Y = lambda v: H - B - (v - ys[0]) / (ys[1] - ys[0]) * (H - B - T)
-    s = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}" role="img">', CSS,
+    s = [f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {W} {H}" width="{W}" height="{H}" role="img">', CSS, f'<rect class="bg" width="{W}" height="{H}"/>',
          f'<text x="{L}" y="20" style="font-weight:bold">{title}</text>',
          f'<line class="ax" x1="{L}" y1="{H - B}" x2="{W - Rm}" y2="{H - B}"/><line class="ax" x1="{L}" y1="{T}" x2="{L}" y2="{H - B}"/>',
          f'<text x="{(L + W - Rm) / 2}" y="{H - 10}" text-anchor="middle">{xlab}</text>',
@@ -119,15 +119,19 @@ def plot(title, xs, ys, pts, xlab, ylab, hl, logx, frontline):
     for i in range(6):
         yv = ys[0] + (ys[1] - ys[0]) * i / 5
         s.append(f'<line class="g" x1="{L}" y1="{Y(yv):.1f}" x2="{W - Rm}" y2="{Y(yv):.1f}"/><text x="{L - 6}" y="{Y(yv) + 4:.1f}" text-anchor="end">{yv:.3f}</text>')
-        xv = (10 ** (fx(xs[0]) + (fx(xs[1]) - fx(xs[0])) * i / 5)) if logx else xs[0] + (xs[1] - xs[0]) * i / 5
-        s.append(f'<text x="{X(xv):.1f}" y="{H - B + 16}" text-anchor="middle">{xv:.3g}</text>')
+    lo, hi = math.floor(math.log10(xs[0])), math.ceil(math.log10(xs[1]))
+    for e in range(lo, hi + 1):
+        for m in (1, 2, 5):
+            xv = m * 10 ** e
+            if xs[0] <= xv <= xs[1]:
+                s.append(f'<line class="g" x1="{X(xv):.1f}" y1="{T}" x2="{X(xv):.1f}" y2="{H - B}"/><text x="{X(xv):.1f}" y="{H - B + 16}" text-anchor="middle">{xv:g}</text>')
     s.append(f'<line class="d" x1="{L}" y1="{Y(hl[0]):.1f}" x2="{W - Rm}" y2="{Y(hl[0]):.1f}"/><text x="{W - Rm + 4}" y="{Y(hl[0]) + 4:.1f}">{hl[1]}</text>')
     fp = sorted((x, y) for x, y, _, _, f in pts if f)
     if len(fp) > 1:
         s.append('<polyline class="f" points="' + " ".join(f"{X(a):.1f},{Y(b):.1f}" for a, b in fp) + '"/>')
     for x, y, lab, kind_filled, _ in pts:
         kind, filled = kind_filled
-        s.append(marker(kind, X(x), Y(y), "m" if filled else "o") + f'<text x="{X(x) + 7:.1f}" y="{Y(y) - 6:.1f}" style="font-size:10px">{lab}</text>')
+        s.append(marker(kind, X(x), Y(y), "m" if filled else "o") + (f'<text x="{X(x) + 7:.1f}" y="{Y(y) - 6:.1f}" style="font-size:10px">{lab}</text>' if lab else ""))
     ly = T + 4
     for k, v in MARK.items():
         s.append(marker(v, W - Rm + 14, ly, "m") + f'<text x="{W - Rm + 26}" y="{ly + 4}">{k}</text>')
@@ -145,10 +149,11 @@ def figures(sm):
         pts = []
         for r in sm["rows"]:
             if r.get("k26"):
-                pts.append((r["k26"][xk], r["test_accuracy"], r["module"].replace("lb_", "").replace("_h16x8", "").replace("_h8", " h8"),
+                short = r["format"] + ("" if r["act_bits"] == 4 else f" A{r['act_bits']}") + ("" if r["pipe"] == "comb" else " reg")
+                pts.append((r["k26"][xk], r["test_accuracy"], short if r["act_bits"] == 4 and r["pipe"] == "comb" else "",
                             (MARK[family(r["format"])], True), r["module"] in on))
         for r in sm["references"]:
-            pts.append((r["k26"][xk], r["test_accuracy"], r["id"], ("circle", False), r["id"] in on))
+            pts.append((r["k26"][xk], r["test_accuracy"], r["id"] if r["id"] in ("87 imb_rule", "87 gbt_comb", "87 mlp_hand", "89 lg_small_comb", "89 lg_b87_comb", "89 treelut_arm", "89 lg_add_comb") else "", ("circle", False), r["id"] in on))
         if pts:
             xs = (min(p[0] for p in pts) * 0.8, max(p[0] for p in pts) * 1.5)
             figs[name] = plot(f"Test accuracy against {'LUTs' if xk == 'lut' else 'latency'} on the K26 (out of context, Vivado 2026.1)",
