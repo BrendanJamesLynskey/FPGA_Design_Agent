@@ -49,6 +49,7 @@ numbers filled from the records by code) rendered as `README.md` for people and 
 `flow/doccheck.py --check` enforces it in CI. The agent writes the same handover for its own work at the end of every run
 and can pick older work up again from one (`python -m agent resume <design> "<change>"`): [docs/agent.md](docs/agent.md),
 with three recorded runs documented by the agent in [results/68_agent_docs](results/68_agent_docs/README.md).
+Design review mode (`python -m agent review <design-dir>`, read-only; findings with severity, place, evidence, rule, fix and confidence; improvement-request plans): [docs/review.md](docs/review.md), with the pre-registered benchmark results in [results/84_review/README.md](results/84_review/README.md).
 A portfolio pack (title, facts with their sources, stills and a short animation) is in [site/portfolio/](site/portfolio/README.md).
 
 ## The flow
