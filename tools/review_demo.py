@@ -29,6 +29,8 @@ T1 = ROOT / "designs" / "t1_dimmer_counter"
 
 
 def main() -> int:
+    from agent.access import require_or_exit
+    require_or_exit('tools/review_demo.py')
     ap = argparse.ArgumentParser()
     ap.add_argument("out", type=Path)
     ap.add_argument("--runs", default="build/verif/icarus")

@@ -64,8 +64,13 @@ class Session:
     def __post_init__(self) -> None:
         self.design = Path(self.design).resolve()
         self.root = Path(self.root).resolve()
+        from agent.access import require_or_exit      # brief 94: a session is the agent's tool surface
+        require_or_exit("Session")
         self.part = self.part or part_of(self.design)
         self.family = family_for_part(self.part) or self.family
         self.jail = self.jail or PathJail(self.design, shell_root=self.root / "shell")
         self.audit = self.audit or AuditLog(self.design / "build" / "audit.jsonl")
         self.hw = self.hw or HardwarePolicy(self.hw_budget)
+        from agent import access                       # brief 94: attribute the run to the entry that admitted it (name only)
+        if access.CURRENT:
+            self.audit.log({"event": "access", "entry": access.CURRENT})

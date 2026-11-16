@@ -226,6 +226,8 @@ def main(argv: list[str] | None = None) -> int:
     if args[:1] == ["project"]:                      # brief 27B: the project layer (project/), not part of the agent graph
         from project.cli import main as project_main
         return project_main(args[1:])
+    from agent.access import require_or_exit      # brief 94: run, resume and document all start here
+    require_or_exit("python -m agent")
     from agent.graph.role_models import parse_roles
     from agent.graph.run import Config, build_graph, checkpointer_for, new_runtime
     ap = argparse.ArgumentParser(prog="python -m agent")

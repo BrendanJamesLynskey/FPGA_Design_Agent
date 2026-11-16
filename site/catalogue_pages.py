@@ -190,7 +190,7 @@ def index_body(C):
 <li><strong>The mutants.</strong> Deliberate bugs, each a small edit to the reference. Every one must fail the hidden tests, which shows the tests can tell a right design from a nearly right one. <span class="small muted"><code>hidden/mutants.yaml</code></span></li>
 <li><strong>The held-out draw.</strong> A seeded draw holds out about a third of each tier. Benchmark v2 holds out one task in every block of three per domain and tier, drawn from the frozen files, so nobody chooses which. <a href="{BLOB}benchmark/v2/README.md">More on benchmark v2</a>.</li>
 </ol>
-<p class="small muted">Course-tier tasks are adapted from the owner's FPGA design course (Parts 9 to 16; the course itself is private). Code on these pages is from the repository under its MIT licence.</p>
+<p class="small muted">Course-tier tasks are adapted from the owner's FPGA design course (Parts 9 to 16; the course itself is private). Code on these pages is from the repository, all rights reserved (source visible for review, see LICENSE).</p>
 """
 
 
@@ -198,7 +198,7 @@ def index_body(C):
 def code_block(tid, f, kind_label):
     return (f'<details class="code"><summary><span class="mono">{E(f["name"])}</span> <span class="muted small">{kind_label}, '
             f'{f["lines"]} lines</span></summary><div class="codebar small"><a href="{E(tid)}/{E(f["name"])}" download>Download</a>'
-            f'<a href="{BLOB}{E(f["path"])}">On GitHub</a><span class="muted">MIT licence</span></div>'
+            f'<a href="{BLOB}{E(f["path"])}">On GitHub</a><span class="muted">All rights reserved</span></div>'
             f'<pre tabindex="0"><code>{highlight(f["text"], f["lang"])}</code></pre></details>')
 
 
@@ -301,7 +301,7 @@ def task_body(T, C, prev, nxt):
 {mut_note}
 {muts}
 <h2>Sample solution</h2>
-<p class="note">Hand-written reference for the benchmark, not agent output; it passes every test, and the listed mutants fail them. With it, the hidden cocotb tests and the golden model. Repository licence: MIT.</p>
+<p class="note">Hand-written reference for the benchmark, not agent output; it passes every test, and the listed mutants fail them. With it, the hidden cocotb tests and the golden model. Repository licence: all rights reserved (source visible for review).</p>
 {code}
 <h2>The agent on this task</h2>
 {runs}

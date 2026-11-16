@@ -102,7 +102,7 @@ Steps 1-8 were done by hand for F0A. Since F2 the agent does steps 1-8 itself, a
 | ILA insertion from a probe list, built both ways, cost recorded | [flow/debug.tcl](flow/debug.tcl) | local builds |
 | A reusable on-board test shell (UART register protocol, host driver, model) | [shell/](shell/), [PROTOCOL.md](shell/PROTOCOL.md) | CI: cocotb against the model, including 115200-baud bit timing |
 | One hand-written T1 design from spec to bitstream | [designs/t1_dimmer_counter](designs/t1_dimmer_counter) | CI: cocotb against the model + mutants; local: gates |
-| Board files | [boards/nexys_a7_100t](boards/nexys_a7_100t) | Digilent master XDC (MIT) at a pinned commit |
+| Board files | [boards/nexys_a7_100t](boards/nexys_a7_100t) | Digilent master XDC (MIT, listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)) at a pinned commit |
 
 The T1 build numbers on Vivado 2026.1 (timing, utilisation, ILA cost, run time and memory) are in
 [results/f0a_2026_1/t1_dimmer_counter.md](results/f0a_2026_1/t1_dimmer_counter.md); every one comes from the JSON next to it
@@ -471,5 +471,15 @@ docs/        methodology.md (UG949 -> flow stages, gates, deviations, the agent'
 
 ## Licence
 
-MIT (see [LICENSE](LICENSE)). `boards/nexys_a7_100t/Nexys-A7-100T-Master.xdc` is Digilent's, MIT, with its licence
-alongside.
+All rights reserved (see [LICENSE](LICENSE)): the source is visible for review, and nobody may use, copy, modify, run or
+distribute it without written permission. Until 2026-11-16 the repository was MIT-licensed; earlier commits remain
+under the licence they were published with. Files from other people keep their own licences and are listed in
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) (for example `boards/nexys_a7_100t/Nexys-A7-100T-Master.xdc`, Digilent's, MIT,
+with its licence alongside). The notice is plain words, not legal advice.
+
+### Access key
+
+While the agent is developed it refuses to start without an access key (see [agent/access/README.md](agent/access/README.md)).
+The key keeps casual users of a checkout from running the agent; it does not stop anyone who edits the code, and the
+licence is what forbids that. The gate is **off until the owner commits `agent/access/keys.json`**. To set up your own
+key: copy [.env.example](.env.example) to `.env` (git-ignored) and put the key you were given after `FDA_ACCESS_KEY=`.

@@ -29,6 +29,8 @@ class MP:
 
 
 def main() -> int:
+    from agent.access import require_or_exit
+    require_or_exit('tools/scripted_review_run.py')
     out, keep = Path(sys.argv[1]), Path(sys.argv[2])
     tmp = Path(tempfile.mkdtemp())
 

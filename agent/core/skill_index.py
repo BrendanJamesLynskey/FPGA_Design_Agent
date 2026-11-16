@@ -336,6 +336,8 @@ def build(bank_root: Path, model: str = EMBED_MODEL) -> dict:
 
 
 def main(argv: list[str] | None = None) -> int:
+    from agent.access import require_or_exit
+    require_or_exit('agent.core.skill_index')
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     sub = ap.add_subparsers(dest="cmd", required=True)
     b = sub.add_parser("build", help="embed every skill into <bank>/indexes (owner's PC only)")
