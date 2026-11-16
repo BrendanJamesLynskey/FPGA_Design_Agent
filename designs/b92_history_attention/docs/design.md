@@ -68,9 +68,48 @@ Optional public data (FI-2010): not used (no licence check was made); the data s
   retained event of a session has 50 events of history (more than the longest window, 16), and a test perturbs events after t
   and checks the columns do not move.
 
-## 4-6. Stages 2-4
+## 4. Stage 2: the arms (decided after the stage 1 gate passed: `results/b92/stage1_test.json`)
 
-(To be filled in only if the gate passes.)
+What stage 1 showed that shapes the design: the trees gain from the lagged *features* (+0.0067 on the self-exciting generator,
+interval [0.0032, 0.0101]) and not from the lagged raw primitives (+0.0010); the lagged-feature trees lean on the old order-flow sums
+(lag 16 is the most-used lag) and on bid and ask sizes. So the window tokens carry the book state, not only the trades.
+
+**Token** of one event (what the fabric already has on the message stream): trade sign (-1, 0, +1), signed traded size (-8..8), the
+event's order-flow term (clipped to -31..31 here; the 87 clip of the sum stays), and the imbalance bucket (0..7). Window N = 16 events
+(arm 2 also at N = 8 as a cheaper point). **Head.** All arms end in the same head so that only the history mechanism differs: the 91
+`log4` network (power-of-two weights, hidden 16 then 8, 4-bit codes), trained as in brief 91 (quantisation in the loop, exact integer
+twin, best validation epoch). The 89 LUT network on the arm-1 columns is arm 4. Reference arms with no history, all on the
+self-exciting data: trivial rule, 87 trees (stage 1 numbers), 87 MLP, `log4` head on the current features, the 89 `lg_small` network.
+
+1. **Decaying sums.** For each of four channels (trade sign, signed size, order-flow term, 2 x bucket - 7) and two rates k,
+   `s <- s - (s >> k) + x` (arithmetic shift, floor), a shift and two adders per sum, no multiplier. The rate pair is chosen
+   on validation from {(1,3), (2,4), (3,5), (4,6)} (time constants about 2, 4, 8, 16, 32, 64 events); the sums are cut to 8-bit
+   unsigned columns by a fixed shift `sh` per column (the smallest with the training 99.9th percentile of |s >> sh| at most 127) plus 128,
+   saturating, like the 87 order-flow feature. They enter the head as eight extra columns.
+2. **Fixed window.** The last N tokens' codes (each token field coded to 2-4 bits by a threshold ROM shared across lags) go straight into the
+   head's first layer: that layer *is* a learned fixed-weight linear filter per hidden unit over the window (power-of-two weights).
+   Cost grows with 4 N inputs; that is the point of measuring it.
+3. **Tiny attention** (key size d = 4, value size m = 4, N = 16; weights `log4`, queries from the 7 current features, keys and values
+   from the token, both computed once when the event arrives and kept in the shift register; a learned integer position bias is added to
+   each score). Two softmax-free forms, chosen because a softmax needs an exponential and a division, which neither shifts nor
+   small adders give:
+   - **top-1:** the output is the value of the highest-scoring position (ties to the most recent), a compare tree and a mux (the hard-attention
+     limit; trained with the softmax gradient as a straight-through surrogate);
+   - **ReLU-linear:** `a_i = clip((s_i) >> sa, 0, 7)`, output `clip((sum_i a_i v_i) >> so, -8, 7)` (linear attention without normalisation,
+     Katharopoulos et al.; the shift `sa` is a power-of-two scale, standing in for a base-2 softmax's normaliser).
+   The attention block is trained first with a small float head on top, frozen to integers, and its four output columns then go through the
+   same 91 head training as every other arm. (End-to-end training of the quantised head would be better for attention; that is a known gap,
+   it is stated in the report.)
+4. **The 89 LUT network** (`lg_small` configuration) on the arm-1 columns, as the cheap-head yardstick.
+
+Selection rule for every arm: three training seeds, the built seed is the best on validation, the test split is scored once
+(`docs/preregistration_stage2.md`, committed before). Accuracy is reported with a paired 95% t-interval over the ten test sessions against
+the trivial rule, the stage-1 trees and the history-free 91 head. "A margin whose interval excludes zero" for the attention decision is the
+paired difference, tiny attention minus decaying sums, built seeds.
+
+## 5. Stage 3: hardware (to be filled in after stage 2's results)
+
+## 6. Stage 4: where it would sit (to be filled in with the stage 3 numbers)
 
 ## 7. Literature (own words; every arXiv ID checked at export.arxiv.org on 2026-11-16)
 
