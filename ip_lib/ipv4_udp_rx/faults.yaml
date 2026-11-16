@@ -11,8 +11,8 @@ faults:
     test: flow/net/tests/test_63d_udp_rx_rtl.py -k p8
   - name: udp_rx_no_pseudo_header_source
     file: ipv4_udp_rx.sv
-    old: "assign u_tot = u_acc + {16'd0, src[31:16]} + {16'd0, src[15:0]} +"
-    new: "assign u_tot = u_acc + {16'd0, src[15:0]} +"
+    old: "cs_a <= u_acc + {16'd0, src[31:16]};"
+    new: "cs_a <= u_acc;"
     class: protocol
     why: the UDP checksum leaves half of the source address out of the pseudo-header
     test: flow/net/tests/test_63d_udp_rx_rtl.py -k p4

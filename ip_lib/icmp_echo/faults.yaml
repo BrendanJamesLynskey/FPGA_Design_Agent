@@ -51,3 +51,10 @@ faults:
     class: timing
     why: bytes after 13 of a frame arriving during a reply overwrite the stored request (the formal check watches byte 13 only; found by the independent review)
     test: flow/net/tests/test_63d_adversarial_rtl.py -k icmp
+  - name: icmp_chk0_resolution_missing
+    file: icmp_echo.sv
+    old: "if (chk0) begin chk0 <= 1'b0; stored <= stored && !accept; end"
+    new: "if (chk0) begin chk0 <= 1'b0; end"
+    class: ordering
+    why: a frame whose first byte comes on the clock `fin` is high is stored over the request that is accepted a clock later
+    test: flow/net/tests/test_63d_adversarial_rtl.py -k icmp

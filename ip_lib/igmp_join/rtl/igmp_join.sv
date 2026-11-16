@@ -126,13 +126,14 @@ module igmp_join #(
     // the message verdict is registered, and the group state acts on it one clock later (brief 88)
     logic        q2, r2;
     logic [31:0] grp2;
-    logic [7:0]  qm2;
+    logic [7:0]  qm2, q_mrt_r;          // q_mrt registered: mrt is final several bytes before the frame's last byte
     logic [7:0]  rq [N];                 // the random delay for a query's answer, drawn with the verdict
     always_ff @(posedge clk) begin
-        if (rst) begin for (int i = 0; i < N; i++) rq[i] <= 8'd0; q2 <= 1'b0; r2 <= 1'b0; grp2 <= '0; qm2 <= 8'd0; end
+        if (rst) begin for (int i = 0; i < N; i++) rq[i] <= 8'd0; q2 <= 1'b0; r2 <= 1'b0; grp2 <= '0; qm2 <= 8'd0; q_mrt_r <= 8'd0; end
         else begin
-            q2 <= is_query; r2 <= is_report; grp2 <= grp; qm2 <= q_mrt;
-            for (int i = 0; i < N; i++) rq[i] <= rnd(lfsr[7:0] ^ 8'(i * 37), q_mrt);
+            q_mrt_r <= q_mrt;
+            q2 <= is_query; r2 <= is_report; grp2 <= grp; qm2 <= q_mrt_r;
+            for (int i = 0; i < N; i++) rq[i] <= rnd(lfsr[7:0] ^ 8'(i * 37), q_mrt_r);
         end
     end
     logic [N-1:0] en_q, run, rep_p, lv_p, last_rep;
