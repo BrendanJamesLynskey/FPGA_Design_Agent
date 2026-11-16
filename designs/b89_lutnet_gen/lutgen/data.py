@@ -37,6 +37,10 @@ def load(names=("train", "val", "test")) -> dict:
         X, y, _ = d[n]
         if digest(X, y) != ref[n]:
             raise RuntimeError(f"{n} split differs from brief 87's (digest mismatch); delete {CACHE} and retry")
+        g = d[n][2]                    # the session index the paired comparisons rest on (review S8)
+        if not np.array_equal(g, np.repeat(np.arange(int(g.max()) + 1), np.bincount(g))) or n == "test" and \
+                np.bincount(g).tolist() != [9910] * 10:
+            raise RuntimeError(f"{n} split: session index is not the 87 layout")
     return {n: d[n] for n in names}
 
 

@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -62,10 +63,37 @@ def test_rtl_equals_twin_and_latency_is_fixed(arm, pipe, data, test_split, tmp_p
     assert r["ok"], r
 
 
-def test_treelut_rtl_equals_treelut_predictions(test_split, tmp_path):
-    """TreeLUT's Verilog against TreeLUT's own integer predictions (seed 0) on the whole test split."""
-    exp = np.load(C.RES / "treelut" / "test_predictions.npz")["seed0"].astype(np.int64)
-    X = test_split
+@pytest.mark.parametrize("arm,pipe", modules())
+def test_rtl_tables_equal_model_tables_exhaustively(arm, pipe):
+    """Every table constant and every address concatenation in the RTL, parsed back, equals the model: covers the
+    table cells no simulated input reaches (review S2)."""
+    m = model(arm)
+    txt = (C.GEN / f"{arm}_{pipe}.sv").read_text()
+    consts = {(int(a), int(b), int(c)): int(v, 16) for a, b, c, v in
+              re.findall(r"localparam logic \[\d+:0\] T(\d+)_(\d+)_(\d+) = \d+'h([0-9a-f]+);", txt)}
+    n = 0
+    for li, sp in enumerate(m["layers"]):
+        for j, tab in enumerate(m["tables"][li]):
+            for bit in range(sp["bits"]):
+                want = sum(1 << a for a, o in enumerate(tab) if (o >> bit) & 1)
+                assert consts[(li, j, bit)] == want, (li, j, bit)
+                n += 1
+            src = "e" if li == 0 else ("q" if pipe == "layer" else "n")
+            names = [f"{src}{c}" if li == 0 else f"{src}{li - 1}_{c}" for c in m["wiring"][li][j]]
+            assert re.search(rf"a{li}_{j} = \{{{', '.join(names)}\}};", txt), (li, j)
+    assert n == len(consts)
+
+
+@pytest.mark.parametrize("data", ["test_split", "random"])
+def test_treelut_rtl_equals_treelut_predictions(data, test_split, tmp_path):
+    """TreeLUT's Verilog against TreeLUT's own integer predictions (seed 0): the whole test split, and the 20,000
+    random packed inputs (review S3; predictions written by run_treelut.py score)."""
+    z = np.load(C.RES / "treelut" / "test_predictions.npz")
+    if data == "test_split":
+        exp, X = z["seed0"].astype(np.int64), test_split
+    else:
+        X = S.random_features(N_RANDOM, seed=89)
+        exp = np.load(C.RES / "treelut" / "random_predictions.npz")["seed0"].astype(np.int64)
     (tmp_path / "v.hex").write_text("\n".join(S.pack(X, exp)) + "\n")
     src = sorted(str(p) for p in TL.glob("*.v")) + [str(TL / "treelut_arm.sv")]
     subprocess.run(["iverilog", "-g2012", "-DARM=treelut_arm", "-o", str(tmp_path / "sim"), str(S.TB)] + src, check=True)
@@ -73,7 +101,7 @@ def test_treelut_rtl_equals_treelut_predictions(test_split, tmp_path):
                     f"+OUT={tmp_path / 's.txt'}"], check=True, capture_output=True)
     s = dict(zip(*[iter((tmp_path / "s.txt").read_text().split())] * 2))
     r = {k: int(v) for k, v in s.items()}
-    _results["treelut_arm/test_split"] = r
+    _results[f"treelut_arm/{data}"] = r
     assert r["n"] == r["out"] == len(X) and r["mismatches"] == 0 and r["latency_min"] == r["latency_max"] == 3, r
 
 

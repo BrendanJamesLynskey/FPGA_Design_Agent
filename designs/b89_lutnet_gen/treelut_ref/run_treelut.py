@@ -6,6 +6,7 @@ from its own virtual environment; none of its code is in this repository, only t
     <treelut venv>/bin/python -m designs.b89_lutnet_gen.treelut_ref.run_treelut tune      # validation grid
     <treelut venv>/bin/python -m designs.b89_lutnet_gen.treelut_ref.run_treelut build     # 3 seeds, RTL of seed 0
     <treelut venv>/bin/python -m designs.b89_lutnet_gen.treelut_ref.run_treelut score     # test split (after prereg)
+    <treelut venv>/bin/python -m designs.b89_lutnet_gen.treelut_ref.run_treelut random    # random inputs (RTL test)
 
 Features go in unchanged: every 87 feature is already an unsigned integer of at most 8 bits, so w_feature = 8 and no
 input quantisation is applied (TreeLUT's first step is that quantisation).
@@ -159,5 +160,14 @@ def score():
     print({k: round(float((v == yte).mean()), 4) for k, v in preds.items()})
 
 
+def random_inputs():
+    """Seed 0's predictions on the lutgen RTL test's random packed inputs (for the TreeLUT RTL test off the data)."""
+    c = json.loads((OUT / "tuning.json").read_text())["chosen"]
+    from designs.b89_lutnet_gen.lutgen import sim as S      # the same random inputs as the lutgen RTL test
+    m = load(0, c)
+    np.savez_compressed(OUT / "random_predictions.npz",
+                        seed0=treelut(m, c["w_tree"], BUILD / "random0").predict(S.random_features(20000, 89)).astype(np.uint8))
+
+
 if __name__ == "__main__":
-    {"tune": tune, "build": build, "score": score}[sys.argv[1]]()
+    {"tune": tune, "build": build, "score": score, "random": random_inputs}[sys.argv[1]]()
