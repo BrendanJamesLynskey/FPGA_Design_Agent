@@ -122,10 +122,10 @@ def parse(wd: Path, clock_ns: float) -> dict:
     r["wns_ns"] = float(m.group(1)) if m and m.group(1) not in ("inf", "NA") else None
     # hold and pulse-width slack from the same summary row (brief 88: pulse width, not setup, can bind a fast block;
     # an Fmax read from WNS alone is then flattering)
-    hm = re.search(r"WNS\(ns\)\s+TNS\(ns\)[^\n]*\n\s*-+[^\n]*\n\s*([^\n]+)", t)
-    cells = hm.group(1).split() if hm else []
-    num = lambda i: float(cells[i]) if len(cells) > i and re.fullmatch(r"-?\d+\.\d+", cells[i]) else None
-    r["whs_ns"], r["wpws_ns"] = num(4), num(8)
+    hm = re.search(r"^\s*(WNS\(ns\)\s[^\n]*)\n\s*-+[^\n]*\n\s*([^\n]+)", t, re.M)
+    cols = dict(zip(re.split(r"\s{2,}", hm.group(1).strip()), hm.group(2).split())) if hm else {}
+    num = lambda k: float(cols[k]) if re.fullmatch(r"-?\d+\.\d+", cols.get(k, "")) else None
+    r["whs_ns"], r["wpws_ns"] = num("WHS(ns)"), num("WPWS(ns)")
     r["fmax_setup_mhz"] = round(1000.0 / (clock_ns - r["wns_ns"]), 1) if r["wns_ns"] is not None else None
     r["fmax_mhz"] = r["fmax_setup_mhz"]
     if r["wpws_ns"] is not None and r["wpws_ns"] < 0 and r["fmax_mhz"] is not None:
