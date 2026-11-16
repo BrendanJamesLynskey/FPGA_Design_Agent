@@ -62,7 +62,10 @@ def build():
     if (R / "rounds" / "fanin.json").exists():
         for n, c in j(R / "rounds" / "fanin.json")["configs"].items():
             fan[n] = {"val_seed0": next(r["val"] for r in c["runs"] if r["seed"] == 0),
-                      "table_bits": c["runs"][0]["table_bits_total"], "k26": h.get(f"{n}_comb", {}).get("k26")}
+                      "table_bits": c["runs"][0]["table_bits_total"],
+                      # fan-in 3 is lg_add seed 0 (identical tables), so its build is lg_add_comb's
+                      "module": "lg_add_comb" if n == "fanin3" else f"{n}_comb",
+                      "k26": h.get("lg_add_comb" if n == "fanin3" else f"{n}_comb", {}).get("k26")}
     return {"schema": "b89-summary/1", "latency_rule": f"clocks x max(closed period, {FLOOR} ns)", "parts": PARTS,
             "rows": rows, "arms": {k: {kk: v[kk] for kk in ("built_seed", "test_mean_over_seeds", "paired_vs")} | {
                 "test_by_seed": [r["test"]["mean"] for r in v["runs"]]} for k, v in acc["arms"].items()},

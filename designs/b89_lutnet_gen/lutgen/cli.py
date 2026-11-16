@@ -65,6 +65,17 @@ def rtl(check: bool) -> int:
                 GEN.mkdir(parents=True, exist_ok=True)
                 f.write_text(txt)
                 print("wrote", f.relative_to(Dm.ROOT))
+    for f in sorted((RES / "models").glob("fanin*_seed0.json")):     # the fan-in cost sweep (not scored on test)
+        name = f.name.replace("_seed0.json", "_comb")
+        txt = R.emit(json.loads(f.read_text()), name, S.FBITS, pipe="comb", source=f"results/b89/models/{f.name}")
+        g = GEN / f"{name}.sv"
+        if check:
+            if not g.exists() or g.read_text() != txt:
+                print(f"out of date: {g}")
+                bad = 1
+        else:
+            g.write_text(txt)
+            print("wrote", g.relative_to(Dm.ROOT))
     return bad
 
 

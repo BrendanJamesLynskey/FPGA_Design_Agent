@@ -26,7 +26,12 @@ _results: dict = {}
 
 
 def modules():
-    return [(arm, pipe) for arm, a in C.frozen()["arms"].items() for pipe in a["pipes"]]
+    m = [(arm, pipe) for arm, a in C.frozen()["arms"].items() for pipe in a["pipes"]]
+    return m + [(f.name.replace("_seed0.json", ""), "comb") for f in sorted((C.RES / "models").glob("fanin*_seed0.json"))]
+
+
+def model(arm):
+    return C.model_of(arm) if arm in C.frozen()["arms"] else C.model_of(arm, 0)
 
 
 @pytest.fixture(scope="module")
@@ -52,7 +57,7 @@ def test_twin_tables_reproduce_recorded_validation_accuracy():
 def test_rtl_equals_twin_and_latency_is_fixed(arm, pipe, data, test_split, tmp_path):
     X = test_split if data == "test_split" else S.random_features(N_RANDOM, seed=89)
     name = f"{arm}_{pipe}"
-    r = S.run(C.model_of(arm), C.GEN / f"{name}.sv", name, X, tmp_path)
+    r = S.run(model(arm), C.GEN / f"{name}.sv", name, X, tmp_path)
     _results[f"{name}/{data}"] = r
     assert r["ok"], r
 
