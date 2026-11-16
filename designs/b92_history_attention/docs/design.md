@@ -77,9 +77,11 @@ Optional public data (FI-2010): not used (no licence check was made); the data s
 - DeepLOB, Zhang, Zohren and Roberts 2019 (arXiv 1808.03668): a convolutional net over the last 100 snapshots of a 10-level book, then an
   inception module and an LSTM, predicts the mid-price move. It shows history of book snapshots is usable, and it is
   far too large for a nanosecond path.
-- TransLOB, Wallbridge 2020 (2003.00130): replaces the recurrent part with self-attention over the window of snapshots.
-- Prata, Masi, Berti and Arrigoni 2023 (2308.01915): a benchmark of order-book deep nets over the same data; its lesson we keep is that
-  results depend on the data and horizon and that the gain from heavy models over simple ones is often small.
+- TransLOB, Wallbridge 2020 (2003.00130): a causal convolution for features plus masked self-attention that updates each step's features
+  from relevant earlier steps; reported as the best on the FI-2010 data at the time. It is the "attention helps" claim we test, at a
+  size a fabric could hold.
+- Prata, Masi, Berti and Arrigoni 2023 (2308.01915): a benchmark of fifteen order-book deep models; its finding that every model loses
+  accuracy on new data is why we score on unseen sessions and report intervals, and why we do not read the published gains as ours.
 - Hawkes processes in order flow (1502.04592, 1301.1135), sign memory (cond-mat/0311053, cond-mat/0307332), and
   price impact of order-flow imbalance (Cont, Kukanov and Stoikov 2014, 1011.6402; our OFI feature is theirs).
 - Linear attention (Katharopoulos, Vyas, Pappas and Fleuret 2020, 2006.16236): drop the softmax normalisation so attention is a
