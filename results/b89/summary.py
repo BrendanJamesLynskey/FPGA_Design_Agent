@@ -34,11 +34,11 @@ def hw():
                 if at:
                     a = dict(at[0], area_at_ns=FLOOR)
             out.setdefault(r["arm"], {})[tag] = None if not a else {
-                "clocks": r["latency_clocks"], "closed_at_ns": r["closed_at_ns"], "fmax_mhz": r["closed_at_mhz"],
+                "clocks": r["latency_clocks"], "closed_at_ns": round(r["closed_at_ns"], 2), "fmax_mhz": r["closed_at_mhz"],
                 "latency_ns": round(r["latency_clocks"] * max(r["closed_at_ns"], FLOOR), 2),
                 "lut": a["lut"], "ff": a["ff"], "dsp": a["dsp"], "bram_tiles": a["bram_tiles"], "wns_ns": a["wns_ns"],
                 "wpws_ns": a["wpws_ns"], "tool": r["tool"],
-                "area_from_build_at_ns": a.get("area_at_ns", r["closed_at_ns"])}
+                "area_from_build_at_ns": round(a.get("area_at_ns", r["closed_at_ns"]), 2)}
     return out
 
 

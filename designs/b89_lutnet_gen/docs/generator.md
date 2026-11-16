@@ -13,6 +13,9 @@ cls = M.twin_predict(m, X)                                      # the bit-exact 
 sv = R.emit(m, "my_net", fbits=[8, 8, 4, 3, 5, 8, 2], pipe="layer")
 ```
 
+As a flow tool for any data: `python3 -m flow.lutgen train|emit|predict` (`flow/lutgen.py`; `emit` takes
+`--pipe comb|layer|N` and `--reg-encoder`, both tested in `flow/tests/test_89_lutgen_rtl.py`).
+
 Command line for the brief 89 models: `python -m designs.b89_lutnet_gen.lutgen.cli train|rtl` (see the README).
 
 ## Config fields

@@ -24,7 +24,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
 from designs.b87_ml_trading.ooc.ooc import WRAP, parse  # noqa: E402
-from flow.ipchar import tcl_list, vivado  # noqa: E402
+from flow.ipchar import _row, tcl_list, vivado  # noqa: E402
 
 D = Path(__file__).resolve().parents[1]
 TCL = ROOT / "designs" / "b87_ml_trading" / "ooc" / "ooc.tcl"
@@ -37,6 +37,17 @@ def sources(arm: str) -> list[str]:
     if arm == "treelut_arm":
         return sorted(str(p) for p in TL.glob("*.v")) + [str(TL / "treelut_arm.sv")]
     return [str(GEN / f"{arm}.sv")]
+
+
+def fix_util(r: dict) -> dict:
+    """The 87 parser reads UltraScale+ names (CLB LUTs, CLB Registers); 7-series reports say Slice LUTs and Slice
+    Registers. Fill those from the pass's own report."""
+    wd = r.get("wd")
+    if r.get("status") == "ok" and r.get("lut") is None and wd and (Path(wd) / "utilization.rpt").exists():
+        u = (Path(wd) / "utilization.rpt").read_text()
+        r["lut"], r["ff"] = _row(u, "Slice LUTs"), _row(u, "Slice Registers")
+        r["carry8"] = r.get("carry8") if r.get("carry8") is not None else _row(u, "CARRY4")
+    return r
 
 
 def run_pass(part, jobs, tag, unit_tag):
@@ -60,7 +71,7 @@ def run_pass(part, jobs, tag, unit_tag):
     print(f"ooc: {part} pass {tag}: {len(jobs)} jobs, scope {unit}", flush=True)
     subprocess.run(cmd, cwd=batch)
     m = re.search(r"Vivado v(\S+) \(64-bit\)", (batch / "vivado.log").read_text()) if (batch / "vivado.log").exists() else None
-    return {arm: dict(parse(wd, ck), wd=str(wd)) for arm, (wd, ck) in wds.items()}, (m.group(1) if m else "unknown")
+    return {arm: fix_util(dict(parse(wd, ck), wd=str(wd))) for arm, (wd, ck) in wds.items()}, (m.group(1) if m else "unknown")
 
 
 def main(argv=None) -> int:
@@ -70,6 +81,7 @@ def main(argv=None) -> int:
     ap.add_argument("--start", type=float, default=2.0)
     ap.add_argument("--passes", type=int, default=4)
     ap.add_argument("--fresh", action="store_true")
+    ap.add_argument("--rewrite", action="store_true", help="no Vivado: re-read the recorded passes and rewrite the JSON")
     a = ap.parse_args(argv)
     out = ROOT / "results" / "b89" / "ooc" / PARTS[a.part]
     out.mkdir(parents=True, exist_ok=True)
@@ -77,11 +89,15 @@ def main(argv=None) -> int:
     for arm in a.arms:
         f = out / f"{arm}.json"
         if f.exists() and not a.fresh:
-            hist[arm] = json.loads(f.read_text())["passes"]
+            hist[arm] = [fix_util(r) for r in json.loads(f.read_text())["passes"]]
     # an arm whose earlier search already closed is not rebuilt (same RTL unless --fresh), so a part can be run by a
     # second runner without repeating its work
-    todo = {arm: a.start for arm in a.arms if a.fresh or not any(r.get("closed") for r in hist[arm])}
+    todo = {} if a.rewrite else {arm: a.start for arm in a.arms if a.fresh or not any(r.get("closed") for r in hist[arm])}
     ver = "unknown"
+    for arm in a.arms:                       # a rewrite keeps the version the passes were built with
+        f = out / f"{arm}.json"
+        if a.rewrite and f.exists():
+            ver = json.loads(f.read_text())["tool"].replace("Vivado ", "")
     base = f"run{len(list((ROOT / 'build' / 'b89' / 'ooc' / PARTS[a.part]).glob('run*_pass1')))+1}"
     for p in range(a.passes):
         if not todo:

@@ -265,7 +265,7 @@ jobs:
       - name: LUT-network generator (brief 89) - generated RTL against its twin (test split, random inputs, every table cell), fixed latency, Verilator -Wall; TreeLUT reference RTL against TreeLUT
         run: |
           sudo apt-get install -y verilator
-          python -m pytest -q designs/b89_lutnet_gen/tests/test_b89_rtl.py
+          python -m pytest -q designs/b89_lutnet_gen/tests/test_b89_rtl.py flow/tests/test_89_lutgen_rtl.py
           python3 results/b89/summary.py --check
       - name: Upload simulation logs
         if: always()

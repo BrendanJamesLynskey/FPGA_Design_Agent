@@ -128,7 +128,28 @@ TreeLUT's Verilog equals TreeLUT's own predictions on the same inputs (`tests/te
 
 Post-route, out of context, Vivado 2026.1 ([summary.json], `ooc/`):
 
-HARDWARE_TABLE
+| Module | Test acc. | Clocks | K26 closed (ns) | K26 latency (ns) | K26 LUT / FF | A7 closed (ns) | A7 latency (ns) | A7 LUT / FF |
+|---|---|---|---|---|---|---|---|---|
+| `lg_add_comb` | 0.4913 | 1 | 4.95 | 4.95 | 882 / 48 | 13.85 | 13.85 | 866 / 49 |
+| `lg_add_layer` | 0.4913 | 2 | 2.85 | 5.7 | 804 / 143 | 8.0 | 16.0 | 767 / 143 |
+| `lg_small_comb` | 0.4892 | 1 | 4.5 | 4.5 | 325 / 42 | 12.05 | 12.05 | 259 / 42 |
+| `lg_small_layer` | 0.4892 | 2 | 2.7 | 5.4 | 251 / 135 | 8.6 | 17.2 | 210 / 135 |
+| `lg_b87_comb` | 0.4811 | 1 | 3.2 | 3.2 | 129 / 41 | 9.0 | 9.0 | 129 / 41 |
+| `lg_b87_layer` | 0.4811 | 4 | 1.3 | 8.0 | 115 / 104 | 3.15 | 12.6 | 117 / 104 |
+| `treelut_arm` | 0.4983 | 3 | 2.5 | 7.5 | 869 / 323 | 7.75 | 23.25 | 854 / 323 |
+
+For comparison, the brief 87 K26 rows (`results/b87/summary.json`): trees, combinational, 4.4 ns, 640 LUTs, test 0.4914; hand MLP 37.7 ns, 6,018 LUTs, 0.4988; 87 LUT network 6.0 ns, 76 LUTs, 0.4207. No DSP or BRAM in any brief 89 module. `lg_b87_layer` closed at 1.3 ns on the K26; it is quoted at the 2.0 ns floor (8.0 ns), with the area of its 2.0 ns build. Clocks are the fastest closed point the search reached in at most four passes on the Artix-7 and three on the K26 (the fourth K26 pass was stopped to free a heavy slot for another brief), so a closed clock is a closed point, not the bound.
+
+Fan-in sweep (lg_add's configuration, seed 0, validation only; `results/b89/rounds/fanin.json`; K26):
+
+| Fan-in | Val | Table bits | K26 LUTs | K26 closed (ns) |
+|---|---|---|---|---|
+| 1 | 0.4725 | 704 | 200 | 3.7 |
+| 2 | 0.477 | 5,248 | 322 | 4.45 |
+| 3 | 0.4846 | 37,888 | 882 | 4.95 |
+| 4 | 0.4847 | 278,528 | 4977 | 6.45 |
+
+Fan-in 4 buys nothing on validation (0.4847 against 0.4846) for 5.6 times the LUTs; on the Artix-7 it did not close within four passes (best attempt 15.25 ns, WNS -0.161 ns).
 
 ![accuracy against latency](../../../results/b89/accuracy_vs_latency.svg)
 ![LUTs against fan-in](../../../results/b89/luts_vs_fanin.svg)
