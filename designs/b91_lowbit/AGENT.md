@@ -31,14 +31,14 @@ designs/b91_lowbit/lowbit/seedmean.py e58da4229f: post-hoc seed-mean comparison
 designs/b91_lowbit/ooc/ooc.py f2024cd5cd: out-of-context clock search
 designs/b91_lowbit/docs/design.md 388ef95201: design note
 designs/b91_lowbit/docs/preregistration.md 0fd6397eca: pre-registration
-designs/b91_lowbit/docs/what_we_found.md ba539b9604: the write-up
+designs/b91_lowbit/docs/what_we_found.md dea94c4fb2: the write-up
 designs/b91_lowbit/docs/stage2_plan.md 71bfdf7f35: plan: FP4 hardware for the phase-2 student
 flow/lowbit.py 8c56739acc: flow tool: train, emit, predict
 
 ## commands
 train all stage 1 networks, select, sweep, freeze, emit RTL (~75min): python3 -m designs.b91_lowbit.lowbit.cli stage1 && python3 -m designs.b91_lowbit.lowbit.cli select && python3 -m designs.b91_lowbit.lowbit.cli stage2 && python3 -m designs.b91_lowbit.lowbit.cli freeze && python3 -m designs.b91_lowbit.lowbit.cli rtl
 score the test split (after frozen.json is committed) (~2min): python3 -m designs.b91_lowbit.lowbit.evaluate && python3 -m designs.b91_lowbit.lowbit.seedmean
-RTL against the twins, lint (~6min): B91_RECORD=results/b91 python3 -m pytest -q designs/b91_lowbit/tests flow/tests/test_91_lowbit.py
+RTL against the twins, lint (~6min): B91_RECORD=results/b91 python3 -m pytest -q designs/b91_lowbit/tests flow/tests/test_91_lowbit_rtl.py
 [heavy] out-of-context builds and clock search on both parts (~480min): python3 -m designs.b91_lowbit.ooc.ooc --part xck26-sfvc784-2LV-c --arms <modules> --start 3.0
 summary, figures and tables (~1min): python3 results/b91/summary.py && python3 results/b91/tables.py
 

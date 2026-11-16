@@ -191,7 +191,7 @@ not close on the Artix-7 in six passes (three, then three more) and is marked "n
 
 ```
 python -m designs.b91_lowbit.lowbit.cli stage1 && ... select && ... stage2 && ... freeze && ... rtl
-B91_RECORD=results/b91 pytest designs/b91_lowbit/tests flow/tests/test_91_lowbit.py
+B91_RECORD=results/b91 pytest designs/b91_lowbit/tests flow/tests/test_91_lowbit_rtl.py
 python -m designs.b91_lowbit.lowbit.evaluate && python -m designs.b91_lowbit.lowbit.seedmean
 python -m designs.b91_lowbit.ooc.ooc --part xck26-sfvc784-2LV-c --arms <modules>     # Vivado 2026.1, a heavy slot
 python3 results/b91/summary.py && python3 results/b91/tables.py

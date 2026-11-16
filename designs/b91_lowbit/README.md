@@ -62,7 +62,7 @@ Interfaces:
 |---|---|---|---|
 | train all stage 1 networks, select, sweep, freeze, emit RTL; needs torch (CPU); a 5 GB memory scope; two workers | `python3 -m designs.b91_lowbit.lowbit.cli stage1 && python3 -m designs.b91_lowbit.lowbit.cli select && python3 -m designs.b91_lowbit.lowbit.cli stage2 && python3 -m designs.b91_lowbit.lowbit.cli freeze && python3 -m designs.b91_lowbit.lowbit.cli rtl` | no | about 75 min |
 | score the test split (after frozen.json is committed); needs torch not needed | `python3 -m designs.b91_lowbit.lowbit.evaluate && python3 -m designs.b91_lowbit.lowbit.seedmean` | no | about 2 min |
-| RTL against the twins, lint; needs Icarus Verilog 12, Verilator 5 (the lint test skips without it) | `B91_RECORD=results/b91 python3 -m pytest -q designs/b91_lowbit/tests flow/tests/test_91_lowbit.py` | no | about 6 min |
+| RTL against the twins, lint; needs Icarus Verilog 12, Verilator 5 (the lint test skips without it) | `B91_RECORD=results/b91 python3 -m pytest -q designs/b91_lowbit/tests flow/tests/test_91_lowbit_rtl.py` | no | about 6 min |
 | out-of-context builds and clock search on both parts; needs Vivado 2026.1 and a heavy slot; repeat with --part xc7a100tcsg324-1 --start 12.0 --passes 3 | `python3 -m designs.b91_lowbit.ooc.ooc --part xck26-sfvc784-2LV-c --arms <modules> --start 3.0` | yes | about 480 min |
 | summary, figures and tables; needs python 3.12 | `python3 results/b91/summary.py && python3 results/b91/tables.py` | no | about 1 min |
 

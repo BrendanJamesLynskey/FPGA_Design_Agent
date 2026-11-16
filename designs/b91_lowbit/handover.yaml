@@ -85,7 +85,7 @@ files:
   sha256: 0fd6397ecae572a3ad920625fb0747f3c6f8ab93168af3964ad58801d3c01440
 - path: designs/b91_lowbit/docs/what_we_found.md
   what: the write-up
-  sha256: ba539b960437bcc95319157b6bcb0927184e99856109710b0c20366ce3d9783f
+  sha256: dea94c4fb2282a07711c3c97ac38141c791ac469f4540378b58ba27fa78f2306
 - path: designs/b91_lowbit/docs/stage2_plan.md
   what: 'plan: FP4 hardware for the phase-2 student'
   sha256: 71bfdf7f35465b22c4b61bb7dd8c0bc41d604c717aa4933cd4054d5f0b0cae8b
@@ -106,7 +106,7 @@ commands:
   minutes: 2
   needs: torch not needed
 - what: RTL against the twins, lint
-  cmd: B91_RECORD=results/b91 python3 -m pytest -q designs/b91_lowbit/tests flow/tests/test_91_lowbit.py
+  cmd: B91_RECORD=results/b91 python3 -m pytest -q designs/b91_lowbit/tests flow/tests/test_91_lowbit_rtl.py
   heavy: false
   minutes: 6
   needs: Icarus Verilog 12, Verilator 5 (the lint test skips without it)
