@@ -262,6 +262,11 @@ jobs:
           B87_ML_ARM=1 python -m pytest -q designs/b87_ml_trading/tests/test_b87_integ_rtl.py
           B87_ML_ARM=2 python -m pytest -q designs/b87_ml_trading/tests/test_b87_integ_rtl.py
           python3 results/b87/summary.py --check
+      - name: LUT-network generator (brief 89) - generated RTL against its twin (test split, random inputs, every table cell), fixed latency, Verilator -Wall; TreeLUT reference RTL against TreeLUT
+        run: |
+          sudo apt-get install -y verilator
+          python -m pytest -q designs/b89_lutnet_gen/tests/test_b89_rtl.py flow/tests/test_89_lutgen_rtl.py
+          python3 results/b89/summary.py --check
       - name: Upload simulation logs
         if: always()
         uses: actions/upload-artifact@v4
