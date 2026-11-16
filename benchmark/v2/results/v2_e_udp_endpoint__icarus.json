@@ -1,0 +1,453 @@
+{
+ "task": "v2_e_udp_endpoint",
+ "sim": "icarus",
+ "date": "2026-11-15",
+ "ref": {
+  "pass": true,
+  "tests": {
+   "test_ep_identity_reset_and_basic_commands": true,
+   "test_ep_counter_registers_show_the_count_before_the_command": true,
+   "test_ep_error_codes_and_consumed_numbers": true,
+   "test_ep_damaged_packets_get_no_reply_and_change_nothing": true,
+   "test_ep_sequence_rules": true,
+   "test_ep_telemetry_schedule_content_and_overrun": true,
+   "test_ep_telemetry_stop_period_floor_and_restart": true,
+   "test_ep_random_packets": true,
+   "test_ep_short_packet_with_big_length_unmapped_writes_and_reset": true,
+   "test_ep_refused_packets_leave_telemetry_alone_and_frames_are_snapshots": true
+  }
+ },
+ "mutants": [
+  {
+   "name": "accepts_bad_crc",
+   "why": "a packet with a wrong check is accepted",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_ep_damaged_packets_get_no_reply_and_change_nothing",
+    "test_ep_random_packets",
+    "test_ep_refused_packets_leave_telemetry_alone_and_frames_are_snapshots"
+   ]
+  },
+  {
+   "name": "truncated_leaves_parser_part_way",
+   "why": "a truncated packet is not forgotten: the next packet is glued onto it (the parser hangs on it)",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_ep_damaged_packets_get_no_reply_and_change_nothing",
+    "test_ep_random_packets",
+    "test_ep_short_packet_with_big_length_unmapped_writes_and_reset"
+   ]
+  },
+  {
+   "name": "sequence_order_lost",
+   "why": "the last accepted number is never recorded",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_ep_error_codes_and_consumed_numbers",
+    "test_ep_sequence_rules",
+    "test_ep_random_packets",
+    "test_ep_refused_packets_leave_telemetry_alone_and_frames_are_snapshots"
+   ]
+  },
+  {
+   "name": "replay_accepted",
+   "why": "a repeated number runs again",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_ep_error_codes_and_consumed_numbers",
+    "test_ep_sequence_rules",
+    "test_ep_refused_packets_leave_telemetry_alone_and_frames_are_snapshots"
+   ]
+  },
+  {
+   "name": "old_number_accepted",
+   "why": "an old number runs",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_ep_sequence_rules",
+    "test_ep_random_packets"
+   ]
+  },
+  {
+   "name": "old_number_checked_on_first",
+   "why": "the first packet after reset is compared with number 0",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_ep_sequence_rules",
+    "test_ep_random_packets"
+   ]
+  },
+  {
+   "name": "half_span_wrong",
+   "why": "exactly 0x8000 ahead counts as new",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_ep_sequence_rules"
+   ]
+  },
+  {
+   "name": "seq_moved_by_type_error",
+   "why": "a refused packet moves the sequence state",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_ep_error_codes_and_consumed_numbers"
+   ]
+  },
+  {
+   "name": "addr_error_gives_number_back",
+   "why": "a register error does not use up its sequence number",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_ep_refused_packets_leave_telemetry_alone_and_frames_are_snapshots"
+   ]
+  },
+  {
+   "name": "bad_check_gets_a_reply",
+   "why": "a packet with a bad check is answered",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_ep_damaged_packets_get_no_reply_and_change_nothing",
+    "test_ep_random_packets",
+    "test_ep_refused_packets_leave_telemetry_alone_and_frames_are_snapshots"
+   ]
+  },
+  {
+   "name": "short_not_detected",
+   "why": "a packet that ends before its announced size goes on to the check",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_ep_damaged_packets_get_no_reply_and_change_nothing",
+    "test_ep_random_packets"
+   ]
+  },
+  {
+   "name": "length_nine_not_oversize",
+   "why": "a length byte of 9 is let through",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_ep_damaged_packets_get_no_reply_and_change_nothing"
+   ]
+  },
+  {
+   "name": "type_zero_known",
+   "why": "type 0 is taken as a command",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_ep_error_codes_and_consumed_numbers"
+   ]
+  },
+  {
+   "name": "write_ro_allowed",
+   "why": "the counters can be written",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_ep_counter_registers_show_the_count_before_the_command",
+    "test_ep_error_codes_and_consumed_numbers"
+   ]
+  },
+  {
+   "name": "addr_low_bits",
+   "why": "register 256 is taken as register 0",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_ep_error_codes_and_consumed_numbers"
+   ]
+  },
+  {
+   "name": "write_value_byte_order",
+   "why": "the written value is taken low byte first",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_ep_identity_reset_and_basic_commands",
+    "test_ep_damaged_packets_get_no_reply_and_change_nothing",
+    "test_ep_sequence_rules"
+   ]
+  },
+  {
+   "name": "read_counts_itself",
+   "why": "a read of the commands register includes the read",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_ep_counter_registers_show_the_count_before_the_command",
+    "test_ep_random_packets",
+    "test_ep_short_packet_with_big_length_unmapped_writes_and_reset"
+   ]
+  },
+  {
+   "name": "status_counts_itself",
+   "why": "the status reply includes the status command",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_ep_identity_reset_and_basic_commands",
+    "test_ep_counter_registers_show_the_count_before_the_command",
+    "test_ep_error_codes_and_consumed_numbers",
+    "test_ep_damaged_packets_get_no_reply_and_change_nothing",
+    "test_ep_sequence_rules",
+    "test_ep_telemetry_schedule_content_and_overrun",
+    "test_ep_random_packets",
+    "test_ep_short_packet_with_big_length_unmapped_writes_and_reset",
+    "test_ep_refused_packets_leave_telemetry_alone_and_frames_are_snapshots"
+   ]
+  },
+  {
+   "name": "status_counter_order",
+   "why": "two counters swapped in the status reply",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_ep_damaged_packets_get_no_reply_and_change_nothing",
+    "test_ep_random_packets",
+    "test_ep_refused_packets_leave_telemetry_alone_and_frames_are_snapshots"
+   ]
+  },
+  {
+   "name": "stale_not_in_refused",
+   "why": "out-of-order packets are not in the refused-packets register",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_ep_sequence_rules"
+   ]
+  },
+  {
+   "name": "period_not_raised",
+   "why": "a period below 4 is used",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_ep_telemetry_stop_period_floor_and_restart"
+   ]
+  },
+  {
+   "name": "period_zero_sets",
+   "why": "a zero period is raised to 4 instead of keeping the period",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_ep_refused_packets_leave_telemetry_alone_and_frames_are_snapshots"
+   ]
+  },
+  {
+   "name": "start_does_not_restart_count",
+   "why": "telemetry start does not restart the count",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_ep_refused_packets_leave_telemetry_alone_and_frames_are_snapshots"
+   ]
+  },
+  {
+   "name": "stop_keeps_held_frame",
+   "why": "telemetry stop leaves a held frame",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_ep_telemetry_stop_period_floor_and_restart"
+   ]
+  },
+  {
+   "name": "overrun_replaces_frame",
+   "why": "a frame falling due while one is held replaces it",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_ep_telemetry_schedule_content_and_overrun"
+   ]
+  },
+  {
+   "name": "period_one_early",
+   "why": "a frame falls due one tick early",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_ep_telemetry_schedule_content_and_overrun",
+    "test_ep_telemetry_stop_period_floor_and_restart",
+    "test_ep_short_packet_with_big_length_unmapped_writes_and_reset",
+    "test_ep_refused_packets_leave_telemetry_alone_and_frames_are_snapshots"
+   ]
+  },
+  {
+   "name": "tlm_seq_stuck",
+   "why": "every telemetry frame carries sequence 0",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_ep_telemetry_schedule_content_and_overrun",
+    "test_ep_telemetry_stop_period_floor_and_restart",
+    "test_ep_refused_packets_leave_telemetry_alone_and_frames_are_snapshots"
+   ]
+  },
+  {
+   "name": "tlm_uptime_stale",
+   "why": "the frame shows the tick before the one that made it due",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_ep_telemetry_schedule_content_and_overrun",
+    "test_ep_telemetry_stop_period_floor_and_restart",
+    "test_ep_short_packet_with_big_length_unmapped_writes_and_reset",
+    "test_ep_refused_packets_leave_telemetry_alone_and_frames_are_snapshots"
+   ]
+  },
+  {
+   "name": "tlm_status_nonzero",
+   "why": "telemetry status byte is not zero",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_ep_telemetry_schedule_content_and_overrun",
+    "test_ep_telemetry_stop_period_floor_and_restart",
+    "test_ep_short_packet_with_big_length_unmapped_writes_and_reset",
+    "test_ep_refused_packets_leave_telemetry_alone_and_frames_are_snapshots"
+   ]
+  },
+  {
+   "name": "tlm_refused_count_zero",
+   "why": "the frame's refused count is zero",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_ep_short_packet_with_big_length_unmapped_writes_and_reset",
+    "test_ep_refused_packets_leave_telemetry_alone_and_frames_are_snapshots"
+   ]
+  },
+  {
+   "name": "reply_crc_high_first",
+   "why": "reply check goes high byte first",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_ep_identity_reset_and_basic_commands",
+    "test_ep_counter_registers_show_the_count_before_the_command",
+    "test_ep_error_codes_and_consumed_numbers",
+    "test_ep_damaged_packets_get_no_reply_and_change_nothing",
+    "test_ep_sequence_rules",
+    "test_ep_telemetry_schedule_content_and_overrun",
+    "test_ep_telemetry_stop_period_floor_and_restart",
+    "test_ep_random_packets",
+    "test_ep_short_packet_with_big_length_unmapped_writes_and_reset",
+    "test_ep_refused_packets_leave_telemetry_alone_and_frames_are_snapshots"
+   ]
+  },
+  {
+   "name": "reply_without_flag",
+   "why": "the reply type lacks its top bit",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_ep_identity_reset_and_basic_commands",
+    "test_ep_counter_registers_show_the_count_before_the_command",
+    "test_ep_error_codes_and_consumed_numbers",
+    "test_ep_damaged_packets_get_no_reply_and_change_nothing",
+    "test_ep_sequence_rules",
+    "test_ep_telemetry_schedule_content_and_overrun",
+    "test_ep_telemetry_stop_period_floor_and_restart",
+    "test_ep_random_packets",
+    "test_ep_short_packet_with_big_length_unmapped_writes_and_reset",
+    "test_ep_refused_packets_leave_telemetry_alone_and_frames_are_snapshots"
+   ]
+  },
+  {
+   "name": "take_does_nothing",
+   "why": "the held frame cannot be taken",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_ep_telemetry_schedule_content_and_overrun",
+    "test_ep_telemetry_stop_period_floor_and_restart",
+    "test_ep_refused_packets_leave_telemetry_alone_and_frames_are_snapshots"
+   ]
+  },
+  {
+   "name": "tick_count_ignored",
+   "why": "a tick write of any non-zero number makes a single tick",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_ep_counter_registers_show_the_count_before_the_command",
+    "test_ep_telemetry_schedule_content_and_overrun",
+    "test_ep_telemetry_stop_period_floor_and_restart",
+    "test_ep_short_packet_with_big_length_unmapped_writes_and_reset",
+    "test_ep_refused_packets_leave_telemetry_alone_and_frames_are_snapshots"
+   ]
+  },
+  {
+   "name": "uptime_only_when_on",
+   "why": "ticks count towards uptime only while telemetry is on",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_ep_counter_registers_show_the_count_before_the_command",
+    "test_ep_telemetry_stop_period_floor_and_restart"
+   ]
+  },
+  {
+   "name": "led_shows_refused",
+   "why": "the LEDs show the wrong count",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_ep_identity_reset_and_basic_commands",
+    "test_ep_error_codes_and_consumed_numbers",
+    "test_ep_damaged_packets_get_no_reply_and_change_nothing",
+    "test_ep_sequence_rules",
+    "test_ep_telemetry_schedule_content_and_overrun",
+    "test_ep_random_packets",
+    "test_ep_short_packet_with_big_length_unmapped_writes_and_reset"
+   ]
+  },
+  {
+   "name": "stat_bits_swapped",
+   "why": "status bits swapped",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_ep_telemetry_schedule_content_and_overrun",
+    "test_ep_telemetry_stop_period_floor_and_restart",
+    "test_ep_short_packet_with_big_length_unmapped_writes_and_reset",
+    "test_ep_refused_packets_leave_telemetry_alone_and_frames_are_snapshots"
+   ]
+  },
+  {
+   "name": "reset_period",
+   "why": "period after reset is 10",
+   "killed": true,
+   "built": true,
+   "failed_tests": [
+    "test_ep_identity_reset_and_basic_commands",
+    "test_ep_short_packet_with_big_length_unmapped_writes_and_reset"
+   ]
+  }
+ ],
+ "trap": {
+  "twin": "endpoint that orders sequence numbers with a plain greater-than test (no wrap)",
+  "why": "a plain compare refuses every number after 0xFFFF; the spec asks for modular order with a first packet that may carry any number",
+  "must_fail": [
+   "test_ep_sequence_rules"
+  ],
+  "failed_tests": [
+   "test_ep_sequence_rules"
+  ],
+  "trap_fires": true
+ },
+ "mutants_killed": 38,
+ "mutants_total": 38
+}

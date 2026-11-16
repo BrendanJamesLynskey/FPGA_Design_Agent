@@ -378,9 +378,9 @@ def catalogue(runs):
     # tasks only as a count per (domain, tier) cell.
     v2cells = {}
     for e in ledger():
-        if e["kind"] == "draw":
+        if e["kind"] in ("draw", "family_draw"):          # brief 82R: a family draw (brief 79) counts like a block draw
             c = v2cells.setdefault(f'{e["domain"]}/{e["tier"]}', {"domain": e["domain"], "tier": e["tier"], "dev": 0, "held_out": 0})
-            c["held_out"] += 1
+            c["held_out"] += 1 if e["kind"] == "draw" else len(e["held_out"])
             c["dev"] += len(e["dev"])
             for dv in e["dev"]:
                 tdir = V2 / "tasks" / dv["task"]
