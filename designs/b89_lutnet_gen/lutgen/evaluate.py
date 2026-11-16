@@ -57,7 +57,9 @@ def main():
             ps = per_session(M.twin_predict(m, X), y, g)
             runs.append({"seed": s, "val": m["val_accuracy"], "test": summ(ps) | {"per_session": [round(x, 4) for x in ps]}})
         b = next(r for r in runs if r["seed"] == bs)["test"]["per_session"]
-        rec["arms"][arm] = {"built_seed": bs, "runs": runs,
+        sc = np.sort(M.twin_scores(C.model_of(arm, bs), X), axis=1)
+        tie = round(float((sc[:, -1] == sc[:, -2]).mean()), 4)     # top two class scores equal (lower class wins)
+        rec["arms"][arm] = {"built_seed": bs, "runs": runs, "tie_share_test_built_seed": tie,
                             "test_mean_over_seeds": round(float(np.mean([r["test"]["mean"] for r in runs])), 4),
                             "paired_vs": {k: paired(b, v) for k, v in ref.items()}}
         print(arm, bs, [r["test"]["mean"] for r in runs], rec["arms"][arm]["paired_vs"]["trivial_rule_87"])

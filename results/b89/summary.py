@@ -29,11 +29,16 @@ def hw():
         for f in sorted((R / "ooc" / tag).glob("*.json")):
             r = j(f)
             a = r["at_closed_clock"]
+            if a and r["closed_at_ns"] < FLOOR:       # review S11: quote area from the build at the quoted clock
+                at = [x for x in r["passes"] if x.get("closed") and abs(x["clock_ns"] - FLOOR) < 1e-9]
+                if at:
+                    a = dict(at[0], area_at_ns=FLOOR)
             out.setdefault(r["arm"], {})[tag] = None if not a else {
                 "clocks": r["latency_clocks"], "closed_at_ns": r["closed_at_ns"], "fmax_mhz": r["closed_at_mhz"],
                 "latency_ns": round(r["latency_clocks"] * max(r["closed_at_ns"], FLOOR), 2),
                 "lut": a["lut"], "ff": a["ff"], "dsp": a["dsp"], "bram_tiles": a["bram_tiles"], "wns_ns": a["wns_ns"],
-                "wpws_ns": a["wpws_ns"], "tool": r["tool"]}
+                "wpws_ns": a["wpws_ns"], "tool": r["tool"],
+                "area_from_build_at_ns": a.get("area_at_ns", r["closed_at_ns"])}
     return out
 
 
