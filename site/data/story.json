@@ -94,7 +94,8 @@
    "2026-11-11",
    "2026-11-12",
    "2026-11-13",
-   "2026-11-14"
+   "2026-11-14",
+   "2026-11-16"
   ],
   "plots": {
    "c14_runs": {
@@ -437,7 +438,7 @@
    "e_scored": 2,
    "e_slots": 57,
    "e_tasks": 19,
-   "exp_n": 12,
+   "exp_n": 13,
    "f1_base": 61.6,
    "f1_d_est": -12.4,
    "f1_d_hi": -3.5,
@@ -513,13 +514,23 @@
    "r_skills": 157,
    "r_t0": 0.394,
    "r_tasks": 12,
+   "rv_a_fa": 146,
+   "rv_a_found": 42,
+   "rv_a_n": 42,
+   "rv_a_prec": 0.223,
+   "rv_b_fa": 3,
+   "rv_b_found": 2,
+   "rv_b_n": 14,
+   "rv_b_prec": 0.4,
+   "rv_plan_n": 21,
+   "rv_plan_ok": 8,
    "span_days": 16,
    "u_ind_n": 3,
    "u_ind_unknown": 3,
    "u_pdr_n": 3,
    "u_pdr_ok": 3,
    "v_inconclusive": 1,
-   "v_mixed": 5,
+   "v_mixed": 6,
    "v_negative": 1,
    "v_null": 1,
    "v_stopped": 1,
@@ -1066,6 +1077,36 @@
     "setup": "Both methods on three blocks with the assumptions of the bounded proofs, and eqy on 3 pairs of generated register blocks. One run each, recorded whatever it returned.",
     "title": "Can the protocol checkers be proved for every cycle, not only to a depth?",
     "verdict": "mixed"
+   },
+   {
+    "date": "2026-11-16",
+    "decision": "Review mode ships as an opt-in, read-only tool with its precision stated. Carrying out requested improvements is the next phase.",
+    "detail": [],
+    "id": "x_review",
+    "interval": "Each problem class rests on one or two designs, so this is a detection table, not a rate. The reviewer's prompt carries a checklist that names most of the classes, so recall measures following a checklist, not discovering unknown kinds of defect. On real blocks an independent rater found about a third of the findings restated documented facts or were wrong.",
+    "lesson": "Recall alone is the easy half. A reviewer that finds every planted problem and buries it among several false alarms a review costs the reader time, so precision and an independent rating of real blocks matter as much.",
+    "links": [
+     {
+      "path": "results/84_review/README.md",
+      "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/84_review/README.md"
+     },
+     {
+      "path": "results/84_review/prereg.md",
+      "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/84_review/prereg.md"
+     },
+     {
+      "path": "docs/review.md",
+      "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/docs/review.md"
+     }
+    ],
+    "order": 21,
+    "plot": "",
+    "prs": [],
+    "question": "Given a design with planted problems and clean controls, how many does a review find, how many false alarms does it raise, and what does the reviewing model add over the check suite alone?",
+    "result": "The check suite alone found 2 of 14 planted issues, with 3 false alarms (precision 0.4). With the reviewer, 42 of 42 were found, with 146 false alarms (precision 0.223). Improvement-request plans: 8 of 21 were sound.",
+    "setup": "Held-out set of small designs written for the test (most with planted problems, three clean controls), pre-registered and frozen before any held-out review. Arm one: the check suite alone at RTL scope. Arm two: the suite plus one reviewer call (claude-sonnet-5-5, no tools), three repeats per design. Scored by code against private ground truth.",
+    "title": "Can the agent review a design it did not write?",
+    "verdict": "mixed"
    }
   ],
   "findings": [
@@ -1488,7 +1529,7 @@
    "glossary": "Terms used below: CVDP is a public set of RTL-writing problems. CDC is a signal crossing between two clocks. A mutant is a design with one deliberate fault, used to test whether the tests notice. An escape is a run whose own checks passed while the hidden tests failed. Slack is how much timing margin a path has; negative means it fails. V0 to V3 are the four verification stages. H1, H2 and H9 are three harness changes (context management, hang protection, report digests). Slack and WNS both mean timing margin. An oracle answers the agent's clarifying questions from the hidden spec. ILA is an on-chip logic analyser. MCP is the protocol the agent's tools speak. Stage 2 is the RTL and tests stage. The Clarifier, Modeller, Verifier and Designer are the agent's four roles. The models are named as the provider lists them.",
    "lede": "How the FPGA Design Agent was designed, measured and corrected. The agent turns a plain-English request into a design checked by hidden tests, code-run gates and a board. This page shows how that was built and tested, one experiment at a time, including the ones that found nothing.",
    "limits": "The grouping of the timeline and the cause class of each finding are the author's reading of the pull request text, not a measurement. The findings listed are the ones with a recorded fix, not a complete count of the agent's faults. Most experiments ran one model on a small task set, and each card says so. Results measured on an earlier Vivado release and not repeated on Vivado 2026.1 are not shown. The list of merged pull requests is a snapshot from the day the page was built.",
-   "scope": "12 experiments are written up below, each in the same form. Where a run was single or the sample small, the card says so and claims no rate."
+   "scope": "13 experiments are written up below, each in the same form. Where a run was single or the sample small, the card says so and claims no rate."
   },
   "timeline": [
    {
@@ -2062,7 +2103,7 @@
    "e_scored": 2,
    "e_slots": 57,
    "e_tasks": 19,
-   "exp_n": 12,
+   "exp_n": 13,
    "f1_base": 61.6,
    "f1_d_est": -12.4,
    "f1_d_hi": -3.5,
@@ -2138,13 +2179,23 @@
    "r_skills": 157,
    "r_t0": 0.394,
    "r_tasks": 12,
+   "rv_a_fa": 146,
+   "rv_a_found": 42,
+   "rv_a_n": 42,
+   "rv_a_prec": 0.223,
+   "rv_b_fa": 3,
+   "rv_b_found": 2,
+   "rv_b_n": 14,
+   "rv_b_prec": 0.4,
+   "rv_plan_n": 21,
+   "rv_plan_ok": 8,
    "span_days": 16,
    "u_ind_n": 3,
    "u_ind_unknown": 3,
    "u_pdr_n": 3,
    "u_pdr_ok": 3,
    "v_inconclusive": 1,
-   "v_mixed": 5,
+   "v_mixed": 6,
    "v_negative": 1,
    "v_null": 1,
    "v_stopped": 1,

@@ -50,4 +50,4 @@ Each class rests on one or two designs, so this is a detection table, not a rate
 Sound plans: 8 of 21 (0.381). Per request: P1 1/3; P2 0/3; P3 0/3; P4 3/3; P5 2/3; P6 0/3; P7 2/3.
 The failures were of two kinds: runs with no usable plan, and requests the reviewer judged unmeasurable (or measurable) where the benchmark expected the opposite. The expected labels were the executor's, not fixed by any authority.
 
-Other records: [usefulness_rating.md](usefulness_rating.md), [adjudication.md](adjudication.md), [leak_guard.txt](leak_guard.txt), [real/](real) (reviews of five of our own network blocks), [AMENDMENTS.md](AMENDMENTS.md).
+Other records: [usefulness_rating.md](usefulness_rating.md), [adjudication.md](adjudication.md), [leak_guard.txt](leak_guard.txt), [real/](real) (reviews of five of our own network blocks; the "produced by review" handovers were not committed), [AMENDMENTS.md](AMENDMENTS.md).
