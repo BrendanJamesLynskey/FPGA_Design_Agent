@@ -31,10 +31,11 @@ module formal_icmp (
     logic [15:0] f_ik, f_ok;            // index of the next input and output byte
     logic [7:0]  f_bx;                 // byte 13 of the frame now arriving
     logic        f_hasx;
-    logic [8:0]  f_p1, f_p2;            // {has byte 13, byte 13} of a frame that ended 1 and 2 clocks ago
+    logic [8:0]  f_p1, f_p2, f_p3;      // {has byte 13, byte 13} of a frame that ended 1, 2 and 3 clocks ago (the request is
+                                        // accepted 3 clocks after its last byte in 0.2.0, 2 in 0.1.0)
     logic [8:0]  f_rq;                  // ... of the request being answered
     always_ff @(posedge clk) begin
-        if (rst) begin f_ik <= '0; f_ok <= '0; f_hasx <= 1'b0; f_bx <= '0; f_p1 <= '0; f_p2 <= '0; f_rq <= '0; end
+        if (rst) begin f_ik <= '0; f_ok <= '0; f_hasx <= 1'b0; f_bx <= '0; f_p1 <= '0; f_p2 <= '0; f_p3 <= '0; f_rq <= '0; end
         else begin
             f_p1 <= '0;
             if (s_axis_tvalid) begin
@@ -44,14 +45,14 @@ module formal_icmp (
                     f_ik <= '0; f_hasx <= 1'b0;
                 end else if (f_ik != 16'hFFFF) f_ik <= f_ik + 16'd1;
             end
-            f_p2 <= f_p1;
-            if (ev_request) f_rq <= f_p2;
+            f_p2 <= f_p1; f_p3 <= f_p2;
+            if (ev_request) f_rq <= f_p3;
             if (m_axis_tvalid && m_axis_tready) f_ok <= m_axis_tlast ? 16'd0 : f_ok + 16'd1;
         end
     end
     always_ff @(posedge clk) if (f_past && !rst) begin
         if (m_axis_tvalid && f_ok == 16'd13 && f_rq[8]) assert (m_axis_tdata == f_rq[7:0]);
-        if (ev_request) assert (f_p2[8]);
+        if (ev_request) assert (f_p3[8]);
         assert (viol[3:0] == 4'b0000);
         if (m_axis_tvalid) assert (f_req || ev_request);
         if (ev_reply) assert (f_req);

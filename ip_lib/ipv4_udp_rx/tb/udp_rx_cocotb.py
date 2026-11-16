@@ -120,3 +120,42 @@ async def udp_rx(dut):
     assert n_ev["ev_bad_udp"] == reasons.get("discard", 0) + reasons.get("bad_udp", 0), (n_ev, reasons)
     assert n_ev["ev_bad_ip"] == reasons.get("bad_ip", 0), (n_ev, reasons)
     dut._log.info(f"udp_rx: {N} frames, {len(want)} payloads out, kinds {kinds}, reasons {reasons}, events {n_ev}")
+
+
+LATENCY = 6            # clocks from the last input beat to the last output beat (ip.yaml latency.payload; 0.1.0: 2)
+
+
+@cocotb.test()
+async def udp_rx_latency(dut):
+    """The declared latency on an idle block: one good datagram, no gaps, output always ready. The last output beat may come
+    at most NET_LAT_EXTRA clocks later than the declared latency (brief 88: pipelined candidates); never earlier."""
+    from cocotb.triggers import FallingEdge
+    rng = random.Random(7)
+    dut.own_ip.value = int.from_bytes(OWN_IP, "big")
+    dut.ports.value = 5000
+    dut.port_en.value = 1
+    await axis_tb.start(dut)
+    src = axis_tb.Source(dut, rng, gap=0.0)
+    sink = axis_tb.Sink(dut, rng, ready=1.0, user=True, side=SIDE)
+    pay = bytes(rng.randrange(256) for _ in range(64))
+    fr = inet.eth(OWN_MAC, inet.mac_b("02:cc:00:00:00:05"), 0x0800,
+                  inet.ipv4(inet.ip_b("192.168.10.9"), OWN_IP, 17, inet.udp(inet.ip_b("192.168.10.9"), OWN_IP, 1234, 5000, pay),
+                            ident=1, flags_frag=0x4000))
+    t = {"n": 0, "in": None, "out": None}
+
+    async def watch():
+        while True:
+            await FallingEdge(dut.clk)
+            t["n"] += 1
+            if t["in"] is None and int(dut.s_axis_tvalid.value) and int(dut.s_axis_tready.value) and int(dut.s_axis_tlast.value):
+                t["in"] = t["n"]
+            if t["in"] is not None and t["out"] is None and int(dut.m_axis_tvalid.value) and int(dut.m_axis_tlast.value):
+                t["out"] = t["n"]
+    cocotb.start_soon(watch())
+    await src.send(fr)
+    await axis_tb.clocks(dut, 200)
+    sink.stop()
+    assert len(sink.frames) == 1 and sink.frames[0][0] == pay and sink.frames[0][1]["tuser"] == 0, sink.frames
+    n = t["out"] - t["in"]
+    dut._log.info(f"latency: {n} clocks from the frame's last beat to the payload's last beat")
+    assert axis_tb.lat_ok(n, LATENCY), (n, LATENCY, axis_tb.LAT_EXTRA)

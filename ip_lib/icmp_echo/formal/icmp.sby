@@ -1,17 +1,18 @@
-# SymbiYosys: icmp_echo's reply protocol (axi_tx/rtl/axis_rules.sv, the AXI checker). bmc: bounded, depth 64 (a request, a frame right after it and the reply's first bytes); cover: a
-# whole reply to a minimal echo request leaves (depth 90).
+# SymbiYosys: icmp_echo's reply protocol (axi_tx/rtl/axis_rules.sv, the AXI checker). bmc: bounded, depth 62 (64 before 0.2.0: step 64 did not finish in an hour; the shortest reply reaches byte 13 at step 60) (a request, a frame right after it and the reply's first bytes); cover: a
+# whole reply to a minimal echo request leaves (depth 96; 90 before the 0.2.0 latency).
 [tasks]
 bmc
 cover
 
 [options]
 bmc: mode bmc
-bmc: depth 64
+bmc: depth 62
 cover: mode cover
-cover: depth 90
+cover: depth 96
 
+# yices: the 0.2.0 reply starts later and boolector did not finish step 61 of the bounded check in an hour; yices passes steps up to 63 in about 10 minutes, step 64 not in an hour
 [engines]
-smtbmc boolector
+smtbmc yices
 
 [script]
 read_verilog -formal -sv axis_rules.sv

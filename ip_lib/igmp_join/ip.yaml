@@ -1,10 +1,12 @@
 # ip.yaml for igmp_join: the declared parameter space and contract (the library's reuse rules; brief 63D).
 name: igmp_join
-version: 0.1.0
-status: 'Misses 125 MHz out of context (71-80 MHz estimated: needs pipelining before it sits behind the RGMII MAC); closes
-  at 50 MHz. Simulated against RFC 2236 (directed sequence, every frame compared with the model, scapy decoding); transmit
-  framing checked by bounded model checking; built alone out of context on an Artix-7 with Vivado 2026.1; not yet run on a
-  board (the Nexys A7 network design carries it behind eth_mac_rmii; built, not yet run: a cable check comes first, see designs/b63d_nexys_net/host/PLAN.md)'
+version: 0.2.0
+status: 'Meets 125 MHz out of context on xc7a100t-1 (Fmax estimates 128 MHz at 4 and 8 groups, WNS +0.17 to +0.20 ns) and
+  with margin on xck26-2LV (232-238 MHz). Version 0.2.0 starts a frame 3 clocks after the group is picked and acts on a
+  received query or report 1 clock later. Simulated against RFC 2236 (directed sequence, every frame compared with the model,
+  scapy decoding); built alone out of context with Vivado 2026.1 (single runs at 8 ns, estimates); not yet run on a board
+  (the Nexys A7 network design carries it behind eth_mac_rmii; built, not yet run: a cable check comes first, see
+  designs/b63d_nexys_net/host/PLAN.md)'
 summary: 'Multicast group membership for a host (IGMPv2, RFC 2236) for up to 8 configured groups: unsolicited reports on joining,
   reports in answer to general, group-specific and version 3 queries after a random delay, suppression by other hosts'' reports,
   leaves. IGMPv2 only: IGMPv3 reports are not implemented (a version 3 query is answered as version 2).'
@@ -63,7 +65,7 @@ parameters:
     note: the repeat of a join's report comes within this many ticks
 constraints: []
 latency:
-  report: a join's first report follows at once (no tick wait); query answers after a random 1..Max Response Time ticks, checked
+  report: a join's first report follows 3 clocks after the group is picked (no tick wait; 0.1.0 was at once); query answers after a random 1..Max Response Time ticks, checked
     against that window in the bench
 throughput: one frame at a time, lowest group first
 guards:
@@ -94,7 +96,7 @@ boundary:
   part_specific: none
 limits: 'IGMPv2 host side only: no IGMPv3 reports or source filtering (a version 3 query is answered as a version 2 query,
   RFC 3376 7.2.1); no version 1 router compatibility timer; the random delay comes from a 16-bit LFSR; measured Fmax estimates
-  71-80 MHz out of context: below the RGMII MAC''s 125 MHz (the frame''s checksums are summed in one clock)'
+  128 MHz (xc7a100t-1) out of context; the added pipeline stage moves some decisions one clock later, so a same-clock race between a frame''s verdict and a free-running input (a tick, a flush, a lookup, an output handshake) resolves one clock later than in 0.1.0 (no bench reaches these races; the CHANGELOG lists them); the formal checks were written for 0.1.0 and run in CI on 0.2.0'
 evidence:
   summary: 'cocotb, a directed sequence written from RFC 2236 with short ticks: joins (a report at once and one repeat), general,
     group-specific and version 3 queries answered within the Max Response Time, the timer-restart rule, a query with a bad
@@ -112,5 +114,5 @@ evidence:
 cost_table: 'measured out of context: see the Cost section above'
 licence: MIT (this repository)
 next_steps:
-- Pipeline the block before it sits behind the RGMII MAC (it closes at 50 MHz, not 125 MHz).
+- Time the block in context behind eth_mac_rgmii on the KR260 (out-of-context numbers are single runs).
 - Run designs/b63d_nexys_net on the board and record the joins on a switch.

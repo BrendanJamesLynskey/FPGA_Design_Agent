@@ -1,0 +1,69 @@
+{
+ "caught": 6,
+ "valid": 7,
+ "faults": [
+  {
+   "name": "arp_round_robin_stuck",
+   "block": "arp_responder",
+   "class": "state",
+   "why": "a full cache always replaces the same slot",
+   "status": "caught",
+   "seconds": 1.8,
+   "pytest": "1 failed, 6 deselected in 1.46s"
+  },
+  {
+   "name": "icmp_checksum_not_updated",
+   "block": "icmp_echo",
+   "class": "protocol",
+   "why": "the ICMP checksum is not updated for the type change",
+   "status": "caught",
+   "seconds": 14.4,
+   "pytest": "1 failed, 8 deselected in 14.12s"
+  },
+  {
+   "name": "icmp_back_to_back_overwrite",
+   "block": "icmp_echo",
+   "class": "timing",
+   "why": "a frame starting on the clock after a request's last byte is stored over the request (found by the independent review)",
+   "status": "SURVIVED",
+   "seconds": 3.8,
+   "pytest": "1 passed, 5 deselected in 3.20s"
+  },
+  {
+   "name": "icmp_tail_bytes_overwritten",
+   "block": "icmp_echo",
+   "class": "timing",
+   "why": "bytes after 13 of a frame arriving during a reply overwrite the stored request (the formal check watches byte 13 only; found by the independent review)",
+   "status": "caught",
+   "seconds": 3.8,
+   "pytest": "1 failed, 5 deselected in 3.21s"
+  },
+  {
+   "name": "igmp_timer_never_restarted",
+   "block": "igmp_join",
+   "class": "protocol",
+   "why": "a query with a shorter Max Response Time does not shorten a running timer",
+   "status": "caught",
+   "seconds": 1.8,
+   "pytest": "1 failed, 7 deselected in 1.52s"
+  },
+  {
+   "name": "igmp_timer_always_restarted",
+   "block": "igmp_join",
+   "class": "protocol",
+   "why": "a query with a longer Max Response Time restarts a running timer (found by the independent review)",
+   "status": "caught",
+   "seconds": 1.9,
+   "pytest": "1 failed, 7 deselected in 1.64s"
+  },
+  {
+   "name": "udp_tx_zero_checksum_sent",
+   "block": "ipv4_udp_tx",
+   "class": "protocol",
+   "why": "a computed checksum of 0 goes out as 0 (no checksum) instead of 0xFFFF",
+   "status": "caught",
+   "seconds": 10.9,
+   "pytest": "1 failed, 8 deselected in 10.60s"
+  }
+ ]
+}
