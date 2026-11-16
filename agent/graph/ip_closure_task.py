@@ -164,6 +164,8 @@ def spec_for(block: str, mhz: float, part: str, extra: int) -> dict:
 
 
 def main(argv=None) -> int:
+    from agent.access import require_or_exit
+    require_or_exit('agent.graph.ip_closure_task')
     ap = argparse.ArgumentParser()
     ap.add_argument("block", choices=sorted(TESTS))
     ap.add_argument("--case", required=True)
