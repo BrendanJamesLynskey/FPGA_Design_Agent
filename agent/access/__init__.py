@@ -60,7 +60,10 @@ def read_dotenv(path: Path, name: str = ENV_NAME) -> str | None:
         for line in path.read_text().splitlines():
             line = line.strip()
             if line.startswith(name + "="):
-                return line.split("=", 1)[1].strip().strip("\"'")
+                v = line.split("=", 1)[1].strip()
+                if v[:1] in "\"'" and v[-1:] == v[:1] and len(v) > 1:
+                    return v[1:-1]
+                return v.split(" #", 1)[0].strip()
     except OSError:
         return None
     return None
@@ -75,7 +78,12 @@ def _live(entry: dict, today: _dt.date) -> bool:
     if not entry.get("enabled", True):
         return False
     exp = entry.get("expires")
-    return not exp or today <= _dt.date.fromisoformat(exp)
+    if not exp:
+        return True
+    try:
+        return today <= _dt.date.fromisoformat(exp)
+    except (TypeError, ValueError):
+        return False                                   # a malformed date closes the entry, it does not crash the gate
 
 
 def match(key: str | None, entries: list[dict], today: _dt.date | None = None) -> str | None:

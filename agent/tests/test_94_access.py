@@ -119,7 +119,6 @@ def test_arm_config_never_holds_the_key(monkeypatch, tmp_path):
 NOT_RUNNING_THE_AGENT = {
     "tools/access/set_key_hash.py": "manages the key file; reads the key to hash it",
     "agent/tools/harness_audit.py": "builds the harness over a stub client; no model, no tools",
-    "project/cli.py": "the project layer: status, hash and test generation over files; no agent run",
     "results/36_skill_routing/measure.py": "an old measurement script under results/ (frozen record)",
     "debug_core/demo_t1.py": "a demo that replays recorded calls",
     "designs/b58a_trigger/host/nl_rule.py": "a host-side tool using only the model client",
@@ -203,3 +202,19 @@ def test_the_ci_secret_matches_the_committed_hash():
     if not os.environ.get("FDA_ACCESS_KEY"):
         pytest.skip("FDA_ACCESS_KEY is not set here (fork pull request or a local run without the key)")
     assert access.require("ci") is not None
+
+
+def test_dotenv_comments_and_malformed_expiry(tmp_path):
+    f = tmp_path / ".env"
+    f.write_text(f"FDA_ACCESS_KEY={KEY} # my key\n")
+    assert access.read_dotenv(f) == KEY
+    e = _entry("alice", KEY, expires="not-a-date")
+    assert access.match(KEY, [e], TODAY) is None          # closed, no traceback
+
+
+def test_session_oracle_and_project_spec_are_gated():
+    for rel, fn in (("agent/core/session.py", "__post_init__"), ("agent/claude_code_arm/oracle.py", "cc_oracle"),
+                    ("project/cli.py", "_spec")):
+        tree = ast.parse((ROOT / rel).read_text())
+        f = next(n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef) and n.name == fn)
+        assert _calls_gate(ast.Module(body=f.body, type_ignores=[])), f"{rel}:{fn}"

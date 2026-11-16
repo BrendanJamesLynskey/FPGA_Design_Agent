@@ -37,7 +37,8 @@ def main(argv: list[str] | None = None, keys_file: Path | None = None) -> int:
         if not hit:
             print(f"no entry named {a.revoke!r}", file=sys.stderr)
             return 1
-        hit[0]["enabled"] = False
+        for e in hit:                                  # every entry of that name, in case the file was edited by hand
+            e["enabled"] = False
         msg = f"revoked {a.revoke!r}"
     else:
         key = access.read_key({}, a.env_file) if a.env_file != access.ENV_FILE else access.read_key(None, a.env_file)
@@ -45,7 +46,11 @@ def main(argv: list[str] | None = None, keys_file: Path | None = None) -> int:
             print(f"{access.ENV_NAME} is not set in the environment or in {a.env_file}", file=sys.stderr)
             return 1
         if a.expires:
-            dt.date.fromisoformat(a.expires)
+            try:
+                dt.date.fromisoformat(a.expires)
+            except ValueError:
+                print("--expires must be YYYY-MM-DD", file=sys.stderr)
+                return 1
         salt = secrets.token_hex(16)
         entry = {"name": a.name, "salt": salt, "sha256": access.hash_key(key, salt),
                  "expires": a.expires, "enabled": True}

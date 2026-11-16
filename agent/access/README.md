@@ -26,7 +26,7 @@ not do, and how to set it up. Licence: [LICENSE](../../LICENSE).
 - The key comes from `FDA_ACCESS_KEY` in the environment, else from a git-ignored `.env` at the repo root.
 - Gated: `python -m agent` (run, resume, document), run creation (`new_runtime`), the Claude Code arm and its MCP
   server, the plan and closure arms, the skill service and index tools, the smoke run and the demo scripts.
-  `python -m agent project ...`, the models, flows, RTL tests and site builds do not need the key.
+  `python -m agent project spec` is gated (it drafts with a model); the other `project` subcommands, the models, flows, RTL tests and site builds do not need the key.
   A test (`agent/tests/test_94_access.py`) fails if a new script that imports the agent has no gate call.
 
 ## Owner: arming

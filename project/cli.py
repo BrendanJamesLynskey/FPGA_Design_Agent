@@ -108,6 +108,8 @@ def main(argv: list[str] | None = None) -> int:
 
 
 def _spec(a: argparse.Namespace, root: Path) -> int:
+    from agent.access import require_or_exit      # brief 94: this subcommand drafts and answers with a model
+    require_or_exit("python -m project spec")
     from agent.graph.interview import SpecOracle
     from agent.graph.llm import DEFAULT_MODEL, OpenRouterClient, Recorder, Replay
     from project.phase0 import Calls, Drafter, Session, Terminal, oracle_llm
