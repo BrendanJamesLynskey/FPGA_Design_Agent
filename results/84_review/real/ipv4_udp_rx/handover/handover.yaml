@@ -1,0 +1,72 @@
+# Produced by review (flow/review/handover_review.py): facts read from the sources, nothing measured.
+schema: fda-handover-review/1
+produced_by: review
+review_id: ipv4_udp_rx
+id: ipv4_udp_rx
+design_sha256: 3da95ae853c9612d5519f13164ae765a2298623ed5e8e825cb79a34b8da83bd3
+summary: ipv4_udp_rx is a byte-wide AXI-Stream IPv4/UDP receiver. It parses Ethernet frames without FCS and checks the IPv4
+  header (version, IHL, checksum, length), fragments, protocol, destination address and UDP length. It optionally verifies
+  the UDP checksum including the pseudo-header, and picks the lowest enabled matching destination port. Payload bytes stream
+  out with a one-byte holdback so tlast can carry the verdict as tuser, and header fields and event pulses accompany them.
+  I found no functional bug in the RTL by reading. The main weaknesses are timing (it misses 125 MHz, which the docs state),
+  documentation mismatches, and the limited reach of the formal and seeded-fault evidence.
+scope_not:
+- 'a measured design: no build, resources, timing or power were produced by the review'
+- 'a verified design: findings are listed in review.json and not all are fixed'
+top: formal_udp_rx
+clock_domains:
+- clk
+interfaces:
+- name: clk
+  dir: input
+  width: '1'
+- name: s_axis_tdata
+  dir: input
+  width: '[7:0]'
+- name: s_axis_tvalid
+  dir: input
+  width: '1'
+- name: m_axis_tready
+  dir: input
+  width: '1'
+parameters: []
+files:
+  rtl:
+  - formal/formal_udp_rx.sv
+  - rtl/ipv4_udp_rx.sv
+  tests:
+  - tb/udp_rx_cocotb.py
+  constraints: []
+  docs:
+  - CHANGELOG.md
+  - README.md
+interfaces_text: Slave AXI-Stream s_axis (8-bit data, tuser = bad frame). Master AXI-Stream m_axis (8-bit data, tuser = discard
+  on tlast, 3-bit tdest = port index) with sideband m_src_ip, m_dst_ip, m_src_port, m_dst_port and m_len. Native config inputs
+  own_ip, ports[N_PORTS*16] and port_en. Six one-clock event pulses. s_axis_tready = !fin && (!m_axis_tvalid || m_axis_tready),
+  so it is combinational from m_axis_tready.
+clocks_resets_text: Single clock `clk`, synchronous active-high `rst`, no crossings. The reset also clears many data registers
+  (header fields, accumulators and so on), which is more than needed but harmless. Config inputs are used directly with no
+  synchronisation, which is fine in one domain but they must be static during a frame.
+architecture_text: A byte counter k, saturating at 0xFFFF, indexes the frame. Header fields are captured by case on k. Two
+  32-bit one's-complement accumulators run, one over the IP header and one over the UDP datagram. The header verdict (mine
+  && len_ok && port_hit) is taken when the first payload byte arrives at k = u0+8, which sets fwd and f_dest. A single holding
+  register h_d/h_v delays each payload byte by one so the last byte can be emitted with tlast and tuser = u_bad once the `fin`
+  cycle follows tlast. In that cycle, if nothing was held, the reason is classified into an ev_* pulse. Large combinational
+  cones (index compares, the fold and the 7-term u_tot add) are unpipelined.
+findings_open: []
+gaps:
+- no synthesis, implementation or timing result exists in this handover
+- no simulation was run by the review; the tests' coverage is the reviewer's reading
+- Reset during a frame or during an output stall.
+- s_axis_tuser asserted mid-frame, not just on the last beat.
+- Frames shorter than 14 bytes, and back-to-back frames with m_axis stalled at tlast.
+- Config changes during traffic.
+- Full parameter cross product (CHECK_UDP=0 with ACCEPT_BCAST=1, BCAST/MCAST independence).
+- Frames above Ethernet size, with k saturation.
+next_steps:
+- fix the critical and major findings, then re-run the review and the check suite at scope synth after a build
+- answer the open questions below
+open_questions:
+- Is ev_* intended to pulse for frames dropped with s_axis_tuser set when the datagram is not for us? The code and model both
+  stay silent there; confirm this is intended.
+- What BMC depth was used for the formal runs? The result files are not provided.

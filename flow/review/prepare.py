@@ -38,7 +38,7 @@ def _files(d: Path):
 def tree_sha(d: Path) -> str:
     """SHA-256 over every file's relative path and content (build/, .git and caches left out)."""
     h = hashlib.sha256()
-    for f in _files(d):
+    for f in sorted(_files(d), key=lambda p: p.relative_to(d).as_posix()):
         h.update(f.relative_to(d).as_posix().encode() + b"\0" + f.read_bytes() + b"\0")
     return h.hexdigest()
 

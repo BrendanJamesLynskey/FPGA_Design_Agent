@@ -60,7 +60,21 @@ def test_info_ignored_duplicates_benign_and_one_finding_one_issue():
                       f("e", "docs/a.md", 1, "documentation", "major")]}           # benign only up to minor
     s = S.score_review(r, TRUTH)
     assert s["found"] == ["rb99-1"] and s["duplicates"] == ["c"] and s["benign"] == ["d"] and s["false_alarms"] == ["e"]
+    g = score = S.score_review({"findings": [f("g", "rtl/z.sv", 1, "style", "minor"), f("h", "rtl/z.sv", 1, "documentation", "minor"),
+                                              f("i", "rtl/z.sv", 1, "documentation", "major"), f("j", "rtl/z.sv", 1, "reset", "minor")]}, TRUTH)
+    assert g["advisory"] == ["g", "h"] and g["false_alarms"] == ["i", "j"]
     assert s["info_ignored"] == 1
+
+
+def test_check_findings_count_only_through_tool_codes():
+    a = f("a", "rtl/x.sv", 21, "cdc")
+    a["source"] = "check:standards"                                   # right place, right category, but no listed tool code
+    assert S.score_review({"findings": [a]}, TRUTH)["found"] == []
+    b = f("b", "rtl/y.sv", 5, "scalability", rule="HDL-LINT-00 (WIDTH)")
+    b["source"] = "check:lint"
+    assert S.score_review({"findings": [b]}, TRUTH)["found"] == ["rb99-3"]
+    c = dict(a, source="both")                                         # a reviewer finding that builds on a check finding
+    assert S.score_review({"findings": [c]}, TRUTH)["found"] == ["rb99-1"]
 
 
 def test_tool_code_credit_and_severity_choice():
@@ -74,7 +88,7 @@ def test_tool_code_credit_and_severity_choice():
 def _write(tmp: Path, rid: str, arm: str, k: int, findings, ran=True):
     p = tmp / "reviews" / arm / rid / f"r{k}"
     p.mkdir(parents=True)
-    (p / "review.json").write_text(json.dumps({"findings": findings, "judge": {"ran": ran, "call": {"usage": {"total_tokens": 10, "output_tokens": 2}, "wall_s": 1}}}))
+    (p / "review.json").write_text(json.dumps({"findings": findings, "judge": {"ran": ran, "prompt_version": "2", "call": {"usage": {"total_tokens": 10, "output_tokens": 2}, "wall_s": 1}}}))
 
 
 def test_missing_runs_stay_in_the_denominator(tmp_path):

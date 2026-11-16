@@ -5,16 +5,19 @@
 
 Matching rule (pre-registered, results/84_review/prereg.md):
 - Only findings of severity critical, major or minor are scored; ``info`` findings are counted and ignored.
-- A finding FOUND a planted issue when (a) its category is one the issue accepts, or its rule code is one of the issue's tool
-  codes, AND (b) its location is inside one of the issue's regions: the same file, and for a region with lines, the finding's
-  line (or any line of its range) within LINE_TOL lines of the region; a region without lines is the whole file, and a
-  finding with no line number matches only such a region; AND (c) when the issue lists ``keywords`` (the issues whose region is a
-  whole file), the finding's title, evidence, fix or rule contains at least one of them.
+- A finding FOUND a planted issue when (a) for a reviewer's finding (source judge or both): its category is one the issue accepts,
+  or its rule text contains one of the issue's tool codes; for a check finding (source check:*): its rule text contains one of the
+  issue's tool codes (the tool signals that really show the defect), nothing else, AND (b) its location is inside one of the issue's regions: the same file, and for a region with lines, the finding's
+  line (or any line of its range, ranges over 10 lines cut to their first line) within LINE_TOL lines of the region; a region without lines is the whole file, and a
+  finding with no line number matches only such a region; AND (c) the issue lists ``keywords``: groups of words, and the finding's title, evidence, fix or
+  rule contains every word of at least one group (reviewer fix round: category and place alone credited unrelated findings).
 - Each finding is used for at most one issue and each issue is found at most once per review: further findings on an issue that
   is already found are duplicates (not false alarms, not extra recall). When several findings fit an issue, the one with the
   closest severity wins, then the higher confidence, then the lower id.
 - A finding that matches no issue is a FALSE ALARM unless the design lists a benign region for it (file and category) and the
-  finding is not above minor. False alarms are counted strictly here; the adjudication step reads them afterwards and may list
+  finding is not above minor. A minor finding in category style or documentation that matches nothing is ADVISORY: listed and
+  counted apart, never a false alarm (a reviewer may note a missing sentence or a naming point; it costs the reader little).
+  Everything else unmatched is a false alarm. False alarms are counted strictly here; the adjudication step reads them afterwards and may list
   some as real unplanted defects (``adjudication.yaml``), which are reported on their own and never added to recall.
 - Recall is over issue-reviews: planted issues x repeats. Precision is found / (found + false alarms), over scored findings.
 - Severity accuracy: of the found issues, the share where the finding's severity equals the issue's, and the share within one level.
@@ -36,6 +39,9 @@ from typing import Any
 import yaml
 
 LINE_TOL = 2
+MAX_RANGE = 10
+#: a minor finding in one of these categories that matches no planted issue is advisory: counted, listed, not a false alarm
+ADVISORY_CATEGORIES = ("style", "documentation")
 SEV = {"critical": 0, "major": 1, "minor": 2, "info": 3}
 CONF = {"high": 0, "medium": 1, "low": 2}
 BOOT = 2000
@@ -62,15 +68,22 @@ def in_region(finding: dict[str, Any], reg: dict[str, Any]) -> bool:
         return False
     lo, hi = reg["lines"]
     a, b = int(ln), int(loc.get("end_line") or ln)
+    if b - a > MAX_RANGE:           # a long range would overlap everything: only its first line counts
+        b = a
     return a <= hi + LINE_TOL and b >= lo - LINE_TOL
 
 
 def fits(finding: dict[str, Any], issue: dict[str, Any]) -> bool:
     code = (finding.get("rule") or "")
-    ok_cat = finding["category"] in issue["categories"] or any(c in code for c in issue.get("tool_codes") or [])
+    by_code = any(c in code for c in issue.get("tool_codes") or [])
+    if str(finding.get("source", "judge")).startswith("check:"):
+        ok_cat = by_code       # a check's finding counts only through the tool signals the truth lists for this issue: its category
+        #                        comes from a rule prefix, and a lint warning that happens to sit on the same line is not the defect
+    else:
+        ok_cat = finding["category"] in issue["categories"] or by_code
     kws = issue.get("keywords") or []
     text = " ".join(str(finding.get(k, "")) for k in ("title", "evidence", "fix", "rule")).lower()
-    ok_kw = not kws or any(k.lower() in text for k in kws)     # an issue with a whole-file region names words the finding must use
+    ok_kw = not kws or any(all(w.lower() in text for w in ([g] if isinstance(g, str) else g)) for g in kws)   # one group of words, all present
     return ok_cat and ok_kw and any(in_region(finding, r) for r in issue["regions"])
 
 
@@ -87,7 +100,7 @@ def score_review(review: dict[str, Any], truth: dict[str, Any]) -> dict[str, Any
         cands.sort(key=lambda f: (abs(SEV[f["severity"]] - SEV[issue["severity"]]), CONF.get(f["confidence"], 1), f["id"]))
         found[issue["id"]] = cands[0]
         used.add(cands[0]["id"])
-    dup, fa, benign = [], [], []
+    dup, fa, benign, adv = [], [], [], []
     for f in fs:
         if f["id"] in used:
             continue
@@ -95,12 +108,14 @@ def score_review(review: dict[str, Any], truth: dict[str, Any]) -> dict[str, Any
             dup.append(f["id"])
         elif any(_norm(f["location"].get("file")) == _norm(b["file"]) and f["category"] in b["cats"] and SEV[f["severity"]] >= 2 for b in truth.get("benign") or []):
             benign.append(f["id"])
+        elif f["category"] in ADVISORY_CATEGORIES and f["severity"] == "minor":
+            adv.append(f["id"])
         else:
             fa.append(f["id"])
     sev_exact = sum(1 for i in truth["issues"] if i["id"] in found and found[i["id"]]["severity"] == i["severity"])
     sev_one = sum(1 for i in truth["issues"] if i["id"] in found and abs(SEV[found[i["id"]]["severity"]] - SEV[i["severity"]]) <= 1)
     return {"found": sorted(found), "missed": sorted(i["id"] for i in truth["issues"] if i["id"] not in found), "false_alarms": fa,
-            "duplicates": dup, "benign": benign, "info_ignored": len(info), "scored_findings": len(fs), "severity_exact": sev_exact,
+            "duplicates": dup, "benign": benign, "advisory": adv, "info_ignored": len(info), "scored_findings": len(fs), "severity_exact": sev_exact,
             "severity_within_one": sev_one}
 
 
@@ -130,6 +145,10 @@ def boot(per_design: dict[str, tuple[float, float]], fn, n: int = BOOT) -> tuple
     return (round(vals[int(0.025 * len(vals))], 3), round(vals[min(len(vals) - 1, int(0.975 * len(vals)))], 3))
 
 
+col_manifest: dict[str, str] = {}
+EXPECT_PROMPT = ["2"]
+
+
 def collect(truth: dict[str, dict], reviews: Path, arm: str, split: str, k: int | None) -> dict[str, Any]:
     runs: dict[str, list[dict[str, Any]]] = defaultdict(list)
     notrun: list[str] = []
@@ -149,7 +168,15 @@ def collect(truth: dict[str, dict], reviews: Path, arm: str, split: str, k: int 
             if arm == "agent" and not rev.get("judge", {}).get("ran"):
                 notrun.append(f"{rid}/r{kk} (the reviewer's reply was not usable)")
                 continue
+            if rev.get("design", {}).get("sha256") is not None and t.get("design") and rid in col_manifest and rev["design"]["sha256"] != col_manifest[rid]:
+                notrun.append(f"{rid}/r{kk} (stale: design hash differs from the manifest)")
+                continue
+            if arm == "agent" and rev.get("judge", {}).get("prompt_version") != EXPECT_PROMPT[0]:
+                notrun.append(f"{rid}/r{kk} (stale: prompt version {rev.get('judge', {}).get('prompt_version')})")
+                continue
             s = score_review(rev, t)
+            s["checks_not_run"] = sorted((rev.get("checks") or {}).get("not_run", {}))
+            s["checks_ran"] = (rev.get("checks") or {}).get("ran", {})
             s["rid"], s["k"] = rid, kk
             runs[rid].append(s)
             c = (rev.get("judge") or {}).get("call") or {}
@@ -166,7 +193,7 @@ def summarise(truth: dict[str, dict], col: dict[str, Any], k: int, count_missing
     sel = {rid: t for rid, t in truth.items() if col["split"] == "all" or t["split"] == col["split"]}
     by_class: dict[str, dict[str, int]] = defaultdict(lambda: {"issue_reviews": 0, "found": 0, "found_in_any": 0, "found_in_all": 0, "issues": 0})
     per_design: dict[str, tuple[float, float]] = {}
-    tot = {"issue_reviews": 0, "found": 0, "found_n": 0, "fa": 0, "scored": 0, "sev_exact": 0, "sev_one": 0, "dup": 0, "benign": 0, "info": 0, "control_reviews": 0, "control_fa": 0}
+    tot = {"issue_reviews": 0, "found": 0, "found_n": 0, "fa": 0, "scored": 0, "sev_exact": 0, "sev_one": 0, "dup": 0, "benign": 0, "adv": 0, "info": 0, "control_reviews": 0, "control_fa": 0}
     cls_of = {i["id"]: i["class"] for t in truth.values() for i in t["issues"]}
     for rid, t in sel.items():
         rs = runs.get(rid, [])
@@ -189,6 +216,7 @@ def summarise(truth: dict[str, dict], col: dict[str, Any], k: int, count_missing
             tot["sev_one"] += r["severity_within_one"]
             tot["dup"] += len(r["duplicates"])
             tot["benign"] += len(r["benign"])
+            tot["adv"] += len(r["advisory"])
             tot["info"] += r["info_ignored"]
             if t["control"]:
                 tot["control_reviews"] += 1
@@ -197,13 +225,14 @@ def summarise(truth: dict[str, dict], col: dict[str, Any], k: int, count_missing
     out: dict[str, Any] = {"classes": {}, "overall": {}}
     for c, v in sorted(by_class.items()):
         lo, hi = wilson(v["found"], v["issue_reviews"])
-        out["classes"][c] = {**v, "recall": round(v["found"] / v["issue_reviews"], 3) if v["issue_reviews"] else None, "recall_wilson95": [lo, hi]}
+        out["classes"][c] = {**v, "recall": round(v["found"] / v["issue_reviews"], 3) if v["issue_reviews"] else None, "recall_wilson95_per_run": [lo, hi]}
     ir = tot["issue_reviews"]
     lo, hi = boot({r: v for r, v in per_design.items() if truth[r]["issues"]}, lambda s: (sum(a for a, _ in s) / sum(b for _, b in s)) if sum(b for _, b in s) else None)
     prec_den = tot["found"] + tot["fa"]
     out["overall"] = {"issue_reviews": ir, "found": tot["found"], "recall": round(tot["found"] / ir, 3) if ir else None, "recall_boot95_over_designs": [lo, hi],
                       "false_alarms": tot["fa"], "precision": round(tot["found"] / prec_den, 3) if prec_den else None,
-                      "scored_findings": tot["scored"], "duplicates": tot["dup"], "benign": tot["benign"], "info_ignored": tot["info"],
+                      "precision_incl_advisory_as_false": round(tot["found"] / (tot["found"] + tot["fa"] + tot["adv"]), 3) if (tot["found"] + tot["fa"] + tot["adv"]) else None,
+                      "scored_findings": tot["scored"], "duplicates": tot["dup"], "benign": tot["benign"], "advisory": tot["adv"], "info_ignored": tot["info"],
                       "severity_exact": round(tot["sev_exact"] / tot["found"], 3) if tot["found"] else None,
                       "severity_within_one": round(tot["sev_one"] / tot["found"], 3) if tot["found"] else None,
                       "control_reviews": tot["control_reviews"], "control_false_alarms": tot["control_fa"],
@@ -214,7 +243,7 @@ def summarise(truth: dict[str, dict], col: dict[str, Any], k: int, count_missing
     for g, cs in groups.items():
         f = sum(by_class[c]["found"] for c in cs)
         n = sum(by_class[c]["issue_reviews"] for c in cs)
-        out["groups"][g] = {"classes": sorted(cs), "found": f, "issue_reviews": n, "recall": round(f / n, 3) if n else None, "recall_wilson95": list(wilson(f, n))}
+        out["groups"][g] = {"classes": sorted(cs), "found": f, "issue_reviews": n, "recall": round(f / n, 3) if n else None, "recall_wilson95_per_run": list(wilson(f, n))}
     out["per_design"] = {r: {"found": a, "issue_reviews": b} for r, (a, b) in sorted(per_design.items())}
     return out
 
@@ -242,6 +271,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--out", type=Path, required=True)
     a = ap.parse_args(argv)
     truth = load_truth(a.truth)
+    col_manifest.update({r: v["sha256"] for r, v in json.loads((a.truth / "MANIFEST.json").read_text()).items()})
     col = collect(truth, a.reviews, a.arm, a.split, a.k)
     s = summarise(truth, col, a.k, not a.drop_missing)
     s.update({"arm": a.arm, "split": a.split, "k": a.k, "not_run": col["not_run"], "cost": col["cost"], "count_missing": not a.drop_missing})
