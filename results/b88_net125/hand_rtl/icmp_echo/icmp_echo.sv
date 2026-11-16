@@ -152,6 +152,9 @@ module icmp_echo #(
     logic        sending;
     logic [15:0] j, rj;                 // next byte to read; the byte in rq
     logic        rv;
+    logic        acc2;
+    logic [15:0] t_is, t_cs;
+    logic [7:0]  t_proto, t_code;
     logic        take;
     assign take  = !m_axis_tvalid || m_axis_tready;
     assign rd_en = sending && (take || !rv);
@@ -178,7 +181,7 @@ module icmp_echo #(
     always_ff @(posedge clk) begin
         ev_request <= 1'b0; ev_reply <= 1'b0; ev_busy <= 1'b0; ev_bad <= 1'b0;
         if (rst) begin
-            busy <= 1'b0; sending <= 1'b0; j <= '0; rj <= '0; rv <= 1'b0; r_da <= '0; r_isum <= '0; r_csum <= '0;
+            busy <= 1'b0; sending <= 1'b0; acc2 <= 1'b0; t_is <= '0; t_cs <= '0; t_proto <= '0; t_code <= '0; j <= '0; rj <= '0; rv <= 1'b0; r_da <= '0; r_isum <= '0; r_csum <= '0;
             r_len <= '0; m_axis_tvalid <= 1'b0; m_axis_tdata <= '0; m_axis_tlast <= 1'b0;
         end else begin
             if (fin2 && echo2) begin
@@ -187,10 +190,18 @@ module icmp_echo #(
                 else begin
                     ev_request <= 1'b1;
                     busy <= 1'b1; sending <= 1'b1; j <= '0; rv <= 1'b0; r_da <= sa; r_len <= 16'd14 + tl;
-                    // RFC 1624 eqn 3: HC' = ~(~HC + ~m + m'), m the old 16-bit field, m' the new one
-                    r_isum <= ~oc_add(oc_add(~isum_rx, ~{ttl_rx, proto}), {8'(TTL), proto});
-                    r_csum <= ~oc_add(oc_add(~csum_rx, ~{typ, code}), {8'd0, code});
+                    // RFC 1624 eqn 3: HC' = ~(~HC + ~m + m'), m the old 16-bit field, m' the new one. The first
+                    // ones' complement add is registered here, the second one clock later (acc2): the checksums
+                    // are first read as reply bytes 24 and 36, tens of clocks after the accept.
+                    t_is <= oc_add(~isum_rx, ~{ttl_rx, proto});
+                    t_cs <= oc_add(~csum_rx, ~{typ, code});
+                    t_proto <= proto; t_code <= code; acc2 <= 1'b1;
                 end
+            end
+            if (acc2) begin
+                acc2 <= 1'b0;
+                r_isum <= ~oc_add(t_is, {8'(TTL), t_proto});
+                r_csum <= ~oc_add(t_cs, {8'd0, t_code});
             end
             if (take) begin
                 m_axis_tvalid <= rv;

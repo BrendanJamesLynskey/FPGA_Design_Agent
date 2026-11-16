@@ -123,6 +123,18 @@ module igmp_join #(
     assign q_mrt = (mrt == 8'd0) ? 8'd100 : mrt;
 
     // ---------------------------------------------------------------- per-group state
+    // the message verdict is registered, and the group state acts on it one clock later (brief 88)
+    logic        q2, r2;
+    logic [31:0] grp2;
+    logic [7:0]  qm2;
+    logic [7:0]  rq [N];                 // the random delay for a query's answer, drawn with the verdict
+    always_ff @(posedge clk) begin
+        if (rst) begin for (int i = 0; i < N; i++) rq[i] <= 8'd0; q2 <= 1'b0; r2 <= 1'b0; grp2 <= '0; qm2 <= 8'd0; end
+        else begin
+            q2 <= is_query; r2 <= is_report; grp2 <= grp; qm2 <= q_mrt;
+            for (int i = 0; i < N; i++) rq[i] <= rnd(lfsr[7:0] ^ 8'(i * 37), q_mrt);
+        end
+    end
     logic [N-1:0] en_q, run, rep_p, lv_p, last_rep;
     logic [7:0]   tmr [N];
     logic [N-1:0] sent_rep, sent_lv;    // one clock: the frame for group i finished
@@ -133,7 +145,7 @@ module igmp_join #(
             for (int i = 0; i < N; i++) tmr[i] <= '0;
         end else begin
             en_q <= group_en;
-            if (is_query) ev_query <= 1'b1;
+            if (q2) ev_query <= 1'b1;
             for (int i = 0; i < N; i++) begin
                 if (sent_rep[i]) begin rep_p[i] <= 1'b0; last_rep[i] <= 1'b1; end
                 if (sent_lv[i]) lv_p[i] <= 1'b0;
@@ -145,11 +157,11 @@ module igmp_join #(
                     if (last_rep[i]) lv_p[i] <= 1'b1;
                     last_rep[i] <= 1'b0;
                 end else if (group_en[i]) begin
-                    if (is_query && (grp == 32'd0 || grp == groups[32*i +: 32])) begin
-                        if (!run[i] || tmr[i] > q_mrt) begin
-                            run[i] <= 1'b1; tmr[i] <= rnd(lfsr[7:0] ^ 8'(i * 37), q_mrt);
+                    if (q2 && (grp2 == 32'd0 || grp2 == groups[32*i +: 32])) begin
+                        if (!run[i] || tmr[i] > qm2) begin
+                            run[i] <= 1'b1; tmr[i] <= rq[i];
                         end
-                    end else if (is_report && grp == groups[32*i +: 32] && run[i]) begin
+                    end else if (r2 && grp2 == groups[32*i +: 32] && run[i]) begin
                         run[i] <= 1'b0; last_rep[i] <= 1'b0; ev_suppressed <= 1'b1;
                     end else if (run[i] && tick && !rep_p[i]) begin     // counts once no report waits
                         if (tmr[i] <= 8'd1) begin run[i] <= 1'b0; rep_p[i] <= 1'b1; end
