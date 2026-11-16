@@ -122,7 +122,7 @@ async def udp_rx(dut):
     dut._log.info(f"udp_rx: {N} frames, {len(want)} payloads out, kinds {kinds}, reasons {reasons}, events {n_ev}")
 
 
-LATENCY = 2            # clocks from the last input beat to the last output beat, measured on the unmodified block (ip.yaml latency.payload says 1 clock after the last byte, counted differently: see README)
+LATENCY = 6            # clocks from the last input beat to the last output beat (ip.yaml latency.payload; 0.1.0: 2)
 
 
 @cocotb.test()
