@@ -1,0 +1,35 @@
+# Mutants and the trap for v2_e_cmd_exec (benchmark/tools/check_task.py)
+mutants:
+- {name: write_ro_allowed, file: cmd_exec.sv, find: 'else if (p0[2:0] == 3''d0 || p0[2:0] >= 3''d4) begin code <= CODE_RO; errs <= errs + 32''d1; end', replace: 'else if (p0[2:0] == 3''d0) begin code <= CODE_RO; errs <= errs + 32''d1; end', why: the
+    counters can be written}
+- {name: id_writable, file: cmd_exec.sv, find: 'else if (p0[2:0] == 3''d0 || p0[2:0] >= 3''d4)', replace: 'else if (p0[2:0] >= 3''d4)', why: the ID register can be overwritten (as scratch0 slot)}
+- {name: addr_check_low_bits, file: cmd_exec.sv, find: wire addr_bad = (p0 > 16'd7);, replace: 'wire addr_bad = (p0[7:0] > 8''d7);', why: register 256 is taken as register 0}
+- {name: addr_limit_nine, file: cmd_exec.sv, find: wire addr_bad = (p0 > 16'd7);, replace: wire addr_bad = (p0 > 16'd8);, why: register 8 is taken as register 0}
+- {name: bad_addr_still_counts_ok, file: cmd_exec.sv, find: "if (addr_bad) begin code <= CODE_ADDR; errs <= errs + 32'd1; end\n                            else begin code <= CODE_OK; rdata <= bank(p0[2:0]); cmds <= cmds + 32'd1; end",
+  replace: "if (addr_bad) begin code <= CODE_ADDR; errs <= errs + 32'd1; cmds <= cmds + 32'd1; end\n                            else begin code <= CODE_OK; rdata <= bank(p0[2:0]); cmds <= cmds + 32'd1; end", why: a refused read also counts as
+    a success}
+- {name: failure_not_counted, file: cmd_exec.sv, find: 'default: begin code <= CODE_TYPE; errs <= errs + 32''d1; end', replace: 'default: begin code <= CODE_TYPE; end', why: unknown types are not counted as errors}
+- {name: unknown_type_code, file: cmd_exec.sv, find: 'CODE_TYPE = 3''d1,', replace: 'CODE_TYPE = 3''d2,', why: wrong code for an unknown type}
+- {name: type_six_known, file: cmd_exec.sv, find: '8''d5: begin code <= CODE_OK; cmds <= cmds + 32''d1; tlm_on <= 1''b0; end', replace: '8''d5, 8''d6: begin code <= CODE_OK; cmds <= cmds + 32''d1; tlm_on <= 1''b0; end', why: type 6 acts as telemetry
+    stop}
+- {name: read_counts_itself, file: cmd_exec.sv, find: 'else begin code <= CODE_OK; rdata <= bank(p0[2:0]); cmds <= cmds + 32''d1; end', replace: 'else begin code <= CODE_OK; rdata <= (p0[2:0] == 3''d4) ? cmds + 32''d1 : bank(p0[2:0]); cmds <=
+    cmds + 32''d1; end', why: a read of CMDS includes the read itself}
+- {name: rdata_kept_on_failure, file: cmd_exec.sv, find: "                    rdata <= '0;\n                    case (typ)", replace: '                    case (typ)', why: the old read value stays after a refused or other command}
+- {name: period_not_raised, file: cmd_exec.sv, find: 'if (p0 != 16''d0) period <= (p0 < 16''d4) ? 16''d4 : p0;', replace: if (p0 != 16'd0) period <= p0;, why: the period is not raised to 4}
+- {name: period_zero_sets, file: cmd_exec.sv, find: 'if (p0 != 16''d0) period <= (p0 < 16''d4) ? 16''d4 : p0;', replace: 'period <= (p0 < 16''d4) ? 16''d4 : p0;', why: a zero period resets it to 4 instead of keeping it}
+- {name: stop_does_not_stop, file: cmd_exec.sv, find: '8''d5: begin code <= CODE_OK; cmds <= cmds + 32''d1; tlm_on <= 1''b0; end', replace: '8''d5: begin code <= CODE_OK; cmds <= cmds + 32''d1; end', why: telemetry stop leaves it on}
+- {name: start_does_not_start, file: cmd_exec.sv, find: code <= CODE_OK; cmds <= cmds + 32'd1; tlm_on <= 1'b1;, replace: code <= CODE_OK; cmds <= cmds + 32'd1;, why: telemetry start leaves it off}
+- {name: write_low_half_only, file: cmd_exec.sv, find: 'scratch[p0[2:0] - 3''d1] <= p1;', replace: 'scratch[p0[2:0] - 3''d1] <= {16''d0, p1[15:0]};', why: only 16 bits of the value are stored}
+- {name: tick_adds_one, file: cmd_exec.sv, find: '7''h06: uptime <= uptime + {24''d0, win_wdata[7:0]};', replace: '7''h06: uptime <= uptime + 32''d1;', why: a tick write adds one whatever the number}
+- {name: refused_adds_two, file: cmd_exec.sv, find: '7''h07: errs <= errs + 32''d1;', replace: '7''h07: errs <= errs + win_wdata[0] + 32''d1;', why: the value written to the refused register matters}
+- {name: p0_wide, file: cmd_exec.sv, find: '7''h01: p0  <= win_wdata[15:0];', replace: '7''h01: p0  <= {8''d0, win_wdata[7:0]};', why: the first parameter keeps 8 bits}
+- {name: view_offset_shift, file: cmd_exec.sv, find: '7''h10, 7''h11, 7''h12, 7''h13, 7''h14, 7''h15, 7''h16, 7''h17: win_rdata <= bank(win_addr[2:0]);', replace: "7'h10, 7'h11, 7'h12, 7'h13, 7'h14, 7'h15, 7'h16: win_rdata <= bank(win_addr[2:0]);\n\
+    \                7'h17:   win_rdata <= uptime + 32'd1;", why: the uptime view is wrong}
+- {name: led_swapped, file: cmd_exec.sv, find: 'assign led = {cmds[7:0], errs[7:0]};', replace: 'assign led = {errs[7:0], cmds[7:0]};', why: the LED halves are swapped}
+- {name: period_reset_wrong, file: cmd_exec.sv, find: period <= 16'd100; tlm_on <= 1'b0;, replace: period <= 16'd10; tlm_on <= 1'b0;, why: the period after reset is 10}
+trap:
+  twin: executor that treats a register number above 7 as a wrap onto the bank (address taken modulo 8)
+  why: the common cheap decode uses the low three bits; the spec refuses register numbers of 8 or more
+  edits:
+  - {file: cmd_exec.sv, find: wire addr_bad = (p0 > 16'd7);, replace: wire addr_bad = 1'b0;}
+  must_fail: [test_exec_refusals_and_what_they_change]

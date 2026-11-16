@@ -1,0 +1,264 @@
+{
+  "task": "v2_e_resp_builder",
+  "sim": "icarus",
+  "date": "2026-11-15",
+  "ref": {
+    "pass": true,
+    "tests": {
+      "test_builder_identity_and_reset_state": true,
+      "test_builder_reply_layout_and_check": true,
+      "test_builder_every_field_width_and_type_mask": true,
+      "test_builder_full_payload_and_overflow": true,
+      "test_builder_overflow_flag_and_positions_beyond_the_reply": true,
+      "test_builder_reply_survives_until_the_next_build_and_payload_accumulates": true,
+      "test_builder_random_replies": true,
+      "test_builder_type_mask_led_status_and_shorter_after_longer": true,
+      "test_builder_reset_clears_gathered_state_and_unmapped_writes_do_nothing": true
+    }
+  },
+  "mutants": [
+    {
+      "name": "type_top_bit_missing",
+      "why": "the type is sent without its reply flag",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_builder_reply_layout_and_check",
+        "test_builder_every_field_width_and_type_mask",
+        "test_builder_full_payload_and_overflow",
+        "test_builder_reply_survives_until_the_next_build_and_payload_accumulates",
+        "test_builder_random_replies",
+        "test_builder_type_mask_led_status_and_shorter_after_longer"
+      ]
+    },
+    {
+      "name": "seq_low_first",
+      "why": "the sequence number goes low byte first",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_builder_reply_layout_and_check",
+        "test_builder_every_field_width_and_type_mask",
+        "test_builder_full_payload_and_overflow",
+        "test_builder_reply_survives_until_the_next_build_and_payload_accumulates",
+        "test_builder_random_replies",
+        "test_builder_type_mask_led_status_and_shorter_after_longer"
+      ]
+    },
+    {
+      "name": "length_byte_counts_all",
+      "why": "the length byte counts the whole frame",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_builder_reply_layout_and_check",
+        "test_builder_every_field_width_and_type_mask",
+        "test_builder_full_payload_and_overflow",
+        "test_builder_reply_survives_until_the_next_build_and_payload_accumulates",
+        "test_builder_random_replies",
+        "test_builder_type_mask_led_status_and_shorter_after_longer"
+      ]
+    },
+    {
+      "name": "crc_high_byte_first",
+      "why": "the check goes high byte first",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_builder_reply_layout_and_check",
+        "test_builder_every_field_width_and_type_mask",
+        "test_builder_full_payload_and_overflow",
+        "test_builder_reply_survives_until_the_next_build_and_payload_accumulates",
+        "test_builder_random_replies",
+        "test_builder_type_mask_led_status_and_shorter_after_longer"
+      ]
+    },
+    {
+      "name": "crc_not_inverted",
+      "why": "no final inversion",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_builder_reply_layout_and_check",
+        "test_builder_every_field_width_and_type_mask",
+        "test_builder_full_payload_and_overflow",
+        "test_builder_reply_survives_until_the_next_build_and_payload_accumulates",
+        "test_builder_random_replies",
+        "test_builder_type_mask_led_status_and_shorter_after_longer"
+      ]
+    },
+    {
+      "name": "crc_skips_header",
+      "why": "the check covers the payload only",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_builder_reply_layout_and_check",
+        "test_builder_every_field_width_and_type_mask",
+        "test_builder_full_payload_and_overflow",
+        "test_builder_reply_survives_until_the_next_build_and_payload_accumulates",
+        "test_builder_random_replies",
+        "test_builder_type_mask_led_status_and_shorter_after_longer"
+      ]
+    },
+    {
+      "name": "crc_start_zero",
+      "why": "the check starts from zero",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_builder_reply_layout_and_check",
+        "test_builder_every_field_width_and_type_mask",
+        "test_builder_full_payload_and_overflow",
+        "test_builder_reply_survives_until_the_next_build_and_payload_accumulates",
+        "test_builder_random_replies",
+        "test_builder_type_mask_led_status_and_shorter_after_longer"
+      ]
+    },
+    {
+      "name": "payload_not_cleared",
+      "why": "the next reply starts with the old payload",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_builder_reply_layout_and_check",
+        "test_builder_every_field_width_and_type_mask",
+        "test_builder_full_payload_and_overflow",
+        "test_builder_reply_survives_until_the_next_build_and_payload_accumulates",
+        "test_builder_random_replies",
+        "test_builder_type_mask_led_status_and_shorter_after_longer"
+      ]
+    },
+    {
+      "name": "overflow_not_cleared",
+      "why": "the overflow flag survives a build",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_builder_full_payload_and_overflow",
+        "test_builder_overflow_flag_and_positions_beyond_the_reply"
+      ]
+    },
+    {
+      "name": "capacity_23",
+      "why": "one payload byte fewer than the capacity",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_builder_full_payload_and_overflow",
+        "test_builder_overflow_flag_and_positions_beyond_the_reply",
+        "test_builder_random_replies",
+        "test_builder_type_mask_led_status_and_shorter_after_longer",
+        "test_builder_reset_clears_gathered_state_and_unmapped_writes_do_nothing"
+      ]
+    },
+    {
+      "name": "overflow_overwrites",
+      "why": "an extra byte replaces the last one held",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_builder_full_payload_and_overflow"
+      ]
+    },
+    {
+      "name": "type_eight_bits",
+      "why": "bit 7 of the type write leaks in",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_builder_type_mask_led_status_and_shorter_after_longer"
+      ]
+    },
+    {
+      "name": "beyond_end_reads_stale",
+      "why": "positions beyond the reply read old bytes",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_builder_identity_and_reset_state",
+        "test_builder_overflow_flag_and_positions_beyond_the_reply",
+        "test_builder_type_mask_led_status_and_shorter_after_longer",
+        "test_builder_reset_clears_gathered_state_and_unmapped_writes_do_nothing"
+      ]
+    },
+    {
+      "name": "len_off_by_one",
+      "why": "the length register is one short",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_builder_reply_layout_and_check",
+        "test_builder_every_field_width_and_type_mask",
+        "test_builder_full_payload_and_overflow",
+        "test_builder_reply_survives_until_the_next_build_and_payload_accumulates",
+        "test_builder_random_replies",
+        "test_builder_type_mask_led_status_and_shorter_after_longer"
+      ]
+    },
+    {
+      "name": "status_not_reset",
+      "why": "the status register survives CPU_RESETN",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_builder_identity_and_reset_state",
+        "test_builder_reset_clears_gathered_state_and_unmapped_writes_do_nothing"
+      ]
+    },
+    {
+      "name": "led_shows_live_status",
+      "why": "the LEDs show the status being prepared, not the reply's",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_builder_type_mask_led_status_and_shorter_after_longer"
+      ]
+    },
+    {
+      "name": "plen_five_bits_read",
+      "why": "the held-payload count reads 4 bits",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_builder_full_payload_and_overflow",
+        "test_builder_overflow_flag_and_positions_beyond_the_reply",
+        "test_builder_random_replies",
+        "test_builder_type_mask_led_status_and_shorter_after_longer",
+        "test_builder_reset_clears_gathered_state_and_unmapped_writes_do_nothing"
+      ]
+    },
+    {
+      "name": "build_during_gather_resets",
+      "why": "a build wipes the sequence register",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_builder_reply_layout_and_check",
+        "test_builder_every_field_width_and_type_mask",
+        "test_builder_full_payload_and_overflow",
+        "test_builder_reply_survives_until_the_next_build_and_payload_accumulates",
+        "test_builder_random_replies",
+        "test_builder_type_mask_led_status_and_shorter_after_longer"
+      ]
+    }
+  ],
+  "mutants_killed": 18,
+  "mutants_total": 18,
+  "trap": {
+    "twin": "builder that puts the CRC over the payload alone and the length field as the frame length",
+    "why": "the spec fixes the check to cover every byte before it, and the length byte to count payload bytes only",
+    "must_fail": [
+      "test_builder_reply_layout_and_check"
+    ],
+    "failed_tests": [
+      "test_builder_reply_layout_and_check",
+      "test_builder_every_field_width_and_type_mask",
+      "test_builder_full_payload_and_overflow",
+      "test_builder_reply_survives_until_the_next_build_and_payload_accumulates",
+      "test_builder_random_replies",
+      "test_builder_type_mask_led_status_and_shorter_after_longer"
+    ],
+    "trap_fires": true
+  }
+}

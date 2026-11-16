@@ -1,0 +1,172 @@
+# Reply frame builder (the spec oracle reads this)
+part: xc7a100tcsg324-1
+tier: T2
+behaviour:
+      frame:
+      - Reply = (0x80 | TYPE), STATUS, SEQ high, SEQ low, PLEN, payload, CRC-32 (Ethernet, low byte first) of all bytes before it.
+      - BUILD lays the reply out from TYPE, STATUS, SEQ and the held payload (one byte per clock, finished within 64 clocks), then clears the payload and the overflow flag; the registers TYPE, STATUS, SEQ stay.
+      - Capacity 24 payload bytes; a 25th is dropped and sets STAT bit 1 until the next build.
+      registers:
+      - TYPE 0 (7 bits), STATUS 1 (8), SEQ 2 (16), PBYTE 3 (append; reads 0), BUILD 4 (any write; reads 0), IDX 5 (7 bits, R/W), BYTE 6 (frame[IDX], 0 beyond the length), LEN 7, STAT 8 (bit 0 building, bit 1 overflow), PLEN 9; LED = {status of the reply, 2'b00, length}.
+top: v2_e_resp_builder_top
+open_questions: []
+timing:
+      clock_constraint: period 10 ns, port CLK100MHZ
+      async_inputs: 'UART receive and reset are asynchronous inputs: synchronised and false paths'
+      outputs: 'outputs are registered and slow: false paths'
+reset:
+      effect: TYPE, STATUS, SEQ, payload count, overflow, reply length and index 0; no reply
+      port: CPU_RESETN
+      kind: button, synchronised to the clock; reset takes hold at once and lets go on a clock edge
+      polarity: active_low
+design_id: 1381188145
+ports:
+-     async: true
+      dir: in
+      name: UART_TXD_IN
+      width: 1
+      iostandard: LVCMOS33
+      pins:
+      - C4
+-     dir: in
+      pins:
+      - C12
+      width: 1
+      name: CPU_RESETN
+      async: true
+      iostandard: LVCMOS33
+-     name: CLK100MHZ
+      pins:
+      - E3
+      dir: in
+      iostandard: LVCMOS33
+      width: 1
+-     iostandard: LVCMOS33
+      pins:
+      - D4
+      name: UART_RXD_OUT
+      dir: out
+      width: 1
+-     dir: out
+      name: LED
+      iostandard: LVCMOS33
+      width: 16
+      pins:
+      - H17
+      - K15
+      - J13
+      - N14
+      - R18
+      - V17
+      - U17
+      - U16
+      - V16
+      - T15
+      - U14
+      - T16
+      - V15
+      - V14
+      - V12
+      - V11
+board: nexys_a7_100t
+clocks:
+-     port: CLK100MHZ
+      name: sys_clk
+      source: the on-board oscillator
+      freq_mhz: 100
+title: Reply frame builder
+parameters:
+      CLKS_PER_BIT: 868
+      TIMEOUT_CYCLES: 100000
+schema: fpga-design-agent/spec/v0
+resources_expected: about 400 LUTs; one small RAM or registers; no DSP
+assumptions:
+-     reason: it is the protocol's payload length field
+      assumption: the length byte counts payload bytes only
+-     assumption: the reply stays readable until the next build
+      reason: gathering payload for the next reply must not disturb the last one
+registers:
+      unmapped: reads of unused offsets give 0; writes to unused or read-only offsets do nothing
+      shell: test shell, PROTOCOL.md 1.1
+      map:
+      -     reset: 0
+            name: STATUS
+            offset: 1
+            bits: '[7:0]'
+            access: RW
+      -     offset: 3
+            access: WO
+            reset: 0
+            name: PBYTE
+            bits: '[7:0] appended to the payload (24 at most); reads 0'
+      -     name: PLEN
+            access: RO
+            offset: 9
+            reset: 0
+            bits: payload bytes held
+      -     offset: 5
+            reset: 0
+            bits: '[6:0] position'
+            access: RW
+            name: IDX
+      -     offset: 2
+            name: SEQ
+            access: RW
+            reset: 0
+            bits: '[15:0]'
+      -     name: STAT
+            bits: '[0] building, [1] payload overflow'
+            access: RO
+            offset: 8
+            reset: 0
+      -     reset: 0
+            access: WO
+            bits: any write builds the reply; reads 0
+            name: BUILD
+            offset: 4
+      -     name: LEN
+            access: RO
+            offset: 7
+            bits: reply length in bytes
+            reset: 0
+      -     offset: 0
+            access: RW
+            bits: '[6:0] reply type (sent with bit 7 set)'
+            name: TYPE
+            reset: 0
+      -     access: RO
+            reset: 0
+            bits: reply byte at IDX, 0 past the end
+            name: BYTE
+            offset: 6
+name: v2_e_resp_builder
+requirements:
+-     proof:
+      - simulation
+      text: a 25th payload byte is dropped and sets the overflow flag
+      id: REQ-03
+-     proof:
+      - simulation
+      text: the reply is type|0x80, status, sequence high and low, payload length, payload, CRC-32 low byte first over all bytes before it
+      id: REQ-01
+-     proof:
+      - hardware
+      text: Register values read on the board equal the model's
+      id: REQ-07
+-     proof:
+      - simulation
+      id: REQ-04
+      text: positions past the reply read 0
+-     id: REQ-05
+      proof:
+      - simulation
+      text: LED shows the reply length and its status byte
+-     id: REQ-02
+      proof:
+      - simulation
+      text: a build clears the payload and the overflow flag and leaves TYPE, STATUS and SEQ
+-     text: No unconstrained path; the 100 MHz clock meets timing
+      proof:
+      - analysis
+      id: REQ-06
+source: spec.md
