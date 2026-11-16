@@ -10,8 +10,9 @@ bmc: depth 64
 cover: mode cover
 cover: depth 96
 
+# yices: the 0.2.0 reply starts later and boolector did not finish step 61 of the bounded check in an hour; yices passes steps 57-63 in about 10 minutes
 [engines]
-smtbmc boolector
+smtbmc yices
 
 [script]
 read_verilog -formal -sv axis_rules.sv
