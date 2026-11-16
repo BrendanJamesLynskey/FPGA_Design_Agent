@@ -70,14 +70,18 @@ async def adversarial(dut):
     # 5. back-to-back: an echo request, then a 60-byte ARP frame on the very next clock (always-ready input)
     f = req(bytes(range(100)))
     arp = bytes(Ether(src=PC_MAC, dst="ff:ff:ff:ff:ff:ff") / ARP(op=1, hwsrc=PC_MAC, psrc=PC_IP, pdst="192.168.10.50")).ljust(60, b"\x00")
-    before = len(sink.frames)
-    src = axis_tb.Source(dut, random.Random(1), gap=0.0)
-    await src.send(f + b"")          # send() drops tvalid for zero clocks only if called again at once
-    await src.send(arp)
-    await axis_tb.clocks(dut, 400)
-    got = sink.frames[before:]
-    ok = len(got) == 1 and got[0][0] == expect_reply(f)
-    results.append(("back-to-back", ok, got[0][0][:48].hex() if got else None))
+    # (brief 88: the frame also starts 1, 2 and 3 clocks after the request's last byte: the accept decision moved a clock later)
+    for idle in (0, 1, 2, 3):
+        before = len(sink.frames)
+        src = axis_tb.Source(dut, random.Random(1), gap=0.0)
+        await src.send(f + b"")          # send() drops tvalid for zero clocks only if called again at once
+        if idle:
+            await axis_tb.clocks(dut, idle)
+        await src.send(arp)
+        await axis_tb.clocks(dut, 400)
+        got = sink.frames[before:]
+        ok = len(got) == 1 and got[0][0] == expect_reply(f)
+        results.append((f"back-to-back idle {idle}", ok, got[0][0][:48].hex() if got else None))
     for r in results:
         dut._log.info(f"ADV {r[0]}: {'PASS' if r[1] else 'FAIL'} {r[2] or ''}")
     assert all(r[1] for r in results), [r[0] for r in results if not r[1]]

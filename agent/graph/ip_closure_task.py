@@ -71,7 +71,7 @@ def pytest_g1(block: str, d: Path, extra: int, tests: list[str] | None = None, l
     files = tests or [f"flow/net/tests/{TESTS[block]}"]
 
     def g1(rtl: Path) -> dict:
-        env = dict(os.environ, NET_LAT_EXTRA=str(extra), NET_BUILD=str(d / "simbuild"), PYTHONPATH=str(ROOT),
+        env = dict(os.environ, FDA_SIM_BUILD_ROOT=str(d / "sim"), NET_LAT_EXTRA=str(extra), NET_BUILD=str(d / "simbuild"), PYTHONPATH=str(ROOT),
                    **{f"NET_RTL_{block.upper()}": str(rtl.resolve())})
         r = subprocess.run([sys.executable, "-m", "pytest", "-q", "-rA", "-p", "no:cacheprovider", "--tb=line", *files],
                            cwd=ROOT, env=env, capture_output=True, text=True)
@@ -210,7 +210,7 @@ def main(argv=None) -> int:
                        "signoff")(d / "rtl")
         if not g1["pass"]:
             failed.append("bench or adversarial bench fails")
-        env = dict(os.environ, NET_LAT_EXTRA=str(a.extra_latency), NET_BUILD=str(d / "simbuild"))
+        env = dict(os.environ, FDA_SIM_BUILD_ROOT=str(d / "sim"), NET_LAT_EXTRA=str(a.extra_latency), NET_BUILD=str(d / "simbuild"))
         f = subprocess.run([sys.executable, "flow/net/faults.py", "--only", ",".join(m["name"] for m in
                                                                                       yaml.safe_load((iv.IP / a.block / "faults.yaml").read_text())["faults"]),
                             "--rtl-dir", str(d / "rtl"), "--json", str(out / "signoff_faults.json")],

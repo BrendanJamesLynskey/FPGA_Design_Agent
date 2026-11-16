@@ -127,6 +127,9 @@ def with_checkers(sources: list[Path], design: Path) -> list[Path]:
     return [c for c in out if c not in binds] + binds
 
 
+SIM_ROOT = Path(os.environ.get("FDA_SIM_BUILD_ROOT") or ROOT / "build" / "sim")   # concurrent runs of one test (brief 88) set their own
+
+
 def run(name: str, toplevel: str, sources: list[Path], test_module: str, test_dir: Path,
         parameters: dict[str, object] | None = None, testcase: str | list[str] | None = None,
         seed: int | None = None, build_root: Path | None = None, extra_env: dict[str, str] | None = None,
@@ -149,7 +152,7 @@ def run(name: str, toplevel: str, sources: list[Path], test_module: str, test_di
     # brief 16: stand-ins for the XPM macros a build instantiates (Icarus and Verilator have none) and, with
     # $FDA_CDC_INJECT_SEED, the synchroniser-delay injection (flow/cdc_inject.py)
     inj_env = os.environ.get("FDA_CDC_INJECT_SEED")
-    sources, inj_plus, inj_info = cdc_inject.prepare(sources, (build_root or ROOT / "build" / "sim") / f"{name}_cdcinj",
+    sources, inj_plus, inj_info = cdc_inject.prepare(sources, (build_root or SIM_ROOT) / f"{name}_cdcinj",
                                                      int(inj_env) if inj_env not in (None, "") else None)
     if inj_env not in (None, "") and os.environ.get("FDA_CDC_INJECT_INFO"):
         Path(os.environ["FDA_CDC_INJECT_INFO"]).write_text(__import__("json").dumps(inj_info, indent=1))
@@ -159,7 +162,7 @@ def run(name: str, toplevel: str, sources: list[Path], test_module: str, test_di
         sources = with_checkers(sources, design)
     sources = srcorder.order_sv(sources)                  # 07a2-prep: packages and interfaces first, not name order
     sim = get_runner(simname)
-    build_dir = (build_root or ROOT / "build" / "sim") / name
+    build_dir = (build_root or SIM_ROOT) / name
     if simname == "verilator":
         args = ["--assert", "-Wno-fatal", "-Wno-lint", "-Wno-style", "-Wno-TIMESCALEMOD", "-j", "1"]
         if coverage:
@@ -171,7 +174,7 @@ def run(name: str, toplevel: str, sources: list[Path], test_module: str, test_di
             Path(trace_dir).mkdir(parents=True, exist_ok=True)
             dump = fsm_coverage.trace_module(design, Path(trace_dir) / f"{name}{'' if seed is None else f'_seed{seed}'}.fsmtrace")
             if dump:
-                dsrc = (build_root or ROOT / "build" / "sim") / f"{name}_fsm_trace" / "fsm_trace_dump.sv"
+                dsrc = (build_root or SIM_ROOT) / f"{name}_fsm_trace" / "fsm_trace_dump.sv"
                 dsrc.parent.mkdir(parents=True, exist_ok=True)
                 dsrc.write_text(dump)
                 sources = list(sources) + [dsrc]
@@ -213,7 +216,7 @@ def _run_vhdl(name: str, toplevel: str, sources: list[Path], test_module: str, t
       parameters fixed (the test shell, SystemVerilog, stays a black-box instance in it), and the simulator builds
       that netlist with the other sources. No CDC injection and no FSM trace on this path (both read SystemVerilog)."""
     vh, other = vhdl.split(sources)
-    build_dir = (build_root or ROOT / "build" / "sim") / name
+    build_dir = (build_root or SIM_ROOT) / name
     env = {"PYTHONPATH": os.pathsep.join([str(ROOT), str(test_dir), os.environ.get("PYTHONPATH", "")])}
     env["FDA_COV_OUT"] = str(build_dir / "coverage_func.yml")
     env.update(extra_env or {})

@@ -4,8 +4,8 @@ runner: flow/net/faults.py          # the fault runner that owns this block's fa
 faults:
   - name: udp_tx_zero_checksum_sent
     file: ipv4_udp_tx.sv
-    old: "((~fold(u_sum) == 16'h0000) ? 16'hFFFF : ~fold(u_sum))"
-    new: "~fold(u_sum)"
+    old: "((~fold(u_sum_r) == 16'h0000) ?\n                             16'hFFFF : ~fold(u_sum_r));"
+    new: "~fold(u_sum_r);"
     class: protocol
     why: a computed checksum of 0 goes out as 0 (no checksum) instead of 0xFFFF
     test: flow/net/tests/test_63d_udp_tx_rtl.py -k bram_1472

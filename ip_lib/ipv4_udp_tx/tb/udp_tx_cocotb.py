@@ -17,7 +17,7 @@ from ip_lib.ipv4_udp_tx import model
 
 SEED = int(os.environ.get("UTX_SEED", "1"))
 N = int(os.environ.get("UTX_N", "40"))
-LATENCY = 4                                         # ip.yaml latency.frame
+LATENCY = 7                                         # ip.yaml latency.frame
 OWN_MAC = inet.mac_b("02:00:00:00:00:01")
 OWN_IP = inet.ip_b("192.168.10.2")
 try:

@@ -11,7 +11,7 @@ faults:
     test: flow/net/tests/test_63d_icmp_rtl.py -k bram_2048
   - name: icmp_checksum_not_updated
     file: icmp_echo.sv
-    old: "r_csum <= ~oc_add(oc_add(~csum_rx, ~{typ, code}), {8'd0, code});"
+    old: "r_csum <= ~oc_add(t_cs, {8'd0, t_code});"
     new: "r_csum <= csum_rx;"
     class: protocol
     why: the ICMP checksum is not updated for the type change
@@ -39,15 +39,15 @@ faults:
     test: flow/net/tests/test_63d_icmp_rtl.py -k bram_2048
   - name: icmp_back_to_back_overwrite
     file: icmp_echo.sv
-    old: "assign blocked = busy || (fin && ok && f_store);"
+    old: "assign blocked = busy || accept;"
     new: "assign blocked = busy;"
     class: timing
     why: a frame starting on the clock after a request's last byte is stored over the request (found by the independent review)
     test: flow/net/tests/test_63d_adversarial_rtl.py -k icmp
   - name: icmp_tail_bytes_overwritten
     file: icmp_echo.sv
-    old: "assign we = beat && (first ? !blocked : stored) && k < 16'(BUF_BYTES);"
-    new: "assign we = beat && (k > 16'd13 ? 1'b1 : (first ? !blocked : stored)) && k < 16'(BUF_BYTES);"
+    old: "assign we = beat && (k < 16'd12 || stored) && k < 16'(BUF_BYTES);"
+    new: "assign we = beat && (k > 16'd13 ? 1'b1 : (k < 16'd12 || stored)) && k < 16'(BUF_BYTES);"
     class: timing
     why: bytes after 13 of a frame arriving during a reply overwrite the stored request (the formal check watches byte 13 only; found by the independent review)
     test: flow/net/tests/test_63d_adversarial_rtl.py -k icmp

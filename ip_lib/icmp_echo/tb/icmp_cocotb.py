@@ -19,7 +19,7 @@ from ip_lib.icmp_echo import model
 
 SEED = int(os.environ.get("ICMP_SEED", "1"))
 N = int(os.environ.get("ICMP_N", "60"))
-LATENCY = 4                                         # ip.yaml latency.reply
+LATENCY = 5                                         # ip.yaml latency.reply
 OWN_MAC = inet.mac_b("02:00:00:00:00:01")
 OWN_IP = inet.ip_b("192.168.10.2")
 try:

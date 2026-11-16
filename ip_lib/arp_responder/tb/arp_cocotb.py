@@ -16,7 +16,7 @@ from ip_lib.arp_responder import model
 
 SEED = int(os.environ.get("ARP_SEED", "1"))
 N = int(os.environ.get("ARP_N", "150"))
-LATENCY = 3                                         # ip.yaml latency.reply
+LATENCY = 4                                         # ip.yaml latency.reply
 OWN_MAC = inet.mac_b("02:00:00:00:00:01")
 OWN_IP = inet.ip_b("192.168.10.2")
 
