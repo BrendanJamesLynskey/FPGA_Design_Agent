@@ -3,4 +3,866 @@
 .......................................................................s [ 11%]
 sssssss.............sss................................................. [ 15%]
 ........................................................................ [ 19%]
-..............................................
+........................................................................ [ 23%]
+........................................................................ [ 27%]
+........................................................................ [ 31%]
+........................................................................ [ 35%]
+........................................................................ [ 39%]
+........................................................................ [ 43%]
+........................................................................ [ 46%]
+........................................................................ [ 50%]
+.......s.................ss.....................FFF.....F............... [ 54%]
+...........F.............F.............F..FF............................ [ 58%]
+...........................................................F.....s...... [ 62%]
+........................................................................ [ 66%]
+........ss...........F.............F...............F.................... [ 70%]
+........................................................................ [ 74%]
+...........F......................F........................sFFFFFF...... [ 78%]
+.........................................................s.............. [ 82%]
+........................................................................ [ 86%]
+.....................................F.......ssssssssssssss............. [ 90%]
+..........................................ss............................ [ 93%]
+........................................................................ [ 97%]
+........................................                                 [100%]
+ERROR: the tests changed the checkout they ran from: HEAD 463b91264025 -> 585315dfb4a0
+
+=================================== FAILURES ===================================
+_________________________________ test_seed_1 __________________________________
+
+    def test_seed_1():
+>       _run(1)
+
+agent/tests/fixtures/run4_c14/tests/test_c14_int8_dot_requant_rtl.py:30: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+agent/tests/fixtures/run4_c14/tests/test_c14_int8_dot_requant_rtl.py:22: in _run
+    res = cocotb_run.run(NAME, TOPLEVEL, sources, "c14_bench", Path(__file__).resolve().parent,
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+name = 'c14_int8_dot_requant', toplevel = 'c14_int8_dot_requant_top'
+sources = [PosixPath('/home/brendan/Claude_sandbox/_worktrees/88-net-125/flow/cdc_models/cdc_inj_pkg.sv'), PosixPath('/home/bren...t_requant_cdcinj/sync2.sv'), PosixPath('/home/brendan/Claude_sandbox/_worktrees/88-net-125/shell/rtl/uart_rx.sv'), ...]
+test_module = 'c14_bench'
+test_dir = PosixPath('/home/brendan/Claude_sandbox/_worktrees/88-net-125/agent/tests/fixtures/run4_c14/tests')
+parameters = {'CLKS_PER_BIT': 8, 'TIMEOUT_CYCLES': 2000, 'BUILD_STAMP': 464367618}
+testcase = None, seed = 1, build_root = None, extra_env = None, coverage = False
+
+    def run(name: str, toplevel: str, sources: list[Path], test_module: str, test_dir: Path,
+            parameters: dict[str, object] | None = None, testcase: str | list[str] | None = None,
+            seed: int | None = None, build_root: Path | None = None, extra_env: dict[str, str] | None = None,
+            coverage: bool | None = None) -> None:
+        """Build ``sources`` with $SIM (icarus by default; verilator needs 5.036+ for cocotb 2) and run
+        ``test_module`` (a name or a list of names); fail if any test failed.
+    
+        ``coverage=None`` follows ``$FDA_COVERAGE`` (set by the agent's ``simulate(coverage=True)``). The bench can export
+        its functional-coverage bins to ``$FDA_COV_OUT`` (cocotb-coverage ``coverage_db.export_to_yaml``). With ``coverage`` (Verilator only) the build is instrumented for line and toggle coverage and the run
+        writes ``<build_dir>/coverage.dat``. Under Verilator, warnings are not fatal (the repo's lint gate is
+        flow/lint.sh) and concurrent assertions are on."""
+        simname = os.environ.get("SIM", "icarus")
+        if coverage is None:
+            coverage = os.environ.get("FDA_COVERAGE") == "1"
+        sources = swap_mutant_sources(sources)
+        design = srcorder.design_of(test_dir)
+        if any(vhdl.is_vhdl(s) for s in sources):            # brief 55: VHDL sources (GHDL natively, or a GHDL netlist)
+            return _run_vhdl(name, toplevel, sources, test_module, test_dir, parameters, testcase, seed, build_root,
+                             extra_env, coverage, simname, design)
+        # brief 16: stand-ins for the XPM macros a build instantiates (Icarus and Verilator have none) and, with
+        # $FDA_CDC_INJECT_SEED, the synchroniser-delay injection (flow/cdc_inject.py)
+        inj_env = os.environ.get("FDA_CDC_INJECT_SEED")
+        sources, inj_plus, inj_info = cdc_inject.prepare(sources, (build_root or SIM_ROOT) / f"{name}_cdcinj",
+                                                         int(inj_env) if inj_env not in (None, "") else None)
+        if inj_env not in (None, "") and os.environ.get("FDA_CDC_INJECT_INFO"):
+            Path(os.environ["FDA_CDC_INJECT_INFO"]).write_text(__import__("json").dumps(inj_info, indent=1))
+        if srcorder.no_shell(design):                         # 07a2-prep: a UART-subject design is built without the test shell
+            sources = srcorder.drop_shell(sources)
+        if simname == "verilator":                            # 07a2 fix 4: bound checkers belong to every Verilator build
+            sources = with_checkers(sources, design)
+        sources = srcorder.order_sv(sources)                  # 07a2-prep: packages and interfaces first, not name order
+        sim = get_runner(simname)
+        build_dir = (build_root or SIM_ROOT) / name
+        if simname == "verilator":
+            args = ["--assert", "-Wno-fatal", "-Wno-lint", "-Wno-style", "-Wno-TIMESCALEMOD", "-j", "1"]
+            if coverage:
+                args += ["--coverage-line", "--coverage-toggle", "--coverage-user"]
+        else:
+            args = ["-g2012"]
+            trace_dir = os.environ.get("FDA_FSM_TRACE")        # brief 24: the state register's value changes, for flow/fsm_coverage.py
+            if trace_dir:
+                Path(trace_dir).mkdir(parents=True, exist_ok=True)
+                dump = fsm_coverage.trace_module(design, Path(trace_dir) / f"{name}{'' if seed is None else f'_seed{seed}'}.fsmtrace")
+                if dump:
+                    dsrc = (build_root or SIM_ROOT) / f"{name}_fsm_trace" / "fsm_trace_dump.sv"
+                    dsrc.parent.mkdir(parents=True, exist_ok=True)
+                    dsrc.write_text(dump)
+                    sources = list(sources) + [dsrc]
+                    args += ["-s", "fsm_trace_dump"]
+        args += [f"-I{d}" for d in sorted({str(Path(s).parent) for s in sources})]     # `include "x.svh" next to a source
+        sim.build(sources=[str(s) for s in sources], hdl_toplevel=toplevel, parameters=parameters or {},
+                  build_dir=build_dir, timescale=("1ns", "1ps"), always=True, build_args=args)
+        env = {"PYTHONPATH": os.pathsep.join([str(ROOT), str(test_dir), os.environ.get("PYTHONPATH", "")])}
+        env["FDA_COV_OUT"] = str(build_dir / "coverage_func.yml")
+        env.update(extra_env or {})
+        plus = [f"+verilator+coverage+file+{build_dir / 'coverage.dat'}"] if (simname == "verilator" and coverage) else []
+        plus += inj_plus
+        try:
+            # 07a2-prep: the simulator starts in test_dir; the task's data files are linked there for the run ($readmemh)
+            with srcorder.linked_data(design / "data", test_dir):
+                results = sim.test(test_module=test_module, hdl_toplevel=toplevel, testcase=testcase, seed=seed,
+                                   build_dir=build_dir, test_dir=test_dir, extra_env=env, parameters=parameters or {},
+                                   timescale=("1ns", "1ps"), results_xml=str(build_dir / "results.xml"),
+                                   log_file=build_dir / "sim.log", plusargs=plus)
+        except SystemExit:
+            collect_results(build_dir, seed)         # a failing run is evidence too: the gate reads the failures
+            # cocotb's runner exits with only "Failed n of m tests"; the failing assertions and tracebacks are in the
+            # simulator log, which lives in a scratch directory the caller never sees. Say what they are.
+>           raise AssertionError(f"{name}: the cocotb run failed. From {build_dir / 'sim.log'}:\n"
+                                 + failure_excerpt(build_dir / "sim.log")) from None
+E           AssertionError: c14_int8_dot_requant: the cocotb run failed. From /home/brendan/Claude_sandbox/_worktrees/88-net-125/build/sim/c14_int8_dot_requant/sim.log:
+E                                                                   Traceback (most recent call last):
+E                                                                     File "/home/brendan/Claude_sandbox/_worktrees/88-net-125/agent/tests/fixtures/run4_c14/tests/c14_bench.py", line 419, in test_smoke
+E                                                                       assert (st, d) == (0, 0x00010000)
+E                                                                   AssertionError: assert (0, 65537) == (0, 65536)
+E            26010.00ns WARNING  cocotb.regression                  c14_bench.test_smoke failed
+E            26010.00ns INFO     cocotb.regression                  running c14_bench.test_regs_rw (2/12)
+E           720300.00ns INFO     cocotb.regression                  c14_bench.test_regs_rw passed
+E           720300.00ns INFO     cocotb.regression                  running c14_bench.test_alias_unmapped (3/12)
+E           1501080.00ns INFO     cocotb.regression                  c14_bench.test_alias_unmapped passed
+E           1501080.00ns INFO     cocotb.regression                  running c14_bench.test_arith_a (4/12)
+E           2306410.00ns INFO     cocotb.regression                  c14_bench.test_arith_a passed
+E           2306410.00ns INFO     cocotb.regression                  running c14_bench.test_arith_b (5/12)
+E           3458320.00ns INFO     cocotb.regression                  c14_bench.test_arith_b passed
+E           3458320.00ns INFO     cocotb.regression                  running c14_bench.test_arith_random (6/12)
+E           5030590.00ns INFO     cocotb.regression                  c14_bench.test_arith_random passed
+E           5030590.00ns INFO     cocotb.regression                  running c14_bench.test_shift_sweep (7/12)
+E           6899820.01ns INFO     cocotb.regression                  c14_bench.test_shift_sweep passed
+E           6899820.01ns INFO     cocotb.regression                  running c14_bench.test_go_timing (8/12)
+E                                                                    Traceback (most recent call last):
+E                                                                      File "/home/brendan/Claude_sandbox/_worktrees/88-net-125/agent/tests/fixtures/run4_c14/tests/c14_bench.py", line 628, in test_shell_protocol
+E                                                                        assert (await e.txn(CMD_WRITE, 0x05, 1)) == (3, 0)
+E                                                                    AssertionError: assert (4, 0) == (3, 0)
+E           8002480.01ns WARNING  cocotb.regression                  c14_bench.test_shell_protocol failed
+E           8002480.01ns INFO     cocotb.regression                  running c14_bench.test_baud (11/12)
+E           8016120.01ns INFO     cocotb.regression                  c14_bench.test_baud passed
+E           8016120.01ns INFO     cocotb.regression                  running c14_bench.test_zz_export (12/12)
+E           8016120.01ns INFO     cocotb.regression                  c14_bench.test_zz_export passed
+E           8016120.01ns INFO     cocotb.regression                  ****************************************************************************************
+E                                                                    ** TEST                            STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **
+E                                                                    ****************************************************************************************
+E                                                                    ** c14_bench.test_smoke             FAIL       26010.00           0.38      68052.48  **
+E                                                                    ** c14_bench.test_regs_rw           PASS      694290.00          10.42      66644.71  **
+
+flow/cocotb_run.py:201: AssertionError
+------------------------------ Captured log call -------------------------------
+INFO     Icarus:runner.py:632 Running command iverilog -o /home/brendan/Claude_sandbox/_worktrees/88-net-125/build/sim/c14_int8_dot_requant/sim.vvp -s c14_int8_dot_requant_top -g2012 -Pc14_int8_dot_requant_top.CLKS_PER_BIT=8 -Pc14_int8_dot_requant_top.TIMEOUT_CYCLES=2000 -Pc14_int8_dot_requant_top.BUILD_STAMP=464367618 -g2012 -I/home/brendan/Claude_sandbox/_worktrees/88-net-125/agent/tests/fixtures/run4_c14/rtl -I/home/brendan/Claude_sandbox/_worktrees/88-net-125/build/sim/c14_int8_dot_requant_cdcinj -I/home/brendan/Claude_sandbox/_worktrees/88-net-125/flow/cdc_models -I/home/brendan/Claude_sandbox/_worktrees/88-net-125/shell/rtl -f /home/brendan/Claude_sandbox/_worktrees/88-net-125/build/sim/c14_int8_dot_requant/cmds.f /home/brendan/Claude_sandbox/_worktrees/88-net-125/flow/cdc_models/cdc_inj_pkg.sv /home/brendan/Claude_sandbox/_worktrees/88-net-125/shell/rtl/fpga_shell.sv /home/brendan/Claude_sandbox/_worktrees/88-net-125/build/sim/c14_int8_dot_requant_cdcinj/reset_sync.sv /home/brendan/Claude_sandbox/_worktrees/88-net-125/shell/rtl/shell_core.sv /home/brendan/Claude_sandbox/_worktrees/88-net-125/build/sim/c14_int8_dot_requant_cdcinj/sync2.sv /home/brendan/Claude_sandbox/_worktrees/88-net-125/shell/rtl/uart_rx.sv /home/brendan/Claude_sandbox/_worktrees/88-net-125/shell/rtl/uart_tx.sv /home/brendan/Claude_sandbox/_worktrees/88-net-125/agent/tests/fixtures/run4_c14/rtl/c14_int8_dot_requant_top.sv /home/brendan/Claude_sandbox/_worktrees/88-net-125/agent/tests/fixtures/run4_c14/rtl/dotq_core.sv /home/brendan/Claude_sandbox/_worktrees/88-net-125/agent/tests/fixtures/run4_c14/rtl/dotq_regs.sv /home/brendan/Claude_sandbox/_worktrees/88-net-125/agent/tests/fixtures/run4_c14/rtl/reset_sync.sv in directory /home/brendan/Claude_sandbox/_worktrees/88-net-125/build/sim/c14_int8_dot_requant
+INFO     Icarus:runner.py:632 Running command vvp -M /home/brendan/Claude_sandbox/_worktrees/88-venv/lib/python3.12/site-packages/cocotb/libs -m libcocotbvpi_icarus /home/brendan/Claude_sandbox/_worktrees/88-net-125/build/sim/c14_int8_dot_requant/sim.vvp +CDC_INJ_SEED=2 -none in directory /home/brendan/Claude_sandbox/_worktrees/88-net-125/agent/tests/fixtures/run4_c14/tests
+ERROR    Icarus:runner.py:572 ERROR: Failed 2 of 12 tests.
+_________________________________ test_seed_2 __________________________________
+
+    def test_seed_2():
+>       _run(2)
+
+agent/tests/fixtures/run4_c14/tests/test_c14_int8_dot_requant_rtl.py:34: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+agent/tests/fixtures/run4_c14/tests/test_c14_int8_dot_requant_rtl.py:22: in _run
+    res = cocotb_run.run(NAME, TOPLEVEL, sources, "c14_bench", Path(__file__).resolve().parent,
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+name = 'c14_int8_dot_requant', toplevel = 'c14_int8_dot_requant_top'
+sources = [PosixPath('/home/brendan/Claude_sandbox/_worktrees/88-net-125/flow/cdc_models/cdc_inj_pkg.sv'), PosixPath('/home/bren...t_requant_cdcinj/sync2.sv'), PosixPath('/home/brendan/Claude_sandbox/_worktrees/88-net-125/shell/rtl/uart_rx.sv'), ...]
+test_module = 'c14_bench'
+test_dir = PosixPath('/home/brendan/Claude_sandbox/_worktrees/88-net-125/agent/tests/fixtures/run4_c14/tests')
+parameters = {'CLKS_PER_BIT': 8, 'TIMEOUT_CYCLES': 2000, 'BUILD_STAMP': 464367618}
+testcase = None, seed = 2, build_root = None, extra_env = None, coverage = False
+
+    def run(name: str, toplevel: str, sources: list[Path], test_module: str, test_dir: Path,
+            parameters: dict[str, object] | None = None, testcase: str | list[str] | None = None,
+            seed: int | None = None, build_root: Path | None = None, extra_env: dict[str, str] | None = None,
+            coverage: bool | None = None) -> None:
+        """Build ``sources`` with $SIM (icarus by default; verilator needs 5.036+ for cocotb 2) and run
+        ``test_module`` (a name or a list of names); fail if any test failed.
+    
+        ``coverage=None`` follows ``$FDA_COVERAGE`` (set by the agent's ``simulate(coverage=True)``). The bench can export
+        its functional-coverage bins to ``$FDA_COV_OUT`` (cocotb-coverage ``coverage_db.export_to_yaml``). With ``coverage`` (Verilator only) the build is instrumented for line and toggle coverage and the run
+        writes ``<build_dir>/coverage.dat``. Under Verilator, warnings are not fatal (the repo's lint gate is
+        flow/lint.sh) and concurrent assertions are on."""
+        simname = os.environ.get("SIM", "icarus")
+        if coverage is None:
+            coverage = os.environ.get("FDA_COVERAGE") == "1"
+        sources = swap_mutant_sources(sources)
+        design = srcorder.design_of(test_dir)
+        if any(vhdl.is_vhdl(s) for s in sources):            # brief 55: VHDL sources (GHDL natively, or a GHDL netlist)
+            return _run_vhdl(name, toplevel, sources, test_module, test_dir, parameters, testcase, seed, build_root,
+                             extra_env, coverage, simname, design)
+        # brief 16: stand-ins for the XPM macros a build instantiates (Icarus and Verilator have none) and, with
+        # $FDA_CDC_INJECT_SEED, the synchroniser-delay injection (flow/cdc_inject.py)
+        inj_env = os.environ.get("FDA_CDC_INJECT_SEED")
+        sources, inj_plus, inj_info = cdc_inject.prepare(sources, (build_root or SIM_ROOT) / f"{name}_cdcinj",
+                                                         int(inj_env) if inj_env not in (None, "") else None)
+        if inj_env not in (None, "") and os.environ.get("FDA_CDC_INJECT_INFO"):
+            Path(os.environ["FDA_CDC_INJECT_INFO"]).write_text(__import__("json").dumps(inj_info, indent=1))
+        if srcorder.no_shell(design):                         # 07a2-prep: a UART-subject design is built without the test shell
+            sources = srcorder.drop_shell(sources)
+        if simname == "verilator":                            # 07a2 fix 4: bound checkers belong to every Verilator build
+            sources = with_checkers(sources, design)
+        sources = srcorder.order_sv(sources)                  # 07a2-prep: packages and interfaces first, not name order
+        sim = get_runner(simname)
+        build_dir = (build_root or SIM_ROOT) / name
+        if simname == "verilator":
+            args = ["--assert", "-Wno-fatal", "-Wno-lint", "-Wno-style", "-Wno-TIMESCALEMOD", "-j", "1"]
+            if coverage:
+                args += ["--coverage-line", "--coverage-toggle", "--coverage-user"]
+        else:
+            args = ["-g2012"]
+            trace_dir = os.environ.get("FDA_FSM_TRACE")        # brief 24: the state register's value changes, for flow/fsm_coverage.py
+            if trace_dir:
+                Path(trace_dir).mkdir(parents=True, exist_ok=True)
+                dump = fsm_coverage.trace_module(design, Path(trace_dir) / f"{name}{'' if seed is None else f'_seed{seed}'}.fsmtrace")
+                if dump:
+                    dsrc = (build_root or SIM_ROOT) / f"{name}_fsm_trace" / "fsm_trace_dump.sv"
+                    dsrc.parent.mkdir(parents=True, exist_ok=True)
+                    dsrc.write_text(dump)
+                    sources = list(sources) + [dsrc]
+                    args += ["-s", "fsm_trace_dump"]
+        args += [f"-I{d}" for d in sorted({str(Path(s).parent) for s in sources})]     # `include "x.svh" next to a source
+        sim.build(sources=[str(s) for s in sources], hdl_toplevel=toplevel, parameters=parameters or {},
+                  build_dir=build_dir, timescale=("1ns", "1ps"), always=True, build_args=args)
+        env = {"PYTHONPATH": os.pathsep.join([str(ROOT), str(test_dir), os.environ.get("PYTHONPATH", "")])}
+        env["FDA_COV_OUT"] = str(build_dir / "coverage_func.yml")
+        env.update(extra_env or {})
+        plus = [f"+verilator+coverage+file+{build_dir / 'coverage.dat'}"] if (simname == "verilator" and coverage) else []
+        plus += inj_plus
+        try:
+            # 07a2-prep: the simulator starts in test_dir; the task's data files are linked there for the run ($readmemh)
+            with srcorder.linked_data(design / "data", test_dir):
+                results = sim.test(test_module=test_module, hdl_toplevel=toplevel, testcase=testcase, seed=seed,
+                                   build_dir=build_dir, test_dir=test_dir, extra_env=env, parameters=parameters or {},
+                                   timescale=("1ns", "1ps"), results_xml=str(build_dir / "results.xml"),
+                                   log_file=build_dir / "sim.log", plusargs=plus)
+        except SystemExit:
+            collect_results(build_dir, seed)         # a failing run is evidence too: the gate reads the failures
+            # cocotb's runner exits with only "Failed n of m tests"; the failing assertions and tracebacks are in the
+            # simulator log, which lives in a scratch directory the caller never sees. Say what they are.
+>           raise AssertionError(f"{name}: the cocotb run failed. From {build_dir / 'sim.log'}:\n"
+                                 + failure_excerpt(build_dir / "sim.log")) from None
+E           AssertionError: c14_int8_dot_requant: the cocotb run failed. From /home/brendan/Claude_sandbox/_worktrees/88-net-125/build/sim/c14_int8_dot_requant/sim.log:
+E                                                                   Traceback (most recent call last):
+E                                                                     File "/home/brendan/Claude_sandbox/_worktrees/88-net-125/agent/tests/fixtures/run4_c14/tests/c14_bench.py", line 419, in test_smoke
+E                                                                       assert (st, d) == (0, 0x00010000)
+E                                                                   AssertionError: assert (0, 65537) == (0, 65536)
+E            26010.00ns WARNING  cocotb.regression                  c14_bench.test_smoke failed
+E            26010.00ns INFO     cocotb.regression                  running c14_bench.test_regs_rw (2/12)
+E           720300.00ns INFO     cocotb.regression                  c14_bench.test_regs_rw passed
+E           720300.00ns INFO     cocotb.regression                  running c14_bench.test_alias_unmapped (3/12)
+E           1501080.00ns INFO     cocotb.regression                  c14_bench.test_alias_unmapped passed
+E           1501080.00ns INFO     cocotb.regression                  running c14_bench.test_arith_a (4/12)
+E           2306410.00ns INFO     cocotb.regression                  c14_bench.test_arith_a passed
+E           2306410.00ns INFO     cocotb.regression                  running c14_bench.test_arith_b (5/12)
+E           3458320.00ns INFO     cocotb.regression                  c14_bench.test_arith_b passed
+E           3458320.00ns INFO     cocotb.regression                  running c14_bench.test_arith_random (6/12)
+E           5216190.00ns INFO     cocotb.regression                  c14_bench.test_arith_random passed
+E           5216190.00ns INFO     cocotb.regression                  running c14_bench.test_shift_sweep (7/12)
+E           7085350.01ns INFO     cocotb.regression                  c14_bench.test_shift_sweep passed
+E           7085350.01ns INFO     cocotb.regression                  running c14_bench.test_go_timing (8/12)
+E                                                                    Traceback (most recent call last):
+E                                                                      File "/home/brendan/Claude_sandbox/_worktrees/88-net-125/agent/tests/fixtures/run4_c14/tests/c14_bench.py", line 628, in test_shell_protocol
+E                                                                        assert (await e.txn(CMD_WRITE, 0x05, 1)) == (3, 0)
+E                                                                    AssertionError: assert (4, 0) == (3, 0)
+E           8187960.01ns WARNING  cocotb.regression                  c14_bench.test_shell_protocol failed
+E           8187960.01ns INFO     cocotb.regression                  running c14_bench.test_baud (11/12)
+E           8201610.01ns INFO     cocotb.regression                  c14_bench.test_baud passed
+E           8201610.01ns INFO     cocotb.regression                  running c14_bench.test_zz_export (12/12)
+E           8201610.01ns INFO     cocotb.regression                  c14_bench.test_zz_export passed
+E           8201610.01ns INFO     cocotb.regression                  ****************************************************************************************
+E                                                                    ** TEST                            STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **
+E                                                                    ****************************************************************************************
+E                                                                    ** c14_bench.test_smoke             FAIL       26010.00           0.38      68412.67  **
+E                                                                    ** c14_bench.test_regs_rw           PASS      694290.00          10.18      68185.26  **
+
+flow/cocotb_run.py:201: AssertionError
+------------------------------ Captured log call -------------------------------
+INFO     Icarus:runner.py:632 Running command iverilog -o /home/brendan/Claude_sandbox/_worktrees/88-net-125/build/sim/c14_int8_dot_requant/sim.vvp -s c14_int8_dot_requant_top -g2012 -Pc14_int8_dot_requant_top.CLKS_PER_BIT=8 -Pc14_int8_dot_requant_top.TIMEOUT_CYCLES=2000 -Pc14_int8_dot_requant_top.BUILD_STAMP=464367618 -g2012 -I/home/brendan/Claude_sandbox/_worktrees/88-net-125/agent/tests/fixtures/run4_c14/rtl -I/home/brendan/Claude_sandbox/_worktrees/88-net-125/build/sim/c14_int8_dot_requant_cdcinj -I/home/brendan/Claude_sandbox/_worktrees/88-net-125/flow/cdc_models -I/home/brendan/Claude_sandbox/_worktrees/88-net-125/shell/rtl -f /home/brendan/Claude_sandbox/_worktrees/88-net-125/build/sim/c14_int8_dot_requant/cmds.f /home/brendan/Claude_sandbox/_worktrees/88-net-125/flow/cdc_models/cdc_inj_pkg.sv /home/brendan/Claude_sandbox/_worktrees/88-net-125/shell/rtl/fpga_shell.sv /home/brendan/Claude_sandbox/_worktrees/88-net-125/build/sim/c14_int8_dot_requant_cdcinj/reset_sync.sv /home/brendan/Claude_sandbox/_worktrees/88-net-125/shell/rtl/shell_core.sv /home/brendan/Claude_sandbox/_worktrees/88-net-125/build/sim/c14_int8_dot_requant_cdcinj/sync2.sv /home/brendan/Claude_sandbox/_worktrees/88-net-125/shell/rtl/uart_rx.sv /home/brendan/Claude_sandbox/_worktrees/88-net-125/shell/rtl/uart_tx.sv /home/brendan/Claude_sandbox/_worktrees/88-net-125/agent/tests/fixtures/run4_c14/rtl/c14_int8_dot_requant_top.sv /home/brendan/Claude_sandbox/_worktrees/88-net-125/agent/tests/fixtures/run4_c14/rtl/dotq_core.sv /home/brendan/Claude_sandbox/_worktrees/88-net-125/agent/tests/fixtures/run4_c14/rtl/dotq_regs.sv /home/brendan/Claude_sandbox/_worktrees/88-net-125/agent/tests/fixtures/run4_c14/rtl/reset_sync.sv in directory /home/brendan/Claude_sandbox/_worktrees/88-net-125/build/sim/c14_int8_dot_requant
+INFO     Icarus:runner.py:632 Running command vvp -M /home/brendan/Claude_sandbox/_worktrees/88-venv/lib/python3.12/site-packages/cocotb/libs -m libcocotbvpi_icarus /home/brendan/Claude_sandbox/_worktrees/88-net-125/build/sim/c14_int8_dot_requant/sim.vvp +CDC_INJ_SEED=2 -none in directory /home/brendan/Claude_sandbox/_worktrees/88-net-125/agent/tests/fixtures/run4_c14/tests
+ERROR    Icarus:runner.py:572 ERROR: Failed 2 of 12 tests.
+_________________________________ test_seed_3 __________________________________
+
+    def test_seed_3():
+>       _run(3)
+
+agent/tests/fixtures/run4_c14/tests/test_c14_int8_dot_requant_rtl.py:38: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+agent/tests/fixtures/run4_c14/tests/test_c14_int8_dot_requant_rtl.py:22: in _run
+    res = cocotb_run.run(NAME, TOPLEVEL, sources, "c14_bench", Path(__file__).resolve().parent,
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+name = 'c14_int8_dot_requant', toplevel = 'c14_int8_dot_requant_top'
+sources = [PosixPath('/home/brendan/Claude_sandbox/_worktrees/88-net-125/flow/cdc_models/cdc_inj_pkg.sv'), PosixPath('/home/bren...t_requant_cdcinj/sync2.sv'), PosixPath('/home/brendan/Claude_sandbox/_worktrees/88-net-125/shell/rtl/uart_rx.sv'), ...]
+test_module = 'c14_bench'
+test_dir = PosixPath('/home/brendan/Claude_sandbox/_worktrees/88-net-125/agent/tests/fixtures/run4_c14/tests')
+parameters = {'CLKS_PER_BIT': 8, 'TIMEOUT_CYCLES': 2000, 'BUILD_STAMP': 464367618}
+testcase = None, seed = 3, build_root = None, extra_env = None, coverage = False
+
+    def run(name: str, toplevel: str, sources: list[Path], test_module: str, test_dir: Path,
+            parameters: dict[str, object] | None = None, testcase: str | list[str] | None = None,
+            seed: int | None = None, build_root: Path | None = None, extra_env: dict[str, str] | None = None,
+            coverage: bool | None = None) -> None:
+        """Build ``sources`` with $SIM (icarus by default; verilator needs 5.036+ for cocotb 2) and run
+        ``test_module`` (a name or a list of names); fail if any test failed.
+    
+        ``coverage=None`` follows ``$FDA_COVERAGE`` (set by the agent's ``simulate(coverage=True)``). The bench can export
+        its functional-coverage bins to ``$FDA_COV_OUT`` (cocotb-coverage ``coverage_db.export_to_yaml``). With ``coverage`` (Verilator only) the build is instrumented for line and toggle coverage and the run
+        writes ``<build_dir>/coverage.dat``. Under Verilator, warnings are not fatal (the repo's lint gate is
+        flow/lint.sh) and concurrent assertions are on."""
+        simname = os.environ.get("SIM", "icarus")
+        if coverage is None:
+            coverage = os.environ.get("FDA_COVERAGE") == "1"
+        sources = swap_mutant_sources(sources)
+        design = srcorder.design_of(test_dir)
+        if any(vhdl.is_vhdl(s) for s in sources):            # brief 55: VHDL sources (GHDL natively, or a GHDL netlist)
+            return _run_vhdl(name, toplevel, sources, test_module, test_dir, parameters, testcase, seed, build_root,
+                             extra_env, coverage, simname, design)
+        # brief 16: stand-ins for the XPM macros a build instantiates (Icarus and Verilator have none) and, with
+        # $FDA_CDC_INJECT_SEED, the synchroniser-delay injection (flow/cdc_inject.py)
+        inj_env = os.environ.get("FDA_CDC_INJECT_SEED")
+        sources, inj_plus, inj_info = cdc_inject.prepare(sources, (build_root or SIM_ROOT) / f"{name}_cdcinj",
+                                                         int(inj_env) if inj_env not in (None, "") else None)
+        if inj_env not in (None, "") and os.environ.get("FDA_CDC_INJECT_INFO"):
+            Path(os.environ["FDA_CDC_INJECT_INFO"]).write_text(__import__("json").dumps(inj_info, indent=1))
+        if srcorder.no_shell(design):                         # 07a2-prep: a UART-subject design is built without the test shell
+            sources = srcorder.drop_shell(sources)
+        if simname == "verilator":                            # 07a2 fix 4: bound checkers belong to every Verilator build
+            sources = with_checkers(sources, design)
+        sources = srcorder.order_sv(sources)                  # 07a2-prep: packages and interfaces first, not name order
+        sim = get_runner(simname)
+        build_dir = (build_root or SIM_ROOT) / name
+        if simname == "verilator":
+            args = ["--assert", "-Wno-fatal", "-Wno-lint", "-Wno-style", "-Wno-TIMESCALEMOD", "-j", "1"]
+            if coverage:
+                args += ["--coverage-line", "--coverage-toggle", "--coverage-user"]
+        else:
+            args = ["-g2012"]
+            trace_dir = os.environ.get("FDA_FSM_TRACE")        # brief 24: the state register's value changes, for flow/fsm_coverage.py
+            if trace_dir:
+                Path(trace_dir).mkdir(parents=True, exist_ok=True)
+                dump = fsm_coverage.trace_module(design, Path(trace_dir) / f"{name}{'' if seed is None else f'_seed{seed}'}.fsmtrace")
+                if dump:
+                    dsrc = (build_root or SIM_ROOT) / f"{name}_fsm_trace" / "fsm_trace_dump.sv"
+                    dsrc.parent.mkdir(parents=True, exist_ok=True)
+                    dsrc.write_text(dump)
+                    sources = list(sources) + [dsrc]
+                    args += ["-s", "fsm_trace_dump"]
+        args += [f"-I{d}" for d in sorted({str(Path(s).parent) for s in sources})]     # `include "x.svh" next to a source
+        sim.build(sources=[str(s) for s in sources], hdl_toplevel=toplevel, parameters=parameters or {},
+                  build_dir=build_dir, timescale=("1ns", "1ps"), always=True, build_args=args)
+        env = {"PYTHONPATH": os.pathsep.join([str(ROOT), str(test_dir), os.environ.get("PYTHONPATH", "")])}
+        env["FDA_COV_OUT"] = str(build_dir / "coverage_func.yml")
+        env.update(extra_env or {})
+        plus = [f"+verilator+coverage+file+{build_dir / 'coverage.dat'}"] if (simname == "verilator" and coverage) else []
+        plus += inj_plus
+        try:
+            # 07a2-prep: the simulator starts in test_dir; the task's data files are linked there for the run ($readmemh)
+            with srcorder.linked_data(design / "data", test_dir):
+                results = sim.test(test_module=test_module, hdl_toplevel=toplevel, testcase=testcase, seed=seed,
+                                   build_dir=build_dir, test_dir=test_dir, extra_env=env, parameters=parameters or {},
+                                   timescale=("1ns", "1ps"), results_xml=str(build_dir / "results.xml"),
+                                   log_file=build_dir / "sim.log", plusargs=plus)
+        except SystemExit:
+            collect_results(build_dir, seed)         # a failing run is evidence too: the gate reads the failures
+            # cocotb's runner exits with only "Failed n of m tests"; the failing assertions and tracebacks are in the
+            # simulator log, which lives in a scratch directory the caller never sees. Say what they are.
+>           raise AssertionError(f"{name}: the cocotb run failed. From {build_dir / 'sim.log'}:\n"
+                                 + failure_excerpt(build_dir / "sim.log")) from None
+E           AssertionError: c14_int8_dot_requant: the cocotb run failed. From /home/brendan/Claude_sandbox/_worktrees/88-net-125/build/sim/c14_int8_dot_requant/sim.log:
+E                                                                   Traceback (most recent call last):
+E                                                                     File "/home/brendan/Claude_sandbox/_worktrees/88-net-125/agent/tests/fixtures/run4_c14/tests/c14_bench.py", line 419, in test_smoke
+E                                                                       assert (st, d) == (0, 0x00010000)
+E                                                                   AssertionError: assert (0, 65537) == (0, 65536)
+E            26010.00ns WARNING  cocotb.regression                  c14_bench.test_smoke failed
+E            26010.00ns INFO     cocotb.regression                  running c14_bench.test_regs_rw (2/12)
+E           720300.00ns INFO     cocotb.regression                  c14_bench.test_regs_rw passed
+E           720300.00ns INFO     cocotb.regression                  running c14_bench.test_alias_unmapped (3/12)
+E           1501080.00ns INFO     cocotb.regression                  c14_bench.test_alias_unmapped passed
+E           1501080.00ns INFO     cocotb.regression                  running c14_bench.test_arith_a (4/12)
+E           2306410.00ns INFO     cocotb.regression                  c14_bench.test_arith_a passed
+E           2306410.00ns INFO     cocotb.regression                  running c14_bench.test_arith_b (5/12)
+E           3458320.00ns INFO     cocotb.regression                  c14_bench.test_arith_b passed
+E           3458320.00ns INFO     cocotb.regression                  running c14_bench.test_arith_random (6/12)
+E           5191440.00ns INFO     cocotb.regression                  c14_bench.test_arith_random passed
+E           5191440.00ns INFO     cocotb.regression                  running c14_bench.test_shift_sweep (7/12)
+E           7060690.01ns INFO     cocotb.regression                  c14_bench.test_shift_sweep passed
+E           7060690.01ns INFO     cocotb.regression                  running c14_bench.test_go_timing (8/12)
+E                                                                    Traceback (most recent call last):
+E                                                                      File "/home/brendan/Claude_sandbox/_worktrees/88-net-125/agent/tests/fixtures/run4_c14/tests/c14_bench.py", line 628, in test_shell_protocol
+E                                                                        assert (await e.txn(CMD_WRITE, 0x05, 1)) == (3, 0)
+E                                                                    AssertionError: assert (4, 0) == (3, 0)
+E           8163340.01ns WARNING  cocotb.regression                  c14_bench.test_shell_protocol failed
+E           8163340.01ns INFO     cocotb.regression                  running c14_bench.test_baud (11/12)
+E           8176990.01ns INFO     cocotb.regression                  c14_bench.test_baud passed
+E           8176990.01ns INFO     cocotb.regression                  running c14_bench.test_zz_export (12/12)
+E           8176990.01ns INFO     cocotb.regression                  c14_bench.test_zz_export passed
+E           8176990.01ns INFO     cocotb.regression                  ****************************************************************************************
+E                                                                    ** TEST                            STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **
+E                                                                    ****************************************************************************************
+E                                                                    ** c14_bench.test_smoke             FAIL       26010.00           0.37      69532.76  **
+E                                                                    ** c14_bench.test_regs_rw           PASS      694290.00          10.01      69330.41  **
+
+flow/cocotb_run.py:201: AssertionError
+------------------------------ Captured log call -------------------------------
+INFO     Icarus:runner.py:632 Running command iverilog -o /home/brendan/Claude_sandbox/_worktrees/88-net-125/build/sim/c14_int8_dot_requant/sim.vvp -s c14_int8_dot_requant_top -g2012 -Pc14_int8_dot_requant_top.CLKS_PER_BIT=8 -Pc14_int8_dot_requant_top.TIMEOUT_CYCLES=2000 -Pc14_int8_dot_requant_top.BUILD_STAMP=464367618 -g2012 -I/home/brendan/Claude_sandbox/_worktrees/88-net-125/agent/tests/fixtures/run4_c14/rtl -I/home/brendan/Claude_sandbox/_worktrees/88-net-125/build/sim/c14_int8_dot_requant_cdcinj -I/home/brendan/Claude_sandbox/_worktrees/88-net-125/flow/cdc_models -I/home/brendan/Claude_sandbox/_worktrees/88-net-125/shell/rtl -f /home/brendan/Claude_sandbox/_worktrees/88-net-125/build/sim/c14_int8_dot_requant/cmds.f /home/brendan/Claude_sandbox/_worktrees/88-net-125/flow/cdc_models/cdc_inj_pkg.sv /home/brendan/Claude_sandbox/_worktrees/88-net-125/shell/rtl/fpga_shell.sv /home/brendan/Claude_sandbox/_worktrees/88-net-125/build/sim/c14_int8_dot_requant_cdcinj/reset_sync.sv /home/brendan/Claude_sandbox/_worktrees/88-net-125/shell/rtl/shell_core.sv /home/brendan/Claude_sandbox/_worktrees/88-net-125/build/sim/c14_int8_dot_requant_cdcinj/sync2.sv /home/brendan/Claude_sandbox/_worktrees/88-net-125/shell/rtl/uart_rx.sv /home/brendan/Claude_sandbox/_worktrees/88-net-125/shell/rtl/uart_tx.sv /home/brendan/Claude_sandbox/_worktrees/88-net-125/agent/tests/fixtures/run4_c14/rtl/c14_int8_dot_requant_top.sv /home/brendan/Claude_sandbox/_worktrees/88-net-125/agent/tests/fixtures/run4_c14/rtl/dotq_core.sv /home/brendan/Claude_sandbox/_worktrees/88-net-125/agent/tests/fixtures/run4_c14/rtl/dotq_regs.sv /home/brendan/Claude_sandbox/_worktrees/88-net-125/agent/tests/fixtures/run4_c14/rtl/reset_sync.sv in directory /home/brendan/Claude_sandbox/_worktrees/88-net-125/build/sim/c14_int8_dot_requant
+INFO     Icarus:runner.py:632 Running command vvp -M /home/brendan/Claude_sandbox/_worktrees/88-venv/lib/python3.12/site-packages/cocotb/libs -m libcocotbvpi_icarus /home/brendan/Claude_sandbox/_worktrees/88-net-125/build/sim/c14_int8_dot_requant/sim.vvp +CDC_INJ_SEED=2 -none in directory /home/brendan/Claude_sandbox/_worktrees/88-net-125/agent/tests/fixtures/run4_c14/tests
+ERROR    Icarus:runner.py:572 ERROR: Failed 2 of 12 tests.
+____________ test_repair_edits_previous_output_and_deletes_nothing _____________
+
+rt = Runtime(cfg=Config(spec_md=PosixPath('/home/brendan/Claude_sandbox/_worktrees/88-net-125/designs/t1_dimmer_counter/spe...it=0, budget_notes=[], spectest_llm=None, spectest_triage_llm=None, skill_shortlist=None, skill_notes=[], doc_llm=None)
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x71fa1977c680>
+
+    def test_repair_edits_previous_output_and_deletes_nothing(rt, monkeypatch):
+>       import deepagents
+E       ModuleNotFoundError: No module named 'deepagents'
+
+agent/tests/test_05c2_fixes.py:131: ModuleNotFoundError
+__________________________ test_valid_spec_signs_off ___________________________
+
+rt = Runtime(cfg=Config(spec_md=PosixPath('/home/brendan/Claude_sandbox/_worktrees/88-net-125/designs/t1_dimmer_counter/spe...it=0, budget_notes=[], spectest_llm=None, spectest_triage_llm=None, skill_shortlist=None, skill_notes=[], doc_llm=None)
+
+    def test_valid_spec_signs_off(rt):
+        # 07a2 fix 1: this request names registers without offsets, so the spec carries the register-map question
+        ask = {"question": "What is the register map (offsets, widths, reset values, access)?", "default": "d", "reason": "r"}
+        spec = {**GOOD, "open_questions": [ask]}
+        (rt.design / "spec.yaml").write_text(yaml.safe_dump(spec))
+>       out = gr.node_gate({"run_id": rt.run_id, "stage": 0})
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+agent/tests/test_05c_fixes.py:72: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+agent/graph/run.py:1257: in node_gate
+    spec, summary = _interview(rt, spec, state)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+rt = Runtime(cfg=Config(spec_md=PosixPath('/home/brendan/Claude_sandbox/_worktrees/88-net-125/designs/t1_dimmer_counter/spe...it=0, budget_notes=[], spectest_llm=None, spectest_triage_llm=None, skill_shortlist=None, skill_notes=[], doc_llm=None)
+spec = {'assumptions': [{'assumption': 'the debounce time is 10 ms.', 'reason': 'the spec says "however bouncy"; 10 ms covers...s': [{'freq_mhz': 100, 'name': 'sys_clk', 'note': 'the only clock; no MMCM is needed', 'port': 'CLK100MHZ', ...}], ...}
+state = {'run_id': '20261116-054900-e630', 'stage': 0}
+
+    def _interview(rt: Runtime, spec: dict, state: State) -> tuple[dict, dict]:
+>       from langgraph.types import interrupt
+E       ModuleNotFoundError: No module named 'langgraph'
+
+agent/graph/run.py:1017: ModuleNotFoundError
+______ test_interview_asks_for_the_cycle_count_and_rewrites_the_parameter ______
+
+rt = Runtime(cfg=Config(spec_md=PosixPath('/home/brendan/Claude_sandbox/_worktrees/88-net-125/designs/t1_dimmer_counter/spe...it=0, budget_notes=[], spectest_llm=None, spectest_triage_llm=None, skill_shortlist=None, skill_notes=[], doc_llm=None)
+
+    def test_interview_asks_for_the_cycle_count_and_rewrites_the_parameter(rt):
+        (rt.design / "spec.md").write_text("A PWM dimmer counter for the board.\n")     # 07a2 fix 1: no register wording
+        spec = {**GOOD, "open_questions": [], "parameters": {"PWM_HZ": 1000, "CLKS_PER_BIT": 868}}
+        (rt.design / "spec.yaml").write_text(yaml.safe_dump(spec))
+>       out = gr.node_gate({"run_id": rt.run_id, "stage": 0})
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+agent/tests/test_05c_fixes.py:153: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+agent/graph/run.py:1257: in node_gate
+    spec, summary = _interview(rt, spec, state)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+rt = Runtime(cfg=Config(spec_md=PosixPath('/home/brendan/Claude_sandbox/_worktrees/88-net-125/designs/t1_dimmer_counter/spe...it=0, budget_notes=[], spectest_llm=None, spectest_triage_llm=None, skill_shortlist=None, skill_notes=[], doc_llm=None)
+spec = {'assumptions': [{'assumption': 'the debounce time is 10 ms.', 'reason': 'the spec says "however bouncy"; 10 ms covers...s': [{'freq_mhz': 100, 'name': 'sys_clk', 'note': 'the only clock; no MMCM is needed', 'port': 'CLK100MHZ', ...}], ...}
+state = {'run_id': '20261116-054900-4d18', 'stage': 0}
+
+    def _interview(rt: Runtime, spec: dict, state: State) -> tuple[dict, dict]:
+>       from langgraph.types import interrupt
+E       ModuleNotFoundError: No module named 'langgraph'
+
+agent/graph/run.py:1017: ModuleNotFoundError
+___ test_cli_builds_the_oracle_client_on_the_run_model_whatever_the_profile ____
+
+runs = PosixPath('/home/brendan/Claude_sandbox/_worktrees/88-net-125/runs/_pytest_c6e8a163')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x71fa19809370>
+tmp_path = PosixPath('/tmp/pytest-of-brendan/pytest-271/test_cli_builds_the_oracle_cli0')
+
+    def test_cli_builds_the_oracle_client_on_the_run_model_whatever_the_profile(runs, monkeypatch, tmp_path):
+        asked = []
+        monkeypatch.setattr(cli, "_client", lambda model, replay, record: asked.append(model) or (lambda *a, **k: None))
+        monkeypatch.setattr(cli, "_drive", lambda *a, **k: {})
+        monkeypatch.setattr(gr, "container_available", lambda: False)
+        monkeypatch.setenv("FDA_ALLOW_HOST_SANDBOX", "1")          # QR1: a hidden-spec run is otherwise refused without the image
+        hidden = tmp_path / "h.yaml"
+        hidden.write_text("name: x\n")
+>       cli.main(["run", str(T1 / "spec.md"), "--profile", "cvdp", "--interview", "oracle", "--hidden-spec", str(hidden)])
+
+agent/tests/test_05f_role_models.py:108: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+agent/__main__.py:341: in main
+    graph = build_graph(checkpointer_for(rt.run_dir), routing=cfg.skill_routing != "off")
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+run_dir = PosixPath('/home/brendan/Claude_sandbox/_worktrees/88-net-125/runs/_pytest_c6e8a163/20261116-054901-73d4')
+
+    def checkpointer_for(run_dir: Path):
+        import sqlite3
+    
+>       from langgraph.checkpoint.sqlite import SqliteSaver
+E       ModuleNotFoundError: No module named 'langgraph'
+
+agent/graph/run.py:1727: ModuleNotFoundError
+___________ test_each_role_goes_to_its_own_harness_model_and_effort ____________
+
+runs = PosixPath('/home/brendan/Claude_sandbox/_worktrees/88-net-125/runs/_pytest_807833ac')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x71fa1980ab70>
+
+    def test_each_role_goes_to_its_own_harness_model_and_effort(runs, monkeypatch):
+>       import deepagents
+E       ModuleNotFoundError: No module named 'deepagents'
+
+agent/tests/test_05f_role_models.py:134: ModuleNotFoundError
+_______ test_a_deep_agents_role_on_another_model_gets_that_models_client _______
+
+runs = PosixPath('/home/brendan/Claude_sandbox/_worktrees/88-net-125/runs/_pytest_2538011d')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x71fa18ac72f0>
+
+    def test_a_deep_agents_role_on_another_model_gets_that_models_client(runs, monkeypatch):
+>       import deepagents
+E       ModuleNotFoundError: No module named 'deepagents'
+
+agent/tests/test_05f_role_models.py:155: ModuleNotFoundError
+_____ test_interview_node_merges_into_the_summary_the_state_already_holds ______
+
+session = Session(design=PosixPath('/tmp/pytest-of-brendan/pytest-271/test_interview_node_merges_int0/root/designs/t1_dimmer_cou...x71fa18cbdcd0>, hw=<agent.core.security.HardwarePolicy object at 0x71fa18cbdc70>, skill_routing='off', harness_arms=())
+tmp_path = PosixPath('/tmp/pytest-of-brendan/pytest-271/test_interview_node_merges_int0')
+
+    def test_interview_node_merges_into_the_summary_the_state_already_holds(session: Session, tmp_path: Path) -> None:
+        import agent.graph.run as gr
+        from types import SimpleNamespace
+        rt = SimpleNamespace(cfg=SimpleNamespace(interview="off", hidden_spec=None), design=session.design, oracle_llm=None)
+        spec = {"name": "x", "open_questions": [], "requirements": []}
+        prev = {"asked": 5, "answered": 5, "defaulted": 0, "questions": [{"text": f"q{i}", "status": "answered"} for i in range(5)]}
+        try:
+>           _, summary = gr._interview(rt, spec, {"interview": prev})
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+agent/tests/test_07a2_fix3.py:77: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+rt = namespace(cfg=namespace(interview='off', hidden_spec=None), design=PosixPath('/tmp/pytest-of-brendan/pytest-271/test_interview_node_merges_int0/root/designs/t1_dimmer_counter'), oracle_llm=None)
+spec = {'name': 'x', 'open_questions': [], 'requirements': []}
+state = {'interview': {'asked': 5, 'answered': 5, 'defaulted': 0, 'questions': [{'text': 'q0', 'status': 'answered'}, {'text':...'}, {'text': 'q2', 'status': 'answered'}, {'text': 'q3', 'status': 'answered'}, {'text': 'q4', 'status': 'answered'}]}}
+
+    def _interview(rt: Runtime, spec: dict, state: State) -> tuple[dict, dict]:
+>       from langgraph.types import interrupt
+E       ModuleNotFoundError: No module named 'langgraph'
+
+agent/graph/run.py:1017: ModuleNotFoundError
+
+The above exception was the direct cause of the following exception:
+
+session = Session(design=PosixPath('/tmp/pytest-of-brendan/pytest-271/test_interview_node_merges_int0/root/designs/t1_dimmer_cou...x71fa18cbdcd0>, hw=<agent.core.security.HardwarePolicy object at 0x71fa18cbdc70>, skill_routing='off', harness_arms=())
+tmp_path = PosixPath('/tmp/pytest-of-brendan/pytest-271/test_interview_node_merges_int0')
+
+    def test_interview_node_merges_into_the_summary_the_state_already_holds(session: Session, tmp_path: Path) -> None:
+        import agent.graph.run as gr
+        from types import SimpleNamespace
+        rt = SimpleNamespace(cfg=SimpleNamespace(interview="off", hidden_spec=None), design=session.design, oracle_llm=None)
+        spec = {"name": "x", "open_questions": [], "requirements": []}
+        prev = {"asked": 5, "answered": 5, "defaulted": 0, "questions": [{"text": f"q{i}", "status": "answered"} for i in range(5)]}
+        try:
+            _, summary = gr._interview(rt, spec, {"interview": prev})
+        except Exception as e:           # a spec the schema code will not take is not what this test is about
+>           raise AssertionError(f"_interview raised {e!r}") from e
+E           AssertionError: _interview raised ModuleNotFoundError("No module named 'langgraph'")
+
+agent/tests/test_07a2_fix3.py:79: AssertionError
+____________ test_off_graph_is_the_eval1_graph_and_on_adds_one_node ____________
+
+    def test_off_graph_is_the_eval1_graph_and_on_adds_one_node() -> None:
+        from agent.graph import run as gr
+>       off = gr.build_graph(None)
+              ^^^^^^^^^^^^^^^^^^^^
+
+agent/tests/test_36_skill_routing.py:179: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+checkpointer = None, routing = False
+
+    def build_graph(checkpointer, routing: bool = False):
+        """``routing`` (brief 36): a ``route_skills`` node before every ``work``; off, the graph is exactly the eval-1 one."""
+>       from langgraph.graph import END, START, StateGraph
+E       ModuleNotFoundError: No module named 'langgraph'
+
+agent/graph/run.py:1599: ModuleNotFoundError
+__________________ test_h1_middleware_takes_the_default_slot ___________________
+
+    def test_h1_middleware_takes_the_default_slot() -> None:
+>       import deepagents.graph as dg
+E       ModuleNotFoundError: No module named 'deepagents'
+
+agent/tests/test_42_harness.py:81: ModuleNotFoundError
+_____________________ test_watchdog_on_a_real_cocotb_hang ______________________
+
+tmp_path = PosixPath('/tmp/pytest-of-brendan/pytest-271/test_watchdog_on_a_real_cocotb0')
+
+    @pytest.mark.skipif(shutil.which("iverilog") is None, reason="Icarus not installed")
+    def test_watchdog_on_a_real_cocotb_hang(tmp_path: Path) -> None:
+        """The brief 24 B1 failure in small: a bench that waits on a value the design never reaches."""
+        (tmp_path / "cnt.sv").write_text("module cnt(input logic clk, input logic rst, output logic [7:0] q);\n"
+                                         "always_ff @(posedge clk) if (rst) q <= 0; else q <= q + 1;\nendmodule\n")
+        (tmp_path / "hangbench.py").write_text(HEAD + """
+    @cocotb.test()
+    async def test_ok(dut):
+        await Timer(10, unit="ns")
+    
+    @cocotb.test()
+    async def test_hang(dut):
+        from cocotb.clock import Clock
+        cocotb.start_soon(Clock(dut.clk, 10, unit="ns").start())
+        dut.rst.value = 0
+        while True:
+            await RisingEdge(dut.clk)
+    """)
+        (tmp_path / "test_run_rtl.py").write_text(
+            "from cocotb_tools.runner import get_runner\n"
+            "def test_run():\n    r = get_runner('icarus')\n"
+            "    r.build(sources=['cnt.sv'], hdl_toplevel='cnt', build_dir='build/b', always=True, timescale=('1ns','1ps'))\n"
+            "    r.test(test_module='hangbench', hdl_toplevel='cnt', build_dir='build/b', log_file='build/b/sim.log', test_dir='.', "
+            "timescale=('1ns','1ps'))\n")
+        import os
+        env = {**os.environ, "PYTHONPATH": str(tmp_path)}
+        p = subprocess.run([sys.executable, str(ROOT / "flow" / "sim_watchdog.py"), "--limit", "12", "--heartbeat", "1", "--root",
+                            str(tmp_path), "--", sys.executable, "-m", "pytest", "-q", "-s", "-p", "no:cacheprovider", "test_run_rtl.py"],
+                           capture_output=True, text=True, timeout=120, cwd=tmp_path, env=env)
+        assert p.returncode == 124, p.stdout[-800:]
+        h = json.loads(p.stdout.split("FDA_HANG ", 1)[1].splitlines()[0])
+>       assert h["test"]["name"].endswith("test_hang") and h["sim_time_ns"] > 0 and h["sim_time_advancing"] is True
+E       AssertionError: assert (True and 10.0 > 0 and False is True)
+E        +  where True = <built-in method endswith of str object at 0x71fa1865a170>('test_hang')
+E        +    where <built-in method endswith of str object at 0x71fa1865a170> = 'hangbench.test_hang'.endswith
+
+agent/tests/test_42_harness.py:311: AssertionError
+__________________ test_graph_ends_through_the_document_node ___________________
+
+    def test_graph_ends_through_the_document_node() -> None:
+>       from langgraph.checkpoint.memory import MemorySaver
+E       ModuleNotFoundError: No module named 'langgraph'
+
+agent/tests/test_68_document_resume.py:166: ModuleNotFoundError
+______ test_review_does_not_write_up_a_stop_before_the_gate_as_a_failure _______
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x71fa18ab27e0>
+
+    def test_review_does_not_write_up_a_stop_before_the_gate_as_a_failure(monkeypatch) -> None:
+        from agent.graph import run as gr
+        from agent.tests.request_golden import T1, _Ok
+        runs = ROOT / "runs" / f"_pytest_{uuid.uuid4().hex[:8]}"
+        monkeypatch.setattr(gr, "RUNS", runs)
+        try:
+            cfg = gr.Config(spec_md=T1 / "spec.md", name="t1_dimmer_counter")
+            rt = gr.new_runtime(cfg, lambda *a, **k: None, runner=_Ok())
+            state = {"run_id": rt.run_id, "stage": 6, "stop": "stage 6 visited more than 4 times",
+                     "fails": ["bitstream: did not run"], "history": [], "visits": {"6": 5}, "evidence": {}}
+>           out = gr.node_review(state)
+                  ^^^^^^^^^^^^^^^^^^^^^
+
+agent/tests/test_68f_agent_docs.py:89: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+state = {'run_id': '20261116-054937-d836', 'stage': 6, 'stop': 'stage 6 visited more than 4 times', 'fails': ['bitstream: did not run'], ...}
+
+    def node_review(state: State) -> dict:
+>       from langgraph.types import interrupt
+E       ModuleNotFoundError: No module named 'langgraph'
+
+agent/graph/run.py:1370: ModuleNotFoundError
+_____ test_same_prompt_tools_and_limits_as_deep_agents[0-clarify-allowed0] _____
+
+rt = Runtime(cfg=Config(spec_md=PosixPath('/home/brendan/Claude_sandbox/_worktrees/88-net-125/designs/t1_dimmer_counter/spe...it=0, budget_notes=[], spectest_llm=None, spectest_triage_llm=None, skill_shortlist=None, skill_notes=[], doc_llm=None)
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x71fa184ee240>, n = 0
+role = 'clarify', allowed = ('search_docs', 'load_skill')
+
+    @pytest.mark.parametrize("n,role,allowed", CASES)
+    def test_same_prompt_tools_and_limits_as_deep_agents(rt, monkeypatch, n, role, allowed):
+>       import deepagents
+E       ModuleNotFoundError: No module named 'deepagents'
+
+agent/tests/test_claude_code_arm.py:61: ModuleNotFoundError
+______ test_same_prompt_tools_and_limits_as_deep_agents[2-model-allowed1] ______
+
+rt = Runtime(cfg=Config(spec_md=PosixPath('/home/brendan/Claude_sandbox/_worktrees/88-net-125/designs/t1_dimmer_counter/spe...it=0, budget_notes=[], spectest_llm=None, spectest_triage_llm=None, skill_shortlist=None, skill_notes=[], doc_llm=None)
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x71fa184edd60>, n = 2
+role = 'model', allowed = ()
+
+    @pytest.mark.parametrize("n,role,allowed", CASES)
+    def test_same_prompt_tools_and_limits_as_deep_agents(rt, monkeypatch, n, role, allowed):
+>       import deepagents
+E       ModuleNotFoundError: No module named 'deepagents'
+
+agent/tests/test_claude_code_arm.py:61: ModuleNotFoundError
+______ test_same_prompt_tools_and_limits_as_deep_agents[2-tests-allowed2] ______
+
+rt = Runtime(cfg=Config(spec_md=PosixPath('/home/brendan/Claude_sandbox/_worktrees/88-net-125/designs/t1_dimmer_counter/spe...it=0, budget_notes=[], spectest_llm=None, spectest_triage_llm=None, skill_shortlist=None, skill_notes=[], doc_llm=None)
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x71fa184eccb0>, n = 2
+role = 'tests', allowed = ('search_docs', 'load_skill')
+
+    @pytest.mark.parametrize("n,role,allowed", CASES)
+    def test_same_prompt_tools_and_limits_as_deep_agents(rt, monkeypatch, n, role, allowed):
+>       import deepagents
+E       ModuleNotFoundError: No module named 'deepagents'
+
+agent/tests/test_claude_code_arm.py:61: ModuleNotFoundError
+_______ test_same_prompt_tools_and_limits_as_deep_agents[2-rtl-allowed3] _______
+
+rt = Runtime(cfg=Config(spec_md=PosixPath('/home/brendan/Claude_sandbox/_worktrees/88-net-125/designs/t1_dimmer_counter/spe...it=0, budget_notes=[], spectest_llm=None, spectest_triage_llm=None, skill_shortlist=None, skill_notes=[], doc_llm=None)
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x71fa184edd00>, n = 2
+role = 'rtl'
+allowed = ('read_file', 'write_file', 'list_files', 'search_docs', 'load_skill', 'lint', ...)
+
+    @pytest.mark.parametrize("n,role,allowed", CASES)
+    def test_same_prompt_tools_and_limits_as_deep_agents(rt, monkeypatch, n, role, allowed):
+>       import deepagents
+E       ModuleNotFoundError: No module named 'deepagents'
+
+agent/tests/test_claude_code_arm.py:61: ModuleNotFoundError
+_______ test_same_prompt_tools_and_limits_as_deep_agents[4-rtl-allowed4] _______
+
+rt = Runtime(cfg=Config(spec_md=PosixPath('/home/brendan/Claude_sandbox/_worktrees/88-net-125/designs/t1_dimmer_counter/spe...it=0, budget_notes=[], spectest_llm=None, spectest_triage_llm=None, skill_shortlist=None, skill_notes=[], doc_llm=None)
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x71fa184efd70>, n = 4
+role = 'rtl'
+allowed = ('read_file', 'write_file', 'list_files', 'search_docs', 'load_skill', 'build', ...)
+
+    @pytest.mark.parametrize("n,role,allowed", CASES)
+    def test_same_prompt_tools_and_limits_as_deep_agents(rt, monkeypatch, n, role, allowed):
+>       import deepagents
+E       ModuleNotFoundError: No module named 'deepagents'
+
+agent/tests/test_claude_code_arm.py:61: ModuleNotFoundError
+_______ test_same_prompt_tools_and_limits_as_deep_agents[9-rtl-allowed5] _______
+
+rt = Runtime(cfg=Config(spec_md=PosixPath('/home/brendan/Claude_sandbox/_worktrees/88-net-125/designs/t1_dimmer_counter/spe...it=0, budget_notes=[], spectest_llm=None, spectest_triage_llm=None, skill_shortlist=None, skill_notes=[], doc_llm=None)
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x71fa184ee8a0>, n = 9
+role = 'rtl'
+allowed = ('read_file', 'write_file', 'list_files', 'search_docs', 'load_skill', 'build', ...)
+
+    @pytest.mark.parametrize("n,role,allowed", CASES)
+    def test_same_prompt_tools_and_limits_as_deep_agents(rt, monkeypatch, n, role, allowed):
+>       import deepagents
+E       ModuleNotFoundError: No module named 'deepagents'
+
+agent/tests/test_claude_code_arm.py:61: ModuleNotFoundError
+________________________________ test_adv_pause ________________________________
+
+    def test_adv_pause():
+        crc = ROOT / "ip_lib" / "eth_mac_rmii" / "rtl" / "eth_crc32.sv"
+        xpm = ROOT / "flow" / "cdc_models" / "xpm_cdc_models.sv"
+        pkg = ROOT / "flow" / "cdc_models" / "cdc_inj_pkg.sv"
+>       cocotb_run.run("adv_pause", "eth_mac_rgmii", [pkg, xpm, crc] + sim.rtl("eth_mac_rgmii"), "adv_pause", HERE,
+                       parameters={"CUT_THROUGH": 1, "PAUSE": 1, "FILTER": 1, "STATS": 1}, extra_env=ENV)
+
+flow/net/tests/test_63d_adversarial_rtl.py:50: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+flow/cocotb_run.py:183: in run
+    sim.build(sources=[str(s) for s in sources], hdl_toplevel=toplevel, parameters=parameters or {},
+../88-venv/lib/python3.12/site-packages/cocotb_tools/runner.py:389: in build
+    self._execute(cmds, cwd=self.build_dir)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+input = None, capture_output = False, timeout = None, check = True
+popenargs = (['iverilog', '-o', '/home/brendan/Claude_sandbox/_worktrees/88-net-125/build/sim/adv_pause/sim.vvp', '-s', 'eth_mac_rgmii', '-g2012', ...],)
+kwargs = {'cwd': PosixPath('/home/brendan/Claude_sandbox/_worktrees/88-net-125/build/sim/adv_pause'), 'env': {'SHELL': '/bin/ba...CE-unix/2686,unix/bren-ubuntu24-04:/tmp/.ICE-unix/2686', 'QT_ACCESSIBILITY': '1', ...}, 'stdout': None, 'stderr': None}
+
+    def run(*popenargs,
+            input=None, capture_output=False, timeout=None, check=False, **kwargs):
+        """Run command with arguments and return a CompletedProcess instance.
+    
+        The returned instance will have attributes args, returncode, stdout and
+        stderr. By default, stdout and stderr are not captured, and those attributes
+        will be None. Pass stdout=PIPE and/or stderr=PIPE in order to capture them,
+        or pass capture_output=True to capture both.
+    
+        If check is True and the exit code was non-zero, it raises a
+        CalledProcessError. The CalledProcessError object will have the return code
+        in the returncode attribute, and output & stderr attributes if those streams
+        were captured.
+    
+        If timeout is given, and the process takes too long, a TimeoutExpired
+        exception will be raised.
+    
+        There is an optional argument "input", allowing you to
+        pass bytes or a string to the subprocess's stdin.  If you use this argument
+        you may not also use the Popen constructor's "stdin" argument, as
+        it will be used internally.
+    
+        By default, all communication is in bytes, and therefore any "input" should
+        be bytes, and the stdout and stderr will be bytes. If in text mode, any
+        "input" should be a string, and stdout and stderr will be strings decoded
+        according to locale encoding, or by "encoding" if set. Text mode is
+        triggered by setting any of text, encoding, errors or universal_newlines.
+    
+        The other arguments are the same as for the Popen constructor.
+        """
+        if input is not None:
+            if kwargs.get('stdin') is not None:
+                raise ValueError('stdin and input arguments may not both be used.')
+            kwargs['stdin'] = PIPE
+    
+        if capture_output:
+            if kwargs.get('stdout') is not None or kwargs.get('stderr') is not None:
+                raise ValueError('stdout and stderr arguments may not be used '
+                                 'with capture_output.')
+            kwargs['stdout'] = PIPE
+            kwargs['stderr'] = PIPE
+    
+        with Popen(*popenargs, **kwargs) as process:
+            try:
+                stdout, stderr = process.communicate(input, timeout=timeout)
+            except TimeoutExpired as exc:
+                process.kill()
+                if _mswindows:
+                    # Windows accumulates the output in a single blocking
+                    # read() call run on child threads, with the timeout
+                    # being done in a join() on those threads.  communicate()
+                    # _after_ kill() is required to collect that and add it
+                    # to the exception.
+                    exc.stdout, exc.stderr = process.communicate()
+                else:
+                    # POSIX _communicate already populated the output so
+                    # far into the TimeoutExpired exception.
+                    process.wait()
+                raise
+            except:  # Including KeyboardInterrupt, communicate handled that.
+                process.kill()
+                # We don't call process.wait() as .__exit__ does that for us.
+                raise
+            retcode = process.poll()
+            if check and retcode:
+>               raise CalledProcessError(retcode, process.args,
+                                         output=stdout, stderr=stderr)
+E               subprocess.CalledProcessError: Command '['iverilog', '-o', '/home/brendan/Claude_sandbox/_worktrees/88-net-125/build/sim/adv_pause/sim.vvp', '-s', 'eth_mac_rgmii', '-g2012', '-Peth_mac_rgmii.CUT_THROUGH=1', '-Peth_mac_rgmii.PAUSE=1', '-Peth_mac_rgmii.FILTER=1', '-Peth_mac_rgmii.STATS=1', '-g2012', '-I/home/brendan/Claude_sandbox/_worktrees/88-net-125/flow/cdc_models', '-I/home/brendan/Claude_sandbox/_worktrees/88-net-125/ip_lib/eth_mac_rgmii/rtl', '-I/home/brendan/Claude_sandbox/_worktrees/88-net-125/ip_lib/eth_mac_rmii/rtl', '-f', '/home/brendan/Claude_sandbox/_worktrees/88-net-125/build/sim/adv_pause/cmds.f', '/home/brendan/Claude_sandbox/_worktrees/88-net-125/flow/cdc_models/cdc_inj_pkg.sv', '/home/brendan/Claude_sandbox/_worktrees/88-net-125/flow/cdc_models/cdc_inj_pkg.sv', '/home/brendan/Claude_sandbox/_worktrees/88-net-125/flow/cdc_models/xpm_cdc_models.sv', '/home/brendan/Claude_sandbox/_worktrees/88-net-125/ip_lib/eth_mac_rmii/rtl/eth_crc32.sv', '/home/brendan/Claude_sandbox/_worktrees/88-net-125/ip_lib/eth_mac_rgmii/rtl/eth_mac_rgmii.sv', '/home/brendan/Claude_sandbox/_worktrees/88-net-125/ip_lib/eth_mac_rgmii/rtl/eth_mac_stats.sv', '/home/brendan/Claude_sandbox/_worktrees/88-net-125/ip_lib/eth_mac_rgmii/rtl/eth_rx_classify.sv', '/home/brendan/Claude_sandbox/_worktrees/88-net-125/ip_lib/eth_mac_rgmii/rtl/eth_rx_sf.sv', '/home/brendan/Claude_sandbox/_worktrees/88-net-125/ip_lib/eth_mac_rgmii/rtl/gmii_cdc.sv', '/home/brendan/Claude_sandbox/_worktrees/88-net-125/ip_lib/eth_mac_rgmii/rtl/mac_rx.sv', '/home/brendan/Claude_sandbox/_worktrees/88-net-125/ip_lib/eth_mac_rgmii/rtl/mac_tx.sv', '/home/brendan/Claude_sandbox/_worktrees/88-net-125/ip_lib/eth_mac_rgmii/rtl/rgmii_rx.sv', '/home/brendan/Claude_sandbox/_worktrees/88-net-125/ip_lib/eth_mac_rgmii/rtl/rgmii_tx.sv']' returned non-zero exit status 2.
+
+/usr/lib/python3.12/subprocess.py:571: CalledProcessError
+----------------------------- Captured stderr call -----------------------------
+/home/brendan/Claude_sandbox/_worktrees/88-net-125/flow/cdc_models/cdc_inj_pkg.sv:11: syntax error
+I give up.
+------------------------------ Captured log call -------------------------------
+INFO     Icarus:runner.py:632 Running command iverilog -o /home/brendan/Claude_sandbox/_worktrees/88-net-125/build/sim/adv_pause/sim.vvp -s eth_mac_rgmii -g2012 -Peth_mac_rgmii.CUT_THROUGH=1 -Peth_mac_rgmii.PAUSE=1 -Peth_mac_rgmii.FILTER=1 -Peth_mac_rgmii.STATS=1 -g2012 -I/home/brendan/Claude_sandbox/_worktrees/88-net-125/flow/cdc_models -I/home/brendan/Claude_sandbox/_worktrees/88-net-125/ip_lib/eth_mac_rgmii/rtl -I/home/brendan/Claude_sandbox/_worktrees/88-net-125/ip_lib/eth_mac_rmii/rtl -f /home/brendan/Claude_sandbox/_worktrees/88-net-125/build/sim/adv_pause/cmds.f /home/brendan/Claude_sandbox/_worktrees/88-net-125/flow/cdc_models/cdc_inj_pkg.sv /home/brendan/Claude_sandbox/_worktrees/88-net-125/flow/cdc_models/cdc_inj_pkg.sv /home/brendan/Claude_sandbox/_worktrees/88-net-125/flow/cdc_models/xpm_cdc_models.sv /home/brendan/Claude_sandbox/_worktrees/88-net-125/ip_lib/eth_mac_rmii/rtl/eth_crc32.sv /home/brendan/Claude_sandbox/_worktrees/88-net-125/ip_lib/eth_mac_rgmii/rtl/eth_mac_rgmii.sv /home/brendan/Claude_sandbox/_worktrees/88-net-125/ip_lib/eth_mac_rgmii/rtl/eth_mac_stats.sv /home/brendan/Claude_sandbox/_worktrees/88-net-125/ip_lib/eth_mac_rgmii/rtl/eth_rx_classify.sv /home/brendan/Claude_sandbox/_worktrees/88-net-125/ip_lib/eth_mac_rgmii/rtl/eth_rx_sf.sv /home/brendan/Claude_sandbox/_worktrees/88-net-125/ip_lib/eth_mac_rgmii/rtl/gmii_cdc.sv /home/brendan/Claude_sandbox/_worktrees/88-net-125/ip_lib/eth_mac_rgmii/rtl/mac_rx.sv /home/brendan/Claude_sandbox/_worktrees/88-net-125/ip_lib/eth_mac_rgmii/rtl/mac_tx.sv /home/brendan/Claude_sandbox/_worktrees/88-net-125/ip_lib/eth_mac_rgmii/rtl/rgmii_rx.sv /home/brendan/Claude_sandbox/_worktrees/88-net-125/ip_lib/eth_mac_rgmii/rtl/rgmii_tx.sv in directory /home/brendan/Claude_sandbox/_worktrees/88-net-125/build/sim/adv_pause
+=========================== short test summary info ============================
+FAILED agent/tests/fixtures/run4_c14/tests/test_c14_int8_dot_requant_rtl.py::test_seed_1
+FAILED agent/tests/fixtures/run4_c14/tests/test_c14_int8_dot_requant_rtl.py::test_seed_2
+FAILED agent/tests/fixtures/run4_c14/tests/test_c14_int8_dot_requant_rtl.py::test_seed_3
+FAILED agent/tests/test_05c2_fixes.py::test_repair_edits_previous_output_and_deletes_nothing
+FAILED agent/tests/test_05c_fixes.py::test_valid_spec_signs_off - ModuleNotFo...
+FAILED agent/tests/test_05c_fixes.py::test_interview_asks_for_the_cycle_count_and_rewrites_the_parameter
+FAILED agent/tests/test_05f_role_models.py::test_cli_builds_the_oracle_client_on_the_run_model_whatever_the_profile
+FAILED agent/tests/test_05f_role_models.py::test_each_role_goes_to_its_own_harness_model_and_effort
+FAILED agent/tests/test_05f_role_models.py::test_a_deep_agents_role_on_another_model_gets_that_models_client
+FAILED agent/tests/test_07a2_fix3.py::test_interview_node_merges_into_the_summary_the_state_already_holds
+FAILED agent/tests/test_36_skill_routing.py::test_off_graph_is_the_eval1_graph_and_on_adds_one_node
+FAILED agent/tests/test_42_harness.py::test_h1_middleware_takes_the_default_slot
+FAILED agent/tests/test_42_harness.py::test_watchdog_on_a_real_cocotb_hang - ...
+FAILED agent/tests/test_68_document_resume.py::test_graph_ends_through_the_document_node
+FAILED agent/tests/test_68f_agent_docs.py::test_review_does_not_write_up_a_stop_before_the_gate_as_a_failure
+FAILED agent/tests/test_claude_code_arm.py::test_same_prompt_tools_and_limits_as_deep_agents[0-clarify-allowed0]
+FAILED agent/tests/test_claude_code_arm.py::test_same_prompt_tools_and_limits_as_deep_agents[2-model-allowed1]
+FAILED agent/tests/test_claude_code_arm.py::test_same_prompt_tools_and_limits_as_deep_agents[2-tests-allowed2]
+FAILED agent/tests/test_claude_code_arm.py::test_same_prompt_tools_and_limits_as_deep_agents[2-rtl-allowed3]
+FAILED agent/tests/test_claude_code_arm.py::test_same_prompt_tools_and_limits_as_deep_agents[4-rtl-allowed4]
+FAILED agent/tests/test_claude_code_arm.py::test_same_prompt_tools_and_limits_as_deep_agents[9-rtl-allowed5]
+FAILED flow/net/tests/test_63d_adversarial_rtl.py::test_adv_pause - subproces...
+22 failed, 1783 passed, 38 skipped in 1370.96s (0:22:50)

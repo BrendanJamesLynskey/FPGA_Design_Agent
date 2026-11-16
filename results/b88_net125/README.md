@@ -50,3 +50,19 @@ ipv4_udp_tx and arp_responder by the agent.
 ## Not shown
 
 In-context timing behind eth_mac_rgmii; the Nexys design was re-simulated (43 tests pass) but not rebuilt; no board; single runs at one seed.
+
+## Records
+
+Per agent run: `<case>/` (`history.jsonl`, `summary.json`, `closure_actions.jsonl`, `llm_calls.jsonl`, `task.txt`, `rtl_final/`) and `<case>.log`; hand runs `hand_*` (build only); `faults_*.json` and `faults_reexpressed.json` (seeded faults after the change); `nexys_design_tests.log`, `full_tests.log` (local test runs); `hand_rtl/` (the hand RTL); `run.sh`, `chainB.sh`, `chainC.sh` (how the runs were started). Measurements: `ip_lib/<block>/char/*.json`.
+
+## Reproduce
+
+Needs Vivado 2026.1, Icarus, and a Python environment with pytest, cocotb 2.0.1, scapy and openai (and an OpenRouter key for the agent runs):
+`results/b88_net125/run.sh <block> <extra-latency> xc7 <k> [point]` runs the agent loop (set `EXTRA=--scan-multiply` for the fixed playbook);
+`python3 -m flow.ipchar <blocks> [--part xck26-sfvc784-2LV-c]` repeats the characterisation; `python3 -m pytest flow/net/tests/test_63d_*_rtl.py` the benches;
+`python3 flow/net/faults.py` the seeded faults.
+
+## Known gaps and limits
+
+Single out-of-context runs at one clock; no in-context or board result; thin passes (+0.005, +0.08, +0.15 ns) are inside run-to-run noise; the 16 KB LUT RAM
+icmp buffer still misses; k = 1 agent runs (k = 2 for icmp). The sign-off of agent runs does not cover the hand versions' same-clock race windows (see each block's CHANGELOG).
