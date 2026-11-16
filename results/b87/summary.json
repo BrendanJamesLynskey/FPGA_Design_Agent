@@ -1,0 +1,146 @@
+{
+ "schema": "b87-summary/1",
+ "part": "xck26-sfvc784-2LV-c",
+ "note": "accuracy: seed-0 quantised model, test split, 95% t-interval over 10 sessions; latency: LATENCY clocks x max(closed period, 2.0 ns), out of context, post-route; in the 58A path every arm runs at 8 ns, so there its latency is LATENCY x 8 ns",
+ "floor_ns": 2.0,
+ "rows": [
+  {
+   "arm": "imb_rule",
+   "label": "trivial rule (imbalance threshold)",
+   "model": "imbalance_rule",
+   "test_accuracy": 0.4266,
+   "test_accuracy_ci95": [
+    0.4155,
+    0.4378
+   ],
+   "latency_clocks": 1,
+   "initiation_interval": 1,
+   "closed_at_ns": 0.55,
+   "closed_at_mhz": 1818.2,
+   "quoted_period_ns": 2.0,
+   "latency_ns": 2.0,
+   "lut": 2,
+   "ff": 7,
+   "dsp": 0,
+   "bram_tiles": 0,
+   "wns_ns": 0.136,
+   "whs_ns": 0.074,
+   "bit_exact_and_fixed_latency_over_test_split": true
+  },
+  {
+   "arm": "gbt_comb",
+   "label": "(a) boosted trees, combinational",
+   "model": "gbt",
+   "test_accuracy": 0.4914,
+   "test_accuracy_ci95": [
+    0.4823,
+    0.5006
+   ],
+   "latency_clocks": 1,
+   "initiation_interval": 1,
+   "closed_at_ns": 4.4,
+   "closed_at_mhz": 227.3,
+   "quoted_period_ns": 4.4,
+   "latency_ns": 4.4,
+   "lut": 640,
+   "ff": 42,
+   "dsp": 0,
+   "bram_tiles": 0,
+   "wns_ns": 0.099,
+   "whs_ns": 0.149,
+   "bit_exact_and_fixed_latency_over_test_split": true
+  },
+  {
+   "arm": "gbt_pipe",
+   "label": "(a) boosted trees, one clock per level",
+   "model": "gbt",
+   "test_accuracy": 0.4914,
+   "test_accuracy_ci95": [
+    0.4823,
+    0.5006
+   ],
+   "latency_clocks": 10,
+   "initiation_interval": 1,
+   "closed_at_ns": 1.55,
+   "closed_at_mhz": 645.2,
+   "quoted_period_ns": 2.0,
+   "latency_ns": 20.0,
+   "lut": 897,
+   "ff": 1066,
+   "dsp": 0,
+   "bram_tiles": 0,
+   "wns_ns": 0.258,
+   "whs_ns": 0.092,
+   "bit_exact_and_fixed_latency_over_test_split": true
+  },
+  {
+   "arm": "mlp_hand",
+   "label": "(b) MLP, hand RTL",
+   "model": "mlp",
+   "test_accuracy": 0.4988,
+   "test_accuracy_ci95": [
+    0.488,
+    0.5096
+   ],
+   "latency_clocks": 13,
+   "initiation_interval": 1,
+   "closed_at_ns": 2.9,
+   "closed_at_mhz": 344.8,
+   "quoted_period_ns": 2.9,
+   "latency_ns": 37.7,
+   "lut": 6018,
+   "ff": 4295,
+   "dsp": 0,
+   "bram_tiles": 0,
+   "wns_ns": 0.197,
+   "whs_ns": 0.065,
+   "bit_exact_and_fixed_latency_over_test_split": true
+  },
+  {
+   "arm": "mlp_hls4ml",
+   "label": "(b) MLP, hls4ml + Vitis HLS",
+   "model": "mlp",
+   "test_accuracy": 0.4988,
+   "test_accuracy_ci95": [
+    0.488,
+    0.5096
+   ],
+   "latency_clocks": 33,
+   "initiation_interval": 1,
+   "closed_at_ns": 2.3,
+   "closed_at_mhz": 434.8,
+   "quoted_period_ns": 2.3,
+   "latency_ns": 75.9,
+   "lut": 5299,
+   "ff": 7508,
+   "dsp": 0,
+   "bram_tiles": 0,
+   "wns_ns": 0.028,
+   "whs_ns": 0.055,
+   "bit_exact_and_fixed_latency_over_test_split": true
+  },
+  {
+   "arm": "lutnet",
+   "label": "(c) LUT network",
+   "model": "lutnet",
+   "test_accuracy": 0.4207,
+   "test_accuracy_ci95": [
+    0.402,
+    0.4393
+   ],
+   "latency_clocks": 3,
+   "initiation_interval": 1,
+   "closed_at_ns": 1.95,
+   "closed_at_mhz": 512.8,
+   "quoted_period_ns": 2.0,
+   "latency_ns": 6.0,
+   "lut": 76,
+   "ff": 79,
+   "dsp": 0,
+   "bram_tiles": 0.5,
+   "wns_ns": 0.039,
+   "whs_ns": 0.1,
+   "bit_exact_and_fixed_latency_over_test_split": true
+  }
+ ]
+}
