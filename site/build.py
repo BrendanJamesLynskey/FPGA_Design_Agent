@@ -379,7 +379,7 @@ def layout(fname, title, desc, body, keys, d, css, js, prefix="", current=None, 
 {body}
 {pager}
 </main>
-<footer><div class="wrap"><p>Designed by Brendan Lynskey. Code and results: <a href="{REPO}">{REPO.split('//')[1]}</a> (MIT licence). Every number on these pages is read from a committed result file; development results are labelled as such and are not the held-out score.</p></div></footer>
+<footer><div class="wrap"><p>Designed by Brendan Lynskey. Code and results: <a href="{REPO}">{REPO.split('//')[1]}</a> (all rights reserved; source visible for review, see LICENSE). Every number on these pages is read from a committed result file; development results are labelled as such and are not the held-out score.</p></div></footer>
 {scripts}
 <script>{js}</script>
 </body>

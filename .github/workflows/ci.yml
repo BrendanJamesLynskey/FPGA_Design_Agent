@@ -27,7 +27,11 @@ jobs:
     timeout-minutes: 20
     env:
       PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      FDA_ACCESS_KEY: ${{ secrets.FDA_ACCESS_KEY }}     # brief 94: empty on fork pull requests
     steps:
+      - name: Access key notice (brief 94)
+        run: |
+          if [ -z "$FDA_ACCESS_KEY" ]; then echo "::notice::FDA_ACCESS_KEY is not available here (fork pull request, or the secret is not set): the access-key match test skips; no job fails for it"; fi
       - uses: actions/checkout@v4
       - name: Fetch the pull request base (for the task selection)
         if: github.event_name == 'pull_request'

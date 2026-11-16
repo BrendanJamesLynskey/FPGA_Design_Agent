@@ -187,6 +187,8 @@ def gates_signoff(d: Path):
 
 
 def main(argv: list[str] | None = None) -> int:
+    from agent.access import require_or_exit
+    require_or_exit('agent.graph.closure_task')
     ap = argparse.ArgumentParser()
     ap.add_argument("task", type=Path)
     ap.add_argument("--rtl", type=Path, required=True)
