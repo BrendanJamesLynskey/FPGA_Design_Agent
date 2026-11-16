@@ -148,6 +148,16 @@ def write_digest(wd: Path, period: float) -> dict:
     return dg
 
 
+def has_multiply(rtl: Path) -> bool:
+    """True when any RTL file has a multiply operator `*` (comments, attributes `(* *)` and `**` powers excluded)."""
+    for f in rtl.glob("*.sv"):
+        t = re.sub(r"//[^\n]*|/\*.*?\*/", "", f.read_text(), flags=re.S)
+        t = re.sub(r"\(\*.*?\*\)", "", t, flags=re.S).replace("**", "")
+        if "*" in re.sub(r"\[[^\]]*\*[^\]]*\]|\+:", "", t) and re.search(r"[\w\)\]]\s*\*\s*[\w\(]", t):
+            return True
+    return False
+
+
 def spec_for(block: str, mhz: float, part: str, extra: int) -> dict:
     return {"clocks": [{"name": "clk", "freq_mhz": mhz}], "part": part, "top": block,
             "behaviour": {"latency": [f"at most {extra} clocks more than now"]}}
@@ -167,6 +177,9 @@ def main(argv=None) -> int:
     ap.add_argument("--out", type=Path)
     ap.add_argument("--rtl", type=Path, help="start from this RTL directory instead of ip_lib/<block>/rtl")
     ap.add_argument("--point", type=int, default=0, help="index of the characterisation point the loop builds (the others are built at sign-off)")
+    ap.add_argument("--scan-multiply", action="store_true",
+                    help="tell the playbook whether the RTL has a multiply (brief 88 fix: no DSP mapping for adder chains; "
+                         "also enables the carry-split and verdict-register strategies). Off = the playbook as of brief 62B")
     ap.add_argument("--prefix", default="88")
     ap.add_argument("--build-only", action="store_true")
     a = ap.parse_args(argv)
@@ -186,7 +199,10 @@ def main(argv=None) -> int:
     n_pts = len(y["characterisation"]["points"])
 
     def build(dd: Path) -> dict:
-        return ooc_build(a.block, d, a.part, a.clock_mhz, a.prefix, point=a.point)
+        dg = ooc_build(a.block, d, a.part, a.clock_mhz, a.prefix, point=a.point)
+        if a.scan_multiply and dg.get("ran"):
+            dg["rtl_has_multiply"] = has_multiply(d / "rtl")
+        return dg
 
     def signoff(_dg: dict) -> dict:
         failed = []
