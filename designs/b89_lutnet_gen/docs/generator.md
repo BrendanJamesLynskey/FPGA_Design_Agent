@@ -13,7 +13,7 @@ cls = M.twin_predict(m, X)                                      # the bit-exact 
 sv = R.emit(m, "my_net", fbits=[8, 8, 4, 3, 5, 8, 2], pipe="layer")
 ```
 
-Command line for the brief 89 models: `python -m designs.b89_lutnet_gen.lutgen.cli` (see the README).
+Command line for the brief 89 models: `python -m designs.b89_lutnet_gen.lutgen.cli train|rtl` (see the README).
 
 ## Config fields
 
@@ -55,9 +55,9 @@ entry (the trained network's output there), so the twin and the RTL agree on any
   `out_cls` is undefined until the first `out_v`.
 - `LATENCY` (a localparam) = clocks from `in_v` to `out_v`, the same for every input; one new input every clock.
   - `pipe="comb"`: 1 (encoder, all layers, the adders and the argmax before one output register);
-  - `pipe="layer"`: hidden layers + 1 (a register after each hidden layer, plus the output register after the score
-    layer, adders and argmax); with no hidden layer this equals `"comb"`;
-  - `pipe=N`: a register after every N-th hidden layer, plus the output register;
+  - `pipe="layer"`: LUT layers + 1 (a register after every LUT layer, hidden and score, plus the output register
+    after the score adder and argmax); a network with no hidden layer has LATENCY 2;
+  - `pipe=N`: a register after every N-th LUT layer, plus the output register;
   - `reg_encoder=True` adds one register after the encoder compares (+1).
 - The features are not registered inside the module: the producer's register is assumed (the out-of-context
   wrapper adds one, outside `LATENCY`).

@@ -41,7 +41,7 @@ def main():
     d = Dm.load(("test",))
     X, y, g = d["test"]
     ref = {"trivial_rule_87": Dm.b87_per_session("imbalance_rule"), "trees_87": Dm.b87_per_session("gbt"),
-           "mlp_87": Dm.b87_per_session("mlp")}
+           "mlp_87": Dm.b87_per_session("mlp"), "lutnet_87": Dm.b87_per_session("lutnet")}
     tl = np.load(C.RES / "treelut" / "test_predictions.npz")
     tl_ps = {s: per_session(tl[f"seed{s}"], y, g) for s in C.SEEDS}
     ref["treelut_seed0"] = tl_ps[0]

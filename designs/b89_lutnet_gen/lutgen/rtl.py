@@ -9,8 +9,9 @@ Ports (the brief 87 arm interface, so the 87 test bench and out-of-context wrapp
 Pipelining (`pipe`), counted in clocks from in_v to out_v, which is the module's `LATENCY` localparam:
 
     "comb"     one register, at the output (encoder, every LUT layer, the adder and the argmax in one clock): LATENCY 1
-    "layer"    a register after every LUT layer and at the output: LATENCY = LUT layers + 1
+    "layer"    a register after every LUT layer (hidden and score) and at the output: LATENCY = LUT layers + 1
     N (int)    a register after every N-th LUT layer and at the output (N >= 1; "layer" is N = 1)
+The score adder (additive output) and the argmax always sit in the last clock, before the output register.
 
 The input encoder's compares sit in front of the first LUT layer in the same clock; `reg_encoder=True` adds a
 register after them (LATENCY + 1). The latency is fixed: no stage depends on the data. The feature inputs are not
@@ -37,9 +38,9 @@ def emit(m: dict, name: str, fbits: list[int], pipe="layer", reg_encoder: bool =
     if pipe == "comb":
         regs_after = set()
     elif pipe == "layer":
-        regs_after = set(range(nl - 1))
+        regs_after = set(range(nl))
     elif isinstance(pipe, int) and pipe >= 1:
-        regs_after = {i for i in range(nl - 1) if (i + 1) % pipe == 0}
+        regs_after = {i for i in range(nl) if (i + 1) % pipe == 0}
     else:
         raise ValueError("pipe must be 'comb', 'layer' or a positive integer")
     latency = 1 + len(regs_after) + (1 if reg_encoder else 0)
