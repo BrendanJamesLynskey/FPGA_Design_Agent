@@ -166,6 +166,7 @@ def main(argv=None) -> int:
     ap.add_argument("--replay", type=Path)
     ap.add_argument("--out", type=Path)
     ap.add_argument("--rtl", type=Path, help="start from this RTL directory instead of ip_lib/<block>/rtl")
+    ap.add_argument("--point", type=int, default=0, help="index of the characterisation point the loop builds (the others are built at sign-off)")
     ap.add_argument("--prefix", default="88")
     ap.add_argument("--build-only", action="store_true")
     a = ap.parse_args(argv)
@@ -185,7 +186,7 @@ def main(argv=None) -> int:
     n_pts = len(y["characterisation"]["points"])
 
     def build(dd: Path) -> dict:
-        return ooc_build(a.block, d, a.part, a.clock_mhz, a.prefix)
+        return ooc_build(a.block, d, a.part, a.clock_mhz, a.prefix, point=a.point)
 
     def signoff(_dg: dict) -> dict:
         failed = []
@@ -213,7 +214,7 @@ def main(argv=None) -> int:
             # hand afterwards (recorded in signoff_faults.json); closure is not claimed on a design with no live fault there
             note_invalid = [x["name"] for x in fj if x["status"] == "invalid"]
             (out / "signoff_invalid_faults.txt").write_text("\n".join(note_invalid) + "\n")
-        for i in range(1, n_pts):
+        for i in [j for j in range(n_pts) if j != a.point]:
             dg = ooc_build(a.block, d, a.part, a.clock_mhz, a.prefix, point=i, name=f"point{i}")
             t = (dg.get("timing") or {})
             if not (dg.get("ran") and (t.get("wns_ns") or -1) >= 0 and (t.get("whs_ns") or 0) >= 0 and (dg.get("gates") or {}).get("pulse_width", True)):
