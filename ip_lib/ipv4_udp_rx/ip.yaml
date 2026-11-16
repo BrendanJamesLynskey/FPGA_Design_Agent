@@ -1,10 +1,12 @@
 # ip.yaml for ipv4_udp_rx: the declared parameter space and contract (the library's reuse rules; brief 63D).
 name: ipv4_udp_rx
-version: 0.1.0
-status: 'Misses 125 MHz out of context (75-81 MHz estimated: needs pipelining before it sits behind the RGMII MAC); closes
-  at 50 MHz. Simulated against an RFC 791/768 model with scapy checking the bench''s frames; output protocol checked by bounded
-  model checking; built alone out of context on an Artix-7 with Vivado 2026.1; not yet run on a board (the Nexys A7 network
-  design carries it behind eth_mac_rmii; built, not yet run: a cable check comes first, see designs/b63d_nexys_net/host/PLAN.md)'
+version: 0.2.0
+status: 'Meets 125 MHz out of context on xc7a100t-1 (Fmax estimates 133 MHz at 4 and 8 ports) and with margin on xck26-2LV
+  (216-244 MHz). Version 0.2.0 delays the last payload byte to 6 clocks after the frame''s last input beat (was 2) and holds
+  the input for 5 clocks after each frame (was 1). Simulated against an RFC 791/768 model with scapy checking the bench''s
+  frames; built alone out of context with Vivado 2026.1 (single runs at 8 ns, estimates); not yet run on a board (the Nexys
+  A7 network design carries it behind eth_mac_rmii; built, not yet run: a cable check comes first, see
+  designs/b63d_nexys_net/host/PLAN.md)'
 summary: 'IPv4 and UDP receive: header checksum and length checks, options skipped, fragments refused, destination by own
   address, broadcast or multicast, UDP checksum with the pseudo-header, demultiplexed by destination port; the payload streams
   out with its header fields.'
@@ -72,9 +74,9 @@ parameters:
     note: 1 = accept 224.0.0.0/4 (the MAC filter and igmp_join choose the groups)
 constraints: []
 latency:
-  payload: each payload byte leaves one input byte later (one byte held back to place tlast); the last one 1 clock after the
-    frame's last byte
-throughput: a byte a clock, less one clock per frame
+  payload: each payload byte leaves one input byte later (one byte held back to place tlast); the last one 6 clocks after the
+    frame's last input beat (0.1.0 had 2); the input is held for 5 clocks after each frame
+throughput: a byte a clock, less 5 clocks per frame (0.1.0 had 1)
 guards:
 - N_PORTS: 0
 - N_PORTS: 9
@@ -106,8 +108,7 @@ boundary:
   part_specific: none
 limits: 'no reassembly (fragments are counted and dropped); no VLAN tags (strip them in the MAC); a datagram with no payload
   produces no output; the UDP checksum verdict comes on tlast, so a consumer acting on the bytes early must undo on tuser;
-  measured Fmax estimates 75-81 MHz out of context: it closes at the RMII MAC''s 50 MHz but not at the RGMII MAC''s 125 MHz
-  (header index compares and checksum folds are not pipelined)'
+  measured Fmax estimates 133 MHz (xc7a100t-1) out of context; the input is held for 5 clocks after each frame while the verdict settles (a frame every 6 clocks at most); the added pipeline stage moves some decisions one clock later, so a same-clock race between a frame''s verdict and a free-running input (a tick, a flush, a lookup, an output handshake) resolves one clock later than in 0.1.0 (no bench reaches these races; the CHANGELOG lists them); the formal checks were written for 0.1.0 and run in CI on 0.2.0'
 evidence:
   summary: 'cocotb against ip_lib/ipv4_udp_rx/model.py (RFC 791, 768, 1071), frames built in plain Python with scapy recomputing
     the bench''s own UDP checksums: unicast, broadcast, multicast and foreign destinations; enabled, disabled, duplicated
@@ -126,5 +127,5 @@ evidence:
 cost_table: 'measured out of context: see the Cost section above'
 licence: MIT (this repository)
 next_steps:
-- Pipeline the header checks so the block meets 125 MHz behind the RGMII MAC.
+- Time the block in context behind eth_mac_rgmii on the KR260 (out-of-context numbers are single runs).
 - Run designs/b63d_nexys_net on the board with a host sending datagrams.

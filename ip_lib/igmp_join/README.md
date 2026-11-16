@@ -1,10 +1,10 @@
-# igmp_join 0.1.0
+# igmp_join 0.2.0
 
 Multicast group membership for a host (IGMPv2, RFC 2236) for up to 8 configured groups: unsolicited reports on joining, reports in answer to general, group-specific and version 3 queries after a random delay, suppression by other hosts' reports, leaves. IGMPv2 only: IGMPv3 reports are not implemented (a version 3 query is answered as version 2).
 
 Generated from `ip.yaml` by `flow/net/ipdoc.py`; do not edit by hand.
 
-Status: Misses 125 MHz out of context (71-80 MHz estimated: needs pipelining before it sits behind the RGMII MAC); closes at 50 MHz. Simulated against RFC 2236 (directed sequence, every frame compared with the model, scapy decoding); transmit framing checked by bounded model checking; built alone out of context on an Artix-7 with Vivado 2026.1; not yet run on a board (the Nexys A7 network design carries it behind eth_mac_rmii; built, not yet run: a cable check comes first, see designs/b63d_nexys_net/host/PLAN.md).
+Status: Meets 125 MHz out of context on xc7a100t-1 (Fmax estimates 128 MHz at 4 and 8 groups, WNS +0.17 to +0.20 ns) and with margin on xck26-2LV (232-238 MHz). Version 0.2.0 starts a frame 3 clocks after the group is picked and acts on a received query or report 1 clock later. Simulated against RFC 2236 (directed sequence, every frame compared with the model, scapy decoding); built alone out of context with Vivado 2026.1 (single runs at 8 ns, estimates); not yet run on a board (the Nexys A7 network design carries it behind eth_mac_rmii; built, not yet run: a cable check comes first, see designs/b63d_nexys_net/host/PLAN.md).
 
 ## Parameters
 
@@ -27,7 +27,7 @@ Clocks: `clk`. Reset: `rst`, active high, synchronous.
 
 ## Latency and throughput
 
-- report: a join's first report follows at once (no tick wait); query answers after a random 1..Max Response Time ticks, checked against that window in the bench
+- report: a join's first report follows 3 clocks after the group is picked (no tick wait; 0.1.0 was at once); query answers after a random 1..Max Response Time ticks, checked against that window in the bench
 - throughput: one frame at a time, lowest group first
 
 ## Evidence
@@ -57,8 +57,8 @@ Built alone (out of context) on an Artix-7, xc7a100tcsg324-1, for a 8.0 ns clock
 
 | N_GROUPS | TICK_CLKS | UNSOL_TICKS | LUT | FF | LUT RAM | Block RAM tiles | DSP | WNS (ns) | Fmax estimate (MHz) | Dynamic power (W) |
 |---|---|---|---|---|---|---|---|---|---|---|
-| 4 | 12500000 | 100 | 1075 | 430 | 0 | 0 | 0 | -4.529 | 79.8 | 0.020 |
-| 8 | 12500000 | 100 | 1628 | 491 | 0 | 0 | 0 | -6.033 | 71.3 | 0.033 |
+| 4 | 12500000 | 100 | 1009 | 568 | 0 | 0 | 0 | 0.198 | 128.2 | 0.022 |
+| 8 | 12500000 | 100 | 1506 | 661 | 0 | 0 | 0 | 0.169 | 127.7 | 0.036 |
 
 Defaults: N_GROUPS 4, TICK_CLKS 12500000, UNSOL_TICKS 100. WNS is the worst negative slack (the timing margin at the target clock; below zero the target is missed).
 
@@ -79,16 +79,17 @@ Licence: MIT (this repository).
 
 ## Known gaps and limits
 
-- IGMPv2 host side only: no IGMPv3 reports or source filtering (a version 3 query is answered as a version 2 query, RFC 3376 7.2.1); no version 1 router compatibility timer; the random delay comes from a 16-bit LFSR; measured Fmax estimates 71-80 MHz out of context: below the RGMII MAC's 125 MHz (the frame's checksums are summed in one clock).
+- IGMPv2 host side only: no IGMPv3 reports or source filtering (a version 3 query is answered as a version 2 query, RFC 3376 7.2.1); no version 1 router compatibility timer; the random delay comes from a 16-bit LFSR; measured Fmax estimates 128 MHz (xc7a100t-1) out of context; the added pipeline stage moves some decisions one clock later, so a same-clock race between a frame's verdict and a free-running input (a tick, a flush, a lookup, an output handshake) resolves one clock later than in 0.1.0 (no bench reaches these races; the CHANGELOG lists them); the formal checks were written for 0.1.0 and run in CI on 0.2.0.
 - Board: no board run of this entry is recorded; its evidence is simulation and out-of-context builds.
 
 ## Next steps
 
-1. Pipeline the block before it sits behind the RGMII MAC (it closes at 50 MHz, not 125 MHz).
+1. Time the block in context behind eth_mac_rgmii on the KR260 (out-of-context numbers are single runs).
 2. Run designs/b63d_nexys_net on the board and record the joins on a switch.
 
 ## History
 
+- 0.2.0 (2026-11-16): Pipelined to meet 125 MHz out of context on xc7a100t-1 (brief 88; Vivado 2026.1, single runs). Behaviour is unchanged apart from latency: see the status line and the latency entry in ip.yaml. Same-clock races between a frame's verdict and free-running inputs (a tick, a flush, a lookup, an output handshake) resolve one clock later than in 0.1.0; no bench reaches them. Seeded faults re-expressed for the new RTL.
 - 0.1.0 (2026-11-12): Initial version: simulated against a Python model, seeded faults caught, formal checks (bounded except where the README says proved), out-of-context cost on an Artix-7 (Vivado 2026.1); not run on a board. See README.md.
 
 Full entries: [CHANGELOG.md](CHANGELOG.md).

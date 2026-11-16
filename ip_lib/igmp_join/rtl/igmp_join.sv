@@ -123,6 +123,19 @@ module igmp_join #(
     assign q_mrt = (mrt == 8'd0) ? 8'd100 : mrt;
 
     // ---------------------------------------------------------------- per-group state
+    // the message verdict is registered, and the group state acts on it one clock later (brief 88)
+    logic        q2, r2;
+    logic [31:0] grp2;
+    logic [7:0]  qm2, q_mrt_r;          // q_mrt registered: mrt is final several bytes before the frame's last byte
+    logic [7:0]  rq [N];                 // the random delay for a query's answer, drawn with the verdict
+    always_ff @(posedge clk) begin
+        if (rst) begin for (int i = 0; i < N; i++) rq[i] <= 8'd0; q2 <= 1'b0; r2 <= 1'b0; grp2 <= '0; qm2 <= 8'd0; q_mrt_r <= 8'd0; end
+        else begin
+            q_mrt_r <= q_mrt;
+            q2 <= is_query; r2 <= is_report; grp2 <= grp; qm2 <= q_mrt_r;
+            for (int i = 0; i < N; i++) rq[i] <= rnd(lfsr[7:0] ^ 8'(i * 37), q_mrt_r);
+        end
+    end
     logic [N-1:0] en_q, run, rep_p, lv_p, last_rep;
     logic [7:0]   tmr [N];
     logic [N-1:0] sent_rep, sent_lv;    // one clock: the frame for group i finished
@@ -133,7 +146,7 @@ module igmp_join #(
             for (int i = 0; i < N; i++) tmr[i] <= '0;
         end else begin
             en_q <= group_en;
-            if (is_query) ev_query <= 1'b1;
+            if (q2) ev_query <= 1'b1;
             for (int i = 0; i < N; i++) begin
                 if (sent_rep[i]) begin rep_p[i] <= 1'b0; last_rep[i] <= 1'b1; end
                 if (sent_lv[i]) lv_p[i] <= 1'b0;
@@ -145,11 +158,11 @@ module igmp_join #(
                     if (last_rep[i]) lv_p[i] <= 1'b1;
                     last_rep[i] <= 1'b0;
                 end else if (group_en[i]) begin
-                    if (is_query && (grp == 32'd0 || grp == groups[32*i +: 32])) begin
-                        if (!run[i] || tmr[i] > q_mrt) begin
-                            run[i] <= 1'b1; tmr[i] <= rnd(lfsr[7:0] ^ 8'(i * 37), q_mrt);
+                    if (q2 && (grp2 == 32'd0 || grp2 == groups[32*i +: 32])) begin
+                        if (!run[i] || tmr[i] > qm2) begin
+                            run[i] <= 1'b1; tmr[i] <= rq[i];
                         end
-                    end else if (is_report && grp == groups[32*i +: 32] && run[i]) begin
+                    end else if (r2 && grp2 == groups[32*i +: 32] && run[i]) begin
                         run[i] <= 1'b0; last_rep[i] <= 1'b0; ev_suppressed <= 1'b1;
                     end else if (run[i] && tick && !rep_p[i]) begin     // counts once no report waits
                         if (tmr[i] <= 8'd1) begin run[i] <= 1'b0; rep_p[i] <= 1'b1; end
@@ -176,14 +189,13 @@ module igmp_join #(
             else if (rep_p[i]) begin pick = 1'b1; pick_i = 3'(i); pick_lv = 1'b0; end
         end
     end
-    // checksums of the frame about to start
+    // checksums of the frame about to start, computed from the registered choice over two clocks (brief 88: the choice, the
+    // group multiplexer and the nine-term sum used to sit in one clock; the frame now starts three clocks after the pick)
     logic [31:0] n_dst, n_grp;
     assign n_grp = groups[32*pick_i +: 32];
     assign n_dst = pick_lv ? 32'hE000_0002 : n_grp;
-    logic [31:0] ip_s, ig_s;
-    assign ip_s = 32'h4600 + 32'd32 + {16'd0, ident} + 32'h0102 + {16'd0, own_ip[31:16]} + {16'd0, own_ip[15:0]} +
-                  {16'd0, n_dst[31:16]} + {16'd0, n_dst[15:0]} + 32'h9404;
-    assign ig_s = {16'd0, pick_lv ? 8'h17 : 8'h16, 8'h00} + {16'd0, n_grp[31:16]} + {16'd0, n_grp[15:0]};
+    logic [1:0]  ps;                    // 0 idle or sending; 1, 2, 3 = the frame is being prepared
+    logic [31:0] pa, pb, ig_r;
     function automatic logic [7:0] fb(input logic [5:0] i, input logic [31:0] d, input logic [31:0] g, input logic lv,
                                       input logic [47:0] sm, input logic [31:0] si, input logic [15:0] id,
                                       input logic [15:0] ic, input logic [15:0] gc);
@@ -208,13 +220,26 @@ module igmp_join #(
         ev_report <= 1'b0; ev_leave <= 1'b0; sent_rep <= '0; sent_lv <= '0;
         if (rst) begin
             sending <= 1'b0; cur_lv <= 1'b0; cur_i <= '0; cur_dst <= '0; cur_grp <= '0; j <= '0; ident <= '0;
-            ipcs <= '0; igcs <= '0; m_axis_tvalid <= 1'b0; m_axis_tdata <= '0; m_axis_tlast <= 1'b0;
+            ipcs <= '0; igcs <= '0; ps <= '0; pa <= '0; pb <= '0; ig_r <= '0; m_axis_tvalid <= 1'b0; m_axis_tdata <= '0; m_axis_tlast <= 1'b0;
         end else if (!sending) begin
             if (pick && !(|sent_rep) && !(|sent_lv)) begin
-                sending <= 1'b1; cur_lv <= pick_lv; cur_i <= pick_i; cur_dst <= n_dst; cur_grp <= n_grp; j <= 6'd1;
-                ipcs <= ~fold(ip_s); igcs <= ~fold(ig_s);
-                m_axis_tvalid <= 1'b1; m_axis_tdata <= 8'h01; m_axis_tlast <= 1'b0;
+                sending <= 1'b1; cur_lv <= pick_lv; cur_i <= pick_i; cur_dst <= n_dst; cur_grp <= n_grp; ps <= 2'd1;
             end
+        end else if (ps != 2'd0) begin
+            case (ps)
+                2'd1: begin             // the registered choice: two partial sums
+                    pa <= 32'h4600 + 32'd32 + {16'd0, ident} + 32'h0102 + {16'd0, own_ip[31:16]} + {16'd0, own_ip[15:0]} + 32'h9404;
+                    pb <= {16'd0, cur_dst[31:16]} + {16'd0, cur_dst[15:0]};
+                    ig_r <= {16'd0, cur_lv ? 8'h17 : 8'h16, 8'h00} + {16'd0, cur_grp[31:16]} + {16'd0, cur_grp[15:0]};
+                    ps <= 2'd2;
+                end
+                2'd2: begin
+                    ipcs <= ~fold(pa + pb); igcs <= ~fold(ig_r); ps <= 2'd3;
+                end
+                default: begin
+                    m_axis_tvalid <= 1'b1; m_axis_tdata <= 8'h01; m_axis_tlast <= 1'b0; j <= 6'd1; ps <= 2'd0;
+                end
+            endcase
         end else if (m_axis_tvalid && m_axis_tready) begin
             if (m_axis_tlast) begin
                 m_axis_tvalid <= 1'b0; sending <= 1'b0; ident <= ident + 16'd1;
