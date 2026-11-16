@@ -99,3 +99,10 @@ writing the record. Both workers were restarted and the two records rebuilt from
 `driver.py rebuild` (scoring repeated on the same RTL; wall time = run-directory creation to `summary.json` mtime, so it is a
 reconstruction and the record says so). The two workers stood idle from about 14:32 to 15:58; that is lost wall time, not a result.
 Nothing about the agent, knowledge, prompts, benchmark or the runs' configuration changed.
+
+## Amendment 2 (2026-11-16 17:00, harness only, after the Sonnet harness review)
+
+Fixes to `driver.py` made after the review, applying to the table and any later scoring: a run killed by the hard wall limit
+is always a failure (`passed()`); a stale score file is deleted before scoring. Workers already running keep the old code,
+so the table applies the hard-limit rule when it reads the records. Review items not fixed (run-id discovery without a
+unique marker, loose infra-failure test, rebuild checks) are listed in the report's known gaps; so far no run has needed them.

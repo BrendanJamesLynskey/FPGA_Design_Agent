@@ -103,6 +103,7 @@ def score(code: Path, task: str, rtl: Path, out: Path) -> dict:
     with open(HERE / "score.lock", "w") as lk:
         fcntl.flock(lk, fcntl.LOCK_EX)
         out.parent.mkdir(parents=True, exist_ok=True)
+        out.unlink(missing_ok=True)       # review fix: never read a stale score after a scorer crash
         r = subprocess.run([sys.executable, str(code / "benchmark/tools/run_task.py"), str(code / "benchmark/v2/tasks" / task),
                             "--rtl", str(rtl), "--sim", "icarus", "--json", str(out)], cwd=code, capture_output=True, text=True,
                            timeout=3600)
@@ -272,6 +273,11 @@ def wilson(k: int, n: int, z: float = 1.96) -> tuple[float, float]:
     return (c - h, c + h)
 
 
+def passed(r: dict) -> bool:
+    """Review fix: a run killed by the hard wall limit is a budget failure whatever its partial RTL scores."""
+    return bool((r.get("score") or {}).get("pass")) and not r.get("hard_limit")
+
+
 def table() -> int:
     rs = [r for r in records() if "_attempt1" not in str(r.get("attempt_label", ""))]
     primary = {}
@@ -291,7 +297,7 @@ def table() -> int:
             continue
         sc = r.get("score") or {}
         nr = len(list(REC.glob(f"{t}_r{rep}_attempt1_not_run.json")))
-        md.append(f"| {t} | {r['level']} | {rep} | {r.get('run_id')} | {'PASS' if sc.get('pass') else 'fail'} | "
+        md.append(f"| {t} | {r['level']} | {rep} | {r.get('run_id')} | {'PASS' if passed(r) else 'fail'} | "
                   f"{sc.get('tests_passed')}/{sc.get('tests')} | {'pass' if r.get('stage2_gates_passed') else 'fail'} | {r.get('stop')} | "
                   f"{r.get('stage2_visits')} | {r.get('turns')} | {round(r['wall_s'] / 60, 1)}{' (hard limit)' if r.get('hard_limit') else ''} | "
                   f"{r.get('tokens', r.get('tokens_lower_bound'))} | {r.get('plan_cost_estimate_usd')} | {nr} |")
@@ -301,10 +307,10 @@ def table() -> int:
     per_task = {}
     for t in TASKS:
         rr = [primary[(t, rep)] for rep in REPEATS if (t, rep) in primary]
-        k = sum(1 for r in rr if (r.get("score") or {}).get("pass"))
+        k = sum(1 for r in rr if passed(r))
         n = len(rr)
         gc = sum(1 for r in rr if r.get("stage2_gates_passed"))
-        esc = sum(1 for r in rr if r.get("stage2_gates_passed") and not (r.get("score") or {}).get("pass"))
+        esc = sum(1 for r in rr if r.get("stage2_gates_passed") and not passed(r))
         per_task[t] = (k, n)
         tot[LEVEL[t]][0] += k
         tot[LEVEL[t]][1] += n
