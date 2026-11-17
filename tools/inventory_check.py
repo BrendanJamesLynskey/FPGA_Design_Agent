@@ -33,7 +33,7 @@ SOURCED = ("part", "function", "interface", "pins", "address_or_id", "reset_enab
 VERDICTS = ("yes", "with conditions", "no")
 TOP_KEYS = ("schema", "board", "part", "master_xdc", "documents", "digilent_demos", "power", "core_io", "peripherals")
 XDC_LINE = re.compile(r"^#?\s*set_property\s+-dict\s*\{\s*PACKAGE_PIN\s+(\w+)\s+IOSTANDARD\s+(\w+)\s*\}"
-                      r"\s*\[get_ports\s*\{\s*([^\s}]+)\s*\}\]")
+                      r"\s*\[get_ports\s*\{?\s*((?:[^\s{}\[\]]|\[\d+\])+)\s*\}?\s*\]")
 
 
 def parse_xdc(text: str) -> tuple[dict[str, tuple[str, str]], dict[str, list[str]]]:

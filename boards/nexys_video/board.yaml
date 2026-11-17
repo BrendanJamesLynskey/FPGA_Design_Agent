@@ -1,0 +1,181 @@
+# Digilent Nexys Video: board file (fpga-design-agent/board/v2). Facts name their sources (ids under `sources`); an unconfirmed
+# fact says so and why. Written by hand from the cited documents; see boards/SCHEMA.md.
+schema: fpga-design-agent/board/v2
+name: nexys_video
+display_name: Digilent Nexys Video
+vendor: Digilent
+family: Artix-7
+part: xc7a200tsbg484-1
+board_revision: Rev. A (the master XDC's header)
+master_xdc: Nexys-Video-Master.xdc
+master_xdc_source:
+  kind: vendor_copy
+  repo: https://github.com/Digilent/digilent-xdc
+  commit: c8644a9fe31cc803789643124545d56b3bef4600
+  file: Nexys-Video-Master.xdc
+  licence: MIT (LICENSE-digilent-xdc.txt, copied from the same commit)
+sources:
+  XDC:
+    title: Digilent master XDC Nexys-Video-Master.xdc
+    version: Digilent/digilent-xdc @ c8644a9 (MIT)
+    url: https://github.com/Digilent/digilent-xdc
+  BDF:
+    title: AMD XilinxBoardStore board file (part name, memories)
+    version: XilinxBoardStore @ 40fad97, boards/Digilent/nexys_video/A.0/board.xml (Apache-2.0)
+    url: https://github.com/Xilinx/XilinxBoardStore/blob/40fad97cf36f3d856c6759d83c2390de1566ffa7/boards/Digilent/nexys_video/A.0/board.xml
+  RM:
+    title: Digilent Nexys Video Reference Manual (web page)
+    version: web.archive.org snapshot 2025
+    url: https://digilent.com/reference/programmable-logic/nexys-video/reference-manual
+clock:
+  port: clk
+  pin: R4
+  freq_mhz: 100
+  source:
+  - XDC
+  period_ns_in_vendor_xdc: 10.0
+uart:
+  fpga_rx:
+    port: uart_tx_in
+    pin: V18
+  fpga_tx:
+    port: uart_rx_out
+    pin: AA19
+  default_baud: 115200
+  source:
+  - XDC
+  note: port names follow the vendor file; 'fpga_rx' is the pin the FPGA receives on. Baud rate is the common default, not a board property
+resources:
+  clk: clk
+  led:
+  - led[0]
+  - led[1]
+  - led[2]
+  - led[3]
+  - led[4]
+  - led[5]
+  - led[6]
+  - led[7]
+  btn: btnc
+  sw:
+  - sw[0]
+  - sw[1]
+  - sw[2]
+  - sw[3]
+  - sw[4]
+  - sw[5]
+  - sw[6]
+  - sw[7]
+  uart_rx: uart_tx_in
+  uart_tx: uart_rx_out
+facts:
+- item: part
+  value: xc7a200tsbg484-1 (Artix-7)
+  source:
+  - BDF
+- item: clock
+  value: one 100 MHz crystal oscillator on R4 (a MRCC input, bank 34); a 135 MHz GTP reference oscillator
+  source:
+  - RM
+  - XDC
+- item: memory
+  value: 512 MiB DDR3 (one of Micron MT41K256M16HA-187E, MT41K256M16TW-107, or two Zentel parts, by board build); 32 MiB serial flash (S25FL256S)
+  source:
+  - RM
+- item: serial
+  value: FTDI FT232R USB-UART bridge (connector J13)
+  source:
+  - RM
+  - XDC
+- item: ethernet
+  value: Realtek RTL8211E-VL PHY, 10/100/1000 (RGMII pins eth_rx*, eth_tx* in the XDC)
+  source:
+  - RM
+  - XDC
+- item: video and audio
+  value: HDMI sink and source, DisplayPort source, an Analog Devices ADAU1761 audio codec with four 3.5 mm jacks, 128x32 OLED
+  source:
+  - RM
+  - XDC
+- item: connectors
+  value: 160-pin FMC LPC, four Pmod ports (JA, JB, JC, XADC), USB HID host, microSD
+  source:
+  - RM
+  - XDC
+- item: user I/O
+  value: 8 slide switches, 8 LEDs, 6 push buttons (btnc, btnd, btnl, btnr, btnu, cpu_resetn)
+  source:
+  - RM
+  - XDC
+- item: LED and button polarity
+  status: unconfirmed
+  reason: the vendor constraints file does not state it, and the schematic was not read
+xdc_sections:
+  source:
+  - XDC
+  ports_per_section:
+    Clock Signal: 1
+    LEDs: 8
+    Buttons: 6
+    Switches: 8
+    OLED Display: 6
+    HDMI in: 13
+    HDMI out: 12
+    Display Port: 5
+    Audio Codec: 5
+    Pmod header JA: 8
+    Pmod header JB: 8
+    Pmod header JC: 8
+    XADC Header: 8
+    UART: 2
+    Ethernet: 17
+    Fan PWM: 1
+    DPTI/DSPI: 16
+    QSPI: 5
+    SD card: 8
+    I2C: 2
+    Voltage Adjust: 3
+    FMC: 72
+iostandards:
+  default: LVCMOS33
+  other_standards_in_master_xdc:
+    LVCMOS25: 30
+    LVCMOS12: 85
+    LVCMOS15: 1
+    TMDS_33: 18
+  source:
+  - XDC
+pin_aliases:
+  source:
+  - XDC
+  reason: the vendor file names one physical pin twice, for two headers or functions that share it (for example an analogue input and an Arduino
+    header pin)
+  pins: []
+slow_ports:
+- led\[\d+\]
+- led\d_[rgb]
+- sw\[\d+\]
+- btn\w*(\[\d+\])?
+- uart_\w+
+- Rs[RT]x
+- cpu_resetn
+config:
+  cfgbvs: VCCO
+  config_voltage: 3.3
+  source:
+  - XDC
+thermal:
+  airflow_lfm: 0
+  heatsink: none
+  board: small
+  board_layers: 4to7
+  ambient_c: 40
+  status: assumption
+  reason: board stack-up, heat sink and airflow are not published; still air, no heat sink, the smallest class is the pessimistic choice (as for
+    the Nexys A7)
+hardware_use:
+  owned: false
+  rule: no supply or programming rule is recorded for this board; do not program one without the owner adding a per-board rule to the house rules
+smoke:
+  clk_hz: 100000000
+  banner: Nexys Video

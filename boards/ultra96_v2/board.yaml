@@ -1,0 +1,66 @@
+# Avnet Ultra96-V2: board file (fpga-design-agent/board/v2). Facts name their sources (ids under `sources`); an unconfirmed
+# fact says so and why. Written by hand from the cited documents; see boards/SCHEMA.md.
+schema: fpga-design-agent/board/v2
+name: ultra96_v2
+display_name: Avnet Ultra96-V2
+vendor: Avnet
+family: Zynq UltraScale+ MPSoC
+part: xczu3eg-sbva484-1-i
+board_revision: 1.2 (the AMD board file's revision)
+master_xdc: ultra96_v2-pins.xdc
+master_xdc_source:
+  kind: derived
+  tool: tools/board_pins_import.py
+  spec: boards/ultra96_v2/pins_import.yaml
+  note: our own listing of documented pin locations, not a copy of a vendor file
+sources:
+  U96:
+    title: 'AMD XilinxBoardStore board file for the Ultra96-V2 (Avnet): part and PL pins'
+    version: XilinxBoardStore @ 40fad97, boards/Avnet/ultra96v2/1.2 (board.xml, part0_pins.xml; Apache-2.0)
+    url: https://github.com/Xilinx/XilinxBoardStore/blob/40fad97cf36f3d856c6759d83c2390de1566ffa7/boards/Avnet/ultra96v2/1.2/board.xml
+clock:
+  port: null
+  status: none
+  reason: the board file lists no PL clock source and no user LED or button on PL pins; a design takes its clock from the PS (pl_clk0), which
+    needs a PS8 block
+  source:
+  - U96
+resources: {}
+facts:
+- item: part
+  value: xczu3eg-sbva484-1-i (Zynq UltraScale+ ZU3EG, industrial grade)
+  source:
+  - U96
+- item: PL pins in the board file
+  value: a UART (uart2_PL_TX AU15, uart2_PL_RX AT15), two I2C buses, two radio LEDs, a radio reset, an HSIC strobe
+  source:
+  - U96
+- item: expansion
+  value: a 96Boards low-speed and high-speed connector
+  status: unconfirmed
+  reason: 'not read: no reference manual or schematic for this board was retrieved (vendor sites block automated clients), so this is not stated'
+- item: clock
+  value: no PL oscillator in the board file
+  source:
+  - U96
+- item: memory, wireless, USB, DisplayPort
+  status: unconfirmed
+  reason: 'not read: no reference manual or schematic for this board was retrieved (vendor sites block automated clients), so this is not stated'
+slow_ports:
+- uart_pl_\w+
+thermal:
+  airflow_lfm: 0
+  heatsink: none
+  board: medium
+  board_layers: 8to11
+  ambient_c: 40
+  status: assumption
+  reason: stack-up, heat sink and airflow are not published; still air and no heat sink is the pessimistic bound (as for the KR260)
+hardware_use:
+  owned: false
+  rule: no supply or programming rule is recorded for this board; do not program one without the owner adding a per-board rule to the house rules
+pin_aliases:
+  source:
+  - U96
+  reason: the source lists one physical pin under two names
+  pins: []
