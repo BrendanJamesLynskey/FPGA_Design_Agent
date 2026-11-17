@@ -1,0 +1,20 @@
+--- a/rtl/pcs_rx.sv
++++ b/rtl/pcs_rx.sv
+@@ -64,13 +64,13 @@
+             x_v <= 1'b0; x_d <= '0; x_c <= '0;
+         end else begin
+             slip_r <= 1'b0;
+-            x_v    <= 1'b0;
++            x_v <= 1'b0;
+             if (blk_v) begin
+                 hist <= hist_next(blk[65:2]);
+-                x_d  <= dec[63:0];
+-                x_c  <= dec[71:64];
++                x_d <= dec[63:0];
++                x_c <= dec[71:64];
++                if (lock) x_v <= 1'b1;
+                 if (lock) begin
+-                    x_v <= 1'b1;
+                     ev_sh_err   <= (dec[73:72] == 2'd1);
+                     ev_type_err <= (dec[73:72] == 2'd2);
+                     ev_os       <= (dec[73:72] == 2'd3);

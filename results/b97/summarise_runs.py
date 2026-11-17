@@ -13,7 +13,7 @@ from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
 SRC = Path(sys.argv[1]) if len(sys.argv) > 1 else Path.home() / "Claude_sandbox" / "_worktrees" / "97-runs"
-NAMES = ["A0_1", "A0_2", "A1_1", "A1_2"]
+NAMES = ["A0_1", "A0_2", "A1_1", "A1_2", "R2_A0_1", "R2_A0_2", "R2_A1_1", "R2_A1_2"]
 PRIVATE = Path.home() / "Claude_sandbox" / "_worktrees" / "97-kb" / "runs_b97"      # the private knowledge-bank worktree
 
 

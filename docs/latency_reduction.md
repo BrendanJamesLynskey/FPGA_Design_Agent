@@ -70,3 +70,28 @@ knowledge bank (`prompts/latency/`, brief 94: new prompts go private by default)
   decision cut the margin between the pulse and the order data bus (sampled for four clocks) and put a 32-bit compare in front of the crossing flop: post-route timing is required before any claim.
 - The stage file's `removable`/`technique` fields and the test file `test_b96_latency.py` spell out the stage structure, so neither arm is blind to it; the A1 tools therefore
   state structure A0 can also read in `docs/design.md`. The A0/A1 prompts are private files; their sameness is by construction, not checkable from this repository.
+
+## Post-route and CDC evidence (Vivado 2026.1, `xck26-sfvc784-2LV-c`, `results/b97/postroute.md`, `results/b97/cdc/`)
+
+All four variants route and meet timing at 161.13 MHz (WNS +0.078 to +0.298 ns, WHS +0.010 ns, no failing endpoint; the 96 baseline was +0.115 / +0.010). LUT and FF move by under 1 %.
+`report_cdc` (routed, `results/b97/cdc/<variant>_cdc_summary.rpt`) is identical to the baseline's for every variant: the same nine clock-pair rows, the receive-to-transmit
+row (151 endpoints, "No Common Node", False Path exception) all Safe, no Unsafe, no Unknown, no missing `ASYNC_REG`. The setup slack of the path into the go pulse's source flop,
+which carries the new combinational decision, falls from 5.59 ns (baseline) to 2.20 ns (agent_both) and 2.23 ns (all3): met, with margin.
+
+Written reasoning for the two edits that touch the crossing (report_cdc cannot see data-bus skew):
+- **`u_p_go` `REG_OUTPUT` 1 -> 0** removes only the output register after the destination-domain synchroniser chain. The asynchronous hop (toggle flop to the first of two `ASYNC_REG` flops)
+  and the number of synchroniser flops (2) are unchanged, so the metastability failure rate is unchanged; what changes is a combinational XOR in front of the consumer, checked by timing.
+  report_cdc agrees (same structure, Safe).
+- **`trade64.fire` combinational** is a source-domain change (it feeds the toggle flop's D input in the same clock domain); it adds no crossing. It does move the pulse one clock earlier relative to the order
+  data bus (`u_bus`, 3 synchroniser stages, each bit independent), which `frame_src` samples for four clocks after it starts. Worst case the bus bits settle one clock after the pulse and one more if a bit slips a clock, so the last
+  effective sample leaves about two clocks of margin (was about four). The `stale` counter checks only the sequence word, not the price or quantity bits, so a late price bit would not be caught by it.
+  This is reasoning, not proof: the receive-to-transmit crossing is a false path in the constraints, only the board shows bit skew. The board session therefore reads `stale`, `late` and the order bytes at the receiving end
+  on every variant, and a variant with a non-zero `stale` or a wrong order byte is reverted.
+- **Order-only early MAC start** (`s_valid | (fs_start && go_p)`, found by the A0 arm in round 2) is a same-domain change: no crossing; its risk is the gearbox pause, which holds MAC state (an early valid during a pause is ignored and costs a clock, not data).
+
+## Agent before/after, both rounds (`results/b97/ab_summary.md`, k = 2 per arm, `openai/gpt-6-luna`, provider-reported cost)
+
+- Round 1 (start 11): all four runs ended at 9 clocks with the same two edits; A1 cost less (about 0.016 against 0.023 USD) but k = 2 allows no inference.
+- Round 2 (start 9, stage file updated, pre-registered as an addendum written after round 1): both A0 runs found the order-only early MAC start (9 -> 8, bench and twin pass); both A1 runs
+  made no gain and stopped after two visits (the stall rule), after reverting attempts that touched `pcs_rx`. So the tools-plus-skill-text bundle did not help here and may have hurt: the skill text's
+  "start from the earlier event" led A1 to a version that failed the cut-frame bench, while A0 found the narrower order-only form. This is two runs per arm; it is reported as a null with a reversal, not a finding.
