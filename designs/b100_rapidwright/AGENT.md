@@ -24,12 +24,12 @@ param chain placer=simulated annealing on whole slices, 200000 moves, window of 
 
 ## files
 designs/b100_rapidwright/docs/design.md d11dac793b: the design note written before the code, and what changed after it (section 6)
-designs/b100_rapidwright/docs/what_we_found.md ea95de01e5: the results with their tables, rendered from the summary record
+designs/b100_rapidwright/docs/what_we_found.md 8a236da8a8: the results with their tables, rendered from the summary record
 designs/b100_rapidwright/docs/licences.md 4b545ec475: licences of RapidWright, its device files and the Java runtime, and what is committed
 designs/b100_rapidwright/docs/tools.md 9a6df028ac: datasheet for the five agent tools and the scripts behind them
 designs/b100_rapidwright/rtl/pcs_unit.sv c825d999f4: the relocatable block (brief 96's pcs_tx with its own source and sink, three input pins)
 designs/b100_rapidwright/rtl/chain_top.sv 0204d59663: the transmit chain with a bare GT
-designs/b100_rapidwright/scripts/run_c1.sh fa17946406: capability 1 end to end
+designs/b100_rapidwright/scripts/run_c1.sh 501cd38a76: capability 1 end to end
 designs/b100_rapidwright/scripts/run_c23.sh ea789b7cfd: capabilities 2 and 3 end to end
 designs/b100_rapidwright/agent_run/run_arm.py 4b12b9c2ce: the stage 2 agent runs, with and without the tools
 flow/rw/place_chain.py d6e884f392: the annealing placer
@@ -39,13 +39,13 @@ flow/rapidwright_pin.py 00b1af66eb: versions, hashes and paths of the RapidWrigh
 
 ## commands
 install RapidWright into a git-ignored venv (no root; downloads the jar from AMD's GitHub release) (~5min): tools/rapidwright_env/setup.sh
-[heavy] capability 1 (block, relocation, stamp, Vivado alone), three site targets, two period perturbations (~90min): PERIODS="3.40 3.41" designs/b100_rapidwright/scripts/run_c1.sh
-[heavy] capabilities 2 and 3 on the chain, per period perturbation (~120min): BASE=3.40 STEPS="0 1 2" designs/b100_rapidwright/scripts/run_c23.sh
+[heavy] capability 1 (block, relocation, stamp, Vivado alone), three site targets, two period perturbations (the stamp arm ran at 3.40 ns in both because of a clock override, see what_we_found.md) (~90min): PERIODS="3.40 3.41" designs/b100_rapidwright/scripts/run_c1.sh
+[heavy] capabilities 2 and 3 on the chain, per period perturbation (~120min): BASE=3.40 STEPS="0 1" designs/b100_rapidwright/scripts/run_c23.sh
 [heavy] the stage 2 agent runs (access key in .env; Claude Code token file) (~75min): python3 designs/b100_rapidwright/agent_run/run_arm.py a --max-turns 30 --minutes 75
 tests that need neither tool (~1min): python3 -m pytest -q designs/b100_rapidwright/tests agent/tests/test_100_rapidwright.py
 
 ## records (path sha256-prefix; claims below cite R<n>)
-R1 results/b100/summary.json f11cdfbc6f
+R1 results/b100/summary.json e19da36328
 R2 agent/tests/test_100_rapidwright.py 13128ba474
 
 ## evidence

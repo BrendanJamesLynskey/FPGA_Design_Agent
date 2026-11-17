@@ -12,7 +12,7 @@ DRC, bitstream). **Pre-implemented relocatable blocks work and are the useful pa
 most of its internal delays, where the same logic implemented by Vivado at the same sites does not (it differs by hundreds of picoseconds at almost every
 endpoint), and a stamped design gave the same result at both period perturbations. **Our own placement and RWRoute routing both lost to Vivado on timing**
 in every paired run (two per arm), on one chain, with a first-cut annealing placer; RWRoute was five to seven times faster than Vivado's router on the same
-placement but left hold violations. **The agent given the tools did no better than the agent without them**: neither beat the as-built result, and the runs showed
+placement but its result is incompletely routed (two nets with routing errors and two with unrouted pins in `rwr_s*_route_status.rpt`; DRC critical warning) with hold violations, so its numbers are for a partly routed design. **The agent given the tools did no better than the agent without them**: neither beat the as-built result, and the runs showed
 what the agent still lacks (a per-path timing breakdown, and a build that returns within the tool timeout).
 
 ## Stage 0: does it work here (`results/b100/s0/`)
@@ -33,24 +33,24 @@ three other sites (`results/b100/c1/rw_mv_*.log`: nets with routing before and a
 against the same four-copy design implemented by Vivado alone with the pblock moved by the same offsets. The numbers compare every endpoint register of copy 1, 2 and 3
 with the same endpoint of copy 0, by Vivado's data-path delay. "Seeds" here are the target period perturbations in the run name (3.40 and 3.41 ns); Vivado's placer has no seed.
 
-| run | block | worst internal path (ns) | endpoints with the same delay as copy 0 | mean difference (ps) | largest difference (ps) |
-|---|---|---|---|---|---|
-| alone_p3_40 | copy 0 | 3.652 | 579 of 579 | 0 | 0 |
-| alone_p3_40 | copy 1 | 3.653 | 1 of 451 | 248.1 | 1504 |
-| alone_p3_40 | copy 2 | 3.596 | 1 of 451 | 257.1 | 1347 |
-| alone_p3_40 | copy 3 | 3.638 | 6 of 451 | 226.5 | 1201 |
-| alone_p3_41 | copy 0 | 3.621 | 579 of 579 | 0 | 0 |
-| alone_p3_41 | copy 1 | 3.619 | 1 of 451 | 258 | 1310 |
-| alone_p3_41 | copy 2 | 3.635 | 1 of 451 | 268.9 | 1582 |
-| alone_p3_41 | copy 3 | 3.601 | 1 of 451 | 281.2 | 1308 |
-| stamp_p3_40 | copy 0 | 3.508 | 579 of 579 | 0 | 0 |
-| stamp_p3_40 | copy 1 | 3.503 | 504 of 579 | 3.5 | 114 |
-| stamp_p3_40 | copy 2 | 3.5 | 413 of 579 | 23.4 | 332 |
-| stamp_p3_40 | copy 3 | 3.5 | 351 of 579 | 38.7 | 345 |
-| stamp_p3_41 | copy 0 | 3.508 | 579 of 579 | 0 | 0 |
-| stamp_p3_41 | copy 1 | 3.503 | 504 of 579 | 3.5 | 114 |
-| stamp_p3_41 | copy 2 | 3.5 | 413 of 579 | 23.4 | 332 |
-| stamp_p3_41 | copy 3 | 3.5 | 351 of 579 | 38.7 | 345 |
+| run | block | worst internal path (ns) | worst internal slack (ns) | endpoints with the same delay as copy 0 | mean difference (ps) | largest difference (ps) |
+|---|---|---|---|---|---|---|
+| alone_p3_40 | copy 0 | 3.652 | -0.303 | 579 of 579 | 0 | 0 |
+| alone_p3_40 | copy 1 | 3.653 | -0.33 | 1 of 451 | 248.1 | 1504 |
+| alone_p3_40 | copy 2 | 3.596 | -0.339 | 1 of 451 | 257.1 | 1347 |
+| alone_p3_40 | copy 3 | 3.638 | -0.339 | 6 of 451 | 226.5 | 1201 |
+| alone_p3_41 | copy 0 | 3.621 | -0.247 | 579 of 579 | 0 | 0 |
+| alone_p3_41 | copy 1 | 3.619 | -0.251 | 1 of 451 | 258 | 1310 |
+| alone_p3_41 | copy 2 | 3.635 | -0.251 | 1 of 451 | 268.9 | 1582 |
+| alone_p3_41 | copy 3 | 3.601 | -0.248 | 1 of 451 | 281.2 | 1308 |
+| stamp_p3_40 | copy 0 | 3.508 | -0.134 | 579 of 579 | 0 | 0 |
+| stamp_p3_40 | copy 1 | 3.503 | -0.142 | 504 of 579 | 3.5 | 114 |
+| stamp_p3_40 | copy 2 | 3.5 | -0.218 | 413 of 579 | 23.4 | 332 |
+| stamp_p3_40 | copy 3 | 3.5 | -0.229 | 351 of 579 | 38.7 | 345 |
+| stamp_p3_41 | copy 0 | 3.508 | -0.134 | 579 of 579 | 0 | 0 |
+| stamp_p3_41 | copy 1 | 3.503 | -0.142 | 504 of 579 | 3.5 | 114 |
+| stamp_p3_41 | copy 2 | 3.5 | -0.218 | 413 of 579 | 23.4 | 332 |
+| stamp_p3_41 | copy 3 | 3.5 | -0.229 | 351 of 579 | 38.7 | 345 |
 
 | run | target (ns) | WNS (ns) | WHS (ns) | LUT | FF | synth (s) | place (s) | route (s) |
 |---|---|---|---|---|---|---|---|---|
@@ -66,8 +66,12 @@ What it says:
   not isolated the cause (tile types and clock-region rows are the likely ones).
 - The Vivado-alone copies differ from copy 0 at almost every endpoint (mean 226 to 281 ps, largest 1.2 to 1.6 ns), because each copy is placed and routed afresh; the endpoints common to both copies are 451 of 579, so the
   comparison is over those.
-- The stamped runs at 3.40 and 3.41 ns gave identical block results and the same whole-design WNS; the Vivado-alone runs did not (WNS and worst internal path both moved). The 0.01 ns step is therefore a perturbation for
-  the alone arm only: the locked blocks hold the stamp steady. That is the repeatability this capability buys.
+- **The stamp arm has one effective perturbation, not two.** Vivado's report for `stamp_p3_41` shows a requirement of 3.400 ns: the blocks' out-of-context clock (3.4 ns), pulled in by
+  `read_checkpoint -cell`, overrode the top's constraint, so the 3.41 run is a rerun of the 3.40 run (identical results). The alone arm did get 3.41 (requirement 3.410 ns) and its results
+  moved. So the comparison is not like for like on clock, and **we make no claim that the stamp is steady against perturbation**; the repeatability claim rests on the copies within a run
+  (they keep their delays, the alone copies do not) and on the identical rerun. Fixing the clock override and re-running is a next step.
+- Slack, not only delay: the worst internal slack per stamped copy at 3.40 ns is the first table's column (-0.134, -0.142, -0.218, -0.229 for copies 0 to 3). Copy 3 is 0.095 ns worse than the original with almost the same
+  worst data delay, so a relocated block can lose slack at its new site (clock skew or region effect, not isolated). Hold is checked only through the whole-design WHS, and the block's boundary nets only through whole-design WNS.
 - Whole-design timing: the stamped design is a little better than the alone design at both perturbations (second table), and at 3.40 ns the worst path of both designs is inside a block (`*_timing.rpt`). Hold slack is positive in these four runs.
   The worst internal path of a stamped copy is 3.50 ns against 3.60 to 3.65 ns for the alone copies; the stamped block was implemented once on its own, so this is not a like-for-like Fmax claim, only that a good
   implementation is kept.
@@ -111,7 +115,7 @@ What it says, plainly:
   `rwr` (RWRoute for everything) loses by the most and leaves hold violations in both seeds (WHS negative).
 - Reasons we can name, not proven: the annealer's cost is wire length while Vivado's placer is timing-driven; RWRoute's delay estimate is not Vivado's; the first RapidWright run was a random walk until we fixed a bug
   (design.md section 6).
-- RWRoute's speed is real: it routed the whole chain in 12.5 s and 58.4 s (the machine was loaded in the second run) against Vivado's 70.6 s and 396.7 s route step on the same placements. Speed without timing is not a
+- RWRoute's speed is real, with the caveat that its result is incompletely routed (see above): it routed the whole chain in 12.5 s and 58.4 s (the machine was loaded in the second run) against Vivado's 70.6 s and 396.7 s route step on the same placements. Speed without timing is not a
   closure tool here.
 - LUT and FF counts are identical in every arm: RapidWright moved and routed, it did not change the netlist.
 - Nothing here supports using our placer or RWRoute for closure on this design. What would change that is listed under "next".
@@ -135,6 +139,7 @@ Claude Sonnet 5.5 through the Claude Code arm, Max plan.
 - Neither arm could get a per-path breakdown for the TXDATA and MAC-to-PCS paths of the baseline: only `rw_referee` gives it, and arm A used it only on its own re-placements. That is what brief 97's `latency_path` tool is for.
 - The tool run found a real difference in the agent's reach: arm A could try a physical idea in a few minutes per attempt (a RapidWright step of tens of seconds plus a Vivado route of about four minutes), arm B's only physical lever (a pblock in the XDC) cost
   a full flow build of half an hour.
+- Arm B's `check_constraints` call failed with an internal `KeyError: 'master_xdc'` (a third agent defect, not fixed here: it hit the KR260 design, whose board has no master XDC); arm A did not call it, so the arms did not differ in tools only in effect.
 - Two bugs in the agent were found by the first runs and fixed on this branch: the `build` tool refused the KR260's part name ("not a plain part name"), and the RapidWright tools did not find Vivado 2026.1 on `PATH`.
 
 ## What did not work, and what we would try next

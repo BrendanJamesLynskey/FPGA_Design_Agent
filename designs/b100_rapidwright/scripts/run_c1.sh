@@ -9,7 +9,7 @@ set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"; ROOT="$HERE/../../.."
 R="$ROOT/results/b100/c1"; D="$ROOT/designs/b100_rapidwright/rtl"; B96="$ROOT/designs/b96_kr260_10g/rtl"
 export B100_PART=xck26-sfvc784-2LV-c
-PERIODS="${PERIODS:-3.40 3.41 3.42}"
+PERIODS="${PERIODS:-3.40 3.41}"   # NB: the stamp arm ignores the period (the blocks carry their 3.4 ns clock); see docs/what_we_found.md
 PB0="SLICE_X26Y70:SLICE_X37Y89"
 TARGETS="SLICE_X35Y57 SLICE_X41Y117 SLICE_X41Y177"
 mkdir -p "$R"

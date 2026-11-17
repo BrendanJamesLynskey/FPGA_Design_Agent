@@ -73,8 +73,8 @@ Interfaces:
 | Step | Command | Heavy slot | Time |
 |---|---|---|---|
 | install RapidWright into a git-ignored venv (no root; downloads the jar from AMD's GitHub release); needs Python 3.12, network | `tools/rapidwright_env/setup.sh` | no | about 5 min |
-| capability 1 (block, relocation, stamp, Vivado alone), three site targets, two period perturbations; needs Vivado 2026.1, RapidWright, a heavy slot declared as Vivado impl peak 4G | `PERIODS="3.40 3.41" designs/b100_rapidwright/scripts/run_c1.sh` | yes | about 90 min |
-| capabilities 2 and 3 on the chain, per period perturbation; needs Vivado 2026.1, RapidWright, a heavy slot declared as Vivado impl peak 4G | `BASE=3.40 STEPS="0 1 2" designs/b100_rapidwright/scripts/run_c23.sh` | yes | about 120 min |
+| capability 1 (block, relocation, stamp, Vivado alone), three site targets, two period perturbations (the stamp arm ran at 3.40 ns in both because of a clock override, see what_we_found.md); needs Vivado 2026.1, RapidWright, a heavy slot declared as Vivado impl peak 4G | `PERIODS="3.40 3.41" designs/b100_rapidwright/scripts/run_c1.sh` | yes | about 90 min |
+| capabilities 2 and 3 on the chain, per period perturbation; needs Vivado 2026.1, RapidWright, a heavy slot declared as Vivado impl peak 4G | `BASE=3.40 STEPS="0 1" designs/b100_rapidwright/scripts/run_c23.sh` | yes | about 120 min |
 | the stage 2 agent runs (access key in .env; Claude Code token file); needs Vivado 2026.1, RapidWright, the Claude Code arm of brief 05c, a heavy slot | `python3 designs/b100_rapidwright/agent_run/run_arm.py a --max-turns 30 --minutes 75` | yes | about 75 min |
 | tests that need neither tool; needs pytest | `python3 -m pytest -q designs/b100_rapidwright/tests agent/tests/test_100_rapidwright.py` | no | about 1 min |
 

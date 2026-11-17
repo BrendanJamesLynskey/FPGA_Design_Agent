@@ -30,8 +30,8 @@ def table(name):
         rows = []
         for label, run in sorted(S["capability1"]["blocks"].items()):
             for c, x in sorted(run["copies"].items()):
-                rows.append([label, f"copy {c}", x["worst_delay_ns"], f'{x["endpoints_identical"]} of {x["common_with_copy0"]}', x["mean_abs_diff_ps"], x["max_abs_diff_ps"]])
-        return md(rows, ["run", "block", "worst internal path (ns)", "endpoints with the same delay as copy 0", "mean difference (ps)", "largest difference (ps)"])
+                rows.append([label, f"copy {c}", x["worst_delay_ns"], x["worst_slack_ns"], f'{x["endpoints_identical"]} of {x["common_with_copy0"]}', x["mean_abs_diff_ps"], x["max_abs_diff_ps"]])
+        return md(rows, ["run", "block", "worst internal path (ns)", "worst internal slack (ns)", "endpoints with the same delay as copy 0", "mean difference (ps)", "largest difference (ps)"])
     if name == "c1_whole":
         rows = [[k, v["period_ns"], v["wns_ns"], v["whs_ns"], v["lut"], v["ff"], v["times_s"].get("synth", ""), v["times_s"].get("place", ""), v["times_s"].get("route", "")]
                 for k, v in sorted(S["capability1"]["whole_design_runs"].items())]

@@ -136,7 +136,8 @@ def rw_route(s: Session, checkpoint: str, output: str, mode: str, variant: str =
 def rw_referee(s: Session, checkpoint: str, variant: str = "base", route: bool = False) -> dict:
     d = _vdir(s, variant)
     src = d / "rw" / checkpoint if (d / "rw" / checkpoint).is_file() else _in_dcp(s, variant, checkpoint)
-    stem = src.with_suffix("")
+    (d / "rw").mkdir(parents=True, exist_ok=True)
+    stem = d / "rw" / src.with_suffix("").name       # reports always go to build/<variant>/rw/, never over the flow's own files
     env = {**pin.env(), "B100_IN_DCP": str(src), "B100_OUT": str(stem), "B100_ROUTE": "1" if route else "0", "B100_THREADS": "1"}
     from flow import version_pin
     r = s.runner.run("rw_referee", [version_pin.vivado_path(), "-mode", "batch", "-nojournal", "-nolog", "-source",

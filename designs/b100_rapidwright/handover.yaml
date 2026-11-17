@@ -69,7 +69,7 @@ files:
   sha256: d11dac793b84121e96ba256aeff93489e7d81717192905beb4868bf751ae1064
 - path: designs/b100_rapidwright/docs/what_we_found.md
   what: the results with their tables, rendered from the summary record
-  sha256: ea95de01e5565ff8834350e5246e35e3bf7606be03d7c7a002d542f6c4427a58
+  sha256: 8a236da8a82bcd9f6bbc6ec92abd4657669057b0fa815ffac4b66df141605d6a
 - path: designs/b100_rapidwright/docs/licences.md
   what: licences of RapidWright, its device files and the Java runtime, and what is committed
   sha256: 4b545ec4751c6c93334dff66ea07c400ca9d237e5eb61b171d51f23bc338a06a
@@ -84,7 +84,7 @@ files:
   sha256: 0204d59663b9e09f43075ce562d8b9d8ecd871c4f7dff75e2afd972b203e2ac4
 - path: designs/b100_rapidwright/scripts/run_c1.sh
   what: capability 1 end to end
-  sha256: fa17946406d350f8575ab3f57efeaf32ebcd3114e690a44853da2046ac96ab36
+  sha256: 501cd38a7689f842f7e9d50bfbf1daad685dccf1ed75674999d530a9aaebb75f
 - path: designs/b100_rapidwright/scripts/run_c23.sh
   what: capabilities 2 and 3 end to end
   sha256: ea789b7cfd937edf68676d315088a2f35f84c1497858249b8f1d3a38a48734d6
@@ -109,13 +109,14 @@ commands:
   heavy: false
   minutes: 5
   needs: Python 3.12, network
-- what: capability 1 (block, relocation, stamp, Vivado alone), three site targets, two period perturbations
+- what: capability 1 (block, relocation, stamp, Vivado alone), three site targets, two period perturbations (the stamp arm
+    ran at 3.40 ns in both because of a clock override, see what_we_found.md)
   cmd: PERIODS="3.40 3.41" designs/b100_rapidwright/scripts/run_c1.sh
   heavy: true
   minutes: 90
   needs: Vivado 2026.1, RapidWright, a heavy slot declared as Vivado impl peak 4G
 - what: capabilities 2 and 3 on the chain, per period perturbation
-  cmd: BASE=3.40 STEPS="0 1 2" designs/b100_rapidwright/scripts/run_c23.sh
+  cmd: BASE=3.40 STEPS="0 1" designs/b100_rapidwright/scripts/run_c23.sh
   heavy: true
   minutes: 120
   needs: Vivado 2026.1, RapidWright, a heavy slot declared as Vivado impl peak 4G
@@ -135,13 +136,13 @@ evidence:
   result: pass
   what: RapidWright reads and writes Vivado 2026.1 checkpoints for both parts and Vivado accepts them (route, DRC, bitstream)
   record: results/b100/summary.json
-  sha256: f11cdfbc6fd872332b539fb1c5798a749582ab1a76bec124d8d2ad9f61d1cfdc
+  sha256: e19da3632863e0adbf5abec0f57d2f7baef6f7bf9d16d59b84e060581278672b
 - id: E2
   activity: build
   result: pass
   what: every comparison number is Vivado 2026.1 timing on a routed checkpoint (relocation, placement, routing runs)
   record: results/b100/summary.json
-  sha256: f11cdfbc6fd872332b539fb1c5798a749582ab1a76bec124d8d2ad9f61d1cfdc
+  sha256: e19da3632863e0adbf5abec0f57d2f7baef6f7bf9d16d59b84e060581278672b
 - id: E3
   activity: lint
   result: pass
@@ -160,7 +161,7 @@ measurements:
   field: stage0.xck26.after_rapidwright_wns_ns
   conditions: s0_top at a 4 ns target, Vivado 2026.1, one thread; the value before the round trip is in the same record
   value: 0.218
-  sha256: f11cdfbc6fd872332b539fb1c5798a749582ab1a76bec124d8d2ad9f61d1cfdc
+  sha256: e19da3632863e0adbf5abec0f57d2f7baef6f7bf9d16d59b84e060581278672b
 - id: M2
   what: Artix-7 100T checkpoint WNS after RapidWright read and write, Vivado route_design
   category: timing
@@ -170,7 +171,7 @@ measurements:
   field: stage0.xc7a100t.after_rapidwright_wns_ns
   conditions: as M1; the 4 ns target is missed on this part before and after
   value: -5.36
-  sha256: f11cdfbc6fd872332b539fb1c5798a749582ab1a76bec124d8d2ad9f61d1cfdc
+  sha256: e19da3632863e0adbf5abec0f57d2f7baef6f7bf9d16d59b84e060581278672b
 - id: M3
   what: JVM scope peak memory on a first checkpoint read for the K26
   category: resources
@@ -180,7 +181,7 @@ measurements:
   field: stage0.jvm_peak_gib_first_read
   conditions: cgroup peak of the whole scope including the Vivado RapidWright starts; under 1 GiB when the EDIF is cached
   value: 2.6
-  sha256: f11cdfbc6fd872332b539fb1c5798a749582ab1a76bec124d8d2ad9f61d1cfdc
+  sha256: e19da3632863e0adbf5abec0f57d2f7baef6f7bf9d16d59b84e060581278672b
 - id: M4
   what: baseline chain, achieved period at a 3.40 ns target, Vivado alone, perturbation s0
   category: timing
@@ -190,7 +191,7 @@ measurements:
   field: capabilities23.rows[0].achieved_period_ns
   conditions: target minus whole-design WNS; chain_top on the K26, one thread, Vivado 2026.1
   value: 3.776
-  sha256: f11cdfbc6fd872332b539fb1c5798a749582ab1a76bec124d8d2ad9f61d1cfdc
+  sha256: e19da3632863e0adbf5abec0f57d2f7baef6f7bf9d16d59b84e060581278672b
 - id: M5
   what: baseline chain, two-clock chain latency at that period
   category: latency
@@ -201,7 +202,7 @@ measurements:
   conditions: two registers on the wire-to-wire path (MAC output, PCS output) times the achieved period; the GT's own latency
     is not included
   value: 7.552
-  sha256: f11cdfbc6fd872332b539fb1c5798a749582ab1a76bec124d8d2ad9f61d1cfdc
+  sha256: e19da3632863e0adbf5abec0f57d2f7baef6f7bf9d16d59b84e060581278672b
 - id: M6
   what: baseline chain LUTs
   category: resources
@@ -211,7 +212,7 @@ measurements:
   field: capabilities23.rows[0].lut
   conditions: as M4; the same count in every arm (RapidWright moves, it does not resynthesise)
   value: 1768
-  sha256: f11cdfbc6fd872332b539fb1c5798a749582ab1a76bec124d8d2ad9f61d1cfdc
+  sha256: e19da3632863e0adbf5abec0f57d2f7baef6f7bf9d16d59b84e060581278672b
 - id: M7
   what: baseline chain flip-flops
   category: resources
@@ -221,7 +222,7 @@ measurements:
   field: capabilities23.rows[0].ff
   conditions: as M4
   value: 414
-  sha256: f11cdfbc6fd872332b539fb1c5798a749582ab1a76bec124d8d2ad9f61d1cfdc
+  sha256: e19da3632863e0adbf5abec0f57d2f7baef6f7bf9d16d59b84e060581278672b
 - id: M8
   what: mean achieved period, Vivado alone, over the perturbations
   category: timing
@@ -231,7 +232,7 @@ measurements:
   field: capabilities23.by_arm.base.achieved_period_ns_mean
   conditions: N runs in the record; perturbation is the target period (+0.01 ns each)
   value: 3.95
-  sha256: f11cdfbc6fd872332b539fb1c5798a749582ab1a76bec124d8d2ad9f61d1cfdc
+  sha256: e19da3632863e0adbf5abec0f57d2f7baef6f7bf9d16d59b84e060581278672b
 - id: M9
   what: mean achieved period, our annealing placement then Vivado routing
   category: timing
@@ -241,7 +242,7 @@ measurements:
   field: capabilities23.by_arm.place.achieved_period_ns_mean
   conditions: as M8, the same placed checkpoints as M8 are the starting point
   value: 4.429
-  sha256: f11cdfbc6fd872332b539fb1c5798a749582ab1a76bec124d8d2ad9f61d1cfdc
+  sha256: e19da3632863e0adbf5abec0f57d2f7baef6f7bf9d16d59b84e060581278672b
 - id: M10
   what: mean achieved period, RWRoute routing of Vivado's placement
   category: timing
@@ -251,7 +252,7 @@ measurements:
   field: capabilities23.by_arm.rwr.achieved_period_ns_mean
   conditions: as M8; Vivado checks and times, does not route
   value: 5.877
-  sha256: f11cdfbc6fd872332b539fb1c5798a749582ab1a76bec124d8d2ad9f61d1cfdc
+  sha256: e19da3632863e0adbf5abec0f57d2f7baef6f7bf9d16d59b84e060581278672b
 - id: M11
   what: mean achieved period, RWRoute on the worst-path nets inside Vivado's routing
   category: timing
@@ -261,7 +262,7 @@ measurements:
   field: capabilities23.by_arm.fixed.achieved_period_ns_mean
   conditions: as M8
   value: 4.611
-  sha256: f11cdfbc6fd872332b539fb1c5798a749582ab1a76bec124d8d2ad9f61d1cfdc
+  sha256: e19da3632863e0adbf5abec0f57d2f7baef6f7bf9d16d59b84e060581278672b
 - id: M12
   what: stamped blocks, copy 3 endpoints with the same delay as copy 0
   category: other
@@ -271,7 +272,7 @@ measurements:
   field: capability1.blocks.stamp_p3_40.copies.3.endpoints_identical
   conditions: of the endpoints common to both copies, period perturbation 3.40 ns, Vivado data-path delay
   value: 351
-  sha256: f11cdfbc6fd872332b539fb1c5798a749582ab1a76bec124d8d2ad9f61d1cfdc
+  sha256: e19da3632863e0adbf5abec0f57d2f7baef6f7bf9d16d59b84e060581278672b
 - id: M13
   what: Vivado alone, the same four-copy design, copy 3 endpoints with the same delay as copy 0
   category: other
@@ -281,7 +282,7 @@ measurements:
   field: capability1.blocks.alone_p3_40.copies.3.endpoints_identical
   conditions: as M12
   value: 6
-  sha256: f11cdfbc6fd872332b539fb1c5798a749582ab1a76bec124d8d2ad9f61d1cfdc
+  sha256: e19da3632863e0adbf5abec0f57d2f7baef6f7bf9d16d59b84e060581278672b
 - id: M14
   what: stage 2, tool calls of the arm with the RapidWright tools
   category: other
@@ -291,7 +292,7 @@ measurements:
   field: stage2.a.tool_calls
   conditions: Claude Sonnet 5.5, 30 turn cap, 75 minute cap, one run
   value: 12
-  sha256: f11cdfbc6fd872332b539fb1c5798a749582ab1a76bec124d8d2ad9f61d1cfdc
+  sha256: e19da3632863e0adbf5abec0f57d2f7baef6f7bf9d16d59b84e060581278672b
 - id: M15
   what: stage 2, tool calls of the arm without the RapidWright tools
   category: other
@@ -301,7 +302,7 @@ measurements:
   field: stage2.b.tool_calls
   conditions: as M14
   value: 15
-  sha256: f11cdfbc6fd872332b539fb1c5798a749582ab1a76bec124d8d2ad9f61d1cfdc
+  sha256: e19da3632863e0adbf5abec0f57d2f7baef6f7bf9d16d59b84e060581278672b
 gaps:
 - about: power
   text: Not measured; no power report was made for any run, and no bitstream of the chain exists.

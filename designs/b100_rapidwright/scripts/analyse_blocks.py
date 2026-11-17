@@ -9,10 +9,15 @@ from collections import defaultdict
 from statistics import mean
 
 
+SL = {}
+
+
 def load(path):
+    SL.clear()
     d = defaultdict(dict)
     for r in csv.DictReader(open(path)):
         d[int(r["copy"])][r["endpoint"]] = float(r["data_path_delay_ns"])
+        SL[int(r["copy"])] = min(SL.get(int(r["copy"]), 9e9), float(r["slack_ns"]))
     return d
 
 
@@ -27,7 +32,7 @@ for arg in sys.argv[2:]:
         diffs = [round((d[c][e] - base[e]) * 1000) for e in common]
         run["copies"][c] = {
             "endpoints": len(d[c]), "common_with_copy0": len(common),
-            "worst_delay_ns": max(d[c].values()),
+            "worst_delay_ns": max(d[c].values()), "worst_slack_ns": SL[c],
             "mean_abs_diff_ps": round(mean(abs(x) for x in diffs), 1) if diffs else None,
             "max_abs_diff_ps": max((abs(x) for x in diffs), default=None),
             "endpoints_identical": sum(1 for x in diffs if x == 0),
