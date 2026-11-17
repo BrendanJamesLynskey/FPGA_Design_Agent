@@ -5,7 +5,8 @@
 // features; the bench sends them on l_x and zeroes them in e_f, so a block that read them early would fail).
 // Schedule (te = clock of e_v, tl = clock of l_v):
 //   first half   back to back, one sample a clock, tl = te + FILL (the tightest legal use, initiation interval 1);
-//   second half  te >= the previous tl (the table is rewritten FILL clocks later), tl = te + FILL + 0..3, gaps 0..2.
+//   second half  te from (previous tl - (FILL-1)) (the limit of the contract: the table is rewritten FILL clocks after
+//                the next e_v) up to 2 clocks later, tl = te + FILL + 0..3.
 // Latency checked: out_v exactly 1 clock after l_v, for every sample.
 `timescale 1ns/1ps
 module tb_pe;
@@ -37,7 +38,7 @@ module tb_pe;
             if (i < n / 2) begin
                 te[i] = 8 + i; tl[i] = te[i] + fill;
             end else begin
-                te[i] = tl[i-1] + rnd(3);
+                te[i] = tl[i-1] - (fill - 1) + rnd(3);   // down to the contract's limit: the next e_v FILL-1 clocks before this l_v
                 tl[i] = te[i] + fill + rnd(4);
             end
         end

@@ -35,3 +35,9 @@ def test_b93_integration() -> None:
                            model] + SOURCES[-1:]
     cocotb_run.run(f"b93_integ_{tag}", "trigger_core", srcs, "b93_integ_cocotb", HERE,
                    parameters={"BUILD_MODE": 0, "MDIO_DIV": 4, "ML_ARM": ML_ARM, "ML_PRE": ML_PRE}, extra_env=env)
+
+
+def test_gate_pre_timing_and_veto() -> None:
+    """ml_gate_pre alone: the class before, with and after the rule's decision."""
+    cocotb_run.run("b93_gate_pre", "ml_gate_pre", [D / "rtl" / "ml_gate_pre.sv"], "b93_gate_cocotb", HERE,
+                   parameters={"FW": 8}, extra_env={"PYTHONPATH": str(ROOT)})

@@ -185,6 +185,7 @@ def lgs_pe(m: dict, name: str, fill: int) -> str:
     cb = M89.code_bits(th)
     sw = b + _w(pc - 1)
     tl = th[LATE]
+    assert tl == sorted(set(tl)), "late thresholds must be strictly increasing"
     ni = len(tl) + 1
     s = _head(name, f"Arm (c) LUT network lg_small, partial evaluation on the late feature: {len(wiring[0])} neurons, "
               f"{ni} codes of the late feature.", "results/b89/models/lg_small_seed2.json", fill, ni)

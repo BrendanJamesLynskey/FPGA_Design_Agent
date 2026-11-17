@@ -231,18 +231,18 @@ module trigger_core #(
             end
             if (ML_ARM == 1) begin : g_m
                 if (ML_PRE == 2) begin : g_f
-                    gbt_pe u_arm (.clk, .rst, .e_v(feat_v), .e_f(feat), .l_v(lv[FILL-1]), .l_x(feat[35:28]),
+                    gbt_pe u_arm (.clk, .rst, .e_v(feat_v), .e_f({feat[37:36], 8'h00, feat[27:0]}), .l_v(lv[FILL-1]), .l_x(feat[35:28]),
                         .out_v(cls_v), .out_cls(cls));
                 end else begin : g_f
-                    gbt_pe2 u_arm (.clk, .rst, .e_v(feat_v), .e_f(feat), .l_v(lv[FILL-1]), .l_x(feat[35:28]),
+                    gbt_pe2 u_arm (.clk, .rst, .e_v(feat_v), .e_f({feat[37:36], 8'h00, feat[27:0]}), .l_v(lv[FILL-1]), .l_x(feat[35:28]),
                         .out_v(cls_v), .out_cls(cls));
                 end
             end else begin : g_m
                 if (ML_PRE == 2) begin : g_f
-                    lgs_pe u_arm (.clk, .rst, .e_v(feat_v), .e_f(feat), .l_v(lv[FILL-1]), .l_x(feat[35:28]),
+                    lgs_pe u_arm (.clk, .rst, .e_v(feat_v), .e_f({feat[37:36], 8'h00, feat[27:0]}), .l_v(lv[FILL-1]), .l_x(feat[35:28]),
                         .out_v(cls_v), .out_cls(cls));
                 end else begin : g_f
-                    lgs_pe2 u_arm (.clk, .rst, .e_v(feat_v), .e_f(feat), .l_v(lv[FILL-1]), .l_x(feat[35:28]),
+                    lgs_pe2 u_arm (.clk, .rst, .e_v(feat_v), .e_f({feat[37:36], 8'h00, feat[27:0]}), .l_v(lv[FILL-1]), .l_x(feat[35:28]),
                         .out_v(cls_v), .out_cls(cls));
                 end
             end

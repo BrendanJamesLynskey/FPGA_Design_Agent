@@ -335,6 +335,13 @@ jobs:
         run: |
           python -m pytest -q designs/b91_lowbit/tests/test_b91_formats.py designs/b91_lowbit/tests/test_b91_rtl.py flow/tests/test_91_lowbit_rtl.py
           python3 results/b91/summary.py --check
+      - name: Precompute before the last byte (brief 93) - table blocks against the 87/89 models (test split, random, every late value), early feature unit against the 87 unit in lockstep, the model behind trigger_core for every ML_ARM x ML_PRE, gate timing; Verilator -Wall
+        run: |
+          python -m pytest -q designs/b93_precompute/tests/test_b93_pe.py designs/b93_precompute/tests/test_b93_feat_pre.py
+          python -m pytest -q designs/b93_precompute/tests/test_b93_integ_rtl.py -k gate_pre
+          for arm in 1 4; do for pre in 0 1 2 3; do B93_ML_ARM=$arm B93_ML_PRE=$pre python -m pytest -q designs/b93_precompute/tests/test_b93_integ_rtl.py -k b93_integration; done; done
+          python3 -m designs.b93_precompute.model.gen_rtl --check
+          python3 results/b93/summary.py --check
       - name: Upload simulation logs
         if: always()
         uses: actions/upload-artifact@v4

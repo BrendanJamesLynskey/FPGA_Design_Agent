@@ -153,6 +153,28 @@ async def features_and_class_match_the_twin(dut):
 
 
 @cocotb.test()
+async def other_instruments_between_tracked_messages(dut):
+    """Untracked messages (another instrument, its own book entry) between the tracked ones: the unit must ignore them."""
+    import random
+    rng = random.Random(5)
+    base = stream_msgs(160)
+    msgs, kept = [], []
+    for m in base:
+        msgs.append(m)
+        kept.append(m)
+        for _ in range(rng.choice([0, 1, 1, 2])):
+            msgs.append(bf.Msg(rng.choice([bf.ADD, bf.TRADE]), rng.choice([bf.BID, bf.ASK]), INST + 4,
+                               10000 + rng.randint(-5, 5), rng.randint(1, 300)))
+    seen, _ = await run_frames(dut, msgs)
+    exp_f, exp_c, _ = check(dut, seen, kept, "mixed")
+    out = os.environ.get("B93_TWIN_OUT")
+    if out:
+        with open(out.replace(".json", "_mixed.json"), "w") as f:
+            json.dump({"ml_arm": ML_ARM, "ml_pre": ML_PRE, "tracked_messages": len(kept), "untracked_messages": len(msgs) - len(kept),
+                       "match_twin": True}, f, indent=1)
+
+
+@cocotb.test()
 async def edge_cases(dut):
     msgs = stress_msgs(300)
     seen, kept = await run_frames(dut, msgs)
