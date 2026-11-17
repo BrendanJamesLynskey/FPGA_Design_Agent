@@ -191,3 +191,4 @@ def _episode(tmp_path, runs):
     assert (rt.design / "build" / "review" / "06_timing-closure.html").is_file()
     assert "3.911" in (rt.design / "build" / "review" / "06_timing-closure.html").read_text()
     assert "simulate" in runner.kinds and "bringup" in runner.kinds
+    return rt

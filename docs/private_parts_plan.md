@@ -1,6 +1,6 @@
 # What makes the agent valuable, and moving it into private repositories over time (brief 94)
 
-Status 2026-11-16: a plan; one safe move is listed but not made. Nothing here names a secret. The repository is
+Status 2026-11-17 (brief 99): stage 0 of the prompts move is done (the loader `agent/core/prompts.py`, its tests, the pin file, the CI fetch step, the manifest builder in the private repository); **no prompt text has moved yet**, waiting for the CI read token (see below). Nothing here names a secret. The repository is
 all-rights-reserved ([LICENSE](../LICENSE)) and gated by an access key ([agent/access/README.md](../agent/access/README.md)),
 but a public repository's source can still be read, so the valuable parts below are ranked for moving out.
 
@@ -32,3 +32,44 @@ fetched into it, not the other way round.
 3. Review the development benchmark split once the site decides what it publishes.
 
 Do not move held-out material in this programme step: the freeze and leak-guard rules govern it.
+
+## Prompts move: design and status (brief 99, 2026-11-17)
+
+**Loader.** `agent.core.prompts.load(name)` returns the text of `prompts/<name>.txt` from the private knowledge repository,
+byte for byte. The directory is `$FDA_PROMPTS_DIR`, else `<knowledge checkout>/prompts` (the checkout the knowledge packs use).
+The private repository's `prompts/MANIFEST.json` lists each name, file, SHA-256 and size (`tools/build_prompt_manifest.py`
+writes and checks it). This repository's `agent/core/prompts_pin.json` records the private commit and the manifest's SHA-256
+only; `load` refuses a manifest that is not the pinned one and a file that is not the manifest's. `FDA_PROMPTS_UNPINNED=1`
+skips only the pin comparison (development); `provenance()` reports whether the pin was enforced, for run records.
+There is **no committed fallback**: a missing or altered prompt raises `PromptUnavailable` and the run stops. (The first
+plan said "fall back while the gate is unarmed"; the gate is armed now, and a fallback would mean prompt text stays public.)
+
+**CI.** Secret `FDA_KB_READ_TOKEN`: a fine-grained, read-only (Contents: read) token for `FPGA_Design_Agent_Knowledge` only.
+The `python` job fetches `prompts/` of the pinned commit (`actions/checkout`, sparse) when the pin is set. A fork pull request
+has no secrets: the step prints a notice, sets `FDA_PROMPTS_SKIP_NOTICE=1`, and only the test that needs prompts skips. Any other
+run (pull request from this repository, push, schedule) **fails** if the pin is set and the secret is missing. While nothing is
+pinned the step is a no-op.
+
+**Slices, smallest first.** (1) `interview.py`, (2) `review.py`, (3) `roles.py`, (4) `closure_playbook.py`, (5) prompt strings
+in `run.py` (and `plan_arm.py`, `closure.py`, `spectest.py`). Each slice: text to `prompts/` in the private repository (manifest
+rebuilt), the public module calls `load(...)`, the pin updated, snapshot tests compare the loaded text's SHA-256 against the
+hash recorded before the move (so a prompt change is still caught without the text being in the repository), the tool-schema
+fixture and a before and after prompt hash match.
+
+Review (one Sonnet pass, 2026-11-17) found and this PR fixed: a partial pin failed open, the read token persisted in the `_kb` checkout, and malformed manifest entries raised raw errors. **Open for slice work:** a shared skip marker for tests that import prompt-using modules on forks, and tests must compare prompt hashes, never text (a failing `assert text == ...` would print it into a public log).
+
+| Slice | State |
+| --- | --- |
+| Stage 0: loader, tests, pin, CI step, manifest builder | done (2026-11-17) |
+| 1 interview.py, 2 review.py, 3 roles.py, 4 closure playbook, 5 run.py and the rest | not started: waiting for `FDA_KB_READ_TOKEN` |
+
+## Records keep hashes, not prompts (brief 99, step 1, 2026-11-17)
+
+A moved prompt must not reappear in a run record. The writers that stored rendered prompt text now store its SHA-256, length and the prompt
+pin instead (`agent.core.prompts.record`): the Claude Code arm writes `claude_code/<tag>.prompt.json` where it wrote `<tag>.system.txt` and
+`<tag>.user.txt`, and the closure task driver writes `task.json` where it wrote `task.txt`. Other records (summaries, review pages, the
+interview record, `doc_calls.jsonl`) never held the rendered prompt; a scripted T1 episode proves it
+(`test_a_whole_episode_leaves_no_prompt_text_in_its_records`: no 12-word window of any prompt in any file the run wrote).
+`tools/prompts/leak_scan.py` is the same check over tracked files. It uses 12-word windows: the harness's own questions and gate messages are
+recorded by design and a model's replies reuse the prompts' vocabulary, so 8 words matched in about 100 files that held no dump. Records written
+before this change still carry prompt text; step 2 moves them out.

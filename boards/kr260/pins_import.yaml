@@ -1,0 +1,14 @@
+board: kr260
+out: boards/kr260/kr260-pins.xdc
+title: "Kria KR260 Robotics Starter Kit (xck26-sfvc784-2LV-c): PL pins with an I/O standard, as this repository's own designs use them"
+sources:
+  - {id: B58A_XDC, url: https://raw.githubusercontent.com/BrendanJamesLynskey/FPGA_Design_Agent/78314d91955d9c573fc4f361749c08df3ed6017f/designs/b58a_trigger/design.xdc, sha256: 62c1e380c0978425e45040d2a86e7b743966eeb4f7d94f4c3a25cd980054117f, format: xdc, licence: "this repository (MIT); its header says the pins come from the AMD kr260_carrier 1.1 and kr260_som 1.1 board files (Apache-2.0, shipped with Vivado), mapped from SOM pins to package pins", use: "the 25 MHz clock input, the two PL Ethernet ports (RGMII) and the two user LEDs; built (results/b58a), not run on the board"}
+  - {id: B96_XDC, url: https://raw.githubusercontent.com/BrendanJamesLynskey/FPGA_Design_Agent/78314d91955d9c573fc4f361749c08df3ed6017f/designs/b96_kr260_10g/design.xdc, sha256: 4dec8c5ba8f6dccc6273f45d40a7d95a6668f5fe09350c0a0d80cc6c07ea1118, format: xdc, licence: "this repository (MIT); the SFP+ control and I2C pins; the board run of 2026-11-17 (results/b96/hw/stage3.json) used them and the module's EEPROM and DDM were read", use: "the SFP+ cage J24 control and I2C pins (LVCMOS33)"}
+iostandard:
+  std_from_pin: true
+section_by:
+  - ['^clk', 'PL clock (25 MHz; the frequency is unconfirmed)']
+  - ['^led', 'User LEDs']
+  - ['^sfp', 'SFP+ cage J24 control and I2C (3.3 V; measured on the board 2026-11-17)']
+  - ['^a_', 'PL Ethernet port A (PHY2, J10B, RGMII, 1.8 V; built, not run)']
+  - ['^b_', 'PL Ethernet port B (PHY3, J10A, RGMII, 1.8 V; built, not run)']

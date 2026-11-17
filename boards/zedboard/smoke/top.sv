@@ -5,7 +5,9 @@
 
 module b95_smoke_top (
     input  logic clk,
-    output logic [7:0] led
+    output logic [7:0] led,
+    input  logic btn,
+    input  logic [7:0] sw
 );
     localparam int CLK_HZ       = 100000000;
     localparam int CLKS_PER_BIT = (CLK_HZ + 57600) / 115200;
@@ -14,15 +16,19 @@ module b95_smoke_top (
     logic [TOPB:0] cnt = '0;
     always_ff @(posedge clk) cnt <= cnt + 1'b1;
 
+    logic [7:0] sw_s;
+    sync2 #(.WIDTH(8)) u_sw (.clk(clk), .rst(1'b0), .d(sw), .q(sw_s));
+    logic btn_s;
+    sync2 #(.WIDTH(1)) u_btn (.clk(clk), .rst(1'b0), .d(btn), .q(btn_s));
 
     always_comb begin
-        led[0] = cnt[TOPB - 0];
-        led[1] = cnt[TOPB - 1];
-        led[2] = cnt[TOPB - 2];
-        led[3] = cnt[TOPB - 3];
-        led[4] = cnt[TOPB - 4];
-        led[5] = cnt[TOPB - 5];
-        led[6] = cnt[TOPB - 6];
-        led[7] = cnt[TOPB - 7];
+        led[0] = cnt[TOPB - 0] ^ sw_s[0] ^ btn_s;
+        led[1] = cnt[TOPB - 1] ^ sw_s[1];
+        led[2] = cnt[TOPB - 2] ^ sw_s[2];
+        led[3] = cnt[TOPB - 3] ^ sw_s[3];
+        led[4] = cnt[TOPB - 4] ^ sw_s[4];
+        led[5] = cnt[TOPB - 5] ^ sw_s[5];
+        led[6] = cnt[TOPB - 6] ^ sw_s[6];
+        led[7] = cnt[TOPB - 7] ^ sw_s[7];
     end
 endmodule
