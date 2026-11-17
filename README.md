@@ -494,3 +494,13 @@ While the agent is developed it refuses to start without an access key (see [age
 The key keeps casual users of a checkout from running the agent; it does not stop anyone who edits the code, and the
 licence is what forbids that. The gate is **off until the owner commits `agent/access/keys.json`**. To set up your own
 key: copy [.env.example](.env.example) to `.env` (git-ignored) and put the key you were given after `FDA_ACCESS_KEY=`.
+
+### Private prompts (brief 99)
+
+The agent's prompt text is moving, slice by slice, into the private knowledge repository and is read through
+`agent.core.prompts.load(name)` ([agent/core/prompts.py](agent/core/prompts.py)). This repository holds only the pin (the
+private commit and the SHA-256 of its prompt manifest, [agent/core/prompts_pin.json](agent/core/prompts_pin.json)). A prompt
+that cannot be read stops the run; there is no committed copy to fall back on. CI fetches the pinned prompts with a
+read-only token; a fork pull request has no token, so the tests that need prompts skip there with a notice and every
+other pull request fails if the token is missing. Status and order: [docs/private_parts_plan.md](docs/private_parts_plan.md).
+Stage 0 (the loader, its tests and the CI step) is in; no prompt has moved yet.
