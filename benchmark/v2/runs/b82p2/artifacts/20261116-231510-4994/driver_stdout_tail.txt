@@ -1,0 +1,204 @@
+d": 2.5299
+  }
+ },
+ "per_stage": {
+  "clarify": {
+   "calls": 2,
+   "turns": 7,
+   "tokens": 97207,
+   "wall_s": 119.0,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 0.3664
+  },
+  "board-and-device-planning": {
+   "calls": 2,
+   "turns": 16,
+   "tokens": 274973,
+   "wall_s": 60.7,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 0.2809
+  },
+  "rtl-design-creation": {
+   "calls": 12,
+   "turns": 108,
+   "tokens": 4025635,
+   "wall_s": 2455.6,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 4.9982
+  }
+ },
+ "interview": "oracle",
+ "review": "off",
+ "stages_visited": [
+  0,
+  0,
+  1,
+  1,
+  2,
+  2,
+  2,
+  2,
+  2,
+  2,
+  2
+ ],
+ "loops": 8,
+ "rewinds": [],
+ "tokens": 4397815,
+ "cost_usd": 0.0,
+ "unreported_cost_calls": 0,
+ "turns": 131,
+ "wall_s": 7021.7,
+ "questions": {
+  "asked": 7,
+  "answered": 2,
+  "defaulted": 5,
+  "questions": [
+   {
+    "id": "q1",
+    "text": "What is the shell register map (offset, width, reset value and access of every register)?",
+    "default": "The map in registers.map, 32-bit registers at word offsets 0x00 to 0x28.",
+    "reason": "The request names the shell registers but gives no offsets, so the map is a proposal.",
+    "answer": "IN: offset 0x00, WO, reset 0: [7:0] packet byte, [8] end flag\nSTAT: offset 0x09, RO, reset 0: [0] telemetry on, [1] busy\nRIDX: offset 0x03, RW, reset 0: [6:0] word number\nRWORD: offset 0x04, RO, reset 0: bytes 4i..4i+3 of the reply, first byte on top, zero past the end\nRLEN: offset 0x02, RO, reset 0: length in bytes of the latest reply, 0 if none\nTICK: offset 0x01, WO, reset 0: [7:0] n ticks\nTIDX: offset 0x06, RW, reset 0: [6:0] word number\nTWORD: offset 0x07, RO, reset 0: same for the telemetry frame\nTAKE: offset 0x08, WO, reset 0: any write takes the held telemetry frame\nTLEN: offset 0x05, RO, reset 0: length of the held telemetry frame, 0 if none\nshell: test shell, PROTOCOL.md 1.1\nunmapped: no register at an offset: reads 0, writes ignored (read-only registers behave the same on write)",
+    "status": "answered",
+    "by": "oracle",
+    "evidence": "IN: offset 0x00, WO, reset 0: [7:0] packet byte, [8] end flag"
+   },
+   {
+    "id": "q2",
+    "text": "Which counter takes a packet refused with status 4, equal to the last accepted number versus older?",
+    "default": "Equal goes to repeated number, older (1..32767 behind) goes to out-of-order.",
+    "reason": "The request names both counters but not the split.",
+    "answer": "Equal goes to repeated number, older (1..32767 behind) goes to out-of-order.",
+    "status": "defaulted",
+    "by": "oracle",
+    "evidence": null
+   },
+   {
+    "id": "q3",
+    "text": "What happens when TICK is written while ticks are still pending?",
+    "default": "The new count is added to the pending count, saturating at 65535.",
+    "reason": "The request does not say.",
+    "answer": "The new count is added to the pending count, saturating at 65535.",
+    "status": "defaulted",
+    "by": "oracle",
+    "evidence": null
+   },
+   {
+    "id": "q4",
+    "text": "Does a command with a wrong length for its type, such as read with length 0, use up its sequence number?",
+    "default": "No, since wrong length is judged before the sequence rule it changes nothing.",
+    "reason": "Order of rules places length before sequence.",
+    "answer": "No. A command with a wrong length for its type is refused at the length check, which comes before the sequence check, so it never passes the sequence rule and does not consume its sequence number. Under REQ-05, a refused packet changes no sequence state.",
+    "status": "answered",
+    "by": "oracle",
+    "evidence": "Checks in order: long, short, bad CRC (silent drops), type, length, sequence, then register number and access; a command that passes the sequence rule consumes its number."
+   },
+   {
+    "id": "q5",
+    "text": "Do statuses 1, 2, 3 and 5 all increment the type/length/register/access counter?",
+    "default": "Yes, all four increment that one counter.",
+    "reason": "The request lists them as one counter.",
+    "answer": "Yes, all four increment that one counter.",
+    "status": "defaulted",
+    "by": "oracle",
+    "evidence": null
+   },
+   {
+    "id": "q6",
+    "text": "Does a write to a read-only register count as a command carried out?",
+    "default": "No, it is refused with status 5 and counted as an error.",
+    "reason": "Refused packets do not count as carried out.",
+    "answer": "No, it is refused with status 5 and counted as an error.",
+    "status": "defaulted",
+    "by": "oracle",
+    "evidence": null
+   },
+   {
+    "id": "q7",
+    "text": "How is the busy bit defined?",
+    "default": "Busy is 1 from the end-flag byte until the reply is built, and while pending ticks remain.",
+    "reason": "The request gives no definition.",
+    "answer": "Busy is 1 from the end-flag byte until the reply is built, and while pending ticks remain.",
+    "status": "defaulted",
+    "by": "oracle",
+    "evidence": null
+   }
+  ]
+ },
+ "stop": "stage 2 visited more than 6 times",
+ "gates_last": {
+  "clarify": true,
+  "board-and-device-planning": true,
+  "rtl-design-creation": false
+ },
+ "approvals": [
+  {
+   "n": 0,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 0,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 1,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 1,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  }
+ ],
+ "bringup": null
+}
