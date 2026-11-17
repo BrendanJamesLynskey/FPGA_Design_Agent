@@ -964,3 +964,76 @@ Time (s): cpu = 00:00:12 ; elapsed = 00:00:12 . Memory (MB): peak = 4365.602 ; g
 Phase 4 Initial Routing
 
 Phase 4.1 Initial Net Routing Pass
+Phase 4.1 Initial Net Routing Pass | Checksum: 8e497f7b
+
+Time (s): cpu = 00:03:00 ; elapsed = 00:03:01 . Memory (MB): peak = 4502.602 ; gain = 137.000 ; free physical = 982 ; free virtual = 18971
+Phase 4 Initial Routing | Checksum: 15a27d587
+
+Time (s): cpu = 00:03:00 ; elapsed = 00:03:01 . Memory (MB): peak = 4502.602 ; gain = 137.000 ; free physical = 973 ; free virtual = 18962
+
+Phase 5 Initial Routing Verification
+
+Post Initial-Routing Verification
+---------------------------------
+CRITICAL WARNING: [Route 35-54] Net: c3/sh[36] is not completely routed.
+Resolution: Run report_route_status for more information.
+CRITICAL WARNING: [Route 35-54] Net: c1/sh[36] is not completely routed.
+Resolution: Run report_route_status for more information.
+CRITICAL WARNING: [Route 35-54] Net: c0/sh[36] is not completely routed.
+Resolution: Run report_route_status for more information.
+CRITICAL WARNING: [Route 35-54] Net: c2/sh[36] is not completely routed.
+Resolution: Run report_route_status for more information.
+INFO: [Route 35-3320] Number of nets that did not attempt to route: 3376
+
+Unroutable connection Types: 
+----------------------------
+Checking all reachable nodes within 5 hops of driver and load 
+
+Unroute Type 1 : Blockages in route causing unroute
+
+	Type 1SLICEM.FQ2->SLICEM.G5]
+	-----Num Open nets: 4
+	-----Representative Net: Net[43] c3/sh[36]
+	-----SLICE_X40Y146/FQ2 -> SLICE_X38Y136/G5
+	-----Driver Term: c3/sh_reg[36]/Q Load Term [984]: c3/u_b/hist[27]_i_2/I4
+	Expansion wavefront from Load was blocked by locked nodes at level: 2
+Phase 5 Initial Routing Verification | Checksum: 15a27d587
+
+Time (s): cpu = 00:03:00 ; elapsed = 00:03:01 . Memory (MB): peak = 4502.602 ; gain = 137.000 ; free physical = 971 ; free virtual = 18961
+
+Phase 6 Verifying routed nets
+CRITICAL WARNING: [Route 35-54] Net: c3/sh[36] is not completely routed.
+Resolution: Run report_route_status for more information.
+CRITICAL WARNING: [Route 35-54] Net: c1/sh[36] is not completely routed.
+Resolution: Run report_route_status for more information.
+CRITICAL WARNING: [Route 35-54] Net: c0/sh[36] is not completely routed.
+Resolution: Run report_route_status for more information.
+CRITICAL WARNING: [Route 35-54] Net: c2/sh[36] is not completely routed.
+Resolution: Run report_route_status for more information.
+ERROR: [Route 35-7] Design has 4 unroutable pins, potentially caused by placement issue or user provided physical constraints.
+Resolution: Please check if the unroute is caused by an incorrect physical constraint on the driver/load pair of the unrouted net. If so, please remove or modify the constraint and re-run placer.
+
+ Verification failed
+Phase 6 Verifying routed nets | Checksum: 15a27d587
+
+Time (s): cpu = 00:03:40 ; elapsed = 00:03:42 . Memory (MB): peak = 4502.602 ; gain = 137.000 ; free physical = 1299 ; free virtual = 19158
+ERROR: [Route 35-4445] route_design is terminated due to errors/critical warnings issued before and during initial routing. The issues reported cannot be resolved later in route_design.
+Resolution: Please review previous errors/critical warnings messages to determine the reason for router exit during initial routing stage. To know the state of route database please run report_route_status.
+Total Elapsed time in route_design: 221.96 secs
+INFO: [Route 35-17] Router encountered errors. Please check the log file for details
+Ending Routing Task | Checksum: ea2641e6
+
+Time (s): cpu = 00:03:40 ; elapsed = 00:03:42 . Memory (MB): peak = 4502.602 ; gain = 137.000 ; free physical = 1299 ; free virtual = 19158
+Running DRC after route_design as it did not complete successfully
+INFO: [Vivado_Tcl 4-198] DRC finished with 0 Errors
+INFO: [Vivado_Tcl 4-199] Please refer to the DRC report (report_drc) for more information.
+INFO: [Common 17-83] Releasing license: Vivado_Implementation
+7 Infos, 0 Warnings, 8 Critical Warnings and 2 Errors encountered.
+route_design failed
+route_design: Time (s): cpu = 00:03:44 ; elapsed = 00:03:46 . Memory (MB): peak = 4502.602 ; gain = 137.000 ; free physical = 1375 ; free virtual = 19233
+ERROR: [Common 17-39] 'route_design' failed due to earlier errors.
+
+    while executing
+"route_design"
+    (file "/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/scripts/stamp.tcl" line 38)
+INFO: [Common 17-206] Exiting Vivado at Tue Nov 17 12:39:58 2026...

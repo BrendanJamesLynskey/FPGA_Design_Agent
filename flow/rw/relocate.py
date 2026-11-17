@@ -31,17 +31,21 @@ if mode == "options":
     RelocationTools.printValidRelocationOptions(opts, 40, System.out)
     print(json.dumps({"bbox": bbox(d)}))
 else:
+    a = RelocationTools.getValidRelocationOptions(d).getFirst()
     if mode == "moveto":
-        a = RelocationTools.getValidRelocationOptions(d).getFirst()
         t = d.getDevice().getSite(sys.argv[4]).getTile()
         dx, dy = int(t.getTileXCoordinate()) - int(a.getTile().getTileXCoordinate()), int(t.getTileYCoordinate()) - int(a.getTile().getTileYCoordinate())
     else:
         dx, dy = int(sys.argv[4]), int(sys.argv[5])
     before = bbox(d)
+    nets_before = sum(1 for n in d.getNets() if n.hasPIPs())
     ok = bool(RelocationTools.relocate(d, d.getSiteInsts(), dx, dy))
-    out = {"ok": ok, "dx": dx, "dy": dy, "before": before, "target": sys.argv[4] if mode == "moveto" else None}
+    out = {"ok": ok, "dx": dx, "dy": dy, "nets_with_pips_before": nets_before, "before": before, "target": sys.argv[4] if mode == "moveto" else None}
     if ok:
         out["after"] = bbox(d)
-        out["unrouted_nets_after"] = sum(1 for n in d.getNets() if n.getType().toString() in ("WIRE",) and not n.hasPIPs() and n.getPins().size() > 1)
+        out["nets_with_pips_after"] = sum(1 for n in d.getNets() if n.hasPIPs())
+        out["anchor_before"] = str(a.getName())
+        t = a.getTile()
+        out["anchor_after"] = str(d.getDevice().getSite(sys.argv[4]).getName()) if mode == "moveto" else None
         d.writeCheckpoint(sys.argv[3])
     print(json.dumps(out))

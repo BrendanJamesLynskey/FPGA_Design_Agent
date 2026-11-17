@@ -1,4 +1,4 @@
-// reloc_top.sv: four copies of brief 96's pcs_tx, each between its own shift-register source and xor-reduced sink (brief 100, capability 1).
+// reloc_top.sv: four copies of brief 96's pcs_tx_blk, each between its own shift-register source and xor-reduced sink (brief 100, capability 1).
 // The copies are separate cells (c0/u_b .. c3/u_b) so that each can be a pre-implemented block (read_checkpoint -cell) or an ordinary
 // cell with a pblock: the same top serves the relocation runs and the Vivado-alone runs.
 module reloc_one (
@@ -12,7 +12,7 @@ module reloc_one (
     logic [63:0] gt_d;
     logic [64:0] o;
     always_ff @(posedge clk) begin sh <= {sh[70:0], din}; rst_q <= rst; end
-    pcs_tx u_b (.clk(clk), .rst(rst_q), .x_d(sh[63:0]), .x_c(sh[71:64]), .adv(adv), .gt_d(gt_d));
+    pcs_tx_blk u_b (.clk(clk), .rst(rst_q), .x_d(sh[63:0]), .x_c(sh[71:64]), .adv(adv), .gt_d(gt_d));
     always_ff @(posedge clk) begin
         o    <= {adv, gt_d};
         dout <= ^o;

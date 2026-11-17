@@ -1,5 +1,5 @@
 {
- "schema_version": "1.12.1",
+ "schema_version": "1.13.0",
  "tools": [
   {
    "name": "axi_board_run",
@@ -20,7 +20,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.12.1"
+   "version": "1.13.0"
   },
   {
    "name": "axi_program_check",
@@ -41,7 +41,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.12.1"
+   "version": "1.13.0"
   },
   {
    "name": "axi_simulate",
@@ -62,7 +62,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.12.1"
+   "version": "1.13.0"
   },
   {
    "name": "board_constraints",
@@ -99,7 +99,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.12.1"
+   "version": "1.13.0"
   },
   {
    "name": "bringup",
@@ -110,7 +110,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.12.1"
+   "version": "1.13.0"
   },
   {
    "name": "build",
@@ -138,7 +138,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.12.1"
+   "version": "1.13.0"
   },
   {
    "name": "check",
@@ -200,7 +200,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.12.1"
+   "version": "1.13.0"
   },
   {
    "name": "check_constraints",
@@ -211,7 +211,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.12.1"
+   "version": "1.13.0"
   },
   {
    "name": "debug_capture",
@@ -233,7 +233,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.12.1"
+   "version": "1.13.0"
   },
   {
    "name": "debug_plan",
@@ -255,7 +255,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.12.1"
+   "version": "1.13.0"
   },
   {
    "name": "debug_query",
@@ -281,7 +281,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.12.1"
+   "version": "1.13.0"
   },
   {
    "name": "formal",
@@ -292,7 +292,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.12.1"
+   "version": "1.13.0"
   },
   {
    "name": "gates",
@@ -321,7 +321,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.12.1"
+   "version": "1.13.0"
   },
   {
    "name": "gt_plan",
@@ -332,7 +332,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.12.1"
+   "version": "1.13.0"
   },
   {
    "name": "lint",
@@ -343,7 +343,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.12.1"
+   "version": "1.13.0"
   },
   {
    "name": "list_files",
@@ -359,7 +359,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.12.1"
+   "version": "1.13.0"
   },
   {
    "name": "load_skill",
@@ -387,7 +387,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.12.1"
+   "version": "1.13.0"
   },
   {
    "name": "mutate",
@@ -414,7 +414,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.12.1"
+   "version": "1.13.0"
   },
   {
    "name": "program",
@@ -436,7 +436,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.12.1"
+   "version": "1.13.0"
   },
   {
    "name": "read_file",
@@ -463,7 +463,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.12.1"
+   "version": "1.13.0"
   },
   {
    "name": "report",
@@ -497,7 +497,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.12.1"
+   "version": "1.13.0"
   },
   {
    "name": "report_digest",
@@ -534,7 +534,199 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.12.1"
+   "version": "1.13.0"
+  },
+  {
+   "name": "rw_place_chain",
+   "description": "Re-place a chain of cells with RapidWright: whole slices (LUT/FF packing kept) that hold a chain cell move to free sites near an anchor (a GT channel or a slice) by simulated annealing on wire length; nets of moved slices are un-routed, the rest keep their routing. Returns slices moved and RapidWright's own estimate (for the log: it is not a timing result). Then run rw_referee, which routes and times it in Vivado. cells: name patterns (fnmatch, for example u_pcs/*). RapidWright starts a JVM (about 3 GB the first time for a checkpoint, 1 GB after) and, on a first read, a Vivado; run it only where the heavy-job rules allow.",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "variant": {
+      "type": "string",
+      "enum": [
+       "base",
+       "ila"
+      ]
+     },
+     "checkpoint": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_\\-]{1,60}\\.dcp$",
+      "description": "A checkpoint file name in build/<variant>/ (post_route.dcp)."
+     },
+     "output": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_\\-]{1,60}\\.dcp$",
+      "description": "Output checkpoint name; written to build/<variant>/rw/."
+     },
+     "cells": {
+      "type": "array",
+      "items": {
+       "type": "string",
+       "pattern": "^[A-Za-z0-9_\\-\\[\\]\\*\\./]{1,80}$"
+      },
+      "minItems": 1,
+      "maxItems": 16
+     },
+     "anchor": {
+      "type": "string",
+      "pattern": "^(GTHE4_CHANNEL|GTYE4_CHANNEL|SLICE)_X\\d{1,3}Y\\d{1,3}$"
+     },
+     "window_cols": {
+      "type": "integer",
+      "minimum": 4,
+      "maximum": 120
+     },
+     "window_rows": {
+      "type": "integer",
+      "minimum": 4,
+      "maximum": 120
+     },
+     "seed": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100000
+     },
+     "iterations": {
+      "type": "integer",
+      "minimum": 1000,
+      "maximum": 400000
+     }
+    },
+    "required": [
+     "checkpoint",
+     "output",
+     "cells",
+     "anchor"
+    ],
+    "additionalProperties": false
+   },
+   "version": "1.13.0"
+  },
+  {
+   "name": "rw_referee",
+   "description": "Vivado's verdict on a checkpoint RapidWright wrote: optionally route_design first (needed after rw_place_chain, or after rw_route mode nets), then worst setup and hold slack, route status, DRC and utilisation. This is the only timing the rw_* tools report. Reports are written to build/<variant>/rw/<name>_*.rpt. Heavy: a Vivado run.",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "variant": {
+      "type": "string",
+      "enum": [
+       "base",
+       "ila"
+      ]
+     },
+     "checkpoint": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_\\-]{1,60}\\.dcp$",
+      "description": "A checkpoint in build/<variant>/rw/ (an rw_* output) or in build/<variant>/."
+     },
+     "route": {
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "checkpoint"
+    ],
+    "additionalProperties": false
+   },
+   "version": "1.13.0"
+  },
+  {
+   "name": "rw_relocate_block",
+   "description": "Move a pre-implemented routed block (the whole checkpoint is the block, for example an out-of-context checkpoint) so that its anchor slice lands on target_site, keeping its placement and routing shape. RapidWright refuses a target whose column pattern does not match (ok false). Returns the tile offset and bounding boxes. Judge the stamped block with rw_referee. RapidWright starts a JVM (about 3 GB the first time for a checkpoint, 1 GB after) and, on a first read, a Vivado; run it only where the heavy-job rules allow.",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "variant": {
+      "type": "string",
+      "enum": [
+       "base",
+       "ila"
+      ]
+     },
+     "checkpoint": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_\\-]{1,60}\\.dcp$",
+      "description": "A checkpoint file name in build/<variant>/ (post_route.dcp)."
+     },
+     "output": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_\\-]{1,60}\\.dcp$",
+      "description": "Output checkpoint name; written to build/<variant>/rw/."
+     },
+     "target_site": {
+      "type": "string",
+      "pattern": "^SLICE_X\\d{1,3}Y\\d{1,3}$"
+     }
+    },
+    "required": [
+     "checkpoint",
+     "output",
+     "target_site"
+    ],
+    "additionalProperties": false
+   },
+   "version": "1.13.0"
+  },
+  {
+   "name": "rw_route",
+   "description": "Route with RapidWright's RWRoute instead of Vivado's router. mode full: every net of the (placed or partly routed) checkpoint, timing-driven. mode nets: only the named nets (full net names), then lock them (fixed routes); Vivado's route_design (rw_referee route=true) routes the rest and keeps the locked nets. Returns the RWRoute wall time. Judge with rw_referee. RapidWright starts a JVM (about 3 GB the first time for a checkpoint, 1 GB after) and, on a first read, a Vivado; run it only where the heavy-job rules allow.",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "variant": {
+      "type": "string",
+      "enum": [
+       "base",
+       "ila"
+      ]
+     },
+     "checkpoint": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_\\-]{1,60}\\.dcp$",
+      "description": "A checkpoint file name in build/<variant>/ (post_route.dcp)."
+     },
+     "output": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_\\-]{1,60}\\.dcp$",
+      "description": "Output checkpoint name; written to build/<variant>/rw/."
+     },
+     "mode": {
+      "type": "string",
+      "enum": [
+       "full",
+       "nets"
+      ]
+     },
+     "nets": {
+      "type": "array",
+      "items": {
+       "type": "string",
+       "pattern": "^[A-Za-z0-9_\\-\\[\\]\\./]{1,120}$"
+      },
+      "maxItems": 200
+     }
+    },
+    "required": [
+     "checkpoint",
+     "output",
+     "mode"
+    ],
+    "additionalProperties": false
+   },
+   "version": "1.13.0"
+  },
+  {
+   "name": "rw_status",
+   "description": "Is RapidWright usable on this machine, and which versions the tools were measured with (RapidWright, Vivado, Java). Nothing is run.",
+   "inputSchema": {
+    "type": "object",
+    "properties": {},
+    "required": [],
+    "additionalProperties": false
+   },
+   "version": "1.13.0"
   },
   {
    "name": "search_docs",
@@ -565,7 +757,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.12.1"
+   "version": "1.13.0"
   },
   {
    "name": "simulate",
@@ -588,7 +780,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.12.1"
+   "version": "1.13.0"
   },
   {
    "name": "skill_excerpt",
@@ -611,7 +803,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.12.1"
+   "version": "1.13.0"
   },
   {
    "name": "skill_index",
@@ -634,7 +826,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.12.1"
+   "version": "1.13.0"
   },
   {
    "name": "spec_items",
@@ -645,7 +837,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.12.1"
+   "version": "1.13.0"
   },
   {
    "name": "stage_note",
@@ -679,7 +871,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.12.1"
+   "version": "1.13.0"
   },
   {
    "name": "write_file",
@@ -702,7 +894,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.12.1"
+   "version": "1.13.0"
   }
  ]
 }
