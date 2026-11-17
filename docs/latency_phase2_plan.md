@@ -72,3 +72,7 @@ See [latency_reduction.md](latency_reduction.md) and the report `reports/97_agen
 fix the cycle behaviour of the PCS and MAC, so a change there needs a latency parameter in the twin before an agent may try it;
 the transceiver's share (about 15 clocks of the 20 in the echo) is not reachable from simulation at all and needs a board session per
 variant; and the simulation's in-phase clocks hide the receive-to-transmit crossing's phase, so a crossing change is judged on the board.
+
+## What the probe read from Vivado 2026.1 (results/b97/phase2_probe.txt, brief 97)
+
+Confirmed from the tool's own help: `synth_design -directive` includes `PerformanceOptimized`, `AlternateRoutability` and `LogicCompaction`, and has `-incremental_mode`; `opt_design` has `-directive` values including the Explore family; the 96 checkpoint's cells carry `LOC`, `BEL`, `RLOC`, `H_SET`, `KEEP`, `DONT_TOUCH`, `KEEP_HIERARCHY`, `IS_BEL_FIXED`, `IS_LOC_FIXED`, `PBLOCK`. `U_SET` and `HU_SET` were not listed on a plain register (they appear only once set; to be re-checked by 97B). The net-property half of the probe (`FIXED_ROUTE`, `ROUTE`, `IS_ROUTE_FIXED`, `USER_CLOCK_ROOT`) did not complete and the GT Wizard bypass probe failed (a missing scratch directory in the script, fixed in the script, not re-run): both are open and 97B re-runs them first.

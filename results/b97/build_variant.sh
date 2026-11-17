@@ -16,6 +16,7 @@ while true; do
 done
 release() { case "$(cat "$HEAVY_LOCK" 2>/dev/null)" in "97:"*) rm -f "$HEAVY_LOCK";; esac; }
 trap release EXIT
+export FDA_VIVADO_THREADS=1   # 2 threads hit the 6 GiB cap and the kernel OOM-killed all four first attempts (swap nearly full)
 echo "slot $HEAVY_LOCK taken: $(cat "$HEAVY_LOCK"); threads $FDA_VIVADO_THREADS"
 OUT="$ROOT/results/b97/builds/$V"; mkdir -p "$OUT"
 export FDA_VIVADO_MAX=3

@@ -1,34 +1,39 @@
 run_vivado: build cache: fresh
-run_vivado: preflight ok (21113 MiB available, no other Vivado)
-run_vivado: designs/b96_kr260_10g/lat_all3 base: exit 143, 265.9 s, Vivado peak RSS None MiB, scope peak 6144 MiB (anon 6050 MiB, swap 1166 MiB; cap 6G hit 2079 times, OOM kills 0)
-INFO: [Synth 8-3886] merging instance 'u_rx/u_mr/fl_d_reg[46]' (FDRE) to 'u_rx/u_mr/fl_d_reg[63]'
-INFO: [Synth 8-3886] merging instance 'u_rx/u_mr/t2_aw_reg[46]' (FDRE) to 'u_rx/u_mr/t2_aw_reg[63]'
-INFO: [Synth 8-3886] merging instance 'u_rx/u_mr/fl_d_reg[47]' (FDRE) to 'u_rx/u_mr/fl_d_reg[63]'
-INFO: [Synth 8-3886] merging instance 'u_rx/u_mr/t2_aw_reg[47]' (FDRE) to 'u_rx/u_mr/t2_aw_reg[63]'
-INFO: [Synth 8-3886] merging instance 'u_rx/u_mr/fl_d_reg[45]' (FDRE) to 'u_rx/u_mr/fl_d_reg[63]'
-INFO: [Synth 8-3886] merging instance 'u_rx/u_mr/t2_aw_reg[45]' (FDRE) to 'u_rx/u_mr/t2_aw_reg[63]'
-INFO: [Synth 8-3886] merging instance 'u_rx/u_mr/fl_d_reg[44]' (FDRE) to 'u_rx/u_mr/fl_d_reg[63]'
-INFO: [Synth 8-3886] merging instance 'u_rx/u_mr/t2_aw_reg[44]' (FDRE) to 'u_rx/u_mr/t2_aw_reg[63]'
-INFO: [Common 17-14] Message 'Synth 8-3886' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
-INFO: [Common 17-14] Message 'Synth 8-3886' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_rx/u_mr/\fl_d_reg[56] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (u_rx/u_mr/\t2_aw_reg[56] )
-INFO: [Synth 8-3333] propagating constant 0 across sequential element (\u_rxv/u_hs /\src_hsdata_ff_reg[479] )
-WARNING: [Synth 8-3917] design b96_core__GCB2 has port P[4] driven by constant 0
-WARNING: [Synth 8-3917] design b96_core__GCB2 has port P[3] driven by constant 0
-WARNING: [Synth 8-3917] design b96_core__GCB2 has port P[2] driven by constant 0
-WARNING: [Synth 8-3917] design b96_core__GCB2 has port P[1] driven by constant 0
-WARNING: [Synth 8-3917] design b96_core__GCB2 has port P[0] driven by constant 0
----------------------------------------------------------------------------------
-Finished Cross Boundary and Area Optimization : Time (s): cpu = 00:02:39 ; elapsed = 00:02:50 . Memory (MB): peak = 3658.191 ; gain = 337.223 ; free physical = 1419 ; free virtual = 15617
----------------------------------------------------------------------------------
----------------------------------------------------------------------------------
-Start Applying XDC Timing Constraints
----------------------------------------------------------------------------------
----------------------------------------------------------------------------------
-Finished Applying XDC Timing Constraints : Time (s): cpu = 00:02:57 ; elapsed = 00:03:17 . Memory (MB): peak = 4251.531 ; gain = 930.562 ; free physical = 775 ; free virtual = 13444
----------------------------------------------------------------------------------
----------------------------------------------------------------------------------
-Start Timing Optimization
----------------------------------------------------------------------------------
-run_vivado: Vivado failed for designs/b96_kr260_10g/lat_all3 (base), exit 143; see /home/brendan/Claude_sandbox/_worktrees/97-latency/designs/b96_kr260_10g/lat_all3/build/base/vivado.log
+run_vivado: preflight ok (19159 MiB available, no other Vivado)
+{"build_id": "069488f1", "outputs": {"bit": {"file": "kr260_10g_top.bit", "sha256": "84fcc899f9d76809e49d6e86a1b52f63c202da612f87dff7ab0d1c75361af68a", "usr_access": "069488F1"}}, "problems": []}
+run_vivado: designs/b96_kr260_10g/lat_all3 base: exit 0, 1413.1 s, Vivado peak RSS 4217 MiB, scope peak 6144 MiB (anon 6107 MiB, swap 387 MiB; cap 6G hit 596 times, OOM kills 0)
+gates: kr260_10g_top (base): PASS  WNS 0.15 ns, TNS 0.0, WHS 0.01 ns, THS 0.0; LUT 5978, FF 13658, BRAM 0, DSP 0
+  rtl: pass
+    ok   rtl_methodology_no_critical
+  post_synth: pass
+    ok   post_synth_no_unconstrained_endpoints
+    ok   post_synth_methodology_no_critical
+    ok   post_synth_drc_clean
+    ok   post_synth_cdc_no_critical
+    ok   post_synth_cdc_structure_clean
+    ok   post_synth_exceptions_clean
+    ok   post_synth_io_constraints_clean
+    ok   post_synth_gt_refclk_pin_quad
+    ok   post_synth_gt_lane_pins
+    ok   post_synth_gt_rate_in_window
+    ok   post_synth_gt_user_clock_limit
+    ok   post_synth_gt_reset_sequence
+    ok   post_synth_gt_user_clocks_timed
+    ok   post_synth_gt_drc_clean
+    ok   post_synth_resets_clean
+    ok   post_synth_resources_in_range
+  post_place: pass
+    ok   post_place_hold
+  post_route: pass
+    ok   setup
+    ok   hold
+    ok   pulse_width
+    ok   no_unconstrained_endpoints
+    ok   drc_clean
+    ok   methodology_no_critical
+    ok   cdc_no_critical
+    ok   power_junction_ok
+    ok   exceptions_clean
+    ok   io_timing_clean
+  bitstream: pass
+    ok   bitstream_present

@@ -11,6 +11,7 @@ set base [list \
     CONFIG.TX_USER_DATA_WIDTH {64} CONFIG.TX_INT_DATA_WIDTH {32} CONFIG.RX_USER_DATA_WIDTH {64} CONFIG.RX_INT_DATA_WIDTH {32} \
     CONFIG.FREERUN_FREQUENCY {100} CONFIG.LOCATE_TX_USER_CLOCKING {CORE} CONFIG.LOCATE_RX_USER_CLOCKING {CORE} \
     CONFIG.TX_REFCLK_SOURCE {X0Y6 clk0} CONFIG.RX_REFCLK_SOURCE {X0Y6 clk0}]
+file mkdir [pwd]/ip_probe
 create_ip -vlnv xilinx.com:ip:gtwizard_ultrascale:1.7 -module_name gth_probe -dir [pwd]/ip_probe
 set ip [get_ips gth_probe]
 set_property -dict $base $ip

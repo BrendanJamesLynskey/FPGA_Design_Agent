@@ -43,10 +43,10 @@ def run(design: Path, dcp: Path, out_json: Path, scope_gb: int = 6, timeout: int
     if raw.exists():
         raw.unlink()
     cmd = ["systemd-run", "--user", "--scope", "-q", f"-p", f"MemoryMax={scope_gb}G", "nice", "-n", "15", VIVADO, "-mode", "batch",
-           "-nojournal", "-nolog", "-source", str(TCL), "-tclargs", str(dcp), str(tsv), str(raw)]
+           "-nojournal", "-nolog", "-source", str(TCL), "-tclargs", str(Path(dcp).resolve()), str(tsv), str(raw)]
     p = subprocess.run(cmd, cwd=work, capture_output=True, text=True, timeout=timeout)
     if not raw.is_file():
         raise LatencyError("netlist read failed:\n" + (p.stdout + p.stderr)[-1500:])
     res = {"schema": "fda.latency_slack/1", "source": str(dcp), "stages": parse_out(raw.read_text())}
-    Path(out_json).write_text(json.dumps(res, indent=1) + "\n")
+    Path(out_json).resolve().write_text(json.dumps(res, indent=1) + "\n")
     return res
