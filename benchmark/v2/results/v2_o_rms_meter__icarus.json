@@ -1,0 +1,200 @@
+{
+  "task": "v2_o_rms_meter",
+  "sim": "icarus",
+  "date": "2026-11-14",
+  "ref": {
+    "pass": true,
+    "tests": {
+      "test_rms_identity_and_reset": true,
+      "test_rms_constant_blocks": true,
+      "test_rms_reading_changes_only_at_the_end_of_a_block": true,
+      "test_rms_floor_of_mean_and_of_root": true,
+      "test_rms_full_scale_is_exact": true,
+      "test_rms_negative_samples_square_correctly": true,
+      "test_rms_restart_and_fill": true,
+      "test_rms_register_rules": true,
+      "test_rms_default_block_length_is_256": true
+    }
+  },
+  "mutants": [
+    {
+      "name": "block_one_long",
+      "why": "a block has N+1 samples",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_rms_identity_and_reset",
+        "test_rms_constant_blocks",
+        "test_rms_reading_changes_only_at_the_end_of_a_block",
+        "test_rms_floor_of_mean_and_of_root",
+        "test_rms_full_scale_is_exact",
+        "test_rms_negative_samples_square_correctly",
+        "test_rms_restart_and_fill",
+        "test_rms_default_block_length_is_256"
+      ]
+    },
+    {
+      "name": "shift_one_short",
+      "why": "the mean is divided by N/2: the reading is about 41 percent high",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_rms_identity_and_reset",
+        "test_rms_constant_blocks",
+        "test_rms_reading_changes_only_at_the_end_of_a_block",
+        "test_rms_floor_of_mean_and_of_root",
+        "test_rms_full_scale_is_exact",
+        "test_rms_negative_samples_square_correctly",
+        "test_rms_restart_and_fill",
+        "test_rms_default_block_length_is_256"
+      ]
+    },
+    {
+      "name": "mean_rounded",
+      "why": "the mean square is rounded to nearest instead of floored",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_rms_floor_of_mean_and_of_root"
+      ]
+    },
+    {
+      "name": "root_rounded",
+      "why": "the square root is rounded to nearest instead of floored",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_rms_floor_of_mean_and_of_root",
+        "test_rms_full_scale_is_exact",
+        "test_rms_negative_samples_square_correctly"
+      ]
+    },
+    {
+      "name": "unsigned_square",
+      "why": "negative samples are squared as large unsigned numbers",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_rms_constant_blocks",
+        "test_rms_reading_changes_only_at_the_end_of_a_block",
+        "test_rms_floor_of_mean_and_of_root",
+        "test_rms_full_scale_is_exact",
+        "test_rms_negative_samples_square_correctly",
+        "test_rms_default_block_length_is_256"
+      ]
+    },
+    {
+      "name": "sum_too_narrow",
+      "why": "the sum overflows for a block at full scale",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_rms_full_scale_is_exact",
+        "test_rms_default_block_length_is_256"
+      ]
+    },
+    {
+      "name": "sqrt_one_step_short",
+      "why": "the square root stops one bit early: wrong for large readings",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_rms_identity_and_reset",
+        "test_rms_constant_blocks",
+        "test_rms_reading_changes_only_at_the_end_of_a_block",
+        "test_rms_floor_of_mean_and_of_root",
+        "test_rms_full_scale_is_exact",
+        "test_rms_negative_samples_square_correctly",
+        "test_rms_restart_and_fill",
+        "test_rms_default_block_length_is_256"
+      ]
+    },
+    {
+      "name": "restart_keeps_sum",
+      "why": "abandoning the block leaves its squares in the sum",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_rms_restart_and_fill"
+      ]
+    },
+    {
+      "name": "restart_on_any_write",
+      "why": "CTRL restarts whatever bit is written",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_rms_restart_and_fill"
+      ]
+    },
+    {
+      "name": "fill_not_reset",
+      "why": "the block position survives CPU_RESETN",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_rms_identity_and_reset",
+        "test_rms_constant_blocks",
+        "test_rms_reading_changes_only_at_the_end_of_a_block",
+        "test_rms_floor_of_mean_and_of_root",
+        "test_rms_full_scale_is_exact",
+        "test_rms_negative_samples_square_correctly",
+        "test_rms_restart_and_fill",
+        "test_rms_register_rules",
+        "test_rms_default_block_length_is_256"
+      ]
+    },
+    {
+      "name": "led_low_bits",
+      "why": "LED shows the wrong bits",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_rms_identity_and_reset",
+        "test_rms_constant_blocks",
+        "test_rms_reading_changes_only_at_the_end_of_a_block",
+        "test_rms_floor_of_mean_and_of_root",
+        "test_rms_full_scale_is_exact",
+        "test_rms_negative_samples_square_correctly",
+        "test_rms_restart_and_fill",
+        "test_rms_default_block_length_is_256"
+      ]
+    },
+    {
+      "name": "block_length_fixed_at_8",
+      "why": "blocks are 8 samples long whatever RMS_LOG2 is set to",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_rms_default_block_length_is_256"
+      ]
+    },
+    {
+      "name": "sum_width_for_short_blocks",
+      "why": "the sum is wide enough for blocks of 8 but overflows for 256",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_rms_default_block_length_is_256"
+      ]
+    }
+  ],
+  "mutants_killed": 13,
+  "mutants_total": 13,
+  "trap": {
+    "twin": "textbook pre-scaling: divide each square by N before adding it, to keep the sum narrow",
+    "why": "shifting each square throws away its low bits before the sum, so the reading is biased low (eight samples of 3 give a mean square of 8, not 9); the spec asks for the sum at full width and one division at the end",
+    "must_fail": [
+      "test_rms_floor_of_mean_and_of_root"
+    ],
+    "failed_tests": [
+      "test_rms_identity_and_reset",
+      "test_rms_constant_blocks",
+      "test_rms_reading_changes_only_at_the_end_of_a_block",
+      "test_rms_floor_of_mean_and_of_root",
+      "test_rms_full_scale_is_exact",
+      "test_rms_negative_samples_square_correctly"
+    ],
+    "trap_fires": true
+  }
+}

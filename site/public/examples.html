@@ -606,11 +606,46 @@ svg .bdtick { stroke: var(--ink-3); }
   .tl li { grid-template-columns: 1fr; }
   .tld { padding: 0 0 .1em; }
 }
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.mx td.mk, .mx th.mk { text-align: center; white-space: normal; min-width: 6.5em; position: relative; }
+.mx th[scope="row"] { font-weight: 400; color: var(--ink); min-width: 14em; }
+.mx tfoot th, .mx tfoot td { border-top: 2px solid var(--ink); font-weight: 600; }
+.sq { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--ink); vertical-align: middle; line-height: 12px; text-align: center; box-sizing: border-box; }
+.sq.y { background: var(--ink); }
+.sq.n { background: transparent; border-color: var(--ink-3); border-style: dashed; }
+.sq.na { border: 0; color: var(--ink-3); }
+.map code { white-space: normal; overflow-wrap: anywhere; display: inline-block; margin: 0 4px 4px 0; font-size: .75rem; }
+.map th[scope="row"] { min-width: 12em; font-weight: 600; }
+.map td { min-width: 8em; }
+.map { table-layout: auto; }
+.pin { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.pstep { border: 1px solid var(--rule); background: var(--panel); padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; max-width: none; }
+.pstep.bad { border: 2px solid var(--warn); }
+.ptag { font: 700 .75rem var(--f-mono); text-transform: uppercase; color: var(--ink-3); }
+.pstep.bad .ptag { color: var(--warn); }
+.sfig .sbad { fill: var(--warn); }
+.sfig .ftick { stroke: var(--ink); stroke-width: 2.5; }
+.sfig .sunk { fill: none; stroke: var(--ink-3); stroke-dasharray: 4 3; }
+.sfig .sbar2 { fill: var(--ink); }
+.mxfig td.num { font-family: var(--f-mono); }
+.cexfig .cxh { fill: var(--ink); }
+.cexfig .cxl { fill: var(--ink-3); }
+.cexfig .cxfut { fill: var(--bg); opacity: .85; }
+.cexfig .ctl { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+.mx th[scope="row"] { min-width: 10em; }
+@media (max-width: 700px) {
+  .map thead { display: none; }
+  .map, .map tbody, .map tr, .map td, .map th { display: block; min-width: 0; width: 100%; }
+  .map tr { border-bottom: 2px solid var(--rule); padding: 6px 0; }
+  .map td { border: 0; padding: 2px 10px; }
+  .map td:not(:has(code)) { display: none; }
+  .map td::before { content: attr(data-label) ": "; font-size: .78rem; color: var(--ink-3); display: block; }
+}
 </style>
 </head>
 <body>
 <a class="visually-hidden" href="#main">Skip to content</a>
-<header class="bar"><div class="wrap"><a class="brand" href="index.html">FPGA Design Agent</a><nav aria-label="Pages"><a href="agent.html">The agent</a><a class="sub" href="agent.html#harness">Harness</a><a href="story.html">How it was built</a><a href="how.html">How it works</a><a href="flow-notes.html">Beyond the flow</a><a href="expertise.html">Expertise</a><a href="examples.html" aria-current="page">Examples</a><a href="showcase.html">Showcase</a><a href="problems.html">Problems</a><a href="evaluation.html">Evaluation</a><a href="results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
+<header class="bar"><div class="wrap"><a class="brand" href="index.html">FPGA Design Agent</a><nav aria-label="Pages"><a href="agent.html">The agent</a><a class="sub" href="agent.html#harness">Harness</a><a href="story.html">How it was built</a><a href="how.html">How it works</a><a href="verification.html">Verification</a><a href="flow-notes.html">Beyond the flow</a><a href="expertise.html">Expertise</a><a href="examples.html" aria-current="page">Examples</a><a href="showcase.html">Showcase</a><a href="problems.html">Problems</a><a href="evaluation.html">Evaluation</a><a href="results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
 <main id="main" class="wrap">
 <h1>Examples</h1>
 <p class="lede">Four stories from the development work: a clean first run, an interview that decided the outcome, a task that took five runs, and a hand-built design on the board. Each development task here was used to find and fix faults in the agent, so these runs show how it works and fails, not how it will do on new tasks.</p>
@@ -715,7 +750,7 @@ endmodule</code></pre>
 
 <div class="pager"><a href="expertise.html">&larr; Expertise</a><a href="showcase.html">Showcase &rarr;</a></div>
 </main>
-<footer><div class="wrap"><p>Designed by Brendan Lynskey. Code and results: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent">github.com/BrendanJamesLynskey/FPGA_Design_Agent</a> (MIT licence). Every number on these pages is read from a committed result file; development results are labelled as such and are not the held-out score.</p></div></footer>
+<footer><div class="wrap"><p>Designed by Brendan Lynskey. Code and results: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent">github.com/BrendanJamesLynskey/FPGA_Design_Agent</a> (all rights reserved; source visible for review, see LICENSE). Every number on these pages is read from a committed result file; development results are labelled as such and are not the held-out score.</p></div></footer>
 <script type="application/json" data-key="board">{"agent_board":{"failed_step":"ila_captures","pass":false,"programmed":true,"source":"results/f2/agent_luna_05c2_run7_bringup.json","uart_passed":3,"uart_tests":3},"board_runs":2,"board_runs_passed":1,"board_v2_designs":4,"board_v2_passed":30,"board_v2_runs":30,"bram":["0","2"],"captures":{"08":{"duty":8,"edges":[[0,0],[1,1],[33,0]],"model_on":32,"on":32,"samples":1024},"40":{"duty":64,"edges":[[0,0],[1,1],[257,0]],"model_on":256,"on":256,"samples":1024},"a0":{"duty":160,"edges":[[0,0],[1,1],[641,0]],"model_on":640,"on":640,"samples":1024}},"design":"t1_dimmer_counter","dsp":["0","0"],"ff":["488","2562"],"ila_captures":4,"lut":["487","1668"],"mutants":21,"mutants_killed":21,"mutation_first_run_pct":90.48,"mutation_survivors_first":2,"part":"xc7a100t","pass_total_s":123.5,"power":["0.15","0.161"],"rtl":"// debounce.sv: synchronise and debounce one push button.\n// The debounced level changes only after the synchronised input has differed\n// from it for CYCLES consecutive clocks; a shorter difference restarts the\n// count. press pulses for one clock on each 0 -> 1 change of the level.\n\n// req: REQ-01, REQ-02, REQ-10\nmodule debounce #(\n    parameter int CYCLES = 1_000_000          // 10 ms at 100 MHz\n) (\n    input  logic clk,\n    input  logic rst,\n    input  logic btn,                         // asynchronous, active high\n    output logic level,                       // debounced\n    output logic press                        // one-clock pulse on a press\n);\n    localparam int CW = $clog2(CYCLES + 1);\n\n    logic          s;\n    logic [CW-1:0] cnt;\n\n    sync2 #(.WIDTH(1)) u_sync (.clk(clk), .rst(rst), .d(btn), .q(s));\n\n    always_ff @(posedge clk) begin\n        press <= 1'b0;\n        if (rst) begin\n            level <= 1'b0;\n            cnt   <= '0;\n        end else if (s == level) begin\n            cnt <= '0;\n        end else if (cnt == CW'(CYCLES - 1)) begin\n            cnt   <= '0;\n            level <= s;\n            press <= s;\n        end else begin\n            cnt <= cnt + 1'b1;\n        end\n    end\nendmodule","run_totals_s":[122.7,123.5],"uart_failures":0,"uart_tests":8,"vivado":"2026.1","whs":["0.064","0.034"],"wns":["3.609","3.866"]}</script>
 <script>/* FPGA Design Agent site. No dependencies. Every animation is frame(step) over a state list built from site/data/*.json. */
 (function () {
@@ -1831,6 +1866,20 @@ endmodule</code></pre>
   }
   openHash();
   window.addEventListener("hashchange", openHash);
+})();
+
+// brief 81: replay of a recorded counterexample: the slider hides the steps after the chosen one
+(function () {
+  document.querySelectorAll('.cexfig').forEach(function (f) {
+    var r = f.querySelector('input[type=range]'), fut = f.querySelector('.cxfut'), pos = f.querySelector('.cexpos'), lab = f.querySelector('.cxstep');
+    var n = +f.dataset.cycles, lx = +f.dataset.lx, cw = +f.dataset.cw, w = +f.dataset.w;
+    function set() {
+      var k = +r.value, x = lx + (k + 1) * cw;
+      fut.setAttribute('x', x); fut.setAttribute('width', Math.max(0, w - x));
+      pos.textContent = k; if (lab) lab.textContent = 'step ' + k;
+    }
+    r.addEventListener('input', set); set();
+  });
 })();
 </script>
 </body>

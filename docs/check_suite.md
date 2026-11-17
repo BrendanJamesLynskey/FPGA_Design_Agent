@@ -128,15 +128,20 @@ python3 -m flow.checks designs/<d> [--names all|resets,cdc,...] [--scope auto|rt
   The sign-off gate `post_synth_resets_clean` reads the findings of all parts but is not made false by a PARTIAL source part: its
   netlist part is the one that decides, and the netlist attack results (`results/71b_netlist_attack/`) show what it does and
   does not catch.
-- **What the source part still cannot see** (the independent re-review of 71B, after its HIGH findings were closed): asynchronous
-  state built from a combinational loop (`assign q = rst ? 0 : (en ? d : q)`, cross-coupled gates) has no storage cell; a declared
-  synchroniser is exempt as a whole subtree and only has to contain an ASYNC_REG register or an XPM reset macro, so a decoy inside
-  it hides an unrelated asynchronous flop; polarity is not judged for a reset value that is not a constant, nor for a reset folded
+- **What the source part still cannot see** (the independent re-review of 71B, after its HIGH findings were closed; two of its
+  MEDIUMs were closed in brief 80): polarity is not judged for a reset value that is not a constant, nor for a reset folded
   into other logic (`~(rst|rst2)`, a multi-bit compare), which is a distinct root. Modules the tool declares itself (XPM, AMD primitives
   and build IP by name) are never judged inside; any other module the build does not define makes the part PARTIAL, as does a
   `blackbox` attribute on a user module, a VHDL entity with several architectures or a configuration. The elaborator rejects a few
   constructs Vivado accepts (for example `$rtoi` in dds_awg, so `b65a_axil_soc` reads PARTIAL at scope rtl): PARTIAL is the honest answer.
   Every latch is treated as an asynchronous element, whatever its signals are called.
+- **Closed in brief 80.** A combinational feedback loop inside one module (`assign q = rst ? 0 : (en ? d : q)`, cross-coupled
+  gates) is stored state with no storage cell: it is reported as an asynchronous latch (HDL-RST-01), also inside a declared
+  synchroniser. Loops that pass through a module instance are not followed (each module is judged alone). A declared synchroniser
+  still exempts its subtree, but only for storage that carries `ASYNC_REG` (on the cell or on the net its Q drives): any other
+  asynchronous flop or latch inside it, a decoy next to the real stages, is reported ("inside a declared synchroniser but not an
+  ASYNC_REG stage"). The case `sync_via_substring` (a declared module with an `xpm_cdc_async_rst` and its own unmarked asynchronous
+  flop) was recorded as clean before this and is now HDL-RST-01.
 - **`reset.async_inputs` exempt the nets they name**, wherever those nets are used: a flop in a submodule whose reset input is
   wired (through ports, buffers and inverters) to a declared top-level input is exempt, as in the netlist rule; a reset that
   is computed (`a & b`), registered, or an undriven internal signal of the same name is reported.

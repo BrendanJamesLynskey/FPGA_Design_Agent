@@ -1,0 +1,60 @@
+{
+ "caught": 4,
+ "valid": 4,
+ "faults": [
+  {
+   "name": "icmp_ttl_kept",
+   "block": "icmp_echo",
+   "class": "protocol",
+   "why": "the reply keeps the request's TTL while its checksum assumes the new one",
+   "status": "caught",
+   "seconds": 14.8,
+   "pytest": "1 failed, 8 deselected in 14.42s"
+  },
+  {
+   "name": "icmp_checksum_not_updated",
+   "block": "icmp_echo",
+   "status": "invalid",
+   "why": "old string occurs 0 times"
+  },
+  {
+   "name": "icmp_answers_fragments",
+   "block": "icmp_echo",
+   "status": "invalid",
+   "why": "old string occurs 2 times"
+  },
+  {
+   "name": "icmp_sum_over_padding",
+   "block": "icmp_echo",
+   "class": "off-by-one",
+   "why": "the ICMP checksum is checked over the Ethernet padding too",
+   "status": "caught",
+   "seconds": 14.6,
+   "pytest": "1 failed, 8 deselected in 14.32s"
+  },
+  {
+   "name": "icmp_addresses_not_swapped",
+   "block": "icmp_echo",
+   "class": "protocol",
+   "why": "the reply's IP source stays the requester's address",
+   "status": "caught",
+   "seconds": 14.7,
+   "pytest": "1 failed, 8 deselected in 14.34s"
+  },
+  {
+   "name": "icmp_back_to_back_overwrite",
+   "block": "icmp_echo",
+   "status": "invalid",
+   "why": "old string occurs 0 times"
+  },
+  {
+   "name": "icmp_tail_bytes_overwritten",
+   "block": "icmp_echo",
+   "class": "timing",
+   "why": "bytes after 13 of a frame arriving during a reply overwrite the stored request (the formal check watches byte 13 only; found by the independent review)",
+   "status": "caught",
+   "seconds": 3.7,
+   "pytest": "1 failed, 5 deselected in 3.20s"
+  }
+ ]
+}

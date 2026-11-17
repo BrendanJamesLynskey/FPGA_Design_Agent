@@ -606,11 +606,46 @@ svg .bdtick { stroke: var(--ink-3); }
   .tl li { grid-template-columns: 1fr; }
   .tld { padding: 0 0 .1em; }
 }
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.mx td.mk, .mx th.mk { text-align: center; white-space: normal; min-width: 6.5em; position: relative; }
+.mx th[scope="row"] { font-weight: 400; color: var(--ink); min-width: 14em; }
+.mx tfoot th, .mx tfoot td { border-top: 2px solid var(--ink); font-weight: 600; }
+.sq { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--ink); vertical-align: middle; line-height: 12px; text-align: center; box-sizing: border-box; }
+.sq.y { background: var(--ink); }
+.sq.n { background: transparent; border-color: var(--ink-3); border-style: dashed; }
+.sq.na { border: 0; color: var(--ink-3); }
+.map code { white-space: normal; overflow-wrap: anywhere; display: inline-block; margin: 0 4px 4px 0; font-size: .75rem; }
+.map th[scope="row"] { min-width: 12em; font-weight: 600; }
+.map td { min-width: 8em; }
+.map { table-layout: auto; }
+.pin { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.pstep { border: 1px solid var(--rule); background: var(--panel); padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; max-width: none; }
+.pstep.bad { border: 2px solid var(--warn); }
+.ptag { font: 700 .75rem var(--f-mono); text-transform: uppercase; color: var(--ink-3); }
+.pstep.bad .ptag { color: var(--warn); }
+.sfig .sbad { fill: var(--warn); }
+.sfig .ftick { stroke: var(--ink); stroke-width: 2.5; }
+.sfig .sunk { fill: none; stroke: var(--ink-3); stroke-dasharray: 4 3; }
+.sfig .sbar2 { fill: var(--ink); }
+.mxfig td.num { font-family: var(--f-mono); }
+.cexfig .cxh { fill: var(--ink); }
+.cexfig .cxl { fill: var(--ink-3); }
+.cexfig .cxfut { fill: var(--bg); opacity: .85; }
+.cexfig .ctl { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+.mx th[scope="row"] { min-width: 10em; }
+@media (max-width: 700px) {
+  .map thead { display: none; }
+  .map, .map tbody, .map tr, .map td, .map th { display: block; min-width: 0; width: 100%; }
+  .map tr { border-bottom: 2px solid var(--rule); padding: 6px 0; }
+  .map td { border: 0; padding: 2px 10px; }
+  .map td:not(:has(code)) { display: none; }
+  .map td::before { content: attr(data-label) ": "; font-size: .78rem; color: var(--ink-3); display: block; }
+}
 </style>
 </head>
 <body>
 <a class="visually-hidden" href="#main">Skip to content</a>
-<header class="bar"><div class="wrap"><a class="brand" href="../index.html">FPGA Design Agent</a><nav aria-label="Pages"><a href="../agent.html">The agent</a><a class="sub" href="../agent.html#harness">Harness</a><a href="../story.html">How it was built</a><a href="../how.html">How it works</a><a href="../flow-notes.html">Beyond the flow</a><a href="../expertise.html">Expertise</a><a href="../examples.html">Examples</a><a href="../showcase.html">Showcase</a><a href="../problems.html" aria-current="page">Problems</a><a href="../evaluation.html">Evaluation</a><a href="../results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
+<header class="bar"><div class="wrap"><a class="brand" href="../index.html">FPGA Design Agent</a><nav aria-label="Pages"><a href="../agent.html">The agent</a><a class="sub" href="../agent.html#harness">Harness</a><a href="../story.html">How it was built</a><a href="../how.html">How it works</a><a href="../verification.html">Verification</a><a href="../flow-notes.html">Beyond the flow</a><a href="../expertise.html">Expertise</a><a href="../examples.html">Examples</a><a href="../showcase.html">Showcase</a><a href="../problems.html" aria-current="page">Problems</a><a href="../evaluation.html">Evaluation</a><a href="../results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
 <main id="main" class="wrap">
 <p class="crumbs small"><a href="../problems.html">Problems</a> / <a href="../problems.html#dom-A">A. Basic digital design drills</a></p>
 <h1>Four-floor lift controller</h1>
@@ -642,8 +677,8 @@ svg .bdtick { stroke: var(--ink-3); }
 <p>Each is a small edit to the reference RTL. In the committed check (icarus, 2026-11-10, <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/results/reference/t1_elevator_fsm__icarus.json"><code>t1_elevator_fsm__icarus.json</code></a>) the reference passed all 9 hidden tests and 10 of 10 mutants failed them.</p>
 <div class="tablewrap" tabindex="0"><table><thead><tr><th>Mutant</th><th>File</th><th>The bug</th><th>Hidden tests that fail</th></tr></thead><tbody><tr><td><code>always_turns</code></td><td><code>elevator_fsm.sv</code></td><td>the car never keeps its direction at a decision (always turns)</td><td><code>test_single_call</code>, <code>test_scan_keeps_direction</code>, <code>test_call_on_the_way_and_behind</code>, <code>test_call_at_current_floor</code>, <code>test_switch_edges_only</code>, <code>test_turns_round_at_the_top</code>, <code>test_shell_calls_and_register_rules</code>, <code>test_random_calls</code></td></tr><tr><td><code>door_short</code></td><td><code>elevator_fsm.sv</code></td><td>door open one clock short</td><td><code>test_single_call</code>, <code>test_scan_keeps_direction</code>, <code>test_call_on_the_way_and_behind</code>, <code>test_call_at_current_floor</code>, <code>test_switch_edges_only</code>, <code>test_turns_round_at_the_top</code>, <code>test_shell_calls_and_register_rules</code>, <code>test_random_calls</code></td></tr><tr><td><code>floor_long</code></td><td><code>elevator_fsm.sv</code></td><td>a floor takes FLOOR_CYCLES + 1 clocks</td><td><code>test_single_call</code>, <code>test_scan_keeps_direction</code>, <code>test_call_on_the_way_and_behind</code>, <code>test_call_at_current_floor</code>, <code>test_switch_edges_only</code>, <code>test_turns_round_at_the_top</code>, <code>test_shell_calls_and_register_rules</code>, <code>test_random_calls</code></td></tr><tr><td><code>no_stop_passing</code></td><td><code>elevator_fsm.sv</code></td><td>calls passed on the way are not served until the turn</td><td><code>test_single_call</code>, <code>test_scan_keeps_direction</code>, <code>test_call_on_the_way_and_behind</code>, <code>test_call_at_current_floor</code>, <code>test_switch_edges_only</code>, <code>test_turns_round_at_the_top</code>, <code>test_shell_calls_and_register_rules</code>, <code>test_random_calls</code></td></tr><tr><td><code>door_floor_call_kept</code></td><td><code>elevator_fsm.sv</code></td><td>a call at the open-door floor reopens the door afterwards</td><td><code>test_call_at_current_floor</code></td></tr><tr><td><code>level_calls</code></td><td><code>elevator_fsm.sv</code></td><td>a switch left up keeps calling</td><td><code>test_switch_edges_only</code></td></tr><tr><td><code>moves_count_stops</code></td><td><code>elevator_fsm.sv</code></td><td>MOVES counts stops, not floors</td><td><code>test_single_call</code>, <code>test_scan_keeps_direction</code>, <code>test_call_on_the_way_and_behind</code>, <code>test_switch_edges_only</code>, <code>test_turns_round_at_the_top</code>, <code>test_shell_calls_and_register_rules</code>, <code>test_random_calls</code></td></tr><tr><td><code>pending_write_replaces</code></td><td><code>elevator_fsm.sv</code></td><td>a PENDING write replaces the calls instead of adding (not W1S)</td><td><code>test_shell_calls_and_register_rules</code></td></tr><tr><td><code>leds_no_pending</code></td><td><code>elevator_fsm.sv</code></td><td>LED[7:4] do not show the calls</td><td><code>test_call_on_the_way_and_behind</code></td></tr><tr><td><code>pend_not_reset</code></td><td><code>elevator_fsm.sv</code></td><td>CPU_RESETN does not reset pend (amended 2026-11-10: the reset test now kills a mutant)</td><td><code>test_identity_and_reset</code>, <code>test_single_call</code>, <code>test_scan_keeps_direction</code>, <code>test_call_on_the_way_and_behind</code>, <code>test_call_at_current_floor</code>, <code>test_switch_edges_only</code>, <code>test_turns_round_at_the_top</code>, <code>test_shell_calls_and_register_rules</code>, <code>test_random_calls</code></td></tr></tbody></table></div>
 <h2>Sample solution</h2>
-<p class="note">Hand-written reference for the benchmark, not agent output; it passes every test, and the listed mutants fail them. With it, the hidden cocotb tests and the golden model. Repository licence: MIT.</p>
-<details class="code"><summary><span class="mono">elevator_fsm.sv</span> <span class="muted small">reference RTL, 97 lines</span></summary><div class="codebar small"><a href="t1_elevator_fsm/elevator_fsm.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t1_elevator_fsm/ref/rtl/elevator_fsm.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// elevator_fsm.sv: four-floor SCAN lift controller with travel and door timers,</span>
+<p class="note">Hand-written reference for the benchmark, not agent output; it passes every test, and the listed mutants fail them. With it, the hidden cocotb tests and the golden model. Repository licence: all rights reserved (source visible for review).</p>
+<details class="code"><summary><span class="mono">elevator_fsm.sv</span> <span class="muted small">reference RTL, 97 lines</span></summary><div class="codebar small"><a href="t1_elevator_fsm/elevator_fsm.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t1_elevator_fsm/ref/rtl/elevator_fsm.sv">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hc">// elevator_fsm.sv: four-floor SCAN lift controller with travel and door timers,</span>
 <span class="hc">// for t1_elevator_fsm, behind the shell&#x27;s register window.</span>
 <span class="hk">module</span> elevator_fsm #(
     <span class="hk">parameter</span> <span class="hk">int</span> FLOOR_CYCLES = 150_000_000,
@@ -740,7 +775,7 @@ svg .bdtick { stroke: var(--ink-3); }
         <span class="hk">end</span>
     <span class="hk">end</span>
 <span class="hk">endmodule</span>
-</code></pre></details><details class="code"><summary><span class="mono">t1_elevator_fsm_top.sv</span> <span class="muted small">reference RTL, 32 lines</span></summary><div class="codebar small"><a href="t1_elevator_fsm/t1_elevator_fsm_top.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t1_elevator_fsm/ref/rtl/t1_elevator_fsm_top.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// t1_elevator_fsm_top.sv: board top (Nexys A7-100T, master-XDC port names).</span>
+</code></pre></details><details class="code"><summary><span class="mono">t1_elevator_fsm_top.sv</span> <span class="muted small">reference RTL, 32 lines</span></summary><div class="codebar small"><a href="t1_elevator_fsm/t1_elevator_fsm_top.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t1_elevator_fsm/ref/rtl/t1_elevator_fsm_top.sv">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hc">// t1_elevator_fsm_top.sv: board top (Nexys A7-100T, master-XDC port names).</span>
 <span class="hc">// Reference design for benchmark task t1_elevator_fsm; DESIGN_ID &quot;ELEV&quot;.</span>
 <span class="hk">module</span> t1_elevator_fsm_top #(
     <span class="hk">parameter</span> <span class="hk">int</span>          CLKS_PER_BIT   = 868,
@@ -772,7 +807,7 @@ svg .bdtick { stroke: var(--ink-3); }
         .clk(clk), .rst(rst), .sw_async(SW[3:0]), .led(LED),
         .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));
 <span class="hk">endmodule</span>
-</code></pre></details><details class="code"><summary><span class="mono">acceptance.py</span> <span class="muted small">hidden cocotb acceptance tests, 266 lines</span></summary><div class="codebar small"><a href="t1_elevator_fsm/acceptance.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t1_elevator_fsm/hidden/acceptance.py">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;Acceptance tests of t1_elevator_fsm against model.py (hidden from the agent).
+</code></pre></details><details class="code"><summary><span class="mono">acceptance.py</span> <span class="muted small">hidden cocotb acceptance tests, 266 lines</span></summary><div class="codebar small"><a href="t1_elevator_fsm/acceptance.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t1_elevator_fsm/hidden/acceptance.py">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;Acceptance tests of t1_elevator_fsm against model.py (hidden from the agent).
 
 The clocked model and the RTL run side by side. Events seen on the pins (LED[14] rise = depart, LED[3:0] change =
 arrive, LED[15] rise/fall = door open/close) must match the model&#x27;s events in order and floor, and every interval
@@ -1038,7 +1073,7 @@ SW_LAT = 2              <span class="hc"># clocks from a switch change to the ca
     e.check_events()
     <span class="hk">await</span> e.check_regs()
     <span class="hk">await</span> e.check_leds()
-</code></pre></details><details class="code"><summary><span class="mono">model.py</span> <span class="muted small">golden model, 81 lines</span></summary><div class="codebar small"><a href="t1_elevator_fsm/model.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t1_elevator_fsm/hidden/model.py">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;Golden model of t1_elevator_fsm, written from spec.yaml alone (never from any RTL).
+</code></pre></details><details class="code"><summary><span class="mono">model.py</span> <span class="muted small">golden model, 81 lines</span></summary><div class="codebar small"><a href="t1_elevator_fsm/model.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t1_elevator_fsm/hidden/model.py">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;Golden model of t1_elevator_fsm, written from spec.yaml alone (never from any RTL).
 
 A clocked model: run_to(t) steps the spec&#x27;s rules one clock at a time and logs events (time, kind, floor) with
 kind in &quot;depart&quot;, &quot;arrive&quot;, &quot;open&quot;, &quot;close&quot;. Calls are scheduled at the clock they are seen.&quot;&quot;&quot;</span>
@@ -1126,7 +1161,7 @@ DESIGN_ID = 0x454C4556          <span class="hc"># &quot;ELEV&quot;</span>
 
 <div class="pager"><a href="../problems.html">&larr; All problems</a><span></span></div>
 </main>
-<footer><div class="wrap"><p>Designed by Brendan Lynskey. Code and results: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent">github.com/BrendanJamesLynskey/FPGA_Design_Agent</a> (MIT licence). Every number on these pages is read from a committed result file; development results are labelled as such and are not the held-out score.</p></div></footer>
+<footer><div class="wrap"><p>Designed by Brendan Lynskey. Code and results: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent">github.com/BrendanJamesLynskey/FPGA_Design_Agent</a> (all rights reserved; source visible for review, see LICENSE). Every number on these pages is read from a committed result file; development results are labelled as such and are not the held-out score.</p></div></footer>
 <script type="application/json" data-key="trace">{"captions":["Clock 0: idle at floor 0. Outstanding calls 0000, floors travelled 0.","Clock 1: call for floor 3; leaves floor 0. Outstanding calls 1000, floors travelled 0.","Clock 2: moving up from floor 0. Outstanding calls 1000, floors travelled 0.","Clock 3: call for floor 1. Outstanding calls 1010, floors travelled 0.","Clock 4: moving up from floor 0. Outstanding calls 1010, floors travelled 0.","Clock 5: reaches floor 1; door opens at floor 1. Outstanding calls 1000, floors travelled 1.","Clock 6: door open at floor 1. Outstanding calls 1000, floors travelled 1.","Clock 7: door open at floor 1. Outstanding calls 1000, floors travelled 1.","Clock 8: door closes at floor 1; leaves floor 1. Outstanding calls 1000, floors travelled 1.","Clock 9: moving up from floor 1. Outstanding calls 1000, floors travelled 1.","Clock 10: moving up from floor 1. Outstanding calls 1000, floors travelled 1.","Clock 11: moving up from floor 1. Outstanding calls 1000, floors travelled 1.","Clock 12: reaches floor 2. Outstanding calls 1000, floors travelled 2.","Clock 13: moving up from floor 2. Outstanding calls 1000, floors travelled 2.","Clock 14: call for floor 0. Outstanding calls 1001, floors travelled 2.","Clock 15: moving up from floor 2. Outstanding calls 1001, floors travelled 2.","Clock 16: reaches floor 3; door opens at floor 3. Outstanding calls 0001, floors travelled 3.","Clock 17: door open at floor 3. Outstanding calls 0001, floors travelled 3.","Clock 18: door open at floor 3. Outstanding calls 0001, floors travelled 3.","Clock 19: door closes at floor 3; leaves floor 3. Outstanding calls 0001, floors travelled 3.","Clock 20: moving down from floor 3. Outstanding calls 0001, floors travelled 3.","Clock 21: moving down from floor 3. Outstanding calls 0001, floors travelled 3.","Clock 22: moving down from floor 3. Outstanding calls 0001, floors travelled 3.","Clock 23: reaches floor 2. Outstanding calls 0001, floors travelled 4.","Clock 24: moving down from floor 2. Outstanding calls 0001, floors travelled 4.","Clock 25: moving down from floor 2. Outstanding calls 0001, floors travelled 4.","Clock 26: moving down from floor 2. Outstanding calls 0001, floors travelled 4.","Clock 27: reaches floor 1. Outstanding calls 0001, floors travelled 5.","Clock 28: moving down from floor 1. Outstanding calls 0001, floors travelled 5.","Clock 29: moving down from floor 1. Outstanding calls 0001, floors travelled 5.","Clock 30: moving down from floor 1. Outstanding calls 0001, floors travelled 5.","Clock 31: reaches floor 0; door opens at floor 0. Outstanding calls 0000, floors travelled 6.","Clock 32: door open at floor 0. Outstanding calls 0000, floors travelled 6.","Clock 33: door open at floor 0. Outstanding calls 0000, floors travelled 6.","Clock 34: door closes at floor 0. Outstanding calls 0000, floors travelled 6.","Clock 35: idle at floor 0. Outstanding calls 0000, floors travelled 6.","Clock 36: idle at floor 0. Outstanding calls 0000, floors travelled 6."],"hero":{"floor_cycles":4,"floors":4},"signals":[{"kind":"bus","name":"FLOOR","radix":"dec","v":[0,0,0,0,0,1,1,1,1,1,1,1,2,2,2,2,3,3,3,3,3,3,3,2,2,2,2,1,1,1,1,0,0,0,0,0,0]},{"kind":"text","name":"STATE","v":["idle","moving","moving","moving","moving","door open","door open","door open","moving","moving","moving","moving","moving","moving","moving","moving","door open","door open","door open","moving","moving","moving","moving","moving","moving","moving","moving","moving","moving","moving","moving","door open","door open","door open","idle","idle","idle"]},{"kind":"bit","name":"DIR (1 = down)","v":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]},{"kind":"bus","name":"PENDING","radix":"bin","v":[0,8,8,10,10,8,8,8,8,8,8,8,8,8,9,9,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0],"width":4},{"kind":"bus","name":"MOVES","radix":"dec","v":[0,0,0,0,0,1,1,1,1,1,1,1,2,2,2,2,3,3,3,3,3,3,3,4,4,4,4,5,5,5,5,6,6,6,6,6,6]}],"stimulus":"Travel time 4 clocks a floor and door time 3 clocks (shrunk, as the bench does). Calls: floor 3 at clock 1; floor 1 at clock 3; floor 0 at clock 14.","unit":"clock","x":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36]}</script>
 <script>/* FPGA Design Agent site. No dependencies. Every animation is frame(step) over a state list built from site/data/*.json. */
 (function () {
@@ -2242,6 +2277,20 @@ DESIGN_ID = 0x454C4556          <span class="hc"># &quot;ELEV&quot;</span>
   }
   openHash();
   window.addEventListener("hashchange", openHash);
+})();
+
+// brief 81: replay of a recorded counterexample: the slider hides the steps after the chosen one
+(function () {
+  document.querySelectorAll('.cexfig').forEach(function (f) {
+    var r = f.querySelector('input[type=range]'), fut = f.querySelector('.cxfut'), pos = f.querySelector('.cexpos'), lab = f.querySelector('.cxstep');
+    var n = +f.dataset.cycles, lx = +f.dataset.lx, cw = +f.dataset.cw, w = +f.dataset.w;
+    function set() {
+      var k = +r.value, x = lx + (k + 1) * cw;
+      fut.setAttribute('x', x); fut.setAttribute('width', Math.max(0, w - x));
+      pos.textContent = k; if (lab) lab.textContent = 'step ' + k;
+    }
+    r.addEventListener('input', set); set();
+  });
 })();
 </script>
 </body>

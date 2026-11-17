@@ -606,11 +606,46 @@ svg .bdtick { stroke: var(--ink-3); }
   .tl li { grid-template-columns: 1fr; }
   .tld { padding: 0 0 .1em; }
 }
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.mx td.mk, .mx th.mk { text-align: center; white-space: normal; min-width: 6.5em; position: relative; }
+.mx th[scope="row"] { font-weight: 400; color: var(--ink); min-width: 14em; }
+.mx tfoot th, .mx tfoot td { border-top: 2px solid var(--ink); font-weight: 600; }
+.sq { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--ink); vertical-align: middle; line-height: 12px; text-align: center; box-sizing: border-box; }
+.sq.y { background: var(--ink); }
+.sq.n { background: transparent; border-color: var(--ink-3); border-style: dashed; }
+.sq.na { border: 0; color: var(--ink-3); }
+.map code { white-space: normal; overflow-wrap: anywhere; display: inline-block; margin: 0 4px 4px 0; font-size: .75rem; }
+.map th[scope="row"] { min-width: 12em; font-weight: 600; }
+.map td { min-width: 8em; }
+.map { table-layout: auto; }
+.pin { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.pstep { border: 1px solid var(--rule); background: var(--panel); padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; max-width: none; }
+.pstep.bad { border: 2px solid var(--warn); }
+.ptag { font: 700 .75rem var(--f-mono); text-transform: uppercase; color: var(--ink-3); }
+.pstep.bad .ptag { color: var(--warn); }
+.sfig .sbad { fill: var(--warn); }
+.sfig .ftick { stroke: var(--ink); stroke-width: 2.5; }
+.sfig .sunk { fill: none; stroke: var(--ink-3); stroke-dasharray: 4 3; }
+.sfig .sbar2 { fill: var(--ink); }
+.mxfig td.num { font-family: var(--f-mono); }
+.cexfig .cxh { fill: var(--ink); }
+.cexfig .cxl { fill: var(--ink-3); }
+.cexfig .cxfut { fill: var(--bg); opacity: .85; }
+.cexfig .ctl { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+.mx th[scope="row"] { min-width: 10em; }
+@media (max-width: 700px) {
+  .map thead { display: none; }
+  .map, .map tbody, .map tr, .map td, .map th { display: block; min-width: 0; width: 100%; }
+  .map tr { border-bottom: 2px solid var(--rule); padding: 6px 0; }
+  .map td { border: 0; padding: 2px 10px; }
+  .map td:not(:has(code)) { display: none; }
+  .map td::before { content: attr(data-label) ": "; font-size: .78rem; color: var(--ink-3); display: block; }
+}
 </style>
 </head>
 <body>
 <a class="visually-hidden" href="#main">Skip to content</a>
-<header class="bar"><div class="wrap"><a class="brand" href="../index.html">FPGA Design Agent</a><nav aria-label="Pages"><a href="../agent.html">The agent</a><a class="sub" href="../agent.html#harness">Harness</a><a href="../story.html">How it was built</a><a href="../how.html">How it works</a><a href="../flow-notes.html">Beyond the flow</a><a href="../expertise.html">Expertise</a><a href="../examples.html">Examples</a><a href="../showcase.html">Showcase</a><a href="../problems.html" aria-current="page">Problems</a><a href="../evaluation.html">Evaluation</a><a href="../results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
+<header class="bar"><div class="wrap"><a class="brand" href="../index.html">FPGA Design Agent</a><nav aria-label="Pages"><a href="../agent.html">The agent</a><a class="sub" href="../agent.html#harness">Harness</a><a href="../story.html">How it was built</a><a href="../how.html">How it works</a><a href="../verification.html">Verification</a><a href="../flow-notes.html">Beyond the flow</a><a href="../expertise.html">Expertise</a><a href="../examples.html">Examples</a><a href="../showcase.html">Showcase</a><a href="../problems.html" aria-current="page">Problems</a><a href="../evaluation.html">Evaluation</a><a href="../results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
 <main id="main" class="wrap">
 <p class="crumbs small"><a href="../problems.html">Problems</a> / <a href="../problems.html#dom-A">A. Basic digital design drills</a></p>
 <h1>LED pattern sequencer</h1>
@@ -642,8 +677,8 @@ svg .bdtick { stroke: var(--ink-3); }
 <p>Each is a small edit to the reference RTL. In the committed check (icarus, 2026-11-10, <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/results/reference/t1_pattern_sequencer__icarus.json"><code>t1_pattern_sequencer__icarus.json</code></a>) the reference passed all 11 hidden tests and 10 of 10 mutants failed them.</p>
 <div class="tablewrap" tabindex="0"><table><thead><tr><th>Mutant</th><th>File</th><th>The bug</th><th>Hidden tests that fail</th></tr></thead><tbody><tr><td><code>dur_zero_not_256</code></td><td><code>pattern_sequencer.sv</code></td><td>DUR 0 is not 256 ticks</td><td><code>test_zero_duration_is_256</code></td></tr><tr><td><code>tick_off_by_one</code></td><td><code>pattern_sequencer.sv</code></td><td>a tick is TICK_CYCLES + 1 clocks</td><td><code>test_loop_playback</code>, <code>test_one_shot_holds_last</code>, <code>test_pause_button</code>, <code>test_zero_duration_is_256</code>, <code>test_live_pattern_edit</code>, <code>test_random_program</code></td></tr><tr><td><code>plays_one_extra</code></td><td><code>pattern_sequencer.sv</code></td><td>LENGTH + 1 entries played</td><td><code>test_loop_playback</code>, <code>test_one_shot_holds_last</code>, <code>test_length_rules</code></td></tr><tr><td><code>oneshot_goes_dark</code></td><td><code>pattern_sequencer.sv</code></td><td>one-shot does not hold the last pattern</td><td><code>test_one_shot_holds_last</code></td></tr><tr><td><code>run_write_restarts</code></td><td><code>pattern_sequencer.sv</code></td><td>a RUN = 1 write while running restarts the show</td><td><code>test_start_is_from_entry_zero</code></td></tr><tr><td><code>pause_keeps_time</code></td><td><code>pattern_sequencer.sv</code></td><td>time keeps running while paused</td><td><code>test_pause_button</code></td></tr><tr><td><code>oneshot_no_loop_count</code></td><td><code>pattern_sequencer.sv</code></td><td>a finished one-shot is not counted in LOOPS</td><td><code>test_one_shot_holds_last</code></td></tr><tr><td><code>length_accepts_17</code></td><td><code>pattern_sequencer.sv</code></td><td>LENGTH 17 accepted</td><td><code>test_length_rules</code></td></tr><tr><td><code>debounce_half</code></td><td><code>bm_debounce.sv</code></td><td>debounce accepts pulses of half the time</td><td><code>test_debounce_rejects_bounce</code></td></tr><tr><td><code>run_not_reset</code></td><td><code>pattern_sequencer.sv</code></td><td>CPU_RESETN does not reset run (amended 2026-11-10: the reset test now kills a mutant)</td><td><code>test_identity_and_reset</code>, <code>test_loop_playback</code>, <code>test_one_shot_holds_last</code>, <code>test_pause_button</code>, <code>test_zero_duration_is_256</code>, <code>test_length_rules</code>, <code>test_live_pattern_edit</code>, <code>test_start_is_from_entry_zero</code>, <code>test_debounce_rejects_bounce</code>, <code>test_register_rules</code>, <code>test_random_program</code></td></tr></tbody></table></div>
 <h2>Sample solution</h2>
-<p class="note">Hand-written reference for the benchmark, not agent output; it passes every test, and the listed mutants fail them. With it, the hidden cocotb tests and the golden model. Repository licence: MIT.</p>
-<details class="code"><summary><span class="mono">bm_debounce.sv</span> <span class="muted small">reference RTL, 35 lines</span></summary><div class="codebar small"><a href="t1_pattern_sequencer/bm_debounce.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t1_pattern_sequencer/ref/rtl/bm_debounce.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// bm_debounce.sv: two-flop synchroniser, then a counting debounce. The level</span>
+<p class="note">Hand-written reference for the benchmark, not agent output; it passes every test, and the listed mutants fail them. With it, the hidden cocotb tests and the golden model. Repository licence: all rights reserved (source visible for review).</p>
+<details class="code"><summary><span class="mono">bm_debounce.sv</span> <span class="muted small">reference RTL, 35 lines</span></summary><div class="codebar small"><a href="t1_pattern_sequencer/bm_debounce.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t1_pattern_sequencer/ref/rtl/bm_debounce.sv">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hc">// bm_debounce.sv: two-flop synchroniser, then a counting debounce. The level</span>
 <span class="hc">// changes only after the synchronised input has differed from it for CYCLES</span>
 <span class="hc">// consecutive clocks; a shorter difference restarts the count. rise is a</span>
 <span class="hc">// one-clock pulse on each 0 -&gt; 1 change of the level.</span>
@@ -678,7 +713,7 @@ svg .bdtick { stroke: var(--ink-3); }
         <span class="hk">end</span>
     <span class="hk">end</span>
 <span class="hk">endmodule</span>
-</code></pre></details><details class="code"><summary><span class="mono">pattern_sequencer.sv</span> <span class="muted small">reference RTL, 104 lines</span></summary><div class="codebar small"><a href="t1_pattern_sequencer/pattern_sequencer.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t1_pattern_sequencer/ref/rtl/pattern_sequencer.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// pattern_sequencer.sv: 16-entry LED pattern/duration memory played in loop or</span>
+</code></pre></details><details class="code"><summary><span class="mono">pattern_sequencer.sv</span> <span class="muted small">reference RTL, 104 lines</span></summary><div class="codebar small"><a href="t1_pattern_sequencer/pattern_sequencer.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t1_pattern_sequencer/ref/rtl/pattern_sequencer.sv">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hc">// pattern_sequencer.sv: 16-entry LED pattern/duration memory played in loop or</span>
 <span class="hc">// one-shot mode, paused by BTNC, for t1_pattern_sequencer.</span>
 <span class="hk">module</span> pattern_sequencer #(
     <span class="hk">parameter</span> <span class="hk">int</span> DEBOUNCE_CYCLES = 1_000_000,
@@ -782,7 +817,7 @@ svg .bdtick { stroke: var(--ink-3); }
         <span class="hk">end</span>
     <span class="hk">end</span>
 <span class="hk">endmodule</span>
-</code></pre></details><details class="code"><summary><span class="mono">t1_pattern_sequencer_top.sv</span> <span class="muted small">reference RTL, 32 lines</span></summary><div class="codebar small"><a href="t1_pattern_sequencer/t1_pattern_sequencer_top.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t1_pattern_sequencer/ref/rtl/t1_pattern_sequencer_top.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// t1_pattern_sequencer_top.sv: board top (Nexys A7-100T, master-XDC port names).</span>
+</code></pre></details><details class="code"><summary><span class="mono">t1_pattern_sequencer_top.sv</span> <span class="muted small">reference RTL, 32 lines</span></summary><div class="codebar small"><a href="t1_pattern_sequencer/t1_pattern_sequencer_top.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t1_pattern_sequencer/ref/rtl/t1_pattern_sequencer_top.sv">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hc">// t1_pattern_sequencer_top.sv: board top (Nexys A7-100T, master-XDC port names).</span>
 <span class="hc">// Reference design for benchmark task t1_pattern_sequencer; DESIGN_ID &quot;PSEQ&quot;.</span>
 <span class="hk">module</span> t1_pattern_sequencer_top #(
     <span class="hk">parameter</span> <span class="hk">int</span>          CLKS_PER_BIT    = 868,
@@ -814,7 +849,7 @@ svg .bdtick { stroke: var(--ink-3); }
         .clk(clk), .rst(rst), .btn(BTNC), .led(LED),
         .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));
 <span class="hk">endmodule</span>
-</code></pre></details><details class="code"><summary><span class="mono">acceptance.py</span> <span class="muted small">hidden cocotb acceptance tests, 270 lines</span></summary><div class="codebar small"><a href="t1_pattern_sequencer/acceptance.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t1_pattern_sequencer/hidden/acceptance.py">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;Acceptance tests of t1_pattern_sequencer against model.py (hidden from the agent).
+</code></pre></details><details class="code"><summary><span class="mono">acceptance.py</span> <span class="muted small">hidden cocotb acceptance tests, 270 lines</span></summary><div class="codebar small"><a href="t1_pattern_sequencer/acceptance.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t1_pattern_sequencer/hidden/acceptance.py">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;Acceptance tests of t1_pattern_sequencer against model.py (hidden from the agent).
 
 A watcher logs every LED change with its clock; a playback is checked as the sequence of patterns shown and the
 exact number of clocks each was shown (the first change is the start, so no absolute timing is needed).&quot;&quot;&quot;</span>
@@ -1084,7 +1119,7 @@ PATS = [0x0001, 0x8000, 0x00F0, 0x0F0F, 0xAAAA, 0x5555, 0xFF00, 0x1234, 0x0420, 
     ev = <span class="hk">await</span> e.play(1, total + total // 2 + 200)
     want = e.m.show(len(ev) - 1)
     <span class="hk">assert</span> shown(ev) == want, f<span class="hs">&quot;shown {shown(ev)} != model {want}&quot;</span>
-</code></pre></details><details class="code"><summary><span class="mono">model.py</span> <span class="muted small">golden model, 43 lines</span></summary><div class="codebar small"><a href="t1_pattern_sequencer/model.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t1_pattern_sequencer/hidden/model.py">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;Golden model of t1_pattern_sequencer, written from spec.yaml alone (never from any RTL).&quot;&quot;&quot;</span>
+</code></pre></details><details class="code"><summary><span class="mono">model.py</span> <span class="muted small">golden model, 43 lines</span></summary><div class="codebar small"><a href="t1_pattern_sequencer/model.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t1_pattern_sequencer/hidden/model.py">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;Golden model of t1_pattern_sequencer, written from spec.yaml alone (never from any RTL).&quot;&quot;&quot;</span>
 
 <span class="hk">from</span> __future__ <span class="hk">import</span> annotations
 
@@ -1134,7 +1169,7 @@ DESIGN_ID = 0x50534551          <span class="hc"># &quot;PSEQ&quot;</span>
 
 <div class="pager"><a href="../problems.html">&larr; All problems</a><span></span></div>
 </main>
-<footer><div class="wrap"><p>Designed by Brendan Lynskey. Code and results: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent">github.com/BrendanJamesLynskey/FPGA_Design_Agent</a> (MIT licence). Every number on these pages is read from a committed result file; development results are labelled as such and are not the held-out score.</p></div></footer>
+<footer><div class="wrap"><p>Designed by Brendan Lynskey. Code and results: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent">github.com/BrendanJamesLynskey/FPGA_Design_Agent</a> (all rights reserved; source visible for review, see LICENSE). Every number on these pages is read from a committed result file; development results are labelled as such and are not the held-out score.</p></div></footer>
 <script type="application/json" data-key="trace">{"captions":["Entry 0 (pass 0): the LEDs show 0000000000001111 for 12 clocks, from clock 0 to 11.","Entry 1 (pass 0): the LEDs show 0000000011110000 for 8 clocks, from clock 12 to 19.","Entry 2 (pass 0): the LEDs show 0000111100000000 for 16 clocks, from clock 20 to 35.","Entry 3 (pass 0): the LEDs show 1111000000000000 for 4 clocks, from clock 36 to 39.","Entry 4 (pass 0): the LEDs show 1010101010101010 for 20 clocks, from clock 40 to 59. The last entry is done, so playback goes round again.","Entry 0 (pass 1): the LEDs show 0000000000001111 for 12 clocks, from clock 60 to 71.","Entry 1 (pass 1): the LEDs show 0000000011110000 for 8 clocks, from clock 72 to 79.","Entry 2 (pass 1): the LEDs show 0000111100000000 for 16 clocks, from clock 80 to 95.","Entry 3 (pass 1): the LEDs show 1111000000000000 for 4 clocks, from clock 96 to 99.","Entry 4 (pass 1): the LEDs show 1010101010101010 for 20 clocks, from clock 100 to 119. The last entry is done, so playback goes round again.","Entry 0 (pass 2): the LEDs show 0000000000001111 for 12 clocks, from clock 120 to 131.","Entry 1 (pass 2): the LEDs show 0000000011110000 for 8 clocks, from clock 132 to 139.","Entry 2 (pass 2): the LEDs show 0000111100000000 for 16 clocks, from clock 140 to 155.","Entry 3 (pass 2): the LEDs show 1111000000000000 for 4 clocks, from clock 156 to 159.","Entry 4 (pass 2): the LEDs show 1010101010101010 for 20 clocks, from clock 160 to 179. The last entry is done, so playback goes round again.","Entry 0 (pass 3): the LEDs show 0000000000001111 for 12 clocks, from clock 180 to 191."],"signals":[{"kind":"bus","name":"INDEX","radix":"dec","v":[0,1,2,3,4,0,1,2,3,4,0,1,2,3,4,0]},{"kind":"bus","name":"LED[15:0]","radix":"bin","v":[15,240,3840,61440,43690,15,240,3840,61440,43690,15,240,3840,61440,43690,15],"width":16},{"kind":"wave","lo":0,"name":"clocks shown","v":[12,8,16,4,20,12,8,16,4,20,12,8,16,4,20,12]},{"kind":"bus","name":"LOOPS","radix":"dec","v":[0,0,0,0,0,1,1,1,1,1,2,2,2,2,2,3]}],"stimulus":"5 entries are written (patterns and durations in ticks), length 5, loop mode, then playback is started. One tick is 4 clocks (shrunk). No pause and no changes while it runs. The first 16 entries shown are listed.","unit":"entry","x":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]}</script>
 <script>/* FPGA Design Agent site. No dependencies. Every animation is frame(step) over a state list built from site/data/*.json. */
 (function () {
@@ -2250,6 +2285,20 @@ DESIGN_ID = 0x50534551          <span class="hc"># &quot;PSEQ&quot;</span>
   }
   openHash();
   window.addEventListener("hashchange", openHash);
+})();
+
+// brief 81: replay of a recorded counterexample: the slider hides the steps after the chosen one
+(function () {
+  document.querySelectorAll('.cexfig').forEach(function (f) {
+    var r = f.querySelector('input[type=range]'), fut = f.querySelector('.cxfut'), pos = f.querySelector('.cexpos'), lab = f.querySelector('.cxstep');
+    var n = +f.dataset.cycles, lx = +f.dataset.lx, cw = +f.dataset.cw, w = +f.dataset.w;
+    function set() {
+      var k = +r.value, x = lx + (k + 1) * cw;
+      fut.setAttribute('x', x); fut.setAttribute('width', Math.max(0, w - x));
+      pos.textContent = k; if (lab) lab.textContent = 'step ' + k;
+    }
+    r.addEventListener('input', set); set();
+  });
 })();
 </script>
 </body>

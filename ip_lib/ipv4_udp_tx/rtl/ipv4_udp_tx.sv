@@ -52,8 +52,9 @@ module ipv4_udp_tx #(
     endfunction
 
     // ---------------------------------------------------------------- take the payload
-    localparam logic [1:0] S_IN = 2'd0, S_CALC = 2'd1, S_OUT = 2'd2;
-    logic [1:0]  st;
+    localparam logic [2:0] S_IN = 3'd0, S_CALC = 3'd1, S_OUT = 3'd2,
+                           S_CALC2 = 3'd3, S_CALC3 = 3'd4, S_CALC4 = 3'd5;
+    logic [2:0]  st;
     logic [15:0] n;                     // payload bytes stored
     logic        over;                  // this payload is too long: drop it
     logic [31:0] p_acc;                 // sum of the payload as 16-bit words
@@ -70,30 +71,46 @@ module ipv4_udp_tx #(
     logic [15:0] ulen, tlen, ipcs, ucs;
     assign ulen = n + 16'd8;
     assign tlen = n + 16'd28;
-    logic [31:0] ip_sum, u_sum;
-    assign ip_sum = 32'h4500 + {16'd0, tlen} + {16'd0, ident} + {16'd0, 8'(TTL), 8'd17} + {16'd0, own_ip[31:16]} +
-                    {16'd0, own_ip[15:0]} + {16'd0, d_ip[31:16]} + {16'd0, d_ip[15:0]};
-    assign u_sum  = p_acc + {16'd0, own_ip[31:16]} + {16'd0, own_ip[15:0]} + {16'd0, d_ip[31:16]} + {16'd0, d_ip[15:0]} +
-                    32'd17 + {16'd0, ulen} + {16'd0, sp} + {16'd0, dp} + {16'd0, ulen};
+
+    // Split the checksum reductions across calculate states. Partial sums are
+    // paired first, then accumulated and folded in separate clock stages.
+    logic [31:0] ip_part0, ip_part1, ip_part2;
+    logic [31:0] u_part0, u_part1, u_part2;
+
+    always_comb begin
+        ip_part0 = 32'h00004500 + {16'd0, tlen} + {16'd0, ident};
+        ip_part1 = {16'd0, 8'(TTL), 8'd17} + {16'd0, own_ip[31:16]} + {16'd0, own_ip[15:0]};
+        ip_part2 = {16'd0, d_ip[31:16]} + {16'd0, d_ip[15:0]};
+
+        u_part0 = p_acc + {16'd0, own_ip[31:16]} + {16'd0, own_ip[15:0]};
+        u_part1 = {16'd0, d_ip[31:16]} + {16'd0, d_ip[15:0]} + 32'd17 + {16'd0, ulen};
+        u_part2 = {16'd0, sp} + {16'd0, dp} + {16'd0, ulen};
+    end
+
+    logic [31:0] ip_part0_r, ip_part1_r, ip_part2_r;
+    logic [31:0] u_part0_r, u_part1_r, u_part2_r;
+    logic [31:0] ip_pair_r, u_pair_r;
+    logic [31:0] ip_sum_r, u_sum_r;
+
     function automatic logic [7:0] hdr_byte(input logic [5:0] i, input logic [47:0] dm, input logic [47:0] sm,
                                             input logic [15:0] tl, input logic [15:0] id, input logic [15:0] ic,
                                             input logic [31:0] si, input logic [31:0] di, input logic [15:0] s_p,
                                             input logic [15:0] d_p, input logic [15:0] ul, input logic [15:0] uc);
         case (i)
-            6'd0:  hdr_byte = dm[47:40]; 6'd1:  hdr_byte = dm[39:32]; 6'd2:  hdr_byte = dm[31:24];
-            6'd3:  hdr_byte = dm[23:16]; 6'd4:  hdr_byte = dm[15:8];  6'd5:  hdr_byte = dm[7:0];
-            6'd6:  hdr_byte = sm[47:40]; 6'd7:  hdr_byte = sm[39:32]; 6'd8:  hdr_byte = sm[31:24];
+            6'd0:  hdr_byte = dm[47:40]; 6'd1: hdr_byte = dm[39:32]; 6'd2: hdr_byte = dm[31:24];
+            6'd3:  hdr_byte = dm[23:16]; 6'd4: hdr_byte = dm[15:8];  6'd5: hdr_byte = dm[7:0];
+            6'd6:  hdr_byte = sm[47:40]; 6'd7: hdr_byte = sm[39:32]; 6'd8: hdr_byte = sm[31:24];
             6'd9:  hdr_byte = sm[23:16]; 6'd10: hdr_byte = sm[15:8];  6'd11: hdr_byte = sm[7:0];
             6'd12: hdr_byte = 8'h08;     6'd13: hdr_byte = 8'h00;     6'd14: hdr_byte = 8'h45;
             6'd15: hdr_byte = 8'h00;     6'd16: hdr_byte = tl[15:8];  6'd17: hdr_byte = tl[7:0];
-            6'd18: hdr_byte = id[15:8];  6'd19: hdr_byte = id[7:0];   6'd20: hdr_byte = 8'h00;
+            6'd18: hdr_byte = id[15:8]; 6'd19: hdr_byte = id[7:0];   6'd20: hdr_byte = 8'h00;
             6'd21: hdr_byte = 8'h00;     6'd22: hdr_byte = 8'(TTL);   6'd23: hdr_byte = 8'd17;
-            6'd24: hdr_byte = ic[15:8];  6'd25: hdr_byte = ic[7:0];
+            6'd24: hdr_byte = ic[15:8]; 6'd25: hdr_byte = ic[7:0];
             6'd26: hdr_byte = si[31:24]; 6'd27: hdr_byte = si[23:16]; 6'd28: hdr_byte = si[15:8];
             6'd29: hdr_byte = si[7:0];   6'd30: hdr_byte = di[31:24]; 6'd31: hdr_byte = di[23:16];
             6'd32: hdr_byte = di[15:8];  6'd33: hdr_byte = di[7:0];
             6'd34: hdr_byte = s_p[15:8]; 6'd35: hdr_byte = s_p[7:0];  6'd36: hdr_byte = d_p[15:8];
-            6'd37: hdr_byte = d_p[7:0];  6'd38: hdr_byte = ul[15:8];  6'd39: hdr_byte = ul[7:0];
+            6'd37: hdr_byte = d_p[7:0];  6'd38: hdr_byte = ul[15:8]; 6'd39: hdr_byte = ul[7:0];
             6'd40: hdr_byte = uc[15:8];  default: hdr_byte = uc[7:0];
         endcase
     endfunction
@@ -151,8 +168,29 @@ module ipv4_udp_tx #(
                     end
                 end
                 S_CALC: begin
-                    ipcs <= ~fold(ip_sum);
-                    ucs  <= (CSUM == 0) ? 16'h0000 : ((~fold(u_sum) == 16'h0000) ? 16'hFFFF : ~fold(u_sum));
+                    ip_part0_r <= ip_part0;
+                    ip_part1_r <= ip_part1;
+                    ip_part2_r <= ip_part2;
+                    u_part0_r <= u_part0;
+                    u_part1_r <= u_part1;
+                    u_part2_r <= u_part2;
+                    st <= S_CALC2;
+                end
+                S_CALC2: begin
+                    ip_pair_r <= ip_part0_r + ip_part1_r;
+                    u_pair_r  <= u_part0_r + u_part1_r;
+                    st <= S_CALC3;
+                end
+                S_CALC3: begin
+                    ip_sum_r <= ip_pair_r + ip_part2_r;
+                    u_sum_r  <= u_pair_r + u_part2_r;
+                    st <= S_CALC4;
+                end
+                S_CALC4: begin
+                    ipcs <= ~fold(ip_sum_r);
+                    ucs  <= (CSUM == 0) ? 16'h0000 :
+                            ((~fold(u_sum_r) == 16'h0000) ?
+                             16'hFFFF : ~fold(u_sum_r));
                     st <= S_OUT; j <= '0; rv <= 1'b0;
                 end
                 default: ;                                  // S_OUT

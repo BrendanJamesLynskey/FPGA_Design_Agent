@@ -606,11 +606,46 @@ svg .bdtick { stroke: var(--ink-3); }
   .tl li { grid-template-columns: 1fr; }
   .tld { padding: 0 0 .1em; }
 }
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.mx td.mk, .mx th.mk { text-align: center; white-space: normal; min-width: 6.5em; position: relative; }
+.mx th[scope="row"] { font-weight: 400; color: var(--ink); min-width: 14em; }
+.mx tfoot th, .mx tfoot td { border-top: 2px solid var(--ink); font-weight: 600; }
+.sq { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--ink); vertical-align: middle; line-height: 12px; text-align: center; box-sizing: border-box; }
+.sq.y { background: var(--ink); }
+.sq.n { background: transparent; border-color: var(--ink-3); border-style: dashed; }
+.sq.na { border: 0; color: var(--ink-3); }
+.map code { white-space: normal; overflow-wrap: anywhere; display: inline-block; margin: 0 4px 4px 0; font-size: .75rem; }
+.map th[scope="row"] { min-width: 12em; font-weight: 600; }
+.map td { min-width: 8em; }
+.map { table-layout: auto; }
+.pin { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.pstep { border: 1px solid var(--rule); background: var(--panel); padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; max-width: none; }
+.pstep.bad { border: 2px solid var(--warn); }
+.ptag { font: 700 .75rem var(--f-mono); text-transform: uppercase; color: var(--ink-3); }
+.pstep.bad .ptag { color: var(--warn); }
+.sfig .sbad { fill: var(--warn); }
+.sfig .ftick { stroke: var(--ink); stroke-width: 2.5; }
+.sfig .sunk { fill: none; stroke: var(--ink-3); stroke-dasharray: 4 3; }
+.sfig .sbar2 { fill: var(--ink); }
+.mxfig td.num { font-family: var(--f-mono); }
+.cexfig .cxh { fill: var(--ink); }
+.cexfig .cxl { fill: var(--ink-3); }
+.cexfig .cxfut { fill: var(--bg); opacity: .85; }
+.cexfig .ctl { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+.mx th[scope="row"] { min-width: 10em; }
+@media (max-width: 700px) {
+  .map thead { display: none; }
+  .map, .map tbody, .map tr, .map td, .map th { display: block; min-width: 0; width: 100%; }
+  .map tr { border-bottom: 2px solid var(--rule); padding: 6px 0; }
+  .map td { border: 0; padding: 2px 10px; }
+  .map td:not(:has(code)) { display: none; }
+  .map td::before { content: attr(data-label) ": "; font-size: .78rem; color: var(--ink-3); display: block; }
+}
 </style>
 </head>
 <body>
 <a class="visually-hidden" href="#main">Skip to content</a>
-<header class="bar"><div class="wrap"><a class="brand" href="../index.html">FPGA Design Agent</a><nav aria-label="Pages"><a href="../agent.html">The agent</a><a class="sub" href="../agent.html#harness">Harness</a><a href="../story.html">How it was built</a><a href="../how.html">How it works</a><a href="../flow-notes.html">Beyond the flow</a><a href="../expertise.html">Expertise</a><a href="../examples.html">Examples</a><a href="../showcase.html">Showcase</a><a href="../problems.html" aria-current="page">Problems</a><a href="../evaluation.html">Evaluation</a><a href="../results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
+<header class="bar"><div class="wrap"><a class="brand" href="../index.html">FPGA Design Agent</a><nav aria-label="Pages"><a href="../agent.html">The agent</a><a class="sub" href="../agent.html#harness">Harness</a><a href="../story.html">How it was built</a><a href="../how.html">How it works</a><a href="../verification.html">Verification</a><a href="../flow-notes.html">Beyond the flow</a><a href="../expertise.html">Expertise</a><a href="../examples.html">Examples</a><a href="../showcase.html">Showcase</a><a href="../problems.html" aria-current="page">Problems</a><a href="../evaluation.html">Evaluation</a><a href="../results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
 <main id="main" class="wrap">
 <p class="crumbs small"><a href="../problems.html">Problems</a> / <a href="../problems.html#dom-I">I. Machine learning inference</a></p>
 <h1>Quantised-layer arithmetic unit behind the test shell</h1>
@@ -642,8 +677,8 @@ svg .bdtick { stroke: var(--ink-3); }
 <p>Each is a small edit to the reference RTL. In the committed check (icarus, 2026-11-10, <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/results/c14_int8_dot_requant__icarus.json"><code>c14_int8_dot_requant__icarus.json</code></a>) the reference passed all 6 hidden tests and 7 of 7 mutants failed them.</p>
 <div class="tablewrap" tabindex="0"><table><thead><tr><th>Mutant</th><th>File</th><th>The bug</th><th>Hidden tests that fail</th></tr></thead><tbody><tr><td><code>no_rounding</code></td><td><code>dot_requant.sv</code></td><td>scaling truncates instead of rounding halves up</td><td><code>test_random_cases</code>, <code>test_extremes_halves_and_bias</code>, <code>test_shift_and_mult_ranges</code></td></tr><tr><td><code>relu_ignored</code></td><td><code>dot_requant.sv</code></td><td>the relu switch no longer limits at 0</td><td><code>test_random_cases</code>, <code>test_extremes_halves_and_bias</code>, <code>test_tail_cases</code>, <code>test_shift_and_mult_ranges</code>, <code>test_ready_clears_on_go_and_regs</code></td></tr><tr><td><code>mult_signed</code></td><td><code>dot_requant.sv</code></td><td>mult treated as signed, wrong above 32767</td><td><code>test_random_cases</code>, <code>test_extremes_halves_and_bias</code>, <code>test_tail_cases</code>, <code>test_shift_and_mult_ranges</code>, <code>test_ready_clears_on_go_and_regs</code></td></tr><tr><td><code>weights_unsigned</code></td><td><code>dot_requant.sv</code></td><td>weights read as unsigned</td><td><code>test_random_cases</code>, <code>test_extremes_halves_and_bias</code>, <code>test_tail_cases</code>, <code>test_shift_and_mult_ranges</code>, <code>test_ready_clears_on_go_and_regs</code></td></tr><tr><td><code>bias_dropped</code></td><td><code>dot_requant.sv</code></td><td>bias not added</td><td><code>test_random_cases</code>, <code>test_extremes_halves_and_bias</code>, <code>test_tail_cases</code>, <code>test_shift_and_mult_ranges</code>, <code>test_ready_clears_on_go_and_regs</code></td></tr><tr><td><code>round_wrong_bit</code></td><td><code>dot_requant.sv</code></td><td>rounding constant is 2^shift, not 2^(shift-1)</td><td><code>test_extremes_halves_and_bias</code>, <code>test_shift_and_mult_ranges</code></td></tr><tr><td><code>a_r_not_reset</code></td><td><code>c14_int8_dot_requant_regs.sv</code></td><td>CPU_RESETN does not reset a_r (amended 2026-11-10: the reset test now kills a mutant)</td><td><code>test_identity_and_reset</code></td></tr></tbody></table></div>
 <h2>Sample solution</h2>
-<p class="note">Hand-written reference for the benchmark, not agent output; it passes every test, and the listed mutants fail them. With it, the hidden cocotb tests and the golden model. Repository licence: MIT.</p>
-<details class="code"><summary><span class="mono">c14_int8_dot_requant_regs.sv</span> <span class="muted small">reference RTL, 62 lines</span></summary><div class="codebar small"><a href="c14_int8_dot_requant/c14_int8_dot_requant_regs.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c14_int8_dot_requant/ref/rtl/c14_int8_dot_requant_regs.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// c14_int8_dot_requant_regs.sv: the shell window of course task c14_int8_dot_requant.</span>
+<p class="note">Hand-written reference for the benchmark, not agent output; it passes every test, and the listed mutants fail them. With it, the hidden cocotb tests and the golden model. Repository licence: all rights reserved (source visible for review).</p>
+<details class="code"><summary><span class="mono">c14_int8_dot_requant_regs.sv</span> <span class="muted small">reference RTL, 62 lines</span></summary><div class="codebar small"><a href="c14_int8_dot_requant/c14_int8_dot_requant_regs.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c14_int8_dot_requant/ref/rtl/c14_int8_dot_requant_regs.sv">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hc">// c14_int8_dot_requant_regs.sv: the shell window of course task c14_int8_dot_requant.</span>
 <span class="hk">module</span> c14_int8_dot_requant_regs (
     <span class="hk">input</span>  <span class="hk">logic</span>        clk,
     <span class="hk">input</span>  <span class="hk">logic</span>        rst,
@@ -705,7 +740,7 @@ svg .bdtick { stroke: var(--ink-3); }
         <span class="hk">end</span>
     <span class="hk">end</span>
 <span class="hk">endmodule</span>
-</code></pre></details><details class="code"><summary><span class="mono">c14_int8_dot_requant_top.sv</span> <span class="muted small">reference RTL, 29 lines</span></summary><div class="codebar small"><a href="c14_int8_dot_requant/c14_int8_dot_requant_top.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c14_int8_dot_requant/ref/rtl/c14_int8_dot_requant_top.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// c14_int8_dot_requant_top.sv: board top (Nexys A7-100T, master-XDC port names), test shell DESIGN_ID &quot;DOTQ&quot;.</span>
+</code></pre></details><details class="code"><summary><span class="mono">c14_int8_dot_requant_top.sv</span> <span class="muted small">reference RTL, 29 lines</span></summary><div class="codebar small"><a href="c14_int8_dot_requant/c14_int8_dot_requant_top.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c14_int8_dot_requant/ref/rtl/c14_int8_dot_requant_top.sv">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hc">// c14_int8_dot_requant_top.sv: board top (Nexys A7-100T, master-XDC port names), test shell DESIGN_ID &quot;DOTQ&quot;.</span>
 <span class="hc">// Reference design for course task c14_int8_dot_requant; the shell window is wired to c14_int8_dot_requant_regs.</span>
 <span class="hk">module</span> c14_int8_dot_requant_top #(
     <span class="hk">parameter</span> <span class="hk">int</span>          CLKS_PER_BIT   = 868,
@@ -734,7 +769,7 @@ svg .bdtick { stroke: var(--ink-3); }
         .clk(clk), .rst(rst), .led(LED),
         .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));
 <span class="hk">endmodule</span>
-</code></pre></details><details class="code"><summary><span class="mono">dot_requant.sv</span> <span class="muted small">reference RTL, 45 lines</span></summary><div class="codebar small"><a href="c14_int8_dot_requant/dot_requant.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c14_int8_dot_requant/ref/rtl/dot_requant.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// Part 14 lesson 3 exercise: an int8 dot-product unit with requantisation and saturation (the core of one output of a quantised layer).</span>
+</code></pre></details><details class="code"><summary><span class="mono">dot_requant.sv</span> <span class="muted small">reference RTL, 45 lines</span></summary><div class="codebar small"><a href="c14_int8_dot_requant/dot_requant.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c14_int8_dot_requant/ref/rtl/dot_requant.sv">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hc">// Part 14 lesson 3 exercise: an int8 dot-product unit with requantisation and saturation (the core of one output of a quantised layer).</span>
 <span class="hc">//</span>
 <span class="hc">// N pairs of signed 8-bit numbers a[i] (activations) and w[i] (weights), packed a[i*8 +: 8], w[i*8 +: 8]. With in_valid high, one clock later (out_valid high, one clock</span>
 <span class="hc">// of latency, rst_n clears out_valid only; synchronous, active low):</span>
@@ -779,7 +814,7 @@ svg .bdtick { stroke: var(--ink-3); }
         <span class="hk">end</span>
     <span class="hk">end</span>
 <span class="hk">endmodule</span>
-</code></pre></details><details class="code"><summary><span class="mono">acceptance.py</span> <span class="muted small">hidden cocotb acceptance tests, 96 lines</span></summary><div class="codebar small"><a href="c14_int8_dot_requant/acceptance.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c14_int8_dot_requant/hidden/acceptance.py">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;Acceptance tests of c14_int8_dot_requant against model.py (hidden from the agent).&quot;&quot;&quot;</span>
+</code></pre></details><details class="code"><summary><span class="mono">acceptance.py</span> <span class="muted small">hidden cocotb acceptance tests, 96 lines</span></summary><div class="codebar small"><a href="c14_int8_dot_requant/acceptance.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c14_int8_dot_requant/hidden/acceptance.py">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;Acceptance tests of c14_int8_dot_requant against model.py (hidden from the agent).&quot;&quot;&quot;</span>
 
 <span class="hk">from</span> __future__ <span class="hk">import</span> annotations
 
@@ -875,7 +910,7 @@ svg .bdtick { stroke: var(--ink-3); }
     <span class="hk">await</span> b.reset()
     <span class="hk">await</span> b.expect(STATUS, 0, <span class="hs">&quot;READY after reset&quot;</span>)
     <span class="hk">await</span> b.expect(CTRL, 1, <span class="hs">&quot;CTRL after reset&quot;</span>)
-</code></pre></details><details class="code"><summary><span class="mono">model.py</span> <span class="muted small">golden model, 53 lines</span></summary><div class="codebar small"><a href="c14_int8_dot_requant/model.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c14_int8_dot_requant/hidden/model.py">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;Reference model for P14-2 (int8 dot product with requantisation). Plain Python integers, no dependencies.&quot;&quot;&quot;</span>
+</code></pre></details><details class="code"><summary><span class="mono">model.py</span> <span class="muted small">golden model, 53 lines</span></summary><div class="codebar small"><a href="c14_int8_dot_requant/model.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c14_int8_dot_requant/hidden/model.py">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;Reference model for P14-2 (int8 dot product with requantisation). Plain Python integers, no dependencies.&quot;&quot;&quot;</span>
 <span class="hk">import</span> random
 
 N = 8
@@ -935,7 +970,7 @@ A_LO, A_HI, W_LO, W_HI, BIAS, MULT, CTRL, GO, Y, ACC, STATUS = range(11)
 
 <div class="pager"><a href="../problems.html">&larr; All problems</a><span></span></div>
 </main>
-<footer><div class="wrap"><p>Designed by Brendan Lynskey. Code and results: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent">github.com/BrendanJamesLynskey/FPGA_Design_Agent</a> (MIT licence). Every number on these pages is read from a committed result file; development results are labelled as such and are not the held-out score.</p></div></footer>
+<footer><div class="wrap"><p>Designed by Brendan Lynskey. Code and results: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent">github.com/BrendanJamesLynskey/FPGA_Design_Agent</a> (all rights reserved; source visible for review, see LICENSE). Every number on these pages is read from a committed result file; development results are labelled as such and are not the held-out score.</p></div></footer>
 <script type="application/json" data-key="trace">{"captions":["Case 9: eight products plus bias 919 give acc = 402. Scaled by 20519 / 2^19 and rounded it is 16; relu is off. y = 16.","Case 14: eight products plus bias 3399 give acc = 24386. Scaled by 38625 / 2^26 and rounded it is 14; relu is on. y = 14.","Case 19: eight products plus bias -4954 give acc = 6093. Scaled by 32926 / 2^25 and rounded it is 6; relu is on. y = 6.","Case 24: eight products plus bias 3287 give acc = -25280. Scaled by 35404 / 2^25 and rounded it is -27; relu is off. y = -27.","Case 25: eight products plus bias 596 give acc = -6700. Scaled by 21970 / 2^26 and rounded it is -2; relu is off. y = -2.","Case 29: eight products plus bias 2694 give acc = -16159. Scaled by 26352 / 2^25 and rounded it is -13; relu is on. It is limited to 0. y = 0.","Case 0: eight products plus bias -915 give acc = -16929. Scaled by 17243 / 2^14 and rounded it is -17817; relu is on. It is limited to 0. y = 0.","Case 11: eight products plus bias 931 give acc = -18502. Scaled by 47660 / 2^17 and rounded it is -6728; relu is off. It is limited to -128. y = -128.","Case 304: eight products plus bias 0 give acc = -130048. Scaled by 65535 / 2^15 and rounded it is -260092; relu is off. It is limited to -128. y = -128.","Case 305: eight products plus bias 0 give acc = -130048. Scaled by 65535 / 2^15 and rounded it is -260092; relu is on. It is limited to 0. y = 0.","Case 306: eight products plus bias 0 give acc = 1. Scaled by 1 / 2^1 and rounded it is 1; relu is off. y = 1.","Case 307: eight products plus bias 0 give acc = 3. Scaled by 1 / 2^1 and rounded it is 2; relu is off. y = 2.","Case 308: eight products plus bias 0 give acc = -1. Scaled by 1 / 2^1 and rounded it is 0; relu is off. y = 0.","Case 309: eight products plus bias 0 give acc = -3. Scaled by 1 / 2^1 and rounded it is -1; relu is off. y = -1.","Case 310: eight products plus bias 0 give acc = 5. Scaled by 1 / 2^1 and rounded it is 3; relu is off. y = 3.","Case 311: eight products plus bias 0 give acc = -5. Scaled by 1 / 2^1 and rounded it is -2; relu is off. y = -2."],"signals":[{"kind":"bus","name":"acc","radix":"dec","v":[402,24386,6093,-25280,-6700,-16159,-16929,-18502,-130048,-130048,1,3,-1,-3,5,-5],"width":32},{"kind":"bus","name":"scaled (before limit)","radix":"dec","v":[16,14,6,-27,-2,-13,-17817,-6728,-260092,-260092,1,2,0,-1,3,-2]},{"kind":"bit","name":"relu","v":[0,1,1,0,0,1,1,0,0,1,0,0,0,0,0,0]},{"kind":"bus","name":"y","radix":"dec","v":[16,14,6,-27,-2,0,0,-128,-128,0,1,2,0,-1,3,-2],"width":8}],"stimulus":"16 cases picked from the model's fixed test set of 400: random ones that fit the range, random ones that are limited, and the hand-made cases for limiting and for exact halves (cases 304 to 311).","unit":"test case","x":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]}</script>
 <script>/* FPGA Design Agent site. No dependencies. Every animation is frame(step) over a state list built from site/data/*.json. */
 (function () {
@@ -2051,6 +2086,20 @@ A_LO, A_HI, W_LO, W_HI, BIAS, MULT, CTRL, GO, Y, ACC, STATUS = range(11)
   }
   openHash();
   window.addEventListener("hashchange", openHash);
+})();
+
+// brief 81: replay of a recorded counterexample: the slider hides the steps after the chosen one
+(function () {
+  document.querySelectorAll('.cexfig').forEach(function (f) {
+    var r = f.querySelector('input[type=range]'), fut = f.querySelector('.cxfut'), pos = f.querySelector('.cexpos'), lab = f.querySelector('.cxstep');
+    var n = +f.dataset.cycles, lx = +f.dataset.lx, cw = +f.dataset.cw, w = +f.dataset.w;
+    function set() {
+      var k = +r.value, x = lx + (k + 1) * cw;
+      fut.setAttribute('x', x); fut.setAttribute('width', Math.max(0, w - x));
+      pos.textContent = k; if (lab) lab.textContent = 'step ' + k;
+    }
+    r.addEventListener('input', set); set();
+  });
 })();
 </script>
 </body>

@@ -26,6 +26,7 @@ def pytest_addoption(parser: pytest.Parser) -> None:
 
 
 def pytest_configure(config: pytest.Config) -> None:
+    config.addinivalue_line("markers", "access_gate: tests of the access gate itself (agent/access); they run with the test bypass off")
     config.addinivalue_line("markers", "hw: needs the programmed board on --hw-port (skipped otherwise)")
 
 
@@ -55,3 +56,37 @@ def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
     if msg:
         print(f"\nERROR: {msg}")
         session.exitstatus = pytest.ExitCode.TESTS_FAILED
+
+
+#: tool names whose absence makes a formal test skip; with FDA_REQUIRE_FORMAL=1 (set on the CI jobs that run formal tests) such
+#: a skip is a failure, so a formal step can never pass by skipping because a tool was not on the PATH (brief 81)
+FORMAL_SKIP = ("sby", "yosys", "boolector", "z3")
+
+
+def formal_skip_is_failure(reason: str, env: dict) -> bool:
+    return env.get("FDA_REQUIRE_FORMAL") == "1" and any(t in reason.lower() for t in FORMAL_SKIP)
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo):
+    import os
+    out = yield
+    rep = out.get_result()
+    if rep.skipped and isinstance(rep.longrepr, tuple):
+        reason = str(rep.longrepr[2])
+        if formal_skip_is_failure(reason, os.environ):
+            rep.outcome = "failed"
+            rep.longrepr = f"formal test skipped with FDA_REQUIRE_FORMAL=1: {reason}"
+
+
+@pytest.fixture(autouse=True)
+def _access_gate_bypass(request: pytest.FixtureRequest):
+    """Brief 94: in-process tests of entry points (replays, fake clients) run without the access key, so a fork's CI
+    does not fail when the secret is absent. The gate's own tests are marked ``access_gate`` and run it for real."""
+    from agent import access
+    old = access._TEST_BYPASS
+    access.CURRENT = None                       # a gate test's admitted name must not leak into later tests' audit logs
+    access._TEST_BYPASS = request.node.get_closest_marker("access_gate") is None
+    yield
+    access._TEST_BYPASS = old
+    access.CURRENT = None

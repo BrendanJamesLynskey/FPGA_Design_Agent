@@ -606,11 +606,46 @@ svg .bdtick { stroke: var(--ink-3); }
   .tl li { grid-template-columns: 1fr; }
   .tld { padding: 0 0 .1em; }
 }
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.mx td.mk, .mx th.mk { text-align: center; white-space: normal; min-width: 6.5em; position: relative; }
+.mx th[scope="row"] { font-weight: 400; color: var(--ink); min-width: 14em; }
+.mx tfoot th, .mx tfoot td { border-top: 2px solid var(--ink); font-weight: 600; }
+.sq { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--ink); vertical-align: middle; line-height: 12px; text-align: center; box-sizing: border-box; }
+.sq.y { background: var(--ink); }
+.sq.n { background: transparent; border-color: var(--ink-3); border-style: dashed; }
+.sq.na { border: 0; color: var(--ink-3); }
+.map code { white-space: normal; overflow-wrap: anywhere; display: inline-block; margin: 0 4px 4px 0; font-size: .75rem; }
+.map th[scope="row"] { min-width: 12em; font-weight: 600; }
+.map td { min-width: 8em; }
+.map { table-layout: auto; }
+.pin { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.pstep { border: 1px solid var(--rule); background: var(--panel); padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; max-width: none; }
+.pstep.bad { border: 2px solid var(--warn); }
+.ptag { font: 700 .75rem var(--f-mono); text-transform: uppercase; color: var(--ink-3); }
+.pstep.bad .ptag { color: var(--warn); }
+.sfig .sbad { fill: var(--warn); }
+.sfig .ftick { stroke: var(--ink); stroke-width: 2.5; }
+.sfig .sunk { fill: none; stroke: var(--ink-3); stroke-dasharray: 4 3; }
+.sfig .sbar2 { fill: var(--ink); }
+.mxfig td.num { font-family: var(--f-mono); }
+.cexfig .cxh { fill: var(--ink); }
+.cexfig .cxl { fill: var(--ink-3); }
+.cexfig .cxfut { fill: var(--bg); opacity: .85; }
+.cexfig .ctl { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+.mx th[scope="row"] { min-width: 10em; }
+@media (max-width: 700px) {
+  .map thead { display: none; }
+  .map, .map tbody, .map tr, .map td, .map th { display: block; min-width: 0; width: 100%; }
+  .map tr { border-bottom: 2px solid var(--rule); padding: 6px 0; }
+  .map td { border: 0; padding: 2px 10px; }
+  .map td:not(:has(code)) { display: none; }
+  .map td::before { content: attr(data-label) ": "; font-size: .78rem; color: var(--ink-3); display: block; }
+}
 </style>
 </head>
 <body>
 <a class="visually-hidden" href="#main">Skip to content</a>
-<header class="bar"><div class="wrap"><a class="brand" href="index.html">FPGA Design Agent</a><nav aria-label="Pages"><a href="agent.html">The agent</a><a class="sub" href="agent.html#harness">Harness</a><a href="story.html">How it was built</a><a href="how.html">How it works</a><a href="flow-notes.html">Beyond the flow</a><a href="expertise.html">Expertise</a><a href="examples.html">Examples</a><a href="showcase.html">Showcase</a><a href="problems.html" aria-current="page">Problems</a><a href="evaluation.html">Evaluation</a><a href="results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
+<header class="bar"><div class="wrap"><a class="brand" href="index.html">FPGA Design Agent</a><nav aria-label="Pages"><a href="agent.html">The agent</a><a class="sub" href="agent.html#harness">Harness</a><a href="story.html">How it was built</a><a href="how.html">How it works</a><a href="verification.html">Verification</a><a href="flow-notes.html">Beyond the flow</a><a href="expertise.html">Expertise</a><a href="examples.html">Examples</a><a href="showcase.html">Showcase</a><a href="problems.html" aria-current="page">Problems</a><a href="evaluation.html">Evaluation</a><a href="results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
 <main id="main" class="wrap">
 <h1>Problems</h1>
 <p class="lede">Every task in the benchmark. Each development task has its own page with the request the agent is given, the hidden spec and tests, a hand-written solution, the planted bugs the tests must catch, its golden model running, and the agent's runs. Held-out tasks are kept private and listed here by id and tier only.</p>
@@ -628,7 +663,7 @@ svg .bdtick { stroke: var(--ink-3); }
 <div class="tablewrap" tabindex="0"><table><thead><tr><th>Set</th><th>Tier</th><th class="num">Tasks</th><th>Ids</th></tr></thead><tbody><tr><td>Benchmark v1</td><td>T1</td><td class="num">3</td><td><code>t1_breathe_rgb</code>, <code>t1_reaction_timer</code>, <code>t1_stopwatch_lap</code></td></tr><tr><td>Benchmark v1</td><td>T2</td><td class="num">2</td><td><code>t2_adxl362_fifo</code>, <code>t2_vga_800x600</code></td></tr><tr><td>Course tier</td><td>course part 9</td><td class="num">1</td><td><code>c9_rgb2ycc</code></td></tr><tr><td>Course tier</td><td>course part 11</td><td class="num">1</td><td><code>c11_fm_discriminator</code></td></tr><tr><td>Course tier</td><td>course part 12</td><td class="num">1</td><td><code>c12_pdm_decimator</code></td></tr><tr><td>Course tier</td><td>course part 13</td><td class="num">2</td><td><code>c13_histogram_equaliser</code>, <code>c13_stereo_disparity</code></td></tr><tr><td>Course tier</td><td>course part 14</td><td class="num">1</td><td><code>c14_binarised_dense</code></td></tr><tr><td>Course tier</td><td>course part 15</td><td class="num">1</td><td><code>c15_nexys_vector_search</code></td></tr><tr><td>Course tier</td><td>course part 16</td><td class="num">2</td><td><code>c16_health_test</code>, <code>c16_sha256_uart</code></td></tr></tbody></table></div>
 <p>Moved from held-out to development after eval-1 (their pass counts were seen), listed by id and tier; their files are still in the private repository, so they have no page yet: <code>t1_combo_lock</code> (T1), <code>t2_ascii_console</code> (T2), <code>t2_uart_regs</code> (T2), <code>c15_topk_stream</code> (course part 15), <code>c10_cic_decimator</code> (course part 10).</p>
 <h3>Benchmark v2</h3>
-<div class="tablewrap" tabindex="0"><table><thead><tr><th>Domain</th><th>Tier</th><th class="num">Development</th><th class="num">Held out</th></tr></thead><tbody><tr><td>A Basic digital design drills</td><td>drill</td><td class="num">6</td><td class="num">3</td></tr></tbody></table></div>
+<div class="tablewrap" tabindex="0"><table><thead><tr><th>Domain</th><th>Tier</th><th class="num">Development</th><th class="num">Held out</th></tr></thead><tbody><tr><td>A Basic digital design drills</td><td>drill</td><td class="num">6</td><td class="num">3</td></tr><tr><td>B DSP</td><td>T2</td><td class="num">6</td><td class="num">0</td></tr><tr><td>B DSP</td><td>T3</td><td class="num">0</td><td class="num">6</td></tr><tr><td>E Ethernet and networking</td><td>T2</td><td class="num">5</td><td class="num">1</td></tr><tr><td>O Audio</td><td>T1</td><td class="num">3</td><td class="num">0</td></tr><tr><td>O Audio</td><td>T2</td><td class="num">3</td><td class="num">0</td></tr></tbody></table></div>
 <h2 id="made">How the problems are made</h2>
 <ol class="made">
 <li><strong>The request.</strong> A short request in plain English, written as a user would ask. It leaves things out on purpose, so the agent has to ask. Every answer is settled in a hidden full spec (ports, clocks, reset, register map, behaviour, requirements), and a stand-in user answers only from that. <span class="small muted"><code>spec.md</code>, <code>hidden/spec.yaml</code></span></li>
@@ -638,13 +673,13 @@ svg .bdtick { stroke: var(--ink-3); }
 <li><strong>The mutants.</strong> Deliberate bugs, each a small edit to the reference. Every one must fail the hidden tests, which shows the tests can tell a right design from a nearly right one. <span class="small muted"><code>hidden/mutants.yaml</code></span></li>
 <li><strong>The held-out draw.</strong> A seeded draw holds out about a third of each tier. Benchmark v2 holds out one task in every block of three per domain and tier, drawn from the frozen files, so nobody chooses which. <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/v2/README.md">More on benchmark v2</a>.</li>
 </ol>
-<p class="small muted">Course-tier tasks are adapted from the owner's FPGA design course (Parts 9 to 16; the course itself is private). Code on these pages is from the repository under its MIT licence.</p>
+<p class="small muted">Course-tier tasks are adapted from the owner's FPGA design course (Parts 9 to 16; the course itself is private). Code on these pages is from the repository, all rights reserved (source visible for review, see LICENSE).</p>
 
 <p class="next">Next: <a href="evaluation.html">Evaluation</a> explains how the agent will be scored on tasks it has never seen.</p>
 
 <div class="pager"><a href="showcase.html">&larr; Showcase</a><a href="evaluation.html">Evaluation &rarr;</a></div>
 </main>
-<footer><div class="wrap"><p>Designed by Brendan Lynskey. Code and results: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent">github.com/BrendanJamesLynskey/FPGA_Design_Agent</a> (MIT licence). Every number on these pages is read from a committed result file; development results are labelled as such and are not the held-out score.</p></div></footer>
+<footer><div class="wrap"><p>Designed by Brendan Lynskey. Code and results: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent">github.com/BrendanJamesLynskey/FPGA_Design_Agent</a> (all rights reserved; source visible for review, see LICENSE). Every number on these pages is read from a committed result file; development results are labelled as such and are not the held-out score.</p></div></footer>
 <script type="application/json" data-key="catalogue_index">{"domains":{"A":"Basic digital design drills","B":"DSP","C":"Communications, SDR and coding","D":"Cryptography and security","E":"Ethernet and networking","F":"Interfaces and protocols","G":"Memory and storage","H":"Video and image processing","I":"Machine learning inference","J":"Processors, SoC and embedded software","K":"Control, motors and robotics","L":"Test and measurement","M":"Clocking, CDC and resets","N":"HPC, acceleration and data processing","O":"Audio","P":"Verification and debug","Q":"High reliability","R":"Other commonly attempted","S":"Computer vision","T":"High-speed serial transceivers"}}</script>
 <script>/* FPGA Design Agent site. No dependencies. Every animation is frame(step) over a state list built from site/data/*.json. */
 (function () {
@@ -1760,6 +1795,20 @@ svg .bdtick { stroke: var(--ink-3); }
   }
   openHash();
   window.addEventListener("hashchange", openHash);
+})();
+
+// brief 81: replay of a recorded counterexample: the slider hides the steps after the chosen one
+(function () {
+  document.querySelectorAll('.cexfig').forEach(function (f) {
+    var r = f.querySelector('input[type=range]'), fut = f.querySelector('.cxfut'), pos = f.querySelector('.cexpos'), lab = f.querySelector('.cxstep');
+    var n = +f.dataset.cycles, lx = +f.dataset.lx, cw = +f.dataset.cw, w = +f.dataset.w;
+    function set() {
+      var k = +r.value, x = lx + (k + 1) * cw;
+      fut.setAttribute('x', x); fut.setAttribute('width', Math.max(0, w - x));
+      pos.textContent = k; if (lab) lab.textContent = 'step ' + k;
+    }
+    r.addEventListener('input', set); set();
+  });
 })();
 </script>
 </body>

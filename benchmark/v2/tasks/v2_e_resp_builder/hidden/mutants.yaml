@@ -1,0 +1,27 @@
+# Mutants and the trap for v2_e_resp_builder (benchmark/tools/check_task.py)
+mutants:
+- {name: type_top_bit_missing, file: resp_builder.sv, find: '6''d0:    cur = {1''b1, r_type};', replace: '6''d0:    cur = {1''b0, r_type};', why: the type is sent without its reply flag}
+- {name: seq_low_first, file: resp_builder.sv, find: "6'd2:    cur = r_seq[15:8];\n            6'd3:    cur = r_seq[7:0];", replace: "6'd2:    cur = r_seq[7:0];\n            6'd3:    cur = r_seq[15:8];", why: the sequence number goes
+    low byte first}
+- {name: length_byte_counts_all, file: resp_builder.sv, find: '6''d4:    cur = {3''d0, plen};', replace: '6''d4:    cur = {3''d0, plen} + 8''d9;', why: the length byte counts the whole frame}
+- {name: crc_high_byte_first, file: resp_builder.sv, find: 'frame[i] <= ~crc >> (8 * (i - total));', replace: 'frame[i] <= ~crc >> (8 * (6''d3 - (i - total)));', why: the check goes high byte first}
+- {name: crc_not_inverted, file: resp_builder.sv, find: 'frame[i] <= ~crc >> (8 * (i - total));', replace: 'frame[i] <= crc >> (8 * (i - total));', why: no final inversion}
+- {name: crc_skips_header, file: resp_builder.sv, find: 'crc <= crcbhhh(crc, cur);', replace: 'if (i >= 6''d5) crc <= crcbhhh(crc, cur);', why: the check covers the payload only}
+- {name: crc_start_zero, file: resp_builder.sv, find: 'total <= 6''d5 + {1''b0, plen}; crc <= 32''hFFFF_FFFF; end', replace: 'total <= 6''d5 + {1''b0, plen}; crc <= 32''h0000_0000; end', why: the check starts from zero}
+- {name: payload_not_cleared, file: resp_builder.sv, find: frame_status <= r_stat; plen <= '0; ovf <= 1'b0;, replace: frame_status <= r_stat; ovf <= 1'b0;, why: the next reply starts with the old payload}
+- {name: overflow_not_cleared, file: resp_builder.sv, find: frame_status <= r_stat; plen <= '0; ovf <= 1'b0;, replace: frame_status <= r_stat; plen <= '0;, why: the overflow flag survives a build}
+- {name: capacity_23, file: resp_builder.sv, find: '7''h03: if (plen == 5''d24) ovf <= 1''b1;', replace: '7''h03: if (plen == 5''d23) ovf <= 1''b1;', why: one payload byte fewer than the capacity}
+- {name: overflow_overwrites, file: resp_builder.sv, find: '7''h03: if (plen == 5''d24) ovf <= 1''b1;', replace: '7''h03: if (plen == 5''d24) begin ovf <= 1''b1; pay[23] <= win_wdata[7:0]; end', why: an extra byte replaces the last one held}
+- {name: type_eight_bits, file: resp_builder.sv, find: '7''h00: r_type <= win_wdata[6:0];', replace: '7''h00: r_type <= win_wdata[6:0] | win_wdata[7];', why: bit 7 of the type write leaks in}
+- {name: beyond_end_reads_stale, file: resp_builder.sv, find: '7''h06:   win_rdata <= (idx < flen) ? {24''d0, frame[idx]} : 32''d0;', replace: '7''h06:   win_rdata <= {24''d0, frame[idx]};', why: positions beyond the reply read old bytes}
+- {name: len_off_by_one, file: resp_builder.sv, find: busy <= 1'b0; flen <= total + 6'd4;, replace: busy <= 1'b0; flen <= total + 6'd3;, why: the length register is one short}
+- {name: status_not_reset, file: resp_builder.sv, find: r_type <= '0; r_stat <= '0; r_seq <= '0;, replace: r_type <= '0; r_seq <= '0;, why: the status register survives CPU_RESETN}
+- {name: led_shows_live_status, file: resp_builder.sv, find: 'assign led = {frame_status, 2''b00, flen};', replace: 'assign led = {r_stat, 2''b00, flen};', why: 'the LEDs show the status being prepared, not the reply''s'}
+- {name: plen_five_bits_read, file: resp_builder.sv, find: '7''h09:   win_rdata <= {27''d0, plen};', replace: '7''h09:   win_rdata <= {27''d0, plen} & 32''h0F;', why: the held-payload count reads 4 bits}
+- {name: build_during_gather_resets, file: resp_builder.sv, find: '7''h04: begin busy <= 1''b1; i <= ''0;', replace: '7''h04: begin busy <= 1''b1; i <= ''0; r_seq <= 16''d0;', why: a build wipes the sequence register}
+trap:
+  twin: builder that puts the CRC over the payload alone and the length field as the frame length
+  why: the spec fixes the check to cover every byte before it, and the length byte to count payload bytes only
+  edits:
+  - {file: resp_builder.sv, find: '6''d4:    cur = {3''d0, plen};', replace: '6''d4:    cur = {2''d0, plen + 5''d9};'}
+  must_fail: [test_builder_reply_layout_and_check]

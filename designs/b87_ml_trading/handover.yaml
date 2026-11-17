@@ -1,0 +1,287 @@
+# Brief 68 handover: the facts behind README.md and AGENT.md (docs/documentation_standard.md).
+# Measurement values and every sha256 are filled from the records by `python -m flow.handover fill`;
+# do not type them. Render with `python -m flow.handover write <this directory>`.
+schema: fda-handover/1
+id: b87_ml_trading
+title: Decision models in the trading path on the K26
+kind: showcase
+produced_by: human
+summary: Small decision models for the 58A trading path, trained on synthetic order flow and built in the fabric of the
+  K26 (Kria KR260). Boosted trees, an MLP built by hand and through hls4ml with Vitis HLS, and a LUT network are each checked
+  bit for bit against their integer models over the whole test split, built out of context and routed, and the boosted trees
+  sit behind the 58A rule table in simulation, switched by a register.
+scope_not:
+- real market data or a real exchange; the order flow comes from our own seeded generator with a planted signal
+- a board run; every number here is from simulation or an out-of-context Vivado 2026.1 build
+- a trading result; the back-test's fill model is an assumption and its differences are within noise
+target:
+  part: xck26-sfvc784-2LV-c
+  board: Kria KR260 (K26 SOM)
+  top: ooc_wrap (one arm with an input register), out of context; trigger_core with ML_ARM = 1 in simulation
+  tool: Vivado 2026.1
+  note: no board top of its own; the 58A board top would carry the model with ML_ARM set
+clocks:
+- name: clk
+  mhz: 125
+  source: results/b87/integration/integration_latency_sim.json
+  note: the 58A core clock in the integration; each arm's out-of-context clock is in results/b87/ooc/<arm>.json
+resets:
+- name: rst
+  active: high
+  note: synchronous; resets only the valid pipeline of an arm and the feature unit's state, not the datapath
+interfaces:
+- name: arm ports
+  type: clk, rst, in_v, in_f[37:0] (packed features), out_v, out_cls[1:0]
+  doc: designs/b87_ml_trading/docs/arms.md
+  note: out_v follows in_v by exactly LATENCY clocks for every input; one input a clock; ties go to the lower class
+- name: model control in trigger_core
+  type: registers 0x02A ML_CTRL (enable, tracked instrument), 0x02B ML_LAST_CLASS, 0x02C ML_VETOES
+  doc: designs/b87_ml_trading/docs/arms.md
+  note: with ML_ARM = 0 (the default) the 58A path is unchanged and the registers read 0, 1 and 0
+parameters:
+- name: ML_ARM
+  value: 0 in 58A, 1 in the integration test
+  legal: 0 none, 1 gbt_comb, 2 lutnet; 3 (mlp_hand, 13 clocks) is refused because an arm's LATENCY must be at most 8 clocks
+  note: trigger_core parameter; elaboration fails above 8 clocks (the order slot binds an order to its frame)
+- name: label horizon
+  value: 40 events
+  legal: any positive integer (model/lobsim.py Params.horizon)
+  note: the sign of the mid-price change 40 events later; changing it needs retraining
+- name: training seed built
+  value: seed 0 of three
+  legal: 0, 1 or 2 (the evaluation trains all three)
+  note: the RTL is generated from results/b87/models/*.json
+files:
+- path: designs/b87_ml_trading/model/lobsim.py
+  what: order-flow generator, features, label, splits
+  sha256: 6e6c8c3f87483ebf6018b47d1da734306f80492972ff21c693a26716d6d12ea0
+- path: designs/b87_ml_trading/model/arms.py
+  what: the arms and their integer models
+  sha256: 83acd888cb2dc9da469514f633276e9d9b0690df0e463f827be3566d5fc77dd8
+- path: designs/b87_ml_trading/model/evaluate.py
+  what: training and scoring
+  sha256: 5378839b182c9e66e8d7783b007021a73e61b3ef33d356a97fd142861ee23064
+- path: designs/b87_ml_trading/model/gen_rtl.py
+  what: RTL generator
+  sha256: 2b093862ecc7836241d58fe520ca47fe546d2fbd37ee96ee628943b230a85a08
+- path: designs/b87_ml_trading/rtl/ml_feat.sv
+  what: feature unit for the 58A book
+  sha256: 74e91004bc80b9e8048234ef3e45f270e925727ed2137adeeeacc074dc38ee31
+- path: designs/b87_ml_trading/rtl/ml_gate.sv
+  what: model gate behind the rules
+  sha256: 69ffe79a2065be60993d405f33a8f6ae53f3c5dab5816d59df02ff7ef11555b3
+- path: designs/b87_ml_trading/ooc/ooc.py
+  what: out-of-context clock search
+  sha256: 2660202d6cc0401c4e246e3462d928db34bffa18166dc9f57d03abf05c9ac58c
+- path: designs/b87_ml_trading/docs/preregistration.md
+  what: pre-registration
+  sha256: ced929e6b624ed4f2f6bfc0816f80390f43fa978b6d2a5ddaec9dab3d7bd834e
+commands:
+- what: train and score every arm
+  cmd: python3 -m designs.b87_ml_trading.model.evaluate --out results/b87
+  heavy: false
+  minutes: 17
+  needs: numpy, scikit-learn, torch (CPU); run under a 5 GB memory scope
+- what: regenerate the RTL and check it against the models over the test split
+  cmd: python3 -m designs.b87_ml_trading.model.gen_rtl && B87_RECORD=results/b87 python3 -m pytest -q designs/b87_ml_trading/tests/test_b87_rtl.py
+  heavy: false
+  minutes: 3
+  needs: Icarus Verilog 12
+- what: the 58A integration in simulation
+  cmd: B87_RECORD=$PWD/results/b87/integration python3 -m pytest -q designs/b87_ml_trading/tests/test_b87_integ_rtl.py
+  heavy: false
+  minutes: 1
+  needs: Icarus Verilog 12 and cocotb 2.0.1
+- what: hls4ml conversion, C simulation and Vitis HLS
+  cmd: python3 -m designs.b87_ml_trading.model.hls4ml_arm --synth --clock 2.0
+  heavy: true
+  minutes: 3
+  needs: hls4ml 1.3.0 and Vitis 2026.1 (vitis-run on PATH), a heavy slot
+- what: out-of-context builds and the clock search
+  cmd: python3 -m designs.b87_ml_trading.ooc.ooc
+  heavy: true
+  minutes: 60
+  needs: Vivado 2026.1 and a heavy slot
+evidence:
+- id: E1
+  activity: simulation
+  result: pass
+  how: ci
+  what: every hand-RTL arm equals its integer model on all test-split samples, with one fixed latency
+  record: designs/b87_ml_trading/tests/test_b87_rtl.py
+  sha256: 2ffcf72e10dc6f629478d8c0681a365bdbb0c7ae57b726066516f02c01ee77d6
+- id: E2
+  activity: simulation
+  result: pass
+  what: the hls4ml arm's C simulation equals the integer model's logits bit for bit, and its Verilog equals it in Icarus
+    with a fixed latency
+  record: results/b87/hls4ml_csim.json
+  sha256: d00b95f07901e8fcf7522aff696887064e87b813cb6bfc2265234d3e868cbb0e
+- id: E3
+  activity: simulation
+  result: pass
+  how: ci
+  what: trigger_core with the boosted trees (and again with the LUT network); the fabric's features and classes equal the
+    Python twin on a generator stream and on 300 edge-case messages, and a disagreeing order is vetoed and counted
+  record: designs/b87_ml_trading/tests/test_b87_integ_rtl.py
+  sha256: 02050fb09d5b7dddb112c9f3f8e0876fd4d1b8649c1c259204e8949176c76afc
+- id: E4
+  activity: build
+  result: pass
+  what: out-of-context, post-route builds of every arm on the K26 with a clock search; each recorded clock closed (setup,
+    hold and pulse width)
+  record: results/b87/summary.json
+  sha256: 427edff04ea5aae367aa90641e06d603afcd62aa1350481117a848db18db0ad2
+measurements:
+- id: M1
+  what: boosted trees (combinational), test accuracy, seed 0
+  category: other
+  key: gbt_acc
+  unit: fraction
+  record: results/b87/accuracy.json
+  field: arms.gbt.runs[0].test_quantised.mean
+  conditions: 99,100 test samples in 10 sessions; synthetic order flow
+  value: 0.4914
+  sha256: dad79e61888b77772638a38dfdcdf27b1324178658a771f1eaa9465dd60679ad
+- id: M2
+  what: MLP, test accuracy, seed 0
+  category: other
+  key: mlp_acc
+  unit: fraction
+  record: results/b87/accuracy.json
+  field: arms.mlp.runs[0].test_quantised.mean
+  conditions: as M1
+  value: 0.4988
+  sha256: dad79e61888b77772638a38dfdcdf27b1324178658a771f1eaa9465dd60679ad
+- id: M3
+  what: trivial rule (imbalance threshold), test accuracy
+  category: other
+  key: rule_acc
+  unit: fraction
+  record: results/b87/accuracy.json
+  field: arms.imbalance_rule.test.mean
+  conditions: as M1
+  value: 0.4266
+  sha256: dad79e61888b77772638a38dfdcdf27b1324178658a771f1eaa9465dd60679ad
+- id: M4
+  what: boosted trees (combinational), clock period closed post-route
+  category: timing
+  key: gbt_comb_ns
+  unit: ns
+  record: results/b87/ooc/gbt_comb.json
+  field: closed_at_ns
+  conditions: out of context, Vivado 2026.1, one thread
+  value: 4.4
+  sha256: bd70057950f4bb2e5606406a2ff3d8955d3ecca9c911a3eb962b82af6bac2cbe
+- id: M5
+  what: boosted trees (combinational), LUTs
+  category: resources
+  key: gbt_comb_lut
+  unit: LUT
+  record: results/b87/ooc/gbt_comb.json
+  field: at_closed_clock.lut
+  conditions: as M4
+  value: 640
+  sha256: bd70057950f4bb2e5606406a2ff3d8955d3ecca9c911a3eb962b82af6bac2cbe
+- id: M6
+  what: added clocks from the rule's decision to the gated decision in the 58A path, model on
+  category: latency
+  key: gate_clocks
+  unit: clocks
+  record: results/b87/integration/integration_latency_sim.json
+  field: modes.speculative_model_on.stages_cycles.model gate (rule fire -> decision)
+  conditions: simulation, 8 ns clock, speculative mode
+  value: 1
+  sha256: 0b7136ae81914b1fdb351d1b5b1bcea49813445861811252011648c8418e8b1a
+- id: M7
+  what: last price byte in to first preamble byte out, model on
+  category: latency
+  key: t2t_on
+  unit: clocks
+  record: results/b87/integration/integration_latency_sim.json
+  field: modes.speculative_model_on.decision_to_first_byte
+  conditions: as M6
+  value: 9
+  sha256: 0b7136ae81914b1fdb351d1b5b1bcea49813445861811252011648c8418e8b1a
+- id: M8
+  what: MLP (hand RTL), LUTs
+  category: resources
+  key: mlp_hand_lut
+  unit: LUT
+  record: results/b87/ooc/mlp_hand.json
+  field: at_closed_clock.lut
+  conditions: as M4
+  value: 6018
+  sha256: 182a6d233828211ec9c1e05abea75b26c3dc354f72fd78bf54b88d08e7200142
+- id: M9
+  what: MLP (hls4ml + Vitis HLS), clock period closed post-route
+  category: timing
+  key: mlp_hls4ml_ns
+  unit: ns
+  record: results/b87/ooc/mlp_hls4ml.json
+  field: closed_at_ns
+  conditions: as M4
+  value: 2.3
+  sha256: eb7c3afa060e431528a9dba97d957e776366e3a05c2a61ebe6bcd5bedc5c09a2
+- id: M10
+  what: MLP (hls4ml), latency at the quoted clock
+  category: latency
+  key: mlp_hls4ml_lat
+  unit: ns
+  record: results/b87/summary.json
+  field: rows[4].latency_ns
+  conditions: 33 clocks x 2.3 ns, out of context
+  value: 75.9
+  sha256: 427edff04ea5aae367aa90641e06d603afcd62aa1350481117a848db18db0ad2
+- id: M11
+  what: MLP (hand RTL), latency at the quoted clock
+  category: latency
+  key: mlp_hand_lat
+  unit: ns
+  record: results/b87/summary.json
+  field: rows[3].latency_ns
+  conditions: 13 clocks x 2.9 ns, out of context
+  value: 37.7
+  sha256: 427edff04ea5aae367aa90641e06d603afcd62aa1350481117a848db18db0ad2
+gaps:
+- about: board_run
+  text: Not run on a board; the KR260 build with the model in the 58A top is a next step.
+- about: timing
+  text: The feature unit and the gate (ml_feat, ml_gate) have no Vivado run; only the arms were built. Out of context the
+    clock has no buffer or jitter, so every latency is quoted at no faster than 2.0 ns.
+- about: power
+  text: Not measured; the out-of-context builds have no power report and nothing ran on a board.
+- about: throughput
+  text: Every arm accepts one input a clock (the RTL test streams the first half of the test split back to back), but no
+    throughput figure beyond that is recorded.
+- about: data
+  text: Synthetic order flow from one generator with a planted signal; the accuracies say how well each arm recovers it,
+    nothing about a market.
+- about: E4
+  text: Out-of-context builds; inside a full design the clock and placement can differ. Only seed 0 is built.
+- about: lutnet
+  text: The LUT network (seed 0) does not beat the trivial rule on the test split; it is reported as not useful.
+- about: behaviour
+  text: 'Guessable wrongly: the feature history follows one tracked instrument only; a decision for another instrument passes
+    unchanged; a vetoed decision still performs the rule''s pin and log actions; ML_LAST_CLASS updates even with the model
+    off; the hls4ml core must run every clock (its ap_vld input stalls the pipeline).'
+next_steps:
+- Phase 2 (docs/jepa_student_plan.md) - a JEPA-pretrained teacher distilled into a student within the MLP's cost.
+- Build the 58A board top with ML_ARM = 1 and take the board run with stage timestamps.
+- A richer generator (several instruments, regimes) so that the arms are separated by more than one feature set.
+open_questions:
+- Should the model veto, or skew the price and size of the order instead?
+history:
+- date: '2026-11-15'
+  brief: '87'
+  note: generator, arms, RTL, hls4ml, out-of-context builds and the 58A integration in simulation
+numbers_allow: []
+state:
+  stage: built
+  gates:
+    rtl_equals_model: pass
+    ooc_build_2026_1: pass
+    board_run: not-run
+  vivado: '2026.1'
+  kb_pin: 2338b83
+  build_id: null

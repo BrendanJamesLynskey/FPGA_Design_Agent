@@ -45,6 +45,8 @@ def parse_answer(text: str) -> dict[str, Any]:
 
 
 def cc_oracle(model: str, log: Path | None = None, timeout_s: float = 300) -> Callable[[str, str], dict[str, Any]]:
+    from agent.access import require_or_exit      # brief 94
+    require_or_exit("claude_code_arm.oracle")
     """An ``llm(system, user) -> {"answer", "quote"}`` callable for :class:`agent.graph.interview.SpecOracle`."""
     def llm(system: str, user: str) -> dict[str, Any]:
         from agent.graph.run import ArmBlocked

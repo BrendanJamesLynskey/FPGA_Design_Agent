@@ -606,11 +606,46 @@ svg .bdtick { stroke: var(--ink-3); }
   .tl li { grid-template-columns: 1fr; }
   .tld { padding: 0 0 .1em; }
 }
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.mx td.mk, .mx th.mk { text-align: center; white-space: normal; min-width: 6.5em; position: relative; }
+.mx th[scope="row"] { font-weight: 400; color: var(--ink); min-width: 14em; }
+.mx tfoot th, .mx tfoot td { border-top: 2px solid var(--ink); font-weight: 600; }
+.sq { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--ink); vertical-align: middle; line-height: 12px; text-align: center; box-sizing: border-box; }
+.sq.y { background: var(--ink); }
+.sq.n { background: transparent; border-color: var(--ink-3); border-style: dashed; }
+.sq.na { border: 0; color: var(--ink-3); }
+.map code { white-space: normal; overflow-wrap: anywhere; display: inline-block; margin: 0 4px 4px 0; font-size: .75rem; }
+.map th[scope="row"] { min-width: 12em; font-weight: 600; }
+.map td { min-width: 8em; }
+.map { table-layout: auto; }
+.pin { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.pstep { border: 1px solid var(--rule); background: var(--panel); padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; max-width: none; }
+.pstep.bad { border: 2px solid var(--warn); }
+.ptag { font: 700 .75rem var(--f-mono); text-transform: uppercase; color: var(--ink-3); }
+.pstep.bad .ptag { color: var(--warn); }
+.sfig .sbad { fill: var(--warn); }
+.sfig .ftick { stroke: var(--ink); stroke-width: 2.5; }
+.sfig .sunk { fill: none; stroke: var(--ink-3); stroke-dasharray: 4 3; }
+.sfig .sbar2 { fill: var(--ink); }
+.mxfig td.num { font-family: var(--f-mono); }
+.cexfig .cxh { fill: var(--ink); }
+.cexfig .cxl { fill: var(--ink-3); }
+.cexfig .cxfut { fill: var(--bg); opacity: .85; }
+.cexfig .ctl { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+.mx th[scope="row"] { min-width: 10em; }
+@media (max-width: 700px) {
+  .map thead { display: none; }
+  .map, .map tbody, .map tr, .map td, .map th { display: block; min-width: 0; width: 100%; }
+  .map tr { border-bottom: 2px solid var(--rule); padding: 6px 0; }
+  .map td { border: 0; padding: 2px 10px; }
+  .map td:not(:has(code)) { display: none; }
+  .map td::before { content: attr(data-label) ": "; font-size: .78rem; color: var(--ink-3); display: block; }
+}
 </style>
 </head>
 <body>
 <a class="visually-hidden" href="#main">Skip to content</a>
-<header class="bar"><div class="wrap"><a class="brand" href="../index.html">FPGA Design Agent</a><nav aria-label="Pages"><a href="../agent.html">The agent</a><a class="sub" href="../agent.html#harness">Harness</a><a href="../story.html">How it was built</a><a href="../how.html">How it works</a><a href="../flow-notes.html">Beyond the flow</a><a href="../expertise.html">Expertise</a><a href="../examples.html">Examples</a><a href="../showcase.html">Showcase</a><a href="../problems.html" aria-current="page">Problems</a><a href="../evaluation.html">Evaluation</a><a href="../results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
+<header class="bar"><div class="wrap"><a class="brand" href="../index.html">FPGA Design Agent</a><nav aria-label="Pages"><a href="../agent.html">The agent</a><a class="sub" href="../agent.html#harness">Harness</a><a href="../story.html">How it was built</a><a href="../how.html">How it works</a><a href="../verification.html">Verification</a><a href="../flow-notes.html">Beyond the flow</a><a href="../expertise.html">Expertise</a><a href="../examples.html">Examples</a><a href="../showcase.html">Showcase</a><a href="../problems.html" aria-current="page">Problems</a><a href="../evaluation.html">Evaluation</a><a href="../results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
 <main id="main" class="wrap">
 <p class="crumbs small"><a href="../problems.html">Problems</a> / <a href="../problems.html#dom-D">D. Cryptography and security</a></p>
 <h1>NTT engine behind the test shell</h1>
@@ -642,8 +677,8 @@ svg .bdtick { stroke: var(--ink-3); }
 <p>Each is a small edit to the reference RTL. In the committed check (icarus, 2026-11-10, <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/results/c16_ntt_engine__icarus.json"><code>c16_ntt_engine__icarus.json</code></a>) the reference passed all 5 hidden tests and 8 of 8 mutants failed them.</p>
 <div class="tablewrap" tabindex="0"><table><thead><tr><th>Mutant</th><th>File</th><th>The bug</th><th>Hidden tests that fail</th></tr></thead><tbody><tr><td><code>barrett_constant</code></td><td><code>ntt_engine.sv</code></td><td>the Barrett reduction constant is off by one</td><td><code>test_inverse_random</code></td></tr><tr><td><code>inverse_scale</code></td><td><code>ntt_engine.sv</code></td><td>the final inverse scaling uses the wrong constant</td><td><code>test_inverse_random</code></td></tr><tr><td><code>inverse_zeta_index</code></td><td><code>ntt_engine.sv</code></td><td>inverse butterflies use the wrong zeta</td><td><code>test_inverse_random</code></td></tr><tr><td><code>forward_sub_is_add</code></td><td><code>ntt_engine.sv</code></td><td>the forward butterfly adds twice instead of add and subtract</td><td><code>test_forward_random</code>, <code>test_forward_edge_polynomials</code></td></tr><tr><td><code>one_layer_short</code></td><td><code>ntt_engine.sv</code></td><td>the last of the seven layers is skipped</td><td><code>test_forward_random</code>, <code>test_inverse_random</code>, <code>test_forward_edge_polynomials</code></td></tr><tr><td><code>subq_unreduced</code></td><td><code>ntt_engine.sv</code></td><td>the subtraction is not reduced when the result is already non-negative</td><td><code>test_forward_random</code>, <code>test_inverse_random</code>, <code>test_forward_edge_polynomials</code></td></tr><tr><td><code>forward_scaled</code></td><td><code>ntt_engine.sv</code></td><td>the forward transform also runs the multiplication by 3303 (amended 2026-11-10: the first form of this edit left a dangling else and never compiled)</td><td><code>test_forward_random</code>, <code>test_forward_edge_polynomials</code></td></tr><tr><td><code>ld_ptr_q_not_reset</code></td><td><code>c16_ntt_engine_regs.sv</code></td><td>CPU_RESETN does not reset ld_ptr_q (amended 2026-11-10: the reset test now kills a mutant)</td><td><code>test_identity_and_reset</code>, <code>test_registers_and_reset</code></td></tr></tbody></table></div>
 <h2>Sample solution</h2>
-<p class="note">Hand-written reference for the benchmark, not agent output; it passes every test, and the listed mutants fail them. With it, the hidden cocotb tests and the golden model. Repository licence: MIT.</p>
-<details class="code"><summary><span class="mono">_ntt_zetas_pkg.sv</span> <span class="muted small">reference RTL, 137 lines</span></summary><div class="codebar small"><a href="c16_ntt_engine/_ntt_zetas_pkg.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c16_ntt_engine/ref/rtl/_ntt_zetas_pkg.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// source: solutions/p16l07_ntt/ntt_zetas_pkg.sv (course file, unchanged below this line)</span>
+<p class="note">Hand-written reference for the benchmark, not agent output; it passes every test, and the listed mutants fail them. With it, the hidden cocotb tests and the golden model. Repository licence: all rights reserved (source visible for review).</p>
+<details class="code"><summary><span class="mono">_ntt_zetas_pkg.sv</span> <span class="muted small">reference RTL, 137 lines</span></summary><div class="codebar small"><a href="c16_ntt_engine/_ntt_zetas_pkg.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c16_ntt_engine/ref/rtl/_ntt_zetas_pkg.sv">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hc">// source: solutions/p16l07_ntt/ntt_zetas_pkg.sv (course file, unchanged below this line)</span>
 <span class="hc">// GIVEN (generated by tools/gen_crypto_rtl.py): the 128 twiddle factors zeta^BitRev7(k) mod 3329 of FIPS 203 (zeta = 17), k = 0..127, and the constant 128^-1 mod q = 3303.</span>
 <span class="hk">package</span> ntt_zetas_pkg;
     <span class="hk">function</span> <span class="hk">automatic</span> <span class="hk">logic</span> [11:0] zeta(<span class="hk">input</span> <span class="hk">logic</span> [6:0] k);
@@ -780,7 +815,7 @@ svg .bdtick { stroke: var(--ink-3); }
         <span class="hk">endcase</span>
     <span class="hk">endfunction</span>
 <span class="hk">endpackage</span>
-</code></pre></details><details class="code"><summary><span class="mono">c16_ntt_engine_regs.sv</span> <span class="muted small">reference RTL, 62 lines</span></summary><div class="codebar small"><a href="c16_ntt_engine/c16_ntt_engine_regs.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c16_ntt_engine/ref/rtl/c16_ntt_engine_regs.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// c16_ntt_engine_regs.sv: the shell window of course task c16_ntt_engine.</span>
+</code></pre></details><details class="code"><summary><span class="mono">c16_ntt_engine_regs.sv</span> <span class="muted small">reference RTL, 62 lines</span></summary><div class="codebar small"><a href="c16_ntt_engine/c16_ntt_engine_regs.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c16_ntt_engine/ref/rtl/c16_ntt_engine_regs.sv">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hc">// c16_ntt_engine_regs.sv: the shell window of course task c16_ntt_engine.</span>
 <span class="hk">module</span> c16_ntt_engine_regs (
     <span class="hk">input</span>  <span class="hk">logic</span>        clk,
     <span class="hk">input</span>  <span class="hk">logic</span>        rst,
@@ -842,7 +877,7 @@ svg .bdtick { stroke: var(--ink-3); }
         <span class="hk">end</span>
     <span class="hk">end</span>
 <span class="hk">endmodule</span>
-</code></pre></details><details class="code"><summary><span class="mono">c16_ntt_engine_top.sv</span> <span class="muted small">reference RTL, 29 lines</span></summary><div class="codebar small"><a href="c16_ntt_engine/c16_ntt_engine_top.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c16_ntt_engine/ref/rtl/c16_ntt_engine_top.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// c16_ntt_engine_top.sv: board top (Nexys A7-100T, master-XDC port names), test shell DESIGN_ID &quot;NTTE&quot;.</span>
+</code></pre></details><details class="code"><summary><span class="mono">c16_ntt_engine_top.sv</span> <span class="muted small">reference RTL, 29 lines</span></summary><div class="codebar small"><a href="c16_ntt_engine/c16_ntt_engine_top.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c16_ntt_engine/ref/rtl/c16_ntt_engine_top.sv">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hc">// c16_ntt_engine_top.sv: board top (Nexys A7-100T, master-XDC port names), test shell DESIGN_ID &quot;NTTE&quot;.</span>
 <span class="hc">// Reference design for course task c16_ntt_engine; the shell window is wired to c16_ntt_engine_regs.</span>
 <span class="hk">module</span> c16_ntt_engine_top #(
     <span class="hk">parameter</span> <span class="hk">int</span>          CLKS_PER_BIT   = 868,
@@ -871,7 +906,7 @@ svg .bdtick { stroke: var(--ink-3); }
         .clk(clk), .rst(rst), .led(LED),
         .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));
 <span class="hk">endmodule</span>
-</code></pre></details><details class="code"><summary><span class="mono">ntt_engine.sv</span> <span class="muted small">reference RTL, 93 lines</span></summary><div class="codebar small"><a href="c16_ntt_engine/ntt_engine.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c16_ntt_engine/ref/rtl/ntt_engine.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// source: solutions/p16l07_ntt/ntt_engine.sv (course file, unchanged below this line)</span>
+</code></pre></details><details class="code"><summary><span class="mono">ntt_engine.sv</span> <span class="muted small">reference RTL, 93 lines</span></summary><div class="codebar small"><a href="c16_ntt_engine/ntt_engine.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c16_ntt_engine/ref/rtl/ntt_engine.sv">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hc">// source: solutions/p16l07_ntt/ntt_engine.sv (course file, unchanged below this line)</span>
 <span class="hc">// Part 16 lesson 7 exercise: an NTT engine for ML-KEM (FIPS 203): 256 coefficients modulo q = 3329, one butterfly per clock, in place. Given: ntt_zetas_pkg.sv (function zeta(k): the table of FIPS 203 appendix A).</span>
 <span class="hc">//   ld_en with ld_addr / ld_data writes coefficient ld_addr (any time the engine is idle). rd_addr / rd_data is an asynchronous read of coefficient rd_addr (rd_data follows rd_addr within the same clock).</span>
 <span class="hc">//   start (one clock, only while !busy) with inverse = 0 runs the forward transform (algorithm 9), with inverse = 1 the inverse (algorithm 10, including the final multiplication of every coefficient by 128^-1 = 3303).</span>
@@ -964,7 +999,7 @@ svg .bdtick { stroke: var(--ink-3); }
         <span class="hk">end</span>
     <span class="hk">end</span>
 <span class="hk">endmodule</span>
-</code></pre></details><details class="code"><summary><span class="mono">acceptance.py</span> <span class="muted small">hidden cocotb acceptance tests, 77 lines</span></summary><div class="codebar small"><a href="c16_ntt_engine/acceptance.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c16_ntt_engine/hidden/acceptance.py">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;Acceptance tests of c16_ntt_engine against model.py (hidden from the agent).&quot;&quot;&quot;</span>
+</code></pre></details><details class="code"><summary><span class="mono">acceptance.py</span> <span class="muted small">hidden cocotb acceptance tests, 77 lines</span></summary><div class="codebar small"><a href="c16_ntt_engine/acceptance.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c16_ntt_engine/hidden/acceptance.py">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;Acceptance tests of c16_ntt_engine against model.py (hidden from the agent).&quot;&quot;&quot;</span>
 
 <span class="hk">from</span> __future__ <span class="hk">import</span> annotations
 
@@ -1041,7 +1076,7 @@ svg .bdtick { stroke: var(--ink-3); }
     <span class="hk">assert</span> led == 0, f<span class="hs">&quot;LED {led:04X}: idle, nothing done&quot;</span>
     <span class="hk">await</span> b.reset()
     <span class="hk">await</span> b.expect(LD_PTR, 0, <span class="hs">&quot;LD_PTR after reset&quot;</span>)
-</code></pre></details><details class="code"><summary><span class="mono">model.py</span> <span class="muted small">golden model, 97 lines</span></summary><div class="codebar small"><a href="c16_ntt_engine/model.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c16_ntt_engine/hidden/model.py">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;P16-3 model: the number-theoretic transform of ML-KEM (FIPS 203 algorithms 9 and 10, q = 3329, 256 coefficients) and the transforms the block is asked for (standalone: python only).&quot;&quot;&quot;</span>
+</code></pre></details><details class="code"><summary><span class="mono">model.py</span> <span class="muted small">golden model, 97 lines</span></summary><div class="codebar small"><a href="c16_ntt_engine/model.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c16_ntt_engine/hidden/model.py">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;P16-3 model: the number-theoretic transform of ML-KEM (FIPS 203 algorithms 9 and 10, q = 3329, 256 coefficients) and the transforms the block is asked for (standalone: python only).&quot;&quot;&quot;</span>
 <span class="hk">import</span> hashlib
 <span class="hk">import</span> math
 <span class="hk">import</span> random
@@ -1145,7 +1180,7 @@ LD_PTR, RD_PTR, LD_DATA, START_FWD, START_INV, STATUS, RD_DATA, CYCLES = range(8
 
 <div class="pager"><a href="../problems.html">&larr; All problems</a><span></span></div>
 </main>
-<footer><div class="wrap"><p>Designed by Brendan Lynskey. Code and results: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent">github.com/BrendanJamesLynskey/FPGA_Design_Agent</a> (MIT licence). Every number on these pages is read from a committed result file; development results are labelled as such and are not the held-out score.</p></div></footer>
+<footer><div class="wrap"><p>Designed by Brendan Lynskey. Code and results: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent">github.com/BrendanJamesLynskey/FPGA_Design_Agent</a> (all rights reserved; source visible for review, see LICENSE). Every number on these pages is read from a committed result file; development results are labelled as such and are not the held-out score.</p></div></footer>
 <script type="application/json" data-key="trace">{"captions":["Coefficient 0: input 742, forward transform 1856, inverse of that 742, back to the input.","Coefficient 1: input 503, forward transform 2954, inverse of that 503, back to the input.","Coefficient 2: input 2709, forward transform 2003, inverse of that 2709, back to the input.","Coefficient 3: input 1838, forward transform 1319, inverse of that 1838, back to the input.","Coefficient 4: input 1370, forward transform 2876, inverse of that 1370, back to the input.","Coefficient 5: input 980, forward transform 1932, inverse of that 980, back to the input.","Coefficient 6: input 810, forward transform 1146, inverse of that 810, back to the input.","Coefficient 7: input 2005, forward transform 2586, inverse of that 2005, back to the input.","Coefficient 8: input 2573, forward transform 1095, inverse of that 2573, back to the input.","Coefficient 9: input 2023, forward transform 3066, inverse of that 2023, back to the input.","Coefficient 10: input 749, forward transform 1456, inverse of that 749, back to the input.","Coefficient 11: input 1965, forward transform 2260, inverse of that 1965, back to the input.","Coefficient 12: input 1210, forward transform 44, inverse of that 1210, back to the input.","Coefficient 13: input 1877, forward transform 2467, inverse of that 1877, back to the input.","Coefficient 14: input 1083, forward transform 780, inverse of that 1083, back to the input.","Coefficient 15: input 803, forward transform 519, inverse of that 803, back to the input."],"signals":[{"kind":"bus","name":"input","radix":"dec","v":[742,503,2709,1838,1370,980,810,2005,2573,2023,749,1965,1210,1877,1083,803],"width":12},{"kind":"bus","name":"after forward NTT","radix":"dec","v":[1856,2954,2003,1319,2876,1932,1146,2586,1095,3066,1456,2260,44,2467,780,519],"width":12},{"kind":"bus","name":"after inverse NTT","radix":"dec","v":[742,503,2709,1838,1370,980,810,2005,2573,2023,749,1965,1210,1877,1083,803],"width":12}],"stimulus":"The random polynomial of 256 coefficients (modulo 3329) from the model, put through the forward transform and then the inverse; the first 16 coefficients are shown.","unit":"coefficient","x":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]}</script>
 <script>/* FPGA Design Agent site. No dependencies. Every animation is frame(step) over a state list built from site/data/*.json. */
 (function () {
@@ -2261,6 +2296,20 @@ LD_PTR, RD_PTR, LD_DATA, START_FWD, START_INV, STATUS, RD_DATA, CYCLES = range(8
   }
   openHash();
   window.addEventListener("hashchange", openHash);
+})();
+
+// brief 81: replay of a recorded counterexample: the slider hides the steps after the chosen one
+(function () {
+  document.querySelectorAll('.cexfig').forEach(function (f) {
+    var r = f.querySelector('input[type=range]'), fut = f.querySelector('.cxfut'), pos = f.querySelector('.cexpos'), lab = f.querySelector('.cxstep');
+    var n = +f.dataset.cycles, lx = +f.dataset.lx, cw = +f.dataset.cw, w = +f.dataset.w;
+    function set() {
+      var k = +r.value, x = lx + (k + 1) * cw;
+      fut.setAttribute('x', x); fut.setAttribute('width', Math.max(0, w - x));
+      pos.textContent = k; if (lab) lab.textContent = 'step ' + k;
+    }
+    r.addEventListener('input', set); set();
+  });
 })();
 </script>
 </body>

@@ -606,11 +606,46 @@ svg .bdtick { stroke: var(--ink-3); }
   .tl li { grid-template-columns: 1fr; }
   .tld { padding: 0 0 .1em; }
 }
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.mx td.mk, .mx th.mk { text-align: center; white-space: normal; min-width: 6.5em; position: relative; }
+.mx th[scope="row"] { font-weight: 400; color: var(--ink); min-width: 14em; }
+.mx tfoot th, .mx tfoot td { border-top: 2px solid var(--ink); font-weight: 600; }
+.sq { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--ink); vertical-align: middle; line-height: 12px; text-align: center; box-sizing: border-box; }
+.sq.y { background: var(--ink); }
+.sq.n { background: transparent; border-color: var(--ink-3); border-style: dashed; }
+.sq.na { border: 0; color: var(--ink-3); }
+.map code { white-space: normal; overflow-wrap: anywhere; display: inline-block; margin: 0 4px 4px 0; font-size: .75rem; }
+.map th[scope="row"] { min-width: 12em; font-weight: 600; }
+.map td { min-width: 8em; }
+.map { table-layout: auto; }
+.pin { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.pstep { border: 1px solid var(--rule); background: var(--panel); padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; max-width: none; }
+.pstep.bad { border: 2px solid var(--warn); }
+.ptag { font: 700 .75rem var(--f-mono); text-transform: uppercase; color: var(--ink-3); }
+.pstep.bad .ptag { color: var(--warn); }
+.sfig .sbad { fill: var(--warn); }
+.sfig .ftick { stroke: var(--ink); stroke-width: 2.5; }
+.sfig .sunk { fill: none; stroke: var(--ink-3); stroke-dasharray: 4 3; }
+.sfig .sbar2 { fill: var(--ink); }
+.mxfig td.num { font-family: var(--f-mono); }
+.cexfig .cxh { fill: var(--ink); }
+.cexfig .cxl { fill: var(--ink-3); }
+.cexfig .cxfut { fill: var(--bg); opacity: .85; }
+.cexfig .ctl { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+.mx th[scope="row"] { min-width: 10em; }
+@media (max-width: 700px) {
+  .map thead { display: none; }
+  .map, .map tbody, .map tr, .map td, .map th { display: block; min-width: 0; width: 100%; }
+  .map tr { border-bottom: 2px solid var(--rule); padding: 6px 0; }
+  .map td { border: 0; padding: 2px 10px; }
+  .map td:not(:has(code)) { display: none; }
+  .map td::before { content: attr(data-label) ": "; font-size: .78rem; color: var(--ink-3); display: block; }
+}
 </style>
 </head>
 <body>
 <a class="visually-hidden" href="#main">Skip to content</a>
-<header class="bar"><div class="wrap"><a class="brand" href="../index.html">FPGA Design Agent</a><nav aria-label="Pages"><a href="../agent.html">The agent</a><a class="sub" href="../agent.html#harness">Harness</a><a href="../story.html">How it was built</a><a href="../how.html">How it works</a><a href="../flow-notes.html">Beyond the flow</a><a href="../expertise.html">Expertise</a><a href="../examples.html">Examples</a><a href="../showcase.html">Showcase</a><a href="../problems.html" aria-current="page">Problems</a><a href="../evaluation.html">Evaluation</a><a href="../results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
+<header class="bar"><div class="wrap"><a class="brand" href="../index.html">FPGA Design Agent</a><nav aria-label="Pages"><a href="../agent.html">The agent</a><a class="sub" href="../agent.html#harness">Harness</a><a href="../story.html">How it was built</a><a href="../how.html">How it works</a><a href="../verification.html">Verification</a><a href="../flow-notes.html">Beyond the flow</a><a href="../expertise.html">Expertise</a><a href="../examples.html">Examples</a><a href="../showcase.html">Showcase</a><a href="../problems.html" aria-current="page">Problems</a><a href="../evaluation.html">Evaluation</a><a href="../results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
 <main id="main" class="wrap">
 <p class="crumbs small"><a href="../problems.html">Problems</a> / <a href="../problems.html#dom-A">A. Basic digital design drills</a></p>
 <h1>Gray-code stepper on the LEDs</h1>
@@ -642,8 +677,8 @@ svg .bdtick { stroke: var(--ink-3); }
 <p>Each is a small edit to the reference RTL. In the committed check (icarus, 2026-11-10, <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/results/reference/t1_gray_stepper__icarus.json"><code>t1_gray_stepper__icarus.json</code></a>) the reference passed all 9 hidden tests and 9 of 9 mutants failed them.</p>
 <div class="tablewrap" tabindex="0"><table><thead><tr><th>Mutant</th><th>File</th><th>The bug</th><th>Hidden tests that fail</th></tr></thead><tbody><tr><td><code>gray_wrong_shift</code></td><td><code>gray_stepper.sv</code></td><td>Gray conversion shifts the wrong way: several LEDs change per step</td><td><code>test_press_steps_both_ways</code>, <code>test_wrap_changes_one_led</code>, <code>test_every_transition_one_bit</code>, <code>test_auto_rate_exact</code>, <code>test_press_during_auto</code>, <code>test_debounce_rejects_bounce</code>, <code>test_random_sequence</code></td></tr><tr><td><code>direction_inverted</code></td><td><code>gray_stepper.sv</code></td><td>SW[15] = 1 counts up</td><td><code>test_press_steps_both_ways</code>, <code>test_wrap_changes_one_led</code>, <code>test_every_transition_one_bit</code>, <code>test_auto_rate_exact</code>, <code>test_press_during_auto</code>, <code>test_debounce_rejects_bounce</code>, <code>test_random_sequence</code></td></tr><tr><td><code>leds_binary</code></td><td><code>gray_stepper.sv</code></td><td>LEDs show the binary count</td><td><code>test_press_steps_both_ways</code>, <code>test_wrap_changes_one_led</code>, <code>test_every_transition_one_bit</code>, <code>test_auto_rate_exact</code>, <code>test_press_during_auto</code>, <code>test_register_rules</code>, <code>test_random_sequence</code></td></tr><tr><td><code>rate_off_by_one</code></td><td><code>gray_stepper.sv</code></td><td>automatic steps RATE + 1 ticks apart</td><td><code>test_every_transition_one_bit</code>, <code>test_auto_rate_exact</code>, <code>test_press_during_auto</code></td></tr><tr><td><code>auto_ignored</code></td><td><code>gray_stepper.sv</code></td><td>automatic stepping runs with AUTO off</td><td><code>test_identity_and_reset</code>, <code>test_press_steps_both_ways</code>, <code>test_wrap_changes_one_led</code>, <code>test_every_transition_one_bit</code>, <code>test_auto_rate_exact</code>, <code>test_press_during_auto</code>, <code>test_debounce_rejects_bounce</code>, <code>test_register_rules</code>, <code>test_random_sequence</code></td></tr><tr><td><code>wrap_at_1000</code></td><td><code>gray_stepper.sv</code></td><td>counter wraps at 1000 (decimal habit): the wrap changes several LEDs</td><td><code>test_press_steps_both_ways</code>, <code>test_wrap_changes_one_led</code>, <code>test_every_transition_one_bit</code>, <code>test_auto_rate_exact</code></td></tr><tr><td><code>steps_count_writes</code></td><td><code>gray_stepper.sv</code></td><td>a BIN write counts as a step</td><td><code>test_wrap_changes_one_led</code>, <code>test_auto_rate_exact</code>, <code>test_register_rules</code>, <code>test_random_sequence</code></td></tr><tr><td><code>debounce_half</code></td><td><code>bm_debounce.sv</code></td><td>debounce accepts pulses of half the time</td><td><code>test_debounce_rejects_bounce</code></td></tr><tr><td><code>press_restarts_prescaler</code></td><td><code>gray_stepper.sv</code></td><td>a button press moves the automatic grid</td><td><code>test_press_during_auto</code></td></tr></tbody></table></div>
 <h2>Sample solution</h2>
-<p class="note">Hand-written reference for the benchmark, not agent output; it passes every test, and the listed mutants fail them. With it, the hidden cocotb tests and the golden model. Repository licence: MIT.</p>
-<details class="code"><summary><span class="mono">bm_debounce.sv</span> <span class="muted small">reference RTL, 35 lines</span></summary><div class="codebar small"><a href="t1_gray_stepper/bm_debounce.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t1_gray_stepper/ref/rtl/bm_debounce.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// bm_debounce.sv: two-flop synchroniser, then a counting debounce. The level</span>
+<p class="note">Hand-written reference for the benchmark, not agent output; it passes every test, and the listed mutants fail them. With it, the hidden cocotb tests and the golden model. Repository licence: all rights reserved (source visible for review).</p>
+<details class="code"><summary><span class="mono">bm_debounce.sv</span> <span class="muted small">reference RTL, 35 lines</span></summary><div class="codebar small"><a href="t1_gray_stepper/bm_debounce.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t1_gray_stepper/ref/rtl/bm_debounce.sv">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hc">// bm_debounce.sv: two-flop synchroniser, then a counting debounce. The level</span>
 <span class="hc">// changes only after the synchronised input has differed from it for CYCLES</span>
 <span class="hc">// consecutive clocks; a shorter difference restarts the count. rise is a</span>
 <span class="hc">// one-clock pulse on each 0 -&gt; 1 change of the level.</span>
@@ -678,7 +713,7 @@ svg .bdtick { stroke: var(--ink-3); }
         <span class="hk">end</span>
     <span class="hk">end</span>
 <span class="hk">endmodule</span>
-</code></pre></details><details class="code"><summary><span class="mono">gray_stepper.sv</span> <span class="muted small">reference RTL, 94 lines</span></summary><div class="codebar small"><a href="t1_gray_stepper/gray_stepper.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t1_gray_stepper/ref/rtl/gray_stepper.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// gray_stepper.sv: 10-bit binary count shown as reflected Gray code, stepped by</span>
+</code></pre></details><details class="code"><summary><span class="mono">gray_stepper.sv</span> <span class="muted small">reference RTL, 94 lines</span></summary><div class="codebar small"><a href="t1_gray_stepper/gray_stepper.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t1_gray_stepper/ref/rtl/gray_stepper.sv">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hc">// gray_stepper.sv: 10-bit binary count shown as reflected Gray code, stepped by</span>
 <span class="hc">// debounced BTNU presses and by an automatic rate, for t1_gray_stepper.</span>
 <span class="hk">module</span> gray_stepper #(
     <span class="hk">parameter</span> <span class="hk">int</span> DEBOUNCE_CYCLES = 1_000_000,
@@ -772,7 +807,7 @@ svg .bdtick { stroke: var(--ink-3); }
         <span class="hk">end</span>
     <span class="hk">end</span>
 <span class="hk">endmodule</span>
-</code></pre></details><details class="code"><summary><span class="mono">t1_gray_stepper_top.sv</span> <span class="muted small">reference RTL, 33 lines</span></summary><div class="codebar small"><a href="t1_gray_stepper/t1_gray_stepper_top.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t1_gray_stepper/ref/rtl/t1_gray_stepper_top.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// t1_gray_stepper_top.sv: board top (Nexys A7-100T, master-XDC port names).</span>
+</code></pre></details><details class="code"><summary><span class="mono">t1_gray_stepper_top.sv</span> <span class="muted small">reference RTL, 33 lines</span></summary><div class="codebar small"><a href="t1_gray_stepper/t1_gray_stepper_top.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t1_gray_stepper/ref/rtl/t1_gray_stepper_top.sv">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hc">// t1_gray_stepper_top.sv: board top (Nexys A7-100T, master-XDC port names).</span>
 <span class="hc">// Reference design for benchmark task t1_gray_stepper; DESIGN_ID &quot;GRAY&quot;.</span>
 <span class="hk">module</span> t1_gray_stepper_top #(
     <span class="hk">parameter</span> <span class="hk">int</span>          CLKS_PER_BIT    = 868,
@@ -805,7 +840,7 @@ svg .bdtick { stroke: var(--ink-3); }
         .clk(clk), .rst(rst), .btn(BTNU), .dir_async(SW[15]), .led(LED),
         .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));
 <span class="hk">endmodule</span>
-</code></pre></details><details class="code"><summary><span class="mono">acceptance.py</span> <span class="muted small">hidden cocotb acceptance tests, 276 lines</span></summary><div class="codebar small"><a href="t1_gray_stepper/acceptance.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t1_gray_stepper/hidden/acceptance.py">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;Acceptance tests of t1_gray_stepper against model.py (hidden from the agent).&quot;&quot;&quot;</span>
+</code></pre></details><details class="code"><summary><span class="mono">acceptance.py</span> <span class="muted small">hidden cocotb acceptance tests, 276 lines</span></summary><div class="codebar small"><a href="t1_gray_stepper/acceptance.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t1_gray_stepper/hidden/acceptance.py">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;Acceptance tests of t1_gray_stepper against model.py (hidden from the agent).&quot;&quot;&quot;</span>
 
 <span class="hk">from</span> __future__ <span class="hk">import</span> annotations
 
@@ -1081,7 +1116,7 @@ NAMES = (<span class="hs">&quot;GRAY&quot;</span>, <span class="hs">&quot;BIN&qu
             <span class="hk">assert</span> len(e.w.take()) == 1
     <span class="hk">await</span> e.check_regs()
     <span class="hk">await</span> e.check_leds()
-</code></pre></details><details class="code"><summary><span class="mono">model.py</span> <span class="muted small">golden model, 51 lines</span></summary><div class="codebar small"><a href="t1_gray_stepper/model.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t1_gray_stepper/hidden/model.py">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;Golden model of t1_gray_stepper, written from spec.yaml alone (never from any RTL).&quot;&quot;&quot;</span>
+</code></pre></details><details class="code"><summary><span class="mono">model.py</span> <span class="muted small">golden model, 51 lines</span></summary><div class="codebar small"><a href="t1_gray_stepper/model.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t1_gray_stepper/hidden/model.py">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;Golden model of t1_gray_stepper, written from spec.yaml alone (never from any RTL).&quot;&quot;&quot;</span>
 
 <span class="hk">from</span> __future__ <span class="hk">import</span> annotations
 
@@ -1139,7 +1174,7 @@ DESIGN_ID = 0x47524159          <span class="hc"># &quot;GRAY&quot;</span>
 
 <div class="pager"><a href="../problems.html">&larr; All problems</a><span></span></div>
 </main>
-<footer><div class="wrap"><p>Designed by Brendan Lynskey. Code and results: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent">github.com/BrendanJamesLynskey/FPGA_Design_Agent</a> (MIT licence). Every number on these pages is read from a committed result file; development results are labelled as such and are not the held-out score.</p></div></footer>
+<footer><div class="wrap"><p>Designed by Brendan Lynskey. Code and results: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent">github.com/BrendanJamesLynskey/FPGA_Design_Agent</a> (all rights reserved; source visible for review, see LICENSE). Every number on these pages is read from a committed result file; development results are labelled as such and are not the held-out score.</p></div></footer>
 <script type="application/json" data-key="trace">{"captions":["Step 0: the count is set to 1019, so the LEDs show Gray code 1000000110.","Step 1: up to count 1020, Gray 1000000010; 1 LED changed.","Step 2: up to count 1021, Gray 1000000011; 1 LED changed.","Step 3: up to count 1022, Gray 1000000001; 1 LED changed.","Step 4: up to count 1023, Gray 1000000000; 1 LED changed.","Step 5: up to count 0, Gray 0000000000; 1 LED changed.","Step 6: up to count 1, Gray 0000000001; 1 LED changed.","Step 7: up to count 2, Gray 0000000011; 1 LED changed.","Step 8: up to count 3, Gray 0000000010; 1 LED changed.","Step 9: down to count 2, Gray 0000000011; 1 LED changed.","Step 10: down to count 1, Gray 0000000001; 1 LED changed.","Step 11: down to count 0, Gray 0000000000; 1 LED changed.","Step 12: down to count 1023, Gray 1000000000; 1 LED changed.","Step 13: down to count 1022, Gray 1000000001; 1 LED changed.","Step 14: down to count 1021, Gray 1000000011; 1 LED changed.","Step 15: down to count 1020, Gray 1000000010; 1 LED changed.","Step 16: down to count 1019, Gray 1000000110; 1 LED changed.","Step 17: down to count 1018, Gray 1000000111; 1 LED changed.","Step 18: down to count 1017, Gray 1000000101; 1 LED changed.","Step 19: down to count 1016, Gray 1000000100; 1 LED changed.","Step 20: down to count 1015, Gray 1000001100; 1 LED changed."],"signals":[{"kind":"bus","name":"BIN","radix":"dec","v":[1019,1020,1021,1022,1023,0,1,2,3,2,1,0,1023,1022,1021,1020,1019,1018,1017,1016,1015]},{"kind":"bus","name":"GRAY","radix":"bin","v":[518,514,515,513,512,0,1,3,2,3,1,0,512,513,515,514,518,519,517,516,524],"width":10},{"kind":"bus","name":"LEDs changed","radix":"dec","v":[0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]}],"stimulus":"The count is set to 1019, then stepped up 8 times (past the top of the range) and down 12 times (past the bottom of the range again).","unit":"step","x":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]}</script>
 <script>/* FPGA Design Agent site. No dependencies. Every animation is frame(step) over a state list built from site/data/*.json. */
 (function () {
@@ -2255,6 +2290,20 @@ DESIGN_ID = 0x47524159          <span class="hc"># &quot;GRAY&quot;</span>
   }
   openHash();
   window.addEventListener("hashchange", openHash);
+})();
+
+// brief 81: replay of a recorded counterexample: the slider hides the steps after the chosen one
+(function () {
+  document.querySelectorAll('.cexfig').forEach(function (f) {
+    var r = f.querySelector('input[type=range]'), fut = f.querySelector('.cxfut'), pos = f.querySelector('.cexpos'), lab = f.querySelector('.cxstep');
+    var n = +f.dataset.cycles, lx = +f.dataset.lx, cw = +f.dataset.cw, w = +f.dataset.w;
+    function set() {
+      var k = +r.value, x = lx + (k + 1) * cw;
+      fut.setAttribute('x', x); fut.setAttribute('width', Math.max(0, w - x));
+      pos.textContent = k; if (lab) lab.textContent = 'step ' + k;
+    }
+    r.addEventListener('input', set); set();
+  });
 })();
 </script>
 </body>

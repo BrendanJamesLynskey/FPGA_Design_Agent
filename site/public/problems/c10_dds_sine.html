@@ -606,11 +606,46 @@ svg .bdtick { stroke: var(--ink-3); }
   .tl li { grid-template-columns: 1fr; }
   .tld { padding: 0 0 .1em; }
 }
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.mx td.mk, .mx th.mk { text-align: center; white-space: normal; min-width: 6.5em; position: relative; }
+.mx th[scope="row"] { font-weight: 400; color: var(--ink); min-width: 14em; }
+.mx tfoot th, .mx tfoot td { border-top: 2px solid var(--ink); font-weight: 600; }
+.sq { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--ink); vertical-align: middle; line-height: 12px; text-align: center; box-sizing: border-box; }
+.sq.y { background: var(--ink); }
+.sq.n { background: transparent; border-color: var(--ink-3); border-style: dashed; }
+.sq.na { border: 0; color: var(--ink-3); }
+.map code { white-space: normal; overflow-wrap: anywhere; display: inline-block; margin: 0 4px 4px 0; font-size: .75rem; }
+.map th[scope="row"] { min-width: 12em; font-weight: 600; }
+.map td { min-width: 8em; }
+.map { table-layout: auto; }
+.pin { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.pstep { border: 1px solid var(--rule); background: var(--panel); padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; max-width: none; }
+.pstep.bad { border: 2px solid var(--warn); }
+.ptag { font: 700 .75rem var(--f-mono); text-transform: uppercase; color: var(--ink-3); }
+.pstep.bad .ptag { color: var(--warn); }
+.sfig .sbad { fill: var(--warn); }
+.sfig .ftick { stroke: var(--ink); stroke-width: 2.5; }
+.sfig .sunk { fill: none; stroke: var(--ink-3); stroke-dasharray: 4 3; }
+.sfig .sbar2 { fill: var(--ink); }
+.mxfig td.num { font-family: var(--f-mono); }
+.cexfig .cxh { fill: var(--ink); }
+.cexfig .cxl { fill: var(--ink-3); }
+.cexfig .cxfut { fill: var(--bg); opacity: .85; }
+.cexfig .ctl { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+.mx th[scope="row"] { min-width: 10em; }
+@media (max-width: 700px) {
+  .map thead { display: none; }
+  .map, .map tbody, .map tr, .map td, .map th { display: block; min-width: 0; width: 100%; }
+  .map tr { border-bottom: 2px solid var(--rule); padding: 6px 0; }
+  .map td { border: 0; padding: 2px 10px; }
+  .map td:not(:has(code)) { display: none; }
+  .map td::before { content: attr(data-label) ": "; font-size: .78rem; color: var(--ink-3); display: block; }
+}
 </style>
 </head>
 <body>
 <a class="visually-hidden" href="#main">Skip to content</a>
-<header class="bar"><div class="wrap"><a class="brand" href="../index.html">FPGA Design Agent</a><nav aria-label="Pages"><a href="../agent.html">The agent</a><a class="sub" href="../agent.html#harness">Harness</a><a href="../story.html">How it was built</a><a href="../how.html">How it works</a><a href="../flow-notes.html">Beyond the flow</a><a href="../expertise.html">Expertise</a><a href="../examples.html">Examples</a><a href="../showcase.html">Showcase</a><a href="../problems.html" aria-current="page">Problems</a><a href="../evaluation.html">Evaluation</a><a href="../results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
+<header class="bar"><div class="wrap"><a class="brand" href="../index.html">FPGA Design Agent</a><nav aria-label="Pages"><a href="../agent.html">The agent</a><a class="sub" href="../agent.html#harness">Harness</a><a href="../story.html">How it was built</a><a href="../how.html">How it works</a><a href="../verification.html">Verification</a><a href="../flow-notes.html">Beyond the flow</a><a href="../expertise.html">Expertise</a><a href="../examples.html">Examples</a><a href="../showcase.html">Showcase</a><a href="../problems.html" aria-current="page">Problems</a><a href="../evaluation.html">Evaluation</a><a href="../results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
 <main id="main" class="wrap">
 <p class="crumbs small"><a href="../problems.html">Problems</a> / <a href="../problems.html#dom-B">B. DSP</a></p>
 <h1>Sine-wave generator behind the test shell</h1>
@@ -642,8 +677,8 @@ svg .bdtick { stroke: var(--ink-3); }
 <p>Each is a small edit to the reference RTL. In the committed check (icarus, 2026-11-10, <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/results/c10_dds_sine__icarus.json"><code>c10_dds_sine__icarus.json</code></a>) the reference passed all 3 hidden tests and 7 of 7 mutants failed them.</p>
 <div class="tablewrap" tabindex="0"><table><thead><tr><th>Mutant</th><th>File</th><th>The bug</th><th>Hidden tests that fail</th></tr></thead><tbody><tr><td><code>wrong_address_bits</code></td><td><code>dds.sv</code></td><td>table addressed by the wrong 8 phase bits</td><td><code>test_each_frequency_word_sample_for_sample</code>, <code>test_restart_and_pointer</code></td></tr><tr><td><code>amplitude_2048</code></td><td><code>dds.sv</code></td><td>table peak 2048 wraps to -2048</td><td><code>test_each_frequency_word_sample_for_sample</code>, <code>test_restart_and_pointer</code></td></tr><tr><td><code>no_rounding</code></td><td><code>dds.sv</code></td><td>table entries truncated instead of rounded</td><td><code>test_each_frequency_word_sample_for_sample</code>, <code>test_restart_and_pointer</code></td></tr><tr><td><code>phase_step_doubled</code></td><td><code>dds.sv</code></td><td>frequency twice the word</td><td><code>test_each_frequency_word_sample_for_sample</code>, <code>test_restart_and_pointer</code></td></tr><tr><td><code>reset_keeps_phase</code></td><td><code>dds.sv</code></td><td>reset does not clear the phase, so a second run starts mid-cycle</td><td><code>test_each_frequency_word_sample_for_sample</code>, <code>test_restart_and_pointer</code></td></tr><tr><td><code>phase_one_clock_late</code></td><td><code>dds.sv</code></td><td>table read from the already advanced phase</td><td><code>test_each_frequency_word_sample_for_sample</code>, <code>test_restart_and_pointer</code></td></tr><tr><td><code>fw_r_not_reset</code></td><td><code>c10_dds_sine_regs.sv</code></td><td>CPU_RESETN does not reset fw_r (amended 2026-11-10: the reset test now kills a mutant)</td><td><code>test_identity_and_reset</code>, <code>test_restart_and_pointer</code></td></tr></tbody></table></div>
 <h2>Sample solution</h2>
-<p class="note">Hand-written reference for the benchmark, not agent output; it passes every test, and the listed mutants fail them. With it, the hidden cocotb tests and the golden model. Repository licence: MIT.</p>
-<details class="code"><summary><span class="mono">c10_dds_sine_regs.sv</span> <span class="muted small">reference RTL, 54 lines</span></summary><div class="codebar small"><a href="c10_dds_sine/c10_dds_sine_regs.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c10_dds_sine/ref/rtl/c10_dds_sine_regs.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// c10_dds_sine_regs.sv: the shell window of course task c10_dds_sine (frequency word, recording of 1200 samples, packed read port).</span>
+<p class="note">Hand-written reference for the benchmark, not agent output; it passes every test, and the listed mutants fail them. With it, the hidden cocotb tests and the golden model. Repository licence: all rights reserved (source visible for review).</p>
+<details class="code"><summary><span class="mono">c10_dds_sine_regs.sv</span> <span class="muted small">reference RTL, 54 lines</span></summary><div class="codebar small"><a href="c10_dds_sine/c10_dds_sine_regs.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c10_dds_sine/ref/rtl/c10_dds_sine_regs.sv">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hc">// c10_dds_sine_regs.sv: the shell window of course task c10_dds_sine (frequency word, recording of 1200 samples, packed read port).</span>
 <span class="hk">module</span> c10_dds_sine_regs (
     <span class="hk">input</span>  <span class="hk">logic</span>        clk,
     <span class="hk">input</span>  <span class="hk">logic</span>        rst,
@@ -697,7 +732,7 @@ svg .bdtick { stroke: var(--ink-3); }
         <span class="hk">end</span>
     <span class="hk">end</span>
 <span class="hk">endmodule</span>
-</code></pre></details><details class="code"><summary><span class="mono">c10_dds_sine_top.sv</span> <span class="muted small">reference RTL, 29 lines</span></summary><div class="codebar small"><a href="c10_dds_sine/c10_dds_sine_top.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c10_dds_sine/ref/rtl/c10_dds_sine_top.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// c10_dds_sine_top.sv: board top (Nexys A7-100T, master-XDC port names), test shell DESIGN_ID &quot;DDSN&quot;.</span>
+</code></pre></details><details class="code"><summary><span class="mono">c10_dds_sine_top.sv</span> <span class="muted small">reference RTL, 29 lines</span></summary><div class="codebar small"><a href="c10_dds_sine/c10_dds_sine_top.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c10_dds_sine/ref/rtl/c10_dds_sine_top.sv">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hc">// c10_dds_sine_top.sv: board top (Nexys A7-100T, master-XDC port names), test shell DESIGN_ID &quot;DDSN&quot;.</span>
 <span class="hc">// Reference design for course task c10_dds_sine; the shell window is wired to c10_dds_sine_regs.</span>
 <span class="hk">module</span> c10_dds_sine_top #(
     <span class="hk">parameter</span> <span class="hk">int</span>          CLKS_PER_BIT   = 868,
@@ -726,7 +761,7 @@ svg .bdtick { stroke: var(--ink-3); }
         .clk(clk), .rst(rst), .led(LED),
         .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));
 <span class="hk">endmodule</span>
-</code></pre></details><details class="code"><summary><span class="mono">dds.sv</span> <span class="muted small">reference RTL, 35 lines</span></summary><div class="codebar small"><a href="c10_dds_sine/dds.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c10_dds_sine/ref/rtl/dds.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// Part 10 lesson 5 exercise: a direct digital synthesiser: a phase accumulator, a sine look-up table and a registered output.</span>
+</code></pre></details><details class="code"><summary><span class="mono">dds.sv</span> <span class="muted small">reference RTL, 35 lines</span></summary><div class="codebar small"><a href="c10_dds_sine/dds.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c10_dds_sine/ref/rtl/dds.sv">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hc">// Part 10 lesson 5 exercise: a direct digital synthesiser: a phase accumulator, a sine look-up table and a registered output.</span>
 <span class="hc">//</span>
 <span class="hc">// Every clock: acc &lt;= acc + fw (AW bits, wraps), and out_data &lt;= LUT[top LA bits of the OLD acc]. So out_data on clock k (k = 0 for the first clock</span>
 <span class="hc">// after reset is released) is LUT[(k * fw mod 2^AW) &gt;&gt; (AW - LA)] and the low AW - LA bits of the phase are thrown away (phase truncation, which</span>
@@ -761,7 +796,7 @@ svg .bdtick { stroke: var(--ink-3); }
         <span class="hk">end</span>
     <span class="hk">end</span>
 <span class="hk">endmodule</span>
-</code></pre></details><details class="code"><summary><span class="mono">acceptance.py</span> <span class="muted small">hidden cocotb acceptance tests, 69 lines</span></summary><div class="codebar small"><a href="c10_dds_sine/acceptance.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c10_dds_sine/hidden/acceptance.py">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;Acceptance tests of c10_dds_sine against model.py (hidden from the agent).&quot;&quot;&quot;</span>
+</code></pre></details><details class="code"><summary><span class="mono">acceptance.py</span> <span class="muted small">hidden cocotb acceptance tests, 69 lines</span></summary><div class="codebar small"><a href="c10_dds_sine/acceptance.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c10_dds_sine/hidden/acceptance.py">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;Acceptance tests of c10_dds_sine against model.py (hidden from the agent).&quot;&quot;&quot;</span>
 
 <span class="hk">from</span> __future__ <span class="hk">import</span> annotations
 
@@ -830,7 +865,7 @@ svg .bdtick { stroke: var(--ink-3); }
     <span class="hk">await</span> b.reset()
     <span class="hk">for</span> off <span class="hk">in</span> (FW, STATUS, PTR, DATA):
         <span class="hk">await</span> b.expect(off, 0, f<span class="hs">&quot;{off:#x} after reset&quot;</span>)
-</code></pre></details><details class="code"><summary><span class="mono">model.py</span> <span class="muted small">golden model, 24 lines</span></summary><div class="codebar small"><a href="c10_dds_sine/model.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c10_dds_sine/hidden/model.py">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;Reference model for P10-2 (phase-truncated DDS), sample for sample. Standalone: python only.&quot;&quot;&quot;</span>
+</code></pre></details><details class="code"><summary><span class="mono">model.py</span> <span class="muted small">golden model, 24 lines</span></summary><div class="codebar small"><a href="c10_dds_sine/model.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c10_dds_sine/hidden/model.py">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;Reference model for P10-2 (phase-truncated DDS), sample for sample. Standalone: python only.&quot;&quot;&quot;</span>
 <span class="hk">import</span> math
 
 AW, LA, OW = 24, 8, 12
@@ -861,7 +896,7 @@ FW, GO, STATUS, PTR, DATA = 0x00, 0x01, 0x02, 0x03, 0x04
 
 <div class="pager"><a href="../problems.html">&larr; All problems</a><span></span></div>
 </main>
-<footer><div class="wrap"><p>Designed by Brendan Lynskey. Code and results: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent">github.com/BrendanJamesLynskey/FPGA_Design_Agent</a> (MIT licence). Every number on these pages is read from a committed result file; development results are labelled as such and are not the held-out score.</p></div></footer>
+<footer><div class="wrap"><p>Designed by Brendan Lynskey. Code and results: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent">github.com/BrendanJamesLynskey/FPGA_Design_Agent</a> (all rights reserved; source visible for review, see LICENSE). Every number on these pages is read from a committed result file; development results are labelled as such and are not the held-out score.</p></div></footer>
 <script type="application/json" data-key="trace">{"captions":["Sample 0: phase 0x000000, top 8 bits address table entry 0, output 0.","Sample 1: phase 0x0a3d71, top 8 bits address table entry 10, output 497.","Sample 2: phase 0x147ae2, top 8 bits address table entry 20, output 965.","Sample 3: phase 0x1eb853, top 8 bits address table entry 30, output 1375.","Sample 4: phase 0x28f5c4, top 8 bits address table entry 40, output 1702.","Sample 5: phase 0x333335, top 8 bits address table entry 51, output 1944.","Sample 6: phase 0x3d70a6, top 8 bits address table entry 61, output 2041.","Sample 7: phase 0x47ae17, top 8 bits address table entry 71, output 2017.","Sample 8: phase 0x51eb88, top 8 bits address table entry 81, output 1871.","Sample 9: phase 0x5c28f9, top 8 bits address table entry 92, output 1582.","Sample 10: phase 0x66666a, top 8 bits address table entry 102, output 1219.","Sample 11: phase 0x70a3db, top 8 bits address table entry 112, output 783.","Sample 12: phase 0x7ae14c, top 8 bits address table entry 122, output 300.","Sample 13: phase 0x851ebd, top 8 bits address table entry 133, output -251.","Sample 14: phase 0x8f5c2e, top 8 bits address table entry 143, output -737.","Sample 15: phase 0x99999f, top 8 bits address table entry 153, output -1179.","Sample 16: phase 0xa3d710, top 8 bits address table entry 163, output -1550.","Sample 17: phase 0xae1481, top 8 bits address table entry 174, output -1850.","Sample 18: phase 0xb851f2, top 8 bits address table entry 184, output -2008.","Sample 19: phase 0xc28f63, top 8 bits address table entry 194, output -2045.","Sample 20: phase 0xccccd4, top 8 bits address table entry 204, output -1959.","Sample 21: phase 0xd70a45, top 8 bits address table entry 215, output -1729.","Sample 22: phase 0xe147b6, top 8 bits address table entry 225, output -1411.","Sample 23: phase 0xeb8527, top 8 bits address table entry 235, output -1009.","Sample 24: phase 0xf5c298, top 8 bits address table entry 245, output -546.","Sample 25: phase 0x000009, top 8 bits address table entry 0, output 0.","Sample 26: phase 0x0a3d7a, top 8 bits address table entry 10, output 497.","Sample 27: phase 0x147aeb, top 8 bits address table entry 20, output 965.","Sample 28: phase 0x1eb85c, top 8 bits address table entry 30, output 1375.","Sample 29: phase 0x28f5cd, top 8 bits address table entry 40, output 1702.","Sample 30: phase 0x33333e, top 8 bits address table entry 51, output 1944.","Sample 31: phase 0x3d70af, top 8 bits address table entry 61, output 2041.","Sample 32: phase 0x47ae20, top 8 bits address table entry 71, output 2017.","Sample 33: phase 0x51eb91, top 8 bits address table entry 81, output 1871.","Sample 34: phase 0x5c2902, top 8 bits address table entry 92, output 1582.","Sample 35: phase 0x666673, top 8 bits address table entry 102, output 1219.","Sample 36: phase 0x70a3e4, top 8 bits address table entry 112, output 783.","Sample 37: phase 0x7ae155, top 8 bits address table entry 122, output 300.","Sample 38: phase 0x851ec6, top 8 bits address table entry 133, output -251.","Sample 39: phase 0x8f5c37, top 8 bits address table entry 143, output -737.","Sample 40: phase 0x9999a8, top 8 bits address table entry 153, output -1179.","Sample 41: phase 0xa3d719, top 8 bits address table entry 163, output -1550.","Sample 42: phase 0xae148a, top 8 bits address table entry 174, output -1850.","Sample 43: phase 0xb851fb, top 8 bits address table entry 184, output -2008.","Sample 44: phase 0xc28f6c, top 8 bits address table entry 194, output -2045.","Sample 45: phase 0xccccdd, top 8 bits address table entry 204, output -1959.","Sample 46: phase 0xd70a4e, top 8 bits address table entry 215, output -1729.","Sample 47: phase 0xe147bf, top 8 bits address table entry 225, output -1411."],"hero":{"amp":2047,"aw":24,"fw":671089,"la":8},"signals":[{"kind":"bus","name":"phase","radix":"hex","v":[0,671089,1342178,2013267,2684356,3355445,4026534,4697623,5368712,6039801,6710890,7381979,8053068,8724157,9395246,10066335,10737424,11408513,12079602,12750691,13421780,14092869,14763958,15435047,16106136,9,671098,1342187,2013276,2684365,3355454,4026543,4697632,5368721,6039810,6710899,7381988,8053077,8724166,9395255,10066344,10737433,11408522,12079611,12750700,13421789,14092878,14763967],"width":24},{"kind":"bus","name":"table address","radix":"dec","v":[0,10,20,30,40,51,61,71,81,92,102,112,122,133,143,153,163,174,184,194,204,215,225,235,245,0,10,20,30,40,51,61,71,81,92,102,112,122,133,143,153,163,174,184,194,204,215,225]},{"hi":2047,"kind":"wave","lo":-2047,"name":"out","v":[0,497,965,1375,1702,1944,2041,2017,1871,1582,1219,783,300,-251,-737,-1179,-1550,-1850,-2008,-2045,-1959,-1729,-1411,-1009,-546,0,497,965,1375,1702,1944,2041,2017,1871,1582,1219,783,300,-251,-737,-1179,-1550,-1850,-2008,-2045,-1959,-1729,-1411]}],"stimulus":"Frequency word 0x0a3d71 added to a 24-bit phase every clock; the top 8 bits pick one of 256 sine-table entries, 12-bit output. The first 48 samples.","unit":"sample","x":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47]}</script>
 <script>/* FPGA Design Agent site. No dependencies. Every animation is frame(step) over a state list built from site/data/*.json. */
 (function () {
@@ -1977,6 +2012,20 @@ FW, GO, STATUS, PTR, DATA = 0x00, 0x01, 0x02, 0x03, 0x04
   }
   openHash();
   window.addEventListener("hashchange", openHash);
+})();
+
+// brief 81: replay of a recorded counterexample: the slider hides the steps after the chosen one
+(function () {
+  document.querySelectorAll('.cexfig').forEach(function (f) {
+    var r = f.querySelector('input[type=range]'), fut = f.querySelector('.cxfut'), pos = f.querySelector('.cexpos'), lab = f.querySelector('.cxstep');
+    var n = +f.dataset.cycles, lx = +f.dataset.lx, cw = +f.dataset.cw, w = +f.dataset.w;
+    function set() {
+      var k = +r.value, x = lx + (k + 1) * cw;
+      fut.setAttribute('x', x); fut.setAttribute('width', Math.max(0, w - x));
+      pos.textContent = k; if (lab) lab.textContent = 'step ' + k;
+    }
+    r.addEventListener('input', set); set();
+  });
 })();
 </script>
 </body>

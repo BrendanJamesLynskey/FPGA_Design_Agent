@@ -81,6 +81,8 @@ def table(out: Path) -> str:
 
 
 def main(argv=None) -> int:
+    from agent.access import require_or_exit
+    require_or_exit('tools/spectest_replay.py')
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     sub = ap.add_subparsers(dest="cmd", required=True)
     r = sub.add_parser("replay")

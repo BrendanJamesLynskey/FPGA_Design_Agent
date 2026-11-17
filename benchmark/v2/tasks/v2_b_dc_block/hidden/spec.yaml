@@ -1,0 +1,75 @@
+# Answer key for the DC blocker: the oracle may say only what this file says about the DC blocker (brief 79, ladder); never shown to the agent.
+schema: fpga-design-agent/spec/v0
+name: v2_b_dc_block
+title: DC blocker for a microphone signal
+source: spec.md
+tier: T2
+level: L1
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: v2_b_dc_block_top
+design_id: 0x4443424B          # "DCBK"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: the previous input and previous output, the queue, SAT and LOST all clear
+
+parameters:
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+
+behaviour:
+  blocker:
+    - "For each written sample x (16-bit signed, bits [15:0] of the written word) with the previous input xp and the previous output yp (both 0 at start): W = x - xp + yp - (yp >> 7), where >> is an arithmetic shift (floor, toward minus infinity). The pole is 1 - 2^-7."
+    - "Y = W limited to -32768..32767. SAT is set whenever W was outside that range and stays set until CLEAR or reset. The feedback uses the limited Y as yp, and xp = x."
+    - "Because the shift floors, a positive Y below 128 stays where it is (a small positive offset can remain); negative values fade to 0. This is the chosen behaviour, not an error."
+    - "One result per written sample, in the queue within 16 clocks."
+  queue:
+    - "Depth 4. When 4 blocked samples wait and another blocked sample comes, the oldest blocked sample is discarded so the newest 4 stay; LOST goes up until CLEAR or reset. This is the DC blocker's queue rule."
+    - "COUNT tells how many blocked samples wait. RESULT shows the oldest blocked sample as a 32-bit sign-extended number, or 0 if no blocked sample waits; a write to NEXT discards that blocked sample (ignored with nothing queued). Reading RESULT leaves the DC blocker's queue as it is."
+  clear:
+    - "A write to CTRL with bit 0 = 1 clears xp, yp, the queue, SAT and LOST. CTRL reads 0."
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.1)
+  map:
+    - {offset: 0x00, name: CTRL, note: DC-blocker, access: WO, reset: 0, bits: "[0] CLEAR the DC blocker (write 1); other bits ignored; reads 0"}
+    - {offset: 0x01, name: SAMPLE, note: DC-blocker, access: WO, reset: 0, bits: "[15:0] signed input of the DC blocker; [31:16] ignored; reads 0"}
+    - {offset: 0x02, name: STATUS, note: DC-blocker, access: RO, reset: 0, bits: "[2:0] COUNT (0..4); [3] SAT; [4] LOST; others 0"}
+    - {offset: 0x03, name: RESULT, note: DC-blocker, access: RO, reset: 0, bits: "[31:0] the oldest queued blocked sample, sign-extended; 0 when empty"}
+    - {offset: 0x04, name: NEXT, note: DC-blocker, access: WO, reset: 0, bits: "blocked sample queue: any write discards the oldest one; reads 0"}
+  unmapped: offsets 0x05-0x7F read 0; writes to them and to RO registers are ignored
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  async_inputs: CPU_RESETN and UART RX are synchronised and false-pathed
+  outputs: slow registered outputs, false-pathed
+
+requirements:
+  - {id: REQ-01, note: DC-blocker, text: "Each result equals the model: W = x - xp + yp - (yp >> 7), floor shift, limited feedback", proof: [simulation]}
+  - {id: REQ-02, note: DC-blocker, text: "A step decays to the chosen residual (positive below 128 stays, negative reaches 0), checked sample by sample", proof: [simulation]}
+  - {id: REQ-03, note: DC-blocker, text: "Results saturate at the 16-bit limits, SAT latches, and the feedback uses the limited result", proof: [simulation]}
+  - {id: REQ-04, note: DC-blocker, text: "The queue keeps the newest 4 and sets LOST whenever a blocked sample is discarded; CLEAR and reset restore the DC blocker's start state", proof: [simulation]}
+  - {id: REQ-05, note: DC-blocker, text: "Every DC blocker register answers with the listed map, reset value and access rule of the DC blocker", proof: [simulation]}
+  - {id: REQ-06, note: DC-blocker, text: "The DC blocker closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+  - {id: REQ-07, note: DC-blocker, text: "On the board the DC blocker registers answer as the model predicts", proof: [hardware]}
+
+resources_expected: "about 80 LUTs; no BRAM, no DSP"
+
+assumptions:
+  - assumption: the shift floors (arithmetic shift), which leaves a small positive residual.
+    reason: it is the cheapest hardware; a symmetric rounding rule would need extra logic. The request says only that the pole is set by a power of two.
+
+open_questions: []

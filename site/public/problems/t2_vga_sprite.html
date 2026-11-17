@@ -606,11 +606,46 @@ svg .bdtick { stroke: var(--ink-3); }
   .tl li { grid-template-columns: 1fr; }
   .tld { padding: 0 0 .1em; }
 }
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.mx td.mk, .mx th.mk { text-align: center; white-space: normal; min-width: 6.5em; position: relative; }
+.mx th[scope="row"] { font-weight: 400; color: var(--ink); min-width: 14em; }
+.mx tfoot th, .mx tfoot td { border-top: 2px solid var(--ink); font-weight: 600; }
+.sq { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--ink); vertical-align: middle; line-height: 12px; text-align: center; box-sizing: border-box; }
+.sq.y { background: var(--ink); }
+.sq.n { background: transparent; border-color: var(--ink-3); border-style: dashed; }
+.sq.na { border: 0; color: var(--ink-3); }
+.map code { white-space: normal; overflow-wrap: anywhere; display: inline-block; margin: 0 4px 4px 0; font-size: .75rem; }
+.map th[scope="row"] { min-width: 12em; font-weight: 600; }
+.map td { min-width: 8em; }
+.map { table-layout: auto; }
+.pin { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.pstep { border: 1px solid var(--rule); background: var(--panel); padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; max-width: none; }
+.pstep.bad { border: 2px solid var(--warn); }
+.ptag { font: 700 .75rem var(--f-mono); text-transform: uppercase; color: var(--ink-3); }
+.pstep.bad .ptag { color: var(--warn); }
+.sfig .sbad { fill: var(--warn); }
+.sfig .ftick { stroke: var(--ink); stroke-width: 2.5; }
+.sfig .sunk { fill: none; stroke: var(--ink-3); stroke-dasharray: 4 3; }
+.sfig .sbar2 { fill: var(--ink); }
+.mxfig td.num { font-family: var(--f-mono); }
+.cexfig .cxh { fill: var(--ink); }
+.cexfig .cxl { fill: var(--ink-3); }
+.cexfig .cxfut { fill: var(--bg); opacity: .85; }
+.cexfig .ctl { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+.mx th[scope="row"] { min-width: 10em; }
+@media (max-width: 700px) {
+  .map thead { display: none; }
+  .map, .map tbody, .map tr, .map td, .map th { display: block; min-width: 0; width: 100%; }
+  .map tr { border-bottom: 2px solid var(--rule); padding: 6px 0; }
+  .map td { border: 0; padding: 2px 10px; }
+  .map td:not(:has(code)) { display: none; }
+  .map td::before { content: attr(data-label) ": "; font-size: .78rem; color: var(--ink-3); display: block; }
+}
 </style>
 </head>
 <body>
 <a class="visually-hidden" href="#main">Skip to content</a>
-<header class="bar"><div class="wrap"><a class="brand" href="../index.html">FPGA Design Agent</a><nav aria-label="Pages"><a href="../agent.html">The agent</a><a class="sub" href="../agent.html#harness">Harness</a><a href="../story.html">How it was built</a><a href="../how.html">How it works</a><a href="../flow-notes.html">Beyond the flow</a><a href="../expertise.html">Expertise</a><a href="../examples.html">Examples</a><a href="../showcase.html">Showcase</a><a href="../problems.html" aria-current="page">Problems</a><a href="../evaluation.html">Evaluation</a><a href="../results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
+<header class="bar"><div class="wrap"><a class="brand" href="../index.html">FPGA Design Agent</a><nav aria-label="Pages"><a href="../agent.html">The agent</a><a class="sub" href="../agent.html#harness">Harness</a><a href="../story.html">How it was built</a><a href="../how.html">How it works</a><a href="../verification.html">Verification</a><a href="../flow-notes.html">Beyond the flow</a><a href="../expertise.html">Expertise</a><a href="../examples.html">Examples</a><a href="../showcase.html">Showcase</a><a href="../problems.html" aria-current="page">Problems</a><a href="../evaluation.html">Evaluation</a><a href="../results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
 <main id="main" class="wrap">
 <p class="crumbs small"><a href="../problems.html">Problems</a> / <a href="../problems.html#dom-H">H. Video and image processing</a></p>
 <h1>A bouncing 16 x 16 sprite on VGA</h1>
@@ -642,8 +677,8 @@ svg .bdtick { stroke: var(--ink-3); }
 <p>Each is a small edit to the reference RTL. In the committed check (icarus, 2026-11-04, <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/results/reference/t2_vga_sprite__icarus.json"><code>t2_vga_sprite__icarus.json</code></a>) the reference passed all 10 hidden tests and 9 of 9 mutants failed them.</p>
 <div class="tablewrap" tabindex="0"><table><thead><tr><th>Mutant</th><th>File</th><th>The bug</th><th>Hidden tests that fail</th></tr></thead><tbody><tr><td><code>bit0_leftmost</code></td><td><code>sprite_gen.sv</code></td><td>sprite mirrored (bit 0 drawn leftmost)</td><td><code>test_sprite_bitmap</code>, <code>test_bounce_and_vertical_timing</code>, <code>test_random_sprites</code></td></tr><tr><td><code>sprite_17_wide</code></td><td><code>sprite_gen.sv</code></td><td>a 17th column repeats column 0</td><td><code>test_sprite_bitmap</code>, <code>test_clipping_and_enable</code>, <code>test_bounce_and_vertical_timing</code>, <code>test_offscreen_and_disabled_inside_sprite_span</code>, <code>test_random_sprites</code></td></tr><tr><td><code>hs_positive</code></td><td><code>sprite_gen.sv</code></td><td>HS positive</td><td><code>test_identity_and_reset</code>, <code>test_sync_timing</code>, <code>test_sprite_bitmap</code>, <code>test_clipping_and_enable</code>, <code>test_bounce_and_vertical_timing</code>, <code>test_offscreen_and_disabled_inside_sprite_span</code>, <code>test_blank_lines_are_black_over_a_background</code>, <code>test_random_sprites</code></td></tr><tr><td><code>bounce_limit_640</code></td><td><code>sprite_regs.sv</code></td><td>turns at the screen width, not width - 16</td><td><code>test_bounce_and_vertical_timing</code></td></tr><tr><td><code>vsync_three_lines</code></td><td><code>sprite_gen.sv</code></td><td>VS three lines long</td><td><code>test_bounce_and_vertical_timing</code></td></tr><tr><td><code>wraps_at_right</code></td><td><code>sprite_gen.sv</code></td><td>a sprite off the right edge wraps round to the left</td><td><code>test_offscreen_and_disabled_inside_sprite_span</code></td></tr><tr><td><code>no_turn_at_zero</code></td><td><code>sprite_regs.sv</code></td><td>X wraps below 0 instead of turning</td><td><code>test_bounce_turns_at_left_and_bottom</code></td></tr><tr><td><code>enable_ignored</code></td><td><code>sprite_gen.sv</code></td><td>CTRL.EN does not hide the sprite</td><td><code>test_offscreen_and_disabled_inside_sprite_span</code></td></tr><tr><td><code>blank_shows_bg</code></td><td><code>sprite_gen.sv</code></td><td>lines 480-524 show the background colour</td><td><code>test_blank_lines_are_black_over_a_background</code></td></tr></tbody></table></div>
 <h2>Sample solution</h2>
-<p class="note">Hand-written reference for the benchmark, not agent output; it passes every test, and the listed mutants fail them. With it, the hidden cocotb tests and the golden model. Repository licence: MIT.</p>
-<details class="code"><summary><span class="mono">sprite_gen.sv</span> <span class="muted small">reference RTL, 64 lines</span></summary><div class="codebar small"><a href="t2_vga_sprite/sprite_gen.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t2_vga_sprite/ref/rtl/sprite_gen.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// sprite_gen.sv: 640x480 at 60 Hz raster (800 x 525, negative syncs) on a</span>
+<p class="note">Hand-written reference for the benchmark, not agent output; it passes every test, and the listed mutants fail them. With it, the hidden cocotb tests and the golden model. Repository licence: all rights reserved (source visible for review).</p>
+<details class="code"><summary><span class="mono">sprite_gen.sv</span> <span class="muted small">reference RTL, 64 lines</span></summary><div class="codebar small"><a href="t2_vga_sprite/sprite_gen.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t2_vga_sprite/ref/rtl/sprite_gen.sv">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hc">// sprite_gen.sv: 640x480 at 60 Hz raster (800 x 525, negative syncs) on a</span>
 <span class="hc">// pixel enable every 4th clock, one 16x16 1-bit sprite over a background.</span>
 <span class="hk">module</span> sprite_gen (
     <span class="hk">input</span>  <span class="hk">logic</span>            clk,
@@ -707,7 +742,7 @@ svg .bdtick { stroke: var(--ink-3); }
         <span class="hk">end</span>
     <span class="hk">end</span>
 <span class="hk">endmodule</span>
-</code></pre></details><details class="code"><summary><span class="mono">sprite_regs.sv</span> <span class="muted small">reference RTL, 85 lines</span></summary><div class="codebar small"><a href="t2_vga_sprite/sprite_regs.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t2_vga_sprite/ref/rtl/sprite_regs.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// sprite_regs.sv: sprite rows, position, colours, CTRL (with the bounce</span>
+</code></pre></details><details class="code"><summary><span class="mono">sprite_regs.sv</span> <span class="muted small">reference RTL, 85 lines</span></summary><div class="codebar small"><a href="t2_vga_sprite/sprite_regs.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t2_vga_sprite/ref/rtl/sprite_regs.sv">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hc">// sprite_regs.sv: sprite rows, position, colours, CTRL (with the bounce</span>
 <span class="hc">// update at each frame wrap) and FRAME, in the shell window.</span>
 <span class="hk">module</span> sprite_regs (
     <span class="hk">input</span>  <span class="hk">logic</span>              clk,
@@ -792,7 +827,7 @@ svg .bdtick { stroke: var(--ink-3); }
         <span class="hk">end</span>
     <span class="hk">end</span>
 <span class="hk">endmodule</span>
-</code></pre></details><details class="code"><summary><span class="mono">t2_vga_sprite_top.sv</span> <span class="muted small">reference RTL, 46 lines</span></summary><div class="codebar small"><a href="t2_vga_sprite/t2_vga_sprite_top.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t2_vga_sprite/ref/rtl/t2_vga_sprite_top.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// t2_vga_sprite_top.sv: board top (Nexys A7-100T, master-XDC port names).</span>
+</code></pre></details><details class="code"><summary><span class="mono">t2_vga_sprite_top.sv</span> <span class="muted small">reference RTL, 46 lines</span></summary><div class="codebar small"><a href="t2_vga_sprite/t2_vga_sprite_top.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t2_vga_sprite/ref/rtl/t2_vga_sprite_top.sv">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hc">// t2_vga_sprite_top.sv: board top (Nexys A7-100T, master-XDC port names).</span>
 <span class="hc">// Reference design for benchmark task t2_vga_sprite; DESIGN_ID &quot;SPRT&quot;.</span>
 <span class="hc">// 640x480 at 60 Hz with one 16x16 1-bit sprite and an optional bounce.</span>
 <span class="hk">module</span> t2_vga_sprite_top #(
@@ -838,7 +873,7 @@ svg .bdtick { stroke: var(--ink-3); }
     <span class="hk">assign</span> VGA_G = rgb[7:4];
     <span class="hk">assign</span> VGA_B = rgb[3:0];
 <span class="hk">endmodule</span>
-</code></pre></details><details class="code"><summary><span class="mono">acceptance.py</span> <span class="muted small">hidden cocotb acceptance tests, 240 lines</span></summary><div class="codebar small"><a href="t2_vga_sprite/acceptance.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t2_vga_sprite/hidden/acceptance.py">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;Acceptance tests of t2_vga_sprite against model.py (hidden from the agent).&quot;&quot;&quot;</span>
+</code></pre></details><details class="code"><summary><span class="mono">acceptance.py</span> <span class="muted small">hidden cocotb acceptance tests, 240 lines</span></summary><div class="codebar small"><a href="t2_vga_sprite/acceptance.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t2_vga_sprite/hidden/acceptance.py">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;Acceptance tests of t2_vga_sprite against model.py (hidden from the agent).&quot;&quot;&quot;</span>
 
 <span class="hk">from</span> __future__ <span class="hk">import</span> annotations
 
@@ -1078,7 +1113,7 @@ ARROW = [0x8000, 0xC000, 0xE000, 0xF000, 0xF800, 0xFC00, 0xFE00, 0xFF00, 0xFF80,
         ys = sorted(rng.sample(range(e.m.y, e.m.y + 16), 3))
         <span class="hk">await</span> e.check_lines(ys, range(max(0, e.m.x - 4), min(HT, e.m.x + 20)))
     <span class="hk">await</span> e.regs((ROW <span class="hk">for</span> ROW <span class="hk">in</span> range(16)))
-</code></pre></details><details class="code"><summary><span class="mono">model.py</span> <span class="muted small">golden model, 76 lines</span></summary><div class="codebar small"><a href="t2_vga_sprite/model.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t2_vga_sprite/hidden/model.py">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;Golden model of t2_vga_sprite, written from spec.yaml alone (never from any RTL).&quot;&quot;&quot;</span>
+</code></pre></details><details class="code"><summary><span class="mono">model.py</span> <span class="muted small">golden model, 76 lines</span></summary><div class="codebar small"><a href="t2_vga_sprite/model.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t2_vga_sprite/hidden/model.py">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;Golden model of t2_vga_sprite, written from spec.yaml alone (never from any RTL).&quot;&quot;&quot;</span>
 
 <span class="hk">from</span> __future__ <span class="hk">import</span> annotations
 
@@ -1161,7 +1196,7 @@ XMAX, YMAX = 624, 464
 
 <div class="pager"><a href="../problems.html">&larr; All problems</a><span></span></div>
 </main>
-<footer><div class="wrap"><p>Designed by Brendan Lynskey. Code and results: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent">github.com/BrendanJamesLynskey/FPGA_Design_Agent</a> (MIT licence). Every number on these pages is read from a committed result file; development results are labelled as such and are not the held-out score.</p></div></footer>
+<footer><div class="wrap"><p>Designed by Brendan Lynskey. Code and results: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent">github.com/BrendanJamesLynskey/FPGA_Design_Agent</a> (all rights reserved; source visible for review, see LICENSE). Every number on these pages is read from a committed result file; development results are labelled as such and are not the held-out score.</p></div></footer>
 <script type="application/json" data-key="trace">{"captions":["Step 0: Start with the sprite at (620, 455), bounce on, moving right and down. Position (620, 455), 256 sprite pixels on screen.","Step 1: Frame 1 ends and the sprite moves one pixel each way. Position (621, 456), 256 sprite pixels on screen.","Step 2: Frame 2 ends and the sprite moves one pixel each way. Position (622, 457), 256 sprite pixels on screen.","Step 3: Frame 3 ends and the sprite moves one pixel each way. Position (623, 458), 256 sprite pixels on screen.","Step 4: Frame 4 ends and the sprite moves one pixel each way. Position (624, 459), 256 sprite pixels on screen.","Step 5: Frame 5 ends and the sprite moves one pixel each way. It turns round at the right edge. Position (623, 460), 256 sprite pixels on screen.","Step 6: Frame 6 ends and the sprite moves one pixel each way. Position (622, 461), 256 sprite pixels on screen.","Step 7: Frame 7 ends and the sprite moves one pixel each way. Position (621, 462), 256 sprite pixels on screen.","Step 8: Frame 8 ends and the sprite moves one pixel each way. Position (620, 463), 256 sprite pixels on screen.","Step 9: Frame 9 ends and the sprite moves one pixel each way. Position (619, 464), 256 sprite pixels on screen.","Step 10: Frame 10 ends and the sprite moves one pixel each way. It turns round at the bottom edge. Position (618, 463), 256 sprite pixels on screen.","Step 11: Frame 11 ends and the sprite moves one pixel each way. Position (617, 462), 256 sprite pixels on screen.","Step 12: Frame 12 ends and the sprite moves one pixel each way. Position (616, 461), 256 sprite pixels on screen.","Step 13: Frame 13 ends and the sprite moves one pixel each way. Position (615, 460), 256 sprite pixels on screen.","Step 14: Frame 14 ends and the sprite moves one pixel each way. Position (614, 459), 256 sprite pixels on screen.","Step 15: The sprite is placed at (3, 2), moving left and up. Position (3, 2), 256 sprite pixels on screen.","Step 16: Frame 15 ends and the sprite moves one pixel each way. Position (2, 1), 256 sprite pixels on screen.","Step 17: Frame 16 ends and the sprite moves one pixel each way. Position (1, 0), 256 sprite pixels on screen.","Step 18: Frame 17 ends and the sprite moves one pixel each way. It turns round at the top edge. Position (0, 1), 256 sprite pixels on screen.","Step 19: Frame 18 ends and the sprite moves one pixel each way. It turns round at the left edge. Position (1, 2), 256 sprite pixels on screen.","Step 20: Frame 19 ends and the sprite moves one pixel each way. Position (2, 3), 256 sprite pixels on screen.","Step 21: Frame 20 ends and the sprite moves one pixel each way. Position (3, 4), 256 sprite pixels on screen.","Step 22: Frame 21 ends and the sprite moves one pixel each way. Position (4, 5), 256 sprite pixels on screen.","Step 23: Frame 22 ends and the sprite moves one pixel each way. Position (5, 6), 256 sprite pixels on screen.","Step 24: Frame 23 ends and the sprite moves one pixel each way. Position (6, 7), 256 sprite pixels on screen.","Step 25: Frame 24 ends and the sprite moves one pixel each way. Position (7, 8), 256 sprite pixels on screen.","Step 26: Frame 25 ends and the sprite moves one pixel each way. Position (8, 9), 256 sprite pixels on screen.","Step 27: Frame 26 ends and the sprite moves one pixel each way. Position (9, 10), 256 sprite pixels on screen.","Step 28: Bounce is off and X is set to 632; only part of the block is inside the 640 columns, the rest is clipped. Position (632, 10), 128 sprite pixels on screen.","Step 29: Bounce is off and X is set to 636; only part of the block is inside the 640 columns, the rest is clipped. Position (636, 10), 64 sprite pixels on screen.","Step 30: Bounce is off and X is set to 640; none of the block is inside the screen. Position (640, 10), 0 sprite pixels on screen.","Step 31: Bounce is off and X is set to 1000; none of the block is inside the screen. Position (1000, 10), 0 sprite pixels on screen."],"signals":[{"kind":"bus","name":"FRAME","radix":"dec","v":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,14,15,16,17,18,19,20,21,22,23,24,25,26,26,26,26,26]},{"hi":1023,"kind":"wave","lo":0,"name":"X","v":[620,621,622,623,624,623,622,621,620,619,618,617,616,615,614,3,2,1,0,1,2,3,4,5,6,7,8,9,632,636,640,1000]},{"hi":479,"kind":"wave","lo":0,"name":"Y","v":[455,456,457,458,459,460,461,462,463,464,463,462,461,460,459,2,1,0,1,2,3,4,5,6,7,8,9,10,10,10,10,10]},{"kind":"bit","name":"DX_NEG (1 = left)","v":[0,0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"kind":"bit","name":"DY_NEG (1 = up)","v":[0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"hi":256,"kind":"wave","lo":0,"name":"sprite pixels on screen","v":[256,256,256,256,256,256,256,256,256,256,256,256,256,256,256,256,256,256,256,256,256,256,256,256,256,256,256,256,128,64,0,0]}],"stimulus":"A solid 16 x 16 block is placed at (620, 455) with bounce on and followed for 14 frames, then restarted at (3, 2) moving up and left for 12 frames. Finally bounce is turned off and X is set to 632, 636, 640, 1000.","unit":"step","x":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31]}</script>
 <script>/* FPGA Design Agent site. No dependencies. Every animation is frame(step) over a state list built from site/data/*.json. */
 (function () {
@@ -2277,6 +2312,20 @@ XMAX, YMAX = 624, 464
   }
   openHash();
   window.addEventListener("hashchange", openHash);
+})();
+
+// brief 81: replay of a recorded counterexample: the slider hides the steps after the chosen one
+(function () {
+  document.querySelectorAll('.cexfig').forEach(function (f) {
+    var r = f.querySelector('input[type=range]'), fut = f.querySelector('.cxfut'), pos = f.querySelector('.cexpos'), lab = f.querySelector('.cxstep');
+    var n = +f.dataset.cycles, lx = +f.dataset.lx, cw = +f.dataset.cw, w = +f.dataset.w;
+    function set() {
+      var k = +r.value, x = lx + (k + 1) * cw;
+      fut.setAttribute('x', x); fut.setAttribute('width', Math.max(0, w - x));
+      pos.textContent = k; if (lab) lab.textContent = 'step ' + k;
+    }
+    r.addEventListener('input', set); set();
+  });
 })();
 </script>
 </body>

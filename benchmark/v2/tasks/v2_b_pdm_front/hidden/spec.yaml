@@ -1,0 +1,89 @@
+# Answer key for the microphone front end: the oracle may say only what this file says about the microphone front end (brief 79, ladder); never shown to the agent.
+schema: fpga-design-agent/spec/v0
+name: v2_b_pdm_front
+title: PDM microphone front end
+source: spec.md
+tier: T2
+level: L1
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: v2_b_pdm_front_top
+design_id: 0x50444D46          # "PDMF"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised (asserts at once, releases on the clock)
+  effect: RUN = 0, the clock divider and M_CLK low, the word builder, the queue, OVR, both STUCK flags, the run counter and the WORDS counter all clear
+
+parameters:
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 100000
+  CLK_HALF: 16                  # M_CLK half period in board clocks: 100 MHz / 32 = 3.125 MHz
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: M_CLK, dir: out, width: 1, pins: [J5], iostandard: LVCMOS33}
+  - {name: M_DATA, dir: in, width: 1, async: true, pins: [H5], iostandard: LVCMOS33}
+  - {name: M_LRSEL, dir: out, width: 1, pins: [F5], iostandard: LVCMOS33}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+
+behaviour:
+  clock:
+    - "While RUN = 1, M_CLK toggles every CLK_HALF board clocks, starting low: it is low for CLK_HALF clocks, then high for CLK_HALF clocks, and so on. While RUN = 0, M_CLK is low and the divider is held at its start."
+    - "M_LRSEL is driven low at all times."
+  sampling:
+    - "With M_LRSEL low the microphone drives each data bit after a falling edge of M_CLK and holds it until one board clock after the next rising edge, then the line carries no valid data until the next falling edge (on the board it floats). A bit is therefore taken from M_DATA at the board clock edge at which M_CLK goes from low to high, or one board clock after it; sampling at any other time reads an invalid bit."
+    - "Each such instant yields one sample, in order. Sample 0 is the first one after RUN goes from 0 to 1."
+  packing:
+    - "Sample number 32 * w + j goes into bit j of word w; a word is finished when its bit 31 is taken. Finished words enter a queue of depth 4."
+    - "When RUN goes 0 the partial word and its bit count are discarded, and the stuck-run counter is cleared. The queue and the flags are kept."
+  queue:
+    - "A word finished while 4 are queued is dropped (the old entries stay) and OVR is set, stays set until CLEAR or reset. WORDS still counts it."
+    - "COUNT tells how many captured words wait. RESULT shows the oldest captured word as a 32-bit unsigned number, or 0 if no captured word waits; a write to NEXT discards that captured word (ignored with nothing queued). Reading RESULT leaves the microphone front end's queue as it is."
+    - "WORDS counts every word finished since reset (32 bit, not cleared by CLEAR)."
+  stuck:
+    - "A run is a sequence of consecutive samples with the same value; the run counter is cleared when RUN goes 0 and starts at 1 with the first sample. When the run reaches 40 samples, STUCK_HI is set if the value is 1, STUCK_LO if it is 0. Both flags stay set until CLEAR or reset. A run of 39 sets nothing."
+  clear:
+    - "A write to CTRL with bit 1 = 1 clears the queue, OVR, STUCK_HI and STUCK_LO (it does not touch RUN, the partial word, the run counter or WORDS). The RUN bit is written by the same write (bit 0)."
+  leds:
+    - "LED[0] = RUN. LED[1] = STUCK_HI or STUCK_LO. LED[15:2] = 0."
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.1)
+  map:
+    - {offset: 0x00, name: CTRL, note: microphone-front-end, access: RW, reset: 0, bits: "[0] RUN; [1] CLEAR (write 1, reads 0); other bits read 0, ignored on write"}
+    - {offset: 0x01, name: STATUS, note: microphone-front-end, access: RO, reset: 0, bits: "[2:0] COUNT (0..4); [4] OVR; [5] STUCK_HI; [6] STUCK_LO; others 0"}
+    - {offset: 0x02, name: DATA, note: microphone-front-end, access: RO, reset: 0, bits: "[31:0] oldest queued word; 0 when empty"}
+    - {offset: 0x03, name: NEXT, note: microphone-front-end, access: WO, reset: 0, bits: "any write drops the oldest word; reads 0"}
+    - {offset: 0x04, name: WORDS, note: microphone-front-end, access: RO, reset: 0, bits: "[31:0] words finished since reset"}
+  unmapped: offsets 0x05-0x7F read 0; writes to them and to RO registers are ignored
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  async_inputs: CPU_RESETN, UART RX and M_DATA go through synchronisers in the front end and their paths are then false-pathed
+  outputs: M_CLK and M_LRSEL are registered outputs
+
+requirements:
+  - {id: REQ-01, note: microphone-front-end, text: "The microphone front end drives M_CLK with half period CLK_HALF, holds it low while RUN = 0, and keeps M_LRSEL low", proof: [simulation]}
+  - {id: REQ-02, note: microphone-front-end, text: "Each data bit is taken at a valid instant for M_LRSEL low; words hold the bits first-in-lowest-bit", proof: [simulation]}
+  - {id: REQ-03, note: microphone-front-end, text: "Switching RUN off abandons the partial word; the queue and flags are kept", proof: [simulation]}
+  - {id: REQ-04, note: microphone-front-end, text: "A run of 40 equal samples sets STUCK_HI or STUCK_LO (39 does not); flags latch until CLEAR", proof: [simulation]}
+  - {id: REQ-05, note: microphone-front-end, text: "The queue holds 4 words, drops a new captured word when full and sets OVR; WORDS counts them all", proof: [simulation]}
+  - {id: REQ-06, note: microphone-front-end, text: "The register window and LEDs follow the listed map", proof: [simulation]}
+  - {id: REQ-07, note: microphone-front-end, text: "The microphone front end closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+  - {id: REQ-08, note: microphone-front-end, text: "On the board with the microphone the stream is not stuck and words are not all equal", proof: [hardware]}
+
+resources_expected: "about 120 LUTs; no BRAM, no DSP"
+
+assumptions:
+  - assumption: the microphone timing model is the one in the sampling rule above (data valid from after a falling edge to one board clock after the next rising edge, for M_LRSEL low).
+    reason: derived from the microphone's data sheet timing diagram for the left channel; a bench model reproduces it, including garbage outside the window.
+
+open_questions: []

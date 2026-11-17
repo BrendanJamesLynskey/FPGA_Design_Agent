@@ -606,11 +606,46 @@ svg .bdtick { stroke: var(--ink-3); }
   .tl li { grid-template-columns: 1fr; }
   .tld { padding: 0 0 .1em; }
 }
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.mx td.mk, .mx th.mk { text-align: center; white-space: normal; min-width: 6.5em; position: relative; }
+.mx th[scope="row"] { font-weight: 400; color: var(--ink); min-width: 14em; }
+.mx tfoot th, .mx tfoot td { border-top: 2px solid var(--ink); font-weight: 600; }
+.sq { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--ink); vertical-align: middle; line-height: 12px; text-align: center; box-sizing: border-box; }
+.sq.y { background: var(--ink); }
+.sq.n { background: transparent; border-color: var(--ink-3); border-style: dashed; }
+.sq.na { border: 0; color: var(--ink-3); }
+.map code { white-space: normal; overflow-wrap: anywhere; display: inline-block; margin: 0 4px 4px 0; font-size: .75rem; }
+.map th[scope="row"] { min-width: 12em; font-weight: 600; }
+.map td { min-width: 8em; }
+.map { table-layout: auto; }
+.pin { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.pstep { border: 1px solid var(--rule); background: var(--panel); padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; max-width: none; }
+.pstep.bad { border: 2px solid var(--warn); }
+.ptag { font: 700 .75rem var(--f-mono); text-transform: uppercase; color: var(--ink-3); }
+.pstep.bad .ptag { color: var(--warn); }
+.sfig .sbad { fill: var(--warn); }
+.sfig .ftick { stroke: var(--ink); stroke-width: 2.5; }
+.sfig .sunk { fill: none; stroke: var(--ink-3); stroke-dasharray: 4 3; }
+.sfig .sbar2 { fill: var(--ink); }
+.mxfig td.num { font-family: var(--f-mono); }
+.cexfig .cxh { fill: var(--ink); }
+.cexfig .cxl { fill: var(--ink-3); }
+.cexfig .cxfut { fill: var(--bg); opacity: .85; }
+.cexfig .ctl { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+.mx th[scope="row"] { min-width: 10em; }
+@media (max-width: 700px) {
+  .map thead { display: none; }
+  .map, .map tbody, .map tr, .map td, .map th { display: block; min-width: 0; width: 100%; }
+  .map tr { border-bottom: 2px solid var(--rule); padding: 6px 0; }
+  .map td { border: 0; padding: 2px 10px; }
+  .map td:not(:has(code)) { display: none; }
+  .map td::before { content: attr(data-label) ": "; font-size: .78rem; color: var(--ink-3); display: block; }
+}
 </style>
 </head>
 <body>
 <a class="visually-hidden" href="#main">Skip to content</a>
-<header class="bar"><div class="wrap"><a class="brand" href="../index.html">FPGA Design Agent</a><nav aria-label="Pages"><a href="../agent.html">The agent</a><a class="sub" href="../agent.html#harness">Harness</a><a href="../story.html">How it was built</a><a href="../how.html">How it works</a><a href="../flow-notes.html">Beyond the flow</a><a href="../expertise.html">Expertise</a><a href="../examples.html">Examples</a><a href="../showcase.html">Showcase</a><a href="../problems.html" aria-current="page">Problems</a><a href="../evaluation.html">Evaluation</a><a href="../results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
+<header class="bar"><div class="wrap"><a class="brand" href="../index.html">FPGA Design Agent</a><nav aria-label="Pages"><a href="../agent.html">The agent</a><a class="sub" href="../agent.html#harness">Harness</a><a href="../story.html">How it was built</a><a href="../how.html">How it works</a><a href="../verification.html">Verification</a><a href="../flow-notes.html">Beyond the flow</a><a href="../expertise.html">Expertise</a><a href="../examples.html">Examples</a><a href="../showcase.html">Showcase</a><a href="../problems.html" aria-current="page">Problems</a><a href="../evaluation.html">Evaluation</a><a href="../results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
 <main id="main" class="wrap">
 <p class="crumbs small"><a href="../problems.html">Problems</a> / <a href="../problems.html#dom-F">F. Interfaces and protocols</a></p>
 <h1>I2C bus scanner on the temperature-sensor bus</h1>
@@ -642,8 +677,8 @@ svg .bdtick { stroke: var(--ink-3); }
 <p>Each is a small edit to the reference RTL. In the committed check (icarus, 2026-11-04, <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/results/reference/t2_i2c_scanner__icarus.json"><code>t2_i2c_scanner__icarus.json</code></a>) the reference passed all 6 hidden tests and 9 of 9 mutants failed them.</p>
 <div class="tablewrap" tabindex="0"><table><thead><tr><th>Mutant</th><th>File</th><th>The bug</th><th>Hidden tests that fail</th></tr></thead><tbody><tr><td><code>starts_at_zero</code></td><td><code>scan_core.sv</code></td><td>reserved addresses 0x00-0x07 are probed</td><td><code>test_scan_finds_devices</code>, <code>test_empty_bus</code>, <code>test_rescan_clears_and_busy</code>, <code>test_clock_stretching_and_timing</code>, <code>test_random_population</code></td></tr><tr><td><code>stops_early</code></td><td><code>scan_core.sv</code></td><td>0x77 is never probed</td><td><code>test_scan_finds_devices</code>, <code>test_empty_bus</code>, <code>test_rescan_clears_and_busy</code>, <code>test_clock_stretching_and_timing</code>, <code>test_random_population</code></td></tr><tr><td><code>read_probe</code></td><td><code>scan_core.sv</code></td><td>probes with the read bit set</td><td><code>test_scan_finds_devices</code>, <code>test_empty_bus</code>, <code>test_rescan_clears_and_busy</code>, <code>test_clock_stretching_and_timing</code>, <code>test_random_population</code></td></tr><tr><td><code>lowest_is_last</code></td><td><code>scan_core.sv</code></td><td>LOWEST holds the highest answering address</td><td><code>test_scan_finds_devices</code>, <code>test_rescan_clears_and_busy</code>, <code>test_random_population</code></td></tr><tr><td><code>map_not_cleared</code></td><td><code>scan_core.sv</code></td><td>a new scan keeps the old map</td><td><code>test_rescan_clears_and_busy</code>, <code>test_random_population</code></td></tr><tr><td><code>no_stretch_wait</code></td><td><code>scan_core.sv</code></td><td>SCL high time not held off while a slave stretches</td><td><code>test_clock_stretching_and_timing</code></td></tr><tr><td><code>ack_inverted</code></td><td><code>scan_core.sv</code></td><td>a NACK counts as an answer</td><td><code>test_scan_finds_devices</code>, <code>test_empty_bus</code>, <code>test_rescan_clears_and_busy</code>, <code>test_clock_stretching_and_timing</code>, <code>test_random_population</code></td></tr><tr><td><code>led_shows_lowest</code></td><td><code>t2_i2c_scanner_top.sv</code></td><td>LEDs show LOWEST, not COUNT</td><td><code>test_identity_and_reset</code>, <code>test_scan_finds_devices</code>, <code>test_empty_bus</code>, <code>test_rescan_clears_and_busy</code>, <code>test_clock_stretching_and_timing</code>, <code>test_random_population</code></td></tr><tr><td><code>no_bus_free</code></td><td><code>scan_core.sv</code></td><td>SDA never released: no STOP condition between probes</td><td><code>test_scan_finds_devices</code>, <code>test_empty_bus</code>, <code>test_rescan_clears_and_busy</code>, <code>test_clock_stretching_and_timing</code>, <code>test_random_population</code></td></tr></tbody></table></div>
 <h2>Sample solution</h2>
-<p class="note">Hand-written reference for the benchmark, not agent output; it passes every test, and the listed mutants fail them. With it, the hidden cocotb tests and the golden model. Repository licence: MIT.</p>
-<details class="code"><summary><span class="mono">scan_core.sv</span> <span class="muted small">reference RTL, 85 lines</span></summary><div class="codebar small"><a href="t2_i2c_scanner/scan_core.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t2_i2c_scanner/ref/rtl/scan_core.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// scan_core.sv: I2C address scanner. Probes 0x08..0x77: START, {addr, W},</span>
+<p class="note">Hand-written reference for the benchmark, not agent output; it passes every test, and the listed mutants fail them. With it, the hidden cocotb tests and the golden model. Repository licence: all rights reserved (source visible for review).</p>
+<details class="code"><summary><span class="mono">scan_core.sv</span> <span class="muted small">reference RTL, 85 lines</span></summary><div class="codebar small"><a href="t2_i2c_scanner/scan_core.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t2_i2c_scanner/ref/rtl/scan_core.sv">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hc">// scan_core.sv: I2C address scanner. Probes 0x08..0x77: START, {addr, W},</span>
 <span class="hc">// ACK bit, STOP. Records answering addresses. Open drain; waits for SCL to be</span>
 <span class="hc">// seen high after each release (clock stretching).</span>
 <span class="hk">module</span> scan_core #(
@@ -728,7 +763,7 @@ svg .bdtick { stroke: var(--ink-3); }
         <span class="hk">end</span>
     <span class="hk">end</span>
 <span class="hk">endmodule</span>
-</code></pre></details><details class="code"><summary><span class="mono">t2_i2c_scanner_top.sv</span> <span class="muted small">reference RTL, 62 lines</span></summary><div class="codebar small"><a href="t2_i2c_scanner/t2_i2c_scanner_top.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t2_i2c_scanner/ref/rtl/t2_i2c_scanner_top.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// t2_i2c_scanner_top.sv: board top (Nexys A7-100T, master-XDC port names).</span>
+</code></pre></details><details class="code"><summary><span class="mono">t2_i2c_scanner_top.sv</span> <span class="muted small">reference RTL, 62 lines</span></summary><div class="codebar small"><a href="t2_i2c_scanner/t2_i2c_scanner_top.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t2_i2c_scanner/ref/rtl/t2_i2c_scanner_top.sv">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hc">// t2_i2c_scanner_top.sv: board top (Nexys A7-100T, master-XDC port names).</span>
 <span class="hc">// Reference design for benchmark task t2_i2c_scanner; DESIGN_ID &quot;SCAN&quot;.</span>
 <span class="hc">// Scans I2C addresses 0x08..0x77 on the sensor bus; LED shows the count.</span>
 <span class="hk">module</span> t2_i2c_scanner_top #(
@@ -790,7 +825,7 @@ svg .bdtick { stroke: var(--ink-3); }
         <span class="hk">end</span>
     <span class="hk">end</span>
 <span class="hk">endmodule</span>
-</code></pre></details><details class="code"><summary><span class="mono">acceptance.py</span> <span class="muted small">hidden cocotb acceptance tests, 131 lines</span></summary><div class="codebar small"><a href="t2_i2c_scanner/acceptance.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t2_i2c_scanner/hidden/acceptance.py">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;Acceptance tests of t2_i2c_scanner against model.py (hidden from the agent).&quot;&quot;&quot;</span>
+</code></pre></details><details class="code"><summary><span class="mono">acceptance.py</span> <span class="muted small">hidden cocotb acceptance tests, 131 lines</span></summary><div class="codebar small"><a href="t2_i2c_scanner/acceptance.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t2_i2c_scanner/hidden/acceptance.py">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;Acceptance tests of t2_i2c_scanner against model.py (hidden from the agent).&quot;&quot;&quot;</span>
 
 <span class="hk">from</span> __future__ <span class="hk">import</span> annotations
 
@@ -921,7 +956,7 @@ SYNC_SLACK = 8
     present2 = set(rng.sample(range(0x08, 0x78), 3))
     e.bus.devices = Env.devices(present2)
     <span class="hk">await</span> e.scan(present2)
-</code></pre></details><details class="code"><summary><span class="mono">model.py</span> <span class="muted small">golden model, 45 lines</span></summary><div class="codebar small"><a href="t2_i2c_scanner/model.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t2_i2c_scanner/hidden/model.py">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;Golden model of t2_i2c_scanner, written from spec.yaml alone (never from any RTL).&quot;&quot;&quot;</span>
+</code></pre></details><details class="code"><summary><span class="mono">model.py</span> <span class="muted small">golden model, 45 lines</span></summary><div class="codebar small"><a href="t2_i2c_scanner/model.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t2_i2c_scanner/hidden/model.py">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;Golden model of t2_i2c_scanner, written from spec.yaml alone (never from any RTL).&quot;&quot;&quot;</span>
 
 <span class="hk">from</span> __future__ <span class="hk">import</span> annotations
 
@@ -973,7 +1008,7 @@ FIRST, LAST = 0x08, 0x77
 
 <div class="pager"><a href="../problems.html">&larr; All problems</a><span></span></div>
 </main>
-<footer><div class="wrap"><p>Designed by Brendan Lynskey. Code and results: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent">github.com/BrendanJamesLynskey/FPGA_Design_Agent</a> (MIT licence). Every number on these pages is read from a committed result file; development results are labelled as such and are not the held-out score.</p></div></footer>
+<footer><div class="wrap"><p>Designed by Brendan Lynskey. Code and results: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent">github.com/BrendanJamesLynskey/FPGA_Design_Agent</a> (all rights reserved; source visible for review, see LICENSE). Every number on these pages is read from a committed result file; development results are labelled as such and are not the held-out score.</p></div></footer>
 <script type="application/json" data-key="trace">{"captions":["Probe 0x08: START, address byte 0x10 (write), then STOP; no answer (ACK bit left high).","Probe 0x09: START, address byte 0x12 (write), then STOP; no answer (ACK bit left high).","Probe 0x0a: START, address byte 0x14 (write), then STOP; no answer (ACK bit left high).","Probe 0x1a: START, address byte 0x34 (write), then STOP; no answer (ACK bit left high).","Probe 0x1b: START, address byte 0x36 (write), then STOP; no answer (ACK bit left high).","Probe 0x1c: START, address byte 0x38 (write), then STOP; no answer (ACK bit left high).","Probe 0x1d: START, address byte 0x3a (write), then STOP; the ACK bit is low, so a device answers. Devices found so far 1, lowest 0x1d.","Probe 0x1e: START, address byte 0x3c (write), then STOP; no answer (ACK bit left high).","Probe 0x1f: START, address byte 0x3e (write), then STOP; no answer (ACK bit left high).","Probe 0x20: START, address byte 0x40 (write), then STOP; no answer (ACK bit left high).","Probe 0x48: START, address byte 0x90 (write), then STOP; no answer (ACK bit left high).","Probe 0x49: START, address byte 0x92 (write), then STOP; no answer (ACK bit left high).","Probe 0x4a: START, address byte 0x94 (write), then STOP; no answer (ACK bit left high).","Probe 0x4b: START, address byte 0x96 (write), then STOP; the ACK bit is low, so a device answers. Devices found so far 2, lowest 0x1d.","Probe 0x4c: START, address byte 0x98 (write), then STOP; no answer (ACK bit left high).","Probe 0x4d: START, address byte 0x9a (write), then STOP; no answer (ACK bit left high)."],"signals":[{"kind":"bus","name":"address","radix":"hex","v":[8,9,10,26,27,28,29,30,31,32,72,73,74,75,76,77],"width":7},{"kind":"bit","name":"ACK","v":[0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0]},{"kind":"bus","name":"COUNT","radix":"dec","v":[0,0,0,0,0,0,1,1,1,1,1,1,1,2,2,2]},{"kind":"bus","name":"LOWEST","radix":"hex","v":[255,255,255,255,255,255,29,29,29,29,29,29,29,29,29,29],"width":8}],"stimulus":"A scan is started over a bus where the devices at 0x1d, 0x4b answer. Only the probes of 0x08 to 0x0a, 0x1a to 0x20, 0x48 to 0x4d are shown (the rest of the scan runs the same way); every probe is a write address and a STOP, never a data byte.","unit":"probe","x":[8,9,10,26,27,28,29,30,31,32,72,73,74,75,76,77]}</script>
 <script>/* FPGA Design Agent site. No dependencies. Every animation is frame(step) over a state list built from site/data/*.json. */
 (function () {
@@ -2089,6 +2124,20 @@ FIRST, LAST = 0x08, 0x77
   }
   openHash();
   window.addEventListener("hashchange", openHash);
+})();
+
+// brief 81: replay of a recorded counterexample: the slider hides the steps after the chosen one
+(function () {
+  document.querySelectorAll('.cexfig').forEach(function (f) {
+    var r = f.querySelector('input[type=range]'), fut = f.querySelector('.cxfut'), pos = f.querySelector('.cexpos'), lab = f.querySelector('.cxstep');
+    var n = +f.dataset.cycles, lx = +f.dataset.lx, cw = +f.dataset.cw, w = +f.dataset.w;
+    function set() {
+      var k = +r.value, x = lx + (k + 1) * cw;
+      fut.setAttribute('x', x); fut.setAttribute('width', Math.max(0, w - x));
+      pos.textContent = k; if (lab) lab.textContent = 'step ' + k;
+    }
+    r.addEventListener('input', set); set();
+  });
 })();
 </script>
 </body>

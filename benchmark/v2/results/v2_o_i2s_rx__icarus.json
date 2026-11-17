@@ -1,0 +1,206 @@
+{
+  "task": "v2_o_i2s_rx",
+  "sim": "icarus",
+  "date": "2026-11-14",
+  "ref": {
+    "pass": true,
+    "tests": {
+      "test_rx_identity_and_reset": true,
+      "test_rx_walking_ones_and_the_bit_alignment": true,
+      "test_rx_extremes_and_signs": true,
+      "test_rx_random_bursts_and_a_stopped_clock": true,
+      "test_rx_one_channel_at_a_time": true,
+      "test_rx_frame_count_wraps_past_a_byte": true,
+      "test_rx_clear_and_register_rules": true,
+      "test_rx_padding_bits_are_ignored": true,
+      "test_rx_bit_clock_ratios": true
+    }
+  },
+  "mutants": [
+    {
+      "name": "channels_swapped",
+      "why": "left and right are exchanged",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_rx_identity_and_reset",
+        "test_rx_walking_ones_and_the_bit_alignment",
+        "test_rx_extremes_and_signs",
+        "test_rx_random_bursts_and_a_stopped_clock",
+        "test_rx_one_channel_at_a_time",
+        "test_rx_frame_count_wraps_past_a_byte",
+        "test_rx_clear_and_register_rules",
+        "test_rx_padding_bits_are_ignored",
+        "test_rx_bit_clock_ratios"
+      ]
+    },
+    {
+      "name": "no_sign_extension",
+      "why": "a negative left sample reads as a large positive number",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_rx_walking_ones_and_the_bit_alignment",
+        "test_rx_extremes_and_signs",
+        "test_rx_random_bursts_and_a_stopped_clock",
+        "test_rx_frame_count_wraps_past_a_byte",
+        "test_rx_padding_bits_are_ignored",
+        "test_rx_bit_clock_ratios"
+      ]
+    },
+    {
+      "name": "lsb_first",
+      "why": "bits are assembled least significant first",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_rx_identity_and_reset",
+        "test_rx_walking_ones_and_the_bit_alignment",
+        "test_rx_extremes_and_signs",
+        "test_rx_random_bursts_and_a_stopped_clock",
+        "test_rx_one_channel_at_a_time",
+        "test_rx_frame_count_wraps_past_a_byte",
+        "test_rx_clear_and_register_rules",
+        "test_rx_padding_bits_are_ignored",
+        "test_rx_bit_clock_ratios"
+      ]
+    },
+    {
+      "name": "falling_edge_sampling",
+      "why": "data is taken on the falling edge, when it is changing",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_rx_identity_and_reset",
+        "test_rx_walking_ones_and_the_bit_alignment",
+        "test_rx_extremes_and_signs",
+        "test_rx_random_bursts_and_a_stopped_clock",
+        "test_rx_one_channel_at_a_time",
+        "test_rx_frame_count_wraps_past_a_byte",
+        "test_rx_clear_and_register_rules",
+        "test_rx_padding_bits_are_ignored",
+        "test_rx_bit_clock_ratios"
+      ]
+    },
+    {
+      "name": "frames_both_channels",
+      "why": "FRAMES counts every slot, so it runs at twice the frame rate",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_rx_identity_and_reset",
+        "test_rx_walking_ones_and_the_bit_alignment",
+        "test_rx_extremes_and_signs",
+        "test_rx_random_bursts_and_a_stopped_clock",
+        "test_rx_one_channel_at_a_time",
+        "test_rx_frame_count_wraps_past_a_byte",
+        "test_rx_clear_and_register_rules",
+        "test_rx_padding_bits_are_ignored",
+        "test_rx_bit_clock_ratios"
+      ]
+    },
+    {
+      "name": "frames_wraps_early",
+      "why": "the received-frame count rolls over after 255 instead of 65535",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_rx_frame_count_wraps_past_a_byte"
+      ]
+    },
+    {
+      "name": "clear_ignored",
+      "why": "CTRL does not clear FRAMES",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_rx_clear_and_register_rules"
+      ]
+    },
+    {
+      "name": "clear_wipes_samples",
+      "why": "clearing the count also clears LEFT",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_rx_clear_and_register_rules"
+      ]
+    },
+    {
+      "name": "captured_one_early",
+      "why": "the sample is registered one bit clock before its last bit",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_rx_identity_and_reset",
+        "test_rx_walking_ones_and_the_bit_alignment",
+        "test_rx_extremes_and_signs",
+        "test_rx_random_bursts_and_a_stopped_clock",
+        "test_rx_one_channel_at_a_time",
+        "test_rx_frame_count_wraps_past_a_byte",
+        "test_rx_clear_and_register_rules",
+        "test_rx_padding_bits_are_ignored",
+        "test_rx_bit_clock_ratios"
+      ]
+    },
+    {
+      "name": "left_not_reset",
+      "why": "LEFT survives CPU_RESETN",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_rx_identity_and_reset"
+      ]
+    },
+    {
+      "name": "led_shows_right",
+      "why": "the LEDs show the right channel instead of the left",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_rx_walking_ones_and_the_bit_alignment",
+        "test_rx_extremes_and_signs",
+        "test_rx_one_channel_at_a_time",
+        "test_rx_padding_bits_are_ignored"
+      ]
+    },
+    {
+      "name": "samples_late_in_the_bit",
+      "why": "data is taken on the falling edge, before it has settled",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_rx_identity_and_reset",
+        "test_rx_walking_ones_and_the_bit_alignment",
+        "test_rx_extremes_and_signs",
+        "test_rx_random_bursts_and_a_stopped_clock",
+        "test_rx_one_channel_at_a_time",
+        "test_rx_frame_count_wraps_past_a_byte",
+        "test_rx_clear_and_register_rules",
+        "test_rx_padding_bits_are_ignored",
+        "test_rx_bit_clock_ratios"
+      ]
+    }
+  ],
+  "mutants_killed": 12,
+  "mutants_total": 12,
+  "trap": {
+    "twin": "a left-justified receiver, which expects the top bit on the first bit clock after the frame_word-select edge",
+    "why": "left-justified is the common textbook receiver; true I2S sends the top bit one clock later, so this variant reads every sample one bit early, doubling it or flipping its sign",
+    "must_fail": [
+      "test_rx_walking_ones_and_the_bit_alignment"
+    ],
+    "failed_tests": [
+      "test_rx_identity_and_reset",
+      "test_rx_walking_ones_and_the_bit_alignment",
+      "test_rx_extremes_and_signs",
+      "test_rx_random_bursts_and_a_stopped_clock",
+      "test_rx_one_channel_at_a_time",
+      "test_rx_frame_count_wraps_past_a_byte",
+      "test_rx_clear_and_register_rules",
+      "test_rx_padding_bits_are_ignored",
+      "test_rx_bit_clock_ratios"
+    ],
+    "trap_fires": true
+  }
+}

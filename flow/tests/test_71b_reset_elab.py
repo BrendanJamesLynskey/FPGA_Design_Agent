@@ -232,3 +232,38 @@ def test_review_defeats_are_closed(name: str, tmp_path: Path) -> None:
         assert kind == "partial", (name, rules)
     else:
         assert kind == "ran" and rules == want, (name, kind, rules)
+
+
+# ---- brief 80: the two MEDIUMs the independent re-review of 71B left open --------------------------------------------------
+SYNC_OK = ("module syn(input clk, arst_n, output rst);\n(* ASYNC_REG = \"TRUE\" *) logic [1:0] q;\n"
+           "always_ff @(posedge clk or negedge arst_n) if (!arst_n) q <= 2'b11; else q <= {q[0], 1'b0};\nassign rst = q[1];\nendmodule\n")
+SYNC_TOP = "module x(input clk, arst_n, d, output logic o);\nwire r; syn u(.clk(clk), .arst_n(arst_n), .rst(r));\nalways_ff @(posedge clk) if (r) o <= 0; else o <= d;\nendmodule\n"
+SYNC_DECOY = SYNC_OK.replace("assign rst = q[1];", "logic dq;\nalways_ff @(posedge clk or negedge arst_n) if (!arst_n) dq <= 0; else dq <= ~dq;\nassign rst = q[1] & ~dq | q[1];")
+LOOPS = {
+    "comb_loop_latch": ("module x(input rst, en, d, output q); assign q = rst ? 1'b0 : (en ? d : q); endmodule\n", {"HDL-RST-01"}),
+    "comb_loop_cross_coupled": ("module x(input s, r, output q, qn); assign q = ~(r | qn); assign qn = ~(s | q); endmodule\n", {"HDL-RST-01"}),
+    "ripple_chain_is_not_a_loop": ("module x(input [7:0] a, output [7:0] c); assign c[0] = a[0]; assign c[7:1] = a[7:1] & c[6:0]; endmodule\n", set()),
+    "no_loop_is_clean": ("module x(input rst, en, d, output q); assign q = rst ? 1'b0 : (en ? d : 1'b1); endmodule\n", set()),
+    "loop_in_a_submodule": ("module sub(input rst, en, d, output q); assign q = rst ? 1'b0 : (en ? d : q); endmodule\n"
+                            "module x(input rst, en, d, output q); sub u(.rst(rst), .en(en), .d(d), .q(q)); endmodule\n", {"HDL-RST-01"}),
+}
+
+
+@needs_tool
+@pytest.mark.parametrize("name", sorted(LOOPS))
+def test_combinational_loop_is_an_asynchronous_latch(name: str, tmp_path: Path) -> None:
+    src, want = LOOPS[name]
+    kind, rules = _src_only(tmp_path, {"rtl/x.sv": src})
+    assert kind == "ran" and rules == want, (name, kind, rules)
+
+
+@needs_tool
+def test_declared_synchroniser_exempts_only_its_marked_stages(tmp_path: Path) -> None:
+    arch = "reset:\n  synchronisers: [syn]\n"
+    ok = _design(tmp_path / "ok", {"rtl/x.sv": SYNC_OK + SYNC_TOP, "architecture.yaml": arch})
+    r = C.run_one("resets", ok, "rtl", root=ok)
+    assert r["parts"]["source"] == "ran" and not [f for f in r["findings"] if f["blocking"]], r["findings"]
+    bad = _design(tmp_path / "bad", {"rtl/x.sv": SYNC_DECOY + SYNC_TOP, "architecture.yaml": arch})
+    r = C.run_one("resets", bad, "rtl", root=bad)
+    blocking = [f for f in r["findings"] if f["blocking"]]
+    assert {f["rule"] for f in blocking} == {"HDL-RST-01"} and "not an ASYNC_REG stage" in blocking[0]["message"], r["findings"]

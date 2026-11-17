@@ -1,0 +1,284 @@
+{
+  "task": "v2_b_pdm_front",
+  "sim": "icarus",
+  "date": "2026-11-14",
+  "ref": {
+    "pass": true,
+    "tests": {
+      "test_identity_and_reset": true,
+      "test_clock_and_channel_select": true,
+      "test_words_hold_the_microphone_bits": true,
+      "test_first_bit_goes_to_the_lowest_bit": true,
+      "test_run_off_abandons_the_partial_word": true,
+      "test_queue_overflow_and_clear": true,
+      "test_stuck_detection": true,
+      "test_stuck_run_spans_words_and_leds": true,
+      "test_stuck_run_restarts_with_run": true,
+      "test_register_rules": true
+    }
+  },
+  "mutants": [
+    {
+      "name": "clock_half_short",
+      "why": "M_CLK half period is one board clock short",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_clock_and_channel_select",
+        "test_words_hold_the_microphone_bits",
+        "test_first_bit_goes_to_the_lowest_bit",
+        "test_run_off_abandons_the_partial_word",
+        "test_queue_overflow_and_clear",
+        "test_stuck_detection",
+        "test_stuck_run_spans_words_and_leds",
+        "test_stuck_run_restarts_with_run",
+        "test_register_rules"
+      ]
+    },
+    {
+      "name": "clock_free_running",
+      "why": "M_CLK keeps toggling while RUN = 0",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_clock_and_channel_select",
+        "test_words_hold_the_microphone_bits",
+        "test_first_bit_goes_to_the_lowest_bit",
+        "test_run_off_abandons_the_partial_word",
+        "test_queue_overflow_and_clear",
+        "test_stuck_detection",
+        "test_stuck_run_spans_words_and_leds",
+        "test_stuck_run_restarts_with_run",
+        "test_register_rules"
+      ]
+    },
+    {
+      "name": "lrsel_high",
+      "why": "M_LRSEL is driven high",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_clock_and_channel_select"
+      ]
+    },
+    {
+      "name": "sample_too_late",
+      "why": "the bit is taken three clocks after the rising edge, when the line is no longer valid",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_words_hold_the_microphone_bits",
+        "test_first_bit_goes_to_the_lowest_bit",
+        "test_run_off_abandons_the_partial_word",
+        "test_queue_overflow_and_clear",
+        "test_stuck_detection",
+        "test_stuck_run_spans_words_and_leds",
+        "test_stuck_run_restarts_with_run",
+        "test_register_rules"
+      ]
+    },
+    {
+      "name": "msb_first",
+      "why": "the first bit taken goes to the highest bit",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_words_hold_the_microphone_bits",
+        "test_first_bit_goes_to_the_lowest_bit",
+        "test_run_off_abandons_the_partial_word",
+        "test_queue_overflow_and_clear",
+        "test_stuck_detection",
+        "test_stuck_run_spans_words_and_leds",
+        "test_stuck_run_restarts_with_run",
+        "test_register_rules"
+      ]
+    },
+    {
+      "name": "partial_kept_on_stop",
+      "why": "switching RUN off keeps the half-built word",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_run_off_abandons_the_partial_word",
+        "test_stuck_detection",
+        "test_stuck_run_restarts_with_run"
+      ]
+    },
+    {
+      "name": "stuck_run_kept_on_stop",
+      "why": "switching RUN off keeps the stuck-run counter",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_stuck_run_restarts_with_run"
+      ]
+    },
+    {
+      "name": "overflow_keeps_newest",
+      "why": "a word finished at a full queue replaces the oldest",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_words_hold_the_microphone_bits",
+        "test_run_off_abandons_the_partial_word",
+        "test_queue_overflow_and_clear",
+        "test_stuck_detection",
+        "test_stuck_run_spans_words_and_leds",
+        "test_stuck_run_restarts_with_run",
+        "test_register_rules"
+      ]
+    },
+    {
+      "name": "ovr_cleared_by_pop",
+      "why": "OVR is not sticky",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_queue_overflow_and_clear",
+        "test_register_rules"
+      ]
+    },
+    {
+      "name": "words_skip_dropped",
+      "why": "WORDS does not count dropped words",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_words_hold_the_microphone_bits",
+        "test_first_bit_goes_to_the_lowest_bit",
+        "test_run_off_abandons_the_partial_word",
+        "test_queue_overflow_and_clear",
+        "test_stuck_detection",
+        "test_stuck_run_spans_words_and_leds",
+        "test_stuck_run_restarts_with_run",
+        "test_register_rules"
+      ]
+    },
+    {
+      "name": "stuck_at_39",
+      "why": "a run of 39 already sets the flag",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_stuck_detection"
+      ]
+    },
+    {
+      "name": "stuck_at_41",
+      "why": "a run of 40 does not set the flag yet",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_stuck_detection"
+      ]
+    },
+    {
+      "name": "stuck_not_sticky",
+      "why": "the flags follow the current run instead of latching",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_stuck_detection",
+        "test_stuck_run_spans_words_and_leds"
+      ]
+    },
+    {
+      "name": "stuck_run_breaks_at_word",
+      "why": "the run counter restarts at every word boundary",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_run_off_abandons_the_partial_word",
+        "test_stuck_detection",
+        "test_stuck_run_spans_words_and_leds",
+        "test_stuck_run_restarts_with_run"
+      ]
+    },
+    {
+      "name": "clear_clears_words",
+      "why": "CLEAR also zeroes WORDS",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_queue_overflow_and_clear",
+        "test_stuck_detection",
+        "test_stuck_run_restarts_with_run"
+      ]
+    },
+    {
+      "name": "led_swapped",
+      "why": "LED[0] and LED[1] exchanged",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_stuck_run_spans_words_and_leds"
+      ]
+    },
+    {
+      "name": "result_read_pops",
+      "why": "reading DATA removes the word",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_words_hold_the_microphone_bits",
+        "test_first_bit_goes_to_the_lowest_bit",
+        "test_run_off_abandons_the_partial_word",
+        "test_queue_overflow_and_clear",
+        "test_stuck_detection",
+        "test_stuck_run_restarts_with_run",
+        "test_register_rules"
+      ]
+    },
+    {
+      "name": "next_on_empty_underflows",
+      "why": "NEXT on an empty queue underflows the count",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_register_rules"
+      ]
+    },
+    {
+      "name": "status_flags_swapped",
+      "why": "STUCK_HI and STUCK_LO exchanged",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_run_off_abandons_the_partial_word",
+        "test_stuck_detection",
+        "test_stuck_run_spans_words_and_leds",
+        "test_stuck_run_restarts_with_run"
+      ]
+    },
+    {
+      "name": "clear_on_run_bit",
+      "why": "writing RUN = 1 clears the queue and flags",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_queue_overflow_and_clear",
+        "test_stuck_detection"
+      ]
+    }
+  ],
+  "mutants_killed": 20,
+  "mutants_total": 20,
+  "trap": {
+    "twin": "textbook PDM reader that takes the bit at the falling edge of the clock (the right edge for the other channel)",
+    "why": "the microphone's valid window depends on the channel select; with M_LRSEL low the data are valid around the rising edge and the line is invalid at the falling edge",
+    "must_fail": [
+      "test_words_hold_the_microphone_bits"
+    ],
+    "failed_tests": [
+      "test_words_hold_the_microphone_bits",
+      "test_first_bit_goes_to_the_lowest_bit",
+      "test_run_off_abandons_the_partial_word",
+      "test_queue_overflow_and_clear",
+      "test_stuck_detection",
+      "test_stuck_run_spans_words_and_leds",
+      "test_stuck_run_restarts_with_run",
+      "test_register_rules"
+    ],
+    "trap_fires": true
+  }
+}

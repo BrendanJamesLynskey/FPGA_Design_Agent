@@ -85,6 +85,7 @@ class State(TypedDict, total=False):
     doc: dict             # brief 68 C: the DOC step's result (agent.graph.document), set by the document node
     resumed_from: str     # brief 68 D: the handover a resumed run started from (agent.graph.pickup)
     carried: list         # brief 68 D: stages before the entry that passed in the handover (inputs unchanged): not re-run
+    loopback: dict        # closure-loop hook: the joint closure plan needs the spec or architecture changed (closure_plan.reentry)
 
 
 @dataclass
@@ -1073,6 +1074,20 @@ def _sources_hash(rt: Runtime) -> str:
     return h.hexdigest()
 
 
+#: b82p2: in the 15 measured runs the build was refused with this text in 8 runs (two workers and other sessions' jobs
+#: shared the one Vivado slot); the gate then failed, the Designer could do nothing about it and spent every repair visit.
+VIVADO_BUSY = "limit FDA_VIVADO_MAX="
+VIVADO_POLL_S = 30.0
+
+
+def vivado_wait_s() -> float:
+    """How long a build waits for the Vivado slot before the refusal counts (FDA_VIVADO_WAIT_S, default 45 minutes)."""
+    try:
+        return float(os.environ.get("FDA_VIVADO_WAIT_S", "2700"))
+    except ValueError:
+        return 2700.0
+
+
 def _build(rt: Runtime, until: str, variant: str = "base") -> dict:
     """Run the Vivado flow to ``until`` unless a build of the same sources already went at least that far (the
     later stages re-read the same reports; a rebuild would only cost time). Gates always re-parsed."""
@@ -1082,6 +1097,11 @@ def _build(rt: Runtime, until: str, variant: str = "base") -> dict:
         b = {"ok": True, "cached": True}
     else:
         b = dispatch(rt.session, "build", {"until": until, "variant": variant})
+        waited = 0.0
+        while not b.get("ok") and VIVADO_BUSY in str(b.get("output", "")) and waited < vivado_wait_s():
+            time.sleep(VIVADO_POLL_S)                   # b82p2: another Vivado holds the PC's slot; that is no fault of the design
+            waited += VIVADO_POLL_S
+            b = dispatch(rt.session, "build", {"until": until, "variant": variant})
         if not b.get("ok"):
             rt.last_build_output = str(b.get("output", ""))[-2000:]
         cache.write_text(json.dumps({"sources": key, "until": until, "ok": bool(b.get("ok"))}))
@@ -1535,6 +1555,10 @@ def node_advance(state: State) -> dict:
     last = hist[-1] if hist else {}
     if last.get("rewind"):
         return {"stage": last["rewind"]["to"]}
+    if state.get("loopback"):                # closure-loop hook: the joint closure plan goes back to the spec or architecture
+        lb = state["loopback"]
+        return {"stage": lb["stage"], "note": lb["note"], "note_role": lb["note_role"],
+                "owners": {**(state.get("owners") or {}), **(lb.get("owners") or {})}, "loopback": {}}
     if n == 9 and state.get("hw_approved") and not (state.get("evidence") or {}).get("bringup"):
         return {"stage": 9}                                   # approved: run stage 9 again with hardware
     fails = state.get("fails") or []
@@ -1662,6 +1686,8 @@ def follow_spec_language(rt) -> bool:
 
 def new_runtime(cfg: Config, client: Callable, run_id: str | None = None, runner=None,
                 oracle_llm: Callable | None = None) -> Runtime:
+    from agent.access import require_or_exit      # brief 94: every run is created here
+    require_or_exit("new_runtime")
     run_id = run_id or time.strftime("%Y%m%d-%H%M%S-") + uuid.uuid4().hex[:4]
     run_dir = RUNS / run_id
     design = run_dir / cfg.name

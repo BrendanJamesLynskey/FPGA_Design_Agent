@@ -1,0 +1,731 @@
+{
+ "schema": "b89-diagnosis/1",
+ "splits_used": [
+  "train",
+  "val"
+ ],
+ "D1_input_coding": {
+  "gbt_87cfg": {
+   "raw": [
+    0.5032,
+    0.4746
+   ],
+   "codes_1bit": [
+    0.4874,
+    0.4777
+   ],
+   "codes_2bit": [
+    0.4956,
+    0.4673
+   ],
+   "codes_3bit": [
+    0.5001,
+    0.4771
+   ],
+   "codes_4bit": [
+    0.5022,
+    0.4747
+   ]
+  },
+  "logreg": {
+   "raw": [
+    0.4886,
+    0.4762
+   ],
+   "onehot_codes_1bit": [
+    0.4751,
+    0.4625
+   ],
+   "onehot_codes_2bit": [
+    0.4897,
+    0.4659
+   ],
+   "onehot_codes_3bit": [
+    0.492,
+    0.4675
+   ],
+   "onehot_codes_4bit": [
+    0.495,
+    0.4663
+   ]
+  },
+  "distinct_2bit_codes_used_per_feature": [
+   4,
+   4,
+   2,
+   4,
+   4,
+   4,
+   2
+  ],
+  "note": "[train, val] accuracy; codes are quantile thresholds from train (87 used 2 bits)"
+ },
+ "D2_ceiling": {
+  "hgb_100x4": [
+   0.523,
+   0.4801
+  ],
+  "hgb_300x6": [
+   0.5642,
+   0.4717
+  ],
+  "imbalance_rule_val": 0.44889001009081736,
+  "note": "[train, val]; a large ensemble's validation accuracy is our estimate of what the features allow"
+ },
+ "D3_fan_in": {
+  "single_feature_val": {
+   "bid_sz": 0.3988,
+   "ask_sz": 0.4119,
+   "spread": 0.3985,
+   "imb_bucket": 0.4339,
+   "trade_sign_sum": 0.3233,
+   "ofi16": 0.3797,
+   "last_mid_dir": 0.3945
+  },
+  "three_feature_subsets_val": {
+   "ask_sz+spread+imb_bucket": 0.4649,
+   "bid_sz+ask_sz+last_mid_dir": 0.4648,
+   "spread+imb_bucket+trade_sign_sum": 0.4647,
+   "spread+imb_bucket+ofi16": 0.4647,
+   "spread+imb_bucket+last_mid_dir": 0.4645,
+   "ask_sz+imb_bucket+trade_sign_sum": 0.4633,
+   "ask_sz+imb_bucket+ofi16": 0.4625,
+   "ask_sz+imb_bucket+last_mid_dir": 0.461,
+   "bid_sz+ask_sz+spread": 0.4609,
+   "bid_sz+imb_bucket+last_mid_dir": 0.4609,
+   "bid_sz+spread+imb_bucket": 0.4607,
+   "bid_sz+imb_bucket+ofi16": 0.4566,
+   "bid_sz+ask_sz+imb_bucket": 0.4552,
+   "bid_sz+ask_sz+ofi16": 0.4548,
+   "bid_sz+ask_sz+trade_sign_sum": 0.4544,
+   "bid_sz+imb_bucket+trade_sign_sum": 0.4502,
+   "ask_sz+spread+ofi16": 0.4493,
+   "bid_sz+spread+ofi16": 0.4461,
+   "bid_sz+spread+last_mid_dir": 0.4461,
+   "spread+ofi16+last_mid_dir": 0.4456,
+   "bid_sz+ofi16+last_mid_dir": 0.4407,
+   "bid_sz+spread+trade_sign_sum": 0.4404,
+   "ask_sz+ofi16+last_mid_dir": 0.4375,
+   "ask_sz+spread+trade_sign_sum": 0.4373,
+   "ask_sz+spread+last_mid_dir": 0.4371,
+   "imb_bucket+ofi16+last_mid_dir": 0.4353,
+   "imb_bucket+trade_sign_sum+last_mid_dir": 0.4348,
+   "imb_bucket+trade_sign_sum+ofi16": 0.4345,
+   "spread+trade_sign_sum+ofi16": 0.4342,
+   "ask_sz+trade_sign_sum+ofi16": 0.4334,
+   "ask_sz+trade_sign_sum+last_mid_dir": 0.4245,
+   "bid_sz+trade_sign_sum+ofi16": 0.4195,
+   "spread+trade_sign_sum+last_mid_dir": 0.4123,
+   "bid_sz+trade_sign_sum+last_mid_dir": 0.4115,
+   "trade_sign_sum+ofi16+last_mid_dir": 0.4045
+  },
+  "note": "validation accuracy of the 87 tree config restricted to these raw features"
+ },
+ "D4_training": {
+  "quantised_87": [
+   {
+    "train": 0.4694,
+    "val": 0.4534,
+    "val_by_epoch": [
+     0.4413,
+     0.4454,
+     0.4575,
+     0.4609,
+     0.4213,
+     0.4555,
+     0.428,
+     0.4464,
+     0.3797,
+     0.4534
+    ]
+   },
+   {
+    "train": 0.4757,
+    "val": 0.4548,
+    "val_by_epoch": [
+     0.4377,
+     0.4122,
+     0.4127,
+     0.4152,
+     0.3918,
+     0.4196,
+     0.4152,
+     0.4176,
+     0.4268,
+     0.4548
+    ]
+   },
+   {
+    "train": 0.4276,
+    "val": 0.4076,
+    "val_by_epoch": [
+     0.435,
+     0.4087,
+     0.4451,
+     0.4304,
+     0.438,
+     0.4301,
+     0.4139,
+     0.4314,
+     0.4211,
+     0.4076
+    ]
+   }
+  ],
+  "float_hidden": [
+   {
+    "train": 0.4971,
+    "val": 0.4801,
+    "val_by_epoch": [
+     0.4724,
+     0.4762,
+     0.4767,
+     0.4737,
+     0.4774,
+     0.4736,
+     0.4751,
+     0.4736,
+     0.4673,
+     0.4801
+    ]
+   },
+   {
+    "train": 0.4954,
+    "val": 0.4701,
+    "val_by_epoch": [
+     0.4571,
+     0.4587,
+     0.4675,
+     0.4689,
+     0.4657,
+     0.4711,
+     0.4628,
+     0.4704,
+     0.469,
+     0.4701
+    ]
+   },
+   {
+    "train": 0.496,
+    "val": 0.4742,
+    "val_by_epoch": [
+     0.4727,
+     0.4712,
+     0.4756,
+     0.4706,
+     0.4777,
+     0.4771,
+     0.4734,
+     0.4744,
+     0.4678,
+     0.4742
+    ]
+   }
+  ],
+  "quantised_bn": [
+   {
+    "train": 0.4532,
+    "val": 0.4163,
+    "val_by_epoch": [
+     0.4018,
+     0.4227,
+     0.4521,
+     0.4243,
+     0.4376,
+     0.3906,
+     0.468,
+     0.4339,
+     0.4142,
+     0.4163
+    ]
+   },
+   {
+    "train": 0.4527,
+    "val": 0.426,
+    "val_by_epoch": [
+     0.4325,
+     0.398,
+     0.4043,
+     0.4303,
+     0.4448,
+     0.4073,
+     0.3979,
+     0.4009,
+     0.4439,
+     0.426
+    ]
+   },
+   {
+    "train": 0.4497,
+    "val": 0.4335,
+    "val_by_epoch": [
+     0.4363,
+     0.43,
+     0.4459,
+     0.4479,
+     0.4328,
+     0.4291,
+     0.4286,
+     0.4308,
+     0.4215,
+     0.4335
+    ]
+   }
+  ],
+  "float_hidden_3bit_inputs": [
+   {
+    "train": 0.5048,
+    "val": 0.482,
+    "val_by_epoch": [
+     0.4701,
+     0.4712,
+     0.4741,
+     0.48,
+     0.4752,
+     0.4822,
+     0.4807,
+     0.4729,
+     0.4743,
+     0.482
+    ]
+   },
+   {
+    "train": 0.5047,
+    "val": 0.48,
+    "val_by_epoch": [
+     0.4587,
+     0.4685,
+     0.487,
+     0.4836,
+     0.4785,
+     0.4688,
+     0.4696,
+     0.4884,
+     0.4802,
+     0.48
+    ]
+   },
+   {
+    "train": 0.5039,
+    "val": 0.4809,
+    "val_by_epoch": [
+     0.4612,
+     0.4716,
+     0.4832,
+     0.4725,
+     0.4715,
+     0.4802,
+     0.4798,
+     0.4789,
+     0.472,
+     0.4809
+    ]
+   }
+  ],
+  "note": "vectorised re-implementation of the 87 structure, 10 epochs; same wiring draw as 87 for a seed (numpy default_rng(seed).choice per neuron)"
+ },
+ "D0_b87_network": [
+  {
+   "seed": 0,
+   "train": 0.4256,
+   "val": 0.4004,
+   "distinct_output_codes_per_neuron": [
+    [
+     4,
+     2,
+     4,
+     2,
+     4,
+     4,
+     1,
+     3,
+     2,
+     4,
+     2,
+     2,
+     3,
+     4,
+     1,
+     4
+    ],
+    [
+     4,
+     4,
+     4,
+     4,
+     1,
+     3,
+     2,
+     2
+    ],
+    [
+     4,
+     3,
+     5
+    ]
+   ],
+   "constant_neurons": [
+    2,
+    1,
+    0
+   ],
+   "val_share_with_tied_top_score": 0.693,
+   "val_class_share_predicted": [
+    0.6184,
+    0.2352,
+    0.1464
+   ],
+   "first_layer_wiring": [
+    [
+     3,
+     4,
+     6
+    ],
+    [
+     0,
+     5,
+     6
+    ],
+    [
+     3,
+     5,
+     6
+    ],
+    [
+     3,
+     5,
+     6
+    ],
+    [
+     1,
+     4,
+     6
+    ],
+    [
+     0,
+     3,
+     4
+    ],
+    [
+     0,
+     1,
+     4
+    ],
+    [
+     0,
+     2,
+     6
+    ],
+    [
+     0,
+     2,
+     6
+    ],
+    [
+     3,
+     4,
+     5
+    ],
+    [
+     2,
+     3,
+     6
+    ],
+    [
+     2,
+     4,
+     6
+    ],
+    [
+     4,
+     5,
+     6
+    ],
+    [
+     0,
+     3,
+     5
+    ],
+    [
+     1,
+     2,
+     5
+    ],
+    [
+     0,
+     4,
+     6
+    ]
+   ],
+   "seconds": 451.2
+  },
+  {
+   "seed": 1,
+   "train": 0.4719,
+   "val": 0.4393,
+   "distinct_output_codes_per_neuron": [
+    [
+     4,
+     4,
+     4,
+     3,
+     4,
+     2,
+     3,
+     2,
+     4,
+     3,
+     4,
+     1,
+     4,
+     1,
+     1,
+     4
+    ],
+    [
+     4,
+     4,
+     2,
+     4,
+     1,
+     4,
+     4,
+     4
+    ],
+    [
+     4,
+     5,
+     4
+    ]
+   ],
+   "constant_neurons": [
+    3,
+    1,
+    0
+   ],
+   "val_share_with_tied_top_score": 0.7074,
+   "val_class_share_predicted": [
+    0.623,
+    0.2299,
+    0.1471
+   ],
+   "first_layer_wiring": [
+    [
+     2,
+     3,
+     5
+    ],
+    [
+     0,
+     4,
+     6
+    ],
+    [
+     1,
+     2,
+     4
+    ],
+    [
+     2,
+     3,
+     6
+    ],
+    [
+     4,
+     5,
+     6
+    ],
+    [
+     1,
+     2,
+     5
+    ],
+    [
+     0,
+     2,
+     6
+    ],
+    [
+     1,
+     2,
+     5
+    ],
+    [
+     0,
+     4,
+     6
+    ],
+    [
+     0,
+     2,
+     6
+    ],
+    [
+     0,
+     2,
+     4
+    ],
+    [
+     1,
+     4,
+     6
+    ],
+    [
+     2,
+     3,
+     6
+    ],
+    [
+     2,
+     3,
+     5
+    ],
+    [
+     2,
+     3,
+     5
+    ],
+    [
+     2,
+     3,
+     5
+    ]
+   ],
+   "seconds": 713.4
+  },
+  {
+   "seed": 2,
+   "train": 0.4627,
+   "val": 0.4327,
+   "distinct_output_codes_per_neuron": [
+    [
+     1,
+     4,
+     1,
+     4,
+     3,
+     4,
+     4,
+     4,
+     3,
+     4,
+     4,
+     4,
+     4,
+     2,
+     4,
+     1
+    ],
+    [
+     2,
+     4,
+     4,
+     4,
+     4,
+     4,
+     1,
+     4
+    ],
+    [
+     5,
+     3,
+     3
+    ]
+   ],
+   "constant_neurons": [
+    3,
+    1,
+    0
+   ],
+   "val_share_with_tied_top_score": 0.574,
+   "val_class_share_predicted": [
+    0.3853,
+    0.5714,
+    0.0433
+   ],
+   "first_layer_wiring": [
+    [
+     0,
+     1,
+     4
+    ],
+    [
+     0,
+     2,
+     4
+    ],
+    [
+     4,
+     5,
+     6
+    ],
+    [
+     0,
+     1,
+     3
+    ],
+    [
+     1,
+     3,
+     6
+    ],
+    [
+     2,
+     4,
+     6
+    ],
+    [
+     1,
+     3,
+     6
+    ],
+    [
+     2,
+     3,
+     6
+    ],
+    [
+     1,
+     2,
+     4
+    ],
+    [
+     4,
+     5,
+     6
+    ],
+    [
+     1,
+     4,
+     5
+    ],
+    [
+     0,
+     3,
+     4
+    ],
+    [
+     1,
+     3,
+     4
+    ],
+    [
+     2,
+     3,
+     5
+    ],
+    [
+     2,
+     4,
+     5
+    ],
+    [
+     2,
+     5,
+     6
+    ]
+   ],
+   "seconds": 803.8
+  }
+ ]
+}

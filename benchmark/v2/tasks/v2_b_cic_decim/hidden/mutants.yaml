@@ -1,0 +1,81 @@
+# Mutants and the trap for v2_b_cic_decim (benchmark/tools/check_task.py)
+mutants:
+- name: width_12
+  file: cic_decim.sv
+  find: localparam int W = 16;
+  replace: localparam int W = 12;
+  why: 'registers are 12 bits wide: the +4096 and -4096 steady states wrap'
+- name: phase_early
+  file: cic_decim.sv
+  find: wire out_v_cd = bit_v_cd && phase_cd == 4'd15;
+  replace: wire out_v_cd = bit_v_cd && phase_cd == 4'd14;
+  why: the comb chain takes its sample one input bit early
+- name: map_zero_for_zero
+  file: cic_decim.sv
+  find: 'wire signed [W-1:0] s_cd  = shreg_cd[0] ? 16''sd1 : -16''sd1;'
+  replace: 'wire signed [W-1:0] s_cd  = shreg_cd[0] ? 16''sd1 : 16''sd0;'
+  why: a 0 bit counts as 0, not -1
+- name: integrator_pipelined
+  file: cic_decim.sv
+  find: wire signed [W-1:0] n3_cd = i3_cd + n2_cd;
+  replace: wire signed [W-1:0] n3_cd = i3_cd + i2_cd;
+  why: the third integrator adds the old second integrator, a one-clock-late cascade
+- name: comb_tap_wrong
+  file: cic_decim.sv
+  find: d1_cd <= n3_cd; d2_cd <= c1_cd; d3_cd <= c2_cd;
+  replace: d1_cd <= n3_cd; d2_cd <= c1_cd; d3_cd <= c1_cd;
+  why: the third comb delays the wrong signal
+- name: fill_discard_one
+  file: cic_decim.sv
+  find: warm1_cd <= warm0_cd;
+  replace: warm1_cd <= 1'b1;
+  why: only the first output is discarded
+- name: overflow_overwrites
+  file: cic_decim.sv
+  find: if (cnt_cd == 5'd16) ovr_cd <= 1'b1;
+  replace: if (cnt_cd == 5'd16) begin ovr_cd <= 1'b1; q_cd[wp_cd] <= 32'(c3_cd); wp_cd <= wp_cd + 4'd1; end
+  why: a result arriving at a full queue overwrites an old entry
+- name: ovr_cleared_by_pop
+  file: cic_decim.sv
+  find: if (pop_cd) rp_cd <= rp_cd + 4'd1;
+  replace: if (pop_cd) begin rp_cd <= rp_cd + 4'd1; ovr_cd <= 1'b0; end
+  why: 'OVR is not sticky: a pop clears it'
+- name: clear_keeps_ovr
+  file: cic_decim.sv
+  find: cnt_cd <= '0; ovr_cd <= 1'b0;
+  replace: 'cnt_cd <= ''0; ovr_cd <= rst_cd ? 1''b0 : ovr_cd;'
+  why: CLEAR leaves OVR set
+- name: result_read_pops
+  file: cic_decim.sv
+  find: wire pop_cd  = win_wr_cd && win_addr_cd == 7'h04 && cnt_cd != 5'd0;
+  replace: wire pop_cd  = ((win_wr_cd && win_addr_cd == 7'h04) || (win_rd_cd && win_addr_cd == 7'h03)) && cnt_cd != 5'd0;
+  why: reading RESULT removes the entry
+- name: next_on_empty_underflows
+  file: cic_decim.sv
+  find: wire pop_cd  = win_wr_cd && win_addr_cd == 7'h04 && cnt_cd != 5'd0;
+  replace: wire pop_cd  = win_wr_cd && win_addr_cd == 7'h04;
+  why: NEXT on an empty queue drives the count below zero
+- name: bit_order_msb_first
+  file: cic_decim.sv
+  find: shreg_cd <= win_wdata_cd;
+  replace: shreg_cd <= {win_wdata_cd[0],win_wdata_cd[1],win_wdata_cd[2],win_wdata_cd[3],win_wdata_cd[4],win_wdata_cd[5],win_wdata_cd[6],win_wdata_cd[7],win_wdata_cd[8],win_wdata_cd[9],win_wdata_cd[10],win_wdata_cd[11],win_wdata_cd[12],win_wdata_cd[13],win_wdata_cd[14],win_wdata_cd[15],win_wdata_cd[16],win_wdata_cd[17],win_wdata_cd[18],win_wdata_cd[19],win_wdata_cd[20],win_wdata_cd[21],win_wdata_cd[22],win_wdata_cd[23],win_wdata_cd[24],win_wdata_cd[25],win_wdata_cd[26],win_wdata_cd[27],win_wdata_cd[28],win_wdata_cd[29],win_wdata_cd[30],win_wdata_cd[31]};
+  why: the 32 bits are fed bit 31 first
+- name: clr_any_ctrl_write
+  file: cic_decim.sv
+  find: wire clr_cd  = win_wr_cd && win_addr_cd == 7'h00 && win_wdata_cd[0];
+  replace: wire clr_cd  = win_wr_cd && win_addr_cd == 7'h00;
+  why: any write to CTRL clears, not only bit 0 = 1
+- name: status_count_off
+  file: cic_decim.sv
+  find: '7''h02:   win_rdata_cd <= {22''d0, left_cd != 6''d0, ovr_cd, 3''d0, cnt_cd};'
+  replace: '7''h02:   win_rdata_cd <= {22''d0, left_cd != 6''d0, ovr_cd, 3''d0, cnt_cd - 5''d0 + {4''d0, ovr_cd}};'
+  why: COUNT includes the OVR flag
+trap:
+  twin: textbook CIC that outputs from the first decimation instant
+  why: after reset the first outputs mix real bits with the empty start state; the request says only fully made results count
+  edits:
+  - file: cic_decim.sv
+    find: wire push_cd  = out_v_cd && warm1_cd;
+    replace: wire push_cd  = out_v_cd;
+  must_fail:
+  - test_fill_outputs_are_not_results

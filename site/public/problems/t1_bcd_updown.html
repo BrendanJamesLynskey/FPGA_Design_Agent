@@ -606,11 +606,46 @@ svg .bdtick { stroke: var(--ink-3); }
   .tl li { grid-template-columns: 1fr; }
   .tld { padding: 0 0 .1em; }
 }
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.mx td.mk, .mx th.mk { text-align: center; white-space: normal; min-width: 6.5em; position: relative; }
+.mx th[scope="row"] { font-weight: 400; color: var(--ink); min-width: 14em; }
+.mx tfoot th, .mx tfoot td { border-top: 2px solid var(--ink); font-weight: 600; }
+.sq { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--ink); vertical-align: middle; line-height: 12px; text-align: center; box-sizing: border-box; }
+.sq.y { background: var(--ink); }
+.sq.n { background: transparent; border-color: var(--ink-3); border-style: dashed; }
+.sq.na { border: 0; color: var(--ink-3); }
+.map code { white-space: normal; overflow-wrap: anywhere; display: inline-block; margin: 0 4px 4px 0; font-size: .75rem; }
+.map th[scope="row"] { min-width: 12em; font-weight: 600; }
+.map td { min-width: 8em; }
+.map { table-layout: auto; }
+.pin { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.pstep { border: 1px solid var(--rule); background: var(--panel); padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; max-width: none; }
+.pstep.bad { border: 2px solid var(--warn); }
+.ptag { font: 700 .75rem var(--f-mono); text-transform: uppercase; color: var(--ink-3); }
+.pstep.bad .ptag { color: var(--warn); }
+.sfig .sbad { fill: var(--warn); }
+.sfig .ftick { stroke: var(--ink); stroke-width: 2.5; }
+.sfig .sunk { fill: none; stroke: var(--ink-3); stroke-dasharray: 4 3; }
+.sfig .sbar2 { fill: var(--ink); }
+.mxfig td.num { font-family: var(--f-mono); }
+.cexfig .cxh { fill: var(--ink); }
+.cexfig .cxl { fill: var(--ink-3); }
+.cexfig .cxfut { fill: var(--bg); opacity: .85; }
+.cexfig .ctl { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+.mx th[scope="row"] { min-width: 10em; }
+@media (max-width: 700px) {
+  .map thead { display: none; }
+  .map, .map tbody, .map tr, .map td, .map th { display: block; min-width: 0; width: 100%; }
+  .map tr { border-bottom: 2px solid var(--rule); padding: 6px 0; }
+  .map td { border: 0; padding: 2px 10px; }
+  .map td:not(:has(code)) { display: none; }
+  .map td::before { content: attr(data-label) ": "; font-size: .78rem; color: var(--ink-3); display: block; }
+}
 </style>
 </head>
 <body>
 <a class="visually-hidden" href="#main">Skip to content</a>
-<header class="bar"><div class="wrap"><a class="brand" href="../index.html">FPGA Design Agent</a><nav aria-label="Pages"><a href="../agent.html">The agent</a><a class="sub" href="../agent.html#harness">Harness</a><a href="../story.html">How it was built</a><a href="../how.html">How it works</a><a href="../flow-notes.html">Beyond the flow</a><a href="../expertise.html">Expertise</a><a href="../examples.html">Examples</a><a href="../showcase.html">Showcase</a><a href="../problems.html" aria-current="page">Problems</a><a href="../evaluation.html">Evaluation</a><a href="../results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
+<header class="bar"><div class="wrap"><a class="brand" href="../index.html">FPGA Design Agent</a><nav aria-label="Pages"><a href="../agent.html">The agent</a><a class="sub" href="../agent.html#harness">Harness</a><a href="../story.html">How it was built</a><a href="../how.html">How it works</a><a href="../verification.html">Verification</a><a href="../flow-notes.html">Beyond the flow</a><a href="../expertise.html">Expertise</a><a href="../examples.html">Examples</a><a href="../showcase.html">Showcase</a><a href="../problems.html" aria-current="page">Problems</a><a href="../evaluation.html">Evaluation</a><a href="../results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
 <main id="main" class="wrap">
 <p class="crumbs small"><a href="../problems.html">Problems</a> / <a href="../problems.html#dom-A">A. Basic digital design drills</a></p>
 <h1>Decimal up/down counter with selectable step</h1>
@@ -642,8 +677,8 @@ svg .bdtick { stroke: var(--ink-3); }
 <p>Each is a small edit to the reference RTL. In the committed check (icarus, 2026-11-10, <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/results/reference/t1_bcd_updown__icarus.json"><code>t1_bcd_updown__icarus.json</code></a>) the reference passed all 11 hidden tests and 9 of 9 mutants failed them.</p>
 <div class="tablewrap" tabindex="0"><table><thead><tr><th>Mutant</th><th>File</th><th>The bug</th><th>Hidden tests that fail</th></tr></thead><tbody><tr><td><code>step_eight</code></td><td><code>bcd_updown.sv</code></td><td>SW = 11 steps by 8, not 10</td><td><code>test_steps_from_switches</code>, <code>test_wrap_both_ends</code></td></tr><tr><td><code>wrap_off_by_one</code></td><td><code>bcd_updown.sv</code></td><td>9999 + 1 shows 10000 instead of wrapping</td><td><code>test_wrap_both_ends</code>, <code>test_wrap_count_is_a_byte</code></td></tr><tr><td><code>debounce_half</code></td><td><code>bm_debounce.sv</code></td><td>debounce accepts pulses of half the time</td><td><code>test_debounce_rejects_bounce</code></td></tr><tr><td><code>simultaneous_up_wins</code></td><td><code>bcd_updown.sv</code></td><td>up wins when both press on one clock</td><td><code>test_simultaneous_presses_cancel</code></td></tr><tr><td><code>write_range</code></td><td><code>bcd_updown.sv</code></td><td>out-of-range COUNT writes accepted</td><td><code>test_register_rules</code></td></tr><tr><td><code>wraps_not_cleared</code></td><td><code>bcd_updown.sv</code></td><td>a write does not clear WRAPS</td><td><code>test_wrap_both_ends</code></td></tr><tr><td><code>wraps_nine_bits</code></td><td><code>bcd_updown.sv</code></td><td>the wrap count is nine bits and reads 256 after 256 wraps (amended 2026-11-10)</td><td><code>test_wrap_count_is_a_byte</code></td></tr><tr><td><code>count_survives_reset</code></td><td><code>bcd_updown.sv</code></td><td>CPU_RESETN does not clear COUNT after activity (amended 2026-11-10)</td><td><code>test_debounce_rejects_bounce</code>, <code>test_wrap_count_is_a_byte</code>, <code>test_reset_after_activity</code></td></tr><tr><td><code>wraps_survive_reset</code></td><td><code>bcd_updown.sv</code></td><td>CPU_RESETN does not clear WRAPS after activity (amended 2026-11-10)</td><td><code>test_reset_after_activity</code></td></tr></tbody></table></div>
 <h2>Sample solution</h2>
-<p class="note">Hand-written reference for the benchmark, not agent output; it passes every test, and the listed mutants fail them. With it, the hidden cocotb tests and the golden model. Repository licence: MIT.</p>
-<details class="code"><summary><span class="mono">bcd_updown.sv</span> <span class="muted small">reference RTL, 132 lines</span></summary><div class="codebar small"><a href="t1_bcd_updown/bcd_updown.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t1_bcd_updown/ref/rtl/bcd_updown.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// bcd_updown.sv: the counter, wrap count, binary-to-BCD converter, LEDs and</span>
+<p class="note">Hand-written reference for the benchmark, not agent output; it passes every test, and the listed mutants fail them. With it, the hidden cocotb tests and the golden model. Repository licence: all rights reserved (source visible for review).</p>
+<details class="code"><summary><span class="mono">bcd_updown.sv</span> <span class="muted small">reference RTL, 132 lines</span></summary><div class="codebar small"><a href="t1_bcd_updown/bcd_updown.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t1_bcd_updown/ref/rtl/bcd_updown.sv">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hc">// bcd_updown.sv: the counter, wrap count, binary-to-BCD converter, LEDs and</span>
 <span class="hc">// display contents of t1_bcd_updown, behind the shell&#x27;s register window.</span>
 <span class="hk">module</span> bcd_updown #(
     <span class="hk">parameter</span> <span class="hk">int</span> DEBOUNCE_CYCLES = 1_000_000
@@ -775,7 +810,7 @@ svg .bdtick { stroke: var(--ink-3); }
         <span class="hk">end</span>
     <span class="hk">end</span>
 <span class="hk">endmodule</span>
-</code></pre></details><details class="code"><summary><span class="mono">bm_debounce.sv</span> <span class="muted small">reference RTL, 35 lines</span></summary><div class="codebar small"><a href="t1_bcd_updown/bm_debounce.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t1_bcd_updown/ref/rtl/bm_debounce.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// bm_debounce.sv: two-flop synchroniser, then a counting debounce. The level</span>
+</code></pre></details><details class="code"><summary><span class="mono">bm_debounce.sv</span> <span class="muted small">reference RTL, 35 lines</span></summary><div class="codebar small"><a href="t1_bcd_updown/bm_debounce.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t1_bcd_updown/ref/rtl/bm_debounce.sv">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hc">// bm_debounce.sv: two-flop synchroniser, then a counting debounce. The level</span>
 <span class="hc">// changes only after the synchronised input has differed from it for CYCLES</span>
 <span class="hc">// consecutive clocks; a shorter difference restarts the count. rise is a</span>
 <span class="hc">// one-clock pulse on each 0 -&gt; 1 change of the level.</span>
@@ -810,7 +845,7 @@ svg .bdtick { stroke: var(--ink-3); }
         <span class="hk">end</span>
     <span class="hk">end</span>
 <span class="hk">endmodule</span>
-</code></pre></details><details class="code"><summary><span class="mono">bm_scan8.sv</span> <span class="muted small">reference RTL, 35 lines</span></summary><div class="codebar small"><a href="t1_bcd_updown/bm_scan8.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t1_bcd_updown/ref/rtl/bm_scan8.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// bm_scan8.sv: eight-digit multiplexed display. Digit k (0 = rightmost, AN[0])</span>
+</code></pre></details><details class="code"><summary><span class="mono">bm_scan8.sv</span> <span class="muted small">reference RTL, 35 lines</span></summary><div class="codebar small"><a href="t1_bcd_updown/bm_scan8.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t1_bcd_updown/ref/rtl/bm_scan8.sv">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hc">// bm_scan8.sv: eight-digit multiplexed display. Digit k (0 = rightmost, AN[0])</span>
 <span class="hc">// is lit for 2^REFRESH_BITS clocks, in order 0..7. While digit k is lit its</span>
 <span class="hc">// anode is low unless blank[k] is set (then every anode stays high for that</span>
 <span class="hc">// slot). seg is active-low {g,f,e,d,c,b,a}; dp_n is active low.</span>
@@ -845,7 +880,7 @@ svg .bdtick { stroke: var(--ink-3); }
         <span class="hk">end</span>
     <span class="hk">end</span>
 <span class="hk">endmodule</span>
-</code></pre></details><details class="code"><summary><span class="mono">t1_bcd_updown_top.sv</span> <span class="muted small">reference RTL, 44 lines</span></summary><div class="codebar small"><a href="t1_bcd_updown/t1_bcd_updown_top.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t1_bcd_updown/ref/rtl/t1_bcd_updown_top.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// t1_bcd_updown_top.sv: board top (Nexys A7-100T, master-XDC port names).</span>
+</code></pre></details><details class="code"><summary><span class="mono">t1_bcd_updown_top.sv</span> <span class="muted small">reference RTL, 44 lines</span></summary><div class="codebar small"><a href="t1_bcd_updown/t1_bcd_updown_top.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t1_bcd_updown/ref/rtl/t1_bcd_updown_top.sv">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hc">// t1_bcd_updown_top.sv: board top (Nexys A7-100T, master-XDC port names).</span>
 <span class="hc">// Reference design for benchmark task t1_bcd_updown; DESIGN_ID &quot;BCDU&quot;.</span>
 <span class="hk">module</span> t1_bcd_updown_top #(
     <span class="hk">parameter</span> <span class="hk">int</span>          CLKS_PER_BIT    = 868,
@@ -889,7 +924,7 @@ svg .bdtick { stroke: var(--ink-3); }
         .an(AN), .seg_n(seg_n), .dp_n(DP));
     <span class="hk">assign</span> {CG, CF, CE, CD, CC, CB, CA} = seg_n;
 <span class="hk">endmodule</span>
-</code></pre></details><details class="code"><summary><span class="mono">acceptance.py</span> <span class="muted small">hidden cocotb acceptance tests, 225 lines</span></summary><div class="codebar small"><a href="t1_bcd_updown/acceptance.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t1_bcd_updown/hidden/acceptance.py">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;Acceptance tests of t1_bcd_updown against model.py (hidden from the agent).&quot;&quot;&quot;</span>
+</code></pre></details><details class="code"><summary><span class="mono">acceptance.py</span> <span class="muted small">hidden cocotb acceptance tests, 225 lines</span></summary><div class="codebar small"><a href="t1_bcd_updown/acceptance.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t1_bcd_updown/hidden/acceptance.py">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;Acceptance tests of t1_bcd_updown against model.py (hidden from the agent).&quot;&quot;&quot;</span>
 
 <span class="hk">from</span> __future__ <span class="hk">import</span> annotations
 
@@ -1114,7 +1149,7 @@ IDLE = {<span class="hs">&quot;BTNU&quot;</span>: 0, <span class="hs">&quot;BTND
     <span class="hk">await</span> e.check_regs()
     <span class="hk">await</span> e.check_display()
     <span class="hk">await</span> e.check_leds()
-</code></pre></details><details class="code"><summary><span class="mono">model.py</span> <span class="muted small">golden model, 65 lines</span></summary><div class="codebar small"><a href="t1_bcd_updown/model.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t1_bcd_updown/hidden/model.py">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;Golden model of t1_bcd_updown, written from spec.yaml alone (never from any RTL).&quot;&quot;&quot;</span>
+</code></pre></details><details class="code"><summary><span class="mono">model.py</span> <span class="muted small">golden model, 65 lines</span></summary><div class="codebar small"><a href="t1_bcd_updown/model.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t1_bcd_updown/hidden/model.py">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;Golden model of t1_bcd_updown, written from spec.yaml alone (never from any RTL).&quot;&quot;&quot;</span>
 
 <span class="hk">from</span> __future__ <span class="hk">import</span> annotations
 
@@ -1186,7 +1221,7 @@ GLYPHS = (<span class="hs">&quot;abcdef&quot;</span>, <span class="hs">&quot;bc&
 
 <div class="pager"><a href="../problems.html">&larr; All problems</a><span></span></div>
 </main>
-<footer><div class="wrap"><p>Designed by Brendan Lynskey. Code and results: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent">github.com/BrendanJamesLynskey/FPGA_Design_Agent</a> (MIT licence). Every number on these pages is read from a committed result file; development results are labelled as such and are not the held-out score.</p></div></footer>
+<footer><div class="wrap"><p>Designed by Brendan Lynskey. Code and results: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent">github.com/BrendanJamesLynskey/FPGA_Design_Agent</a> (all rights reserved; source visible for review, see LICENSE). Every number on these pages is read from a committed result file; development results are labelled as such and are not the held-out score.</p></div></footer>
 <script type="application/json" data-key="trace">{"captions":["Press 0: the count is set to 9985 over the shell, so the display shows 9985. No wraps yet.","Press 1: switches 00 give a step of 1; one press up takes 9985 to 9986.","Press 2: switches 00 give a step of 1; one press up takes 9986 to 9987.","Press 3: switches 01 give a step of 2; one press up takes 9987 to 9989.","Press 4: switches 10 give a step of 5; one press up takes 9989 to 9994.","Press 5: switches 11 give a step of 10; one press up takes 9994 to 4. That passes the end of the range, so the wrap count becomes 1.","Press 6: switches 11 give a step of 10; one press up takes 4 to 14.","Press 7: switches 11 give a step of 10; one press down takes 14 to 4.","Press 8: switches 10 give a step of 5; one press down takes 4 to 9999. That passes the end of the range, so the wrap count becomes 2.","Press 9: switches 01 give a step of 2; one press down takes 9999 to 9997.","Press 10: switches 00 give a step of 1; one press down takes 9997 to 9996.","Press 11: switches 00 give a step of 1; one press down takes 9996 to 9995.","Press 12: switches 11 give a step of 10; one press down takes 9995 to 9985.","Press 13: switches 11 give a step of 10; one press down takes 9985 to 9975.","Press 14: switches 11 give a step of 10; one press down takes 9975 to 9965.","Press 15: switches 10 give a step of 5; one press down takes 9965 to 9960.","Press 16: switches 10 give a step of 5; one press up takes 9960 to 9965.","Press 17: switches 11 give a step of 10; one press up takes 9965 to 9975.","Press 18: switches 11 give a step of 10; one press up takes 9975 to 9985.","Press 19: switches 11 give a step of 10; one press up takes 9985 to 9995.","Press 20: switches 00 give a step of 1; one press up takes 9995 to 9996."],"signals":[{"kind":"bus","name":"COUNT","radix":"dec","v":[9985,9986,9987,9989,9994,4,14,4,9999,9997,9996,9995,9985,9975,9965,9960,9965,9975,9985,9995,9996]},{"kind":"bus","name":"STEP","radix":"dec","v":[1,1,1,2,5,10,10,10,5,2,1,1,10,10,10,5,5,10,10,10,1]},{"kind":"bus","name":"WRAPS","radix":"dec","v":[0,0,0,0,0,1,1,1,2,2,2,2,2,2,2,2,2,2,2,2,2]},{"kind":"bus","name":"BCD","radix":"hex","v":[39301,39302,39303,39305,39316,4,20,4,39321,39319,39318,39317,39301,39285,39269,39264,39269,39285,39301,39317,39318],"width":16}],"stimulus":"The count is set to 9985, then 20 clean button presses are applied (the debounced button, so one press is one step), up or down, with the step switches changed between presses.","unit":"press","x":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]}</script>
 <script>/* FPGA Design Agent site. No dependencies. Every animation is frame(step) over a state list built from site/data/*.json. */
 (function () {
@@ -2302,6 +2337,20 @@ GLYPHS = (<span class="hs">&quot;abcdef&quot;</span>, <span class="hs">&quot;bc&
   }
   openHash();
   window.addEventListener("hashchange", openHash);
+})();
+
+// brief 81: replay of a recorded counterexample: the slider hides the steps after the chosen one
+(function () {
+  document.querySelectorAll('.cexfig').forEach(function (f) {
+    var r = f.querySelector('input[type=range]'), fut = f.querySelector('.cxfut'), pos = f.querySelector('.cexpos'), lab = f.querySelector('.cxstep');
+    var n = +f.dataset.cycles, lx = +f.dataset.lx, cw = +f.dataset.cw, w = +f.dataset.w;
+    function set() {
+      var k = +r.value, x = lx + (k + 1) * cw;
+      fut.setAttribute('x', x); fut.setAttribute('width', Math.max(0, w - x));
+      pos.textContent = k; if (lab) lab.textContent = 'step ' + k;
+    }
+    r.addEventListener('input', set); set();
+  });
 })();
 </script>
 </body>

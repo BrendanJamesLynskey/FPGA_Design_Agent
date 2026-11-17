@@ -143,6 +143,10 @@ def board_for(cfg: dict) -> str | None:
         return str(cfg["board"])
     hits = [b.parent.name for b in sorted((ROOT / "boards").glob("*/board.yaml"))
             if (yaml.safe_load(b.read_text()) or {}).get("part") == cfg["part"]]
+    if len(hits) > 1:                       # brief 95: several boards share a part; boards/catalogue.yaml names the default one
+        cat = (ROOT / "boards" / "catalogue.yaml")
+        boards = (yaml.safe_load(cat.read_text()) or {}).get("boards", {}) if cat.is_file() else {}
+        hits = [h for h in hits if (boards.get(h) or {}).get("default_for_part")]
     return hits[0] if len(hits) == 1 else None
 
 

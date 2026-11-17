@@ -1,0 +1,16 @@
+board: zedboard
+out: boards/zedboard/zedboard-pins.xdc
+title: "ZedBoard (Avnet and Digilent, xc7z020clg484-1): PL pins whose I/O standard the sources fix"
+sources:
+  - {id: ZED_XDC, url: https://raw.githubusercontent.com/Digilent/digilent-xdc/c8644a9fe31cc803789643124545d56b3bef4600/Zedboard-Master.xdc, sha256: 4c3ae9d40dce0cb0ca86fdd381a3ec05e0cc099c6f17f8299e270690b2b58b5c, format: xdc, licence: "Avnet design resource, header says publication needs Avnet's consent; not copied, only pin facts are listed", use: "pin locations and names"}
+  - {id: ZED_BOARDFILE, url: https://raw.githubusercontent.com/Xilinx/XilinxBoardStore/40fad97cf36f3d856c6759d83c2390de1566ffa7/boards/Avnet/zedboard/1.4/part0_pins.xml, sha256: 732296bd482fe6a0f8d057589703c7f314c02c399787edd6dec3d2b9c034a271, format: board-store-xml, licence: "Avnet, Apache-2.0", use: "the I/O standard of each pin it lists"}
+rename:
+  - ['^LD(\d)$', 'LD[\1]']
+  - ['^SW(\d)$', 'SW[\1]']
+iostandard:
+  std_from_pin: true
+  only: [LVCMOS33]
+  only_reason: "the other banks run at Vadj, set by jumper J18 on each board (the Avnet XDC assumes 1.8 V, the AMD board file 2.5 V, the guide's table 2.5 V, the project's notes 1.8 V as shipped); the pins stay out until the owner confirms J18"
+section_by:
+  - ['^GCLK$', 'PL clock']
+  - ['^LD\[', 'LEDs']

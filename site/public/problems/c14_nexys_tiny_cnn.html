@@ -606,11 +606,46 @@ svg .bdtick { stroke: var(--ink-3); }
   .tl li { grid-template-columns: 1fr; }
   .tld { padding: 0 0 .1em; }
 }
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.mx td.mk, .mx th.mk { text-align: center; white-space: normal; min-width: 6.5em; position: relative; }
+.mx th[scope="row"] { font-weight: 400; color: var(--ink); min-width: 14em; }
+.mx tfoot th, .mx tfoot td { border-top: 2px solid var(--ink); font-weight: 600; }
+.sq { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--ink); vertical-align: middle; line-height: 12px; text-align: center; box-sizing: border-box; }
+.sq.y { background: var(--ink); }
+.sq.n { background: transparent; border-color: var(--ink-3); border-style: dashed; }
+.sq.na { border: 0; color: var(--ink-3); }
+.map code { white-space: normal; overflow-wrap: anywhere; display: inline-block; margin: 0 4px 4px 0; font-size: .75rem; }
+.map th[scope="row"] { min-width: 12em; font-weight: 600; }
+.map td { min-width: 8em; }
+.map { table-layout: auto; }
+.pin { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.pstep { border: 1px solid var(--rule); background: var(--panel); padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; max-width: none; }
+.pstep.bad { border: 2px solid var(--warn); }
+.ptag { font: 700 .75rem var(--f-mono); text-transform: uppercase; color: var(--ink-3); }
+.pstep.bad .ptag { color: var(--warn); }
+.sfig .sbad { fill: var(--warn); }
+.sfig .ftick { stroke: var(--ink); stroke-width: 2.5; }
+.sfig .sunk { fill: none; stroke: var(--ink-3); stroke-dasharray: 4 3; }
+.sfig .sbar2 { fill: var(--ink); }
+.mxfig td.num { font-family: var(--f-mono); }
+.cexfig .cxh { fill: var(--ink); }
+.cexfig .cxl { fill: var(--ink-3); }
+.cexfig .cxfut { fill: var(--bg); opacity: .85; }
+.cexfig .ctl { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+.mx th[scope="row"] { min-width: 10em; }
+@media (max-width: 700px) {
+  .map thead { display: none; }
+  .map, .map tbody, .map tr, .map td, .map th { display: block; min-width: 0; width: 100%; }
+  .map tr { border-bottom: 2px solid var(--rule); padding: 6px 0; }
+  .map td { border: 0; padding: 2px 10px; }
+  .map td:not(:has(code)) { display: none; }
+  .map td::before { content: attr(data-label) ": "; font-size: .78rem; color: var(--ink-3); display: block; }
+}
 </style>
 </head>
 <body>
 <a class="visually-hidden" href="#main">Skip to content</a>
-<header class="bar"><div class="wrap"><a class="brand" href="../index.html">FPGA Design Agent</a><nav aria-label="Pages"><a href="../agent.html">The agent</a><a class="sub" href="../agent.html#harness">Harness</a><a href="../story.html">How it was built</a><a href="../how.html">How it works</a><a href="../flow-notes.html">Beyond the flow</a><a href="../expertise.html">Expertise</a><a href="../examples.html">Examples</a><a href="../showcase.html">Showcase</a><a href="../problems.html" aria-current="page">Problems</a><a href="../evaluation.html">Evaluation</a><a href="../results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
+<header class="bar"><div class="wrap"><a class="brand" href="../index.html">FPGA Design Agent</a><nav aria-label="Pages"><a href="../agent.html">The agent</a><a class="sub" href="../agent.html#harness">Harness</a><a href="../story.html">How it was built</a><a href="../how.html">How it works</a><a href="../verification.html">Verification</a><a href="../flow-notes.html">Beyond the flow</a><a href="../expertise.html">Expertise</a><a href="../examples.html">Examples</a><a href="../showcase.html">Showcase</a><a href="../problems.html" aria-current="page">Problems</a><a href="../evaluation.html">Evaluation</a><a href="../results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
 <main id="main" class="wrap">
 <p class="crumbs small"><a href="../problems.html">Problems</a> / <a href="../problems.html#dom-I">I. Machine learning inference</a></p>
 <h1>Tiny CNN shape classifier</h1>
@@ -642,8 +677,8 @@ svg .bdtick { stroke: var(--ink-3); }
 <p>Each is a small edit to the reference RTL. In the committed check (icarus, 2026-11-09, <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/results/c14_nexys_tiny_cnn__icarus.json"><code>c14_nexys_tiny_cnn__icarus.json</code></a>) the reference passed all 5 hidden tests and 7 of 7 mutants failed them.</p>
 <div class="tablewrap" tabindex="0"><table><thead><tr><th>Mutant</th><th>File</th><th>The bug</th><th>Hidden tests that fail</th></tr></thead><tbody><tr><td><code>letters_swapped</code></td><td><code>cnn_system.sv</code></td><td>the letters of classes 2 and 3 are swapped</td><td><code>test_pictures_4_to_7</code>, <code>test_glitch_is_not_a_press</code></td></tr><tr><td><code>digit_pattern</code></td><td><code>cnn_nexys_top_ref.sv</code></td><td>the segment pattern for 2 is wrong</td><td><code>test_pictures_4_to_7</code>, <code>test_glitch_is_not_a_press</code></td></tr><tr><td><code>min_pool</code></td><td><code>tiny_cnn.sv</code></td><td>min-pooling instead of max-pooling</td><td><code>test_pictures_0_to_3</code>, <code>test_pictures_4_to_7</code>, <code>test_glitch_is_not_a_press</code>, <code>test_reset_blanks_the_display</code></td></tr><tr><td><code>no_relu_clamp</code></td><td><code>tiny_cnn.sv</code></td><td>negative values are not limited to 0</td><td><code>test_pictures_0_to_3</code>, <code>test_pictures_4_to_7</code>, <code>test_reset_blanks_the_display</code></td></tr><tr><td><code>extra_shift</code></td><td><code>tiny_cnn.sv</code></td><td>every layer output is scaled down four times too far</td><td><code>test_pictures_4_to_7</code></td></tr><tr><td><code>argmin</code></td><td><code>tiny_cnn.sv</code></td><td>the class is the smallest score, not the biggest</td><td><code>test_pictures_0_to_3</code>, <code>test_pictures_4_to_7</code>, <code>test_glitch_is_not_a_press</code>, <code>test_reset_blanks_the_display</code></td></tr><tr><td><code>debounce_ignored</code></td><td><code>cnn_nexys_top_ref.sv</code></td><td>the button is not debounced: the press starts before it is stable</td><td><code>test_glitch_is_not_a_press</code></td></tr></tbody></table></div>
 <h2>Sample solution</h2>
-<p class="note">Hand-written reference for the benchmark, not agent output; it passes every test, and the listed mutants fail them. With it, the hidden cocotb tests and the golden model. Repository licence: MIT.</p>
-<details class="code"><summary><span class="mono">c14_nexys_tiny_cnn_top.sv</span> <span class="muted small">reference RTL, 22 lines</span></summary><div class="codebar small"><a href="c14_nexys_tiny_cnn/c14_nexys_tiny_cnn_top.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c14_nexys_tiny_cnn/ref/rtl/c14_nexys_tiny_cnn_top.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// c14_nexys_tiny_cnn_top.sv: board top (Nexys A7-100T, master-XDC port names) around the course reference&#x27;s tiny CNN system.</span>
+<p class="note">Hand-written reference for the benchmark, not agent output; it passes every test, and the listed mutants fail them. With it, the hidden cocotb tests and the golden model. Repository licence: all rights reserved (source visible for review).</p>
+<details class="code"><summary><span class="mono">c14_nexys_tiny_cnn_top.sv</span> <span class="muted small">reference RTL, 22 lines</span></summary><div class="codebar small"><a href="c14_nexys_tiny_cnn/c14_nexys_tiny_cnn_top.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c14_nexys_tiny_cnn/ref/rtl/c14_nexys_tiny_cnn_top.sv">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hc">// c14_nexys_tiny_cnn_top.sv: board top (Nexys A7-100T, master-XDC port names) around the course reference&#x27;s tiny CNN system.</span>
 <span class="hk">module</span> c14_nexys_tiny_cnn_top #(
     <span class="hk">parameter</span> <span class="hk">int</span> DEBOUNCE_CYCLES = 1_000_000,
     <span class="hk">parameter</span> <span class="hk">int</span> CLKS_PER_BIT    = 868
@@ -665,7 +700,7 @@ svg .bdtick { stroke: var(--ink-3); }
     <span class="hk">assign</span> {CG, CF, CE, CD, CC, CB, CA} = seg;
     <span class="hk">assign</span> DP = 1&#x27;b1;
 <span class="hk">endmodule</span>
-</code></pre></details><details class="code"><summary><span class="mono">cnn_init.svh</span> <span class="muted small">reference RTL, 1784 lines</span></summary><div class="codebar small"><a href="c14_nexys_tiny_cnn/cnn_init.svh" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c14_nexys_tiny_cnn/ref/rtl/cnn_init.svh">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code>prom[0] = 32&#x27;h00000022;
+</code></pre></details><details class="code"><summary><span class="mono">cnn_init.svh</span> <span class="muted small">reference RTL, 1784 lines</span></summary><div class="codebar small"><a href="c14_nexys_tiny_cnn/cnn_init.svh" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c14_nexys_tiny_cnn/ref/rtl/cnn_init.svh">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code>prom[0] = 32&#x27;h00000022;
 prom[1] = 32&#x27;h0000002e;
 prom[2] = 32&#x27;h0000003d;
 prom[3] = 32&#x27;h000000e0;
@@ -2449,7 +2484,7 @@ irom[1148] = 8&#x27;h00;
 irom[1149] = 8&#x27;h00;
 irom[1150] = 8&#x27;h10;
 irom[1151] = 8&#x27;h0a;
-</code></pre></details><details class="code"><summary><span class="mono">cnn_nexys_top_ref.sv</span> <span class="muted small">reference RTL, 55 lines</span></summary><div class="codebar small"><a href="c14_nexys_tiny_cnn/cnn_nexys_top_ref.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c14_nexys_tiny_cnn/ref/rtl/cnn_nexys_top_ref.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// P14-1 reference top for the Nexys A7-100T: the course&#x27;s tiny CNN (tiny_cnn.sv) with the parameters and eight images in block-RAM files (cnn_system.sv loads them), a debounced</span>
+</code></pre></details><details class="code"><summary><span class="mono">cnn_nexys_top_ref.sv</span> <span class="muted small">reference RTL, 55 lines</span></summary><div class="codebar small"><a href="c14_nexys_tiny_cnn/cnn_nexys_top_ref.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c14_nexys_tiny_cnn/ref/rtl/cnn_nexys_top_ref.sv">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hc">// P14-1 reference top for the Nexys A7-100T: the course&#x27;s tiny CNN (tiny_cnn.sv) with the parameters and eight images in block-RAM files (cnn_system.sv loads them), a debounced</span>
 <span class="hc">// button to classify the picture chosen on SW[2:0], the class (0 .. 3) on the right-hand seven-segment digit, and one letter (H, V, B, X) plus a newline over the USB-UART at 115200 baud.</span>
 <span class="hc">// Not run on a board; simulated in Icarus by projects/test_p14_projects.py with a shortened debounce and baud divider.</span>
 <span class="hk">module</span> cnn_nexys_top_ref #(
@@ -2504,7 +2539,7 @@ irom[1151] = 8&#x27;h0a;
     <span class="hk">end</span>
     <span class="hk">assign</span> LED = {ready, 13&#x27;d0, have ? cls_q : 2&#x27;d0};
 <span class="hk">endmodule</span>
-</code></pre></details><details class="code"><summary><span class="mono">cnn_system.sv</span> <span class="muted small">reference RTL, 94 lines</span></summary><div class="codebar small"><a href="c14_nexys_tiny_cnn/cnn_system.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c14_nexys_tiny_cnn/ref/rtl/cnn_system.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// Part 14 lab 1, the working core (checked in Icarus by test_lab_cnn.py): block-RAM parameters and eight test images, a loader that writes them into the course tiny CNN</span>
+</code></pre></details><details class="code"><summary><span class="mono">cnn_system.sv</span> <span class="muted small">reference RTL, 94 lines</span></summary><div class="codebar small"><a href="c14_nexys_tiny_cnn/cnn_system.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c14_nexys_tiny_cnn/ref/rtl/cnn_system.sv">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hc">// Part 14 lab 1, the working core (checked in Icarus by test_lab_cnn.py): block-RAM parameters and eight test images, a loader that writes them into the course tiny CNN</span>
 <span class="hc">// (solutions/p14l10_tiny_cnn/tiny_cnn.sv), a start on `go`, and a UART transmitter that sends the class letter (H, V, B or X for a horizontal bar, a vertical bar, a box</span>
 <span class="hc">// or a cross) and a newline. After reset the 632 parameter words are loaded once (about 650 clocks); `ready` goes high when the system can take a `go`.</span>
 <span class="hk">module</span> cnn_system #(
@@ -2598,7 +2633,7 @@ irom[1151] = 8&#x27;h0a;
         <span class="hk">end</span> <span class="hk">else</span> tx &lt;= 1&#x27;b1;
     <span class="hk">end</span>
 <span class="hk">endmodule</span>
-</code></pre></details><details class="code"><summary><span class="mono">tiny_cnn.sv</span> <span class="muted small">reference RTL, 238 lines</span></summary><div class="codebar small"><a href="c14_nexys_tiny_cnn/tiny_cnn.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c14_nexys_tiny_cnn/ref/rtl/tiny_cnn.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// Part 14 lesson 10 exercise: a whole tiny CNN in RTL, one multiply-accumulate unit, bit-exact against the numpy integer model (tools/ml_models.int_forward).</span>
+</code></pre></details><details class="code"><summary><span class="mono">tiny_cnn.sv</span> <span class="muted small">reference RTL, 238 lines</span></summary><div class="codebar small"><a href="c14_nexys_tiny_cnn/tiny_cnn.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c14_nexys_tiny_cnn/ref/rtl/tiny_cnn.sv">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hc">// Part 14 lesson 10 exercise: a whole tiny CNN in RTL, one multiply-accumulate unit, bit-exact against the numpy integer model (tools/ml_models.int_forward).</span>
 <span class="hc">//</span>
 <span class="hc">// The network (12 x 12 grey image, int8 values 0 .. 127) is   conv 3x3, 1 -&gt; 4 channels, ReLU, requantise   (4 x 10 x 10)</span>
 <span class="hc">//                                                             max-pool 2 x 2                                 (4 x 5 x 5)</span>
@@ -2836,7 +2871,7 @@ irom[1151] = 8&#x27;h0a;
         <span class="hk">endcase</span>
     <span class="hk">end</span>
 <span class="hk">endmodule</span>
-</code></pre></details><details class="code"><summary><span class="mono">acceptance.py</span> <span class="muted small">hidden cocotb acceptance tests, 88 lines</span></summary><div class="codebar small"><a href="c14_nexys_tiny_cnn/acceptance.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c14_nexys_tiny_cnn/hidden/acceptance.py">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;Acceptance tests of c14_nexys_tiny_cnn against model.py (hidden from the agent).&quot;&quot;&quot;</span>
+</code></pre></details><details class="code"><summary><span class="mono">acceptance.py</span> <span class="muted small">hidden cocotb acceptance tests, 88 lines</span></summary><div class="codebar small"><a href="c14_nexys_tiny_cnn/acceptance.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c14_nexys_tiny_cnn/hidden/acceptance.py">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;Acceptance tests of c14_nexys_tiny_cnn against model.py (hidden from the agent).&quot;&quot;&quot;</span>
 
 <span class="hk">from</span> __future__ <span class="hk">import</span> annotations
 
@@ -2924,7 +2959,7 @@ EXP = expected()
     <span class="hk">await</span> b.reset()
     <span class="hk">await</span> b.cycles(20)
     <span class="hk">assert</span> seg_pins(dut) == 0x7F, <span class="hs">&quot;reset must blank the display&quot;</span>
-</code></pre></details><details class="code"><summary><span class="mono">model.py</span> <span class="muted small">golden model, 66 lines</span></summary><div class="codebar small"><a href="c14_nexys_tiny_cnn/model.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c14_nexys_tiny_cnn/hidden/model.py">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;Reference model for P14-1 (the Nexys tiny CNN). Standalone numpy: it rebuilds the integer network from cnn_params.hex and cnn_images.hex (the files the design loads) and
+</code></pre></details><details class="code"><summary><span class="mono">model.py</span> <span class="muted small">golden model, 66 lines</span></summary><div class="codebar small"><a href="c14_nexys_tiny_cnn/model.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c14_nexys_tiny_cnn/hidden/model.py">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;Reference model for P14-1 (the Nexys tiny CNN). Standalone numpy: it rebuilds the integer network from cnn_params.hex and cnn_images.hex (the files the design loads) and
 evaluates it. Layout: 612 weights (conv1 36: [oc][ky][kx]; conv2 288: [oc][ic][ky][kx]; dense 288: [o][i], i = c*9 + y*3 + x), 16 int32 biases, then M1, S1, M2, S2.&quot;&quot;&quot;</span>
 <span class="hk">from</span> pathlib <span class="hk">import</span> Path
 
@@ -2997,7 +3032,7 @@ SEG_OF = {0: 0x40, 1: 0x79, 2: 0x24, 3: 0x30}
 
 <div class="pager"><a href="../problems.html">&larr; All problems</a><span></span></div>
 </main>
-<footer><div class="wrap"><p>Designed by Brendan Lynskey. Code and results: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent">github.com/BrendanJamesLynskey/FPGA_Design_Agent</a> (MIT licence). Every number on these pages is read from a committed result file; development results are labelled as such and are not the held-out score.</p></div></footer>
+<footer><div class="wrap"><p>Designed by Brendan Lynskey. Code and results: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent">github.com/BrendanJamesLynskey/FPGA_Design_Agent</a> (all rights reserved; source visible for review, see LICENSE). Every number on these pages is read from a committed result file; development results are labelled as such and are not the held-out score.</p></div></footer>
 <script type="application/json" data-key="trace">{"captions":["Picture 0: the scores are 0: 11955, 1: -36784, 2: -1141, 3: 6100. The biggest is class 0 (horizontal bar), so the board shows 0 and sends the letter H.","Picture 1: the scores are 0: 9680, 1: -11429, 2: -3435, 3: -2750. The biggest is class 0 (horizontal bar), so the board shows 0 and sends the letter H.","Picture 2: the scores are 0: -10783, 1: 6838, 2: -6631, 3: -11783. The biggest is class 1 (vertical bar), so the board shows 1 and sends the letter V.","Picture 3: the scores are 0: -5018, 1: 4413, 2: -5122, 3: 459. The biggest is class 1 (vertical bar), so the board shows 1 and sends the letter V.","Picture 4: the scores are 0: -7887, 1: -26065, 2: 15368, 3: -3667. The biggest is class 2 (box), so the board shows 2 and sends the letter B.","Picture 5: the scores are 0: -7742, 1: -15851, 2: 10919, 3: -1115. The biggest is class 2 (box), so the board shows 2 and sends the letter B.","Picture 6: the scores are 0: -12524, 1: -4157, 2: -8301, 3: 7462. The biggest is class 3 (cross), so the board shows 3 and sends the letter X.","Picture 7: the scores are 0: -3491, 1: -20039, 2: -2207, 3: 9932. The biggest is class 3 (cross), so the board shows 3 and sends the letter X."],"signals":[{"kind":"bus","name":"score 0","radix":"dec","v":[11955,9680,-10783,-5018,-7887,-7742,-12524,-3491]},{"kind":"bus","name":"score 1","radix":"dec","v":[-36784,-11429,6838,4413,-26065,-15851,-4157,-20039]},{"kind":"bus","name":"score 2","radix":"dec","v":[-1141,-3435,-6631,-5122,15368,10919,-8301,-2207]},{"kind":"bus","name":"score 3","radix":"dec","v":[6100,-2750,-11783,459,-3667,-1115,7462,9932]},{"kind":"bus","name":"class (digit)","radix":"dec","v":[0,0,1,1,2,2,3,3]},{"kind":"text","name":"UART letter","v":["H","H","V","V","B","B","X","X"]}],"stimulus":"The 8 pictures of 12 by 12 pixels from the data file, each run through the model's integer network (two convolution layers, a pooling step and a final layer).","unit":"picture","x":[0,1,2,3,4,5,6,7]}</script>
 <script>/* FPGA Design Agent site. No dependencies. Every animation is frame(step) over a state list built from site/data/*.json. */
 (function () {
@@ -4113,6 +4148,20 @@ SEG_OF = {0: 0x40, 1: 0x79, 2: 0x24, 3: 0x30}
   }
   openHash();
   window.addEventListener("hashchange", openHash);
+})();
+
+// brief 81: replay of a recorded counterexample: the slider hides the steps after the chosen one
+(function () {
+  document.querySelectorAll('.cexfig').forEach(function (f) {
+    var r = f.querySelector('input[type=range]'), fut = f.querySelector('.cxfut'), pos = f.querySelector('.cexpos'), lab = f.querySelector('.cxstep');
+    var n = +f.dataset.cycles, lx = +f.dataset.lx, cw = +f.dataset.cw, w = +f.dataset.w;
+    function set() {
+      var k = +r.value, x = lx + (k + 1) * cw;
+      fut.setAttribute('x', x); fut.setAttribute('width', Math.max(0, w - x));
+      pos.textContent = k; if (lab) lab.textContent = 'step ' + k;
+    }
+    r.addEventListener('input', set); set();
+  });
 })();
 </script>
 </body>

@@ -606,11 +606,46 @@ svg .bdtick { stroke: var(--ink-3); }
   .tl li { grid-template-columns: 1fr; }
   .tld { padding: 0 0 .1em; }
 }
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.mx td.mk, .mx th.mk { text-align: center; white-space: normal; min-width: 6.5em; position: relative; }
+.mx th[scope="row"] { font-weight: 400; color: var(--ink); min-width: 14em; }
+.mx tfoot th, .mx tfoot td { border-top: 2px solid var(--ink); font-weight: 600; }
+.sq { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--ink); vertical-align: middle; line-height: 12px; text-align: center; box-sizing: border-box; }
+.sq.y { background: var(--ink); }
+.sq.n { background: transparent; border-color: var(--ink-3); border-style: dashed; }
+.sq.na { border: 0; color: var(--ink-3); }
+.map code { white-space: normal; overflow-wrap: anywhere; display: inline-block; margin: 0 4px 4px 0; font-size: .75rem; }
+.map th[scope="row"] { min-width: 12em; font-weight: 600; }
+.map td { min-width: 8em; }
+.map { table-layout: auto; }
+.pin { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.pstep { border: 1px solid var(--rule); background: var(--panel); padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; max-width: none; }
+.pstep.bad { border: 2px solid var(--warn); }
+.ptag { font: 700 .75rem var(--f-mono); text-transform: uppercase; color: var(--ink-3); }
+.pstep.bad .ptag { color: var(--warn); }
+.sfig .sbad { fill: var(--warn); }
+.sfig .ftick { stroke: var(--ink); stroke-width: 2.5; }
+.sfig .sunk { fill: none; stroke: var(--ink-3); stroke-dasharray: 4 3; }
+.sfig .sbar2 { fill: var(--ink); }
+.mxfig td.num { font-family: var(--f-mono); }
+.cexfig .cxh { fill: var(--ink); }
+.cexfig .cxl { fill: var(--ink-3); }
+.cexfig .cxfut { fill: var(--bg); opacity: .85; }
+.cexfig .ctl { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+.mx th[scope="row"] { min-width: 10em; }
+@media (max-width: 700px) {
+  .map thead { display: none; }
+  .map, .map tbody, .map tr, .map td, .map th { display: block; min-width: 0; width: 100%; }
+  .map tr { border-bottom: 2px solid var(--rule); padding: 6px 0; }
+  .map td { border: 0; padding: 2px 10px; }
+  .map td:not(:has(code)) { display: none; }
+  .map td::before { content: attr(data-label) ": "; font-size: .78rem; color: var(--ink-3); display: block; }
+}
 </style>
 </head>
 <body>
 <a class="visually-hidden" href="#main">Skip to content</a>
-<header class="bar"><div class="wrap"><a class="brand" href="../index.html">FPGA Design Agent</a><nav aria-label="Pages"><a href="../agent.html">The agent</a><a class="sub" href="../agent.html#harness">Harness</a><a href="../story.html">How it was built</a><a href="../how.html">How it works</a><a href="../flow-notes.html">Beyond the flow</a><a href="../expertise.html">Expertise</a><a href="../examples.html">Examples</a><a href="../showcase.html">Showcase</a><a href="../problems.html" aria-current="page">Problems</a><a href="../evaluation.html">Evaluation</a><a href="../results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
+<header class="bar"><div class="wrap"><a class="brand" href="../index.html">FPGA Design Agent</a><nav aria-label="Pages"><a href="../agent.html">The agent</a><a class="sub" href="../agent.html#harness">Harness</a><a href="../story.html">How it was built</a><a href="../how.html">How it works</a><a href="../verification.html">Verification</a><a href="../flow-notes.html">Beyond the flow</a><a href="../expertise.html">Expertise</a><a href="../examples.html">Examples</a><a href="../showcase.html">Showcase</a><a href="../problems.html" aria-current="page">Problems</a><a href="../evaluation.html">Evaluation</a><a href="../results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
 <main id="main" class="wrap">
 <p class="crumbs small"><a href="../problems.html">Problems</a> / <a href="../problems.html#dom-I">I. Machine learning inference</a></p>
 <h1>RMS norm unit behind the test shell</h1>
@@ -642,8 +677,8 @@ svg .bdtick { stroke: var(--ink-3); }
 <p>Each is a small edit to the reference RTL. In the committed check (icarus, 2026-11-10, <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/results/c15_rmsnorm_unit__icarus.json"><code>c15_rmsnorm_unit__icarus.json</code></a>) the reference passed all 5 hidden tests and 6 of 6 mutants failed them.</p>
 <div class="tablewrap" tabindex="0"><table><thead><tr><th>Mutant</th><th>File</th><th>The bug</th><th>Hidden tests that fail</th></tr></thead><tbody><tr><td><code>no_epsilon</code></td><td><code>rmsnorm_unit.sv</code></td><td>the tiny constant is missing, so a one-LSB input is scaled to full size</td><td><code>test_special_vectors</code>, <code>test_random_vectors</code>, <code>test_registers</code></td></tr><tr><td><code>newton_shift</code></td><td><code>rmsnorm_unit.sv</code></td><td>the refined reciprocal square root is half size</td><td><code>test_special_vectors</code>, <code>test_single_large_input</code>, <code>test_random_vectors</code>, <code>test_registers</code></td></tr><tr><td><code>lut_index</code></td><td><code>rmsnorm_unit.sv</code></td><td>table indexed by the wrong mantissa bits</td><td><code>test_special_vectors</code>, <code>test_single_large_input</code>, <code>test_random_vectors</code>, <code>test_registers</code></td></tr><tr><td><code>exponent_off</code></td><td><code>rmsnorm_unit.sv</code></td><td>the power-of-four exponent is off by one for odd bit positions</td><td><code>test_special_vectors</code>, <code>test_random_vectors</code></td></tr><tr><td><code>squares_unsigned</code></td><td><code>rmsnorm_unit.sv</code></td><td>negative inputs are squared as unsigned numbers</td><td><code>test_special_vectors</code>, <code>test_random_vectors</code>, <code>test_registers</code></td></tr><tr><td><code>x_r_not_reset</code></td><td><code>c15_rmsnorm_unit_regs.sv</code></td><td>CPU_RESETN does not reset x_r (amended 2026-11-10: the reset test now kills a mutant)</td><td><code>test_identity_and_reset</code>, <code>test_registers</code></td></tr></tbody></table></div>
 <h2>Sample solution</h2>
-<p class="note">Hand-written reference for the benchmark, not agent output; it passes every test, and the listed mutants fail them. With it, the hidden cocotb tests and the golden model. Repository licence: MIT.</p>
-<details class="code"><summary><span class="mono">c15_rmsnorm_unit_regs.sv</span> <span class="muted small">reference RTL, 35 lines</span></summary><div class="codebar small"><a href="c15_rmsnorm_unit/c15_rmsnorm_unit_regs.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c15_rmsnorm_unit/ref/rtl/c15_rmsnorm_unit_regs.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// c15_rmsnorm_unit_regs.sv: the shell window of course task c15_rmsnorm_unit.</span>
+<p class="note">Hand-written reference for the benchmark, not agent output; it passes every test, and the listed mutants fail them. With it, the hidden cocotb tests and the golden model. Repository licence: all rights reserved (source visible for review).</p>
+<details class="code"><summary><span class="mono">c15_rmsnorm_unit_regs.sv</span> <span class="muted small">reference RTL, 35 lines</span></summary><div class="codebar small"><a href="c15_rmsnorm_unit/c15_rmsnorm_unit_regs.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c15_rmsnorm_unit/ref/rtl/c15_rmsnorm_unit_regs.sv">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hc">// c15_rmsnorm_unit_regs.sv: the shell window of course task c15_rmsnorm_unit.</span>
 <span class="hk">module</span> c15_rmsnorm_unit_regs (
     <span class="hk">input</span>  <span class="hk">logic</span>        clk,
     <span class="hk">input</span>  <span class="hk">logic</span>        rst,
@@ -678,7 +713,7 @@ svg .bdtick { stroke: var(--ink-3); }
         <span class="hk">if</span> (rst) <span class="hk">begin</span> x_r &lt;= &#x27;0; go &lt;= 1&#x27;b0; vld &lt;= 1&#x27;b0; win_rdata &lt;= 32&#x27;d0; <span class="hk">end</span>
     <span class="hk">end</span>
 <span class="hk">endmodule</span>
-</code></pre></details><details class="code"><summary><span class="mono">c15_rmsnorm_unit_top.sv</span> <span class="muted small">reference RTL, 29 lines</span></summary><div class="codebar small"><a href="c15_rmsnorm_unit/c15_rmsnorm_unit_top.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c15_rmsnorm_unit/ref/rtl/c15_rmsnorm_unit_top.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// c15_rmsnorm_unit_top.sv: board top (Nexys A7-100T, master-XDC port names), test shell DESIGN_ID &quot;RMSN&quot;.</span>
+</code></pre></details><details class="code"><summary><span class="mono">c15_rmsnorm_unit_top.sv</span> <span class="muted small">reference RTL, 29 lines</span></summary><div class="codebar small"><a href="c15_rmsnorm_unit/c15_rmsnorm_unit_top.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c15_rmsnorm_unit/ref/rtl/c15_rmsnorm_unit_top.sv">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hc">// c15_rmsnorm_unit_top.sv: board top (Nexys A7-100T, master-XDC port names), test shell DESIGN_ID &quot;RMSN&quot;.</span>
 <span class="hc">// Reference design for course task c15_rmsnorm_unit; the shell window is wired to c15_rmsnorm_unit_regs.</span>
 <span class="hk">module</span> c15_rmsnorm_unit_top #(
     <span class="hk">parameter</span> <span class="hk">int</span>          CLKS_PER_BIT   = 868,
@@ -707,7 +742,7 @@ svg .bdtick { stroke: var(--ink-3); }
         .clk(clk), .rst(rst), .led(LED),
         .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));
 <span class="hk">endmodule</span>
-</code></pre></details><details class="code"><summary><span class="mono">rmsnorm_unit.sv</span> <span class="muted small">reference RTL, 155 lines</span></summary><div class="codebar small"><a href="c15_rmsnorm_unit/rmsnorm_unit.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c15_rmsnorm_unit/ref/rtl/rmsnorm_unit.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// P15-3 reference RTL: a copy of solutions/p15l06_rmsnorm/rmsnorm_unit.sv (course exercise p15l06_rmsnorm).</span>
+</code></pre></details><details class="code"><summary><span class="mono">rmsnorm_unit.sv</span> <span class="muted small">reference RTL, 155 lines</span></summary><div class="codebar small"><a href="c15_rmsnorm_unit/rmsnorm_unit.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c15_rmsnorm_unit/ref/rtl/rmsnorm_unit.sv">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hc">// P15-3 reference RTL: a copy of solutions/p15l06_rmsnorm/rmsnorm_unit.sv (course exercise p15l06_rmsnorm).</span>
 <span class="hc">// Part 15 lesson 6 exercise: an RMS-norm unit for N = 16 values, an inverse square root from a table and one Newton step, within a stated error budget.</span>
 <span class="hc">//</span>
 <span class="hc">// Input: N signed 16-bit values in Q8.8 (x_i / 256 is the real value), packed x[i*16 +: 16]. Output: N signed 16-bit values in Q8.8, y_i = x_i / sqrt(mean(x^2) + eps) with</span>
@@ -862,7 +897,7 @@ svg .bdtick { stroke: var(--ink-3); }
         <span class="hk">if</span> (in_valid) y &lt;= yout;
     <span class="hk">end</span>
 <span class="hk">endmodule</span>
-</code></pre></details><details class="code"><summary><span class="mono">acceptance.py</span> <span class="muted small">hidden cocotb acceptance tests, 75 lines</span></summary><div class="codebar small"><a href="c15_rmsnorm_unit/acceptance.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c15_rmsnorm_unit/hidden/acceptance.py">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;Acceptance tests of c15_rmsnorm_unit against model.py (hidden from the agent).&quot;&quot;&quot;</span>
+</code></pre></details><details class="code"><summary><span class="mono">acceptance.py</span> <span class="muted small">hidden cocotb acceptance tests, 75 lines</span></summary><div class="codebar small"><a href="c15_rmsnorm_unit/acceptance.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c15_rmsnorm_unit/hidden/acceptance.py">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;Acceptance tests of c15_rmsnorm_unit against model.py (hidden from the agent).&quot;&quot;&quot;</span>
 
 <span class="hk">from</span> __future__ <span class="hk">import</span> annotations
 
@@ -937,7 +972,7 @@ svg .bdtick { stroke: var(--ink-3); }
     <span class="hk">await</span> b.reset()
     <span class="hk">await</span> b.expect(STATUS, 0, <span class="hs">&quot;READY after reset&quot;</span>)
     <span class="hk">await</span> b.expect(X0, 0, <span class="hs">&quot;X0 after reset&quot;</span>)
-</code></pre></details><details class="code"><summary><span class="mono">model.py</span> <span class="muted small">golden model, 41 lines</span></summary><div class="codebar small"><a href="c15_rmsnorm_unit/model.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c15_rmsnorm_unit/hidden/model.py">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;P15-3 model: the input vectors and the float reference with the error budget (standalone: numpy only).&quot;&quot;&quot;</span>
+</code></pre></details><details class="code"><summary><span class="mono">model.py</span> <span class="muted small">golden model, 41 lines</span></summary><div class="codebar small"><a href="c15_rmsnorm_unit/model.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c15_rmsnorm_unit/hidden/model.py">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;P15-3 model: the input vectors and the float reference with the error budget (standalone: numpy only).&quot;&quot;&quot;</span>
 <span class="hk">import</span> numpy <span class="hk">as</span> np
 
 N = 16
@@ -985,7 +1020,7 @@ X0, GO, STATUS, OUT0 = 0x00, 0x10, 0x11, 0x20
 
 <div class="pager"><a href="../problems.html">&larr; All problems</a><span></span></div>
 </main>
-<footer><div class="wrap"><p>Designed by Brendan Lynskey. Code and results: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent">github.com/BrendanJamesLynskey/FPGA_Design_Agent</a> (MIT licence). Every number on these pages is read from a committed result file; development results are labelled as such and are not the held-out score.</p></div></footer>
+<footer><div class="wrap"><p>Designed by Brendan Lynskey. Code and results: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent">github.com/BrendanJamesLynskey/FPGA_Design_Agent</a> (all rights reserved; source visible for review, see LICENSE). Every number on these pages is read from a committed result file; development results are labelled as such and are not the held-out score.</p></div></footer>
 <script type="application/json" data-key="trace">{"captions":["Lane 0: input 86 (0.34 in real units) becomes 89 (0.35).","Lane 1: input 353 (1.38 in real units) becomes 367 (1.43).","Lane 2: input -119 (-0.46 in real units) becomes -124 (-0.48).","Lane 3: input -50 (-0.20 in real units) becomes -52 (-0.20).","Lane 4: input 180 (0.70 in real units) becomes 187 (0.73).","Lane 5: input 156 (0.61 in real units) becomes 162 (0.63).","Lane 6: input 477 (1.86 in real units) becomes 496 (1.94).","Lane 7: input 212 (0.83 in real units) becomes 220 (0.86).","Lane 8: input -39 (-0.15 in real units) becomes -41 (-0.16).","Lane 9: input -540 (-2.11 in real units) becomes -561 (-2.19).","Lane 10: input -17 (-0.07 in real units) becomes -18 (-0.07).","Lane 11: input -245 (-0.96 in real units) becomes -255 (-1.00).","Lane 12: input -122 (-0.48 in real units) becomes -127 (-0.50).","Lane 13: input 139 (0.54 in real units) becomes 144 (0.56).","Lane 14: input -240 (-0.94 in real units) becomes -249 (-0.97).","Lane 15: input -220 (-0.86 in real units) becomes -229 (-0.89)."],"signals":[{"hi":32767,"kind":"wave","lo":-32768,"name":"input","v":[86,353,-119,-50,180,156,477,212,-39,-540,-17,-245,-122,139,-240,-220]},{"hi":32767,"kind":"wave","lo":-32768,"name":"output","v":[89,367,-124,-52,187,162,496,220,-41,-561,-18,-255,-127,144,-249,-229]}],"stimulus":"Input vector number 530 of the model's set: 16 numbers, value times 256. The mean of the squares of the real values is 0.93, so every lane is divided by its square root.","unit":"lane","x":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]}</script>
 <script>/* FPGA Design Agent site. No dependencies. Every animation is frame(step) over a state list built from site/data/*.json. */
 (function () {
@@ -2101,6 +2136,20 @@ X0, GO, STATUS, OUT0 = 0x00, 0x10, 0x11, 0x20
   }
   openHash();
   window.addEventListener("hashchange", openHash);
+})();
+
+// brief 81: replay of a recorded counterexample: the slider hides the steps after the chosen one
+(function () {
+  document.querySelectorAll('.cexfig').forEach(function (f) {
+    var r = f.querySelector('input[type=range]'), fut = f.querySelector('.cxfut'), pos = f.querySelector('.cexpos'), lab = f.querySelector('.cxstep');
+    var n = +f.dataset.cycles, lx = +f.dataset.lx, cw = +f.dataset.cw, w = +f.dataset.w;
+    function set() {
+      var k = +r.value, x = lx + (k + 1) * cw;
+      fut.setAttribute('x', x); fut.setAttribute('width', Math.max(0, w - x));
+      pos.textContent = k; if (lab) lab.textContent = 'step ' + k;
+    }
+    r.addEventListener('input', set); set();
+  });
 })();
 </script>
 </body>

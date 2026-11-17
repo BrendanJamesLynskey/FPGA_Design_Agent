@@ -67,6 +67,8 @@ def same_gates(new: dict, old: dict) -> dict:
 
 
 def main(argv: list[str] | None = None) -> int:
+    from agent.access import require_or_exit
+    require_or_exit('agent.core.smoke')
     ap = argparse.ArgumentParser(description=__doc__.split("\n", 1)[0])
     ap.add_argument("--record", type=Path, help="write the CI replay episode here")
     ap.add_argument("--hardware", action="store_true")

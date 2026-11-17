@@ -1,0 +1,157 @@
+{
+ "bench_feed_v1": [
+  {
+   "input": "type",
+   "offset": "0",
+   "known_clock": -3,
+   "used_by_model": "no (sets the NEXT message's trade sign)"
+  },
+  {
+   "input": "side",
+   "offset": "1",
+   "known_clock": -2,
+   "used_by_model": "no (as type)"
+  },
+  {
+   "input": "instrument",
+   "offset": "2-3",
+   "known_clock": 0,
+   "used_by_model": "yes: selects the book entry; equality with the tracked instrument gates the unit"
+  },
+  {
+   "input": "price",
+   "offset": "4-7",
+   "known_clock": 4,
+   "used_by_model": "no (rules use it; the book is updated from it after the message)"
+  },
+  {
+   "input": "size",
+   "offset": "8-11",
+   "known_clock": 8,
+   "used_by_model": "no"
+  },
+  {
+   "input": "book entry (bid/ask price and size)",
+   "offset": "from the book RAM",
+   "known_clock": 1,
+   "used_by_model": "yes: the book BEFORE this message"
+  },
+  {
+   "input": "previous snapshot, OFI window, trade window, last direction",
+   "offset": "state",
+   "known_clock": "before the frame",
+   "used_by_model": "yes"
+  }
+ ],
+ "features_87": [
+  {
+   "feature": "f0 bid size",
+   "bits": 8,
+   "depends_on": "book entry",
+   "class": "early field (instrument), shallow logic"
+  },
+  {
+   "feature": "f1 ask size",
+   "bits": 8,
+   "depends_on": "book entry",
+   "class": "early field (instrument), shallow logic"
+  },
+  {
+   "feature": "f2 spread",
+   "bits": 4,
+   "depends_on": "book entry (two prices)",
+   "class": "early field (instrument), a 32-bit subtract and compare"
+  },
+  {
+   "feature": "f3 imbalance bucket",
+   "bits": 3,
+   "depends_on": "f0, f1",
+   "class": "early field, seven compares of shifted sizes"
+  },
+  {
+   "feature": "f4 trade-sign sum",
+   "bits": 5,
+   "depends_on": "trade window, previous message's type and side",
+   "class": "pure function of state known before the frame"
+  },
+  {
+   "feature": "f5 order-flow imbalance",
+   "bits": 8,
+   "depends_on": "book entry, previous snapshot, OFI window",
+   "class": "early field, deepest logic: four 32-bit compares, a 35-bit sum, a clip, a window update"
+  },
+  {
+   "feature": "f6 last mid direction",
+   "bits": 2,
+   "depends_on": "book entry, previous snapshot, last direction",
+   "class": "early field, two 33-bit sums and a compare"
+  }
+ ],
+ "last_arriving_input_of_the_model": {
+  "input": "the book entry read for the message (its address is the instrument field, offset 2-3)",
+  "clock_known": 1,
+  "price_field_complete_clock": 4,
+  "slack_clocks_before_price": 3,
+  "width_after_87_quantisation_bits": 38,
+  "note": "the packed feature vector is 38 bits; inside the feature unit f5 (8 bits) is the deepest. No input depends on the message's own price, size, type or side."
+ },
+ "ml_decision_depends_on_price_field": false,
+ "itch_5_0_add_order": {
+  "fields": [
+   {
+    "name": "message type",
+    "offset": 0,
+    "bytes": 1
+   },
+   {
+    "name": "stock locate",
+    "offset": 1,
+    "bytes": 2
+   },
+   {
+    "name": "tracking number",
+    "offset": 3,
+    "bytes": 2
+   },
+   {
+    "name": "timestamp",
+    "offset": 5,
+    "bytes": 6
+   },
+   {
+    "name": "order reference",
+    "offset": 11,
+    "bytes": 8
+   },
+   {
+    "name": "buy/sell",
+    "offset": 19,
+    "bytes": 1
+   },
+   {
+    "name": "shares",
+    "offset": 20,
+    "bytes": 4
+   },
+   {
+    "name": "stock (symbol)",
+    "offset": 24,
+    "bytes": 8
+   },
+   {
+    "name": "price",
+    "offset": 32,
+    "bytes": 4
+   }
+  ],
+  "length": 36,
+  "conclusion": "the book key (stock locate at offset 1, or the stock symbol at 24-31) arrives 4 to 31 bytes before the price (32-35); under the 87 definition of the features the conclusion is the same as for Bench Feed v1. A model with the order's own price or shares as an input would have the price (offset 32, 4 bytes) as its last input."
+ },
+ "measured_clocks_after_instrument_field": {
+  "baseline_87": 6,
+  "early_features": 3,
+  "table_fill1": 4,
+  "table_fill2": 5,
+  "rule_decision_visible": 5
+ }
+}

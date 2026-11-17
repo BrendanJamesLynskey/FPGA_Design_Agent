@@ -606,11 +606,46 @@ svg .bdtick { stroke: var(--ink-3); }
   .tl li { grid-template-columns: 1fr; }
   .tld { padding: 0 0 .1em; }
 }
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.mx td.mk, .mx th.mk { text-align: center; white-space: normal; min-width: 6.5em; position: relative; }
+.mx th[scope="row"] { font-weight: 400; color: var(--ink); min-width: 14em; }
+.mx tfoot th, .mx tfoot td { border-top: 2px solid var(--ink); font-weight: 600; }
+.sq { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--ink); vertical-align: middle; line-height: 12px; text-align: center; box-sizing: border-box; }
+.sq.y { background: var(--ink); }
+.sq.n { background: transparent; border-color: var(--ink-3); border-style: dashed; }
+.sq.na { border: 0; color: var(--ink-3); }
+.map code { white-space: normal; overflow-wrap: anywhere; display: inline-block; margin: 0 4px 4px 0; font-size: .75rem; }
+.map th[scope="row"] { min-width: 12em; font-weight: 600; }
+.map td { min-width: 8em; }
+.map { table-layout: auto; }
+.pin { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.pstep { border: 1px solid var(--rule); background: var(--panel); padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; max-width: none; }
+.pstep.bad { border: 2px solid var(--warn); }
+.ptag { font: 700 .75rem var(--f-mono); text-transform: uppercase; color: var(--ink-3); }
+.pstep.bad .ptag { color: var(--warn); }
+.sfig .sbad { fill: var(--warn); }
+.sfig .ftick { stroke: var(--ink); stroke-width: 2.5; }
+.sfig .sunk { fill: none; stroke: var(--ink-3); stroke-dasharray: 4 3; }
+.sfig .sbar2 { fill: var(--ink); }
+.mxfig td.num { font-family: var(--f-mono); }
+.cexfig .cxh { fill: var(--ink); }
+.cexfig .cxl { fill: var(--ink-3); }
+.cexfig .cxfut { fill: var(--bg); opacity: .85; }
+.cexfig .ctl { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+.mx th[scope="row"] { min-width: 10em; }
+@media (max-width: 700px) {
+  .map thead { display: none; }
+  .map, .map tbody, .map tr, .map td, .map th { display: block; min-width: 0; width: 100%; }
+  .map tr { border-bottom: 2px solid var(--rule); padding: 6px 0; }
+  .map td { border: 0; padding: 2px 10px; }
+  .map td:not(:has(code)) { display: none; }
+  .map td::before { content: attr(data-label) ": "; font-size: .78rem; color: var(--ink-3); display: block; }
+}
 </style>
 </head>
 <body>
 <a class="visually-hidden" href="#main">Skip to content</a>
-<header class="bar"><div class="wrap"><a class="brand" href="../index.html">FPGA Design Agent</a><nav aria-label="Pages"><a href="../agent.html">The agent</a><a class="sub" href="../agent.html#harness">Harness</a><a href="../story.html">How it was built</a><a href="../how.html">How it works</a><a href="../flow-notes.html">Beyond the flow</a><a href="../expertise.html">Expertise</a><a href="../examples.html">Examples</a><a href="../showcase.html">Showcase</a><a href="../problems.html" aria-current="page">Problems</a><a href="../evaluation.html">Evaluation</a><a href="../results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
+<header class="bar"><div class="wrap"><a class="brand" href="../index.html">FPGA Design Agent</a><nav aria-label="Pages"><a href="../agent.html">The agent</a><a class="sub" href="../agent.html#harness">Harness</a><a href="../story.html">How it was built</a><a href="../how.html">How it works</a><a href="../verification.html">Verification</a><a href="../flow-notes.html">Beyond the flow</a><a href="../expertise.html">Expertise</a><a href="../examples.html">Examples</a><a href="../showcase.html">Showcase</a><a href="../problems.html" aria-current="page">Problems</a><a href="../evaluation.html">Evaluation</a><a href="../results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
 <main id="main" class="wrap">
 <p class="crumbs small"><a href="../problems.html">Problems</a> / <a href="../problems.html#dom-A">A. Basic digital design drills</a></p>
 <h1>Byte FIFO behind the test shell</h1>
@@ -642,8 +677,8 @@ svg .bdtick { stroke: var(--ink-3); }
 <p>Each is a small edit to the reference RTL. In the committed check (icarus, 2026-11-03, <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/results/reference/t1_sync_fifo_regs__icarus.json"><code>t1_sync_fifo_regs__icarus.json</code></a>) the reference passed all 9 hidden tests and 8 of 8 mutants failed them.</p>
 <div class="tablewrap" tabindex="0"><table><thead><tr><th>Mutant</th><th>File</th><th>The bug</th><th>Hidden tests that fail</th></tr></thead><tbody><tr><td><code>full_at_15</code></td><td><code>sync_fifo_regs.sv</code></td><td>FIFO full one entry early</td><td><code>test_fill_and_overflow</code>, <code>test_underflow_and_w1c</code>, <code>test_almost_full_threshold</code>, <code>test_leds_thermometer</code></td></tr><tr><td><code>overflow_overwrites</code></td><td><code>sync_fifo_regs.sv</code></td><td>a push when full overwrites the head byte</td><td><code>test_fill_and_overflow</code></td></tr><tr><td><code>afull_strict</code></td><td><code>sync_fifo_regs.sv</code></td><td>almost full compares strictly</td><td><code>test_fill_and_overflow</code>, <code>test_almost_full_threshold</code></td></tr><tr><td><code>w1c_clears_both</code></td><td><code>sync_fifo_regs.sv</code></td><td>clearing OVERFLOW also clears UNDERFLOW</td><td><code>test_underflow_and_w1c</code></td></tr><tr><td><code>head_read_underflows</code></td><td><code>sync_fifo_regs.sv</code></td><td>a HEAD read removes the byte</td><td><code>test_identity_and_reset</code>, <code>test_fwft_head_and_pop</code>, <code>test_fill_and_overflow</code>, <code>test_underflow_and_w1c</code>, <code>test_almost_full_threshold</code>, <code>test_pointer_wrap_order</code>, <code>test_register_rules</code>, <code>test_random_traffic</code></td></tr><tr><td><code>empty_pop_stale</code></td><td><code>sync_fifo_regs.sv</code></td><td>an empty pop returns a stale byte instead of 0</td><td><code>test_identity_and_reset</code>, <code>test_fwft_head_and_pop</code>, <code>test_fill_and_overflow</code>, <code>test_underflow_and_w1c</code>, <code>test_almost_full_threshold</code>, <code>test_register_rules</code></td></tr><tr><td><code>leds_off_by_one</code></td><td><code>sync_fifo_regs.sv</code></td><td>thermometer lights one LED too many</td><td><code>test_identity_and_reset</code>, <code>test_fill_and_overflow</code>, <code>test_pointer_wrap_order</code>, <code>test_leds_thermometer</code>, <code>test_random_traffic</code></td></tr><tr><td><code>underflow_not_sticky</code></td><td><code>sync_fifo_regs.sv</code></td><td>UNDERFLOW clears on the next good pop</td><td><code>test_fwft_head_and_pop</code>, <code>test_fill_and_overflow</code>, <code>test_underflow_and_w1c</code>, <code>test_almost_full_threshold</code>, <code>test_pointer_wrap_order</code>, <code>test_leds_thermometer</code>, <code>test_register_rules</code>, <code>test_random_traffic</code></td></tr></tbody></table></div>
 <h2>Sample solution</h2>
-<p class="note">Hand-written reference for the benchmark, not agent output; it passes every test, and the listed mutants fail them. With it, the hidden cocotb tests and the golden model. Repository licence: MIT.</p>
-<details class="code"><summary><span class="mono">sync_fifo_regs.sv</span> <span class="muted small">reference RTL, 77 lines</span></summary><div class="codebar small"><a href="t1_sync_fifo_regs/sync_fifo_regs.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t1_sync_fifo_regs/ref/rtl/sync_fifo_regs.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// sync_fifo_regs.sv: 16 x 8 first-word-fall-through FIFO driven from the</span>
+<p class="note">Hand-written reference for the benchmark, not agent output; it passes every test, and the listed mutants fail them. With it, the hidden cocotb tests and the golden model. Repository licence: all rights reserved (source visible for review).</p>
+<details class="code"><summary><span class="mono">sync_fifo_regs.sv</span> <span class="muted small">reference RTL, 77 lines</span></summary><div class="codebar small"><a href="t1_sync_fifo_regs/sync_fifo_regs.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t1_sync_fifo_regs/ref/rtl/sync_fifo_regs.sv">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hc">// sync_fifo_regs.sv: 16 x 8 first-word-fall-through FIFO driven from the</span>
 <span class="hc">// shell&#x27;s register window, with sticky W1C error flags, for t1_sync_fifo_regs.</span>
 <span class="hk">module</span> sync_fifo_regs (
     <span class="hk">input</span>  <span class="hk">logic</span>        clk,
@@ -720,7 +755,7 @@ svg .bdtick { stroke: var(--ink-3); }
         <span class="hk">end</span>
     <span class="hk">end</span>
 <span class="hk">endmodule</span>
-</code></pre></details><details class="code"><summary><span class="mono">t1_sync_fifo_regs_top.sv</span> <span class="muted small">reference RTL, 29 lines</span></summary><div class="codebar small"><a href="t1_sync_fifo_regs/t1_sync_fifo_regs_top.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t1_sync_fifo_regs/ref/rtl/t1_sync_fifo_regs_top.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// t1_sync_fifo_regs_top.sv: board top (Nexys A7-100T, master-XDC port names).</span>
+</code></pre></details><details class="code"><summary><span class="mono">t1_sync_fifo_regs_top.sv</span> <span class="muted small">reference RTL, 29 lines</span></summary><div class="codebar small"><a href="t1_sync_fifo_regs/t1_sync_fifo_regs_top.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t1_sync_fifo_regs/ref/rtl/t1_sync_fifo_regs_top.sv">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hc">// t1_sync_fifo_regs_top.sv: board top (Nexys A7-100T, master-XDC port names).</span>
 <span class="hc">// Reference design for benchmark task t1_sync_fifo_regs; DESIGN_ID &quot;FIFO&quot;.</span>
 <span class="hk">module</span> t1_sync_fifo_regs_top #(
     <span class="hk">parameter</span> <span class="hk">int</span>          CLKS_PER_BIT   = 868,
@@ -749,7 +784,7 @@ svg .bdtick { stroke: var(--ink-3); }
         .clk(clk), .rst(rst), .led(LED),
         .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));
 <span class="hk">endmodule</span>
-</code></pre></details><details class="code"><summary><span class="mono">acceptance.py</span> <span class="muted small">hidden cocotb acceptance tests, 196 lines</span></summary><div class="codebar small"><a href="t1_sync_fifo_regs/acceptance.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t1_sync_fifo_regs/hidden/acceptance.py">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;Acceptance tests of t1_sync_fifo_regs against model.py (hidden from the agent).&quot;&quot;&quot;</span>
+</code></pre></details><details class="code"><summary><span class="mono">acceptance.py</span> <span class="muted small">hidden cocotb acceptance tests, 196 lines</span></summary><div class="codebar small"><a href="t1_sync_fifo_regs/acceptance.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t1_sync_fifo_regs/hidden/acceptance.py">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;Acceptance tests of t1_sync_fifo_regs against model.py (hidden from the agent).&quot;&quot;&quot;</span>
 
 <span class="hk">from</span> __future__ <span class="hk">import</span> annotations
 
@@ -945,7 +980,7 @@ svg .bdtick { stroke: var(--ink-3); }
             <span class="hk">await</span> e.b.expect(FLAGS, e.m.read(FLAGS), <span class="hs">&quot;FLAGS&quot;</span>)
     <span class="hk">await</span> e.check_regs()
     <span class="hk">await</span> e.check_leds()
-</code></pre></details><details class="code"><summary><span class="mono">model.py</span> <span class="muted small">golden model, 55 lines</span></summary><div class="codebar small"><a href="t1_sync_fifo_regs/model.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t1_sync_fifo_regs/hidden/model.py">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;Golden model of t1_sync_fifo_regs, written from spec.yaml alone (never from any RTL).&quot;&quot;&quot;</span>
+</code></pre></details><details class="code"><summary><span class="mono">model.py</span> <span class="muted small">golden model, 55 lines</span></summary><div class="codebar small"><a href="t1_sync_fifo_regs/model.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t1_sync_fifo_regs/hidden/model.py">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;Golden model of t1_sync_fifo_regs, written from spec.yaml alone (never from any RTL).&quot;&quot;&quot;</span>
 
 <span class="hk">from</span> __future__ <span class="hk">import</span> annotations
 
@@ -1007,7 +1042,7 @@ DESIGN_ID = 0x4649464F          <span class="hc"># &quot;FIFO&quot;</span>
 
 <div class="pager"><a href="../problems.html">&larr; All problems</a><span></span></div>
 </main>
-<footer><div class="wrap"><p>Designed by Brendan Lynskey. Code and results: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent">github.com/BrendanJamesLynskey/FPGA_Design_Agent</a> (MIT licence). Every number on these pages is read from a committed result file; development results are labelled as such and are not the held-out score.</p></div></footer>
+<footer><div class="wrap"><p>Designed by Brendan Lynskey. Code and results: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent">github.com/BrendanJamesLynskey/FPGA_Design_Agent</a> (all rights reserved; source visible for review, see LICENSE). Every number on these pages is read from a committed result file; development results are labelled as such and are not the held-out score.</p></div></footer>
 <script type="application/json" data-key="trace">{"captions":["Op 0: Almost-full threshold set to 4.","Op 1: Push A0: stored, level 0 to 1.","Op 2: Push A1: stored, level 1 to 2.","Op 3: Push A2: stored, level 2 to 3.","Op 4: Push A3: stored, level 3 to 4. Almost-full flag is 1.","Op 5: Push A4: stored, level 4 to 5.","Op 6: Push A5: stored, level 5 to 6.","Op 7: Push A6: stored, level 6 to 7.","Op 8: Push A7: stored, level 7 to 8.","Op 9: Push A8: stored, level 8 to 9.","Op 10: Push A9: stored, level 9 to 10.","Op 11: Push AA: stored, level 10 to 11.","Op 12: Push AB: stored, level 11 to 12.","Op 13: Push AC: stored, level 12 to 13.","Op 14: Push AD: stored, level 13 to 14.","Op 15: Push AE: stored, level 14 to 15.","Op 16: Push AF: stored, level 15 to 16. The FIFO is now full.","Op 17: Push B0: the FIFO is full, so the byte is lost and the overflow flag is set.","Op 18: Read HEAD: A0, the oldest byte, which stays in the FIFO.","Op 19: Pop: returns A0, level 16 to 15.","Op 20: Pop: returns A1, level 15 to 14.","Op 21: Pop: returns A2, level 14 to 13.","Op 22: Pop: returns A3, level 13 to 12.","Op 23: Write FLAGS with 100: the overflow flag is cleared.","Op 24: Pop: returns A4, level 12 to 11.","Op 25: Pop: returns A5, level 11 to 10.","Op 26: Pop: returns A6, level 10 to 9.","Op 27: Pop: returns A7, level 9 to 8.","Op 28: Pop: returns A8, level 8 to 7.","Op 29: Pop: returns A9, level 7 to 6.","Op 30: Pop: returns AA, level 6 to 5.","Op 31: Pop: returns AB, level 5 to 4.","Op 32: Pop: returns AC, level 4 to 3. Almost-full flag is 0.","Op 33: Pop: returns AD, level 3 to 2.","Op 34: Pop: returns AE, level 2 to 1.","Op 35: Pop: returns AF, level 1 to 0. The FIFO is now empty.","Op 36: Pop of an empty FIFO returns 00 and sets the underflow flag.","Op 37: Write FLAGS with 200: the underflow flag is cleared."],"signals":[{"kind":"bus","name":"LEVEL","radix":"dec","v":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,16,16,15,14,13,12,12,11,10,9,8,7,6,5,4,3,2,1,0,0,0]},{"kind":"bus","name":"HEAD","radix":"hex","v":[0,160,160,160,160,160,160,160,160,160,160,160,160,160,160,160,160,160,160,161,162,163,164,164,165,166,167,168,169,170,171,172,173,174,175,0,0,0],"width":8},{"kind":"bus","name":"data read","radix":"hex","v":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,160,160,161,162,163,0,164,165,166,167,168,169,170,171,172,173,174,175,0,0],"width":8},{"kind":"bit","name":"EMPTY","v":[1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1]},{"kind":"bit","name":"FULL","v":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"kind":"bit","name":"ALMOST_FULL","v":[0,0,0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0]},{"kind":"bit","name":"OVERFLOW","v":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"kind":"bit","name":"UNDERFLOW","v":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0]}],"stimulus":"The almost-full threshold is set to 4. Then 17 bytes are pushed (one more than fits), one is peeked, four are popped, the overflow flag is cleared, the rest are popped, one extra pop hits the empty FIFO and the underflow flag is cleared.","unit":"operation","x":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37]}</script>
 <script>/* FPGA Design Agent site. No dependencies. Every animation is frame(step) over a state list built from site/data/*.json. */
 (function () {
@@ -2123,6 +2158,20 @@ DESIGN_ID = 0x4649464F          <span class="hc"># &quot;FIFO&quot;</span>
   }
   openHash();
   window.addEventListener("hashchange", openHash);
+})();
+
+// brief 81: replay of a recorded counterexample: the slider hides the steps after the chosen one
+(function () {
+  document.querySelectorAll('.cexfig').forEach(function (f) {
+    var r = f.querySelector('input[type=range]'), fut = f.querySelector('.cxfut'), pos = f.querySelector('.cexpos'), lab = f.querySelector('.cxstep');
+    var n = +f.dataset.cycles, lx = +f.dataset.lx, cw = +f.dataset.cw, w = +f.dataset.w;
+    function set() {
+      var k = +r.value, x = lx + (k + 1) * cw;
+      fut.setAttribute('x', x); fut.setAttribute('width', Math.max(0, w - x));
+      pos.textContent = k; if (lab) lab.textContent = 'step ' + k;
+    }
+    r.addEventListener('input', set); set();
+  });
 })();
 </script>
 </body>

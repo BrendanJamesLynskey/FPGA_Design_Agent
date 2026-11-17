@@ -1,0 +1,252 @@
+{
+  "task": "v2_b_dc_block",
+  "sim": "icarus",
+  "date": "2026-11-14",
+  "ref": {
+    "pass": true,
+    "tests": {
+      "test_identity_and_reset": true,
+      "test_step_follows_the_equation": true,
+      "test_small_positive_offsets_stay": true,
+      "test_random_samples": true,
+      "test_saturation_and_limited_feedback": true,
+      "test_queue_keeps_the_newest": true,
+      "test_clear_and_register_rules": true,
+      "test_limits_at_the_exact_boundaries": true
+    }
+  },
+  "mutants": [
+    {
+      "name": "shift_logical",
+      "why": "a logical shift on a sign-extended word: negative outputs do not decay properly",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_step_follows_the_equation",
+        "test_small_positive_offsets_stay",
+        "test_random_samples",
+        "test_saturation_and_limited_feedback",
+        "test_limits_at_the_exact_boundaries"
+      ]
+    },
+    {
+      "name": "shift_toward_zero",
+      "why": "the pole term is truncated toward zero (symmetric), so small positive offsets fade too",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_step_follows_the_equation",
+        "test_small_positive_offsets_stay",
+        "test_random_samples",
+        "test_saturation_and_limited_feedback",
+        "test_limits_at_the_exact_boundaries"
+      ]
+    },
+    {
+      "name": "pole_shift_8",
+      "why": "pole 1 - 2^-8",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_identity_and_reset",
+        "test_step_follows_the_equation",
+        "test_small_positive_offsets_stay",
+        "test_random_samples",
+        "test_saturation_and_limited_feedback",
+        "test_queue_keeps_the_newest",
+        "test_clear_and_register_rules",
+        "test_limits_at_the_exact_boundaries"
+      ]
+    },
+    {
+      "name": "pole_shift_6",
+      "why": "pole 1 - 2^-6",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_identity_and_reset",
+        "test_step_follows_the_equation",
+        "test_small_positive_offsets_stay",
+        "test_random_samples",
+        "test_saturation_and_limited_feedback",
+        "test_queue_keeps_the_newest",
+        "test_clear_and_register_rules",
+        "test_limits_at_the_exact_boundaries"
+      ]
+    },
+    {
+      "name": "input_not_differenced",
+      "why": "the previous input is not subtracted: a leaky integrator",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_identity_and_reset",
+        "test_step_follows_the_equation",
+        "test_small_positive_offsets_stay",
+        "test_random_samples",
+        "test_saturation_and_limited_feedback",
+        "test_queue_keeps_the_newest",
+        "test_clear_and_register_rules",
+        "test_limits_at_the_exact_boundaries"
+      ]
+    },
+    {
+      "name": "feedback_unlimited",
+      "why": "the feedback is the wrapped sum, not the limited result",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_saturation_and_limited_feedback"
+      ]
+    },
+    {
+      "name": "wrap_not_saturate",
+      "why": "results wrap instead of stopping at the limits",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_saturation_and_limited_feedback",
+        "test_limits_at_the_exact_boundaries"
+      ]
+    },
+    {
+      "name": "sat_not_latched",
+      "why": "SAT follows the last sample",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_saturation_and_limited_feedback"
+      ]
+    },
+    {
+      "name": "sat_low_limit_wrong",
+      "why": "negative limit -32767",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_saturation_and_limited_feedback",
+        "test_limits_at_the_exact_boundaries"
+      ]
+    },
+    {
+      "name": "xp_not_updated_by_limited",
+      "why": "the previous input is replaced by the limited output",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_identity_and_reset",
+        "test_step_follows_the_equation",
+        "test_small_positive_offsets_stay",
+        "test_random_samples",
+        "test_saturation_and_limited_feedback",
+        "test_queue_keeps_the_newest",
+        "test_clear_and_register_rules"
+      ]
+    },
+    {
+      "name": "lost_without_discard",
+      "why": "a full queue overwrites a slot but reads still start at the old oldest",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_queue_keeps_the_newest"
+      ]
+    },
+    {
+      "name": "clear_keeps_history",
+      "why": "CLEAR leaves xp and yp",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_step_follows_the_equation",
+        "test_small_positive_offsets_stay",
+        "test_saturation_and_limited_feedback",
+        "test_clear_and_register_rules",
+        "test_limits_at_the_exact_boundaries"
+      ]
+    },
+    {
+      "name": "sample_unsigned",
+      "why": "bit 15 of the sample dropped",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_identity_and_reset",
+        "test_step_follows_the_equation",
+        "test_small_positive_offsets_stay",
+        "test_random_samples",
+        "test_saturation_and_limited_feedback",
+        "test_clear_and_register_rules",
+        "test_limits_at_the_exact_boundaries"
+      ]
+    },
+    {
+      "name": "lost_not_cleared_by_clear",
+      "why": "CLEAR leaves LOST",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_queue_keeps_the_newest"
+      ]
+    },
+    {
+      "name": "status_bits_swapped",
+      "why": "SAT and LOST exchanged",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_saturation_and_limited_feedback",
+        "test_queue_keeps_the_newest",
+        "test_limits_at_the_exact_boundaries"
+      ]
+    },
+    {
+      "name": "result_read_pops",
+      "why": "reading RESULT removes the entry",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_step_follows_the_equation",
+        "test_random_samples",
+        "test_saturation_and_limited_feedback",
+        "test_queue_keeps_the_newest",
+        "test_clear_and_register_rules"
+      ]
+    },
+    {
+      "name": "next_on_empty_underflows",
+      "why": "NEXT on empty underflows",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_clear_and_register_rules"
+      ]
+    },
+    {
+      "name": "clr_any_ctrl_write",
+      "why": "any CTRL write clears",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_clear_and_register_rules"
+      ]
+    }
+  ],
+  "mutants_killed": 18,
+  "mutants_total": 18,
+  "trap": {
+    "twin": "textbook DC blocker with a truncate-toward-zero (symmetric) pole term",
+    "why": "with a floor shift a positive output below 128 never decays; a symmetric rule makes it fade, which the hidden spec says is not the behaviour",
+    "must_fail": [
+      "test_small_positive_offsets_stay"
+    ],
+    "failed_tests": [
+      "test_step_follows_the_equation",
+      "test_small_positive_offsets_stay",
+      "test_random_samples",
+      "test_saturation_and_limited_feedback",
+      "test_limits_at_the_exact_boundaries"
+    ],
+    "trap_fires": true
+  }
+}

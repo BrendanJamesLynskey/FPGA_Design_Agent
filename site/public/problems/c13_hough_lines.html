@@ -606,11 +606,46 @@ svg .bdtick { stroke: var(--ink-3); }
   .tl li { grid-template-columns: 1fr; }
   .tld { padding: 0 0 .1em; }
 }
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.mx td.mk, .mx th.mk { text-align: center; white-space: normal; min-width: 6.5em; position: relative; }
+.mx th[scope="row"] { font-weight: 400; color: var(--ink); min-width: 14em; }
+.mx tfoot th, .mx tfoot td { border-top: 2px solid var(--ink); font-weight: 600; }
+.sq { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--ink); vertical-align: middle; line-height: 12px; text-align: center; box-sizing: border-box; }
+.sq.y { background: var(--ink); }
+.sq.n { background: transparent; border-color: var(--ink-3); border-style: dashed; }
+.sq.na { border: 0; color: var(--ink-3); }
+.map code { white-space: normal; overflow-wrap: anywhere; display: inline-block; margin: 0 4px 4px 0; font-size: .75rem; }
+.map th[scope="row"] { min-width: 12em; font-weight: 600; }
+.map td { min-width: 8em; }
+.map { table-layout: auto; }
+.pin { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.pstep { border: 1px solid var(--rule); background: var(--panel); padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; max-width: none; }
+.pstep.bad { border: 2px solid var(--warn); }
+.ptag { font: 700 .75rem var(--f-mono); text-transform: uppercase; color: var(--ink-3); }
+.pstep.bad .ptag { color: var(--warn); }
+.sfig .sbad { fill: var(--warn); }
+.sfig .ftick { stroke: var(--ink); stroke-width: 2.5; }
+.sfig .sunk { fill: none; stroke: var(--ink-3); stroke-dasharray: 4 3; }
+.sfig .sbar2 { fill: var(--ink); }
+.mxfig td.num { font-family: var(--f-mono); }
+.cexfig .cxh { fill: var(--ink); }
+.cexfig .cxl { fill: var(--ink-3); }
+.cexfig .cxfut { fill: var(--bg); opacity: .85; }
+.cexfig .ctl { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+.mx th[scope="row"] { min-width: 10em; }
+@media (max-width: 700px) {
+  .map thead { display: none; }
+  .map, .map tbody, .map tr, .map td, .map th { display: block; min-width: 0; width: 100%; }
+  .map tr { border-bottom: 2px solid var(--rule); padding: 6px 0; }
+  .map td { border: 0; padding: 2px 10px; }
+  .map td:not(:has(code)) { display: none; }
+  .map td::before { content: attr(data-label) ": "; font-size: .78rem; color: var(--ink-3); display: block; }
+}
 </style>
 </head>
 <body>
 <a class="visually-hidden" href="#main">Skip to content</a>
-<header class="bar"><div class="wrap"><a class="brand" href="../index.html">FPGA Design Agent</a><nav aria-label="Pages"><a href="../agent.html">The agent</a><a class="sub" href="../agent.html#harness">Harness</a><a href="../story.html">How it was built</a><a href="../how.html">How it works</a><a href="../flow-notes.html">Beyond the flow</a><a href="../expertise.html">Expertise</a><a href="../examples.html">Examples</a><a href="../showcase.html">Showcase</a><a href="../problems.html" aria-current="page">Problems</a><a href="../evaluation.html">Evaluation</a><a href="../results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
+<header class="bar"><div class="wrap"><a class="brand" href="../index.html">FPGA Design Agent</a><nav aria-label="Pages"><a href="../agent.html">The agent</a><a class="sub" href="../agent.html#harness">Harness</a><a href="../story.html">How it was built</a><a href="../how.html">How it works</a><a href="../verification.html">Verification</a><a href="../flow-notes.html">Beyond the flow</a><a href="../expertise.html">Expertise</a><a href="../examples.html">Examples</a><a href="../showcase.html">Showcase</a><a href="../problems.html" aria-current="page">Problems</a><a href="../evaluation.html">Evaluation</a><a href="../results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
 <main id="main" class="wrap">
 <p class="crumbs small"><a href="../problems.html">Problems</a> / <a href="../problems.html#dom-S">S. Computer vision</a></p>
 <h1>Hough line accumulator behind the test shell</h1>
@@ -642,8 +677,8 @@ svg .bdtick { stroke: var(--ink-3); }
 <p>Each is a small edit to the reference RTL. In the committed check (icarus, 2026-11-10, <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/results/c13_hough_lines__icarus.json"><code>c13_hough_lines__icarus.json</code></a>) the reference passed all 5 hidden tests and 8 of 8 mutants failed them.</p>
 <div class="tablewrap" tabindex="0"><table><thead><tr><th>Mutant</th><th>File</th><th>The bug</th><th>Hidden tests that fail</th></tr></thead><tbody><tr><td><code>rho_offset</code></td><td><code>c13_hough_lines_regs.sv</code></td><td>the distance table is offset by one</td><td><code>test_diagonal_line</code>, <code>test_vertical_line</code>, <code>test_four_lines_then_clear</code>, <code>test_corners_and_registers</code></td></tr><tr><td><code>no_rounding</code></td><td><code>hough.sv</code></td><td>the distance is truncated instead of rounded</td><td><code>test_diagonal_line</code>, <code>test_vertical_line</code>, <code>test_four_lines_then_clear</code></td></tr><tr><td><code>cos_entry</code></td><td><code>hough.sv</code></td><td>one cosine table entry is wrong</td><td><code>test_four_lines_then_clear</code></td></tr><tr><td><code>sin_entry</code></td><td><code>hough.sv</code></td><td>one sine table entry is wrong</td><td><code>test_four_lines_then_clear</code></td></tr><tr><td><code>y_from_x</code></td><td><code>hough.sv</code></td><td>the y coordinate of a point is replaced by its x</td><td><code>test_diagonal_line</code>, <code>test_vertical_line</code>, <code>test_four_lines_then_clear</code>, <code>test_corners_and_registers</code></td></tr><tr><td><code>clear_ignored</code></td><td><code>hough.sv</code></td><td>CLEAR does not zero the table</td><td><code>test_vertical_line</code>, <code>test_four_lines_then_clear</code>, <code>test_corners_and_registers</code></td></tr><tr><td><code>one_angle_missing</code></td><td><code>hough.sv</code></td><td>the last direction never votes</td><td><code>test_vertical_line</code>, <code>test_four_lines_then_clear</code>, <code>test_corners_and_registers</code></td></tr><tr><td><code>k_not_reset</code></td><td><code>hough.sv</code></td><td>CPU_RESETN does not reset k (amended 2026-11-10: the reset test now kills a mutant)</td><td><code>test_identity_and_reset</code>, <code>test_diagonal_line</code>, <code>test_vertical_line</code>, <code>test_four_lines_then_clear</code>, <code>test_corners_and_registers</code></td></tr></tbody></table></div>
 <h2>Sample solution</h2>
-<p class="note">Hand-written reference for the benchmark, not agent output; it passes every test, and the listed mutants fail them. With it, the hidden cocotb tests and the golden model. Repository licence: MIT.</p>
-<details class="code"><summary><span class="mono">c13_hough_lines_regs.sv</span> <span class="muted small">reference RTL, 44 lines</span></summary><div class="codebar small"><a href="c13_hough_lines/c13_hough_lines_regs.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c13_hough_lines/ref/rtl/c13_hough_lines_regs.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// c13_hough_lines_regs.sv: the shell window of course task c13_hough_lines.</span>
+<p class="note">Hand-written reference for the benchmark, not agent output; it passes every test, and the listed mutants fail them. With it, the hidden cocotb tests and the golden model. Repository licence: all rights reserved (source visible for review).</p>
+<details class="code"><summary><span class="mono">c13_hough_lines_regs.sv</span> <span class="muted small">reference RTL, 44 lines</span></summary><div class="codebar small"><a href="c13_hough_lines/c13_hough_lines_regs.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c13_hough_lines/ref/rtl/c13_hough_lines_regs.sv">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hc">// c13_hough_lines_regs.sv: the shell window of course task c13_hough_lines.</span>
 <span class="hk">module</span> c13_hough_lines_regs (
     <span class="hk">input</span>  <span class="hk">logic</span>        clk,
     <span class="hk">input</span>  <span class="hk">logic</span>        rst,
@@ -687,7 +722,7 @@ svg .bdtick { stroke: var(--ink-3); }
         <span class="hk">if</span> (rst) <span class="hk">begin</span> pt_v &lt;= 1&#x27;b0; clr &lt;= 1&#x27;b0; rd_theta &lt;= &#x27;0; rd_rho &lt;= &#x27;0; win_rdata &lt;= 32&#x27;d0; <span class="hk">end</span>
     <span class="hk">end</span>
 <span class="hk">endmodule</span>
-</code></pre></details><details class="code"><summary><span class="mono">c13_hough_lines_top.sv</span> <span class="muted small">reference RTL, 29 lines</span></summary><div class="codebar small"><a href="c13_hough_lines/c13_hough_lines_top.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c13_hough_lines/ref/rtl/c13_hough_lines_top.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// c13_hough_lines_top.sv: board top (Nexys A7-100T, master-XDC port names), test shell DESIGN_ID &quot;HOUG&quot;.</span>
+</code></pre></details><details class="code"><summary><span class="mono">c13_hough_lines_top.sv</span> <span class="muted small">reference RTL, 29 lines</span></summary><div class="codebar small"><a href="c13_hough_lines/c13_hough_lines_top.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c13_hough_lines/ref/rtl/c13_hough_lines_top.sv">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hc">// c13_hough_lines_top.sv: board top (Nexys A7-100T, master-XDC port names), test shell DESIGN_ID &quot;HOUG&quot;.</span>
 <span class="hc">// Reference design for course task c13_hough_lines; the shell window is wired to c13_hough_lines_regs.</span>
 <span class="hk">module</span> c13_hough_lines_top #(
     <span class="hk">parameter</span> <span class="hk">int</span>          CLKS_PER_BIT   = 868,
@@ -716,7 +751,7 @@ svg .bdtick { stroke: var(--ink-3); }
         .clk(clk), .rst(rst), .led(LED),
         .win_addr(win_addr), .win_wr(win_wr), .win_rd(win_rd), .win_wdata(win_wdata), .win_rdata(win_rdata));
 <span class="hk">endmodule</span>
-</code></pre></details><details class="code"><summary><span class="mono">hough.sv</span> <span class="muted small">reference RTL, 153 lines</span></summary><div class="codebar small"><a href="c13_hough_lines/hough.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c13_hough_lines/ref/rtl/hough.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// Part 13 lesson 8 reference solution: a Hough transform accumulator for straight lines, 16 angles, one angle per clock.</span>
+</code></pre></details><details class="code"><summary><span class="mono">hough.sv</span> <span class="muted small">reference RTL, 153 lines</span></summary><div class="codebar small"><a href="c13_hough_lines/hough.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c13_hough_lines/ref/rtl/hough.sv">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hc">// Part 13 lesson 8 reference solution: a Hough transform accumulator for straight lines, 16 angles, one angle per clock.</span>
 <span class="hc">//</span>
 <span class="hc">// A line is the set of points (x, y) with x*cos(t) + y*sin(t) = rho. For each edge point and each of the NT = 16 angles t_k = k * pi / 16 (k = 0 .. 15, in steps of</span>
 <span class="hc">// 11.25 degrees) the block computes   rho_k = ((x * ctab(k) + y * stab(k) + 64) &gt;&gt;&gt; 7) + ROFF   (cos and sin are in Q7: ctab(k) = round(128 cos t_k), given below;</span>
@@ -869,7 +904,7 @@ svg .bdtick { stroke: var(--ink-3); }
         <span class="hk">end</span>
     <span class="hk">end</span>
 <span class="hk">endmodule</span>
-</code></pre></details><details class="code"><summary><span class="mono">acceptance.py</span> <span class="muted small">hidden cocotb acceptance tests, 76 lines</span></summary><div class="codebar small"><a href="c13_hough_lines/acceptance.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c13_hough_lines/hidden/acceptance.py">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;Acceptance tests of c13_hough_lines against model.py (hidden from the agent).&quot;&quot;&quot;</span>
+</code></pre></details><details class="code"><summary><span class="mono">acceptance.py</span> <span class="muted small">hidden cocotb acceptance tests, 76 lines</span></summary><div class="codebar small"><a href="c13_hough_lines/acceptance.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c13_hough_lines/hidden/acceptance.py">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;Acceptance tests of c13_hough_lines against model.py (hidden from the agent).&quot;&quot;&quot;</span>
 
 <span class="hk">from</span> __future__ <span class="hk">import</span> annotations
 
@@ -945,7 +980,7 @@ svg .bdtick { stroke: var(--ink-3); }
     <span class="hk">assert</span> led == 0, f<span class="hs">&quot;LED {led:04X}: idle&quot;</span>
     <span class="hk">for</span> off <span class="hk">in</span> (0x05, 0x41, 0x7F):
         <span class="hk">await</span> b.expect(off, 0, <span class="hs">&quot;unmapped&quot;</span>)
-</code></pre></details><details class="code"><summary><span class="mono">model.py</span> <span class="muted small">golden model, 70 lines</span></summary><div class="codebar small"><a href="c13_hough_lines/model.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c13_hough_lines/hidden/model.py">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;P13-5 reference model: the Hough accumulator of the reference picture (numpy; bit-exact with the course exercise p13l08_hough).&quot;&quot;&quot;</span>
+</code></pre></details><details class="code"><summary><span class="mono">model.py</span> <span class="muted small">golden model, 70 lines</span></summary><div class="codebar small"><a href="c13_hough_lines/model.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/course/tasks/c13_hough_lines/hidden/model.py">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;P13-5 reference model: the Hough accumulator of the reference picture (numpy; bit-exact with the course exercise p13l08_hough).&quot;&quot;&quot;</span>
 <span class="hk">import</span> numpy <span class="hk">as</span> np
 
 
@@ -1022,7 +1057,7 @@ PT, CLEAR, RD_SEL, RD_CNT, STATUS = 0x00, 0x01, 0x02, 0x03, 0x04
 
 <div class="pager"><a href="../problems.html">&larr; All problems</a><span></span></div>
 </main>
-<footer><div class="wrap"><p>Designed by Brendan Lynskey. Code and results: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent">github.com/BrendanJamesLynskey/FPGA_Design_Agent</a> (MIT licence). Every number on these pages is read from a committed result file; development results are labelled as such and are not the held-out score.</p></div></footer>
+<footer><div class="wrap"><p>Designed by Brendan Lynskey. Code and results: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent">github.com/BrendanJamesLynskey/FPGA_Design_Agent</a> (all rights reserved; source visible for review, see LICENSE). Every number on these pages is read from a committed result file; development results are labelled as such and are not the held-out score.</p></div></footer>
 <script type="application/json" data-key="trace">{"captions":["Direction 0 (0 degrees): the busiest distance is 10, where 32 of the 107 points agree; 107 votes were cast in all.","Direction 1 (11.25 degrees): the busiest distance is 15, where 8 of the 107 points agree; 107 votes were cast in all.","Direction 2 (22.5 degrees): the busiest distance is 10, where 6 of the 107 points agree; 107 votes were cast in all.","Direction 3 (33.75 degrees): the busiest distance is 25, where 7 of the 107 points agree; 107 votes were cast in all.","Direction 4 (45 degrees): the busiest distance is 28, where 25 of the 107 points agree; 107 votes were cast in all.","Direction 5 (56.25 degrees): the busiest distance is 25, where 8 of the 107 points agree; 107 votes were cast in all.","Direction 6 (67.5 degrees): the busiest distance is 20, where 7 of the 107 points agree; 107 votes were cast in all.","Direction 7 (78.75 degrees): the busiest distance is 20, where 9 of the 107 points agree; 107 votes were cast in all.","Direction 8 (90 degrees): the busiest distance is 20, where 32 of the 107 points agree; 107 votes were cast in all.","Direction 9 (101.25 degrees): the busiest distance is 15, where 9 of the 107 points agree; 107 votes were cast in all.","Direction 10 (112.5 degrees): the busiest distance is 7, where 7 of the 107 points agree; 107 votes were cast in all.","Direction 11 (123.75 degrees): the busiest distance is 7, where 8 of the 107 points agree; 107 votes were cast in all.","Direction 12 (135 degrees): the busiest distance is 4, where 28 of the 107 points agree; 107 votes were cast in all.","Direction 13 (146.25 degrees): the busiest distance is -3, where 7 of the 107 points agree; 107 votes were cast in all.","Direction 14 (157.5 degrees): the busiest distance is -8, where 7 of the 107 points agree; 107 votes were cast in all.","Direction 15 (168.75 degrees): the busiest distance is -8, where 9 of the 107 points agree; 107 votes were cast in all."],"signals":[{"kind":"bus","name":"direction index","radix":"dec","v":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]},{"kind":"wave","lo":0,"name":"peak count","v":[32,8,6,7,25,8,7,9,32,9,7,8,28,7,7,9]},{"kind":"bus","name":"peak distance","radix":"dec","v":[10,15,10,25,28,25,20,20,20,15,7,7,4,-3,-8,-8]},{"kind":"bus","name":"votes in range","radix":"dec","v":[107,107,107,107,107,107,107,107,107,107,107,107,107,107,107,107]}],"stimulus":"The picture of 4 straight lines on a 32 by 32 grid, which has 107 edge points. Each point votes in all 16 directions.","unit":"direction","x":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]}</script>
 <script>/* FPGA Design Agent site. No dependencies. Every animation is frame(step) over a state list built from site/data/*.json. */
 (function () {
@@ -2138,6 +2173,20 @@ PT, CLEAR, RD_SEL, RD_CNT, STATUS = 0x00, 0x01, 0x02, 0x03, 0x04
   }
   openHash();
   window.addEventListener("hashchange", openHash);
+})();
+
+// brief 81: replay of a recorded counterexample: the slider hides the steps after the chosen one
+(function () {
+  document.querySelectorAll('.cexfig').forEach(function (f) {
+    var r = f.querySelector('input[type=range]'), fut = f.querySelector('.cxfut'), pos = f.querySelector('.cexpos'), lab = f.querySelector('.cxstep');
+    var n = +f.dataset.cycles, lx = +f.dataset.lx, cw = +f.dataset.cw, w = +f.dataset.w;
+    function set() {
+      var k = +r.value, x = lx + (k + 1) * cw;
+      fut.setAttribute('x', x); fut.setAttribute('width', Math.max(0, w - x));
+      pos.textContent = k; if (lab) lab.textContent = 'step ' + k;
+    }
+    r.addEventListener('input', set); set();
+  });
 })();
 </script>
 </body>

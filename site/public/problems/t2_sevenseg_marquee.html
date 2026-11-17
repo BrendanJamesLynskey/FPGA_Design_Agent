@@ -606,11 +606,46 @@ svg .bdtick { stroke: var(--ink-3); }
   .tl li { grid-template-columns: 1fr; }
   .tld { padding: 0 0 .1em; }
 }
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.mx td.mk, .mx th.mk { text-align: center; white-space: normal; min-width: 6.5em; position: relative; }
+.mx th[scope="row"] { font-weight: 400; color: var(--ink); min-width: 14em; }
+.mx tfoot th, .mx tfoot td { border-top: 2px solid var(--ink); font-weight: 600; }
+.sq { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--ink); vertical-align: middle; line-height: 12px; text-align: center; box-sizing: border-box; }
+.sq.y { background: var(--ink); }
+.sq.n { background: transparent; border-color: var(--ink-3); border-style: dashed; }
+.sq.na { border: 0; color: var(--ink-3); }
+.map code { white-space: normal; overflow-wrap: anywhere; display: inline-block; margin: 0 4px 4px 0; font-size: .75rem; }
+.map th[scope="row"] { min-width: 12em; font-weight: 600; }
+.map td { min-width: 8em; }
+.map { table-layout: auto; }
+.pin { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.pstep { border: 1px solid var(--rule); background: var(--panel); padding: 10px 12px; display: flex; flex-direction: column; gap: 4px; max-width: none; }
+.pstep.bad { border: 2px solid var(--warn); }
+.ptag { font: 700 .75rem var(--f-mono); text-transform: uppercase; color: var(--ink-3); }
+.pstep.bad .ptag { color: var(--warn); }
+.sfig .sbad { fill: var(--warn); }
+.sfig .ftick { stroke: var(--ink); stroke-width: 2.5; }
+.sfig .sunk { fill: none; stroke: var(--ink-3); stroke-dasharray: 4 3; }
+.sfig .sbar2 { fill: var(--ink); }
+.mxfig td.num { font-family: var(--f-mono); }
+.cexfig .cxh { fill: var(--ink); }
+.cexfig .cxl { fill: var(--ink-3); }
+.cexfig .cxfut { fill: var(--bg); opacity: .85; }
+.cexfig .ctl { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+.mx th[scope="row"] { min-width: 10em; }
+@media (max-width: 700px) {
+  .map thead { display: none; }
+  .map, .map tbody, .map tr, .map td, .map th { display: block; min-width: 0; width: 100%; }
+  .map tr { border-bottom: 2px solid var(--rule); padding: 6px 0; }
+  .map td { border: 0; padding: 2px 10px; }
+  .map td:not(:has(code)) { display: none; }
+  .map td::before { content: attr(data-label) ": "; font-size: .78rem; color: var(--ink-3); display: block; }
+}
 </style>
 </head>
 <body>
 <a class="visually-hidden" href="#main">Skip to content</a>
-<header class="bar"><div class="wrap"><a class="brand" href="../index.html">FPGA Design Agent</a><nav aria-label="Pages"><a href="../agent.html">The agent</a><a class="sub" href="../agent.html#harness">Harness</a><a href="../story.html">How it was built</a><a href="../how.html">How it works</a><a href="../flow-notes.html">Beyond the flow</a><a href="../expertise.html">Expertise</a><a href="../examples.html">Examples</a><a href="../showcase.html">Showcase</a><a href="../problems.html" aria-current="page">Problems</a><a href="../evaluation.html">Evaluation</a><a href="../results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
+<header class="bar"><div class="wrap"><a class="brand" href="../index.html">FPGA Design Agent</a><nav aria-label="Pages"><a href="../agent.html">The agent</a><a class="sub" href="../agent.html#harness">Harness</a><a href="../story.html">How it was built</a><a href="../how.html">How it works</a><a href="../verification.html">Verification</a><a href="../flow-notes.html">Beyond the flow</a><a href="../expertise.html">Expertise</a><a href="../examples.html">Examples</a><a href="../showcase.html">Showcase</a><a href="../problems.html" aria-current="page">Problems</a><a href="../evaluation.html">Evaluation</a><a href="../results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
 <main id="main" class="wrap">
 <p class="crumbs small"><a href="../problems.html">Problems</a> / <a href="../problems.html#dom-A">A. Basic digital design drills</a></p>
 <h1>Scrolling message on the eight 7-segment digits</h1>
@@ -642,8 +677,8 @@ svg .bdtick { stroke: var(--ink-3); }
 <p>Each is a small edit to the reference RTL. In the committed check (icarus, 2026-11-03, <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/results/reference/t2_sevenseg_marquee__icarus.json"><code>t2_sevenseg_marquee__icarus.json</code></a>) the reference passed all 7 hidden tests and 9 of 9 mutants failed them.</p>
 <div class="tablewrap" tabindex="0"><table><thead><tr><th>Mutant</th><th>File</th><th>The bug</th><th>Hidden tests that fail</th></tr></thead><tbody><tr><td><code>window_reversed</code></td><td><code>marquee.sv</code></td><td>the rightmost digit shows MSG[POS]: the message reads backwards</td><td><code>test_raw_segment_bytes</code>, <code>test_window_wraps</code>, <code>test_dimming</code>, <code>test_scroll_steps</code>, <code>test_random_windows</code></td></tr><tr><td><code>dim_off_by_one</code></td><td><code>marquee.sv</code></td><td>each digit lit for DIM/8 of its slot (DIM 0 dark)</td><td><code>test_identity_and_reset</code>, <code>test_raw_segment_bytes</code>, <code>test_window_wraps</code>, <code>test_dimming</code>, <code>test_scroll_steps</code>, <code>test_random_windows</code></td></tr><tr><td><code>dir_inverted</code></td><td><code>marquee.sv</code></td><td>the direction bit scrolls the other way</td><td><code>test_scroll_steps</code></td></tr><tr><td><code>length_17_accepted</code></td><td><code>marquee.sv</code></td><td>LENGTH 17 accepted</td><td><code>test_length_and_pos_rules</code></td></tr><tr><td><code>pos_kept_on_shorter_length</code></td><td><code>marquee.sv</code></td><td>POS = new LENGTH is kept (out of range)</td><td><code>test_length_and_pos_rules</code></td></tr><tr><td><code>scroll_half_period</code></td><td><code>marquee.sv</code></td><td>steps twice as often</td><td><code>test_scroll_steps</code></td></tr><tr><td><code>dp_dropped</code></td><td><code>marquee.sv</code></td><td>bit 7 never lights the decimal point</td><td><code>test_raw_segment_bytes</code>, <code>test_window_wraps</code>, <code>test_dimming</code>, <code>test_scroll_steps</code>, <code>test_random_windows</code></td></tr><tr><td><code>wrap_at_16</code></td><td><code>marquee.sv</code></td><td>the window wraps at 16 whatever LENGTH is</td><td><code>test_window_wraps</code>, <code>test_random_windows</code></td></tr><tr><td><code>scroll_restart_ignored</code></td><td><code>marquee.sv</code></td><td>writes to CTRL / POS do not restart the scroll counter</td><td><code>test_scroll_steps</code></td></tr></tbody></table></div>
 <h2>Sample solution</h2>
-<p class="note">Hand-written reference for the benchmark, not agent output; it passes every test, and the listed mutants fail them. With it, the hidden cocotb tests and the golden model. Repository licence: MIT.</p>
-<details class="code"><summary><span class="mono">marquee.sv</span> <span class="muted small">reference RTL, 101 lines</span></summary><div class="codebar small"><a href="t2_sevenseg_marquee/marquee.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t2_sevenseg_marquee/ref/rtl/marquee.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// marquee.sv: 16-byte raw-segment message, an 8-digit window that wraps</span>
+<p class="note">Hand-written reference for the benchmark, not agent output; it passes every test, and the listed mutants fail them. With it, the hidden cocotb tests and the golden model. Repository licence: all rights reserved (source visible for review).</p>
+<details class="code"><summary><span class="mono">marquee.sv</span> <span class="muted small">reference RTL, 101 lines</span></summary><div class="codebar small"><a href="t2_sevenseg_marquee/marquee.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t2_sevenseg_marquee/ref/rtl/marquee.sv">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hc">// marquee.sv: 16-byte raw-segment message, an 8-digit window that wraps</span>
 <span class="hc">// modulo LENGTH, scrolling every SCROLL_CYCLES, and a dimmed digit scan.</span>
 <span class="hk">module</span> marquee #(
     <span class="hk">parameter</span> <span class="hk">int</span> SCROLL_CYCLES = 25_000_000,
@@ -744,7 +779,7 @@ svg .bdtick { stroke: var(--ink-3); }
         <span class="hk">end</span>
     <span class="hk">end</span>
 <span class="hk">endmodule</span>
-</code></pre></details><details class="code"><summary><span class="mono">t2_sevenseg_marquee_top.sv</span> <span class="muted small">reference RTL, 36 lines</span></summary><div class="codebar small"><a href="t2_sevenseg_marquee/t2_sevenseg_marquee_top.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t2_sevenseg_marquee/ref/rtl/t2_sevenseg_marquee_top.sv">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hc">// t2_sevenseg_marquee_top.sv: board top (Nexys A7-100T, master-XDC port names).</span>
+</code></pre></details><details class="code"><summary><span class="mono">t2_sevenseg_marquee_top.sv</span> <span class="muted small">reference RTL, 36 lines</span></summary><div class="codebar small"><a href="t2_sevenseg_marquee/t2_sevenseg_marquee_top.sv" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t2_sevenseg_marquee/ref/rtl/t2_sevenseg_marquee_top.sv">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hc">// t2_sevenseg_marquee_top.sv: board top (Nexys A7-100T, master-XDC port names).</span>
 <span class="hc">// Reference design for benchmark task t2_sevenseg_marquee; DESIGN_ID &quot;MARQ&quot;.</span>
 <span class="hc">// A scrolling message of raw segment bytes on the eight digits.</span>
 <span class="hk">module</span> t2_sevenseg_marquee_top #(
@@ -780,7 +815,7 @@ svg .bdtick { stroke: var(--ink-3); }
 
     <span class="hk">assign</span> {DP, CG, CF, CE, CD, CC, CB, CA} = seg_n;
 <span class="hk">endmodule</span>
-</code></pre></details><details class="code"><summary><span class="mono">acceptance.py</span> <span class="muted small">hidden cocotb acceptance tests, 188 lines</span></summary><div class="codebar small"><a href="t2_sevenseg_marquee/acceptance.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t2_sevenseg_marquee/hidden/acceptance.py">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;Acceptance tests of t2_sevenseg_marquee against model.py (hidden from the agent).&quot;&quot;&quot;</span>
+</code></pre></details><details class="code"><summary><span class="mono">acceptance.py</span> <span class="muted small">hidden cocotb acceptance tests, 188 lines</span></summary><div class="codebar small"><a href="t2_sevenseg_marquee/acceptance.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t2_sevenseg_marquee/hidden/acceptance.py">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;Acceptance tests of t2_sevenseg_marquee against model.py (hidden from the agent).&quot;&quot;&quot;</span>
 
 <span class="hk">from</span> __future__ <span class="hk">import</span> annotations
 
@@ -968,7 +1003,7 @@ ODD = [0x49, 0x80, 0x36, 0x01, 0x7F, 0x63, 0x5C, 0xC9, 0x14, 0x22, 0x08, 0x41, 0
         <span class="hk">await</span> e.wr(MSG0 + rng.randrange(16), rng.randrange(256))
         <span class="hk">await</span> e.regs()
         <span class="hk">await</span> e.check_display()
-</code></pre></details><details class="code"><summary><span class="mono">model.py</span> <span class="muted small">golden model, 52 lines</span></summary><div class="codebar small"><a href="t2_sevenseg_marquee/model.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t2_sevenseg_marquee/hidden/model.py">On GitHub</a><span class="muted">MIT licence</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;Golden model of t2_sevenseg_marquee, written from spec.yaml alone (never from any RTL).&quot;&quot;&quot;</span>
+</code></pre></details><details class="code"><summary><span class="mono">model.py</span> <span class="muted small">golden model, 52 lines</span></summary><div class="codebar small"><a href="t2_sevenseg_marquee/model.py" download>Download</a><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/benchmark/tasks/t2_sevenseg_marquee/hidden/model.py">On GitHub</a><span class="muted">All rights reserved</span></div><pre tabindex="0"><code><span class="hs">&quot;&quot;&quot;Golden model of t2_sevenseg_marquee, written from spec.yaml alone (never from any RTL).&quot;&quot;&quot;</span>
 
 <span class="hk">from</span> __future__ <span class="hk">import</span> annotations
 
@@ -1027,7 +1062,7 @@ SCROLL, DIR = 1, 2
 
 <div class="pager"><a href="../problems.html">&larr; All problems</a><span></span></div>
 </main>
-<footer><div class="wrap"><p>Designed by Brendan Lynskey. Code and results: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent">github.com/BrendanJamesLynskey/FPGA_Design_Agent</a> (MIT licence). Every number on these pages is read from a committed result file; development results are labelled as such and are not the held-out score.</p></div></footer>
+<footer><div class="wrap"><p>Designed by Brendan Lynskey. Code and results: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent">github.com/BrendanJamesLynskey/FPGA_Design_Agent</a> (all rights reserved; source visible for review, see LICENSE). Every number on these pages is read from a committed result file; development results are labelled as such and are not the held-out score.</p></div></footer>
 <script type="application/json" data-key="trace">{"captions":["Step 0: Scrolling starts from the beginning of the message. Position 0; the eight digits show FPGA-7SE.","Step 1: The text moves one character left. Position 1; the eight digits show PGA-7SEG.","Step 2: The text moves one character left. Position 2; the eight digits show GA-7SEG-.","Step 3: The text moves one character left. Position 3; the eight digits show A-7SEG-F.","Step 4: The text moves one character left. Position 4; the eight digits show -7SEG-FP.","Step 5: The text moves one character left. Position 5; the eight digits show 7SEG-FPG.","Step 6: The text moves one character left. Position 6; the eight digits show SEG-FPGA.","Step 7: The text moves one character left. Position 7; the eight digits show EG-FPGA-.","Step 8: The text moves one character left. Position 8; the eight digits show G-FPGA-7.","Step 9: The text moves one character left. Position 9; the eight digits show -FPGA-7S.","Step 10: The text moves one character left. The message wraps round to its start. Position 0; the eight digits show FPGA-7SE.","Step 11: The text moves one character left. Position 1; the eight digits show PGA-7SEG.","Step 12: The text moves one character left. Position 2; the eight digits show GA-7SEG-.","Step 13: The direction is reversed, so the text moves right. Position 1; the eight digits show PGA-7SEG.","Step 14: The text moves one character right. Position 0; the eight digits show FPGA-7SE.","Step 15: The text moves one character right. The message wraps round to its end. Position 9; the eight digits show -FPGA-7S.","Step 16: The text moves one character right. Position 8; the eight digits show G-FPGA-7.","Step 17: The text moves one character right. Position 7; the eight digits show EG-FPGA-.","Step 18: The text moves one character right. Position 6; the eight digits show SEG-FPGA.","Step 19: The text moves one character right. Position 5; the eight digits show 7SEG-FPG.","Step 20: The text moves one character right. Position 4; the eight digits show -7SEG-FP."],"signals":[{"kind":"text","name":"window (left to right)","v":["FPGA-7SE","PGA-7SEG","GA-7SEG-","A-7SEG-F","-7SEG-FP","7SEG-FPG","SEG-FPGA","EG-FPGA-","G-FPGA-7","-FPGA-7S","FPGA-7SE","PGA-7SEG","GA-7SEG-","PGA-7SEG","FPGA-7SE","-FPGA-7S","G-FPGA-7","EG-FPGA-","SEG-FPGA","7SEG-FPG","-7SEG-FP"]},{"kind":"bus","name":"POS","radix":"dec","v":[0,1,2,3,4,5,6,7,8,9,0,1,2,1,0,9,8,7,6,5,4]},{"kind":"bus","name":"leftmost digit","radix":"hex","v":[113,115,61,119,64,7,109,121,61,64,113,115,61,115,113,64,61,121,109,7,64],"width":8},{"kind":"bus","name":"rightmost digit","radix":"hex","v":[121,61,64,113,115,61,119,64,7,109,121,61,64,61,121,109,7,64,119,61,115],"width":8},{"kind":"bit","name":"DIR","v":[0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1]}],"stimulus":"The message FPGA-7SEG- (10 characters, each written as a raw segment byte) is scrolled 12 steps left and then 8 steps right. The window text below is those bytes shown as the letters they draw.","unit":"scroll step","x":[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20]}</script>
 <script>/* FPGA Design Agent site. No dependencies. Every animation is frame(step) over a state list built from site/data/*.json. */
 (function () {
@@ -2143,6 +2178,20 @@ SCROLL, DIR = 1, 2
   }
   openHash();
   window.addEventListener("hashchange", openHash);
+})();
+
+// brief 81: replay of a recorded counterexample: the slider hides the steps after the chosen one
+(function () {
+  document.querySelectorAll('.cexfig').forEach(function (f) {
+    var r = f.querySelector('input[type=range]'), fut = f.querySelector('.cxfut'), pos = f.querySelector('.cexpos'), lab = f.querySelector('.cxstep');
+    var n = +f.dataset.cycles, lx = +f.dataset.lx, cw = +f.dataset.cw, w = +f.dataset.w;
+    function set() {
+      var k = +r.value, x = lx + (k + 1) * cw;
+      fut.setAttribute('x', x); fut.setAttribute('width', Math.max(0, w - x));
+      pos.textContent = k; if (lab) lab.textContent = 'step ' + k;
+    }
+    r.addEventListener('input', set); set();
+  });
 })();
 </script>
 </body>

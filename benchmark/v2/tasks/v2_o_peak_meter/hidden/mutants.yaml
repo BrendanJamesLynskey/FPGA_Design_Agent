@@ -1,0 +1,24 @@
+# Mutants and the trap for v2_o_peak_meter (benchmark/tools/check_task.py)
+mutants:
+  - {name: magnitude_23_bits, file: peak_meter.sv, find: "wire        [23:0] mag  = x[23] ? (~x + 24'd1) : x;", replace: "wire        [23:0] mag  = {1'b0, x[23] ? (~x[22:0] + 23'd1) : x[22:0]};", why: "the most negative sample gets magnitude 0 (a 23-bit absolute value overflows)"}
+  - {name: positive_samples_only, file: peak_meter.sv, find: "wire        [23:0] mag  = x[23] ? (~x + 24'd1) : x;", replace: "wire        [23:0] mag  = x[23] ? 24'd0 : x;", why: "the meter ignores negative samples"}
+  - {name: hold_ignored, file: peak_meter.sv, find: "end else if (hold_left != 16'd0) begin", replace: "end else if (1'b0) begin", why: "the reading falls at once, with no hold"}
+  - {name: hold_one_short, file: peak_meter.sv, find: "end else if (hold_left != 16'd0) begin", replace: "end else if (hold_left > 16'd1) begin", why: "the hold lasts one sample too few"}
+  - {name: decay_stalls, file: peak_meter.sv, find: "wire        [23:0] dec  = (sh == 24'd0) ? 24'd1 : sh;", replace: "wire        [23:0] dec  = sh;", why: "the fall stops at 31 and never reaches zero"}
+  - {name: decay_sixteenth, file: peak_meter.sv, find: "wire        [23:0] sh   = peak >> 5;", replace: "wire        [23:0] sh   = peak >> 4;", why: "the fall is twice as fast"}
+  - {name: equal_does_not_rearm, file: peak_meter.sv, find: "if (mag >= peak) begin", replace: "if (mag > peak) begin", why: "an equal magnitude does not reload the hold"}
+  - {name: clip_runs, file: peak_meter.sv, find: "if (rail && clips != 16'hFFFF) clips <= clips + 16'd1;", replace: "if (rail && !((last_in == 24'sh7FFFFF) || (last_in == 24'sh800000)) && clips != 16'hFFFF) clips <= clips + 16'd1;", why: "a run of rail samples counts once"}
+  - {name: clip_positive_only, file: peak_meter.sv, find: "wire               rail = (x == 24'sh7FFFFF) || (x == 24'sh800000);", replace: "wire               rail = (x == 24'sh7FFFFF);", why: "the counter misses the negative end of the range"}
+  - {name: clip_near_rail, file: peak_meter.sv, find: "wire               rail = (x == 24'sh7FFFFF) || (x == 24'sh800000);", replace: "wire               rail = (x[23:8] == 16'h7FFF) || (x[23:8] == 16'h8000);", why: "a sample near the rail counts as a clip"}
+  - {name: clear_bits_swapped, file: peak_meter.sv, find: "if (win_wdata[1]) clips <= '0;", replace: "if (win_wdata[2]) clips <= '0;", why: "the clip clear is on the wrong bit"}
+  - {name: clear_peak_keeps_hold, file: peak_meter.sv, find: "                        peak <= '0;\n                        hold_left <= '0;", replace: "                        peak <= '0;", why: "clearing the peak leaves the hold timer running"}
+  - {name: hold_not_reset, file: peak_meter.sv, find: "peak <= '0; hold_cfg <= 16'd32; hold_left <= '0;", replace: "peak <= '0; hold_left <= '0;", why: "HOLD survives CPU_RESETN"}
+  - {name: led_wrong_bits, file: peak_meter.sv, find: "assign led = peak[23:8];", replace: "assign led = peak[15:0];", why: "LED shows the wrong bits"}
+  - {name: clip_count_eight_bits, file: peak_meter.sv, find: "if (rail && clips != 16'hFFFF) clips <= clips + 16'd1;", replace: "if (rail && clips[7:0] != 8'hFF) clips <= clips + 16'd1;", why: "the clip counter stops at 255"}
+  - {name: hold_eight_bits, file: peak_meter.sv, find: "7'h03: hold_cfg <= win_wdata[15:0];", replace: "7'h03: hold_cfg <= {8'h00, win_wdata[7:0]};", why: "HOLD stores just the bottom 8 bits of what is written"}
+trap:
+  twin: "textbook cheap absolute value: invert the sign bit's bits (one's complement) instead of negating"
+  why: "inverting without adding one is off by one for every negative sample, so a -1 reads as 0 and the meter is a count low on one polarity"
+  edits:
+    - {file: peak_meter.sv, find: "wire        [23:0] mag  = x[23] ? (~x + 24'd1) : x;", replace: "wire        [23:0] mag  = x[23] ? ~x : x;"}
+  must_fail: [test_peak_negative_samples_and_the_extremes]

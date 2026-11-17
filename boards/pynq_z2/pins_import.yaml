@@ -1,0 +1,26 @@
+board: pynq_z2
+out: boards/pynq_z2/pynq_z2-pins.xdc
+title: "TUL PYNQ-Z2 (xc7z020clg400-1): PL pins"
+sources:
+  - {id: PYNQZ2_PINS, url: https://raw.githubusercontent.com/Xilinx/XilinxBoardStore/40fad97cf36f3d856c6759d83c2390de1566ffa7/boards/TUL/pynq-z2/A.0/part0_pins.xml, sha256: bf7618420270cdd8b3f9fe109b197a346e4d8ecb2785e7c5b3b75700eaaef448, format: board-store-xml, licence: "AMD XilinxBoardStore board file, TUL; no licence text in this file, so only pin facts are listed", use: "every pin, its I/O standard and its function name"}
+rename:
+  - ['^btns_4bits_tri_i_(\d)$', 'btn[\1]']
+  - ['^leds_4bits_tri_o_(\d)$', 'led[\1]']
+  - ['^sws_2bits_tri_i_(\d)$', 'sw[\1]']
+  - ['^sys_clk$', 'clk']
+  - ['^rgb_led_tri_o_(\d)$', 'rgb_led[\1]']
+  - ['^JA(\d+)$', 'pmoda[\1]']
+  - ['^JB(\d+)$', 'pmodb[\1]']
+  - ['^arduino_a0_a13_tri_i_(\d+)$', 'arduino_io[\1]']
+  - ['^raspberry_pi_tri_i_(\d+)$', 'rpi_gpio[\1]']
+section_by:
+  - ['^clk$', 'PL clock']
+  - ['^led\[', 'LEDs']
+  - ['^rgb_led', 'RGB LEDs']
+  - ['^btn\[', 'Push buttons']
+  - ['^sw\[', 'Slide switches']
+  - ['^pmod', 'Pmod']
+  - ['^arduino', 'Arduino header']
+  - ['^rpi', 'Raspberry Pi header']
+  - ['TMDS|hdmi', 'HDMI']
+  - ['audio|bclk|wclk|sdat', 'Audio codec']

@@ -304,6 +304,89 @@ def _modname(m: str) -> str:
     return m.split("$")[0]
 
 
+def _async_reg_marked(mod: dict[str, Any], c: dict[str, Any]) -> bool:
+    """True when the storage cell is a marked synchroniser stage: ASYNC_REG on the cell, or on the net its Q output drives."""
+    def on(attrs: dict[str, Any]) -> bool:
+        return "ASYNC_REG" in attrs and "FALSE" not in _str(attrs["ASYNC_REG"]).upper()
+    if on(c.get("attributes", {})):
+        return True
+    qbits = {b for p in ("Q", "O") for b in c["connections"].get(p, []) if isinstance(b, int)}
+    return any(on(v.get("attributes", {})) and qbits & {b for b in v["bits"] if isinstance(b, int)}
+               for v in mod["netnames"].values())
+
+
+def _comb_loops(mod: dict[str, Any]) -> list[dict[str, Any]]:
+    """Cells of a module that drive a bit on a combinational feedback loop (a cycle through $-cells that are not storage cells and
+    not module instances). Such a loop is stored state with no storage cell (``assign q = rst ? 0 : (en ? d : q)``), an
+    asynchronous latch whatever it is called. The graph is per bit: a bitwise cell ($and, $or, $mux ...) links input bit i to
+    output bit i only (its select to every output bit), any other cell every input bit to every output bit, so a ripple chain
+    ``c[N:1] = a & c[N-1:0]`` is not a loop. Loops through a module instance are not followed (each module is judged alone)."""
+    skip = ("dff", "latch", "$ff", "$sr", "$anyinit", "$mem", "$meminit", "$print", "$assert", "$assume", "$cover", "$check", "$paramod")
+    bitwise = ("$and", "$or", "$xor", "$xnor", "$not", "$mux", "$pmux", "$_AND_", "$_OR_", "$_XOR_", "$_NOT_", "$_MUX_", "$buf", "$pos")
+    comb = {cn: c for cn, c in mod["cells"].items() if c["type"].startswith("$") and not any(k in c["type"] for k in skip)}
+    succ: dict[Any, set[Any]] = {}
+    drv: dict[Any, str] = {}
+    for cn, c in comb.items():
+        pd = c.get("port_directions", {})
+        outs = [(p, bits) for p, bits in c["connections"].items() if pd.get(p) == "output"]
+        for p, bits in c["connections"].items():
+            if pd.get(p) != "input":
+                continue
+            for i, b in enumerate(bits):
+                if not isinstance(b, int):
+                    continue
+                for _, ob in outs:
+                    tgt = [ob[i]] if c["type"] in bitwise and p != "S" and i < len(ob) else ob
+                    for o in tgt:
+                        if isinstance(o, int):
+                            succ.setdefault(b, set()).add(o)
+        for _, ob in outs:
+            for o in ob:
+                if isinstance(o, int):
+                    drv[o] = cn
+    index: dict[Any, int] = {}
+    low: dict[Any, int] = {}
+    on: set[Any] = set()
+    stack: list[Any] = []
+    loops: set[str] = set()
+    n = 0
+    for root in list(succ):
+        if root in index:
+            continue
+        work = [(root, iter(succ.get(root, ())))]
+        index[root] = low[root] = n
+        n += 1
+        stack.append(root)
+        on.add(root)
+        while work:
+            v, it = work[-1]
+            for w in it:
+                if w not in index:
+                    index[w] = low[w] = n
+                    n += 1
+                    stack.append(w)
+                    on.add(w)
+                    work.append((w, iter(succ.get(w, ()))))
+                    break
+                if w in on:
+                    low[v] = min(low[v], index[w])
+            else:
+                work.pop()
+                if work:
+                    low[work[-1][0]] = min(low[work[-1][0]], low[v])
+                if low[v] == index[v]:
+                    comp = []
+                    while True:
+                        w = stack.pop()
+                        on.discard(w)
+                        comp.append(w)
+                        if w == v:
+                            break
+                    if len(comp) > 1 or v in succ.get(v, ()):
+                        loops |= {drv[x] for x in comp if x in drv}
+    return [comb[cn] for cn in sorted(loops)]
+
+
 def elab_findings(el: Any, design: Path, cfg: dict[str, Any], root: Path, parts: dict[str, str]) -> list[dict[str, Any]]:
     """The findings of the elaborated design (the source part): every storage cell with an asynchronous control, a latch with
     a reset in its cone, and one root reset signal used in both polarities, outside a recognised synchroniser."""
@@ -354,6 +437,12 @@ def elab_findings(el: Any, design: Path, cfg: dict[str, Any], root: Path, parts:
         mfile_abs = (Path(mfile) if Path(mfile).is_absolute() else root / mfile).resolve() if mfile else None
         here = exempt or (base in cfg["synchronisers"] and (base in declared or mfile_abs in shell)
                           and base not in cfg.get("impostors", set()) - declared)
+        if not post:                                          # a loop is never part of a synchroniser either
+            for c in _comb_loops(mod)[:1]:                   # one finding per module: the first cell on a loop
+                rel_f, ln = _src(c.get("attributes", {}))
+                add(_rel(Path(rel_f), design) if rel_f else mname, ln, "RST-ASYNC-01",
+                    f"module {base}: a combinational feedback loop ({len(_comb_loops(mod))} cell(s)) holds state with no storage "
+                    "cell: an asynchronous latch whatever its signals are called")
         for cn, c in mod["cells"].items():
             t = c["type"]
             if net.is_inst(c):
@@ -387,7 +476,7 @@ def elab_findings(el: Any, design: Path, cfg: dict[str, Any], root: Path, parts:
                     pins += [("async", b, 0 if inv else 1) for b in cc.get(p, [])]
                 what = f"{t} primitive ({cn})"
             elif t == "$dlatch":
-                if not here:
+                if not here or not _async_reg_marked(mod, c):
                     add(rel, ln, "RST-ASYNC-01", f"module {base}: a latch (an LDCE/LDPE-style cell: its enable and data are "
                         "asynchronous controls): treated as an asynchronous element whatever its signals are called")
                 continue
@@ -406,12 +495,14 @@ def elab_findings(el: Any, design: Path, cfg: dict[str, Any], root: Path, parts:
                 if kd == "const":                         # x or z: an undriven signal reaching a reset pin
                     kd, nm = "undriven", "(an undriven signal)"
                 eff = hi ^ inv
-                if kind == "async" and not here:
+                decoy = here and kind == "async" and not _async_reg_marked(mod, c)   # inside a synchroniser, only its marked stages are exempt
+                if kind == "async" and (not here or decoy):
                     if kd == "port" and re.sub(r"\[\d+\]$", "", nm) in cfg["async_inputs"] and len(frames) >= 1:
                         pass                                  # a declared external asynchronous input (top-level port)
                     else:
                         add(rel, ln, "RST-ASYNC-01", f"module {base}: {what} has an asynchronous reset or set from {kd} "
-                            f"{nm}: an asynchronous reset outside a recognised synchroniser")
+                            f"{nm}: an asynchronous reset outside a recognised synchroniser"
+                            + (" (this one is inside a declared synchroniser but is not an ASYNC_REG stage)" if decoy else ""))
                 if not here and kd != "undriven" and not nm.endswith("<unnamed net>"):
                     # an unnamed net is a different signal at every place, so two of them say nothing about one reset (brief
                     # 70: b59a's data mux `sel < N ? x : 0` became a synchronous-reset flop that shared the unnamed key

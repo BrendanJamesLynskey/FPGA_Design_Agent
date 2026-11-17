@@ -50,3 +50,18 @@ manifest precedes its submit and the draw in git history, so a reviewer can comp
   touches plus the smoke task, and all of them when it touches shared grader code (`tools/ci_select.py`).
 - `split.py submit` refuses a block-completing submit whose private directory lacks the earlier task ids (nothing is written);
   `split.py move-dev` refuses a task no v1 or course split file holds out unless `--unlisted` is given.
+
+## Family draws (brief 79, strategy section 12a)
+
+Tasks that share code by construction (an L2 task with its L1 parts, and siblings above the leak-guard threshold) are drawn as a unit.
+Submit every member with `split.py submit --defer-draw` (no block of three is drawn), then record one draw per (domain, tier) cell:
+
+    split.py draw-family --domain D --tier T --group G --private-dir DIR --families families.yaml
+
+`families.yaml` is a list of `{name, tasks: [ids], eligible: bool, reason: text}`. A family that overlaps a public or development task above
+the guard threshold (`benchmark/tools/task_leak.py`) is not eligible and is development-only. One eligible family is held out by rule; with
+several, one is chosen by the ledger's seeded randomness (the published seed of the cell, the draw index and the eligible families' digests,
+which depend on every member's frozen manifest); with none, nothing is held out. The `family_draw` entry records the families, their
+eligibility reasons, the rule and the choice. Development members are named; held-out members appear only as manifest hashes and a family
+digest. `verify` recomputes the choice and fails on any entry that differs from it, so the held-out family cannot be picked by hand.
+`current_manifests`, `effective` and the public-task test treat `family_draw` development members like block-draw ones.

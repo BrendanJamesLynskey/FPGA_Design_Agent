@@ -1,0 +1,255 @@
+{
+ "stop": "iteration limit 6 reached",
+ "all_met": false,
+ "start": {
+  "G1": {
+   "met": true,
+   "value": "9/9",
+   "target": "all pass",
+   "shortfall": 0.0,
+   "detail": ""
+  },
+  "G2": {
+   "met": false,
+   "value": {
+    "wns_ns": -0.59,
+    "whs_ns": 0.145,
+    "tns_ns": -0.59,
+    "failing_endpoints": null
+   },
+   "target": {
+    "wns_ns": 0.0,
+    "whs_ns": 0.0,
+    "period_ns": 8.0
+   },
+   "shortfall": 0.07375,
+   "detail": ""
+  },
+  "G3": {
+   "met": true,
+   "value": {
+    "lut": 391,
+    "ff": 443,
+    "bram_tile": 0.5,
+    "dsp": 0,
+    "iob": 0
+   },
+   "target": {
+    "lut": 50720.0,
+    "ff": 101440.0,
+    "bram_tile": 108.0,
+    "dsp": 192.0,
+    "iob": 168.0
+   },
+   "shortfall": 0.0,
+   "detail": ""
+  },
+  "G4": {
+   "met": true,
+   "value": {
+    "total_w": 0.09,
+    "junction_c": 25.0
+   },
+   "target": {
+    "power_w": 2.0,
+    "tj_max_c": 85.0
+   },
+   "shortfall": 0.0,
+   "detail": "vectorless estimate, confidence Medium"
+  },
+  "G5": {
+   "met": null,
+   "value": null,
+   "target": "board checks",
+   "shortfall": null,
+   "detail": "not run yet (no board in this phase)"
+  },
+  "CHK": {
+   "met": null,
+   "value": null,
+   "target": "no Error or Critical Warning",
+   "shortfall": null,
+   "detail": "not reported"
+  }
+ },
+ "final": {
+  "G1": {
+   "met": true,
+   "value": "9/9",
+   "target": "all pass",
+   "shortfall": 0.0,
+   "detail": ""
+  },
+  "G2": {
+   "met": false,
+   "value": {
+    "wns_ns": -0.369,
+    "whs_ns": 0.142,
+    "tns_ns": -0.369,
+    "failing_endpoints": null
+   },
+   "target": {
+    "wns_ns": 0.0,
+    "whs_ns": 0.0,
+    "period_ns": 8.0
+   },
+   "shortfall": 0.04612,
+   "detail": ""
+  },
+  "G3": {
+   "met": true,
+   "value": {
+    "lut": 359,
+    "ff": 411,
+    "bram_tile": 0.5,
+    "dsp": 0,
+    "iob": 0
+   },
+   "target": {
+    "lut": 50720.0,
+    "ff": 101440.0,
+    "bram_tile": 108.0,
+    "dsp": 192.0,
+    "iob": 168.0
+   },
+   "shortfall": 0.0,
+   "detail": ""
+  },
+  "G4": {
+   "met": true,
+   "value": {
+    "total_w": 0.09,
+    "junction_c": 25.0
+   },
+   "target": {
+    "power_w": 2.0,
+    "tj_max_c": 85.0
+   },
+   "shortfall": 0.0,
+   "detail": "vectorless estimate, confidence Medium"
+  },
+  "G5": {
+   "met": null,
+   "value": null,
+   "target": "board checks",
+   "shortfall": null,
+   "detail": "not run yet (no board in this phase)"
+  },
+  "CHK": {
+   "met": null,
+   "value": null,
+   "target": "no Error or Critical Warning",
+   "shortfall": null,
+   "detail": "not reported"
+  }
+ },
+ "start_line": "G1 met (9/9); G2 NOT met (WNS -0.59 WHS 0.145); G3 met (LUT 391 FF 443 BRAM 0.5 DSP 0); G4 met (0.09 W); G5 -; CHK -",
+ "final_line": "G1 met (9/9); G2 NOT met (WNS -0.369 WHS 0.142); G3 met (LUT 359 FF 411 BRAM 0.5 DSP 0); G4 met (0.09 W); G5 -; CHK -",
+ "unmet": {
+  "G2": {
+   "best": {
+    "wns_ns": -0.369,
+    "whs_ns": 0.142,
+    "tns_ns": -0.369,
+    "failing_endpoints": null
+   },
+   "target": {
+    "wns_ns": 0.0,
+    "whs_ns": 0.0,
+    "period_ns": 8.0
+   },
+   "tried": [
+    "t_pipeline (revert)",
+    "t_pipeline (revert)",
+    "t_fanout (revert)",
+    "t_fanout (revert)",
+    "t_tree (accept)",
+    "t_dsp_map (revert)"
+   ]
+  }
+ },
+ "unmet_text": [
+  "goal G2 not met; best value {'wns_ns': -0.369, 'whs_ns': 0.142, 'tns_ns': -0.369, 'failing_endpoints': None}; tried: t_pipeline (revert), t_pipeline (revert), t_fanout (revert), t_fanout (revert), t_tree (accept), t_dsp_map (revert)"
+ ],
+ "iterations": 6,
+ "accepted": 1,
+ "reverted": 5,
+ "early_rejected": 0,
+ "strategies": [
+  [
+   "t_pipeline",
+   "revert"
+  ],
+  [
+   "t_pipeline",
+   "revert"
+  ],
+  [
+   "t_fanout",
+   "revert"
+  ],
+  [
+   "t_fanout",
+   "revert"
+  ],
+  [
+   "t_tree",
+   "accept"
+  ],
+  [
+   "t_dsp_map",
+   "revert"
+  ]
+ ],
+ "strategies_all": [
+  [
+   [
+    "t_pipeline"
+   ],
+   "revert"
+  ],
+  [
+   [
+    "t_pipeline"
+   ],
+   "revert"
+  ],
+  [
+   [
+    "t_fanout"
+   ],
+   "revert"
+  ],
+  [
+   [
+    "t_fanout"
+   ],
+   "revert"
+  ],
+  [
+   [
+    "t_tree"
+   ],
+   "accept"
+  ],
+  [
+   [
+    "t_dsp_map"
+   ],
+   "revert"
+  ]
+ ],
+ "usd": 0.020839,
+ "tokens": 61100,
+ "llm_calls": 6,
+ "seconds": 2258.4,
+ "signoff": null,
+ "closure_claimed": false,
+ "reentry": null,
+ "case": "xc7_icmp_echo_k1",
+ "block": "icmp_echo",
+ "part": "xc7a100tcsg324-1",
+ "model": "openai/gpt-6-luna",
+ "clock_mhz": 125.0,
+ "extra_latency": 4
+}

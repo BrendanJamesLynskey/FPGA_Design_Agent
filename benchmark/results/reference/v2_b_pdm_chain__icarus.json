@@ -1,0 +1,305 @@
+{
+  "task": "v2_b_pdm_chain",
+  "sim": "icarus",
+  "date": "2026-11-14",
+  "ref": {
+    "pass": true,
+    "tests": {
+      "test_identity_and_reset": true,
+      "test_clock_and_channel_select": true,
+      "test_capture_of_a_tone": true,
+      "test_capture_of_random_bits": true,
+      "test_digital_full_scale_saturates": true,
+      "test_small_signal_does_not_set_sat": true,
+      "test_run_start_clears_the_chain_and_count": true,
+      "test_arm_and_capture_rules": true,
+      "test_partial_capture_restarts_at_the_next_run": true,
+      "test_register_rules": true,
+      "test_product_numbers_of_the_model": true
+    }
+  },
+  "mutants": [
+    {
+      "name": "scale_gain_4",
+      "why": "the CIC output is scaled by 4, not 8",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_capture_of_a_tone",
+        "test_capture_of_random_bits",
+        "test_digital_full_scale_saturates",
+        "test_small_signal_does_not_set_sat",
+        "test_run_start_clears_the_chain_and_count",
+        "test_arm_and_capture_rules",
+        "test_partial_capture_restarts_at_the_next_run"
+      ]
+    },
+    {
+      "name": "scale_wraps",
+      "why": "digital full scale wraps instead of stopping at the limit",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_digital_full_scale_saturates",
+        "test_run_start_clears_the_chain_and_count"
+      ]
+    },
+    {
+      "name": "hb_ties_up",
+      "why": "half-band ties round up instead of to even",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_capture_of_a_tone",
+        "test_capture_of_random_bits",
+        "test_small_signal_does_not_set_sat",
+        "test_run_start_clears_the_chain_and_count",
+        "test_arm_and_capture_rules",
+        "test_partial_capture_restarts_at_the_next_run"
+      ]
+    },
+    {
+      "name": "hb_first_of_pair",
+      "why": "half-band keeps the first sample of each pair",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_capture_of_a_tone",
+        "test_capture_of_random_bits",
+        "test_digital_full_scale_saturates",
+        "test_small_signal_does_not_set_sat",
+        "test_run_start_clears_the_chain_and_count",
+        "test_arm_and_capture_rules",
+        "test_partial_capture_restarts_at_the_next_run"
+      ]
+    },
+    {
+      "name": "fir_no_rounding",
+      "why": "FIR truncates",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_capture_of_a_tone",
+        "test_capture_of_random_bits",
+        "test_digital_full_scale_saturates",
+        "test_small_signal_does_not_set_sat",
+        "test_run_start_clears_the_chain_and_count",
+        "test_arm_and_capture_rules",
+        "test_partial_capture_restarts_at_the_next_run"
+      ]
+    },
+    {
+      "name": "fir_centre_tap",
+      "why": "FIR centre coefficient 583",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_capture_of_a_tone",
+        "test_capture_of_random_bits",
+        "test_digital_full_scale_saturates",
+        "test_small_signal_does_not_set_sat",
+        "test_run_start_clears_the_chain_and_count",
+        "test_arm_and_capture_rules",
+        "test_partial_capture_restarts_at_the_next_run"
+      ]
+    },
+    {
+      "name": "dc_pole_8",
+      "why": "DC blocker pole 1 - 2^-8",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_capture_of_a_tone",
+        "test_capture_of_random_bits",
+        "test_digital_full_scale_saturates",
+        "test_small_signal_does_not_set_sat",
+        "test_run_start_clears_the_chain_and_count",
+        "test_arm_and_capture_rules",
+        "test_partial_capture_restarts_at_the_next_run"
+      ]
+    },
+    {
+      "name": "dc_not_differencing",
+      "why": "DC blocker without the previous-input term",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_capture_of_a_tone",
+        "test_capture_of_random_bits",
+        "test_digital_full_scale_saturates",
+        "test_small_signal_does_not_set_sat",
+        "test_run_start_clears_the_chain_and_count",
+        "test_arm_and_capture_rules",
+        "test_partial_capture_restarts_at_the_next_run"
+      ]
+    },
+    {
+      "name": "cic_integrator_pipelined",
+      "why": "third integrator adds the old second one",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_capture_of_a_tone",
+        "test_capture_of_random_bits",
+        "test_small_signal_does_not_set_sat",
+        "test_run_start_clears_the_chain_and_count",
+        "test_arm_and_capture_rules",
+        "test_partial_capture_restarts_at_the_next_run"
+      ]
+    },
+    {
+      "name": "run_start_keeps_state",
+      "why": "starting RUN does not clear the chain",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_digital_full_scale_saturates",
+        "test_run_start_clears_the_chain_and_count",
+        "test_partial_capture_restarts_at_the_next_run"
+      ]
+    },
+    {
+      "name": "count_not_cleared",
+      "why": "COUNT is not cleared at the RUN start",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_run_start_clears_the_chain_and_count"
+      ]
+    },
+    {
+      "name": "captures_before_dc_blocker",
+      "why": "the capture takes the FIR output, not the DC blocker output",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_capture_of_a_tone",
+        "test_capture_of_random_bits",
+        "test_digital_full_scale_saturates",
+        "test_small_signal_does_not_set_sat",
+        "test_run_start_clears_the_chain_and_count",
+        "test_arm_and_capture_rules",
+        "test_partial_capture_restarts_at_the_next_run"
+      ]
+    },
+    {
+      "name": "done_one_early",
+      "why": "DONE is set before CAP[63] is stored",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_capture_of_a_tone",
+        "test_capture_of_random_bits",
+        "test_digital_full_scale_saturates",
+        "test_small_signal_does_not_set_sat",
+        "test_run_start_clears_the_chain_and_count",
+        "test_arm_and_capture_rules",
+        "test_partial_capture_restarts_at_the_next_run"
+      ]
+    },
+    {
+      "name": "cap_reads_before_done",
+      "why": "CAP does not read 0 while DONE = 0",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_identity_and_reset",
+        "test_arm_and_capture_rules",
+        "test_register_rules"
+      ]
+    },
+    {
+      "name": "arm_while_running",
+      "why": "ARM is honoured while RUN is 1",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_arm_and_capture_rules"
+      ]
+    },
+    {
+      "name": "partial_capture_not_restarted",
+      "why": "a partial capture continues at the old index after a new RUN start",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_partial_capture_restarts_at_the_next_run"
+      ]
+    },
+    {
+      "name": "clock_half_short",
+      "why": "M_CLK half period one board clock short",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_clock_and_channel_select",
+        "test_capture_of_a_tone",
+        "test_capture_of_random_bits",
+        "test_digital_full_scale_saturates",
+        "test_small_signal_does_not_set_sat",
+        "test_run_start_clears_the_chain_and_count",
+        "test_arm_and_capture_rules",
+        "test_partial_capture_restarts_at_the_next_run"
+      ]
+    },
+    {
+      "name": "clock_free_running",
+      "why": "M_CLK keeps toggling while RUN = 0",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_identity_and_reset",
+        "test_clock_and_channel_select",
+        "test_capture_of_a_tone",
+        "test_capture_of_random_bits",
+        "test_small_signal_does_not_set_sat",
+        "test_run_start_clears_the_chain_and_count",
+        "test_arm_and_capture_rules",
+        "test_partial_capture_restarts_at_the_next_run"
+      ]
+    },
+    {
+      "name": "lrsel_high",
+      "why": "M_LRSEL driven high",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_clock_and_channel_select"
+      ]
+    },
+    {
+      "name": "sample_too_late",
+      "why": "the bit is taken three clocks after the rising edge, outside the valid window",
+      "killed": true,
+      "built": true,
+      "failed_tests": [
+        "test_capture_of_a_tone",
+        "test_capture_of_random_bits",
+        "test_digital_full_scale_saturates",
+        "test_small_signal_does_not_set_sat",
+        "test_run_start_clears_the_chain_and_count",
+        "test_arm_and_capture_rules",
+        "test_partial_capture_restarts_at_the_next_run"
+      ]
+    }
+  ],
+  "mutants_killed": 20,
+  "mutants_total": 20,
+  "trap": {
+    "twin": "textbook CIC chain that passes on every decimated output, including the first two while the filter is still filling",
+    "why": "the first two CIC outputs mix real bits with the empty start state; the spec drops them, and a chain that keeps them shifts every audio sample by two CIC outputs",
+    "must_fail": [
+      "test_capture_of_a_tone"
+    ],
+    "failed_tests": [
+      "test_capture_of_a_tone",
+      "test_capture_of_random_bits",
+      "test_digital_full_scale_saturates",
+      "test_small_signal_does_not_set_sat",
+      "test_run_start_clears_the_chain_and_count",
+      "test_arm_and_capture_rules",
+      "test_partial_capture_restarts_at_the_next_run"
+    ],
+    "trap_fires": true
+  }
+}

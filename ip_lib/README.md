@@ -69,9 +69,7 @@ bench. Simulated, checked formally (bounded, except the MDIO frame, which is pro
 alone out of context on an Artix-7 with Vivado 2026.1. All of them run together behind `eth_mac_rmii` in the Nexys A7
 design [designs/b63d_nexys_net](../designs/b63d_nexys_net/README.md), which is built but not yet run on a board.
 
-Timing: at a 125 MHz target, `ipv4_udp_rx`, `ipv4_udp_tx`, `igmp_join` (71-82 MHz estimated) and `icmp_echo`
-(89-116 MHz) miss, as does `arp_responder` with 16 entries (116 MHz); the MAC with its LUT RAM buffer at 32768 bytes
-meets it only just in one run (WNS 0.04 ns). They close at the Nexys design's 50 MHz; behind the 125 MHz RGMII MAC they need pipelining first.
+Timing: at a 125 MHz target (Vivado 2026.1, out of context, single runs), version 0.2.0 of `ipv4_udp_rx`, `ipv4_udp_tx`, `igmp_join`, `icmp_echo` and `arp_responder` meets it on the Artix-7 (xc7a100t-1) at every characterised point except `icmp_echo` with its LUT RAM buffer at 16 KB (104 MHz estimated); `ipv4_udp_tx` with LUT RAM at 8972 bytes (+0.005 ns) and `arp_responder` with 16 entries (+0.15 ns) pass only just, and the MAC with its LUT RAM buffer at 32768 bytes meets it only just in one run (WNS 0.04 ns). All five meet it with margin on the KR260's xck26-2LV. Pipelining adds 1 to 4 clocks of latency (declared per block); see [results/b88_net125](../results/b88_net125/README.md).
 
 | Entry | What | Tests |
 |---|---|---|

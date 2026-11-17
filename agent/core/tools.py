@@ -210,7 +210,15 @@ def write_file(s: Session, path: str, content: str) -> dict:
     p = s.jail.resolve(path, write=True)
     if len(content.encode()) > s.jail.MAX_WRITE_BYTES:
         raise SecurityError("path-jail", "file too large")
-    bad = check_artefact(str(p.relative_to(s.jail.root)), content)
+    rel = p.relative_to(s.jail.root)
+    shell_dir = s.jail.shell_root / "rtl" if s.jail.shell_root else None
+    if (shell_dir and not srcorder.no_shell(s.design) and rel.parent == Path("rtl") and rel.suffix in (".sv", ".v")
+            and (shell_dir / rel.name).is_file()):  # b82p2: four of fifteen runs blanked such a file and the scorer refused the build
+        return {"ok": False, "invalid": True, "output": (
+            f"not written: {rel.name} is also the name of a test-shell file (@shell/rtl/{rel.name}); the shell's modules are "
+            f"compiled into every build and the scorer refuses a file of that name, so a design file cannot carry it. Instantiate "
+            f"the shell's module instead, or put your own module in a file with another name.")}
+    bad = check_artefact(str(rel), content)
     if bad:                                           # 05c2 fix 4: one clear error, the previous file is kept
         return {"ok": False, "output": f"not written: {bad}", "invalid": True}
     p.parent.mkdir(parents=True, exist_ok=True)
