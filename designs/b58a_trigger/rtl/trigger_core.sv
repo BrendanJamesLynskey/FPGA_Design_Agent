@@ -13,9 +13,13 @@ module trigger_core #(
     parameter int          BUILD_MODE  = 0,     // order_ctl: 0 pre-built headers, 1 assemble then send
     parameter int          NINST       = 256,
     parameter int          MDIO_DIV    = 32,
-    parameter int          ML_ARM      = 0      // decision model behind the rules: 0 none (no added logic), 1 gbt_comb,
-                                                // 2 lutnet; 3 mlp_hand is refused (LATENCY 13 > 8)
-                                                // (designs/b87_ml_trading; register 0x02A)
+    parameter int          ML_ARM      = 0,     // decision model behind the rules: 0 none (no added logic), 1 gbt_comb,
+                                                // 2 lutnet; 3 mlp_hand is refused (LATENCY 13 > 8); 4 lg_small_comb
+                                                // (designs/b87_ml_trading, b89_lutnet_gen; register 0x02A)
+    parameter int          ML_PRE      = 0      // 0: features at the price field (brief 87, default); 1: features
+                                                // computed early, at the book read, model block unchanged; 2 and 3: early
+                                                // features and a partial-evaluation block on the late feature (table
+                                                // fill 1 or 2 clocks; ML_ARM 1 or 4 only) (designs/b93_precompute)
 ) (
     input  logic        clk,
     input  logic        rst,
@@ -187,30 +191,81 @@ module trigger_core #(
         assign ml_last = 2'd1;
     end else begin : g_ml
         localparam int RW = 3 + 16 + 32 + 32 + 32 + 1 + 16 + 3;   // packed rule-decision fields
-        logic        feat_v, cls_v;
+        logic        feat_v, cls_v, trk_v;
         logic [37:0] feat;
         logic [1:0]  cls;
-        ml_feat u_feat (.clk, .rst, .ml_inst, .msg_px_v(m_px_v), .msg_type(m_type), .msg_side(m_side),
-            .msg_inst(m_inst), .bk_valid(bk_valid), .bk_bid_px(bk_bpx), .bk_bid_sz(bk_bsz), .bk_ask_px(bk_apx),
-            .bk_ask_sz(bk_asz), .feat_v(feat_v), .feat(feat));
-        // each arm's LATENCY (rtl/gen/*.sv; the integration test checks the gate delay against the source): at most 8
-        localparam int ML_LAT = (ML_ARM == 1) ? 1 : (ML_ARM == 2) ? 3 : 13;
-        initial if (ML_LAT > 8) $error("trigger_core: ML arm latency %0d > 8 clocks (ML_ARM %0d)", ML_LAT, ML_ARM);
-        if (ML_ARM == 1) begin : g_arm
-            gbt_comb u_arm (.clk, .rst, .in_v(feat_v), .in_f(feat), .out_v(cls_v), .out_cls(cls));
-        end else if (ML_ARM == 2) begin : g_arm
-            lutnet u_arm (.clk, .rst, .in_v(feat_v), .in_f(feat), .out_v(cls_v), .out_cls(cls));
-        end else begin : g_arm
-            mlp_hand u_arm (.clk, .rst, .in_v(feat_v), .in_f(feat), .out_v(cls_v), .out_cls(cls));
+        if (ML_PRE == 0) begin : g_base
+            assign trk_v = 1'b0;
+            ml_feat u_feat (.clk, .rst, .ml_inst, .msg_px_v(m_px_v), .msg_type(m_type), .msg_side(m_side),
+                .msg_inst(m_inst), .bk_valid(bk_valid), .bk_bid_px(bk_bpx), .bk_bid_sz(bk_bsz), .bk_ask_px(bk_apx),
+                .bk_ask_sz(bk_asz), .feat_v(feat_v), .feat(feat));
+        end else begin : g_pre
+            ml_feat_pre u_feat (.clk, .rst, .ml_inst, .inst_v(m_inst_v), .msg_px_v(m_px_v), .msg_type(m_type),
+                .msg_side(m_side), .msg_inst(m_inst), .bk_valid(bk_valid), .bk_bid_px(bk_bpx), .bk_bid_sz(bk_bsz),
+                .bk_ask_px(bk_apx), .bk_ask_sz(bk_asz), .trk_v(trk_v), .feat_v(feat_v), .feat(feat));
         end
-        ml_gate #(.FW(RW)) u_gate (.clk, .rst, .en(ml_en), .track(feat_v), .fire_v(r_fire_v),
-            .fire_order(r_fire_order), .fire_side(r_fire_side),
-            .fire_rest({r_fire_rule, r_fire_ver, r_fire_qty, r_fire_px, r_fire_ref, r_fire_noref, r_fire_inst,
-                        r_fire_pin_en, r_fire_pin_idx, r_fire_log}),
-            .cls_v(cls_v), .cls(cls), .o_fire_v(fire_v), .o_fire_order(fire_order), .o_fire_side(fire_side),
-            .o_fire_rest({fire_rule, fire_ver, fire_qty, fire_px, fire_ref, fire_noref, fire_inst, fire_pin_en,
-                          fire_pin_idx, fire_log}),
-            .vetoes(ml_vetoes), .last_cls(ml_last));
+        // each arm's LATENCY (rtl/gen/*.sv; the integration test checks the gate delay against the source): at most 8
+        localparam int ML_LAT = (ML_ARM == 1) ? 1 : (ML_ARM == 2) ? 3 : (ML_ARM == 4) ? 1 : 13;
+        initial if (ML_PRE == 0 && ML_LAT > 8) $error("trigger_core: ML arm latency %0d > 8 clocks (ML_ARM %0d)", ML_LAT, ML_ARM);
+        initial if (ML_PRE != 0 && ML_ARM == 3) $error("trigger_core: ML_ARM 3 (mlp_hand) is not supported with ML_PRE");
+        initial if (ML_PRE >= 2 && ML_ARM != 1 && ML_ARM != 4) $error("trigger_core: ML_PRE %0d needs ML_ARM 1 or 4", ML_PRE);
+        if (ML_PRE <= 1) begin : g_arm
+            if (ML_ARM == 1) begin : g_m
+                gbt_comb u_arm (.clk, .rst, .in_v(feat_v), .in_f(feat), .out_v(cls_v), .out_cls(cls));
+            end else if (ML_ARM == 2) begin : g_m
+                lutnet u_arm (.clk, .rst, .in_v(feat_v), .in_f(feat), .out_v(cls_v), .out_cls(cls));
+            end else if (ML_ARM == 4) begin : g_m
+                lg_small_comb u_arm (.clk, .rst, .in_v(feat_v), .in_f(feat), .out_v(cls_v), .out_cls(cls));
+            end else begin : g_m
+                mlp_hand u_arm (.clk, .rst, .in_v(feat_v), .in_f(feat), .out_v(cls_v), .out_cls(cls));
+            end
+        end else begin : g_arm
+            // the late feature (the order-flow imbalance, packed bits 35:28) goes to the table block FILL clocks after
+            // the early features, as a deeper feature pipeline would deliver it; the early vector carries it too, but
+            // the block ignores those bits
+            localparam int FILL = (ML_PRE == 2) ? 1 : 2;
+            logic [FILL-1:0] lv;
+            always_ff @(posedge clk) begin
+                lv[0] <= feat_v;
+                for (int i = 1; i < FILL; i++) lv[i] <= lv[i-1];
+            end
+            if (ML_ARM == 1) begin : g_m
+                if (ML_PRE == 2) begin : g_f
+                    gbt_pe u_arm (.clk, .rst, .e_v(feat_v), .e_f(feat), .l_v(lv[FILL-1]), .l_x(feat[35:28]),
+                        .out_v(cls_v), .out_cls(cls));
+                end else begin : g_f
+                    gbt_pe2 u_arm (.clk, .rst, .e_v(feat_v), .e_f(feat), .l_v(lv[FILL-1]), .l_x(feat[35:28]),
+                        .out_v(cls_v), .out_cls(cls));
+                end
+            end else begin : g_m
+                if (ML_PRE == 2) begin : g_f
+                    lgs_pe u_arm (.clk, .rst, .e_v(feat_v), .e_f(feat), .l_v(lv[FILL-1]), .l_x(feat[35:28]),
+                        .out_v(cls_v), .out_cls(cls));
+                end else begin : g_f
+                    lgs_pe2 u_arm (.clk, .rst, .e_v(feat_v), .e_f(feat), .l_v(lv[FILL-1]), .l_x(feat[35:28]),
+                        .out_v(cls_v), .out_cls(cls));
+                end
+            end
+        end
+        if (ML_PRE == 0) begin : g_gate
+            ml_gate #(.FW(RW)) u_gate (.clk, .rst, .en(ml_en), .track(feat_v), .fire_v(r_fire_v),
+                .fire_order(r_fire_order), .fire_side(r_fire_side),
+                .fire_rest({r_fire_rule, r_fire_ver, r_fire_qty, r_fire_px, r_fire_ref, r_fire_noref, r_fire_inst,
+                            r_fire_pin_en, r_fire_pin_idx, r_fire_log}),
+                .cls_v(cls_v), .cls(cls), .o_fire_v(fire_v), .o_fire_order(fire_order), .o_fire_side(fire_side),
+                .o_fire_rest({fire_rule, fire_ver, fire_qty, fire_px, fire_ref, fire_noref, fire_inst, fire_pin_en,
+                              fire_pin_idx, fire_log}),
+                .vetoes(ml_vetoes), .last_cls(ml_last));
+        end else begin : g_gate
+            ml_gate_pre #(.FW(RW)) u_gate (.clk, .rst, .en(ml_en), .inst_v(m_inst_v), .trk_v(trk_v), .fire_v(r_fire_v),
+                .fire_order(r_fire_order), .fire_side(r_fire_side),
+                .fire_rest({r_fire_rule, r_fire_ver, r_fire_qty, r_fire_px, r_fire_ref, r_fire_noref, r_fire_inst,
+                            r_fire_pin_en, r_fire_pin_idx, r_fire_log}),
+                .cls_v(cls_v), .cls(cls), .o_fire_v(fire_v), .o_fire_order(fire_order), .o_fire_side(fire_side),
+                .o_fire_rest({fire_rule, fire_ver, fire_qty, fire_px, fire_ref, fire_noref, fire_inst, fire_pin_en,
+                              fire_pin_idx, fire_log}),
+                .vetoes(ml_vetoes), .last_cls(ml_last));
+        end
     end
     always_ff @(posedge clk) if (m_px_v) fire_seq <= m_seq;
 
