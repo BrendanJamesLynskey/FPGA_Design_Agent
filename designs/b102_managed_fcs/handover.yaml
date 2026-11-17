@@ -48,7 +48,7 @@ parameters:
 files:
 - path: designs/b102_managed_fcs/project.yaml
   what: the managed-project manifest, ownership and contracts of the four components
-  sha256: 1a5cceb7e4aaa4807719017f16f32e0dabacd7f5d59d820df3d13d4097f9864a
+  sha256: 5e12c73fd83d49a69a87ea11d1945b17fd38eabdfdfd3911c20b03401d5fc525
 - path: designs/b102_managed_fcs/rtl/fcs_top.sv
   what: top level, power-on reset and the LEDs
   sha256: 4a6763e3e1b57adc500186455ed1c9e2aebf2b0bdf42b29a5b0ad16cfb08208b
@@ -63,7 +63,7 @@ files:
   sha256: 5fd46dc110c580f2015044edb4f9e9e0711a6b36a6204b9a58a4558e6b95ac81
 - path: designs/b102_managed_fcs/build.yaml
   what: how flow/run_vivado.sh builds the design, with the netlist
-  sha256: 1fe41eafaaee24b3faa58b6e09059eaa6128b341e761aeba5d0ca606b160b8bb
+  sha256: 3d2d8b3271a8c8ddf2961368005c32887e108f05691187c6e6de96e234334128
 commands:
 - what: import checks (interface, licence, simulation, eqy)
   cmd: python3 flow/managed_import.py check designs/b102_managed_fcs --sim --eqy
@@ -108,7 +108,7 @@ evidence:
   what: the scripted session edits only the owned controller; its attempts on the frozen netlist, the excluded block, the
     out-of-scope top, a port change, a dropped build source and the manifest are all refused
   record: results/102_managed/demo_session.json
-  sha256: 3dae68b0531b42927688117977bce7477d4c2b97c6f307fe7e011c2ac2fc96b9
+  sha256: b1f84afed55a2e77c09bb1fba068e83ed3ca447dbdc8d84464951b5264f1f15f
 measurements:
 - id: M1
   what: clocks saved by the agent session's edit (first cycle in which pass_o rises, baseline minus edited)
@@ -158,4 +158,4 @@ state:
     import_checks: pass
   vivado: '2026.1'
   kb_pin: 93d158c
-  build_id: a4ffaea2
+  build_id: fce9e901

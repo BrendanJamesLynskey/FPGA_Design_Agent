@@ -9,7 +9,7 @@ A KR260 self-test of an Ethernet FCS stage that exists to demonstrate a managed 
 not: a 10G Ethernet FCS check; the CRC block takes sixteen bits a clock, not the 64-bit word of the 96 design, because the open equivalence engines could not prove 64 bits; a board design; it was not programmed, and the 161 MHz clock constraint is on the 25 MHz oscillator pin for a timing study
 
 ## state
-stage=simulated vivado=2026.1 kb_pin=93d158c build_id=a4ffaea2
+stage=simulated vivado=2026.1 kb_pin=93d158c build_id=fce9e901
 gates: import_checks=pass
 
 ## interface
@@ -20,12 +20,12 @@ param N_WORDS=16 legal=1 to 254 (the counter is eight bits wide in the word func
 param EXPECT=0x79D3D43A legal=the CRC register value of the frame, from flow/managed_import.crc32_model
 
 ## files
-designs/b102_managed_fcs/project.yaml 1a5cceb7e4: the managed-project manifest, ownership and contracts of the four components
+designs/b102_managed_fcs/project.yaml 5e12c73fd8: the managed-project manifest, ownership and contracts of the four components
 designs/b102_managed_fcs/rtl/fcs_top.sv 4a6763e3e1: top level, power-on reset and the LEDs
 designs/b102_managed_fcs/rtl/fcs_ctrl.sv 2e11253b3f: the owned sequencer and FCS verdict
 designs/b102_managed_fcs/ext/crc32_d16.edf b602ea89bb: the frozen CRC-32 block as an EDIF netlist made by Yosys outside the project
 designs/b102_managed_fcs/ext/reference/crc32_d16.sv 5fd46dc110: the supplier's RTL, the reference for the equivalence proof (not in the build)
-designs/b102_managed_fcs/build.yaml 1fe41eafaa: how flow/run_vivado.sh builds the design, with the netlist
+designs/b102_managed_fcs/build.yaml 3d2d8b3271: how flow/run_vivado.sh builds the design, with the netlist
 
 ## commands
 import checks (interface, licence, simulation, eqy) (~1min): python3 flow/managed_import.py check designs/b102_managed_fcs --sim --eqy
@@ -36,7 +36,7 @@ the scripted agent session on a scratch copy (~1min): python3 designs/b102_manag
 R1 agent/tests/test_102_managed.py 0b0e99cc9f
 R2 results/102_managed/import_check.json e9f07ff8be
 R3 results/102_managed/eqy_fault.json 547b2e0178
-R4 results/102_managed/demo_session.json 3dae68b053
+R4 results/102_managed/demo_session.json b1f84afed5
 R5 results/102_managed/latency.json d787aee463
 
 ## evidence
