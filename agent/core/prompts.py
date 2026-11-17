@@ -164,3 +164,19 @@ class Lazy:
 
     def __get__(self, obj, owner=None) -> str:
         return load(self.name)
+
+
+def fingerprint(text: str) -> dict:
+    """What a run record keeps of a rendered prompt instead of the text: its SHA-256 and length (brief 99). The same text always
+    gives the same hash, so two runs can be compared and a record can be matched to the pinned prompts without publishing them."""
+    return {"sha256": _sha(text.encode("utf-8")), "chars": len(text)}
+
+
+def record(**texts: str) -> dict:
+    """``{label: fingerprint(text)}`` for the rendered texts of one model call, plus the prompt pin (``provenance()``):
+    the record a run writes where it used to write the prompts themselves."""
+    try:
+        pin = provenance()
+    except Exception:                                       # a record must never stop a run
+        pin = {}
+    return {**{k: fingerprint(v) for k, v in texts.items()}, "prompts_pin": pin}

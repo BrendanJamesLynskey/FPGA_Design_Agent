@@ -46,7 +46,8 @@ def test_unpinned_stage0_still_checks_file_against_manifest(tmp_path):
         P.load("a", root=tmp_path, pin=_pin(None))
 
 
-def test_a_manifest_that_is_not_the_pinned_one_is_refused(tmp_path):
+def test_a_manifest_that_is_not_the_pinned_one_is_refused(tmp_path, monkeypatch):
+    monkeypatch.delenv(P.ENV_UNPINNED, raising=False)
     sha = _make(tmp_path, {"a": "x"})
     _make(tmp_path, {"a": "x", "b": "y"})                       # the checkout moved on
     with pytest.raises(P.PromptUnavailable, match="not the pinned"):
@@ -146,3 +147,44 @@ def test_malformed_entries_raise_promptunavailable(tmp_path):
     (tmp_path / "MANIFEST.json").write_text(json.dumps({"version": 1, "prompts": {"c": {"file": "c.txt", "sha256": hashlib.sha256(raw).hexdigest(), "bytes": 2}}}))
     with pytest.raises(P.PromptUnavailable, match="UTF-8"):
         P.load("c", root=tmp_path, pin=_pin(None))
+
+
+def test_a_whole_episode_leaves_no_prompt_text_in_its_records(tmp_path, monkeypatch):
+    """Brief 99 step 1: a scripted episode on T1 (interview, review, rewind, documentation) writes run records, review
+    pages, summaries and transcripts; none holds a 12-word window of any private prompt. Run records name prompts and
+    their hashes instead (``agent.core.prompts.record``)."""
+    import shutil
+    import uuid
+
+    pytest.importorskip("langgraph")
+    pytest.importorskip("deepagents")
+    from agent.core.session import ROOT
+    from agent.graph import run as gr
+    from agent.tests import test_episode as te
+    from flow import hw
+    from tools.prompts import leak_scan
+    if not P.names():
+        pytest.skip("stage 0: no private prompt yet")
+    runs = ROOT / "runs" / f"_pytest_{uuid.uuid4().hex[:8]}"
+    monkeypatch.setattr(gr, "RUNS", runs)
+    monkeypatch.setattr(hw, "load_board", lambda b: {"cable_serial": "TEST0000"})
+    monkeypatch.setattr(hw, "power_ok", lambda d, b: {"pass": True, "total_w": 0.15, "junction_c": 42.7, "source": "wall"})
+    try:
+        te._episode(tmp_path, runs)
+        files = [p for p in runs.rglob("*") if p.is_file()]
+        assert len(files) > 20
+        hits = leak_scan.scan(P.prompts_dir(), leak_scan.DEFAULT_WORDS, files)
+        assert not hits, [(Path(h[0]).name, h[1], h[2]) for h in hits]      # names only, never text
+    finally:
+        shutil.rmtree(runs, ignore_errors=True)
+
+
+def test_record_keeps_hashes_not_text():
+    r = P.record(task="some rendered text")
+    assert r["task"] == {"sha256": hashlib.sha256(b"some rendered text").hexdigest(), "chars": 18}
+    assert "some rendered text" not in json.dumps(r) and "prompts_pin" in r
+
+
+def test_the_closure_task_record_is_a_hash_file():
+    src = (Path(__file__).resolve().parents[1] / "graph" / "ip_closure_task.py").read_text()
+    assert '"task.txt"' not in src and '"task.json"' in src
