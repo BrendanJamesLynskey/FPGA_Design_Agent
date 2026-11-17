@@ -1,0 +1,153 @@
+Running as unit: run-rf84bb85e0b1c449fb398008e9fe1301d.scope; invocation ID: 1e919e3dee8643fa8949826d77a57ab2
+INFO: [Common 17-3922] A valid Vivado Design Suite BASIC license has been detected. Your current license is active and will expire on 10-nov-2027.
+
+****** Vivado v2026.1 (64-bit)
+  **** SW Build 6511674 on Tue Jun 16 11:01:26 MDT 2026
+  **** IP Build 6504888 on Tue Jun 09 09:05:25 MDT 2026
+  **** SharedData Build 6501428 on Mon Jun 08 17:34:18 MDT 2026
+  **** Start of session at: Tue Nov 17 16:16:49 2026
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+    ** Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+
+source /home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/scripts/stamp.tcl
+# source [file join [file dirname [info script]] ../../../flow/rw/common.tcl]
+## proc env_or {k d} { if {[info exists ::env($k)] && $::env($k) ne ""} { return $::env($k) } else { return $d } }
+## proc b100_threads {} {
+##     set n [env_or B100_THREADS 1]
+##     set_param general.maxThreads $n
+##     set_param synth.maxThreads $n
+##     set_param chipscope.maxJobs 1
+## }
+## proc lap {name} {
+##     upvar t0 t0 times times
+##     set n [clock milliseconds]
+##     dict set times $name [expr {($n - $t0) / 1000.0}]
+##     set t0 $n
+## }
+## proc write_run_json {out times part period} {
+##     set wns [get_property SLACK [lindex [get_timing_paths -setup -max_paths 1] 0]]
+##     set whs [get_property SLACK [lindex [get_timing_paths -hold -max_paths 1] 0]]
+##     set lut [llength [get_cells -hier -filter {REF_NAME =~ LUT*}]]
+##     set ff  [llength [get_cells -hier -filter {REF_NAME =~ FD*}]]
+##     set f [open ${out}_run.json w]
+##     set tj [join [lmap {k v} $times {format {"%s": %s} $k $v}] {, }]
+##     puts $f "{\"vivado\": \"[version -short]\", \"part\": \"$part\", \"period_ns\": $period, \"wns_ns\": $wns, \"whs_ns\": $whs, \"lut\": $lut, \"ff\": $ff, \"times_s\": {$tj}}"
+##     close $f
+## }
+## proc slack_of {from to} {
+##     set p [lindex [get_timing_paths -setup -from $from -to $to -max_paths 1] 0]
+##     if {$p eq ""} { return null }
+##     return [get_property SLACK $p]
+## }
+## proc chain_metrics {out} {
+##     set period [get_property PERIOD [lindex [get_clocks] 0]]
+##     set xd [get_cells -hier -filter {NAME =~ u_mac/x_d_reg* || NAME =~ u_mac/x_c_reg*}]
+##     set gd [get_cells -hier -filter {NAME =~ u_pcs/gt_d_reg*}]
+##     set pcs [get_cells -hier -filter {NAME =~ u_pcs/*}]
+##     set gtp [get_pins u_gt/TXDATA*]
+##     set wns [get_property SLACK [lindex [get_timing_paths -setup -max_paths 1] 0]]
+##     set f [open ${out}_chain.json w]
+##     puts $f "{\"period_ns\": $period, \"wns_all_ns\": $wns, \"wns_mac_to_pcs_ns\": [slack_of $xd $gd], \"wns_pcs_to_gt_ns\": [slack_of $gd $gtp], \"wns_inside_pcs_ns\": [slack_of $pcs $pcs]}"
+##     close $f
+## }
+# source [file join [file dirname [info script]] blocks.tcl]
+## proc block_paths {out} {
+##     set n 4
+##     # The block-internal paths: the worst setup path to each endpoint register inside each copy, with the path's data delay, slack and
+##     # logic levels. Endpoint names are relative to the copy so that copies compare endpoint by endpoint.
+##     set f [open ${out}_blocks.csv w]
+##     puts $f "copy,endpoint,data_path_delay_ns,slack_ns,logic_levels"
+##     for {set i 0} {$i < $n} {incr i} {
+##         set cells [get_cells -hier -filter "IS_SEQUENTIAL && NAME =~ c$i/*"]
+##         set prefix "c$i/"
+##         foreach p [get_timing_paths -setup -from $cells -to $cells -max_paths 2000 -nworst 1 -unique_pins] {
+##             set e [string map [list $prefix ""] [get_property ENDPOINT_PIN $p]]
+##             puts $f "$i,$e,[get_property DATAPATH_DELAY $p],[get_property SLACK $p],[get_property LOGIC_LEVELS $p]"
+##         }
+##     }
+##     close $f
+## }
+# b100_threads
+# set out    $::env(B100_OUT)
+# set period [env_or B100_PERIOD 3.4]
+# set mode   $::env(B100_MODE)
+# set n      4
+# set times [dict create]
+# set t0 [clock milliseconds]
+# foreach f $::env(B100_SRC) { if {[string match *.sv $f]} { read_verilog -sv $f } else { read_verilog $f } }
+read_verilog: Time (s): cpu = 00:00:21 ; elapsed = 00:00:32 . Memory (MB): peak = 1686.117 ; gain = 214.812 ; free physical = 4536 ; free virtual = 19842
+# synth_design -top reloc_top -part $::env(B100_PART) -flatten_hierarchy rebuilt 
+Command: synth_design -top reloc_top -part xck26-sfvc784-2LV-c -flatten_hierarchy rebuilt
+Starting synth_design
+Attempting to get a license for feature 'Vivado_Synthesis' and/or device 'xck26'
+INFO: [Common 17-349] Got license for feature 'Vivado_Synthesis' and/or device 'xck26'
+INFO: [Synth 8-7079] Multithreading enabled for synth_design using a maximum of 1 processes.
+INFO: [Synth 8-7078] Launching helper process for spawning children vivado processes
+INFO: [Synth 8-7075] Helper process launched with PID 1358396
+---------------------------------------------------------------------------------
+Starting Synthesize : Time (s): cpu = 00:00:14 ; elapsed = 00:00:20 . Memory (MB): peak = 2214.117 ; gain = 522.027 ; free physical = 3876 ; free virtual = 19182
+---------------------------------------------------------------------------------
+INFO: [Synth 8-6157] synthesizing module 'reloc_top' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/reloc_top.sv:4]
+INFO: [Synth 8-6157] synthesizing module 'pcs_unit' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/pcs_unit.sv:9]
+INFO: [Synth 8-6157] synthesizing module 'pcs_tx' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b96_kr260_10g/rtl/pcs_tx.sv:7]
+INFO: [Synth 8-6155] done synthesizing module 'pcs_tx' (0#1) [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b96_kr260_10g/rtl/pcs_tx.sv:7]
+INFO: [Synth 8-6155] done synthesizing module 'pcs_unit' (0#1) [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/pcs_unit.sv:9]
+INFO: [Synth 8-6155] done synthesizing module 'reloc_top' (0#1) [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/reloc_top.sv:4]
+---------------------------------------------------------------------------------
+Finished Synthesize : Time (s): cpu = 00:00:19 ; elapsed = 00:00:25 . Memory (MB): peak = 2305.086 ; gain = 612.996 ; free physical = 3744 ; free virtual = 19052
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Constraint Validation : Time (s): cpu = 00:00:20 ; elapsed = 00:00:27 . Memory (MB): peak = 2316.961 ; gain = 624.871 ; free physical = 3753 ; free virtual = 19060
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Loading Part and Timing Information
+---------------------------------------------------------------------------------
+Loading part: xck26-sfvc784-2LV-c
+INFO: [Synth 8-6742] Reading net delay rules and data
+INFO: [Device 21-403] Loading part xck26-sfvc784-2LV-c
+---------------------------------------------------------------------------------
+Finished Loading Part and Timing Information : Time (s): cpu = 00:00:20 ; elapsed = 00:00:27 . Memory (MB): peak = 2333.871 ; gain = 641.781 ; free physical = 3753 ; free virtual = 19060
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 2 : Time (s): cpu = 00:00:23 ; elapsed = 00:00:29 . Memory (MB): peak = 2341.879 ; gain = 649.789 ; free physical = 3726 ; free virtual = 19034
+---------------------------------------------------------------------------------
+No constraint files found.
+---------------------------------------------------------------------------------
+Start RTL Component Statistics 
+---------------------------------------------------------------------------------
+Detailed RTL Component Info : 
++---Adders : 
+	   2 Input    7 Bit       Adders := 4     
++---XORs : 
+	   3 Input      1 Bit         XORs := 256   
++---XORs : 
+	               65 Bit    Wide XORs := 4     
++---Registers : 
+	               72 Bit    Registers := 4     
+	               65 Bit    Registers := 4     
+	               64 Bit    Registers := 8     
+	               58 Bit    Registers := 4     
+	                7 Bit    Registers := 4     
+	                1 Bit    Registers := 8     
++---Muxes : 
+	   2 Input   66 Bit        Muxes := 100   
+	   3 Input   66 Bit        Muxes := 8     
+	   2 Input   64 Bit        Muxes := 76    
+	   2 Input    7 Bit        Muxes := 4     
+	   2 Input    1 Bit        Muxes := 64    
+---------------------------------------------------------------------------------
+Finished RTL Component Statistics 
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Part Resource Summary
+---------------------------------------------------------------------------------
+Part Resources:
+DSPs: 1248 (col length:96)
+BRAMs: 288 (col length: RAMB18 96 RAMB36 48)
+---------------------------------------------------------------------------------
+Finished Part Resource Summary
+---------------------------------------------------------------------------------
+No constraint files found.
+---------------------------------------------------------------------------------
+Start Cross Boundary and Area Optimization
+---------------------------------------------------------------------------------
