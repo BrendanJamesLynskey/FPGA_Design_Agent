@@ -98,6 +98,8 @@ def scan(root: Path | None, n: int = DEFAULT_WORDS, files: list[Path] | None = N
 
 
 def main(argv=None) -> int:
+    from agent.access import require_or_exit            # it reads the private prompts: same gate as the agent's entry points
+    require_or_exit("leak_scan")
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--prompts-dir", type=Path, default=None)
     ap.add_argument("--allow", type=Path, default=ROOT / "tools" / "prompts" / "leak_allow.txt")
