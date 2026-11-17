@@ -42,16 +42,27 @@ class VivadoTcl:
 
     def cmd(self, line: str) -> str:
         assert self.p.stdin and self.p.stdout
-        self.p.stdin.write(line + "\nputs __DONE__\n"); self.p.stdin.flush()
-        out = []
+        # A piped `vivado -mode tcl` does not echo a command's result, and an error would otherwise pass silently: wrap
+        # each line so its result or error comes back on a tagged line (measured on the KR260, 2026-11-17).
+        self.p.stdin.write("if {[catch {" + line + "} __r]} {puts \"__ERR__ $__r\"} else {puts \"__RES__ $__r\"}\nputs __DONE__\n")
+        self.p.stdin.flush()
+        out, res, err = [], None, None
         while True:
             l = self.p.stdout.readline()
             if not l:
                 raise RuntimeError("vivado closed")
-            if l.strip().endswith("__DONE__"):
+            t = l.rstrip()
+            if t.endswith("__DONE__"):
                 break
-            out.append(l.rstrip())
-        return "\n".join(out)
+            if t.startswith("__RES__"):
+                res = t[8:]
+            elif t.startswith("__ERR__"):
+                err = t[8:]
+            else:
+                out.append(t)
+        if err is not None:
+            raise RuntimeError(f"vivado: {line}: {err}")
+        return "\n".join(out + ([res] if res else []))
 
     def rd(self, addr: int) -> int:
         return int(self.cmd(f"b96_rd {addr:#x}").strip().splitlines()[-1], 16)
