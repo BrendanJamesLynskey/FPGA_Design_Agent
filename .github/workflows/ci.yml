@@ -333,6 +333,10 @@ jobs:
         run: |
           python -m pytest -q designs/b91_lowbit/tests/test_b91_formats.py designs/b91_lowbit/tests/test_b91_rtl.py flow/tests/test_91_lowbit_rtl.py
           python3 results/b91/summary.py --check
+      - name: Order-flow history and tiny attention (brief 92) - generator checks, causality, generated stateful arms against their stream twin (test sessions, random and extreme streams), fixed latency, Verilator -Wall
+        run: |
+          python -m pytest -q designs/b92_history_attention/tests
+          python3 results/b92/summary.py --check
       - name: Upload simulation logs
         if: always()
         uses: actions/upload-artifact@v4
