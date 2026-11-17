@@ -23,6 +23,14 @@ sources:
     title: AMD XilinxBoardStore board file (part name, memories)
     version: XilinxBoardStore @ 40fad97, boards/Digilent/arty-s7-50/B.0/board.xml (Apache-2.0)
     url: https://github.com/Xilinx/XilinxBoardStore/blob/40fad97cf36f3d856c6759d83c2390de1566ffa7/boards/Digilent/arty-s7-50/B.0/board.xml
+  UG471:
+    title: AMD UG471, 7 Series FPGAs SelectIO Resources User Guide (Table 1-55, VCCO and VREF requirements; the INTERNAL_VREF rules)
+    version: v1.10, 8 May 2018 (local copy of the PDF, not committed)
+    url: https://docs.amd.com/v/u/en-US/ug471_7Series_SelectIO
+  UG912:
+    title: AMD UG912, Vivado Properties Reference Guide (INTERNAL_VREF)
+    version: v2025.2, 20 November 2025 (local copy of the PDF, not committed)
+    url: https://docs.amd.com/r/en-US/ug912-vivado-properties
 clock:
   port: CLK100MHZ
   pin: R2
@@ -229,5 +237,8 @@ smoke:
 internal_vref:
   bank: 34
   volts: 0.675
-  status: derived
-  reason: the vendor XDC puts the clock (R2) and sw[3] (M5, a VREF pin) in bank 34 at SSTL135, so Vivado's DRC BIVRU-1 needs the bank's INTERNAL_VREF; 0.675 V is half of 1.35 V, the SSTL135 reference. Found by the first smoke build, not read from a board document
+  status: documented
+  source:
+  - UG471
+  - UG912
+  reason: "the vendor XDC (XDC) puts the clock (R2) and sw[3] (M5, a VREF pin, so the bank has no external VREF) in bank 34 at SSTL135, so Vivado's DRC BIVRU-1 needs the bank's INTERNAL_VREF. The value is the SSTL135 reference voltage, 0.675 V (UG471 v1.10 Table 1-55: SSTL135, VCCO 1.35 V, VREF 0.675 V), and UG471 says INTERNAL_VREF can only be set to the nominal VREF of the I/O standard and lists 0.675 among the valid settings (UG912 v2025.2 lists it for 7 series). The first smoke build (brief 95) found that the setting is needed; brief 98 read the value from AMD's documents. Not confirmed from Digilent's reference manual or schematic (the vendor site blocks automated clients), so that bank 34 is powered at 1.35 V on the board is taken from the vendor XDC's choice of SSTL135"
