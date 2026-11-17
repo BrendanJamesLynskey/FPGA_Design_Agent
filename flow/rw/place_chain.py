@@ -16,7 +16,7 @@ import sys
 import time
 
 import rapidwright  # noqa: F401
-from com.xilinx.rapidwright.design import Design
+from com.xilinx.rapidwright.design import Design, DesignTools
 from com.xilinx.rapidwright.device import SiteTypeEnum
 
 src, dst, cfgfile = sys.argv[1], sys.argv[2], sys.argv[3]
@@ -28,6 +28,7 @@ rnd = random.Random(seed)
 t_start = time.time()
 
 d = Design.readCheckpoint(src)
+DesignTools.createMissingSitePinInsts(d)       # a placed, unrouted checkpoint has no site pins on its nets yet
 dev = d.getDevice()
 anchor = dev.getSite(cfg["anchor"])
 acol, arow = int(anchor.getTile().getColumn()), int(anchor.getTile().getRow())

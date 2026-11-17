@@ -103,6 +103,12 @@ def main() -> int:
     (out / "stream.jsonl").write_text(stream)
     (out / "meta.json").write_text(json.dumps({"arm": arm, "model": MODEL, "tools": tools, "max_turns": turns, "minutes": minutes,
                                                "wall_s": round(time.time() - t0, 1), "stderr_tail": err[-400:]}, indent=1))
+    for src, dst in ((d / "build" / "audit.jsonl", "audit.jsonl"), (d / "rtl" / "chain_top.sv", "final_chain_top.sv"), (d / "design.xdc", "final_design.xdc")):
+        if src.is_file():
+            shutil.copy(src, out / dst)
+    for f in list((d / "build" / "base").glob("rw/*_run.json")) + list((d / "build" / "base").glob("rw/*_chain.json")) + \
+            list((d / "build" / "base").glob("run.json")) + list((d / "build" / "base").glob("timing_summary.rpt")):
+        shutil.copy(f, out / f.name.replace("run.json", "build_run.json") if f.name == "run.json" else out / f.name)
     shutil.rmtree(work, ignore_errors=True)
     print("done", arm, round(time.time() - t0))
     return 0

@@ -11,11 +11,12 @@ import sys
 import time
 
 import rapidwright  # noqa: F401
-from com.xilinx.rapidwright.design import Design
+from com.xilinx.rapidwright.design import Design, DesignTools
 from com.xilinx.rapidwright.rwroute import PartialRouter, RWRoute
 
 mode, src, dst = sys.argv[1], sys.argv[2], sys.argv[3]
 d = Design.readCheckpoint(src)
+DesignTools.createMissingSitePinInsts(d)       # a placed, unrouted checkpoint has no site pins on its nets yet
 t0 = time.time()
 out = {"mode": mode}
 if mode == "full":
@@ -41,13 +42,18 @@ elif mode == "nets":
         for p in net.getSinkPins():
             pins.add(p)
     d = PartialRouter.routeDesignPartialTimingDriven(d, pins, True)
-    locked = 0
+    locked, left_to_vivado = 0, 0
     for n in names:
         net = d.getNet(n)
-        if net is not None and net.hasPIPs():
-            net.lockRouting()
+        if net is None:
+            continue
+        if net.hasPIPs() and all(p.isRouted() for p in net.getSinkPins()):
+            net.lockRouting()                       # fully routed by RWRoute: fixed
             locked += 1
-    out.update({"nets_requested": len(names), "nets_locked": locked, "missing": missing})
+        else:
+            net.unroute()                           # a locked partial route cannot be completed by Vivado: leave the whole net to it
+            left_to_vivado += 1
+    out.update({"nets_requested": len(names), "nets_locked": locked, "nets_left_to_vivado": left_to_vivado, "missing": missing})
 out["route_s"] = round(time.time() - t0, 2)
 t1 = time.time()
 d.writeCheckpoint(dst)

@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 
 d = Path(sys.argv[1])
-ARMS = {"base": "Vivado alone", "place": "RapidWright placement + Vivado route", "rwr": "Vivado placement + RWRoute (no Vivado routing)",
+ARMS = {"base": "Vivado alone", "place": "RapidWright placement + Vivado route", "placew": "RapidWright placement with Vivado's critical nets weighted + Vivado route", "rwr": "Vivado placement + RWRoute (no Vivado routing)",
         "fixed": "Vivado placement + RWRoute on the worst-path nets (fixed) + Vivado route"}
 rows = []
 for arm in ARMS:
