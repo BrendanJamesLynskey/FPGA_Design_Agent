@@ -37,7 +37,7 @@ closure (brief 100's rule).
 | Timing after the round trip | K26: WNS 0.218 ns before and after (same placement and routing); 7-series: the design misses its 4 ns target (-5.4 ns) before and after, the same either side to 0.04 ns |
 | Memory | JVM scope peak 0.71 GiB with the readable EDIF cached (`results/b100/s0/rw_xck26_cached.time`), 2.60 GiB when RapidWright starts a Vivado to make it (`rw_xck26_peak.time`) (declared to the heavy-slot rule as 3G) |
 | Run time | read 12.7 s with the EDIF cached (`rw_xck26_cached.log`; the machine was busy), 44 s on a first read (Vivado start-up plus the device file load; `rw_xck26_peak.log`) |
-| Gotcha | RapidWright starts a Vivado found on `PATH` to turn the checkpoint's encrypted EDIF into a readable one. With 2025.2 first on `PATH` it fails with "created with Vivado v2026.1 and cannot be opened in this version". `scripts/rw.sh` puts the pinned Vivado first |
+| Gotcha | RapidWright starts a Vivado found on `PATH` to turn the checkpoint's encrypted EDIF into a readable one. With an older release first on `PATH` it fails with "created with Vivado v2026.1 and cannot be opened in this version". `scripts/rw.sh` puts the pinned Vivado first |
 
 So RapidWright can read and write 2026.1 checkpoints for both parts and the branch goes ahead.
 

@@ -23,8 +23,8 @@ param block relocation targets=SLICE_X35Y57, SLICE_X41Y117, SLICE_X41Y177 (origi
 param chain placer=simulated annealing on whole slices, 200000 moves, window of 60 columns by 40 rows around GTHE4_CHANNEL_X0Y6 legal=any slice site of the same type inside the window that is free; slices with carry chains or LUT RAM stay
 
 ## files
-designs/b100_rapidwright/docs/design.md d11dac793b: the design note written before the code, and what changed after it (section 6)
-designs/b100_rapidwright/docs/what_we_found.md 8a236da8a8: the results with their tables, rendered from the summary record
+designs/b100_rapidwright/docs/design.md 4afa1e7335: the design note written before the code, and what changed after it (section 6)
+designs/b100_rapidwright/docs/what_we_found.md 6ee5acb0d8: the results with their tables, rendered from the summary record
 designs/b100_rapidwright/docs/licences.md 4b545ec475: licences of RapidWright, its device files and the Java runtime, and what is committed
 designs/b100_rapidwright/docs/tools.md 9a6df028ac: datasheet for the five agent tools and the scripts behind them
 designs/b100_rapidwright/rtl/pcs_unit.sv c825d999f4: the relocatable block (brief 96's pcs_tx with its own source and sink, three input pins)

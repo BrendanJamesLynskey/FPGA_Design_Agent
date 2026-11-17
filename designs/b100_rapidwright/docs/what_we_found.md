@@ -23,7 +23,7 @@ what the agent still lacks (a per-path timing breakdown, and a build that return
   -5.36 ns after (the 4 ns target is missed on that part either way), bitstream written.
 - Memory: the JVM's scope peak was 2.6 GiB on a first read (it includes the Vivado RapidWright starts to make the checkpoint's
   EDIF readable) and 0.71 GiB when that EDIF is cached. Declared to the heavy-slot rule as 3G.
-- One gotcha: RapidWright runs the first `vivado` on `PATH`; with the 2025.2 install first it refuses 2026.1 checkpoints. `scripts/rw.sh` and
+- One gotcha: RapidWright runs the first `vivado` on `PATH`; with an older install first it refuses 2026.1 checkpoints. `scripts/rw.sh` and
   `flow/rapidwright_pin.py` put 2026.1 first.
 
 ## Capability 1: pre-implemented relocatable block
