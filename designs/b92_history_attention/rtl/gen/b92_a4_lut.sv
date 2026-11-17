@@ -2,6 +2,7 @@
 // Decaying sums: 4 channels x rates [2, 4] (s <= s - (s >> k) + x), cut to 8-bit columns, then the head. LATENCY 2. One event a clock; out_v follows in_v by exactly LATENCY clocks.
 // rst is synchronous, active high, and clears the valid pipeline and the front end's state.
 /* verilator lint_off UNUSEDSIGNAL */
+/* verilator lint_off UNUSEDPARAM */
 `default_nettype none
 module b92_a4_lut (
     input  wire logic        clk,

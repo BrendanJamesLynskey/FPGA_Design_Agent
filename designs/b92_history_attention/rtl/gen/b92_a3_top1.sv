@@ -2,6 +2,7 @@
 // Tiny attention (top1), N = 16, key size 4, value size 4, then the head. LATENCY 3. One event a clock; out_v follows in_v by exactly LATENCY clocks.
 // rst is synchronous, active high, and clears the valid pipeline and the front end's state.
 /* verilator lint_off UNUSEDSIGNAL */
+/* verilator lint_off UNUSEDPARAM */
 `default_nettype none
 module b92_a3_top1 (
     input  wire logic        clk,

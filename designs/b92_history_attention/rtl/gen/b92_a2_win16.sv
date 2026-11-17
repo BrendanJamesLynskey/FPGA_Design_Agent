@@ -2,6 +2,7 @@
 // Fixed window: the last 16 token codes (codes [2, 4, 4, 3] bits per field) feed the head. LATENCY 2. One event a clock; out_v follows in_v by exactly LATENCY clocks.
 // rst is synchronous, active high, and clears the valid pipeline and the front end's state.
 /* verilator lint_off UNUSEDSIGNAL */
+/* verilator lint_off UNUSEDPARAM */
 `default_nettype none
 module b92_a2_win16 (
     input  wire logic        clk,
@@ -17,9 +18,9 @@ module b92_a2_win16 (
     wire logic signed [6:0] t_ofi = $signed({1'b0, in_f[50:45]}) - 7'sd31;
     wire logic signed [4:0] t_imb2 = $signed({1'b0, in_f[22:20], 1'b0}) - 5'sd7;
     wire logic signed [3:0] t_imb = $signed({1'b0, in_f[22:20]});
-    wire logic [1:0] code0 = 2'(t_ts > -2'sd1) + 2'(t_ts > 2'sd0);
-    wire logic [3:0] code1 = 4'(t_sv > 5'sd0);
-    wire logic [3:0] code2 = 4'(t_ofi > -6'sd5) + 4'(t_ofi > -6'sd3) + 4'(t_ofi > -6'sd2) + 4'(t_ofi > 6'sd0) + 4'(t_ofi > 6'sd2) + 4'(t_ofi > 6'sd3) + 4'(t_ofi > 6'sd5);
+    wire logic [1:0] code0 = 2'(t_ts > -3'sd1) + 2'(t_ts > 3'sd0);
+    wire logic [3:0] code1 = 4'(t_sv > 6'sd0);
+    wire logic [3:0] code2 = 4'(t_ofi > -7'sd5) + 4'(t_ofi > -7'sd3) + 4'(t_ofi > -7'sd2) + 4'(t_ofi > 7'sd0) + 4'(t_ofi > 7'sd2) + 4'(t_ofi > 7'sd3) + 4'(t_ofi > 7'sd5);
     wire logic [2:0] code3 = 3'(t_imb > 4'sd0) + 3'(t_imb > 4'sd1) + 3'(t_imb > 4'sd2) + 3'(t_imb > 4'sd3) + 3'(t_imb > 4'sd4) + 3'(t_imb > 4'sd5) + 3'(t_imb > 4'sd6);
     wire logic [12:0] code = {code3, code2, code1, code0};
     logic [12:0] win [0:15];
