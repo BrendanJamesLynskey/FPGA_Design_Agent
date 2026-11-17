@@ -107,9 +107,23 @@ Selection rule for every arm: three training seeds, the built seed is the best o
 the trivial rule, the stage-1 trees and the history-free 91 head. "A margin whose interval excludes zero" for the attention decision is the
 paired difference, tiny attention minus decaying sums, built seeds.
 
-## 5. Stage 3: hardware (to be filled in after stage 2's results)
+## 5. Stage 3: hardware (decided after the stage 2 test)
 
-## 6. Stage 4: where it would sit (to be filled in with the stage 3 numbers)
+Built: the history-free head, decaying sums, the LUT net on the sums, window of 8 and of 16 (the arms with a measured accuracy gain, plus the reference). Not built in Vivado: the two
+attention arms, because the pre-registered rule needed an attention arm to beat the decaying sums and neither did (their RTL was still generated and simulated against the twin,
+so the emitter is tested). Front end and head are separate modules with a register between them: the front end is one clock of state update and column cut (attention: two), the head is the
+brief 91 one-clock combinational network. That costs a clock against merging them; merging would lengthen the period, and we did not measure it. State is cleared by `rst` and advances on `in_v` only.
+The test bench resets between streams, runs half the events back to back and half with gaps, and the twin is evaluated over the same stream from the same reset state. Builds: out of context, Vivado 2026.1, one thread,
+K26 and Artix-7 100T, the brief 87 wrapper (an input register) and pulse-width-aware clock search; latency = clocks x max(closed period, 2.0 ns).
+
+## 6. Stage 4: where it would sit
+
+Decided from the measured latency, the 58A stage budget (8 clocks, last price byte to first byte out, speculative mode, simulation) and the fast/slow checklist of the reading notes:
+the decaying sums go in the per-tick path (a one-clock state update); the head weights, shifts and the rate pair are the slow loop's to write; attention would belong in the slow loop by structure (it was not built).
+Details and the caveats are in docs/what_we_found.md section 7.
+
+## Deviations from this note
+- The pre-registration (stage 2) says no attention RTL is built unless attention wins. We generated and simulated it (not built in Vivado). Recorded in results/b92/README.md.
 
 ## 7. Literature (own words; every arXiv ID checked at export.arxiv.org on 2026-11-16)
 
