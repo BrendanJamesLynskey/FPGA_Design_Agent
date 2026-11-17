@@ -1,0 +1,89 @@
+# Formal specification of the PDM microphone audio path (brief 79, ladder project 1). Planner's copy: the agent is given request.md only,
+# and a spec oracle answers its questions from this file.
+schema: fpga-design-agent/spec/v0
+name: pdm_decimator
+title: PDM microphone to 48.828 kHz audio on the Nexys A7-100T
+source: request.md
+tier: T2
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: pdm_decimator_top
+design_id: 0x504D4432          # "PMD2"
+
+clocks:
+  - {name: sys_clk, port: CLK100MHZ, freq_mhz: 100, source: board oscillator, note: "M_CLK is a registered output of the fabric, not a clock inside it"}
+
+reset:
+  port: CPU_RESETN
+  polarity: active_low
+  kind: asynchronous button, synchronised
+  effect: run, arm, done, saturation flag and sample count cleared; the chain is cleared again at every run start
+
+parameters:
+  CLK_HALF: 16                # board clocks per half period of M_CLK: 100 MHz / 32 = 3.125 MHz (the bench shrinks it)
+
+ports:
+  - {name: CLK100MHZ, dir: in, width: 1, pins: [E3], iostandard: LVCMOS33}
+  - {name: CPU_RESETN, dir: in, width: 1, async: true, pins: [C12], iostandard: LVCMOS33}
+  - {name: M_CLK, dir: out, width: 1, pins: [J5], iostandard: LVCMOS33}
+  - {name: M_DATA, dir: in, width: 1, async: true, pins: [H5], iostandard: LVCMOS33}
+  - {name: M_LRSEL, dir: out, width: 1, pins: [F5], iostandard: LVCMOS33}
+  - {name: LED, dir: out, width: 16, pins: [H17, K15, J13, N14, R18, V17, U17, U16, V16, T15, U14, T16, V15, V14, V12, V11], iostandard: LVCMOS33}
+  - {name: UART_TXD_IN, dir: in, width: 1, async: true, pins: [C4], iostandard: LVCMOS33}
+  - {name: UART_RXD_OUT, dir: out, width: 1, pins: [D4], iostandard: LVCMOS33}
+
+product_numbers:
+  output_rate: "48.828125 kHz = 100 MHz / 2048 (M_CLK 3.125 MHz, total decimation 64); 48.000 kHz would need a PLL"
+  passband: "200 Hz to 15 kHz within +-1.0 dB of the 1 kHz level (model: +-0.4 dB)"
+  alias_rejection: "a tone above 40 kHz whose alias lands in 0..15 kHz is at least 35 dB below its input level (model: 36.8 dB worst, 63.8 kHz)"
+  snr: "1 kHz, -6 dBFS, 100 Hz..15 kHz: at least 70 dB (model: 76 dB with a second-order delta-sigma source)"
+  latency: "audio sample j is available when PDM sample 96 + 64 j has been taken (30.7 us for sample 0)"
+  full_scale: "an all-ones or all-zeros stream saturates the scale stage and sets SAT"
+
+behaviour:
+  stages:
+    - "Sampling: M_CLK toggles every CLK_HALF clocks while RUN = 1, starting low; M_LRSEL low; the bit for each rising edge is taken at that clock edge or one later (the microphone's data are valid from just after a falling edge to just after the next rising edge)."
+    - "Stage 1, CIC: bit 1 -> +1, 0 -> -1; three integrators, keep every 16th value, three combs, exact integers within +-4096; the first two outputs are fills of the empty filter and are dropped."
+    - "Stage 2, scale: x8, limited to the 16-bit range."
+    - "Stages 3 and 4, half-band decimators by two: taps [-1, 0, 9, 16, 9, 0, -1], result on every even sample, convergent rounding of the quotient by 32, limited."
+    - "Stage 5, compensating FIR: taps [2, -6, 16, -48, 584, -48, 16, -6, 2], one result per sample, rounded with ties up, limited."
+    - "Stage 6, DC blocker: y = x - xp + yp - (yp >> 7), limited, with the limited value fed back."
+  capture:
+    - "A 64-entry memory records audio samples 0..63 of a run when armed; DONE rises when the 64th is stored. ARM is accepted only while RUN is 0 (it may be written together with RUN = 1)."
+  indicators:
+    - "LED[0] run, LED[1] done, LED[2] saturation seen."
+
+timing:
+  clock_constraint: 10 ns on CLK100MHZ
+  async_inputs: CPU_RESETN, UART RX and M_DATA are synchronised and false-pathed
+  outputs: M_CLK and M_LRSEL are registered outputs
+
+registers:
+  shell: shell/PROTOCOL.md (version 1.1)
+  map:
+    - {offset: 0x00, name: CTRL, access: RW, reset: 0, bits: "[0] RUN; [1] ARM (write 1, reads 0)"}
+    - {offset: 0x01, name: STATUS, access: RO, reset: 0, bits: "[0] DONE; [1] ARMED; [2] SAT"}
+    - {offset: 0x02, name: COUNT, access: RO, reset: 0, bits: "[31:0] audio samples since the run start"}
+    - {offset: 0x40, name: CAP, access: RO, reset: 0, bits: "64 words from 0x40: sign-extended samples, 0 until DONE"}
+  unmapped: offsets 0x03-0x3F read 0; writes to them and to read-only registers are ignored
+
+requirements:
+  - {id: REQ-01, text: "The 64 captured samples equal the reference model's first 64 audio samples for the bit stream the microphone sent, bit for bit", proof: [simulation]}
+  - {id: REQ-02, text: "Passband flat within +-1.0 dB from 200 Hz to 15 kHz", proof: [simulation, hardware]}
+  - {id: REQ-03, text: "Alias attenuation at least 35 dB for tones above 40 kHz that land in 0..15 kHz", proof: [simulation]}
+  - {id: REQ-04, text: "SNR at least 70 dB for a -6 dBFS 1 kHz tone, 100 Hz to 15 kHz", proof: [simulation]}
+  - {id: REQ-05, text: "The microphone clock is 3.125 MHz and M_LRSEL is low", proof: [simulation, hardware]}
+  - {id: REQ-06, text: "The design closes timing at 100 MHz with no unconstrained path", proof: [analysis]}
+  - {id: REQ-07, text: "On the board a loudspeaker tone appears in the capture at the right frequency and the quiet-room noise floor is consistent with REQ-04", proof: [hardware]}
+
+measurements:
+  - {id: M1, what: "microphone self-noise in a quiet room: rms of many captures, DC removed, in dBFS", limit: "the microphone's own noise, not the design's"}
+  - {id: M2, what: "level of PC loudspeaker tones at 200, 500, 1k, 2k, 4k, 8k, 12k and 15 kHz relative to 1 kHz", limit: "loudspeaker, room and microphone response bound this; reported as the measured chain, not as the design"}
+  - {id: M3, what: "tone signal-to-noise: tone level against the M1 floor", limit: "acoustic and electrical interference are included"}
+  - {id: M4, what: "operating conditions: die temperature and VCCINT/VCCAUX/VCCBRAM at the start and end of each run", limit: "XADC sampling (about 1 MSPS) cannot see fast supply droop"}
+
+assumptions:
+  - assumption: output rate 48.828125 kHz, not 48 kHz.
+    reason: the board has no PLL in this design; 3.125 MHz is inside the microphone's clock range and 64 is a power of two.
+
+open_questions: []
