@@ -30,6 +30,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import subprocess
 import sys
 import time
@@ -150,6 +151,7 @@ def program(design: Path, variant: str, board: str | None = None, log_dir: Path 
     res["power_ok"] = hw.power_ok(info["dir"], b["name"])
     if not res["power_ok"]["pass"]:
         raise hw.HwError(f"power_ok: {res['power_ok']['why']}; not programming")
+    os.environ["FDA_PROGRAM_PART"] = str(b.get("part") or "xc7a100t")   # program.tcl picks the one device of this part
     args = [b["cable_serial"], str(info["bit"])] + ([str(info["ltx"])] if variant == "ila" else [])
     log_dir = log_dir or hw.ROOT / "build" / "hw" / "program"
     with hw.HwServer(log_dir):
