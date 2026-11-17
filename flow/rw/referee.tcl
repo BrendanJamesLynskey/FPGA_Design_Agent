@@ -17,7 +17,8 @@ report_timing -setup -max_paths 10 -nworst 1 -file ${out}_timing.rpt
 report_timing -hold -max_paths 3 -file ${out}_hold.rpt
 report_drc -file ${out}_drc.rpt
 report_utilization -file ${out}_util.rpt
-write_run_json $out $times [get_property PART [current_design]] [env_or B100_PERIOD 0]
+write_run_json $out $times [get_property PART [current_design]] [get_property PERIOD [lindex [get_clocks] 0]]
+if {[llength [get_cells -quiet u_gt]]} { chain_metrics $out }
 if {[env_or B100_BITSTREAM 0] eq "1"} {
     write_bitstream -force ${out}.bit
     lap bitstream

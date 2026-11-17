@@ -24,3 +24,22 @@ proc write_run_json {out times part period} {
     puts $f "{\"vivado\": \"[version -short]\", \"part\": \"$part\", \"period_ns\": $period, \"wns_ns\": $wns, \"whs_ns\": $whs, \"lut\": $lut, \"ff\": $ff, \"times_s\": {$tj}}"
     close $f
 }
+
+# The latency chain of chain_top (brief 100): worst setup slack of (a) the whole design, (b) the logic between the MAC's output registers and
+# the PCS's gt_d registers (encode, scramble, gearbox), (c) gt_d to the GT's TXDATA pins. Vivado's numbers; written as <out>_chain.json.
+proc slack_of {from to} {
+    set p [lindex [get_timing_paths -setup -from $from -to $to -max_paths 1] 0]
+    if {$p eq ""} { return null }
+    return [get_property SLACK $p]
+}
+proc chain_metrics {out} {
+    set period [get_property PERIOD [lindex [get_clocks] 0]]
+    set xd [get_cells -hier -filter {NAME =~ u_mac/x_d_reg* || NAME =~ u_mac/x_c_reg*}]
+    set gd [get_cells -hier -filter {NAME =~ u_pcs/gt_d_reg*}]
+    set pcs [get_cells -hier -filter {NAME =~ u_pcs/*}]
+    set gtp [get_pins u_gt/TXDATA*]
+    set wns [get_property SLACK [lindex [get_timing_paths -setup -max_paths 1] 0]]
+    set f [open ${out}_chain.json w]
+    puts $f "{\"period_ns\": $period, \"wns_all_ns\": $wns, \"wns_mac_to_pcs_ns\": [slack_of $xd $gd], \"wns_pcs_to_gt_ns\": [slack_of $gd $gtp], \"wns_inside_pcs_ns\": [slack_of $pcs $pcs]}"
+    close $f
+}

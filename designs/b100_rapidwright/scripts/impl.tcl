@@ -3,7 +3,7 @@
 #   B100_PERIOD (ns, default 4.0), B100_DIRECTIVE (place_design directive, default Default), B100_THREADS (default 1)
 #   B100_FROM: synth (default) | a synth checkpoint to start from (skips synthesis)
 # Writes <out>_synth.dcp (when synthesised here), <out>_placed.dcp, <out>_routed.dcp, <out>_run.json.
-source [file join [file dirname [info script]] common.tcl]
+source [file join [file dirname [info script]] ../../../flow/rw/common.tcl]
 b100_threads
 set part   $::env(B100_PART)
 set out    $::env(B100_OUT)
@@ -31,3 +31,4 @@ route_design
 lap route
 write_checkpoint -force ${out}_routed.dcp
 write_run_json $out $times $part $period
+if {[llength [get_cells -quiet u_gt]]} { chain_metrics $out }
