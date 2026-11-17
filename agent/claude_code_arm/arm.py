@@ -206,11 +206,13 @@ def run_subagent_cc(rt, plan: dict[str, Any]) -> dict[str, str]:
     effort = plan["effort"] if "effort" in plan else rt.cfg.cc_effort
     argv = cli_argv(rt, plan, mcp_file, model, effort, left)
     shown = list(argv)
-    shown[2], shown[argv.index("--system-prompt") + 1] = f"<user message: {out_dir.name}/{tag}.user.txt>", \
-        f"<system prompt: {out_dir.name}/{tag}.system.txt>"
+    shown[2], shown[argv.index("--system-prompt") + 1] = f"<user message: sha256 in {out_dir.name}/{tag}.prompt.json>", \
+        f"<system prompt: sha256 in {out_dir.name}/{tag}.prompt.json>"
     (out_dir / f"{tag}.argv.json").write_text(json.dumps(shown, indent=1))
-    (out_dir / f"{tag}.user.txt").write_text(plan["user_message"])
-    (out_dir / f"{tag}.system.txt").write_text(plan["system_prompt"])
+    # brief 99: the prompts are private; a record keeps their hashes and the pin, not the text
+    from agent.core import prompts as _prompts
+    (out_dir / f"{tag}.prompt.json").write_text(json.dumps(
+        _prompts.record(user_message=plan["user_message"], system_prompt=plan["system_prompt"]), indent=1))
     t0, timed_out = time.time(), False
     try:
         p = subprocess.run(argv, cwd=work, env=isolated_env(work, token), capture_output=True, text=True,
