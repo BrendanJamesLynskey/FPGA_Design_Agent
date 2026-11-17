@@ -37,7 +37,7 @@ designs/b92_history_attention/hist/cli.py d8dac770a3: RTL generation
 designs/b92_history_attention/hist/importance.py fdd9d9bb8f: tree split importance
 designs/b92_history_attention/tb/tb_stream.sv c9bbb03986: stream test bench
 designs/b92_history_attention/ooc/ooc.py b1b085d9e1: out-of-context clock search
-designs/b92_history_attention/docs/design.md 4f3c0b4793: design note
+designs/b92_history_attention/docs/design.md 6fec52d0aa: design note
 designs/b92_history_attention/docs/preregistration.md abd96614e0: pre-registration, stages 0-1
 designs/b92_history_attention/docs/preregistration_stage2.md 83c49887e1: pre-registration, stage 2
 designs/b92_history_attention/docs/what_we_found.md c3c5c1eeea: the write-up
