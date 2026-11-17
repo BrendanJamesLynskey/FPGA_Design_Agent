@@ -10,7 +10,9 @@ from typing import Any
 
 from flow.latency.model import ROOT, LatencyError, load_stages
 
-VIVADO = "/opt/Xilinx/2026.1/Vivado/bin/vivado"
+from flow import version_pin
+
+VIVADO = version_pin.vivado_path()
 TCL = Path(__file__).with_name("netlist_slack.tcl")
 
 
