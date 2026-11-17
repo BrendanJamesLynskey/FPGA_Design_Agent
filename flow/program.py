@@ -46,6 +46,34 @@ from flow import hw  # noqa: E402
 # the Nexys A7's own junction limit (house rules: 85 C)
 ROC = {"VCCINT": (0.95, 1.05), "VCCAUX": (1.71, 1.89), "VCCBRAM": (0.95, 1.05), "TEMPERATURE": (None, 85.0)}
 
+# Zynq UltraScale+ (the Kria K26 is one): AMD DS925 v1.30 table 2 (recommended operating conditions). VCCINT depends on the speed
+# grade: the lowest-power -1L and -2L devices run at 0.72 V and Vivado lists them as -1LV and -2LV (DS925 table note), the -1/-2 E and I
+# grades run at 0.85 V, -3E at 0.90 V. VCCBRAM (with VCCINT_IO) is 0.85 V (0.90 V for -3E) whatever VCCINT is, VCCAUX 1.8 V +-3 %.
+# The junction limit stays the house rule's 85 C (the data sheet's 100 C is the silicon's, not the board's).
+_ZUP_VCCAUX = (1.746, 1.854)
+
+
+def roc_for(part: str | None) -> tuple[dict[str, tuple[float | None, float | None]], str]:
+    """The recommended operating conditions to judge XADC/SYSMON readings against, and where they come from, by part.
+
+    A Zynq UltraScale+ part (xczu..., xck26...) uses DS925 for its speed grade; a part the table does not name (or no part: older
+    callers) keeps the 7-series -1 limits (ROC), which are the ones the Artix-7 Nexys A7 was checked against."""
+    p = (part or "").lower()
+    if not (p.startswith("xczu") or p.startswith("xck26")):
+        return ROC, "AMD DS181 table 2 (Artix-7 -1)"
+    sg = p.rsplit("-", 2)[-2] if p.count("-") >= 2 else ""
+    if sg.startswith("3"):
+        vint, vbram = (0.873, 0.927), (0.873, 0.927)
+    elif sg.endswith("lv"):                      # -1LV, -2LV: the 0.72 V devices
+        vint, vbram = (0.698, 0.742), (0.825, 0.876)
+    elif sg.endswith(("le", "li", "l")):         # -1LI, -2LE: 0.72 V or 0.85 V by how the board powers them; accept either window
+        vint, vbram = (0.698, 0.876), (0.825, 0.876)
+    else:
+        vint, vbram = (0.825, 0.876), (0.825, 0.876)
+    return ({"VCCINT": vint, "VCCAUX": _ZUP_VCCAUX, "VCCBRAM": vbram, "TEMPERATURE": (None, 85.0)},
+            f"AMD DS925 v1.30 table 2 (Zynq UltraScale+, speed grade {sg or 'not stated'})")
+
+
 FLASH_REFUSAL = ("refused: this flow programs the FPGA's volatile SRAM only. Writing the configuration "
                  "flash (QSPI) needs the owner's explicit yes and is not supported by flow/program.py.")
 
@@ -71,8 +99,9 @@ def build_info(design: Path, variant: str) -> dict[str, Any]:
             "manifest_stamp": manifest_stamp}
 
 
-def parse_conditions(text: str) -> dict[str, Any]:
-    """The FDA-COND lines of program.tcl: now, latched max and min, alarm flags, and the verdict against ROC."""
+def parse_conditions(text: str, part: str | None = None) -> dict[str, Any]:
+    """The FDA-COND lines of program.tcl: now, latched max and min, alarm flags, and the verdict against the part's ROC (roc_for)."""
+    roc, roc_source = roc_for(part)
     cond: dict[str, Any] = {}
     for line in text.splitlines():
         if line.startswith("FDA-COND FLAGS"):
@@ -85,14 +114,14 @@ def parse_conditions(text: str) -> dict[str, Any]:
         return {"read": False}
     outside = []
     for which in ("now", "max", "min"):
-        for k, (lo, hi) in ROC.items():
+        for k, (lo, hi) in roc.items():
             v = (cond.get(which) or {}).get(k)
             if v is None:
                 continue
             if (lo is not None and v < lo) or (hi is not None and v > hi):
                 outside.append(f"{which} {k} {v}")
     return {"read": True, **cond, "inside_roc": not outside, "outside": outside,
-            "limits": {k: list(v) for k, v in ROC.items()},
+            "limits": {k: list(v) for k, v in roc.items()}, "limits_source": roc_source,
             "note": "XADC through JTAG at programming time; min/max are latched since this configuration; the XADC "
                     "samples at about 1 MSPS across channels, so nanosecond supply droop is not visible to it"}
 
@@ -134,6 +163,16 @@ def check_shell_build_id(ident: dict[str, Any], manifest_stamp: str | None,
     return r
 
 
+def _catalogue_part(b: dict[str, Any]) -> str | None:
+    """The full part name (with speed grade) of the board: boards/<name>/board.yaml, else the short part the discovery file holds."""
+    import yaml
+    f = hw.ROOT / "boards" / str(b.get("name")) / "board.yaml"
+    try:
+        return (yaml.safe_load(f.read_text()) or {}).get("part") or b.get("part")
+    except OSError:
+        return b.get("part")
+
+
 def program(design: Path, variant: str, board: str | None = None, log_dir: Path | None = None) -> dict[str, Any]:
     t0 = time.monotonic()
     b = hw.load_board(board)
@@ -165,7 +204,7 @@ def program(design: Path, variant: str, board: str | None = None, log_dir: Path 
                 "done_pin": kv.get("done_pin"), "program_ms": int(kv.get("program_ms", 0)),
                 "ila_cores": int(kv.get("ilas", 0)), "vivado_version": hw.vivado_version(text),
                 "seconds": round(time.monotonic() - t0, 1)})
-    res["conditions"] = parse_conditions(text)
+    res["conditions"] = parse_conditions(text, _catalogue_part(b))
     res["build_id_jtag"] = check_build_id(info["build_id"], kv.get("usr_access"), "jtag")
     if variant == "ila" and res["ila_cores"] < 1:
         res["pass"] = False
