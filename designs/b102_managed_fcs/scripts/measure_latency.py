@@ -29,6 +29,7 @@ module tb;
   reg clk = 0; wire [1:0] led; integer cyc = 0, last_en = -1, t_pass = -1, t_hbfree = 0;
   fcs_top dut (.clk_25(clk), .led(led));
   always #5 clk = ~clk;
+  initial dut.por = 4'd0;          // configured flip-flops start at zero
   always @(posedge clk) begin
     cyc <= cyc + 1;
     if (dut.u_ctrl.crc_en_o) last_en <= cyc;

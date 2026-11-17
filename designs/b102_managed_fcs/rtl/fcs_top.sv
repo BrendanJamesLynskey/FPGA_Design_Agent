@@ -7,16 +7,14 @@ module fcs_top #(
     input  logic       clk_25,
     output logic [1:0] led
 );
-    /* verilator lint_off PROCASSINIT */
-    logic [3:0]  por = '0;                           // power-on reset: a four-clock counter (the FPGA's flip-flops start at zero)
-    /* verilator lint_on PROCASSINIT */
+    logic [3:0]  por;                                // power-on reset: a four-clock shift register (configured flip-flops start at zero)
     logic        rst;
     logic        init, en, pass, frame;
     logic [15:0] d;
     logic [31:0] crc;
     logic        blink;
 
-    always_ff @(posedge clk_25) if (!por[3]) por <= por + 1'b1;
+    always_ff @(posedge clk_25) por <= {por[2:0], 1'b1};
     assign rst = !por[3];
 
     fcs_ctrl u_ctrl (.clk(clk_25), .rst(rst), .crc_i(crc), .crc_init_o(init), .crc_en_o(en), .crc_d_o(d), .pass_o(pass), .frame_o(frame));

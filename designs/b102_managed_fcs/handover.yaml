@@ -28,7 +28,8 @@ clocks:
 resets:
 - name: power-on counter
   active: high
-  note: a four-clock counter in fcs_top holds every block in synchronous reset after configuration; there is no reset input
+  note: a four-clock shift register in fcs_top holds every block in synchronous reset after configuration; there is no reset
+    input
 interfaces:
 - name: crc32_d16 slot
   type: black-box module filled by an EDIF netlist (build.yaml netlists)
@@ -51,7 +52,7 @@ files:
   sha256: 5e12c73fd83d49a69a87ea11d1945b17fd38eabdfdfd3911c20b03401d5fc525
 - path: designs/b102_managed_fcs/rtl/fcs_top.sv
   what: top level, power-on reset and the LEDs
-  sha256: 4a6763e3e1b57adc500186455ed1c9e2aebf2b0bdf42b29a5b0ad16cfb08208b
+  sha256: 5cf2f929feb8d0e2a8d5198597e0cca8722d9bb997dc3d371d8bf312e4afd069
 - path: designs/b102_managed_fcs/rtl/fcs_ctrl.sv
   what: the owned sequencer and FCS verdict
   sha256: 2e11253b3f3351a8772a0fe5121044c4861e47f30b1788f34aef786c1d2e8bbb
@@ -108,7 +109,7 @@ evidence:
   what: the scripted session edits only the owned controller; its attempts on the frozen netlist, the excluded block, the
     out-of-scope top, a port change, a dropped build source and the manifest are all refused
   record: results/102_managed/demo_session.json
-  sha256: b1f84afed55a2e77c09bb1fba068e83ed3ca447dbdc8d84464951b5264f1f15f
+  sha256: a8da549f48ed82c56291fd84a47fed9aceae9733507fef345374df214da13e7d
 measurements:
 - id: M1
   what: clocks saved by the agent session's edit (first cycle in which pass_o rises, baseline minus edited)
@@ -119,7 +120,7 @@ measurements:
   field: clocks_saved
   conditions: Icarus simulation, CRC block from its functional netlist, counted from power-up
   value: 1
-  sha256: d787aee463a558e86954571f2f58a4928f933c00935149a93f548915cd3f2275
+  sha256: b174f5be8d1e653951294178ff08b6900d5bb8f923e172c954c61dca4286ac31
 gaps:
 - about: resources
   text: Not measured yet; the Vivado builds of this design wait for a heavy slot and will be recorded in results/102_managed.
@@ -158,4 +159,4 @@ state:
     import_checks: pass
   vivado: '2026.1'
   kb_pin: 93d158c
-  build_id: fce9e901
+  build_id: 90be2136
