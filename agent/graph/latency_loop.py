@@ -92,6 +92,11 @@ def _oai(name: str, description: str, schema: dict[str, Any]) -> dict[str, Any]:
 
 REG_TOOLS = ("read_file", "list_files", "write_file")
 LAT_TOOLS = ("latency_path", "latency_budget")
+EDIT_SPEC = _oai("edit_file", "Change an rtl/*.sv file by replacing ONE exact string (old) with another (new). old must occur exactly once in the file. "
+                 "Prefer this to rewriting a whole file: every line you do not touch stays exactly as it was.",
+                 {"type": "object", "properties": {"path": {"type": "string", "maxLength": 300}, "old": {"type": "string", "maxLength": 20000},
+                                                   "new": {"type": "string", "maxLength": 20000}},
+                  "required": ["path", "old", "new"], "additionalProperties": False})
 MEASURE_SPEC = _oai("measure", "Run the independent bench and the model twin on the current RTL and return pass/fail and the measured clocks "
                     "of the tick-to-trade path and the echo path. Takes a few minutes; at most three calls per visit.",
                     {"type": "object", "properties": {}, "additionalProperties": False})
@@ -101,7 +106,7 @@ def tool_specs(arm: str) -> list[dict[str, Any]]:
     from agent.core import tools as _t  # noqa: F401  (registers)
     from agent.core.registry import TOOLS
     names = list(REG_TOOLS) + (list(LAT_TOOLS) if arm == "A1" else [])
-    return [_oai(n, TOOLS[n].describe(), TOOLS[n].schema()) for n in names] + [MEASURE_SPEC]
+    return [_oai(n, TOOLS[n].describe(), TOOLS[n].schema()) for n in names] + [EDIT_SPEC, MEASURE_SPEC]
 
 
 @dataclass
@@ -128,6 +133,18 @@ class Visit:
             self.measures += 1
             m = measure(self.root, self.design)
             return json.dumps({k: v for k, v in m.items() if k != "core"})
+        if name == "edit_file":
+            p = str(args.get("path", ""))
+            if not (p.startswith("rtl/") and p.endswith(".sv") and "/" not in p[4:]):
+                return "refused: only rtl/*.sv may be edited in this loop"
+            f = self.design / p
+            if not f.is_file():
+                return f"refused: no such file {p}"
+            text, old = f.read_text(), str(args.get("old", ""))
+            if not old or text.count(old) != 1:
+                return f"not changed: old occurs {text.count(old) if old else 0} times in {p}; it must occur exactly once"
+            f.write_text(text.replace(old, str(args.get("new", "")), 1))
+            return f"edited {p}"
         if name == "write_file":
             p = str(args.get("path", ""))
             if not (p.startswith("rtl/") and p.endswith(".sv") and "/" not in p[4:]):
