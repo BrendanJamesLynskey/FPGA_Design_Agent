@@ -1,0 +1,1935 @@
+
+##### help synth_design
+synth_design
+
+Description: 
+Synthesize a design using Vivado Synthesis and open that design
+
+Syntax: 
+synth_design  [-name <arg>] [-part <arg>] [-constrset <arg>] [-top <arg>]
+              [-include_dirs <args>] [-generic <args>] [-define <args>]
+              [-verilog_define <args>] [-vhdl_define <args>]
+              [-flatten_hierarchy <arg>] [-gated_clock_conversion <arg>]
+              [-directive <arg>] [-rtl] [-lint] [-file <arg>] [-bufg <arg>]
+              [-no_lc] [-lut_cascade] [-shreg_min_size <arg>] [-mode <arg>]
+              [-fsm_extraction <arg>] [-rtl_skip_mlo] [-rtl_skip_ip]
+              [-rtl_skip_constraints] [-srl_style <arg>]
+              [-keep_equivalent_registers] [-resource_sharing <arg>]
+              [-cascade_dsp <arg>] [-control_set_opt_threshold <arg>]
+              [-incremental_mode <arg>] [-max_bram <arg>] [-max_uram <arg>]
+              [-max_dsp <arg>] [-max_bram_cascade_height <arg>]
+              [-max_uram_cascade_height <arg>] [-global_retiming <arg>]
+              [-no_srlextract] [-assert] [-no_timing_driven] [-sfcu]
+              [-debug_log] [-quiet] [-verbose]
+
+Returns: 
+design object
+
+Usage: 
+  Name                          Description
+  -----------------------------------------
+  [-name]                       Design name
+  [-part]                       Target part
+  [-constrset]                  Constraint fileset to use
+  [-top]                        Specify the top module name
+  [-include_dirs]               Specify verilog search directories
+  [-generic]                    Specify generic parameters. Syntax: -generic 
+                                <name>=<value> -generic <name>=<value> ...
+  [-define]                     Specify verilog and vhdl defines. Syntax: 
+                                -define <macro_name>[=<macro_text>] -define 
+                                <macro_name>[=<macro_text>] ...
+  [-verilog_define]             Specify verilog defines. Syntax: 
+                                -verilog_define <macro_name>[=<macro_text>] 
+                                -verilog_define <macro_name>[=<macro_text>] 
+                                ...
+  [-vhdl_define]                Specify vhdl defines. Syntax: -vhdl_define 
+                                <macro_name>[=<macro_text>] -vhdl_define 
+                                <macro_name>[=<macro_text>] ...
+  [-flatten_hierarchy]          Flatten hierarchy during LUT mapping. Values:
+                                full, none, rebuilt
+                                Default: rebuilt
+  [-gated_clock_conversion]     Convert clock gating logic to flop enable. 
+                                Values: off, on, auto
+                                Default: off
+  [-directive]                  Synthesis directive. Values: default, 
+                                RuntimeOptimized, AreaOptimized_high, 
+                                AreaOptimized_medium, AlternateRoutability, 
+                                AreaMapLargeShiftRegToBRAM, 
+                                AreaMultThresholdDSP, FewerCarryChains, 
+                                PerformanceOptimized, LogicCompaction, 
+                                PowerOptimized_high, PowerOptimized_medium
+                                Default: default
+  [-rtl]                        Elaborate and open an rtl design
+  [-lint]                       Run RTL Linter on source files. Recommended 
+                                to run before RTL simulation and synthesis to
+                                identify potential issues at early design 
+                                cycle.
+  [-file]                       Linter Filename to output results to. (send 
+                                output to console if -file is not used)
+  [-bufg]                       Max number of global clock buffers used by 
+                                synthesis
+                                Default: 12
+  [-no_lc]                      Disable LUT combining. Do not allow combining
+                                LUT pairs into single dual output LUTs.
+  [-lut_cascade]                Enable LUT cascading in synthesis. Pack more 
+                                logic into same slice by utilizing LUT 
+                                cascade connection. This is expected to 
+                                improve delay at cost of area.
+  [-shreg_min_size]             Minimum length for chain of registers to be 
+                                mapped onto SRL
+                                Default: 3
+  [-mode]                       The design mode. Values: default, 
+                                out_of_context
+                                Default: default
+  [-fsm_extraction]             FSM Extraction Encoding. Values: off, 
+                                one_hot, sequential, johnson, gray, 
+                                user_encoding, auto
+                                Default: auto
+  [-rtl_skip_mlo]               Skip mandatory logic optimization for RTL 
+                                elaboration of the design; requires -rtl 
+                                option.
+  [-rtl_skip_ip]                Exclude subdesign checkpoints in the RTL 
+                                elaboration of the design; requires -rtl 
+                                option.
+  [-rtl_skip_constraints]       Do not load and validate constraints against 
+                                elaborated design; requires -rtl option.
+  [-srl_style]                  Static SRL Implementation Style. Values: 
+                                register, srl, srl_reg, reg_srl, reg_srl_reg
+  [-keep_equivalent_registers]  Prevents registers sourced by the same logic 
+                                from being merged. (Note that the merging can
+                                otherwise be prevented using the synthesis 
+                                KEEP attribute)
+  [-resource_sharing]           Sharing arithmetic operators. Value: auto, 
+                                on, off
+                                Default: auto
+  [-cascade_dsp]                Controls how adders summing DSP block outputs
+                                will be implemented. Value: auto, tree, force
+                                Default: auto
+  [-control_set_opt_threshold]  Threshold for synchronous control set 
+                                optimization to lower number of control sets.
+                                Valid values are 'auto' and non-negative 
+                                integers. The higher the number, the more 
+                                control set optimization will be performed 
+                                and fewer control sets will result. To 
+                                disable control set optimization completely, 
+                                set to 0.
+                                Default: auto
+  [-incremental_mode]           Mode of incremental synthesis 
+                                (aggressive/default/off/quick)
+                                Default: default
+  [-max_bram]                   Maximum number of block RAM allowed in 
+                                design. (Note -1 means that the tool will 
+                                choose the max number allowed for the part in
+                                question)
+                                Default: -1
+  [-max_uram]                   Maximum number of Ultra RAM blocks allowed in
+                                design. (Note -1 means that the tool will 
+                                choose the max number allowed for the part in
+                                question)
+                                Default: -1
+  [-max_dsp]                    Maximum number of block DSP allowed in 
+                                design. (Note -1 means that the tool will 
+                                choose the max number allowed for the part in
+                                question)
+                                Default: -1
+  [-max_bram_cascade_height]    Controls the maximum number of BRAM that can 
+                                be cascaded by the tool. (Note -1 means that 
+                                the tool will choose the max number allowed 
+                                for the part in question)
+                                Default: -1
+  [-max_uram_cascade_height]    Controls the maximum number of URAM that can 
+                                be cascaded by the tool. (Note -1 means that 
+                                the tool will choose the max number allowed 
+                                for the part in question)
+                                Default: -1
+  [-global_retiming]            Values: auto, on, off. Improves circuit 
+                                performance for intra-clock sequential paths 
+                                by automatically movingregisters (register 
+                                balancing) across combinatorial gates or 
+                                LUTs. It maintains the original behavior and 
+                                latency of the circuitand does not require 
+                                changes to the RTL sources.
+                                Default: auto
+  [-no_srlextract]              Prevents the extraction of shift registers so
+                                that they get implemented as simple registers
+  [-assert]                     Enable VHDL assert statements to be 
+                                evaluated. A severity level of failure will 
+                                stop the synthesis flow and produce an error.
+  [-no_timing_driven]           Do not run in timing driven mode
+  [-sfcu]                       Run in single-file compilation unit mode
+  [-debug_log]                  Print detailed log files for debugging
+  [-quiet]                      Ignore command errors
+  [-verbose]                    Suspend message limits during command 
+                                execution
+
+Categories: 
+Tools
+Description:
+
+  Directly launches the Vivado synthesis engine to compile and synthesize a
+  design in either Project Mode or Non-Project Mode in the Vivado Design
+  Suite. Refer to the Vivado Design Suite User Guide: Design Flows Overview
+  (UG892) for a complete description of Project Mode and Non-Project Mode.
+
+  Vivado synthesis can be launched directly with the synth_design command in
+  the Non-Project Mode of the Vivado Design Suite.
+
+  Tip: The synth_design can be multi-threaded to speed the process. Refer to
+  the set_param command for more information on setting the
+  general.maxThreads parameter.
+
+  In Project Mode, synthesis should be launched from an existing synthesis
+  run created with the create_run command. The run is launched using the
+  launch_runs command, and this in turn calls synth_design for Vivado
+  synthesis.
+
+  You can also use the synth_design command to elaborate RTL source files,
+  and open an elaborated design:
+
+    synth_design -rtl -name rtl_1
+
+  This command returns a transcript of the synthesis process, or returns an
+  error if it fails.
+
+Arguments:
+
+  -name <arg> - (Optional) This is the name assigned to the synthesized
+  design when it is opened by the Vivado tool after synthesis has completed.
+  This name is for reference purposes, and has nothing to do with the
+  top-level of the design or any logic contained within.
+
+  -part <arg> - (Optional) The target AMD device to use for the design. If
+  the part is not specified the default part assigned to the project will be
+  used.
+
+  -constrset <arg> - (Optional) The name of the XDC constraints to use when
+  synthesizing the design. Vivado synthesis requires the use of XDC, and does
+  not support UCF. The -constrset argument must refer to a constraint fileset
+  that exists. It cannot be used to create a new fileset. Use the
+  create_fileset command for that purpose.
+
+  -top <arg> - (Optional) The top module of the design hierarchy.
+
+  Important: If you use the find_top command to define the -top option, be
+  sure to specify only one top if find_top returns multiple prospects. See
+  the examples below.
+
+  -include_dirs <args> - (Optional) The directories to search for Verilog
+  `include files. You can specify multiple directories by creating a list to
+  contain them:
+
+    -include_dirs {C:/data/include1 C:/data/include2}
+
+  -generic <name>=<value> - (Optional) The value of a VHDL generic entity, or
+  of a Verilog parameter. The -generic option can be used to override the
+  assigned values of parameters in the RTL design sources. However it can
+  only override parameters at the top level of the design. The parameters of
+  lower-level modules can only be overridden at the time of instantiation and
+  not by the -generic option. The syntax for the -generic argument is
+  <name>=<value>, specifying the name of the generic or parameter, and the
+  value to be assigned. Repeat the -generic option multiple times in the
+  synth_design command for each generic or parameter value to be defined:
+
+    synth_design -generic width=32 -generic depth=512 ...
+
+  Important: When specifying binary values for boolean or std_logic VHDL
+  generic types, you must specify the value using the Verilog bit format,
+  rather than standard VHDL format:
+
+    0 = 1`b0
+    01010000 = 8`b01010000
+
+  -verilog_define <name>=<text> - (Optional) Set values for Verilog `define,
+  and `ifdef, statements. The syntax for the -verilog_define argument is
+  <name>=<text>, specifying the name of the define directive, and the value
+  to be assigned. The argument can be reused multiple times in a single
+  synth_design command.
+
+    synth_design -verilog_define <name>=<value> -verilog_define <name>=<value> ...
+
+  -flatten_hierarchy <arg> - (Optional) Flatten the hierarchy of the design
+  during LUT mapping. The valid values are:
+
+   *  rebuilt - This will attempt to rebuild the original hierarchy of the
+      RTL design after synthesis has completed. This is the default setting.
+
+   *  full - Flatten the hierarchy of the design.
+
+   *  none - Do not flatten the hierarchy of the design. This will preserve
+      the hierarchy of the design, but will also limit the design
+      optimization that can be performed by the synthesis tool.
+
+  -gated_clock_conversion <arg> - (Optional) Convert clock gating logic to
+  use the flop enable pins when available. This optimization can eliminate
+  logic and simplify the netlist. Refer to the GATED_CLOCK property in the
+  Vivado Design Suite User Guide: Synthesis (UG901) for more information.
+  Valid values for this option are:
+
+   *  off - Disables the conversion of clock gating logic during synthesis,
+      regardless of the use of the GATED_CLOCK property in the RTL design.
+
+   *  on - Converts clock gating logic based on the use of the GATED_CLOCK
+      property in the RTL design.
+
+   *  auto - lets Vivado synthesis perform gated clock conversion if either
+      the GATED_CLOCK property is present in the RTL, or if the Vivado tool
+      detects a gate with a valid clock constraint.
+
+  -directive <arg> - (Optional) Direct synthesis to achieve specific design
+  objectives. Only one directive can be specified for a single synth_design
+  command, and values are case-sensitive. Valid values are:
+
+   *  default - Run the default synthesis process.
+
+   *  runtimeoptimized - Perform fewer timing optimizations and eliminate
+      some RTL optimizations to reduce synthesis run time.
+
+   *  AreaOptimized_high - Perform general area optimizations including
+      AreaMapLargeShiftRegToBRAM, AreaThresholdUseDSP directives.
+
+   *  AreaOptimized_medium - Perform general area optimizations including
+      forcing ternary adder implementation, applying new thresholds for use
+      of carry chain in comparators, and implementing area optimized
+      multiplexers.
+
+   *  AlternateRoutability - Algorithms to improve routability with reduced
+      use of MUXFs and CARRYs.
+
+   *  AreaMapLargeShiftRegToBRAM - Detects large shift registers and
+      implements them using dedicated blocks of RAM.
+
+   *  AreaMultThresholdDSP - Lower threshold for dedicated DSP block
+      inference for packing multipliers.
+
+   *  FewerCarryChains - Higher operand size threshold to use LUTs instead of
+      the carry chain.
+
+   *  PerformanceOptimized - Perform general timing optimizations including
+      logic level reduction at the expense of area.
+
+   *  LogicCompaction - Configure LUTs and Carry chains for multipliers in a
+      way that makes it easier for the placer to pack these structures into
+      small areas.
+
+  -rtl - (Optional) Elaborate the HDL source files and open the RTL design.
+  In designs that use out-of-context (OOC) modules, such as IP from the
+  Xilinx IP catalog, the Vivado Design Suite will import synthesized design
+  checkpoints (DCP) for the OOC modules in the design, and import associated
+  constraint files (XDC) into the elaborated design. However, you can disable
+  the default behavior using the -rtl_skip_ip and -rtl_skip_constraints
+  options.
+
+  -lint - Run RTL Linter on source files against various rules. The following
+  are the supported rules.
+
+   *  ASSIGN-1(arithmetic overlfow)
+
+   *  ASSIGN-2(mixed operand signedness)
+
+   *  ASSIGN-3(shift overflow)
+
+   *  ASSIGN-4(unused scalar)
+
+   *  ASSIGN-5(bit in array not set)
+
+   *  ASSIGN-6(bit in array not used)
+
+   *  ASSIGN-7(mult-assign/multi-driver)
+
+   *  QOR-1(arithmetic operator not mergeable)
+
+   *  INFER-1(inferred latch)
+
+   *  INFER-2(incomplete case statement)
+
+   *  INFER-3(case equality)
+
+   *  CLOCK-1(module using both clock edges)
+
+   *  RESET-1(mixed asyncreset)
+
+   *  RESET-2(missing async reset logic)
+
+  Create_waiver -type LINT can be used to waive rules or individual linter
+  warnings. For example,
+
+    create_waiver -type LINT -id ASSIGN-3 -description {waive all warnings from ASSIGN-3 check}
+
+  -rtl_skip_ip - (Optional) This option requires the use of the -rtl option.
+  When elaborating the RTL design, this option causes the Vivado Design Suite
+  to skip loading the DCP files for OOC modules in the design, and instead
+  load a stub file to treat the OOC modules as black boxes. This can
+  significantly speed elaboration of the design.
+
+  Tip: An OOC synthesis run will be needed in either case to generate the DCP
+  file that is loaded during elaboration, or to generate the stub file needed
+  for the black box.
+
+  -rtl_skip_constraints - (Optional) This option requires the use of the -rtl
+  option. When elaborating the RTL design, this option causes the Vivado
+  Design Suite to skip loading any design constraints (XDC) into the
+  elaborated design. This can significantly speed elaboration of the design.
+
+  -bufg <arg> - (Optional) Specify the maximum number of global clock buffers
+  to be used on clock nets during synthesis. Specified as a value >= 1, which
+  should not exceed the BUFG count on the target device. The default value is
+  12.
+
+  Tip: Vivado synthesis infers up to the number of BUFGs specified, including
+  those instantiated in the RTL source. For example, with the default setting
+  of -bufg 12, if there are three BUFGs instantiated in the RTL, the tool
+  infers up to nine more for a total of 12.
+
+  -no_lc - (Optional) Disable the default LUT combining feature of Vivado
+  synthesis.
+
+  -shreg_min_size <arg> - (Optional) Specified as an integer, this is the
+  minimum length for a chain of registers to be mapped onto SRL. The default
+  is three.
+
+  -mode [ default | out_of_context ] - (Optional) Out of Context mode
+  specifies the synthesis of an IP module, or block module, for use in an
+  out-of-context design flow. This mode turns off I/O buffer insertion for
+  the module, and marks the module as OOC, to facilitate its use in the tool
+  flow. The block can also be implemented for analysis purposes. Refer to the
+  Vivado Design Suite User Guide: Designing with IP (UG896) or the Vivado
+  Design Suite User Guide: Hierarchical Design (UG905) for more information.
+
+  -fsm_extraction <arg> - (Optional) Finite state machine (FSM) encoding is
+  automatic (auto) in Vivado synthesis by default. This option enables state
+  machine identification and specifies the type of encoding that should be
+  applied. Valid values are: off, one_hot, sequential, johnson, gray, auto.
+  Automatic encoding (auto) allows the tool to choose the best encoding for
+  each state machine identified. In this case, the tool may use different
+  encoding styles for different FSMs in the same design.
+
+  Note: Use -fsm_extraction off to disable finite state machine extraction in
+  Vivado synthesis. This will override the FSM_ENCODING property when
+  specified.
+
+  -keep_equivalent_registers - (Optional) Works like the KEEP property to
+  prevent the merging of registers during optimization.
+
+  -resource_sharing <arg> - (Optional) Share arithmetic operators like adders
+  or subtractors between different signals, rather than creating new
+  operators. This can result in better area usage when it is turned on. Valid
+  values are: auto, on, off. The default is auto.
+
+  -cascade_dsp [ auto | tree | force ] - (Optional) Specifies how to
+  implement adders that add DSP block outputs. Valid values include auto,
+  tree, force. The default setting is auto.
+
+  -control_set_opt_threshold <arg> - (Optional) Threshold for synchronous
+  control set optimization to decrease the number of control sets. Specifies
+  how large the fanout of a control set should be before it starts using it
+  as a control set. For example, if -control_set_opt_threshold is set to 10,
+  a synchronous reset that only fans out to 5 registers would be moved to the
+  D input logic, rather than using the reset line of a register. However, if
+  -control_set_opt_threshold is set to 4, then the reset line is used. This
+  option can be specified as "auto", or as an integer from 0 to 16. The
+  default setting is "auto", and the actual threshold used under "auto" can
+  vary depending on the selected device architecture.
+
+  -incremental - (Optional) Specify a DCP file for the incremental
+  compilation flow. In the incremental synthesis flow, the netlist from the
+  incremental DCP is applied to the design objects in the current design to
+  reuse existing synthesis results when possible.
+
+  -max_bram <arg> - (Optional) Specify the maximum number of Block RAM to add
+  to the design during synthesis. Specify a value >= 1, which should not
+  exceed the available Block RAM count on the target device. If a value of -1
+  is used, the Vivado synthesis tool will not exceed the available Block RAM
+  limit of the device. The default value is -1.
+
+  Note: A value of 0 directs Vivado synthesis to not infer Block RAMs in the
+  design, but is not a recommended value.
+
+  -max_uram <arg> - (Optional) Specify the maximum number of Ultra RAM blocks
+  (URAM) to add to the design during synthesis. Specify a value >= 1, which
+  should not exceed the available URAM count on the target device. If a value
+  of -1 is used, the Vivado synthesis tool will not exceed the available URAM
+  block limit of the device. The default value is -1.
+
+  Note: A value of 0 directs Vivado synthesis to not infer URAM in the
+  design, but is not a recommended value.
+
+  -max_dsp <arg> - (Optional) Specify the maximum number of DSPs to add to
+  the design during synthesis. Specify a value >= 1, which should not exceed
+  the available DSP count on the target device. If a value of -1 is used, the
+  Vivado synthesis tool will not exceed the available limit of the device.
+  The default value is -1.
+
+  Note: A value of 0 directs Vivado synthesis to not infer DSPs in the
+  design, but is not a recommended value.
+
+  -max_bram_cascade_height <arg> - (Optional) Controls the maximum number of
+  Block RAM that can be cascaded by the tool. A value of -1 lets Vivado
+  synthesis choose up to the maximum number allowed for the target part. The
+  default value is -1.
+
+  -max_uram_cascade_height <arg> - (Optional) Controls the maximum number of
+  URAM that can be cascaded by the tool. A value of -1 lets Vivado synthesis
+  choose up to the maximum number allowed for the target part. The default
+  value is -1.
+
+  -retiming - (Optional) For non-Versal devices who do not have retiming
+  turned On by default. Seeks to improve circuit performance for intra-clock
+  sequential paths by automatically moving registers (register balancing)
+  across combinatorial gates or LUTs. It maintains the original behavior and
+  latency of the circuit and does not require changes to the RTL sources.
+
+  Note: If both -retiming and -no_retiming are set, retiming will not occur.
+
+  -no_retiming - (Optional). This is for Versal devices where retiming is On
+  by default. Turns off the retiming feature.
+
+  Note: If both -retiming and -no_retiming are set, retiming will not occur.
+
+  -no_srlextract - (Optional) Prevents the extraction of shift registers so
+  that they get implemented as simple registers.
+
+  -assert - (Optional) Enable VHDL assert statements to be evaluated. A
+  severity level of failure stops the synthesis flow and produce an error.
+
+  -no_timing_driven - (Optional) Disables the default timing driven synthesis
+  algorithm. This results in a reduced synthesis runtime, but ignores the
+  effect of timing on synthesis.
+
+  -debug_log - (Optional) Prints an extended log file that is useful for
+  debugging. Will have extra information about logic that was trimmed along
+  with sections on the sizes of the RTL partitions and RTL Components. In
+  addition, there will be more INFO/WARNING messages that are often ignored.
+
+  -quiet - (Optional) Execute the command quietly, returning no messages from
+  the command. The command also returns TCL_OK regardless of any errors
+  encountered during execution.
+
+  Note: Any errors encountered on the command-line, while launching the
+  command, will be returned. Only errors occurring inside the command will be
+  trapped.
+
+  -verbose - (Optional) Temporarily override any message limits and return
+  all messages from this command.
+
+  Note: Message limits can be defined with the set_msg_config command.
+
+Examples:
+
+  The following example uses the set_property command to define the target
+  part for the active project, then elaborates the source files and opens an
+  RTL design:
+
+    set_property part xc7vx485tffg1158-1 [current_project]
+    synth_design -rtl -name rtl_1
+
+  Note: The default source set, constraint set, and part will be used in this
+  example.
+
+  The following example uses the find_top command to define the top of the
+  current design for synthesis:
+
+    synth_design -top [lindex [find_top] 0]
+
+  Note: Since find_top returns multiple possible candidates, choosing index 0
+  chooses the best top candidate for synthesis.
+
+  The following example runs synthesis on the current design, defining the
+  top module and the target part, and specifying no flattening of the
+  hierarchy. The results of the synthesis run are then opened in a netlist
+  design:
+
+    synth_design -top top -part xc7k70tfbg676-2 -flatten_hierarchy none
+    open_run synth_1 -name netlist_1
+
+See Also:
+
+   *  create_ip_run
+   *  create_run
+   *  current_design
+   *  current_project
+   *  find_top
+   *  open_run
+   *  opt_design
+   *  set_property
+
+
+##### help opt_design
+opt_design
+
+Description: 
+Optimize the current netlist. This will perform the retarget, propconst, sweep and bram_power_opt optimizations by default.
+
+Syntax: 
+opt_design  [-retarget] [-propconst] [-sweep] [-bram_power_opt] [-remap]
+            [-aggressive_remap] [-resynth_remap] [-resynth_area]
+            [-resynth_seq_area] [-directive <arg>] [-muxf_remap]
+            [-hier_fanout_limit <arg>] [-bufg_opt] [-mbufg_opt]
+            [-shift_register_opt] [-dsp_register_opt] [-srl_remap_modes <arg>]
+            [-control_set_merge] [-control_set_opt] [-merge_equivalent_drivers]
+            [-carry_remap] [-memory_opt] [-property_opt_only] [-quiet]
+            [-verbose]
+
+Usage: 
+  Name                         Description
+  ----------------------------------------
+  [-retarget]                  Retarget
+  [-propconst]                 Propagate constants across leaf-level 
+                               instances
+  [-sweep]                     Remove unconnected leaf-level instances
+  [-bram_power_opt]            Perform Block RAM power optimizations
+  [-remap]                     Remap logic optimally in LUTs
+  [-aggressive_remap]          High effort remap optimization
+  [-resynth_remap]             High effort re-synthesis to reduce the depth 
+                               of logic in critical timing paths
+  [-resynth_area]              Resynthesis
+  [-resynth_seq_area]          Resynthesis (with Sequential optimizations)
+  [-directive]                 Mode of behavior (directive) for this command.
+                               Please refer to Arguments section of this help
+                               for values for this option
+                               Default: Default
+  [-muxf_remap]                Optimize all MuxFx cells to LUT3
+  [-hier_fanout_limit]         Replicate by module with threshold N
+  [-bufg_opt]                  Insert, Merge and Split BUFGs
+  [-mbufg_opt]                 Merge BUFGs to MBUFGs
+  [-shift_register_opt]        Pull register stage from shift register
+  [-dsp_register_opt]          Push/Pull Registers out of a DSP
+  [-srl_remap_modes]           Remap shift registers to flops or flops to 
+                               shift registers
+  [-control_set_merge]         Merge all equivalent control set drivers to a 
+                               single driver
+  [-control_set_opt]           Optimize control set, Versal only
+  [-merge_equivalent_drivers]  Merge all LUT,Flop equivalent driver 
+                               replications
+  [-carry_remap]               Remap carries into luts
+  [-memory_opt]                Perform Memory optimization on underutilized 
+                               XPM memories
+  [-property_opt_only]         Do targeted optimizations on tagged cells
+  [-quiet]                     Ignore command errors
+  [-verbose]                   Suspend message limits during command 
+                               execution
+
+Categories: 
+Tools
+
+Description:
+
+  Optimizes a design netlist for the target part. Optimization provides
+  improvements to synthesized netlists from third-party tools or for netlists
+  that are not optimized during synthesis.
+
+  Run this command after synthesis but prior to implementation optimize the
+  design and simplify the netlist before placing and routing the design.
+  Assign the DONT_TOUCH property to prevent the optimization of individual
+  cells.
+
+  Tip: To see what actions opt_design is taking in optimizing your design,
+  you can use the -verbose option to get a more detailed transcript of the
+  process. This helps you in understanding and debugging some of the changes
+  made to your design.
+
+  The opt_design command performs the following optimizations by default:
+
+   *  Retarget
+
+   *  Constant Propagation
+
+   *  Sweep
+
+   *  Global Buffer (BUFG) optimizations
+
+   *  DSP Register optimizations
+
+   *  Shift-Register Logic optimizations
+
+   *  Block RAM Power optimizations
+
+   *  Implement MIG cores
+
+   *  Implement Debug cores
+
+  Important: Using command-line options for specific optimizations results in
+  opt_design performing only the specified optimizations and disabling all
+  others, even the ones that are usually performed by default.
+
+  To perform LUT Remapping, you must specify -remap.
+
+  To perform area-based re-synthesis, you must specify -resynth_area, or
+  -directive ExploreArea.
+
+  To perform sequential area-based re-synthesis, you must specify
+  -resynth_seq_area, or -directive ExploreSequentialArea.
+
+Arguments:
+
+  -retarget - (Optional) Retarget one type of block to another when
+  retargetting the design from one device family to another. For example,
+  retarget instantiated MUXCY or XORCY components into a CARRY4 block; or
+  retarget DCM to MMCM. The retarget optimization also absorbs inverters into
+  downstream logic where possible.
+
+  Note: The -retarget argument is optional, as are the other optimizations.
+  However this optimization is run by default unless explicitly overridden by
+  another optimization.
+
+  -propconst - (Optional) Propagate constant inputs through the circuit,
+  resulting in a simplified netlist. Propagation of constants can eliminate
+  redundant combinational logic from the netlist.
+
+  -sweep - (Optional) Remove unnecessary logic, removing loadless cells and
+  nets. Additional optimization can be performed such as tie-off, register
+  replication driving multiple OBUF, IBUF/OBUF insertion, retargeting dual
+  port RAM to single port RAM, and optimizing IDELAYCTRL by grouping IO.
+
+  -bram_power_opt - (Optional) Enables power optimization on Block RAM cells.
+  Changes the WRITE_MODE on unread ports of true dual-port RAMs to NO_CHANGE,
+  and applies intelligent clock gating to Block RAM outputs.
+
+  Note: Specific Block RAM cells can be excluded from this optimization using
+  the set_power_opt command.
+
+  -remap - (Optional) Remap the design to combine multiple LUTs into a single
+  LUT to reduce the depth of the logic.
+
+  -aggressive_remap - (Optional) Similar to the -remap option to reduce LUT
+  logic depth but more exhaustive. This may reduce more LUT levels at the
+  expense of longer optimization runtime.
+
+  -resynth_area - (Optional) Perform re-synthesis in area mode to reduce the
+  number of LUTs.
+
+  -resynth_seq_area - (Optional) Perform re-synthesis to reduce both
+  combinational and sequential logic. Performs a superset of the optimization
+  provided by -resynth_area.
+
+  -resynth_remap - (Optional) Remap the design to improve the critical paths
+  in timing-driven mode by performing re-synthesis to reduce the depth of
+  logic. This timing-based approach replicates LUTs with fanout and collapse
+  smaller LUT's into bigger functions at the expense of longer optimization
+  runtime.
+
+  -directive <arg> - (Optional) Direct the mode of optimization with specific
+  design objectives. Only one directive can be specified for a single
+  opt_design command, and values are case-sensitive. Supported values
+  include:
+
+   *  Explore - Run additional optimizations to improve results.
+
+   *  ExploreArea - Run Explore with resynth_area, to reduce the number of
+      LUTs.
+
+   *  ExploreWithRemap - Run Explore with aggresive_remap optimization to
+      compress logic levels.
+
+   *  ExploreSequentialArea - Run Explore with resynth_seq_area optimization
+      to reduce registers and related combinational logic.
+
+   *  RuntimeOptimized - Runs Default without bram_power_opt. Run the fewest
+      optimizations, trading optimization results for faster runtime.
+
+   *  RQS - Instructs opt_design to select the opt_design directive specified
+      by the report_qor_suggestion strategy suggestion. Requires an RQS file
+      with a strategy suggestion to be read in prior to calling this
+      directive. See report_qor_suggestions -help for more details.
+
+   *  Default - Run the default optimization.
+
+  Refer to the Vivado Design Suite User Guide: Implementation (UG904) for
+  more information on the effects of each directive.
+
+  Note: The -directive option controls the overall optimization strategy, and
+  is not compatible with any specific optimization options. It can only be
+  used with -quiet and -verbose.
+
+  -muxf_remap - (Optional) Convert MUXFs to LUT3s opportunistically when it
+  can potentially improve route-ability of the design without affecting
+  timing.
+
+  -hier_fanout_limit <arg> - (Optional) Net drivers with fanout greater than
+  the specified limit (<arg>) is replicated according to the logical
+  hierarchy. For each hierarchical instance driven by the high-fanout net, if
+  the fanout within the hierarchy is greater than the specified limit, then
+  the net within the hierarchy is driven by a replica of the driver of the
+  high-fanout net. The minimum value for hier_fanout_limit is 512.
+
+  -bufg_opt - (Optional) Perform various optimizations related to global
+  buffers (BUFG/BUFGCE): Insert a buffer on unbuffered clock nets (fanout >
+  30). Insert BUFGs on high fanout nets where the control set pin count on
+  the net exceeds the tool threshold. Perform load-splitting when a
+  high-fanout net drives both combinational and sequential logic: the
+  combinational portion bypasses the BUFG because the added delay is too
+  large.
+
+  Tip: The phys_opt_design command can be used to optimize the combinational
+  portion, while the sequential portion can be driven by BUFG.
+
+  -mbufg_opt - (Optional) MBUFG optimization transforms parallel clock
+  buffers driven by a common driver, or clock modifying blocks (CMB) such as
+  MMCM, DPLL, or XPLL, to MBUFG.
+
+  -shift_register_opt - (Optional) For high-fanout nets originating from an
+  SRL, add output register pipeline stages to improve timing prior to the
+  high-fanout net replication. This optimization is performed as part of the
+  default optimization.
+
+  -dsp_register_opt - (Optional) Pull registers out of a DSP, or push
+  registers into a DSP, to improve timing and resource utilization as needed.
+  This optimization is performed as part of the default optimization.
+
+  -srl_remap_modes <args> - (Optional) Many designs have timing closure
+  issues related to deep SRLs, and long register chains. This option provides
+  both an automatic rule to trigger remapping between FF chains and SRLs, and
+  also a manual rule to specify when to convert a FF chain to an SRL, or an
+  SRL to a FF chain. Automatic remapping starts with the longest FF chains
+  and converts those to SRLs when needed to reduce FF utilization, and takes
+  the shallowest SRLs and converts those to FF chains when needed to reduce
+  LUT utilization. Manual remapping takes FF chains in excess of specified
+  lengths and remaps them to SRLs, and takes SRLs with specified depths and
+  remaps them to FF chains. The automatic and manual modes cannot both be
+  used in the same opt_design command pass. The following shows the syntax
+  for the automatic and manual rules:
+
+   *  Automatic:
+
+       -  -srl_remap_modes {{target_ff_util <util> target_lutram_util
+          <util>}}: Where <util> is a number from 0 to 100 expressed as a
+          percentage of utilization. When either FF or LUTs exceed the
+          specified utilization, the tool remaps as needed. When both
+          utilization rates are exceeded neither is remapped.
+
+   *  Manual:
+
+       -  -srl_remap_modes {{min_depth_ffs_to_srl <val>}{max_depth_srl_to_ffs
+          <val>}}: Where <val> specifies the depth of an SRL or length of a
+          FF chain. When a FF chain is greater than the specified min value,
+          the chain is remapped to an SRL with the required depth. If an SRL
+          has depth less than or equal to the specified max value, the SRL is
+          remapped to a FF chain.
+
+  -control_set_merge - (Optional) Reduce the drivers of logically-equivalent
+  control signals to a single driver. This is like a reverse fanout
+  replication, and results in nets that are better suited for module-based
+  replication.
+
+  -control_set_opt - (Optional) Reduce the control set structure complexity
+  and provide more flexibility to placer by converting smaller control sets
+  into bigger group. This switch introduce new LUT logic in front of flop D
+  pins to preserve functionality. The optimization is enabled by default in
+  all explore strategies.
+
+    Explore/ExploreArea/ExploreSequentialArea/ExploreWithRemap
+
+  -merge_equivalent_drivers - (Optional) This option merges equivalent
+  drivers on both control signals and non-control signals, to reduce logic in
+  the design.
+
+  -carry_remap - (Optional) Remap carry signals into LUTs.
+
+  -memory_opt - (Optional) Optimize XPM memories by converting block RAMs and
+  LUTRAMs to improve utilization. Modifies a sparse RAMB36 to RAMB18, and
+  merges multiple underutilized RAMB blocks to optimal number of blocks.
+
+  -property_opt_only - (Optional) Indicates that the opt_design command
+  should be driven only by properties on objects in the design, and not by
+  the options defined as part of the command syntax. Refer to the Vivado
+  Design Suite Properties Reference Guide (UG912) for more information on
+  specific properties. The following properties trigger property-only
+  optimizations: CARRY_REMAP, CONTROL_SET_REMAP, EQUIVALENT_DRIVER_OPT,
+  LUT_REMAP, MUXF_REMAP, REG_TO_SRL, SRL_STAGES_TO_REG_INPUT,
+  SRL_STAGES_TO_REG_OUTPUT, SRL_TO_REG.
+
+  Tip: When -property_opt_only is specified, the tool returns an error if
+  additional optimizations have been specified in the opt_design command.
+
+  -quiet - (Optional) Execute the command quietly, returning no messages from
+  the command. The command also returns TCL_OK regardless of any errors
+  encountered during execution.
+
+  Note: Any errors encountered on the command-line, while launching the
+  command, will be returned. Only errors occurring inside the command will be
+  trapped.
+
+  -verbose - (Optional) Temporarily override any message limits and return
+  all messages from this command. This option displays detailed information
+  about the logic that is affected by each optimization.
+
+Examples:
+
+  The following example performs all four default optimizations: retarget,
+  constant propagation, sweep, and Block RAM power optimization. The command
+  returns detailed results with the -verbose switch:
+
+    opt_design -verbose
+
+  This example excludes specific Block RAM cells from power optimization
+  using the set_power_opt command, and then runs opt_design with the four
+  default optimizations:
+
+    set_power_opt -exclude_cells [get_cells \
+       -filter {PRIMITIVE_TYPE =~ BMEM.*.*} \
+       -of_objects [get_pins -leaf -filter {DIRECTION == IN} \
+       -of_objects [get_nets -of_objects [get_pins clock/bufgctrl_clk_mld/O]]]]
+    opt_design
+
+  The following example performs the sweep and retarget optimizations:
+
+    opt_design -sweep -retarget
+
+  Note: Because -sweep and -retarget are expressly enabled in the prior
+  example, -propconst optimization and -bram_power_opt are implicitly
+  disabled.
+
+  The following example directs the opt_design command to use various
+  algorithms to achieve potentially better results:
+
+    opt_design -directive Explore
+
+  The following example directs the opt_design command to use various
+  algorithms to achieve potentially better results, while focusing on area
+  reduction:
+
+    opt_design -directive ExploreArea
+
+  This example uses the -srl_remap_modes argument with the automatic option
+  to convert FF chains into SRLs when FF utilization is greater than 20%, or
+  SRLs into FF chains when SRL utilization is over 50%:
+
+    -srl_remap_modes {{target_ff_util 20 target_lutram_util 50}}
+
+  Tip: In this case, the srl_remap is only performed if either specified
+  utilization rate is exceeded, but NOT if both are exceeded.
+
+  The following example uses the -srl_remap_modes argument with the manual
+  option to convert FF chains with length greater than 5 to SRLs, and SRLs
+  with depth less than or equal to 8 to FF chains:
+
+    -srl_remap_modes {{min_depth_ffs_to_srl 5}{max_depth_srl_to_ffs 8}}
+
+See Also:
+
+   *  phys_opt_design
+   *  place_design
+   *  power_opt_design
+   *  route_design
+   *  set_power_opt
+
+
+
+##### help place_design
+place_design
+
+Description: 
+Automatically place ports and leaf-level instances
+
+Syntax: 
+place_design  [-directive <arg>] [-subdirective <args>] [-no_timing_driven]
+              [-eco] [-timing_summary] [-unplace] [-post_place_opt] [-no_psip]
+              [-psip_options <args>] [-sll_align_opt] [-clock_vtree_type <arg>]
+              [-no_bufg_opt] [-ultrathreads] [-no_noc_opt]
+              [-net_delay_weight <arg>] [-quiet] [-verbose]
+
+Usage: 
+  Name                 Description
+  --------------------------------
+  [-directive]         Mode of behavior (directive) for this command. Please 
+                       refer to Arguments section of this help for values for
+                       this option.
+                       Default: Default
+  [-subdirective]      (Advanced Flow) Mode of behavior (subdirective) for 
+                       this command. Please refer to Arguments section of 
+                       this help for values for this option.
+  [-no_timing_driven]  Do not run in timing driven mode
+  [-eco]               (Advanced Flow) Run placer in ECO mode
+  [-timing_summary]    Enable accurate post-placement timing summary.
+  [-unplace]           Unplace all the instances which are not locked by 
+                       Constraints.
+  [-post_place_opt]    (Not applicable for Advanced Flow) Run only the post 
+                       commit optimizer
+  [-no_psip]           Disable PSIP (Physical Synthesis In Placer) 
+                       optimization during placement.
+  [-psip_options]      (Advanced Flow) Run place_design with specified PSIP 
+                       optimizations. Please refer to Arguments section of 
+                       this help for values for this option.
+  [-sll_align_opt]     (Not applicable for Advanced Flow) Run only the sll 
+                       alignment optimizer in PCO
+  [-clock_vtree_type]  Specify v-tree template to be used in place_design, 
+                       valid values are balanced, intraSLR, interSLR. For the
+                       Advanced Flow, the default is balanced; otherwise, 
+                       default is interSLR.
+  [-no_bufg_opt]       Disable global buffer insertion during placement
+  [-ultrathreads]      (Not applicable for Advanced Flow) Enable 
+                       ultra-threads mode to speed up place_design
+  [-no_noc_opt]        To result in better NoC QoS during place_design
+  [-net_delay_weight]  Specify net delay weight to be used, valid options are
+                       low, medium, high
+                       Default: low
+  [-quiet]             Ignore command errors
+  [-verbose]           Suspend message limits during command execution
+
+Categories: 
+Tools
+
+Description:
+
+  Place the specified ports and logic cells in the current design, or all
+  ports and logic cells, onto device resources on the target part. The tool
+  optimizes placement to minimize negative timing slack and reduce overall
+  wire length, while also attempting to spread out placement to reduce
+  routing congestion.
+
+  Placement is one step of the complete design implementation process, which
+  can be run automatically through the use of the launch_runs command when
+  running the AMD Vivado Design Suite Advanced Flow tools in the Project
+  Mode.
+
+  In Non-Project Mode, the implementation process must be run manually with
+  the individual commands namely opt_design, place_design, phys_opt_design,
+  and route_design. Refer to the Vivado Design Suite User Guide: Design Flows
+  Overview (UG892) for a complete description of Project and Non-Project
+  Mode.
+
+  Tip: The place_design can be multi-threaded to speed the process. Refer to
+  the set_param command for more information on setting the
+  general.maxThreads parameter.
+
+  You can also manually place some elements of the design using place_ports,
+  or by setting LOC properties on the cell, and then automatically place the
+  remainder of the design using place_design.
+
+  This command requires an open synthesized design, and it is recommended
+  that you run the opt_design command prior to running place_design to avoid
+  placing a suboptimal netlist.
+
+Arguments:
+
+  -directive <arg> - (Optional) Direct placement to achieve specific design
+  objectives. Only one directive can be specified for a single place_design
+  command, and values are case-sensitive. Supported values include:
+
+   *  Explore - Increased placer effort in detail placement and
+      post-placement optimization.
+
+   *  AggressiveExplore - Attempt to improve QoR at the expense of runtime.
+      The placer runtime is significantly higher compared to the Explore
+      directive because the placer uses more aggressive optimization goals to
+      meet timing requirements.
+
+   *  RuntimeOptimized - Run fewest iterations and trades higher design
+      performance for faster runtime.
+
+   *  Quick - Absolute, fastest runtime, non-timing-driven, performs the
+      minimum required placement for a legal design.
+
+   *  Default - Runs place_design with default settings.
+
+  Important: The -directive option controls the overall placement strategy,
+  and is not compatible with some place_design options. It can be used with
+  -no_psip, -net_delay_weight, -quiet and -verbose. Refer to the Vivado
+  Design Suite User Guide: Implementation (UG904) for more information on
+  placement strategies and the use of the -directive option.
+
+  -subdirective <arg> - (Optional) Affects specific placer phases. The
+  following placer phases can be controlled with subdirectives:
+
+    floorplanning, global placer, detailed placer
+
+  More than one subdirective can be used at a time. The subdirective option
+  is incompatible with other options with the exception of -directive,
+  -no_psip, -clock_vtree_type, -quiet and -verbose. The subdirective option
+  has the following format:
+
+   *  For available values of low, med, and high:
+
+        <phase>.<sub-directive>.<low|med|high>
+
+   *  For all others values, specifying the phase and sub-directive enables
+      the optimization:
+
+        <phase>.<sub-directive>
+
+  The supported phase names are Floorplan for the floorplanning phase, GPlace
+  for the global placer phase, and DPlace for the detailed pacer phase.
+  Multiple sub-directives can be specified through a Tcl list. Supported
+  subdirectives are:
+
+   *  RuntimeOptimized: Supported phase is Floorplan, Gplace, and Dplace.
+      Using this option indicates that the optimization is enabled. Improves
+      runtime at the expense of design performance.
+
+   *  ExtraTimingUpdate: Supported phase is Floorplan, Gplace, and Dplace.
+      Using this option indicates that the optimization is enabled. Increases
+      the number of timing updates to improve design performance.
+
+   *  ExtraTimingOpt: Supported phase is Floorplan, Gplace, and Dplace.
+      Allowed value is low (default), med, and high. It improves design
+      performance at the expense of runtime.
+
+   *  BalancedSLR: Supported phase is Floorplan. Allowed value is low
+      (default), med, and high. It partitions across SLRs to balance the
+      number of cells between SLRs.
+
+   *  ForceSpreading: Supported phase is Floorplan and Gplace. Allowed value
+      is low (default), med, and high. Spreads the placement by lowering the
+      target utilization for all block types.
+
+   *  ReduceCongestion: Supported phase is Gplace. Allowed value is low
+      (default), med, and high. It reduces global and pin congestion at the
+      expense of other metrics.
+
+   *  WLDrivenBlockPlacement: Supported phase is Floorplan and Gplace. Using
+      this option indicates that the optimization is enabled
+      wirelength-driven placement of RAM and DSP blocks. It overrides
+      timing-driven placement by directing the placer to minimize the
+      distance of connections to and from blocks. This directive can improve
+      timing to and from RAM and DSP blocks.
+
+   *  ReducePinDensity: Supported phase is Dplace. Allowed value is low
+      (default), med, and high. Detail placer tries to reduce pin congestion
+      for CLBs to improve overall router convergence.
+
+   *  EarlyBlockPlacement: Supported phase is Gplace. Using option indicates
+      optimization is enabled. The placement of the DSP and block RAM blocks
+      are fixed earlier in the placer flow.
+
+  -no_timing_driven - (Optional) Disables the default timing driven placement
+  algorithm. This results in a faster placement based on wire lengths, but
+  ignores any timing constraints during the placement process.
+
+  -eco - (Optional) Run the placer in ECO mode. New cells added to the design
+  are placed while maintaining placement of existing cells.
+
+  -timing_summary - (Optional) Report the post-placement worst negative slack
+  (WNS) using results from static timing analysis. The WNS value is identical
+  to that of report_timing_summary when run on the post-placement design. By
+  default the placer reports an estimated WNS based on incremental placement
+  updates during the design implementation. The -timing_summary option incurs
+  additional runtime to run a full timing analysis.
+
+  -unplace - (Optional) Unplace all the instances which are not locked by
+  constraints. Cells with fixed placement (IS_LOC_FIXED set to TRUE), are not
+  affected.
+
+  Tip: Use the set_property to change IS_LOC_FIXED to FALSE prior to
+  unplacing fixed cells.
+
+  -no_psip - (Optional) Disable PSIP (Physical Synthesis In Placer)
+  optimization during placement. By default, to improve delay the Vivado
+  Advanced Flow placer performs optimizations such as replicating drivers of
+  high-fanout nets and drivers of loads that are far-apart. This option
+  disables those optimizations.
+
+  -psip_options - (Optional) Specify a list of optimizations to switch on
+  during Physical Synthesis In Placer (PSIP) phase. Optimizations are performed
+  only if they are applicable for the given design. Use the following commands
+  to specify which optimization to enable during PSIP:
+
+   *  critical_cell_opt
+   *  fanout_opt
+   *  very_high_fanout_opt
+   *  equ_drivers_opt
+   *  dsp_register_opt
+   *  bram_register_opt
+   *  uram_register_opt
+   *  shift_register_opt
+   *  retime
+   *  per_slr_replication_opt
+   *  shift_register_to_pipeline
+   *  auto_pipeline_insertion
+   *  control_set_opt
+
+  -net_delay_weight - (Optional) Increases estimated delay of high fanout and
+  long-distance nets. Three levels of pessimism are supported: high, medium,
+  and low. High applies to the highest level of pessimism. Default value is
+  low.
+
+  -clock_vtree_type <arg> - (Optional) Specifies the type of clock tree which
+  is used as the default option for Versal SSIT devices. Depending on the
+  value, the clock tree is optimized for different design targets.
+
+   *  Select intraSLR to minimize clock skew within each SLR
+
+   *  Select interSLR to minimize clock skew on paths between SLRs
+
+   *  Select balanced for the best compromise between intraSLR and interSLR
+
+  Warning: Placer clock v-tree type properties are case sensitive. Using the
+  wrong case generates an error message stopping the placer flow.
+
+  -quiet - (Optional) Execute the command quietly, returning no messages from
+  the command. The command also returns TCL_OK regardless of any errors
+  encountered during execution.
+
+  Note: Any errors encountered on the command-line, while launching the
+  command, will be returned. Only errors occurring inside the command will be
+  trapped.
+
+  -verbose - (Optional) Temporarily override any message limits and return
+  all messages from this command.
+
+  Note: Message limits can be defined with the set_msg_config command.
+
+Examples:
+
+  The following example directs the Vivado Advanced Flow placer to try
+  different placement algorithms to achieve a better placement result:
+
+    place_design -directive Explore
+
+  The following example uses the Default directive but enables wirelength
+  driven placement of RAM and DSP blocks during floorplanning.
+
+    place_design -subdirective Floorplan.WLDrivenBlockPlacement
+
+  The following example uses the Default directive but sets instructs the
+  placer to use high effort for SLR balancing in floorplan, reducing
+  congestion in global place and reducing pin density in detailed place.
+
+    place_design -subdirective {Floorplan.BalancedSLR.high Floorplan.ExtraTimingOpt.high GPlace.ReduceCongestion.high DPlace.ReducePinDensity.high}
+
+  This example unplaces the current design:
+
+    place_design -unplace
+
+  The following example directs Vivado Advanced Flow Placer to run only
+  bram register optimization and fanout optimization during the Physical
+  Synthesis Phase if the following command line options are used:
+   
+    place_design -psip_options {bram_register_opt fanout_opt}
+
+
+See Also:
+
+   *  launch_runs
+   *  opt_design
+   *  place_ports
+   *  phys_opt_design
+   *  power_opt_design
+   *  read_checkpoint
+   *  route_design
+   *  set_property
+
+
+
+##### help phys_opt_design
+phys_opt_design
+
+Description: 
+Optimize the current placed netlist.
+
+Syntax: 
+phys_opt_design  [-fanout_opt] [-placement_opt] [-routing_opt]
+                 [-slr_crossing_opt] [-insert_negative_edge_ffs]
+                 [-restruct_opt] [-interconnect_retime] [-lut_opt] [-casc_opt]
+                 [-cell_group_opt] [-equ_drivers_opt] [-critical_cell_opt]
+                 [-dsp_register_opt] [-bram_register_opt] [-uram_register_opt]
+                 [-bram_enable_opt] [-shift_register_opt] [-hold_fix]
+                 [-aggressive_hold_fix] [-retime]
+                 [-force_replication_on_nets <args>] [-directive <arg>]
+                 [-critical_pin_opt] [-clock_opt] [-path_groups <args>]
+                 [-tns_cleanup] [-sll_reg_hold_fix] [-memory_rewire_opt]
+                 [-quiet] [-verbose]
+
+Usage: 
+  Name                          Description
+  -----------------------------------------
+  [-fanout_opt]                 Do cell-duplication based optimization on 
+                                high-fanout timing critical nets
+  [-placement_opt]              Do placement based optimization on timing 
+                                critical nets
+  [-routing_opt]                Do routing based optimization on timing 
+                                critical nets
+  [-slr_crossing_opt]           Do placement optimization of SLR-crossing 
+                                timing critical nets
+  [-insert_negative_edge_ffs]   Insert negative edge triggered FFs for hold 
+                                optimization
+  [-restruct_opt]               Do LUT restructuring optimization
+  [-interconnect_retime]        Do interconnect retiming optimization
+  [-lut_opt]                    Do single LUT replacement/replication 
+                                optimization
+  [-casc_opt]                   Do LUT cascade placement/replication 
+                                optimization
+  [-cell_group_opt]             Do critical cell group optimization
+  [-equ_drivers_opt]            Rewiring load pins to equivalent drivers
+  [-critical_cell_opt]          Do cell-duplication based optimization on 
+                                timing critical nets
+  [-dsp_register_opt]           Do DSP register optimization
+  [-bram_register_opt]          Do BRAM register optimization
+  [-uram_register_opt]          Do UltraRAM register optimization
+  [-bram_enable_opt]            Do BRAM enable optimization
+  [-shift_register_opt]         Do Shift register optimization
+  [-hold_fix]                   Attempt to improve slack of high hold 
+                                violators
+  [-aggressive_hold_fix]        Attempt to aggressively improve slack of high
+                                hold violators
+  [-retime]                     Do retiming optimization
+  [-force_replication_on_nets]  Force replication optimization on nets
+  [-directive]                  Mode of behavior (directive) for this 
+                                command. Please refer to Arguments section of
+                                this help for values for this option
+                                Default: Default
+  [-critical_pin_opt]           Do pin-swapping based optimization on timing 
+                                critical nets
+  [-clock_opt]                  Do clock skew optimization in post-route 
+                                optimization
+  [-path_groups]                Work only on specified path groups
+  [-tns_cleanup]                Work on all nets in the design that meet 
+                                criteria for the specified optimizations to 
+                                improve design tns
+  [-sll_reg_hold_fix]           Do hold fixing on SLL Tx-Rx paths
+  [-memory_rewire_opt]          Do memory pin-swapping based optimization on 
+                                timing critical nets
+  [-quiet]                      Ignore command errors
+  [-verbose]                    Suspend message limits during command 
+                                execution
+
+Categories: 
+Tools
+
+Description:
+
+  Performs timing-driven optimization on the negative-slack paths of a
+  design. A path should have negative slack near the worst negative slack
+  (WNS) to be considered for optimization. Optimization will not be performed
+  on designs without negative slack.
+
+  This optional command can be run for post-place or post-route optimizations.
+
+  Note: Because physical optimization requires timing data that is only
+  available after placement, the command cannot be run prior to placement.
+  However, the write_iphys_opt_tcl and read_iphys_opt_tcl commands let you
+  write out the physical optimizations performed on the post-placed design,
+  and then apply those optimizations to the design netlist prior to
+  placement. Refer to the Vivado Design Suite User Guide: Implementation
+  (UG904) for more information on interactive physical optimization.
+
+  Post-place phys_opt_design performs the following optimizations by default:
+
+   *  high-fanout optimization
+
+   *  placement-based optimization of critical paths
+
+   *  LUT restructure optimization
+
+   *  critical-cell optimization
+
+   *  DSP register optimization
+
+   *  Block RAM register optimization
+
+   *  URAM register optimization
+
+   *  a final fanout optimization
+
+  Tip: Using command-line options for specific optimizations results in
+  phys_opt_design performing only the specified optimizations and disabling
+  all others, even the ones that are usually performed by default.
+
+  Post-route phys_opt_design performs the following optimizations by default:
+
+   *  placement-based optimization of critical paths
+
+   *  routing optimization
+
+   *  LUT restructure optimization
+
+   *  critical-cell optimization
+
+  Physical optimizations involve replication, re-timing, hold fixing, and
+  placement improvement. The phys_opt_design command automatically performs
+  all necessary netlist and placement changes.
+
+  To perform re-timing you must specify the -retime option, or the -directive
+  AddRetime option.
+
+  To perform hold fixing you must specify the -hold_fix option, or the
+  -directive ExploreWithHoldFix option.
+
+  If the phys_opt_design command is used iteratively, the subsequent run
+  optimizes the results of the prior run.
+
+  Tip: The phys_opt_design can be multi-threaded to speed the process. Refer
+  to the set_param command for more information on setting the
+  general.maxThreads parameter.
+
+  The command reports each net processed, a summary of any optimizations
+  performed, and the WNS before and after optimization. Replicated objects
+  are named by appending _replica to the original object name, followed by
+  the replicated object count.
+
+Arguments:
+
+  -fanout_opt - (Optional) Performs delay-driven optimization on high-fanout
+  timing critical nets, by replicating drivers to reduce delay. This is not
+  applicable for Versal adaptive SoC devices.
+
+  Note: The -fanout_opt argument is optional, as are the other optimizations.
+  However this optimization is run by default unless explicitly overridden by
+  another optimization.
+
+  -placement_opt - (Optional) Moves cells to reduce delay on timing-critical
+  nets. This is not applicable for Versal adaptive SoC devices.
+
+  -memory_rewire_opt - (Optional) Performs rewiring of critical signals to
+  faster pins of BRAM/URAM. Not applicable for cascaded and ECC enabled
+  memories. This is applicable to Versal adaptive SoC devices only.
+
+  -routing_opt - (Optional) Performs routing optimization on timing-critical
+  nets to reduce delay.
+
+  -slr_crossing_opt - (Optional) Performs post-place or post-route
+  optimizations to improve the path delay of inter-SLR connections. The
+  optimization adjusts the locations of the driver, load, or both along the
+  SLR crossing after potential replication. For use with UltraScale and
+  UltraScale+ devices.
+
+  -restruct_opt - (Optional) Advanced LUT restructure optimization to reduce
+  logic levels and reduce delay on critical signals.
+
+  -insert_negative_edge_ffs - (Optional) Inserts negative edge triggered FFs
+  for hold optimization. This is not applicable for the Advanced Flow.
+
+  -interconnect_retime - (Optional) Performs interconnect retiming to improve
+  critical path timing by movement or replication of a FF or LUT-FF pair.
+  This is applicable to Versal adaptive SoC devices only.
+
+  -lut_opt - (Optional) Performs LUT movement/replication to improve critical
+  path timing. This is applicable to Versal adaptive SoC devices only.
+
+  -casc_opt- (Optional) Performs LUT cascade optimization for creating new
+  LUT cascades or moving existing LUT cascades to improve critical path
+  timing. This is applicable to Versal adaptive SoC devices only.
+
+  -critical_cell_opt - (Optional) Replicates cells on timing critical nets to
+  reduce delays. This is not applicable for Versal adaptive SoC devices.
+
+  -dsp_register_opt - (Optional) Improves critical path delay by moving
+  registers from slices to DSP blocks, or from DSP blocks to slices.
+
+  -bram_register_opt - (Optional) Improves critical path delay by moving
+  registers from slices to block RAMs, or from block RAMs to slices.
+
+  -uram_register_opt - (Optional) Improves critical path delay by moving
+  registers across the URAM cell boundary, from slices into URAMs, or from
+  URAMs to slices.
+
+  -bram_enable_opt - (Optional) The block RAM enable optimization improves
+  timing on critical paths involving power-optimized block RAMs.
+  Pre-placement block RAM power optimization restructures the logic driving
+  block RAM read and write enable inputs to reduce dynamic power consumption.
+  After placement the restructured logic may become timing-critical. The
+  block RAM enable optimization reverses the enable-logic optimization to
+  improve the slack on the critical enable-logic paths. This is not
+  applicable for Advanced flow.
+
+  -shift_register_opt - (Optional) Performs shift register optimization to
+  improve timing on negative slack paths between shift register cells (SRLs)
+  and other logic cells. If there are timing violations to or from shift
+  register cells (SRL16E or SRLC32E), the optimization extracts a register
+  from the beginning or end of the SRL register chain and places it into the
+  logic fabric to improve timing. The optimization shortens the wire length
+  of the original critical path. Refer to the Vivado Design Suite User Guide:
+  Implementation (UG904) for more information.
+
+  -hold_fix - (Optional) Performs optimizations to insert data path delay to
+  fix hold time violations.
+
+  -aggressive_hold_fix - (Optional) Performs optimizations to insert data
+  path delay to fix hold time violations. Considers significantly more hold
+  violations than the standard hold fix algorithm.
+
+  -retime - (Optional) Re-time registers forward through combinational logic
+  to balance path delays. This is a property-driven optimization.
+
+  -force_replication_on_nets <args> - (Optional) Forces the drivers of the
+  specified net objects to be replicated, regardless of timing slack. This
+  option requires the use of the get_nets command to specify net objects.
+  Replication is based on load placements and requires manual analysis to
+  determine if replication is sufficient. If further replication is required,
+  nets can be replicated repeatedly by successive commands. This is not
+  applicable for Advanced Flow.
+
+  -directive <arg> - (Optional) Directs the mode of physical optimization
+  with specific design objectives. Only one directive can be specified for a
+  single phys_opt_design command and the values are case-sensitive. Supported
+  values include:
+
+   *  Explore - Run different algorithms in multiple passes of optimization,
+      including replication for very high fanout nets.
+
+   *  ExploreWithHoldFix - Run different algorithms in multiple passes of
+      optimization, including hold violation fixing and replication for very
+      high fanout nets.
+
+   *  ExploreWithAggressiveHoldFix - Run different algorithms in multiple
+      passes of optimization, including aggressive hold violation fixing and
+      replication for very high fanout nets.
+
+   *  AggressiveExplore - Similar to Explore but with different optimization
+      algorithms and more aggressive goals.
+
+   *  AlternateReplication - Use different algorithms for performing critical
+      cell replication. This is not applicable for Advanced Flow.
+
+   *  AggressiveFanoutOpt - Uses different algorithms for fanout-related
+      optimizations with more aggressive goals. This is not applicable for
+      Advanced Flow.
+
+   *  AlternateFlowWithRetiming - Perform more aggressive replication and DSP
+      and Block RAM optimizations, and enable register re-timing. This is not
+      applicable for Advanced Flow.
+
+   *  AddRetime - Performs the default phys_opt_design flow and adds
+      re-timing. This is not applicable for Advanced Flow.
+
+   *  RuntimeOptimized - Provides a reduced set of physical optimizations
+      with the shortest runtime. Use this directive when compile time
+      reduction is more important than design performance. RuntimeOptimized
+      includes fanout_opt, critical_cell_opt, placement_opt, and
+      bram_enable_opt.
+
+   *  RQS - Instructs phys_opt_design to select the phys_opt_design directive
+      specified by the report_qor_suggestion strategy suggestion. Requires an
+      RQS file with a strategy suggestion to be read in prior to calling this
+      directive. This is not applicable for Advanced Flow. See
+      report_qor_suggestions -help for more details.
+
+   *  Default - Run phys_opt_design with default settings.
+
+  Refer to the Vivado Design Suite User Guide: Implementation (UG904) for
+  more information on the effects of each directive.
+
+  Note: The -directive option controls the overall optimization strategy, and
+  is not compatible with any specific optimization options. It can only be
+  used with -quiet and -verbose.
+
+  -critical_pin_opt - For LUT inputs, this optimization performs remapping of
+  logical pins to physical pins, also known as pin-swapping, to improve
+  critical path timing. A critical path traversing a logical pin that has
+  been mapped to a slow physical pin, such as A1 or A2, is reassigned to a
+  faster physical pin, such as A6 or A5 if it improves timing.
+
+  Note: A cell with a LOCK_PINS property will be skipped and the cell will
+  retain the pin mapping specified by LOCK_PINS. Logical-to-physical pin
+  mapping can be obtained with get_site_pins for a selected logical pin
+  object.
+
+  -clock_opt - (Optional) Perform clock skew optimization during post-route
+  optimization. Insert global clock buffers to delay destination clocks to
+  improve setup on critical paths. Optimization will modify CLK_MOD delays
+  for Versal devices.
+
+  -path_groups <args> - (Optional) Perform optimizations on the specified
+  path groups only.
+
+  -tns_cleanup - (Optional) This option can be used with the
+  -slr_crossing_opt option. This performs a Total Negative Slack (TNS)
+  cleanup, which supports optimizing SLR crossing paths while allowing some
+  slack degradation on other paths, as long as the overall WNS does not
+  degrade. This is applicable to UltraScale and UltraScale+ devices.
+
+  -sll_reg_hold_fix - (Optional) Performs SLL register hold fix optimization.
+  You can use this option when the router is having trouble resolving hold
+  violations on SLR crossing paths. This is not applicable for Versal
+  adaptive SoC devices.
+
+  -quiet - (Optional) Execute the command quietly, returning no messages from
+  the command. The command also returns TCL_OK regardless of any errors
+  encountered during execution.
+
+  Note: Any errors encountered on the command-line, while launching the
+  command, will be returned. Only errors occurring inside the command will be
+  trapped.
+
+  -verbose - (Optional) Temporarily override any message limits and return
+  all messages from this command.
+
+  Note: Message limits can be defined with the set_msg_config command.
+
+Examples:
+
+  The following example performs a physical optimization of the current
+  post-placement design, and then writes the iphys_opt Tcl script for use
+  before placement:
+
+    phys_opt_design
+    write_iphys_opt_tcl C:/Data/my_iphys_opt.tcl
+
+  This example sets the LOCK_PINS property on the specified cell, then
+  performs physical optimizations including register re-timing, optimization
+  of registers across DSP blocks and block RAMs, and pin swapping (excluding
+  the locked pins) to improve timing:
+
+    set_property LOCK_PINS {I3:A1 I2:A4} [get_cell cpuEngine/qmem_dack_reg_i_1]
+    phys_opt_design -retime -dsp_register_opt -bram_register_opt \
+       -critical_pin_opt
+
+  This example directs phys_opt_design to run more iterations, with hold
+  violation fixing, to achieve potentially better results:
+
+    phys_opt_design -directive ExploreWithHoldFix
+
+  This example directs phys_opt_design to consider more nets for replication:
+
+    phys_opt_design -directive AggressiveFanoutOpt
+
+See Also:
+
+   *  get_pins
+   *  get_site_pins
+   *  opt_design
+   *  place_design
+   *  power_opt_design
+   *  read_iphys_opt_tcl
+   *  route_design
+   *  write_iphys_opt_tcl
+
+
+##### help route_design
+route_design
+
+Description: 
+Route the current design
+
+Syntax: 
+route_design  [-unroute] [-release_memory] [-nets <args>] [-physical_nets]
+              [-pins <arg>] [-directive <arg>] [-tns_cleanup]
+              [-no_timing_driven] [-preserve] [-delay] [-auto_delay]
+              -max_delay <arg> -min_delay <arg> [-timing_summary] [-finalize]
+              [-ultrathreads] [-eco] [-no_psir] [-quiet] [-verbose]
+
+Usage: 
+  Name                 Description
+  --------------------------------
+  [-unroute]           Unroute whole design or the given nets/pins if used 
+                       with -nets or -pins.
+  [-release_memory]    Release Router memory. Not compatible with any other 
+                       options.
+  [-nets]              Operate on the given nets.
+  [-physical_nets]     Operate on all physical nets.
+  [-pins]              Operate on the given pins.
+  [-directive]         Mode of behavior (directive) for this command. Please 
+                       refer to Arguments section of this help for values for
+                       this option.
+                       Default: Default
+  [-tns_cleanup]       Do optional TNS clean up.
+  [-no_timing_driven]  Do not run in timing driven mode.
+  [-preserve]          Preserve existing routing.
+  [-delay]             Use with -nets or -pins option to route in delay 
+                       driven mode.
+  [-auto_delay]        Use with -nets or -pins option to route in constraint 
+                       driven mode.
+  -max_delay           Use with -pins option to specify the max_delay 
+                       constraint on the pins.When specified -delay is 
+                       implicit.
+  -min_delay           Use with -pins option to specify the max_delay 
+                       constraint on the pins.When specified -delay is 
+                       implicit.
+  [-timing_summary]    Enable post-router signoff timing summary.
+  [-finalize]          finalize route_design in interactive mode.
+  [-ultrathreads]      Enable Turbo mode routing.
+  [-eco]               runs incremental router if there was eco modification 
+                       on routed netlist.
+  [-no_psir]           skips Physical Synthesis in Router phase.
+  [-quiet]             Ignore command errors
+  [-verbose]           Suspend message limits during command execution
+
+Categories: 
+Tools
+
+Description:
+
+  Route the nets in the current design to complete logic connections on the
+  target part.
+
+  Predefined routing strategies can be quickly selected using the
+  route_design -directive command, or specific route options can be
+  configured to define your own routing strategy.
+
+  Routing can be completed automatically with route_design, or can be
+  completed iteratively using the various options of the route_design command
+  to achieve route completion and timing closure. Iterative routing provides
+  you some control over the routing process to route critical nets first and
+  then route less critical nets, and to control the level of effort and the
+  timing algorithms for these various route passes.
+
+  Routing is one step of the complete design implementation process, which
+  can be run automatically through the use of the launch_runs command when
+  running the Vivado tools in Project Mode.
+
+  In Non-Project Mode, the implementation process must be run manually with
+  the individual commands: opt_design, place_design, phys_opt_design,
+  power_opt_design, and route_design. Refer to the Vivado Design Suite User
+  Guide: Design Flows Overview (UG892) for a complete description of Project
+  Mode and Non-Project Mode.
+
+  Tip: The route_design can be multi-threaded to speed the process. Refer to
+  the set_param command for more information on setting the
+  general.maxThreads parameter.
+
+  Both placement and routing can be completed incrementally, based on prior
+  results stored in a Design Checkpoint file (DCP), using the incremental
+  implementation flow. Refer to the read_checkpoint command, or to Vivado
+  Design Suite User Guide: Implementation (UG904) for more information on
+  incremental place and route.
+
+  This command requires a placed design, and it is recommended that you have
+  optimized the design with opt_design prior to placement.
+
+Arguments:
+
+  -unroute <arg> - (Optional) Unroute nets in the design. If no arguments are
+  specified, all nets in the design are unrouted. The route_design command
+  will not route any nets when the -unroute option is specified.
+
+   *  Combine with the -nets option to limit unrouting to a list of nets.
+
+   *  Combine with the -pins option to unroute from a specified pin to the
+      nearest branch of the net.
+
+   *  Combine with the -physical_nets option to unroute all logic 1 and logic
+      0 nets.
+
+  -release_memory - (Optional) Free router memory resources for subsequent
+  route passes. This option does not run route passes, but only releases
+  memory held by the router to reduce router initialization. The router will
+  need to reload design data for subsequent route passes.
+
+  -nets <args> - (Optional) Route or unroute only the specified net objects.
+  Net objects must be specified using the get_nets command.
+
+  Tip: The router uses a quick route approach to find a routing solution for
+  the specified nets, ignoring timing delays, when routing with -nets,
+  -physical_nets, or -pins specified. Use -delay to find a route with the
+  shortest delay.
+
+  -physical_nets - (Optional) Route or unroute only logic zero and logic one
+  nets.
+
+  -pins <args> - (Optional) Route or unroute to the specified pins, which
+  must be input pins. If a specified pin is driven by a multiple fanout net,
+  only the route segment between the net and pin is affected.
+
+  -directive <arg> - (Optional) Direct routing to achieve specific design
+  objectives. Only one directive can be specified for a single route_design
+  command, and values are case-sensitive. Supported values are:
+
+   *  Explore - Causes the Vivado router to explore different critical path
+      routes based on timing, after an initial route.
+
+   *  AggressiveExplore - Directs the router to further expand its
+      exploration of critical path routes while maintaining original timing
+      budgets. The router runtime might be significantly higher compared to
+      the Explore directive as the router uses more aggressive optimization
+      thresholds to attempt to meet timing constraints.
+
+   *  NoTimingRelaxation - Prevents the router from relaxing timing to
+      complete routing. If the router has difficulty meeting timing, it will
+      run longer to try to meet the original timing constraints.
+
+   *  MoreGlobalIterations - Uses detailed timing analysis throughout all
+      stages instead of just the final stages, and will run more global
+      iterations even when timing improves only slightly.
+
+   *  HigherDelayCost - Adjusts the router`s internal cost functions to
+      emphasize delay over iterations, allowing a trade-off of runtime for
+      better performance.
+
+   *  AdvancedSkewModeling - Uses more accurate skew modeling throughout all
+      routing stages which may improve design performance on higher-skew
+      clock networks.
+
+   *  AlternateCLBRouting - (UltraScale only) Chooses alternate routing
+      algorithms that require extra runtime but may help resolve routing
+      congestion.
+
+   *  RuntimeOptimized - Run fewest iterations, trade higher design
+      performance for faster runtime.
+
+   *  Quick - Absolute fastest runtime, non-timing-driven, performs the
+      minimum required routing for a legal design.
+
+   *  Default - Run route_design with default settings.
+
+  Important: The -directive option controls the overall routing strategy, and
+  is not compatible with any specific route_design options, except -preserve
+  and -tns_cleanup. It can also be used with -quiet and -verbose. Only the
+  Explore, Quick, and Default directives are compatible with high reuse
+  designs and the incremental implementation flow as defined by
+  read_checkpoint -incremental. Refer to the Vivado Design Suite User Guide:
+  Implementation (UG904) for more information on the use of the -directive
+  option.
+
+  -tns_cleanup - (Optional) By default, to reduce runtime, the router focuses
+  on optimizing the Worst Negative Slack (WNS) path as opposed to Total
+  Negative Slack (TNS) paths. This option invokes an optional phase at the
+  end of routing where the router attempts to fix the TNS paths, those
+  failing paths other than the WNS path. This option may reduce TNS at the
+  cost of added runtime, but will not affect WNS. The -tns_cleanup option is
+  recommended when using post-route phys_opt_design to ensure that
+  optimization focuses on the WNS path and does not waste effort on TNS paths
+  that can be fixed by the router. This option can be used in combination
+  with -directive.
+
+  -no_timing_driven - (Optional) Disables the default timing driven routing
+  algorithm. This results in faster routing results, but ignores any timing
+  constraints during the routing process.
+
+  -preserve - (Optional) Existing completed routes will be preserved and not
+  subject to the rip-up and reroute phase. This does not apply to routing
+  that is fixed using the IS_ROUTE_FIXED or FIXED_ROUTE properties, which is
+  not subject to being rerouted. Routing is preserved only for the current
+  route_design command.
+
+  Tip: Partially routed nets are subject to rerouting to complete the
+  connection. If you want to preserve the routing of a partially routed net,
+  you should apply the FIXED_ROUTE property to the portion of the route you
+  want to preserve.
+
+  -delay - (Optional) Can only be used in combination with the -nets or -pins
+  options. By default nets are routed to achieve the fastest routing runtime,
+  ignoring timing constraints, when using -nets and -pins options. The -delay
+  option directs the router to try to achieve the shortest routed
+  interconnect delay, but still ignores timing constraints.
+
+  Important: You can specify multiple nets to route at the same time using
+  the -delay option, but this can result in conflicts for routing resources.
+  The Vivado router may create node overlap errors if the nets are in close
+  proximity to each other because the -delay option will reuse routing
+  resources to achieve the shortest routes for all specified nets. Therefore
+  it is recommended to route nets and pins individually using the -delay
+  option, beginning with the most critical.
+
+  -auto_delay - (Optional) Can only be used in combination with the -nets or
+  -pins options. It is recommended to use the -auto_delay option on a placed
+  design, and limit the specified number of nets or pins to less than 100.
+  The -auto_delay option directs the router to prioritize setup and hold
+  critical paths using the defined timing constraints.
+
+  -max_delay <arg> - (Optional) Can only be used with -pins. Directs the
+  router to try to achieve an interconnect delay less than or equal to the
+  specified delay given in picoseconds. When this options is specified, the
+  -delay option is implied.
+
+  Note: The -max_delay and -min_delay options specify the delay limits for
+  the interconnect only, not the logic or intra-site delay. The router
+  attempts to satisfy the delay restrictions on the interconnect.
+
+  -min_delay <arg> - (Optional) Can only be used with -pins. Directs the
+  router to try to achieve an interconnect delay greater than or equal to the
+  specified delay given in picoseconds. When this option is specified, the
+  -delay option is implied.
+
+  -timing_summary - (Optional) By default, the router outputs a final timing
+  summary to the log, based on Vivado router internal estimated timing which
+  might differ slightly from the actual routed timing due to pessimism in the
+  delay estimates. The -timing_summary option forces the router to launch the
+  Vivado static timing analyzer to report the timing summary based on actual
+  routed delays, but incurs additional run time for the static timing
+  analysis. The timing summary consists of the Worst Negative Slack (WNS),
+  Total Negative Slack (TNS), Worst Hold Slack (WHS), and Total Hold Slack
+  (THS). The values are identical to that of report_timing_summary when run
+  on the post-route design.
+
+  Tip: The Vivado static timing analyzer is also launched by the -directive
+  Explore option.
+
+  -finalize - (Optional) When routing interactively you can specify
+  route_design -finalize to complete any partially routed connections.
+
+  -ultrathreads - (Optional) Reduces router runtime at the expense of
+  repeatability. This option enables the router to run faster, but there will
+  be some variation in routing results between otherwise identical runs.
+
+  -eco - (Optional) Run router in incremental mode when there is an eco
+  modification. When in incremental mode, as well as routing new nets, the
+  router can modify existing nets to improve routability and the ability to
+  meet timing. This option can be called by itself, or it can be used with
+  the -no_timing_driven switch or the Quick directive. These options run the
+  router with timing off for a faster result.
+
+  -no_psir - (Optional) Disables Physical Synthesis In Router (PSIR)
+  optimization during route. By default, Vivado router performs interconnect
+  retiming and clock, critical pin, LUT restructure, placement, and routing
+  optimizations to improve delay.
+
+  -quiet - (Optional) Execute the command quietly, returning no messages from
+  the command. The command also returns TCL_OK regardless of any errors
+  encountered during execution.
+
+  Note: Any errors encountered on the command-line, while launching the
+  command, will be returned. Only errors occurring inside the command will be
+  trapped.
+
+  -verbose - (Optional) Temporarily override any message limits and return
+  all messages from this command.
+
+  Note: Message limits can be defined with the set_msg_config command.
+
+Examples:
+
+  Route the entire design, and direct the router to try multiple algorithms
+  for improving critical path delay:
+
+    route_design -directive Explore
+
+  The following example routes the set of timing critical nets,
+  $criticalNets, to the shortest interconnect delay, marks the nets as fixed
+  using the IS_ROUTE_FIXED property, and then routes the rest of the design
+  using a low effort directive for fast results:
+
+    route_design -delay -nets $criticalNets
+    set_property IS_ROUTE_FIXED 1 $criticalNets
+    route_design -directive RuntimeOptimized
+
+  Route the specified nets using the fastest runtime:
+
+    route_design -nets [get_nets ctrl0/ctr*]
+
+  Route the specified nets to get the shortest interconnect delays:
+
+    route_design -nets [get_nets ctrl0/ctr*] -delay
+
+  Route to the specified pins:
+
+    route_design -pins [get_pins ctrl0/reset_reg/D ctrl0/ram0/ADDRARDADDR]
+
+  Route to a particular pin, try to achieve less than 500 ps delay:
+
+    route_design -pins [get_pins ctrl0/reset_reg/D] -max_delay 500
+
+  Route to a particular pin, try to achieve more than 200 ps delay:
+
+    route_design -pins [get_pins ctrl0/ram0/ADDRARDADDR] -min_delay 200
+
+See Also:
+
+   *  get_nets
+   *  get_pins
+   *  launch_runs
+   *  opt_design
+   *  phys_opt_design
+   *  place_design
+   *  power_opt_design
+   *  read_checkpoint
+   *  set_property
+   *  write_checkpoint
+
+
+##### version
+2026.1
+
+##### properties of a cell matching these names
+cell LOC : present
+cell BEL : present
+cell RLOC : present
+cell U_SET : ABSENT
+cell HU_SET : ABSENT
+cell H_SET : present
+cell KEEP : present
+cell DONT_TOUCH : present
+cell KEEP_HIERARCHY : present
+cell IS_BEL_FIXED : present
+cell IS_LOC_FIXED : present
+cell PBLOCK : present
+cell DIRECT_ENABLE : ABSENT
+
+##### properties of a net matching these names
