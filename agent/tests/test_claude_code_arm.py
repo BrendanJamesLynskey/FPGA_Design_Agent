@@ -152,6 +152,13 @@ def test_run_subagent_cc_end_to_end_with_a_fake_cli(rt, monkeypatch, tmp_path):
     assert rec["claude_code_version"].startswith("2.1.316") and rec["models_served"] == ["claude-haiku-5-5"]
     assert rt.meter.stage["turns"] == 2 and rt.meter.run["usd"] == 0.0
     assert (rt.run_dir / "trace.jsonl").is_file()
+    # brief 99: the prompts are private, so the run directory keeps their hashes, never the text
+    cc = rt.run_dir / "claude_code"
+    assert not list(cc.glob("*.system.txt")) and not list(cc.glob("*.user.txt"))
+    pj = json.loads(next(cc.glob("*.prompt.json")).read_text())
+    import hashlib
+    assert pj["system_prompt"]["sha256"] == hashlib.sha256(argv[argv.index("--system-prompt") + 1].encode()).hexdigest()
+    assert pj["user_message"]["sha256"] == hashlib.sha256(argv[2].encode()).hexdigest() and "prompts_pin" in pj
 
 
 def test_missing_token_blocks_with_the_owner_step(rt, monkeypatch):
