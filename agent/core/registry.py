@@ -62,6 +62,10 @@ def tool(name: str, description: str, properties: dict[str, Any], required: list
     return deco
 
 
+#: tools that run agent-written code (tests, sims, builds): the managed policy re-hashes frozen and excluded files after them
+CODE_RUNNING_TOOLS = frozenset({"simulate", "mutate", "formal", "build", "gates", "lint", "check", "bringup", "program"})
+
+
 def tool_list(refined: bool = True) -> list[dict[str, Any]]:
     from agent.core import tools as _t  # noqa: F401  (registers the tools)
     return [TOOLS[n].descriptor(refined) for n in sorted(TOOLS)]
@@ -86,13 +90,20 @@ def dispatch(session, name: str, args: dict[str, Any] | None) -> dict[str, Any]:
         tl = TOOLS[name]
         validate_args(tl.schema(), args)
         out = tl.fn(session, **args)
+        pol = getattr(session.jail, "policy", None)
+        if pol is not None and name in CODE_RUNNING_TOOLS:      # brief 102: design code ran: nothing frozen or excluded may have changed
+            bad = pol.integrity_violations()
+            if bad:
+                raise SecurityError("managed-integrity", f"{name} ran design code and a frozen or excluded file changed: "
+                                                         f"{', '.join(bad[:5])}. The run is not trustworthy; the owner must restore it")
         res = {"ok": bool(out.pop("ok", True)), "refused": False, "tool": name, "stage": session.stage, **out}
     except SecurityError as e:
         res = {"ok": False, "refused": True, "rule": e.rule, "tool": name, "stage": session.stage, "output": str(e)}
     except Exception as e:                                      # a tool bug: report it, never crash the harness
         res = {"ok": False, "refused": False, "tool": name, "stage": session.stage,
                "output": f"internal error: {type(e).__name__}: {e}"}
-    res["output"] = clip(redact(str(res.get("output", ""))))
+    pol = getattr(session.jail, "policy", None)
+    res["output"] = clip(redact(pol.scrub(str(res.get("output", ""))) if pol is not None and not res["refused"] and name not in ("read_file", "list_files") else str(res.get("output", ""))))
     res = redact_obj(res)
     res["seconds"] = round(time.monotonic() - t0, 3)
     summary = res["output"][:300]

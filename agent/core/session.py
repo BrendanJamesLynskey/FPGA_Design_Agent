@@ -71,6 +71,9 @@ class Session:
         self.jail = self.jail or PathJail(self.design, shell_root=self.root / "shell")
         self.audit = self.audit or AuditLog(self.design / "build" / "audit.jsonl")
         self.hw = self.hw or HardwarePolicy(self.hw_budget)
+        if self.jail.policy is None:                   # brief 102: a design with a project.yaml is a managed project
+            from agent.core.managed import policy_for
+            self.jail.policy = policy_for(self.design)
         from agent import access                       # brief 94: attribute the run to the entry that admitted it (name only)
         if access.CURRENT:
             self.audit.log({"event": "access", "entry": access.CURRENT})

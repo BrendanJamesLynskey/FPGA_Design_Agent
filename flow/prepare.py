@@ -13,6 +13,7 @@ the same stamp in any clone and the shell's BUILD_STAMP register identifies them
 from __future__ import annotations
 
 import argparse
+import re
 import hashlib
 import json
 import os
@@ -166,6 +167,26 @@ def power_env_tcl(board: str | None) -> str:
             f"-board_layers {th['board_layers']} -ambient_temp {float(th['ambient_c'])}")
 
 
+def netlist_tcl(netlists: list[dict[str, Any]], root: Path = ROOT) -> list[str]:
+    """Tcl lines for ``build.tcl`` (set by prepare.py): ``set netlists {{edif <file>} {checkpoint <file> <cell>}}``. An EDIF is
+    read before ``synth_design`` (RTL instantiating its module leaves a black box the netlist fills); a checkpoint fills a
+    black-box cell after synthesis with ``read_checkpoint -cell`` (build.tcl)."""
+    items = []
+    for n in netlists:
+        f = (root / n["file"]).resolve()
+        if n.get("format", "edif") == "edif":
+            items.append(f"{{edif {{{f}}}}}")
+        elif n.get("format") == "checkpoint":
+            if not re.match(r"^[A-Za-z_][\w/\[\]]*$", str(n.get("cell", ""))):
+                raise SystemExit(f"netlists: checkpoint entry {n['file']} needs a plain 'cell' (the black-box instance path)")
+            items.append(f"{{checkpoint {{{f}}} {{{n['cell']}}}}}")
+        else:
+            raise SystemExit(f"netlists: format of {n['file']} must be edif or checkpoint")
+    return ["set netlists {" + " ".join(items) + "}"]
+
+
+
+
 STOP_AFTER = ("synth", "place", "route", "bitstream")
 
 
@@ -219,7 +240,14 @@ def main(argv: list[str] | None = None) -> int:
         ip_tcls = ip_tcl_allow.check(cfg.get("ip_tcl", []) or [], ROOT)      # hashed into the stamp as before
     except ip_tcl_allow.IpTclRefused as e:
         raise SystemExit(f"prepare: {e}") from None
-    stamp = sources_sha256(srcs + xdcs + data + ip_tcls)
+    # brief 102: netlists made outside the project (managed project components): EDIF read before synthesis, a checkpoint filling a
+    # black-box cell after it; each file is hashed into the stamp, so a changed netlist is a new build
+    netlists = cfg.get("netlists", []) or []
+    nl_files = [(ROOT / n["file"]).resolve() for n in netlists]
+    for n, f in zip(netlists, nl_files):
+        if not f.is_file():
+            raise SystemExit(f"prepare: netlists entry {n['file']} does not exist")
+    stamp = sources_sha256(srcs + xdcs + data + ip_tcls + nl_files)
     out = a.out.resolve()
     out.mkdir(parents=True, exist_ok=True)
     # the build sources verified copies in the build directory, not the files in the tree (flow/ip_tcl_allow.materialise)
@@ -241,6 +269,7 @@ def main(argv: list[str] | None = None) -> int:
            f"set sources {tcl_list([str(s) for s in srcs])}",
            f"set constraints {tcl_list([str(x) for x in xdcs])}",
            f"set ip_tcls {tcl_list([str(t) for t in ip_copies])}",
+           *netlist_tcl(netlists, ROOT),
            f"set generics {tcl_list([f'{k}={v}' for k, v in generics.items()])}",
            f"set out {{{out}}}",
            f"set ila {int(ila)}",
@@ -253,7 +282,7 @@ def main(argv: list[str] | None = None) -> int:
     (out / "inputs.tcl").write_text("\n".join(tcl) + "\n")
     json.dump({"design": str(design.relative_to(ROOT)), "variant": a.variant, "top": cfg["top"],
                "part": cfg["part"], "sources_sha256": stamp, "build_stamp": stamp[:8],
-               "files": [str(f.relative_to(ROOT)) for f in srcs + xdcs + data + ip_tcls],
+               "files": [str(f.relative_to(ROOT)) for f in srcs + xdcs + data + ip_tcls + nl_files],
                "board": board_for(cfg), "timing_margin_ns": timing_margin(cfg, xdcs)}, sys.stdout)
     print()
     return 0
