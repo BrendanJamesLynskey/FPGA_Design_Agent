@@ -1,0 +1,148 @@
+# Digilent Cora Z7-10: board file (fpga-design-agent/board/v2). Facts name their sources (ids under `sources`); an unconfirmed
+# fact says so and why. Written by hand from the cited documents; see boards/SCHEMA.md.
+schema: fpga-design-agent/board/v2
+name: cora_z7_10
+display_name: Digilent Cora Z7-10
+vendor: Digilent
+family: Zynq-7000
+part: xc7z010clg400-1
+board_revision: Rev. B (the master XDC's header)
+master_xdc: Cora-Z7-10-Master.xdc
+master_xdc_source:
+  kind: vendor_copy
+  repo: https://github.com/Digilent/digilent-xdc
+  commit: c8644a9fe31cc803789643124545d56b3bef4600
+  file: Cora-Z7-10-Master.xdc
+  licence: MIT (LICENSE-digilent-xdc.txt, copied from the same commit)
+sources:
+  XDC:
+    title: Digilent master XDC Cora-Z7-10-Master.xdc
+    version: Digilent/digilent-xdc @ c8644a9 (MIT)
+    url: https://github.com/Digilent/digilent-xdc
+  BDF:
+    title: AMD XilinxBoardStore board file (part name, memories)
+    version: XilinxBoardStore @ 40fad97, boards/Digilent/cora-z7-10/B.0/board.xml (Apache-2.0)
+    url: https://github.com/Xilinx/XilinxBoardStore/blob/40fad97cf36f3d856c6759d83c2390de1566ffa7/boards/Digilent/cora-z7-10/B.0/board.xml
+clock:
+  port: clk
+  pin: H16
+  freq_mhz: 125
+  source:
+  - XDC
+  period_ns_in_vendor_xdc: 8.0
+uart:
+  pl_uart: none
+  source:
+  - XDC
+  note: the vendor XDC has no PL UART pin; the USB-UART bridge goes to the PS
+resources:
+  clk: clk
+  led:
+  - led0_b
+  - led0_g
+  - led0_r
+  - led1_b
+  - led1_g
+  - led1_r
+  btn: btn[0]
+facts:
+- item: part
+  value: xc7z010clg400-1 (Zynq-7000)
+  source:
+  - BDF
+- item: clock
+  value: one 125 MHz PL clock (clk on H16, bank 35)
+  source:
+  - XDC
+- item: user I/O
+  value: two RGB LEDs (led0_b, led0_g, led0_r, led1_*), two push buttons; no plain LEDs or switches
+  source:
+  - XDC
+- item: connectors
+  value: Pmod JA and JB, Arduino/chipKIT shield header (ck_io, ck_a), XADC pairs
+  source:
+  - XDC
+- item: memory sizes, parts, oscillator detail and other peripherals not in the XDC
+  status: unconfirmed
+  reason: the vendor's reference manual could not be fetched automatically (its site blocks automated clients), so this was not read
+- item: LED and button polarity
+  status: unconfirmed
+  reason: the vendor constraints file does not state it, and the schematic was not read
+xdc_sections:
+  source:
+  - XDC
+  ports_per_section:
+    PL System Clock: 1
+    RGB LEDs: 6
+    Buttons: 2
+    Pmod Header JA: 8
+    Pmod Header JB: 8
+    Crypto SDA: 1
+    Dedicated Analog Inputs: 2
+    'WARNING: Do not use both sets of constraints at the same time!': 18
+    'NOTE: The following constraints should be used when using these ports as digital I/O.': 6
+    'NOTE: The following constraints should be used when using the inner analog header ports as digital I/O.': 6
+    ChipKit Outer Digital Header: 14
+    ChipKit Inner Digital Header: 16
+    ChipKit SPI: 4
+    ChipKit I2C: 2
+    Misc. ChipKit signals: 1
+    User Digital I/O Header J1: 12
+iostandards:
+  default: LVCMOS33
+  other_standards_in_master_xdc: {}
+  source:
+  - XDC
+pin_aliases:
+  source:
+  - XDC
+  reason: the vendor file names one physical pin twice, for two headers or functions that share it (for example an analogue input and an Arduino
+    header pin)
+  pins:
+  - pin: A20
+    ports:
+    - Vaux8_0_v_n
+    - ck_a11
+  - pin: B19
+    ports:
+    - Vaux8_0_v_p
+    - ck_a10
+  - pin: B20
+    ports:
+    - Vaux0_0_v_n
+    - ck_a7
+  - pin: C20
+    ports:
+    - Vaux0_0_v_p
+    - ck_a6
+  - pin: F19
+    ports:
+    - Vaux12_0_v_p
+    - ck_a8
+  - pin: F20
+    ports:
+    - Vaux12_0_v_n
+    - ck_a9
+slow_ports:
+- led\[\d+\]
+- led\d_[rgb]
+- sw\[\d+\]
+- btn\w*(\[\d+\])?
+- uart_\w+
+- Rs[RT]x
+- cpu_resetn
+thermal:
+  airflow_lfm: 0
+  heatsink: none
+  board: small
+  board_layers: 4to7
+  ambient_c: 40
+  status: assumption
+  reason: board stack-up, heat sink and airflow are not published; still air, no heat sink, the smallest class is the pessimistic choice (as for
+    the Nexys A7)
+hardware_use:
+  owned: false
+  rule: no supply or programming rule is recorded for this board; do not program one without the owner adding a per-board rule to the house rules
+smoke:
+  clk_hz: 125000000
+  banner: Cora Z7-10

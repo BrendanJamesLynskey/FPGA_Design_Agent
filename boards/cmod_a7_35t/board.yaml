@@ -1,0 +1,142 @@
+# Digilent Cmod A7-35T: board file (fpga-design-agent/board/v2). Facts name their sources (ids under `sources`); an unconfirmed
+# fact says so and why. Written by hand from the cited documents; see boards/SCHEMA.md.
+schema: fpga-design-agent/board/v2
+name: cmod_a7_35t
+display_name: Digilent Cmod A7-35T
+vendor: Digilent
+family: Artix-7
+part: xc7a35tcpg236-1
+board_revision: rev B (the master XDC's header; the same file covers the 15T)
+master_xdc: Cmod-A7-Master.xdc
+master_xdc_source:
+  kind: vendor_copy
+  repo: https://github.com/Digilent/digilent-xdc
+  commit: c8644a9fe31cc803789643124545d56b3bef4600
+  file: Cmod-A7-Master.xdc
+  licence: MIT (LICENSE-digilent-xdc.txt, copied from the same commit)
+sources:
+  XDC:
+    title: Digilent master XDC Cmod-A7-Master.xdc
+    version: Digilent/digilent-xdc @ c8644a9 (MIT)
+    url: https://github.com/Digilent/digilent-xdc
+  BDF:
+    title: AMD XilinxBoardStore board file (part name, memories)
+    version: XilinxBoardStore @ 40fad97, boards/Digilent/cmod_a7-35t/B.0/board.xml (Apache-2.0)
+    url: https://github.com/Xilinx/XilinxBoardStore/blob/40fad97cf36f3d856c6759d83c2390de1566ffa7/boards/Digilent/cmod_a7-35t/B.0/board.xml
+  RM:
+    title: Digilent Cmod A7 Reference Manual (web page)
+    version: web.archive.org snapshot 2025
+    url: https://digilent.com/reference/programmable-logic/cmod-a7/reference-manual
+clock:
+  port: sysclk
+  pin: L17
+  freq_mhz: 12
+  source:
+  - XDC
+  period_ns_in_vendor_xdc: 83.33
+uart:
+  fpga_rx:
+    port: uart_txd_in
+    pin: J17
+  fpga_tx:
+    port: uart_rxd_out
+    pin: J18
+  default_baud: 115200
+  source:
+  - XDC
+  note: port names follow the vendor file; 'fpga_rx' is the pin the FPGA receives on. Baud rate is the common default, not a board property
+resources:
+  clk: sysclk
+  led:
+  - led[0]
+  - led[1]
+  btn: btn[0]
+  uart_rx: uart_txd_in
+  uart_tx: uart_rxd_out
+facts:
+- item: part
+  value: xc7a35tcpg236-1 (Artix-7)
+  source:
+  - BDF
+- item: clock
+  value: one 12 MHz clock input on L17 (a MRCC input, bank 14)
+  source:
+  - RM
+  - XDC
+- item: user I/O
+  value: 2 LEDs, 1 tri-colour LED, 2 push buttons; no slide switches
+  source:
+  - RM
+  - XDC
+- item: memory
+  value: 512 KB SRAM on an 8-bit parallel bus (MemAdr, MemDB, RamOEn, RamWEn, RamCEn); 4 MB Quad-SPI flash (a Micron N25Q032A or a Macronix MX25L3233F)
+  source:
+  - RM
+  - XDC
+- item: connectors
+  value: 48-pin DIP connector with 44 digital I/O and 2 analogue inputs (pio1..pio48), one Pmod (JA), XADC pairs
+  source:
+  - RM
+  - XDC
+- item: serial
+  value: FTDI FT2232HQ USB-UART bridge
+  source:
+  - RM
+  - XDC
+- item: LED and button polarity
+  status: unconfirmed
+  reason: the vendor constraints file does not state it, and the schematic was not read
+xdc_sections:
+  source:
+  - XDC
+  ports_per_section:
+    12 MHz Clock Signal: 1
+    LEDs: 2
+    RGB LED: 3
+    Buttons: 2
+    Pmod Header JA: 8
+    Only declare these if you want to use pins 15 and 16 as single ended analog inputs. pin 15 -> vaux4, pin16 -> vaux12: 4
+    Pins 15 and 16 should remain commented if using them as analog inputs: 44
+    UART: 2
+    Crypto 1 Wire Interface: 1
+    QSPI: 5
+    Cellular RAM: 30
+iostandards:
+  default: LVCMOS33
+  other_standards_in_master_xdc: {}
+  source:
+  - XDC
+pin_aliases:
+  source:
+  - XDC
+  reason: the vendor file names one physical pin twice, for two headers or functions that share it (for example an analogue input and an Arduino
+    header pin)
+  pins: []
+slow_ports:
+- led\[\d+\]
+- led\d_[rgb]
+- sw\[\d+\]
+- btn\w*(\[\d+\])?
+- uart_\w+
+- Rs[RT]x
+- cpu_resetn
+config:
+  cfgbvs: VCCO
+  config_voltage: 3.3
+  status: unconfirmed
+  reason: the vendor XDC has no CFGBVS or CONFIG_VOLTAGE line; VCCO_0 = 3.3 V is assumed (needed so the DRC is clean), the schematic was not read
+thermal:
+  airflow_lfm: 0
+  heatsink: none
+  board: small
+  board_layers: 4to7
+  ambient_c: 40
+  status: assumption
+  reason: board stack-up, heat sink and airflow are not published; still air, no heat sink, the smallest class is the pessimistic choice (as for
+    the Nexys A7)
+hardware_use:
+  owned: false
+  rule: no supply or programming rule is recorded for this board; do not program one without the owner adding a per-board rule to the house rules
+smoke:
+  clk_hz: 12000000
+  banner: Cmod A7-35T

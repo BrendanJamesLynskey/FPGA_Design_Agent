@@ -1,0 +1,124 @@
+# Real Digital AUP-ZU3: board file (fpga-design-agent/board/v2). Facts name their sources (ids under `sources`); an unconfirmed
+# fact says so and why. Written by hand from the cited documents; see boards/SCHEMA.md.
+schema: fpga-design-agent/board/v2
+name: aup_zu3
+display_name: Real Digital AUP-ZU3
+vendor: Real Digital (AMD University Program)
+family: Zynq UltraScale+ MPSoC
+part: xczu3eg-sfvc784-2-e
+board_revision: RevC (the board file's compatible revision)
+master_xdc: aup_zu3-pins.xdc
+master_xdc_source:
+  kind: derived
+  tool: tools/board_pins_import.py
+  spec: boards/aup_zu3/pins_import.yaml
+  note: our own listing of documented pin locations, not a copy of a vendor file
+sources:
+  AUPBSP:
+    title: 'Real Digital aup-zu3-bsp: board files for the 4 GB and 8 GB boards, and the PL constraints of its reference design'
+    version: RealDigitalOrg/aup-zu3-bsp @ b595ecd (board-files/aup-zu3-4gb/1.0, aup-zu3-8gb/1.0, hw/constraints/mpsoc.xdc)
+    url: https://github.com/RealDigitalOrg/aup-zu3-bsp
+  AUPPAGE:
+    title: Real Digital AUP-ZU3 product page (named in the board file's spec_url)
+    version: not read
+    url: https://www.realdigital.org/hardware/aup-zu3
+clock:
+  port: clk_100_p
+  port_n: clk_100_n
+  pin: D7
+  pin_n: D6
+  differential: true
+  iostandard: LVDS
+  freq_mhz: 100
+  source:
+  - AUPBSP
+resources:
+  clk_p: clk_100_p
+  clk_n: clk_100_n
+  led:
+  - led[0]
+  - led[1]
+  - led[2]
+  - led[3]
+  - led[4]
+  - led[5]
+  - led[6]
+  - led[7]
+  btn: btn[0]
+  sw:
+  - sw[0]
+  - sw[1]
+  - sw[2]
+  - sw[3]
+  - sw[4]
+  - sw[5]
+  - sw[6]
+  - sw[7]
+facts:
+- item: part
+  value: 'xczu3eg-sfvc784-2-e: the part name in both Real Digital board files (4 GB and 8 GB DDR4 variants; the PL pin lists are identical)'
+  source:
+  - AUPBSP
+- item: clock
+  value: a 100 MHz differential PL clock on D7 (P) and D6 (N), LVDS
+  source:
+  - AUPBSP
+- item: user I/O
+  value: 8 LEDs, 4 RGB LEDs (12 pins), 4 push buttons, 8 slide switches; all LVCMOS12
+  source:
+  - AUPBSP
+- item: connectors
+  value: Pmod A (8), Pmod B (8), Pmod AB (6), two Grove connectors (2 pins each), a Raspberry Pi 40-pin header (27 GPIO, LVCMOS33), 4 servo PWM
+    pins, a joystick select pin
+  source:
+  - AUPBSP
+- item: audio
+  value: a codec with I2C (F5, G5), reset (E2) and I2S pins (G3, G4, G1, F2, F3), LVCMOS18, in the reference design's constraints
+  source:
+  - AUPBSP
+- item: serial
+  value: the UART in the reference design is on the PS (MIO txd and rxd); no PL UART pin
+  source:
+  - AUPBSP
+- item: memory
+  value: DDR4 on the PS, 4 GB or 8 GB by board variant
+  source:
+  - AUPBSP
+- item: LED and button polarity
+  value: LEDs, buttons and RGB LEDs are 'Active High' in the board file's component descriptions
+  source:
+  - AUPBSP
+- item: supply, JTAG and boot
+  status: unconfirmed
+  reason: 'not read: no reference manual or schematic for this board was retrieved (vendor sites block automated clients), so this is not stated'
+pynq:
+  needs: 'PYNQ support: the vendor''s page and the board file''s search keywords name PYNQ. An overlay is a .bit plus a .hwh from a block design
+    with the PS configured'
+  agent_flow: the agent's flow writes a PL-only bitstream (no PS block, no .hwh), so it cannot yet produce a PYNQ overlay
+  status: unconfirmed
+  reason: PYNQ overlay requirements are stated from general knowledge; the PYNQ documentation was not read in this session
+book: the owner says an author's third edition of an FPGA book will use this board; this is reported by the owner, not checked
+slow_ports:
+- led\[\d+\]
+- rgbled\d_[RGB]
+- sw\[\d+\]
+- btn\[\d+\]
+thermal:
+  airflow_lfm: 0
+  heatsink: none
+  board: medium
+  board_layers: 8to11
+  ambient_c: 40
+  status: assumption
+  reason: stack-up, heat sink and airflow are not published; still air and no heat sink is the pessimistic bound (as for the KR260)
+hardware_use:
+  owned: false
+  rule: no supply or programming rule is recorded for this board; do not program one without the owner adding a per-board rule to the house rules
+smoke:
+  clk_hz: 100000000
+  banner: AUP-ZU3
+pin_aliases:
+  source:
+  - AUPBSP
+  reason: the source lists one physical pin under two names
+  pins: []

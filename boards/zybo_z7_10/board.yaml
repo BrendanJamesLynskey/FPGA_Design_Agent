@@ -1,0 +1,134 @@
+# Digilent Zybo Z7-10: board file (fpga-design-agent/board/v2). Facts name their sources (ids under `sources`); an unconfirmed
+# fact says so and why. Written by hand from the cited documents; see boards/SCHEMA.md.
+schema: fpga-design-agent/board/v2
+name: zybo_z7_10
+display_name: Digilent Zybo Z7-10
+vendor: Digilent
+family: Zynq-7000
+part: xc7z010clg400-1
+board_revision: 'Rev. B (the master XDC''s header: one file covers the Z7-10 and Z7-20)'
+master_xdc: ../zybo_z7_20/Zybo-Z7-Master.xdc
+master_xdc_source:
+  kind: vendor_copy
+  repo: https://github.com/Digilent/digilent-xdc
+  commit: c8644a9fe31cc803789643124545d56b3bef4600
+  file: Zybo-Z7-Master.xdc
+  licence: MIT (LICENSE-digilent-xdc.txt, copied from the same commit)
+sources:
+  XDC:
+    title: Digilent master XDC Zybo-Z7-Master.xdc
+    version: Digilent/digilent-xdc @ c8644a9 (MIT)
+    url: https://github.com/Digilent/digilent-xdc
+  BDF:
+    title: AMD XilinxBoardStore board file (part name, memories)
+    version: XilinxBoardStore @ 40fad97, boards/Digilent/zybo-z7-10/A.0/board.xml (Apache-2.0)
+    url: https://github.com/Xilinx/XilinxBoardStore/blob/40fad97cf36f3d856c6759d83c2390de1566ffa7/boards/Digilent/zybo-z7-10/A.0/board.xml
+clock:
+  port: sysclk
+  pin: K17
+  freq_mhz: 125
+  source:
+  - XDC
+  period_ns_in_vendor_xdc: 8.0
+uart:
+  pl_uart: none
+  source:
+  - XDC
+  note: the vendor XDC has no PL UART pin; the USB-UART bridge goes to the PS
+resources:
+  clk: sysclk
+  led:
+  - led[0]
+  - led[1]
+  - led[2]
+  - led[3]
+  btn: btn[0]
+  sw:
+  - sw[0]
+  - sw[1]
+  - sw[2]
+  - sw[3]
+facts:
+- item: part
+  value: xc7z010clg400-1 (Zynq-7000)
+  source:
+  - BDF
+- item: clock
+  value: one 125 MHz PL clock (sysclk on K17, bank 35)
+  source:
+  - XDC
+- item: pins
+  value: the vendor file marks some pins 'Z7-20 only' (RGB LED 5, fan, HDMI RX CEC, Pmod JB, unconnected pins); those do not apply to the Z7-10
+  source:
+  - XDC
+- item: serial
+  value: the USB-UART goes to the Zynq PS (MIO), so there is no PL UART pin
+  source:
+  - XDC
+- item: memory sizes, parts, oscillator detail and other peripherals not in the XDC
+  status: unconfirmed
+  reason: the vendor's reference manual could not be fetched automatically (its site blocks automated clients), so this was not read
+- item: LED and button polarity
+  status: unconfirmed
+  reason: the vendor constraints file does not state it, and the schematic was not read
+xdc_sections:
+  source:
+  - XDC
+  ports_per_section:
+    Clock signal: 1
+    Switches: 4
+    Buttons: 4
+    LEDs: 4
+    RGB LED 5 (Zybo Z7-20 only): 3
+    RGB LED 6: 3
+    Audio Codec: 9
+    Additional Ethernet signals: 1
+    USB-OTG over-current detect pin: 1
+    HDMI RX: 11
+    HDMI RX CEC (Zybo Z7-20 only): 1
+    HDMI TX: 11
+    HDMI TX CEC: 1
+    Pmod Header JA (XADC): 8
+    Pmod Header JB (Zybo Z7-20 only): 8
+    Pmod Header JC: 8
+    Pmod Header JD: 8
+    Pmod Header JE: 8
+    This configuration expects the sensor to use 672Mbps/lane = 336 MHz HS_Clk: 15
+    Unloaded Crypto Chip SWI (for future use): 1
+iostandards:
+  default: LVCMOS33
+  other_standards_in_master_xdc:
+    TMDS_33: 16
+    HSUL_12: 6
+    LVDS_25: 6
+  source:
+  - XDC
+pin_aliases:
+  source:
+  - XDC
+  reason: the vendor file names one physical pin twice, for two headers or functions that share it (for example an analogue input and an Arduino
+    header pin)
+  pins: []
+slow_ports:
+- led\[\d+\]
+- led\d_[rgb]
+- sw\[\d+\]
+- btn\w*(\[\d+\])?
+- uart_\w+
+- Rs[RT]x
+- cpu_resetn
+thermal:
+  airflow_lfm: 0
+  heatsink: none
+  board: small
+  board_layers: 4to7
+  ambient_c: 40
+  status: assumption
+  reason: board stack-up, heat sink and airflow are not published; still air, no heat sink, the smallest class is the pessimistic choice (as for
+    the Nexys A7)
+hardware_use:
+  owned: false
+  rule: no supply or programming rule is recorded for this board; do not program one without the owner adding a per-board rule to the house rules
+smoke:
+  clk_hz: 125000000
+  banner: Zybo Z7-10

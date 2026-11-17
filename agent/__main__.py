@@ -23,6 +23,7 @@ import json
 import sys
 from pathlib import Path
 
+from agent.core.boards import board_arg
 from agent.core.session import ROOT
 
 
@@ -234,7 +235,8 @@ def main(argv: list[str] | None = None) -> int:
     sub = ap.add_subparsers(dest="cmd", required=True)
     r = sub.add_parser("run")
     r.add_argument("spec", type=Path)
-    r.add_argument("--board", default="nexys_a7_100t")
+    r.add_argument("--board", default="nexys_a7_100t", type=board_arg,
+                   help="a board id or the words of a request (boards/catalogue.yaml; docs/board_catalogue.md)")
     r.add_argument("--name")
     r.add_argument("--interview", choices=["on", "oracle", "off"], default="off")
     r.add_argument("--review", choices=["on", "off"], default="off")
@@ -306,7 +308,7 @@ def main(argv: list[str] | None = None) -> int:
     rs.add_argument("--from-stage", type=int, help="design resume: enter at this stage, overriding the rule")
     rs.add_argument("--dry-run", action="store_true", help="design resume: report the freshness and the entry stage only")
     rs.add_argument("--stop-after", type=int)
-    rs.add_argument("--board", help="design resume: default the handover's target.board when it names a board directory")
+    rs.add_argument("--board", type=board_arg, help="design resume: default the handover's target.board when it names a board directory")
     rs.add_argument("--model", default="openai/gpt-6-luna")
     rs.add_argument("--harness", choices=["deepagents", "claude_code"], default="deepagents")
     rs.add_argument("--cc-model", default="claude-haiku-5-5")
@@ -317,7 +319,7 @@ def main(argv: list[str] | None = None) -> int:
     rs.add_argument("--docs", choices=["on", "off"], default="on")
     dc = sub.add_parser("document", help="brief 68 C: the DOC step on a finished run directory")
     dc.add_argument("run_dir", type=Path)
-    dc.add_argument("--board", default="nexys_a7_100t")
+    dc.add_argument("--board", default="nexys_a7_100t", type=board_arg)
     dc.add_argument("--cc-model", default="claude-sonnet-5-5")
     dc.add_argument("--cc-effort", default="medium")
     dc.add_argument("--verif-level", help="default: the run's config.json, else V3")

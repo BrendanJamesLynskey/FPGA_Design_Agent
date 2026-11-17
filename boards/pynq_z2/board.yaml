@@ -1,0 +1,135 @@
+# TUL PYNQ-Z2: board file (fpga-design-agent/board/v2). Facts name their sources (ids under `sources`); an unconfirmed
+# fact says so and why. Written by hand from the cited documents; see boards/SCHEMA.md.
+schema: fpga-design-agent/board/v2
+name: pynq_z2
+display_name: TUL PYNQ-Z2
+vendor: TUL
+family: Zynq-7000
+part: xc7z020clg400-1
+board_revision: A.0 (the AMD board file's revision)
+master_xdc: pynq_z2-pins.xdc
+master_xdc_source:
+  kind: derived
+  tool: tools/board_pins_import.py
+  spec: boards/pynq_z2/pins_import.yaml
+  note: our own listing of documented pin locations, not a copy of a vendor file
+sources:
+  PYNQZ2:
+    title: 'AMD XilinxBoardStore board file for the PYNQ-Z2 (TUL): part, pins, clocks'
+    version: XilinxBoardStore @ 40fad97, boards/TUL/pynq-z2/A.0 (board.xml, part0_pins.xml)
+    url: https://github.com/Xilinx/XilinxBoardStore/blob/40fad97cf36f3d856c6759d83c2390de1566ffa7/boards/TUL/pynq-z2/A.0/board.xml
+  PYNQDOC:
+    title: 'PYNQ documentation: overlays, .bit and .hwh'
+    version: not read in this session (see the PYNQ note below)
+    url: https://pynq.readthedocs.io/
+clock:
+  port: clk
+  pin: H16
+  freq_mhz: 125
+  source:
+  - PYNQZ2
+resources:
+  clk: clk
+  led:
+  - led[0]
+  - led[1]
+  - led[2]
+  - led[3]
+  btn: btn[0]
+  sw:
+  - sw[0]
+  - sw[1]
+facts:
+- item: part
+  value: xc7z020clg400-1 (Zynq-7000)
+  source:
+  - PYNQZ2
+- item: clock
+  value: 125 MHz PL clock on H16 (the board file's system clock)
+  source:
+  - PYNQZ2
+- item: user I/O
+  value: 4 LEDs, 4 push buttons, 2 slide switches, 2 RGB LEDs (6 pins)
+  source:
+  - PYNQZ2
+- item: connectors
+  value: 2 Pmod (A and B, pins 1-4 and 7-10), Arduino header (14 digital, 6 analogue), Raspberry Pi header, HDMI in and out (TMDS_33), audio codec
+    pins
+  source:
+  - PYNQZ2
+- item: serial
+  value: 'no PL UART pin: the board''s USB-UART is on the PS'
+  source:
+  - PYNQZ2
+  status: unconfirmed
+  reason: inferred from the absence of a UART in the PL pin list; the schematic was not read
+- item: memory, Ethernet, USB, SD
+  value: on the PS; not in the PL pin list
+  status: unconfirmed
+  reason: 'not read: no reference manual or schematic for this board was retrieved (vendor sites block automated clients), so this is not stated'
+- item: LED and button polarity
+  status: unconfirmed
+  reason: not stated in the board file; the schematic was not read
+pynq:
+  needs: a PYNQ overlay is a .bit plus a .hwh (the block design's hardware handoff) with the PS configured by the block design; both come from
+    a Vivado block-design flow
+  agent_flow: the agent's flow writes a PL-only bitstream (no PS block, no .hwh), so it cannot yet produce a PYNQ overlay
+  status: unconfirmed
+  reason: PYNQ's overlay requirements are stated from general knowledge; the PYNQ documentation was not read in this session. Listed under known
+    gaps.
+slow_ports:
+- led\[\d+\]
+- rgb_led\[\d+\]
+- sw\[\d+\]
+- btn\[\d+\]
+thermal:
+  airflow_lfm: 0
+  heatsink: none
+  board: medium
+  board_layers: 8to11
+  ambient_c: 40
+  status: assumption
+  reason: stack-up, heat sink and airflow are not published; still air and no heat sink is the pessimistic bound (as for the KR260)
+hardware_use:
+  owned: false
+  rule: no supply or programming rule is recorded for this board; do not program one without the owner adding a per-board rule to the house rules
+smoke:
+  clk_hz: 125000000
+  banner: PYNQ-Z2
+pin_aliases:
+  source:
+  - PYNQZ2
+  reason: the source lists one physical pin under two names
+  pins:
+  - pin: U18
+    ports:
+    - pmoda[7]
+    - rpi_gpio[4]
+  - pin: U19
+    ports:
+    - pmoda[8]
+    - rpi_gpio[5]
+  - pin: W18
+    ports:
+    - pmoda[9]
+    - rpi_gpio[0]
+  - pin: W19
+    ports:
+    - pmoda[10]
+    - rpi_gpio[1]
+  - pin: Y16
+    ports:
+    - pmoda[3]
+    - respberry_sd_i
+  - pin: Y17
+    ports:
+    - pmoda[4]
+    - respberry_sc_i
+  - pin: Y18
+    ports:
+    - pmoda[1]
+    - rpi_gpio[2]
+  - pin: Y19
+    ports:
+    - pmoda[2]
+    - rpi_gpio[3]

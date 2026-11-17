@@ -1,0 +1,166 @@
+# The board catalogue (brief 95). One entry per boards/<board>/ directory. See flow/board_catalogue.py for how the trust label is
+# computed from evidence; `trust` here is the declared label and may never be above what the evidence supports.
+#   display, aliases : how a request names the board (whole words, lower case); an alias shared by two boards makes the request ambiguous
+#   targetable       : the agent can write the board's constraints (a master XDC with a clock the design can use)
+#   licence_tier     : free | paid, measured by results/95_boards/licence_probe.json against the installed Vivado 2026.1 (Basic tier)
+#   default_for_part : the board a build.yaml with only `part:` means (flow/prepare.py board_for); needed where two boards share a part
+#   legacy           : board.yaml predates schema v2 (no per-fact sources); its sources are in its README and inventory
+#   evidence         : built = earlier gates.json records; hardware = run records on the owner's board
+schema: fpga-design-agent/board-catalogue/v1
+boards:
+  nexys_a7_100t:
+    display: Digilent Nexys A7-100T
+    aliases: [nexys a7, nexys a7 100t, nexys a7-100t, nexys 4 ddr, nexys4 ddr]
+    legacy: true
+    default_for_part: true
+    targetable: true
+    licence_tier: free
+    trust: hardware
+    evidence:
+      hardware: [results/board_v2/README.md]
+    scope: "the owner's board: four peripheral designs run 3 of 3 times (LEDs, UART, SPI, I2C, PDM microphone, QSPI), programmed over JTAG, wall power"
+  kr260:
+    display: AMD Kria KR260 Robotics Starter Kit
+    aliases: [kria kr260, kr260, kr 260]
+    legacy: true
+    default_for_part: true
+    targetable: true
+    licence_tier: free
+    trust: built
+    evidence:
+      built: [results/b58a/build/gates.json]
+    scope: "built as part of the mock trading design (results/b58a, PL Ethernet pins), not as a smoke design; no board run record is in the repository"
+  basys3:
+    display: Digilent Basys 3
+    aliases: [basys 3, basys3, basys-3]
+    targetable: true
+    licence_tier: free
+    trust: documented
+    scope: "board file from Digilent's master XDC and reference manual; no build"
+  arty_a7_35t:
+    display: Digilent Arty A7-35T
+    aliases: [arty a7, arty a7 35t, arty a7-35t, arty a7 35, arty a7-35, arty-a7-35t]
+    targetable: true
+    licence_tier: free
+    trust: documented
+    scope: "board file from Digilent's master XDC and the AMD board file; no build"
+  arty_a7_100t:
+    display: Digilent Arty A7-100T
+    aliases: [arty a7, arty a7 100t, arty a7-100t, arty a7 100, arty a7-100, arty-a7-100t]
+    targetable: true
+    licence_tier: free
+    trust: documented
+    scope: "board file from Digilent's master XDC and the AMD board file; no build"
+  arty_s7_50:
+    display: Digilent Arty S7-50
+    aliases: [arty s7, arty s7 50, arty s7-50, arty-s7-50]
+    targetable: true
+    licence_tier: free
+    trust: documented
+    scope: "board file from Digilent's master XDC and the AMD board file; no build"
+  cmod_a7_35t:
+    display: Digilent Cmod A7-35T
+    aliases: [cmod a7 35t, cmod a7-35t, cmod a7 35, cmod a7-35, cmod-a7-35t]
+    targetable: true
+    licence_tier: free
+    trust: documented
+    scope: "board file from Digilent's master XDC and reference manual; no build"
+  nexys_video:
+    display: Digilent Nexys Video
+    aliases: [nexys video, nexys-video]
+    targetable: true
+    licence_tier: paid
+    trust: documented
+    smoke_note: "the part is outside the installed licence"
+    scope: "board file from Digilent's master XDC and reference manual; no build"
+  genesys2:
+    display: Digilent Genesys 2
+    aliases: [genesys 2, genesys2, genesys-2]
+    targetable: true
+    licence_tier: paid
+    trust: documented
+    smoke_note: "the part is outside the installed licence"
+    scope: "board file from Digilent's master XDC; no build"
+  zybo_z7_10:
+    display: Digilent Zybo Z7-10
+    aliases: [zybo z7, zybo z7 10, zybo z7-10, zybo-z7-10]
+    targetable: true
+    licence_tier: free
+    trust: documented
+    scope: "board file from Digilent's master XDC (shared with the Z7-20); no build"
+  zybo_z7_20:
+    display: Digilent Zybo Z7-20
+    aliases: [zybo z7, zybo z7 20, zybo z7-20, zybo-z7-20]
+    targetable: true
+    licence_tier: free
+    trust: documented
+    scope: "board file from Digilent's master XDC; no build"
+  cora_z7_07s:
+    display: Digilent Cora Z7-07S
+    aliases: [cora z7, cora z7 07s, cora z7-07s, cora-z7-07s]
+    targetable: true
+    licence_tier: free
+    trust: documented
+    scope: "board file from Digilent's master XDC; no build"
+  cora_z7_10:
+    display: Digilent Cora Z7-10
+    aliases: [cora z7, cora z7 10, cora z7-10, cora-z7-10]
+    targetable: true
+    licence_tier: free
+    trust: documented
+    scope: "board file from Digilent's master XDC; no build"
+  zedboard:
+    display: ZedBoard (Avnet and Digilent)
+    aliases: [zedboard, zed board, zedboard zynq 7020]
+    targetable: true
+    licence_tier: free
+    trust: hardware
+    evidence:
+      hardware: [results/64b_zedboard/summary.json]
+    scope: "the owner's board ('bump'): bare-metal runs of brief 64B over JTAG (PS, DDR3, fabric DMA chains on the PS clock); the PL user pins (LEDs, switches, buttons, Pmod) were not used by any run"
+  pynq_z2:
+    display: TUL PYNQ-Z2
+    aliases: [pynq z2, pynq-z2, pynqz2]
+    targetable: true
+    licence_tier: free
+    trust: documented
+    scope: "board file from the AMD board file for the board; no build"
+  aup_zu3:
+    display: Real Digital AUP-ZU3
+    aliases: [aup zu3, aup-zu3, aupzu3, real digital aup zu3]
+    targetable: true
+    licence_tier: free
+    trust: documented
+    scope: "board file from Real Digital's board files and reference-design constraints; no build"
+  kv260:
+    display: AMD Kria KV260 Vision AI Starter Kit
+    aliases: [kria kv260, kv260, kv 260]
+    targetable: false
+    licence_tier: free
+    trust: documented
+    smoke_note: "no PL clock or user pin list is documented; a design needs the PS (pl_clk0)"
+    scope: "SOM part from the AMD board file and the user guide; carrier pins not listed"
+  ultra96_v2:
+    display: Avnet Ultra96-V2
+    aliases: [ultra96 v2, ultra96-v2, ultra96v2, ultra96]
+    targetable: false
+    licence_tier: free
+    trust: documented
+    smoke_note: "no PL clock or user LED pin in the board file; a design needs the PS (pl_clk0)"
+    scope: "board file from the AMD board file for the board; no build"
+  zcu104:
+    display: AMD ZCU104
+    aliases: [zcu104, zcu 104]
+    targetable: true
+    licence_tier: paid
+    trust: documented
+    smoke_note: "the part is outside the installed licence"
+    scope: "board file from the AMD board file for the board; no build"
+  adalm_pluto:
+    display: Analog Devices ADALM-Pluto
+    aliases: [adalm pluto, adalm-pluto, plutosdr, pluto sdr, pluto]
+    targetable: false
+    licence_tier: free
+    trust: documented
+    smoke_note: "no user LED, button or free-running clock on a PL pin; the radio interface needs the AD9363 configured by the PS"
+    scope: "radio-interface pins from Analog Devices' reference design; the owner has one but no run used it"
