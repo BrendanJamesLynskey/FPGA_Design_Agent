@@ -16,7 +16,7 @@ class FakeBoard:
         # inject: {restart index: {"stale": 1, "bad": 2, ...}} counters set non-zero at that restart's snapshot (restart = number of clears - 1);
         # drop_orders: {restart index: orders actually fired and sent}; late_orders: snapshots that still show no orders (the tail has not arrived)
         self.inject = inject or {}; self.drop_orders = drop_orders or {}; self.late_orders = late_orders
-        self.clears = 0; self.late_left = 0
+        self.clears = 0; self.late_left = 0; self.stale_acc = 0; self.done = set()      # stale is not cleared by CMD bit 0 on the real design
         self.r = {0x000: 0x96A00001, 0x00C: 0x8, 0x014: 0x3 | (1 << 9) | (1 << 11)}
         self.polarity_ok = polarity_ok
         self.rx = [0] * 16; self.tx = [0] * 26
@@ -36,13 +36,16 @@ class FakeBoard:
         self.r[a] = v
         if a == 0x018 and v & 1:
             self.clears += 1; self.late_left = self.late_orders
-            self.tx = [0] * 26; self.rx = [0] * 16; self.rx[bb.RX["lock_clk"]] = 70
+            self.tx = [0] * 26; self.tx[bb.TX["stale"]] = self.stale_acc; self.rx = [0] * 16; self.rx[bb.RX["lock_clk"]] = 70
         if a == 0x018 and v & 2 and (self.r.get(0x068, 0) & 1) and ((self.r.get(0x068, 0) >> 4) & 3) == 1:      # armed feed frames fire one order each
             n = self.drop_orders.get(self.clears - 1, self.r.get(0x078, 0))
             self.tx[bb.TX["n_order"]] += n; self.rx[bb.RX["fired"]] += n
         if a == 0x018 and v & 4:
             i = self.clears - 1
+            if i not in self.done: self.stale_acc += self.inject.get(i, {}).get("stale", 0); self.done.add(i)
+            self.tx[bb.TX["stale"]] = self.stale_acc
             for k, c in self.inject.get(i, {}).items():
+                if k == "stale": continue
                 (self.tx if k in bb.TX else self.rx)[(bb.TX if k in bb.TX else bb.RX)[k]] = c
             self.mask = self.late_left > 0
             self.late_left = max(0, self.late_left - 1)
@@ -146,3 +149,23 @@ def test_link_never_up_has_no_ok(tmp_path, monkeypatch) -> None:
     monkeypatch.setattr(bb.Board, "wait", lambda self, pred, t, poll_s=0.05: False)
     res = bb.run_all(f, "97: x", tmp_path, cable_loop_m=1.0, n_restarts=3)
     assert res["safety"]["ok"] is False
+
+
+def test_stale_is_judged_as_an_increase(tmp_path, monkeypatch) -> None:
+    # stale is not cleared by CMD bit 0: a constant leftover count must not fail every restart, a rise in one restart must fail that one only
+    f = FakeBoard()
+    orig = f.wr
+    def wr(a, v):
+        orig(a, v)
+        if a == 0x018 and v & 4:
+            f.tx[bb.TX["stale"]] = 3 + (1 if f.clears - 1 >= 4 else 0)
+    f.wr = wr
+    monkeypatch.setattr(bb.Board, "module_info", lambda self: {}); monkeypatch.setattr(bb.Board, "ddm", lambda self: {})
+    monkeypatch.setattr(bb.time, "sleep", lambda s: None)
+    sf = bb.run_all(f, "97: x", tmp_path, cable_loop_m=1.0, n_restarts=6)["safety"]
+    assert sf["ok"] is False and [r["restart"] for r in sf["bad_restarts"]] == [4] and sf["failing_counters"] == ["stale"]
+
+
+def test_nothing_to_judge_is_not_ok() -> None:
+    assert bb.safety_verdict([], 5, 0)["ok"] is False
+    assert bb.safety_verdict([{"tx": {}, "rx": {}}], 0, 1)["ok"] is False

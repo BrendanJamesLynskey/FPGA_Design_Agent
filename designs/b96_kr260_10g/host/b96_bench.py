@@ -167,13 +167,20 @@ def summarise(values: list[int]) -> dict:
 
 
 def settled_snapshot(b: Board, expected_orders: int, tries: int = 10, wait_s: float = 0.02) -> tuple[dict, dict]:
-    """A snapshot taken once the orders have all been sent and fired. The run command returns before the generator has finished (it is held
-    back 200 clocks and then sends `count` frames), so a snapshot taken at once could miss the tail; retake it until `n_order` and `fired` both
-    reach the expected count, or the tries run out (the shortfall is then reported by `safety_verdict`, never hidden)."""
+    """A snapshot taken once the run has stopped moving. The run command returns before the generator has finished, and `late`, `poisoned`, `bad`
+    and `err` land after `n_order` and `fired` do, so the test is: both order counts reached AND two consecutive snapshots agree on every
+    counter except the free-running ones (`ts`, `d_last`). After `tries` retakes the last snapshot is returned; a shortfall is then reported
+    by `safety_verdict`, never hidden."""
+    skip = ("ts", "d_last")
+    def key(tx: dict, rx: dict) -> tuple:
+        return tuple(sorted((k, v) for k, v in {**{"t_" + k: v for k, v in tx.items() if k not in skip}, **{"r_" + k: v for k, v in rx.items()}}.items()))
+    prev = None
     tx, rx = b.snapshot()
     for _ in range(tries):
-        if tx["n_order"] >= expected_orders and rx["fired"] >= expected_orders:
+        cur = key(tx, rx)
+        if prev == cur and tx["n_order"] >= expected_orders and rx["fired"] >= expected_orders:
             break
+        prev = cur
         time.sleep(wait_s)
         tx, rx = b.snapshot()
     return tx, rx
@@ -185,6 +192,8 @@ def safety_verdict(snapshots: list[dict | None], expected_orders: int, n_restart
     snapshots, every counter is present, the eight safety counters are 0 in every restart and orders sent and fired both equal the expected
     count in every restart. Every failing counter is named, with the restart it failed in."""
     reasons: list[str] = []
+    if not (isinstance(n_restarts, int) and n_restarts >= 1 and isinstance(expected_orders, int) and expected_orders >= 1):
+        return {"ok": False, "failing_counters": [], "reasons": [f"nothing to judge: restarts={n_restarts!r}, expected orders={expected_orders!r}"]}
     failing: set[str] = set()
     bad_restarts: list[dict] = []
     sums = {k: 0 for k in SAFETY_TX + SAFETY_RX + ("blocked", "n_order", "fired")}
@@ -234,18 +243,24 @@ def restart_distribution(b: Board, n: int = 100, probes_per_link: int = 5, timeo
     a counter that moved during the relock itself is not seen: the counters judge the traffic of the run, not the restart transient)."""
     E, L, lock_clk, fails = [], [], [], 0
     snapshots: list[dict | None] = []
+    # `stale` is NOT cleared by CMD bit 0 (frame_src resets it only with the TX reset), so it accumulates; judge its increase per restart.
+    stale_prev = b.snapshot()[0]["stale"]
+    pre_clear: list[dict | None] = []
     for i in range(n):
         b.reset(rx_dp=True)
         if not b.wait(lambda s: s["rx_done"] and s["pcs_lock"], timeout_s):
             fails += 1
             snapshots.append(None)
             continue
+        pre_clear.append(dict(zip(("tx", "rx"), b.snapshot())))        # relock transient: recorded, not judged
         b.clear()
         b.configure(kind=2, count=probes_per_link, interval=3000)
         b.run(0.02)
         b.configure(arm=True, kind=1, count=probes_per_link, interval=3000)
         b.run(0.02)
         tx, rx = settled_snapshot(b, probes_per_link)
+        tx = dict(tx, stale_raw=tx["stale"], stale=tx["stale"] - stale_prev)
+        stale_prev = tx["stale_raw"]
         snapshots.append({"tx": tx, "rx": rx})
         lock_clk.append(rx["lock_clk"])
         if tx["e_cnt"]:
@@ -255,7 +270,7 @@ def restart_distribution(b: Board, n: int = 100, probes_per_link: int = 5, timeo
     return {"restarts": n, "failed_to_lock": fails, "lock_clocks": summarise(lock_clk),
             "E_min_per_link": summarise([e[0] for e in E]), "E_max_per_link": summarise([e[1] for e in E]),
             "L_min_per_link": summarise([l[0] for l in L]), "L_max_per_link": summarise([l[1] for l in L]),
-            "safety": safety_verdict(snapshots, probes_per_link, n), "snapshots": snapshots}
+            "safety": safety_verdict(snapshots, probes_per_link, n), "snapshots": snapshots, "pre_clear_snapshots": pre_clear}
 
 
 def decision_latency(E_clocks: float, L_clocks: float) -> float:
