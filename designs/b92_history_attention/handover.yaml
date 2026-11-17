@@ -1,0 +1,511 @@
+# Brief 68 handover: the facts behind README.md and AGENT.md (docs/documentation_standard.md).
+# Measurement values and every sha256 are filled from the records by `python -m flow.handover fill`;
+# do not type them. Render with `python -m flow.handover write <this directory>`.
+schema: fda-handover/1
+id: b92_history_attention
+title: Order-flow history and tiny attention for nanosecond inference, measured
+kind: showcase
+produced_by: human
+summary: A gated study of whether order-flow history helps small integer classifiers on synthetic limit-order-book data,
+  and what it costs in the fabric. A self-exciting generator (Hawkes-type arrivals, sign persistence, informed bursts) makes
+  history matter; lagged features help the 87 trees (gate passed). On one common head, exponentially decaying sums and a
+  learned fixed window each add about 0.015 test accuracy over the history-free head, while two softmax-free tiny attentions
+  end about 0.012 below the decaying sums, so no attention block was built in Vivado. The stateful arms are bit-exact against
+  a twin and built out of context on the K26 and the Artix-7 100T.
+scope_not:
+- real market data; both generators are seeded synthetic order flow with planted structure
+- a board run or a full-design build; every hardware number is an out-of-context, post-route Vivado 2026.1 build
+- 'an attention block in the fabric: it lost at the stage 2 test, so its RTL was simulated against its twin but never built'
+- a model of a real market; the clustering is exponential and short-memory (docs/what_we_found.md section 2)
+target:
+  part: xck26-sfvc784-2LV-c
+  board: Kria KR260 (K26 SOM); also xc7a100tcsg324-1 (Nexys A7) out of context
+  top: b92_<arm> (a stateful front end and a head), out of context, behind an input register
+  tool: Vivado 2026.1
+  note: no board top; the arms take the 87 features plus three event terms (docs/generator.md)
+clocks:
+- name: clk
+  mhz: 80.6
+  source: results/b92/ooc/k26/b92_a1_decay.json
+  note: closed clocks differ per module; every module's closed clock is in results/b92/ooc/<part>/<module>.json
+resets:
+- name: rst
+  active: high
+  note: synchronous; clears the valid pipeline and the front end's state (sums, window); never the datapath or out_cls
+interfaces:
+- name: arm ports
+  type: clk, rst, in_v, in_f[50:0] (87 features, then ts+1, sv+8, ofi+31), out_v, out_cls[1:0]
+  doc: designs/b92_history_attention/docs/generator.md
+  note: state advances only on in_v; out_v follows in_v by exactly LATENCY clocks; ties go to the lower class
+- name: generator and training API
+  type: Python (hist.hawkes_sim, hist.frontends, hist.attn, hist.stage2, hist.rtl)
+  doc: designs/b92_history_attention/docs/generator.md
+  note: options and the behaviours a user could guess wrong are listed in the datasheet
+parameters:
+- name: decay rate pair
+  value: shifts 2 and 4 (chosen on validation from 1/3, 2/4, 3/5, 4/6)
+  legal: any shift pair
+  note: time constants about 4 and 16 events
+- name: window length
+  value: 8 and 16 events
+  legal: any N
+  note: cost grows with the window
+- name: attention
+  value: N=16, key size 4, value size 4, forms top1 and relu
+  legal: fixed in this brief
+  note: not built in Vivado
+files:
+- path: designs/b92_history_attention/hist/hawkes_sim.py
+  what: the self-exciting generator
+  sha256: 34ad166fc0b03f3ad9f3fdedbb815796735e7b28b84a099a61020f7434b7651c
+- path: designs/b92_history_attention/hist/prims.py
+  what: both generators behind one interface, history columns
+  sha256: ede1e37f5d4c80c45f06231ac0c0c5365d769c71f28c07c4222c5f17b46ce865
+- path: designs/b92_history_attention/hist/gen_stats.py
+  what: generator statistics
+  sha256: f279cbee315f393b1095220253213b8160679ef561567bed677e0004108a36de
+- path: designs/b92_history_attention/hist/stage1.py
+  what: stage 1, the gate
+  sha256: 7badb80dd2b298e0079e791acf2270f0f2b3f66ae2a694760edaf800afebfe38
+- path: designs/b92_history_attention/hist/tokens.py
+  what: tokens and split data
+  sha256: ede96dfab1a56ccf02c00f9b828ba31c44a04eac83c92503da7512282a4b95e7
+- path: designs/b92_history_attention/hist/frontends.py
+  what: decaying sums and window codes
+  sha256: f8ea826c771e6628a61e5998dd4b07145464e4e478b0410bbc0b1ca0ff0fe6ef
+- path: designs/b92_history_attention/hist/attn.py
+  what: 'tiny attention: trainer and integer twin'
+  sha256: e931c38ce73140bb6d181b1a0bc95caa48499b8418e3b509feb1dd845d55971c
+- path: designs/b92_history_attention/hist/stage2.py
+  what: stage 2 arms, freeze, test scoring
+  sha256: 87ebb7bce621f9db197ccf85433a870829e3aa7f0018802060c381310d6f962d
+- path: designs/b92_history_attention/hist/rtl.py
+  what: SystemVerilog emitters of the stateful arms
+  sha256: a2a78de058e991b2ff30c6bec00c101aa3452ef316d9f027f99b44617f335c95
+- path: designs/b92_history_attention/hist/stream.py
+  what: port packing and the stream twin
+  sha256: 78450c83cb0a7d024be06fe40abc475b2644b9e4d22aed4e3d604c079b6aa461
+- path: designs/b92_history_attention/hist/sim.py
+  what: Icarus runner
+  sha256: 40f06c15c1b09a28dea336ef419ecac328fc6255dea390dd076ec09716b9d638
+- path: designs/b92_history_attention/hist/cli.py
+  what: RTL generation
+  sha256: d8dac770a376fe449fb67b622e964b12bb4ead5d61487f894453d3dd14164955
+- path: designs/b92_history_attention/hist/importance.py
+  what: tree split importance
+  sha256: fdd9d9bb8f8cad1f9e261e6ae25223d7a99d49eec86ab2b383d0aad78bc43131
+- path: designs/b92_history_attention/tb/tb_stream.sv
+  what: stream test bench
+  sha256: c9bbb039867ea0758fed3065ce2546e9c8e4260d2d940547a62fbedc23dbacb2
+- path: designs/b92_history_attention/ooc/ooc.py
+  what: out-of-context clock search
+  sha256: b1b085d9e15990f94a60c011b84ed81c54841bcd9dbeea1c5176d24aa504ea63
+- path: designs/b92_history_attention/docs/design.md
+  what: design note
+  sha256: 6fec52d0aa518e4bff785b1e878efc72c94475f54ea6c4480aa52cb3b209f672
+- path: designs/b92_history_attention/docs/preregistration.md
+  what: pre-registration, stages 0-1
+  sha256: abd96614e0d3b9ff2c7ae36247f857cda97ee2cea48789ac7ae9cc04c7787551
+- path: designs/b92_history_attention/docs/preregistration_stage2.md
+  what: pre-registration, stage 2
+  sha256: 83c49887e1d717db17f0d8a817f452374ff56f6760463625fc4cc1ced42563be
+- path: designs/b92_history_attention/docs/what_we_found.md
+  what: the write-up
+  sha256: c3c5c1eeea060b84a5ab532ef22ea2037e062b1d9616598a36f0ecfbb1dc7a9a
+- path: designs/b92_history_attention/docs/generator.md
+  what: datasheet
+  sha256: e952618e0ffa7c5fe874a831f579321378653f14e5383f5bc73f8db28f6a7480
+- path: results/b92/summary.py
+  what: summary and figures
+  sha256: 897425ffae59a68f0e3327f86b92d4ff0f5b2581b6ea0c22e4232d17dbb485c3
+- path: results/b92/tables.py
+  what: tables
+  sha256: 4a451e5ecb419842f14c1405af393a462801cbc726e6abfa99459e1595c2c1f0
+commands:
+- what: generator statistics, stage 1 (validation, then test after the selection is committed)
+  cmd: python3 -m designs.b92_history_attention.hist.gen_stats && python3 -m designs.b92_history_attention.hist.stage1 val
+    && python3 -m designs.b92_history_attention.hist.stage1 test
+  heavy: false
+  minutes: 50
+  needs: torch not needed; scikit-learn; a 5 GB memory scope; two workers
+- what: 'stage 2: fit, freeze, then score the test split'
+  cmd: python3 -m designs.b92_history_attention.hist.stage2 fit && python3 -m designs.b92_history_attention.hist.stage2
+    freeze && python3 -m designs.b92_history_attention.hist.stage2 test
+  heavy: false
+  minutes: 45
+  needs: torch (CPU); a 5 GB memory scope; two workers; commit the freeze before the test step
+- what: generate RTL, check against the twins, lint
+  cmd: python3 -m designs.b92_history_attention.hist.cli rtl && B92_RECORD=results/b92 python3 -m pytest -q designs/b92_history_attention/tests
+  heavy: false
+  minutes: 10
+  needs: Icarus Verilog 12, Verilator 5
+- what: out-of-context builds and clock search on both parts
+  cmd: python3 -m designs.b92_history_attention.ooc.ooc --part xck26-sfvc784-2LV-c --arms b92_ref_current b92_a1_decay b92_a4_lut
+    b92_a2_win8 b92_a2_win16 && python3 -m designs.b92_history_attention.ooc.ooc --part xc7a100tcsg324-1 --arms ... --start
+    30.0
+  heavy: true
+  minutes: 240
+  needs: Vivado 2026.1 and a heavy slot
+- what: summary, figures and tables
+  cmd: python3 results/b92/summary.py && python3 results/b92/tables.py
+  heavy: false
+  minutes: 1
+  needs: python 3.12
+evidence:
+- id: E1
+  activity: simulation
+  result: pass
+  how: ci
+  what: every stateful arm equals its stream twin on all 100,000 events of the ten test sessions, 20,000 random events and
+    9,000 extreme-input events, with one fixed latency; Verilator -Wall clean
+  record: designs/b92_history_attention/tests/test_b92_rtl.py
+  sha256: 44817e5f086817d76a72c6f35233e9e8646d377c9b35740783cfd4d1ad1794b4
+- id: E2
+  activity: build
+  result: pass
+  what: out-of-context, post-route builds of five arms on the K26 and the Artix-7 100T with a clock search; every recorded
+    clock closed setup, hold and pulse width
+  record: results/b92/summary.json
+  sha256: 784bedbf706f29595cdd4b589bfe8b4f110bd84ae4624431a47321fc62052d19
+measurements:
+- id: M1
+  what: history-free head test accuracy
+  category: other
+  key: ref_current_acc
+  unit: fraction
+  record: results/b92/summary.json
+  field: arms.ref_current.test_accuracy
+  conditions: retained test rows of the 10 test sessions; synthetic self-exciting order flow; built seed
+  value: 0.4844
+  sha256: 784bedbf706f29595cdd4b589bfe8b4f110bd84ae4624431a47321fc62052d19
+- id: M2
+  what: decaying sums test accuracy
+  category: other
+  key: a1_decay_acc
+  unit: fraction
+  record: results/b92/summary.json
+  field: arms.a1_decay.test_accuracy
+  conditions: retained test rows of the 10 test sessions; synthetic self-exciting order flow; built seed
+  value: 0.4997
+  sha256: 784bedbf706f29595cdd4b589bfe8b4f110bd84ae4624431a47321fc62052d19
+- id: M3
+  what: window N=8 test accuracy
+  category: other
+  key: a2_win8_acc
+  unit: fraction
+  record: results/b92/summary.json
+  field: arms.a2_win8.test_accuracy
+  conditions: retained test rows of the 10 test sessions; synthetic self-exciting order flow; built seed
+  value: 0.5008
+  sha256: 784bedbf706f29595cdd4b589bfe8b4f110bd84ae4624431a47321fc62052d19
+- id: M4
+  what: window N=16 test accuracy
+  category: other
+  key: a2_win16_acc
+  unit: fraction
+  record: results/b92/summary.json
+  field: arms.a2_win16.test_accuracy
+  conditions: retained test rows of the 10 test sessions; synthetic self-exciting order flow; built seed
+  value: 0.5009
+  sha256: 784bedbf706f29595cdd4b589bfe8b4f110bd84ae4624431a47321fc62052d19
+- id: M5
+  what: attention top-1 test accuracy
+  category: other
+  key: a3_top1_acc
+  unit: fraction
+  record: results/b92/summary.json
+  field: arms.a3_top1.test_accuracy
+  conditions: retained test rows of the 10 test sessions; synthetic self-exciting order flow; built seed
+  value: 0.4873
+  sha256: 784bedbf706f29595cdd4b589bfe8b4f110bd84ae4624431a47321fc62052d19
+- id: M6
+  what: attention ReLU-linear test accuracy
+  category: other
+  key: a3_relu_acc
+  unit: fraction
+  record: results/b92/summary.json
+  field: arms.a3_relu.test_accuracy
+  conditions: retained test rows of the 10 test sessions; synthetic self-exciting order flow; built seed
+  value: 0.4878
+  sha256: 784bedbf706f29595cdd4b589bfe8b4f110bd84ae4624431a47321fc62052d19
+- id: M7
+  what: LUT net on the sums test accuracy
+  category: other
+  key: a4_lut_acc
+  unit: fraction
+  record: results/b92/summary.json
+  field: arms.a4_lut.test_accuracy
+  conditions: retained test rows of the 10 test sessions; synthetic self-exciting order flow; built seed
+  value: 0.4885
+  sha256: 784bedbf706f29595cdd4b589bfe8b4f110bd84ae4624431a47321fc62052d19
+- id: M8
+  what: decaying sums minus the history-free head, paired
+  category: other
+  key: decay_vs_head
+  unit: fraction
+  record: results/b92/summary.json
+  field: arms.a1_decay.paired_vs.ref_current.difference_mean
+  conditions: built seeds; 95% interval in the record
+  value: 0.0153
+  sha256: 784bedbf706f29595cdd4b589bfe8b4f110bd84ae4624431a47321fc62052d19
+- id: M9
+  what: attention top-1 minus decaying sums, paired
+  category: other
+  key: attn_top1_vs_decay
+  unit: fraction
+  record: results/b92/summary.json
+  field: attention_vs_decay.a3_top1.difference_mean
+  conditions: built seeds; 95% interval in the record
+  value: -0.0124
+  sha256: 784bedbf706f29595cdd4b589bfe8b4f110bd84ae4624431a47321fc62052d19
+- id: M10
+  what: 'gate: lagged-feature trees minus current-feature trees, self-exciting generator'
+  category: other
+  key: gate_difference
+  unit: fraction
+  record: results/b92/summary.json
+  field: gate.gate_difference.hawkes.mean
+  conditions: 3-seed mean per session; 95% interval in the record
+  value: 0.0067
+  sha256: 784bedbf706f29595cdd4b589bfe8b4f110bd84ae4624431a47321fc62052d19
+- id: M11
+  what: ref_current K26 LUTs
+  category: resources
+  key: ref_current_k26_lut
+  unit: LUT
+  record: results/b92/summary.json
+  field: arms.ref_current.hardware.k26.lut
+  conditions: out of context, post-route, Vivado 2026.1, one thread
+  value: 1619
+  sha256: 784bedbf706f29595cdd4b589bfe8b4f110bd84ae4624431a47321fc62052d19
+- id: M12
+  what: ref_current K26 latency
+  category: latency
+  key: ref_current_k26_lat
+  unit: ns
+  record: results/b92/summary.json
+  field: arms.ref_current.hardware.k26.latency_ns
+  conditions: clocks x max(closed period, 2.0 ns); out of context, Vivado 2026.1
+  value: 10.2
+  sha256: 784bedbf706f29595cdd4b589bfe8b4f110bd84ae4624431a47321fc62052d19
+- id: M13
+  what: ref_current Artix-7 LUTs
+  category: resources
+  key: ref_current_a7_lut
+  unit: LUT
+  record: results/b92/summary.json
+  field: arms.ref_current.hardware.a7.lut
+  conditions: out of context, post-route, Vivado 2026.1, one thread
+  value: 1214
+  sha256: 784bedbf706f29595cdd4b589bfe8b4f110bd84ae4624431a47321fc62052d19
+- id: M14
+  what: ref_current Artix-7 latency
+  category: latency
+  key: ref_current_a7_lat
+  unit: ns
+  record: results/b92/summary.json
+  field: arms.ref_current.hardware.a7.latency_ns
+  conditions: clocks x max(closed period, 2.0 ns); out of context, Vivado 2026.1
+  value: 30.55
+  sha256: 784bedbf706f29595cdd4b589bfe8b4f110bd84ae4624431a47321fc62052d19
+- id: M15
+  what: a1_decay K26 LUTs
+  category: resources
+  key: a1_decay_k26_lut
+  unit: LUT
+  record: results/b92/summary.json
+  field: arms.a1_decay.hardware.k26.lut
+  conditions: out of context, post-route, Vivado 2026.1, one thread
+  value: 2313
+  sha256: 784bedbf706f29595cdd4b589bfe8b4f110bd84ae4624431a47321fc62052d19
+- id: M16
+  what: a1_decay K26 latency
+  category: latency
+  key: a1_decay_k26_lat
+  unit: ns
+  record: results/b92/summary.json
+  field: arms.a1_decay.hardware.k26.latency_ns
+  conditions: clocks x max(closed period, 2.0 ns); out of context, Vivado 2026.1
+  value: 24.8
+  sha256: 784bedbf706f29595cdd4b589bfe8b4f110bd84ae4624431a47321fc62052d19
+- id: M17
+  what: a1_decay Artix-7 LUTs
+  category: resources
+  key: a1_decay_a7_lut
+  unit: LUT
+  record: results/b92/summary.json
+  field: arms.a1_decay.hardware.a7.lut
+  conditions: out of context, post-route, Vivado 2026.1, one thread
+  value: 2127
+  sha256: 784bedbf706f29595cdd4b589bfe8b4f110bd84ae4624431a47321fc62052d19
+- id: M18
+  what: a1_decay Artix-7 latency
+  category: latency
+  key: a1_decay_a7_lat
+  unit: ns
+  record: results/b92/summary.json
+  field: arms.a1_decay.hardware.a7.latency_ns
+  conditions: clocks x max(closed period, 2.0 ns); out of context, Vivado 2026.1
+  value: 64.1
+  sha256: 784bedbf706f29595cdd4b589bfe8b4f110bd84ae4624431a47321fc62052d19
+- id: M19
+  what: a4_lut K26 LUTs
+  category: resources
+  key: a4_lut_k26_lut
+  unit: LUT
+  record: results/b92/summary.json
+  field: arms.a4_lut.hardware.k26.lut
+  conditions: out of context, post-route, Vivado 2026.1, one thread
+  value: 554
+  sha256: 784bedbf706f29595cdd4b589bfe8b4f110bd84ae4624431a47321fc62052d19
+- id: M20
+  what: a4_lut K26 latency
+  category: latency
+  key: a4_lut_k26_lat
+  unit: ns
+  record: results/b92/summary.json
+  field: arms.a4_lut.hardware.k26.latency_ns
+  conditions: clocks x max(closed period, 2.0 ns); out of context, Vivado 2026.1
+  value: 9.0
+  sha256: 784bedbf706f29595cdd4b589bfe8b4f110bd84ae4624431a47321fc62052d19
+- id: M21
+  what: a4_lut Artix-7 LUTs
+  category: resources
+  key: a4_lut_a7_lut
+  unit: LUT
+  record: results/b92/summary.json
+  field: arms.a4_lut.hardware.a7.lut
+  conditions: out of context, post-route, Vivado 2026.1, one thread
+  value: 441
+  sha256: 784bedbf706f29595cdd4b589bfe8b4f110bd84ae4624431a47321fc62052d19
+- id: M22
+  what: a4_lut Artix-7 latency
+  category: latency
+  key: a4_lut_a7_lat
+  unit: ns
+  record: results/b92/summary.json
+  field: arms.a4_lut.hardware.a7.latency_ns
+  conditions: clocks x max(closed period, 2.0 ns); out of context, Vivado 2026.1
+  value: 27.9
+  sha256: 784bedbf706f29595cdd4b589bfe8b4f110bd84ae4624431a47321fc62052d19
+- id: M23
+  what: a2_win8 K26 LUTs
+  category: resources
+  key: a2_win8_k26_lut
+  unit: LUT
+  record: results/b92/summary.json
+  field: arms.a2_win8.hardware.k26.lut
+  conditions: out of context, post-route, Vivado 2026.1, one thread
+  value: 3250
+  sha256: 784bedbf706f29595cdd4b589bfe8b4f110bd84ae4624431a47321fc62052d19
+- id: M24
+  what: a2_win8 K26 latency
+  category: latency
+  key: a2_win8_k26_lat
+  unit: ns
+  record: results/b92/summary.json
+  field: arms.a2_win8.hardware.k26.latency_ns
+  conditions: clocks x max(closed period, 2.0 ns); out of context, Vivado 2026.1
+  value: 26.5
+  sha256: 784bedbf706f29595cdd4b589bfe8b4f110bd84ae4624431a47321fc62052d19
+- id: M25
+  what: a2_win8 Artix-7 LUTs
+  category: resources
+  key: a2_win8_a7_lut
+  unit: LUT
+  record: results/b92/summary.json
+  field: arms.a2_win8.hardware.a7.lut
+  conditions: out of context, post-route, Vivado 2026.1, one thread
+  value: 2882
+  sha256: 784bedbf706f29595cdd4b589bfe8b4f110bd84ae4624431a47321fc62052d19
+- id: M26
+  what: a2_win8 Artix-7 latency
+  category: latency
+  key: a2_win8_a7_lat
+  unit: ns
+  record: results/b92/summary.json
+  field: arms.a2_win8.hardware.a7.latency_ns
+  conditions: clocks x max(closed period, 2.0 ns); out of context, Vivado 2026.1
+  value: 70.3
+  sha256: 784bedbf706f29595cdd4b589bfe8b4f110bd84ae4624431a47321fc62052d19
+- id: M27
+  what: a2_win16 K26 LUTs
+  category: resources
+  key: a2_win16_k26_lut
+  unit: LUT
+  record: results/b92/summary.json
+  field: arms.a2_win16.hardware.k26.lut
+  conditions: out of context, post-route, Vivado 2026.1, one thread
+  value: 5372
+  sha256: 784bedbf706f29595cdd4b589bfe8b4f110bd84ae4624431a47321fc62052d19
+- id: M28
+  what: a2_win16 K26 latency
+  category: latency
+  key: a2_win16_k26_lat
+  unit: ns
+  record: results/b92/summary.json
+  field: arms.a2_win16.hardware.k26.latency_ns
+  conditions: clocks x max(closed period, 2.0 ns); out of context, Vivado 2026.1
+  value: 26.8
+  sha256: 784bedbf706f29595cdd4b589bfe8b4f110bd84ae4624431a47321fc62052d19
+- id: M29
+  what: a2_win16 Artix-7 LUTs
+  category: resources
+  key: a2_win16_a7_lut
+  unit: LUT
+  record: results/b92/summary.json
+  field: arms.a2_win16.hardware.a7.lut
+  conditions: out of context, post-route, Vivado 2026.1, one thread
+  value: 4482
+  sha256: 784bedbf706f29595cdd4b589bfe8b4f110bd84ae4624431a47321fc62052d19
+- id: M30
+  what: a2_win16 Artix-7 latency
+  category: latency
+  key: a2_win16_a7_lat
+  unit: ns
+  record: results/b92/summary.json
+  field: arms.a2_win16.hardware.a7.latency_ns
+  conditions: clocks x max(closed period, 2.0 ns); out of context, Vivado 2026.1
+  value: 72.7
+  sha256: 784bedbf706f29595cdd4b589bfe8b4f110bd84ae4624431a47321fc62052d19
+gaps:
+- about: board_run
+  text: Not run on a board and not built inside the 58A top; out of context only.
+- about: timing
+  text: Out of context the clock has no buffer or jitter, so every latency is quoted at no faster than 2.0 ns; the arms
+    have two registered stages before the output (three for attention).
+- about: power
+  text: Not measured; the out-of-context builds have no power report.
+- about: data
+  text: Two synthetic generators with planted structure; the ranking of history mechanisms may not hold on real order flow.
+- about: attention
+  text: Attention was trained with a throwaway head, frozen, then given the common head; its negative result holds for that
+    recipe only. It was not built in Vivado.
+- about: comparison
+  text: Many paired intervals over 10 sessions, uncorrected; the gain of the sums over the history-free head has a lower
+    bound of +0.004.
+- about: throughput
+  text: Every arm accepts one event a clock (the RTL test streams half the events back to back).
+- about: behaviour
+  text: 'Guessable wrongly: state is cleared by rst and advances only on in_v; the first N outputs after a reset use an
+    empty history; shifts floor; ties go to the lower class and, in attention, to the most recent event.'
+next_steps:
+- End-to-end training of attention and head, with learned shifts, on a generator whose relevant events depend on context.
+- Merge the front end and the head into one clock and measure the period it costs.
+- Weights written by the slow loop through a descriptor with a model id and schema check (87 phase 2).
+open_questions:
+- Would a power-of-two softmax approximation close the gap, or is the data simply too simple for content-dependent weights?
+history:
+- date: '2026-11-16'
+  brief: '92'
+  note: generator, gated stages, pre-registered scoring, stateful RTL, out-of-context builds on both parts, write-up
+numbers_allow: []
+state:
+  stage: built
+  gates:
+    rtl_equals_twin: pass
+    ooc_build_2026_1: pass
+    board_run: not-run
+  vivado: '2026.1'
+  kb_pin: 2338b83
+  build_id: null
