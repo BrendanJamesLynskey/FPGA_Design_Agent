@@ -7,6 +7,7 @@ every ``hw`` test is skipped, so CI and a plain ``pytest`` never touch a serial 
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
@@ -37,6 +38,18 @@ def pytest_collection_modifyitems(config: pytest.Config, items: list[pytest.Item
     for item in items:
         if "hw" in item.keywords:
             item.add_marker(skip)
+
+
+@pytest.hookimpl(wrapper=True)
+def pytest_runtest_call(item):
+    """Brief 99: a fork pull request has no token for the private prompts (the workflow sets FDA_PROMPTS_SKIP_NOTICE=1 and prints a
+    notice), so a test that needs a prompt skips there. Anywhere else a missing prompt is a failure, never a skip."""
+    try:
+        return (yield)
+    except Exception as e:
+        if type(e).__name__ == "PromptUnavailable" and os.environ.get("FDA_PROMPTS_SKIP_NOTICE") == "1":
+            pytest.skip("private prompts are not available here (fork pull request)")
+        raise
 
 
 @pytest.fixture(autouse=True)

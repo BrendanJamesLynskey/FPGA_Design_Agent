@@ -209,3 +209,50 @@ def test_record_keeps_hashes_not_text():
 def test_the_closure_task_record_is_a_hash_file():
     src = (Path(__file__).resolve().parents[1] / "graph" / "ip_closure_task.py").read_text()
     assert '"task.txt"' not in src and '"task.json"' in src
+
+
+def _drive_hook(exc):
+    import conftest
+    g = conftest.pytest_runtest_call(None)
+    next(g)
+    try:
+        g.throw(exc)
+    except StopIteration:
+        return None
+
+
+def test_a_missing_prompt_skips_only_where_the_workflow_says_it_is_a_fork(monkeypatch):
+    monkeypatch.setenv("FDA_PROMPTS_SKIP_NOTICE", "1")
+    with pytest.raises(pytest.skip.Exception):
+        _drive_hook(P.PromptUnavailable("x"))
+    with pytest.raises(ValueError):                                         # other errors are never skipped
+        _drive_hook(ValueError("x"))
+    monkeypatch.delenv("FDA_PROMPTS_SKIP_NOTICE")
+    with pytest.raises(P.PromptUnavailable):                                # a trusted run fails
+        _drive_hook(P.PromptUnavailable("x"))
+
+
+def test_no_prompt_text_in_the_tracked_files():
+    """Brief 99 step 2, the CI gate: no tracked file holds 12 consecutive words of a private prompt, except the entries of
+    tools/prompts/leak_allow.txt (each with a reason). Where the prompts are not available (a fork pull request) the loader raises and
+    the conftest hook skips this test with the workflow's notice; on any other run a missing prompt fails it."""
+    from tools.prompts import leak_scan
+    allow = leak_scan.read_allow(leak_scan.ROOT / "tools" / "prompts" / "leak_allow.txt")
+    assert allow and all((leak_scan.ROOT / a).exists() for a in allow), "an allow-list entry names a path that does not exist"
+    hits = leak_scan.scan(P.prompts_dir(), leak_scan.DEFAULT_WORDS)           # one scan; the allow-list is applied below
+
+    def covered(path, a):
+        return path == a or (a.endswith("/") and path.startswith(a))
+    loose = [(h[0], h[1], h[2]) for h in hits if not any(covered(h[0], a) for a in allow)]
+    assert not loose, loose                                                  # path, line and prompt name; never text
+    stale = [a for a in allow if not any(covered(h[0], a) for h in hits)]
+    assert not stale, f"allow-list entries that no longer cover anything: {stale}"
+
+
+def test_every_moved_prompt_still_has_its_recorded_hash():
+    """The snapshot of the moved prompts: each prompt's SHA-256 as committed at the move (``fixtures/b99_prompt_hashes.json``). A prompt
+    change shows here by name, without the text, and has to be re-pinned on purpose."""
+    snap = json.loads((Path(__file__).parent / "fixtures" / "b99_prompt_hashes.json").read_text())
+    assert sorted(snap) == sorted(P.read_pin()["names"])
+    changed = [n for n, sha in snap.items() if hashlib.sha256(P.load(n).encode("utf-8")).hexdigest() != sha]
+    assert not changed, changed

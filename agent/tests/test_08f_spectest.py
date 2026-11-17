@@ -16,6 +16,7 @@ from agent.core.runner import LocalRunner, RunResult
 from agent.core.session import ROOT
 from agent.graph import repair, roles, spectest
 from agent.graph import run as gr
+from agent.tests.prompt_checks import has
 
 HAVE_ICARUS = shutil.which("iverilog") is not None
 
@@ -90,7 +91,7 @@ def test_the_role_sees_the_request_the_interview_and_the_board_but_nothing_of_th
         assert secret not in p
     assert "uart_bfm" not in p                                              # a no-shell design gets no shell material
     (design / ".no_shell").unlink()
-    assert "UartBfm" in spectest.role_prompt(design, "nexys_a7_100t")
+    assert has(spectest.role_prompt(design, "nexys_a7_100t"), "25819a6528cd0f5f6e37b04031fbdc9e4ff47dc20f0b3dea43949f98ed53fe07:7")        # the spec-test role is told about the UART bus-functional model
 
 
 def test_the_spec_test_role_has_no_jail_entry_and_the_four_roles_are_untouched():

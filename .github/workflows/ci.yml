@@ -37,7 +37,7 @@ jobs:
         id: prompts
         env:
           KB_TOKEN: ${{ secrets.FDA_KB_READ_TOKEN }}
-          IS_FORK: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
+          IS_FORK: ${{ github.event_name == 'pull_request' && (github.event.pull_request.head.repo.full_name != github.repository || github.actor == 'dependabot[bot]') }}      # a fork, or Dependabot (its pull requests get no repository secrets)
         run: |
           # nothing pinned yet (agent/core/prompts_pin.json "kb_commit" null): no private prompts are needed
           kb=$(python3 -c 'import json; print(json.load(open("agent/core/prompts_pin.json"))["kb_commit"] or "")')

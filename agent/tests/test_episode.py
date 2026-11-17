@@ -16,6 +16,7 @@ pytest.importorskip("deepagents")
 from agent.core.runner import RunResult  # noqa: E402
 from agent.graph import run as gr  # noqa: E402
 from agent.graph.llm import Reply  # noqa: E402
+from agent.tests.prompt_checks import has  # noqa: E402
 
 T1 = Path(__file__).resolve().parents[2] / "designs" / "t1_dimmer_counter"
 from agent.core.session import ROOT as ROOT_  # noqa: E402
@@ -106,8 +107,8 @@ def scripted_client(seen, where):
 
     def client(messages, tools=None):
         system = messages[0]["content"]
-        role = ("clarify" if "turn a short design request" in system else "model" if "You are the Modeller" in system
-                else "tests" if ("cocotb tests" in system or "bring-up tests" in system) else "rtl")
+        role = ("clarify" if has(system, "8632ae844c432880151fc892a53c48a481556271e741731313ffc01e7f820c27:27") else "model" if has(system, "e4be652be8848ef383971d6e8b43066f1a8addd11d31d17bdb6e9a461b909023:20")
+                else "tests" if (has(system, "c1819ba15bddbbf6f654bd0e4e9c0a38a63c3873312c6fdd6dac7e8230a25dce:12") or has(system, "809582ceaa46bca363cc457baa25c43c06367074989c996d04aa816d74cd2d68:14")) else "rtl")      # which role's prompt this is
         seen.append({"role": role, "user": messages[1]["content"] if len(messages) > 1 else ""})
         if messages[-1]["role"] == "tool":
             return Reply("DONE", [])

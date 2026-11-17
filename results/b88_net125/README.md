@@ -53,7 +53,7 @@ In-context timing behind eth_mac_rgmii; the Nexys design was re-simulated (43 te
 
 ## Records
 
-Per agent run: `<case>/` (`history.jsonl`, `summary.json`, `closure_actions.jsonl`, `llm_calls.jsonl`, `task.txt`, `rtl_final/`) and `<case>.log`; hand runs `hand_*` (build only); `faults_*.json` and `faults_reexpressed.json` (seeded faults after the change); `nexys_design_tests.log`, `full_tests.log` (local test runs); `hand_rtl/` (the hand RTL); `run.sh`, `chainB.sh`, `chainC.sh` (how the runs were started). Measurements: `ip_lib/<block>/char/*.json`.
+Per agent run: `<case>/` (`history.jsonl`, `summary.json`, `closure_actions.jsonl`, `llm_calls.jsonl`, `task.json` (the task text's hash; the text itself is in the private knowledge repository), `rtl_final/`) and `<case>.log`; hand runs `hand_*` (build only); `faults_*.json` and `faults_reexpressed.json` (seeded faults after the change); `nexys_design_tests.log`, `full_tests.log` (local test runs); `hand_rtl/` (the hand RTL); `run.sh`, `chainB.sh`, `chainC.sh` (how the runs were started). Measurements: `ip_lib/<block>/char/*.json`.
 
 ## Reproduce
 

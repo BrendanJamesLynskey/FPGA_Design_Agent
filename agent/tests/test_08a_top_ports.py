@@ -15,6 +15,7 @@ from agent.core import dispatch
 from agent.core import tools as tl
 from agent.graph import run as gr
 from agent.tests.test_05c2_fixes import rt  # noqa: F401  (the runtime fixture)
+from agent.tests.prompt_checks import has
 
 ROOT = Path(__file__).resolve().parents[2]
 BOARD = ROOT / "boards" / "nexys_a7_100t"
@@ -100,4 +101,4 @@ def test_check_constraints_tool_reports_a_spec_port_missing_on_the_top(rt) -> No
 
 
 def test_rtl_role_convention_names_both_rules() -> None:
-    assert "FDA-CON-8" in gr.CONVENTIONS and "FDA-CON-9" in gr.CONVENTIONS and "UART_TXD_IN" in gr.CONVENTIONS
+    assert has(gr.CONVENTIONS, "262430e3b3cdb6e0414f4df52033648527f93ba55371ce3b1efca276960a335c:9") and has(gr.CONVENTIONS, "70135673384964d8de7b11dd39857adaf30ed4fab6fb363d9e5cf46d2b9600e9:9") and has(gr.CONVENTIONS, "cae95f4bf3b7c442e25c3421982e0e48ac05a76287fec9c50831f03b3e32815c:11")        # the conventions cite rules 8 and 9 and the UART pins
