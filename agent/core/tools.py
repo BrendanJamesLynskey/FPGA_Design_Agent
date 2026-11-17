@@ -1173,3 +1173,4 @@ def bringup(s: Session) -> dict:
 # brief 50A: the debug tools (debug_plan, debug_capture, debug_query) register themselves on import
 from agent.core import debug_tools as _debug_tools  # noqa: E402,F401
 from agent.core import axi_tools as _axi_tools  # noqa: E402,F401  (brief 59A: registers axi_program_check, axi_simulate, axi_board_run)
+from agent.core import latency_tools as _latency_tools  # noqa: E402,F401  (brief 97: registers latency_path, latency_budget)
