@@ -55,6 +55,7 @@ jobs:
           ref: ${{ steps.prompts.outputs.kb }}
           token: ${{ secrets.FDA_KB_READ_TOKEN }}
           path: _kb
+          persist-credentials: false
           sparse-checkout: prompts
       - name: Private prompts - point the tests at them
         if: steps.prompts.outputs.fetch == 'yes'

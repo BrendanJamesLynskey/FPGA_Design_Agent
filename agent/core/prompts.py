@@ -63,6 +63,8 @@ def _manifest(root: Path, pin: dict) -> dict:
         raise PromptUnavailable(f"prompt manifest not found at {mf}: set {ENV_DIR} or check out the private knowledge "
                                 f"repository at the pinned commit") from None
     want = pin.get("manifest_sha256")
+    if (pin.get("kb_commit") or pin.get("names")) and not (isinstance(want, str) and re.fullmatch(r"[0-9a-f]{64}", want)):
+        raise PromptUnavailable("the pin names a private commit or prompts but has no valid manifest_sha256: pin is incomplete")
     if want and os.environ.get(ENV_UNPINNED) != "1" and _sha(raw) != want:
         raise PromptUnavailable(f"prompt manifest hash {_sha(raw)[:12]} is not the pinned {want[:12]} "
                                 f"(private repository commit {str(pin.get('kb_commit'))[:12]}); re-pin or check out the pin")
@@ -75,13 +77,15 @@ def _manifest(root: Path, pin: dict) -> dict:
 
 def load(name: str, *, root: Path | None = None, pin: dict | None = None) -> str:
     """The prompt called ``name``, exactly as stored. Raises :class:`PromptUnavailable`; never returns other text."""
-    if not NAME_RE.match(name or ""):
+    if not isinstance(name, str) or not NAME_RE.fullmatch(name):
         raise PromptUnavailable(f"bad prompt name {name!r}: lowercase words separated by '/'")
     root = Path(root) if root else prompts_dir()
     entries = _manifest(root, pin if pin is not None else read_pin())
     ent = entries.get(name)
     if ent is None:
         raise PromptUnavailable(f"prompt {name!r} is not in the manifest")
+    if not (isinstance(ent, dict) and isinstance(ent.get("file"), str) and isinstance(ent.get("sha256"), str)):
+        raise PromptUnavailable(f"prompt {name!r}: manifest entry is not valid")
     f = root / ent["file"]
     try:
         f.resolve().relative_to(root.resolve())
@@ -93,7 +97,10 @@ def load(name: str, *, root: Path | None = None, pin: dict | None = None) -> str
         raise PromptUnavailable(f"prompt {name!r}: file {ent['file']} is missing") from None
     if _sha(raw) != ent["sha256"]:
         raise PromptUnavailable(f"prompt {name!r}: file hash {_sha(raw)[:12]} is not the manifest's {ent['sha256'][:12]}")
-    return raw.decode("utf-8")
+    try:
+        return raw.decode("utf-8")
+    except UnicodeDecodeError:
+        raise PromptUnavailable(f"prompt {name!r}: file is not valid UTF-8") from None
 
 
 def names(*, root: Path | None = None, pin: dict | None = None) -> list[str]:

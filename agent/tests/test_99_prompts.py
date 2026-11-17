@@ -28,7 +28,7 @@ def _make(root: Path, files: dict[str, str]) -> str:
 
 
 def _pin(sha=None):
-    return {"version": 1, "kb_commit": "0" * 40, "manifest_sha256": sha, "names": []}
+    return {"version": 1, "kb_commit": "0" * 40 if sha else None, "manifest_sha256": sha, "names": []}
 
 
 def test_load_returns_the_bytes_exactly(tmp_path):
@@ -74,7 +74,7 @@ def test_missing_things_refuse_and_there_is_no_fallback_text(tmp_path):
         P.load("a", root=tmp_path, pin=_pin(sha))
 
 
-@pytest.mark.parametrize("bad", ["", "../x", "/abs", "A", "a//b", "a/b/", "a b", "a.txt"])
+@pytest.mark.parametrize("bad", ["", "../x", "/abs", "A", "a//b", "a/b/", "a b", "a.txt", "a\n"])
 def test_bad_names_are_refused(tmp_path, bad):
     sha = _make(tmp_path, {"a": "x"})
     with pytest.raises(P.PromptUnavailable, match="bad prompt name"):
@@ -120,6 +120,7 @@ def test_every_pinned_prompt_loads():
     """Once prompts have moved: the private repository must be readable and match the pin. CI on a fork pull request
     has no token and sets FDA_PROMPTS_SKIP_NOTICE=1 (the workflow prints a notice); anywhere else a missing prompt fails."""
     pin = P.read_pin()
+    assert bool(pin["names"]) == bool(pin["kb_commit"]) == bool(pin["manifest_sha256"]), "pin must be all set or all empty"
     if not pin["names"]:
         pytest.skip("stage 0: no prompt has moved yet")
     if os.environ.get("FDA_PROMPTS_SKIP_NOTICE") == "1":
@@ -127,3 +128,21 @@ def test_every_pinned_prompt_loads():
     for n in pin["names"]:
         assert P.load(n)
     assert set(P.names()) >= set(pin["names"])
+
+
+def test_a_partial_pin_refuses(tmp_path):
+    _make(tmp_path, {"a": "x"})
+    with pytest.raises(P.PromptUnavailable, match="incomplete"):
+        P.load("a", root=tmp_path, pin={"version": 1, "kb_commit": "0" * 40, "manifest_sha256": None, "names": []})
+
+
+def test_malformed_entries_raise_promptunavailable(tmp_path):
+    (tmp_path / "MANIFEST.json").write_text(json.dumps({"version": 1, "prompts": {"a": {"file": "a.txt"}, "b": 3}}))
+    for n in ("a", "b"):
+        with pytest.raises(P.PromptUnavailable, match="not valid"):
+            P.load(n, root=tmp_path, pin=_pin(None))
+    raw = b"\xff\xfe"
+    (tmp_path / "c.txt").write_bytes(raw)
+    (tmp_path / "MANIFEST.json").write_text(json.dumps({"version": 1, "prompts": {"c": {"file": "c.txt", "sha256": hashlib.sha256(raw).hexdigest(), "bytes": 2}}}))
+    with pytest.raises(P.PromptUnavailable, match="UTF-8"):
+        P.load("c", root=tmp_path, pin=_pin(None))

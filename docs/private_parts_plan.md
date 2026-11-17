@@ -56,6 +56,8 @@ rebuilt), the public module calls `load(...)`, the pin updated, snapshot tests c
 hash recorded before the move (so a prompt change is still caught without the text being in the repository), the tool-schema
 fixture and a before and after prompt hash match.
 
+Review (one Sonnet pass, 2026-11-17) found and this PR fixed: a partial pin failed open, the read token persisted in the `_kb` checkout, and malformed manifest entries raised raw errors. **Open for slice work:** a shared skip marker for tests that import prompt-using modules on forks, and tests must compare prompt hashes, never text (a failing `assert text == ...` would print it into a public log).
+
 | Slice | State |
 | --- | --- |
 | Stage 0: loader, tests, pin, CI step, manifest builder | done (2026-11-17) |
