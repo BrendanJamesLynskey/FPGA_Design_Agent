@@ -40,6 +40,14 @@ def test_file_tools(session) -> None:
         assert dispatch(session, "write_file", bad)["refused"]
 
 
+def test_write_file_refuses_a_design_file_named_like_a_shell_file(session) -> None:
+    """b82p2: the scorer refuses rtl/reset_sync.sv (the shell has one), even a comment-only placeholder; refuse it at write time."""
+    r = dispatch(session, "write_file", {"path": "rtl/reset_sync.sv", "content": "// intentionally empty\n"})
+    assert r["ok"] is False and r["invalid"] and "@shell/rtl/reset_sync.sv" in r["output"]
+    assert not (session.design / "rtl" / "reset_sync.sv").exists()
+    assert dispatch(session, "write_file", {"path": "rtl/my_sync.sv", "content": "module my_sync; endmodule\n"})["ok"]
+
+
 def test_constraints_checker_t1_is_clean_and_the_btnc_trap_is_caught() -> None:
     t1 = (ROOT / "designs" / "t1_dimmer_counter" / "design.xdc").read_text()
     assert check_xdc(t1, BOARD) == [] and check_xdc_safety(t1) == []
