@@ -1074,6 +1074,20 @@ def _sources_hash(rt: Runtime) -> str:
     return h.hexdigest()
 
 
+#: b82p2: in the 15 measured runs the build was refused with this text in 8 runs (two workers and other sessions' jobs
+#: shared the one Vivado slot); the gate then failed, the Designer could do nothing about it and spent every repair visit.
+VIVADO_BUSY = "limit FDA_VIVADO_MAX="
+VIVADO_POLL_S = 30.0
+
+
+def vivado_wait_s() -> float:
+    """How long a build waits for the Vivado slot before the refusal counts (FDA_VIVADO_WAIT_S, default 45 minutes)."""
+    try:
+        return float(os.environ.get("FDA_VIVADO_WAIT_S", "2700"))
+    except ValueError:
+        return 2700.0
+
+
 def _build(rt: Runtime, until: str, variant: str = "base") -> dict:
     """Run the Vivado flow to ``until`` unless a build of the same sources already went at least that far (the
     later stages re-read the same reports; a rebuild would only cost time). Gates always re-parsed."""
@@ -1083,6 +1097,11 @@ def _build(rt: Runtime, until: str, variant: str = "base") -> dict:
         b = {"ok": True, "cached": True}
     else:
         b = dispatch(rt.session, "build", {"until": until, "variant": variant})
+        waited = 0.0
+        while not b.get("ok") and VIVADO_BUSY in str(b.get("output", "")) and waited < vivado_wait_s():
+            time.sleep(VIVADO_POLL_S)                   # b82p2: another Vivado holds the PC's slot; that is no fault of the design
+            waited += VIVADO_POLL_S
+            b = dispatch(rt.session, "build", {"until": until, "variant": variant})
         if not b.get("ok"):
             rt.last_build_output = str(b.get("output", ""))[-2000:]
         cache.write_text(json.dumps({"sources": key, "until": until, "ok": bool(b.get("ok"))}))

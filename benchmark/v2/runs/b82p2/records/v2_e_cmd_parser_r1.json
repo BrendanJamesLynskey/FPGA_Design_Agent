@@ -1,0 +1,217 @@
+{
+ "task": "v2_e_cmd_parser",
+ "level": "L1",
+ "repeat": 1,
+ "attempt": 1,
+ "run_id": "20261116-134454-d48e",
+ "rc": null,
+ "wall_s": 6585.3,
+ "hard_limit": false,
+ "worker": "rebuilt",
+ "code": "b76b4558",
+ "claude_cli": "2.1.321",
+ "started": "2026-11-16 13:44:54",
+ "reconstructed": "record rebuilt from the finished run directory after the driver's first version failed to write it (records/ did not exist); wall = run directory creation to summary.json mtime, rc unknown",
+ "tokens": 2604109,
+ "plan_cost_estimate_usd": 2.6433,
+ "turns": 137,
+ "stop": "stage 2 visited more than 6 times",
+ "stages_visited": [
+  0,
+  0,
+  1,
+  1,
+  2,
+  2,
+  2,
+  2,
+  2,
+  2,
+  2
+ ],
+ "stage2_visits": 7,
+ "gates_last": {
+  "clarify": true,
+  "board-and-device-planning": true,
+  "rtl-design-creation": false
+ },
+ "stage2_gates_passed": false,
+ "claude_code_version": "2.1.321 (Claude Code)",
+ "knowledge_use": {
+  "rtl/board-and-device-planning": {
+   "board_constraints": {
+    "calls": 3
+   },
+   "load_skill": {
+    "calls": 1,
+    "sections": [],
+    "skills": [
+     "procedures/ultrafast/constraints/SKILL.md"
+    ],
+    "empty_calls": 0
+   }
+  },
+  "tests/rtl-design-creation": {
+   "load_skill": {
+    "calls": 1,
+    "sections": [
+     "verification-stages"
+    ],
+    "skills": [
+     "procedures/verification-stages/v-hw-bringup/SKILL.md",
+     "procedures/verification-stages/v0-v1-testplan/SKILL.md",
+     "procedures/verification-stages/v2-tests-assertions-formal/SKILL.md",
+     "procedures/verification-stages/v3-coverage-closure/SKILL.md"
+    ],
+    "empty_calls": 0,
+    "procedures_fallback": [
+     "verification-stages"
+    ]
+   },
+   "search_docs": {
+    "calls": 1,
+    "hits": [
+     "amd/Digilent_Nexys_A7_RM#2",
+     "ross/vitis-embedded/references/boot-image.md#2",
+     "ross/vivado-ip-configurator/SKILL.md#2",
+     "ross/vivado-revision-control/helper-procedures/README.md#9",
+     "ross/vivado-rtl-elaboration-analysis/resolution/8-6026.md#1",
+     "ross/vivado-rtl-elaboration-analysis/resolution/8-6090.md#1"
+    ]
+   }
+  },
+  "rtl/rtl-design-creation": {
+   "load_skill": {
+    "calls": 1,
+    "sections": [],
+    "skills": [],
+    "empty_calls": 1
+   },
+   "search_docs": {
+    "calls": 1,
+    "hits": [
+     "ross/vivado-rtl-elaboration-analysis/resolution/8-6426.md#1",
+     "ross/vivado-rtl-elaboration-analysis/resolution/8-7213.md#1",
+     "ross/vivado-rtl-lint/resolution/RESET-1.md#2",
+     "ross/vivado-rtl-lint/resolution/RESET-2.md#1",
+     "ross/vivado-rtl-lint/resolution/RESET-2.md#2"
+    ]
+   }
+  }
+ },
+ "questions": {
+  "asked": 6,
+  "answered": 4,
+  "defaulted": 2,
+  "questions": [
+   {
+    "id": "q1",
+    "text": "What is the register map (offset, width, reset value and access of every register) of the test shell?",
+    "default": "The map in registers.map above, 32-bit word registers at 4-byte offsets starting at 0x00",
+    "reason": "The request names registers but gives no offsets",
+    "answer": "BUSY: offset 0x07, RO, reset 0: [0] a packet is part-way\nCTR_GOOD..CTR_PROTO: offset 0x10, RO, reset 0: 0x10 good, 0x11 bad check, 0x12 short, 0x13 long, 0x14 repeat, 0x15 stale, 0x16 type or length; 16 bits, wrapping\nLASTSEQ: offset 0x06, RO, reset 0: [15:0] last accepted number, [16] one once a packet was accepted\nSEQ: offset 0x03, RO, reset 0: sequence number of the last good packet\nPAY0: offset 0x04, RO, reset 0: first two payload bytes of the last good packet, big-endian, zero filled\nBYTE: offset 0x00, RW, reset 0: [7:0] packet byte, [8] end flag; reads the last 9 bits written\nPAY1: offset 0x05, RO, reset 0: next four payload bytes, big-endian, zero filled when a good packet has fewer\nTYPE: offset 0x02, RO, reset 0: type of the last good packet\nRESULT: offset 0x01, RO, reset 0: class of the last packet: 0 none, 1 good, 2 bad check, 3 short, 4 long, 5 repeat, 6 stale, 7 bad type, 8 bad length\nshell: test shell, PROTOCOL.md 1.1\nunmapped: any offset not listed reads as 0 and ignores writes, as do the read-only registers",
+    "status": "answered",
+    "by": "oracle",
+    "evidence": "BUSY: offset 0x07, RO, reset 0: [0] a packet is part-way"
+   },
+   {
+    "id": "q2",
+    "text": "What does TIMEOUT_CYCLES do?",
+    "default": "If no byte arrives for TIMEOUT_CYCLES clocks while a packet is part-way, the packet is dropped as class 2 too short and the block returns to idle",
+    "reason": "The request names the parameter but does not describe a timeout rule",
+    "answer": "If no byte arrives for TIMEOUT_CYCLES clocks while a packet is part-way, the packet is dropped as class 2 too short and the block returns to idle",
+    "status": "defaulted",
+    "by": "oracle",
+    "evidence": null
+   },
+   {
+    "id": "q3",
+    "text": "Which byte-register format marks the end flag?",
+    "default": "BYTE_IN bit 8 is the END flag, bits 7:0 are the byte",
+    "reason": "The request says a flag but not where it sits",
+    "answer": "Confirmed, with one correction: the register is named BYTE (offset 0x00, RW), not BYTE_IN. Bits 7:0 hold the packet byte and bit 8 is the end flag.",
+    "status": "answered",
+    "by": "oracle",
+    "evidence": "BYTE (0 write): bits 7:0 byte, bit 8 end flag; reads the last 9 bits written."
+   },
+   {
+    "id": "q4",
+    "text": "Does a packet longer than expected with a length byte of 8 or less count as class 1 even when the CRC is bad?",
+    "default": "Yes, class 1 comes first by rule order",
+    "reason": "Rule 1 precedes rule 3",
+    "answer": "No. The proposed default is not supported. GOOD (class 1) requires a valid CRC, so a bad-CRC packet cannot be class 1. The spec's rules are listed with LONG first and GOOD last, so an over-length packet is classed LONG (4) under the first-applicable-rule requirement, and its rest is discarded to the end flag. The spec does not state the precedence between LONG and BADCRC in words; this reading relies on the listing order.",
+    "status": "answered",
+    "by": "oracle",
+    "evidence": "LONG (4): length byte > 8, or more bytes than 4 + LEN + 4 (decided as soon as known; the rest of the packet is discarded to the end flag)."
+   },
+   {
+    "id": "q5",
+    "text": "Are the type, sequence, address and value registers cleared by a non-good packet?",
+    "default": "No, they keep the last good packet",
+    "reason": "The request says other classes change nothing but counter and result",
+    "answer": "BUSY: offset 0x07, RO, reset 0: [0] a packet is part-way\nCTR_GOOD..CTR_PROTO: offset 0x10, RO, reset 0: 0x10 good, 0x11 bad check, 0x12 short, 0x13 long, 0x14 repeat, 0x15 stale, 0x16 type or length; 16 bits, wrapping\nLASTSEQ: offset 0x06, RO, reset 0: [15:0] last accepted number, [16] one once a packet was accepted\nSEQ: offset 0x03, RO, reset 0: sequence number of the last good packet\nPAY0: offset 0x04, RO, reset 0: first two payload bytes of the last good packet, big-endian, zero filled\nBYTE: offset 0x00, RW, reset 0: [7:0] packet byte, [8] end flag; reads the last 9 bits written\nPAY1: offset 0x05, RO, reset 0: next four payload bytes, big-endian, zero filled when a good packet has fewer\nTYPE: offset 0x02, RO, reset 0: type of the last good packet\nRESULT: offset 0x01, RO, reset 0: class of the last packet: 0 none, 1 good, 2 bad check, 3 short, 4 long, 5 repeat, 6 stale, 7 bad type, 8 bad length\nshell: test shell, PROTOCOL.md 1.1\nunmapped: any offset not listed reads as 0 and ignores writes, as do the read-only registers",
+    "status": "answered",
+    "by": "oracle",
+    "evidence": "BUSY: offset 0x07, RO, reset 0: [0] a packet is part-way"
+   },
+   {
+    "id": "q6",
+    "text": "Does the status register bit mean mid-packet only?",
+    "default": "STATUS bit 0 is 1 from the first byte of a packet until its END byte is processed",
+    "reason": "The request says \"whether a packet is part-way through\"",
+    "answer": "STATUS bit 0 is 1 from the first byte of a packet until its END byte is processed",
+    "status": "defaulted",
+    "by": "oracle",
+    "evidence": null
+   }
+  ]
+ },
+ "per_stage": {
+  "clarify": {
+   "calls": 2,
+   "turns": 6,
+   "tokens": 59642,
+   "wall_s": 78.3,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 0.2317
+  },
+  "board-and-device-planning": {
+   "calls": 2,
+   "turns": 17,
+   "tokens": 294996,
+   "wall_s": 65.0,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 0.2991
+  },
+  "rtl-design-creation": {
+   "calls": 9,
+   "turns": 114,
+   "tokens": 2249471,
+   "wall_s": 1724.6,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 2.1123
+  }
+ },
+ "reached_first_model_turn": true,
+ "score": {
+  "pass": false,
+  "tests_passed": 0,
+  "tests": 10,
+  "failed": [
+   "test_screen_bad_check_and_framing_classes",
+   "test_screen_boundaries_first_refused_and_reset_state",
+   "test_screen_fields_and_register_rules",
+   "test_screen_first_packet_may_carry_any_number_and_the_number_wraps",
+   "test_screen_identity_reset_and_a_good_packet",
+   "test_screen_oversize_is_discarded_to_its_end_flag",
+   "test_screen_random_mix",
+   "test_screen_repeat_and_stale_numbers_change_nothing_but_their_counter",
+   "test_screen_type_and_length_checks_come_after_the_check_and_before_the_number",
+   "test_screen_unmapped_writes_change_nothing"
+  ]
+ },
+ "tool_calls": 167,
+ "simulate_calls": 19,
+ "artifact_tarball_sha256": "6891a5f6e88ac479fcc97b37f1e7f8227975dfcdfbe07ea09772585aa8a6adbe",
+ "artifact_tarball_bytes": 620034
+}
