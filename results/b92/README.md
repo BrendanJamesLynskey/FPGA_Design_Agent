@@ -28,3 +28,15 @@ There was no board run. All data are synthetic.
 - Software: Python 3.12, numpy 2.4.3, scikit-learn 1.9.1, torch 2.15.0 (CPU); Icarus Verilog 12 and Verilator 5.
 - Run times: generator statistics 1 minute; stage 1 about 45 minutes on two workers; stage 2 about 40 minutes; the RTL test about 8 minutes;
   each out-of-context build a few minutes under a heavy slot.
+
+## Known gaps and limits
+
+- Everything is out of context: there is no clock buffer or jitter, and latency is quoted at no faster than 2.0 ns. Each arm has two
+  registered stages before the output (three for attention, which was not built).
+- The clock search stopped after at most four passes per part; the Artix-7 window-of-8 build was re-run once with a later start
+  after four passes did not close it. A closed clock is a closed point, not the bound.
+- Both data sets are synthetic with planted history structure; the stage 1 gate and the stage 2 ranking say nothing about real order flow.
+- Tiny attention was trained with a throwaway head, then frozen (docs/what_we_found.md section 5); its RTL was generated and simulated but never built in Vivado,
+  as pre-registered. The pre-registration said no attention RTL would be built; "built" there meant Vivado, and the simulation-only generation is a deviation
+  stated in the report.
+- Many paired intervals (10 sessions, nine degrees of freedom) are uncorrected for multiple comparison.

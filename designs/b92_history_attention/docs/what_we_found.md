@@ -49,7 +49,22 @@ reported for real flow. **It is a mechanism to test history against, not a model
 
 ## 3. Stage 1, the gate
 
-{{stage1}}
+| Generator | Arm | Test accuracy (trees) | Paired difference to current-only trees | Histogram boosting difference |
+|---|---|---|---|---|
+| b87 | current only | 0.4923 [0.4829, 0.5018] | | |
+| b87 | lagfeat4 | 0.4975 [0.4885, 0.5064] | +0.0052 [+0.0034, +0.0069] |  |
+| b87 | lagfeat8 | 0.5058 [0.4961, 0.5156] | +0.0135 [+0.0103, +0.0167] |  |
+| b87 | lagfeat16 (gate candidate) | 0.5103 [0.5002, 0.5203] | +0.0180 [+0.0135, +0.0225] | +0.0205 [+0.0140, +0.0270] |
+| b87 | lagprim4 | 0.4936 [0.4838, 0.5035] | +0.0013 [-0.0003, +0.0029] |  |
+| b87 | lagprim8 | 0.4936 [0.4838, 0.5033] | +0.0012 [-0.0001, +0.0026] |  |
+| b87 | lagprim16 | 0.4936 [0.4838, 0.5033] | +0.0012 [-0.0001, +0.0026] |  |
+| hawkes | current only | 0.4834 [0.4707, 0.4960] | | |
+| hawkes | lagfeat4 | 0.4857 [0.4730, 0.4984] | +0.0023 [+0.0005, +0.0040] |  |
+| hawkes | lagfeat8 | 0.4901 [0.4773, 0.5029] | +0.0067 [+0.0037, +0.0096] |  |
+| hawkes | lagfeat16 (gate candidate) | 0.4901 [0.4768, 0.5033] | +0.0067 [+0.0032, +0.0101] | +0.0168 [+0.0108, +0.0229] |
+| hawkes | lagprim4 | 0.4841 [0.4712, 0.4969] | +0.0007 [-0.0013, +0.0026] |  |
+| hawkes | lagprim8 | 0.4843 [0.4714, 0.4973] | +0.0009 [-0.0004, +0.0023] |  |
+| hawkes | lagprim16 | 0.4844 [0.4714, 0.4973] | +0.0010 [-0.0005, +0.0024] |  |
 
 The trees (10 rounds, depth 3) gain from lagged *features* and gain nothing from lagged raw event terms (+0.0010, interval includes zero):
 the gain is in longer memory of sums such as the order-flow total (by the trees' split importance, mean of three seeds, the lagged order-flow total at lag 16 is the most important lagged column in both generators; the lagged columns together carry 7% to 9% of the importance), which the trees cannot
@@ -57,7 +72,20 @@ build from 16 separate terms. The gate candidate was chosen on validation (lagfe
 
 ## 4. Stage 2, the arms (self-exciting data, one common head)
 
-{{stage2}}
+| Arm | Built seed | Test accuracy [95%] | 3-seed mean | vs head with no history | vs 1 decaying sums |
+|---|---|---|---|---|---|
+| head, no history | 2 | 0.4844 [0.4707, 0.4981] | 0.4821 | +0.0000 [+0.0000, +0.0000] | -0.0153 [-0.0268, -0.0038] |
+| 1 decaying sums | 0 | 0.4997 [0.4908, 0.5085] | 0.4988 | +0.0153 [+0.0038, +0.0268] | +0.0000 [+0.0000, +0.0000] |
+| 2 window N=16 | 1 | 0.5009 [0.4916, 0.5102] | 0.4985 | +0.0165 [+0.0081, +0.0249] | +0.0012 [-0.0050, +0.0073] |
+| 2 window N=8 | 1 | 0.5008 [0.4911, 0.5104] | 0.4967 | +0.0164 [+0.0075, +0.0253] | +0.0011 [-0.0035, +0.0057] |
+| 3 attention, top-1 | 1 | 0.4873 [0.4745, 0.5001] | 0.4867 | +0.0029 [-0.0031, +0.0090] | -0.0124 [-0.0216, -0.0031] |
+| 3 attention, ReLU-linear | 1 | 0.4878 [0.4766, 0.4991] | 0.4880 | +0.0034 [-0.0045, +0.0114] | -0.0119 [-0.0213, -0.0024] |
+| 4 LUT net on the sums | 1 | 0.4885 [0.4780, 0.4989] | 0.4879 | +0.0041 [-0.0020, +0.0102] | -0.0112 [-0.0182, -0.0041] |
+| 89 LUT net, no history | 1 | 0.4845 [0.4715, 0.4974] | 0.4828 | +0.0001 [-0.0062, +0.0064] | -0.0152 [-0.0276, -0.0028] |
+| 87 MLP, no history | 2 | 0.4905 [0.4760, 0.5051] | 0.4900 | +0.0062 [-0.0052, +0.0175] | -0.0091 [-0.0210, +0.0028] |
+| reference: trivial_rule | | 0.4297 [0.4114, 0.4480] | | | |
+| reference: trees_87_current | | 0.4834 [0.4707, 0.4960] | | | |
+| reference: trees_lagfeat16 | | 0.4901 [0.4768, 0.5033] | | | |
 
 ![test accuracy by arm](../../../results/b92/accuracy_by_arm.svg)
 
@@ -83,7 +111,13 @@ build from 16 separate terms. The gate candidate was chosen on validation (lagfe
 Out of context, post-route, Vivado 2026.1, one thread; K26 `xck26-sfvc784-2LV-c` and Artix-7 100T `xc7a100tcsg324-1`. Latency = clocks x
 max(closed period, 2.0 ns), the brief 87 floor. Every arm: **one event accepted per clock (initiation interval 1)**, 0 DSP, 0 BRAM.
 
-{{hardware}}
+| Arm | Clocks | K26 closed ns | K26 latency ns | K26 LUT | K26 FF | A7 closed ns | A7 latency ns | A7 LUT | A7 FF | DSP / BRAM |
+|---|---|---|---|---|---|---|---|---|---|---|
+| head, no history | 1 | 10.2 | 10.2 | 1619 | 42 | 30.55 | 30.55 | 1214 | 42 | 0 / 0 |
+| 1 decaying sums | 2 | 12.4 | 24.8 | 2313 | 216 | 32.05 | 64.1 | 2127 | 216 | 0 / 0 |
+| 2 window N=16 | 2 | 13.4 | 26.8 | 5372 | 238 | 36.35 | 72.7 | 4482 | 238 | 0 / 0 |
+| 2 window N=8 | 2 | 13.25 | 26.5 | 3250 | 166 | 35.15 | 70.3 | 2882 | 166 | 0 / 0 |
+| 4 LUT net on the sums | 2 | 4.5 | 9.0 | 554 | 216 | 13.95 | 27.9 | 441 | 216 | 0 / 0 |
 
 - Every arm's RTL equals its bit-exact twin on all 100,000 events of the ten test sessions (each run from the reset state, back to back and with gaps),
   on 20,000 random events (ten streams with resets) and on 9,000 extreme-input events, with one fixed latency per arm
@@ -94,6 +128,7 @@ max(closed period, 2.0 ns), the brief 87 floor. Every arm: **one event accepted 
 - **Latency is not flattered by the window fill.** A fresh window or zero sums give a result at the same fixed latency; what changes is meaning: after a reset the first
   N outputs (16, or about 64 for the slowest sum) are computed on an empty history, and the training data never had that. The two clocks are real:
   the front end is registered before the head. Merging them would save a clock and cost period; not measured.
+- The Artix-7 100T closes about 2.5 to 3 times slower than the K26 for every arm (head alone 30.55 ns, sums 32.05 ns), so the two-clock latency there is 64 to 73 ns; the window of 8 closed at 35.15 ns after missing at 34.5 ns by 0.05 ns (closure near the limit is not monotonic in the period).
 - The attention RTL was generated and checked against its twin in simulation (both forms) but **never built in Vivado**, per the pre-registered rule. Its cost is unmeasured.
 - The `log4` head closes at 10.2 ns or slower on the K26, so none of these arms fits a 125 MHz (8 ns) clock as a one-clock block; in the 58A path they would need the registered per-layer form of brief 91
   (4 clocks near 4 ns) with the front end in front.
