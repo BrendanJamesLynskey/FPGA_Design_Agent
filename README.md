@@ -42,6 +42,11 @@ measured lessons in [docs/agent_lessons.md](docs/agent_lessons.md).
 
 How the designs are verified (simulation, hidden tests, coverage, mutation testing, protocol checkers, formal proofs, clock-crossing checks, static checks, the board and traceability, each with what it cannot find and its measured evidence): the site's "Verification" page, source `site/verification/verification.yaml`.
 
+More boards (brief 95): the agent has a board file for 20 boards, each with a trust label (`documented`, `built` or `hardware`) computed from the evidence on
+disk, a smoke design generated from the board's own pins, and a request that names a board (`python -m agent run <spec> --board "the PYNQ-Z2"`) picks its file:
+[docs/board_catalogue.md](docs/board_catalogue.md) (the table), [boards/SCHEMA.md](boards/SCHEMA.md) (the file format and how to add a board),
+[docs/demo_intake.md](docs/demo_intake.md) (what to ask someone who wants a demo), [results/95_boards](results/95_boards/README.md).
+
 Showcase pages for projects built with the agent follow one template: [docs/showcase_pages.md](docs/showcase_pages.md).
 Every design, `ip_lib` entry and results folder is documented for the next engineer to
 [docs/documentation_standard.md](docs/documentation_standard.md) (brief 68): each design has one `handover.yaml` (the facts,
@@ -102,7 +107,7 @@ Steps 1-8 were done by hand for F0A. Since F2 the agent does steps 1-8 itself, a
 | ILA insertion from a probe list, built both ways, cost recorded | [flow/debug.tcl](flow/debug.tcl) | local builds |
 | A reusable on-board test shell (UART register protocol, host driver, model) | [shell/](shell/), [PROTOCOL.md](shell/PROTOCOL.md) | CI: cocotb against the model, including 115200-baud bit timing |
 | One hand-written T1 design from spec to bitstream | [designs/t1_dimmer_counter](designs/t1_dimmer_counter) | CI: cocotb against the model + mutants; local: gates |
-| Board files | [boards/nexys_a7_100t](boards/nexys_a7_100t) | Digilent master XDC (MIT, listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)) at a pinned commit |
+| Board files | [boards/nexys_a7_100t](boards/nexys_a7_100t); the catalogue of 20 boards in [boards/catalogue.yaml](boards/catalogue.yaml) | Digilent master XDCs (MIT, listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)) at a pinned commit; trust labels computed from evidence by [test_95_boards.py](flow/tests/test_95_boards.py) |
 
 The T1 build numbers on Vivado 2026.1 (timing, utilisation, ILA cost, run time and memory) are in
 [results/f0a_2026_1/t1_dimmer_counter.md](results/f0a_2026_1/t1_dimmer_counter.md); every one comes from the JSON next to it
@@ -361,6 +366,7 @@ flow/handover.py, flow/doccheck.py  documentation (brief 68): handover.yaml to R
              agent/graph/document.py (the agent's DOC step and gate) and agent/graph/pickup.py (resume from a handover)
 shell/       the test shell: RTL, protocol, host driver, model, tests
 boards/      board files (Nexys A7-100T: board.yaml, master XDC, inventory.yaml, power_budget.md; KR260: board.yaml)
+             and the board catalogue (brief 95: catalogue.yaml, SCHEMA.md, 18 more board directories with their smoke designs)
 tools/       inventory_check.py (board inventory against the master XDC); git_guard.py (the tests must not move the checkout they run from; checked at the end of every pytest session by conftest.py)
 agent/       core/ (tools, security, trace, replay, smoke) and mcp_server/ (05a); tests/ with the replay fixture
 project/     the project layer (brief 27 P0): design.yaml and contract.yaml checkers, stage keys, status and dashboard,

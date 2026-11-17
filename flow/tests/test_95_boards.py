@@ -293,6 +293,13 @@ def test_board_arg_accepts_ids_and_requests_and_refuses_the_rest():
         agent_boards.board_arg("kv260")
 
 
+def test_commands_that_only_read_a_design_accept_a_board_the_agent_cannot_target():
+    assert agent_boards.board_name("kr260") == "kr260"             # `document` and `resume` of the hand-written KR260 designs keep working
+    assert agent_boards.board_name("the kv260") == "kv260"
+    with pytest.raises(argparse.ArgumentTypeError, match="more than one"):
+        agent_boards.board_name("arty a7")
+
+
 def test_the_agent_cli_takes_a_request_for_its_board():
     r = subprocess.run([sys.executable, "-m", "agent", "run", "x.md", "--board", "arty a7"], cwd=ROOT, capture_output=True, text=True)
     assert r.returncode == 2 and "names more than one board" in r.stderr

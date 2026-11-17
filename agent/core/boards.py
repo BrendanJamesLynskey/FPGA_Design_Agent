@@ -13,8 +13,14 @@ import argparse
 from flow import board_catalogue as cat
 
 
-def board_arg(value: str) -> str:
-    """argparse ``type=``: the board id for an id or a free-text request."""
+def board_name(value: str) -> str:
+    """argparse ``type=`` for commands that only read a finished design (``document``, ``resume``): the board id for an id or a
+    free-text request, whether or not the agent can write that board's constraints."""
+    return board_arg(value, require_targetable=False)
+
+
+def board_arg(value: str, require_targetable: bool = True) -> str:
+    """argparse ``type=`` for ``run``: the board id for an id or a free-text request; refuses a board the agent cannot target."""
     boards = cat.load()
     if value in boards:
         board = value
@@ -25,7 +31,7 @@ def board_arg(value: str) -> str:
                 raise argparse.ArgumentTypeError(f"{value!r} names more than one board ({', '.join(cands)}); say which")
             raise argparse.ArgumentTypeError(f"no board named in {value!r}; the catalogue has: {', '.join(boards)}")
     e = boards[board]
-    if not e.get("targetable"):
+    if require_targetable and not e.get("targetable"):
         raise argparse.ArgumentTypeError(
             f"{board} ({e['display']}) is in the catalogue but the agent cannot target it yet: {e.get('smoke_note') or 'no usable pin list'}. "
             f"See boards/{board}/board.yaml (facts and known gaps)")

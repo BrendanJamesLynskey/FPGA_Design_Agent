@@ -13,7 +13,7 @@ Licence tier: `free` means the installed Vivado licence (Basic tier, 2026.1) imp
 | Board id | Board | Part | Family | Trust | Licence tier | Targetable | Smoke build | Scope of the evidence |
 |---|---|---|---|---|---|---|---|---|
 | `nexys_a7_100t` | Digilent Nexys A7-100T | `xc7a100tcsg324-1` |  | hardware | free | yes | no | the owner's board: four peripheral designs run 3 of 3 times (LEDs, UART, SPI, I2C, PDM microphone, QSPI), programmed over JTAG, wall power |
-| `kr260` | AMD Kria KR260 Robotics Starter Kit | `xck26-sfvc784-2LV-c` |  | built | free | yes | earlier build (not a smoke design) | built as part of the mock trading design (results/b58a, PL Ethernet pins), not as a smoke design; no board run record is in the repository |
+| `kr260` | AMD Kria KR260 Robotics Starter Kit | `xck26-sfvc784-2LV-c` |  | built | free | no | earlier build (not a smoke design) | built as part of the mock trading design (results/b58a, PL Ethernet pins), not as a smoke design; no board run record is in the repository |
 | `basys3` | Digilent Basys 3 | `xc7a35tcpg236-1` | Artix-7 | documented | free | yes | no | board file from Digilent's master XDC and reference manual; no build |
 | `arty_a7_35t` | Digilent Arty A7-35T | `xc7a35ticsg324-1L` | Artix-7 | documented | free | yes | no | board file from Digilent's master XDC and the AMD board file; no build |
 | `arty_a7_100t` | Digilent Arty A7-100T | `xc7a100tcsg324-1` | Artix-7 | documented | free | yes | no | board file from Digilent's master XDC and the AMD board file; no build |
