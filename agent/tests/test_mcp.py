@@ -62,9 +62,17 @@ def test_mcp_call_goes_through_the_core(session) -> None:
 def test_mcp_over_stdio_subprocess(wd) -> None:
     from mcp.client.stdio import stdio_client
 
+    import os
+    from mcp.client.stdio import get_default_environment
+    from agent import access
+    key = os.environ.get("FDA_ACCESS_KEY") or access.read_dotenv(access.ENV_FILE)
+    if access.load_entries(None) is not None and not key:
+        pytest.skip("access gate armed and no FDA_ACCESS_KEY here (a fork PR, or no .env): the server would refuse")
+    env = {**get_default_environment(), **({"FDA_ACCESS_KEY": key} if key else {})}   # stdio passes a minimal env
+
     async def go():
         params = StdioServerParameters(command=sys.executable, args=["-m", "agent.mcp_server", "--design", str(wd)],
-                                       cwd=str(ROOT))
+                                       cwd=str(ROOT), env=env)
         async with Client(params) as c:
             names = [t.name for t in (await c.list_tools()).tools]
             r = await c.call_tool("read_file", {"path": "spec.yaml", "max_bytes": 40})

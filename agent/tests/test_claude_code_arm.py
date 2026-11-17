@@ -114,7 +114,8 @@ def test_isolated_env_carries_only_path_home_and_the_token(tmp_path):
     env = arm.isolated_env(tmp_path, "tok")
     assert env["HOME"] == str(tmp_path) and env["CLAUDE_CONFIG_DIR"].startswith(str(tmp_path))
     assert set(env) <= {"PATH", "HOME", "CLAUDE_CONFIG_DIR", "CLAUDE_CODE_OAUTH_TOKEN", "DISABLE_AUTOUPDATER",
-                        "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC", "LANG"}
+                        "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC", "LANG",
+                        "FDA_ACCESS_KEY"}   # brief 94: the gate key, present only when set; the MCP tools need it
     assert "ANTHROPIC_API_KEY" not in env and "OPENROUTER_API_KEY" not in env and "ANTHROPIC_BASE_URL" not in env
 
 
