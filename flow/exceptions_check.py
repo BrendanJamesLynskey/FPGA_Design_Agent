@@ -32,6 +32,10 @@ log (``vivado.log``) for constraint messages raised while reading the XDC. It fa
     XDCH-1          a -setup multicycle with no -hold multicycle (a Warning; brief 20 E2 measured it, and the hold check
                     then fails by about N-1 periods)
 
+EXC-XDC-RTL-DIFFINBUF (information only, brief 98): Vivado 12-1411 from ``synth_design -rtl`` on a differential input of an UltraScale+ part
+(the RTL view's DIFFINBUF cell cannot take the port's LOC); the real synthesis prints nothing, so only a message that does not recur
+after it is counted here.
+
 EXC-XDC-DEBUG-HUB (information only, ILA builds only, brief 48): CRITICAL WARNINGs printed by the debug hub IP's own xsdbm_*.xdc script.
 
 EXC-IGNORED-DEBUG-IP (information only, listed under ``info``, never a failure): an ignored exception (its coverage-0 entry follows it) that is
@@ -177,6 +181,23 @@ def is_debug_hub_message(m: dict[str, Any]) -> bool:
     """A message from the debug hub IP's own constraint script: an xsdbm_*.xdc file inside a dbg_hub directory under .Xil."""
     path = m.get("path") or ""
     return bool(re.fullmatch(r"xsdbm_\w+\.xdc", m["file"])) and "/.Xil/" in path and "/dbg_hub" in path
+
+
+_RTL_ONLY_LOC = re.compile(r"Cannot set LOC property of ports, \S*DIFFINBUF_INST\. Illegal to place instance \S*DIFFINBUF_INST on site")
+
+
+def is_rtl_diffinbuf_message(m: dict[str, Any], log_text: str) -> bool:
+    """Brief 98: on an UltraScale+ part ``synth_design -rtl`` expands an IBUFDS into a DIFFINBUF cell and tries to put the port's
+    PACKAGE_PIN on it, which Vivado 2026.1 refuses (Vivado 12-1411, "site type HPIOB_M does not match the cell type DIFFINBUF").
+    The real ``synth_design`` that follows does not print it and places the pin (the routed I/O report has it). It is a tool message
+    of the RTL elaboration, not an XDC fault, but only when it is printed before the real synthesis starts and never again after."""
+    if m["id"] != "Vivado 12-1411" or not _RTL_ONLY_LOC.search(m["message"]):
+        return False
+    cut = re.search(r"^Command: synth_design (?!-rtl)", log_text, re.M)
+    if cut is None:
+        return False
+    after = xdc_messages(log_text[cut.start():])
+    return not any(a["id"] == m["id"] and a["file"] == m["file"] and a["line"] == m["line"] for a in after)
 
 
 def xdc_messages(log_text: str) -> list[dict[str, Any]]:
@@ -432,6 +453,11 @@ def evaluate(build_dir: Path, stage: str = "synth", xdc_files: list[Path] | None
         info.append({"rule": "EXC-XDC-DEBUG-HUB", "count": len(hub),
                      "vivado": {"files": sorted({m["file"] for m in hub}), "ids": sorted({m["id"] for m in hub})}})
     msgs = [m for m in msgs if m not in hub]
+    rtl_loc = [m for m in msgs if is_rtl_diffinbuf_message(m, log.read_text(errors="replace"))] if log.exists() else []
+    if rtl_loc:
+        info.append({"rule": "EXC-XDC-RTL-DIFFINBUF", "count": len(rtl_loc),
+                     "vivado": {"lines": sorted({f"{m['file']}:{m['line']}" for m in rtl_loc}), "ids": ["Vivado 12-1411"]}})
+    msgs = [m for m in msgs if m not in rtl_loc]
     for m in msgs:
         fails.append({"rule": "EXC-XDC-MSG", "position": None, "file": m["file"], "line": m["line"],
                       "text": line_text(m["file"], m["line"]),

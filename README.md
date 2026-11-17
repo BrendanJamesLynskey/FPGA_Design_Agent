@@ -365,7 +365,7 @@ debug_core/  debug on the board from a plain-English request (brief 50A, [docs/d
 flow/handover.py, flow/doccheck.py  documentation (brief 68): handover.yaml to README.md and AGENT.md, and the checker;
              agent/graph/document.py (the agent's DOC step and gate) and agent/graph/pickup.py (resume from a handover)
 shell/       the test shell: RTL, protocol, host driver, model, tests
-boards/      board files (Nexys A7-100T: board.yaml, master XDC, inventory.yaml, power_budget.md; KR260: board.yaml)
+boards/      board files (Nexys A7-100T: board.yaml, master XDC, inventory.yaml, power_budget.md; KR260: board.yaml, kr260-pins.xdc; the catalogue's other boards)
              and the board catalogue (brief 95: catalogue.yaml, SCHEMA.md, 18 more board directories with their smoke designs)
 tools/       inventory_check.py (board inventory against the master XDC); git_guard.py (the tests must not move the checkout they run from; checked at the end of every pytest session by conftest.py)
 agent/       core/ (tools, security, trace, replay, smoke) and mcp_server/ (05a); tests/ with the replay fixture
@@ -376,7 +376,7 @@ designs/     one directory per design: spec.md, spec.yaml, model.py, rtl/, desig
              build.yaml, tests/, BRINGUP.md
 benchmark/   benchmark v1: tasks (development split), training pool, bench library and tools, manifest, owner review;
              benchmark/course/: the course-tier tasks (Parts 9-16), splits, manifest
-showcase/    showcase projects that are not yet designs (brief 78: codec_audio, the spec, model, register file and measurement scripts)
+showcase/    showcase projects that are not yet designs (brief 78: codec_audio, the spec, model, register file and measurement scripts; brief 79: pdm_decimator, the PDM microphone to 48 kHz audio path: spec, model, measurement scripts)
 results/     committed build and bring-up results, per milestone
 cloud/       the AWS EC2 burst runner for Vivado batches (brief 33): fda_cloud.py (start, status, sync, run-batch,
              fetch-results, stop; budget, auto-stop), instance/ scripts, BUILD_AMI.md; tests against mocked EC2
@@ -477,6 +477,7 @@ docs/        methodology.md (UG949 -> flow stages, gates, deviations, the agent'
 | 91 | Low-bit weight formats ([designs/b91_lowbit](designs/b91_lowbit/README.md), [results/b91](results/b91/README.md), [what we found](designs/b91_lowbit/docs/what_we_found.md), [stage 2 plan](designs/b91_lowbit/docs/stage2_plan.md)): binary, ternary, INT4, an MXFP4-style format and our power-of-two formats trained with the quantiser in the loop on the 87 data, bit-exact against a twin, and built out of context on the K26 and Artix-7 100T; the 4-bit-weight formats match the 89 LUT network on accuracy at about four times the LUTs, so none is on the area or latency front. No board run | in review |
 | 93 | Deciding before the last byte ([designs/b93_precompute](designs/b93_precompute/README.md), [what we found](designs/b93_precompute/docs/what_we_found.md), [results/b93](results/b93/summary.json)): the 87 decision model's inputs are all known before the price field, so computing the features early removes the clock the model added to the 58A path at no LUT cost; a table of the model's classes per interval of its deepest feature (partial evaluation) saves no clocks here and costs about three times the LUTs. Simulation and out-of-context builds on the K26 and Artix-7 100T; no board run | in review |
 | 92 | Order-flow history and tiny attention ([designs/b92_history_attention](designs/b92_history_attention/README.md), [results/b92](results/b92/README.md), [what we found](designs/b92_history_attention/docs/what_we_found.md)): a self-exciting synthetic order-flow generator, a gated test of whether history helps, and decaying sums, a fixed window and two softmax-free tiny attentions on one integer head, bit-exact against a twin and built out of context on the K26 and Artix-7 100T; decaying sums win, attention does not earn its place. No board run | in review |
+| 79 | PDM microphone to 48.828 kHz audio on the Nexys A7-100T (ladder project 1), phase 1: the plain-English request and formal spec with product-style numbers (flat within 1 dB from 200 Hz to 15 kHz, at least 35 dB alias rejection, at least 70 dB SNR), a bit-exact Python reference model of the CIC, half-band, FIR and DC-blocker chain with those numbers measured on it, and PC-side measurement scripts (microphone noise, loudspeaker tone levels, operating conditions) with a dry-run mode that needs no board or audio device. The agent has not been run on it and the board has not been used; the benchmark tasks derived from it are written but not yet frozen. Try it: `python3 -m pytest -q showcase/pdm_decimator/tests` ([showcase/pdm_decimator](showcase/pdm_decimator/README.md)) | PR open |
 | F3 | Scored runs | `eval-1` stopped 2026-11-09 before analysis, no score ([pre-registration](docs/eval/eval1_preregistration.md)); baseline evaluation on a larger benchmark next |
 
 ## Licence
@@ -493,3 +494,13 @@ While the agent is developed it refuses to start without an access key (see [age
 The key keeps casual users of a checkout from running the agent; it does not stop anyone who edits the code, and the
 licence is what forbids that. The gate is **off until the owner commits `agent/access/keys.json`**. To set up your own
 key: copy [.env.example](.env.example) to `.env` (git-ignored) and put the key you were given after `FDA_ACCESS_KEY=`.
+
+### Private prompts (brief 99)
+
+The agent's prompt text is moving, slice by slice, into the private knowledge repository and is read through
+`agent.core.prompts.load(name)` ([agent/core/prompts.py](agent/core/prompts.py)). This repository holds only the pin (the
+private commit and the SHA-256 of its prompt manifest, [agent/core/prompts_pin.json](agent/core/prompts_pin.json)). A prompt
+that cannot be read stops the run; there is no committed copy to fall back on. CI fetches the pinned prompts with a
+read-only token; a fork pull request has no token, so the tests that need prompts skip there with a notice and every
+other pull request fails if the token is missing. Status and order: [docs/private_parts_plan.md](docs/private_parts_plan.md).
+Stage 0 (the loader, its tests and the CI step) is in; no prompt has moved yet.
