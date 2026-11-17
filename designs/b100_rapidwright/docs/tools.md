@@ -1,7 +1,7 @@
 # The RapidWright agent tools: datasheet (brief 100)
 
-Code: `agent/core/rapidwright_tools.py`; scripts: `flow/rw/`. Tests: `agent/tests/test_100_rapidwright.py`. Registered with the other flow tools
-(schema version 1.13.0). **Offered to a role only with `FDA_RAPIDWRIGHT=1` and RapidWright installed** (`enabled()`); the MCP server lists
+Code: `agent/core/rapidwright_tools.py`; scripts: `flow/rw/`. Tests: `agent/tests/test_100_rapidwright.py`. Registered with the other flow tools only when `FDA_RAPIDWRIGHT=1` is set at import
+(schema version unchanged). **Offered to a role only with `FDA_RAPIDWRIGHT=1` and RapidWright installed** (`enabled()`); the MCP server lists
 all registered tools but a stage's tool list decides what a role sees, and the stage lists do not include these, so earlier briefs' golden
 requests are unchanged. The stage 2 runs name the tools explicitly.
 

@@ -26,12 +26,12 @@ param chain placer=simulated annealing on whole slices, 200000 moves, window of 
 designs/b100_rapidwright/docs/design.md 4afa1e7335: the design note written before the code, and what changed after it (section 6)
 designs/b100_rapidwright/docs/what_we_found.md 6ee5acb0d8: the results with their tables, rendered from the summary record
 designs/b100_rapidwright/docs/licences.md 4b545ec475: licences of RapidWright, its device files and the Java runtime, and what is committed
-designs/b100_rapidwright/docs/tools.md 9a6df028ac: datasheet for the five agent tools and the scripts behind them
+designs/b100_rapidwright/docs/tools.md 3de7472dc2: datasheet for the five agent tools and the scripts behind them
 designs/b100_rapidwright/rtl/pcs_unit.sv c825d999f4: the relocatable block (brief 96's pcs_tx with its own source and sink, three input pins)
 designs/b100_rapidwright/rtl/chain_top.sv 0204d59663: the transmit chain with a bare GT
 designs/b100_rapidwright/scripts/run_c1.sh 501cd38a76: capability 1 end to end
 designs/b100_rapidwright/scripts/run_c23.sh ea789b7cfd: capabilities 2 and 3 end to end
-designs/b100_rapidwright/agent_run/run_arm.py 4b12b9c2ce: the stage 2 agent runs, with and without the tools
+designs/b100_rapidwright/agent_run/run_arm.py e2b2564bca: the stage 2 agent runs, with and without the tools
 flow/rw/place_chain.py d6e884f392: the annealing placer
 flow/rw/route.py 2ddfda190f: RWRoute full and net-list routing
 flow/rw/relocate.py d1fd27257f: block relocation
@@ -46,7 +46,7 @@ tests that need neither tool (~1min): python3 -m pytest -q designs/b100_rapidwri
 
 ## records (path sha256-prefix; claims below cite R<n>)
 R1 results/b100/summary.json e19da36328
-R2 agent/tests/test_100_rapidwright.py 13128ba474
+R2 agent/tests/test_100_rapidwright.py ce04bcd03f
 
 ## evidence
 E1 review pass R1: RapidWright reads and writes Vivado 2026.1 checkpoints for both parts and Vivado accepts them (route, DRC, bitstream)

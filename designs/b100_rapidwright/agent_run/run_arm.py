@@ -80,7 +80,7 @@ def main() -> int:
     work = Path(tempfile.mkdtemp(prefix="fda_b100_"))
     tf = work / "tools.yaml"
     tf.write_text("path: []\nenv:\n  FDA_VIVADO_MAX: '2'\n  FDA_RAPIDWRIGHT: '1'\n")        # builds may run beside one other session's Vivado
-    env = {"PYTHONPATH": str(ROOT), "PATH": os.environ.get("PATH", ""), "HOME": os.environ.get("HOME", ""), "FDA_TOOLS_FILE": str(tf)}
+    env = {"PYTHONPATH": str(ROOT), "PATH": os.environ.get("PATH", ""), "HOME": os.environ.get("HOME", ""), "FDA_TOOLS_FILE": str(tf), "FDA_RAPIDWRIGHT": "1"}
     if os.environ.get("FDA_ACCESS_KEY"):                  # else the server reads the git-ignored .env at the repo root (the key is never written here)
         env["FDA_ACCESS_KEY"] = "${FDA_ACCESS_KEY}"
     mcp = {"mcpServers": {MCP_NAME: {"command": sys.executable, "args": [

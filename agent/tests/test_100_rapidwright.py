@@ -7,9 +7,25 @@ from pathlib import Path
 
 import pytest
 
-from agent.core import dispatch
+import importlib
+import os
+
+from agent.core import TOOLS, dispatch
 from agent.core import rapidwright_tools as rt
 from flow import rapidwright_pin as pin
+
+
+@pytest.fixture(autouse=True)
+def _register_rw_tools(monkeypatch):
+    """The tools register only with FDA_RAPIDWRIGHT=1 at import: register them for these tests and take them out again, so the registry
+    other tests see (and hash) is unchanged."""
+    monkeypatch.setenv("FDA_RAPIDWRIGHT", "1")
+    importlib.reload(rt)
+    yield
+    for n in [n for n in TOOLS if n.startswith("rw_")]:
+        TOOLS.pop(n)
+    monkeypatch.delenv("FDA_RAPIDWRIGHT")
+    importlib.reload(rt)
 
 
 @pytest.fixture()
@@ -101,3 +117,12 @@ def test_rapidwright_env_puts_the_pinned_vivado_first():
     from flow import version_pin
     first = pin.env()["PATH"].split(":")[0]
     assert first == str(Path(version_pin.vivado_path()).parent)
+
+
+def test_default_registry_has_no_rw_tools():
+    """Without FDA_RAPIDWRIGHT=1 at import the tools are not registered (the registry hash in the golden requests is unchanged)."""
+    import subprocess
+    import sys
+    r = subprocess.run([sys.executable, "-c", "from agent.core import TOOLS; print(sorted(n for n in TOOLS if n.startswith('rw_')))"],
+                       capture_output=True, text=True, env={k: v for k, v in os.environ.items() if k != "FDA_RAPIDWRIGHT"}, cwd=str(rt.Path(__file__).resolve().parents[2]))
+    assert r.stdout.strip() == "[]", r.stdout + r.stderr

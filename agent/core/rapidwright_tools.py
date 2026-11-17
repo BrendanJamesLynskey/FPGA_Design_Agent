@@ -18,7 +18,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-from agent.core.registry import tool
+from agent.core.registry import tool as _tool
 from agent.core.security import SecurityError
 from agent.core.session import Session
 from flow import rapidwright_pin as pin
@@ -28,6 +28,16 @@ _SITE = re.compile(r"^SLICE_X\d{1,3}Y\d{1,3}$")
 _CELL_PAT = re.compile(r"^[A-Za-z0-9_\-\[\]\*\./]{1,80}$")
 _NET = re.compile(r"^[A-Za-z0-9_\-\[\]\./]{1,120}$")
 _ANCHOR = re.compile(r"^(GTHE4_CHANNEL|GTYE4_CHANNEL|SLICE)_X\d{1,3}Y\d{1,3}$")
+
+
+def tool(*a, **k):
+    """Register the tool only when FDA_RAPIDWRIGHT=1 is set at import: the default registry, its schema snapshot and the golden requests of
+    earlier briefs stay as they were (the golden test hashes the registry)."""
+    if os.environ.get("FDA_RAPIDWRIGHT") == "1":
+        return _tool(*a, **k)
+    return lambda fn: fn
+
+
 HEAVY = ("RapidWright starts a JVM (about 3 GB the first time for a checkpoint, 1 GB after) and, on a first read, a Vivado; "
          "run it only where the heavy-job rules allow.")
 
