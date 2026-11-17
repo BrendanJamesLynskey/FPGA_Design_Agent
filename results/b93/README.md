@@ -24,3 +24,11 @@ Synthetic data only (brief 87's splits). No board run.
   (about 3 hours a part on the shared workstation, one thread each, in a heavy slot).
 - Latency of a block = clocks x max(closed period, 2.0 ns). The early and late path delays are the clock period minus the slack
   of the worst path from the early or the late input registers.
+
+## Known gaps and limits
+
+- Out of context only: no clock buffer or jitter, so no clock is quoted faster than 2.0 ns; closed clocks are closed points of a
+  search (routing noise is about 0.1 ns), not bounds. The gate's bypass path is not in the block builds.
+- `ML_PRE` 1 to 3 are simulation only: no full-design build and no board run.
+- The late feature is not really late in this design, and no model here takes the message's own price.
+- The speculation counts use one synthetic data set; the SVG diagrams were checked as generated text, not rendered.
