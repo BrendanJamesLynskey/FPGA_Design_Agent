@@ -1,0 +1,161 @@
+# Brief 68 handover: the facts behind README.md and AGENT.md (docs/documentation_standard.md).
+# Measurement values and every sha256 are filled from the records by `python -m flow.handover fill`;
+# do not type them. Render with `python -m flow.handover write <this directory>`.
+schema: fda-handover/1
+id: b102_managed_fcs
+title: Managed-project demonstration - an FCS self-test around a frozen CRC netlist
+kind: demonstration
+produced_by: human
+summary: A KR260 self-test of an Ethernet FCS stage that exists to demonstrate a managed project (brief 102). An owned sequencer
+  sends a fixed sixteen-word frame through a CRC-32 block that was made outside the project as an EDIF netlist and is frozen,
+  and shows the verdict on an LED; a heartbeat divider is excluded from the agent's view but built with the rest. project.yaml
+  marks each part, and the agent's tools enforce it.
+scope_not:
+- a 10G Ethernet FCS check; the CRC block takes sixteen bits a clock, not the 64-bit word of the 96 design, because the
+  open equivalence engines could not prove 64 bits
+- a board design; it was not programmed, and the 161 MHz clock constraint is on the 25 MHz oscillator pin for a timing study
+target:
+  part: xck26-sfvc784-2LV-c
+  board: Kria KR260
+  top: fcs_top
+  tool: Vivado 2026.1
+clocks:
+- name: clk_25
+  mhz: 161.13
+  source: designs/b102_managed_fcs/design.xdc
+  note: the oscillator pin is 25 MHz on the board; the constraint is the 10G datapath rate to ask the real question of the
+    CRC block
+resets:
+- name: power-on counter
+  active: high
+  note: a four-clock counter in fcs_top holds every block in synchronous reset after configuration; there is no reset input
+interfaces:
+- name: crc32_d16 slot
+  type: black-box module filled by an EDIF netlist (build.yaml netlists)
+  doc: designs/b102_managed_fcs/project.yaml
+  note: the contract is in project.yaml (ports, clock, reset, boundary timing budgets); behaviour a user could guess wrong
+    is in the header of ext/reference/crc32_d16.sv (register not complement, little-endian words, hold on en low, reset
+    wins)
+parameters:
+- name: N_WORDS
+  value: 16
+  legal: 1 to 254 (the counter is eight bits wide in the word function)
+  note: words per frame, two bytes each
+- name: EXPECT
+  value: '0x79D3D43A'
+  legal: the CRC register value of the frame, from flow/managed_import.crc32_model
+  note: checked against zlib in designs/b102_managed_fcs/tests/test_b102_fcs.py
+files:
+- path: designs/b102_managed_fcs/project.yaml
+  what: the managed-project manifest, ownership and contracts of the four components
+  sha256: 1a5cceb7e4aaa4807719017f16f32e0dabacd7f5d59d820df3d13d4097f9864a
+- path: designs/b102_managed_fcs/rtl/fcs_top.sv
+  what: top level, power-on reset and the LEDs
+  sha256: 4a6763e3e1b57adc500186455ed1c9e2aebf2b0bdf42b29a5b0ad16cfb08208b
+- path: designs/b102_managed_fcs/rtl/fcs_ctrl.sv
+  what: the owned sequencer and FCS verdict
+  sha256: 2e11253b3f3351a8772a0fe5121044c4861e47f30b1788f34aef786c1d2e8bbb
+- path: designs/b102_managed_fcs/ext/crc32_d16.edf
+  what: the frozen CRC-32 block as an EDIF netlist made by Yosys outside the project
+  sha256: b602ea89bb13ab4a294f59f92e2fd783546464aa59c2f5a6f5d12d3e067afc94
+- path: designs/b102_managed_fcs/ext/reference/crc32_d16.sv
+  what: the supplier's RTL, the reference for the equivalence proof (not in the build)
+  sha256: 5fd46dc110c580f2015044edb4f9e9e0711a6b36a6204b9a58a4558e6b95ac81
+- path: designs/b102_managed_fcs/build.yaml
+  what: how flow/run_vivado.sh builds the design, with the netlist
+  sha256: 1fe41eafaaee24b3faa58b6e09059eaa6128b341e761aeba5d0ca606b160b8bb
+commands:
+- what: import checks (interface, licence, simulation, eqy)
+  cmd: python3 flow/managed_import.py check designs/b102_managed_fcs --sim --eqy
+  heavy: false
+  minutes: 1
+  needs: the OSS CAD Suite (FDA_OSS_CAD) and Icarus Verilog
+- what: the scripted agent session on a scratch copy
+  cmd: python3 designs/b102_managed_fcs/scripts/demo_managed_session.py
+  heavy: false
+  minutes: 1
+  needs: Python with PyYAML and jsonschema
+- what: build and run the gates
+  cmd: flow/run_vivado.sh designs/b102_managed_fcs base
+  heavy: true
+  minutes: 12
+  needs: local Vivado 2026.1 and a heavy slot (take_heavy_slot.sh)
+evidence:
+- id: E1
+  activity: simulation
+  result: pass
+  how: ci
+  what: ownership, scope, contract and path-trick tests of the agent's tools; the import checks, the boundary parsers and
+    the build plumbing
+  record: agent/tests/test_102_managed.py
+  sha256: 0b0e99cc9f741b70c6e4e0463d81774095e98c2e0e4fe96c1b67a0049943d2b9
+- id: E2
+  activity: simulation
+  result: pass
+  what: the netlist's interface equals the contract, the licence and hash are recorded, 400 simulated vectors match the
+    model, and eqy proves the supplier's RTL equivalent to the netlist
+  record: results/102_managed/import_check.json
+  sha256: e9f07ff8be45a411c4566d9199e7d39101b2fcbb662ea75501541d54b5b13e64
+- id: E3
+  activity: faults
+  result: pass
+  what: one flipped LUT INIT bit in the netlist fails both the simulation and the eqy proof
+  record: results/102_managed/eqy_fault.json
+  sha256: 547b2e01780faccfeae5ead485d0e97f06ccfe46f20eeebb9737d050dded7197
+- id: E4
+  activity: review
+  result: pass
+  what: the scripted session edits only the owned controller; its attempts on the frozen netlist, the excluded block, the
+    out-of-scope top, a port change, a dropped build source and the manifest are all refused
+  record: results/102_managed/demo_session.json
+  sha256: 3dae68b0531b42927688117977bce7477d4c2b97c6f307fe7e011c2ac2fc96b9
+measurements:
+- id: M1
+  what: clocks saved by the agent session's edit (first cycle in which pass_o rises, baseline minus edited)
+  category: latency
+  key: latency_clocks
+  unit: clocks
+  record: results/102_managed/latency.json
+  field: clocks_saved
+  conditions: Icarus simulation, CRC block from its functional netlist, counted from power-up
+  value: 1
+  sha256: d787aee463a558e86954571f2f58a4928f933c00935149a93f548915cd3f2275
+gaps:
+- about: resources
+  text: Not measured yet; the Vivado builds of this design wait for a heavy slot and will be recorded in results/102_managed.
+- about: timing
+  text: Not measured yet; the routed timing at 161 MHz, and the boundary timing budgets of the contract, are recorded with
+    the Vivado builds.
+- about: power
+  text: Not measured; this is a timing study and was not run on a board, so no power estimate is claimed.
+- about: throughput
+  text: Not applicable beyond the clock; the block takes two bytes a clock by construction and no throughput measurement
+    was made.
+- about: width
+  text: The CRC block is sixteen bits wide; the 10G design uses sixty-four. The open engines of eqy proved 8 and 16 bits
+    within two minutes and not 32 or 64 (results/102_managed/eqy_width_scaling.json).
+- about: board
+  text: Never programmed; no hardware evidence and no operating conditions exist.
+- about: behaviour
+  text: The design has no reset input and one fixed frame; the verdict LED is sticky until the next configuration, a corrupted
+    word in a later frame does not clear it.
+next_steps:
+- Record the two Vivado builds, the gates and the boundary checks, and replace the resources and timing gaps with their
+  measurements.
+- Stage 2 of brief 102 imports a placed-and-routed block and relocates it with RapidWright.
+open_questions:
+- Which owner-approved block should be the first real external import (stage 3 of brief 102)?
+history:
+- date: '2026-11-17'
+  brief: '102'
+  note: written for stage 1 of the managed-project brief
+numbers_allow:
+- token: '161'
+  reason: the 10G datapath clock, 161.13 MHz, from designs/b96_kr260_10g/design.xdc (a 6.206 ns period constraint here)
+state:
+  stage: simulated
+  gates:
+    import_checks: pass
+  vivado: '2026.1'
+  kb_pin: 93d158c
+  build_id: a4ffaea2
