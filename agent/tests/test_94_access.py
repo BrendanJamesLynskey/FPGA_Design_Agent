@@ -96,7 +96,8 @@ def test_the_key_is_redacted(monkeypatch):
 def test_audit_records_the_name_not_the_key(tmp_path, monkeypatch):
     from agent.core.session import Session
     monkeypatch.setattr(access, "CURRENT", "alice")
-    monkeypatch.setenv("FDA_ACCESS_KEY", KEY)
+    monkeypatch.setattr(access, "_TEST_BYPASS", True)   # this test is about the audit log, not admission: once
+    monkeypatch.setenv("FDA_ACCESS_KEY", KEY)           # keys.json is committed, the test key is (rightly) refused
     d = tmp_path / "d"
     d.mkdir()
     s = Session(design=d)
