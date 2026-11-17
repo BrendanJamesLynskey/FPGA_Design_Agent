@@ -48,6 +48,6 @@ def test_zynq_ultrascale_plus_speed_grades():
     assert program.roc_for("xck26-sfvc784-2LV-c")[0]["TEMPERATURE"] == (None, 85.0)       # the house rule's junction limit
 
 
-def test_program_uses_the_boards_catalogue_part(tmp_path, monkeypatch):
+def test_program_uses_the_boards_catalogue_part():
     assert program._catalogue_part({"name": "kr260", "part": "xck26"}) == KR260             # discovery holds only the short part
     assert program._catalogue_part({"name": "not_a_board", "part": "xc7a100t"}) == "xc7a100t"
