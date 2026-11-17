@@ -29,6 +29,7 @@ module tb_stream;
         @(posedge clk);
         while (ni < n) begin
             if (vec[ni][53] && ni > 0) begin           // a new stream: drain, reset the arm, go on
+                @(posedge clk);
                 in_v <= 0;
                 repeat (12) @(posedge clk);
                 rst <= 1;

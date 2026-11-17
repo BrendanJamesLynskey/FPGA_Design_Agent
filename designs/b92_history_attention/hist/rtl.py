@@ -118,8 +118,9 @@ def emit_a1(rec: dict, name: str, net_name: str) -> str:
             L.append(f"    logic signed [{w - 1}:0] {nm};")
             L.append(f"    wire logic signed [{w - 1}:0] {nm}_n = {nm} - ({nm} >>> {k}) + {w}'({tn});")
             sc = sh[ci * len(rates) + ri]
-            L.append(f"    wire logic signed [{w + 1}:0] {nm}_c = ({w + 2}'({nm}_n) >>> {sc}) + {w + 2}'sd128;")
-            L.append(f"    wire logic [7:0] {nm}_u = {nm}_c < {w + 2}'sd0 ? 8'd0 : {nm}_c > {w + 2}'sd255 ? 8'd255 : {nm}_c[7:0];")
+            cw = max(w + 2, 11)
+            L.append(f"    wire logic signed [{cw - 1}:0] {nm}_c = ({cw}'({nm}_n) >>> {sc}) + {cw}'sd128;")
+            L.append(f"    wire logic [7:0] {nm}_u = {nm}_c < {cw}'sd0 ? 8'd0 : {nm}_c > {cw}'sd255 ? 8'd255 : {nm}_c[7:0];")
             cols.append(nm)
     L.append("    logic v1;")
     L.append("    logic [37:0] f1;")
