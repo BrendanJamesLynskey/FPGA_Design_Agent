@@ -1,5 +1,5 @@
 {
-  "build_dir": "/home/brendan/Claude_sandbox/_worktrees/95-boards/boards/zedboard/smoke/build/base",
+  "build_dir": "/home/brendan/Claude_sandbox/_worktrees/98-boards/boards/zedboard/smoke/build/base",
   "vivado_version": "2026.1",
   "kb_measured_version": "2026.1",
   "kb_version_match": true,
@@ -40,13 +40,13 @@
       "methodology": {
         "errors": 0,
         "critical_warnings": 0,
-        "warnings": 8,
+        "warnings": 17,
         "rules": [
           {
             "rule": "XDCH-2",
             "severity": "Warning",
             "description": "Same min and max delay values on IO port",
-            "count": 8
+            "count": 17
           }
         ]
       },
@@ -69,15 +69,15 @@
         "wns_ns": 6.97,
         "tns_ns": 0.0,
         "tns_failing_endpoints": 0,
-        "tns_total_endpoints": 27,
-        "whs_ns": 0.213,
+        "tns_total_endpoints": 36,
+        "whs_ns": 0.045,
         "ths_ns": 0.0,
         "ths_failing_endpoints": 0,
-        "ths_total_endpoints": 27,
+        "ths_total_endpoints": 36,
         "wpws_ns": 4.5,
         "tpws_ns": 0.0,
         "tpws_failing_endpoints": 0,
-        "tpws_total_endpoints": 28,
+        "tpws_total_endpoints": 46,
         "timing_met": true
       },
       "check_timing": {
@@ -98,13 +98,13 @@
       "methodology": {
         "errors": 0,
         "critical_warnings": 0,
-        "warnings": 8,
+        "warnings": 17,
         "rules": [
           {
             "rule": "XDCH-2",
             "severity": "Warning",
             "description": "Same min and max delay values on IO port",
-            "count": 8
+            "count": 17
           }
         ]
       },
@@ -145,11 +145,12 @@
         "status": "pass",
         "waived": 0,
         "waived_rules": [],
-        "exceptions": 1,
+        "exceptions": 2,
         "ignored": 0,
         "info": [],
         "covered": {
-          "3": 8
+          "3": 9,
+          "5": 8
         },
         "failures": []
       },
@@ -158,7 +159,7 @@
         "pass": true,
         "interfaces": [],
         "failures": [],
-        "delays": 1,
+        "delays": 2,
         "clocks": {
           "sys_clk_pin": {
             "period": 10.0,
@@ -182,15 +183,15 @@
             "to": "cnt_reg[25]/D"
           },
           "hold": {
-            "slack": 0.213,
+            "slack": 0.045,
             "requirement": 0.0,
             "start_clock": "sys_clk_pin",
             "end_clock": "sys_clk_pin",
             "corner": "Fast",
             "uncertainty": null,
             "pessimism": -0.209,
-            "from": "cnt_reg[0]/C",
-            "to": "cnt_reg[0]/D"
+            "from": "u_btn/s1_reg[0]/C",
+            "to": "u_btn/s2_reg[0]/D"
           }
         }
       },
@@ -211,18 +212,18 @@
       },
       "resource_sanity": null,
       "utilization": {
-        "lut": 1,
-        "lut_available": 0,
+        "lut": 9,
+        "lut_available": 53200,
         "lutram": 0,
         "lutram_available": 17400,
-        "ff": 27,
+        "ff": 45,
         "ff_available": 106400,
         "carry4": 7,
         "bram_tile": 0,
         "bram_tile_available": 140,
         "dsp": 0,
         "dsp_available": 220,
-        "iob": 9,
+        "iob": 18,
         "iob_available": 200,
         "bufg": 1,
         "bufg_available": 32
@@ -235,18 +236,18 @@
         "post_place_hold": true
       },
       "timing": {
-        "wns_ns": 7.627,
+        "wns_ns": 7.453,
         "tns_ns": 0.0,
         "tns_failing_endpoints": 0,
-        "tns_total_endpoints": 27,
-        "whs_ns": 0.254,
+        "tns_total_endpoints": 36,
+        "whs_ns": 0.11,
         "ths_ns": 0.0,
         "ths_failing_endpoints": 0,
-        "ths_total_endpoints": 27,
+        "ths_total_endpoints": 36,
         "wpws_ns": 4.5,
         "tpws_ns": 0.0,
         "tpws_failing_endpoints": 0,
-        "tpws_total_endpoints": 28,
+        "tpws_total_endpoints": 46,
         "timing_met": true
       },
       "pass": true
@@ -275,11 +276,12 @@
         "status": "pass",
         "waived": 0,
         "waived_rules": [],
-        "exceptions": 1,
+        "exceptions": 2,
         "ignored": 0,
         "info": [],
         "covered": {
-          "3": 8
+          "3": 9,
+          "5": 8
         },
         "failures": []
       },
@@ -288,7 +290,7 @@
         "pass": true,
         "interfaces": [],
         "failures": [],
-        "delays": 1,
+        "delays": 2,
         "clocks": {
           "sys_clk_pin": {
             "period": 10.0,
@@ -301,26 +303,26 @@
         },
         "worst": {
           "setup": {
-            "slack": 7.351,
+            "slack": 7.182,
             "requirement": 10.0,
             "start_clock": "sys_clk_pin",
             "end_clock": "sys_clk_pin",
             "corner": "Slow",
             "uncertainty": 0.035,
-            "pessimism": 0.434,
+            "pessimism": 0.28,
             "from": "cnt_reg[1]/C",
             "to": "cnt_reg[25]/D"
           },
           "hold": {
-            "slack": 0.252,
+            "slack": 0.088,
             "requirement": 0.0,
             "start_clock": "sys_clk_pin",
             "end_clock": "sys_clk_pin",
             "corner": "Fast",
             "uncertainty": null,
-            "pessimism": -0.518,
+            "pessimism": -0.247,
             "from": "cnt_reg[11]/C",
-            "to": "cnt_reg[11]/D"
+            "to": "cnt_reg[12]/D"
           }
         },
         "uncertainty": {
@@ -331,9 +333,9 @@
             "tij_ns": 0.0,
             "dj_ns": 0.0,
             "pe_ns": 0.0,
-            "pessimism_ns": 0.434,
+            "pessimism_ns": 0.28,
             "requirement_ns": 10.0,
-            "slack_ns": 7.351
+            "slack_ns": 7.182
           },
           "hold": null
         }
@@ -353,18 +355,18 @@
     }
   },
   "timing": {
-    "wns_ns": 7.351,
+    "wns_ns": 7.182,
     "tns_ns": 0.0,
     "tns_failing_endpoints": 0,
-    "tns_total_endpoints": 27,
-    "whs_ns": 0.252,
+    "tns_total_endpoints": 36,
+    "whs_ns": 0.088,
     "ths_ns": 0.0,
     "ths_failing_endpoints": 0,
-    "ths_total_endpoints": 27,
+    "ths_total_endpoints": 36,
     "wpws_ns": 4.5,
     "tpws_ns": 0.0,
     "tpws_failing_endpoints": 0,
-    "tpws_total_endpoints": 28,
+    "tpws_total_endpoints": 46,
     "timing_met": true
   },
   "check_timing": {
@@ -382,18 +384,18 @@
     "latch_loops": 0
   },
   "utilization": {
-    "lut": 1,
-    "lut_available": 0,
+    "lut": 9,
+    "lut_available": 53200,
     "lutram": 0,
     "lutram_available": 17400,
-    "ff": 27,
+    "ff": 45,
     "ff_available": 106400,
     "carry4": 7,
     "bram_tile": 0,
     "bram_tile_available": 140,
     "dsp": 0,
     "dsp_available": 220,
-    "iob": 9,
+    "iob": 18,
     "iob_available": 200,
     "bufg": 1,
     "bufg_available": 32
@@ -414,13 +416,13 @@
   "methodology": {
     "errors": 0,
     "critical_warnings": 0,
-    "warnings": 8,
+    "warnings": 17,
     "rules": [
       {
         "rule": "XDCH-2",
         "severity": "Warning",
         "description": "Same min and max delay values on IO port",
-        "count": 8
+        "count": 17
       }
     ]
   },
@@ -429,19 +431,19 @@
     "rules": []
   },
   "power": {
-    "total_w": 0.138,
-    "dynamic_w": 0.007,
+    "total_w": 0.144,
+    "dynamic_w": 0.013,
     "static_w": 0.131,
-    "confidence": "Medium",
-    "clocks_w": 0.0005,
+    "confidence": "Low",
+    "clocks_w": 0.002,
     "slice_logic_w": 0.0005,
     "signals_w": 0.0005,
-    "io_w": 0.006,
-    "core_w": 0.0015
+    "io_w": 0.011,
+    "core_w": 0.003
   },
   "power_environment": {
-    "junction_c": 42.0,
-    "max_ambient_c": 83.0,
+    "junction_c": 42.1,
+    "max_ambient_c": 82.9,
     "theta_ja_c_per_w": 14.4,
     "ambient_c": 40.0,
     "airflow_lfm": 0.0,
@@ -453,6 +455,6 @@
     "file": "b95_smoke_top.bit",
     "bytes": 4045768
   },
-  "build_stamp": "64fe4803",
-  "sources_sha256": "64fe4803e8ab63cd668311d23cb2a5c6dc80601c27715ec6f3ecda60f6339328"
+  "build_stamp": "2c504bae",
+  "sources_sha256": "2c504bae3ec7a334d1717cbe3a686bc996ef90d606e01d4b0b3c10d887967fbf"
 }

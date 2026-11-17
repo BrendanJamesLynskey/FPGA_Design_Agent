@@ -1,9 +1,9 @@
 Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
 ---------------------------------------------------------------------------------------------------------------------------------------------
 | Tool Version : Vivado v.2026.1 (lin64) Build 6511674 Tue Jun 16 11:01:26 MDT 2026
-| Date         : Tue Nov 17 03:07:02 2026
+| Date         : Tue Nov 17 12:18:43 2026
 | Host         : bren-ubuntu24-04 running 64-bit Ubuntu 24.04.4 LTS
-| Command      : report_methodology -file /home/brendan/Claude_sandbox/_worktrees/95-boards/boards/zedboard/smoke/build/base/methodology.rpt
+| Command      : report_methodology -file /home/brendan/Claude_sandbox/_worktrees/98-boards/boards/zedboard/smoke/build/base/methodology.rpt
 | Design       : b95_smoke_top
 | Device       : xc7z020clg484-1
 | Speed File   : -1
@@ -23,69 +23,132 @@ Table of Contents
           Floorplan: design_1
       Design limits: <entire design considered>
              Max checks: <unlimited>
-             Checks found: 8
+             Checks found: 17
 +--------+----------+------------------------------------------+--------+
 | Rule   | Severity | Description                              | Checks |
 +--------+----------+------------------------------------------+--------+
-| XDCH-2 | Warning  | Same min and max delay values on IO port | 8      |
+| XDCH-2 | Warning  | Same min and max delay values on IO port | 17     |
 +--------+----------+------------------------------------------+--------+
 
 2. REPORT DETAILS
 -----------------
 XDCH-2#1 Warning
 Same min and max delay values on IO port  
-The same output delay of 0.000 ns has been defined on port 'led[0]' relative to clock sys_clk_pin for both max and min. Make sure this reflects the design intent.
-set_output_delay -clock sys_clk_pin 0.000 [get_ports {led[*]}]
-/home/brendan/Claude_sandbox/_worktrees/95-boards/boards/zedboard/smoke/design.xdc (Line: 17)
+The same input delay of 0.000 ns has been defined on port 'btn' relative to clock sys_clk_pin for both max and min. Make sure this reflects the design intent.
+set_input_delay -clock sys_clk_pin 0.000 [get_ports {btn {sw[*]}}]
+/home/brendan/Claude_sandbox/_worktrees/98-boards/boards/zedboard/smoke/design.xdc (Line: 27)
 Related violations: <none>
 
 XDCH-2#2 Warning
 Same min and max delay values on IO port  
-The same output delay of 0.000 ns has been defined on port 'led[1]' relative to clock sys_clk_pin for both max and min. Make sure this reflects the design intent.
-set_output_delay -clock sys_clk_pin 0.000 [get_ports {led[*]}]
-/home/brendan/Claude_sandbox/_worktrees/95-boards/boards/zedboard/smoke/design.xdc (Line: 17)
+The same input delay of 0.000 ns has been defined on port 'sw[0]' relative to clock sys_clk_pin for both max and min. Make sure this reflects the design intent.
+set_input_delay -clock sys_clk_pin 0.000 [get_ports {btn {sw[*]}}]
+/home/brendan/Claude_sandbox/_worktrees/98-boards/boards/zedboard/smoke/design.xdc (Line: 27)
 Related violations: <none>
 
 XDCH-2#3 Warning
 Same min and max delay values on IO port  
-The same output delay of 0.000 ns has been defined on port 'led[2]' relative to clock sys_clk_pin for both max and min. Make sure this reflects the design intent.
-set_output_delay -clock sys_clk_pin 0.000 [get_ports {led[*]}]
-/home/brendan/Claude_sandbox/_worktrees/95-boards/boards/zedboard/smoke/design.xdc (Line: 17)
+The same input delay of 0.000 ns has been defined on port 'sw[1]' relative to clock sys_clk_pin for both max and min. Make sure this reflects the design intent.
+set_input_delay -clock sys_clk_pin 0.000 [get_ports {btn {sw[*]}}]
+/home/brendan/Claude_sandbox/_worktrees/98-boards/boards/zedboard/smoke/design.xdc (Line: 27)
 Related violations: <none>
 
 XDCH-2#4 Warning
 Same min and max delay values on IO port  
-The same output delay of 0.000 ns has been defined on port 'led[3]' relative to clock sys_clk_pin for both max and min. Make sure this reflects the design intent.
-set_output_delay -clock sys_clk_pin 0.000 [get_ports {led[*]}]
-/home/brendan/Claude_sandbox/_worktrees/95-boards/boards/zedboard/smoke/design.xdc (Line: 17)
+The same input delay of 0.000 ns has been defined on port 'sw[2]' relative to clock sys_clk_pin for both max and min. Make sure this reflects the design intent.
+set_input_delay -clock sys_clk_pin 0.000 [get_ports {btn {sw[*]}}]
+/home/brendan/Claude_sandbox/_worktrees/98-boards/boards/zedboard/smoke/design.xdc (Line: 27)
 Related violations: <none>
 
 XDCH-2#5 Warning
 Same min and max delay values on IO port  
-The same output delay of 0.000 ns has been defined on port 'led[4]' relative to clock sys_clk_pin for both max and min. Make sure this reflects the design intent.
-set_output_delay -clock sys_clk_pin 0.000 [get_ports {led[*]}]
-/home/brendan/Claude_sandbox/_worktrees/95-boards/boards/zedboard/smoke/design.xdc (Line: 17)
+The same input delay of 0.000 ns has been defined on port 'sw[3]' relative to clock sys_clk_pin for both max and min. Make sure this reflects the design intent.
+set_input_delay -clock sys_clk_pin 0.000 [get_ports {btn {sw[*]}}]
+/home/brendan/Claude_sandbox/_worktrees/98-boards/boards/zedboard/smoke/design.xdc (Line: 27)
 Related violations: <none>
 
 XDCH-2#6 Warning
 Same min and max delay values on IO port  
-The same output delay of 0.000 ns has been defined on port 'led[5]' relative to clock sys_clk_pin for both max and min. Make sure this reflects the design intent.
-set_output_delay -clock sys_clk_pin 0.000 [get_ports {led[*]}]
-/home/brendan/Claude_sandbox/_worktrees/95-boards/boards/zedboard/smoke/design.xdc (Line: 17)
+The same input delay of 0.000 ns has been defined on port 'sw[4]' relative to clock sys_clk_pin for both max and min. Make sure this reflects the design intent.
+set_input_delay -clock sys_clk_pin 0.000 [get_ports {btn {sw[*]}}]
+/home/brendan/Claude_sandbox/_worktrees/98-boards/boards/zedboard/smoke/design.xdc (Line: 27)
 Related violations: <none>
 
 XDCH-2#7 Warning
 Same min and max delay values on IO port  
-The same output delay of 0.000 ns has been defined on port 'led[6]' relative to clock sys_clk_pin for both max and min. Make sure this reflects the design intent.
-set_output_delay -clock sys_clk_pin 0.000 [get_ports {led[*]}]
-/home/brendan/Claude_sandbox/_worktrees/95-boards/boards/zedboard/smoke/design.xdc (Line: 17)
+The same input delay of 0.000 ns has been defined on port 'sw[5]' relative to clock sys_clk_pin for both max and min. Make sure this reflects the design intent.
+set_input_delay -clock sys_clk_pin 0.000 [get_ports {btn {sw[*]}}]
+/home/brendan/Claude_sandbox/_worktrees/98-boards/boards/zedboard/smoke/design.xdc (Line: 27)
 Related violations: <none>
 
 XDCH-2#8 Warning
 Same min and max delay values on IO port  
+The same input delay of 0.000 ns has been defined on port 'sw[6]' relative to clock sys_clk_pin for both max and min. Make sure this reflects the design intent.
+set_input_delay -clock sys_clk_pin 0.000 [get_ports {btn {sw[*]}}]
+/home/brendan/Claude_sandbox/_worktrees/98-boards/boards/zedboard/smoke/design.xdc (Line: 27)
+Related violations: <none>
+
+XDCH-2#9 Warning
+Same min and max delay values on IO port  
+The same input delay of 0.000 ns has been defined on port 'sw[7]' relative to clock sys_clk_pin for both max and min. Make sure this reflects the design intent.
+set_input_delay -clock sys_clk_pin 0.000 [get_ports {btn {sw[*]}}]
+/home/brendan/Claude_sandbox/_worktrees/98-boards/boards/zedboard/smoke/design.xdc (Line: 27)
+Related violations: <none>
+
+XDCH-2#10 Warning
+Same min and max delay values on IO port  
+The same output delay of 0.000 ns has been defined on port 'led[0]' relative to clock sys_clk_pin for both max and min. Make sure this reflects the design intent.
+set_output_delay -clock sys_clk_pin 0.000 [get_ports {led[*]}]
+/home/brendan/Claude_sandbox/_worktrees/98-boards/boards/zedboard/smoke/design.xdc (Line: 32)
+Related violations: <none>
+
+XDCH-2#11 Warning
+Same min and max delay values on IO port  
+The same output delay of 0.000 ns has been defined on port 'led[1]' relative to clock sys_clk_pin for both max and min. Make sure this reflects the design intent.
+set_output_delay -clock sys_clk_pin 0.000 [get_ports {led[*]}]
+/home/brendan/Claude_sandbox/_worktrees/98-boards/boards/zedboard/smoke/design.xdc (Line: 32)
+Related violations: <none>
+
+XDCH-2#12 Warning
+Same min and max delay values on IO port  
+The same output delay of 0.000 ns has been defined on port 'led[2]' relative to clock sys_clk_pin for both max and min. Make sure this reflects the design intent.
+set_output_delay -clock sys_clk_pin 0.000 [get_ports {led[*]}]
+/home/brendan/Claude_sandbox/_worktrees/98-boards/boards/zedboard/smoke/design.xdc (Line: 32)
+Related violations: <none>
+
+XDCH-2#13 Warning
+Same min and max delay values on IO port  
+The same output delay of 0.000 ns has been defined on port 'led[3]' relative to clock sys_clk_pin for both max and min. Make sure this reflects the design intent.
+set_output_delay -clock sys_clk_pin 0.000 [get_ports {led[*]}]
+/home/brendan/Claude_sandbox/_worktrees/98-boards/boards/zedboard/smoke/design.xdc (Line: 32)
+Related violations: <none>
+
+XDCH-2#14 Warning
+Same min and max delay values on IO port  
+The same output delay of 0.000 ns has been defined on port 'led[4]' relative to clock sys_clk_pin for both max and min. Make sure this reflects the design intent.
+set_output_delay -clock sys_clk_pin 0.000 [get_ports {led[*]}]
+/home/brendan/Claude_sandbox/_worktrees/98-boards/boards/zedboard/smoke/design.xdc (Line: 32)
+Related violations: <none>
+
+XDCH-2#15 Warning
+Same min and max delay values on IO port  
+The same output delay of 0.000 ns has been defined on port 'led[5]' relative to clock sys_clk_pin for both max and min. Make sure this reflects the design intent.
+set_output_delay -clock sys_clk_pin 0.000 [get_ports {led[*]}]
+/home/brendan/Claude_sandbox/_worktrees/98-boards/boards/zedboard/smoke/design.xdc (Line: 32)
+Related violations: <none>
+
+XDCH-2#16 Warning
+Same min and max delay values on IO port  
+The same output delay of 0.000 ns has been defined on port 'led[6]' relative to clock sys_clk_pin for both max and min. Make sure this reflects the design intent.
+set_output_delay -clock sys_clk_pin 0.000 [get_ports {led[*]}]
+/home/brendan/Claude_sandbox/_worktrees/98-boards/boards/zedboard/smoke/design.xdc (Line: 32)
+Related violations: <none>
+
+XDCH-2#17 Warning
+Same min and max delay values on IO port  
 The same output delay of 0.000 ns has been defined on port 'led[7]' relative to clock sys_clk_pin for both max and min. Make sure this reflects the design intent.
 set_output_delay -clock sys_clk_pin 0.000 [get_ports {led[*]}]
-/home/brendan/Claude_sandbox/_worktrees/95-boards/boards/zedboard/smoke/design.xdc (Line: 17)
+/home/brendan/Claude_sandbox/_worktrees/98-boards/boards/zedboard/smoke/design.xdc (Line: 32)
 Related violations: <none>
 
 
