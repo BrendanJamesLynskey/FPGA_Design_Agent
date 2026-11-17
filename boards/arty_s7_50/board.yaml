@@ -226,3 +226,8 @@ hardware_use:
 smoke:
   clk_hz: 100000000
   banner: Arty S7-50
+internal_vref:
+  bank: 34
+  volts: 0.675
+  status: derived
+  reason: the vendor XDC puts the clock (R2) and sw[3] (M5, a VREF pin) in bank 34 at SSTL135, so Vivado's DRC BIVRU-1 needs the bank's INTERNAL_VREF; 0.675 V is half of 1.35 V, the SSTL135 reference. Found by the first smoke build, not read from a board document

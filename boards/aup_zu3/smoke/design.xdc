@@ -2,8 +2,8 @@
 ## (aup_zu3-pins.xdc). Pins and I/O standards are the board's; do not edit pin numbers.
 
 set_property -dict { PACKAGE_PIN AB6  IOSTANDARD LVCMOS12 } [get_ports { btn }];  # btn[0]
-set_property -dict { PACKAGE_PIN D6   IOSTANDARD LVDS } [get_ports { clk_n }];  # clk_100_n
 set_property -dict { PACKAGE_PIN D7   IOSTANDARD LVDS } [get_ports { clk_p }];  # clk_100_p
+set_property IOSTANDARD LVDS [get_ports { clk_n }];  # pair of clk_p, pin D6 per the board file
 create_clock -add -name sys_clk_pin -period 10.00 -waveform {0 5} [get_ports { clk_p }];
 set_property -dict { PACKAGE_PIN AF5  IOSTANDARD LVCMOS12 } [get_ports { led[0] }];  # led[0]
 set_property -dict { PACKAGE_PIN AE7  IOSTANDARD LVCMOS12 } [get_ports { led[1] }];  # led[1]

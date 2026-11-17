@@ -176,11 +176,11 @@ def test_trust_is_computed_from_evidence_and_never_declared_above_it(monkeypatch
     for b, e in CAT.items():
         assert e["trust"] == cat.computed_trust(b, e), b
     fake = {k: dict(v) for k, v in CAT.items()}
-    fake["basys3"]["trust"] = "built"                       # no smoke record behind it
+    fake["aup_zu3"]["trust"] = "built"                      # its smoke build failed a gate, so no passing record is behind it
     monkeypatch.setattr(cat, "load", lambda: fake)
     assert any("above the evidence" in p for p in cat.problems())
-    fake["basys3"]["trust"] = "hardware"
-    assert any("basys3" in p and "above the evidence" in p for p in cat.problems())
+    fake["aup_zu3"]["trust"] = "hardware"
+    assert any("aup_zu3" in p and "above the evidence" in p for p in cat.problems())
 
 
 def test_a_smoke_record_must_match_the_committed_xdc(tmp_path, monkeypatch):

@@ -190,7 +190,7 @@ def table() -> str:
             "with DRC and methodology clean. The record is `results/95_boards/<board>/smoke.json`. Nothing was run on a board.",
             "- **hardware**: run on a real board that the owner has, with run records in the repository. The scope column says what those runs covered.", "",
             "Licence tier: `free` means the installed Vivado licence (Basic tier, 2026.1) implements the part, as the probe or a build shows; "
-            "`paid` means it does not, so the board is listed and documented but its flow stops at synthesis. Targetable: the agent can write the board's constraints "
+            "`unverified` means the probe took the part through synthesis, placement and routing but no bitstream was tried. `paid` would mean the licence refuses the part (no board is in that state: the probe and the smoke builds took every part tried, including the Artix-7 200T and Kintex-7 325T, through the bitstream where a smoke design exists). Targetable: the agent can write the board's constraints "
             "from its resource names; `no` means the board has no PL clock or no usable pin list yet (see the board's known gaps).", "",
             "| Board id | Board | Part | Family | Trust | Licence tier | Targetable | Smoke build | Scope of the evidence |",
             "|---|---|---|---|---|---|---|---|---|"]

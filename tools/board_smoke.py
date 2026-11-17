@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import re
 import json
 import sys
 from pathlib import Path
@@ -39,7 +40,7 @@ def _board(board: str) -> dict:
 
 def has_smoke(board: str) -> bool:
     cat = yaml.safe_load((ROOT / "boards" / "catalogue.yaml").read_text())["boards"].get(board, {})
-    if cat.get("licence_tier") == "paid" or not cat.get("targetable", True):
+    if cat.get("licence_tier") == "paid" or not cat.get("targetable", True) or cat.get("licence_tier") == "unverified":
         return False                     # the installed licence cannot build it, or the agent cannot target it
     y = _board(board)
     return bool(y.get("smoke")) and bool(y.get("master_xdc")) and (y.get("resources") or {}).get("led") is not None
@@ -138,6 +139,23 @@ def make_xdc(board: str, p: dict) -> str:
     if cfg:
         t += f"\n## Configuration bank voltage ({'unconfirmed for this board: see board.yaml config' if cfg.get('status') else 'from the vendor XDC'})\n"
         t += f"set_property CFGBVS {cfg['cfgbvs']} [current_design];\nset_property CONFIG_VOLTAGE {cfg['config_voltage']} [current_design];\n"
+    if p["diff"]:                         # the P port's LOC first: Vivado places the input buffer from the first of the pair it meets
+        ls = t.splitlines()
+        pi = next(i for i, l in enumerate(ls) if "get_ports { clk_p }" in l and "PACKAGE_PIN" in l)
+        ni = next(i for i, l in enumerate(ls) if "get_ports { clk_n }" in l and "PACKAGE_PIN" in l)
+        if ni < pi:
+            ls[ni], ls[pi] = ls[pi], ls[ni]
+        pi = next(i for i, l in enumerate(ls) if "get_ports { clk_p }" in l and "PACKAGE_PIN" in l)
+        ni = next(i for i, l in enumerate(ls) if "get_ports { clk_n }" in l and "PACKAGE_PIN" in l)
+        if p["y"]["part"].startswith(("xczu", "xck")):
+            # UltraScale+: a LOC on both ports of a pair makes Vivado 2026.1 warn (12-1411) that the input buffer cannot be placed, although it
+            # ends up on the right pair. The P pin's LOC places the pair; the N port keeps its standard and a comment names its pin.
+            pn = re.search(r"PACKAGE_PIN (\w+)\s+IOSTANDARD (\w+)", ls[ni])
+            ls[ni] = f"set_property IOSTANDARD {pn.group(2)} [get_ports {{ clk_n }}];  # pair of clk_p, pin {pn.group(1)} per the board file"
+        t = "\n".join(ls) + "\n"
+    iv = y.get("internal_vref")
+    if iv:
+        t += f"\n## Bank {iv['bank']} holds SSTL135 ports (see board.yaml internal_vref): its VREF pin is a user pin, so the bank uses the internal reference.\nset_property INTERNAL_VREF {iv['volts']} [get_iobanks {iv['bank']}];\n"
     ins = (["btn"] if p["btn"] else []) + (["sw[*]"] if p["nsw"] and p["nsw"] > 1 else ["sw"] if p["nsw"] else []) + (["uart_rx"] if p["uart"] else [])
     outs = ["led[*]" if p["nled"] > 1 else "led"] + (["uart_tx"] if p["uart"] else [])
     if ins:

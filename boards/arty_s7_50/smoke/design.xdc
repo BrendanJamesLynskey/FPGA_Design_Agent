@@ -19,6 +19,9 @@ set_property -dict { PACKAGE_PIN R12  IOSTANDARD LVCMOS33 } [get_ports { uart_tx
 set_property CFGBVS VCCO [current_design];
 set_property CONFIG_VOLTAGE 3.3 [current_design];
 
+## Bank 34 holds SSTL135 ports (see board.yaml internal_vref): its VREF pin is a user pin, so the bank uses the internal reference.
+set_property INTERNAL_VREF 0.675 [get_iobanks 34];
+
 ## Asynchronous inputs: each is synchronised by two ASYNC_REG flops (sync2.sv); a zero input delay marks them
 ## constrained for check_timing and the false path removes them from timing analysis.
 set async_in [get_ports {btn sw[*] uart_rx}]

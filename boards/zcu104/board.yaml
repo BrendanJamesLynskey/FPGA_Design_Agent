@@ -14,6 +14,10 @@ master_xdc_source:
   spec: boards/zcu104/pins_import.yaml
   note: our own listing of documented pin locations, not a copy of a vendor file
 sources:
+  PROBE:
+    title: this repository's licence probe
+    version: Vivado 2026.1, brief 95, 2026-11-17
+    url: results/95_boards/licence_probe.json
   ZCU104:
     title: 'AMD XilinxBoardStore board file for the ZCU104: part, pins, components'
     version: XilinxBoardStore @ 40fad97, boards/Xilinx/zcu104/1.1 (board.xml, part0_pins.xml; Apache-2.0)
@@ -59,10 +63,10 @@ facts:
   source:
   - ZCU104
 - item: licence
-  value: the ZU7EV is outside the installed Vivado licence (Basic tier), checked by the probe in results/95_boards/licence_probe.json
-  status: unconfirmed
-  reason: until the probe record exists in this repo
-- item: LED and button polarity
+  value: the licence probe (results/95_boards/licence_probe.json) took xczu7ev through synthesis, placement and routing on the installed Basic-tier Vivado 2026.1; no bitstream was tried because the board file has no smoke map
+  source:
+  - PROBE
+  - item: LED and button polarity
   status: unconfirmed
   reason: not stated in the board file
 slow_ports:
