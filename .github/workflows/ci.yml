@@ -303,7 +303,7 @@ jobs:
   trading-path:
     name: Mock trading path (brief 58A) - cocotb against the reference model, pin-level RGMII loop
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 50
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -342,6 +342,10 @@ jobs:
           for arm in 1 4; do for pre in 0 1 2 3; do B93_ML_ARM=$arm B93_ML_PRE=$pre python -m pytest -q designs/b93_precompute/tests/test_b93_integ_rtl.py -k b93_integration; done; done
           python3 -m designs.b93_precompute.model.gen_rtl --check
           python3 results/b93/summary.py --check
+      - name: Order-flow history and tiny attention (brief 92) - generator checks, causality, generated stateful arms against their stream twin (test sessions, random and extreme streams), fixed latency, Verilator -Wall
+        run: |
+          python -m pytest -q designs/b92_history_attention/tests/test_b92_gen.py designs/b92_history_attention/tests/test_b92_rtl.py
+          python3 results/b92/summary.py --check
       - name: Upload simulation logs
         if: always()
         uses: actions/upload-artifact@v4
