@@ -1,0 +1,272 @@
+# Brief 68 handover: the facts behind README.md and AGENT.md (docs/documentation_standard.md).
+# Measurement values and every sha256 are filled from the records by `python -m flow.handover fill`;
+# do not type them. Render with `python -m flow.handover write <this directory>`.
+schema: fda-handover/1
+id: b93_precompute
+title: Deciding before the last byte, precomputing the ML decision on a serial feed
+kind: showcase
+produced_by: human
+summary: Measures how much of the brief 87 decision model can be done while a message is still arriving. The model's inputs
+  turn out to be known three clocks before the price field, so computing the features early removes the one or three clocks
+  the model added to the 58A path, at no LUT cost. A table of the model's class per interval of its deepest feature (partial
+  evaluation) is built for the 87 trees and the 89 lg_small network and measured, and it saves nothing in clocks in this
+  design.
+scope_not:
+- real market data or a real exchange feed; the data are brief 87's seeded synthetic order flow and our own Bench Feed v1
+  format
+- a board run or a full-design build of ML_PRE 1 to 3; every hardware number is an out-of-context, post-route Vivado 2026.1
+  block build
+- a model that uses the message's own price; none exists in this programme, and every arm must equal the 87 integer model
+target:
+  part: xck26-sfvc784-2LV-c
+  board: Kria KR260 (K26 SOM); also xc7a100tcsg324-1 (Nexys A7) out of context
+  top: ooc_wrap (one block with input registers), out of context; the integration is trigger_core in simulation
+  tool: Vivado 2026.1
+  note: no board top; the new parameter ML_PRE (default 0) of trigger_core selects the early and table paths
+clocks:
+- name: clk
+  mhz: 166.7
+  source: results/b93/ooc/k26/ml_feat_pre.json
+  note: the early feature unit's closed clock on the K26 out of context; the 58A core runs at 125 MHz (8 ns, a byte a clock)
+    and every block's closed clock is in results/b93/ooc/<part>/<block>.json
+resets:
+- name: rst
+  active: high
+  note: synchronous; clears the valid pipeline and, in the feature unit and gate, the state; never the table or datapath
+    of a table block
+interfaces:
+- name: table block ports
+  type: clk, rst, e_v, e_f[37:0], l_v, l_x[7:0], out_v, out_cls[1:0]
+  doc: designs/b93_precompute/docs/blocks.md
+  note: l_v must come FILL clocks after e_v and no later than FILL - 1 clocks after the next e_v; out_v is l_v delayed by
+    exactly one clock
+- name: trigger_core parameters ML_ARM and ML_PRE
+  type: ML_ARM and ML_PRE, integer parameters
+  doc: designs/b93_precompute/docs/blocks.md
+  note: ML_PRE 0 is the 87 behaviour and the default; registers 0x02A-0x02C are unchanged
+parameters:
+- name: ML_PRE
+  value: 0 (default), 1, 2 and 3 all built in simulation
+  legal: 0 to 3; 2 and 3 need ML_ARM 1 or 4
+  note: 1 early features; 2 and 3 early features and a table block with a fill of 1 or 2 clocks
+files:
+- path: designs/b93_precompute/model/gen_rtl.py
+  what: generator of the table blocks
+  sha256: 47e61982fe6d3ca793515c3789e8f03bfb6f7f8089116a87f7a3c1da9e4584ac
+- path: designs/b93_precompute/rtl/ml_feat_pre.sv
+  what: early feature unit
+  sha256: 8745a2f49b72d0bb07199339fb4bd31c1244aae530eaff89fb0b8322cec99a0d
+- path: designs/b93_precompute/rtl/ml_gate_pre.sv
+  what: gate for an early class
+  sha256: b69f63825bf712bfcbf684db4fdc44f570703b9eac40a85962235809f90b044b
+- path: designs/b58a_trigger/rtl/trigger_core.sv
+  what: ML_PRE and ML_ARM 4 added (defaults unchanged)
+  sha256: cf7c64d60a10a6ad309a5f796b9451f4574fab61ad3d54302e1027700b776cdc
+- path: designs/b93_precompute/ooc/ooc.py
+  what: out-of-context clock search on both parts
+  sha256: 950817e484b6d1b573ec902f9fd1fdedbea4cfbd9814f413b312224aa4e68266
+commands:
+- what: table blocks against the 87 and 89 models, feature unit in lockstep, gate timing
+  cmd: B93_RECORD=results/b93 python3 -m pytest -q designs/b93_precompute/tests/test_b93_pe_rtl.py designs/b93_precompute/tests/test_b93_feat_pre_rtl.py
+  heavy: false
+  minutes: 3
+  needs: Icarus Verilog 12, Verilator 5 (the lint test skips without it)
+- what: the model behind trigger_core for one ML_ARM and ML_PRE
+  cmd: B93_ML_ARM=1 B93_ML_PRE=1 B93_RECORD=results/b93 python3 -m pytest -q designs/b93_precompute/tests/test_b93_integ_rtl.py
+  heavy: false
+  minutes: 1
+  needs: Icarus Verilog 12, cocotb 2.0.1; repeat for ML_ARM 1 and 4, ML_PRE 0 to 3
+- what: out-of-context builds and clock search on both parts
+  cmd: python3 -m designs.b93_precompute.ooc.ooc --part xck26-sfvc784-2LV-c --arms gbt_comb lg_small_comb gbt_pe gbt_pe2
+    lgs_pe lgs_pe2 ml_feat ml_feat_pre
+  heavy: true
+  minutes: 180
+  needs: Vivado 2026.1 and a heavy slot; repeat with --part xc7a100tcsg324-1
+evidence:
+- id: E1
+  activity: simulation
+  result: pass
+  how: ci
+  what: every table block equals its 87 or 89 model on the test split, 20,000 random vectors and every late value, with
+    out_v exactly one clock after l_v; Verilator -Wall clean
+  record: designs/b93_precompute/tests/test_b93_pe_rtl.py
+  sha256: 06d5a9a3a125a46ee0115c261afdd05fbca3eeeef97acbf63484bd699fb4d36c
+- id: E2
+  activity: build
+  result: pass
+  what: out-of-context, post-route builds of eight blocks on the K26 and the Artix-7 100T with a clock search; every recorded
+    clock closed setup, hold and pulse width
+  record: results/b93/summary.json
+  sha256: f6e69c71957bab6a44d9f6cf4863553712451df8ccaa462f49e15696a5bdf8b5
+measurements:
+- id: M1
+  what: trees baseline, clocks the gate adds, simulation
+  category: latency
+  key: gbt_gate_clocks_baseline
+  unit: clocks
+  record: results/b93/summary.json
+  field: integration.gbt_pre0.gate_added_clocks
+  conditions: 58A trigger_core at the 8 ns core clock, Icarus simulation, speculative mode
+  value: 1
+  sha256: f6e69c71957bab6a44d9f6cf4863553712451df8ccaa462f49e15696a5bdf8b5
+- id: M2
+  what: trees with early features, clocks the gate adds
+  category: latency
+  key: gbt_gate_clocks_early
+  unit: clocks
+  record: results/b93/summary.json
+  field: integration.gbt_pre1.gate_added_clocks
+  conditions: as M1
+  value: 0
+  sha256: f6e69c71957bab6a44d9f6cf4863553712451df8ccaa462f49e15696a5bdf8b5
+- id: M3
+  what: last price byte to decision, baseline trees
+  category: latency
+  key: tick_to_decision_baseline
+  unit: clocks
+  record: results/b93/summary.json
+  field: integration.gbt_pre0.tick_to_decision_clocks
+  conditions: as M1
+  value: 4
+  sha256: f6e69c71957bab6a44d9f6cf4863553712451df8ccaa462f49e15696a5bdf8b5
+- id: M4
+  what: last price byte to decision, early features
+  category: latency
+  key: tick_to_decision_early
+  unit: clocks
+  record: results/b93/summary.json
+  field: integration.gbt_pre1.tick_to_decision_clocks
+  conditions: as M1
+  value: 3
+  sha256: f6e69c71957bab6a44d9f6cf4863553712451df8ccaa462f49e15696a5bdf8b5
+- id: M5
+  what: gbt_comb, K26 closed period
+  category: latency
+  key: gbt_comb_k26_ns
+  unit: ns
+  record: results/b93/summary.json
+  field: ooc.k26.gbt_comb.quoted_ns
+  conditions: 1 clock, out of context, post-route, Vivado 2026.1, one thread
+  value: 4.3
+  sha256: f6e69c71957bab6a44d9f6cf4863553712451df8ccaa462f49e15696a5bdf8b5
+- id: M6
+  what: gbt_comb, K26 LUTs
+  category: resources
+  key: gbt_comb_k26_lut
+  unit: LUT
+  record: results/b93/summary.json
+  field: ooc.k26.gbt_comb.lut
+  conditions: as M5
+  value: 641
+  sha256: f6e69c71957bab6a44d9f6cf4863553712451df8ccaa462f49e15696a5bdf8b5
+- id: M7
+  what: gbt_pe2 (table, fill 2), K26 closed period
+  category: latency
+  key: gbt_pe2_k26_ns
+  unit: ns
+  record: results/b93/summary.json
+  field: ooc.k26.gbt_pe2.quoted_ns
+  conditions: as M5
+  value: 4.15
+  sha256: f6e69c71957bab6a44d9f6cf4863553712451df8ccaa462f49e15696a5bdf8b5
+- id: M8
+  what: gbt_pe2, K26 LUTs
+  category: resources
+  key: gbt_pe2_k26_lut
+  unit: LUT
+  record: results/b93/summary.json
+  field: ooc.k26.gbt_pe2.lut
+  conditions: as M5
+  value: 1692
+  sha256: f6e69c71957bab6a44d9f6cf4863553712451df8ccaa462f49e15696a5bdf8b5
+- id: M9
+  what: lg_small_comb, K26 closed period
+  category: latency
+  key: lg_small_comb_k26_ns
+  unit: ns
+  record: results/b93/summary.json
+  field: ooc.k26.lg_small_comb.quoted_ns
+  conditions: as M5
+  value: 4.45
+  sha256: f6e69c71957bab6a44d9f6cf4863553712451df8ccaa462f49e15696a5bdf8b5
+- id: M10
+  what: lgs_pe2 (table, fill 2), K26 closed period
+  category: latency
+  key: lgs_pe2_k26_ns
+  unit: ns
+  record: results/b93/summary.json
+  field: ooc.k26.lgs_pe2.quoted_ns
+  conditions: as M5
+  value: 2.95
+  sha256: f6e69c71957bab6a44d9f6cf4863553712451df8ccaa462f49e15696a5bdf8b5
+- id: M11
+  what: lgs_pe2, K26 LUTs
+  category: resources
+  key: lgs_pe2_k26_lut
+  unit: LUT
+  record: results/b93/summary.json
+  field: ooc.k26.lgs_pe2.lut
+  conditions: as M5
+  value: 867
+  sha256: f6e69c71957bab6a44d9f6cf4863553712451df8ccaa462f49e15696a5bdf8b5
+- id: M12
+  what: ml_feat_pre (early feature unit), K26 closed period
+  category: latency
+  key: ml_feat_pre_k26_ns
+  unit: ns
+  record: results/b93/summary.json
+  field: ooc.k26.ml_feat_pre.quoted_ns
+  conditions: as M5
+  value: 6.0
+  sha256: f6e69c71957bab6a44d9f6cf4863553712451df8ccaa462f49e15696a5bdf8b5
+- id: M13
+  what: ml_feat_pre, K26 flip-flops (wrapper included)
+  category: resources
+  key: ml_feat_pre_k26_ff
+  unit: FF
+  record: results/b93/summary.json
+  field: ooc.k26.ml_feat_pre.ff
+  conditions: as M5
+  value: 596
+  sha256: f6e69c71957bab6a44d9f6cf4863553712451df8ccaa462f49e15696a5bdf8b5
+gaps:
+- about: board_run
+  text: Not run on a board and not built inside the 58A top; ML_PRE 1 to 3 are simulation only.
+- about: timing
+  text: Out of context the clock has no buffer or jitter, so every latency is quoted at no faster than 2.0 ns; the bypass
+    path of the gate is not in the block builds.
+- about: power
+  text: Not measured; the out-of-context builds have no power report.
+- about: throughput
+  text: Every block accepts one input a clock (the test streams half the vectors back to back); no separate throughput figure
+    is recorded.
+- about: data
+  text: One synthetic data set and one set of 87 features; none of them uses the message's own price, which is why the table
+    arm gains nothing in clocks.
+- about: behaviour
+  text: 'Guessable wrongly: state is committed at the price field, not at the early clock; a table block answers with another
+    message''s table if l_v breaks the timing contract and nothing detects it; the late feature is delayed by the fill in
+    trigger_core, it is not really late.'
+next_steps:
+- Build the KR260 top with ML_PRE 1 and ML_ARM 4, then a board run.
+- Train a model with the message's own price as an input (for example inside or outside the touch) and measure the table
+  arm on it.
+- Pipeline the table fill inside the model, not only at the scores, to see whether the table block can beat its baseline
+  clock for trees.
+open_questions:
+- Is one core clock worth the extra flip-flops of the early feature unit on the board, or is the rule table the longer path
+  to shorten next?
+history:
+- date: '2026-11-17'
+  brief: '93'
+  note: stage 0, early feature unit, table blocks, integration for both models, out-of-context builds on both parts
+numbers_allow: []
+state:
+  stage: built
+  gates:
+    rtl_equals_twin: pass
+    ooc_build_2026_1: pass
+    board_run: not-run
+  vivado: '2026.1'
+  kb_pin: 5c10d51
+  build_id: null
