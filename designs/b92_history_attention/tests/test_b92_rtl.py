@@ -48,7 +48,7 @@ def random_streams():
 
 def test_stream_twin_equals_the_scoring_path():
     te = S2.splits(("test",))["test"]
-    for arm in ["a1_decay", "a2_win16", "a3_relu", "a4_lut"]:
+    for arm in ["a1_decay", "a2_win8", "a2_win16", "a3_top1", "a3_relu", "a4_lut"]:
         r = C.rec_of(arm)
         a = S2.predict(r, te)
         parts = []

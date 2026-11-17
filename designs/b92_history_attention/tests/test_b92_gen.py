@@ -66,3 +66,27 @@ def test_window_stays_inside_the_session_after_warmup():
 def test_label_horizon_does_not_cross_the_session_end():
     r = P.session("hawkes", 6001)
     assert (r["y"][-40:] == -1).all() and (r["y"][:-40] >= 0).all()
+
+
+def test_front_ends_are_causal():
+    """Review fix: tokens, decaying sums, window codes and the attention twin at event t do not move when later events change."""
+    import json
+
+    from designs.b89_lutnet_gen.lutgen import model as M89
+    from designs.b92_history_attention.hist import attn as AT
+    from designs.b92_history_attention.hist import frontends as FE
+    from designs.b92_history_attention.hist import stage2 as S2
+    from designs.b92_history_attention.hist import stream as S
+    X, Pm = S.random_stream(600, 5)
+    X2, P2 = X.copy(), Pm.copy()
+    t0 = 300
+    X2[t0 + 1:] = X[::-1][: len(X) - t0 - 1]
+    P2[t0 + 1:] = Pm[::-1][: len(X) - t0 - 1]
+    a, b = S.session_of(X, Pm), S.session_of(X2, P2)
+    if not (S2.RES / "stage2_frozen.json").exists():
+        return
+    fz = json.loads((S2.RES / "stage2_frozen.json").read_text())
+    for arm in ("a1_decay", "a2_win16", "a3_top1", "a3_relu"):
+        rec = json.loads(S2.mpath(arm, fz["built_seed"][arm]).read_text())
+        ca, cb = S.columns(arm, rec, a), S.columns(arm, rec, b)
+        assert np.array_equal(ca[:t0 + 1], cb[:t0 + 1]), arm
