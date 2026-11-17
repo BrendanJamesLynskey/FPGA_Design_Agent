@@ -59,6 +59,14 @@ facts:
   value: a 100 MHz differential PL clock on D7 (P) and D6 (N), LVDS
   source:
   - AUPBSP
+- item: clock input, Vivado 12-1411 (brief 98)
+  value: 'D7 is IO_L13P (P) and D6 is IO_L13N (N) of one differential pair in bank 66, a High Performance bank (Vivado 2026.1 get_package_pins: IS_DIFFERENTIAL, DIFF_PAIR_PIN, IS_MASTER on D7), so LVDS (HP banks only, AMD UG571) and the pins are right. The brief 95 critical warning, "Cannot set LOC property of ports, u_clk_ibuf/DIFFINBUF_INST ... site type HPIOB_M does not match the cell type DIFFINBUF", is printed only by `synth_design -rtl` (the RTL elaboration the flow runs first): there Vivado 2026.1 expands an IBUFDS on an UltraScale+ part into a DIFFINBUF cell and tries to put the port''s LOC on it. It happens with the P pin alone, with both pins, with DIFF_TERM and with DIFF_TERM_ADV, so it is not an IOSTANDARD, DIFF_TERM, bank-voltage or placement fault of the board file. The real synthesis prints nothing and the routed I/O report has clk_p on D7 and clk_n on D6, LVDS, FIXED (results/95_boards/aup_zu3/rtl_stage_12_1411.txt). The flow''s exceptions gate now counts the message as information when it appears only before the real synthesis (EXC-XDC-RTL-DIFFINBUF, flow/exceptions_check.py); no change to the board file or the smoke design was needed'
+  source:
+  - AUPBSP
+  status: measured
+- item: clock input termination
+  status: unconfirmed
+  reason: 'AMD UG571 says an LVDS receiver is terminated with DIFF_TERM_ADV = TERM_100 inside the device (VCCO must then be 1.8 V) unless the board terminates it; whether the AUP-ZU3 oscillator is terminated on the board is not in the files read (no schematic), so the smoke XDC sets no DIFF_TERM_ADV and a design that needs the internal termination must add it'
 - item: user I/O
   value: 8 LEDs, 4 RGB LEDs (12 pins), 4 push buttons, 8 slide switches; all LVCMOS12
   source:

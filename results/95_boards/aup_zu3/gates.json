@@ -1,12 +1,12 @@
 {
-  "build_dir": "/home/brendan/Claude_sandbox/_worktrees/95-boards/boards/aup_zu3/smoke/build/base",
+  "build_dir": "/home/brendan/Claude_sandbox/_worktrees/98-boards/boards/aup_zu3/smoke/build/base",
   "vivado_version": "2026.1",
   "kb_measured_version": "2026.1",
   "kb_version_match": true,
   "top": "b95_smoke_top",
   "variant": "base",
-  "pass": false,
-  "first_failed_stage": "post_synth",
+  "pass": true,
+  "first_failed_stage": null,
   "gates": {
     "rtl_methodology_no_critical": true,
     "post_synth_no_unconstrained_endpoints": true,
@@ -14,7 +14,7 @@
     "post_synth_drc_clean": true,
     "post_synth_cdc_no_critical": true,
     "post_synth_cdc_structure_clean": true,
-    "post_synth_exceptions_clean": false,
+    "post_synth_exceptions_clean": true,
     "post_synth_io_constraints_clean": true,
     "post_synth_resets_clean": true,
     "post_place_hold": true,
@@ -26,7 +26,7 @@
     "methodology_no_critical": true,
     "cdc_no_critical": true,
     "power_junction_ok": true,
-    "exceptions_clean": false,
+    "exceptions_clean": true,
     "io_timing_clean": true,
     "bitstream_present": true
   },
@@ -60,7 +60,7 @@
         "post_synth_drc_clean": true,
         "post_synth_cdc_no_critical": true,
         "post_synth_cdc_structure_clean": true,
-        "post_synth_exceptions_clean": false,
+        "post_synth_exceptions_clean": true,
         "post_synth_io_constraints_clean": true,
         "post_synth_resets_clean": true
       },
@@ -134,31 +134,31 @@
       },
       "exceptions": {
         "stage": "synth",
-        "pass": false,
-        "status": "fail",
+        "pass": true,
+        "status": "pass",
         "waived": 0,
         "waived_rules": [],
         "exceptions": 2,
         "ignored": 0,
-        "info": [],
+        "info": [
+          {
+            "rule": "EXC-XDC-RTL-DIFFINBUF",
+            "count": 1,
+            "vivado": {
+              "lines": [
+                "design.xdc:5"
+              ],
+              "ids": [
+                "Vivado 12-1411"
+              ]
+            }
+          }
+        ],
         "covered": {
           "3": 9,
           "5": 8
         },
-        "failures": [
-          {
-            "rule": "EXC-XDC-MSG",
-            "position": null,
-            "file": "design.xdc",
-            "line": 5,
-            "text": "set_property -dict { PACKAGE_PIN D7   IOSTANDARD LVDS } [get_ports { clk_p }];  # clk_100_p",
-            "vivado": {
-              "severity": "CRITICAL WARNING",
-              "id": "Vivado 12-1411",
-              "message": "Cannot set LOC property of ports, u_clk_ibuf/DIFFINBUF_INST. Illegal to place instance u_clk_ibuf/DIFFINBUF_INST on site D7. The location site type (HPIOB_M) does not match the cell type (DIFFINBUF). Please choose a compatible site for the instance."
-            }
-          }
-        ]
+        "failures": []
       },
       "io_timing": {
         "stage": "synth",
@@ -235,7 +235,7 @@
         "carry8": 4,
         "carry8_available": 8820
       },
-      "pass": false
+      "pass": true
     },
     "post_place": {
       "ran": true,
@@ -270,7 +270,7 @@
         "methodology_no_critical": true,
         "cdc_no_critical": true,
         "power_junction_ok": true,
-        "exceptions_clean": false,
+        "exceptions_clean": true,
         "io_timing_clean": true
       },
       "qor_assessment": {
@@ -279,31 +279,31 @@
       },
       "exceptions": {
         "stage": "route",
-        "pass": false,
-        "status": "fail",
+        "pass": true,
+        "status": "pass",
         "waived": 0,
         "waived_rules": [],
         "exceptions": 2,
         "ignored": 0,
-        "info": [],
+        "info": [
+          {
+            "rule": "EXC-XDC-RTL-DIFFINBUF",
+            "count": 1,
+            "vivado": {
+              "lines": [
+                "design.xdc:5"
+              ],
+              "ids": [
+                "Vivado 12-1411"
+              ]
+            }
+          }
+        ],
         "covered": {
           "3": 9,
           "5": 8
         },
-        "failures": [
-          {
-            "rule": "EXC-XDC-MSG",
-            "position": null,
-            "file": "design.xdc",
-            "line": 5,
-            "text": "set_property -dict { PACKAGE_PIN D7   IOSTANDARD LVDS } [get_ports { clk_p }];  # clk_100_p",
-            "vivado": {
-              "severity": "CRITICAL WARNING",
-              "id": "Vivado 12-1411",
-              "message": "Cannot set LOC property of ports, u_clk_ibuf/DIFFINBUF_INST. Illegal to place instance u_clk_ibuf/DIFFINBUF_INST on site D7. The location site type (HPIOB_M) does not match the cell type (DIFFINBUF). Please choose a compatible site for the instance."
-            }
-          }
-        ]
+        "failures": []
       },
       "io_timing": {
         "stage": "route",
@@ -364,7 +364,7 @@
       "ila_hub_crossing": null,
       "warnings": [],
       "unconstrained_ports": {},
-      "pass": false
+      "pass": true
     },
     "bitstream": {
       "ran": true,

@@ -9,8 +9,15 @@ rename:
   - ['^SW(\d)$', 'SW[\1]']
 iostandard:
   std_from_pin: true
-  only: [LVCMOS33]
-  only_reason: "the other banks run at Vadj, set by jumper J18 on each board (the Avnet XDC assumes 1.8 V, the AMD board file 2.5 V, the guide's table 2.5 V, the project's notes 1.8 V as shipped); the pins stay out until the owner confirms J18"
+  by_name:
+    - ['^(BTN[CDLRU]|SW\[)', 'LVCMOS18']
+    - ['^J[A-D]\d', 'LVCMOS33']
+  by_name_reason: "BTN* and SW*: banks 34 and 35, Vadj = 1.8 V, owner-confirmed 2026-11-17 (both boards: J18 on 1V8, JP6 removed), matching the Avnet XDC's bank constraint (LVCMOS18); Pmod JA to JD: the Avnet XDC labels all four 'Bank 13' and sets bank 13 to LVCMOS33 (not a Vadj bank)"
+  only: [LVCMOS33, LVCMOS18]
+  only_reason: "the AMD board file assigns LVCMOS25 to some Vadj-bank pins, which contradicts the owner-confirmed 1.8 V; those pins stay out"
 section_by:
   - ['^GCLK$', 'PL clock']
   - ['^LD\[', 'LEDs']
+  - ['^BTN', 'Push buttons (Vadj bank, 1.8 V)']
+  - ['^SW\[', 'Slide switches (Vadj bank, 1.8 V)']
+  - ['^J[A-D]', 'Pmod (bank 13, 3.3 V)']
