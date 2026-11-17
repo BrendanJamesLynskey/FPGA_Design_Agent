@@ -1,0 +1,177 @@
+# Digilent Basys 3: board file (fpga-design-agent/board/v2). Facts name their sources (ids under `sources`); an unconfirmed
+# fact says so and why. Written by hand from the cited documents; see boards/SCHEMA.md.
+schema: fpga-design-agent/board/v2
+name: basys3
+display_name: Digilent Basys 3
+vendor: Digilent
+family: Artix-7
+part: xc7a35tcpg236-1
+board_revision: rev B (the master XDC's header)
+master_xdc: Basys-3-Master.xdc
+master_xdc_source:
+  kind: vendor_copy
+  repo: https://github.com/Digilent/digilent-xdc
+  commit: c8644a9fe31cc803789643124545d56b3bef4600
+  file: Basys-3-Master.xdc
+  licence: MIT (LICENSE-digilent-xdc.txt, copied from the same commit)
+sources:
+  XDC:
+    title: Digilent master XDC Basys-3-Master.xdc
+    version: Digilent/digilent-xdc @ c8644a9 (MIT)
+    url: https://github.com/Digilent/digilent-xdc
+  BDF:
+    title: AMD XilinxBoardStore board file (part name, memories)
+    version: XilinxBoardStore @ 40fad97, boards/Digilent/basys3/C.0/board.xml (Apache-2.0)
+    url: https://github.com/Xilinx/XilinxBoardStore/blob/40fad97cf36f3d856c6759d83c2390de1566ffa7/boards/Digilent/basys3/C.0/board.xml
+  RM:
+    title: Digilent Basys 3 Reference Manual (web page)
+    version: web.archive.org snapshot 2025
+    url: https://digilent.com/reference/programmable-logic/basys-3/reference-manual
+clock:
+  port: clk
+  pin: W5
+  freq_mhz: 100
+  source:
+  - XDC
+  period_ns_in_vendor_xdc: 10.0
+uart:
+  fpga_rx:
+    port: RsRx
+    pin: B18
+  fpga_tx:
+    port: RsTx
+    pin: A18
+  default_baud: 115200
+  source:
+  - XDC
+  note: port names follow the vendor file; 'fpga_rx' is the pin the FPGA receives on. Baud rate is the common default, not a board property
+resources:
+  clk: clk
+  led:
+  - led[0]
+  - led[1]
+  - led[2]
+  - led[3]
+  - led[4]
+  - led[5]
+  - led[6]
+  - led[7]
+  - led[8]
+  - led[9]
+  - led[10]
+  - led[11]
+  - led[12]
+  - led[13]
+  - led[14]
+  - led[15]
+  btn: btnC
+  sw:
+  - sw[0]
+  - sw[1]
+  - sw[2]
+  - sw[3]
+  - sw[4]
+  - sw[5]
+  - sw[6]
+  - sw[7]
+  - sw[8]
+  - sw[9]
+  - sw[10]
+  - sw[11]
+  - sw[12]
+  - sw[13]
+  - sw[14]
+  - sw[15]
+  uart_rx: RsRx
+  uart_tx: RsTx
+facts:
+- item: part
+  value: xc7a35tcpg236-1 (Artix-7)
+  source:
+  - BDF
+- item: clock
+  value: one 100 MHz oscillator on W5 (a MRCC input, bank 34)
+  source:
+  - RM
+  - XDC
+- item: user I/O
+  value: 16 slide switches, 16 LEDs, 5 push buttons, one four-digit common-anode seven-segment display
+  source:
+  - RM
+  - XDC
+- item: connectors
+  value: Pmod JA, JB, JC and the XADC Pmod (JXADC); 12-bit VGA; PS/2 on the USB HID host (Hsync, Vsync, RsRx, RsTx are named in the XDC)
+  source:
+  - RM
+  - XDC
+- item: serial
+  value: FTDI FT2232HQ USB-UART bridge (connector J4); FPGA receive is RsRx on B18, transmit is RsTx on A18
+  source:
+  - RM
+  - XDC
+- item: memory
+  value: 32 Mbit serial QSPI flash (a Spansion S25FL032 or a Macronix MX25L3233F, depending on the board); the manual lists no other memory
+  source:
+  - RM
+- item: configuration
+  value: CFGBVS VCCO, CONFIG_VOLTAGE 3.3, SPIx4 at 33 MHz as the vendor XDC sets them
+  source:
+  - XDC
+- item: LED and button polarity
+  status: unconfirmed
+  reason: the vendor constraints file does not state it, and the schematic was not read
+xdc_sections:
+  source:
+  - XDC
+  ports_per_section:
+    Clock signal: 1
+    Switches: 16
+    LEDs: 16
+    7 Segment Display: 12
+    Buttons: 5
+    Pmod Header JA: 8
+    Pmod Header JB: 8
+    Pmod Header JC: 8
+    Pmod Header JXADC: 8
+    VGA Connector: 14
+    USB-RS232 Interface: 2
+    STARTUPE2 primitive.: 5
+iostandards:
+  default: LVCMOS33
+  other_standards_in_master_xdc: {}
+  source:
+  - XDC
+pin_aliases:
+  source:
+  - XDC
+  reason: the vendor file names one physical pin twice, for two headers or functions that share it (for example an analogue input and an Arduino
+    header pin)
+  pins: []
+slow_ports:
+- led\[\d+\]
+- led\d_[rgb]
+- sw\[\d+\]
+- btn\w*(\[\d+\])?
+- uart_\w+
+- Rs[RT]x
+- cpu_resetn
+config:
+  cfgbvs: VCCO
+  config_voltage: 3.3
+  source:
+  - XDC
+thermal:
+  airflow_lfm: 0
+  heatsink: none
+  board: small
+  board_layers: 4to7
+  ambient_c: 40
+  status: assumption
+  reason: board stack-up, heat sink and airflow are not published; still air, no heat sink, the smallest class is the pessimistic choice (as for
+    the Nexys A7)
+hardware_use:
+  owned: false
+  rule: no supply or programming rule is recorded for this board; do not program one without the owner adding a per-board rule to the house rules
+smoke:
+  clk_hz: 100000000
+  banner: Basys 3

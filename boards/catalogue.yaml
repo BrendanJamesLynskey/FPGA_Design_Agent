@@ -1,0 +1,177 @@
+# The board catalogue (brief 95). One entry per boards/<board>/ directory. See flow/board_catalogue.py for how the trust label is
+# computed from evidence; `trust` here is the declared label and may never be above what the evidence supports.
+#   display, aliases : how a request names the board (whole words, lower case); an alias shared by two boards makes the request ambiguous
+#   targetable       : the agent can write the board's constraints (a master XDC with a clock the design can use)
+#   licence_tier     : free | paid, measured by results/95_boards/licence_probe.json against the installed Vivado 2026.1 (Basic tier)
+#   default_for_part : the board a build.yaml with only `part:` means (flow/prepare.py board_for); needed where two boards share a part
+#   legacy           : board.yaml predates schema v2 (no per-fact sources); its sources are in its README and inventory
+#   evidence         : built = earlier gates.json records; hardware = run records on the owner's board
+schema: fpga-design-agent/board-catalogue/v1
+selection: |
+  Chosen by the planner's candidate list in brief 95, trimmed to what could be documented from a source in hand. No count of how often each
+  board appears in courses, papers or open-source projects was made (that would need a survey this brief did not do), so the choice is
+  by the brief's list, and by whether a vendor constraints file or board file exists that we may read or list. Two-board
+  families are kept where the part differs (Arty A7-35T and A7-100T, Zybo Z7-10 and Z7-20, Cora Z7-07S and Z7-10) because a part is what a build needs.
+  The AUP-ZU3 is in because the owner named it a priority board (an author's third edition of an FPGA book will use it, as reported by the owner).
+not_included:
+  - {board: "Terasic DE10-Nano and DE10-Lite", reason: "the agent has no Quartus back end yet (brief 38 plans one), so a board file would have no flow behind it; listed as a known gap"}
+  - {board: "Digilent Arty S7-25, Cmod S7-25, Arty Z7-10 and Z7-20, Eclypse Z7, USB104 A7, Genesys ZU, Sword", reason: "not in the brief's candidate list; each has a Digilent master XDC at the same commit and can be added by the steps in boards/SCHEMA.md"}
+  - {board: "Digilent Nexys A7-50T and Nexys 4 DDR", reason: "the Nexys A7-100T is already the agent's main board; the 50T uses a different part and has no hardware behind it"}
+  - {board: "Other AMD evaluation boards (ZC702, ZC706, KC705, ZCU102, VCK190 and others)", reason: "not in the brief's candidate list and the owner has none; the AMD board store has files for them, and a licence probe (results/95_boards/licence_probe.json) would say which of their parts the installed licence can implement"}
+boards:
+  nexys_a7_100t:
+    display: Digilent Nexys A7-100T
+    aliases: [nexys a7, nexys a7 100t, nexys a7-100t, nexys 4 ddr, nexys4 ddr]
+    legacy: true
+    default_for_part: true
+    targetable: true
+    licence_tier: free
+    trust: hardware
+    evidence:
+      hardware: [results/board_v2/README.md]
+    scope: "the owner's board: four peripheral designs run 3 of 3 times (I2C, SPI, QSPI, PDM microphone; the UART was the check channel), programmed over JTAG, wall power"
+  kr260:
+    display: AMD Kria KR260 Robotics Starter Kit
+    aliases: [kria kr260, kr260, kr 260]
+    legacy: true
+    default_for_part: true
+    targetable: false
+    smoke_note: "its board.yaml has no master XDC or resource map (the pins live in each design's own XDC), so the agent cannot write its constraints from resource names yet; brief 96 is editing this file"
+    licence_tier: free
+    trust: built
+    evidence:
+      built: [results/b58a/build/gates.json]
+    scope: "built as part of the mock trading design (results/b58a, PL Ethernet pins), not as a smoke design; no board run record is in the repository"
+  basys3:
+    display: Digilent Basys 3
+    aliases: [basys 3, basys3, basys-3]
+    targetable: true
+    licence_tier: free
+    trust: built
+    scope: "board file from Digilent's master XDC and reference manual; a generated smoke design built through post-route and the bitstream on Vivado 2026.1 (results/95_boards/basys3/smoke.json); nothing was run on a board"
+  arty_a7_35t:
+    display: Digilent Arty A7-35T
+    aliases: [arty a7, arty a7 35t, arty a7-35t, arty a7 35, arty a7-35, arty-a7-35t]
+    targetable: true
+    licence_tier: free
+    trust: built
+    scope: "board file from Digilent's master XDC and the AMD board file; a generated smoke design built through post-route and the bitstream on Vivado 2026.1 (results/95_boards/arty_a7_35t/smoke.json); nothing was run on a board"
+  arty_a7_100t:
+    display: Digilent Arty A7-100T
+    aliases: [arty a7, arty a7 100t, arty a7-100t, arty a7 100, arty a7-100, arty-a7-100t]
+    targetable: true
+    licence_tier: free
+    trust: built
+    scope: "board file from Digilent's master XDC and the AMD board file; a generated smoke design built through post-route and the bitstream on Vivado 2026.1 (results/95_boards/arty_a7_100t/smoke.json); nothing was run on a board"
+  arty_s7_50:
+    display: Digilent Arty S7-50
+    aliases: [arty s7, arty s7 50, arty s7-50, arty-s7-50]
+    targetable: true
+    licence_tier: free
+    trust: built
+    scope: "board file from Digilent's master XDC and the AMD board file; a generated smoke design built through post-route and the bitstream on Vivado 2026.1 (results/95_boards/arty_s7_50/smoke.json); nothing was run on a board"
+  cmod_a7_35t:
+    display: Digilent Cmod A7-35T
+    aliases: [cmod a7 35t, cmod a7-35t, cmod a7 35, cmod a7-35, cmod-a7-35t]
+    targetable: true
+    licence_tier: free
+    trust: built
+    scope: "board file from Digilent's master XDC and reference manual; a generated smoke design built through post-route and the bitstream on Vivado 2026.1 (results/95_boards/cmod_a7_35t/smoke.json); nothing was run on a board"
+  nexys_video:
+    display: Digilent Nexys Video
+    aliases: [nexys video, nexys-video]
+    targetable: true
+    licence_tier: free
+    trust: built
+    scope: "board file from Digilent's master XDC and reference manual; a generated smoke design built through post-route and the bitstream on Vivado 2026.1 (results/95_boards/nexys_video/smoke.json); nothing was run on a board"
+  genesys2:
+    display: Digilent Genesys 2
+    aliases: [genesys 2, genesys2, genesys-2]
+    targetable: true
+    licence_tier: free
+    trust: built
+    scope: "board file from Digilent's master XDC; a generated smoke design built through post-route and the bitstream on Vivado 2026.1 (results/95_boards/genesys2/smoke.json); nothing was run on a board"
+  zybo_z7_10:
+    display: Digilent Zybo Z7-10
+    aliases: [zybo z7, zybo z7 10, zybo z7-10, zybo-z7-10]
+    targetable: true
+    licence_tier: free
+    trust: built
+    scope: "board file from Digilent's master XDC (shared with the Z7-20); a generated smoke design built through post-route and the bitstream on Vivado 2026.1 (results/95_boards/zybo_z7_10/smoke.json); nothing was run on a board"
+  zybo_z7_20:
+    display: Digilent Zybo Z7-20
+    aliases: [zybo z7, zybo z7 20, zybo z7-20, zybo-z7-20]
+    targetable: true
+    licence_tier: free
+    trust: built
+    scope: "board file from Digilent's master XDC; a generated smoke design built through post-route and the bitstream on Vivado 2026.1 (results/95_boards/zybo_z7_20/smoke.json); nothing was run on a board"
+  cora_z7_07s:
+    display: Digilent Cora Z7-07S
+    aliases: [cora z7, cora z7 07s, cora z7-07s, cora-z7-07s]
+    targetable: true
+    licence_tier: free
+    trust: built
+    scope: "board file from Digilent's master XDC; a generated smoke design built through post-route and the bitstream on Vivado 2026.1 (results/95_boards/cora_z7_07s/smoke.json); nothing was run on a board"
+  cora_z7_10:
+    display: Digilent Cora Z7-10
+    aliases: [cora z7, cora z7 10, cora z7-10, cora-z7-10]
+    targetable: true
+    licence_tier: free
+    trust: built
+    scope: "board file from Digilent's master XDC; a generated smoke design built through post-route and the bitstream on Vivado 2026.1 (results/95_boards/cora_z7_10/smoke.json); nothing was run on a board"
+  zedboard:
+    display: ZedBoard (Avnet and Digilent)
+    aliases: [zedboard, zed board, zedboard zynq 7020]
+    targetable: true
+    licence_tier: free
+    trust: hardware
+    evidence:
+      hardware: [results/64b_zedboard/summary.json]
+    scope: "the owner's board ('bump'): bare-metal runs of brief 64B over JTAG (PS, DDR3, fabric DMA chains on the PS clock); the PL pin facts (clock Y9, LEDs) have a passing smoke build (results/95_boards/zedboard/smoke.json) but were not exercised by any board run, and the switch, button and Pmod pins are not listed"
+  pynq_z2:
+    display: TUL PYNQ-Z2
+    aliases: [pynq z2, pynq-z2, pynqz2]
+    targetable: true
+    licence_tier: free
+    trust: built
+    scope: "board file from the AMD board file for the board; a generated smoke design built through post-route and the bitstream on Vivado 2026.1 (results/95_boards/pynq_z2/smoke.json); nothing was run on a board"
+  aup_zu3:
+    display: Real Digital AUP-ZU3
+    aliases: [aup zu3, aup-zu3, aupzu3, real digital aup zu3]
+    targetable: true
+    licence_tier: free
+    trust: documented
+    smoke_note: "one smoke build reached the bitstream with every timing, DRC and methodology gate passing but failed the exceptions gate on a Vivado 12-1411 critical warning at the differential clock input (the pins landed on D7 and D6 in the routed io report); not labelled built"
+    scope: "board file from Real Digital's board files and reference-design constraints; the smoke build failed one gate (see smoke_note)"
+  kv260:
+    display: AMD Kria KV260 Vision AI Starter Kit
+    aliases: [kria kv260, kv260, kv 260]
+    targetable: false
+    licence_tier: free
+    trust: documented
+    smoke_note: "no PL clock or user pin list is documented; a design needs the PS (pl_clk0)"
+    scope: "SOM part from the AMD board file and the user guide; carrier pins not listed"
+  ultra96_v2:
+    display: Avnet Ultra96-V2
+    aliases: [ultra96 v2, ultra96-v2, ultra96v2, ultra96]
+    targetable: false
+    licence_tier: free
+    trust: documented
+    smoke_note: "no PL clock or user LED pin in the board file; a design needs the PS (pl_clk0)"
+    scope: "board file from the AMD board file for the board; no build"
+  zcu104:
+    display: AMD ZCU104
+    aliases: [zcu104, zcu 104]
+    targetable: true
+    licence_tier: unverified
+    trust: documented
+    smoke_note: "the licence probe took the part through synthesis, placement and routing; no bitstream was tried because the board file has no smoke map"
+    scope: "board file from the AMD board file for the board; no build"
+  adalm_pluto:
+    display: Analog Devices ADALM-Pluto
+    aliases: [adalm pluto, adalm-pluto, plutosdr, pluto sdr, pluto]
+    targetable: false
+    licence_tier: free
+    trust: documented
+    smoke_note: "no user LED, button or free-running clock on a PL pin; the radio interface needs the AD9363 configured by the PS"
+    scope: "radio-interface pins from Analog Devices' reference design; the owner has one but no run used it"

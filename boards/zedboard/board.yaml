@@ -1,0 +1,110 @@
+# ZedBoard: board file (fpga-design-agent/board/v2). Facts name their sources (ids under `sources`); an unconfirmed
+# fact says so and why. Written by hand from the cited documents; see boards/SCHEMA.md.
+schema: fpga-design-agent/board/v2
+name: zedboard
+display_name: ZedBoard (Avnet and Digilent)
+vendor: Avnet (sold by Digilent)
+family: Zynq-7000
+part: xc7z020clg484-1
+board_revision: the guide is v2.2 (27 Jan 2014); the owner's two boards' revisions are not recorded
+master_xdc: zedboard-pins.xdc
+master_xdc_source:
+  kind: derived
+  tool: tools/board_pins_import.py
+  spec: boards/zedboard/pins_import.yaml
+  note: our own listing of documented pin locations, not a copy of a vendor file
+sources:
+  ZHUG:
+    title: Avnet/Digilent ZedBoard Hardware User's Guide
+    version: v2.2, 27 January 2014 (local copy of the PDF, not committed)
+    url: https://digilent.com/reference/programmable-logic/zedboard/start
+  ZED_XDC:
+    title: Avnet-generated Zedboard-Master.xdc (hosted in the Digilent XDC repository)
+    version: 'Digilent/digilent-xdc @ c8644a9; header: Avnet design resource, not copied, pins listed as facts'
+    url: https://github.com/Digilent/digilent-xdc
+  ZED_BOARDFILE:
+    title: AMD XilinxBoardStore board file for the ZedBoard (Avnet)
+    version: XilinxBoardStore @ 40fad97, boards/Avnet/zedboard/1.4 (board.xml, part0_pins.xml; Apache-2.0)
+    url: https://github.com/Xilinx/XilinxBoardStore/blob/40fad97cf36f3d856c6759d83c2390de1566ffa7/boards/Avnet/zedboard/1.4/board.xml
+clock:
+  port: GCLK
+  pin: Y9
+  freq_mhz: 100
+  source:
+  - ZED_BOARDFILE
+  - ZED_XDC
+resources:
+  clk: GCLK
+  led:
+  - LD[0]
+  - LD[1]
+  - LD[2]
+  - LD[3]
+  - LD[4]
+  - LD[5]
+  - LD[6]
+  - LD[7]
+facts:
+- item: part
+  value: xc7z020clg484-1 (Zynq-7000)
+  source:
+  - ZED_BOARDFILE
+  - ZHUG
+- item: clock
+  value: a 100 MHz PL oscillator on Y9 (the AMD board file gives the frequency and LVCMOS33)
+  source:
+  - ZED_BOARDFILE
+  - ZED_XDC
+- item: user I/O
+  value: 8 PL LEDs LD0 to LD7 on T22, T21, U22, U21, V22, W22, U19, U14, LVCMOS33 (the AMD board file); 5 PL push buttons and 8 slide switches
+    in the Vadj banks
+  source:
+  - ZED_XDC
+  - ZED_BOARDFILE
+- item: Vadj banks
+  value: banks 34 and 35 run at Vadj, set by jumper J18 on each board. The sources disagree on the shipped value (the Avnet XDC assumes 1.8 V,
+    the AMD board file assigns LVCMOS25, the guide's power table says 2.5 V). Buttons, switches, Pmod JC and JD, FMC LA pins and OLED/HDMI/VGA/audio
+    pins are therefore not in the master XDC (their standard is not fixed by the sources); the house rules take J18 as 1.8 V as shipped, and only
+    the owner reads or sets it
+  source:
+  - ZED_XDC
+  - ZED_BOARDFILE
+  - ZHUG
+- item: memory
+  value: 512 MB DDR3 on the PS (two 128M x 16 parts, 32-bit); 256 Mb QSPI flash; both on the PS
+  source:
+  - ZHUG
+- item: serial
+  value: a USB-UART bridge on the PS (no PL UART pin)
+  source:
+  - ZHUG
+- item: display and I/O
+  value: 128x32 OLED, HDMI output, VGA, an audio codec, Pmod JA to JD, FMC LPC; most are in the Vadj banks and so not in the master XDC
+  source:
+  - ZHUG
+  - ZED_XDC
+- item: LED polarity
+  status: unconfirmed
+  reason: the guide says high turns an LED on (390 ohm from 3.3 V), but the smoke design does not depend on it; the schematic was not read
+slow_ports:
+- LD\[\d+\]
+thermal:
+  airflow_lfm: 0
+  heatsink: none
+  board: medium
+  board_layers: 8to11
+  ambient_c: 40
+  status: assumption
+  reason: stack-up, heat sink and airflow are not published; still air and no heat sink is the pessimistic bound (as for the KR260)
+hardware_use:
+  owned: true
+  rule: 'the house rules'' ZedBoard supply and boot rule: 12 V only, SW8, JTAG boot straps by the owner, J18 read by the owner, SRAM over JTAG
+    only. Never transfer it to another board.'
+smoke:
+  clk_hz: 100000000
+  banner: ZedBoard
+pin_aliases:
+  source:
+  - ZED_XDC
+  reason: the source lists one physical pin under two names
+  pins: []

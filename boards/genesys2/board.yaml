@@ -1,0 +1,179 @@
+# Digilent Genesys 2: board file (fpga-design-agent/board/v2). Facts name their sources (ids under `sources`); an unconfirmed
+# fact says so and why. Written by hand from the cited documents; see boards/SCHEMA.md.
+schema: fpga-design-agent/board/v2
+name: genesys2
+display_name: Digilent Genesys 2
+vendor: Digilent
+family: Kintex-7
+part: xc7k325tffg900-2
+board_revision: Rev. H (the master XDC's header)
+master_xdc: Genesys-2-Master.xdc
+master_xdc_source:
+  kind: vendor_copy
+  repo: https://github.com/Digilent/digilent-xdc
+  commit: c8644a9fe31cc803789643124545d56b3bef4600
+  file: Genesys-2-Master.xdc
+  licence: MIT (LICENSE-digilent-xdc.txt, copied from the same commit)
+sources:
+  XDC:
+    title: Digilent master XDC Genesys-2-Master.xdc
+    version: Digilent/digilent-xdc @ c8644a9 (MIT)
+    url: https://github.com/Digilent/digilent-xdc
+  BDF:
+    title: AMD XilinxBoardStore board file (part name, memories)
+    version: XilinxBoardStore @ 40fad97, boards/Digilent/genesys2/H/board.xml (Apache-2.0)
+    url: https://github.com/Xilinx/XilinxBoardStore/blob/40fad97cf36f3d856c6759d83c2390de1566ffa7/boards/Digilent/genesys2/H/board.xml
+clock:
+  port: sysclk_p
+  pin: AD12
+  freq_mhz: 200
+  source:
+  - XDC
+  port_n: sysclk_n
+  pin_n: AD11
+  differential: true
+  period_ns_in_vendor_xdc: null
+uart:
+  fpga_rx:
+    port: uart_tx_in
+    pin: Y20
+  fpga_tx:
+    port: uart_rx_out
+    pin: Y23
+  default_baud: 115200
+  source:
+  - XDC
+  note: port names follow the vendor file; 'fpga_rx' is the pin the FPGA receives on. Baud rate is the common default, not a board property
+resources:
+  clk_p: sysclk_p
+  clk_n: sysclk_n
+  led:
+  - led[0]
+  - led[1]
+  - led[2]
+  - led[3]
+  - led[4]
+  - led[5]
+  - led[6]
+  - led[7]
+  btn: btnc
+  sw:
+  - sw[0]
+  - sw[1]
+  - sw[2]
+  - sw[3]
+  - sw[4]
+  - sw[5]
+  - sw[6]
+  - sw[7]
+  uart_rx: uart_tx_in
+  uart_tx: uart_rx_out
+facts:
+- item: part
+  value: xc7k325tffg900-2 (Kintex-7)
+  source:
+  - BDF
+- item: clock
+  value: a differential 200 MHz system clock (sysclk_p, sysclk_n); the frequency is the vendor XDC's create_clock period
+  source:
+  - XDC
+- item: connectors
+  value: FMC HPC (FMC_HA, FMC_HB, fmc_la), four Pmod ports, HDMI in and out, DisplayPort, VGA, OLED, microSD, USB OTG, audio codec, Ethernet RGMII;
+    the vendor XDC names each
+  source:
+  - XDC
+- item: memory sizes, parts, oscillator detail and other peripherals not in the XDC
+  status: unconfirmed
+  reason: the vendor's reference manual could not be fetched automatically (its site blocks automated clients), so this was not read
+- item: LED and button polarity
+  status: unconfirmed
+  reason: the vendor constraints file does not state it, and the schematic was not read
+xdc_sections:
+  source:
+  - XDC
+  ports_per_section:
+    Clock Signal: 2
+    Buttons: 6
+    LEDs: 8
+    Switches: 8
+    UART: 2
+    SD Card: 8
+    Audio Codec: 9
+    Ethernet: 17
+    VGA Connector: 18
+    HDMI in: 12
+    HDMI out: 12
+    OLED Display: 6
+    PMOD Header JA: 8
+    PMOD Header JB: 8
+    PMOD Header JC: 8
+    PMOD Header JD: 8
+    XADC Header: 8
+    FMC: 169
+    Fan Control: 2
+    'Note: DPTI and DSPI constraints cannot be used in the same design, as they share pins.': 21
+    QSPI: 5
+    IIC Bus: 2
+    Display Port IN: 5
+    Display Port OUT: 5
+    USB: 14
+iostandards:
+  default: LVCMOS12
+  other_standards_in_master_xdc:
+    LVDS: 2
+    LVCMOS33: 123
+    LVCMOS18: 38
+    LVCMOS15: 14
+    TMDS_33: 16
+  source:
+  - XDC
+pin_aliases:
+  source:
+  - XDC
+  reason: the vendor file names one physical pin twice, for two headers or functions that share it (for example an analogue input and an Arduino
+    header pin)
+  pins:
+  - pin: AD27
+    ports:
+    - PROG_D[0]
+    - PROG_SCK
+  - pin: W27
+    ports:
+    - PROG_D[1]
+    - PROG_MOSI
+  - pin: W28
+    ports:
+    - PROG_D[2]
+    - PROG_MISO
+  - pin: W29
+    ports:
+    - PROG_D[3]
+    - PROG_SS
+slow_ports:
+- led\[\d+\]
+- led\d_[rgb]
+- sw\[\d+\]
+- btn\w*(\[\d+\])?
+- uart_\w+
+- Rs[RT]x
+- cpu_resetn
+config:
+  cfgbvs: VCCO
+  config_voltage: 3.3
+  status: unconfirmed
+  reason: the vendor XDC has no CFGBVS or CONFIG_VOLTAGE line; VCCO_0 = 3.3 V is assumed (needed so the DRC is clean), the schematic was not read
+thermal:
+  airflow_lfm: 0
+  heatsink: none
+  board: small
+  board_layers: 4to7
+  ambient_c: 40
+  status: assumption
+  reason: board stack-up, heat sink and airflow are not published; still air, no heat sink, the smallest class is the pessimistic choice (as for
+    the Nexys A7)
+hardware_use:
+  owned: false
+  rule: no supply or programming rule is recorded for this board; do not program one without the owner adding a per-board rule to the house rules
+smoke:
+  clk_hz: 200000000
+  banner: Genesys 2

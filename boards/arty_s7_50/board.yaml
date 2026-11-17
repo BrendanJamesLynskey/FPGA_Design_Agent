@@ -1,0 +1,233 @@
+# Digilent Arty S7-50: board file (fpga-design-agent/board/v2). Facts name their sources (ids under `sources`); an unconfirmed
+# fact says so and why. Written by hand from the cited documents; see boards/SCHEMA.md.
+schema: fpga-design-agent/board/v2
+name: arty_s7_50
+display_name: Digilent Arty S7-50
+vendor: Digilent
+family: Spartan-7
+part: xc7s50csga324-1
+board_revision: Rev. E (the master XDC's header)
+master_xdc: Arty-S7-50-Master.xdc
+master_xdc_source:
+  kind: vendor_copy
+  repo: https://github.com/Digilent/digilent-xdc
+  commit: c8644a9fe31cc803789643124545d56b3bef4600
+  file: Arty-S7-50-Master.xdc
+  licence: MIT (LICENSE-digilent-xdc.txt, copied from the same commit)
+sources:
+  XDC:
+    title: Digilent master XDC Arty-S7-50-Master.xdc
+    version: Digilent/digilent-xdc @ c8644a9 (MIT)
+    url: https://github.com/Digilent/digilent-xdc
+  BDF:
+    title: AMD XilinxBoardStore board file (part name, memories)
+    version: XilinxBoardStore @ 40fad97, boards/Digilent/arty-s7-50/B.0/board.xml (Apache-2.0)
+    url: https://github.com/Xilinx/XilinxBoardStore/blob/40fad97cf36f3d856c6759d83c2390de1566ffa7/boards/Digilent/arty-s7-50/B.0/board.xml
+clock:
+  port: CLK100MHZ
+  pin: R2
+  freq_mhz: 100
+  source:
+  - XDC
+  period_ns_in_vendor_xdc: 10.0
+uart:
+  fpga_rx:
+    port: uart_txd_in
+    pin: V12
+  fpga_tx:
+    port: uart_rxd_out
+    pin: R12
+  default_baud: 115200
+  source:
+  - XDC
+  note: port names follow the vendor file; 'fpga_rx' is the pin the FPGA receives on. Baud rate is the common default, not a board property
+resources:
+  clk: CLK100MHZ
+  led:
+  - led[0]
+  - led[1]
+  - led[2]
+  - led[3]
+  btn: btn[0]
+  sw:
+  - sw[0]
+  - sw[1]
+  - sw[2]
+  - sw[3]
+  uart_rx: uart_txd_in
+  uart_tx: uart_rxd_out
+facts:
+- item: part
+  value: xc7s50csga324-1 (Spartan-7)
+  source:
+  - BDF
+- item: clock
+  value: 'two oscillators: CLK12MHZ and CLK100MHZ (both have create_clock lines in the vendor XDC)'
+  source:
+  - XDC
+- item: memory
+  value: QSPI flash (N25Q128A13ESF40 per the AMD board file); the DDR3L is not on this part's pin list in the XDC
+  source:
+  - BDF
+  - XDC
+- item: connectors
+  value: Pmod JA to JD, Arduino/chipKIT shield header, XADC pairs; the vendor XDC names each
+  source:
+  - XDC
+- item: memory sizes, parts, oscillator detail and other peripherals not in the XDC
+  status: unconfirmed
+  reason: the vendor's reference manual could not be fetched automatically (its site blocks automated clients), so this was not read
+- item: LED and button polarity
+  status: unconfirmed
+  reason: the vendor constraints file does not state it, and the schematic was not read
+xdc_sections:
+  source:
+  - XDC
+  ports_per_section:
+    Clock Signals: 2
+    Switches: 4
+    RGB LEDs: 6
+    LEDs: 4
+    Buttons: 4
+    Pmod Header JA: 8
+    Pmod Header JB: 8
+    Pmod Header JC: 8
+    Pmod Header JD: 8
+    USB-UART Interface: 2
+    ChipKit Outer Digital Header: 10
+    ? 'NOTE: The ChipKit SPI header ports can also be used as digital I/O and share FPGA pins with ck_io10-13. Do not use both at the same time.'
+    : 4
+    ? 'Note: these pins are shared with PMOD Headers JC and JD and cannot be used at the same time as the applicable PMOD interface(s)'
+    : 16
+    'NOTE: The following constraints should be used with the XADC IP core when using these ports as analog inputs.': 12
+    'NOTE: The following constraints should be used when using these ports as digital I/O.': 6
+    'NOTE: The following constraints should be used with the XADC core when using these ports as analog inputs.': 4
+    'NOTE: The following constraints should be used when using the inner analog header ports as digital I/O.': 6
+    ChipKit I2C: 2
+    Misc. ChipKit Ports: 2
+    'Note: the SCK clock signal can be driven using the STARTUPE2 primitive': 5
+iostandards:
+  default: LVCMOS33
+  other_standards_in_master_xdc:
+    SSTL135: 2
+  source:
+  - XDC
+pin_aliases:
+  source:
+  - XDC
+  reason: the vendor file names one physical pin twice, for two headers or functions that share it (for example an analogue input and an Arduino
+    header pin)
+  pins:
+  - pin: A14
+    ports:
+    - vaux8_n
+    - ck_a7
+  - pin: B14
+    ports:
+    - vaux8_p
+    - ck_a6
+  - pin: D16
+    ports:
+    - vaux3_p
+    - ck_a8
+  - pin: D17
+    ports:
+    - vaux3_n
+    - ck_a9
+  - pin: P13
+    ports:
+    - jc[5]
+    - ck_io36
+  - pin: R11
+    ports:
+    - jd[5]
+    - ck_io28
+  - pin: R13
+    ports:
+    - jc[6]
+    - ck_io35
+  - pin: T11
+    ports:
+    - jd[6]
+    - ck_io27
+  - pin: T12
+    ports:
+    - jd[3]
+    - ck_io30
+  - pin: T13
+    ports:
+    - jd[4]
+    - ck_io29
+  - pin: U11
+    ports:
+    - jd[7]
+    - ck_io26
+  - pin: U12
+    ports:
+    - jd[1]
+    - ck_io32
+  - pin: U15
+    ports:
+    - jc[0]
+    - ck_io41
+  - pin: U16
+    ports:
+    - jc[4]
+    - ck_io37
+  - pin: U17
+    ports:
+    - jc[2]
+    - ck_io39
+  - pin: U18
+    ports:
+    - jc[3]
+    - ck_io38
+  - pin: V13
+    ports:
+    - jd[2]
+    - ck_io31
+  - pin: V14
+    ports:
+    - jc[7]
+    - ck_io34
+  - pin: V15
+    ports:
+    - jd[0]
+    - ck_io33
+  - pin: V16
+    ports:
+    - jc[1]
+    - ck_io40
+slow_ports:
+- led\[\d+\]
+- led\d_[rgb]
+- sw\[\d+\]
+- btn\w*(\[\d+\])?
+- uart_\w+
+- Rs[RT]x
+- cpu_resetn
+config:
+  cfgbvs: VCCO
+  config_voltage: 3.3
+  source:
+  - XDC
+thermal:
+  airflow_lfm: 0
+  heatsink: none
+  board: small
+  board_layers: 4to7
+  ambient_c: 40
+  status: assumption
+  reason: board stack-up, heat sink and airflow are not published; still air, no heat sink, the smallest class is the pessimistic choice (as for
+    the Nexys A7)
+hardware_use:
+  owned: false
+  rule: no supply or programming rule is recorded for this board; do not program one without the owner adding a per-board rule to the house rules
+smoke:
+  clk_hz: 100000000
+  banner: Arty S7-50
+internal_vref:
+  bank: 34
+  volts: 0.675
+  status: derived
+  reason: the vendor XDC puts the clock (R2) and sw[3] (M5, a VREF pin) in bank 34 at SSTL135, so Vivado's DRC BIVRU-1 needs the bank's INTERNAL_VREF; 0.675 V is half of 1.35 V, the SSTL135 reference. Found by the first smoke build, not read from a board document
