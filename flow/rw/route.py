@@ -1,5 +1,7 @@
 """Capability 3 of brief 100: route with RWRoute (RapidWright's router) instead of Vivado's. Run with the venv python. Usage:
   route.py full  <in.dcp> <out.dcp> [timing|nontiming]   route every net of a placed (or partly routed) checkpoint with RWRoute
+  route.py complete <in.dcp> <out.dcp>                  route only the pins left unrouted, with soft preserve: routes already in the checkpoint
+                                                         (locked blocks) stay unless a pin cannot be reached without ripping one up
   route.py nets  <in.dcp> <out.dcp> <netfile>            route only the nets named in <netfile> (one full net name per line), then
                                                          lock them (fixed routes); Vivado's route_design completes the rest
 One JSON line on stdout: the mode, RWRoute's wall time, nets routed. RWRoute is timing-driven by its own estimate of delay (it reads the
@@ -20,6 +22,11 @@ if mode == "full":
     timing = (sys.argv[4] if len(sys.argv) > 4 else "timing") == "timing"
     d = RWRoute.routeDesignFullTimingDriven(d) if timing else RWRoute.routeDesignFullNonTimingDriven(d)
     out["timing_driven"] = timing
+elif mode == "complete":
+    pins = PartialRouter.getUnroutedPins(d)
+    out["unrouted_pins_before"] = int(pins.size())
+    d = PartialRouter.routeDesignPartialTimingDriven(d, pins, True)
+    out["unrouted_pins_after"] = int(PartialRouter.getUnroutedPins(d).size())
 elif mode == "nets":
     names = [l.strip() for l in open(sys.argv[4]) if l.strip()]
     from java.util import ArrayList
