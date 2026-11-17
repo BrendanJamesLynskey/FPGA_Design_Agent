@@ -22,7 +22,7 @@ merge into one. A loop that confuses the two shortens the wrong path.
 | `latency_budget(path, refresh)` | the table to reason from: per stage the clocks, ns, why it exists, what removing it risks, the technique that removes it, the clocks that could come out; then the board's share (GT, optics, wire-to-wire from the recorded stage 3 run) and the unattributed residual | as above, plus `results/b96/hw/*/stage3.json` |
 
 Both **reconcile**: the stage clocks, summed per segment, must equal what the bench measured (the 96 numbers: 11 digital clocks from the GT
-word holding the price to the GT word holding the order's start block, receive 2 to the MAC register, crossing 4, transmit 2 to the preamble
+word holding the price to the GT word holding the order's start block, receive 2 to the MAC register, decision register 1, crossing 4, transmit 2 to the preamble
 and 2 to the start block). When the design changed and the stage file did not, the tools say so in a warning and the bench's total stands.
 Neither tool takes a path, a command or a board. The budget **never adds a board figure to a simulation figure** without showing the
 residual: wire-to-wire on the board is L - E - fibre = 29.9 clocks (185 ns, medians of 100 restarts); the simulated digital chain is 11; the
@@ -42,8 +42,8 @@ decides, not the model:
 3. otherwise the files are restored.
 
 Every iteration is a row of `history.jsonl`: hypothesis (the agent's NOTE), tools used, diff hash, clocks before and after, tests, kept or reverted and
-why, dollars. A kept change is then built by the flow (heavy-slot rule) and its post-route slack, utilisation and power recorded; a change that
-fails post-route timing is reverted as a design change even though the simulation kept it.
+why, dollars. The loop has no build step: a kept change is built afterwards by hand (`results/b97/build_variant.sh`, heavy-slot rule) and a change that fails post-route
+timing is to be reverted as a design change even though the simulation kept it.
 
 Arms: **A1** has the two tools and the skill text (`latency-critical-path`, a private knowledge-bank file); **A0** is the agent as it was (file tools and
 `measure`; it finds the path from the RTL). Same design, same prompt skeleton, same budget. The prompts and skill text live in the private
@@ -58,3 +58,15 @@ knowledge bank (`prompts/latency/`, brief 94: new prompts go private by default)
 - The whole-core bench runs both user clocks in phase, so it shows the receive-to-transmit crossing's fixed latency only; on the board there is up
   to one clock of phase on top, and a metastability margin that only an analysis (MTBF) or a soak can show.
 - The transceiver's 15 clocks are not simulated. Buffer bypass is board-only and is a plan, not a result, here.
+
+## Known limits found in review (brief 97)
+
+- The measured clocks read internal RTL events (`wi`, `fire`, `go_p`, `sop`) plus two fixed constants, so the agent controls the signals the bench reads. They are not
+  measured at the GT ports; a port-level measurement is a follow-up.
+- The 15-clock GT share (E - 5) and the 29.9-clock wire-to-wire figure are different accountings (frame start to frame start on the board, price word to start block
+  in simulation); the roughly 4-clock residual is a net of definitional differences, not a small unknown. Quote the GT share as derived, not measured.
+- All savings are in-phase, fixed-latency simulation without the gearbox pause; the board adds up to one clock of crossing phase. The simulated CDC cells are the
+  repository's behavioural stand-ins, not AMD's XPM; no MTBF analysis, CDC injection or soak was run on the changed crossing. Both the shorter pulse and the combinational
+  decision cut the margin between the pulse and the order data bus (sampled for four clocks) and put a 32-bit compare in front of the crossing flop: post-route timing is required before any claim.
+- The stage file's `removable`/`technique` fields and the test file `test_b96_latency.py` spell out the stage structure, so neither arm is blind to it; the A1 tools therefore
+  state structure A0 can also read in `docs/design.md`. The A0/A1 prompts are private files; their sameness is by construction, not checkable from this repository.

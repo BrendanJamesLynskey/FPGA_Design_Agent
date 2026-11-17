@@ -15,8 +15,9 @@ Arms: ``A1`` has the new tools (``latency_path``, ``latency_budget``) and the sk
 ``measure`` gate only; it finds the path from the RTL). Both have ``measure`` and see the same RTL and the same prompt skeleton.
 The system prompts and the skill text are private knowledge-bank files (``prompts/latency/``, see ``kb_text``).
 
-Post-route timing and slack are NOT part of this loop's keep rule: a kept change is built afterwards by the flow (``flow/run_vivado.sh``,
-under the heavy-slot rule) and the build's slack and utilisation are recorded in the iteration row by ``record_build``.
+Post-route timing and slack are NOT part of this loop's keep rule and the loop has no build step: a kept change is built afterwards by hand
+(``results/b97/build_variant.sh``, heavy-slot rule). Known limits: the measured clocks read internal RTL events (the agent edits those signals)
+plus two fixed constants, so the number is a bench figure, not a port measurement; only the echo is checked besides the path.
 """
 
 from __future__ import annotations
@@ -153,6 +154,10 @@ class Visit:
             return "refused: that file is the tools' own data"
         if name in ("latency_path", "latency_budget") and self.arm != "A1":
             return "refused: no such tool"
+        if name not in REG_TOOLS + LAT_TOOLS:
+            return "refused: no such tool"                    # allow-list: only the advertised tools reach the registry
+        if args.get("refresh"):
+            return "refused: refresh is not available in the loop; use measure"
         r = dispatch(self.session, name, args)
         out = str(r.get("output", ""))
         if name == "list_files":
@@ -205,7 +210,7 @@ class LatencyLoop:
     client: Callable
     out: Path
     max_iter: int = 3
-    max_usd: float = 2.0
+    max_usd: float = 1.0
     max_turns: int = 16
     rows: list[dict[str, Any]] = field(default_factory=list)
     usd: float = 0.0
@@ -252,7 +257,10 @@ class LatencyLoop:
                 row.update(kept=False, reason="no change made")
                 stall += 1
             else:
-                after = measure(self.root, self.design)
+                try:
+                    after = measure(self.root, self.design)
+                except Exception as e:                                # a gate error counts as a failed gate: restore, record
+                    after = {"tests_pass": False, "failure": f"gate error: {type(e).__name__}: {str(e)[:300]}"}
                 ok, why = judge(best, after)
                 row.update(kept=ok, reason=why, clocks_after=after.get("ttt_clocks"), echo_after=after.get("echo_clocks"),
                            tests_pass=after.get("tests_pass"), failure=(after.get("failure") or "")[-600:] or None)
@@ -305,6 +313,6 @@ def add_parser(sub) -> None:
     p.add_argument("--model", default="openai/gpt-6-luna")
     p.add_argument("--max-iter", type=int, default=3)
     p.add_argument("--max-turns", type=int, default=16)
-    p.add_argument("--max-usd", type=float, default=2.0)
+    p.add_argument("--max-usd", type=float, default=1.0)
     p.add_argument("--out", type=Path)
     p.add_argument("--replay", help="LLM replay fixture (no network)")

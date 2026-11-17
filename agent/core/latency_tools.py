@@ -25,14 +25,14 @@ REFRESH = {"type": "boolean", "description": "re-run the design's whole-core ben
 def _inputs(s: Session, refresh: bool) -> tuple[dict[str, Any], dict[str, Any], dict | None, dict | None, str]:
     st = lm.load_stages(s.design)
     if refresh:
-        core = lm.run_trace(s.design, st, out=s.design / "build" / "latency" / "core_sim.json", root=s.root)
+        core = lm.run_trace(s.design, st, out=s.root / "build" / "latency" / "core_sim.json", root=s.root)
         src = f"fresh bench run ({core.name})"
     else:
-        cached = s.design / "build" / "latency" / "core_sim.json"
+        cached = s.root / "build" / "latency" / "core_sim.json"
         core = cached if cached.is_file() else s.root / st["trace"]["results_file"]
         src = f"recorded clocks ({core.relative_to(s.root) if s.root in core.parents else core.name})"
     sl_file = s.root / st["slack"]["file"]
-    cached_sl = s.design / "build" / "latency" / "latency_slack.json"
+    cached_sl = s.root / "build" / "latency" / "latency_slack.json"
     slack = lm.load_slack(cached_sl if cached_sl.is_file() else sl_file)
     return st, json.loads(Path(core).read_text()), slack, None, src
 

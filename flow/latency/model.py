@@ -55,7 +55,7 @@ def run_trace(design: Path, st: dict[str, Any] | None = None, out: Path | None =
     st = st or load_stages(design)
     t = st["trace"]
     entry = entry or t["pytest"]
-    if not entry.startswith("designs/") or not entry.split("::")[0].endswith(".py"):
+    if not entry.startswith("designs/") or ".." in entry or not entry.split("::")[0].endswith(".py"):
         raise LatencyError(f"trace entry {entry!r} must be a pytest file under designs/")
     root = Path(root) if root else ROOT          # the checkout that holds the design (a frozen copy under test, or this one)
     out = Path(out) if out else root / "build" / "latency" / f"{st['design']}_core_sim.json"
