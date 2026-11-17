@@ -124,3 +124,19 @@ def provenance(*, root: Path | None = None, pin: dict | None = None) -> dict:
         mh = None
     return {"kb_commit": pin.get("kb_commit"), "pinned_manifest_sha256": pin.get("manifest_sha256"),
             "manifest_sha256": mh, "enforced": bool(pin.get("manifest_sha256")) and os.environ.get(ENV_UNPINNED) != "1"}
+
+
+def fingerprint(text: str) -> dict:
+    """What a run record keeps of a rendered prompt instead of the text: its SHA-256 and length (brief 99). The same text always
+    gives the same hash, so two runs can be compared and a record can be matched to the pinned prompts without publishing them."""
+    return {"sha256": _sha(text.encode("utf-8")), "chars": len(text)}
+
+
+def record(**texts: str) -> dict:
+    """``{label: fingerprint(text)}`` for the rendered texts of one model call, plus the prompt pin (``provenance()``):
+    the record a run writes where it used to write the prompts themselves."""
+    try:
+        pin = provenance()
+    except Exception:                                       # a record must never stop a run
+        pin = {}
+    return {**{k: fingerprint(v) for k, v in texts.items()}, "prompts_pin": pin}
