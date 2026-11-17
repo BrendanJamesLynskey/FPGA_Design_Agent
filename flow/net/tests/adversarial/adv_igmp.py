@@ -9,6 +9,7 @@ from flow.net.tests import axis_tb
 OWN_MAC, OWN_IP = "02:00:00:00:00:01", "192.168.10.2"
 G0, G1 = "239.63.0.1", "239.1.200.3"
 TICK = 4
+LAT_ALLOW = 4          # clocks the 0.2.0 block adds between a verdict or a pick and the frame (brief 88); the 0.1.0 block needs 0
 
 
 def ip2i(s):
@@ -70,7 +71,7 @@ async def timing(dut):
     res.append(("report bytes == scapy", fr and fr[0] == host(0x16, G0, 0), fr[0].hex() if fr else None))
     if len(times) == 2:
         dt = (times[1] - times[0] - FRAME_CLKS) / TICK      # times are frame ends
-        res.append(("unsolicited repeat within 1..10 ticks", 0.5 <= dt <= 10 + 1, dt))
+        res.append(("unsolicited repeat within 1..10 ticks", 0.5 <= dt <= 10 + 1 + LAT_ALLOW / TICK, dt))
     # general query, max response 20 ticks: one report within 20 ticks
     n0 = len(sink.frames); tq = t["n"]
     await src.send(query("0.0.0.0", 20))
@@ -78,7 +79,7 @@ async def timing(dut):
     await axis_tb.clocks(dut, TICK * 25 + 200)
     got = sink.frames[n0:]
     dt = (times[n0] - tq_end) / TICK if len(times) > n0 else None
-    res.append(("general query mrt 20: one report within 20 ticks", len(got) == 1 and dt is not None and dt <= 20 + 1, (len(got), dt)))
+    res.append(("general query mrt 20: one report within 20 ticks", len(got) == 1 and dt is not None and dt <= 20 + 1 + LAT_ALLOW / TICK, (len(got), dt)))
     if got:
         res.append(("query report bytes == scapy", got[0][0] == host(0x16, G0, n0), got[0][0].hex()))   # IP ID counts frames sent
     # v1 query (mrt 0): within 100 ticks, not before 1
@@ -87,7 +88,7 @@ async def timing(dut):
     tq_end = t["n"]
     await axis_tb.clocks(dut, TICK * 105 + 200)
     dt = (times[n0] - tq_end) / TICK if len(times) > n0 else None
-    res.append(("v1 query: report within 100 ticks", len(sink.frames) == n0 + 1 and dt is not None and dt <= 101, dt))
+    res.append(("v1 query: report within 100 ticks", len(sink.frames) == n0 + 1 and dt is not None and dt <= 101 + LAT_ALLOW / TICK, dt))
     # group-specific query for a group we are not in: nothing
     n0 = len(sink.frames)
     await src.send(query(G1, 10))

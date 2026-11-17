@@ -1,0 +1,92 @@
+# AMD ZCU104: board file (fpga-design-agent/board/v2). Facts name their sources (ids under `sources`); an unconfirmed
+# fact says so and why. Written by hand from the cited documents; see boards/SCHEMA.md.
+schema: fpga-design-agent/board/v2
+name: zcu104
+display_name: AMD ZCU104
+vendor: AMD
+family: Zynq UltraScale+ MPSoC (EV)
+part: xczu7ev-ffvc1156-2-e
+board_revision: 1.1 (the AMD board file's revision)
+master_xdc: zcu104-pins.xdc
+master_xdc_source:
+  kind: derived
+  tool: tools/board_pins_import.py
+  spec: boards/zcu104/pins_import.yaml
+  note: our own listing of documented pin locations, not a copy of a vendor file
+sources:
+  PROBE:
+    title: this repository's licence probe
+    version: Vivado 2026.1, brief 95, 2026-11-17
+    url: results/95_boards/licence_probe.json
+  ZCU104:
+    title: 'AMD XilinxBoardStore board file for the ZCU104: part, pins, components'
+    version: XilinxBoardStore @ 40fad97, boards/Xilinx/zcu104/1.1 (board.xml, part0_pins.xml; Apache-2.0)
+    url: https://github.com/Xilinx/XilinxBoardStore/blob/40fad97cf36f3d856c6759d83c2390de1566ffa7/boards/Xilinx/zcu104/1.1/board.xml
+clock:
+  port: clk_300_p
+  port_n: clk_300_n
+  pin: AH18
+  pin_n: AH17
+  differential: true
+  iostandard: DIFF_SSTL12
+  freq_mhz: 300
+  source:
+  - ZCU104
+  status: unconfirmed
+  reason: the board file calls it a programmable differential clock (300 MHz, SI5341B); its I/O standard is the file's DIFF_SSTL12, which is a
+    memory-interface standard, so check it before use as a system clock
+resources: {}
+facts:
+- item: part
+  value: xczu7ev-ffvc1156-2-e (Zynq UltraScale+ EV)
+  source:
+  - ZCU104
+- item: clock
+  value: programmable differential clock, 300 MHz, Silicon Labs SI5341B per the part_name in the board file (its description says SI570 based; the file contradicts itself), on AH18 and AH17
+  source:
+  - ZCU104
+- item: memory
+  value: DDR4 on the PL side, Micron MT40A256M16GE-075E (64-bit data; its pins are left out of the pin file)
+  source:
+  - ZCU104
+- item: serial
+  value: a Silicon Labs CP2108 USB-UART bridge with PL UART pins (uart2_PL_TX on C19, uart2_PL_RX on A20); the board file gives no I/O standard
+    for them, so they are left out of the pin file
+  source:
+  - ZCU104
+- item: user I/O
+  value: 4 DIP switches, 4 push buttons, 4 LEDs (3.3 V), a CPU reset button
+  source:
+  - ZCU104
+- item: expansion
+  value: an FMC LPC connector (pins left out of the pin file)
+  source:
+  - ZCU104
+- item: licence
+  value: the licence probe (results/95_boards/licence_probe.json) took xczu7ev through synthesis, placement and routing on the installed Basic-tier Vivado 2026.1; no bitstream was tried because the board file has no smoke map
+  source:
+  - PROBE
+  - item: LED and button polarity
+  status: unconfirmed
+  reason: not stated in the board file
+slow_ports:
+- led\[\d+\]
+- sw\[\d+\]
+- btn\[\d+\]
+- cpu_reset
+thermal:
+  airflow_lfm: 0
+  heatsink: none
+  board: medium
+  board_layers: 8to11
+  ambient_c: 40
+  status: assumption
+  reason: stack-up, heat sink and airflow are not published; still air and no heat sink is the pessimistic bound (as for the KR260)
+hardware_use:
+  owned: false
+  rule: no supply or programming rule is recorded for this board; do not program one without the owner adding a per-board rule to the house rules
+pin_aliases:
+  source:
+  - ZCU104
+  reason: the source lists one physical pin under two names
+  pins: []

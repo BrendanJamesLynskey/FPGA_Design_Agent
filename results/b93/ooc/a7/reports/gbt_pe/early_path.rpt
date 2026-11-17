@@ -1,0 +1,110 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2026.1 (lin64) Build 6511674 Tue Jun 16 11:01:26 MDT 2026
+| Date         : Tue Nov 17 06:50:25 2026
+| Host         : bren-ubuntu24-04 running 64-bit Ubuntu 24.04.4 LTS
+| Command      : report_timing -from [get_cells -hier -filter {NAME =~ *e_q_reg* || NAME =~ *ev_q_reg*}] -max_paths 1 -file /home/brendan/Claude_sandbox/_worktrees/93-precompute/build/b93/ooc/a7/a1_pass3/gbt_pe_15.35/early_path.rpt
+| Design       : ooc_wrap
+| Device       : 7a100t-csg324
+| Speed File   : -1  PRODUCTION 1.23 2018-06-13
+| Design State : Routed
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Timing Report
+
+Slack (MET) :             0.000ns  (required time - arrival time)
+  Source:                 e_q_reg[14]/C
+                            (rising edge-triggered cell FDRE clocked by clk  {rise@0.000ns fall@7.675ns period=15.350ns})
+  Destination:            u_arm/tab_reg[10][1]/R
+                            (rising edge-triggered cell FDRE clocked by clk  {rise@0.000ns fall@7.675ns period=15.350ns})
+  Path Group:             clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            15.350ns  (clk rise@15.350ns - clk rise@0.000ns)
+  Data Path Delay:        14.837ns  (logic 6.413ns (43.224%)  route 8.424ns (56.776%))
+  Logic Levels:           20  (CARRY4=8 LUT2=1 LUT3=2 LUT4=2 LUT5=1 LUT6=6)
+  Clock Path Skew:        -0.049ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    0.924ns = ( 16.274 - 15.350 ) 
+    Source Clock Delay      (SCD):    0.973ns
+    Clock Pessimism Removal (CPR):    0.000ns
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk rise edge)        0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk
+                         net (fo=82, unset)           0.973     0.973    clk
+    SLICE_X12Y70         FDRE                                         r  e_q_reg[14]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X12Y70         FDRE (Prop_fdre_C_Q)         0.518     1.491 r  e_q_reg[14]/Q
+                         net (fo=20, routed)          0.484     1.975    u_arm/e_q[14]
+    SLICE_X13Y70         LUT4 (Prop_lut4_I1_O)        0.124     2.099 f  u_arm/tab[1][1]_i_178/O
+                         net (fo=73, routed)          0.609     2.708    u_arm/tab[1][1]_i_178_n_0
+    SLICE_X12Y70         LUT4 (Prop_lut4_I0_O)        0.124     2.832 f  u_arm/tab[1][1]_i_362/O
+                         net (fo=15, routed)          0.616     3.447    u_arm/tab[1][1]_i_362_n_0
+    SLICE_X11Y70         LUT6 (Prop_lut6_I1_O)        0.124     3.571 r  u_arm/tab[0][1]_i_121/O
+                         net (fo=4, routed)           0.620     4.192    u_arm/tab[0][1]_i_121_n_0
+    SLICE_X10Y72         LUT6 (Prop_lut6_I1_O)        0.124     4.316 r  u_arm/tab[0][1]_i_110/O
+                         net (fo=1, routed)           0.000     4.316    u_arm/tab[0][1]_i_110_n_0
+    SLICE_X10Y72         CARRY4 (Prop_carry4_S[1]_O[3])
+                                                      0.643     4.959 r  u_arm/tab_reg[0][1]_i_87/O[3]
+                         net (fo=6, routed)           0.535     5.494    u_arm/tab_reg[0][1]_i_87_n_4
+    SLICE_X9Y72          LUT6 (Prop_lut6_I0_O)        0.307     5.801 r  u_arm/tab[5][1]_i_117/O
+                         net (fo=1, routed)           0.000     5.801    u_arm/tab[5][1]_i_117_n_0
+    SLICE_X9Y72          CARRY4 (Prop_carry4_S[3]_CO[3])
+                                                      0.401     6.202 r  u_arm/tab_reg[5][1]_i_115/CO[3]
+                         net (fo=1, routed)           0.000     6.202    u_arm/tab_reg[5][1]_i_115_n_0
+    SLICE_X9Y73          CARRY4 (Prop_carry4_CI_O[1])
+                                                      0.334     6.536 r  u_arm/tab_reg[6][1]_i_85/O[1]
+                         net (fo=5, routed)           0.660     7.196    u_arm/tab_reg[6][1]_i_85_n_6
+    SLICE_X13Y75         LUT6 (Prop_lut6_I0_O)        0.303     7.499 r  u_arm/tab[6][1]_i_98/O
+                         net (fo=2, routed)           0.481     7.980    u_arm/tab[6][1]_i_98_n_0
+    SLICE_X8Y75          LUT6 (Prop_lut6_I0_O)        0.124     8.104 r  u_arm/tab[6][1]_i_102/O
+                         net (fo=1, routed)           0.000     8.104    u_arm/tab[6][1]_i_102_n_0
+    SLICE_X8Y75          CARRY4 (Prop_carry4_S[2]_O[2])
+                                                      0.250     8.354 r  u_arm/tab_reg[6][1]_i_84/O[2]
+                         net (fo=7, routed)           0.498     8.851    u_arm/tab_reg[6][1]_i_84_n_5
+    SLICE_X10Y76         LUT5 (Prop_lut5_I0_O)        0.301     9.152 r  u_arm/tab[8][1]_i_81/O
+                         net (fo=3, routed)           0.475     9.627    u_arm/tab[8][1]_i_81_n_0
+    SLICE_X13Y77         LUT6 (Prop_lut6_I2_O)        0.124     9.751 r  u_arm/tab[8][1]_i_57/O
+                         net (fo=2, routed)           0.493    10.244    u_arm/tab[8][1]_i_57_n_0
+    SLICE_X12Y75         CARRY4 (Prop_carry4_DI[3]_CO[3])
+                                                      0.396    10.640 r  u_arm/tab_reg[8][1]_i_35/CO[3]
+                         net (fo=1, routed)           0.000    10.640    u_arm/tab_reg[8][1]_i_35_n_0
+    SLICE_X12Y76         CARRY4 (Prop_carry4_CI_O[0])
+                                                      0.219    10.859 r  u_arm/tab_reg[7][1]_i_33/O[0]
+                         net (fo=9, routed)           1.060    11.919    u_arm/tab_reg[7][1]_i_33_n_7
+    SLICE_X28Y79         LUT3 (Prop_lut3_I1_O)        0.295    12.214 r  u_arm/tab[8][1]_i_37/O
+                         net (fo=1, routed)           0.000    12.214    u_arm/tab[8][1]_i_37_n_0
+    SLICE_X28Y79         CARRY4 (Prop_carry4_S[1]_O[2])
+                                                      0.580    12.794 r  u_arm/tab_reg[8][1]_i_22/O[2]
+                         net (fo=8, routed)           0.767    13.561    u_arm/s0_9[10]
+    SLICE_X29Y76         LUT2 (Prop_lut2_I0_O)        0.302    13.863 r  u_arm/tab[9][1]_i_12/O
+                         net (fo=1, routed)           0.000    13.863    u_arm/tab[9][1]_i_12_n_0
+    SLICE_X29Y76         CARRY4 (Prop_carry4_S[1]_CO[1])
+                                                      0.491    14.354 r  u_arm/tab_reg[9][1]_i_3/CO[1]
+                         net (fo=4, routed)           0.630    14.984    u_arm/p_6_in
+    SLICE_X30Y79         LUT3 (Prop_lut3_I1_O)        0.329    15.313 r  u_arm/tab[10][1]_i_1/O
+                         net (fo=1, routed)           0.497    15.810    u_arm/tab7_out
+    SLICE_X29Y78         FDRE                                         r  u_arm/tab_reg[10][1]/R
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk rise edge)       15.350    15.350 r  <hidden>
+                                                      0.000    15.350 r  clk
+                         net (fo=82, unset)           0.924    16.274    u_arm/clk
+    SLICE_X29Y78         FDRE                                         r  u_arm/tab_reg[10][1]/C
+                         clock pessimism              0.000    16.274    <hidden>
+                         clock uncertainty           -0.035    16.239    <hidden>
+    SLICE_X29Y78         FDRE (Setup_fdre_C_R)       -0.429    15.810    u_arm/tab_reg[10][1]
+  -------------------------------------------------------------------
+                         required time                         15.810    <hidden>
+                         arrival time                         -15.810    <hidden>
+  -------------------------------------------------------------------
+                         slack                                  0.000    <hidden>
+
+
+
+

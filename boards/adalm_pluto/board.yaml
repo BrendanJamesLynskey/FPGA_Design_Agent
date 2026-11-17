@@ -1,0 +1,64 @@
+# ADALM-Pluto: board file (fpga-design-agent/board/v2). Facts name their sources (ids under `sources`); an unconfirmed
+# fact says so and why. Written by hand from the cited documents; see boards/SCHEMA.md.
+schema: fpga-design-agent/board/v2
+name: adalm_pluto
+display_name: Analog Devices ADALM-Pluto (PlutoSDR)
+vendor: Analog Devices
+family: Zynq-7000
+part: xc7z010clg400-1
+board_revision: not stated
+master_xdc: adalm_pluto-pins.xdc
+master_xdc_source:
+  kind: derived
+  tool: tools/board_pins_import.py
+  spec: boards/adalm_pluto/pins_import.yaml
+  note: our own listing of documented pin locations, not a copy of a vendor file
+sources:
+  ADIHDL:
+    title: 'Analog Devices HDL reference design for the Pluto: PL pins of the AD9363 interface'
+    version: analogdevicesinc/hdl @ 9bac1ed, projects/pluto/system_constr.xdc and projects/scripts/adi_project_xilinx.tcl (the device string)
+    url: https://github.com/analogdevicesinc/hdl/tree/9bac1ed939d4511d0a21596d4adcb7b2b2dbeaed/projects/pluto
+clock:
+  port: null
+  status: none
+  reason: the radio's data clock (rx_clk_in on L12, 16.27 ns in the reference design) comes from the AD9363 once the PS has configured it over
+    SPI; there is no free-running board oscillator on a PL pin
+  source:
+  - ADIHDL
+resources: {}
+facts:
+- item: part
+  value: 'xc7z010clg400-1: the device string in Analog Devices'' HDL build script for the Pluto'
+  source:
+  - ADIHDL
+- item: radio interface
+  value: AD9363 data on 12-bit LVCMOS18 buses (rx_data_in 12, tx_data_out 12) with rx_clk_in, rx_frame_in, tx_clk_out, tx_frame_out, plus gpio_status
+    (8), gpio_ctl (4), enable, txnrx, SPI to the radio, and 5 PL GPIOs
+  source:
+  - ADIHDL
+- item: user I/O
+  status: unconfirmed
+  reason: the reference design's PL constraints have no LED, button or switch pin; the board has LEDs but their wiring was not read
+- item: serial
+  status: unconfirmed
+  reason: 'not read: no reference manual or schematic for this board was retrieved (vendor sites block automated clients), so this is not stated'
+use:
+  note: the owner has one; no run used it (designs/b30_hil_audio/README.md lists the Pluto path as not run), so its trust label is 'documented'
+slow_ports: []
+thermal:
+  airflow_lfm: 0
+  heatsink: none
+  board: medium
+  board_layers: 8to11
+  ambient_c: 40
+  status: assumption
+  reason: stack-up, heat sink and airflow are not published; still air and no heat sink is the pessimistic bound (as for the KR260)
+hardware_use:
+  owned: true
+  rule: no hardware rule is recorded for the Pluto in the house rules beyond the RF rule (transmit only into a cable with a 30 dB attenuator or
+    a dummy load; receive only over the air)
+pin_aliases:
+  source:
+  - ADIHDL
+  reason: the source lists one physical pin under two names
+  pins: []

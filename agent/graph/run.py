@@ -1686,6 +1686,8 @@ def follow_spec_language(rt) -> bool:
 
 def new_runtime(cfg: Config, client: Callable, run_id: str | None = None, runner=None,
                 oracle_llm: Callable | None = None) -> Runtime:
+    from agent.access import require_or_exit      # brief 94: every run is created here
+    require_or_exit("new_runtime")
     run_id = run_id or time.strftime("%Y%m%d-%H%M%S-") + uuid.uuid4().hex[:4]
     run_dir = RUNS / run_id
     design = run_dir / cfg.name

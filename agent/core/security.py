@@ -35,7 +35,7 @@ _KEY_SHAPES = re.compile(
     r"|AKIA[0-9A-Z]{16})")
 _BEARER = re.compile(r"(?i)(bearer\s+)[A-Za-z0-9._\-]{16,}")
 _PRIVATE_KEY = re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----.*?(-----END [A-Z ]*PRIVATE KEY-----|\Z)", re.S)
-_SECRET_NAME = re.compile(r"(API_KEY|_TOKEN|_SECRET|PASSWORD|PASSWD)$", re.IGNORECASE)
+_SECRET_NAME = re.compile(r"(API_KEY|ACCESS_KEY|_TOKEN|_SECRET|PASSWORD|PASSWD)$", re.IGNORECASE)
 EXTRA_SECRETS: set[str] = set()          # values registered at runtime (for example the cable serial)
 
 

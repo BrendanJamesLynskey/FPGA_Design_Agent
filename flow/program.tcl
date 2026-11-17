@@ -53,19 +53,20 @@ if {$ltx ne "" && ![file isfile $ltx]} { fda_refuse "no probes file $ltx" }
 set_param general.maxThreads 1
 open_hw_manager
 connect_hw_server -url localhost:3121
-set targets [get_hw_targets -quiet "*/Digilent/${serial}*"]
+set targets [get_hw_targets -quiet "*/${serial}*"]
 if {[llength $targets] != 1} {
     puts "program.tcl: targets found:"
     foreach t [get_hw_targets -quiet] { puts "  ...[string range [get_property UID $t] end-4 end]" }
     fda_refuse "expected exactly one target with the given serial, found [llength $targets]"
 }
 open_hw_target $targets
-set devs [get_hw_devices -quiet]
-if {[llength $devs] != 1} { fda_refuse "expected one device on the chain, found [llength $devs]: $devs" }
+# the expected PL part: FDA_PROGRAM_PART (set by flow/program.py from the board), default the Nexys A7's xc7a100t.
+# A Zynq UltraScale+ chain also holds the PS debug port (arm_dap), so pick the one device of the expected part.
+set want xc7a100t
+if {[info exists ::env(FDA_PROGRAM_PART)] && $::env(FDA_PROGRAM_PART) ne ""} { set want $::env(FDA_PROGRAM_PART) }
+set devs [get_hw_devices -quiet -filter "PART == $want"]
+if {[llength $devs] != 1} { fda_refuse "expected one $want device on the chain, found [llength $devs]: [get_hw_devices -quiet]" }
 set dev [lindex $devs 0]
-if {[get_property PART $dev] ne "xc7a100t"} {
-    fda_refuse "device $dev is a [get_property PART $dev], expected xc7a100t"
-}
 current_hw_device $dev
 refresh_hw_device -update_hw_probes false $dev
 set_property PROGRAM.FILE $bit $dev
@@ -82,6 +83,8 @@ set ms [expr {[clock milliseconds] - $t0}]
 refresh_hw_device $dev
 set done ?
 catch {set done [get_property REGISTER.CONFIG_STATUS.BIT14_DONE_PIN $dev]}
+# UltraScale+ names the same bit with brackets
+if {$done eq "?"} { catch {set done [get_property {REGISTER.CONFIG_STATUS.BIT[14]_DONE_PIN} $dev]} }
 # the USR_ACCESS register of the configured device (the build ID that flow/build.tcl wrote; AMD XAPP1232)
 set ua ?
 catch {set ua [get_property REGISTER.USR_ACCESS $dev]}

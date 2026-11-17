@@ -1,0 +1,92 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version      : Vivado v.2026.1 (lin64) Build 6511674 Tue Jun 16 11:01:26 MDT 2026
+| Date              : Tue Nov 17 07:31:19 2026
+| Host              : bren-ubuntu24-04 running 64-bit Ubuntu 24.04.4 LTS
+| Command           : report_timing -from [get_cells -hier -filter {NAME =~ *e_q_reg* || NAME =~ *ev_q_reg*}] -max_paths 1 -file /home/brendan/Claude_sandbox/_worktrees/93-precompute/build/b93/ooc/k26/k1_pass4/lgs_pe2_2.95/early_path.rpt
+| Design            : ooc_wrap
+| Device            : xck26-sfvc784
+| Speed File        : -2LV  PRODUCTION 1.31 12-08-2025
+| Design State      : Routed
+| Temperature Grade : C
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Timing Report
+
+Slack (MET) :             0.009ns  (required time - arrival time)
+  Source:                 e_q_reg[13]/C
+                            (rising edge-triggered cell FDRE clocked by clk  {rise@0.000ns fall@1.475ns period=2.950ns})
+  Destination:            u_arm/r1_7_reg[6]/D
+                            (rising edge-triggered cell FDRE clocked by clk  {rise@0.000ns fall@1.475ns period=2.950ns})
+  Path Group:             clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            2.950ns  (clk rise@2.950ns - clk rise@0.000ns)
+  Data Path Delay:        2.938ns  (logic 1.297ns (44.149%)  route 1.641ns (55.851%))
+  Logic Levels:           9  (CARRY8=1 LUT4=1 LUT5=1 LUT6=6)
+  Clock Path Skew:        -0.012ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    0.029ns = ( 2.979 - 2.950 ) 
+    Source Clock Delay      (SCD):    0.041ns
+    Clock Pessimism Removal (CPR):    0.000ns
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk rise edge)        0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk
+                         net (fo=225, unset)          0.041     0.041    clk
+    SLICE_X36Y95         FDRE                                         r  e_q_reg[13]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X36Y95         FDRE (Prop_BFF_SLICEL_C_Q)
+                                                      0.113     0.154 r  e_q_reg[13]/Q
+                         net (fo=3, routed)           0.103     0.257    u_arm/e_q[13]
+    SLICE_X36Y96         LUT4 (Prop_C6LUT_SLICEL_I0_O)
+                                                      0.150     0.407 r  u_arm/r1_2[6]_i_46/O
+                         net (fo=4, routed)           0.167     0.574    u_arm/r1_2[6]_i_46_n_0
+    SLICE_X36Y95         LUT5 (Prop_E6LUT_SLICEL_I0_O)
+                                                      0.057     0.631 r  u_arm/r1_2[6]_i_44/O
+                         net (fo=2, routed)           0.075     0.705    u_arm/r1_2[6]_i_44_n_0
+    SLICE_X36Y95         LUT6 (Prop_F6LUT_SLICEL_I0_O)
+                                                      0.224     0.929 r  u_arm/r1_2[6]_i_24/O
+                         net (fo=90, routed)          0.327     1.256    u_arm/a11_1[4]
+    SLICE_X35Y93         LUT6 (Prop_C6LUT_SLICEM_I4_O)
+                                                      0.080     1.336 r  u_arm/r1_1[6]_i_53/O
+                         net (fo=3, routed)           0.122     1.458    u_arm/r1_1[6]_i_53_n_0
+    SLICE_X34Y93         LUT6 (Prop_C6LUT_SLICEM_I1_O)
+                                                      0.135     1.593 r  u_arm/r1_1[6]_i_66/O
+                         net (fo=9, routed)           0.222     1.815    u_arm/r1_1[6]_i_66_n_0
+    SLICE_X32Y93         LUT6 (Prop_D6LUT_SLICEM_I5_O)
+                                                      0.151     1.966 r  u_arm/r1_1[6]_i_22/O
+                         net (fo=14, routed)          0.305     2.271    u_arm/r1_1[6]_i_22_n_0
+    SLICE_X31Y90         LUT6 (Prop_E6LUT_SLICEM_I2_O)
+                                                      0.152     2.423 r  u_arm/r1_7[6]_i_3/O
+                         net (fo=2, routed)           0.276     2.699    u_arm/r1_7[6]_i_3_n_0
+    SLICE_X30Y89         LUT6 (Prop_E6LUT_SLICEL_I0_O)
+                                                      0.057     2.756 r  u_arm/r1_7[6]_i_10/O
+                         net (fo=1, routed)           0.011     2.767    u_arm/r1_7[6]_i_10_n_0
+    SLICE_X30Y89         CARRY8 (Prop_CARRY8_SLICEL_S[4]_O[6])
+                                                      0.178     2.945 r  u_arm/r1_7_reg[6]_i_1/O[6]
+                         net (fo=1, routed)           0.034     2.979    u_arm/s1_7[6]
+    SLICE_X30Y89         FDRE                                         r  u_arm/r1_7_reg[6]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk rise edge)        2.950     2.950 r  <hidden>
+                                                      0.000     2.950 r  clk
+                         net (fo=225, unset)          0.029     2.979    u_arm/clk
+    SLICE_X30Y89         FDRE                                         r  u_arm/r1_7_reg[6]/C
+                         clock pessimism              0.000     2.979    <hidden>
+                         clock uncertainty           -0.035     2.944    <hidden>
+    SLICE_X30Y89         FDRE (Setup_GFF_SLICEL_C_D)
+                                                      0.044     2.988    u_arm/r1_7_reg[6]
+  -------------------------------------------------------------------
+                         required time                          2.988    <hidden>
+                         arrival time                          -2.979    <hidden>
+  -------------------------------------------------------------------
+                         slack                                  0.009    <hidden>
+
+
+
+

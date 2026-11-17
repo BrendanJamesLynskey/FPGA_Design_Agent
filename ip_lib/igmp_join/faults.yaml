@@ -25,7 +25,7 @@ faults:
     test: flow/net/tests/test_63d_igmp_rtl.py -k g4
   - name: igmp_timer_never_restarted
     file: igmp_join.sv
-    old: "if (!run[i] || tmr[i] > q_mrt) begin"
+    old: "if (!run[i] || tmr[i] > qm2) begin"
     new: "if (!run[i]) begin"
     class: protocol
     why: a query with a shorter Max Response Time does not shorten a running timer
@@ -39,7 +39,7 @@ faults:
     test: flow/net/tests/test_63d_igmp_rtl.py -k g4
   - name: igmp_timer_always_restarted
     file: igmp_join.sv
-    old: "if (!run[i] || tmr[i] > q_mrt) begin"
+    old: "if (!run[i] || tmr[i] > qm2) begin"
     new: "if (1'b1) begin"
     class: protocol
     why: a query with a longer Max Response Time restarts a running timer (found by the independent review)

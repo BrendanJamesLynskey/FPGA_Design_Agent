@@ -26,6 +26,7 @@ def pytest_addoption(parser: pytest.Parser) -> None:
 
 
 def pytest_configure(config: pytest.Config) -> None:
+    config.addinivalue_line("markers", "access_gate: tests of the access gate itself (agent/access); they run with the test bypass off")
     config.addinivalue_line("markers", "hw: needs the programmed board on --hw-port (skipped otherwise)")
 
 
@@ -76,3 +77,16 @@ def pytest_runtest_makereport(item: pytest.Item, call: pytest.CallInfo):
         if formal_skip_is_failure(reason, os.environ):
             rep.outcome = "failed"
             rep.longrepr = f"formal test skipped with FDA_REQUIRE_FORMAL=1: {reason}"
+
+
+@pytest.fixture(autouse=True)
+def _access_gate_bypass(request: pytest.FixtureRequest):
+    """Brief 94: in-process tests of entry points (replays, fake clients) run without the access key, so a fork's CI
+    does not fail when the secret is absent. The gate's own tests are marked ``access_gate`` and run it for real."""
+    from agent import access
+    old = access._TEST_BYPASS
+    access.CURRENT = None                       # a gate test's admitted name must not leak into later tests' audit logs
+    access._TEST_BYPASS = request.node.get_closest_marker("access_gate") is None
+    yield
+    access._TEST_BYPASS = old
+    access.CURRENT = None

@@ -1,0 +1,26 @@
+board: aup_zu3
+out: boards/aup_zu3/aup_zu3-pins.xdc
+title: "Real Digital AUP-ZU3 (xczu3eg-sfvc784-2-e): PL pins"
+sources:
+  - {id: AUP_PINS, url: https://raw.githubusercontent.com/RealDigitalOrg/aup-zu3-bsp/b595ecdf37c7204129517de1773b0895bcdcc2ed/board-files/aup-zu3-4gb/1.0/part0_pins.xml, sha256: 442919f0085cd8a34cef82f2ee29b96d881c97e5433a02afea3630834fc9023b, format: board-store-xml, licence: "Real Digital's aup-zu3-bsp repository, no licence file; only pin facts are listed (the 8 GB board file has the same pins)", use: "every pin, its I/O standard and its function name"}
+rename:
+  - ['^GPIO_SW_(\d)$', 'sw[\1]']
+  - ['^GPIO_LED_(\d)$', 'led[\1]']
+  - ['^GPIO_PB_(\d)$', 'btn[\1]']
+  - ['^GPIO_RGBLED(\d)_([RGB])_0$', 'rgbled\1_\2']
+  - ['^pmod01_(\d)$', 'pmod_ab[\1]']
+  - ['^pmod0_(\d)$', 'pmod_a[\1]']
+  - ['^pmod1_(\d)$', 'pmod_b[\1]']
+  - ['^GPIO_GROVE(\d)_(\d)$', 'grove\1[\2]']
+  - ['^raspberry_pi_(\d+)$', 'rpi_gpio[\1]']
+  - ['^CLK_100_P$', 'clk_100_p']
+  - ['^CLK_100_N$', 'clk_100_n']
+section_by:
+  - ['^clk', 'PL clock (100 MHz, differential)']
+  - ['^led', 'LEDs']
+  - ['^rgbled', 'RGB LEDs']
+  - ['^btn', 'Push buttons']
+  - ['^sw', 'Slide switches']
+  - ['^pmod', 'Pmod']
+  - ['^grove', 'Grove']
+  - ['^rpi', 'Raspberry Pi header']

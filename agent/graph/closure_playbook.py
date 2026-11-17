@@ -63,6 +63,25 @@ TIMING: tuple[Strategy, ...] = (
              "beside the data (valid, index, enable) by the same number of clocks, and extend busy (or the equivalent "
              "handshake) by the clocks you add, so the externally visible behaviour is unchanged apart from that latency.",
              {"ff": "+", "latency": "+"}),
+    Strategy("t_carry_split", "carry_split", "G2", "split a wide add, accumulate or compare chain across clocks",
+             "The failing path is a long carry chain of additions or comparisons that is not a multiply (a ones'-complement "
+             "checksum fold, a running sum, a length or address compare). Do not map it to a DSP. Keep the running sum "
+             "unfolded and add the words as they arrive; fold the carries and compare in one or two later registered stages "
+             "(a stage that adds the high half to the low half, a stage that adds the last carry and compares with the "
+             "constant). Compare against registered operands, not against a sum computed in the same clock. The result is "
+             "needed only at the end of the frame or message, so the extra stages cost latency, not throughput. Delay every "
+             "signal that travels beside the result by the same number of clocks." + _KEEP,
+             {"ff": "+", "latency": "+"}),
+    Strategy("t_verdict_reg", "verdict", "G2", "register the end-of-frame verdict, act on it one clock later",
+             "The failing path ends at a control input (reset, clock enable or write enable) and starts at the registers of a "
+             "check that is computed once per frame (checksums, lengths, header fields). Register the verdict (and the "
+             "flags that go with it, such as 'store this frame') on the clock it is computed, and take the action that the "
+             "verdict drives (start a reply, set busy, raise an event) one clock later from the registered copy. A value the "
+             "action reads that the next frame can overwrite in that clock (a length, a flag set on the last beat) must be "
+             "copied into the same stage. Anything that used the verdict in the same clock to protect a buffer must be "
+             "re-derived from state that is known earlier (for example decide on the frame's later bytes instead of its first, "
+             "if the early bytes are never read back), so that the observable behaviour does not change." + _KEEP,
+             {"ff": "+", "latency": "+"}),
     Strategy("t_fanout", "fanout", "G2", "register or replicate a high-fanout net on the path",
              "A net on the failing path drives many loads (see 'largest fanout'). Replicate its driving register (one copy "
              "per group of loads) or add `(* max_fanout = 16 *)` to it, or register the decoded value it feeds so the "
@@ -222,7 +241,17 @@ def _timing(dg, vec, spec, plan_fails):
     ff_room = _headroom(vec, "ff")
     if plan_fails:
         out.append((100, BY_ID["t_plan_map"], "the post-synthesis plan check failed: " + "; ".join(plan_fails)[:300]))
-    if f.get("lut_arith") and (dsp_room is None or dsp_room >= 1):
+    # a multiply is the only arithmetic a DSP48E1 helps (brief 88: three network blocks were sent to t_dsp_map for a ones'-
+    # complement checksum fold); ``rtl_has_multiply`` is set by drivers that scan the RTL, unset means "unknown: offer it"
+    has_mult = dg.get("rtl_has_multiply", True)
+    dst = str(p.get("destination") or "")
+    if f.get("lut_arith") and not has_mult and (f.get("carry_chain") or 0) >= 4:
+        out.append((92, BY_ID["t_carry_split"], f"{f.get('carry_chain')} CARRY4 in series and no multiply in the RTL: an "
+                                                 "add or compare chain, to split across clocks"))
+    if dst.endswith(("/R", "/CE", "/S", "/CLR", "/WE", "/ENARDEN")) and (f.get("logic_levels") or 0) >= 6:
+        out.append((91, BY_ID["t_verdict_reg"], f"the path ends at a control pin ({dst}) after {f.get('logic_levels')} logic "
+                                                 "levels: a per-frame verdict driving enables"))
+    if f.get("lut_arith") and has_mult and (dsp_room is None or dsp_room >= 1):
         out.append((90, BY_ID["t_dsp_map"], f"{f.get('carry_chain')} CARRY4 on the path and no DSP: arithmetic in LUTs; "
                                             f"DSP headroom {dsp_room}"))
     if (f.get("logic_levels") or 0) >= 4 or (p.get("data_path_ns") or 0) > 0.7 * period:

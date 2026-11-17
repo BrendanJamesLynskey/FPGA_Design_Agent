@@ -18,8 +18,8 @@ faults:
     test: flow/net/tests/test_63d_arp_rtl.py -k cache4
   - name: arp_round_robin_stuck
     file: arp_responder.sv
-    old: "rr <= (int'(rr) == CACHE_N - 1) ? '0 : rr + 1'b1;"
-    new: "rr <= rr;"
+    old: "rr <= (int'(rr_q) == CACHE_N - 1) ? '0 : rr_q + 1'b1;"
+    new: "rr <= rr_q;"
     class: state
     why: a full cache always replaces the same slot
     test: flow/net/tests/test_63d_arp_rtl.py -k cache4

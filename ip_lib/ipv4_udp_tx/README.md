@@ -1,10 +1,10 @@
-# ipv4_udp_tx 0.1.0
+# ipv4_udp_tx 0.2.0
 
 UDP over IPv4 transmit: stores one payload, then sends Ethernet, IPv4 (header checksum, counting identification) and UDP headers (checksum over the pseudo-header, or none) followed by the payload.
 
 Generated from `ip.yaml` by `flow/net/ipdoc.py`; do not edit by hand.
 
-Status: Misses 125 MHz out of context (74-82 MHz estimated: needs pipelining before it sits behind the RGMII MAC); closes at 50 MHz. Simulated against an RFC 791/768 model with scapy recomputing both checksums; framing checked by bounded model checking; built alone out of context on an Artix-7 with Vivado 2026.1; not yet run on a board (the Nexys A7 network design carries it behind eth_mac_rmii; built, not yet run: a cable check comes first, see designs/b63d_nexys_net/host/PLAN.md).
+Status: Meets 125 MHz out of context on xc7a100t-1 at every characterised point (Fmax estimates 142-149 MHz with block RAM; 143 MHz and, by +0.005 ns only, 125 MHz with LUT RAM at 1472 and 8972 bytes) and with margin on xck26-2LV (215-309 MHz). Version 0.2.0 sends the first header byte 7 clocks after the payload's last beat (was 4). Simulated against an RFC 791/768 model with scapy recomputing both checksums; built alone out of context with Vivado 2026.1 (single runs at 8 ns, estimates); not yet run on a board (the Nexys A7 network design carries it behind eth_mac_rmii; built, not yet run: a cable check comes first, see designs/b63d_nexys_net/host/PLAN.md).
 
 ## Parameters
 
@@ -28,7 +28,7 @@ Clocks: `clk`. Reset: `rst`, active high, synchronous.
 
 ## Latency and throughput
 
-- frame: the first header byte on m_axis 4 clocks after the payload's last beat (store and forward; measured in the bench; the variants' declared latency)
+- frame: the first header byte on m_axis 7 clocks after the payload's last beat (store and forward; measured in the bench; the variants' declared latency)
 - throughput: one datagram at a time: the payload in at a byte a clock, then the frame out at a byte a clock
 
 ## Evidence
@@ -56,15 +56,15 @@ Selected by `RAM`; every variant has the same ports, the same bit-exact result a
 
 | Variant | What | Latency | II | Use when |
 |---|---|---|---|---|
-| `bram` | the payload buffer in block RAM | `4` | `1` | the default; measured: one RAMB18 at MAX_PAYLOAD 1472, 4 RAMB36 at 8972 (the depth rounds up to a power of two) |
-| `lutram` | the payload buffer in LUT RAM | `4` | `1` | block RAM spoken for; measured: 276 LUTs as RAM at MAX_PAYLOAD 1472, 1692 at 8972 |
+| `bram` | the payload buffer in block RAM | `7` | `1` | the default; measured: one RAMB18 at MAX_PAYLOAD 1472, 4 RAMB36 at 8972 (the depth rounds up to a power of two) |
+| `lutram` | the payload buffer in LUT RAM | `7` | `1` | block RAM spoken for; measured: 276 LUTs as RAM at MAX_PAYLOAD 1472, 1692 at 8972 |
 
 Measured at MAX_PAYLOAD 1472, CSUM 1, TTL 64: built alone (out of context) on an Artix-7, xc7a100tcsg324-1, for a 8.0 ns clock (125 MHz), Vivado 2026.1 (build 6511674). Not run on a board.
 
 | Variant | DSP | Block RAM tiles | LUT | Fmax estimate (MHz) | II | Latency |
 |---|---|---|---|---|---|---|
-| `bram` | 0 | 0.5 | 560 | 82 | 1 | 4 |
-| `lutram` | 0 | 0 | 914 | 80 | 1 | 4 |
+| `bram` | 0 | 0.5 | 498 | 149 | 1 | 7 |
+| `lutram` | 0 | 0 | 881 | 143 | 1 | 7 |
 
 Fmax is estimated from one routed run at the target clock (1000 / (period - WNS)); it is not a closure at that frequency. WNS (worst slack against the clock) below zero means the target was missed.
 
@@ -72,10 +72,10 @@ Fmax is estimated from one routed run at the target clock (1000 / (period - WNS)
 
 | Variant | MAX_PAYLOAD | CSUM | TTL | LUT | FF | LUT RAM | Block RAM tiles | DSP | WNS (ns) | Fmax estimate (MHz) | Dynamic power (W) | Latency | II |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| `bram` | 1472 | 1 | 64 | 560 | 251 | 0 | 0.5 | 0 | -4.265 | 81.5 | 0.006 | 4 | 1 |
-| `bram` | 8972 | 1 | 64 | 532 | 269 | 0 | 4 | 0 | -4.862 | 77.7 | 0.010 | 4 | 1 |
-| `lutram` | 1472 | 1 | 64 | 914 | 260 | 276 | 0 | 0 | -4.434 | 80.4 | 0.010 | 4 | 1 |
-| `lutram` | 8972 | 1 | 64 | 2713 | 286 | 1692 | 0 | 0 | -5.507 | 74.0 | 0.018 | 4 | 1 |
+| `bram` | 1472 | 1 | 64 | 498 | 478 | 0 | 0.5 | 0 | 1.283 | 148.9 | 0.006 | 7 | 1 |
+| `bram` | 8972 | 1 | 64 | 481 | 481 | 0 | 4 | 0 | 0.973 | 142.3 | 0.008 | 7 | 1 |
+| `lutram` | 1472 | 1 | 64 | 881 | 487 | 276 | 0 | 0 | 1.006 | 143.0 | 0.012 | 7 | 1 |
+| `lutram` | 8972 | 1 | 64 | 2654 | 509 | 1692 | 0 | 0 | 0.005 | 125.1 | 0.016 | 7 | 1 |
 
 Dynamic power is vectorless (default toggle rates, no simulation activity): use it to rank variants, not as a measurement. Regenerate with `python3 -m flow.ipchar ipv4_udp_tx` (Vivado, minutes per point).
 
@@ -96,16 +96,17 @@ Licence: MIT (this repository).
 
 ## Known gaps and limits
 
-- No fragmentation; no IP options; DSCP 0; one datagram buffered (the next waits); the destination MAC is the caller's (from arp_responder, or the multicast mapping); measured Fmax estimates are 74-82 MHz out of context: it closes at the 50 MHz of the RMII MAC but not at the 125 MHz of the RGMII MAC (the checksum adders are not pipelined).
+- No fragmentation; no IP options; DSCP 0; one datagram buffered (the next waits); the destination MAC is the caller's (from arp_responder, or the multicast mapping); measured Fmax estimates (xc7a100t-1) are 125-149 MHz out of context (the LUT RAM buffer at 8972 bytes meets 8 ns by 0.005 ns: one run); the added pipeline stage moves some decisions one clock later, so a same-clock race between a frame's verdict and a free-running input (a tick, a flush, a lookup, an output handshake) resolves one clock later than in 0.1.0 (no bench reaches these races; the CHANGELOG lists them); the formal checks were written for 0.1.0 and run in CI on 0.2.0.
 - Board: no board run of this entry is recorded; its evidence is simulation and out-of-context builds.
 
 ## Next steps
 
-1. Pipeline the checksum path so the block meets 125 MHz behind the RGMII MAC.
+1. Time the block in context behind eth_mac_rgmii on the KR260 (out-of-context numbers are single runs).
 2. Run designs/b63d_nexys_net on the board with a host capturing the datagrams.
 
 ## History
 
+- 0.2.0 (2026-11-16): Pipelined to meet 125 MHz out of context on xc7a100t-1 (brief 88; Vivado 2026.1, single runs). Behaviour is unchanged apart from latency: see the status line and the latency entry in ip.yaml. Same-clock races between a frame's verdict and free-running inputs (a tick, a flush, a lookup, an output handshake) resolve one clock later than in 0.1.0; no bench reaches them. Seeded faults re-expressed for the new RTL.
 - 0.1.0 (2026-11-12): Initial version: simulated against a Python model, seeded faults caught, formal checks (bounded except where the README says proved), out-of-context cost on an Artix-7 (Vivado 2026.1); not run on a board. See README.md.
 
 Full entries: [CHANGELOG.md](CHANGELOG.md).

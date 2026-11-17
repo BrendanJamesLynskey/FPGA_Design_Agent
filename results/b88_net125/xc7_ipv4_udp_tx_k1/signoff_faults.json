@@ -1,0 +1,39 @@
+{
+ "caught": 3,
+ "valid": 3,
+ "faults": [
+  {
+   "name": "udp_tx_zero_checksum_sent",
+   "block": "ipv4_udp_tx",
+   "status": "invalid",
+   "why": "old string occurs 0 times"
+  },
+  {
+   "name": "udp_tx_ident_stuck",
+   "block": "ipv4_udp_tx",
+   "class": "state",
+   "why": "every datagram carries the same IP identification",
+   "status": "caught",
+   "seconds": 10.8,
+   "pytest": "1 failed, 8 deselected in 10.47s"
+  },
+  {
+   "name": "udp_tx_length_plus_one",
+   "block": "ipv4_udp_tx",
+   "class": "off-by-one",
+   "why": "the UDP length counts one byte too many",
+   "status": "caught",
+   "seconds": 10.9,
+   "pytest": "1 failed, 8 deselected in 10.58s"
+  },
+  {
+   "name": "udp_tx_long_payload_sent",
+   "block": "ipv4_udp_tx",
+   "class": "missing check",
+   "why": "a payload one byte over MAX_PAYLOAD is sent cut short instead of dropped",
+   "status": "caught",
+   "seconds": 13.5,
+   "pytest": "1 failed, 8 deselected in 13.14s"
+  }
+ ]
+}

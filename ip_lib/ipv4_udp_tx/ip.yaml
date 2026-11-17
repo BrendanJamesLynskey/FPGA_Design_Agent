@@ -1,10 +1,12 @@
 # ip.yaml for ipv4_udp_tx: the declared parameter space and contract (the library's reuse rules; brief 63D).
 name: ipv4_udp_tx
-version: 0.1.0
-status: 'Misses 125 MHz out of context (74-82 MHz estimated: needs pipelining before it sits behind the RGMII MAC); closes
-  at 50 MHz. Simulated against an RFC 791/768 model with scapy recomputing both checksums; framing checked by bounded model
-  checking; built alone out of context on an Artix-7 with Vivado 2026.1; not yet run on a board (the Nexys A7 network design
-  carries it behind eth_mac_rmii; built, not yet run: a cable check comes first, see designs/b63d_nexys_net/host/PLAN.md)'
+version: 0.2.0
+status: 'Meets 125 MHz out of context on xc7a100t-1 at every characterised point (Fmax estimates 142-149 MHz with block RAM;
+  143 MHz and, by +0.005 ns only, 125 MHz with LUT RAM at 1472 and 8972 bytes) and with margin on xck26-2LV (215-309 MHz).
+  Version 0.2.0 sends the first header byte 7 clocks after the payload''s last beat (was 4). Simulated against an RFC 791/768
+  model with scapy recomputing both checksums; built alone out of context with Vivado 2026.1 (single runs at 8 ns,
+  estimates); not yet run on a board (the Nexys A7 network design carries it behind eth_mac_rmii; built, not yet run: a cable
+  check comes first, see designs/b63d_nexys_net/host/PLAN.md)'
 summary: 'UDP over IPv4 transmit: stores one payload, then sends Ethernet, IPv4 (header checksum, counting identification)
   and UDP headers (checksum over the pseudo-header, or none) followed by the payload.'
 top: ipv4_udp_tx
@@ -73,7 +75,7 @@ variants:
     uses:
       dsp: 0
       bram_tiles: max(0.5, pow2(clog2(MAX_PAYLOAD + 1)) / 4096)
-    latency: 4
+    latency: 7
     ii: 1
   lutram:
     summary: the payload buffer in LUT RAM
@@ -81,10 +83,10 @@ variants:
     uses:
       dsp: 0
       bram_tiles: 0
-    latency: 4
+    latency: 7
     ii: 1
 latency:
-  frame: the first header byte on m_axis 4 clocks after the payload's last beat (store and forward; measured in the bench;
+  frame: the first header byte on m_axis 7 clocks after the payload's last beat (store and forward; measured in the bench;
     the variants' declared latency)
 throughput: 'one datagram at a time: the payload in at a byte a clock, then the frame out at a byte a clock'
 guards:
@@ -118,8 +120,7 @@ boundary:
   cdc: none
   part_specific: none (memories inferred; ram_style steers the variants)
 limits: 'no fragmentation; no IP options; DSCP 0; one datagram buffered (the next waits); the destination MAC is the caller''s
-  (from arp_responder, or the multicast mapping); measured Fmax estimates are 74-82 MHz out of context: it closes at the 50
-  MHz of the RMII MAC but not at the 125 MHz of the RGMII MAC (the checksum adders are not pipelined)'
+  (from arp_responder, or the multicast mapping); measured Fmax estimates (xc7a100t-1) are 125-149 MHz out of context (the LUT RAM buffer at 8972 bytes meets 8 ns by 0.005 ns: one run); the added pipeline stage moves some decisions one clock later, so a same-clock race between a frame''s verdict and a free-running input (a tick, a flush, a lookup, an output handshake) resolves one clock later than in 0.1.0 (no bench reaches these races; the CHANGELOG lists them); the formal checks were written for 0.1.0 and run in CI on 0.2.0'
 evidence:
   summary: 'cocotb against ip_lib/ipv4_udp_tx/model.py (RFC 791, 768, 1071) with scapy recomputing both checksums of every
     frame: random lengths up to and over MAX_PAYLOAD, payloads whose checksum computes to zero (sent as 0xFFFF), unicast and
@@ -136,5 +137,5 @@ evidence:
 cost_table: measured costs are in the Variants section above
 licence: MIT (this repository)
 next_steps:
-- Pipeline the checksum path so the block meets 125 MHz behind the RGMII MAC.
+- Time the block in context behind eth_mac_rgmii on the KR260 (out-of-context numbers are single runs).
 - Run designs/b63d_nexys_net on the board with a host capturing the datagrams.

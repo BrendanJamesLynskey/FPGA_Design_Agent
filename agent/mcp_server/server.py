@@ -61,6 +61,8 @@ async def serve(session: Session, only: set[str] | None = None) -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
+    from agent.access import require_or_exit
+    require_or_exit('agent.mcp_server')
     ap = argparse.ArgumentParser(description=__doc__.split("\n", 1)[0])
     ap.add_argument("--design", required=True, type=Path)
     ap.add_argument("--board", default="nexys_a7_100t")

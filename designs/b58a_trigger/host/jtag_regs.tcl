@@ -27,8 +27,18 @@ proc b58a_open {serial} {
     open_hw_target -jtag_mode on
     set ::b58a_dev [lindex [get_hw_devices -filter {PART =~ xck26*}] 0]
     if {$::b58a_dev eq ""} { error "no xck26 PL device on the chain" }
-    set ::b58a_ir [get_property IR_LENGTH $::b58a_dev]
-    set ::b58a_user4 [b58a_user4_code $::b58a_dev]
+    set ::b58a_drpad 0
+    if {[llength [get_hw_devices]] == 2 && [llength [get_hw_devices -filter {PART == arm_dap}]] == 1} {
+        # Zynq UltraScale+ (K26) cascaded chain, measured on the KR260 2026-11-17: TDI -> PL/PS TAP (IR 12) -> ARM DAP (IR 4)
+        # -> TDO. USER4 is 0x923 in the 12-bit IR; the DAP gets BYPASS (0xF) in the low 4 bits; its 1-bit bypass register
+        # sits between the PL user chain and TDO, so DR scans are 65 bits with the data one bit up.
+        set ::b58a_ir 16
+        set ::b58a_user4 923f
+        set ::b58a_drpad 1
+    } else {
+        set ::b58a_ir [get_property IR_LENGTH $::b58a_dev]
+        set ::b58a_user4 [b58a_user4_code $::b58a_dev]
+    }
 }
 
 # USER4 for the selected device, from the device's own BSDL-derived instruction table (Vivado's USER instructions)
@@ -41,6 +51,12 @@ proc b58a_user4_code {dev} {
 
 proc b58a_scan {bits64} {
     scan_ir_hw_jtag $::b58a_ir -tdi $::b58a_user4
+    if {[info exists ::b58a_drpad] && $::b58a_drpad} {
+        set w [scan $bits64 %llx]
+        set r [scan_dr_hw_jtag 65 -tdi [format %017llx [expr {$w << 1}]]]
+        set v [scan $r %llx]
+        return [format %016llx [expr {($v >> 1) & 0xFFFFFFFFFFFFFFFF}]]
+    }
     return [scan_dr_hw_jtag 64 -tdi $bits64]
 }
 

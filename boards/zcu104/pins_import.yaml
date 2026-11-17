@@ -1,0 +1,15 @@
+board: zcu104
+out: boards/zcu104/zcu104-pins.xdc
+title: "AMD ZCU104 (xczu7ev-ffvc1156-2-e): PL pins from the AMD board file (no DDR4, no FMC)"
+sources:
+  - {id: ZCU104_PINS, url: https://raw.githubusercontent.com/Xilinx/XilinxBoardStore/40fad97cf36f3d856c6759d83c2390de1566ffa7/boards/Xilinx/zcu104/1.1/part0_pins.xml, sha256: 7f94d3b6c0cc30dc421d78a3c518deaf78dd8cb0b9281822b70fb0dbf2f80b5d, format: board-store-xml, licence: "AMD XilinxBoardStore board file, Apache-2.0", use: "clock, UART, switch, button and LED pins and their standards"}
+exclude: ['^c0_ddr4', '^fmc_lpc', '^IIC']
+rename:
+  - ['^GPIO_DIP_SW(\d)$', 'sw[\1]']
+  - ['^GPIO_LED_(\d)_LS$', 'led[\1]']
+  - ['^GPIO_PB_SW(\d)$', 'btn[\1]']
+  - ['^CLK_300_P$', 'clk_300_p']
+  - ['^CLK_300_N$', 'clk_300_n']
+  - ['^uart2_PL_TX$', 'uart_pl_tx']
+  - ['^uart2_PL_RX$', 'uart_pl_rx']
+  - ['^CPU_RESET$', 'cpu_reset']

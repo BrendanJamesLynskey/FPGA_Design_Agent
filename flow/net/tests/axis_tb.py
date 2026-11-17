@@ -4,11 +4,20 @@ The sink checks the AXI-Stream rules it can see: once tvalid is high it stays hi
 signals steady, until the beat is taken."""
 from __future__ import annotations
 
+import os
 import random
 
 import cocotb
 from cocotb.clock import Clock
 from cocotb.triggers import FallingEdge, ReadOnly, RisingEdge, Timer
+
+
+LAT_EXTRA = int(os.environ.get("NET_LAT_EXTRA", "0"))     # clocks of latency a pipelined candidate may add (brief 88); 0 = exact
+
+
+def lat_ok(n: int, declared: int) -> bool:
+    """A measured latency matches the declared one, or exceeds it by at most the stated extra (never fewer clocks)."""
+    return declared <= n <= declared + LAT_EXTRA
 
 
 async def start(dut, period_ns: int = 8, reset_clocks: int = 5):

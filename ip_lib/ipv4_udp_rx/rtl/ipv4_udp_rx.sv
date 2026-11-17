@@ -59,7 +59,8 @@ module ipv4_udp_rx #(
         fold = t[15:0] + {15'd0, t[16]};
     endfunction
 
-    logic        fin;                   // the clock after a frame's last byte: the verdict
+    logic        fin;                   // the clock(s) after a frame's last byte: the verdict
+    logic [2:0]  fin_phase;
     logic        take;                  // the output register is free this clock
     assign take = !m_axis_tvalid || m_axis_tready;
     assign s_axis_tready = !fin && take;
@@ -79,7 +80,7 @@ module ipv4_udp_rx #(
     logic [16:0] u_end;                 // index after the datagram's last byte
     assign u_end = {1'b0, u0} + {1'b0, ulen};
 
-    // header checks, complete when the first payload byte arrives (k = u0 + 8)
+    // Header checks, complete when the first payload byte arrives (k = u0 + 8).
     logic        hdr_ok, dst_ok, frag, port_hit;
     logic [2:0]  port_i;
     assign dst_ok = dst == own_ip || (ACCEPT_BCAST != 0 && dst == 32'hFFFF_FFFF) || (ACCEPT_MCAST != 0 && dst[31:28] == 4'hE);
@@ -96,6 +97,8 @@ module ipv4_udp_rx #(
     logic        len_ok;
     assign len_ok = ulen >= 16'd8 && ulen <= tl - {10'd0, vi[3:0], 2'b00};
     logic        fwd;                   // this frame's payload is being passed on
+    logic        verd;                  // mine && len_ok && port_hit, registered on the byte before the first payload byte
+    logic [2:0]  verd_i;
     logic        decided;               // the header verdict for this frame has been taken
     logic        h_v;                   // a payload byte is held back
     logic [7:0]  h_d;
@@ -106,25 +109,29 @@ module ipv4_udp_rx #(
     assign in_udp = k >= u0 && (k < u0 + 16'd8 || {1'b0, k} < u_end);     // ulen is complete from u0 + 6
     assign in_pay = k >= u0 + 16'd8 && {1'b0, k} < u_end;
 
-    // the UDP checksum's verdict: the datagram's words plus the pseudo-header (source, destination, 17, UDP length)
-    logic [31:0] u_tot;
-    assign u_tot = u_acc + {16'd0, src[31:16]} + {16'd0, src[15:0]} + {16'd0, dst[31:16]} + {16'd0, dst[15:0]} +
-                   32'd17 + {16'd0, ulen};
-    logic        u_bad;
-    assign u_bad = f_bad || {1'b0, k} + 17'd1 < u_end || (CHECK_UDP != 0 && ucs != 16'd0 && fold(u_tot) != 16'hFFFF);
+    // Pseudo-header checksum addition is split across the idle clocks after the frame.
+    logic [31:0] cs_a, cs_b, cs_c;
+    logic [31:0] cs_ab, cs_cu;
+    logic [31:0] cs_total, cs_tot_r;
+    logic        short_pipe;
+    logic        u_bad_pipe;
+    assign cs_total = cs_ab + cs_cu;
 
     always_ff @(posedge clk) begin
         ev_ok <= 1'b0; ev_bad_ip <= 1'b0; ev_bad_udp <= 1'b0; ev_no_port <= 1'b0; ev_frag <= 1'b0; ev_empty <= 1'b0;
         if (rst) begin
-            fin <= 1'b0; k <= '0; et <= '0; tl <= '0; ff <= '0; sport <= '0; dport <= '0; ulen <= '0; ucs <= '0; vi <= '0;
+            fin <= 1'b0; fin_phase <= 3'd0; k <= '0;
+            et <= '0; tl <= '0; ff <= '0; sport <= '0; dport <= '0; ulen <= '0; ucs <= '0; vi <= '0;
             proto <= '0; src <= '0; dst <= '0; ip_acc <= '0; u_acc <= '0; f_bad <= 1'b0; fwd <= 1'b0; decided <= 1'b0;
             h_v <= 1'b0; h_d <= '0; f_dest <= '0;
+            cs_a <= '0; cs_b <= '0; cs_c <= '0; cs_ab <= '0; cs_cu <= '0; cs_tot_r <= '0;
+            short_pipe <= 1'b0; u_bad_pipe <= 1'b0;
             m_axis_tvalid <= 1'b0; m_axis_tdata <= '0; m_axis_tlast <= 1'b0; m_axis_tuser <= 1'b0; m_axis_tdest <= '0;
             m_src_ip <= '0; m_dst_ip <= '0; m_src_port <= '0; m_dst_port <= '0; m_len <= '0;
         end else begin
             if (m_axis_tvalid && m_axis_tready) m_axis_tvalid <= 1'b0;
             if (beat) begin
-                if (k == 16'd0) begin ip_acc <= '0; u_acc <= '0; fwd <= 1'b0; decided <= 1'b0; f_bad <= 1'b0; end
+                if (k == 16'd0) begin ip_acc <= '0; u_acc <= '0; fwd <= 1'b0; decided <= 1'b0; f_bad <= 1'b0; verd <= 1'b0; end
                 case (k)
                     16'd12, 16'd13: et    <= {et[7:0], s_axis_tdata};
                     16'd14:         vi    <= s_axis_tdata;
@@ -143,40 +150,68 @@ module ipv4_udp_rx #(
                 end
                 if (in_ip)  ip_acc <= ip_acc + 32'(wv);
                 if (in_udp && k >= 16'd34) u_acc <= u_acc + 32'(wv);
-                // the header verdict, at the first payload byte
+                // The header verdict is taken one byte early (every header field is final by then) and used at the
+                // first payload byte, so the checksum compare is not in the same clock as the output enables.
+                if (k == u0 + 16'd7 && k >= 16'd41) begin verd <= mine && len_ok && port_hit; verd_i <= port_i; end
                 if (k == u0 + 16'd8 && k >= 16'd42 && !decided) begin
                     decided <= 1'b1;
-                    fwd <= mine && len_ok && port_hit;
-                    f_dest <= port_i;
+                    fwd <= verd;
+                    f_dest <= verd_i;
                 end
-                if (in_pay && (k == u0 + 16'd8 ? (mine && len_ok && port_hit && !decided) : fwd)) begin
+                if (in_pay && (k == u0 + 16'd8 ? (verd && !decided) : fwd)) begin
                     if (h_v) begin                                  // the held byte goes out
                         m_axis_tvalid <= 1'b1; m_axis_tdata <= h_d; m_axis_tlast <= 1'b0; m_axis_tuser <= 1'b0;
-                        m_axis_tdest <= (k == u0 + 16'd8) ? port_i : f_dest;
+                        m_axis_tdest <= (k == u0 + 16'd8) ? verd_i : f_dest;
                         m_src_ip <= src; m_dst_ip <= dst; m_src_port <= sport; m_dst_port <= dport;
                         m_len <= ulen - 16'd8;
                     end
                     h_v <= 1'b1; h_d <= s_axis_tdata;
                 end
-                if (s_axis_tlast) begin fin <= 1'b1; f_bad <= s_axis_tuser; end
+                if (s_axis_tlast) begin fin <= 1'b1; fin_phase <= 3'd0; f_bad <= s_axis_tuser; end
                 if (!s_axis_tlast && k != 16'hFFFF) k <= k + 16'd1;
             end
             if (fin && take) begin
-                fin <= 1'b0;
-                k <= '0;
-                if (h_v) begin                                      // the last payload byte, with the verdict
-                    m_axis_tvalid <= 1'b1; m_axis_tdata <= h_d; m_axis_tlast <= 1'b1; m_axis_tuser <= u_bad;
-                    m_axis_tdest <= f_dest;
-                    m_src_ip <= src; m_dst_ip <= dst; m_src_port <= sport; m_dst_port <= dport; m_len <= ulen - 16'd8;
-                    h_v <= 1'b0;
-                    if (u_bad) ev_bad_udp <= 1'b1; else ev_ok <= 1'b1;
-                end else if (k >= 16'd33 && et == 16'h0800) begin      // no payload passed on: say why
-                    if (!hdr_ok) ev_bad_ip <= 1'b1;
-                    else if (frag && dst_ok) ev_frag <= 1'b1;
-                    else if (mine && k + 16'd1 >= u0 + 16'd8 && len_ok && !port_hit) ev_no_port <= 1'b1;
-                    else if (mine && k + 16'd1 >= u0 + 16'd8 && len_ok && ulen == 16'd8 && !u_bad) ev_empty <= 1'b1;
-                    else if (mine) ev_bad_udp <= 1'b1;
-                end
+                case (fin_phase)
+                    3'd0: begin
+                        cs_a <= u_acc + {16'd0, src[31:16]};
+                        cs_b <= {16'd0, src[15:0]} + {16'd0, dst[31:16]};
+                        cs_c <= {16'd0, dst[15:0]} + 32'd17;
+                        short_pipe <= {1'b0, k} + 17'd1 < u_end;
+                        fin_phase <= 3'd1;
+                    end
+                    3'd1: begin
+                        cs_ab <= cs_a + cs_b;
+                        cs_cu <= cs_c + {16'd0, ulen};
+                        fin_phase <= 3'd2;
+                    end
+                    3'd2: begin
+                        cs_tot_r <= cs_total;                           // the last add is registered before the fold and compare
+                        fin_phase <= 3'd3;
+                    end
+                    3'd3: begin
+                        u_bad_pipe <= f_bad || short_pipe ||
+                                      (CHECK_UDP != 0 && ucs != 16'd0 && fold(cs_tot_r) != 16'hFFFF);
+                        fin_phase <= 3'd4;
+                    end
+                    default: begin
+                        fin <= 1'b0;
+                        fin_phase <= 3'd0;
+                        k <= '0;
+                        if (h_v) begin                                  // the last payload byte, with the verdict
+                            m_axis_tvalid <= 1'b1; m_axis_tdata <= h_d; m_axis_tlast <= 1'b1; m_axis_tuser <= u_bad_pipe;
+                            m_axis_tdest <= f_dest;
+                            m_src_ip <= src; m_dst_ip <= dst; m_src_port <= sport; m_dst_port <= dport; m_len <= ulen - 16'd8;
+                            h_v <= 1'b0;
+                            if (u_bad_pipe) ev_bad_udp <= 1'b1; else ev_ok <= 1'b1;
+                        end else if (k >= 16'd33 && et == 16'h0800) begin      // no payload passed on: say why
+                            if (!hdr_ok) ev_bad_ip <= 1'b1;
+                            else if (frag && dst_ok) ev_frag <= 1'b1;
+                            else if (mine && k + 16'd1 >= u0 + 16'd8 && len_ok && !port_hit) ev_no_port <= 1'b1;
+                            else if (mine && k + 16'd1 >= u0 + 16'd8 && len_ok && ulen == 16'd8 && !u_bad_pipe) ev_empty <= 1'b1;
+                            else if (mine) ev_bad_udp <= 1'b1;
+                        end
+                    end
+                endcase
             end
         end
     end

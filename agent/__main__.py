@@ -5,6 +5,7 @@
     python -m agent resume <run-id> [--rewind N] [--reply '<json>'] [--replies <json>]
     python -m agent resume <design-dir> ["<change request>"] [--kind K] [--from-stage N] [--dry-run] [--stop-after N]
                                                                    (brief 68 D: pick up older work from its handover)
+    python -m agent review <design-dir> [--out DIR] [--intent FILE] [--improvements FILE] [--no-judge]   (brief 84: review an existing design, read-only)
     python -m agent document <run-dir> [--cc-model M] [--replay doc_calls.jsonl]   (brief 68 C: the DOC step on a finished run)
     python -m agent project check|status|hash|gen-tests <dir> ...     (the project layer, project/cli.py)
 
@@ -22,6 +23,7 @@ import json
 import sys
 from pathlib import Path
 
+from agent.core.boards import board_arg, board_name
 from agent.core.session import ROOT
 
 
@@ -208,18 +210,33 @@ def pickup_cmd(a) -> int:
     return 0
 
 
+def review_cmd(a) -> int:
+    from flow.review import review
+    reqs = [l.strip().lstrip("-*0123456789. ").strip() for l in a.improvements.read_text().splitlines() if l.strip() and not l.startswith("#")] if a.improvements else None
+    out = a.out or ROOT / "runs" / "review_out" / a.design.resolve().name
+    rep = review(a.design, out, intent_file=a.intent, improvements=reqs, use_judge=not a.no_judge, model=a.model, effort=a.effort,
+                 claude_bin=a.claude_bin, tag=a.design.resolve().name)
+    cnt = {s: sum(1 for f in rep["findings"] if f["severity"] == s) for s in ("critical", "major", "minor", "info")}
+    print(json.dumps({"review": str(out / "REVIEW.md"), "agent_version": str(out / "REVIEW_AGENT.md"), "findings": cnt,
+                      "design_unchanged": rep["design"]["unchanged"], "judge_ran": rep["judge"]["ran"]}, indent=1))
+    return 0 if rep["design"]["unchanged"] else 2
+
+
 def main(argv: list[str] | None = None) -> int:
     args = sys.argv[1:] if argv is None else argv
     if args[:1] == ["project"]:                      # brief 27B: the project layer (project/), not part of the agent graph
         from project.cli import main as project_main
         return project_main(args[1:])
+    from agent.access import require_or_exit      # brief 94: run, resume and document all start here
+    require_or_exit("python -m agent")
     from agent.graph.role_models import parse_roles
     from agent.graph.run import Config, build_graph, checkpointer_for, new_runtime
     ap = argparse.ArgumentParser(prog="python -m agent")
     sub = ap.add_subparsers(dest="cmd", required=True)
     r = sub.add_parser("run")
     r.add_argument("spec", type=Path)
-    r.add_argument("--board", default="nexys_a7_100t")
+    r.add_argument("--board", default="nexys_a7_100t", type=board_arg,
+                   help="a board id or the words of a request (boards/catalogue.yaml; docs/board_catalogue.md)")
     r.add_argument("--name")
     r.add_argument("--interview", choices=["on", "oracle", "off"], default="off")
     r.add_argument("--review", choices=["on", "off"], default="off")
@@ -291,7 +308,7 @@ def main(argv: list[str] | None = None) -> int:
     rs.add_argument("--from-stage", type=int, help="design resume: enter at this stage, overriding the rule")
     rs.add_argument("--dry-run", action="store_true", help="design resume: report the freshness and the entry stage only")
     rs.add_argument("--stop-after", type=int)
-    rs.add_argument("--board", help="design resume: default the handover's target.board when it names a board directory")
+    rs.add_argument("--board", type=board_name, help="design resume: default the handover's target.board when it names a board directory")
     rs.add_argument("--model", default="openai/gpt-6-luna")
     rs.add_argument("--harness", choices=["deepagents", "claude_code"], default="deepagents")
     rs.add_argument("--cc-model", default="claude-haiku-5-5")
@@ -302,12 +319,23 @@ def main(argv: list[str] | None = None) -> int:
     rs.add_argument("--docs", choices=["on", "off"], default="on")
     dc = sub.add_parser("document", help="brief 68 C: the DOC step on a finished run directory")
     dc.add_argument("run_dir", type=Path)
-    dc.add_argument("--board", default="nexys_a7_100t")
+    dc.add_argument("--board", default="nexys_a7_100t", type=board_name)
     dc.add_argument("--cc-model", default="claude-sonnet-5-5")
     dc.add_argument("--cc-effort", default="medium")
     dc.add_argument("--verif-level", help="default: the run's config.json, else V3")
     dc.add_argument("--replay", type=Path, help="replay the replies of a recorded doc_calls.jsonl (no model call)")
+    rv = sub.add_parser("review", help="brief 84: review an existing design (read-only); findings, understanding, verification gap")
+    rv.add_argument("design", type=Path, help="a directory with RTL, tests, constraints and docs")
+    rv.add_argument("--out", type=Path, help="output directory (default runs/review_out/<design>)")
+    rv.add_argument("--intent", type=Path, help="a statement of intent (default: spec.md or INTENT.md in the design)")
+    rv.add_argument("--improvements", type=Path, help="a plain-English list, one request per line: restate, assess and order them (a plan only)")
+    rv.add_argument("--no-judge", action="store_true", help="the check suite alone (the benchmark's baseline)")
+    rv.add_argument("--model", default="claude-sonnet-5-5")
+    rv.add_argument("--effort", default="medium", choices=["low", "medium", "high", "xhigh", "max"])
+    rv.add_argument("--claude-bin", default="claude", help="the pinned Claude Code binary")
     a = ap.parse_args(argv)
+    if a.cmd == "review":
+        return review_cmd(a)
     if a.cmd == "document":
         return document_cmd(a)
     if a.cmd == "resume" and (Path(a.run_id) / "handover.yaml").is_file():

@@ -1,0 +1,166 @@
+# Digilent Arty A7-100T: board file (fpga-design-agent/board/v2). Facts name their sources (ids under `sources`); an unconfirmed
+# fact says so and why. Written by hand from the cited documents; see boards/SCHEMA.md.
+schema: fpga-design-agent/board/v2
+name: arty_a7_100t
+display_name: Digilent Arty A7-100T
+vendor: Digilent
+family: Artix-7
+part: xc7a100tcsg324-1
+board_revision: Rev. D and Rev. E (the master XDC's header)
+master_xdc: Arty-A7-100-Master.xdc
+master_xdc_source:
+  kind: vendor_copy
+  repo: https://github.com/Digilent/digilent-xdc
+  commit: c8644a9fe31cc803789643124545d56b3bef4600
+  file: Arty-A7-100-Master.xdc
+  licence: MIT (LICENSE-digilent-xdc.txt, copied from the same commit)
+sources:
+  XDC:
+    title: Digilent master XDC Arty-A7-100-Master.xdc
+    version: Digilent/digilent-xdc @ c8644a9 (MIT)
+    url: https://github.com/Digilent/digilent-xdc
+  BDF:
+    title: AMD XilinxBoardStore board file (part name, memories)
+    version: XilinxBoardStore @ 40fad97, boards/Digilent/arty-a7-100/E.0/board.xml (Apache-2.0)
+    url: https://github.com/Xilinx/XilinxBoardStore/blob/40fad97cf36f3d856c6759d83c2390de1566ffa7/boards/Digilent/arty-a7-100/E.0/board.xml
+clock:
+  port: CLK100MHZ
+  pin: E3
+  freq_mhz: 100
+  source:
+  - XDC
+  period_ns_in_vendor_xdc: 10.0
+uart:
+  fpga_rx:
+    port: uart_txd_in
+    pin: A9
+  fpga_tx:
+    port: uart_rxd_out
+    pin: D10
+  default_baud: 115200
+  source:
+  - XDC
+  note: port names follow the vendor file; 'fpga_rx' is the pin the FPGA receives on. Baud rate is the common default, not a board property
+resources:
+  clk: CLK100MHZ
+  led:
+  - led[0]
+  - led[1]
+  - led[2]
+  - led[3]
+  btn: btn[0]
+  sw:
+  - sw[0]
+  - sw[1]
+  - sw[2]
+  - sw[3]
+  uart_rx: uart_txd_in
+  uart_tx: uart_rxd_out
+facts:
+- item: part
+  value: xc7a100tcsg324-1 (Artix-7)
+  source:
+  - BDF
+- item: memory
+  value: DDR3L SDRAM, QSPI flash (N25Q128A13ESF40 per the AMD board file)
+  source:
+  - BDF
+- item: connectors
+  value: Pmod JA to JD, Arduino/chipKIT shield header (ck_io, ck_a), XADC pairs, Ethernet MII to a PHY; the vendor XDC names each
+  source:
+  - XDC
+- item: memory sizes, parts, oscillator detail and other peripherals not in the XDC
+  status: unconfirmed
+  reason: the vendor's reference manual could not be fetched automatically (its site blocks automated clients), so this was not read
+- item: LED and button polarity
+  status: unconfirmed
+  reason: the vendor constraints file does not state it, and the schematic was not read
+xdc_sections:
+  source:
+  - XDC
+  ports_per_section:
+    Clock signal: 1
+    Switches: 4
+    RGB LEDs: 12
+    LEDs: 4
+    Buttons: 4
+    Pmod Header JA: 8
+    Pmod Header JB: 8
+    Pmod Header JC: 8
+    Pmod Header JD: 8
+    USB-UART Interface: 2
+    ChipKit Outer Digital Header: 14
+    ChipKit Inner Digital Header: 16
+    'NOTE: The following constraints should be used with the XADC IP core when using these ports as analog inputs.': 12
+    'NOTE: The following constraints should be used when using these ports as digital I/O.': 6
+    'NOTE: The following constraints should be used with the XADC core when using these ports as analog inputs.': 6
+    'NOTE: The following constraints should be used when using the inner analog header ports as digital I/O.': 6
+    ChipKit SPI: 4
+    ChipKit I2C: 4
+    Misc. ChipKit Ports: 2
+    SMSC Ethernet PHY: 19
+    Quad SPI Flash: 5
+    Power Measurements: 8
+iostandards:
+  default: LVCMOS33
+  other_standards_in_master_xdc: {}
+  source:
+  - XDC
+pin_aliases:
+  source:
+  - XDC
+  reason: the vendor file names one physical pin twice, for two headers or functions that share it (for example an analogue input and an Arduino
+    header pin)
+  pins:
+  - pin: A3
+    ports:
+    - vaux14_n
+    - ck_a11
+  - pin: A4
+    ports:
+    - vaux14_p
+    - ck_a10
+  - pin: B6
+    ports:
+    - vaux12_n
+    - ck_a7
+  - pin: B7
+    ports:
+    - vaux12_p
+    - ck_a6
+  - pin: E5
+    ports:
+    - vaux13_n
+    - ck_a9
+  - pin: E6
+    ports:
+    - vaux13_p
+    - ck_a8
+slow_ports:
+- led\[\d+\]
+- led\d_[rgb]
+- sw\[\d+\]
+- btn\w*(\[\d+\])?
+- uart_\w+
+- Rs[RT]x
+- cpu_resetn
+config:
+  cfgbvs: VCCO
+  config_voltage: 3.3
+  status: unconfirmed
+  reason: the vendor XDC has no CFGBVS or CONFIG_VOLTAGE line; VCCO_0 = 3.3 V is assumed (needed so the DRC is clean), the schematic was not read
+thermal:
+  airflow_lfm: 0
+  heatsink: none
+  board: small
+  board_layers: 4to7
+  ambient_c: 40
+  status: assumption
+  reason: board stack-up, heat sink and airflow are not published; still air, no heat sink, the smallest class is the pessimistic choice (as for
+    the Nexys A7)
+hardware_use:
+  owned: false
+  rule: no supply or programming rule is recorded for this board; do not program one without the owner adding a per-board rule to the house rules
+smoke:
+  clk_hz: 100000000
+  banner: Arty A7-100T
