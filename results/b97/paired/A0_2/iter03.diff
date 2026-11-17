@@ -1,0 +1,15 @@
+--- a/rtl/pcs_rx.sv
++++ b/rtl/pcs_rx.sv
+@@ -10,9 +10,9 @@
+     input  logic        clk,
+     input  logic        rst,        // hold while the GT's receive side is not up (rx_done low)
+     input  logic [63:0] gt_d,       // RXDATA
+-    output logic        x_v,        // a decoded block, with block lock held
+-    output logic [63:0] x_d,
+-    output logic [7:0]  x_c,
++    output wire         x_v,        // a decoded block, with block lock held
++    output wire  [63:0] x_d,
++    output wire  [7:0]  x_c,
+     output logic        lock,
+     output logic        ev_sh_err,  // pulses, one per event, for the counters
+     output logic        ev_type_err,

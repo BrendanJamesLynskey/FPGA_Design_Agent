@@ -1,0 +1,19 @@
+--- a/rtl/pcs_rx.sv
++++ b/rtl/pcs_rx.sv
+@@ -57,11 +57,15 @@
+     assign pd       = desc_out(hist, blk[65:2]);
+     assign dec      = dec66(blk[1:0], pd);
+     assign valid_sh = (blk[1:0] == 2'b01) || (blk[1:0] == 2'b10);
++    // Decode directly from the registered gearbox block. The MAC samples these
++    // values on the edge that the lock FSM advances this block.
++    assign x_v = !rst && blk_v && lock;
++    assign x_d = rst ? 64'd0 : dec[63:0];
++    assign x_c = rst ? 8'd0 : dec[71:64];
+     always_ff @(posedge clk) begin
+         ev_sh_err <= 1'b0; ev_type_err <= 1'b0; ev_os <= 1'b0; ev_slip <= 1'b0; ev_loss <= 1'b0; ev_lock <= 1'b0;
+         if (rst) begin
+             hist <= '0; lock <= 1'b0; sh_cnt <= '0; inv_cnt <= '0; settle <= 1'b0; slip_r <= 1'b0;
+-            x_v <= 1'b0; x_d <= '0; x_c <= '0;
+         end else begin
+             slip_r <= 1'b0;
+             x_v    <= 1'b0;
