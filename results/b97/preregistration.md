@@ -15,3 +15,16 @@ Question: do the latency tools and the skill text change what the agent achieves
   register table, which A1 can see too.
 - Before this protocol: two smoke runs (`smoke_A1`, `smoke2` on the same commit and on its predecessor) fixed the loop's mechanics (an `edit_file` tool was
   added after a whole-file rewrite in the first smoke failed the bench). Their results are reported as smoke, not as part of the comparison.
+
+## Addendum, 2026-11-17 13:06 (written before the round-2 runs finished; round 1 had ended: all four runs reached 9 clocks with the same two edits)
+
+Round 1 could not separate the arms: the bench-gated space of easy changes was exhausted by both. Round 2 starts from the round-1 result so that the
+next change is harder to find. Everything else as above (model, budget, k = 2 per arm, outcome, no inference).
+
+- Start state: commit `9f4305aa` with `designs/b96_kr260_10g/rtl` replaced by the round-1 final RTL (`designs/b96_kr260_10g/lat_agent_both/rtl`: `trade64.fire` combinational,
+  `u_p_go` `REG_OUTPUT` 0; 9 clocks) and the stage file updated by hand for that structure (decision register 0 clocks, crossing 3 clocks); the exact overlay is
+  `results/b97/round2_start.patch`. Baseline 9 clocks.
+- What a win looks like: fewer than 9 clocks with the bench and the twin passing. The one such change known to the planner of this experiment is the hand
+  reference's (the order frames only start the MAC one clock early, `lat_hand_ref`), which both arms' round-1 attempts missed because their version started *every*
+  frame early and failed the cut-frame bench.
+- The expected result is a null; it is reported as one.
