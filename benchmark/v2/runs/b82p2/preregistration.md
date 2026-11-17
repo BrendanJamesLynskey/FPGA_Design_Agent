@@ -106,3 +106,19 @@ Fixes to `driver.py` made after the review, applying to the table and any later 
 is always a failure (`passed()`); a stale score file is deleted before scoring. Workers already running keep the old code,
 so the table applies the hard-limit rule when it reads the records. Review items not fixed (run-id discovery without a
 unique marker, loose infra-failure test, rebuild checks) are listed in the report's known gaps; so far no run has needed them.
+
+## Amendment 3 (2026-11-17, retrospective; no effect on the 15 scored runs)
+
+Two statements above were wrong, found by reading the run traces after all 15 runs:
+1. "No Vivado runs" (and `environment.txt`: "vivado: not used"). Stage 2 of the agent includes a Vivado synthesis gate, so runs that
+   reached it ran Vivado synthesis without taking a heavy slot (the agent's own one-Vivado-at-a-time check applied, `FDA_VIVADO_MAX=1`).
+   In the last repair visit of 10 of the 11 runs whose own gates failed, the only listed problem was "a gate failed" and the build output
+   was the refusal "N Vivado job(s) running (PIDs ...), limit FDA_VIVADO_MAX=1" (the 11th, `bcc3`, was killed at the hard limit with a simulate
+   problem open). So the "gates-clean" column measures Vivado slot availability, not design quality; closure was still not measured.
+2. The scorer refuses a design file whose name equals a test-shell file, even a comment-only placeholder. Four runs wrote
+   `reset_sync.sv` as such a placeholder (the agent has no delete tool and its own simulation reported a duplicate module).
+
+Post-hoc work, labelled and kept apart from the primary table: `posthoc/rescore_placeholder_file.json` (the four saved designs scored
+again with the one placeholder file removed; scorer unchanged) and one agent re-run of `v2_e_udp_endpoint` on the fixed code
+(`posthoc/`). Fixes made: `write_file` refuses an rtl file named like a shell file; a build waits up to 45 minutes for a busy Vivado
+slot (`FDA_VIVADO_WAIT_S`).
