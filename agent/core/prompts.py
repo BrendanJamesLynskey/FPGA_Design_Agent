@@ -29,6 +29,7 @@ import hashlib
 import json
 import os
 import re
+from collections.abc import Mapping
 from pathlib import Path
 
 from agent.core.bank import DEFAULT_BANK
@@ -124,3 +125,42 @@ def provenance(*, root: Path | None = None, pin: dict | None = None) -> dict:
         mh = None
     return {"kb_commit": pin.get("kb_commit"), "pinned_manifest_sha256": pin.get("manifest_sha256"),
             "manifest_sha256": mh, "enforced": bool(pin.get("manifest_sha256")) and os.environ.get(ENV_UNPINNED) != "1"}
+
+
+class LazyDict(Mapping):
+    """A read-only dict of prompts, each loaded on first access (``prefix + "_" + key``). Keeps ``PROMPTS["rtl"]`` working
+    without reading the private repository at import time, so importing the agent never needs it."""
+
+    def __init__(self, prefix: str, keys: tuple[str, ...]):
+        self._prefix, self._keys = prefix, tuple(keys)
+
+    def __getitem__(self, key: str) -> str:
+        if key not in self._keys:
+            raise KeyError(key)
+        return load(f"{self._prefix}_{key}")
+
+    def __iter__(self):
+        return iter(self._keys)
+
+    def __len__(self) -> int:
+        return len(self._keys)
+
+
+def module_getattr(module: str, constants: dict[str, str]):
+    """For a module's ``__getattr__`` (PEP 562): ``X = module_getattr(__name__, {"CONVENTIONS": "graph/run/conventions"})``
+    makes ``module.CONVENTIONS`` (and ``from module import CONVENTIONS``) load the prompt on first use."""
+    def __getattr__(attr: str):
+        if attr in constants:
+            return load(constants[attr])
+        raise AttributeError(f"module {module!r} has no attribute {attr!r}")
+    return __getattr__
+
+
+class Lazy:
+    """A class attribute that loads a prompt when read (``SYSTEM = Lazy("graph/interview/oracle_system")``)."""
+
+    def __init__(self, name: str):
+        self.name = name
+
+    def __get__(self, obj, owner=None) -> str:
+        return load(self.name)

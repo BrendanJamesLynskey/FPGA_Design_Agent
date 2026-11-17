@@ -11,6 +11,9 @@ gets one repair call with the bench's failure text. The result is an RTL directo
 
 from __future__ import annotations
 
+from agent.core.prompts import load as _p
+from agent.core import prompts as _prompts
+
 import argparse
 import json
 import re
@@ -25,10 +28,6 @@ from agent.graph import closure as cl  # noqa: E402
 from agent.graph.closure_task import acceptance_g1  # noqa: E402
 from flow import timing_plan  # noqa: E402
 
-SYSTEM = ("You are the Designer of an FPGA design agent (SystemVerilog, Vivado 2026.1, Artix-7 -1, 100 MHz unless the spec "
-          "says otherwise). Write the one module asked for, synthesisable, with exactly the given header (module name, "
-          "parameters, ports). Reply with the whole file as\n=== FILE: rtl/<name> ===\n```systemverilog\n<file>\n```\n"
-          "then one line starting NOTE: with the latency in clocks and the resources you expect.")
 
 
 def header(text: str, module: str) -> str:
@@ -40,14 +39,12 @@ def header(text: str, module: str) -> str:
 
 def write_core(client, spec_yaml: str, name: str, module: str, hdr: str, others: list[str], plan: str = "",
                failure: str = "") -> tuple[str | None, dict]:
-    prompt = (f"Write rtl/{name}: module {module}. It is instantiated by the design's register block (not shown; files "
-              f"{', '.join(others)}), which drives its ports exactly as the header below names them.\n\nHEADER (keep exactly):\n"
-              f"{hdr}\n\nSPEC (spec.yaml, the design's clarified specification):\n{spec_yaml}\n")
+    prompt = (_p("graph/plan_arm/write_core_1").format(name, module, ', '.join(others), hdr, spec_yaml))
     if plan:
         prompt += "\n" + plan + "\n"
     if failure:
-        prompt += "\nYOUR LAST VERSION FAILED THE INDEPENDENT BENCH; fix it:\n" + failure[:2500] + "\n"
-    rep = client([{"role": "system", "content": SYSTEM}, {"role": "user", "content": prompt}])
+        prompt += _p("graph/plan_arm/write_core_2") + failure[:2500] + "\n"
+    rep = client([{"role": "system", "content": _p("graph/plan_arm/system")}, {"role": "user", "content": prompt}])
     files, note = cl.parse_reply(rep.text, {f"rtl/{name}"})
     return files.get(f"rtl/{name}"), {"cost": rep.cost, "prompt_tokens": rep.prompt_tokens,
                                       "completion_tokens": rep.completion_tokens, "note": note}
@@ -101,3 +98,6 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
+
+__getattr__ = _prompts.module_getattr(__name__, {'SYSTEM': 'graph/plan_arm/system'})
