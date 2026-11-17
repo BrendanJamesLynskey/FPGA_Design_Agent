@@ -23,6 +23,10 @@ TX = dict(n_order=0, n_feed=1, n_probe=2, n_test=3, poisoned=4, dropped=5, under
           l_max=22, l_cnt=23, d_last=24, ts=25)
 RX = dict(lock=0, slip=1, loss=2, lock_ev=3, sh=4, type=5, os=6, frames=7, good=8, bad=9, err=10, fired=11, blocked=12, toolong=13,
           last_len=14, lock_clk=15)
+#: Safety counters that must be 0 in every restart (TX side from TXV, RX side from RXV); `blocked` is recorded but is not a failure on its own
+#: (a blocked hit means one order fewer, which the order-count check catches).
+SAFETY_TX = ("poisoned", "dropped", "underrun", "late", "stale")
+SAFETY_RX = ("bad", "err", "toolong")
 GT_STAT_BITS = dict(tx_done=0, rx_done=1, pgood=2, cdr_lock=3, txpma=4, rxpma=5, cdr_stable=8, pcs_lock=9, mod_abs=10, rx_los=11, tx_fault=12)
 
 
@@ -162,21 +166,87 @@ def summarise(values: list[int]) -> dict:
             "histogram": dict(sorted(h.items())), "min_ns": clocks_to_ns(min(values)), "max_ns": clocks_to_ns(max(values))}
 
 
+def settled_snapshot(b: Board, expected_orders: int, tries: int = 10, wait_s: float = 0.02) -> tuple[dict, dict]:
+    """A snapshot taken once the orders have all been sent and fired. The run command returns before the generator has finished (it is held
+    back 200 clocks and then sends `count` frames), so a snapshot taken at once could miss the tail; retake it until `n_order` and `fired` both
+    reach the expected count, or the tries run out (the shortfall is then reported by `safety_verdict`, never hidden)."""
+    tx, rx = b.snapshot()
+    for _ in range(tries):
+        if tx["n_order"] >= expected_orders and rx["fired"] >= expected_orders:
+            break
+        time.sleep(wait_s)
+        tx, rx = b.snapshot()
+    return tx, rx
+
+
+def safety_verdict(snapshots: list[dict | None], expected_orders: int, n_restarts: int) -> dict:
+    """The acceptance test for the latency variants that fire combinationally. `snapshots` has one entry per restart: {"tx": {...}, "rx": {...}},
+    or None for a restart whose link did not lock (nothing was read, so nothing can be vouched for). `ok` is true only when there are n_restarts
+    snapshots, every counter is present, the eight safety counters are 0 in every restart and orders sent and fired both equal the expected
+    count in every restart. Every failing counter is named, with the restart it failed in."""
+    reasons: list[str] = []
+    failing: set[str] = set()
+    bad_restarts: list[dict] = []
+    sums = {k: 0 for k in SAFETY_TX + SAFETY_RX + ("blocked", "n_order", "fired")}
+    unreadable = [i for i, sn in enumerate(snapshots) if sn is None]
+    if len(snapshots) != n_restarts:
+        reasons.append(f"{len(snapshots)} snapshots for {n_restarts} restarts")
+    if unreadable:
+        reasons.append(f"{len(unreadable)} restarts have no counters (link did not lock): {unreadable[:10]}")
+    for i, sn in enumerate(snapshots):
+        if sn is None:
+            continue
+        vals: dict[str, int] = {}
+        missing = [k for k in SAFETY_TX + ("n_order",) if k not in sn.get("tx", {})] + [k for k in SAFETY_RX + ("blocked", "fired") if k not in sn.get("rx", {})]
+        if missing:
+            reasons.append(f"restart {i}: counters not read: {missing}")
+            failing.update(missing)
+            continue
+        for k in SAFETY_TX + ("n_order",):
+            vals[k] = sn["tx"][k]
+        for k in SAFETY_RX + ("blocked", "fired"):
+            vals[k] = sn["rx"][k]
+        for k, v in vals.items():
+            sums[k] += v
+        nonzero = {k: vals[k] for k in SAFETY_TX + SAFETY_RX if vals[k] != 0}
+        short = {}
+        if vals["n_order"] != expected_orders:
+            short["n_order"] = vals["n_order"]
+        if vals["fired"] != expected_orders:
+            short["fired"] = vals["fired"]
+        if nonzero or short:
+            bad_restarts.append({"restart": i, "nonzero": nonzero, "order_count_wrong": short, "n_order": vals["n_order"], "fired": vals["fired"], "blocked": vals["blocked"]})
+            failing.update(nonzero)
+            failing.update(short)
+    if bad_restarts:
+        reasons.append(f"{len(bad_restarts)} restarts with a non-zero safety counter or a wrong order count; failing: {sorted(failing)}")
+    ok = not reasons and not failing
+    return {"ok": ok, "failing_counters": sorted(failing), "reasons": reasons, "expected_orders_per_restart": expected_orders,
+            "restarts": n_restarts, "restarts_checked": len(snapshots) - len(unreadable), "restarts_unreadable": unreadable, "sums": sums,
+            "orders": {"expected_total": expected_orders * n_restarts, "sent_total": sums["n_order"], "fired_total": sums["fired"]},
+            "bad_restarts": bad_restarts}
+
+
 def restart_distribution(b: Board, n: int = 100, probes_per_link: int = 5, timeout_s: float = 5.0) -> dict:
     """Restart the receive datapath n times; after each link-up send probe frames and the trading loop (frames and orders); collect E, L and the lock clocks.
-    The brief's method (design.md section 6): at least 100 restarts; min, max and distribution of E (echo) and L (loop) per link-up."""
+    The brief's method (design.md section 6): at least 100 restarts; min, max and distribution of E (echo) and L (loop) per link-up.
+    Brief 97B: the full TX and RX counter snapshot of every restart is kept and judged by `safety_verdict` (`clear()` runs after the link locks, so
+    a counter that moved during the relock itself is not seen: the counters judge the traffic of the run, not the restart transient)."""
     E, L, lock_clk, fails = [], [], [], 0
+    snapshots: list[dict | None] = []
     for i in range(n):
         b.reset(rx_dp=True)
         if not b.wait(lambda s: s["rx_done"] and s["pcs_lock"], timeout_s):
             fails += 1
+            snapshots.append(None)
             continue
         b.clear()
         b.configure(kind=2, count=probes_per_link, interval=3000)
         b.run(0.02)
         b.configure(arm=True, kind=1, count=probes_per_link, interval=3000)
         b.run(0.02)
-        tx, rx = b.snapshot()
+        tx, rx = settled_snapshot(b, probes_per_link)
+        snapshots.append({"tx": tx, "rx": rx})
         lock_clk.append(rx["lock_clk"])
         if tx["e_cnt"]:
             E.append((tx["e_min"], tx["e_max"]))
@@ -184,7 +254,8 @@ def restart_distribution(b: Board, n: int = 100, probes_per_link: int = 5, timeo
             L.append((tx["l_min"], tx["l_max"]))
     return {"restarts": n, "failed_to_lock": fails, "lock_clocks": summarise(lock_clk),
             "E_min_per_link": summarise([e[0] for e in E]), "E_max_per_link": summarise([e[1] for e in E]),
-            "L_min_per_link": summarise([l[0] for l in L]), "L_max_per_link": summarise([l[1] for l in L])}
+            "L_min_per_link": summarise([l[0] for l in L]), "L_max_per_link": summarise([l[1] for l in L]),
+            "safety": safety_verdict(snapshots, probes_per_link, n), "snapshots": snapshots}
 
 
 def decision_latency(E_clocks: float, L_clocks: float) -> float:
@@ -215,6 +286,7 @@ def run_all(t: Transport, lock_text: str, out_dir: Path, *, cable_loop_m: float,
     ok = s0["rx_los"] == 1 and s1["rx_los"] == 0 and s2["rx_los"] == 1 and s0["mod_abs"] == 0
     res["polarity_ok"] = ok
     if not ok:
+        res["safety"] = {"ok": False, "reasons": ["not run: polarity step failed"]}
         res["stopped"] = "laser polarity or pin functions differ from the open-source example: read the schematic, do not continue"
         (out_dir / "stage3.json").write_text(json.dumps(res, indent=1)); return res
     # step 4: bring-up with the laser on, loop fitted
@@ -223,8 +295,10 @@ def run_all(t: Transport, lock_text: str, out_dir: Path, *, cable_loop_m: float,
     res["link_up"] = b.wait(lambda s: s["tx_done"] and s["rx_done"] and s["pcs_lock"], 5.0)
     res["status_up"] = b.status()
     res["ddm_start"] = b.ddm()
+    res["safety"] = {"ok": False, "reasons": ["not run: link did not come up"]}
     if res["link_up"]:
         res["restarts"] = restart_distribution(b, n_restarts)
+        res["safety"] = res["restarts"]["safety"]
         E = res["restarts"]["E_min_per_link"].get("median"); L = res["restarts"]["L_min_per_link"].get("median")
         if E is not None and L is not None:
             res["D_clocks_from_medians_of_minima"] = decision_latency(E, L)
@@ -253,7 +327,11 @@ def main() -> None:
         res = run_all(t, a.lock_text, a.out, cable_loop_m=a.loop_m, n_restarts=a.restarts)
     finally:
         t.close()
-    print(json.dumps({k: res[k] for k in res if k in ("id", "polarity_ok", "link_up", "stopped")}, indent=1))
+    out = {k: res[k] for k in res if k in ("id", "polarity_ok", "link_up", "stopped")}
+    sf = res.get("safety", {})
+    out["safety_ok"] = sf.get("ok", False)
+    out["safety_failing"] = sf.get("failing_counters", []) or sf.get("reasons", [])
+    print(json.dumps(out, indent=1))
 
 
 if __name__ == "__main__":
