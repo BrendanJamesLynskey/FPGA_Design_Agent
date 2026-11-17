@@ -339,6 +339,7 @@ async def latency_by_gearbox_phase(dut):
            "rx_first_data_word_clocks_after_its_block_captured": sorted(res["rx_first_word_after_its_block_clocks"]),
            "lock_clocks_offset0_min": min(res["lock_clocks_offset0"]), "lock_clocks_offset0_max": max(res["lock_clocks_offset0"]),
            "phases": 33, **{k: v for k, v in LAT.items()}}
+    out["tx_clocks_min"] = min(out["tx_mac_to_gt_last_bit_clocks_all_phases"]); out["tx_clocks_max"] = max(out["tx_mac_to_gt_last_bit_clocks_all_phases"])
     dut._log.info("LATENCY " + json.dumps(out))
     assert out["rx_start_strobe_clocks_after_last_bit_captured"] == [2], out
     assert out["rx_first_data_word_clocks_after_its_block_captured"] == [2], out

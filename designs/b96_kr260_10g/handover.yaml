@@ -1,0 +1,297 @@
+# Brief 68 handover: the facts behind README.md and AGENT.md (docs/documentation_standard.md).
+# Measurement values and every sha256 are filled from the records by `python -m flow.handover fill`;
+# do not type them. Render with `python -m flow.handover write <this directory>`.
+schema: fda-handover/1
+id: b96_kr260_10g
+title: 'A 10GBASE-R link on the KR260 SFP+ cage: our own PCS and 64-bit MAC with a mock trading path'
+kind: example
+produced_by: human
+summary: A Kria KR260 design that carries our own 10GBASE-R PCS (64B/66B, scrambler, gearbox, block lock) and a 64-bit Ethernet
+  MAC on one GTH lane at 10.3125 Gb/s, with the mock trading path of brief 58A behind it (a one-rule 64-bit decision in
+  the same message format), because the AMD 10G Ethernet core is refused on the free Basic licence. Verified against an
+  independent Python reference in simulation (the GT is a behavioural stand-in) and built to a bitstream on Vivado 2026.1
+  Basic with every flow gate passing in two variants; not run on a board.
+scope_not:
+- 'an interoperability proof: a PCS talking to itself accepts its own symmetric mistakes, only a network card proves it'
+- 'the full 58A trading core (book, rule table, interlocks, ARP) at 64 bits: trade64 is a small stand-in with one rule'
+- the reconciliation sublayer link-fault state machine, the BER monitor, an ARP or ICMP responder
+target:
+  part: xck26-sfvc784-2LV-c
+  board: Kria KR260
+  top: kr260_10g_top
+  tool: Vivado 2026.1
+  note: GTHE4_CHANNEL_X0Y6 of quad 224; SFP+ cage J24; reference MGTREFCLK0 (Y6/Y5); variant (a) is selftest/build.yaml
+clocks:
+- name: clk_25
+  mhz: 25
+  source: designs/b96_kr260_10g/design.xdc
+  note: input C3, an open-source example figure, unconfirmed against the schematic; an MMCM makes the 100 MHz free-running
+    clock
+- name: sfp_mgt_refclk
+  mhz: 156.25
+  source: designs/b96_kr260_10g/design.xdc
+  note: MGTREFCLK0 of quad 224; frequency and source unconfirmed (two third-party sources agree, no AMD document or schematic)
+resets:
+- name: reset helper
+  active: high
+  note: the register block is reset while the MMCM is unlocked; each path is held in reset while the GT Wizard reports its
+    transmit or receive side not done
+interfaces:
+- name: Host register block
+  type: 32-bit register bus over JTAG (BSCANE2 USER4, jtag_bus)
+  doc: designs/b96_kr260_10g/docs/register_map.md
+  note: generated from regmap.py; unmapped reads return 0; counters read from a snapshot; reads have no side effects
+- name: SFP+ lane and control pins
+  type: one GTH lane at 10.3125 Gb/s; tx_disable, mod_abs, rx_los, tx_fault, I2C
+  doc: designs/b96_kr260_10g/docs/board_run_plan.md
+  note: the laser is disabled at reset (tx_disable = 1; polarity unconfirmed until the first board run)
+parameters:
+- name: NEAR_END
+  value: 0 (variant b), 1 (variant a)
+  legal: 0 or 1
+  note: 1 selects the near-end PMA loopback at reset
+- name: TRADE
+  value: 1 (variant b), 0 (variant a)
+  legal: 0 or 1
+  note: 1 enables the mock trading path at reset; it still needs ARM
+- name: line rate
+  value: 10.3125 Gb/s
+  legal: fixed by 10GBASE-R
+  note: QPLL0 from the 156.25 MHz reference; the user clocks (161.133 MHz) carry 64 bits a word and the PCS takes one clock
+    pause in 33
+files:
+- path: designs/b96_kr260_10g/rtl/b96_pkg.sv
+  what: block codes, scrambler, CRC-32 functions
+  sha256: 6fdf7f5fec44e22c18b8e12918c155e98184c562e2d73a849b45161cc9ba5891
+- path: designs/b96_kr260_10g/rtl/pcs_tx.sv
+  what: transmit PCS (encode, scramble, gearbox)
+  sha256: e0e68141d910f428c25b37d8c8cc1c73ad0bb6c79fe6dd8d69307b9c430dc45d
+- path: designs/b96_kr260_10g/rtl/pcs_rx.sv
+  what: receive PCS (gearbox with slip, block lock, descramble, decode)
+  sha256: 0065dd34d9462a5a08e7eaa2a938096ae8069ed8b7425bdd6734759851270eaa
+- path: designs/b96_kr260_10g/rtl/mac64_tx.sv
+  what: 64-bit MAC transmitter
+  sha256: f885c6434bfde8ad9a8a229d96363c17ebc9d0b31b79fb99a7b4459a962bd303
+- path: designs/b96_kr260_10g/rtl/mac64_rx.sv
+  what: 64-bit MAC receiver
+  sha256: 35a0ed74f5449979bdbbfa0c57d66e8c8ce127f6132c53690212653a5a97ee8c
+- path: designs/b96_kr260_10g/rtl/frame_src.sv
+  what: frame builder for orders, feed, probe and test frames
+  sha256: 2b72ce74c5657460df897d3fbd1e0dca514e667e17c95b4868eacc7ae7af73df
+- path: designs/b96_kr260_10g/rtl/trade64.sv
+  what: the 64-bit mock trading decision
+  sha256: 09b28ff8247f392d8cd46694eb9ce1a74e3a75bc4b5ed55e6ec4356024d1e984
+- path: designs/b96_kr260_10g/rtl/tx_path.sv
+  what: 'transmit domain: sources, generator, timestamps'
+  sha256: 96f37455a09d81aae2b8976e43702ae522ac01e4266b9820eb083c3070756e45
+- path: designs/b96_kr260_10g/rtl/rx_path.sv
+  what: 'receive domain: PCS, MAC, decision, counters'
+  sha256: d17b21f834c5b04ee274bc11ea69812a7d6626ad7f4cec893aabb1224a520d00
+- path: designs/b96_kr260_10g/rtl/b96_core.sv
+  what: registers, GT wrapper and clock-domain crossings
+  sha256: 87e4a5d7d8385e29fd2c960126060dd3a17900a0b56d7223a992aea34f339407
+- path: designs/b96_kr260_10g/rtl/kr260_10g_top.sv
+  what: board top (MMCM, SYSMON, pins)
+  sha256: 79baa375363524a702cd7b3cbf7bc3d1524283661fa737e5619e41cc0dd33807
+- path: designs/b96_kr260_10g/rtl/hs_vec.sv
+  what: coherent vector crossing
+  sha256: bb5cad4fa986aeb9be36f0d9e4ebc9b695fa883d9d07db450cc5908ad0860a60
+- path: designs/b96_kr260_10g/model/pcs.py
+  what: bit-serial Python reference of the PCS (the twin)
+  sha256: 92790d45d722112f604dbb5dbe70e8e76533ab06f54e8157d28f362a5398554f
+- path: designs/b96_kr260_10g/design.xdc
+  what: pins, clocks, slow-pin constraints
+  sha256: 4dec8c5ba8f6dccc6273f45d40a7d95a6668f5fe09350c0a0d80cc6c07ea1118
+- path: designs/b96_kr260_10g/docs/design.md
+  what: 'design note: decisions and alternatives'
+  sha256: f410e6c00f53bb897ac9942f1644109a3496e23e4bb5839689c9c20cfbb0d9e9
+- path: designs/b96_kr260_10g/docs/board_run_plan.md
+  what: stage 3 plan for the board
+  sha256: 0d3f8fd49cb2fdd9c3cb87c2185ab0a4eab7e7c03327b77a99659e52ecc3634b
+- path: designs/b96_kr260_10g/docs/what_we_found.md
+  what: results and gaps
+  sha256: 6147485fb4de6352097a3a0a53fa71cfa27efad0c3adac5b0b6631b809c0c50c
+- path: designs/b96_kr260_10g/regmap.py
+  what: register map as data
+  sha256: 60923fc43aaefcaec695f6b93f5768725a3b5cda078953be3ec5eae5ee5f46ae
+- path: designs/b96_kr260_10g/docs/register_map.md
+  what: interface datasheet
+  sha256: a4f09edf86a57ecc5cdaa6f2650f7991469e94c29ee79440aa854bd919a8a5a3
+commands:
+- what: simulate the PCS, MAC and core against the Python reference
+  cmd: python -m pytest -q designs/b96_kr260_10g/tests
+  heavy: false
+  minutes: 2
+  needs: Icarus Verilog and cocotb 2.0.1
+- what: build variant (b) and run all gates
+  cmd: flow/run_vivado.sh designs/b96_kr260_10g base
+  heavy: true
+  minutes: 22
+  needs: local Vivado 2026.1 (Basic tier) and a heavy slot (take_heavy_slot.sh), MEM_MAX=6G reaches the cap
+- what: build variant (a), the near-end loopback self-test
+  cmd: flow/run_vivado.sh designs/b96_kr260_10g/selftest base
+  heavy: true
+  minutes: 22
+  needs: as above
+evidence:
+- id: E1
+  activity: simulation
+  result: pass
+  how: ci
+  what: 'PCS and MAC against an independent bit-serial Python model clock for clock; frames in lane 0 and lane 4, every
+    length residue, any bit offset; the whole core with a stand-in for the GT: probe echo, trading loop, decisions, poisoned
+    orders'
+  record: designs/b96_kr260_10g/tests/test_b96_pcs_rtl.py
+  sha256: 5c76fb4bc02f6b596ce3dd9bd5b2ec3e72dcd4442c435bcb024cb761088089e8
+- id: E2
+  activity: build
+  result: pass
+  what: variant (b) synthesis, implementation and bitstream on the Basic tier; every flow gate and every GT gate passes
+  record: results/b96/build_b/gates.json
+  sha256: e2cd32b64d009e81b24ea76259da493a7483a542d916bc4ece63b8bd81d36368
+- id: E3
+  activity: review
+  result: pass
+  what: one independent correctness review (Sonnet) and one fix round
+  record: results/b96/README.md
+  sha256: 3fb82e2bc0256f1a8ee33ffecafd1a863184e2e3cea1cb533d0cb658fe120f06
+measurements:
+- id: M1
+  what: LUTs, variant (b)
+  category: resources
+  key: lut
+  unit: LUT
+  record: results/b96/build_b/gates.json
+  field: utilization.lut
+  conditions: routed, Vivado 2026.1
+  value: 5789
+  sha256: e2cd32b64d009e81b24ea76259da493a7483a542d916bc4ece63b8bd81d36368
+- id: M2
+  what: registers, variant (b)
+  category: resources
+  key: ff
+  unit: FF
+  record: results/b96/build_b/gates.json
+  field: utilization.ff
+  conditions: as M1
+  value: 13657
+  sha256: e2cd32b64d009e81b24ea76259da493a7483a542d916bc4ece63b8bd81d36368
+- id: M3
+  what: worst setup slack, variant (b)
+  category: timing
+  key: wns_ns
+  unit: ns
+  record: results/b96/build_b/gates.json
+  field: timing.wns_ns
+  conditions: routed, user clocks 161.133 MHz and 100 MHz
+  value: 0.039
+  sha256: e2cd32b64d009e81b24ea76259da493a7483a542d916bc4ece63b8bd81d36368
+- id: M4
+  what: worst hold slack, variant (b)
+  category: timing
+  key: whs_ns
+  unit: ns
+  record: results/b96/build_b/gates.json
+  field: timing.whs_ns
+  conditions: as M3
+  value: 0.01
+  sha256: e2cd32b64d009e81b24ea76259da493a7483a542d916bc4ece63b8bd81d36368
+- id: M5
+  what: total on-chip power estimate, variant (b)
+  category: power
+  key: power_w
+  unit: W
+  record: results/b96/build_b/gates.json
+  field: power.total_w
+  conditions: report_power after routing, vectorless, confidence Medium
+  value: 0.984
+  sha256: e2cd32b64d009e81b24ea76259da493a7483a542d916bc4ece63b8bd81d36368
+- id: M6
+  what: Vivado peak resident memory of the variant (b) build
+  category: other
+  unit: MiB
+  record: results/b96/build_b/run.json
+  field: vivado_peak_rss_mib
+  conditions: 2 threads, MemoryMax=6G reached, one run
+  value: 3892
+  sha256: 53a64777df276d108f33a4e1676d62eacc3ee2e6fd88edd9f4a64739210ff134
+- id: M7
+  what: transmit latency, worst gearbox phase
+  category: latency
+  unit: clocks
+  record: results/b96/latency_sim.json
+  field: tx_clocks_max
+  conditions: simulation, 161.13 MHz clock, MAC output register to the GT word with the last bit of the start block
+  value: 3
+  sha256: e5453d4c0b5d85fc9ccc28cbbfec0378fa8f365493b8dac1a61e8d8c2be4e081
+- id: M8
+  what: digital tick-to-trade
+  category: latency
+  unit: clocks
+  record: results/b96/core_sim.json
+  field: tick_to_trade_digital_sim.gt_rxdata_price_word_to_gt_txdata_order_start_clocks
+  conditions: simulation, same-phase clocks; GT, optics and clock-crossing phase not included
+  value: 11
+  sha256: b1ba6d48f8bd81ecba0fae78fb5c793ea9b074a9b16e90d71a092bfabb6b8523
+gaps:
+- about: hardware
+  text: Nothing has run on a board. The reference clock source and frequency, the 25 MHz input and the SFP+ control pin
+    functions and TX_DISABLE polarity are unconfirmed (third-party example, not the schematic).
+- about: interoperability
+  text: The PCS and MAC are checked against a model written by the same author and against zlib and a recurrence; the standard
+    text was not available, so only a network card proves the block formats and scrambler order.
+- about: simulation
+  text: The transceiver is a behavioural stand-in because the free simulator refuses the real model; the whole-core bench
+    uses same-phase clocks, so the receive-to-transmit crossing phase is not simulated.
+- about: trading path
+  text: trade64 is a one-rule 64-bit stand-in, not the 58A core; orders that overlap are dropped; no cancel after send;
+    the order fields cross as a quasi-static bus (CDC-6 warning).
+- about: protocol
+  text: No link-fault state machine, BER monitor, ARP or ICMP responder; ordered sets are counted and shown as idles; receive
+    does not check preamble, runts or jumbo frames; the transmit MAC does not pad.
+- about: build
+  text: The variant (b) build runs at the 6 GiB memory cap and swaps (3710 cap hits); transmit setup slack is thin at 0.039
+    ns.
+- about: throughput
+  text: The line rate and the 10 Gb/s payload rate are by configuration and by the gearbox arithmetic; no throughput or
+    error-rate measurement exists because nothing ran on a board.
+next_steps:
+- Run docs/board_run_plan.md steps 1 to 4 on the KR260 (laser polarity first), then the NIC steps after the owner buys a
+  card and cable.
+- Confirm the reference clock and the control pins against the carrier schematic.
+- Widen the 58A core to 64 bits, or add the missing 58A features to trade64.
+open_questions:
+- Does the PL load over JTAG with the PS idle on the KR260 (flow/program.py has no KR260 board entry yet)?
+history:
+- date: '2026-11-17'
+  note: 'brief 96 stages 0 to 2: board facts, design note, PCS, MAC, trading path, host code, builds; one review round'
+numbers_allow:
+- token: '10.3125'
+  reason: the 10GBASE-R line rate
+- token: '12.5'
+  reason: GTH maximum on this part (DS925)
+- token: 64B/66B
+  reason: the name of the line code
+- token: '224'
+  reason: the GT quad number of the SFP+ lane (design.xdc)
+- token: '33'
+  reason: the gearbox period in clocks (one pause in 33), design.md section 2.3
+- token: '3710'
+  reason: cap hits recorded in results/b96/build_b/run.json
+- token: '0.039'
+  reason: transmit setup slack recorded in results/b96/build_b/gates.json
+- token: '161.133'
+  reason: user clock frequency, design.md section 2.3
+- token: '6'
+  reason: the memory cap in GiB
+- token: '1'
+  reason: generic count
+- token: 58A
+  reason: a brief name
+state:
+  stage: built
+  gates:
+    build_2026_1: pass
+  vivado: '2026.1'
+  kb_pin: 2338b83
+  build_id: 5f119053

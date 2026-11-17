@@ -34,14 +34,21 @@ module mac64_tx (
     localparam logic [63:0] PRE_D  = {8'hD5, 8'h55, 8'h55, 8'h55, 8'h55, 8'h55, 8'h55, X_START};
     assign s_ready = (st == S_DATA) && adv;
 
-    // last-word construction: n data bytes, the FCS, the terminate, idles; sixteen bytes, two words
-    logic [31:0]  crc_n, fcs;
+    // last-word construction: n data bytes (1..8), the FCS, the terminate, idles: sixteen bytes, two words. The CRC and the frame end are built for
+    // every possible n at once (eight fixed-length steps, shallow) and the right one is selected by s_nb1 (a register): a variable-length CRC step
+    // followed by the byte placement was a 15-level path that did not close at 161 MHz.
+    logic [31:0]  crc_k [8];
+    logic [143:0] fe_k [8];
+    logic [31:0]  crc_n;
     logic [143:0] fe;
+    for (genvar k = 0; k < 8; k++) begin : g_k
+        assign crc_k[k] = crc_upd(crc, s_data, k + 1);
+        assign fe_k[k]  = frame_end(s_data, k + 1, s_poison ? crc_k[k] : ~crc_k[k]);
+    end
+    assign crc_n = s_last ? crc_k[s_nb1] : crc_k[7];
+    assign fe    = fe_k[s_nb1];
     int           n;
-    assign n     = int'(s_nb1) + 1;
-    assign crc_n = crc_upd(crc, s_data, s_last ? n : 8);
-    assign fcs   = s_poison ? crc_n : ~crc_n;
-    assign fe    = frame_end(s_data, n, fcs);
+    assign n = int'(s_nb1) + 1;
     logic [127:0] vm;
     logic [15:0]  cv;
     assign vm = fe[127:0];
