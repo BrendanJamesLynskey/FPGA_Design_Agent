@@ -11,7 +11,7 @@ Records of brief 97 on the 10G design `designs/b96_kr260_10g`: the four paired a
 
 ## Measured
 Simulation clocks (GT word holding the price to GT word holding the order start block), baseline 11: all four paired runs ended at 9 with bench and twin passing, using the same two edits.
-Cost per run 0.015 to 0.024 USD (provider-reported, openai/gpt-6-luna).
+Cost per run: see the usd column of ab_summary.md (provider-reported, openai/gpt-6-luna).
 
 ## Reproduce
 `python -m agent latency <frozen worktree> --arm A1|A0` (needs the access key and the private prompts); `python3 results/b97/summarise_runs.py`. No heavy slot for the loop (simulation only); the builds need one.
