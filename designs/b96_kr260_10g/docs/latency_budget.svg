@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 250" role="img" aria-labelledby="t d" font-family="system-ui,sans-serif" font-size="13">
+<title id="t">Digital tick-to-trade budget of the KR260 10G path</title>
+<desc id="d">11 clocks of 6.2058 ns (plus 0 or 1 for the pause, plus up to 1 for the crossing phase on the board), 68.3 ns, from the GT word that completes the price to the GT word that completes the order start block; simulation, GT and optics not included.</desc>
+<style>text{fill:#1d2630}.l{fill:#fff;font-size:12px}@media (prefers-color-scheme:dark){text{fill:#e4e8ec}}</style>
+<text x="40" y="28" font-size="15" font-weight="600">Digital tick-to-trade: 11 clocks = 68.3 ns (simulation; GT, optics and cable not included)</text>
+<rect x="40" y="60" width="110" height="46" fill="#5b6b7a"/>
+<text class="l" x="95.0" y="88" text-anchor="middle">2</text>
+<text x="42" y="126" font-size="11">GT RXDATA to MAC register</text>
+<text x="42" y="140" font-size="10" opacity="0.75">2 registers: block, decoded block</text>
+<rect x="150" y="60" width="55" height="46" fill="#8a97a3"/>
+<text class="l" x="177.5" y="88" text-anchor="middle">1</text>
+<text x="152" y="126" font-size="11">rule decision</text>
+<text x="152" y="140" font-size="10" opacity="0.75">1 register</text>
+<rect x="205" y="60" width="220" height="46" fill="#b7a27a"/>
+<text class="l" x="315.0" y="88" text-anchor="middle">4</text>
+<text x="207" y="126" font-size="11">receive to transmit clock</text>
+<text x="207" y="140" font-size="10" opacity="0.75">pulse crossing: 2 flops + toggle + output</text>
+<rect x="425" y="60" width="110" height="46" fill="#8a97a3"/>
+<text class="l" x="480.0" y="88" text-anchor="middle">2</text>
+<text x="427" y="126" font-size="11">frame source, MAC preamble</text>
+<text x="427" y="140" font-size="10" opacity="0.75">start, preamble register</text>
+<rect x="535" y="60" width="110" height="46" fill="#5b6b7a"/>
+<text class="l" x="590.0" y="88" text-anchor="middle">2</text>
+<text x="537" y="126" font-size="11">MAC to GT TXDATA</text>
+<text x="537" y="140" font-size="10" opacity="0.75">block spills into the next word (+1 on the pause clock)</text>
+<line x1="40" y1="52" x2="645" y2="52" stroke="#1d2630" stroke-width="1"/>
+<text x="40" y="178">One clock is 6.2058 ns (161.1328125 MHz). The same-clock bench shows the crossing's fixed part only; on the board it can be one clock longer or shorter.</text>
+<text x="40" y="196">TX: MAC register to the last bit of the start block on TXDATA = 2 clocks, 3 when the 1-in-33 gearbox pause falls on that clock. RX: word captured to MAC start strobe = 2 clocks.</text>
+<text x="40" y="214">Brief 58A at 1 Gb/s for comparison: 8 clocks of 8 ns = 64 ns, last price byte in to first preamble byte out (byte path, `results/b58a`).</text>
+</svg>

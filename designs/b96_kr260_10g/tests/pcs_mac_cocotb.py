@@ -115,7 +115,7 @@ async def receive(dut, words, reset_first=True):
     and, per clock, the receive PCS's registered output (x_v, x_d, x_c) for comparison with the model."""
     ev = {"frames": [], "ends": [], "errs": 0, "lock_at": None, "slips": 0, "losses": 0, "sh": 0, "type": 0, "os": 0,
           "sop_idx": [], "word_idx": [], "end_idx": [], "xs": [], "lens": []}
-    cur = None
+    accs, queue, cur = [], [], None
     if reset_first:
         dut.rst_rx.value = 1
         dut.gt_rx_d.value = 0
@@ -132,20 +132,22 @@ async def receive(dut, words, reset_first=True):
         ev["slips"] += int(dut.ev_slip.value); ev["losses"] += int(dut.ev_loss.value)
         ev["sh"] += int(dut.ev_sh_err.value); ev["type"] += int(dut.ev_type_err.value); ev["os"] += int(dut.ev_os.value)
         if int(dut.rx_sop.value):
-            cur = bytearray(); ev["sop_idx"].append(i)
+            cur = bytearray(); accs.append(cur); queue.append(len(accs) - 1); ev["sop_idx"].append(i)
         if int(dut.m_v.value):
             nb = int(dut.m_nb.value)
             if cur is None:
-                cur = bytearray()
+                cur = bytearray(); accs.append(cur); queue.append(len(accs) - 1)
             if int(dut.m_sof.value):
                 ev["word_idx"].append(i)
             cur += int(dut.m_d.value).to_bytes(8, "little")[:nb]
         if int(dut.m_err.value):
-            ev["errs"] += 1; cur = None
-        if int(dut.m_end.value):
-            ev["ends"].append((int(dut.m_fcs_ok.value), int(dut.m_len.value)))
-            ev["frames"].append(bytes(cur or b"")); ev["end_idx"].append(i)
+            ev["errs"] += 1
+            if queue:
+                queue.pop()                                   # the frame in progress is abandoned
             cur = None
+        if int(dut.m_end.value):                              # m_end can arrive after the next frame has started: pair ends with frames in order
+            ev["ends"].append((int(dut.m_fcs_ok.value), int(dut.m_len.value)))
+            ev["frames"].append(bytes(accs[queue.pop(0)]) if queue else b""); ev["end_idx"].append(i)
     return ev
 
 
@@ -187,6 +189,7 @@ async def pcs_tx_matches_model(dut):
     dut._log.info('first mismatch ' + str(next((i for i in range(min(len(got), len(want) - 1)) if got[i] != want[i + 1]), None)) + ' of ' + str(len(got)))
     pairs = [(g, w) for g in range(0, 4) for w in range(0, 4) if got[g:g + 400] == want[w:w + 400]]
     assert pairs, f"differ: got {[hex(x) for x in got[:5]]} want {[hex(x) for x in want[:5]]}"
+    assert pairs[0] == (0, 1), f"the RTL output must equal the model's output one step later, not a searched offset: {pairs[:4]}"
     g, w = pairs[0]
     m = min(len(got) - g, len(want) - w) - 5
     assert got[g:g + m] == want[w:w + m], "the words differ somewhere after the start"
@@ -199,7 +202,7 @@ def lead(n_idle_words):
     return [IDLE_W] * n_idle_words
 
 
-def py_stream(items, lead_words=4800, tail=60):
+def py_stream(items, lead_words=1500, tail=60):
     """The reference transmitter's GT words for: idles, then the XGMII word lists in `items`, then idles."""
     words = lead(lead_words)
     for it in items:
@@ -215,12 +218,12 @@ async def receive_matches_model_cycle_exact(dut):
     await clocks(dut)
     rng = random.Random(33)
     frames = [bytes(rng.getrandbits(8) for _ in range(rng.randrange(60, 200))) for _ in range(20)]
-    ws, _ = py_stream([pcs.frame_words(f) for f in frames], lead_words=5200)
+    ws, _ = py_stream([pcs.frame_words(f) for f in frames], lead_words=1500)
     bits = pcs.words_to_bits(ws)[7:]
-    for k in range(5100, 5130):                 # a burst of invalid headers: loses lock, re-locks
+    for k in range(1550, 1580):                 # a burst of invalid headers: loses lock, re-locks
         bits[66 * k - 7] = bits[66 * k - 6] = 0
     bits = bits[:]
-    for f in (900, 5000, 9000, 14000, 340000):
+    for f in (900, 5000, 9000, 14000, 100000):
         bits[f] ^= 1
     words = pcs.bits_to_words(bits)
     ev = await receive(dut, words)
@@ -238,11 +241,12 @@ async def lanes_and_starts(dut):
     """Frames of 60..140 bytes (every terminate lane), started in lane 0 and in lane 4, any bit offset, arrive intact with good FCS."""
     await clocks(dut)
     rng = random.Random(8)
-    frames = [bytes(rng.getrandbits(8) for _ in range(n)) for n in list(range(60, 79)) + [100, 137, 1500]]
-    items = []
-    for i, f in enumerate(frames):
-        items.append(pcs.frame_words(f, lane0=(i % 3 != 1)))
-    ws, words = py_stream(items, lead_words=4800)
+    frames, items = [], []
+    for n in list(range(60, 76)) + [100, 137, 1500]:      # every length residue mod 8, each with a lane-0 and a lane-4 start
+        for lane0 in (True, False):
+            f = bytes(rng.getrandbits(8) for _ in range(n))
+            frames.append(f); items.append(pcs.frame_words(f, lane0=lane0))
+    ws, words = py_stream(items, lead_words=1500)
     for off in (0, 1, 33, 65):
         got = await receive(dut, channel(ws, off))
         good = [f for f, (ok, ln) in zip(got["frames"], got["ends"]) if ok]
@@ -259,8 +263,8 @@ async def mac_tx_through_pcs(dut):
     rng = random.Random(5)
     frames = [bytes(rng.getrandbits(8) for _ in range(n)) for n in list(range(60, 82)) + [200, 1514]]
     await reset(dut)
-    # lock needs a long idle lead: the MAC idles for 5600 clocks before the frames
-    gt, sops, eops, advs = await send_frames(dut, frames, poison={3: True}, lead_clocks=5600)
+    # lock needs an idle lead: the MAC idles for 1500 clocks (lock takes at most 275 clocks, results/b96/lock_time_model.json) before the frames
+    gt, sops, eops, advs = await send_frames(dut, frames, poison={3: True}, lead_clocks=1500)
     # TX latency through the real MAC + PCS, measured by decoding the GT words with the reference receiver: the clock at which the GT
     # word that holds the last bit of the start block is visible, minus the clock at which the preamble is in the MAC's output register
     rxm = pcs.RxPcs()
@@ -270,6 +274,7 @@ async def mac_tx_through_pcs(dut):
     lat_last = [(i - 1) - sp for i, sp in zip(start_x[-len(sops):], sops)]
     LAT["tx_mac_to_gt_last_bit_clocks"] = sorted(set(lat_last))
     assert len(start_x) >= len(sops) and set(lat_last) <= {2, 3}, lat_last
+    dut._log.info(f'TX latency over the frames: {sorted(set(lat_last))}')
     dut._log.info(f'TX: {len(sops)} sops {len(eops)} eops of {len(frames)}; sops {sops[:8]} eops {eops[:8]} gt {len(gt)}')
     # idle gaps between frames: the MAC's IFG (eop to the next sop) is at least 12 byte times = 2 words
     for e, s in zip(eops, sops[1:]):
@@ -286,6 +291,28 @@ async def mac_tx_through_pcs(dut):
         assert [t[0] for t in tail] == frames
         assert [t[1] for t in tail] == [i != 3 for i in range(len(frames))]
 
+
+
+@cocotb.test()
+async def tx_latency_all_phases(dut):
+    """Transmit latency over many gearbox phases: frames of 60 bytes sent every few clocks (the one-in-33 pause lands in all positions); the last bit of the
+    start block is on TXDATA 2 clocks after the preamble is in the MAC's register, or 3 when the pause falls on that clock."""
+    await clocks(dut)
+    await reset(dut)
+    rng = random.Random(77)
+    frames = [bytes(rng.getrandbits(8) for _ in range(60 + (i % 7))) for i in range(120)]
+    gt, sops, eops, advs = await send_frames(dut, frames, lead_clocks=600)
+    rxm = pcs.RxPcs()
+    for w in gt:
+        rxm.step(w)
+    start_x = [i for i, (v, d, c) in enumerate(rxm.xs) if v and c == 0x01 and (d & 0xFF) == pcs.START]
+    assert len(start_x) >= len(sops) - 2
+    lat = [(i - 1) - sp for i, sp in zip(start_x[-len(sops):], sops)]
+    pause_at_sop = [advs[sp] == 0 for sp in sops]
+    LAT["tx_mac_to_gt_last_bit_clocks_all_phases"] = sorted(set(lat))
+    dut._log.info(f"TX latency set {sorted(set(lat))}; preamble offered on a pause clock in {sum(pause_at_sop)} of {len(sops)} frames")
+    assert set(lat) == {2, 3}, set(lat)
+    assert all((l == 3) == p for l, p in zip(lat, pause_at_sop))
 
 
 @cocotb.test()

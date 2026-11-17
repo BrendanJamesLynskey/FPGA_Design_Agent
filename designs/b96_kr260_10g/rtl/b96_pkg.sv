@@ -9,6 +9,7 @@ package b96_pkg;
     localparam logic [7:0] X_IDLE = 8'h07, X_START = 8'hFB, X_TERM = 8'hFD, X_ERR = 8'hFE;
     localparam logic [7:0] T_CTRL = 8'h1E, T_S0 = 8'h78, T_S4 = 8'h33;
     localparam logic [31:0] CRC_RESIDUE = 32'hDEBB20E3;
+    localparam int CFGW = 421;     // width of the configuration vector (b96_core)
 
     // terminate block type of lane k
     function automatic logic [7:0] t_term(input int k);
@@ -150,10 +151,10 @@ package b96_pkg;
 
     // the end of a frame: n data bytes (1..8) of d, then the 4 FCS bytes, the terminate and idles, as two XGMII words: {c[15:0], d[127:0]}
     function automatic logic [143:0] frame_end(input logic [63:0] d, input int n, input logic [31:0] fcs);
-        logic [127:0] v; logic [15:0] cv;
-        v = {16{X_IDLE}}; cv = 16'hFFFF;
+        logic [127:0] v, dx; logic [15:0] cv;
+        v = {16{X_IDLE}}; cv = 16'hFFFF; dx = {64'd0, d};
         for (int i = 0; i < 16; i++) begin
-            if (i < n) begin v[8 * i +: 8] = d[8 * i +: 8]; cv[i] = 1'b0; end
+            if (i < n) begin v[8 * i +: 8] = dx[8 * i +: 8]; cv[i] = 1'b0; end
             else if (i < n + 4) begin v[8 * i +: 8] = fcs[8 * (i - n) +: 8]; cv[i] = 1'b0; end
             else if (i == n + 4) begin v[8 * i +: 8] = X_TERM; cv[i] = 1'b1; end
         end

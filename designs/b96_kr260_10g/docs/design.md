@@ -20,12 +20,13 @@ machine), so the review checks them.
 
 What stays open, and what we do about it:
 
-- The reference may not be 156.25 MHz. With the QPLL0 integer dividers (M 1 to 4, N 16 to 160, UG576 ch. 2) only the
-  references 156.25 (N 66), 312.5 (N 33), 161.1328125 (N 64) and 322.265625 MHz (N 32), and their /2 and /3 multiples
-  of N and M, give exactly 10.3125 GHz. 100, 125, 150, 200 and 250 MHz do not (checked by enumeration in
-  `scripts/refclk_options.py`). With one of those the GTH can only run an off-grid line rate through the fractional
-  divider, which is not 10GBASE-R and cannot talk to a NIC. The board plan therefore tests the reference first: PLL lock
-  and `tx_done` at 156.25 MHz settings; if it fails, stop and report, do not guess.
+- The reference may not be 156.25 MHz. With the QPLL0 **integer** dividers (M 1 to 4, N 16 to 160, UG576 ch. 2) only the
+  references 156.25 (N 66), 312.5 (N 33), 161.1328125 (N 64) and 322.265625 MHz (N 32), and their multiples of N and M, give
+  exactly 10.3125 GHz; 100, 125, 150, 200 and 250 MHz do not (enumeration in `scripts/refclk_options.py`). The UltraScale+ QPLL
+  also has a fractional-N divider (UG576, the SDM fields), which could make N = 82.5 from 125 MHz or N = 103.125 from 100 MHz
+  exactly, at the price of more PLL jitter and a Wizard configuration 56A did not build or test. So if the board's reference
+  is not in the 156.25 family, the next step is a fractional-N Wizard build, not a guess; the board plan tests the
+  reference first (PLL lock and `tx_done` at the 156.25 MHz settings) and stops with a report if it fails.
 - Nothing is driven that the open pins could damage: `tx_disable` resets to 1 (laser off) exactly as in 56A.
 
 ## 2. Decisions and the alternatives
@@ -107,8 +108,10 @@ serialiser, CDR and buffer are not in our simulation; they are what the loopback
 Block lock follows the clause 49 receive state diagram (Figure 49-14, from memory): hunt for 64 consecutive valid sync
 headers (01 or 10) with no invalid one; in lock, 16 invalid headers in a 64-header window lose lock; on a failure
 while hunting, **slip** one bit. Our slip is registered: the barrel shifter drops one bit one clock after the decision,
-and the FSM ignores the next 2 blocks (the pipeline's old alignment). Lock time is therefore at least 64 blocks plus the
-slips: up to 66 x (64 + settle) blocks in the worst alignment, about 28 us (reported from simulation).
+and the FSM ignores the next 2 blocks (the pipeline's old alignment). Lock time is 64 blocks at the right alignment plus the wrong ones tried first (a wrong
+alignment shows an invalid header within a few blocks on random scrambled data): 67 to 275 clocks (0.4 to 1.7 us) over all 66 bit offsets with idle
+traffic (`results/b96/lock_time_model.json`, from the bit-exact model). A header sequence built to look valid at every alignment could take longer; the standard's
+state machine has the same property.
 
 Decoding: an invalid sync header (00 or 11) or an unknown block type becomes an all-/E/ block and a counter; an ordered
 set is counted and presented as idles (the reconciliation sublayer's link-fault state machine is **not** implemented:
@@ -121,12 +124,12 @@ TX (TXUSRCLK2 domain; `adv` = 1 except one clock in 33):
 | Stage | Register | What it does |
 |---|---|---|
 | MAC `mac64_tx` | `o_d`, `o_c` (XGMII word and control) | preamble word, data, FCS in the last word, T, idles |
-| PCS `pcs_tx` stage 1 (`TX_PIPE=1`) | `blk` (66 b) | encode, scramble |
-| PCS gearbox | `acc`, `n` | merge the block at bit offset `n`, emit 64 bits |
+| PCS `pcs_tx` | `gt_d` (64 b), `acc`, `n`, scrambler history | encode, scramble, merge the block at bit offset `n`, emit 64 bits (one stage) |
 | GT | `TXDATA` | the wizard's own FPGA-interface registers and the GT's internal path are the GT's |
 
-With `TX_PIPE=0` (default) encode, scramble and gearbox are one stage: register chain MAC `o_*` then `acc`/`gt_tx`:
-**2 registers from the MAC's output register to the GT**.
+Encode, scramble and gearbox are one stage (one register, `gt_d`, plus the remainder `acc`): **2 registers from the MAC's output register to the GT**: the
+MAC's `x_d` and the PCS's `gt_d`. A block is 66 bits and a word 64, so a block always spills into the next word: the first bit of the start block is on
+TXDATA one clock after the MAC's output register, its last bit two clocks after.
 
 RX (RXUSRCLK2 domain):
 

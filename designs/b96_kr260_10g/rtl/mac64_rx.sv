@@ -8,6 +8,7 @@
 module mac64_rx (
     input  logic        clk,
     input  logic        rst,
+    input  logic        lock_i,     // PCS block lock; a frame in progress is aborted when it drops
     input  logic        x_v,
     input  logic [63:0] x_d,
     input  logic [7:0]  x_c,
@@ -49,13 +50,22 @@ module mac64_rx (
     // aligned word: lane-0 starts pass through; lane-4 starts take the previous word's upper half first
     assign aw    = s4 ? {x_d[31:0], hold} : x_d;
     assign nbi   = is_term ? (s4 ? 4 + ((tk > 4) ? 4 : tk) : tk) : 8;
-    assign crc_w = crc_upd(crc, aw, nbi);
+    assign crc_w = crc_upd(crc, aw, 8);          // data words are always full: a fixed-length CRC step (the variable-length last word is staged below)
+    // the last word's CRC (variable byte count) is computed one clock later from registers, so the receive clock closes at 161 MHz
+    logic [31:0] t_crc; logic [63:0] t_aw; int t_nb; logic [15:0] t_len; logic t_v, t_last;
+    logic [63:0] t2_aw; logic [3:0] t2_nb; logic t2_v;
     always_ff @(posedge clk) begin
         m_v <= 1'b0; m_sof <= 1'b0; m_end <= 1'b0; m_err <= 1'b0; rx_sop <= 1'b0;
         if (rst) begin
             st <= R_IDLE; crc <= '1; len <= '0; s4 <= 1'b0; first <= 1'b0; any <= 1'b0; hold <= '0; m_d <= '0; m_nb <= '0;
-            m_fcs_ok <= 1'b0; m_len <= '0;
+            m_fcs_ok <= 1'b0; m_len <= '0; end_pend <= 1'b0; crc_pend <= '0; len_pend <= '0; fl_d <= '0; fl_nb <= '0;
+            t_v <= 1'b0; t_last <= 1'b0; t2_v <= 1'b0; t_crc <= '0; t_aw <= '0; t_nb <= 0; t_len <= '0; t2_aw <= '0; t2_nb <= '0;
+        end else if (!lock_i && st != R_IDLE) begin
+            st <= R_IDLE; m_err <= 1'b1; end_pend <= 1'b0; t_v <= 1'b0; t2_v <= 1'b0;
         end else begin
+            t_v <= 1'b0; t2_v <= 1'b0;
+            if (t_v) begin crc_pend <= crc_upd(t_crc, t_aw, t_nb); len_pend <= t_len; end_pend <= t_last; end
+            if (t2_v) begin crc_pend <= crc_upd(crc_pend, t2_aw, int'(t2_nb)); len_pend <= len_pend + 16'(t2_nb); end_pend <= 1'b1; end
             if (end_pend) begin end_pend <= 1'b0; m_end <= 1'b1; m_fcs_ok <= (crc_pend == CRC_RESIDUE); m_len <= len_pend; end
             case (st)
                 R_IDLE: if (x_v) begin
@@ -80,7 +90,7 @@ module mac64_rx (
                                 m_v <= 1'b1; m_d <= aw; m_nb <= 4'(nbi); m_sof <= !any;
                             end
                             any <= 1'b1;
-                            crc_pend <= crc_w; len_pend <= len + 16'(nbi); end_pend <= !(s4 && tk > 4);
+                            t_v <= 1'b1; t_crc <= crc; t_aw <= aw; t_nb <= (s4 && tk > 4) ? 8 : nbi; t_len <= len + 16'((s4 && tk > 4) ? 8 : nbi); t_last <= !(s4 && tk > 4);
                             if (s4 && tk > 4) begin                                // bytes 4..tk-1 of this word are still to go
                                 st <= R_FLUSH; fl_d <= {32'd0, x_d[63:32]}; fl_nb <= 4'(tk - 4);
                             end else st <= R_IDLE;
@@ -91,8 +101,7 @@ module mac64_rx (
                 end
                 R_FLUSH: begin
                     // one more word with the bytes after lane 4; the CRC and length updates of the main word are folded in here
-                    m_v <= 1'b1; m_d <= fl_d; m_nb <= fl_nb; crc_pend <= crc_upd(crc_pend, fl_d, int'(fl_nb));
-                    len_pend <= len_pend + 16'(fl_nb); st <= R_IDLE; end_pend <= 1'b1;
+                    m_v <= 1'b1; m_d <= fl_d; m_nb <= fl_nb; t2_v <= 1'b1; t2_aw <= fl_d; t2_nb <= fl_nb; st <= R_IDLE;
                 end
                 default: st <= R_IDLE;
             endcase
