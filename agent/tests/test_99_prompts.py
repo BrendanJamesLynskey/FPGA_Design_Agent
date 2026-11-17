@@ -149,10 +149,27 @@ def test_malformed_entries_raise_promptunavailable(tmp_path):
         P.load("c", root=tmp_path, pin=_pin(None))
 
 
+def live_prompt_texts() -> dict[str, str]:
+    """Every prompt the agent sends a model, by name, read from wherever it now lives (module constants, or the private repository
+    after the move), so the check below holds before and after a slice moves."""
+    from agent.graph import closure, closure_playbook, contract, document, interview, plan_arm, router, spectest
+    from agent.graph import run as gr
+    t = {f"run.PROMPTS.{k}": v for k, v in gr.PROMPTS.items()}
+    for mod, names in ((gr, ("CONVENTIONS", "HW_FORMAT", "FRESH_TESTS", "NO_SHELL_BULLET")), (contract, ("MODEL_CONTRACT",)),
+                       (document, ("DOC_SYSTEM",)), (spectest, ("ROLE_SYSTEM", "TRIAGE_SYSTEM")), (router, ("ROUTER_SYSTEM",)),
+                       (plan_arm, ("SYSTEM",)), (closure, ("SYSTEM",))):
+        for n in names:
+            t[f"{mod.__name__}.{n}"] = getattr(mod, n)
+    t["interview.SpecOracle.SYSTEM"] = interview.SpecOracle.SYSTEM
+    for s in closure_playbook.ALL:
+        t[f"closure_playbook.{s.id}"] = s.instructions
+    return t
+
+
 def test_a_whole_episode_leaves_no_prompt_text_in_its_records(tmp_path, monkeypatch):
-    """Brief 99 step 1: a scripted episode on T1 (interview, review, rewind, documentation) writes run records, review
-    pages, summaries and transcripts; none holds a 12-word window of any private prompt. Run records name prompts and
-    their hashes instead (``agent.core.prompts.record``)."""
+    """Brief 99 step 1: a scripted episode on T1 (interview, review, rewind, hardware approval) writes run records, review pages,
+    summaries and transcripts; none holds a 12-word window of any prompt the agent sends. Records name prompts by hash
+    (``agent.core.prompts.record``) where they used to carry the text."""
     import shutil
     import uuid
 
@@ -163,8 +180,8 @@ def test_a_whole_episode_leaves_no_prompt_text_in_its_records(tmp_path, monkeypa
     from agent.tests import test_episode as te
     from flow import hw
     from tools.prompts import leak_scan
-    if not P.names():
-        pytest.skip("stage 0: no private prompt yet")
+    texts = live_prompt_texts()
+    assert len(texts) > 40
     runs = ROOT / "runs" / f"_pytest_{uuid.uuid4().hex[:8]}"
     monkeypatch.setattr(gr, "RUNS", runs)
     monkeypatch.setattr(hw, "load_board", lambda b: {"cable_serial": "TEST0000"})
@@ -173,8 +190,12 @@ def test_a_whole_episode_leaves_no_prompt_text_in_its_records(tmp_path, monkeypa
         te._episode(tmp_path, runs)
         files = [p for p in runs.rglob("*") if p.is_file()]
         assert len(files) > 20
-        hits = leak_scan.scan(P.prompts_dir(), leak_scan.DEFAULT_WORDS, files)
+        hits = leak_scan.scan(None, leak_scan.DEFAULT_WORDS, files, texts=texts)
         assert not hits, [(Path(h[0]).name, h[1], h[2]) for h in hits]      # names only, never text
+        # the scan can see a dump: the same files plus one that holds a prompt are caught
+        dump = tmp_path / "dump.txt"
+        dump.write_text(next(iter(texts.values())))
+        assert leak_scan.scan(None, leak_scan.DEFAULT_WORDS, [dump], texts=texts)
     finally:
         shutil.rmtree(runs, ignore_errors=True)
 

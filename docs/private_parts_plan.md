@@ -62,3 +62,14 @@ Review (one Sonnet pass, 2026-11-17) found and this PR fixed: a partial pin fail
 | --- | --- |
 | Stage 0: loader, tests, pin, CI step, manifest builder | done (2026-11-17) |
 | 1 interview.py, 2 review.py, 3 roles.py, 4 closure playbook, 5 run.py and the rest | not started: waiting for `FDA_KB_READ_TOKEN` |
+
+## Records keep hashes, not prompts (brief 99, step 1, 2026-11-17)
+
+A moved prompt must not reappear in a run record. The writers that stored rendered prompt text now store its SHA-256, length and the prompt
+pin instead (`agent.core.prompts.record`): the Claude Code arm writes `claude_code/<tag>.prompt.json` where it wrote `<tag>.system.txt` and
+`<tag>.user.txt`, and the closure task driver writes `task.json` where it wrote `task.txt`. Other records (summaries, review pages, the
+interview record, `doc_calls.jsonl`) never held the rendered prompt; a scripted T1 episode proves it
+(`test_a_whole_episode_leaves_no_prompt_text_in_its_records`: no 12-word window of any prompt in any file the run wrote).
+`tools/prompts/leak_scan.py` is the same check over tracked files. It uses 12-word windows: the harness's own questions and gate messages are
+recorded by design and a model's replies reuse the prompts' vocabulary, so 8 words matched in about 100 files that held no dump. Records written
+before this change still carry prompt text; step 2 moves them out.
