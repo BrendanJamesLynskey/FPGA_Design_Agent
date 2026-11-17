@@ -112,6 +112,13 @@ is in `build/managed/evidence/<component>.json`, which the agent cannot write, a
   the owned parent RTL.
 - Hard links are refused only on write; an integrity re-hash catches changes by design code afterwards, it does not prevent them
   (a test running as the agent's own code can still write a frozen file before the re-hash; it is caught, not blocked).
+- Code the agent wrote (tests, benchmarks, cocotb) runs as host code: it is not confined, so it can read an excluded file or write a frozen one;
+  the re-hash after code-running tools (now also of `project.yaml` and the scope file) detects a write and refuses the result, it does not prevent
+  or revert it, and nothing detects a read. The code-running tool list is kept by hand (`registry.CODE_RUNNING_TOOLS`).
+- Evidence files are plain JSON in `build/managed/`: the agent's tools cannot write them, but code it ran could forge one. They are not signed.
+- Constraints (`design.xdc`) are agent-owned: a false path over an excluded block's boundary is a timing exception the existing exceptions check
+  reports, not something the managed policy forbids.
+- A tool that answers "not available" for an excluded path and "no such file" for an absent one tells the agent which excluded paths exist.
 - Free-text resolution is name and alias matching, not understanding; an unfamiliar phrasing gets a question.
 - Interface checks cover port names, directions and widths; clock and reset contracts are recorded, and checked at the boundary only through
   the CDC filter. IP-XACT is converted for ports only (not bus interfaces or register maps).

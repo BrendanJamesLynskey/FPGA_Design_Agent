@@ -243,6 +243,13 @@ def main(argv: list[str] | None = None) -> int:
     # brief 102: netlists made outside the project (managed project components): EDIF read before synthesis, a checkpoint filling a
     # black-box cell after it; each file is hashed into the stamp, so a changed netlist is a new build
     netlists = cfg.get("netlists", []) or []
+    if (design / "project.yaml").is_file():              # a managed project: the build must cover every component, whoever wrote build.yaml
+        sys.path.insert(0, str(ROOT))
+        from agent.core import managed
+        proj = managed.load(design)
+        problems = managed.build_coverage_problems(proj, cfg) if proj else []
+        if problems:
+            raise SystemExit("prepare: build.yaml does not build the whole managed project: " + ", ".join(problems))
     nl_files = [(ROOT / n["file"]).resolve() for n in netlists]
     for n, f in zip(netlists, nl_files):
         if not f.is_file():

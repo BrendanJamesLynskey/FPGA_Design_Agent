@@ -42,7 +42,6 @@ from typing import Any
 
 import yaml
 
-from agent.core.security import SecurityError
 
 SCHEMA = "fda-managed-project/1"
 MANIFEST = "project.yaml"
@@ -135,6 +134,8 @@ def validate(raw: Any, design: Path | None = None) -> list[str]:
         errs.append("top must be a plain identifier")
     if raw.get("unclaimed", "owned") not in ("owned", "frozen"):
         errs.append("unclaimed must be owned or frozen")
+    if not isinstance(raw.get("approved_contract_changes", []), list):
+        errs.append("approved_contract_changes must be a list of component names")
     comps = raw.get("components")
     if not isinstance(comps, list) or not comps:
         return errs + ["components must be a non-empty list"]
@@ -162,8 +163,9 @@ def validate(raw: Any, design: Path | None = None) -> list[str]:
             errs.append(f"{where}: paths must be a non-empty list of design-relative patterns")
         else:
             for p in paths:
-                if p.startswith("/") or ".." in Path(p).parts or "\x00" in p:
-                    errs.append(f"{where}: path {p!r} must be design-relative without '..'")
+                if (p.startswith("/") or ".." in Path(p).parts or "\x00" in p or "\\" in p or "[" in p or p != p.strip()
+                        or "//" in p or any(part in (".", "") for part in p.rstrip("/").split("/"))):
+                    errs.append(f"{where}: path {p!r} must be a normalised design-relative pattern (no '..', '.', '//', backslash, '[' or spaces)")
         if c.get("level") == "netlist":
             nl = c.get("netlist") or {}
             if nl.get("format") not in ("edif", "checkpoint") or not nl.get("file"):
@@ -174,6 +176,14 @@ def validate(raw: Any, design: Path | None = None) -> list[str]:
                 errs.append(f"{where}: a netlist component needs its module name")
         if c.get("level") == "rtl" and not (c.get("build_sources") or []):
             errs.append(f"{where}: an rtl component lists its build_sources so a build.yaml that drops it is refused")
+        for k in ("interface", "netlist", "provenance"):
+            if c.get(k) is not None and not isinstance(c.get(k), dict):
+                errs.append(f"{where}: {k} must be a mapping")
+        for k in ("aliases", "build_sources", "reference_rtl"):
+            if c.get(k) is not None and not (isinstance(c.get(k), list) and all(isinstance(x, str) for x in c[k])):
+                errs.append(f"{where}: {k} must be a list of strings")
+        if not isinstance(c.get("interface") or {}, dict) or not isinstance(c.get("provenance") or {}, dict) or not isinstance(c.get("netlist") or {}, dict):
+            continue
         prov = c.get("provenance") or {}
         for k in sorted(set(prov) - _PROV_KEYS):
             errs.append(f"{where}: unknown provenance key {k!r}")
@@ -222,12 +232,14 @@ def from_design(design: Path, write: bool = False) -> dict[str, Any]:
 # --- hashing and trust --------------------------------------------------------------------------------------------
 
 def component_files(project: Project, comp: Component) -> list[Path]:
+    """The files matching the component's paths, and the netlist, simulation netlist and reference RTL it names (the evidence covers them)."""
     pats = [_glob_re(p) for p in comp.paths]
+    extra = {x for x in [comp.netlist.get("file"), comp.netlist.get("sim_file"), *comp.reference_rtl] if x}
     out = []
     for p in sorted(project.design.rglob("*")):
         if p.is_file() and "build" not in p.relative_to(project.design).parts[:1]:
             rel = p.relative_to(project.design).as_posix()
-            if any(r.match(rel) for r in pats) and rel != MANIFEST:
+            if (any(r.match(rel) for r in pats) or rel in extra) and rel != MANIFEST:
                 out.append(p)
     return out
 
@@ -385,6 +397,23 @@ def resolve_request(project: Project, text: str = "", scope_arg: list[str] | Non
     return Resolution(None, f"the request does not say which component to change. Owned components: {owned_names}")
 
 
+def build_coverage_problems(project: Project, cfg: dict[str, Any]) -> list[str]:
+    """What a build.yaml fails to build: each component's ``build_sources`` exactly as listed, and each netlist component's file as the
+    exact repo-relative path ``designs/<design>/<file>`` (no suffix match, no ``..``). Used by the agent's tools and by flow/prepare.py."""
+    srcs = set(map(str, cfg.get("sources") or []))
+    nets = {str(n.get("file") if isinstance(n, dict) else n) for n in cfg.get("netlists") or []}
+    rel = f"{project.design.parent.name}/{project.design.name}"
+    miss = []
+    for c in project.components:
+        who = "*" if c.ownership == "excluded" else c.name
+        miss += [f"{s} (component {who})" for s in c.build_sources if s not in srcs]
+        if c.level == "netlist" and f"{rel}/{c.netlist.get('file') or ''}" not in nets:
+            miss.append(f"netlist {rel}/{c.netlist.get('file')} (component {who})")
+    allowed = {f"{rel}/{c.netlist.get('file')}" for c in project.components if c.level == "netlist"}
+    miss += [f"netlist {n} is not a netlist component of project.yaml" for n in sorted(nets - allowed)]
+    return miss
+
+
 # --- the policy the path jail calls -------------------------------------------------------------------------------
 
 _RANK = {"excluded": 0, "frozen": 1, "owned": 2}
@@ -407,6 +436,7 @@ class ManagedPolicy:
         return min(hits, key=lambda c: _RANK[c.ownership]) if hits else None
 
     def _refuse(self, msg: str, rule: str = "managed") -> None:
+        from agent.core.security import SecurityError      # lazy: flow/prepare.py imports this module with only PyYAML installed
         raise SecurityError(rule, msg)
 
     def check(self, rel: str, write: bool) -> None:
@@ -416,8 +446,8 @@ class ManagedPolicy:
             if write:
                 self._refuse("project.yaml is the owner's manifest: ownership, scope and contracts are not the agent's to change")
             return                                                  # reading it is served as the filtered agent view
-        if rel.startswith((MANAGED_DIR.as_posix() + "/evidence", MANAGED_DIR.as_posix() + "/scope")) and write:
-            self._refuse("build/managed/ evidence and scope records are written by the flow")
+        if write and (rel == MANAGED_DIR.as_posix() or rel.startswith(MANAGED_DIR.as_posix() + "/")):
+            self._refuse("build/managed/ (evidence, scope, flags, provenance) is written by the flow")
         c = self.classify(rel)
         if c is None:
             if write and self.project.unclaimed == "frozen" and not rel.startswith("build/") and rel != "":
@@ -453,7 +483,7 @@ class ManagedPolicy:
             return
         if c.name in self.project.approved_contract_changes:
             return
-        if not re.search(rf"\bmodule\s+{re.escape(c.module)}\b", content):
+        if not re.search(rf"\bmodule\s+{re.escape(c.module)}\b", re.sub(r"//[^\n]*|/\*.*?\*/", "", content, flags=re.S)):
             return                                                  # the file does not declare the contract's module
         got = parse_module_ports(content, c.module)
         diff = interface_diff(c.interface["ports"], got)
@@ -472,15 +502,7 @@ class ManagedPolicy:
 
     def check_build(self, cfg: dict[str, Any]) -> None:
         """The whole design is always built: every component's sources (or netlist) must be in build.yaml, excluded or not."""
-        srcs, nets = set(map(str, cfg.get("sources") or [])), {str(n.get("file") if isinstance(n, dict) else n)
-                                                                for n in cfg.get("netlists") or []}
-        miss = []
-        for c in self.project.components:
-            miss += [f"{s} (component {'*' if c.ownership == 'excluded' else c.name})" for s in c.build_sources if s not in srcs]
-            if c.level == "netlist":
-                f = (c.netlist.get("file") or "")
-                if not any(n == f or n.endswith("/" + f) for n in nets):
-                    miss.append(f"netlist {f} (component {'*' if c.ownership == 'excluded' else c.name})")
+        miss = build_coverage_problems(self.project, cfg)
         if miss:
             self._refuse("build.yaml must still build every component: missing " + ", ".join(miss) +
                          " (excluded or frozen parts are part of the build and the sign-off)", "managed-build")
@@ -532,7 +554,8 @@ class ManagedPolicy:
         self._baseline = self._hashes()
 
     def _hashes(self) -> dict[str, str]:
-        out = {}
+        out = {p: sha256_file(self.project.design / p) for p in (MANIFEST, (MANAGED_DIR / "scope.json").as_posix())
+               if (self.project.design / p).is_file()}
         for c in self.project.components:
             if c.ownership in ("frozen", "excluded"):
                 for p in component_files(self.project, c):
@@ -568,13 +591,33 @@ def _eval_width(expr: str, params: dict[str, int]) -> int | None:
         return None
 
 
+def _paren(text: str, start: int) -> str:
+    depth = 0
+    for i in range(start, len(text)):
+        depth += (text[i] == "(") - (text[i] == ")")
+        if depth == 0:
+            return text[start:i + 1]
+    return text[start:]
+
+
 def parse_module_ports(text: str, module: str) -> list[dict[str, Any]]:
     """The ANSI port list of ``module`` in SystemVerilog source: name, dir, width (None when an expression is not a plain
     integer expression of the module's parameter defaults). Comments are removed first. Non-ANSI headers are not read."""
     text = re.sub(r"//[^\n]*|/\*.*?\*/", "", text, flags=re.S)
-    m = re.search(rf"\bmodule\s+{re.escape(module)}\b\s*(#\s*\((?P<params>.*?)\))?\s*\((?P<ports>.*?)\)\s*;", text, re.S)
+    m = re.search(rf"\bmodule\s+{re.escape(module)}\b\s*", text)
     if not m:
         return []
+    i, ptxt = m.end(), ""
+    if text[i:i + 1] == "#":
+        j = text.index("(", i)
+        ptxt = _paren(text, j)
+        i = j + len(ptxt)
+        while text[i:i + 1].isspace():
+            i += 1
+    if text[i:i + 1] != "(":
+        return []
+    body = _paren(text, i)
+    m = type("M", (), {"group": lambda self, k: {"params": ptxt[1:-1], "ports": body[1:-1]}[k]})()
     params = {k: int(v) for k, v in re.findall(r"\b(\w+)\s*=\s*(\d+)\b", m.group("params") or "")}
     ports, cur_dir, cur_w = [], None, 1
     for item in (x.strip() for x in m.group("ports").split(",")):

@@ -3,6 +3,7 @@
 
     python3 flow/managed_import.py check  designs/<name> [--component C] [--eqy] [--sim] [--out FILE]
     python3 flow/managed_import.py boundary designs/<name> <build dir> [--out FILE]
+    python3 flow/managed_import.py record-build designs/<name> <build dir>      (gates.json clean -> 'built' evidence)
 
 ``check`` runs the import checks on every ``level: netlist`` component of the design's ``project.yaml`` (or one):
 
@@ -71,12 +72,19 @@ def _edif_ports(text: str, module: str) -> list[dict[str, Any]]:
     ports = []
     for pm in re.finditer(r"\(port\s+(?:\(array\s+(?:\(rename\s+\S+\s+\"(?P<qa>[^\"]+)\"\)|(?P<na>\S+))\s+(?P<w>\d+)\)|"
                           r"\(rename\s+\S+\s+\"(?P<qn>[^\"]+)\"\)|(?P<n>[^\s()]+))\s*\(direction\s+(?P<d>INPUT|OUTPUT|INOUT)\)", body):
-        name = re.sub(r"\[.*\]$", "", pm.group("qa") or pm.group("na") or pm.group("qn") or pm.group("n"))
+        raw = pm.group("qa") or pm.group("na") or pm.group("qn") or pm.group("n")
+        name = re.sub(r"\[.*\]$", "", raw)
+        if pm.group("n") or pm.group("qn"):                    # a scalar port 'name[3]' of a bus written bit by bit
+            m3 = re.match(r".*\[(\d+)\]$", raw)
+            if m3:
+                prev = next((q for q in ports if q["name"] == name), None)
+                if prev:
+                    prev["width"] = max(prev["width"], int(m3.group(1)) + 1)
+                    continue
+                ports.append({"name": name, "dir": pm.group("d").lower(), "width": int(m3.group(1)) + 1})
+                continue
         ports.append({"name": name, "dir": pm.group("d").lower(), "width": int(pm.group("w")) if pm.group("w") else 1})
-    folded: dict[str, dict[str, Any]] = {}              # a bus written as scalar ports name[0], name[1], ...
-    for p in ports:
-        folded.setdefault(p["name"], p)
-    return list(folded.values())
+    return ports
 
 
 def netlist_ports(path: Path, module: str) -> list[dict[str, Any]]:
@@ -339,7 +347,7 @@ def import_check(design: Path, only: str | None = None, run_eqy: bool = False, r
             r["eqy"] = eqy_prove([project.design / p for p in c.reference_rtl], flat, c.module, work / c.name / "eqy")
         ok = (not r["interface"] and not r["licence"] and r["sha256_matches"]
               and (not run_sim or r.get("simulation", {}).get("passed") is True)
-              and (not run_eqy or not c.reference_rtl or r.get("eqy", {}).get("equivalent") is True))
+              and (not run_eqy or (bool(c.reference_rtl) and r.get("eqy", {}).get("equivalent") is True)))
         r["passed"] = ok
         rep["components"][c.name] = r
         if ok and run_sim:                                       # only a run that executed the tests is evidence of 'verified'
@@ -347,6 +355,20 @@ def import_check(design: Path, only: str | None = None, run_eqy: bool = False, r
                                                       (["eqy"] if run_eqy and c.reference_rtl else [])})
     rep["passed"] = all(v["passed"] for v in rep["components"].values())
     return rep
+
+
+def record_build(design: Path, build_dir: Path) -> dict[str, Any]:
+    """Record a finished build as ``built`` evidence for every component: only when gates.json says every gate passed and the build's source
+    stamp is the one this tree would get now (so the evidence is of this content). Written by the flow, never by the agent's tools."""
+    project = M.load(design)
+    g = json.loads((build_dir / "gates.json").read_text())
+    failed = sorted(k for k, v in (g.get("gates") or {}).items() if v is not True)
+    clean = bool(g.get("pass")) and not failed
+    out = {"gates_clean": clean, "failed_gates": failed, "build_stamp": g.get("build_stamp"), "build_dir": str(build_dir.name)}
+    for c in project.components:
+        if c.ownership != "excluded":                       # the label of an excluded part is the owner's business, not the agent's
+            M.write_evidence(project, c, "built", out)
+    return out
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -363,12 +385,19 @@ def main(argv: list[str] | None = None) -> int:
     b.add_argument("build_dir", type=Path)
     b.add_argument("--budgets", type=Path, help="the output of flow/managed_boundary.tcl")
     b.add_argument("--out", type=Path)
+    r_ = sub.add_parser("record-build", help="record a finished build's gates as 'built' evidence")
+    r_.add_argument("design", type=Path)
+    r_.add_argument("build_dir", type=Path)
     t = sub.add_parser("budget-tcl", help="write the Tcl that measures the boundary timing budgets of a routed checkpoint")
     t.add_argument("design", type=Path)
     t.add_argument("checkpoint")
     t.add_argument("out", type=Path)
     a = ap.parse_args(argv)
     design = a.design.resolve()
+    if a.cmd == "record-build":
+        rep = record_build(design, a.build_dir.resolve())
+        print(json.dumps(rep, indent=1))
+        return 0 if rep["gates_clean"] else 1
     if a.cmd == "budget-tcl":
         proj = M.load(design)
         c = next(c for c in proj.components if c.level == "netlist" and c.instance and c.interface.get("timing_budgets"))

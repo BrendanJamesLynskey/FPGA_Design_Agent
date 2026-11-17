@@ -139,13 +139,6 @@ def load_build_cfg(s: Session) -> dict[str, Any]:
                 real = Path(os.path.realpath(h))
                 if not any(real == a or a in real.parents for a in allowed):
                     raise SecurityError("build-yaml", f"{key} entry {pat!r} resolves outside the design and shell directories")
-    if cfg.get("netlists"):                          # brief 102: only the netlist components of the design's project.yaml
-        pol = s.jail.policy
-        known = {c.netlist.get("file"): c for c in pol.project.components if c.level == "netlist"} if pol else {}
-        for n in cfg["netlists"]:
-            f = str(n.get("file") if isinstance(n, dict) else n)
-            if not any(f == k or f.endswith("/" + str(k)) for k in known):
-                raise SecurityError("build-yaml", f"netlists entry {f!r} is not a netlist component of this design's project.yaml")
     if s.jail.policy is not None:                    # brief 102: the whole design is always built: no component may be dropped
         s.jail.policy.check_build(cfg)
     if cfg.get("probes"):

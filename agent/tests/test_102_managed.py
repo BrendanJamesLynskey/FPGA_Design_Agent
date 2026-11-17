@@ -96,7 +96,7 @@ def test_validator_names_every_problem(proj):
     raw["components"][3]["paths"] = ["../outside"]
     raw["schema"] = "other"
     errs = "\n".join(M.validate(raw))
-    for needle in ("schema must be", "trust is computed", "ownership must be", "netlist: {file, format", "duplicate name", "without '..'"):
+    for needle in ("schema must be", "trust is computed", "ownership must be", "netlist: {file, format", "duplicate name", "normalised design-relative"):
         assert needle in errs, errs
 
 
@@ -415,3 +415,54 @@ def test_tool_output_about_an_excluded_file_is_scrubbed(proj, monkeypatch):
     out = call(s, "lint")["output"]
     assert "secret" not in out and "assign y" not in out and "removed" in out
     assert "rtl/core.sv:5:3" in out and "always_ff" in out                 # the owned component's warning is untouched
+
+
+@pytest.mark.parametrize("pat", ["./rtl/frz.sv", "rtl//frz.sv", "rtl/./frz.sv", "rtl/frz.sv ", "rtl\\frz.sv", "rtl/frz.s[v]", "../x"])
+def test_unnormalised_manifest_patterns_are_rejected_not_silently_unmatched(proj, pat):
+    raw = _manifest(proj)
+    raw["components"][1]["paths"] = [pat]
+    assert any("normalised design-relative" in e for e in M.validate(raw))
+
+
+def test_a_netlist_path_must_match_exactly_no_suffix_substitution(proj):
+    s = session(proj)
+    cfg = yaml.safe_load((proj / "build.yaml").read_text())
+    good = list(cfg["netlists"])
+    for bad in ("designs/demo/rtl/ext/crc32_d64.edf", "designs/demo/../demo/rtl/ext/crc32_d64.edf", "x/ext/crc32_d64.edf"):
+        cfg["netlists"] = good + [{"file": bad, "format": "edif"}]
+        r = call(s, "write_file", path="build.yaml", content=yaml.safe_dump(cfg))
+        assert r["refused"] and r["rule"] == "managed-build", bad
+    cfg["netlists"] = [{"file": "designs/demo/rtl/ext/crc32_d64.edf", "format": "edif"}]               # substituted for the frozen one
+    assert call(s, "write_file", path="build.yaml", content=yaml.safe_dump(cfg))["refused"]
+
+
+def test_the_flow_rechecks_build_coverage_whoever_wrote_build_yaml(proj):
+    cfg = yaml.safe_load((proj / "build.yaml").read_text())
+    p = M.load(proj)
+    assert M.build_coverage_problems(p, cfg) == []
+    cfg["sources"] = cfg["sources"][:-1]
+    assert M.build_coverage_problems(p, cfg)
+
+
+def test_ports_with_a_function_call_in_the_parameters_and_a_commented_module():
+    src = "// module core is described here\nmodule other #(parameter int W = $clog2(8)) (input logic [W-1:0] a, output logic b);\nendmodule\n"
+    ports = M.parse_module_ports(src, "other")
+    assert [p["name"] for p in ports] == ["a", "b"]
+
+
+def test_the_whole_managed_directory_and_manifest_are_integrity_checked(proj):
+    s = session(proj)
+    pol = s.jail.policy
+    pol.snapshot()
+    (proj / "project.yaml").write_text((proj / "project.yaml").read_text() + "# changed\n")
+    assert "project.yaml" in pol.integrity_violations()
+    for f in ("contract_flags.jsonl", "provenance.md", "evidence/x.json"):
+        assert call(s, "write_file", path=f"build/managed/{f}", content="x")["refused"]
+
+
+def test_non_mapping_manifest_fields_fail_validation_not_with_a_type_error(proj):
+    raw = _manifest(proj)
+    raw["components"][0]["interface"] = ["x"]
+    raw["components"][1]["build_sources"] = "rtl/mac.sv"
+    errs = "\n".join(M.validate(raw))
+    assert "interface must be a mapping" in errs and "build_sources must be a list of strings" in errs
