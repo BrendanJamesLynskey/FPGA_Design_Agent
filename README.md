@@ -365,7 +365,7 @@ debug_core/  debug on the board from a plain-English request (brief 50A, [docs/d
 flow/handover.py, flow/doccheck.py  documentation (brief 68): handover.yaml to README.md and AGENT.md, and the checker;
              agent/graph/document.py (the agent's DOC step and gate) and agent/graph/pickup.py (resume from a handover)
 shell/       the test shell: RTL, protocol, host driver, model, tests
-boards/      board files (Nexys A7-100T: board.yaml, master XDC, inventory.yaml, power_budget.md; KR260: board.yaml)
+boards/      board files (Nexys A7-100T: board.yaml, master XDC, inventory.yaml, power_budget.md; KR260: board.yaml, kr260-pins.xdc; the catalogue's other boards)
              and the board catalogue (brief 95: catalogue.yaml, SCHEMA.md, 18 more board directories with their smoke designs)
 tools/       inventory_check.py (board inventory against the master XDC); git_guard.py (the tests must not move the checkout they run from; checked at the end of every pytest session by conftest.py)
 agent/       core/ (tools, security, trace, replay, smoke) and mcp_server/ (05a); tests/ with the replay fixture

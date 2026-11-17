@@ -44,6 +44,16 @@ resources:
   - LD[5]
   - LD[6]
   - LD[7]
+  btn: BTNC
+  sw:
+  - SW[0]
+  - SW[1]
+  - SW[2]
+  - SW[3]
+  - SW[4]
+  - SW[5]
+  - SW[6]
+  - SW[7]
 facts:
 - item: part
   value: xc7z020clg484-1 (Zynq-7000)
@@ -56,20 +66,24 @@ facts:
   - ZED_BOARDFILE
   - ZED_XDC
 - item: user I/O
-  value: 8 PL LEDs LD0 to LD7 on T22, T21, U22, U21, V22, W22, U19, U14, LVCMOS33 (the AMD board file); 5 PL push buttons and 8 slide switches
-    in the Vadj banks
+  value: 8 PL LEDs LD0 to LD7 on T22, T21, U22, U21, V22, W22, U19, U14, LVCMOS33 (the AMD board file); 5 PL push buttons (BTNC, BTND, BTNL,
+    BTNR, BTNU) and 8 slide switches in the Vadj banks, LVCMOS18 on the owner's boards (see Vadj banks); Pmod JA to JD, LVCMOS33, in the master XDC
   source:
   - ZED_XDC
   - ZED_BOARDFILE
 - item: Vadj banks
-  value: banks 34 and 35 run at Vadj, set by jumper J18 on each board. The sources disagree on the shipped value (the Avnet XDC assumes 1.8 V,
-    the AMD board file assigns LVCMOS25, the guide's power table says 2.5 V). Buttons, switches, Pmod JC and JD, FMC LA pins and OLED/HDMI/VGA/audio
-    pins are therefore not in the master XDC (their standard is not fixed by the sources); the house rules take J18 as 1.8 V as shipped, and only
-    the owner reads or sets it
+  value: 'banks 34 and 35 run at Vadj, set by jumper J18. OWNER-CONFIRMED 2026-11-17: both of the owner''s ZedBoards ("ZedBoard bump" and
+    "ZedBoard no-bump") have J18 on 1V8 and JP6 removed, so Vadj is 1.8 V and the push buttons and slide switches (Vadj banks) are LVCMOS18, as
+    in the Avnet XDC''s bank constraint. This is a fact about the owner''s two boards, not about the product: the sources disagree on the shipped
+    value (the Avnet XDC assumes 1.8 V, the AMD board file assigns LVCMOS25, the guide''s power table says 2.5 V), so another ZedBoard may be set
+    differently. The Pmod JA to JD are not Vadj pins: the Avnet XDC labels all four "Bank 13" and sets bank 13 to LVCMOS33. FMC LA pins, OLED,
+    HDMI, VGA and audio pins are still not in the master XDC (no source gives their standard, or they depend on a card)'
   source:
   - ZED_XDC
   - ZED_BOARDFILE
   - ZHUG
+  confirmed_by: owner
+  confirmed_on: '2026-11-17'
 - item: memory
   value: 512 MB DDR3 on the PS (two 128M x 16 parts, 32-bit); 256 Mb QSPI flash; both on the PS
   source:
@@ -88,6 +102,8 @@ facts:
   reason: the guide says high turns an LED on (390 ohm from 3.3 V), but the smoke design does not depend on it; the schematic was not read
 slow_ports:
 - LD\[\d+\]
+- SW\[\d+\]
+- BTN[CDLRU]
 thermal:
   airflow_lfm: 0
   heatsink: none

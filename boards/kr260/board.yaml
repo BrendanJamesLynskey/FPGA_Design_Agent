@@ -5,6 +5,12 @@
 name: kr260
 vendor: AMD
 part: xck26-sfvc784-2LV-c
+master_xdc: kr260-pins.xdc         # brief 98: our own listing (tools/board_pins_import.py) of the pins this repository's designs use; not a vendor file
+master_xdc_source:
+  kind: derived
+  tool: tools/board_pins_import.py
+  spec: boards/kr260/pins_import.yaml
+  note: the clock, user LEDs and PL Ethernet pins come from the AMD board files (kr260_carrier 1.1 and kr260_som 1.1, Apache-2.0) through designs/b58a_trigger/design.xdc; the SFP+ control and I2C pins through designs/b96_kr260_10g/design.xdc, which the board run of 2026-11-17 used; the GTH pins are in `gt:` below, they have no I/O standard
 clock:
   port: clk_25
   pin: C3                         # HPA_CLK0P, bank 66, LVCMOS18 (25 MHz in an open-source reference design: unconfirmed against the schematic)
@@ -22,6 +28,23 @@ gt:                               # GTH transceivers on the PL (brief 56A; flow/
     speed: {line_rate_gbps_max: 12.5, note: "K26 -2LV GTH maximum (DS925 table 99, brief 56A); 10.3125 Gb/s is inside the QPLL0 divider-1 window 9.8 to 12.5; the SFP+ cage J24 carries one lane (UG1092)"}
     control: {tx_disable: Y10, mod_abs: W10, rx_los: J12, tx_fault: A10, i2c_scl: AB11, i2c_sda: AC11, level: LVCMOS33, status: "I2C pins confirmed (AMD board file sfp_iic: som240_2 b49/b50); SOM-to-package pins confirmed (AMD board files); the TX_DISABLE, MOD_ABS, RX_LOS and TX_FAULT functions and their polarity remain unconfirmed (Taxi example, not the schematic); the first board run tests them with the laser off (designs/b96_kr260_10g/docs/board_run_plan.md step 1)"}
 user_leds: [F8, E8]               # LVCMOS18
+resources:                        # brief 98: names a design maps its ports to (core tool board_constraints); every other master-XDC port is also a resource
+  clk: clk_25                     # 25 MHz on HPA_CLK0P: the frequency is unconfirmed (an open-source reference design's figure; no board measurement)
+  led: ["led[0]", "led[1]"]
+  sfp_tx_disable: sfp_tx_disable  # SFP+ cage J24 control and I2C (3.3 V): the board run of 2026-11-17 used these pins and read the module
+  sfp_mod_abs: sfp_mod_abs
+  sfp_rx_los: sfp_rx_los
+  sfp_tx_fault: sfp_tx_fault
+  sfp_i2c_scl: sfp_i2c_scl
+  sfp_i2c_sda: sfp_i2c_sda
+measured_on_board:                # brief 96 stage 3, 2026-11-17, the owner's board, wall power, SRAM only; records in results/b96/hw/
+  evidence: [results/b96/hw/20261117_101326/stage3.json, results/b96/hw/20261117_095236.program.json]
+  jtag_chain: "xck26 then arm_dap (a cascaded chain; results/b96/hw/20261117_095236.program.json device xck26_0); the K26's USER4 instruction is 0x923 in the 12-bit IR with the DAP in BYPASS, a 65-bit DR (brief 96 report, stage 3; the register script that measured it is not a committed record)"
+  sfp_lane: "GTHE4_CHANNEL_X0Y6 (quad 224): the link came up and locked on 100 of 100 restarts (stage3.json, restarts.failed_to_lock = 0)"
+  sfp_refclk: "156.25 MHz on Y6/Y5 (MGTREFCLK0 of quad 224) worked: the link came up"
+  sfp_control_pins: "the pins in designs/b96_kr260_10g/design.xdc (tx_disable Y10, mod_abs W10, rx_los J12, tx_fault A10, I2C AB11/AC11, LVCMOS33) worked: module identity and diagnostics were read (stage3.json module, ddm_start)"
+  not_measured: "the 25 MHz clock on C3 (the design's free-running clock came from it through an MMCM, so a 25 MHz input is likely, but no run measured its frequency), the PL Ethernet ports and the user LEDs (built in results/b58a, never run on the board)"
+
 host_access: JTAG cable (BSCANE2 USER4 register bus, designs/b58a_trigger/rtl/jtag_bus.sv); no PL UART pins
 slow_ports:
   - 'led\[\d+\]'
