@@ -44,7 +44,7 @@ def splits(names=("train", "val")):
 
 def fronts_columns(arm: str, front: dict, sp) -> np.ndarray:
     """Extra columns of an arm for one Split (current features are not included)."""
-    if arm == "a1_decay":
+    if arm in ("a1_decay", "a4_lut"):
         return sp.apply(lambda s: FE.decay_cols(s, front))
     if arm in ("a2_win16", "a2_win8"):
         n = 16 if arm == "a2_win16" else 8
@@ -57,7 +57,7 @@ def fronts_columns(arm: str, front: dict, sp) -> np.ndarray:
 
 
 def front_bits(arm: str, front: dict) -> list[int]:
-    if arm == "a1_decay":
+    if arm in ("a1_decay", "a4_lut"):
         return [8] * (4 * len(front["rates"]))
     if arm in ("a2_win16", "a2_win8"):
         return front["bits"] * (16 if arm == "a2_win16" else 8)
