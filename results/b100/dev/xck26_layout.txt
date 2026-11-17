@@ -1,0 +1,19 @@
+#   puts "REGION $cr slices X [lindex $xs 0]-[lindex $xs end] Y [lindex $ys 0]-[lindex $ys end] n=[llength $s]"
+REGION X0Y0 slices X 0-22 Y 0-59 n=1380
+REGION X0Y1 slices X 0-22 Y 60-119 n=1380
+REGION X0Y2 slices X 0-22 Y 120-179 n=1380
+REGION X0Y3 slices X 0-22 Y 180-239 n=1380
+REGION X1Y0 slices X 23-40 Y 0-59 n=1080
+REGION X1Y1 slices X 23-40 Y 60-119 n=1080
+REGION X1Y2 slices X 23-40 Y 120-179 n=1080
+REGION X1Y3 slices X 23-40 Y 180-239 n=1080
+REGION X2Y0 slices X 41-60 Y 0-59 n=1200
+REGION X2Y1 slices X 41-60 Y 60-119 n=1200
+REGION X2Y2 slices X 41-60 Y 120-179 n=1200
+REGION X2Y3 slices X 41-60 Y 180-239 n=1200
+# puts "GT [get_property CLOCK_REGION $g] [get_property RPM_X $g] [get_property RPM_Y $g] tile [get_tiles -of_objects $g]"
+GT X2Y1 2816 131 tile GTH_QUAD_RIGHT_X42Y60
+# puts "BRAM cols: [lsort -u [lmap s [get_sites RAMB36_X*Y0] {regexp -inline {X\d+} $s}]]"
+BRAM cols: X0 X1 X2
+# puts "DSP cols: [lsort -u [lmap s [get_sites DSP48E2_X*Y0] {regexp -inline {X\d+} $s}]]"
+DSP cols: X0 X1 X10 X11 X12 X2 X3 X4 X5 X6 X7 X8 X9
