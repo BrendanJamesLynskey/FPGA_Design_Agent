@@ -29,15 +29,18 @@ serialiser, CDR and RX buffer latency (not in simulation: the real GT model is r
 
 | | Variant (b): SFP+ live, trading path | Variant (a): near-end PMA loopback self-test |
 |---|---|---|
-| LUTs / registers | 5,789 / 13,657 (4.9 % / 5.8 %) | see `results/b96/build_a` |
-| Timing at 161.13 MHz (user clocks) | WNS +0.039 ns (txusr2), +0.279 ns (rxusr2); WHS +0.010 ns; all constraints met | see `results/b96/build_a` |
-| Power (report_power, vectorless, still air) | 0.984 W | see `results/b96/build_a` |
-| Vivado peak RSS / scope memory | 3,892 MiB RSS; the 6 GiB scope cap was reached (anonymous peak 6,114 MiB, 3,710 cap hits, 2,234 MiB swap) | |
-| Wall time | 1,331 s (2 threads) | |
+| LUTs / registers | 5,954 / 13,657 (5.1 % / 5.8 %) | 6,107 / 13,657 (5.2 % / 5.8 %) |
+| Timing at 161.13 MHz (user clocks) | WNS +0.115 ns (txusr2), +0.235 ns (rxusr2); WHS +0.010 ns; all constraints met | WNS +0.293 ns (txusr2), +0.203 ns (rxusr2); WHS +0.011 ns; all constraints met |
+| Power (report_power, vectorless, still air) | 1.068 W | 1.083 W |
+| Vivado peak RSS / scope memory | 3,893 MiB RSS; scope cap (6 GiB) reached (3,879 hits), 2,358 MiB swap | 3,884 MiB RSS; scope cap reached (3,771 hits), 2,317 MiB swap |
+| Wall time (2 threads) | 1,177 s | 1,252 s |
+| Flow and GT gates | all pass | all pass |
+
+Records: `results/b96/build_b/` and `results/b96/build_a/` (trimmed `gates.json`, `run.json`).
 
 Timing closed at 161.13 MHz; the 32-bit/322 MHz fallback was not needed. It did not close the first time: the receive MAC's last-word CRC (variable byte count) was a
-16-level path at WNS -0.165 ns; it is now one clock later, from registers (the data latency is unchanged). The transmit side's equivalent path closes with +0.039 ns, which is
-thin.
+16-level path at WNS -0.165 ns; it is now one clock later, from registers (the data latency is unchanged). The transmit side's last-word CRC and frame end (a 15-level path, WNS -0.158 ns in variant (a), +0.039 ns in
+variant (b)) is now built for each possible byte count at once and selected by a register: both variants close with at least +0.1 ns.
 
 ## What the review found (one Sonnet review, one fix round)
 

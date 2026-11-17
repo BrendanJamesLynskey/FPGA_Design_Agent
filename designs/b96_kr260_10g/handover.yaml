@@ -71,7 +71,7 @@ files:
   sha256: 0065dd34d9462a5a08e7eaa2a938096ae8069ed8b7425bdd6734759851270eaa
 - path: designs/b96_kr260_10g/rtl/mac64_tx.sv
   what: 64-bit MAC transmitter
-  sha256: f885c6434bfde8ad9a8a229d96363c17ebc9d0b31b79fb99a7b4459a962bd303
+  sha256: 0cbc07b0268f1c0d3e4c916808bb87930fc6c17d3c60eba2cc90e17ad945246a
 - path: designs/b96_kr260_10g/rtl/mac64_rx.sv
   what: 64-bit MAC receiver
   sha256: 35a0ed74f5449979bdbbfa0c57d66e8c8ce127f6132c53690212653a5a97ee8c
@@ -110,7 +110,7 @@ files:
   sha256: 0d3f8fd49cb2fdd9c3cb87c2185ab0a4eab7e7c03327b77a99659e52ecc3634b
 - path: designs/b96_kr260_10g/docs/what_we_found.md
   what: results and gaps
-  sha256: 6147485fb4de6352097a3a0a53fa71cfa27efad0c3adac5b0b6631b809c0c50c
+  sha256: d1095afbeb6a23ad4a5406efcf34ea18360bfdfa3517648d6656a18c7f9cb634
 - path: designs/b96_kr260_10g/regmap.py
   what: register map as data
   sha256: 60923fc43aaefcaec695f6b93f5768725a3b5cda078953be3ec5eae5ee5f46ae
@@ -148,7 +148,14 @@ evidence:
   result: pass
   what: variant (b) synthesis, implementation and bitstream on the Basic tier; every flow gate and every GT gate passes
   record: results/b96/build_b/gates.json
-  sha256: e2cd32b64d009e81b24ea76259da493a7483a542d916bc4ece63b8bd81d36368
+  sha256: 935b96de0d9fb7fffea1d02525fe24c5a3ee8a93271498dabf5759200fa828bc
+- id: E4
+  activity: build
+  result: pass
+  what: 'variant (a), the near-end loopback self-test: synthesis, implementation and bitstream; every flow gate and every
+    GT gate passes'
+  record: results/b96/build_a/gates.json
+  sha256: fe45f7625c3ccb8b1c942419bdccfeae9372e8f88fd3bef2577018d885faea8c
 - id: E3
   activity: review
   result: pass
@@ -164,8 +171,8 @@ measurements:
   record: results/b96/build_b/gates.json
   field: utilization.lut
   conditions: routed, Vivado 2026.1
-  value: 5789
-  sha256: e2cd32b64d009e81b24ea76259da493a7483a542d916bc4ece63b8bd81d36368
+  value: 5954
+  sha256: 935b96de0d9fb7fffea1d02525fe24c5a3ee8a93271498dabf5759200fa828bc
 - id: M2
   what: registers, variant (b)
   category: resources
@@ -175,7 +182,7 @@ measurements:
   field: utilization.ff
   conditions: as M1
   value: 13657
-  sha256: e2cd32b64d009e81b24ea76259da493a7483a542d916bc4ece63b8bd81d36368
+  sha256: 935b96de0d9fb7fffea1d02525fe24c5a3ee8a93271498dabf5759200fa828bc
 - id: M3
   what: worst setup slack, variant (b)
   category: timing
@@ -184,8 +191,8 @@ measurements:
   record: results/b96/build_b/gates.json
   field: timing.wns_ns
   conditions: routed, user clocks 161.133 MHz and 100 MHz
-  value: 0.039
-  sha256: e2cd32b64d009e81b24ea76259da493a7483a542d916bc4ece63b8bd81d36368
+  value: 0.115
+  sha256: 935b96de0d9fb7fffea1d02525fe24c5a3ee8a93271498dabf5759200fa828bc
 - id: M4
   what: worst hold slack, variant (b)
   category: timing
@@ -195,7 +202,7 @@ measurements:
   field: timing.whs_ns
   conditions: as M3
   value: 0.01
-  sha256: e2cd32b64d009e81b24ea76259da493a7483a542d916bc4ece63b8bd81d36368
+  sha256: 935b96de0d9fb7fffea1d02525fe24c5a3ee8a93271498dabf5759200fa828bc
 - id: M5
   what: total on-chip power estimate, variant (b)
   category: power
@@ -204,8 +211,8 @@ measurements:
   record: results/b96/build_b/gates.json
   field: power.total_w
   conditions: report_power after routing, vectorless, confidence Medium
-  value: 0.984
-  sha256: e2cd32b64d009e81b24ea76259da493a7483a542d916bc4ece63b8bd81d36368
+  value: 1.068
+  sha256: 935b96de0d9fb7fffea1d02525fe24c5a3ee8a93271498dabf5759200fa828bc
 - id: M6
   what: Vivado peak resident memory of the variant (b) build
   category: other
@@ -213,8 +220,8 @@ measurements:
   record: results/b96/build_b/run.json
   field: vivado_peak_rss_mib
   conditions: 2 threads, MemoryMax=6G reached, one run
-  value: 3892
-  sha256: 53a64777df276d108f33a4e1676d62eacc3ee2e6fd88edd9f4a64739210ff134
+  value: 3893
+  sha256: 830cf90442a2dc04d9d3d97f26ce0ee9737a0b3eeabe3eed62dab707f107d5fe
 - id: M7
   what: transmit latency, worst gearbox phase
   category: latency
@@ -249,12 +256,12 @@ gaps:
 - about: protocol
   text: No link-fault state machine, BER monitor, ARP or ICMP responder; ordered sets are counted and shown as idles; receive
     does not check preamble, runts or jumbo frames; the transmit MAC does not pad.
-- about: build
-  text: The variant (b) build runs at the 6 GiB memory cap and swaps (3710 cap hits); transmit setup slack is thin at 0.039
-    ns.
 - about: throughput
   text: The line rate and the 10 Gb/s payload rate are by configuration and by the gearbox arithmetic; no throughput or
     error-rate measurement exists because nothing ran on a board.
+- about: build
+  text: Both builds run at the 6 GiB memory cap and swap (thousands of cap hits in the run records); the Vivado resident
+    peak is 3893 MiB.
 next_steps:
 - Run docs/board_run_plan.md steps 1 to 4 on the KR260 (laser polarity first), then the NIC steps after the owner buys a
   card and cable.
@@ -276,10 +283,6 @@ numbers_allow:
   reason: the GT quad number of the SFP+ lane (design.xdc)
 - token: '33'
   reason: the gearbox period in clocks (one pause in 33), design.md section 2.3
-- token: '3710'
-  reason: cap hits recorded in results/b96/build_b/run.json
-- token: '0.039'
-  reason: transmit setup slack recorded in results/b96/build_b/gates.json
 - token: '161.133'
   reason: user clock frequency, design.md section 2.3
 - token: '6'
@@ -288,10 +291,12 @@ numbers_allow:
   reason: generic count
 - token: 58A
   reason: a brief name
+- token: '3893'
+  reason: Vivado peak resident memory recorded in results/b96/build_b/run.json
 state:
   stage: built
   gates:
     build_2026_1: pass
   vivado: '2026.1'
   kb_pin: 2338b83
-  build_id: 5f119053
+  build_id: 2d559734

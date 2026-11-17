@@ -5,15 +5,15 @@
  "kb_version_match": true,
  "top": "kr260_10g_top",
  "variant": "base",
- "pass": false,
- "first_failed_stage": "post_synth",
+ "pass": true,
+ "first_failed_stage": null,
  "gates": {
   "rtl_methodology_no_critical": true,
   "post_synth_no_unconstrained_endpoints": true,
   "post_synth_methodology_no_critical": true,
   "post_synth_drc_clean": true,
   "post_synth_cdc_no_critical": true,
-  "post_synth_cdc_structure_clean": false,
+  "post_synth_cdc_structure_clean": true,
   "post_synth_exceptions_clean": true,
   "post_synth_io_constraints_clean": true,
   "post_synth_gt_refclk_pin_quad": true,
@@ -24,8 +24,9 @@
   "post_synth_gt_user_clocks_timed": true,
   "post_synth_gt_drc_clean": true,
   "post_synth_resets_clean": true,
+  "post_synth_resources_in_range": true,
   "post_place_hold": true,
-  "setup": false,
+  "setup": true,
   "hold": true,
   "pulse_width": true,
   "no_unconstrained_endpoints": true,
@@ -84,7 +85,7 @@
     "post_synth_methodology_no_critical": true,
     "post_synth_drc_clean": true,
     "post_synth_cdc_no_critical": true,
-    "post_synth_cdc_structure_clean": false,
+    "post_synth_cdc_structure_clean": true,
     "post_synth_exceptions_clean": true,
     "post_synth_io_constraints_clean": true,
     "post_synth_gt_refclk_pin_quad": true,
@@ -94,22 +95,23 @@
     "post_synth_gt_reset_sequence": true,
     "post_synth_gt_user_clocks_timed": true,
     "post_synth_gt_drc_clean": true,
-    "post_synth_resets_clean": true
+    "post_synth_resets_clean": true,
+    "post_synth_resources_in_range": true
    },
    "warnings": [],
    "timing": {
-    "wns_ns": 0.825,
+    "wns_ns": 0.652,
     "tns_ns": 0.0,
     "tns_failing_endpoints": 0,
-    "tns_total_endpoints": 32303,
+    "tns_total_endpoints": 32300,
     "whs_ns": -0.394,
-    "ths_ns": -287.292,
-    "ths_failing_endpoints": 10122,
-    "ths_total_endpoints": 30164,
+    "ths_ns": -287.253,
+    "ths_failing_endpoints": 10119,
+    "ths_total_endpoints": 30161,
     "wpws_ns": 0.381,
     "tpws_ns": 0.0,
     "tpws_failing_endpoints": 0,
-    "tpws_total_endpoints": 14507,
+    "tpws_total_endpoints": 14506,
     "timing_met": false
    },
    "check_timing": {
@@ -188,7 +190,7 @@
      }
     ]
    },
-   "cdc_structure": "<trimmed: 13378793 bytes>",
+   "cdc_structure": "<trimmed: 13377652 bytes>",
    "exceptions": {
     "stage": "synth",
     "pass": true,
@@ -366,7 +368,64 @@
     "n_findings": 0,
     "findings": []
    },
-   "resource_sanity": null,
+   "resource_sanity": {
+    "factor": 2.0,
+    "resources": {
+     "lut": {
+      "used": 5882,
+      "predicted": [
+       3000.0,
+       12000.0
+      ],
+      "allowed": [
+       1500.0,
+       24000.0
+      ],
+      "pass": true,
+      "direction": null
+     },
+     "ff": {
+      "used": 14491,
+      "predicted": [
+       6000.0,
+       20000.0
+      ],
+      "allowed": [
+       3000.0,
+       40000.0
+      ],
+      "pass": true,
+      "direction": null
+     },
+     "bram_tile": {
+      "used": 0,
+      "predicted": [
+       0.0,
+       0.0
+      ],
+      "allowed": [
+       0.0,
+       0.0
+      ],
+      "pass": true,
+      "direction": null
+     },
+     "dsp": {
+      "used": 0,
+      "predicted": [
+       0.0,
+       0.0
+      ],
+      "allowed": [
+       0.0,
+       0.0
+      ],
+      "pass": true,
+      "direction": null
+     }
+    },
+    "pass": true
+   },
    "utilization": {
     "lutram": 0,
     "lutram_available": 57600,
@@ -378,14 +437,14 @@
     "iob_available": 189,
     "bufg": 0,
     "bufg_available": 32,
-    "lut": 5772,
+    "lut": 5882,
     "lut_available": 117120,
-    "ff": 14492,
+    "ff": 14491,
     "ff_available": 234240,
     "carry8": 174,
     "carry8_available": 14640
    },
-   "pass": false
+   "pass": true
   },
   "post_place": {
    "ran": true,
@@ -393,18 +452,18 @@
     "post_place_hold": true
    },
    "timing": {
-    "wns_ns": 0.061,
+    "wns_ns": 0.499,
     "tns_ns": 0.0,
     "tns_failing_endpoints": 0,
-    "tns_total_endpoints": 30638,
-    "whs_ns": -0.079,
-    "ths_ns": -1.413,
-    "ths_failing_endpoints": 76,
-    "ths_total_endpoints": 28776,
-    "wpws_ns": 0.422,
+    "tns_total_endpoints": 30635,
+    "whs_ns": -0.087,
+    "ths_ns": -2.757,
+    "ths_failing_endpoints": 119,
+    "ths_total_endpoints": 28773,
+    "wpws_ns": 0.4,
     "tpws_ns": 0.0,
     "tpws_failing_endpoints": 0,
-    "tpws_total_endpoints": 13673,
+    "tpws_total_endpoints": 13672,
     "timing_met": false
    },
    "pass": true
@@ -412,7 +471,7 @@
   "post_route": {
    "ran": true,
    "gates": {
-    "setup": false,
+    "setup": true,
     "hold": true,
     "pulse_width": true,
     "no_unconstrained_endpoints": true,
@@ -474,12 +533,12 @@
     },
     "failures": []
    },
-   "io_timing": "<trimmed: 4162 bytes>",
+   "io_timing": "<trimmed: 4166 bytes>",
    "timing_margin": null,
    "ila_hub_crossing": null,
    "warnings": [],
    "unconstrained_ports": {},
-   "pass": false
+   "pass": true
   },
   "bitstream": {
    "ran": true,
@@ -490,19 +549,19 @@
   }
  },
  "timing": {
-  "wns_ns": -0.158,
-  "tns_ns": -3.078,
-  "tns_failing_endpoints": 47,
-  "tns_total_endpoints": 30638,
-  "whs_ns": 0.01,
+  "wns_ns": 0.203,
+  "tns_ns": 0.0,
+  "tns_failing_endpoints": 0,
+  "tns_total_endpoints": 30635,
+  "whs_ns": 0.011,
   "ths_ns": 0.0,
   "ths_failing_endpoints": 0,
-  "ths_total_endpoints": 28776,
-  "wpws_ns": 0.461,
+  "ths_total_endpoints": 28773,
+  "wpws_ns": 0.45,
   "tpws_ns": 0.0,
   "tpws_failing_endpoints": 0,
-  "tpws_total_endpoints": 13673,
-  "timing_met": false
+  "tpws_total_endpoints": 13672,
+  "timing_met": true
  },
  "check_timing": {
   "no_clock": 0,
@@ -529,9 +588,9 @@
   "iob_available": 189,
   "bufg": 0,
   "bufg_available": 32,
-  "lut": 5943,
+  "lut": 6107,
   "lut_available": 117120,
-  "ff": 13658,
+  "ff": 13657,
   "ff_available": 234240,
   "carry8": 174,
   "carry8_available": 14640
@@ -591,18 +650,18 @@
   ]
  },
  "power": {
-  "total_w": 1.012,
-  "dynamic_w": 0.629,
-  "static_w": 0.384,
+  "total_w": 1.083,
+  "dynamic_w": 0.697,
+  "static_w": 0.386,
   "confidence": "Medium",
   "clocks_w": 0.042,
-  "signals_w": 0.124,
+  "signals_w": 0.163,
   "io_w": 0.008,
-  "core_w": 0.621
+  "core_w": 0.688
  },
  "power_environment": {
-  "junction_c": 47.5,
-  "max_ambient_c": 77.5,
+  "junction_c": 48.0,
+  "max_ambient_c": 77.0,
   "theta_ja_c_per_w": 7.4,
   "ambient_c": 40.0,
   "airflow_lfm": 0.0,
@@ -614,7 +673,7 @@
   "file": "kr260_10g_top.bit",
   "bytes": 7797904
  },
- "build_stamp": "8a17dc88",
- "sources_sha256": "8a17dc88da26aa28530ac7daffd5c971586350ae84afe02f51ce0d6eff8a6a82",
+ "build_stamp": "275b4926",
+ "sources_sha256": "275b4926f6b977e423ba6637e738067c762a40ba8f505ff1fdf6b9f82352878d",
  "note": "stages trimmed for the repository (per-stage report bodies removed); every other field is as flow/gates.py wrote it"
 }

@@ -9,7 +9,7 @@ A Kria KR260 design that carries our own 10GBASE-R PCS (64B/66B, scrambler, gear
 not: an interoperability proof: a PCS talking to itself accepts its own symmetric mistakes, only a network card proves it; the full 58A trading core (book, rule table, interlocks, ARP) at 64 bits: trade64 is a small stand-in with one rule; the reconciliation sublayer link-fault state machine, the BER monitor, an ARP or ICMP responder
 
 ## state
-stage=built vivado=2026.1 kb_pin=2338b83 build_id=5f119053
+stage=built vivado=2026.1 kb_pin=2338b83 build_id=2d559734
 gates: build_2026_1=pass
 
 ## interface
@@ -26,7 +26,7 @@ param line rate=10.3125 Gb/s legal=fixed by 10GBASE-R
 designs/b96_kr260_10g/rtl/b96_pkg.sv 6fdf7f5fec: block codes, scrambler, CRC-32 functions
 designs/b96_kr260_10g/rtl/pcs_tx.sv e0e68141d9: transmit PCS (encode, scramble, gearbox)
 designs/b96_kr260_10g/rtl/pcs_rx.sv 0065dd34d9: receive PCS (gearbox with slip, block lock, descramble, decode)
-designs/b96_kr260_10g/rtl/mac64_tx.sv f885c6434b: 64-bit MAC transmitter
+designs/b96_kr260_10g/rtl/mac64_tx.sv 0cbc07b026: 64-bit MAC transmitter
 designs/b96_kr260_10g/rtl/mac64_rx.sv 35a0ed74f5: 64-bit MAC receiver
 designs/b96_kr260_10g/rtl/frame_src.sv 2b72ce74c5: frame builder for orders, feed, probe and test frames
 designs/b96_kr260_10g/rtl/trade64.sv 09b28ff824: the 64-bit mock trading decision
@@ -39,7 +39,7 @@ designs/b96_kr260_10g/model/pcs.py 92790d45d7: bit-serial Python reference of th
 designs/b96_kr260_10g/design.xdc 4dec8c5ba8: pins, clocks, slow-pin constraints
 designs/b96_kr260_10g/docs/design.md f410e6c00f: design note: decisions and alternatives
 designs/b96_kr260_10g/docs/board_run_plan.md 0d3f8fd49c: stage 3 plan for the board
-designs/b96_kr260_10g/docs/what_we_found.md 6147485fb4: results and gaps
+designs/b96_kr260_10g/docs/what_we_found.md d1095afbeb: results and gaps
 designs/b96_kr260_10g/regmap.py 60923fc43a: register map as data
 designs/b96_kr260_10g/docs/register_map.md a4f09edf86: interface datasheet
 
@@ -50,26 +50,28 @@ simulate the PCS, MAC and core against the Python reference (~2min): python -m p
 
 ## records (path sha256-prefix; claims below cite R<n>)
 R1 designs/b96_kr260_10g/tests/test_b96_pcs_rtl.py 5c76fb4bc0
-R2 results/b96/build_b/gates.json e2cd32b64d
-R3 results/b96/README.md 3fb82e2bc0
-R4 results/b96/build_b/run.json 53a64777df
-R5 results/b96/latency_sim.json e5453d4c0b
-R6 results/b96/core_sim.json b1ba6d48f8
+R2 results/b96/build_b/gates.json 935b96de0d
+R3 results/b96/build_a/gates.json fe45f7625c
+R4 results/b96/README.md 3fb82e2bc0
+R5 results/b96/build_b/run.json 830cf90442
+R6 results/b96/latency_sim.json e5453d4c0b
+R7 results/b96/core_sim.json b1ba6d48f8
 
 ## evidence
 E1 simulation pass R1 ci: PCS and MAC against an independent bit-serial Python model clock for clock; frames in lane 0 and lane 4, every length residue, any bit offset; the whole core with a stand-in for the GT: probe echo, trading loop, decisions, poisoned orders
 E2 build pass R2: variant (b) synthesis, implementation and bitstream on the Basic tier; every flow gate and every GT gate passes
-E3 review pass R3: one independent correctness review (Sonnet) and one fix round
+E4 build pass R3: variant (a), the near-end loopback self-test: synthesis, implementation and bitstream; every flow gate and every GT gate passes
+E3 review pass R4: one independent correctness review (Sonnet) and one fix round
 
 ## measured
-M1 resources lut=5789 LUT R2#utilization.lut: LUTs, variant (b) | routed, Vivado 2026.1
+M1 resources lut=5954 LUT R2#utilization.lut: LUTs, variant (b) | routed, Vivado 2026.1
 M2 resources ff=13,657 FF R2#utilization.ff: registers, variant (b) | as M1
-M3 timing wns_ns=0.039 ns R2#timing.wns_ns: worst setup slack, variant (b) | routed, user clocks 161.133 MHz and 100 MHz
+M3 timing wns_ns=0.115 ns R2#timing.wns_ns: worst setup slack, variant (b) | routed, user clocks 161.133 MHz and 100 MHz
 M4 timing whs_ns=0.01 ns R2#timing.whs_ns: worst hold slack, variant (b) | as M3
-M5 power power_w=0.984 W R2#power.total_w: total on-chip power estimate, variant (b) | report_power after routing, vectorless, confidence Medium
-M6 other -=3892 MiB R4#vivado_peak_rss_mib: Vivado peak resident memory of the variant (b) build | 2 threads, MemoryMax=6G reached, one run
-M7 latency -=3 clocks R5#tx_clocks_max: transmit latency, worst gearbox phase | simulation, 161.13 MHz clock, MAC output register to the GT word with the last bit of the start block
-M8 latency -=11 clocks R6#tick_to_trade_digital_sim.gt_rxdata_price_word_to_gt_txdata_order_start_clocks: digital tick-to-trade | simulation, same-phase clocks; GT, optics and clock-crossing phase not included
+M5 power power_w=1.068 W R2#power.total_w: total on-chip power estimate, variant (b) | report_power after routing, vectorless, confidence Medium
+M6 other -=3893 MiB R5#vivado_peak_rss_mib: Vivado peak resident memory of the variant (b) build | 2 threads, MemoryMax=6G reached, one run
+M7 latency -=3 clocks R6#tx_clocks_max: transmit latency, worst gearbox phase | simulation, 161.13 MHz clock, MAC output register to the GT word with the last bit of the start block
+M8 latency -=11 clocks R7#tick_to_trade_digital_sim.gt_rxdata_price_word_to_gt_txdata_order_start_clocks: digital tick-to-trade | simulation, same-phase clocks; GT, optics and clock-crossing phase not included
 
 ## gaps
 [hardware] Nothing has run on a board. The reference clock source and frequency, the 25 MHz input and the SFP+ control pin functions and TX_DISABLE polarity are unconfirmed (third-party example, not the schematic).
@@ -77,8 +79,8 @@ M8 latency -=11 clocks R6#tick_to_trade_digital_sim.gt_rxdata_price_word_to_gt_t
 [simulation] The transceiver is a behavioural stand-in because the free simulator refuses the real model; the whole-core bench uses same-phase clocks, so the receive-to-transmit crossing phase is not simulated.
 [trading path] trade64 is a one-rule 64-bit stand-in, not the 58A core; orders that overlap are dropped; no cancel after send; the order fields cross as a quasi-static bus (CDC-6 warning).
 [protocol] No link-fault state machine, BER monitor, ARP or ICMP responder; ordered sets are counted and shown as idles; receive does not check preamble, runts or jumbo frames; the transmit MAC does not pad.
-[build] The variant (b) build runs at the 6 GiB memory cap and swaps (3710 cap hits); transmit setup slack is thin at 0.039 ns.
 [throughput] The line rate and the 10 Gb/s payload rate are by configuration and by the gearbox arithmetic; no throughput or error-rate measurement exists because nothing ran on a board.
+[build] Both builds run at the 6 GiB memory cap and swap (thousands of cap hits in the run records); the Vivado resident peak is 3893 MiB.
 
 ## next_actions
 1. Run docs/board_run_plan.md steps 1 to 4 on the KR260 (laser polarity first), then the NIC steps after the owner buys a card and cable.
