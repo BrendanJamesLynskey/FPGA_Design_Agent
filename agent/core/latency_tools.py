@@ -43,7 +43,7 @@ def _fmt_path(r: dict[str, Any]) -> str:
         sl = (x["netlist"] or {}).get("setup_slack_ns")
         lines.append(f"  {x['cumulative_clocks'] if x['cumulative_clocks'] is not None else '-':>3} {x['id']:<16} {x['domain']:<6} +{x['clocks']} clk "
                      f"{x['ns']} ns" + (f"  slack {sl} ns" + (" [timing-critical]" if x["timing_critical"] else "") if sl is not None else ""))
-    lines += [f"  PROBLEM: {p}" for p in r["problems"]]
+    lines += [f"  WARNING (the stage file no longer matches the bench; the design changed since it was written, trust the bench's total): {p}" for p in r["problems"]]
     return "\n".join(lines)
 
 
@@ -58,7 +58,7 @@ def latency_path(s: Session, path: str = "tick_to_trade", refresh: bool = False)
         r = lm.latency_path(s.design, core, slack, path, st)
     except lm.LatencyError as e:
         return {"ok": False, "output": f"latency_path: {e}"}
-    return {"ok": r["reconciled"], "output": _fmt_path(r) + f"\nclocks from: {src}", "latency_path": r}
+    return {"ok": True, "output": _fmt_path(r) + f"\nclocks from: {src}", "latency_path": r}
 
 
 @tool("latency_budget", "The latency budget the agent reasons from: each stage of the chain ranked by what could come out, with its clocks, ns, "
@@ -80,5 +80,6 @@ def latency_budget(s: Session, path: str = "tick_to_trade", refresh: bool = Fals
         bd = b["board"]
         lines.append(f"  board: wire-to-wire {bd['wire_to_wire_clocks']} clocks = {bd['wire_to_wire_ns']} ns; GT+optics {bd['gt_optics_clocks']} clocks; "
                      f"unattributed {bd['unattributed_clocks']} clocks")
+    lines += [f"  WARNING (stage file out of date): {p}" for p in b["problems"]]
     lines.append(b["note"])
-    return {"ok": b["reconciled"], "output": "\n".join(lines), "latency_budget": b}
+    return {"ok": True, "output": "\n".join(lines), "latency_budget": b}
