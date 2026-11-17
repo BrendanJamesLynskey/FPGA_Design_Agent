@@ -84,3 +84,20 @@ def test_enabled_needs_the_switch(monkeypatch):
     assert rt.enabled() is False
     monkeypatch.setenv("FDA_RAPIDWRIGHT", "1")
     assert rt.enabled() is True
+
+
+@pytest.mark.parametrize("part,ok", [("xck26-sfvc784-2LV-c", True), ("xc7a100tcsg324-1", True), ("xczu5ev-sfvc784-2-e", True),
+                                     ("xck26-sfvc784-2LV-c; exit", False), ("x$(id)", False), ("xck26/../etc", False)])
+def test_build_yaml_part_pattern(part, ok):
+    """The agent's build tool refused the KR260's part name ("not a plain part name": the pattern wanted six characters before the first
+    hyphen and a short suffix). The part still reaches Tcl, so the pattern stays a plain allow-list: letters, digits, up to three hyphen groups."""
+    from agent.core import tools
+    assert bool(tools._PART.match(part)) is ok
+
+
+def test_rapidwright_env_puts_the_pinned_vivado_first():
+    """The first stage 2 run failed in rw_place_chain ("Unable to find a readable EDIF file for the DCP"): RapidWright starts the first
+    `vivado` on PATH, and the agent's scrubbed environment did not have the pinned one first."""
+    from flow import version_pin
+    first = pin.env()["PATH"].split(":")[0]
+    assert first == str(Path(version_pin.vivado_path()).parent)

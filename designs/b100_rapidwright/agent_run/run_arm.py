@@ -103,6 +103,14 @@ def main() -> int:
     (out / "stream.jsonl").write_text(stream)
     (out / "meta.json").write_text(json.dumps({"arm": arm, "model": MODEL, "tools": tools, "max_turns": turns, "minutes": minutes,
                                                "wall_s": round(time.time() - t0, 1), "stderr_tail": err[-400:]}, indent=1))
+    for line in stream.splitlines():                       # the final message and the turn count, from the stream, into result.json
+        try:
+            ev = json.loads(line)
+        except ValueError:
+            continue
+        if ev.get("type") == "result":
+            (out / "result.json").write_text(json.dumps({"text": ev.get("result"), "num_turns": ev.get("num_turns"), "is_error": ev.get("is_error"),
+                                                          "usage": ev.get("usage"), "plan_cost_estimate_usd": ev.get("total_cost_usd")}, indent=1))
     for src, dst in ((d / "build" / "audit.jsonl", "audit.jsonl"), (d / "rtl" / "chain_top.sv", "final_chain_top.sv"), (d / "design.xdc", "final_design.xdc")):
         if src.is_file():
             shutil.copy(src, out / dst)

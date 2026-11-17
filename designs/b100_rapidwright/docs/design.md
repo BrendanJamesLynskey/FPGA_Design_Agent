@@ -1,6 +1,7 @@
 # b100_rapidwright: design note (written before the capability code; brief 100, 2026-11-17)
 
-Stage 0 (does RapidWright work here) is done and recorded in `results/b100/s0/`; this note is written before stage 1's code.
+Stage 0 (does RapidWright work here) is done and recorded in `results/b100/s0/`; this note was written before stage 1's code. Sections 1 to 5 are
+that note as written (with the block name corrected where the plan changed); section 6 lists what changed once the code met the device and why.
 Facts from our own runs are marked with their file; facts from the literature are marked "(cited)" or "(from memory, unverified)".
 
 ## 1. What RapidWright is and where it sits in our flow
@@ -89,3 +90,28 @@ UltraScale+ coverage (from memory, unverified); they cannot produce a bitstream 
 - ZU+ (K26) only for the capabilities; the 7-series part is stage 0 only.
 - The GT is a bare primitive: its clocking is not the real design's BUFG_GT path.
 - No board is touched; whether a faster chain survives the GT's own latency is a board question for the planner.
+
+## 6. What changed after the code met the tools (measured; every item has its record)
+
+1. **The block is `pcs_unit`, not `pcs_tx`.** The plan stamped brief 96's `pcs_tx` (73 input pins) as the block. In Vivado, `route_design` on
+   the stamped design failed in every copy, original site included, on one or two input pins ("Load Pin does not reach Interconnect
+   fabric within 5 hops", "Expansion wavefront from Load was blocked by locked nodes"): an out-of-context block is routed without
+   its input pins' last hop, and the router that stamps it later cannot always get past the block's own locked routes. It failed the same way
+   whether the bus ended on LUT pins or on registers inside a wrapper (`results/b100/c1/failed_direct_ports/`). RapidWright's `PartialRouter`
+   with soft preserve (the "complete" mode of `flow/rw/route.py`) routed all but 84 of 15,164 pins in 11 s but Vivado then refused 6 of them
+   (same folder). A block with three input pins (`rtl/pcs_unit.sv`: pcs_tx with its own shift-register source and xor sink inside) stamps. The limit is
+   written down for users: **a pre-implemented block needs a narrow interface, or its input pins may be unreachable when it is stamped.**
+2. **How far a block can move depends on its footprint.** `RelocationTools.getValidRelocationOptions` lists the anchor sites a block can
+   move to: the 98-slice first block could shift to ten slice columns, the 128-slice `pcs_unit` to three (X35, X38, X41). The targets are
+   read from that list (`results/b100/c1/scans/`).
+3. **A placed, unrouted checkpoint has no site pins on its nets**, so RapidWright's net lists were empty and the first placement run was a random
+   walk (Vivado: WNS -6.07 ns, `results/b100/c23/first_pass_bugs/`). `DesignTools.createMissingSitePinInsts` fixes it. The random run is kept
+   as a negative control: it shows the referee catches a bad RapidWright placement.
+4. **Fixed routes on an unrouted design conflict with other pins.** RWRoute routed 71 of the nets on Vivado's worst paths and locked them; Vivado
+   then refused the design ("Fixed routing constraint on net ... conflicts with pin ... The said pin is unroutable", 10 pins). The kept
+   version re-routes those nets inside Vivado's own routed result and keeps every other route.
+5. **The period-setting path of the chain is in the MAC, not at the GT.** In the baseline the worst path is `sh_reg -> u_mac/crc_reg` (10 LUT
+   levels); the PCS and the PCS-to-GT paths have more slack (`results/b100/c23/base_s0_chain.json`). The chain given to the RapidWright
+   placer is therefore the MAC and the PCS (`u_mac/*`, `u_pcs/*`), and the report gives all three slacks.
+6. **The agent's `build` tool refused the KR260's part name** (`xck26-sfvc784-2LV-c`: "not a plain part name"; the pattern wanted six characters
+   before the first hyphen). Fixed in `agent/core/tools.py` with a test; recorded in the agent improvement ledger by the planner.

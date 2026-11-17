@@ -37,7 +37,10 @@ def env() -> dict[str, str]:
     """Environment for running a RapidWright script: JAVA_HOME, RapidWright's device-file directory under the env dir."""
     e = dict(os.environ)
     e["JAVA_HOME"] = str(JAVA_HOME)
-    e["PATH"] = f"{JAVA_HOME / 'bin'}:{e.get('PATH', '')}"
+    # RapidWright starts the first `vivado` on PATH to make a checkpoint's EDIF readable: it must be the pinned release, or 2026.1
+    # checkpoints are refused ("created with Vivado v2026.1 and cannot be opened in this version")
+    from flow import version_pin
+    e["PATH"] = f"{Path(version_pin.vivado_path()).parent}:{JAVA_HOME / 'bin'}:{e.get('PATH', '')}"
     e.setdefault("RW_DATA_DIR", str(ENV_DIR / "data"))
     return e
 
