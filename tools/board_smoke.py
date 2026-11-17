@@ -38,6 +38,9 @@ def _board(board: str) -> dict:
 
 
 def has_smoke(board: str) -> bool:
+    cat = yaml.safe_load((ROOT / "boards" / "catalogue.yaml").read_text())["boards"].get(board, {})
+    if cat.get("licence_tier") == "paid" or not cat.get("targetable", True):
+        return False                     # the installed licence cannot build it, or the agent cannot target it
     y = _board(board)
     return bool(y.get("smoke")) and bool(y.get("master_xdc")) and (y.get("resources") or {}).get("led") is not None
 
@@ -94,8 +97,9 @@ def make_top(board: str, p: dict) -> str:
     if p["btn"]:
         L += ["    logic btn_s;", "    sync2 #(.WIDTH(1)) u_btn (.clk(clk), .rst(1'b0), .d(btn), .q(btn_s));"]
     if p["uart"]:
-        L += ["    logic rx_s, rx_prev = 1'b1, rx_flip = 1'b0;", "    sync2 #(.WIDTH(1), .RESET_VALUE(1'b1)) u_rx (.clk(clk), .rst(1'b0), .d(uart_rx), .q(rx_s));",
-              "    always_ff @(posedge clk) begin", "        rx_prev <= rx_s;", "        if (rx_prev && !rx_s) rx_flip <= ~rx_flip;   // a start bit arrived", "    end"]
+        L += ["    logic rx_s, rx_prev = 1'b1, rx_flip = 1'b0, rx_armed = 1'b0;", "    sync2 #(.WIDTH(1), .RESET_VALUE(1'b1)) u_rx (.clk(clk), .rst(1'b0), .d(uart_rx), .q(rx_s));",
+              "    always_ff @(posedge clk) begin", "        rx_prev <= rx_s;", "        if (cnt[8]) rx_armed <= 1'b1;               // the synchroniser flops power up at 0, which is not a start bit",
+              "        if (rx_armed && rx_prev && !rx_s) rx_flip <= ~rx_flip;   // a start bit arrived", "    end"]
     L += ["", "    always_comb begin"]
     for i in range(n):
         e = f"cnt[TOPB - {i}]"

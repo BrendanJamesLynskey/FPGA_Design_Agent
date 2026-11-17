@@ -12,7 +12,7 @@ Licence tier: `free` means the installed Vivado licence (Basic tier, 2026.1) imp
 
 | Board id | Board | Part | Family | Trust | Licence tier | Targetable | Smoke build | Scope of the evidence |
 |---|---|---|---|---|---|---|---|---|
-| `nexys_a7_100t` | Digilent Nexys A7-100T | `xc7a100tcsg324-1` |  | hardware | free | yes | no | the owner's board: four peripheral designs run 3 of 3 times (LEDs, UART, SPI, I2C, PDM microphone, QSPI), programmed over JTAG, wall power |
+| `nexys_a7_100t` | Digilent Nexys A7-100T | `xc7a100tcsg324-1` |  | hardware | free | yes | no | the owner's board: four peripheral designs run 3 of 3 times (I2C, SPI, QSPI, PDM microphone; the UART was the check channel), programmed over JTAG, wall power |
 | `kr260` | AMD Kria KR260 Robotics Starter Kit | `xck26-sfvc784-2LV-c` |  | built | free | no | earlier build (not a smoke design) | built as part of the mock trading design (results/b58a, PL Ethernet pins), not as a smoke design; no board run record is in the repository |
 | `basys3` | Digilent Basys 3 | `xc7a35tcpg236-1` | Artix-7 | documented | free | yes | no | board file from Digilent's master XDC and reference manual; no build |
 | `arty_a7_35t` | Digilent Arty A7-35T | `xc7a35ticsg324-1L` | Artix-7 | documented | free | yes | no | board file from Digilent's master XDC and the AMD board file; no build |
@@ -25,10 +25,25 @@ Licence tier: `free` means the installed Vivado licence (Basic tier, 2026.1) imp
 | `zybo_z7_20` | Digilent Zybo Z7-20 | `xc7z020clg400-1` | Zynq-7000 | documented | free | yes | no | board file from Digilent's master XDC; no build |
 | `cora_z7_07s` | Digilent Cora Z7-07S | `xc7z007sclg400-1` | Zynq-7000 | documented | free | yes | no | board file from Digilent's master XDC; no build |
 | `cora_z7_10` | Digilent Cora Z7-10 | `xc7z010clg400-1` | Zynq-7000 | documented | free | yes | no | board file from Digilent's master XDC; no build |
-| `zedboard` | ZedBoard (Avnet and Digilent) | `xc7z020clg484-1` | Zynq-7000 | hardware | free | yes | no | the owner's board ('bump'): bare-metal runs of brief 64B over JTAG (PS, DDR3, fabric DMA chains on the PS clock); the PL user pins (LEDs, switches, buttons, Pmod) were not used by any run |
+| `zedboard` | ZedBoard (Avnet and Digilent) | `xc7z020clg484-1` | Zynq-7000 | hardware | free | yes | no | the owner's board ('bump'): bare-metal runs of brief 64B over JTAG (PS, DDR3, fabric DMA chains on the PS clock); the PL pin facts (clock Y9, LEDs, switches, buttons, Pmod) were not exercised by any run and are only as good as their sources |
 | `pynq_z2` | TUL PYNQ-Z2 | `xc7z020clg400-1` | Zynq-7000 | documented | free | yes | no | board file from the AMD board file for the board; no build |
 | `aup_zu3` | Real Digital AUP-ZU3 | `xczu3eg-sfvc784-2-e` | Zynq UltraScale+ MPSoC | documented | free | yes | no | board file from Real Digital's board files and reference-design constraints; no build |
 | `kv260` | AMD Kria KV260 Vision AI Starter Kit | `xck26-sfvc784-2LV-c` | Zynq UltraScale+ MPSoC (K26 SOM) | documented | free | no | not built: no PL clock or user pin list is documented; a design needs the PS (pl_clk0) | SOM part from the AMD board file and the user guide; carrier pins not listed |
 | `ultra96_v2` | Avnet Ultra96-V2 | `xczu3eg-sbva484-1-i` | Zynq UltraScale+ MPSoC | documented | free | no | not built: no PL clock or user LED pin in the board file; a design needs the PS (pl_clk0) | board file from the AMD board file for the board; no build |
 | `zcu104` | AMD ZCU104 | `xczu7ev-ffvc1156-2-e` | Zynq UltraScale+ MPSoC (EV) | documented | paid | yes | not built: the part is outside the installed licence | board file from the AMD board file for the board; no build |
 | `adalm_pluto` | Analog Devices ADALM-Pluto | `xc7z010clg400-1` | Zynq-7000 | documented | free | no | not built: no user LED, button or free-running clock on a PL pin; the radio interface needs the AD9363 configured by the PS | radio-interface pins from Analog Devices' reference design; the owner has one but no run used it |
+
+## How the boards were chosen
+
+Chosen by the planner's candidate list in brief 95, trimmed to what could be documented from a source in hand. No count of how often each
+board appears in courses, papers or open-source projects was made (that would need a survey this brief did not do), so the choice is
+by the brief's list, and by whether a vendor constraints file or board file exists that we may read or list. Two-board
+families are kept where the part differs (Arty A7-35T and A7-100T, Zybo Z7-10 and Z7-20, Cora Z7-07S and Z7-10) because a part is what a build needs.
+The AUP-ZU3 is in because the owner named it a priority board (an author's third edition of an FPGA book will use it, as reported by the owner).
+
+## Considered and left out
+
+- **Terasic DE10-Nano and DE10-Lite**: the agent has no Quartus back end yet (brief 38 plans one), so a board file would have no flow behind it; listed as a known gap.
+- **Digilent Arty S7-25, Cmod S7-25, Arty Z7-10 and Z7-20, Eclypse Z7, USB104 A7, Genesys ZU, Sword**: not in the brief's candidate list; each has a Digilent master XDC at the same commit and can be added by the steps in boards/SCHEMA.md.
+- **Digilent Nexys A7-50T and Nexys 4 DDR**: the Nexys A7-100T is already the agent's main board; the 50T uses a different part and has no hardware behind it.
+- **Other AMD evaluation boards (ZC702, ZC706, KC705, ZCU102, VCK190 and others)**: not in the brief's candidate list and the owner has none; the AMD board store has files for them, and a licence probe (results/95_boards/licence_probe.json) would say which of their parts the installed licence can implement.

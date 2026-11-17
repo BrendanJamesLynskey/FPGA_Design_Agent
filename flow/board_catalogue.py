@@ -52,11 +52,17 @@ def resolve(text: str) -> tuple[str | None, list[str]]:
     (the request is ambiguous: say which) and ``(None, [])`` when none is. Matching is on whole words of the board id, its
     display name and its aliases; a shorter alias inside a longer matched one ("arty a7" inside "arty a7 100t") does not count."""
     t = " " + _norm(text) + " "
-    found: list[tuple[str, str]] = []
+    found: list[tuple[str, str, bool]] = []
     for b, e in load().items():
         keys = {_norm(b), _norm(e.get("display", ""))} | {_norm(a) for a in e.get("aliases", [])}
-        found += [(b, k) for k in keys if k and f" {k} " in t]
-    keep = {b for b, k in found if not any(k != k2 and f" {k} " in f" {k2} " for _, k2 in found)}
+        for k in filter(None, keys):
+            m = re.search(rf" {re.escape(k)} (\S*)", t)
+            if m:
+                found.append((b, k, bool(re.match(r"\d", m.group(1)))))
+    # a shorter alias inside a longer matched one does not count; then a digit-led word after an alias ("arty s7 25",
+    # "nexys a7 50t") names another model the catalogue does not have, so that alias does not count either
+    live = [(b, k, d) for b, k, d in found if not any(k != k2 and f" {k} " in f" {k2} " for _, k2, _ in found)]
+    keep = {b for b, k, d in live if not d}
     if not keep:
         return None, []
     return (next(iter(keep)), []) if len(keep) == 1 else (None, sorted(keep))
@@ -76,8 +82,15 @@ def smoke_evidence(board: str) -> tuple[bool, str]:
     xdc = BOARDS / board / "smoke" / "design.xdc"
     if r.get("board") != board:
         return False, "the record names another board"
+    top = BOARDS / board / "smoke" / "top.sv"
     if not xdc.is_file() or r.get("xdc_sha256") != sha256(xdc):
         return False, "the record's XDC hash is not the committed smoke XDC's"
+    if not top.is_file() or r.get("top_sha256") != sha256(top):
+        return False, "the record's top.sv hash is not the committed smoke top's"
+    if r.get("part") != board_yaml(board)["part"]:
+        return False, "the record's part is not the board's part"
+    if not str(r.get("vivado_version", "")).startswith("2026.1"):
+        return False, "the record is not a Vivado 2026.1 build"
     g = r.get("gates", {})
     need = ("post_route_timing", "drc", "methodology", "bitstream")
     bad = [k for k in need if g.get(k) is not True]
@@ -86,7 +99,7 @@ def smoke_evidence(board: str) -> tuple[bool, str]:
     return True, ""
 
 
-def built_records_ok(entry: dict[str, Any]) -> tuple[bool, str]:
+def built_records_ok(entry: dict[str, Any], board_part: str = "") -> tuple[bool, str]:
     """A board with no smoke design can still be ``built`` by listed earlier builds (``evidence.built``: paths of
     ``gates.json`` files made with the board's constraints): each must exist, pass every gate and be a 2026.1 build."""
     import json
@@ -100,6 +113,9 @@ def built_records_ok(entry: dict[str, Any]) -> tuple[bool, str]:
         g = json.loads(f.read_text())
         if g.get("pass") is not True or not g.get("gates", {}).get("bitstream_present") or not str(g.get("vivado_version", "")).startswith("2026.1"):
             return False, f"{p} is not a passing 2026.1 build with a bitstream"
+        man = f.parent / "manifest.json"
+        if man.is_file() and board_part and board_part not in man.read_text():
+            return False, f"{p}: its manifest does not name the board's part {board_part}"
     return True, ""
 
 
@@ -107,14 +123,14 @@ def built_ok(board: str, entry: dict[str, Any]) -> tuple[bool, str]:
     ok, why = smoke_evidence(board)
     if ok:
         return True, ""
-    ok2, why2 = built_records_ok(entry)
+    ok2, why2 = built_records_ok(entry, board_yaml(board)["part"])
     return ok2, (why if not (entry.get("evidence") or {}).get("built") else why2)
 
 
 def computed_trust(board: str, entry: dict[str, Any]) -> str:
     hw = (entry.get("evidence") or {}).get("hardware") or []
-    if hw and all((ROOT / p).exists() for p in hw):
-        return "hardware"
+    if hw and all((ROOT / p).exists() for p in hw) and (board_yaml(board).get("hardware_use") or {}).get("owned", entry.get("legacy", False)):
+        return "hardware"          # only a board the owner has; a legacy board file has no hardware_use, its catalogue entry says so
     if built_ok(board, entry)[0]:
         return "built"
     return "documented"
@@ -163,7 +179,7 @@ def table() -> str:
     rows = []
     for b, e in cat.items():
         y = board_yaml(b)
-        smoke = "yes" if smoke_evidence(b)[0] else ("earlier build (not a smoke design)" if built_records_ok(e)[0] else None) or ("not built: " + e["smoke_note"] if e.get("smoke_note") else "no")
+        smoke = "yes" if smoke_evidence(b)[0] else ("earlier build (not a smoke design)" if built_records_ok(e, y["part"])[0] else None) or ("not built: " + e["smoke_note"] if e.get("smoke_note") else "no")
         rows.append(f"| `{b}` | {e['display']} | `{y['part']}` | {y.get('family', '')} | {computed_trust(b, e)} | "
                     f"{e.get('licence_tier', '')} | {'yes' if e.get('targetable') else 'no'} | {smoke} | {_scope(e)} |")
     head = ["# Board catalogue and trust labels", "",
@@ -178,7 +194,10 @@ def table() -> str:
             "from its resource names; `no` means the board has no PL clock or no usable pin list yet (see the board's known gaps).", "",
             "| Board id | Board | Part | Family | Trust | Licence tier | Targetable | Smoke build | Scope of the evidence |",
             "|---|---|---|---|---|---|---|---|---|"]
-    return "\n".join(head + rows) + "\n"
+    cfg = yaml.safe_load((BOARDS / "catalogue.yaml").read_text())
+    tail = ["", "## How the boards were chosen", "", cfg["selection"].strip(), "", "## Considered and left out", ""]
+    tail += [f"- **{n['board']}**: {n['reason']}." for n in cfg["not_included"]]
+    return "\n".join(head + rows + tail) + "\n"
 
 
 def main(argv: list[str] | None = None) -> int:

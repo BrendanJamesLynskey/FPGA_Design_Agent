@@ -22,11 +22,12 @@ module b95_smoke_top (
     sync2 #(.WIDTH(4)) u_sw (.clk(clk), .rst(1'b0), .d(sw), .q(sw_s));
     logic btn_s;
     sync2 #(.WIDTH(1)) u_btn (.clk(clk), .rst(1'b0), .d(btn), .q(btn_s));
-    logic rx_s, rx_prev = 1'b1, rx_flip = 1'b0;
+    logic rx_s, rx_prev = 1'b1, rx_flip = 1'b0, rx_armed = 1'b0;
     sync2 #(.WIDTH(1), .RESET_VALUE(1'b1)) u_rx (.clk(clk), .rst(1'b0), .d(uart_rx), .q(rx_s));
     always_ff @(posedge clk) begin
         rx_prev <= rx_s;
-        if (rx_prev && !rx_s) rx_flip <= ~rx_flip;   // a start bit arrived
+        if (cnt[8]) rx_armed <= 1'b1;               // the synchroniser flops power up at 0, which is not a start bit
+        if (rx_armed && rx_prev && !rx_s) rx_flip <= ~rx_flip;   // a start bit arrived
     end
 
     always_comb begin

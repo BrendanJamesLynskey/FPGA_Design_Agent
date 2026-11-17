@@ -194,13 +194,16 @@ def test_a_smoke_record_must_match_the_committed_xdc(tmp_path, monkeypatch):
     monkeypatch.setattr(cat, "BOARDS", tmp_path / "boards")
     (tmp_path / "boards" / b / "smoke").mkdir(parents=True)
     (tmp_path / "boards" / b / "smoke" / "design.xdc").write_text("x")
+    (tmp_path / "boards" / b / "smoke" / "top.sv").write_text("t")
+    (tmp_path / "boards" / b / "board.yaml").write_text("part: p1\n")
     rec = tmp_path / "results" / "95_boards" / b
     rec.mkdir(parents=True)
-    good = {"board": b, "passed": True, "xdc_sha256": hashlib.sha256(b"x").hexdigest(),
+    good = {"board": b, "passed": True, "xdc_sha256": hashlib.sha256(b"x").hexdigest(), "top_sha256": hashlib.sha256(b"t").hexdigest(),
+            "part": "p1", "vivado_version": "2026.1",
             "gates": {"post_route_timing": True, "drc": True, "methodology": True, "bitstream": True}}
     (rec / "smoke.json").write_text(json.dumps(good))
     assert cat.smoke_evidence(b) == (True, "")
-    for bad in ({"xdc_sha256": "0" * 64}, {"passed": False}, {"gates": {**good["gates"], "drc": False}}, {"board": "other"}):
+    for bad in ({"xdc_sha256": "0" * 64}, {"top_sha256": "0" * 64}, {"part": "p2"}, {"vivado_version": "2025.2"}, {"passed": False}, {"gates": {**good["gates"], "drc": False}}, {"board": "other"}):
         (rec / "smoke.json").write_text(json.dumps({**good, **bad}))
         assert cat.smoke_evidence(b)[0] is False, bad
 
@@ -269,6 +272,11 @@ def test_a_request_names_one_board(text, board):
     ("a Basys 3 or a PYNQ-Z2", ["basys3", "pynq_z2"])])
 def test_an_ambiguous_request_is_not_guessed(text, cands):
     assert cat.resolve(text) == (None, cands)
+
+
+@pytest.mark.parametrize("text", ["Arty S7-25", "Nexys A7-50T", "Zybo Z7-30"])
+def test_a_sibling_model_the_catalogue_lacks_is_not_taken_for_a_listed_one(text):
+    assert cat.resolve(text) == (None, [])
 
 
 def test_an_unknown_board_is_not_guessed():

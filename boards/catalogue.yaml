@@ -7,6 +7,17 @@
 #   legacy           : board.yaml predates schema v2 (no per-fact sources); its sources are in its README and inventory
 #   evidence         : built = earlier gates.json records; hardware = run records on the owner's board
 schema: fpga-design-agent/board-catalogue/v1
+selection: |
+  Chosen by the planner's candidate list in brief 95, trimmed to what could be documented from a source in hand. No count of how often each
+  board appears in courses, papers or open-source projects was made (that would need a survey this brief did not do), so the choice is
+  by the brief's list, and by whether a vendor constraints file or board file exists that we may read or list. Two-board
+  families are kept where the part differs (Arty A7-35T and A7-100T, Zybo Z7-10 and Z7-20, Cora Z7-07S and Z7-10) because a part is what a build needs.
+  The AUP-ZU3 is in because the owner named it a priority board (an author's third edition of an FPGA book will use it, as reported by the owner).
+not_included:
+  - {board: "Terasic DE10-Nano and DE10-Lite", reason: "the agent has no Quartus back end yet (brief 38 plans one), so a board file would have no flow behind it; listed as a known gap"}
+  - {board: "Digilent Arty S7-25, Cmod S7-25, Arty Z7-10 and Z7-20, Eclypse Z7, USB104 A7, Genesys ZU, Sword", reason: "not in the brief's candidate list; each has a Digilent master XDC at the same commit and can be added by the steps in boards/SCHEMA.md"}
+  - {board: "Digilent Nexys A7-50T and Nexys 4 DDR", reason: "the Nexys A7-100T is already the agent's main board; the 50T uses a different part and has no hardware behind it"}
+  - {board: "Other AMD evaluation boards (ZC702, ZC706, KC705, ZCU102, VCK190 and others)", reason: "not in the brief's candidate list and the owner has none; the AMD board store has files for them, and a licence probe (results/95_boards/licence_probe.json) would say which of their parts the installed licence can implement"}
 boards:
   nexys_a7_100t:
     display: Digilent Nexys A7-100T
@@ -18,7 +29,7 @@ boards:
     trust: hardware
     evidence:
       hardware: [results/board_v2/README.md]
-    scope: "the owner's board: four peripheral designs run 3 of 3 times (LEDs, UART, SPI, I2C, PDM microphone, QSPI), programmed over JTAG, wall power"
+    scope: "the owner's board: four peripheral designs run 3 of 3 times (I2C, SPI, QSPI, PDM microphone; the UART was the check channel), programmed over JTAG, wall power"
   kr260:
     display: AMD Kria KR260 Robotics Starter Kit
     aliases: [kria kr260, kr260, kr 260]
@@ -118,7 +129,7 @@ boards:
     trust: hardware
     evidence:
       hardware: [results/64b_zedboard/summary.json]
-    scope: "the owner's board ('bump'): bare-metal runs of brief 64B over JTAG (PS, DDR3, fabric DMA chains on the PS clock); the PL user pins (LEDs, switches, buttons, Pmod) were not used by any run"
+    scope: "the owner's board ('bump'): bare-metal runs of brief 64B over JTAG (PS, DDR3, fabric DMA chains on the PS clock); the PL pin facts (clock Y9, LEDs, switches, buttons, Pmod) were not exercised by any run and are only as good as their sources"
   pynq_z2:
     display: TUL PYNQ-Z2
     aliases: [pynq z2, pynq-z2, pynqz2]

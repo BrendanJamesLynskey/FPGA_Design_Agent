@@ -16,6 +16,8 @@ from flow import board_catalogue as cat
 def board_name(value: str) -> str:
     """argparse ``type=`` for commands that only read a finished design (``document``, ``resume``): the board id for an id or a
     free-text request, whether or not the agent can write that board's constraints."""
+    if (cat.BOARDS / value).is_dir() and value not in cat.load():
+        return value                    # a board directory the catalogue does not list: as before, a plain name
     return board_arg(value, require_targetable=False)
 
 
