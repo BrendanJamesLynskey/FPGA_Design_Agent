@@ -10,7 +10,7 @@ Synthetic data only (brief 87's splits). No board run.
 | File | What | Made by |
 |---|---|---|
 | `stage0.json` | when each model input becomes known, which input is last, the ITCH 5.0 Add Order offsets | `python -m designs.b93_precompute.model.stage0` |
-| `block_equivalence.json` | each table block against the 87 or 89 integer model: test split, 20,000 random vectors, every late value | `B93_RECORD=results/b93 pytest designs/b93_precompute/tests/test_b93_pe.py` |
+| `block_equivalence.json` | each table block against the 87 or 89 integer model: test split, 20,000 random vectors, every late value | `B93_RECORD=results/b93 pytest designs/b93_precompute/tests/test_b93_pe_rtl.py` |
 | `integration_<gbt\|lgs>_pre<0-3>_latency.json` | the 58A stage clocks with the model off and on, speculative and safe, and when the class is valid | `B93_ML_ARM=<1\|4> B93_ML_PRE=<0-3> B93_RECORD=results/b93 pytest designs/b93_precompute/tests/test_b93_integ_rtl.py` |
 | `integration_*_twin*.json` | features and classes equal the twin: generator stream, 300 edge cases, bad-FCS frames, other instruments between tracked ones | same command |
 | `speculation.json` | how often a send on the table's most likely class would be undone (counted, not built) | `python -m designs.b93_precompute.model.speculation` |

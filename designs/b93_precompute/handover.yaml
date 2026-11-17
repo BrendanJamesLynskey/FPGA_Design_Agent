@@ -67,7 +67,7 @@ files:
   sha256: 950817e484b6d1b573ec902f9fd1fdedbea4cfbd9814f413b312224aa4e68266
 commands:
 - what: table blocks against the 87 and 89 models, feature unit in lockstep, gate timing
-  cmd: B93_RECORD=results/b93 python3 -m pytest -q designs/b93_precompute/tests/test_b93_pe.py designs/b93_precompute/tests/test_b93_feat_pre.py
+  cmd: B93_RECORD=results/b93 python3 -m pytest -q designs/b93_precompute/tests/test_b93_pe_rtl.py designs/b93_precompute/tests/test_b93_feat_pre_rtl.py
   heavy: false
   minutes: 3
   needs: Icarus Verilog 12, Verilator 5 (the lint test skips without it)
@@ -89,7 +89,7 @@ evidence:
   how: ci
   what: every table block equals its 87 or 89 model on the test split, 20,000 random vectors and every late value, with
     out_v exactly one clock after l_v; Verilator -Wall clean
-  record: designs/b93_precompute/tests/test_b93_pe.py
+  record: designs/b93_precompute/tests/test_b93_pe_rtl.py
   sha256: 06d5a9a3a125a46ee0115c261afdd05fbca3eeeef97acbf63484bd699fb4d36c
 - id: E2
   activity: build

@@ -27,12 +27,12 @@ designs/b58a_trigger/rtl/trigger_core.sv cf7c64d60a: ML_PRE and ML_ARM 4 added (
 designs/b93_precompute/ooc/ooc.py 950817e484: out-of-context clock search on both parts
 
 ## commands
-table blocks against the 87 and 89 models, feature unit in lockstep, gate timing (~3min): B93_RECORD=results/b93 python3 -m pytest -q designs/b93_precompute/tests/test_b93_pe.py designs/b93_precompute/tests/test_b93_feat_pre.py
+table blocks against the 87 and 89 models, feature unit in lockstep, gate timing (~3min): B93_RECORD=results/b93 python3 -m pytest -q designs/b93_precompute/tests/test_b93_pe_rtl.py designs/b93_precompute/tests/test_b93_feat_pre_rtl.py
 the model behind trigger_core for one ML_ARM and ML_PRE (~1min): B93_ML_ARM=1 B93_ML_PRE=1 B93_RECORD=results/b93 python3 -m pytest -q designs/b93_precompute/tests/test_b93_integ_rtl.py
 [heavy] out-of-context builds and clock search on both parts (~180min): python3 -m designs.b93_precompute.ooc.ooc --part xck26-sfvc784-2LV-c --arms gbt_comb lg_small_comb gbt_pe gbt_pe2 lgs_pe lgs_pe2 ml_feat ml_feat_pre
 
 ## records (path sha256-prefix; claims below cite R<n>)
-R1 designs/b93_precompute/tests/test_b93_pe.py 06d5a9a3a1
+R1 designs/b93_precompute/tests/test_b93_pe_rtl.py 06d5a9a3a1
 R2 results/b93/summary.json f6e69c7195
 
 ## evidence

@@ -70,7 +70,7 @@ Interfaces:
 
 | Step | Command | Heavy slot | Time |
 |---|---|---|---|
-| table blocks against the 87 and 89 models, feature unit in lockstep, gate timing; needs Icarus Verilog 12, Verilator 5 (the lint test skips without it) | `B93_RECORD=results/b93 python3 -m pytest -q designs/b93_precompute/tests/test_b93_pe.py designs/b93_precompute/tests/test_b93_feat_pre.py` | no | about 3 min |
+| table blocks against the 87 and 89 models, feature unit in lockstep, gate timing; needs Icarus Verilog 12, Verilator 5 (the lint test skips without it) | `B93_RECORD=results/b93 python3 -m pytest -q designs/b93_precompute/tests/test_b93_pe_rtl.py designs/b93_precompute/tests/test_b93_feat_pre_rtl.py` | no | about 3 min |
 | the model behind trigger_core for one ML_ARM and ML_PRE; needs Icarus Verilog 12, cocotb 2.0.1; repeat for ML_ARM 1 and 4, ML_PRE 0 to 3 | `B93_ML_ARM=1 B93_ML_PRE=1 B93_RECORD=results/b93 python3 -m pytest -q designs/b93_precompute/tests/test_b93_integ_rtl.py` | no | about 1 min |
 | out-of-context builds and clock search on both parts; needs Vivado 2026.1 and a heavy slot; repeat with --part xc7a100tcsg324-1 | `python3 -m designs.b93_precompute.ooc.ooc --part xck26-sfvc784-2LV-c --arms gbt_comb lg_small_comb gbt_pe gbt_pe2 lgs_pe lgs_pe2 ml_feat ml_feat_pre` | yes | about 180 min |
 
@@ -93,7 +93,7 @@ Tool: Vivado 2026.1. Build ID of the inputs at handover: none (no Vivado build o
 
 | ID | Activity | Result | What | Evidence | Conditions |
 |---|---|---|---|---|---|
-| E1 | simulation | pass | every table block equals its 87 or 89 model on the test split, 20,000 random vectors and every late value, with out_v exactly one clock after l_v; Verilator -Wall clean | [`designs/b93_precompute/tests/test_b93_pe.py`](tests/test_b93_pe.py) (run in CI) | - |
+| E1 | simulation | pass | every table block equals its 87 or 89 model on the test split, 20,000 random vectors and every late value, with out_v exactly one clock after l_v; Verilator -Wall clean | [`designs/b93_precompute/tests/test_b93_pe_rtl.py`](tests/test_b93_pe_rtl.py) (run in CI) | - |
 | E2 | build | pass | out-of-context, post-route builds of eight blocks on the K26 and the Artix-7 100T with a clock search; every recorded clock closed setup, hold and pulse width | [`results/b93/summary.json`](../../results/b93/summary.json) | - |
 
 Gates at handover: `rtl_equals_twin` pass, `ooc_build_2026_1` pass, `board_run` not-run.
