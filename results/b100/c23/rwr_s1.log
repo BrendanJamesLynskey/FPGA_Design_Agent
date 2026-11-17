@@ -1,0 +1,118 @@
+Running as unit: run-r2c638880a6384612a7ee3adae92b6c29.scope; invocation ID: 3285535476f4443aa7abae024624cb20
+INFO: [Common 17-3922] A valid Vivado Design Suite BASIC license has been detected. Your current license is active and will expire on 10-nov-2027.
+
+****** Vivado v2026.1 (64-bit)
+  **** SW Build 6511674 on Tue Jun 16 11:01:26 MDT 2026
+  **** IP Build 6504888 on Tue Jun 09 09:05:25 MDT 2026
+  **** SharedData Build 6501428 on Mon Jun 08 17:34:18 MDT 2026
+  **** Start of session at: Tue Nov 17 17:32:28 2026
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+    ** Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+
+source /home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/scripts/../../../flow/rw/referee.tcl
+# source [file join [file dirname [info script]] common.tcl]
+## proc env_or {k d} { if {[info exists ::env($k)] && $::env($k) ne ""} { return $::env($k) } else { return $d } }
+## proc b100_threads {} {
+##     set n [env_or B100_THREADS 1]
+##     set_param general.maxThreads $n
+##     set_param synth.maxThreads $n
+##     set_param chipscope.maxJobs 1
+## }
+## proc lap {name} {
+##     upvar t0 t0 times times
+##     set n [clock milliseconds]
+##     dict set times $name [expr {($n - $t0) / 1000.0}]
+##     set t0 $n
+## }
+## proc write_run_json {out times part period} {
+##     set wns [get_property SLACK [lindex [get_timing_paths -setup -max_paths 1] 0]]
+##     set whs [get_property SLACK [lindex [get_timing_paths -hold -max_paths 1] 0]]
+##     set lut [llength [get_cells -hier -filter {REF_NAME =~ LUT*}]]
+##     set ff  [llength [get_cells -hier -filter {REF_NAME =~ FD*}]]
+##     set f [open ${out}_run.json w]
+##     set tj [join [lmap {k v} $times {format {"%s": %s} $k $v}] {, }]
+##     puts $f "{\"vivado\": \"[version -short]\", \"part\": \"$part\", \"period_ns\": $period, \"wns_ns\": $wns, \"whs_ns\": $whs, \"lut\": $lut, \"ff\": $ff, \"times_s\": {$tj}}"
+##     close $f
+## }
+## proc slack_of {from to} {
+##     set p [lindex [get_timing_paths -setup -from $from -to $to -max_paths 1] 0]
+##     if {$p eq ""} { return null }
+##     return [get_property SLACK $p]
+## }
+## proc chain_metrics {out} {
+##     set period [get_property PERIOD [lindex [get_clocks] 0]]
+##     set xd [get_cells -hier -filter {NAME =~ u_mac/x_d_reg* || NAME =~ u_mac/x_c_reg*}]
+##     set gd [get_cells -hier -filter {NAME =~ u_pcs/gt_d_reg*}]
+##     set pcs [get_cells -hier -filter {NAME =~ u_pcs/*}]
+##     set gtp [get_pins u_gt/TXDATA*]
+##     set wns [get_property SLACK [lindex [get_timing_paths -setup -max_paths 1] 0]]
+##     set f [open ${out}_chain.json w]
+##     puts $f "{\"period_ns\": $period, \"wns_all_ns\": $wns, \"wns_mac_to_pcs_ns\": [slack_of $xd $gd], \"wns_pcs_to_gt_ns\": [slack_of $gd $gtp], \"wns_inside_pcs_ns\": [slack_of $pcs $pcs]}"
+##     close $f
+## }
+# b100_threads
+# set out [env_or B100_OUT referee]
+# set times [dict create]
+# set t0 [clock milliseconds]
+# open_checkpoint $::env(B100_IN_DCP)
+Command: open_checkpoint /home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/scripts/../../../results/b100/c23/rwr_s1_in.dcp
+
+Starting open_checkpoint Task
+
+Time (s): cpu = 00:00:00.07 ; elapsed = 00:00:00.16 . Memory (MB): peak = 1485.250 ; gain = 8.906 ; free physical = 6125 ; free virtual = 21475
+WARNING: [Vivado 12-8410] Design file '/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/results/b100/c23/rwr_s1_in.dcp' has failed integrity check (2). There is either a missing chekcsum or mismatch. Please regenerate the DCP file.
+INFO: [Device 21-403] Loading part xck26-sfvc784-2LV-c
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.02 . Memory (MB): peak = 2755.430 ; gain = 0.000 ; free physical = 4797 ; free virtual = 20147
+INFO: [Netlist 29-17] Analyzing 4 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+INFO: [Project 1-479] Netlist was created with RapidWright 2026.1.2
+INFO: [Project 1-570] Preparing netlist for logic optimization
+Parsing XDC File [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/results/b100/c23/rwr_s1_in/chain_top.xdc]
+Finished Parsing XDC File [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/results/b100/c23/rwr_s1_in/chain_top.xdc]
+Parsing XDC File [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/results/b100/c23/rwr_s1_in/chain_top_late.xdc]
+create_clock: Time (s): cpu = 00:00:12 ; elapsed = 00:00:20 . Memory (MB): peak = 2755.430 ; gain = 0.000 ; free physical = 4772 ; free virtual = 20124
+Finished Parsing XDC File [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/results/b100/c23/rwr_s1_in/chain_top_late.xdc]
+Reading placement.
+Reading placer database...
+Reading routing.
+Read Old XDEF File: Time (s): cpu = 00:00:00.89 ; elapsed = 00:00:00.97 . Memory (MB): peak = 2755.430 ; gain = 0.000 ; free physical = 4772 ; free virtual = 20124
+Restored from archive | CPU: 0.910000 secs | Memory: 2.254288 MB |
+Finished XDEF File Restore: Time (s): cpu = 00:00:00.9 ; elapsed = 00:00:00.98 . Memory (MB): peak = 2755.430 ; gain = 0.000 ; free physical = 4772 ; free virtual = 20124
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2968.805 ; gain = 0.000 ; free physical = 4503 ; free virtual = 19856
+INFO: [Project 1-111] Unisim Transformation Summary:
+  A total of 2 instances were transformed.
+  IBUF => IBUF (IBUFCTRL, INBUF): 2 instances
+
+open_checkpoint: Time (s): cpu = 00:01:07 ; elapsed = 00:01:38 . Memory (MB): peak = 2968.840 ; gain = 1497.465 ; free physical = 4503 ; free virtual = 19856
+# set_property SEVERITY {Warning} [get_drc_checks {NSTD-1 UCIO-1}]
+# if {[env_or B100_ROUTE 0] eq "1"} {
+#     route_design
+#     lap route
+# }
+# report_route_status -file ${out}_route_status.rpt
+# report_timing -setup -max_paths 10 -nworst 1 -file ${out}_timing.rpt
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -2LV, Temperature grade: C, Delay Type: max.
+INFO: [Timing 38-35] Done setting XDC timing constraints.
+INFO: [Timing 38-78] ReportTimingParams: -max_paths 10 -nworst 1 -delay_type max -sort_by slack.
+report_timing: Time (s): cpu = 00:00:09 ; elapsed = 00:00:13 . Memory (MB): peak = 3405.934 ; gain = 427.223 ; free physical = 4198 ; free virtual = 19562
+# report_timing -hold -max_paths 3 -file ${out}_hold.rpt
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -2LV, Temperature grade: C, Delay Type: min.
+INFO: [Timing 38-78] ReportTimingParams: -max_paths 3 -nworst 1 -delay_type min -sort_by slack.
+# report_drc -file ${out}_drc.rpt
+Command: report_drc -file /home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/scripts/../../../results/b100/c23/rwr_s1_drc.rpt
+INFO: [IP_Flow 19-234] Refreshing IP repositories
+INFO: [IP_Flow 19-1704] No user IP repositories specified
+INFO: [IP_Flow 19-2313] Loaded Vivado IP repository '/home/brendan/Xilinx/2026.1/data/ip'.
+INFO: [Vivado_Tcl 2-168] The results of DRC are in file /home/brendan/Claude_sandbox/_worktrees/100-rapidwright/results/b100/c23/rwr_s1_drc.rpt.
+report_drc completed successfully
+report_drc: Time (s): cpu = 00:00:04 ; elapsed = 00:00:08 . Memory (MB): peak = 3484.832 ; gain = 78.898 ; free physical = 4097 ; free virtual = 19462
+# report_utilization -file ${out}_util.rpt
+# write_run_json $out $times [get_property PART [current_design]] [get_property PERIOD [lindex [get_clocks] 0]]
+# if {[llength [get_cells -quiet u_gt]]} { chain_metrics $out }
+# if {[env_or B100_BITSTREAM 0] eq "1"} {
+#     write_bitstream -force ${out}.bit
+#     lap bitstream
+#     set f [open ${out}_bitstream.txt w]; puts $f "bitstream [file size ${out}.bit] bytes"; close $f
+# }
+INFO: [Common 17-206] Exiting Vivado at Tue Nov 17 17:34:46 2026...
