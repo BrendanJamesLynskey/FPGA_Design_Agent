@@ -1,0 +1,353 @@
+# Brief 68 handover: the facts behind README.md and AGENT.md (docs/documentation_standard.md).
+# Measurement values and every sha256 are filled from the records by `python -m flow.handover fill`;
+# do not type them. Render with `python -m flow.handover write <this directory>`.
+schema: fda-handover/1
+id: b100_rapidwright
+title: 'RapidWright in the agent: relocatable blocks, latency-aware placement and routing control, judged by Vivado 2026.1'
+kind: showcase
+produced_by: human
+summary: Three RapidWright capabilities built as tested agent tools and compared with Vivado alone on the K26 (xck26-sfvc784-2LV-c).
+  They are a pre-implemented block stamped at other sites with its internal timing kept, an annealing placer for the transmit
+  latency chain of brief 96, and RWRoute routing of the whole design or of the worst-path nets. Vivado 2026.1 times every
+  result; RapidWright's own estimates are never used. The block capability works and is the only one that beats Vivado alone
+  (on repeatability); placement and routing lose to Vivado on timing; the agent given the tools did no better than the agent
+  without them.
+scope_not:
+- a board run; no bitstream of the chain was made or loaded, and the chain's GT is a bare primitive without a reference
+  clock or reset sequence
+- a claim that RapidWright's placer or router is better or worse than Vivado's in general; this is one chain, one part,
+  our first-cut placer and a handful of period perturbations
+- the full brief 96 design; the chain is brief 96's own MAC and PCS RTL with a bare GT, not the GT Wizard design
+target:
+  part: xck26-sfvc784-2LV-c
+  board: Kria KR260
+  top: chain_top (the chain); reloc_top (the block runs); s0_top (stage 0, also xc7a100tcsg324-1)
+  tool: Vivado 2026.1
+  note: RapidWright 2026.1.2 with the JRE inside Vivado 2026.1; no board is touched
+clocks:
+- name: clk
+  mhz: 312.5
+  source: designs/b100_rapidwright/agent_run/arm_a/design.xdc
+  note: the stage 2 agent runs' constraint (3.2 ns); the other runs set their period per run (3.40 ns and perturbations)
+    through the scripts, so no fixed XDC clock exists for them
+resets:
+- name: rst
+  active: high
+  note: synchronous, from a register in the source shift register; the RTL is brief 96's and is not changed here
+interfaces:
+- name: agent tools (rw_status, rw_relocate_block, rw_place_chain, rw_route, rw_referee)
+  type: agent/core/rapidwright_tools.py; offered to a role only with FDA_RAPIDWRIGHT=1 and RapidWright installed
+  doc: designs/b100_rapidwright/docs/tools.md
+  note: every argument is validated, inputs are checkpoint file names inside build/<variant>/, outputs go to build/<variant>/rw/,
+    and only rw_referee returns timing, from Vivado
+- name: RapidWright scripts
+  type: flow/rw/*.py run with the pinned venv python (flow/rapidwright_pin.py)
+  doc: designs/b100_rapidwright/docs/design.md
+  note: relocate.py, place_chain.py, route.py, roundtrip.py print one JSON line; they need RapidWright and Vivado 2026.1
+    on PATH
+parameters:
+- name: clock period
+  value: set per run by the scripts, 3.40 ns for the first chain run, plus 0.01 ns per perturbation (3.2 ns in the agent
+    runs)
+  legal: any period the scripts are given
+  note: there is no fixed clock in an XDC; impl.tcl and stamp.tcl add create_clock on port clk from the run's period
+- name: RapidWright
+  value: 2026.1.2
+  legal: the release whose year and minor match the Vivado release (2026.1.x)
+  note: pinned with hashes in flow/rapidwright_pin.py; tools/rapidwright_env/setup.sh installs it
+- name: block relocation targets
+  value: SLICE_X35Y57, SLICE_X41Y117, SLICE_X41Y177 (original block at SLICE_X35Y87)
+  legal: only the anchor sites RapidWright lists as valid for the block's footprint
+  note: for the 128-slice block three columns were valid (X35, X38, X41)
+- name: chain placer
+  value: simulated annealing on whole slices, 200000 moves, window of 60 columns by 40 rows around GTHE4_CHANNEL_X0Y6
+  legal: any slice site of the same type inside the window that is free; slices with carry chains or LUT RAM stay
+  note: weighted half-perimeter wire length in tile units; its estimate is logged, never reported as a result
+files:
+- path: designs/b100_rapidwright/docs/design.md
+  what: the design note written before the code, and what changed after it (section 6)
+  sha256: d11dac793b84121e96ba256aeff93489e7d81717192905beb4868bf751ae1064
+- path: designs/b100_rapidwright/docs/what_we_found.md
+  what: the results with their tables, rendered from the summary record
+  sha256: ea95de01e5565ff8834350e5246e35e3bf7606be03d7c7a002d542f6c4427a58
+- path: designs/b100_rapidwright/docs/licences.md
+  what: licences of RapidWright, its device files and the Java runtime, and what is committed
+  sha256: 4b545ec4751c6c93334dff66ea07c400ca9d237e5eb61b171d51f23bc338a06a
+- path: designs/b100_rapidwright/docs/tools.md
+  what: datasheet for the five agent tools and the scripts behind them
+  sha256: 9a6df028acc79abb49a4543d2a9040685556038be275ed24930d69adb5895cf8
+- path: designs/b100_rapidwright/rtl/pcs_unit.sv
+  what: the relocatable block (brief 96's pcs_tx with its own source and sink, three input pins)
+  sha256: c825d999f406543c7622aa98c40a92ff26c19bc23b88a95ecee07c4fa243422e
+- path: designs/b100_rapidwright/rtl/chain_top.sv
+  what: the transmit chain with a bare GT
+  sha256: 0204d59663b9e09f43075ce562d8b9d8ecd871c4f7dff75e2afd972b203e2ac4
+- path: designs/b100_rapidwright/scripts/run_c1.sh
+  what: capability 1 end to end
+  sha256: fa17946406d350f8575ab3f57efeaf32ebcd3114e690a44853da2046ac96ab36
+- path: designs/b100_rapidwright/scripts/run_c23.sh
+  what: capabilities 2 and 3 end to end
+  sha256: ea789b7cfd937edf68676d315088a2f35f84c1497858249b8f1d3a38a48734d6
+- path: designs/b100_rapidwright/agent_run/run_arm.py
+  what: the stage 2 agent runs, with and without the tools
+  sha256: 4b12b9c2ce0ee3564f172dd60bb6f34f20aa10b20ca2abc39a56aedd2006784e
+- path: flow/rw/place_chain.py
+  what: the annealing placer
+  sha256: d6e884f39285972e48cd6e2a5f34f95e2620dc679b0bf737fe01848c69dbde91
+- path: flow/rw/route.py
+  what: RWRoute full and net-list routing
+  sha256: 2ddfda190ff50d08746186215a1f502b421fa153a2448d2d9bf6ff4226b84d55
+- path: flow/rw/relocate.py
+  what: block relocation
+  sha256: d1fd27257fee3dbe838295e1fc0171559959fb9ee577812abc25c727bef28213
+- path: flow/rapidwright_pin.py
+  what: versions, hashes and paths of the RapidWright install
+  sha256: 00b1af66eb08d14b1cb336444d3aadaec2075d10cd9675d756d76438ace09579
+commands:
+- what: install RapidWright into a git-ignored venv (no root; downloads the jar from AMD's GitHub release)
+  cmd: tools/rapidwright_env/setup.sh
+  heavy: false
+  minutes: 5
+  needs: Python 3.12, network
+- what: capability 1 (block, relocation, stamp, Vivado alone), three site targets, two period perturbations
+  cmd: PERIODS="3.40 3.41" designs/b100_rapidwright/scripts/run_c1.sh
+  heavy: true
+  minutes: 90
+  needs: Vivado 2026.1, RapidWright, a heavy slot declared as Vivado impl peak 4G
+- what: capabilities 2 and 3 on the chain, per period perturbation
+  cmd: BASE=3.40 STEPS="0 1 2" designs/b100_rapidwright/scripts/run_c23.sh
+  heavy: true
+  minutes: 120
+  needs: Vivado 2026.1, RapidWright, a heavy slot declared as Vivado impl peak 4G
+- what: the stage 2 agent runs (access key in .env; Claude Code token file)
+  cmd: python3 designs/b100_rapidwright/agent_run/run_arm.py a --max-turns 30 --minutes 75
+  heavy: true
+  minutes: 75
+  needs: Vivado 2026.1, RapidWright, the Claude Code arm of brief 05c, a heavy slot
+- what: tests that need neither tool
+  cmd: python3 -m pytest -q designs/b100_rapidwright/tests agent/tests/test_100_rapidwright.py
+  heavy: false
+  minutes: 1
+  needs: pytest
+evidence:
+- id: E1
+  activity: review
+  result: pass
+  what: RapidWright reads and writes Vivado 2026.1 checkpoints for both parts and Vivado accepts them (route, DRC, bitstream)
+  record: results/b100/summary.json
+  sha256: f11cdfbc6fd872332b539fb1c5798a749582ab1a76bec124d8d2ad9f61d1cfdc
+- id: E2
+  activity: build
+  result: pass
+  what: every comparison number is Vivado 2026.1 timing on a routed checkpoint (relocation, placement, routing runs)
+  record: results/b100/summary.json
+  sha256: f11cdfbc6fd872332b539fb1c5798a749582ab1a76bec124d8d2ad9f61d1cfdc
+- id: E3
+  activity: lint
+  result: pass
+  how: ci
+  what: argument validation, fixed argv, refusals and the skip-without-RapidWright behaviour of the agent tools; the block-path
+    analysis
+  record: agent/tests/test_100_rapidwright.py
+  sha256: 13128ba47424c9909a00ae232dbe433f22bdb8fa36f6c7e691abe13fcd68c056
+measurements:
+- id: M1
+  what: K26 checkpoint WNS after RapidWright read and write, Vivado route_design
+  category: timing
+  key: s0_k26_wns_after
+  unit: ns
+  record: results/b100/summary.json
+  field: stage0.xck26.after_rapidwright_wns_ns
+  conditions: s0_top at a 4 ns target, Vivado 2026.1, one thread; the value before the round trip is in the same record
+  value: 0.218
+  sha256: f11cdfbc6fd872332b539fb1c5798a749582ab1a76bec124d8d2ad9f61d1cfdc
+- id: M2
+  what: Artix-7 100T checkpoint WNS after RapidWright read and write, Vivado route_design
+  category: timing
+  key: s0_a7_wns_after
+  unit: ns
+  record: results/b100/summary.json
+  field: stage0.xc7a100t.after_rapidwright_wns_ns
+  conditions: as M1; the 4 ns target is missed on this part before and after
+  value: -5.36
+  sha256: f11cdfbc6fd872332b539fb1c5798a749582ab1a76bec124d8d2ad9f61d1cfdc
+- id: M3
+  what: JVM scope peak memory on a first checkpoint read for the K26
+  category: resources
+  key: jvm_peak_gib
+  unit: GiB
+  record: results/b100/summary.json
+  field: stage0.jvm_peak_gib_first_read
+  conditions: cgroup peak of the whole scope including the Vivado RapidWright starts; under 1 GiB when the EDIF is cached
+  value: 2.6
+  sha256: f11cdfbc6fd872332b539fb1c5798a749582ab1a76bec124d8d2ad9f61d1cfdc
+- id: M4
+  what: baseline chain, achieved period at a 3.40 ns target, Vivado alone, perturbation s0
+  category: timing
+  key: base_s0_period
+  unit: ns
+  record: results/b100/summary.json
+  field: capabilities23.rows[0].achieved_period_ns
+  conditions: target minus whole-design WNS; chain_top on the K26, one thread, Vivado 2026.1
+  value: 3.776
+  sha256: f11cdfbc6fd872332b539fb1c5798a749582ab1a76bec124d8d2ad9f61d1cfdc
+- id: M5
+  what: baseline chain, two-clock chain latency at that period
+  category: latency
+  key: base_s0_latency
+  unit: ns
+  record: results/b100/summary.json
+  field: capabilities23.rows[0].chain_latency_ns_2clk
+  conditions: two registers on the wire-to-wire path (MAC output, PCS output) times the achieved period; the GT's own latency
+    is not included
+  value: 7.552
+  sha256: f11cdfbc6fd872332b539fb1c5798a749582ab1a76bec124d8d2ad9f61d1cfdc
+- id: M6
+  what: baseline chain LUTs
+  category: resources
+  key: base_lut
+  unit: LUT
+  record: results/b100/summary.json
+  field: capabilities23.rows[0].lut
+  conditions: as M4; the same count in every arm (RapidWright moves, it does not resynthesise)
+  value: 1768
+  sha256: f11cdfbc6fd872332b539fb1c5798a749582ab1a76bec124d8d2ad9f61d1cfdc
+- id: M7
+  what: baseline chain flip-flops
+  category: resources
+  key: base_ff
+  unit: FF
+  record: results/b100/summary.json
+  field: capabilities23.rows[0].ff
+  conditions: as M4
+  value: 414
+  sha256: f11cdfbc6fd872332b539fb1c5798a749582ab1a76bec124d8d2ad9f61d1cfdc
+- id: M8
+  what: mean achieved period, Vivado alone, over the perturbations
+  category: timing
+  key: base_mean_period
+  unit: ns
+  record: results/b100/summary.json
+  field: capabilities23.by_arm.base.achieved_period_ns_mean
+  conditions: N runs in the record; perturbation is the target period (+0.01 ns each)
+  value: 3.95
+  sha256: f11cdfbc6fd872332b539fb1c5798a749582ab1a76bec124d8d2ad9f61d1cfdc
+- id: M9
+  what: mean achieved period, our annealing placement then Vivado routing
+  category: timing
+  key: place_mean_period
+  unit: ns
+  record: results/b100/summary.json
+  field: capabilities23.by_arm.place.achieved_period_ns_mean
+  conditions: as M8, the same placed checkpoints as M8 are the starting point
+  value: 4.429
+  sha256: f11cdfbc6fd872332b539fb1c5798a749582ab1a76bec124d8d2ad9f61d1cfdc
+- id: M10
+  what: mean achieved period, RWRoute routing of Vivado's placement
+  category: timing
+  key: rwr_mean_period
+  unit: ns
+  record: results/b100/summary.json
+  field: capabilities23.by_arm.rwr.achieved_period_ns_mean
+  conditions: as M8; Vivado checks and times, does not route
+  value: 5.877
+  sha256: f11cdfbc6fd872332b539fb1c5798a749582ab1a76bec124d8d2ad9f61d1cfdc
+- id: M11
+  what: mean achieved period, RWRoute on the worst-path nets inside Vivado's routing
+  category: timing
+  key: fixed_mean_period
+  unit: ns
+  record: results/b100/summary.json
+  field: capabilities23.by_arm.fixed.achieved_period_ns_mean
+  conditions: as M8
+  value: 4.611
+  sha256: f11cdfbc6fd872332b539fb1c5798a749582ab1a76bec124d8d2ad9f61d1cfdc
+- id: M12
+  what: stamped blocks, copy 3 endpoints with the same delay as copy 0
+  category: other
+  key: stamp_c3_identical
+  unit: endpoints
+  record: results/b100/summary.json
+  field: capability1.blocks.stamp_p3_40.copies.3.endpoints_identical
+  conditions: of the endpoints common to both copies, period perturbation 3.40 ns, Vivado data-path delay
+  value: 351
+  sha256: f11cdfbc6fd872332b539fb1c5798a749582ab1a76bec124d8d2ad9f61d1cfdc
+- id: M13
+  what: Vivado alone, the same four-copy design, copy 3 endpoints with the same delay as copy 0
+  category: other
+  key: alone_c3_identical
+  unit: endpoints
+  record: results/b100/summary.json
+  field: capability1.blocks.alone_p3_40.copies.3.endpoints_identical
+  conditions: as M12
+  value: 6
+  sha256: f11cdfbc6fd872332b539fb1c5798a749582ab1a76bec124d8d2ad9f61d1cfdc
+- id: M14
+  what: stage 2, tool calls of the arm with the RapidWright tools
+  category: other
+  key: agent_a_calls
+  unit: calls
+  record: results/b100/summary.json
+  field: stage2.a.tool_calls
+  conditions: Claude Sonnet 5.5, 30 turn cap, 75 minute cap, one run
+  value: 12
+  sha256: f11cdfbc6fd872332b539fb1c5798a749582ab1a76bec124d8d2ad9f61d1cfdc
+- id: M15
+  what: stage 2, tool calls of the arm without the RapidWright tools
+  category: other
+  key: agent_b_calls
+  unit: calls
+  record: results/b100/summary.json
+  field: stage2.b.tool_calls
+  conditions: as M14
+  value: 15
+  sha256: f11cdfbc6fd872332b539fb1c5798a749582ab1a76bec124d8d2ad9f61d1cfdc
+gaps:
+- about: power
+  text: Not measured; no power report was made for any run, and no bitstream of the chain exists.
+- about: throughput
+  text: Not applicable to this work; the chain moves one 64-bit word a clock by construction and no throughput figure is
+    claimed.
+- about: board_run
+  text: No board was touched, so no claim is made that a faster chain survives the transceiver's own latency; that is a
+    question for an owner session.
+- about: seeds
+  text: Vivado's placer has no seed parameter, so a seed is a 0.01 ns step of the target period; two or three of them per
+    capability, which shows scatter but is not a distribution.
+- about: placer
+  text: The annealer is a first cut that minimises wire length with fixed weights; the comparison says nothing about what
+    a timing-driven RapidWright placer would do.
+- about: single_chain
+  text: One chain, one part (the K26 for all three capabilities; the Artix-7 only in stage 0), and the chain's GT is a bare
+    primitive without the real clocking.
+- about: block_interface
+  text: A pre-implemented block with a wide input bus could not be stamped in Vivado 2026.1 (input pins unreachable past
+    locked routes); the block used has three input pins.
+- about: stage2
+  text: Stage 2 is one run per arm; the arms differ in tools only, but the without arm's pblock build outlasted the tool
+    call timeout, so its second attempt was never seen by the agent.
+- about: review
+  text: One Sonnet review and one fix round per the check-once rule; the fixes are not re-reviewed.
+next_steps:
+- Merge brief 97's latency path tool when it lands and give the placer its chain instead of the fixed cell patterns.
+- A timing-driven placer that takes criticality from Vivado's report each round, and RWRoute with Vivado's delay model,
+  then repeat the comparison on the full brief 96 design.
+- Hand the stamped-block flow a wider interface by routing the block's input pins in context before locking its routes,
+  or by reserving pin access in the out-of-context run.
+open_questions:
+- Does the relocatable block keep its delays on the Artix-7, where the column structure differs?
+history:
+- date: '2026-11-17'
+  brief: '100'
+  note: stage 0, three capabilities, tools and the with-and-without agent runs
+numbers_allow:
+- token: '2026.1'
+  reason: the Vivado and RapidWright release
+state:
+  stage: built
+  gates:
+    rapidwright_roundtrip: pass
+    comparison_vivado_2026_1: pass
+  vivado: '2026.1'
+  kb_pin: 93d158c
+  build_id: null

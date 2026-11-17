@@ -38,10 +38,11 @@ def table(name):
         return md(rows, ["run", "target (ns)", "WNS (ns)", "WHS (ns)", "LUT", "FF", "synth (s)", "place (s)", "route (s)"])
     if name == "c23_rows":
         rows = [[r["arm"], r["seed"], r["target_ns"], r["wns_all_ns"], r["wns_mac_to_pcs_ns"], r["wns_pcs_to_gt_ns"], r["whs_ns"], r["achieved_period_ns"],
-                 r["chain_latency_ns_2clk"], r["lut"], r["ff"], sum(r["vivado_times_s"].values()), r["rapidwright"].get("route_s", r["rapidwright"].get("seconds", ""))]
+                 r["chain_latency_ns_2clk"], r["lut"], r["ff"], r["vivado_times_s"].get("place", ""), r["vivado_times_s"].get("route", ""),
+                 r["rapidwright"].get("route_s", r["rapidwright"].get("seconds", ""))]
                 for r in S["capabilities23"]["rows"]]
         return md(rows, ["arm", "seed", "target (ns)", "WNS all (ns)", "WNS MAC to PCS (ns)", "WNS PCS to GT (ns)", "WHS (ns)", "achieved period (ns)",
-                         "2-clock chain latency (ns)", "LUT", "FF", "Vivado time of the run (s)", "RapidWright time (s)"])
+                         "2-clock chain latency (ns)", "LUT", "FF", "Vivado place (s)", "Vivado route (s)", "RapidWright (s)"])
     if name == "c23_arms":
         rows = [[a, S["capabilities23"]["arms"][a], v["n"], v["achieved_period_ns_mean"], v["min"], v["max"], v["stdev"], v["wns_closed"]] for a, v in S["capabilities23"]["by_arm"].items()]
         return md(rows, ["arm", "what", "runs", "mean achieved period (ns)", "min", "max", "std dev", "runs that closed"])

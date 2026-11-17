@@ -32,6 +32,7 @@ out["stage0"] = {
     "xc7a100t": {"vivado_wns_ns": jl(s0 / "xc7a100tcsg324-1_run.json")["wns_ns"], "after_rapidwright_wns_ns": jl(s0 / "xc7_rw_ref_run.json")["wns_ns"],
                  "roundtrip": last_json_line(s0 / "rw_xc7a100t.log"), "bitstream_bytes": int(re.search(r"(\d+)", (s0 / "xc7_rw_ref_bitstream.txt").read_text()).group(1))},
     "jvm_peak_gib_first_read": time_file(s0 / "rw_xck26_peak.time")["peak_gib"],
+    "jvm_peak_gib_cached": time_file(s0 / "rw_xck26_cached.time")["peak_gib"],
 }
 # --- capability 1
 c1 = R / "c1"
