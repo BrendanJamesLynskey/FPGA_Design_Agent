@@ -32,7 +32,7 @@ module rate_match #(
     input  logic        w_os,       // the block was an ordered set (shown by the decoder as idles)
     input  logic        w_lock,     // PCS block lock (write domain)
     input  logic        clr_w,      // clear the write-side counter (write domain pulse)
-    output logic [31:0] n_ovf,
+    output logic [31:0] n_ovf, n_wr,
     input  logic        rclk,
     input  logic        rrst,
     input  logic        clr_r,      // clear the read-side counters (read domain pulse)
@@ -40,7 +40,7 @@ module rate_match #(
     output logic [63:0] r_d,
     output logic [7:0]  r_c,
     output logic        r_lock,
-    output logic [31:0] n_ins, n_del, n_stall, n_out, fill_min, fill_max
+    output logic [31:0] n_ins, n_del, n_stall, n_out, n_drain, fill_min, fill_max
 );
     localparam int DEPTH = 1 << AW;
     localparam int PW = AW + 1;
@@ -54,13 +54,13 @@ module rate_match #(
     assign wfull = ((wptr - rp_s) >= PW'(DEPTH));
 
     always_ff @(posedge wclk) begin
-        if (clr_w) n_ovf <= '0;
+        if (clr_w) begin n_ovf <= '0; n_wr <= '0; end
         if (w_v) begin
             if (wfull) n_ovf <= n_ovf + 32'd1;
-            else begin mem[wptr[AW - 1:0]] <= w_ent; wptr <= wptr + PW'(1); end
+            else begin mem[wptr[AW - 1:0]] <= w_ent; wptr <= wptr + PW'(1); n_wr <= n_wr + 32'd1; end
         end
     end
-    initial begin n_ovf = '0; for (int i = 0; i < DEPTH; i++) mem[i] = '0; end
+    initial begin n_ovf = '0; n_wr = '0; for (int i = 0; i < DEPTH; i++) mem[i] = '0; end
 
     xpm_cdc_gray #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .REG_OUTPUT(WP_REG), .SIM_ASSERT_CHK(0), .SIM_LOSSLESS_GRAY_CHK(0), .WIDTH(PW)) u_wp (
         .src_clk(wclk), .src_in_bin(wptr), .dest_clk(rclk), .dest_out_bin(wp_s));
@@ -82,20 +82,20 @@ module rate_match #(
     // a start block (lane 0 or lane 4) or a data block leaves the stream inside a frame
     assign head_frame = (head[71:64] == 8'h00) || (head[71:64] == 8'h01 && head[7:0] == 8'hFB) || (head[71:64] == 8'h1F && head[39:32] == 8'hFB);
     initial begin
-        n_ins = '0; n_del = '0; n_stall = '0; n_out = '0; fill_min = '1; fill_max = '0; r_v = 1'b0; r_d = '0; r_c = '0; r_lock = 1'b0;
+        n_ins = '0; n_del = '0; n_stall = '0; n_out = '0; n_drain = '0; fill_min = '1; fill_max = '0; r_v = 1'b0; r_d = '0; r_c = '0; r_lock = 1'b0;
     end
     always_ff @(posedge rclk) begin
         r_v <= 1'b0;
         if (rrst) begin
             rptr <= wp_s; pace <= '0; in_frame <= 1'b0; idle_run <= '0; r_lock <= 1'b0; r_d <= '0; r_c <= '0;
-            n_ins <= '0; n_del <= '0; n_stall <= '0; n_out <= '0; fill_min <= '1; fill_max <= '0;
+            n_ins <= '0; n_del <= '0; n_stall <= '0; n_out <= '0; n_drain <= '0; fill_min <= '1; fill_max <= '0;
         end else begin
             pace <= (pace == 6'd32) ? 6'd0 : pace + 6'd1;
-            if (clr_r) begin n_ins <= '0; n_del <= '0; n_stall <= '0; n_out <= '0; fill_min <= '1; fill_max <= '0; end
+            if (clr_r) begin n_ins <= '0; n_del <= '0; n_stall <= '0; n_out <= '0; n_drain <= '0; fill_min <= '1; fill_max <= '0; end
             r_lock <= lock_s;
             if (!lock_s) begin
                 in_frame <= 1'b0; idle_run <= '0;
-                if (fill != '0) rptr <= rptr + PW'(1);
+                if (fill != '0) begin rptr <= rptr + PW'(1); n_drain <= n_drain + 32'd1; end
             end else if (slot) begin
                 if (32'(fill) < fill_min) fill_min <= 32'(fill);
                 if (32'(fill) > fill_max) fill_max <= 32'(fill);

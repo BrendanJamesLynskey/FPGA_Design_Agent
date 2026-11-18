@@ -74,7 +74,7 @@ async def run_case(dut, name, ppm, n_frames=300, gaps=(2,), seed=1, hi=4, os_eve
                 done["stop"] = True
                 await Timer(1, unit="ns")
                 in_flight["out"].append((int(dut.r_v.value), int(dut.r_d.value), int(dut.r_c.value), int(dut.r_lock.value)))     # state after the last edge
-                in_flight["cnt"] = {k: int(getattr(dut, k).value) for k in ("n_ovf", "n_ins", "n_del", "n_stall", "n_out", "fill_min", "fill_max")}
+                in_flight["cnt"] = {k: int(getattr(dut, k).value) for k in ("n_ovf", "n_wr", "n_ins", "n_del", "n_stall", "n_out", "n_drain", "fill_min", "fill_max")}
                 return
 
     wt = cocotb.start_soon(w_drv())
@@ -97,7 +97,7 @@ async def run_case(dut, name, ppm, n_frames=300, gaps=(2,), seed=1, hi=4, os_eve
             bad += 1
             if first is None:
                 first = (j, (v, hex(d), hex(c), lk), (tv, [hex(tb[0]), hex(tb[1])], tl))
-    tw = dict(n_ovf=m.n_ovf, n_ins=m.n_ins, n_del=m.n_del, n_stall=m.n_stall, n_out=m.n_out, fill_min=m.fill_min, fill_max=m.fill_max)
+    tw = dict(n_ovf=m.n_ovf, n_wr=m.n_wr, n_ins=m.n_ins, n_del=m.n_del, n_stall=m.n_stall, n_out=m.n_out, n_drain=m.n_drain, fill_min=m.fill_min, fill_max=m.fill_max)
     # the frames out of the RTL (valid blocks only) against the frames offered
     got = [(d, c) for (v, d, c, lk) in in_flight["out"] if v]
     frames_in = st.frames_of([(b[0], b[1]) for b in blocks])

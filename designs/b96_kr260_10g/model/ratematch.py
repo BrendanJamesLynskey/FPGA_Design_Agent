@@ -71,6 +71,7 @@ class RateMatch:
     w_gs: list = field(default_factory=list)      # sync chain of the read pointer, in the write domain
     w_rp_q: int = 0
     n_ovf: int = 0
+    n_wr: int = 0
     # read side
     rptr: int = 0
     r_g: int = 0
@@ -87,6 +88,7 @@ class RateMatch:
     n_del: int = 0
     n_stall: int = 0
     n_out: int = 0
+    n_drain: int = 0
     fill_min: int = (1 << 32) - 1
     fill_max: int = 0
     mem: list = field(default_factory=list)
@@ -111,12 +113,14 @@ class RateMatch:
         new_rp_q = ungray(self.w_gs[-1], self.aw + 1)
         if clr:
             self.n_ovf = 0
+            self.n_wr = 0
         if v:
             if full:
                 self.n_ovf += 1
             else:
                 self.mem[self.wptr & (self.depth - 1)] = blk
                 self.wptr = (self.wptr + 1) & self.mask
+                self.n_wr += 1
         self.w_g = new_g
         self.w_gs = new_gs
         self.w_rp_q = new_rp_q
@@ -155,6 +159,7 @@ class RateMatch:
                 self.idle_run = 0
                 if fill != 0:
                     self.rptr = (self.rptr + 1) & self.mask
+                    self.n_drain += 1
             elif slot:
                 self.fill_min = min(self.fill_min, fill)
                 self.fill_max = max(self.fill_max, fill)
@@ -185,7 +190,7 @@ class RateMatch:
         self.r_ls = new_ls
 
     def _clear(self) -> None:
-        self.n_ins = self.n_del = self.n_stall = self.n_out = 0
+        self.n_ins = self.n_del = self.n_stall = self.n_out = self.n_drain = 0
         self.fill_min = (1 << 32) - 1
         self.fill_max = 0
 

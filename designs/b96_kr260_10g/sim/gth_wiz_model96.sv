@@ -67,7 +67,9 @@ module gth_wiz (
     output logic        rxpmaresetdone_out,
     output logic        rxprbserr_out,
     output logic        rxprbslocked_out,
-    output logic        txpmaresetdone_out
+    output logic        txpmaresetdone_out,
+    output logic [1:0]  txbufstatus_out,
+    output logic [2:0]  rxbufstatus_out
 );
     parameter int BIT_OFFSET = 0;
     localparam int TX_DELAY = 300, RX_DELAY = 700;
@@ -93,6 +95,7 @@ module gth_wiz (
         else if (rxc >= RX_DELAY) rx_up <= 1'b1;
     end
     assign gtpowergood_out = 1'b1;
+    assign txbufstatus_out = 2'b00; assign rxbufstatus_out = 3'b000;
     assign txpmaresetdone_out = tx_up || txc > 20;
     assign rxpmaresetdone_out = rx_up || rxc > 20;
     assign gtwiz_userclk_tx_active_out = txpmaresetdone_out;
