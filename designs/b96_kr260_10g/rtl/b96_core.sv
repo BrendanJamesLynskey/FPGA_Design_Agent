@@ -38,7 +38,7 @@ module b96_core #(
     output logic [1:0]  led
 );
     import b96_pkg::*;
-    localparam int NRXW = 16;
+    localparam int NRXW = 18;
     localparam int NTXW = 26;
     localparam logic [31:0] ID = 32'h96A0_0001;
 
@@ -46,7 +46,7 @@ module b96_core #(
     logic [2:0]  loopback;
     logic        tx_disable, tx_pol, rx_pol, rx_lpm;
     logic [3:0]  rs_all, rs_txpll, rs_rxpll, rs_txdp, rs_rxdp;
-    logic        p_clr, p_gen, p_snap;
+    logic        p_clr, p_gen, p_snap, p_seq, tx_done_q, rx_done_q;
     logic [47:0] my_mac, venue_mac;
     logic [31:0] my_ip, venue_ip, thr, qty;
     logic [15:0] sport, port_feed, port_order, port_probe;
@@ -125,9 +125,11 @@ module b96_core #(
     logic [CFGW-1:0] cfg_tx, cfg_rx;
     hs_vec #(.W(CFGW)) u_cfg_tx (.src_clk(clk), .src_vec(cfg), .dst_clk(txusr2), .dst_vec(cfg_tx));
     hs_vec #(.W(CFGW)) u_cfg_rx (.src_clk(clk), .src_vec(cfg), .dst_clk(rxusr2), .dst_vec(cfg_rx));
-    logic clr_tx, clr_rx, gen_tx;
+    logic clr_tx, clr_rx, gen_tx, seq_tx, seq_rx;
     xpm_cdc_pulse #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(0)) u_p_ct (.src_clk(clk), .src_pulse(p_clr), .src_rst(1'b0), .dest_clk(txusr2), .dest_pulse(clr_tx), .dest_rst(1'b0));
     xpm_cdc_pulse #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(0)) u_p_cr (.src_clk(clk), .src_pulse(p_clr), .src_rst(1'b0), .dest_clk(rxusr2), .dest_pulse(clr_rx), .dest_rst(1'b0));
+    xpm_cdc_pulse #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(0)) u_p_st (.src_clk(clk), .src_pulse(p_seq), .src_rst(1'b0), .dest_clk(txusr2), .dest_pulse(seq_tx), .dest_rst(1'b0));
+    xpm_cdc_pulse #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(0)) u_p_sr (.src_clk(clk), .src_pulse(p_seq), .src_rst(1'b0), .dest_clk(rxusr2), .dest_pulse(seq_rx), .dest_rst(1'b0));
     xpm_cdc_pulse #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(0)) u_p_gt (.src_clk(clk), .src_pulse(p_gen), .src_rst(1'b0), .dest_clk(txusr2), .dest_pulse(gen_tx), .dest_rst(1'b0));
 
     logic        r_fire, r_sop, r_feed, r_order, r_probe, r_verdict_v, r_verdict_bad;
@@ -140,7 +142,7 @@ module b96_core #(
     logic [31:0] go_price, go_qty, go_seq;
     logic        vd_v, vd_bad;
     logic [31:0] r_verdict_seq, vd_seq;
-    rx_path #(.NRXW(NRXW)) u_rx (.clk(rxusr2), .rst(!rx_done_r), .cfg(cfg_rx), .clr_p(clr_rx), .gt_d(rx_data), .fire(r_fire), .o_inst(r_inst),
+    rx_path #(.NRXW(NRXW)) u_rx (.clk(rxusr2), .rst(!rx_done_r), .cfg(cfg_rx), .clr_p(clr_rx), .seq_p(seq_rx), .gt_d(rx_data), .fire(r_fire), .o_inst(r_inst),
         .o_price(r_price), .o_qty(r_qty), .o_seq(r_seq), .verdict_v(r_verdict_v), .verdict_bad(r_verdict_bad), .verdict_seq(r_verdict_seq), .rx_sop(r_sop),
         .cls_feed(r_feed), .cls_order(r_order), .cls_probe(r_probe), .lock(pcs_lock_rx), .rx_vec(rx_vec_r));
     xpm_cdc_pulse #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(0)) u_p_go (.src_clk(rxusr2), .src_pulse(r_fire), .src_rst(1'b0), .dest_clk(txusr2), .dest_pulse(go_t), .dest_rst(1'b0));
@@ -151,7 +153,7 @@ module b96_core #(
     xpm_cdc_array_single #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(0), .WIDTH(146)) u_bus (
         .src_clk(rxusr2), .src_in({r_verdict_v, r_verdict_bad, r_verdict_seq, r_inst, r_price, r_qty, r_seq}), .dest_clk(txusr2),
         .dest_out({vd_v, vd_bad, vd_seq, go_inst, go_price, go_qty, go_seq}));
-    tx_path #(.NTXW(NTXW)) u_tx (.clk(txusr2), .rst(!tx_done_t), .cfg(cfg_tx), .clr_p(clr_tx), .gen_go_p(gen_tx), .go_p(go_t), .go_inst, .go_price,
+    tx_path #(.NTXW(NTXW)) u_tx (.clk(txusr2), .rst(!tx_done_t), .cfg(cfg_tx), .clr_p(clr_tx), .seq_p(seq_tx), .gen_go_p(gen_tx), .go_p(go_t), .go_inst, .go_price,
         .go_qty, .go_seq, .verdict_v(vd_v), .verdict_bad(vd_bad), .verdict_seq(vd_seq), .rx_sop_p(sop_t), .rx_feed_p(feed_t), .rx_order_p(order_t),
         .rx_probe_p(probe_t), .gt_d(tx_data), .tx_vec(tx_vec_t));
     hs_vec #(.W(32 * NRXW)) u_rxv (.src_clk(rxusr2), .src_vec(rx_vec_r), .dst_clk(clk), .dst_vec(rx_live));
@@ -164,9 +166,13 @@ module b96_core #(
     int          rx_i, tx_i;
     assign rx_i = (int'(h_addr) - 256) >> 2;
     assign tx_i = (int'(h_addr) - 512) >> 2;
+    initial begin p_seq = 1'b0; tx_done_q = 1'b0; rx_done_q = 1'b0; end
     logic [7:0]  gen_dly;      // the run command is held back so the configuration (hs_vec, a few dozen clocks) has arrived first
     always_ff @(posedge clk) begin
         p_clr <= 1'b0; p_gen <= 1'b0; p_snap <= 1'b0;
+        // 97C: any restart of either side (a GT reset command, or either side's done level changing) restarts the order number on both sides
+        tx_done_q <= tx_done; rx_done_q <= rx_done;
+        p_seq <= (tx_done != tx_done_q) || (rx_done != rx_done_q) || (h_we && h_addr == 12'h010 && (h_wdata[4:0] != 5'd0));
         if (gen_dly != 8'd0) begin gen_dly <= gen_dly - 8'd1; if (gen_dly == 8'd1) p_gen <= 1'b1; end
         if (rs_all != 0) rs_all <= rs_all - 4'd1;
         if (rs_txpll != 0) rs_txpll <= rs_txpll - 4'd1;

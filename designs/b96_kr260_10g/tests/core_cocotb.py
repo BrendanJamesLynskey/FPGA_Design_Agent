@@ -270,6 +270,206 @@ async def tick_to_trade_digital(dut):
     RESULTS["tick_to_trade_digital_sim"] = out
 
 
+RX_NEW = dict(order_ok=16, order_bad=17)       # brief 97C: order-content counters (read 0 on a design built before 97C)
+
+
+async def counters(h):
+    await h.snap()
+    t = {k: await h.tx(v) for k, v in TX.items()}
+    r = {k: await h.rx(v) for k, v in RX.items()}
+    r.update({k: await h.rx(v) for k, v in RX_NEW.items()})
+    return t, r
+
+
+async def order_round(dut, h, n=3, clear=False, interval=300, wait_ns=14000):
+    """Send n feed frames that each fire an order (the loop returns both) and return the change in every counter over the round."""
+    if clear:
+        await h.w(0x018, 1)
+        await Timer(2000, unit="ns")
+    t0, r0 = await counters(h)
+    await h.w(0x060, 9975); await h.w(0x064, 250)
+    await h.w(0x06C, (7 << 16) | 66)
+    await h.w(0x068, 0x1 | 0x4 | (1 << 4))
+    await h.w(0x070, 9950); await h.w(0x074, interval); await h.w(0x078, n)
+    await h.w(0x018, 2)
+    await Timer(wait_ns, unit="ns")
+    t1, r1 = await counters(h)
+    d = {("t_" + k): t1[k] - t0[k] for k in ("n_order", "n_feed", "poisoned", "late", "stale", "go", "dropped", "underrun")}
+    d.update({("r_" + k): r1[k] - r0[k] for k in ("fired", "good", "bad", "err", "order_ok", "order_bad")})
+    if clear:       # the cleared counters restart from 0, so the absolute value is the change
+        d = {("t_" + k): t1[k] for k in ("n_order", "n_feed", "poisoned", "late", "stale", "go", "dropped", "underrun")}
+        d.update({("r_" + k): r1[k] for k in ("fired", "good", "bad", "err", "order_ok", "order_bad")})
+    return d
+
+
+def clean_round(d, n=3):
+    return (d["t_n_order"] == n and d["r_fired"] == n and d["t_stale"] == 0 and d["t_poisoned"] == 0 and d["t_late"] == 0 and d["t_dropped"] == 0
+            and d["t_underrun"] == 0 and d["r_err"] == 0 and d["t_go"] == n)
+
+
+async def relink(dut, h, bits):
+    """Write the GT reset register (bit 0 all, 3 TX datapath, 4 RX datapath) and wait for both sides and the block lock to come back."""
+    await h.w(0x010, bits)
+    await Timer(300, unit="ns")
+    for _ in range(400):
+        await Timer(200, unit="ns")
+        st = await h.r(0x014)
+        if st & 1 and st & 2 and st & 0x200:
+            return
+    raise AssertionError(f"link did not come back after reset {bits:#x}: GTSTAT {st:#x}")
+
+
+async def seq_scenario(dut, name, action, rounds=2):
+    """From a clean start (cleared counters, one clean round of 3 orders), do `action` and then run `rounds` rounds of 3 orders; each must be clean
+    (no stale, late or poisoned order, the right counts) and every returned order must pass the content check (97C)."""
+    h = await bring_up(dut)
+    os.environ["B96_ARM"] = "1"
+    log = {"start": await order_round(dut, h, clear=True)}
+    assert clean_round(log["start"]), log["start"]
+    await action(dut, h)
+    for i in range(rounds):
+        log[f"round{i}"] = await order_round(dut, h)
+    dut._log.info(f"SEQ {name} " + json.dumps(log))
+    RESULTS.setdefault("seq_scenarios", {})[name] = log
+    bad = {k: v for k, v in log.items() if not clean_round(v)}
+    assert not bad, bad
+    notok = {k: v for k, v in log.items() if k != "start" and (v["r_order_ok"] != 3 or v["r_order_bad"] != 0)}
+    assert not notok, notok
+
+
+async def act_clear(dut, h):
+    await h.w(0x018, 1)                       # the bench clears after every relink
+    await Timer(2000, unit="ns")              # the clear crosses to both domains (the bench waits much longer)
+
+
+async def act_rx_relink(dut, h):
+    await relink(dut, h, 1 << 4)
+
+
+async def act_tx_relink(dut, h):
+    await relink(dut, h, 1 << 3)
+
+
+async def act_all_reset(dut, h):
+    await relink(dut, h, 1)
+
+
+async def act_bench_sequence(dut, h):
+    for _ in range(4):                        # restart the RX datapath, then clear, as restart_distribution does
+        await relink(dut, h, 1 << 4)
+        await h.w(0x018, 1)
+        await Timer(2000, unit="ns")
+        d = await order_round(dut, h)
+        assert clean_round(d) and d["r_order_ok"] == 3 and d["r_order_bad"] == 0, d
+
+
+@cocotb.test()
+async def seq_after_counter_clear(dut):
+    """Brief 97C: CMD bit 0 clears the order number on the receive side; the transmit side's expectation must follow."""
+    await seq_scenario(dut, "counter_clear", act_clear)
+
+
+@cocotb.test()
+async def seq_after_rx_relink(dut):
+    """An RX datapath restart (no clear) leaves the order sequence in step."""
+    await seq_scenario(dut, "rx_relink", act_rx_relink)
+
+
+@cocotb.test()
+async def seq_after_tx_relink(dut):
+    """A TX datapath restart (no clear) leaves the order sequence in step."""
+    await seq_scenario(dut, "tx_relink", act_tx_relink)
+
+
+@cocotb.test()
+async def seq_after_all_reset(dut):
+    """A reset of the whole GT leaves the order sequence in step."""
+    await seq_scenario(dut, "all_reset", act_all_reset)
+
+
+@cocotb.test()
+async def seq_bench_restart_sequence(dut):
+    """The stage-3 bench's own sequence: restart the RX datapath, clear, send orders; four times over, then two more rounds."""
+    await seq_scenario(dut, "bench_sequence", act_bench_sequence)
+
+
+@cocotb.test()
+async def seq_clear_while_orders_flow(dut):
+    """A counter clear in the middle of a stream of orders (the window where a fire and the clear straddle in the two domains): the orders around
+    the clear may be flagged stale (fail closed), but the sequence is back in step for the round that follows, at every offset tried."""
+    h = await bring_up(dut)
+    os.environ["B96_ARM"] = "1"
+    await h.w(0x018, 1)
+    await Timer(2000, unit="ns")
+    await h.w(0x060, 9975); await h.w(0x064, 250)
+    await h.w(0x06C, (7 << 16) | 66)
+    await h.w(0x068, 0x1 | 0x4 | (1 << 4))
+    log = []
+    for off in (0, 30, 60, 90, 120, 150, 180):
+        await h.w(0x070, 9950); await h.w(0x074, 40); await h.w(0x078, 6)
+        await h.w(0x018, 2)
+        await Timer(1400 + off, unit="ns")          # the run starts 200 clocks after the command; orders are flowing
+        await h.w(0x018, 1)                          # clear in the middle of the stream
+        await Timer(12000, unit="ns")
+        d = await order_round(dut, h)
+        log.append(d)
+        assert clean_round(d) and d["r_order_ok"] == 3 and d["r_order_bad"] == 0, (off, d)
+    RESULTS["seq_clear_while_orders_flow"] = log
+
+
+@cocotb.test()
+async def seq_mismatch_still_poisons(dut):
+    """Fail-safe kept: if the transmit side's count is forced out of step with the order number, the next order is flagged stale, late and
+    poisoned (it leaves with a wrong FCS) and the content check counts it bad; the count then re-synchronises, so a persistent offset cannot stay."""
+    h = await bring_up(dut)
+    os.environ["B96_ARM"] = "1"
+    d0 = await order_round(dut, h, clear=True)
+    assert clean_round(d0), d0
+    dut.u.u_tx.go_cnt.value = int(dut.u.u_tx.go_cnt.value) + 7           # forced mismatch
+    await Timer(100, unit="ns")
+    d1 = await order_round(dut, h)
+    dut._log.info("MISMATCH " + json.dumps(d1))
+    RESULTS["seq_forced_mismatch"] = d1
+    # the first order after the forced offset is flagged stale, goes out poisoned and is counted bad; it re-loads the count (self-heal), so the
+    # orders after it are in step again and pass
+    assert d1["t_stale"] == 1 and d1["t_poisoned"] == 1 and d1["t_late"] == 1 and d1["r_order_bad"] == 1 and d1["r_order_ok"] == 2, d1
+    d2 = await order_round(dut, h)
+    assert clean_round(d2) and d2["r_order_ok"] == 3, d2
+    await h.w(0x018, 1)
+    d3 = await order_round(dut, h, clear=True)
+    assert clean_round(d3) and d3["r_order_ok"] == 3, d3
+
+
+@cocotb.test()
+async def order_content_check_catches_a_wrong_order(dut):
+    """An order that leaves with a good FCS but a wrong quantity (the receive side's decision register is changed after the frame source
+    sampled it) is counted bad, not ok."""
+    h = await bring_up(dut)
+    os.environ["B96_ARM"] = "1"
+    await h.w(0x018, 1)
+    await h.w(0x060, 9975); await h.w(0x064, 250)
+    await h.w(0x06C, (7 << 16) | 66)
+    await h.w(0x068, 0x1 | 0x4 | (1 << 4))
+    await h.w(0x070, 9950); await h.w(0x074, 300); await h.w(0x078, 1)
+    await h.w(0x018, 2)
+    hit = False
+    for _ in range(4000):
+        await RisingEdge(dut.refclk)
+        if int(dut.u.u_tx.sop.value) and int(dut.u.u_tx.cur_kind.value) == 0:
+            hit = True
+            break
+    assert hit
+    for _ in range(12):
+        await RisingEdge(dut.refclk)
+    dut.u.u_rx.u_td.o_qty.value = 999
+    await Timer(10000, unit="ns")
+    t, r = await counters(h)
+    dut._log.info(f"content: tx {t}\nrx {r}")
+    assert t["n_order"] == 1 and t["poisoned"] == 0 and r["good"] == 2 and r["bad"] == 0, (t, r)
+    assert r["order_bad"] == 1 and r["order_ok"] == 0, r
+    RESULTS["order_content_wrong_qty"] = {"order_ok": r["order_ok"], "order_bad": r["order_bad"], "poisoned": t["poisoned"]}
+
+
 @cocotb.test()
 async def zz_write_results(dut):
     if os.environ.get("B96_CORE_RESULTS"):
