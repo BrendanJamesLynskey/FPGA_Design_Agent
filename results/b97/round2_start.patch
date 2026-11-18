@@ -1,0 +1,74 @@
+diff --git a/designs/b96_kr260_10g/latency_stages.yaml b/designs/b96_kr260_10g/latency_stages.yaml
+index d8d3cf67..6b8d37a7 100644
+--- a/designs/b96_kr260_10g/latency_stages.yaml
++++ b/designs/b96_kr260_10g/latency_stages.yaml
+@@ -77,23 +77,23 @@ paths:
+         name: "trade64 decision register (`fire`, o_price, o_inst)"
+         domain: rx
+         kind: reg
+-        clocks: 1
++        clocks: 0
+         registers: ["*u_rx/u_td/fire_reg", "*u_rx/u_td/o_price_reg[*]"]
+-        why: "the price compare (price <= thr, 32 bits) and the arm/kill/enable interlock are registered before the order is requested"
++        why: "the price compare (price <= thr, 32 bits) and the arm/kill/enable interlock feed the crossing's source flop in the same clock (no decision register)"
+         remove_risk: "an early decision from the lower word bytes is a design change (the price is complete only in word 7); removing the register puts the compare in front of the crossing flop"
+-        technique: merge_stages
+-        removable: 1
++        technique: none
++        removable: 0
+       - id: cross_go
+         segment: fire_to_go
+-        name: "receive-to-transmit crossing of the go pulse (xpm_cdc_pulse u_p_go: toggle flop, 2 synchroniser flops, edge detect, output register)"
++        name: "receive-to-transmit crossing of the go pulse (xpm_cdc_pulse u_p_go: toggle flop, 2 synchroniser flops, edge detect; no output register)"
+         domain: rx->tx
+         kind: cdc
+-        clocks: 4
++        clocks: 3
+         registers: ["*u_p_go/*"]
+         why: "the order is requested in the recovered-clock domain and sent in the transmit-clock domain; the two clocks are independent"
+         remove_risk: "fewer synchroniser flops raise the metastability failure rate (MTBF); the order bus beside the pulse is sampled 4 clocks later by frame_src, so an earlier pulse must still find the bus settled (`stale` counts misses); the quasi-static bus uses 3 flops"
+-        technique: shorten_cdc
+-        removable: 1
++        technique: none
++        removable: 0
+       - id: fs_start
+         segment: go_to_preamble
+         name: "frame_src start -> s_valid, s_data (word 0)"
+diff --git a/designs/b96_kr260_10g/rtl/b96_core.sv b/designs/b96_kr260_10g/rtl/b96_core.sv
+index 8b91ad38..bc50b39f 100644
+--- a/designs/b96_kr260_10g/rtl/b96_core.sv
++++ b/designs/b96_kr260_10g/rtl/b96_core.sv
+@@ -143,7 +143,7 @@ module b96_core #(
+     rx_path #(.NRXW(NRXW)) u_rx (.clk(rxusr2), .rst(!rx_done_r), .cfg(cfg_rx), .clr_p(clr_rx), .gt_d(rx_data), .fire(r_fire), .o_inst(r_inst),
+         .o_price(r_price), .o_qty(r_qty), .o_seq(r_seq), .verdict_v(r_verdict_v), .verdict_bad(r_verdict_bad), .verdict_seq(r_verdict_seq), .rx_sop(r_sop),
+         .cls_feed(r_feed), .cls_order(r_order), .cls_probe(r_probe), .lock(pcs_lock_rx), .rx_vec(rx_vec_r));
+-    xpm_cdc_pulse #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(0)) u_p_go (.src_clk(rxusr2), .src_pulse(r_fire), .src_rst(1'b0), .dest_clk(txusr2), .dest_pulse(go_t), .dest_rst(1'b0));
++    xpm_cdc_pulse #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .REG_OUTPUT(0), .RST_USED(0), .SIM_ASSERT_CHK(0)) u_p_go (.src_clk(rxusr2), .src_pulse(r_fire), .src_rst(1'b0), .dest_clk(txusr2), .dest_pulse(go_t), .dest_rst(1'b0));
+     xpm_cdc_pulse #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(0)) u_p_so (.src_clk(rxusr2), .src_pulse(r_sop), .src_rst(1'b0), .dest_clk(txusr2), .dest_pulse(sop_t), .dest_rst(1'b0));
+     xpm_cdc_pulse #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(0)) u_p_fe (.src_clk(rxusr2), .src_pulse(r_feed), .src_rst(1'b0), .dest_clk(txusr2), .dest_pulse(feed_t), .dest_rst(1'b0));
+     xpm_cdc_pulse #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(0)) u_p_or (.src_clk(rxusr2), .src_pulse(r_order), .src_rst(1'b0), .dest_clk(txusr2), .dest_pulse(order_t), .dest_rst(1'b0));
+diff --git a/designs/b96_kr260_10g/rtl/trade64.sv b/designs/b96_kr260_10g/rtl/trade64.sv
+index 0f86b51d..29ad8409 100644
+--- a/designs/b96_kr260_10g/rtl/trade64.sv
++++ b/designs/b96_kr260_10g/rtl/trade64.sv
+@@ -47,8 +47,10 @@ module trade64 (
+     assign widx = m_sof ? 4'd0 : wi;
+     assign price = {ph, m_d[7:0], m_d[15:8]};
+     assign hit = is_feed && hdr_ok && spec_ok && (mtype == 8'h01 || mtype == 8'h02) && side_ask && price != 32'd0 && price <= thr;
++    // Drive the event directly from the complete word-7 decision; order fields still register below.
++    assign fire = !rst && m_v && (widx == 4'd7) && hit && arm && !kill && trade_en;
+     always_ff @(posedge clk) begin
+-        fire <= 1'b0; cls_feed <= 1'b0; cls_order <= 1'b0; cls_probe <= 1'b0;
++        cls_feed <= 1'b0; cls_order <= 1'b0; cls_probe <= 1'b0;
+         if (rst) begin
+             wi <= '0; mac_ok <= 1'b0; ven_ok <= 1'b0; ip_ok <= 1'b0; udp_ok <= 1'b0; hdr_ok <= 1'b0; is_feed <= 1'b0; spec_ok <= 1'b0; in_frame <= 1'b0;
+             fired_this <= 1'b0; verdict_v <= 1'b0; verdict_bad <= 1'b0; verdict_seq <= '0; o_inst <= '0; o_price <= '0; o_qty <= '0;
+@@ -76,7 +78,7 @@ module trade64 (
+                             if (!spec_ok) n_toolong <= n_toolong + 32'd1;
+                             if (hit) begin
+                                 if (arm && !kill && trade_en) begin
+-                                    fire <= 1'b1; fired_this <= 1'b1;
++                                    fired_this <= 1'b1;
+                                     o_inst <= inst_r; o_price <= price; o_qty <= qty; o_seq <= o_seq + 32'd1; n_fired <= n_fired + 32'd1;
+                                 end else n_blocked <= n_blocked + 32'd1;
+                             end

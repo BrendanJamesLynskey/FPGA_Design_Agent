@@ -9,7 +9,7 @@ A Kria KR260 design that carries our own 10GBASE-R PCS (64B/66B, scrambler, gear
 not: an interoperability proof: a PCS talking to itself accepts its own symmetric mistakes, only a network card proves it; the full 58A trading core (book, rule table, interlocks, ARP) at 64 bits: trade64 is a small stand-in with one rule; the reconciliation sublayer link-fault state machine, the BER monitor, an ARP or ICMP responder
 
 ## state
-stage=built vivado=2026.1 kb_pin=2338b83 build_id=2d559734
+stage=built vivado=2026.1 kb_pin=93d158c build_id=c4786c4b
 gates: build_2026_1=pass
 
 ## interface
@@ -38,7 +38,7 @@ designs/b96_kr260_10g/rtl/hs_vec.sv bb5cad4fa9: coherent vector crossing
 designs/b96_kr260_10g/model/pcs.py 92790d45d7: bit-serial Python reference of the PCS (the twin)
 designs/b96_kr260_10g/design.xdc 4dec8c5ba8: pins, clocks, slow-pin constraints
 designs/b96_kr260_10g/docs/design.md f410e6c00f: design note: decisions and alternatives
-designs/b96_kr260_10g/docs/board_run_plan.md 0d3f8fd49c: stage 3 plan for the board
+designs/b96_kr260_10g/docs/board_run_plan.md 61aea50d7d: stage 3 plan for the board
 designs/b96_kr260_10g/docs/what_we_found.md d1095afbeb: results and gaps
 designs/b96_kr260_10g/regmap.py 60923fc43a: register map as data
 designs/b96_kr260_10g/docs/register_map.md a4f09edf86: interface datasheet

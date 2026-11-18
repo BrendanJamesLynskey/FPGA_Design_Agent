@@ -196,7 +196,8 @@ def main(argv=None) -> int:
             shutil.copy2(f, d / "rtl" / f.name)
     spec = spec_for(a.block, a.clock_mhz, a.part, a.extra_latency)
     contract = task_text(a.block, a.clock_mhz, a.part, a.extra_latency)
-    (out / "task.txt").write_text(contract + "\n")
+    from agent.core import prompts as _prompts                 # brief 99: the task text is private; the record keeps its hash
+    (out / "task.json").write_text(json.dumps(_prompts.record(task=contract), indent=1) + "\n")
     y = yaml.safe_load((iv.IP / a.block / "ip.yaml").read_text())
     n_pts = len(y["characterisation"]["points"])
 

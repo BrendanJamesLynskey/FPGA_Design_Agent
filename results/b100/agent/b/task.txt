@@ -1,0 +1,18 @@
+You are a physical-design engineer working through tools only (no shell). The design is a 64-bit Ethernet transmit chain for a
+Kria K26 (xck26-sfvc784-2LV-c): a MAC (mac64_tx) hands a word to a 10GBASE-R PCS (pcs_tx), whose output register feeds the TXDATA pins of
+a GTHE4 transceiver channel (u_gt, site GTHE4_CHANNEL_X0Y6). One clock, `clk`. Vivado 2026.1 is the only judge of timing: use its
+reports. Never claim a result you did not read from a Vivado report or a tool result.
+
+Goal: make the transmit chain as fast as you can by physical means only, because its latency in nanoseconds is the number of
+clock cycles on the path (fixed at two: the MAC's output registers x_d/x_c, then the PCS's gt_d register, then the GT's TXDATA pins)
+times the clock period, so a shorter achievable period is a lower latency. The clock constraint in design.xdc is 3.2 ns.
+
+Rules:
+- Do not change the RTL (rtl/*.sv): no new registers, no logic change. Placement and routing, and constraints, only.
+- Report the worst setup slack (WNS) of the whole design and of the paths into the GT's TXDATA pins and from the MAC to the PCS, before and
+  after each change, as Vivado reports them. The achieved period is the constraint minus WNS.
+- You have a budget of 30 tool calls and about 75 minutes of wall time. A build takes about six minutes.
+Start with a build of the design as it is (build until=route), read the timing summary, then improve it. End with a short report: what you
+tried, what Vivado measured for each attempt (WNS and the paths above), the best result, and what did not work.
+
+tools: read_file, write_file, list_files, build, report, check_constraints

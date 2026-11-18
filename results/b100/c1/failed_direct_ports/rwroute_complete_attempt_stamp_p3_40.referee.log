@@ -1,0 +1,491 @@
+Running as unit: run-rb58cdea58939494b82e8554839679288.scope; invocation ID: d30de67246034bed830eac72fad5faf5
+INFO: [Common 17-3922] A valid Vivado Design Suite BASIC license has been detected. Your current license is active and will expire on 10-nov-2027.
+
+****** Vivado v2026.1 (64-bit)
+  **** SW Build 6511674 on Tue Jun 16 11:01:26 MDT 2026
+  **** IP Build 6504888 on Tue Jun 09 09:05:25 MDT 2026
+  **** SharedData Build 6501428 on Mon Jun 08 17:34:18 MDT 2026
+  **** Start of session at: Tue Nov 17 13:14:29 2026
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+    ** Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+
+source /home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/scripts/stamp_referee.tcl
+# source [file join [file dirname [info script]] ../../../flow/rw/common.tcl]
+## proc env_or {k d} { if {[info exists ::env($k)] && $::env($k) ne ""} { return $::env($k) } else { return $d } }
+## proc b100_threads {} {
+##     set n [env_or B100_THREADS 1]
+##     set_param general.maxThreads $n
+##     set_param synth.maxThreads $n
+##     set_param chipscope.maxJobs 1
+## }
+## proc lap {name} {
+##     upvar t0 t0 times times
+##     set n [clock milliseconds]
+##     dict set times $name [expr {($n - $t0) / 1000.0}]
+##     set t0 $n
+## }
+## proc write_run_json {out times part period} {
+##     set wns [get_property SLACK [lindex [get_timing_paths -setup -max_paths 1] 0]]
+##     set whs [get_property SLACK [lindex [get_timing_paths -hold -max_paths 1] 0]]
+##     set lut [llength [get_cells -hier -filter {REF_NAME =~ LUT*}]]
+##     set ff  [llength [get_cells -hier -filter {REF_NAME =~ FD*}]]
+##     set f [open ${out}_run.json w]
+##     set tj [join [lmap {k v} $times {format {"%s": %s} $k $v}] {, }]
+##     puts $f "{\"vivado\": \"[version -short]\", \"part\": \"$part\", \"period_ns\": $period, \"wns_ns\": $wns, \"whs_ns\": $whs, \"lut\": $lut, \"ff\": $ff, \"times_s\": {$tj}}"
+##     close $f
+## }
+## proc slack_of {from to} {
+##     set p [lindex [get_timing_paths -setup -from $from -to $to -max_paths 1] 0]
+##     if {$p eq ""} { return null }
+##     return [get_property SLACK $p]
+## }
+## proc chain_metrics {out} {
+##     set period [get_property PERIOD [lindex [get_clocks] 0]]
+##     set xd [get_cells -hier -filter {NAME =~ u_mac/x_d_reg* || NAME =~ u_mac/x_c_reg*}]
+##     set gd [get_cells -hier -filter {NAME =~ u_pcs/gt_d_reg*}]
+##     set pcs [get_cells -hier -filter {NAME =~ u_pcs/*}]
+##     set gtp [get_pins u_gt/TXDATA*]
+##     set wns [get_property SLACK [lindex [get_timing_paths -setup -max_paths 1] 0]]
+##     set f [open ${out}_chain.json w]
+##     puts $f "{\"period_ns\": $period, \"wns_all_ns\": $wns, \"wns_mac_to_pcs_ns\": [slack_of $xd $gd], \"wns_pcs_to_gt_ns\": [slack_of $gd $gtp], \"wns_inside_pcs_ns\": [slack_of $pcs $pcs]}"
+##     close $f
+## }
+# source [file join [file dirname [info script]] blocks.tcl]
+## proc block_paths {out} {
+##     set n 4
+##     # The block-internal paths: the worst setup path to each endpoint register inside each copy, with the path's data delay, slack and
+##     # logic levels. Endpoint names are relative to the copy so that copies compare endpoint by endpoint.
+##     set f [open ${out}_blocks.csv w]
+##     puts $f "copy,endpoint,data_path_delay_ns,slack_ns,logic_levels"
+##     for {set i 0} {$i < $n} {incr i} {
+##         set cells [get_cells "c$i/u_b/*"]
+##         set prefix "c$i/u_b/"
+##         foreach p [get_timing_paths -setup -from [all_registers -clock_pins -of_objects $cells] -to [all_registers -data_pins -of_objects $cells] -max_paths 2000 -nworst 1 -unique_pins] {
+##             set e [string map [list $prefix ""] [get_property ENDPOINT_PIN $p]]
+##             puts $f "$i,$e,[get_property DATAPATH_DELAY $p],[get_property SLACK $p],[get_property LOGIC_LEVELS $p]"
+##         }
+##     }
+##     close $f
+## }
+# b100_threads
+# set out $::env(B100_OUT)
+# set times [dict create]
+# set t0 [clock milliseconds]
+# open_checkpoint $::env(B100_IN_DCP)
+Command: open_checkpoint /home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/scripts/../../../results/b100/c1/stamp_p3_40_rwrouted.dcp
+
+Starting open_checkpoint Task
+
+Time (s): cpu = 00:00:00.06 ; elapsed = 00:00:00.06 . Memory (MB): peak = 1485.148 ; gain = 8.906 ; free physical = 5147 ; free virtual = 22274
+WARNING: [Vivado 12-8410] Design file '/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/results/b100/c1/stamp_p3_40_rwrouted.dcp' has failed integrity check (2). There is either a missing chekcsum or mismatch. Please regenerate the DCP file.
+INFO: [Device 21-403] Loading part xck26-sfvc784-2LV-c
+Netlist sorting complete. Time (s): cpu = 00:00:00.02 ; elapsed = 00:00:00.02 . Memory (MB): peak = 2755.328 ; gain = 0.000 ; free physical = 4176 ; free virtual = 21151
+INFO: [Netlist 29-17] Analyzing 6 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+INFO: [Project 1-479] Netlist was created with RapidWright 2026.1.2
+INFO: [Project 1-570] Preparing netlist for logic optimization
+Parsing XDC File [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/results/b100/c1/stamp_p3_40_rwrouted/reloc_top_late.xdc]
+create_clock: Time (s): cpu = 00:00:07 ; elapsed = 00:00:08 . Memory (MB): peak = 2755.328 ; gain = 0.000 ; free physical = 3998 ; free virtual = 20968
+INFO: [Vivado 12-3520] Assignment of 'x_d_r_reg[62], x_d_r_reg[38], x_d_r_reg[17], gt_q_reg[62], gt_q_reg[41], gt_q_reg[20], x_d_r_reg[47], x_d_r_reg[26], x_d_r_reg[1], gt_q_reg[50], gt_q_reg[3], gt_q_reg[39], gt_q_reg[18], x_d_r_reg[56], x_d_r_reg[35], x_c_r_reg[5], gt_q_reg[48], gt_q_reg[27], x_d_r_reg[44], x_d_r_reg[14], x_d_r_reg[23], x_d_r_reg[8], gt_q_reg[57], gt_q_reg[15], gt_q_reg[36], VCC, x_d_r_reg[53], x_d_r_reg[32], gt_q_reg[0], x_d_r_reg[11], x_c_r_reg[2], gt_q_reg[45], gt_q_reg[24], x_d_r_reg[12], x_d_r_reg[33], x_d_r_reg[54], gt_q_reg[16], gt_q_reg[37], gt_q_reg[1], gt_q_reg[58], x_d_r_reg[9], x_d_r_reg[24], x_d_r_reg[45], gt_q_reg[28], gt_q_reg[49], x_c_r_reg[6], gt_q_reg[60], x_d_r_reg[15], x_d_r_reg[36], x_d_r_reg[57], gt_q_reg[19], gt_q_reg[4], gt_q_reg[30], gt_q_reg[51], x_d_r_reg[27], x_d_r_reg[2], x_d_r_reg[48], GND, gt_q_reg[21], gt_q_reg[42], gt_q_reg[63], x_d_r_reg[18], x_d_r_reg[39], u_core, x_d_r_reg[50], gt_q_reg[7], gt_q_reg[12], gt_q_reg[33], gt_q_reg[54], x_d_r_reg[5], x_d_r_reg[20], x_d_r_reg[41], gt_q_reg[40], gt_q_reg[29], gt_q_reg[61], rst_r_reg, x_c_r_reg[7], x_d_r_reg[16], x_d_r_reg[37], x_d_r_reg[58], gt_q_reg[5], gt_q_reg[31], gt_q_reg[10], gt_q_reg[52], x_d_r_reg[28], x_d_r_reg[3], x_d_r_reg[49], x_d_r_reg[60], gt_q_reg[22], gt_q_reg[43], x_d_r_reg[19], x_c_r_reg[0], x_d_r_reg[30], x_d_r_reg[51], gt_q_reg[8], gt_q_reg[13], gt_q_reg[34], gt_q_reg[55], x_d_r_reg[6], x_d_r_reg[21], x_c_r_reg[3], gt_q_reg[46], gt_q_reg[25], x_d_r_reg[63], x_d_r_reg[42], x_d_r_reg[46], x_d_r_reg[0], x_d_r_reg[25], gt_q_reg[2], gt_q_reg[59], gt_q_reg[38], gt_q_reg[17], adv_reg, x_d_r_reg[55], x_d_r_reg[34], x_d_r_reg[13], x_c_r_reg[4], gt_q_reg[47], gt_q_reg[26], x_d_r_reg[43], x_d_r_reg[22], x_d_r_reg[7], gt_q_reg[56], gt_q_reg[35], gt_q_reg[14], gt_q_reg[9], x_d_r_reg[52], x_d_r_reg[31], x_d_r_reg[10], x_c_r_reg[1], gt_q_reg[44], gt_q_reg[23], x_d_r_reg[61], x_d_r_reg[40], x_d_r_reg[4], x_d_r_reg[29], gt_q_reg[53], gt_q_reg[32], gt_q_reg[11], gt_q_reg[6], and x_d_r_reg[59]' to a pblock 'c0_u_b_pb_blk' means that all children of 'u_b' are in the pblock. Changing the pblock assignment to 'u_b'.
+INFO: [Vivado 12-3520] Assignment of 'gt_q_reg[29], x_d_r_reg[46], gt_q_reg[40], gt_q_reg[61], rst_r_reg, x_c_r_reg[7], x_d_r_reg[16], x_d_r_reg[37], x_d_r_reg[58], gt_q_reg[5], gt_q_reg[31], gt_q_reg[10], gt_q_reg[52], x_d_r_reg[28], x_d_r_reg[3], x_d_r_reg[49], x_d_r_reg[60], gt_q_reg[22], gt_q_reg[43], x_d_r_reg[19], x_c_r_reg[0], x_d_r_reg[30], x_d_r_reg[51], gt_q_reg[8], gt_q_reg[13], gt_q_reg[34], gt_q_reg[55], x_d_r_reg[6], gt_q_reg[46], gt_q_reg[25], x_d_r_reg[63], x_d_r_reg[42], x_d_r_reg[21], x_d_r_reg[0], x_d_r_reg[25], gt_q_reg[2], gt_q_reg[59], gt_q_reg[38], gt_q_reg[17], adv_reg, x_d_r_reg[55], x_d_r_reg[34], x_d_r_reg[13], x_c_r_reg[4], gt_q_reg[47], gt_q_reg[26], x_d_r_reg[43], x_d_r_reg[22], x_d_r_reg[7], gt_q_reg[56], gt_q_reg[35], gt_q_reg[14], gt_q_reg[9], x_d_r_reg[52], x_d_r_reg[31], x_d_r_reg[10], x_c_r_reg[1], gt_q_reg[44], gt_q_reg[23], x_d_r_reg[61], x_d_r_reg[40], x_d_r_reg[4], x_d_r_reg[29], gt_q_reg[53], gt_q_reg[32], gt_q_reg[11], gt_q_reg[6], x_d_r_reg[59], x_d_r_reg[38], x_d_r_reg[17], gt_q_reg[62], gt_q_reg[41], gt_q_reg[20], x_d_r_reg[47], x_d_r_reg[26], x_d_r_reg[1], gt_q_reg[50], gt_q_reg[3], gt_q_reg[39], gt_q_reg[18], x_d_r_reg[56], x_d_r_reg[35], x_c_r_reg[5], gt_q_reg[48], gt_q_reg[27], x_d_r_reg[44], x_d_r_reg[14], x_d_r_reg[23], x_d_r_reg[8], gt_q_reg[57], gt_q_reg[15], gt_q_reg[36], VCC, x_d_r_reg[53], x_d_r_reg[32], gt_q_reg[0], x_d_r_reg[11], x_c_r_reg[2], gt_q_reg[45], gt_q_reg[24], x_c_r_reg[3], x_d_r_reg[12], x_d_r_reg[33], x_d_r_reg[54], gt_q_reg[16], gt_q_reg[37], gt_q_reg[1], gt_q_reg[58], x_d_r_reg[9], x_d_r_reg[24], x_d_r_reg[45], gt_q_reg[28], gt_q_reg[49], x_c_r_reg[6], gt_q_reg[60], x_d_r_reg[15], x_d_r_reg[36], x_d_r_reg[57], gt_q_reg[19], gt_q_reg[4], gt_q_reg[30], gt_q_reg[51], x_d_r_reg[27], x_d_r_reg[2], x_d_r_reg[48], GND, gt_q_reg[21], gt_q_reg[42], gt_q_reg[63], x_d_r_reg[18], x_d_r_reg[39], u_core, x_d_r_reg[50], gt_q_reg[7], gt_q_reg[12], gt_q_reg[33], gt_q_reg[54], x_d_r_reg[5], x_d_r_reg[20], x_d_r_reg[41], and x_d_r_reg[62]' to a pblock 'c1_u_b_pb_blk' means that all children of 'u_b' are in the pblock. Changing the pblock assignment to 'u_b'.
+INFO: [Vivado 12-3520] Assignment of 'gt_q_reg[29], x_d_r_reg[46], x_d_r_reg[0], x_d_r_reg[25], gt_q_reg[2], gt_q_reg[59], gt_q_reg[38], gt_q_reg[17], adv_reg, x_d_r_reg[55], x_d_r_reg[34], x_d_r_reg[13], x_c_r_reg[4], gt_q_reg[47], gt_q_reg[26], x_d_r_reg[43], x_d_r_reg[22], x_d_r_reg[7], gt_q_reg[56], gt_q_reg[35], gt_q_reg[14], gt_q_reg[9], x_d_r_reg[52], x_d_r_reg[31], x_d_r_reg[10], x_c_r_reg[1], gt_q_reg[44], gt_q_reg[23], x_d_r_reg[61], x_d_r_reg[40], x_d_r_reg[4], x_d_r_reg[29], gt_q_reg[53], gt_q_reg[32], gt_q_reg[11], gt_q_reg[6], x_d_r_reg[59], x_d_r_reg[38], x_d_r_reg[17], gt_q_reg[62], gt_q_reg[41], gt_q_reg[20], x_d_r_reg[47], x_d_r_reg[26], x_d_r_reg[1], gt_q_reg[50], gt_q_reg[3], gt_q_reg[39], gt_q_reg[18], x_d_r_reg[56], x_d_r_reg[35], x_c_r_reg[5], gt_q_reg[48], gt_q_reg[27], x_d_r_reg[44], x_d_r_reg[14], x_d_r_reg[23], x_d_r_reg[8], gt_q_reg[57], gt_q_reg[15], gt_q_reg[36], VCC, x_d_r_reg[53], x_d_r_reg[32], gt_q_reg[0], x_d_r_reg[11], x_c_r_reg[2], gt_q_reg[45], gt_q_reg[24], gt_q_reg[61], gt_q_reg[40], rst_r_reg, x_c_r_reg[7], x_d_r_reg[16], x_d_r_reg[37], x_d_r_reg[58], gt_q_reg[5], gt_q_reg[31], gt_q_reg[10], gt_q_reg[52], x_d_r_reg[28], x_d_r_reg[3], x_d_r_reg[49], x_d_r_reg[60], gt_q_reg[22], gt_q_reg[43], x_d_r_reg[19], x_c_r_reg[0], x_d_r_reg[30], x_d_r_reg[51], gt_q_reg[8], gt_q_reg[13], gt_q_reg[34], gt_q_reg[55], x_d_r_reg[6], x_d_r_reg[21], x_d_r_reg[42], x_d_r_reg[12], x_c_r_reg[3], gt_q_reg[46], gt_q_reg[25], x_d_r_reg[63], x_d_r_reg[33], x_d_r_reg[54], gt_q_reg[16], gt_q_reg[37], gt_q_reg[1], gt_q_reg[58], x_d_r_reg[9], x_d_r_reg[24], x_d_r_reg[45], gt_q_reg[28], gt_q_reg[49], x_c_r_reg[6], gt_q_reg[60], x_d_r_reg[15], x_d_r_reg[36], x_d_r_reg[57], gt_q_reg[19], gt_q_reg[4], gt_q_reg[30], gt_q_reg[51], x_d_r_reg[27], x_d_r_reg[2], x_d_r_reg[48], GND, gt_q_reg[21], gt_q_reg[42], gt_q_reg[63], x_d_r_reg[18], x_d_r_reg[39], u_core, x_d_r_reg[50], gt_q_reg[7], gt_q_reg[12], gt_q_reg[33], gt_q_reg[54], x_d_r_reg[5], x_d_r_reg[20], x_d_r_reg[41], and x_d_r_reg[62]' to a pblock 'c2_u_b_pb_blk' means that all children of 'u_b' are in the pblock. Changing the pblock assignment to 'u_b'.
+INFO: [Vivado 12-3520] Assignment of 'gt_q_reg[61], gt_q_reg[40], x_d_r_reg[16], rst_r_reg, x_c_r_reg[7], x_d_r_reg[37], gt_q_reg[52], x_d_r_reg[58], gt_q_reg[5], gt_q_reg[31], gt_q_reg[10], x_d_r_reg[28], x_d_r_reg[3], x_d_r_reg[49], x_d_r_reg[60], gt_q_reg[22], gt_q_reg[43], x_d_r_reg[19], x_c_r_reg[0], x_d_r_reg[30], x_d_r_reg[51], gt_q_reg[8], gt_q_reg[13], gt_q_reg[34], gt_q_reg[55], x_d_r_reg[6], x_d_r_reg[21], x_d_r_reg[42], x_d_r_reg[63], x_d_r_reg[33], x_d_r_reg[12], x_c_r_reg[3], gt_q_reg[46], gt_q_reg[25], gt_q_reg[29], x_d_r_reg[46], x_d_r_reg[0], x_d_r_reg[25], gt_q_reg[2], gt_q_reg[59], gt_q_reg[38], gt_q_reg[17], adv_reg, x_d_r_reg[55], x_d_r_reg[34], x_d_r_reg[13], x_c_r_reg[4], gt_q_reg[47], gt_q_reg[26], x_d_r_reg[43], x_d_r_reg[22], x_d_r_reg[7], gt_q_reg[56], gt_q_reg[35], gt_q_reg[14], gt_q_reg[9], x_d_r_reg[52], x_d_r_reg[31], x_d_r_reg[10], x_c_r_reg[1], gt_q_reg[44], gt_q_reg[23], x_d_r_reg[61], x_d_r_reg[40], x_d_r_reg[4], x_d_r_reg[29], gt_q_reg[53], gt_q_reg[32], gt_q_reg[11], gt_q_reg[6], x_d_r_reg[59], x_d_r_reg[38], x_d_r_reg[17], gt_q_reg[62], gt_q_reg[41], gt_q_reg[20], x_d_r_reg[47], x_d_r_reg[26], x_d_r_reg[1], gt_q_reg[50], gt_q_reg[3], gt_q_reg[39], gt_q_reg[18], x_d_r_reg[56], x_d_r_reg[35], x_c_r_reg[5], gt_q_reg[48], gt_q_reg[27], x_d_r_reg[44], x_d_r_reg[14], x_d_r_reg[23], x_d_r_reg[8], gt_q_reg[57], gt_q_reg[15], gt_q_reg[36], VCC, x_d_r_reg[53], x_d_r_reg[32], gt_q_reg[0], x_d_r_reg[11], x_c_r_reg[2], gt_q_reg[24], x_d_r_reg[54], gt_q_reg[16], gt_q_reg[37], gt_q_reg[1], gt_q_reg[58], x_d_r_reg[9], x_d_r_reg[24], x_d_r_reg[45], gt_q_reg[28], gt_q_reg[49], x_c_r_reg[6], gt_q_reg[60], x_d_r_reg[15], x_d_r_reg[36], x_d_r_reg[57], gt_q_reg[19], gt_q_reg[4], gt_q_reg[30], gt_q_reg[51], x_d_r_reg[27], x_d_r_reg[2], x_d_r_reg[48], GND, gt_q_reg[21], gt_q_reg[42], gt_q_reg[63], x_d_r_reg[18], x_d_r_reg[39], u_core, gt_q_reg[7], gt_q_reg[12], gt_q_reg[33], gt_q_reg[54], x_d_r_reg[5], x_d_r_reg[20], x_d_r_reg[41], x_d_r_reg[62], x_d_r_reg[50], and gt_q_reg[45]' to a pblock 'c3_u_b_pb_blk' means that all children of 'u_b' are in the pblock. Changing the pblock assignment to 'u_b'.
+Finished Parsing XDC File [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/results/b100/c1/stamp_p3_40_rwrouted/reloc_top_late.xdc]
+Reading placement.
+Reading placer database...
+Reading routing.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c2/u_b/u_core/scr_out_return5076_out was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c1/u_b/u_core/hist[3]_i_13_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c1/u_b/u_core/hist[39]_i_13_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c1/u_b/u_core/acc[3]_i_4_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c3/u_b/u_core/hist[11]_i_4_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c1/u_b/u_core/scr_out_return5073_out was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c1/u_b/u_core/hist[57]_i_2_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c1/u_b/u_core/scr_out_return5088_out was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c2/u_b/u_core/hist[57]_i_12_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c3/u_b/u_core/hist[24]_i_11_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c0/u_b/u_core/hist[57]_i_7_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c1/u_b/u_core/hist[57]_i_5_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c2/u_b/u_core/hist[39]_i_13_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c0/u_b/u_core/acc[3]_i_4_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c0/u_b/u_core/hist[19]_i_9_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c1/u_b/u_core/hist[5]_i_4_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c3/u_b/u_core/hist[57]_i_12_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c2/u_b/u_core/hist[43]_i_2_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c0/u_b/u_core/scr_out_return5073_out was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c0/u_b/u_core/acc[40]_i_4_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c1/u_b/u_core/hist[39]_i_9_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c2/u_b/u_core/hist[57]_i_6_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c0/u_b/u_core/scr_out_return5088_out was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c2/u_b/u_core/acc[48]_i_2_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c3/u_b/u_core/hist[39]_i_13_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c2/u_b/u_core/scr_out_return5058_out was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c3/u_b/u_core/acc[9]_i_2_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c1/u_b/u_core/hist[25]_i_8_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c0/u_b/u_core/scr_out_return5076_out was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c0/u_b/u_core/hist[47]_i_10_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c0/u_b/u_core/hist[3]_i_14_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c3/u_b/u_core/hist[57]_i_7_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c2/u_b/u_core/hist[3]_i_8_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c0/u_b/u_core/hist[3]_i_6_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c2/u_b/u_core/acc[63]_i_1_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c1/u_b/u_core/scr_out_return5038_out was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c2/u_b/u_core/hist[31]_i_7_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c2/u_b/u_core/hist[3]_i_13_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c2/u_b/u_core/acc[9]_i_2_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c2/u_b/u_core/hist[52]_i_9_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c0/u_b/u_core/hist[43]_i_2_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c1/u_b/u_core/hist[47]_i_10_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c0/u_b/u_core/acc[44]_i_3_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c3/u_b/u_core/acc[10]_i_3_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c2/u_b/u_core/hist[5]_i_4_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c3/u_b/u_core/scr_out_return6 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c1/u_b/u_core/acc[9]_i_2_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c1/u_b/u_core/hist[57]_i_7_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c2/u_b/u_core/hist[57]_i_5_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c0/u_b/u_core/acc[10]_i_3_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c2/u_b/u_core/hist[47]_i_10_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c1/u_b/u_core/hist[19]_i_9_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c3/u_b/u_core/hist[43]_i_2_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c0/u_b/u_core/scr_out_return6 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c0/u_b/u_core/scr_out_return5058_out was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c2/u_b/u_core/hist[39]_i_9_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c0/u_b/u_core/hist[31]_i_7_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c3/u_b/u_core/hist[3]_i_8_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c0/u_b/u_core/hist[3]_i_13_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c1/u_b/u_core/hist[3]_i_6_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c3/u_b/u_core/acc[63]_i_1_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c1/u_b/u_core/hist[39]_i_11_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c0/u_b/u_core/acc[9]_i_2_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c2/u_b/u_core/hist[11]_i_4_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c3/u_b/u_core/hist[47]_i_10_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c1/u_b/u_core/hist[3]_i_14_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c0/u_b/u_core/hist[3]_i_8_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c0/u_b/u_core/acc[63]_i_1_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c3/u_b/u_core/scr_out_return5073_out was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c1/u_b/u_core/hist[39]_i_29_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c0/u_b/u_core/hist[57]_i_5_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c2/u_b/u_core/hist[39]_i_11_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c1/u_b/u_core/hist[34]_i_1_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c3/u_b/u_core/hist[31]_i_7_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c3/u_b/u_core/hist[5]_i_4_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c3/u_b/u_core/acc[3]_i_4_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c3/u_b/u_core/scr_out_return5076_out was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c3/u_b/u_core/hist[52]_i_9_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c1/u_b/u_core/hist[43]_i_2_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c2/u_b/u_core/acc[40]_i_4_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c0/u_b/u_core/hist[39]_i_9_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c0/u_b/u_core/hist[57]_i_12_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c1/u_b/u_core/hist[57]_i_6_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c3/u_b/u_core/hist[57]_i_2_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c2/u_b/u_core/acc[13]_i_7_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c1/u_b/u_core/hist[24]_i_11_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c0/u_b/u_core/hist[11]_i_4_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c3/u_b/u_core/hist[39]_i_11_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c0/u_b/u_core/hist[5]_i_4_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c2/u_b/u_core/scr_out_return5073_out was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c0/u_b/u_core/hist[25]_i_8_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c2/u_b/u_core/scr_out_return5088_out was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c0/u_b/u_core/hist[39]_i_13_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c3/u_b/u_core/hist[57]_i_5_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c2/u_b/u_core/hist[3]_i_6_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c2/u_b/u_core/acc[3]_i_4_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c0/u_b/u_core/hist[52]_i_8_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c1/u_b/u_core/hist[57]_i_12_n_0 was partially unrouted during load.
+WARNING: [Constraints 18-11785] Skipping invalid subTree.
+CRITICAL WARNING: [Designutils 20-1362] Net c1/u_b/u_core/acc[48]_i_2_n_0 was partially unrouted during load.
+Read Old XDEF File: Time (s): cpu = 00:00:10 ; elapsed = 00:00:11 . Memory (MB): peak = 2990.734 ; gain = 235.406 ; free physical = 3815 ; free virtual = 20773
+Restored from archive | CPU: 10.440000 secs | Memory: 406.693604 MB |
+Finished XDEF File Restore: Time (s): cpu = 00:00:10 ; elapsed = 00:00:11 . Memory (MB): peak = 2990.734 ; gain = 235.406 ; free physical = 3815 ; free virtual = 20773
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2990.734 ; gain = 0.000 ; free physical = 3819 ; free virtual = 20776
+INFO: [Project 1-111] Unisim Transformation Summary:
+  A total of 6 instances were transformed.
+  IBUF => IBUF (IBUFCTRL, INBUF): 6 instances
+
+open_checkpoint: Time (s): cpu = 00:00:42 ; elapsed = 00:00:44 . Memory (MB): peak = 2990.770 ; gain = 1518.496 ; free physical = 3819 ; free virtual = 20776
+# set_property SEVERITY {Warning} [get_drc_checks {NSTD-1 UCIO-1}]
+# if {[env_or B100_ROUTE 1] eq "1"} { route_design; lap route }
+Command: route_design
+Attempting to get a license for feature 'Vivado_Implementation' and/or device 'xck26'
+INFO: [Common 17-349] Got license for feature 'Vivado_Implementation' and/or device 'xck26'
+
+
+Starting Routing Task
+
+Phase 1 Build RT Design
+Checksum: PlaceDB: a0465cdc ConstDB: 0 ShapeSum: 821e525c RouteDB: 3101b9bd
+Nodegraph reading from file.  Time (s): cpu = 00:00:00.73 ; elapsed = 00:00:00.79 . Memory (MB): peak = 3113.445 ; gain = 122.676 ; free physical = 3655 ; free virtual = 20612
+INFO: [Timing 38-35] Done setting XDC timing constraints.
+Post Restoration Checksum: NetGraph: db9123f4 | NumContArr: 72ab46be | Constraints: 7077e3ac | Timing: c2a8fa9d
+Phase 1 Build RT Design | Checksum: 2815d48fb
+
+Time (s): cpu = 00:00:31 ; elapsed = 00:00:32 . Memory (MB): peak = 4380.699 ; gain = 1389.930 ; free physical = 2449 ; free virtual = 19485
+
+Phase 2 Router Initialization
+
+Phase 2.1 Fix Topology Constraints
+Phase 2.1 Fix Topology Constraints | Checksum: 2815d48fb
+
+Time (s): cpu = 00:00:31 ; elapsed = 00:00:32 . Memory (MB): peak = 4380.699 ; gain = 1389.930 ; free physical = 2429 ; free virtual = 19464
+
+Phase 2.2 Pre Route Cleanup
+Phase 2.2 Pre Route Cleanup | Checksum: 2815d48fb
+
+Time (s): cpu = 00:00:31 ; elapsed = 00:00:32 . Memory (MB): peak = 4380.699 ; gain = 1389.930 ; free physical = 2422 ; free virtual = 19457
+
+Phase 2.3 Global Clock Net Routing
+ Number of Nodes with overlaps = 0
+Phase 2.3 Global Clock Net Routing | Checksum: 25302fd59
+
+Time (s): cpu = 00:00:33 ; elapsed = 00:00:34 . Memory (MB): peak = 4380.699 ; gain = 1389.930 ; free physical = 2100 ; free virtual = 19127
+
+Phase 2.4 Update Timing
+Phase 2.4 Update Timing | Checksum: 15d511d93
+
+Time (s): cpu = 00:00:35 ; elapsed = 00:00:36 . Memory (MB): peak = 4380.699 ; gain = 1389.930 ; free physical = 2247 ; free virtual = 19265
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=-0.211 | TNS=-24.808| WHS=-0.652 | THS=-155.112|
+
+
+Phase 2.5 Soft Constraint Pins - Fast Budgeting
+Phase 2.5 Soft Constraint Pins - Fast Budgeting | Checksum: 1896b3a5b
+
+Time (s): cpu = 00:00:37 ; elapsed = 00:00:38 . Memory (MB): peak = 4380.699 ; gain = 1389.930 ; free physical = 2640 ; free virtual = 19659
+
+Router Utilization Summary
+  Global Vertical Routing Utilization    = 0 %
+  Global Horizontal Routing Utilization  = 0 %
+  Routable Net Status*
+  *Does not include unroutable nets such as driverless and loadless.
+  Run report_route_status for detailed report.
+  Number of Failed Nets               = 966
+    (Failed Nets is the sum of unrouted and partially routed nets)
+  Number of Unrouted Nets             = 818
+  Number of Partially Routed Nets     = 148
+  Number of Node Overlaps             = 0
+
+Phase 2 Router Initialization | Checksum: ff3d02fe
+
+Time (s): cpu = 00:00:38 ; elapsed = 00:00:39 . Memory (MB): peak = 4380.699 ; gain = 1389.930 ; free physical = 2664 ; free virtual = 19683
+
+Phase 3 Global Routing
+Phase 3 Global Routing | Checksum: ff3d02fe
+
+Time (s): cpu = 00:00:38 ; elapsed = 00:00:39 . Memory (MB): peak = 4380.699 ; gain = 1389.930 ; free physical = 2664 ; free virtual = 19683
+
+Phase 4 Initial Routing
+
+Phase 4.1 Initial Net Routing Pass
+Phase 4.1 Initial Net Routing Pass | Checksum: 14cb6a8b5
+
+Time (s): cpu = 00:02:55 ; elapsed = 00:03:02 . Memory (MB): peak = 4380.699 ; gain = 1389.930 ; free physical = 2353 ; free virtual = 19399
+Phase 4 Initial Routing | Checksum: ec7fb597
+
+Time (s): cpu = 00:02:55 ; elapsed = 00:03:02 . Memory (MB): peak = 4380.699 ; gain = 1389.930 ; free physical = 2353 ; free virtual = 19399
+
+Phase 5 Initial Routing Verification
+
+Post Initial-Routing Verification
+---------------------------------
+CRITICAL WARNING: [Route 35-54] Net: c3/sh[10] is not completely routed.
+Resolution: Run report_route_status for more information.
+CRITICAL WARNING: [Route 35-54] Net: c3/sh[52] is not completely routed.
+Resolution: Run report_route_status for more information.
+CRITICAL WARNING: [Route 35-54] Net: c1/sh[10] is not completely routed.
+Resolution: Run report_route_status for more information.
+CRITICAL WARNING: [Route 35-54] Net: c1/sh[52] is not completely routed.
+Resolution: Run report_route_status for more information.
+CRITICAL WARNING: [Route 35-54] Net: c0/sh[10] is not completely routed.
+Resolution: Run report_route_status for more information.
+CRITICAL WARNING: [Route 35-54] Net: c2/sh[10] is not completely routed.
+Resolution: Run report_route_status for more information.
+INFO: [Route 35-3320] Number of nets that did not attempt to route: 3860
+
+Unroutable connection Types: 
+----------------------------
+Checking all reachable nodes within 5 hops of driver and load 
+
+Unroute Type 1 : Site pin does not reach interconnect fabric
+
+	Type 1SLICEL.AQ->SLICEM.EX]
+	-----Num Open nets: 1
+	-----Representative Net: Net[154] c3/sh[10]
+	-----SLICE_X33Y145/AQ -> SLICE_X32Y143/EX
+	-----Driver Term: c3/sh_reg[10]/Q Load Term [2016]: c3/u_b/x_d_r_reg[10]/D
+	Load Pin does not reach Interconnect fabric within 5 hops 
+	Type 2SLICEL.AQ2->SLICEM.EX]
+	-----Num Open nets: 1
+	-----Representative Net: Net[1399] c1/sh[10]
+	-----SLICE_X33Y115/AQ2 -> SLICE_X32Y113/EX
+	-----Driver Term: c1/sh_reg[10]/Q Load Term [8522]: c1/u_b/x_d_r_reg[10]/D
+	Load Pin does not reach Interconnect fabric within 5 hops 
+	Type 3SLICEM.EQ->SLICEM.EX]
+	-----Num Open nets: 2
+	-----Representative Net: Net[2900] c0/sh[10]
+	-----SLICE_X35Y83/EQ -> SLICE_X32Y83/EX
+	-----Driver Term: c0/sh_reg[10]/Q Load Term [16841]: c0/u_b/x_d_r_reg[10]/D
+	Load Pin does not reach Interconnect fabric within 5 hops 
+	Expansion wavefront from Load was blocked by locked nodes at level: 1
+	Type 4SLICEM.BQ->SLICEM.GX]
+	-----Num Open nets: 2
+	-----Representative Net: Net[855] c3/sh[52]
+	-----SLICE_X35Y139/BQ -> SLICE_X34Y138/GX
+	-----Driver Term: c3/sh_reg[52]/Q Load Term [5688]: c3/u_b/x_d_r_reg[52]/D
+	Driver Pin does not reach Interconnect fabric within 5 hops.
+	Pins Reached within 5 hops from Driver
+	SLICE_X35Y139/C_I Net on Pin: c3/sh[49]  Net Driver: SLICE_X35Y140/AQc3/sh[50]  Net Driver: SLICE_X35Y139/AQc3/sh[52]  Net Driver: SLICE_X35Y139/BQ
+	SLICE_X35Y139/C1 Net on Pin: 
+	SLICE_X35Y139/A5 Net on Pin: 
+	SLICE_X35Y139/B5 Net on Pin: 
+	SLICE_X35Y139/C4 Net on Pin: 
+	SLICE_X35Y139/D4 Net on Pin: 
+	SLICE_X35Y139/CX Net on Pin: c3/sh[53]  Net Driver: SLICE_X35Y139/BQ2
+	SLICE_X35Y139/DX Net on Pin: c3/sh[34]  Net Driver: SLICE_X35Y139/EQ2c3/sh[32]  Net Driver: SLICE_X35Y135/FQ2
+	SLICE_X35Y139/E1 Net on Pin: 
+	SLICE_X35Y139/B6 Net on Pin: 
+	SLICE_X35Y139/C6 Net on Pin: 
+	SLICE_X35Y139/D6 Net on Pin: 
+Phase 5 Initial Routing Verification | Checksum: ec7fb597
+
+Time (s): cpu = 00:02:56 ; elapsed = 00:03:02 . Memory (MB): peak = 4380.699 ; gain = 1389.930 ; free physical = 2353 ; free virtual = 19399
+
+Phase 6 Verifying routed nets
+CRITICAL WARNING: [Route 35-54] Net: c3/sh[10] is not completely routed.
+Resolution: Run report_route_status for more information.
+CRITICAL WARNING: [Route 35-54] Net: c3/sh[52] is not completely routed.
+Resolution: Run report_route_status for more information.
+CRITICAL WARNING: [Route 35-54] Net: c1/sh[10] is not completely routed.
+Resolution: Run report_route_status for more information.
+CRITICAL WARNING: [Route 35-54] Net: c1/sh[52] is not completely routed.
+Resolution: Run report_route_status for more information.
+CRITICAL WARNING: [Route 35-54] Net: c0/sh[10] is not completely routed.
+Resolution: Run report_route_status for more information.
+CRITICAL WARNING: [Route 35-54] Net: c2/sh[10] is not completely routed.
+Resolution: Run report_route_status for more information.
+ERROR: [Route 35-7] Design has 6 unroutable pins, potentially caused by placement issue or user provided physical constraints.
+Resolution: Please check if the unroute is caused by an incorrect physical constraint on the driver/load pair of the unrouted net. If so, please remove or modify the constraint and re-run placer.
+
+ Verification failed
+Phase 6 Verifying routed nets | Checksum: ec7fb597
+
+Time (s): cpu = 00:03:47 ; elapsed = 00:03:55 . Memory (MB): peak = 4380.699 ; gain = 1389.930 ; free physical = 2538 ; free virtual = 19591
+ERROR: [Route 35-4445] route_design is terminated due to errors/critical warnings issued before and during initial routing. The issues reported cannot be resolved later in route_design.
+Resolution: Please review previous errors/critical warnings messages to determine the reason for router exit during initial routing stage. To know the state of route database please run report_route_status.
+Total Elapsed time in route_design: 234.96 secs
+INFO: [Route 35-17] Router encountered errors. Please check the log file for details
+Ending Routing Task | Checksum: 124434ac7
+
+Time (s): cpu = 00:03:47 ; elapsed = 00:03:55 . Memory (MB): peak = 4380.699 ; gain = 1389.930 ; free physical = 2538 ; free virtual = 19591
+Running DRC after route_design as it did not complete successfully
+INFO: [Vivado_Tcl 4-198] DRC finished with 0 Errors
+INFO: [Vivado_Tcl 4-199] Please refer to the DRC report (report_drc) for more information.
+INFO: [Common 17-83] Releasing license: Vivado_Implementation
+8 Infos, 0 Warnings, 12 Critical Warnings and 2 Errors encountered.
+route_design failed
+route_design: Time (s): cpu = 00:03:54 ; elapsed = 00:04:02 . Memory (MB): peak = 4380.699 ; gain = 1389.930 ; free physical = 2619 ; free virtual = 19673
+ERROR: [Common 17-39] 'route_design' failed due to earlier errors.
+
+    while executing
+"route_design"
+    invoked from within
+"if {[env_or B100_ROUTE 1] eq "1"} { route_design; lap route }"
+    (file "/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/scripts/stamp_referee.tcl" line 12)
+INFO: [Common 17-206] Exiting Vivado at Tue Nov 17 13:19:20 2026...

@@ -35,13 +35,14 @@ boards:
     aliases: [kria kr260, kr260, kr 260]
     legacy: true
     default_for_part: true
-    targetable: false
-    smoke_note: "its board.yaml has no master XDC or resource map (the pins live in each design's own XDC), so the agent cannot write its constraints from resource names yet; brief 96 is editing this file"
+    targetable: true
+    smoke_note: "targetable since brief 98 (master XDC kr260-pins.xdc, resources, slow_ports); no generated smoke design yet, because the 25 MHz clock is unconfirmed"
     licence_tier: free
-    trust: built
+    trust: hardware
     evidence:
       built: [results/b58a/build/gates.json]
-    scope: "built as part of the mock trading design (results/b58a, PL Ethernet pins), not as a smoke design; no board run record is in the repository"
+      hardware: [results/b96/hw/20261117_101326/stage3.json]
+    scope: "the owner's board: brief 96's 10GBASE-R design (SFP+ cage J24, one GTH lane) was loaded over JTAG (SRAM only, wall power) on 2026-11-17 and its link came up and locked on 100 of 100 restarts (results/b96/hw/); the SFP+ pins, the lane and the 156.25 MHz transceiver reference are measured, the 25 MHz clock, user LEDs and PL Ethernet pins are not (the PL Ethernet pins were built in results/b58a, never run)"
   basys3:
     display: Digilent Basys 3
     aliases: [basys 3, basys3, basys-3]
@@ -140,9 +141,9 @@ boards:
     aliases: [aup zu3, aup-zu3, aupzu3, real digital aup zu3]
     targetable: true
     licence_tier: free
-    trust: documented
-    smoke_note: "one smoke build reached the bitstream with every timing, DRC and methodology gate passing but failed the exceptions gate on a Vivado 12-1411 critical warning at the differential clock input (the pins landed on D7 and D6 in the routed io report); not labelled built"
-    scope: "board file from Real Digital's board files and reference-design constraints; the smoke build failed one gate (see smoke_note)"
+    trust: built
+    smoke_note: "the brief 95 build failed the exceptions gate on a Vivado 12-1411 critical warning that only `synth_design -rtl` prints for a differential input on an UltraScale+ part; the flow now counts that message as information when the real synthesis does not repeat it (brief 98), and the rebuilt smoke design passes every gate (results/95_boards/aup_zu3/)"
+    scope: "board file from Real Digital's board files and reference-design constraints; a generated smoke design built through post-route and the bitstream on Vivado 2026.1 (results/95_boards/aup_zu3/smoke.json, rebuilt 2026-11-17 for brief 98); nothing was run on a board"
   kv260:
     display: AMD Kria KV260 Vision AI Starter Kit
     aliases: [kria kv260, kv260, kv 260]

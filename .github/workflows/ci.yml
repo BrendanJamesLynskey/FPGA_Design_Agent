@@ -33,6 +33,33 @@ jobs:
         run: |
           if [ -z "$FDA_ACCESS_KEY" ]; then echo "::notice::FDA_ACCESS_KEY is not available here (fork pull request, or the secret is not set): the access-key match test skips; no job fails for it"; fi
       - uses: actions/checkout@v4
+      - name: Private prompts - decide (brief 99)
+        id: prompts
+        env:
+          KB_TOKEN: ${{ secrets.FDA_KB_READ_TOKEN }}
+          IS_FORK: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
+        run: |
+          # nothing pinned yet (agent/core/prompts_pin.json "kb_commit" null): no private prompts are needed
+          kb=$(python3 -c 'import json; print(json.load(open("agent/core/prompts_pin.json"))["kb_commit"] or "")')
+          if [ -z "$kb" ]; then echo "::notice::private prompts: none pinned yet, nothing to fetch"; echo "fetch=no" >> "$GITHUB_OUTPUT"
+          elif [ -n "$KB_TOKEN" ]; then echo "fetch=yes" >> "$GITHUB_OUTPUT"; echo "kb=$kb" >> "$GITHUB_OUTPUT"
+          elif [ "$IS_FORK" = "true" ]; then
+            echo "::notice::private prompts are not available to a fork pull request: the tests that need them skip"
+            echo "fetch=no" >> "$GITHUB_OUTPUT"; echo "FDA_PROMPTS_SKIP_NOTICE=1" >> "$GITHUB_ENV"
+          else echo "::error::FDA_KB_READ_TOKEN is not set: private prompts are pinned but cannot be fetched (not a fork, so this fails rather than skips)"; exit 1; fi
+      - name: Private prompts - fetch the pinned commit (brief 99)
+        if: steps.prompts.outputs.fetch == 'yes'
+        uses: actions/checkout@v4
+        with:
+          repository: BrendanJamesLynskey/FPGA_Design_Agent_Knowledge
+          ref: ${{ steps.prompts.outputs.kb }}
+          token: ${{ secrets.FDA_KB_READ_TOKEN }}
+          path: _kb
+          persist-credentials: false
+          sparse-checkout: prompts
+      - name: Private prompts - point the tests at them
+        if: steps.prompts.outputs.fetch == 'yes'
+        run: echo "FDA_PROMPTS_DIR=$GITHUB_WORKSPACE/_kb/prompts" >> "$GITHUB_ENV"
       - name: Fetch the pull request base (for the task selection)
         if: github.event_name == 'pull_request'
         run: git fetch --depth=1 origin ${{ github.event.pull_request.base.sha }}

@@ -1,0 +1,356 @@
+Running as unit: run-rf80501ccb67643f5bee9e29a0857317f.scope; invocation ID: 45c83d0858934efd93311af21f728504
+INFO: [Common 17-3922] A valid Vivado Design Suite BASIC license has been detected. Your current license is active and will expire on 10-nov-2027.
+
+****** Vivado v2026.1 (64-bit)
+  **** SW Build 6511674 on Tue Jun 16 11:01:26 MDT 2026
+  **** IP Build 6504888 on Tue Jun 09 09:05:25 MDT 2026
+  **** SharedData Build 6501428 on Mon Jun 08 17:34:18 MDT 2026
+  **** Start of session at: Tue Nov 17 14:11:03 2026
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+    ** Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+
+source /home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/scripts/../../../flow/rw/referee.tcl
+# source [file join [file dirname [info script]] common.tcl]
+## proc env_or {k d} { if {[info exists ::env($k)] && $::env($k) ne ""} { return $::env($k) } else { return $d } }
+## proc b100_threads {} {
+##     set n [env_or B100_THREADS 1]
+##     set_param general.maxThreads $n
+##     set_param synth.maxThreads $n
+##     set_param chipscope.maxJobs 1
+## }
+## proc lap {name} {
+##     upvar t0 t0 times times
+##     set n [clock milliseconds]
+##     dict set times $name [expr {($n - $t0) / 1000.0}]
+##     set t0 $n
+## }
+## proc write_run_json {out times part period} {
+##     set wns [get_property SLACK [lindex [get_timing_paths -setup -max_paths 1] 0]]
+##     set whs [get_property SLACK [lindex [get_timing_paths -hold -max_paths 1] 0]]
+##     set lut [llength [get_cells -hier -filter {REF_NAME =~ LUT*}]]
+##     set ff  [llength [get_cells -hier -filter {REF_NAME =~ FD*}]]
+##     set f [open ${out}_run.json w]
+##     set tj [join [lmap {k v} $times {format {"%s": %s} $k $v}] {, }]
+##     puts $f "{\"vivado\": \"[version -short]\", \"part\": \"$part\", \"period_ns\": $period, \"wns_ns\": $wns, \"whs_ns\": $whs, \"lut\": $lut, \"ff\": $ff, \"times_s\": {$tj}}"
+##     close $f
+## }
+## proc slack_of {from to} {
+##     set p [lindex [get_timing_paths -setup -from $from -to $to -max_paths 1] 0]
+##     if {$p eq ""} { return null }
+##     return [get_property SLACK $p]
+## }
+## proc chain_metrics {out} {
+##     set period [get_property PERIOD [lindex [get_clocks] 0]]
+##     set xd [get_cells -hier -filter {NAME =~ u_mac/x_d_reg* || NAME =~ u_mac/x_c_reg*}]
+##     set gd [get_cells -hier -filter {NAME =~ u_pcs/gt_d_reg*}]
+##     set pcs [get_cells -hier -filter {NAME =~ u_pcs/*}]
+##     set gtp [get_pins u_gt/TXDATA*]
+##     set wns [get_property SLACK [lindex [get_timing_paths -setup -max_paths 1] 0]]
+##     set f [open ${out}_chain.json w]
+##     puts $f "{\"period_ns\": $period, \"wns_all_ns\": $wns, \"wns_mac_to_pcs_ns\": [slack_of $xd $gd], \"wns_pcs_to_gt_ns\": [slack_of $gd $gtp], \"wns_inside_pcs_ns\": [slack_of $pcs $pcs]}"
+##     close $f
+## }
+# b100_threads
+# set out [env_or B100_OUT referee]
+# set times [dict create]
+# set t0 [clock milliseconds]
+# open_checkpoint $::env(B100_IN_DCP)
+Command: open_checkpoint /home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/scripts/../../../results/b100/c23/fixed_s0_in.dcp
+
+Starting open_checkpoint Task
+
+Time (s): cpu = 00:00:00.06 ; elapsed = 00:00:00.06 . Memory (MB): peak = 1485.180 ; gain = 8.906 ; free physical = 9048 ; free virtual = 23035
+WARNING: [Vivado 12-8410] Design file '/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/results/b100/c23/fixed_s0_in.dcp' has failed integrity check (2). There is either a missing chekcsum or mismatch. Please regenerate the DCP file.
+INFO: [Device 21-403] Loading part xck26-sfvc784-2LV-c
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 2755.359 ; gain = 0.000 ; free physical = 7906 ; free virtual = 21893
+INFO: [Netlist 29-17] Analyzing 4 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+INFO: [Project 1-479] Netlist was created with RapidWright 2026.1.2
+INFO: [Project 1-570] Preparing netlist for logic optimization
+Parsing XDC File [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/results/b100/c23/fixed_s0_in/chain_top.xdc]
+Finished Parsing XDC File [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/results/b100/c23/fixed_s0_in/chain_top.xdc]
+Parsing XDC File [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/results/b100/c23/fixed_s0_in/chain_top_late.xdc]
+create_clock: Time (s): cpu = 00:00:06 ; elapsed = 00:00:06 . Memory (MB): peak = 2755.359 ; gain = 0.000 ; free physical = 7864 ; free virtual = 21851
+Finished Parsing XDC File [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/results/b100/c23/fixed_s0_in/chain_top_late.xdc]
+Reading placement.
+Reading placer database...
+Reading routing.
+Read Old XDEF File: Time (s): cpu = 00:00:10 ; elapsed = 00:00:10 . Memory (MB): peak = 2987.766 ; gain = 232.406 ; free physical = 7698 ; free virtual = 21685
+Restored from archive | CPU: 9.860000 secs | Memory: 403.836029 MB |
+Finished XDEF File Restore: Time (s): cpu = 00:00:10 ; elapsed = 00:00:10 . Memory (MB): peak = 2987.766 ; gain = 232.406 ; free physical = 7698 ; free virtual = 21685
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2987.766 ; gain = 0.000 ; free physical = 7698 ; free virtual = 21685
+INFO: [Project 1-111] Unisim Transformation Summary:
+  A total of 2 instances were transformed.
+  IBUF => IBUF (IBUFCTRL, INBUF): 2 instances
+
+open_checkpoint: Time (s): cpu = 00:00:39 ; elapsed = 00:00:40 . Memory (MB): peak = 2987.801 ; gain = 1517.496 ; free physical = 7698 ; free virtual = 21685
+# set_property SEVERITY {Warning} [get_drc_checks {NSTD-1 UCIO-1}]
+# if {[env_or B100_ROUTE 0] eq "1"} {
+#     route_design
+#     lap route
+# }
+Command: route_design
+Attempting to get a license for feature 'Vivado_Implementation' and/or device 'xck26'
+INFO: [Common 17-349] Got license for feature 'Vivado_Implementation' and/or device 'xck26'
+
+
+Starting Routing Task
+
+Phase 1 Build RT Design
+Checksum: PlaceDB: 9d16e3b3 ConstDB: 0 ShapeSum: eff7ca32 RouteDB: 26629f9a
+Nodegraph reading from file.  Time (s): cpu = 00:00:00.7 ; elapsed = 00:00:00.73 . Memory (MB): peak = 3102.477 ; gain = 114.676 ; free physical = 7566 ; free virtual = 21553
+INFO: [Timing 38-35] Done setting XDC timing constraints.
+Post Restoration Checksum: NetGraph: 71eab7a | NumContArr: 67336293 | Constraints: 1fca5dc6 | Timing: c2a8fa9d
+Phase 1 Build RT Design | Checksum: 150c56670
+
+Time (s): cpu = 00:00:26 ; elapsed = 00:00:27 . Memory (MB): peak = 4369.699 ; gain = 1381.898 ; free physical = 6368 ; free virtual = 20357
+
+Phase 2 Router Initialization
+
+Phase 2.1 Fix Topology Constraints
+Phase 2.1 Fix Topology Constraints | Checksum: 150c56670
+
+Time (s): cpu = 00:00:26 ; elapsed = 00:00:27 . Memory (MB): peak = 4369.699 ; gain = 1381.898 ; free physical = 6368 ; free virtual = 20357
+
+Phase 2.2 Pre Route Cleanup
+CRITICAL WARNING: [Route 35-341] Fixed routing constraint on net u_mac/g_k[7].r1113_out conflicts with pin sh_reg[21]/D of net sh[20]. The said pin is unroutable.
+Fixed routing constraint on net u_mac/g_k[7].r1113_out conflicts with pin sh_reg[21]/D of net sh[20]. The said pin is unroutable.
+Conflicted nodegraph::Node (388 131 0) nc = 2
+CRITICAL WARNING: [Route 35-341] Fixed routing constraint on net u_mac/g_k[7].r1158_out conflicts with pin sh_reg[9]/D of net sh[8]. The said pin is unroutable.
+Fixed routing constraint on net u_mac/g_k[7].r1158_out conflicts with pin sh_reg[9]/D of net sh[8]. The said pin is unroutable.
+Conflicted nodegraph::Node (388 129 8) nc = 2
+CRITICAL WARNING: [Route 35-341] Fixed routing constraint on net u_mac/D[40] conflicts with pin u_pcs/hist_reg[18]/D of net u_mac/D[17]. The said pin is unroutable.
+Fixed routing constraint on net u_mac/D[40] conflicts with pin u_pcs/hist_reg[18]/D of net u_mac/D[17]. The said pin is unroutable.
+Conflicted nodegraph::Node (385 148 10) nc = 2
+CRITICAL WARNING: [Route 35-341] Fixed routing constraint on net u_mac/x_d[34] conflicts with pin u_pcs/hist_reg[27]/D of net u_mac/D[26]. The said pin is unroutable.
+Fixed routing constraint on net u_mac/x_d[34] conflicts with pin u_pcs/hist_reg[27]/D of net u_mac/D[26]. The said pin is unroutable.
+Conflicted nodegraph::Node (388 143 18) nc = 2
+CRITICAL WARNING: [Route 35-341] Fixed routing constraint on net u_mac/hist[57]_i_7_n_0 conflicts with pin u_pcs/hist_reg[13]/D of net u_mac/D[12]. The said pin is unroutable.
+Fixed routing constraint on net u_mac/hist[57]_i_7_n_0 conflicts with pin u_pcs/hist_reg[13]/D of net u_mac/D[12]. The said pin is unroutable.
+Conflicted nodegraph::Node (388 145 18) nc = 2
+CRITICAL WARNING: [Route 35-341] Fixed routing constraint on net u_mac/x_d[47]_i_4_n_0 conflicts with pin sh_reg[59]/D of net sh[58]. The said pin is unroutable.
+Fixed routing constraint on net u_mac/x_d[47]_i_4_n_0 conflicts with pin sh_reg[59]/D of net sh[58]. The said pin is unroutable.
+Conflicted nodegraph::Node (388 137 22) nc = 2
+CRITICAL WARNING: [Route 35-341] Fixed routing constraint on net u_mac/hist[57]_i_7_n_0 conflicts with pin u_pcs/hist_reg[38]/D of net u_mac/D[37]. The said pin is unroutable.
+Fixed routing constraint on net u_mac/hist[57]_i_7_n_0 conflicts with pin u_pcs/hist_reg[38]/D of net u_mac/D[37]. The said pin is unroutable.
+Conflicted nodegraph::Node (381 146 30) nc = 2
+CRITICAL WARNING: [Route 35-341] Fixed routing constraint on net u_mac/hist[57]_i_7_n_0 conflicts with pin u_pcs/hist_reg[28]/D of net u_mac/D[27]. The said pin is unroutable.
+Fixed routing constraint on net u_mac/hist[57]_i_7_n_0 conflicts with pin u_pcs/hist_reg[28]/D of net u_mac/D[27]. The said pin is unroutable.
+Conflicted nodegraph::Node (385 148 30) nc = 2
+CRITICAL WARNING: [Route 35-341] Fixed routing constraint on net u_mac/hist[57]_i_7_n_0 conflicts with pin u_pcs/hist_reg[30]/D of net u_mac/D[29]. The said pin is unroutable.
+Fixed routing constraint on net u_mac/hist[57]_i_7_n_0 conflicts with pin u_pcs/hist_reg[30]/D of net u_mac/D[29]. The said pin is unroutable.
+Conflicted nodegraph::Node (385 149 30) nc = 2
+CRITICAL WARNING: [Route 35-341] Fixed routing constraint on net u_mac/g_k[7].r1177_out conflicts with pin sh_reg[8]/D of net sh[7]. The said pin is unroutable.
+Fixed routing constraint on net u_mac/g_k[7].r1177_out conflicts with pin sh_reg[8]/D of net sh[7]. The said pin is unroutable.
+Conflicted nodegraph::Node (393 129 31) nc = 2
+CRITICAL WARNING: [Route 35-341] Fixed routing constraint on net u_mac/g_k[7].r1113_out conflicts with pin sh_reg[21]/D of net sh[20]. The said pin is unroutable.
+Fixed routing constraint on net u_mac/g_k[7].r1113_out conflicts with pin sh_reg[21]/D of net sh[20]. The said pin is unroutable.
+Conflicted nodegraph::Node (388 131 0) nc = 2
+CRITICAL WARNING: [Route 35-341] Fixed routing constraint on net u_mac/g_k[7].r1158_out conflicts with pin sh_reg[9]/D of net sh[8]. The said pin is unroutable.
+Fixed routing constraint on net u_mac/g_k[7].r1158_out conflicts with pin sh_reg[9]/D of net sh[8]. The said pin is unroutable.
+Conflicted nodegraph::Node (388 129 8) nc = 2
+CRITICAL WARNING: [Route 35-341] Fixed routing constraint on net u_mac/D[40] conflicts with pin u_pcs/hist_reg[18]/D of net u_mac/D[17]. The said pin is unroutable.
+Fixed routing constraint on net u_mac/D[40] conflicts with pin u_pcs/hist_reg[18]/D of net u_mac/D[17]. The said pin is unroutable.
+Conflicted nodegraph::Node (385 148 10) nc = 2
+CRITICAL WARNING: [Route 35-341] Fixed routing constraint on net u_mac/x_d[34] conflicts with pin u_pcs/hist_reg[27]/D of net u_mac/D[26]. The said pin is unroutable.
+Fixed routing constraint on net u_mac/x_d[34] conflicts with pin u_pcs/hist_reg[27]/D of net u_mac/D[26]. The said pin is unroutable.
+Conflicted nodegraph::Node (388 143 18) nc = 2
+CRITICAL WARNING: [Route 35-341] Fixed routing constraint on net u_mac/hist[57]_i_7_n_0 conflicts with pin u_pcs/hist_reg[13]/D of net u_mac/D[12]. The said pin is unroutable.
+Fixed routing constraint on net u_mac/hist[57]_i_7_n_0 conflicts with pin u_pcs/hist_reg[13]/D of net u_mac/D[12]. The said pin is unroutable.
+Conflicted nodegraph::Node (388 145 18) nc = 2
+CRITICAL WARNING: [Route 35-341] Fixed routing constraint on net u_mac/x_d[47]_i_4_n_0 conflicts with pin sh_reg[59]/D of net sh[58]. The said pin is unroutable.
+Fixed routing constraint on net u_mac/x_d[47]_i_4_n_0 conflicts with pin sh_reg[59]/D of net sh[58]. The said pin is unroutable.
+Conflicted nodegraph::Node (388 137 22) nc = 2
+CRITICAL WARNING: [Route 35-341] Fixed routing constraint on net u_mac/hist[57]_i_7_n_0 conflicts with pin u_pcs/hist_reg[38]/D of net u_mac/D[37]. The said pin is unroutable.
+Fixed routing constraint on net u_mac/hist[57]_i_7_n_0 conflicts with pin u_pcs/hist_reg[38]/D of net u_mac/D[37]. The said pin is unroutable.
+Conflicted nodegraph::Node (381 146 30) nc = 2
+CRITICAL WARNING: [Route 35-341] Fixed routing constraint on net u_mac/hist[57]_i_7_n_0 conflicts with pin u_pcs/hist_reg[28]/D of net u_mac/D[27]. The said pin is unroutable.
+Fixed routing constraint on net u_mac/hist[57]_i_7_n_0 conflicts with pin u_pcs/hist_reg[28]/D of net u_mac/D[27]. The said pin is unroutable.
+Conflicted nodegraph::Node (385 148 30) nc = 2
+CRITICAL WARNING: [Route 35-341] Fixed routing constraint on net u_mac/hist[57]_i_7_n_0 conflicts with pin u_pcs/hist_reg[30]/D of net u_mac/D[29]. The said pin is unroutable.
+Fixed routing constraint on net u_mac/hist[57]_i_7_n_0 conflicts with pin u_pcs/hist_reg[30]/D of net u_mac/D[29]. The said pin is unroutable.
+Conflicted nodegraph::Node (385 149 30) nc = 2
+CRITICAL WARNING: [Route 35-341] Fixed routing constraint on net u_mac/g_k[7].r1177_out conflicts with pin sh_reg[8]/D of net sh[7]. The said pin is unroutable.
+Fixed routing constraint on net u_mac/g_k[7].r1177_out conflicts with pin sh_reg[8]/D of net sh[7]. The said pin is unroutable.
+Conflicted nodegraph::Node (393 129 31) nc = 2
+Phase 2.2 Pre Route Cleanup | Checksum: 150c56670
+
+Time (s): cpu = 00:00:26 ; elapsed = 00:00:27 . Memory (MB): peak = 4369.699 ; gain = 1381.898 ; free physical = 6368 ; free virtual = 20357
+
+Phase 2.3 Global Clock Net Routing
+Phase 2.3 Global Clock Net Routing | Checksum: 1f1c56f51
+
+Time (s): cpu = 00:00:27 ; elapsed = 00:00:28 . Memory (MB): peak = 4369.699 ; gain = 1381.898 ; free physical = 6368 ; free virtual = 20357
+
+Phase 2.4 Update Timing
+Phase 2.4 Update Timing | Checksum: 1b3ddba62
+
+Time (s): cpu = 00:00:28 ; elapsed = 00:00:28 . Memory (MB): peak = 4369.699 ; gain = 1381.898 ; free physical = 6367 ; free virtual = 20356
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=-0.418 | TNS=-9.846 | WHS=-0.171 | THS=-7.695 |
+
+
+Phase 2.5 Soft Constraint Pins - Fast Budgeting
+Phase 2.5 Soft Constraint Pins - Fast Budgeting | Checksum: 184280a78
+
+Time (s): cpu = 00:00:29 ; elapsed = 00:00:29 . Memory (MB): peak = 4369.699 ; gain = 1381.898 ; free physical = 6366 ; free virtual = 20355
+
+Router Utilization Summary
+  Global Vertical Routing Utilization    = 0 %
+  Global Horizontal Routing Utilization  = 0 %
+  Routable Net Status*
+  *Does not include unroutable nets such as driverless and loadless.
+  Run report_route_status for detailed report.
+  Number of Failed Nets               = 1815
+    (Failed Nets is the sum of unrouted and partially routed nets)
+  Number of Unrouted Nets             = 589
+  Number of Partially Routed Nets     = 1226
+  Number of Node Overlaps             = 10
+
+Phase 2 Router Initialization | Checksum: 1831992bd
+
+Time (s): cpu = 00:00:30 ; elapsed = 00:00:30 . Memory (MB): peak = 4369.699 ; gain = 1381.898 ; free physical = 6361 ; free virtual = 20350
+
+Phase 3 Global Routing
+Phase 3 Global Routing | Checksum: 1831992bd
+
+Time (s): cpu = 00:00:30 ; elapsed = 00:00:30 . Memory (MB): peak = 4369.699 ; gain = 1381.898 ; free physical = 6361 ; free virtual = 20350
+
+Phase 4 Initial Routing
+
+Phase 4.1 Initial Net Routing Pass
+Phase 4.1 Initial Net Routing Pass | Checksum: 19c4009e7
+
+Time (s): cpu = 00:00:32 ; elapsed = 00:00:32 . Memory (MB): peak = 4369.699 ; gain = 1381.898 ; free physical = 6362 ; free virtual = 20350
+Phase 4 Initial Routing | Checksum: 1e49978a7
+
+Time (s): cpu = 00:00:32 ; elapsed = 00:00:32 . Memory (MB): peak = 4369.699 ; gain = 1381.898 ; free physical = 6361 ; free virtual = 20350
+
+Phase 5 Initial Routing Verification
+
+Post Initial-Routing Verification
+---------------------------------
+CRITICAL WARNING: [Route 35-54] Net: sh[7] is not completely routed.
+Resolution: Run report_route_status for more information.
+CRITICAL WARNING: [Route 35-54] Net: sh[8] is not completely routed.
+Resolution: Run report_route_status for more information.
+CRITICAL WARNING: [Route 35-54] Net: sh[20] is not completely routed.
+Resolution: Run report_route_status for more information.
+CRITICAL WARNING: [Route 35-54] Net: sh[58] is not completely routed.
+Resolution: Run report_route_status for more information.
+CRITICAL WARNING: [Route 35-54] Net: u_mac/D[12] is not completely routed.
+Resolution: Run report_route_status for more information.
+CRITICAL WARNING: [Route 35-54] Net: u_mac/D[26] is not completely routed.
+Resolution: Run report_route_status for more information.
+CRITICAL WARNING: [Route 35-54] Net: u_mac/D[17] is not completely routed.
+Resolution: Run report_route_status for more information.
+CRITICAL WARNING: [Route 35-54] Net: u_mac/D[37] is not completely routed.
+Resolution: Run report_route_status for more information.
+CRITICAL WARNING: [Route 35-54] Net: u_mac/D[29] is not completely routed.
+Resolution: Run report_route_status for more information.
+CRITICAL WARNING: [Route 35-54] Net: u_mac/D[27] is not completely routed.
+Resolution: Run report_route_status for more information.
+INFO: [Route 35-3320] Number of nets that did not attempt to route: 295
+
+Unroutable connection Types: 
+----------------------------
+Checking all reachable nodes within 5 hops of driver and load 
+
+Unroute Type 1 : Potential Placement Issue
+
+SLICEL.FMUX/SLICEL.F_O/->SLICEL.EX]
+	-----Num Open nets: 1
+	-----Representative Net: Net[1354] u_mac/D[26]
+	-----SLICE_X56Y101.FMUX/SLICE_X56Y101.F_O/ -> SLICE_X57Y101/EX
+	-----Driver Term: u_mac/hist[27]_i_2/O Load Term [10623]: u_pcs/hist_reg[27]/D
+SLICEL.FMUX/SLICEL.F_O/->SLICEL.E_I]
+	-----Num Open nets: 1
+	-----Representative Net: Net[1549] u_mac/D[17]
+	-----SLICE_X55Y99.FMUX/SLICE_X55Y99.F_O/ -> SLICE_X55Y96/E_I
+	-----Driver Term: u_mac/hist[18]_i_2/O Load Term [11636]: u_pcs/hist_reg[18]/D
+SLICEM.DMUX/SLICEM.D_O/->SLICEM.EX]
+	-----Num Open nets: 3
+	-----Representative Net: Net[1653] u_mac/D[37]
+	-----SLICE_X53Y97.DMUX/SLICE_X53Y97.D_O/ -> SLICE_X53Y98/EX
+	-----Driver Term: u_mac/hist[38]_i_2/O Load Term [12097]: u_pcs/hist_reg[38]/D
+	Type 4SLICEL.E_O->SLICEL.EX]
+	-----Num Open nets: 1
+	-----Representative Net: Net[1277] u_mac/D[12]
+	-----SLICE_X57Y98/E_O -> SLICE_X57Y99/EX
+	-----Driver Term: u_mac/hist[13]_i_2/O Load Term [10149]: u_pcs/hist_reg[13]/D
+	Type 5SLICEL.EQ2->SLICEL.E_I]
+	-----Num Open nets: 1
+	-----Representative Net: Net[825] sh[58]
+	-----SLICE_X56Y106/EQ2 -> SLICE_X56Y107/E_I
+	-----Driver Term: sh_reg[58]/Q Load Term [6831]: sh_reg[59]/D
+	Type 6SLICEM.EQ->SLICEL.AX]
+	-----Num Open nets: 1
+	-----Representative Net: Net[560] sh[20]
+	-----SLICE_X58Y113/EQ -> SLICE_X57Y113/AX
+	-----Driver Term: sh_reg[20]/Q Load Term [5522]: sh_reg[21]/D
+	Type 7SLICEM.FQ->SLICEL.GX]
+	-----Num Open nets: 1
+	-----Representative Net: Net[271] sh[8]
+	-----SLICE_X58Y115/FQ -> SLICE_X57Y115/GX
+	-----Driver Term: sh_reg[8]/Q Load Term [3713]: sh_reg[9]/D
+	Type 8SLICEL.FQ->SLICEM.FX]
+	-----Num Open nets: 1
+	-----Representative Net: Net[133] sh[7]
+	-----SLICE_X57Y116/FQ -> SLICE_X58Y115/FX
+	-----Driver Term: sh_reg[7]/Q Load Term [2669]: sh_reg[8]/D
+Phase 5 Initial Routing Verification | Checksum: 1e49978a7
+
+Time (s): cpu = 00:00:32 ; elapsed = 00:00:33 . Memory (MB): peak = 4369.699 ; gain = 1381.898 ; free physical = 6361 ; free virtual = 20350
+
+Phase 6 Verifying routed nets
+CRITICAL WARNING: [Route 35-54] Net: sh[7] is not completely routed.
+Resolution: Run report_route_status for more information.
+CRITICAL WARNING: [Route 35-54] Net: sh[8] is not completely routed.
+Resolution: Run report_route_status for more information.
+CRITICAL WARNING: [Route 35-54] Net: sh[20] is not completely routed.
+Resolution: Run report_route_status for more information.
+CRITICAL WARNING: [Route 35-54] Net: sh[58] is not completely routed.
+Resolution: Run report_route_status for more information.
+CRITICAL WARNING: [Route 35-54] Net: u_mac/D[12] is not completely routed.
+Resolution: Run report_route_status for more information.
+CRITICAL WARNING: [Route 35-54] Net: u_mac/D[26] is not completely routed.
+Resolution: Run report_route_status for more information.
+CRITICAL WARNING: [Route 35-54] Net: u_mac/D[17] is not completely routed.
+Resolution: Run report_route_status for more information.
+CRITICAL WARNING: [Route 35-54] Net: u_mac/D[37] is not completely routed.
+Resolution: Run report_route_status for more information.
+CRITICAL WARNING: [Route 35-54] Net: u_mac/D[29] is not completely routed.
+Resolution: Run report_route_status for more information.
+CRITICAL WARNING: [Route 35-54] Net: u_mac/D[27] is not completely routed.
+Resolution: Run report_route_status for more information.
+ERROR: [Route 35-8] Design has 10 unrouted pins, that are still reachable.
+
+ Verification failed
+Phase 6 Verifying routed nets | Checksum: 1e49978a7
+
+Time (s): cpu = 00:00:32 ; elapsed = 00:00:33 . Memory (MB): peak = 4369.699 ; gain = 1381.898 ; free physical = 6361 ; free virtual = 20350
+ERROR: [Route 35-4445] route_design is terminated due to errors/critical warnings issued before and during initial routing. The issues reported cannot be resolved later in route_design.
+Resolution: Please review previous errors/critical warnings messages to determine the reason for router exit during initial routing stage. To know the state of route database please run report_route_status.
+Total Elapsed time in route_design: 32.55 secs
+INFO: [Route 35-17] Router encountered errors. Please check the log file for details
+Ending Routing Task | Checksum: 2137b6da3
+
+Time (s): cpu = 00:00:32 ; elapsed = 00:00:33 . Memory (MB): peak = 4369.699 ; gain = 1381.898 ; free physical = 6361 ; free virtual = 20350
+Running DRC after route_design as it did not complete successfully
+INFO: [Vivado_Tcl 4-198] DRC finished with 0 Errors
+INFO: [Vivado_Tcl 4-199] Please refer to the DRC report (report_drc) for more information.
+INFO: [Common 17-83] Releasing license: Vivado_Implementation
+8 Infos, 0 Warnings, 40 Critical Warnings and 2 Errors encountered.
+route_design failed
+route_design: Time (s): cpu = 00:00:35 ; elapsed = 00:00:35 . Memory (MB): peak = 4369.699 ; gain = 1381.898 ; free physical = 6360 ; free virtual = 20352
+ERROR: [Common 17-39] 'route_design' failed due to earlier errors.
+
+    while executing
+"route_design"
+    invoked from within
+"if {[env_or B100_ROUTE 0] eq "1"} {
+    route_design
+    lap route
+}"
+    (file "/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/scripts/../../../flow/rw/referee.tcl" line 11)
+INFO: [Common 17-206] Exiting Vivado at Tue Nov 17 14:12:22 2026...
