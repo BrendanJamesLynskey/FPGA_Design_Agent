@@ -68,24 +68,30 @@ proc apply_xpm_cdc_constraints {} {
     # brief 96C: xpm_fifo_async. AMD ships no scoped constraint for the FIFO's block memory (its gray pointers are xpm_cdc_gray and are handled above). The memory
     # is written in the write clock and read in the read clock only after the pointer has crossed, so its read path needs a bound, not a timing relationship:
     # without one, the two user clocks are timed together through the RAM and report_methodology raises TIMING-7 (Critical) "no common node between related
-    # clocks" (measured on brief 96C's rate_match: 0 checks with this exception, 1 without). Datapath-only max delay from the RAM's clock pins to the
-    # FIFO's registers at the source period.
+    # clocks" (measured on brief 96C's rate_match: 0 checks with this exception, 1 without). Datapath-only max delay, at the write clock's period, from the
+    # RAM's clock pins to exactly the register pins the RAM outputs reach (all_fanout, endpoints only). Applied once per FIFO instance, nothing for a design with
+    # no xpm_fifo_async; if the exception cannot be built the build fails (a FIFO without it is a Critical methodology warning, not a pass).
     set nxf 0
-    set fr [get_cells -quiet -hierarchical -filter {NAME =~ *xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/* && REF_NAME =~ RAM*}]
-    if {[llength $fr]} {
-        set fpins [get_pins -quiet -of_objects $fr -filter {REF_PIN_NAME == CLK || REF_PIN_NAME == WCLK}]
-        set froot [lsort -unique [lmap c $fr {set n [get_property NAME $c]; regsub {/xpm_fifo_base_inst/.*$} $n {} n; set n}]]
-        foreach root $froot {
-            set rp [get_pins -quiet -of_objects [get_cells -quiet -hierarchical -filter "NAME =~ ${root}/xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/* && REF_NAME =~ RAM*"] -filter {REF_PIN_NAME == CLK || REF_PIN_NAME == WCLK}]
-            regsub {/[^/]+$} $root {} parent       ;# the module that instantiates the FIFO: its read-side registers are the endpoints
-            set ends [get_cells -quiet -hierarchical -filter "NAME =~ ${parent}/* && IS_SEQUENTIAL"]
-            if {[llength $rp] && [llength $ends]} {
-                set c [get_clocks -quiet -of_objects [lindex $rp 0]]
-                set per [expr {$c eq "" ? 10.000 : [get_property PERIOD [lindex $c 0]]}]
-                set_max_delay -datapath_only -from $rp -to $ends $per
-                incr nxf
-            }
+    set froots {}
+    set allram [get_cells -quiet -hierarchical -filter {NAME =~ *xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/* && REF_NAME =~ RAM*}]
+    if {[llength $allram]} {
+        foreach n [get_property NAME $allram] {
+            regsub {/xpm_fifo_base_inst/.*$} $n {} n
+            if {[lsearch -exact $froots $n] < 0} { lappend froots $n }
         }
+    }
+    foreach root $froots {
+        set ram [get_cells -quiet -hierarchical -filter "NAME =~ ${root}/xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/* && REF_NAME =~ RAM*"]
+        set clkpins [get_pins -quiet -of_objects $ram -filter {REF_PIN_NAME == CLK || REF_PIN_NAME == WCLK}]
+        set outpins [get_pins -quiet -of_objects $ram -filter {DIRECTION == OUT}]
+        if {[llength $clkpins] == 0 || [llength $outpins] == 0} { error "xpm_cdc: FIFO $root: no RAM clock or output pins found" }
+        set clk [get_clocks -quiet -of_objects [lindex $clkpins 0]]
+        if {$clk eq ""} { error "xpm_cdc: FIFO $root: the RAM's write clock has no clock definition (cannot take its period)" }
+        set per [get_property PERIOD $clk]
+        set endpins [all_fanout -from $outpins -endpoints_only -flat]
+        if {[llength $endpins] == 0} { error "xpm_cdc: FIFO $root: the RAM output reaches no register" }
+        set_max_delay -datapath_only -from $clkpins -to $endpins $per
+        incr nxf
     }
     puts "xpm_cdc: false path to [llength $xs] first stages, $nxg Gray instances, $nxh handshake data buses, $nxf FIFO memories"
 }

@@ -41,7 +41,7 @@ async def run_case(dut, name, ppm, n_frames=300, gaps=(2,), seed=1, hi=4, os_eve
 
     async def w_drv():
         i = 0
-        while True:
+        for _ in range(2_000_000):
             await RisingEdge(dut.wclk)
             in_flight["w_t"].append(get_sim_time("fs"))
             k = len(in_flight["w_t"])               # edges seen; inputs set now are held before edge k
@@ -65,7 +65,7 @@ async def run_case(dut, name, ppm, n_frames=300, gaps=(2,), seed=1, hi=4, os_eve
 
     async def r_mon():
         j = 0
-        while True:
+        for _ in range(2_000_000):
             await RisingEdge(dut.rclk)
             in_flight["r_t"].append(get_sim_time("fs"))
             j = len(in_flight["r_t"])
@@ -118,28 +118,28 @@ async def run_case(dut, name, ppm, n_frames=300, gaps=(2,), seed=1, hi=4, os_eve
     return res
 
 
-@cocotb.test()
+@cocotb.test(timeout_time=50, timeout_unit="ms")
 async def same_clocks(dut):
     """Equal frequencies, a fixed phase: after the start-up insertions nothing is inserted or deleted."""
     r = await run_case(dut, "same", 0)
     assert r["frames_equal"] and r["rtl"]["n_ovf"] == 0, r
 
 
-@cocotb.test()
+@cocotb.test(timeout_time=50, timeout_unit="ms")
 async def partner_faster(dut):
     """The partner's clock is 400 ppm faster than ours: the fill grows, idles are deleted, every frame is intact."""
     r = await run_case(dut, "p400", 400, n_frames=700, gaps=(2, 3, 1, 4))
     assert r["frames_equal"] and r["rtl"]["n_del"] > 0 and r["rtl"]["n_ovf"] == 0, r
 
 
-@cocotb.test()
+@cocotb.test(timeout_time=50, timeout_unit="ms")
 async def partner_slower(dut):
     """The partner's clock is 400 ppm slower: the fill falls, idles are inserted, every frame is intact."""
     r = await run_case(dut, "m400", -400, n_frames=700, gaps=(2, 3, 1, 4))
     assert r["frames_equal"] and r["rtl"]["n_ins"] > 0 and r["rtl"]["n_ovf"] == 0, r
 
 
-@cocotb.test()
+@cocotb.test(timeout_time=50, timeout_unit="ms")
 async def minimum_gap_partner_faster(dut):
     """One idle block between frames (a minimum-gap stream, 802.3's 12-byte gap holds one pure idle block), the partner 300 ppm faster, 5000 frames (about 4,000 clocks per
     deletion needed, so the buffer would fill from about 1 to its 16 blocks after about 60,000 clocks). With MIN_KEEP = 0 a lone idle block may be deleted: nothing overflows.
@@ -151,21 +151,21 @@ async def minimum_gap_partner_faster(dut):
         assert r["rtl"]["n_ovf"] > 0 and not r["frames_equal"], r
 
 
-@cocotb.test()
+@cocotb.test(timeout_time=50, timeout_unit="ms")
 async def ordered_sets_and_errors_pass(dut):
     """Ordered-set blocks (shown as idles) and error blocks between frames: the RTL equals the twin; frames intact."""
     r = await run_case(dut, "os_err", 300, n_frames=600, gaps=(2, 1, 3), seed=4, os_every=3, err_every=5)
     assert r["frames_equal"], r
 
 
-@cocotb.test()
+@cocotb.test(timeout_time=50, timeout_unit="ms")
 async def lock_loss_discards(dut):
     """The block lock drops for a while mid-stream: the buffer is discarded, nothing is output meanwhile; the RTL equals the twin."""
     r = await run_case(dut, "lockdrop", 100, n_frames=300, gaps=(2,), seed=5, lock_drop=(6000, 6100))
     assert r["rtl"]["n_ovf"] == 0, r
 
 
-@cocotb.test()
+@cocotb.test(timeout_time=50, timeout_unit="ms")
 async def clear_wins_over_a_count(dut):
     """A counter clear in the write and read domains in the middle of a stream (blocks are being counted in that very clock): the counters restart from the clear."""
     r = await run_case(dut, "clear", 150, n_frames=200, gaps=(2,), seed=7, clr_at=(3000, 3000))

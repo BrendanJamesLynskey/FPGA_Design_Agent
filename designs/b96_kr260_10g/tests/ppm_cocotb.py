@@ -133,7 +133,7 @@ def verdict(res):
 POINTS = [float(x) for x in os.environ.get("B96_PPM_POINTS", "0,100,-100,300,-300").split(",")]
 
 
-@cocotb.test()
+@cocotb.test(timeout_time=50, timeout_unit="ms")
 @cocotb.parametrize(ppm=POINTS)
 async def ppm_point(dut, ppm):
     """One offset (a test of its own, so the clock and partner coroutines of the point before are gone); the verdicts are recorded and, for the
