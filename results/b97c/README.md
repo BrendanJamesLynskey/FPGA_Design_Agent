@@ -1,6 +1,6 @@
 # results/b97c: order sequence resync and order-content check (brief 97C)
 
-Records of brief 97C on `designs/b96_kr260_10g` and its variants `lat_agent_both` and `lat_all3`.
+This folder holds the simulation logs, the rebuild queue and the board results of brief 97C, which fixes the order-sequence resync after a link restart and adds an order-content check to `designs/b96_kr260_10g` and its variants `lat_agent_both` and `lat_all3`.
 
 ## Records
 - `sim_before.log`, `core_sim_before.json`, `pytest_before.txt`: the core cocotb bench (15 tests, the 97C tests added) on the RTL of main 3db08151. 7 pass, 8 fail: every sequence scenario except an RX-only restart shows all orders stale, late and poisoned.
