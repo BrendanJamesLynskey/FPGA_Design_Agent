@@ -17,3 +17,15 @@ Cause (simulation, before): CMD bit 0 zeroed the receive side's order number but
 
 ## Known gaps and limits
 No board result: the board run is the owner's (`_handoff/fpga_agent/run_97c_stage3.sh`). The content check covers the order's fields, length and FCS, not the MAC, IP and UDP header bytes beyond classification, and holds one order in flight. The re-synchronisation is verified in simulation with both user clocks equal; on the board the two restart pulses can differ by a few clocks (the self-heal covers that case).
+
+## Board run, 2026-11-18 19:42 (`hw/20261118_194221/`)
+
+The owner ran `_handoff/fpga_agent/run_97c_stage3.sh` on the KR260 (10G-LR module in J24, 0.17 m OS2 loopback lead), 100 link restarts per variant, 5 orders per restart. `program.json` holds the programming record (build ID read back over JTAG, XADC supplies inside the DS925 limits); `stage3.json` holds the per-restart counters and the safety verdict.
+
+| Variant | safety_ok | Orders sent / fired / order_ok | order_bad, stale, late, poisoned, bad | E min (median, range) | L min (median, range) | L−E | Tick-to-trade ≈ (L−E)×6.206 − 0.83 ns |
+|---|---|---|---|---|---|---|---|
+| control | true | 500 / 500 / 500 | all 0 | 20 (19–21) | 50 (48–51) | 30 | ≈185 ns |
+| agent_both | true | 500 / 500 / 500 | all 0 | 20 (19–21) | 48 (47–49) | 28 | ≈173 ns |
+| all3 | true | 500 / 500 / 500 | all 0 | 20 (19–20) | 46 (45–47) | 26 | ≈161 ns |
+
+Every restart locked. The 97 predictions were L 50, 48 and 47; all3 came in one clock better than predicted. With the sequence fix, every order of every restart is clean and its content checked in hardware, so agent_both and all3 are accepted.
