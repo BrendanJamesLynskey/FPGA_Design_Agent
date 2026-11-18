@@ -1,0 +1,82 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2026.1 (lin64) Build 6511674 Tue Jun 16 11:01:26 MDT 2026
+| Date         : Wed Nov 18 10:34:56 2026
+| Host         : bren-ubuntu24-04 running 64-bit Ubuntu 24.04.4 LTS
+| Command      : report_timing -max_paths 1 -setup -file /home/brendan/Claude_sandbox/_worktrees/101-oss-synth-eqy/build/b101/vivado/a7/run1_pass5_edif/crc64_rx__ys_abc9_10.60/timing_worst.rpt
+| Design       : ooc_wrap
+| Device       : 7a100t-csg324
+| Speed File   : -1  PRODUCTION 1.23 2018-06-13
+| Design State : Routed
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Timing Report
+
+Slack (MET) :             0.016ns  (required time - arrival time)
+  Source:                 $auto$ff.cc:337:slice$2041/C
+                            (rising edge-triggered cell FDRE clocked by clk  {rise@0.000ns fall@5.300ns period=10.600ns})
+  Destination:            $auto$ff.cc:337:slice$2021/D
+                            (rising edge-triggered cell FDSE clocked by clk  {rise@0.000ns fall@5.300ns period=10.600ns})
+  Path Group:             clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            10.600ns  (clk rise@10.600ns - clk rise@0.000ns)
+  Data Path Delay:        10.529ns  (logic 2.385ns (22.652%)  route 8.144ns (77.348%))
+  Logic Levels:           10  (LUT2=4 LUT4=1 LUT5=1 LUT6=4)
+  Clock Path Skew:        -0.049ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    0.924ns = ( 11.524 - 10.600 ) 
+    Source Clock Delay      (SCD):    0.973ns
+    Clock Pessimism Removal (CPR):    0.000ns
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk rise edge)        0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk
+                         net (fo=96, unset)           0.973     0.973    clk
+    SLICE_X26Y43         FDRE                                         r  $auto$ff.cc:337:slice$2041/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X26Y43         FDRE (Prop_fdre_C_Q)         0.456     1.429 r  $auto$ff.cc:337:slice$2041/Q
+                         net (fo=8, routed)           0.871     2.300    d_q[4]
+    SLICE_X27Y45         LUT2 (Prop_lut2_I0_O)        0.150     2.450 r  $abc$37178$lut$aiger37177$167/O
+                         net (fo=6, routed)           0.480     2.930    $techmap37202$abc$37178$lut$aiger37177$527.A[5]
+    SLICE_X26Y43         LUT6 (Prop_lut6_I5_O)        0.326     3.256 r  $abc$37178$lut$aiger37177$206/O
+                         net (fo=3, routed)           0.960     4.216    $techmap37261$abc$37178$lut$aiger37177$1628.A[1]
+    SLICE_X24Y44         LUT4 (Prop_lut4_I1_O)        0.124     4.340 r  $abc$37178$lut$aiger37177$1628/O
+                         net (fo=7, routed)           0.779     5.119    $techmap37262$abc$37178$lut$aiger37177$1775.A[4]
+    SLICE_X20Y46         LUT2 (Prop_lut2_I0_O)        0.124     5.243 r  $abc$37178$lut$aiger37177$1949/O
+                         net (fo=2, routed)           0.793     6.036    $techmap37380$abc$37178$lut$aiger37177$2030.A[4]
+    SLICE_X23Y46         LUT2 (Prop_lut2_I1_O)        0.150     6.186 r  $abc$37178$lut$aiger37177$3008/O
+                         net (fo=2, routed)           1.067     7.253    $techmap37403$abc$37178$lut$aiger37177$3023.A[2]
+    SLICE_X22Y46         LUT6 (Prop_lut6_I3_O)        0.326     7.579 r  $abc$37178$lut$aiger37177$4559/O
+                         net (fo=1, routed)           0.784     8.363    $techmap37416$abc$37178$lut$aiger37177$4652.A[3]
+    SLICE_X22Y46         LUT5 (Prop_lut5_I3_O)        0.124     8.487 r  $abc$37178$lut$aiger37177$4652/O
+                         net (fo=9, routed)           0.612     9.099    $techmap37417$abc$37178$lut$aiger37177$4739.A[5]
+    SLICE_X20Y48         LUT6 (Prop_lut6_I5_O)        0.124     9.223 r  $abc$37178$lut$aiger37177$4739/O
+                         net (fo=11, routed)          1.235    10.458    $techmap37418$auto$abc_ops_reintegrate.cc:722:reintegrate$37198.A[2]
+    SLICE_X27Y46         LUT2 (Prop_lut2_I0_O)        0.154    10.612 r  $abc$37178$lut$aiger37177$5588/O
+                         net (fo=2, routed)           0.563    11.175    $techmap37495$auto$abc_ops_reintegrate.cc:722:reintegrate$37185.A[4]
+    SLICE_X27Y47         LUT6 (Prop_lut6_I4_O)        0.327    11.502 r  $auto$abc_ops_reintegrate.cc:722:reintegrate$37185/O
+                         net (fo=1, routed)           0.000    11.502    $abc$37178$aiger$o79
+    SLICE_X27Y47         FDSE                                         r  $auto$ff.cc:337:slice$2021/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk rise edge)       10.600    10.600 r  <hidden>
+                                                      0.000    10.600 r  clk
+                         net (fo=96, unset)           0.924    11.524    clk
+    SLICE_X27Y47         FDSE                                         r  $auto$ff.cc:337:slice$2021/C
+                         clock pessimism              0.000    11.524    <hidden>
+                         clock uncertainty           -0.035    11.489    <hidden>
+    SLICE_X27Y47         FDSE (Setup_fdse_C_D)        0.029    11.518    $auto$ff.cc:337:slice$2021
+  -------------------------------------------------------------------
+                         required time                         11.518    <hidden>
+                         arrival time                         -11.502    <hidden>
+  -------------------------------------------------------------------
+                         slack                                  0.016    <hidden>
+
+
+
+

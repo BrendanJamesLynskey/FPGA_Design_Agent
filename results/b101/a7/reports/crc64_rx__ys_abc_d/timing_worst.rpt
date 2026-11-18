@@ -1,0 +1,90 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2026.1 (lin64) Build 6511674 Tue Jun 16 11:01:26 MDT 2026
+| Date         : Wed Nov 18 10:42:35 2026
+| Host         : bren-ubuntu24-04 running 64-bit Ubuntu 24.04.4 LTS
+| Command      : report_timing -max_paths 1 -setup -file /home/brendan/Claude_sandbox/_worktrees/101-oss-synth-eqy/build/b101/vivado/a7/run1_pass5_edif/crc64_rx__ys_abc_d_11.20/timing_worst.rpt
+| Design       : ooc_wrap
+| Device       : 7a100t-csg324
+| Speed File   : -1  PRODUCTION 1.23 2018-06-13
+| Design State : Routed
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Timing Report
+
+Slack (MET) :             0.143ns  (required time - arrival time)
+  Source:                 $auto$ff.cc:337:slice$2014/C
+                            (rising edge-triggered cell FDSE clocked by clk  {rise@0.000ns fall@5.600ns period=11.200ns})
+  Destination:            $auto$ff.cc:337:slice$2022/D
+                            (rising edge-triggered cell FDSE clocked by clk  {rise@0.000ns fall@5.600ns period=11.200ns})
+  Path Group:             clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            11.200ns  (clk rise@11.200ns - clk rise@0.000ns)
+  Data Path Delay:        11.004ns  (logic 3.777ns (34.324%)  route 7.227ns (65.676%))
+  Logic Levels:           14  (LUT5=1 LUT6=6 MUXF7=5 MUXF8=2)
+  Clock Path Skew:        -0.049ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    0.924ns = ( 12.124 - 11.200 ) 
+    Source Clock Delay      (SCD):    0.973ns
+    Clock Pessimism Removal (CPR):    0.000ns
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk rise edge)        0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk
+                         net (fo=96, unset)           0.973     0.973    clk
+    SLICE_X19Y43         FDSE                                         r  $auto$ff.cc:337:slice$2014/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X19Y43         FDSE (Prop_fdse_C_Q)         0.456     1.429 r  $auto$ff.cc:337:slice$2014/Q
+                         net (fo=4, routed)           1.120     2.549    crc[10]
+    SLICE_X25Y42         LUT6 (Prop_lut6_I0_O)        0.124     2.673 r  $abc$3990$blif$3990$7.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.lut0.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.lut1/O
+                         net (fo=1, routed)           0.000     2.673    $abc$3990$blif$3990$7.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.lut0.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.f1
+    SLICE_X25Y42         MUXF7 (Prop_muxf7_I1_O)      0.245     2.918 r  $abc$3990$blif$3990$7.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.lut0.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.mux7/O
+                         net (fo=1, routed)           0.000     2.918    $abc$3990$blif$3990$7.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.f0
+    SLICE_X25Y42         MUXF8 (Prop_muxf8_I0_O)      0.104     3.022 r  $abc$3990$blif$3990$7.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.mux8/O
+                         net (fo=27, routed)          1.075     4.097    $abc$3990$blif$3990$16.A[1]
+    SLICE_X26Y44         LUT6 (Prop_lut6_I0_O)        0.316     4.413 r  $abc$3990$blif$3990$58.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.lut1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.lut0/O
+                         net (fo=1, routed)           0.000     4.413    $abc$3990$blif$3990$58.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.lut1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.f0
+    SLICE_X26Y44         MUXF7 (Prop_muxf7_I0_O)      0.212     4.625 r  $abc$3990$blif$3990$58.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.lut1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.mux7/O
+                         net (fo=1, routed)           0.000     4.625    $abc$3990$blif$3990$58.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.f1
+    SLICE_X26Y44         MUXF8 (Prop_muxf8_I1_O)      0.094     4.719 r  $abc$3990$blif$3990$58.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.mux8/O
+                         net (fo=12, routed)          1.525     6.244    $abc$3990$blif$3990$102.A[3]
+    SLICE_X19Y47         LUT5 (Prop_lut5_I1_O)        0.344     6.588 r  $abc$3990$blif$3990$151/O
+                         net (fo=3, routed)           0.535     7.123    $abc$3990$blif$3990$176.A[1]
+    SLICE_X14Y47         LUT6 (Prop_lut6_I1_O)        0.326     7.449 r  $abc$3990$blif$3990$176.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.lut0/O
+                         net (fo=1, routed)           0.000     7.449    $abc$3990$blif$3990$176.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.f0
+    SLICE_X14Y47         MUXF7 (Prop_muxf7_I0_O)      0.241     7.690 r  $abc$3990$blif$3990$176.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.mux7/O
+                         net (fo=3, routed)           0.819     8.509    $abc$3990$blif$3990$194.A[4]
+    SLICE_X14Y45         LUT6 (Prop_lut6_I4_O)        0.298     8.807 r  $abc$3990$blif$3990$194.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.lut0/O
+                         net (fo=1, routed)           0.000     8.807    $abc$3990$blif$3990$194.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.f0
+    SLICE_X14Y45         MUXF7 (Prop_muxf7_I0_O)      0.209     9.016 r  $abc$3990$blif$3990$194.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.mux7/O
+                         net (fo=7, routed)           1.130    10.146    $abc$3990$blif$3990$199.A[3]
+    SLICE_X16Y42         LUT6 (Prop_lut6_I3_O)        0.297    10.443 r  $abc$3990$blif$3990$199.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.lut0/O
+                         net (fo=1, routed)           0.000    10.443    $abc$3990$blif$3990$199.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.f0
+    SLICE_X16Y42         MUXF7 (Prop_muxf7_I0_O)      0.212    10.655 r  $abc$3990$blif$3990$199.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.mux7/O
+                         net (fo=19, routed)          1.023    11.678    $abc$3990$blif$3990$221.A[3]
+    SLICE_X20Y43         LUT6 (Prop_lut6_I2_O)        0.299    11.977 r  $abc$3990$blif$3990$252/O
+                         net (fo=1, routed)           0.000    11.977    $$root.b96_pkg.crc_upd.r$190[19]
+    SLICE_X20Y43         FDSE                                         r  $auto$ff.cc:337:slice$2022/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk rise edge)       11.200    11.200 r  <hidden>
+                                                      0.000    11.200 r  clk
+                         net (fo=96, unset)           0.924    12.124    clk
+    SLICE_X20Y43         FDSE                                         r  $auto$ff.cc:337:slice$2022/C
+                         clock pessimism              0.000    12.124    <hidden>
+                         clock uncertainty           -0.035    12.089    <hidden>
+    SLICE_X20Y43         FDSE (Setup_fdse_C_D)        0.031    12.120    $auto$ff.cc:337:slice$2022
+  -------------------------------------------------------------------
+                         required time                         12.120    <hidden>
+                         arrival time                         -11.977    <hidden>
+  -------------------------------------------------------------------
+                         slack                                  0.143    <hidden>
+
+
+
+

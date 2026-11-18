@@ -418,6 +418,22 @@ def _gt(d: Path, g: dict[str, bool]) -> dict[str, Any] | None:
     return r
 
 
+def _oss_netlist(d: Path, g: dict[str, bool]) -> dict[str, Any] | None:
+    """Brief 101: gate ``post_synth_oss_netlist_equivalent``. Any flow that changes logic outside Vivado's own synthesis (Yosys,
+    direct primitives, RapidWright, hand edits) leaves its netlist under ``oss_netlists/<name>/`` in the build directory, and the
+    netlist passes only with a PASS from flow/eqy_gate.py bound to that exact netlist and its RTL. None (no gate) for a build with no
+    such netlist."""
+    try:
+        from flow import eqy_gate
+    except ImportError:      # run as a script: flow/ is on sys.path, not the repo
+        sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+        from flow import eqy_gate
+    r = eqy_gate.evidence(d)
+    if r is not None:
+        g["post_synth_oss_netlist_equivalent"] = r["pass"]
+    return r
+
+
 def _resets(d: Path, g: dict[str, bool]) -> dict[str, Any] | None:
     """Brief 71: the check suite's ``resets`` check (flow/checks/resets.py: AMD's reset rows and our netlist scan) as gate
     ``post_synth_resets_clean``, the same function the agent's ``check`` tool runs. Only for a build that ran the scan
@@ -579,6 +595,7 @@ def evaluate(build_dir: Path, architecture: Path | None = None) -> dict[str, Any
         io_s = _io(d, "synth", strict, g, "post_synth_io_constraints_clean")
         gt_s = _gt(d, g)                   # brief 56A: the GT gates, only for a design with a GT Wizard core
         rst_s = _resets(d, g)              # brief 71: the reset check, for a build made with the reset scan
+        oss_s = _oss_netlist(d, g)         # brief 101: a netlist written outside Vivado's synthesis must have passed eqy
         util_s = parse_utilization(_read(d, "utilization_synth.rpt")) if (d / "utilization_synth.rpt").exists() else {}
         arch = _architecture_for(d, architecture)
         sanity = None
@@ -593,7 +610,7 @@ def evaluate(build_dir: Path, architecture: Path | None = None) -> dict[str, Any
                                 "unconstrained_ports": parse_check_timing_ports(c_s_text),
                                 "methodology": _rule_summary(m_s), "drc": _rule_summary(d_s), "qor_assessment": q_s,
                                 "cdc": cdc_s, "cdc_structure": cdc_struct, "exceptions": exc_s, "io_timing": io_s,
-                                "gt": gt_s, "resets": rst_s, "resource_sanity": sanity,
+                                "gt": gt_s, "resets": rst_s, "oss_netlist": oss_s, "resource_sanity": sanity,
                                 "utilization": util_s}
     else:
         stages["post_synth"] = {"ran": False, "gates": {}}

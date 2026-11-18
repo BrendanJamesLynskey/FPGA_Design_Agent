@@ -1,0 +1,110 @@
+{
+ "block": "adder_tree8",
+ "arm": "ys_abc9_dff",
+ "part": "xc7a100tcsg324-1",
+ "tool": "Vivado 2026.1",
+ "flow": "out of context, post-route, one thread",
+ "synthesis": "edif",
+ "latency_clocks": 2,
+ "closed_at_ns": 4.45,
+ "closed_at_mhz": 224.7,
+ "latency_ns": 8.9,
+ "at_closed_clock": {
+  "status": "ok",
+  "clock_ns": 4.45,
+  "lut": 66,
+  "ff": 75,
+  "carry": 3,
+  "lut_levels": 6,
+  "data_path_ns": 4.394,
+  "wns_ns": 0.034,
+  "whs_ns": 0.617,
+  "wpws_ns": 1.725,
+  "build_seconds": 184,
+  "closed": true
+ },
+ "passes": [
+  {
+   "status": "error: ERROR: [Project 1-68] No files found to match top module 'ooc_wrap'",
+   "clock_ns": 2.0,
+   "wd": "/home/brendan/Claude_sandbox/_worktrees/101-oss-synth-eqy/build/b101/vivado/a7/run1_pass1/adder_tree8__ys_abc9_dff_2.00"
+  },
+  {
+   "status": "error: ERROR: [Project 1-68] No files found to match top module 'ooc_wrap'",
+   "clock_ns": 2.0,
+   "wd": "/home/brendan/Claude_sandbox/_worktrees/101-oss-synth-eqy/build/b101/vivado/a7/run1_pass1_edif/adder_tree8__ys_abc9_dff_2.00"
+  },
+  {
+   "status": "ok",
+   "clock_ns": 2.0,
+   "lut": 81,
+   "ff": 75,
+   "carry": 3,
+   "lut_levels": 6,
+   "data_path_ns": 4.453,
+   "wns_ns": -2.428,
+   "whs_ns": 0.471,
+   "wpws_ns": 0.5,
+   "build_seconds": 129,
+   "closed": false,
+   "wd": "/home/brendan/Claude_sandbox/_worktrees/101-oss-synth-eqy/build/b101/vivado/a7/run1_pass1_edif/adder_tree8__ys_abc9_dff_2.00"
+  },
+  {
+   "status": "ok",
+   "clock_ns": 4.45,
+   "lut": 66,
+   "ff": 75,
+   "carry": 3,
+   "lut_levels": 6,
+   "data_path_ns": 4.394,
+   "wns_ns": 0.034,
+   "whs_ns": 0.617,
+   "wpws_ns": 1.725,
+   "build_seconds": 184,
+   "closed": true,
+   "wd": "/home/brendan/Claude_sandbox/_worktrees/101-oss-synth-eqy/build/b101/vivado/a7/run1_pass2_edif/adder_tree8__ys_abc9_dff_4.45"
+  }
+ ],
+ "yosys": {
+  "script": "abc9_dff",
+  "script_text": "synth_xilinx -flatten -dff (abc9 -luts 2:2,3,6:5,10,20 -dff)",
+  "yosys": "Yosys 0.70+385 (git sha1 098e46a36, Release, Clang /usr/bin/clang++ 21.1.8)",
+  "yosys_commands": "plugin -i slang; read_slang --top ooc_wrap  /home/brendan/Claude_sandbox/_worktrees/101-oss-synth-eqy/flow/oss_compare/rtl/adder_tree8.sv /home/brendan/Claude_sandbox/_worktrees/101-oss-synth-eqy/flow/oss_compare/rtl/wrap_adder_tree8.sv; synth_xilinx -family xc7 -top ooc_wrap -noiopad -noclkbuf -flatten -dff; tee -o /home/brendan/Claude_sandbox/_worktrees/101-oss-synth-eqy/build/b101/yosys/a7/adder_tree8__ys_abc9_dff/netlist.edif.stat stat -tech xilinx; write_edif -pvector bra /home/brendan/Claude_sandbox/_worktrees/101-oss-synth-eqy/build/b101/yosys/a7/adder_tree8__ys_abc9_dff/netlist.edif; write_verilog -noattr /home/brendan/Claude_sandbox/_worktrees/101-oss-synth-eqy/build/b101/yosys/a7/adder_tree8__ys_abc9_dff/netlist.v",
+  "seconds": 4.2,
+  "lut": 81,
+  "ff": 75,
+  "carry": 3,
+  "d_ps": null
+ },
+ "perturb": {
+  "points": [
+   {
+    "clock_ns": 4.45,
+    "lut": 66,
+    "wns_ns": 0.034,
+    "wpws_ns": 1.725,
+    "closed": true,
+    "achievable_ns": 4.416
+   },
+   {
+    "clock_ns": 4.46,
+    "wns_ns": 0.057,
+    "wpws_ns": 1.73,
+    "lut": 69,
+    "closed": true,
+    "achievable_ns": 4.403
+   },
+   {
+    "clock_ns": 4.47,
+    "wns_ns": -0.11,
+    "wpws_ns": 1.735,
+    "lut": 67,
+    "closed": false,
+    "achievable_ns": 4.58
+   }
+  ],
+  "achievable_min_ns": 4.403,
+  "achievable_max_ns": 4.58,
+  "spread_ns": 0.177
+ }
+}
