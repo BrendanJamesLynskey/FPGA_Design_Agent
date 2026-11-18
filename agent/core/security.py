@@ -95,6 +95,8 @@ class PathJail:
         self.root = Path(os.path.realpath(root))
         self.write_deny = write_deny
         self.shell_root = Path(os.path.realpath(shell_root)) if shell_root else None
+        #: brief 102: a managed project's ownership and scope (agent.core.managed.ManagedPolicy); None for an ordinary design
+        self.policy: Any = None
 
     def _resolve_shell(self, rel: str, write: bool) -> Path:
         if write:
@@ -164,6 +166,10 @@ class PathJail:
                 raise SecurityError("path-jail", f"hidden path {top!r} is not writable")
             if os.path.lexists(full) and os.path.islink(full):
                 raise SecurityError("path-jail", "refusing to write through a symlink")
+        if self.policy is not None:                  # brief 102: ownership and scope, on the resolved path
+            self.policy.check(inside.as_posix(), write)
+            if write:
+                self.policy.check_real(real, True)
         return real
 
 

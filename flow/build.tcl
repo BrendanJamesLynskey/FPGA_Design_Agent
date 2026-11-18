@@ -116,6 +116,9 @@ if {$resume_from eq ""} {
     # brief 55: VHDL sources are read as VHDL-2008 (prepare.py lists them after the SystemVerilog, in analysis order)
     foreach f $sources     { if {[string match -nocase *.vhd $f] || [string match -nocase *.vhdl $f]} { read_vhdl -vhdl2008 $f } else { read_verilog -sv $f } }
     foreach x $constraints { read_xdc $x }
+    # brief 102: netlists made outside the project (build.yaml netlists, managed-project components): an EDIF is read here, so RTL
+    # that instantiates its module (a (* black_box *) slot) gets the netlist; a checkpoint fills its cell after synthesis (below)
+    if {[info exists netlists]} { foreach n $netlists { if {[lindex $n 0] eq "edif"} { read_edif [lindex $n 1] } } }
     # brief 59A: AMD IP the design instantiates, created in the in-memory project by the design's own Tcl (build.yaml ip_tcl)
     if {[info exists ip_tcls]} { foreach t $ip_tcls { source $t } }
     stage read
@@ -133,6 +136,8 @@ if {$resume_from eq ""} {
 
     # --- stage post_synth ----------------------------------------------------------
     synth_design -top $top -part $part {*}$gen_args
+    # brief 102: a post-synthesis (or placed) checkpoint of an imported block fills its black-box cell (UG835 read_checkpoint -cell)
+    if {[info exists netlists]} { foreach n $netlists { if {[lindex $n 0] eq "checkpoint"} { read_checkpoint -cell [lindex $n 2] [lindex $n 1] } } }
     stage synth
     # AMD's scoped XPM constraints are not applied in this non-project flow (QR1, docs/methodology.md): apply them by cell name.
     # FDA_XPM_CDC=0 skips this, only to measure the gap (brief 49 re-measured the QR1 probe both ways); never set it in a real build.

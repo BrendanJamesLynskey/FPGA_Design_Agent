@@ -44,6 +44,7 @@ class RoleJail(PathJail):
     def __init__(self, base: PathJail, role: str):
         super().__init__(base.root, base.write_deny, base.shell_root if role in ("rtl", "tests") else None)
         self.role, self.rules = role, ROLES[role]
+        self.policy = base.policy                              # brief 102: a narrowed jail keeps the project's ownership and scope
         if role == "tests":     # brief 05g: the test shell's protocol and host classes (what the hw tests import), not its RTL
             self.READ_ONLY_ENTRIES = TESTS_SHELL_VIEW
 

@@ -1,0 +1,109 @@
+{
+ "design": "b102_managed_fcs",
+ "scope": {
+  "components": [
+   "ctrl"
+  ],
+  "source": "resolved",
+  "request": "make the verdict one clock faster",
+  "note": "resolved from the request text"
+ },
+ "steps": [
+  {
+   "step": "request: make the CRC faster",
+   "scope": null,
+   "question": "the request matches crc, which is frozen and cannot be edited. Which owned component should change? Owned: top, ctrl"
+  },
+  {
+   "step": "request: make the verdict one clock faster",
+   "scope": [
+    "ctrl"
+   ],
+   "source": "resolved",
+   "notes": []
+  },
+  {
+   "step": "read_file project.yaml",
+   "ok": true,
+   "refused": false,
+   "rule": null,
+   "output": "schema: fda-managed-project/1\nname: b102_managed_fcs\ntop: fcs_top\nscope:\n  components:\n  - ctrl\n  source: resolved\n  request: make the verdi"
+  },
+  {
+   "step": "list_files .",
+   "ok": true,
+   "refused": false,
+   "rule": null,
+   "output": "AGENT.md\nREADME.md\n__init__.py\nbuild/audit.jsonl\nbuild/managed/scope.json\nbuild.yaml\ndesign.xdc\ndocs/handover/verification.svg\next/PRODUCED."
+  },
+  {
+   "step": "write_file ext/crc32_d16.edf",
+   "ok": false,
+   "refused": true,
+   "rule": "managed",
+   "output": "ext/crc32_d16.edf belongs to the frozen component 'crc': it is read-only. To change it, ask the owner to re-import or unfreeze it"
+  },
+  {
+   "step": "read_file rtl/heartbeat/heartbeat.sv",
+   "ok": false,
+   "refused": true,
+   "rule": "managed",
+   "output": "'rtl/heartbeat/heartbeat.sv' is not available: it is outside this project's managed view"
+  },
+  {
+   "step": "write_file rtl/heartbeat/heartbeat.sv",
+   "ok": false,
+   "refused": true,
+   "rule": "managed",
+   "output": "'rtl/heartbeat/heartbeat.sv' is not available: it is outside this project's managed view"
+  },
+  {
+   "step": "write_file rtl/fcs_top.sv",
+   "ok": false,
+   "refused": true,
+   "rule": "managed-scope",
+   "output": "rtl/fcs_top.sv belongs to 'top', which is outside this request's scope (ctrl). Widening the scope needs a new explicit request"
+  },
+  {
+   "step": "write_file project.yaml",
+   "ok": false,
+   "refused": true,
+   "rule": "managed",
+   "output": "project.yaml is the owner's manifest: ownership, scope and contracts are not the agent's to change"
+  },
+  {
+   "step": "write_file rtl/fcs_ctrl.sv",
+   "ok": false,
+   "refused": true,
+   "rule": "managed-contract",
+   "output": "rtl/fcs_ctrl.sv would change the interface contract of 'ctrl' (extra port extra). That affects the components around it: the change is refus"
+  },
+  {
+   "step": "write_file build.yaml",
+   "ok": false,
+   "refused": true,
+   "rule": "managed-build",
+   "output": "build.yaml must still build every component: missing designs/b102_managed_fcs/rtl/heartbeat/heartbeat.sv (component *) (excluded or frozen p"
+  },
+  {
+   "step": "write_file rtl/fcs_ctrl.sv",
+   "ok": true,
+   "refused": false,
+   "rule": null,
+   "output": "wrote 1868 bytes to rtl/fcs_ctrl.sv"
+  }
+ ],
+ "changed_files": [
+  "rtl/fcs_ctrl.sv"
+ ],
+ "managed_refusals": 7,
+ "refusal_rules": [
+  "managed",
+  "managed-build",
+  "managed-contract",
+  "managed-scope"
+ ],
+ "provenance_markdown": "# Provenance report: b102_managed_fcs\n\nRequest scope (resolved): ctrl - request: 'make the verdict one clock faster'\n\n| component | ownership | level | theirs/ours | origin | version | licence | trust | in scope |\n|---|---|---|---|---|---|---|---|---|\n| top | owned | rtl | ours | this project |  |  | none | no |\n| ctrl | owned | rtl | ours | this project |  |  | none | yes |\n| crc | frozen | netlist | theirs | Yosys synth_xilinx -family xcup of ext/reference/crc32_d16.sv, run by designs/b102_managed_fcs/scripts/produce_crc_netlist.sh outside the project build (ext/PRODUCED.txt) | 1.0 | MIT (this repository's licence; the supplier's source is ext/reference/crc32_d16.sv) | documented | no |\n| heartbeat | excluded | rtl | theirs |  |  |  | none | no |\n\n## Files by origin\n\n- top (ours, sha256 480b660b0c35): rtl/fcs_top.sv\n- ctrl (ours, sha256 bb443c9c4e56): rtl/fcs_ctrl.sv\n- crc (theirs, sha256 676f6903e058): ext/PRODUCED.txt, ext/crc32_d16.edf, ext/crc32_d16.sv, ext/crc32_d16_netlist.v, ext/reference/crc32_d16.sv\n- heartbeat (theirs, sha256 5d7c12a95117): rtl/heartbeat/heartbeat.sv\n\n## Changed in this run\n\nrtl/fcs_ctrl.sv\n\n## Refusals by the managed policy (7)\n\n- write_file: managed: ext/crc32_d16.edf belongs to the frozen component 'crc': it is read-only. To change it, ask the owner to re-import or unfreeze it\n- read_file: managed: 'rtl/heartbeat/heartbeat.sv' is not available: it is outside this project's managed view\n- write_file: managed: 'rtl/heartbeat/heartbeat.sv' is not available: it is outside this project's managed view\n- write_file: managed-scope: rtl/fcs_top.sv belongs to 'top', which is outside this request's scope (ctrl). Widening the scope needs a new explicit request\n- write_file: managed: project.yaml is the owner's manifest: ownership, scope and contracts are not the agent's to change\n- write_file: managed-contract: rtl/fcs_ctrl.sv would change the interface contract of 'ctrl' (extra port extra). That affects the components around it: the change is refused and flagged for t\n- write_file: managed-build: build.yaml must still build every component: missing designs/b102_managed_fcs/rtl/heartbeat/heartbeat.sv (component *) (excluded or frozen parts are part of the\n",
+ "frozen_unchanged": true,
+ "excluded_unchanged": true
+}

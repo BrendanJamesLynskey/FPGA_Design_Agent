@@ -91,7 +91,7 @@ def first_failure(text: str) -> dict[str, Any] | None:
 
 #: every build.yaml key the flow reads (flow/prepare.py, flow/vhdl.py); anything else is refused in agent sessions
 BUILD_YAML_KEYS = frozenset({"top", "part", "board", "sources", "constraints", "generics", "probes", "timing_margin_ns",
-                             "hdl", "ip_tcl"})
+                             "hdl", "ip_tcl", "netlists"})
 
 
 def load_build_cfg(s: Session) -> dict[str, Any]:
@@ -139,6 +139,8 @@ def load_build_cfg(s: Session) -> dict[str, Any]:
                 real = Path(os.path.realpath(h))
                 if not any(real == a or a in real.parents for a in allowed):
                     raise SecurityError("build-yaml", f"{key} entry {pat!r} resolves outside the design and shell directories")
+    if s.jail.policy is not None:                    # brief 102: the whole design is always built: no component may be dropped
+        s.jail.policy.check_build(cfg)
     if cfg.get("probes"):
         p = (s.root / cfg["probes"]).resolve()
         if s.design not in p.parents:
@@ -194,6 +196,10 @@ def _rel(s: Session, p: Path) -> str:
        "max_bytes": {"type": "integer", "minimum": 1, "maximum": 100000}}, ["path"])
 def read_file(s: Session, path: str, offset: int = 0, max_bytes: int = 20000) -> dict:
     p = s.jail.resolve(path)
+    if s.jail.policy is not None and p == s.jail.root / "project.yaml":     # brief 102: the manifest as the agent may see it
+        text = s.jail.policy.agent_view()
+        return {"output": text[offset:offset + max_bytes], "size_bytes": len(text), "offset": offset,
+                "truncated": offset + max_bytes < len(text)}
     if not p.is_file():
         return {"ok": False, "output": f"no such file: {path}"}
     data = p.read_bytes()
@@ -218,6 +224,8 @@ def write_file(s: Session, path: str, content: str) -> dict:
             f"not written: {rel.name} is also the name of a test-shell file (@shell/rtl/{rel.name}); the shell's modules are "
             f"compiled into every build and the scorer refuses a file of that name, so a design file cannot carry it. Instantiate "
             f"the shell's module instead, or put your own module in a file with another name.")}
+    if s.jail.policy is not None:                     # brief 102: contract changes and build.yaml coverage, before anything is written
+        s.jail.policy.check_content(rel.as_posix(), content)
     bad = check_artefact(str(rel), content)
     if bad:                                           # 05c2 fix 4: one clear error, the previous file is kept
         return {"ok": False, "output": f"not written: {bad}", "invalid": True}

@@ -55,6 +55,11 @@ numbers filled from the records by code) rendered as `README.md` for people and 
 and can pick older work up again from one (`python -m agent resume <design> "<change>"`): [docs/agent.md](docs/agent.md),
 with three recorded runs documented by the agent in [results/68_agent_docs](results/68_agent_docs/README.md).
 Design review mode (`python -m agent review <design-dir>`, read-only; findings with severity, place, evidence, rule, fix and confidence; improvement-request plans): [docs/review.md](docs/review.md), with the pre-registered benchmark results in [results/84_review/README.md](results/84_review/README.md).
+Managed projects (brief 102, stage 1): a design may carry a `project.yaml` that marks each component `owned`, `frozen` or `excluded` and
+lists the level it arrives at (RTL or an externally made netlist) and its interface contract. Ownership and the request's scope are enforced in the agent's tools,
+not in a prompt; excluded parts are hidden from the agent and still built and signed off; an imported netlist is checked (interface, licence, simulation, `eqy`
+against the supplier's RTL, boundary CDC and timing budgets) and given a trust label computed from evidence: [docs/managed_projects.md](docs/managed_projects.md),
+the demonstration [designs/b102_managed_fcs](designs/b102_managed_fcs/README.md) and [results/102_managed](results/102_managed/README.md).
 A portfolio pack (title, facts with their sources, stills and a short animation) is in [site/portfolio/](site/portfolio/README.md).
 
 ## The flow

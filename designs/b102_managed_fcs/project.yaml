@@ -1,0 +1,134 @@
+# project.yaml: the managed-project manifest of this design (brief 102; schema in agent/core/managed.py). Ownership, scope and contracts
+# are the owner's: the agent cannot write this file. Trust labels are computed from evidence files, never written here.
+schema: fda-managed-project/1
+name: b102_managed_fcs
+top: fcs_top
+unclaimed: owned
+components:
+- name: top
+  ownership: owned
+  level: rtl
+  module: fcs_top
+  paths:
+  - rtl/fcs_top.sv
+  build_sources:
+  - designs/b102_managed_fcs/rtl/fcs_top.sv
+  aliases:
+  - top
+  - led
+  - leds
+  - reset
+  description: 'top level: power-on reset, the LEDs, the wiring of the three blocks below'
+- name: ctrl
+  ownership: owned
+  level: rtl
+  module: fcs_ctrl
+  instance: u_ctrl
+  paths:
+  - rtl/fcs_ctrl.sv
+  build_sources:
+  - designs/b102_managed_fcs/rtl/fcs_ctrl.sv
+  aliases:
+  - sequencer
+  - verdict
+  - compare
+  - frame
+  - latency
+  - pass
+  description: the frame sequencer and the FCS verdict around the CRC block
+  interface:
+    ports:
+    - name: clk
+      dir: input
+      width: 1
+    - name: rst
+      dir: input
+      width: 1
+    - name: crc_i
+      dir: input
+      width: 32
+    - name: crc_init_o
+      dir: output
+      width: 1
+    - name: crc_en_o
+      dir: output
+      width: 1
+    - name: crc_d_o
+      dir: output
+      width: 16
+    - name: pass_o
+      dir: output
+      width: 1
+    - name: frame_o
+      dir: output
+      width: 1
+- name: crc
+  ownership: frozen
+  level: netlist
+  module: crc32_d16
+  instance: u_crc
+  paths:
+  - ext/**
+  build_sources:
+  - designs/b102_managed_fcs/ext/crc32_d16.sv
+  netlist:
+    file: ext/crc32_d16.edf
+    format: edif
+    sim_file: ext/crc32_d16_netlist.v
+  reference_rtl:
+  - ext/reference/crc32_d16.sv
+  aliases:
+  - crc
+  - checksum
+  - polynomial
+  description: IEEE 802.3 CRC-32 over 16 bits per clock, delivered as an EDIF netlist made outside the project
+  interface:
+    ports:
+    - name: clk
+      dir: input
+      width: 1
+    - name: rst
+      dir: input
+      width: 1
+    - name: init
+      dir: input
+      width: 1
+    - name: en
+      dir: input
+      width: 1
+    - name: d
+      dir: input
+      width: 16
+    - name: crc
+      dir: output
+      width: 32
+    clocks:
+    - name: clk_25
+      port: clk
+    resets:
+    - port: rst
+      active: high
+      sync: true
+    timing_budgets:
+    - name: crc_to_verdict
+      dir: out
+      max_ns: 4.0
+    - name: word_to_crc
+      dir: in
+      max_ns: 4.0
+  provenance:
+    origin: Yosys synth_xilinx -family xcup of ext/reference/crc32_d16.sv, run by designs/b102_managed_fcs/scripts/produce_crc_netlist.sh outside
+      the project build (ext/PRODUCED.txt)
+    version: '1.0'
+    licence: MIT (this repository's licence; the supplier's source is ext/reference/crc32_d16.sv)
+    sha256: b602ea89bb13ab4a294f59f92e2fd783546464aa59c2f5a6f5d12d3e067afc94
+- name: heartbeat
+  ownership: excluded
+  level: rtl
+  module: heartbeat
+  paths:
+  - rtl/heartbeat/**
+  build_sources:
+  - designs/b102_managed_fcs/rtl/heartbeat/heartbeat.sv
+  aliases:
+  - blink
