@@ -10,6 +10,7 @@ from pathlib import Path
 from agent.graph import review as rv
 from agent.graph import run as R
 from agent.graph.spec_schema import requirement_quality_errors, validate
+from agent.tests.prompt_checks import has
 
 ROOT = Path(__file__).resolve().parents[2]
 MINI = ROOT / "flow" / "tests" / "fixtures" / "trace53" / "mini"
@@ -70,8 +71,8 @@ def test_the_clarify_gate_applies_the_quality_check_and_validate_does_not():
 
 
 def test_role_prompts_ask_for_atomic_requirements_and_tags():
-    assert "ONE checkable statement" in R.PROMPTS["clarify"]
-    assert "# req: REQ-01, REQ-02" in R.PROMPTS["tests"] and "structural" in R.PROMPTS["tests"]
+    assert has(R.PROMPTS["clarify"], "3f869fb4778d414a49743d8d261a53437280c94ba94ca366deb937cf6fbbb27e:23")        # one checkable statement per requirement
+    assert has(R.PROMPTS["tests"], "f319844acd88dded504ecd3119af76b90f84275aa48aa1667fb77b6d05d0c02a:21") and has(R.PROMPTS["tests"], "adf0d3f5f1ada968fdea732952a98a72d14ee9401d0699ea5283f70d3de298e3:10")        # the tests prompt shows the requirement tag and the structural escape
 
 
 def test_trace_record_and_review_index(tmp_path):

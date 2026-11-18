@@ -9,6 +9,7 @@ import pytest
 import yaml
 
 from flow.srcorder import NO_SHELL_MARKER
+from agent.tests.prompt_checks import has
 
 ROOT = Path(__file__).resolve().parents[2]
 OWN_UART = "module uart_rx (input logic clk, output logic v);\n  assign v = 1'b1;\nendmodule\n"
@@ -200,4 +201,4 @@ def test_clarify_gate_checks_the_answered_map_reaches_registers_map() -> None:
 
 def test_clarify_prompt_tells_the_agent_to_ask_for_the_register_map() -> None:
     from agent.graph.run import PROMPTS
-    assert "REGISTER MAP" in PROMPTS["clarify"] and "must not invent" in PROMPTS["clarify"]
+    assert has(PROMPTS["clarify"], "97ab0d67da125a4601952d8d1b896f5fb4744cc3ffca9f1485d51527e5c98554:12") and has(PROMPTS["clarify"], "c8d9c7e9ac89ed6646ce46ab05db9d2e6564dc062eb1cf5730c876bd853f3723:15")        # the clarify prompt has a register-map rule and forbids inventing offsets

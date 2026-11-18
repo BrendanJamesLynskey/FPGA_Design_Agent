@@ -15,6 +15,10 @@ rules are tested without a model.
 
 from __future__ import annotations
 
+from agent.core import prompts as _prompts
+
+from agent.core.prompts import load as _p
+
 import json
 import re
 from dataclasses import asdict, dataclass, field
@@ -120,7 +124,7 @@ def render_register_map(text: str) -> str:
     lines = [f"{r['name']}: offset {off(r['offset'])}, {r.get('access', '?')}, reset {r.get('reset', 0)}: {r.get('bits', '')}"
              for r in rows]
     extra = [f"{k}: {v}" for k, v in regs.items() if k not in ("map",) and isinstance(v, (str, int))]
-    return "\n".join(["Register map (the same entries as registers.map above, one per line):", *lines, *extra])
+    return "\n".join([_p("graph/interview/render_register_map_1"), *lines, *extra])
 
 
 REG_TOPIC = re.compile(r"(?is)\b(?:registers?|regs?)\b.{0,80}\b(?:map|offsets?|address(?:es|ing)?|layout)\b"
@@ -152,7 +156,7 @@ def proposed_register_default(spec: dict[str, Any]) -> str:
             off = _offset_int(r["offset"])
             rows.append(f"{r['name']}: offset {('0x%02X' % off) if off is not None else r['offset']}, "
                         f"{str(r.get('access', 'RW')).upper()}, reset {r.get('reset', 0)}")
-    return "; ".join(rows) if rows else "no registers beyond the test shell's own window (the design is driven by its ports)"
+    return "; ".join(rows) if rows else _p("graph/interview/proposed_register_default_1")
 
 
 def ensure_register_question(request: str, spec: dict[str, Any]) -> tuple[dict[str, Any], bool]:
@@ -167,11 +171,9 @@ def ensure_register_question(request: str, spec: dict[str, Any]) -> tuple[dict[s
         return spec, False
     spec = dict(spec)
     spec["open_questions"] = [*(spec.get("open_questions") or []), {
-        "question": "What is the register map: the offset, width, reset value and access (RW, RO, WO) of every register the "
-                    "host reads or writes, and the address layout of the host interface?",
+        "question": _p("graph/interview/ensure_register_question_1"),
         "default": proposed_register_default(spec),
-        "reason": "the request names a host-visible interface but gives no register offsets; the harness asks so the map is "
-                  "never invented"}]
+        "reason": _p("graph/interview/ensure_register_question_2")}]
     return spec, True
 
 
@@ -191,9 +193,7 @@ def register_map_errors(request: str, spec: dict[str, Any]) -> list[str]:
     qs = [*(spec.get("open_questions") or []), *(spec.get("resolved_questions") or [])]
     mine = [q for q in qs if isinstance(q, dict) and is_register_question(str(q.get("question", "")))]
     if not mine:
-        return ["the request names registers or the test shell but gives no register offsets, and spec.yaml has no question "
-                "asking for the register map: add an open_questions entry asking for the offsets, widths, reset values and "
-                "access of every register (your proposed map as the default); do not invent the map"]
+        return [_p("graph/interview/register_map_errors_1")]
     regs = spec.get("registers") or {}
     have = {_offset_int(r.get("offset")) for r in (regs.get("map") or []) if isinstance(r, dict)} if isinstance(regs, dict) else set()
     errs = []
@@ -202,12 +202,12 @@ def register_map_errors(request: str, spec: dict[str, Any]) -> list[str]:
             want = {r["offset"] for r in answer_register_rows(str(q.get("answer", "")))}
             miss = sorted(w for w in want if w not in have)
             if miss:
-                errs.append("registers.map disagrees with the answered register map: no register at offset "
-                            + ", ".join(f"0x{m:02X}" for m in miss) + "; copy the answer's map into registers.map")
+                errs.append(_p("graph/interview/register_map_errors_2")
+                            + ", ".join(f"0x{m:02X}" for m in miss) + _p("graph/interview/register_map_errors_3"))
             extra = sorted(h for h in have if h is not None and want and h not in want) if q.get("by") == "oracle" else []
             if extra:                              # 07a2 fix 6: the oracle's map is the whole map; invented registers are wrong
-                errs.append("registers.map has registers at offsets the answered register map does not list ("
-                            + ", ".join(f"0x{m:02X}" for m in extra) + "): the answer is the whole map, remove them")
+                errs.append(_p("graph/interview/register_map_errors_4")
+                            + ", ".join(f"0x{m:02X}" for m in extra) + _p("graph/interview/register_map_errors_5"))
     return errs
 
 
@@ -315,10 +315,7 @@ class SpecOracle:
     agent's state: the oracle is outside the graph's sub-agents."""
 
     name = "oracle"
-    SYSTEM = ("You stand in for the user of an FPGA design agent. You hold the full specification below and may "
-              "answer only from it. Reply as JSON {\"answer\": ..., \"quote\": ...}, where quote is the exact line "
-              "of the specification your answer rests on. If the specification does not settle the question, reply "
-              "{\"answer\": \"not specified\", \"quote\": null}. Never guess, never add requirements.")
+    SYSTEM = _prompts.Lazy("graph/interview/oracle_system")
 
     def __init__(self, hidden_spec: Path, llm: Callable[[str, str], dict[str, Any]]):
         self._file = hidden_spec.read_text()

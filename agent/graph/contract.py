@@ -7,23 +7,14 @@ instantiate it with the spec's parameters, ``reset()``, ``step({})``) before the
 
 from __future__ import annotations
 
+from agent.core.prompts import load as _p
+from agent.core import prompts as _prompts
+
 import json
 import sys
 from pathlib import Path
 from typing import Any
 
-MODEL_CONTRACT = """\
-Model API contract (identical for the Modeller and the Verifier; the graph checks it before simulating):
-- model.py defines exactly one class, named `Model`, with no other public entry point.
-- `Model(**params)`: keyword arguments named EXACTLY as the keys of spec.yaml `parameters` (same spelling and case),
-  each defaulting to the spec's value. No positional arguments. Timing parameters are integer cycle counts.
-- `reset()` -> None: the state after reset is asserted and released.
-- `step(inputs=None)` -> dict: advance ONE clock cycle. `inputs` maps input port names (spec.yaml `ports`, exact
-  names) to ints; an absent port keeps its previous value. The result maps output port names to ints, as sampled
-  after the clock edge, and is always a dict (an empty one is allowed only if the design has no outputs).
-- `read_reg(offset)` -> int and `write_reg(offset, value)` -> None for the register window (spec.yaml `registers`).
-- The Verifier uses only these names: `from model import Model; m = Model(**params)`.
-"""
 
 _SNIPPET = r"""
 import json, sys, traceback
@@ -62,3 +53,6 @@ def parse_result(returncode: int, stdout: str, stderr: str) -> dict[str, Any]:
         except ValueError:
             continue
     return {"ok": False, "error": ((stderr or stdout or f"exit {returncode}")[-1500:])}
+
+
+__getattr__ = _prompts.module_getattr(__name__, {'MODEL_CONTRACT': 'graph/contract/model_contract'})

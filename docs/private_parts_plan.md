@@ -61,7 +61,7 @@ Review (one Sonnet pass, 2026-11-17) found and this PR fixed: a partial pin fail
 | Slice | State |
 | --- | --- |
 | Stage 0: loader, tests, pin, CI step, manifest builder | done (2026-11-17) |
-| 1 interview.py, 2 review.py, 3 roles.py, 4 closure playbook, 5 run.py and the rest | not started: waiting for `FDA_KB_READ_TOKEN` |
+| Slices 1 to 5 (done 2026-11-17; the planned order was not followed because `review.py` and `roles.py` hold no prompt text) | the oracle's system prompt and register-map questions (`interview.py`); the five role prompts, the conventions, bring-up format, repair, checklist and VHDL/no-shell variants (`run.py`); the model contract; the closure system and edit prompts and all 40 strategy texts (`closure.py`, `closure_playbook.py`); the spec-test role and triage prompts; the router, documentation and design-time-plan prompts |
 
 ## Records keep hashes, not prompts (brief 99, step 1, 2026-11-17)
 
@@ -73,3 +73,36 @@ interview record, `doc_calls.jsonl`) never held the rendered prompt; a scripted 
 `tools/prompts/leak_scan.py` is the same check over tracked files. It uses 12-word windows: the harness's own questions and gate messages are
 recorded by design and a model's replies reuse the prompts' vocabulary, so 8 words matched in about 100 files that held no dump. Records written
 before this change still carry prompt text; step 2 moves them out.
+
+## What moved, what stays, and the limits of "private" (brief 99 step 2, 2026-11-17)
+
+**Moved** to `prompts/` in the private knowledge repository (about 130 files; the committed `agent/tests/fixtures/b99_prompt_hashes.json`
+holds each one's SHA-256): the prompt text listed in the slice table. Module constants load on first use (`agent.core.prompts.LazyDict`,
+`module_getattr`, `Lazy`), so importing the agent needs no access; text inside functions is `load(name)` or `load(name).format(...)` with
+the same placeholders, so the rendered text is byte-identical (the golden request hashes of `agent/tests/request_golden.py` are unchanged).
+**Moved out of the public tree**: the closure task texts `results/b88_net125/*/task.txt` now live in `results_private/b88_net125/` of the
+private repository; the public folder keeps `task.json` (hash, length) and the summary numbers.
+
+**Archives (2026-11-18).** `leak_scan` had skipped binary files, so it never opened the `run_dir.tar.gz` archives of benchmark runs, which hold
+the rendered prompts of each run (`claude_code/*.system.txt` and `*.user.txt`, the closure task files). It now opens `.tar.gz`, `.tgz`, `.tar`,
+`.gz`, `.zip`, `.bz2` and `.xz` files (nested up to three deep) and scans every text member; a hit is reported as `archive!member`, and the
+allow-list never covers an archive, so an archive that carries prompt text fails the same CI test. An archive it cannot open, or one over 400 MB,
+also fails. All 21 `run_dir.tar.gz` archives of `benchmark/v2/runs/b82p2` (15) and `b82p3` (6) moved to `results_private/benchmark/v2/runs/...`
+in the private repository; each leaves `run_dir.tar.gz.pointer.json` (private path, SHA-256, size), and the SHA-256 is the one the run's record
+already carried. Nothing in the repository read those archives. A future driver that writes such an archive is stopped by `.gitignore` and, if forced in, by the test. Also failing: a corrupt or encrypted archive, a member over 8 MB, a nest deeper than three. Known limits: archives are recognised by suffix, not by magic bytes; the scan splits words on whitespace only, so a copy re-tokenised by punctuation is not caught (a review probe found 49 non-allow-listed files sharing one 12-word run after punctuation-insensitive matching, mostly shared vocabulary; to be triaged before the window is normalised).
+
+**Not moved, by decision**: the tool descriptions (`agent/core/tools.py`, `axi_tools.py`, `debug_tools.py`, about 10 KB) are consumed when the
+tools register and are pinned by `agent/tests/fixtures/tool_schemas.json`; they are a later move. Validator and gate messages and the interview's
+own questions stay: they are recorded in run records as data. `tools/prompts/leak_allow.txt` lists the four tracked paths that may hold a
+prompt's 12-word run, each with its reason.
+
+**The gate.** `test_no_prompt_text_in_the_tracked_files` fails if any tracked file other than the allow-list holds 12 consecutive words of a
+private prompt. It needs the prompts, so it skips on a fork pull request (the workflow prints a notice) and fails anywhere else if they are missing.
+Public tests that used to quote prompt phrases check them by hash (`agent/tests/prompt_checks.py`).
+
+**Limits, stated plainly.**
+- **Earlier versions of these prompts remain in the public git history, and history is not rewritten** (force-push is refused and the repository's
+  forks and clones already hold it). Moving text only removes it from the current tree.
+- A short phrase of a prompt can still appear in public text (a 12-word window is the line, so shorter shared wording is not caught); a model's replies
+  quote the prompts' vocabulary, so run records written by earlier runs can hold a few words of them.
+- "Private" means the private repository's access control. Anyone with read access to it, and anyone who can run the agent (the access key), can read the prompts.

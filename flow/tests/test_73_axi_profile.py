@@ -13,6 +13,7 @@ import yaml
 from flow import checks as C
 from flow.checks import axi_profile as AP
 from hwsw import regmap
+from agent.tests.prompt_checks import has
 
 ROOT = Path(__file__).resolve().parents[2]
 DEMO = ROOT / "hwsw" / "examples" / "demo_accel.yaml"
@@ -229,7 +230,7 @@ def test_the_clarify_and_rtl_prompts_describe_the_three_profiles() -> None:
     c = PROMPTS["clarify"]
     for k in ("house", "amd_compatible", "strict", "AMD IP", "bring-up, safety or verification-heavy"):
         assert k in c
-    assert "axi_profile" in PROMPTS["rtl"] and "never edit a generated block" in PROMPTS["rtl"]
+    assert has(PROMPTS["rtl"], "c1231cc54433c0731a996d09e96365c21c3e4676dd09b13107fe8703f7a88a11:11") and has(PROMPTS["rtl"], "9c5ab3c2b815f5726ccfe17bb9733bbf0c741743a110ab8e6c10a27a5456a7ff:28")        # the Designer is pointed at axi_profile and told not to edit a generated block
 
 
 # ---- the reviewer's attempts to make a block claim a profile and behave otherwise (brief 73 review round) ----------------------
