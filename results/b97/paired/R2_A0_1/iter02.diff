@@ -1,0 +1,11 @@
+--- a/rtl/tx_path.sv
++++ b/rtl/tx_path.sv
+@@ -75,7 +75,7 @@
+     logic verdict_good;
+     assign verdict_good = verdict_v && !verdict_bad && (verdict_seq == go_seq_l);
+     assign poison = (cur_kind == 2'd0) && !verdict_good;      // fail closed: unless the verdict for THIS order is known good
+-    mac64_tx u_mt (.clk, .rst, .adv, .s_valid, .s_data, .s_last, .s_nb1, .s_poison(poison), .s_ready, .x_d, .x_c, .sop, .eop, .underrun);
++    mac64_tx u_mt (.clk, .rst, .adv, .s_valid(s_valid | (fs_start && go_p)), .s_data, .s_last, .s_nb1, .s_poison(poison), .s_ready, .x_d, .x_c, .sop, .eop, .underrun);
+     pcs_tx   u_pt (.clk, .rst, .x_d, .x_c, .adv, .gt_d);
+ 
+     // ---------------------------------------------------------------- what to send next

@@ -1,0 +1,11 @@
+--- a/rtl/pcs_rx.sv
++++ b/rtl/pcs_rx.sv
+@@ -61,7 +61,7 @@
+         ev_sh_err <= 1'b0; ev_type_err <= 1'b0; ev_os <= 1'b0; ev_slip <= 1'b0; ev_loss <= 1'b0; ev_lock <= 1'b0;
+         if (rst) begin
+             hist <= '0; lock <= 1'b0; sh_cnt <= '0; inv_cnt <= '0; settle <= 1'b0; slip_r <= 1'b0;
+-            x_v <= 1'b0; x_d <= '0; x_c <= '0;
++            // x_v/x_d/x_c are combinational from the registered block.
+         end else begin
+             slip_r <= 1'b0;
+             x_v    <= 1'b0;

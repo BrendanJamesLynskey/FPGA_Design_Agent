@@ -1,0 +1,378 @@
+Running as unit: run-rdf4868b1b7b64038b85cd19c9de574de.scope; invocation ID: 00811e9a1067463e8a70589e55dfadfc
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::load has been called by org.jpype.JPypeContext in an unnamed module (file:/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/tools/rapidwright_env/venv/lib/python3.12/site-packages/org.jpype.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+==============================================================================
+==                   Reading DCP: stamp_p3_40_placed.dcp                    ==
+==============================================================================
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::arrayBaseOffset has been called by com.esotericsoftware.kryo.unsafe.UnsafeUtil (file:/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/tools/rapidwright_env/venv/lib/python3.12/site-packages/rapidwright/rapidwright-2026.1.2-standalone-lin64.jar)
+WARNING: Please consider reporting this to the maintainers of class com.esotericsoftware.kryo.unsafe.UnsafeUtil
+WARNING: sun.misc.Unsafe::arrayBaseOffset will be removed in a future release
+ XML Parse & Device Load:     1.371s
+Running job [1] /opt/Xilinx/2026.1/Vivado/bin/vivado -mode batch -source readable.tcl in /home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/scripts/../../../results/b100/c1/stamp_p3_40_placed.dcp.edf/stamp_p3_40_placed.edf_readable_edif_12890319971075068196
+    (Read PhysDB Caches):            (    0.162s)
+   (Read PhysDB Routing):            (    0.346s)
+ (Read PhysDB Placement):            (    0.477s)
+(Read PhysDB Finalizing):            (    0.060s)
+Waiting on 1 running, 0 not yet started...
+Waiting on 1 running, 0 not yet started...
+Waiting on 1 running, 0 not yet started...
+Waiting on 1 running, 0 not yet started...
+Waiting on 1 running, 0 not yet started...
+Waiting on 1 running, 0 not yet started...
+Waiting on 1 running, 0 not yet started...
+Waiting on 1 running, 0 not yet started...
+Waiting on 1 running, 0 not yet started...
+Waiting on 1 running, 0 not yet started...
+Waiting on 1 running, 0 not yet started...
+Waiting on 1 running, 0 not yet started...
+Waiting on 1 running, 0 not yet started...
+Waiting on 1 running, 0 not yet started...
+Waiting on 1 running, 0 not yet started...
+Waiting on 1 running, 0 not yet started...
+Waiting on 1 running, 0 not yet started...
+Waiting on 1 running, 0 not yet started...
+Waiting on 1 running, 0 not yet started...
+Waiting on 1 running, 0 not yet started...
+Waiting on 1 running, 0 not yet started...
+Waiting on 0 not yet started...
+            (EDIF Parse):            (   47.709s)
+   Read Netlist & PhysDB:    47.713s
+------------------------------------------------------------------------------
+         [No GC] *Total*:    49.084s
+INFO: Building uncommon Wire->Node cache...
+      This might take a few seconds for large devices on the first call.  
+      It is generally triggered when getting the Node from an uncommon Wire object.  
+      To avoid printing this message, set Device.QUIET_MESSAGE=true or set the ENVIRONMENT variable RW_QUIET_MESSAGE=1.
+INFO: Finished building uncommon Wire->Node cache
+java.lang.NullPointerException: Cannot invoke "com.xilinx.rapidwright.device.Node.getTile()" because "<parameter1>" is null
+	at com.xilinx.rapidwright.rwroute.RouteNodeGraph.preserve(RouteNodeGraph.java:2082)
+	at com.xilinx.rapidwright.rwroute.RouteNodeGraph.preserve(RouteNodeGraph.java:2159)
+	at com.xilinx.rapidwright.rwroute.RouteNodeGraph.lambda$preserveAsync$15(RouteNodeGraph.java:2166)
+	at com.xilinx.rapidwright.util.ParallelismTools$4.compute(ParallelismTools.java:921)
+	at java.base/java.util.concurrent.CountedCompleter.exec(CountedCompleter.java:759)
+	at java.base/java.util.concurrent.ForkJoinTask.doExec(ForkJoinTask.java:507)
+	at java.base/java.util.concurrent.ForkJoinPool$WorkQueue.topLevelExec(ForkJoinPool.java:1394)
+	at java.base/java.util.concurrent.ForkJoinPool.runWorker(ForkJoinPool.java:1970)
+	at java.base/java.util.concurrent.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:187)
+WARNING: Unable to find physical pins on Net 'GLOBAL_USEDNET'; possibly due to an encrypted netlist.
+------------------------------------------------------------------------------
+Total nets:                               5195
+Routable nets:                            7555
+  Preserved routable nets:                3776
+    GLOBAL_CLOCK:                            1
+    Static nets:                             1
+    WIRE:                                 3776
+  Nets to be routed:                      3777
+    GLOBAL_CLOCK:                            0
+    Static nets:                             1
+    WIRE:                                 3776
+  All site pins to be routed:               84
+    Connections to be routed:                0
+      With SLR crossings:                    0
+    Static net pins:                        84
+    Clock pins:                              0
+Nets not needing routing:                 1418
+------------------------------------------------------------------------------
+Connection Span Info:
+INFO: Max span of connections: 17
+INFO: Avg span of connections: 5
+INFO: # connections longer than avg span: 7780
+(51.59%)
+------------------------------------------------------------------------------
+Router Configuration
+              
+Max routing iterations:                    100
+Timing-driven:                            true
+Use bounding boxes:                       true
+Bounding box extension X:                    3
+Bounding box extension Y:                   15
+Fixed bounding box:                       true
+Wirelength-driven weight:                 0.80
+Sharing exponent:                         2.00
+Timing-driven weight:                     0.35
+Timing-driven mult fac:                   1.00
+Criticality exponent:                     3.00
+Reroute criticality threshold:            0.85
+Reroute percentage:                          3
+PessimismA:                               1.03
+PessimismB:                                100
+Mask nodes across RCLK:                  false
+Include U-turn nodes:                     true
+Initial present congestion factor:        2.00
+Present congestion multiplier:            1.30
+Historical congestion factor:             1.00
+LUT pin swapping:                        false
+LUT routethrus:                          false
+Use Hybrid Updating Strategy:            false
+
+==============================================================================
+==                               Route Design                               ==
+==============================================================================
+INFO: Estimated pre-routing max delay: 2423
+------------------------------------------------------------------------------
+              Generated       RRG        Routed  Nodes With     CPD  Total Run
+Iteration     RRG Nodes  Time (s)   Connections    Overlaps    (ps)   Time (s)
+---------  ----------------------   -----------  ----------   -----  ---------
+   1                  0      0.04             0           0    2423       0.11
+------------------------------------------------------------------------------
+
+INFO: Route 0 direct connections 
+
+INFO: No PIP overlaps
+
+==============================================================================
+==                                Statistics                                ==
+==============================================================================
+Node Usage Per Type
+ Node Type                 Usage        Length
+ NODE_SINGLE               10388        7740.0
+ NODE_DOUBLE                8364       12624.0
+ NODE_VQUAD                 1516        6064.0
+ NODE_HQUAD                 1872        3744.0
+ NODE_VLONG                   56         672.0
+ NODE_HLONG                   72         432.0
+ NODE_LOCAL                37304        2068.0
+ NODE_PINBOUNCE             4276         944.0
+ NODE_PINFEED              14596           0.0
+ NODE_LAGUNA_DATA              0           0.0
+
+Total wirelength:                      34288.0
+Total INT tile nodes:                    78444
+Total rnodes created:                    91864
+Average #children per node:                  0
+------------------------------------------------------------------------------
+Num iterations:                              1
+Connections routed:                          0
+Nodes pushed:                                0
+Nodes popped:                                0
+------------------------------------------------------------------------------
+Route design:                           10.67s
+├─ Initialization:                       9.96s
+│  ├─ determine route targets:           0.47s
+│  ├─ build timing model:                0.01s
+│  ├─ build timing graph:                2.80s
+│  │  ├─ determine logic dly:            0.35s
+│  │  └─ add net dly edges:              2.45s
+│  └─ post graph build:                  0.16s
+└─ Routing:                              0.72s
+   ├─ route clock:                       0.00s
+   ├─ route static nets:                 0.00s
+   ├─ route wire nets:                   0.32s
+   │  ├─ rnodes creation:                0.04s
+   │  ├─ route connections:              0.19s
+   │  ├─ update timing:                  0.12s
+   │  └─ update congestion costs:        0.03s
+   └─ finalize routes:                   0.39s
+==============================================================================
+==                              Timing Report                               ==
+==============================================================================
+Timing requirement (ps):               3400.00
+Critical path delay (ps):                 2774
+Slack (ps):                                626
+With timing closure guarantee:     
+Critical path delay (ps):                 2957
+Slack (ps):                                443
+
+TimingEdges:
+    0  superSource -> c1/u_b/x_c_r_reg[6]/Q
+    1  c1/u_b/x_c_r_reg[6]/Q -> c1/u_b/u_core/hist[51]_i_9/I1
+    2  c1/u_b/u_core/hist[51]_i_9/I1 -> c1/u_b/u_core/hist[51]_i_9/O
+    3  c1/u_b/u_core/hist[51]_i_9/O -> c1/u_b/u_core/hist[57]_i_26/I5
+    4  c1/u_b/u_core/hist[57]_i_26/I5 -> c1/u_b/u_core/hist[57]_i_26/O
+    5  c1/u_b/u_core/hist[57]_i_26/O -> c1/u_b/u_core/hist[57]_i_19/I4
+    6  c1/u_b/u_core/hist[57]_i_19/I4 -> c1/u_b/u_core/hist[57]_i_19/O
+    7  c1/u_b/u_core/hist[57]_i_19/O -> c1/u_b/u_core/hist[57]_i_7/I3
+    8  c1/u_b/u_core/hist[57]_i_7/I3 -> c1/u_b/u_core/hist[57]_i_7/O
+    9  c1/u_b/u_core/hist[57]_i_7/O -> c1/u_b/u_core/hist[25]_i_2/I3
+   10  c1/u_b/u_core/hist[25]_i_2/I3 -> c1/u_b/u_core/hist[25]_i_2/O
+   11  c1/u_b/u_core/hist[25]_i_2/O -> c1/u_b/u_core/hist[25]_i_1/I0
+   12  c1/u_b/u_core/hist[25]_i_1/I0 -> c1/u_b/u_core/hist[25]_i_1/O
+   13  c1/u_b/u_core/hist[25]_i_1/O -> c1/u_b/u_core/acc[10]_i_6/I3
+   14  c1/u_b/u_core/acc[10]_i_6/I3 -> c1/u_b/u_core/acc[10]_i_6/O
+   15  c1/u_b/u_core/acc[10]_i_6/O -> c1/u_b/u_core/acc[34]_i_3/I0
+   16  c1/u_b/u_core/acc[34]_i_3/I0 -> c1/u_b/u_core/acc[34]_i_3/O
+   17  c1/u_b/u_core/acc[34]_i_3/O -> c1/u_b/u_core/gt_d[50]_i_2/I3
+   18  c1/u_b/u_core/gt_d[50]_i_2/I3 -> c1/u_b/u_core/gt_d[50]_i_2/O
+   19  c1/u_b/u_core/gt_d[50]_i_2/O -> c1/u_b/u_core/gt_d[50]_i_1/I1
+   20  c1/u_b/u_core/gt_d[50]_i_1/I1 -> c1/u_b/u_core/gt_d[50]_i_1/O
+   21  c1/u_b/u_core/gt_d[50]_i_1/O -> c1/u_b/u_core/gt_d_reg[50]/D
+   22  c1/u_b/u_core/gt_d_reg[50]/D -> superSink
+
+Detail delays:
+------------------------------------------------------------------------------
+Logic (ps)  Net (ps)  (intrasite (ps))  Total (ps)    Netlist Resource(s)      
+----------  --------------------------  ----------    ------------------------
+         0         0                 0           0    superSource              
+        78       337                 0         415    c1/u_b/x_c_r_reg[6]/Q    
+                                                      net: c1/u_b/x_c_r[6]   
+        35         0                 0          35    c1/u_b/u_core/hist[51]_i_9/I1
+         0       108                 0         108    c1/u_b/u_core/hist[51]_i_9/O
+                                                      net: c1/u_b/u_core/hist[51]_i_9_n_0
+        35         0                 0          35    c1/u_b/u_core/hist[57]_i_26/I5
+         0       264                 0         264    c1/u_b/u_core/hist[57]_i_26/O
+                                                      net: c1/u_b/u_core/hist[57]_i_26_n_0
+        35         0                 0          35    c1/u_b/u_core/hist[57]_i_19/I4
+         0       171                 0         171    c1/u_b/u_core/hist[57]_i_19/O
+                                                      net: c1/u_b/u_core/hist[57]_i_19_n_0
+       125         0                 0         125    c1/u_b/u_core/hist[57]_i_7/I3
+         0       322                 0         322    c1/u_b/u_core/hist[57]_i_7/O
+                                                      net: c1/u_b/u_core/hist[57]_i_7_n_0
+        35         0                 0          35    c1/u_b/u_core/hist[25]_i_2/I3
+         0       155                 0         155    c1/u_b/u_core/hist[25]_i_2/O
+                                                      net: c1/u_b/u_core/hist[25]_i_2_n_0
+        90         0                 0          90    c1/u_b/u_core/hist[25]_i_1/I0
+         0        90                 0          90    c1/u_b/u_core/hist[25]_i_1/O
+                                                      net: c1/u_b/u_core/scr_out_return50129_out
+        50         0                 0          50    c1/u_b/u_core/acc[10]_i_6/I3
+         0       202                 0         202    c1/u_b/u_core/acc[10]_i_6/O
+                                                      net: c1/u_b/u_core/acc[10]_i_6_n_0
+       100         0                 0         100    c1/u_b/u_core/acc[34]_i_3/I0
+         0       264                 0         264    c1/u_b/u_core/acc[34]_i_3/O
+                                                      net: c1/u_b/u_core/acc[34]_i_3_n_0
+        35         0                 0          35    c1/u_b/u_core/gt_d[50]_i_2/I3
+         0        53                 0          53    c1/u_b/u_core/gt_d[50]_i_2/O
+                                                      net: c1/u_b/u_core/gt_d[50]_i_2_n_0
+       140         0                 0         140    c1/u_b/u_core/gt_d[50]_i_1/I1
+         0        50                50          50    c1/u_b/u_core/gt_d[50]_i_1/O
+                                                      net: c1/u_b/u_core/gt_d[50]_i_1_n_0
+         0         0                 0           0    c1/u_b/u_core/gt_d_reg[50]/D
+----------  --------------------------  ----------    ------------------------
+Arrival time:                                 2774
+------------------------------------------------------------------------------
+
+Con  11436, boundbox = [( 21, 92 ), -> ( 27, 129 )], net = c1/u_b/x_c_r[6], net fanout =  12, source = SLICE_X34Y114.BQ, sink = SLICE_X34Y107.B6, delay =  337 , criticality = 0.538 
+	delay =    0, NODE_CLE_OUTPUT   , node node CLEM_X24Y114/CLE_CLE_M_SITE_0_BQ, (24W,114), type = EXCLUSIVE_SOURCE, ic = NODE_CLE_OUTPUT, user = 0, null, (24,114), type = EXCLUSIVE_SOURCE, ic = NODE_CLE_OUTPUT, dly = 0.000000, user = 0, null
+	delay =    0, NODE_LOCAL        , node node INT_X24Y114/INT_NODE_SDQ_52_INT_OUT0, (24W,114), type = NON_LOCAL, ic = NODE_LOCAL, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@b68=5}, (24,114), type = NON_LOCAL, ic = NODE_LOCAL, dly = 0.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@b68=5}
+	delay =   67, NODE_DOUBLE       , node node INT_X24Y114/EE2_W_BEG1, (25W,114), type = NON_LOCAL, ic = NODE_DOUBLE, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@b68=4}, (25,114), type = NON_LOCAL, ic = NODE_DOUBLE, dly = 67.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@b68=4}
+	delay =    0, NODE_LOCAL        , node node INT_X25Y114/INT_NODE_SDQ_49_INT_OUT0, (25W,114), type = NON_LOCAL, ic = NODE_LOCAL, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@b68=4}, (25,114), type = NON_LOCAL, ic = NODE_LOCAL, dly = 0.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@b68=4}
+	delay =   53, NODE_DOUBLE       , node node INT_X25Y114/SS2_W_BEG0, (25W,112), type = NON_LOCAL, ic = NODE_DOUBLE, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@b68=4}, (25,112), type = NON_LOCAL, ic = NODE_DOUBLE, dly = 53.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@b68=4}
+	delay =    0, NODE_LOCAL        , node node INT_X25Y112/INT_NODE_SDQ_70_INT_OUT0, (25W,112), type = NON_LOCAL, ic = NODE_LOCAL, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@b68=2}, (25,112), type = NON_LOCAL, ic = NODE_LOCAL, dly = 0.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@b68=2}
+	delay =   61, NODE_VQUAD        , node node INT_X25Y112/SS4_W_BEG0, (25W,107), type = NON_LOCAL, ic = NODE_VQUAD, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@b68=2}, (25,107), type = NON_LOCAL, ic = NODE_VQUAD, dly = 61.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@b68=2}
+	delay =    0, NODE_LOCAL        , node node INT_X25Y107/SDQNODE_W_93_FT0, (25W,108), type = NON_LOCAL, ic = NODE_LOCAL, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@b68=2}, (25,108), type = NON_LOCAL, ic = NODE_LOCAL, dly = 0.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@b68=2}
+	delay =   67, NODE_DOUBLE       , node node INT_X25Y108/WW2_W_BEG0, (24W,108), type = NON_LOCAL, ic = NODE_DOUBLE, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@b68=2}, (24,108), type = NON_LOCAL, ic = NODE_DOUBLE, dly = 67.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@b68=2}
+	delay =    0, NODE_LOCAL        , node node INT_X24Y107/SDQNODE_W_95_FT0, (24W,108), type = NON_LOCAL, ic = NODE_LOCAL, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@b68=1}, (24,108), type = NON_LOCAL, ic = NODE_LOCAL, dly = 0.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@b68=1}
+	delay =   46, NODE_SINGLE       , node node INT_X24Y108/SS1_W_BEG0, (24W,107), type = NON_LOCAL, ic = NODE_SINGLE, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@b68=1}, (24,107), type = NON_LOCAL, ic = NODE_SINGLE, dly = 46.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@b68=1}
+	delay =    0, NODE_LOCAL        , node node INT_X24Y107/INT_NODE_IMUX_43_INT_OUT0, (24W,107), type = LOCAL, ic = NODE_LOCAL, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@b68=1}, (24,107), type = LOCAL, ic = NODE_LOCAL, dly = 0.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@b68=1}
+	delay =   43, NODE_PINFEED      , node node INT_X24Y107/IMUX_W19, (24W,107), type = EXCLUSIVE_SINK, ic = NODE_PINFEED, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@b68=1}, (24,107), type = EXCLUSIVE_SINK, ic = NODE_PINFEED, dly = 43.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@b68=1}
+
+Con   1288, boundbox = [( 21, 92 ), -> ( 27, 122 )], net = c1/u_b/u_core/hist[51]_i_9_n_0, net fanout =   6, source = SLICE_X34Y107.B_O, sink = SLICE_X34Y107.C6, delay =  108 , criticality = 0.538 
+	delay =    0, (intrasite)       , B6LUT/O -> B_O
+	delay =    0, NODE_CLE_OUTPUT   , node node CLEM_X24Y107/CLE_CLE_M_SITE_0_B_O, (24W,107), type = EXCLUSIVE_SOURCE, ic = NODE_CLE_OUTPUT, user = 0, null, (24,107), type = EXCLUSIVE_SOURCE, ic = NODE_CLE_OUTPUT, dly = 0.000000, user = 0, null
+	delay =    0, NODE_LOCAL        , node node INT_X24Y107/INT_NODE_IMUX_40_INT_OUT1, (24W,107), type = LOCAL, ic = NODE_LOCAL, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@13b=1}, (24,107), type = LOCAL, ic = NODE_LOCAL, dly = 0.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@13b=1}
+	delay =   65, NODE_PINBOUNCE    , node node INT_X24Y107/BYPASS_W6, (24W,107), type = LOCAL, ic = NODE_PINBOUNCE, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@13b=1}, (24,107), type = LOCAL, ic = NODE_PINBOUNCE, dly = 65.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@13b=1}
+	delay =    0, NODE_LOCAL        , node node INT_X24Y107/INT_NODE_IMUX_63_INT_OUT0, (24W,107), type = LOCAL, ic = NODE_LOCAL, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@13b=1}, (24,107), type = LOCAL, ic = NODE_LOCAL, dly = 0.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@13b=1}
+	delay =   43, NODE_PINFEED      , node node INT_X24Y107/IMUX_W20, (24W,107), type = EXCLUSIVE_SINK, ic = NODE_PINFEED, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@13b=1}, (24,107), type = EXCLUSIVE_SINK, ic = NODE_PINFEED, dly = 43.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@13b=1}
+
+Con   4683, boundbox = [( 20, 92 ), -> ( 27, 124 )], net = c1/u_b/u_core/hist[57]_i_26_n_0, net fanout =   3, source = SLICE_X34Y107.C_O, sink = SLICE_X33Y109.A6, delay =  264 , criticality = 0.538 
+	delay =    0, (intrasite)       , C6LUT/O -> C_O
+	delay =    0, NODE_CLE_OUTPUT   , node node CLEM_X24Y107/CLE_CLE_M_SITE_0_C_O, (24W,107), type = EXCLUSIVE_SOURCE, ic = NODE_CLE_OUTPUT, user = 0, null, (24,107), type = EXCLUSIVE_SOURCE, ic = NODE_CLE_OUTPUT, dly = 0.000000, user = 0, null
+	delay =    0, NODE_LOCAL        , node node INT_X24Y107/INT_NODE_SDQ_49_INT_OUT0, (24W,107), type = NON_LOCAL, ic = NODE_LOCAL, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@493=2}, (24,107), type = NON_LOCAL, ic = NODE_LOCAL, dly = 0.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@493=2}
+	delay =   43, NODE_SINGLE       , node node INT_X24Y107/INT_INT_SDQ_60_INT_OUT1, (24E,107), type = NON_LOCAL, ic = NODE_SINGLE, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@493=1}, (24,107), type = NON_LOCAL, ic = NODE_SINGLE, dly = 43.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@493=1}
+	delay =    0, NODE_LOCAL        , node node INT_X24Y107/INT_NODE_SDQ_1_INT_OUT0, (24E,107), type = NON_LOCAL, ic = NODE_LOCAL, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@493=1}, (24,107), type = NON_LOCAL, ic = NODE_LOCAL, dly = 0.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@493=1}
+	delay =   53, NODE_DOUBLE       , node node INT_X24Y107/NN2_E_BEG0, (24E,109), type = NON_LOCAL, ic = NODE_DOUBLE, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@493=1}, (24,109), type = NON_LOCAL, ic = NODE_DOUBLE, dly = 53.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@493=1}
+	delay =    0, NODE_LOCAL        , node node INT_X24Y109/INT_NODE_SDQ_44_INT_OUT1, (24E,109), type = NON_LOCAL, ic = NODE_LOCAL, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@493=1}, (24,109), type = NON_LOCAL, ic = NODE_LOCAL, dly = 0.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@493=1}
+	delay =   60, NODE_DOUBLE       , node node INT_X24Y109/WW2_E_BEG1, (23E,109), type = NON_LOCAL, ic = NODE_DOUBLE, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@493=1}, (23,109), type = NON_LOCAL, ic = NODE_DOUBLE, dly = 60.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@493=1}
+	delay =    0, NODE_LOCAL        , node node INT_X23Y109/INODE_E_9_FT1, (23E,108), type = LOCAL, ic = NODE_LOCAL, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@493=1}, (23,108), type = LOCAL, ic = NODE_LOCAL, dly = 0.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@493=1}
+	delay =   65, NODE_PINBOUNCE    , node node INT_X23Y108/BOUNCE_E_15_FT0, (23E,109), type = LOCAL, ic = NODE_PINBOUNCE, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@493=1}, (23,109), type = LOCAL, ic = NODE_PINBOUNCE, dly = 65.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@493=1}
+	delay =    0, NODE_LOCAL        , node node INT_X23Y109/INT_NODE_IMUX_3_INT_OUT1, (23E,109), type = LOCAL, ic = NODE_LOCAL, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@493=1}, (23,109), type = LOCAL, ic = NODE_LOCAL, dly = 0.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@493=1}
+	delay =   43, NODE_PINFEED      , node node INT_X23Y109/IMUX_E18, (23E,109), type = EXCLUSIVE_SINK, ic = NODE_PINFEED, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@493=1}, (23,109), type = EXCLUSIVE_SINK, ic = NODE_PINFEED, dly = 43.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@493=1}
+
+Con  13008, boundbox = [( 20, 92 ), -> ( 26, 125 )], net = c1/u_b/u_core/hist[57]_i_19_n_0, net fanout =   7, source = SLICE_X33Y109.A_O, sink = SLICE_X33Y107.E2, delay =  171 , criticality = 0.538 
+	delay =    0, (intrasite)       , A6LUT/O -> A_O
+	delay =    0, NODE_CLE_OUTPUT   , node node CLEL_R_X23Y109/CLE_CLE_L_SITE_0_A_O, (23E,109), type = EXCLUSIVE_SOURCE, ic = NODE_CLE_OUTPUT, user = 0, null, (23,109), type = EXCLUSIVE_SOURCE, ic = NODE_CLE_OUTPUT, dly = 0.000000, user = 0, null
+	delay =    0, NODE_LOCAL        , node node INT_X23Y109/INT_NODE_SDQ_22_INT_OUT1, (23E,109), type = NON_LOCAL, ic = NODE_LOCAL, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@cc9=3}, (23,109), type = NON_LOCAL, ic = NODE_LOCAL, dly = 0.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@cc9=3}
+	delay =   53, NODE_DOUBLE       , node node INT_X23Y109/SS2_E_BEG0, (23E,107), type = NON_LOCAL, ic = NODE_DOUBLE, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@cc9=1}, (23,107), type = NON_LOCAL, ic = NODE_DOUBLE, dly = 53.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@cc9=1}
+	delay =    0, NODE_LOCAL        , node node INT_X23Y107/INT_NODE_IMUX_11_INT_OUT0, (23E,107), type = LOCAL, ic = NODE_LOCAL, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@cc9=1}, (23,107), type = LOCAL, ic = NODE_LOCAL, dly = 0.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@cc9=1}
+	delay =   65, NODE_PINBOUNCE    , node node INT_X23Y107/BYPASS_E1, (23E,107), type = LOCAL, ic = NODE_PINBOUNCE, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@cc9=1}, (23,107), type = LOCAL, ic = NODE_PINBOUNCE, dly = 65.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@cc9=1}
+	delay =    0, NODE_LOCAL        , node node INT_X23Y107/INT_NODE_IMUX_7_INT_OUT1, (23E,107), type = LOCAL, ic = NODE_LOCAL, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@cc9=1}, (23,107), type = LOCAL, ic = NODE_LOCAL, dly = 0.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@cc9=1}
+	delay =   53, NODE_PINFEED      , node node INT_X23Y107/IMUX_E4, (23E,107), type = EXCLUSIVE_SINK, ic = NODE_PINFEED, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@cc9=1}, (23,107), type = EXCLUSIVE_SINK, ic = NODE_PINFEED, dly = 53.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@cc9=1}
+
+Con   8417, boundbox = [( 18, 89 ), -> ( 26, 124 )], net = c1/u_b/u_core/hist[57]_i_7_n_0, net fanout =  34, source = SLICE_X33Y107.E_O, sink = SLICE_X30Y104.A6, delay =  322 , criticality = 0.538 
+	delay =    0, (intrasite)       , E6LUT/O -> E_O
+	delay =    0, NODE_CLE_OUTPUT   , node node CLEL_R_X23Y107/CLE_CLE_L_SITE_0_E_O, (23E,107), type = EXCLUSIVE_SOURCE, ic = NODE_CLE_OUTPUT, user = 0, null, (23,107), type = EXCLUSIVE_SOURCE, ic = NODE_CLE_OUTPUT, dly = 0.000000, user = 0, null
+	delay =    0, NODE_LOCAL        , node node INT_X23Y107/INT_NODE_SDQ_10_INT_OUT1, (23E,107), type = NON_LOCAL, ic = NODE_LOCAL, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@873=2}, (23,107), type = NON_LOCAL, ic = NODE_LOCAL, dly = 0.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@873=2}
+	delay =   53, NODE_DOUBLE       , node node INT_X23Y107/SS2_E_BEG2, (23E,105), type = NON_LOCAL, ic = NODE_DOUBLE, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@873=2}, (23,105), type = NON_LOCAL, ic = NODE_DOUBLE, dly = 53.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@873=2}
+	delay =    0, NODE_LOCAL        , node node INT_X23Y105/INT_NODE_SDQ_10_INT_OUT1, (23E,105), type = NON_LOCAL, ic = NODE_LOCAL, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@873=1}, (23,105), type = NON_LOCAL, ic = NODE_LOCAL, dly = 0.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@873=1}
+	delay =   53, NODE_DOUBLE       , node node INT_X23Y105/SS2_E_BEG2, (23E,103), type = NON_LOCAL, ic = NODE_DOUBLE, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@873=1}, (23,103), type = NON_LOCAL, ic = NODE_DOUBLE, dly = 53.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@873=1}
+	delay =    0, NODE_LOCAL        , node node INT_X23Y103/INT_NODE_SDQ_10_INT_OUT0, (23E,103), type = NON_LOCAL, ic = NODE_LOCAL, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@873=1}, (23,103), type = NON_LOCAL, ic = NODE_LOCAL, dly = 0.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@873=1}
+	delay =   67, NODE_DOUBLE       , node node INT_X23Y103/WW2_E_BEG2, (22E,103), type = NON_LOCAL, ic = NODE_DOUBLE, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@873=1}, (22,103), type = NON_LOCAL, ic = NODE_DOUBLE, dly = 67.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@873=1}
+	delay =    0, NODE_LOCAL        , node node INT_X22Y103/INT_NODE_SDQ_7_INT_OUT1, (22E,103), type = NON_LOCAL, ic = NODE_LOCAL, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@873=1}, (22,103), type = NON_LOCAL, ic = NODE_LOCAL, dly = 0.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@873=1}
+	delay =   60, NODE_DOUBLE       , node node INT_X22Y103/WW2_E_BEG2, (21E,103), type = NON_LOCAL, ic = NODE_DOUBLE, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@873=1}, (21,103), type = NON_LOCAL, ic = NODE_DOUBLE, dly = 60.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@873=1}
+	delay =    0, NODE_LOCAL        , node node INT_X21Y103/INT_NODE_SDQ_7_INT_OUT1, (21E,103), type = NON_LOCAL, ic = NODE_LOCAL, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@873=1}, (21,103), type = NON_LOCAL, ic = NODE_LOCAL, dly = 0.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@873=1}
+	delay =   46, NODE_SINGLE       , node node INT_X21Y103/NN1_E_BEG2, (21E,104), type = NON_LOCAL, ic = NODE_SINGLE, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@873=1}, (21,104), type = NON_LOCAL, ic = NODE_SINGLE, dly = 46.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@873=1}
+	delay =    0, NODE_LOCAL        , node node INT_X21Y104/INT_NODE_IMUX_3_INT_OUT1, (21E,104), type = LOCAL, ic = NODE_LOCAL, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@873=1}, (21,104), type = LOCAL, ic = NODE_LOCAL, dly = 0.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@873=1}
+	delay =   43, NODE_PINFEED      , node node INT_X21Y104/IMUX_E18, (21E,104), type = EXCLUSIVE_SINK, ic = NODE_PINFEED, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@873=1}, (21,104), type = EXCLUSIVE_SINK, ic = NODE_PINFEED, dly = 43.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@873=1}
+
+Con   2223, boundbox = [( 18, 89 ), -> ( 24, 119 )], net = c1/u_b/u_core/hist[25]_i_2_n_0, net fanout =   1, source = SLICE_X30Y104.A_O, sink = SLICE_X30Y104.G4, delay =  155 , criticality = 0.538 
+	delay =    0, (intrasite)       , A6LUT/O -> A_O
+	delay =    0, NODE_CLE_OUTPUT   , node node CLEL_R_X21Y104/CLE_CLE_L_SITE_0_A_O, (21E,104), type = EXCLUSIVE_SOURCE, ic = NODE_CLE_OUTPUT, user = 0, null, (21,104), type = EXCLUSIVE_SOURCE, ic = NODE_CLE_OUTPUT, dly = 0.000000, user = 0, null
+	delay =    0, NODE_LOCAL        , node node INT_X21Y104/INT_NODE_SDQ_0_INT_OUT1, (21E,104), type = NON_LOCAL, ic = NODE_LOCAL, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@239=1}, (21,104), type = NON_LOCAL, ic = NODE_LOCAL, dly = 0.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@239=1}
+	delay =   46, NODE_SINGLE       , node node INT_X21Y104/NN1_E_BEG0, (21E,105), type = NON_LOCAL, ic = NODE_SINGLE, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@239=1}, (21,105), type = NON_LOCAL, ic = NODE_SINGLE, dly = 46.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@239=1}
+	delay =    0, NODE_LOCAL        , node node INT_X21Y104/INODE_E_62_FT0, (21E,105), type = LOCAL, ic = NODE_LOCAL, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@239=1}, (21,105), type = LOCAL, ic = NODE_LOCAL, dly = 0.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@239=1}
+	delay =   65, NODE_PINBOUNCE    , node node INT_X21Y105/BOUNCE_E_0_FT1, (21E,104), type = LOCAL, ic = NODE_PINBOUNCE, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@239=1}, (21,104), type = LOCAL, ic = NODE_PINBOUNCE, dly = 65.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@239=1}
+	delay =    0, NODE_LOCAL        , node node INT_X21Y104/INT_NODE_IMUX_23_INT_OUT1, (21E,104), type = LOCAL, ic = NODE_LOCAL, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@239=1}, (21,104), type = LOCAL, ic = NODE_LOCAL, dly = 0.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@239=1}
+	delay =   44, NODE_PINFEED      , node node INT_X21Y104/IMUX_E36, (21E,104), type = EXCLUSIVE_SINK, ic = NODE_PINFEED, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@239=1}, (21,104), type = EXCLUSIVE_SINK, ic = NODE_PINFEED, dly = 44.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@239=1}
+
+Con  13918, boundbox = [( 18, 89 ), -> ( 25, 120 )], net = c1/u_b/u_core/scr_out_return50129_out, net fanout =   6, source = SLICE_X30Y104.G_O, sink = SLICE_X30Y105.H5, delay =   90 , criticality = 0.538 
+	delay =    0, (intrasite)       , G6LUT/O -> G_O
+	delay =    0, NODE_CLE_OUTPUT   , node node CLEL_R_X21Y104/CLE_CLE_L_SITE_0_G_O, (21E,104), type = EXCLUSIVE_SOURCE, ic = NODE_CLE_OUTPUT, user = 0, null, (21,104), type = EXCLUSIVE_SOURCE, ic = NODE_CLE_OUTPUT, dly = 0.000000, user = 0, null
+	delay =    0, NODE_LOCAL        , node node INT_X21Y104/INT_NODE_SDQ_27_INT_OUT1, (21E,104), type = NON_LOCAL, ic = NODE_LOCAL, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@d98=4}, (21,104), type = NON_LOCAL, ic = NODE_LOCAL, dly = 0.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@d98=4}
+	delay =   46, NODE_SINGLE       , node node INT_X21Y104/NN1_E_BEG5, (21E,105), type = NON_LOCAL, ic = NODE_SINGLE, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@d98=2}, (21,105), type = NON_LOCAL, ic = NODE_SINGLE, dly = 46.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@d98=2}
+	delay =    0, NODE_LOCAL        , node node INT_X21Y105/INT_NODE_IMUX_19_INT_OUT0, (21E,105), type = LOCAL, ic = NODE_LOCAL, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@d98=1}, (21,105), type = LOCAL, ic = NODE_LOCAL, dly = 0.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@d98=1}
+	delay =   44, NODE_PINFEED      , node node INT_X21Y105/IMUX_E39, (21E,105), type = EXCLUSIVE_SINK, ic = NODE_PINFEED, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@d98=1}, (21,105), type = EXCLUSIVE_SINK, ic = NODE_PINFEED, dly = 44.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@d98=1}
+
+Con  14698, boundbox = [( 18, 90 ), -> ( 24, 122 )], net = c1/u_b/u_core/acc[10]_i_6_n_0, net fanout =   2, source = SLICE_X30Y105.H_O, sink = SLICE_X29Y107.C3, delay =  202 , criticality = 0.538 
+	delay =    0, (intrasite)       , H6LUT/O -> H_O
+	delay =    0, NODE_CLE_OUTPUT   , node node CLEL_R_X21Y105/CLE_CLE_L_SITE_0_H_O, (21E,105), type = EXCLUSIVE_SOURCE, ic = NODE_CLE_OUTPUT, user = 0, null, (21,105), type = EXCLUSIVE_SOURCE, ic = NODE_CLE_OUTPUT, dly = 0.000000, user = 0, null
+	delay =    0, NODE_LOCAL        , node node INT_X21Y105/INT_NODE_SDQ_40_INT_OUT0, (21E,105), type = NON_LOCAL, ic = NODE_LOCAL, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@e5c=2}, (21,105), type = NON_LOCAL, ic = NODE_LOCAL, dly = 0.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@e5c=2}
+	delay =   43, NODE_SINGLE       , node node INT_X21Y105/INT_INT_SDQ_75_INT_OUT0, (21W,105), type = NON_LOCAL, ic = NODE_SINGLE, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@e5c=2}, (21,105), type = NON_LOCAL, ic = NODE_SINGLE, dly = 43.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@e5c=2}
+	delay =    0, NODE_LOCAL        , node node INT_X21Y105/INT_NODE_SDQ_86_INT_OUT0, (21W,105), type = NON_LOCAL, ic = NODE_LOCAL, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@e5c=1}, (21,105), type = NON_LOCAL, ic = NODE_LOCAL, dly = 0.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@e5c=1}
+	delay =   46, NODE_SINGLE       , node node INT_X21Y105/NN1_W_BEG6, (21W,106), type = NON_LOCAL, ic = NODE_SINGLE, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@e5c=1}, (21,106), type = NON_LOCAL, ic = NODE_SINGLE, dly = 46.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@e5c=1}
+	delay =    0, NODE_LOCAL        , node node INT_X21Y106/INT_NODE_IMUX_53_INT_OUT0, (21W,106), type = LOCAL, ic = NODE_LOCAL, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@e5c=1}, (21,106), type = LOCAL, ic = NODE_LOCAL, dly = 0.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@e5c=1}
+	delay =   65, NODE_PINBOUNCE    , node node INT_X21Y106/BOUNCE_W_15_FT0, (21W,107), type = LOCAL, ic = NODE_PINBOUNCE, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@e5c=1}, (21,107), type = LOCAL, ic = NODE_PINBOUNCE, dly = 65.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@e5c=1}
+	delay =    0, NODE_LOCAL        , node node INT_X21Y107/INT_NODE_IMUX_35_INT_OUT1, (21W,107), type = LOCAL, ic = NODE_LOCAL, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@e5c=1}, (21,107), type = LOCAL, ic = NODE_LOCAL, dly = 0.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@e5c=1}
+	delay =   48, NODE_PINFEED      , node node INT_X21Y107/IMUX_W16, (21W,107), type = EXCLUSIVE_SINK, ic = NODE_PINFEED, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@e5c=1}, (21,107), type = EXCLUSIVE_SINK, ic = NODE_PINFEED, dly = 48.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@e5c=1}
+
+Con   6451, boundbox = [( 15, 92 ), -> ( 24, 123 )], net = c1/u_b/u_core/acc[34]_i_3_n_0, net fanout =   3, source = SLICE_X29Y107.C_O, sink = SLICE_X26Y108.G6, delay =  264 , criticality = 0.538 
+	delay =    0, (intrasite)       , C6LUT/O -> C_O
+	delay =    0, NODE_CLE_OUTPUT   , node node CLEM_X21Y107/CLE_CLE_M_SITE_0_C_O, (21W,107), type = EXCLUSIVE_SOURCE, ic = NODE_CLE_OUTPUT, user = 0, null, (21,107), type = EXCLUSIVE_SOURCE, ic = NODE_CLE_OUTPUT, dly = 0.000000, user = 0, null
+	delay =    0, NODE_LOCAL        , node node INT_X21Y107/INT_NODE_SDQ_49_INT_OUT0, (21W,107), type = NON_LOCAL, ic = NODE_LOCAL, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@6ab=3}, (21,107), type = NON_LOCAL, ic = NODE_LOCAL, dly = 0.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@6ab=3}
+	delay =   53, NODE_DOUBLE       , node node INT_X21Y107/NN2_W_BEG0, (21W,109), type = NON_LOCAL, ic = NODE_DOUBLE, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@6ab=1}, (21,109), type = NON_LOCAL, ic = NODE_DOUBLE, dly = 53.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@6ab=1}
+	delay =    0, NODE_LOCAL        , node node INT_X21Y109/INT_NODE_SDQ_92_INT_OUT0, (21W,109), type = NON_LOCAL, ic = NODE_LOCAL, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@6ab=1}, (21,109), type = NON_LOCAL, ic = NODE_LOCAL, dly = 0.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@6ab=1}
+	delay =   85, NODE_HQUAD        , node node INT_X21Y109/WW4_W_BEG0, (19W,109), type = NON_LOCAL, ic = NODE_HQUAD, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@6ab=1}, (19,109), type = NON_LOCAL, ic = NODE_HQUAD, dly = 85.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@6ab=1}
+	delay =    0, NODE_LOCAL        , node node INT_X19Y109/INT_NODE_SDQ_81_INT_OUT1, (19W,109), type = NON_LOCAL, ic = NODE_LOCAL, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@6ab=1}, (19,109), type = NON_LOCAL, ic = NODE_LOCAL, dly = 0.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@6ab=1}
+	delay =   83, NODE_SINGLE       , node node INT_X19Y109/WW1_W_BEG0, (18E,109), type = NON_LOCAL, ic = NODE_SINGLE, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@6ab=1}, (18,109), type = NON_LOCAL, ic = NODE_SINGLE, dly = 83.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@6ab=1}
+	delay =    0, NODE_LOCAL        , node node INT_X18Y109/INODE_E_5_FT1, (18E,108), type = LOCAL, ic = NODE_LOCAL, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@6ab=1}, (18,108), type = LOCAL, ic = NODE_LOCAL, dly = 0.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@6ab=1}
+	delay =   43, NODE_PINFEED      , node node INT_X18Y108/IMUX_E46, (18E,108), type = EXCLUSIVE_SINK, ic = NODE_PINFEED, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@6ab=1}, (18,108), type = EXCLUSIVE_SINK, ic = NODE_PINFEED, dly = 43.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@6ab=1}
+
+Con   1764, boundbox = [( 15, 93 ), -> ( 21, 123 )], net = c1/u_b/u_core/gt_d[50]_i_2_n_0, net fanout =   1, source = SLICE_X26Y108.G_O, sink = SLICE_X26Y108.A2, delay =   53 , criticality = 0.538 
+	delay =    0, (intrasite)       , G6LUT/O -> G_O
+	delay =    0, NODE_CLE_OUTPUT   , node node CLEL_R_X18Y108/CLE_CLE_L_SITE_0_G_O, (18E,108), type = EXCLUSIVE_SOURCE, ic = NODE_CLE_OUTPUT, user = 0, null, (18,108), type = EXCLUSIVE_SOURCE, ic = NODE_CLE_OUTPUT, dly = 0.000000, user = 0, null
+	delay =    0, NODE_LOCAL        , node node INT_X18Y108/INT_NODE_IMUX_17_INT_OUT1, (18E,108), type = LOCAL, ic = NODE_LOCAL, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@1c7=1}, (18,108), type = LOCAL, ic = NODE_LOCAL, dly = 0.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@1c7=1}
+	delay =   53, NODE_PINFEED      , node node INT_X18Y108/IMUX_E8, (18E,108), type = EXCLUSIVE_SINK, ic = NODE_PINFEED, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@1c7=1}, (18,108), type = EXCLUSIVE_SINK, ic = NODE_PINFEED, dly = 53.000000, user = 1, {com.xilinx.rapidwright.rwroute.NetWrapper@1c7=1}
+
+net = c1/u_b/u_core/gt_d[50]_i_1_n_0, c1/u_b/u_core/gt_d[50]_i_1/O -> c1/u_b/u_core/gt_d_reg[50]/D
+	delay =   50, (intrasite)       , A5LUT/O5 -> AFF2/D
+
+==============================================================================
+==============================================================================
+==                  Writing DCP: stamp_p3_40_rwrouted.dcp                   ==
+==============================================================================
+     (Build XDEF Header):            (    0.251s)
+            (Write EDIF):            (    0.350s)
+(Write XDEF Cache (1/3)):            (    0.160s)
+(Write XDEF Cache (2/3)):            (    0.188s)
+(Write XDEF Cache (3/3)):            (    0.394s)
+  (Write XDEF Placement):            (    0.689s)
+    (Write XDEF Routing):            (    1.343s)
+ (Write XDEF Finalizing):            (    0.013s)
+            (Write XDEF):            (    1.426s)
+       Write EDIF & XDEF:     1.443s
+               Write XDC:     0.007s
+------------------------------------------------------------------------------
+         [No GC] *Total*:     1.449s
+{"mode": "complete", "unrouted_pins_before": 15164, "unrouted_pins_after": 84, "route_s": 10.96, "write_s": 1.54, "nets_with_pips": 3778}

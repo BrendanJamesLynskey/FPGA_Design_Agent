@@ -1,0 +1,416 @@
+{
+ "commit": "9f4305aa26bab5c69ecbca8312374960d623ede2",
+ "model": "openai/gpt-6-luna",
+ "runs": {
+  "A0_1": {
+   "arm": "A0",
+   "baseline_clocks": 11,
+   "final_clocks": 9,
+   "usd": 0.022631,
+   "kept": 2,
+   "visits": 3,
+   "final_rtl_sha": "e968fb05d7a5f3f0",
+   "reverted": 1,
+   "first_kept_visit": 1,
+   "tool_calls": {
+    "edit_file": 13,
+    "list_files": 4,
+    "measure": 4,
+    "read_file": 33
+   },
+   "turns": 34,
+   "wall_s": 586.7,
+   "per_visit": [
+    {
+     "iteration": 1,
+     "kept": true,
+     "reason": "tick-to-trade 11 -> 10 clocks, bench and twin pass",
+     "clocks_before": 11,
+     "clocks_after": 10,
+     "files_changed": [
+      "rtl/trade64.sv"
+     ],
+     "hypothesis_note": "Made `fire` combinational during price word 7 so the receive-to-transmit pulse crossing can start one clock earlier; the bench measured tick-to-trade dropping from 11 to 10 clocks (one clock, about 6.2 ns, saved) with tests passing. A longer combinational path or a timing/alignment issue at the CDC could erase the gain or miss the pulse."
+    },
+    {
+     "iteration": 2,
+     "kept": true,
+     "reason": "tick-to-trade 10 -> 9 clocks, bench and twin pass",
+     "clocks_before": 10,
+     "clocks_after": 9,
+     "files_changed": [
+      "rtl/b96_core.sv"
+     ],
+     "hypothesis_note": "Set the order-pulse CDC\u2019s `REG_OUTPUT` to 0, removing one transmit-domain register stage; the bench measured tick-to-trade improving from 10 to 9 clocks (about 6.2 ns saved), with echo unchanged at 12 clocks. The unregistered CDC output could have timing or pulse-alignment issues."
+    },
+    {
+     "iteration": 3,
+     "kept": false,
+     "reason": "no change made",
+     "clocks_before": 9,
+     "clocks_after": null,
+     "files_changed": [],
+     "hypothesis_note": "I reverted the experimental TX preamble-start bypass after the whole-core bench failed; RTL behavior is back to the prior design, so I expect no clocks saved. The bypass made the MAC consume the first word before `frame_src` had registered valid data, which broke frame timing."
+    }
+   ]
+  },
+  "A0_2": {
+   "arm": "A0",
+   "baseline_clocks": 11,
+   "final_clocks": 9,
+   "usd": 0.024095,
+   "kept": 2,
+   "visits": 3,
+   "final_rtl_sha": "bb9cdfa185695375",
+   "reverted": 1,
+   "first_kept_visit": 1,
+   "tool_calls": {
+    "edit_file": 15,
+    "list_files": 6,
+    "measure": 4,
+    "read_file": 28
+   },
+   "turns": 34,
+   "wall_s": 639.0,
+   "per_visit": [
+    {
+     "iteration": 1,
+     "kept": true,
+     "reason": "tick-to-trade 11 -> 10 clocks, bench and twin pass",
+     "clocks_before": 11,
+     "clocks_after": 10,
+     "files_changed": [
+      "rtl/trade64.sv"
+     ],
+     "hypothesis_note": "Made `trade64.fire` combinational from the word-7 decision instead of registering it, saving 1 measured tick-to-trade clock (11\u219210; echo unchanged); risk: the earlier pulse depends on the MAC word and decision signals meeting timing. Bench and model twin pass."
+    },
+    {
+     "iteration": 2,
+     "kept": true,
+     "reason": "tick-to-trade 10 -> 9 clocks, bench and twin pass",
+     "clocks_before": 10,
+     "clocks_after": 9,
+     "files_changed": [
+      "rtl/b96_core.sv"
+     ],
+     "hypothesis_note": "Changed the order-go CDC pulse to use an unregistered output; saved 1 tick-to-trade clock (10\u21929; echo unchanged). The combinational CDC output could affect pulse timing, but the bench and model twin pass."
+    },
+    {
+     "iteration": 3,
+     "kept": false,
+     "reason": "the independent bench or the model twin failed",
+     "clocks_before": 9,
+     "clocks_after": null,
+     "files_changed": [
+      "rtl/pcs_rx.sv"
+     ],
+     "hypothesis_note": ""
+    }
+   ]
+  },
+  "A1_1": {
+   "arm": "A1",
+   "baseline_clocks": 11,
+   "final_clocks": 9,
+   "usd": 0.014949,
+   "kept": 2,
+   "visits": 3,
+   "final_rtl_sha": "7d61e08303305141",
+   "reverted": 1,
+   "first_kept_visit": 2,
+   "tool_calls": {
+    "edit_file": 9,
+    "latency_budget": 3,
+    "latency_path": 4,
+    "list_files": 6,
+    "measure": 3,
+    "read_file": 19
+   },
+   "turns": 37,
+   "wall_s": 442.6,
+   "per_visit": [
+    {
+     "iteration": 1,
+     "kept": false,
+     "reason": "tick-to-trade did not fall (11 -> 11 clocks)",
+     "clocks_before": 11,
+     "clocks_after": 11,
+     "files_changed": [
+      "rtl/tx_path.sv"
+     ],
+     "hypothesis_note": "I tried starting the MAC on `fs_start` to remove the `fs_start`\u2192`s_valid` cycle, but the independent bench failed, so I reverted the change. No latency reduction was kept; the expected saving was 1 TX clock (6.206 ns). The attempted change altered MAC start behavior, and the failure may indicate a behavioral or timing interaction."
+    },
+    {
+     "iteration": 2,
+     "kept": true,
+     "reason": "tick-to-trade 11 -> 10 clocks, bench and twin pass",
+     "clocks_before": 11,
+     "clocks_after": 10,
+     "files_changed": [
+      "rtl/b96_core.sv"
+     ],
+     "hypothesis_note": "Set `u_p_go`\u2019s `REG_OUTPUT` to 0, removing one TX clock from the pulse crossing while retaining its two-flop synchronizer; tick-to-trade fell from 11 to 10 clocks (about 6.206 ns), echo stayed at 12, and the bench/model passed. The refreshed stage breakdown is stale, so the measured total is authoritative; the earlier pulse must still align with the quasi-static order bus, and post-route timing was not checked."
+    },
+    {
+     "iteration": 3,
+     "kept": true,
+     "reason": "tick-to-trade 10 -> 9 clocks, bench and twin pass",
+     "clocks_before": 10,
+     "clocks_after": 9,
+     "files_changed": [
+      "rtl/trade64.sv"
+     ],
+     "hypothesis_note": "Bypassed the registered `fire` decision in `trade64` while keeping the order fields registered; tick-to-trade fell from 10 to 9 clocks (about 6.206 ns), echo stayed at 12, and the bench/model passed. The two-flop pulse synchronizer remains; the main risk is added timing pressure on the receive-side decision path and event/data alignment, which still needs post-route verification."
+    }
+   ]
+  },
+  "A1_2": {
+   "arm": "A1",
+   "baseline_clocks": 11,
+   "final_clocks": 9,
+   "usd": 0.016895,
+   "kept": 2,
+   "visits": 3,
+   "final_rtl_sha": "b30e90ba9a153f85",
+   "reverted": 1,
+   "first_kept_visit": 1,
+   "tool_calls": {
+    "edit_file": 10,
+    "latency_budget": 3,
+    "latency_path": 4,
+    "list_files": 3,
+    "measure": 3,
+    "read_file": 26
+   },
+   "turns": 38,
+   "wall_s": 553.9,
+   "per_visit": [
+    {
+     "iteration": 1,
+     "kept": true,
+     "reason": "tick-to-trade 11 -> 10 clocks, bench and twin pass",
+     "clocks_before": 11,
+     "clocks_after": 10,
+     "files_changed": [
+      "rtl/b96_core.sv"
+     ],
+     "hypothesis_note": "Set `u_p_go`\u2019s `REG_OUTPUT` to 0, removing one tick-to-trade clock (6.2058 ns); the independent bench and model twin pass at 10 clocks, with echo unchanged at 12. The two-flop synchronizer remains, but the earlier pulse could affect timing or order-bus alignment; post-route timing was not verified."
+    },
+    {
+     "iteration": 2,
+     "kept": true,
+     "reason": "tick-to-trade 10 -> 9 clocks, bench and twin pass",
+     "clocks_before": 10,
+     "clocks_after": 9,
+     "files_changed": [
+      "rtl/trade64.sv"
+     ],
+     "hypothesis_note": "Made `trade64.fire` combinational from the existing word-7 decision and removed its output register; the bench and model twin pass at 9 tick-to-trade clocks (1 clock, about 6.21 ns saved), with echo unchanged at 12. The compare now feeds the crossing pulse without that register, so timing or order-bus alignment could be affected; post-route timing was not verified."
+    },
+    {
+     "iteration": 3,
+     "kept": false,
+     "reason": "no change made",
+     "clocks_before": 9,
+     "clocks_after": null,
+     "files_changed": [],
+     "hypothesis_note": "I tried starting the MAC from `fs_start` to remove the frame-source start clock, but the independent bench failed, so I reverted the change. Tick-to-trade remains 9 clocks; no saving was verified. The change could have violated MAC/frame-source data alignment."
+    }
+   ]
+  },
+  "R2_A0_1": {
+   "arm": "A0",
+   "baseline_clocks": 9,
+   "final_clocks": 8,
+   "usd": 0.035936,
+   "kept": 1,
+   "visits": 3,
+   "final_rtl_sha": "a1b0df686605dfb2",
+   "reverted": 2,
+   "first_kept_visit": 2,
+   "tool_calls": {
+    "edit_file": 18,
+    "list_files": 6,
+    "measure": 6,
+    "read_file": 45
+   },
+   "turns": 49,
+   "wall_s": 838.5,
+   "per_visit": [
+    {
+     "iteration": 1,
+     "kept": false,
+     "reason": "tick-to-trade did not fall (9 -> 9 clocks)",
+     "clocks_before": 9,
+     "clocks_after": 9,
+     "files_changed": [
+      "rtl/pcs_rx.sv"
+     ],
+     "hypothesis_note": ""
+    },
+    {
+     "iteration": 2,
+     "kept": true,
+     "reason": "tick-to-trade 9 -> 8 clocks, bench and twin pass",
+     "clocks_before": 9,
+     "clocks_after": 8,
+     "files_changed": [
+      "rtl/tx_path.sv"
+     ],
+     "hypothesis_note": "I let the MAC see `s_valid` on the same cycle as an order\u2019s `fs_start`, removing one startup cycle; measured tick-to-trade fell from 9 to 8 clocks (no clocks saved on echo). Risk: if the frame-source timing changes, the MAC could start before the first order word is valid."
+    },
+    {
+     "iteration": 3,
+     "kept": false,
+     "reason": "tick-to-trade did not fall (8 -> 8 clocks)",
+     "clocks_before": 8,
+     "clocks_after": 8,
+     "files_changed": [
+      "rtl/pcs_rx.sv"
+     ],
+     "hypothesis_note": ""
+    }
+   ]
+  },
+  "R2_A0_2": {
+   "arm": "A0",
+   "baseline_clocks": 9,
+   "final_clocks": 8,
+   "usd": 0.046939,
+   "kept": 1,
+   "visits": 3,
+   "final_rtl_sha": "e76235a11fd80efb",
+   "reverted": 2,
+   "first_kept_visit": 1,
+   "tool_calls": {
+    "edit_file": 19,
+    "list_files": 3,
+    "measure": 6,
+    "read_file": 45
+   },
+   "turns": 48,
+   "wall_s": 944.4,
+   "per_visit": [
+    {
+     "iteration": 1,
+     "kept": true,
+     "reason": "tick-to-trade 9 -> 8 clocks, bench and twin pass",
+     "clocks_before": 9,
+     "clocks_after": 8,
+     "files_changed": [
+      "rtl/tx_path.sv"
+     ],
+     "hypothesis_note": ""
+    },
+    {
+     "iteration": 2,
+     "kept": false,
+     "reason": "tick-to-trade did not fall (8 -> 8 clocks)",
+     "clocks_before": 8,
+     "clocks_after": 8,
+     "files_changed": [
+      "rtl/b96_core.sv"
+     ],
+     "hypothesis_note": "Replaced the order-go pulse synchronizer with an equivalent two-flop toggle synchronizer; the bench measured 8 tick-to-trade clocks, so this saves 0 clocks; closely spaced events or metastability could still cause a missed or duplicated pulse."
+    },
+    {
+     "iteration": 3,
+     "kept": false,
+     "reason": "the independent bench or the model twin failed",
+     "clocks_before": 8,
+     "clocks_after": null,
+     "files_changed": [
+      "rtl/pcs_rx.sv"
+     ],
+     "hypothesis_note": ""
+    }
+   ]
+  },
+  "R2_A1_1": {
+   "arm": "A1",
+   "baseline_clocks": 9,
+   "final_clocks": 9,
+   "usd": 0.029736,
+   "kept": 0,
+   "visits": 2,
+   "final_rtl_sha": "7d61e08303305141",
+   "reverted": 2,
+   "first_kept_visit": null,
+   "tool_calls": {
+    "edit_file": 10,
+    "latency_budget": 2,
+    "latency_path": 3,
+    "list_files": 2,
+    "measure": 3,
+    "read_file": 30
+   },
+   "turns": 35,
+   "wall_s": 1131.9,
+   "per_visit": [
+    {
+     "iteration": 1,
+     "kept": false,
+     "reason": "no change made",
+     "clocks_before": 9,
+     "clocks_after": null,
+     "files_changed": [],
+     "hypothesis_note": "I tried to bypass the frame-source start cycle, expecting to save 1 transmit clock (6.2058 ns), but reverted after two bench failures; the change may have misaligned frame/control signals, and no latency or timing result was verified."
+    },
+    {
+     "iteration": 2,
+     "kept": false,
+     "reason": "the independent bench or the model twin failed",
+     "clocks_before": 9,
+     "clocks_after": null,
+     "files_changed": [
+      "rtl/pcs_rx.sv"
+     ],
+     "hypothesis_note": ""
+    }
+   ]
+  },
+  "R2_A1_2": {
+   "arm": "A1",
+   "baseline_clocks": 9,
+   "final_clocks": 9,
+   "usd": 0.02274,
+   "kept": 0,
+   "visits": 2,
+   "final_rtl_sha": "7d61e08303305141",
+   "reverted": 2,
+   "first_kept_visit": null,
+   "tool_calls": {
+    "edit_file": 11,
+    "latency_budget": 3,
+    "latency_path": 3,
+    "list_files": 4,
+    "measure": 3,
+    "read_file": 21
+   },
+   "turns": 31,
+   "wall_s": 500.6,
+   "per_visit": [
+    {
+     "iteration": 1,
+     "kept": false,
+     "reason": "no change made",
+     "clocks_before": 9,
+     "clocks_after": null,
+     "files_changed": [],
+     "hypothesis_note": "No RTL change was kept: the early-`s_valid` experiment failed the whole-core bench, and the follow-up did not make it pass, so I reverted both edits; expected clocks saved: 0 (the experimental 1-clock `fs_start` bypass was unverified). The experiment risked changing frame-start accounting or output behavior; no post-route timing was checked."
+    },
+    {
+     "iteration": 2,
+     "kept": false,
+     "reason": "the independent bench or the model twin failed",
+     "clocks_before": 9,
+     "clocks_after": null,
+     "files_changed": [
+      "rtl/pcs_rx.sv"
+     ],
+     "hypothesis_note": ""
+    }
+   ]
+  }
+ }
+}

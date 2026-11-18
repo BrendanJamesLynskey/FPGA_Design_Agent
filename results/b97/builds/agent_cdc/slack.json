@@ -1,0 +1,66 @@
+{
+ "schema": "fda.latency_slack/1",
+ "source": "designs/b96_kr260_10g/lat_agent_cdc/build/base/post_route.dcp",
+ "stages": {
+  "rx_blk": {
+   "cells": 202,
+   "clock": "rxusr2",
+   "setup_slack_ns": 1.094,
+   "hold_slack_ns": 0.149
+  },
+  "rx_descramble": {
+   "cells": 72,
+   "clock": "rxusr2",
+   "setup_slack_ns": 0.855,
+   "hold_slack_ns": 0.076
+  },
+  "rx_mac": {
+   "cells": 65,
+   "clock": "rxusr2",
+   "setup_slack_ns": 1.756,
+   "hold_slack_ns": 0.07
+  },
+  "decide": {
+   "cells": 33,
+   "clock": "rxusr2",
+   "setup_slack_ns": 1.362,
+   "hold_slack_ns": 0.041
+  },
+  "cross_go": {
+   "cells": 5,
+   "clock": "txusr2",
+   "setup_slack_ns": 5.423,
+   "hold_slack_ns": 0.122
+  },
+  "fs_start": {
+   "cells": 65,
+   "clock": "txusr2",
+   "setup_slack_ns": 1.725,
+   "hold_slack_ns": 0.192
+  },
+  "mac_preamble": {
+   "cells": 65,
+   "clock": "txusr2",
+   "setup_slack_ns": 1.127,
+   "hold_slack_ns": 0.139
+  },
+  "tx_encode": {
+   "cells": 128,
+   "clock": "txusr2",
+   "setup_slack_ns": 1.168,
+   "hold_slack_ns": 0.07
+  },
+  "echo_tx_pcs": {
+   "cells": 64,
+   "clock": "txusr2",
+   "setup_slack_ns": 1.168,
+   "hold_slack_ns": 0.07
+  },
+  "echo_to_rx_stamp": {
+   "cells": 7,
+   "clock": "txusr2",
+   "setup_slack_ns": 4.695,
+   "hold_slack_ns": 0.103
+  }
+ }
+}

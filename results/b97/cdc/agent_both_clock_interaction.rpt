@@ -1,0 +1,37 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version      : Vivado v.2026.1 (lin64) Build 6511674 Tue Jun 16 11:01:26 MDT 2026
+| Date              : Tue Nov 17 20:04:39 2026
+| Host              : bren-ubuntu24-04 running 64-bit Ubuntu 24.04.4 LTS
+| Command           : report_clock_interaction -file /home/brendan/Claude_sandbox/_worktrees/97-latency/results/b97/cdc/agent_both_clock_interaction.rpt
+| Design            : kr260_10g_top
+| Device            : xck26-sfvc784
+| Speed File        : -2LV  PRODUCTION 1.31 12-08-2025
+| Design State      : Routed
+| Temperature Grade : C
+---------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Clock Interaction Report
+
+Clock Interaction Table
+-----------------------
+
+                                                                              WNS                            TNS Failing  TNS Total    WNS Path         Clock-Pair           Inter-Clock              
+From Clock                             To Clock                               Clock Edges  WNS(ns)  TNS(ns)    Endpoints    Endpoints  Requirement(ns)  Classification       Constraints              
+-------------------------------------  -------------------------------------  -----------  -------  -------  -----------  -----------  ---------------  -------------------  -----------------------  
+clk_u                                  clk_u                                  rise - rise     3.35     0.00            0        12621            10.00  Clean                Partial False Path       
+clk_u                                  rxusr2                                 rise - rise     8.97     0.00            0          222            10.00  Ignored              Max Delay Datapath Only  
+clk_u                                  tck_out                                                                         0           40                   Ignored              False Path               
+clk_u                                  txusr2                                 rise - rise     8.84     0.00            0          366            10.00  Ignored              Max Delay Datapath Only  
+gen_gtwizard_gthe4.rxoutclkpcs_int[0]  gen_gtwizard_gthe4.rxoutclkpcs_int[0]  rise - rise     1.55     0.00            0           34             3.10  Clean                Timed                    
+rxusr2                                 clk_u                                  rise - rise     5.00     0.00            0          470             6.21  Ignored              Max Delay Datapath Only  
+rxusr2                                 rxusr2                                 rise - rise     0.12     0.00            0         6519             6.21  Clean                Partial False Path       
+rxusr2                                 txusr2                                                                          0          151                   Ignored              False Path               
+tck                                    tck_out                                fall - rise    11.75     0.00            0          174            16.67  Clean                Timed                    
+tck_out                                clk_u                                                                           0           46                   Ignored              False Path               
+tck_out                                tck                                    rise - fall     4.45     0.00            0            1            16.67  Clean                Timed                    
+tck_out                                tck_out                                rise - rise    30.16     0.00            0          195            33.33  Clean                Timed                    
+txusr2                                 clk_u                                  rise - rise     4.98     0.00            0          836             6.21  Ignored              Max Delay Datapath Only  
+txusr2                                 txusr2                                 rise - rise     0.18     0.00            0         9374             6.21  Clean                Partial False Path       
+
+
