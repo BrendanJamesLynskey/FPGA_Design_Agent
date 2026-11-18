@@ -309,6 +309,9 @@ def test_leak_scan_looks_inside_archives(tmp_path):
     bad = tmp_path / "broken.tar.gz"
     bad.write_bytes(b"not an archive at all")
     assert leak_scan.unreadable_archives([bad])
+    corrupt = tmp_path / "corrupt.zip"                                      # a bad member CRC / truncated zip is reported, not passed
+    corrupt.write_bytes((tmp_path / "x.zip").read_bytes()[:-30])
+    assert leak_scan.unreadable_archives([corrupt])
 
 
 def test_archives_moved_to_the_private_repository_leave_a_pointer_with_the_hash():
@@ -327,3 +330,8 @@ def test_archives_moved_to_the_private_repository_leave_a_pointer_with_the_hash(
         priv = Path(kb) / d["moved_to"].split("/", 1)[1]
         if priv.is_file():
             assert hashlib.sha256(priv.read_bytes()).hexdigest() == d["sha256"], p
+
+
+def test_runs_archives_stay_untracked():
+    gi = (Path(__file__).resolve().parents[2] / ".gitignore").read_text()
+    assert "benchmark/v2/runs/*/artifacts/*/run_dir.tar.gz" in gi

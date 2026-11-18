@@ -65,39 +65,54 @@ def is_archive(name: str) -> bool:
     return name.lower().endswith(ARCHIVE_SUFFIXES)
 
 
-def _members(name: str, raw: bytes, depth: int = 0):
+def _members(name: str, raw: bytes, depth: int = 0, errs: list | None = None):
     """Yield ``(label, bytes)`` for every member of the archive ``raw`` (a single compressed file is one member); nested archives
-    are opened up to MAX_DEPTH. An archive that cannot be read yields nothing here (``unreadable_archives`` reports those)."""
+    are opened up to MAX_DEPTH. Anything that cannot be read (corrupt or encrypted archive, member over MAX_BYTES, nest deeper than
+    MAX_DEPTH) is appended to ``errs`` as a label, which ``unreadable_archives`` turns into a failure."""
+    errs = errs if errs is not None else []
     low = name.lower()
     try:
         if low.endswith(TAR_SUFFIXES):
             with tarfile.open(fileobj=io.BytesIO(raw), mode="r:*") as tf:
                 for m in tf:
-                    if m.isfile() and m.size <= MAX_BYTES and (fh := tf.extractfile(m)) is not None:
-                        yield from _member(f"{name}!{m.name}", fh.read(), depth)
+                    if not m.isfile():
+                        continue
+                    if m.size > MAX_BYTES:
+                        errs.append(f"{name}!{m.name}")
+                    elif (fh := tf.extractfile(m)) is not None:
+                        yield from _member(f"{name}!{m.name}", fh.read(), depth, errs)
         elif low.endswith(".zip"):
             with zipfile.ZipFile(io.BytesIO(raw)) as zf:
                 for zi in zf.infolist():
-                    if not zi.is_dir() and zi.file_size <= MAX_BYTES:
-                        yield from _member(f"{name}!{zi.filename}", zf.read(zi), depth)
+                    if zi.is_dir():
+                        continue
+                    if zi.file_size > MAX_BYTES:
+                        errs.append(f"{name}!{zi.filename}")
+                    else:
+                        yield from _member(f"{name}!{zi.filename}", zf.read(zi), depth, errs)
         else:
-            op = gzip.decompress if low.endswith(".gz") else bz2.decompress if low.endswith(".bz2") else lzma.decompress
+            op = {".gz": gzip.decompress, ".bz2": bz2.decompress}.get(low[low.rfind("."):], lzma.decompress)
             data = op(raw)
-            if len(data) <= MAX_BYTES:
-                yield from _member(f"{name}!{low.rsplit('/', 1)[-1].rsplit('.', 1)[0]}", data, depth)
+            if len(data) > MAX_BYTES:
+                errs.append(name)
+            else:
+                yield from _member(f"{name}!{low.rsplit('/', 1)[-1].rsplit('.', 1)[0]}", data, depth, errs)
     except (tarfile.TarError, zipfile.BadZipFile, OSError, EOFError, lzma.LZMAError, ValueError, NotImplementedError, RuntimeError):
-        return
+        errs.append(name)
 
 
-def _member(label: str, data: bytes, depth: int):
-    if is_archive(label) and depth < MAX_DEPTH:
-        yield from _members(label, data, depth + 1)
+def _member(label: str, data: bytes, depth: int, errs: list):
+    if is_archive(label):
+        if depth < MAX_DEPTH:
+            yield from _members(label, data, depth + 1, errs)
+        else:
+            errs.append(label)
     yield label, data
 
 
 def unreadable_archives(files: list[Path]) -> list[str]:
-    """Tracked archives the scan cannot read or that exceed MAX_ARCHIVE_BYTES (paths only)."""
-    bad = []
+    """Tracked archives (or members of them) the scan cannot read in full: corrupt, encrypted, too deep, or over a size cap. Paths only."""
+    bad: list[str] = []
     for f in files:
         if not is_archive(f.name) or not f.is_file():
             continue
@@ -105,17 +120,9 @@ def unreadable_archives(files: list[Path]) -> list[str]:
             if f.stat().st_size > MAX_ARCHIVE_BYTES:
                 bad.append(_rel(f))
                 continue
-            low = f.name.lower()
-            if low.endswith(TAR_SUFFIXES):
-                with tarfile.open(f, "r:*") as tf:
-                    tf.getmembers()
-            elif low.endswith(".zip"):
-                zipfile.ZipFile(f).close()
-            else:
-                with (gzip.open if low.endswith(".gz") else bz2.open if low.endswith(".bz2") else lzma.open)(f) as fh:
-                    while fh.read(1 << 20):
-                        pass
-        except (tarfile.TarError, zipfile.BadZipFile, OSError, EOFError, lzma.LZMAError):
+            for _ in _members(_rel(f), f.read_bytes(), 0, bad):
+                pass
+        except OSError:
             bad.append(_rel(f))
     return bad
 

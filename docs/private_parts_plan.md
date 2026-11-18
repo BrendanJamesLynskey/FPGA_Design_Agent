@@ -89,7 +89,7 @@ the rendered prompts of each run (`claude_code/*.system.txt` and `*.user.txt`, t
 allow-list never covers an archive, so an archive that carries prompt text fails the same CI test. An archive it cannot open, or one over 400 MB,
 also fails. All 21 `run_dir.tar.gz` archives of `benchmark/v2/runs/b82p2` (15) and `b82p3` (6) moved to `results_private/benchmark/v2/runs/...`
 in the private repository; each leaves `run_dir.tar.gz.pointer.json` (private path, SHA-256, size), and the SHA-256 is the one the run's record
-already carried. Nothing in the repository read those archives. A future driver that writes such an archive into a tracked path fails the test.
+already carried. Nothing in the repository read those archives. A future driver that writes such an archive is stopped by `.gitignore` and, if forced in, by the test. Also failing: a corrupt or encrypted archive, a member over 8 MB, a nest deeper than three. Known limits: archives are recognised by suffix, not by magic bytes; the scan splits words on whitespace only, so a copy re-tokenised by punctuation is not caught (a review probe found 49 non-allow-listed files sharing one 12-word run after punctuation-insensitive matching, mostly shared vocabulary; to be triaged before the window is normalised).
 
 **Not moved, by decision**: the tool descriptions (`agent/core/tools.py`, `axi_tools.py`, `debug_tools.py`, about 10 KB) are consumed when the
 tools register and are pinned by `agent/tests/fixtures/tool_schemas.json`; they are a later move. Validator and gate messages and the interview's
