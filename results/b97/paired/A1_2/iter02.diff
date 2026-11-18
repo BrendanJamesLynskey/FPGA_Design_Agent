@@ -1,0 +1,22 @@
+--- a/rtl/trade64.sv
++++ b/rtl/trade64.sv
+@@ -47,8 +47,9 @@
+     assign widx = m_sof ? 4'd0 : wi;
+     assign price = {ph, m_d[7:0], m_d[15:8]};
+     assign hit = is_feed && hdr_ok && spec_ok && (mtype == 8'h01 || mtype == 8'h02) && side_ask && price != 32'd0 && price <= thr;
++    assign fire = !rst && m_v && (widx == 4'd7) && hit && arm && !kill && trade_en;
+     always_ff @(posedge clk) begin
+-        fire <= 1'b0; cls_feed <= 1'b0; cls_order <= 1'b0; cls_probe <= 1'b0;
++        cls_feed <= 1'b0; cls_order <= 1'b0; cls_probe <= 1'b0;
+         if (rst) begin
+             wi <= '0; mac_ok <= 1'b0; ven_ok <= 1'b0; ip_ok <= 1'b0; udp_ok <= 1'b0; hdr_ok <= 1'b0; is_feed <= 1'b0; spec_ok <= 1'b0; in_frame <= 1'b0;
+             fired_this <= 1'b0; verdict_v <= 1'b0; verdict_bad <= 1'b0; verdict_seq <= '0; o_inst <= '0; o_price <= '0; o_qty <= '0;
+@@ -76,7 +77,7 @@
+                             if (!spec_ok) n_toolong <= n_toolong + 32'd1;
+                             if (hit) begin
+                                 if (arm && !kill && trade_en) begin
+-                                    fire <= 1'b1; fired_this <= 1'b1;
++                                    fired_this <= 1'b1;
+                                     o_inst <= inst_r; o_price <= price; o_qty <= qty; o_seq <= o_seq + 32'd1; n_fired <= n_fired + 32'd1;
+                                 end else n_blocked <= n_blocked + 32'd1;
+                             end

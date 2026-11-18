@@ -22,6 +22,8 @@ Records ``history.jsonl``, ``summary.json``, ``closure_actions.jsonl``, ``llm_ca
 """
 from __future__ import annotations
 
+from agent.core.prompts import load as _p
+
 import argparse
 import json
 import os
@@ -49,12 +51,7 @@ TESTS = {"icmp_echo": "test_63d_icmp_rtl.py", "arp_responder": "test_63d_arp_rtl
 
 def task_text(block: str, mhz: float, part: str, extra: int) -> str:
     y = yaml.safe_load((iv.IP / block / "ip.yaml").read_text())
-    return (f"Task: make the block `{y['top']}` ({y['summary'].strip()}) meet {mhz:g} MHz ({1000 / mhz:g} ns) on {part}, built alone "
-            f"out of context with the clock on port clk (setup, hold and minimum pulse width must all pass). Keep every port, "
-            f"parameter and the byte-for-byte behaviour: the same frames out for the same frames in, the same events, the same "
-            f"throughput (a byte a clock). You may add at most {extra} clocks of latency in total (declared latency now: "
-            f"{json.dumps(y['latency'])}). Registers must use synchronous reset only where they need one (house rule: no "
-            f"asynchronous resets). Do not edit files other than the block's RTL.")
+    return (_p("graph/ip_closure_task/task_text_1").format(y['top'], y['summary'].strip(), mhz, 1000 / mhz, part, extra, json.dumps(y['latency'])))
 
 
 def stage(block: str, case: str) -> Path:

@@ -1,5 +1,5 @@
 {
- "schema_version": "1.12.1",
+ "schema_version": "1.14.0",
  "tools": [
   {
    "name": "axi_board_run",
@@ -20,7 +20,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.12.1"
+   "version": "1.14.0"
   },
   {
    "name": "axi_program_check",
@@ -41,7 +41,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.12.1"
+   "version": "1.14.0"
   },
   {
    "name": "axi_simulate",
@@ -62,7 +62,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.12.1"
+   "version": "1.14.0"
   },
   {
    "name": "board_constraints",
@@ -99,7 +99,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.12.1"
+   "version": "1.14.0"
   },
   {
    "name": "bringup",
@@ -110,7 +110,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.12.1"
+   "version": "1.14.0"
   },
   {
    "name": "build",
@@ -138,7 +138,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.12.1"
+   "version": "1.14.0"
   },
   {
    "name": "check",
@@ -200,7 +200,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.12.1"
+   "version": "1.14.0"
   },
   {
    "name": "check_constraints",
@@ -211,7 +211,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.12.1"
+   "version": "1.14.0"
   },
   {
    "name": "debug_capture",
@@ -233,7 +233,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.12.1"
+   "version": "1.14.0"
   },
   {
    "name": "debug_plan",
@@ -255,7 +255,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.12.1"
+   "version": "1.14.0"
   },
   {
    "name": "debug_query",
@@ -281,7 +281,48 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.12.1"
+   "version": "1.14.0"
+  },
+  {
+   "name": "eqy_check",
+   "description": "Prove a netlist (Verilog from Yosys, or Vivado write_verilog -mode funcsim, or RapidWright) equivalent to the RTL sources with eqy (OSS CAD Suite). Returns PASS, FAIL (counterexample under the work directory), SKIPPED (suite absent: nothing is claimed) or ERROR. strategy auto = register correspondence by name, then a single-partition PDR proof if that does not prove. Writes eqy_result.json beside the netlist when it lives under oss_netlists/.",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "top": {
+      "type": "string",
+      "maxLength": 64
+     },
+     "sources": {
+      "type": "array",
+      "items": {
+       "type": "string",
+       "maxLength": 300
+      },
+      "minItems": 1,
+      "maxItems": 40
+     },
+     "netlist": {
+      "type": "string",
+      "maxLength": 300
+     },
+     "strategy": {
+      "type": "string",
+      "enum": [
+       "auto",
+       "name",
+       "group"
+      ]
+     }
+    },
+    "required": [
+     "top",
+     "sources",
+     "netlist"
+    ],
+    "additionalProperties": false
+   },
+   "version": "1.14.0"
   },
   {
    "name": "formal",
@@ -292,7 +333,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.12.1"
+   "version": "1.14.0"
   },
   {
    "name": "gates",
@@ -321,7 +362,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.12.1"
+   "version": "1.14.0"
   },
   {
    "name": "gt_plan",
@@ -332,7 +373,55 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.12.1"
+   "version": "1.14.0"
+  },
+  {
+   "name": "latency_budget",
+   "description": "The latency budget the agent reasons from: each stage of the chain ranked by what could come out, with its clocks, ns, why it exists, what removing it risks, the technique that removes it, and the board's share (GT, optics, wire-to-wire from the recorded board run) that simulation cannot see. Digital and board figures are never added into one number: the unattributed difference is shown. The removable clocks are an upper bound, not a plan.",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "path": {
+      "type": "string",
+      "enum": [
+       "tick_to_trade",
+       "echo"
+      ],
+      "description": "which chain: the trading path or the echo (default tick_to_trade)"
+     },
+     "refresh": {
+      "type": "boolean",
+      "description": "re-run the design's whole-core bench for fresh clocks (about a minute; simulation only)"
+     }
+    },
+    "required": [],
+    "additionalProperties": false
+   },
+   "version": "1.14.0"
+  },
+  {
+   "name": "latency_path",
+   "description": "List every register and clock crossing on the design's wire-to-wire latency chain, per direction, with its clock domain, the clocks and ns it adds (from the design's whole-core simulation) and, when a post-route checkpoint has been read, the setup slack of its registers; marks stages that are also timing-critical. Reconciles the stage clocks with the bench and reports any difference. The latency-critical path (this chain) is not the timing-critical path (worst slack).",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "path": {
+      "type": "string",
+      "enum": [
+       "tick_to_trade",
+       "echo"
+      ],
+      "description": "which chain: the trading path or the echo (default tick_to_trade)"
+     },
+     "refresh": {
+      "type": "boolean",
+      "description": "re-run the design's whole-core bench for fresh clocks (about a minute; simulation only)"
+     }
+    },
+    "required": [],
+    "additionalProperties": false
+   },
+   "version": "1.14.0"
   },
   {
    "name": "lint",
@@ -343,7 +432,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.12.1"
+   "version": "1.14.0"
   },
   {
    "name": "list_files",
@@ -359,7 +448,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.12.1"
+   "version": "1.14.0"
   },
   {
    "name": "load_skill",
@@ -387,7 +476,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.12.1"
+   "version": "1.14.0"
   },
   {
    "name": "mutate",
@@ -414,7 +503,64 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.12.1"
+   "version": "1.14.0"
+  },
+  {
+   "name": "oss_synth",
+   "description": "Synthesise the given sources with Yosys + ABC for a part (script abc9 = timing-driven ABC9, abc9_dff = with sequential steps, abc_d = classic ABC with a delay target d_ps) and write an EDIF and a Verilog netlist under build/<variant>/oss_netlists/<name>/. The LUT/FF counts are Yosys's, not timing: implement the EDIF in Vivado (read_edif, out of context) and judge it by Vivado's timing. The netlist must pass eqy_check before any result from it is reported (gate post_synth_oss_netlist_equivalent).",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "top": {
+      "type": "string",
+      "maxLength": 64
+     },
+     "sources": {
+      "type": "array",
+      "items": {
+       "type": "string",
+       "maxLength": 300
+      },
+      "minItems": 1,
+      "maxItems": 40
+     },
+     "part": {
+      "type": "string",
+      "maxLength": 40
+     },
+     "script": {
+      "type": "string",
+      "enum": [
+       "abc9",
+       "abc9_dff",
+       "abc_d"
+      ]
+     },
+     "d_ps": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 100000
+     },
+     "name": {
+      "type": "string",
+      "maxLength": 40
+     },
+     "variant": {
+      "type": "string",
+      "enum": [
+       "base",
+       "ila"
+      ]
+     }
+    },
+    "required": [
+     "top",
+     "sources",
+     "part"
+    ],
+    "additionalProperties": false
+   },
+   "version": "1.14.0"
   },
   {
    "name": "program",
@@ -436,7 +582,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.12.1"
+   "version": "1.14.0"
   },
   {
    "name": "read_file",
@@ -463,7 +609,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.12.1"
+   "version": "1.14.0"
   },
   {
    "name": "report",
@@ -497,7 +643,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.12.1"
+   "version": "1.14.0"
   },
   {
    "name": "report_digest",
@@ -534,7 +680,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.12.1"
+   "version": "1.14.0"
   },
   {
    "name": "search_docs",
@@ -565,7 +711,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.12.1"
+   "version": "1.14.0"
   },
   {
    "name": "simulate",
@@ -588,7 +734,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.12.1"
+   "version": "1.14.0"
   },
   {
    "name": "skill_excerpt",
@@ -611,7 +757,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.12.1"
+   "version": "1.14.0"
   },
   {
    "name": "skill_index",
@@ -634,7 +780,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.12.1"
+   "version": "1.14.0"
   },
   {
    "name": "spec_items",
@@ -645,7 +791,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.12.1"
+   "version": "1.14.0"
   },
   {
    "name": "stage_note",
@@ -679,7 +825,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.12.1"
+   "version": "1.14.0"
   },
   {
    "name": "write_file",
@@ -702,7 +848,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.12.1"
+   "version": "1.14.0"
   }
  ]
 }

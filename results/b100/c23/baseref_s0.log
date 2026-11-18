@@ -1,0 +1,123 @@
+Running as unit: run-re24060d2eb4f45269855d55db64595d4.scope; invocation ID: d9e4d66716824e79aa6d76b06f122f34
+INFO: [Common 17-3922] A valid Vivado Design Suite BASIC license has been detected. Your current license is active and will expire on 10-nov-2027.
+
+****** Vivado v2026.1 (64-bit)
+  **** SW Build 6511674 on Tue Jun 16 11:01:26 MDT 2026
+  **** IP Build 6504888 on Tue Jun 09 09:05:25 MDT 2026
+  **** SharedData Build 6501428 on Mon Jun 08 17:34:18 MDT 2026
+  **** Start of session at: Tue Nov 17 17:40:40 2026
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+    ** Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+
+source /home/brendan/Claude_sandbox/_worktrees/100-rapidwright/flow/rw/referee.tcl
+# source [file join [file dirname [info script]] common.tcl]
+## proc env_or {k d} { if {[info exists ::env($k)] && $::env($k) ne ""} { return $::env($k) } else { return $d } }
+## proc b100_threads {} {
+##     set n [env_or B100_THREADS 1]
+##     set_param general.maxThreads $n
+##     set_param synth.maxThreads $n
+##     set_param chipscope.maxJobs 1
+## }
+## proc lap {name} {
+##     upvar t0 t0 times times
+##     set n [clock milliseconds]
+##     dict set times $name [expr {($n - $t0) / 1000.0}]
+##     set t0 $n
+## }
+## proc write_run_json {out times part period} {
+##     set wns [get_property SLACK [lindex [get_timing_paths -setup -max_paths 1] 0]]
+##     set whs [get_property SLACK [lindex [get_timing_paths -hold -max_paths 1] 0]]
+##     set lut [llength [get_cells -hier -filter {REF_NAME =~ LUT*}]]
+##     set ff  [llength [get_cells -hier -filter {REF_NAME =~ FD*}]]
+##     set f [open ${out}_run.json w]
+##     set tj [join [lmap {k v} $times {format {"%s": %s} $k $v}] {, }]
+##     puts $f "{\"vivado\": \"[version -short]\", \"part\": \"$part\", \"period_ns\": $period, \"wns_ns\": $wns, \"whs_ns\": $whs, \"lut\": $lut, \"ff\": $ff, \"times_s\": {$tj}}"
+##     close $f
+## }
+## proc slack_of {from to} {
+##     set p [lindex [get_timing_paths -setup -from $from -to $to -max_paths 1] 0]
+##     if {$p eq ""} { return null }
+##     return [get_property SLACK $p]
+## }
+## proc chain_metrics {out} {
+##     set period [get_property PERIOD [lindex [get_clocks] 0]]
+##     set xd [get_cells -hier -filter {NAME =~ u_mac/x_d_reg* || NAME =~ u_mac/x_c_reg*}]
+##     set gd [get_cells -hier -filter {NAME =~ u_pcs/gt_d_reg*}]
+##     set pcs [get_cells -hier -filter {NAME =~ u_pcs/*}]
+##     set gtp [get_pins u_gt/TXDATA*]
+##     set wns [get_property SLACK [lindex [get_timing_paths -setup -max_paths 1] 0]]
+##     set f [open ${out}_chain.json w]
+##     puts $f "{\"period_ns\": $period, \"wns_all_ns\": $wns, \"wns_mac_to_pcs_ns\": [slack_of $xd $gd], \"wns_pcs_to_gt_ns\": [slack_of $gd $gtp], \"wns_inside_pcs_ns\": [slack_of $pcs $pcs]}"
+##     close $f
+## }
+# b100_threads
+# set out [env_or B100_OUT referee]
+# set times [dict create]
+# set t0 [clock milliseconds]
+# open_checkpoint $::env(B100_IN_DCP)
+Command: open_checkpoint /home/brendan/Claude_sandbox/_worktrees/100-rapidwright/results/b100/c23/base_s0_routed.dcp
+
+Starting open_checkpoint Task
+
+Time (s): cpu = 00:00:00.08 ; elapsed = 00:00:00.08 . Memory (MB): peak = 1484.211 ; gain = 7.938 ; free physical = 5658 ; free virtual = 21006
+INFO: [Device 21-403] Loading part xck26-sfvc784-2LV-c
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.03 . Memory (MB): peak = 2755.391 ; gain = 0.000 ; free physical = 4383 ; free virtual = 19732
+INFO: [Netlist 29-17] Analyzing 4 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+INFO: [Project 1-479] Netlist was created with Vivado 2026.1
+INFO: [Project 1-570] Preparing netlist for logic optimization
+Read ShapeDB Complete: Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 2755.391 ; gain = 0.000 ; free physical = 4379 ; free virtual = 19728
+INFO: [Timing 38-478] Restoring timing data from binary archive.
+INFO: [Timing 38-479] Binary timing data restore complete.
+INFO: [Project 1-856] Restoring constraints from binary archive.
+INFO: [Project 1-853] Binary constraint restore complete.
+INFO: [Designutils 20-5722] Start Reading Physical Databases.
+Reading placement.
+Read Netlist Cache: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.01 . Memory (MB): peak = 2925.488 ; gain = 0.000 ; free physical = 4171 ; free virtual = 19520
+Reading placer database...
+Read Device Cache: Time (s): cpu = 00:00:00.07 ; elapsed = 00:00:00.07 . Memory (MB): peak = 2925.488 ; gain = 0.000 ; free physical = 4164 ; free virtual = 19513
+Read PlaceDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2925.488 ; gain = 0.000 ; free physical = 4164 ; free virtual = 19513
+Read placeStorage: Time (s): cpu = 00:00:00.13 ; elapsed = 00:00:00.13 . Memory (MB): peak = 2944.566 ; gain = 19.078 ; free physical = 4163 ; free virtual = 19513
+Read PulsedLatchDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2944.566 ; gain = 0.000 ; free physical = 4163 ; free virtual = 19513
+Reading routing.
+Read RouteStorage: Time (s): cpu = 00:00:16 ; elapsed = 00:00:22 . Memory (MB): peak = 3348.738 ; gain = 404.172 ; free physical = 3838 ; free virtual = 19187
+Read Physdb Files: Time (s): cpu = 00:00:17 ; elapsed = 00:00:22 . Memory (MB): peak = 3348.738 ; gain = 423.250 ; free physical = 3838 ; free virtual = 19187
+Restored from archive | CPU: 17.100000 secs | Memory: 405.680901 MB |
+Finished XDEF File Restore: Time (s): cpu = 00:00:17 ; elapsed = 00:00:22 . Memory (MB): peak = 3348.738 ; gain = 423.250 ; free physical = 3838 ; free virtual = 19187
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.01 . Memory (MB): peak = 3348.738 ; gain = 0.000 ; free physical = 3838 ; free virtual = 19187
+INFO: [Project 1-111] Unisim Transformation Summary:
+  A total of 2 instances were transformed.
+  IBUF => IBUF (IBUFCTRL, INBUF): 2 instances
+
+INFO: [Project 1-604] Checkpoint was created with Vivado v2026.1 (64-bit) build 6511674
+open_checkpoint: Time (s): cpu = 00:01:11 ; elapsed = 00:01:51 . Memory (MB): peak = 3348.773 ; gain = 1878.469 ; free physical = 3838 ; free virtual = 19187
+# set_property SEVERITY {Warning} [get_drc_checks {NSTD-1 UCIO-1}]
+# if {[env_or B100_ROUTE 0] eq "1"} {
+#     route_design
+#     lap route
+# }
+# report_route_status -file ${out}_route_status.rpt
+# report_timing -setup -max_paths 10 -nworst 1 -file ${out}_timing.rpt
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -2LV, Temperature grade: C, Delay Type: max.
+INFO: [Timing 38-78] ReportTimingParams: -max_paths 10 -nworst 1 -delay_type max -sort_by slack.
+report_timing: Time (s): cpu = 00:00:05 ; elapsed = 00:00:07 . Memory (MB): peak = 3400.395 ; gain = 51.621 ; free physical = 3794 ; free virtual = 19143
+# report_timing -hold -max_paths 3 -file ${out}_hold.rpt
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -2LV, Temperature grade: C, Delay Type: min.
+INFO: [Timing 38-78] ReportTimingParams: -max_paths 3 -nworst 1 -delay_type min -sort_by slack.
+# report_drc -file ${out}_drc.rpt
+Command: report_drc -file /home/brendan/Claude_sandbox/_worktrees/100-rapidwright/results/b100/c23/baseref_s0_drc.rpt
+INFO: [IP_Flow 19-234] Refreshing IP repositories
+INFO: [IP_Flow 19-1704] No user IP repositories specified
+INFO: [IP_Flow 19-2313] Loaded Vivado IP repository '/home/brendan/Xilinx/2026.1/data/ip'.
+INFO: [Vivado_Tcl 2-168] The results of DRC are in file /home/brendan/Claude_sandbox/_worktrees/100-rapidwright/results/b100/c23/baseref_s0_drc.rpt.
+report_drc completed successfully
+report_drc: Time (s): cpu = 00:00:04 ; elapsed = 00:00:13 . Memory (MB): peak = 3481.082 ; gain = 80.688 ; free physical = 3640 ; free virtual = 18989
+# report_utilization -file ${out}_util.rpt
+# write_run_json $out $times [get_property PART [current_design]] [get_property PERIOD [lindex [get_clocks] 0]]
+# if {[llength [get_cells -quiet u_gt]]} { chain_metrics $out }
+# if {[env_or B100_BITSTREAM 0] eq "1"} {
+#     write_bitstream -force ${out}.bit
+#     lap bitstream
+#     set f [open ${out}_bitstream.txt w]; puts $f "bitstream [file size ${out}.bit] bytes"; close $f
+# }
+INFO: [Common 17-206] Exiting Vivado at Tue Nov 17 17:43:20 2026...

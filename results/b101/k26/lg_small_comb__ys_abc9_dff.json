@@ -1,0 +1,155 @@
+{
+ "block": "lg_small_comb",
+ "arm": "ys_abc9_dff",
+ "part": "xck26-sfvc784-2LV-c",
+ "tool": "Vivado 2026.1",
+ "flow": "out of context, post-route, one thread",
+ "synthesis": "edif",
+ "latency_clocks": 2,
+ "closed_at_ns": 4.75,
+ "closed_at_mhz": 210.5,
+ "latency_ns": 9.5,
+ "at_closed_clock": {
+  "status": "ok",
+  "clock_ns": 4.75,
+  "lut": 407,
+  "ff": 42,
+  "carry": 10,
+  "lut_levels": 15,
+  "data_path_ns": 4.527,
+  "wns_ns": 0.055,
+  "whs_ns": 0.113,
+  "wpws_ns": 2.1,
+  "build_seconds": 165,
+  "closed": true
+ },
+ "passes": [
+  {
+   "status": "error: ERROR: [Project 1-68] No files found to match top module 'ooc_wrap'",
+   "clock_ns": 2.0,
+   "wd": "/home/brendan/Claude_sandbox/_worktrees/101-oss-synth-eqy/build/b101/vivado/k26/run1_pass1_edif/lg_small_comb__ys_abc9_dff_2.00"
+  },
+  {
+   "status": "error: ERROR: [Project 1-68] No files found to match top module 'ooc_wrap'",
+   "clock_ns": 2.0,
+   "wd": "/home/brendan/Claude_sandbox/_worktrees/101-oss-synth-eqy/build/b101/vivado/k26/run2_pass1_edif/lg_small_comb__ys_abc9_dff_2.00"
+  },
+  {
+   "status": "ok",
+   "clock_ns": 2.0,
+   "lut": 419,
+   "ff": 42,
+   "carry": 10,
+   "lut_levels": 16,
+   "data_path_ns": 4.678,
+   "wns_ns": -2.846,
+   "whs_ns": 0.113,
+   "wpws_ns": 0.725,
+   "build_seconds": 193,
+   "closed": false,
+   "wd": "/home/brendan/Claude_sandbox/_worktrees/101-oss-synth-eqy/build/b101/vivado/k26/run2_pass1_edif/lg_small_comb__ys_abc9_dff_2.00"
+  },
+  {
+   "status": "ok",
+   "clock_ns": 4.85,
+   "lut": 422,
+   "ff": 42,
+   "carry": 10,
+   "lut_levels": 15,
+   "data_path_ns": 4.405,
+   "wns_ns": 0.279,
+   "whs_ns": 0.102,
+   "wpws_ns": 2.15,
+   "build_seconds": 164,
+   "closed": true,
+   "wd": "/home/brendan/Claude_sandbox/_worktrees/101-oss-synth-eqy/build/b101/vivado/k26/run2_pass2_edif/lg_small_comb__ys_abc9_dff_4.85"
+  },
+  {
+   "status": "ok",
+   "clock_ns": 4.6,
+   "lut": 417,
+   "ff": 42,
+   "carry": 10,
+   "lut_levels": 15,
+   "data_path_ns": 4.581,
+   "wns_ns": -0.147,
+   "whs_ns": 0.113,
+   "wpws_ns": 2.025,
+   "build_seconds": 182,
+   "closed": false,
+   "wd": "/home/brendan/Claude_sandbox/_worktrees/101-oss-synth-eqy/build/b101/vivado/k26/run2_pass3_edif/lg_small_comb__ys_abc9_dff_4.60"
+  },
+  {
+   "status": "ok",
+   "clock_ns": 4.8,
+   "lut": 418,
+   "ff": 42,
+   "carry": 10,
+   "lut_levels": 16,
+   "data_path_ns": 4.555,
+   "wns_ns": 0.079,
+   "whs_ns": 0.113,
+   "wpws_ns": 2.125,
+   "build_seconds": 157,
+   "closed": true,
+   "wd": "/home/brendan/Claude_sandbox/_worktrees/101-oss-synth-eqy/build/b101/vivado/k26/run2_pass4_edif/lg_small_comb__ys_abc9_dff_4.80"
+  },
+  {
+   "status": "ok",
+   "clock_ns": 4.75,
+   "lut": 407,
+   "ff": 42,
+   "carry": 10,
+   "lut_levels": 15,
+   "data_path_ns": 4.527,
+   "wns_ns": 0.055,
+   "whs_ns": 0.113,
+   "wpws_ns": 2.1,
+   "build_seconds": 165,
+   "closed": true,
+   "wd": "/home/brendan/Claude_sandbox/_worktrees/101-oss-synth-eqy/build/b101/vivado/k26/run2_pass5_edif/lg_small_comb__ys_abc9_dff_4.75"
+  }
+ ],
+ "yosys": {
+  "script": "abc9_dff",
+  "script_text": "synth_xilinx -flatten -dff (abc9 -luts 2:2,3,6:5,10,20 -dff)",
+  "yosys": "Yosys 0.70+385 (git sha1 098e46a36, Release, Clang /usr/bin/clang++ 21.1.8)",
+  "yosys_commands": "plugin -i slang; read_slang --top ooc_wrap  /home/brendan/Claude_sandbox/_worktrees/101-oss-synth-eqy/designs/b89_lutnet_gen/rtl/gen/lg_small_comb.sv /home/brendan/Claude_sandbox/_worktrees/101-oss-synth-eqy/flow/oss_compare/rtl/wrap_lg_small_comb.sv; synth_xilinx -family xcup -top ooc_wrap -noiopad -noclkbuf -flatten -dff; tee -o /home/brendan/Claude_sandbox/_worktrees/101-oss-synth-eqy/build/b101/yosys/k26/lg_small_comb__ys_abc9_dff/netlist.edif.stat stat -tech xilinx; write_edif -pvector bra /home/brendan/Claude_sandbox/_worktrees/101-oss-synth-eqy/build/b101/yosys/k26/lg_small_comb__ys_abc9_dff/netlist.edif; write_verilog -noattr /home/brendan/Claude_sandbox/_worktrees/101-oss-synth-eqy/build/b101/yosys/k26/lg_small_comb__ys_abc9_dff/netlist.v",
+  "seconds": 14.5,
+  "lut": 442,
+  "ff": 42,
+  "carry": 13,
+  "d_ps": null
+ },
+ "perturb": {
+  "points": [
+   {
+    "clock_ns": 4.75,
+    "lut": 407,
+    "wns_ns": 0.055,
+    "wpws_ns": 2.1,
+    "closed": true,
+    "achievable_ns": 4.695
+   },
+   {
+    "clock_ns": 4.76,
+    "wns_ns": -0.026,
+    "wpws_ns": 2.105,
+    "lut": 424,
+    "closed": false,
+    "achievable_ns": 4.786
+   },
+   {
+    "clock_ns": 4.77,
+    "wns_ns": 0.004,
+    "wpws_ns": 2.11,
+    "lut": 416,
+    "closed": true,
+    "achievable_ns": 4.766
+   }
+  ],
+  "achievable_min_ns": 4.695,
+  "achievable_max_ns": 4.786,
+  "spread_ns": 0.091
+ }
+}

@@ -1,0 +1,988 @@
+Running as unit: run-r4e1378ef3c864631b7cac2c03c6beab5.scope; invocation ID: f1b1f14c4d4e4d4997d0f6d502d17306
+INFO: [Common 17-3922] A valid Vivado Design Suite BASIC license has been detected. Your current license is active and will expire on 10-nov-2027.
+
+****** Vivado v2026.1 (64-bit)
+  **** SW Build 6511674 on Tue Jun 16 11:01:26 MDT 2026
+  **** IP Build 6504888 on Tue Jun 09 09:05:25 MDT 2026
+  **** SharedData Build 6501428 on Mon Jun 08 17:34:18 MDT 2026
+  **** Start of session at: Tue Nov 17 16:07:47 2026
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+    ** Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+
+source /home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/scripts/stamp.tcl
+# source [file join [file dirname [info script]] ../../../flow/rw/common.tcl]
+## proc env_or {k d} { if {[info exists ::env($k)] && $::env($k) ne ""} { return $::env($k) } else { return $d } }
+## proc b100_threads {} {
+##     set n [env_or B100_THREADS 1]
+##     set_param general.maxThreads $n
+##     set_param synth.maxThreads $n
+##     set_param chipscope.maxJobs 1
+## }
+## proc lap {name} {
+##     upvar t0 t0 times times
+##     set n [clock milliseconds]
+##     dict set times $name [expr {($n - $t0) / 1000.0}]
+##     set t0 $n
+## }
+## proc write_run_json {out times part period} {
+##     set wns [get_property SLACK [lindex [get_timing_paths -setup -max_paths 1] 0]]
+##     set whs [get_property SLACK [lindex [get_timing_paths -hold -max_paths 1] 0]]
+##     set lut [llength [get_cells -hier -filter {REF_NAME =~ LUT*}]]
+##     set ff  [llength [get_cells -hier -filter {REF_NAME =~ FD*}]]
+##     set f [open ${out}_run.json w]
+##     set tj [join [lmap {k v} $times {format {"%s": %s} $k $v}] {, }]
+##     puts $f "{\"vivado\": \"[version -short]\", \"part\": \"$part\", \"period_ns\": $period, \"wns_ns\": $wns, \"whs_ns\": $whs, \"lut\": $lut, \"ff\": $ff, \"times_s\": {$tj}}"
+##     close $f
+## }
+## proc slack_of {from to} {
+##     set p [lindex [get_timing_paths -setup -from $from -to $to -max_paths 1] 0]
+##     if {$p eq ""} { return null }
+##     return [get_property SLACK $p]
+## }
+## proc chain_metrics {out} {
+##     set period [get_property PERIOD [lindex [get_clocks] 0]]
+##     set xd [get_cells -hier -filter {NAME =~ u_mac/x_d_reg* || NAME =~ u_mac/x_c_reg*}]
+##     set gd [get_cells -hier -filter {NAME =~ u_pcs/gt_d_reg*}]
+##     set pcs [get_cells -hier -filter {NAME =~ u_pcs/*}]
+##     set gtp [get_pins u_gt/TXDATA*]
+##     set wns [get_property SLACK [lindex [get_timing_paths -setup -max_paths 1] 0]]
+##     set f [open ${out}_chain.json w]
+##     puts $f "{\"period_ns\": $period, \"wns_all_ns\": $wns, \"wns_mac_to_pcs_ns\": [slack_of $xd $gd], \"wns_pcs_to_gt_ns\": [slack_of $gd $gtp], \"wns_inside_pcs_ns\": [slack_of $pcs $pcs]}"
+##     close $f
+## }
+# source [file join [file dirname [info script]] blocks.tcl]
+## proc block_paths {out} {
+##     set n 4
+##     # The block-internal paths: the worst setup path to each endpoint register inside each copy, with the path's data delay, slack and
+##     # logic levels. Endpoint names are relative to the copy so that copies compare endpoint by endpoint.
+##     set f [open ${out}_blocks.csv w]
+##     puts $f "copy,endpoint,data_path_delay_ns,slack_ns,logic_levels"
+##     for {set i 0} {$i < $n} {incr i} {
+##         set cells [get_cells -hier -filter "IS_SEQUENTIAL && NAME =~ c$i/*"]
+##         set prefix "c$i/"
+##         foreach p [get_timing_paths -setup -from $cells -to $cells -max_paths 2000 -nworst 1 -unique_pins] {
+##             set e [string map [list $prefix ""] [get_property ENDPOINT_PIN $p]]
+##             puts $f "$i,$e,[get_property DATAPATH_DELAY $p],[get_property SLACK $p],[get_property LOGIC_LEVELS $p]"
+##         }
+##     }
+##     close $f
+## }
+# b100_threads
+# set out    $::env(B100_OUT)
+# set period [env_or B100_PERIOD 3.4]
+# set mode   $::env(B100_MODE)
+# set n      4
+# set times [dict create]
+# set t0 [clock milliseconds]
+# foreach f $::env(B100_SRC) { if {[string match *.sv $f]} { read_verilog -sv $f } else { read_verilog $f } }
+read_verilog: Time (s): cpu = 00:00:21 ; elapsed = 00:00:28 . Memory (MB): peak = 1683.152 ; gain = 213.844 ; free physical = 4812 ; free virtual = 20110
+# synth_design -top reloc_top -part $::env(B100_PART) -flatten_hierarchy rebuilt 
+Command: synth_design -top reloc_top -part xck26-sfvc784-2LV-c -flatten_hierarchy rebuilt
+Starting synth_design
+Attempting to get a license for feature 'Vivado_Synthesis' and/or device 'xck26'
+INFO: [Common 17-349] Got license for feature 'Vivado_Synthesis' and/or device 'xck26'
+INFO: [Synth 8-7079] Multithreading enabled for synth_design using a maximum of 1 processes.
+INFO: [Synth 8-7078] Launching helper process for spawning children vivado processes
+INFO: [Synth 8-7075] Helper process launched with PID 1350691
+---------------------------------------------------------------------------------
+Starting Synthesize : Time (s): cpu = 00:00:15 ; elapsed = 00:00:17 . Memory (MB): peak = 2213.816 ; gain = 520.758 ; free physical = 4126 ; free virtual = 19425
+---------------------------------------------------------------------------------
+INFO: [Synth 8-6157] synthesizing module 'reloc_top' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/reloc_top.sv:4]
+INFO: [Synth 8-6157] synthesizing module 'pcs_unit' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/pcs_unit_bb.sv:3]
+INFO: [Synth 8-6155] done synthesizing module 'reloc_top' (0#1) [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/reloc_top.sv:4]
+---------------------------------------------------------------------------------
+Finished Synthesize : Time (s): cpu = 00:00:19 ; elapsed = 00:00:22 . Memory (MB): peak = 2299.754 ; gain = 606.695 ; free physical = 4028 ; free virtual = 19327
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Constraint Validation : Time (s): cpu = 00:00:20 ; elapsed = 00:00:22 . Memory (MB): peak = 2325.566 ; gain = 632.508 ; free physical = 4013 ; free virtual = 19312
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Loading Part and Timing Information
+---------------------------------------------------------------------------------
+Loading part: xck26-sfvc784-2LV-c
+INFO: [Synth 8-6742] Reading net delay rules and data
+---------------------------------------------------------------------------------
+Finished Loading Part and Timing Information : Time (s): cpu = 00:00:20 ; elapsed = 00:00:23 . Memory (MB): peak = 2342.477 ; gain = 649.418 ; free physical = 4013 ; free virtual = 19312
+---------------------------------------------------------------------------------
+INFO: [Device 21-403] Loading part xck26-sfvc784-2LV-c
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 2 : Time (s): cpu = 00:00:20 ; elapsed = 00:00:23 . Memory (MB): peak = 2342.477 ; gain = 649.418 ; free physical = 4010 ; free virtual = 19311
+---------------------------------------------------------------------------------
+No constraint files found.
+---------------------------------------------------------------------------------
+Start RTL Component Statistics 
+---------------------------------------------------------------------------------
+Detailed RTL Component Info : 
+---------------------------------------------------------------------------------
+Finished RTL Component Statistics 
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Part Resource Summary
+---------------------------------------------------------------------------------
+Part Resources:
+DSPs: 1248 (col length:96)
+BRAMs: 288 (col length: RAMB18 96 RAMB36 48)
+---------------------------------------------------------------------------------
+Finished Part Resource Summary
+---------------------------------------------------------------------------------
+No constraint files found.
+---------------------------------------------------------------------------------
+Start Cross Boundary and Area Optimization
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Cross Boundary and Area Optimization : Time (s): cpu = 00:00:36 ; elapsed = 00:00:43 . Memory (MB): peak = 3141.578 ; gain = 1448.520 ; free physical = 3099 ; free virtual = 18403
+---------------------------------------------------------------------------------
+No constraint files found.
+---------------------------------------------------------------------------------
+Start Timing Optimization
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Timing Optimization : Time (s): cpu = 00:00:36 ; elapsed = 00:00:43 . Memory (MB): peak = 3141.578 ; gain = 1448.520 ; free physical = 3096 ; free virtual = 18400
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Technology Mapping
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Technology Mapping : Time (s): cpu = 00:00:36 ; elapsed = 00:00:43 . Memory (MB): peak = 3141.578 ; gain = 1448.520 ; free physical = 3095 ; free virtual = 18399
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished IO Insertion : Time (s): cpu = 00:00:44 ; elapsed = 00:00:59 . Memory (MB): peak = 3191.391 ; gain = 1498.332 ; free physical = 3044 ; free virtual = 18359
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Instances
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Instances : Time (s): cpu = 00:00:44 ; elapsed = 00:00:59 . Memory (MB): peak = 3191.391 ; gain = 1498.332 ; free physical = 3044 ; free virtual = 18359
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Rebuilding User Hierarchy
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Rebuilding User Hierarchy : Time (s): cpu = 00:00:44 ; elapsed = 00:00:59 . Memory (MB): peak = 3191.391 ; gain = 1498.332 ; free physical = 3043 ; free virtual = 18359
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Ports
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Ports : Time (s): cpu = 00:00:44 ; elapsed = 00:00:59 . Memory (MB): peak = 3191.391 ; gain = 1498.332 ; free physical = 3043 ; free virtual = 18359
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:00:44 ; elapsed = 00:00:59 . Memory (MB): peak = 3191.391 ; gain = 1498.332 ; free physical = 3043 ; free virtual = 18359
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Nets
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Nets : Time (s): cpu = 00:00:45 ; elapsed = 00:00:59 . Memory (MB): peak = 3191.391 ; gain = 1498.332 ; free physical = 3043 ; free virtual = 18359
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Writing Synthesis Report
+---------------------------------------------------------------------------------
+
+Report BlackBoxes: 
++------+--------------+----------+
+|      |BlackBox name |Instances |
++------+--------------+----------+
+|1     |pcs_unit      |         4|
++------+--------------+----------+
+
+Report Cell Usage: 
++------+--------------+------+
+|      |Cell          |Count |
++------+--------------+------+
+|1     |pcs_unit_bbox |     4|
+|5     |IBUF          |     6|
+|6     |OBUF          |     4|
++------+--------------+------+
+
+Report Instance Areas: 
++------+---------+-------+------+
+|      |Instance |Module |Cells |
++------+---------+-------+------+
+|1     |top      |       |    14|
++------+---------+-------+------+
+---------------------------------------------------------------------------------
+Finished Writing Synthesis Report : Time (s): cpu = 00:00:45 ; elapsed = 00:00:59 . Memory (MB): peak = 3191.391 ; gain = 1498.332 ; free physical = 3043 ; free virtual = 18359
+---------------------------------------------------------------------------------
+Synthesis finished with 0 errors, 0 critical warnings and 0 warnings.
+Synthesis Optimization Runtime : Time (s): cpu = 00:00:45 ; elapsed = 00:00:59 . Memory (MB): peak = 3191.391 ; gain = 1498.332 ; free physical = 3044 ; free virtual = 18359
+Synthesis Optimization Complete : Time (s): cpu = 00:00:45 ; elapsed = 00:00:59 . Memory (MB): peak = 3194.359 ; gain = 1498.332 ; free physical = 3044 ; free virtual = 18359
+INFO: [Project 1-571] Translating synthesized netlist
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3212.266 ; gain = 0.000 ; free physical = 3189 ; free virtual = 18505
+INFO: [Netlist 29-17] Analyzing 6 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+INFO: [Project 1-570] Preparing netlist for logic optimization
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.01 . Memory (MB): peak = 3290.828 ; gain = 0.000 ; free physical = 3146 ; free virtual = 18461
+INFO: [Project 1-111] Unisim Transformation Summary:
+  A total of 6 instances were transformed.
+  IBUF => IBUF (IBUFCTRL, INBUF): 6 instances
+
+Synth Design complete | Checksum: 49068577
+INFO: [Common 17-83] Releasing license: Vivado_Synthesis
+16 Infos, 0 Warnings, 0 Critical Warnings and 0 Errors encountered.
+synth_design completed successfully
+synth_design: Time (s): cpu = 00:00:56 ; elapsed = 00:01:11 . Memory (MB): peak = 3293.797 ; gain = 1610.645 ; free physical = 3145 ; free virtual = 18460
+INFO: [Common 17-2834] synth_design peak Physical Memory [PSS] (MB): overall = 2720.164; main = 2703.726; forked = 339.670
+INFO: [Common 17-2834] synth_design peak Virtual Memory [VSS] (MB): overall = 4178.820; main = 3293.801; forked = 1037.238
+# lap synth
+# create_clock -period $period [get_ports clk]
+create_clock: Time (s): cpu = 00:00:14 ; elapsed = 00:00:22 . Memory (MB): peak = 3293.797 ; gain = 0.000 ; free physical = 3176 ; free virtual = 18486
+# set_property SEVERITY {Warning} [get_drc_checks {NSTD-1 UCIO-1}]
+# if {$mode eq "stamp"} {
+#     set i 0
+#     foreach b $::env(B100_BLOCKS) {
+#         read_checkpoint -cell "c$i" $b
+#         incr i
+#     }
+# } else {
+#     set i 0
+#     foreach pb $::env(B100_PBLOCKS) {
+#         create_pblock pb_$i
+#         resize_pblock pb_$i -add $pb
+#         add_cells_to_pblock pb_$i [get_cells "c$i"]
+#         incr i
+#     }
+# }
+Command: read_checkpoint -cell c0 /home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/scripts/../../../results/b100/c1/blk_p0_ooc.dcp
+WARNING: [Vivado 12-12435] Any Tcl variable pointing to design objects become invalid when read_checkpoint is executed subsequently after open_checkpoint. The content of those variables need to be rebuilt after read_checkpoint. Otherwise this could result in unwanted behavior due to referencing objects that do not exist anymore.
+INFO: [Timing 38-480] Writing timing data to binary archive.
+Write ShapeDB Complete: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3293.797 ; gain = 0.000 ; free physical = 3176 ; free virtual = 18486
+INFO: [Project 1-5699] Read binary netlist with skipMacroContent - 1
+INFO: [Project 1-454] Reading design checkpoint '/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/results/b100/c1/blk_p0_ooc.dcp' for cell 'c0'
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.02 . Memory (MB): peak = 3293.797 ; gain = 0.000 ; free physical = 3177 ; free virtual = 18487
+INFO: [Netlist 29-17] Analyzing 6 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+WARNING: [Netlist 29-43] Netlist 'reloc_top' is not ideal for floorplanning, since the cellview 'pcs_tx' defined in file 'pcs_unit.edf' contains large number of primitives.  Please consider enabling hierarchy in synthesis if you want to do floorplanning.
+INFO: [Project 1-479] Netlist was created with Vivado 2026.1
+INFO: [Project 1-570] Preparing netlist for logic optimization
+Parsing XDC File [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/results/b100/c1/.Xil/Vivado-1350081-bren-ubuntu24-04/readCheckpointCellTempDcp/temp/reloc_top_late.xdc]
+create_clock: Time (s): cpu = 00:00:12 ; elapsed = 00:00:18 . Memory (MB): peak = 3293.797 ; gain = 0.000 ; free physical = 3128 ; free virtual = 18435
+Finished Parsing XDC File [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/results/b100/c1/.Xil/Vivado-1350081-bren-ubuntu24-04/readCheckpointCellTempDcp/temp/reloc_top_late.xdc]
+Parsing XDC File [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/results/b100/c1/blk_p0_ooc/pcs_unit_late.xdc] for cell 'c0'
+INFO: [Vivado 12-3520] Assignment of 'o_reg[2], o_reg[30], o_reg[29], o_reg[27], o_reg[23], dout_i_4, dout_i_6, o_reg[31], o_reg[24], o_reg[25], o_reg[32], dout_i_5, dout_i_12, dout_i_3, dout_i_13, dout_i_1, dout_i_10, dout_i_11, GND, dout_i_2, VCC, o_reg[28], o_reg[26], o_reg[33], o_reg[34], o_reg[35], sh_reg[1], o_reg[1], o_reg[19], o_reg[18], sh_reg[16], sh_reg[20], o_reg[21], sh_reg[19], sh_reg[18], sh_reg[17], o_reg[63], sh_reg[15], o_reg[61], sh_reg[11], o_reg[41], sh_reg[12], o_reg[37], o_reg[15], sh_reg[14], o_reg[62], o_reg[58], o_reg[36], sh_reg[13], o_reg[13], sh_reg[21], o_reg[14], o_reg[60], o_reg[5], dout_i_9, o_reg[59], o_reg[52], o_reg[56], o_reg[55], dout_reg, o_reg[50], o_reg[57], sh_reg[27], o_reg[48], sh_reg[25], o_reg[4], o_reg[49], o_reg[51], o_reg[40], o_reg[44], sh_reg[28], sh_reg[23], o_reg[43], o_reg[42], sh_reg[22], o_reg[12], o_reg[22], sh_reg[24], sh_reg[26], o_reg[3], o_reg[20], o_reg[39], o_reg[46], o_reg[54], o_reg[53], o_reg[47], o_reg[11], o_reg[45], dout_i_8, o_reg[10], dout_i_7, o_reg[17], o_reg[0], o_reg[16], o_reg[38], o_reg[7], sh_reg[37], sh_reg[10], rst_q_reg, o_reg[9], o_reg[8], sh_reg[38], o_reg[6], sh_reg[3], sh_reg[0], sh_reg[39], sh_reg[35], sh_reg[33], sh_reg[36], sh_reg[40], o_reg[64], sh_reg[32], sh_reg[34], sh_reg[2], sh_reg[29], sh_reg[30], sh_reg[31], sh_reg[69], sh_reg[52], sh_reg[67], sh_reg[61], sh_reg[63], sh_reg[6], sh_reg[66], sh_reg[65], sh_reg[64], sh_reg[56], sh_reg[62], sh_reg[60], sh_reg[68], sh_reg[42], sh_reg[59], sh_reg[57], sh_reg[55], sh_reg[50], sh_reg[54], sh_reg[47], sh_reg[53], sh_reg[58], sh_reg[45], sh_reg[49], sh_reg[4], sh_reg[48], sh_reg[46], sh_reg[41], sh_reg[5], sh_reg[44], sh_reg[51], sh_reg[43], sh_reg[8], sh_reg[71], sh_reg[70], sh_reg[9], u_core, and sh_reg[7]' to a pblock 'c0_pb_blk' means that all children of 'c0' are in the pblock. Changing the pblock assignment to 'c0'.
+Finished Parsing XDC File [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/results/b100/c1/blk_p0_ooc/pcs_unit_late.xdc] for cell 'c0'
+INFO: [Designutils 20-5722] Start Reading Physical Databases.
+Reading placement.
+Read Netlist Cache: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3293.797 ; gain = 0.000 ; free physical = 3128 ; free virtual = 18435
+Reading placer database...
+Read Device Cache: Time (s): cpu = 00:00:00.06 ; elapsed = 00:00:00.07 . Memory (MB): peak = 3293.797 ; gain = 0.000 ; free physical = 3128 ; free virtual = 18435
+Read PlaceDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3293.797 ; gain = 0.000 ; free physical = 3128 ; free virtual = 18435
+Read placeStorage: Time (s): cpu = 00:00:00.07 ; elapsed = 00:00:00.07 . Memory (MB): peak = 3293.797 ; gain = 0.000 ; free physical = 3128 ; free virtual = 18435
+Read PulsedLatchDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3293.797 ; gain = 0.000 ; free physical = 3128 ; free virtual = 18435
+Reading routing.
+Read RouteStorage: Time (s): cpu = 00:00:00.11 ; elapsed = 00:00:00.34 . Memory (MB): peak = 3293.797 ; gain = 0.000 ; free physical = 3126 ; free virtual = 18433
+Read Physdb Files: Time (s): cpu = 00:00:00.25 ; elapsed = 00:00:00.55 . Memory (MB): peak = 3293.797 ; gain = 0.000 ; free physical = 3126 ; free virtual = 18433
+Restored from archive | CPU: 0.260000 secs | Memory: 0.966660 MB |
+Finished XDEF File Restore: Time (s): cpu = 00:00:00.25 ; elapsed = 00:00:00.55 . Memory (MB): peak = 3293.797 ; gain = 0.000 ; free physical = 3126 ; free virtual = 18433
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.01 . Memory (MB): peak = 3293.797 ; gain = 0.000 ; free physical = 3130 ; free virtual = 18441
+INFO: [Project 1-111] Unisim Transformation Summary:
+  A total of 6 instances were transformed.
+  IBUF => IBUF (IBUFCTRL, INBUF): 6 instances
+
+read_checkpoint: Time (s): cpu = 00:00:31 ; elapsed = 00:00:46 . Memory (MB): peak = 3293.832 ; gain = 0.035 ; free physical = 3131 ; free virtual = 18442
+Command: read_checkpoint -cell c1 /home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/scripts/../../../results/b100/c1/blk_SLICE_X35Y57.dcp
+WARNING: [Vivado 12-12435] Any Tcl variable pointing to design objects become invalid when read_checkpoint is executed subsequently after open_checkpoint. The content of those variables need to be rebuilt after read_checkpoint. Otherwise this could result in unwanted behavior due to referencing objects that do not exist anymore.
+INFO: [Timing 38-480] Writing timing data to binary archive.
+Write ShapeDB Complete: Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3130 ; free virtual = 18442
+Wrote PlaceDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3130 ; free virtual = 18442
+Wrote PulsedLatchDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3130 ; free virtual = 18442
+Writing XDEF routing.
+Writing XDEF routing logical nets.
+Writing XDEF routing special nets.
+Wrote RouteStorage: Time (s): cpu = 00:00:00.1 ; elapsed = 00:00:00.11 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3130 ; free virtual = 18443
+Wrote PlaceStorage: Time (s): cpu = 00:00:00.06 ; elapsed = 00:00:00.07 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3130 ; free virtual = 18443
+Wrote Netlist Cache: Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3130 ; free virtual = 18443
+Wrote Device Cache: Time (s): cpu = 00:00:00.02 ; elapsed = 00:00:00.03 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3130 ; free virtual = 18446
+Write Physdb Complete: Time (s): cpu = 00:00:00.2 ; elapsed = 00:00:00.22 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3130 ; free virtual = 18446
+INFO: [Project 1-5699] Read binary netlist with skipMacroContent - 1
+INFO: [Project 1-454] Reading design checkpoint '/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/results/b100/c1/blk_SLICE_X35Y57.dcp' for cell 'c1'
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3134 ; free virtual = 18446
+INFO: [Netlist 29-17] Analyzing 6 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+INFO: [Project 1-479] Netlist was created with Vivado 2026.1
+INFO: [Project 1-570] Preparing netlist for logic optimization
+Parsing XDC File [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/results/b100/c1/.Xil/Vivado-1350081-bren-ubuntu24-04/readCheckpointCellTempDcp/temp/reloc_top_late.xdc]
+create_clock: Time (s): cpu = 00:00:13 ; elapsed = 00:00:19 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3141 ; free virtual = 18446
+INFO: [Vivado 12-3520] Assignment of 'sh_reg[23], sh_reg[1], o_reg[1], sh_reg[36], sh_reg[33], sh_reg[32], sh_reg[31], sh_reg[25], sh_reg[24], sh_reg[30], sh_reg[34], sh_reg[20], sh_reg[35], sh_reg[28], o_reg[29], o_reg[28], o_reg[27], o_reg[9], o_reg[33], o_reg[8], o_reg[25], o_reg[24], o_reg[23], o_reg[21], o_reg[22], o_reg[14], o_reg[19], o_reg[17], o_reg[16], o_reg[18], o_reg[15], o_reg[0], o_reg[13], o_reg[20], o_reg[12], o_reg[11], o_reg[64], o_reg[50], o_reg[55], o_reg[54], o_reg[53], o_reg[52], o_reg[51], o_reg[45], o_reg[4], o_reg[57], o_reg[48], o_reg[47], o_reg[46], o_reg[3], o_reg[44], o_reg[43], o_reg[42], o_reg[41], o_reg[49], o_reg[35], sh_reg[26], o_reg[39], o_reg[38], o_reg[37], o_reg[36], o_reg[2], o_reg[34], o_reg[40], o_reg[32], o_reg[31], o_reg[30], o_reg[26], sh_reg[2], sh_reg[21], sh_reg[17], sh_reg[29], sh_reg[16], sh_reg[19], sh_reg[18], sh_reg[22], sh_reg[13], sh_reg[12], sh_reg[66], sh_reg[14], o_reg[7], sh_reg[10], sh_reg[0], rst_q_reg, o_reg[6], sh_reg[37], sh_reg[15], sh_reg[27], sh_reg[11], o_reg[63], o_reg[60], o_reg[61], o_reg[56], o_reg[62], o_reg[5], o_reg[59], o_reg[58], u_core, sh_reg[70], sh_reg[7], sh_reg[71], sh_reg[8], sh_reg[67], sh_reg[9], sh_reg[68], sh_reg[6], sh_reg[69], sh_reg[65], sh_reg[58], sh_reg[59], sh_reg[57], sh_reg[51], sh_reg[50], sh_reg[49], sh_reg[46], sh_reg[45], sh_reg[44], sh_reg[3], sh_reg[43], sh_reg[47], sh_reg[41], sh_reg[63], sh_reg[5], sh_reg[54], sh_reg[4], sh_reg[64], sh_reg[52], sh_reg[62], sh_reg[56], sh_reg[55], sh_reg[53], sh_reg[48], sh_reg[40], sh_reg[42], sh_reg[60], sh_reg[39], sh_reg[38], sh_reg[61], dout_i_10, dout_i_1, GND, dout_i_8, dout_reg, dout_i_9, dout_i_3, dout_i_2, dout_i_5, dout_i_7, dout_i_12, dout_i_4, dout_i_11, VCC, dout_i_13, o_reg[10], and dout_i_6' to a pblock 'c0_pb_blk' means that all children of 'c0' are in the pblock. Changing the pblock assignment to 'c0'.
+Finished Parsing XDC File [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/results/b100/c1/.Xil/Vivado-1350081-bren-ubuntu24-04/readCheckpointCellTempDcp/temp/reloc_top_late.xdc]
+INFO: [Designutils 20-5722] Start Reading Physical Databases.
+Reading placement.
+Read Netlist Cache: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3141 ; free virtual = 18446
+Reading placer database...
+Read Device Cache: Time (s): cpu = 00:00:00.06 ; elapsed = 00:00:00.12 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3141 ; free virtual = 18446
+Read PlaceDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3141 ; free virtual = 18446
+Read placeStorage: Time (s): cpu = 00:00:00.07 ; elapsed = 00:00:00.16 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3141 ; free virtual = 18446
+Read PulsedLatchDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3141 ; free virtual = 18446
+Reading routing.
+Read RouteStorage: Time (s): cpu = 00:00:00.1 ; elapsed = 00:00:00.2 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3141 ; free virtual = 18446
+Read Physdb Files: Time (s): cpu = 00:00:00.27 ; elapsed = 00:00:00.54 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3141 ; free virtual = 18446
+Restored from archive | CPU: 0.280000 secs | Memory: 0.966461 MB |
+Finished XDEF File Restore: Time (s): cpu = 00:00:00.27 ; elapsed = 00:00:00.56 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3141 ; free virtual = 18446
+Parsing XDC File [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/results/b100/c1/blk_SLICE_X35Y57/pcs_unit_late.xdc] for cell 'c1'
+INFO: [Vivado 12-3520] Assignment of 'o_reg[51], sh_reg[62], sh_reg[24], o_reg[30], o_reg[45], sh_reg[45], sh_reg[68], sh_reg[47], o_reg[6], o_reg[24], sh_reg[11], o_reg[57], o_reg[32], dout_i_3, sh_reg[56], sh_reg[38], dout_i_4, dout_i_10, sh_reg[14], sh_reg[26], sh_reg[3], o_reg[19], o_reg[8], sh_reg[35], sh_reg[60], o_reg[59], o_reg[38], o_reg[53], o_reg[36], sh_reg[41], sh_reg[49], sh_reg[17], dout_i_7, o_reg[43], o_reg[11], o_reg[49], o_reg[64], sh_reg[51], sh_reg[27], sh_reg[54], sh_reg[12], o_reg[40], o_reg[17], sh_reg[20], o_reg[15], o_reg[4], o_reg[60], sh_reg[66], sh_reg[9], sh_reg[71], o_reg[52], dout_i_8, o_reg[10], o_reg[22], o_reg[7], sh_reg[19], sh_reg[21], o_reg[55], sh_reg[33], sh_reg[0], sh_reg[42], dout_i_2, sh_reg[30], sh_reg[50], o_reg[37], o_reg[2], sh_reg[39], o_reg[61], o_reg[25], o_reg[3], sh_reg[57], o_reg[58], sh_reg[69], sh_reg[48], sh_reg[15], o_reg[16], sh_reg[6], o_reg[34], dout_i_9, sh_reg[36], o_reg[46], o_reg[28], o_reg[0], sh_reg[18], o_reg[13], o_reg[12], sh_reg[44], o_reg[21], sh_reg[32], o_reg[42], dout_i_5, dout_i_6, dout_reg, o_reg[9], o_reg[54], sh_reg[2], o_reg[33], sh_reg[53], sh_reg[65], sh_reg[23], o_reg[63], dout_i_1, sh_reg[1], sh_reg[10], sh_reg[31], GND, sh_reg[40], sh_reg[70], sh_reg[8], o_reg[5], sh_reg[52], sh_reg[61], o_reg[39], rst_q_reg, o_reg[18], o_reg[50], sh_reg[29], o_reg[48], o_reg[27], o_reg[62], o_reg[41], o_reg[20], sh_reg[43], u_core, sh_reg[64], sh_reg[22], sh_reg[59], sh_reg[37], dout_i_13, o_reg[1], sh_reg[16], VCC, o_reg[26], o_reg[56], sh_reg[25], o_reg[35], sh_reg[7], sh_reg[58], dout_i_12, o_reg[47], o_reg[14], dout_i_11, o_reg[23], sh_reg[46], sh_reg[4], sh_reg[28], sh_reg[13], sh_reg[55], o_reg[44], sh_reg[67], sh_reg[34], o_reg[31], sh_reg[63], o_reg[29], and sh_reg[5]' to a pblock 'c1_pb_blk' means that all children of 'c1' are in the pblock. Changing the pblock assignment to 'c1'.
+Finished Parsing XDC File [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/results/b100/c1/blk_SLICE_X35Y57/pcs_unit_late.xdc] for cell 'c1'
+Reading placement.
+Reading placer database...
+Reading routing.
+Read Old XDEF File: Time (s): cpu = 00:00:00.74 ; elapsed = 00:00:02 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3144 ; free virtual = 18449
+Restored from archive | CPU: 0.750000 secs | Memory: 1.016785 MB |
+Finished XDEF File Restore: Time (s): cpu = 00:00:00.74 ; elapsed = 00:00:02 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3142 ; free virtual = 18447
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3144 ; free virtual = 18449
+INFO: [Project 1-111] Unisim Transformation Summary:
+  A total of 6 instances were transformed.
+  IBUF => IBUF (IBUFCTRL, INBUF): 6 instances
+
+read_checkpoint: Time (s): cpu = 00:00:35 ; elapsed = 00:00:49 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3144 ; free virtual = 18448
+Command: read_checkpoint -cell c2 /home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/scripts/../../../results/b100/c1/blk_SLICE_X41Y117.dcp
+WARNING: [Vivado 12-12435] Any Tcl variable pointing to design objects become invalid when read_checkpoint is executed subsequently after open_checkpoint. The content of those variables need to be rebuilt after read_checkpoint. Otherwise this could result in unwanted behavior due to referencing objects that do not exist anymore.
+INFO: [Timing 38-480] Writing timing data to binary archive.
+Write ShapeDB Complete: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3141 ; free virtual = 18447
+Wrote PlaceDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3141 ; free virtual = 18447
+Wrote PulsedLatchDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3141 ; free virtual = 18447
+Writing XDEF routing.
+Writing XDEF routing logical nets.
+Writing XDEF routing special nets.
+Wrote RouteStorage: Time (s): cpu = 00:00:00.14 ; elapsed = 00:00:00.35 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3140 ; free virtual = 18447
+Wrote PlaceStorage: Time (s): cpu = 00:00:00.16 ; elapsed = 00:00:00.41 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3139 ; free virtual = 18447
+Wrote Netlist Cache: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.01 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3139 ; free virtual = 18447
+Wrote Device Cache: Time (s): cpu = 00:00:00.03 ; elapsed = 00:00:00.08 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3135 ; free virtual = 18446
+Write Physdb Complete: Time (s): cpu = 00:00:00.35 ; elapsed = 00:00:00.87 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3135 ; free virtual = 18446
+INFO: [Project 1-5699] Read binary netlist with skipMacroContent - 1
+INFO: [Project 1-454] Reading design checkpoint '/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/results/b100/c1/blk_SLICE_X41Y117.dcp' for cell 'c2'
+Netlist sorting complete. Time (s): cpu = 00:00:00.02 ; elapsed = 00:00:00.02 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3137 ; free virtual = 18442
+INFO: [Netlist 29-17] Analyzing 6 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+INFO: [Project 1-479] Netlist was created with Vivado 2026.1
+INFO: [Project 1-570] Preparing netlist for logic optimization
+Parsing XDC File [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/results/b100/c1/.Xil/Vivado-1350081-bren-ubuntu24-04/readCheckpointCellTempDcp/temp/reloc_top_late.xdc]
+create_clock: Time (s): cpu = 00:00:13 ; elapsed = 00:00:21 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3151 ; free virtual = 18457
+INFO: [Vivado 12-3520] Assignment of 'sh_reg[66], sh_reg[21], o_reg[31], o_reg[22], o_reg[36], sh_reg[32], sh_reg[0], o_reg[58], sh_reg[31], o_reg[14], o_reg[55], o_reg[48], sh_reg[24], o_reg[38], rst_q_reg, o_reg[40], o_reg[41], o_reg[47], o_reg[59], o_reg[8], sh_reg[18], o_reg[33], dout_i_5, o_reg[56], o_reg[28], o_reg[20], sh_reg[25], o_reg[16], o_reg[2], dout_i_13, sh_reg[14], dout_i_3, sh_reg[12], o_reg[35], sh_reg[17], sh_reg[29], sh_reg[11], o_reg[50], o_reg[18], o_reg[11], o_reg[1], sh_reg[16], o_reg[42], dout_i_4, dout_i_10, sh_reg[23], sh_reg[19], o_reg[21], o_reg[34], o_reg[57], o_reg[0], o_reg[32], o_reg[10], o_reg[44], o_reg[3], dout_i_2, o_reg[46], o_reg[43], sh_reg[35], sh_reg[13], o_reg[6], o_reg[30], dout_i_12, dout_i_11, o_reg[64], o_reg[17], VCC, o_reg[53], sh_reg[30], o_reg[23], sh_reg[33], sh_reg[2], o_reg[45], dout_i_6, sh_reg[1], o_reg[63], o_reg[19], o_reg[5], o_reg[9], o_reg[62], o_reg[54], sh_reg[22], o_reg[26], o_reg[29], o_reg[52], o_reg[49], sh_reg[26], o_reg[51], sh_reg[37], sh_reg[36], o_reg[4], o_reg[27], sh_reg[10], o_reg[15], sh_reg[20], sh_reg[27], GND, dout_i_7, o_reg[7], o_reg[61], dout_i_1, o_reg[39], o_reg[13], o_reg[25], o_reg[37], sh_reg[15], o_reg[24], o_reg[12], sh_reg[28], sh_reg[34], o_reg[60], sh_reg[8], sh_reg[67], sh_reg[61], sh_reg[9], sh_reg[70], sh_reg[60], sh_reg[71], sh_reg[59], sh_reg[43], sh_reg[63], sh_reg[38], sh_reg[46], sh_reg[64], sh_reg[54], u_core, sh_reg[4], sh_reg[50], sh_reg[53], sh_reg[40], sh_reg[51], sh_reg[62], sh_reg[57], sh_reg[58], sh_reg[49], sh_reg[52], sh_reg[5], sh_reg[42], sh_reg[45], sh_reg[39], sh_reg[41], sh_reg[44], sh_reg[7], sh_reg[3], sh_reg[6], sh_reg[68], sh_reg[69], sh_reg[48], sh_reg[56], sh_reg[55], sh_reg[65], sh_reg[47], dout_reg, dout_i_8, and dout_i_9' to a pblock 'c0_pb_blk' means that all children of 'c0' are in the pblock. Changing the pblock assignment to 'c0'.
+INFO: [Vivado 12-3520] Assignment of 'sh_reg[43], sh_reg[46], sh_reg[64], sh_reg[45], sh_reg[63], sh_reg[44], u_core, sh_reg[32], sh_reg[8], sh_reg[60], sh_reg[65], sh_reg[6], sh_reg[3], sh_reg[38], sh_reg[41], sh_reg[42], sh_reg[37], sh_reg[2], sh_reg[33], sh_reg[69], sh_reg[36], sh_reg[39], sh_reg[67], sh_reg[70], sh_reg[9], sh_reg[66], sh_reg[59], sh_reg[68], sh_reg[31], sh_reg[34], sh_reg[40], sh_reg[5], sh_reg[47], sh_reg[7], sh_reg[35], sh_reg[62], sh_reg[30], sh_reg[61], sh_reg[71], dout_i_13, GND, VCC, dout_i_10, dout_i_1, dout_i_4, dout_i_11, dout_i_12, dout_reg, o_reg[38], o_reg[14], o_reg[13], o_reg[1], dout_i_9, o_reg[25], o_reg[3], o_reg[44], o_reg[24], o_reg[28], o_reg[39], o_reg[37], o_reg[31], o_reg[0], dout_i_7, o_reg[19], o_reg[32], o_reg[15], o_reg[30], o_reg[40], o_reg[33], o_reg[12], o_reg[29], o_reg[43], dout_i_8, o_reg[18], o_reg[2], o_reg[22], o_reg[35], sh_reg[58], o_reg[23], o_reg[26], o_reg[21], dout_i_6, o_reg[17], o_reg[16], o_reg[45], o_reg[34], dout_i_3, dout_i_5, dout_i_2, sh_reg[54], o_reg[27], o_reg[36], o_reg[10], o_reg[42], o_reg[41], o_reg[11], o_reg[20], sh_reg[10], sh_reg[13], sh_reg[56], sh_reg[18], o_reg[63], o_reg[62], o_reg[5], o_reg[7], o_reg[59], sh_reg[1], sh_reg[29], sh_reg[17], sh_reg[26], o_reg[58], o_reg[57], sh_reg[28], o_reg[56], o_reg[55], sh_reg[52], sh_reg[24], sh_reg[12], o_reg[54], sh_reg[21], sh_reg[57], sh_reg[25], sh_reg[0], sh_reg[11], sh_reg[20], sh_reg[55], rst_q_reg, sh_reg[22], o_reg[9], sh_reg[15], sh_reg[23], sh_reg[27], o_reg[53], o_reg[61], o_reg[50], o_reg[52], o_reg[51], o_reg[49], o_reg[4], o_reg[48], sh_reg[14], sh_reg[19], o_reg[47], o_reg[46], o_reg[64], sh_reg[53], o_reg[60], sh_reg[51], sh_reg[16], o_reg[6], o_reg[8], sh_reg[50], sh_reg[48], sh_reg[4], and sh_reg[49]' to a pblock 'c1_pb_blk' means that all children of 'c1' are in the pblock. Changing the pblock assignment to 'c1'.
+Finished Parsing XDC File [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/results/b100/c1/.Xil/Vivado-1350081-bren-ubuntu24-04/readCheckpointCellTempDcp/temp/reloc_top_late.xdc]
+INFO: [Designutils 20-5722] Start Reading Physical Databases.
+Reading placement.
+Read Netlist Cache: Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3151 ; free virtual = 18457
+Reading placer database...
+Read Device Cache: Time (s): cpu = 00:00:00.06 ; elapsed = 00:00:00.07 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3151 ; free virtual = 18457
+Read PlaceDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3151 ; free virtual = 18457
+Read placeStorage: Time (s): cpu = 00:00:00.13 ; elapsed = 00:00:00.13 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3151 ; free virtual = 18456
+Read PulsedLatchDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3151 ; free virtual = 18456
+Reading routing.
+Read RouteStorage: Time (s): cpu = 00:00:00.18 ; elapsed = 00:00:00.4 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3151 ; free virtual = 18456
+Read Physdb Files: Time (s): cpu = 00:00:00.41 ; elapsed = 00:00:00.64 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3151 ; free virtual = 18456
+Restored from archive | CPU: 0.520000 secs | Memory: 1.912537 MB |
+Finished XDEF File Restore: Time (s): cpu = 00:00:00.41 ; elapsed = 00:00:00.64 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3151 ; free virtual = 18456
+Parsing XDC File [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/results/b100/c1/blk_SLICE_X41Y117/pcs_unit_late.xdc] for cell 'c2'
+INFO: [Vivado 12-3520] Assignment of 'sh_reg[26], sh_reg[64], sh_reg[43], sh_reg[22], o_reg[62], o_reg[41], o_reg[20], u_core, o_reg[15], sh_reg[17], o_reg[2], o_reg[57], dout_i_3, o_reg[45], sh_reg[68], sh_reg[47], o_reg[36], o_reg[24], dout_i_2, sh_reg[44], dout_reg, sh_reg[0], sh_reg[5], o_reg[42], sh_reg[32], sh_reg[37], sh_reg[41], sh_reg[8], dout_i_12, o_reg[18], sh_reg[58], sh_reg[53], sh_reg[7], o_reg[61], sh_reg[21], sh_reg[42], sh_reg[63], sh_reg[38], o_reg[7], o_reg[5], o_reg[10], o_reg[31], o_reg[52], sh_reg[12], o_reg[26], o_reg[47], sh_reg[28], sh_reg[40], sh_reg[10], sh_reg[52], dout_i_11, dout_i_6, sh_reg[49], o_reg[38], o_reg[17], o_reg[28], o_reg[9], sh_reg[31], o_reg[59], sh_reg[60], o_reg[4], dout_i_10, sh_reg[19], sh_reg[30], sh_reg[51], o_reg[29], o_reg[50], sh_reg[11], dout_i_1, o_reg[40], sh_reg[27], o_reg[30], sh_reg[48], o_reg[33], sh_reg[69], o_reg[16], sh_reg[71], o_reg[37], sh_reg[50], dout_i_8, dout_i_4, o_reg[58], sh_reg[23], o_reg[21], dout_i_9, o_reg[49], o_reg[6], sh_reg[65], sh_reg[1], o_reg[3], sh_reg[18], sh_reg[39], o_reg[39], dout_i_5, dout_i_7, o_reg[63], o_reg[19], sh_reg[33], sh_reg[54], sh_reg[29], sh_reg[3], GND, o_reg[48], o_reg[22], sh_reg[59], o_reg[60], o_reg[43], rst_q_reg, o_reg[64], sh_reg[24], sh_reg[45], sh_reg[66], o_reg[27], o_reg[13], o_reg[34], sh_reg[70], sh_reg[14], o_reg[55], o_reg[54], sh_reg[20], sh_reg[62], o_reg[0], sh_reg[15], sh_reg[36], sh_reg[56], sh_reg[35], o_reg[12], sh_reg[61], sh_reg[57], sh_reg[6], sh_reg[2], o_reg[25], o_reg[51], o_reg[46], sh_reg[9], o_reg[53], o_reg[56], o_reg[23], o_reg[35], o_reg[1], o_reg[8], dout_i_13, o_reg[32], VCC, sh_reg[55], o_reg[44], sh_reg[4], sh_reg[16], sh_reg[34], sh_reg[13], sh_reg[46], o_reg[14], sh_reg[25], o_reg[11], and sh_reg[67]' to a pblock 'c2_pb_blk' means that all children of 'c2' are in the pblock. Changing the pblock assignment to 'c2'.
+Finished Parsing XDC File [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/results/b100/c1/blk_SLICE_X41Y117/pcs_unit_late.xdc] for cell 'c2'
+Reading placement.
+Reading placer database...
+Reading routing.
+Read Old XDEF File: Time (s): cpu = 00:00:00.66 ; elapsed = 00:00:00.71 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3042 ; free virtual = 18348
+Restored from archive | CPU: 0.670000 secs | Memory: 1.027771 MB |
+Finished XDEF File Restore: Time (s): cpu = 00:00:00.66 ; elapsed = 00:00:00.71 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3042 ; free virtual = 18348
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3042 ; free virtual = 18348
+INFO: [Project 1-111] Unisim Transformation Summary:
+  A total of 6 instances were transformed.
+  IBUF => IBUF (IBUFCTRL, INBUF): 6 instances
+
+read_checkpoint: Time (s): cpu = 00:00:34 ; elapsed = 00:00:53 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3042 ; free virtual = 18347
+Command: read_checkpoint -cell c3 /home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/scripts/../../../results/b100/c1/blk_SLICE_X41Y177.dcp
+WARNING: [Vivado 12-12435] Any Tcl variable pointing to design objects become invalid when read_checkpoint is executed subsequently after open_checkpoint. The content of those variables need to be rebuilt after read_checkpoint. Otherwise this could result in unwanted behavior due to referencing objects that do not exist anymore.
+INFO: [Timing 38-480] Writing timing data to binary archive.
+Write ShapeDB Complete: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3038 ; free virtual = 18345
+Wrote PlaceDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3038 ; free virtual = 18345
+Wrote PulsedLatchDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3038 ; free virtual = 18345
+Writing XDEF routing.
+Writing XDEF routing logical nets.
+Writing XDEF routing special nets.
+Wrote RouteStorage: Time (s): cpu = 00:00:00.16 ; elapsed = 00:00:00.17 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3038 ; free virtual = 18346
+Wrote PlaceStorage: Time (s): cpu = 00:00:00.2 ; elapsed = 00:00:00.23 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3038 ; free virtual = 18348
+Wrote Netlist Cache: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3038 ; free virtual = 18348
+Wrote Device Cache: Time (s): cpu = 00:00:00.03 ; elapsed = 00:00:00.04 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3038 ; free virtual = 18351
+Write Physdb Complete: Time (s): cpu = 00:00:00.4 ; elapsed = 00:00:00.45 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3038 ; free virtual = 18351
+INFO: [Project 1-5699] Read binary netlist with skipMacroContent - 1
+INFO: [Project 1-454] Reading design checkpoint '/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/results/b100/c1/blk_SLICE_X41Y177.dcp' for cell 'c3'
+Netlist sorting complete. Time (s): cpu = 00:00:00.02 ; elapsed = 00:00:00.03 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3093 ; free virtual = 18399
+INFO: [Netlist 29-17] Analyzing 6 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+INFO: [Project 1-479] Netlist was created with Vivado 2026.1
+INFO: [Project 1-570] Preparing netlist for logic optimization
+Parsing XDC File [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/results/b100/c1/.Xil/Vivado-1350081-bren-ubuntu24-04/readCheckpointCellTempDcp/temp/reloc_top_late.xdc]
+create_clock: Time (s): cpu = 00:00:13 ; elapsed = 00:00:16 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3088 ; free virtual = 18394
+INFO: [Vivado 12-3520] Assignment of 'o_reg[2], o_reg[9], o_reg[8], o_reg[60], o_reg[29], sh_reg[31], o_reg[30], o_reg[34], o_reg[61], o_reg[58], o_reg[59], sh_reg[40], o_reg[32], sh_reg[45], sh_reg[36], sh_reg[35], sh_reg[42], sh_reg[41], sh_reg[34], sh_reg[14], sh_reg[39], o_reg[33], o_reg[63], o_reg[36], sh_reg[10], o_reg[7], sh_reg[15], sh_reg[13], sh_reg[0], sh_reg[12], sh_reg[17], o_reg[6], sh_reg[57], sh_reg[55], sh_reg[11], sh_reg[58], sh_reg[5], sh_reg[59], sh_reg[16], o_reg[62], o_reg[5], sh_reg[29], sh_reg[26], sh_reg[32], sh_reg[27], sh_reg[28], sh_reg[2], sh_reg[46], sh_reg[30], sh_reg[43], o_reg[35], sh_reg[47], sh_reg[4], sh_reg[33], sh_reg[38], o_reg[31], sh_reg[50], sh_reg[51], o_reg[37], sh_reg[44], sh_reg[7], sh_reg[3], sh_reg[37], rst_q_reg, sh_reg[68], sh_reg[48], sh_reg[60], sh_reg[9], sh_reg[19], u_core, sh_reg[18], sh_reg[8], sh_reg[66], sh_reg[67], sh_reg[69], sh_reg[63], sh_reg[64], sh_reg[61], sh_reg[56], sh_reg[62], sh_reg[65], sh_reg[52], sh_reg[53], sh_reg[54], sh_reg[1], o_reg[64], sh_reg[20], sh_reg[23], sh_reg[6], sh_reg[22], sh_reg[21], sh_reg[71], sh_reg[49], sh_reg[24], sh_reg[25], sh_reg[70], o_reg[21], o_reg[11], o_reg[17], o_reg[40], o_reg[15], GND, o_reg[25], o_reg[38], o_reg[56], o_reg[53], o_reg[41], o_reg[26], o_reg[54], o_reg[28], o_reg[27], o_reg[12], dout_i_6, o_reg[48], o_reg[10], o_reg[49], dout_i_8, dout_i_2, o_reg[13], dout_reg, o_reg[14], o_reg[0], dout_i_9, o_reg[16], dout_i_12, dout_i_5, dout_i_7, o_reg[47], dout_i_10, o_reg[51], dout_i_4, o_reg[50], o_reg[19], o_reg[45], o_reg[46], dout_i_11, dout_i_13, dout_i_3, o_reg[23], o_reg[24], VCC, o_reg[4], o_reg[43], o_reg[55], o_reg[3], o_reg[52], o_reg[42], o_reg[39], o_reg[44], dout_i_1, o_reg[20], o_reg[57], o_reg[1], o_reg[22], and o_reg[18]' to a pblock 'c0_pb_blk' means that all children of 'c0' are in the pblock. Changing the pblock assignment to 'c0'.
+INFO: [Vivado 12-3520] Assignment of 'sh_reg[55], o_reg[25], o_reg[57], sh_reg[6], o_reg[38], sh_reg[20], sh_reg[59], rst_q_reg, sh_reg[61], sh_reg[62], o_reg[62], o_reg[30], o_reg[40], sh_reg[27], sh_reg[9], o_reg[58], sh_reg[31], o_reg[39], sh_reg[21], o_reg[31], sh_reg[4], sh_reg[37], o_reg[63], sh_reg[8], sh_reg[68], sh_reg[51], o_reg[32], o_reg[8], sh_reg[10], sh_reg[12], o_reg[59], o_reg[3], sh_reg[22], sh_reg[67], sh_reg[71], o_reg[9], sh_reg[28], o_reg[33], sh_reg[64], sh_reg[49], sh_reg[5], o_reg[64], o_reg[34], sh_reg[65], sh_reg[29], o_reg[5], sh_reg[23], o_reg[60], sh_reg[34], o_reg[6], sh_reg[38], o_reg[37], sh_reg[33], sh_reg[32], sh_reg[3], o_reg[52], o_reg[20], sh_reg[14], o_reg[42], sh_reg[70], sh_reg[11], sh_reg[63], sh_reg[0], sh_reg[30], o_reg[26], o_reg[53], sh_reg[15], sh_reg[52], o_reg[21], sh_reg[16], sh_reg[48], o_reg[43], sh_reg[50], sh_reg[36], o_reg[27], o_reg[41], o_reg[54], sh_reg[17], o_reg[22], sh_reg[18], o_reg[4], sh_reg[69], sh_reg[7], o_reg[28], o_reg[55], o_reg[23], sh_reg[24], sh_reg[19], o_reg[50], o_reg[29], o_reg[56], u_core, sh_reg[25], o_reg[24], sh_reg[1], o_reg[51], sh_reg[60], o_reg[61], o_reg[2], sh_reg[40], sh_reg[35], sh_reg[26], sh_reg[44], sh_reg[47], sh_reg[56], sh_reg[66], sh_reg[41], o_reg[7], sh_reg[53], sh_reg[45], sh_reg[57], sh_reg[42], sh_reg[39], sh_reg[58], sh_reg[54], sh_reg[43], o_reg[35], sh_reg[46], o_reg[36], sh_reg[2], sh_reg[13], VCC, dout_i_1, o_reg[45], dout_i_10, dout_i_11, dout_i_4, dout_i_12, dout_i_9, dout_reg, dout_i_13, dout_i_2, dout_i_3, dout_i_5, o_reg[11], dout_i_6, o_reg[18], o_reg[19], o_reg[0], o_reg[12], dout_i_7, o_reg[13], o_reg[14], o_reg[15], o_reg[44], o_reg[48], o_reg[46], o_reg[10], o_reg[1], dout_i_8, o_reg[47], GND, o_reg[17], o_reg[49], and o_reg[16]' to a pblock 'c1_pb_blk' means that all children of 'c1' are in the pblock. Changing the pblock assignment to 'c1'.
+INFO: [Vivado 12-3520] Assignment of 'dout_i_13, dout_i_6, dout_i_12, dout_i_1, dout_reg, dout_i_10, dout_i_7, o_reg[11], GND, VCC, o_reg[41], dout_i_5, dout_i_3, o_reg[40], o_reg[0], dout_i_11, o_reg[10], dout_i_4, dout_i_2, o_reg[12], dout_i_9, dout_i_8, o_reg[30], sh_reg[51], o_reg[2], sh_reg[65], o_reg[29], o_reg[31], o_reg[28], o_reg[27], sh_reg[46], sh_reg[31], o_reg[26], o_reg[34], o_reg[43], o_reg[25], sh_reg[52], o_reg[24], o_reg[23], sh_reg[53], sh_reg[43], sh_reg[42], sh_reg[54], o_reg[22], o_reg[21], sh_reg[55], sh_reg[64], sh_reg[63], sh_reg[56], sh_reg[68], sh_reg[69], sh_reg[57], sh_reg[39], sh_reg[3], sh_reg[58], o_reg[20], o_reg[1], sh_reg[59], o_reg[19], o_reg[18], sh_reg[5], o_reg[17], o_reg[16], sh_reg[60], o_reg[63], o_reg[62], o_reg[64], sh_reg[38], sh_reg[37], o_reg[6], o_reg[13], o_reg[14], o_reg[7], sh_reg[50], o_reg[15], o_reg[8], o_reg[61], o_reg[60], o_reg[9], o_reg[5], o_reg[59], rst_q_reg, sh_reg[30], sh_reg[2], sh_reg[0], sh_reg[10], o_reg[58], o_reg[57], sh_reg[11], o_reg[56], o_reg[55], sh_reg[12], o_reg[36], o_reg[35], sh_reg[13], sh_reg[48], sh_reg[47], sh_reg[14], o_reg[54], o_reg[53], sh_reg[15], o_reg[39], o_reg[38], sh_reg[16], sh_reg[61], sh_reg[62], sh_reg[17], o_reg[52], o_reg[51], sh_reg[18], o_reg[50], o_reg[4], sh_reg[19], sh_reg[67], sh_reg[66], sh_reg[1], o_reg[37], sh_reg[32], sh_reg[20], sh_reg[34], sh_reg[33], sh_reg[21], o_reg[49], o_reg[48], sh_reg[22], sh_reg[45], sh_reg[44], sh_reg[23], o_reg[33], o_reg[32], sh_reg[24], sh_reg[41], sh_reg[40], sh_reg[25], sh_reg[36], sh_reg[35], sh_reg[26], sh_reg[4], sh_reg[49], sh_reg[27], o_reg[42], o_reg[3], sh_reg[28], o_reg[47], o_reg[46], sh_reg[29], o_reg[45], o_reg[44], u_core, sh_reg[9], sh_reg[8], sh_reg[7], sh_reg[71], sh_reg[70], and sh_reg[6]' to a pblock 'c2_pb_blk' means that all children of 'c2' are in the pblock. Changing the pblock assignment to 'c2'.
+Finished Parsing XDC File [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/results/b100/c1/.Xil/Vivado-1350081-bren-ubuntu24-04/readCheckpointCellTempDcp/temp/reloc_top_late.xdc]
+INFO: [Designutils 20-5722] Start Reading Physical Databases.
+Reading placement.
+Read Netlist Cache: Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3088 ; free virtual = 18394
+Reading placer database...
+Read Device Cache: Time (s): cpu = 00:00:00.06 ; elapsed = 00:00:00.06 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3088 ; free virtual = 18394
+Read PlaceDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3088 ; free virtual = 18394
+Read placeStorage: Time (s): cpu = 00:00:00.2 ; elapsed = 00:00:00.31 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3087 ; free virtual = 18393
+Read PulsedLatchDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3087 ; free virtual = 18393
+Reading routing.
+Read RouteStorage: Time (s): cpu = 00:00:00.26 ; elapsed = 00:00:00.65 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3088 ; free virtual = 18398
+Read Physdb Files: Time (s): cpu = 00:00:00.55 ; elapsed = 00:00:01 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3088 ; free virtual = 18398
+Restored from archive | CPU: 0.560000 secs | Memory: 2.869568 MB |
+Finished XDEF File Restore: Time (s): cpu = 00:00:00.55 ; elapsed = 00:00:01 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3088 ; free virtual = 18398
+Parsing XDC File [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/results/b100/c1/blk_SLICE_X41Y177/pcs_unit_late.xdc] for cell 'c3'
+INFO: [Vivado 12-3520] Assignment of 'o_reg[46], sh_reg[62], o_reg[2], sh_reg[60], sh_reg[44], o_reg[45], sh_reg[14], o_reg[13], sh_reg[47], sh_reg[38], dout_i_3, sh_reg[5], sh_reg[24], o_reg[24], sh_reg[56], o_reg[38], sh_reg[61], sh_reg[3], dout_i_5, sh_reg[59], sh_reg[23], sh_reg[53], o_reg[57], sh_reg[71], o_reg[9], sh_reg[35], o_reg[63], sh_reg[41], sh_reg[46], o_reg[21], o_reg[12], sh_reg[65], sh_reg[68], o_reg[35], sh_reg[6], sh_reg[16], o_reg[56], sh_reg[58], o_reg[1], sh_reg[49], sh_reg[70], dout_i_12, sh_reg[37], sh_reg[7], o_reg[29], o_reg[48], o_reg[27], dout_reg, sh_reg[29], sh_reg[40], o_reg[42], dout_i_1, o_reg[51], o_reg[19], dout_i_7, dout_i_6, sh_reg[2], sh_reg[32], sh_reg[11], o_reg[18], sh_reg[19], sh_reg[30], o_reg[49], o_reg[4], sh_reg[51], o_reg[7], o_reg[10], o_reg[39], o_reg[31], sh_reg[63], sh_reg[15], dout_i_10, o_reg[34], sh_reg[66], sh_reg[57], o_reg[55], sh_reg[8], o_reg[16], sh_reg[54], o_reg[0], sh_reg[67], dout_i_13, o_reg[58], sh_reg[69], o_reg[14], sh_reg[27], o_reg[3], sh_reg[48], sh_reg[26], sh_reg[18], sh_reg[39], dout_i_8, dout_i_9, o_reg[26], o_reg[28], sh_reg[36], sh_reg[28], sh_reg[50], o_reg[64], o_reg[47], o_reg[59], o_reg[60], o_reg[17], o_reg[15], sh_reg[33], dout_i_2, sh_reg[17], sh_reg[9], o_reg[52], o_reg[37], o_reg[43], dout_i_11, sh_reg[12], dout_i_4, sh_reg[45], o_reg[25], o_reg[6], o_reg[22], o_reg[36], o_reg[30], sh_reg[20], o_reg[11], VCC, sh_reg[25], o_reg[8], sh_reg[21], sh_reg[0], o_reg[40], o_reg[61], o_reg[53], o_reg[32], sh_reg[42], sh_reg[4], o_reg[23], sh_reg[13], sh_reg[34], sh_reg[55], o_reg[44], o_reg[20], u_core, GND, o_reg[33], sh_reg[31], sh_reg[10], sh_reg[52], sh_reg[1], o_reg[54], o_reg[41], o_reg[5], sh_reg[43], rst_q_reg, sh_reg[64], o_reg[50], o_reg[62], and sh_reg[22]' to a pblock 'c3_pb_blk' means that all children of 'c3' are in the pblock. Changing the pblock assignment to 'c3'.
+Finished Parsing XDC File [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/results/b100/c1/blk_SLICE_X41Y177/pcs_unit_late.xdc] for cell 'c3'
+Reading placement.
+Reading placer database...
+Reading routing.
+Read Old XDEF File: Time (s): cpu = 00:00:00.7 ; elapsed = 00:00:01 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3057 ; free virtual = 18364
+Restored from archive | CPU: 0.750000 secs | Memory: 0.997742 MB |
+Finished XDEF File Restore: Time (s): cpu = 00:00:00.7 ; elapsed = 00:00:01 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3057 ; free virtual = 18364
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3058 ; free virtual = 18366
+INFO: [Project 1-111] Unisim Transformation Summary:
+  A total of 6 instances were transformed.
+  IBUF => IBUF (IBUFCTRL, INBUF): 6 instances
+
+read_checkpoint: Time (s): cpu = 00:00:35 ; elapsed = 00:00:55 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3058 ; free virtual = 18365
+# opt_design
+Command: opt_design
+Attempting to get a license for feature 'Vivado_Implementation' and/or device 'xck26'
+INFO: [Common 17-349] Got license for feature 'Vivado_Implementation' and/or device 'xck26'
+Running DRC as a precondition to command opt_design
+
+Starting DRC Task
+INFO: [Project 1-461] DRC finished with 0 Errors
+INFO: [Project 1-462] Please refer to the DRC report (report_drc) for more information.
+
+Time (s): cpu = 00:00:01 ; elapsed = 00:00:03 . Memory (MB): peak = 3293.832 ; gain = 0.000 ; free physical = 3051 ; free virtual = 18361
+
+Starting Cache Timing Information Task
+INFO: [Timing 38-35] Done setting XDC timing constraints.
+Ending Cache Timing Information Task | Checksum: 133a19c67
+
+Time (s): cpu = 00:00:06 ; elapsed = 00:00:11 . Memory (MB): peak = 3445.473 ; gain = 151.641 ; free physical = 3025 ; free virtual = 18331
+
+Starting Logic Optimization Task
+
+Phase 1 Initialization
+
+Phase 1.1 Core Generation And Design Setup
+Phase 1.1 Core Generation And Design Setup | Checksum: 133a19c67
+
+Time (s): cpu = 00:00:00.04 ; elapsed = 00:00:00.07 . Memory (MB): peak = 3808.410 ; gain = 0.000 ; free physical = 2671 ; free virtual = 17977
+
+Phase 1.2 Setup Constraints And Sort Netlist
+Phase 1.2 Setup Constraints And Sort Netlist | Checksum: 133a19c67
+
+Time (s): cpu = 00:00:00.07 ; elapsed = 00:00:00.13 . Memory (MB): peak = 3808.410 ; gain = 0.000 ; free physical = 2671 ; free virtual = 17977
+Phase 1 Initialization | Checksum: 133a19c67
+
+Time (s): cpu = 00:00:00.09 ; elapsed = 00:00:00.2 . Memory (MB): peak = 3808.410 ; gain = 0.000 ; free physical = 2671 ; free virtual = 17977
+
+Phase 2 Timer Update And Timing Data Collection
+
+Phase 2.1 Detect if minReqCache needed
+Phase 2.1 Detect if minReqCache needed | Checksum: 133a19c67
+
+Time (s): cpu = 00:00:00.13 ; elapsed = 00:00:00.29 . Memory (MB): peak = 3808.410 ; gain = 0.000 ; free physical = 2671 ; free virtual = 17977
+
+Phase 2.2 Timer Update
+Phase 2.2 Timer Update | Checksum: 133a19c67
+
+Time (s): cpu = 00:00:00.16 ; elapsed = 00:00:00.36 . Memory (MB): peak = 3808.410 ; gain = 0.000 ; free physical = 2671 ; free virtual = 17977
+Phase 2 Timer Update And Timing Data Collection | Checksum: 133a19c67
+
+Time (s): cpu = 00:00:00.19 ; elapsed = 00:00:00.41 . Memory (MB): peak = 3808.410 ; gain = 0.000 ; free physical = 2671 ; free virtual = 17977
+
+Phase 3 Retarget
+INFO: [Opt 31-1851] Number of loadless carry chains removed were: 0
+INFO: [Opt 31-1834] Total Chains To Be Transformed Were: 0 AND Number of Transformed insts Created are: 0
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+INFO: [Opt 31-49] Retargeted 0 cell(s).
+Phase 3 Retarget | Checksum: 133a19c67
+
+Time (s): cpu = 00:00:00.53 ; elapsed = 00:00:01 . Memory (MB): peak = 3808.410 ; gain = 0.000 ; free physical = 2676 ; free virtual = 17982
+Retarget | Checksum: 133a19c67
+INFO: [Opt 31-389] Phase Retarget created 0 cells and removed 0 cells
+INFO: [Opt 31-1021] In phase Retarget, 1 netlist objects are constrained preventing optimization. Please run opt_design with -debug_log to get more detail. 
+
+Phase 4 Constant propagation
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+Phase 4 Constant propagation | Checksum: 133a19c67
+
+Time (s): cpu = 00:00:00.73 ; elapsed = 00:00:02 . Memory (MB): peak = 3808.410 ; gain = 0.000 ; free physical = 2673 ; free virtual = 17979
+Constant propagation | Checksum: 133a19c67
+INFO: [Opt 31-389] Phase Constant propagation created 0 cells and removed 0 cells
+
+Phase 5 Sweep
+INFO: [Constraints 18-11670] Building netlist checker database with flags, 0x8
+Done building netlist checker database: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.01 . Memory (MB): peak = 3808.410 ; gain = 0.000 ; free physical = 2673 ; free virtual = 17979
+Phase 5 Sweep | Checksum: 133a19c67
+
+Time (s): cpu = 00:00:00.95 ; elapsed = 00:00:02 . Memory (MB): peak = 3808.410 ; gain = 0.000 ; free physical = 2673 ; free virtual = 17979
+Sweep | Checksum: 133a19c67
+INFO: [Opt 31-389] Phase Sweep created 0 cells and removed 0 cells
+INFO: [Opt 31-1021] In phase Sweep, 9252 netlist objects are constrained preventing optimization. Please run opt_design with -debug_log to get more detail. 
+
+Phase 6 BUFG optimization
+INFO: [Opt 31-194] Inserted BUFG clk_IBUF_BUFG_inst to drive 1324 load(s) on clock net clk_IBUF_inst/O
+INFO: [Opt 31-193] Inserted 1 BUFG(s) on clock nets
+INFO: [Opt 31-1077] Phase BUFG optimization inserted 0 global clock buffer(s) for CLOCK_LOW_FANOUT.
+Phase 6 BUFG optimization | Checksum: 135a3150a
+
+Time (s): cpu = 00:00:01 ; elapsed = 00:00:02 . Memory (MB): peak = 3840.426 ; gain = 32.016 ; free physical = 2673 ; free virtual = 17979
+BUFG optimization | Checksum: 135a3150a
+INFO: [Opt 31-662] Phase BUFG optimization created 1 cells of which 1 are BUFGs and removed 0 cells.
+
+Phase 7 Shift Register Optimization
+INFO: [Opt 31-1064] SRL Remap converted 0 SRLs to 0 registers and converted 0 registers of register chains to 0 SRLs
+Phase 7 Shift Register Optimization | Checksum: 135a3150a
+
+Time (s): cpu = 00:00:01 ; elapsed = 00:00:03 . Memory (MB): peak = 3840.426 ; gain = 32.016 ; free physical = 2673 ; free virtual = 17979
+Shift Register Optimization | Checksum: 135a3150a
+INFO: [Opt 31-389] Phase Shift Register Optimization created 0 cells and removed 0 cells
+
+Phase 8 Post Processing Netlist
+Phase 8 Post Processing Netlist | Checksum: 135a3150a
+
+Time (s): cpu = 00:00:01 ; elapsed = 00:00:03 . Memory (MB): peak = 3840.426 ; gain = 32.016 ; free physical = 2673 ; free virtual = 17979
+Post Processing Netlist | Checksum: 135a3150a
+INFO: [Opt 31-389] Phase Post Processing Netlist created 0 cells and removed 0 cells
+
+Phase 9 Finalization
+
+Phase 9.1 Finalizing Design Cores and Updating Shapes
+Phase 9.1 Finalizing Design Cores and Updating Shapes | Checksum: 1effbf00b
+
+Time (s): cpu = 00:00:02 ; elapsed = 00:00:04 . Memory (MB): peak = 3840.426 ; gain = 32.016 ; free physical = 2672 ; free virtual = 17978
+
+Phase 9.2 Verifying Netlist Connectivity
+
+Starting Connectivity Check Task
+
+Time (s): cpu = 00:00:00.02 ; elapsed = 00:00:00.03 . Memory (MB): peak = 3840.426 ; gain = 0.000 ; free physical = 2672 ; free virtual = 17978
+Phase 9.2 Verifying Netlist Connectivity | Checksum: 1effbf00b
+
+Time (s): cpu = 00:00:02 ; elapsed = 00:00:04 . Memory (MB): peak = 3840.426 ; gain = 32.016 ; free physical = 2672 ; free virtual = 17978
+Phase 9 Finalization | Checksum: 1effbf00b
+
+Time (s): cpu = 00:00:02 ; elapsed = 00:00:04 . Memory (MB): peak = 3840.426 ; gain = 32.016 ; free physical = 2672 ; free virtual = 17978
+Opt_design Change Summary
+=========================
+
+
+-------------------------------------------------------------------------------------------------------------------------
+|  Phase                        |  #Cells created  |  #Cells Removed  |  #Constrained objects preventing optimizations  |
+-------------------------------------------------------------------------------------------------------------------------
+|  Retarget                     |               0  |               0  |                                              1  |
+|  Constant propagation         |               0  |               0  |                                              0  |
+|  Sweep                        |               0  |               0  |                                           9252  |
+|  BUFG optimization            |               1  |               0  |                                              0  |
+|  Shift Register Optimization  |               0  |               0  |                                              0  |
+|  Post Processing Netlist      |               0  |               0  |                                              0  |
+-------------------------------------------------------------------------------------------------------------------------
+
+
+Ending Logic Optimization Task | Checksum: 1effbf00b
+
+Time (s): cpu = 00:00:02 ; elapsed = 00:00:04 . Memory (MB): peak = 3840.426 ; gain = 32.016 ; free physical = 2672 ; free virtual = 17978
+
+Starting Power Optimization Task
+INFO: [Pwropt 34-132] Skipping clock gating for clocks with a period < 2.00 ns.
+Ending Power Optimization Task | Checksum: 1effbf00b
+
+Time (s): cpu = 00:00:00.03 ; elapsed = 00:00:00.04 . Memory (MB): peak = 3840.426 ; gain = 0.000 ; free physical = 2672 ; free virtual = 17978
+
+Starting Final Cleanup Task
+Ending Final Cleanup Task | Checksum: 1effbf00b
+
+Time (s): cpu = 00:00:00.02 ; elapsed = 00:00:00.02 . Memory (MB): peak = 3840.426 ; gain = 0.000 ; free physical = 2672 ; free virtual = 17978
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.01 . Memory (MB): peak = 3840.426 ; gain = 0.000 ; free physical = 2672 ; free virtual = 17978
+INFO: [Common 17-83] Releasing license: Vivado_Implementation
+24 Infos, 0 Warnings, 0 Critical Warnings and 0 Errors encountered.
+opt_design completed successfully
+opt_design: Time (s): cpu = 00:00:17 ; elapsed = 00:00:31 . Memory (MB): peak = 3840.426 ; gain = 546.594 ; free physical = 2672 ; free virtual = 17978
+# place_design -directive [env_or B100_DIRECTIVE Default]
+Command: place_design -directive Default
+Attempting to get a license for feature 'Vivado_Implementation' and/or device 'xck26'
+INFO: [Common 17-349] Got license for feature 'Vivado_Implementation' and/or device 'xck26'
+INFO: [Common 17-83] Releasing license: Vivado_Implementation
+INFO: [Timing 38-35] Done setting XDC timing constraints.
+INFO: [Vivado_Tcl 4-2302] The placer was invoked with the 'Default' directive.
+Running DRC as a precondition to command place_design
+INFO: [Vivado_Tcl 4-198] DRC finished with 0 Errors
+INFO: [Vivado_Tcl 4-199] Please refer to the DRC report (report_drc) for more information.
+
+Starting Placer Task
+
+Phase 1 Placer Initialization
+
+Phase 1.1 Placer Initialization Netlist Sorting
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3840.426 ; gain = 0.000 ; free physical = 2670 ; free virtual = 17976
+Phase 1.1 Placer Initialization Netlist Sorting | Checksum: 155c99cfc
+
+Time (s): cpu = 00:00:00.09 ; elapsed = 00:00:00.09 . Memory (MB): peak = 3840.426 ; gain = 0.000 ; free physical = 2670 ; free virtual = 17976
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3840.426 ; gain = 0.000 ; free physical = 2670 ; free virtual = 17976
+
+Phase 1.2 IO Placement/ Clock Placement/ Build Placer Device
+Phase 1.2 IO Placement/ Clock Placement/ Build Placer Device | Checksum: 18a5ebd98
+
+Time (s): cpu = 00:00:34 ; elapsed = 00:00:39 . Memory (MB): peak = 4345.512 ; gain = 505.086 ; free physical = 2053 ; free virtual = 17373
+
+Phase 1.3 Build Placer Netlist Model
+Phase 1.3 Build Placer Netlist Model | Checksum: 21aabe1e1
+
+Time (s): cpu = 00:00:42 ; elapsed = 00:00:51 . Memory (MB): peak = 4345.512 ; gain = 505.086 ; free physical = 2072 ; free virtual = 17391
+
+Phase 1.4 Constrain Clocks/Macros
+Phase 1.4 Constrain Clocks/Macros | Checksum: 21aabe1e1
+
+Time (s): cpu = 00:00:42 ; elapsed = 00:00:51 . Memory (MB): peak = 4345.512 ; gain = 505.086 ; free physical = 2072 ; free virtual = 17391
+Phase 1 Placer Initialization | Checksum: 21aabe1e1
+
+Time (s): cpu = 00:00:42 ; elapsed = 00:00:51 . Memory (MB): peak = 4345.512 ; gain = 505.086 ; free physical = 2072 ; free virtual = 17391
+INFO: [Place 30-3162] Check ILP status : ILP-based clock placer completed successfully.
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.01 . Memory (MB): peak = 4345.512 ; gain = 0.000 ; free physical = 2072 ; free virtual = 17391
+
+Phase 2 Final Placement Cleanup
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00 . Memory (MB): peak = 4345.512 ; gain = 0.000 ; free physical = 2072 ; free virtual = 17391
+
+Time (s): cpu = 00:00:42 ; elapsed = 00:00:52 . Memory (MB): peak = 4345.512 ; gain = 505.086 ; free physical = 2072 ; free virtual = 17391
+INFO: [Place 30-281] No place-able instance is found; design doesn't contain any instance or all instances are placed
+Ending Placer Task | Checksum: 13713f4ed
+
+Time (s): cpu = 00:00:42 ; elapsed = 00:00:52 . Memory (MB): peak = 4345.512 ; gain = 505.086 ; free physical = 2072 ; free virtual = 17391
+8 Infos, 0 Warnings, 0 Critical Warnings and 0 Errors encountered.
+place_design completed successfully
+place_design: Time (s): cpu = 00:00:46 ; elapsed = 00:00:56 . Memory (MB): peak = 4345.512 ; gain = 505.086 ; free physical = 2072 ; free virtual = 17391
+# lap place
+# write_checkpoint -force ${out}_placed.dcp
+INFO: [Timing 38-480] Writing timing data to binary archive.
+Write ShapeDB Complete: Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 4345.512 ; gain = 0.000 ; free physical = 2067 ; free virtual = 17391
+Wrote PlaceDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 4345.512 ; gain = 0.000 ; free physical = 2067 ; free virtual = 17391
+Wrote PulsedLatchDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 4345.512 ; gain = 0.000 ; free physical = 2067 ; free virtual = 17391
+Writing XDEF routing.
+Writing XDEF routing logical nets.
+Writing XDEF routing special nets.
+Wrote RouteStorage: Time (s): cpu = 00:00:00.21 ; elapsed = 00:00:00.38 . Memory (MB): peak = 4345.512 ; gain = 0.000 ; free physical = 2069 ; free virtual = 17391
+Wrote PlaceStorage: Time (s): cpu = 00:00:00.3 ; elapsed = 00:00:00.32 . Memory (MB): peak = 4345.512 ; gain = 0.000 ; free physical = 2069 ; free virtual = 17393
+Wrote Netlist Cache: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 4345.512 ; gain = 0.000 ; free physical = 2069 ; free virtual = 17393
+Wrote Device Cache: Time (s): cpu = 00:00:00.03 ; elapsed = 00:00:00.03 . Memory (MB): peak = 4345.512 ; gain = 0.000 ; free physical = 2065 ; free virtual = 17392
+Write Physdb Complete: Time (s): cpu = 00:00:00.55 ; elapsed = 00:00:00.75 . Memory (MB): peak = 4345.512 ; gain = 0.000 ; free physical = 2065 ; free virtual = 17392
+INFO: [Common 17-1381] The checkpoint '/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/results/b100/c1/stamp_p3_41_placed.dcp' has been generated.
+# if {[env_or B100_UNTIL route] eq "place"} { return }
+# route_design
+Command: route_design
+Attempting to get a license for feature 'Vivado_Implementation' and/or device 'xck26'
+INFO: [Common 17-349] Got license for feature 'Vivado_Implementation' and/or device 'xck26'
+
+
+Starting Routing Task
+
+Phase 1 Build RT Design
+Checksum: PlaceDB: f6791988 ConstDB: 0 ShapeSum: 3f68de34 RouteDB: 131fd31
+Nodegraph reading from file.  Time (s): cpu = 00:00:01 ; elapsed = 00:00:02 . Memory (MB): peak = 4345.512 ; gain = 0.000 ; free physical = 2081 ; free virtual = 17400
+INFO: [Timing 38-35] Done setting XDC timing constraints.
+Post Restoration Checksum: NetGraph: 49fabe36 | NumContArr: 3757df6e | Constraints: a378b8f4 | Timing: c2a8fa9d
+Phase 1 Build RT Design | Checksum: 1e7745135
+
+Time (s): cpu = 00:00:17 ; elapsed = 00:00:23 . Memory (MB): peak = 4345.512 ; gain = 0.000 ; free physical = 1958 ; free virtual = 17274
+
+Phase 2 Router Initialization
+
+Phase 2.1 Fix Topology Constraints
+Phase 2.1 Fix Topology Constraints | Checksum: 1e7745135
+
+Time (s): cpu = 00:00:17 ; elapsed = 00:00:23 . Memory (MB): peak = 4345.512 ; gain = 0.000 ; free physical = 1958 ; free virtual = 17274
+
+Phase 2.2 Pre Route Cleanup
+Phase 2.2 Pre Route Cleanup | Checksum: 1e7745135
+
+Time (s): cpu = 00:00:17 ; elapsed = 00:00:23 . Memory (MB): peak = 4345.512 ; gain = 0.000 ; free physical = 1958 ; free virtual = 17274
+
+Phase 2.3 Global Clock Net Routing
+ Number of Nodes with overlaps = 0
+Phase 2.3 Global Clock Net Routing | Checksum: 2a3df6237
+
+Time (s): cpu = 00:00:20 ; elapsed = 00:00:27 . Memory (MB): peak = 4345.512 ; gain = 0.000 ; free physical = 1969 ; free virtual = 17285
+
+Phase 2.4 Update Timing
+Phase 2.4 Update Timing | Checksum: 37ee25397
+
+Time (s): cpu = 00:00:23 ; elapsed = 00:00:33 . Memory (MB): peak = 4345.512 ; gain = 0.000 ; free physical = 1988 ; free virtual = 17305
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=-0.275 | TNS=-34.913| WHS=0.078  | THS=0.000  |
+
+
+Phase 2.5 Soft Constraint Pins - Fast Budgeting
+Phase 2.5 Soft Constraint Pins - Fast Budgeting | Checksum: 392eb6d21
+
+Time (s): cpu = 00:00:27 ; elapsed = 00:00:39 . Memory (MB): peak = 4345.512 ; gain = 0.000 ; free physical = 2059 ; free virtual = 17376
+
+Router Utilization Summary
+  Global Vertical Routing Utilization    = 0 %
+  Global Horizontal Routing Utilization  = 0 %
+  Routable Net Status*
+  *Does not include unroutable nets such as driverless and loadless.
+  Run report_route_status for detailed report.
+  Number of Failed Nets               = 10
+    (Failed Nets is the sum of unrouted and partially routed nets)
+  Number of Unrouted Nets             = 9
+  Number of Partially Routed Nets     = 1
+  Number of Node Overlaps             = 0
+
+Phase 2 Router Initialization | Checksum: 393fcfb48
+
+Time (s): cpu = 00:00:28 ; elapsed = 00:00:43 . Memory (MB): peak = 4345.512 ; gain = 0.000 ; free physical = 2052 ; free virtual = 17369
+
+Phase 3 Global Routing
+Phase 3 Global Routing | Checksum: 393fcfb48
+
+Time (s): cpu = 00:00:28 ; elapsed = 00:00:43 . Memory (MB): peak = 4345.512 ; gain = 0.000 ; free physical = 2052 ; free virtual = 17369
+
+Phase 4 Initial Routing
+
+Phase 4.1 Initial Net Routing Pass
+Phase 4.1 Initial Net Routing Pass | Checksum: 26a8b59a4
+
+Time (s): cpu = 00:00:30 ; elapsed = 00:00:46 . Memory (MB): peak = 4345.512 ; gain = 0.000 ; free physical = 2054 ; free virtual = 17371
+Phase 4 Initial Routing | Checksum: 2190d8c72
+
+Time (s): cpu = 00:00:30 ; elapsed = 00:00:46 . Memory (MB): peak = 4345.512 ; gain = 0.000 ; free physical = 2054 ; free virtual = 17371
+
+Phase 5 Rip-up And Reroute
+
+Phase 5.1 Global Iteration 0
+ Number of Nodes with overlaps = 0
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=-0.273 | TNS=-33.580| WHS=0.027  | THS=0.000  |
+
+Phase 5.1 Global Iteration 0 | Checksum: 214684a0e
+
+Time (s): cpu = 00:00:35 ; elapsed = 00:00:53 . Memory (MB): peak = 4345.512 ; gain = 0.000 ; free physical = 2086 ; free virtual = 17395
+
+Phase 5.2 Additional Iteration for Hold
+Phase 5.2 Additional Iteration for Hold | Checksum: 2b7936d41
+
+Time (s): cpu = 00:00:36 ; elapsed = 00:00:54 . Memory (MB): peak = 4345.512 ; gain = 0.000 ; free physical = 2086 ; free virtual = 17395
+Phase 5 Rip-up And Reroute | Checksum: 2b7936d41
+
+Time (s): cpu = 00:00:36 ; elapsed = 00:00:54 . Memory (MB): peak = 4345.512 ; gain = 0.000 ; free physical = 2086 ; free virtual = 17395
+
+Phase 6 Delay and Skew Optimization
+
+Phase 6.1 Delay CleanUp
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=-0.273 | TNS=-33.580| WHS=0.027  | THS=0.000  |
+
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=-0.273 | TNS=-33.580| WHS=0.027  | THS=0.000  |
+
+Phase 6.1 Delay CleanUp | Checksum: 2422414ed
+
+Time (s): cpu = 00:00:39 ; elapsed = 00:01:00 . Memory (MB): peak = 4345.512 ; gain = 0.000 ; free physical = 2099 ; free virtual = 17408
+
+Phase 6.2 Clock Skew Optimization
+Phase 6.2 Clock Skew Optimization | Checksum: 2422414ed
+
+Time (s): cpu = 00:00:40 ; elapsed = 00:01:00 . Memory (MB): peak = 4345.512 ; gain = 0.000 ; free physical = 2099 ; free virtual = 17408
+Phase 6 Delay and Skew Optimization | Checksum: 2422414ed
+
+Time (s): cpu = 00:00:40 ; elapsed = 00:01:00 . Memory (MB): peak = 4345.512 ; gain = 0.000 ; free physical = 2099 ; free virtual = 17408
+
+Phase 7 Post Hold Fix
+
+Phase 7.1 Hold Fix Iter
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=-0.273 | TNS=-33.580| WHS=0.027  | THS=0.000  |
+
+Phase 7.1 Hold Fix Iter | Checksum: 2422414ed
+
+Time (s): cpu = 00:00:41 ; elapsed = 00:01:03 . Memory (MB): peak = 4345.512 ; gain = 0.000 ; free physical = 2096 ; free virtual = 17405
+Phase 7 Post Hold Fix | Checksum: 2422414ed
+
+Time (s): cpu = 00:00:41 ; elapsed = 00:01:03 . Memory (MB): peak = 4345.512 ; gain = 0.000 ; free physical = 2096 ; free virtual = 17405
+
+Phase 8 Route finalize
+
+Router Utilization Summary
+  Global Vertical Routing Utilization    = 0.0121643 %
+  Global Horizontal Routing Utilization  = 0.00538061 %
+  Routable Net Status*
+  *Does not include unroutable nets such as driverless and loadless.
+  Run report_route_status for detailed report.
+  Number of Failed Nets               = 0
+    (Failed Nets is the sum of unrouted and partially routed nets)
+  Number of Unrouted Nets             = 0
+  Number of Partially Routed Nets     = 0
+  Number of Node Overlaps             = 0
+
+
+--GLOBAL Congestion:
+Utilization threshold used for congestion level computation: 0.85
+Congestion Report
+North Dir 1x1 Area, Max Cong = 7.51174%, No Congested Regions.
+South Dir 1x1 Area, Max Cong = 6.25%, No Congested Regions.
+East Dir 1x1 Area, Max Cong = 6%, No Congested Regions.
+West Dir 1x1 Area, Max Cong = 7.31707%, No Congested Regions.
+
+------------------------------
+Reporting congestion hotspots
+------------------------------
+Direction: North
+----------------
+Congested clusters found at Level 0
+Effective congestion level: 0 Aspect Ratio: 1 Sparse Ratio: 0
+Direction: South
+----------------
+Congested clusters found at Level 0
+Effective congestion level: 0 Aspect Ratio: 1 Sparse Ratio: 0
+Direction: East
+----------------
+Congested clusters found at Level 0
+Effective congestion level: 0 Aspect Ratio: 1 Sparse Ratio: 0
+Direction: West
+----------------
+Congested clusters found at Level 0
+Effective congestion level: 0 Aspect Ratio: 1 Sparse Ratio: 0
+
+Phase 8 Route finalize | Checksum: 2422414ed
+
+Time (s): cpu = 00:00:42 ; elapsed = 00:01:04 . Memory (MB): peak = 4345.512 ; gain = 0.000 ; free physical = 2103 ; free virtual = 17412
+
+Phase 9 Verifying routed nets
+
+ Verification completed successfully
+Phase 9 Verifying routed nets | Checksum: 2422414ed
+
+Time (s): cpu = 00:00:42 ; elapsed = 00:01:04 . Memory (MB): peak = 4345.512 ; gain = 0.000 ; free physical = 2103 ; free virtual = 17412
+
+Phase 10 Depositing Routes
+Phase 10 Depositing Routes | Checksum: 2422414ed
+
+Time (s): cpu = 00:00:43 ; elapsed = 00:01:08 . Memory (MB): peak = 4345.512 ; gain = 0.000 ; free physical = 2066 ; free virtual = 17371
+
+Phase 11 Resolve XTalk
+Phase 11 Resolve XTalk | Checksum: 2422414ed
+
+Time (s): cpu = 00:00:43 ; elapsed = 00:01:08 . Memory (MB): peak = 4345.512 ; gain = 0.000 ; free physical = 2062 ; free virtual = 17367
+
+Phase 12 Post Process Routing
+Phase 12 Post Process Routing | Checksum: 2422414ed
+
+Time (s): cpu = 00:00:43 ; elapsed = 00:01:08 . Memory (MB): peak = 4345.512 ; gain = 0.000 ; free physical = 2050 ; free virtual = 17355
+
+Phase 13 Post Router Timing
+INFO: [Route 35-57] Estimated Timing Summary | WNS=-0.273 | TNS=-33.580| WHS=0.027  | THS=0.000  |
+
+WARNING: [Route 35-328] Router estimated timing not met.
+Resolution: For a complete and accurate timing signoff, report_timing_summary must be run after route_design. Alternatively, route_design can be run with the -timing_summary option to enable a complete timing signoff at the end of route_design.
+Phase 13 Post Router Timing | Checksum: 2422414ed
+
+Time (s): cpu = 00:00:43 ; elapsed = 00:01:08 . Memory (MB): peak = 4345.512 ; gain = 0.000 ; free physical = 2050 ; free virtual = 17355
+Time taken to check if laguna hold fix is required (in secs): 0
+
+Phase 14 Physical Synthesis in Router
+
+Phase 14.1 Physical Synthesis Initialization
+INFO: [Physopt 32-668] Current Timing Summary | WNS=-0.262 | TNS=-29.731 | WHS=0.028 | THS=0.000 |
+Phase 14.1 Physical Synthesis Initialization | Checksum: 2422414ed
+
+Time (s): cpu = 00:00:59 ; elapsed = 00:01:27 . Memory (MB): peak = 4345.512 ; gain = 0.000 ; free physical = 2057 ; free virtual = 17363
+
+Phase 14.2 Critical Path Optimization
+INFO: [Physopt 32-668] Current Timing Summary | WNS=-0.262 | TNS=-29.731 | WHS=0.028 | THS=0.000 |
+INFO: [Physopt 32-952] Improved path group WNS = -0.243. Path group: c2/clk. Processed net: c2/u_core/Q[58].
+INFO: [Physopt 32-952] Improved path group WNS = -0.254. Path group: c3/clk. Processed net: c3/u_core/Q[58].
+INFO: [Physopt 32-952] Improved path group WNS = -0.246. Path group: c3/clk. Processed net: c3/u_core/acc[26].
+INFO: [Physopt 32-952] Improved path group WNS = -0.244. Path group: c3/clk. Processed net: c3/u_core/Q[29].
+INFO: [Physopt 32-952] Improved path group WNS = -0.238. Path group: c3/clk. Processed net: c3/u_core/acc[10].
+INFO: [Physopt 32-952] Improved path group WNS = -0.236. Path group: c2/clk. Processed net: c2/u_core/acc[26].
+INFO: [Physopt 32-952] Improved path group WNS = -0.237. Path group: c3/clk. Processed net: c3/u_core/Q[39].
+INFO: [Physopt 32-952] Improved path group WNS = -0.229. Path group: c3/clk. Processed net: c3/u_core/acc[30].
+INFO: [Physopt 32-952] Improved path group WNS = -0.235. Path group: c2/clk. Processed net: c2/u_core/Q[39].
+INFO: [Physopt 32-952] Improved path group WNS = -0.233. Path group: c2/clk. Processed net: c2/u_core/Q[29].
+INFO: [Physopt 32-952] Improved path group WNS = -0.226. Path group: c2/clk. Processed net: c2/u_core/acc[10].
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: c3/clk. Processed net: c3/u_core/Q[62].
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: c3/clk. Processed net: c3/sh[16].
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: c3/clk. Processed net: c3/u_core/acc[30]_i_2_n_0.
+INFO: [Physopt 32-952] Improved path group WNS = -0.218. Path group: c2/clk. Processed net: c2/u_core/acc[30].
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: c2/clk. Processed net: c2/u_core/Q[62].
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: c2/clk. Processed net: c2/sh[25].
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: c2/clk. Processed net: c2/u_core/acc[30]_i_2_n_0.
+INFO: [Physopt 32-952] Improved path group WNS = -0.166. Path group: c1/clk. Processed net: c1/u_core/Q[58].
+INFO: [Physopt 32-952] Improved path group WNS = -0.153. Path group: c0/clk. Processed net: c0/u_core/Q[58].
+INFO: [Physopt 32-952] Improved path group WNS = -0.157. Path group: c1/clk. Processed net: c1/u_core/acc[26].
+INFO: [Physopt 32-952] Improved path group WNS = -0.156. Path group: c1/clk. Processed net: c1/u_core/Q[29].
+INFO: [Physopt 32-952] Improved path group WNS = -0.151. Path group: c1/clk. Processed net: c1/u_core/acc[10].
+INFO: [Physopt 32-952] Improved path group WNS = -0.150. Path group: c0/clk. Processed net: c0/u_core/acc[26].
+INFO: [Physopt 32-952] Improved path group WNS = -0.150. Path group: c1/clk. Processed net: c1/u_core/Q[39].
+INFO: [Physopt 32-952] Improved path group WNS = -0.143. Path group: c0/clk. Processed net: c0/u_core/Q[29].
+INFO: [Physopt 32-952] Improved path group WNS = -0.142. Path group: c1/clk. Processed net: c1/u_core/acc[30].
+INFO: [Physopt 32-952] Improved path group WNS = -0.140. Path group: c0/clk. Processed net: c0/u_core/Q[39].
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: c1/clk. Processed net: c1/u_core/Q[62].
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: c1/clk. Processed net: c1/sh[25].
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: c1/clk. Processed net: c1/u_core/acc[30]_i_2_n_0.
+INFO: [Physopt 32-952] Improved path group WNS = -0.137. Path group: c0/clk. Processed net: c0/u_core/acc[10].
+INFO: [Physopt 32-952] Improved path group WNS = -0.134. Path group: c0/clk. Processed net: c0/u_core/acc[30].
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: c0/clk. Processed net: c0/u_core/Q[62].
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: c0/clk. Processed net: c0/sh[25].
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: c0/clk. Processed net: c0/u_core/acc[30]_i_2_n_0.
+INFO: [Physopt 32-668] Current Timing Summary | WNS=-0.229 | TNS=-26.328 | WHS=0.011 | THS=0.000 |
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.01 . Memory (MB): peak = 4345.512 ; gain = 0.000 ; free physical = 2051 ; free virtual = 17356
+Phase 14.2 Critical Path Optimization | Checksum: 2074ac17d
+
+Time (s): cpu = 00:01:04 ; elapsed = 00:01:33 . Memory (MB): peak = 4345.512 ; gain = 0.000 ; free physical = 2051 ; free virtual = 17356
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.01 . Memory (MB): peak = 4345.512 ; gain = 0.000 ; free physical = 2051 ; free virtual = 17356
+INFO: [Physopt 32-669] Post Physical Optimization Timing Summary | WNS=-0.229 | TNS=-26.328 | WHS=0.011 | THS=0.000 |
+Phase 14 Physical Synthesis in Router | Checksum: 254b65313
+
+Time (s): cpu = 00:01:04 ; elapsed = 00:01:33 . Memory (MB): peak = 4345.512 ; gain = 0.000 ; free physical = 2051 ; free virtual = 17356
+Total Elapsed time in route_design: 92.95 secs
+
+Phase 15 Post-Route Event Processing
+Phase 15 Post-Route Event Processing | Checksum: 218afa78e
+
+Time (s): cpu = 00:01:04 ; elapsed = 00:01:33 . Memory (MB): peak = 4345.512 ; gain = 0.000 ; free physical = 2051 ; free virtual = 17356
+INFO: [Route 35-16] Router Completed Successfully
+Ending Routing Task | Checksum: 218afa78e
+
+Time (s): cpu = 00:01:04 ; elapsed = 00:01:33 . Memory (MB): peak = 4345.512 ; gain = 0.000 ; free physical = 2051 ; free virtual = 17356
+
+Routing Is Done.
+INFO: [Common 17-83] Releasing license: Vivado_Implementation
+50 Infos, 1 Warnings, 0 Critical Warnings and 0 Errors encountered.
+route_design completed successfully
+route_design: Time (s): cpu = 00:01:04 ; elapsed = 00:01:33 . Memory (MB): peak = 4345.512 ; gain = 0.000 ; free physical = 2045 ; free virtual = 17354
+# lap route
+# write_checkpoint -force ${out}_routed.dcp
+INFO: [Timing 38-480] Writing timing data to binary archive.
+Write ShapeDB Complete: Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 4345.512 ; gain = 0.000 ; free physical = 2041 ; free virtual = 17350
+Wrote PlaceDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 4345.512 ; gain = 0.000 ; free physical = 2041 ; free virtual = 17350
+Wrote PulsedLatchDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 4345.512 ; gain = 0.000 ; free physical = 2041 ; free virtual = 17350
+Writing XDEF routing.
+Writing XDEF routing logical nets.
+Writing XDEF routing special nets.
+Wrote RouteStorage: Time (s): cpu = 00:00:00.19 ; elapsed = 00:00:00.2 . Memory (MB): peak = 4345.512 ; gain = 0.000 ; free physical = 2039 ; free virtual = 17350
+Wrote PlaceStorage: Time (s): cpu = 00:00:00.28 ; elapsed = 00:00:00.31 . Memory (MB): peak = 4345.512 ; gain = 0.000 ; free physical = 2037 ; free virtual = 17350
+Wrote Netlist Cache: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 4345.512 ; gain = 0.000 ; free physical = 2037 ; free virtual = 17350
+Wrote Device Cache: Time (s): cpu = 00:00:00.02 ; elapsed = 00:00:00.02 . Memory (MB): peak = 4345.512 ; gain = 0.000 ; free physical = 2033 ; free virtual = 17349
+Write Physdb Complete: Time (s): cpu = 00:00:00.51 ; elapsed = 00:00:00.56 . Memory (MB): peak = 4345.512 ; gain = 0.000 ; free physical = 2033 ; free virtual = 17349
+INFO: [Common 17-1381] The checkpoint '/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/results/b100/c1/stamp_p3_41_routed.dcp' has been generated.
+# write_run_json $out $times $::env(B100_PART) $period
+# block_paths $out
+# report_timing -setup -max_paths 3 -file ${out}_timing.rpt
+INFO: [Timing 38-78] ReportTimingParams: -max_paths 3 -nworst 1 -delay_type max -sort_by slack.
+INFO: [Common 17-206] Exiting Vivado at Tue Nov 17 16:16:42 2026...

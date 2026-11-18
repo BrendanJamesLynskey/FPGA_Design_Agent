@@ -9,7 +9,7 @@ A Kria KR260 design that carries our own 10GBASE-R PCS (64B/66B, scrambler, gear
 not: an interoperability proof: a PCS talking to itself accepts its own symmetric mistakes, only a network card proves it; the full 58A trading core (book, rule table, interlocks, ARP) at 64 bits: trade64 is a small stand-in with one rule; the reconciliation sublayer link-fault state machine, the BER monitor, an ARP or ICMP responder
 
 ## state
-stage=built vivado=2026.1 kb_pin=2338b83 build_id=2d559734
+stage=built vivado=2026.1 kb_pin=93d158c build_id=637c3086
 gates: build_2026_1=pass
 
 ## interface
@@ -28,20 +28,20 @@ designs/b96_kr260_10g/rtl/pcs_tx.sv e0e68141d9: transmit PCS (encode, scramble, 
 designs/b96_kr260_10g/rtl/pcs_rx.sv 0065dd34d9: receive PCS (gearbox with slip, block lock, descramble, decode)
 designs/b96_kr260_10g/rtl/mac64_tx.sv 0cbc07b026: 64-bit MAC transmitter
 designs/b96_kr260_10g/rtl/mac64_rx.sv 35a0ed74f5: 64-bit MAC receiver
-designs/b96_kr260_10g/rtl/frame_src.sv 2b72ce74c5: frame builder for orders, feed, probe and test frames
-designs/b96_kr260_10g/rtl/trade64.sv 09b28ff824: the 64-bit mock trading decision
-designs/b96_kr260_10g/rtl/tx_path.sv 96f37455a0: transmit domain: sources, generator, timestamps
-designs/b96_kr260_10g/rtl/rx_path.sv d17b21f834: receive domain: PCS, MAC, decision, counters
-designs/b96_kr260_10g/rtl/b96_core.sv 87e4a5d7d8: registers, GT wrapper and clock-domain crossings
+designs/b96_kr260_10g/rtl/frame_src.sv a745598f6a: frame builder for orders, feed, probe and test frames
+designs/b96_kr260_10g/rtl/trade64.sv 1999e01a37: the 64-bit mock trading decision
+designs/b96_kr260_10g/rtl/tx_path.sv e7801f4c71: transmit domain: sources, generator, timestamps
+designs/b96_kr260_10g/rtl/rx_path.sv 870783186e: receive domain: PCS, MAC, decision, counters
+designs/b96_kr260_10g/rtl/b96_core.sv d9aa7ad8a1: registers, GT wrapper and clock-domain crossings
 designs/b96_kr260_10g/rtl/kr260_10g_top.sv 79baa37536: board top (MMCM, SYSMON, pins)
 designs/b96_kr260_10g/rtl/hs_vec.sv bb5cad4fa9: coherent vector crossing
 designs/b96_kr260_10g/model/pcs.py 92790d45d7: bit-serial Python reference of the PCS (the twin)
 designs/b96_kr260_10g/design.xdc 4dec8c5ba8: pins, clocks, slow-pin constraints
 designs/b96_kr260_10g/docs/design.md f410e6c00f: design note: decisions and alternatives
-designs/b96_kr260_10g/docs/board_run_plan.md 0d3f8fd49c: stage 3 plan for the board
-designs/b96_kr260_10g/docs/what_we_found.md d1095afbeb: results and gaps
-designs/b96_kr260_10g/regmap.py 60923fc43a: register map as data
-designs/b96_kr260_10g/docs/register_map.md a4f09edf86: interface datasheet
+designs/b96_kr260_10g/docs/board_run_plan.md 678413f0be: stage 3 plan for the board
+designs/b96_kr260_10g/docs/what_we_found.md 3c8502e3cf: results and gaps
+designs/b96_kr260_10g/regmap.py a2d9438a21: register map as data
+designs/b96_kr260_10g/docs/register_map.md 5c595e1a5f: interface datasheet
 
 ## commands
 simulate the PCS, MAC and core against the Python reference (~2min): python -m pytest -q designs/b96_kr260_10g/tests

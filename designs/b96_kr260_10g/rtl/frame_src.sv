@@ -11,6 +11,7 @@ module frame_src (
     input  logic        clk,
     input  logic        rst,
     input  logic        start,
+    input  logic        clr,            // clear `stale` (the counter clear)
     input  logic [1:0]  kind,
     input  logic [15:0] len,
     input  logic [47:0] dst_mac,        // byte 0 (first on the wire) in bits 7:0
@@ -26,6 +27,8 @@ module frame_src (
     input  logic [31:0] want_seq,
     output logic        busy,
     output logic [31:0] stale,
+    output logic        stale_p,        // one clock: this frame's sampled sequence did not equal `want_seq` (the clock `stale` counts it)
+    output logic [31:0] seq_seen,       // the sequence the frame carries (valid with stale_p)
     output logic        s_valid,
     output logic [63:0] s_data,
     output logic        s_last,
@@ -92,6 +95,8 @@ module frame_src (
     assign nword = (nidx >= 16'd9) ? ((s_ready && idx >= 16'd8) ? xs(xr) : xr) : V[64 * nidx[3:0] +: 64];
     assign s_last = (idx == last_idx);
     assign s_nb1  = s_last ? 3'(len_r - 16'd8 * last_idx - 16'd1) : 3'd7;
+    assign stale_p = busy && idx == 16'd3 && s_ready && (f_seq != want_seq);
+    assign seq_seen = f_seq;
     always_ff @(posedge clk) begin
         if (rst) begin
             busy <= 1'b0; s_valid <= 1'b0; idx <= '0; stale <= '0; s_data <= '0; xr <= 64'h9E3779B97F4A7C15; k_r <= '0; len_r <= 16'd66;
@@ -115,6 +120,7 @@ module frame_src (
                     if (idx >= 16'd8) xr <= xs(xr);
                 end
             end
+            if (clr) stale <= '0;
         end
     end
 endmodule

@@ -9,10 +9,11 @@ import yaml
 from agent.core.runner import LocalRunner, RunResult
 from agent.core.session import ROOT
 from agent.graph import run as gr
-from agent.graph.contract import MODEL_CONTRACT, contract_argv, parse_result
+from agent.graph.contract import contract_argv, parse_result
 from agent.graph.roles import RoleJail
 from agent.graph.spec_schema import SpecError, load_spec, rate_params, validate
 from agent.graph.stages import MACHINE, exit_check
+from agent.tests.prompt_checks import has
 
 T1 = ROOT / "designs" / "t1_dimmer_counter"
 GOOD = yaml.safe_load((T1 / "spec.yaml").read_text())
@@ -116,6 +117,7 @@ def test_contract_is_a_stage_2_gate_and_in_both_prompts():
     assert "model_contract" in MACHINE[2].gates
     assert not exit_check(MACHINE[2], {"lint": {"ok": True}, "simulate": {"ok": True},
                                        "contract": {"ok": False, "error": "boom"}})[0]
+    from agent.graph.contract import MODEL_CONTRACT
     assert MODEL_CONTRACT in gr.PROMPTS["model"] and MODEL_CONTRACT in gr.PROMPTS["tests"]
 
 
@@ -158,7 +160,7 @@ def test_interview_asks_for_the_cycle_count_and_rewrites_the_parameter(rt):
 
 
 def test_clarify_prompt_demands_integer_cycle_counts():
-    assert "INTEGER CYCLE COUNTS" in gr.PROMPTS["clarify"]
+    assert has(gr.PROMPTS["clarify"], "e12c0e6f6edb1800251e741a462a726957f982290afca228faafe0d0390d3aa4:20")        # the clarify prompt asks for integer cycle counts
 
 
 # --- fix 4: superseded files are deleted --------------------------------------------------------------------------

@@ -13,6 +13,7 @@ import pytest
 
 from flow import mutate as M, verif_gates as G
 from flow.tests.test_05j_gate_preconditions import _plan, _seeds
+from agent.tests.prompt_checks import has
 
 ROOT = Path(__file__).resolve().parents[2]
 T1 = ROOT / "designs" / "t1_dimmer_counter"
@@ -178,6 +179,6 @@ def test_tests_role_checklist_and_prompt_state_the_floors_and_name_no_missing_to
     rt = SimpleNamespace(cfg=SimpleNamespace(name="t1_dimmer_counter", verif_level="V3"))
     chk = R.tests_checklist(rt, 2, False)
     assert "flow/verif_floors.yaml" in chk and "ignored" in chk and text in chk and "10, or every candidate" in chk
-    assert "below the harness floor" in R.CONVENTIONS
+    assert has(R.CONVENTIONS, "c5fcd5a0b2d1099534c1cd73a820181679a8913ea1c4f933d31a83562c03b4ea:23")        # the conventions tell the Designer about the harness floors
     for word in ("`mutate`", "`simulate`", "mutate(", "simulate("):
         assert word not in chk.split("7. V3 floors")[1].split("8.")[0]

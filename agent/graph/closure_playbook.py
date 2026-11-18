@@ -20,6 +20,8 @@ Every strategy names:
 
 from __future__ import annotations
 
+from agent.core.prompts import load as _p
+
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -33,181 +35,115 @@ class Strategy:
     cls: str                     # strategy class: the stall rule moves to another class, not another strategy of one class
     goal: str                    # G2 | G3 | G4 | CHK
     title: str
-    instructions: str
+    instr_ref: str               # the prompt's name in the private knowledge repository (brief 99); read it as ``instructions``
     predicted: dict[str, str] = field(default_factory=dict)   # resource -> "+" / "-" (what it usually costs or saves)
     phase: str = "ready"                        # ready | gated (offered only with a stated reason) | later
     stage: str = "rtl"                          # rtl | constraints | architecture | spec: the earliest stage it changes
     hard: bool = False                          # moves work onto a hard resource (DSP, BRAM, SRL, carry chain)
 
+    @property
+    def instructions(self) -> str:
+        return _p(self.instr_ref)
 
-_KEEP = (" Keep every port and the externally visible behaviour; extra latency is allowed only where the handshake "
-         "(busy/valid) already covers it, and every signal that travels beside the data must be delayed to match.")
+
 
 TIMING: tuple[Strategy, ...] = (
     Strategy("t_plan_map", "resource_map", "G2", "implement the plan's resource mapping",
-             "The design-time plan (TIMING_PLAN.md, below) put operations on hard resources that synthesis did not infer. "
-             "Rewrite those operations with the plan's templates so synthesis infers the planned DSP48E1 or block RAM, with "
-             "the pipeline registers the plan lists." + _KEEP,
+             "graph/closure_playbook/t_plan_map",
              {"dsp": "+", "ff": "-", "lut": "-", "latency": "+"}, hard=True),
     Strategy("t_dsp_map", "resource_map", "G2", "map a multiply built in LUTs to a DSP48E1 with its pipeline registers",
-             "The failing path is a long carry chain with no DSP on it: a multiply (or multiply-add) built from LUTs and "
-             "CARRY4. Write the multiply so synthesis puts it in a DSP48E1: registered operands, then the product registered "
-             "(MREG), then the following add registered (PREG); no asynchronous reset on those registers, operands within "
-             "25 x 18 bits signed. If a table lookup or other logic feeds the operands, register its output first so it is "
-             "not in series with the multiply. Add the matching delay to any control or valid signal that travels beside "
-             "the data, and extend busy (or the equivalent) by the clocks you add.",
+             "graph/closure_playbook/t_dsp_map",
              {"dsp": "+", "ff": "+", "lut": "-", "latency": "+"}, hard=True),
     Strategy("t_pipeline", "pipeline", "G2", "pipeline the long path (add a register stage)",
-             "Cut the failing path with a register stage near the middle of its delay, at the cell boundary the report "
-             "shows (after the table lookup, after the multiply, between adder levels). Delay every signal that travels "
-             "beside the data (valid, index, enable) by the same number of clocks, and extend busy (or the equivalent "
-             "handshake) by the clocks you add, so the externally visible behaviour is unchanged apart from that latency.",
+             "graph/closure_playbook/t_pipeline",
              {"ff": "+", "latency": "+"}),
     Strategy("t_carry_split", "carry_split", "G2", "split a wide add, accumulate or compare chain across clocks",
-             "The failing path is a long carry chain of additions or comparisons that is not a multiply (a ones'-complement "
-             "checksum fold, a running sum, a length or address compare). Do not map it to a DSP. Keep the running sum "
-             "unfolded and add the words as they arrive; fold the carries and compare in one or two later registered stages "
-             "(a stage that adds the high half to the low half, a stage that adds the last carry and compares with the "
-             "constant). Compare against registered operands, not against a sum computed in the same clock. The result is "
-             "needed only at the end of the frame or message, so the extra stages cost latency, not throughput. Delay every "
-             "signal that travels beside the result by the same number of clocks." + _KEEP,
+             "graph/closure_playbook/t_carry_split",
              {"ff": "+", "latency": "+"}),
     Strategy("t_verdict_reg", "verdict", "G2", "register the end-of-frame verdict, act on it one clock later",
-             "The failing path ends at a control input (reset, clock enable or write enable) and starts at the registers of a "
-             "check that is computed once per frame (checksums, lengths, header fields). Register the verdict (and the "
-             "flags that go with it, such as 'store this frame') on the clock it is computed, and take the action that the "
-             "verdict drives (start a reply, set busy, raise an event) one clock later from the registered copy. A value the "
-             "action reads that the next frame can overwrite in that clock (a length, a flag set on the last beat) must be "
-             "copied into the same stage. Anything that used the verdict in the same clock to protect a buffer must be "
-             "re-derived from state that is known earlier (for example decide on the frame's later bytes instead of its first, "
-             "if the early bytes are never read back), so that the observable behaviour does not change." + _KEEP,
+             "graph/closure_playbook/t_verdict_reg",
              {"ff": "+", "latency": "+"}),
     Strategy("t_fanout", "fanout", "G2", "register or replicate a high-fanout net on the path",
-             "A net on the failing path drives many loads (see 'largest fanout'). Replicate its driving register (one copy "
-             "per group of loads) or add `(* max_fanout = 16 *)` to it, or register the decoded value it feeds so the "
-             "decode is not in series with the rest of the path. Do not change behaviour or latency.",
+             "graph/closure_playbook/t_fanout",
              {"ff": "+"}),
     Strategy("t_tree", "tree", "G2", "balance a deep adder or comparator tree",
-             "The failing path chains several adds or compares one after another. Restructure them as a balanced tree "
-             "(pairwise adds), register between tree levels if one level is still too long, and keep the arithmetic exact "
-             "(same widths, same rounding and shift).",
+             "graph/closure_playbook/t_tree",
              {"ff": "+", "latency": "+"}),
     Strategy("t_retime", "retime", "G2", "retime: move an existing register across logic",
-             "Move an existing register earlier or later along the failing path so the logic on either side is balanced "
-             "(for example register the decoded table value instead of the index that feeds the table). Keep the latency "
-             "of every output the same.",
+             "graph/closure_playbook/t_retime",
              {"ff": "+"}),
     Strategy("t_exception", "exception", "G2", "multicycle or false-path exception (only where the protocol proves it)",
-             "spec.yaml states a multicycle protocol for this path. Write the exception in the design's XDC with "
-             "set_multicycle_path -setup N and the matching -hold N-1, on the exact registers the protocol covers, never "
-             "on a whole clock; the flow's exception check audits it.",
+             "graph/closure_playbook/t_exception",
              {"wns": "+"}, phase="gated", stage="constraints"),
     Strategy("t_impl", "implementation", "G2", "implementation directives or strategies",
-             "Not offered yet (a later phase).", {}, phase="later", stage="constraints"),
+             "graph/closure_playbook/t_impl", {}, phase="later", stage="constraints"),
 )
 
 AREA: tuple[Strategy, ...] = (
     Strategy("a_ram", "ram_infer", "G3", "infer block RAM instead of registers",
-             "Synthesis built a memory (or a deep register array) in flip-flops and LUT multiplexers. Rewrite it with the "
-             "block-RAM inference template: one `always_ff` with a registered read (`rdata <= mem[raddr]`), a write port "
-             "`if (we) mem[waddr] <= wdata`, no reset on the array, and `(* ram_style = \"block\" *)`. A one-clock 'clear "
-             "all' becomes a valid bit per entry or a clearing sweep the handshake already covers." + _KEEP,
+             "graph/closure_playbook/a_ram",
              {"bram_tile": "+", "ff": "-", "lut": "-", "latency": "+"}, hard=True),
     Strategy("a_dsp", "dsp_map", "G3", "move multiplies built in LUTs onto DSP48E1 slices",
-             "Multiplies are built from LUTs and CARRY4 (see the LUT users and the carry count). Write each so synthesis "
-             "puts it in a DSP48E1 (registered operands, registered product, operands within 25 x 18 signed); this frees "
-             "the LUTs." + _KEEP,
+             "graph/closure_playbook/a_dsp",
              {"dsp": "+", "lut": "-", "latency": "+"}, hard=True),
     Strategy("a_srl", "srl", "G3", "use SRL shift registers for delay lines",
-             "Delay lines and pipelines of flip-flops with no reset and no tap in the middle can be packed into SRL16/SRL32 "
-             "LUTs: remove the reset from those registers (they still reach a known value once the line has been "
-             "filled; keep the reset on the valid bits that travel beside them) and write them as a shift register. "
-             "Behaviour and latency must not change.",
+             "graph/closure_playbook/a_srl",
              {"ff": "-", "lut": "+"}, hard=True),
     Strategy("a_bram_merge", "bram_merge", "G3", "use both ports of one block RAM instead of two RAMs",
-             "The design uses more block RAM than the budget. Find memories that hold the same data or are small enough "
-             "to share one RAMB36/RAMB18: a duplicated copy made only to get a second read port can be one true dual-port "
-             "RAM (port A and port B, each read or write), with the ports shared in time where needed (for example the "
-             "user read port and the internal read-modify-write use port B on different clocks, as the handshake allows). "
-             "Two small memories can share one RAM at different address ranges. The data must stay exactly the same." + _KEEP,
+             "graph/closure_playbook/a_bram_merge",
              {"bram_tile": "-", "lut": "+", "latency": "+"}, hard=True),
     Strategy("a_lutram", "lutram", "G3", "move a small memory from block RAM to distributed (LUT) RAM",
-             "A memory that is small (a few thousand bits) or needs extra read ports can live in distributed RAM: write it "
-             "with an asynchronous or registered read and `(* ram_style = \"distributed\" *)`. It costs LUTs (about one "
-             "LUT per 64 bits per read port) and frees block RAM." + _KEEP,
+             "graph/closure_playbook/a_lutram",
              {"bram_tile": "-", "lut": "+"}),
     Strategy("a_dsp_share", "share", "G3", "share one DSP48E1 across cycles (time-multiplex)",
-             "The design uses more DSP slices than the budget. Where the handshake gives several clocks per result, "
-             "compute the multiplies one after another on one DSP48E1 (a small sequencer and operand multiplexers), and "
-             "extend busy (or the equivalent) by the clocks this adds." + _KEEP,
+             "graph/closure_playbook/a_dsp_share",
              {"dsp": "-", "lut": "+", "ff": "+", "latency": "+"}),
     Strategy("a_lut_mult", "lut_mult", "G3", "build a small multiply in LUTs instead of a DSP48E1",
-             "A multiply whose narrower operand is small (a few bits, or a constant) can be built from LUTs or as shifts "
-             "and adds, which frees a DSP slice. Keep the arithmetic exact, and register the result if the path is long.",
+             "graph/closure_playbook/a_lut_mult",
              {"dsp": "-", "lut": "+", "wns": "-"}),
     Strategy("a_narrow", "narrow", "G3", "narrow an over-wide datapath or memory",
-             "Registers, adders or memory words are wider than the values they can hold (check the ranges the spec gives). "
-             "Narrow them to the width the spec needs; results must stay bit for bit the same at the ports.",
+             "graph/closure_playbook/a_narrow",
              {"lut": "-", "ff": "-", "bram_tile": "-"}),
     Strategy("a_unused", "unused", "G3", "remove logic the design does not use",
-             "Remove logic whose outputs never reach a port (synthesis keeps it only because the RTL ties it to something "
-             "observable, such as a debug register). Do not remove anything the spec names.",
+             "graph/closure_playbook/a_unused",
              {"lut": "-", "ff": "-"}),
     Strategy("a_latch", "latch", "G3", "remove an inferred latch",
-             "Synthesis inferred a latch: a combinational block does not assign the named signal on every path. Give it a "
-             "default assignment at the top of the block (or make it a register if it is meant to hold its value).",
+             "graph/closure_playbook/a_latch",
              {"lut": "-"}),
     Strategy("a_io", "io", "G3", "fewer I/O pins (a spec change)",
-             "The design needs more I/O pins than the budget; only the spec can remove or multiplex ports.",
+             "graph/closure_playbook/a_io",
              {}, phase="gated", stage="spec"),
 )
 
 POWER: tuple[Strategy, ...] = (
     Strategy("p_bram_en", "bram_enable", "G4", "enable block RAM only when it is accessed",
-             "Block RAM power is a large share of the dynamic power, and the RAMs are enabled on every clock. Give each "
-             "RAM port an enable that is true only on the clocks it is read or written (`if (en) rdata <= mem[raddr]`), so "
-             "the RAM is idle otherwise. A registered read output must hold its last value while not enabled, so check "
-             "every reader still sees the data at the same clock." + _KEEP,
+             "graph/closure_playbook/p_bram_en",
              {"power": "-"}, hard=True),
     Strategy("p_gate", "toggle", "G4", "gate data on valid (operand isolation)",
-             "Signals and logic toggle on clocks where their result is not used. Register operands only when their valid "
-             "(or enable) is true, and hold multiplexer selects and wide buses steady when idle, so the datapath does not "
-             "toggle on idle clocks. Behaviour at the ports must not change.",
+             "graph/closure_playbook/p_gate",
              {"power": "-", "lut": "+"}),
     Strategy("p_ce", "clock_enable", "G4", "clock enables instead of free-running registers",
-             "Registers load on every clock even when their value does not change. Give register groups a clock enable "
-             "(load only when the stage has new data); Vivado maps it to the flip-flop CE pin. Do not gate the clock "
-             "itself in logic.",
+             "graph/closure_playbook/p_ce",
              {"power": "-"}),
     Strategy("p_dsp", "dsp_power", "G4", "move a multiply from LUTs to a DSP48E1 (less switching)",
-             "A multiply built from LUTs and carry chains toggles many nets; on a DSP48E1 it uses far less dynamic power. "
-             "Write it so synthesis infers the DSP (registered operands and product)." + _KEEP,
+             "graph/closure_playbook/p_dsp",
              {"power": "-", "dsp": "+", "lut": "-"}, hard=True),
     Strategy("p_clock", "clock", "G4", "a lower clock (only if the spec allows it)",
-             "spec.yaml allows a lower clock for this domain. Lower it in the design's XDC to the slowest rate that still "
-             "meets the stated throughput.", {"power": "-", "wns": "+"}, phase="gated", stage="constraints"),
+             "graph/closure_playbook/p_clock", {"power": "-", "wns": "+"}, phase="gated", stage="constraints"),
 )
 
 CHECKS: tuple[Strategy, ...] = (
     Strategy("c_constraints", "constraints", "CHK", "fix the constraints the routed checks flag",
-             "The routed DRC or methodology checks report Critical Warnings or Errors about constraints (TIMING-*, "
-             "XDCB-*, NSTD-*, UCIO-*: a missing I/O standard, a clock defined twice, an unconstrained input or output). "
-             "Fix the XDC: one create_clock per clock, an IOSTANDARD and PACKAGE_PIN on every port, input and output delays "
-             "on the I/O the spec times. Do not add a false path or a multicycle path to silence a check.",
+             "graph/closure_playbook/c_constraints",
              {}, stage="constraints"),
     Strategy("c_rtl_check", "rtl_check", "CHK", "fix the RTL a routed check flags",
-             "The routed DRC or methodology checks report Critical Warnings or Errors about the netlist (for example "
-             "asynchronous resets on DSP or RAM registers (DPIR, RMIR), or a combinational loop (LUTLP)). Fix the RTL they "
-             "point at, following the rule's one-line fix.", {}, stage="rtl"),
+             "graph/closure_playbook/c_rtl_check", {}, stage="rtl"),
 )
 
-_REPLAN = ("The RTL strategies for this goal are used up. Go back to the architecture: re-plan the datapath (pipeline "
-           "depth, which operations go on DSP slices or block RAM, how memories are shared) with the design-time plan, "
-           "and say what the plan must change and why.")
 REPLAN: tuple[Strategy, ...] = (
-    Strategy("x_replan_timing", "replan", "G2", "re-plan the architecture for timing", _REPLAN, {}, stage="architecture"),
-    Strategy("x_replan_area", "replan", "G3", "re-plan the architecture for the resource budget", _REPLAN, {}, stage="architecture"),
-    Strategy("x_replan_power", "replan", "G4", "re-plan the architecture for the power budget", _REPLAN, {}, stage="architecture"),
+    Strategy("x_replan_timing", "replan", "G2", "re-plan the architecture for timing", "graph/closure_playbook/x_replan_timing", {}, stage="architecture"),
+    Strategy("x_replan_area", "replan", "G3", "re-plan the architecture for the resource budget", "graph/closure_playbook/x_replan_area", {}, stage="architecture"),
+    Strategy("x_replan_power", "replan", "G4", "re-plan the architecture for the power budget", "graph/closure_playbook/x_replan_power", {}, stage="architecture"),
 )
 
 ALL = TIMING + AREA + POWER + CHECKS + REPLAN

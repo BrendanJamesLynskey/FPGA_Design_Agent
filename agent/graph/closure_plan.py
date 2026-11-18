@@ -19,6 +19,8 @@ records are the training and evaluation data for choosing closure strategies (do
 
 from __future__ import annotations
 
+from agent.core.prompts import load as _p
+
 import hashlib
 import re
 from typing import Any
@@ -163,7 +165,7 @@ def reentry(p: dict[str, Any]) -> dict[str, Any] | None:
         return None
     n = pb.STAGE_NUMBER[st]
     text = "; ".join(f"{a['goal']}: {pb.BY_ID[a['id']].title} ({a['why'][:200]})" for a in p["actions"])
-    note = f"CLOSURE LOOP: the joint closure plan needs a change at the {st} stage: {text}"
+    note = _p("graph/closure_plan/reentry_1").format(st, text)
     return {"stage": n, "note": note, "note_role": "clarify" if n == 0 else "rtl",
             "owners": {"rtl": [note]} if n == 1 else {}}
 

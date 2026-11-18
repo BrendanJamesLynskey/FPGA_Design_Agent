@@ -1,0 +1,140 @@
+{
+ "block": "lg_small_comb",
+ "arm": "ys_abc_d",
+ "part": "xc7a100tcsg324-1",
+ "tool": "Vivado 2026.1",
+ "flow": "out of context, post-route, one thread",
+ "synthesis": "edif",
+ "latency_clocks": 2,
+ "closed_at_ns": 15.0,
+ "closed_at_mhz": 66.7,
+ "latency_ns": 30.0,
+ "at_closed_clock": {
+  "status": "ok",
+  "clock_ns": 15.0,
+  "lut": 274,
+  "ff": 42,
+  "carry": 14,
+  "lut_levels": 14,
+  "data_path_ns": 14.212,
+  "wns_ns": 0.086,
+  "whs_ns": 0.26,
+  "wpws_ns": 7.0,
+  "build_seconds": 211,
+  "closed": true
+ },
+ "passes": [
+  {
+   "status": "error: ERROR: [Project 1-68] No files found to match top module 'ooc_wrap'",
+   "clock_ns": 2.0,
+   "wd": "/home/brendan/Claude_sandbox/_worktrees/101-oss-synth-eqy/build/b101/vivado/a7/run1_pass1/lg_small_comb__ys_abc_d_2.00"
+  },
+  {
+   "status": "error: ERROR: [Project 1-68] No files found to match top module 'ooc_wrap'",
+   "clock_ns": 2.0,
+   "wd": "/home/brendan/Claude_sandbox/_worktrees/101-oss-synth-eqy/build/b101/vivado/a7/run1_pass1_edif/lg_small_comb__ys_abc_d_2.00"
+  },
+  {
+   "status": "ok",
+   "clock_ns": 2.0,
+   "lut": 298,
+   "ff": 42,
+   "carry": 14,
+   "lut_levels": 18,
+   "data_path_ns": 13.915,
+   "wns_ns": -12.617,
+   "whs_ns": 0.26,
+   "wpws_ns": 0.5,
+   "build_seconds": 261,
+   "closed": false,
+   "wd": "/home/brendan/Claude_sandbox/_worktrees/101-oss-synth-eqy/build/b101/vivado/a7/run1_pass1_edif/lg_small_comb__ys_abc_d_2.00"
+  },
+  {
+   "status": "ok",
+   "clock_ns": 14.65,
+   "lut": 281,
+   "ff": 42,
+   "carry": 14,
+   "lut_levels": 17,
+   "data_path_ns": 14.211,
+   "wns_ns": -0.263,
+   "whs_ns": 0.26,
+   "wpws_ns": 6.825,
+   "build_seconds": 188,
+   "closed": false,
+   "wd": "/home/brendan/Claude_sandbox/_worktrees/101-oss-synth-eqy/build/b101/vivado/a7/run1_pass2_edif/lg_small_comb__ys_abc_d_14.65"
+  },
+  {
+   "status": "ok",
+   "clock_ns": 15.0,
+   "lut": 274,
+   "ff": 42,
+   "carry": 14,
+   "lut_levels": 14,
+   "data_path_ns": 14.212,
+   "wns_ns": 0.086,
+   "whs_ns": 0.26,
+   "wpws_ns": 7.0,
+   "build_seconds": 211,
+   "closed": true,
+   "wd": "/home/brendan/Claude_sandbox/_worktrees/101-oss-synth-eqy/build/b101/vivado/a7/run1_pass3_edif/lg_small_comb__ys_abc_d_15.00"
+  },
+  {
+   "status": "ok",
+   "clock_ns": 14.95,
+   "lut": 278,
+   "ff": 42,
+   "carry": 14,
+   "lut_levels": 18,
+   "data_path_ns": 14.388,
+   "wns_ns": -0.14,
+   "whs_ns": 0.26,
+   "wpws_ns": 6.975,
+   "build_seconds": 208,
+   "closed": false,
+   "wd": "/home/brendan/Claude_sandbox/_worktrees/101-oss-synth-eqy/build/b101/vivado/a7/run1_pass4_edif/lg_small_comb__ys_abc_d_14.95"
+  }
+ ],
+ "yosys": {
+  "script": "abc_d",
+  "script_text": "synth_xilinx -run begin:map_luts; abc -luts 2:2,3,6:5,10,20 -D <ps>; techmap lut_map/cells_map; synth_xilinx -run finalize:",
+  "yosys": "Yosys 0.70+385 (git sha1 098e46a36, Release, Clang /usr/bin/clang++ 21.1.8)",
+  "yosys_commands": "plugin -i slang; read_slang --top ooc_wrap  /home/brendan/Claude_sandbox/_worktrees/101-oss-synth-eqy/designs/b89_lutnet_gen/rtl/gen/lg_small_comb.sv /home/brendan/Claude_sandbox/_worktrees/101-oss-synth-eqy/flow/oss_compare/rtl/wrap_lg_small_comb.sv; synth_xilinx -family xc7 -top ooc_wrap -noiopad -noclkbuf -flatten -run begin:map_luts; opt_expr -mux_undef -noclkinv; abc -luts 2:2,3,6:5,10,20 -D 1; clean; techmap -map +/xilinx/lut_map.v -map +/xilinx/cells_map.v -D LUT_WIDTH=6; xilinx_dffopt; opt_lut_ins -tech xilinx; synth_xilinx -family xc7 -top ooc_wrap -noiopad -noclkbuf -run finalize:; tee -o /home/brendan/Claude_sandbox/_worktrees/101-oss-synth-eqy/build/b101/yosys/a7/lg_small_comb__ys_abc_d/netlist.edif.stat stat -tech xilinx; write_edif -pvector bra /home/brendan/Claude_sandbox/_worktrees/101-oss-synth-eqy/build/b101/yosys/a7/lg_small_comb__ys_abc_d/netlist.edif; write_verilog -noattr /home/brendan/Claude_sandbox/_worktrees/101-oss-synth-eqy/build/b101/yosys/a7/lg_small_comb__ys_abc_d/netlist.v",
+  "seconds": 4.9,
+  "lut": 311,
+  "ff": 42,
+  "carry": 14,
+  "d_ps": 1
+ },
+ "perturb": {
+  "points": [
+   {
+    "clock_ns": 15.0,
+    "lut": 274,
+    "wns_ns": 0.086,
+    "wpws_ns": 7.0,
+    "closed": true,
+    "achievable_ns": 14.914
+   },
+   {
+    "clock_ns": 15.01,
+    "wns_ns": 0.131,
+    "wpws_ns": 7.005,
+    "lut": 270,
+    "closed": true,
+    "achievable_ns": 14.879
+   },
+   {
+    "clock_ns": 15.02,
+    "wns_ns": 0.221,
+    "wpws_ns": 7.01,
+    "lut": 277,
+    "closed": true,
+    "achievable_ns": 14.799
+   }
+  ],
+  "achievable_min_ns": 14.799,
+  "achievable_max_ns": 14.914,
+  "spread_ns": 0.115
+ }
+}

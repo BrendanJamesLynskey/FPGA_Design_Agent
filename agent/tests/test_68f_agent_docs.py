@@ -17,6 +17,7 @@ import pytest
 from agent.graph import document as D
 from agent.graph import stages as ST
 from flow import handover as H
+from agent.tests.prompt_checks import has
 
 ROOT = H.ROOT
 REC = ROOT / "results" / "68_agent_docs"
@@ -134,7 +135,7 @@ def test_empty_design_files_and_shared_sources_are_marked() -> None:
     user = D.user_prompt(d, h, [])
     assert "SOURCES THE BUILD READS" in user and "shell/rtl/reset_sync.sv" in user and "SHARED SOURCES" in user
     assert "module reset_sync" in user                                # the shared file's body is shown to the Designer
-    assert "not found" in D.DOC_SYSTEM and "do\n  not put in open_questions" in D.DOC_SYSTEM
+    assert has(D.DOC_SYSTEM, "907ba78b4545338d3539683e63ecb51cf51c10adc9dabd86e92bd52339f298b9:9") and has(D.DOC_SYSTEM, "ca47a4fdb2b536f37abe1920523292c9376b460a654584fae018eff6e89c8435:30")        # the doc prompt covers a missing item and the open-questions rule
 
 
 def test_spec_rates_reach_the_parameter_notes() -> None:

@@ -38,7 +38,7 @@ from flow import srcorder, vhdl
 
 PY = sys.executable
 _ID = re.compile(r"^[A-Za-z_][A-Za-z0-9_]{0,63}$")
-_PART = re.compile(r"^[A-Za-z0-9]{5,24}(-[0-9A-Za-z]{1,8}){0,3}$")   # brief 102: UltraScale+ names (xck26-sfvc784-2LV-c) as well; the board file still decides
+_PART = re.compile(r"^[a-z0-9]{5,24}(-[0-9A-Za-z]{1,8}){0,3}$")   # brief 100: xck26-sfvc784-2LV-c (KR260) was refused as "not a plain part name"
 _GEN_VAL = re.compile(r"^[A-Za-z0-9_'.\-]{1,40}$")
 _REPORT = re.compile(r"^[A-Za-z0-9_\-]{1,60}\.(rpt|txt|log|json|xdc|tcl)$")
 HW_SKIPS = ()
@@ -1181,3 +1181,6 @@ def bringup(s: Session) -> dict:
 # brief 50A: the debug tools (debug_plan, debug_capture, debug_query) register themselves on import
 from agent.core import debug_tools as _debug_tools  # noqa: E402,F401
 from agent.core import axi_tools as _axi_tools  # noqa: E402,F401  (brief 59A: registers axi_program_check, axi_simulate, axi_board_run)
+from agent.core import latency_tools as _latency_tools  # noqa: E402,F401  (brief 97: registers latency_path, latency_budget)
+from agent.core import rapidwright_tools as _rw_tools  # noqa: E402,F401  (brief 100: registers rw_status, rw_relocate_block, rw_place_chain, rw_route, rw_referee)
+from agent.core import oss_tools as _oss_tools  # noqa: E402,F401  (brief 101: registers oss_synth and eqy_check)

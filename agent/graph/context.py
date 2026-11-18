@@ -15,6 +15,8 @@ Two changes, both off by default:
 
 from __future__ import annotations
 
+from agent.core.prompts import load as _p
+
 import json
 from pathlib import Path
 from typing import Any
@@ -43,8 +45,7 @@ def offload_result(res: dict[str, Any], design: Path, tool: str, seq: int) -> st
                "output_tail": out[-TAIL_CHARS:] if len(out) > HEAD_CHARS + TAIL_CHARS else "",
                "output_chars": len(out), "fields_in_file_only": dropped,
                "full_result": f"/{'/'.join(OFFLOAD_DIR)}/{name}",
-               "note": f"The result was {len(text)} characters; this is its head and tail. Read the rest with read_file "
-                       f"(path, offset, limit) on full_result."}
+               "note": _p("graph/context/offload_result_1").format(len(text))}
     return json.dumps(preview)
 
 

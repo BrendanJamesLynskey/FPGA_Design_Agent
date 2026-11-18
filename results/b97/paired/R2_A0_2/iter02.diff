@@ -1,0 +1,21 @@
+--- a/rtl/b96_core.sv
++++ b/rtl/b96_core.sv
+@@ -143,7 +143,17 @@
+     rx_path #(.NRXW(NRXW)) u_rx (.clk(rxusr2), .rst(!rx_done_r), .cfg(cfg_rx), .clr_p(clr_rx), .gt_d(rx_data), .fire(r_fire), .o_inst(r_inst),
+         .o_price(r_price), .o_qty(r_qty), .o_seq(r_seq), .verdict_v(r_verdict_v), .verdict_bad(r_verdict_bad), .verdict_seq(r_verdict_seq), .rx_sop(r_sop),
+         .cls_feed(r_feed), .cls_order(r_order), .cls_probe(r_probe), .lock(pcs_lock_rx), .rx_vec(rx_vec_r));
+-    xpm_cdc_pulse #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .REG_OUTPUT(0), .RST_USED(0), .SIM_ASSERT_CHK(0)) u_p_go (.src_clk(rxusr2), .src_pulse(r_fire), .src_rst(1'b0), .dest_clk(txusr2), .dest_pulse(go_t), .dest_rst(1'b0));
++    // A toggle synchronizer carries the sparse order event with two destination flops.
++    // The source pulse is one RX clock; an event cannot recur until a complete feed frame.
++    logic go_toggle, go_sync1, go_sync2, go_sync2_d;
++    initial begin go_toggle = 1'b0; go_sync1 = 1'b0; go_sync2 = 1'b0; go_sync2_d = 1'b0; end
++    always_ff @(posedge rxusr2) if (r_fire) go_toggle <= ~go_toggle;
++    always_ff @(posedge txusr2) begin
++        go_sync1 <= go_toggle;
++        go_sync2 <= go_sync1;
++        go_sync2_d <= go_sync2;
++    end
++    assign go_t = go_sync2 ^ go_sync2_d;
+     xpm_cdc_pulse #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(0)) u_p_so (.src_clk(rxusr2), .src_pulse(r_sop), .src_rst(1'b0), .dest_clk(txusr2), .dest_pulse(sop_t), .dest_rst(1'b0));
+     xpm_cdc_pulse #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(0)) u_p_fe (.src_clk(rxusr2), .src_pulse(r_feed), .src_rst(1'b0), .dest_clk(txusr2), .dest_pulse(feed_t), .dest_rst(1'b0));
+     xpm_cdc_pulse #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(0)) u_p_or (.src_clk(rxusr2), .src_pulse(r_order), .src_rst(1'b0), .dest_clk(txusr2), .dest_pulse(order_t), .dest_rst(1'b0));

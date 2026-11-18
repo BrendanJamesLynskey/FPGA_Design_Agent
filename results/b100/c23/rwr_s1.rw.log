@@ -1,0 +1,137 @@
+Running as unit: run-rca927393cd384ed08ed2c32e8e1b5fc8.scope; invocation ID: 4e9b663f5e304246acf03fd797322839
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::load has been called by org.jpype.JPypeContext in an unnamed module (file:/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/tools/rapidwright_env/venv/lib/python3.12/site-packages/org.jpype.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+==============================================================================
+==                     Reading DCP: base_s1_placed.dcp                      ==
+==============================================================================
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::arrayBaseOffset has been called by com.esotericsoftware.kryo.unsafe.UnsafeUtil (file:/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/tools/rapidwright_env/venv/lib/python3.12/site-packages/rapidwright/rapidwright-2026.1.2-standalone-lin64.jar)
+WARNING: Please consider reporting this to the maintainers of class com.esotericsoftware.kryo.unsafe.UnsafeUtil
+WARNING: sun.misc.Unsafe::arrayBaseOffset will be removed in a future release
+ XML Parse & Device Load:     8.251s
+    (Read PhysDB Caches):            (    1.455s)
+   (Read PhysDB Routing):            (    0.672s)
+ (Read PhysDB Placement):            (    0.859s)
+(Read PhysDB Finalizing):            (    0.007s)
+            (EDIF Parse):            (    6.171s)
+   Read Netlist & PhysDB:     6.182s
+------------------------------------------------------------------------------
+         [No GC] *Total*:    14.433s
+WARNING: Not masking nodes across RCLK could result in delay optimism.
+==============================================================================
+==                               Route Design                               ==
+==============================================================================
+INFO: Routing 269 pins of clock clk_g (non timing-driven)
+INFO: Routing 373 pins of GLOBAL_LOGIC1
+INFO: Routing 457 pins of GLOBAL_LOGIC0
+INFO: Estimated pre-routing max delay: 2518
+------------------------------------------------------------------------------
+              Generated       RRG        Routed  Nodes With     CPD  Total Run
+Iteration     RRG Nodes  Time (s)   Connections    Overlaps    (ps)   Time (s)
+---------  ----------------------   -----------  ----------   -----  ---------
+   1             113043      1.11          8767        4731    4156       4.67
+   2              37205      0.16          5888        3084    3786       3.27
+   3              14809      0.09          4495        2184    3654       5.12
+   4               8881      0.05          3394        1461    3927       3.35
+   5               5397      0.08          2521         890    4194       4.72
+   6              13489      0.04          1480         509    4530       4.54
+   7               3511      0.03          1063         298    4759       3.05
+   8              11039      0.06           699         140    4836       4.01
+   9               5932      0.02           280          94    4766       1.40
+  10              10817      0.03           249          41    4709       1.42
+  11               8049      0.02           211          38    5016       1.54
+  12               7196      0.02           113          20    5150       1.22
+  13                 18      0.00            88           6    4816       0.97
+  14                208      0.00           124          11    4643       0.98
+  15                714      0.00            90          10    4709       0.86
+  16                  0      0.00            74           6    4879       0.35
+  17                  0      0.00            63           3    4570       0.78
+  18                  0      0.00           107           3    4406       0.82
+  19               1961      0.01           212           1    4470       1.10
+  20                  0      0.00           146           0    4435       1.42
+------------------------------------------------------------------------------
+
+INFO: Route 2 direct connections 
+
+INFO: No PIP overlaps
+
+==============================================================================
+==                                Statistics                                ==
+==============================================================================
+Total wirelength:                      33297.5
+Nodes popped:                         14976673
+Route design:                           57.80s
+├─ Initialization:                       9.67s
+└─ Routing:                             48.13s
+==============================================================================
+==                              Timing Report                               ==
+==============================================================================
+Timing requirement (ps):               3410.00
+Critical path delay (ps):                 4435
+Slack (ps):                              -1025
+With timing closure guarantee:     
+Critical path delay (ps):                 4668
+Slack (ps):                              -1258
+
+Detail delays:
+------------------------------------------------------------------------------
+Logic (ps)  Net (ps)  (intrasite (ps))  Total (ps)    Netlist Resource(s)      
+----------  --------------------------  ----------    ------------------------
+         0         0                 0           0    superSource              
+        78       317                 0         395    u_mac/crc_reg[7]/Q       
+                                                      net: u_mac/p_1_out[6]  
+        50         0                 0          50    u_mac/x_d[39]_i_8/I2     
+         0       810                 0         810    u_mac/x_d[39]_i_8/O      
+                                                      net: u_mac/g_k[7].r1186_out
+        35         0                 0          35    u_mac/x_d[29]_i_4/I3     
+         0       221                 0         221    u_mac/x_d[29]_i_4/O      
+                                                      net: u_mac/data0[21]   
+        50         0                 0          50    u_mac/crc[13]_i_10/I0    
+         0       292                 0         292    u_mac/crc[13]_i_10/O     
+                                                      net: u_mac/crc[13]_i_10_n_0
+        35         0                 0          35    u_mac/crc[31]_i_16/I4    
+         0       200                 0         200    u_mac/crc[31]_i_16/O     
+                                                      net: u_mac/g_k[7].r1110_out
+       100         0                 0         100    u_mac/crc[17]_i_11/I1    
+         0       227                 0         227    u_mac/crc[17]_i_11/O     
+                                                      net: u_mac/g_k[7].r180_out
+        90         0                 0          90    u_mac/crc[28]_i_12/I2    
+         0       480                 0         480    u_mac/crc[28]_i_12/O     
+                                                      net: u_mac/g_k[7].r159_out
+        50         0                 0          50    u_mac/crc[12]_i_8/I1     
+         0       273                 0         273    u_mac/crc[12]_i_8/O      
+                                                      net: u_mac/crc[12]_i_8_n_0
+        35         0                 0          35    u_mac/tail_d[28]_i_2/I4  
+         0       640                 0         640    u_mac/tail_d[28]_i_2/O   
+                                                      net: u_mac/g_k[7].r111_out
+       125         0                 0         125    u_mac/crc[23]_i_4/I0     
+         0       242                 0         242    u_mac/crc[23]_i_4/O      
+                                                      net: u_mac/crc[23]_i_4_n_0
+        35         0                 0          35    u_mac/crc[23]_i_1/I3     
+         0        50                50          50    u_mac/crc[23]_i_1/O      
+                                                      net: u_mac/crc[23]     
+         0         0                 0           0    u_mac/crc_reg[23]/D      
+----------  --------------------------  ----------    ------------------------
+Arrival time:                                 4435
+------------------------------------------------------------------------------
+==============================================================================
+==============================================================================
+==                        Writing DCP: rwr_s1_in.dcp                        ==
+==============================================================================
+            (Write EDIF):            (    0.484s)
+     (Build XDEF Header):            (    0.698s)
+(Write XDEF Cache (2/3)):            (    0.156s)
+(Write XDEF Cache (1/3)):            (    0.161s)
+(Write XDEF Cache (3/3)):            (    0.879s)
+  (Write XDEF Placement):            (    1.268s)
+    (Write XDEF Routing):            (    3.757s)
+ (Write XDEF Finalizing):            (    0.040s)
+            (Write XDEF):            (    3.915s)
+       Write EDIF & XDEF:     3.941s
+               Write XDC:     0.022s
+------------------------------------------------------------------------------
+         [No GC] *Total*:     3.964s
+{"mode": "full", "timing_driven": true, "route_s": 58.44, "write_s": 4.16, "nets_with_pips": 1890}

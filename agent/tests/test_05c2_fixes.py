@@ -18,6 +18,7 @@ from agent.graph import repair
 from agent.graph import run as gr
 from agent.graph.stages import MACHINE, exit_check
 from flow import verif_gates as vg
+from agent.tests.prompt_checks import has
 
 T1 = ROOT / "designs" / "t1_dimmer_counter"
 GOOD = yaml.safe_load((T1 / "spec.yaml").read_text())
@@ -211,7 +212,7 @@ def test_board_constraints_errors_name_the_problem_and_write_nothing(rt):
 def test_board_constraints_is_a_stage_tool_and_on_the_mcp_server():
     assert "board_constraints" in MACHINE[1].tools and "board_constraints" in MACHINE[3].tools
     assert "board_constraints" in [t["name"] for t in tool_list()]
-    assert "pin number" in gr.CONVENTIONS and "master XDC (search_docs" not in gr.CONVENTIONS
+    assert has(gr.CONVENTIONS, "f87b92e52727dce034e413a2813e0be84fc4407d897fe97b8005b3f1e6a1caa1:10") and not has(gr.CONVENTIONS, "b13463c22aa946177cad7bdc0a7e723e98a07c54a7ecab978c78129a05ef70ac:23")        # pin numbers are named; the old search_docs route to the XDC is gone
 
 
 # --- fix 3: only offer tools that work here ----------------------------------------------------------------------
@@ -318,7 +319,7 @@ def test_spec_items_tool_lists_the_exact_ids_the_gate_checks(rt):
     assert r["output"].splitlines()[0].startswith("behaviour.") and ": " in r["output"].splitlines()[0]
     (rt.design / "spec.yaml").write_text("name: x\nregisters: [a]\n")
     assert not dispatch(rt.session, "spec_items", {})["ok"]
-    assert "spec_items" in gr.FLOW_TOOLS and "spec_items" in gr.PROMPTS["tests"]
+    assert "spec_items" in gr.FLOW_TOOLS and has(gr.PROMPTS["tests"], "e99e20853c444d1f91b07255c5185b87ed7f7c9f4d554f3bf8e2279a419462da:10")        # the tests role is told about the spec_items tool
 
 
 def test_the_gate_failure_lists_the_untraced_ids(rt):

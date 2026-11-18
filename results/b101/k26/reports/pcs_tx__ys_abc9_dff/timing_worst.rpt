@@ -1,0 +1,104 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version      : Vivado v.2026.1 (lin64) Build 6511674 Tue Jun 16 11:01:26 MDT 2026
+| Date              : Wed Nov 18 15:19:47 2026
+| Host              : bren-ubuntu24-04 running 64-bit Ubuntu 24.04.4 LTS
+| Command           : report_timing -max_paths 1 -setup -file /home/brendan/Claude_sandbox/_worktrees/101-oss-synth-eqy/build/b101/vivado/k26/run2_pass3_edif/pcs_tx__ys_abc9_dff_3.35/timing_worst.rpt
+| Design            : ooc_wrap
+| Device            : xck26-sfvc784
+| Speed File        : -2LV  PRODUCTION 1.31 12-08-2025
+| Design State      : Routed
+| Temperature Grade : C
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Timing Report
+
+Slack (MET) :             0.032ns  (required time - arrival time)
+  Source:                 $auto$ff.cc:337:slice$4946/C
+                            (rising edge-triggered cell FDRE clocked by clk  {rise@0.000ns fall@1.675ns period=3.350ns})
+  Destination:            $auto$ff.cc:337:slice$4858/D
+                            (rising edge-triggered cell FDRE clocked by clk  {rise@0.000ns fall@1.675ns period=3.350ns})
+  Path Group:             clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            3.350ns  (clk rise@3.350ns - clk rise@0.000ns)
+  Data Path Delay:        3.313ns  (logic 1.189ns (35.886%)  route 2.124ns (64.114%))
+  Logic Levels:           13  (LUT2=2 LUT3=3 LUT4=2 LUT5=5 LUT6=1)
+  Clock Path Skew:        -0.013ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    0.029ns = ( 3.379 - 3.350 ) 
+    Source Clock Delay      (SCD):    0.042ns
+    Clock Pessimism Removal (CPR):    0.000ns
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk rise edge)        0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk
+                         net (fo=263, unset)          0.042     0.042    clk
+    SLICE_X16Y57         FDRE                                         r  $auto$ff.cc:337:slice$4946/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X16Y57         FDRE (Prop_HFF_SLICEL_C_Q)
+                                                      0.113     0.155 f  $auto$ff.cc:337:slice$4946/Q
+                         net (fo=6, routed)           0.108     0.263    d_q[46]
+    SLICE_X16Y56         LUT2 (Prop_G6LUT_SLICEL_I0_O)
+                                                      0.137     0.400 f  $abc$51942$lut$aiger51677$662/O
+                         net (fo=2, routed)           0.110     0.510    $techmap52588$abc$51942$lut$aiger51677$709.A[4]
+    SLICE_X14Y56         LUT5 (Prop_F6LUT_SLICEL_I4_O)
+                                                      0.056     0.566 f  $abc$51942$lut$aiger51677$709/O
+                         net (fo=2, routed)           0.199     0.765    $techmap52589$abc$51942$lut$aiger51677$834.A[4]
+    SLICE_X14Y57         LUT5 (Prop_C6LUT_SLICEL_I4_O)
+                                                      0.056     0.821 f  $abc$51942$lut$aiger51677$834/O
+                         net (fo=3, routed)           0.149     0.970    $techmap52597$abc$51942$lut$aiger51677$1000.A[0]
+    SLICE_X15Y58         LUT6 (Prop_D6LUT_SLICEL_I5_O)
+                                                      0.136     1.106 f  $abc$51942$lut$aiger51677$976/O
+                         net (fo=3, routed)           0.125     1.230    $techmap52690$abc$51942$lut$aiger51677$977.A[0]
+    SLICE_X14Y58         LUT2 (Prop_A6LUT_SLICEL_I0_O)
+                                                      0.188     1.418 r  $abc$51942$lut$aiger51677$977/O
+                         net (fo=9, routed)           0.275     1.693    $techmap52691$abc$51942$lut$aiger51677$980.A[3]
+    SLICE_X18Y58         LUT3 (Prop_F6LUT_SLICEM_I2_O)
+                                                      0.080     1.773 f  $abc$51942$lut$aiger51677$2341/O
+                         net (fo=1, routed)           0.151     1.924    $techmap52804$abc$51942$lut$aiger51677$2348.A[4]
+    SLICE_X19Y59         LUT5 (Prop_F6LUT_SLICEL_I4_O)
+                                                      0.056     1.980 r  $abc$51942$lut$aiger51677$2348/O
+                         net (fo=2, routed)           0.158     2.139    $techmap52808$abc$51942$lut$aiger51677$2443.A[4]
+    SLICE_X18Y58         LUT3 (Prop_G6LUT_SLICEM_I2_O)
+                                                      0.057     2.196 r  $abc$51942$lut$aiger$o467/O
+                         net (fo=2, routed)           0.223     2.419    $techmap52145$auto$ff.cc:337:slice$4803.D
+    SLICE_X18Y55         LUT5 (Prop_A6LUT_SLICEM_I4_O)
+                                                      0.083     2.502 r  $abc$51942$lut$aiger51677$2369/O
+                         net (fo=4, routed)           0.064     2.565    $techmap52997$abc$51942$lut$aiger51677$2844.A[3]
+    SLICE_X18Y55         LUT3 (Prop_C6LUT_SLICEM_I2_O)
+                                                      0.056     2.621 r  $abc$51942$lut$aiger51677$2372/O
+                         net (fo=4, routed)           0.176     2.797    $techmap53121$abc$51942$lut$aiger51677$2942.A[3]
+    SLICE_X16Y55         LUT4 (Prop_A6LUT_SLICEL_I3_O)
+                                                      0.058     2.855 r  $abc$51942$lut$aiger51677$2942/O
+                         net (fo=2, routed)           0.162     3.017    $techmap53122$abc$51942$lut$aiger51677$2959.A[3]
+    SLICE_X16Y55         LUT4 (Prop_E6LUT_SLICEL_I3_O)
+                                                      0.057     3.074 f  $abc$51942$lut$aiger51677$2959/O
+                         net (fo=1, routed)           0.156     3.230    $techmap53168$abc$51942$lut$aiger$o742.A[2]
+    SLICE_X16Y55         LUT5 (Prop_F6LUT_SLICEL_I4_O)
+                                                      0.056     3.286 r  $auto$xilinx_dffopt.cc:338:execute$53440/O
+                         net (fo=1, routed)           0.069     3.355    $auto$xilinx_dffopt.cc:347:execute$53441
+    SLICE_X16Y55         FDRE                                         r  $auto$ff.cc:337:slice$4858/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk rise edge)        3.350     3.350 r  <hidden>
+                                                      0.000     3.350 r  clk
+                         net (fo=263, unset)          0.029     3.379    clk
+    SLICE_X16Y55         FDRE                                         r  $auto$ff.cc:337:slice$4858/C
+                         clock pessimism              0.000     3.379    <hidden>
+                         clock uncertainty           -0.035     3.344    <hidden>
+    SLICE_X16Y55         FDRE (Setup_FFF_SLICEL_C_D)
+                                                      0.044     3.388    $auto$ff.cc:337:slice$4858
+  -------------------------------------------------------------------
+                         required time                          3.388    <hidden>
+                         arrival time                          -3.355    <hidden>
+  -------------------------------------------------------------------
+                         slack                                  0.032    <hidden>
+
+
+
+

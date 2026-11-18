@@ -20,6 +20,8 @@ Pure functions over tool results: CI tests them with recorded evidence.
 
 from __future__ import annotations
 
+from agent.core.prompts import load as _p
+
 import re
 from typing import Any
 
@@ -125,15 +127,13 @@ def stage2_owners(ev: dict[str, Any], repeat: int = 0) -> tuple[dict[str, list[s
         if plan:
             add("tests", "[verification] " + "\n".join(plan), "verif:" + (v.get("first_failed") or "none"))
     if mismatch_test and repeat >= 1 and "tests" not in owners:
-        owners["tests"] = [f"[simulate] the same failure survived a repair of the RTL: test {mismatch_test}. Check that the "
-                           f"bench drives the ports as the spec says and compares the right outputs. "
+        owners["tests"] = [_p("graph/repair/stage2_owners_1").format(mismatch_test)
                            + owners["rtl"][-1][:900]]
     if mismatch_test and repeat >= 2 and "model" not in owners:
-        owners["model"] = [f"[independent check] your model disagreed with an independent check in test {mismatch_test}. "
-                           f"Re-read spec.yaml for the behaviour that test covers and check your model against it."]
+        owners["model"] = [_p("graph/repair/stage2_owners_2").format(mismatch_test)]
     stt = ev.get("spec_test") or {}
     if stt.get("blocks") and not owners:             # 08f: the independent spec-only bench failed and triage blamed the design
-        add("rtl", str(stt.get("evidence") or "[spec test] the independent bench failed")[:1800], str(stt.get("sig") or "spectest"))
+        add("rtl", str(stt.get("evidence") or _p("graph/repair/stage2_owners_3"))[:1800], str(stt.get("sig") or "spectest"))
     if not owners:
         owners["rtl"] = ["[gates] " + " ".join(ev.get("other_fails") or ["a gate failed"])[:1500]
                          + (("\n[build output]\n" + ev["build_output"][-1800:]) if ev.get("build_output") else "")]

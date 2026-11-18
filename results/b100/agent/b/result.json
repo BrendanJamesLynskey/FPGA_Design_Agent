@@ -1,0 +1,28 @@
+{
+ "text": "I got one timing result: the baseline. The pblock attempt has no result because that build never returned.\n\n**Baseline (unchanged design, 3.2 ns clock, `build until=route`)**\n- Whole-design WNS is **-0.759 ns**, so the achieved period is 3.2 + 0.759 \u2248 **3.96 ns**.\n- TNS is -96.3 ns over 196 failing endpoints. Hold WHS is +0.052 ns.\n- The worst path is `u_mac/crc_reg[5]` to `u_mac/crc_reg[2]`. It has 10 logic levels (LUT2/3/4/5/6) with about 2.26 ns of routing and 1.58 ns of logic. That is a logic-depth limit inside the MAC's CRC feedback loop. It is not a MAC-to-PCS or GT path.\n- **Not measured:** the WNS of the paths into the GT's TXDATA pins, and of the MAC-to-PCS (`x_d`/`x_c` to `gt_d`) paths. The only paths in the reports are the 10 worst, and all of those sit in the CRC. I have no tool that runs a custom `report_timing`, so I could not get those figures.\n\n**Attempt 2: pblock (no result)**\n- I added a pblock for `u_mac` and `u_pcs` restricted to `CLOCKREGION_X0Y1` to `design.xdc`. I picked that region because the baseline CRC logic sat around SLICE_X56Y115. I did not confirm it is the GT's region.\n- `check_constraints` failed with an internal `KeyError: 'master_xdc'`, so the constraints were not validated.\n- The build was aborted after 1800 s with no response. No reports exist for it, so I have no WNS for this attempt.\n- The baseline build took 1013 s, not the ~6 minutes stated. I suspect that is why the second build timed out and why the time budget ran out. I cannot confirm either.\n\n**What did not work, and what is left**\n- The only change made is that unvalidated pblock in `design.xdc`, and nothing shows it helps. It could also hurt if X0Y1 is the wrong region. If you re-run, I'd revert it first and compare against the -0.759 ns baseline.\n- The CRC loop is probably the limit. Placement alone is unlikely to remove 10 LUT levels, so the achievable period by physical means is probably near the baseline's 3.96 ns.\n- The best measured result is still the baseline: WNS -0.759 ns, about 3.96 ns, so about 7.9 ns of latency over the two cycles.",
+ "num_turns": 17,
+ "is_error": false,
+ "usage": {
+  "input_tokens": 18,
+  "cache_creation_input_tokens": 18948,
+  "cache_read_input_tokens": 98549,
+  "output_tokens": 3760,
+  "output_tokens_details": {
+   "thinking_tokens": 1325
+  },
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 18948,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "global",
+  "iterations": [],
+  "speed": "standard",
+  "fallback_credit": null
+ },
+ "plan_cost_estimate_usd": 0.1232829
+}

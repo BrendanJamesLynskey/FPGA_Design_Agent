@@ -25,6 +25,9 @@ code with stubs or the real thing. Nothing here runs unless ``Config.spec_tests`
 
 from __future__ import annotations
 
+from agent.core.prompts import load as _p
+from agent.core import prompts as _prompts
+
 import hashlib
 import json
 import py_compile
@@ -67,7 +70,7 @@ def interview_text(design: Path) -> str:
             continue
         status = str(q.get("status") or "")
         tag = ("ANSWERED by the requester" if status == "answered"
-               else "NOT CONFIRMED: the requester gave no answer, this is the agent's own proposal, not a requirement")
+               else _p("graph/spectest/interview_text_1"))
         rows.append(f"Q{i}. {str(q.get('question', '')).strip()}\n    [{tag}]\n    {str(q.get('answer', '')).strip()}")
     return "\n\n".join(rows) or "(the interview asked no questions)"
 
@@ -90,8 +93,7 @@ def board_pack_text(board: str, boards_root: Path | None = None) -> str:
             m = _XDC_PORT.search(line)
             if m and m.group(1) not in names:
                 names.append(m.group(1))
-        parts.append("Top-level port names of the board's master XDC (a request's port names follow these; a bus is "
-                     "declared once, as NAME[n:0]):\n" + ", ".join(names))
+        parts.append(_p("graph/spectest/board_pack_text_1") + ", ".join(names))
     return "\n\n".join(parts) or "(no board pack)"
 
 
@@ -119,71 +121,27 @@ def data_text(design: Path) -> str:
             out.append(f"--- {rel} ({size} bytes) ---\n{p.read_text(errors='replace')}")
         else:
             head = "\n".join(p.read_text(errors="replace").splitlines()[:20])
-            out.append(f"--- {rel} ({size} bytes, first 20 lines; read the whole file at run time) ---\n{head}")
+            out.append(_p("graph/spectest/data_text_1").format(rel, size, head))
     return "\n".join(out) or "(no data files)"
 
 
-ROLE_SYSTEM = """You write the independent spec tests for an FPGA design on a Xilinx board. You work from the request alone.
-You have not seen, and must not ask for, the design's RTL, the Modeller's reference model or the Verifier's tests: those
-may share a misreading of the request, and your job is to be the second reading.
-
-Write two Python files:
-1. spectest/spec_ref.py: your own reference model of the design's externally observable behaviour, from the request. Pure Python.
-2. spectest/spec_bench.py: a cocotb acceptance bench that drives the top module's ports and compares with spec_ref.py.
-
-Aim at what the Designer can misread and a self-written test would repeat: bit encodings and field positions, widths,
-signedness (two's complement against unsigned, which bit is the sign, sign extension, truncation), rounding and saturation
-rules, register offsets, reset values and access, byte and bit order on serial lines, and timing promises (latency, periods) in
-clock cycles. Work every expected value out from the request's own rules, and from the data files read at run time; never
-paste numbers you cannot justify from the request.
-
-Rules.
-- Test only what the request or an ANSWERED question states. A question marked NOT CONFIRMED is the Clarifier's guess: do not
-  test it unless the request says the same. If the request is silent on a point, do not test it.
-- Read an ambiguous sentence the way a careful engineer reading the request cold would, and say in a comment which sentence
-  each check comes from.
-- Top-level ports are the board's master-XDC names (list below); the top-level module name and parameters are in the request
-  (the harness builds the top it names). Put the parameters your bench overrides (for example a baud divider or a debounce
-  count, shrunk for simulation) in a module-level dict `PARAMS = {...}`; optional `SEEDS = (1, 2)` (default one seed).
-- spec_bench.py: `import cocotb`, `from cocotb.clock import Clock`, the cocotb triggers; tests are `@cocotb.test()` async
-  functions. Import your model with `import spec_ref` (the same directory). The task's data files are at
-  `Path(__file__).resolve().parents[1] / "data" / "<name>"`. Drive the clock named in the request (CLK100MHZ unless it says
-  otherwise) and the reset (CPU_RESETN is active low) yourself. Keep the simulation short: at most a few thousand clock cycles per
-  check where you can shrink a divider, and no more than ten checks in all.
-- Give each test a name that says what observable behaviour it checks, and make each assertion message say what was expected, in
-  the request's own terms, and what the design did.
-
-Reply with the two files and nothing else, in exactly this form:
-=== FILE: spectest/spec_ref.py ===
-<file text>
-=== END FILE ===
-=== FILE: spectest/spec_bench.py ===
-<file text>
-=== END FILE ===
-"""
 
 
 def role_prompt(design: Path, board: str, root: Path | None = None) -> str:
     """The first user message of the spec-test role: only the inputs listed in the module docstring."""
     from flow import srcorder
     shell = "" if srcorder.no_shell(design) else (
-        "\n\nThis design embeds the test shell (a UART register window). Reach its registers as a host does, through the shell's "
-        "UART; the protocol and the UART bus model (`from shell.tests.uart_bfm import UartBfm`, `from shell.host import "
-        "protocol as p`) are:\n" + shell_ref_text(root))
-    nos = ("\n\nThis design does NOT embed the test shell: its pins are the board's, and your bench drives them directly "
-           "(a serial line is bit-banged at the clocks-per-bit you set in PARAMS).") if srcorder.no_shell(design) else ""
+        _p("graph/spectest/role_prompt_1") + shell_ref_text(root))
+    nos = (_p("graph/spectest/role_prompt_2")) if srcorder.no_shell(design) else ""
     spec_md = (design / "spec.md").read_text() if (design / "spec.md").is_file() else "(no spec.md)"
-    return (f"REQUEST (spec.md):\n{spec_md}\n\nTHE REQUESTER'S ANSWERS TO THE CLARIFYING QUESTIONS:\n{interview_text(design)}\n\n"
-            f"BOARD PACK:\n{board_pack_text(board)}\n\nDATA FILES:\n{data_text(design)}{shell}{nos}\n")
+    return (_p("graph/spectest/role_prompt_3").format(spec_md, interview_text(design), board_pack_text(board), data_text(design), shell, nos))
 
 
 def repair_prompt(design: Path, board: str, reason: str, evidence: str, root: Path | None = None) -> str:
     """The bench repair: the same inputs, the bench's own earlier output, and what the triage found wrong with it."""
-    cur = "\n".join(f"=== FILE: spectest/{n} ===\n{(design / SPEC_DIR / n).read_text()}\n=== END FILE ==="
+    cur = "\n".join(_p("graph/spectest/repair_prompt_1").format(n, (design / SPEC_DIR / n).read_text())
                     for n in ("spec_ref.py", "spec_bench.py") if (design / SPEC_DIR / n).is_file())
-    return (role_prompt(design, board, root) + f"\n\nYOUR EARLIER BENCH:\n{cur}\n\nIt failed against the design, and a "
-            f"reviewer who read the request judged the bench wrong: {reason}\nThe failing checks:\n{evidence[:3000]}\n"
-            "Correct only what the request does not support, keep the rest, and reply with both files in the same form.")
+    return (role_prompt(design, board, root) + _p("graph/spectest/repair_prompt_2").format(cur, reason, evidence[:3000]))
 
 
 def parse_files(text: str) -> dict[str, str]:
@@ -303,22 +261,11 @@ def failing_checks_text(res: dict[str, Any]) -> str:
         seen: set[str] = set()      # the simulator log excerpt is shared by every failing test: show it once
         return "\n".join(f"- {f['test']}: " + ("(same log excerpt as above)" if f["message"] in seen else f["message"])
                          + (seen.add(f["message"]) or "") for f in res["failing"])
-    return "the bench did not run to a result (build or elaboration error):\n" + str(res.get("text", ""))[-1800:]
+    return _p("graph/spectest/failing_checks_text_1") + str(res.get("text", ""))[-1800:]
 
 
 # --- the triage step --------------------------------------------------------------------------------------------------
 
-TRIAGE_SYSTEM = """You settle a disagreement between two test benches for an FPGA design, from the written request alone. Bench A
-(the Verifier's, the agent's own) passes against the design. Bench B (written independently from the request) fails. You see the request,
-the requester's answers, and both benches; you never see the RTL.
-
-Decide who misread the request. Reply with one JSON object and nothing else:
-{"verdict": "design_wrong" | "bench_wrong", "reason": "<two sentences at most: which sentence of the request settles it, and what each bench assumed>"}
-- design_wrong: the failing check of bench B is what the request (or an ANSWERED question) says, and bench A did not check it or
-  checked something else. The design must change.
-- bench_wrong: the failing check of bench B asserts something the request does not say (a guess, a mistaken reading, a timing it
-  did not promise), or a NOT CONFIRMED answer. Bench B must change.
-When the request is genuinely ambiguous between the two readings, answer bench_wrong: the request must be clear to hold a design to it."""
 
 
 def triage_prompt(design: Path, failing: str, limit: int = 20_000) -> str:
@@ -331,9 +278,7 @@ def triage_prompt(design: Path, failing: str, limit: int = 20_000) -> str:
         a += f"--- {p.relative_to(design)} ---\n{p.read_text(errors='replace')}\n"
     b = "".join(f"--- {n} ---\n{(design / SPEC_DIR / n).read_text()}\n" for n in ("spec_bench.py",) if (design / SPEC_DIR / n).is_file())
     spec_md = (design / "spec.md").read_text() if (design / "spec.md").is_file() else ""
-    return (f"REQUEST (spec.md):\n{spec_md}\n\nTHE REQUESTER'S ANSWERS:\n{interview_text(design)}\n\n"
-            f"BENCH A (the Verifier's; all of its checks pass):\n{a[:limit]}\n\nBENCH B (independent):\n{b[:limit]}\n"
-            f"BENCH B'S FAILING CHECKS:\n{failing[:3500]}\n")
+    return (_p("graph/spectest/triage_prompt_1").format(spec_md, interview_text(design), a[:limit], b[:limit], failing[:3500]))
 
 
 def parse_verdict(text: str) -> dict[str, str]:
@@ -395,15 +340,15 @@ def write_bench(design: Path, board: str, llm: LLM, st: dict[str, Any], prompt: 
     """One role call, then (if the files do not even compile) one repair call. Returns the problems left."""
     prompt = prompt or role_prompt(design, board)
     for attempt in (0, 1):
-        files = parse_files(llm(ROLE_SYSTEM, prompt))
+        files = parse_files(llm(_p("graph/spectest/role_system"), prompt))
         st["bench_writes"] += 1
         if files:
             write_files(design, files)
-        problems = static_problems(design) if files else ["the reply held no spectest/ files in the required form"]
+        problems = static_problems(design) if files else [_p("graph/spectest/write_bench_1")]
         _note(st, step="write" if attempt == 0 else "write_static_repair", files=sorted(files), problems=problems)
         if not problems:
             return []
-        prompt = prompt + "\n\nYour previous reply had these problems, fix them and reply with both files again:\n" + "\n".join(problems)
+        prompt = prompt + _p("graph/spectest/write_bench_2") + "\n".join(problems)
     return problems
 
 
@@ -422,7 +367,7 @@ def gate(design: Path, board: str, runner: Any, role_llm: LLM, triage_llm: LLM, 
             if left:
                 st["outcome"] = "error"
                 _note(st, step="error", why="the bench could not be written: " + "; ".join(left))
-                return _finish(design, st, "error", False, "the spec-test bench could not be written: " + "; ".join(left), "error")
+                return _finish(design, st, "error", False, _p("graph/spectest/gate_1") + "; ".join(left), "error")
         repaired_this_episode = False
         for _ in range(4):                                       # run, triage, at most one bench repair, run, triage
             res = run_bench(design, runner, sim, timeout)
@@ -434,18 +379,16 @@ def gate(design: Path, board: str, runner: Any, role_llm: LLM, triage_llm: LLM, 
                 return _finish(design, st, "pass", False, "", "pass")
             if st["design_wrong"] >= max_loops:
                 st.update(outcome="unresolved", passed=False)
-                _note(st, step="limit", why=f"{st['design_wrong']} design_wrong round trips already used (limit {max_loops})")
+                _note(st, step="limit", why=_p("graph/spectest/gate_2").format(st['design_wrong'], max_loops))
                 return _finish(design, st, "unresolved", False, failing_checks_text(res), "limit")
             failing = failing_checks_text(res)
-            v = parse_verdict(triage_llm(TRIAGE_SYSTEM, triage_prompt(design, failing)))
+            v = parse_verdict(triage_llm(_p("graph/spectest/triage_system"), triage_prompt(design, failing)))
             _note(st, step="triage", **v)
             if v["verdict"] == "design_wrong":
                 st["design_wrong"] += 1
                 st.update(outcome="design_wrong", passed=False)
                 sig = "spectest:" + "|".join(sorted(f["test"] for f in res["failing"])) if res["failing"] else "spectest:build"
-                ev = (f"[spec test] An independent bench written from the request alone fails against your design, and a reviewer who "
-                      f"read the request judged the design wrong: {v['reason']}\nFailing checks of the independent bench:\n{failing}\n"
-                      f"The bench (spectest/spec_bench.py) is yours to read; fix the RTL to match the request.")
+                ev = (_p("graph/spectest/gate_3").format(v['reason'], failing))
                 return _finish(design, st, "design_wrong", True, ev, sig)
             st["bench_wrong"] += 1
             if repaired_this_episode:                            # the bench was repaired once and is still judged wrong
@@ -525,3 +468,6 @@ def cc_llm(model: str, effort: str | None, log: Path | None = None, label: str =
             raise ArmBlocked("Claude Code could not authenticate: " + str(res.get("result", ""))[:200])
         return str(res.get("result", ""))
     return llm
+
+
+__getattr__ = _prompts.module_getattr(__name__, {'ROLE_SYSTEM': 'graph/spectest/role_system', 'TRIAGE_SYSTEM': 'graph/spectest/triage_system'})

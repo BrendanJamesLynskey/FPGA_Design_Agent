@@ -25,6 +25,9 @@ the evidence entry is ``partial``, the timing, resource and power numbers are wi
 
 from __future__ import annotations
 
+from agent.core.prompts import load as _p
+from agent.core import prompts as _prompts
+
 import copy
 import datetime as _dt
 import json
@@ -60,52 +63,6 @@ FILE_KINDS = (("spec.md", "the request the run started from"),
               ("hw_checks.py", "the ILA capture checks for bring-up"),
               ("BRINGUP.md", "the bring-up procedure for a tester"))
 
-DOC_SYSTEM = """You are the Designer. The run has ended: write the documentation for the next engineer who picks up this design.
-You are given handover.yaml as drafted by the flow. The facts in it (target, clocks, files, commands, evidence, measurements, the
-gates of every stage, history and the gaps already listed) were filled from the run's records by code. They are not yours to change:
-the flow keeps its own copy of them whatever you write. You write the prose fields:
-- title: a short name for the design.
-- summary: what the design does, for an engineer who has never seen it (at least two sentences), and how far the run got.
-- scope_not: what the design is not, or does not do.
-- resets: a list of {name, active: high or low, note}; interfaces: a list of {name, type, note} with an optional doc (a
-  datasheet path in the repo or a URL), one entry per port group of the top level. Copy names from spec.yaml.
-- parameters: a list of {name, value, legal, note}: keep each name and value; write the legal range and a note.
-- Where spec.yaml, the interview answers and ARCHITECTURE.md disagree with the RTL or design.xdc (pins, widths, reset
-  style, reset values, periods, unmapped accesses, priorities), the RTL and XDC are what was built: state what they do and
-  name the file, and add a gap saying the spec disagrees. Do not leave as an open question what the RTL answers.
-- Answer from the files before you ask: the build reads the sources listed under SOURCES THE BUILD READS, shared shell files
-  included (shown below as far as they fit). Never write that a source was not found or not reviewed when it is shown, and do
-  not put in open_questions what the RTL, the XDC, those sources or the spec settle. When the spec promises a latency, a
-  rate or a width, count it from the RTL (pipeline stages, counter periods), state the count and the file, and say so when it
-  differs from the promise. State any masking, gating or priority between control signals that a user could guess wrong.
-  State the rates the spec gives for the parameters (its timing section) in the parameter notes.
-- If cover properties are unhit while functional bins are hit, the draft says the two disagree: say so too, and put "compare
-  the cover results with the functional coverage" before any new stimulus in next_steps.
-- The first next_steps entry addresses the earliest stage that failed or did not reach its level (for example verification,
-  before any rebuild). If a build was made under an earlier Vivado release, one later step re-measures it with python -m agent
-  resume when the flow reaches the build again; publish no number from that build and never name the earlier release.
-- Approval: the draft says the specification and architecture were approved automatically, with no human review (review was off;
-  the interview oracle only answered the interview questions and approved nothing). Never write "signed off" or "approved" without
-  saying that, and never write that a model approved them. If the draft says no debug build was attempted or recorded, do not write
-  that it failed or did not complete.
-- For a seven-segment or other multi-pin output, check the RTL's bit order against design.xdc (which pin each bit drives). If
-  they disagree, or the files cannot settle it, say so as a gap or an open question with the file and line. When the draft
-  already lists a seg_bit_order gap and open question (found by the flow from the glyph table and the XDC), keep them and add what you
-  know, once.
-- If the draft lists a simulated_parameters gap, the benches ran at a parameter value other than the spec's: say in that parameter's
-  note that the spec's value was not simulated, never that it was tested.
-- gaps: keep every gap listed. Add a gap (about: a short key) for each behaviour a user could guess wrong that spec.yaml or the
-  RTL settles and the draft does not state: reset values, unmapped or reserved register accesses, read side effects, partial
-  writes, same-cycle priorities, latency. Also add any assumption the run made.
-- next_steps: what the next engineer should do first, in order (the first one from the earliest gap). open_questions: what is
-  still undecided.
-Say each fact once, in the field where it belongs (a reset in resets, a pin or port in interfaces, a behaviour a user could guess
-wrong in one gap) and do not repeat it in the summary or in another note; a note is one or two sentences. The summary is a short
-paragraph.
-Rules: write no number that is not in the draft, spec.yaml or a cited record (every number is checked against them); no
-placeholder text; plain, measured words; never say a check passed unless its evidence entry says pass; say "the Designer",
-"the Modeller", "the Verifier" and "the Clarifier" for the roles. Reply with the complete handover.yaml in one ```yaml block and
-nothing else."""
 
 
 # --- facts from the records ---------------------------------------------------------------------------------------
@@ -845,7 +802,7 @@ def _first_visited(gates_last: dict | None) -> int:
 def user_prompt(design: Path, h: dict, problems: list[str]) -> str:
     spec = (design / "spec.yaml").read_text(errors="replace")[:12000] if (design / "spec.yaml").is_file() else "(none)"
     arch = (design / "ARCHITECTURE.md").read_text(errors="replace")[:4000] if (design / "ARCHITECTURE.md").is_file() else ""
-    out = f"DRAFT handover.yaml (fields marked WRITE are yours):\n```yaml\n{H.dump(h)}```\n\nspec.yaml:\n{spec}\n"
+    out = _p("graph/document/user_prompt_1").format(H.dump(h), spec)
     if arch:
         out += f"\nARCHITECTURE.md (first part):\n{arch}\n"
     src, budget = "", 30000
@@ -855,10 +812,10 @@ def user_prompt(design: Path, h: dict, problems: list[str]) -> str:
             budget -= len(body)
             src += f"\n--- {p.relative_to(design)} ---\n{body}\n"
     if src:
-        out += "\nWHAT WAS BUILT (design.xdc and the RTL):" + src
+        out += _p("graph/document/user_prompt_2") + src
     shared = [q for q in build_sources(design) if _is_shared(q, design)]
     if shared:
-        out += ("\nSOURCES THE BUILD READS (build.yaml; shared files the agent did not write):\n"
+        out += (_p("graph/document/user_prompt_3")
                 + "\n".join(f"- {H.rel(q)}" + (" (empty)" if _is_empty(q) else "") for q in shared) + "\n")
         shown = ""
         for q in sorted(shared, key=lambda q: q.stat().st_size):          # small modules first: the most files fit
@@ -868,8 +825,7 @@ def user_prompt(design: Path, h: dict, problems: list[str]) -> str:
         if shown:
             out += "\nSHARED SOURCES (as far as they fit):" + shown
     if problems:
-        out += ("\nThe documentation check (flow/handover.py) found these problems in your last reply; fix them and reply with "
-                "the whole file again:\n" + "\n".join(f"- {p[:400]}" for p in problems[:40]) + "\n")
+        out += (_p("graph/document/user_prompt_4") + "\n".join(f"- {p[:400]}" for p in problems[:40]) + "\n")
     return out
 
 
@@ -1053,7 +1009,7 @@ def document(design: Path, run_dir: Path, llm: LLM, *, run_id: str, board: str, 
     problems: list[str] = []
     for n in range(1, passes + 1):
         user = user_prompt(design, h0 if n == 1 else last, problems)
-        text = llm(DOC_SYSTEM, user)
+        text = llm(_p("graph/document/doc_system"), user)
         if log is not None:
             with log.open("a") as f:
                 f.write(json.dumps({"pass": n, "user_chars": len(user), "reply": text}) + "\n")
@@ -1098,3 +1054,6 @@ def designer_llm(rt) -> LLM:
         rt.meter.add(reply)
         return reply.text
     return llm
+
+
+__getattr__ = _prompts.module_getattr(__name__, {'DOC_SYSTEM': 'graph/document/doc_system'})

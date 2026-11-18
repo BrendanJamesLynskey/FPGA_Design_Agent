@@ -333,7 +333,12 @@ def main(argv: list[str] | None = None) -> int:
     rv.add_argument("--model", default="claude-sonnet-5-5")
     rv.add_argument("--effort", default="medium", choices=["low", "medium", "high", "xhigh", "max"])
     rv.add_argument("--claude-bin", default="claude", help="the pinned Claude Code binary")
+    from agent.graph.latency_loop import add_parser as _latency_parser    # brief 97
+    _latency_parser(sub)
     a = ap.parse_args(argv)
+    if a.cmd == "latency":
+        from agent.graph.latency_loop import latency_cmd
+        return latency_cmd(a)
     if a.cmd == "review":
         return review_cmd(a)
     if a.cmd == "document":

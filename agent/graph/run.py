@@ -18,6 +18,9 @@ limits per stage visit and per run come from ``stages.MACHINE`` / ``RUN_LIMITS``
 
 from __future__ import annotations
 
+from agent.core.prompts import load as _p
+from agent.core import prompts as _prompts
+
 import json
 import os
 import re
@@ -36,7 +39,7 @@ from agent.core import Session, dispatch
 from agent.core.runner import ContainerRunner, LocalRunner, container_available
 from agent.core.session import ROOT
 from agent.graph import review as rv
-from agent.graph.contract import MODEL_CONTRACT, contract_argv, parse_result
+from agent.graph.contract import contract_argv, parse_result
 from agent.graph.interview import (Interview, Question, SpecOracle, apply_register_answer, ensure_register_question, merge_summaries,
                                    register_map_errors)
 from agent.graph.llm import BudgetExceeded, Meter, chat_model
@@ -162,118 +165,18 @@ _RT: dict[str, Runtime] = {}
 
 # --- sub-agents ---------------------------------------------------------------------------------------------------
 
-PROMPTS = {
-    "clarify": "You turn a short design request (spec.md) into spec.yaml for an FPGA design on the {board}. Write "
-               "spec.yaml with: name, title, board, part, top, clocks, reset, parameters, ports (name, direction, "
-               "width, board pin role), behaviour, registers, timing, resources_expected, assumptions (each with a "
-               "reason), and open_questions: one entry per thing the request leaves open, each as {{question, "
-               "default, reason}} (the default you propose and why). Use only spec.md and the knowledge tools. "
-               "requirements: a list of {{id, text, proof}}, one per checkable requirement of the request (id unique, for example "
-               "REQ-01); proof is a list of the methods that will discharge it, from simulation (a cocotb test against the "
-               "reference model), formal (a SymbiYosys property), hardware (a bring-up check on the board) and analysis (a flow "
-               "gate or report: timing, resources, power); propose the method you think fits, and leave proof out only if "
-               "you cannot tell (the interview will ask). "
-               "REGISTER MAP: if spec.md names registers, the test shell, the USB-UART host interface or reading values back, but gives no register offsets (a hex constant such as a seed or an I2C address is not an offset), you do NOT know the "
-               "map and must not invent it: add an open_questions entry that asks for the register map (offset, width, reset "
-               "value and access of every register), with your proposed map as the default, and write registers.map from the "
-               "answer; an answered map overrides your proposal (the harness copies it into registers.map). The gate fails a spec that has shell registers and no such question. "
-               "spec.yaml must be valid YAML (quote any text that contains ': ' or '?'); ports, clocks, reset, "
-               "behaviour, registers and timing must all be non-empty, in this exact shape: behaviour is a mapping of "
-               "group name -> list of statements; registers is a mapping with a 'map' list of entries "
-               "{{offset, name, access, reset, bits}}; timing is a mapping, with latency: a mapping of name -> text. Timing parameters (debounce, PWM period, scan or "
-               "refresh period, baud divider) are INTEGER CYCLE COUNTS of the named clock, for example "
-               "PWM_PERIOD_CYCLES: 1024; put the rate or duration only in a comment or in timing. Never a rate "
-               "(_HZ, _MS) or a fraction as a parameter. If spec.yaml already exists it is shown below with the "
-               "gate's message: fix it in place.",
-    "model": "You are the Modeller. From spec.yaml alone write model.py: a pure-Python, cycle-level "
-             "reference model of the design's externally visible behaviour (no HDL, no simulator imports).\n"
-             + MODEL_CONTRACT,
-    "tests": "You are the Verifier. You write the cocotb tests for the design from spec.yaml and the Modeller's reference model model.py (you never see "
-             "the RTL). Write tests/test_{name}_rtl.py (pytest entry calling flow.cocotb_run) and the cocotb bench; "
-             "import the model with sys.path.insert(0, str(Path(__file__).resolve().parents[1])); import model. "
-             "Also write verif/testplan.yaml tracing every spec item to a test: call spec_items for the exact ids "
-             "the V1 gate checks (every one must appear in some requirement's spec list), and the requirements of spec.yaml with "
-             "their proof methods: the testplan gets a top-level `proof:` list of {{requirement, method, artefact}}, one "
-             "entry for every method of every requirement. artefact is: for simulation a bench test (module.test) that "
-             "checks it, for formal a SymbiYosys job name in verif/formal, for hardware a bring-up step (uart_tests, "
-             "ila_captures) or step:case, for analysis a flow gate (stage:gate, for example post_route:setup, "
-             "post_synth:post_synth_resources_in_range).\n" + MODEL_CONTRACT,
-    "hwtests": "You write the board bring-up tests and ILA capture checks for the design (stage 9), from spec.yaml, the "
-               "Modeller's reference model model.py, probes.yaml and BRINGUP.md. You never see the RTL. Write tests/test_{name}_hw.py "
-               "and hw_checks.py. Paths are relative to the design directory (/tests/..., /hw_checks.py). "
-               "Problems found by the bring-up artefact check: {fails}\n",
-    "rtl": "You are the Designer, the RTL engineer for stage {stage} ({stage_name}) of the UltraFast flow on the "
-           "{board}. Do only what this stage allows: {allowed}. The flow's gates decide when the stage is done, "
-           "not you; when you think your part is complete, stop and reply DONE. Failures so far: {fails}. "
-           "Reviewer note: {note}",
-}
-# brief 53: requirement quality (the clarify gate rejects vague and compound requirements) and requirement tags
-PROMPTS["clarify"] += (" Each requirement is ONE checkable statement: no ';' or ', and' joining two statements (split them, "
-                       "each with its own id), and no vague word (should, fast, robust, appropriate, support, etc): state a "
-                       "value, a count of clocks or an exact behaviour.")
-# brief 73: the AXI4-Lite interface profile, chosen once in spec.yaml (hwsw/regmap.py, docs/hwsw.md)
-PROMPTS["clarify"] += (" INTERFACE PROFILE: only if the design has an AXI4-Lite register block, add `interfaces: "
-                       "{{axi_lite_profile: house}}` (a profile bundles what a driver writer could guess wrong: the answer to a "
-                       "hole, strobes, unaligned and reserved accesses, error capture). Choose amd_compatible when software "
-                       "already written for AMD IP will drive the block (a hole reads OKAY and 0, no error-capture registers); "
-                       "strict for bring-up, safety or verification-heavy work (every access the block cannot take answers "
-                       "SLVERR, error capture with an interrupt, wide values need a snapshot group); house otherwise (the "
-                       "default; a hole answers SLVERR to a read and OKAY to a write). Leave interfaces out when there is "
-                       "no register block.")
-# brief 71: the check suite, one tool for the Designer (flow/checks)
-PROMPTS["rtl"] += (" The `check` tool runs the design checks and returns a short digest (each check pass, fail, partial or "
-                   "not run; each finding with its rule, place, one-line fix and the KB skill to load): call it with "
-                   "names [\"all\"] before you reply DONE and after a build, or name one check (resets, cdc, lint, standards, "
-                   "methodology, drc, exceptions, io, clocking, dsp_ram_mapping, control_sets, fsm, axi, axi_profile, gt_plan, doc) "
-                   "to look into a failure. Follow AMD's design recommendations (UG949). Resets are synchronous: an asynchronous reset belongs "
-                   "only in a reset or clock-domain-crossing synchroniser (asynchronous assert, synchronous release, as "
-                   "xpm_cdc_async_rst does) or where an external device's reset is asynchronous, never in datapath or ordinary "
-                   "control logic. Reset only what needs it (control registers, not datapath registers). Use one polarity for "
-                   "each reset inside the design: active high inside, inverted once where it enters (aresetn at AXI ports, "
-                   "which AXI requires active low); never both polarities of one reset. The registers of a DSP or block RAM "
-                   "take a synchronous reset or none, and no register with an asynchronous reset or logic may drive their "
-                   "reset pins; the `resets` check reports each of these. "
-                   "A generated AXI4-Lite register block must be the profile spec.yaml `interfaces:` declares (axi_profile "
-                   "regenerates it and compares); never edit a generated block, regenerate it from its map.")
-PROMPTS["tests"] += ("\nTag every check with the spec.yaml requirement ids it verifies (brief 53, flow/traceability.py): a "
-                     "`# req: REQ-01, REQ-02` comment directly above each @cocotb.test() (or @req(\"REQ-01\") from flow.req, "
-                     "above @cocotb.test()), `// req: REQ-01` on the line of each `V_*(...)` assertion or cover, and a "
-                     "`# req: REQ-01` line in each .sby job. A test that verifies no requirement says "
-                     "`# robustness: <why>` or `# structural: <why>` (for example the coverage-export test).\n")
+PROMPTS = _prompts.LazyDict("graph/run/prompt", ('clarify', 'model', 'tests', 'hwtests', 'rtl'))          # brief 99: the text is in the private knowledge repository
 
 
 #: the bring-up file formats of stage 9, as a short schema (never the reference design's content): what
 #: flow/bringup.py and flow/hw_dry_check.py need. Same text for both harnesses.
-HW_FORMAT = """
-Bring-up files (stage 9; flow/bringup.py runs them on the board once the owner approves programming):
-- tests/test_{name}_hw.py: a pytest module with `pytestmark = pytest.mark.hw` and plain `def test_...(board)` functions.
-  A module-scoped fixture `board` opens the board's UART: `from shell.host.fpga_shell import FpgaShell`;
-  `FpgaShell.open(request.config.getoption("--hw-port"), timeout_s=0.2)`; the bitstream's build stamp comes from
-  `request.config.getoption("--hw-stamp")` (hex text). Registers are read and written through the shell window,
-  `sh.read(p.WINDOW_BASE + offset)` / `sh.write(p.WINDOW_BASE + offset, value)` with `from shell.host import
-  protocol as p` (@shell/PROTOCOL.md has the frames). Compare every answer with the reference model (model.py). Leave the
-  design at its reset values afterwards, and keep LED duty and count low (the board's power rule).
-- hw_checks.py: the ILA capture checks, run on the ILA build. A module-level `CAPTURES: list[Capture]` where you define
-  `Capture` as a dataclass with name, condition ("AND" or "OR"), position (int, trigger position in the 1024-sample
-  window), compares (dict: probe name -> the integer value the trigger waits for; use "AND": Vivado cannot merge the compare
-  values of one ILA port under "OR"), setup(sh), stimulus(sh) and
-  check(samples) -> dict with a "pass" bool; `samples` is {{probe name: [value per clock]}}. Probe names are the ones in
-  probes.yaml. Also a function `restore(sh)` that puts the design back at its reset values.
-- BRINGUP.md for a tester who did not design it, with the sections Setup, Testing (step by step, pass/fail), Debug aids
-  (the ILA probes and their triggers) and If it fails.
-Call gates(kind="bringup_ready") to check that these files are complete without the board. The stage cannot ask the
-owner to approve programming until that check passes.
-"""
 
-FRESH_TESTS = (" Write your whole output: files of an earlier attempt that you do not write again are deleted.")
 
 
 def repair_note(role: str, reasons: list[str]) -> str:
     """The extra prompt text of a repair visit: only this role's own failures, and the instruction to edit."""
-    return ("\n\nREPAIR VISIT. Your previous output is in the files listed below: it is yours to edit. The gates found "
-            f"problems that belong to the {role} role:\n" + "\n".join(f"- {r[:2200]}" for r in reasons)
-            + "\nMake the smallest change that fixes them. Do not rewrite or restructure what already works; the other "
-              "artefacts are frozen and nobody else rewrites them this visit.")
+    return (_p("graph/run/repair_note_1").format(role) + "\n".join(f"- {r[:2200]}" for r in reasons)
+            + _p("graph/run/repair_note_2"))
 
 
 SELF_CHECK_PASSES = 2          # 07a2 fix 7: repair passes the tests role gets inside one turn before it hands over
@@ -354,94 +257,22 @@ def surviving_mutants_note(design: Path, limit: int = 30) -> str:
     text = [*(mut.get("survivor_text") or []), *(("timed out, counts as not killed: " + t) for t in mut.get("timed_out_text") or [])]
     if not text:
         return ""
-    return ("\n\nSURVIVING MUTANTS of the last mutation run (the design was changed as follows and your tests still passed; "
-            f"score {mut.get('score_pct')}%, {mut.get('killed')} of {mut.get('evaluated')} killed). Tighten the checks so a test "
-            "fails for each change (compare more outputs, drive the stimulus that exercises the changed line):\n"
+    return (_p("graph/run/surviving_mutants_note_1").format(mut.get('score_pct'), mut.get('killed'), mut.get('evaluated'))
             + "\n".join(f"- {t}" for t in text[:limit]) + (f"\n(+{len(text) - limit} more in build/verif/mutation.json)" if len(text) > limit else ""))
 
 
 
-CONVENTIONS = """
-Flow conventions (fixed by the repo; follow them exactly):
-- File tool paths (read_file, write_file, list_files) are relative to the design directory, for example rtl/top.sv; "{design_rel}/rtl/top.sv" and "/rtl/top.sv" mean the same file.
-- Paths in build.yaml are relative to the repo root. This design's directory is {design_rel}. build.yaml:
-    top: <top module>
-    part: xc7a100tcsg324-1
-    sources: [shell/rtl/*.sv, {design_rel}/rtl/*.sv]
-    constraints: [{design_rel}/design.xdc]
-    generics: {{}}
-    probes: {design_rel}/probes.yaml
-- The board top must instantiate the test shell `fpga_shell` (UART register window; read @shell/PROTOCOL.md and
-  @shell/rtl/fpga_shell.sv with fda_read_file). fpga_shell ports: clk, rst (sync, active high), uart_rx, uart_tx,
-  win_addr[6:0], win_wr, win_rd, win_wdata[31:0], win_rdata[31:0] (due one cycle after win_rd); parameters
-  CLKS_PER_BIT, TIMEOUT_CYCLES, DESIGN_ID, BUILD_STAMP. The design's registers live in this window. The board top
-  declares `parameter logic [31:0] BUILD_STAMP = 32'h0` and passes it to fpga_shell (.BUILD_STAMP(BUILD_STAMP)); the
-  flow sets it per build, so never write a constant there.
-- design.xdc: call board_constraints with a map of board resource name -> your port name (it lists the resources when
-  called with no map). It writes the pins, I/O standards and the board clock constraint from the master XDC; never
-  write a pin number yourself. check_constraints checks the result.
-  Top-level port names are the master XDC's: CLK100MHZ, BTNC, UART_RXD_OUT, and buses such as LED[15:0], SW[15:0], AN[7:0]
-  (a request's "LED0" is bit 0 of bus LED, so declare `LED` as a bus; never a scalar LED0). Connector pins are scalar
-  JA1, QSPI_DQ0.
-  Every port that spec.yaml declares must exist on the top module, used or not (the hidden bench is written against
-  the spec's ports; rule FDA-CON-8 in lint and check_constraints). The board's USB-UART is a pair: with the test shell,
-  or when the design uses either of UART_TXD_IN / UART_RXD_OUT, the top declares BOTH and design.xdc constrains both
-  (FDA-CON-9). A design that only sends still declares UART_TXD_IN; mark an unused input with
-  `/* verilator lint_off UNUSEDSIGNAL */`, never delete the port.
-- I/O timing (gate post_synth_no_unconstrained_endpoints; check_timing must list no port without an input or output
-  delay). board_constraints writes pins only and REWRITES the whole of design.xdc, so call it first, then read
-  design.xdc and write it back with your timing lines appended; there is no second constraints file and only design.xdc
-  is yours to write. When the gate fails, gates(kind="stages") names the ports (also report name=check_timing_synth.rpt),
-  and load_skill(["constraints"]) has the vendor note. For each port group say why in a comment above (rule FDA-CON-5), and
-  in the XDC dialect `set NAME [get_ports {{...}}]` is the only allowed `set`.
-- probes.yaml (stage 9, ILA debug build; build.yaml `probes:` names it): `ila: {{name, clock_net, depth}}` and a top-level
-  `probes:` list of {{name, pins, width}}; pins are post-synthesis register output pins (cell names survive synthesis,
-  net names do not; a bus lists its bits with [*] and width must match). Read the synthesised design's reports under
-  build/base/ for the real names; the write is refused if the shape is wrong.
-- architecture.yaml (stage 1, beside ARCHITECTURE.md): schema fpga-design-agent/architecture/v1 with blocks [{{name, function}}],
-  interfaces [{{name, between: [a, b], protocol: axi4-lite|axi4-stream|simple|uart|gpio|other, prefix, module}}],
-  clock_domains [{{name, clock (the clock port name), freq_mhz}}], reset {{synchronisers: [module names]}}, crossings
-  [{{from, to, signal, primitive, inline_in}}] ('from' may be async; primitive is one of {cdc_prims}) and
-  predicted_resources {{lut, ff, bram_tile, dsp}}, each a number or [low, high]. Predict before you write RTL: after
-  synthesis a result more than 2x outside your range fails a gate. The owner approves ARCHITECTURE.md and
-  architecture.yaml BEFORE any RTL is written, and both are frozen afterwards.
-- Design standards v1.0 (checked by flow/standards_check.py; gates(kind="standards") shows the rules and findings):
-{standards}
-- ARCHITECTURE.md must have a "## Block diagram" section with a fenced text diagram, the clock plan and the pin list.
-- Tests (Verifier): tests/test_{name}_rtl.py is a pytest entry that calls
-  flow.cocotb_run.run(name, toplevel, sources, test_module, test_dir, parameters=..., seed=...), where
-  sources = flow.cocotb_run.SHELL_RTL + sorted((design_dir / "rtl").glob("*.sv")); the cocotb bench module sits
-  next to it in tests/ and checks the RTL against model.py. Do not add verif/checkers/*.sv to sources: cocotb_run.run
-  compiles them (the bind file last) into every Verilator build, which is the run that counts cover properties.
-  Proof methods for bench tests: a cocotb test is proven by method `simulation` (artefact = module.test_name);
-  the method name formal is only for a job in verif/formal. Name the constrained-random test with "random" in it
-  (for example test_random_traffic): V2 `constrained_random_test_ran` looks for that word.
-- Stage 2 ends only at verification stage V3 (flow/verif_gates.py): load_skill(["verification-stages"]) first.
-  verif/testplan.yaml (schema fpga-design-agent/testplan/v0) has keys: schema, design, spec ({design_rel}/spec.yaml),
-  model, bench {{modules: [...], dir: {design_rel}/tests}}, checkers ({design_rel}/verif/checkers), formal_dir
-  ({design_rel}/verif/formal), thresholds {{seeds_min, functional_bins_pct, cover_properties_pct, line_pct,
-  toggle_pct, mutation_score_pct; a value below the harness floor (flow/verif_floors.yaml) is ignored and the floor applies),
-  waivers {{code_coverage: [], functional_bins: [], cover_properties: []}} (each
-  waiver needs a reason), requirements: [{{id, spec: [spec.yaml item paths], tests: [module.test], assertions,
-  cover_props, bins, formal}}], proof: [{{requirement: <spec.yaml requirement id>, method: simulation|formal|hardware|analysis,
-  artefact: ...}}], plus verif/mutants.yaml. The last gate output shows what verif_gates found.
-"""
 
 
-NO_SHELL_BULLET = """- This design does NOT use the test shell: its subject is the USB-UART itself (07a2-prep). The flow builds, lints and simulates
-  without shell/rtl, so `uart_rx` and `uart_tx` are free for your own modules. The board top has exactly the ports the
-  request names (names from the board's master XDC) and the parameters the request names as top-level parameters (for
-  example CLKS_PER_BIT); it has no fpga_shell, no register window and no BUILD_STAMP parameter, and the flow passes no
-  BUILD_STAMP generic. Drive the design's pins from your own cocotb bench."""
 
 
 def no_shell_conventions(t: str) -> str:
     """CONVENTIONS for a design without the test shell: no shell source in build.yaml, no fpga_shell bullet, no shell in the test sources."""
-    t = t.replace("sources: [shell/rtl/*.sv, {design_rel}/rtl/*.sv]", "sources: [{design_rel}/rtl/*.sv]")
-    t = t.replace("sources = flow.cocotb_run.SHELL_RTL + sorted((design_dir / \"rtl\").glob(\"*.sv\"))",
-                  "sources = sorted((design_dir / \"rtl\").glob(\"*.sv\")) (no test shell for this design)")
+    t = t.replace(_p("graph/run/no_shell_conventions_1"), "sources: [{design_rel}/rtl/*.sv]")
+    t = t.replace(_p("graph/run/no_shell_conventions_2"),
+                  _p("graph/run/no_shell_conventions_3"))
     head, *bullets = t.split("\n- ")
-    bullets = [NO_SHELL_BULLET[2:] if b.startswith("The board top must instantiate the test shell") else b for b in bullets]
+    bullets = [_p("graph/run/no_shell_bullet")[2:] if b.startswith(_p("graph/run/no_shell_conventions_4")) else b for b in bullets]
     return "\n- ".join([head, *bullets])
 
 
@@ -449,14 +280,14 @@ def vhdl_conventions(t: str) -> str:
     """Brief 55: CONVENTIONS for a VHDL design (``--hdl vhdl``): VHDL file names in rtl/, the VHDL form of the shell
     instance and BUILD_STAMP, the language-boundary bullet (flow/vhdl.py BOUNDARY_NOTES), VHDL sources in the tests."""
     from flow.vhdl import BOUNDARY_NOTES
-    t = t.replace("for example rtl/top.sv; \"{design_rel}/rtl/top.sv\" and \"/rtl/top.sv\"",
-                  "for example rtl/top.vhd; \"{design_rel}/rtl/top.vhd\" and \"/rtl/top.vhd\"")
+    t = t.replace(_p("graph/run/vhdl_conventions_1"),
+                  _p("graph/run/vhdl_conventions_2"))
     t = t.replace("{design_rel}/rtl/*.sv]", "{design_rel}/rtl/*.vhd]")
-    t = t.replace("sorted((design_dir / \"rtl\").glob(\"*.sv\"))", "sorted((design_dir / \"rtl\").glob(\"*.vhd\"))")
-    t = t.replace("The board top\n  declares `parameter logic [31:0] BUILD_STAMP = 32'h0` and passes it to fpga_shell (.BUILD_STAMP(BUILD_STAMP)); the\n  flow sets it per build, so never write a constant there.",
-                  "The board top\n  declares the generic `BUILD_STAMP : std_logic_vector(31 downto 0) := x\"00000000\"` and passes it to fpga_shell\n  (BUILD_STAMP => BUILD_STAMP); the flow sets it per build, so never write a constant there.")
-    t = t.replace("A design that only sends still declares UART_TXD_IN; mark an unused input with\n  `/* verilator lint_off UNUSEDSIGNAL */`, never delete the port.",
-                  "A design that only sends still declares UART_TXD_IN; leave an unused input unconnected, never delete the port.")
+    t = t.replace(_p("graph/run/vhdl_conventions_3"), _p("graph/run/vhdl_conventions_4"))
+    t = t.replace(_p("graph/run/vhdl_conventions_5"),
+                  _p("graph/run/vhdl_conventions_6"))
+    t = t.replace(_p("graph/run/vhdl_conventions_7"),
+                  _p("graph/run/vhdl_conventions_8"))
     notes = BOUNDARY_NOTES.replace("{", "{{").replace("}", "}}")
     head, *bullets = t.split("\n- ")
     vhdl_bullet = "THIS DESIGN IS WRITTEN IN VHDL-2008. " + notes.split("\n", 1)[1].lstrip("- ").replace("\n- ", "\n  * ")
@@ -466,7 +297,7 @@ def vhdl_conventions(t: str) -> str:
 def conventions_text(fmt: dict, template: str | None = None) -> str:
     """CONVENTIONS with this run's values; the one place that fills it (the Claude Code arm's tests use it too)."""
     from flow import architecture as am
-    t = template or CONVENTIONS
+    t = template or _p("graph/run/conventions")
     if fmt.get("no_shell"):
         t = no_shell_conventions(t)
     if fmt.get("hdl") == "vhdl":
@@ -478,7 +309,7 @@ def tests_conventions_text(fmt: dict) -> str:
     """05l: the part of ``CONVENTIONS`` that concerns the tests role: where file paths are rooted, the test entry, and the
     verification stages. The rest (constraints, probes, architecture files, standards) is addressed to the Designer and
     names tools (board_constraints, gates) the tests role does not have, so it is not shown to the tests role."""
-    head, *bullets = CONVENTIONS.split("\n- ")
+    head, *bullets = _p("graph/run/conventions").split("\n- ")
     keep = [b for b in bullets if b.startswith(("File tool paths", "Tests (Verifier)", "Stage 2 ends only"))]
     return conventions_text(fmt, "\n- ".join([head, *keep]))
 
@@ -600,8 +431,7 @@ def subagent_plan(rt: Runtime, role: str, prompt: str, allowed: tuple[str, ...] 
     from agent.graph.roles import ROLE_TOOLS
     inputs = role_inputs(rt.session, role, previous=repair)
     if role != "rtl":
-        prompt += ("\nYour working directory is the design directory: write files at paths like /model.py, "
-                   "/tests/..., /verif/... (repo-relative paths in build.yaml and testplan.yaml stay as given).")
+        prompt += (_p("graph/run/subagent_plan_1"))
     msg = prompt + "\n\nFiles you have:\n" + "\n".join(f"--- {k} ---\n{v}" for k, v in inputs.items())
     core = tuple(n for n in allowed if n in FLOW_TOOLS and n in TOOLS)
     role_files = ROLE_TOOLS[role]
@@ -837,63 +667,31 @@ def tests_checklist(rt: Runtime, stage: int, repair: bool) -> str:
     from agent.core.runner import tool_available
     name = rt.cfg.name
     formal = tool_available("sby")
-    lines = ["", "", "STAGE-ENTRY CHECKLIST (the files the gates read; the gate fails if one is missing):"]
+    lines = ["", "", _p("graph/run/tests_checklist_1")]
     if stage == 2:
         lines += [
-            f"1. tests/test_{name}_rtl.py: the pytest entry (gate V0 `bench_modules_present`; the flow runs tests/test_*_rtl.py itself after you write it). "
-            "The V2/V3 gates read build/verif/sim/seed<N>/results.xml of this design, one directory per seed; the flow's run writes it for every "
-            "flow.cocotb_run.run(..., seed=N) call (a call without seed= counts as seed 1), so call run() for each seed you need "
-            "(V3 wants the testplan's seeds_min) and list every test module in one run's `test_module`.",
-            "2. tests/<module>.py for every module listed in bench.modules of the testplan (V0 `bench_modules_present`). "
-            "Keep the bench fast: cocotb on Icarus runs about 10^5 clock cycles per second and the flow stops a run "
-            "after 30 minutes, so override the spec's long timing parameters (debounce, PWM period, baud divider) with small "
-            "values through `parameters=` of flow.cocotb_run.run and take the same values for the model. A test that needs "
-            "more than about 200,000 cycles is too long.",
-            "3. verif/testplan.yaml (V0 `testplan_present`, V1 `spec_items_traced`): every spec item traced to a test. "
-            "Its `proof:` list needs one {requirement, method, artefact} entry for every method of every requirement in "
-            "spec.yaml (V1 `proof_methods_discharged`), and each artefact must exist (V1 `proof_references_resolve`). "
-            "A bench test (module.test_name) is proven by method `simulation`; the method name formal is only for a job in verif/formal. "
-            "Name the constrained-random test with \"random\" in its name (V2 `constrained_random_test_ran`).",
+            _p("graph/run/tests_checklist_2").format(name),
+            _p("graph/run/tests_checklist_3"),
+            _p("graph/run/tests_checklist_4"),
             "4. `formal` methods: " + (
-                "SymbiYosys is installed. Write verif/formal/<job>.sby and its property module (properties over the top "
-                "module's ports from spec.yaml), call the `formal` tool, and use <job> as the artefact. A job that has not "
-                "passed bmc and cover is not discharged." if formal else
-                "SymbiYosys is NOT installed here, so no formal job can run. Do not name a formal job and do not claim a "
-                "proof. Re-plan the method: add a top-level `replan:` list to verif/testplan.yaml with one "
-                "{requirement, method: formal, replaced_by: simulation|analysis|hardware, artefact, why} entry per formal "
-                "method (why = a sentence saying why it was re-planned). The replacement's own evidence is what counts."),
-            "5. Assertions and covers are declared only through the four macros of verif/checkers/v_macros.svh (the flow's read-only "
-            "file, already there; include it with the SystemVerilog include directive): `V_SAME(A_x, ante, cons)`, `V_NEXT(A_y, ante, cons)`, `V_RST(A_z, cons)`, "
-            "`V_COVER(C_w, expr)`. The module that includes it must declare `clk`, `rst` and `seen_rst`. Names must start A_ or C_. "
-            "A plain `C_x: cover property (...)` is not read by the gate, so the name stays unresolved in the testplan.",
-            *(["6. V3 coverage evidence (the gate reads only these; the flow makes the runs itself once V0 to V2 pass, so you write "
-               "the bench and the plan, not the runs): (a) functional bins: at least one name in `bins:` of the requirements, "
-               "sampled in the bench and exported by its last test with coverage_db.export_to_yaml(os.environ[\"FDA_COV_OUT\"]) "
-               "(cocotb-coverage; every CoverPoint/CoverCross name is a dotted path with a parent such as \"top.result_class\", else the bench "
-               "fails at import with \"CoverPoint must have a parent\"; sample by calling the decorated function; "
-               "load_skill([\"simulation\"]) has the details); (b) code coverage (line, toggle, cover properties): the flow runs the bench again under Verilator "
-               "with coverage on, so declare the cover points with `V_COVER` and the bench must reach them (the flow compiles verif/checkers/*.sv, the bind file last, into that Verilator build itself; list them in your own sources only if you build by hand); (c) mutation score: the "
-               "flow then runs a capped, seeded sample of changes to the RTL against your tests; a change no test fails on is "
-               "reported to you in words (file, line, change), and the fix is a tighter check or a test that exercises that behaviour."]
+                _p("graph/run/tests_checklist_5") if formal else
+                _p("graph/run/tests_checklist_6")),
+            _p("graph/run/tests_checklist_7"),
+            *([_p("graph/run/tests_checklist_8")]
               if rt.cfg.verif_level == "V3" else []),
-            *([f"7. V3 floors (flow/verif_floors.yaml, fixed by the harness): {floors_text()}. A testplan threshold below its floor is "
-               "ignored and the check says so; you can only raise a bar. Only a waiver with a reason in the testplan excuses a named bin "
-               "or cover property. A mutation score counts only when enough mutants were evaluated (10, or every candidate when fewer); "
-               "that number is the flow's, not something your tests can change."]
+            *([_p("graph/run/tests_checklist_9").format(floors_text())]
               if rt.cfg.verif_level == "V3" else []),
-            ("8" if rt.cfg.verif_level == "V3" else "6") + ". `hardware` methods are discharged in stage 9 (tests/test_" + name + "_hw.py, hw_checks.py); name the bring-up "
-            "step in the proof list now (uart_tests, ila_captures or step:case).",
+            ("8" if rt.cfg.verif_level == "V3" else "6") + _p("graph/run/tests_checklist_10") + name + _p("graph/run/tests_checklist_11"),
         ]
     else:
         lines += [
-            f"1. tests/test_{name}_hw.py: `pytestmark = pytest.mark.hw`, plain `def test_...(board)` functions (bring-up readiness).",
-            "2. hw_checks.py: `CAPTURES` (condition AND) and `restore(sh)` (bring-up readiness).",
-            "3. Read-only references you can open: shell_ref/PROTOCOL.md, shell_ref/host/fpga_shell.py and "
-            "shell_ref/host/protocol.py (the classes you import), and probes.yaml for the probe names.",
-            f"4. Keep tests/test_{name}_rtl.py, the bench and verif/ exactly as they are.",
+            _p("graph/run/tests_checklist_12").format(name),
+            _p("graph/run/tests_checklist_13"),
+            _p("graph/run/tests_checklist_14"),
+            _p("graph/run/tests_checklist_15").format(name),
         ]
-    lines.append("Write every file of the list in this visit. " + (
-        "This is a repair visit: change only the files the failures name, and never delete another." if repair else
+    lines.append(_p("graph/run/tests_checklist_16") + (
+        _p("graph/run/tests_checklist_17") if repair else
         "A file you leave out is a failed gate."))
     return "\n".join(lines) + "\n"
 
@@ -950,7 +748,7 @@ def node_work(state: State) -> dict:
     # the owner's edit prompt (brief 05d, addition 6) goes to the role it names, default the stage's writer
     note_for = state.get("note_role") or ("clarify" if n == 0 else "rtl")
     def prompt_note(role: str) -> str:
-        return (f"\n\nThe owner reviewed the last result and asks (their prompt, follow it): {state['note']}"
+        return (_p("graph/run/prompt_note_1").format(state['note'])
                 if state.get("note") and role == note_for else "")
     if n == 6 and rt.cfg.closure == "on":    # closure-loop hook: the closure controller owns stage 6
         from agent.graph import closure as _cl
@@ -972,7 +770,7 @@ def node_work(state: State) -> dict:
                     run_role(rt, "model", PROMPTS["model"].format(**fmt) + note + prompt_note("model"), role_allowed("model", 2), repair)
                 elif role == "tests":
                     mut = surviving_mutants_note(rt.design) if repair else ""        # 07a2 fix 7 (3)
-                    run_role(rt, "tests", PROMPTS["tests"].format(**fmt) + (note if repair else FRESH_TESTS) + mut
+                    run_role(rt, "tests", PROMPTS["tests"].format(**fmt) + (note if repair else _p("graph/run/fresh_tests")) + mut
                                  + tests_checklist(rt, 2, repair) + prompt_note("tests") + conv_tests, role_allowed("tests", 2), repair)
                     selfcheck_tests_role(rt, lambda extra: run_role(            # 07a2 fix 7 (2): convention misses end here
                         rt, "tests", PROMPTS["tests"].format(**fmt) + repair_note("tests", extra) + mut
@@ -983,7 +781,7 @@ def node_work(state: State) -> dict:
                     run_role(rt, "rtl", PROMPTS["rtl"].format(**{**fmt, "fails": own})
                                  + (note if repair else "") + prompt_note("rtl") + conv0, role_allowed("rtl", 2), repair)
         else:           # stage 9 too: the model writes probes.yaml and BRINGUP.md BEFORE the builds and the hardware pause
-            run_role(rt, "rtl", PROMPTS["rtl"].format(**fmt) + conv + (HW_FORMAT.format(**fmt) if n == 9 else ""),
+            run_role(rt, "rtl", PROMPTS["rtl"].format(**fmt) + conv + (_p("graph/run/hw_format").format(**fmt) if n == 9 else ""),
                          role_allowed("rtl", n))
             if n == 9:                                  # then the bring-up tests, which need the probe names (planner item, 05d)
                 from flow import hw_dry_check
@@ -991,7 +789,7 @@ def node_work(state: State) -> dict:
                 own = [q for q in dry["problems"] if not q.startswith(("BRINGUP.md", "probes.yaml"))]
                 if own:
                     run_role(rt, "tests", PROMPTS["hwtests"].format(**{**fmt, "fails": "; ".join(own)})
-                                 + tests_checklist(rt, 9, True) + HW_FORMAT.format(**fmt) + MODEL_CONTRACT, role_allowed("tests", 9),
+                                 + tests_checklist(rt, 9, True) + _p("graph/run/hw_format").format(**fmt) + _p("graph/contract/model_contract"), role_allowed("tests", 9),
                                  repair=True)        # never "fresh": a fresh tests write deletes the stage-2 benches
         files = [p for p in rt.design.rglob("*") if p.is_file() and "build" not in p.relative_to(rt.design).parts
                  and "__pycache__" not in p.parts]
@@ -1024,14 +822,12 @@ def _interview(rt: Runtime, spec: dict, state: State) -> tuple[dict, dict]:
     rates = [r for r in rate_params(spec) if r["cycles"]]
     for r in rates:                                               # 05c fix 3: rates become cycle counts
         clk = f"{clock_hz(spec) / 1e6:g} MHz"
-        asks.append((f"{r['name']} is given as {r['value']} {r['unit']}. The model and the RTL need an integer "
-                     f"number of clock cycles ({r['new_name']}); at {clk}, how many?", str(r["cycles"]),
-                     f"{r['cycles']} is {r['value']} {r['unit']} at {clk}, rounded once, so the model and RTL agree"))
+        asks.append((_p("graph/run/interview_1").format(r['name'], r['value'], r['unit'], r['new_name'], clk), str(r["cycles"]),
+                     _p("graph/run/interview_2").format(r['cycles'], r['value'], r['unit'], clk)))
     unproven = [r for r in spec.get("requirements") or [] if isinstance(r, dict) and not r.get("proof")]
     for r in unproven:                                            # 05d: a proof method per requirement, with a default
         methods, why = propose_proof(str(r.get("text", "")))
-        asks.append((f"Which proof method discharges requirement {r['id']} ({r.get('text')})? One or more of "
-                     f"{', '.join(PROOF_METHODS)}", ",".join(methods), why))
+        asks.append((_p("graph/run/interview_3").format(r['id'], r.get('text'), ', '.join(PROOF_METHODS)), ",".join(methods), why))
     for i, (qt, qd, qr) in enumerate(asks):
         q = Question(id=f"q{i + 1}", text=qt, default=qd, reason=qr)
         if rt.cfg.interview == "on":                                  # one question at a time, to the human
@@ -1054,7 +850,7 @@ def _interview(rt: Runtime, spec: dict, state: State) -> tuple[dict, dict]:
         params[r["new_name"]] = int(m.group()) if m else r["cycles"]
         spec["parameters"] = params
     for r in unproven:                                            # the answered (or defaulted) methods go into the spec
-        got = next((q for q in iv.questions if q.text.startswith(f"Which proof method discharges requirement {r['id']} ")), None)
+        got = next((q for q in iv.questions if q.text.startswith(_p("graph/run/interview_4").format(r['id']))), None)
         found = [m for m in PROOF_METHODS if got and got.answer and m in got.answer.lower()]
         r["proof"] = found or propose_proof(str(r.get("text", "")))[0]
     (rt.design / "spec.yaml").write_text(yaml.safe_dump(spec, sort_keys=False))
@@ -1651,13 +1447,9 @@ def install_data_files(design: Path, data_dir: Path) -> list[str]:
     names = [str(p.relative_to(dst)) for p in sorted(dst.rglob("*")) if p.is_file()]
     if names:
         with (design / "spec.md").open("a") as f:
-            f.write("\n\n## Data files supplied with this request\n\n"
-                    "These files belong to the request. They are in the design directory under data/ and are read-only "
-                    "(read them with read_file; list_files data shows them):\n\n"
+            f.write(_p("graph/run/install_data_files_1")
                     + "".join(f"- data/{n} ({(dst / n).stat().st_size} bytes)\n" for n in names)
-                    + "\nSimulations and the Vivado build run with these files available: `$readmemh(\"data/<name>\")` and "
-                      "`$readmemh(\"<name>\")` both open them, and the scoring run finds them the same way. A design may read "
-                      "them with $readmemh/$readmemb or embed their values in the RTL.\n")
+                    + _p("graph/run/install_data_files_2"))
     return names
 
 
@@ -1865,3 +1657,6 @@ def summary(rt: Runtime, state: dict) -> dict:
             "approvals": [{"n": h["n"], **h["approval"]} for h in hist],
             "bringup": ((state.get("evidence") or {}).get("bringup") or {}).get("pass"),
             **({"spec_test": __import__("agent.graph.spectest", fromlist=["x"]).record(rt.design)} if rt.cfg.spec_tests else {})}
+
+
+__getattr__ = _prompts.module_getattr(__name__, {'HW_FORMAT': 'graph/run/hw_format', 'FRESH_TESTS': 'graph/run/fresh_tests', 'CONVENTIONS': 'graph/run/conventions', 'NO_SHELL_BULLET': 'graph/run/no_shell_bullet'})

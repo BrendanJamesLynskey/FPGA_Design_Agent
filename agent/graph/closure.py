@@ -41,6 +41,9 @@ The build, the G1 check and the Designer are passed in, so CI tests the controll
 
 from __future__ import annotations
 
+from agent.core.prompts import load as _p
+from agent.core import prompts as _prompts
+
 import difflib
 import json
 import re
@@ -274,28 +277,22 @@ class EditResult:
     calls: int = 0
 
 
-SYSTEM = ("You are the RTL engineer in an FPGA closure loop (timing, area and power) (Vivado 2026.1, Artix-7 -1). The flow, not you, decides "
-          "whether a change worked: it re-runs an independent simulation bench you cannot see and rebuilds the design. "
-          "Make one focused change of the kind asked for. Reply with every file you change in full, each as\n"
-          "=== FILE: <path> ===\n```systemverilog\n<whole file>\n```\nand nothing else after the last block except one line "
-          "starting NOTE: that says what you changed and the latency it adds (in clocks).")
 
 
 def edit_prompt(r: EditRequest) -> str:
-    parts = [f"GOAL {r.goal}. Strategy: {r.strategy.title}.\nWhy this strategy: {r.why}\n\n{r.strategy.instructions}"]
+    parts = [_p("graph/closure/edit_prompt_1").format(r.goal, r.strategy.title, r.why, r.strategy.instructions)]
     for s, g, why in r.also:
-        parts.append(f"\nALSO, IN THE SAME CHANGE (the planner checked the two do not conflict): GOAL {g}. Strategy: "
-                     f"{s.title}.\nWhy: {why}\n\n{s.instructions}")
+        parts.append(_p("graph/closure/edit_prompt_2").format(g, s.title, why, s.instructions))
     parts += [
              "\nWHAT MUST NOT CHANGE:\n" + r.contract,
              "\nREPORT DIGEST (from the last build):\n" + r.digest]
     if r.plan:
         parts.append("\n" + r.plan)
     if r.history:
-        parts.append("\nEARLIER ITERATIONS (do not repeat a change that was reverted):\n" + "\n".join(r.history[-6:]))
+        parts.append(_p("graph/closure/edit_prompt_3") + "\n".join(r.history[-6:]))
     if r.failure:
-        parts.append("\nYOUR LAST CHANGE FAILED THE INDEPENDENT BENCH. Fix it, keeping the closure change:\n" + r.failure[:2500])
-    parts.append("\nOther design files (not shown; do not change them): " + (", ".join(r.other_files) or "none"))
+        parts.append(_p("graph/closure/edit_prompt_4") + r.failure[:2500])
+    parts.append(_p("graph/closure/edit_prompt_5") + (", ".join(r.other_files) or "none"))
     for p, t in r.files.items():
         parts.append(f"\n=== FILE: {p} ===\n```{'tcl' if p.endswith('.xdc') else 'systemverilog'}\n{t}\n```")
     return "\n".join(parts)
@@ -320,7 +317,7 @@ def llm_editor(client: Callable, log: list | None = None, meter: Any = None) -> 
     def edit(r: EditRequest) -> EditResult:
         if meter is not None:
             meter.check()                        # raises BudgetExceeded at the run's limit
-        rep = client([{"role": "system", "content": SYSTEM}, {"role": "user", "content": edit_prompt(r)}])
+        rep = client([{"role": "system", "content": _p("graph/closure/system")}, {"role": "user", "content": edit_prompt(r)}])
         if meter is not None:
             meter.add(rep)
         files, note = parse_reply(rep.text, set(r.files) | {f for f in r.other_files if f.endswith((".sv", ".v"))})
@@ -834,7 +831,10 @@ def contract_from_spec(spec: dict[str, Any]) -> str:
         if any(w in k.lower() for w in ("handshake", "latency", "timing", "busy", "valid")):
             hs += v if isinstance(v, list) else [str(v)]
     lat = (spec.get("timing") or {}).get("latency") if isinstance(spec.get("timing"), dict) else None
-    return ("Keep every module's name, ports and parameters, and the arithmetic results bit for bit. "
-            + ("Handshake and latency rules from the spec: " + " ".join(map(str, hs)) if hs else "")
+    return (_p("graph/closure/contract_from_spec_1")
+            + (_p("graph/closure/contract_from_spec_2") + " ".join(map(str, hs)) if hs else "")
             + (f" Stated latencies: {lat}." if lat else "")
-            + " Extra clocks of latency are allowed only where the handshake (busy or valid) already lets the user wait.")
+            + _p("graph/closure/contract_from_spec_3"))
+
+
+__getattr__ = _prompts.module_getattr(__name__, {'SYSTEM': 'graph/closure/system'})

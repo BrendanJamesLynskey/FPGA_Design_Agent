@@ -38,12 +38,12 @@ def collect() -> dict[str, str]:
     from agent.graph import run as gr
     from agent.claude_code_arm import arm
     out: dict[str, str] = {}
-    out["prompts"] = _h(gr.PROMPTS)
+    out["prompts"] = _h(dict(gr.PROMPTS))
     out["conventions"] = _h(gr.CONVENTIONS)
     out["hw_format"] = _h(gr.HW_FORMAT)
     out["fresh_tests"] = _h(gr.FRESH_TESTS)
     out["no_shell_bullet"] = _h(gr.NO_SHELL_BULLET)
-    out["model_contract"] = _h(gr.MODEL_CONTRACT)
+    out["model_contract"] = _h(__import__("agent.graph.contract", fromlist=["x"]).MODEL_CONTRACT)
     out["floors_text"] = _h(gr.floors_text())
     out["repair_note"] = _h(gr.repair_note("tests", ["a failure", "another"]))
     out["oracle_system"] = _h(interview.SpecOracle.SYSTEM)

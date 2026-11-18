@@ -1,0 +1,1228 @@
+Running as unit: run-rbc3d2368cdb241aeb4c5cc3e099a3174.scope; invocation ID: 3da0f68604b0468b9b2e4e3481f9da1a
+INFO: [Common 17-3922] A valid Vivado Design Suite BASIC license has been detected. Your current license is active and will expire on 10-nov-2027.
+
+****** Vivado v2026.1 (64-bit)
+  **** SW Build 6511674 on Tue Jun 16 11:01:26 MDT 2026
+  **** IP Build 6504888 on Tue Jun 09 09:05:25 MDT 2026
+  **** SharedData Build 6501428 on Mon Jun 08 17:34:18 MDT 2026
+  **** Start of session at: Tue Nov 17 13:47:22 2026
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+    ** Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+
+source /home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/scripts/impl.tcl
+# source [file join [file dirname [info script]] ../../../flow/rw/common.tcl]
+## proc env_or {k d} { if {[info exists ::env($k)] && $::env($k) ne ""} { return $::env($k) } else { return $d } }
+## proc b100_threads {} {
+##     set n [env_or B100_THREADS 1]
+##     set_param general.maxThreads $n
+##     set_param synth.maxThreads $n
+##     set_param chipscope.maxJobs 1
+## }
+## proc lap {name} {
+##     upvar t0 t0 times times
+##     set n [clock milliseconds]
+##     dict set times $name [expr {($n - $t0) / 1000.0}]
+##     set t0 $n
+## }
+## proc write_run_json {out times part period} {
+##     set wns [get_property SLACK [lindex [get_timing_paths -setup -max_paths 1] 0]]
+##     set whs [get_property SLACK [lindex [get_timing_paths -hold -max_paths 1] 0]]
+##     set lut [llength [get_cells -hier -filter {REF_NAME =~ LUT*}]]
+##     set ff  [llength [get_cells -hier -filter {REF_NAME =~ FD*}]]
+##     set f [open ${out}_run.json w]
+##     set tj [join [lmap {k v} $times {format {"%s": %s} $k $v}] {, }]
+##     puts $f "{\"vivado\": \"[version -short]\", \"part\": \"$part\", \"period_ns\": $period, \"wns_ns\": $wns, \"whs_ns\": $whs, \"lut\": $lut, \"ff\": $ff, \"times_s\": {$tj}}"
+##     close $f
+## }
+## proc slack_of {from to} {
+##     set p [lindex [get_timing_paths -setup -from $from -to $to -max_paths 1] 0]
+##     if {$p eq ""} { return null }
+##     return [get_property SLACK $p]
+## }
+## proc chain_metrics {out} {
+##     set period [get_property PERIOD [lindex [get_clocks] 0]]
+##     set xd [get_cells -hier -filter {NAME =~ u_mac/x_d_reg* || NAME =~ u_mac/x_c_reg*}]
+##     set gd [get_cells -hier -filter {NAME =~ u_pcs/gt_d_reg*}]
+##     set pcs [get_cells -hier -filter {NAME =~ u_pcs/*}]
+##     set gtp [get_pins u_gt/TXDATA*]
+##     set wns [get_property SLACK [lindex [get_timing_paths -setup -max_paths 1] 0]]
+##     set f [open ${out}_chain.json w]
+##     puts $f "{\"period_ns\": $period, \"wns_all_ns\": $wns, \"wns_mac_to_pcs_ns\": [slack_of $xd $gd], \"wns_pcs_to_gt_ns\": [slack_of $gd $gtp], \"wns_inside_pcs_ns\": [slack_of $pcs $pcs]}"
+##     close $f
+## }
+# b100_threads
+# set part   $::env(B100_PART)
+# set out    $::env(B100_OUT)
+# set period [env_or B100_PERIOD 4.0]
+# set dir    [env_or B100_DIRECTIVE Default]
+# set from   [env_or B100_FROM synth]
+# set times [dict create]
+# set t0 [clock milliseconds]
+# if {$from eq "synth"} {
+#     foreach f $::env(B100_SRC) { if {[string match *.sv $f]} { read_verilog -sv $f } else { read_verilog $f } }
+#     if {[info exists ::env(B100_XDC)] && $::env(B100_XDC) ne ""} { read_xdc $::env(B100_XDC) }
+#     synth_design -top $::env(B100_TOP) -part $part -flatten_hierarchy rebuilt
+#     lap synth
+#     write_checkpoint -force ${out}_synth.dcp
+# } else {
+#     open_checkpoint $from
+# }
+read_verilog: Time (s): cpu = 00:00:13 ; elapsed = 00:00:13 . Memory (MB): peak = 1683.113 ; gain = 209.844 ; free physical = 6520 ; free virtual = 20799
+Command: synth_design -top chain_top -part xck26-sfvc784-2LV-c -flatten_hierarchy rebuilt
+Starting synth_design
+Attempting to get a license for feature 'Vivado_Synthesis' and/or device 'xck26'
+INFO: [Common 17-349] Got license for feature 'Vivado_Synthesis' and/or device 'xck26'
+INFO: [Device 21-403] Loading part xck26-sfvc784-2LV-c
+INFO: [Designutils 20-5008] Incremental synthesis strategy default
+INFO: [Synth 8-7079] Multithreading enabled for synth_design using a maximum of 1 processes.
+INFO: [Synth 8-7078] Launching helper process for spawning children vivado processes
+INFO: [Synth 8-7075] Helper process launched with PID 1158892
+---------------------------------------------------------------------------------
+Starting RTL Elaboration : Time (s): cpu = 00:00:08 ; elapsed = 00:00:08 . Memory (MB): peak = 2923.301 ; gain = 170.852 ; free physical = 3734 ; free virtual = 18019
+---------------------------------------------------------------------------------
+INFO: [Synth 8-6157] synthesizing module 'chain_top' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:7]
+INFO: [Synth 8-6157] synthesizing module 'BUFG' [/opt/Xilinx/2026.1/Vivado/scripts/rt/data/unisim_comp.v:2678]
+INFO: [Synth 8-6155] done synthesizing module 'BUFG' (0#1) [/opt/Xilinx/2026.1/Vivado/scripts/rt/data/unisim_comp.v:2678]
+INFO: [Synth 8-6157] synthesizing module 'mac64_tx' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b96_kr260_10g/rtl/mac64_tx.sv:10]
+INFO: [Synth 8-226] default block is never used [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b96_kr260_10g/rtl/mac64_tx.sv:61]
+INFO: [Synth 8-6155] done synthesizing module 'mac64_tx' (0#1) [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b96_kr260_10g/rtl/mac64_tx.sv:10]
+INFO: [Synth 8-6157] synthesizing module 'pcs_tx' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b96_kr260_10g/rtl/pcs_tx.sv:7]
+INFO: [Synth 8-6155] done synthesizing module 'pcs_tx' (0#1) [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b96_kr260_10g/rtl/pcs_tx.sv:7]
+INFO: [Synth 8-6157] synthesizing module 'GTHE4_CHANNEL' [/opt/Xilinx/2026.1/Vivado/scripts/rt/data/unisim_comp.v:53844]
+INFO: [Synth 8-6155] done synthesizing module 'GTHE4_CHANNEL' (0#1) [/opt/Xilinx/2026.1/Vivado/scripts/rt/data/unisim_comp.v:53844]
+WARNING: [Synth 8-689] width (15) of port connection 'TXCTRL2' does not match port width (8) of module 'GTHE4_CHANNEL' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:29]
+WARNING: [Synth 8-7071] port 'BUFGTCE' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'BUFGTCEMASK' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'BUFGTDIV' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'BUFGTRESET' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'BUFGTRSTMASK' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'CPLLFBCLKLOST' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'CPLLLOCK' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'CPLLREFCLKLOST' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'DMONITOROUT' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'DMONITOROUTCLK' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'DRPDO' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'DRPRDY' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'EYESCANDATAERROR' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'GTPOWERGOOD' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'GTREFCLKMONITOR' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'PCIERATEGEN3' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'PCIERATEIDLE' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'PCIERATEQPLLPD' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'PCIERATEQPLLRESET' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'PCIESYNCTXSYNCDONE' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'PCIEUSERGEN3RDY' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'PCIEUSERPHYSTATUSRST' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'PCIEUSERRATESTART' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'PCSRSVDOUT' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'PHYSTATUS' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'PINRSRVDAS' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'POWERPRESENT' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'RESETEXCEPTION' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'RXBUFSTATUS' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'RXBYTEISALIGNED' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'RXBYTEREALIGN' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'RXCDRLOCK' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'RXCDRPHDONE' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'RXCHANBONDSEQ' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'RXCHANISALIGNED' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'RXCHANREALIGN' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'RXCHBONDO' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'RXCKCALDONE' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'RXCLKCORCNT' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'RXCOMINITDET' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'RXCOMMADET' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'RXCOMSASDET' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'RXCOMWAKEDET' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'RXCTRL0' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'RXCTRL1' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'RXCTRL2' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'RXCTRL3' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'RXDATA' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'RXDATAEXTENDRSVD' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'RXDATAVALID' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'RXDLYSRESETDONE' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'RXELECIDLE' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'RXHEADER' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'RXHEADERVALID' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'RXLFPSTRESETDET' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'RXLFPSU2LPEXITDET' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'RXLFPSU3WAKEDET' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'RXMONITOROUT' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'RXOSINTDONE' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'RXOSINTSTARTED' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'RXOSINTSTROBEDONE' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'RXOSINTSTROBESTARTED' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'RXOUTCLK' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'RXOUTCLKFABRIC' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'RXOUTCLKPCS' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'RXPHALIGNDONE' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'RXPHALIGNERR' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'RXPMARESETDONE' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'RXPRBSERR' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'RXPRBSLOCKED' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'RXPRGDIVRESETDONE' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'RXQPISENN' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'RXQPISENP' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'RXRATEDONE' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'RXRECCLKOUT' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'RXRESETDONE' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'RXSLIDERDY' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'RXSLIPDONE' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'RXSLIPOUTCLKRDY' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'RXSLIPPMARDY' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'RXSTARTOFSEQ' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'RXSTATUS' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'RXSYNCDONE' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'RXSYNCOUT' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'RXVALID' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'TXBUFSTATUS' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'TXCOMFINISH' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'TXDCCDONE' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'TXDLYSRESETDONE' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'TXOUTCLK' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'TXOUTCLKFABRIC' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'TXOUTCLKPCS' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'TXPHALIGNDONE' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'TXPHINITDONE' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'TXPMARESETDONE' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'TXPRGDIVRESETDONE' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'TXQPISENN' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'TXQPISENP' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'TXRATEDONE' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+WARNING: [Synth 8-7071] port 'TXRESETDONE' of module 'GTHE4_CHANNEL' is unconnected for instance 'u_gt' [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+INFO: [Common 17-14] Message 'Synth 8-7071' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+WARNING: [Synth 8-7023] instance 'u_gt' of module 'GTHE4_CHANNEL' has 341 connections declared, but only 12 given [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:26]
+INFO: [Synth 8-6155] done synthesizing module 'chain_top' (0#1) [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/rtl/chain_top.sv:7]
+---------------------------------------------------------------------------------
+Finished RTL Elaboration : Time (s): cpu = 00:00:12 ; elapsed = 00:00:12 . Memory (MB): peak = 3040.270 ; gain = 287.820 ; free physical = 3389 ; free virtual = 17710
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:00:12 ; elapsed = 00:00:12 . Memory (MB): peak = 3040.270 ; gain = 287.820 ; free physical = 3388 ; free virtual = 17709
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 1 : Time (s): cpu = 00:00:12 ; elapsed = 00:00:12 . Memory (MB): peak = 3040.270 ; gain = 287.820 ; free physical = 3388 ; free virtual = 17709
+---------------------------------------------------------------------------------
+Netlist sorting complete. Time (s): cpu = 00:00:00.06 ; elapsed = 00:00:00.06 . Memory (MB): peak = 3048.270 ; gain = 0.000 ; free physical = 3351 ; free virtual = 17668
+INFO: [Netlist 29-17] Analyzing 1 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+INFO: [Project 1-570] Preparing netlist for logic optimization
+
+Processing XDC Constraints
+Initializing timing engine
+Parsing XDC File [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/chain.xdc]
+Finished Parsing XDC File [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/chain.xdc]
+INFO: [Project 1-236] Implementation specific constraints were found while reading constraint file [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/chain.xdc]. These constraints will be ignored for synthesis but will be used in implementation. Impacted constraints are listed in the file [.Xil/chain_top_propImpl.xdc].
+Resolution: To avoid this warning, move constraints listed in [.Xil/chain_top_propImpl.xdc] to another XDC file and exclude this new file from synthesis with the used_in_synthesis property (File Properties dialog in GUI) and re-run elaboration/synthesis.
+Completed Processing XDC Constraints
+
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3099.082 ; gain = 0.000 ; free physical = 3271 ; free virtual = 17589
+INFO: [Project 1-111] Unisim Transformation Summary:
+  A total of 1 instances were transformed.
+  BUFG => BUFGCE: 1 instance 
+
+Constraint Validation Runtime : Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00 . Memory (MB): peak = 3099.117 ; gain = 0.000 ; free physical = 3271 ; free virtual = 17589
+---------------------------------------------------------------------------------
+Finished Constraint Validation : Time (s): cpu = 00:00:23 ; elapsed = 00:00:24 . Memory (MB): peak = 3099.117 ; gain = 346.668 ; free physical = 2969 ; free virtual = 17304
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Loading Part and Timing Information
+---------------------------------------------------------------------------------
+Loading part: xck26-sfvc784-2LV-c
+INFO: [Synth 8-6742] Reading net delay rules and data
+---------------------------------------------------------------------------------
+Finished Loading Part and Timing Information : Time (s): cpu = 00:00:23 ; elapsed = 00:00:24 . Memory (MB): peak = 3107.086 ; gain = 354.637 ; free physical = 2969 ; free virtual = 17304
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Applying 'set_property' XDC Constraints
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished applying 'set_property' XDC Constraints : Time (s): cpu = 00:00:23 ; elapsed = 00:00:24 . Memory (MB): peak = 3107.086 ; gain = 354.637 ; free physical = 2969 ; free virtual = 17304
+---------------------------------------------------------------------------------
+INFO: [Synth 8-802] inferred FSM for state register 'st_reg' in module 'mac64_tx'
+---------------------------------------------------------------------------------------------------
+                   State |                     New Encoding |                Previous Encoding 
+---------------------------------------------------------------------------------------------------
+                  S_IDLE |                               00 |                               00
+                  S_DATA |                               01 |                               01
+                  S_TAIL |                               10 |                               10
+                   S_IFG |                               11 |                               11
+---------------------------------------------------------------------------------------------------
+INFO: [Synth 8-3354] encoded FSM with state register 'st_reg' using encoding 'sequential' in module 'mac64_tx'
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 2 : Time (s): cpu = 00:00:25 ; elapsed = 00:00:25 . Memory (MB): peak = 3107.086 ; gain = 354.637 ; free physical = 2940 ; free virtual = 17277
+---------------------------------------------------------------------------------
+No constraint files found.
+---------------------------------------------------------------------------------
+Start RTL Component Statistics 
+---------------------------------------------------------------------------------
+Detailed RTL Component Info : 
++---Adders : 
+	   2 Input   32 Bit       Adders := 2     
+	   2 Input    7 Bit       Adders := 1     
+	   2 Input    2 Bit       Adders := 1     
++---XORs : 
+	   2 Input     32 Bit         XORs := 64    
+	   2 Input      1 Bit         XORs := 64    
+	   3 Input      1 Bit         XORs := 64    
++---Registers : 
+	               80 Bit    Registers := 1     
+	               64 Bit    Registers := 4     
+	               58 Bit    Registers := 1     
+	               32 Bit    Registers := 1     
+	                8 Bit    Registers := 2     
+	                7 Bit    Registers := 1     
+	                2 Bit    Registers := 1     
+	                1 Bit    Registers := 4     
++---Muxes : 
+	   2 Input   66 Bit        Muxes := 25    
+	   3 Input   66 Bit        Muxes := 2     
+	   2 Input   64 Bit        Muxes := 22    
+	   4 Input   64 Bit        Muxes := 1     
+	   2 Input   32 Bit        Muxes := 73    
+	   4 Input   32 Bit        Muxes := 1     
+	   2 Input    8 Bit        Muxes := 3     
+	   4 Input    8 Bit        Muxes := 1     
+	   2 Input    7 Bit        Muxes := 1     
+	   4 Input    2 Bit        Muxes := 3     
+	   2 Input    2 Bit        Muxes := 2     
+	   2 Input    1 Bit        Muxes := 19    
+	   4 Input    1 Bit        Muxes := 7     
+---------------------------------------------------------------------------------
+Finished RTL Component Statistics 
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Part Resource Summary
+---------------------------------------------------------------------------------
+Part Resources:
+DSPs: 1248 (col length:96)
+BRAMs: 288 (col length: RAMB18 96 RAMB36 48)
+---------------------------------------------------------------------------------
+Finished Part Resource Summary
+---------------------------------------------------------------------------------
+No constraint files found.
+---------------------------------------------------------------------------------
+Start Cross Boundary and Area Optimization
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Cross Boundary and Area Optimization : Time (s): cpu = 00:01:25 ; elapsed = 00:01:26 . Memory (MB): peak = 3489.117 ; gain = 736.668 ; free physical = 1828 ; free virtual = 16162
+---------------------------------------------------------------------------------
+No constraint files found.
+---------------------------------------------------------------------------------
+Start Timing Optimization
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Timing Optimization : Time (s): cpu = 00:01:27 ; elapsed = 00:01:28 . Memory (MB): peak = 3489.117 ; gain = 736.668 ; free physical = 1825 ; free virtual = 16156
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Technology Mapping
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Technology Mapping : Time (s): cpu = 00:01:28 ; elapsed = 00:01:29 . Memory (MB): peak = 3489.117 ; gain = 736.668 ; free physical = 1825 ; free virtual = 16152
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Flattening Before IO Insertion
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Final Netlist Cleanup
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished IO Insertion : Time (s): cpu = 00:01:33 ; elapsed = 00:01:34 . Memory (MB): peak = 3489.117 ; gain = 736.668 ; free physical = 1765 ; free virtual = 16107
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Instances
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Instances : Time (s): cpu = 00:01:33 ; elapsed = 00:01:34 . Memory (MB): peak = 3489.117 ; gain = 736.668 ; free physical = 1765 ; free virtual = 16107
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Rebuilding User Hierarchy
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Rebuilding User Hierarchy : Time (s): cpu = 00:01:33 ; elapsed = 00:01:34 . Memory (MB): peak = 3489.117 ; gain = 736.668 ; free physical = 1765 ; free virtual = 16107
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Ports
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Ports : Time (s): cpu = 00:01:33 ; elapsed = 00:01:34 . Memory (MB): peak = 3489.117 ; gain = 736.668 ; free physical = 1765 ; free virtual = 16107
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:01:33 ; elapsed = 00:01:34 . Memory (MB): peak = 3489.117 ; gain = 736.668 ; free physical = 1765 ; free virtual = 16107
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Renaming Generated Nets
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Renaming Generated Nets : Time (s): cpu = 00:01:33 ; elapsed = 00:01:34 . Memory (MB): peak = 3489.117 ; gain = 736.668 ; free physical = 1765 ; free virtual = 16107
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start ROM, RAM, DSP, Shift Register and Retiming Reporting
+---------------------------------------------------------------------------------
+
+Static Shift Register Report:
++------------+----------+--------+-------+--------------+--------------------+-------------------+--------+---------+
+|Module Name | RTL Name | Length | Width | Reset Signal | Pull out first Reg | Pull out last Reg | SRL16E | SRLC32E | 
++------------+----------+--------+-------+--------------+--------------------+-------------------+--------+---------+
+|chain_top   | rst_reg  | 11     | 1     | NO           | NO                 | YES               | 1      | 0       | 
++------------+----------+--------+-------+--------------+--------------------+-------------------+--------+---------+
+
+---------------------------------------------------------------------------------
+Finished ROM, RAM, DSP, Shift Register and Retiming Reporting
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Writing Synthesis Report
+---------------------------------------------------------------------------------
+
+Report BlackBoxes: 
++-+--------------+----------+
+| |BlackBox name |Instances |
++-+--------------+----------+
++-+--------------+----------+
+
+Report Cell Usage: 
++------+--------------+------+
+|      |Cell          |Count |
++------+--------------+------+
+|1     |BUFG          |     1|
+|2     |CARRY8        |     2|
+|3     |GTHE4_CHANNEL |     1|
+|4     |LUT1          |    34|
+|5     |LUT2          |   177|
+|6     |LUT3          |   207|
+|7     |LUT4          |   223|
+|8     |LUT5          |   388|
+|9     |LUT6          |   772|
+|10    |SRL16E        |     1|
+|11    |FDRE          |   332|
+|12    |FDSE          |    81|
+|13    |IBUF          |     2|
++------+--------------+------+
+---------------------------------------------------------------------------------
+Finished Writing Synthesis Report : Time (s): cpu = 00:01:33 ; elapsed = 00:01:34 . Memory (MB): peak = 3489.117 ; gain = 736.668 ; free physical = 1765 ; free virtual = 16107
+---------------------------------------------------------------------------------
+Synthesis finished with 0 errors, 0 critical warnings and 0 warnings.
+Synthesis Optimization Runtime : Time (s): cpu = 00:01:30 ; elapsed = 00:01:31 . Memory (MB): peak = 3489.117 ; gain = 677.820 ; free physical = 1765 ; free virtual = 16107
+Synthesis Optimization Complete : Time (s): cpu = 00:01:33 ; elapsed = 00:01:34 . Memory (MB): peak = 3489.125 ; gain = 736.668 ; free physical = 1765 ; free virtual = 16107
+INFO: [Project 1-571] Translating synthesized netlist
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.02 . Memory (MB): peak = 3489.125 ; gain = 0.000 ; free physical = 1765 ; free virtual = 16107
+INFO: [Netlist 29-17] Analyzing 5 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+INFO: [Project 1-570] Preparing netlist for logic optimization
+Parsing XDC File [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/chain.xdc]
+Finished Parsing XDC File [/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/designs/b100_rapidwright/chain.xdc]
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3489.125 ; gain = 0.000 ; free physical = 1910 ; free virtual = 16251
+INFO: [Project 1-111] Unisim Transformation Summary:
+  A total of 3 instances were transformed.
+  BUFG => BUFGCE: 1 instance 
+  IBUF => IBUF (IBUFCTRL, INBUF): 2 instances
+
+Synth Design complete | Checksum: 87c09e66
+INFO: [Common 17-83] Releasing license: Vivado_Synthesis
+33 Infos, 102 Warnings, 0 Critical Warnings and 0 Errors encountered.
+synth_design completed successfully
+synth_design: Time (s): cpu = 00:01:50 ; elapsed = 00:01:47 . Memory (MB): peak = 3489.152 ; gain = 1806.039 ; free physical = 1905 ; free virtual = 16250
+INFO: [Common 17-2834] synth_design peak Physical Memory [PSS] (MB): overall = 2661.636; main = 2459.431; forked = 217.546
+INFO: [Common 17-2834] synth_design peak Virtual Memory [VSS] (MB): overall = 4526.371; main = 3489.121; forked = 1037.250
+INFO: [Timing 38-480] Writing timing data to binary archive.
+Write ShapeDB Complete: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3489.152 ; gain = 0.000 ; free physical = 1902 ; free virtual = 16249
+Wrote PlaceDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3489.152 ; gain = 0.000 ; free physical = 1902 ; free virtual = 16249
+Wrote PulsedLatchDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3489.152 ; gain = 0.000 ; free physical = 1902 ; free virtual = 16249
+Writing XDEF routing.
+Writing XDEF routing logical nets.
+Writing XDEF routing special nets.
+Wrote RouteStorage: Time (s): cpu = 00:00:00.06 ; elapsed = 00:00:00.06 . Memory (MB): peak = 3489.152 ; gain = 0.000 ; free physical = 1903 ; free virtual = 16247
+Wrote PlaceStorage: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.01 . Memory (MB): peak = 3489.152 ; gain = 0.000 ; free physical = 1903 ; free virtual = 16247
+Wrote Netlist Cache: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3489.152 ; gain = 0.000 ; free physical = 1903 ; free virtual = 16247
+Wrote Device Cache: Time (s): cpu = 00:00:00.02 ; elapsed = 00:00:00.01 . Memory (MB): peak = 3489.152 ; gain = 0.000 ; free physical = 1903 ; free virtual = 16249
+Write Physdb Complete: Time (s): cpu = 00:00:00.09 ; elapsed = 00:00:00.09 . Memory (MB): peak = 3489.152 ; gain = 0.000 ; free physical = 1903 ; free virtual = 16249
+INFO: [Common 17-1381] The checkpoint '/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/results/b100/c23/base_s0_synth.dcp' has been generated.
+# set_property SEVERITY {Warning} [get_drc_checks {NSTD-1 UCIO-1}]
+# if {[llength [get_clocks -quiet]] == 0} { create_clock -period $period [get_ports clk] }
+create_clock: Time (s): cpu = 00:00:08 ; elapsed = 00:00:11 . Memory (MB): peak = 3587.105 ; gain = 0.000 ; free physical = 1098 ; free virtual = 15325
+# opt_design
+Command: opt_design
+Attempting to get a license for feature 'Vivado_Implementation' and/or device 'xck26'
+INFO: [Common 17-349] Got license for feature 'Vivado_Implementation' and/or device 'xck26'
+Running DRC as a precondition to command opt_design
+
+Starting DRC Task
+INFO: [Project 1-461] DRC finished with 0 Errors
+INFO: [Project 1-462] Please refer to the DRC report (report_drc) for more information.
+
+Time (s): cpu = 00:00:00.6 ; elapsed = 00:00:00.63 . Memory (MB): peak = 3587.105 ; gain = 0.000 ; free physical = 1091 ; free virtual = 15183
+
+Starting Cache Timing Information Task
+Ending Cache Timing Information Task | Checksum: 292a1c2a9
+
+Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 3587.105 ; gain = 0.000 ; free physical = 1091 ; free virtual = 15172
+
+Starting Logic Optimization Task
+
+Phase 1 Initialization
+
+Phase 1.1 Core Generation And Design Setup
+Phase 1.1 Core Generation And Design Setup | Checksum: 292a1c2a9
+
+Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00 . Memory (MB): peak = 3805.105 ; gain = 0.000 ; free physical = 941 ; free virtual = 14199
+
+Phase 1.2 Setup Constraints And Sort Netlist
+Phase 1.2 Setup Constraints And Sort Netlist | Checksum: 292a1c2a9
+
+Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 3805.105 ; gain = 0.000 ; free physical = 941 ; free virtual = 14197
+Phase 1 Initialization | Checksum: 292a1c2a9
+
+Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 3805.105 ; gain = 0.000 ; free physical = 941 ; free virtual = 14197
+
+Phase 2 Timer Update And Timing Data Collection
+
+Phase 2.1 Detect if minReqCache needed
+Phase 2.1 Detect if minReqCache needed | Checksum: 292a1c2a9
+
+Time (s): cpu = 00:00:00.02 ; elapsed = 00:00:00.01 . Memory (MB): peak = 3805.105 ; gain = 0.000 ; free physical = 941 ; free virtual = 14194
+
+Phase 2.2 Timer Update
+Phase 2.2 Timer Update | Checksum: 292a1c2a9
+
+Time (s): cpu = 00:00:00.13 ; elapsed = 00:00:00.12 . Memory (MB): peak = 3805.105 ; gain = 0.000 ; free physical = 939 ; free virtual = 14163
+
+Phase 2.3 Timing Data Collection
+Phase 2.3 Timing Data Collection | Checksum: 292a1c2a9
+
+Time (s): cpu = 00:00:00.13 ; elapsed = 00:00:00.13 . Memory (MB): peak = 3805.105 ; gain = 0.000 ; free physical = 939 ; free virtual = 14163
+Phase 2 Timer Update And Timing Data Collection | Checksum: 292a1c2a9
+
+Time (s): cpu = 00:00:00.13 ; elapsed = 00:00:00.13 . Memory (MB): peak = 3805.105 ; gain = 0.000 ; free physical = 939 ; free virtual = 14163
+
+Phase 3 Retarget
+INFO: [Opt 31-1851] Number of loadless carry chains removed were: 0
+INFO: [Opt 31-1834] Total Chains To Be Transformed Were: 0 AND Number of Transformed insts Created are: 0
+INFO: [Opt 31-1566] Pulled 33 inverters resulting in an inversion of 206 pins
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+INFO: [Opt 31-49] Retargeted 0 cell(s).
+Phase 3 Retarget | Checksum: 1f3e9f153
+
+Time (s): cpu = 00:00:00.22 ; elapsed = 00:00:00.22 . Memory (MB): peak = 3805.105 ; gain = 0.000 ; free physical = 939 ; free virtual = 14153
+Retarget | Checksum: 1f3e9f153
+INFO: [Opt 31-389] Phase Retarget created 0 cells and removed 33 cells
+
+Phase 4 Constant propagation
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+Phase 4 Constant propagation | Checksum: 1f3e9f153
+
+Time (s): cpu = 00:00:00.25 ; elapsed = 00:00:00.25 . Memory (MB): peak = 3805.105 ; gain = 0.000 ; free physical = 939 ; free virtual = 14148
+Constant propagation | Checksum: 1f3e9f153
+INFO: [Opt 31-389] Phase Constant propagation created 0 cells and removed 0 cells
+
+Phase 5 Sweep
+INFO: [Constraints 18-11670] Building netlist checker database with flags, 0x8
+Done building netlist checker database: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3805.105 ; gain = 0.000 ; free physical = 939 ; free virtual = 14147
+Phase 5 Sweep | Checksum: 1ef537f85
+
+Time (s): cpu = 00:00:00.27 ; elapsed = 00:00:00.28 . Memory (MB): peak = 3805.105 ; gain = 0.000 ; free physical = 939 ; free virtual = 14148
+Sweep | Checksum: 1ef537f85
+INFO: [Opt 31-389] Phase Sweep created 0 cells and removed 0 cells
+INFO: [Opt 31-1021] In phase Sweep, 1 netlist objects are constrained preventing optimization. Please run opt_design with -debug_log to get more detail. 
+
+Phase 6 BUFG optimization
+INFO: [Opt 31-1077] Phase BUFG optimization inserted 0 global clock buffer(s) for CLOCK_LOW_FANOUT.
+Phase 6 BUFG optimization | Checksum: 1ef537f85
+
+Time (s): cpu = 00:00:00.32 ; elapsed = 00:00:00.31 . Memory (MB): peak = 3837.121 ; gain = 32.016 ; free physical = 939 ; free virtual = 14147
+BUFG optimization | Checksum: 1ef537f85
+INFO: [Opt 31-662] Phase BUFG optimization created 0 cells of which 0 are BUFGs and removed 0 cells.
+
+Phase 7 Shift Register Optimization
+INFO: [Opt 31-1064] SRL Remap converted 0 SRLs to 0 registers and converted 0 registers of register chains to 0 SRLs
+Phase 7 Shift Register Optimization | Checksum: 2a21ab375
+
+Time (s): cpu = 00:00:00.32 ; elapsed = 00:00:00.31 . Memory (MB): peak = 3837.121 ; gain = 32.016 ; free physical = 939 ; free virtual = 14147
+Shift Register Optimization | Checksum: 2a21ab375
+INFO: [Opt 31-389] Phase Shift Register Optimization created 1 cells and removed 0 cells
+
+Phase 8 Post Processing Netlist
+Phase 8 Post Processing Netlist | Checksum: 2a21ab375
+
+Time (s): cpu = 00:00:00.34 ; elapsed = 00:00:00.33 . Memory (MB): peak = 3837.121 ; gain = 32.016 ; free physical = 1007 ; free virtual = 14204
+Post Processing Netlist | Checksum: 2a21ab375
+INFO: [Opt 31-389] Phase Post Processing Netlist created 0 cells and removed 0 cells
+
+Phase 9 Finalization
+
+Phase 9.1 Finalizing Design Cores and Updating Shapes
+Phase 9.1 Finalizing Design Cores and Updating Shapes | Checksum: 2bdc97f3f
+
+Time (s): cpu = 00:00:00.37 ; elapsed = 00:00:00.38 . Memory (MB): peak = 3837.121 ; gain = 32.016 ; free physical = 1045 ; free virtual = 14187
+
+Phase 9.2 Verifying Netlist Connectivity
+
+Starting Connectivity Check Task
+
+Time (s): cpu = 00:00:00.02 ; elapsed = 00:00:00.02 . Memory (MB): peak = 3837.121 ; gain = 0.000 ; free physical = 1061 ; free virtual = 14196
+Phase 9.2 Verifying Netlist Connectivity | Checksum: 2bdc97f3f
+
+Time (s): cpu = 00:00:00.39 ; elapsed = 00:00:00.4 . Memory (MB): peak = 3837.121 ; gain = 32.016 ; free physical = 1062 ; free virtual = 14195
+Phase 9 Finalization | Checksum: 2bdc97f3f
+
+Time (s): cpu = 00:00:00.39 ; elapsed = 00:00:00.4 . Memory (MB): peak = 3837.121 ; gain = 32.016 ; free physical = 1061 ; free virtual = 14194
+Opt_design Change Summary
+=========================
+
+
+-------------------------------------------------------------------------------------------------------------------------
+|  Phase                        |  #Cells created  |  #Cells Removed  |  #Constrained objects preventing optimizations  |
+-------------------------------------------------------------------------------------------------------------------------
+|  Retarget                     |               0  |              33  |                                              0  |
+|  Constant propagation         |               0  |               0  |                                              0  |
+|  Sweep                        |               0  |               0  |                                              1  |
+|  BUFG optimization            |               0  |               0  |                                              0  |
+|  Shift Register Optimization  |               1  |               0  |                                              0  |
+|  Post Processing Netlist      |               0  |               0  |                                              0  |
+-------------------------------------------------------------------------------------------------------------------------
+
+
+Ending Logic Optimization Task | Checksum: 2bdc97f3f
+
+Time (s): cpu = 00:00:00.4 ; elapsed = 00:00:00.4 . Memory (MB): peak = 3837.121 ; gain = 32.016 ; free physical = 1064 ; free virtual = 14194
+
+Starting Power Optimization Task
+INFO: [Pwropt 34-132] Skipping clock gating for clocks with a period < 2.00 ns.
+Ending Power Optimization Task | Checksum: 2bdc97f3f
+
+Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 3837.121 ; gain = 0.000 ; free physical = 1067 ; free virtual = 14151
+
+Starting Final Cleanup Task
+Ending Final Cleanup Task | Checksum: 2bdc97f3f
+
+Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3837.121 ; gain = 0.000 ; free physical = 1068 ; free virtual = 14152
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.01 . Memory (MB): peak = 3837.121 ; gain = 0.000 ; free physical = 1067 ; free virtual = 14152
+INFO: [Common 17-83] Releasing license: Vivado_Implementation
+21 Infos, 0 Warnings, 0 Critical Warnings and 0 Errors encountered.
+opt_design completed successfully
+opt_design: Time (s): cpu = 00:00:05 ; elapsed = 00:00:06 . Memory (MB): peak = 3837.121 ; gain = 250.016 ; free physical = 1069 ; free virtual = 14154
+# place_design -directive $dir
+Command: place_design -directive Default
+Attempting to get a license for feature 'Vivado_Implementation' and/or device 'xck26'
+INFO: [Common 17-349] Got license for feature 'Vivado_Implementation' and/or device 'xck26'
+INFO: [Common 17-83] Releasing license: Vivado_Implementation
+INFO: [Timing 38-35] Done setting XDC timing constraints.
+INFO: [Vivado_Tcl 4-2302] The placer was invoked with the 'Default' directive.
+Running DRC as a precondition to command place_design
+INFO: [Vivado_Tcl 4-198] DRC finished with 0 Errors
+INFO: [Vivado_Tcl 4-199] Please refer to the DRC report (report_drc) for more information.
+
+Starting Placer Task
+
+Phase 1 Placer Initialization
+
+Phase 1.1 Placer Initialization Netlist Sorting
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00 . Memory (MB): peak = 3837.121 ; gain = 0.000 ; free physical = 1164 ; free virtual = 14116
+Phase 1.1 Placer Initialization Netlist Sorting | Checksum: 1e23a0f79
+
+Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 3837.121 ; gain = 0.000 ; free physical = 1164 ; free virtual = 14116
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.01 . Memory (MB): peak = 3837.121 ; gain = 0.000 ; free physical = 1164 ; free virtual = 14116
+
+Phase 1.2 IO Placement/ Clock Placement/ Build Placer Device
+Phase 1.2 IO Placement/ Clock Placement/ Build Placer Device | Checksum: 1fbfaace0
+
+Time (s): cpu = 00:00:17 ; elapsed = 00:00:18 . Memory (MB): peak = 4371.676 ; gain = 534.555 ; free physical = 6200 ; free virtual = 20294
+
+Phase 1.3 Build Placer Netlist Model
+Phase 1.3 Build Placer Netlist Model | Checksum: 26eeebfd9
+
+Time (s): cpu = 00:00:18 ; elapsed = 00:00:19 . Memory (MB): peak = 4371.676 ; gain = 534.555 ; free physical = 6179 ; free virtual = 20273
+
+Phase 1.4 Constrain Clocks/Macros
+Phase 1.4 Constrain Clocks/Macros | Checksum: 26eeebfd9
+
+Time (s): cpu = 00:00:18 ; elapsed = 00:00:19 . Memory (MB): peak = 4371.676 ; gain = 534.555 ; free physical = 6179 ; free virtual = 20273
+Phase 1 Placer Initialization | Checksum: 26eeebfd9
+
+Time (s): cpu = 00:00:18 ; elapsed = 00:00:19 . Memory (MB): peak = 4371.676 ; gain = 534.555 ; free physical = 6179 ; free virtual = 20273
+
+Phase 2 Global Placement
+
+Phase 2.1 Floorplanning
+
+Phase 2.1.1 Partition Driven Placement
+
+Phase 2.1.1.1 PBP: Partition Driven Placement
+Phase 2.1.1.1 PBP: Partition Driven Placement | Checksum: 263873728
+
+Time (s): cpu = 00:00:19 ; elapsed = 00:00:20 . Memory (MB): peak = 4371.676 ; gain = 534.555 ; free physical = 6156 ; free virtual = 20250
+
+Phase 2.1.1.2 PBP: Clock Region Placement
+INFO: [Place 30-3162] Check ILP status : ILP-based clock placer completed successfully.
+Phase 2.1.1.2 PBP: Clock Region Placement | Checksum: 263873728
+
+Time (s): cpu = 00:00:19 ; elapsed = 00:00:20 . Memory (MB): peak = 4371.676 ; gain = 534.555 ; free physical = 6151 ; free virtual = 20245
+
+Phase 2.1.1.3 PBP: Compute Congestion
+Phase 2.1.1.3 PBP: Compute Congestion | Checksum: 263873728
+
+Time (s): cpu = 00:00:29 ; elapsed = 00:00:29 . Memory (MB): peak = 4371.676 ; gain = 534.555 ; free physical = 6014 ; free virtual = 20133
+
+Phase 2.1.1.4 PBP: UpdateTiming
+Phase 2.1.1.4 PBP: UpdateTiming | Checksum: 2d1350f59
+
+Time (s): cpu = 00:00:29 ; elapsed = 00:00:29 . Memory (MB): peak = 4371.676 ; gain = 534.555 ; free physical = 6010 ; free virtual = 20129
+
+Phase 2.1.1.5 PBP: Add part constraints
+Phase 2.1.1.5 PBP: Add part constraints | Checksum: 2d1350f59
+
+Time (s): cpu = 00:00:29 ; elapsed = 00:00:29 . Memory (MB): peak = 4371.676 ; gain = 534.555 ; free physical = 6010 ; free virtual = 20129
+Phase 2.1.1 Partition Driven Placement | Checksum: 2d1350f59
+
+Time (s): cpu = 00:00:29 ; elapsed = 00:00:29 . Memory (MB): peak = 4371.676 ; gain = 534.555 ; free physical = 6010 ; free virtual = 20129
+Phase 2.1 Floorplanning | Checksum: 2d1350f59
+
+Time (s): cpu = 00:00:29 ; elapsed = 00:00:29 . Memory (MB): peak = 4371.676 ; gain = 534.555 ; free physical = 6010 ; free virtual = 20129
+
+Phase 2.2 Update Timing before SLR Path Opt
+Phase 2.2 Update Timing before SLR Path Opt | Checksum: 2d1350f59
+
+Time (s): cpu = 00:00:29 ; elapsed = 00:00:29 . Memory (MB): peak = 4371.676 ; gain = 534.555 ; free physical = 6010 ; free virtual = 20129
+
+Phase 2.3 Post-Processing in Floorplanning
+Phase 2.3 Post-Processing in Floorplanning | Checksum: 2d1350f59
+
+Time (s): cpu = 00:00:29 ; elapsed = 00:00:30 . Memory (MB): peak = 4371.676 ; gain = 534.555 ; free physical = 6010 ; free virtual = 20129
+
+Phase 2.4 Global Place Phase1
+Phase 2.4 Global Place Phase1 | Checksum: 25a9cf2ab
+
+Time (s): cpu = 00:00:52 ; elapsed = 00:00:52 . Memory (MB): peak = 4371.676 ; gain = 534.555 ; free physical = 4485 ; free virtual = 18621
+
+Phase 2.5 Global Place Phase2
+
+Phase 2.5.1 UpdateTiming Before Physical Synthesis
+Phase 2.5.1 UpdateTiming Before Physical Synthesis | Checksum: 28f946aa5
+
+Time (s): cpu = 00:00:52 ; elapsed = 00:00:53 . Memory (MB): peak = 4371.676 ; gain = 534.555 ; free physical = 4486 ; free virtual = 18619
+
+Phase 2.5.2 Physical Synthesis In Placer
+INFO: [Physopt 32-1035] Found 226 LUTNM shape to break, 12 LUT instances to create LUTNM shape
+INFO: [Physopt 32-1044] Break lutnm for timing: one critical 40, two critical 186, total 226, new lutff created 5
+INFO: [Physopt 32-1138] End 1 Pass. Optimized 231 nets or LUTs. Breaked 226 LUTs, combined 5 existing LUTs and moved 0 existing LUT
+INFO: [Physopt 32-1030] Pass 1. Identified 1 candidate driver set for equivalent driver rewiring.
+INFO: [Physopt 32-661] Optimized 1 net.  Re-placed 3 instances.
+INFO: [Physopt 32-775] End 1 Pass. Optimized 1 net or cell. Created 0 new cell, deleted 0 existing cell and moved 3 existing cells
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 4371.676 ; gain = 0.000 ; free physical = 4478 ; free virtual = 18611
+INFO: [Physopt 32-65] No nets found for high-fanout optimization.
+INFO: [Physopt 32-232] Optimized 0 net. Created 0 new instance.
+INFO: [Physopt 32-775] End 1 Pass. Optimized 0 net or cell. Created 0 new cell, deleted 0 existing cell and moved 0 existing cell
+INFO: [Physopt 32-456] No candidate cells for DSP register optimization found in the design.
+INFO: [Physopt 32-775] End 2 Pass. Optimized 0 net or cell. Created 0 new cell, deleted 0 existing cell and moved 0 existing cell
+INFO: [Physopt 32-1123] No candidate cells found for Shift Register to Pipeline optimization
+INFO: [Physopt 32-775] End 2 Pass. Optimized 0 net or cell. Created 0 new cell, deleted 0 existing cell and moved 0 existing cell
+INFO: [Physopt 32-1401] No candidate cells found for Shift Register optimization.
+INFO: [Physopt 32-677] No candidate cells for Shift Register optimization found in the design
+INFO: [Physopt 32-775] End 1 Pass. Optimized 0 net or cell. Created 0 new cell, deleted 0 existing cell and moved 0 existing cell
+INFO: [Physopt 32-526] No candidate cells for BRAM register optimization found in the design
+INFO: [Physopt 32-775] End 1 Pass. Optimized 0 net or cell. Created 0 new cell, deleted 0 existing cell and moved 0 existing cell
+INFO: [Physopt 32-846] No candidate cells for URAM register optimization found in the design
+INFO: [Physopt 32-775] End 1 Pass. Optimized 0 net or cell. Created 0 new cell, deleted 0 existing cell and moved 0 existing cell
+INFO: [Physopt 32-846] No candidate cells for URAM register optimization found in the design
+INFO: [Physopt 32-775] End 1 Pass. Optimized 0 net or cell. Created 0 new cell, deleted 0 existing cell and moved 0 existing cell
+INFO: [Physopt 32-949] No candidate nets found for dynamic/static region interface net replication
+INFO: [Physopt 32-775] End 1 Pass. Optimized 0 net or cell. Created 0 new cell, deleted 0 existing cell and moved 0 existing cell
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.01 . Memory (MB): peak = 4371.676 ; gain = 0.000 ; free physical = 4470 ; free virtual = 18603
+
+Summary of Physical Synthesis Optimizations
+============================================
+
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+|  Optimization                                     |  Added Cells  |  Removed Cells  |  Optimized Cells/Nets  |  Dont Touch  |  Iterations  |  Elapsed   |
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+|  LUT Combining                                    |          226  |              5  |                   231  |           0  |           1  |  00:00:00  |
+|  Retime                                           |            0  |              0  |                     0  |           0  |           1  |  00:00:00  |
+|  Equivalent Driver Rewiring                       |            0  |              0  |                     1  |           0  |           1  |  00:00:00  |
+|  Very High Fanout                                 |            0  |              0  |                     0  |           0  |           1  |  00:00:00  |
+|  DSP Register                                     |            0  |              0  |                     0  |           0  |           1  |  00:00:00  |
+|  Shift Register to Pipeline                       |            0  |              0  |                     0  |           0  |           1  |  00:00:00  |
+|  Shift Register                                   |            0  |              0  |                     0  |           0  |           1  |  00:00:00  |
+|  BRAM Register                                    |            0  |              0  |                     0  |           0  |           1  |  00:00:00  |
+|  URAM Register                                    |            0  |              0  |                     0  |           0  |           1  |  00:00:00  |
+|  Dynamic/Static Region Interface Net Replication  |            0  |              0  |                     0  |           0  |           1  |  00:00:00  |
+|  Total                                            |          226  |              5  |                   232  |           0  |          10  |  00:00:00  |
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+Phase 2.5.2 Physical Synthesis In Placer | Checksum: 14b3b3b95
+
+Time (s): cpu = 00:00:53 ; elapsed = 00:00:54 . Memory (MB): peak = 4371.676 ; gain = 534.555 ; free physical = 4462 ; free virtual = 18596
+Phase 2.5 Global Place Phase2 | Checksum: 1980deec3
+
+Time (s): cpu = 00:01:03 ; elapsed = 00:01:04 . Memory (MB): peak = 4371.676 ; gain = 534.555 ; free physical = 4494 ; free virtual = 18517
+Phase 2 Global Placement | Checksum: 1980deec3
+
+Time (s): cpu = 00:01:03 ; elapsed = 00:01:04 . Memory (MB): peak = 4371.676 ; gain = 534.555 ; free physical = 4494 ; free virtual = 18517
+
+Phase 3 Detail Placement
+
+Phase 3.1 Commit Multi Column Macros
+Phase 3.1 Commit Multi Column Macros | Checksum: 19ff42147
+
+Time (s): cpu = 00:01:13 ; elapsed = 00:01:15 . Memory (MB): peak = 4371.676 ; gain = 534.555 ; free physical = 4317 ; free virtual = 18466
+
+Phase 3.2 Commit Most Macros & LUTRAMs
+Phase 3.2 Commit Most Macros & LUTRAMs | Checksum: 1f0a74f2f
+
+Time (s): cpu = 00:01:14 ; elapsed = 00:01:15 . Memory (MB): peak = 4371.676 ; gain = 534.555 ; free physical = 4305 ; free virtual = 18454
+
+Phase 3.3 Small Shape DP
+
+Phase 3.3.1 Small Shape Clustering
+Phase 3.3.1 Small Shape Clustering | Checksum: 1e11332a5
+
+Time (s): cpu = 00:01:29 ; elapsed = 00:01:31 . Memory (MB): peak = 4371.676 ; gain = 534.555 ; free physical = 4067 ; free virtual = 18216
+
+Phase 3.3.2 Slice Area Swap
+
+Phase 3.3.2.1 Slice Area Swap Initial
+Phase 3.3.2.1 Slice Area Swap Initial | Checksum: 292869a5a
+
+Time (s): cpu = 00:01:30 ; elapsed = 00:01:31 . Memory (MB): peak = 4371.676 ; gain = 534.555 ; free physical = 4071 ; free virtual = 18225
+Phase 3.3.2 Slice Area Swap | Checksum: 292869a5a
+
+Time (s): cpu = 00:01:30 ; elapsed = 00:01:32 . Memory (MB): peak = 4371.676 ; gain = 534.555 ; free physical = 4082 ; free virtual = 18232
+Phase 3.3 Small Shape DP | Checksum: 16365c344
+
+Time (s): cpu = 00:01:31 ; elapsed = 00:01:33 . Memory (MB): peak = 4371.676 ; gain = 534.555 ; free physical = 4130 ; free virtual = 18279
+
+Phase 3.4 Re-assign LUT pins
+Phase 3.4 Re-assign LUT pins | Checksum: 1dde6ed7e
+
+Time (s): cpu = 00:01:31 ; elapsed = 00:01:33 . Memory (MB): peak = 4371.676 ; gain = 534.555 ; free physical = 4130 ; free virtual = 18279
+
+Phase 3.5 Pipeline Register Optimization
+Phase 3.5 Pipeline Register Optimization | Checksum: 1bfd3bcd8
+
+Time (s): cpu = 00:01:31 ; elapsed = 00:01:33 . Memory (MB): peak = 4371.676 ; gain = 534.555 ; free physical = 4130 ; free virtual = 18279
+
+Phase 3.6 Fast Optimization
+Phase 3.6 Fast Optimization | Checksum: 1cd550025
+
+Time (s): cpu = 00:01:59 ; elapsed = 00:02:01 . Memory (MB): peak = 4371.676 ; gain = 534.555 ; free physical = 2456 ; free virtual = 16610
+Phase 3 Detail Placement | Checksum: 1cd550025
+
+Time (s): cpu = 00:01:59 ; elapsed = 00:02:01 . Memory (MB): peak = 4371.676 ; gain = 534.555 ; free physical = 2456 ; free virtual = 16610
+
+Phase 4 Post Placement Optimization and Clean-Up
+
+Phase 4.1 Post Commit Optimization
+INFO: [Timing 38-35] Done setting XDC timing constraints.
+
+Phase 4.1.1 Post Placement Optimization
+Post Placement Optimization Initialization | Checksum: 252387573
+
+Phase 4.1.1.1 BUFG Insertion
+
+Starting Physical Synthesis Task
+
+Phase 1 Physical Synthesis Initialization
+INFO: [Physopt 32-721] Multithreading enabled for phys_opt_design using a maximum of 1 CPUs
+INFO: [Physopt 32-619] Estimated Timing Summary | WNS=-0.587 | TNS=-45.042 |
+Phase 1 Physical Synthesis Initialization | Checksum: 149f99fc4
+
+Time (s): cpu = 00:00:00.11 ; elapsed = 00:00:00.11 . Memory (MB): peak = 4371.676 ; gain = 0.000 ; free physical = 2200 ; free virtual = 16401
+INFO: [Place 46-56] BUFG insertion identified 0 candidate nets. Inserted BUFG: 0, Replicated BUFG Driver: 0, Skipped due to Placement/Routing Conflicts: 0, Skipped due to Timing Degradation: 0, Skipped due to netlist editing failed: 0.
+Ending Physical Synthesis Task | Checksum: 262a3e468
+
+Time (s): cpu = 00:00:00.13 ; elapsed = 00:00:00.14 . Memory (MB): peak = 4371.676 ; gain = 0.000 ; free physical = 2200 ; free virtual = 16401
+Phase 4.1.1.1 BUFG Insertion | Checksum: 252387573
+
+Time (s): cpu = 00:02:11 ; elapsed = 00:02:13 . Memory (MB): peak = 4371.676 ; gain = 534.555 ; free physical = 2200 ; free virtual = 16401
+
+Phase 4.1.1.2 Post Placement Timing Optimization
+INFO: [Place 30-746] Post Placement Timing Summary WNS=-0.147. For the most accurate timing information please run report_timing.
+Phase 4.1.1.2 Post Placement Timing Optimization | Checksum: 26d5b8790
+
+Time (s): cpu = 00:03:55 ; elapsed = 00:04:00 . Memory (MB): peak = 4371.676 ; gain = 534.555 ; free physical = 1417 ; free virtual = 15614
+
+Time (s): cpu = 00:03:55 ; elapsed = 00:04:00 . Memory (MB): peak = 4371.676 ; gain = 534.555 ; free physical = 1417 ; free virtual = 15614
+Phase 4.1 Post Commit Optimization | Checksum: 26d5b8790
+
+Time (s): cpu = 00:03:55 ; elapsed = 00:04:00 . Memory (MB): peak = 4371.676 ; gain = 534.555 ; free physical = 1417 ; free virtual = 15614
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 4371.676 ; gain = 0.000 ; free physical = 446 ; free virtual = 14062
+
+Phase 4.2 Post Placement Cleanup
+Phase 4.2 Post Placement Cleanup | Checksum: 22f11d3fb
+
+Time (s): cpu = 00:04:12 ; elapsed = 00:04:21 . Memory (MB): peak = 4371.676 ; gain = 534.555 ; free physical = 446 ; free virtual = 14059
+
+Phase 4.3 Placer Reporting
+
+Phase 4.3.1 Print Estimated Congestion
+INFO: [Place 30-612] Post-Placement Estimated Congestion 
+ ________________________________________________________________________
+|           | Global Congestion | Long Congestion   | Short Congestion  |
+| Direction | Region Size       | Region Size       | Region Size       |
+|___________|___________________|___________________|___________________|
+|      North|                2x2|                1x1|                4x4|
+|___________|___________________|___________________|___________________|
+|      South|                1x1|                1x1|                4x4|
+|___________|___________________|___________________|___________________|
+|       East|                1x1|                1x1|                4x4|
+|___________|___________________|___________________|___________________|
+|       West|                2x2|                1x1|                8x8|
+|___________|___________________|___________________|___________________|
+
+Phase 4.3.1 Print Estimated Congestion | Checksum: 22f11d3fb
+
+Time (s): cpu = 00:04:12 ; elapsed = 00:04:21 . Memory (MB): peak = 4371.676 ; gain = 534.555 ; free physical = 446 ; free virtual = 14059
+Phase 4.3 Placer Reporting | Checksum: 22f11d3fb
+
+Time (s): cpu = 00:04:12 ; elapsed = 00:04:21 . Memory (MB): peak = 4371.676 ; gain = 534.555 ; free physical = 446 ; free virtual = 14059
+
+Phase 4.4 Final Placement Cleanup
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 4371.676 ; gain = 0.000 ; free physical = 446 ; free virtual = 14059
+
+Time (s): cpu = 00:04:12 ; elapsed = 00:04:21 . Memory (MB): peak = 4371.676 ; gain = 534.555 ; free physical = 446 ; free virtual = 14059
+Phase 4 Post Placement Optimization and Clean-Up | Checksum: 2c7086651
+
+Time (s): cpu = 00:04:12 ; elapsed = 00:04:21 . Memory (MB): peak = 4371.676 ; gain = 534.555 ; free physical = 446 ; free virtual = 14059
+Ending Placer Task | Checksum: 1e3736249
+
+Time (s): cpu = 00:04:12 ; elapsed = 00:04:21 . Memory (MB): peak = 4371.676 ; gain = 534.555 ; free physical = 446 ; free virtual = 14059
+37 Infos, 0 Warnings, 0 Critical Warnings and 0 Errors encountered.
+place_design completed successfully
+place_design: Time (s): cpu = 00:04:14 ; elapsed = 00:04:23 . Memory (MB): peak = 4371.676 ; gain = 534.555 ; free physical = 446 ; free virtual = 14059
+# lap place
+# write_checkpoint -force ${out}_placed.dcp
+INFO: [Timing 38-480] Writing timing data to binary archive.
+Write ShapeDB Complete: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 4371.676 ; gain = 0.000 ; free physical = 446 ; free virtual = 14019
+Wrote PlaceDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 4371.676 ; gain = 0.000 ; free physical = 446 ; free virtual = 14019
+Wrote PulsedLatchDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 4371.676 ; gain = 0.000 ; free physical = 446 ; free virtual = 14019
+Writing XDEF routing.
+Writing XDEF routing logical nets.
+Writing XDEF routing special nets.
+Wrote RouteStorage: Time (s): cpu = 00:00:00.07 ; elapsed = 00:00:00.06 . Memory (MB): peak = 4371.676 ; gain = 0.000 ; free physical = 447 ; free virtual = 14016
+Wrote PlaceStorage: Time (s): cpu = 00:00:00.08 ; elapsed = 00:00:00.09 . Memory (MB): peak = 4371.676 ; gain = 0.000 ; free physical = 442 ; free virtual = 13999
+Wrote Netlist Cache: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.01 . Memory (MB): peak = 4371.676 ; gain = 0.000 ; free physical = 439 ; free virtual = 13994
+Wrote Device Cache: Time (s): cpu = 00:00:00.03 ; elapsed = 00:00:00.03 . Memory (MB): peak = 4371.676 ; gain = 0.000 ; free physical = 432 ; free virtual = 13985
+Write Physdb Complete: Time (s): cpu = 00:00:00.19 ; elapsed = 00:00:00.2 . Memory (MB): peak = 4371.676 ; gain = 0.000 ; free physical = 431 ; free virtual = 13984
+INFO: [Common 17-1381] The checkpoint '/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/results/b100/c23/base_s0_placed.dcp' has been generated.
+# route_design
+Command: route_design
+Attempting to get a license for feature 'Vivado_Implementation' and/or device 'xck26'
+INFO: [Common 17-349] Got license for feature 'Vivado_Implementation' and/or device 'xck26'
+
+
+Starting Routing Task
+
+Phase 1 Build RT Design
+Checksum: PlaceDB: 9d16e3b3 ConstDB: 0 ShapeSum: be8eabdf RouteDB: 87cdd2b7
+Nodegraph reading from file.  Time (s): cpu = 00:00:01 ; elapsed = 00:00:01 . Memory (MB): peak = 4371.676 ; gain = 0.000 ; free physical = 443 ; free virtual = 13584
+Post Restoration Checksum: NetGraph: a3c904e | NumContArr: d194b459 | Constraints: 7514f57e | Timing: c2a8fa9d
+Phase 1 Build RT Design | Checksum: 2138f34c2
+
+Time (s): cpu = 00:00:08 ; elapsed = 00:00:08 . Memory (MB): peak = 4371.676 ; gain = 0.000 ; free physical = 774 ; free virtual = 13444
+
+Phase 2 Router Initialization
+
+Phase 2.1 Fix Topology Constraints
+Phase 2.1 Fix Topology Constraints | Checksum: 2138f34c2
+
+Time (s): cpu = 00:00:08 ; elapsed = 00:00:09 . Memory (MB): peak = 4371.676 ; gain = 0.000 ; free physical = 774 ; free virtual = 13444
+
+Phase 2.2 Pre Route Cleanup
+Phase 2.2 Pre Route Cleanup | Checksum: 2138f34c2
+
+Time (s): cpu = 00:00:08 ; elapsed = 00:00:09 . Memory (MB): peak = 4371.676 ; gain = 0.000 ; free physical = 774 ; free virtual = 13444
+
+Phase 2.3 Global Clock Net Routing
+ Number of Nodes with overlaps = 0
+Phase 2.3 Global Clock Net Routing | Checksum: 201763b53
+
+Time (s): cpu = 00:00:09 ; elapsed = 00:00:09 . Memory (MB): peak = 4371.676 ; gain = 0.000 ; free physical = 749 ; free virtual = 13409
+
+Phase 2.4 Update Timing
+Phase 2.4 Update Timing | Checksum: 295c57416
+
+Time (s): cpu = 00:00:10 ; elapsed = 00:00:10 . Memory (MB): peak = 4371.676 ; gain = 0.000 ; free physical = 746 ; free virtual = 13385
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=-0.022 | TNS=-0.029 | WHS=-0.170 | THS=-7.676 |
+
+
+Phase 2.5 Soft Constraint Pins - Fast Budgeting
+Phase 2.5 Soft Constraint Pins - Fast Budgeting | Checksum: 2b633ecae
+
+Time (s): cpu = 00:00:11 ; elapsed = 00:00:11 . Memory (MB): peak = 4371.676 ; gain = 0.000 ; free physical = 793 ; free virtual = 13432
+
+Router Utilization Summary
+  Global Vertical Routing Utilization    = 0 %
+  Global Horizontal Routing Utilization  = 0 %
+  Routable Net Status*
+  *Does not include unroutable nets such as driverless and loadless.
+  Run report_route_status for detailed report.
+  Number of Failed Nets               = 1886
+    (Failed Nets is the sum of unrouted and partially routed nets)
+  Number of Unrouted Nets             = 597
+  Number of Partially Routed Nets     = 1289
+  Number of Node Overlaps             = 0
+
+Phase 2 Router Initialization | Checksum: 208b7c64c
+
+Time (s): cpu = 00:00:12 ; elapsed = 00:00:12 . Memory (MB): peak = 4371.676 ; gain = 0.000 ; free physical = 795 ; free virtual = 13402
+
+Phase 3 Global Routing
+Phase 3 Global Routing | Checksum: 208b7c64c
+
+Time (s): cpu = 00:00:12 ; elapsed = 00:00:12 . Memory (MB): peak = 4371.676 ; gain = 0.000 ; free physical = 795 ; free virtual = 13402
+
+Phase 4 Initial Routing
+
+Phase 4.1 Initial Net Routing Pass
+Phase 4.1 Initial Net Routing Pass | Checksum: 1c1ec9057
+
+Time (s): cpu = 00:00:15 ; elapsed = 00:00:15 . Memory (MB): peak = 4371.676 ; gain = 0.000 ; free physical = 6932 ; free virtual = 20677
+Phase 4 Initial Routing | Checksum: 20ceea831
+
+Time (s): cpu = 00:00:15 ; elapsed = 00:00:15 . Memory (MB): peak = 4371.676 ; gain = 0.000 ; free physical = 6932 ; free virtual = 20677
+
+Phase 5 Rip-up And Reroute
+
+Phase 5.1 Global Iteration 0
+ Number of Nodes with overlaps = 1435
+ Number of Nodes with overlaps = 375
+ Number of Nodes with overlaps = 145
+ Number of Nodes with overlaps = 82
+ Number of Nodes with overlaps = 57
+ Number of Nodes with overlaps = 32
+ Number of Nodes with overlaps = 21
+ Number of Nodes with overlaps = 12
+ Number of Nodes with overlaps = 5
+ Number of Nodes with overlaps = 4
+ Number of Nodes with overlaps = 4
+ Number of Nodes with overlaps = 3
+ Number of Nodes with overlaps = 3
+ Number of Nodes with overlaps = 0
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=-0.531 | TNS=-43.739| WHS=0.047  | THS=0.000  |
+
+Phase 5.1 Global Iteration 0 | Checksum: 1dd92c6ea
+
+Time (s): cpu = 00:00:40 ; elapsed = 00:00:41 . Memory (MB): peak = 4371.676 ; gain = 0.000 ; free physical = 6973 ; free virtual = 20716
+
+Phase 5.2 Global Iteration 1
+ Number of Nodes with overlaps = 63
+ Number of Nodes with overlaps = 29
+ Number of Nodes with overlaps = 31
+ Number of Nodes with overlaps = 26
+ Number of Nodes with overlaps = 20
+ Number of Nodes with overlaps = 14
+ Number of Nodes with overlaps = 13
+ Number of Nodes with overlaps = 7
+ Number of Nodes with overlaps = 3
+ Number of Nodes with overlaps = 0
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=-0.432 | TNS=-35.858| WHS=N/A    | THS=N/A    |
+
+Phase 5.2 Global Iteration 1 | Checksum: 27d892fab
+
+Time (s): cpu = 00:00:50 ; elapsed = 00:00:50 . Memory (MB): peak = 4371.676 ; gain = 0.000 ; free physical = 6729 ; free virtual = 20496
+
+Phase 5.3 Global Iteration 2
+ Number of Nodes with overlaps = 212
+ Number of Nodes with overlaps = 94
+ Number of Nodes with overlaps = 44
+ Number of Nodes with overlaps = 24
+ Number of Nodes with overlaps = 11
+ Number of Nodes with overlaps = 2
+ Number of Nodes with overlaps = 1
+ Number of Nodes with overlaps = 3
+ Number of Nodes with overlaps = 0
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=-0.534 | TNS=-36.597| WHS=N/A    | THS=N/A    |
+
+Phase 5.3 Global Iteration 2 | Checksum: 2cb61380e
+
+Time (s): cpu = 00:00:57 ; elapsed = 00:00:57 . Memory (MB): peak = 4371.676 ; gain = 0.000 ; free physical = 6701 ; free virtual = 20469
+Phase 5 Rip-up And Reroute | Checksum: 2cb61380e
+
+Time (s): cpu = 00:00:57 ; elapsed = 00:00:57 . Memory (MB): peak = 4371.676 ; gain = 0.000 ; free physical = 6701 ; free virtual = 20469
+
+Phase 6 Delay and Skew Optimization
+
+Phase 6.1 Delay CleanUp
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=-0.432 | TNS=-35.858| WHS=0.047  | THS=0.000  |
+
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=-0.432 | TNS=-35.858| WHS=0.047  | THS=0.000  |
+
+ Number of Nodes with overlaps = 0
+Phase 6.1 Delay CleanUp | Checksum: 153856e79
+
+Time (s): cpu = 00:01:00 ; elapsed = 00:01:01 . Memory (MB): peak = 4371.676 ; gain = 0.000 ; free physical = 6705 ; free virtual = 20474
+
+Phase 6.2 Clock Skew Optimization
+Phase 6.2 Clock Skew Optimization | Checksum: 153856e79
+
+Time (s): cpu = 00:01:00 ; elapsed = 00:01:01 . Memory (MB): peak = 4371.676 ; gain = 0.000 ; free physical = 6705 ; free virtual = 20474
+Phase 6 Delay and Skew Optimization | Checksum: 153856e79
+
+Time (s): cpu = 00:01:00 ; elapsed = 00:01:01 . Memory (MB): peak = 4371.676 ; gain = 0.000 ; free physical = 6705 ; free virtual = 20474
+
+Phase 7 Post Hold Fix
+
+Phase 7.1 Hold Fix Iter
+INFO: [Route 35-416] Intermediate Timing Summary | WNS=-0.403 | TNS=-33.917| WHS=0.047  | THS=0.000  |
+
+Phase 7.1 Hold Fix Iter | Checksum: 21894d3b2
+
+Time (s): cpu = 00:01:01 ; elapsed = 00:01:01 . Memory (MB): peak = 4371.676 ; gain = 0.000 ; free physical = 6705 ; free virtual = 20474
+Phase 7 Post Hold Fix | Checksum: 21894d3b2
+
+Time (s): cpu = 00:01:01 ; elapsed = 00:01:01 . Memory (MB): peak = 4371.676 ; gain = 0.000 ; free physical = 6705 ; free virtual = 20474
+
+Phase 8 Route finalize
+
+Router Utilization Summary
+  Global Vertical Routing Utilization    = 0.282568 %
+  Global Horizontal Routing Utilization  = 0.353751 %
+  Routable Net Status*
+  *Does not include unroutable nets such as driverless and loadless.
+  Run report_route_status for detailed report.
+  Number of Failed Nets               = 0
+    (Failed Nets is the sum of unrouted and partially routed nets)
+  Number of Unrouted Nets             = 0
+  Number of Partially Routed Nets     = 0
+  Number of Node Overlaps             = 0
+
+
+--GLOBAL Congestion:
+Utilization threshold used for congestion level computation: 0.85
+Congestion Report
+North Dir 1x1 Area, Max Cong = 53.0516%, No Congested Regions.
+South Dir 1x1 Area, Max Cong = 45.9716%, No Congested Regions.
+East Dir 1x1 Area, Max Cong = 54.8077%, No Congested Regions.
+West Dir 1x1 Area, Max Cong = 52.8846%, No Congested Regions.
+
+------------------------------
+Reporting congestion hotspots
+------------------------------
+Direction: North
+----------------
+Congested clusters found at Level 0
+Effective congestion level: 0 Aspect Ratio: 1 Sparse Ratio: 0
+Direction: South
+----------------
+Congested clusters found at Level 0
+Effective congestion level: 0 Aspect Ratio: 1 Sparse Ratio: 0
+Direction: East
+----------------
+Congested clusters found at Level 0
+Effective congestion level: 0 Aspect Ratio: 1 Sparse Ratio: 0
+Direction: West
+----------------
+Congested clusters found at Level 0
+Effective congestion level: 0 Aspect Ratio: 1 Sparse Ratio: 0
+
+Phase 8 Route finalize | Checksum: 21894d3b2
+
+Time (s): cpu = 00:01:01 ; elapsed = 00:01:02 . Memory (MB): peak = 4371.676 ; gain = 0.000 ; free physical = 6707 ; free virtual = 20475
+
+Phase 9 Verifying routed nets
+
+ Verification completed successfully
+Phase 9 Verifying routed nets | Checksum: 21894d3b2
+
+Time (s): cpu = 00:01:01 ; elapsed = 00:01:02 . Memory (MB): peak = 4371.676 ; gain = 0.000 ; free physical = 6707 ; free virtual = 20475
+
+Phase 10 Depositing Routes
+Phase 10 Depositing Routes | Checksum: 21894d3b2
+
+Time (s): cpu = 00:01:02 ; elapsed = 00:01:02 . Memory (MB): peak = 4371.676 ; gain = 0.000 ; free physical = 6707 ; free virtual = 20475
+
+Phase 11 Resolve XTalk
+Phase 11 Resolve XTalk | Checksum: 21894d3b2
+
+Time (s): cpu = 00:01:02 ; elapsed = 00:01:02 . Memory (MB): peak = 4371.676 ; gain = 0.000 ; free physical = 6705 ; free virtual = 20477
+
+Phase 12 Post Process Routing
+Phase 12 Post Process Routing | Checksum: 21894d3b2
+
+Time (s): cpu = 00:01:02 ; elapsed = 00:01:02 . Memory (MB): peak = 4371.676 ; gain = 0.000 ; free physical = 6705 ; free virtual = 20477
+
+Phase 13 Post Router Timing
+INFO: [Route 35-57] Estimated Timing Summary | WNS=-0.403 | TNS=-33.917| WHS=0.047  | THS=0.000  |
+
+WARNING: [Route 35-328] Router estimated timing not met.
+Resolution: For a complete and accurate timing signoff, report_timing_summary must be run after route_design. Alternatively, route_design can be run with the -timing_summary option to enable a complete timing signoff at the end of route_design.
+Phase 13 Post Router Timing | Checksum: 21894d3b2
+
+Time (s): cpu = 00:01:02 ; elapsed = 00:01:02 . Memory (MB): peak = 4371.676 ; gain = 0.000 ; free physical = 6705 ; free virtual = 20477
+Time taken to check if laguna hold fix is required (in secs): 0
+
+Phase 14 Physical Synthesis in Router
+
+Phase 14.1 Physical Synthesis Initialization
+INFO: [Physopt 32-668] Current Timing Summary | WNS=-0.387 | TNS=-32.001 | WHS=0.048 | THS=0.000 |
+Phase 14.1 Physical Synthesis Initialization | Checksum: 21894d3b2
+
+Time (s): cpu = 00:01:08 ; elapsed = 00:01:08 . Memory (MB): peak = 4371.676 ; gain = 0.000 ; free physical = 6721 ; free virtual = 20486
+
+Phase 14.2 Critical Path Optimization
+INFO: [Physopt 32-668] Current Timing Summary | WNS=-0.387 | TNS=-32.001 | WHS=0.048 | THS=0.000 |
+INFO: [Physopt 32-952] Improved path group WNS = -0.378. Path group: clk. Processed net: u_mac/p_1_out[12].
+INFO: [Physopt 32-952] Improved path group WNS = -0.376. Path group: clk. Processed net: u_pcs/gt_d_reg[63]_0[58].
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: clk. Processed net: u_mac/p_1_out[21].
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: clk. Processed net: sh[0].
+INFO: [Physopt 32-953] Path group WNS did not improve. Path group: clk. Processed net: u_mac/crc[22]_i_2_n_0.
+INFO: [Physopt 32-668] Current Timing Summary | WNS=-0.376 | TNS=-32.836 | WHS=0.020 | THS=0.000 |
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 4371.676 ; gain = 0.000 ; free physical = 6714 ; free virtual = 20484
+Phase 14.2 Critical Path Optimization | Checksum: 1d087ded0
+
+Time (s): cpu = 00:01:09 ; elapsed = 00:01:10 . Memory (MB): peak = 4371.676 ; gain = 0.000 ; free physical = 6714 ; free virtual = 20484
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 4371.676 ; gain = 0.000 ; free physical = 6714 ; free virtual = 20484
+INFO: [Physopt 32-669] Post Physical Optimization Timing Summary | WNS=-0.376 | TNS=-32.836 | WHS=0.020 | THS=0.000 |
+Phase 14 Physical Synthesis in Router | Checksum: 1d087ded0
+
+Time (s): cpu = 00:01:09 ; elapsed = 00:01:10 . Memory (MB): peak = 4371.676 ; gain = 0.000 ; free physical = 6714 ; free virtual = 20484
+Total Elapsed time in route_design: 69.77 secs
+
+Phase 15 Post-Route Event Processing
+Phase 15 Post-Route Event Processing | Checksum: 1774fb3f9
+
+Time (s): cpu = 00:01:09 ; elapsed = 00:01:10 . Memory (MB): peak = 4371.676 ; gain = 0.000 ; free physical = 6714 ; free virtual = 20484
+INFO: [Route 35-16] Router Completed Successfully
+Ending Routing Task | Checksum: 1774fb3f9
+
+Time (s): cpu = 00:01:09 ; elapsed = 00:01:10 . Memory (MB): peak = 4371.676 ; gain = 0.000 ; free physical = 6714 ; free virtual = 20484
+
+Routing Is Done.
+INFO: [Common 17-83] Releasing license: Vivado_Implementation
+20 Infos, 1 Warnings, 0 Critical Warnings and 0 Errors encountered.
+route_design completed successfully
+route_design: Time (s): cpu = 00:01:09 ; elapsed = 00:01:10 . Memory (MB): peak = 4371.676 ; gain = 0.000 ; free physical = 6714 ; free virtual = 20484
+# lap route
+# write_checkpoint -force ${out}_routed.dcp
+INFO: [Timing 38-480] Writing timing data to binary archive.
+Write ShapeDB Complete: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 4371.676 ; gain = 0.000 ; free physical = 6720 ; free virtual = 20488
+Wrote PlaceDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 4371.676 ; gain = 0.000 ; free physical = 6720 ; free virtual = 20488
+Wrote PulsedLatchDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 4371.676 ; gain = 0.000 ; free physical = 6720 ; free virtual = 20488
+Writing XDEF routing.
+Writing XDEF routing logical nets.
+Writing XDEF routing special nets.
+Wrote RouteStorage: Time (s): cpu = 00:00:00.08 ; elapsed = 00:00:00.08 . Memory (MB): peak = 4371.676 ; gain = 0.000 ; free physical = 6719 ; free virtual = 20489
+Wrote PlaceStorage: Time (s): cpu = 00:00:00.06 ; elapsed = 00:00:00.06 . Memory (MB): peak = 4371.676 ; gain = 0.000 ; free physical = 6718 ; free virtual = 20488
+Wrote Netlist Cache: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.01 . Memory (MB): peak = 4371.676 ; gain = 0.000 ; free physical = 6718 ; free virtual = 20488
+Wrote Device Cache: Time (s): cpu = 00:00:00.02 ; elapsed = 00:00:00.01 . Memory (MB): peak = 4371.676 ; gain = 0.000 ; free physical = 6711 ; free virtual = 20484
+Write Physdb Complete: Time (s): cpu = 00:00:00.17 ; elapsed = 00:00:00.17 . Memory (MB): peak = 4371.676 ; gain = 0.000 ; free physical = 6711 ; free virtual = 20484
+INFO: [Common 17-1381] The checkpoint '/home/brendan/Claude_sandbox/_worktrees/100-rapidwright/results/b100/c23/base_s0_routed.dcp' has been generated.
+# write_run_json $out $times $part $period
+# if {[llength [get_cells -quiet u_gt]]} { chain_metrics $out }
+INFO: [Common 17-206] Exiting Vivado at Tue Nov 17 13:55:31 2026...
