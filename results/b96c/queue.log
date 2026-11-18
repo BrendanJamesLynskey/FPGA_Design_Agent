@@ -1,35 +1,35 @@
-slot /home/brendan/Claude_sandbox/_handoff/heavy_slot.lock taken: 96C: Vivado impl control peak 6G, 22:41, expected end 23:26; threads 1
+slot /home/brendan/Claude_sandbox/_handoff/heavy_slot.lock taken: 96C: Vivado impl control peak 6G, 23:33, expected end 00:18; threads 1
 run_vivado: build cache: fresh
-run_vivado: preflight ok (23211 MiB available, no other Vivado)
-run_vivado: designs/b96_kr260_10g base: exit 143, 1031.4 s, Vivado peak RSS None MiB, scope peak 6111 MiB (anon 5999 MiB, swap 0 MiB; cap 6G hit 0 times, OOM kills 0)
-
-Phase 4 Post Placement Optimization and Clean-Up
-
-Phase 4.1 Post Commit Optimization
-INFO: [Timing 38-35] Done setting XDC timing constraints.
-
-Phase 4.1.1 Post Placement Optimization
-Post Placement Optimization Initialization | Checksum: 2225240f5
-
-Phase 4.1.1.1 BUFG Insertion
-
-Starting Physical Synthesis Task
-
-Phase 1 Physical Synthesis Initialization
-INFO: [Physopt 32-721] Multithreading enabled for phys_opt_design using a maximum of 1 CPUs
-INFO: [Physopt 32-619] Estimated Timing Summary | WNS=0.078 | TNS=0.000 |
-Phase 1 Physical Synthesis Initialization | Checksum: 174f1f20e
-
-Time (s): cpu = 00:00:01 ; elapsed = 00:00:01 . Memory (MB): peak = 5175.738 ; gain = 0.000 ; free physical = 3171 ; free virtual = 21046
-INFO: [Place 46-35] Processed net u_rst/syncstages_ff[3], inserted BUFG to drive 2352 loads.
-INFO: [Place 46-35] Processed net u_jtag/h_addr_reg[6]_1[0], inserted BUFG to drive 1760 loads.
-INFO: [Place 46-56] BUFG insertion identified 2 candidate nets. Inserted BUFG: 2, Replicated BUFG Driver: 0, Skipped due to Placement/Routing Conflicts: 0, Skipped due to Timing Degradation: 0, Skipped due to netlist editing failed: 0.
-Ending Physical Synthesis Task | Checksum: 230ed22f3
-
-Time (s): cpu = 00:00:03 ; elapsed = 00:00:03 . Memory (MB): peak = 5175.738 ; gain = 0.000 ; free physical = 3177 ; free virtual = 21053
-Phase 4.1.1.1 BUFG Insertion | Checksum: 2050a99ed
-
-Time (s): cpu = 00:02:54 ; elapsed = 00:02:57 . Memory (MB): peak = 5175.738 ; gain = 0.000 ; free physical = 3177 ; free virtual = 21053
-
-Phase 4.1.1.2 Post Placement Timing Optimization
+run_vivado: preflight ok (23181 MiB available, no other Vivado)
+run_vivado: designs/b96_kr260_10g base: exit 143, 20.1 s, Vivado peak RSS None MiB, scope peak 590 MiB (anon 578 MiB, swap 0 MiB; cap 6G hit 0 times, OOM kills 0)
+# }
+read_verilog: Time (s): cpu = 00:00:11 ; elapsed = 00:00:12 . Memory (MB): peak = 1683.207 ; gain = 213.844 ; free physical = 6569 ; free virtual = 24238
+## set_part $part
+INFO: [Coretcl 2-1500] The part has been set to 'xck26-sfvc784-2LV-c' for the current project only. Run set_part -help for more details. To evaluate different speed grades in the current design, use the set_speed_grade command, or use the open_checkpoint -part command to change the part used by an existing checkpoint design.
+## set fda_ip_dir [file join $out ip]
+## file mkdir $fda_ip_dir
+## proc fda_ip {vlnv name cfg} {
+##     global fda_ip_dir
+##     create_ip -vlnv $vlnv -module_name $name -dir $fda_ip_dir
+##     set ip [get_ips $name]
+##     set_property -dict $cfg $ip
+##     set_property GENERATE_SYNTH_CHECKPOINT false [get_files [get_property IP_FILE $ip]]
+##     generate_target {synthesis instantiation_template} $ip
+## }
+## fda_ip xilinx.com:ip:gtwizard_ultrascale:1.7 gth_wiz [list \
+##     CONFIG.CHANNEL_ENABLE {X0Y6} CONFIG.TX_MASTER_CHANNEL {X0Y6} CONFIG.RX_MASTER_CHANNEL {X0Y6} \
+##     CONFIG.TX_LINE_RATE {10.3125} CONFIG.RX_LINE_RATE {10.3125} \
+##     CONFIG.TX_REFCLK_FREQUENCY {156.25} CONFIG.RX_REFCLK_FREQUENCY {156.25} \
+##     CONFIG.TX_PLL_TYPE {QPLL0} CONFIG.RX_PLL_TYPE {QPLL0} \
+##     CONFIG.TX_DATA_ENCODING {RAW} CONFIG.RX_DATA_DECODING {RAW} \
+##     CONFIG.TX_USER_DATA_WIDTH {64} CONFIG.TX_INT_DATA_WIDTH {32} CONFIG.RX_USER_DATA_WIDTH {64} CONFIG.RX_INT_DATA_WIDTH {32} \
+##     CONFIG.FREERUN_FREQUENCY {100} CONFIG.LOCATE_TX_USER_CLOCKING {CORE} CONFIG.LOCATE_RX_USER_CLOCKING {CORE} \
+##     CONFIG.TX_REFCLK_SOURCE {X0Y6 clk0} CONFIG.RX_REFCLK_SOURCE {X0Y6 clk0} \
+##     CONFIG.ENABLE_OPTIONAL_PORTS {loopback_in txprbssel_in rxprbssel_in txprbsforceerr_in rxprbserr_out rxprbslocked_out \
+##         rxprbscntreset_in drpaddr_in drpclk_in drpdi_in drpen_in drpwe_in drpdo_out drprdy_out eyescanreset_in eyescantrigger_in \
+##         eyescandataerror_out rxlpmen_in rxpolarity_in txpolarity_in txdiffctrl_in txpostcursor_in txprecursor_in rxcdrhold_in \
+##         txpippmen_in txpippmsel_in txpippmstepsize_in rxcdrlock_out txelecidle_in rxdfelpmreset_in txbufstatus_out rxbufstatus_out}]
+INFO: [IP_Flow 19-234] Refreshing IP repositories
+INFO: [IP_Flow 19-1704] No user IP repositories specified
+INFO: [IP_Flow 19-2313] Loaded Vivado IP repository '/home/brendan/Xilinx/2026.1/data/ip'.
 run_vivado: Vivado failed for designs/b96_kr260_10g (base), exit 143; see /home/brendan/Claude_sandbox/_worktrees/96c-ppm/designs/b96_kr260_10g/build/base/vivado.log
