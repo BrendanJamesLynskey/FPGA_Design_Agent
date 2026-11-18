@@ -23,3 +23,8 @@ def test_core_cocotb() -> None:
             RTL / "frame_src.sv", RTL / "trade64.sv", RTL / "tx_path.sv", RTL / "rx_path.sv", RTL / "b96_core.sv",
             DESIGN / "sim" / "gth_wiz_model96.sv", DESIGN / "sim" / "tb_core.sv"] + xpm_free
     cocotb_run.run("b96_core", "tb_core", srcs, "core_cocotb", HERE, extra_env={"PYTHONPATH": str(ROOT)})
+
+
+def test_rate_match_cocotb() -> None:
+    srcs = [RTL / "rate_match.sv", DESIGN / "sim" / "tb_rate_match.sv"]
+    cocotb_run.run("b96_rate_match", "tb_rate_match", srcs, "ratematch_cocotb", HERE, extra_env={"PYTHONPATH": str(ROOT)})
