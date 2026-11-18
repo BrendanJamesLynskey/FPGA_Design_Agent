@@ -50,7 +50,7 @@ module rx_path (
     logic [63:0] y_d;
     logic [7:0]  y_c;
     logic [31:0] rm_ovf, rm_wr, rm_ins, rm_del, rm_stall, rm_out, rm_drain, rm_fmin, rm_fmax;
-    rate_match u_rm (.wclk(clk), .w_v(x_v), .w_d(x_d), .w_c(x_c), .w_os(x_os), .w_lock(lock), .clr_w, .n_ovf(rm_ovf), .n_wr(rm_wr),
+    rate_match u_rm (.wclk(clk), .wrst(rst), .w_v(x_v), .w_d(x_d), .w_c(x_c), .w_os(x_os), .w_lock(lock), .clr_w, .n_ovf(rm_ovf), .n_wr(rm_wr),
         .rclk(clk_c), .rrst(rst_c), .clr_r(clr_c), .r_v(y_v), .r_d(y_d), .r_c(y_c), .r_lock(y_lock),
         .n_ins(rm_ins), .n_del(rm_del), .n_stall(rm_stall), .n_out(rm_out), .n_drain(rm_drain), .fill_min(rm_fmin), .fill_max(rm_fmax));
     // ---------------------------------------------------------------- core clock: MAC and the trading path
@@ -69,16 +69,18 @@ module rx_path (
     // a few clocks late, by the same amount, so the error of one difference is about 2 counts in 16.8 million (0.1 ppm).
     logic [31:0] rcnt, rcnt_s, rcnt_prev, f_delta, f_win;
     logic [23:0] tcnt;
-    initial begin rcnt = '0; rcnt_prev = '0; f_delta = '0; f_win = '0; tcnt = '0; end
+    logic        primed;          // the first window end after a core restart only loads the previous sample (a difference to a stale sample would be garbage)
+    initial begin rcnt = '0; rcnt_prev = '0; f_delta = '0; f_win = '0; tcnt = '0; primed = 1'b0; end
     always_ff @(posedge clk) rcnt <= rcnt + 32'd1;
     xpm_cdc_gray #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .SIM_ASSERT_CHK(0), .SIM_LOSSLESS_GRAY_CHK(0), .WIDTH(32)) u_fc (
         .src_clk(clk), .src_in_bin(rcnt), .dest_clk(clk_c), .dest_out_bin(rcnt_s));
     always_ff @(posedge clk_c) begin
-        if (rst_c) begin tcnt <= '0; f_win <= '0; f_delta <= '0; end
+        if (rst_c) begin tcnt <= '0; f_win <= '0; f_delta <= '0; primed <= 1'b0; end
         else begin
             tcnt <= tcnt + 24'd1;
             if (tcnt == 24'hFFFFFF) begin
-                rcnt_prev <= rcnt_s; f_delta <= rcnt_s - rcnt_prev; f_win <= f_win + 32'd1;
+                rcnt_prev <= rcnt_s; primed <= 1'b1;
+                if (primed) begin f_delta <= rcnt_s - rcnt_prev; f_win <= f_win + 32'd1; end
             end
         end
     end

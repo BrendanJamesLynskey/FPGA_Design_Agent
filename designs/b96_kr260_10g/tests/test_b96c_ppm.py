@@ -29,7 +29,7 @@ class FakeBoard:
         if a == 0x020:
             return 0
         if a == 0x094:
-            code = {0x00: int((55 + 273.6777) * 1024 / 501.3743) if not self.hot else int((95 + 273.6777) * 1024 / 501.3743), 0x01: int(0.72 / 3 * 1024), 0x02: int(1.8 / 3 * 1024), 0x06: int(0.72 / 3 * 1024)}[self.sm_addr]
+            code = {0x00: int((55 + 273.6777) * 1024 / 501.3743) if not self.hot else int((95 + 273.6777) * 1024 / 501.3743), 0x01: int(0.72 / 3 * 1024), 0x02: int(1.8 / 3 * 1024), 0x06: int(0.85 / 3 * 1024)}[self.sm_addr]
             return (1 << 16) | (code << 6)
         if 0x100 <= a < 0x174:
             i = (a - 0x100) // 4

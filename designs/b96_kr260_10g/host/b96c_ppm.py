@@ -24,9 +24,22 @@ WINDOW_CLOCKS = 1 << 24                         # the frequency counter's window
 BLOCK_RATE = F_CORE_HZ * 32 / 33                # blocks a second in either clock domain
 #: SYSMON (SYSMONE4) status registers read through the register block (0x090 address, 0x094 data: bit 16 valid, 15:6 the 10-bit result).
 SYSMON = {"temp_c": 0x00, "vccint_v": 0x01, "vccaux_v": 0x02, "vccbram_v": 0x06}
-#: Operating-condition windows. ASSUMED, not read from a datasheet that the knowledge bank holds: the die limit is the board's own rule (Tj at most 85 C);
-#: the rails are +-3 % of their nominal values (VCCINT and VCCBRAM 0.72 V for the -2LV part, VCCAUX 1.8 V). The planner confirms them against DS925.
-ROC = {"temp_c": (-10.0, 85.0), "vccint_v": (0.698, 0.742), "vccaux_v": (1.746, 1.854), "vccbram_v": (0.698, 0.742)}
+#: Operating-condition windows, from DS925 (Zynq UltraScale+ DC and AC switching characteristics, v1.x in ~/Claude_sandbox/_amd_docs), Table "Recommended operating conditions":
+#: VCCINT for -2LV (0.72 V) devices 0.698 to 0.742 V; VCCBRAM 0.825 to 0.876 V (it is 0.85 V nominal even on the 0.72 V parts); VCCAUX 1.746 to 1.854 V; Tj of an extended-temperature
+#: device 0 to 100 C, and the board's own rule is 85 C (house rules), so 0 to 85 C here. Read with the SYSMON's own 10-bit resolution (about 3 mV, 0.5 C).
+ROC = {"temp_c": (0.0, 85.0), "vccint_v": (0.698, 0.742), "vccaux_v": (1.746, 1.854), "vccbram_v": (0.825, 0.876)}
+
+#: UG576 v1.7.1, "TX Phase Interpolator PPM Controller" (Equation 3-3): in continuous mode the line rate is offset by
+#: ppm = 1e6 x TXPIPPMSTEPSIZE[3:0] / (64 x TXOUT_DIV x TX_INT_DATAWIDTH x (TXPI_SYNFREQ_PPM + 1)); TXPIPPMSTEPSIZE[4] = 1 increments the PI code, 0 decrements;
+#: TXPIPPMSEL must be 1 and TXPIPPMEN held at 1. This design: TXOUT_DIV 1, internal data width 32, TXPI_SYNFREQ_PPM 7 (3'b111, set by ppm.xdc; the Wizard's default 1
+#: would give 244 ppm a step, too coarse): 1e6 / (64 x 1 x 32 x 8) = 61.04 ppm a step. Which sign is faster against the core clock is NOT assumed (the counter says).
+PPM_PER_STEP = 1e6 / (64 * 1 * 32 * 8)
+
+
+def predicted_ppm(code: int) -> float:
+    """The offset Equation 3-3 predicts for a 5-bit step code (bit 4 the sign: 1 increments the PI code). Signed as 'increment = positive'; the measured sign may differ."""
+    mag = code & 0xF
+    return (mag if (code >> 4) & 1 else -mag) * PPM_PER_STEP if mag else 0.0
 
 
 def sysmon_to_units(name: str, raw: int) -> float:
@@ -70,17 +83,17 @@ def ppm_from_delta(delta: int) -> float:
 def measure_ppm(t: bb.Transport, windows: int = 2, timeout_s: float = 3.0) -> dict:
     """The receive clock against the core clock from the frequency counter: wait for `windows` new windows and return their ppm values. `stable` is true
     when they agree within 0.5 ppm (a window that spans a clock restart does not)."""
-    def w() -> int:
-        return t.rd(0x100 + 4 * bb.RX["f_win"])
+    def snap() -> tuple[int, int]:
+        t.wr(0x018, 4)          # one snapshot: the window count and its delta belong together
+        return t.rd(0x100 + 4 * bb.RX["f_win"]), t.rd(0x100 + 4 * bb.RX["f_delta"])
     t0 = time.time()
-    start = w()
+    start = snap()[0]
     seen: dict[int, int] = {}
     while time.time() - t0 < timeout_s and len(seen) < windows:
-        n = w()
-        if n > start and n not in seen:
-            seen[n] = t.rd(0x100 + 4 * bb.RX["f_delta"])
+        n, dlt = snap()
+        if n > start and n not in seen and n >= 2:        # window 1 after a core restart has no valid earlier sample
+            seen[n] = dlt
         time.sleep(0.02)
-    # note: reads are one register at a time (no snapshot), so `n` and the delta can straddle a window edge; two windows that agree are taken as stable
     ppms = [ppm_from_delta(d) for d in seen.values()]
     return {"windows": len(ppms), "ppm": (sum(ppms) / len(ppms)) if ppms else None, "ppm_each": ppms,
             "stable": len(ppms) == windows and (max(ppms) - min(ppms)) < 0.5}
@@ -96,7 +109,7 @@ def relock(b: bb.Board, timeout_s: float = 5.0) -> bool:
     return b.wait(lambda s: s["tx_done"] and s["rx_done"] and s["pcs_lock"], timeout_s)
 
 
-def calibrate(b: bb.Board, sels=(1, 0), steps=range(32), settle_s: float = 0.3) -> list[dict]:
+def calibrate(b: bb.Board, sels=(1,), steps=range(32), settle_s: float = 0.3) -> list[dict]:
     """Every (sel, step) with the controller enabled: the achieved ppm, the GT buffer status and whether the link stayed up. Step 0 with the controller off is
     the reference row. A setting that drops the link is recorded and the offset is put back to 0 before the next."""
     rows: list[dict] = []
@@ -110,7 +123,7 @@ def calibrate(b: bb.Board, sels=(1, 0), steps=range(32), settle_s: float = 0.3) 
             time.sleep(settle_s)
             b.clear()
             m = measure_ppm(b.t)
-            row = {"en": 1, "sel": sel, "step": step, **m, "link": link_ok(b), **gt_buffers(b.t)}
+            row = {"en": 1, "sel": sel, "step": step, "predicted_ppm": predicted_ppm(step), **m, "link": link_ok(b), **gt_buffers(b.t)}
             rows.append(row)
             if not row["link"]:
                 set_ppm(b.t, 0, False, False)
@@ -119,7 +132,7 @@ def calibrate(b: bb.Board, sels=(1, 0), steps=range(32), settle_s: float = 0.3) 
     return rows
 
 
-def choose_points(rows: list[dict], targets=(0.0, -150.0, -100.0, -50.0, 50.0, 100.0, 150.0), tol_ppm: float = 25.0) -> list[dict]:
+def choose_points(rows: list[dict], targets=(0.0, -183.1, -122.1, -61.0, 61.0, 122.1, 183.1), tol_ppm: float = 20.0) -> list[dict]:
     """For each target the usable calibrated setting (link kept, stable, no buffer error seen) with the measured ppm closest to it. A target with none within
     `tol_ppm` is reported unreachable with the nearest one found, never silently replaced."""
     good = [r for r in rows if r.get("link") and r.get("stable") and r["ppm"] is not None and r["txbuf_seen"] == 0 and r["rxbuf_seen"] == 0]
@@ -154,9 +167,12 @@ def dwell(b: bb.Board, seconds: float, *, interval_clocks: int = 20000, poll_s: 
     t_start = time.time()
     last_cond = t_start
     tx, rx = tx0, rx0
+    seen: dict[int, int] = {}
     while True:
         time.sleep(poll_s)
         tx, rx = b.snapshot()
+        if rx["f_win"] >= 2:
+            seen[rx["f_win"]] = rx["f_delta"]       # the offset DURING the dwell: every window completed in it
         if time.time() - last_cond >= cond_every_s:
             cond.append(read_conditions(b.t)); last_cond = time.time()
         if tx["n_order"] >= count and rx["fired"] >= count:
@@ -168,7 +184,8 @@ def dwell(b: bb.Board, seconds: float, *, interval_clocks: int = 20000, poll_s: 
     cond.append(read_conditions(b.t))
     windows = rx["f_win"] - w0
     elapsed = windows * WINDOW_CLOCKS / F_CORE_HZ
-    return {"orders_expected": count, "tx": tx, "rx": rx, "elapsed_s_by_windows": elapsed, "host_elapsed_s": time.time() - t_start,
+    ppms = [ppm_from_delta(v) for k, v in seen.items() if k > w0 + 1]
+    return {"ppm_dwell": (sum(ppms) / len(ppms)) if ppms else None, "ppm_dwell_spread": (max(ppms) - min(ppms)) if ppms else None, "orders_expected": count, "tx": tx, "rx": rx, "elapsed_s_by_windows": elapsed, "host_elapsed_s": time.time() - t_start,
             "conditions": cond, "gt_buffers": gt_buffers(b.t), "interval_clocks": interval_clocks}
 
 
@@ -209,8 +226,8 @@ def judge_point(d: dict, ppm: float, rate_tol: float = 0.15) -> dict:
             "blocks_in_minus_out": rx["rm_wr"] - (rx["rm_out"] - rx["rm_ins"] + rx["rm_del"] + rx["rm_drain"])}
 
 
-def run_ppm_session(t: bb.Transport, lock_text: str, out_dir: Path, *, dwell_s: float = 20.0, restarts: int = 20, targets=(0.0, -150.0, -100.0, -50.0, 50.0, 100.0, 150.0),
-                    sels=(1, 0), steps=range(32)) -> dict:
+def run_ppm_session(t: bb.Transport, lock_text: str, out_dir: Path, *, dwell_s: float = 20.0, restarts: int = 20, targets=(0.0, -183.1, -122.1, -61.0, 61.0, 122.1, 183.1),
+                    sels=(1,), steps=range(32)) -> dict:
     """The whole ppm session on a board whose laser polarity and link bring-up have already passed (the caller, `run_96c`, does steps 1 to 3 of the stage-3
     sequence first through b96_bench.run_all's pieces). Refuses without the lock text."""
     if not lock_text.startswith("96C:"):
@@ -243,7 +260,7 @@ def run_ppm_session(t: bb.Transport, lock_text: str, out_dir: Path, *, dwell_s: 
             continue
         d = dwell(b, dwell_s)
         rec["dwell"] = d
-        rec["verdict"] = judge_point(d, m["ppm"])
+        rec["verdict"] = judge_point(d, d["ppm_dwell"] if d.get("ppm_dwell") is not None else m["ppm"])
         rec["distribution"] = bb.restart_distribution(b, restarts)
         set_ppm(t, pt["step"], bool(pt["en"]), bool(pt["sel"]))          # a restart does not change the register, but state it
         rec["ppm_after"] = measure_ppm(t)

@@ -8,8 +8,8 @@ time are refused (the RTL has no defined order for them).
 
 Policy (the same text as the RTL header, restated so the two can be read side by side):
 
-* the write side writes every valid block from the PCS, unless the buffer is full as the write side sees it (the read pointer it sees
-  is old, so this is conservative): that block is dropped and counted in ``n_ovf``. Nothing else is ever dropped there;
+* the write side writes every valid block from the PCS, unless the FIFO macro says full (it sees an old read pointer, so this is conservative): that block is dropped
+  and counted in ``n_ovf``. Nothing else is ever dropped there;
 * the reader outputs at most one block a clock, in 32 of every 33 clocks (the *slot* clocks; the 33rd, the *pause* clock, is the same
   cadence the transmit gearbox has);
 * in a slot clock: with at least one block visible it pops and outputs the head; with none visible and the last output not inside a frame
@@ -58,25 +58,25 @@ def in_frame_after(d: int, c: int) -> bool:
 
 @dataclass
 class RateMatch:
+    """Model of rtl/rate_match.sv around the repo's Icarus stand-in of xpm_fifo_async (flow/cdc_models/xpm_cdc_models.sv, FWFT with read data count), not around the
+    real macro: the real macro's latencies differ in detail. The stand-in's start-up handshake is assumed finished (the bench holds the read reset long enough)."""
     aw: int = 4
     hi: int = 4
-    min_keep: int = 1
-    sync: int = 2                 # DEST_SYNC_FF of both pointer crossings
-    wp_reg: int = 1               # read side: 1 = a register after the decode of the write pointer (REG_OUTPUT)
-    rp_reg: int = 1               # write side: the same for the read pointer
+    min_keep: int = 0
+    sync: int = 2                 # CDC_SYNC_STAGES of the macro
     lock_sync: int = 2
     # write side
-    wptr: int = 0
-    w_g: int = 0
-    w_gs: list = field(default_factory=list)      # sync chain of the read pointer, in the write domain
-    w_rp_q: int = 0
+    wbin: int = 0
+    wg: int = 0
+    w_gs: list = field(default_factory=list)      # synchroniser of the read gray pointer, write domain
+    wfull: bool = False
     n_ovf: int = 0
     n_wr: int = 0
     # read side
-    rptr: int = 0
-    r_g: int = 0
-    r_gs: list = field(default_factory=list)      # sync chain of the write pointer, in the read domain
-    r_wp_q: int = 0
+    rbin: int = 0
+    rg: int = 0
+    r_gs: list = field(default_factory=list)      # synchroniser of the write gray pointer, read domain
+    rempty: bool = True
     r_ls: list = field(default_factory=list)
     pace: int = 0
     in_frame: bool = False
@@ -101,48 +101,45 @@ class RateMatch:
         self.r_gs = [0] * self.sync
         self.r_ls = [0] * self.lock_sync
 
-    # -------------------------------------------------------------------------------------------------- write side
-    def rp_seen(self) -> int:
-        return self.w_rp_q if self.rp_reg else ungray(self.w_gs[-1], self.aw + 1)
-
     def w_edge(self, clr: bool, v: bool, blk: tuple) -> None:
-        """One write-clock edge: ``v`` and ``blk`` = (d, c, os) are the inputs held before the edge."""
-        full = ((self.wptr - self.rp_seen()) & self.mask) >= self.depth
-        new_g = gray(self.wptr)
-        new_gs = [self.r_g] + self.w_gs[:-1]
-        new_rp_q = ungray(self.w_gs[-1], self.aw + 1)
+        """One write-clock edge; v and blk = (d, c, os) are the inputs held before the edge."""
+        rq = self.w_gs[-1]
+        new_gs = [self.rg] + self.w_gs[:-1]
+        wr = v and not self.wfull
+        wbn = (self.wbin + (1 if wr else 0)) & self.mask
+        if wr:
+            self.mem[self.wbin & (self.depth - 1)] = blk
         if v:
-            if full:
+            if self.wfull:
                 self.n_ovf += 1
             else:
-                self.mem[self.wptr & (self.depth - 1)] = blk
-                self.wptr = (self.wptr + 1) & self.mask
                 self.n_wr += 1
+        top2 = ((~(rq >> (self.aw - 1))) & 3) << (self.aw - 1)
+        self.wfull = gray(wbn) == (top2 | (rq & ((1 << (self.aw - 1)) - 1)))
+        self.wbin = wbn
+        self.wg = gray(wbn)
+        self.w_gs = new_gs
         if clr:
             self.n_ovf = 0
             self.n_wr = 0
-        self.w_g = new_g
-        self.w_gs = new_gs
-        self.w_rp_q = new_rp_q
-
-    # -------------------------------------------------------------------------------------------------- read side
-    def wp_seen(self) -> int:
-        return self.r_wp_q if self.wp_reg else ungray(self.r_gs[-1], self.aw + 1)
 
     def r_edge(self, rst: bool, clr: bool, w_lock: bool) -> None:
-        """One read-clock edge; ``w_lock`` is the write domain's lock level before the edge."""
-        wp = self.wp_seen()
+        """One read-clock edge; w_lock is the write domain's lock level before the edge."""
+        wq = self.r_gs[-1]
         lock_s = bool(self.r_ls[-1])
-        fill = (wp - self.rptr) & self.mask
-        head = self.mem[self.rptr & (self.depth - 1)]
-        new_g = gray(self.rptr)
-        new_gs = [self.w_g] + self.r_gs[:-1]
-        new_wp_q = ungray(self.r_gs[-1], self.aw + 1)
-        new_ls = [int(w_lock)] + self.r_ls[:-1]
+        fill = (ungray(wq, self.aw + 1) - self.rbin) & self.mask
+        head = self.mem[self.rbin & (self.depth - 1)]
+        can_read = not self.rempty
         slot = self.pace != 32
+        d, c, os = head
+        do_pop = (not rst) and can_read and lock_s and slot
+        do_del = ((not rst) and can_read and lock_s and (not slot) and fill > self.hi and (not self.in_frame) and self.idle_run >= self.min_keep and is_pure_idle(d, c, os))
+        rd_en = do_pop or do_del or ((not rst) and can_read and not lock_s)
+        new_gs = [self.wg] + self.r_gs[:-1]
+        new_ls = [int(w_lock)] + self.r_ls[:-1]
+        rbn = (self.rbin + (1 if (rd_en and can_read) else 0)) & self.mask
         self.r_v = False
         if rst:
-            self.rptr = wp
             self.pace = 0
             self.in_frame = False
             self.idle_run = 0
@@ -155,17 +152,14 @@ class RateMatch:
             if not lock_s:
                 self.in_frame = False
                 self.idle_run = 0
-                if fill != 0:
-                    self.rptr = (self.rptr + 1) & self.mask
+                if can_read:
                     self.n_drain += 1
             elif slot:
                 self.fill_min = min(self.fill_min, fill)
                 self.fill_max = max(self.fill_max, fill)
-                if fill != 0:
-                    d, c, os = head
+                if can_read:
                     self.r_v = True
                     self.r_blk = head
-                    self.rptr = (self.rptr + 1) & self.mask
                     self.in_frame = in_frame_after(d, c)
                     self.idle_run = min(self.idle_run + 1, 3) if is_pure_idle(d, c, os) else 0
                     self.n_out += 1
@@ -177,16 +171,14 @@ class RateMatch:
                     self.n_out += 1
                 else:
                     self.n_stall += 1
-            else:
-                d, c, os = head
-                if fill > self.hi and not self.in_frame and self.idle_run >= self.min_keep and is_pure_idle(d, c, os):
-                    self.rptr = (self.rptr + 1) & self.mask
-                    self.n_del += 1
-        if clr and not rst:
-            self._clear()
-        self.r_g = new_g
+            elif do_del:
+                self.n_del += 1
+            if clr:
+                self._clear()
+        self.rempty = gray(rbn) == wq
+        self.rbin = rbn
+        self.rg = gray(rbn)
         self.r_gs = new_gs
-        self.r_wp_q = new_wp_q
         self.r_ls = new_ls
 
     def _clear(self) -> None:

@@ -80,12 +80,12 @@ module b96_core #(
         wz_utx   <= ~txpmadone;
         wz_urx   <= ~rxpmadone;
     end
-    logic       ppm_en_t, ppm_sel_t;
+    logic       txusr1, ppm_en_t, ppm_sel_t;
     logic [4:0] ppm_step_t;
     logic [1:0] txbuf_c;
     logic [2:0] rxbuf_c;
     gth_wiz u_gt (
-        .gtwiz_userclk_tx_reset_in(wz_utx), .gtwiz_userclk_tx_srcclk_out(), .gtwiz_userclk_tx_usrclk_out(),
+        .gtwiz_userclk_tx_reset_in(wz_utx), .gtwiz_userclk_tx_srcclk_out(), .gtwiz_userclk_tx_usrclk_out(txusr1),
         .gtwiz_userclk_tx_usrclk2_out(txusr2), .gtwiz_userclk_tx_active_out(utx_act_t),
         .gtwiz_userclk_rx_reset_in(wz_urx), .gtwiz_userclk_rx_srcclk_out(), .gtwiz_userclk_rx_usrclk_out(),
         .gtwiz_userclk_rx_usrclk2_out(rxusr2), .gtwiz_userclk_rx_active_out(urx_act_r),
@@ -109,8 +109,8 @@ module b96_core #(
         .rxprbserr_out(), .rxprbslocked_out(), .txpmaresetdone_out(txpmadone_c),
         .txbufstatus_out(txbuf_c), .rxbufstatus_out(rxbuf_c));
     logic tx_pol_t, rx_pol_r;
-    // the TX phase-interpolator ppm controller's controls (static while the host changes them): into the transmit user clock domain as one bus
-    xpm_cdc_array_single #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(1), .WIDTH(7)) u_c_ppm (.src_clk(clk), .src_in({ppm_sel, ppm_en, ppm_step}), .dest_clk(txusr2), .dest_out({ppm_sel_t, ppm_en_t, ppm_step_t}));
+    // the TX phase-interpolator ppm controller's controls (UG576 Table 3-33: TXUSRCLK domain, and TXUSRCLK (not TXUSRCLK2) when the internal data width is below the user width, as here): one bus into TXUSRCLK
+    xpm_cdc_array_single #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(1), .WIDTH(7)) u_c_ppm (.src_clk(clk), .src_in({ppm_sel, ppm_en, ppm_step}), .dest_clk(txusr1), .dest_out({ppm_sel_t, ppm_en_t, ppm_step_t}));
     xpm_cdc_single #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(1)) u_c_tp (.src_clk(clk), .src_in(tx_pol), .dest_clk(txusr2), .dest_out(tx_pol_t));
     xpm_cdc_single #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(1)) u_c_rp (.src_clk(clk), .src_in(rx_pol), .dest_clk(rxusr2), .dest_out(rx_pol_r));
 

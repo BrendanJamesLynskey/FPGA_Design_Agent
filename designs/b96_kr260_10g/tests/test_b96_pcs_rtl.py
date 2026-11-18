@@ -30,6 +30,13 @@ def test_rate_match_cocotb() -> None:
     cocotb_run.run("b96_rate_match", "tb_rate_match", srcs, "ratematch_cocotb", HERE, extra_env={"PYTHONPATH": str(ROOT)})
 
 
+def test_rate_match_min_keep_1_shows_the_limit() -> None:
+    """MIN_KEEP = 1 (delete only after an idle block was output): the minimum-gap stream at +300 ppm overflows, as design.md section 9 says."""
+    srcs = [RTL / "rate_match.sv", DESIGN / "sim" / "tb_rate_match.sv"]
+    cocotb_run.run("b96_rate_match_k1", "tb_rate_match", srcs, "ratematch_cocotb", HERE, parameters={"MIN_KEEP": 1}, testcase="minimum_gap_partner_faster",
+                   extra_env={"PYTHONPATH": str(ROOT), "B96_RM_MIN_KEEP": "1"})
+
+
 def test_ppm_partner_cocotb() -> None:
     """The core against a partner at +-ppm offsets (gth_wiz_model96p.sv). B96_PPM_RTL_ROOT picks the RTL tree (default: this one)."""
     import os

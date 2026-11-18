@@ -15,6 +15,7 @@ from cocotb.utils import get_sim_time
 from designs.b96_kr260_10g.model import ratematch as rm
 from designs.b96_kr260_10g.tests import ratematch_stim as st
 
+MIN_KEEP = int(os.environ.get("B96_RM_MIN_KEEP", "0"))
 P_NOM_FS = 6_205_800          # 161.1328125 MHz is 6205.8 ps
 RESULTS: dict = {}
 
@@ -90,7 +91,7 @@ async def run_case(dut, name, ppm, n_frames=300, gaps=(2,), seed=1, hi=4, os_eve
     # twin on the same edges and inputs
     r_t = in_flight["r_t"]
     w_t = [t for t in in_flight["w_t"] if t < r_t[-1]]
-    out, m = rm.run(w_t, r_t, in_flight["w_in"][:len(w_t)], w_lock=in_flight["w_lock"], r_rst=in_flight["r_rst"][:len(r_t)], clr=in_flight["clr"][:len(r_t)], w_clr=in_flight["wclr"], hi=hi, min_keep=1)
+    out, m = rm.run(w_t, r_t, in_flight["w_in"][:len(w_t)], w_lock=in_flight["w_lock"], r_rst=in_flight["r_rst"][:len(r_t)], clr=in_flight["clr"][:len(r_t)], w_clr=in_flight["wclr"], hi=hi, min_keep=MIN_KEEP)
     # RTL output sampled at read edge j (pre-edge) = state after edge j-1
     bad = 0
     first = None
@@ -140,10 +141,14 @@ async def partner_slower(dut):
 
 @cocotb.test()
 async def minimum_gap_partner_faster(dut):
-    """One idle block between frames (a minimum-gap stream), the partner 150 ppm faster: deletion is possible only after an idle block was
-    output, so fewer chances; every frame still intact and nothing lost."""
-    r = await run_case(dut, "p150_gap1", 150, n_frames=900, gaps=(1,), seed=3)
-    assert r["frames_equal"] and r["rtl"]["n_ovf"] == 0, r
+    """One idle block between frames (a minimum-gap stream, 802.3's 12-byte gap holds one pure idle block), the partner 300 ppm faster, 5000 frames (about 4,000 clocks per
+    deletion needed, so the buffer would fill from about 1 to its 16 blocks after about 60,000 clocks). With MIN_KEEP = 0 a lone idle block may be deleted: nothing overflows.
+    With MIN_KEEP = 1 (B96_RM_MIN_KEEP=1) it cannot be: this bench then shows the limit, a buffer that overflows and cuts frames (counted, FCS-failing, never silent)."""
+    r = await run_case(dut, "p300_gap1_long", 300, n_frames=5000, gaps=(1,), seed=3)
+    if MIN_KEEP == 0:
+        assert r["frames_equal"] and r["rtl"]["n_ovf"] == 0 and r["rtl"]["n_del"] > 5, r
+    else:
+        assert r["rtl"]["n_ovf"] > 0 and not r["frames_equal"], r
 
 
 @cocotb.test()

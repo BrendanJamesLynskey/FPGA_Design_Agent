@@ -90,8 +90,7 @@ million), the order leaves in TXUSRCLK2. Streaming frames across would need an e
 Instead the decision is made in the RX domain and only a small **go message** (instrument, price, order id, "poison" level)
 crosses, by `xpm_cdc_handshake` (3 to 4 destination clocks); the TX domain owns the pre-built order frame and starts
 sending when the go arrives. The poison level for a bad incoming frame crosses by `xpm_cdc_single`; the order frame is 9
-words long, so the verdict (1 to 2 clocks after the decision) arrives long before the order's last word (asserted in
-simulation, and stated as a timing assumption). Configuration crosses by `xpm_cdc_handshake` per domain.
+words long, so the verdict arrives before the order's last word (a timing assumption, counted by `late`; for a feed of the longest length the rule acts on, 78 bytes, the verdict is about 6 to 8 clocks after the decision, not 1 to 2, and since 96C, with no crossing delay on either, the margin to the order's last word is about a clock smaller than before: `late` counts a miss and the order is poisoned, fail closed) Configuration crosses by `xpm_cdc_handshake` per domain.
 
 ### 2.7 RX elastic buffer in the GT
 
@@ -176,9 +175,8 @@ With one port the loop crosses the link twice for the trading loop.
   from RX-start of the feed to TX-start of the order. So **D = L - 2E, not L - E** (the brief's "trading loop minus one echo"
   counts one pass of the link; the loop has two). Stated here before any data; if the owner's meaning differs it is
   recomputed from the recorded L and E.
-- **Counter**: one free-running 32-bit counter in TXUSRCLK2. The RX start event crosses by `xpm_cdc_pulse`; the
-  timestamp is therefore known to one clock plus the fixed synchroniser delay (recorded, calibrated by the near-end PMA
-  loopback where TX and RX run from the same reference). Uncertainty stated as +/- 1 clock (6.2 ns).
+- **Counter**: one free-running 32-bit counter in TXUSRCLK2. (Brief 96C: the RX start is stamped in the same clock by the MAC's start strobe behind the elastic buffer, no crossing; it includes the
+  buffer's latency, 5 to 6 clocks in simulation, varying by a clock. Before 96C the RX start crossed by `xpm_cdc_pulse`, known to one clock plus the fixed synchroniser delay.) Uncertainty stated as +/- 1 clock (6.2 ns).
 - **Link restarts**: at least 100 restarts (RX datapath reset), min, max and distribution of E and L per restart.
 - **Subtract**: the measured fibre length x 4.9 ns/m (group index about 1.468 for G.652/G.657 fibre; the lead is 'about
   1 m'; measure it) and the optics' own delay, **unknown** unless the module's datasheet gives it.
@@ -215,37 +213,45 @@ the offset was indirect: the timestamp of a received frame is late by the crossi
 go pulse (`stale` counts a miss), an assumption that holds for any drift this small but is a timing assumption. Rate matching was built because a real link needs it
 wherever frames cross (any forwarding, bridging or host-facing path), because it removes those assumptions and, as measured below, because it costs almost no latency here.
 
-**Architecture now.** `pcs_rx` stays in the receive clock. Its decoded blocks (data, control, an ordered-set flag) are written into `rate_match` (a 16-block elastic buffer, one
-distributed-RAM array, gray pointers through `xpm_cdc_gray`); everything after it, `mac64_rx`, `trade64` and the order path, runs in the transmit user clock (the core clock). The go
+**Architecture now.** `pcs_rx` stays in the receive clock. Its decoded blocks (data, control, an ordered-set flag) are written into `rate_match` (a 16-block elastic buffer: AMD's `xpm_fifo_async`, distributed RAM, first-word-fall-through, read data count; the macro carries the pointers, the memory and their clock-crossing
+constraints. A hand-made block memory read in the other clock was tried first and gave report_cdc CDC-1 Critical, 38 rows, with or without `set_max_delay -datapath_only` and with `xpm_memory_sdpram`
+(`results/b96c/cdc_probe.rpt`, `cdcexp/cdc_x.rpt`): the flow's gate `post_synth_cdc_no_critical` allows none); everything after it, `mac64_rx`, `trade64` and the order path, runs in the transmit user clock (the core clock). The go
 pulse, the order bus and the five event pulses of the old design are gone; the decision reaches the order logic in the same clock domain.
 
 **Policy (rtl/rate_match.sv, model/ratematch.py):**
-- every valid block is written; if the buffer is full as the write side sees it (it sees an old read pointer, so this is conservative) the block is dropped and counted (`rm_ovf`);
+- every valid block is written; if the macro says full (it sees an old read pointer, so this is conservative) the block is dropped and counted (`rm_ovf`);
 - the reader outputs at most one block a clock, in 32 of 33 clocks (the 33rd, the pause clock, is the transmit gearbox's cadence);
 - in an output clock: a block visible -> pop and output it; none visible and the last output not inside a frame -> **insert one idle block** (`rm_ins`); none visible inside a frame -> output
   nothing for one clock (`rm_stall`; the MAC holds its state; nothing is lost);
-- in the pause clock: visible fill above HI (4), last output not inside a frame, at least one pure idle block just output, head a pure idle block -> **delete it** (`rm_del`);
+- in the pause clock: visible fill (the macro's read data count) above HI (4), last output not inside a frame, at least MIN_KEEP pure idle blocks just output (default 0), head a pure idle block -> **delete it** (`rm_del`);
 - *inside a frame* means the last block output was a start block (lane 0 or 4) or a data block. A *pure idle* block is an all-idle control block that is not an ordered set.
   **Ordered sets (the link-fault signalling), error blocks, terminate blocks and every block with data are never inserted, duplicated or deleted**, so no frame and no needed ordered set is touched (checked
   frame by frame against an independent parser in `tests/ratematch_cocotb.py`, with ordered sets and error blocks in the stream);
 - while the synchronised block lock is low the reader discards the buffer, one block a clock, and outputs nothing.
 
-**Limits, stated.** (1) A deletion needs a pure idle block after one already output: a partner at +ppm that sends frames with only the minimum gap and no second idle block for a long time cannot be
-compensated; the buffer then fills and `rm_ovf` counts blocks lost (the frame is cut and fails its FCS: fail closed, never silent). (2) A deletion leaves at least one idle block between
-frames, so the gap after a deletion can be as small as 8 bytes plus the terminate's own idles, below the usual 12; this design's MAC does not check it, a downstream consumer might.
-(3) Inserted idles are plain `/I/` blocks; the idle-block checks of a real partner's PHY are not exercised. (4) Nothing here forwards frames to the transmitter: the buffer
-exists for the receive path only.
+**Limits, stated.** (1) *Minimum-gap traffic.* A conforming sender's 12-byte gap holds one pure idle block between a terminate and the next start. A partner 100 ppm fast sending
+only minimum gaps must have 100 ppm of its stream deleted (one idle block in about 12,000 blocks); with `MIN_KEEP = 1` (delete only after an idle block was already output) that gap can never be shortened and the buffer overflows
+(bench `minimum_gap_partner_faster` with `B96_RM_MIN_KEEP=1`: +300 ppm, 5000 frames: `rm_ovf` > 0, frames cut and failing their FCS, never silent). **The default is therefore `MIN_KEEP = 0`**: a lone idle block between frames
+may be deleted, and the bench with it (same stream) loses nothing. The price: the gap after such a deletion can be as small as the terminate block's own trailing idles plus the start block's leading idles (0 to 7 and 0 or 4 bytes),
+below the usual 12 bytes. This design's MAC does not check it. **IEEE 802.3 clause 46 and 49 were not available on this machine, so the standard's own minimum receive gap and its deficit-idle-count rules were NOT read**:
+whether a downstream consumer would accept such a gap is unverified, and the rule "never delete the last idle block" (`MIN_KEEP = 1`) is the conservative setting if it matters. (2) Inserted idles are plain `/I/` blocks;
+a real partner PHY's idle checks are not exercised. (3) Nothing here forwards frames to the transmitter: the buffer exists for the receive path only. (4) The FIFO macro's real latencies are not in the Icarus stand-in
+(written from UG974's port descriptions); the board measures them.
 
-**Latency cost.** Simulated, in-phase clocks, GT word of the price to GT word of the order's start block: **13 to 14 clocks** (80.7 to 86.9 ns) against 11 before (the receive
-path through the buffer is 6 to 7 clocks; the 4-clock go crossing it replaces is gone). Table and the board's figure: the 96C report. The write-to-read latency is the gray
-register (1) + two synchroniser flops + the decoded pointer register (`WP_REG`, 1) + the output register (1) plus the wait for the next output clock.
+**Latency cost.** Simulated with the stand-in, in-phase clocks, GT word of the price to GT word of the order's start block: **12 to 13 clocks** (74.5 to 80.7 ns) against 11 before (the receive path through the buffer is
+5 to 6 clocks; the 4-clock go crossing it replaces is gone): about +1 to +2 clocks. A first version with a hand-made buffer measured 13 to 14. Two cautions the review raised: the figure is for in-phase clocks, and at a positive offset the visible fill rests near the
+deletion threshold (above 4), so latency there can be a few clocks higher (the board's `rm_fmin`/`rm_fmax` and the distribution of E and L at each ppm say). The real macro's latency is not in the stand-in.
 
 **Frequency counter.** A free-running 32-bit count of receive clocks crosses as a gray code; in the core clock a window of 2^24 clocks (104 ms) and the difference of the last two
 samples give the receive clock's cycles per window (RXV27, RXV28): ppm = (count - 2^24) / 2^24 x 10^6, resolution about 0.1 ppm. The board run reports every point's offset from this
 counter, not from the setting that was meant to cause it.
 
-**Phase-interpolator ppm controller.** `TXPPM` (0x01C) drives the GT's TXPIPPMEN, TXPIPPMSEL and TXPIPPMSTEPSIZE. The Transceiver Wizard fixes `TXPI_PPM` to 0 and offers no setting for it;
-the ppm_* builds set it on the primitive through `ppm.xdc` (confirmed settable on a synthesised netlist, `results/b96c/txpi_probe.log`). **Unconfirmed, because UG576 is not on this machine: whether
-`TXPI_PPM` alone enables the controller, the encoding of the step code, and whether TXUSRCLK2 (taken from the PMA's output clock in this Wizard configuration,
-`TXOUTCLKSEL = 3'b010`) follows the shifted serial clock.** If it does, the receive and core clocks move together and the counter will read 0 ppm at every code; the board run then reports "no relative offset
-obtainable this way" (and the GT buffer status, `GT_BUF`, shows whether the TX buffer slipped). Nothing in the report claims an offset the counter did not measure.
+**Phase-interpolator ppm controller (UG576 v1.7.1, "TX Phase Interpolator PPM Controller", Tables 3-33 and 3-34, Equation 3-3).** `TXPPM` (0x01C) drives TXPIPPMEN, TXPIPPMSEL and TXPIPPMSTEPSIZE.
+From the guide: the controller needs TXPIPPMSEL = 1 and TXPIPPMEN held at 1 while an offset is wanted; TXPIPPMSTEPSIZE[4] = 1 increments the PI code (0 decrements) and [3:0] is the amount, 0 to 15; the offset in continuous mode is
+ppm = 10^6 x step / (64 x TXOUT_DIV x TX_INT_DATAWIDTH x (TXPI_SYNFREQ_PPM + 1)); `TXPI_PPM` (UltraScale+) "enables gating reset to the TXPIPPM controller": with 0 the controller is held in reset. The Transceiver Wizard fixes
+TXPI_PPM to 0 and TXPI_SYNFREQ_PPM to 1; at 10.3125 Gb/s with a 32-bit internal width (TXOUT_DIV 1) that default gives 244 ppm a step, too coarse for +-100 ppm. The ppm_* builds therefore set TXPI_PPM = 1 and TXPI_SYNFREQ_PPM = 7 through
+`ppm.xdc` (both attributes confirmed settable on a synthesised netlist, `results/b96c/txpi_probe.log`), giving **61.04 ppm a step**: reachable points 0, +-61.0, +-122.1, +-183.1 ppm (steps 1, 2, 3), not the brief's 50/100/150.
+The controls are clocked in TXUSRCLK (322 MHz), as the guide requires when the internal width is below the user width. The guide's own example (Figure 3-30, "data stream frequency re-synthesis") shows the TX user clock staying on the reference and the fabric doing
+character insertion and removal: so the TX buffer, fed at the reference rate, will see the shifted line rate. **Still unknown, and the board decides:** whether TXUSRCLK2 in this Wizard configuration (`TXOUTCLKSEL = 3'b010`, PMA clock)
+follows the shifted serial clock (then the receive and core clocks move together and the frequency counter reads 0 ppm at every code, with no relative offset by this route), or stays on the reference (then the GT TX buffer drifts and `GT_BUF` shows overflow/underflow after its depth is used up).
+Nothing in the report claims an offset the counter did not measure.
