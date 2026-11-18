@@ -1,0 +1,465 @@
+{
+  "build_dir": "/home/brendan/Claude_sandbox/_worktrees/b102/designs/b102_managed_fcs/build/base",
+  "vivado_version": "2026.1",
+  "kb_measured_version": "2026.1",
+  "kb_version_match": true,
+  "top": "fcs_top",
+  "variant": "base",
+  "pass": true,
+  "first_failed_stage": null,
+  "gates": {
+    "rtl_methodology_no_critical": true,
+    "post_synth_no_unconstrained_endpoints": true,
+    "post_synth_methodology_no_critical": true,
+    "post_synth_drc_clean": true,
+    "post_synth_cdc_no_critical": true,
+    "post_synth_cdc_structure_clean": true,
+    "post_synth_exceptions_clean": true,
+    "post_synth_io_constraints_clean": true,
+    "post_synth_resets_clean": true,
+    "post_place_hold": true,
+    "setup": true,
+    "hold": true,
+    "pulse_width": true,
+    "no_unconstrained_endpoints": true,
+    "drc_clean": true,
+    "methodology_no_critical": true,
+    "cdc_no_critical": true,
+    "power_junction_ok": true,
+    "exceptions_clean": true,
+    "io_timing_clean": true,
+    "bitstream_present": true
+  },
+  "warnings": [],
+  "stages": {
+    "rtl": {
+      "ran": true,
+      "gates": {
+        "rtl_methodology_no_critical": true
+      },
+      "methodology": {
+        "errors": 0,
+        "critical_warnings": 0,
+        "warnings": 2,
+        "rules": [
+          {
+            "rule": "XDCH-2",
+            "severity": "Warning",
+            "description": "Same min and max delay values on IO port",
+            "count": 2
+          }
+        ]
+      },
+      "pass": true
+    },
+    "post_synth": {
+      "ran": true,
+      "gates": {
+        "post_synth_no_unconstrained_endpoints": true,
+        "post_synth_methodology_no_critical": true,
+        "post_synth_drc_clean": true,
+        "post_synth_cdc_no_critical": true,
+        "post_synth_cdc_structure_clean": true,
+        "post_synth_exceptions_clean": true,
+        "post_synth_io_constraints_clean": true,
+        "post_synth_resets_clean": true
+      },
+      "warnings": [],
+      "timing": {
+        "wns_ns": 2.287,
+        "tns_ns": 0.0,
+        "tns_failing_endpoints": 0,
+        "tns_total_endpoints": 109,
+        "whs_ns": -2.533,
+        "ths_ns": -155.305,
+        "ths_failing_endpoints": 87,
+        "ths_total_endpoints": 109,
+        "wpws_ns": 2.828,
+        "tpws_ns": 0.0,
+        "tpws_failing_endpoints": 0,
+        "tpws_total_endpoints": 74,
+        "timing_met": false
+      },
+      "check_timing": {
+        "no_clock": 0,
+        "constant_clock": 0,
+        "pulse_width_clock": 0,
+        "unconstrained_internal_endpoints": 0,
+        "no_input_delay": 0,
+        "no_output_delay": 0,
+        "multiple_clock": 0,
+        "generated_clocks": 0,
+        "loops": 0,
+        "partial_input_delay": 0,
+        "partial_output_delay": 0,
+        "latch_loops": 0
+      },
+      "unconstrained_ports": {},
+      "methodology": {
+        "errors": 0,
+        "critical_warnings": 0,
+        "warnings": 66,
+        "rules": [
+          {
+            "rule": "TIMING-15",
+            "severity": "Warning",
+            "description": "Large hold violation",
+            "count": 64
+          },
+          {
+            "rule": "XDCH-2",
+            "severity": "Warning",
+            "description": "Same min and max delay values on IO port",
+            "count": 2
+          },
+          {
+            "rule": "CLKC-5",
+            "severity": "Advisory",
+            "description": "BUFGCE with constant CE has BUFG driver",
+            "count": 1
+          }
+        ]
+      },
+      "drc": {
+        "errors": 0,
+        "critical_warnings": 0,
+        "warnings": 1,
+        "rules": [
+          {
+            "rule": "REQP-1852",
+            "severity": "Warning",
+            "description": "BUFGCE_cascade_from_clock_buf",
+            "count": 1
+          }
+        ]
+      },
+      "qor_assessment": null,
+      "cdc": {
+        "safely_timed": true,
+        "rules": []
+      },
+      "cdc_structure": {
+        "crossings": [],
+        "summary": {},
+        "unsafe": [],
+        "n_crossings": 0,
+        "clocks": {
+          "clk_25": {
+            "period": 6.206,
+            "root": "clk_25"
+          }
+        },
+        "pass": true
+      },
+      "exceptions": {
+        "stage": "synth",
+        "pass": true,
+        "status": "pass",
+        "waived": 0,
+        "waived_rules": [],
+        "exceptions": 1,
+        "ignored": 0,
+        "info": [],
+        "covered": {
+          "3": 2
+        },
+        "failures": []
+      },
+      "io_timing": {
+        "stage": "synth",
+        "pass": true,
+        "interfaces": [],
+        "failures": [],
+        "delays": 1,
+        "clocks": {
+          "clk_25": {
+            "period": 6.206,
+            "waveform": "0.000 3.103",
+            "virtual": false,
+            "generated": false,
+            "source": "clk_25",
+            "input_jitter": 0.0
+          }
+        },
+        "worst": {
+          "setup": {
+            "slack": 2.287,
+            "requirement": 6.206,
+            "start_clock": "clk_25",
+            "end_clock": "clk_25",
+            "corner": "Slow",
+            "uncertainty": 0.035,
+            "pessimism": 0.342,
+            "from": "u_crc/$auto$ff.cc:337:slice$1500/C",
+            "to": "u_ctrl/pass_o_reg/D"
+          },
+          "hold": {
+            "slack": -2.533,
+            "requirement": 0.0,
+            "start_clock": "clk_25",
+            "end_clock": "clk_25",
+            "corner": "Slow",
+            "uncertainty": null,
+            "pessimism": -0.342,
+            "from": "u_ctrl/crc_d_o_reg[8]/C",
+            "to": "u_crc/$auto$ff.cc:337:slice$1480/D"
+          }
+        }
+      },
+      "gt": null,
+      "resets": {
+        "status": "pass",
+        "parts": {
+          "source": "not run: module(s) crc32_d16 carry a blackbox attribute in the source: their bodies are not judged",
+          "amd_methodology": "ran",
+          "amd_drc": "ran",
+          "amd_cdc": "ran",
+          "netlist": "ran",
+          "netlist_clocks": "ran",
+          "polarity": "ran"
+        },
+        "n_findings": 0,
+        "findings": []
+      },
+      "oss_netlist": null,
+      "resource_sanity": null,
+      "utilization": {
+        "lutram": 0,
+        "lutram_available": 57600,
+        "bram_tile": 0,
+        "bram_tile_available": 144,
+        "dsp": 0,
+        "dsp_available": 1248,
+        "iob": 3,
+        "iob_available": 189,
+        "bufg": 0,
+        "bufg_available": 32,
+        "lut": 92,
+        "lut_available": 117120,
+        "ff": 72,
+        "ff_available": 234240,
+        "carry8": 4,
+        "carry8_available": 14640
+      },
+      "pass": true
+    },
+    "post_place": {
+      "ran": true,
+      "gates": {
+        "post_place_hold": true
+      },
+      "timing": {
+        "wns_ns": 4.206,
+        "tns_ns": 0.0,
+        "tns_failing_endpoints": 0,
+        "tns_total_endpoints": 109,
+        "whs_ns": 0.102,
+        "ths_ns": 0.0,
+        "ths_failing_endpoints": 0,
+        "ths_total_endpoints": 109,
+        "wpws_ns": 2.828,
+        "tpws_ns": 0.0,
+        "tpws_failing_endpoints": 0,
+        "tpws_total_endpoints": 73,
+        "timing_met": true
+      },
+      "pass": true
+    },
+    "post_route": {
+      "ran": true,
+      "gates": {
+        "setup": true,
+        "hold": true,
+        "pulse_width": true,
+        "no_unconstrained_endpoints": true,
+        "drc_clean": true,
+        "methodology_no_critical": true,
+        "cdc_no_critical": true,
+        "power_junction_ok": true,
+        "exceptions_clean": true,
+        "io_timing_clean": true
+      },
+      "qor_assessment": {
+        "available": false,
+        "reason": "report_qor_assessment needs a licence tier above Basic (Implflow 47-2944); the QoR gate is not judged"
+      },
+      "exceptions": {
+        "stage": "route",
+        "pass": true,
+        "status": "pass",
+        "waived": 0,
+        "waived_rules": [],
+        "exceptions": 1,
+        "ignored": 0,
+        "info": [],
+        "covered": {
+          "3": 2
+        },
+        "failures": []
+      },
+      "io_timing": {
+        "stage": "route",
+        "pass": true,
+        "interfaces": [],
+        "failures": [],
+        "delays": 1,
+        "clocks": {
+          "clk_25": {
+            "period": 6.206,
+            "waveform": "0.000 3.103",
+            "virtual": false,
+            "generated": false,
+            "source": "clk_25",
+            "input_jitter": 0.0
+          }
+        },
+        "worst": {
+          "setup": {
+            "slack": 3.894,
+            "requirement": 6.206,
+            "start_clock": "clk_25",
+            "end_clock": "clk_25",
+            "corner": "Slow",
+            "uncertainty": 0.035,
+            "pessimism": 0.421,
+            "from": "u_crc/$auto$ff.cc:337:slice$1478/C",
+            "to": "u_crc/$auto$ff.cc:337:slice$1498/D"
+          },
+          "hold": {
+            "slack": 0.097,
+            "requirement": 0.0,
+            "start_clock": "clk_25",
+            "end_clock": "clk_25",
+            "corner": "Fast",
+            "uncertainty": null,
+            "pessimism": -0.36,
+            "from": "u_ctrl/cnt_reg[2]/C",
+            "to": "u_ctrl/cnt_reg[3]/D"
+          }
+        },
+        "uncertainty": {
+          "setup": {
+            "total_ns": 0.035,
+            "formula": "((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE",
+            "tsj_ns": 0.071,
+            "tij_ns": 0.0,
+            "dj_ns": 0.0,
+            "pe_ns": 0.0,
+            "pessimism_ns": 0.421,
+            "requirement_ns": 6.206,
+            "slack_ns": 3.894
+          },
+          "hold": null
+        }
+      },
+      "timing_margin": null,
+      "ila_hub_crossing": null,
+      "warnings": [],
+      "unconstrained_ports": {},
+      "pass": true
+    },
+    "bitstream": {
+      "ran": true,
+      "gates": {
+        "bitstream_present": true
+      },
+      "pass": true
+    }
+  },
+  "timing": {
+    "wns_ns": 3.894,
+    "tns_ns": 0.0,
+    "tns_failing_endpoints": 0,
+    "tns_total_endpoints": 109,
+    "whs_ns": 0.097,
+    "ths_ns": 0.0,
+    "ths_failing_endpoints": 0,
+    "ths_total_endpoints": 109,
+    "wpws_ns": 2.828,
+    "tpws_ns": 0.0,
+    "tpws_failing_endpoints": 0,
+    "tpws_total_endpoints": 73,
+    "timing_met": true
+  },
+  "check_timing": {
+    "no_clock": 0,
+    "constant_clock": 0,
+    "pulse_width_clock": 0,
+    "unconstrained_internal_endpoints": 0,
+    "no_input_delay": 0,
+    "no_output_delay": 0,
+    "multiple_clock": 0,
+    "generated_clocks": 0,
+    "loops": 0,
+    "partial_input_delay": 0,
+    "partial_output_delay": 0,
+    "latch_loops": 0
+  },
+  "utilization": {
+    "lutram": 0,
+    "lutram_available": 57600,
+    "bram_tile": 0,
+    "bram_tile_available": 144,
+    "dsp": 0,
+    "dsp_available": 1248,
+    "iob": 3,
+    "iob_available": 189,
+    "bufg": 0,
+    "bufg_available": 32,
+    "lut": 74,
+    "lut_available": 117120,
+    "ff": 72,
+    "ff_available": 234240,
+    "carry8": 4,
+    "carry8_available": 14640
+  },
+  "drc": {
+    "errors": 0,
+    "critical_warnings": 0,
+    "warnings": 0,
+    "rules": []
+  },
+  "methodology": {
+    "errors": 0,
+    "critical_warnings": 0,
+    "warnings": 2,
+    "rules": [
+      {
+        "rule": "XDCH-2",
+        "severity": "Warning",
+        "description": "Same min and max delay values on IO port",
+        "count": 2
+      }
+    ]
+  },
+  "cdc": {
+    "safely_timed": true,
+    "rules": []
+  },
+  "power": {
+    "total_w": 0.337,
+    "dynamic_w": 0.004,
+    "static_w": 0.333,
+    "confidence": "Medium",
+    "clocks_w": 0.0005,
+    "signals_w": 0.0005,
+    "io_w": 0.001,
+    "core_w": 0.003
+  },
+  "power_environment": {
+    "junction_c": 42.5,
+    "max_ambient_c": 82.5,
+    "theta_ja_c_per_w": 7.4,
+    "ambient_c": 40.0,
+    "airflow_lfm": 0.0,
+    "heatsink": "none",
+    "board": "medium (10\"x10\")",
+    "board_layers": "8to11 (8 to 11 Layers)"
+  },
+  "bitstream": {
+    "file": "fcs_top.bit",
+    "bytes": 7797898
+  },
+  "build_stamp": "fe99b9d4",
+  "sources_sha256": "fe99b9d4a493e249c1de77620880a26032b3ed967d90090e6184404defabba2e"
+}

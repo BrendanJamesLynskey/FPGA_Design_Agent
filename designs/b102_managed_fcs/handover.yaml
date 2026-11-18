@@ -96,7 +96,7 @@ evidence:
   what: the netlist's interface equals the contract, the licence and hash are recorded, 400 simulated vectors match the
     model, and eqy proves the supplier's RTL equivalent to the netlist
   record: results/102_managed/import_check.json
-  sha256: e9f07ff8be45a411c4566d9199e7d39101b2fcbb662ea75501541d54b5b13e64
+  sha256: a76aed2d1e717c6600c8127427f32834322649786a9ef80ea50ab66b05160a74
 - id: E3
   activity: faults
   result: pass
@@ -110,6 +110,13 @@ evidence:
     out-of-scope top, a port change, a dropped build source and the manifest are all refused
   record: results/102_managed/demo_session.json
   sha256: a8da549f48ed82c56291fd84a47fed9aceae9733507fef345374df214da13e7d
+- id: E5
+  activity: build
+  result: pass
+  what: both builds (before and after the edit) pass every gate on Vivado 2026.1, with the CRC block read from its EDIF
+    netlist; the boundary check finds no CDC row on the slot and both boundary timing budgets are met
+  record: results/102_managed/boundary.json
+  sha256: 73755c3cf4a51c6834ac0cf7798fea55348be2cea781717682d0a9ea6594358f
 measurements:
 - id: M1
   what: clocks saved by the agent session's edit (first cycle in which pass_o rises, baseline minus edited)
@@ -121,14 +128,70 @@ measurements:
   conditions: Icarus simulation, CRC block from its functional netlist, counted from power-up
   value: 1
   sha256: b174f5be8d1e653951294178ff08b6900d5bb8f923e172c954c61dca4286ac31
+- id: M2
+  what: LUTs, whole design including the frozen CRC netlist
+  category: resources
+  key: lut
+  unit: LUT
+  record: results/102_managed/builds.json
+  field: builds.baseline.lut
+  conditions: routed build, Vivado 2026.1, xck26-sfvc784-2LV-c
+  value: 76
+  sha256: e3cb7b1d4f57ffcfba8446fde8d0a11a8224149b2f912e4fd26dbb1685658782
+- id: M3
+  what: flip-flops, whole design
+  category: resources
+  key: ff
+  unit: FF
+  record: results/102_managed/builds.json
+  field: builds.baseline.ff
+  conditions: routed build, Vivado 2026.1
+  value: 74
+  sha256: e3cb7b1d4f57ffcfba8446fde8d0a11a8224149b2f912e4fd26dbb1685658782
+- id: M4
+  what: worst setup slack at the 6.206 ns clock
+  category: timing
+  key: wns_ns
+  unit: ns
+  record: results/102_managed/builds.json
+  field: builds.baseline.wns_ns
+  conditions: routed, 161.13 MHz constraint on the 25 MHz pin
+  value: 3.594
+  sha256: e3cb7b1d4f57ffcfba8446fde8d0a11a8224149b2f912e4fd26dbb1685658782
+- id: M5
+  what: worst hold slack
+  category: timing
+  key: whs_ns
+  unit: ns
+  record: results/102_managed/builds.json
+  field: builds.baseline.whs_ns
+  conditions: routed, 6.206 ns clock
+  value: 0.086
+  sha256: e3cb7b1d4f57ffcfba8446fde8d0a11a8224149b2f912e4fd26dbb1685658782
+- id: M6
+  what: total on-chip power estimate
+  category: power
+  key: power_w
+  unit: W
+  record: results/102_managed/builds.json
+  field: builds.baseline.power_w
+  conditions: report_power after routing, vectorless, never run on a board
+  value: 0.337
+  sha256: e3cb7b1d4f57ffcfba8446fde8d0a11a8224149b2f912e4fd26dbb1685658782
+- id: M7
+  what: worst setup slack after the agent session's edit
+  category: timing
+  key: wns_ns_edited
+  unit: ns
+  record: results/102_managed/builds.json
+  field: builds.edited.wns_ns
+  conditions: routed, 6.206 ns clock, controller with the registered compare stage removed
+  value: 3.894
+  sha256: e3cb7b1d4f57ffcfba8446fde8d0a11a8224149b2f912e4fd26dbb1685658782
 gaps:
-- about: resources
-  text: Not measured yet; the Vivado builds of this design wait for a heavy slot and will be recorded in results/102_managed.
-- about: timing
-  text: Not measured yet; the routed timing at 161 MHz, and the boundary timing budgets of the contract, are recorded with
-    the Vivado builds.
 - about: power
-  text: Not measured; this is a timing study and was not run on a board, so no power estimate is claimed.
+  text: The estimate is vectorless at default toggle rates; this is a timing study that was never run on a board, so no
+    power measurement is claimed.
 - about: throughput
   text: Not applicable beyond the clock; the block takes two bytes a clock by construction and no throughput measurement
     was made.
@@ -154,9 +217,11 @@ numbers_allow:
 - token: '161'
   reason: the 10G datapath clock, 161.13 MHz, from designs/b96_kr260_10g/design.xdc (a 6.206 ns period constraint here)
 state:
-  stage: simulated
+  stage: built
   gates:
     import_checks: pass
+    build_2026_1: pass
+    boundary_checks: pass
   vivado: '2026.1'
   kb_pin: 93d158c
-  build_id: 90be2136
+  build_id: d2f6ac31

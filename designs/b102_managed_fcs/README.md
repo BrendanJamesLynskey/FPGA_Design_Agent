@@ -9,7 +9,7 @@ Not in scope:
 - a 10G Ethernet FCS check; the CRC block takes sixteen bits a clock, not the 64-bit word of the 96 design, because the open equivalence engines could not prove 64 bits
 - a board design; it was not programmed, and the 161 MHz clock constraint is on the 25 MHz oscillator pin for a timing study
 
-Kind: demonstration; written by hand. State: simulated. For an agent: [AGENT.md](AGENT.md).
+Kind: demonstration; written by hand. State: built. For an agent: [AGENT.md](AGENT.md).
 
 <!-- prose:what -->
 <!-- /prose:what -->
@@ -42,11 +42,13 @@ Interfaces:
 
 | Quantity | Value | Source |
 |---|---|---|
-| Resources | not measured | [Known gaps](#known-gaps-and-limits) |
-| Timing | not measured | [Known gaps](#known-gaps-and-limits) |
-| Power | not measured | [Known gaps](#known-gaps-and-limits) |
+| Resources | LUTs, whole design including the frozen CRC netlist: 76 LUT; flip-flops, whole design: 74 FF | M2, M3 |
+| Timing | worst setup slack at the 6.206 ns clock: 3.594 ns; worst hold slack: 0.086 ns; worst setup slack after the agent session's edit: 3.894 ns | M4, M5, M7 |
+| Power | total on-chip power estimate: 0.337 W | M6 |
 | Latency | clocks saved by the agent session's edit (first cycle in which pass_o rises, baseline minus edited): 1 clocks | M1 |
 | Throughput | not measured | [Known gaps](#known-gaps-and-limits) |
+
+![Resource use as a share of the part, and timing slack](docs/handover/resources.svg)
 
 <!-- prose:parameters -->
 <!-- /prose:parameters -->
@@ -59,7 +61,7 @@ Interfaces:
 | the scripted agent session on a scratch copy; needs Python with PyYAML and jsonschema | `python3 designs/b102_managed_fcs/scripts/demo_managed_session.py` | no | about 1 min |
 | build and run the gates; needs local Vivado 2026.1 and a heavy slot (take_heavy_slot.sh) | `flow/run_vivado.sh designs/b102_managed_fcs base` | yes | about 12 min |
 
-Tool: Vivado 2026.1. Build ID of the inputs at handover: `90be2136` (`python flow/manifest.py show designs/b102_managed_fcs`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `93d158c`.
+Tool: Vivado 2026.1. Build ID of the inputs at handover: `d2f6ac31` (`python flow/manifest.py show designs/b102_managed_fcs`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `93d158c`.
 
 | File | What |
 |---|---|
@@ -83,8 +85,9 @@ Tool: Vivado 2026.1. Build ID of the inputs at handover: `90be2136` (`python flo
 | E2 | simulation | pass | the netlist's interface equals the contract, the licence and hash are recorded, 400 simulated vectors match the model, and eqy proves the supplier's RTL equivalent to the netlist | [`results/102_managed/import_check.json`](../../results/102_managed/import_check.json) | - |
 | E3 | faults | pass | one flipped LUT INIT bit in the netlist fails both the simulation and the eqy proof | [`results/102_managed/eqy_fault.json`](../../results/102_managed/eqy_fault.json) | - |
 | E4 | review | pass | the scripted session edits only the owned controller; its attempts on the frozen netlist, the excluded block, the out-of-scope top, a port change, a dropped build source and the manifest are all refused | [`results/102_managed/demo_session.json`](../../results/102_managed/demo_session.json) | - |
+| E5 | build | pass | both builds (before and after the edit) pass every gate on Vivado 2026.1, with the CRC block read from its EDIF netlist; the boundary check finds no CDC row on the slot and both boundary timing budgets are met | [`results/102_managed/boundary.json`](../../results/102_managed/boundary.json) | - |
 
-Gates at handover: `import_checks` pass.
+Gates at handover: `import_checks` pass, `build_2026_1` pass, `boundary_checks` pass.
 
 <!-- prose:verified -->
 <!-- /prose:verified -->
@@ -96,15 +99,19 @@ Every value is read from the record by `python -m flow.handover fill`, not typed
 | ID | What | Value | Runs | Source | Conditions |
 |---|---|---|---|---|---|
 | M1 | clocks saved by the agent session's edit (first cycle in which pass_o rises, baseline minus edited) | 1 clocks | 1 | [`results/102_managed/latency.json`](../../results/102_managed/latency.json) `clocks_saved` | Icarus simulation, CRC block from its functional netlist, counted from power-up |
+| M2 | LUTs, whole design including the frozen CRC netlist | 76 LUT | 1 | [`results/102_managed/builds.json`](../../results/102_managed/builds.json) `builds.baseline.lut` | routed build, Vivado 2026.1, xck26-sfvc784-2LV-c |
+| M3 | flip-flops, whole design | 74 FF | 1 | [`results/102_managed/builds.json`](../../results/102_managed/builds.json) `builds.baseline.ff` | routed build, Vivado 2026.1 |
+| M4 | worst setup slack at the 6.206 ns clock | 3.594 ns | 1 | [`results/102_managed/builds.json`](../../results/102_managed/builds.json) `builds.baseline.wns_ns` | routed, 161.13 MHz constraint on the 25 MHz pin |
+| M5 | worst hold slack | 0.086 ns | 1 | [`results/102_managed/builds.json`](../../results/102_managed/builds.json) `builds.baseline.whs_ns` | routed, 6.206 ns clock |
+| M6 | total on-chip power estimate | 0.337 W | 1 | [`results/102_managed/builds.json`](../../results/102_managed/builds.json) `builds.baseline.power_w` | report_power after routing, vectorless, never run on a board |
+| M7 | worst setup slack after the agent session's edit | 3.894 ns | 1 | [`results/102_managed/builds.json`](../../results/102_managed/builds.json) `builds.edited.wns_ns` | routed, 6.206 ns clock, controller with the registered compare stage removed |
 
 <!-- prose:measured -->
 <!-- /prose:measured -->
 
 ## Known gaps and limits
 
-- **resources**: Not measured yet; the Vivado builds of this design wait for a heavy slot and will be recorded in results/102_managed.
-- **timing**: Not measured yet; the routed timing at 161 MHz, and the boundary timing budgets of the contract, are recorded with the Vivado builds.
-- **power**: Not measured; this is a timing study and was not run on a board, so no power estimate is claimed.
+- **power**: The estimate is vectorless at default toggle rates; this is a timing study that was never run on a board, so no power measurement is claimed.
 - **throughput**: Not applicable beyond the clock; the block takes two bytes a clock by construction and no throughput measurement was made.
 - **width**: The CRC block is sixteen bits wide; the 10G design uses sixty-four. The open engines of eqy proved 8 and 16 bits within two minutes and not 32 or 64 (results/102_managed/eqy_width_scaling.json).
 - **board**: Never programmed; no hardware evidence and no operating conditions exist.
