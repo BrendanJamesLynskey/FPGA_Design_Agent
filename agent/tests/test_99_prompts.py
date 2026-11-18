@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -242,9 +243,15 @@ def test_no_prompt_text_in_the_tracked_files():
     hits = leak_scan.scan(P.prompts_dir(), leak_scan.DEFAULT_WORDS)           # one scan; the allow-list is applied below
 
     def covered(path, a):
+        if "!" in path:                                                      # an archive member: never allow-listed
+            return False
         return path == a or (a.endswith("/") and path.startswith(a))
     loose = [(h[0], h[1], h[2]) for h in hits if not any(covered(h[0], a) for a in allow)]
     assert not loose, loose                                                  # path, line and prompt name; never text
+    # archives are opened by the scan (.tar.gz, .gz, .zip members); one that carries prompt text, or cannot be read, fails
+    files = [leak_scan.ROOT / p for p in subprocess.run(["git", "ls-files", "-z"], cwd=leak_scan.ROOT, capture_output=True, check=True)
+             .stdout.decode().split("\0") if p]
+    assert not leak_scan.unreadable_archives(files), leak_scan.unreadable_archives(files)
     stale = [a for a in allow if not any(covered(h[0], a) for h in hits)]
     assert not stale, f"allow-list entries that no longer cover anything: {stale}"
 
@@ -256,3 +263,67 @@ def test_every_moved_prompt_still_has_its_recorded_hash():
     assert sorted(snap) == sorted(P.read_pin()["names"])
     changed = [n for n, sha in snap.items() if hashlib.sha256(P.load(n).encode("utf-8")).hexdigest() != sha]
     assert not changed, changed
+
+
+def _fp_texts():
+    return {"demo": "alpha bravo charlie delta echo foxtrot golf hotel india juliet kilo lima mike november oscar"}
+
+
+def test_leak_scan_looks_inside_archives(tmp_path):
+    """Brief 99 step 2: a .tar.gz, a .gz, a .zip and an archive nested in an archive are opened; the hit names the member, never text."""
+    import gzip
+    import io
+    import tarfile
+    import zipfile
+
+    from tools.prompts import leak_scan
+    dump = _fp_texts()["demo"].encode()
+    clean = b"nothing to see here, just a few unrelated words in a record"
+    tgz = tmp_path / "run_dir.tar.gz"
+    with tarfile.open(tgz, "w:gz") as t:
+        for name, data in (("r/clean.txt", clean), ("r/claude_code/001.system.txt", dump)):
+            ti = tarfile.TarInfo(name)
+            ti.size = len(data)
+            t.addfile(ti, io.BytesIO(data))
+    gz = tmp_path / "stdout.txt.gz"
+    gz.write_bytes(gzip.compress(dump))
+    zp = tmp_path / "x.zip"
+    with zipfile.ZipFile(zp, "w") as z:
+        z.writestr("a/b.txt", dump)
+    inner = io.BytesIO()
+    with tarfile.open(fileobj=inner, mode="w:gz") as t:
+        ti = tarfile.TarInfo("deep.txt")
+        ti.size = len(dump)
+        t.addfile(ti, io.BytesIO(dump))
+    with zipfile.ZipFile(tmp_path / "wrap.zip", "w") as z:
+        z.writestr("inner.tar.gz", inner.getvalue())
+    ok_gz = tmp_path / "clean.txt.gz"
+    ok_gz.write_bytes(gzip.compress(clean))
+    texts = _fp_texts()
+    for f, member in ((tgz, "claude_code/001.system.txt"), (gz, "stdout.txt"), (zp, "a/b.txt"), (tmp_path / "wrap.zip", "deep.txt")):
+        hits = leak_scan.scan(None, 12, [f], allow=[str(f)], texts=texts)                # an allow entry does not cover an archive
+        assert len(hits) == 1 and "!" in hits[0][0] and hits[0][0].endswith(member), (f.name, hits)
+        assert dump.decode() not in repr(hits)
+    assert not leak_scan.scan(None, 12, [ok_gz], texts=texts)
+    assert leak_scan.unreadable_archives([tgz, gz, zp, ok_gz]) == []
+    bad = tmp_path / "broken.tar.gz"
+    bad.write_bytes(b"not an archive at all")
+    assert leak_scan.unreadable_archives([bad])
+
+
+def test_archives_moved_to_the_private_repository_leave_a_pointer_with_the_hash():
+    """Every b82p2/b82p3 ``run_dir.tar.gz`` is private; the public tree holds ``run_dir.tar.gz.pointer.json`` with the SHA-256, which is the
+    one the run's record already carries."""
+    root = Path(__file__).resolve().parents[2] / "benchmark" / "v2" / "runs"
+    ptrs = sorted(root.glob("b82p*/artifacts/*/run_dir.tar.gz.pointer.json"))
+    assert len(ptrs) == 21
+    assert not list(root.glob("b82p*/artifacts/*/run_dir.tar.gz")), "a rendered-prompt archive is tracked again"
+    for p in ptrs:
+        d = json.loads(p.read_text())
+        assert set(d) == {"moved_to", "sha256", "bytes", "why"} and len(d["sha256"]) == 64
+        recs = (p.parents[2] / "records").glob("*.json")
+        assert any(d["sha256"] in r.read_text() for r in recs), p
+        kb = os.environ.get("FDA_KB_CHECKOUT") or str(P.prompts_dir().parent)                # the private checkout, where there is one
+        priv = Path(kb) / d["moved_to"].split("/", 1)[1]
+        if priv.is_file():
+            assert hashlib.sha256(priv.read_bytes()).hexdigest() == d["sha256"], p

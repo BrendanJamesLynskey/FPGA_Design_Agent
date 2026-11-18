@@ -83,6 +83,14 @@ the same placeholders, so the rendered text is byte-identical (the golden reques
 **Moved out of the public tree**: the closure task texts `results/b88_net125/*/task.txt` now live in `results_private/b88_net125/` of the
 private repository; the public folder keeps `task.json` (hash, length) and the summary numbers.
 
+**Archives (2026-11-18).** `leak_scan` had skipped binary files, so it never opened the `run_dir.tar.gz` archives of benchmark runs, which hold
+the rendered prompts of each run (`claude_code/*.system.txt` and `*.user.txt`, the closure task files). It now opens `.tar.gz`, `.tgz`, `.tar`,
+`.gz`, `.zip`, `.bz2` and `.xz` files (nested up to three deep) and scans every text member; a hit is reported as `archive!member`, and the
+allow-list never covers an archive, so an archive that carries prompt text fails the same CI test. An archive it cannot open, or one over 400 MB,
+also fails. All 21 `run_dir.tar.gz` archives of `benchmark/v2/runs/b82p2` (15) and `b82p3` (6) moved to `results_private/benchmark/v2/runs/...`
+in the private repository; each leaves `run_dir.tar.gz.pointer.json` (private path, SHA-256, size), and the SHA-256 is the one the run's record
+already carried. Nothing in the repository read those archives. A future driver that writes such an archive into a tracked path fails the test.
+
 **Not moved, by decision**: the tool descriptions (`agent/core/tools.py`, `axi_tools.py`, `debug_tools.py`, about 10 KB) are consumed when the
 tools register and are pinned by `agent/tests/fixtures/tool_schemas.json`; they are a later move. Validator and gate messages and the interview's
 own questions stay: they are recorded in run records as data. `tools/prompts/leak_allow.txt` lists the four tracked paths that may hold a

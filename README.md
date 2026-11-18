@@ -504,4 +504,4 @@ private commit and the SHA-256 of its prompt manifest, [agent/core/prompts_pin.j
 that cannot be read stops the run; there is no committed copy to fall back on. CI fetches the pinned prompts with a
 read-only token; a fork pull request has no token, so the tests that need prompts skip there with a notice and every
 other pull request fails if the token is missing. Status and order: [docs/private_parts_plan.md](docs/private_parts_plan.md).
-The prompts, the model contract and the closure playbook texts have moved; run records keep hashes, not prompt text; a CI test fails if a tracked file holds 12 consecutive words of a private prompt. Earlier versions remain in git history.
+The prompts, the model contract and the closure playbook texts have moved; run records keep hashes, not prompt text; a CI test fails if a tracked file, or a member of a tracked archive (.tar.gz, .gz, .zip), holds 12 consecutive words of a private prompt; benchmark run archives live in the private repository and leave a pointer with their SHA-256. Earlier versions remain in git history.
