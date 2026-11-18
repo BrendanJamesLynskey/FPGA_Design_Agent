@@ -93,6 +93,13 @@ async def run_point(dut, name, ppm, n_frames=400, gaps=(40, 55, 70, 90), seed=1)
             await RisingEdge(dut.refclk)
             words.append(int(dut.u.tx_data.value))
     cocotb.start_soon(cap())
+    if os.environ.get("B96_PPM_DEBUG"):
+        async def mon():
+            while True:
+                await Timer(3000, unit="ns")
+                m = dut.u.u_rx.u_rm
+                dut._log.info(f"RMDBG wptr {int(m.wptr.value)} rptr {int(m.rptr.value)} wp_s {int(m.wp_s.value)} rp_s {int(m.rp_s.value)} pace {int(m.pace.value)} lock_s {int(m.lock_s.value)} in_frame {int(m.in_frame.value)} ovf {int(m.n_ovf.value)} del {int(m.n_del.value)} ins {int(m.n_ins.value)}")
+        cocotb.start_soon(mon())
     await h.w(0x018, 1)
     await Timer(3000, unit="ns")
     await h.w(0x060, 9975); await h.w(0x064, 100)
@@ -127,17 +134,16 @@ POINTS = [float(x) for x in os.environ.get("B96_PPM_POINTS", "0,100,-100,300,-30
 
 
 @cocotb.test()
-async def ppm_sweep(dut):
-    """Each offset in turn; the verdicts are recorded, and (for the current design) must all hold."""
-    ok_all = True
-    for ppm in POINTS:
-        res = await run_point(dut, f"ppm{ppm:+g}", ppm, n_frames=int(os.environ.get("B96_PPM_FRAMES", "400")),
-                              gaps=tuple(int(g) for g in os.environ.get("B96_PPM_GAPS", "40,55,70,90").split(",")))
-        v = verdict(res)
-        res["verdict"] = v
-        dut._log.info(f"PPM VERDICT {ppm:+g} {json.dumps(v)}")
-        ok_all = ok_all and all(v.values())
+@cocotb.parametrize(ppm=POINTS)
+async def ppm_point(dut, ppm):
+    """One offset (a test of its own, so the clock and partner coroutines of the point before are gone); the verdicts are recorded and, for the
+    current design, must all hold."""
+    res = await run_point(dut, f"ppm{ppm:+g}", ppm, n_frames=int(os.environ.get("B96_PPM_FRAMES", "400")),
+                          gaps=tuple(int(g) for g in os.environ.get("B96_PPM_GAPS", "40,55,70,90").split(",")))
+    v = verdict(res)
+    res["verdict"] = v
+    dut._log.info(f"PPM VERDICT {ppm:+g} {json.dumps(v)}")
     if os.environ.get("B96_PPM_RESULTS"):
         Path(os.environ["B96_PPM_RESULTS"]).write_text(json.dumps(RESULTS, indent=1) + "\n")
     if os.environ.get("B96_PPM_EXPECT_FAIL") != "1":
-        assert ok_all, "see PPM VERDICT lines"
+        assert all(v.values()), v

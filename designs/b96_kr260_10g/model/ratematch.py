@@ -111,9 +111,6 @@ class RateMatch:
         new_g = gray(self.wptr)
         new_gs = [self.r_g] + self.w_gs[:-1]
         new_rp_q = ungray(self.w_gs[-1], self.aw + 1)
-        if clr:
-            self.n_ovf = 0
-            self.n_wr = 0
         if v:
             if full:
                 self.n_ovf += 1
@@ -121,6 +118,9 @@ class RateMatch:
                 self.mem[self.wptr & (self.depth - 1)] = blk
                 self.wptr = (self.wptr + 1) & self.mask
                 self.n_wr += 1
+        if clr:
+            self.n_ovf = 0
+            self.n_wr = 0
         self.w_g = new_g
         self.w_gs = new_gs
         self.w_rp_q = new_rp_q
@@ -151,8 +151,6 @@ class RateMatch:
             self._clear()
         else:
             self.pace = 0 if self.pace == 32 else self.pace + 1
-            if clr:
-                self._clear()
             self.r_lock = lock_s
             if not lock_s:
                 self.in_frame = False
@@ -184,6 +182,8 @@ class RateMatch:
                 if fill > self.hi and not self.in_frame and self.idle_run >= self.min_keep and is_pure_idle(d, c, os):
                     self.rptr = (self.rptr + 1) & self.mask
                     self.n_del += 1
+        if clr and not rst:
+            self._clear()
         self.r_g = new_g
         self.r_gs = new_gs
         self.r_wp_q = new_wp_q
@@ -195,7 +195,7 @@ class RateMatch:
         self.fill_max = 0
 
 
-def run(w_clk, r_clk, w_in, *, w_lock=None, r_rst=None, clr=None, **kw):
+def run(w_clk, r_clk, w_in, *, w_lock=None, r_rst=None, clr=None, w_clr=None, **kw):
     """Drive the model from rising-edge times (sorted ints).
 
     ``w_in[i]`` is ``(v, d, c, os)`` held before write edge i (bench-style: set after the previous edge). ``w_lock[i]`` is the lock level
@@ -214,7 +214,7 @@ def run(w_clk, r_clk, w_in, *, w_lock=None, r_rst=None, clr=None, **kw):
     for _t, which, i in ev:
         if which == 0:
             v, d, c, os = w_in[i] if i < len(w_in) else (0, 0, 0, 0)
-            m.w_edge(False, bool(v), (d, c, os))
+            m.w_edge(bool(w_clr[i]) if w_clr and i < len(w_clr) else False, bool(v), (d, c, os))
             # the lock level the bench holds after this edge is the one the reader's synchroniser sees from now on
             lock_now = 1 if w_lock is None else (w_lock[i + 1] if i + 1 < len(w_lock) else w_lock[-1])
         else:

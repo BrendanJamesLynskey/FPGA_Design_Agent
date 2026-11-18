@@ -54,11 +54,11 @@ module rate_match #(
     assign wfull = ((wptr - rp_s) >= PW'(DEPTH));
 
     always_ff @(posedge wclk) begin
-        if (clr_w) begin n_ovf <= '0; n_wr <= '0; end
         if (w_v) begin
             if (wfull) n_ovf <= n_ovf + 32'd1;
             else begin mem[wptr[AW - 1:0]] <= w_ent; wptr <= wptr + PW'(1); n_wr <= n_wr + 32'd1; end
         end
+        if (clr_w) begin n_ovf <= '0; n_wr <= '0; end        // a clear wins over a count in the same clock
     end
     initial begin n_ovf = '0; n_wr = '0; for (int i = 0; i < DEPTH; i++) mem[i] = '0; end
 
@@ -91,7 +91,6 @@ module rate_match #(
             n_ins <= '0; n_del <= '0; n_stall <= '0; n_out <= '0; n_drain <= '0; fill_min <= '1; fill_max <= '0;
         end else begin
             pace <= (pace == 6'd32) ? 6'd0 : pace + 6'd1;
-            if (clr_r) begin n_ins <= '0; n_del <= '0; n_stall <= '0; n_out <= '0; n_drain <= '0; fill_min <= '1; fill_max <= '0; end
             r_lock <= lock_s;
             if (!lock_s) begin
                 in_frame <= 1'b0; idle_run <= '0;
@@ -114,6 +113,7 @@ module rate_match #(
                     rptr <= rptr + PW'(1); n_del <= n_del + 32'd1;
                 end
             end
+            if (clr_r) begin n_ins <= '0; n_del <= '0; n_stall <= '0; n_out <= '0; n_drain <= '0; fill_min <= '1; fill_max <= '0; end     // a clear wins over a count in the same clock
         end
     end
 endmodule

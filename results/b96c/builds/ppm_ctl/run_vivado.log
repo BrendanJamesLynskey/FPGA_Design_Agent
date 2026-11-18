@@ -1,0 +1,40 @@
+  File "<stdin>", line 13, in <module>
+  File "/usr/lib/python3.12/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/json/decoder.py", line 337, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/json/decoder.py", line 355, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 2 column 1 (char 1)
+INFO: [Common 17-3922] A valid Vivado Design Suite BASIC license has been detected. Your current license is active and will expire on 10-nov-2027.
+
+****** Vivado v2026.1 (64-bit)
+  **** SW Build 6511674 on Tue Jun 16 11:01:26 MDT 2026
+  **** IP Build 6504888 on Tue Jun 09 09:05:25 MDT 2026
+  **** SharedData Build 6501428 on Mon Jun 08 17:34:18 MDT 2026
+  **** Start of session at: Wed Nov 18 22:40:58 2026
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+    ** Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+
+source /home/brendan/Claude_sandbox/_worktrees/96c-ppm/flow/build.tcl
+# set fda_threads 1
+# if {[info exists ::env(FDA_VIVADO_THREADS)] && $::env(FDA_VIVADO_THREADS) ne ""} {
+#     set fda_threads $::env(FDA_VIVADO_THREADS)
+#     if {![string is integer -strict $fda_threads] || $fda_threads < 1 || $fda_threads > 8} {
+#         error "build.tcl: FDA_VIVADO_THREADS must be an integer from 1 to 8, not '$fda_threads'"
+#     }
+# }
+# set_param general.maxThreads $fda_threads
+# set_param synth.maxThreads   $fda_threads
+# set_param chipscope.maxJobs  1
+# puts "FLOW-THREADS $fda_threads"
+FLOW-THREADS 1
+# source [lindex $argv 0]
+couldn't read file "/home/brendan/Claude_sandbox/_worktrees/96c-ppm/designs/b96_kr260_10g/ppm_ctl/build/base/inputs.tcl": no such file or directory
+    while executing
+"source [lindex $argv 0]"
+    (file "/home/brendan/Claude_sandbox/_worktrees/96c-ppm/flow/build.tcl" line 38)
+INFO: [Common 17-206] Exiting Vivado at Wed Nov 18 22:41:02 2026...
+run_vivado: Vivado failed for designs/b96_kr260_10g/ppm_ctl (base), exit 1; see /home/brendan/Claude_sandbox/_worktrees/96c-ppm/designs/b96_kr260_10g/ppm_ctl/build/base/vivado.log

@@ -17,6 +17,8 @@ REGS = [
     (0x00C, "GT_CTRL", "RW", "0x008 (variant a: 0x00A)", "bits 2:0 LOOPBACK (000 normal, 001 near-end PCS, 010 near-end PMA, 100 far-end PMA; entering or leaving a loopback needs an RX datapath reset); bit 3 TX_DISABLE (1 = laser off; polarity on this carrier unconfirmed); bit 4 TX_POLARITY; bit 5 RX_POLARITY; bit 6 RX_LPM (1 = low-power equaliser)."),
     (0x010, "GT_RESET", "W", "0", "Write 1 to start an 8-clock reset pulse: bit 0 all, bit 1 TX PLL and datapath, bit 2 RX PLL and datapath, bit 3 TX datapath, bit 4 RX datapath. Reads 0."),
     (0x014, "GT_STAT", "RO", "-", "bit 0 TX_DONE, 1 RX_DONE, 2 GT power good, 3 CDR lock, 4 TX PMA reset done, 5 RX PMA reset done, 8 CDR stable, 9 PCS BLOCK_LOCK, 10 MOD_ABS (1 = no module, if the SFF polarity holds), 11 RX_LOS, 12 TX_FAULT."),
+    (0x01C, "TXPPM", "RW", "0", "TX phase-interpolator ppm controller (brief 96C), driven into the GT's TXPIPPMEN, TXPIPPMSEL and TXPIPPMSTEPSIZE ports: bits 4:0 step code, bit 5 enable, bit 6 select. Reset 0 (controller off). **What a code does is not documented here**: the encoding of the step (sign and size), the effect of the select bit and the achieved offset are measured by the board run (host/b96c_ppm.py, calibration) from the frequency counter (RXV27, RXV28), never assumed. Without the build's `TXPI_PPM` attribute (the ppm_* builds, ppm.xdc) the ports may have no effect. Written values cross to the transmit clock as one static bus; change it only while no traffic matters."),
+    (0x020, "GT_BUF", "RO", "-", "GT buffer status (brief 96C): bits 1:0 TXBUFSTATUS now, bits 4:2 RXBUFSTATUS now, bits 6:5 TXBUFSTATUS seen (OR) since the last clear, bits 9:7 RXBUFSTATUS seen (OR) since the last clear; that is {rxbuf_seen[2:0], txbuf_seen[1:0], rxbuf[2:0], txbuf[1:0]}. The seen fields restart from the present value on CMD bit 0. A non-zero seen field after the link was up means a GT buffer error (the bit meanings are AMD's, UG576; this register only shows them). A GT reset sets them, so clear after the link locks."),
     (0x018, "CMD", "W", "0", "Write-only commands: bit 0 clear the counters and the order number (which counters: see \"What clears what\" below); bit 1 start the generator run (held back 200 clocks so the configuration has crossed); bit 2 take a snapshot of the counter and timestamp vectors (reads of 0x100 and 0x200 are from the snapshot)."),
     (0x040, "MY_MAC_LO", "RW", "0x00000002", "Our MAC address, bytes 3:0 in bits 31:0, first byte on the wire in bits 7:0. Default 02:00:00:00:58:0A."),
     (0x044, "MY_MAC_HI", "RW", "0x0A58", "Our MAC address bytes 5:4 in bits 15:0."),
@@ -38,7 +40,7 @@ REGS = [
     (0x094, "SYSMON_DATA", "RO", "0", "bit 16 valid, 15:0 data (die temperature is register 0x00, 10-bit result in bits 15:6, T = result x 501.3743 / 1024 - 273.6777 degrees C; units conversion is the host's)."),
 ]
 RANGES = [
-    (0x100, 18, "RXV", "Receive-domain snapshot, 18 words (RXV0 is 0x100). See the table below."),
+    (0x100, 29, "RXV", "Receive-side snapshot, 29 words (RXV0 is 0x100): the PCS counters are from the receive clock, the MAC, trade and rate-match counters from the core (transmit) clock. See the table below."),
     (0x200, 26, "TXV", "Transmit-domain snapshot, 26 words (TXV0 is 0x200). See the table below."),
 ]
 RXV = ["lock (bit 0: PCS block lock now)", "bit slips", "lock losses", "lock events", "invalid sync headers (in lock)", "unknown block types (in lock)",
@@ -46,7 +48,14 @@ RXV = ["lock (bit 0: PCS block lock now)", "bit slips", "lock losses", "lock eve
        "orders fired by the rule", "rule hits blocked (disarmed, kill or TRADE_EN off)", "frames too long to act on (IPv4 length above 60)",
        "length of the last frame in bytes, FCS included", "clocks from RX reset release to the first block lock (this link-up)",
        "order_ok: returned order frames that matched what the rule decided (content, 66-byte length, good FCS)",
-       "order_bad: returned order frames that did not (a wrong field, a wrong length, a bad FCS, or cut by an error character)"]
+       "order_bad: returned order frames that did not (a wrong field, a wrong length, a bad FCS, or cut by an error character)",
+       "rate match: blocks written into the elastic buffer (receive clock)", "rate match: blocks dropped because the buffer was full (receive clock; must be 0)",
+       "rate match: idle blocks inserted (core clock)", "rate match: idle blocks deleted (core clock)",
+       "rate match: clocks with nothing to output inside a frame (a one-clock bubble, nothing lost)", "rate match: blocks output (data, inserted idles)",
+       "rate match: blocks discarded while the block lock was low", "rate match: smallest visible fill at an output slot since the clear (blocks)",
+       "rate match: largest visible fill at an output slot since the clear (blocks)",
+       "frequency counter: receive-clock cycles counted in the last full window of 2^24 core clocks (ppm = (value - 16777216) / 16777216 x 1e6; positive: the receive clock is faster than the core clock; valid when RXV28 is at least 2 and no GT restart fell in the window)",
+       "frequency counter: windows completed since the core came out of reset"]
 TXV = ["order frames sent", "feed frames sent", "probe frames sent", "test frames sent", "orders sent with a wrong FCS (poisoned)",
        "orders dropped (frame source busy)", "MAC underruns", "orders whose FCS verdict had not arrived at their last word",
        "orders whose live fields were not settled (sequence mismatch)", "go pulses seen (the order count the transmit side expects)", "timestamp: TX start of the last feed frame",
@@ -72,9 +81,9 @@ def render() -> str:
     o += [f"| TXV{i} | 0x{0x200 + 4 * i:03X} | {t} |" for i, t in enumerate(TXV)]
     o += ["", "## What clears what", "",
           "- **CMD bit 0 (clear)** clears every event counter: RXV1 to RXV13, `order_ok` and `order_bad` "
-          "(RXV16, RXV17); TXV0 to TXV9 (the sent, poisoned, dropped, underrun, late, `stale` and `go` counts) and the E and L minimum, maximum and count words "
+          "(RXV16, RXV17) and the rate-match counters RXV18 to RXV24 (the fill minimum and maximum, RXV25 and RXV26, restart too); TXV0 to TXV9 (the sent, poisoned, dropped, underrun, late, `stale` and `go` counts) and the E and L minimum, maximum and count words "
           "(TXV17 to TXV19, TXV21 to TXV23); and it restarts the order number on both sides. It does **not** clear the last-value words and timestamps "
-          "(RXV14, RXV15, TXV10 to TXV16, TXV20, TXV24, TXV25). Before brief 97C it left `stale` and `go` running and cleared only the receive side's order number, "
+          "(RXV14, RXV15, RXV27, RXV28, TXV10 to TXV16, TXV20, TXV24, TXV25). Before brief 97C it left `stale` and `go` running and cleared only the receive side's order number, "
           "which put the two sides out of step (every later order was stale, late and poisoned).",
           "- **A restart of the RX datapath** (GT_RESET bit 2, 4 or 0, or the receive side losing its done level) holds the receive PCS, MAC and decision logic in reset "
           "and clears the order number and RXV15; the receive event counters keep their values.",
@@ -89,9 +98,14 @@ def render() -> str:
           "no error character. `order_ok` counts frames that pass all of it, `order_bad` the rest. It holds the latest decision only: an order that comes back after the next "
           "decision is counted bad, so keep the generator interval above the loop time. The logic reads the receive words in parallel with the decision and is not on "
           "the path from a received price to the order's first word, so the tick-to-trade clock count does not change (measured in simulation, results/b97c).", "",
+          "- **Which clock owns which word (brief 96C).** RXV0 to RXV6, RXV15, RXV18 and RXV19 are counted in the receive clock and cleared by the clear command's copy in that clock; the rest "
+          "of RXV in the core clock. Both are snapshotted together by CMD bit 2 only to within the handshake's few clocks: counters in the two clocks are not mutually exact "
+          "(`rm_wr` and `rm_out` can differ by the blocks in flight, at most about 20).",
+          "- **Rate matching (brief 96C)** inserts or deletes idle blocks between frames only; see docs/design.md section 9 for the policy and its limits.", "",
           "Timestamps: one free-running 32-bit counter in the TX clock. A TX start is stamped by the MAC's start strobe (the clock at which the "
-          "preamble word is in the MAC's output register). An RX start crosses to the TX domain through an `xpm_cdc_pulse`: its stamp is late by the pulse's fixed latency "
-          "(measured in simulation, docs/what_we_found.md) plus up to one TX clock of phase on the board.", ""]
+          "preamble word is in the MAC's output register). Since brief 96C the MAC and the decision logic run in the TX clock behind the elastic buffer, so an RX start is "
+          "stamped in the same clock by the MAC's start strobe: no crossing, no phase term; its latency includes the elastic buffer (6 to 7 clocks in simulation, "
+          "which varies by a clock with the gearbox pause and the buffer's read cadence).", ""]
     return "\n".join(o)
 
 

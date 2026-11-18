@@ -22,7 +22,11 @@ def test_every_address_is_decoded_and_nothing_else() -> None:
 
 
 def test_vector_widths_agree() -> None:
-    assert f"NRXW = {len(regmap.RXV)}" in CORE and f"NTXW = {len(regmap.TXV)}" in CORE
+    pkg = (DESIGN / "rtl" / "b96_pkg.sv").read_text()
+    assert f"NRXW      = {len(regmap.RXV)};" in pkg and f"NTXW = {len(regmap.TXV)}" in CORE      # brief 96C: NRXW moved to the package (rx_path and the core share it)
+    own = int(re.search(r"RXV_OWN_W = 32'h([0-9A-Fa-f_]+);", pkg).group(1).replace("_", ""), 16)
+    assert own < (1 << len(regmap.RXV))
+    assert max(int(m) for m in re.findall(r"rw\[(\d+)\] =", (DESIGN / "rtl" / "rx_path.sv").read_text())) == len(regmap.RXV) - 1
     tx = (DESIGN / "rtl" / "tx_path.sv").read_text()
     assert f"NTXW = {len(regmap.TXV)}" in tx
     assert max(int(m) for m in re.findall(r"tw\[(\d+)\] =", tx)) == len(regmap.TXV) - 1

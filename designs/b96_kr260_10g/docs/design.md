@@ -83,7 +83,7 @@ order's FCS poisoned if the incoming frame turns out bad, a kill bit and an arm 
 mock trading path (ML_ARM=0)" is thus met in function and format, not in code; the decisions are checked against
 `designs/b58a_trigger/model/benchfeed.py` frames. A 64-bit port of the full core is a follow-up for the planner.
 
-### 2.6 Where the decision lives and how it crosses clocks
+### 2.6 Where the decision lives and how it crosses clocks (as built for brief 96; superseded by section 9, brief 96C)
 
 The receive side is in RXUSRCLK2 (the recovered clock; independent of TXUSRCLK2 to within the partner's parts per
 million), the order leaves in TXUSRCLK2. Streaming frames across would need an elastic FIFO with its variable delay.
@@ -200,3 +200,52 @@ With one port the loop crosses the link twice for the trading loop.
 5. xsim: the real GTHE4 secureip model is refused by the Basic simulator (54,716 instances against 50,000: 56A). So the
    serial loopback uses a behavioural GT stand-in in xsim and Icarus; the GT itself is tested on the board.
 6. Vivado builds (a) near-end PMA loopback self-test, (b) SFP+ live with `trade64`; flow and GT gates.
+
+## 9. Rate matching and the receive-to-core crossing (brief 96C)
+
+**The question.** In the SFP+ loopback the receive clock is recovered from our own transmission, so it has exactly the frequency of the transmit clock. A real partner
+(a NIC, a switch) differs by up to +-100 ppm (IEEE 802.3 clause 49), so the two user clocks drift against each other by a clock cycle every 10,000 clocks (62 us) at
+100 ppm, and a design that moves a stream across them needs rate matching: delete idles when the partner is faster, insert them when it is slower.
+
+**What the design before 96C did, and what simulation showed.** It crossed only *events* from the receive clock to the transmit clock (the go pulse and a few
+pulses by `xpm_cdc_pulse`, the order's fields as a quasi-static bus): no frame stream crossed, so there was no buffer to overflow. Run against a simulated partner whose clock
+differs by +-100, +-300 ppm (and +-3000 ppm in a stress run), with 400 feed frames each, it lost nothing, duplicated nothing and fired every order
+(`results/b96c/ppm_sim_baseline*.json`). That is a null result and is stated first: **the pre-96C design did not fail at any offset we simulated.** Its dependence on
+the offset was indirect: the timestamp of a received frame is late by the crossing's fixed latency plus one clock of phase, and the order bus is sampled five clocks after the
+go pulse (`stale` counts a miss), an assumption that holds for any drift this small but is a timing assumption. Rate matching was built because a real link needs it
+wherever frames cross (any forwarding, bridging or host-facing path), because it removes those assumptions and, as measured below, because it costs almost no latency here.
+
+**Architecture now.** `pcs_rx` stays in the receive clock. Its decoded blocks (data, control, an ordered-set flag) are written into `rate_match` (a 16-block elastic buffer, one
+distributed-RAM array, gray pointers through `xpm_cdc_gray`); everything after it, `mac64_rx`, `trade64` and the order path, runs in the transmit user clock (the core clock). The go
+pulse, the order bus and the five event pulses of the old design are gone; the decision reaches the order logic in the same clock domain.
+
+**Policy (rtl/rate_match.sv, model/ratematch.py):**
+- every valid block is written; if the buffer is full as the write side sees it (it sees an old read pointer, so this is conservative) the block is dropped and counted (`rm_ovf`);
+- the reader outputs at most one block a clock, in 32 of 33 clocks (the 33rd, the pause clock, is the transmit gearbox's cadence);
+- in an output clock: a block visible -> pop and output it; none visible and the last output not inside a frame -> **insert one idle block** (`rm_ins`); none visible inside a frame -> output
+  nothing for one clock (`rm_stall`; the MAC holds its state; nothing is lost);
+- in the pause clock: visible fill above HI (4), last output not inside a frame, at least one pure idle block just output, head a pure idle block -> **delete it** (`rm_del`);
+- *inside a frame* means the last block output was a start block (lane 0 or 4) or a data block. A *pure idle* block is an all-idle control block that is not an ordered set.
+  **Ordered sets (the link-fault signalling), error blocks, terminate blocks and every block with data are never inserted, duplicated or deleted**, so no frame and no needed ordered set is touched (checked
+  frame by frame against an independent parser in `tests/ratematch_cocotb.py`, with ordered sets and error blocks in the stream);
+- while the synchronised block lock is low the reader discards the buffer, one block a clock, and outputs nothing.
+
+**Limits, stated.** (1) A deletion needs a pure idle block after one already output: a partner at +ppm that sends frames with only the minimum gap and no second idle block for a long time cannot be
+compensated; the buffer then fills and `rm_ovf` counts blocks lost (the frame is cut and fails its FCS: fail closed, never silent). (2) A deletion leaves at least one idle block between
+frames, so the gap after a deletion can be as small as 8 bytes plus the terminate's own idles, below the usual 12; this design's MAC does not check it, a downstream consumer might.
+(3) Inserted idles are plain `/I/` blocks; the idle-block checks of a real partner's PHY are not exercised. (4) Nothing here forwards frames to the transmitter: the buffer
+exists for the receive path only.
+
+**Latency cost.** Simulated, in-phase clocks, GT word of the price to GT word of the order's start block: **13 to 14 clocks** (80.7 to 86.9 ns) against 11 before (the receive
+path through the buffer is 6 to 7 clocks; the 4-clock go crossing it replaces is gone). Table and the board's figure: the 96C report. The write-to-read latency is the gray
+register (1) + two synchroniser flops + the decoded pointer register (`WP_REG`, 1) + the output register (1) plus the wait for the next output clock.
+
+**Frequency counter.** A free-running 32-bit count of receive clocks crosses as a gray code; in the core clock a window of 2^24 clocks (104 ms) and the difference of the last two
+samples give the receive clock's cycles per window (RXV27, RXV28): ppm = (count - 2^24) / 2^24 x 10^6, resolution about 0.1 ppm. The board run reports every point's offset from this
+counter, not from the setting that was meant to cause it.
+
+**Phase-interpolator ppm controller.** `TXPPM` (0x01C) drives the GT's TXPIPPMEN, TXPIPPMSEL and TXPIPPMSTEPSIZE. The Transceiver Wizard fixes `TXPI_PPM` to 0 and offers no setting for it;
+the ppm_* builds set it on the primitive through `ppm.xdc` (confirmed settable on a synthesised netlist, `results/b96c/txpi_probe.log`). **Unconfirmed, because UG576 is not on this machine: whether
+`TXPI_PPM` alone enables the controller, the encoding of the step code, and whether TXUSRCLK2 (taken from the PMA's output clock in this Wizard configuration,
+`TXOUTCLKSEL = 3'b010`) follows the shifted serial clock.** If it does, the receive and core clocks move together and the counter will read 0 ppm at every code; the board run then reports "no relative offset
+obtainable this way" (and the GT buffer status, `GT_BUF`, shows whether the TX buffer slipped). Nothing in the report claims an offset the counter did not measure.

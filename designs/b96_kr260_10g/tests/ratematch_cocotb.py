@@ -20,7 +20,7 @@ RESULTS: dict = {}
 
 
 async def run_case(dut, name, ppm, n_frames=300, gaps=(2,), seed=1, hi=4, os_every=0, err_every=0, lock_drop=None, w_offset_fs=1_234_567,
-                   r_start_fs=0, phase=0):
+                   r_start_fs=0, phase=0, clr_at=None):
     """One run. The write clock is nominal (the partner's) and the read clock is offset by `ppm` (ours = partner * (1 - ppm*1e-6), so a
     positive ppm means the partner is faster than we are). Returns a dict of results and asserts RTL == twin."""
     rng = random.Random(seed)
@@ -30,8 +30,8 @@ async def run_case(dut, name, ppm, n_frames=300, gaps=(2,), seed=1, hi=4, os_eve
     blocks = st.block_stream(rng, frames, list(gaps), os_every=os_every, err_every=err_every)
     ent = st.to_entries(blocks, phase=phase)
     n_w = len(ent) - 300
-    in_flight = {"w_t": [], "r_t": [], "w_in": [(0, 0, 0, 0)], "w_lock": [0], "r_rst": [1], "clr": [0], "out": []}
-    dut.w_v.value = 0; dut.w_d.value = 0; dut.w_c.value = 0; dut.w_os.value = 0; dut.w_lock.value = 0; dut.rrst.value = 1; dut.clr_r.value = 0
+    in_flight = {"w_t": [], "r_t": [], "wclr": [0], "w_in": [(0, 0, 0, 0)], "w_lock": [0], "r_rst": [1], "clr": [0], "out": []}
+    dut.w_v.value = 0; dut.w_d.value = 0; dut.w_c.value = 0; dut.w_os.value = 0; dut.w_lock.value = 0; dut.rrst.value = 1; dut.clr_r.value = 0; dut.clr_w.value = 0
     cocotb.start_soon(Clock(dut.wclk, pw, unit="fs").start())
     await Timer(r_start_fs + w_offset_fs, unit="fs")
     cocotb.start_soon(Clock(dut.rclk, pr, unit="fs").start())
@@ -52,6 +52,9 @@ async def run_case(dut, name, ppm, n_frames=300, gaps=(2,), seed=1, hi=4, os_eve
             if lock_drop and lock_drop[0] <= k < lock_drop[1] + 70:
                 e = (0, 0, 0, 0)
             dut.w_v.value = e[0]; dut.w_d.value = e[1]; dut.w_c.value = e[2]; dut.w_os.value = e[3]; dut.w_lock.value = lock
+            wc = 1 if (k == 5 or (clr_at and k == clr_at[0])) else 0      # the write-side counters are cleared at the start (the DUT is never reset between cases)
+            dut.clr_w.value = wc
+            in_flight["wclr"].append(wc)
             in_flight["w_in"].append(e); in_flight["w_lock"].append(lock)
             if k > n_w:
                 done["w"] = True
@@ -69,7 +72,9 @@ async def run_case(dut, name, ppm, n_frames=300, gaps=(2,), seed=1, hi=4, os_eve
             rst = 1 if j < n_rst else 0
             dut.rrst.value = rst
             in_flight["r_rst"].append(rst)
-            in_flight["clr"].append(0)
+            cl = 1 if (clr_at and j == clr_at[1]) else 0
+            dut.clr_r.value = cl
+            in_flight["clr"].append(cl)
             if done["w"] and j > n_w + 120:
                 done["stop"] = True
                 await Timer(1, unit="ns")
@@ -85,7 +90,7 @@ async def run_case(dut, name, ppm, n_frames=300, gaps=(2,), seed=1, hi=4, os_eve
     # twin on the same edges and inputs
     r_t = in_flight["r_t"]
     w_t = [t for t in in_flight["w_t"] if t < r_t[-1]]
-    out, m = rm.run(w_t, r_t, in_flight["w_in"][:len(w_t)], w_lock=in_flight["w_lock"], r_rst=in_flight["r_rst"][:len(r_t)], hi=hi, min_keep=1)
+    out, m = rm.run(w_t, r_t, in_flight["w_in"][:len(w_t)], w_lock=in_flight["w_lock"], r_rst=in_flight["r_rst"][:len(r_t)], clr=in_flight["clr"][:len(r_t)], w_clr=in_flight["wclr"], hi=hi, min_keep=1)
     # RTL output sampled at read edge j (pre-edge) = state after edge j-1
     bad = 0
     first = None
@@ -153,3 +158,10 @@ async def lock_loss_discards(dut):
     """The block lock drops for a while mid-stream: the buffer is discarded, nothing is output meanwhile; the RTL equals the twin."""
     r = await run_case(dut, "lockdrop", 100, n_frames=300, gaps=(2,), seed=5, lock_drop=(6000, 6100))
     assert r["rtl"]["n_ovf"] == 0, r
+
+
+@cocotb.test()
+async def clear_wins_over_a_count(dut):
+    """A counter clear in the write and read domains in the middle of a stream (blocks are being counted in that very clock): the counters restart from the clear."""
+    r = await run_case(dut, "clear", 150, n_frames=200, gaps=(2,), seed=7, clr_at=(3000, 3000))
+    assert r["frames_equal"] and r["rtl"]["n_wr"] < 7000, r
