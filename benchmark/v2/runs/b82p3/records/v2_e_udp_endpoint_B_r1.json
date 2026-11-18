@@ -1,0 +1,192 @@
+{
+ "task": "v2_e_udp_endpoint",
+ "level": "L2",
+ "arm": "B",
+ "repeat": 1,
+ "attempt": 1,
+ "run_id": "20261117-135502-145d",
+ "rc": 0,
+ "wall_s": 4030.2,
+ "hard_limit": false,
+ "worker": "w1",
+ "code": "c4cd5f05",
+ "claude_cli": "2.1.321",
+ "spec_tests": true,
+ "started": "2026-11-17 13:55:01",
+ "tokens": 2674370,
+ "plan_cost_estimate_usd": 3.3959,
+ "turns": 74,
+ "stop": "done",
+ "stages_visited": [
+  0,
+  0,
+  1,
+  1,
+  2
+ ],
+ "stage2_visits": 1,
+ "gates_last": {
+  "clarify": true,
+  "board-and-device-planning": true,
+  "rtl-design-creation": true
+ },
+ "stage2_gates_passed": true,
+ "claude_code_version": "2.1.321 (Claude Code)",
+ "knowledge_use": {
+  "rtl/board-and-device-planning": {
+   "board_constraints": {
+    "calls": 3
+   },
+   "load_skill": {
+    "calls": 1,
+    "sections": [],
+    "skills": [
+     "procedures/ultrafast/constraints/SKILL.md"
+    ],
+    "empty_calls": 0
+   }
+  },
+  "tests/rtl-design-creation": {
+   "load_skill": {
+    "calls": 1,
+    "sections": [
+     "verification-stages"
+    ],
+    "skills": [
+     "procedures/verification-stages/v-hw-bringup/SKILL.md",
+     "procedures/verification-stages/v0-v1-testplan/SKILL.md",
+     "procedures/verification-stages/v2-tests-assertions-formal/SKILL.md",
+     "procedures/verification-stages/v3-coverage-closure/SKILL.md"
+    ],
+    "empty_calls": 0,
+    "procedures_fallback": [
+     "verification-stages"
+    ]
+   }
+  },
+  "rtl/rtl-design-creation": {
+   "load_skill": {
+    "calls": 1,
+    "sections": [],
+    "skills": [],
+    "empty_calls": 1
+   }
+  }
+ },
+ "questions": {
+  "asked": 6,
+  "answered": 3,
+  "defaulted": 3,
+  "questions": [
+   {
+    "id": "q1",
+    "text": "What is the register map of the test shell (offset, width, reset value and access of every register)?",
+    "default": "The proposed map in registers.map, 32-bit registers at 0x00 to 0x28 as listed.",
+    "reason": "The request names shell registers (tick, take, length, word, status) but gives no offsets.",
+    "answer": "IN: offset 0x00, WO, reset 0: [7:0] packet byte, [8] end flag\nSTAT: offset 0x09, RO, reset 0: [0] telemetry on, [1] busy\nRIDX: offset 0x03, RW, reset 0: [6:0] word number\nRWORD: offset 0x04, RO, reset 0: bytes 4i..4i+3 of the reply, first byte on top, zero past the end\nRLEN: offset 0x02, RO, reset 0: length in bytes of the latest reply, 0 if none\nTICK: offset 0x01, WO, reset 0: [7:0] n ticks\nTIDX: offset 0x06, RW, reset 0: [6:0] word number\nTWORD: offset 0x07, RO, reset 0: same for the telemetry frame\nTAKE: offset 0x08, WO, reset 0: any write takes the held telemetry frame\nTLEN: offset 0x05, RO, reset 0: length of the held telemetry frame, 0 if none\nshell: test shell, PROTOCOL.md 1.1\nunmapped: no register at an offset: reads 0, writes ignored (read-only registers behave the same on write)",
+    "status": "answered",
+    "by": "oracle",
+    "evidence": "IN: offset 0x00, WO, reset 0: [7:0] packet byte, [8] end flag"
+   },
+   {
+    "id": "q2",
+    "text": "What are the values of TIMEOUT_CYCLES and BUILD_STAMP?",
+    "default": "TIMEOUT_CYCLES 1000000 and BUILD_STAMP 0.",
+    "reason": "Request says they are supplied but gives no values.",
+    "answer": "TIMEOUT_CYCLES is 100000 (not 1000000). BUILD_STAMP is not specified.",
+    "status": "answered",
+    "by": "oracle",
+    "evidence": "TIMEOUT_CYCLES: 100000"
+   },
+   {
+    "id": "q3",
+    "text": "The status reply is sixteen bytes and one more, what length value is sent?",
+    "default": "Length byte 17.",
+    "reason": "Request says 16 plus one byte.",
+    "answer": "17",
+    "status": "answered",
+    "by": "oracle",
+    "evidence": "STATUS: seven 16-bit counters, telemetry frame count (16 bit), TLM_ON byte, all before this command is counted."
+   },
+   {
+    "id": "q4",
+    "text": "Which counters do status 4 and status 1, 2, 3, 5 refusals use, and do all count in R5?",
+    "default": "All refusals count in R5, status 4 uses repeated or out-of-order, others use the combined counter.",
+    "reason": "Counter assignment is implied but not stated.",
+    "answer": "All refusals count in R5, status 4 uses repeated or out-of-order, others use the combined counter.",
+    "status": "defaulted",
+    "by": "oracle",
+    "evidence": null
+   },
+   {
+    "id": "q5",
+    "text": "Does a read of R7 include ticks still pending in the tick register?",
+    "default": "No, only ticks already made.",
+    "reason": "Unstated.",
+    "answer": "No, only ticks already made.",
+    "status": "defaulted",
+    "by": "oracle",
+    "evidence": null
+   },
+   {
+    "id": "q6",
+    "text": "Does a telemetry start while on also drop a held frame?",
+    "default": "No, only stop forgets a held frame.",
+    "reason": "Request says only stop forgets it.",
+    "answer": "No, only stop forgets a held frame.",
+    "status": "defaulted",
+    "by": "oracle",
+    "evidence": null
+   }
+  ]
+ },
+ "per_stage": {
+  "clarify": {
+   "calls": 2,
+   "turns": 5,
+   "tokens": 88477,
+   "wall_s": 116.3,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 0.3581
+  },
+  "board-and-device-planning": {
+   "calls": 2,
+   "turns": 18,
+   "tokens": 335674,
+   "wall_s": 60.8,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 0.3216
+  },
+  "rtl-design-creation": {
+   "calls": 3,
+   "turns": 51,
+   "tokens": 2250219,
+   "wall_s": 1595.6,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 2.4807
+  }
+ },
+ "spec_test": {
+  "fired": true,
+  "passed": true,
+  "outcome": "pass",
+  "caught_bug": false,
+  "bench_repaired": false,
+  "design_wrong_verdicts": 0,
+  "bench_wrong_verdicts": 0,
+  "bench_writes": 1,
+  "bench_runs": 1
+ },
+ "reached_first_model_turn": true,
+ "score": {
+  "pass": true,
+  "tests_passed": 10,
+  "tests": 10,
+  "failed": []
+ },
+ "tool_calls": 103,
+ "simulate_calls": 4,
+ "artifact_tarball_sha256": "63ee39b17ec7ba2cde1398eaee489dee9c27b7d6d97712a6221ea40c5d615b03",
+ "artifact_tarball_bytes": 1171951,
+ "weekly_pct_before": 14.0
+}

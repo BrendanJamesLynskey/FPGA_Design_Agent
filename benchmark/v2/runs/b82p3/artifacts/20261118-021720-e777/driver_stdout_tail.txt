@@ -1,0 +1,235 @@
+ne",
+   "wall_s": 335.6,
+   "tools": {},
+   "model_tool_calls": {},
+   "refused": {},
+   "files_written": [
+    "rtl/udp_core.sv"
+   ],
+   "files_changed": [
+    "rtl/udp_core.sv"
+   ]
+  }
+ ],
+ "per_role": {
+  "clarify": {
+   "calls": 2,
+   "turns": 7,
+   "tokens": 94729,
+   "wall_s": 115.2,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 0.3595
+  },
+  "rtl": {
+   "calls": 7,
+   "turns": 90,
+   "tokens": 3813840,
+   "wall_s": 2228.7,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 2.6869
+  },
+  "model": {
+   "calls": 1,
+   "turns": 3,
+   "tokens": 36978,
+   "wall_s": 36.3,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 0.1064
+  },
+  "tests": {
+   "calls": 1,
+   "turns": 13,
+   "tokens": 630062,
+   "wall_s": 646.7,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 1.5297
+  }
+ },
+ "per_stage": {
+  "clarify": {
+   "calls": 2,
+   "turns": 7,
+   "tokens": 94729,
+   "wall_s": 115.2,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 0.3595
+  },
+  "board-and-device-planning": {
+   "calls": 2,
+   "turns": 16,
+   "tokens": 272590,
+   "wall_s": 55.5,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 0.2973
+  },
+  "rtl-design-creation": {
+   "calls": 7,
+   "turns": 90,
+   "tokens": 4208290,
+   "wall_s": 2856.2,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 4.0257
+  }
+ },
+ "interview": "oracle",
+ "review": "off",
+ "stages_visited": [
+  0,
+  0,
+  1,
+  1,
+  2,
+  2,
+  2,
+  2,
+  2
+ ],
+ "loops": 6,
+ "rewinds": [],
+ "tokens": 4575609,
+ "cost_usd": 0.0,
+ "unreported_cost_calls": 0,
+ "turns": 113,
+ "wall_s": 6211.5,
+ "questions": {
+  "asked": 6,
+  "answered": 1,
+  "defaulted": 5,
+  "questions": [
+   {
+    "id": "q1",
+    "text": "What is the register map of the test shell (offset, width, reset value and access of every register)?",
+    "default": "The map in registers.map: RX_BYTE 0x00, TICK 0x04, STATUS 0x08, REPLY_LEN 0x0C, REPLY_IDX 0x10, REPLY_WORD 0x14, TELEM_LEN 0x18, TELEM_IDX 0x1C, TELEM_WORD 0x20, TAKE 0x24, all 32-bit",
+    "reason": "The request names these functions but gives no offsets",
+    "answer": "IN: offset 0x00, WO, reset 0: [7:0] packet byte, [8] end flag\nSTAT: offset 0x09, RO, reset 0: [0] telemetry on, [1] busy\nRIDX: offset 0x03, RW, reset 0: [6:0] word number\nRWORD: offset 0x04, RO, reset 0: bytes 4i..4i+3 of the reply, first byte on top, zero past the end\nRLEN: offset 0x02, RO, reset 0: length in bytes of the latest reply, 0 if none\nTICK: offset 0x01, WO, reset 0: [7:0] n ticks\nTIDX: offset 0x06, RW, reset 0: [6:0] word number\nTWORD: offset 0x07, RO, reset 0: same for the telemetry frame\nTAKE: offset 0x08, WO, reset 0: any write takes the held telemetry frame\nTLEN: offset 0x05, RO, reset 0: length of the held telemetry frame, 0 if none\nshell: test shell, PROTOCOL.md 1.1\nunmapped: no register at an offset: reads 0, writes ignored (read-only registers behave the same on write)",
+    "status": "answered",
+    "by": "oracle",
+    "evidence": "IN: offset 0x00, WO, reset 0: [7:0] packet byte, [8] end flag"
+   },
+   {
+    "id": "q2",
+    "text": "Which packets count as commands carried out?",
+    "default": "Every packet answered with status 0",
+    "reason": "The request does not say whether only reads and writes count",
+    "answer": "Every packet answered with status 0",
+    "status": "defaulted",
+    "by": "oracle",
+    "evidence": null
+   },
+   {
+    "id": "q3",
+    "text": "Does a packet that passes the sequence rule and then fails the register or access check count in the type, length, register or access error counter?",
+    "default": "Yes, in that counter and in refused-packets",
+    "reason": "The request says that failure is counted",
+    "answer": "Yes, in that counter and in refused-packets",
+    "status": "defaulted",
+    "by": "oracle",
+    "evidence": null
+   },
+   {
+    "id": "q4",
+    "text": "What are the busy bit semantics (STATUS bit 1)?",
+    "default": "Busy is 1 from the first byte of a packet until its reply is built",
+    "reason": "The request names the bit but not when it is set",
+    "answer": "Busy is 1 from the first byte of a packet until its reply is built",
+    "status": "defaulted",
+    "by": "oracle",
+    "evidence": null
+   },
+   {
+    "id": "q5",
+    "text": "Does a TICK write while earlier ticks are pending add or restart?",
+    "default": "A new write replaces the remaining count with n",
+    "reason": "The request does not say",
+    "answer": "A new write replaces the remaining count with n",
+    "status": "defaulted",
+    "by": "oracle",
+    "evidence": null
+   },
+   {
+    "id": "q6",
+    "text": "What happens to a frame falling due on the same clock as a take write?",
+    "default": "The take clears the held frame first and the new frame is then held",
+    "reason": "The request leaves the ordering open",
+    "answer": "The take clears the held frame first and the new frame is then held",
+    "status": "defaulted",
+    "by": "oracle",
+    "evidence": null
+   }
+  ]
+ },
+ "stop": "done",
+ "gates_last": {
+  "clarify": true,
+  "board-and-device-planning": true,
+  "rtl-design-creation": true
+ },
+ "approvals": [
+  {
+   "n": 0,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 0,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 1,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 1,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  }
+ ],
+ "bringup": null,
+ "spec_test": {
+  "fired": true,
+  "passed": false,
+  "outcome": "unresolved",
+  "caught_bug": false,
+  "bench_repaired": false,
+  "design_wrong_verdicts": 2,
+  "bench_wrong_verdicts": 0,
+  "bench_writes": 1,
+  "bench_runs": 3
+ }
+}
