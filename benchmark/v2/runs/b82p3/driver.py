@@ -316,7 +316,8 @@ def wilson(k: int, n: int, z: float = 1.96) -> tuple[float, float]:
 
 def passed(r: dict) -> bool:
     """Review fix: a run killed by the hard wall limit is a budget failure whatever its partial RTL scores."""
-    return bool((r.get("score") or {}).get("pass")) and not r.get("hard_limit")
+    sc = r.get("score") or {}
+    return bool(sc.get("pass")) and bool(sc.get("tests")) and sc.get("tests_passed") == sc.get("tests") and not r.get("hard_limit")
 
 
 def table() -> int:
