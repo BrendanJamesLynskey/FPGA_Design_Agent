@@ -76,12 +76,12 @@ proc apply_xpm_cdc_constraints {} {
     set allram [get_cells -quiet -hierarchical -filter {NAME =~ *xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/* && REF_NAME =~ RAM*}]
     if {[llength $allram]} {
         foreach n [get_property NAME $allram] {
-            regsub {/xpm_fifo_base_inst/.*$} $n {} n
+            regsub {\.xpm_fifo_base_inst/.*$} $n {} n
             if {[lsearch -exact $froots $n] < 0} { lappend froots $n }
         }
     }
     foreach root $froots {
-        set ram [get_cells -quiet -hierarchical -filter "NAME =~ ${root}/xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/* && REF_NAME =~ RAM*"]
+        set ram [get_cells -quiet -hierarchical -filter "NAME =~ ${root}.xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/* && REF_NAME =~ RAM*"]
         set clkpins [get_pins -quiet -of_objects $ram -filter {REF_PIN_NAME == CLK || REF_PIN_NAME == WCLK}]
         set outpins [get_pins -quiet -of_objects $ram -filter {DIRECTION == OUT}]
         if {[llength $clkpins] == 0 || [llength $outpins] == 0} { error "xpm_cdc: FIFO $root: no RAM clock or output pins found" }
