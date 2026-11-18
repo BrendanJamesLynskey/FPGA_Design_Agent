@@ -1,0 +1,93 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2026.1 (lin64) Build 6511674 Tue Jun 16 11:01:26 MDT 2026
+| Date         : Wed Nov 18 08:31:58 2026
+| Host         : bren-ubuntu24-04 running 64-bit Ubuntu 24.04.4 LTS
+| Command      : report_timing -max_paths 1 -setup -file /home/brendan/Claude_sandbox/_worktrees/101-oss-synth-eqy/build/b101/vivado/a7/run1_pass2_edif/lg_small_comb__ys_abc9_dff_13.30/timing_worst.rpt
+| Design       : ooc_wrap
+| Device       : 7a100t-csg324
+| Speed File   : -1  PRODUCTION 1.23 2018-06-13
+| Design State : Routed
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Timing Report
+
+Slack (MET) :             0.015ns  (required time - arrival time)
+  Source:                 $auto$ff.cc:337:slice$17076/C
+                            (rising edge-triggered cell FDRE clocked by clk  {rise@0.000ns fall@6.650ns period=13.300ns})
+  Destination:            $auto$ff.cc:337:slice$17104/R
+                            (rising edge-triggered cell FDRE clocked by clk  {rise@0.000ns fall@6.650ns period=13.300ns})
+  Path Group:             clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            13.300ns  (clk rise@13.300ns - clk rise@0.000ns)
+  Data Path Delay:        12.589ns  (logic 5.129ns (40.743%)  route 7.460ns (59.257%))
+  Logic Levels:           14  (CARRY4=3 LUT2=1 LUT3=4 LUT5=3 LUT6=2 MUXF8=1)
+  Clock Path Skew:        -0.049ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    0.924ns = ( 14.224 - 13.300 ) 
+    Source Clock Delay      (SCD):    0.973ns
+    Clock Pessimism Removal (CPR):    0.000ns
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk rise edge)        0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk
+                         net (fo=41, unset)           0.973     0.973    clk
+    SLICE_X10Y87         FDRE                                         r  $auto$ff.cc:337:slice$17076/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X10Y87         FDRE (Prop_fdre_C_Q)         0.518     1.491 f  $auto$ff.cc:337:slice$17076/Q
+                         net (fo=11, routed)          0.706     2.197    f_q[23]
+    SLICE_X11Y87         LUT3 (Prop_lut3_I0_O)        0.149     2.346 f  $abc$34333$lut$aiger34290$419/O
+                         net (fo=3, routed)           0.694     3.040    $techmap34479$auto$abc_ops_reintegrate.cc:722:reintegrate$34382.A[1]
+    SLICE_X10Y87         LUT2 (Prop_lut2_I1_O)        0.354     3.394 f  $auto$abc_ops_reintegrate.cc:722:reintegrate$34382/O
+                         net (fo=5, routed)           0.690     4.085    $techmap34480$abc$34333$lut$aiger34290$520.A[2]
+    SLICE_X11Y87         LUT3 (Prop_lut3_I2_O)        0.358     4.443 f  $abc$34333$lut$aiger34290$520/O
+                         net (fo=3, routed)           0.284     4.726    $techmap34483$abc$34333$lut$aiger34290$523.A[1]
+    SLICE_X11Y87         LUT3 (Prop_lut3_I2_O)        0.327     5.053 f  $abc$34333$lut$aiger34290$719/O
+                         net (fo=1, routed)           0.706     5.760    $techmap34745$abc$34333$lut$aiger34290$728.A[3]
+    SLICE_X10Y87         LUT5 (Prop_lut5_I3_O)        0.124     5.884 r  $abc$34333$lut$aiger34290$728/O
+                         net (fo=1, routed)           0.162     6.046    $techmap34746$abc$34333$lut$aiger34290$756.A[4]
+    SLICE_X10Y87         LUT5 (Prop_lut5_I4_O)        0.124     6.170 r  $abc$34333$lut$aiger34290$756/O
+                         net (fo=3, routed)           0.578     6.748    $techmap34750$abc$34333$lut$aiger34290$1544.A[2]
+    SLICE_X9Y89          LUT3 (Prop_lut3_I1_O)        0.124     6.872 r  $abc$34333$lut$aiger34290$772/O
+                         net (fo=5, routed)           1.085     7.957    $techmap34784$abc$34333$lut$aiger34290$1761.A[3]
+    SLICE_X6Y89          LUT6 (Prop_lut6_I3_O)        0.124     8.081 r  $auto$abc_ops_reintegrate.cc:722:reintegrate$34358/O
+                         net (fo=5, routed)           0.630     8.711    $techmap34799$abc$34333$lut$aiger$o96.A[1]
+    SLICE_X6Y89          CARRY4 (Prop_carry4_DI[1]_O[3])
+                                                      0.610     9.321 r  $auto$maccmap.cc:240:synth$17843.genblk1.slice[0].genblk1.carry4/O[3]
+                         net (fo=6, routed)           0.507     9.828    $abc$34333$lut$aiger$o122.A[4]
+    SLICE_X7Y90          LUT6 (Prop_lut6_I5_O)        0.307    10.135 r  $auto$abc_ops_reintegrate.cc:722:reintegrate$34347/O
+                         net (fo=1, routed)           0.331    10.466    $abc$34333$aiger$o92
+    SLICE_X7Y91          CARRY4 (Prop_carry4_DI[1]_O[3])
+                                                      0.596    11.062 r  $353.genblk1.slice[0].genblk1.carry4/O[3]
+                         net (fo=6, routed)           0.396    11.458    $abc$34333$lut$aiger$o122.A[7]
+    SLICE_X7Y92          MUXF8 (Prop_muxf8_S_O)       0.455    11.913 r  $abc$34333$lut$aiger34290$4172.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.genblk1.mux8/O
+                         net (fo=1, routed)           0.355    12.267    $techmap34857$abc$34333$lut$aiger$o126.A[4]
+    SLICE_X6Y92          LUT5 (Prop_lut5_I4_O)        0.316    12.583 r  $abc$34333$lut$aiger$o126/O
+                         net (fo=1, routed)           0.000    12.583    $abc$34333$aiger$o126
+    SLICE_X6Y92          CARRY4 (Prop_carry4_S[1]_O[3])
+                                                      0.643    13.226 r  $359.genblk1.slice[0].genblk1.carry4/O[3]
+                         net (fo=2, routed)           0.335    13.562    $techmap34425$auto$ff.cc:337:slice$17104.R
+    SLICE_X5Y92          FDRE                                         r  $auto$ff.cc:337:slice$17104/R
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk rise edge)       13.300    13.300 r  <hidden>
+                                                      0.000    13.300 r  clk
+                         net (fo=41, unset)           0.924    14.224    clk
+    SLICE_X5Y92          FDRE                                         r  $auto$ff.cc:337:slice$17104/C
+                         clock pessimism              0.000    14.224    <hidden>
+                         clock uncertainty           -0.035    14.189    <hidden>
+    SLICE_X5Y92          FDRE (Setup_fdre_C_R)       -0.612    13.577    $auto$ff.cc:337:slice$17104
+  -------------------------------------------------------------------
+                         required time                         13.577    <hidden>
+                         arrival time                         -13.562    <hidden>
+  -------------------------------------------------------------------
+                         slack                                  0.015    <hidden>
+
+
+
+

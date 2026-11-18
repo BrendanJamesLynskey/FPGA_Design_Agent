@@ -1,0 +1,155 @@
+{
+ "block": "crc64_rx",
+ "arm": "ys_abc9_dff",
+ "part": "xc7a100tcsg324-1",
+ "tool": "Vivado 2026.1",
+ "flow": "out of context, post-route, one thread",
+ "synthesis": "edif",
+ "latency_clocks": 2,
+ "closed_at_ns": 10.8,
+ "closed_at_mhz": 92.6,
+ "latency_ns": 21.6,
+ "at_closed_clock": {
+  "status": "ok",
+  "clock_ns": 10.8,
+  "lut": 268,
+  "ff": 97,
+  "carry": null,
+  "lut_levels": 10,
+  "data_path_ns": 10.343,
+  "wns_ns": 0.402,
+  "whs_ns": 0.301,
+  "wpws_ns": 4.9,
+  "build_seconds": 269,
+  "closed": true
+ },
+ "passes": [
+  {
+   "status": "error: ERROR: [Project 1-68] No files found to match top module 'ooc_wrap'",
+   "clock_ns": 2.0,
+   "wd": "/home/brendan/Claude_sandbox/_worktrees/101-oss-synth-eqy/build/b101/vivado/a7/run1_pass1/crc64_rx__ys_abc9_dff_2.00"
+  },
+  {
+   "status": "error: ERROR: [Project 1-68] No files found to match top module 'ooc_wrap'",
+   "clock_ns": 2.0,
+   "wd": "/home/brendan/Claude_sandbox/_worktrees/101-oss-synth-eqy/build/b101/vivado/a7/run1_pass1_edif/crc64_rx__ys_abc9_dff_2.00"
+  },
+  {
+   "status": "ok",
+   "clock_ns": 2.0,
+   "lut": 323,
+   "ff": 97,
+   "carry": null,
+   "lut_levels": 11,
+   "data_path_ns": 9.231,
+   "wns_ns": -7.283,
+   "whs_ns": 0.311,
+   "wpws_ns": 0.5,
+   "build_seconds": 244,
+   "closed": false,
+   "wd": "/home/brendan/Claude_sandbox/_worktrees/101-oss-synth-eqy/build/b101/vivado/a7/run1_pass1_edif/crc64_rx__ys_abc9_dff_2.00"
+  },
+  {
+   "status": "ok",
+   "clock_ns": 9.3,
+   "lut": 279,
+   "ff": 97,
+   "carry": null,
+   "lut_levels": 11,
+   "data_path_ns": 10.207,
+   "wns_ns": -0.96,
+   "whs_ns": 0.302,
+   "wpws_ns": 4.15,
+   "build_seconds": 302,
+   "closed": false,
+   "wd": "/home/brendan/Claude_sandbox/_worktrees/101-oss-synth-eqy/build/b101/vivado/a7/run1_pass2_edif/crc64_rx__ys_abc9_dff_9.30"
+  },
+  {
+   "status": "ok",
+   "clock_ns": 10.350000000000001,
+   "lut": 268,
+   "ff": 97,
+   "carry": null,
+   "lut_levels": 11,
+   "data_path_ns": 10.684,
+   "wns_ns": -0.387,
+   "whs_ns": 0.344,
+   "wpws_ns": 4.675,
+   "build_seconds": 328,
+   "closed": false,
+   "wd": "/home/brendan/Claude_sandbox/_worktrees/101-oss-synth-eqy/build/b101/vivado/a7/run1_pass3_edif/crc64_rx__ys_abc9_dff_10.35"
+  },
+  {
+   "status": "ok",
+   "clock_ns": 10.8,
+   "lut": 268,
+   "ff": 97,
+   "carry": null,
+   "lut_levels": 10,
+   "data_path_ns": 10.343,
+   "wns_ns": 0.402,
+   "whs_ns": 0.301,
+   "wpws_ns": 4.9,
+   "build_seconds": 269,
+   "closed": true,
+   "wd": "/home/brendan/Claude_sandbox/_worktrees/101-oss-synth-eqy/build/b101/vivado/a7/run1_pass4_edif/crc64_rx__ys_abc9_dff_10.80"
+  },
+  {
+   "status": "ok",
+   "clock_ns": 10.4,
+   "lut": 269,
+   "ff": 97,
+   "carry": null,
+   "lut_levels": 10,
+   "data_path_ns": 10.353,
+   "wns_ns": -0.008,
+   "whs_ns": 0.311,
+   "wpws_ns": 4.7,
+   "build_seconds": 263,
+   "closed": false,
+   "wd": "/home/brendan/Claude_sandbox/_worktrees/101-oss-synth-eqy/build/b101/vivado/a7/run1_pass5_edif/crc64_rx__ys_abc9_dff_10.40"
+  }
+ ],
+ "yosys": {
+  "script": "abc9_dff",
+  "script_text": "synth_xilinx -flatten -dff (abc9 -luts 2:2,3,6:5,10,20 -dff)",
+  "yosys": "Yosys 0.70+385 (git sha1 098e46a36, Release, Clang /usr/bin/clang++ 21.1.8)",
+  "yosys_commands": "plugin -i slang; read_slang --top ooc_wrap  /home/brendan/Claude_sandbox/_worktrees/101-oss-synth-eqy/designs/b96_kr260_10g/rtl/b96_pkg.sv /home/brendan/Claude_sandbox/_worktrees/101-oss-synth-eqy/flow/oss_compare/rtl/crc64_rx.sv /home/brendan/Claude_sandbox/_worktrees/101-oss-synth-eqy/flow/oss_compare/rtl/wrap_crc64_rx.sv; synth_xilinx -family xc7 -top ooc_wrap -noiopad -noclkbuf -flatten -dff; tee -o /home/brendan/Claude_sandbox/_worktrees/101-oss-synth-eqy/build/b101/yosys/a7/crc64_rx__ys_abc9_dff/netlist.edif.stat stat -tech xilinx; write_edif -pvector bra /home/brendan/Claude_sandbox/_worktrees/101-oss-synth-eqy/build/b101/yosys/a7/crc64_rx__ys_abc9_dff/netlist.edif; write_verilog -noattr /home/brendan/Claude_sandbox/_worktrees/101-oss-synth-eqy/build/b101/yosys/a7/crc64_rx__ys_abc9_dff/netlist.v",
+  "seconds": 18.8,
+  "lut": 323,
+  "ff": 97,
+  "carry": 0,
+  "d_ps": null
+ },
+ "perturb": {
+  "points": [
+   {
+    "clock_ns": 10.8,
+    "lut": 268,
+    "wns_ns": 0.402,
+    "wpws_ns": 4.9,
+    "closed": true,
+    "achievable_ns": 10.398
+   },
+   {
+    "clock_ns": 10.81,
+    "wns_ns": 0.402,
+    "wpws_ns": 4.905,
+    "lut": 269,
+    "closed": true,
+    "achievable_ns": 10.408
+   },
+   {
+    "clock_ns": 10.82,
+    "wns_ns": 0.137,
+    "wpws_ns": 4.91,
+    "lut": 269,
+    "closed": true,
+    "achievable_ns": 10.683
+   }
+  ],
+  "achievable_min_ns": 10.398,
+  "achievable_max_ns": 10.683,
+  "spread_ns": 0.285
+ }
+}

@@ -1,0 +1,155 @@
+{
+ "block": "adder_tree8",
+ "arm": "ys_abc_d",
+ "part": "xc7a100tcsg324-1",
+ "tool": "Vivado 2026.1",
+ "flow": "out of context, post-route, one thread",
+ "synthesis": "edif",
+ "latency_clocks": 2,
+ "closed_at_ns": 4.3,
+ "closed_at_mhz": 232.6,
+ "latency_ns": 8.6,
+ "at_closed_clock": {
+  "status": "ok",
+  "clock_ns": 4.3,
+  "lut": 75,
+  "ff": 75,
+  "carry": 3,
+  "lut_levels": 6,
+  "data_path_ns": 4.095,
+  "wns_ns": 0.183,
+  "whs_ns": 0.368,
+  "wpws_ns": 1.65,
+  "build_seconds": 300,
+  "closed": true
+ },
+ "passes": [
+  {
+   "status": "error: ERROR: [Project 1-68] No files found to match top module 'ooc_wrap'",
+   "clock_ns": 2.0,
+   "wd": "/home/brendan/Claude_sandbox/_worktrees/101-oss-synth-eqy/build/b101/vivado/a7/run1_pass1/adder_tree8__ys_abc_d_2.00"
+  },
+  {
+   "status": "error: ERROR: [Project 1-68] No files found to match top module 'ooc_wrap'",
+   "clock_ns": 2.0,
+   "wd": "/home/brendan/Claude_sandbox/_worktrees/101-oss-synth-eqy/build/b101/vivado/a7/run1_pass1_edif/adder_tree8__ys_abc_d_2.00"
+  },
+  {
+   "status": "ok",
+   "clock_ns": 2.0,
+   "lut": 81,
+   "ff": 75,
+   "carry": 3,
+   "lut_levels": 8,
+   "data_path_ns": 4.366,
+   "wns_ns": -2.388,
+   "whs_ns": 0.51,
+   "wpws_ns": 0.5,
+   "build_seconds": 96,
+   "closed": false,
+   "wd": "/home/brendan/Claude_sandbox/_worktrees/101-oss-synth-eqy/build/b101/vivado/a7/run1_pass1_edif/adder_tree8__ys_abc_d_2.00"
+  },
+  {
+   "status": "ok",
+   "clock_ns": 4.4,
+   "lut": 71,
+   "ff": 75,
+   "carry": 3,
+   "lut_levels": 5,
+   "data_path_ns": 4.284,
+   "wns_ns": 0.141,
+   "whs_ns": 0.455,
+   "wpws_ns": 1.7,
+   "build_seconds": 171,
+   "closed": true,
+   "wd": "/home/brendan/Claude_sandbox/_worktrees/101-oss-synth-eqy/build/b101/vivado/a7/run1_pass2_edif/adder_tree8__ys_abc_d_4.40"
+  },
+  {
+   "status": "ok",
+   "clock_ns": 4.3,
+   "lut": 75,
+   "ff": 75,
+   "carry": 3,
+   "lut_levels": 6,
+   "data_path_ns": 4.095,
+   "wns_ns": 0.183,
+   "whs_ns": 0.368,
+   "wpws_ns": 1.65,
+   "build_seconds": 300,
+   "closed": true,
+   "wd": "/home/brendan/Claude_sandbox/_worktrees/101-oss-synth-eqy/build/b101/vivado/a7/run1_pass3_edif/adder_tree8__ys_abc_d_4.30"
+  },
+  {
+   "status": "ok",
+   "clock_ns": 4.15,
+   "lut": 78,
+   "ff": 75,
+   "carry": 3,
+   "lut_levels": 7,
+   "data_path_ns": 4.208,
+   "wns_ns": -0.033,
+   "whs_ns": 0.303,
+   "wpws_ns": 1.575,
+   "build_seconds": 290,
+   "closed": false,
+   "wd": "/home/brendan/Claude_sandbox/_worktrees/101-oss-synth-eqy/build/b101/vivado/a7/run1_pass4_edif/adder_tree8__ys_abc_d_4.15"
+  },
+  {
+   "status": "ok",
+   "clock_ns": 4.25,
+   "lut": 76,
+   "ff": 75,
+   "carry": 3,
+   "lut_levels": 7,
+   "data_path_ns": 4.956,
+   "wns_ns": -0.681,
+   "whs_ns": 0.415,
+   "wpws_ns": 1.625,
+   "build_seconds": 207,
+   "closed": false,
+   "wd": "/home/brendan/Claude_sandbox/_worktrees/101-oss-synth-eqy/build/b101/vivado/a7/run1_pass5_edif/adder_tree8__ys_abc_d_4.25"
+  }
+ ],
+ "yosys": {
+  "script": "abc_d",
+  "script_text": "synth_xilinx -run begin:map_luts; abc -luts 2:2,3,6:5,10,20 -D <ps>; techmap lut_map/cells_map; synth_xilinx -run finalize:",
+  "yosys": "Yosys 0.70+385 (git sha1 098e46a36, Release, Clang /usr/bin/clang++ 21.1.8)",
+  "yosys_commands": "plugin -i slang; read_slang --top ooc_wrap  /home/brendan/Claude_sandbox/_worktrees/101-oss-synth-eqy/flow/oss_compare/rtl/adder_tree8.sv /home/brendan/Claude_sandbox/_worktrees/101-oss-synth-eqy/flow/oss_compare/rtl/wrap_adder_tree8.sv; synth_xilinx -family xc7 -top ooc_wrap -noiopad -noclkbuf -flatten -run begin:map_luts; opt_expr -mux_undef -noclkinv; abc -luts 2:2,3,6:5,10,20 -D 1; clean; techmap -map +/xilinx/lut_map.v -map +/xilinx/cells_map.v -D LUT_WIDTH=6; xilinx_dffopt; opt_lut_ins -tech xilinx; synth_xilinx -family xc7 -top ooc_wrap -noiopad -noclkbuf -run finalize:; tee -o /home/brendan/Claude_sandbox/_worktrees/101-oss-synth-eqy/build/b101/yosys/a7/adder_tree8__ys_abc_d/netlist.edif.stat stat -tech xilinx; write_edif -pvector bra /home/brendan/Claude_sandbox/_worktrees/101-oss-synth-eqy/build/b101/yosys/a7/adder_tree8__ys_abc_d/netlist.edif; write_verilog -noattr /home/brendan/Claude_sandbox/_worktrees/101-oss-synth-eqy/build/b101/yosys/a7/adder_tree8__ys_abc_d/netlist.v",
+  "seconds": 3.5,
+  "lut": 82,
+  "ff": 75,
+  "carry": 3,
+  "d_ps": 1
+ },
+ "perturb": {
+  "points": [
+   {
+    "clock_ns": 4.3,
+    "lut": 75,
+    "wns_ns": 0.183,
+    "wpws_ns": 1.65,
+    "closed": true,
+    "achievable_ns": 4.117
+   },
+   {
+    "clock_ns": 4.31,
+    "wns_ns": 0.045,
+    "wpws_ns": 1.655,
+    "lut": 72,
+    "closed": true,
+    "achievable_ns": 4.265
+   },
+   {
+    "clock_ns": 4.32,
+    "wns_ns": 0.093,
+    "wpws_ns": 1.66,
+    "lut": 74,
+    "closed": true,
+    "achievable_ns": 4.227
+   }
+  ],
+  "achievable_min_ns": 4.117,
+  "achievable_max_ns": 4.265,
+  "spread_ns": 0.148
+ }
+}
