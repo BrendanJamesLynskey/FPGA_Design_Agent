@@ -22,11 +22,13 @@ TX = dict(n_order=0, n_feed=1, n_probe=2, n_test=3, poisoned=4, dropped=5, under
           t_tx_order=12, t_rx_feed=13, t_rx_probe=14, t_rx_order=15, e_last=16, e_min=17, e_max=18, e_cnt=19, l_last=20, l_min=21,
           l_max=22, l_cnt=23, d_last=24, ts=25)
 RX = dict(lock=0, slip=1, loss=2, lock_ev=3, sh=4, type=5, os=6, frames=7, good=8, bad=9, err=10, fired=11, blocked=12, toolong=13,
-          last_len=14, lock_clk=15)
+          last_len=14, lock_clk=15, order_ok=16, order_bad=17)
+NRXW, NTXW = 18, 26
 #: Safety counters that must be 0 in every restart (TX side from TXV, RX side from RXV); `blocked` is recorded but is not a failure on its own
-#: (a blocked hit means one order fewer, which the order-count check catches).
+#: (a blocked hit means one order fewer, which the order-count check catches). `order_bad` (97C) counts returned orders whose content, length or
+#: FCS did not match what the rule decided; `order_ok` must equal the expected order count (checked below), so a silent order cannot pass either.
 SAFETY_TX = ("poisoned", "dropped", "underrun", "late", "stale")
-SAFETY_RX = ("bad", "err", "toolong")
+SAFETY_RX = ("bad", "err", "toolong", "order_bad")
 GT_STAT_BITS = dict(tx_done=0, rx_done=1, pgood=2, cdr_lock=3, txpma=4, rxpma=5, cdr_stable=8, pcs_lock=9, mod_abs=10, rx_los=11, tx_fault=12)
 
 
@@ -189,14 +191,14 @@ def settled_snapshot(b: Board, expected_orders: int, tries: int = 10, wait_s: fl
 def safety_verdict(snapshots: list[dict | None], expected_orders: int, n_restarts: int) -> dict:
     """The acceptance test for the latency variants that fire combinationally. `snapshots` has one entry per restart: {"tx": {...}, "rx": {...}},
     or None for a restart whose link did not lock (nothing was read, so nothing can be vouched for). `ok` is true only when there are n_restarts
-    snapshots, every counter is present, the eight safety counters are 0 in every restart and orders sent and fired both equal the expected
-    count in every restart. Every failing counter is named, with the restart it failed in."""
+    snapshots, every counter is present, the nine safety counters are 0 in every restart and orders sent, fired and returned intact
+    (`order_ok`, the hardware's content check) all equal the expected count in every restart. Every failing counter is named, with the restart it failed in."""
     reasons: list[str] = []
     if not (isinstance(n_restarts, int) and n_restarts >= 1 and isinstance(expected_orders, int) and expected_orders >= 1):
         return {"ok": False, "failing_counters": [], "reasons": [f"nothing to judge: restarts={n_restarts!r}, expected orders={expected_orders!r}"]}
     failing: set[str] = set()
     bad_restarts: list[dict] = []
-    sums = {k: 0 for k in SAFETY_TX + SAFETY_RX + ("blocked", "n_order", "fired")}
+    sums = {k: 0 for k in SAFETY_TX + SAFETY_RX + ("blocked", "n_order", "fired", "order_ok")}
     unreadable = [i for i, sn in enumerate(snapshots) if sn is None]
     if len(snapshots) != n_restarts:
         reasons.append(f"{len(snapshots)} snapshots for {n_restarts} restarts")
@@ -206,14 +208,14 @@ def safety_verdict(snapshots: list[dict | None], expected_orders: int, n_restart
         if sn is None:
             continue
         vals: dict[str, int] = {}
-        missing = [k for k in SAFETY_TX + ("n_order",) if k not in sn.get("tx", {})] + [k for k in SAFETY_RX + ("blocked", "fired") if k not in sn.get("rx", {})]
+        missing = [k for k in SAFETY_TX + ("n_order",) if k not in sn.get("tx", {})] + [k for k in SAFETY_RX + ("blocked", "fired", "order_ok") if k not in sn.get("rx", {})]
         if missing:
             reasons.append(f"restart {i}: counters not read: {missing}")
             failing.update(missing)
             continue
         for k in SAFETY_TX + ("n_order",):
             vals[k] = sn["tx"][k]
-        for k in SAFETY_RX + ("blocked", "fired"):
+        for k in SAFETY_RX + ("blocked", "fired", "order_ok"):
             vals[k] = sn["rx"][k]
         for k, v in vals.items():
             sums[k] += v
@@ -223,6 +225,8 @@ def safety_verdict(snapshots: list[dict | None], expected_orders: int, n_restart
             short["n_order"] = vals["n_order"]
         if vals["fired"] != expected_orders:
             short["fired"] = vals["fired"]
+        if vals["order_ok"] != expected_orders:
+            short["order_ok"] = vals["order_ok"]
         if nonzero or short:
             bad_restarts.append({"restart": i, "nonzero": nonzero, "order_count_wrong": short, "n_order": vals["n_order"], "fired": vals["fired"], "blocked": vals["blocked"]})
             failing.update(nonzero)
@@ -243,8 +247,8 @@ def restart_distribution(b: Board, n: int = 100, probes_per_link: int = 5, timeo
     a counter that moved during the relock itself is not seen: the counters judge the traffic of the run, not the restart transient)."""
     E, L, lock_clk, fails = [], [], [], 0
     snapshots: list[dict | None] = []
-    # `stale` is NOT cleared by CMD bit 0 (frame_src resets it only with the TX reset), so it accumulates; judge its increase per restart.
-    stale_prev = b.snapshot()[0]["stale"]
+    # Since 97C every counter, `stale` and `go` included, is cleared by CMD bit 0, and the order number restarts with every restart of either
+    # side, so each restart's snapshot is judged as it reads. (Bitstreams built before 97C accumulate `stale` and lack the order-content words.)
     pre_clear: list[dict | None] = []
     for i in range(n):
         b.reset(rx_dp=True)
@@ -259,8 +263,6 @@ def restart_distribution(b: Board, n: int = 100, probes_per_link: int = 5, timeo
         b.configure(arm=True, kind=1, count=probes_per_link, interval=3000)
         b.run(0.02)
         tx, rx = settled_snapshot(b, probes_per_link)
-        tx = dict(tx, stale_raw=tx["stale"], stale=tx["stale"] - stale_prev)
-        stale_prev = tx["stale_raw"]
         snapshots.append({"tx": tx, "rx": rx})
         lock_clk.append(rx["lock_clk"])
         if tx["e_cnt"]:

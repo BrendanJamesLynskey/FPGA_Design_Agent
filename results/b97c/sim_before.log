@@ -1,0 +1,162 @@
+     -.--ns INFO     gpi                                ..mbed/gpi_embed.cpp:93   in _embed_init_python              Using Python 3.12.4 interpreter at /usr/bin/python3
+     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:79   in gpi_print_registered_impl       VPI registered
+     0.00ns INFO     cocotb                             Running on Icarus Verilog version 12.0 (stable)
+     0.00ns INFO     cocotb                             Seeding Python random module with 1794996562
+     0.00ns INFO     cocotb                             Initialized cocotb v2.0.1 from /home/brendan/.local/lib/python3.12/site-packages/cocotb
+     0.00ns INFO     cocotb                             Running tests
+     0.00ns INFO     cocotb.regression                  running core_cocotb.echo_probe (1/15)
+                                                            A probe frame sent by the generator comes back through the (near-end) loop: counted once, FCS good, echo time recorded.
+ 20161.00ns INFO     cocotb.tb_core                     echo: sent 3 cnt 3 E 12..12 good 3 bad 0
+ 20191.00ns INFO     cocotb.regression                  core_cocotb.echo_probe passed
+ 20191.00ns INFO     cocotb.regression                  running core_cocotb.trading_loop_armed (2/15)
+                                                            A feed frame (ask 99.50, threshold 99.75) loops back, the trading path fires, the order frame loops back: all frame bytes checked.
+ 40502.00ns INFO     cocotb.tb_core                     tx {'n_order': 1, 'n_feed': 1, 'n_probe': 0, 'n_test': 0, 'poisoned': 0, 'dropped': 0, 'underrun': 0, 'late': 0, 'stale': 0, 'go': 1, 't_tx_feed': 1611, 't_tx_probe': 0, 't_tx_order': 1634, 't_rx_feed': 1623, 't_rx_probe': 0, 't_rx_order': 1646, 'e_last': 0, 'e_min': 4294967295, 'e_max': 0, 'e_cnt': 0, 'l_last': 35, 'l_min': 35, 'l_max': 35, 'l_cnt': 1, 'd_last': 11, 'ts': 2542}
+                                                        rx {'lock': 1, 'slip': 0, 'loss': 0, 'lock_ev': 0, 'sh': 0, 'type': 0, 'os': 0, 'frames': 2, 'good': 2, 'bad': 0, 'err': 0, 'fired': 1, 'blocked': 0, 'toolong': 0, 'last_len': 70, 'lock_clk': 91}
+ 40502.00ns INFO     cocotb.regression                  core_cocotb.trading_loop_armed passed
+ 40502.00ns INFO     cocotb.regression                  running core_cocotb.trade_decisions (3/15)
+                                                            Prices above the threshold, the kill bit and the disarmed state send no order; counters say why.
+ 57683.00ns INFO     cocotb.tb_core                     price 10000 arm 1 kill 0: fired 0 sent 0 blocked 0
+ 63903.00ns INFO     cocotb.tb_core                     price 9975 arm 1 kill 0: fired 1 sent 1 blocked 0
+ 70123.00ns INFO     cocotb.tb_core                     price 9950 arm 0 kill 0: fired 0 sent 0 blocked 1
+ 76343.00ns INFO     cocotb.tb_core                     price 9950 arm 1 kill 1: fired 0 sent 0 blocked 1
+ 76343.00ns INFO     cocotb.regression                  core_cocotb.trade_decisions passed
+ 76343.00ns INFO     cocotb.regression                  running core_cocotb.poisoned_order_bad_fcs (4/15)
+                                                            The feed frame is damaged on the wire after the decision (its FCS fails): the order, already under way, leaves with a wrong FCS.
+ 96784.00ns INFO     cocotb.tb_core                     poison 4: tx {'n_order': 1, 'n_feed': 1, 'n_probe': 0, 'n_test': 0, 'poisoned': 1, 'dropped': 0, 'underrun': 0, 'late': 0, 'stale': 0, 'go': 1, 't_tx_feed': 1611, 't_tx_probe': 0, 't_tx_order': 1634, 't_rx_feed': 1623, 't_rx_probe': 0, 't_rx_order': 1646, 'e_last': 0, 'e_min': 4294967295, 'e_max': 0, 'e_cnt': 0, 'l_last': 35, 'l_min': 35, 'l_max': 35, 'l_cnt': 1, 'd_last': 11, 'ts': 2573}
+                                                        rx {'lock': 1, 'slip': 0, 'loss': 0, 'lock_ev': 0, 'sh': 0, 'type': 1, 'os': 0, 'frames': 2, 'good': 0, 'bad': 2, 'err': 0, 'fired': 1, 'blocked': 0, 'toolong': 0, 'last_len': 70, 'lock_clk': 91}
+ 96784.00ns INFO     cocotb.regression                  core_cocotb.poisoned_order_bad_fcs passed
+ 96784.00ns INFO     cocotb.regression                  running core_cocotb.poisoned_order_cut_frame (5/15)
+                                                            The feed frame is cut by a line error that makes a block an error block: the order leaves with a wrong FCS too.
+117225.00ns INFO     cocotb.tb_core                     poison 3: tx {'n_order': 1, 'n_feed': 1, 'n_probe': 0, 'n_test': 0, 'poisoned': 1, 'dropped': 0, 'underrun': 0, 'late': 0, 'stale': 0, 'go': 1, 't_tx_feed': 1611, 't_tx_probe': 0, 't_tx_order': 1634, 't_rx_feed': 1623, 't_rx_probe': 0, 't_rx_order': 1646, 'e_last': 0, 'e_min': 4294967295, 'e_max': 0, 'e_cnt': 0, 'l_last': 35, 'l_min': 35, 'l_max': 35, 'l_cnt': 1, 'd_last': 11, 'ts': 2557}
+                                                        rx {'lock': 1, 'slip': 0, 'loss': 0, 'lock_ev': 0, 'sh': 0, 'type': 1, 'os': 0, 'frames': 1, 'good': 0, 'bad': 1, 'err': 1, 'fired': 1, 'blocked': 0, 'toolong': 0, 'last_len': 70, 'lock_clk': 91}
+117225.00ns INFO     cocotb.regression                  core_cocotb.poisoned_order_cut_frame passed
+117225.00ns INFO     cocotb.regression                  running core_cocotb.tick_to_trade_digital (6/15)
+                                                            The fabric's own tick-to-trade in clocks, from the clock edge that captures the GT word completing the price field (RX side) to the clock
+130450.09ns INFO     cocotb.tb_core                     TTT {"price_word_captured_at_gt_to_mac_register_clocks": 2, "mac_register_to_fire_register_clocks": 1, "fire_register_to_go_pulse_in_tx_domain_clocks": 4, "go_pulse_to_order_preamble_in_mac_register_clocks": 2, "mac_register_of_price_word_to_order_preamble_clocks": 7, "gt_rxdata_price_word_to_gt_txdata_order_start_clocks": 11}
+130450.09ns INFO     cocotb.regression                  core_cocotb.tick_to_trade_digital passed
+130450.09ns INFO     cocotb.regression                  running core_cocotb.seq_after_counter_clear (7/15)
+                                                            Brief 97C: CMD bit 0 clears the order number on the receive side; the transmit side's expectation must follow.
+195811.09ns INFO     cocotb.tb_core                     SEQ counter_clear {"start": {"t_n_order": 3, "t_n_feed": 3, "t_poisoned": 0, "t_late": 0, "t_stale": 0, "t_go": 3, "t_dropped": 0, "t_underrun": 0, "r_fired": 3, "r_good": 6, "r_bad": 0, "r_err": 0, "r_order_ok": 0, "r_order_bad": 0}, "round0": {"t_n_order": 3, "t_n_feed": 3, "t_poisoned": 3, "t_late": 3, "t_stale": 3, "t_go": 3, "t_dropped": 0, "t_underrun": 0, "r_fired": 3, "r_good": 3, "r_bad": 3, "r_err": 0, "r_order_ok": 0, "r_order_bad": 0}, "round1": {"t_n_order": 3, "t_n_feed": 3, "t_poisoned": 3, "t_late": 3, "t_stale": 3, "t_go": 3, "t_dropped": 0, "t_underrun": 0, "r_fired": 3, "r_good": 3, "r_bad": 3, "r_err": 0, "r_order_ok": 0, "r_order_bad": 0}}
+195811.09ns WARNING  ..er_clear.seq_after_counter_clear {'round0': {'t_n_order': 3, 't_n_feed': 3, 't_poisoned': 3, 't_late': 3, ...}, 'round1': {'t_n_order': 3, 't_n_feed': 3, 't_poisoned': 3, 't_late': 3, ...}}
+                                                        assert not {'round0': {'t_n_order': 3, 't_n_feed': 3, 't_poisoned': 3, 't_late': 3, ...}, 'round1': {'t_n_order': 3, 't_n_feed': 3, 't_poisoned': 3, 't_late': 3, ...}}
+                                                        Traceback (most recent call last):
+                                                          File "/home/brendan/Claude_sandbox/_worktrees/97c-base/designs/b96_kr260_10g/tests/core_cocotb.py", line 369, in seq_after_counter_clear
+                                                            await seq_scenario(dut, "counter_clear", act_clear)
+                                                          File "/home/brendan/Claude_sandbox/_worktrees/97c-base/designs/b96_kr260_10g/tests/core_cocotb.py", line 335, in seq_scenario
+                                                            assert not bad, bad
+                                                        AssertionError: {'round0': {'t_n_order': 3, 't_n_feed': 3, 't_poisoned': 3, 't_late': 3, ...}, 'round1': {'t_n_order': 3, 't_n_feed': 3, 't_poisoned': 3, 't_late': 3, ...}}
+                                                        assert not {'round0': {'t_n_order': 3, 't_n_feed': 3, 't_poisoned': 3, 't_late': 3, ...}, 'round1': {'t_n_order': 3, 't_n_feed': 3, 't_poisoned': 3, 't_late': 3, ...}}
+195811.09ns WARNING  cocotb.regression                  core_cocotb.seq_after_counter_clear failed
+195811.09ns INFO     cocotb.regression                  running core_cocotb.seq_after_rx_relink (8/15)
+                                                            An RX datapath restart (no clear) leaves the order sequence in step.
+267532.09ns INFO     cocotb.tb_core                     SEQ rx_relink {"start": {"t_n_order": 3, "t_n_feed": 3, "t_poisoned": 0, "t_late": 0, "t_stale": 0, "t_go": 3, "t_dropped": 0, "t_underrun": 0, "r_fired": 3, "r_good": 6, "r_bad": 0, "r_err": 0, "r_order_ok": 0, "r_order_bad": 0}, "round0": {"t_n_order": 3, "t_n_feed": 3, "t_poisoned": 0, "t_late": 0, "t_stale": 0, "t_go": 3, "t_dropped": 0, "t_underrun": 0, "r_fired": 3, "r_good": 6, "r_bad": 0, "r_err": 0, "r_order_ok": 0, "r_order_bad": 0}, "round1": {"t_n_order": 3, "t_n_feed": 3, "t_poisoned": 0, "t_late": 0, "t_stale": 0, "t_go": 3, "t_dropped": 0, "t_underrun": 0, "r_fired": 3, "r_good": 6, "r_bad": 0, "r_err": 0, "r_order_ok": 0, "r_order_bad": 0}}
+267532.09ns WARNING  ..er_rx_relink.seq_after_rx_relink {'round0': {'t_n_order': 3, 't_n_feed': 3, 't_poisoned': 0, 't_late': 0, ...}, 'round1': {'t_n_order': 3, 't_n_feed': 3, 't_poisoned': 0, 't_late': 0, ...}}
+                                                        assert not {'round0': {'t_n_order': 3, 't_n_feed': 3, 't_poisoned': 0, 't_late': 0, ...}, 'round1': {'t_n_order': 3, 't_n_feed': 3, 't_poisoned': 0, 't_late': 0, ...}}
+                                                        Traceback (most recent call last):
+                                                          File "/home/brendan/Claude_sandbox/_worktrees/97c-base/designs/b96_kr260_10g/tests/core_cocotb.py", line 375, in seq_after_rx_relink
+                                                            await seq_scenario(dut, "rx_relink", act_rx_relink)
+                                                          File "/home/brendan/Claude_sandbox/_worktrees/97c-base/designs/b96_kr260_10g/tests/core_cocotb.py", line 337, in seq_scenario
+                                                            assert not notok, notok
+                                                        AssertionError: {'round0': {'t_n_order': 3, 't_n_feed': 3, 't_poisoned': 0, 't_late': 0, ...}, 'round1': {'t_n_order': 3, 't_n_feed': 3, 't_poisoned': 0, 't_late': 0, ...}}
+                                                        assert not {'round0': {'t_n_order': 3, 't_n_feed': 3, 't_poisoned': 0, 't_late': 0, ...}, 'round1': {'t_n_order': 3, 't_n_feed': 3, 't_poisoned': 0, 't_late': 0, ...}}
+267532.09ns WARNING  cocotb.regression                  core_cocotb.seq_after_rx_relink failed
+267532.09ns INFO     cocotb.regression                  running core_cocotb.seq_after_tx_relink (9/15)
+                                                            A TX datapath restart (no clear) leaves the order sequence in step.
+335113.09ns INFO     cocotb.tb_core                     SEQ tx_relink {"start": {"t_n_order": 3, "t_n_feed": 3, "t_poisoned": 0, "t_late": 0, "t_stale": 0, "t_go": 3, "t_dropped": 0, "t_underrun": 0, "r_fired": 3, "r_good": 6, "r_bad": 0, "r_err": 0, "r_order_ok": 0, "r_order_bad": 0}, "round0": {"t_n_order": 3, "t_n_feed": 3, "t_poisoned": 3, "t_late": 3, "t_stale": 3, "t_go": 3, "t_dropped": 0, "t_underrun": 0, "r_fired": 3, "r_good": 3, "r_bad": 3, "r_err": 0, "r_order_ok": 0, "r_order_bad": 0}, "round1": {"t_n_order": 3, "t_n_feed": 3, "t_poisoned": 3, "t_late": 3, "t_stale": 3, "t_go": 3, "t_dropped": 0, "t_underrun": 0, "r_fired": 3, "r_good": 3, "r_bad": 3, "r_err": 0, "r_order_ok": 0, "r_order_bad": 0}}
+335113.09ns WARNING  ..er_tx_relink.seq_after_tx_relink {'round0': {'t_n_order': 3, 't_n_feed': 3, 't_poisoned': 3, 't_late': 3, ...}, 'round1': {'t_n_order': 3, 't_n_feed': 3, 't_poisoned': 3, 't_late': 3, ...}}
+                                                        assert not {'round0': {'t_n_order': 3, 't_n_feed': 3, 't_poisoned': 3, 't_late': 3, ...}, 'round1': {'t_n_order': 3, 't_n_feed': 3, 't_poisoned': 3, 't_late': 3, ...}}
+                                                        Traceback (most recent call last):
+                                                          File "/home/brendan/Claude_sandbox/_worktrees/97c-base/designs/b96_kr260_10g/tests/core_cocotb.py", line 381, in seq_after_tx_relink
+                                                            await seq_scenario(dut, "tx_relink", act_tx_relink)
+                                                          File "/home/brendan/Claude_sandbox/_worktrees/97c-base/designs/b96_kr260_10g/tests/core_cocotb.py", line 335, in seq_scenario
+                                                            assert not bad, bad
+                                                        AssertionError: {'round0': {'t_n_order': 3, 't_n_feed': 3, 't_poisoned': 3, 't_late': 3, ...}, 'round1': {'t_n_order': 3, 't_n_feed': 3, 't_poisoned': 3, 't_late': 3, ...}}
+                                                        assert not {'round0': {'t_n_order': 3, 't_n_feed': 3, 't_poisoned': 3, 't_late': 3, ...}, 'round1': {'t_n_order': 3, 't_n_feed': 3, 't_poisoned': 3, 't_late': 3, ...}}
+335113.09ns WARNING  cocotb.regression                  core_cocotb.seq_after_tx_relink failed
+335113.09ns INFO     cocotb.regression                  running core_cocotb.seq_after_all_reset (10/15)
+                                                            A reset of the whole GT leaves the order sequence in step.
+409364.09ns INFO     cocotb.tb_core                     SEQ all_reset {"start": {"t_n_order": 3, "t_n_feed": 3, "t_poisoned": 0, "t_late": 0, "t_stale": 0, "t_go": 3, "t_dropped": 0, "t_underrun": 0, "r_fired": 3, "r_good": 6, "r_bad": 0, "r_err": 0, "r_order_ok": 0, "r_order_bad": 0}, "round0": {"t_n_order": 3, "t_n_feed": 3, "t_poisoned": 3, "t_late": 3, "t_stale": 3, "t_go": 3, "t_dropped": 0, "t_underrun": 0, "r_fired": 3, "r_good": 3, "r_bad": 3, "r_err": 0, "r_order_ok": 0, "r_order_bad": 0}, "round1": {"t_n_order": 3, "t_n_feed": 3, "t_poisoned": 3, "t_late": 3, "t_stale": 3, "t_go": 3, "t_dropped": 0, "t_underrun": 0, "r_fired": 3, "r_good": 3, "r_bad": 3, "r_err": 0, "r_order_ok": 0, "r_order_bad": 0}}
+409364.09ns WARNING  ..er_all_reset.seq_after_all_reset {'round0': {'t_n_order': 3, 't_n_feed': 3, 't_poisoned': 3, 't_late': 3, ...}, 'round1': {'t_n_order': 3, 't_n_feed': 3, 't_poisoned': 3, 't_late': 3, ...}}
+                                                        assert not {'round0': {'t_n_order': 3, 't_n_feed': 3, 't_poisoned': 3, 't_late': 3, ...}, 'round1': {'t_n_order': 3, 't_n_feed': 3, 't_poisoned': 3, 't_late': 3, ...}}
+                                                        Traceback (most recent call last):
+                                                          File "/home/brendan/Claude_sandbox/_worktrees/97c-base/designs/b96_kr260_10g/tests/core_cocotb.py", line 387, in seq_after_all_reset
+                                                            await seq_scenario(dut, "all_reset", act_all_reset)
+                                                          File "/home/brendan/Claude_sandbox/_worktrees/97c-base/designs/b96_kr260_10g/tests/core_cocotb.py", line 335, in seq_scenario
+                                                            assert not bad, bad
+                                                        AssertionError: {'round0': {'t_n_order': 3, 't_n_feed': 3, 't_poisoned': 3, 't_late': 3, ...}, 'round1': {'t_n_order': 3, 't_n_feed': 3, 't_poisoned': 3, 't_late': 3, ...}}
+                                                        assert not {'round0': {'t_n_order': 3, 't_n_feed': 3, 't_poisoned': 3, 't_late': 3, ...}, 'round1': {'t_n_order': 3, 't_n_feed': 3, 't_poisoned': 3, 't_late': 3, ...}}
+409364.09ns WARNING  cocotb.regression                  core_cocotb.seq_after_all_reset failed
+409364.09ns INFO     cocotb.regression                  running core_cocotb.seq_bench_restart_sequence (11/15)
+                                                            The stage-3 bench's own sequence: restart the RX datapath, clear, send orders; four times over, then two more rounds.
+466265.10ns WARNING  ..uence.seq_bench_restart_sequence {'t_n_order': 3, 't_n_feed': 3, 't_poisoned': 3, 't_late': 3, ...}
+                                                        assert (False)
+                                                         +  where False = clean_round({'t_n_order': 3, 't_n_feed': 3, 't_poisoned': 3, 't_late': 3, ...})
+                                                        Traceback (most recent call last):
+                                                          File "/home/brendan/Claude_sandbox/_worktrees/97c-base/designs/b96_kr260_10g/tests/core_cocotb.py", line 393, in seq_bench_restart_sequence
+                                                            await seq_scenario(dut, "bench_sequence", act_bench_sequence)
+                                                          File "/home/brendan/Claude_sandbox/_worktrees/97c-base/designs/b96_kr260_10g/tests/core_cocotb.py", line 329, in seq_scenario
+                                                            await action(dut, h)
+                                                          File "/home/brendan/Claude_sandbox/_worktrees/97c-base/designs/b96_kr260_10g/tests/core_cocotb.py", line 363, in act_bench_sequence
+                                                            assert clean_round(d) and d["r_order_ok"] == 3 and d["r_order_bad"] == 0, d
+                                                        AssertionError: {'t_n_order': 3, 't_n_feed': 3, 't_poisoned': 3, 't_late': 3, ...}
+                                                        assert (False)
+                                                         +  where False = clean_round({'t_n_order': 3, 't_n_feed': 3, 't_poisoned': 3, 't_late': 3, ...})
+466265.10ns WARNING  cocotb.regression                  core_cocotb.seq_bench_restart_sequence failed
+466265.10ns INFO     cocotb.regression                  running core_cocotb.seq_clear_while_orders_flow (12/15)
+                                                            A counter clear in the middle of a stream of orders (the window where a fire and the clear straddle in the two domains): the orders around
+509526.10ns WARNING  ..flow.seq_clear_while_orders_flow (0, {'t_n_order': 3, 't_n_feed': 3, 't_poisoned': 0, 't_late': 0, ...})
+                                                        assert (True and 0 == 3)
+                                                         +  where True = clean_round({'t_n_order': 3, 't_n_feed': 3, 't_poisoned': 0, 't_late': 0, ...})
+                                                        Traceback (most recent call last):
+                                                          File "/home/brendan/Claude_sandbox/_worktrees/97c-base/designs/b96_kr260_10g/tests/core_cocotb.py", line 416, in seq_clear_while_orders_flow
+                                                            assert clean_round(d) and d["r_order_ok"] == 3 and d["r_order_bad"] == 0, (off, d)
+                                                        AssertionError: (0, {'t_n_order': 3, 't_n_feed': 3, 't_poisoned': 0, 't_late': 0, ...})
+                                                        assert (True and 0 == 3)
+                                                         +  where True = clean_round({'t_n_order': 3, 't_n_feed': 3, 't_poisoned': 0, 't_late': 0, ...})
+509526.10ns WARNING  cocotb.regression                  core_cocotb.seq_clear_while_orders_flow failed
+509526.10ns INFO     cocotb.regression                  running core_cocotb.seq_mismatch_still_poisons (13/15)
+                                                            Fail-safe kept: if the transmit side's count is forced out of step with the order number, the next order is flagged stale, late and
+556157.10ns INFO     cocotb.tb_core                     MISMATCH {"t_n_order": 3, "t_n_feed": 3, "t_poisoned": 3, "t_late": 3, "t_stale": 3, "t_go": 10, "t_dropped": 0, "t_underrun": 0, "r_fired": 3, "r_good": 3, "r_bad": 3, "r_err": 0, "r_order_ok": 0, "r_order_bad": 0}
+556157.10ns WARNING  ..isons.seq_mismatch_still_poisons {'t_n_order': 3, 't_n_feed': 3, 't_poisoned': 3, 't_late': 3, ...}
+                                                        assert (3 == 1)
+                                                        Traceback (most recent call last):
+                                                          File "/home/brendan/Claude_sandbox/_worktrees/97c-base/designs/b96_kr260_10g/tests/core_cocotb.py", line 435, in seq_mismatch_still_poisons
+                                                            assert d1["t_stale"] == 1 and d1["t_poisoned"] == 1 and d1["t_late"] == 1 and d1["r_order_bad"] == 1 and d1["r_order_ok"] == 2, d1
+                                                        AssertionError: {'t_n_order': 3, 't_n_feed': 3, 't_poisoned': 3, 't_late': 3, ...}
+                                                        assert (3 == 1)
+556157.10ns WARNING  cocotb.regression                  core_cocotb.seq_mismatch_still_poisons failed
+556157.10ns INFO     cocotb.regression                  running core_cocotb.order_content_check_catches_a_wrong_order (14/15)
+                                                            An order that leaves with a good FCS but a wrong quantity (the receive side's decision register is changed after the frame source
+580798.10ns INFO     cocotb.tb_core                     content: tx {'n_order': 1, 'n_feed': 1, 'n_probe': 0, 'n_test': 0, 'poisoned': 0, 'dropped': 0, 'underrun': 0, 'late': 0, 'stale': 0, 'go': 1, 't_tx_feed': 1611, 't_tx_probe': 0, 't_tx_order': 1634, 't_rx_feed': 1623, 't_rx_probe': 0, 't_rx_order': 1646, 'e_last': 0, 'e_min': 4294967295, 'e_max': 0, 'e_cnt': 0, 'l_last': 35, 'l_min': 35, 'l_max': 35, 'l_cnt': 1, 'd_last': 11, 'ts': 3222}
+                                                        rx {'lock': 1, 'slip': 0, 'loss': 0, 'lock_ev': 0, 'sh': 0, 'type': 0, 'os': 0, 'frames': 2, 'good': 2, 'bad': 0, 'err': 0, 'fired': 1, 'blocked': 0, 'toolong': 0, 'last_len': 70, 'lock_clk': 91, 'order_ok': 0, 'order_bad': 0}
+580798.10ns WARNING  ..tent_check_catches_a_wrong_order {'lock': 1, 'slip': 0, 'loss': 0, 'lock_ev': 0, ...}
+                                                        assert (0 == 1)
+                                                        Traceback (most recent call last):
+                                                          File "/home/brendan/Claude_sandbox/_worktrees/97c-base/designs/b96_kr260_10g/tests/core_cocotb.py", line 469, in order_content_check_catches_a_wrong_order
+                                                            assert r["order_bad"] == 1 and r["order_ok"] == 0, r
+                                                        AssertionError: {'lock': 1, 'slip': 0, 'loss': 0, 'lock_ev': 0, ...}
+                                                        assert (0 == 1)
+580798.10ns WARNING  cocotb.regression                  core_cocotb.order_content_check_catches_a_wrong_order failed
+580798.10ns INFO     cocotb.regression                  running core_cocotb.zz_write_results (15/15)
+580798.10ns INFO     cocotb.regression                  core_cocotb.zz_write_results passed
+580798.10ns INFO     cocotb.regression                  ***************************************************************************************************************
+                                                        ** TEST                                                   STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **
+                                                        ***************************************************************************************************************
+                                                        ** core_cocotb.echo_probe                                  PASS       20191.00           9.35       2159.22  **
+                                                        ** core_cocotb.trading_loop_armed                          PASS       20311.00           9.73       2086.46  **
+                                                        ** core_cocotb.trade_decisions                             PASS       35841.00          16.95       2115.05  **
+                                                        ** core_cocotb.poisoned_order_bad_fcs                      PASS       20441.00           9.56       2138.59  **
+                                                        ** core_cocotb.poisoned_order_cut_frame                    PASS       20441.00           9.66       2116.84  **
+                                                        ** core_cocotb.tick_to_trade_digital                       PASS       13225.09           5.77       2292.62  **
+                                                        ** core_cocotb.seq_after_counter_clear                     FAIL       65361.00          34.39       1900.59  **
+                                                        ** core_cocotb.seq_after_rx_relink                         FAIL       71721.00          35.59       2015.30  **
+                                                        ** core_cocotb.seq_after_tx_relink                         FAIL       67581.00          34.74       1945.56  **
+                                                        ** core_cocotb.seq_after_all_reset                         FAIL       74251.00          36.90       2012.15  **
+                                                        ** core_cocotb.seq_bench_restart_sequence                  FAIL       56901.00          26.62       2137.34  **
+                                                        ** core_cocotb.seq_clear_while_orders_flow                 FAIL       43261.00          20.97       2063.38  **
+                                                        ** core_cocotb.seq_mismatch_still_poisons                  FAIL       46631.00          22.46       2076.63  **
+                                                        ** core_cocotb.order_content_check_catches_a_wrong_order   FAIL       24641.00          11.54       2135.98  **
+                                                        ** core_cocotb.zz_write_results                            PASS           0.00           0.00          0.00  **
+                                                        ***************************************************************************************************************
+                                                        ** TESTS=15 PASS=7 FAIL=8 SKIP=0                                     580798.10         284.26       2043.21  **
+                                                        ***************************************************************************************************************

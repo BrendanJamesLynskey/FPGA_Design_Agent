@@ -14,6 +14,7 @@ module tx_path #(
     input  logic [b96_pkg::CFGW-1:0] cfg,    // configuration (layout in b96_core)
     input  logic        clr_p,               // clear counters (pulse)
     input  logic        gen_go_p,            // start the generator's run (pulse)
+    input  logic        seq_p,               // restart the order count (pulse): a restart of either side, from the register domain (97C)
     // from the receive domain
     input  logic        go_p,                // an order is wanted
     input  logic [15:0] go_inst,
@@ -47,6 +48,8 @@ module tx_path #(
     logic [15:0] fs_len;
     logic [63:0] s_data;
     logic [2:0]  s_nb1;
+    logic        stale_p;
+    logic [31:0] seq_seen;
     logic [31:0] stale, go_cnt, b_price, b_qty, b_seq, want_seq;
     logic [15:0] b_inst;
     logic [63:0] x_d;
@@ -66,10 +69,10 @@ module tx_path #(
     // orders go from us to the venue; the generator's frames come from the "venue" to us (they loop back through the optics or a NIC)
     logic is_order;
     assign is_order = (bus_kind == 2'd0);
-    frame_src u_fs (.clk, .rst, .start(fs_start), .kind(fs_kind), .len(fs_len), .dst_mac(is_order ? venue_mac : my_mac),
+    frame_src u_fs (.clk, .rst, .start(fs_start), .clr(clr_p), .kind(fs_kind), .len(fs_len), .dst_mac(is_order ? venue_mac : my_mac),
         .src_mac(is_order ? my_mac : venue_mac), .src_ip(is_order ? my_ip : venue_ip),
         .dst_ip(is_order ? venue_ip : my_ip), .sport(is_order ? sport : port_order), .dport_order(port_order), .dport_feed(port_feed), .dport_probe(port_probe),
-        .b_inst, .b_price, .b_qty, .b_seq, .want_seq, .busy(fs_busy), .stale, .s_valid, .s_data, .s_last, .s_nb1, .s_ready);
+        .b_inst, .b_price, .b_qty, .b_seq, .want_seq, .busy(fs_busy), .stale, .stale_p, .seq_seen, .s_valid, .s_data, .s_last, .s_nb1, .s_ready);
     // poison: the order's FCS is made wrong when the frame that caused it turned out bad (verdict arrives long before the last word:
     // the trading path never acts on frames long enough for it not to)
     logic verdict_good;
@@ -106,6 +109,13 @@ module tx_path #(
                 go_cnt <= go_cnt + 32'd1; go_seq_l <= go_cnt + 32'd1;
                 if (fs_busy || s_valid) n_dropped <= n_dropped + 32'd1;
             end
+            // the order count restarts with the counter clear and with a restart of either side; the receive side restarts its order number
+            // on the same events, so the two stay in step (97C). A clear in the clock of a go pulse wins: that order is flagged stale (fail closed)
+            if (clr_p || seq_p) begin go_cnt <= '0; go_seq_l <= '0; end
+            // Self-heal (97C review): a restart pulse that straddles a go pulse in the two domains (a few clocks apart) would leave the count one off for
+            // good. An order flagged stale (it is poisoned, fail closed) reloads the count from the number it carries, so the NEXT order is in step.
+            // The flagged order itself is never saved; an unsettled bus only costs the orders it garbles.
+            else if (stale_p && is_order) go_cnt <= seq_seen;
             if (gen_go_p) begin gen_left <= gen_count; gen_wait <= '0; end
             if (gen_wait != 32'd0) gen_wait <= gen_wait - 32'd1;
             if (fs_start && !go_p && gen_due) begin

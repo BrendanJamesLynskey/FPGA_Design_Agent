@@ -59,7 +59,7 @@ met the pause). Not fixed, stated as gaps below.
 - Not implemented: the reconciliation sublayer's link-fault state machine and the BER monitor; ordered sets are counted and shown as idles (block type 0x66, an ordered set followed by a
   lane-4 start, is among them, so a frame after it would be lost); no preamble/SFD check, runt or jumbo check on receive; no ARP or ICMP responder (stage 3 step 6 needs one); the transmit MAC does not pad.
 - `trade64` is **not** the 58A core: one rule on the first message of a frame, no book, no sequence-gap or halt, no price band or position interlock, no cancel after send, no IPv4 checksum check (design.md section 2.5).
-  Order fields cross by `xpm_cdc_array_single` as a quasi-static bus sampled five clocks after the order starts (Vivado reports CDC-6, three multi-bit warnings, for it); the `stale` counter shows a miss.
+  Order fields cross by `xpm_cdc_array_single` as a quasi-static bus sampled five clocks after the order starts (Vivado reports CDC-6, three multi-bit warnings, for it); the `stale` counter shows a miss. Brief 97C: the receive side's order number and the transmit side's expected count restart together on every counter clear and every restart of either side (before it a counter clear left them out of step and every later order was stale, late and poisoned), and the receive side compares each returned order with the decision (`order_ok`, `order_bad`; register_map.md).
   Two orders overlapping: the second is dropped and counted.
 - Memory: the build runs at the 6 GiB cap and swaps; a build with less memory pressure needs the hs_vec widths or the reports trimmed.
 

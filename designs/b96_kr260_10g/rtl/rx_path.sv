@@ -1,13 +1,14 @@
 // rx_path.sv: the receive side of brief 96's 10G design, in the receive user-clock domain (RXUSRCLK2, the clock the GT recovers from the
 // line): the GT's 64-bit RXDATA -> pcs_rx -> mac64_rx -> trade64, the receive counters and the events sent to the transmit domain.
-// The counters are cleared only by `clr_p` (so they survive a link restart); the PCS and MAC state is held in reset by `rst`.
+// The counters are cleared only by `clr_p` (so they survive a link restart; the order number is also restarted by `seq_p`, brief 97C); the PCS and MAC state is held in reset by `rst`.
 module rx_path #(
-    parameter int NRXW = 16
+    parameter int NRXW = 18
 ) (
     input  logic        clk,                 // RXUSRCLK2
     input  logic        rst,                 // hold while the GT's receive side is not up
     input  logic [b96_pkg::CFGW-1:0] cfg,
     input  logic        clr_p,
+    input  logic        seq_p,               // restart the order number (a restart of either side; from the register domain)
     input  logic [63:0] gt_d,
     output logic        fire,
     output logic [15:0] o_inst,
@@ -37,10 +38,10 @@ module rx_path #(
     logic [3:0]  m_nb;
     logic [15:0] m_len;
     mac64_rx u_mr (.clk, .rst, .lock_i(lock), .x_v, .x_d, .x_c, .m_v, .m_d, .m_sof, .m_nb, .m_end, .m_fcs_ok, .m_len, .m_err, .rx_sop);
-    logic [31:0] n_frames, n_good, n_bad, n_fired, n_blocked, n_toolong;
-    trade64 u_td (.clk, .rst, .clr(clr_p), .m_v, .m_d, .m_sof, .m_end, .m_fcs_ok, .m_len, .m_err, .my_mac, .venue_mac, .port_feed, .port_order, .port_probe,
+    logic [31:0] n_frames, n_good, n_bad, n_fired, n_blocked, n_toolong, n_order_ok, n_order_bad;
+    trade64 u_td (.clk, .rst, .clr(clr_p), .seq_clr(seq_p), .m_v, .m_d, .m_sof, .m_end, .m_fcs_ok, .m_len, .m_err, .my_mac, .venue_mac, .port_feed, .port_order, .port_probe,
         .thr, .qty, .arm, .kill, .trade_en, .fire, .o_inst, .o_price, .o_qty, .o_seq, .cls_feed, .cls_order, .cls_probe,
-        .verdict_v, .verdict_bad, .verdict_seq, .n_frames, .n_good, .n_bad, .n_fired, .n_blocked, .n_toolong);
+        .verdict_v, .verdict_bad, .verdict_seq, .n_frames, .n_good, .n_bad, .n_fired, .n_blocked, .n_toolong, .n_order_ok, .n_order_bad);
     // counters
     logic [31:0] c_slip, c_loss, c_lock, c_sh, c_type, c_os, c_err, lock_clk, last_len;
     logic        locked_once;
@@ -65,7 +66,7 @@ module rx_path #(
     always_comb begin
         rw[0] = {31'd0, lock}; rw[1] = c_slip; rw[2] = c_loss; rw[3] = c_lock; rw[4] = c_sh; rw[5] = c_type; rw[6] = c_os;
         rw[7] = n_frames; rw[8] = n_good; rw[9] = n_bad; rw[10] = c_err; rw[11] = n_fired; rw[12] = n_blocked; rw[13] = n_toolong;
-        rw[14] = last_len; rw[15] = lock_clk;
+        rw[14] = last_len; rw[15] = lock_clk; rw[16] = n_order_ok; rw[17] = n_order_bad;
     end
     always_comb for (int i = 0; i < NRXW; i++) rx_vec[32 * i +: 32] = rw[i];
     logic _unused;

@@ -12,19 +12,19 @@ from designs.b96_kr260_10g.host import b96_bench as bb
 class FakeBoard:
     """Registers of the design as far as the driver reads them; the module behind the I2C pins is not modelled (module_info is stubbed)."""
 
-    def __init__(self, polarity_ok=True, inject=None, drop_orders=None, late_orders=0):
+    def __init__(self, polarity_ok=True, inject=None, drop_orders=None, late_orders=0, order_wrong=None):
         # inject: {restart index: {"stale": 1, "bad": 2, ...}} counters set non-zero at that restart's snapshot (restart = number of clears - 1);
         # drop_orders: {restart index: orders actually fired and sent}; late_orders: snapshots that still show no orders (the tail has not arrived)
-        self.inject = inject or {}; self.drop_orders = drop_orders or {}; self.late_orders = late_orders
-        self.clears = 0; self.late_left = 0; self.stale_acc = 0; self.done = set()      # stale is not cleared by CMD bit 0 on the real design
+        self.order_wrong = order_wrong or {}; self.inject = inject or {}; self.drop_orders = drop_orders or {}; self.late_orders = late_orders
+        self.clears = 0; self.late_left = 0; self.done = set()
         self.r = {0x000: 0x96A00001, 0x00C: 0x8, 0x014: 0x3 | (1 << 9) | (1 << 11)}
         self.polarity_ok = polarity_ok
-        self.rx = [0] * 16; self.tx = [0] * 26
+        self.rx = [0] * 18; self.tx = [0] * 26
         self.snap_n = 0
         self.rx[bb.RX["lock_clk"]] = 70
 
     def rd(self, a):
-        if 0x100 <= a < 0x140: return 0 if getattr(self, "mask", False) and a == 0x100 + 4 * bb.RX["fired"] else self.rx[(a - 0x100) // 4]
+        if 0x100 <= a < 0x148: return 0 if getattr(self, "mask", False) and a == 0x100 + 4 * bb.RX["fired"] else self.rx[(a - 0x100) // 4]
         if 0x200 <= a < 0x268: return 0 if getattr(self, "mask", False) and a == 0x200 + 4 * bb.TX["n_order"] else self.tx[(a - 0x200) // 4]
         if a == 0x014:
             off = self.r[0x00C] & 8
@@ -36,16 +36,14 @@ class FakeBoard:
         self.r[a] = v
         if a == 0x018 and v & 1:
             self.clears += 1; self.late_left = self.late_orders
-            self.tx = [0] * 26; self.tx[bb.TX["stale"]] = self.stale_acc; self.rx = [0] * 16; self.rx[bb.RX["lock_clk"]] = 70
+            self.tx = [0] * 26; self.rx = [0] * 18; self.rx[bb.RX["lock_clk"]] = 70
         if a == 0x018 and v & 2 and (self.r.get(0x068, 0) & 1) and ((self.r.get(0x068, 0) >> 4) & 3) == 1:      # armed feed frames fire one order each
             n = self.drop_orders.get(self.clears - 1, self.r.get(0x078, 0))
-            self.tx[bb.TX["n_order"]] += n; self.rx[bb.RX["fired"]] += n
+            self.tx[bb.TX["n_order"]] += n; self.rx[bb.RX["fired"]] += n; self.rx[bb.RX["order_ok"]] += n - self.order_wrong.get(self.clears - 1, 0)
+            self.rx[bb.RX["order_bad"]] += self.order_wrong.get(self.clears - 1, 0)
         if a == 0x018 and v & 4:
             i = self.clears - 1
-            if i not in self.done: self.stale_acc += self.inject.get(i, {}).get("stale", 0); self.done.add(i)
-            self.tx[bb.TX["stale"]] = self.stale_acc
             for k, c in self.inject.get(i, {}).items():
-                if k == "stale": continue
                 (self.tx if k in bb.TX else self.rx)[(bb.TX if k in bb.TX else bb.RX)[k]] = c
             self.mask = self.late_left > 0
             self.late_left = max(0, self.late_left - 1)
@@ -98,7 +96,7 @@ def _run(tmp_path, monkeypatch, n=6, **kw):
 def test_clean_run_is_ok(tmp_path, monkeypatch) -> None:
     sf = _run(tmp_path, monkeypatch)["safety"]
     assert sf["ok"] is True and sf["failing_counters"] == [] and sf["reasons"] == [] and sf["bad_restarts"] == []
-    assert sf["sums"]["stale"] == 0 and sf["restarts_checked"] == 6
+    assert sf["sums"]["stale"] == 0 and sf["sums"]["order_ok"] == 30 and sf["sums"]["order_bad"] == 0 and sf["restarts_checked"] == 6
     saved = json.loads((tmp_path / "stage3.json").read_text())["restarts"]["snapshots"]
     assert saved[0]["tx"]["n_order"] == 5 and saved[0]["rx"]["fired"] == 5
 
@@ -110,7 +108,7 @@ def test_one_stale_in_one_restart_fails_and_names_it(tmp_path, monkeypatch) -> N
     assert sf["sums"]["stale"] == 1 and sf["orders"]["fired_total"] == 30      # orders are right: only stale failed
 
 
-@pytest.mark.parametrize("name", ["poisoned", "dropped", "underrun", "late", "stale", "bad", "err", "toolong"])
+@pytest.mark.parametrize("name", ["poisoned", "dropped", "underrun", "late", "stale", "bad", "err", "toolong", "order_bad"])
 def test_every_safety_counter_is_judged(tmp_path, monkeypatch, name) -> None:
     sf = _run(tmp_path, monkeypatch, n=2, inject={1: {name: 2}})["safety"]
     assert sf["ok"] is False and sf["failing_counters"] == [name]
@@ -118,8 +116,8 @@ def test_every_safety_counter_is_judged(tmp_path, monkeypatch, name) -> None:
 
 def test_order_shortfall_fails(tmp_path, monkeypatch) -> None:
     sf = _run(tmp_path, monkeypatch, drop_orders={2: 4})["safety"]
-    assert sf["ok"] is False and sorted(sf["failing_counters"]) == ["fired", "n_order"]
-    assert sf["bad_restarts"][0]["order_count_wrong"] == {"n_order": 4, "fired": 4}
+    assert sf["ok"] is False and sorted(sf["failing_counters"]) == ["fired", "n_order", "order_ok"]
+    assert sf["bad_restarts"][0]["order_count_wrong"] == {"n_order": 4, "fired": 4, "order_ok": 4}
     assert sf["orders"]["expected_total"] == 30 and sf["orders"]["fired_total"] == 29
 
 
@@ -129,7 +127,7 @@ def test_tail_that_arrives_late_is_waited_for(tmp_path, monkeypatch) -> None:
 
 
 def test_unlocked_restart_is_not_ok() -> None:
-    clean = {"tx": {k: 0 for k in bb.SAFETY_TX} | {"n_order": 5}, "rx": {k: 0 for k in bb.SAFETY_RX} | {"blocked": 0, "fired": 5}}
+    clean = {"tx": {k: 0 for k in bb.SAFETY_TX} | {"n_order": 5}, "rx": {k: 0 for k in bb.SAFETY_RX} | {"blocked": 0, "fired": 5, "order_ok": 5}}
     assert bb.safety_verdict([clean, clean], 5, 2)["ok"] is True
     sf = bb.safety_verdict([clean, None], 5, 2)
     assert sf["ok"] is False and sf["restarts_unreadable"] == [1]
@@ -137,7 +135,7 @@ def test_unlocked_restart_is_not_ok() -> None:
 
 
 def test_unread_counter_is_not_ok() -> None:
-    sn = {"tx": {k: 0 for k in bb.SAFETY_TX} | {"n_order": 5}, "rx": {"bad": 0, "err": 0, "blocked": 0, "fired": 5}}      # toolong missing
+    sn = {"tx": {k: 0 for k in bb.SAFETY_TX} | {"n_order": 5}, "rx": {"bad": 0, "err": 0, "blocked": 0, "fired": 5, "order_ok": 5, "order_bad": 0}}      # toolong missing
     sf = bb.safety_verdict([sn], 5, 1)
     assert sf["ok"] is False and "toolong" in sf["failing_counters"]
 
@@ -151,19 +149,25 @@ def test_link_never_up_has_no_ok(tmp_path, monkeypatch) -> None:
     assert res["safety"]["ok"] is False
 
 
-def test_stale_is_judged_as_an_increase(tmp_path, monkeypatch) -> None:
-    # stale is not cleared by CMD bit 0: a constant leftover count must not fail every restart, a rise in one restart must fail that one only
+def test_wrong_order_content_fails_and_is_named(tmp_path, monkeypatch) -> None:
+    sf = _run(tmp_path, monkeypatch, order_wrong={2: 1})["safety"]
+    assert sf["ok"] is False and sorted(sf["failing_counters"]) == ["order_bad", "order_ok"]
+    assert sf["bad_restarts"][0]["restart"] == 2 and sf["bad_restarts"][0]["nonzero"] == {"order_bad": 1}
+    assert sf["bad_restarts"][0]["order_count_wrong"] == {"order_ok": 4}
+
+
+def test_a_bitstream_without_the_content_check_is_not_ok(tmp_path, monkeypatch) -> None:
+    # built before 97C the words RXV16 and RXV17 read 0: no order is ever counted intact, so the run cannot pass
     f = FakeBoard()
     orig = f.wr
     def wr(a, v):
         orig(a, v)
-        if a == 0x018 and v & 4:
-            f.tx[bb.TX["stale"]] = 3 + (1 if f.clears - 1 >= 4 else 0)
+        f.rx[bb.RX["order_ok"]] = 0
     f.wr = wr
     monkeypatch.setattr(bb.Board, "module_info", lambda self: {}); monkeypatch.setattr(bb.Board, "ddm", lambda self: {})
     monkeypatch.setattr(bb.time, "sleep", lambda s: None)
-    sf = bb.run_all(f, "97: x", tmp_path, cable_loop_m=1.0, n_restarts=6)["safety"]
-    assert sf["ok"] is False and [r["restart"] for r in sf["bad_restarts"]] == [4] and sf["failing_counters"] == ["stale"]
+    sf = bb.run_all(f, "97: x", tmp_path, cable_loop_m=1.0, n_restarts=3)["safety"]
+    assert sf["ok"] is False and "order_ok" in sf["failing_counters"]
 
 
 def test_nothing_to_judge_is_not_ok() -> None:

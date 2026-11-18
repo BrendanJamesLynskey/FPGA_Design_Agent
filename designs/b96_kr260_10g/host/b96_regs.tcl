@@ -17,7 +17,7 @@ proc b96_wr {a v} { b58a_wr $a $v; return ok }
 proc b96_dump {} {
     b58a_wr 0x018 0x4
     after 2
-    for {set i 0} {$i < 16} {incr i} { puts "RXV$i [b96_rd [expr {0x100 + 4 * $i}]]" }
+    for {set i 0} {$i < 18} {incr i} { puts "RXV$i [b96_rd [expr {0x100 + 4 * $i}]]" }
     for {set i 0} {$i < 26} {incr i} { puts "TXV$i [b96_rd [expr {0x200 + 4 * $i}]]" }
 }
 proc b96_laser_on {}  { set c [b58a_rd 0x00C]; b58a_wr 0x00C [expr {$c & ~0x8}]; return ok }
