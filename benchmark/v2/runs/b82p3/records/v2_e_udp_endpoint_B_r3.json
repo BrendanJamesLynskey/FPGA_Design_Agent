@@ -1,0 +1,229 @@
+{
+ "task": "v2_e_udp_endpoint",
+ "level": "L2",
+ "arm": "B",
+ "repeat": 3,
+ "attempt": 1,
+ "run_id": "20261118-021720-e777",
+ "rc": 0,
+ "wall_s": 10005.1,
+ "hard_limit": false,
+ "worker": "w1",
+ "code": "c4cd5f05",
+ "claude_cli": "2.1.321",
+ "spec_tests": true,
+ "started": "2026-11-18 02:17:19",
+ "tokens": 4575609,
+ "plan_cost_estimate_usd": 5.066,
+ "turns": 113,
+ "stop": "done",
+ "stages_visited": [
+  0,
+  0,
+  1,
+  1,
+  2,
+  2,
+  2,
+  2,
+  2
+ ],
+ "stage2_visits": 5,
+ "gates_last": {
+  "clarify": true,
+  "board-and-device-planning": true,
+  "rtl-design-creation": true
+ },
+ "stage2_gates_passed": true,
+ "claude_code_version": "2.1.321 (Claude Code)",
+ "knowledge_use": {
+  "rtl/board-and-device-planning": {
+   "board_constraints": {
+    "calls": 1
+   },
+   "load_skill": {
+    "calls": 1,
+    "sections": [],
+    "skills": [
+     "procedures/ultrafast/constraints/SKILL.md"
+    ],
+    "empty_calls": 0
+   }
+  },
+  "tests/rtl-design-creation": {
+   "load_skill": {
+    "calls": 1,
+    "sections": [
+     "verification-stages"
+    ],
+    "skills": [
+     "procedures/verification-stages/v-hw-bringup/SKILL.md",
+     "procedures/verification-stages/v0-v1-testplan/SKILL.md",
+     "procedures/verification-stages/v2-tests-assertions-formal/SKILL.md",
+     "procedures/verification-stages/v3-coverage-closure/SKILL.md"
+    ],
+    "empty_calls": 0,
+    "procedures_fallback": [
+     "verification-stages"
+    ]
+   },
+   "search_docs": {
+    "calls": 1,
+    "hits": [
+     "ross/hw-ila-debug/REFERENCE.md#13",
+     "ross/vivado-simulate-rtl/README.md#2",
+     "ross/vivado-simulate-rtl/references/adding-a-simulator.md#2",
+     "ross/vivado-simulate-rtl/references/xsim-advanced-verification.md#1",
+     "ross/vivado-simulate-rtl/references/xsim-advanced-verification.md#3",
+     "ross/vivado-simulate-rtl/references/xsim-advanced-verification.md#6"
+    ]
+   }
+  },
+  "rtl/rtl-design-creation": {
+   "load_skill": {
+    "calls": 1,
+    "sections": [
+     "verification-stages"
+    ],
+    "skills": [
+     "procedures/verification-stages/v-hw-bringup/SKILL.md",
+     "procedures/verification-stages/v0-v1-testplan/SKILL.md",
+     "procedures/verification-stages/v2-tests-assertions-formal/SKILL.md",
+     "procedures/verification-stages/v3-coverage-closure/SKILL.md"
+    ],
+    "empty_calls": 0,
+    "procedures_fallback": [
+     "verification-stages"
+    ]
+   },
+   "search_docs": {
+    "calls": 2,
+    "hits": [
+     "amd/UG906#2",
+     "ross/vai-aie-compiler-oriented-optimizations/SKILL.md#20",
+     "ross/vivado-rtl-elaboration-analysis/resolution/8-7134.md#1",
+     "ross/vivado-rtl-elaboration-analysis/resolution/clock-edge.md#3",
+     "ross/vivado-rtl-lint/resolution/RESET-2.md#1"
+    ]
+   }
+  }
+ },
+ "questions": {
+  "asked": 6,
+  "answered": 1,
+  "defaulted": 5,
+  "questions": [
+   {
+    "id": "q1",
+    "text": "What is the register map of the test shell (offset, width, reset value and access of every register)?",
+    "default": "The map in registers.map: RX_BYTE 0x00, TICK 0x04, STATUS 0x08, REPLY_LEN 0x0C, REPLY_IDX 0x10, REPLY_WORD 0x14, TELEM_LEN 0x18, TELEM_IDX 0x1C, TELEM_WORD 0x20, TAKE 0x24, all 32-bit",
+    "reason": "The request names these functions but gives no offsets",
+    "answer": "IN: offset 0x00, WO, reset 0: [7:0] packet byte, [8] end flag\nSTAT: offset 0x09, RO, reset 0: [0] telemetry on, [1] busy\nRIDX: offset 0x03, RW, reset 0: [6:0] word number\nRWORD: offset 0x04, RO, reset 0: bytes 4i..4i+3 of the reply, first byte on top, zero past the end\nRLEN: offset 0x02, RO, reset 0: length in bytes of the latest reply, 0 if none\nTICK: offset 0x01, WO, reset 0: [7:0] n ticks\nTIDX: offset 0x06, RW, reset 0: [6:0] word number\nTWORD: offset 0x07, RO, reset 0: same for the telemetry frame\nTAKE: offset 0x08, WO, reset 0: any write takes the held telemetry frame\nTLEN: offset 0x05, RO, reset 0: length of the held telemetry frame, 0 if none\nshell: test shell, PROTOCOL.md 1.1\nunmapped: no register at an offset: reads 0, writes ignored (read-only registers behave the same on write)",
+    "status": "answered",
+    "by": "oracle",
+    "evidence": "IN: offset 0x00, WO, reset 0: [7:0] packet byte, [8] end flag"
+   },
+   {
+    "id": "q2",
+    "text": "Which packets count as commands carried out?",
+    "default": "Every packet answered with status 0",
+    "reason": "The request does not say whether only reads and writes count",
+    "answer": "Every packet answered with status 0",
+    "status": "defaulted",
+    "by": "oracle",
+    "evidence": null
+   },
+   {
+    "id": "q3",
+    "text": "Does a packet that passes the sequence rule and then fails the register or access check count in the type, length, register or access error counter?",
+    "default": "Yes, in that counter and in refused-packets",
+    "reason": "The request says that failure is counted",
+    "answer": "Yes, in that counter and in refused-packets",
+    "status": "defaulted",
+    "by": "oracle",
+    "evidence": null
+   },
+   {
+    "id": "q4",
+    "text": "What are the busy bit semantics (STATUS bit 1)?",
+    "default": "Busy is 1 from the first byte of a packet until its reply is built",
+    "reason": "The request names the bit but not when it is set",
+    "answer": "Busy is 1 from the first byte of a packet until its reply is built",
+    "status": "defaulted",
+    "by": "oracle",
+    "evidence": null
+   },
+   {
+    "id": "q5",
+    "text": "Does a TICK write while earlier ticks are pending add or restart?",
+    "default": "A new write replaces the remaining count with n",
+    "reason": "The request does not say",
+    "answer": "A new write replaces the remaining count with n",
+    "status": "defaulted",
+    "by": "oracle",
+    "evidence": null
+   },
+   {
+    "id": "q6",
+    "text": "What happens to a frame falling due on the same clock as a take write?",
+    "default": "The take clears the held frame first and the new frame is then held",
+    "reason": "The request leaves the ordering open",
+    "answer": "The take clears the held frame first and the new frame is then held",
+    "status": "defaulted",
+    "by": "oracle",
+    "evidence": null
+   }
+  ]
+ },
+ "per_stage": {
+  "clarify": {
+   "calls": 2,
+   "turns": 7,
+   "tokens": 94729,
+   "wall_s": 115.2,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 0.3595
+  },
+  "board-and-device-planning": {
+   "calls": 2,
+   "turns": 16,
+   "tokens": 272590,
+   "wall_s": 55.5,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 0.2973
+  },
+  "rtl-design-creation": {
+   "calls": 7,
+   "turns": 90,
+   "tokens": 4208290,
+   "wall_s": 2856.2,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 4.0257
+  }
+ },
+ "spec_test": {
+  "fired": true,
+  "passed": false,
+  "outcome": "unresolved",
+  "caught_bug": false,
+  "bench_repaired": false,
+  "design_wrong_verdicts": 2,
+  "bench_wrong_verdicts": 0,
+  "bench_writes": 1,
+  "bench_runs": 3
+ },
+ "reached_first_model_turn": true,
+ "score": {
+  "pass": false,
+  "tests_passed": 9,
+  "tests": 10,
+  "failed": [
+   "test_ep_identity_reset_and_basic_commands"
+  ]
+ },
+ "tool_calls": 207,
+ "simulate_calls": 14,
+ "artifact_tarball_sha256": "d37f7b3e930a92dadcda1bd82e590890b36c13340de05ca41a699961578e4145",
+ "artifact_tarball_bytes": 1496294,
+ "weekly_pct_before": 21.0
+}
