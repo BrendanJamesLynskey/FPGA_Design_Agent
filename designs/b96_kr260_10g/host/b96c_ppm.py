@@ -66,6 +66,14 @@ def read_conditions(t: bb.Transport, wait_s: float = 0.01) -> dict:
     return out
 
 
+def safe_conditions(t: bb.Transport) -> dict:
+    """read_conditions that records a failure instead of stopping the session (the start sample can be taken before the register block answers)."""
+    try:
+        return read_conditions(t)
+    except Exception as e:  # noqa: BLE001 - recorded, and roc_ok is then false
+        return {"error": f"{type(e).__name__}: {e}", "inside_roc": False}
+
+
 def gt_buffers(t: bb.Transport) -> dict:
     v = t.rd(0x020)
     return {"txbuf": v & 3, "rxbuf": (v >> 2) & 7, "txbuf_seen": (v >> 4) & 3, "rxbuf_seen": (v >> 6) & 7}
@@ -302,6 +310,7 @@ def main() -> None:
     t = bb.VivadoTcl(repo, a.serial, version_pin.vivado_path())
     out: dict = {}
     try:
+        out["conditions_start"] = safe_conditions(t)
         res = bb.run_all(t, a.lock_text, a.out, cable_loop_m=a.loop_m, n_restarts=a.restarts)
         sf = res.get("safety", {})
         out.update({"id": res.get("id"), "polarity_ok": res.get("polarity_ok"), "link_up": res.get("link_up"), "safety_ok": sf.get("ok", False),
@@ -315,6 +324,8 @@ def main() -> None:
             else:
                 out["ppm"] = {"stopped": "link did not come back for the ppm session"}
             bb.Board(t).laser(False)
+        out["conditions_end"] = safe_conditions(t)
+        out["roc_ok"] = all(c.get("inside_roc") for c in (out["conditions_start"], out["conditions_end"]))
     finally:
         t.close()
     print(json.dumps(out, indent=1))
