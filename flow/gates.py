@@ -529,6 +529,38 @@ def _io(d: Path, stage: str, strict: bool, g: dict[str, bool], name: str) -> dic
     return r
 
 
+def _constraint_scope(d: Path, prep: dict[str, Any], drc: list[dict[str, Any]], g: dict[str, bool]) -> tuple[dict[str, Any] | None, list[dict[str, Any]]]:
+    """Brief 105A (flow/constraint_gates.py). Adds gate ``config_voltage_declared`` for a board whose configuration voltage is confirmed
+    (CFGBVS-1/2 in report_drc fail it); returns the verdict record and the advisory warnings (a CFGBVS value the board file does not
+    share, and every blanket asynchronous clock group). Never raises: a missing report is no finding."""
+    try:
+        from flow import constraint_gates as CG
+    except ImportError:      # run as a script: flow/ is on sys.path, not the repo
+        import constraint_gates as CG
+    root = Path(__file__).resolve().parents[1]
+    cfg = CG.board_config(prep.get("board"), root)
+    info = None
+    warn: list[dict[str, Any]] = []
+    xdcs = [root / f for f in prep.get("files", []) if f.endswith(".xdc")]
+    if cfg and cfg["confirmed"]:
+        info = CG.cfgbvs_verdict(drc, cfg)
+        g["config_voltage_declared"] = info["ok"]
+        for m in CG.cfgbvs_mismatch(cfg, CG.xdc_declared(xdcs)):
+            warn.append({"name": "config_voltage_differs_from_board", "stage": "post_route", "note": m})
+    elif cfg:
+        info = CG.cfgbvs_verdict(drc, cfg)      # advisory: the voltage is not confirmed for this board
+    ci = d / "clock_interaction_route.rpt"
+    texts = []
+    for x in xdcs:
+        try:
+            texts.append(x.read_text(errors="replace"))
+        except OSError:
+            pass
+    for f in CG.async_group_findings(ci.read_text(errors="replace") if ci.exists() else "", texts):
+        warn.append({"name": "async_clock_groups_review", "stage": "post_route", "code": f["code"], "where": f["where"], "note": f["message"]})
+    return info, warn
+
+
 def _margin(d: Path) -> dict[str, Any] | None:
     """Brief 20 part B: the implementation-only setup margin (timing_margin.txt from flow/build.tcl) and the placed WNS
     with and without it. Sign-off (timing_summary.rpt) is after its removal."""
@@ -683,6 +715,9 @@ def evaluate(build_dir: Path, architecture: Path | None = None) -> dict[str, Any
         if (d / "methodology_rtl.rpt").exists() or strict:      # a build of this flow version: the environment is set
             route_gates["power_junction_ok"] = (env["airflow_lfm"] == 0 and env["heatsink"] == "none"
                                                 and env["junction_c"] is not None and env["junction_c"] <= JUNCTION_MAX_C)
+        # brief 105A: CFGBVS-1/2 are gate failures on a board whose configuration voltage is confirmed in its board file (advisory elsewhere);
+        # blanket set_clock_groups -asynchronous is an advisory flag for owner review (a warning, never a gate)
+        cfg_info, cfg_warn = _constraint_scope(d, prep, drc, route_gates)
         ci = d / "clock_interaction_route.rpt"
         if (d / "probe_nets.txt").exists():      # an ILA that is an IP (brief 48): the hub's JTAG crossing must be constrained as asynchronous
             hub = hub_crossings(parse_clock_interaction(_read(d, "clock_interaction_route.rpt")) if ci.exists() else [])
@@ -694,7 +729,8 @@ def evaluate(build_dir: Path, architecture: Path | None = None) -> dict[str, Any
         io_r = _io(d, "route", strict, route_gates, "io_timing_clean")
         stages["post_route"] = {"ran": True, "gates": route_gates, "qor_assessment": q_r, "exceptions": exc_r,
                                 "io_timing": io_r, "timing_margin": _margin(d), "ila_hub_crossing": hub_info,
-                                "warnings": (io_r or {}).get("warnings", []),
+                                "config_voltage": cfg_info,
+                                "warnings": (io_r or {}).get("warnings", []) + cfg_warn,
                                 "unconstrained_ports": parse_check_timing_ports(checks_text)}
 
         # --- bitstream ---

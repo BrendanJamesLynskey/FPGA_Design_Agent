@@ -129,36 +129,36 @@ module gth_serdes_core #(
         .rxprbserr_out(hard_err_r), .rxprbslocked_out(hard_lock_r), .txpmaresetdone_out(txpmadone_c));
 
     // levels from the GT into clk
-    xpm_cdc_single #(.DEST_SYNC_FF(4), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(0)) u_s_tx (.src_clk(txusr2), .src_in(tx_done_t), .dest_clk(clk), .dest_out(tx_done));
-    xpm_cdc_single #(.DEST_SYNC_FF(4), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(0)) u_s_rx (.src_clk(rxusr2), .src_in(rx_done_r), .dest_clk(clk), .dest_out(rx_done));
-    xpm_cdc_single #(.DEST_SYNC_FF(4), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(0)) u_s_cs (.src_clk(1'b0), .src_in(cdr_stable_c), .dest_clk(clk), .dest_out(cdr_stable));
-    xpm_cdc_single #(.DEST_SYNC_FF(4), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(0)) u_s_pg (.src_clk(1'b0), .src_in(pgood_c), .dest_clk(clk), .dest_out(pgood));
-    xpm_cdc_single #(.DEST_SYNC_FF(4), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(0)) u_s_cl (.src_clk(1'b0), .src_in(cdrlock_c), .dest_clk(clk), .dest_out(cdrlock));
-    xpm_cdc_single #(.DEST_SYNC_FF(4), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(0)) u_s_tp (.src_clk(1'b0), .src_in(txpmadone_c), .dest_clk(clk), .dest_out(txpmadone));
-    xpm_cdc_single #(.DEST_SYNC_FF(4), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(0)) u_s_rp (.src_clk(1'b0), .src_in(rxpmadone_c), .dest_clk(clk), .dest_out(rxpmadone));
+    xpm_cdc_single #(.DEST_SYNC_FF(4), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(1), .SRC_INPUT_REG(0)) u_s_tx (.src_clk(txusr2), .src_in(tx_done_t), .dest_clk(clk), .dest_out(tx_done));
+    xpm_cdc_single #(.DEST_SYNC_FF(4), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(1), .SRC_INPUT_REG(0)) u_s_rx (.src_clk(rxusr2), .src_in(rx_done_r), .dest_clk(clk), .dest_out(rx_done));
+    xpm_cdc_single #(.DEST_SYNC_FF(4), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(1), .SRC_INPUT_REG(0)) u_s_cs (.src_clk(1'b0), .src_in(cdr_stable_c), .dest_clk(clk), .dest_out(cdr_stable));
+    xpm_cdc_single #(.DEST_SYNC_FF(4), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(1), .SRC_INPUT_REG(0)) u_s_pg (.src_clk(1'b0), .src_in(pgood_c), .dest_clk(clk), .dest_out(pgood));
+    xpm_cdc_single #(.DEST_SYNC_FF(4), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(1), .SRC_INPUT_REG(0)) u_s_cl (.src_clk(1'b0), .src_in(cdrlock_c), .dest_clk(clk), .dest_out(cdrlock));
+    xpm_cdc_single #(.DEST_SYNC_FF(4), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(1), .SRC_INPUT_REG(0)) u_s_tp (.src_clk(1'b0), .src_in(txpmadone_c), .dest_clk(clk), .dest_out(txpmadone));
+    xpm_cdc_single #(.DEST_SYNC_FF(4), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(1), .SRC_INPUT_REG(0)) u_s_rp (.src_clk(1'b0), .src_in(rxpmadone_c), .dest_clk(clk), .dest_out(rxpmadone));
     logic fab_locked_c, hard_locked_c, eyedat_c, mod_abs_c, rx_los_c, tx_fault_c, scl_c, sda_c;
-    xpm_cdc_single #(.DEST_SYNC_FF(4), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(1)) u_s_fl (.src_clk(rxusr2), .src_in(fab_lock_rx), .dest_clk(clk), .dest_out(fab_locked_c));
-    xpm_cdc_single #(.DEST_SYNC_FF(4), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(1)) u_s_hl (.src_clk(rxusr2), .src_in(hard_lock_r), .dest_clk(clk), .dest_out(hard_locked_c));
-    xpm_cdc_single #(.DEST_SYNC_FF(4), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(1)) u_s_ed (.src_clk(rxusr2), .src_in(eyedat_r), .dest_clk(clk), .dest_out(eyedat_c));
-    xpm_cdc_single #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(0)) u_s_ma (.src_clk(1'b0), .src_in(sfp_mod_abs), .dest_clk(clk), .dest_out(mod_abs_c));
-    xpm_cdc_single #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(0)) u_s_lo (.src_clk(1'b0), .src_in(sfp_rx_los), .dest_clk(clk), .dest_out(rx_los_c));
-    xpm_cdc_single #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(0)) u_s_tf (.src_clk(1'b0), .src_in(sfp_tx_fault), .dest_clk(clk), .dest_out(tx_fault_c));
-    xpm_cdc_single #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(0)) u_s_sc (.src_clk(1'b0), .src_in(i2c_scl_i), .dest_clk(clk), .dest_out(scl_c));
-    xpm_cdc_single #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(0)) u_s_sd (.src_clk(1'b0), .src_in(i2c_sda_i), .dest_clk(clk), .dest_out(sda_c));
+    xpm_cdc_single #(.DEST_SYNC_FF(4), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(1), .SRC_INPUT_REG(1)) u_s_fl (.src_clk(rxusr2), .src_in(fab_lock_rx), .dest_clk(clk), .dest_out(fab_locked_c));
+    xpm_cdc_single #(.DEST_SYNC_FF(4), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(1), .SRC_INPUT_REG(1)) u_s_hl (.src_clk(rxusr2), .src_in(hard_lock_r), .dest_clk(clk), .dest_out(hard_locked_c));
+    xpm_cdc_single #(.DEST_SYNC_FF(4), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(1), .SRC_INPUT_REG(1)) u_s_ed (.src_clk(rxusr2), .src_in(eyedat_r), .dest_clk(clk), .dest_out(eyedat_c));
+    xpm_cdc_single #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(1), .SRC_INPUT_REG(0)) u_s_ma (.src_clk(1'b0), .src_in(sfp_mod_abs), .dest_clk(clk), .dest_out(mod_abs_c));
+    xpm_cdc_single #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(1), .SRC_INPUT_REG(0)) u_s_lo (.src_clk(1'b0), .src_in(sfp_rx_los), .dest_clk(clk), .dest_out(rx_los_c));
+    xpm_cdc_single #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(1), .SRC_INPUT_REG(0)) u_s_tf (.src_clk(1'b0), .src_in(sfp_tx_fault), .dest_clk(clk), .dest_out(tx_fault_c));
+    xpm_cdc_single #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(1), .SRC_INPUT_REG(0)) u_s_sc (.src_clk(1'b0), .src_in(i2c_scl_i), .dest_clk(clk), .dest_out(scl_c));
+    xpm_cdc_single #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(1), .SRC_INPUT_REG(0)) u_s_sd (.src_clk(1'b0), .src_in(i2c_sda_i), .dest_clk(clk), .dest_out(sda_c));
 
     // controls from clk into the GT's clocked ports
-    xpm_cdc_array_single #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(1), .WIDTH(14)) u_c_tx (
+    xpm_cdc_array_single #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(1), .SRC_INPUT_REG(1), .WIDTH(14)) u_c_tx (
         .src_clk(clk), .src_in({txprbssel, tx_pol, tx_idle, ppm_en, ppm_sel, ppm_step, fab_tx_en}), .dest_clk(txusr2),
         .dest_out({txprbssel_t, tx_pol_t, tx_idle_t, ppm_en_t, ppm_sel_t, ppm_step_t, fab_tx_en_t}));
-    xpm_cdc_array_single #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(1), .WIDTH(2)) u_c_ptx (
+    xpm_cdc_array_single #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(1), .SRC_INPUT_REG(1), .WIDTH(2)) u_c_ptx (
         .src_clk(clk), .src_in(fab_poly), .dest_clk(txusr2), .dest_out(poly_t));
-    xpm_cdc_array_single #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(1), .WIDTH(7)) u_c_rx (
+    xpm_cdc_array_single #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(1), .SRC_INPUT_REG(1), .WIDTH(7)) u_c_rx (
         .src_clk(clk), .src_in({rxprbssel, rx_pol, fab_poly}), .dest_clk(rxusr2), .dest_out({rxprbssel_r, rx_pol_r, poly_r}));
-    xpm_cdc_pulse #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(0)) u_p_fe (
+    xpm_cdc_pulse #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(1)) u_p_fe (
         .src_clk(clk), .src_pulse(p_ferr_fab), .src_rst(1'b0), .dest_clk(txusr2), .dest_pulse(ferr_fab_t), .dest_rst(1'b0));
-    xpm_cdc_pulse #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(0)) u_p_fh (
+    xpm_cdc_pulse #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(1)) u_p_fh (
         .src_clk(clk), .src_pulse(p_ferr_hard), .src_rst(1'b0), .dest_clk(txusr2), .dest_pulse(ferr_hard_t), .dest_rst(1'b0));
-    xpm_cdc_pulse #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(0)) u_p_cl (
+    xpm_cdc_pulse #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(1)) u_p_cl (
         .src_clk(clk), .src_pulse(p_clr), .src_rst(1'b0), .dest_clk(rxusr2), .dest_pulse(clr_r), .dest_rst(1'b0));
     // the hard checker needs a reset (or a counter reset) after RXPRBSSEL changes (UG576): pulse one when the selection changes
     logic [3:0] rxprbssel_q;
@@ -194,7 +194,7 @@ module gth_serdes_core #(
         if (!hs_send && !hs_rcv) begin src_vec <= {c_words, c_errb, c_errw, c_loss, h_cyc, h_err}; hs_send <= 1'b1; end
         else if (hs_rcv) hs_send <= 1'b0;
     end
-    xpm_cdc_handshake #(.DEST_EXT_HSK(1), .DEST_SYNC_FF(4), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_SYNC_FF(4), .WIDTH(CW)) u_snap (
+    xpm_cdc_handshake #(.DEST_EXT_HSK(1), .DEST_SYNC_FF(4), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(1), .SRC_SYNC_FF(4), .WIDTH(CW)) u_snap (
         .src_clk(rxusr2), .src_in(src_vec), .src_send(hs_send), .src_rcv(hs_rcv),
         .dest_clk(clk), .dest_out(dst_vec), .dest_req(hs_req), .dest_ack(hs_ack));
     always_ff @(posedge clk) hs_ack <= hs_req;       // external handshake: acknowledge each request one clock after it is taken (live <= dst_vec below)

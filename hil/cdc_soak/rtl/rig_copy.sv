@@ -62,7 +62,7 @@ module rig_copy #(
         logic tog, pls;
         logic [7:0] cnt, refc;
         src_ev #(.SEED(SEED)) pbs_src (.clk(sclk), .rst(s_por), .run(s_run), .tog(tog), .pls(pls), .cnt(cnt));
-        xpm_cdc_gray #(.DEST_SYNC_FF(3), .WIDTH(8), .REG_OUTPUT(1))
+        xpm_cdc_gray #(.DEST_SYNC_FF(3), .WIDTH(8), .REG_OUTPUT(1), .SIM_ASSERT_CHK(1))
             u_ref (.src_clk(sclk), .src_in_bin(cnt), .dest_clk(dclk), .dest_out_bin(refc));
         logic lvl, ev;                       // the crossing's output: a level (lvl) or a pulse (ev)
         logic pbd_lp = 1'b0;
@@ -71,7 +71,7 @@ module rig_copy #(
             sync_n #(.STAGES(C1_STAGES)) pbd_x (.clk(dclk), .d(tog), .q(lvl));
             assign ev = lvl != pbd_lp;
         end else if (VAR == V_C3A || VAR == V_C3B) begin : g_xpm
-            xpm_cdc_single #(.DEST_SYNC_FF(C3_STAGES), .SRC_INPUT_REG(0))
+            xpm_cdc_single #(.DEST_SYNC_FF(C3_STAGES), .SRC_INPUT_REG(0), .SIM_ASSERT_CHK(1))
                 u_x (.src_clk(sclk), .src_in(tog), .dest_clk(dclk), .dest_out(lvl));
             assign ev = lvl != pbd_lp;
         end else if (VAR == V_M1) begin : g_m1
@@ -88,7 +88,7 @@ module rig_copy #(
             sync_n #(.STAGES(2)) pbd_x (.clk(dclk), .d(pbs_tg), .q(lvl));
             assign ev = lvl != pbd_lp;
         end else if (VAR == V_C5) begin : g_c5
-            xpm_cdc_pulse #(.DEST_SYNC_FF(3), .REG_OUTPUT(1), .RST_USED(0))
+            xpm_cdc_pulse #(.DEST_SYNC_FF(3), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(1))
                 u_x (.src_clk(sclk), .src_pulse(pls), .dest_clk(dclk), .src_rst(1'b0), .dest_rst(1'b0),
                      .dest_pulse(ev));
             assign lvl = 1'b0;
@@ -171,7 +171,7 @@ module rig_copy #(
             assign v = gray2bin12(raw);
             chk_count #(.MAXSTEP(2), .RAWCHK(1)) u_chk (.clk(dclk), .v(v), .raw(raw), .e_err(e_err), .e_ev(e_ev));
         end else if (VAR == V_C7) begin : g_c7
-            xpm_cdc_gray #(.DEST_SYNC_FF(3), .WIDTH(12), .REG_OUTPUT(1))
+            xpm_cdc_gray #(.DEST_SYNC_FF(3), .WIDTH(12), .REG_OUTPUT(1), .SIM_ASSERT_CHK(1))
                 u_x (.src_clk(sclk), .src_in_bin(pbs_bin), .dest_clk(dclk), .dest_out_bin(v));
             assign raw = '0;
             chk_count #(.MAXSTEP(2)) u_chk (.clk(dclk), .v(v), .raw(raw), .e_err(e_err), .e_ev(e_ev));
@@ -255,7 +255,7 @@ module rig_copy #(
             logic [15:0] pbs_data = SEED, dout;
             logic pbs_send = 1'b0, rcv, dreq, pbd_ack = 1'b0, pbd_v = 1'b0;
             logic [15:0] pbd_w = '0;
-            xpm_cdc_handshake #(.DEST_EXT_HSK(1), .DEST_SYNC_FF(3), .SRC_SYNC_FF(3), .WIDTH(16))
+            xpm_cdc_handshake #(.DEST_EXT_HSK(1), .DEST_SYNC_FF(3), .SRC_SYNC_FF(3), .WIDTH(16), .SIM_ASSERT_CHK(1))
                 u_x (.src_clk(sclk), .src_in(pbs_data), .src_send(pbs_send), .src_rcv(rcv),
                      .dest_clk(dclk), .dest_out(dout), .dest_req(dreq), .dest_ack(pbd_ack));
             always_ff @(posedge sclk)

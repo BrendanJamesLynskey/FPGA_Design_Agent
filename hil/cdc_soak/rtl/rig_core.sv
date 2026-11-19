@@ -117,7 +117,7 @@ module rig_core #(
     assign rdy_s[0] = rdy_x[0];
     for (genvar d = 1; d < 4; d++) begin : g_rdy
         wire dclk = d == 1 ? clk_b : d == 2 ? clk_c : clk_f;
-        xpm_cdc_single #(.DEST_SYNC_FF(3), .SRC_INPUT_REG(1)) u_r (.src_clk(dclk), .src_in(rdy_x[d]), .dest_clk(clk_a), .dest_out(rdy_s[d]));
+        xpm_cdc_single #(.DEST_SYNC_FF(3), .SRC_INPUT_REG(1), .SIM_ASSERT_CHK(1)) u_r (.src_clk(dclk), .src_in(rdy_x[d]), .dest_clk(clk_a), .dest_out(rdy_s[d]));
     end
     logic q_req, storm_en, stopped;
     logic q_run = 1'b1;
@@ -149,19 +149,19 @@ module rig_core #(
     assign frz_x = {frz_c, frz_b, frz_a};
     for (genvar d = 0; d < 3; d++) begin : g_back
         wire dclk = d == 0 ? clk_a : d == 1 ? clk_b : clk_c;
-        xpm_cdc_single #(.DEST_SYNC_FF(3), .SRC_INPUT_REG(1)) u_f (.src_clk(dclk), .src_in(frz_x[d]), .dest_clk(clk_a), .dest_out(frz_s[d]));
-        xpm_cdc_single #(.DEST_SYNC_FF(3), .SRC_INPUT_REG(1)) u_b (.src_clk(dclk), .src_in(bit_x[d]), .dest_clk(clk_a), .dest_out(bit_s[d]));
-        xpm_cdc_single #(.DEST_SYNC_FF(3), .SRC_INPUT_REG(1)) u_k (.src_clk(dclk), .src_in(ack_x[d]), .dest_clk(clk_a), .dest_out(ack_s[d]));
+        xpm_cdc_single #(.DEST_SYNC_FF(3), .SRC_INPUT_REG(1), .SIM_ASSERT_CHK(1)) u_f (.src_clk(dclk), .src_in(frz_x[d]), .dest_clk(clk_a), .dest_out(frz_s[d]));
+        xpm_cdc_single #(.DEST_SYNC_FF(3), .SRC_INPUT_REG(1), .SIM_ASSERT_CHK(1)) u_b (.src_clk(dclk), .src_in(bit_x[d]), .dest_clk(clk_a), .dest_out(bit_s[d]));
+        xpm_cdc_single #(.DEST_SYNC_FF(3), .SRC_INPUT_REG(1), .SIM_ASSERT_CHK(1)) u_k (.src_clk(dclk), .src_in(ack_x[d]), .dest_clk(clk_a), .dest_out(ack_s[d]));
     end
     logic qf;
-    xpm_cdc_single #(.DEST_SYNC_FF(3), .SRC_INPUT_REG(0)) u_qf (.src_clk(1'b0), .src_in(q_run), .dest_clk(clk_f), .dest_out(qf));
+    xpm_cdc_single #(.DEST_SYNC_FF(3), .SRC_INPUT_REG(0), .SIM_ASSERT_CHK(1)) u_qf (.src_clk(1'b0), .src_in(q_run), .dest_clk(clk_f), .dest_out(qf));
     assign run_f = !qf;
 
     // CFGMCLK meter: clk_b cycles per MS_TICKS clk_a cycles (per millisecond = kHz in hardware)
     logic [19:0] bc = '0, bca, bcp = '0, khz = '0;
     logic [31:0] mc = '0;
     always_ff @(posedge clk_b) bc <= bc + 1'b1;
-    xpm_cdc_gray #(.DEST_SYNC_FF(3), .WIDTH(20), .REG_OUTPUT(1)) u_bmeter (.src_clk(clk_b), .src_in_bin(bc), .dest_clk(clk_a), .dest_out_bin(bca));
+    xpm_cdc_gray #(.DEST_SYNC_FF(3), .WIDTH(20), .REG_OUTPUT(1), .SIM_ASSERT_CHK(1)) u_bmeter (.src_clk(clk_b), .src_in_bin(bc), .dest_clk(clk_a), .dest_out_bin(bca));
     always_ff @(posedge clk_a)
         if (mc == 32'(MS_TICKS - 1)) begin mc <= '0; khz <= bca - bcp; bcp <= bca; end
         else mc <= mc + 1'b1;

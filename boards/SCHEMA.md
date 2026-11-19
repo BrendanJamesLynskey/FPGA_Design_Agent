@@ -27,7 +27,8 @@ schema below (`schema: fpga-design-agent/board/v2`). `flow/tests/test_95_boards.
 - `pin_aliases`: a pin that two ports of the master XDC share (a header and an analogue input on the same pin, say). A pin shared without being listed here fails the test.
 - `hardware_use`: `owned: true` only for the owner's boards, with the rule that applies. For every other board it says no supply or programming rule is recorded.
 - `smoke`: `clk_hz` and `banner` for the generated smoke design (`tools/board_smoke.py`).
-- `config`, `thermal`: where a value is an assumption it says `status: assumption` or `unconfirmed` and gives the reason.
+- `config`: `cfgbvs`, `config_voltage` and either `source: [ids]` (the value is confirmed: a vendor XDC that sets it, a schematic, an AMD board file) or `status: unconfirmed` with a `reason` (an assumed value, kept so the generated smoke design can set it). `flow/constraint_gates.py` calls a board **confirmed** only when the block has `source` and no `status`; for a confirmed board the flow writes `board_config.xdc` (CFGBVS, CONFIG_VOLTAGE) into the build and DRC CFGBVS-1/2 fail the gate `config_voltage_declared` (brief 105A). An unconfirmed board gets neither: the rows stay advisory. A board with no `config` block (Zynq, UltraScale+) is not asked.
+- `thermal`: where a value is an assumption it says `status: assumption` or `unconfirmed` and gives the reason.
 
 ## Adding a board
 

@@ -42,9 +42,9 @@ module jtag_bus (
     logic [39:0] resp;
     logic [1:0]  wait_n;
     logic        rd_pend;
-    xpm_cdc_single #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(0)) u_req (
+    xpm_cdc_single #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(1), .SRC_INPUT_REG(0)) u_req (
         .src_clk(tck), .src_in(req_t), .dest_clk(clk), .dest_out(req_s));
-    xpm_cdc_array_single #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(0), .WIDTH(46)) u_cmd (
+    xpm_cdc_array_single #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(1), .SRC_INPUT_REG(0), .WIDTH(46)) u_cmd (
         .src_clk(tck), .src_in(cmd), .dest_clk(clk), .dest_out(cmd_s));
     always_ff @(posedge clk) begin
         h_we <= 1'b0; h_re <= 1'b0;
@@ -62,6 +62,6 @@ module jtag_bus (
             end
         end
     end
-    xpm_cdc_array_single #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(1), .WIDTH(40)) u_resp (
+    xpm_cdc_array_single #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(1), .SRC_INPUT_REG(1), .WIDTH(40)) u_resp (
         .src_clk(clk), .src_in(resp), .dest_clk(tck), .dest_out(resp_t));
 endmodule
