@@ -6,7 +6,7 @@ may change, some it may only read, some it must not see, some arrive as netlists
 file tool already goes through), not in a prompt, so a model cannot talk its way past them.
 
 Stage 1 is the manifest, ownership, scoped requests, and RTL and netlist import. Stage 2 (placed-and-routed import, relocation with
-RapidWright, a keep-out) is described near the end; stage 3 (integrating an open-licence block from outside) is planned there.
+RapidWright, a keep-out) and stage 3 (a real open-licence RTL block from outside, with its provenance) are described near the end.
 
 ## The manifest
 
@@ -188,17 +188,36 @@ file drops the evidence.
 - Interconnect delays are compared at six placements of one block on one part; the tolerance is the owner's number and relocation off a clock-region multiple changes delays.
 - The scripted session is not a model: no LLM-driven run on a managed project yet.
 
-## Stage 3 plan: integrating others' work
+## Stage 3: a third-party RTL block
 
-Goal: one real external block under Apache-2.0, MIT or BSD, with a provenance report that lists exactly what was theirs and what was ours; the
-path for the recorded-demo intake (`docs/demo_intake.md`).
+One real block from outside is a frozen `rtl` component: Alex Forencich's `lfsr.v` from verilog-ethernet (MIT), the parallel CRC/LFSR
+that project's own FCS modules use, instantiated at CRC-32 settings inside our adapter. The design is `designs/b102_managed_ext`; the records
+are in `results/102_stage3/`.
 
-1. Choose a small, well-documented open block (a UART, a CRC or Ethernet MAC core, or a small RISC-V peripheral) whose licence permits redistribution
-   and whose repository has tests; state the licence and cite the project, version and commit hash; copy it into `ext/` unmodified, with its
-   licence text, as a frozen `rtl` component (or build it into a netlist with the stage 1 recipe).
-2. Write its contract from its documentation (ports, clocks, resets, register map, in IP-XACT where the project ships it), run its own tests in
-   this project (a `verified` label only if they pass here), and add the wrapper we own.
-3. The provenance report (`managed.write_provenance`) already separates theirs from ours with hashes; stage 3 adds a line-count and file diff
-   against the upstream commit (nothing of theirs modified) and the third-party notice in `THIRD_PARTY_NOTICES.md`.
-4. The agent runs a task on the owned wrapper only; the report shows every file touched, and the managed refusals.
-5. Never open an issue or PR on the upstream project without the owner's yes (house rule on third-party repositories).
+**What a third-party component carries.** A component whose `provenance` names `upstream_url` is asked for more than origin, version and licence
+(`agent/core/managed.py` `third_party_gaps`; any gap makes the label `none`):
+
+| `provenance` key | Meaning |
+|---|---|
+| `spdx` | the licence's SPDX id; only `Apache-2.0`, `MIT`, `BSD-2-Clause`, `BSD-3-Clause` are accepted |
+| `upstream_url`, `commit` | the project and the exact 40-hex commit the files came from |
+| `licence_file` | the licence text in the tree (the file's own header carries the copyright line too) |
+| `files` | SHA-256 of every file of the component as received; each must equal the file now, and no file may be in the component without one |
+| `upstream_paths` | where each file lives in the upstream, so the hashes can be re-checked against the source |
+
+**What is vendored, and where.** Files are copied byte for byte under `third_party/<project>/` with the licence and authors files, and get a row in
+`THIRD_PARTY_NOTICES.md`. Nothing of the supplier's is edited: our adapter (`rtl/crc32_d16.sv`, owned) adds the register, the restart and the enable
+and gives the block the port list the sequencer uses. The Verilator lint warnings the unmodified file raises are waived for that file alone in
+`lint/third_party.vlt`.
+
+**The import check** (`python3 flow/managed_rtl_import.py check designs/<d> --upstream <clone of the upstream> --eqy`) runs the provenance checks; compares each file with
+`git show <commit>:<path>` in a clone; checks the module's ports against the contract at the parameters the design instantiates it with
+(`interface.parameters`); simulates the block alone against a Python model of one CRC-32 step at widths 8, 16, 32 and 64, and the adapter plus the
+block against the register model; plants a fault in a copy of the block and requires both simulations to reject it; and, with `--eqy` (null here: it did not finish in 600 s), asks `eqy` to
+prove the adapter plus the block equal to our own specification (`reference/crc32_d16.sv`, written without the block). A pass writes `verified`
+evidence. Trust `built` then needs a clean build, as for any component.
+
+**Not done by the import check.** The block's own upstream tests are not run: the only ones that cover it are MyHDL co-simulations of the Ethernet modules
+that use it (`tb/test_axis_eth_fcs_*.py`), which need MyHDL's Icarus plug-in built from source. Our own simulations stand in for them.
+
+Never open an issue or PR on the upstream project without the owner's yes (house rule on third-party repositories).

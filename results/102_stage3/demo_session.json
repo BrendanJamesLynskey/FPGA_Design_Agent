@@ -1,0 +1,122 @@
+{
+ "design": "b102_managed_ext",
+ "scope": {
+  "components": [
+   "ctrl"
+  ],
+  "source": "resolved",
+  "request": "make the verdict one clock faster",
+  "note": "resolved from the request text"
+ },
+ "steps": [
+  {
+   "step": "request: make the lfsr faster",
+   "scope": null,
+   "question": "the request matches lfsr, which is frozen and cannot be edited. Which owned component should change? Owned: top, ctrl, crc_adapter"
+  },
+  {
+   "step": "request: make the verdict one clock faster",
+   "scope": [
+    "ctrl"
+   ],
+   "source": "resolved"
+  },
+  {
+   "step": "read_file third_party/verilog-ethernet/lfsr.v",
+   "ok": true,
+   "refused": false,
+   "rule": null,
+   "output": "/*\n\nCopyright (c) 2016-2023 Alex Forencich\n\nPermission is hereby granted, free of charge, to any person obtaining a copy\nof this software an"
+  },
+  {
+   "step": "write_file third_party/verilog-ethernet/lfsr.v",
+   "ok": false,
+   "refused": true,
+   "rule": "managed",
+   "output": "third_party/verilog-ethernet/lfsr.v belongs to the frozen component 'lfsr': it is read-only. To change it, ask the owner to re-import or unf"
+  },
+  {
+   "step": "write_file third_party/verilog-ethernet/COPYING",
+   "ok": false,
+   "refused": true,
+   "rule": "managed",
+   "output": "third_party/verilog-ethernet/COPYING belongs to the frozen component 'lfsr': it is read-only. To change it, ask the owner to re-import or un"
+  },
+  {
+   "step": "write_file third_party/verilog-ethernet/lfsr_fast.v",
+   "ok": false,
+   "refused": true,
+   "rule": "managed",
+   "output": "third_party/verilog-ethernet/lfsr_fast.v belongs to the frozen component 'lfsr': it is read-only. To change it, ask the owner to re-import o"
+  },
+  {
+   "step": "write_file rtl/../third_party/verilog-ethernet/lfsr.v",
+   "ok": false,
+   "refused": true,
+   "rule": "managed",
+   "output": "third_party/verilog-ethernet/lfsr.v belongs to the frozen component 'lfsr': it is read-only. To change it, ask the owner to re-import or unf"
+  },
+  {
+   "step": "write_file rtl/crc32_d16.sv",
+   "ok": false,
+   "refused": true,
+   "rule": "managed-scope",
+   "output": "rtl/crc32_d16.sv belongs to 'crc_adapter', which is outside this request's scope (ctrl). Widening the scope needs a new explicit request"
+  },
+  {
+   "step": "write_file project.yaml",
+   "ok": false,
+   "refused": true,
+   "rule": "managed",
+   "output": "project.yaml is the owner's manifest: ownership, scope and contracts are not the agent's to change"
+  },
+  {
+   "step": "write_file build.yaml",
+   "ok": false,
+   "refused": true,
+   "rule": "managed-build",
+   "output": "build.yaml must still build every component: missing designs/b102_managed_ext/third_party/verilog-ethernet/lfsr.v (component lfsr) (excluded"
+  },
+  {
+   "step": "write_file rtl/fcs_ctrl.sv",
+   "ok": true,
+   "refused": false,
+   "rule": null,
+   "output": "wrote 1868 bytes to rtl/fcs_ctrl.sv"
+  },
+  {
+   "step": "simulation with the third-party block compiled in",
+   "baseline": {
+    "first_pass_cycle": 23,
+    "led0_at_end": 1
+   },
+   "edited": {
+    "first_pass_cycle": 22,
+    "led0_at_end": 1
+   },
+   "clocks_saved": 1
+  }
+ ],
+ "changed_files": [
+  "rtl/fcs_ctrl.sv"
+ ],
+ "simulation": {
+  "baseline": {
+   "first_pass_cycle": 23,
+   "led0_at_end": 1
+  },
+  "edited": {
+   "first_pass_cycle": 22,
+   "led0_at_end": 1
+  },
+  "clocks_saved": 1
+ },
+ "managed_refusals": 7,
+ "refusal_rules": [
+  "managed",
+  "managed-build",
+  "managed-scope"
+ ],
+ "provenance_markdown": "# Provenance report: b102_managed_ext\n\nRequest scope (resolved): ctrl - request: 'make the verdict one clock faster'\n\n| component | ownership | level | theirs/ours | origin | version | licence | trust | in scope |\n|---|---|---|---|---|---|---|---|---|\n| top | owned | rtl | ours | this project |  |  | none | no |\n| ctrl | owned | rtl | ours | this project |  |  | none | yes |\n| crc_adapter | owned | rtl | ours | this project |  |  | none | no |\n| lfsr | frozen | rtl | theirs | Alex Forencich, verilog-ethernet (rtl/lfsr.v), vendored unmodified under third_party/verilog-ethernet/ | master at 77320a9471d1 (2025-02-27); rtl/lfsr.v last changed in 450765187efd | MIT, Copyright (c) 2016-2023 Alex Forencich (file header); COPYING of the repository, Copyright (c) 2014-2018 Alex Forencich | documented | no |\n\n## Files by origin\n\n- top (ours, sha256 0040298f165e): rtl/fcs_top.sv\n- ctrl (ours, sha256 c834b076dce2): rtl/fcs_ctrl.sv\n- crc_adapter (ours, sha256 519631aacf83): reference/crc32_d16.sv, rtl/crc32_d16.sv\n- lfsr (theirs, sha256 4eb60187512b): third_party/verilog-ethernet/AUTHORS, third_party/verilog-ethernet/COPYING, third_party/verilog-ethernet/lfsr.v\n\n## Changed in this run\n\nrtl/fcs_ctrl.sv\n\n## Refusals by the managed policy (7)\n\n- write_file: managed: third_party/verilog-ethernet/lfsr.v belongs to the frozen component 'lfsr': it is read-only. To change it, ask the owner to re-import or unfreeze it\n- write_file: managed: third_party/verilog-ethernet/COPYING belongs to the frozen component 'lfsr': it is read-only. To change it, ask the owner to re-import or unfreeze it\n- write_file: managed: third_party/verilog-ethernet/lfsr_fast.v belongs to the frozen component 'lfsr': it is read-only. To change it, ask the owner to re-import or unfreeze it\n- write_file: managed: third_party/verilog-ethernet/lfsr.v belongs to the frozen component 'lfsr': it is read-only. To change it, ask the owner to re-import or unfreeze it\n- write_file: managed-scope: rtl/crc32_d16.sv belongs to 'crc_adapter', which is outside this request's scope (ctrl). Widening the scope needs a new explicit request\n- write_file: managed: project.yaml is the owner's manifest: ownership, scope and contracts are not the agent's to change\n- write_file: managed-build: build.yaml must still build every component: missing designs/b102_managed_ext/third_party/verilog-ethernet/lfsr.v (component lfsr) (excluded or frozen parts are\n",
+ "vendored_unchanged": true
+}
