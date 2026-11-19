@@ -17,7 +17,7 @@ cumulative options from the options that passed the checks, composes the gain bo
   The fixtures, the truth files and the scoring code are brief 104's, read in place (`results/104_strategy_options/backtest/`, `flow/options/backtest.py`; a test pins the scoring file's SHA-256).
 - `replay.py`, `replay_results.json`, `REPLAY.md`: the supplementary replay (structured fields only; no option text).
 
-## Measured: the replay (supplementary, not a new model call)
+## The replay result (supplementary, not a new model call)
 
 Each recorded run's singles, then the combiner, then the unchanged scoring (counts of three runs per arm; "named" = agent_cdc, agent_both, all3):
 
