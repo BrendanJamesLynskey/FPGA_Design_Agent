@@ -408,7 +408,8 @@ def test_the_written_checkpoint_is_checked_for_the_block_and_for_intruders(tmp_p
     w = ev["placements"]["p0"]["written_checkpoint"]
     assert not w["cells_unchanged"] and not w["routes_unchanged"] and w["other_cells_inside_region"] == ["g/q_reg@SLICE_X30Y85"]
     text = "\n".join(ev["problems"])
-    assert "differs from the block as delivered" in text and "inside the keep-out region" in text
+    assert "differs from the block as delivered" in text and "inside the keep-out region" not in text      # intruders are information
+    assert MP.new_intruders(good, bad, (26, 70, 37, 91)) == ["g/q_reg@SLICE_X30Y85"] and MP.new_intruders(good, good, (26, 70, 37, 91)) == []
 
 
 def test_a_relocated_runs_keepout_moves_with_the_block(tmp_path):

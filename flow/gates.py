@@ -356,6 +356,16 @@ def _read(d: Path, name: str) -> str:
     return p.read_text(errors="replace")
 
 
+ROUTED_IMPORT_DRC_WAIVED = ("RTSTAT-2", "RTSTAT-3", "RTSTAT-9")
+
+
+def routed_import_waived(d: Path) -> bool:
+    """True when the build read a placed-and-routed checkpoint into a cell (inputs.tcl: ``set netlists {{checkpoint <file> <cell>} ...}``,
+    from build.yaml ``netlists:`` of a managed project's ``placed_routed`` component, brief 102)."""
+    f = d / "inputs.tcl"
+    return f.is_file() and re.search(r"^set netlists \{.*\{checkpoint ", f.read_text(), re.M) is not None
+
+
 def _n_sev(rows: list[dict[str, Any]], sev: str) -> int:
     return sum(r["count"] for r in rows if r["severity"].lower() == sev.lower())
 
@@ -565,11 +575,15 @@ def evaluate(build_dir: Path, architecture: Path | None = None) -> dict[str, Any
         c_s = parse_check_timing(c_s_text)
         m_s = parse_rule_table(_read(d, "methodology_synth.rpt"))
         d_s = parse_rule_table(_read(d, "drc_synth.rpt"))
+        # brief 102 stage 2: a placed-and-routed block imported with read_checkpoint -cell is routed at the synthesis stage, so report_drc says its
+        # nets are partially routed and their terminals unplaced until the rest is placed; that is the supplier's work, not a fault (waived here for
+        # these rules only; the post-route DRC, which has no such waiver, still runs on the finished design)
+        d_s_gated = [r for r in d_s if not (routed_import_waived(d) and r["rule"] in ROUTED_IMPORT_DRC_WAIVED)]
         q_s = parse_qor_assessment(_read(d, "qor_assessment_synth.rpt")) if (d / "qor_assessment_synth.rpt").exists() else None
         g = {"post_synth_no_unconstrained_endpoints": unconstrained_ok(c_s, parse_check_timing_ports(c_s_text),
                                                                        forwarded_clock_ports(d, "synth")),
              "post_synth_methodology_no_critical": _n_sev(m_s, "Critical Warning") == 0,
-             "post_synth_drc_clean": _n_sev(d_s, "Error") == 0 and _n_sev(d_s, "Critical Warning") == 0}
+             "post_synth_drc_clean": _n_sev(d_s_gated, "Error") == 0 and _n_sev(d_s_gated, "Critical Warning") == 0}
         warn: list[dict[str, Any]] = []
         if q_s is not None and q_s["score"] < QOR_SCORE_MIN:      # a warning, not a gate (docstring: QoR gate)
             warn.append({"name": "post_synth_qor_assessment", "stage": "post_synth", "score": q_s["score"], "min": QOR_SCORE_MIN,
