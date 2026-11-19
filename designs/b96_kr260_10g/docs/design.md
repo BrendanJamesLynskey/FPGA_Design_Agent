@@ -342,7 +342,8 @@ WAIT, RESET, COUNT, END state machine of UG576 Figure 4-21; its error count is a
 
 ## 11. A lower-latency elastic buffer (brief 96E, 2026-11-19)
 
-**Result in one line.** `RATE_MATCH = 1` with `RM_OWN = 1` (our own gray-pointer buffer, `rtl/rate_match_gp.sv`) adds **+1.2 clocks** (about 7 ns) of GT-port-to-GT-port tick-to-trade over the 97C path in xsim with AMD's real macros, against +5.3 clocks for the buffer of section 9 (`xpm_fifo_async`); the board measured that one at +6.5. The design is not yet measured on a board (no board session was approved for this brief): see "What the board must still show".
+**Result in one line.** `RATE_MATCH = 1` with `RM_OWN = 1` (our own gray-pointer buffer, `rtl/rate_match_gp.sv`, `ENT_SYNC = 1`, build `rm_gp`) adds **+2.3 clocks** (about 14 ns) of GT-port-to-GT-port tick-to-trade over the 97C path in xsim with AMD's real macros, against +5.3 for the buffer of section 9 (`xpm_fifo_async`; the board measured that one at +6.5). That is 0.3 clock outside the brief's "within 2 clocks".
+A faster variant (`ENT_SYNC = 0`, build `rm_gp_direct`, +1.2 clocks) exists but fails the flow's CDC gate (38 CDC-1 Critical rows in `report_cdc`), so it is not the default; see "The buffer". Nothing here has been measured on a board (none was approved for this brief): see "What the board must still show".
 
 ### Where the board's +11 clocks came from (the accounting)
 
@@ -370,34 +371,46 @@ and the read data count through two more synchroniser stages (from the macro's s
 |---|---|---|---|---|
 | 96C: `xpm_fifo_async`, fill target 4 | 10.8 / 8.9 | +5.3 (board +6.5) | report_cdc clean; AMD's macro | the build option of section 9 |
 | same macro, fill target 1 | 8.7 / not run | about +3 (estimate: 2 clocks less) | same; policy change only | not built: still +3 |
-| **96E: own gray pointers, `rate_match_gp.sv`, fill target 1** | **5.6 / 4.8** (4.4 to 5.3 in the core) | **+1.2** (+1.1 to +1.25 by phase) | two-flop `ASYNC_REG` crossings, data one clock ahead of the pointer; see below | **chosen: meets the brief's "within 2 clocks"** |
+| **96E: own gray pointers, per-entry synchronisers and a 3-flop pointer (`ENT_SYNC = 1`), fill target 1** | **6.6 / 5.8** (5.5 to 6.3 in the core) | **+2.3** (+2.25 to +2.4 by phase) | `ASYNC_REG` crossings only; `report_cdc` clean; data settled a full clock before the pointer admits it | **chosen: safe, passes the gates, 0.3 clock over the brief's 2** |
+| 96E: own gray pointers, direct read of the entry flops (`ENT_SYNC = 0`, the standard async-FIFO read) + `set_max_delay -datapath_only` | 5.5 / 4.8 | +1.2 | safe by the pointer rule, but `report_cdc`: 38 CDC-1 Critical, gate `cdc_no_critical` fails | not shippable without a CDC waiver (a decision for the planner); kept as `rm_gp_direct` |
 | GT's own RX elastic buffer with clock correction (UG576) | not measurable: needs a Wizard change and the board | | | **not done**: the Wizard build of 56A uses the buffer bypass (`RXBUF_EN = 0`); enabling the RX buffer adds the GT's own latency, which is a GT property to be measured on the board; UG576's clock correction works on 8B/10B-style or user-defined sequences, and whether it applies to 64B/66B in this configuration was not established here |
 | Decision in the recovered clock, only the order crosses | 0 (it is the 97C path) | 0 | the 97C path: events cross, the stream does not | exists already as `RATE_MATCH = 0`; it needs no rate matching for the trading decision (96C showed it survives +-3000 ppm), and rate matching would be needed only for a consumer of the frame stream in the core clock, which this design does not have |
 
 ### The buffer (`rtl/rate_match_gp.sv`)
 
-Same ports and the same insert/delete policy as `rate_match.sv`. It is the standard asynchronous FIFO (the structure inside `xpm_fifo_async`): 16 blocks of 74 bits in flip-flops in the write clock, each written once and held until the reader has released it (the writer sees the read pointer and never overwrites an unread entry).
-The write pointer crosses as a gray code (`xpm_cdc_gray`: a source register one write clock after the entry was loaded, then two destination flops), so the read side sees an entry admitted no earlier than about 2 read clocks after the entry's flops changed. The reader then selects the entry's flops directly with its own read pointer and registers the result in the read clock.
-That path (write-clock entry flops, multiplexer, read-clock registers) is not a synchroniser: it is safe because the pointer admits an entry only after the entry has been stable for about 2 read clocks, and it is bounded by `designs/b96_kr260_10g/rate_match_gp.xdc`, `set_max_delay -datapath_only` of one read-clock period (6.206 ns) from the entry flops to the instance's read-clock registers, scoped to the instance by name,
-which is AMD's XPM FIFO constraint style for its memory read path (`flow/xpm_cdc.tcl`). The read pointer crosses back the same way; the writer stops at 16 outstanding blocks as it sees them (its view is about 4 clocks old, the reader's of the write pointer about 4, so about 8 are outstanding in steady state). The policy reads the exact pointer difference as the read side sees it
-(`HI = 1`: delete idles in the pause clock while more than one block is visible, instead of the macro's lagging count with 4). The pointers are never reset (a reset of one side cannot leave them inconsistent: the reader drains while the lock is low).
+Same ports and the same insert/delete policy as `rate_match.sv`. 16 blocks of 74 bits in flip-flops in the write clock, each written once and held until the reader has released it (the writer sees the read pointer and never overwrites an unread entry). The write pointer crosses as a gray code (`xpm_cdc_gray`: a source register one write clock after the entry was loaded, then destination flops).
+The read pointer crosses back the same way; the writer stops at 16 outstanding blocks as it sees them. The policy reads the exact pointer difference as the read side sees it (`HI = 1`, not the macro's lagging count with 4). The pointers are never reset (the reader drains while the lock is low).
 
-**A first version was rejected by the planner and replaced.** It copied every entry through its own two-flop synchroniser (`xpm_cdc_array_single`) and relied on the data settling before the pointer; that margin is 0 to 1 clock and holds only if the routing skew of the synchronised bits is bounded, which nothing constrained: a bit whose first flop goes metastable can resolve to the old value and arrive in the same
-clock as the pointer, a torn word. Its records are kept in `results/b96e/builds_v1_per_entry_sync/` and `results/b96e/v1_per_entry_sync/`. The replacement has the same latency (the pointer crossing, not the data, sets it: the data synchronisers ran in parallel with the pointer's) and fewer flip-flops (build numbers below).
+**Two read structures were built (parameter `ENT_SYNC`, build parameter `RM_DIRECT`).**
+1. **`ENT_SYNC = 1` (default, `rm_gp`).** Every entry is also copied bit for bit through its own two-flop `ASYNC_REG` synchroniser (`xpm_cdc_array_single`) and the write pointer crosses with **three** flops. A data bit that goes metastable in its first flop resolves within a clock, so its copy has settled after its second flop; the pointer's third flop makes the pointer arrive at least one clock later than that, whatever the routing skew between the bits (while it is under a clock).
+   This is what the first version lacked: with a two-flop pointer the margin was 0 to 1 clock and a late-resolving bit could arrive in the pointer's clock, a torn word (the planner's review, 2026-11-19). It costs one clock.
+2. **`ENT_SYNC = 0` (`rm_gp_direct`).** The standard asynchronous FIFO read, as the planner asked: the reader selects the entry flops directly with its read pointer and registers the result in the read clock; the pointer (2 flops) admits an entry about 2 read clocks after it changed, so it is stable when read; the path is bounded by `rate_match_gp.xdc`
+   (`set_max_delay -datapath_only` 6.206 ns, one read-clock period, from the entry flops to the instance's read-clock registers, scoped by name, AMD's XPM FIFO constraint style, `flow/xpm_cdc.tcl`). **Result: Vivado's `report_cdc` cannot classify it:** 38 CDC-1 "1-bit unknown CDC circuitry" Critical rows (the entries were inferred as distributed RAM; the endpoints are the output register, `in_frame`, and the enables of `n_del` and `rbin`), each already listed with exception
+   "Max Delay Datapath Only", so the constraint does not change the classification, exactly as in 96C's hand-made buffer (`results/b96c/cdc_probe.rpt`, same 38). The flow gates `post_synth_cdc_no_critical` and `cdc_no_critical` fail (28 of 29 gates); methodology had no criticals; timing met (WNS +0.079 ns). AMD's own FIFO is not flagged because its memory path is inside the macro; a design of our own
+   cannot get the same classification without a waiver, which suppresses a gate and is not done here. The direct variant is kept (parameter, twin test, build record) as the measurement of what the standard structure would give: **4.8 clocks in the core, +1.2 tick-to-trade**.
 
-**MTBF, stated.** The pointers cross in two-flop `ASYNC_REG` synchronisers (`xpm_cdc_gray`, the same structure and `DEST_SYNC_FF` as the other crossings in this design) at 161 MHz, whose MTBF AMD documents. The entry data are not synchronised bit by bit: their safety is the pointer's rule above, checked in simulation
-(the twin, the whole-core bench) and by the constraint, not proved. A remaining caveat: the gray pointer assumes at most one step per destination clock, which a write clock up to 200 ppm faster can break briefly (the macro has the same exposure; the Icarus stand-ins cannot test it).
+Latency is set by the pointer crossing, not by the data path: removing the data synchronisers (variant 2) is one clock faster only because the pointer has two flops instead of three; the data synchronisers themselves ran in parallel with the pointer.
 
-### The build (`rm_gp`)
+**MTBF, stated.** The pointers and (variant 1) every data bit cross in two-flop `ASYNC_REG` synchronisers (`xpm_cdc_gray`, `xpm_cdc_array_single`: the structure whose MTBF AMD documents) at 161 MHz. Variant 1's one-clock settling margin is the standard "wait one more clock before using multi-bit data" rule; it is checked in simulation (the twin, the whole-core bench), not proved.
+Caveat: the gray pointer assumes at most one step per destination clock, which a write clock up to 200 ppm faster can break briefly (the macro has the same exposure; the Icarus stand-ins cannot test it).
 
-`designs/b96_kr260_10g/rm_gp/build.yaml` (the base design, `RATE_MATCH = 1`, `RM_OWN = 1`), built through the heavy slot with `FDA_VIVADO_THREADS=1` under a 6 GiB scope (`results/b96e/builds/rm_gp/`): **all 29 gates true**; DRC and methodology critical warnings 0 (15 methodology warnings: LUTAR-1 x5, XDCH-2 x10, as before);
-**WNS +0.105 ns, WHS +0.011 ns**, 6,836 LUT, 18,935 FF, 0 BRAM, 1.118 W (vectorless, Medium confidence), Tj 48.3 C; 1,465 s, Vivado resident peak 4,412 MiB, 0 scope cap hits, 0 swap. Build stamp `1a2fa1a8`, built from commit f58dbeba with a clean tree; the stamp recomputed from the current tree
-(`flow.prepare.sources_sha256` over the sources, constraints and IP Tcl) is `1a2fa1a8`, so the RTL, build file and constraints are those that were built. The bitstream (`rm_gp/build/base/kr260_10g_top.bit`, git-ignored) has not been loaded on a board.
+### The builds (`rm_gp`, `rm_gp_direct`)
+
+Through the heavy slot with `FDA_VIVADO_THREADS=1` under a 6 GiB scope (`results/b96e/builds/<name>/`; both built from clean trees).
+
+| Build | Gates | WNS / WHS (ns) | LUT / FF | Power, Tj | `report_cdc` | Stamp |
+|---|---|---|---|---|---|---|
+| `rm_gp` (`ENT_SYNC = 1`, built at 9c8f1319) | **all 29 true** | +0.164 / +0.010 | 6,730 / 18,938 | 1.105 W, 48.2 C | no CDC-1; 0 critical; CDC-3 info 1,194; CDC-6 warning 6 (as before); the gates `cdc_no_critical` and `cdc_structure_clean` pass (`cdc_summary.txt`) | `b72d3f46`, recomputed from the tree: `b72d3f46` |
+| `rm_gp_direct` (`ENT_SYNC = 0`, built at an earlier commit of this branch) | 28 of 29: `post_synth_cdc_no_critical`, `cdc_no_critical` fail | +0.079 / +0.011 | 6,557 / 15,434 | | **CDC-1 Critical 38** (`cdc_summary.txt`) | `05b0a150` (RTL since changed by the `ENT_SYNC` parameter: not reproducible from this tree) |
+
+`rm_gp`: DRC and methodology critical warnings 0 (15 methodology warnings: LUTAR-1 x5, XDCH-2 x10, as before); 1,422 s, Vivado resident peak 4,398 MiB, the 6 GiB scope cap was hit 35 times with 16 MiB of swap (the base build had none; harmless here, but run it alone); 0 DRC errors. Against `rm_ctl` (the macro buffer): +117 LUT, +3,271 FF.
+Stamp check: `flow.prepare.sources_sha256` over the sources, constraints and IP Tcl of `designs/b96_kr260_10g/rm_gp/build.yaml`, recomputed from the current tree, equals the build's stamp, and `git diff` of the RTL, the build directory and the flow since the build commit is empty. The bitstream (`rm_gp/build/base/kr260_10g_top.bit`, git-ignored) has not been loaded on a board.
+The first per-entry-synchroniser version's records (2-flop pointer, WNS +0.105 ns, all 29 gates, stamp `1a2fa1a8`) are kept in `results/b96e/builds_v1_per_entry_sync/` and `results/b96e/v1_per_entry_sync/`: rejected for the 0-to-1-clock margin above.
 
 ### How it was checked
 
-- `tests/ratematch_cocotb.py` against the new twin `RateMatchGP` (`model/ratematch.py`), output for output and every counter, on the 96C scenarios (same clocks, partner +-400 ppm, minimum-gap +300 ppm over 5000 frames, ordered sets and errors, lock drop, counter clear): `test_rate_match_gp_cocotb` passes; every frame intact, overflow 0.
-- The whole-core bench with the own buffer (`test_core_cocotb_rm_own`): all tests of `tests/core_cocotb.py` pass.
+- `tests/ratematch_cocotb.py` against the new twin `RateMatchGP` (`model/ratematch.py`), for both `ENT_SYNC = 1` (`test_rate_match_gp_cocotb`) and `ENT_SYNC = 0` (`test_rate_match_gp_direct_read_cocotb`), output for output and every counter, on the 96C scenarios (same clocks, partner +-400 ppm, minimum-gap +300 ppm over 5000 frames, ordered sets and errors, lock drop, counter clear): `test_rate_match_gp_cocotb` passes; every frame intact, overflow 0.
+- The whole-core bench with the own buffer (`test_core_cocotb_rm_own`, `ENT_SYNC = 1`): all tests of `tests/core_cocotb.py` pass.
 - xsim with the real macros, whole core: `sim/tb_lat_core.sv` (above); the buffer alone: `sim/tb_rm_latency.sv`.
 - The default (`RATE_MATCH = 0`) path is untouched: the `eqy` proof of 96C re-run on this branch (`results/b96c/eqy_default/result_default.txt`) and the default bench.
 - `tests/test_b96_generics.py`: the structural check of `GO_REG` in `lat_all3/build.yaml` against `lat_all3/variant.json` (96C follow-up).
@@ -405,7 +418,7 @@ clock as the pointer, a torn word. Its records are kept in `results/b96e/builds_
 
 ### What the board must still show
 
-1. E, L and D of the `rm_gp` build (`_handoff/fpga_agent/run_96e_stage3.sh`): predicted from the simulation, with the +1.25 of `D` that simulation does not explain, L about 51.5 to 53 clocks (97C 50, 96C buffer 61), tick-to-trade about +1.2 to +2.5 clocks.
+1. E, L and D of the `rm_gp` build (`_handoff/fpga_agent/run_96e_stage3.sh`): predicted from the simulation (`rm_gp`: receive-start path +1.4, D +0.9, so dL = 2 x 1.4 + 0.9 = 3.7), plus the 1.25 of `D` that simulation does not explain: L about 54 to 55 clocks (97C 50, 96C buffer 61), tick-to-trade about +2.3 to +3.5 clocks.
 2. The buffer's own counters at 0 ppm (RXV18 to RXV26: inserts, deletes, stalls, overflow, fill min and max).
 3. The remaining 1.25 clocks of `D`: a build with ILA or stamp counters at the buffer's input and output, or the same quantity from the E and D of two builds.
 4. Behaviour under a real offset: `docs/real_offset_plan.md` (a plan for the owner to approve; nothing bought or wired).

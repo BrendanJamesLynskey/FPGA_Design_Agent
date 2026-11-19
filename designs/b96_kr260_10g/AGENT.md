@@ -9,7 +9,7 @@ A Kria KR260 design that carries our own 10GBASE-R PCS (64B/66B, scrambler, gear
 not: an interoperability proof: a PCS talking to itself accepts its own symmetric mistakes, only a network card proves it; the full 58A trading core (book, rule table, interlocks, ARP) at 64 bits: trade64 is a small stand-in with one rule; the reconciliation sublayer link-fault state machine, the BER monitor, an ARP or ICMP responder
 
 ## state
-stage=built vivado=2026.1 kb_pin=93d158c build_id=114de4b3
+stage=built vivado=2026.1 kb_pin=93d158c build_id=357b9db7
 gates: build_2026_1=pass
 
 ## interface
@@ -23,6 +23,7 @@ param TRADE=1 (variant b), 0 (variant a) legal=0 or 1
 param RATE_MATCH=0 (default), 1 (the 96C elastic buffer) legal=0 or 1
 param EYESCAN=0 (default), 1 (the eyescan build) legal=0 or 1
 param RM_OWN=0 (default), 1 (the 96E own gray-pointer buffer) legal=0 or 1
+param RM_DIRECT=0 (default), 1 (build rm_gp_direct) legal=0 or 1
 param GO_REG=1 (default), 0 in lat_all3 legal=0 or 1
 param line rate=10.3125 Gb/s legal=fixed by 10GBASE-R
 
@@ -39,18 +40,19 @@ designs/b96_kr260_10g/rtl/mac64_rx.sv 35a0ed74f5: 64-bit MAC receiver
 designs/b96_kr260_10g/rtl/frame_src.sv a745598f6a: frame builder for orders, feed, probe and test frames
 designs/b96_kr260_10g/rtl/trade64.sv 1999e01a37: the 64-bit mock trading decision
 designs/b96_kr260_10g/rtl/tx_path.sv 91039813b5: transmit domain: sources, generator, timestamps
-designs/b96_kr260_10g/rtl/rx_path.sv 51c39177f6: receive domain: PCS, MAC, decision, counters
-designs/b96_kr260_10g/rtl/b96_core.sv 21d71bff9b: registers, GT wrapper and clock-domain crossings
-designs/b96_kr260_10g/rtl/kr260_10g_top.sv bcd50deb41: board top (MMCM, SYSMON, pins)
+designs/b96_kr260_10g/rtl/rx_path.sv fd582fc7eb: receive domain: PCS, MAC, decision, counters
+designs/b96_kr260_10g/rtl/b96_core.sv 2939f61681: registers, GT wrapper and clock-domain crossings
+designs/b96_kr260_10g/rtl/kr260_10g_top.sv c40a5092b1: board top (MMCM, SYSMON, pins)
 designs/b96_kr260_10g/rtl/rx_path_legacy.sv 4c9412a3ce: the 97C receive path (main 6909e43f), used when RATE_MATCH = 0
 designs/b96_kr260_10g/rtl/rate_match.sv 99afaeec54: rate-matching elastic buffer (idle insert and delete between frames, xpm_fifo_async), brief 96C
-designs/b96_kr260_10g/rtl/rate_match_gp.sv b598699be8: low-latency elastic buffer with our own gray-pointer crossing (RM_OWN = 1), brief 96E
-designs/b96_kr260_10g/model/ratematch.py 1f19d534d0: Python twin of the rate matcher, compared output for output with the RTL
+designs/b96_kr260_10g/rtl/rate_match_gp.sv 155d714e23: low-latency elastic buffer with our own gray-pointer crossing (RM_OWN = 1), brief 96E
+designs/b96_kr260_10g/rate_match_gp.xdc 68705f884b: set_max_delay -datapath_only for the direct-read variant of rate_match_gp (build rm_gp_direct only)
+designs/b96_kr260_10g/model/ratematch.py 8794519d31: Python twin of the rate matcher, compared output for output with the RTL
 designs/b96_kr260_10g/host/b96c_ppm.py a5a5b3d64e: board driver for the ppm sweep (TX phase-interpolator offset, measured ppm, SYSMON conditions)
 designs/b96_kr260_10g/rtl/hs_vec.sv bb5cad4fa9: coherent vector crossing
 designs/b96_kr260_10g/model/pcs.py 92790d45d7: bit-serial Python reference of the PCS (the twin)
 designs/b96_kr260_10g/design.xdc 4dec8c5ba8: pins, clocks, slow-pin constraints
-designs/b96_kr260_10g/docs/design.md 79f1ae4aad: design note: decisions and alternatives
+designs/b96_kr260_10g/docs/design.md 06e9999a77: design note: decisions and alternatives
 designs/b96_kr260_10g/docs/board_run_plan.md 678413f0be: stage 3 plan for the board
 designs/b96_kr260_10g/docs/what_we_found.md 376623bbd5: results and gaps
 designs/b96_kr260_10g/regmap.py 5146c294c8: register map as data
@@ -62,14 +64,14 @@ simulate the PCS, MAC and core against the Python reference (~2min): python -m p
 [heavy] build variant (a), the near-end loopback self-test (~22min): flow/run_vivado.sh designs/b96_kr260_10g/selftest base
 
 ## records (path sha256-prefix; claims below cite R<n>)
-R1 designs/b96_kr260_10g/tests/test_b96_pcs_rtl.py 20c8500b7a
+R1 designs/b96_kr260_10g/tests/test_b96_pcs_rtl.py b26b6317ae
 R2 results/b96c/builds/control/digest.json f4c148e6e1
 R3 results/b96c/eqy_default/result_default.txt 0144f4bfb6
 R4 results/b96c/hw/20261119_080724/control/stage3.json 269183b66c
 R5 results/b96/build_a/gates.json fe45f7625c
 R6 results/b96/README.md 3fb82e2bc0
-R7 results/b96e/core_lat_sim.json 227305d43f
-R8 results/b96e/builds/rm_gp/digest.json 8eabb05bcc
+R7 results/b96e/core_lat_sim.json 77fb782b78
+R8 results/b96e/builds/rm_gp/digest.json fdc4edc093
 R9 results/b96c/builds/control/run.json 699ba4c7ee
 R10 results/b96/latency_sim.json e5453d4c0b
 R11 results/b96c/core_sim.json 227e0284e2
@@ -97,7 +99,7 @@ M7 latency -=3 clocks R10#tx_clocks_max: transmit latency, worst gearbox phase |
 M8 latency -=13 clocks R11#tick_to_trade_digital_sim.gt_rxdata_price_word_to_gt_txdata_order_start_clocks.max: digital tick-to-trade, worst simulated case with the rate matcher (RATE_MATCH = 1) | simulation, same-phase clocks, the Icarus stand-in of the FIFO macro; GT, optics and clock-crossing phase not included; the board measured 11 clocks more than 97C, see E6 and design.md section 9
 M10 latency tick_to_trade_default_clocks=11 clocks R12#tick_to_trade_digital_sim.gt_rxdata_price_word_to_gt_txdata_order_start_clocks: digital tick-to-trade, simulation of the default build (RATE_MATCH = 0, the 97C path) | simulation, same-phase clocks; as M8
 M9 timing wns_ns_all3=0.004 ns R13#timing.wns_ns: worst setup slack, latency variant all3 with the rate matcher (RATE_MATCH = 1) | as M3; the margin is thin
-M11 latency tick_to_trade_own_buffer_clocks=11.88 clocks R7#results.rate_match_1_rm_own_1.1550.tick_to_trade.mean: GT-port tick-to-trade in simulation with AMD's real macros, own gray-pointer buffer (RM_OWN = 1), mean over four phases at phase 1550 ps | xsim 2026.1, whole core, GT stand-in, phase 1550 ps between the clocks; the 97C path is 10.75 and the xpm_fifo_async buffer 16.0 at the same phase; the board has not measured this build
+M11 latency tick_to_trade_own_buffer_clocks=13 clocks R7#results.rate_match_1_rm_own_1.1550.tick_to_trade.mean: GT-port tick-to-trade in simulation with AMD's real macros, own gray-pointer buffer (RM_OWN = 1), mean over four phases at phase 1550 ps | xsim 2026.1, whole core, GT stand-in, phase 1550 ps between the clocks; the 97C path is 10.75 and the xpm_fifo_async buffer 16.0 at the same phase; the board has not measured this build
 
 ## gaps
 [hardware] The design has run on a KR260 optical loopback only (briefs 97 and 96C), never against a network card or a second reference clock, so rate matching (RATE_MATCH = 1) has not been seen under a real frequency offset; the TX phase-interpolator route gave none. The reference clock source and frequency, the 25 MHz input and the SFP+ control pin functions are unconfirmed against the schematic (third-party example).

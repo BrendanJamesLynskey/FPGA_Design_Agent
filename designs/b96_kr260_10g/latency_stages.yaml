@@ -211,13 +211,13 @@ accounting_96e:
     D: {r97c: 10, rate_match_xpm: 12, change: 2}
     L: {r97c: 50, rate_match_xpm: 61, change: 11, explained_by: "2 x 4.5 + 2"}
   simulated_change_in_L: {macro_buffer: 9.75, explained_from_E: 9.0, explained_from_D: 0.75, board: 11, unexplained: 1.25, where: "D (board +2, simulation +0.75); needs the board"}
-  stages_clocks:                      # fire_to_go is the 97C path's xpm_cdc_pulse crossing (gone with a buffer)
-    rx_start_strobe_S:     {r97c: 5.6, rate_match_xpm: 10.1, rate_match_gp: 6.0}
-    d_strobe_to_order:     {r97c: 10.4, rate_match_xpm: 11.1, rate_match_gp: 11.2}
-    pcs_out_to_buffer_out: {r97c: 0, rate_match_xpm: 8.9, rate_match_gp: 4.8}
-    buffer_out_to_mac_word7: {r97c: 0, rate_match_xpm: 1, rate_match_gp: 1}
-    pcs_out_to_mac_word7:  {r97c: 1, rate_match_xpm: 9.9, rate_match_gp: 5.8}
-    mac_word7_to_fire:     {r97c: 1, rate_match_xpm: 1, rate_match_gp: 1}
-    fire_to_go:            {r97c: 3.6, rate_match_xpm: 0, rate_match_gp: 0}
-    go_to_order_preamble:  {r97c: 2, rate_match_xpm: 2, rate_match_gp: 2}
-    tick_to_trade_gt_to_gt: {r97c: 10.6, rate_match_xpm: 15.9, rate_match_gp: 11.8, change_gp_vs_97c: 1.2}
+  stages_clocks:                      # fire_to_go is the 97C path's xpm_cdc_pulse crossing (gone with a buffer); rate_match_gp = ENT_SYNC 1 (rm_gp), rate_match_gp_direct = ENT_SYNC 0 (rm_gp_direct, fails report_cdc)
+    rx_start_strobe_S:     {r97c: 5.6, rate_match_xpm: 10.1, rate_match_gp: 7.0, rate_match_gp_direct: 6.0}
+    d_strobe_to_order:     {r97c: 10.4, rate_match_xpm: 11.1, rate_match_gp: 11.3, rate_match_gp_direct: 11.2}
+    pcs_out_to_buffer_out: {r97c: 0, rate_match_xpm: 8.9, rate_match_gp: 5.9, rate_match_gp_direct: 4.8}
+    buffer_out_to_mac_word7: {r97c: 0, rate_match_xpm: 1, rate_match_gp: 1, rate_match_gp_direct: 1}
+    pcs_out_to_mac_word7:  {r97c: 1, rate_match_xpm: 9.9, rate_match_gp: 6.9, rate_match_gp_direct: 5.8}
+    mac_word7_to_fire:     {r97c: 1, rate_match_xpm: 1, rate_match_gp: 1, rate_match_gp_direct: 1}
+    fire_to_go:            {r97c: 3.6, rate_match_xpm: 0, rate_match_gp: 0, rate_match_gp_direct: 0}
+    go_to_order_preamble:  {r97c: 2, rate_match_xpm: 2, rate_match_gp: 2, rate_match_gp_direct: 2}
+    tick_to_trade_gt_to_gt: {r97c: 10.6, rate_match_xpm: 15.9, rate_match_gp: 12.9, rate_match_gp_direct: 11.8, change_gp_vs_97c: 2.3, change_gp_direct_vs_97c: 1.2}

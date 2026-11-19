@@ -48,6 +48,7 @@ Interfaces:
 | `RATE_MATCH` | 0 (default), 1 (the 96C elastic buffer) | 0 or 1 | 0 is the receive path of main 6909e43f (brief 97C, board-proven); 1 puts rate_match between the receive PCS and the MAC (11 clocks slower on the board); the register map is the same, with the rate-match and frequency words reading 0 at 0 |
 | `EYESCAN` | 0 (default), 1 (the eyescan build) | 0 or 1 | 1 adds brief 96D's DRP access, eye-scan point sequencer (es_ctrl) and TX drive registers (FEATURES bit 4); with 0 they read 0 and the GT's DRP and drive ports are tied to the old constants; es.xdc also powers up the GT's eye-scan circuit in the eyescan build |
 | `RM_OWN` | 0 (default), 1 (the 96E own gray-pointer buffer) | 0 or 1 | RATE_MATCH = 1 only (FEATURES bit 5); 1 uses rate_match_gp.sv (about 5 clocks, 1.2 clocks of tick-to-trade over the 97C path in simulation) instead of the xpm_fifo_async buffer (5.3 clocks) |
+| `RM_DIRECT` | 0 (default), 1 (build rm_gp_direct) | 0 or 1 | RM_OWN = 1 only; 1 sets rate_match_gp's ENT_SYNC to 0 (direct read of the entry flops, 1.2 clocks of tick-to-trade in simulation) which fails the report_cdc gate (38 CDC-1 Critical); kept as evidence |
 | `GO_REG` | 1 (default), 0 in lat_all3 | 0 or 1 | RATE_MATCH = 0 only, the register stage of the go-pulse crossing (brief 97's all3 variant removes it) |
 | `line rate` | 10.3125 Gb/s | fixed by 10GBASE-R | QPLL0 from the 156.25 MHz reference; the user clocks (161.133 MHz) carry 64 bits a word and the PCS takes one clock pause in 33 |
 
@@ -56,7 +57,7 @@ Interfaces:
 | Resources | LUTs, variant (b): 6167 LUT; registers, variant (b): 14,183 FF | M1, M2 |
 | Timing | worst setup slack, variant (b): 0.221 ns; worst hold slack, variant (b): 0.011 ns; worst setup slack, latency variant all3 with the rate matcher (RATE_MATCH = 1): 0.004 ns | M3, M4, M9 |
 | Power | total on-chip power estimate, variant (b): 1.087 W | M5 |
-| Latency | transmit latency, worst gearbox phase: 3 clocks; digital tick-to-trade, worst simulated case with the rate matcher (RATE_MATCH = 1): 13 clocks; digital tick-to-trade, simulation of the default build (RATE_MATCH = 0, the 97C path): 11 clocks; GT-port tick-to-trade in simulation with AMD's real macros, own gray-pointer buffer (RM_OWN = 1), mean over four phases at phase 1550 ps: 11.88 clocks | M7, M8, M10, M11 |
+| Latency | transmit latency, worst gearbox phase: 3 clocks; digital tick-to-trade, worst simulated case with the rate matcher (RATE_MATCH = 1): 13 clocks; digital tick-to-trade, simulation of the default build (RATE_MATCH = 0, the 97C path): 11 clocks; GT-port tick-to-trade in simulation with AMD's real macros, own gray-pointer buffer (RM_OWN = 1), mean over four phases at phase 1550 ps: 13 clocks | M7, M8, M10, M11 |
 | Throughput | not measured | [Known gaps](#known-gaps-and-limits) |
 
 ![Resource use as a share of the part, and timing slack](docs/handover/resources.svg)
@@ -72,7 +73,7 @@ Interfaces:
 | build variant (b) and run all gates; needs local Vivado 2026.1 (Basic tier) and a heavy slot (take_heavy_slot.sh), MEM_MAX=6G reaches the cap | `flow/run_vivado.sh designs/b96_kr260_10g base` | yes | about 22 min |
 | build variant (a), the near-end loopback self-test; needs as above | `flow/run_vivado.sh designs/b96_kr260_10g/selftest base` | yes | about 22 min |
 
-Tool: Vivado 2026.1. Build ID of the inputs at handover: `114de4b3` (`python flow/manifest.py show designs/b96_kr260_10g`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `93d158c`.
+Tool: Vivado 2026.1. Build ID of the inputs at handover: `357b9db7` (`python flow/manifest.py show designs/b96_kr260_10g`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `93d158c`.
 
 | File | What |
 |---|---|
@@ -94,6 +95,7 @@ Tool: Vivado 2026.1. Build ID of the inputs at handover: `114de4b3` (`python flo
 | [`designs/b96_kr260_10g/rtl/rx_path_legacy.sv`](rtl/rx_path_legacy.sv) | the 97C receive path (main 6909e43f), used when RATE_MATCH = 0 |
 | [`designs/b96_kr260_10g/rtl/rate_match.sv`](rtl/rate_match.sv) | rate-matching elastic buffer (idle insert and delete between frames, xpm_fifo_async), brief 96C |
 | [`designs/b96_kr260_10g/rtl/rate_match_gp.sv`](rtl/rate_match_gp.sv) | low-latency elastic buffer with our own gray-pointer crossing (RM_OWN = 1), brief 96E |
+| [`designs/b96_kr260_10g/rate_match_gp.xdc`](rate_match_gp.xdc) | set_max_delay -datapath_only for the direct-read variant of rate_match_gp (build rm_gp_direct only) |
 | [`designs/b96_kr260_10g/model/ratematch.py`](model/ratematch.py) | Python twin of the rate matcher, compared output for output with the RTL |
 | [`designs/b96_kr260_10g/host/b96c_ppm.py`](host/b96c_ppm.py) | board driver for the ppm sweep (TX phase-interpolator offset, measured ppm, SYSMON conditions) |
 | [`designs/b96_kr260_10g/rtl/hs_vec.sv`](rtl/hs_vec.sv) | coherent vector crossing |
@@ -144,7 +146,7 @@ Every value is read from the record by `python -m flow.handover fill`, not typed
 | M8 | digital tick-to-trade, worst simulated case with the rate matcher (RATE_MATCH = 1) | 13 clocks | 1 | [`results/b96c/core_sim.json`](../../results/b96c/core_sim.json) `tick_to_trade_digital_sim.gt_rxdata_price_word_to_gt_txdata_order_start_clocks.max` | simulation, same-phase clocks, the Icarus stand-in of the FIFO macro; GT, optics and clock-crossing phase not included; the board measured 11 clocks more than 97C, see E6 and design.md section 9 |
 | M10 | digital tick-to-trade, simulation of the default build (RATE_MATCH = 0, the 97C path) | 11 clocks | 1 | [`results/b96c/core_sim_default.json`](../../results/b96c/core_sim_default.json) `tick_to_trade_digital_sim.gt_rxdata_price_word_to_gt_txdata_order_start_clocks` | simulation, same-phase clocks; as M8 |
 | M9 | worst setup slack, latency variant all3 with the rate matcher (RATE_MATCH = 1) | 0.004 ns | 1 | [`results/b96c/builds/rm_all3/digest.json`](../../results/b96c/builds/rm_all3/digest.json) `timing.wns_ns` | as M3; the margin is thin |
-| M11 | GT-port tick-to-trade in simulation with AMD's real macros, own gray-pointer buffer (RM_OWN = 1), mean over four phases at phase 1550 ps | 11.88 clocks | 1 | [`results/b96e/core_lat_sim.json`](../../results/b96e/core_lat_sim.json) `results.rate_match_1_rm_own_1.1550.tick_to_trade.mean` | xsim 2026.1, whole core, GT stand-in, phase 1550 ps between the clocks; the 97C path is 10.75 and the xpm_fifo_async buffer 16.0 at the same phase; the board has not measured this build |
+| M11 | GT-port tick-to-trade in simulation with AMD's real macros, own gray-pointer buffer (RM_OWN = 1), mean over four phases at phase 1550 ps | 13 clocks | 1 | [`results/b96e/core_lat_sim.json`](../../results/b96e/core_lat_sim.json) `results.rate_match_1_rm_own_1.1550.tick_to_trade.mean` | xsim 2026.1, whole core, GT stand-in, phase 1550 ps between the clocks; the 97C path is 10.75 and the xpm_fifo_async buffer 16.0 at the same phase; the board has not measured this build |
 
 <!-- prose:measured -->
 <!-- /prose:measured -->

@@ -73,6 +73,11 @@ parameters:
   legal: 0 or 1
   note: RATE_MATCH = 1 only (FEATURES bit 5); 1 uses rate_match_gp.sv (about 5 clocks, 1.2 clocks of tick-to-trade over
     the 97C path in simulation) instead of the xpm_fifo_async buffer (5.3 clocks)
+- name: RM_DIRECT
+  value: 0 (default), 1 (build rm_gp_direct)
+  legal: 0 or 1
+  note: RM_OWN = 1 only; 1 sets rate_match_gp's ENT_SYNC to 0 (direct read of the entry flops, 1.2 clocks of tick-to-trade
+    in simulation) which fails the report_cdc gate (38 CDC-1 Critical); kept as evidence
 - name: GO_REG
   value: 1 (default), 0 in lat_all3
   legal: 0 or 1
@@ -121,13 +126,13 @@ files:
   sha256: 91039813b51cc71fadef8fe342b8e1535eea6c40d996604b95697fa5b577d0d8
 - path: designs/b96_kr260_10g/rtl/rx_path.sv
   what: 'receive domain: PCS, MAC, decision, counters'
-  sha256: 51c39177f613fd34734d93b20f3b476a8c418aacd5ccc0c8131b8bcb3073fbfc
+  sha256: fd582fc7ebb4323706c1fa3804404a6ca57c8440d373e480bc74ac733f532bab
 - path: designs/b96_kr260_10g/rtl/b96_core.sv
   what: registers, GT wrapper and clock-domain crossings
-  sha256: 21d71bff9b6ac9e81cdeb6dcb5613b69983fe44228b45918c199c11fe8fa65a5
+  sha256: 2939f616810182ab7c0046b2a65130b1ea7f8593805e446645c8a9af56079835
 - path: designs/b96_kr260_10g/rtl/kr260_10g_top.sv
   what: board top (MMCM, SYSMON, pins)
-  sha256: bcd50deb41cddf0291fa0f2cc77efc1e64f8e18bd363bf90b0db3e1c086db876
+  sha256: c40a5092b110e5101fbbff857771fdb8858f94bd3b6437f6b01ac34b02ed868c
 - path: designs/b96_kr260_10g/rtl/rx_path_legacy.sv
   what: the 97C receive path (main 6909e43f), used when RATE_MATCH = 0
   sha256: 4c9412a3ce8de3b3ee966add7b5b293e4c9b968a4ce2f1e063f62d537a24573f
@@ -136,10 +141,13 @@ files:
   sha256: 99afaeec542032e6515c77f6d09c049c0b761e1aa9387c280694d5ae53fb5c50
 - path: designs/b96_kr260_10g/rtl/rate_match_gp.sv
   what: low-latency elastic buffer with our own gray-pointer crossing (RM_OWN = 1), brief 96E
-  sha256: b598699be8f3c20ed91e10b8f6250dd808dff0a51923e1a124b73c566010294b
+  sha256: 155d714e23812d648ca5d77d212688b40f1694b3483d145045b8679fe26984b1
+- path: designs/b96_kr260_10g/rate_match_gp.xdc
+  what: set_max_delay -datapath_only for the direct-read variant of rate_match_gp (build rm_gp_direct only)
+  sha256: 68705f884b6498184396c9dd0117e8cc70e198a23eecb3e888adc2f7df25b862
 - path: designs/b96_kr260_10g/model/ratematch.py
   what: Python twin of the rate matcher, compared output for output with the RTL
-  sha256: 1f19d534d02382771022d83a4511398cd6b1e95827b1e62db297224282d3b256
+  sha256: 8794519d310ccc18df9e82273ce3f258b229d37238fcd77a3df76faf88bec3fd
 - path: designs/b96_kr260_10g/host/b96c_ppm.py
   what: board driver for the ppm sweep (TX phase-interpolator offset, measured ppm, SYSMON conditions)
   sha256: a5a5b3d64ee29423b64260c57029f8bedfceaf6deb8974f939ac3be0a5615f96
@@ -154,7 +162,7 @@ files:
   sha256: 4dec8c5ba8f6dccc6273f45d40a7d95a6668f5fe09350c0a0d80cc6c07ea1118
 - path: designs/b96_kr260_10g/docs/design.md
   what: 'design note: decisions and alternatives'
-  sha256: 79f1ae4aad4f8fc360ce0d7dc6d96a213b576242946cef2ba884a0475850eae6
+  sha256: 06e9999a77c745745e708dd8333a88a8b698e23e3353fdaaad2da0d64cdf8ff0
 - path: designs/b96_kr260_10g/docs/board_run_plan.md
   what: stage 3 plan for the board
   sha256: 678413f0be0f0c2692b2d1118cd8a8e54ec6514bd5e643485402e34ecc83c61b
@@ -192,7 +200,7 @@ evidence:
     length residue, any bit offset; the whole core with a stand-in for the GT: probe echo, trading loop, decisions, poisoned
     orders'
   record: designs/b96_kr260_10g/tests/test_b96_pcs_rtl.py
-  sha256: 20c8500b7a08f0282f5c60c20e02732e59d6c99bc39fcdfb3dbd1b13ca93a8dd
+  sha256: b26b6317ae585c87f350bb86616514dd18f7884e9138029f5d1f1a3b865461d5
 - id: E2
   activity: build
   result: pass
@@ -240,14 +248,14 @@ evidence:
     buffer and of the own gray-pointer buffer (RM_OWN = 1); the numbers and the accounting of the board''s loop-latency
     increase are in design.md section 11'
   record: results/b96e/core_lat_sim.json
-  sha256: 227305d43fe892c876113ec7e1fe94135bbbb9730f8517b42b34e9954c62f6ed
+  sha256: 77fb782b78af4c9f598f019b6f552970cdb30bdc6e28111db5ac0335b54c73ed
 - id: E8
   activity: build
   result: pass
   what: build rm_gp (RATE_MATCH = 1, RM_OWN = 1), all 29 gates, WNS +0.105 ns, WHS +0.011 ns, stamp 1a2fa1a8 recomputed
     from the tree; not loaded on a board
   record: results/b96e/builds/rm_gp/digest.json
-  sha256: 8eabb05bccda84a6464b721b04c989c45991afccfbbaddb895892ba663f360db
+  sha256: fdc4edc0935ad555d9099277e65ff2ef4a58676ec0096db0946140804ce95f9d
 measurements:
 - id: M1
   what: LUTs, variant (b)
@@ -357,8 +365,8 @@ measurements:
   field: results.rate_match_1_rm_own_1.1550.tick_to_trade.mean
   conditions: xsim 2026.1, whole core, GT stand-in, phase 1550 ps between the clocks; the 97C path is 10.75 and the xpm_fifo_async
     buffer 16.0 at the same phase; the board has not measured this build
-  value: 11.88
-  sha256: 227305d43fe892c876113ec7e1fe94135bbbb9730f8517b42b34e9954c62f6ed
+  value: 13.0
+  sha256: 77fb782b78af4c9f598f019b6f552970cdb30bdc6e28111db5ac0335b54c73ed
 gaps:
 - about: hardware
   text: The design has run on a KR260 optical loopback only (briefs 97 and 96C), never against a network card or a second
@@ -440,4 +448,4 @@ state:
     build_2026_1: pass
   vivado: '2026.1'
   kb_pin: 93d158c
-  build_id: 114de4b3
+  build_id: 357b9db7
