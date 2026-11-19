@@ -1,34 +1,39 @@
 run_vivado: build cache: fresh
-run_vivado: preflight ok (23291 MiB available, no other Vivado)
-run_vivado: designs/b96_kr260_10g base: exit 143, 72.4 s, Vivado peak RSS None MiB, scope peak 2316 MiB (anon 2301 MiB, swap 0 MiB; cap 6G hit 0 times, OOM kills 0)
-INFO: [Timing 38-2] Deriving generated clocks [/home/brendan/Claude_sandbox/_worktrees/96c-ppm/designs/b96_kr260_10g/design.xdc:44]
-Finished Parsing XDC File [/home/brendan/Claude_sandbox/_worktrees/96c-ppm/designs/b96_kr260_10g/design.xdc]
-Completed Processing XDC Constraints
-
-Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00 . Memory (MB): peak = 3274.270 ; gain = 0.000 ; free physical = 5038 ; free virtual = 22807
-INFO: [Project 1-111] Unisim Transformation Summary:
-  A total of 3 instances were transformed.
-  BUFG => BUFGCE: 2 instances
-  MMCME4_BASE => MMCME4_ADV: 1 instance 
-
-RTL Elaboration Complete:  : Time (s): cpu = 00:00:29 ; elapsed = 00:00:26 . Memory (MB): peak = 3274.305 ; gain = 430.941 ; free physical = 5037 ; free virtual = 22806
-171 Infos, 119 Warnings, 0 Critical Warnings and 0 Errors encountered.
-synth_design completed successfully
-synth_design: Time (s): cpu = 00:00:38 ; elapsed = 00:00:36 . Memory (MB): peak = 3274.305 ; gain = 1485.004 ; free physical = 5037 ; free virtual = 22806
-INFO: [Common 17-2834] synth_design peak Physical Memory [PSS] (MB): overall = 2699.599; main = 2658.153; forked = 339.513
-INFO: [Common 17-2834] synth_design peak Virtual Memory [VSS] (MB): overall = 4166.430; main = 3274.273; forked = 1037.242
-FLOW-STAGE elaborate at 55.591s
-Command: report_methodology -file /home/brendan/Claude_sandbox/_worktrees/96c-ppm/designs/b96_kr260_10g/build/base/methodology_rtl.rpt
-INFO: [Vivado_Tcl 2-1520] The results of Report Methodology are in file /home/brendan/Claude_sandbox/_worktrees/96c-ppm/designs/b96_kr260_10g/build/base/methodology_rtl.rpt.
-report_methodology completed successfully
-FLOW-STAGE rtl_reports at 56.224s
-Command: synth_design -top kr260_10g_top -part xck26-sfvc784-2LV-c -generic NEAR_END=1'b0 -generic TRADE=1'b1 -generic BUILD_STAMP=32'h95356208
-Starting synth_design
-Attempting to get a license for feature 'Vivado_Synthesis' and/or device 'xck26'
-INFO: [Common 17-349] Got license for feature 'Vivado_Synthesis' and/or device 'xck26'
-INFO: [Designutils 20-5008] Incremental synthesis strategy default
-INFO: [Synth 8-7079] Multithreading enabled for synth_design using a maximum of 1 processes.
----------------------------------------------------------------------------------
-Starting RTL Elaboration : Time (s): cpu = 00:00:06 ; elapsed = 00:00:06 . Memory (MB): peak = 3326.117 ; gain = 43.844 ; free physical = 4713 ; free virtual = 22482
----------------------------------------------------------------------------------
-run_vivado: Vivado failed for designs/b96_kr260_10g (base), exit 143; see /home/brendan/Claude_sandbox/_worktrees/96c-ppm/designs/b96_kr260_10g/build/base/vivado.log
+run_vivado: preflight ok (23220 MiB available, no other Vivado)
+{"build_id": "ebfe330d", "outputs": {"bit": {"file": "kr260_10g_top.bit", "sha256": "1d72fd7e366dee2051baeec0473a6f489a00ca0fc2f1440af0a0ac6c42812c1d", "usr_access": "EBFE330D"}}, "problems": []}
+run_vivado: designs/b96_kr260_10g base: exit 0, 1278.1 s, Vivado peak RSS 4449 MiB, scope peak 6114 MiB (anon 6002 MiB, swap 0 MiB; cap 6G hit 0 times, OOM kills 0)
+gates: kr260_10g_top (base): PASS  WNS 0.293 ns, TNS 0.0, WHS 0.01 ns, THS 0.0; LUT 6613, FF 15667, BRAM 0, DSP 0
+  rtl: pass
+    ok   rtl_methodology_no_critical
+  post_synth: pass
+    ok   post_synth_no_unconstrained_endpoints
+    ok   post_synth_methodology_no_critical
+    ok   post_synth_drc_clean
+    ok   post_synth_cdc_no_critical
+    ok   post_synth_cdc_structure_clean
+    ok   post_synth_exceptions_clean
+    ok   post_synth_io_constraints_clean
+    ok   post_synth_gt_refclk_pin_quad
+    ok   post_synth_gt_lane_pins
+    ok   post_synth_gt_rate_in_window
+    ok   post_synth_gt_user_clock_limit
+    ok   post_synth_gt_reset_sequence
+    ok   post_synth_gt_user_clocks_timed
+    ok   post_synth_gt_drc_clean
+    ok   post_synth_resets_clean
+    ok   post_synth_resources_in_range
+  post_place: pass
+    ok   post_place_hold
+  post_route: pass
+    ok   setup
+    ok   hold
+    ok   pulse_width
+    ok   no_unconstrained_endpoints
+    ok   drc_clean
+    ok   methodology_no_critical
+    ok   cdc_no_critical
+    ok   power_junction_ok
+    ok   exceptions_clean
+    ok   io_timing_clean
+  bitstream: pass
+    ok   bitstream_present
