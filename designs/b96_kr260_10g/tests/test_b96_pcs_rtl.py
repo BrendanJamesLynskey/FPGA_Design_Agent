@@ -54,3 +54,16 @@ def test_ppm_partner_cocotb() -> None:
              "rx_path.sv", "rx_path_legacy.sv", "b96_core.sv"]
     srcs = [rtl / n for n in names if (rtl / n).exists()] + [DESIGN / "sim" / "gth_wiz_model96p.sv", DESIGN / "sim" / "tb_core_p.sv"]
     cocotb_run.run("b96_ppm", "tb_core_p", srcs, "ppm_cocotb", HERE, extra_env={"PYTHONPATH": str(ROOT), **{k: v for k, v in os.environ.items() if k.startswith("B96_PPM")}})
+
+
+def test_eyescan_cocotb() -> None:
+    """Brief 96D: DRP access and the eye-scan point sequencer (EYESCAN = 1, RATE_MATCH = 0) against the Python twin and the GT's DRP stand-in."""
+    srcs = [RTL / n for n in CORE_SRCS + ["es_ctrl.sv"]] + [DESIGN / "sim" / "gth_wiz_model96.sv", DESIGN / "sim" / "tb_core.sv"]
+    cocotb_run.run("b96_eyescan", "tb_core", srcs, "eyescan_cocotb", HERE, parameters={"RATE_MATCH": 0, "EYESCAN": 1}, extra_env={"PYTHONPATH": str(ROOT)})
+
+
+def test_eyescan_absent_by_default() -> None:
+    """EYESCAN = 0 (the default): the new registers read 0 and the GT's DRP and drive ports are tied as before."""
+    srcs = [RTL / n for n in CORE_SRCS + ["es_ctrl.sv"]] + [DESIGN / "sim" / "gth_wiz_model96.sv", DESIGN / "sim" / "tb_core.sv"]
+    cocotb_run.run("b96_eyescan_off", "tb_core", srcs, "eyescan_cocotb", HERE, parameters={"RATE_MATCH": 0, "EYESCAN": 0}, testcase="eyescan_absent_reads_zero",
+                   extra_env={"PYTHONPATH": str(ROOT), "B96_EYESCAN_OFF": "1"})

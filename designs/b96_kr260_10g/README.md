@@ -46,6 +46,7 @@ Interfaces:
 | `NEAR_END` | 0 (variant b), 1 (variant a) | 0 or 1 | 1 selects the near-end PMA loopback at reset |
 | `TRADE` | 1 (variant b), 0 (variant a) | 0 or 1 | 1 enables the mock trading path at reset; it still needs ARM |
 | `RATE_MATCH` | 0 (default), 1 (the 96C elastic buffer) | 0 or 1 | 0 is the receive path of main 6909e43f (brief 97C, board-proven); 1 puts rate_match between the receive PCS and the MAC (11 clocks slower on the board); the register map is the same, with the rate-match and frequency words reading 0 at 0 |
+| `EYESCAN` | 0 (default), 1 (the eyescan build) | 0 or 1 | 1 adds brief 96D's DRP access, eye-scan point sequencer (es_ctrl) and TX drive registers (FEATURES bit 4); with 0 they read 0 and the GT's DRP and drive ports are tied to the old constants; es.xdc also powers up the GT's eye-scan circuit in the eyescan build |
 | `GO_REG` | 1 (default), 0 in lat_all3 | 0 or 1 | RATE_MATCH = 0 only, the register stage of the go-pulse crossing (brief 97's all3 variant removes it) |
 | `line rate` | 10.3125 Gb/s | fixed by 10GBASE-R | QPLL0 from the 156.25 MHz reference; the user clocks (161.133 MHz) carry 64 bits a word and the PCS takes one clock pause in 33 |
 
@@ -70,10 +71,14 @@ Interfaces:
 | build variant (b) and run all gates; needs local Vivado 2026.1 (Basic tier) and a heavy slot (take_heavy_slot.sh), MEM_MAX=6G reaches the cap | `flow/run_vivado.sh designs/b96_kr260_10g base` | yes | about 22 min |
 | build variant (a), the near-end loopback self-test; needs as above | `flow/run_vivado.sh designs/b96_kr260_10g/selftest base` | yes | about 22 min |
 
-Tool: Vivado 2026.1. Build ID of the inputs at handover: `92e3dd74` (`python flow/manifest.py show designs/b96_kr260_10g`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `93d158c`.
+Tool: Vivado 2026.1. Build ID of the inputs at handover: `cd409f68` (`python flow/manifest.py show designs/b96_kr260_10g`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `93d158c`.
 
 | File | What |
 |---|---|
+| [`designs/b96_kr260_10g/rtl/es_ctrl.sv`](rtl/es_ctrl.sv) | DRP master and eye-scan point sequencer for the GTHE4 channel (EYESCAN = 1), brief 96D |
+| [`designs/b96_kr260_10g/es.xdc`](es.xdc) | powers up the GT's eye-scan circuit (ES_EYE_SCAN_EN, ES_ERRDET_EN) in the eyescan build |
+| [`designs/b96_kr260_10g/model/eyescan.py`](model/eyescan.py) | Python twin of the eye-scan point sequencer's DRP traffic |
+| [`designs/b96_kr260_10g/tests/eyescan_cocotb.py`](tests/eyescan_cocotb.py) | cocotb bench of the sequencer against the twin and a DRP stand-in |
 | [`designs/b96_kr260_10g/rtl/b96_pkg.sv`](rtl/b96_pkg.sv) | block codes, scrambler, CRC-32 functions |
 | [`designs/b96_kr260_10g/rtl/pcs_tx.sv`](rtl/pcs_tx.sv) | transmit PCS (encode, scramble, gearbox) |
 | [`designs/b96_kr260_10g/rtl/pcs_rx.sv`](rtl/pcs_rx.sv) | receive PCS (gearbox with slip, block lock, descramble, decode) |
@@ -169,6 +174,7 @@ Open questions:
 
 | Date | Brief | PR | What |
 |---|---|---|---|
+| 2026-11-19 | - | - | brief 96D: on-chip RX eye scan (EYESCAN build option, es_ctrl, flow/eyescan); built with all 29 gates; simulated against a stand-in; not yet run on the board |
 | 2026-11-19 | - | - | brief 96C addendum 2: RATE_MATCH build parameter, default 0 (the 97C path, shown equivalent by eqy and the 97C bench); the board measured the buffer at +11 clocks and no relative offset by the TX phase interpolator |
 | 2026-11-19 | - | - | brief 96C: elastic-buffer rate matcher (xpm_fifo_async) in the base design and lat_all3, TX phase-interpolator ppm controls, four builds with all 29 gates, board session pending |
 | 2026-11-17 | - | - | brief 96 stages 0 to 2: board facts, design note, PCS, MAC, trading path, host code, builds; one review round |

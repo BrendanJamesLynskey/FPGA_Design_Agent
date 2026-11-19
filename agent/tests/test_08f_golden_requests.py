@@ -47,7 +47,9 @@ Goldens, oldest first:
   the agent graph is offered them (the latency loop, ``agent/graph/latency_loop.py``, offers them to its own arm), so every hash other than
   ``tool_registry`` equals the brief 80 golden's.
 - ``b101_request_golden.json`` (brief 101, 2026-11-18): the registry gained ``oss_synth`` and ``eqy_check`` (schema 1.14.0). No stage or role of
-  the agent graph is offered them, so every hash other than ``tool_registry`` equals the brief 97 golden's."""
+  the agent graph is offered them, so every hash other than ``tool_registry`` equals the brief 97 golden's.
+- ``b96d_request_golden.json`` (brief 96D, 2026-11-19): the registry gained ``eye_scan`` (schema 1.15.0; reads an eye-scan capture, never runs the board). No stage or role of
+  the agent graph is offered it, so every hash other than ``tool_registry`` equals the brief 101 golden's."""
 
 from __future__ import annotations
 
@@ -58,13 +60,13 @@ from agent.tests.request_golden import collect
 
 FIXTURES = Path(__file__).parent / "fixtures"
 EVAL1 = FIXTURES / "eval1_request_golden.json"
-GOLDEN = FIXTURES / "b101_request_golden.json"          # the newest golden
+GOLDEN = FIXTURES / "b96d_request_golden.json"          # the newest golden
 #: the hashes that differ from eval-1's, and the brief that changed each (an intended change is listed here, with why)
 CHANGED_SINCE_EVAL1 = {"arm_constants": "brief 80: Claude Code 2.1.321 accepted (ACCEPTED_CLI; the tool-text check passed)",
                        "tool_registry": "brief 36: skill_index, skill_excerpt, load_skill(name=); brief 42 H9: report_digest; "
                                         "brief 50A: debug_plan, debug_capture, debug_query; brief 59A: axi_program_check, axi_simulate, axi_board_run; brief 56A: gt_plan; "
                                         "brief 68: bringup description (reference model); brief 71: check; brief 73: check name axi_profile; brief 97: latency_path, latency_budget; "
-                                        "brief 101: oss_synth, eqy_check (no role is offered them)",
+                                        "brief 101: oss_synth, eqy_check (no role is offered them); brief 96D: eye_scan (no role is offered it)",
                        "prompts": "brief 53: requirement quality (clarify) and requirement tags (tests); brief 68: role names; "
                                   "brief 71: the check tool (rtl); brief 73: the interface profile (clarify, rtl); "
                                   "brief 70: the Designer's reset paragraph (rtl)",
