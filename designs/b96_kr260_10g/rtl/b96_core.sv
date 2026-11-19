@@ -4,13 +4,16 @@
 // specification) and the crossings between the three clock domains:
 //   clk (free-running 100 MHz: registers, reset helper) | tx_clk (TXUSRCLK2, 161.1328125 MHz) | rx_clk (RXUSRCLK2, recovered)
 // Crossings: configuration, counters and status by hs_vec (XPM request/acknowledge handshake, always coherent); command pulses by xpm_cdc_pulse.
-// Since brief 96C the receive path's blocks cross from rx_clk to tx_clk once, through the elastic buffer rate_match (idle insertion and deletion
+// With RATE_MATCH = 1 (brief 96C) the receive path's blocks cross from rx_clk to tx_clk once, through the elastic buffer rate_match (idle insertion and deletion
 // between frames keep the +-100 ppm difference of a real link from ever corrupting a frame); the MAC, the trading path and the order
-// path then share the transmit user clock, so the decision reaches the order logic with no further crossing.
+// path then share the transmit user clock, so the decision reaches the order logic with no further crossing. With RATE_MATCH = 0 (the default) the receive
+// path is the one of main 6909e43f (rx_path_legacy: pulse and bus crossings, no elastic buffer; board-proven by brief 97C).
 module b96_core #(
     parameter logic [31:0] BUILD_STAMP = 32'h0,
     parameter bit          NEAR_END    = 1'b0,    // reset value of the loopback field: 1 = near-end PMA loopback (variant a)
-    parameter bit          TRADE       = 1'b1     // 1 = the mock trading path is armed to be enabled (variant b); reported in FEATURES
+    parameter bit          TRADE       = 1'b1,    // 1 = the mock trading path is armed to be enabled (variant b); reported in FEATURES
+    parameter bit          RATE_MATCH  = 1'b0,    // 1 = brief 96C's elastic buffer on the receive path; 0 = the receive path of main 6909e43f (brief 97C); reported in FEATURES bit 3
+    parameter bit          GO_REG      = 1'b1     // RATE_MATCH = 0 only: REG_OUTPUT of the go-pulse crossing u_p_go (1 as on main; brief 97's latency variant all3 builds it 0)
 ) (
     input  logic        clk,
     input  logic        rst,
@@ -136,6 +139,10 @@ module b96_core #(
     xpm_cdc_single #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(0)) u_s_sd (.src_clk(1'b0), .src_in(i2c_sda_i), .dest_clk(clk), .dest_out(sda_c));
 
     // ---------------------------------------------------------------- the two paths and their crossings
+    // RATE_MATCH = 1 (brief 96C): the receive path's blocks cross from rx_clk to tx_clk once, through the elastic buffer rate_match; the MAC, the trading path and
+    // the order path then share the transmit user clock. RATE_MATCH = 0 (the default): the receive path of main 6909e43f (brief 97C), unchanged: the MAC and the
+    // trading path run in rx_clk and the decision crosses to tx_clk by pulses and a quasi-static bus. Both fill the same register map; the 96C-only words
+    // (rate-match counters RXV18..RXV26, frequency counter RXV27/28) read 0 when RATE_MATCH = 0.
     logic [CFGW-1:0] cfg_tx;
     hs_vec #(.W(CFGW)) u_cfg_tx (.src_clk(clk), .src_vec(cfg), .dst_clk(txusr2), .dst_vec(cfg_tx));
     logic clr_tx, clr_rx, gen_tx, seq_tx;
@@ -144,31 +151,63 @@ module b96_core #(
     xpm_cdc_pulse #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(0)) u_p_st (.src_clk(clk), .src_pulse(p_seq), .src_rst(1'b0), .dest_clk(txusr2), .dest_pulse(seq_tx), .dest_rst(1'b0));
     xpm_cdc_pulse #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(0)) u_p_gt (.src_clk(clk), .src_pulse(p_gen), .src_rst(1'b0), .dest_clk(txusr2), .dest_pulse(gen_tx), .dest_rst(1'b0));
 
-    // the receive path (rx_path): PCS in the receive user clock, rate matching across, MAC and trading path in the transmit user clock
-    logic        r_fire, r_sop, r_feed, r_order, r_probe, r_verdict_v, r_verdict_bad;
-    logic [15:0] r_inst;
-    logic [31:0] r_price, r_qty, r_seq, r_verdict_seq;
-    logic [32 * NRXV_W - 1:0] rxw_t, rxw_live;
-    logic [32 * NRXV_C - 1:0] rxc_t, rxc_live;
     logic [32 * NRXW - 1:0] rx_live;
     logic [32 * NTXW - 1:0] tx_vec_t, tx_live;
-    rx_path u_rx (.clk(rxusr2), .rst(!rx_done_r), .clk_c(txusr2), .rst_c(!tx_done_t), .cfg(cfg_tx), .clr_w(clr_rx), .clr_c(clr_tx), .seq_c(seq_tx), .gt_d(rx_data),
-        .fire(r_fire), .o_inst(r_inst), .o_price(r_price), .o_qty(r_qty), .o_seq(r_seq), .verdict_v(r_verdict_v), .verdict_bad(r_verdict_bad),
-        .verdict_seq(r_verdict_seq), .rx_sop(r_sop), .cls_feed(r_feed), .cls_order(r_order), .cls_probe(r_probe), .lock(pcs_lock_rx),
-        .rx_vec_w(rxw_t), .rx_vec_c(rxc_t));
-    tx_path #(.NTXW(NTXW)) u_tx (.clk(txusr2), .rst(!tx_done_t), .cfg(cfg_tx), .clr_p(clr_tx), .seq_p(seq_tx), .gen_go_p(gen_tx), .go_p(r_fire), .go_inst(r_inst), .go_price(r_price),
-        .go_qty(r_qty), .go_seq(r_seq), .verdict_v(r_verdict_v), .verdict_bad(r_verdict_bad), .verdict_seq(r_verdict_seq), .rx_sop_p(r_sop), .rx_feed_p(r_feed), .rx_order_p(r_order),
-        .rx_probe_p(r_probe), .gt_d(tx_data), .tx_vec(tx_vec_t));
-    hs_vec #(.W(32 * NRXV_W)) u_rxv_w (.src_clk(rxusr2), .src_vec(rxw_t), .dst_clk(clk), .dst_vec(rxw_live));
-    hs_vec #(.W(32 * NRXV_C)) u_rxv_c (.src_clk(txusr2), .src_vec(rxc_t), .dst_clk(clk), .dst_vec(rxc_live));
-    hs_vec #(.W(32 * NTXW)) u_txv (.src_clk(txusr2), .src_vec(tx_vec_t), .dst_clk(clk), .dst_vec(tx_live));
-    for (genvar gi = 0; gi < NRXW; gi++) begin : g_rxv
-        if (RXV_OWN_W[gi]) begin : w
-            assign rx_live[32 * gi +: 32] = rxw_live[32 * rxv_pos(1'b1, gi) +: 32];
-        end else begin : c
-            assign rx_live[32 * gi +: 32] = rxc_live[32 * rxv_pos(1'b0, gi) +: 32];
+    if (RATE_MATCH) begin : g_rm
+        logic        r_fire, r_sop, r_feed, r_order, r_probe, r_verdict_v, r_verdict_bad;
+        logic [15:0] r_inst;
+        logic [31:0] r_price, r_qty, r_seq, r_verdict_seq;
+        logic [32 * NRXV_W - 1:0] rxw_t, rxw_live;
+        logic [32 * NRXV_C - 1:0] rxc_t, rxc_live;
+        rx_path u_rx (.clk(rxusr2), .rst(!rx_done_r), .clk_c(txusr2), .rst_c(!tx_done_t), .cfg(cfg_tx), .clr_w(clr_rx), .clr_c(clr_tx), .seq_c(seq_tx), .gt_d(rx_data),
+            .fire(r_fire), .o_inst(r_inst), .o_price(r_price), .o_qty(r_qty), .o_seq(r_seq), .verdict_v(r_verdict_v), .verdict_bad(r_verdict_bad),
+            .verdict_seq(r_verdict_seq), .rx_sop(r_sop), .cls_feed(r_feed), .cls_order(r_order), .cls_probe(r_probe), .lock(pcs_lock_rx),
+            .rx_vec_w(rxw_t), .rx_vec_c(rxc_t));
+        tx_path #(.NTXW(NTXW)) u_tx (.clk(txusr2), .rst(!tx_done_t), .cfg(cfg_tx), .clr_p(clr_tx), .seq_p(seq_tx), .gen_go_p(gen_tx), .go_p(r_fire), .go_inst(r_inst), .go_price(r_price),
+            .go_qty(r_qty), .go_seq(r_seq), .verdict_v(r_verdict_v), .verdict_bad(r_verdict_bad), .verdict_seq(r_verdict_seq), .rx_sop_p(r_sop), .rx_feed_p(r_feed), .rx_order_p(r_order),
+            .rx_probe_p(r_probe), .gt_d(tx_data), .tx_vec(tx_vec_t));
+        hs_vec #(.W(32 * NRXV_W)) u_rxv_w (.src_clk(rxusr2), .src_vec(rxw_t), .dst_clk(clk), .dst_vec(rxw_live));
+        hs_vec #(.W(32 * NRXV_C)) u_rxv_c (.src_clk(txusr2), .src_vec(rxc_t), .dst_clk(clk), .dst_vec(rxc_live));
+        for (genvar gi = 0; gi < NRXW; gi++) begin : g_rxv
+            if (RXV_OWN_W[gi]) begin : w
+                assign rx_live[32 * gi +: 32] = rxw_live[32 * rxv_pos(1'b1, gi) +: 32];
+            end else begin : c
+                assign rx_live[32 * gi +: 32] = rxc_live[32 * rxv_pos(1'b0, gi) +: 32];
+            end
         end
+    end else begin : g_old
+        localparam int NRXW_OLD = 18;     // the words main 6909e43f had: RXV0..RXV17
+        logic [CFGW-1:0] cfg_rx;
+        logic        seq_rx;
+        hs_vec #(.W(CFGW)) u_cfg_rx (.src_clk(clk), .src_vec(cfg), .dst_clk(rxusr2), .dst_vec(cfg_rx));
+        xpm_cdc_pulse #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(0)) u_p_sr (.src_clk(clk), .src_pulse(p_seq), .src_rst(1'b0), .dest_clk(rxusr2), .dest_pulse(seq_rx), .dest_rst(1'b0));
+        logic        r_fire, r_sop, r_feed, r_order, r_probe, r_verdict_v, r_verdict_bad;
+        logic [15:0] r_inst;
+        logic [31:0] r_price, r_qty, r_seq;
+        logic [32 * NRXW_OLD - 1:0] rx_vec_r, rx_live_old;
+        logic        go_t, sop_t, feed_t, order_t, probe_t;
+        logic [15:0] go_inst;
+        logic [31:0] go_price, go_qty, go_seq;
+        logic        vd_v, vd_bad;
+        logic [31:0] r_verdict_seq, vd_seq;
+        rx_path_legacy #(.NRXW(NRXW_OLD)) u_rx (.clk(rxusr2), .rst(!rx_done_r), .cfg(cfg_rx), .clr_p(clr_rx), .seq_p(seq_rx), .gt_d(rx_data), .fire(r_fire), .o_inst(r_inst),
+            .o_price(r_price), .o_qty(r_qty), .o_seq(r_seq), .verdict_v(r_verdict_v), .verdict_bad(r_verdict_bad), .verdict_seq(r_verdict_seq), .rx_sop(r_sop),
+            .cls_feed(r_feed), .cls_order(r_order), .cls_probe(r_probe), .lock(pcs_lock_rx), .rx_vec(rx_vec_r));
+        xpm_cdc_pulse #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .REG_OUTPUT(GO_REG), .RST_USED(0), .SIM_ASSERT_CHK(0)) u_p_go (.src_clk(rxusr2), .src_pulse(r_fire), .src_rst(1'b0), .dest_clk(txusr2), .dest_pulse(go_t), .dest_rst(1'b0));
+        xpm_cdc_pulse #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(0)) u_p_so (.src_clk(rxusr2), .src_pulse(r_sop), .src_rst(1'b0), .dest_clk(txusr2), .dest_pulse(sop_t), .dest_rst(1'b0));
+        xpm_cdc_pulse #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(0)) u_p_fe (.src_clk(rxusr2), .src_pulse(r_feed), .src_rst(1'b0), .dest_clk(txusr2), .dest_pulse(feed_t), .dest_rst(1'b0));
+        xpm_cdc_pulse #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(0)) u_p_or (.src_clk(rxusr2), .src_pulse(r_order), .src_rst(1'b0), .dest_clk(txusr2), .dest_pulse(order_t), .dest_rst(1'b0));
+        xpm_cdc_pulse #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(0)) u_p_pr (.src_clk(rxusr2), .src_pulse(r_probe), .src_rst(1'b0), .dest_clk(txusr2), .dest_pulse(probe_t), .dest_rst(1'b0));
+        xpm_cdc_array_single #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(0), .WIDTH(146)) u_bus (
+            .src_clk(rxusr2), .src_in({r_verdict_v, r_verdict_bad, r_verdict_seq, r_inst, r_price, r_qty, r_seq}), .dest_clk(txusr2),
+            .dest_out({vd_v, vd_bad, vd_seq, go_inst, go_price, go_qty, go_seq}));
+        tx_path #(.NTXW(NTXW)) u_tx (.clk(txusr2), .rst(!tx_done_t), .cfg(cfg_tx), .clr_p(clr_tx), .seq_p(seq_tx), .gen_go_p(gen_tx), .go_p(go_t), .go_inst, .go_price,
+            .go_qty, .go_seq, .verdict_v(vd_v), .verdict_bad(vd_bad), .verdict_seq(vd_seq), .rx_sop_p(sop_t), .rx_feed_p(feed_t), .rx_order_p(order_t),
+            .rx_probe_p(probe_t), .gt_d(tx_data), .tx_vec(tx_vec_t));
+        hs_vec #(.W(32 * NRXW_OLD)) u_rxv (.src_clk(rxusr2), .src_vec(rx_vec_r), .dst_clk(clk), .dst_vec(rx_live_old));
+        assign rx_live = {{(32 * (NRXW - NRXW_OLD)){1'b0}}, rx_live_old};      // the 96C words read 0
     end
+    hs_vec #(.W(32 * NTXW)) u_txv (.src_clk(txusr2), .src_vec(tx_vec_t), .dst_clk(clk), .dst_vec(tx_live));
     logic [32 * NRXW - 1:0] rx_snap;
     logic [32 * NTXW - 1:0] tx_snap;
 
@@ -247,7 +286,7 @@ module b96_core #(
         case (h_addr)
             12'h000: rd = ID;
             12'h004: rd = BUILD_STAMP;
-            12'h008: rd = {29'd0, TRADE, NEAR_END, 1'b1};
+            12'h008: rd = {28'd0, RATE_MATCH, TRADE, NEAR_END, 1'b1};
             12'h00C: rd = {25'd0, rx_lpm, rx_pol, tx_pol, tx_disable, loopback};
             12'h01C: rd = {25'd0, ppm_sel, ppm_en, ppm_step};
             12'h020: rd = {22'd0, rxb_seen, txb_seen, rxbuf, txbuf};

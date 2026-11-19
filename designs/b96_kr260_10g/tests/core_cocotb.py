@@ -200,8 +200,8 @@ async def poison_case(dut, trigger_blk, expect_err):
     for _ in range(4000):
         await RisingEdge(dut.refclk)
         await Timer(100, unit="ps")
-        if int(dut.u.u_rx.x_v.value):
-            c = int(dut.u.u_rx.x_c.value); d = int(dut.u.u_rx.x_d.value)
+        if int(dut.u.g_rm.u_rx.x_v.value):
+            c = int(dut.u.g_rm.u_rx.x_c.value); d = int(dut.u.g_rm.u_rx.x_d.value)
             if (c == 0x01 and (d & 0xFF) == 0xFB) or (c == 0x1F and ((d >> 32) & 0xFF) == 0xFB):
                 nb = 0
             elif nb is not None:
@@ -268,7 +268,7 @@ async def tick_to_trade_digital(dut):
     await h.w(0x068, 0x1 | 0x4 | (1 << 4))
     await h.w(0x070, 9950); await h.w(0x074, 301); await h.w(0x078, 8)
     await h.w(0x018, 2)
-    rx = dut.u.u_rx
+    rx = dut.u.g_rm.u_rx
     rows = []
     ev = {}
     nbx = nby = None
@@ -301,9 +301,9 @@ async def tick_to_trade_digital(dut):
             ev["w7_at_mac"] = k
         if "w7_at_mac" in ev and "fire_reg" not in ev and int(td.fire.value):
             ev["fire_reg"] = k
-        if "fire_reg" in ev and "go_pulse_tx" not in ev and int(dut.u.u_tx.go_p.value):
+        if "fire_reg" in ev and "go_pulse_tx" not in ev and int(dut.u.g_rm.u_tx.go_p.value):
             ev["go_pulse_tx"] = k
-        if "go_pulse_tx" in ev and "sop_mac_reg" not in ev and int(dut.u.u_tx.sop.value) and int(dut.u.u_tx.cur_kind.value) == 0:
+        if "go_pulse_tx" in ev and "sop_mac_reg" not in ev and int(dut.u.g_rm.u_tx.sop.value) and int(dut.u.g_rm.u_tx.cur_kind.value) == 0:
             ev["sop_mac_reg"] = k
             rows.append(ev)
             ev = {}
@@ -486,7 +486,7 @@ async def seq_mismatch_still_poisons(dut):
     os.environ["B96_ARM"] = "1"
     d0 = await order_round(dut, h, clear=True)
     assert clean_round(d0), d0
-    dut.u.u_tx.go_cnt.value = int(dut.u.u_tx.go_cnt.value) + 7           # forced mismatch
+    dut.u.g_rm.u_tx.go_cnt.value = int(dut.u.g_rm.u_tx.go_cnt.value) + 7           # forced mismatch
     await Timer(100, unit="ns")
     d1 = await order_round(dut, h)
     dut._log.info("MISMATCH " + json.dumps(d1))
@@ -516,19 +516,29 @@ async def order_content_check_catches_a_wrong_order(dut):
     hit = False
     for _ in range(4000):
         await RisingEdge(dut.refclk)
-        if int(dut.u.u_tx.sop.value) and int(dut.u.u_tx.cur_kind.value) == 0:
+        if int(dut.u.g_rm.u_tx.sop.value) and int(dut.u.g_rm.u_tx.cur_kind.value) == 0:
             hit = True
             break
     assert hit
     for _ in range(12):
         await RisingEdge(dut.refclk)
-    dut.u.u_rx.u_td.o_qty.value = 999
+    dut.u.g_rm.u_rx.u_td.o_qty.value = 999
     await Timer(10000, unit="ns")
     t, r = await counters(h)
     dut._log.info(f"content: tx {t}\nrx {r}")
     assert t["n_order"] == 1 and t["poisoned"] == 0 and r["good"] == 2 and r["bad"] == 0, (t, r)
     assert r["order_bad"] == 1 and r["order_ok"] == 0, r
     RESULTS["order_content_wrong_qty"] = {"order_ok": r["order_ok"], "order_bad": r["order_bad"], "poisoned": t["poisoned"]}
+
+
+@cocotb.test()
+async def rate_match_reported_in_features(dut):
+    """RATE_MATCH = 1: FEATURES bit 3 reads 1 (it reads 0 in the default build) and the rate-match counters count (the output side moved blocks)."""
+    h = await bring_up(dut)
+    await h.snap()
+    feat = await h.r(0x008)
+    assert feat & 8 == 8, feat
+    assert await h.rx(23) > 0                    # rm_out: blocks the buffer has output
 
 
 @cocotb.test()

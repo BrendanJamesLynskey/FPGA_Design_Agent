@@ -1,0 +1,29 @@
+# rm_ctl (brief 96C): the base design with RATE_MATCH = 1 (the elastic buffer on the receive path), as the board measured it on 2026-11-19
+# (results/b96c/hw/20261119_080724/control, built from f47986f4). The base build.yaml has RATE_MATCH = 0.
+top: kr260_10g_top
+part: xck26-sfvc784-2LV-c
+board: kr260           # boards/kr260/board.yaml
+sources:
+  - designs/b58a_trigger/rtl/jtag_bus.sv
+  - designs/b96_kr260_10g/rtl/b96_pkg.sv
+  - designs/b96_kr260_10g/rtl/pcs_tx.sv
+  - designs/b96_kr260_10g/rtl/pcs_rx.sv
+  - designs/b96_kr260_10g/rtl/mac64_tx.sv
+  - designs/b96_kr260_10g/rtl/mac64_rx.sv
+  - designs/b96_kr260_10g/rtl/hs_vec.sv
+  - designs/b96_kr260_10g/rtl/frame_src.sv
+  - designs/b96_kr260_10g/rtl/trade64.sv
+  - designs/b96_kr260_10g/rtl/rate_match.sv
+  - designs/b96_kr260_10g/rtl/tx_path.sv
+  - designs/b96_kr260_10g/rtl/rx_path.sv
+  - designs/b96_kr260_10g/rtl/rx_path_legacy.sv
+  - designs/b96_kr260_10g/rtl/b96_core.sv
+  - designs/b96_kr260_10g/rtl/kr260_10g_top.sv
+constraints:
+  - designs/b96_kr260_10g/design.xdc
+ip_tcl:                 # AMD IP created in the in-memory project (flow/prepare.py, flow/build.tcl): brief 56A's GT Wizard, unchanged
+  - designs/b96_kr260_10g/ip/amd_ip.tcl
+generics:
+  NEAR_END: "1'b0"
+  TRADE: "1'b1"         # BUILD_STAMP is added by the flow
+  RATE_MATCH: "1'b1"

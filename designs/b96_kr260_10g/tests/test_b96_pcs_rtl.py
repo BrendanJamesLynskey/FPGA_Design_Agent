@@ -17,12 +17,20 @@ def test_pcs_mac_cocotb() -> None:
     cocotb_run.run("b96_pcs_mac", "tb_pcs_mac", srcs, "pcs_mac_cocotb", HERE, extra_env={"PYTHONPATH": str(ROOT)})
 
 
+CORE_SRCS = ["b96_pkg.sv", "pcs_tx.sv", "pcs_rx.sv", "mac64_tx.sv", "mac64_rx.sv", "hs_vec.sv", "frame_src.sv", "trade64.sv", "rate_match.sv", "tx_path.sv",
+             "rx_path.sv", "rx_path_legacy.sv", "b96_core.sv"]
+
+
 def test_core_cocotb() -> None:
-    xpm_free = []
-    srcs = [RTL / "b96_pkg.sv", RTL / "pcs_tx.sv", RTL / "pcs_rx.sv", RTL / "mac64_tx.sv", RTL / "mac64_rx.sv", RTL / "hs_vec.sv",
-            RTL / "frame_src.sv", RTL / "trade64.sv", RTL / "rate_match.sv", RTL / "tx_path.sv", RTL / "rx_path.sv", RTL / "b96_core.sv",
-            DESIGN / "sim" / "gth_wiz_model96.sv", DESIGN / "sim" / "tb_core.sv"] + xpm_free
-    cocotb_run.run("b96_core", "tb_core", srcs, "core_cocotb", HERE, extra_env={"PYTHONPATH": str(ROOT)})
+    """RATE_MATCH = 1: brief 96C's elastic buffer (tests/core_cocotb.py)."""
+    srcs = [RTL / n for n in CORE_SRCS] + [DESIGN / "sim" / "gth_wiz_model96.sv", DESIGN / "sim" / "tb_core.sv"]
+    cocotb_run.run("b96_core", "tb_core", srcs, "core_cocotb", HERE, parameters={"RATE_MATCH": 1}, extra_env={"PYTHONPATH": str(ROOT)})
+
+
+def test_core_cocotb_default_rate_match_off() -> None:
+    """RATE_MATCH = 0, the default: the 97C receive path, held to 97C's own bench (tests/core_cocotb_default.py: main 6909e43f's, paths moved)."""
+    srcs = [RTL / n for n in CORE_SRCS] + [DESIGN / "sim" / "gth_wiz_model96.sv", DESIGN / "sim" / "tb_core.sv"]
+    cocotb_run.run("b96_core_default", "tb_core", srcs, "core_cocotb_default", HERE, parameters={"RATE_MATCH": 0}, extra_env={"PYTHONPATH": str(ROOT)})
 
 
 def test_rate_match_cocotb() -> None:
@@ -43,6 +51,6 @@ def test_ppm_partner_cocotb() -> None:
     root = Path(os.environ.get("B96_PPM_RTL_ROOT", str(DESIGN)))
     rtl = root / "rtl"
     names = ["b96_pkg.sv", "pcs_tx.sv", "pcs_rx.sv", "mac64_tx.sv", "mac64_rx.sv", "hs_vec.sv", "frame_src.sv", "trade64.sv", "rate_match.sv", "tx_path.sv",
-             "rx_path.sv", "b96_core.sv"]
+             "rx_path.sv", "rx_path_legacy.sv", "b96_core.sv"]
     srcs = [rtl / n for n in names if (rtl / n).exists()] + [DESIGN / "sim" / "gth_wiz_model96p.sv", DESIGN / "sim" / "tb_core_p.sv"]
     cocotb_run.run("b96_ppm", "tb_core_p", srcs, "ppm_cocotb", HERE, extra_env={"PYTHONPATH": str(ROOT), **{k: v for k, v in os.environ.items() if k.startswith("B96_PPM")}})

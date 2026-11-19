@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-# Brief 96C: build one of control | all3 | ppm_ctl | ppm_all3 through the flow under the heavy-slot rule (one slot, FDA_VIVADO_THREADS=1, run_vivado.sh puts Vivado in a
+# Brief 96C: build one of control (the default, RATE_MATCH = 0) | rm_ctl | rm_all3 | ppm_ctl | ppm_all3 through the flow under the heavy-slot rule (one slot, FDA_VIVADO_THREADS=1, run_vivado.sh puts Vivado in a
 # systemd scope with MemoryMax=6G), then record the digest (timing, utilisation, power, gates) and the wall time in results/b96c/builds/<name>/.
 #   results/b96c/build_one.sh <name> [wait minutes, default 300]
 set -uo pipefail
-V="${1:?control|all3|ppm_ctl|ppm_all3}"; WAIT="${2:-300}"
+V="${1:?control|rm_ctl|rm_all3|ppm_ctl|ppm_all3}"; WAIT="${2:-300}"
 ROOT=/home/brendan/Claude_sandbox/_worktrees/96c-ppm
 H=/home/brendan/Claude_sandbox/_handoff
 cd "$ROOT"
-case "$V" in control) D=designs/b96_kr260_10g;; ppm_*) D=designs/b96_kr260_10g/$V;; *) D=designs/b96_kr260_10g/lat_$V;; esac
+case "$V" in control) D=designs/b96_kr260_10g;; ppm_*|rm_*) D=designs/b96_kr260_10g/$V;; *) D=designs/b96_kr260_10g/lat_$V;; esac
 TEXT="96C: Vivado impl $V peak 6G, $(date +%H:%M), expected end $(date -d '+45 min' +%H:%M)"
 n=0
 while true; do
@@ -20,7 +20,7 @@ trap release EXIT
 export FDA_VIVADO_THREADS=1 FDA_VIVADO_MAX=3
 OUT="$ROOT/results/b96c/builds/$V"; mkdir -p "$OUT"
 echo "slot $HEAVY_LOCK taken: $(cat "$HEAVY_LOCK"); threads $FDA_VIVADO_THREADS"
-T0=$(date +%s); date -Is > "$OUT/started.txt"
+T0=$(date +%s); date -Is > "$OUT/started.txt"; git rev-parse HEAD > "$OUT/commit.txt"; git status --porcelain -- designs flow ip > "$OUT/dirty.txt"
 flow/run_vivado.sh "$D" base 2>&1 | tail -40 | tee "$OUT/run_vivado.log"
 T1=$(date +%s); echo "wall_s $((T1-T0))" > "$OUT/wall.txt"
 B="$D/build/base"

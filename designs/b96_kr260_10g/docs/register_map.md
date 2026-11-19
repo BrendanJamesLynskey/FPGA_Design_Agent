@@ -6,7 +6,7 @@
 |---|---|---|---|---|
 | 0x000 | ID | RO | 0x96A00001 | Design identifier. |
 | 0x004 | BUILD | RO | build stamp | BUILD_STAMP generic (the flow sets it from the source hash). |
-| 0x008 | FEATURES | RO | variant | bit 0 always 1; bit 1 NEAR_END (near-end PMA loopback selected at reset: variant a); bit 2 TRADE (trading path enabled at reset: variant b). |
+| 0x008 | FEATURES | RO | variant | bit 0 always 1; bit 1 NEAR_END (near-end PMA loopback selected at reset: variant a); bit 2 TRADE (trading path enabled at reset: variant b); bit 3 RATE_MATCH (the build has brief 96C's elastic buffer on the receive path; 0 in the default build, which has the 97C path). |
 | 0x00C | GT_CTRL | RW | 0x008 (variant a: 0x00A) | bits 2:0 LOOPBACK (000 normal, 001 near-end PCS, 010 near-end PMA, 100 far-end PMA; entering or leaving a loopback needs an RX datapath reset); bit 3 TX_DISABLE (1 = laser off; polarity on this carrier unconfirmed); bit 4 TX_POLARITY; bit 5 RX_POLARITY; bit 6 RX_LPM (1 = low-power equaliser). |
 | 0x010 | GT_RESET | W | 0 | Write 1 to start an 8-clock reset pulse: bit 0 all, bit 1 TX PLL and datapath, bit 2 RX PLL and datapath, bit 3 TX datapath, bit 4 RX datapath. Reads 0. |
 | 0x014 | GT_STAT | RO | - | bit 0 TX_DONE, 1 RX_DONE, 2 GT power good, 3 CDR lock, 4 TX PMA reset done, 5 RX PMA reset done, 8 CDR stable, 9 PCS BLOCK_LOCK, 10 MOD_ABS (1 = no module, if the SFF polarity holds), 11 RX_LOS, 12 TX_FAULT. |
@@ -31,7 +31,7 @@
 | 0x080 | I2C | RW | 0 | Bit-banged module I2C: bit 0 pull SCL low, bit 1 pull SDA low (open drain); read bits 8 SCL, 9 SDA as seen on the pins. |
 | 0x090 | SYSMON_ADDR | RW | 0 | SYSMON DRP address; a write starts a read. |
 | 0x094 | SYSMON_DATA | RO | 0 | bit 16 valid, 15:0 data (die temperature is register 0x00, 10-bit result in bits 15:6, T = result x 501.3743 / 1024 - 273.6777 degrees C; units conversion is the host's). |
-| 0x100 to 0x170 | RXV0 to RXV28 | RO | 0 | Receive-side snapshot, 29 words (RXV0 is 0x100): the PCS counters are from the receive clock, the MAC, trade and rate-match counters from the core (transmit) clock. See the table below. |
+| 0x100 to 0x170 | RXV0 to RXV28 | RO | 0 | Receive-side snapshot, 29 words (RXV0 is 0x100): the PCS counters are from the receive clock, the MAC, trade and rate-match counters from the core (transmit) clock. See the table below. In a build with RATE_MATCH = 0 (the default) the words only brief 96C's elastic buffer drives, RXV18 to RXV28 (the rate-match counters and the frequency counter), read 0; RXV0 to RXV17 are the 97C words, unchanged. |
 | 0x200 to 0x264 | TXV0 to TXV25 | RO | 0 | Transmit-domain snapshot, 26 words (TXV0 is 0x200). See the table below. |
 
 ## RXV words (receive clock domain, RXUSRCLK2)

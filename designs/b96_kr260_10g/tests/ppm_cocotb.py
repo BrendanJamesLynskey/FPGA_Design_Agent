@@ -97,7 +97,7 @@ async def run_point(dut, name, ppm, n_frames=400, gaps=(40, 55, 70, 90), seed=1)
         async def mon():
             while True:
                 await Timer(3000, unit="ns")
-                m = dut.u.u_rx.u_rm
+                m = dut.u.g_rm.u_rx.u_rm
                 dut._log.info(f"RMDBG wptr {int(m.wptr.value)} rptr {int(m.rptr.value)} wp_s {int(m.wp_s.value)} rp_s {int(m.rp_s.value)} pace {int(m.pace.value)} lock_s {int(m.lock_s.value)} in_frame {int(m.in_frame.value)} ovf {int(m.n_ovf.value)} del {int(m.n_del.value)} ins {int(m.n_ins.value)}")
         cocotb.start_soon(mon())
     await h.w(0x018, 1)
