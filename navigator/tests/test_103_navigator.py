@@ -45,8 +45,6 @@ class FakeRunner(H.Runner):
             return 0, "abcd1234\n", ""
         if argv[0] == "bash":
             return 0, "usage", ""
-        if argv[:3] == ["python3", "-m", "navigator.jtag_list"]:
-            return 0, "target ...ABCD ok\ndevice xc7a100t_0 xc7a100t idcode 1363\n", ""
         if argv[0] == "gh":
             return 0, json.dumps([{"status": "completed", "conclusion": "success", "headSha": "abcdef012345", "createdAt": "2026-11-19T10:00:00Z", "workflowName": "CI"}]), ""
         return 127, "", "not found"
@@ -259,7 +257,7 @@ def test_scrub_unit():
 
 # --- health: nothing that costs money or touches hardware runs without a click ---------------------------------------------------------------
 
-FORBIDDEN = ("--probe", "usage_check.sh", "navigator.jtag_list", "hw_list", "hw_server", "gh", "vivado", "openFPGALoader", "ssh")
+FORBIDDEN = ("--probe", "usage_check.sh", "jtag_list", "hw_list", "hw_server", "gh", "vivado", "openFPGALoader", "ssh")
 
 
 def test_free_health_checks_run_no_costly_or_hardware_command(tmp_path):
@@ -270,29 +268,38 @@ def test_free_health_checks_run_no_costly_or_hardware_command(tmp_path):
     for c in flat:
         assert not any(f in c.split() or f in c for f in FORBIDDEN), c
     st = {c["id"]: c for c in d["checks"]}
-    for k in ("llm_probe", "jtag_list", "ci_main"):
-        assert st[k]["status"] == "not-run" and st[k]["action"] or k == "llm_probe"
+    for k in ("llm_probe", "jtag_disabled", "ci_main"):
+        assert st[k]["status"] == "not-run"
+    assert "action" not in st["jtag_disabled"] and "stage 2" in st["jtag_disabled"]["detail"]
     assert st["claude_cli"]["status"] == "ok" and "9.9.9" in st["claude_cli"]["detail"]
     assert "someone" not in json.dumps(d) and st["claude_auth"]["detail"].startswith("signed in")
     assert st["models_table"]["endpoints"][0]["key_state"] in ("key present", "key MISSING")
 
 
-def test_actions_run_only_the_fixed_commands_and_jtag_respects_the_board_lock(tmp_path):
+def test_actions_run_only_the_fixed_commands(tmp_path):
     app, runner = make_app(tmp_path)
-    (app.handoff / "board.lock").write_text("96X: someone else's board job\n")
-    r = app.health.run_action("jtag_list")
-    assert r["status"] == "warn" and "refused" in r["detail"]
-    assert not any("jtag_list" in " ".join(c) for c in runner.calls)
-    (app.handoff / "board.lock").unlink()
-    assert app.health.run_action("jtag_list")["status"] == "ok"
-    assert ["python3", "-m", "navigator.jtag_list"] in runner.calls
+    assert app.health.ACTIONS == ("usage_live", "llm_probe", "ci_main")
     r = app.health.run_action("llm_probe")
     assert r["status"] == "ok" and SECRET not in json.dumps(r)
     assert app.health.run_action("ci_main")["status"] == "ok"
-    with pytest.raises(KeyError):
-        app.health.run_action("program_bitstream")
+    for bad in ("program_bitstream", "jtag_list"):
+        with pytest.raises(KeyError):
+            app.health.run_action(bad)
     for c in runner.calls:                                                                   # no board tool of any kind is ever started
-        assert not any(w in " ".join(c) for w in ("program", "flow.eyescan", "board.lock", "ssh", "vivado", "openFPGALoader"))
+        assert not any(w in " ".join(c) for w in ("program", "flow.eyescan", "board.lock", "ssh", "vivado", "openFPGALoader", "hw_list", "jtag"))
+
+
+def test_no_code_path_starts_the_hardware_server_or_vivado():
+    """Stage 1 has no JTAG or Vivado step: no navigator source names the tools that would start them, and the one process starter is health.Runner."""
+    src = {p.name: p.read_text() for p in (ROOT / "navigator").glob("*.py")}
+    for name, text in src.items():
+        for tok in ("HwServer", "run_vivado_tcl", "hw_list.tcl", "jtag_list", "openFPGALoader", "flow.hw", "flow import hw", "Popen", "os.system"):
+            assert tok not in text, f"{name} mentions {tok}"
+        if name not in ("health.py", "sources.py"):          # health.Runner (fixed argv) and sources._git_date (git log) are the only starters
+            assert "subprocess" not in text, name
+    assert not (ROOT / "navigator" / "jtag_list.py").exists()
+    for bad in ("hw_server", "vivado -mode", "/bin/vivado"):
+        assert not any(bad in t for n, t in src.items() if n != "test_103_navigator.py"), bad
 
 
 def test_usage_levels(tmp_path):

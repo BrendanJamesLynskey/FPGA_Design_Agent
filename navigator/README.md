@@ -19,7 +19,7 @@ each time the service starts.
 | The `Host` header must be the loopback address and the port in use (DNS rebinding) | `App.host_ok` |
 | Every request needs the session token (HttpOnly, SameSite=Strict cookie) | `App.token_ok` |
 | Every request calls the access gate (`agent.access.require`), so a revoked or expired key stops it answering; the entry point calls `require_or_exit` | `server._common`, `__main__` |
-| An action (POST) needs the token, `Content-Type: application/json`, the service's own `Origin`, and one of four fixed action names | `do_POST`, `health.Health.ACTIONS` |
+| An action (POST) needs the token, `Content-Type: application/json`, the service's own `Origin`, and one of three fixed action names (three) | `do_POST`, `health.Health.ACTIONS` |
 | No external font, script or image: the Content-Security-Policy names no host, and the shipped files contain no URL | `server.CSP_APP`, tests |
 | No endpoint returns a key, token or prompt text: readers copy named fields only, and every response passes `redact.scrub`; a run's prompts appear as names and SHA-256 hashes | `sources.py`, `redact.py` |
 | The request never names a file to open: capture ids and record paths are looked up in lists the service built, and records are limited to `results/`, a design's `project.yaml` and `latency_stages.yaml` | `measure.resolve`, `sources.read_record` |
@@ -45,7 +45,7 @@ is (one implementation); this brief added the difference map to its Compare tab 
 ## Health: free checks and actions
 
 Free checks run when the panel is opened (cached for a minute) and each shows its status, the time and how it was checked. A check that spends
-tokens, calls GitHub or touches the hardware server is an **action**: it runs only on a click.
+tokens or calls GitHub is an **action**: it runs only on a click.
 
 | Group | Free (automatic) | Action (a click) |
 |---|---|---|
@@ -53,7 +53,7 @@ tokens, calls GitHub or touches the hardware server is an **action**: it runs on
 | Weekly usage | the last line of `_handoff/usage_log.txt` against the 88% stop line, and how old it is | `_handoff/usage_check.sh` (0 tokens) |
 | Tools | Vivado (install path, pinned against installed, licence tier from the committed probe; never started), Yosys, eqy, SymbiYosys, Verilator, Icarus, cocotb, RapidWright and Java (present or not) | |
 | Resources | the two heavy-slot locks (holder, age, stale), memory and load against the admission rule, disk | |
-| Boards | `boards.yaml` (serials cut to 4 characters), the board lock, USB cables by vendor id from sysfs | a hardware-server listing (`flow/hw_list.tcl`, read-only; refused while the board lock is held) |
+| Boards | `boards.yaml` (serials cut to 4 characters), the board lock, USB cables by vendor id from sysfs | (none: a JTAG target listing needs `board.lock` and a heavy slot, so it is a stage 2 item; no navigator code can start the hardware server or Vivado) |
 | Repository | the access gate armed, the knowledge-bank pin against the local checkout, the prompts pin | CI status of `main` (one GitHub API call) |
 
 ## Tests and screenshots

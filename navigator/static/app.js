@@ -418,8 +418,8 @@
   function healthRow(c) {
     var btn = null, extra = null;
     var actionName = c.action || (c.id === "usage" ? "usage_live" : null);
-    var labels = { usage_live: "Run the usage check now", llm_probe: "Probe endpoints", jtag_list: "List JTAG targets", ci_main: "Ask GitHub" };
-    var costs = { usage_live: "0 tokens", llm_probe: "spends a few tokens", jtag_list: "starts hw_server; reads only", ci_main: "one GitHub API call" };
+    var labels = { usage_live: "Run the usage check now", llm_probe: "Probe endpoints", ci_main: "Ask GitHub" };
+    var costs = { usage_live: "0 tokens", llm_probe: "spends a few tokens", ci_main: "one GitHub API call" };
     if (actionName) btn = h("button", { type: "button", title: costs[actionName], on: { click: function (e) { var b = e.target; b.disabled = true; b.textContent = "Running"; post("/api/action/" + actionName).then(function () { pageHealth(); }, function () { b.disabled = false; b.textContent = "Failed: retry"; }); } } }, labels[actionName]);
     if (c.output) extra = h("pre", { class: "cmd" }, c.output.join("\n"));
     return h("div", { class: "health-row" }, stat(c.status), h("div", null, h("strong", null, c.title), h("div", null, c.detail), h("div", { class: "how" }, "How: " + c.how + ". Checked " + c.checked_at + "."), extra),

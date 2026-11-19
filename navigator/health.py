@@ -46,6 +46,11 @@ class Runner:
         return p.returncode, p.stdout, p.stderr
 
 
+def _last4(serial: Any) -> str | None:
+    """Only the last 4 characters of a cable serial are ever shown."""
+    return "..." + str(serial)[-4:] if serial else None
+
+
 def now() -> str:
     return dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
@@ -306,11 +311,10 @@ class Health:
 
     # -- boards ---------------------------------------------------------------------------------------------------------------------
     def boards(self) -> list[dict[str, Any]]:
-        from flow import hw
         out = []
         f = self.config_dir / "boards.yaml"
         bd = (self._load(f, yml=True) or {}).get("boards") or {}
-        rows = [{"board": n, "part": b.get("part"), "power": b.get("power_source"), "discovered": str(b.get("discovered") or "")[:10], "cable": hw.redact(b.get("cable_serial"))}
+        rows = [{"board": n, "part": b.get("part"), "power": b.get("power_source"), "discovered": str(b.get("discovered") or "")[:10], "cable": _last4(b.get("cable_serial"))}
                 for n, b in bd.items() if isinstance(b, dict)]
         out.append(chk("boards_file", "Boards", "Local board list", "ok" if rows else "warn",
                        ", ".join(f"{r['board']} ({r['part']}, {r['power']} power, cable {r['cable']})" for r in rows) or "no boards.yaml: run flow/hw_discover.py",
@@ -321,8 +325,8 @@ class Health:
         else:
             out.append(chk("board_lock", "Boards", "Board lock", "ok", "free: no board job is running", "_handoff/board.lock text", held=False))
         out.append(self.usb())
-        out.append(chk("jtag_list", "Boards", "Hardware-server listing", "not-run", "not checked: click to list the JTAG targets (read-only; refused while the board lock is held)",
-                       "an action: flow/hw_list.tcl through hw_server, run only when you click", action="jtag_list"))
+        out.append(chk("jtag_disabled", "Boards", "JTAG target listing", "not-run", "disabled in stage 1: a listing starts the hardware server and Vivado, so it needs board.lock and a heavy slot (stage 2)",
+                       "no navigator code path starts the hardware server or Vivado"))
         return out
 
     def usb(self) -> dict[str, Any]:
@@ -418,7 +422,7 @@ class Health:
                 "note": "free checks refresh when this page is opened (cached for a minute); an action runs only when you click it"}
 
     # -- actions (a click) ----------------------------------------------------------------------------------------------------------
-    ACTIONS = ("usage_live", "llm_probe", "jtag_list", "ci_main")
+    ACTIONS = ("usage_live", "llm_probe", "ci_main")
 
     def run_action(self, name: str) -> dict[str, Any]:
         if name not in self.ACTIONS:
@@ -450,17 +454,6 @@ class Health:
         return {"status": status, "detail": f"{sum(r.startswith('ok') for r in rows)} of {len(rows)} endpoints answered" if rows else f"no probe result (exit {rc}): {redact.brief(err or out)}",
                 "checked_at": now(), "how": "python -m agent models check --probe: one minimal call per endpoint in use (spends tokens), run on your click",
                 "output": [redact.text(r)[:200] for r in rows]}
-
-    def _act_jtag_list(self) -> dict[str, Any]:
-        how = "flow/hw_list.tcl through hw_server (read-only: it opens each target to read its chain and programs nothing), run on your click"
-        bl = self.handoff / "board.lock"
-        if bl.is_file():
-            return {"status": "warn", "detail": f"refused: the board lock is held ({bl.read_text().strip()[:160]}); a listing would disturb that job", "checked_at": now(), "how": how, "output": None}
-        rc, out, err = self.runner.run([self.python, "-m", "navigator.jtag_list"], timeout=240, cwd=self.root)
-        lines = [ln for ln in out.splitlines() if ln.startswith(("target ", "device "))]
-        if rc != 0 or not lines:
-            return {"status": "unknown", "detail": f"no listing (exit {rc}): {redact.brief(err or out)}", "checked_at": now(), "how": how, "output": None}
-        return {"status": "ok", "detail": f"{sum(ln.startswith('target ') for ln in lines)} target(s) visible", "checked_at": now(), "how": how, "output": [redact.text(ln)[:160] for ln in lines]}
 
     def _act_ci_main(self) -> dict[str, Any]:
         how = "gh run list --branch main --limit 1 (one GitHub API call), run on your click"

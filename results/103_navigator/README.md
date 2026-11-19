@@ -13,7 +13,7 @@ The service ran against this repository's records and the owner's 24 local run r
 
 ## Tests
 
-`python -m pytest navigator/tests` (18 tests): loopback-only binding (a non-loopback host is refused), token and Host-header rules, the access gate called on every request, POST rules, the endpoints on the real records, the scope picker (frozen and excluded parts cannot be scoped), the eye page and record viewer serving only listed files (traversal attempts get 404), a planted key, prompt text and account email never appearing in any response or action result, free health checks starting no costly or hardware command (the runner is a fake that records them), actions running only their fixed commands, the JTAG listing refused while the board lock is held, usage levels against the 88% line, and stale-lock detection.
+`python -m pytest navigator/tests` (18 tests): loopback-only binding (a non-loopback host is refused), token and Host-header rules, the access gate called on every request, POST rules, the endpoints on the real records, the scope picker (frozen and excluded parts cannot be scoped), the eye page and record viewer serving only listed files (traversal attempts get 404), a planted key, prompt text and account email never appearing in any response or action result, free health checks starting no costly or hardware command (the runner is a fake that records them), actions running only their fixed commands, no JTAG or Vivado code path, usage levels against the 88% line, and stale-lock detection.
 
 ## Review
 
@@ -24,9 +24,9 @@ One Sonnet review (security and correctness; the three questions of the brief) a
 - **Stage 1 only.** No run is started from the page; the scope picker builds a command to paste. Live progress, starting and refining runs, and hosting for named people are stage 2.
 - **The cookie is not scoped by port**, so another localhost service the browser visits receives it; an action needs the header token as well (fetched from `/api/session`), which that service cannot read.
 - **The token is printed on the terminal** and moves into a cookie. Another process of the same user can read the cookie jar or the terminal; the service is not a defence against that, nor against anyone who can edit the code.
-- **The JTAG listing starts hw_server and Vivado batch** (`flow/hw_list.tcl`) when clicked. It refuses while `board.lock` is held but does not take the lock itself, and does not take a heavy slot. It was exercised only with a fake runner here; it has not been clicked on the real board.
+- **No JTAG or hardware-server step in stage 1** (planner decision after review): the listing needs `board.lock` and a heavy slot, so Health shows it as disabled; a test asserts no navigator code can start the hardware server or Vivado. Stage 2 item.
 - **No board eye data exists yet**, so the eye views have only been drawn from synthetic captures. The difference map and the slice sliders are checked by screenshot, not against a measured pair.
-- The synthetic captures in `results/b96d/offline` carry no `settings.expected_points`, so the navigator says "grid size not recorded" for their completeness (96D's `margin` tool would call them incomplete). Worth fixing in 96D's fake.
+- (The two synthetic captures now carry `settings.expected_points`, added by this PR.)
 - The latency page shows `designs/b96_kr260_10g/latency_stages.yaml`, which describes the `RATE_MATCH = 1` chain (13 clocks simulated); the default build is `RATE_MATCH = 0` (11 clocks), and its stage file is the git history of this one. The stage file's post-route slack file is not recorded, so stages show "not recorded". Board E and L are shown under Measurements (restart statistics), not added into the chain.
 - Supply and temperature are only the start and end samples each record holds; no timeline exists to draw.
 - Only managed projects (`designs/*/project.yaml`) are shown as trees; the project layer of brief 27 (`project/examples`) is not.
