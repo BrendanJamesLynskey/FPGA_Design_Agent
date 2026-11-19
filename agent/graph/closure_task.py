@@ -196,7 +196,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--arch", type=Path, help="architecture.yaml whose datapaths are planned (design-time plan arm)")
     ap.add_argument("--max-iter", type=int, default=6)
     ap.add_argument("--max-usd", type=float, default=2.0)
-    ap.add_argument("--model", default="openai/gpt-6-luna")
+    ap.add_argument("--model", help="the closure purpose's model (default: the model table, brief 108)")
     ap.add_argument("--replay", type=Path)
     ap.add_argument("--out", type=Path)
     ap.add_argument("--lock-prefix", default=os.environ.get("FDA_BUILD_LOCK_PREFIX", "closure"),
@@ -222,12 +222,11 @@ def main(argv: list[str] | None = None) -> int:
     pl = timing_plan.plan_design(d) if a.arch else {"plan": None}
     if pl.get("plan"):
         (out / "timing_plan.json").write_text(json.dumps(pl["plan"], indent=1) + "\n")
-    from agent.graph.llm import OpenRouterClient, Recorder, Replay
+    from agent.models import resolver_for
     calls: list = []
-    if a.replay:
-        client = Replay(a.replay)
-    else:
-        client = Recorder(OpenRouterClient(a.model), out / "llm_replay.json")
+    rs = resolver_for("closure", model=a.model, replay=a.replay, record=None if a.replay else out / "llm_replay.json")
+    client = rs.chat("closure")
+    model = rs.entry("closure").model
     c = cl.Closure(ws=cl.Workspace(d), goals=cl.goals_from_spec(spec), g1=acceptance_g1(task, a.case),
                    build=locked_build(a.lock_prefix), editor=cl.llm_editor(client, calls), contract=cl.contract_from_spec(spec),
                    spec=spec, plan_text=timing_plan.plan_text(pl["plan"]) if pl.get("plan") else "",
@@ -238,7 +237,7 @@ def main(argv: list[str] | None = None) -> int:
                    synth=locked_build(a.lock_prefix, minutes=8, stop_after="synth") if a.early == "on" else None,
                    signoff=gates_signoff(d) if a.signoff == "on" else None)
     rep = c.run()
-    rep.update({"case": a.case, "task": task.name, "model": a.model, "rtl_in": str(a.rtl), "plan": bool(pl.get("plan")),
+    rep.update({"case": a.case, "task": task.name, "model": model, "rtl_in": str(a.rtl), "plan": bool(pl.get("plan")),
                 "budget_override": budget, "joint": a.joint, "early": a.early,
                 "clock_mhz": a.clock_mhz or (spec.get("clocks") or [{}])[0].get("freq_mhz")})
     (out / "summary.json").write_text(json.dumps(rep, indent=1, default=str) + "\n")

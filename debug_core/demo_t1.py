@@ -113,7 +113,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--replay", action="store_true", help="use the recorded model replies (no model call)")
     ap.add_argument("--board")
     a = ap.parse_args(argv)
-    from agent.graph.llm import OpenRouterClient, Recorder, Replay
+    from agent.models import resolver_for
     from flow import hw
     reqs = json.loads((FIX / "requests.json").read_text())
     names = [n for n in (a.only or CHECKS) if n in CHECKS]
@@ -133,7 +133,8 @@ def main(argv: list[str] | None = None) -> int:
             shutil.rmtree(out)
         out.mkdir(parents=True)
         t0 = time.monotonic()
-        client = Replay(FIX / "llm" / f"{name}.json") if a.replay else Recorder(OpenRouterClient(), out / "llm_replies.json")
+        client = (resolver_for("interpret", replay=FIX / "llm" / f"{name}.json") if a.replay
+                  else resolver_for("interpret", record=out / "llm_replies.json")).chat("interpret")
         plan, meta = R.plan_request(ROOT / r["design"], r["request"], client=client)
         (out / "plan.json").write_text(json.dumps(plan | {"parse": meta}, indent=1) + "\n")
         (out / "plan.txt").write_text(render(plan) + "\n")

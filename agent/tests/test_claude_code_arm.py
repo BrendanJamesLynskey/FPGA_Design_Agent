@@ -190,7 +190,7 @@ def test_summary_reports_claude_code_model_and_plan_cost(tmp_path):
         + json.dumps({"claude_code_version": "2.1.316 (Claude Code)", "plan_cost_estimate_usd": 0.5}) + "\n")
     rt = NS(run_id="r", run_dir=tmp_path, design=tmp_path, cfg=gr.Config(spec_md=T1 / "spec.md", name="d", model="openai/oracle",
             cc_model="claude-haiku-5-5", harness="claude_code", interview="oracle", review="off"),
-            meter=NS(run={"tokens": 1, "usd": 0.0, "turns": 2, "seconds": 3.0}, unreported=1))
+            meter=NS(run={"tokens": 1, "usd": 0.0, "turns": 2, "seconds": 3.0}, unreported=1), resolver=NS(table=NS(hash="h")))
     s = R.summary(rt, {"history": []})
     assert s["model"] == "claude-haiku-5-5" and s["oracle_model"] == "openai/oracle"
     assert s["plan_cost_estimate_usd"] == 0.75 and s["claude_code_version"].startswith("2.1.316")

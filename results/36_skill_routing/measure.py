@@ -58,8 +58,8 @@ def main() -> int:
         raise SystemExit(f"labels name skills not in the catalogue: {missing}")
     client = None
     if a.with_model:
-        from agent.graph.llm import OpenRouterClient
-        client = OpenRouterClient(a.router_model)
+        from agent.models import chat_client
+        client = chat_client("route", model=a.router_model)
     rows, cost = {}, 0.0
     for task, v in lab["tasks"].items():
         spec = (ROOT / v["spec"]).read_text()

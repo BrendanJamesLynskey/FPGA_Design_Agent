@@ -783,7 +783,6 @@ def graph_stage(rt: Any, state: dict[str, Any]) -> dict[str, Any]:
     the design it leaves, and one more Vivado run when the last iteration was reverted (the cache keeps one key)."""
     from agent.core import dispatch
     from agent.graph import run as gr
-    from agent.graph.llm import OpenRouterClient
     from flow import timing_plan
     from flow.digest.build import digest_build
 
@@ -802,7 +801,7 @@ def graph_stage(rt: Any, state: dict[str, Any]) -> dict[str, Any]:
 
     spec = gr._spec(rt)
     plan = timing_plan.load_plan(rt.design)
-    client = rt.client if callable(rt.client) else OpenRouterClient(rt.cfg.model)
+    client = rt.resolver.chat("closure")
     c = Closure(ws=Workspace(rt.design), goals=goals_from_spec(spec, rt.cfg.board), g1=g1, build=build,
                 editor=llm_editor(client, meter=rt.meter), contract=contract_from_spec(spec), spec=spec,
                 plan_text=timing_plan.plan_text(plan) if plan else "",
