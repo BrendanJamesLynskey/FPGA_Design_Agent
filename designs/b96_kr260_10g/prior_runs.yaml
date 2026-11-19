@@ -1,0 +1,101 @@
+# prior_runs.yaml: changes to this design that were measured earlier (brief 104A; schema fda-prior-runs/1).
+# Each run lists the latency stages it changed and its evidence; every evidence entry becomes the analysis fact prior.<run>.<id> (origin prior_run), which an option may cite
+# as the basis of a `measurement` gain. The `gain` entry is the run's headline. Values are copied from the committed files named in each entry and checked against them by
+# agent/tests/test_104a_combiner.py. The back-test fixtures of brief 104 do NOT have this file: their analysis never sees these results.
+# These runs were measured on the 97C chain (the go-pulse crossing `cross_go` in the receive-to-transmit path). The analysis uses a run only when every stage it names is in the
+# design's latency chain: today's latency_stages.yaml describes the rate-matched chain (RATE_MATCH = 1, no `cross_go`), so for it these runs are listed in the analysis notes and
+# not used as facts. A stage file for the default 97C build would make them facts (tested on a copy of the 97-era chain).
+schema: fda-prior-runs/1
+runs:
+- name: agent_cdc
+  metric: latency_clocks
+  stages: [cross_go]
+  summary: "REG_OUTPUT 1 to 0 on the go-pulse crossing"
+  evidence:
+  - id: gain
+    value: 1
+    unit: clocks
+    text: "tick-to-trade cut from 11 to 10 clocks in simulation of the variant's RTL (brief 97)"
+    file: results/b97/postroute.json
+    locator: agent_cdc.sim_clocks (cut = 11 minus this)
+  - id: wns
+    value: 0.298
+    unit: ns
+    text: "post-route worst setup slack of the variant at 161.13 MHz (met), Vivado 2026.1 (brief 97)"
+    file: results/b97/postroute.json
+    locator: agent_cdc.wns_ns
+- name: hand_ref
+  metric: latency_clocks
+  stages: [cross_go, fs_start]
+  summary: "REG_OUTPUT 1 to 0 and an order-only early MAC start (the hand reference of brief 97; see docs/latency_reduction.md for its bench caveat)"
+  evidence:
+  - id: gain
+    value: 2
+    unit: clocks
+    text: "tick-to-trade cut from 11 to 9 clocks in simulation of the variant's RTL (brief 97)"
+    file: results/b97/postroute.json
+    locator: hand_ref.sim_clocks (cut = 11 minus this)
+  - id: wns
+    value: 0.078
+    unit: ns
+    text: "post-route worst setup slack of the variant at 161.13 MHz (met), Vivado 2026.1 (brief 97)"
+    file: results/b97/postroute.json
+    locator: hand_ref.wns_ns
+- name: agent_both
+  metric: latency_clocks
+  stages: [cross_go, decide]
+  summary: "REG_OUTPUT 1 to 0 and trade64.fire made combinational"
+  evidence:
+  - id: gain
+    value: 2
+    unit: clocks
+    text: "tick-to-trade cut from 11 to 9 clocks in simulation of the variant's RTL (brief 97)"
+    file: results/b97/postroute.json
+    locator: agent_both.sim_clocks (cut = 11 minus this)
+  - id: wns
+    value: 0.117
+    unit: ns
+    text: "post-route worst setup slack of the variant at 161.13 MHz (met), Vivado 2026.1 (brief 97)"
+    file: results/b97/postroute.json
+    locator: agent_both.wns_ns
+  - id: sim_after_97c
+    value: 9
+    unit: clocks
+    text: "tick-to-trade clocks after the brief 97C order-sequence fix (unchanged from brief 97's 9)"
+    file: results/b97c/core_sim_agent_both.json
+    locator: tick_to_trade_digital_sim.gt_rxdata_price_word_to_gt_txdata_order_start_clocks
+  - id: board_cut
+    value: 2
+    unit: clocks
+    text: "KR260 loopback, 100 link restarts: L minus E fell from 30 (control) by this many clocks; every order clean (brief 97C, 2026-11-18)"
+    file: results/b97c/README.md
+    locator: Board run, 2026-11-18, the table (L-E column)
+- name: all3
+  metric: latency_clocks
+  stages: [cross_go, decide, fs_start]
+  summary: "all three edits"
+  evidence:
+  - id: gain
+    value: 3
+    unit: clocks
+    text: "tick-to-trade cut from 11 to 8 clocks in simulation of the variant's RTL (brief 97)"
+    file: results/b97/postroute.json
+    locator: all3.sim_clocks (cut = 11 minus this)
+  - id: wns
+    value: 0.15
+    unit: ns
+    text: "post-route worst setup slack of the variant at 161.13 MHz (met), Vivado 2026.1 (brief 97)"
+    file: results/b97/postroute.json
+    locator: all3.wns_ns
+  - id: sim_after_97c
+    value: 8
+    unit: clocks
+    text: "tick-to-trade clocks after the brief 97C order-sequence fix (unchanged from brief 97's 8)"
+    file: results/b97c/core_sim_all3.json
+    locator: tick_to_trade_digital_sim.gt_rxdata_price_word_to_gt_txdata_order_start_clocks
+  - id: board_cut
+    value: 4
+    unit: clocks
+    text: "KR260 loopback, 100 link restarts: L minus E fell from 30 (control) by this many clocks; every order clean (brief 97C, 2026-11-18)"
+    file: results/b97c/README.md
+    locator: Board run, 2026-11-18, the table (L-E column)

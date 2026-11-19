@@ -21,6 +21,7 @@ from typing import Any
 
 from agent.core import managed
 from flow.options import analysis as A
+from flow.options import combine as C
 from flow.options import generate as G
 
 STATE = "strategy.json"
@@ -77,7 +78,8 @@ def render(rec: dict[str, Any], analysis: dict[str, Any] | None = None) -> str:
     for g in (analysis or {}).get("gaps", []):
         out.append(f"gap: {g}")
     for o in rec["options"]:
-        out += ["", f"Option {o['n']} ({o['id']}): {o['title']}   [{o['scope']['kind'].replace('_', ' ')}]",
+        out += ["", f"Option {o['n']} ({o['id']}): {o['title']}   [{o['scope']['kind'].replace('_', ' ')}]" +
+                (f"   [COMBINED by code from {' + '.join(o['combined_from'])}]" if o.get("origin") == "combiner" else ""),
                 f"  scope: {', '.join(o['scope']['components'])}   ({o['scope']['cli']})",
                 f"  approach: {o['approach']}"]
         g = o["gain"]
@@ -102,6 +104,9 @@ def render(rec: dict[str, Any], analysis: dict[str, Any] | None = None) -> str:
                        ("  Needs the owner's approval before it can run." if r["needs_owner_approval"] else "  Approved in project.yaml."))
         out.append("  not touched: " + (", ".join(f"{n['component']} ({n['why']})" for n in o["not_touched"]) or "nothing else is in the project")
                    + (f"; {o['hidden_components']} excluded component(s) are not shown" if o.get("hidden_components") else ""))
+    cb = rec.get("combiner")
+    if cb and cb.get("not_composable"):
+        out += ["", "combinations not offered (the combiner, code):"] + [f"  {' + '.join(x['from'])}: {x['reason']}" for x in cb["not_composable"][:8]]
     if rec.get("rejected"):
         out += ["", f"{len(rec['rejected'])} proposed option(s) failed the checks and are not offered: " +
                 "; ".join(f"{r['id']}: {r['problems'][0]}" for r in rec["rejected"] if r["problems"])]
@@ -168,6 +173,9 @@ def improve_cmd(a, main_fn) -> int:
             if tgt is None or not a.request:
                 print(f"improve: --edit N \"<your change>\": option {a.edit} not found, or no change given", file=sys.stderr)
                 return 2
+            if tgt.get("origin") == "combiner":
+                print(f"improve: option {a.edit} was built by the combiner from options {' + '.join(tgt['combined_from'])}: edit one of those (the combined options are rebuilt), or ask with --more", file=sys.stderr)
+                return 2
             mode, edit = "edit", {"id": tgt["id"], "instruction": a.request}
         else:
             mode = "more"
@@ -184,9 +192,8 @@ def improve_cmd(a, main_fn) -> int:
         history.append({k: state["current"][k] for k in ("created", "request", "mode", "status", "analysis_hash", "options_hash") if k in state["current"]})
     if mode == "edit" and rec["status"] == "options" and rec["options"] and previous:        # the edited option replaces its original; the others stay
         new = rec["options"][0]
-        rec["options"] = [new if o["id"] == edit["id"] else o for o in previous]
-        for k, o in enumerate(rec["options"], 1):
-            o["n"] = k
+        rec["options"] = [new if o["id"] == edit["id"] else o for o in previous if o.get("origin") != "combiner"]
+        C.apply(rec, an, project, goal=rec["goal"], pinned=G.schema.classify_request(request, project, an)["pinned"], blind=a.blind)      # a combined option built from the old option is rebuilt
         rec["options_hash"] = G._sha(json.dumps(rec["options"], sort_keys=True))
     if mode == "more" and rec["status"] == "options" and previous:
         used = {o["id"] for o in previous}
@@ -197,9 +204,8 @@ def improve_cmd(a, main_fn) -> int:
                 k += 1
             used.add(f"O{k}")
             fresh.append(dict(o, id=f"O{k}"))
-        rec["options"] = previous + fresh
-        for k, o in enumerate(rec["options"], 1):
-            o["n"] = k
+        rec["options"] = [o for o in previous if o.get("origin") != "combiner"] + fresh
+        C.apply(rec, an, project, goal=rec["goal"], pinned=G.schema.classify_request(request, project, an)["pinned"], blind=a.blind)      # the combined options are rebuilt from every single option now offered
         rec["options_hash"] = G._sha(json.dumps(rec["options"], sort_keys=True))
     f = _save(design, {"current": rec, "history": history, "analysis": {k: an[k] for k in ("schema", "design", "hash", "sources", "gaps")}, "choice": None,
                        "inputs": {"build_dir": str(Path(a.build_dir).resolve()) if a.build_dir else None, "latency_path": a.latency_path}}, a.out)
@@ -231,6 +237,8 @@ def _render_analysis(an: dict[str, Any]) -> str:
     cd = (an.get("cdc") or {}).get("rows") or []
     if cd:
         out += ["", "clock crossings (report_cdc):"] + [f"  {r['source_clock']} -> {r['dest_clock']}: {r['endpoints']} endpoints, unsafe {r['unsafe']} ({r['exceptions']})" for r in cd if r["source_clock"] != r["dest_clock"]]
+    if an.get("prior_runs"):
+        out += ["", "earlier measured changes (prior runs, citable as a measurement):"] + [f"  {r['name']}: stages {', '.join(r['stages'])}, cut {r['gain']:g} clock(s)  [{r['fact']}]" for r in an["prior_runs"]]
     out += [""] + [f"gap: {g}" for g in an["gaps"]] + [f"note: {n}" for n in an["notes"]]
     return "\n".join(out)
 
@@ -296,5 +304,6 @@ def strategy_for_run(design: Path) -> dict[str, Any] | None:
         return None
     opt = next((o for o in cur["options"] if o["id"] == ch["chosen"]), None)
     return {"chosen": ch["chosen"], "scope": ch["scope"], "request": cur["request"], "goal": cur.get("goal"), "analysis_hash": cur["analysis_hash"],
-            "options_hash": cur["options_hash"], "options_offered": [{"id": o["id"], "title": o["title"], "scope": o["scope"]["components"]} for o in cur["options"]],
+            "options_hash": cur["options_hash"], "options_offered": [{"id": o["id"], "title": o["title"], "scope": o["scope"]["components"], "origin": o.get("origin", "model"),
+                                                  **({"combined_from": o["combined_from"]} if o.get("origin") == "combiner" else {})} for o in cur["options"]],
             "chosen_option": opt, "model": cur.get("model"), "prompts": cur.get("prompts"), "analysis_sources": cur.get("analysis_sources"), "time": ch["time"]}
