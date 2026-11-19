@@ -166,6 +166,11 @@ def flatten_netlist(netlist_v: Path, top: str, out_v: Path, cells_sim: Path | No
     cad = os.environ.get("FDA_OSS_CAD")
     env = {**os.environ, "PATH": (f"{cad}/bin:" if cad else "") + os.environ["PATH"]}
     cs = cells_sim or Path(subprocess.run(["yosys-config", "--datdir"], capture_output=True, text=True, env=env).stdout.strip()) / "xilinx" / "cells_sim.v"
+    text = netlist_v.read_text()
+    if re.search(r"^module glbl\b", text, re.M):                  # a Vivado funcsim netlist ends with simulation boilerplate Yosys cannot read
+        netlist_v = out_v.with_name(out_v.stem + "_noglbl.v")
+        out_v.parent.mkdir(parents=True, exist_ok=True)
+        netlist_v.write_text(re.sub(r"^module glbl\b.*?^endmodule\b", "", text, flags=re.M | re.S))
     script = (f"read_verilog -sv {netlist_v}; read_verilog -sv -D_EXPLICIT_CARRY {cs}; hierarchy -top {top}; proc; flatten -wb; "
               f"opt_clean -purge; write_verilog -noattr {out_v}")
     out_v.parent.mkdir(parents=True, exist_ok=True)

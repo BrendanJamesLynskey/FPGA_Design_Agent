@@ -536,3 +536,37 @@ def test_strict_evidence_cannot_pass_vacuously(tmp_path):
     assert not ev["passed"] and "eqy" in "\n".join(ev["problems"])
     ev = MP.compare_placements([a, {k: v for k, v in b.items() if k != "eqy"}], 0, strict=True)
     assert "nothing was relocated" in "\n".join(ev["problems"])
+
+
+def test_a_relocated_blocks_netlist_fingerprint_must_equal_the_delivered_one(tmp_path):
+    _run(tmp_path, "p0", **BASE)
+    _run(tmp_path, "p1", delays=BASE["delays"], sites={"u/a": "SLICE_X30Y20", "u/b": "SLICE_X30Y21"},
+         routes={"n1": "{ INT_X21Y16/A INT_X21Y14/B }", "n2": "{ INT_X21Y17/C }"})
+    nl = "NL|u/a|LUT6|INIT=64'h1|I0=n1,O=n2\nNL|u/b|FDRE||C=clk,D=n2\n"
+    d0 = "BLOCK|u/a|SLICE_X30Y80|A6LUT|1\nBLOCK|u/b|SLICE_X30Y81|A6LUT|1\nROUTE|n1|1|{ INT_X21Y76/A INT_X21Y74/B }\nROUTE|n2|1|{ INT_X21Y77/C }\n" + nl
+    d1 = "BLOCK|u/a|SLICE_X30Y20|A6LUT|1\nBLOCK|u/b|SLICE_X30Y21|A6LUT|1\nROUTE|n1|1|{ INT_X21Y16/A INT_X21Y14/B }\nROUTE|n2|1|{ INT_X21Y17/C }\n"
+    runs = lambda n1: [{"tag": "p0", "dir": str(tmp_path), "prefix": "p0", "dump": d0},
+                       {"tag": "p1", "dir": str(tmp_path), "prefix": "p1", "note": "relocated", "dump": d1 + n1}]
+    ok = MP.compare_placements(runs(nl), 0)
+    assert ok["placements"]["p1"]["netlist_identical_to_delivered"] is True and not any("netlist" in p for p in ok["problems"])
+    bad = MP.compare_placements(runs(nl.replace("64'h1", "64'h3")), 0)
+    assert bad["placements"]["p1"]["netlist_identical_to_delivered"] is False and not bad["passed"]
+    assert "logical netlist" in "\n".join(bad["problems"])
+    none = MP.compare_placements(runs(""), 0, strict=True)                                   # no fingerprint at all: relocation is unproven
+    assert "nothing shows" in "\n".join(none["problems"])
+
+
+def test_interconnect_delays_are_the_gate_and_path_delays_only_information(tmp_path):
+    _run(tmp_path, "p0", **BASE)
+    _run(tmp_path, "p1", delays={"a": 1.0, "b": 2.042, "c": 3.5}, sites={"u/a": "SLICE_X30Y20", "u/b": "SLICE_X30Y21"},
+         routes={"n1": "{ INT_X21Y16/A INT_X21Y14/B }", "n2": "{ INT_X21Y17/C }"})            # a worst-slack path that moved with the clock tree
+    head = "BLOCK|u/a|SLICE_X30Y%s|A6LUT|1\nBLOCK|u/b|SLICE_X30Y%s|A6LUT|1\nROUTE|n1|1|{ INT_X21Y%s/A }\nROUTE|n2|1|{ INT_X21Y%s/C }\n"
+    d0 = head % (80, 81, 76, 77) + "NETD|n1_to_u/b/D|600|300|0\nNETD|n2_to_u/a/D|900|450|0\n"
+    runs = lambda n: [{"tag": "p0", "dir": str(tmp_path), "prefix": "p0", "dump": d0},
+                      {"tag": "p1", "dir": str(tmp_path), "prefix": "p1", "note": "relocated", "dump": head % (20, 21, 16, 17) + n}]
+    ok = MP.compare_placements(runs("NETD|n1_to_u/b/D|600|300|0\nNETD|n2_to_u/a/D|900|450|0\n"), 0)
+    assert ok["placements"]["p1"]["net_delays"]["identical_pins"] == 2 and ok["placements"]["p1"]["max_abs_diff_ps"] == 42
+    assert not any("delay" in p for p in ok["problems"])                                     # the 42 ps path difference is not the gate
+    bad = MP.compare_placements(runs("NETD|n1_to_u/b/D|603|300|0\nNETD|n2_to_u/a/D|900|450|0\n"), 2)
+    assert not bad["passed"] and "interconnect delay inside the block differs by 3 ps" in "\n".join(bad["problems"])
+    assert not any("interconnect" in p for p in MP.compare_placements(runs("NETD|n1_to_u/b/D|603|300|0\nNETD|n2_to_u/a/D|900|450|0\n"), 3)["problems"])

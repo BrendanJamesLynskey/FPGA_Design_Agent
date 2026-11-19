@@ -17,8 +17,8 @@ locked with ``lock_design -level routing``:
 ``compare`` reads the runs of ``flow/managed_placement_run.tcl`` for each placement tried (the block at its delivered site and relocated by
 RapidWright to others, the rest of the design placed and routed by Vivado around it) and writes the **placement evidence**: for each placement
 whether Vivado left the block alone (cells on their sites, every internal net's route string unchanged), whether the relocated routing has the
-same shape as the delivered one, how far each block-internal path delay is from the delivered placement's (Vivado's ``report_timing``, in
-picoseconds, endpoint by endpoint), the boundary budgets, and, when funcsim netlists are given, whether eqy proves the relocated netlist equal to
+same shape as the delivered one, how far each interconnect delay inside the block (Vivado's ``get_net_delays``, to every pin, in picoseconds) is from the delivered placement's, and, for
+information, each endpoint's worst-slack path delay (``report_timing``: it depends on the clock tree and on which path is worst, so it is not the gate), the boundary budgets, and, when funcsim netlists are given, whether eqy proves the relocated netlist equal to
 the delivered one. ``passed`` needs every placement to satisfy all of these within the manifest's ``placement.timing_tolerance_ps``. The label
 ``built`` of the component needs this evidence (``agent.core.managed.trust``).
 """
@@ -215,10 +215,12 @@ def compare_placements(runs: list[dict[str, Any]], tolerance_ps: int, declared_b
     optionally ``eqy`` (the equivalence result against runs[0]), ``budgets`` (the run's log, with its BUDGET lines), ``dump`` (the text of
     ``managed_block_dump.tcl`` run on the run's written checkpoint) and ``note``. ``declared_region`` is the manifest's keep-out for the
     delivered placement; a relocated run's keep-out is that region moved by the block's own shift. ``strict`` (the command line) makes
-    every run after the first need an eqy result, a written-checkpoint dump and, when budgets are declared, the log with their lines; a run
+    every run after the first need a written-checkpoint dump (whose netlist fingerprint equals the delivered one's for a relocated block, or an eqy proof) and, when budgets are declared, the log with their lines; a run
     whose block sits in a different region is a relocation whatever its note says (shape checked, eqy needed), and a block with no cells or nets
     is no evidence."""
     base = None
+    base_netlist = None
+    base_netd: dict[str, tuple] = {}
     out: dict[str, Any] = {"tolerance_ps": tolerance_ps, "placements": {}}
     for run in runs:
         d, pre = Path(run["dir"]), run["prefix"]
@@ -253,11 +255,26 @@ def compare_placements(runs: list[dict[str, Any]], tolerance_ps: int, declared_b
             rec["eqy_equal_to_delivered"] = run["eqy"].get("equivalent")
             rec["eqy"] = {k: run["eqy"].get(k) for k in ("equivalent", "seconds", "strategy", "why") if run["eqy"].get(k) is not None}
         if run.get("dump") is not None:
-            obs, obs0 = rec["region"], (base_region if base is not None else rec["region"])
+            obs, obs0 = rec["region"], base_region
             kept = M.slice_rect(declared_region) if declared_region else obs
             dx, dy = (obs[0] - obs0[0], obs[1] - obs0[1]) if obs and obs0 else (0, 0)
             region = (kept[0] + dx, kept[1] + dy, kept[2] + dx, kept[3] + dy)
             rec["written_checkpoint"] = dump_check(run["dump"], d / f"{pre}_sites_before.txt", d / f"{pre}_routes_before.txt", region)
+            netd = rec["written_checkpoint"].pop("net_delays")
+            if netd:
+                if not out["placements"]:
+                    base_netd = netd
+                else:
+                    common = sorted(set(netd) & set(base_netd))
+                    diffs = [abs(netd[k][0] - base_netd[k][0]) for k in common]
+                    rec["net_delays"] = {"pins": len(netd), "pins_common": len(common), "pins_only_here": len(set(netd) - set(base_netd)),
+                                         "pins_missing": len(set(base_netd) - set(netd)), "identical_pins": sum(1 for x in diffs if x == 0),
+                                         "max_abs_diff_ps": max(diffs, default=None), "estimated_pins": sum(1 for v in netd.values() if v[2] != "0")}
+            nsha = rec["written_checkpoint"]["netlist_sha"]
+            if not out["placements"]:
+                base_netlist = nsha
+            else:
+                rec["netlist_identical_to_delivered"] = nsha is not None and nsha == base_netlist
         if run.get("budgets"):
             rec["budget_problems"] = MI.check_budgets(declared_budgets or [], MI.parse_budgets(run["budgets"]))
             rec["budgets"] = MI.parse_budgets(run["budgets"])
@@ -280,12 +297,19 @@ def compare_placements(runs: list[dict[str, Any]], tolerance_ps: int, declared_b
             problems.append(f"{tag}: {w['other_cells_inside_region_count']} cells of the rest of the design sit inside the keep-out region")
         if v.get("budget_problems"):
             problems.append(f"{tag}: boundary budgets: {'; '.join(v['budget_problems'])}")
+        if v.get("netlist_identical_to_delivered") is False:
+            problems.append(f"{tag}: the block's logical netlist (cells, configuration, connections) differs from the delivered one")
         if "eqy" in v and v["eqy_equal_to_delivered"] is not True:
             problems.append(f"{tag}: eqy did not prove the netlist equal to the delivered one")
     for tag, v in list(ps.items())[1:]:
         if v["endpoints_only_here"] or v["endpoints_missing"]:
             problems.append(f"{tag}: the set of internal endpoints differs")
-        if v["max_abs_diff_ps"] is None or v["max_abs_diff_ps"] > tolerance_ps:
+        nd = v.get("net_delays")
+        if nd is not None:
+            if nd["pins_only_here"] or nd["pins_missing"] or nd["max_abs_diff_ps"] is None or nd["max_abs_diff_ps"] > tolerance_ps:
+                problems.append(f"{tag}: an interconnect delay inside the block differs by {nd['max_abs_diff_ps']} ps "
+                                f"({nd['pins_only_here']} pins only here, {nd['pins_missing']} missing), tolerance {tolerance_ps} ps")
+        elif not strict and (v["max_abs_diff_ps"] is None or v["max_abs_diff_ps"] > tolerance_ps):
             problems.append(f"{tag}: an internal path delay differs by {v['max_abs_diff_ps']} ps, tolerance {tolerance_ps} ps")
         if not v["route_shape_equal"] and (v["relocated"] or v["note"].startswith("relocated")):
             problems.append(f"{tag}: the relocated routing has a different shape from the delivered one")
@@ -295,8 +319,10 @@ def compare_placements(runs: list[dict[str, Any]], tolerance_ps: int, declared_b
                 problems.append(f"{tag}: no block cells or nets were read")
             if i == 0:
                 continue
-            if "eqy" not in v and v["relocated"]:
-                problems.append(f"{tag}: no eqy result for a relocated block")
+            if v["relocated"] and v.get("netlist_identical_to_delivered") is not True and v.get("eqy_equal_to_delivered") is not True:
+                problems.append(f"{tag}: nothing shows the relocated block's logic equals the delivered one (netlist fingerprint or eqy)")
+            if "net_delays" not in v:
+                problems.append(f"{tag}: no per-pin interconnect delays of the block (dump) to compare")
             if "written_checkpoint" not in v:
                 problems.append(f"{tag}: no read-back of the written checkpoint (dump)")
             if declared_budgets and "budgets" not in v:
@@ -315,13 +341,18 @@ def dump_check(dump_text: str, sites_ref: Path, routes_ref: Path, region: tuple[
     ``_routes_before`` files): the block's cells on the same sites and BELs with fixed locations, every net's route string and fixed flag equal,
     and no cell of the rest of the design on a slice inside the keep-out region."""
     ref_s, ref_r = read_lines(sites_ref), read_lines(routes_ref)
-    blk, routes, other = {}, {}, {}
+    blk, routes, other, nl, netd = {}, {}, {}, [], {}
     for line in dump_text.splitlines():
         t = line.split("|", 3)
         if t[0] == "BLOCK":
             blk[t[1]] = tuple(line.split("|")[2:])
         elif t[0] == "ROUTE":
             routes[t[1]] = (t[2], t[3] if len(t) > 3 else "")
+        elif t[0] == "NETD":
+            f = line.split("|")
+            netd[f[1]] = (int(f[2]), int(f[3]), f[4])
+        elif t[0] == "NL":
+            nl.append(line)
         elif t[0] == "OTHER":
             other[t[1]] = t[2]
     cells_bad = sorted(c for c in set(ref_s) | set(blk) if tuple(ref_s.get(c, ())) != tuple(blk.get(c, ())))
@@ -332,7 +363,7 @@ def dump_check(dump_text: str, sites_ref: Path, routes_ref: Path, region: tuple[
         m = re.match(r"SLICE_X(\d+)Y(\d+)$", site)
         if m and M.rects_overlap((int(m.group(1)), int(m.group(2)), int(m.group(1)), int(m.group(2))), region):
             inside.append(f"{name}@{site}")
-    return {"block_cells": len(blk), "block_nets": len(routes), "cells_unchanged": not cells_bad, "routes_unchanged": not routes_bad,
+    return {"net_delays": netd, "netlist_sha": digest(sorted(nl)) if nl else None, "netlist_cells": len(nl), "block_cells": len(blk), "block_nets": len(routes), "cells_unchanged": not cells_bad, "routes_unchanged": not routes_bad,
             "changed_cells": cells_bad[:5], "changed_nets": routes_bad[:5], "other_cells": len(other), "other_cells_inside_region": sorted(inside)[:10],
             "other_cells_inside_region_count": len(inside), "region": list(region)}
 
