@@ -166,6 +166,11 @@ def flatten_netlist(netlist_v: Path, top: str, out_v: Path, cells_sim: Path | No
     cad = os.environ.get("FDA_OSS_CAD")
     env = {**os.environ, "PATH": (f"{cad}/bin:" if cad else "") + os.environ["PATH"]}
     cs = cells_sim or Path(subprocess.run(["yosys-config", "--datdir"], capture_output=True, text=True, env=env).stdout.strip()) / "xilinx" / "cells_sim.v"
+    text = netlist_v.read_text()
+    if re.search(r"^module glbl\b", text, re.M):                  # a Vivado funcsim netlist ends with simulation boilerplate Yosys cannot read
+        netlist_v = out_v.with_name(out_v.stem + "_noglbl.v")
+        out_v.parent.mkdir(parents=True, exist_ok=True)
+        netlist_v.write_text(re.sub(r"^module glbl\b.*?^endmodule\b", "", text, flags=re.M | re.S))
     script = (f"read_verilog -sv {netlist_v}; read_verilog -sv -D_EXPLICIT_CARRY {cs}; hierarchy -top {top}; proc; flatten -wb; "
               f"opt_clean -purge; write_verilog -noattr {out_v}")
     out_v.parent.mkdir(parents=True, exist_ok=True)
@@ -308,7 +313,7 @@ def boundary_check(project: M.Project, build_dir: Path, budgets_text: str | None
     res: dict[str, Any] = {"components": {}}
     cdc = (build_dir / "cdc_synth.rpt")
     for c in project.components:
-        if c.level != "netlist" or not c.instance:
+        if c.level not in ("netlist", "placed_routed") or not c.instance:
             continue
         r: dict[str, Any] = {"cdc": boundary_cdc(cdc.read_text(), c.instance) if cdc.is_file() else {"clean": None, "why": "no cdc_synth.rpt"}}
         decl = c.interface.get("timing_budgets") or []
@@ -390,7 +395,7 @@ def main(argv: list[str] | None = None) -> int:
     r_.add_argument("build_dir", type=Path)
     t = sub.add_parser("budget-tcl", help="write the Tcl that measures the boundary timing budgets of a routed checkpoint")
     t.add_argument("design", type=Path)
-    t.add_argument("checkpoint")
+    t.add_argument("checkpoint", help="the routed checkpoint to open, or - for the Tcl of a session that already has the design open")
     t.add_argument("out", type=Path)
     a = ap.parse_args(argv)
     design = a.design.resolve()
@@ -400,8 +405,8 @@ def main(argv: list[str] | None = None) -> int:
         return 0 if rep["gates_clean"] else 1
     if a.cmd == "budget-tcl":
         proj = M.load(design)
-        c = next(c for c in proj.components if c.level == "netlist" and c.instance and c.interface.get("timing_budgets"))
-        a.out.write_text(budget_tcl(c.instance, c.interface["timing_budgets"], a.checkpoint))
+        c = next(c for c in proj.components if c.level in ("netlist", "placed_routed") and c.instance and c.interface.get("timing_budgets"))
+        a.out.write_text(budget_tcl(c.instance, c.interface["timing_budgets"], None if a.checkpoint == "-" else a.checkpoint))
         print(f"wrote {a.out}")
         return 0
     if a.cmd == "check":
