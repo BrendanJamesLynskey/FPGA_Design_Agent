@@ -56,7 +56,8 @@ _ID = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 _TOP_KEYS = {"schema", "name", "top", "unclaimed", "components", "approved_contract_changes"}
 _COMP_KEYS = {"name", "ownership", "level", "module", "instance", "paths", "build_sources", "netlist", "aliases", "interface",
               "provenance", "reference_rtl", "description", "placement"}
-_PROV_KEYS = {"origin", "version", "licence", "sha256", "tests"}
+_PROV_KEYS = {"origin", "version", "licence", "sha256", "tests", "spdx", "upstream_url", "commit", "licence_file", "files", "upstream_paths"}
+OPEN_LICENCES = ("Apache-2.0", "MIT", "BSD-2-Clause", "BSD-3-Clause")      # brief 102 stage 3: the only licences a third-party block may carry
 _PLACE_KEYS = {"lock", "region", "anchor", "timing_tolerance_ps"}
 _SLICE_RANGE = re.compile(r"^SLICE_X(\d+)Y(\d+):SLICE_X(\d+)Y(\d+)$")
 _DIRS = ("input", "output", "inout")
@@ -316,6 +317,38 @@ def provenance_gaps(project: Project, comp: Component) -> list[str]:
             gaps.append("provenance.sha256 does not match the netlist file")
     if not comp.interface.get("ports"):
         gaps.append("no interface contract (interface.ports)")
+    gaps += third_party_gaps(project, comp)
+    return gaps
+
+
+def third_party_gaps(project: Project, comp: Component) -> list[str]:
+    """Stage 3: a component that names an upstream (``provenance.upstream_url``) must carry what a reader needs to find and
+    check it: an open licence (SPDX id in OPEN_LICENCES), the exact 40-hex commit, the licence file in the tree, and a SHA-256
+    for every file of the component (``files``) that equals the file now. Components with no upstream are not asked."""
+    prov = comp.provenance
+    if not prov.get("upstream_url"):
+        return []
+    gaps = []
+    if prov.get("spdx") not in OPEN_LICENCES:
+        gaps.append(f"provenance.spdx {prov.get('spdx')!r} is not one of {', '.join(OPEN_LICENCES)}")
+    if not re.fullmatch(r"[0-9a-f]{40}", str(prov.get("commit", ""))):
+        gaps.append("provenance.commit must be the full 40-hex upstream commit")
+    lic = prov.get("licence_file")
+    if not lic or not (project.design / lic).is_file():
+        gaps.append("provenance.licence_file is missing or not in the tree")
+    listed = prov.get("files") or {}
+    if not listed:
+        gaps.append("provenance.files (path: sha256 of each file as received) is missing")
+    for rel, want in sorted(listed.items()):
+        f = project.design / rel
+        if not f.is_file():
+            gaps.append(f"provenance.files: {rel} is missing")
+        elif sha256_file(f) != want:
+            gaps.append(f"provenance.files: {rel} differs from the hash recorded when it was received (modified, or the record is wrong)")
+    on_disk = {p.relative_to(project.design).as_posix() for p in component_files(project, comp)}
+    extra = sorted(on_disk - set(listed))
+    if extra:
+        gaps.append("files in the component with no recorded upstream hash: " + ", ".join(extra))
     return gaps
 
 
@@ -735,7 +768,7 @@ def _paren(text: str, start: int) -> str:
     return text[start:]
 
 
-def parse_module_ports(text: str, module: str) -> list[dict[str, Any]]:
+def parse_module_ports(text: str, module: str, params_override: dict[str, int] | None = None) -> list[dict[str, Any]]:
     """The ANSI port list of ``module`` in SystemVerilog source: name, dir, width (None when an expression is not a plain
     integer expression of the module's parameter defaults). Comments are removed first. Non-ANSI headers are not read."""
     text = re.sub(r"//[^\n]*|/\*.*?\*/", "", text, flags=re.S)
@@ -754,6 +787,7 @@ def parse_module_ports(text: str, module: str) -> list[dict[str, Any]]:
     body = _paren(text, i)
     m = type("M", (), {"group": lambda self, k: {"params": ptxt[1:-1], "ports": body[1:-1]}[k]})()
     params = {k: int(v) for k, v in re.findall(r"\b(\w+)\s*=\s*(\d+)\b", m.group("params") or "")}
+    params.update(params_override or {})                     # the parameter values the design instantiates the module with
     ports, cur_dir, cur_w = [], None, 1
     for item in (x.strip() for x in m.group("ports").split(",")):
         if not item:
