@@ -20,7 +20,7 @@ from typing import Any
 #: config.json keys that are the configuration itself (or follow from it)
 CONFIGURATION = ("models.", "role_models.", "model_config", "explicit", "oracle_model", "profile", "roles", "harness", "cc_model", "cc_effort", "model")
 #: the run's identity
-IDENTITY = ("run_id", "spec_md", "models_file", "isolation")
+IDENTITY = ("run_id", "name", "spec_md", "models_file", "isolation", "run_limits.usd")   # the run name and the cost cap are command-line choices, not model configuration
 
 
 def flat(d: Any, p: str = "") -> dict[str, Any]:

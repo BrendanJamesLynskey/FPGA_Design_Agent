@@ -1,0 +1,276 @@
+{
+ "spec_md": "results/108_model_config/smoke/spec.md",
+ "name": "smoke_split",
+ "board": "nexys_a7_100t",
+ "interview": "off",
+ "review": "off",
+ "model": "openai/gpt-6-luna",
+ "hidden_spec": "None",
+ "run_limits": {
+  "turns": 300,
+  "seconds": 21600,
+  "usd": 1.0,
+  "visits_per_stage": 4
+ },
+ "stop_after": "2",
+ "harness": "deepagents",
+ "cc_model": "claude-haiku-5-5",
+ "cc_effort": "medium",
+ "verif_level": "V1",
+ "profile": "single",
+ "roles": {},
+ "no_shell": "False",
+ "data_dir": "None",
+ "oracle": "openrouter",
+ "oracle_cc_model": "claude-haiku-5-5",
+ "spec_tests": "False",
+ "spectest_model": "claude-sonnet-5-5",
+ "spectest_effort": "medium",
+ "spectest_max_loops": "2",
+ "skill_routing": "off",
+ "router_model": "None",
+ "router_k": "8",
+ "harness_arms": "H1",
+ "hdl": "sv",
+ "design_plan": "False",
+ "closure": "off",
+ "docs": "off",
+ "models_file": null,
+ "model_config": {
+  "default": {
+   "endpoint": "claude_code",
+   "model": "claude-sonnet-5-5"
+  },
+  "endpoints": {
+   "or_compat": {
+    "kind": "openai_compatible",
+    "base_url": "https://openrouter.ai/api/v1",
+    "key_env": "OPENROUTER_API_KEY",
+    "note": "OpenRouter through the generic OpenAI-compatible kind"
+   }
+  },
+  "purposes": {
+   "rtl@rtl-design-creation": {
+    "endpoint": "or_compat",
+    "model": "openai/gpt-6-luna"
+   }
+  }
+ },
+ "explicit": [],
+ "allow_fable": false,
+ "replay_run": "False",
+ "role_models": {
+  "clarify": {
+   "harness": "claude_code",
+   "model": "claude-sonnet-5-5",
+   "effort": "medium"
+  },
+  "model": {
+   "harness": "claude_code",
+   "model": "claude-sonnet-5-5",
+   "effort": "medium"
+  },
+  "tests": {
+   "harness": "claude_code",
+   "model": "claude-sonnet-5-5",
+   "effort": "medium"
+  },
+  "rtl": {
+   "harness": "claude_code",
+   "model": "claude-sonnet-5-5",
+   "effort": "medium"
+  }
+ },
+ "oracle_model": "claude-sonnet-5-5",
+ "models": {
+  "purposes": {
+   "interpret": {
+    "purpose": "interpret",
+    "endpoint": "claude_code",
+    "kind": "claude_code",
+    "model": "claude-sonnet-5-5",
+    "options": {
+     "effort": "medium"
+    },
+    "deployment_note": ""
+   },
+   "oracle": {
+    "purpose": "oracle",
+    "endpoint": "claude_code",
+    "kind": "claude_code",
+    "model": "claude-sonnet-5-5",
+    "options": {
+     "effort": "medium"
+    },
+    "deployment_note": ""
+   },
+   "model": {
+    "purpose": "model",
+    "endpoint": "claude_code",
+    "kind": "claude_code",
+    "model": "claude-sonnet-5-5",
+    "options": {
+     "effort": "medium"
+    },
+    "deployment_note": ""
+   },
+   "tests": {
+    "purpose": "tests",
+    "endpoint": "claude_code",
+    "kind": "claude_code",
+    "model": "claude-sonnet-5-5",
+    "options": {
+     "effort": "medium"
+    },
+    "deployment_note": ""
+   },
+   "spectest": {
+    "purpose": "spectest",
+    "endpoint": "claude_code",
+    "kind": "claude_code",
+    "model": "claude-sonnet-5-5",
+    "options": {
+     "effort": "medium",
+     "timeout_s": 900
+    },
+    "deployment_note": ""
+   },
+   "rtl": {
+    "purpose": "rtl",
+    "endpoint": "claude_code",
+    "kind": "claude_code",
+    "model": "claude-sonnet-5-5",
+    "options": {
+     "effort": "medium"
+    },
+    "deployment_note": ""
+   },
+   "constraints": {
+    "purpose": "constraints",
+    "endpoint": "claude_code",
+    "kind": "claude_code",
+    "model": "claude-sonnet-5-5",
+    "options": {
+     "effort": "medium"
+    },
+    "deployment_note": ""
+   },
+   "closure": {
+    "purpose": "closure",
+    "endpoint": "claude_code",
+    "kind": "claude_code",
+    "model": "claude-sonnet-5-5",
+    "options": {
+     "effort": "medium"
+    },
+    "deployment_note": ""
+   },
+   "latency": {
+    "purpose": "latency",
+    "endpoint": "openrouter",
+    "kind": "openrouter",
+    "model": "openai/gpt-6-luna",
+    "options": {
+     "retries": 1,
+     "temperature": 0.2,
+     "timeout_s": 180
+    },
+    "deployment_note": "",
+    "base_url": "https://openrouter.ai/api/v1",
+    "key_env": "OPENROUTER_API_KEY"
+   },
+   "review": {
+    "purpose": "review",
+    "endpoint": "claude_code",
+    "kind": "claude_code",
+    "model": "claude-sonnet-5-5",
+    "options": {
+     "effort": "medium",
+     "timeout_s": 900
+    },
+    "deployment_note": ""
+   },
+   "doc": {
+    "purpose": "doc",
+    "endpoint": "claude_code",
+    "kind": "claude_code",
+    "model": "claude-sonnet-5-5",
+    "options": {
+     "effort": "medium"
+    },
+    "deployment_note": ""
+   },
+   "route": {
+    "purpose": "route",
+    "endpoint": "openrouter",
+    "kind": "openrouter",
+    "model": null,
+    "options": {
+     "retries": 1,
+     "temperature": 0.2,
+     "timeout_s": 180
+    },
+    "deployment_note": "",
+    "base_url": "https://openrouter.ai/api/v1",
+    "key_env": "OPENROUTER_API_KEY"
+   },
+   "options": {
+    "purpose": "options",
+    "endpoint": "openrouter",
+    "kind": "openrouter",
+    "model": null,
+    "options": {
+     "retries": 1,
+     "temperature": 0.2,
+     "timeout_s": 180
+    },
+    "deployment_note": "",
+    "base_url": "https://openrouter.ai/api/v1",
+    "key_env": "OPENROUTER_API_KEY"
+   },
+   "embed": {
+    "purpose": "embed",
+    "endpoint": "openrouter",
+    "kind": "openrouter",
+    "model": null,
+    "options": {
+     "retries": 1,
+     "temperature": 0.2,
+     "timeout_s": 180
+    },
+    "deployment_note": "",
+    "base_url": "https://openrouter.ai/api/v1",
+    "key_env": "OPENROUTER_API_KEY"
+   },
+   "rtl@rtl-design-creation": {
+    "purpose": "rtl",
+    "stage": "rtl-design-creation",
+    "endpoint": "or_compat",
+    "kind": "openai_compatible",
+    "model": "openai/gpt-6-luna",
+    "options": {
+     "retries": 1,
+     "temperature": 0.2,
+     "timeout_s": 180
+    },
+    "deployment_note": "OpenRouter through the generic OpenAI-compatible kind",
+    "base_url": "https://openrouter.ai/api/v1",
+    "key_env": "OPENROUTER_API_KEY"
+   }
+  },
+  "layers": [
+   {
+    "layer": "cli",
+    "source": "command line",
+    "sha256": null
+   },
+   {
+    "layer": "cli",
+    "source": "command line",
+    "sha256": null
+   }
+  ],
+  "hash": "576d66a2976142a9"
+ },
+ "isolation": "ContainerRunner"
+}
