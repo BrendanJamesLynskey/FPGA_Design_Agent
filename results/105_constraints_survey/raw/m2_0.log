@@ -1,0 +1,35 @@
+INFO: [Common 17-3922] A valid Vivado Design Suite BASIC license has been detected. Your current license is active and will expire on 10-nov-2027.
+
+****** Vivado v2026.1 (64-bit)
+  **** SW Build 6511674 on Tue Jun 16 11:01:26 MDT 2026
+  **** IP Build 6504888 on Tue Jun 09 09:05:25 MDT 2026
+  **** SharedData Build 6501428 on Mon Jun 08 17:34:18 MDT 2026
+  **** Start of session at: Thu Nov 19 18:03:00 2026
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+    ** Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+
+source /home/brendan/Claude_sandbox/_worktrees/105-constraints/flow/tests/fixtures/constraints_survey/measure.tcl
+# set nthr 1
+# if {[info exists ::env(FDA_VIVADO_THREADS)] && $::env(FDA_VIVADO_THREADS) ne ""} { set nthr $::env(FDA_VIVADO_THREADS) }
+# set_param general.maxThreads $nthr
+# set_param synth.maxThreads $nthr
+# lassign $argv flow_dir fx_dir exp top xdcname part generics out
+# file mkdir $out
+# set gen {}
+# foreach g $generics { lappend gen -generic $g }
+# read_verilog -sv $fx_dir/rtl/[dict get {m1 m1_sync m2 m2_fanout m3 m3_bus} $exp].sv
+read_verilog: Time (s): cpu = 00:00:12 ; elapsed = 00:00:12 . Memory (MB): peak = 1683.121 ; gain = 209.844 ; free physical = 4457 ; free virtual = 22372
+# read_xdc $fx_dir/xdc/$xdcname.xdc
+# synth_design -top $top -part $part -mode out_of_context {*}$gen
+Command: synth_design -top m2_fanout -part xc7a100tcsg324-1 -mode out_of_context -generic MODE=0
+Starting synth_design
+Attempting to get a license for feature 'Vivado_Synthesis' and/or device 'xc7a100t'
+INFO: [Common 17-349] Got license for feature 'Vivado_Synthesis' and/or device 'xc7a100t'
+INFO: [Device 21-403] Loading part xc7a100tcsg324-1
+INFO: [Designutils 20-5008] Incremental synthesis strategy default
+INFO: [Synth 8-7079] Multithreading enabled for synth_design using a maximum of 1 processes.
+INFO: [Synth 8-7078] Launching helper process for spawning children vivado processes
+INFO: [Synth 8-7075] Helper process launched with PID 136929
+---------------------------------------------------------------------------------
+Starting RTL Elaboration : Time (s): cpu = 00:00:06 ; elapsed = 00:00:06 . Memory (MB): peak = 2386.410 ; gain = 516.062 ; free physical = 3518 ; free virtual = 21437
+---------------------------------------------------------------------------------
