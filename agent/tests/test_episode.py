@@ -190,6 +190,7 @@ def _episode(tmp_path, runs, tape_spec=None, live=True):
         assert "--- ARCHITECTURE.md ---" not in tests_prompt and "--- rtl/" not in tests_prompt and "endmodule" not in tests_prompt
     idx = (rt.design / "build" / "review" / "review_index.html").read_text()
     assert "planner" in idx and "rewind" in idx
+    rt.summary_ = s                                              # brief 107: the proof scores the run's stage path
     assert (rt.design / "build" / "review" / "06_timing-closure.html").is_file()
     assert "3.911" in (rt.design / "build" / "review" / "06_timing-closure.html").read_text()
     assert "simulate" in runner.kinds and "bringup" in runner.kinds

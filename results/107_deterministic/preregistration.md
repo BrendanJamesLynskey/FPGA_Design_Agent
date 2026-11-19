@@ -21,3 +21,8 @@ byte-identical?
 - No stopping rule beyond the fixed call count; a failed call is retried once, then recorded as a failure and excluded from that prompt's rate
   (the count is reported).
 - Nothing in this probe is a quality score; no model judges anything.
+
+## Amendment, 2026-11-19 (after arm A of model 1 had run)
+Model 1 showed an identical-output rate no better than the control. To see whether that is the model or the route, the same design was
+run once more with a second cheap non-Anthropic model, `deepseek/deepseek-chat`, through OpenRouter. This second run was not part of the
+original plan; its result is reported beside the first with this label, and neither is pooled.

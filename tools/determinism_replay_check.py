@@ -67,7 +67,9 @@ def proof() -> dict:
         out["replay"] = {**_fingerprint(rt_b, runs_b, tmp), "tape": rt_b.resolver.tape.state()}
         det = json.loads((rt_b.run_dir / "config.json").read_text())["determinism"]
         out["replay_run_record_determinism"] = {k: det[k] for k in ("requested", "level", "mode", "level_meaning")}
-        s = gr.summary(rt_b, {"history": []}) if False else None
+        from flow import plan_repeat
+        runs = [{"run_id": r.run_id, "stages_visited": r.summary_["stages_visited"]} for r in (rt_a, rt_b)]
+        out["plan_repeatability"] = plan_repeat.score({"t1_episode:record_vs_replay": runs})       # brief 106's measuring stick
         a, b = out["record"], out["replay"]
         out["identical"] = {k: a[k] == b[k] for k in ("core_tool_calls", "core_tool_calls_sha256", "files_written", "files_sha256")}
         t = b["tape"]
