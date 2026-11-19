@@ -13,7 +13,7 @@ The service ran against this repository's records and the owner's 24 local run r
 
 ## Tests
 
-`python -m pytest navigator/tests` (28 tests): loopback-only binding (a non-loopback host is refused), token and Host-header rules, the access gate called on every request, POST rules, the endpoints on the real records, the scope picker (frozen and excluded parts cannot be scoped), the eye page and record viewer serving only listed files (traversal attempts get 404), a planted key, prompt text and account email never appearing in any response or action result, free health checks starting no costly or hardware command (the runner is a fake that records them), actions running only their fixed commands, the JTAG listing refused while the board lock is held, usage levels against the 88% line, and stale-lock detection.
+`python -m pytest navigator/tests` (15 tests): loopback-only binding (a non-loopback host is refused), token and Host-header rules, the access gate called on every request, POST rules, the endpoints on the real records, the scope picker (frozen and excluded parts cannot be scoped), the eye page and record viewer serving only listed files (traversal attempts get 404), a planted key, prompt text and account email never appearing in any response or action result, free health checks starting no costly or hardware command (the runner is a fake that records them), actions running only their fixed commands, the JTAG listing refused while the board lock is held, usage levels against the 88% line, and stale-lock detection.
 
 ## Known gaps and limits
 
