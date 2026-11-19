@@ -707,13 +707,22 @@ def build(s: Session, until: str = "bitstream", variant: str = "base") -> dict:
     r = s.runner.run("build", [str(s.root / "flow" / "run_vivado.sh"), str(s.design), variant], s.root,
                      {"FDA_STOP_AFTER": until}, timeout=3600)
     bdir = s.design / "build" / variant
-    _stamp(s, f"build:{variant}")
+    try:                                               # brief 106: inputs as they were before the run, stamped only if it succeeded
+        from flow import stale_check
+        pre = stale_check.current_inputs(s.design, f"build:{variant}", s.root)
+    except Exception:                                  # noqa: BLE001
+        pre = None
     info: dict[str, Any] = {}
     rj = bdir / "run.json"
     if rj.is_file():
         run = json.loads(rj.read_text())
         info = {k: run.get(k) for k in ("exit_code", "wall_s", "vivado_version", "build_stamp", "stages_s",
                                          "scope_anon_peak_mib", "scope_oom_kills")}
+    if r.returncode == 0 and pre is not None:
+        try:
+            stale_check.stamp(s.design, f"build:{variant}", s.root, inputs=pre)
+        except Exception:                              # noqa: BLE001
+            pass
     return {"ok": r.returncode == 0 or (until != "bitstream" and bool(info) and info.get("exit_code") == 0),
             "output": _text_out(r), "returncode": r.returncode, "until": until, "variant": variant, **info}
 

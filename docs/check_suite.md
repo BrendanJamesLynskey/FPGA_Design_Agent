@@ -48,7 +48,7 @@ python3 -m flow.checks designs/<d> [--names all|resets,cdc,...] [--scope auto|rt
 | `axi_profile` | ours | rtl, synth, route | `flow/checks/axi_profile.py` (brief 73): each generated AXI4-Lite register block regenerated from its map under the design's `interfaces:` profile and compared with the file; mixed profiles, old blocks and AMD IP beside a strict block flagged; see [hwsw.md](hwsw.md#interface-profiles-brief-73) |
 | `gt_plan` | ours | rtl, synth, route | `flow/gt_plan.py` (brief 56A): every reason the spec's link cannot be built |
 | `constants` | ours | rtl, synth, route | `flow/derived_constants.py` (brief 106): the shell design ID derived from the spec's quoted string, spec identity words, and the board clock period, checked against the RTL and XDC; writes `build/derived_constants.json` |
-| `stale` | ours | rtl, synth, route | `flow/stale_check.py` (brief 106): build and simulation evidence whose inputs changed since it was made (`build/lineage.json`, the build manifest), and a README or handover that cites a build that is not current; takes no waivers |
+| `stale` | ours | synth, route | `flow/stale_check.py` (brief 106): build and simulation evidence whose inputs changed since it was made (`build/lineage.json`, the build manifest), and a README or handover that cites a build that is not current; takes no waivers |
 | `doc` | ours | rtl, synth, route | the DOC gate (`agent/graph/document.py` `doc_gate`, brief 68) |
 
 `python3 -m flow.checks --list` prints the registry from the code.

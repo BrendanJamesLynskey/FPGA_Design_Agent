@@ -725,7 +725,7 @@ register(Check("gt_plan", "source", ALL, {"gt": ("GT-PLAN",)},
 register(Check("constants", "source", ALL, {"constants": ("CONST-ID-01", "CONST-ID-02", "CONST-LIT-01", "CONST-CLK-01")},
                "constants derived by code from the spec and the board file (design ID, identity words, clock period) against the RTL and XDC "
                "(flow/derived_constants.py, brief 106)", _constants))
-register(Check("stale", "records", ALL, {"stale": ("STALE-EVID-01", "STALE-CLAIM-01")},
+register(Check("stale", "records", POST, {"stale": ("STALE-EVID-01", "STALE-CLAIM-01")},
                "build and simulation evidence whose inputs changed since it was made, and documents citing a build that is not current "
                "(flow/stale_check.py, brief 106)", _stale, waivable=False))
 register(Check("doc", "records", ALL, {"doc": ("DOC-PROBLEM",)},

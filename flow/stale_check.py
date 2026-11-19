@@ -81,14 +81,24 @@ def source_files(design: Path, root: Path = ROOT) -> list[Path]:
     return files
 
 
+def board_name(cfg: dict[str, Any], root: Path = ROOT) -> str | None:
+    """The board a design is built for, by flow/prepare.py's rule (build.yaml ``board``, else the one board file whose part
+    matches, the catalogue's default when several do) but read from ``root``, so a copy of the repo can be checked."""
+    if cfg.get("board"):
+        return str(cfg["board"])
+    hits = [b.parent.name for b in sorted((root / "boards").glob("*/board.yaml"))
+            if (yaml.safe_load(b.read_text()) or {}).get("part") == cfg.get("part")]
+    if len(hits) > 1:
+        cat = root / "boards" / "catalogue.yaml"
+        boards = (yaml.safe_load(cat.read_text()) or {}).get("boards", {}) if cat.is_file() else {}
+        hits = [h for h in hits if (boards.get(h) or {}).get("default_for_part")]
+    return hits[0] if len(hits) == 1 else None
+
+
 def extras(design: Path, root: Path = ROOT) -> dict[str, str]:
     """The inputs a build result depends on that the build manifest does not hash: spec files and the board's files."""
     out = {_rel(design / n, root): sha(design / n) for n in SPEC_FILES if (design / n).is_file()}
-    try:
-        from flow.prepare import board_for
-        b = board_for(_build_cfg(design))
-    except Exception:                                  # noqa: BLE001 (no board known: no board file hashed, and HOLES says nothing about it)
-        b = None
+    b = board_name(_build_cfg(design), root)
     if b and (root / "boards" / str(b)).is_dir():
         for p in sorted((root / "boards" / str(b)).glob("*")):
             if p.is_file() and p.suffix in (".yaml", ".xdc", ".yml"):
@@ -109,7 +119,7 @@ def current_inputs(design: Path, kind: str, root: Path = ROOT) -> dict[str, str]
                 ins[rel] = sha(p) if p.is_file() else "missing"
     elif kind == "sim":
         for sub in ("tests", "model"):
-            ins.update({_rel(p, root): sha(p) for p in sorted((design / sub).glob("**/*.py")) if "__pycache__" not in p.parts})
+            ins.update({_rel(p, root): sha(p) for p in sorted((design / sub).glob("**/*")) if p.is_file() and "__pycache__" not in p.parts and p.suffix != ".pyc"})
     else:
         raise ValueError(f"unknown evidence kind {kind!r}: build:<variant> or sim")
     return {**ins, **extras(design, root)}
@@ -204,7 +214,7 @@ def findings(design: Path, root: Path = ROOT) -> list[dict[str, Any]]:
     return out + claim_findings(design, root)
 
 
-_CITE = re.compile(r"\bbuild[\s_-]*(?:id)?\W{0,4}`?([0-9a-f]{8})\b", re.I)
+_CITE = re.compile(r"\bbuild[\s_-]*(?:id)?\W{0,4}`?(?=[0-9a-f]*[a-f])([0-9a-f]{8})\b", re.I)     # at least one a-f: a date is not an ID
 
 
 def cited_ids(text: str) -> list[str]:

@@ -91,7 +91,7 @@ def _params(texts: dict[str, str]) -> dict[str, list[tuple[str, int | None]]]:
     return out
 
 
-def design_id_bindings(texts: dict[str, str]) -> list[dict[str, Any]]:
+def design_id_bindings(texts: dict[str, str], cfg_generics: dict | None = None) -> list[dict[str, Any]]:
     """Each ``.DESIGN_ID(expr)`` binding on an ``fpga_shell`` instance: file, the expression, its value or None."""
     params = _params(texts)
     out = []
@@ -104,7 +104,7 @@ def design_id_bindings(texts: dict[str, str]) -> list[dict[str, Any]]:
             expr = m.group(1).strip()
             val = parse_literal(expr)
             how = "literal"
-            if val is None and re.fullmatch(r"[A-Za-z_]\w*", expr):
+            if val is None and re.fullmatch(r"[A-Za-z_]\w*", expr) and expr not in (cfg_generics or {}):
                 cands = [v for (pf, v) in params.get(expr, []) if v is not None]
                 same = [v for (pf, v) in params.get(expr, []) if v is not None and pf == f]
                 pick = same or cands
@@ -129,8 +129,8 @@ def _sources(design: Path, root: Path) -> tuple[list[Path], dict[str, Any]]:
 
 def board_clock(cfg: dict[str, Any], root: Path) -> dict[str, Any] | None:
     try:
-        from flow.prepare import board_for
-        b = board_for(cfg)
+        from flow.stale_check import board_name
+        b = board_name(cfg, root)
         d = yaml.safe_load((root / "boards" / str(b) / "board.yaml").read_text()) or {}
     except Exception:                                   # noqa: BLE001 (no board file: no clock check, said in the result)
         return None
@@ -170,7 +170,7 @@ def derive(design: Path, root: Path = ROOT) -> dict[str, Any]:
                              "clock": None, "notes": notes}
 
     did = spec["design_id"]
-    binds = design_id_bindings(texts)
+    binds = design_id_bindings(texts, cfg.get("generics"))
     table["design_id_bindings"] = binds
     if not spec_f.is_file():
         notes.append("no spec.md: no spec constant derived")
@@ -207,7 +207,7 @@ def derive(design: Path, root: Path = ROOT) -> dict[str, Any]:
                 if x.suffix != ".xdc":
                     continue
                 for per in xdc_clock_periods(x.read_text(errors="replace"), clk["port"]):
-                    if abs(per - clk["period_ns"]) > 0.001:
+                    if abs(per - clk["period_ns"]) > max(0.01, 1e-4 * clk["period_ns"]):
                         findings.append({"code": "CONST-CLK-01", "severity": "error", "blocking": True,
                                          "where": str(x.relative_to(root)),
                                          "message": f"create_clock -period {per} ns on {clk['port']} but the board file "
