@@ -1,0 +1,6 @@
+`verilator_config
+// flow/lint.sh reads designs/<d>/lint/*.vlt first. The vendored third-party file is not edited, so the style warnings it raises
+// under -Wall are waived here, for that one file only; our own files get no waiver.
+lint_off -rule GENUNNAMED -file "*/third_party/verilog-ethernet/lfsr.v"
+lint_off -rule WIDTHEXPAND -file "*/third_party/verilog-ethernet/lfsr.v"
+lint_off -rule WIDTHTRUNC -file "*/third_party/verilog-ethernet/lfsr.v"

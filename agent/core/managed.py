@@ -56,7 +56,8 @@ _ID = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 _TOP_KEYS = {"schema", "name", "top", "unclaimed", "components", "approved_contract_changes"}
 _COMP_KEYS = {"name", "ownership", "level", "module", "instance", "paths", "build_sources", "netlist", "aliases", "interface",
               "provenance", "reference_rtl", "description", "placement"}
-_PROV_KEYS = {"origin", "version", "licence", "sha256", "tests"}
+_PROV_KEYS = {"origin", "version", "licence", "sha256", "tests", "spdx", "upstream_url", "commit", "licence_file", "files", "upstream_paths"}
+OPEN_LICENCES = ("Apache-2.0", "MIT", "BSD-2-Clause", "BSD-3-Clause")      # brief 102 stage 3: the only licences a third-party block may carry
 _PLACE_KEYS = {"lock", "region", "anchor", "timing_tolerance_ps"}
 _SLICE_RANGE = re.compile(r"^SLICE_X(\d+)Y(\d+):SLICE_X(\d+)Y(\d+)$")
 _DIRS = ("input", "output", "inout")
@@ -212,6 +213,10 @@ def validate(raw: Any, design: Path | None = None) -> list[str]:
         for k in sorted(set(prov) - _PROV_KEYS):
             errs.append(f"{where}: unknown provenance key {k!r}")
         iface = c.get("interface") or {}
+        if not isinstance(prov.get("files", {}), dict) or not isinstance(prov.get("upstream_paths", {}), dict):
+            errs.append(f"{where}: provenance.files and provenance.upstream_paths must be mappings of path to text")
+        if not isinstance(iface.get("parameters", {}), dict) or not all(isinstance(v, int) and not isinstance(v, bool) for v in (iface.get("parameters") or {}).values()):
+            errs.append(f"{where}: interface.parameters must be a mapping of parameter name to a whole number")
         for p in iface.get("ports") or []:
             if not isinstance(p, dict) or not _ID.match(str(p.get("name", ""))) or p.get("dir") not in _DIRS:
                 errs.append(f"{where}: interface port {p!r} needs name and dir (input|output|inout)")
@@ -316,6 +321,43 @@ def provenance_gaps(project: Project, comp: Component) -> list[str]:
             gaps.append("provenance.sha256 does not match the netlist file")
     if not comp.interface.get("ports"):
         gaps.append("no interface contract (interface.ports)")
+    gaps += third_party_gaps(project, comp)
+    return gaps
+
+
+def third_party_gaps(project: Project, comp: Component) -> list[str]:
+    """Stage 3: a component that names an upstream (``provenance.upstream_url``) must carry what a reader needs to find and
+    check it: an open licence (SPDX id in OPEN_LICENCES), the exact 40-hex commit, the licence file in the tree, and a SHA-256
+    for every file of the component (``files``) that equals the file now. Components with no upstream are not asked."""
+    prov = comp.provenance
+    if not prov.get("upstream_url"):
+        return []
+    gaps = []
+    if prov.get("spdx") not in OPEN_LICENCES:
+        gaps.append(f"provenance.spdx {prov.get('spdx')!r} is not one of {', '.join(OPEN_LICENCES)}")
+    if not re.fullmatch(r"[0-9a-f]{40}", str(prov.get("commit", ""))):
+        gaps.append("provenance.commit must be the full 40-hex upstream commit")
+    lic = prov.get("licence_file")
+    listed = prov.get("files") or {}
+    if not lic or not (project.design / lic).is_file():
+        gaps.append("provenance.licence_file is missing or not in the tree")
+    else:
+        if lic not in listed:
+            gaps.append("provenance.licence_file must be one of provenance.files (so it is hashed)")
+        if not re.search(r"permission is hereby granted|apache license|redistribution and use in source", (project.design / lic).read_text(errors="replace"), re.I):
+            gaps.append("provenance.licence_file does not read like a licence text")
+    if not listed:
+        gaps.append("provenance.files (path: sha256 of each file as received) is missing")
+    for rel, want in sorted(listed.items()):
+        f = project.design / rel
+        if not f.is_file():
+            gaps.append(f"provenance.files: {rel} is missing")
+        elif sha256_file(f) != want:
+            gaps.append(f"provenance.files: {rel} differs from the hash recorded when it was received (modified, or the record is wrong)")
+    on_disk = {p.relative_to(project.design).as_posix() for p in component_files(project, comp)}
+    extra = sorted(on_disk - set(listed))
+    if extra:
+        gaps.append("files in the component with no recorded upstream hash: " + ", ".join(extra))
     return gaps
 
 
@@ -330,6 +372,8 @@ def trust(project: Project, comp: Component) -> tuple[str, list[str]]:
     v = ev.get("verified") or {}
     if not (v.get("passed") is True and v.get("component_sha256") == h):
         return "documented", ["no passing own-tests evidence for the current content" if not v else "verified evidence is stale or failed"]
+    if comp.provenance.get("upstream_url") and v.get("upstream_checked") is not True:
+        return "documented", ["the files were not compared with the upstream commit (run flow/managed_rtl_import.py check --upstream <clone>)"]
     if comp.level == "placed_routed":
         pe = ev.get("placement") or {}
         if not (pe.get("passed") is True and pe.get("component_sha256") == h and pe.get("placements_tried") in range(2, 10_000)):
@@ -513,6 +557,8 @@ class ManagedPolicy:
         if rel.lower().endswith((".xdc", ".tcl")) or self._is_listed_constraint(rel):
             self.check_xdc(rel, content)
             return
+        if rel.lower().endswith((".v", ".sv", ".svh", ".vh")):
+            self._no_shadow(rel, content)
         c = self.classify(rel)
         if c is None or c.ownership != "owned" or not c.module or not c.interface.get("ports"):
             return
@@ -527,6 +573,18 @@ class ManagedPolicy:
             self._refuse(f"{rel} would change the interface contract of {c.name!r} ({'; '.join(diff[:4])}). That affects the "
                          f"components around it: the change is refused and flagged for the owner, who approves it by "
                          f"listing {c.name!r} under approved_contract_changes in project.yaml", "managed-contract")
+
+    def _protected_modules(self) -> dict[str, str]:
+        return {c.module: c.name for c in self.project.components if c.ownership in ("frozen", "excluded") and c.module}
+
+    def _no_shadow(self, rel: str, content: str) -> None:
+        """A file that is not a frozen or excluded component's own may not declare that component's module: a second definition could
+        shadow the vendored block in the build (stage 3 review)."""
+        text = re.sub(r"//[^\n]*|/\*.*?\*/", "", content, flags=re.S)
+        for mod, name in self._protected_modules().items():
+            if re.search(rf"\bmodule\s+{re.escape(mod)}\b", text):
+                self._refuse(f"{rel} declares module {mod!r}, which belongs to the {self.project.component(name).ownership} component {name!r}: "
+                             f"a second definition could shadow it in the build", "managed-build")
 
     def _flag(self, c: Component, rel: str, diff: list[str]) -> None:
         f = self.project.design / MANAGED_DIR / "contract_flags.jsonl"
@@ -547,6 +605,15 @@ class ManagedPolicy:
                 n = have.get(f"{rel}/{c.netlist.get('file')}")
                 if n is not None and (n.get("format") != c.netlist.get("format") or n.get("cell") != c.netlist.get("cell")):
                     miss.append(f"netlist {c.netlist.get('file')} with format {c.netlist.get('format')!r} and cell {c.netlist.get('cell')!r} (component {c.name})")
+        theirs = {b for c in self.project.components if c.ownership in ("frozen", "excluded") for b in c.build_sources}
+        root = self.project.design.parent.parent
+        for src in cfg.get("sources") or []:                   # a source that redefines a frozen or excluded module could shadow it
+            sp = root / str(src)
+            if str(src) not in theirs and sp.is_file() and sp.suffix in (".v", ".sv"):
+                try:
+                    self._no_shadow(str(src), sp.read_text(errors="replace"))
+                except Exception as e:                         # refusal raised by _refuse: keep the build.yaml rule name
+                    miss.append(f"source {src} ({e})")
         for f in cfg.get("constraints") or []:                 # a constraints file under any name is checked against the keep-outs
             p = self.project.design.parent.parent / str(f)
             if p.is_file() and p.resolve().is_relative_to(self.project.design):
@@ -735,7 +802,7 @@ def _paren(text: str, start: int) -> str:
     return text[start:]
 
 
-def parse_module_ports(text: str, module: str) -> list[dict[str, Any]]:
+def parse_module_ports(text: str, module: str, params_override: dict[str, int] | None = None) -> list[dict[str, Any]]:
     """The ANSI port list of ``module`` in SystemVerilog source: name, dir, width (None when an expression is not a plain
     integer expression of the module's parameter defaults). Comments are removed first. Non-ANSI headers are not read."""
     text = re.sub(r"//[^\n]*|/\*.*?\*/", "", text, flags=re.S)
@@ -754,6 +821,7 @@ def parse_module_ports(text: str, module: str) -> list[dict[str, Any]]:
     body = _paren(text, i)
     m = type("M", (), {"group": lambda self, k: {"params": ptxt[1:-1], "ports": body[1:-1]}[k]})()
     params = {k: int(v) for k, v in re.findall(r"\b(\w+)\s*=\s*(\d+)\b", m.group("params") or "")}
+    params.update(params_override or {})                     # the parameter values the design instantiates the module with
     ports, cur_dir, cur_w = [], None, 1
     for item in (x.strip() for x in m.group("ports").split(",")):
         if not item:

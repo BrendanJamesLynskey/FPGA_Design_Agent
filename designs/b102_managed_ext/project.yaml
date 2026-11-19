@@ -1,0 +1,119 @@
+# project.yaml: the managed-project manifest of this design (brief 102, stage 3). Ownership, scope and contracts are the owner's:
+# the agent cannot write this file. Trust labels are computed from evidence files, never written here.
+# Theirs: the 'lfsr' component (Alex Forencich's verilog-ethernet, MIT), vendored unmodified under third_party/. Ours: everything else.
+schema: fda-managed-project/1
+name: b102_managed_ext
+top: fcs_top
+unclaimed: owned
+components:
+- name: top
+  ownership: owned
+  level: rtl
+  module: fcs_top
+  paths:
+  - rtl/fcs_top.sv
+  build_sources:
+  - designs/b102_managed_ext/rtl/fcs_top.sv
+  aliases:
+  - top
+  - led
+  - leds
+  - reset
+  description: 'top level: power-on reset, the LEDs, the wiring of the sequencer and the CRC adapter'
+- name: ctrl
+  ownership: owned
+  level: rtl
+  module: fcs_ctrl
+  instance: u_ctrl
+  paths:
+  - rtl/fcs_ctrl.sv
+  build_sources:
+  - designs/b102_managed_ext/rtl/fcs_ctrl.sv
+  aliases:
+  - sequencer
+  - verdict
+  - compare
+  - frame
+  - latency
+  - pass
+  description: the frame sequencer and the FCS verdict around the CRC adapter
+  interface:
+    ports:
+    - {name: clk, dir: input, width: 1}
+    - {name: rst, dir: input, width: 1}
+    - {name: crc_i, dir: input, width: 32}
+    - {name: crc_init_o, dir: output, width: 1}
+    - {name: crc_en_o, dir: output, width: 1}
+    - {name: crc_d_o, dir: output, width: 16}
+    - {name: pass_o, dir: output, width: 1}
+    - {name: frame_o, dir: output, width: 1}
+- name: crc_adapter
+  ownership: owned
+  level: rtl
+  module: crc32_d16
+  instance: u_crc
+  paths:
+  - rtl/crc32_d16.sv
+  build_sources:
+  - designs/b102_managed_ext/rtl/crc32_d16.sv
+  reference_rtl:
+  - reference/crc32_d16.sv
+  aliases:
+  - crc
+  - checksum
+  - adapter
+  - register
+  description: 'our adapter around the frozen LFSR block: the register, the restart (init) and the enable; the port list the sequencer uses'
+  interface:
+    ports:
+    - {name: clk, dir: input, width: 1}
+    - {name: rst, dir: input, width: 1}
+    - {name: init, dir: input, width: 1}
+    - {name: en, dir: input, width: 1}
+    - {name: d, dir: input, width: 16}
+    - {name: crc, dir: output, width: 32}
+    clocks:
+    - {name: clk_25, port: clk}
+    resets:
+    - {port: rst, active: high, sync: true}
+- name: lfsr
+  ownership: frozen
+  level: rtl
+  module: lfsr
+  instance: u_crc.u_lfsr
+  paths:
+  - third_party/**
+  build_sources:
+  - designs/b102_managed_ext/third_party/verilog-ethernet/lfsr.v
+  aliases:
+  - lfsr
+  - polynomial
+  - parallel
+  - verilog-ethernet
+  - forencich
+  description: Alex Forencich's combinational parallel LFSR/CRC, instantiated at CRC-32 settings (32 state bits, 16 data bits per clock)
+  interface:
+    parameters:
+      LFSR_WIDTH: 32
+      DATA_WIDTH: 16
+    ports:
+    - {name: data_in, dir: input, width: 16}
+    - {name: state_in, dir: input, width: 32}
+    - {name: data_out, dir: output, width: 16}
+    - {name: state_out, dir: output, width: 32}
+  provenance:
+    origin: Alex Forencich, verilog-ethernet (rtl/lfsr.v), vendored unmodified under third_party/verilog-ethernet/
+    version: master at 77320a9471d1 (2025-02-27); rtl/lfsr.v last changed in 450765187efd
+    licence: MIT, Copyright (c) 2016-2023 Alex Forencich (file header); COPYING of the repository, Copyright (c) 2014-2018 Alex Forencich
+    spdx: MIT
+    upstream_url: https://github.com/alexforencich/verilog-ethernet
+    commit: 77320a9471d19c7dd383914bc049e02d9f4f1ffb
+    licence_file: third_party/verilog-ethernet/COPYING
+    upstream_paths:
+      third_party/verilog-ethernet/lfsr.v: rtl/lfsr.v
+      third_party/verilog-ethernet/COPYING: COPYING
+      third_party/verilog-ethernet/AUTHORS: AUTHORS
+    files:
+      third_party/verilog-ethernet/lfsr.v: 5502c8203b0dfc7246c1a2de93e60c199ded3c1d7840b106350d714f72a9a079
+      third_party/verilog-ethernet/COPYING: 8ea57f95365e9b16a5b516f422b71269183a1ae53bab5878ae6d69039e58fe77
+      third_party/verilog-ethernet/AUTHORS: 4dd65870e0e53e3911e3d08050c87adc6ccef2e9ee3887d53eeb5726c2c34f79
