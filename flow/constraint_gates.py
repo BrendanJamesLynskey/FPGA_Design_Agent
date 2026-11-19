@@ -54,7 +54,7 @@ def board_config(board: str | None, root: Path = ROOT) -> dict[str, Any] | None:
     out = dict(cfg)
     out["board"] = board
     out["confirmed"] = (cfg.get("cfgbvs") in ("VCCO", "GND") and cfg.get("config_voltage") is not None
-                        and bool(cfg.get("source")) and str(cfg.get("status", "")).lower() not in UNCONFIRMED)
+                        and bool(cfg.get("source")) and "status" not in cfg)
     return out
 
 
@@ -284,6 +284,7 @@ def evaluate(d: Path, xdcs: list[Path], board: str | None, root: Path = ROOT) ->
 
 
 if __name__ == "__main__":
+    sys.path.insert(0, str(ROOT))
     bd = Path(sys.argv[1]).resolve()
     prep = json.loads((bd / "prepare.json").read_text())
     xs = [ROOT / f for f in prep.get("files", []) if f.endswith(".xdc")]

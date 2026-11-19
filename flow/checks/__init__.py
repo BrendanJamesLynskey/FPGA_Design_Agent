@@ -418,7 +418,11 @@ def _async_groups(ctx: Ctx) -> dict[str, Any]:
     if p is None:
         return _not_run(ctx.not_run_reason("clock_interaction"))
     from flow import constraint_gates as CG
-    xdcs = [x for x in sorted(ctx.design.glob("*.xdc"))] + sorted(ctx.design.glob("constr/*.xdc"))
+    try:
+        cons = (yaml.safe_load((ctx.design / "build.yaml").read_text()) or {}).get("constraints") or []
+    except (OSError, yaml.YAMLError):
+        cons = []
+    xdcs = [x for g in cons for x in sorted(ctx.root.glob(g))] or sorted(ctx.design.glob("*.xdc"))     # the build's own constraint list
     fs = [{"tool": "constraint_scope", "code": f["code"], "severity": "advisory", "where": f["where"],
            "key": f"constraint_scope:{f['code']} {f['where']}", "message": f["message"], "blocking": False}
           for f in CG.async_group_findings(p.read_text(errors="replace"), [x.read_text(errors="replace") for x in xdcs])]

@@ -159,8 +159,8 @@ rules:
     title: No design-rule violation
     rationale: A DRC error blocks the bitstream or describes an electrical problem on the board.
     checks: {vivado: ["NSTD-*", "UCIO-*", "PDRC-*", "RTSTAT-*", "BIVC-*", "IOSTDTYPE-*", "REQP-*", "CFGBVS-*"]}
-    fix: fix the pin, I/O standard or primitive setting the DRC row names (CFGBVS-1/2: the flow sets CFGBVS and CONFIG_VOLTAGE from boards/<board>/board.yaml
-      config for a board whose voltage is confirmed there; for any other board the two rows stay advisory)
+    fix: fix the pin, I/O standard or primitive setting the DRC row names; for CFGBVS-1 and CFGBVS-2 the flow sets CFGBVS and CONFIG_VOLTAGE from the board file
+      when the board's voltage is confirmed there, and on any other board the two rows stay advisory
     skill: drc-closure
   - id: HDL-XDC-02
     title: No blanket asynchronous clock group

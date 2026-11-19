@@ -538,7 +538,10 @@ def _constraint_scope(d: Path, prep: dict[str, Any], drc: list[dict[str, Any]], 
     except ImportError:      # run as a script: flow/ is on sys.path, not the repo
         import constraint_gates as CG
     root = Path(__file__).resolve().parents[1]
-    cfg = CG.board_config(prep.get("board"), root)
+    try:
+        cfg = CG.board_config(prep.get("board"), root)
+    except Exception:       # an unreadable board file: no board gate (a confirmed voltage cannot be shown), never a crash
+        cfg = None
     info = None
     warn: list[dict[str, Any]] = []
     xdcs = [root / f for f in prep.get("files", []) if f.endswith(".xdc")]
@@ -556,7 +559,11 @@ def _constraint_scope(d: Path, prep: dict[str, Any], drc: list[dict[str, Any]], 
             texts.append(x.read_text(errors="replace"))
         except OSError:
             pass
-    for f in CG.async_group_findings(ci.read_text(errors="replace") if ci.exists() else "", texts):
+    try:
+        async_f = CG.async_group_findings(ci.read_text(errors="replace") if ci.is_file() else "", texts)
+    except Exception:       # advisory only: a report that cannot be read is no finding
+        async_f = []
+    for f in async_f:
         warn.append({"name": "async_clock_groups_review", "stage": "post_route", "code": f["code"], "where": f["where"], "note": f["message"]})
     return info, warn
 
