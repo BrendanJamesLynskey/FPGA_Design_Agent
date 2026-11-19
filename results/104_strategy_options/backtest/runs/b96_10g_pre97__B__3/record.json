@@ -1,8 +1,11 @@
 {
- "schema": "fda-strategy-record/1",
+ "schema": "fda-strategy-record-public/1",
  "request": "lower latency",
  "mode": "new",
  "blind": true,
+ "goal": "latency",
+ "status": "options",
+ "attempts": 1,
  "analysis_hash": "25c04f9e61c4d049e7d66c376d3a58847d2410baf71c844b3312c9c56a64a246",
  "analysis_sources": [
   {
@@ -46,7 +49,6 @@
    "bytes": 10833
   }
  ],
- "options_schema": "fda-options/1",
  "model": {
   "purpose": "options",
   "endpoint": "claude_code",
@@ -56,11 +58,10 @@
   "entry_hash": "f3f2d8f85ded614e",
   "table_hash": "fefa480b88108b19"
  },
- "attempts": 1,
  "prompts": {
   "system": {
    "name": "graph/options/system",
-   "sha256": "ffb71e87152c89562f25e597b4c471401f7621f107864519b280480913becdc1"
+   "sha256": "5776ae375ac6b124a3bf89d14306c7a3270f40b4c5a12afee05c4b968f293e63"
   },
   "user": {
    "name": "graph/options/user",
@@ -71,14 +72,11 @@
    "sha256": "bb56b4a42f41d6b2e0b4df594b108893c63648374235a7d5d2b5224fc192f8b0"
   }
  },
- "created": "2026-11-19 16:11:35",
- "goal": "latency",
- "status": "options",
- "question": null,
+ "options_hash": "2d1528bb6ee41e05c7493cef1da1c19efa18b4462a3f31457cc3960277fcaebe",
  "options": [
   {
    "id": "O1",
-   "title": "Shorten the go-pulse crossing",
+   "n": 1,
    "scope": {
     "kind": "modules",
     "components": [
@@ -86,17 +84,13 @@
     ],
     "cli": "--scope core"
    },
-   "approach": "In core, shorten the receive-to-transmit go-pulse crossing (xpm_cdc_pulse u_p_go) by dropping its output register, or by replacing the generic pulse crossing with a leaner pulse crossing that keeps two synchroniser flops. The order bus beside the pulse and the frame_src sampling point are re-timed to match. The decision register, the MACs and the PCS are not changed.",
-   "techniques": [
-    "shorten_cdc_stage",
-    "retime_bus_sampling"
-   ],
    "touches_stages": [
     "cross_go"
    ],
-   "stage_components": {
-    "cross_go": "core"
-   },
+   "techniques": [
+    "shorten_cdc_stage",
+    "remove_register"
+   ],
    "gain": {
     "metric": "latency_clocks",
     "unit": "clocks",
@@ -107,9 +101,7 @@
      "stage.cross_go.clocks",
      "stage.cross_go.slack_ns"
     ],
-    "basis_note": "The crossing adds 4 clocks. Dropping the output register saves 1; one further clock (edge detect merged) is the upper end. Two synchroniser flops are kept, so at most 2 of the 4 clocks are taken. The 4.19 ns slack leaves room for it.",
     "ceiling": 4.0,
-    "ceiling_basis": "the clocks of the touched stages (4)",
     "sources": [
      "results/104_strategy_options/backtest/b96_10g_pre97/evidence/core_sim.json",
      "results/104_strategy_options/backtest/b96_10g_pre97/evidence/latency_slack.json"
@@ -130,40 +122,21 @@
      "basis": "iterations x the recorded build time",
      "cite": "build.wall_s",
      "file": "results/104_strategy_options/backtest/b96_10g_pre97/evidence/run.json"
-    },
-    "model_usd": null,
-    "note": "The crossing change and the bus sampling offset must be re-simulated. Then a CDC re-check and a board run follow.",
-    "basis": "iterations are the generator's estimate (a guess); wall time is those times the recorded Vivado run"
+    }
    },
    "risk": {
-    "gates": [
-     "whole-core bench and the twin pass",
-     "report_cdc has no unsafe row",
-     "`stale` counter stays 0 on the board over repeated restarts",
-     "timing met with WNS >= 0 after route"
-    ],
-    "contract_change": true,
+    "contract_change": false,
     "contract_flags": [
-     "core: go pulse to tx_path: pulse arrives 1 to 2 clocks earlier; the order bus sampling offset is shortened to match",
      "stage cross_go is a clock-domain crossing: report_cdc and the crossing's own tests must still pass"
     ],
     "contract_flag_added_by_checker": false,
-    "needs_owner_approval": true,
-    "contract_affected": [
-     "core"
-    ],
+    "needs_owner_approval": false,
     "needs_eqy": false,
     "needs_board": true,
-    "summary": "Metastability margin (MTBF) and the order bus must still be settled when frame_src samples it. Simulation cannot show either, so the board run is required.",
-    "contract_note": "The pulse reaches tx_path/frame_src earlier, so the timing relationship between the pulse and the order bus changes."
+    "contract_affected": [
+     "core"
+    ]
    },
-   "interface_changes": [
-    {
-     "component": "core",
-     "port": "go pulse to tx_path",
-     "change": "pulse arrives 1 to 2 clocks earlier; the order bus sampling offset is shortened to match"
-    }
-   ],
    "not_touched": [
     {
      "component": "top",
@@ -218,12 +191,11 @@
      "why": "frozen: read only"
     }
    ],
-   "hidden_components": 0,
-   "n": 1
+   "title_sha256": "00372736d67cad6985c939d437ad97faa4fd6d9760ad84f134761b1522f38b98"
   },
   {
    "id": "O2",
-   "title": "Start the transmit preamble without the s_valid register",
+   "n": 2,
    "scope": {
     "kind": "modules",
     "components": [
@@ -232,19 +204,14 @@
     ],
     "cli": "--scope tx_frame_src,tx_mac"
    },
-   "approach": "Merge the frame_src start -> s_valid stage into the mac64_tx preamble register. The MAC takes the preamble from `start` directly, because the preamble word does not depend on frame data and word 0 depends only on configuration. frame_src still raises s_valid for the data words. The PCS, the CRC and poison logic and the clock crossing are not changed.",
-   "techniques": [
-    "merge_stages",
-    "precompute"
-   ],
    "touches_stages": [
     "fs_start",
     "mac_preamble"
    ],
-   "stage_components": {
-    "fs_start": "tx_frame_src",
-    "mac_preamble": "tx_mac"
-   },
+   "techniques": [
+    "merge_stages",
+    "precompute"
+   ],
    "gain": {
     "metric": "latency_clocks",
     "unit": "clocks",
@@ -253,12 +220,10 @@
     "basis": "model",
     "cites": [
      "stage.fs_start.clocks",
-     "stage.fs_start.slack_ns",
+     "stage.mac_preamble.clocks",
      "stage.mac_preamble.slack_ns"
     ],
-    "basis_note": "fs_start adds 1 clock, so 1 is the most that can be saved. mac_preamble has only 1.132 ns slack. If the start path then limits the clock, the gain is 0.",
     "ceiling": 2.0,
-    "ceiling_basis": "the clocks of the touched stages (2)",
     "sources": [
      "results/104_strategy_options/backtest/b96_10g_pre97/evidence/core_sim.json",
      "results/104_strategy_options/backtest/b96_10g_pre97/evidence/latency_slack.json"
@@ -279,40 +244,24 @@
      "basis": "iterations x the recorded build time",
      "cite": "build.wall_s",
      "file": "results/104_strategy_options/backtest/b96_10g_pre97/evidence/run.json"
-    },
-    "model_usd": null,
-    "note": "Edit, bench and twin, then place-and-route to see whether the 1.132 ns slack of the MAC register holds.",
-    "basis": "iterations are the generator's estimate (a guess); wall time is those times the recorded Vivado run"
+    }
    },
    "risk": {
-    "gates": [
-     "whole-core bench and the twin pass",
-     "hold-while-paused and gearbox pause (adv) checked in the MAC bench",
-     "timing met with WNS >= 0 after route"
-    ],
     "contract_change": true,
     "contract_flags": [
      "the change spans the boundary between tx_frame_src and tx_mac: it moves or removes logic across a component edge, so the interface contract (ports and boundary timing) must be re-checked",
-     "tx_frame_src: s_valid: first s_valid for the preamble is no longer a registered output of start"
+     "tx_mac: start: add an early start input taken from the frame source start pulse",
+     "tx_frame_src: start_o: export the start pulse to the MAC without the s_valid register"
     ],
     "contract_flag_added_by_checker": false,
     "needs_owner_approval": true,
+    "needs_eqy": true,
+    "needs_board": false,
     "contract_affected": [
      "tx_frame_src",
      "tx_mac"
-    ],
-    "needs_eqy": true,
-    "needs_board": false,
-    "summary": "The MAC's hold-while-paused rule depends on s_valid timing. A wrong merge can corrupt the first block. The start path also has little slack.",
-    "contract_note": "The s_valid/start handshake between frame_src and mac64_tx changes."
+    ]
    },
-   "interface_changes": [
-    {
-     "component": "tx_frame_src",
-     "port": "s_valid",
-     "change": "first s_valid for the preamble is no longer a registered output of start"
-    }
-   ],
    "not_touched": [
     {
      "component": "top",
@@ -363,12 +312,11 @@
      "why": "frozen: read only"
     }
    ],
-   "hidden_components": 0,
-   "n": 2
+   "title_sha256": "f981c62f253daaac531cf23f632c4629bc2e254b9fb9985f19cca5f731e44ae2"
   },
   {
    "id": "O3",
-   "title": "Merge receive gearbox and descramble",
+   "n": 3,
    "scope": {
     "kind": "modules",
     "components": [
@@ -376,17 +324,13 @@
     ],
     "cli": "--scope rx_pcs"
    },
-   "approach": "In pcs_rx, merge stage B (descramble and decode into x_d, x_c, x_v) into stage A, so that the barrel shift, the 58-bit descramble and the decode sit in front of one register. The block-lock FSM keeps reading the same block registers. The MAC and the decision stage are not changed.",
-   "techniques": [
-    "merge_stages",
-    "restructure_logic"
-   ],
    "touches_stages": [
     "rx_descramble"
    ],
-   "stage_components": {
-    "rx_descramble": "rx_pcs"
-   },
+   "techniques": [
+    "merge_stages",
+    "retime"
+   ],
    "gain": {
     "metric": "latency_clocks",
     "unit": "clocks",
@@ -395,12 +339,10 @@
     "basis": "model",
     "cites": [
      "stage.rx_descramble.clocks",
-     "stage.rx_descramble.slack_ns",
-     "stage.rx_blk.slack_ns"
+     "stage.rx_blk.slack_ns",
+     "stage.rx_descramble.slack_ns"
     ],
-    "basis_note": "rx_descramble adds 1 clock, so 1 is the cap. The stage notes say the 192-bit shifter plus the 64-bit XOR tree did not close at 161 MHz, and the two stages have 1.544 ns and 2.215 ns slack. The result may be 0 if timing fails.",
     "ceiling": 1.0,
-    "ceiling_basis": "the clocks of the touched stages (1)",
     "sources": [
      "results/104_strategy_options/backtest/b96_10g_pre97/evidence/core_sim.json",
      "results/104_strategy_options/backtest/b96_10g_pre97/evidence/latency_slack.json"
@@ -421,30 +363,19 @@
      "basis": "iterations x the recorded build time",
      "cite": "build.wall_s",
      "file": "results/104_strategy_options/backtest/b96_10g_pre97/evidence/run.json"
-    },
-    "model_usd": null,
-    "note": "Likely needs several restructuring and route rounds to close timing.",
-    "basis": "iterations are the generator's estimate (a guess); wall time is those times the recorded Vivado run"
+    }
    },
    "risk": {
-    "gates": [
-     "equivalence with the previous netlist",
-     "whole-core bench and the twin pass",
-     "timing met with WNS >= 0 after route"
-    ],
     "contract_change": false,
     "contract_flags": [],
     "contract_flag_added_by_checker": false,
     "needs_owner_approval": false,
-    "contract_affected": [
-     "rx_pcs"
-    ],
     "needs_eqy": true,
     "needs_board": false,
-    "summary": "Timing is the main risk: the earlier design attempt to put these in one clock did not close. The current WNS is only 0.115 ns.",
-    "contract_note": "The change is inside pcs_rx; the ports are kept."
+    "contract_affected": [
+     "rx_pcs"
+    ]
    },
-   "interface_changes": [],
    "not_touched": [
     {
      "component": "top",
@@ -499,12 +430,11 @@
      "why": "frozen: read only"
     }
    ],
-   "hidden_components": 0,
-   "n": 3
+   "title_sha256": "20e68a4c1ea98f53549b67f8bb641fa334a7f489ecb2946de15381a1386f85c3"
   },
   {
    "id": "O4",
-   "title": "Whole-chain latency cut: crossing, transmit start and receive PCS",
+   "n": 4,
    "scope": {
     "kind": "whole_design",
     "components": [
@@ -523,44 +453,30 @@
     ],
     "cli": "--scope top,shared_pkg,core,rx_path,rx_pcs,rx_mac,trade_decision,tx_path,tx_frame_src,tx_mac,tx_pcs,cfg_vec"
    },
-   "approach": "Apply O1, O2 and O3 together: shorten the go-pulse crossing in core, merge fs_start into the MAC preamble register, and merge the pcs_rx stages. Add a timing recovery pass (placement strategy or re-pipelining of non-latency paths) only if the merged paths fail. The rx_mac, decide, tx_encode and gearbox spill stages are not changed.",
-   "techniques": [
-    "merge_stages",
-    "shorten_cdc_stage",
-    "retime_bus_sampling",
-    "placement_strategy"
-   ],
    "touches_stages": [
-    "cross_go",
-    "fs_start",
-    "mac_preamble",
-    "rx_descramble"
+    "rx_descramble",
+    "fs_start"
    ],
-   "stage_components": {
-    "cross_go": "core",
-    "fs_start": "tx_frame_src",
-    "mac_preamble": "tx_mac",
-    "rx_descramble": "rx_pcs"
-   },
+   "techniques": [
+    "tool_strategy_change",
+    "merge_stages",
+    "retime"
+   ],
    "gain": {
     "metric": "latency_clocks",
     "unit": "clocks",
-    "low": 1,
-    "high": 4,
+    "low": 0,
+    "high": 2,
     "basis": "model",
     "cites": [
-     "stage.cross_go.clocks",
-     "stage.fs_start.clocks",
      "stage.rx_descramble.clocks",
-     "latency.total_clocks",
-     "latency.board_gt_optics_clocks"
+     "stage.fs_start.clocks",
+     "timing.wns_ns"
     ],
-    "basis_note": "The upper end is the sum of the three upper ends: up to 2 from cross_go, 1 from fs_start/mac_preamble, 1 from rx_descramble, giving 4 of the 11 digital clocks. The low end 1 assumes only the crossing gain holds. The 15 clocks of GT and optics are in the frozen GT and are not reduced.",
-    "ceiling": 7.0,
-    "ceiling_basis": "the clocks of the touched stages (7)",
+    "ceiling": 2.0,
     "sources": [
      "results/104_strategy_options/backtest/b96_10g_pre97/evidence/core_sim.json",
-     "results/104_strategy_options/backtest/b96_10g_pre97/evidence/latency_slack.json"
+     "results/104_strategy_options/backtest/b96_10g_pre97/evidence/timing_summary.rpt"
     ]
    },
    "cost": {
@@ -578,28 +494,18 @@
      "basis": "iterations x the recorded build time",
      "cite": "build.wall_s",
      "file": "results/104_strategy_options/backtest/b96_10g_pre97/evidence/run.json"
-    },
-    "model_usd": null,
-    "note": "Three changes, each with its own bench, CDC and timing gates, plus a joint route to close timing.",
-    "basis": "iterations are the generator's estimate (a guess); wall time is those times the recorded Vivado run"
+    }
    },
    "risk": {
-    "gates": [
-     "whole-core bench and the twin pass",
-     "equivalence with the previous netlist",
-     "report_cdc has no unsafe row",
-     "timing met with WNS >= 0 after route",
-     "board run: `stale` stays 0"
-    ],
     "contract_change": true,
     "contract_flags": [
-     "the change spans the boundary between core and rx_pcs and tx_frame_src and tx_mac: it moves or removes logic across a component edge, so the interface contract (ports and boundary timing) must be re-checked",
-     "core: go pulse to tx_path: pulse arrives earlier; order bus sampling offset shortened",
-     "tx_frame_src: s_valid: first s_valid for the preamble is no longer a registered output of start",
-     "stage cross_go is a clock-domain crossing: report_cdc and the crossing's own tests must still pass"
+     "the change spans the boundary between rx_pcs and tx_frame_src: it moves or removes logic across a component edge, so the interface contract (ports and boundary timing) must be re-checked",
+     "tx_mac: start: add an early start input from the frame source"
     ],
     "contract_flag_added_by_checker": false,
     "needs_owner_approval": true,
+    "needs_eqy": true,
+    "needs_board": false,
     "contract_affected": [
      "cfg_vec",
      "core",
@@ -613,24 +519,8 @@
      "tx_mac",
      "tx_path",
      "tx_pcs"
-    ],
-    "needs_eqy": true,
-    "needs_board": true,
-    "summary": "Several timing-limited merges at once on a design with 0.115 ns WNS. If one fails, the others must be kept separable, which is why O1 to O3 are offered alone.",
-    "contract_note": "The go pulse timing and the frame_src/MAC handshake both change, which the neighbouring components rely on."
+    ]
    },
-   "interface_changes": [
-    {
-     "component": "core",
-     "port": "go pulse to tx_path",
-     "change": "pulse arrives earlier; order bus sampling offset shortened"
-    },
-    {
-     "component": "tx_frame_src",
-     "port": "s_valid",
-     "change": "first s_valid for the preamble is no longer a registered output of start"
-    }
-   ],
    "not_touched": [
     {
      "component": "gt_wizard",
@@ -641,13 +531,9 @@
      "why": "frozen: read only"
     }
    ],
-   "hidden_components": 0,
-   "n": 4
+   "title_sha256": "d00d20e5bbe9202e1015d0742a98b8c30f214fca3e2c8fe2a2b0b5f848be13bb"
   }
  ],
  "rejected": [],
- "notes": [],
- "unresolved": [],
- "wall_s": 28.8,
- "options_hash": "52ca6cc3640069564e07f42573f7657e6104224ad593acbd6c315bbe8125594e"
+ "free_text_withheld": "title, approach, gains' basis note, gates and risk summaries are in the private repository (moved_to_kb.json)"
 }

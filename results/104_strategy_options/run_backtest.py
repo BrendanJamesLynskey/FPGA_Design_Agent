@@ -61,15 +61,23 @@ def run_all() -> int:
 
 def score_all() -> int:
     from flow.options import backtest as B
+    old = json.loads((BT / "results.json").read_text()) if (BT / "results.json").is_file() else {}
     res: dict = {"schema": "fda-backtest-results/1", "runs": [], "summary": {}}
     for d in sorted(RUNS.iterdir()) if RUNS.is_dir() else []:
-        f = d / "strategy.json"
+        f = d / "record.json"
         if not f.is_file():
-            continue
-        rec = json.loads(f.read_text())["current"]
+            if not (d / "strategy.json").is_file():
+                continue
+            rec = json.loads((d / "strategy.json").read_text())["current"]       # a fresh local run: the raw record
+        else:
+            rec = json.loads(f.read_text())          # the public record: structured fields only; the raw replies are in the private repository (moved_to_kb.json)
         meta = json.loads((d / "meta.json").read_text())
         truth = B.load_truth(BT / "truth" / f"{meta['case']}.json")
         sc = B.score(rec, truth)
+        old_run = next((x for x in old.get("runs", []) if x["run"] == d.name), None)
+        for name, ch in sc.get("changes", {}).items():            # the free text behind names_carry_save is private; keep the value computed when it was available
+            if ch.get("names_carry_save") is None and old_run:
+                ch["names_carry_save"] = old_run["score"]["changes"][name].get("names_carry_save")
         res["runs"].append({"run": d.name, **meta, "attempts": rec["attempts"], "status": rec["status"], "score": sc, "rejected": [{"id": r["id"], "problems": r["problems"]} for r in rec.get("rejected", [])],
                             "notes": rec.get("notes", []), "options_hash": rec.get("options_hash"), "analysis_hash": rec.get("analysis_hash")})
     for case in CASES:
@@ -79,7 +87,7 @@ def score_all() -> int:
                 continue
             s = {"runs": len(rs), "pre_registered": arm in PRE_REGISTERED, "failed": sum(1 for r in rs if r["status"] != "options"), "found_all_per_run": [r["score"].get("found_all") for r in rs],
                  "in_range_per_run": [r["score"].get("in_range") for r in rs],
-                 "prompt_system_sha256": sorted({json.loads((RUNS / r["run"] / "strategy.json").read_text())["current"]["prompts"]["system"]["sha256"][:16] for r in rs})}
+                 "prompt_system_sha256": sorted({json.loads((RUNS / r["run"] / "record.json").read_text())["prompts"]["system"]["sha256"][:16] for r in rs})}
             if case == "b96_10g_pre97":
                 s["found_named_per_run"] = [r["score"].get("found_named") for r in rs]
                 names = ["agent_cdc", "hand_ref", "agent_both", "all3"]

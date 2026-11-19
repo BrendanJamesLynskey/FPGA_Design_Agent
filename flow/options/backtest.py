@@ -47,7 +47,7 @@ def score_latency(rec: dict[str, Any], truth: dict[str, Any]) -> dict[str, Any]:
         else:
             best = max(((_jaccard(set(o["touches_stages"]), want), o["id"]) for o in opts), default=(0.0, None))
             out["variants"][name] = {"found": False, "best_overlap": round(best[0], 2), "best_option": best[1], "measured": v["measured_gain"]}
-    out["other_options"] = [{"id": o["id"], "title": o["title"], "stages": o["touches_stages"], "scope_kind": o["scope"]["kind"], "gain": [o["gain"]["low"], o["gain"]["high"]],
+    out["other_options"] = [{"id": o["id"], "title": o.get("title", ""), "stages": o["touches_stages"], "scope_kind": o["scope"]["kind"], "gain": [o["gain"]["low"], o["gain"]["high"]],
                              "basis": o["gain"]["basis"]} for o in opts if o["id"] not in used]
     named = truth.get("named_by_the_brief") or list(truth["variants"])
     out["found_named"] = sum(1 for n in named if out["variants"][n]["found"])
@@ -66,12 +66,13 @@ def score_change(rec: dict[str, Any], truth: dict[str, Any]) -> dict[str, Any]:
         if scoped:
             o = scoped[0]
             g = o["gain"]
-            out["changes"][name] = {"found": True, "option": o["id"], "title": o["title"], "gain": [g["low"], g["high"]], "basis": g["basis"], "measured": ch["measured_gain"],
+            out["changes"][name] = {"found": True, "option": o["id"], "title": o.get("title", ""), "gain": [g["low"], g["high"]], "basis": g["basis"], "measured": ch["measured_gain"],
                                     "in_range": g["low"] <= ch["measured_gain"] <= g["high"], "over": round(g["high"] - ch["measured_gain"], 3),
-                                    "names_carry_save": any(k in (o["title"] + " " + o["approach"] + " " + " ".join(o.get("techniques") or [])).lower() for k in ("carry-save", "carry save", "csa", "3:2", "compress"))}
+                                    "names_carry_save": (any(k in (o["title"] + " " + o["approach"] + " " + " ".join(o.get("techniques") or [])).lower() for k in ("carry-save", "carry save", "csa", "3:2", "compress"))
+                                                                                                if "approach" in o else None)}      # None: the free text is in the private repository (see moved_to_kb.json)
         else:
             out["changes"][name] = {"found": False, "measured": ch["measured_gain"]}
-    out["other_options"] = [{"id": o["id"], "title": o["title"], "scope": o["scope"]["components"], "scope_kind": o["scope"]["kind"], "gain": [o["gain"]["low"], o["gain"]["high"]],
+    out["other_options"] = [{"id": o["id"], "title": o.get("title", ""), "scope": o["scope"]["components"], "scope_kind": o["scope"]["kind"], "gain": [o["gain"]["low"], o["gain"]["high"]],
                              "basis": o["gain"]["basis"]} for o in opts]
     out["found_all"] = sum(1 for c in out["changes"].values() if c["found"])
     out["in_range"] = sum(1 for c in out["changes"].values() if c.get("in_range"))

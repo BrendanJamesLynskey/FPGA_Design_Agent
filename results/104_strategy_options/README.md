@@ -11,8 +11,8 @@ This folder holds the two designs on which the answer was already known, the pre
   fixture, the 97-era stage file, the recorded simulation clocks, post-route reports of the 96 build). No result of brief 97 is in it (the CDC summary file's banner names the path it was first written to, which is under `results/b97/cdc`; its contents are the baseline's).
 - `backtest/c16_montgomery_200mhz/`: the course task c16 (bit-serial Montgomery multiplier) at 200 MHz, with the failing build's digest only.
 - `backtest/truth/`: what the earlier measurements showed. The analysis never reads this folder.
-- `backtest/runs/<case>__<arm>__<k>/`: one run each: `strategy.json` (the record: request, analysis hash and sources, options offered, rejected options with reasons, model identity,
-  prompt hashes), `model_calls.jsonl` (one row per model call), `stdout.json`, `meta.json`.
+- `backtest/runs/<case>__<arm>__<k>/`: one run each: `record.json` (request, analysis hash and sources, the options as structured fields, rejected counts, model identity, prompt hashes; the free text is withheld), `model_calls.jsonl` (one row per model call), `meta.json`.
+- `backtest/moved_to_kb.json`: the raw replies (`strategy.json`, `stdout.json`, `stderr.txt` of every run) live in the private knowledge repository under `results_private/b104_options/runs/` (a model's reply can echo prompt text, which stays out of this repository); the file gives each one's path and SHA-256.
 - `backtest/results.json` and `backtest/RESULTS.md`: the scores, computed by `flow/options/backtest.py`. Arms A, B and the c16 arm are pre-registered; A2 and B2 are the exploratory re-run with a revised prompt.
 - `dev_run/`: the one development run (request "reach a higher clock rate" on `designs/b102_managed_fcs`) used to shape the prompts before the pre-registration.
 
@@ -38,4 +38,5 @@ Model replies differ between runs, so a rerun gives its own options; the committ
 - `in_range` is a weak test: the checker caps a gain at the stage's removable clocks, which for `cross_go` equals the measured cut, and four of the six agent_cdc ranges start at 0. The width of the
   range above the measurement is reported beside it (`RESULTS.md`).
 - The c16 match is by scope (`montgomery_core` is where the worst path is, so it is nearly forced); two of three found options were guesses and one did not name carry-save.
-- The run records (`backtest/runs/`) are committed with `git add -f` (the folder name is git-ignored elsewhere). The analysis hash definition gained component file hashes after the runs; the test compares the input files instead.
+- The public run records are committed with `git add -f` (the folder name is git-ignored elsewhere). The analysis hash definition gained component file hashes after the runs; the test compares the input files instead. Whether an option names carry-save was decided from the private free text and is kept as computed.
+- `flow/blockdesign/tests/test_65a_adversarial.py` has two failures that also occur on origin/main (not from this brief).
