@@ -129,6 +129,12 @@ def main(argv: list[str] | None = None) -> int:
                             M.slice_rect(proj.component("blk").placement["region"]))
         log("the written checkpoint against the delivered block", **{k: chk[k] for k in ("cells_unchanged", "routes_unchanged", "block_cells", "block_nets", "other_cells_inside_region_count")})
         out["written_checkpoint"] = chk
+        base_dump = a.rapidwright.parent / (a.rapidwright.name.replace("_routed.dcp", "_dump.txt"))
+        if base_dump.is_file():                         # cells the tool added to the keep-out, against the delivered placement's own dump
+            intr = MP.new_intruders(base_dump.read_text(), (work / "build" / "rw_dump.txt").read_text(), M.slice_rect(proj.component("blk").placement["region"]))
+            out["new_cells_in_keepout"] = intr
+            log("cells the placement tool added to the keep-out region", count=len(intr))
+            assert not intr
     # 6: the report
     md = M.write_provenance(proj, before)
     rep = json.loads((work / M.MANAGED_DIR / "provenance.json").read_text())

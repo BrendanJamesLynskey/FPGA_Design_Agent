@@ -1,0 +1,291 @@
+# Brief 68 handover: the facts behind README.md and AGENT.md (docs/documentation_standard.md).
+# Measurement values and every sha256 are filled from the records by `python -m flow.handover fill`;
+# do not type them. Render with `python -m flow.handover write <this directory>`.
+schema: fda-handover/1
+id: b102_managed_pr
+title: Managed-project demonstration - a placed-and-routed block, relocated, with a keep-out
+kind: demonstration
+produced_by: human
+summary: A KR260 timing study that exists to demonstrate stage 2 of a managed project (brief 102). The block pcs_unit, brief
+  96's 64b/66b transmit path, arrives as a placed, routed and locked checkpoint made outside the project and is frozen;
+  an owned stimulus and sink around it are placed and routed by Vivado. project.yaml records the block's keep-out region,
+  the agent's tools refuse to place or constrain anything inside it, and the block's internal timing is measured at six
+  placements, relocated by RapidWright and not.
+scope_not:
+- a 10G Ethernet design; the block is the 64b/66b encoder and scrambler between a shift register and an XOR sink, with three
+  input pins
+- a board design; it was not programmed, and the 250 MHz constraint is on the 25 MHz oscillator pin for a timing study
+- a claim that relocation preserves a block's timing everywhere; the results say where it does and where it does not
+target:
+  part: xck26-sfvc784-2LV-c
+  board: Kria KR260
+  top: pr_top
+  tool: Vivado 2026.1
+clocks:
+- name: clk_25
+  mhz: 250
+  source: designs/b102_managed_pr/design.xdc
+  note: the oscillator pin is 25 MHz on the board; the constraint is 4.0 ns, the period the supplier implemented the block
+    for
+resets:
+- name: power-on counter
+  active: high
+  note: a four-clock shift register in pr_top holds the owned logic and the block in synchronous reset after configuration;
+    there is no reset input
+interfaces:
+- name: pcs_unit slot
+  type: black-box module filled by a locked placed-and-routed checkpoint (build.yaml netlists, format checkpoint)
+  doc: designs/b102_managed_pr/project.yaml
+  note: the contract is in project.yaml (ports, clock, reset, boundary timing budgets, keep-out region); the block's input
+    shift register has no reset, so its first 72 outputs after configuration depend on what shifted in, and the reset must
+    be held for 80 clocks while data shifts in before the output is comparable with the supplier's RTL (the import simulation
+    does this)
+parameters:
+- name: placement.region
+  value: SLICE_X26Y70:SLICE_X37Y91
+  legal: a slice range that contains the block's footprint (slices X27..34, Y72..90)
+  note: the keep-out; it is the supplier's pblock rectangle and is larger than the footprint
+- name: placement.timing_tolerance_ps
+  value: 0
+  legal: a whole number of picoseconds, 0 or more
+  note: the largest change of an interconnect delay inside the block across placements that the evidence accepts
+files:
+- path: designs/b102_managed_pr/project.yaml
+  what: the managed-project manifest, ownership, contracts and the block's placement keep-out
+  sha256: bb9eecf71d051697ed531c1d058469d386b4735426e2e6ea72ea83788c0442b9
+- path: designs/b102_managed_pr/rtl/pr_top.sv
+  what: top level, power-on reset and the LEDs
+  sha256: ac0783fa4d30575e15198480ff8ae05e7e5b43a88a59eac1e554c37eeabd15be
+- path: designs/b102_managed_pr/rtl/pr_src.sv
+  what: the owned LFSR that feeds the block's serial input
+  sha256: 349d147ce9e4c8d5ad11fd5bb4f861753c73af5bdbf68914edfbc7ba99eaed31
+- path: designs/b102_managed_pr/rtl/pr_sink.sv
+  what: the owned consumer of the block's output and the LED drivers
+  sha256: 1763a9b5891be67427d449a773f3f8d2bc19522a3411e70666bc0af7103f5948
+- path: designs/b102_managed_pr/ext/pcs_unit_p0.dcp
+  what: the frozen block as a placed, routed and locked checkpoint made by Vivado outside the project
+  sha256: 71ca7f7bcd4ce6bc2dcca691d5a329beb2e566acb72858efb19a9c40a529b452
+- path: designs/b102_managed_pr/ext/reference/pcs_unit.sv
+  what: the supplier's RTL, the reference for the import simulation (not in the build)
+  sha256: c825d999f406543c7622aa98c40a92ff26c19bc23b88a95ecee07c4fa243422e
+- path: designs/b102_managed_pr/build.yaml
+  what: how flow/run_vivado.sh builds the design, with the checkpoint
+  sha256: 321e846a6cc723c42aacdc9e90137cb72f9de897b83605fef46191ac976049a7
+- path: designs/b102_managed_pr/design.xdc
+  what: the pins and the 4.0 ns clock; the agent's file, kept out of the block's keep-out region
+  sha256: c070fe60dbc11e5fc0c85f363361a6f5fe83467a1cbb5154118e5cd243d6ddc6
+commands:
+- what: import check (interface, licence, lock, footprint, simulation)
+  cmd: python3 flow/managed_placed.py check designs/b102_managed_pr --sim
+  heavy: true
+  minutes: 3
+  needs: Vivado 2026.1, the OSS CAD Suite (FDA_OSS_CAD), Icarus Verilog and a heavy slot (take_heavy_slot.sh)
+- what: the placement runs and the evidence
+  cmd: designs/b102_managed_pr/scripts/run_placements.sh && designs/b102_managed_pr/scripts/run_dumps.sh
+  heavy: true
+  minutes: 45
+  needs: Vivado 2026.1, RapidWright (tools/rapidwright_env/setup.sh) and a heavy slot
+- what: the scripted agent session
+  cmd: python3 designs/b102_managed_pr/scripts/demo_managed_session.py
+  heavy: false
+  minutes: 1
+  needs: Python with PyYAML and jsonschema (the argument checks only; --rapidwright adds the real tools)
+- what: build and run the gates
+  cmd: flow/run_vivado.sh designs/b102_managed_pr base
+  heavy: true
+  minutes: 15
+  needs: local Vivado 2026.1 and a heavy slot (take_heavy_slot.sh)
+evidence:
+- id: E1
+  activity: simulation
+  result: pass
+  how: ci
+  what: the manifest rules, the keep-out on constraints and on the RapidWright tools' arguments, the trust label's need
+    for placement evidence, the import check's reading of a checkpoint's facts and the placement comparison
+  record: agent/tests/test_102_stage2.py
+  sha256: a3c75a92a0592ca356244ed693b81d005e1952f571d03dfbdcb91cf3f625b2d9
+- id: E2
+  activity: simulation
+  result: pass
+  what: interface equals the contract, the licence and hash are recorded, every placeable cell has a fixed location and
+    BEL and every routed net has fixed routing, the footprint is inside the keep-out region, and the functional netlist
+    matches the supplier's RTL
+  record: results/102_managed_pr/import_check.json
+  sha256: 0b74a51c70304cf1f5d95a430364447ef4c7200ce3be824fe021d97183f77274
+- id: E3
+  activity: faults
+  result: pass
+  what: one flipped LUT INIT bit in the functional netlist fails the simulation
+  record: results/102_managed_pr/import_fault.json
+  sha256: b666d18522001a65368b2177ec16ea556be9db754e73366ef916900f5b87226e
+- id: E4
+  activity: build
+  result: pass
+  what: Vivado left every cell, BEL and route of the block alone at the four adopted placements (the delivered one, two
+    re-placements of the owned logic around it, and a relocation by one clock region), the interconnect delays inside it
+    are identical at all four, its netlist fingerprint is the same, and the boundary budgets are met
+  record: results/102_managed_pr/placements/placement_evidence.json
+  sha256: a1300a0c62bc980ee4a5b96a5fe956f8002d57a089191d39387d3e921af7e17c
+- id: E5
+  activity: build
+  result: fail
+  what: the same evidence for all six placements fails at tolerance 0 ps for two of them, because relocation by half a clock
+    region (largest change 161 ps) and to another column (275 ps) changes interconnect delays
+  record: results/102_managed_pr/placements/placement_evidence_all.json
+  sha256: 9fd16b932e80c9eeaa3a6576d3497949b7d87c0c98b5679a945bf871c0b078fc
+- id: E6
+  activity: review
+  result: pass
+  what: the scripted session's attempts on the checkpoint, a pblock and a LOC inside the keep-out, a placement property
+    on the block, the RapidWright tools aimed at the block, and an out-of-scope file are all refused; the real placement
+    tool places owned cells around the block and the written checkpoint holds the block unchanged
+  record: results/102_managed_pr/demo_session.json
+  sha256: 2a745adc110800b24aa8e405e7f2cea9b6b1ed4d946d6d436a4ad849255c05af
+- id: E7
+  activity: build
+  result: pass
+  what: the flow build passes every gate on Vivado 2026.1 with the block read from its checkpoint; the boundary budgets
+    are met on the routed build
+  record: results/102_managed_pr/boundary.json
+  sha256: 5168e2c230099a7871cde05482bb0df60c31c648c39b82f7663ee588ab6fa4ef
+measurements:
+- id: M1
+  what: LUTs, whole design including the frozen block
+  category: resources
+  key: lut
+  unit: LUT
+  record: results/102_managed_pr/builds.json
+  field: builds.baseline.lut
+  conditions: routed build, Vivado 2026.1, xck26-sfvc784-2LV-c
+  value: 735
+  sha256: fad5eb205b421b0d8e1e64210957ec5acbe1fc28d06837f035cc693f6cd8dbbe
+- id: M2
+  what: flip-flops, whole design
+  category: resources
+  key: ff
+  unit: FF
+  record: results/102_managed_pr/builds.json
+  field: builds.baseline.ff
+  conditions: routed build, Vivado 2026.1
+  value: 387
+  sha256: fad5eb205b421b0d8e1e64210957ec5acbe1fc28d06837f035cc693f6cd8dbbe
+- id: M3
+  what: worst setup slack at the 4.0 ns clock
+  category: timing
+  key: wns_ns
+  unit: ns
+  record: results/102_managed_pr/builds.json
+  field: builds.baseline.wns_ns
+  conditions: routed, 250 MHz constraint on the 25 MHz pin
+  value: 0.061
+  sha256: fad5eb205b421b0d8e1e64210957ec5acbe1fc28d06837f035cc693f6cd8dbbe
+- id: M4
+  what: worst hold slack
+  category: timing
+  key: whs_ns
+  unit: ns
+  record: results/102_managed_pr/builds.json
+  field: builds.baseline.whs_ns
+  conditions: routed, 4.0 ns clock
+  value: 0.06
+  sha256: fad5eb205b421b0d8e1e64210957ec5acbe1fc28d06837f035cc693f6cd8dbbe
+- id: M5
+  what: total on-chip power estimate
+  category: power
+  key: power_w
+  unit: W
+  record: results/102_managed_pr/builds.json
+  field: builds.baseline.power_w
+  conditions: report_power after routing, vectorless, never run on a board
+  value: 0.369
+  sha256: fad5eb205b421b0d8e1e64210957ec5acbe1fc28d06837f035cc693f6cd8dbbe
+- id: M6
+  what: interconnect delays inside the block that are identical (to the picosecond) when it is relocated by one clock region
+    (60 slice rows), of the pin delays compared
+  category: timing
+  key: relocation_region_identical_pins
+  unit: pins
+  record: results/102_managed_pr/placements/placement_evidence_all.json
+  field: placements.p1.net_delays.identical_pins
+  conditions: Vivado 2026.1 get_net_delays on the written checkpoint, block relocated by RapidWright, other logic placed
+    and routed around it
+  value: 5197
+  sha256: 9fd16b932e80c9eeaa3a6576d3497949b7d87c0c98b5679a945bf871c0b078fc
+- id: M7
+  what: largest change of an interconnect delay inside the block when it is relocated by half a clock region (30 slice rows)
+  category: timing
+  key: relocation_half_region_max_diff_ps
+  unit: ps
+  record: results/102_managed_pr/placements/placement_evidence_all.json
+  field: placements.p2.net_delays.max_abs_diff_ps
+  conditions: same as M6, placement p2
+  value: 161
+  sha256: 9fd16b932e80c9eeaa3a6576d3497949b7d87c0c98b5679a945bf871c0b078fc
+- id: M8
+  what: largest change of an interconnect delay inside the block when it is relocated to another slice column
+  category: timing
+  key: relocation_other_column_max_diff_ps
+  unit: ps
+  record: results/102_managed_pr/placements/placement_evidence_all.json
+  field: placements.p3.net_delays.max_abs_diff_ps
+  conditions: same as M6, placement p3
+  value: 275
+  sha256: 9fd16b932e80c9eeaa3a6576d3497949b7d87c0c98b5679a945bf871c0b078fc
+gaps:
+- about: E5
+  text: The evidence for all six placements fails by design of the demonstration; the project adopts the four placements
+    of E4 and the other two are recorded as not adoptable at tolerance 0 ps.
+- about: power
+  text: The estimate is vectorless at default toggle rates; this is a timing study that was never run on a board, so no
+    power measurement is claimed.
+- about: latency
+  text: Not measured; the design is a timing and placement study, and the block's latency in clocks is the supplier's, from
+    its RTL.
+- about: throughput
+  text: Not applicable beyond the clock; the block takes one bit a clock by construction and no throughput measurement was
+    made.
+- about: board
+  text: Never programmed; no hardware evidence and no operating conditions exist.
+- about: placement evidence
+  text: Six placements of one block on one device, one run each (Vivado's placer has no seed). Relocation by a clock region
+    leaves every interconnect delay unchanged; half a region or another column does not (see the placement table in results/102_managed_pr/README.md).
+- about: keep-out
+  text: The keep-out binds the agent's tools and constraints; Vivado's own placer fills free slices inside the supplier's
+    pblock rectangle with owned logic.
+next_steps:
+- A model-driven run on this project (the session here is a script).
+- Stage 3 of brief 102 integrates a real external open-licence block.
+open_questions:
+- Which tolerance should a project accept for relocated blocks? Zero passes only whole-clock-region moves.
+history:
+- date: '2026-11-19'
+  brief: '102'
+  note: written for stage 2 of the managed-project brief
+numbers_allow:
+- token: '250'
+  reason: the 4.0 ns period constraint as a frequency, from designs/b102_managed_pr/design.xdc
+- token: '60'
+  reason: the slice rows in one clock region of the part (the p1 relocation)
+- token: '30'
+  reason: half of that, the p2 relocation
+- token: '72'
+  reason: the width of the block's input shift register
+- token: '80'
+  reason: clocks the reset is held for in the import simulation
+- token: '64'
+  reason: the 64b/66b block width of brief 96
+- token: '66'
+  reason: the 64b/66b block width of brief 96
+- token: '10'
+  reason: the 10G designation of brief 96
+- token: '0'
+  reason: zero tolerance
+state:
+  stage: built
+  gates:
+    import_checks: pass
+    build_2026_1: pass
+    boundary_checks: pass
+  vivado: '2026.1'
+  kb_pin: 93d158c
+  build_id: e9289768

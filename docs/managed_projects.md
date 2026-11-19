@@ -176,6 +176,18 @@ with coordinates removed); every block-internal path delay against the delivered
 **Trust.** `built` needs the placement evidence for the current content, covering at least two placements, as well as the clean build. A changed
 file drops the evidence.
 
+## Known gaps (stage 2)
+
+- The keep-out binds the agent's constraints and RapidWright arguments, not Vivado's placer: the region is the supplier's pblock rectangle, bigger than the
+  block's footprint, and Vivado places owned logic in the free slices inside it. Clock-region pblocks, `LOC` on non-slice sites (DSP, block RAM) inside the
+  rectangle, and Tcl that builds names or objects indirectly are not evaluated; the xdc check refuses a variable that captures the block's cells or nets and any
+  wildcard that could select them, but it is a pattern check, not a Tcl interpreter. Vivado itself cannot move a locked cell.
+- A cell pattern for `rw_place_chain` that names only leaf cells (`*/sh_reg*`) cannot be judged in Python; `flow/rw/place_chain.py` refuses it against the real cell names.
+- `lock_problems` compares counts (fixed against routed); a net that is routed but not fixed could be hidden by one that is fixed but unrouted when the totals match.
+- The import simulation compares the functional netlist with the supplier's RTL on random stimulus (597 compared cycles), not exhaustively; `eqy` was too slow on this block.
+- Interconnect delays are compared at six placements of one block on one part; the tolerance is the owner's number and relocation off a clock-region multiple changes delays.
+- The scripted session is not a model: no LLM-driven run on a managed project yet.
+
 ## Stage 3 plan: integrating others' work
 
 Goal: one real external block under Apache-2.0, MIT or BSD, with a provenance report that lists exactly what was theirs and what was ours; the
