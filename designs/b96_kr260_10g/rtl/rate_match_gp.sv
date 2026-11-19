@@ -75,22 +75,22 @@ module rate_match_gp #(
 
     // ---------------------------------------------------------------- the crossings
     logic [CW-1:0] wbin_r;                               // the write pointer in the read clock
-    xpm_cdc_gray #(.DEST_SYNC_FF(ENT_SYNC ? 3 : 2), .INIT_SYNC_FF(0), .REG_OUTPUT(0), .SIM_ASSERT_CHK(0), .SIM_LOSSLESS_GRAY_CHK(0), .WIDTH(CW)) u_wp (
+    xpm_cdc_gray #(.DEST_SYNC_FF(ENT_SYNC ? 3 : 2), .INIT_SYNC_FF(0), .REG_OUTPUT(0), .SIM_ASSERT_CHK(1), .SIM_LOSSLESS_GRAY_CHK(0), .WIDTH(CW)) u_wp (
         .src_clk(wclk), .src_in_bin(wbin), .dest_clk(rclk), .dest_out_bin(wbin_r));
     logic [CW-1:0] rbin = '0;
-    xpm_cdc_gray #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .REG_OUTPUT(0), .SIM_ASSERT_CHK(0), .SIM_LOSSLESS_GRAY_CHK(0), .WIDTH(CW)) u_rp (
+    xpm_cdc_gray #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .REG_OUTPUT(0), .SIM_ASSERT_CHK(1), .SIM_LOSSLESS_GRAY_CHK(0), .WIDTH(CW)) u_rp (
         .src_clk(rclk), .src_in_bin(rbin), .dest_clk(wclk), .dest_out_bin(rbin_w));
     logic [EW-1:0] ent_r [DEPTH];                        // ENT_SYNC = 1: every entry copied into the read clock (stable long before the write pointer admits it)
     for (genvar gi = 0; gi < DEPTH; gi++) begin : g_ent
         if (ENT_SYNC) begin : s
-            xpm_cdc_array_single #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(0), .WIDTH(EW)) u_e (
+            xpm_cdc_array_single #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(1), .SRC_INPUT_REG(0), .WIDTH(EW)) u_e (
                 .src_clk(wclk), .src_in(ent[gi]), .dest_clk(rclk), .dest_out(ent_r[gi]));
         end else begin : d
             assign ent_r[gi] = ent[gi];
         end
     end
     logic lock_s;
-    xpm_cdc_single #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(0)) u_lk (
+    xpm_cdc_single #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(1), .SRC_INPUT_REG(0)) u_lk (
         .src_clk(1'b0), .src_in(w_lock), .dest_clk(rclk), .dest_out(lock_s));
 
     // ---------------------------------------------------------------- read side (rclk)

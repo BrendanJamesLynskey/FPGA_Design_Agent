@@ -143,10 +143,10 @@ module eth_mac_rgmii #(
 
     // ---- receive ----
     logic       rx_rst;
-    xpm_cdc_sync_rst #(.DEST_SYNC_FF(4), .INIT(1), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0)) u_rxrst (
+    xpm_cdc_sync_rst #(.DEST_SYNC_FF(4), .INIT(1), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(1)) u_rxrst (
         .src_rst(rst), .dest_clk(rgmii_rx_clk), .dest_rst(rx_rst));
     logic [1:0] speed_rx;
-    xpm_cdc_array_single #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(1), .WIDTH(2)) u_spd (
+    xpm_cdc_array_single #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(1), .SRC_INPUT_REG(1), .WIDTH(2)) u_spd (
         .src_clk(clk), .src_in(speed), .dest_clk(rgmii_rx_clk), .dest_out(speed_rx));
     logic [7:0] g_d;
     logic       g_v, g_dv, g_er;

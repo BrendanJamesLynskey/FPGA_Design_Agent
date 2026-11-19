@@ -68,18 +68,18 @@ module kr260_top #(
     logic a_rxc_g, b_rxc_g, dly_rdy;
     assign a_rxc_g = a_rxc; assign b_rxc_g = b_rxc; assign dly_rdy = 1'b1;                     // no delay lines
 `endif
-    xpm_cdc_sync_rst #(.DEST_SYNC_FF(4), .INIT(1), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0)) u_rst (
+    xpm_cdc_sync_rst #(.DEST_SYNC_FF(4), .INIT(1), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(1)) u_rst (
         .src_rst(!locked), .dest_clk(clk), .dest_rst(rst));
     // each receive path stays in reset until the delay lines are calibrated: IDELAYCTRL's RDY (asynchronous) is
     // synchronised into the core clock, combined with the core reset in a flip-flop, and that registered reset is
     // what each receive clock's reset synchroniser takes (no logic in front of a synchroniser)
     logic rdy_c, rx_rst_q;
-    xpm_cdc_single #(.DEST_SYNC_FF(4), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(0)) u_rdy (
+    xpm_cdc_single #(.DEST_SYNC_FF(4), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(1), .SRC_INPUT_REG(0)) u_rdy (
         .src_clk(1'b0), .src_in(dly_rdy), .dest_clk(clk), .dest_out(rdy_c));
     always_ff @(posedge clk) rx_rst_q <= rst || !rdy_c;
-    xpm_cdc_sync_rst #(.DEST_SYNC_FF(4), .INIT(1), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0)) u_rsta (
+    xpm_cdc_sync_rst #(.DEST_SYNC_FF(4), .INIT(1), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(1)) u_rsta (
         .src_rst(rx_rst_q), .dest_clk(a_rxc_g), .dest_rst(rst_a));
-    xpm_cdc_sync_rst #(.DEST_SYNC_FF(4), .INIT(1), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0)) u_rstb (
+    xpm_cdc_sync_rst #(.DEST_SYNC_FF(4), .INIT(1), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(1)) u_rstb (
         .src_rst(rx_rst_q), .dest_clk(b_rxc_g), .dest_rst(rst_b));
 
     logic [21:0] prst;
@@ -114,9 +114,9 @@ module kr260_top #(
     logic a_mdo, a_mdt, a_mdi, b_mdo, b_mdt, b_mdi;
     assign a_mdio = a_mdt ? 1'bz : a_mdo;
     assign b_mdio = b_mdt ? 1'bz : b_mdo;
-    xpm_cdc_single #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(0)) u_amdi (
+    xpm_cdc_single #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(1), .SRC_INPUT_REG(0)) u_amdi (
         .src_clk(1'b0), .src_in(a_mdio), .dest_clk(clk), .dest_out(a_mdi));
-    xpm_cdc_single #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(0)) u_bmdi (
+    xpm_cdc_single #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(1), .SRC_INPUT_REG(0)) u_bmdi (
         .src_clk(1'b0), .src_in(b_mdio), .dest_clk(clk), .dest_out(b_mdi));
 
     // ---- operating conditions: SYSMONE4 on the core clock's DRP ----

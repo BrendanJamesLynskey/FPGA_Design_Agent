@@ -61,7 +61,7 @@ module rate_match #(
         end
         if (clr_w) begin n_ovf <= '0; n_wr <= '0; end        // a clear wins over a count in the same clock
     end
-    xpm_cdc_single #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(0)) u_lk (
+    xpm_cdc_single #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(1), .SRC_INPUT_REG(0)) u_lk (
         .src_clk(1'b0), .src_in(w_lock), .dest_clk(rclk), .dest_out(lock_s));
 
     // ---------------------------------------------------------------- read side

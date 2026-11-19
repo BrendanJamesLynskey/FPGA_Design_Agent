@@ -51,7 +51,7 @@ module rig_top #(
     end
 
     logic clkc_off, off_c, ce_c = 1'b1;
-    xpm_cdc_single #(.DEST_SYNC_FF(3), .SRC_INPUT_REG(0)) u_off (.src_clk(1'b0), .src_in(clkc_off), .dest_clk(clk_c), .dest_out(off_c));
+    xpm_cdc_single #(.DEST_SYNC_FF(3), .SRC_INPUT_REG(0), .SIM_ASSERT_CHK(1)) u_off (.src_clk(1'b0), .src_in(clkc_off), .dest_clk(clk_c), .dest_out(off_c));
     always_ff @(posedge clk_c) ce_c <= !off_c;      // once off, the gated clock stops and ce_c stays low
     BUFGCE u_bufg_c (.I(clk_c_u), .CE(ce_c), .O(clk_c));
     BUFG   u_bufg_f (.I(clk_f_u), .O(clk_f));

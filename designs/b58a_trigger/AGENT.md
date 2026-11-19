@@ -9,7 +9,7 @@ A bench model of a low-latency trading path. A packet arrives on a PL Ethernet p
 not: a real market path: a mock. The message format is our own (docs/bench_feed_v1.md), the traffic sources are our own, and there is no exchange, broker or market data; a board result; no latency figure here was measured on hardware, and the PHYs, the cable and the real RGMII timing are outside every number; a proof of the whole design; only interlocks.sv has a k-induction proof, and the order slot and the MAC state machines have bounded checks
 
 ## state
-stage=built vivado=2026.1 kb_pin=93d158c build_id=ee23a7c5
+stage=built vivado=2026.1 kb_pin=93d158c build_id=3efc922f
 gates: build_2026_1=pass board_run=not-run
 
 ## interface
@@ -25,14 +25,14 @@ param RX_IDELAY_PS=1000 legal=from the timing analysis
 param NINST=256 legal=instrument count
 
 ## files
-designs/b58a_trigger/rtl/kr260_top.sv d57f5f9d6e: board top (RGMII ports, clocks, JTAG bus, port B generator and loop timer)
+designs/b58a_trigger/rtl/kr260_top.sv 37a255dedd: board top (RGMII ports, clocks, JTAG bus, port B generator and loop timer)
 designs/b58a_trigger/rtl/trigger_core.sv cf7c64d60a: the path from frame parser to order control
 designs/b58a_trigger/rtl/feed_rx.sv ccc1c62f8b: Ethernet, IPv4, UDP and Bench Feed parser, field by field
 designs/b58a_trigger/rtl/book.sv 216116a0a8: best bid and ask per instrument in block RAM
 designs/b58a_trigger/rtl/rules.sv bf046cfda6: 8 run-time rules checked at once
 designs/b58a_trigger/rtl/interlocks.sv 37a99e59c6: kill, halt, size, price band, position and rate checks
 designs/b58a_trigger/rtl/order_ctl.sv db91763b3f: binds each order to its frame's verdict; drop, poison or cancel
-designs/b58a_trigger/rtl/jtag_bus.sv c56593b3f6: register bus over the JTAG cable
+designs/b58a_trigger/rtl/jtag_bus.sv 5a6042e567: register bus over the JTAG cable
 designs/b58a_trigger/design.xdc 62c1e380c0: pins, clocks and the RGMII timing constraints
 designs/b58a_trigger/build.yaml 6f8f5777a3: build recipe, including the RGMII timing data from the PHY datasheet
 designs/b58a_trigger/model/ref_model.py bf2f0369fc: Python reference model written from the docs, not the RTL

@@ -379,6 +379,74 @@ def _rows_check(report: str, pattern: str | None, block: Callable[[str], bool]):
     return run
 
 
+def _design_board(ctx: Ctx) -> str | None:
+    """The board the build was made for (prepare.json), else the design's build.yaml ``board``."""
+    try:
+        b = json.loads((ctx.build / "prepare.json").read_text()).get("board")
+        if b:
+            return str(b)
+    except (OSError, ValueError):
+        pass
+    try:
+        return (yaml.safe_load((ctx.design / "build.yaml").read_text()) or {}).get("board")
+    except (OSError, yaml.YAMLError):
+        return None
+
+
+def _drc(ctx: Ctx) -> dict[str, Any]:
+    """report_drc as the gate reads it, plus brief 105A: CFGBVS-1/2 block when the board's configuration voltage is confirmed in its
+    board file (the gate ``config_voltage_declared``); on any other board they stay advisory."""
+    r = _rows_check("drc", None, _err_or_crit)(ctx)
+    if r.get("status") == "not_run":
+        return r
+    from flow import constraint_gates as CG
+    cfg = CG.board_config(_design_board(ctx), ctx.root)
+    if cfg and cfg["confirmed"]:
+        for f in r["findings"]:
+            if f["code"] in CG.CFGBVS_RULES and not f["blocking"]:
+                f["blocking"] = True
+                f["message"] += f"; blocking: the configuration voltage of board {cfg['board']} is confirmed (boards/{cfg['board']}/board.yaml)"
+    return r
+
+
+def _async_groups(ctx: Ctx) -> dict[str, Any]:
+    """Brief 105A, advisory: set_clock_groups -asynchronous over clock pairs that have paths between them, or over every clock
+    (flow/constraint_gates.py). Never blocking."""
+    if ctx.scope != "route":
+        return _not_run("needs the routed design's report_clock_interaction (scope route)")
+    p = ctx.report("clock_interaction")
+    if p is None:
+        return _not_run(ctx.not_run_reason("clock_interaction"))
+    from flow import constraint_gates as CG
+    try:
+        cons = (yaml.safe_load((ctx.design / "build.yaml").read_text()) or {}).get("constraints") or []
+    except (OSError, yaml.YAMLError):
+        cons = []
+    xdcs = [x for g in cons for x in sorted(ctx.root.glob(g))] or sorted(ctx.design.glob("*.xdc"))     # the build's own constraint list
+    fs = [{"tool": "constraint_scope", "code": f["code"], "severity": "advisory", "where": f["where"],
+           "key": f"constraint_scope:{f['code']} {f['where']}", "message": f["message"], "blocking": False}
+          for f in CG.async_group_findings(p.read_text(errors="replace"), [x.read_text(errors="replace") for x in xdcs])]
+    return _result(fs, records=[p])
+
+
+def _xpm_sim(ctx: Ctx) -> dict[str, Any]:
+    """Brief 105A, advisory: an xpm_cdc instance (of a macro that has the parameter) whose SIM_ASSERT_CHK is not 1 (flow/constraint_gates.py).
+    Reads the build's own source list; only text of the design's RTL, never a vendor file."""
+    from flow import constraint_gates as CG
+    srcs = [f for f in build_sources(ctx.design, ctx.root) if f.suffix in (".sv", ".v", ".svh", ".vh")]
+    fs = []
+    for f in srcs:
+        try:
+            text = f.read_text(errors="replace")
+        except OSError:
+            continue
+        rel = str(f.relative_to(ctx.root)) if f.is_relative_to(ctx.root) else str(f)
+        for x in CG.xpm_sim_findings(text, rel):
+            fs.append({"tool": "xpm_sim", "code": x["code"], "severity": "advisory", "where": x["where"],
+                       "key": f"xpm_sim:{x['code']} {x['where']}", "message": x["message"], "blocking": False})
+    return _result(fs, records=srcs)
+
+
 def _owned(code: str, by: str) -> str | None:
     """The dedicated check that reads this AMD rule id (resets, cdc, clocking, ...), other than the pass-through ``by``."""
     import fnmatch
@@ -691,8 +759,9 @@ register(Check("cdc", "records", POST, {"vivado": ("CDC-*",), "cdc_structure": (
 register(Check("methodology", "records", ALL, {"vivado": ("*",)},
                "report_methodology: Critical Warnings fail (as the stage gates), Warnings listed",
                _rows_check("methodology", None, _crit), reports=("methodology",), amd=True, gate_mirror=True))
-register(Check("drc", "records", POST, {"vivado": ("*",)}, "report_drc: Errors and Critical Warnings fail (as the stage gates)",
-               _rows_check("drc", None, _err_or_crit), reports=("drc",), amd=True, gate_mirror=True))
+register(Check("drc", "records", POST, {"vivado": ("*",)},
+               "report_drc: Errors and Critical Warnings fail (as the stage gates); CFGBVS-1/2 also fail on a board whose configuration voltage is "
+               "confirmed (brief 105A)", _drc, reports=("drc",), amd=True, gate_mirror=True))
 register(Check("exceptions", "records", POST, {"exceptions": ("EXC-*",)},
                "timing exceptions (flow/exceptions_check.py: ignored, covering no path, dropped by an XDC message)",
                _gate_backed("exceptions"), gate_mirror=True))
@@ -702,6 +771,12 @@ register(Check("io", "records", POST, {"io": ("IO-*",)},
 register(Check("clocking", "vivado", POST, {"vivado": ("CLKC-*",), "clocking": ("CMT-RANGE-01",)},
                "AMD's CLKC methodology rows and the MMCM/PLL VCO and PFD range check (flow/cmt_check.tcl)", _clocking,
                reports=("methodology", "cmt")))
+register(Check("xpm_sim", "source", ALL, {"xpm_sim": ("XPM-SIM-01",)},
+               "advisory: an xpm_cdc instance whose SIM_ASSERT_CHK is not 1, which turns off the macro's own simulation warnings "
+               "(flow/constraint_gates.py, brief 105A)", _xpm_sim))
+register(Check("constraint_scope", "records", ("route",), {"constraint_scope": ("XDC-ASYNC-PATHS", "XDC-ASYNC-ALL")},
+               "advisory flag for owner review: set_clock_groups -asynchronous over clock pairs with paths between them, or over every clock "
+               "(flow/constraint_gates.py, brief 105A); never blocks", _async_groups, reports=("clock_interaction",)))
 register(Check("dsp_ram_mapping", "records", POST, {"vivado": ("DPIP-*", "DPOP-*", "SYNTH-*", "RBOR-*", "DPIR-*", "DPOR-*",
                                                               "RMIR-*", "RMOR-*", "RROR-*")},
                "DSP and block-RAM mapping advice (AMD DPIP/DPOP/SYNTH/RBOR rows) and their utilisation", _dsp_ram,

@@ -44,7 +44,7 @@ module kr260_10g_top #(
     assign clk = clk_25; assign locked = lk[4]; assign clk_u = 1'b0; assign fb = 1'b0;
     assign refclk = sfp_mgt_refclk_p;
 `endif
-    xpm_cdc_sync_rst #(.DEST_SYNC_FF(4), .INIT(1), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0)) u_rst (
+    xpm_cdc_sync_rst #(.DEST_SYNC_FF(4), .INIT(1), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(1)) u_rst (
         .src_rst(!locked), .dest_clk(clk), .dest_rst(rst));
 
     logic scl_low, sda_low, scl_i, sda_i;

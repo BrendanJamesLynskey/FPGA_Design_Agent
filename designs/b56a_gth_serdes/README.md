@@ -66,7 +66,7 @@ Interfaces:
 | simulate the PRBS blocks and the core against the Wizard stand-in; needs Icarus Verilog and cocotb 2.0.1 | `python -m pytest -q designs/b56a_gth_serdes/tests` | no | about 1 min |
 | build the design and run all gates; needs local Vivado 2026.1 (Basic tier) and a heavy slot (take_heavy_slot.sh), MEM_MAX=8G | `flow/run_vivado.sh designs/b56a_gth_serdes base` | yes | about 7 min |
 
-Tool: Vivado 2026.1. Build ID of the inputs at handover: `d61c218c` (`python flow/manifest.py show designs/b56a_gth_serdes`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `20d73e8`.
+Tool: Vivado 2026.1. Build ID of the inputs at handover: `cef3b1f4` (`python flow/manifest.py show designs/b56a_gth_serdes`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `93d158c`.
 
 | File | What |
 |---|---|
