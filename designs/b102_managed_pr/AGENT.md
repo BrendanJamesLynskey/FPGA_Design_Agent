@@ -9,7 +9,7 @@ A KR260 timing study that exists to demonstrate stage 2 of a managed project (br
 not: a 10G Ethernet design; the block is the 64b/66b encoder and scrambler between a shift register and an XOR sink, with three input pins; a board design; it was not programmed, and the 250 MHz constraint is on the 25 MHz oscillator pin for a timing study; a claim that relocation preserves a block's timing everywhere; the results say where it does and where it does not
 
 ## state
-stage=built vivado=2026.1 kb_pin=93d158c build_id=61cf8dba
+stage=built vivado=2026.1 kb_pin=93d158c build_id=7874befe
 gates: import_checks=pass build_2026_1=pass boundary_checks=pass
 
 ## interface
@@ -41,9 +41,9 @@ R2 results/102_managed_pr/import_check.json 0b74a51c70
 R3 results/102_managed_pr/import_fault.json b666d18522
 R4 results/102_managed_pr/placements/placement_evidence.json a1300a0c62
 R5 results/102_managed_pr/placements/placement_evidence_all.json 9fd16b932e
-R6 results/102_managed_pr/demo_session.json 9097fc94cb
+R6 results/102_managed_pr/demo_session.json 64cd49f4ea
 R7 results/102_managed_pr/boundary.json 5168e2c230
-R8 results/102_managed_pr/builds.json f15cf591d3
+R8 results/102_managed_pr/builds.json cf5d2c57a1
 
 ## evidence
 E1 simulation pass R1 ci: the manifest rules, the keep-out on constraints and on the RapidWright tools' arguments, the trust label's need for placement evidence, the import check's reading of a checkpoint's facts and the placement comparison

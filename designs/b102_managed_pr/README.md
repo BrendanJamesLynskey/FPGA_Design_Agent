@@ -63,7 +63,7 @@ Interfaces:
 | the scripted agent session; needs Python with PyYAML and jsonschema (the argument checks only; --rapidwright adds the real tools) | `python3 designs/b102_managed_pr/scripts/demo_managed_session.py` | no | about 1 min |
 | build and run the gates; needs local Vivado 2026.1 and a heavy slot (take_heavy_slot.sh) | `flow/run_vivado.sh designs/b102_managed_pr base` | yes | about 15 min |
 
-Tool: Vivado 2026.1. Build ID of the inputs at handover: `61cf8dba` (`python flow/manifest.py show designs/b102_managed_pr`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `93d158c`.
+Tool: Vivado 2026.1. Build ID of the inputs at handover: `7874befe` (`python flow/manifest.py show designs/b102_managed_pr`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `93d158c`.
 
 | File | What |
 |---|---|
