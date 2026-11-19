@@ -32,15 +32,15 @@ module rate_match #(
     input  logic        w_os,       // the block was an ordered set (shown by the decoder as idles)
     input  logic        w_lock,     // PCS block lock (write domain)
     input  logic        clr_w,      // clear the write-side counters (write domain pulse)
-    output logic [31:0] n_ovf, n_wr,
+    output logic [31:0] n_ovf = '0, n_wr = '0,
     input  logic        rclk,
     input  logic        rrst,
     input  logic        clr_r,      // clear the read-side counters (read domain pulse)
-    output logic        r_v,
-    output logic [63:0] r_d,
-    output logic [7:0]  r_c,
-    output logic        r_lock,
-    output logic [31:0] n_ins, n_del, n_stall, n_out, n_drain, fill_min, fill_max
+    output logic        r_v = 1'b0,
+    output logic [63:0] r_d = '0,
+    output logic [7:0]  r_c = '0,
+    output logic        r_lock = 1'b0,
+    output logic [31:0] n_ins = '0, n_del = '0, n_stall = '0, n_out = '0, n_drain = '0, fill_min = '1, fill_max = '0
 );
     localparam int CW = AW + 1;
     logic [73:0]   w_ent, head;
@@ -61,7 +61,6 @@ module rate_match #(
         end
         if (clr_w) begin n_ovf <= '0; n_wr <= '0; end        // a clear wins over a count in the same clock
     end
-    initial begin n_ovf = '0; n_wr = '0; end
     xpm_cdc_single #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(0)) u_lk (
         .src_clk(1'b0), .src_in(w_lock), .dest_clk(rclk), .dest_out(lock_s));
 
@@ -83,9 +82,6 @@ module rate_match #(
     end
     assign do_del = !rrst && can_read && lock_s && !slot && (fill > CW'(HI)) && !in_frame && keep_ok && head_idle;
     assign rd_en  = do_pop || do_del || (!rrst && can_read && !lock_s);                   // output, delete, or drain while the lock is low
-    initial begin
-        n_ins = '0; n_del = '0; n_stall = '0; n_out = '0; n_drain = '0; fill_min = '1; fill_max = '0; r_v = 1'b0; r_d = '0; r_c = '0; r_lock = 1'b0;
-    end
     always_ff @(posedge rclk) begin
         r_v <= 1'b0;
         if (rrst) begin

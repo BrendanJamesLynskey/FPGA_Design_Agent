@@ -10,7 +10,9 @@ module kr260_10g_top #(
     parameter bit          TRADE       = 1'b1,
     parameter bit          RATE_MATCH  = 1'b0,
     parameter bit          EYESCAN     = 1'b0,
-    parameter bit          GO_REG      = 1'b1
+    parameter bit          GO_REG      = 1'b1,
+    parameter bit          RM_OWN      = 1'b0,
+    parameter bit          RM_DIRECT   = 1'b0
 ) (
     input  logic       clk_25,
     input  logic       sfp_mgt_refclk_p,
@@ -69,7 +71,7 @@ module kr260_10g_top #(
     logic [31:0] h_wdata, h_rdata;
     jtag_bus u_jtag (.clk, .rst, .h_we, .h_re, .h_addr, .h_wdata, .h_rdata);
 
-    b96_core #(.BUILD_STAMP(BUILD_STAMP), .NEAR_END(NEAR_END), .TRADE(TRADE), .RATE_MATCH(RATE_MATCH), .EYESCAN(EYESCAN), .GO_REG(GO_REG)) u_core (.clk, .rst, .h_we, .h_re, .h_addr, .h_wdata, .h_rdata,
+    b96_core #(.BUILD_STAMP(BUILD_STAMP), .NEAR_END(NEAR_END), .TRADE(TRADE), .RATE_MATCH(RATE_MATCH), .EYESCAN(EYESCAN), .GO_REG(GO_REG), .RM_OWN(RM_OWN), .RM_DIRECT(RM_DIRECT)) u_core (.clk, .rst, .h_we, .h_re, .h_addr, .h_wdata, .h_rdata,
         .refclk, .rx_p(sfp_rx_p), .rx_n(sfp_rx_n), .tx_p(sfp_tx_p), .tx_n(sfp_tx_n),
         .sfp_tx_disable, .sfp_mod_abs, .sfp_rx_los, .sfp_tx_fault,
         .i2c_scl_low(scl_low), .i2c_sda_low(sda_low), .i2c_scl_i(scl_i), .i2c_sda_i(sda_i),

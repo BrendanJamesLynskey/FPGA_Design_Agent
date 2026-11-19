@@ -5,7 +5,9 @@
 // and a summary. The same file runs on the Icarus stand-in of xpm_fifo_async (flow/cdc_models) and on AMD's own macro in xsim: the difference is the point of it.
 module tb_rm_latency #(
     parameter int PH_PS = 0,
-    parameter int FRAMES = 40
+    parameter int FRAMES = 40,
+    parameter int IMPL = 0,        // brief 96E: 0 = rate_match (AMD's xpm_fifo_async), 1 = rate_match_gp (own gray-pointer buffer)
+    parameter int HI = 4
 );
     localparam real T = 6.206;                 // ns, 161.1328125 MHz
     logic wclk = 1'b0, rclk = 1'b0;
@@ -18,8 +20,13 @@ module tb_rm_latency #(
     logic [31:0] n_ovf, n_wr, n_ins, n_del, n_stall, n_out, n_drain, fill_min, fill_max;
     always #(T / 2.0) wclk = ~wclk;
     initial begin #(PH_PS / 1000.0); forever #(T / 2.0) rclk = ~rclk; end
-    rate_match u (.wclk, .wrst, .w_v, .w_d, .w_c, .w_os(1'b0), .w_lock, .clr_w(1'b0), .n_ovf, .n_wr,
-        .rclk, .rrst, .clr_r(1'b0), .r_v, .r_d, .r_c, .r_lock, .n_ins, .n_del, .n_stall, .n_out, .n_drain, .fill_min, .fill_max);
+    if (IMPL == 0) begin : g_m
+        rate_match #(.HI(HI)) u (.wclk, .wrst, .w_v, .w_d, .w_c, .w_os(1'b0), .w_lock, .clr_w(1'b0), .n_ovf, .n_wr,
+            .rclk, .rrst, .clr_r(1'b0), .r_v, .r_d, .r_c, .r_lock, .n_ins, .n_del, .n_stall, .n_out, .n_drain, .fill_min, .fill_max);
+    end else begin : g_m
+        rate_match_gp #(.HI(HI)) u (.wclk, .wrst, .w_v, .w_d, .w_c, .w_os(1'b0), .w_lock, .clr_w(1'b0), .n_ovf, .n_wr,
+            .rclk, .rrst, .clr_r(1'b0), .r_v, .r_d, .r_c, .r_lock, .n_ins, .n_del, .n_stall, .n_out, .n_drain, .fill_min, .fill_max);
+    end
     // write side: block k of the stream
     int unsigned k = 0, nf = 0;
     real tw [0:FRAMES+4];
