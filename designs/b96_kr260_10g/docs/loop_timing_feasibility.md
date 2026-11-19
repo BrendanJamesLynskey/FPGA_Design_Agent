@@ -3,7 +3,7 @@
 Status: **paper and simulation only.** Nothing here ran on a board, in Vivado or in xsim. The only code is a Python model of the tracking loop
 (`model/loop_timing.py`, records in `results/b96f/`). Every hardware claim carries a document, section and page; anything that could not be
 read is marked **unconfirmed**. Documents read: UG576 v1.7.1 (18 Aug 2021, local copy `_amd_docs/UG576_ug576-ultrascale-gth-transceivers.pdf`,
-page numbers are the printed ones), DS925 v1.30 (9 Jul 2026, local), the AMD board files `kr260_carrier` 1.1 (local, Vivado 2025.2), the knowledge
+page numbers are the printed ones), DS925 v1.30 (9 Jul 2026, local), the AMD board files `kr260_carrier` 1.1 (local copy shipped with Vivado), the knowledge
 bank's KR260 and K26 notes, and, as web pages, PG182 v1.7 search results, a third-party summary of the article the brief names, and secondary
 sources for IEEE 802.3 and ITU-T G.8262 (the standards are not on this machine). XAPP1276 itself could not be retrieved (the AMD page timed out).
 
@@ -52,7 +52,7 @@ The question (owner, via the planner): the loop needs a recovered clock whenever
 ## 3. Can the KR260 do it? (brief item 1)
 
 **What drives the SFP+ reference clock: unconfirmed.**
-- Confirmed: `MGTREFCLK0P/N_224` are pins Y6/Y5 (Vivado 2025.2 package database, knowledge bank `device/xck26/primitives/xck26-gth-quad-224`);
+- Confirmed: `MGTREFCLK0P/N_224` are pins Y6/Y5 (the Vivado package database, knowledge bank `device/xck26/primitives/xck26-gth-quad-224`);
   a 156.25 MHz reference worked: 100 of 100 restarts locked on 2026-11-17 and again on 2026-11-19 (`docs/design.md` section 1 and "Board result").
 - Not in any document read: the oscillator or clock generator that drives it, and whether it is programmable. UG1092 has no clock table
   (knowledge bank `board/kr260/PROVENANCE.md`); the AMD carrier board file lists the Si5332 parts only as `hpa_clk0p_clk`/`hpb_clk0p_clk`,
