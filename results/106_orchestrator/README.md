@@ -28,6 +28,18 @@ Two small checks added to the check suite, and the three measurements that back 
    82P2 UDP-endpoint runs repeated the same wrong word, so repeatability is not correctness. All runs stop at stage 2 (the benchmark's scope), so the
    later stages are not measured here.
 
+## Records
+
+- `results.md` and `results.json`: the three measurements, written by `analyse.py`.
+- `analyse.py`: the script; reads only committed records.
+
+## Known gaps and limits
+
+- One task (UDP endpoint) for the back-test, and the rule was written after the failure was known: it shows the case would have been caught, not a rate on new tasks.
+- All recorded runs stop at stage 2, so later stages are not in the repeatability numbers; stage order is fixed by code, so its 14/14 is expected.
+- The constants gate derives only the design ID, advisory identity words and the board clock period. Register addresses, field widths and prose constants are not derived.
+- The stale check covers hashed files, not tool binaries, the KB pin or most environment switches (`HOLES` in `flow/stale_check.py`). Enforcement is off by default (`FDA_STALE=enforce`).
+
 ## Reproduce
 
 No access key, Vivado, board or model call is needed.
