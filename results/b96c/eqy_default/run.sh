@@ -2,7 +2,7 @@
 # Brief 96C addendum 2: formal equivalence (eqy, OSS CAD Suite, slang front end) of the RATE_MATCH = 0 core against main 6909e43f's core.
 #   run.sh [default|all3|mutant]     default: base core against main's base core. all3: lat_all3's files with GO_REG = 0 against main's lat_all3 files.
 #                                    mutant: the default gate with one planted change (the MAC's error counter counts by 2): must FAIL (the proof is not vacuous).
-# Work directory: $WORK (default <repo>/build/eqy_<mode>, git-ignored). No Vivado, no board. About 5 minutes; result in $WORK/<mode>.eqy log (PASS or FAIL line) and result.txt.
+# Work directory: $WORK (default <repo>/build/eqy_<mode>, git-ignored). No Vivado, no board. About 5 minutes; result in result_<mode>.txt and partitions_<mode>.txt beside this script (the PASS or FAIL line and every partition).
 set -uo pipefail
 MODE="${1:-default}"
 HERE="$(cd "$(dirname "$0")" && pwd)"; ROOT="$(cd "$HERE/../../.." && pwd)"; D=designs/b96_kr260_10g
@@ -93,3 +93,5 @@ engine smtbmc bitwuzla
 EQY
 cd "$WORK"; eqy -f -j 2 "$MODE.eqy" > "$MODE.log" 2>&1; rc=$?
 { echo "mode $MODE; eqy exit $rc"; grep -E "Successfully proved designs equivalent|Failed to prove|DONE \(" "$MODE.log" | sed 's/^EQY *[0-9:]* //'; grep -c "Proved equivalence of partition" "$MODE.log" | sed 's/^/partitions proved: /'; } | tee result.txt
+cp result.txt "$HERE/result_$MODE.txt"; cp gate_edits.diff "$HERE/gate_edits.diff"
+grep -E "Successfully proved|Failed to prove|DONE|Elapsed clock" "$MODE.log" | sed 's/^EQY *[0-9:]* //' > "$HERE/partitions_$MODE.txt"

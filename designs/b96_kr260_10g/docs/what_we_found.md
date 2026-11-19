@@ -5,44 +5,26 @@ core is refused there), with the mock trading path of brief 58A on top. **It has
 bit-serial Python reference) or a Vivado build; hardware numbers are the plan in [board_run_plan.md](board_run_plan.md). Every number comes from a file under
 `results/b96/` (named at its use).
 
-## Update, brief 96C (2026-11-19): rate matching added; the tables below are from before it
+## Update, brief 96C (2026-11-19): rate matching added as a build option, default off; board result
 
 Brief 96C put an elastic buffer (`rtl/rate_match.sv`, AMD's `xpm_fifo_async`) between the receive PCS and the MAC, so the receive stream crosses into the core
-clock as a stream and idle blocks are inserted or deleted between frames (design.md section 9). The headline figures and build table below were measured before it and
-are kept as the record of brief 96. What changed, with the records:
+clock as a stream and idle blocks are inserted or deleted between frames (design.md section 9). **On the owner's decision of 2026-11-19 it is a build option: `RATE_MATCH = 1` selects it, the default is `RATE_MATCH = 0`,
+the receive path of main 6909e43f (brief 97C) exactly,** because on the board the buffer cost 11 clocks (68 ns) of loop latency and the loopback cannot show a need for it. The headline figures and build table below the update were measured before it and
+are kept as the record of brief 96.
 
-| | Before 96C | With the rate matcher |
+| | Default (`RATE_MATCH = 0`, the 97C path) | With the buffer (`RATE_MATCH = 1`) |
 |---|---|---|
-| Digital tick-to-trade, simulation, in-phase | 11 clocks | 12 to 13 clocks (`results/b96c/core_sim.json`, `tick_to_trade_digital_sim`; the old 4-clock go-pulse crossing is gone, the buffer adds 5 to 6; up to about 5 more at a positive ppm) |
-| Base design (variant b) LUT / FF | 5,954 / 13,657 | 6,613 / 15,667 (`results/b96c/builds/control/digest.json`) |
-| Base design WNS / WHS | +0.115 / +0.010 ns | +0.293 / +0.010 ns |
-| Base design power / Tj | 1.068 W | 0.928 W / 46.9 C (vectorless estimate) |
-| `lat_all3` (97's fastest accepted variant) on the new base | | 6,574 LUT, WNS **+0.004 ns**, 0.947 W (`builds/all3`) |
-| ppm builds (TXPI ppm controls on): ppm_ctl / ppm_all3 | | WNS +0.135 / +0.033 ns, 1.102 / 0.930 W (`builds/ppm_ctl`, `builds/ppm_all3`) |
+| Digital tick-to-trade, simulation, in-phase | 11 clocks (`results/b96c/core_sim_default.json`, the same bench as 97C) | 12 to 13 clocks with the Icarus stand-in of the FIFO macro (`results/b96c/core_sim.json`); AMD's macro is 3 to 5 clocks slower in the same testbench (`results/b96c/rm_latency_sim.json`) |
+| Board, loop latency L (97C records, `results/b96/hw`) | 50 clocks (base), 46 (all3) | **61 (base), 57 (all3)**: +11 clocks, +68 ns (`results/b96c/hw/20261119_080724/{control,all3}/stage3.json`) |
+| Board, tick-to-trade L minus E | 30 / 26 clocks | 36.5 / 33 clocks (226 / 205 ns) |
+| Base design LUT / FF / WNS / WHS | 6,167 / 14,183 / +0.221 / +0.011 ns, 1.087 W, Tj 48.0 C (`results/b96c/builds/control/digest.json`, the default rebuild; 5,954 LUT and WNS +0.115 ns before 96C: the GT buffer-status and ppm registers) | 6,613 / 15,667 / +0.293 / +0.010 ns (`builds/rm_ctl`) |
+| `lat_all3` | | 6,574 LUT, WNS **+0.004 ns**, 0.947 W (`builds/rm_all3`) |
+| ppm builds (TXPI ppm controls on, buffer on): ppm_ctl / ppm_all3 | | WNS +0.135 / +0.033 ns, 1.102 / 0.930 W (`builds/ppm_ctl`, `builds/ppm_all3`) |
 
-All four builds pass all 29 gates, methodology critical warnings 0 (`results/b96c/builds/gates.md`). The all3 builds hit the 6 GiB scope cap about 1000 times and used
-about 700 MiB of swap. **No board run of the rate-matched design yet**; the ppm sweep, the measured offsets and the latency at the extremes are pending (the board script is `run_96c_stage3.sh`
-in the planner's `_handoff/fpga_agent`; the sweep driver is `host/b96c_ppm.py`; design.md section 9 describes the buffer).
-
-## Headline numbers (clocks of 6.2058 ns, 161.1328125 MHz; GT, optics and cable not included)
-
-| Quantity | Result | Source |
-|---|---|---|
-| PCS + MAC, transmit: MAC output register to the GT word with the last bit of the start block | **2 clocks (12.4 ns); 3 (18.6 ns) when the 1-in-33 gearbox pause falls on that clock** (5 of 120 frames in the bench); first bit of the block 1 clock earlier | `results/b96/latency_sim.json` (`tx_mac_to_gt_last_bit_clocks_all_phases`) |
-| PCS + MAC, receive: GT word that completes the start block, to the MAC's start strobe | **2 clocks (12.4 ns), the same at all 33 gearbox phases** | `latency_sim.json` (`rx_start_strobe_clocks_after_last_bit_captured`) |
-| Receive: first data word in the MAC's register, after the capture of its block | 2 clocks, all 33 phases | `latency_sim.json` |
-| Digital tick-to-trade: the GT word completing the price, to the GT word completing the order's start block | **11 clocks = 68.3 ns**, plus 0 or 1 for the transmit pause and up to 1 for the clock-crossing phase on the board: **11 to 13 clocks, 68 to 81 ns** | `results/b96/core_sim.json` (`tick_to_trade_digital_sim`) |
-| of which: the receive-to-transmit crossing | 4 clocks (xpm_cdc_pulse, 2 flops) | `core_sim.json` |
-| Block lock time at bit offset 0, from reset release | 66 clocks (64 blocks + 2 pipeline) | `latency_sim.json` |
-| Block lock time over all 66 bit offsets (bit-exact model) | 67 to 275 clocks (0.4 to 1.7 us) | `results/b96/lock_time_model.json` |
-
-The 11 clocks are assembled from five measured pieces (GT to MAC register 2, decision register 1, crossing 4, frame source and MAC preamble 2, MAC to GT 2); the
-2 and 2 come from the PCS benches, the rest from the whole-core bench (`tick_to_trade_digital`), and the sum is asserted against the figure's drawing. The brief 58A path at
-1 Gb/s took 8 clocks of 8 ns (64 ns) from the last price byte in to the first preamble byte out; the 10 Gb/s figure is for a different path (a one-rule 64-bit decision, not the 58A
-core) and a different measurement point (GT words, not bytes), so the two are not a like-for-like comparison. The simulation clocks are in phase; a real link adds the GT's own
-serialiser, CDR and RX buffer latency (not in simulation: the real GT model is refused by the free simulator, 54,716 instances against 50,000), the optics and the fibre.
-
-![Latency budget](latency_budget.svg)
+**Board results of the rate-matched builds (2026-11-19, KR260 optical loopback).** Safety accepted on all four variants (100 of 100 restarts locked; 500 of 500 orders sent = fired = `order_ok` per variant; every fault counter 0; SYSMON inside the DS925 windows).
+**The TX phase-interpolator route gave no relative offset:** the frequency counter read 0.0 ppm at every code, so rate matching under a real offset is still not shown on hardware (it needs a second reference clock or a second board). The prediction of the buffer's latency cost (+1 to +2 clocks) was
+missed because the Icarus stand-in has fewer pipeline stages than AMD's macro (design.md section 9, "Why the simulation missed the latency"). Builds: all five build records pass all 29 gates, methodology critical warnings 0 (`results/b96c/builds/gates.md`). The all3 builds with the buffer hit the 6 GiB scope cap about 1000 times and used
+about 700 MiB of swap. The board script is `run_96c_stage3.sh` in the planner's `_handoff/fpga_agent`; the sweep driver is `host/b96c_ppm.py`.
 
 ## Build results before 96C (Vivado 2026.1, xck26-sfvc784-2LV-c, flow gates all pass)
 

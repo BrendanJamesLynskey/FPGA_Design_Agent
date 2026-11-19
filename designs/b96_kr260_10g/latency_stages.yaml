@@ -12,7 +12,10 @@ design: b96_kr260_10g
 # carries the blocks into the transmit clock, so MAC, decision and order logic are all in txusr2 and the old go-pulse crossing (cross_go, 4 clocks) is gone.
 # The buffer's latency varies with its fill (5 to 6 clocks in simulation with in-phase clocks, up to about 5 more at a positive ppm: docs/design.md section 9);
 # the stage file counts the simulated worst case and reconciles with the bench's `max` keys. Variants built on pre96c/ (lat_agent_cdc, lat_hand_ref,
-# lat_agent_both) keep the old chain; this file describes the base design and lat_all3.
+# lat_agent_both) keep the old chain; this file describes the base design and lat_all3 BUILT WITH RATE_MATCH = 1.
+# Brief 96C addendum 2 (2026-11-19): the default build is RATE_MATCH = 0, the 97C receive path (the go-pulse crossing, 11 clocks in simulation: results/b96c/core_sim_default.json),
+# whose chain is the one this file had before 96C (git history, and pre96c/); it is not described by a second stage file. The board measured the RATE_MATCH = 1 builds at L 61 (base) and 57 (all3),
+# 11 clocks above 97C's 50 and 46: the `rx_ratematch` stage below is the Icarus stand-in's 6 clocks; AMD's xpm_fifo_async measured 9 to 13 in the same testbench (results/b96c/rm_latency_sim.json, design.md section 9).
 period_ns: 6.2058             # 1 / 161.1328125 MHz; TXUSRCLK2 and RXUSRCLK2 have the same nominal rate
 domains:
   rx: {clock: rxusr2, note: recovered clock, equal to the line rate within the partner's ppm}
@@ -181,7 +184,7 @@ paths:
         technique: none
         removable: 0
 
-# What the board adds (results/b96/hw/*/stage3.json, a PRE-96C run: the board numbers below describe the design before the rate matcher; the 96C board session is pending; the GT and optics are not simulated). Board medians in clocks of 6.2058 ns.
+# What the board adds (results/b96/hw/*/stage3.json, a PRE-96C run: the board numbers below describe the design before the rate matcher, i.e. the default build; the 96C board run of the RATE_MATCH = 1 builds is results/b96c/hw/20261119_080724; the GT and optics are not simulated). Board medians in clocks of 6.2058 ns.
 board:
   file: ../b96/hw/20261117_101326/stage3.json   # relative to the directory of the slack file (results/b96c), so this reaches results/b96/hw
   echo_clocks_key: restarts.E_max_per_link.median        # median over 100 restarts of the per-link maximum echo

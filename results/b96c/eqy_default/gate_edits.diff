@@ -1,0 +1,9 @@
+257d256
+<                     12'h01C: begin ppm_step <= h_wdata[4:0]; ppm_en <= h_wdata[5]; ppm_sel <= h_wdata[6]; end
+291,292d289
+<             12'h01C: rd = {25'd0, ppm_sel, ppm_en, ppm_step};
+<             12'h020: rd = {22'd0, rxb_seen, txb_seen, rxbuf, txbuf};
+313c310
+<                 if (h_addr >= 12'h100 && h_addr < 12'h100 + 12'(4 * NRXW)) rd = rx_snap[32 * rx_i +: 32];
+---
+>                 if (h_addr >= 12'h100 && h_addr < 12'h100 + 12'(4 * 18)) rd = rx_snap[32 * rx_i +: 32];

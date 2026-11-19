@@ -1,0 +1,121 @@
+{
+ "what": "Clocks a frame's start block spends in rate_match (from the clock that loads it into the receive path's output register to the clock that loads it into the buffer's output register), by the phase between the clocks. Same testbench (designs/b96_kr260_10g/sim/tb_rm_latency.sv) on the Icarus stand-in of xpm_fifo_async and on AMD's own macro in xsim 2026.1; 38 frames per point after two warm-up frames; core clock 6.206 ns; traffic: 32 blocks in 33 clocks, a nine-block frame every 200 blocks.",
+ "phase_ps_is": "how far the read (core) clock lags the write (receive) clock",
+ "icarus_standin": [
+  {
+   "phase_ps": 0,
+   "frames": 38,
+   "mean_ns": 47.852,
+   "min_ns": 43.442,
+   "max_ns": 49.648,
+   "mean_clocks": 7.71,
+   "min_clocks": 7.0,
+   "max_clocks": 8.0,
+   "fill_min": 3,
+   "fill_max": 6,
+   "ins": 1,
+   "del": 9
+  },
+  {
+   "phase_ps": 1550,
+   "frames": 38,
+   "mean_ns": 44.665,
+   "min_ns": 38.786,
+   "max_ns": 44.992,
+   "mean_clocks": 7.2,
+   "min_clocks": 6.25,
+   "max_clocks": 7.25,
+   "fill_min": 4,
+   "fill_max": 6,
+   "ins": 1,
+   "del": 10
+  },
+  {
+   "phase_ps": 3100,
+   "frames": 38,
+   "mean_ns": 46.215,
+   "min_ns": 40.336,
+   "max_ns": 46.542,
+   "mean_clocks": 7.45,
+   "min_clocks": 6.5,
+   "max_clocks": 7.5,
+   "fill_min": 4,
+   "fill_max": 6,
+   "ins": 1,
+   "del": 10
+  },
+  {
+   "phase_ps": 4650,
+   "frames": 38,
+   "mean_ns": 47.765,
+   "min_ns": 41.886,
+   "max_ns": 48.092,
+   "mean_clocks": 7.7,
+   "min_clocks": 6.75,
+   "max_clocks": 7.75,
+   "fill_min": 4,
+   "fill_max": 6,
+   "ins": 1,
+   "del": 10
+  }
+ ],
+ "xsim_amd_macro": [
+  {
+   "phase_ps": 0,
+   "frames": 38,
+   "mean_ns": 69.246,
+   "min_ns": 55.854,
+   "max_ns": 80.678,
+   "mean_clocks": 11.16,
+   "min_clocks": 9.0,
+   "max_clocks": 13.0,
+   "fill_min": 0,
+   "fill_max": 6,
+   "ins": 19,
+   "del": 3
+  },
+  {
+   "phase_ps": 1550,
+   "frames": 38,
+   "mean_ns": 64.59,
+   "min_ns": 51.198,
+   "max_ns": 76.022,
+   "mean_clocks": 10.41,
+   "min_clocks": 8.25,
+   "max_clocks": 12.25,
+   "fill_min": 0,
+   "fill_max": 6,
+   "ins": 17,
+   "del": 7
+  },
+  {
+   "phase_ps": 3100,
+   "frames": 38,
+   "mean_ns": 66.14,
+   "min_ns": 52.748,
+   "max_ns": 77.572,
+   "mean_clocks": 10.66,
+   "min_clocks": 8.5,
+   "max_clocks": 12.5,
+   "fill_min": 0,
+   "fill_max": 6,
+   "ins": 17,
+   "del": 7
+  },
+  {
+   "phase_ps": 4650,
+   "frames": 38,
+   "mean_ns": 67.69,
+   "min_ns": 54.298,
+   "max_ns": 79.122,
+   "mean_clocks": 10.91,
+   "min_clocks": 8.75,
+   "max_clocks": 12.75,
+   "fill_min": 0,
+   "fill_max": 6,
+   "ins": 17,
+   "del": 7
+  }
+ ],
+ "reproduce": "results/b96c/rm_latency_sim.sh"
+}

@@ -10,7 +10,9 @@ summary: A Kria KR260 design that carries our own 10GBASE-R PCS (64B/66B, scramb
   MAC on one GTH lane at 10.3125 Gb/s, with the mock trading path of brief 58A behind it (a one-rule 64-bit decision in
   the same message format), because the AMD 10G Ethernet core is refused on the free Basic licence. Verified against an
   independent Python reference in simulation (the GT is a behavioural stand-in) and built to a bitstream on Vivado 2026.1
-  Basic with every flow gate passing in two variants; not run on a board.
+  Basic with every flow gate passing in two variants. Brief 96C added a rate-matching elastic buffer as a build option (default
+  off, the board-proven 97C receive path); the base and its rate-matched variants have run on a KR260 optical loopback,
+  not yet against a network card or a second reference clock.
 scope_not:
 - 'an interoperability proof: a PCS talking to itself accepts its own symmetric mistakes, only a network card proves it'
 - 'the full 58A trading core (book, rule table, interlocks, ARP) at 64 bits: trade64 is a small stand-in with one rule'
@@ -54,6 +56,16 @@ parameters:
   value: 1 (variant b), 0 (variant a)
   legal: 0 or 1
   note: 1 enables the mock trading path at reset; it still needs ARM
+- name: RATE_MATCH
+  value: 0 (default), 1 (the 96C elastic buffer)
+  legal: 0 or 1
+  note: 0 is the receive path of main 6909e43f (brief 97C, board-proven); 1 puts rate_match between the receive PCS and
+    the MAC (11 clocks slower on the board); the register map is the same, with the rate-match and frequency words reading
+    0 at 0
+- name: GO_REG
+  value: 1 (default), 0 in lat_all3
+  legal: 0 or 1
+  note: RATE_MATCH = 0 only, the register stage of the go-pulse crossing (brief 97's all3 variant removes it)
 - name: line rate
   value: 10.3125 Gb/s
   legal: fixed by 10GBASE-R
@@ -89,10 +101,13 @@ files:
   sha256: fdfa0f70a8c9c293a8d285bc09e71bd5519626a6d8c4aa6617e23aa57f6f5c4a
 - path: designs/b96_kr260_10g/rtl/b96_core.sv
   what: registers, GT wrapper and clock-domain crossings
-  sha256: bea03470de0a4c001583d84eef7888a84c55ef84bc48d870ba7c382dfaf94557
+  sha256: b5347c5c94e15bae83c6697ce7c4981428b91de33e12a277cd69afd55eb7b3ac
 - path: designs/b96_kr260_10g/rtl/kr260_10g_top.sv
   what: board top (MMCM, SYSMON, pins)
-  sha256: 79baa375363524a702cd7b3cbf7bc3d1524283661fa737e5619e41cc0dd33807
+  sha256: d16b00df873146a215f773c29438e72c0bc2b5995abc5c6b815a183ab1d218f0
+- path: designs/b96_kr260_10g/rtl/rx_path_legacy.sv
+  what: the 97C receive path (main 6909e43f), used when RATE_MATCH = 0
+  sha256: 4c9412a3ce8de3b3ee966add7b5b293e4c9b968a4ce2f1e063f62d537a24573f
 - path: designs/b96_kr260_10g/rtl/rate_match.sv
   what: rate-matching elastic buffer (idle insert and delete between frames, xpm_fifo_async), brief 96C
   sha256: 89bdb4e820bcdbadb2a1cee6e41a9dc3af1cbf19bfa9efd110060b94f070316d
@@ -113,19 +128,19 @@ files:
   sha256: 4dec8c5ba8f6dccc6273f45d40a7d95a6668f5fe09350c0a0d80cc6c07ea1118
 - path: designs/b96_kr260_10g/docs/design.md
   what: 'design note: decisions and alternatives'
-  sha256: 4bf99ccf2c6c52d92d48ec37792faec89263f12debe13c4bd671176fd5efdb2a
+  sha256: 37875bf0a7a1c03786312011810768fb90368b1abf5adfc225d78404b0134f92
 - path: designs/b96_kr260_10g/docs/board_run_plan.md
   what: stage 3 plan for the board
   sha256: 678413f0be0f0c2692b2d1118cd8a8e54ec6514bd5e643485402e34ecc83c61b
 - path: designs/b96_kr260_10g/docs/what_we_found.md
   what: results and gaps
-  sha256: e707017fadee2558385774d044057f57a8a6fc8c2538debff22606326a17fcd5
+  sha256: 376623bbd5f6b71f50a352b59b252e1c27ab8ecc4643c3cc2871f7614e4bc588
 - path: designs/b96_kr260_10g/regmap.py
   what: register map as data
-  sha256: 7970a54355b05077cab7602cbe1214c70da871b817756ba44160e74848cbef99
+  sha256: 09f678b5a234468a77035f973bba5df93c189866b18e827490a020fe1f8aca94
 - path: designs/b96_kr260_10g/docs/register_map.md
   what: interface datasheet
-  sha256: b31f99a6e3315bb5df5e606ae3eb780336fec184d97d647caff5233562d8da91
+  sha256: 429377b3c9d4f50cd1bc9fe700c0eebe7bdfa0b576699204cd3c2513d711625c
 commands:
 - what: simulate the PCS, MAC and core against the Python reference
   cmd: python -m pytest -q designs/b96_kr260_10g/tests
@@ -151,14 +166,34 @@ evidence:
     length residue, any bit offset; the whole core with a stand-in for the GT: probe echo, trading loop, decisions, poisoned
     orders'
   record: designs/b96_kr260_10g/tests/test_b96_pcs_rtl.py
-  sha256: 47e65a97a6e81781371ce347a8680797a1b44ce81d4a14125195c2f219ce9105
+  sha256: eb7f06c32b02355a7dae15e0aa1d1171549978c4ac514f90a6a71778dea21763
 - id: E2
   activity: build
   result: pass
-  what: variant (b) with the 96C rate matcher, synthesis, implementation and bitstream on the Basic tier; every flow gate
-    and every GT gate passes (29 of 29)
+  what: variant (b), the default build (RATE_MATCH = 0, the 97C receive path; rebuilt for brief 96C addendum 2), synthesis,
+    implementation and bitstream on the Basic tier; every flow gate and every GT gate passes (29 of 29)
   record: results/b96c/builds/control/digest.json
-  sha256: cbe7ba0bca1cfb25b426600e4862ab2a3d87a922ead3ffb38189117eb8217fc2
+  sha256: f4c148e6e13ba7ea7ff6a7c4f2ff446c859bba0d0d49d62c5b8d982b953dc9bd
+- id: E5
+  activity: formal
+  result: pass
+  what: 'the RATE_MATCH = 0 core is equivalent to main 6909e43f''s core (eqy, slang front end, OSS CAD Suite; XPM crossings
+    as wires, GT a black box, the 96C-only registers cut from the proof copy: see results/b96c/eqy_default/README.md); a
+    planted change in the MAC error counter fails it'
+  record: results/b96c/eqy_default/result_default.txt
+  sha256: 0144f4bfb627e468c863b02826a9f80c1d82f8e0ca142c56d2d7ba6b24c90280
+- id: E6
+  activity: board
+  result: pass
+  what: 'the rate-matched builds (RATE_MATCH = 1, from f47986f4) on a KR260 optical loopback: safety accepted on all four
+    variants (100 of 100 restarts locked, 500 of 500 orders sent = fired = order_ok per variant, every fault counter 0,
+    SYSMON inside the DS925 windows); the TX phase-interpolator route gave no relative offset (0.0 ppm at every code; non-zero
+    targets recorded unreachable), so rate matching under a real offset is not shown on hardware; the buffer costs 11 clocks
+    of loop latency'
+  record: results/b96c/hw/20261119_080724/control/stage3.json
+  conditions: KR260, SFP+ optical loopback, Vivado 2026.1 bitstreams of 2026-11-19, 100 restarts a variant, 20 s dwell at
+    0 ppm
+  sha256: 269183b66c18343ad18679a8df240526870c45af74a0fcea32a7c3a1a1a374e3
 - id: E4
   activity: build
   result: pass
@@ -181,8 +216,8 @@ measurements:
   record: results/b96c/builds/control/digest.json
   field: utilization.lut
   conditions: routed, Vivado 2026.1
-  value: 6613
-  sha256: cbe7ba0bca1cfb25b426600e4862ab2a3d87a922ead3ffb38189117eb8217fc2
+  value: 6167
+  sha256: f4c148e6e13ba7ea7ff6a7c4f2ff446c859bba0d0d49d62c5b8d982b953dc9bd
 - id: M2
   what: registers, variant (b)
   category: resources
@@ -191,8 +226,8 @@ measurements:
   record: results/b96c/builds/control/digest.json
   field: utilization.ff
   conditions: as M1
-  value: 15667
-  sha256: cbe7ba0bca1cfb25b426600e4862ab2a3d87a922ead3ffb38189117eb8217fc2
+  value: 14183
+  sha256: f4c148e6e13ba7ea7ff6a7c4f2ff446c859bba0d0d49d62c5b8d982b953dc9bd
 - id: M3
   what: worst setup slack, variant (b)
   category: timing
@@ -201,8 +236,8 @@ measurements:
   record: results/b96c/builds/control/digest.json
   field: timing.wns_ns
   conditions: routed, user clocks 161.133 MHz and 100 MHz
-  value: 0.293
-  sha256: cbe7ba0bca1cfb25b426600e4862ab2a3d87a922ead3ffb38189117eb8217fc2
+  value: 0.221
+  sha256: f4c148e6e13ba7ea7ff6a7c4f2ff446c859bba0d0d49d62c5b8d982b953dc9bd
 - id: M4
   what: worst hold slack, variant (b)
   category: timing
@@ -211,8 +246,8 @@ measurements:
   record: results/b96c/builds/control/digest.json
   field: timing.whs_ns
   conditions: as M3
-  value: 0.01
-  sha256: cbe7ba0bca1cfb25b426600e4862ab2a3d87a922ead3ffb38189117eb8217fc2
+  value: 0.011
+  sha256: f4c148e6e13ba7ea7ff6a7c4f2ff446c859bba0d0d49d62c5b8d982b953dc9bd
 - id: M5
   what: total on-chip power estimate, variant (b)
   category: power
@@ -221,8 +256,8 @@ measurements:
   record: results/b96c/builds/control/digest.json
   field: power.total_w
   conditions: report_power after routing, vectorless, confidence Medium
-  value: 0.928
-  sha256: cbe7ba0bca1cfb25b426600e4862ab2a3d87a922ead3ffb38189117eb8217fc2
+  value: 1.087
+  sha256: f4c148e6e13ba7ea7ff6a7c4f2ff446c859bba0d0d49d62c5b8d982b953dc9bd
 - id: M6
   what: Vivado peak resident memory of the variant (b) build
   category: other
@@ -230,8 +265,8 @@ measurements:
   record: results/b96c/builds/control/run.json
   field: vivado_peak_rss_mib
   conditions: 1 thread, MemoryMax=6G scope, one run, no cap hits
-  value: 4449
-  sha256: b63fd6335d55d1f2fbb7d95f774af3dc1ffc6ce7f298223c906d24b3fdddbec1
+  value: 4439
+  sha256: 699ba4c7ee1d136cf4e95cf43b4bba34480fe284206bc90c557cd24d7fcfaf03
 - id: M7
   what: transmit latency, worst gearbox phase
   category: latency
@@ -242,28 +277,41 @@ measurements:
   value: 3
   sha256: e5453d4c0b5d85fc9ccc28cbbfec0378fa8f365493b8dac1a61e8d8c2be4e081
 - id: M8
-  what: digital tick-to-trade, worst simulated case with the rate matcher (11 before brief 96C)
+  what: digital tick-to-trade, worst simulated case with the rate matcher (RATE_MATCH = 1)
   category: latency
   unit: clocks
   record: results/b96c/core_sim.json
   field: tick_to_trade_digital_sim.gt_rxdata_price_word_to_gt_txdata_order_start_clocks.max
-  conditions: simulation, same-phase clocks; GT, optics and clock-crossing phase not included
+  conditions: simulation, same-phase clocks, the Icarus stand-in of the FIFO macro; GT, optics and clock-crossing phase
+    not included; the board measured 11 clocks more than 97C, see E6 and design.md section 9
   value: 13
   sha256: 227e0284e2cba41f80c8c524388147f56dd26ff5969ad3bb7e7b6e8ae1c70ebc
+- id: M10
+  what: digital tick-to-trade, simulation of the default build (RATE_MATCH = 0, the 97C path)
+  category: latency
+  key: tick_to_trade_default_clocks
+  unit: clocks
+  record: results/b96c/core_sim_default.json
+  field: tick_to_trade_digital_sim.gt_rxdata_price_word_to_gt_txdata_order_start_clocks
+  conditions: simulation, same-phase clocks; as M8
+  value: 11
+  sha256: 21559dbac7b4decba1bfd5a56845ae9f91100c39890c0b53e7adf191c7c7080d
 - id: M9
-  what: worst setup slack, latency variant all3 with the rate matcher
+  what: worst setup slack, latency variant all3 with the rate matcher (RATE_MATCH = 1)
   category: timing
   key: wns_ns_all3
   unit: ns
-  record: results/b96c/builds/all3/digest.json
+  record: results/b96c/builds/rm_all3/digest.json
   field: timing.wns_ns
   conditions: as M3; the margin is thin
   value: 0.004
   sha256: 53fa66d4a7c2a9175d19dd91d627f07606373052dc4af1e8a95622fc3ef07560
 gaps:
 - about: hardware
-  text: Nothing has run on a board. The reference clock source and frequency, the 25 MHz input and the SFP+ control pin
-    functions and TX_DISABLE polarity are unconfirmed (third-party example, not the schematic).
+  text: The design has run on a KR260 optical loopback only (briefs 97 and 96C), never against a network card or a second
+    reference clock, so rate matching (RATE_MATCH = 1) has not been seen under a real frequency offset; the TX phase-interpolator
+    route gave none. The reference clock source and frequency, the 25 MHz input and the SFP+ control pin functions are unconfirmed
+    against the schematic (third-party example).
 - about: interoperability
   text: The PCS and MAC are checked against a model written by the same author and against zlib and a recurrence; the standard
     text was not available, so only a network card proves the block formats and scrambler order.
@@ -280,9 +328,9 @@ gaps:
   text: The line rate and the 10 Gb/s payload rate are by configuration and by the gearbox arithmetic; no throughput or
     error-rate measurement exists because nothing ran on a board.
 - about: build
-  text: The 96C builds of the latency variant (all3) and its ppm twin hit the 6 GiB scope cap about 1000 times and used
-    about 700 MiB of swap (the base build did not); the Vivado resident peak of the base build is 4449 MiB. all3 closes
-    timing with 0.004 ns of setup slack, which is thin.
+  text: The 96C builds of the latency variant with the buffer (rm_all3) and its ppm twin hit the 6 GiB scope cap about 1000
+    times and used about 700 MiB of swap (the base build did not); the Vivado resident peak of the base build is 4439 MiB.
+    all3 closes timing with 0.004 ns of setup slack, which is thin.
 next_steps:
 - Run docs/board_run_plan.md steps 1 to 4 on the KR260 (laser polarity first), then the NIC steps after the owner buys a
   card and cable.
@@ -291,6 +339,9 @@ next_steps:
 open_questions:
 - Does the PL load over JTAG with the PS idle on the KR260 (flow/program.py has no KR260 board entry yet)?
 history:
+- date: '2026-11-19'
+  note: 'brief 96C addendum 2: RATE_MATCH build parameter, default 0 (the 97C path, shown equivalent by eqy and the 97C
+    bench); the board measured the buffer at +11 clocks and no relative offset by the TX phase interpolator'
 - date: '2026-11-19'
   note: 'brief 96C: elastic-buffer rate matcher (xpm_fifo_async) in the base design and lat_all3, TX phase-interpolator
     ppm controls, four builds with all 29 gates, board session pending'
@@ -315,7 +366,9 @@ numbers_allow:
   reason: generic count
 - token: 58A
   reason: a brief name
-- token: '4449'
+- token: '11'
+  reason: the loop-latency cost of the buffer in clocks (L 50 to 61, 46 to 57), design.md section 9
+- token: '4439'
   reason: Vivado peak resident memory recorded in results/b96c/builds/control/run.json
 - token: '1000'
   reason: about the scope cap hits of the all3 builds (989 and 1033 in results/b96c/builds/*/run.json)
@@ -327,4 +380,4 @@ state:
     build_2026_1: pass
   vivado: '2026.1'
   kb_pin: 93d158c
-  build_id: fec2fc2f
+  build_id: 92e3dd74

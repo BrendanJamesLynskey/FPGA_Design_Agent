@@ -308,8 +308,7 @@ read pointer; `rd_data_count` comes from a second, extended pointer synchronised
 | 3100 | 7.5 (6.5 to 7.5) | 10.7 (8.5 to 12.5) |
 | 4650 | 7.7 (6.8 to 7.8) | 10.9 (8.8 to 12.8) |
 
-The real macro adds **3 to 5 clocks over the stand-in at every phase, and widens the spread to about 4 clocks** (the stand-in's is about 1). That accounts for part of the miss, not all of it: the core bench had the buffer at 5 to 6 clocks, and its replacement of the 4-clock go crossing gave 12 to 13 in total; the buffer at 9 to 13 clocks (mean 10.4 to 11.2) instead of 5 to 6 gives
-about 17 to 19 on average for the same path (15 to 21 at the extremes), 6 to 8 more than the 11 of 97C, against +11 measured on the board. The remaining 3 to 5 clocks are **not explained**: this testbench's traffic is a stand-in for the PCS's stream, not the board's (a looped-back frame stream with the board's gap pattern), and the GT's own delays are the same in both designs.
+The real macro adds **3 to 5 clocks over the stand-in at every phase, and widens the spread to about 4 clocks** (the stand-in's is about 1). That accounts for about 5 to 6 of the 9 to 10 clocks missed, not all of them: the buffer takes 10.4 to 11.2 clocks on average with the real macro in this testbench, against the 5 to 6 of the core bench with the stand-in; it replaces the 4-clock go crossing (`cross_go`), so the net is about +6.4 to +7.2 clocks against the +1 to +2 predicted, and the board's +11 leaves about 4 clocks **not explained**: this testbench's traffic is a stand-in for the PCS's stream, not the board's (a looped-back frame stream with the board's gap pattern), and the GT's own delays are the same in both designs.
 Brief 96E (a lower-latency buffer: no first-word-fall-through count, an own read-side comparison of the crossed pointer, a shallower fill target) is the route to remove most of the cost where the buffer is wanted.
 
 ### Next steps (from the board result)
