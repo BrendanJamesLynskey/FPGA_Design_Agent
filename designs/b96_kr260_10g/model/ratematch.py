@@ -191,7 +191,7 @@ class RateMatch:
 class RateMatchGP:
     """Model of rtl/rate_match_gp.sv (brief 96E): the own gray-pointer elastic buffer, around the repo's Icarus stand-ins of xpm_cdc_gray and xpm_cdc_array_single (flow/cdc_models:
     a gray register in the source clock, then ``sync`` flops in the destination clock, a combinational decode). Same policy as ``RateMatch``; the differences are the crossing (the entries
-    are copied bit for bit through a two-flop synchroniser each, the pointers cross as gray codes) and that the fill the policy reads is the pointer difference as the read side sees it (exact in
+    are the write clock's own flops read directly by the read pointer, the pointers cross as gray codes) and that the fill the policy reads is the pointer difference as the read side sees it (exact in
     that view; ``RateMatch`` reads the macro's lagging count). The pointers are never reset. Time-ordered like ``RateMatch``: the caller feeds edges in time order."""
     aw: int = 4
     hi: int = 1
@@ -227,7 +227,6 @@ class RateMatchGP:
         self.depth = 1 << self.aw
         self.mask = (1 << (self.aw + 1)) - 1
         self.ent = [(0, 0, 0)] * self.depth             # write clock registers
-        self.ent_s = [[(0, 0, 0)] * self.depth for _ in range(self.sync)]    # the per-entry synchronisers, read clock
         self.w_rs = [0] * self.sync
         self.r_ws = [0] * self.sync
         self.r_ls = [0] * self.lock_sync
@@ -255,7 +254,7 @@ class RateMatchGP:
         wbin_r = ungray(self.r_ws[-1], self.aw + 1)
         lock_s = bool(self.r_ls[-1])
         fill = (wbin_r - self.rbin) & self.mask
-        head = self.ent_s[-1][self.rbin & (self.depth - 1)]
+        head = self.ent[self.rbin & (self.depth - 1)]
         can_read = fill != 0
         slot = self.pace != 32
         d, c, os = head
@@ -264,7 +263,6 @@ class RateMatchGP:
         rd_en = do_pop or do_del or ((not rst) and can_read and not lock_s)
         new_ws = [self.wg_src] + self.r_ws[:-1]
         new_ls = [int(w_lock)] + self.r_ls[:-1]
-        new_ent_s = [list(self.ent)] + [list(x) for x in self.ent_s[:-1]]
         self.rg_src_next = gray(self.rbin)
         rbn = (self.rbin + (1 if rd_en else 0)) & self.mask
         self.r_v = False
@@ -308,7 +306,6 @@ class RateMatchGP:
         self.rg_src = self.rg_src_next
         self.r_ws = new_ws
         self.r_ls = new_ls
-        self.ent_s = new_ent_s
 
     def _clear(self) -> None:
         self.n_ins = self.n_del = self.n_stall = self.n_out = self.n_drain = 0

@@ -1,16 +1,18 @@
 // rate_match_gp.sv: brief 96E's low-latency elastic buffer. Same ports and the same idle insert/delete policy as rate_match.sv (brief 96C), but the crossing is our own
-// gray-pointer structure instead of AMD's xpm_fifo_async, which cuts the buffer's latency from 9 to 13 clocks (the macro, measured in xsim) to about 4 to 5 (docs/design.md section 11).
+// gray-pointer asynchronous-FIFO structure instead of AMD's xpm_fifo_async, which cuts the buffer's latency from 9 to 13 clocks (the macro, measured in xsim) to about 4 to 5 (docs/design.md section 11).
 //
 // Why the macro is slow: its `empty` flag and read data count come from a pointer that crosses by xpm_cdc_gray (2 flops) and is then registered again, and `empty` is itself a register;
-// first-word-fall-through adds a registered output stage. Here the crossing is the bare minimum AMD allows for a safe multi-bit pointer (UG974, xpm_cdc_gray: DEST_SYNC_FF = 2).
+// first-word-fall-through adds a registered output stage. Here the pointer crossing is the bare minimum AMD allows for a safe multi-bit pointer (UG974, xpm_cdc_gray: DEST_SYNC_FF = 2).
 //
-//   storage: DEPTH blocks held in flip-flops in the write clock (an entry is written once and then held until the reader has released it: the writer sees the read pointer and
-//     never overwrites an entry the reader has not passed). Each entry is also copied, bit for bit, through its own two-flop synchroniser (xpm_cdc_array_single, ASYNC_REG) into the read
-//     clock, continuously. An entry's copy is therefore stable in the read clock from 2 read clocks after it was written, and the reader only looks at an entry after the write pointer says it is complete.
-//   write pointer: binary count in the write clock; crosses by xpm_cdc_gray (a gray register in the write clock = one write clock after the entry was loaded, then 2 flops in the read clock).
-//     So the pointer reaches the read side about 1 clock later than the data of the entry it publishes: the data are settled before the pointer says they exist (the standard rule: data first,
-//     then the pointer; the one-clock lead is the margin for a metastable data flop, which resolves within a clock, as a gray-coded pointer's does). MTBF is that of any two-flop
-//     ASYNC_REG synchroniser at 161 MHz (the same structure as every xpm_cdc_* in this design; AMD's figure for the UltraScale+ flop is many orders of magnitude over any product life).
+// This is the standard asynchronous FIFO (what xpm_fifo_async does inside, and Cummings' gray-pointer FIFO):
+//   storage: DEPTH blocks in flip-flops in the write clock. An entry is written once and then held until the reader has released it: the writer sees the read pointer (old, so conservative)
+//     and never overwrites an entry the reader has not passed.
+//   write pointer: binary count in the write clock, crossing by xpm_cdc_gray (a gray register in the write clock = one write clock after the entry was loaded, then 2 flops in the read clock).
+//     The read side therefore sees the pointer admit an entry no earlier than about 2 read clocks after the entry's flops changed, so the entry is stable when it is read.
+//   read: the reader selects an entry's flops directly with its own read pointer (a multiplexer in the read clock's logic) and registers the result in the read clock (r_d, r_c and the policy
+//     state). That path, write-clock flops to read-clock flops, is NOT a synchroniser path: it is safe only because of the rule above, and it is bounded, not timed, by
+//     designs/b96_kr260_10g/rate_match_gp.xdc (set_max_delay -datapath_only, one read-clock period, scoped to this instance), as AMD's XPM FIFO constraint style does for its memory read path
+//     (flow/xpm_cdc.tcl). The pointers themselves are gray-coded and synchronised by xpm_cdc_gray (ASYNC_REG, two flops), the structure whose MTBF AMD documents.
 //   read pointer: binary in the read clock, crosses to the write clock by xpm_cdc_gray; the writer stops when DEPTH blocks are outstanding as it sees them (conservative: its view is old).
 //   read side policy (identical to rate_match.sv except the fill the policy reads is exact in the read clock's view: blocks whose pointer has crossed):
 //     slot, a block visible       -> pop and output it;     slot, none, not in a frame -> insert one idle block;     slot, none, inside a frame -> output nothing for one clock (stall);
@@ -76,11 +78,6 @@ module rate_match_gp #(
     logic [CW-1:0] rbin = '0;
     xpm_cdc_gray #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .REG_OUTPUT(0), .SIM_ASSERT_CHK(0), .SIM_LOSSLESS_GRAY_CHK(0), .WIDTH(CW)) u_rp (
         .src_clk(rclk), .src_in_bin(rbin), .dest_clk(wclk), .dest_out_bin(rbin_w));
-    logic [EW-1:0] ent_r [DEPTH];                        // every entry, copied into the read clock (stable long before the write pointer admits it)
-    for (genvar gi = 0; gi < DEPTH; gi++) begin : g_ent
-        xpm_cdc_array_single #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(0), .WIDTH(EW)) u_e (
-            .src_clk(wclk), .src_in(ent[gi]), .dest_clk(rclk), .dest_out(ent_r[gi]));
-    end
     logic lock_s;
     xpm_cdc_single #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(0)) u_lk (
         .src_clk(1'b0), .src_in(w_lock), .dest_clk(rclk), .dest_out(lock_s));
@@ -91,7 +88,7 @@ module rate_match_gp #(
     logic            slot, in_frame, head_idle, head_frame, can_read, do_pop, do_del, keep_ok;
     logic [5:0]      pace;
     logic [1:0]      idle_run;
-    assign head      = ent_r[rbin[AW-1:0]];
+    assign head      = ent[rbin[AW-1:0]];            // the write clock's entry flops, selected by the read pointer (see the header: bounded by rate_match_gp.xdc)
     assign fill      = (wbin_r - rbin) & {CW{1'b1}};     // blocks whose write pointer has crossed and that are not yet read
     assign can_read  = (fill != '0);
     assign slot      = (pace != 6'd32);
