@@ -9,7 +9,7 @@ A Kria KR260 design that carries our own 10GBASE-R PCS (64B/66B, scrambler, gear
 not: an interoperability proof: a PCS talking to itself accepts its own symmetric mistakes, only a network card proves it; the full 58A trading core (book, rule table, interlocks, ARP) at 64 bits: trade64 is a small stand-in with one rule; the reconciliation sublayer link-fault state machine, the BER monitor, an ARP or ICMP responder
 
 ## state
-stage=built vivado=2026.1 kb_pin=93d158c build_id=3e5c621e
+stage=built vivado=2026.1 kb_pin=93d158c build_id=cd409f68
 gates: build_2026_1=pass
 
 ## interface
@@ -26,10 +26,10 @@ param GO_REG=1 (default), 0 in lat_all3 legal=0 or 1
 param line rate=10.3125 Gb/s legal=fixed by 10GBASE-R
 
 ## files
-designs/b96_kr260_10g/rtl/es_ctrl.sv d2f00e1814: DRP master and eye-scan point sequencer for the GTHE4 channel (EYESCAN = 1), brief 96D
+designs/b96_kr260_10g/rtl/es_ctrl.sv 671362a1c0: DRP master and eye-scan point sequencer for the GTHE4 channel (EYESCAN = 1), brief 96D
 designs/b96_kr260_10g/es.xdc 9f571dada7: powers up the GT's eye-scan circuit (ES_EYE_SCAN_EN, ES_ERRDET_EN) in the eyescan build
 designs/b96_kr260_10g/model/eyescan.py 9e408b13c6: Python twin of the eye-scan point sequencer's DRP traffic
-designs/b96_kr260_10g/tests/eyescan_cocotb.py 46221e1751: cocotb bench of the sequencer against the twin and a DRP stand-in
+designs/b96_kr260_10g/tests/eyescan_cocotb.py b6da9be062: cocotb bench of the sequencer against the twin and a DRP stand-in
 designs/b96_kr260_10g/rtl/b96_pkg.sv ac2ee00c42: block codes, scrambler, CRC-32 functions
 designs/b96_kr260_10g/rtl/pcs_tx.sv e0e68141d9: transmit PCS (encode, scramble, gearbox)
 designs/b96_kr260_10g/rtl/pcs_rx.sv 161c35209b: receive PCS (gearbox with slip, block lock, descramble, decode)
@@ -48,11 +48,11 @@ designs/b96_kr260_10g/host/b96c_ppm.py a5a5b3d64e: board driver for the ppm swee
 designs/b96_kr260_10g/rtl/hs_vec.sv bb5cad4fa9: coherent vector crossing
 designs/b96_kr260_10g/model/pcs.py 92790d45d7: bit-serial Python reference of the PCS (the twin)
 designs/b96_kr260_10g/design.xdc 4dec8c5ba8: pins, clocks, slow-pin constraints
-designs/b96_kr260_10g/docs/design.md 9a7e7521c7: design note: decisions and alternatives
+designs/b96_kr260_10g/docs/design.md d9845790a7: design note: decisions and alternatives
 designs/b96_kr260_10g/docs/board_run_plan.md 678413f0be: stage 3 plan for the board
 designs/b96_kr260_10g/docs/what_we_found.md 376623bbd5: results and gaps
-designs/b96_kr260_10g/regmap.py 215ac283ff: register map as data
-designs/b96_kr260_10g/docs/register_map.md c381e4cc15: interface datasheet
+designs/b96_kr260_10g/regmap.py 1f411b3539: register map as data
+designs/b96_kr260_10g/docs/register_map.md 5f12cb5ba6: interface datasheet
 
 ## commands
 simulate the PCS, MAC and core against the Python reference (~2min): python -m pytest -q designs/b96_kr260_10g/tests
