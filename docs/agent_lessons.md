@@ -63,6 +63,17 @@ the first held-out evaluation (`eval-1`) was stopped before analysis.
 13. **A passing simulation is not a passing build.** Two blocks driving the same registers passed in Icarus and were tied to
     ground by Vivado (`results/62a_closure/c13_orig_plan_unguarded/INVALID.json`).
 
+## About orchestration (brief 106)
+
+14. **Where the agent chose a constant that code could derive, it chose wrongly four times in six.** In the UDP endpoint
+    re-measure (82P3) four of six runs bound the register-0 identity word 0x55445031 as the shell design ID, where the spec's
+    quoted design ID "UEP1" is 0x55455031; the derived-constants check flags exactly those four and passes the run that
+    passed (`results/106_orchestrator/README.md`). *Does not show:* a rate on other tasks; it covers one derivation rule.
+15. **Evidence needs the hash of what it was made from.** Every one of the 13 build manifests recorded under `results/`
+    is stale against today's tree (flow Tcl and RTL have moved on since), which is expected for history and is why a claim
+    must cite a build that is current, not merely recorded (`results/106_orchestrator/README.md`). *Does not show:* that
+    any published number is wrong; only that none of those builds can be reproduced from the current inputs.
+
 ## Open
 
 - The fine-tuning experiment on closure-strategy choice has not been run. A "no" will be recorded as one.
