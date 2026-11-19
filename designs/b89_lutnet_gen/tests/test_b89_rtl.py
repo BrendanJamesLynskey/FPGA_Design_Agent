@@ -121,3 +121,22 @@ def teardown_module(_m):
         prev = json.loads(p.read_text()) if p.exists() else {}
         prev.update(_results)
         p.write_text(json.dumps(dict(sorted(prev.items())), indent=1))
+
+
+def test_treelut_arm_is_one_clock_domain():
+    """Brief 105: treelut_arm.sv and the TreeLUT files it wraps are one clock domain, so they hold no clock-domain crossing.
+    A name search once flagged the arm (its "sync"/"cdc" look-alike words); the crossing gate (flow/cdc_structure.py) reads
+    clock relations in the netlist, not names. This pins the fact: every clocked block and every clock port connection uses
+    `clk`, no `negedge`, no second clock input, no ASYNC_REG or XPM macro (a design that gains a second clock must then pass the
+    crossing gate, not this test)."""
+    for f in [TL / "treelut_arm.sv", TL / "TreeLUT.v", TL / "myreg.v"]:
+        t = re.sub(r"//.*", "", f.read_text())
+        assert "negedge" not in t, f.name
+        assert not re.search(r"\bxpm_cdc|ASYNC_REG", t), f.name
+        for m in re.finditer(r"@\s*\(\s*posedge\s+(\w+)", t):
+            assert m.group(1) == "clk", (f.name, m.group(1))
+        for m in re.finditer(r"\.clk\s*\(\s*(\w+)\s*\)", t):
+            assert m.group(1) == "clk", (f.name, m.group(1))
+    top = (TL / "treelut_arm.sv").read_text()
+    assert len(re.findall(r"input\s+wire\s+logic\s+clk\b", top)) == 1
+    assert not re.search(r"input\s+wire\s+logic\s+(?!clk\b)\w*clk", top)

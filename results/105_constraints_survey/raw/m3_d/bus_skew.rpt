@@ -1,0 +1,108 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+---------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2026.1 (lin64) Build 6511674 Tue Jun 16 11:01:26 MDT 2026
+| Date         : Thu Nov 19 18:19:59 2026
+| Host         : bren-ubuntu24-04 running 64-bit Ubuntu 24.04.4 LTS
+| Command      : report_bus_skew -file results/105_constraints_survey/raw/m3_d/bus_skew.rpt
+| Design       : m3_bus
+| Device       : 7a100t-csg324
+| Speed File   : -1  PRODUCTION 1.23 2018-06-13
+| Design State : Routed
+---------------------------------------------------------------------------------------------------------------------------------------------
+
+Bus Skew Report
+
+Table of Contents
+-----------------
+1. Bus Skew Report Summary
+2. Bus Skew Report Per Constraint
+
+1. Bus Skew Report Summary
+--------------------------
+
+Id  Position  From                            To                              Corner  Requirement(ns)  Actual(ns)  Slack(ns)
+--  --------  ------------------------------  ------------------------------  ------  ---------------  ----------  ---------
+1   4         [get_cells {gray_reg[*]}]       [get_cells {q1_reg[*]}]         Slow              0.250       0.906     -0.656
+
+
+2. Bus Skew Report Per Constraint
+---------------------------------
+
+Id: 1
+set_bus_skew -from [get_cells {gray_reg[*]}] -to [get_cells {q1_reg[*]}] 0.250
+Requirement: 0.250ns
+Endpoints: 16
+
+From Clock            To Clock              Endpoint Pin                    Reference Pin                   Corner  Actual(ns)  Slack(ns)
+--------------------  --------------------  ------------------------------  ------------------------------  ------  ----------  ---------
+clk_a                 clk_b                 q1_reg[4]/D                     q1_reg[1]/D                     Slow         0.906     -0.656
+
+
+Slack (VIOLATED) :        -0.656ns  (requirement - actual skew)
+  Endpoint Source:        gray_reg[4]/C
+                            (rising edge-triggered cell FDRE clocked by clk_a)
+  Endpoint Destination:   q1_reg[4]/D
+                            (rising edge-triggered cell FDRE clocked by clk_b)
+  Reference Source:       gray_reg[1]/C
+                            (rising edge-triggered cell FDRE clocked by clk_a)
+  Reference Destination:  q1_reg[1]/D
+                            (rising edge-triggered cell FDRE clocked by clk_b)
+  Path Type:              Bus Skew (Max at Slow Process Corner)
+  Requirement:            0.250ns
+  Endpoint Relative Delay:    1.383ns
+  Reference Relative Delay:   0.477ns
+  Relative CRPR:              0.000ns
+  Actual Bus Skew:            0.906ns  (Endpoint Relative Delay - Reference Relative Delay - Relative CRPR)
+
+Endpoint path:
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk_a rise edge)      0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk_a
+                         net (fo=31, unset)           0.973     0.973    clk_a
+    SLICE_X4Y96          FDRE                                         r  gray_reg[4]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X4Y96          FDRE (Prop_fdre_C_Q)         0.419     1.392 r  gray_reg[4]/Q
+                         net (fo=1, routed)           0.649     2.041    gray[4]
+    SLICE_X3Y98          FDRE                                         r  q1_reg[4]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk_b rise edge)      0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk_b
+                         net (fo=79, unset)           0.924     0.924    clk_b
+    SLICE_X3Y98          FDRE                                         r  q1_reg[4]/C
+                         clock pessimism              0.000     0.924    <hidden>
+    SLICE_X3Y98          FDRE (Setup_fdre_C_D)       -0.266     0.658    q1_reg[4]
+  -------------------------------------------------------------------
+                         data arrival                           2.041    <hidden>
+                         clock arrival                          0.658    <hidden>
+  -------------------------------------------------------------------
+                         relative delay                         1.383    <hidden>
+
+Reference path:
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk_a rise edge)      0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk_a
+                         net (fo=31, unset)           0.924     0.924    clk_a
+    SLICE_X4Y95          FDRE                                         r  gray_reg[1]/C
+  -------------------------------------------------------------------    -------------------
+    SLICE_X4Y95          FDRE (Prop_fdre_C_Q)         0.367     1.291 r  gray_reg[1]/Q
+                         net (fo=1, routed)           0.389     1.680    gray[1]
+    SLICE_X2Y97          FDRE                                         r  q1_reg[1]/D
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk_b rise edge)      0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk_b
+                         net (fo=79, unset)           0.973     0.973    clk_b
+    SLICE_X2Y97          FDRE                                         r  q1_reg[1]/C
+                         clock pessimism              0.000     0.973    <hidden>
+    SLICE_X2Y97          FDRE (Hold_fdre_C_D)         0.230     1.203    q1_reg[1]
+  -------------------------------------------------------------------
+                         data arrival                           1.680    <hidden>
+                         clock arrival                          1.203    <hidden>
+  -------------------------------------------------------------------
+                         relative delay                         0.477    <hidden>
+
+
+
