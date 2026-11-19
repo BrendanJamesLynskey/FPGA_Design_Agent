@@ -59,6 +59,7 @@ GATE_WORDS = {
     "arch_yaml": "architecture file valid",
     "inventory": "pins and clocks match the board",
     "arch_approved": "architecture approved",
+    "constants": "constants match the spec and the board",
     "lint": "lint clean",
     "model_contract": "golden model keeps its contract",
     "simulate": "tests pass against the model",
