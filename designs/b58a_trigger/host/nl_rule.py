@@ -124,8 +124,8 @@ def classify_refusal(err: str) -> str:
 
 
 def record(max_usd: float) -> dict:
-    from agent.graph.llm import OpenRouterClient          # the project's client: data collection denied, no Fable/Opus
-    client = OpenRouterClient(model=MODEL)
+    from agent.models import chat_client                  # the model table's client: data collection denied, no Fable/Opus
+    client = chat_client("interpret", model=MODEL)
     system = SYSTEM.format(max_qty=LIMITS.max_qty, band=f"{LIMITS.band / 100:.2f}", schema=SCHEMA.read_text())
     FIXTURES.mkdir(parents=True, exist_ok=True)
     spent = 0.0

@@ -53,24 +53,6 @@ def _drive(graph, rt, cfg_lg, first_input, replies: list) -> dict:
     return s
 
 
-def _client(model: str, replay: str | None, record: str | None):
-    from agent.graph.llm import OpenRouterClient, Recorder, Replay
-    if replay:
-        return Replay(Path(replay))
-    c = OpenRouterClient(model)
-    return Recorder(c, Path(record)) if record else c
-
-
-def _oracle(client):
-    def llm(system, user):
-        r = client([{"role": "system", "content": system}, {"role": "user", "content": user}])
-        try:
-            return json.loads(r.text.strip().removeprefix("```json").removesuffix("```"))
-        except ValueError:
-            return {"answer": "not specified", "quote": None}
-    return llm
-
-
 def task_no_shell(hidden_spec: Path | None) -> bool:
     """07a2-prep: a benchmark task's hidden/bench.yaml says ``no_shell: true`` (the subject is the USB-UART itself)."""
     import yaml
@@ -84,23 +66,23 @@ def task_data_dir(spec_md: Path) -> Path | None:
     return d if d.is_dir() else None
 
 
-def _no_openrouter(model):
-    raise RuntimeError("--oracle claude_code: no OpenRouter call is allowed in this run")
+#: the model flags that, when given on the command line, override the user and project model files (brief 108 aliases)
+MODEL_FLAGS = {"--harness": "harness", "--cc-model": "cc_model", "--cc-effort": "cc_effort", "--model": "model", "--oracle": "oracle",
+               "--oracle-cc-model": "oracle_cc_model", "--spectest-model": "spectest_model", "--router-model": "router_model"}
 
 
-class _NoOpenRouter:
-    """The run client when nothing may use OpenRouter (Claude Code arm and a Claude Code oracle): any call is an error."""
-    def __call__(self, *a, **k):
-        raise RuntimeError("--oracle claude_code: no OpenRouter call is allowed in this run")
+def model_kwargs(a, argv: list[str]) -> dict:
+    """The Config fields of the model configuration: the project file, ``--model-config``, which model flags were given, the owner's Fable flag."""
+    from agent.models.config import parse_cli_json
+    given = tuple(sorted({v for f, v in MODEL_FLAGS.items() if any(x == f or x.startswith(f + "=") for x in argv)}))
+    return dict(models_file=getattr(a, "models_file", None), model_config=parse_cli_json(getattr(a, "model_config", None)) or None,
+                explicit=given, allow_fable=bool(getattr(a, "allow_fable", False)), replay_run=bool(getattr(a, "replay", None)))
 
 
-def _clients(cfg, a):
-    if cfg.oracle == "claude_code":
-        if cfg.harness != "claude_code":
-            raise SystemExit("--oracle claude_code needs --harness claude_code (no OpenRouter at all)")
-        return _NoOpenRouter(), None
-    client = _client(cfg.model, a.replay, a.record)
-    return client, _oracle(client)
+def project_models_file(spec: Path) -> Path | None:
+    """The project layer: ``models.yaml`` next to the spec, when there is one."""
+    f = spec.resolve().parent / "models.yaml"
+    return f if f.is_file() else None
 
 
 def config_from_json(c: dict):
@@ -126,7 +108,36 @@ def config_from_json(c: dict):
                   harness_arms=c.get("harness_arms", "") if c.get("harness_arms") not in (None, "None") else "",
                   hdl=c.get("hdl", "sv") or "sv",
                   design_plan=flag("design_plan"), closure=c.get("closure", "off") or "off",     # closure loop
-                  docs=c.get("docs", "off") or "off")                                            # brief 68 C
+                  docs=c.get("docs", "off") or "off",                                            # brief 68 C
+                  models_file=Path(c["models_file"]) if c.get("models_file") not in (None, "None") else None,   # brief 108
+                  model_config=c.get("model_config") or None, explicit=tuple(c.get("explicit") or ()),
+                  allow_fable=str(c.get("allow_fable", False)) == "True")
+
+
+def models_cmd(a, argv: list[str]) -> int:
+    """Brief 108: ``agent models show`` prints the resolved table and where each value came from; ``check`` validates it (the table is
+    validated whenever it is built, so a bad table fails here) and, with ``--probe``, spends one minimal call per endpoint in use."""
+    from agent.graph.run import Config
+    from agent.models import Resolver
+    from agent.models.config import ConfigError
+    try:
+        cfg = Config(spec_md=Path("spec.md"), name="models", **model_kwargs(a, argv))
+        table = cfg.model_table()
+    except ConfigError as e:
+        print(f"models: {e}", file=sys.stderr)
+        return 2
+    if a.action == "show":
+        print(json.dumps(table.record(), indent=1) if a.json else table.show())
+        return 0
+    print(table.show())
+    print(f"\nthe table is valid ({len(table.entries())} entries, hash {table.hash})")
+    if not a.probe:
+        print("no endpoint was called; add --probe for one minimal call per endpoint (spends tokens)")
+        return 0
+    rows = Resolver(table).probe()
+    for r in rows:
+        print(f"{'ok  ' if r['ok'] else 'FAIL'} {r['purpose']:<11} {r['endpoint']:<14} {r['model']}  {r['detail']}  {r['seconds']}s")
+    return 0 if all(r["ok"] for r in rows) else 1
 
 
 def document_cmd(a) -> int:
@@ -139,8 +150,11 @@ def document_cmd(a) -> int:
         llm = document.replay_llm(a.replay)
         log = None if a.replay.resolve() == log else log
     else:
-        from agent.graph.spectest import cc_llm
-        llm = cc_llm(a.cc_model, a.cc_effort, rd / "doc_claude_code_calls.jsonl", "doc")
+        from agent.models import resolver_for
+        given = {k: v for k, v in (("model", a.cc_model), ("options", {"effort": a.cc_effort} if a.cc_effort else None)) if v}
+        llm = resolver_for("doc", **given, run_dir=rd, command={"purposes": {"doc": {
+            "endpoint": "claude_code", "model": "claude-sonnet-5-5", "options": {"effort": "medium"}}}},
+            ).text("doc", label="doc", claude_log=rd / "doc_claude_code_calls.jsonl")
     res = document.document(rd / s["design"], rd, llm, run_id=s["run_id"], board=a.board, gates_last=s.get("gates_last"),
                             stop=s.get("stop"), verif_level=a.verif_level, resumed_from=s.get("resumed_from"),
                             carried=s.get("gates_carried"), log=log)
@@ -189,13 +203,11 @@ def pickup_cmd(a) -> int:
     report["settings"] = {"board": board, "verif_level": verif}
     cfg = Config(spec_md=ddir / "spec.md", name=ddir.name, board=board, model=a.model, stop_after=a.stop_after,
                  harness=a.harness, cc_model=a.cc_model, cc_effort=a.cc_effort, verif_level=verif,
-                 profile=a.profile, roles=parse_roles(a.roles), docs=a.docs)
+                 profile=a.profile, roles=parse_roles(a.roles), docs=a.docs, **model_kwargs(a, sys.argv[1:]))
     cfg.role_models()
     if a.max_usd is not None:
         cfg.run_limits["usd"] = a.max_usd
-    client, oracle_llm = _clients(cfg, a)
-    rt = new_runtime(cfg, client, oracle_llm=oracle_llm)
-    rt.client_for = (lambda m: _client(m, a.replay, None)) if cfg.oracle == "openrouter" else _no_openrouter
+    rt = new_runtime(cfg, None, replay=a.replay, record=a.record)
     try:
         state = pickup.prepare(ddir, rt, entry, a.change)
     except pickup.PickupError as e:
@@ -212,9 +224,10 @@ def pickup_cmd(a) -> int:
 
 def review_cmd(a) -> int:
     from flow.review import review
+    from flow.review.judge import UNSET as J_UNSET
     reqs = [l.strip().lstrip("-*0123456789. ").strip() for l in a.improvements.read_text().splitlines() if l.strip() and not l.startswith("#")] if a.improvements else None
     out = a.out or ROOT / "runs" / "review_out" / a.design.resolve().name
-    rep = review(a.design, out, intent_file=a.intent, improvements=reqs, use_judge=not a.no_judge, model=a.model, effort=a.effort,
+    rep = review(a.design, out, intent_file=a.intent, improvements=reqs, use_judge=not a.no_judge, model=a.model, effort=a.effort if a.effort else J_UNSET,
                  claude_bin=a.claude_bin, tag=a.design.resolve().name)
     cnt = {s: sum(1 for f in rep["findings"] if f["severity"] == s) for s in ("critical", "major", "minor", "info")}
     print(json.dumps({"review": str(out / "REVIEW.md"), "agent_version": str(out / "REVIEW_AGENT.md"), "findings": cnt,
@@ -290,6 +303,11 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("--docs", choices=["on", "off"], default="on",
                    help="brief 68: at the end of the run the Designer writes handover.yaml and the flow renders README.md and "
                         "AGENT.md; the DOC gate (flow/handover.py checks) must pass for sign-off (doc.json)")
+    r.add_argument("--models-file", type=Path,
+                   help="brief 108: the project's model table (default: models.yaml next to the spec); layers over ~/.config/fpga_design_agent/models.yaml")
+    r.add_argument("--model-config", help="brief 108: JSON in the models.yaml format, the command-line layer of the model table "
+                                          "(purposes: interpret, oracle, model, tests, spectest, rtl, constraints, closure, latency, review, doc, route)")
+    r.add_argument("--allow-fable", action="store_true", help="the owner's flag: permits Fable on a claude_code endpoint (no file can set it)")
     r.add_argument("--hdl", choices=["sv", "vhdl"], default="sv",
                    help="the design language; vhdl = VHDL-2008 RTL (GHDL lint, GHDL netlist or GHDL simulation, "
                         "read_vhdl -vhdl2008 in Vivado); the test shell stays SystemVerilog")
@@ -317,11 +335,15 @@ def main(argv: list[str] | None = None) -> int:
     rs.add_argument("--roles")
     rs.add_argument("--verif-level", choices=["V1", "V2", "V3"], help="design resume: default the original run's, else V3")
     rs.add_argument("--docs", choices=["on", "off"], default="on")
+    rs.add_argument("--models-file", type=Path, help="design resume: the project's model table (a run resume reads the run's own)")
+    rs.add_argument("--model-config", help="design resume: JSON command-line layer of the model table")
+    rs.add_argument("--allow-fable", action="store_true", help="the owner's flag: permits Fable on a claude_code endpoint")
+    rs.add_argument("--allow-model-change", action="store_true", help="resume a run although its model table hash has changed")
     dc = sub.add_parser("document", help="brief 68 C: the DOC step on a finished run directory")
     dc.add_argument("run_dir", type=Path)
     dc.add_argument("--board", default="nexys_a7_100t", type=board_name)
-    dc.add_argument("--cc-model", default="claude-sonnet-5-5")
-    dc.add_argument("--cc-effort", default="medium")
+    dc.add_argument("--cc-model", help="the doc purpose's model (default: the model table; built in: claude-sonnet-5-5 on claude_code)")
+    dc.add_argument("--cc-effort", help="the doc purpose's effort (default: the model table; built in: medium)")
     dc.add_argument("--verif-level", help="default: the run's config.json, else V3")
     dc.add_argument("--replay", type=Path, help="replay the replies of a recorded doc_calls.jsonl (no model call)")
     rv = sub.add_parser("review", help="brief 84: review an existing design (read-only); findings, understanding, verification gap")
@@ -330,12 +352,21 @@ def main(argv: list[str] | None = None) -> int:
     rv.add_argument("--intent", type=Path, help="a statement of intent (default: spec.md or INTENT.md in the design)")
     rv.add_argument("--improvements", type=Path, help="a plain-English list, one request per line: restate, assess and order them (a plan only)")
     rv.add_argument("--no-judge", action="store_true", help="the check suite alone (the benchmark's baseline)")
-    rv.add_argument("--model", default="claude-sonnet-5-5")
-    rv.add_argument("--effort", default="medium", choices=["low", "medium", "high", "xhigh", "max"])
+    rv.add_argument("--model", help="the review purpose's model (default: the model table; built in: claude-sonnet-5-5)")
+    rv.add_argument("--effort", choices=["low", "medium", "high", "xhigh", "max"], help="default: the model table (built in: medium)")
     rv.add_argument("--claude-bin", default="claude", help="the pinned Claude Code binary")
+    md = sub.add_parser("models", help="brief 108: show or check the model table (which endpoint, model and options each purpose uses)")
+    md.add_argument("action", choices=["show", "check"])
+    md.add_argument("--models-file", type=Path, help="the project's models.yaml")
+    md.add_argument("--model-config", help="JSON command-line layer")
+    md.add_argument("--allow-fable", action="store_true")
+    md.add_argument("--json", action="store_true", help="show: the resolved table as JSON (the run-record form)")
+    md.add_argument("--probe", action="store_true", help="check: also make one minimal call per endpoint in use (spends tokens)")
     from agent.graph.latency_loop import add_parser as _latency_parser    # brief 97
     _latency_parser(sub)
     a = ap.parse_args(argv)
+    if a.cmd == "models":
+        return models_cmd(a, args)
     if a.cmd == "latency":
         from agent.graph.latency_loop import latency_cmd
         return latency_cmd(a)
@@ -361,16 +392,12 @@ def main(argv: list[str] | None = None) -> int:
                      spectest_model=a.spectest_model, spectest_max_loops=a.spectest_max_loops,
                      skill_routing=a.skill_routing, router_model=a.router_model, router_k=a.router_k,
                      harness_arms=a.harness_arm, hdl=a.hdl,
-                     design_plan=a.design_plan, closure=a.closure, docs=a.docs)          # closure loop; brief 68 C
+                     design_plan=a.design_plan, closure=a.closure, docs=a.docs,          # closure loop; brief 68 C
+                     **{**model_kwargs(a, args), "models_file": a.models_file or project_models_file(a.spec)})
         cfg.role_models()                                     # fail early on an unknown profile, role or forbidden model
         if a.max_usd is not None:
             cfg.run_limits["usd"] = a.max_usd
-        client, oracle_llm = _clients(cfg, a)
-        rt = new_runtime(cfg, client, oracle_llm=oracle_llm)
-        rt.client_for = (lambda m: _client(m, a.replay, None)) if cfg.oracle == "openrouter" else _no_openrouter
-        if cfg.oracle == "claude_code":
-            from agent.claude_code_arm.oracle import cc_oracle
-            rt.oracle_llm = cc_oracle(cfg.oracle_cc_model, rt.run_dir / "oracle_calls.jsonl")
+        rt = new_runtime(cfg, None, replay=a.replay, record=a.record)
         graph = build_graph(checkpointer_for(rt.run_dir), routing=cfg.skill_routing != "off")
         _drive(graph, rt, {"configurable": {"thread_id": rt.run_id}},
                {"run_id": rt.run_id, "stage": 0, "visits": {}, "history": []}, replies)
@@ -379,14 +406,15 @@ def main(argv: list[str] | None = None) -> int:
     run_dir = ROOT / "runs" / a.run_id
     c = json.loads((run_dir / "config.json").read_text())
     cfg = config_from_json(c)
+    cfg.replay_run = bool(a.replay)
     if a.max_usd is not None:
         cfg.run_limits["usd"] = a.max_usd
-    client, oracle_llm = _clients(cfg, a)
-    rt = new_runtime(cfg, client, run_id=a.run_id, oracle_llm=oracle_llm)
-    rt.client_for = (lambda m: _client(m, a.replay, None)) if cfg.oracle == "openrouter" else _no_openrouter
-    if cfg.oracle == "claude_code":
-        from agent.claude_code_arm.oracle import cc_oracle
-        rt.oracle_llm = cc_oracle(cfg.oracle_cc_model, rt.run_dir / "oracle_calls.jsonl")
+    was = (c.get("models") or {}).get("hash")                # brief 108: resume on the same model table the run started with
+    if was and was != cfg.model_table().hash and not a.allow_model_change:
+        print(f"resume: the model configuration changed since the run started (table hash {was} then, {cfg.model_table().hash} now); "
+              "restore the models.yaml files, or pass --allow-model-change", file=sys.stderr)
+        return 2
+    rt = new_runtime(cfg, None, run_id=a.run_id, replay=a.replay, record=a.record)
     graph = build_graph(checkpointer_for(run_dir), routing=cfg.skill_routing != "off")
     lg = {"configurable": {"thread_id": a.run_id}}
     from langgraph.types import Command

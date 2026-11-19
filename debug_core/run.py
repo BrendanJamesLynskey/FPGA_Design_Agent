@@ -32,8 +32,8 @@ def plan_request(design: Path, request: str | None = None, intent: dict[str, Any
     if intent is None:
         if not request:
             raise ValueError("give a request or an intent")
-        from debug_core.request import DEFAULT_MODEL, parse
-        intent, meta = parse(request, design, client=client, model=model or DEFAULT_MODEL)
+        from debug_core.request import parse
+        intent, meta = parse(request, design, client=client, model=model)
         meta = {k: v for k, v in meta.items() if k != "replies"} | {"parser": "llm"}
     plan = make_plan(design, intent, request)
     plan["intent"] = intent

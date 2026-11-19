@@ -21,6 +21,7 @@ from __future__ import annotations
 from agent.core.prompts import load as _p
 from agent.core import prompts as _prompts
 
+import dataclasses
 import json
 import os
 import re
@@ -124,6 +125,11 @@ class Config:
     design_plan: bool = False       # closure loop: stage 1 declares datapaths; flow/timing_plan.py maps and pipelines them before any build
     closure: str = "off"            # closure loop: on = stage 6 runs the closure controller (agent/graph/closure.py)
     docs: str = "off"               # brief 68 C: on = the document node writes handover.yaml, README.md, AGENT.md at the end (the CLI default is on)
+    models_file: Path | None = None  # brief 108: the project's models.yaml (the project layer of the model table)
+    model_config: dict | None = None  # brief 108: --model-config, the command-line layer in the models.yaml format
+    explicit: tuple = ()            # brief 108: the model flags given on the command line (they override the user and project files)
+    allow_fable: bool = False       # brief 108: the owner's --allow-fable flag (command line only; no file can set it)
+    replay_run: bool = False        # brief 108: the chat calls are served from a recorded fixture (--replay): nothing live on an endpoint host
 
     @property
     def arms(self) -> tuple[str, ...]:
@@ -134,6 +140,39 @@ class Config:
         oracle is not a role: it always runs on ``model``."""
         from agent.graph.role_models import resolve
         return resolve(self, stage)
+
+    def model_table(self):
+        """The brief 108 table of this config: built-in, user file, project file, then the model flags (as aliases) and ``model_config``."""
+        from agent.models.config import build_table, legacy_layer, parse_cli_json
+        from agent.graph.role_models import PROFILES
+        fp = (self.harness, self.cc_model, self.cc_effort, self.model, self.oracle, self.oracle_cc_model, self.spectest_model, self.spectest_effort,
+              self.router_model, self.profile, json.dumps(self.roles or {}, sort_keys=True), str(self.models_file),
+              json.dumps(self.model_config or {}, sort_keys=True), tuple(self.explicit), self.allow_fable, self.replay_run)
+        hit = _TABLES.get(id(self))
+        if hit and hit[0] is self and hit[1] == fp:
+            return hit[2]
+        if self.profile not in PROFILES:
+            raise ValueError(f"unknown profile {self.profile!r}; profiles are {', '.join(PROFILES)}")
+        d = {f.name: f.default for f in dataclasses.fields(self) if f.default is not dataclasses.MISSING}
+
+        def given(name: str):
+            v = getattr(self, name)
+            return v if (name in self.explicit or v != d[name]) else None
+        alias = legacy_layer(harness=given("harness"), cc_model=given("cc_model"), cc_effort=given("cc_effort"), model=given("model"),
+                             oracle=given("oracle"), oracle_cc_model=given("oracle_cc_model"), spectest_model=given("spectest_model"),
+                             spectest_effort=given("spectest_effort"), router_model=given("router_model"),
+                             profile=self.profile, roles=self.roles)
+        cli = parse_cli_json(self.model_config)
+        for k in ("endpoints", "purposes"):
+            alias[k] = {**alias.get(k, {}), **(cli.get(k) or {})}
+        if cli.get("default"):
+            alias["default"] = cli["default"]
+        t = build_table(project_file=Path(self.models_file) if self.models_file else None, cli=alias, allow_fable=self.allow_fable, replay=self.replay_run)
+        _TABLES[id(self)] = (self, fp, t)
+        return t
+
+
+_TABLES: dict[int, tuple[Any, tuple, Any]] = {}      # id(Config) -> (config, fingerprint, table): built once per config value
 
 
 @dataclass
@@ -158,6 +197,7 @@ class Runtime:
     skill_shortlist: dict | None = None                     # brief 36: set by node_route_skills, read by run_role
     skill_notes: list = field(default_factory=list)
     doc_llm: Callable[[str, str], str] | None = None        # brief 68 C: the DOC step's model call (None: the Designer's model)
+    resolver: Any = None                                    # brief 108: every model call of this run goes through it (agent.models.Resolver)
 
 
 _RT: dict[str, Runtime] = {}
@@ -473,15 +513,6 @@ def _validating_state_backend(rt: Runtime):
     return ValidatingStateBackend()
 
 
-def role_client(rt: Runtime, model: str) -> Callable:
-    """The model client of a Deep Agents role: the run's own client for the run's model, else a factory's."""
-    if model == rt.cfg.model:
-        return rt.client
-    if rt.client_for is None:
-        raise ValueError(f"no client for model {model!r} (a Deep Agents role on a model other than the run's)")
-    return rt.client_for(model)
-
-
 def _design_mtimes(design: Path) -> dict[str, float]:
     return {str(p.relative_to(design)): p.stat().st_mtime_ns for p in design.rglob("*")
             if p.is_file() and "build" not in p.relative_to(design).parts and "__pycache__" not in p.parts}
@@ -619,7 +650,8 @@ def _run_subagent(rt: Runtime, role: str, prompt: str, allowed: tuple[str, ...],
 
     register_harness_profile("fda", HarnessProfile(general_purpose_subagent=GeneralPurposeSubagentProfile(enabled=False)))
     sess = role_session(rt.session, role)
-    model = chat_model(role_client(rt, spec["model"]), rt.meter, rt.llm_log)
+    from agent.models.config import ROLE_PURPOSE
+    model = chat_model(rt.resolver.chat(ROLE_PURPOSE[role], rt.session.stage), rt.meter, rt.llm_log)
     plan = subagent_plan(rt, role, prompt, allowed, repair)
     prompt, msg, inputs = plan["system_prompt"], plan["user_message"], plan["inputs"]
     mw = _h1_middleware(rt, model)
@@ -816,7 +848,7 @@ def _interview(rt: Runtime, spec: dict, state: State) -> tuple[dict, dict]:
     iv = Interview()
     who = None
     if rt.cfg.interview == "oracle":
-        who = SpecOracle(rt.cfg.hidden_spec, rt.oracle_llm)
+        who = SpecOracle(rt.cfg.hidden_spec, rt.oracle_llm or rt.resolver.oracle())
     asks = [(str(o.get("question", "")), str(o.get("default", "")), str(o.get("reason", o.get("default", ""))))
             for o in spec.get("open_questions") or []]
     rates = [r for r in rate_params(spec) if r["cycles"]]
@@ -1027,8 +1059,8 @@ def spec_test_gate(rt: Runtime) -> dict:
     """08f: run the independent spec-only bench gate (agent.graph.spectest) for the design as it stands now."""
     from agent.graph import spectest
     log = rt.run_dir / "claude_code_calls.jsonl"
-    role = rt.spectest_llm or spectest.cc_llm(rt.cfg.spectest_model, rt.cfg.spectest_effort, log, "spectest")
-    tri = rt.spectest_triage_llm or spectest.cc_llm(rt.cfg.spectest_model, "low", log, "spectest_triage")
+    role = rt.spectest_llm or rt.resolver.text("spectest", label="spectest", claude_log=log)
+    tri = rt.spectest_triage_llm or rt.resolver.text("spectest", label="spectest_triage", claude_log=log, overrides={"effort": "low"})
     return spectest.gate(rt.design, rt.cfg.board, rt.session.runner, role, tri, max_loops=rt.cfg.spectest_max_loops)
 
 
@@ -1390,9 +1422,9 @@ def node_route_skills(state: State) -> dict:
     spec = (rt.design / "spec.md").read_text(errors="replace") if (rt.design / "spec.md").is_file() else ""
     vocab = router.section_vocab(rt.session.bank.root)
     extra: list[str] = []
-    if rt.cfg.router_model:
+    if rt.resolver.entry("route").model:
         try:
-            extra, reply = router.classify(role_client(rt, rt.cfg.router_model), spec, n, st.name, vocab)
+            extra, reply = router.classify(rt.resolver.chat("route"), spec, n, st.name, vocab)
             rt.meter.add(reply)
             rt.llm_log.append({"role": "router", "stage": n, "cost": reply.cost,
                                "tokens": reply.prompt_tokens + reply.completion_tokens, "sections": extra})
@@ -1476,8 +1508,8 @@ def follow_spec_language(rt) -> bool:
     return True
 
 
-def new_runtime(cfg: Config, client: Callable, run_id: str | None = None, runner=None,
-                oracle_llm: Callable | None = None) -> Runtime:
+def new_runtime(cfg: Config, client: Callable | None = None, run_id: str | None = None, runner=None,
+                oracle_llm: Callable | None = None, replay: str | Path | None = None, record: str | Path | None = None) -> Runtime:
     from agent.access import require_or_exit      # brief 94: every run is created here
     require_or_exit("new_runtime")
     run_id = run_id or time.strftime("%Y%m%d-%H%M%S-") + uuid.uuid4().hex[:4]
@@ -1498,7 +1530,7 @@ def new_runtime(cfg: Config, client: Callable, run_id: str | None = None, runner
         from agent.graph.role_models import describe
         with (design / "BUILD_NOTE.md").open("a") as f:      # 05f: who ran which role, from the first snapshot on
             f.write(f"\n## models by role (profile {cfg.profile})\n\n{describe(cfg.role_models())}. "
-                    f"Interview oracle: {cfg.model} (fixed). The stage machine is plain code.\n")
+                    f"Interview oracle: {cfg.model_table().entry('oracle').model} (the oracle purpose). The stage machine is plain code.\n")
     from flow.verif_gates import seed_macros
     seed_macros(design)                      # 05i: the checker macro file the V1 gate reads, in every run (also on resume)
     if runner is None:
@@ -1523,13 +1555,19 @@ def new_runtime(cfg: Config, client: Callable, run_id: str | None = None, runner
         bank = None
     sess = Session(design=design, board=cfg.board, runner=runner, bank=bank, skill_routing=cfg.skill_routing,
                    harness_arms=cfg.arms)
+    from agent.models.resolver import Resolver
+    table = cfg.model_table()
+    resolver = Resolver(table, run_dir=run_dir, injected=client, replay=replay, record=record)
     rt = Runtime(cfg, run_id, run_dir, design, sess, client, Meter(cfg.run_limits), Snapshots(run_dir, design),
-                 oracle_llm=oracle_llm)
+                 oracle_llm=oracle_llm, resolver=resolver)
     _RT[run_id] = rt
     (run_dir / "config.json").write_text(json.dumps({**{k: str(v) for k, v in cfg.__dict__.items()},
                                                      "run_limits": cfg.run_limits, "profile": cfg.profile,
                                                      "roles": cfg.roles or {}, "role_models": cfg.role_models(),
                                                      "oracle_model": oracle_model_name(cfg),
+                                                     "models_file": str(cfg.models_file) if cfg.models_file else None,
+                                                     "model_config": cfg.model_config or {}, "explicit": list(cfg.explicit),
+                                                     "allow_fable": cfg.allow_fable, "models": table.record(),
                                                      "isolation": type(runner).__name__}, indent=1))
     return rt
 
@@ -1622,7 +1660,7 @@ def usage_trace(rows: list[dict]) -> list[dict]:
 
 
 def oracle_model_name(cfg: Config) -> str:
-    return cfg.oracle_cc_model if cfg.oracle == "claude_code" else cfg.model
+    return cfg.model_table().entry("oracle").model
 
 
 def summary(rt: Runtime, state: dict) -> dict:
@@ -1641,7 +1679,7 @@ def summary(rt: Runtime, state: dict) -> dict:
     usage = role_usage(rt)
     return {"run_id": rt.run_id, "design": rt.cfg.name, "model": models[0] if len(models) == 1 else "per-role", **extra,
             "harness_arm": ",".join(rt.cfg.arms) or "A0",      # the arm this run used (H1 is the CLI default since 2026-11-12)
-            "profile": rt.cfg.profile, "role_models": roles, "oracle_model": oracle_model_name(rt.cfg), "oracle": rt.cfg.oracle,
+            "profile": rt.cfg.profile, "role_models": roles, "model_table_hash": rt.resolver.table.hash, "oracle_model": oracle_model_name(rt.cfg), "oracle": rt.cfg.oracle,
             "stage_overrides": __import__("agent.graph.role_models", fromlist=["x"]).stage_overrides(rt.cfg),
             "knowledge_use": knowledge_use(rt), "knowledge_bank": knowledge_bank_status(rt),
             "turn_trace": usage_trace(usage),

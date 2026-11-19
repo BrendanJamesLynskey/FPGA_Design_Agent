@@ -97,16 +97,16 @@ def test_oracle_is_not_a_role_and_stays_on_the_run_model(runs):
     assert gr.summary(rt, {"history": []})["oracle_model"] == "openai/gpt-6-luna"
 
 
-def test_cli_builds_the_oracle_client_on_the_run_model_whatever_the_profile(runs, monkeypatch, tmp_path):
-    asked = []
-    monkeypatch.setattr(cli, "_client", lambda model, replay, record: asked.append(model) or (lambda *a, **k: None))
-    monkeypatch.setattr(cli, "_drive", lambda *a, **k: {})
+def test_the_oracle_purpose_stays_on_the_run_model_whatever_the_profile(runs, monkeypatch, tmp_path):
+    seen = []
+    monkeypatch.setattr(cli, "_drive", lambda graph, rt, *a, **k: seen.append(rt) or {})
     monkeypatch.setattr(gr, "container_available", lambda: False)
     monkeypatch.setenv("FDA_ALLOW_HOST_SANDBOX", "1")          # QR1: a hidden-spec run is otherwise refused without the image
     hidden = tmp_path / "h.yaml"
     hidden.write_text("name: x\n")
     cli.main(["run", str(T1 / "spec.md"), "--profile", "cvdp", "--interview", "oracle", "--hidden-spec", str(hidden)])
-    assert asked == ["openai/gpt-6-luna"]
+    e = seen[0].resolver.entry("oracle")                       # brief 108: the oracle is a purpose of the model table, not a role
+    assert (e.kind, e.model) == ("openrouter", "openai/gpt-6-luna")
 
 
 # ---- 2. config.json / resume -----------------------------------------------------------------------------------------
@@ -155,7 +155,8 @@ def test_a_deep_agents_role_on_another_model_gets_that_models_client(runs, monke
     import deepagents
     rt = mk(runs, roles={"rtl": {"harness": "deepagents", "model": "openai/other"}})
     made = []
-    rt.client_for = lambda m: made.append(m) or (lambda *a, **k: None)
+    rt.resolver.injected = None
+    rt.resolver.factory = lambda e: made.append((e.purpose, e.model)) or (lambda *a, **k: None)     # brief 108: the resolver builds each client
 
     class Stub:
         def invoke(self, *a, **k):
@@ -164,11 +165,8 @@ def test_a_deep_agents_role_on_another_model_gets_that_models_client(runs, monke
     monkeypatch.setattr(gr, "chat_model", lambda *a, **k: object())
     enter(rt, 2)
     gr.run_subagent(rt, "rtl", "p", ())
-    gr.run_subagent(rt, "tests", "p", ())                            # the run's own model: no factory call
-    assert made == ["openai/other"]
-    rt.client_for = None
-    with pytest.raises(ValueError, match="no client"):
-        gr.role_client(rt, "openai/third")
+    gr.run_subagent(rt, "tests", "p", ())                            # the run's own model
+    assert made == [("rtl", "openai/other"), ("tests", "openai/gpt-6-luna")]
 
 
 def test_effort_none_omits_the_flag_and_a_set_effort_is_passed(runs):

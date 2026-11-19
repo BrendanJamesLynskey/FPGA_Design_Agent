@@ -61,10 +61,10 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--spec-yaml", type=Path, required=True)
     ap.add_argument("--plan", type=Path)
     ap.add_argument("--out", type=Path, required=True)
-    ap.add_argument("--model", default="openai/gpt-6-luna")
+    ap.add_argument("--model", help="the purpose's model (default: the model table, brief 108)")
     ap.add_argument("--retries", type=int, default=1)
     a = ap.parse_args(argv)
-    from agent.graph.llm import OpenRouterClient, Recorder
+    from agent.models import resolver_for
     task = a.task.resolve()
     src = (a.rtl or task / "ref" / "rtl").resolve()
     out = a.out.resolve()
@@ -74,7 +74,8 @@ def main(argv: list[str] | None = None) -> int:
     hdr = header((src / a.module_file).read_text(), a.module)
     others = sorted(p.name for p in src.glob("*.sv") if p.name != a.module_file)
     plan = timing_plan.plan_text(json.loads(a.plan.read_text())) if a.plan else ""
-    client = Recorder(OpenRouterClient(a.model), out / "llm_replay.json")
+    rs = resolver_for("rtl", model=a.model, record=out / "llm_replay.json")
+    client, model = rs.chat("rtl"), rs.entry("rtl").model
     g1 = acceptance_g1(task, out.name)
     calls, failure, res = [], "", None
     for attempt in range(a.retries + 1):
@@ -88,7 +89,7 @@ def main(argv: list[str] | None = None) -> int:
         if res["pass"]:
             break
         failure = str(res.get("detail") or res.get("tests"))
-    summary = {"task": task.name, "plan": bool(plan), "model": a.model, "attempts": len(calls), "g1": res,
+    summary = {"task": task.name, "plan": bool(plan), "model": model, "attempts": len(calls), "g1": res,
                "usd": round(sum((c["cost"] if c["cost"] is not None else 0.05) for c in calls), 6),
                "tokens": sum(c["prompt_tokens"] + c["completion_tokens"] for c in calls), "calls": calls}
     (out / "write_summary.json").write_text(json.dumps(summary, indent=1) + "\n")

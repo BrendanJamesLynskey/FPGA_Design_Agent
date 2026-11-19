@@ -291,15 +291,12 @@ def rtl_sha(design: Path) -> str:
 
 def latency_cmd(a: argparse.Namespace) -> int:
     from agent.access import require_or_exit
-    from agent.graph.llm import OpenRouterClient, Recorder, Replay
+    from agent.models import resolver_for
     require_or_exit("latency")
     root = a.checkout.resolve()
     design = (root / a.design).resolve()
     out = (a.out or root / "results" / "b97" / "runs" / f"{a.arm}_{int(time.time())}").resolve()
-    if a.replay:
-        client = Replay(Path(a.replay))
-    else:
-        client = Recorder(OpenRouterClient(a.model), out / "llm_calls.json")
+    client = resolver_for("latency", model=a.model, replay=a.replay, record=None if a.replay else out / "llm_calls.json").chat("latency")
     loop = LatencyLoop(root, design, a.arm, client, out, a.max_iter, a.max_usd, a.max_turns)
     print(json.dumps(loop.run(), indent=1))
     return 0
@@ -310,7 +307,7 @@ def add_parser(sub) -> None:
     p.add_argument("checkout", type=Path, help="a git worktree of the repo at a fixed commit; only <design>/rtl/*.sv is edited")
     p.add_argument("--arm", choices=["A0", "A1"], required=True)
     p.add_argument("--design", default="designs/b96_kr260_10g")
-    p.add_argument("--model", default="openai/gpt-6-luna")
+    p.add_argument("--model", help="the purpose's model (default: the model table, brief 108)")
     p.add_argument("--max-iter", type=int, default=3)
     p.add_argument("--max-turns", type=int, default=16)
     p.add_argument("--max-usd", type=float, default=1.0)

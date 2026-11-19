@@ -426,48 +426,8 @@ def record(design: Path) -> dict[str, Any]:
             "bench_writes": st.get("bench_writes", 0), "bench_runs": st.get("runs", 0)}
 
 
-# --- the real model calls (a headless `claude -p`, no tools, like the Claude Code interview oracle) ---------------------
-
-
-def cc_llm(model: str, effort: str | None, log: Path | None = None, label: str = "spectest", timeout_s: float = 900) -> LLM:
-    """``llm(system, user) -> text`` through one headless Claude Code call with no tools, no MCP, no settings, an empty HOME and
-    a temporary working directory (the isolation of ``agent.claude_code_arm.oracle``). Each call is logged to ``log``
-    (``claude_code_calls.jsonl`` of the run) so the run's plan-cost estimate counts it."""
-    from agent.claude_code_arm import arm
-
-    def llm(system: str, user: str) -> str:
-        from agent.graph.run import ArmBlocked
-        if shutil.which("claude") is None:
-            raise ArmBlocked("the claude CLI is not on PATH")
-        token = arm.oauth_token()
-        if not token:
-            raise ArmBlocked("CLAUDE_CODE_OAUTH_TOKEN is not set and the token file is missing")
-        argv = ["claude", "-p", user, "--output-format", "json", "--system-prompt", system, "--tools", "",
-                "--strict-mcp-config", "--permission-mode", "dontAsk", "--setting-sources", "", "--disable-slash-commands",
-                "--no-session-persistence", "--model", model, *(["--effort", effort] if effort else []), "--max-turns", "1"]
-        work = Path(tempfile.mkdtemp(prefix="fda_spectest_"))
-        t0 = time.time()
-        try:
-            p = subprocess.run(argv, cwd=work, env=arm.isolated_env(work, token), capture_output=True, text=True,
-                               timeout=timeout_s, stdin=subprocess.DEVNULL)
-        finally:
-            shutil.rmtree(work, ignore_errors=True)
-        try:
-            res = json.loads(p.stdout)
-        except ValueError:
-            res = {}
-        if log is not None:
-            u = res.get("usage") or {}
-            tok = sum(int(u.get(k) or 0) for k in ("input_tokens", "cache_read_input_tokens", "cache_creation_input_tokens", "output_tokens"))
-            with log.open("a") as f:
-                f.write(json.dumps({"tag": f"{label}", "role": label, "stage": "rtl-design-creation", "model_requested": model,
-                                    "effort": effort or "cli-default", "claude_code_version": None, "turns": res.get("num_turns"),
-                                    "wall_s": round(time.time() - t0, 1), "is_error": res.get("is_error"), "tokens": tok,
-                                    "cost_usd": "unreported", "plan_cost_estimate_usd": res.get("total_cost_usd")}) + "\n")
-        if res.get("is_error") and any(k in str(res.get("result", "")).lower() for k in ("login", "authenticat", "oauth", "401")):
-            raise ArmBlocked("Claude Code could not authenticate: " + str(res.get("result", ""))[:200])
-        return str(res.get("result", ""))
-    return llm
+# The real model calls are made by the resolver (agent.models): ``Resolver.text("spectest", ...)``, one tool-less headless Claude Code
+# call on the default endpoint, with no tools, no MCP, no settings, an empty HOME and a temporary working directory (brief 108).
 
 
 __getattr__ = _prompts.module_getattr(__name__, {'ROLE_SYSTEM': 'graph/spectest/role_system', 'TRIAGE_SYSTEM': 'graph/spectest/triage_system'})

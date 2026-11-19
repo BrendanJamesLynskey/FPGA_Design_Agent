@@ -149,21 +149,21 @@ def call_claude(system: str, prompt: str, model: str = DEFAULT_MODEL, effort: st
                 timeout: float = 900, out_dir: Path | None = None, tag: str = "review") -> dict[str, Any]:
     """One isolated headless call. Returns {text, usage, wall_s, version}. Raises RuntimeError when it cannot run."""
     from agent.claude_code_arm.arm import ACCEPTED_CLI, isolated_env, oauth_token
+    from agent.models import claude_cli
     exe = shutil.which(claude_bin) or claude_bin
-    ver = subprocess.run([exe, "--version"], capture_output=True, text=True).stdout.strip()
+    ver = claude_cli.version(exe)
     if not ver.startswith(ACCEPTED_CLI):
         raise RuntimeError(f"Claude Code {ver!r} is not a tested version {ACCEPTED_CLI}")
     tok = oauth_token()
     if not tok:
         raise RuntimeError("no CLAUDE_CODE_OAUTH_TOKEN (see agent/claude_code_arm/arm.py)")
     work = Path(tempfile.mkdtemp(prefix="fda_review_"))
-    argv = [exe, "-p", "--output-format", "stream-json", "--verbose", "--system-prompt", system, "--tools", "",
-            "--permission-mode", "dontAsk", "--setting-sources", "", "--disable-slash-commands", "--no-session-persistence",
-            "--model", model, *(["--effort", effort] if effort else []), "--max-turns", "3"]
+    argv = claude_cli.build_argv(system=system, model=model, output_format="stream-json", verbose=True, effort=effort, max_turns=3,
+                                 strict_mcp=False, exe=exe)
     env = isolated_env(work, tok)
     t0 = time.time()
     try:
-        p = subprocess.run(argv, cwd=work, env=env, input=prompt, capture_output=True, text=True, timeout=timeout)
+        p = claude_cli.run(argv, cwd=work, env=env, timeout=timeout, input=prompt)
     except subprocess.TimeoutExpired:
         raise RuntimeError(f"the review call timed out after {timeout:.0f} s")
     finally:
@@ -180,13 +180,38 @@ def call_claude(system: str, prompt: str, model: str = DEFAULT_MODEL, effort: st
             "effort": effort or "cli-default"}
 
 
-def judge(prep, under, suite, intent: str | None = None, *, model: str = DEFAULT_MODEL, effort: str | None = "medium",
+UNSET: Any = object()
+
+
+def make_runner(model: str | None = None, effort: Any = UNSET, claude_bin: str = "claude", out_dir: Path | None = None, tag: str = "review",
+                resolver=None) -> tuple[Callable[[str, str], dict[str, Any]], Any]:
+    """``(runner, entry)``: the review purpose's call from the model table (brief 108). ``model`` and ``effort`` given are aliases that
+    override the table for this call. A claude_code endpoint is one isolated headless call; any other kind is one chat call."""
+    from agent.models import resolver_for
+    rs = resolver or resolver_for("review", model=model, options=None if effort is UNSET else {"effort": effort})
+    e = rs.entry("review")
+    if e.kind == "claude_code":
+        return (lambda system, prompt: call_claude(system, prompt, model=e.model, effort=e.options.get("effort"), claude_bin=claude_bin,
+                                                  timeout=e.options.get("timeout_s", 900), out_dir=out_dir, tag=tag)), e
+    chat = rs.chat("review")
+
+    def run(system: str, prompt: str) -> dict[str, Any]:
+        t0 = time.time()
+        r = chat([{"role": "system", "content": system}, {"role": "user", "content": prompt}])
+        return {"text": r.text, "usage": {"input_tokens": r.prompt_tokens, "output_tokens": r.completion_tokens,
+                                          "total_tokens": r.prompt_tokens + r.completion_tokens,
+                                          "cost_usd": r.cost if r.cost is not None else "unreported"},
+                "wall_s": round(time.time() - t0, 1), "version": e.kind, "model_requested": e.model, "effort": e.options.get("effort") or "n/a"}
+    return run, e
+
+
+def judge(prep, under, suite, intent: str | None = None, *, model: str | None = None, effort: Any = UNSET,
           claude_bin: str = "claude", runner: Callable[..., dict[str, Any]] | None = None, out_dir: Path | None = None,
           tag: str = "review") -> dict[str, Any]:
     """The reviewer's reply parsed, with the call's record. ``runner`` replaces the model call (tests, replay)."""
     prompt = build_prompt(prep, under, suite, intent)
-    run = runner or call_claude
-    r = run(SYSTEM, prompt, model=model, effort=effort, claude_bin=claude_bin, out_dir=out_dir, tag=tag) if runner is None else run(SYSTEM, prompt)
+    run = runner or make_runner(model, effort, claude_bin, out_dir, tag)[0]
+    r = run(SYSTEM, prompt)
     try:
         reply = parse_reply(r["text"])
         err = ""

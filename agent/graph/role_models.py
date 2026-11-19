@@ -89,25 +89,26 @@ def parse_roles(text: str | dict | None) -> dict[str, dict[str, Any]]:
 
 
 def stage_overrides(cfg) -> list[str]:
-    """The ``role@stage`` keys in force (profile and explicit), for the record."""
-    return sorted({k for k in [*PROFILES[cfg.profile], *(cfg.roles or {})] if "@" in k})
+    """The ``role@stage`` keys in force (profile, explicit and the model files), for the record."""
+    from agent.models.config import PURPOSE_ROLE
+    out = {k for k in [*PROFILES[cfg.profile], *(cfg.roles or {})] if "@" in k}
+    for L in cfg.model_table().layers:
+        for k in (L.data.get("purposes") or {}):
+            p, _, st = k.partition("@")
+            if st:
+                out.add(f"{PURPOSE_ROLE.get(p, p)}@{st}")
+    return sorted(out)
 
 
 def resolve(cfg, stage: str | None = None) -> dict[str, dict[str, Any]]:
-    """role -> {harness, model, effort} for this config; with ``stage``, the map in force in that stage."""
-    if cfg.profile not in PROFILES:
-        raise ValueError(f"unknown profile {cfg.profile!r}; profiles are {', '.join(PROFILES)}")
-    for k in [*PROFILES[cfg.profile], *(cfg.roles or {})]:
-        check_key(k)
+    """role -> {harness, model, effort} for this config; with ``stage``, the map in force in that stage. Since brief 108 this is a
+    view of the model table (``Config.model_table``): the harness is ``claude_code`` for that endpoint kind, else ``deepagents``."""
+    from agent.models.config import ROLE_PURPOSE
+    table = cfg.model_table()
     out: dict[str, dict[str, Any]] = {}
     for r in ROLE_NAMES:
-        if cfg.harness == "claude_code":
-            base = {"harness": "claude_code", "model": cfg.cc_model, "effort": cfg.cc_effort}
-        else:
-            base = {"harness": "deepagents", "model": cfg.model, "effort": None}
-        out[r] = {**base, **PROFILES[cfg.profile].get(r, {}), **((cfg.roles or {}).get(r, {}))}
-        if stage is not None:
-            out[r] = {**out[r], **PROFILES[cfg.profile].get(f"{r}@{stage}", {}), **((cfg.roles or {}).get(f"{r}@{stage}", {}))}
+        e = table.entry(ROLE_PURPOSE[r], stage)
+        out[r] = {"harness": "claude_code" if e.kind == "claude_code" else "deepagents", "model": e.model, "effort": e.options.get("effort")}
     return validate(out)
 
 

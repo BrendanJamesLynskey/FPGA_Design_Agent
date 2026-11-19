@@ -81,18 +81,18 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--spec", type=Path)
     ap.add_argument("--top")
     ap.add_argument("--skill", type=Path, action="append", default=[])
-    ap.add_argument("--model", default="openai/gpt-6-luna")
+    ap.add_argument("--model", help="the rtl purpose's model (default: the model table, brief 108)")
     ap.add_argument("--rounds", type=int, default=3)
     ap.add_argument("--max-usd", type=float, default=0.30)
     ap.add_argument("--block", action="store_true")
     ap.add_argument("--generics", default="{}", help="JSON generics for the lint's elaboration of the top")
     a = ap.parse_args(argv)
-    from agent.graph.llm import OpenRouterClient
-    client = OpenRouterClient(a.model)
+    from agent.models import chat_client
+    client = chat_client("rtl", model=a.model)
     msgs = [{"role": "system", "content": SYSTEM},
             {"role": "user", "content": build_prompt(a.sv, a.spec, a.block, a.skill, a.top)}]
     rtl = a.out / "rtl"
-    rec = {"model": a.model, "sv": [str(p) for p in a.sv], "spec": str(a.spec) if a.spec else None,
+    rec = {"model": client.model, "sv": [str(p) for p in a.sv], "spec": str(a.spec) if a.spec else None,
            "skills": [str(s) for s in a.skill], "block": a.block, "ghdl": vhdl.ghdl_version(), "rounds": [],
            "cost_usd": 0.0, "prompt_tokens": 0, "completion_tokens": 0, "started": time.strftime("%Y-%m-%dT%H:%M:%S")}
     files: dict[str, str] = {}
