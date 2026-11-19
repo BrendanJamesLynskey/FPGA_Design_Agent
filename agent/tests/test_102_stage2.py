@@ -535,4 +535,4 @@ def test_strict_evidence_cannot_pass_vacuously(tmp_path):
     ev = MP.compare_placements([a, {**b, "eqy": {"equivalent": "no"}}], 0)
     assert not ev["passed"] and "eqy" in "\n".join(ev["problems"])
     ev = MP.compare_placements([a, {k: v for k, v in b.items() if k != "eqy"}], 0, strict=True)
-    assert "no eqy result" in "\n".join(ev["problems"]) or "same" in "\n".join(ev["problems"])
+    assert "nothing was relocated" in "\n".join(ev["problems"])
