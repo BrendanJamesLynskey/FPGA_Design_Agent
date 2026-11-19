@@ -376,9 +376,14 @@ class Health:
             prov = P.provenance()
             pinned, now_ = prov.get("pinned_manifest_sha256"), prov.get("manifest_sha256")
             same = bool(pinned) and pinned == now_
-            out.append(chk("prompts_pin", g, "Prompts pin", "ok" if same else "warn" if pinned else "unknown",
-                           f"pinned manifest {str(pinned)[:12]}, on disk {str(now_)[:12]}, enforced: {prov.get('enforced')}" if pinned else "nothing is pinned yet",
-                           "agent/core/prompts_pin.json against the private prompts manifest (hashes only; no prompt text is read)"))
+            how = "agent/core/prompts_pin.json against the private prompts manifest (hashes only; no prompt text is read)"
+            if not pinned:
+                out.append(chk("prompts_pin", g, "Prompts pin", "unknown", "nothing is pinned yet", how))
+            elif not now_:
+                out.append(chk("prompts_pin", g, "Prompts pin", "unknown", f"pinned manifest {str(pinned)[:12]}; the private prompts directory was not found here, so it cannot be compared", how))
+            else:
+                out.append(chk("prompts_pin", g, "Prompts pin", "ok" if same else "warn",
+                               f"pinned manifest {str(pinned)[:12]}, on disk {str(now_)[:12]}, enforced: {prov.get('enforced')}", how))
         except Exception as e:                                   # a missing private checkout is a state, not a crash
             out.append(chk("prompts_pin", g, "Prompts pin", "unknown", f"cannot compare with the private prompts: {str(e)[:140]}", "agent.core.prompts.provenance()"))
         out.append(chk("ci_main", g, "CI status of main", "not-run", "not checked: click to ask GitHub (one API call)", "an action: gh run list on main, run only when you click", action="ci_main"))

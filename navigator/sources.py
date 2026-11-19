@@ -384,7 +384,7 @@ def run_detail(runs_dir: Path, run_id: str, root: Path) -> dict[str, Any] | None
     for pf in sorted((d / "claude_code").glob("*.prompt.json")) if (d / "claude_code").is_dir() else []:
         j = load_json(pf)
         if isinstance(j, dict):
-            prompts.append({"call": pf.name[:-len(".prompt.json")], "user_message": _fp(j.get("user_message")), "system_prompt": _fp(j.get("system_prompt")),
+            prompts.append({"call": pf.name[:-len(".prompt.json")], "user_fp": _fp(j.get("user_message")), "system_fp": _fp(j.get("system_prompt")),
                             "prompt_manifest_sha256": ((j.get("prompts_pin") or {}).get("manifest_sha256") if isinstance(j.get("prompts_pin"), dict) else None),
                             "enforced": ((j.get("prompts_pin") or {}).get("enforced") if isinstance(j.get("prompts_pin"), dict) else None)})
     return {"id": run_id, "summary": _pick(s, SUMMARY_FIELDS),
