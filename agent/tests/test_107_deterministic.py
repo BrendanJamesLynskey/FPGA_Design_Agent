@@ -201,6 +201,7 @@ def test_the_run_record_tells_the_level_truthfully():
     assert determinism_level_at_end(r) == 0
     r.tape = Tape.__new__(Tape)
     r.tape.mode, r.tape.live, r.tape.misses, r.tape.unreplayable = "replay", 0, 0, 0
+    r.tape._rows, r.tape._seen, r.tape.record_failures = {}, {}, 0
     r.level1 = False
     assert determinism_level_at_end(r) == 2
     r.tape.live = 1
@@ -219,3 +220,40 @@ def test_whole_graph_replay_is_exact():
     out = proof()
     assert out["exact"], out
     assert out["replay"]["tape"]["live_calls"] == 0 and out["replay"]["tape"]["served_from_tape"] == out["record"]["tape"]["calls_recorded"] > 10
+
+
+# --- review fixes ---------------------------------------------------------------------------------------------------------------
+
+def test_review_fixes(tmp_path):
+    root = Path(__file__).resolve().parents[2]
+    with pytest.raises(DeterminismError, match="not git-ignored"):               # a new nested path inside the checkout is still refused
+        Tape.check_location(root / "agent" / "_zz_new" / "sub" / "tape")
+    t = table()
+    for secret in ("ghp_" + "a" * 20, "AKIA" + "A" * 16, "api_key=abcdefghij"):
+        bad, _ = counting_factory(lambda n, m, s=secret: Reply(f"x {s}", []))
+        r = Resolver(t, factory=bad, tape=Tape.open(tmp_path / f"t{len(secret)}", "record"))
+        with pytest.raises(DeterminismError):
+            r.chat("rtl")(MSG)
+        assert r.tape.record_failures == 1
+    fac, _ = counting_factory(lambda n, m: Reply("a literal <<repo>> stays", []))
+    Resolver(t, factory=fac, tape=Tape.open(tmp_path / "e", "record", [("/home/u/repo", "<<repo>>")])).chat("rtl")(MSG)
+    assert Resolver(t, tape=Tape.open(tmp_path / "e", "replay", [("/home/u/repo", "<<repo>>")])).chat("rtl")(MSG).text == "a literal <<repo>> stays"
+    with pytest.raises(DeterminismError, match="already holds a recording"):
+        Tape.open(tmp_path / "e", "record")
+    (tmp_path / "e" / "tape.jsonl").write_text((tmp_path / "e" / "tape.jsonl").read_text() + '{"key": ')
+    with pytest.raises(DeterminismError, match="damaged"):
+        Tape.open(tmp_path / "e", "replay")
+
+
+def test_a_partial_replay_is_not_level_2(tmp_path):
+    from agent.graph.run import determinism_level_at_end
+    t = table()
+    fac, _ = counting_factory(lambda n, m: Reply(f"r{n}", []))
+    c = Resolver(t, factory=fac, tape=Tape.open(tmp_path / "tp", "record")).chat("rtl")
+    c(MSG)
+    c([{"role": "user", "content": "two"}])
+    r = Resolver(t, tape=Tape.open(tmp_path / "tp", "replay"))
+    r.chat("rtl")(MSG)
+    assert determinism_level_at_end(r) == 0                                       # one recording unused
+    r.chat("rtl")([{"role": "user", "content": "two"}])
+    assert determinism_level_at_end(r) == 2

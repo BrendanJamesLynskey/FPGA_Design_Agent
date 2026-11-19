@@ -28,7 +28,10 @@ from typing import Any, Callable
 SCHEMA = 1
 KEY_IGNORED_OPTIONS = ("timeout_s", "retries")
 _REPLY_FIELDS = ("text", "tool_calls", "prompt_tokens", "completion_tokens", "provider")
-_KEY_PATTERNS = (re.compile(r"sk-[A-Za-z0-9_\-]{12,}"), re.compile(r"(?i)bearer\s+\S{12,}"))
+_KEY_PATTERNS = (re.compile(r"sk-[A-Za-z0-9_\-]{12,}"), re.compile(r"(?i)bearer\s+\S{12,}"), re.compile(r"gh[pousr]_[A-Za-z0-9]{16,}"),
+                 re.compile(r"github_pat_[A-Za-z0-9_]{16,}"), re.compile(r"AKIA[0-9A-Z]{16}"), re.compile(r"hf_[A-Za-z0-9]{20,}"),
+                 re.compile(r"xox[baprs]-[A-Za-z0-9-]{10,}"), re.compile(r"AIza[0-9A-Za-z_\-]{20,}"), re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY"),
+                 re.compile(r"(?i)(api[_-]?key|secret|token|authorization)\s*[:=]\s*\S{8,}"))
 
 
 class DeterminismError(RuntimeError):
@@ -48,6 +51,7 @@ class Tape:
         self.subs = sorted([(v, t) for v, t in (subs or []) if v], key=lambda p: -len(p[0]))
         self.file = self.root / "tape.jsonl"
         self.served = self.live = self.misses = 0
+        self.record_failures = 0                 # recordings that could not be stored after the live call (the tape is then incomplete)
         self.unreplayable = 0                    # calls a tape cannot hold (a claude_code sub-agent turn), counted in record mode
         self._seen: dict[str, int] = {}
         self._rows: dict[str, list[dict]] = {}
@@ -55,19 +59,26 @@ class Tape:
             if not self.file.is_file():
                 raise DeterminismError(f"no recording at {self.file}")
             for line in self.file.read_text().splitlines():
-                r = json.loads(line)
+                try:
+                    r = json.loads(line)
+                except ValueError:
+                    raise DeterminismError(f"{self.file} is damaged (a line is not JSON; a killed recording?)") from None
                 self._rows.setdefault(r["key"], []).append(r)
             self.header = self._rows.pop("__header__", [{}])[0]
         else:
             self.root.mkdir(parents=True, exist_ok=True)
             self.header = {}
+            if self.file.is_file() and self.file.stat().st_size:
+                raise DeterminismError(f"{self.file} already holds a recording: appending would duplicate request keys; use a new --tape directory or replay it")
 
     # -- privacy ---------------------------------------------------------------------------------------------------
     @staticmethod
     def check_location(root: Path) -> None:
         """A tape holds model output that can quote private prompts: refuse a path git would track."""
         root = Path(root).resolve()
-        d = root if root.exists() else root.parent
+        d = root
+        while not d.exists():                       # the nearest existing ancestor: a new nested path is still inside the checkout
+            d = d.parent
         try:
             top = subprocess.run(["git", "-C", str(d), "rev-parse", "--show-toplevel"], capture_output=True, text=True).stdout.strip()
         except OSError:
@@ -90,6 +101,7 @@ class Tape:
 
     # -- keys ------------------------------------------------------------------------------------------------------
     def _norm(self, text: str) -> str:
+        text = text.replace("<<", "<<lt>>")             # a literal placeholder-looking string must survive the round trip
         for v, tok in self.subs:
             text = text.replace(v, tok)
         return text
@@ -97,7 +109,7 @@ class Tape:
     def _denorm(self, text: str) -> str:
         for v, tok in self.subs:
             text = text.replace(tok, v)
-        return text
+        return text.replace("<<lt>>", "<<")
 
     def request(self, e: Any, messages: list[dict], tools: list[dict] | None) -> dict[str, Any]:
         opts = {k: v for k, v in sorted(e.options.items()) if k not in KEY_IGNORED_OPTIONS}
@@ -166,6 +178,7 @@ class Tape:
     def _store(self, req: dict, reply: dict) -> None:
         text = self._norm(json.dumps(reply, ensure_ascii=False, default=str))      # insertion order kept: a replayed reply is the same bytes
         if any(p.search(text) for p in _KEY_PATTERNS):
+            self.record_failures += 1
             raise DeterminismError(f"a {req['purpose']} reply holds something that looks like a key: not recorded (the run is stopped)")
         n = self._seen.get(req["key"], 0)
         self._seen[req["key"]] = n + 1
@@ -191,4 +204,5 @@ class Tape:
             out["unused_recordings"] = self.unused()
         else:
             out["unreplayable_calls"] = self.unreplayable
+            out["record_failures"] = self.record_failures
         return out

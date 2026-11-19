@@ -1584,7 +1584,14 @@ def new_runtime(cfg: Config, client: Callable | None = None, run_id: str | None 
     rt = Runtime(cfg, run_id, run_dir, design, sess, client, Meter(cfg.run_limits), Snapshots(run_dir, design),
                  oracle_llm=oracle_llm, resolver=resolver)
     _RT[run_id] = rt
+    prior = None
+    try:                                                    # brief 107: a resume keeps the earlier determinism block in a history
+        pj = json.loads((run_dir / "config.json").read_text())
+        prior = [*(pj.get("determinism_history") or []), *([pj["determinism"]] if pj.get("determinism") else [])] or None
+    except (OSError, ValueError):
+        pass
     (run_dir / "config.json").write_text(json.dumps({**{k: str(v) for k, v in cfg.__dict__.items()},
+                                                     **({"determinism_history": prior} if prior else {}),
                                                      "run_limits": cfg.run_limits, "profile": cfg.profile,
                                                      "roles": cfg.roles or {}, "role_models": cfg.role_models(),
                                                      "oracle_model": oracle_model_name(cfg),
@@ -1603,8 +1610,8 @@ def determinism_level_at_end(resolver) -> int:
     if t is None:
         return 0
     if t.mode == "replay":
-        return 2 if t.live == 0 and t.misses == 0 else 0
-    return 1 if resolver.level1 and t.unreplayable == 0 else 0
+        return 2 if t.live == 0 and t.misses == 0 and t.unused() == 0 else 0      # a partial replay (unused recordings) is not the whole run
+    return 1 if resolver.level1 and t.unreplayable == 0 and t.record_failures == 0 else 0
 
 
 def checkpointer_for(run_dir: Path):
