@@ -68,7 +68,7 @@ def score_change(rec: dict[str, Any], truth: dict[str, Any]) -> dict[str, Any]:
             g = o["gain"]
             out["changes"][name] = {"found": True, "option": o["id"], "title": o["title"], "gain": [g["low"], g["high"]], "basis": g["basis"], "measured": ch["measured_gain"],
                                     "in_range": g["low"] <= ch["measured_gain"] <= g["high"], "over": round(g["high"] - ch["measured_gain"], 3),
-                                    "names_carry_save": any(k in (o["approach"] + " " + " ".join(o.get("techniques") or [])).lower() for k in ("carry-save", "carry save", "csa", "3:2", "compress"))}
+                                    "names_carry_save": any(k in (o["title"] + " " + o["approach"] + " " + " ".join(o.get("techniques") or [])).lower() for k in ("carry-save", "carry save", "csa", "3:2", "compress"))}
         else:
             out["changes"][name] = {"found": False, "measured": ch["measured_gain"]}
     out["other_options"] = [{"id": o["id"], "title": o["title"], "scope": o["scope"]["components"], "scope_kind": o["scope"]["kind"], "gain": [o["gain"]["low"], o["gain"]["high"]],
