@@ -52,7 +52,7 @@ designs/b96_kr260_10g/host/b96c_ppm.py a5a5b3d64e: board driver for the ppm swee
 designs/b96_kr260_10g/rtl/hs_vec.sv bb5cad4fa9: coherent vector crossing
 designs/b96_kr260_10g/model/pcs.py 92790d45d7: bit-serial Python reference of the PCS (the twin)
 designs/b96_kr260_10g/design.xdc 4dec8c5ba8: pins, clocks, slow-pin constraints
-designs/b96_kr260_10g/docs/design.md 06e9999a77: design note: decisions and alternatives
+designs/b96_kr260_10g/docs/design.md 237a6b73c0: design note: decisions and alternatives
 designs/b96_kr260_10g/docs/board_run_plan.md 678413f0be: stage 3 plan for the board
 designs/b96_kr260_10g/docs/what_we_found.md 376623bbd5: results and gaps
 designs/b96_kr260_10g/regmap.py 5146c294c8: register map as data
@@ -109,6 +109,7 @@ M11 latency tick_to_trade_own_buffer_clocks=13 clocks R7#results.rate_match_1_rm
 [protocol] No link-fault state machine, BER monitor, ARP or ICMP responder; ordered sets are counted and shown as idles; receive does not check preamble, runts or jumbo frames; the transmit MAC does not pad.
 [throughput] The line rate and the 10 Gb/s payload rate are by configuration and by the gearbox arithmetic; no throughput or error-rate measurement exists because nothing ran on a board.
 [build] The 96C builds of the latency variant with the buffer (rm_all3) and its ppm twin hit the 6 GiB scope cap about 1000 times and used about 700 MiB of swap (the base build did not); the Vivado resident peak of the base build is 4439 MiB. all3 closes timing with 0.004 ns of setup slack, which is thin.
+[constraints] The per-entry data path to the first synchroniser flop (write-clock entry flop to the first `xpm_cdc_array_single` flop) has no max-delay bound: the one-clock margin of `ENT_SYNC = 1` covers normal routing, but it is not constrained.
 
 ## next_actions
 1. Run docs/board_run_plan.md steps 1 to 4 on the KR260 (laser polarity first), then the NIC steps after the owner buys a card and cable.

@@ -392,7 +392,7 @@ The read pointer crosses back the same way; the writer stops at 16 outstanding b
 Latency is set by the pointer crossing, not by the data path: removing the data synchronisers (variant 2) is one clock faster only because the pointer has two flops instead of three; the data synchronisers themselves ran in parallel with the pointer.
 
 **MTBF, stated.** The pointers and (variant 1) every data bit cross in two-flop `ASYNC_REG` synchronisers (`xpm_cdc_gray`, `xpm_cdc_array_single`: the structure whose MTBF AMD documents) at 161 MHz. Variant 1's one-clock settling margin is the standard "wait one more clock before using multi-bit data" rule; it is checked in simulation (the twin, the whole-core bench), not proved.
-Caveat: the gray pointer assumes at most one step per destination clock, which a write clock up to 200 ppm faster can break briefly (the macro has the same exposure; the Icarus stand-ins cannot test it).
+Known gap: The per-entry data path to the first synchroniser flop (write-clock entry flop to the first `xpm_cdc_array_single` flop) has no max-delay bound: the one-clock margin of `ENT_SYNC = 1` covers normal routing, but it is not constrained. Caveat: the gray pointer assumes at most one step per destination clock, which a write clock up to 200 ppm faster can break briefly (the macro has the same exposure; the Icarus stand-ins cannot test it).
 
 ### The builds (`rm_gp`, `rm_gp_direct`)
 

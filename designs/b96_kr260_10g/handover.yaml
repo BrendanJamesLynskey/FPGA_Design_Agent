@@ -162,7 +162,7 @@ files:
   sha256: 4dec8c5ba8f6dccc6273f45d40a7d95a6668f5fe09350c0a0d80cc6c07ea1118
 - path: designs/b96_kr260_10g/docs/design.md
   what: 'design note: decisions and alternatives'
-  sha256: 06e9999a77c745745e708dd8333a88a8b698e23e3353fdaaad2da0d64cdf8ff0
+  sha256: 237a6b73c01cdc641fc0de03cc1e0f0cbf313aae3d42195de51fed7662f9580b
 - path: designs/b96_kr260_10g/docs/board_run_plan.md
   what: stage 3 plan for the board
   sha256: 678413f0be0f0c2692b2d1118cd8a8e54ec6514bd5e643485402e34ecc83c61b
@@ -392,6 +392,9 @@ gaps:
   text: The 96C builds of the latency variant with the buffer (rm_all3) and its ppm twin hit the 6 GiB scope cap about 1000
     times and used about 700 MiB of swap (the base build did not); the Vivado resident peak of the base build is 4439 MiB.
     all3 closes timing with 0.004 ns of setup slack, which is thin.
+- about: constraints
+  text: 'The per-entry data path to the first synchroniser flop (write-clock entry flop to the first `xpm_cdc_array_single`
+    flop) has no max-delay bound: the one-clock margin of `ENT_SYNC = 1` covers normal routing, but it is not constrained.'
 next_steps:
 - Run docs/board_run_plan.md steps 1 to 4 on the KR260 (laser polarity first), then the NIC steps after the owner buys a
   card and cable.
