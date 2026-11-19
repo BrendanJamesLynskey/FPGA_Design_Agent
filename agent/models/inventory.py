@@ -56,13 +56,14 @@ SITES: list[dict[str, object]] = [
      "before": "--model (Claude Code)"},
     {"file": "designs/b100_rapidwright/agent_run/run_arm.py", "fn": "main", "purposes": ["rtl"], "needs": "agent", "prompts": ["public: run_arm.py SYSTEM"],
      "before": "the script's MODEL constant (Claude Code arm); a recorded experiment"},
+    {"file": "flow/options/generate.py", "fn": "improve (agent improve)", "purposes": ["options"], "needs": "text",
+     "prompts": ["graph/options/system", "graph/options/user", "graph/options/repair"], "before": "new in brief 104"},
     {"file": "agent/models/resolver.py", "fn": "Resolver.probe (agent models check --probe)", "purposes": ["*"], "needs": "chat", "prompts": [],
      "before": "new in brief 108"},
 ]
 
 #: purposes with no call site today, and why
 RESERVED = {
-    "options": "brief 104's strategy generator is not built",
     "embed": "the only embeddings are fastembed's local BAAI/bge-small-en-v1.5 in agent/core/skill_index.py (in-process, tied to the bank's stored "
              "vectors; a different embedder needs the bank's vectors rebuilt), so it is not routed through the resolver",
 }

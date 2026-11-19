@@ -1,0 +1,294 @@
+{
+ "current": {
+  "schema": "fda-strategy-record/1",
+  "request": "reach a higher clock rate",
+  "mode": "new",
+  "blind": false,
+  "analysis_hash": "5c4ba5c65774232f34f252a90d6cc1eac42a6a25ddea625eb79b72cc809c696c",
+  "analysis_sources": [
+   {
+    "file": "results/102_managed/build_base/timing_summary.rpt",
+    "sha256": "fa23f0538706066fc950019eaf9a2da4756ba7caad8f0caf60746936f3579cf2",
+    "bytes": 136817
+   }
+  ],
+  "options_schema": "fda-options/1",
+  "model": {
+   "purpose": "options",
+   "endpoint": "claude_code",
+   "kind": "claude_code",
+   "model": "claude-sonnet-5-5",
+   "effort": "medium",
+   "entry_hash": "f3f2d8f85ded614e",
+   "table_hash": "fefa480b88108b19"
+  },
+  "attempts": 1,
+  "prompts": {
+   "system": {
+    "name": "graph/options/system",
+    "sha256": "5776ae375ac6b124a3bf89d14306c7a3270f40b4c5a12afee05c4b968f293e63"
+   },
+   "user": {
+    "name": "graph/options/user",
+    "sha256": "30be8dfd004dac0b443bd9284b0dc2e6b83fc244eb9e18ea65491314bed01ede"
+   },
+   "repair": {
+    "name": "graph/options/repair",
+    "sha256": "bb56b4a42f41d6b2e0b4df594b108893c63648374235a7d5d2b5224fc192f8b0"
+   }
+  },
+  "created": "2026-11-19 16:00:36",
+  "goal": "timing",
+  "status": "options",
+  "question": null,
+  "options": [
+   {
+    "id": "O1",
+    "title": "Tighten the clk_25 constraint and find the real limit",
+    "scope": {
+     "kind": "whole_design",
+     "components": [
+      "top",
+      "ctrl"
+     ],
+     "cli": "--scope top,ctrl"
+    },
+    "approach": "Re-run synthesis and route with a shorter clk_25 period, starting near 4.0 ns and stepping down, and read which path fails first and in which component. No RTL is changed in this step. The frozen crc netlist is untouched, and its internal paths set a floor that the owned logic cannot lower.",
+    "techniques": [
+     "constraint_change",
+     "timing_exploration"
+    ],
+    "touches_stages": [],
+    "stage_components": {},
+    "gain": {
+     "metric": "wns_ns",
+     "unit": "ns",
+     "low": 0,
+     "high": 3.594,
+     "basis": "model",
+     "cites": [
+      "timing.wns_ns",
+      "clock.clk_25.period_ns"
+     ],
+     "basis_note": "The routed design meets the current 6.206 ns period with 3.594 ns of slack, so the period could shrink by at most 3.594 ns, to about 2.6 ns. This is headroom, not a guaranteed gain. The worst path component is not in the analysis, so the low end is 0.",
+     "ceiling": null,
+     "ceiling_basis": "no clock period known",
+     "sources": [
+      "results/102_managed/build_base/timing_summary.rpt"
+     ]
+    },
+    "cost": {
+     "iterations": {
+      "low": 2,
+      "high": 4
+     },
+     "vivado_runs": {
+      "low": 2,
+      "high": 4
+     },
+     "wall_minutes": null,
+     "model_usd": null,
+     "note": "Each period step needs a full route. The worst path is unknown, so several steps are likely.",
+     "basis": "iterations are the generator's estimate (a guess); no recorded build time, so no wall-time figure"
+    },
+    "risk": {
+     "gates": [
+      "timing met with WNS >= 0 after route at the new period",
+      "whole-core bench passes unchanged"
+     ],
+     "contract_change": false,
+     "contract_flags": [],
+     "contract_flag_added_by_checker": false,
+     "needs_owner_approval": false,
+     "needs_eqy": false,
+     "needs_board": false,
+     "summary": "The design may fail early at a path inside the frozen crc netlist, which this option cannot fix. Clock pin and I/O limits on the board are not visible in the analysis.",
+     "contract_note": "Only constraints change. No ports or registers move."
+    },
+    "interface_changes": [],
+    "not_touched": [
+     {
+      "component": "crc",
+      "why": "frozen: read only"
+     }
+    ],
+    "hidden_components": 1,
+    "n": 1
+   },
+   {
+    "id": "O2",
+    "title": "Pipeline the verdict and compare logic in ctrl",
+    "scope": {
+     "kind": "modules",
+     "components": [
+      "ctrl"
+     ],
+     "cli": "--scope ctrl"
+    },
+    "approach": "After O1 (or from the first failing path report) shows the worst path, add a register stage inside ctrl on the longest path, most likely the FCS compare or the sequencer decode. Do not change the ctrl ports or the crc interface. Do not touch the crc netlist.",
+    "techniques": [
+     "pipeline_path",
+     "retiming"
+    ],
+    "touches_stages": [],
+    "stage_components": {},
+    "gain": {
+     "metric": "wns_ns",
+     "unit": "ns",
+     "low": 0,
+     "high": 1.5,
+     "basis": "guess",
+     "cites": [],
+     "basis_note": "Guess. The analysis does not name the worst path or its component and has no per-module resource data. The range is wide on purpose and stays below one clock period of 6.206 ns.",
+     "ceiling": null,
+     "ceiling_basis": "no clock period known",
+     "sources": []
+    },
+    "cost": {
+     "iterations": {
+      "low": 2,
+      "high": 5
+     },
+     "vivado_runs": {
+      "low": 2,
+      "high": 5
+     },
+     "wall_minutes": null,
+     "model_usd": null,
+     "note": "Needs a path report first, then an edit, a route and a check of the added latency.",
+     "basis": "iterations are the generator's estimate (a guess); no recorded build time, so no wall-time figure"
+    },
+    "risk": {
+     "gates": [
+      "timing met with WNS >= 0 after route",
+      "whole-core bench and the twin pass",
+      "equivalence with the previous netlist where the added register does not change outputs"
+     ],
+     "contract_change": false,
+     "contract_flags": [],
+     "contract_flag_added_by_checker": false,
+     "needs_owner_approval": false,
+     "needs_eqy": true,
+     "needs_board": false,
+     "summary": "An added stage can change the verdict timing or frame latency that top relies on. It only helps if the worst path is in ctrl and not in crc.",
+     "contract_note": "The register is kept inside ctrl. If it delays the verdict seen by top, the ctrl contract must be rechecked."
+    },
+    "interface_changes": [],
+    "not_touched": [
+     {
+      "component": "top",
+      "why": "owned, outside this option's scope"
+     },
+     {
+      "component": "crc",
+      "why": "frozen: read only"
+     }
+    ],
+    "hidden_components": 1,
+    "n": 2
+   },
+   {
+    "id": "O3",
+    "title": "Try other synthesis and placement strategies",
+    "scope": {
+     "kind": "whole_design",
+     "components": [
+      "top",
+      "ctrl"
+     ],
+     "cli": "--scope top,ctrl"
+    },
+    "approach": "Re-run the build with a performance-oriented synthesis strategy and a different placement and routing directive at a tightened clk_25 period. Also register the power-on reset in top and limit its fanout. Make no changes to ctrl logic or to the crc netlist.",
+    "techniques": [
+     "tool_strategy",
+     "constraint_change",
+     "reset_fanout"
+    ],
+    "touches_stages": [],
+    "stage_components": {},
+    "gain": {
+     "metric": "wns_ns",
+     "unit": "ns",
+     "low": 0,
+     "high": 0.5,
+     "basis": "guess",
+     "cites": [],
+     "basis_note": "Guess. Strategy changes usually give a small slack change. The analysis has no data on fanout or on the worst path, so this is not derived from a fact.",
+     "ceiling": null,
+     "ceiling_basis": "no clock period known",
+     "sources": []
+    },
+    "cost": {
+     "iterations": {
+      "low": 2,
+      "high": 6
+     },
+     "vivado_runs": {
+      "low": 2,
+      "high": 6
+     },
+     "wall_minutes": null,
+     "model_usd": null,
+     "note": "Several strategy combinations may be needed, each a full build.",
+     "basis": "iterations are the generator's estimate (a guess); no recorded build time, so no wall-time figure"
+    },
+    "risk": {
+     "gates": [
+      "timing met with WNS >= 0 after route",
+      "whole-core bench passes",
+      "reset release timing checked in simulation"
+     ],
+     "contract_change": true,
+     "contract_flags": [
+      "top: reset: register the power-on reset, which retimes reset release by one clock"
+     ],
+     "contract_flag_added_by_checker": true,
+     "needs_owner_approval": true,
+     "needs_eqy": false,
+     "needs_board": false,
+     "summary": "The gain is small and uncertain. Results vary between runs, and a reset delay may affect the frozen crc, which must be checked.",
+     "contract_note": "Reset is wired in top. The reset register adds a clock of delay on reset release to ctrl and crc, so check that the neighbours accept it."
+    },
+    "interface_changes": [
+     {
+      "component": "top",
+      "port": "reset",
+      "change": "register the power-on reset, which retimes reset release by one clock"
+     }
+    ],
+    "not_touched": [
+     {
+      "component": "crc",
+      "why": "frozen: read only"
+     }
+    ],
+    "hidden_components": 1,
+    "n": 3
+   }
+  ],
+  "rejected": [],
+  "notes": [],
+  "unresolved": [],
+  "wall_s": 19.3,
+  "options_hash": "2f417a875dec62739ef749964ee6226b846e540af22d58d1d06b44536d10d4e9"
+ },
+ "history": [],
+ "analysis": {
+  "schema": "fda-analysis/1",
+  "design": "b102_managed_fcs",
+  "hash": "5c4ba5c65774232f34f252a90d6cc1eac42a6a25ddea625eb79b72cc809c696c",
+  "sources": [
+   {
+    "file": "results/102_managed/build_base/timing_summary.rpt",
+    "sha256": "fa23f0538706066fc950019eaf9a2da4756ba7caad8f0caf60746936f3579cf2",
+    "bytes": 136817
+   }
+  ],
+  "gaps": [
+   "no per-module utilisation report (utilization_hier.rpt): resources per module are unknown; the agent can offer to build",
+   "no report_cdc summary: clock crossings are known only from the design's stage file",
+   "no latency_stages.yaml: the design has not declared its latency chain, so latency by stage is unknown"
+  ]
+ },
+ "choice": null
+}

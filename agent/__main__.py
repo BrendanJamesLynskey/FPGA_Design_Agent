@@ -8,6 +8,7 @@
     python -m agent review <design-dir> [--out DIR] [--intent FILE] [--improvements FILE] [--no-judge]   (brief 84: review an existing design, read-only)
     python -m agent document <run-dir> [--cc-model M] [--replay doc_calls.jsonl]   (brief 68 C: the DOC step on a finished run)
     python -m agent project check|status|hash|gen-tests <dir> ...     (the project layer, project/cli.py)
+    python -m agent improve <design-dir> "<request>" [--more | --edit N "<change>" | --choose N]   (brief 104: analysis, then strategy options; --choose runs one)
 
 A paused run (an interview question or a stage review) prints what it waits for; answer with ``resume --reply``
 ({"answer": ...} for a question; {"decision": "approve"|"edit"|"rewind", "note": ..., "to": N} for a review).
@@ -33,6 +34,10 @@ def with_scope(s: dict, design: Path) -> dict:
     if f.is_file():
         sc = json.loads(f.read_text())
         s = {**s, "scope": {k: sc[k] for k in ("components", "source", "request", "note", "plan", "time") if k in sc}}
+    from flow.options.cli import strategy_for_run      # brief 104: the strategy the request came from (analysis, options offered, the choice), when `agent improve` made it
+    st = strategy_for_run(Path(design))
+    if st is not None:
+        s = {**s, "strategy": st}
     return s
 
 
@@ -236,6 +241,13 @@ def pickup_cmd(a) -> int:
     report["run_id"] = rt.run_id
     if scope is not None:                            # the scope and the plan go to the run's design copy, where its tools read them
         managed.start_run(managed.load(Path(rt.design)), scope)
+    if getattr(a, "strategy_file", None):            # brief 104: the options the request was chosen from go with the run
+        import shutil
+        dst = Path(rt.design) / "build" / "managed" / "strategy.json"
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(a.strategy_file, dst)
+        shutil.copyfile(a.strategy_file, rt.run_dir / "strategy.json")
+        report["strategy"] = {"file": "strategy.json", "chosen": (json.loads(Path(a.strategy_file).read_text()).get("choice") or {}).get("chosen")}
     (rt.run_dir / "resume.json").write_text(json.dumps(report, indent=1))
     print(json.dumps(report, indent=1))
     replies = json.loads(a.replies.read_text()) if a.replies else []
@@ -349,6 +361,7 @@ def main(argv: list[str] | None = None) -> int:
     rs.add_argument("--dry-run", action="store_true", help="design resume: report the freshness and the entry stage only")
     rs.add_argument("--scope", help="design resume of a managed project: the components or hierarchy paths this request may touch "
                                     "(comma separated; default: resolved from the change text, else every owned component)")
+    rs.add_argument("--strategy-file", type=Path, help="design resume: the strategy.json `agent improve --choose` saved (the options offered and the choice go into the run record)")
     rs.add_argument("--stop-after", type=int)
     rs.add_argument("--board", type=board_name, help="design resume: default the handover's target.board when it names a board directory")
     rs.add_argument("--model", default="openai/gpt-6-luna")
@@ -388,12 +401,17 @@ def main(argv: list[str] | None = None) -> int:
     md.add_argument("--probe", action="store_true", help="check: also make one minimal call per endpoint in use (spends tokens)")
     from agent.graph.latency_loop import add_parser as _latency_parser    # brief 97
     _latency_parser(sub)
+    from flow.options.cli import add_parser as _improve_parser           # brief 104
+    _improve_parser(sub)
     a = ap.parse_args(argv)
     if a.cmd == "models":
         return models_cmd(a, args)
     if a.cmd == "latency":
         from agent.graph.latency_loop import latency_cmd
         return latency_cmd(a)
+    if a.cmd == "improve":
+        from flow.options.cli import improve_cmd
+        return improve_cmd(a, main)
     if a.cmd == "review":
         return review_cmd(a)
     if a.cmd == "document":

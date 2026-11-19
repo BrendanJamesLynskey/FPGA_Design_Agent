@@ -1,0 +1,191 @@
+# latency_stages.yaml: every register and clock crossing on the wire-to-wire chain of b96_kr260_10g (brief 97).
+# Read by flow/latency (the agent's `latency_path` and `latency_budget` tools). Two kinds of fact live here:
+#   - structure: which register or crossing each stage is, in which clock domain, why it exists and what removing it risks
+#     (written from the RTL; docs/design.md section 3 lists the same registers);
+#   - the stage's clocks: the sum over a segment must equal what the benches measure (results/b96/core_sim.json from
+#     tests/core_cocotb.py, and latency_sim.json from tests/pcs_mac_cocotb.py); the tool refuses a table that does not reconcile.
+# "clocks" is the delay a stage adds on the chain, counted from the clock edge that captures the GT word holding the price
+# (or the start block). A stage that is only the capture edge adds 0.
+schema: fda.latency_stages/1
+design: b96_kr260_10g
+period_ns: 6.2058             # 1 / 161.1328125 MHz; TXUSRCLK2 and RXUSRCLK2 have the same nominal rate
+domains:
+  rx: {clock: rxusr2, note: recovered clock, equal to the line rate within the partner's ppm}
+  tx: {clock: txusr2, note: TX reference clock, independent of rx}
+  gt: {clock: line, note: the GTH's own serialiser, CDR, buffers; not simulated, measured on the board}
+
+# How the tool refreshes the simulated numbers: this pytest runs the whole-core bench, which writes the JSON named by the env variable.
+trace:
+  pytest: designs/b96_kr260_10g/tests/test_b96_pcs_rtl.py::test_core_cocotb
+  results_env: B96_CORE_RESULTS
+  results_file: evidence/core_sim.json
+slack:
+  file: evidence/latency_slack.json   # written by flow/latency/netlist_slack.tcl on a post-route checkpoint (the stages' register patterns)
+
+paths:
+  tick_to_trade:
+    title: "tick-to-trade: price word on the receive GT port -> order's start block on the transmit GT port"
+    # the measured quantity every stage sum must equal (path into results/b96/core_sim.json)
+    measured: {file: core_sim.json, key: "tick_to_trade_digital_sim.gt_rxdata_price_word_to_gt_txdata_order_start_clocks"}
+    segments:
+      - id: gt_to_mac_reg
+        measured: {file: core_sim.json, key: "tick_to_trade_digital_sim.price_word_captured_at_gt_to_mac_register_clocks"}
+      - id: mac_reg_to_fire
+        measured: {file: core_sim.json, key: "tick_to_trade_digital_sim.mac_register_to_fire_register_clocks"}
+      - id: fire_to_go
+        measured: {file: core_sim.json, key: "tick_to_trade_digital_sim.fire_register_to_go_pulse_in_tx_domain_clocks"}
+      - id: go_to_preamble
+        measured: {file: core_sim.json, key: "tick_to_trade_digital_sim.go_pulse_to_order_preamble_in_mac_register_clocks"}
+      - id: preamble_to_start_block
+        measured: {value: 2, note: "pcs bench: the start block's last bit is on TXDATA 2 clocks after the preamble is in the MAC register (3 at some gearbox phases)"}
+    stages:
+      - id: rx_blk
+        segment: gt_to_mac_reg
+        name: "pcs_rx stage A (gearbox remainder + extracted 66-bit block `blk`)"
+        domain: rx
+        kind: reg
+        clocks: 0
+        registers: ["*u_rx/u_pr/blk_reg[*]", "*u_rx/u_pr/acc_reg[*]"]
+        why: "the receive gearbox: a 64-bit RAW word is merged with the remainder and bit-slipped to find the 66-bit block"
+        remove_risk: "this is the capture edge itself; it cannot be removed, only merged with stage B (a longer path in front of the register)"
+        technique: none
+        removable: 0
+      - id: rx_descramble
+        segment: gt_to_mac_reg
+        name: "pcs_rx stage B (descramble + decode into x_d, x_c, x_v)"
+        domain: rx
+        kind: reg
+        clocks: 1
+        registers: ["*u_rx/u_pr/x_d_reg[*]", "*u_rx/u_pr/x_c_reg[*]"]
+        why: "58-bit self-synchronising descrambler and block-type decode, kept separate from the extraction (the 192-bit shifter plus a 64-bit XOR tree did not close at 161 MHz in design)"
+        remove_risk: "merging A and B puts barrel shift, descramble and decode in one clock; the block-lock FSM reads the same block registers; timing is the risk, function is not"
+        technique: merge_stages
+        removable: 1
+      - id: rx_mac
+        segment: gt_to_mac_reg
+        name: "mac64_rx output register (m_d, m_v, m_sof, m_nb)"
+        domain: rx
+        kind: reg
+        clocks: 1
+        registers: ["*u_rx/u_mr/m_d_reg[*]", "*u_rx/u_mr/m_v_reg"]
+        why: "realigns frames that start in lane 4 to word boundaries (hold register) and runs the CRC; trade64 reads aligned words"
+        remove_risk: "lane-4 starts need the hold register; the MAC alignment is checked by the S0/S4 benches and the frame twin"
+        technique: merge_stages
+        removable: 1
+      - id: decide
+        segment: mac_reg_to_fire
+        name: "trade64 decision register (`fire`, o_price, o_inst)"
+        domain: rx
+        kind: reg
+        clocks: 1
+        registers: ["*u_rx/u_td/fire_reg", "*u_rx/u_td/o_price_reg[*]"]
+        why: "the price compare (price <= thr, 32 bits) and the arm/kill/enable interlock are registered before the order is requested"
+        remove_risk: "an early decision from the lower word bytes is a design change (the price is complete only in word 7); removing the register puts the compare in front of the crossing flop"
+        technique: merge_stages
+        removable: 1
+      - id: cross_go
+        segment: fire_to_go
+        name: "receive-to-transmit crossing of the go pulse (xpm_cdc_pulse u_p_go: toggle flop, 2 synchroniser flops, edge detect, output register)"
+        domain: rx->tx
+        kind: cdc
+        clocks: 4
+        registers: ["*u_p_go/*"]
+        why: "the order is requested in the recovered-clock domain and sent in the transmit-clock domain; the two clocks are independent"
+        remove_risk: "fewer synchroniser flops raise the metastability failure rate (MTBF); the order bus beside the pulse is sampled 4 clocks later by frame_src, so an earlier pulse must still find the bus settled (`stale` counts misses); the quasi-static bus uses 3 flops"
+        technique: shorten_cdc
+        removable: 1
+      - id: fs_start
+        segment: go_to_preamble
+        name: "frame_src start -> s_valid, s_data (word 0)"
+        domain: tx
+        kind: reg
+        clocks: 1
+        registers: ["*u_tx/u_fs/s_valid_reg", "*u_tx/u_fs/s_data_reg[*]"]
+        why: "the frame source raises s_valid the clock after `start`; the MAC takes the preamble when it sees s_valid"
+        remove_risk: "the MAC takes the preamble when it sees s_valid; the preamble word itself does not depend on the frame data, and word 0 depends only on the configuration"
+        technique: precompute
+        removable: 1
+      - id: mac_preamble
+        segment: go_to_preamble
+        name: "mac64_tx output register (x_d = preamble word, sop)"
+        domain: tx
+        kind: reg
+        clocks: 1
+        registers: ["*u_tx/u_mt/x_d_reg[*]", "*u_tx/u_mt/sop_reg"]
+        why: "XGMII word register in front of the PCS"
+        remove_risk: "the PCS gearbox pause (adv low one clock in 33) and the MAC's hold-while-paused rule use this register; the poison and CRC logic is behind it"
+        technique: merge_stages
+        removable: 1
+      - id: tx_encode
+        segment: preamble_to_start_block
+        name: "pcs_tx gt_d (encode, scramble, gearbox in one register)"
+        domain: tx
+        kind: reg
+        clocks: 1
+        registers: ["*u_tx/u_pt/gt_d_reg[*]", "*u_tx/u_pt/acc_reg[*]"]
+        why: "first bit of the start block is on TXDATA one clock after the MAC register"
+        remove_risk: "already one stage; encode and scramble are in front of it (the registers cannot be removed, only the MAC register before it)"
+        technique: none
+        removable: 0
+      - id: tx_spill
+        segment: preamble_to_start_block
+        name: "gearbox spill (a 66-bit block never fits one 64-bit word)"
+        domain: tx
+        kind: structure
+        clocks: 1
+        registers: []
+        why: "the last bit of the start block is in the next 64-bit word"
+        remove_risk: "set by the 64-bit RAW interface; a 66-bit GT interface (64B66B gearbox in the GT) would remove it at the cost of the Wizard's encoding mode and the scrambler behind IP"
+        technique: gt_gearbox
+        removable: 0
+
+  echo:
+    title: "echo: probe frame start in the MAC (TX) -> start of the same frame in the RX MAC, through the GT (sim stand-in / board)"
+    measured: {file: core_sim.json, key: "echo_clocks_sim.max"}
+    segments:
+      - id: tx_side
+        measured: {value: 2, note: "pcs bench: MAC register to the start block's last bit on TXDATA"}
+      - id: rx_side_sim
+        measured: {residual: true}
+    stages:
+      - id: echo_tx_pcs
+        segment: tx_side
+        name: "pcs_tx (first bit + spill)"
+        domain: tx
+        kind: reg
+        clocks: 2
+        registers: ["*u_tx/u_pt/gt_d_reg[*]"]
+        why: "same as the tick-to-trade chain, transmit side"
+        remove_risk: "as there"
+        technique: none
+        removable: 0
+      - id: echo_to_rx_stamp
+        segment: rx_side_sim
+        name: "GT stand-in + pcs_rx + the rx-start strobe + its crossing to the stamp counter (sim)"
+        domain: rx->tx
+        kind: measurement
+        clocks: -1
+        registers: ["*u_p_so/*"]
+        why: "the echo E stamps the receive start in the TX domain, so it includes the stand-in, the PCS receive latency and the stamp crossing (design.md section 6)"
+        remove_risk: "the stamp crossing cancels in L - E; it is not on the tick-to-trade chain"
+        technique: none
+        removable: 0
+
+# What the board adds (results/b96/hw/*/stage3.json; the GT and optics are not simulated). Board medians in clocks of 6.2058 ns.
+board:
+  file: board_stage3.json
+  echo_clocks_key: restarts.E_max_per_link.median        # median over 100 restarts of the per-link maximum echo
+  loop_clocks_key: restarts.L_max_per_link.median
+  fibre_one_way_ns_key: fibre_one_way_ns
+  # the 96 report's own accounting: the GT plus optics share of the echo is E minus the digital PCS+MAC clocks of the echo
+  digital_echo_clocks: 5
+  gt_optics_stage:
+    id: gt_tx_rx_optics
+    name: "GTH TX (buffer, PISO, driver) + module optics + fibre + GTH RX (CDR, SIPO, buffer, user interface), counted once"
+    domain: gt
+    kind: gt
+    why: "serialiser, CDR and the TX and RX phase-alignment buffers of the GTH; the optics and fibre (0.17 m = 0.8 ns)"
+    remove_risk: "buffer bypass gives a fixed latency per link-up but needs the Wizard's alignment procedure, a second configuration and a board run; deterministic latency per link-up is a requirement"
+    technique: gt_buffer_bypass
+    source: "derived (board echo minus the digital echo clocks the 96 report counts)"
+    removable_estimate_clocks: unknown       # not cited from UG576 here; a board run measures it

@@ -15,7 +15,7 @@ Rebuild the tables without any tool: `python3 -m flow.oss_compare.run --table` a
 
 ## Headline: best Yosys arm against Vivado, same RTL and wrapper
 
-The three Vivado directives (Default, PerformanceOptimized, PerformanceOptimized with retiming) gave identical results on every block
+The three Vivado directives (Default, PerformanceOptimized, PerformanceOptimized with retiming) produced the same numbers on each block
 and part (the logs confirm each directive was applied); the wrapper already registers both ends, so retiming has nothing to move.
 Latency is two clocks at the arm's own closed period. "Spread" is the range of the achievable period over three runs (the closed clock,
 +0.01 ns and +0.02 ns); see the docs for what that does and does not measure.
