@@ -6,5 +6,10 @@
   "tx_path.sv"
  ],
  "sources_sha256": "1fac4c755f26505641ed071dbe0cb3b25cc897b38f79738e933635420b22ac0f",
- "origin": "agent_both's combinational decision (trade64) plus the hand reference's order-only early MAC start (tx_path), rebuilt for brief 96C on the rate-matched base; the old receive-to-transmit crossing edit no longer applies (the crossing is gone: rx_path now hands the decision to the transmit logic in the same clock domain)"
+ "origin": "agent_both's combinational decision (trade64) plus the hand reference's order-only early MAC start (tx_path), rebuilt for brief 96C on the rate-matched base; the old receive-to-transmit crossing edit no longer applies (the crossing is gone: rx_path now hands the decision to the transmit logic in the same clock domain)",
+ "generics": {
+  "RATE_MATCH": 0,
+  "GO_REG": 0
+ },
+ "generics_note": "brief 96E: the build parameters this variant sets in its build.yaml (GO_REG = 0 is brief 97's all3 edit of the go-pulse crossing, RATE_MATCH = 0 path); tests/test_b96_generics.py checks them against build.yaml"
 }

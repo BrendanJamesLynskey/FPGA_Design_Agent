@@ -14,7 +14,9 @@ module b96_core #(
     parameter bit          TRADE       = 1'b1,    // 1 = the mock trading path is armed to be enabled (variant b); reported in FEATURES
     parameter bit          RATE_MATCH  = 1'b0,    // 1 = brief 96C's elastic buffer on the receive path; 0 = the receive path of main 6909e43f (brief 97C); reported in FEATURES bit 3
     parameter bit          EYESCAN     = 1'b0,    // 1 = brief 96D's DRP access, eye-scan point sequencer and TX drive registers (reported in FEATURES bit 4); 0 = none (the GT's DRP and drive ports are tied as before)
-    parameter bit          GO_REG      = 1'b1     // RATE_MATCH = 0 only: REG_OUTPUT of the go-pulse crossing u_p_go (1 as on main; brief 97's latency variant all3 builds it 0)
+    parameter bit          GO_REG      = 1'b1,    // RATE_MATCH = 0 only: REG_OUTPUT of the go-pulse crossing u_p_go (1 as on main; brief 97's latency variant all3 builds it 0)
+    parameter bit          RM_DIRECT   = 1'b0,    // RM_OWN = 1 only (brief 96E): 1 = rate_match_gp with ENT_SYNC = 0 (direct read of the entry flops, build rm_gp_direct; fails report_cdc); 0 = ENT_SYNC = 1 (the default)
+    parameter bit          RM_OWN      = 1'b0     // RATE_MATCH = 1 only (brief 96E): 1 = our own gray-pointer elastic buffer (rate_match_gp.sv), 0 = the one on AMD's xpm_fifo_async (rate_match.sv); reported in FEATURES bit 5
 ) (
     input  logic        clk,
     input  logic        rst,
@@ -69,6 +71,7 @@ module b96_core #(
                   port_feed, sport, venue_ip, my_ip, venue_mac, my_mac};
 
     // ---------------------------------------------------------------- the GT Wizard core
+    logic        tx_pol_t, rx_pol_r;           // declared before the GT instance that uses them (xsim refuses the implicit declaration; brief 96E)
     logic        txusr2, rxusr2;
     logic        tx_done_t, rx_done_r, cdr_stable_c, pgood_c, cdrlock_c, txpmadone_c, rxpmadone_c, utx_act_t, urx_act_r;
     logic [63:0] tx_data, rx_data;
@@ -117,7 +120,6 @@ module b96_core #(
         .gtpowergood_out(pgood_c), .rxcdrlock_out(cdrlock_c), .rxpmaresetdone_out(rxpmadone_c),
         .rxprbserr_out(), .rxprbslocked_out(), .txpmaresetdone_out(txpmadone_c),
         .txbufstatus_out(txbuf_c), .rxbufstatus_out(rxbuf_c));
-    logic tx_pol_t, rx_pol_r;
     // the TX phase-interpolator ppm controller's controls (UG576 Table 3-33: TXUSRCLK domain, and TXUSRCLK (not TXUSRCLK2) when the internal data width is below the user width, as here): one bus into TXUSRCLK
     xpm_cdc_array_single #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(1), .WIDTH(7)) u_c_ppm (.src_clk(clk), .src_in({ppm_sel, ppm_en, ppm_step}), .dest_clk(txusr1), .dest_out({ppm_sel_t, ppm_en_t, ppm_step_t}));
     xpm_cdc_single #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(1)) u_c_tp (.src_clk(clk), .src_in(tx_pol), .dest_clk(txusr2), .dest_out(tx_pol_t));
@@ -165,7 +167,7 @@ module b96_core #(
         logic [31:0] r_price, r_qty, r_seq, r_verdict_seq;
         logic [32 * NRXV_W - 1:0] rxw_t, rxw_live;
         logic [32 * NRXV_C - 1:0] rxc_t, rxc_live;
-        rx_path u_rx (.clk(rxusr2), .rst(!rx_done_r), .clk_c(txusr2), .rst_c(!tx_done_t), .cfg(cfg_tx), .clr_w(clr_rx), .clr_c(clr_tx), .seq_c(seq_tx), .gt_d(rx_data),
+        rx_path #(.RM_OWN(RM_OWN), .RM_DIRECT(RM_DIRECT)) u_rx (.clk(rxusr2), .rst(!rx_done_r), .clk_c(txusr2), .rst_c(!tx_done_t), .cfg(cfg_tx), .clr_w(clr_rx), .clr_c(clr_tx), .seq_c(seq_tx), .gt_d(rx_data),
             .fire(r_fire), .o_inst(r_inst), .o_price(r_price), .o_qty(r_qty), .o_seq(r_seq), .verdict_v(r_verdict_v), .verdict_bad(r_verdict_bad),
             .verdict_seq(r_verdict_seq), .rx_sop(r_sop), .cls_feed(r_feed), .cls_order(r_order), .cls_probe(r_probe), .lock(pcs_lock_rx),
             .rx_vec_w(rxw_t), .rx_vec_c(rxc_t));
@@ -333,7 +335,7 @@ module b96_core #(
         case (h_addr)
             12'h000: rd = ID;
             12'h004: rd = BUILD_STAMP;
-            12'h008: rd = {27'd0, EYESCAN, RATE_MATCH, TRADE, NEAR_END, 1'b1};
+            12'h008: rd = {26'd0, (RATE_MATCH && RM_OWN), EYESCAN, RATE_MATCH, TRADE, NEAR_END, 1'b1};
             12'h00C: rd = {25'd0, rx_lpm, rx_pol, tx_pol, tx_disable, loopback};
             12'h01C: rd = {25'd0, ppm_sel, ppm_en, ppm_step};
             12'h020: rd = {22'd0, rxb_seen, txb_seen, rxbuf, txbuf};

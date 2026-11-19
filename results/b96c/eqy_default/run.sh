@@ -34,7 +34,7 @@ if [ "$MODE" = mutant ]; then
   cp "$LEG" "$WORK/rx_path_legacy.sv"; sed -i "s/if (m_err) c_err <= c_err + 32'd1;/if (m_err) c_err <= c_err + 32'd2;/" "$WORK/rx_path_legacy.sv"; LEG="$WORK/rx_path_legacy.sv"
 fi
 GS="$GR/rtl/b96_pkg.sv $GR/rtl/pcs_tx.sv $GR/rtl/pcs_rx.sv $GR/rtl/mac64_tx.sv $GR/rtl/mac64_rx.sv $GR/rtl/hs_vec.sv $GR/rtl/frame_src.sv $GT $GX $GR/rtl/rx_path.sv $GC"
-NS="$N/b96_pkg.sv $N/pcs_tx.sv $N/pcs_rx.sv $N/mac64_tx.sv $N/mac64_rx.sv $N/hs_vec.sv $N/frame_src.sv $NT $N/rate_match.sv $NX $N/rx_path.sv $LEG $WORK/gate_rtl/b96_core.sv"
+NS="$N/b96_pkg.sv $N/pcs_tx.sv $N/pcs_rx.sv $N/mac64_tx.sv $N/mac64_rx.sv $N/hs_vec.sv $N/frame_src.sv $NT $N/rate_match.sv $N/rate_match_gp.sv $NX $N/rx_path.sv $LEG $WORK/gate_rtl/b96_core.sv"
 GATE_READ="read_slang $HERE/xpm_wire.sv $WORK/gth_new_bb.sv $NS --top b96_core --allow-use-before-declare -G RATE_MATCH=0 $EXTRA"
 HIDE="opt_clean -purge
 select -set keep t:\$*dff* %co:+[Q] w:* %i

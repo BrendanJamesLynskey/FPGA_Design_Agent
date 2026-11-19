@@ -7,7 +7,10 @@
 // The PCS counters are cleared only by `clr_w`, the MAC and rate-match counters by `clr_c` (so they survive a link restart; the order number is
 // also restarted by `seq_c`, brief 97C); the PCS and MAC state is held in reset by `rst` / `rst_c`.
 // The status words RXV0..RXV28 (docs/register_map.md) come out as two packed vectors, one per domain (b96_pkg: RXV_OWN_W says which is which).
-module rx_path (
+module rx_path #(
+    parameter bit RM_DIRECT = 1'b0,    // brief 96E: with RM_OWN, 1 = rate_match_gp's ENT_SYNC = 0
+    parameter bit RM_OWN = 1'b0     // brief 96E: 1 = rate_match_gp (own gray-pointer buffer, about 5 clocks), 0 = rate_match (AMD's xpm_fifo_async, 9 to 13 clocks)
+) (
     input  logic        clk,                 // RXUSRCLK2
     input  logic        rst,                 // hold while the GT's receive side is not up
     input  logic        clk_c,               // core clock (TXUSRCLK2)
@@ -50,9 +53,15 @@ module rx_path (
     logic [63:0] y_d;
     logic [7:0]  y_c;
     logic [31:0] rm_ovf, rm_wr, rm_ins, rm_del, rm_stall, rm_out, rm_drain, rm_fmin, rm_fmax;
-    rate_match u_rm (.wclk(clk), .wrst(rst), .w_v(x_v), .w_d(x_d), .w_c(x_c), .w_os(x_os), .w_lock(lock), .clr_w, .n_ovf(rm_ovf), .n_wr(rm_wr),
-        .rclk(clk_c), .rrst(rst_c), .clr_r(clr_c), .r_v(y_v), .r_d(y_d), .r_c(y_c), .r_lock(y_lock),
-        .n_ins(rm_ins), .n_del(rm_del), .n_stall(rm_stall), .n_out(rm_out), .n_drain(rm_drain), .fill_min(rm_fmin), .fill_max(rm_fmax));
+    if (RM_OWN) begin : g_own
+        rate_match_gp #(.ENT_SYNC(!RM_DIRECT)) u_rm (.wclk(clk), .wrst(rst), .w_v(x_v), .w_d(x_d), .w_c(x_c), .w_os(x_os), .w_lock(lock), .clr_w, .n_ovf(rm_ovf), .n_wr(rm_wr),
+            .rclk(clk_c), .rrst(rst_c), .clr_r(clr_c), .r_v(y_v), .r_d(y_d), .r_c(y_c), .r_lock(y_lock),
+            .n_ins(rm_ins), .n_del(rm_del), .n_stall(rm_stall), .n_out(rm_out), .n_drain(rm_drain), .fill_min(rm_fmin), .fill_max(rm_fmax));
+    end else begin : g_xpm
+        rate_match u_rm (.wclk(clk), .wrst(rst), .w_v(x_v), .w_d(x_d), .w_c(x_c), .w_os(x_os), .w_lock(lock), .clr_w, .n_ovf(rm_ovf), .n_wr(rm_wr),
+            .rclk(clk_c), .rrst(rst_c), .clr_r(clr_c), .r_v(y_v), .r_d(y_d), .r_c(y_c), .r_lock(y_lock),
+            .n_ins(rm_ins), .n_del(rm_del), .n_stall(rm_stall), .n_out(rm_out), .n_drain(rm_drain), .fill_min(rm_fmin), .fill_max(rm_fmax));
+    end
     // ---------------------------------------------------------------- core clock: MAC and the trading path
     logic        m_v, m_sof, m_end, m_fcs_ok, m_err;
     logic [63:0] m_d;

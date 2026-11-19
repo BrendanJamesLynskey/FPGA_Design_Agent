@@ -187,7 +187,137 @@ class RateMatch:
         self.fill_max = 0
 
 
-def run(w_clk, r_clk, w_in, *, w_lock=None, r_rst=None, clr=None, w_clr=None, **kw):
+@dataclass
+class RateMatchGP:
+    """Model of rtl/rate_match_gp.sv (brief 96E): the own gray-pointer elastic buffer, around the repo's Icarus stand-ins of xpm_cdc_gray and xpm_cdc_array_single (flow/cdc_models:
+    a gray register in the source clock, then ``sync`` flops in the destination clock, a combinational decode). Same policy as ``RateMatch``; the differences are the crossing (the entries
+    are the write clock's own flops read directly by the read pointer, the pointers cross as gray codes) and that the fill the policy reads is the pointer difference as the read side sees it (exact in
+    that view; ``RateMatch`` reads the macro's lagging count). The pointers are never reset. Time-ordered like ``RateMatch``: the caller feeds edges in time order."""
+    aw: int = 4
+    hi: int = 1
+    min_keep: int = 0
+    sync: int = 2
+    lock_sync: int = 2
+    ent_sync: bool = True         # ENT_SYNC of the RTL: per-entry 2-flop copies and a 3-flop write pointer; False = the reader reads the entry flops directly
+    # write side
+    wbin: int = 0
+    wg_src: int = 0
+    w_rs: list = field(default_factory=list)      # synchroniser of the read pointer's gray code, write clock
+    n_ovf: int = 0
+    n_wr: int = 0
+    # read side
+    rbin: int = 0
+    rg_src: int = 0
+    r_ws: list = field(default_factory=list)      # synchroniser of the write pointer's gray code, read clock
+    r_ls: list = field(default_factory=list)
+    pace: int = 0
+    in_frame: bool = False
+    idle_run: int = 0
+    r_v: bool = False
+    r_blk: tuple = IDLE_BLK
+    r_lock: bool = False
+    n_ins: int = 0
+    n_del: int = 0
+    n_stall: int = 0
+    n_out: int = 0
+    n_drain: int = 0
+    fill_min: int = (1 << 32) - 1
+    fill_max: int = 0
+
+    def __post_init__(self) -> None:
+        self.depth = 1 << self.aw
+        self.mask = (1 << (self.aw + 1)) - 1
+        self.ent = [(0, 0, 0)] * self.depth             # write clock registers
+        self.ent_s = [[(0, 0, 0)] * self.depth for _ in range(2)]            # the per-entry synchronisers, read clock (ent_sync only)
+        self.w_rs = [0] * self.sync
+        self.r_ws = [0] * (self.sync + (1 if self.ent_sync else 0))
+        self.r_ls = [0] * self.lock_sync
+
+    def w_edge(self, clr: bool, v: bool, blk: tuple) -> None:
+        rbin_w = ungray(self.w_rs[-1], self.aw + 1)
+        full = ((self.wbin - rbin_w) & self.mask) >= self.depth
+        wr = v and not full
+        if v:
+            if full:
+                self.n_ovf += 1
+            else:
+                self.n_wr += 1
+        self.w_rs = [self.rg_src] + self.w_rs[:-1]
+        self.wg_src = gray(self.wbin)
+        if wr:
+            self.ent = list(self.ent)
+            self.ent[self.wbin & (self.depth - 1)] = blk
+            self.wbin = (self.wbin + 1) & self.mask
+        if clr:
+            self.n_ovf = 0
+            self.n_wr = 0
+
+    def r_edge(self, rst: bool, clr: bool, w_lock: bool) -> None:
+        wbin_r = ungray(self.r_ws[-1], self.aw + 1)
+        lock_s = bool(self.r_ls[-1])
+        fill = (wbin_r - self.rbin) & self.mask
+        head = (self.ent_s[-1] if self.ent_sync else self.ent)[self.rbin & (self.depth - 1)]
+        can_read = fill != 0
+        slot = self.pace != 32
+        d, c, os = head
+        do_pop = (not rst) and can_read and lock_s and slot
+        do_del = ((not rst) and can_read and lock_s and (not slot) and fill > self.hi and (not self.in_frame) and self.idle_run >= self.min_keep and is_pure_idle(d, c, os))
+        rd_en = do_pop or do_del or ((not rst) and can_read and not lock_s)
+        new_ws = [self.wg_src] + self.r_ws[:-1]
+        new_ls = [int(w_lock)] + self.r_ls[:-1]
+        new_ent_s = [list(self.ent)] + [list(x) for x in self.ent_s[:-1]]
+        self.rg_src_next = gray(self.rbin)
+        rbn = (self.rbin + (1 if rd_en else 0)) & self.mask
+        self.r_v = False
+        if rst:
+            self.pace = 0
+            self.in_frame = False
+            self.idle_run = 0
+            self.r_lock = False
+            self.r_blk = IDLE_BLK
+            self._clear()
+        else:
+            self.pace = 0 if self.pace == 32 else self.pace + 1
+            self.r_lock = lock_s
+            if not lock_s:
+                self.in_frame = False
+                self.idle_run = 0
+                if can_read:
+                    self.n_drain += 1
+            elif slot:
+                self.fill_min = min(self.fill_min, fill)
+                self.fill_max = max(self.fill_max, fill)
+                if can_read:
+                    self.r_v = True
+                    self.r_blk = head
+                    self.in_frame = in_frame_after(d, c)
+                    self.idle_run = min(self.idle_run + 1, 3) if is_pure_idle(d, c, os) else 0
+                    self.n_out += 1
+                elif not self.in_frame:
+                    self.r_v = True
+                    self.r_blk = IDLE_BLK
+                    self.idle_run = min(self.idle_run + 1, 3)
+                    self.n_ins += 1
+                    self.n_out += 1
+                else:
+                    self.n_stall += 1
+            elif do_del:
+                self.n_del += 1
+            if clr:
+                self._clear()
+        self.rbin = rbn
+        self.rg_src = self.rg_src_next
+        self.r_ws = new_ws
+        self.r_ls = new_ls
+        self.ent_s = new_ent_s
+
+    def _clear(self) -> None:
+        self.n_ins = self.n_del = self.n_stall = self.n_out = self.n_drain = 0
+        self.fill_min = (1 << 32) - 1
+        self.fill_max = 0
+
+
+def run(w_clk, r_clk, w_in, *, w_lock=None, r_rst=None, clr=None, w_clr=None, impl="macro", **kw):
     """Drive the model from rising-edge times (sorted ints).
 
     ``w_in[i]`` is ``(v, d, c, os)`` held before write edge i (bench-style: set after the previous edge). ``w_lock[i]`` is the lock level
@@ -195,7 +325,7 @@ def run(w_clk, r_clk, w_in, *, w_lock=None, r_rst=None, clr=None, w_clr=None, **
     ``clr[j]`` of the *write* counters through ``w_clr`` (not used: the bench clears nothing in the write domain mid-run).
     Returns (out, model): ``out[j]`` is the reader's registered output (v, blk, lock) after read edge j.
     """
-    m = RateMatch(**kw)
+    m = RateMatchGP(**kw) if impl == "gp" else RateMatch(**kw)
     ev = [(t, 0, i) for i, t in enumerate(w_clk)] + [(t, 1, i) for i, t in enumerate(r_clk)]
     ev.sort()
     for a, b in zip(ev, ev[1:]):

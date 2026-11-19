@@ -3,7 +3,9 @@
 module tb_rate_match #(
     parameter int HI = 4,
     parameter int MIN_KEEP = 0,
-    parameter int WP_REG = 1      // unused since the FIFO macro (kept so benches still elaborate)
+    parameter int WP_REG = 1,     // unused since the FIFO macro (kept so benches still elaborate)
+    parameter bit ENT_SYNC = 1'b1,  // brief 96E: rate_match_gp's ENT_SYNC
+    parameter int IMPL = 0        // brief 96E: 0 = rate_match (AMD's xpm_fifo_async), 1 = rate_match_gp (own gray-pointer buffer)
 ) (
     input  logic        wclk, rclk, rrst, clr_r, clr_w,
     input  logic        w_v, w_os, w_lock,
@@ -14,6 +16,11 @@ module tb_rate_match #(
     output logic [63:0] r_d,
     output logic [7:0]  r_c
 );
-    rate_match #(.HI(HI), .MIN_KEEP(MIN_KEEP)) u (.wclk, .wrst(1'b0), .w_v, .w_d, .w_c, .w_os, .w_lock, .clr_w, .n_ovf, .n_wr,
-        .rclk, .rrst, .clr_r, .r_v, .r_d, .r_c, .r_lock, .n_ins, .n_del, .n_stall, .n_out, .n_drain, .fill_min, .fill_max);
+    if (IMPL == 0) begin : g_i
+        rate_match #(.HI(HI), .MIN_KEEP(MIN_KEEP)) u (.wclk, .wrst(1'b0), .w_v, .w_d, .w_c, .w_os, .w_lock, .clr_w, .n_ovf, .n_wr,
+            .rclk, .rrst, .clr_r, .r_v, .r_d, .r_c, .r_lock, .n_ins, .n_del, .n_stall, .n_out, .n_drain, .fill_min, .fill_max);
+    end else begin : g_i
+        rate_match_gp #(.HI(HI), .MIN_KEEP(MIN_KEEP), .ENT_SYNC(ENT_SYNC)) u (.wclk, .wrst(1'b0), .w_v, .w_d, .w_c, .w_os, .w_lock, .clr_w, .n_ovf, .n_wr,
+            .rclk, .rrst, .clr_r, .r_v, .r_d, .r_c, .r_lock, .n_ins, .n_del, .n_stall, .n_out, .n_drain, .fill_min, .fill_max);
+    end
 endmodule
