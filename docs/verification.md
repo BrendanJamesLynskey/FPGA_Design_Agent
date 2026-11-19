@@ -200,7 +200,10 @@ misreading (c10 DDS run 1, tiny CNN: the model, the RTL and the bench agreed, an
    skipped that visit) or `bench_wrong` (the spec-test role repairs its bench once, then the bench runs again; bench_wrong a
    second time is `unresolved`). An unreadable verdict counts as bench_wrong: a design is never failed on a guess.
    `--spectest-max-loops` (default 2) limits design_wrong round trips per run; past it the result is `unresolved` and does not
-   block. Any infrastructure fault is `error` and does not block.
+   block the stage, **but the run is not a clean stop** (brief 82P4, owner 2026-11-19): a run that ends with the verdict
+   `unresolved` has the stop reason `unresolved: ...` (not `done`), `summary.json` says `clean_stop: false`, and `tools/run_record.py`
+   gives it the outcome `unresolved` (never `pass`, never an escape; the hidden result is recorded beside it). Any infrastructure
+   fault is `error` and does not block.
 3. **Record.** `build/spectest/state.json` (fired, passed, caught_bug, bench_repaired, verdict counters), copied into the run
    summary and into the course run record by `tools/run_record.py` as `spec_test`.
 4. **Unchanged paths.** `agent/tests/test_08f_golden_requests.py` compares hashes of every other request path (prompts,

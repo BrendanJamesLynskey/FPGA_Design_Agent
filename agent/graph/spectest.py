@@ -15,7 +15,8 @@ second, separate pair of eyes.
   design's RTL. A pass is recorded. A failure goes to a short **triage** step that sees both benches' checks and the spec
   text, never the RTL, and decides ``design_wrong`` (back to the RTL role with the evidence) or ``bench_wrong`` (the
   spec-test role repairs its bench once). ``max_loops`` limits the design_wrong round trips per run; past it the result is
-  recorded as ``unresolved`` and does not block.
+  recorded as ``unresolved`` and does not block the stage; the run that ends with it is not a clean stop
+  (``agent.graph.run.stop_status``, brief 82P4).
 - **The record** is ``build/spectest/state.json`` in the design directory (fired / passed / caught a bug / bench repaired),
   read by ``tools/run_record.py``.
 

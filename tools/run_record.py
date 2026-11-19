@@ -7,7 +7,7 @@ measurable and writes them next to the fields the executor recorded by hand:
                        "unknown" when the record has no gate evidence
   hidden_pass          the hidden bench verdict (true / false / "unknown")
   hidden_tests_passed, hidden_tests_total
-  outcome              pass | escape | caught_and_repaired | internal_stop_hidden_pass | fail | unknown
+  outcome              pass | escape | caught_and_repaired | internal_stop_hidden_pass | unresolved | fail | unknown
   escape_level         for an escape only: V0 | V1 | V2 | V3 | post-route | spec-interpretation | unclassified
   tool_runs            how many times the agent called simulate / mutate / formal / build (+ lint, gates)
   tokens, plan_cost_estimate_usd, wall_h_total   from the run logs when they exist, else "unknown"
@@ -21,6 +21,8 @@ Outcome rules (internal = the agent's own gates, hidden = the held-out-style ben
   internal pass, hidden pass, no gate failure before the pass   -> pass
   internal pass, hidden pass, an internal gate failed and was repaired -> caught_and_repaired
   internal pass, hidden fail                                     -> escape
+  internal pass, spec-test verdict "unresolved" (any hidden result) -> unresolved (brief 82P4: never a clean stop, so never
+                                                                       "pass" and never counted as an escape; hidden is recorded beside)
   internal stop, hidden pass                                     -> internal_stop_hidden_pass
   internal stop, hidden fail                                     -> fail
 
@@ -41,7 +43,7 @@ import sys
 from pathlib import Path
 
 ESCAPE_LEVELS = ("V0", "V1", "V2", "V3", "post-route", "spec-interpretation", "unclassified")
-OUTCOMES = ("pass", "escape", "caught_and_repaired", "internal_stop_hidden_pass", "fail", "unknown")
+OUTCOMES = ("pass", "escape", "caught_and_repaired", "internal_stop_hidden_pass", "unresolved", "fail", "unknown")
 FLOW_TOOLS = ("simulate", "mutate", "formal", "build", "lint", "gates")
 UNKNOWN = "unknown"
 # Stages that are re-entered without a gate failure (second clarify pass, planning after approval, hardware approval).
@@ -238,6 +240,9 @@ def derive(rec: dict, run_dir: Path | None = None) -> dict:
     hidden, passed, total = hidden_result(rec)
     repaired = gate_failed_before_pass(rec)
     outcome = outcome_of(internal, hidden, repaired)
+    st0 = spec_test_of(run_dir)
+    if internal is True and (st0 or {}).get("outcome") == "unresolved":
+        outcome = "unresolved"
     fields = {
         "split": split_of(rec),
         "agent_commit": agent_commit_of(rec),

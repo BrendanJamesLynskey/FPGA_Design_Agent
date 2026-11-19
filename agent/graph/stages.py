@@ -34,9 +34,9 @@ MACHINE: tuple[Stage, ...] = (
     Stage(1, "board-and-device-planning", (*FILES, "board_constraints", "check_constraints", "gates", "check", "gt_plan"),
           ("arch_note", "arch_yaml", "inventory"), (0,), _L),
     Stage(2, "rtl-design-creation", (*FILES, "lint", "simulate", "formal", "gates", "check", "gt_plan"),
-          ("arch_approved", "lint", "model_contract", "simulate", "standards_rtl", "verif_v3", "stage_rtl"), (0, 1),
+          ("arch_approved", "lint", "model_contract", "simulate", "standards_rtl", "constants", "verif_v3", "stage_rtl"), (0, 1),
           {"turns": 80, "seconds": 3600, "usd": 0.80}),      # 05g: 60 -> 80, the tests role keeps a reserve (run.ROLE_TURN_RESERVE)
-    Stage(3, "constraints", (*FILES, "board_constraints", "check_constraints", "build", "gates", "report", "check", "gt_plan"), ("constraints_post_synth",), (2,), _L),   # f2-stage3-io: + report
+    Stage(3, "constraints", (*FILES, "board_constraints", "check_constraints", "build", "gates", "report", "check", "gt_plan"), ("constants", "constraints_post_synth"), (2,), _L),   # f2-stage3-io: + report
     Stage(4, "synthesis", (*FILES, "build", "gates", "report", "check"), ("stage_post_synth", "standards_post_synth"), (1, 2, 3), _L),
     Stage(5, "implementation", (*FILES, "build", "gates", "report", "check"), ("stage_post_place", "stage_post_route"), (6,), _L),
     Stage(6, "timing-closure", (*FILES, "build", "gates", "report", "check"), ("timing",), (3, 2, 5), _L),
@@ -167,6 +167,18 @@ def signoff_failures(v: dict | None) -> tuple[bool, list[str]]:
     return False, [f"sign-off: {r['requirement']} {r['method']} {r['artefact']}: {r['result']} ({r['detail']})" for r in rows[:30]]
 
 
+def constants_stage(c: dict | None) -> tuple[bool, list[str]]:
+    """The derived-constants gate (brief 82P4; flow/derived_constants.py, rule HDL-ORC-01). A blocking finding (a design ID
+    bound to a value that contradicts the spec's quoted ID, a ``create_clock`` period that contradicts the board file) fails
+    the stage. Advice findings (an unresolved binding, a spec identity word with no matching literal) never fail it. An
+    evidence record with no ``constants`` key (the check was not run, or errored) does not fail: the check is a gate on a
+    contradiction it found, not on its own availability; the run record says whether it ran."""
+    if not c:
+        return True, []
+    fs = [f for f in (c.get("findings") or []) if f.get("blocking")]
+    return not fs, [f"constants {f['code']} {f.get('where', '')}: {f['message']}" for f in fs]
+
+
 def exit_check(stage: Stage, ev: dict[str, Any]) -> tuple[bool, list[str]]:
     """``ev`` holds the latest tool results the graph collected in this stage: ``spec`` (parsed spec.yaml),
     ``signed_off`` (bool, from the review/interview), ``lint``/``simulate`` (tool results), ``gates_base`` /
@@ -192,6 +204,8 @@ def exit_check(stage: Stage, ev: dict[str, Any]) -> tuple[bool, list[str]]:
             ok, why = standards_stage(ev.get("standards"), "rtl" if g == "standards_rtl" else "post_synth")
         elif g == "signoff":
             ok, why = signoff_failures(ev.get("signoff"))
+        elif g == "constants":
+            ok, why = constants_stage(ev.get("constants"))
         elif g == "inventory":
             r = ev.get("inventory") or {}
             ok, why = bool(r.get("ok")), ["check_constraints failed"]
@@ -264,6 +278,10 @@ _HARNESS_MARKERS = ("ModuleNotFoundError", "ImportError", "SyntaxError", "NameEr
 def classify(stage: Stage, fails: list[str]) -> str | None:
     """Map gate failures to the owning cause, following methodology.md's "Loops back to" column."""
     text = " ".join(fails)
+    if "constants CONST-CLK" in text:
+        return "constraints"             # a clock period against the board file is the constraints' to fix
+    if "constants CONST-" in text:
+        return "rtl"                     # a constant the RTL binds against the spec: the RTL's (the spec text is not at fault)
     if "architecture not approved" in text:
         return "arch"                    # an approval is the owner's (or auto): back to the architecture stage
     if stage.n == 4 and "plan: " in text:

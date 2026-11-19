@@ -1057,6 +1057,25 @@ def simulate_gate(session, d=lambda name, r: r) -> dict:
             "text": str(sr.get("log_tail") or sr.get("output", ""))[-3000:]}
 
 
+def constants_gate(rt: Runtime) -> dict:
+    """Brief 82P4: the derived-constants check (flow/derived_constants.py, HDL-ORC-01) for the design as it stands now, as stage
+    evidence. The table is also written to ``<design>/build/derived_constants.json``. A fault in the check itself is recorded
+    (``error``) and never fails a design."""
+    from flow import derived_constants as DC
+    try:
+        t = DC.derive(rt.design, rt.session.root)
+        f = rt.design / "build" / "derived_constants.json"
+        f.parent.mkdir(parents=True, exist_ok=True)
+        f.write_text(json.dumps(t, indent=1) + "\n")
+        return {"findings": t["findings"], "notes": t["notes"]}
+    except Exception as e:                                       # noqa: BLE001 (the check must never stop a run)
+        return {"findings": [], "error": f"{type(e).__name__}: {str(e)[:300]}"}
+
+
+def constants_blocks(ev: dict) -> bool:
+    return any(f.get("blocking") for f in ((ev.get("constants") or {}).get("findings") or []))
+
+
 def spec_test_gate(rt: Runtime) -> dict:
     """08f: run the independent spec-only bench gate (agent.graph.spectest) for the design as it stands now."""
     from agent.graph import spectest
@@ -1147,16 +1166,23 @@ def node_gate(state: State) -> dict:
         ev["standards_fails"] = standards_stage(ev["standards"], "rtl")[1]
         if ev["standards_fails"]:
             detail.append("[standards] " + "\n".join(ev["standards_fails"])[:1800])
+        ev["constants"] = constants_gate(rt)                       # brief 82P4: the derived-constants gate (HDL-ORC-01)
+        if constants_blocks(ev):
+            detail.append("[constants] " + "\n".join(f["message"] for f in ev["constants"]["findings"] if f.get("blocking"))[:1800])
         spec_blocks = False
-        if (rt.cfg.spec_tests and ev["lint"]["ok"] and ev["simulate"]["ok"] and not ev["standards_fails"]
+        if (rt.cfg.spec_tests and ev["lint"]["ok"] and ev["simulate"]["ok"] and not ev["standards_fails"] and not constants_blocks(ev)
                 and (ev["verif"].get("reached") or "") >= rt.cfg.verif_level):
             ev["spec_test"] = spec_test_gate(rt)                   # 08f: V2/V3 passed, now the independent spec-only bench
             spec_blocks = ev["spec_test"]["blocks"]
             if spec_blocks:
                 detail.append(ev["spec_test"]["evidence"][:3000])
-        if ev["lint"]["ok"] and ev["simulate"]["ok"] and not spec_blocks:          # no Vivado time on a design that fails its tests
+        if ev["lint"]["ok"] and ev["simulate"]["ok"] and not spec_blocks and not constants_blocks(ev):   # no Vivado time on a design that fails its tests
             ev["gates_base"] = _build(rt, "synth")["gates"]
     elif n in (3, 4):
+        if n == 3:
+            ev["constants"] = constants_gate(rt)                 # brief 82P4: the board clock period against the XDC
+            if constants_blocks(ev):
+                detail.append("[constants] " + "\n".join(f["message"] for f in ev["constants"]["findings"] if f.get("blocking"))[:1800])
         ev["gates_base"] = _build(rt, "synth")["gates"]
         if n == 4 and rt.cfg.design_plan:                        # closure-loop hook: inferred primitives against the plan
             from flow import timing_plan as _tp
@@ -1397,8 +1423,22 @@ def node_advance(state: State) -> dict:
             return {"stage": n}
         return {"stage": route_failure(MACHINE[n], classify(MACHINE[n], fails))}
     if n == 9 or (rt.cfg.stop_after is not None and n >= rt.cfg.stop_after):
-        return {"stop": "done"}
+        return {"stop": stop_status(rt)}
     return {"stage": n + 1}
+
+
+UNRESOLVED_STOP = "unresolved: the spec-test verdict is unresolved (not a clean stop)"
+
+
+def stop_status(rt: Runtime) -> str:
+    """Brief 82P4 (owner decision 10, 2026-11-19): a run that reaches its last stage with the spec-test verdict ``unresolved``
+    (the independent bench still fails against the design after the round trips, or the bench could not be settled) is not a
+    clean stop. Its stop reason says so; every other end stays ``done``."""
+    if rt.cfg.spec_tests:
+        from agent.graph import spectest
+        if spectest.record(rt.design).get("outcome") == "unresolved":
+            return UNRESOLVED_STOP
+    return "done"
 
 
 def node_route_skills(state: State) -> dict:
@@ -1665,6 +1705,17 @@ def oracle_model_name(cfg: Config) -> str:
     return cfg.model_table().entry("oracle").model
 
 
+def constants_summary(rt: Runtime) -> dict:
+    """The run record's view of the derived-constants gate: its last table (build/derived_constants.json), or not run."""
+    f = rt.design / "build" / "derived_constants.json"
+    try:
+        t = json.loads(f.read_text())
+    except (OSError, ValueError):
+        return {"ran": False}
+    fs = t.get("findings") or []
+    return {"ran": True, "blocking": [x["code"] for x in fs if x.get("blocking")], "advice": [x["code"] for x in fs if not x.get("blocking")]}
+
+
 def summary(rt: Runtime, state: dict) -> dict:
     hist = state.get("history") or []
     roles = rt.cfg.role_models()
@@ -1693,6 +1744,8 @@ def summary(rt: Runtime, state: dict) -> dict:
             "tokens": rt.meter.run["tokens"], "cost_usd": rt.meter.run["usd"], "unreported_cost_calls": rt.meter.unreported,
             "turns": rt.meter.run["turns"], "wall_s": rt.meter.run["seconds"],
             "questions": (state.get("interview") or {}), "stop": state.get("stop"),
+            "clean_stop": state.get("stop") == "done",
+            "constants": constants_summary(rt),
             "gates_last": {h["stage"]: h["passed"] for h in hist if h.get("gated", True)},   # 68F: not an entry that ran no gate
             "approvals": [{"n": h["n"], **h["approval"]} for h in hist],
             "bringup": ((state.get("evidence") or {}).get("bringup") or {}).get("pass"),

@@ -99,6 +99,10 @@ def stage2_owners(ev: dict[str, Any], repeat: int = 0) -> tuple[dict[str, list[s
     std = ev.get("standards_fails") or []
     if std:
         add("rtl", "[design standards] " + "\n".join(std)[:1800], "standards")
+    from agent.graph.stages import constants_stage
+    k_ok, k_why = constants_stage(ev.get("constants"))
+    if not k_ok:
+        add("rtl", "[derived constants] " + "\n".join(k_why)[:1800], "constants")
     c = ev.get("contract") or {}
     if not c.get("ok"):
         add("model", "[model contract] " + str(c.get("error") or "not checked")[-1200:], "contract")
