@@ -168,9 +168,19 @@ module xpm_fifo_async #(
             rempty <= rgn == wq;
         end
     end
-    assign full = wfull; assign empty = rempty; assign dout = q;
+    // brief 96C: first-word-fall-through read (READ_MODE "fwft"): dout shows the head word while the FIFO is not empty and rd_en pops it, and rd_data_count (RD_DATA_COUNT_WIDTH
+    // bits) is the number of words the read side can see (the synchronised write pointer minus the read pointer). Behaviour written from the port descriptions of UG974, NOT
+    // AMD's source and not checked against the macro: the real macro's latencies and count rounding differ in detail.
+    function automatic logic [AW:0] g2b(input logic [AW:0] g);
+        logic [AW:0] b;
+        for (int i = 0; i <= AW; i++) b[i] = ^(g >> i);
+        return b;
+    endfunction
+    wire fwft = (READ_MODE == "fwft");
+    wire [AW:0] vis = g2b(wq) - rbin;
+    assign full = wfull; assign empty = rempty; assign dout = fwft ? mem[rbin[AW-1:0]] : q;
     assign wr_rst_busy = wbusy; assign rd_rst_busy = rbusy;
     assign prog_full = 1'b0; assign wr_data_count = '0; assign overflow = 1'b0; assign almost_full = 1'b0;
-    assign wr_ack = 1'b0; assign prog_empty = 1'b0; assign rd_data_count = '0; assign underflow = 1'b0;
+    assign wr_ack = 1'b0; assign prog_empty = 1'b0; assign rd_data_count = RD_DATA_COUNT_WIDTH'(vis); assign underflow = 1'b0;
     assign almost_empty = 1'b0; assign data_valid = 1'b0; assign sbiterr = 1'b0; assign dbiterr = 1'b0;
 endmodule

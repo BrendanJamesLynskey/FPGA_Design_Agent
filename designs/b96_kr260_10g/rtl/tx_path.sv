@@ -4,8 +4,9 @@
 // the loop measurement and the transmit counters.
 //
 // Timestamps: one free-running 32-bit counter `ts` in this domain. TX start events are stamped here directly (the clock of the MAC's
-// start strobe); RX start events come from the receive domain through an xpm_cdc_pulse, so each RX stamp is late by the pulse's
-// fixed latency plus up to one clock of phase (design.md section 6; the bench measures the fixed part).
+// start strobe). Since brief 96C the receive MAC and the trading decision run in this same clock (behind the elastic buffer rate_match), so the RX events
+// (rx_sop_p and the class pulses) and the go message arrive as ordinary same-clock signals, not through a crossing: an RX stamp has no crossing latency or phase term
+// (it includes the elastic buffer's latency, design.md section 9). The comments below that say "from the receive domain" mean the receive path's logic.
 module tx_path #(
     parameter int NTXW = 26
 ) (
@@ -56,7 +57,7 @@ module tx_path #(
     logic [7:0]  x_c;
     logic [1:0]  cur_kind;
     logic        order_pend;
-    // live field bus: the order's fields from the other domain, the generator's own for the other kinds
+    // live fields: the order's fields from the decision (same clock since 96C), the generator's own for the other kinds
     logic [31:0] gen_seq;
     logic [1:0]  bus_kind;
     logic [31:0] go_seq_l;      // the order number latched at the go pulse
@@ -136,7 +137,7 @@ module tx_path #(
                 if (!verdict_good && !(verdict_v && verdict_bad && verdict_seq == go_seq_l)) n_late <= n_late + 32'd1;
                 if (poison) n_poisoned <= n_poisoned + 32'd1;
             end
-            // receive events, in this domain a fixed number of clocks late
+            // receive events (same clock since 96C)
             if (rx_sop_p) t_rx_sop <= ts;
             if (rx_feed_p) t_rx_feed <= t_rx_sop;
             if (rx_probe_p) begin

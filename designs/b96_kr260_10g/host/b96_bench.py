@@ -22,8 +22,10 @@ TX = dict(n_order=0, n_feed=1, n_probe=2, n_test=3, poisoned=4, dropped=5, under
           t_tx_order=12, t_rx_feed=13, t_rx_probe=14, t_rx_order=15, e_last=16, e_min=17, e_max=18, e_cnt=19, l_last=20, l_min=21,
           l_max=22, l_cnt=23, d_last=24, ts=25)
 RX = dict(lock=0, slip=1, loss=2, lock_ev=3, sh=4, type=5, os=6, frames=7, good=8, bad=9, err=10, fired=11, blocked=12, toolong=13,
-          last_len=14, lock_clk=15, order_ok=16, order_bad=17)
-NRXW, NTXW = 18, 26
+          last_len=14, lock_clk=15, order_ok=16, order_bad=17,
+          # brief 96C: rate matching (elastic buffer) and the frequency counter; they read 0 on a bitstream built before 96C
+          rm_wr=18, rm_ovf=19, rm_ins=20, rm_del=21, rm_stall=22, rm_out=23, rm_drain=24, rm_fmin=25, rm_fmax=26, f_delta=27, f_win=28)
+NRXW, NTXW = 29, 26
 #: Safety counters that must be 0 in every restart (TX side from TXV, RX side from RXV); `blocked` is recorded but is not a failure on its own
 #: (a blocked hit means one order fewer, which the order-count check catches). `order_bad` (97C) counts returned orders whose content, length or
 #: FCS did not match what the rule decided; `order_ok` must equal the expected order count (checked below), so a silent order cannot pass either.
@@ -287,8 +289,8 @@ def fibre_delay_ns(length_m: float, group_index: float = 1.468) -> float:
 
 def run_all(t: Transport, lock_text: str, out_dir: Path, *, cable_loop_m: float, n_restarts: int = 100) -> dict:
     """The stage-3 loopback sequence (board plan steps 1 to 4 and 1b). Refuses to run without the board.lock text the caller took."""
-    if not lock_text.startswith(("96:", "97:")):          # 97: brief 97 measures latency variants of this design with the same sequence
-        raise RuntimeError("take _handoff/board.lock with a text starting '96:' or '97:' first, and pass that text")
+    if not lock_text.startswith(("96:", "97:", "96C:")):          # 97: brief 97 measures latency variants with the same sequence; 96C: the rate-matched builds
+        raise RuntimeError("take _handoff/board.lock with a text starting '96:', '97:' or '96C:' first, and pass that text")
     b = Board(t)
     res: dict = {"lock": lock_text, "started": time.strftime("%Y-%m-%dT%H:%M:%S")}
     res["id"] = f"{b.id():08x}"

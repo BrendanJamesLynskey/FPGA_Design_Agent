@@ -19,12 +19,12 @@ class FakeBoard:
         self.clears = 0; self.late_left = 0; self.done = set()
         self.r = {0x000: 0x96A00001, 0x00C: 0x8, 0x014: 0x3 | (1 << 9) | (1 << 11)}
         self.polarity_ok = polarity_ok
-        self.rx = [0] * 18; self.tx = [0] * 26
+        self.rx = [0] * 29; self.tx = [0] * 26
         self.snap_n = 0
         self.rx[bb.RX["lock_clk"]] = 70
 
     def rd(self, a):
-        if 0x100 <= a < 0x148: return 0 if getattr(self, "mask", False) and a == 0x100 + 4 * bb.RX["fired"] else self.rx[(a - 0x100) // 4]
+        if 0x100 <= a < 0x174: return 0 if getattr(self, "mask", False) and a == 0x100 + 4 * bb.RX["fired"] else self.rx[(a - 0x100) // 4]
         if 0x200 <= a < 0x268: return 0 if getattr(self, "mask", False) and a == 0x200 + 4 * bb.TX["n_order"] else self.tx[(a - 0x200) // 4]
         if a == 0x014:
             off = self.r[0x00C] & 8
@@ -36,7 +36,7 @@ class FakeBoard:
         self.r[a] = v
         if a == 0x018 and v & 1:
             self.clears += 1; self.late_left = self.late_orders
-            self.tx = [0] * 26; self.rx = [0] * 18; self.rx[bb.RX["lock_clk"]] = 70
+            self.tx = [0] * 26; self.rx = [0] * 29; self.rx[bb.RX["lock_clk"]] = 70
         if a == 0x018 and v & 2 and (self.r.get(0x068, 0) & 1) and ((self.r.get(0x068, 0) >> 4) & 3) == 1:      # armed feed frames fire one order each
             n = self.drop_orders.get(self.clears - 1, self.r.get(0x078, 0))
             self.tx[bb.TX["n_order"]] += n; self.rx[bb.RX["fired"]] += n; self.rx[bb.RX["order_ok"]] += n - self.order_wrong.get(self.clears - 1, 0)

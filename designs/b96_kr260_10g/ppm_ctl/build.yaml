@@ -1,0 +1,29 @@
+# ppm_ctl (brief 96C): the base with the TX phase-interpolator ppm controller enabled (ppm.xdc: TXPI_PPM = 1). Same RTL; for the ppm sweep only.
+top: kr260_10g_top
+part: xck26-sfvc784-2LV-c
+board: kr260
+sources:
+- designs/b58a_trigger/rtl/jtag_bus.sv
+- designs/b96_kr260_10g/rtl/b96_pkg.sv
+- designs/b96_kr260_10g/rtl/pcs_tx.sv
+- designs/b96_kr260_10g/rtl/pcs_rx.sv
+- designs/b96_kr260_10g/rtl/mac64_tx.sv
+- designs/b96_kr260_10g/rtl/mac64_rx.sv
+- designs/b96_kr260_10g/rtl/hs_vec.sv
+- designs/b96_kr260_10g/rtl/frame_src.sv
+- designs/b96_kr260_10g/rtl/trade64.sv
+- designs/b96_kr260_10g/rtl/rate_match.sv
+- designs/b96_kr260_10g/rtl/tx_path.sv
+- designs/b96_kr260_10g/rtl/rx_path.sv
+- designs/b96_kr260_10g/rtl/rx_path_legacy.sv
+- designs/b96_kr260_10g/rtl/b96_core.sv
+- designs/b96_kr260_10g/rtl/kr260_10g_top.sv
+constraints:
+- designs/b96_kr260_10g/design.xdc
+- designs/b96_kr260_10g/ppm.xdc
+ip_tcl:
+- designs/b96_kr260_10g/ip/amd_ip.tcl
+generics:
+  NEAR_END: 1'b0
+  TRADE: 1'b1
+  RATE_MATCH: 1'b1

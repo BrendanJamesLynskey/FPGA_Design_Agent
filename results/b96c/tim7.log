@@ -1,0 +1,97 @@
+INFO: [Common 17-3922] A valid Vivado Design Suite BASIC license has been detected. Your current license is active and will expire on 10-nov-2027.
+#-----------------------------------------------------------
+# Vivado v2026.1 (64-bit)
+# SW Build 6511674 on Tue Jun 16 11:01:26 MDT 2026
+# IP Build 6504888 on Tue Jun 09 09:05:25 MDT 2026
+# SharedData Build 6501428 on Mon Jun 08 17:34:18 MDT 2026
+# Start of session at: Wed Nov 18 23:31:52 2026
+# Process ID         : 3096167
+# Current directory  : /home/brendan/Claude_sandbox/_worktrees/96c-ppm/results/b96c
+# Command line       : vivado -mode batch -source tim7_probe.tcl -log tim7.log -nojournal
+# Log file           : /home/brendan/Claude_sandbox/_worktrees/96c-ppm/results/b96c/tim7.log
+# Journal file       : 
+# Running On         : bren-ubuntu24-04
+# Platform           : Ubuntu
+# Operating System   : Ubuntu 24.04.4 LTS
+# Processor Detail   : Intel(R) Core(TM) i7-3770 CPU @ 3.40GHz
+# CPU Frequency      : 3763.518 MHz
+# CPU Physical cores : 4
+# CPU Logical cores  : 8
+# Host memory        : 33513 MB
+# Swap memory        : 4294 MB
+# Total Virtual      : 37808 MB
+# Available Virtual  : 23676 MB
+#-----------------------------------------------------------
+source tim7_probe.tcl
+# open_checkpoint /home/brendan/Claude_sandbox/_worktrees/96c-ppm/designs/b96_kr260_10g/build/base/post_synth.dcp
+Command: open_checkpoint /home/brendan/Claude_sandbox/_worktrees/96c-ppm/designs/b96_kr260_10g/build/base/post_synth.dcp
+
+Starting open_checkpoint Task
+
+Time (s): cpu = 00:00:00.05 ; elapsed = 00:00:00.04 . Memory (MB): peak = 1485.176 ; gain = 8.906 ; free physical = 4562 ; free virtual = 22410
+INFO: [Device 21-403] Loading part xck26-sfvc784-2LV-c
+Netlist sorting complete. Time (s): cpu = 00:00:00.07 ; elapsed = 00:00:00.07 . Memory (MB): peak = 2779.062 ; gain = 0.000 ; free physical = 3326 ; free virtual = 21175
+INFO: [Netlist 29-17] Analyzing 472 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+INFO: [Project 1-479] Netlist was created with Vivado 2026.1
+INFO: [Project 1-570] Preparing netlist for logic optimization
+Read ShapeDB Complete: Time (s): cpu = 00:00:00.02 ; elapsed = 00:00:00.02 . Memory (MB): peak = 2779.062 ; gain = 0.000 ; free physical = 3324 ; free virtual = 21173
+INFO: [Timing 38-478] Restoring timing data from binary archive.
+INFO: [Timing 38-479] Binary timing data restore complete.
+INFO: [Project 1-856] Restoring constraints from binary archive.
+INFO: [Constraints 18-5170] The checkpoint was created with non-default parameter values which do not match the current Vivado settings.  Mismatching parameters are:
+  synth.maxThreads
+  general.maxThreads
+INFO: [Project 1-853] Binary constraint restore complete.
+INFO: [Designutils 20-5722] Start Reading Physical Databases.
+Reading placement.
+Read Netlist Cache: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3015.660 ; gain = 0.000 ; free physical = 2844 ; free virtual = 20693
+Reading placer database...
+Read Device Cache: Time (s): cpu = 00:00:00.03 ; elapsed = 00:00:00.03 . Memory (MB): peak = 3015.660 ; gain = 0.000 ; free physical = 2836 ; free virtual = 20685
+Read PlaceDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3015.660 ; gain = 0.000 ; free physical = 2836 ; free virtual = 20685
+Read placeStorage: Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 3034.738 ; gain = 19.078 ; free physical = 2836 ; free virtual = 20685
+Read PulsedLatchDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3034.738 ; gain = 0.000 ; free physical = 2836 ; free virtual = 20685
+Reading routing.
+Read RouteStorage: Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 3034.738 ; gain = 0.000 ; free physical = 2836 ; free virtual = 20685
+Read Physdb Files: Time (s): cpu = 00:00:00.06 ; elapsed = 00:00:00.06 . Memory (MB): peak = 3034.738 ; gain = 19.078 ; free physical = 2836 ; free virtual = 20685
+Restored from archive | CPU: 0.110000 secs | Memory: 1.183449 MB |
+Finished XDEF File Restore: Time (s): cpu = 00:00:00.11 ; elapsed = 00:00:00.11 . Memory (MB): peak = 3034.738 ; gain = 19.078 ; free physical = 2836 ; free virtual = 20685
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00 . Memory (MB): peak = 3413.848 ; gain = 0.000 ; free physical = 2292 ; free virtual = 20141
+INFO: [Project 1-111] Unisim Transformation Summary:
+  A total of 12 instances were transformed.
+  IBUF => IBUF (IBUFCTRL, INBUF): 4 instances
+  IOBUF => IOBUF (IBUFCTRL, INBUF, OBUFT): 2 instances
+  RAM32M => RAM32M (RAMD32(x6), RAMS32(x2)): 1 instance 
+  RAM32M16 => RAM32M16 (RAMD32(x14), RAMS32(x2)): 5 instances
+
+INFO: [Project 1-604] Checkpoint was created with Vivado v2026.1 (64-bit) build 6511674
+open_checkpoint: Time (s): cpu = 00:00:49 ; elapsed = 00:00:33 . Memory (MB): peak = 3413.883 ; gain = 1943.582 ; free physical = 2286 ; free virtual = 20135
+# set ram [get_cells -hierarchical -filter {NAME =~ *u_rm/u_fifo/* && REF_NAME =~ RAM*}]
+# puts "RAMCELLS [llength $ram] [lindex $ram 0]"
+RAMCELLS 94 u_core/u_rx/u_rm/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/gen_wr_a.gen_word_narrow.mem_reg_0_15_0_13
+# set pins [get_pins -of_objects $ram -filter {REF_PIN_NAME == CLK || REF_PIN_NAME == WCLK}]
+# puts "RAMPINS [llength $pins]"
+RAMPINS 94
+# set_max_delay -datapath_only -from $pins -to [get_cells -hierarchical -filter {NAME =~ u_core/u_rx/u_rm/* && IS_SEQUENTIAL}] 6.0
+WARNING: [Constraints 18-402] set_max_delay: 'u_core/u_rx/u_rm/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/gen_wr_a.gen_word_narrow.mem_reg_0_15_0_13/WCLK' is not a valid startpoint.
+Resolution: A valid start point is a main or generated clock pin or port, a clock pin of a sequential cell, or a primary input or inout port. Please validate that all the objects returned by your query belong to this list.
+WARNING: [Constraints 18-402] set_max_delay: 'u_core/u_rx/u_rm/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/gen_wr_a.gen_word_narrow.mem_reg_0_15_14_27/WCLK' is not a valid startpoint.
+Resolution: A valid start point is a main or generated clock pin or port, a clock pin of a sequential cell, or a primary input or inout port. Please validate that all the objects returned by your query belong to this list.
+WARNING: [Constraints 18-402] set_max_delay: 'u_core/u_rx/u_rm/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/gen_wr_a.gen_word_narrow.mem_reg_0_15_28_41/WCLK' is not a valid startpoint.
+Resolution: A valid start point is a main or generated clock pin or port, a clock pin of a sequential cell, or a primary input or inout port. Please validate that all the objects returned by your query belong to this list.
+WARNING: [Constraints 18-402] set_max_delay: 'u_core/u_rx/u_rm/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/gen_wr_a.gen_word_narrow.mem_reg_0_15_42_55/WCLK' is not a valid startpoint.
+Resolution: A valid start point is a main or generated clock pin or port, a clock pin of a sequential cell, or a primary input or inout port. Please validate that all the objects returned by your query belong to this list.
+WARNING: [Constraints 18-402] set_max_delay: 'u_core/u_rx/u_rm/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/gen_wr_a.gen_word_narrow.mem_reg_0_15_56_69/WCLK' is not a valid startpoint.
+Resolution: A valid start point is a main or generated clock pin or port, a clock pin of a sequential cell, or a primary input or inout port. Please validate that all the objects returned by your query belong to this list.
+WARNING: [Constraints 18-402] set_max_delay: 'u_core/u_rx/u_rm/u_fifo/gnuram_async_fifo.xpm_fifo_base_inst/gen_sdpram.xpm_memory_base_inst/gen_wr_a.gen_word_narrow.mem_reg_0_15_70_72/WCLK' is not a valid startpoint.
+Resolution: A valid start point is a main or generated clock pin or port, a clock pin of a sequential cell, or a primary input or inout port. Please validate that all the objects returned by your query belong to this list.
+# report_methodology -checks TIMING-7 -file tim7.rpt
+Command: report_methodology -checks TIMING-7 -file tim7.rpt
+INFO: [Timing 38-35] Done setting XDC timing constraints.
+INFO: [DRC 23-133] Running Methodology with 8 threads
+INFO: [Vivado_Tcl 2-1520] The results of Report Methodology are in file /home/brendan/Claude_sandbox/_worktrees/96c-ppm/results/b96c/tim7.rpt.
+report_methodology completed successfully
+report_methodology: Time (s): cpu = 00:00:36 ; elapsed = 00:00:21 . Memory (MB): peak = 4296.723 ; gain = 882.840 ; free physical = 813 ; free virtual = 18530
+# puts DONE
+DONE
+INFO: [Common 17-206] Exiting Vivado at Wed Nov 18 23:32:49 2026...

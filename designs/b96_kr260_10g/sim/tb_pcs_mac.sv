@@ -31,6 +31,6 @@ module tb_pcs_mac (
     assign mx_d = xm_d;
     assign mx_c = xm_c;
     pcs_tx u_pt (.clk(clk_tx), .rst(rst_tx), .x_d(p_d), .x_c(p_c), .adv, .gt_d(gt_tx_d));
-    pcs_rx u_pr (.clk(clk_rx), .rst(rst_rx), .gt_d(gt_rx_d), .x_v, .x_d, .x_c, .lock, .ev_sh_err, .ev_type_err, .ev_os, .ev_slip, .ev_loss, .ev_lock);
+    pcs_rx u_pr (.clk(clk_rx), .rst(rst_rx), .gt_d(gt_rx_d), .x_v, .x_d, .x_c, .x_os(), .lock, .ev_sh_err, .ev_type_err, .ev_os, .ev_slip, .ev_loss, .ev_lock);
     mac64_rx u_mr (.clk(clk_rx), .rst(rst_rx), .lock_i(lock), .x_v, .x_d, .x_c, .m_v, .m_d, .m_sof, .m_nb, .m_end, .m_fcs_ok, .m_len, .m_err, .rx_sop);
 endmodule

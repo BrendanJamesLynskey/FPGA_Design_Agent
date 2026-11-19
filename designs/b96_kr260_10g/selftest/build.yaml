@@ -12,14 +12,17 @@ sources:
   - designs/b96_kr260_10g/rtl/hs_vec.sv
   - designs/b96_kr260_10g/rtl/frame_src.sv
   - designs/b96_kr260_10g/rtl/trade64.sv
+  - designs/b96_kr260_10g/rtl/rate_match.sv
   - designs/b96_kr260_10g/rtl/tx_path.sv
   - designs/b96_kr260_10g/rtl/rx_path.sv
+  - designs/b96_kr260_10g/rtl/rx_path_legacy.sv
   - designs/b96_kr260_10g/rtl/b96_core.sv
   - designs/b96_kr260_10g/rtl/kr260_10g_top.sv
 constraints:
   - designs/b96_kr260_10g/design.xdc
 ip_tcl:                 # AMD IP created in the in-memory project (flow/prepare.py, flow/build.tcl): brief 56A's GT Wizard, unchanged
-  - designs/b56a_gth_serdes/ip/amd_ip.tcl
+  - designs/b96_kr260_10g/ip/amd_ip.tcl
 generics:
   NEAR_END: "1'b1"
   TRADE: "1'b0"         # BUILD_STAMP is added by the flow
+  RATE_MATCH: "1'b0"

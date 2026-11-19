@@ -83,15 +83,14 @@ order's FCS poisoned if the incoming frame turns out bad, a kill bit and an arm 
 mock trading path (ML_ARM=0)" is thus met in function and format, not in code; the decisions are checked against
 `designs/b58a_trigger/model/benchfeed.py` frames. A 64-bit port of the full core is a follow-up for the planner.
 
-### 2.6 Where the decision lives and how it crosses clocks
+### 2.6 Where the decision lives and how it crosses clocks (as built for brief 96; superseded by section 9, brief 96C)
 
 The receive side is in RXUSRCLK2 (the recovered clock; independent of TXUSRCLK2 to within the partner's parts per
 million), the order leaves in TXUSRCLK2. Streaming frames across would need an elastic FIFO with its variable delay.
 Instead the decision is made in the RX domain and only a small **go message** (instrument, price, order id, "poison" level)
 crosses, by `xpm_cdc_handshake` (3 to 4 destination clocks); the TX domain owns the pre-built order frame and starts
 sending when the go arrives. The poison level for a bad incoming frame crosses by `xpm_cdc_single`; the order frame is 9
-words long, so the verdict (1 to 2 clocks after the decision) arrives long before the order's last word (asserted in
-simulation, and stated as a timing assumption). Configuration crosses by `xpm_cdc_handshake` per domain.
+words long, so the verdict arrives before the order's last word (a timing assumption, counted by `late`; for a feed of the longest length the rule acts on, 78 bytes, the verdict is about 6 to 8 clocks after the decision, not 1 to 2, and since 96C, with no crossing delay on either, the margin to the order's last word is about a clock smaller than before: `late` counts a miss and the order is poisoned, fail closed) Configuration crosses by `xpm_cdc_handshake` per domain.
 
 ### 2.7 RX elastic buffer in the GT
 
@@ -176,9 +175,8 @@ With one port the loop crosses the link twice for the trading loop.
   from RX-start of the feed to TX-start of the order. So **D = L - 2E, not L - E** (the brief's "trading loop minus one echo"
   counts one pass of the link; the loop has two). Stated here before any data; if the owner's meaning differs it is
   recomputed from the recorded L and E.
-- **Counter**: one free-running 32-bit counter in TXUSRCLK2. The RX start event crosses by `xpm_cdc_pulse`; the
-  timestamp is therefore known to one clock plus the fixed synchroniser delay (recorded, calibrated by the near-end PMA
-  loopback where TX and RX run from the same reference). Uncertainty stated as +/- 1 clock (6.2 ns).
+- **Counter**: one free-running 32-bit counter in TXUSRCLK2. (Brief 96C: the RX start is stamped in the same clock by the MAC's start strobe behind the elastic buffer, no crossing; it includes the
+  buffer's latency, 5 to 6 clocks in simulation, varying by a clock. Before 96C the RX start crossed by `xpm_cdc_pulse`, known to one clock plus the fixed synchroniser delay.) Uncertainty stated as +/- 1 clock (6.2 ns).
 - **Link restarts**: at least 100 restarts (RX datapath reset), min, max and distribution of E and L per restart.
 - **Subtract**: the measured fibre length x 4.9 ns/m (group index about 1.468 for G.652/G.657 fibre; the lead is 'about
   1 m'; measure it) and the optics' own delay, **unknown** unless the module's datasheet gives it.
@@ -200,3 +198,120 @@ With one port the loop crosses the link twice for the trading loop.
 5. xsim: the real GTHE4 secureip model is refused by the Basic simulator (54,716 instances against 50,000: 56A). So the
    serial loopback uses a behavioural GT stand-in in xsim and Icarus; the GT itself is tested on the board.
 6. Vivado builds (a) near-end PMA loopback self-test, (b) SFP+ live with `trade64`; flow and GT gates.
+
+## 9. Rate matching and the receive-to-core crossing (brief 96C)
+
+**Build option, default off (owner decision, 2026-11-19).** The elastic buffer below is a *build option*: the top-level parameter `RATE_MATCH` (`kr260_10g_top`, `b96_core`; generic in `build.yaml`) selects it.
+`RATE_MATCH = 0` (the **default**, the base design and `lat_all3`) is the receive path of main 6909e43f exactly (brief 97C, board-proven: loop latency L 50 clocks for the base, 46 for all3):
+`rtl/rx_path_legacy.sv` (that file, renamed), the go and event pulses and the order bus crossing from the receive clock to the transmit clock. `RATE_MATCH = 1` is everything this section describes.
+Both settings have the same register map; with 0 the words only the buffer drives (RXV18 to RXV28: the rate-match counters and the frequency counter) read 0, and FEATURES bit 3 reads 0 (1 with the buffer).
+The rate-matched builds that were measured on the board (below) are `ppm_ctl` and `ppm_all3` (also set `RATE_MATCH = 1`; their TX phase-interpolator attribute is in `ppm.xdc`) and the `rm_ctl` and `rm_all3` build files (the base and `lat_all3` with `RATE_MATCH = 1`).
+`GO_REG` (default 1) is the one option left of brief 97's `lat_all3` edit on the 0 path: the go-pulse crossing's output register, which `lat_all3` builds without (0). **Why default 0:** the buffer is needed when a partner's clock differs from ours (a real
+link, not a loopback), and costs 11 clocks (68 ns) on this board (below), so the design that is board-proven and fastest stays the default and the buffer is chosen when a link needs it.
+**How the default is shown to be the old design:** `results/b96c/eqy_default/` (formal equivalence of the `RATE_MATCH = 0` core against main 6909e43f's core, XPM macros as wires, GT as a black box, with the four stated edits to the proof copy
+and the limits: README there) and the core bench at 0 (`tests/core_cocotb_default.py`, main's own bench; 11 clocks, no spread, as 97C; `results/b96c/core_sim_default.json`). Both settings are simulated in CI (`tests/test_b96_pcs_rtl.py`).
+
+**The question.** In the SFP+ loopback the receive clock is recovered from our own transmission, so it has exactly the frequency of the transmit clock. A real partner
+(a NIC, a switch) differs by up to +-100 ppm (IEEE 802.3 clause 49), so the two user clocks drift against each other by a clock cycle every 10,000 clocks (62 us) at
+100 ppm, and a design that moves a stream across them needs rate matching: delete idles when the partner is faster, insert them when it is slower.
+
+**What the design before 96C did, and what simulation showed.** It crossed only *events* from the receive clock to the transmit clock (the go pulse and a few
+pulses by `xpm_cdc_pulse`, the order's fields as a quasi-static bus): no frame stream crossed, so there was no buffer to overflow. Run against a simulated partner whose clock
+differs by +-100, +-300 ppm (and +-3000 ppm in a stress run), with 400 feed frames each, it lost nothing, duplicated nothing and fired every order
+(`results/b96c/ppm_sim_baseline*.json`). That is a null result and is stated first: **the pre-96C design did not fail at any offset we simulated.** Its dependence on
+the offset was indirect: the timestamp of a received frame is late by the crossing's fixed latency plus one clock of phase, and the order bus is sampled five clocks after the
+go pulse (`stale` counts a miss), an assumption that holds for any drift this small but is a timing assumption. Rate matching was built because a real link needs it
+wherever frames cross (any forwarding, bridging or host-facing path), because it removes those assumptions and, as measured below, because it costs almost no latency here.
+
+**Architecture now.** `pcs_rx` stays in the receive clock. Its decoded blocks (data, control, an ordered-set flag) are written into `rate_match` (a 16-block elastic buffer: AMD's `xpm_fifo_async`, distributed RAM, first-word-fall-through, read data count; the macro carries the pointers, the memory and their clock-crossing
+constraints. A hand-made block memory read in the other clock was tried first and gave report_cdc CDC-1 Critical, 38 rows, with or without `set_max_delay -datapath_only` and with `xpm_memory_sdpram`
+(`results/b96c/cdc_probe.rpt`, `cdcexp/cdc_x.rpt`): the flow's gate `post_synth_cdc_no_critical` allows none); everything after it, `mac64_rx`, `trade64` and the order path, runs in the transmit user clock (the core clock). The go
+pulse, the order bus and the five event pulses of the old design are gone; the decision reaches the order logic in the same clock domain.
+
+**Policy (rtl/rate_match.sv, model/ratematch.py):**
+- every valid block is written; if the macro says full (it sees an old read pointer, so this is conservative) the block is dropped and counted (`rm_ovf`);
+- the reader outputs at most one block a clock, in 32 of 33 clocks (the 33rd, the pause clock, is the transmit gearbox's cadence);
+- in an output clock: a block visible -> pop and output it; none visible and the last output not inside a frame -> **insert one idle block** (`rm_ins`); none visible inside a frame -> output
+  nothing for one clock (`rm_stall`; the MAC holds its state; nothing is lost);
+- in the pause clock: visible fill (the macro's read data count) above HI (4), last output not inside a frame, at least MIN_KEEP pure idle blocks just output (default 0), head a pure idle block -> **delete it** (`rm_del`);
+- *inside a frame* means the last block output was a start block (lane 0 or 4) or a data block. A *pure idle* block is an all-idle control block that is not an ordered set.
+  **Ordered sets (the link-fault signalling), error blocks, terminate blocks and every block with data are never inserted, duplicated or deleted**, so no frame and no needed ordered set is touched (checked
+  frame by frame against an independent parser in `tests/ratematch_cocotb.py`, with ordered sets and error blocks in the stream);
+- while the synchronised block lock is low the reader discards the buffer, one block a clock, and outputs nothing.
+
+**Limits, stated.** (1) *Minimum-gap traffic.* A conforming sender's 12-byte gap holds one pure idle block between a terminate and the next start. A partner 100 ppm fast sending
+only minimum gaps must have 100 ppm of its stream deleted (one idle block in about 12,000 blocks); with `MIN_KEEP = 1` (delete only after an idle block was already output) that gap can never be shortened and the buffer overflows
+(bench `minimum_gap_partner_faster` with `B96_RM_MIN_KEEP=1`: +300 ppm, 5000 frames: `rm_ovf` > 0, frames cut and failing their FCS, never silent). **The default is therefore `MIN_KEEP = 0`**: a lone idle block between frames
+may be deleted, and the bench with it (same stream) loses nothing. The price: the gap after such a deletion can be as small as the terminate block's own trailing idles plus the start block's leading idles (0 to 7 and 0 or 4 bytes),
+below the usual 12 bytes. This design's MAC does not check it. **IEEE 802.3 clause 46 and 49 were not available on this machine, so the standard's own minimum receive gap and its deficit-idle-count rules were NOT read**:
+whether a downstream consumer would accept such a gap is unverified, and the rule "never delete the last idle block" (`MIN_KEEP = 1`) is the conservative setting if it matters. (2) Inserted idles are plain `/I/` blocks;
+a real partner PHY's idle checks are not exercised. (3) Nothing here forwards frames to the transmitter: the buffer exists for the receive path only. (4) The FIFO macro's real latencies are not in the Icarus stand-in
+(written from UG974's port descriptions); the board measures them.
+
+**Latency cost.** Simulated with the Icarus stand-in of the macro, in-phase clocks, GT word of the price to GT word of the order's start block: **12 to 13 clocks** (74.5 to 80.7 ns) against 11 before (the receive path through the buffer is
+5 to 6 clocks; the 4-clock go crossing it replaces is gone): about +1 to +2 clocks. A first version with a hand-made buffer measured 13 to 14. **The board measured +11 clocks, not +1 to +2 (see "Board result" below);
+the stand-in is why: it has fewer pipeline stages than AMD's macro. The analysis and a measurement of the real macro in xsim are in "Why the simulation missed the latency".**
+
+**Frequency counter.** A free-running 32-bit count of receive clocks crosses as a gray code; in the core clock a window of 2^24 clocks (104 ms) and the difference of the last two
+samples give the receive clock's cycles per window (RXV27, RXV28): ppm = (count - 2^24) / 2^24 x 10^6, resolution about 0.1 ppm. The board run reports every point's offset from this
+counter, not from the setting that was meant to cause it.
+
+**Phase-interpolator ppm controller (UG576 v1.7.1, "TX Phase Interpolator PPM Controller", Tables 3-33 and 3-34, Equation 3-3).** `TXPPM` (0x01C) drives TXPIPPMEN, TXPIPPMSEL and TXPIPPMSTEPSIZE.
+From the guide: the controller needs TXPIPPMSEL = 1 and TXPIPPMEN held at 1 while an offset is wanted; TXPIPPMSTEPSIZE[4] = 1 increments the PI code (0 decrements) and [3:0] is the amount, 0 to 15; the offset in continuous mode is
+ppm = 10^6 x step / (64 x TXOUT_DIV x TX_INT_DATAWIDTH x (TXPI_SYNFREQ_PPM + 1)); `TXPI_PPM` (UltraScale+) "enables gating reset to the TXPIPPM controller": with 0 the controller is held in reset. The Transceiver Wizard fixes
+TXPI_PPM to 0 and TXPI_SYNFREQ_PPM to 1; at 10.3125 Gb/s with a 32-bit internal width (TXOUT_DIV 1) that default gives 244 ppm a step, too coarse for +-100 ppm. The ppm_* builds therefore set TXPI_PPM = 1 and TXPI_SYNFREQ_PPM = 7 through
+`ppm.xdc` (both attributes confirmed settable on a synthesised netlist, `results/b96c/txpi_probe.log`), giving **61.04 ppm a step**: reachable points 0, +-61.0, +-122.1, +-183.1 ppm (steps 1, 2, 3), not the brief's 50/100/150.
+The controls are clocked in TXUSRCLK (322 MHz), as the guide requires when the internal width is below the user width. The guide's own example (Figure 3-30, "data stream frequency re-synthesis") shows the TX user clock staying on the reference and the fabric doing
+character insertion and removal: so the TX buffer, fed at the reference rate, will see the shifted line rate. **Still unknown, and the board decides:** whether TXUSRCLK2 in this Wizard configuration (`TXOUTCLKSEL = 3'b010`, PMA clock)
+follows the shifted serial clock (then the receive and core clocks move together and the frequency counter reads 0 ppm at every code, with no relative offset by this route), or stays on the reference (then the GT TX buffer drifts and `GT_BUF` shows overflow/underflow after its depth is used up).
+Nothing in the report claims an offset the counter did not measure.
+
+### Board result (2026-11-19, KR260 and an optical loopback; `results/b96c/hw/20261119_080724/`)
+
+The board ran four rate-matched builds from f47986f4 (`rate_match.sv` stamp 95356208; HEAD's lint-only rewrite of that file, a generate-if for `keep_ok`, is proved equivalent to it by eqy, brief run order 2026-11-19 ~08:10):
+the base with the buffer (`control`), the all3 variant with the buffer (`all3`), and the two with the TX phase-interpolator controller (`ppm_ctl`, `ppm_all3`). Every number below is in the `stage3.json` and `ppm_session.json` of its variant directory.
+
+**Safety: accepted on all four.** 100 of 100 restarts locked; 500 of 500 orders sent = fired = `order_ok` per variant; every fault counter 0 (poisoned, dropped, underrun, late, stale, bad, err, toolong, order_bad, blocked); polarity ok; SYSMON temperature, VCCINT, VCCAUX and VCCBRAM
+inside the DS925 windows at the start and end of every dwell (28 C, 0.715 V, 1.79 to 1.80 V, 0.847 V). At 0 ppm, a 20 s dwell of armed orders: 161,132 orders, all `order_ok`; rate-match inserts 0, deletes 0, overflow 0, stalls 0, visible fill 2 to 3 blocks; GT buffer status 0.
+
+**The ppm finding: no relative offset by this route.** The frequency counter read 0.0 ppm at every TX phase-interpolator code tried (steps 0 to 9, up to a predicted 549 ppm, on both ppm builds), the link stayed up and the GT buffers stayed clean; every non-zero target is recorded
+**unreachable**, not passed. The transmit user clock follows the shifted serial clock, and one reference clock feeds both directions, so the receive clock and the core clock move together. **Rate matching under a real offset is therefore not demonstrated on hardware.** It needs
+a second reference (two boards, or a second oscillator on the receive side). The simulated partner at +-100, +-300 ppm (`results/b96c/ppm_sim_ratematch.json`) is the only evidence of its behaviour under an offset.
+
+**Latency, rate-matched builds (medians over 100 restarts; clocks of 6.206 ns):**
+
+| Build | E (echo) min / max per link | L (loop) | L minus E (tick to trade) | Against 97C |
+|---|---|---|---|---|
+| control (base + buffer) | 24.5 / 25.0 | 61 | 36.5 clocks, 226 ns | L 50 to 61: +11 clocks, +68 ns |
+| all3 (+ buffer) | 24.0 / 25.0 | 57 | 33 clocks, 205 ns | L 46 to 57: +11 clocks, +68 ns |
+| ppm_ctl, 0 ppm | 24.0 / 24.0 | 59 | | (the ppm attribute set; same RTL as control) |
+| ppm_all3, 0 ppm | 24.0 / 25.0 | 57 | | |
+
+(The 97C values are `results/b96/hw`, E 20, L 50 and 46; the E medians above are of the per-link minima and maxima as listed in each `stage3.json`.) The prediction made before the board run (`run_96c_stage3.sh`: L 52 to 54 and tick-to-trade 191 to 198 ns for the base) **was missed by 7 to 9 clocks.**
+
+### Why the simulation missed the latency (brief 96C addendum 2)
+
+Two lines. The Icarus stand-in for `xpm_fifo_async` (`flow/cdc_models`) is a pointer-and-memory model with one synchroniser per pointer; AMD's macro registers the crossed write pointer again on the read side, derives `empty` and the read data count from that registered, synchronised pointer
+(the extended pointer for the count has two more synchroniser stages in first-word-fall-through mode), so a block becomes visible to the read side several clocks after it was written, and the buffer then rests at a visible fill of 2 to 3 blocks (board: `rm_fmin` 2, `rm_fmax` 3) on top of that.
+The in-phase simulation could not show it because the stand-in has no such stages, and the real macro's latency also depends on the phase between the two clocks.
+
+From the macro's source (Vivado 2026.1, `data/ip/xpm/xpm_fifo/hdl/xpm_fifo.sv`, read here, not copied): the write pointer crosses by `xpm_cdc_gray` (`CDC_SYNC_STAGES` = 2 flip-flops) and then a register (`wpr_gray_reg`) in the read clock; `empty` (`ram_empty_i`) is a register loaded from a comparison of that registered pointer with the
+read pointer; `rd_data_count` comes from a second, extended pointer synchronised with `DEST_SYNC_FF` + 2 stages when `READ_MODE` is first-word-fall-through (as here). The policy in `rate_match.sv` acts on `empty` and `rd_data_count`, the *delayed* view, so it holds a deeper true fill than it sees.
+
+**Measured, not argued:** `sim/tb_rm_latency.sv` is one testbench, run on the stand-in (Icarus) and on AMD's macro (xsim 2026.1), at four phases between the clocks, 38 frames each, traffic 32 blocks in 33 clocks with a nine-block frame every 200 blocks
+(`results/b96c/rm_latency_sim.json`): the time from the clock that loads a frame's start block into the receive path's output register to the clock that loads it into the buffer's output register, in core clocks, mean (min to max):
+
+| Phase (read clock lag, ps) | Stand-in | AMD macro (xsim) |
+|---|---|---|
+| 0 | 7.7 (7.0 to 8.0) | 11.2 (9.0 to 13.0) |
+| 1550 | 7.2 (6.3 to 7.3) | 10.4 (8.3 to 12.3) |
+| 3100 | 7.5 (6.5 to 7.5) | 10.7 (8.5 to 12.5) |
+| 4650 | 7.7 (6.8 to 7.8) | 10.9 (8.8 to 12.8) |
+
+The real macro adds **3 to 5 clocks over the stand-in at every phase, and widens the spread to about 4 clocks** (the stand-in's is about 1). That accounts for about 5 to 6 of the 9 to 10 clocks missed, not all of them: the buffer takes 10.4 to 11.2 clocks on average with the real macro in this testbench, against the 5 to 6 of the core bench with the stand-in; it replaces the 4-clock go crossing (`cross_go`), so the net is about +6.4 to +7.2 clocks against the +1 to +2 predicted, and the board's +11 leaves about 4 clocks **not explained**: this testbench's traffic is a stand-in for the PCS's stream, not the board's (a looped-back frame stream with the board's gap pattern), and the GT's own delays are the same in both designs.
+Brief 96E (a lower-latency buffer: no first-word-fall-through count, an own read-side comparison of the crossed pointer, a shallower fill target) is the route to remove most of the cost where the buffer is wanted.
+
+### Next steps (from the board result)
+1. **Brief 96E, a lower-latency elastic buffer:** the cost above is the macro's synchroniser and register stages plus the fill it rests at; a buffer of the same policy with its own gray-pointer crossing (checked by report_cdc) and a fill target of one block is the aim; the figure to beat is +11 clocks (68 ns).
+2. **A real offset:** two boards, or one board with a second oscillator on the receive side; the TX phase-interpolator route does not give one (this section). Until then the buffer is shown by simulation only under an offset.
+3. The default stays the 97C path (`RATE_MATCH = 0`); a build for a real NIC link sets `RATE_MATCH = 1`.

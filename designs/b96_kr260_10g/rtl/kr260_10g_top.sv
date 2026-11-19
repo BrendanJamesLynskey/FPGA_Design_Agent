@@ -3,11 +3,13 @@
 // the 25 MHz input (an open-source reference design's figure, unconfirmed against the schematic) -> MMCM -> the 100 MHz free-running
 // clock; the 156.25 MHz GT reference (also unconfirmed) on MGTREFCLK0 of quad 224; the host reaches the registers over the JTAG cable.
 // Variants (generics): NEAR_END = 1 starts with the GT's near-end PMA loopback selected, a self-test with no cable (variant a);
-// TRADE = 1 enables the mock trading path at reset (variant b). The laser starts disabled (sfp_tx_disable resets to 1).
+// TRADE = 1 enables the mock trading path at reset (variant b); RATE_MATCH = 1 puts brief 96C's elastic buffer on the receive path (default 0: the 97C path); GO_REG is the latency variants' option on that path (default 1 = main). The laser starts disabled (sfp_tx_disable resets to 1).
 module kr260_10g_top #(
     parameter logic [31:0] BUILD_STAMP = 32'h0,
     parameter bit          NEAR_END    = 1'b0,
-    parameter bit          TRADE       = 1'b1
+    parameter bit          TRADE       = 1'b1,
+    parameter bit          RATE_MATCH  = 1'b0,
+    parameter bit          GO_REG      = 1'b1
 ) (
     input  logic       clk_25,
     input  logic       sfp_mgt_refclk_p,
@@ -66,7 +68,7 @@ module kr260_10g_top #(
     logic [31:0] h_wdata, h_rdata;
     jtag_bus u_jtag (.clk, .rst, .h_we, .h_re, .h_addr, .h_wdata, .h_rdata);
 
-    b96_core #(.BUILD_STAMP(BUILD_STAMP), .NEAR_END(NEAR_END), .TRADE(TRADE)) u_core (.clk, .rst, .h_we, .h_re, .h_addr, .h_wdata, .h_rdata,
+    b96_core #(.BUILD_STAMP(BUILD_STAMP), .NEAR_END(NEAR_END), .TRADE(TRADE), .RATE_MATCH(RATE_MATCH), .GO_REG(GO_REG)) u_core (.clk, .rst, .h_we, .h_re, .h_addr, .h_wdata, .h_rdata,
         .refclk, .rx_p(sfp_rx_p), .rx_n(sfp_rx_n), .tx_p(sfp_tx_p), .tx_n(sfp_tx_n),
         .sfp_tx_disable, .sfp_mod_abs, .sfp_rx_los, .sfp_tx_fault,
         .i2c_scl_low(scl_low), .i2c_sda_low(sda_low), .i2c_scl_i(scl_i), .i2c_sda_i(sda_i),

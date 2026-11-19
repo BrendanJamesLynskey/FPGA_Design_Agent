@@ -10,6 +10,23 @@ package b96_pkg;
     localparam logic [7:0] T_CTRL = 8'h1E, T_S0 = 8'h78, T_S4 = 8'h33;
     localparam logic [31:0] CRC_RESIDUE = 32'hDEBB20E3;
     localparam int CFGW = 421;     // width of the configuration vector (b96_core)
+    // Brief 96C: the receive-domain status words (RXV, docs/register_map.md) are produced in two clock domains: the PCS counters in the receive
+    // user clock (the write side of rate_match) and the MAC, trade and rate-match read-side counters in the core clock. Bit i of RXV_OWN_W is 1 when
+    // word i belongs to the receive clock; the two vectors carry their own words packed in order of index.
+    localparam int          NRXW      = 29;
+    localparam logic [31:0] RXV_OWN_W = 32'h000C_807F;   // words 0-6, 15, 18, 19
+    function automatic int rxv_pos(input logic own, input int i);     // position of word i among the words of its own domain
+        int n; n = 0;
+        for (int k = 0; k < i; k++) if (RXV_OWN_W[k] == own) n++;
+        return n;
+    endfunction
+    function automatic int rxv_count(input logic own);
+        int n; n = 0;
+        for (int k = 0; k < NRXW; k++) if (RXV_OWN_W[k] == own) n++;
+        return n;
+    endfunction
+    localparam int NRXV_W = rxv_count(1'b1);     // words in the receive-clock vector
+    localparam int NRXV_C = rxv_count(1'b0);     // words in the core-clock vector
 
     // terminate block type of lane k
     function automatic logic [7:0] t_term(input int k);
