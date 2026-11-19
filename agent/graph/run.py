@@ -162,12 +162,9 @@ class Config:
                              oracle=given("oracle"), oracle_cc_model=given("oracle_cc_model"), spectest_model=given("spectest_model"),
                              spectest_effort=given("spectest_effort"), router_model=given("router_model"),
                              profile=self.profile, roles=self.roles)
-        cli = parse_cli_json(self.model_config)
-        for k in ("endpoints", "purposes"):
-            alias[k] = {**alias.get(k, {}), **(cli.get(k) or {})}
-        if cli.get("default"):
-            alias["default"] = cli["default"]
-        t = build_table(project_file=Path(self.models_file) if self.models_file else None, cli=alias, allow_fable=self.allow_fable, replay=self.replay_run)
+        cli = parse_cli_json(self.model_config)           # the JSON layer sits above the aliases, merged per purpose by the table
+        t = build_table(project_file=Path(self.models_file) if self.models_file else None, cli=[alias, cli] if cli else alias,
+                        allow_fable=self.allow_fable, replay=self.replay_run)
         _TABLES[id(self)] = (self, fp, t)
         return t
 
@@ -546,6 +543,8 @@ def run_subagent(rt: Runtime, role: str, prompt: str, allowed: tuple[str, ...] =
         tools: dict[str, int] = {}
         refused: dict[str, int] = {}
         for r in rows:
+            if "tool" not in r:                    # an event row (the access gate's entry), not a tool call
+                continue
             tools[r["tool"]] = tools.get(r["tool"], 0) + 1
             if r.get("refused"):
                 refused[str(r.get("rule"))] = refused.get(str(r.get("rule")), 0) + 1

@@ -141,7 +141,7 @@ class Entry:
 
     @property
     def host(self) -> str:
-        return (urlparse(self.base_url or "").hostname or "").lower()
+        return (urlparse(self.base_url or "").hostname or "").lower().rstrip(".")
 
 
 def _sha(text: str) -> str:
@@ -178,6 +178,10 @@ def validate_layer(data: Any, layer: str, where: str) -> dict[str, Any]:
                 raise ConfigError(f"{where}: endpoint {name!r}: {k!r} looks like a secret; name the environment variable with key_env instead")
         if bad:
             raise ConfigError(f"{where}: endpoint {name!r}: unknown keys {sorted(bad)}")
+        if ep.get("base_url") is not None:
+            u = urlparse(str(ep["base_url"]))
+            if u.scheme not in ("http", "https") or not u.hostname or u.username or u.password or u.query:
+                raise ConfigError(f"{where}: endpoint {name!r}: base_url must be http(s)://host[:port]/path with no user, password or query")
         if ep.get("kind") is not None and ep["kind"] not in KINDS:
             raise ConfigError(f"{where}: endpoint {name!r}: kind must be one of {KINDS}, not {ep['kind']!r}")
         if "host_class" in ep and layer not in ("user", "builtin"):
@@ -257,12 +261,26 @@ class Table:
         self.endpoints: dict[str, dict[str, Any]] = {}
         self.endpoint_src: dict[str, str] = {}
         self.work_hosts: set[str] = set()
+        allowed_keys = {v["key_env"] for v in BUILTIN_ENDPOINTS.values() if v.get("key_env")}
         for L in self.layers:
+            if L.name == "user":
+                allowed_keys |= {ep["key_env"] for ep in (L.data.get("endpoints") or {}).values() if ep.get("key_env")}
             for n, ep in (L.data.get("endpoints") or {}).items():
+                if L.name == "project":
+                    known = {**BUILTIN_ENDPOINTS, **self.endpoints}
+                    if n in known and any(k in ep for k in ("kind", "base_url", "key_env")):
+                        raise ConfigError(f"{L.source}: a project file cannot redefine the kind, base_url or key_env of the existing endpoint {n!r}; "
+                                          "name a new endpoint")
+                    if ep.get("key_env") and ep["key_env"] not in allowed_keys:
+                        raise ConfigError(f"{L.source}: endpoint {n!r}: a project file may only use a key variable that a built-in endpoint or the "
+                                          f"user file already names, not {ep['key_env']!r}")
                 self.endpoints[n] = {**self.endpoints.get(n, {}), **ep}
                 self.endpoint_src[n] = L.name
             for h in L.data.get("work_hardware_hosts") or []:
-                self.work_hosts.add(str(h).lower())
+                self.work_hosts.add(str(h).lower().split("://")[-1].split("/")[0].split(":")[0].rstrip("."))
+            for ep in (L.data.get("endpoints") or {}).values():
+                if ep.get("host_class") == "work_hardware" and ep.get("base_url"):      # the mark follows the host, not only the name
+                    self.work_hosts.add((urlparse(ep["base_url"]).hostname or "").lower().rstrip("."))
         self._raw: dict[str, dict[str, Any]] = {}
         self._src: dict[str, dict[str, str]] = {}
         self._build_raw()
@@ -393,7 +411,7 @@ class Table:
                                   "(batch replay only)")
 
     def _is_router(self, e: Entry) -> bool:
-        return any(h in e.host for h in ("openrouter.ai",))
+        return any(e.host == h or e.host.endswith("." + h) for h in ("openrouter.ai", "api.anthropic.com", "anthropic.com"))
 
     @staticmethod
     def _is_local(e: Entry) -> bool:
@@ -508,6 +526,6 @@ def build_table(*, user_file: Path | None = None, project_file: Path | None = No
         layers.append(load_file(uf, "user"))
     if project_file is not None and project_file.is_file():
         layers.append(load_file(project_file, "project"))
-    if cli:
-        layers.append(Layer("cli", validate_layer(cli, "cli", "the command line"), "command line"))
+    for c in ([] if not cli else cli if isinstance(cli, list) else [cli]):
+        layers.append(Layer("cli", validate_layer(c, "cli", "the command line"), "command line"))
     return Table(layers, allow_fable=allow_fable, replay=replay)

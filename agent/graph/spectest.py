@@ -33,7 +33,6 @@ import json
 import py_compile
 import re
 import shutil
-import subprocess
 import tempfile
 import time
 import xml.etree.ElementTree as ET

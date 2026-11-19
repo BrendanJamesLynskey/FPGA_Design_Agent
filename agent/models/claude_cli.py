@@ -54,8 +54,11 @@ def version(exe: str = EXE) -> str:
 
 def run(argv: list[str], *, cwd: Path, env: dict[str, str], timeout: float, input: str | None = None) -> subprocess.CompletedProcess:
     """Run one call in its isolated working directory and environment (``arm.isolated_env``). Raises ``subprocess.TimeoutExpired``."""
-    return subprocess.run(argv, cwd=cwd, env=env, capture_output=True, text=True, timeout=timeout,
-                          **({"input": input} if input is not None else {"stdin": subprocess.DEVNULL}))
+    try:
+        return subprocess.run(argv, cwd=cwd, env=env, capture_output=True, text=True, timeout=timeout,
+                              **({"input": input} if input is not None else {"stdin": subprocess.DEVNULL}))
+    except subprocess.TimeoutExpired as e:        # its message would carry the whole argv, prompt included
+        raise subprocess.TimeoutExpired("claude -p (argv withheld)", e.timeout, output=e.output, stderr=e.stderr) from None
 
 
 def text_call(system: str, user: str, *, model: str, effort: str | None = None, timeout_s: float = 900,

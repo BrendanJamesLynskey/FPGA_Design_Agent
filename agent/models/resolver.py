@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 from agent.models import claude_cli
-from agent.models.config import PURPOSES, ConfigError, Entry, Table, build_table, parse_cli_json
+from agent.models.config import ConfigError, Entry, Table, build_table, parse_cli_json
 
 
 class _Logged:
@@ -108,7 +108,7 @@ class Resolver:
             return self._cached(("replay", e.path), lambda: self._replay(Path(e.path)))
         if self.table.work_marked(e):
             raise ConfigError(f"{e.purpose}: endpoint {e.endpoint!r} is marked work hardware: refused for live calls")
-        key = (e.hash, label if e.kind == "claude_code" else None)
+        key = (e.kind, e.endpoint, e.model, json.dumps(e.options, sort_keys=True), e.base_url, label if e.kind == "claude_code" else None)
         return self._cached(key, lambda: self._build(e, label))
 
     def _cached(self, key: tuple, make: Callable[[], Callable]) -> Callable:

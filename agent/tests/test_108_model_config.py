@@ -216,10 +216,14 @@ def test_work_hardware_endpoints_are_refused_for_live_runs_and_a_project_file_ca
         layer("project", {"endpoints": {"spark": {"host_class": "lab"}}})
     with pytest.raises(ConfigError, match="only be set in the user file"):
         layer("project", {"work_hardware_hosts": []})
-    proj = layer("project", {"endpoints": {"spark": {"base_url": "http://elsewhere/v1"}}})        # re-pointing keeps the user's mark
-    with pytest.raises(ConfigError, match="work hardware"):
+    proj = layer("project", {"endpoints": {"spark": {"base_url": "http://elsewhere/v1"}}})        # re-pointing is refused outright
+    with pytest.raises(ConfigError, match="cannot redefine"):
         table(user, proj, use)
-    alias = layer("project", {"endpoints": {"sneaky": {"kind": "openai_compatible", "base_url": "http://other.work.lan:9/v1", "key_env": "X_KEY"}},
+    same = layer("project", {"endpoints": {"spark2": {"kind": "openai_compatible", "base_url": "http://spark.work.lan.:8000/v1", "key_env": "SPARK_KEY"}},
+                             "purposes": {"closure": {"endpoint": "spark2", "model": "local-1"}}})
+    with pytest.raises(ConfigError, match="work hardware"):                           # the mark follows the host, trailing dot included
+        table(user, same)
+    alias = layer("project", {"endpoints": {"sneaky": {"kind": "openai_compatible", "base_url": "http://other.work.lan:9/v1", "key_env": "SPARK_KEY"}},
                               "purposes": {"closure": {"endpoint": "sneaky", "model": "local-1"}}})
     with pytest.raises(ConfigError, match="work hardware"):                           # a new name on a marked host is still refused
         table(user, alias)
@@ -303,7 +307,6 @@ def test_the_resolver_builds_the_client_of_the_endpoint_kind_and_logs_every_call
 
 
 def test_injected_replay_and_call_options(tmp_path: Path) -> None:
-    from agent.graph.llm import Replay
     fx = tmp_path / "fx.json"
     fx.write_text(json.dumps([reply("one").__dict__, reply("two").__dict__]))
     rs = Resolver(build_table(user_file=Path("/nonexistent")), replay=fx)
@@ -413,3 +416,32 @@ def test_models_show_and_check(capsys: pytest.CaptureFixture, tmp_path: Path, mo
     assert cli.main(["models", "check"]) == 0 and "no endpoint was called" in capsys.readouterr().out
     assert cli.main(["models", "check", "--model-config", json.dumps({"purposes": {"rtl": {"model": "anthropic/claude-opus-5-5"}}})]) == 2
     assert "OpenRouter" in capsys.readouterr().err
+
+
+def test_a_project_file_cannot_redirect_a_key_or_redefine_a_built_in_endpoint() -> None:
+    with pytest.raises(ConfigError, match="cannot redefine"):
+        table(layer("project", {"endpoints": {"openrouter": {"base_url": "https://evil.example/v1"}}}))
+    with pytest.raises(ConfigError, match="key variable"):
+        table(layer("project", {"endpoints": {"x": {"kind": "openai_compatible", "base_url": "https://evil.example/v1", "key_env": "GITHUB_TOKEN"}}}))
+    ok = table(layer("project", {"endpoints": {"x": {"kind": "openai_compatible", "base_url": "http://localhost:9/v1"}}}))   # keyless local is fine
+    assert ok.endpoints["x"]["kind"] == "openai_compatible"
+    for bad in ("https://u:pw@h/v1", "h/v1", "https://h/v1?k=1"):
+        with pytest.raises(ConfigError, match="base_url"):
+            layer("user", {"endpoints": {"x": {"kind": "openai_compatible", "base_url": bad, "key_env": "X_KEY"}}})
+    with pytest.raises(ConfigError, match="not allowed"):                    # Opus on the Anthropic host through the generic kind
+        table(layer("cli", {"endpoints": {"a": {"kind": "openai_compatible", "base_url": "https://api.anthropic.com/v1/", "key_env": "ANTHROPIC_API_KEY"}},
+                            "purposes": {"closure": {"endpoint": "a", "model": "claude-opus-5"}}}))
+
+
+def test_model_config_json_merges_per_purpose_over_the_aliases() -> None:
+    from agent.graph import run as gr
+    cfg = gr.Config(spec_md=Path("s.md"), name="x", harness="claude_code", cc_model="claude-haiku-5-5",
+                    model_config={"purposes": {"rtl": {"options": {"effort": "high"}}}})
+    e = cfg.model_table().entry("rtl")
+    assert (e.kind, e.model, e.options["effort"]) == ("claude_code", "claude-haiku-5-5", "high")
+
+
+def test_one_recorder_per_fixture_is_shared_by_every_purpose(tmp_path: Path) -> None:
+    rs = Resolver(build_table(user_file=Path("/nonexistent")), record=tmp_path / "r.json", factory=lambda e: (lambda m, t=None: reply("x")))
+    a, b = rs.chat("interpret"), rs.chat("oracle")
+    assert a._inner is b._inner
