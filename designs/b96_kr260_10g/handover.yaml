@@ -62,13 +62,13 @@ parameters:
 files:
 - path: designs/b96_kr260_10g/rtl/b96_pkg.sv
   what: block codes, scrambler, CRC-32 functions
-  sha256: 6fdf7f5fec44e22c18b8e12918c155e98184c562e2d73a849b45161cc9ba5891
+  sha256: ac2ee00c42c8be41a66dae4c04b565c55ed01910aa4c8f12ea7919adaeb77e7c
 - path: designs/b96_kr260_10g/rtl/pcs_tx.sv
   what: transmit PCS (encode, scramble, gearbox)
   sha256: e0e68141d910f428c25b37d8c8cc1c73ad0bb6c79fe6dd8d69307b9c430dc45d
 - path: designs/b96_kr260_10g/rtl/pcs_rx.sv
   what: receive PCS (gearbox with slip, block lock, descramble, decode)
-  sha256: 0065dd34d9462a5a08e7eaa2a938096ae8069ed8b7425bdd6734759851270eaa
+  sha256: 161c35209b39e014a62c3f4624ea52b99ef3316abc7250a7f5b132e19a651c0a
 - path: designs/b96_kr260_10g/rtl/mac64_tx.sv
   what: 64-bit MAC transmitter
   sha256: 0cbc07b0268f1c0d3e4c916808bb87930fc6c17d3c60eba2cc90e17ad945246a
@@ -83,16 +83,25 @@ files:
   sha256: 1999e01a3728a4834f701c66dcb0ba68004c70a8eee5b0045a6bc046fa256787
 - path: designs/b96_kr260_10g/rtl/tx_path.sv
   what: 'transmit domain: sources, generator, timestamps'
-  sha256: e7801f4c71190c6b74e4400a0a18a9600128b2a5720b7106478581b0190fff04
+  sha256: 91039813b51cc71fadef8fe342b8e1535eea6c40d996604b95697fa5b577d0d8
 - path: designs/b96_kr260_10g/rtl/rx_path.sv
   what: 'receive domain: PCS, MAC, decision, counters'
-  sha256: 870783186ee552373d060d0f1ee67dd1d6ceec32b10d32dfd91e7c6931cbc673
+  sha256: fdfa0f70a8c9c293a8d285bc09e71bd5519626a6d8c4aa6617e23aa57f6f5c4a
 - path: designs/b96_kr260_10g/rtl/b96_core.sv
   what: registers, GT wrapper and clock-domain crossings
-  sha256: d9aa7ad8a1ba98e3ba3efc82397eba5055f8706240ee030f744e143d87ba3fed
+  sha256: bea03470de0a4c001583d84eef7888a84c55ef84bc48d870ba7c382dfaf94557
 - path: designs/b96_kr260_10g/rtl/kr260_10g_top.sv
   what: board top (MMCM, SYSMON, pins)
   sha256: 79baa375363524a702cd7b3cbf7bc3d1524283661fa737e5619e41cc0dd33807
+- path: designs/b96_kr260_10g/rtl/rate_match.sv
+  what: rate-matching elastic buffer (idle insert and delete between frames, xpm_fifo_async), brief 96C
+  sha256: 6e79e5c972d42e6de950e743877011e7007e1d8588163979ccfa3758baa09958
+- path: designs/b96_kr260_10g/model/ratematch.py
+  what: Python twin of the rate matcher, compared output for output with the RTL
+  sha256: 29ed3ac9f2dcc13b8e3f157c4562c64a7f9bbf15207c7d1dce30bf1ada0f89a1
+- path: designs/b96_kr260_10g/host/b96c_ppm.py
+  what: board driver for the ppm sweep (TX phase-interpolator offset, measured ppm, SYSMON conditions)
+  sha256: a5a5b3d64ee29423b64260c57029f8bedfceaf6deb8974f939ac3be0a5615f96
 - path: designs/b96_kr260_10g/rtl/hs_vec.sv
   what: coherent vector crossing
   sha256: bb5cad4fa986aeb9be36f0d9e4ebc9b695fa883d9d07db450cc5908ad0860a60
@@ -104,19 +113,19 @@ files:
   sha256: 4dec8c5ba8f6dccc6273f45d40a7d95a6668f5fe09350c0a0d80cc6c07ea1118
 - path: designs/b96_kr260_10g/docs/design.md
   what: 'design note: decisions and alternatives'
-  sha256: f410e6c00f53bb897ac9942f1644109a3496e23e4bb5839689c9c20cfbb0d9e9
+  sha256: 4bf99ccf2c6c52d92d48ec37792faec89263f12debe13c4bd671176fd5efdb2a
 - path: designs/b96_kr260_10g/docs/board_run_plan.md
   what: stage 3 plan for the board
   sha256: 678413f0be0f0c2692b2d1118cd8a8e54ec6514bd5e643485402e34ecc83c61b
 - path: designs/b96_kr260_10g/docs/what_we_found.md
   what: results and gaps
-  sha256: 3c8502e3cf4975a8e17335400838044167bf11e1e771c240995ce8cb0aaca2fd
+  sha256: e707017fadee2558385774d044057f57a8a6fc8c2538debff22606326a17fcd5
 - path: designs/b96_kr260_10g/regmap.py
   what: register map as data
-  sha256: a2d9438a2111d8373ab456eed2513c6693e4d61bb053256b5817bfb8e5cf5db5
+  sha256: 7970a54355b05077cab7602cbe1214c70da871b817756ba44160e74848cbef99
 - path: designs/b96_kr260_10g/docs/register_map.md
   what: interface datasheet
-  sha256: 5c595e1a5f41ea6b5549194ad682b216aad56191fa975cf6b2223e8db72c65d8
+  sha256: b31f99a6e3315bb5df5e606ae3eb780336fec184d97d647caff5233562d8da91
 commands:
 - what: simulate the PCS, MAC and core against the Python reference
   cmd: python -m pytest -q designs/b96_kr260_10g/tests
@@ -142,18 +151,19 @@ evidence:
     length residue, any bit offset; the whole core with a stand-in for the GT: probe echo, trading loop, decisions, poisoned
     orders'
   record: designs/b96_kr260_10g/tests/test_b96_pcs_rtl.py
-  sha256: 5c76fb4bc02f6b596ce3dd9bd5b2ec3e72dcd4442c435bcb024cb761088089e8
+  sha256: 47e65a97a6e81781371ce347a8680797a1b44ce81d4a14125195c2f219ce9105
 - id: E2
   activity: build
   result: pass
-  what: variant (b) synthesis, implementation and bitstream on the Basic tier; every flow gate and every GT gate passes
-  record: results/b96/build_b/gates.json
-  sha256: 935b96de0d9fb7fffea1d02525fe24c5a3ee8a93271498dabf5759200fa828bc
+  what: variant (b) with the 96C rate matcher, synthesis, implementation and bitstream on the Basic tier; every flow gate
+    and every GT gate passes (29 of 29)
+  record: results/b96c/builds/control/digest.json
+  sha256: cbe7ba0bca1cfb25b426600e4862ab2a3d87a922ead3ffb38189117eb8217fc2
 - id: E4
   activity: build
   result: pass
-  what: 'variant (a), the near-end loopback self-test: synthesis, implementation and bitstream; every flow gate and every
-    GT gate passes'
+  what: 'variant (a), the near-end loopback self-test, built before brief 96C and not rebuilt with the rate matcher: synthesis,
+    implementation and bitstream; every flow gate and every GT gate passes'
   record: results/b96/build_a/gates.json
   sha256: fe45f7625c3ccb8b1c942419bdccfeae9372e8f88fd3bef2577018d885faea8c
 - id: E3
@@ -168,60 +178,60 @@ measurements:
   category: resources
   key: lut
   unit: LUT
-  record: results/b96/build_b/gates.json
+  record: results/b96c/builds/control/digest.json
   field: utilization.lut
   conditions: routed, Vivado 2026.1
-  value: 5954
-  sha256: 935b96de0d9fb7fffea1d02525fe24c5a3ee8a93271498dabf5759200fa828bc
+  value: 6613
+  sha256: cbe7ba0bca1cfb25b426600e4862ab2a3d87a922ead3ffb38189117eb8217fc2
 - id: M2
   what: registers, variant (b)
   category: resources
   key: ff
   unit: FF
-  record: results/b96/build_b/gates.json
+  record: results/b96c/builds/control/digest.json
   field: utilization.ff
   conditions: as M1
-  value: 13657
-  sha256: 935b96de0d9fb7fffea1d02525fe24c5a3ee8a93271498dabf5759200fa828bc
+  value: 15667
+  sha256: cbe7ba0bca1cfb25b426600e4862ab2a3d87a922ead3ffb38189117eb8217fc2
 - id: M3
   what: worst setup slack, variant (b)
   category: timing
   key: wns_ns
   unit: ns
-  record: results/b96/build_b/gates.json
+  record: results/b96c/builds/control/digest.json
   field: timing.wns_ns
   conditions: routed, user clocks 161.133 MHz and 100 MHz
-  value: 0.115
-  sha256: 935b96de0d9fb7fffea1d02525fe24c5a3ee8a93271498dabf5759200fa828bc
+  value: 0.293
+  sha256: cbe7ba0bca1cfb25b426600e4862ab2a3d87a922ead3ffb38189117eb8217fc2
 - id: M4
   what: worst hold slack, variant (b)
   category: timing
   key: whs_ns
   unit: ns
-  record: results/b96/build_b/gates.json
+  record: results/b96c/builds/control/digest.json
   field: timing.whs_ns
   conditions: as M3
   value: 0.01
-  sha256: 935b96de0d9fb7fffea1d02525fe24c5a3ee8a93271498dabf5759200fa828bc
+  sha256: cbe7ba0bca1cfb25b426600e4862ab2a3d87a922ead3ffb38189117eb8217fc2
 - id: M5
   what: total on-chip power estimate, variant (b)
   category: power
   key: power_w
   unit: W
-  record: results/b96/build_b/gates.json
+  record: results/b96c/builds/control/digest.json
   field: power.total_w
   conditions: report_power after routing, vectorless, confidence Medium
-  value: 1.068
-  sha256: 935b96de0d9fb7fffea1d02525fe24c5a3ee8a93271498dabf5759200fa828bc
+  value: 0.928
+  sha256: cbe7ba0bca1cfb25b426600e4862ab2a3d87a922ead3ffb38189117eb8217fc2
 - id: M6
   what: Vivado peak resident memory of the variant (b) build
   category: other
   unit: MiB
-  record: results/b96/build_b/run.json
+  record: results/b96c/builds/control/run.json
   field: vivado_peak_rss_mib
-  conditions: 2 threads, MemoryMax=6G reached, one run
-  value: 3893
-  sha256: 830cf90442a2dc04d9d3d97f26ce0ee9737a0b3eeabe3eed62dab707f107d5fe
+  conditions: 1 thread, MemoryMax=6G scope, one run, no cap hits
+  value: 4449
+  sha256: b63fd6335d55d1f2fbb7d95f774af3dc1ffc6ce7f298223c906d24b3fdddbec1
 - id: M7
   what: transmit latency, worst gearbox phase
   category: latency
@@ -232,14 +242,24 @@ measurements:
   value: 3
   sha256: e5453d4c0b5d85fc9ccc28cbbfec0378fa8f365493b8dac1a61e8d8c2be4e081
 - id: M8
-  what: digital tick-to-trade
+  what: digital tick-to-trade, worst simulated case with the rate matcher (11 before brief 96C)
   category: latency
   unit: clocks
-  record: results/b96/core_sim.json
-  field: tick_to_trade_digital_sim.gt_rxdata_price_word_to_gt_txdata_order_start_clocks
+  record: results/b96c/core_sim.json
+  field: tick_to_trade_digital_sim.gt_rxdata_price_word_to_gt_txdata_order_start_clocks.max
   conditions: simulation, same-phase clocks; GT, optics and clock-crossing phase not included
-  value: 11
-  sha256: b1ba6d48f8bd81ecba0fae78fb5c793ea9b074a9b16e90d71a092bfabb6b8523
+  value: 13
+  sha256: 227e0284e2cba41f80c8c524388147f56dd26ff5969ad3bb7e7b6e8ae1c70ebc
+- id: M9
+  what: worst setup slack, latency variant all3 with the rate matcher
+  category: timing
+  key: wns_ns_all3
+  unit: ns
+  record: results/b96c/builds/all3/digest.json
+  field: timing.wns_ns
+  conditions: as M3; the margin is thin
+  value: 0.004
+  sha256: 53fa66d4a7c2a9175d19dd91d627f07606373052dc4af1e8a95622fc3ef07560
 gaps:
 - about: hardware
   text: Nothing has run on a board. The reference clock source and frequency, the 25 MHz input and the SFP+ control pin
@@ -260,8 +280,9 @@ gaps:
   text: The line rate and the 10 Gb/s payload rate are by configuration and by the gearbox arithmetic; no throughput or
     error-rate measurement exists because nothing ran on a board.
 - about: build
-  text: Both builds run at the 6 GiB memory cap and swap (thousands of cap hits in the run records); the Vivado resident
-    peak is 3893 MiB.
+  text: The 96C builds of the latency variant (all3) and its ppm twin hit the 6 GiB scope cap about 1000 times and used
+    about 700 MiB of swap (the base build did not); the Vivado resident peak of the base build is 4449 MiB. all3 closes
+    timing with 0.004 ns of setup slack, which is thin.
 next_steps:
 - Run docs/board_run_plan.md steps 1 to 4 on the KR260 (laser polarity first), then the NIC steps after the owner buys a
   card and cable.
@@ -270,6 +291,9 @@ next_steps:
 open_questions:
 - Does the PL load over JTAG with the PS idle on the KR260 (flow/program.py has no KR260 board entry yet)?
 history:
+- date: '2026-11-19'
+  note: 'brief 96C: elastic-buffer rate matcher (xpm_fifo_async) in the base design and lat_all3, TX phase-interpolator
+    ppm controls, four builds with all 29 gates, board session pending'
 - date: '2026-11-17'
   note: 'brief 96 stages 0 to 2: board facts, design note, PCS, MAC, trading path, host code, builds; one review round'
 numbers_allow:
@@ -291,12 +315,16 @@ numbers_allow:
   reason: generic count
 - token: 58A
   reason: a brief name
-- token: '3893'
-  reason: Vivado peak resident memory recorded in results/b96/build_b/run.json
+- token: '4449'
+  reason: Vivado peak resident memory recorded in results/b96c/builds/control/run.json
+- token: '1000'
+  reason: about the scope cap hits of the all3 builds (989 and 1033 in results/b96c/builds/*/run.json)
+- token: '700'
+  reason: about the swap peak of the all3 builds (697 and 706 MiB in results/b96c/builds/*/run.json)
 state:
   stage: built
   gates:
     build_2026_1: pass
   vivado: '2026.1'
   kb_pin: 93d158c
-  build_id: 637c3086
+  build_id: dd5144c3

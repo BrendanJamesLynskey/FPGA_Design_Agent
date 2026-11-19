@@ -5,6 +5,25 @@ core is refused there), with the mock trading path of brief 58A on top. **It has
 bit-serial Python reference) or a Vivado build; hardware numbers are the plan in [board_run_plan.md](board_run_plan.md). Every number comes from a file under
 `results/b96/` (named at its use).
 
+## Update, brief 96C (2026-11-19): rate matching added; the tables below are from before it
+
+Brief 96C put an elastic buffer (`rtl/rate_match.sv`, AMD's `xpm_fifo_async`) between the receive PCS and the MAC, so the receive stream crosses into the core
+clock as a stream and idle blocks are inserted or deleted between frames (design.md section 9). The headline figures and build table below were measured before it and
+are kept as the record of brief 96. What changed, with the records:
+
+| | Before 96C | With the rate matcher |
+|---|---|---|
+| Digital tick-to-trade, simulation, in-phase | 11 clocks | 12 to 13 clocks (`results/b96c/core_sim.json`, `tick_to_trade_digital_sim`; the old 4-clock go-pulse crossing is gone, the buffer adds 5 to 6; up to about 5 more at a positive ppm) |
+| Base design (variant b) LUT / FF | 5,954 / 13,657 | 6,613 / 15,667 (`results/b96c/builds/control/digest.json`) |
+| Base design WNS / WHS | +0.115 / +0.010 ns | +0.293 / +0.010 ns |
+| Base design power / Tj | 1.068 W | 0.928 W / 46.9 C (vectorless estimate) |
+| `lat_all3` (97's fastest accepted variant) on the new base | | 6,574 LUT, WNS **+0.004 ns**, 0.947 W (`builds/all3`) |
+| ppm builds (TXPI ppm controls on): ppm_ctl / ppm_all3 | | WNS +0.135 / +0.033 ns, 1.102 / 0.930 W (`builds/ppm_ctl`, `builds/ppm_all3`) |
+
+All four builds pass all 29 gates, methodology critical warnings 0 (`results/b96c/builds/gates.md`). The all3 builds hit the 6 GiB scope cap about 1000 times and used
+about 700 MiB of swap. **No board run of the rate-matched design yet**; the ppm sweep, the measured offsets and the latency at the extremes are pending (the board script is `run_96c_stage3.sh`
+in the planner's `_handoff/fpga_agent`; the sweep driver is `host/b96c_ppm.py`; design.md section 9 describes the buffer).
+
 ## Headline numbers (clocks of 6.2058 ns, 161.1328125 MHz; GT, optics and cable not included)
 
 | Quantity | Result | Source |
@@ -25,7 +44,7 @@ serialiser, CDR and RX buffer latency (not in simulation: the real GT model is r
 
 ![Latency budget](latency_budget.svg)
 
-## Build results (Vivado 2026.1, xck26-sfvc784-2LV-c, flow gates all pass)
+## Build results before 96C (Vivado 2026.1, xck26-sfvc784-2LV-c, flow gates all pass)
 
 | | Variant (b): SFP+ live, trading path | Variant (a): near-end PMA loopback self-test |
 |---|---|---|

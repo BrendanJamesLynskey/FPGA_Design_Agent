@@ -2,45 +2,55 @@
 # Read by flow/latency (the agent's `latency_path` and `latency_budget` tools). Two kinds of fact live here:
 #   - structure: which register or crossing each stage is, in which clock domain, why it exists and what removing it risks
 #     (written from the RTL; docs/design.md section 3 lists the same registers);
-#   - the stage's clocks: the sum over a segment must equal what the benches measure (results/b96/core_sim.json from
+#   - the stage's clocks: the sum over a segment must equal what the benches measure (results/b96c/core_sim.json from
 #     tests/core_cocotb.py, and latency_sim.json from tests/pcs_mac_cocotb.py); the tool refuses a table that does not reconcile.
 # "clocks" is the delay a stage adds on the chain, counted from the clock edge that captures the GT word holding the price
 # (or the start block). A stage that is only the capture edge adds 0.
 schema: fda.latency_stages/1
 design: b96_kr260_10g
+# brief 96C (2026-11-19): rewritten for the rate-matched chain. The receive PCS stays in the recovered clock; the elastic buffer (rate_match.sv) now
+# carries the blocks into the transmit clock, so MAC, decision and order logic are all in txusr2 and the old go-pulse crossing (cross_go, 4 clocks) is gone.
+# The buffer's latency varies with its fill (5 to 6 clocks in simulation with in-phase clocks, up to about 5 more at a positive ppm: docs/design.md section 9);
+# the stage file counts the simulated worst case and reconciles with the bench's `max` keys. Variants built on pre96c/ (lat_agent_cdc, lat_hand_ref,
+# lat_agent_both) keep the old chain; this file describes the base design and lat_all3.
 period_ns: 6.2058             # 1 / 161.1328125 MHz; TXUSRCLK2 and RXUSRCLK2 have the same nominal rate
 domains:
   rx: {clock: rxusr2, note: recovered clock, equal to the line rate within the partner's ppm}
-  tx: {clock: txusr2, note: TX reference clock, independent of rx}
+  tx: {clock: txusr2, note: core clock; the rate matcher's read side and everything behind it; asynchronous to rx up to the partner's ppm}
   gt: {clock: line, note: the GTH's own serialiser, CDR, buffers; not simulated, measured on the board}
 
 # How the tool refreshes the simulated numbers: this pytest runs the whole-core bench, which writes the JSON named by the env variable.
 trace:
   pytest: designs/b96_kr260_10g/tests/test_b96_pcs_rtl.py::test_core_cocotb
   results_env: B96_CORE_RESULTS
-  results_file: results/b96/core_sim.json
+  results_file: results/b96c/core_sim.json
 slack:
-  file: results/b96/latency_slack.json   # written by flow/latency/netlist_slack.tcl on a post-route checkpoint (the stages' register patterns)
+  file: results/b96c/latency_slack.json   # not yet taken on the 96C checkpoint (the b96 file described the old chain): stages show no slack, unknown, not fine. Written by flow/latency/netlist_slack.tcl on a post-route checkpoint (the stages' register patterns)
 
 paths:
   tick_to_trade:
     title: "tick-to-trade: price word on the receive GT port -> order's start block on the transmit GT port"
-    # the measured quantity every stage sum must equal (path into results/b96/core_sim.json)
-    measured: {file: core_sim.json, key: "tick_to_trade_digital_sim.gt_rxdata_price_word_to_gt_txdata_order_start_clocks"}
+    # the measured quantity every stage sum must equal (path into results/b96c/core_sim.json; `.max` is the worst simulated case)
+    # fire_to_go has no stage: since 96C the go pulse stays in the transmit clock (0 clocks), the old 4-clock crossing is gone
+    measured: {file: core_sim.json, key: "tick_to_trade_digital_sim.gt_rxdata_price_word_to_gt_txdata_order_start_clocks.max"}
     segments:
-      - id: gt_to_mac_reg
-        measured: {file: core_sim.json, key: "tick_to_trade_digital_sim.price_word_captured_at_gt_to_mac_register_clocks"}
+      - id: gt_to_pcs_out
+        measured: {file: core_sim.json, key: "tick_to_trade_digital_sim.gt_capture_to_pcs_output_register_clocks"}
+      - id: pcs_to_rm_out
+        measured: {file: core_sim.json, key: "tick_to_trade_digital_sim.pcs_output_to_rate_match_output_clocks.max"}
+      - id: rm_to_mac_reg
+        measured: {file: core_sim.json, key: "tick_to_trade_digital_sim.rate_match_output_to_mac_register_clocks.max"}
       - id: mac_reg_to_fire
-        measured: {file: core_sim.json, key: "tick_to_trade_digital_sim.mac_register_to_fire_register_clocks"}
+        measured: {file: core_sim.json, key: "tick_to_trade_digital_sim.mac_register_to_fire_register_clocks.max"}
       - id: fire_to_go
-        measured: {file: core_sim.json, key: "tick_to_trade_digital_sim.fire_register_to_go_pulse_in_tx_domain_clocks"}
+        measured: {file: core_sim.json, key: "tick_to_trade_digital_sim.fire_register_to_order_logic_go_clocks.max"}
       - id: go_to_preamble
-        measured: {file: core_sim.json, key: "tick_to_trade_digital_sim.go_pulse_to_order_preamble_in_mac_register_clocks"}
+        measured: {file: core_sim.json, key: "tick_to_trade_digital_sim.go_to_order_preamble_in_mac_register_clocks.max"}
       - id: preamble_to_start_block
         measured: {value: 2, note: "pcs bench: the start block's last bit is on TXDATA 2 clocks after the preamble is in the MAC register (3 at some gearbox phases)"}
     stages:
       - id: rx_blk
-        segment: gt_to_mac_reg
+        segment: gt_to_pcs_out
         name: "pcs_rx stage A (gearbox remainder + extracted 66-bit block `blk`)"
         domain: rx
         kind: reg
@@ -51,7 +61,7 @@ paths:
         technique: none
         removable: 0
       - id: rx_descramble
-        segment: gt_to_mac_reg
+        segment: gt_to_pcs_out
         name: "pcs_rx stage B (descramble + decode into x_d, x_c, x_v)"
         domain: rx
         kind: reg
@@ -61,10 +71,21 @@ paths:
         remove_risk: "merging A and B puts barrel shift, descramble and decode in one clock; the block-lock FSM reads the same block registers; timing is the risk, function is not"
         technique: merge_stages
         removable: 1
+      - id: rx_ratematch
+        segment: pcs_to_rm_out
+        name: "rate_match elastic buffer (xpm_fifo_async, 16 blocks, registered output); the receive-to-transmit clock crossing"
+        domain: rx->tx
+        kind: cdc
+        clocks: 6
+        registers: ["*u_rx/u_rm/*"]
+        why: "the receive PCS runs in the recovered clock and the MAC in the transmit clock; against a partner at up to +-100 ppm the blocks must cross as a stream, and idle blocks are inserted or deleted here, between frames only (brief 96C). 5 to 6 clocks in simulation with in-phase clocks; the count is the simulated worst case and rises with the buffer's fill"
+        remove_risk: "without the buffer the design relies on frames being sparse (event crossing), which fails against a faster partner sending back-to-back frames; a shallower HI threshold or a smaller FIFO read latency trades clocks against slip margin and needs the partner sweep re-run"
+        technique: shrink_buffer
+        removable: 0
       - id: rx_mac
-        segment: gt_to_mac_reg
+        segment: rm_to_mac_reg
         name: "mac64_rx output register (m_d, m_v, m_sof, m_nb)"
-        domain: rx
+        domain: tx
         kind: reg
         clocks: 1
         registers: ["*u_rx/u_mr/m_d_reg[*]", "*u_rx/u_mr/m_v_reg"]
@@ -75,24 +96,13 @@ paths:
       - id: decide
         segment: mac_reg_to_fire
         name: "trade64 decision register (`fire`, o_price, o_inst)"
-        domain: rx
+        domain: tx
         kind: reg
         clocks: 1
         registers: ["*u_rx/u_td/fire_reg", "*u_rx/u_td/o_price_reg[*]"]
         why: "the price compare (price <= thr, 32 bits) and the arm/kill/enable interlock are registered before the order is requested"
         remove_risk: "an early decision from the lower word bytes is a design change (the price is complete only in word 7); removing the register puts the compare in front of the crossing flop"
         technique: merge_stages
-        removable: 1
-      - id: cross_go
-        segment: fire_to_go
-        name: "receive-to-transmit crossing of the go pulse (xpm_cdc_pulse u_p_go: toggle flop, 2 synchroniser flops, edge detect, output register)"
-        domain: rx->tx
-        kind: cdc
-        clocks: 4
-        registers: ["*u_p_go/*"]
-        why: "the order is requested in the recovered-clock domain and sent in the transmit-clock domain; the two clocks are independent"
-        remove_risk: "fewer synchroniser flops raise the metastability failure rate (MTBF); the order bus beside the pulse is sampled 4 clocks later by frame_src, so an earlier pulse must still find the bus settled (`stale` counts misses); the quasi-static bus uses 3 flops"
-        technique: shorten_cdc
         removable: 1
       - id: fs_start
         segment: go_to_preamble
@@ -171,9 +181,9 @@ paths:
         technique: none
         removable: 0
 
-# What the board adds (results/b96/hw/*/stage3.json; the GT and optics are not simulated). Board medians in clocks of 6.2058 ns.
+# What the board adds (results/b96/hw/*/stage3.json, a PRE-96C run: the board numbers below describe the design before the rate matcher; the 96C board session is pending; the GT and optics are not simulated). Board medians in clocks of 6.2058 ns.
 board:
-  file: hw/20261117_101326/stage3.json
+  file: ../b96/hw/20261117_101326/stage3.json   # relative to the directory of the slack file (results/b96c), so this reaches results/b96/hw
   echo_clocks_key: restarts.E_max_per_link.median        # median over 100 restarts of the per-link maximum echo
   loop_clocks_key: restarts.L_max_per_link.median
   fibre_one_way_ns_key: fibre_one_way_ns

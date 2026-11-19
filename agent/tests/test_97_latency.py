@@ -22,8 +22,8 @@ def session() -> Session:
 
 def test_latency_path_tool_reconciles_with_the_recorded_bench() -> None:
     r = registry.dispatch(session(), "latency_path", {})
-    assert r["ok"] and r["latency_path"]["reconciled"] and r["latency_path"]["total_clocks"] == 11
-    assert "cross_go" in r["output"] and "recorded clocks" in r["output"]
+    assert r["ok"] and r["latency_path"]["reconciled"] and r["latency_path"]["total_clocks"] == 13
+    assert "rx_ratematch" in r["output"] and "recorded clocks" in r["output"]
 
 
 def test_latency_budget_tool_names_risk_and_the_board_share() -> None:
@@ -99,7 +99,7 @@ def test_edit_file_replaces_exactly_one_occurrence(tmp_path: Path) -> None:
 def test_the_a1_visit_can_call_the_latency_tools() -> None:
     v = visit("A1", [], None)
     out = v._dispatch("latency_path", {}, {})
-    assert "tick-to-trade" in out and "cross_go" in out
+    assert "tick-to-trade" in out and "rx_ratematch" in out
 
 
 def test_a_visit_ends_with_the_note(tmp_path: Path) -> None:

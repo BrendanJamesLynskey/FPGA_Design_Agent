@@ -49,10 +49,10 @@ Interfaces:
 
 | Quantity | Value | Source |
 |---|---|---|
-| Resources | LUTs, variant (b): 5954 LUT; registers, variant (b): 13,657 FF | M1, M2 |
-| Timing | worst setup slack, variant (b): 0.115 ns; worst hold slack, variant (b): 0.01 ns | M3, M4 |
-| Power | total on-chip power estimate, variant (b): 1.068 W | M5 |
-| Latency | transmit latency, worst gearbox phase: 3 clocks; digital tick-to-trade: 11 clocks | M7, M8 |
+| Resources | LUTs, variant (b): 6613 LUT; registers, variant (b): 15,667 FF | M1, M2 |
+| Timing | worst setup slack, variant (b): 0.293 ns; worst hold slack, variant (b): 0.01 ns; worst setup slack, latency variant all3 with the rate matcher: 0.004 ns | M3, M4, M9 |
+| Power | total on-chip power estimate, variant (b): 0.928 W | M5 |
+| Latency | transmit latency, worst gearbox phase: 3 clocks; digital tick-to-trade, worst simulated case with the rate matcher (11 before brief 96C): 13 clocks | M7, M8 |
 | Throughput | not measured | [Known gaps](#known-gaps-and-limits) |
 
 ![Resource use as a share of the part, and timing slack](docs/handover/resources.svg)
@@ -68,7 +68,7 @@ Interfaces:
 | build variant (b) and run all gates; needs local Vivado 2026.1 (Basic tier) and a heavy slot (take_heavy_slot.sh), MEM_MAX=6G reaches the cap | `flow/run_vivado.sh designs/b96_kr260_10g base` | yes | about 22 min |
 | build variant (a), the near-end loopback self-test; needs as above | `flow/run_vivado.sh designs/b96_kr260_10g/selftest base` | yes | about 22 min |
 
-Tool: Vivado 2026.1. Build ID of the inputs at handover: `637c3086` (`python flow/manifest.py show designs/b96_kr260_10g`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `93d158c`.
+Tool: Vivado 2026.1. Build ID of the inputs at handover: `dd5144c3` (`python flow/manifest.py show designs/b96_kr260_10g`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `93d158c`.
 
 | File | What |
 |---|---|
@@ -83,6 +83,9 @@ Tool: Vivado 2026.1. Build ID of the inputs at handover: `637c3086` (`python flo
 | [`designs/b96_kr260_10g/rtl/rx_path.sv`](rtl/rx_path.sv) | receive domain: PCS, MAC, decision, counters |
 | [`designs/b96_kr260_10g/rtl/b96_core.sv`](rtl/b96_core.sv) | registers, GT wrapper and clock-domain crossings |
 | [`designs/b96_kr260_10g/rtl/kr260_10g_top.sv`](rtl/kr260_10g_top.sv) | board top (MMCM, SYSMON, pins) |
+| [`designs/b96_kr260_10g/rtl/rate_match.sv`](rtl/rate_match.sv) | rate-matching elastic buffer (idle insert and delete between frames, xpm_fifo_async), brief 96C |
+| [`designs/b96_kr260_10g/model/ratematch.py`](model/ratematch.py) | Python twin of the rate matcher, compared output for output with the RTL |
+| [`designs/b96_kr260_10g/host/b96c_ppm.py`](host/b96c_ppm.py) | board driver for the ppm sweep (TX phase-interpolator offset, measured ppm, SYSMON conditions) |
 | [`designs/b96_kr260_10g/rtl/hs_vec.sv`](rtl/hs_vec.sv) | coherent vector crossing |
 | [`designs/b96_kr260_10g/model/pcs.py`](model/pcs.py) | bit-serial Python reference of the PCS (the twin) |
 | [`designs/b96_kr260_10g/design.xdc`](design.xdc) | pins, clocks, slow-pin constraints |
@@ -102,8 +105,8 @@ Tool: Vivado 2026.1. Build ID of the inputs at handover: `637c3086` (`python flo
 | ID | Activity | Result | What | Evidence | Conditions |
 |---|---|---|---|---|---|
 | E1 | simulation | pass | PCS and MAC against an independent bit-serial Python model clock for clock; frames in lane 0 and lane 4, every length residue, any bit offset; the whole core with a stand-in for the GT: probe echo, trading loop, decisions, poisoned orders | [`designs/b96_kr260_10g/tests/test_b96_pcs_rtl.py`](tests/test_b96_pcs_rtl.py) (run in CI) | - |
-| E2 | build | pass | variant (b) synthesis, implementation and bitstream on the Basic tier; every flow gate and every GT gate passes | [`results/b96/build_b/gates.json`](../../results/b96/build_b/gates.json) | - |
-| E4 | build | pass | variant (a), the near-end loopback self-test: synthesis, implementation and bitstream; every flow gate and every GT gate passes | [`results/b96/build_a/gates.json`](../../results/b96/build_a/gates.json) | - |
+| E2 | build | pass | variant (b) with the 96C rate matcher, synthesis, implementation and bitstream on the Basic tier; every flow gate and every GT gate passes (29 of 29) | [`results/b96c/builds/control/digest.json`](../../results/b96c/builds/control/digest.json) | - |
+| E4 | build | pass | variant (a), the near-end loopback self-test, built before brief 96C and not rebuilt with the rate matcher: synthesis, implementation and bitstream; every flow gate and every GT gate passes | [`results/b96/build_a/gates.json`](../../results/b96/build_a/gates.json) | - |
 | E3 | review | pass | one independent correctness review (Sonnet) and one fix round | [`results/b96/README.md`](../../results/b96/README.md) | - |
 
 Gates at handover: `build_2026_1` pass.
@@ -117,14 +120,15 @@ Every value is read from the record by `python -m flow.handover fill`, not typed
 
 | ID | What | Value | Runs | Source | Conditions |
 |---|---|---|---|---|---|
-| M1 | LUTs, variant (b) | 5954 LUT | 1 | [`results/b96/build_b/gates.json`](../../results/b96/build_b/gates.json) `utilization.lut` | routed, Vivado 2026.1 |
-| M2 | registers, variant (b) | 13,657 FF | 1 | [`results/b96/build_b/gates.json`](../../results/b96/build_b/gates.json) `utilization.ff` | as M1 |
-| M3 | worst setup slack, variant (b) | 0.115 ns | 1 | [`results/b96/build_b/gates.json`](../../results/b96/build_b/gates.json) `timing.wns_ns` | routed, user clocks 161.133 MHz and 100 MHz |
-| M4 | worst hold slack, variant (b) | 0.01 ns | 1 | [`results/b96/build_b/gates.json`](../../results/b96/build_b/gates.json) `timing.whs_ns` | as M3 |
-| M5 | total on-chip power estimate, variant (b) | 1.068 W | 1 | [`results/b96/build_b/gates.json`](../../results/b96/build_b/gates.json) `power.total_w` | report_power after routing, vectorless, confidence Medium |
-| M6 | Vivado peak resident memory of the variant (b) build | 3893 MiB | 1 | [`results/b96/build_b/run.json`](../../results/b96/build_b/run.json) `vivado_peak_rss_mib` | 2 threads, MemoryMax=6G reached, one run |
+| M1 | LUTs, variant (b) | 6613 LUT | 1 | [`results/b96c/builds/control/digest.json`](../../results/b96c/builds/control/digest.json) `utilization.lut` | routed, Vivado 2026.1 |
+| M2 | registers, variant (b) | 15,667 FF | 1 | [`results/b96c/builds/control/digest.json`](../../results/b96c/builds/control/digest.json) `utilization.ff` | as M1 |
+| M3 | worst setup slack, variant (b) | 0.293 ns | 1 | [`results/b96c/builds/control/digest.json`](../../results/b96c/builds/control/digest.json) `timing.wns_ns` | routed, user clocks 161.133 MHz and 100 MHz |
+| M4 | worst hold slack, variant (b) | 0.01 ns | 1 | [`results/b96c/builds/control/digest.json`](../../results/b96c/builds/control/digest.json) `timing.whs_ns` | as M3 |
+| M5 | total on-chip power estimate, variant (b) | 0.928 W | 1 | [`results/b96c/builds/control/digest.json`](../../results/b96c/builds/control/digest.json) `power.total_w` | report_power after routing, vectorless, confidence Medium |
+| M6 | Vivado peak resident memory of the variant (b) build | 4449 MiB | 1 | [`results/b96c/builds/control/run.json`](../../results/b96c/builds/control/run.json) `vivado_peak_rss_mib` | 1 thread, MemoryMax=6G scope, one run, no cap hits |
 | M7 | transmit latency, worst gearbox phase | 3 clocks | 1 | [`results/b96/latency_sim.json`](../../results/b96/latency_sim.json) `tx_clocks_max` | simulation, 161.13 MHz clock, MAC output register to the GT word with the last bit of the start block |
-| M8 | digital tick-to-trade | 11 clocks | 1 | [`results/b96/core_sim.json`](../../results/b96/core_sim.json) `tick_to_trade_digital_sim.gt_rxdata_price_word_to_gt_txdata_order_start_clocks` | simulation, same-phase clocks; GT, optics and clock-crossing phase not included |
+| M8 | digital tick-to-trade, worst simulated case with the rate matcher (11 before brief 96C) | 13 clocks | 1 | [`results/b96c/core_sim.json`](../../results/b96c/core_sim.json) `tick_to_trade_digital_sim.gt_rxdata_price_word_to_gt_txdata_order_start_clocks.max` | simulation, same-phase clocks; GT, optics and clock-crossing phase not included |
+| M9 | worst setup slack, latency variant all3 with the rate matcher | 0.004 ns | 1 | [`results/b96c/builds/all3/digest.json`](../../results/b96c/builds/all3/digest.json) `timing.wns_ns` | as M3; the margin is thin |
 
 <!-- prose:measured -->
 <!-- /prose:measured -->
@@ -137,7 +141,7 @@ Every value is read from the record by `python -m flow.handover fill`, not typed
 - **trading path**: trade64 is a one-rule 64-bit stand-in, not the 58A core; orders that overlap are dropped; no cancel after send; the order fields cross as a quasi-static bus (CDC-6 warning).
 - **protocol**: No link-fault state machine, BER monitor, ARP or ICMP responder; ordered sets are counted and shown as idles; receive does not check preamble, runts or jumbo frames; the transmit MAC does not pad.
 - **throughput**: The line rate and the 10 Gb/s payload rate are by configuration and by the gearbox arithmetic; no throughput or error-rate measurement exists because nothing ran on a board.
-- **build**: Both builds run at the 6 GiB memory cap and swap (thousands of cap hits in the run records); the Vivado resident peak is 3893 MiB.
+- **build**: The 96C builds of the latency variant (all3) and its ppm twin hit the 6 GiB scope cap about 1000 times and used about 700 MiB of swap (the base build did not); the Vivado resident peak of the base build is 4449 MiB. all3 closes timing with 0.004 ns of setup slack, which is thin.
 
 <!-- prose:gaps -->
 <!-- /prose:gaps -->
@@ -159,6 +163,7 @@ Open questions:
 
 | Date | Brief | PR | What |
 |---|---|---|---|
+| 2026-11-19 | - | - | brief 96C: elastic-buffer rate matcher (xpm_fifo_async) in the base design and lat_all3, TX phase-interpolator ppm controls, four builds with all 29 gates, board session pending |
 | 2026-11-17 | - | - | brief 96 stages 0 to 2: board facts, design note, PCS, MAC, trading path, host code, builds; one review round |
 
 <!-- prose:history -->
