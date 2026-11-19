@@ -155,28 +155,30 @@ def import_check(design: Path, only: str | None = None, upstream: Path | None = 
             sims = [simulate_block(block, c.module or "", work / c.name / f"step{w}", w) for w in STEP_WIDTHS]
             fault = planted_fault_copy(block, work / c.name / "lfsr_fault.v")
             fsim = simulate_block(work / c.name / "lfsr_fault.v", c.module or "", work / c.name / "fault16", 16)
-            r["planted_fault"] = {"what": fault, "rejected_by_block_sim": fsim.get("passed") is False, "mismatches": fsim.get("mismatches")}
+            r["planted_fault"] = {"what": fault, "rejected_by_block_sim": fsim.get("passed") is False and bool(fsim.get("mismatches")), "mismatches": fsim.get("mismatches")}
         r["block_simulation"] = sims
         if adapter is not None and block is not None:
             afiles = [*build_files(project, adapter), block]
             r["adapter_simulation"] = {"adapter": adapter.name, **I.simulate_crc_netlist(afiles, adapter.module or "", work / c.name / "adapter", 16)}
             if "planted_fault" in r:
                 fa = I.simulate_crc_netlist([*(f for f in afiles if f != block), work / c.name / "lfsr_fault.v"], adapter.module or "", work / c.name / "adapter_fault", 16)
-                r["planted_fault"]["rejected_by_adapter_sim"] = fa.get("passed") is False
+                r["planted_fault"]["rejected_by_adapter_sim"] = fa.get("passed") is False and bool(fa.get("mismatches"))
                 r["planted_fault"]["adapter_mismatches"] = fa.get("mismatches")
         if run_eqy and adapter is not None and block is not None and adapter.reference_rtl:
             gate = work / c.name / "gate.v"
             gate.write_text("\n".join(f.read_text() for f in [*build_files(project, adapter), block]))
             r["eqy"] = I.eqy_prove([project.design / p for p in adapter.reference_rtl], gate, adapter.module or "", work / c.name / "eqy", timeout=600)
-        ok = (not r["provenance"] and not r["interface"] and not r.get("upstream")
+        needs_adapter = bool(adapter is not None and adapter.reference_rtl) or adapter is not None
+        ok = (needs_adapter and "adapter_simulation" in r
+              and not r["provenance"] and not r["interface"] and not r.get("upstream")
               and bool(sims) and all(s["passed"] for s in sims)
               and r.get("adapter_simulation", {"passed": True})["passed"] is True
-              and r.get("planted_fault", {}).get("rejected_by_block_sim") is True and r.get("planted_fault", {}).get("rejected_by_adapter_sim", True) is True
+              and r.get("planted_fault", {}).get("rejected_by_block_sim") is True and r.get("planted_fault", {}).get("rejected_by_adapter_sim") is True
               and (not run_eqy or r.get("eqy", {}).get("equivalent") is True))
         r["passed"] = ok
         rep["components"][c.name] = r
         if ok:
-            M.write_evidence(project, c, "verified", {"passed": True, "tests": ["provenance", "interface", "block_simulation", "planted_fault"] +
+            M.write_evidence(project, c, "verified", {"passed": True, "upstream_checked": upstream is not None, "tests": ["provenance", "interface", "block_simulation", "planted_fault"] +
                                                       (["upstream"] if upstream is not None else []) + (["adapter_simulation"] if "adapter_simulation" in r else []) +
                                                       (["eqy"] if run_eqy else [])})
     rep["passed"] = bool(rep["components"]) and all(v["passed"] for v in rep["components"].values())

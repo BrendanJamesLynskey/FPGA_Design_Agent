@@ -63,6 +63,7 @@ the demonstration [designs/b102_managed_fcs](designs/b102_managed_fcs/README.md)
 Stage 2 adds a block that arrives already placed, routed and locked (`level: placed_routed`): a keep-out region its owners' constraints and the RapidWright tools must respect,
 an import check of the lock and the footprint, and placement evidence (the block relocated by RapidWright and re-placed around, its internal interconnect delays compared, in picoseconds,
 with Vivado as the referee): the demonstration [designs/b102_managed_pr](designs/b102_managed_pr/README.md) and [results/102_managed_pr](results/102_managed_pr/README.md).
+Stage 3 integrates one real third-party RTL block (Alex Forencich's parallel CRC/LFSR from verilog-ethernet, MIT) as a frozen component vendored unmodified, with its licence, upstream commit and a hash per file checked against the source and a provenance report of what is theirs and what is ours: the demonstration [designs/b102_managed_ext](designs/b102_managed_ext/README.md) and [results/102_stage3](results/102_stage3/README.md).
 A portfolio pack (title, facts with their sources, stills and a short animation) is in [site/portfolio/](site/portfolio/README.md).
 
 ## The flow

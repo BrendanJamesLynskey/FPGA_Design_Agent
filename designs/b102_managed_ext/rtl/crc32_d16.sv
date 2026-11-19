@@ -16,6 +16,9 @@ module crc32_d16 (
     output logic [31:0] crc
 );
     logic [31:0] nxt;
+    /* verilator lint_off UNUSEDSIGNAL */
+    logic [15:0] shifted_out;                       // the block's data_out (bits shifted out of the LFSR): not used by a CRC
+    /* verilator lint_on UNUSEDSIGNAL */
 
     lfsr #(
         .LFSR_WIDTH(32),
@@ -28,7 +31,7 @@ module crc32_d16 (
     ) u_lfsr (
         .data_in(d),
         .state_in(init ? 32'hFFFFFFFF : crc),
-        .data_out(),
+        .data_out(shifted_out),
         .state_out(nxt)
     );
 

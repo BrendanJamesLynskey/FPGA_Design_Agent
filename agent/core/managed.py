@@ -213,6 +213,10 @@ def validate(raw: Any, design: Path | None = None) -> list[str]:
         for k in sorted(set(prov) - _PROV_KEYS):
             errs.append(f"{where}: unknown provenance key {k!r}")
         iface = c.get("interface") or {}
+        if not isinstance(prov.get("files", {}), dict) or not isinstance(prov.get("upstream_paths", {}), dict):
+            errs.append(f"{where}: provenance.files and provenance.upstream_paths must be mappings of path to text")
+        if not isinstance(iface.get("parameters", {}), dict) or not all(isinstance(v, int) and not isinstance(v, bool) for v in (iface.get("parameters") or {}).values()):
+            errs.append(f"{where}: interface.parameters must be a mapping of parameter name to a whole number")
         for p in iface.get("ports") or []:
             if not isinstance(p, dict) or not _ID.match(str(p.get("name", ""))) or p.get("dir") not in _DIRS:
                 errs.append(f"{where}: interface port {p!r} needs name and dir (input|output|inout)")
@@ -334,9 +338,14 @@ def third_party_gaps(project: Project, comp: Component) -> list[str]:
     if not re.fullmatch(r"[0-9a-f]{40}", str(prov.get("commit", ""))):
         gaps.append("provenance.commit must be the full 40-hex upstream commit")
     lic = prov.get("licence_file")
+    listed = prov.get("files") or {}
     if not lic or not (project.design / lic).is_file():
         gaps.append("provenance.licence_file is missing or not in the tree")
-    listed = prov.get("files") or {}
+    else:
+        if lic not in listed:
+            gaps.append("provenance.licence_file must be one of provenance.files (so it is hashed)")
+        if not re.search(r"permission is hereby granted|apache license|redistribution and use in source", (project.design / lic).read_text(errors="replace"), re.I):
+            gaps.append("provenance.licence_file does not read like a licence text")
     if not listed:
         gaps.append("provenance.files (path: sha256 of each file as received) is missing")
     for rel, want in sorted(listed.items()):
@@ -363,6 +372,8 @@ def trust(project: Project, comp: Component) -> tuple[str, list[str]]:
     v = ev.get("verified") or {}
     if not (v.get("passed") is True and v.get("component_sha256") == h):
         return "documented", ["no passing own-tests evidence for the current content" if not v else "verified evidence is stale or failed"]
+    if comp.provenance.get("upstream_url") and v.get("upstream_checked") is not True:
+        return "documented", ["the files were not compared with the upstream commit (run flow/managed_rtl_import.py check --upstream <clone>)"]
     if comp.level == "placed_routed":
         pe = ev.get("placement") or {}
         if not (pe.get("passed") is True and pe.get("component_sha256") == h and pe.get("placements_tried") in range(2, 10_000)):
@@ -546,6 +557,8 @@ class ManagedPolicy:
         if rel.lower().endswith((".xdc", ".tcl")) or self._is_listed_constraint(rel):
             self.check_xdc(rel, content)
             return
+        if rel.lower().endswith((".v", ".sv", ".svh", ".vh")):
+            self._no_shadow(rel, content)
         c = self.classify(rel)
         if c is None or c.ownership != "owned" or not c.module or not c.interface.get("ports"):
             return
@@ -560,6 +573,18 @@ class ManagedPolicy:
             self._refuse(f"{rel} would change the interface contract of {c.name!r} ({'; '.join(diff[:4])}). That affects the "
                          f"components around it: the change is refused and flagged for the owner, who approves it by "
                          f"listing {c.name!r} under approved_contract_changes in project.yaml", "managed-contract")
+
+    def _protected_modules(self) -> dict[str, str]:
+        return {c.module: c.name for c in self.project.components if c.ownership in ("frozen", "excluded") and c.module}
+
+    def _no_shadow(self, rel: str, content: str) -> None:
+        """A file that is not a frozen or excluded component's own may not declare that component's module: a second definition could
+        shadow the vendored block in the build (stage 3 review)."""
+        text = re.sub(r"//[^\n]*|/\*.*?\*/", "", content, flags=re.S)
+        for mod, name in self._protected_modules().items():
+            if re.search(rf"\bmodule\s+{re.escape(mod)}\b", text):
+                self._refuse(f"{rel} declares module {mod!r}, which belongs to the {self.project.component(name).ownership} component {name!r}: "
+                             f"a second definition could shadow it in the build", "managed-build")
 
     def _flag(self, c: Component, rel: str, diff: list[str]) -> None:
         f = self.project.design / MANAGED_DIR / "contract_flags.jsonl"
@@ -580,6 +605,15 @@ class ManagedPolicy:
                 n = have.get(f"{rel}/{c.netlist.get('file')}")
                 if n is not None and (n.get("format") != c.netlist.get("format") or n.get("cell") != c.netlist.get("cell")):
                     miss.append(f"netlist {c.netlist.get('file')} with format {c.netlist.get('format')!r} and cell {c.netlist.get('cell')!r} (component {c.name})")
+        theirs = {b for c in self.project.components if c.ownership in ("frozen", "excluded") for b in c.build_sources}
+        root = self.project.design.parent.parent
+        for src in cfg.get("sources") or []:                   # a source that redefines a frozen or excluded module could shadow it
+            sp = root / str(src)
+            if str(src) not in theirs and sp.is_file() and sp.suffix in (".v", ".sv"):
+                try:
+                    self._no_shadow(str(src), sp.read_text(errors="replace"))
+                except Exception as e:                         # refusal raised by _refuse: keep the build.yaml rule name
+                    miss.append(f"source {src} ({e})")
         for f in cfg.get("constraints") or []:                 # a constraints file under any name is checked against the keep-outs
             p = self.project.design.parent.parent / str(f)
             if p.is_file() and p.resolve().is_relative_to(self.project.design):

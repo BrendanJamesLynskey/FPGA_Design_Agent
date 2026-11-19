@@ -145,6 +145,8 @@ def test_the_import_check_writes_verified_evidence_that_a_later_edit_invalidates
     lfsr = project.component("lfsr")
     assert rep["components"]["lfsr"]["planted_fault"]["rejected_by_block_sim"] is True
     assert rep["components"]["lfsr"]["planted_fault"]["rejected_by_adapter_sim"] is True
+    assert M.trust(project, lfsr)[0] == "documented"                               # no --upstream comparison was made: not verified
+    M.write_evidence(project, lfsr, "verified", {"passed": True, "upstream_checked": True})
     assert M.trust(project, lfsr) == ("verified", ["no build in this project with every gate clean on the current content"])
     M.write_evidence(project, lfsr, "built", {"gates_clean": True})
     assert M.trust(project, lfsr) == ("built", [])
@@ -218,3 +220,61 @@ def test_the_provenance_report_lists_theirs_and_ours(project):
     assert by["lfsr"]["theirs"] is True and by["lfsr"]["licence"].startswith("MIT") and by["lfsr"]["origin"].startswith("Alex Forencich")
     assert all(by[n]["theirs"] is False for n in ("top", "ctrl", "crc_adapter"))
     assert any(f.endswith("lfsr.v") for f in by["lfsr"]["files"]) and not any(f.endswith("lfsr.v") for n in ("top", "ctrl", "crc_adapter") for f in by[n]["files"])
+
+
+@need_iverilog
+def test_the_scripted_session_refuses_every_route_to_the_block_and_edits_only_the_controller(tmp_path):
+    """Runs designs/b102_managed_ext/scripts/demo_ext_session.py in-process (pytest's access-gate bypass applies; outside pytest the
+    script needs the access key). Set FDA_102_RECORD=1 to write results/102_stage3/demo_session.json instead of a temporary file."""
+    import os
+    sys.path.insert(0, str(DESIGN / "scripts"))
+    import importlib
+    demo = importlib.import_module("demo_ext_session")
+    out = ROOT / "results" / "102_stage3" / "demo_session.json" if os.environ.get("FDA_102_RECORD") == "1" else tmp_path / "demo.json"
+    assert demo.main(["--work", str(tmp_path / "designs" / "b102_managed_ext"), "--out", str(out)]) == 0
+    rec = json.loads(out.read_text())
+    assert rec["changed_files"] == ["rtl/fcs_ctrl.sv"] and rec["vendored_unchanged"] is True
+    assert rec["simulation"]["clocks_saved"] == 1 and rec["managed_refusals"] >= 6
+    assert "| lfsr | frozen | rtl | theirs |" in rec["provenance_markdown"]
+
+
+# --- review fixes ----------------------------------------------------------------------------------------------------
+
+def test_a_second_definition_of_the_frozen_module_is_refused_in_a_file_and_in_build_yaml(project):
+    s = _session(project.design)
+    r = dispatch(s, "write_file", {"path": "rtl/lfsr_shadow.v", "content": "module lfsr (input a, output b); assign b = a; endmodule\n"})
+    assert r.get("refused") and r.get("rule") == "managed-build", r
+    (project.design / "rtl" / "lfsr_shadow.v").write_text("module lfsr (input a, output b); assign b = a; endmodule\n")     # made by other means
+    cfg = yaml.safe_load((project.design / "build.yaml").read_text())
+    cfg["sources"].insert(0, f"designs/{project.design.name}/rtl/lfsr_shadow.v")
+    r = dispatch(s, "write_file", {"path": "build.yaml", "content": yaml.safe_dump(cfg)})
+    assert r.get("refused") and "lfsr_shadow" in r["output"], r
+
+
+def test_the_licence_file_must_be_hashed_and_read_like_a_licence(project):
+    p = _write_manifest(project, lambda c: c["provenance"].__setitem__("licence_file", "rtl/fcs_top.sv"))
+    gaps = M.third_party_gaps(p, p.component("lfsr"))
+    assert any("must be one of provenance.files" in g for g in gaps) and any("does not read like a licence" in g for g in gaps)
+
+
+def test_verified_needs_the_upstream_comparison_and_a_bad_manifest_type_is_a_validation_error(project):
+    lfsr = project.component("lfsr")
+    M.write_evidence(project, lfsr, "verified", {"passed": True, "upstream_checked": False})
+    assert M.trust(project, lfsr)[0] == "documented"
+    M.write_evidence(project, lfsr, "verified", {"passed": True, "upstream_checked": True})
+    assert M.trust(project, lfsr)[0] == "verified"
+    raw = yaml.safe_load((project.design / "project.yaml").read_text())
+    lf = next(c for c in raw["components"] if c["name"] == "lfsr")
+    lf["provenance"]["files"] = ["a"]
+    lf["interface"]["parameters"] = {"DATA_WIDTH": "x16"}
+    errs = "\n".join(M.validate(raw, project.design))
+    assert "must be mappings" in errs and "interface.parameters" in errs
+
+
+@need_iverilog
+def test_an_import_check_without_an_adapter_does_not_pass(project):
+    raw = yaml.safe_load((project.design / "project.yaml").read_text())
+    next(c for c in raw["components"] if c["name"] == "crc_adapter")["interface"]["ports"].pop(1)         # no longer the CRC port list
+    (project.design / "project.yaml").write_text(yaml.safe_dump(raw, sort_keys=False))
+    rep = R.import_check(project.design, work=project.design / "build" / "w")
+    assert rep["passed"] is False
