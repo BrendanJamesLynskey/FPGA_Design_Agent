@@ -55,6 +55,9 @@ designs/b96_kr260_10g/design.xdc 4dec8c5ba8: pins, clocks, slow-pin constraints
 designs/b96_kr260_10g/docs/design.md 237a6b73c0: design note: decisions and alternatives
 designs/b96_kr260_10g/docs/board_run_plan.md 678413f0be: stage 3 plan for the board
 designs/b96_kr260_10g/docs/what_we_found.md 376623bbd5: results and gaps
+designs/b96_kr260_10g/docs/loop_timing_feasibility.md 3171386f0d: loop-timing and buffer-bypass feasibility study (96F)
+designs/b96_kr260_10g/docs/loop_timing_board_test_plan.md 2f6c97b6b1: board test plan for loop timing (96F, for approval)
+designs/b96_kr260_10g/model/loop_timing.py a2d1bf6428: Python model of the loop-timing frequency tracker (96F)
 designs/b96_kr260_10g/regmap.py 5146c294c8: register map as data
 designs/b96_kr260_10g/docs/register_map.md eb9e177aa2: interface datasheet
 
