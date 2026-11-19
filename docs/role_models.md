@@ -3,6 +3,10 @@
 Which harness, model and effort runs each sub-agent role. Code: `agent/graph/role_models.py`; dispatch and accounting in
 `agent/graph/run.py` (`run_subagent`).
 
+**Since brief 108 the role map is a view of the model table** ([model_config.md](model_config.md)): a role is a purpose (`clarify` is
+`interpret`), the harness is `claude_code` for a `claude_code` endpoint and `deepagents` for any chat endpoint, and `--profile`, `--roles`,
+`--harness`, `--cc-model` and `--model` are aliases into the table. What follows is unchanged in effect.
+
 ## Roles, orchestration and the oracle
 
 - Roles (display name, record key): the Clarifier (`clarify`), the Modeller (`model`, a blind golden model), the Verifier
