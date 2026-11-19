@@ -39,7 +39,7 @@ RTL against the twins, lint (~2min): B89_RECORD=results/b89 python3 -m pytest -q
 [heavy] out-of-context builds and clock search on both parts (~90min): python3 -m designs.b89_lutnet_gen.ooc.ooc --part xck26-sfvc784-2LV-c --arms lg_add_comb lg_add_layer lg_small_comb lg_small_layer lg_b87_comb lg_b87_layer treelut_arm
 
 ## records (path sha256-prefix; claims below cite R<n>)
-R1 designs/b89_lutnet_gen/tests/test_b89_rtl.py bb21ec30c0
+R1 designs/b89_lutnet_gen/tests/test_b89_rtl.py 3d9eb57504
 R2 results/b89/summary.json 48b73dd7e4
 R3 results/b89/accuracy.json b2f23ad7c2
 

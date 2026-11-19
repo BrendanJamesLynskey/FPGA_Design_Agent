@@ -10,7 +10,7 @@ The designs are in `flow/tests/fixtures/constraints_survey/`.
 - `raw/<variant>/`: per variant `metrics.txt`, `methodology.rpt`, `cdc.rpt`, `timing_summary.rpt`, `utilization.rpt`, `chains.txt` (M1), `mtbf.rpt` (M1 on K26) and the Vivado logs `raw/<variant>.log`. The routed checkpoints are not committed.
 - `m4_kr260/`: the report of the KR260 checkpoint (M4), when present.
 
-## Operating conditions and limits
+## Known gaps and limits
 
 No board was used. Out-of-context runs have no I/O timing and no clock uncertainty, so a hold slack within a few picoseconds of 0 is an artefact of the method; the tables compare variants of one design, they do not show that any design closes. Each experiment is one run per variant (one seed): placement differences of a slice or two are within what a different seed could change, and the survey says so.
 
@@ -24,3 +24,5 @@ python3 results/105_constraints_survey/summarise.py                             
 ```
 
 M4 (read only; opens the routed checkpoint of `designs/b96_kr260_10g`, built by brief 96E, which is not committed): `flow/tests/fixtures/constraints_survey/m4_checkpoint.tcl <flow dir> <post_route.dcp> results/105_constraints_survey/m4_kr260` writes `cdc_paths.rpt`, `cdc.rpt`, `mtbf.rpt` and `metrics.txt` there (about 1 minute; log in `m4_kr260.log`). The checkpoint is not committed; rebuild it from brief 96E.
+
+Gaps: M2 did not produce a failing path driven by the fanout register (its design WNS is an output-port path), so it shows what `MAX_FANOUT` and `DONT_TOUCH` do to the driver but not a closure rescue. M1 on the K26 saw no placement difference (all chains packed in one slice). M4 reads one checkpoint and is not a sweep. No `set_data_check`, `report_methodology` rule-by-rule gate, or `USER_SLL` run was made.
