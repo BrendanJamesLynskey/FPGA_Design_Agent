@@ -83,6 +83,10 @@ def proof() -> dict:
 
 
 if __name__ == "__main__":
+    from agent import access
+    from agent.access import require_or_exit
+    access._TEST_BYPASS = True                                   # the replay needs no key (as the test suite's conftest does)
+    require_or_exit("tools/determinism_replay_check.py")
     r = proof()
     Path(sys.argv[1]).write_text(json.dumps(r, indent=1, sort_keys=True))
     print(json.dumps({"exact": r["exact"], "identical": r["identical"], "tape": r["replay"]["tape"]}, indent=1))

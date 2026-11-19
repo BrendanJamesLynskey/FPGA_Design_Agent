@@ -1722,7 +1722,7 @@ def summary(rt: Runtime, state: dict) -> dict:
     return {"run_id": rt.run_id, "design": rt.cfg.name, "model": models[0] if len(models) == 1 else "per-role", **extra,
             "harness_arm": ",".join(rt.cfg.arms) or "A0",      # the arm this run used (H1 is the CLI default since 2026-11-12)
             "profile": rt.cfg.profile, "role_models": roles, "model_table_hash": rt.resolver.table.hash, "oracle_model": oracle_model_name(rt.cfg), "oracle": rt.cfg.oracle,
-            **({"model_tape": {**rt.resolver.tape.state(), "level_at_end": determinism_level_at_end(rt.resolver)}} if rt.resolver.tape is not None else {}),
+            **({"model_tape": {**rt.resolver.tape.state(), "level_at_end": determinism_level_at_end(rt.resolver)}} if getattr(rt.resolver, "tape", None) is not None else {}),
             "stage_overrides": __import__("agent.graph.role_models", fromlist=["x"]).stage_overrides(rt.cfg),
             "knowledge_use": knowledge_use(rt), "knowledge_bank": knowledge_bank_status(rt),
             "turn_trace": usage_trace(usage),

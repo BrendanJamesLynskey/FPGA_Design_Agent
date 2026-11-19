@@ -32,6 +32,8 @@ def main() -> int:
     ap.add_argument("--model", default="openai/gpt-6-luna")
     ap.add_argument("-n", type=int, default=10)
     a = ap.parse_args()
+    from agent.access import require_or_exit
+    require_or_exit("tools/determinism_probe.py")
     from agent.models.resolver import chat_client
     result: dict = {"model": a.model, "endpoint": "openrouter", "n": a.n, "arms": {}}
     for arm, opts in ARMS.items():
