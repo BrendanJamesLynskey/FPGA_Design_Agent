@@ -13,6 +13,10 @@
 
 | Variant | Attribute on `go` | Worst path from `go`: slack / delay (ns) | Design WNS (ns) | Copies of `go` | Largest fanout | Total flops |
 |---|---|---|---|---|---|---|
+| m2_0 | none | 0.914 / 1.497 | -0.299 | 17 | 232 | 3017 |
+| m2_1 | MAX_FANOUT=100 | 0.956 / 1.455 | -0.299 | 30 | 100 | 3030 |
+| m2_2 | MAX_FANOUT=100 + DONT_TOUCH | 0.333 / 2.078 | -0.299 | 1 | 3000 | 3001 |
+| m2_3 | DONT_TOUCH | 0.333 / 2.078 | -0.299 | 1 | 3000 | 3001 |
 
 ## M3: bus skew on a 16-bit Gray pointer (xc7a100t, clk_a 10 ns to clk_b 6 ns, out-of-context)
 
@@ -21,3 +25,4 @@
 | m3_a | none | 0.672 | 0.720 / 1.043 / 0.323 | No bus skew constraints |
 | m3_b | set_max_delay -datapath_only 10 | 3.048 | 0.863 / 1.228 / 0.365 | No bus skew constraints |
 | m3_c | datapath-only plus set_bus_skew 6 | 3.048 | 0.863 / 1.068 / 0.205 | requirement 6.000, actual 0.906, slack 5.094 ns |
+| m3_d | datapath-only plus set_bus_skew 0.25 | 3.048 | 0.863 / 1.068 / 0.205 | requirement 0.250, actual 0.906, slack -0.656 ns |

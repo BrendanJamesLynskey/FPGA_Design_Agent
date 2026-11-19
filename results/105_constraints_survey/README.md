@@ -19,8 +19,8 @@ No board was used. Out-of-context runs have no I/O timing and no clock uncertain
 ```
 cd <repo root>   # needs Vivado 2026.1 and the heavy slot (_handoff/take_heavy_slot.sh "<prefix>: Vivado impl ...")
 export FDA_VIVADO_THREADS=1
-bash flow/tests/fixtures/constraints_survey/run_all.sh results/105_constraints_survey/raw      # M1-M3, eleven runs, about 35 minutes
+bash flow/tests/fixtures/constraints_survey/run_all.sh results/105_constraints_survey/raw      # M1-M3, twelve runs, about 40 minutes
 python3 results/105_constraints_survey/summarise.py                                            # rewrites results.md
 ```
 
-M4 (read only; opens the routed checkpoint of `designs/b96_kr260_10g`, built by brief 96E, which is not committed): see `m4_kr260/README.md`.
+M4 (read only; opens the routed checkpoint of `designs/b96_kr260_10g`, built by brief 96E, which is not committed): `flow/tests/fixtures/constraints_survey/m4_checkpoint.tcl <flow dir> <post_route.dcp> results/105_constraints_survey/m4_kr260` writes `cdc_paths.rpt`, `cdc.rpt`, `mtbf.rpt` and `metrics.txt` there (about 1 minute; log in `m4_kr260.log`). The checkpoint is not committed; rebuild it from brief 96E.
