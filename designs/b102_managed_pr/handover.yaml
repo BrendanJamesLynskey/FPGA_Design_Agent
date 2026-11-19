@@ -52,7 +52,7 @@ parameters:
 files:
 - path: designs/b102_managed_pr/project.yaml
   what: the managed-project manifest, ownership, contracts and the block's placement keep-out
-  sha256: bb9eecf71d051697ed531c1d058469d386b4735426e2e6ea72ea83788c0442b9
+  sha256: 66ddde7e3b703673a184a97993dcfdbe99431c05b9ebfb0caff4c1bc1e6ff2b6
 - path: designs/b102_managed_pr/rtl/pr_top.sv
   what: top level, power-on reset and the LEDs
   sha256: ac0783fa4d30575e15198480ff8ae05e7e5b43a88a59eac1e554c37eeabd15be
@@ -70,7 +70,7 @@ files:
   sha256: c825d999f406543c7622aa98c40a92ff26c19bc23b88a95ecee07c4fa243422e
 - path: designs/b102_managed_pr/build.yaml
   what: how flow/run_vivado.sh builds the design, with the checkpoint
-  sha256: 321e846a6cc723c42aacdc9e90137cb72f9de897b83605fef46191ac976049a7
+  sha256: ca72c9c40ea164daad637bd0809a898595e1406a1f4cfd99321dd6aa232060c2
 - path: designs/b102_managed_pr/design.xdc
   what: the pins and the 4.0 ns clock; the agent's file, kept out of the block's keep-out region
   sha256: c070fe60dbc11e5fc0c85f363361a6f5fe83467a1cbb5154118e5cd243d6ddc6
@@ -140,7 +140,7 @@ evidence:
     on the block, the RapidWright tools aimed at the block, and an out-of-scope file are all refused; the real placement
     tool places owned cells around the block and the written checkpoint holds the block unchanged
   record: results/102_managed_pr/demo_session.json
-  sha256: 2a745adc110800b24aa8e405e7f2cea9b6b1ed4d946d6d436a4ad849255c05af
+  sha256: 9097fc94cbdbd90d57213178861386f5323f38e0d681a4f91af0ad3c1e31ee12
 - id: E7
   activity: build
   result: pass
@@ -158,7 +158,7 @@ measurements:
   field: builds.baseline.lut
   conditions: routed build, Vivado 2026.1, xck26-sfvc784-2LV-c
   value: 735
-  sha256: fad5eb205b421b0d8e1e64210957ec5acbe1fc28d06837f035cc693f6cd8dbbe
+  sha256: f15cf591d3640dfdd4768b5a0559cc025b19ac05470fd3272ba59987e43b8444
 - id: M2
   what: flip-flops, whole design
   category: resources
@@ -168,7 +168,7 @@ measurements:
   field: builds.baseline.ff
   conditions: routed build, Vivado 2026.1
   value: 387
-  sha256: fad5eb205b421b0d8e1e64210957ec5acbe1fc28d06837f035cc693f6cd8dbbe
+  sha256: f15cf591d3640dfdd4768b5a0559cc025b19ac05470fd3272ba59987e43b8444
 - id: M3
   what: worst setup slack at the 4.0 ns clock
   category: timing
@@ -178,7 +178,7 @@ measurements:
   field: builds.baseline.wns_ns
   conditions: routed, 250 MHz constraint on the 25 MHz pin
   value: 0.061
-  sha256: fad5eb205b421b0d8e1e64210957ec5acbe1fc28d06837f035cc693f6cd8dbbe
+  sha256: f15cf591d3640dfdd4768b5a0559cc025b19ac05470fd3272ba59987e43b8444
 - id: M4
   what: worst hold slack
   category: timing
@@ -188,7 +188,7 @@ measurements:
   field: builds.baseline.whs_ns
   conditions: routed, 4.0 ns clock
   value: 0.06
-  sha256: fad5eb205b421b0d8e1e64210957ec5acbe1fc28d06837f035cc693f6cd8dbbe
+  sha256: f15cf591d3640dfdd4768b5a0559cc025b19ac05470fd3272ba59987e43b8444
 - id: M5
   what: total on-chip power estimate
   category: power
@@ -198,7 +198,7 @@ measurements:
   field: builds.baseline.power_w
   conditions: report_power after routing, vectorless, never run on a board
   value: 0.369
-  sha256: fad5eb205b421b0d8e1e64210957ec5acbe1fc28d06837f035cc693f6cd8dbbe
+  sha256: f15cf591d3640dfdd4768b5a0559cc025b19ac05470fd3272ba59987e43b8444
 - id: M6
   what: interconnect delays inside the block that are identical (to the picosecond) when it is relocated by one clock region
     (60 slice rows), of the pin delays compared
@@ -288,4 +288,4 @@ state:
     boundary_checks: pass
   vivado: '2026.1'
   kb_pin: 93d158c
-  build_id: e9289768
+  build_id: 61cf8dba

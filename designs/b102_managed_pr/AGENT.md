@@ -9,7 +9,7 @@ A KR260 timing study that exists to demonstrate stage 2 of a managed project (br
 not: a 10G Ethernet design; the block is the 64b/66b encoder and scrambler between a shift register and an XOR sink, with three input pins; a board design; it was not programmed, and the 250 MHz constraint is on the 25 MHz oscillator pin for a timing study; a claim that relocation preserves a block's timing everywhere; the results say where it does and where it does not
 
 ## state
-stage=built vivado=2026.1 kb_pin=93d158c build_id=e9289768
+stage=built vivado=2026.1 kb_pin=93d158c build_id=61cf8dba
 gates: import_checks=pass build_2026_1=pass boundary_checks=pass
 
 ## interface
@@ -20,13 +20,13 @@ param placement.region=SLICE_X26Y70:SLICE_X37Y91 legal=a slice range that contai
 param placement.timing_tolerance_ps=0 legal=a whole number of picoseconds, 0 or more
 
 ## files
-designs/b102_managed_pr/project.yaml bb9eecf71d: the managed-project manifest, ownership, contracts and the block's placement keep-out
+designs/b102_managed_pr/project.yaml 66ddde7e3b: the managed-project manifest, ownership, contracts and the block's placement keep-out
 designs/b102_managed_pr/rtl/pr_top.sv ac0783fa4d: top level, power-on reset and the LEDs
 designs/b102_managed_pr/rtl/pr_src.sv 349d147ce9: the owned LFSR that feeds the block's serial input
 designs/b102_managed_pr/rtl/pr_sink.sv 1763a9b589: the owned consumer of the block's output and the LED drivers
 designs/b102_managed_pr/ext/pcs_unit_p0.dcp 71ca7f7bcd: the frozen block as a placed, routed and locked checkpoint made by Vivado outside the project
 designs/b102_managed_pr/ext/reference/pcs_unit.sv c825d999f4: the supplier's RTL, the reference for the import simulation (not in the build)
-designs/b102_managed_pr/build.yaml 321e846a6c: how flow/run_vivado.sh builds the design, with the checkpoint
+designs/b102_managed_pr/build.yaml ca72c9c40e: how flow/run_vivado.sh builds the design, with the checkpoint
 designs/b102_managed_pr/design.xdc c070fe60db: the pins and the 4.0 ns clock; the agent's file, kept out of the block's keep-out region
 
 ## commands
@@ -41,9 +41,9 @@ R2 results/102_managed_pr/import_check.json 0b74a51c70
 R3 results/102_managed_pr/import_fault.json b666d18522
 R4 results/102_managed_pr/placements/placement_evidence.json a1300a0c62
 R5 results/102_managed_pr/placements/placement_evidence_all.json 9fd16b932e
-R6 results/102_managed_pr/demo_session.json 2a745adc11
+R6 results/102_managed_pr/demo_session.json 9097fc94cb
 R7 results/102_managed_pr/boundary.json 5168e2c230
-R8 results/102_managed_pr/builds.json fad5eb205b
+R8 results/102_managed_pr/builds.json f15cf591d3
 
 ## evidence
 E1 simulation pass R1 ci: the manifest rules, the keep-out on constraints and on the RapidWright tools' arguments, the trust label's need for placement evidence, the import check's reading of a checkpoint's facts and the placement comparison

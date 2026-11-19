@@ -83,7 +83,7 @@ def main(argv: list[str] | None = None) -> int:
     xdc = (work / "design.xdc").read_text()
     # 3: what must fail
     call("write_file", True, path="ext/pcs_unit_p0.dcp", content="tampered")
-    call("write_file", True, path="ext/pcs_unit_bb.sv", content="module pcs_unit; endmodule\n")
+    call("write_file", True, path="ext/pcs_unit.sv", content="module pcs_unit; endmodule\n")
     call("write_file", True, "pblock over the block", path="design.xdc", content=xdc + "create_pblock pb_s\nresize_pblock pb_s -add SLICE_X30Y75:SLICE_X40Y80\n")
     call("write_file", True, "LOC inside the region", path="design.xdc", content=xdc + "set_property LOC SLICE_X28Y80 [get_cells u_sink/div_reg[0]]\n")
     call("write_file", True, "placement property on the block", path="design.xdc", content=xdc + "set_property DONT_TOUCH true [get_cells u_blk]\n")
@@ -140,7 +140,7 @@ def main(argv: list[str] | None = None) -> int:
     rep = json.loads((work / M.MANAGED_DIR / "provenance.json").read_text())
     out.update({"scope": rep["scope"], "steps": steps, "changed_files": rep["changed_files"], "managed_refusals": len(rep["managed_refusals"]),
                 "refusal_rules": sorted({x["rule"] for x in rep["managed_refusals"]}), "provenance_markdown": md.read_text(),
-                "frozen_unchanged": all(M.sha256_file(work / p) == M.sha256_file(DESIGN / p) for p in ("ext/pcs_unit_p0.dcp", "ext/pcs_unit_bb.sv"))})
+                "frozen_unchanged": all(M.sha256_file(work / p) == M.sha256_file(DESIGN / p) for p in ("ext/pcs_unit_p0.dcp", "ext/pcs_unit.sv"))})
     assert out["changed_files"] == ["design.xdc"] and out["frozen_unchanged"]
     a.out.parent.mkdir(parents=True, exist_ok=True)
     a.out.write_text(json.dumps(out, indent=1, default=str) + "\n")

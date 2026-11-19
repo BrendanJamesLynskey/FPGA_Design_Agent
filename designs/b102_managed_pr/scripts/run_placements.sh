@@ -9,7 +9,7 @@ HERE="$(cd "$(dirname "$0")/.." && pwd)"; ROOT="$HERE/../.."
 W="$HERE/build/pr"; R="$ROOT/results/102_managed_pr/placements"; mkdir -p "$W" "$R"
 B100="$ROOT/designs/b100_rapidwright/scripts"
 export FDA_PR_PART=xck26-sfvc784-2LV-c FDA_PR_TOP=pr_top FDA_PR_CELL=u_blk FDA_PR_THREADS=1
-export FDA_PR_SRC="$HERE/ext/pcs_unit_bb.sv $HERE/rtl/pr_src.sv $HERE/rtl/pr_sink.sv $HERE/rtl/pr_top.sv" FDA_PR_XDC="$HERE/design.xdc"
+export FDA_PR_SRC="$HERE/ext/pcs_unit.sv $HERE/rtl/pr_src.sv $HERE/rtl/pr_sink.sv $HERE/rtl/pr_top.sv" FDA_PR_XDC="$HERE/design.xdc"
 VIV="$ROOT/flow/managed_placement_run.tcl"
 # tag:target site:directive[:extra xdc] ('-' = the delivered placement; the extra xdc is the agent's own constraints for that arm)
 PLACEMENTS="${PLACEMENTS:-p0:-:Default p0x:-:Explore p0y:-:Default:$HERE/scripts/sink_pblock.xdc p1:SLICE_X29Y20:Default p2:SLICE_X29Y50:Default p3:SLICE_X5Y170:Default}"
