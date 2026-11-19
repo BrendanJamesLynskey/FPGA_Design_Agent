@@ -47,6 +47,10 @@ def enabled() -> bool:
     return os.environ.get("FDA_RAPIDWRIGHT") == "1" and pin.available()[0]
 
 
+def _policy(s: Session):
+    return getattr(s.jail, "policy", None)
+
+
 def _vdir(s: Session, variant: str) -> Path:
     return s.jail.resolve(f"build/{variant}")
 
@@ -94,11 +98,44 @@ def rw_status(s: Session) -> dict:
 @tool("rw_relocate_block", "Move a pre-implemented routed block (the whole checkpoint is the block, for example an out-of-context "
       "checkpoint) so that its anchor slice lands on target_site, keeping its placement and routing shape. RapidWright refuses a target "
       "whose column pattern does not match (ok false). Returns the tile offset and bounding boxes. Judge the stamped block with rw_referee. "
-      + HEAVY, {"variant": _V, "checkpoint": _CK, "output": _OUT, "target_site": {"type": "string", "pattern": _SITE.pattern}},
-      ["checkpoint", "output", "target_site"])
-def rw_relocate_block(s: Session, checkpoint: str, output: str, target_site: str, variant: str = "base") -> dict:
+      "In a managed project (brief 102) give `component` instead of `checkpoint`: the name of a placed-and-routed component; its locked "
+      "checkpoint is moved as a whole to a candidate placement under build/<variant>/rw/ (the block is never edited, and adopting the new "
+      "placement is the owner's decision), and the target must not overlap another block's keep-out region. " + HEAVY,
+      {"variant": _V, "checkpoint": _CK, "output": _OUT, "target_site": {"type": "string", "pattern": _SITE.pattern},
+       "component": {"type": "string", "pattern": "^[A-Za-z_][A-Za-z0-9_]*$", "maxLength": 60}},
+      ["output", "target_site"])
+def rw_relocate_block(s: Session, output: str, target_site: str, checkpoint: str = "", variant: str = "base", component: str = "") -> dict:
     if not _SITE.match(target_site):
         raise SecurityError("arguments", "target_site must look like SLICE_X41Y70")
+    pol = _policy(s)
+    if bool(checkpoint) == bool(component):
+        raise SecurityError("arguments", "give exactly one of checkpoint and component")
+    if component:
+        comp = pol.project.component(component) if pol is not None else None
+        if comp is None or comp.level != "placed_routed" or comp.ownership == "excluded":
+            raise SecurityError("arguments", f"{component!r} is not a placed-and-routed component of this project")
+        src = s.jail.resolve(str(comp.netlist["file"]))                  # a read: the frozen file is never written
+        out = _out_dcp(s, variant, output)
+        res = _rw(s, "rw_relocate", "relocate.py", "moveto", str(src), str(out), target_site)
+        if res.get("ok") and res.get("result"):
+            from agent.core.managed import rects_overlap, slice_rect
+            r = res["result"]
+            import re as _re
+            ax, ay = (int(v) for v in _re.match(r"SLICE_X(\d+)Y(\d+)", r["anchor_before"]).groups())
+            tx, ty = (int(v) for v in _re.match(r"SLICE_X(\d+)Y(\d+)", target_site).groups())
+            x0, y0, x1, y1 = slice_rect(comp.placement["region"])
+            moved = (x0 + tx - ax, y0 + ty - ay, x1 + tx - ax, y1 + ty - ay)
+            hit = [c.name for c, rect in pol.keepouts() if c.name != comp.name and rects_overlap(moved, rect)]
+            if hit:                                                        # refused after the fact: the candidate is deleted
+                out.unlink(missing_ok=True)
+                raise SecurityError("managed-keepout", f"the moved block would cover the keep-out region of {', '.join(hit)}")
+            res["moved_region"] = f"SLICE_X{moved[0]}Y{moved[1]}:SLICE_X{moved[2]}Y{moved[3]}"
+            res["output"] = json.dumps({**r, "moved_region": res["moved_region"], "candidate": f"build/{variant}/rw/{out.name}",
+                                        "note": "a candidate placement only: project.yaml is the owner's"})
+        return res
+    if pol is not None and pol.keepouts():
+        raise SecurityError("managed-keepout", "in a project with a placed-and-routed component, rw_relocate_block moves only that "
+                                               "component (give component=...), never a checkpoint that may contain it")
     return _rw(s, "rw_relocate", "relocate.py", "moveto", str(_in_dcp(s, variant, checkpoint)), str(_out_dcp(s, variant, output)), target_site)
 
 
@@ -116,9 +153,17 @@ def rw_place_chain(s: Session, checkpoint: str, output: str, cells: list, anchor
     for c in cells:
         if not _CELL_PAT.match(c):
             raise SecurityError("arguments", f"cell pattern {c!r} has characters outside the allowed set")
+    pol = _policy(s)
+    protect: dict[str, Any] = {}
+    if pol is not None:                                   # brief 102: place around a locked placed-and-routed block, never inside it
+        pol.check_rw("rw_place_chain", {"cells": cells})
+        ko = pol.keepouts()
+        if ko:
+            protect = {"cells": [f"{c.instance}/*" for c, _ in ko] + [c.instance for c, _ in ko], "regions": [c.placement["region"] for c, _ in ko]}
     out = _out_dcp(s, variant, output)
     cfg = out.with_suffix(".chain.json")
-    cfg.write_text(json.dumps({"cells": cells, "anchor": anchor, "window": {"cols": window_cols, "rows": window_rows}}))
+    cfg.write_text(json.dumps({"cells": cells, "anchor": anchor, "window": {"cols": window_cols, "rows": window_rows},
+                               **({"protect": protect} if protect else {})}))
     return _rw(s, "rw_place", "place_chain.py", str(_in_dcp(s, variant, checkpoint)), str(out), str(cfg), "--seed", str(seed), "--iters", str(iterations))
 
 
@@ -128,6 +173,9 @@ def rw_place_chain(s: Session, checkpoint: str, output: str, cells: list, anchor
       {"variant": _V, "checkpoint": _CK, "output": _OUT, "mode": {"type": "string", "enum": ["full", "nets"]},
        "nets": {"type": "array", "items": {"type": "string", "pattern": _NET.pattern}, "maxItems": 200}}, ["checkpoint", "output", "mode"])
 def rw_route(s: Session, checkpoint: str, output: str, mode: str, variant: str = "base", nets: list | None = None) -> dict:
+    pol = _policy(s)
+    if pol is not None:
+        pol.check_rw("rw_route", {"mode": mode, "nets": nets or []})
     src, out = _in_dcp(s, variant, checkpoint), _out_dcp(s, variant, output)
     if mode == "full":
         return _rw(s, "rw_route", "route.py", "full", str(src), str(out), "timing")
@@ -148,7 +196,7 @@ def rw_referee(s: Session, checkpoint: str, variant: str = "base", route: bool =
     src = d / "rw" / checkpoint if (d / "rw" / checkpoint).is_file() else _in_dcp(s, variant, checkpoint)
     (d / "rw").mkdir(parents=True, exist_ok=True)
     stem = d / "rw" / src.with_suffix("").name       # reports always go to build/<variant>/rw/, never over the flow's own files
-    env = {**pin.env(), "B100_IN_DCP": str(src), "B100_OUT": str(stem), "B100_ROUTE": "1" if route else "0", "B100_THREADS": "1"}
+    env = {**pin.env(), "B100_IN_DCP": str(src), "B100_OUT": str(stem), "B100_ROUTE": "1" if route else "0", "B100_WRITE_DCP": "1" if route else "0", "B100_THREADS": "1"}
     from flow import version_pin
     r = s.runner.run("rw_referee", [version_pin.vivado_path(), "-mode", "batch", "-nojournal", "-nolog", "-source",
                                     str(s.root / "flow" / "rw" / "referee.tcl")], d, env, timeout=3600)

@@ -5,8 +5,8 @@ may change, some it may only read, some it must not see, some arrive as netlists
 `project.yaml` in the design directory, says which is which. The rules are enforced in the agent's tools (the path jail every
 file tool already goes through), not in a prompt, so a model cannot talk its way past them.
 
-Stage 1 (this page) is the manifest, ownership, scoped requests, and RTL and netlist import. Stage 2 (placed-and-routed import with
-RapidWright) and stage 3 (integrating an open-licence block from outside) are planned at the end.
+Stage 1 is the manifest, ownership, scoped requests, and RTL and netlist import. Stage 2 (placed-and-routed import, relocation with
+RapidWright, a keep-out) is described near the end; stage 3 (integrating an open-licence block from outside) is planned there.
 
 ## The manifest
 
@@ -122,24 +122,59 @@ is in `build/managed/evidence/<component>.json`, which the agent cannot write, a
 - Free-text resolution is name and alias matching, not understanding; an unfamiliar phrasing gets a question.
 - Interface checks cover port names, directions and widths; clock and reset contracts are recorded, and checked at the boundary only through
   the CDC filter. IP-XACT is converted for ports only (not bus interfaces or register maps).
-- `placed_routed`, `vendor_ip` and `encrypted_ip` levels validate and are enforced the same way but have no import path yet.
+- `vendor_ip` and `encrypted_ip` levels validate and are enforced the same way but have no import path yet (`placed_routed` has one since stage 2).
 
-## Stage 2 plan: placed-and-routed import (after brief 100 merges)
+## Stage 2: a placed-and-routed block
 
-Goal: import a placed-and-routed block, relocate it with RapidWright, and show its internal timing is unchanged across placements, with the
-agent allowed to place around it and never inside it.
+A block can arrive already placed and routed: a checkpoint made outside the project and locked with `lock_design -level routing`. The
+component is `level: placed_routed`, always `frozen` (the validator refuses `owned`), and carries a `placement` key next to its `netlist`:
 
-1. Component `level: placed_routed`, `netlist: {format: checkpoint, file: <routed .dcp>, cell}`; stage 1's import checks apply unchanged to
-   the block's own interface and licence.
-2. Lock it: `lock_design -level routing` on the block's checkpoint before it is read into the top (`read_checkpoint -cell`); the manifest
-   records the lock level and the placement anchor (the site or Pblock). Frozen ownership already refuses edits to its files; the lock stops
-   Vivado from changing its placement and routing.
-3. Relocate with RapidWright (brief 100's tools): move the block to two or three other legal sites, re-read, route the rest.
-4. Evidence: the block's internal paths (`report_timing -from/-to` cells inside it) are identical across placements (same delay to the
-   picosecond, the same routing nodes hash from the brief 33 result-hash), and eqy (brief 101) proves the relocated netlist equals the original.
-5. Agent policy: add a `pblock` keep-out to the contract, so placement tools may use the surrounding area and never the block's sites; a tool
-   that moves a cell inside a placed-and-routed component is refused (`managed` rule, same jail path, applied to the RapidWright tool's arguments).
-6. Trust: `built` requires the timing-unchanged evidence file for every placement tried.
+```yaml
+- name: blk
+  ownership: frozen
+  level: placed_routed
+  module: pcs_unit
+  instance: u_blk
+  netlist: {file: ext/pcs_unit_p0.dcp, format: checkpoint, cell: u_blk}      # build.yaml netlists: fills the black-box slot after synthesis
+  placement:
+    lock: routing                                   # lock_design -level routing: placement and routing both fixed
+    region: SLICE_X26Y70:SLICE_X37Y91               # the keep-out: slice columns and rows, inclusive
+    anchor: SLICE_X29Y80                            # the anchor slice RapidWright relocates from
+    timing_tolerance_ps: 0                          # the owner's number for "internal timing unchanged" across placements
+```
+
+**The build.** The flow already fills a black-box slot from a checkpoint after synthesis (`read_checkpoint -cell`, stage 1). Vivado then places
+and routes the rest around the locked cells and nets: nothing new is needed in `flow/build.tcl`.
+
+**The import check** (`python3 flow/managed_placed.py check designs/<d> [--sim]`, which runs `flow/managed_placed_check.tcl` in Vivado):
+
+1. the checkpoint's ports equal the contract (name, direction, width) and the licence, version, origin and SHA-256 are recorded and match;
+2. the lock is complete: every placeable leaf cell (GND and VCC have no site) has a fixed location and a fixed BEL, every routed signal net has
+   fixed routing, nothing is unplaced or unrouted;
+3. the footprint: every slice the block occupies is inside `placement.region`;
+4. with `--sim`, the checkpoint's functional netlist (`write_verilog -mode funcsim`, flattened by Yosys with its public Xilinx primitive models) is
+   simulated against the supplier's RTL (`reference_rtl`) on the same random stimulus, cycle by cycle; a run where the output never goes high does not pass.
+
+**Keep-out, enforced in the tools.** A constraints file the agent writes (any `*.xdc`, checked in `ManagedPolicy.check_content`) is refused
+(`managed-keepout`) if it has a pblock slice range or a `LOC` overlapping the region, or a placement property (`LOC`, `BEL`, `PBLOCK`, `IS_*_FIXED`,
+`FIXED_ROUTE`, `DONT_TOUCH`) or `add_cells_to_pblock` on a cell of the block's instance. The RapidWright tools check their arguments: a cell pattern
+for `rw_place_chain` that could select a cell inside the instance (including `*`) is refused, the script itself refuses a pattern that selects one of the
+real cells and never targets a site inside the region, `rw_route mode full` is refused (RWRoute may re-route locked nets), a net inside the instance
+is refused, and `rw_relocate_block` takes a `component` (the block as a whole, a candidate placement written under `build/<variant>/rw/`, the target
+refused if it would cover another block's region), not a checkpoint that might contain the block. A change of the block's placement is the owner's:
+the agent cannot write `project.yaml`.
+
+**Placement evidence** (`designs/b102_managed_pr/scripts/run_placements.sh`, `flow/managed_placed.py compare`). For each placement tried the block is
+the delivered checkpoint or one RapidWright relocated (`flow/rw/relocate.py`), the owned logic is placed and routed by Vivado around it
+(`flow/managed_placement_run.tcl`), and the evidence records, from Vivado: that no cell of the block moved and no internal net's route string changed
+(before `opt_design` against after `route_design`, then again from the written checkpoint, `flow/managed_block_dump.tcl`); that no cell of the rest of
+the design sits in the keep-out region (moved with the block); that the relocated routing has the same shape as the delivered one (route strings
+with coordinates removed); every block-internal path delay against the delivered placement's, in picoseconds; the boundary timing budgets; and that
+`eqy` proves the relocated netlist equal to the delivered one. `passed` needs every check at every placement, with the delay differences inside
+`timing_tolerance_ps`.
+
+**Trust.** `built` needs the placement evidence for the current content, covering at least two placements, as well as the clean build. A changed
+file drops the evidence.
 
 ## Stage 3 plan: integrating others' work
 
