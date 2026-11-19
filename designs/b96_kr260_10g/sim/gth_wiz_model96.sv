@@ -122,6 +122,7 @@ module gth_wiz (
     logic [15:0] drp_mem [0:1023];
     logic [1:0]  es_state;           // 0 WAIT(000), 1 RESET(001), 2 COUNT(011), 3 END(010)
     logic [15:0] es_err, es_samp;
+    logic        drp_dead = 1'b0;    // set by a test: the DRP never answers (DRDY stays low)
     logic        es_hold = 1'b0;     // set by a test (hierarchically) to keep the stand-in in COUNT, so the sequencer's poll times out
     int          es_cnt = 0;
     int          drp_dly = 0;
@@ -151,7 +152,8 @@ module gth_wiz (
         drprdy_r <= 1'b0;
         if (drpen_in && !drp_pend) begin drp_pend <= 1'b1; drp_dly <= 3; drp_pend_we <= drpwe_in; drp_pend_a <= drpaddr_in; drp_pend_d <= drpdi_in; end
         else if (drp_pend) begin
-            if (drp_dly == 0) begin
+            if (drp_dead) begin end
+            else if (drp_dly == 0) begin
                 drp_pend <= 1'b0; drprdy_r <= 1'b1;
                 if (drp_pend_we) begin
                     drp_mem[drp_pend_a] <= drp_pend_d;

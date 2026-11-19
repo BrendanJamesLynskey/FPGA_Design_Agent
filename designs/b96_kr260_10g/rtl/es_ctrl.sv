@@ -55,8 +55,8 @@ module es_ctrl (
     logic [15:0] m_rd;
     logic [7:0] m_cnt;
     always_ff @(posedge clk) begin
-        m_done <= 1'b0; drp_en <= 1'b0;
-        if (rst) begin m <= M_IDLE; drp_tmo <= 1'b0; m_rd <= '0; drp_addr <= '0; drp_di <= '0; drp_we <= 1'b0; m_cnt <= '0; end
+        m_done <= 1'b0; drp_en <= 1'b0; m_to <= 1'b0;
+        if (rst) begin m_to <= 1'b0; m <= M_IDLE; drp_tmo <= 1'b0; m_rd <= '0; drp_addr <= '0; drp_di <= '0; drp_we <= 1'b0; m_cnt <= '0; end
         else begin
             if (clr_flags) drp_tmo <= 1'b0;
             case (m)
@@ -65,7 +65,7 @@ module es_ctrl (
                 M_WAIT: begin
                     m_cnt <= m_cnt + 8'd1;
                     if (drp_rdy) begin if (!drp_we) m_rd <= drp_do; m_done <= 1'b1; m <= M_IDLE; end
-                    else if (m_cnt == 8'd255) begin drp_tmo <= 1'b1; m_done <= 1'b1; m <= M_IDLE; end
+                    else if (m_cnt == 8'd255) begin drp_tmo <= 1'b1; m_done <= 1'b1; m_to <= 1'b1; m <= M_IDLE; end
                 end
                 default: m <= M_IDLE;
             endcase
@@ -80,6 +80,8 @@ module es_ctrl (
     logic        rq_sent;          // the request was issued and is not yet answered
     logic [15:0] old4f, old97, old3c;
     logic [31:0] tcnt;
+    logic [11:0] l_horz; logic [6:0] l_code; logic l_neg, l_ut; logic [1:0] l_range; logic [4:0] l_pre; logic [31:0] l_tmo;   // the point as latched at start (the host may write ES_POINT and ES_TMO meanwhile)
+    logic        m_to;             // the access that just finished timed out (no DRDY)
     logic        tmo_hit;
     assign busy = (s != S_IDLE);
     assign raw_rdata = m_rd;
@@ -98,6 +100,7 @@ module es_ctrl (
                         rq <= 1'b1; rq_we <= raw_wr; rq_addr <= raw_addr; rq_wd <= raw_wdata; rq_sent <= 1'b1; s <= S_RAW;
                     end else begin
                         pt_done <= 1'b0; pt_tmo <= 1'b0; tmo_hit <= 1'b0; res_err <= '0; res_samp <= '0;
+                        l_horz <= pt_horz; l_code <= pt_vs_code; l_neg <= pt_vs_neg; l_ut <= pt_vs_ut; l_range <= pt_vs_range; l_pre <= pt_prescale; l_tmo <= pt_timeout;
                         rq <= 1'b1; rq_we <= 1'b0; rq_addr <= 10'h04F; rq_sent <= 1'b1; s <= S_RD4F;
                     end
                 end
@@ -105,32 +108,39 @@ module es_ctrl (
                 if (raw_rd || raw_wr || pt_start) rejected <= 1'b1;
                 if (rq_sent && m_done) rq_sent <= 1'b0;
                 // each state starts its access when the previous one has completed (rq_sent low and m idle)
+                // a DRP access without DRDY aborts a point: no further read-modify-write on stale data; the run bit is cleared if it may have been set
+                if (rq_sent && m_done && m_to && s != S_RAW && s != S_WR3C_STOP && s != S_END) begin
+                    tmo_hit <= 1'b1; res_err <= '0; res_samp <= '0;
+                    if (s == S_WR3C_RUN || s == S_POLL || s == S_RD_ERR || s == S_RD_SAMP) begin
+                        rq <= 1'b1; rq_we <= 1'b1; rq_addr <= 10'h03C; rq_wd <= {6'b000000, old3c[9:5], l_pre}; rq_sent <= 1'b1; s <= S_WR3C_STOP;
+                    end else begin rq_sent <= 1'b0; s <= S_END; end
+                end else
                 case (s)
                     S_RAW: if (rq_sent && m_done) s <= S_IDLE;
-                    S_RD4F: if (rq_sent && m_done) begin old4f <= m_rd; rq <= 1'b1; rq_we <= 1'b1; rq_addr <= 10'h04F; rq_wd <= {pt_horz, m_rd[3:0]}; rq_sent <= 1'b1; s <= S_WR4F; end
+                    S_RD4F: if (rq_sent && m_done) begin old4f <= m_rd; rq <= 1'b1; rq_we <= 1'b1; rq_addr <= 10'h04F; rq_wd <= {l_horz, m_rd[3:0]}; rq_sent <= 1'b1; s <= S_WR4F; end
                     S_WR4F: if (rq_sent && m_done) begin rq <= 1'b1; rq_we <= 1'b0; rq_addr <= 10'h097; rq_sent <= 1'b1; s <= S_RD97; end
                     S_RD97: if (rq_sent && m_done) begin
                         old97 <= m_rd; rq <= 1'b1; rq_we <= 1'b1; rq_addr <= 10'h097;
-                        rq_wd <= {m_rd[15:11], pt_vs_neg, pt_vs_ut, pt_vs_code, pt_vs_range}; rq_sent <= 1'b1; s <= S_WR97;
+                        rq_wd <= {m_rd[15:11], l_neg, l_ut, l_code, l_range}; rq_sent <= 1'b1; s <= S_WR97;
                     end
                     S_WR97: if (rq_sent && m_done) begin rq <= 1'b1; rq_we <= 1'b0; rq_addr <= 10'h03C; rq_sent <= 1'b1; s <= S_RD3C; end
                     S_RD3C: if (rq_sent && m_done) begin
                         old3c <= m_rd; rq <= 1'b1; rq_we <= 1'b1; rq_addr <= 10'h03C;
-                        rq_wd <= {6'b000000, m_rd[9:5], pt_prescale}; rq_sent <= 1'b1; s <= S_WR3C_A;
+                        rq_wd <= {6'b000000, m_rd[9:5], l_pre}; rq_sent <= 1'b1; s <= S_WR3C_A;
                     end
                     S_WR3C_A: if (rq_sent && m_done) begin
-                        rq <= 1'b1; rq_we <= 1'b1; rq_addr <= 10'h03C; rq_wd <= {6'b000001, old3c[9:5], pt_prescale}; rq_sent <= 1'b1; s <= S_WR3C_RUN; tcnt <= '0;
+                        rq <= 1'b1; rq_we <= 1'b1; rq_addr <= 10'h03C; rq_wd <= {6'b000001, old3c[9:5], l_pre}; rq_sent <= 1'b1; s <= S_WR3C_RUN; tcnt <= '0;
                     end
                     S_WR3C_RUN: if (rq_sent && m_done) begin rq <= 1'b1; rq_we <= 1'b0; rq_addr <= 10'h253; rq_sent <= 1'b1; s <= S_POLL; end
                     S_POLL: if (rq_sent && m_done) begin
                         es_status <= m_rd[3:0];
                         if (m_rd[3:0] == 4'b0101) begin rq <= 1'b1; rq_we <= 1'b0; rq_addr <= 10'h251; rq_sent <= 1'b1; s <= S_RD_ERR; end
-                        else if (tcnt >= pt_timeout) begin tmo_hit <= 1'b1; rq <= 1'b1; rq_we <= 1'b1; rq_addr <= 10'h03C; rq_wd <= {6'b000000, old3c[9:5], pt_prescale}; rq_sent <= 1'b1; s <= S_WR3C_STOP; end
+                        else if (tcnt >= l_tmo) begin tmo_hit <= 1'b1; rq <= 1'b1; rq_we <= 1'b1; rq_addr <= 10'h03C; rq_wd <= {6'b000000, old3c[9:5], l_pre}; rq_sent <= 1'b1; s <= S_WR3C_STOP; end
                         else begin rq <= 1'b1; rq_we <= 1'b0; rq_addr <= 10'h253; rq_sent <= 1'b1; end
                     end
                     S_RD_ERR: if (rq_sent && m_done) begin res_err <= m_rd; rq <= 1'b1; rq_we <= 1'b0; rq_addr <= 10'h252; rq_sent <= 1'b1; s <= S_RD_SAMP; end
                     S_RD_SAMP: if (rq_sent && m_done) begin
-                        res_samp <= m_rd; rq <= 1'b1; rq_we <= 1'b1; rq_addr <= 10'h03C; rq_wd <= {6'b000000, old3c[9:5], pt_prescale}; rq_sent <= 1'b1; s <= S_WR3C_STOP;
+                        res_samp <= m_rd; rq <= 1'b1; rq_we <= 1'b1; rq_addr <= 10'h03C; rq_wd <= {6'b000000, old3c[9:5], l_pre}; rq_sent <= 1'b1; s <= S_WR3C_STOP;
                     end
                     S_WR3C_STOP: if (rq_sent && m_done) begin s <= S_END; end
                     S_END: begin pt_done <= 1'b1; pt_tmo <= tmo_hit; pt_count <= pt_count + 16'd1; s <= S_IDLE; end

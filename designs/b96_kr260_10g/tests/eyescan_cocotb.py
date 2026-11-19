@@ -170,6 +170,36 @@ async def timeout_path_stops_the_run(dut):
 
 
 @cocotb.test()
+async def drp_timeout_aborts_the_point_without_writing(dut):
+    h = await start(dut)
+    dut.u.u_gt.drp_dead.value = 1
+    log = []
+    mon = monitor(dut, log)
+    await h.w(R_POINT, 7 | (5 << 12))
+    await h.w(R_CMD, 4)
+    await h.wait_idle(limit=2000)
+    mon.cancel()
+    st = await h.r(R_STAT)
+    assert st & 3 == 2 and st & 4 and st & 8, f"done with point-timeout and DRP-timeout flags expected: {st:#x}"
+    assert [x for x in log if x[0] == "W"] == [], "no DRP write after a first-access timeout"
+    assert await h.r(R_RES) == 0
+    dut.u.u_gt.drp_dead.value = 0
+    await h.w(R_CMD, 8)
+    assert (await h.r(R_STAT)) & 8 == 0
+
+
+@cocotb.test()
+async def point_is_latched_at_start(dut):
+    h = await start(dut)
+    word = 5 | (17 << 12) | (1 << 19) | (2 << 21) | (3 << 23)
+    await h.w(R_POINT, word)
+    await h.w(R_CMD, 4)
+    await h.w(R_POINT, 0x7FFFFFF)            # the host (wrongly) rewrites ES_POINT mid-point
+    await h.wait_idle()
+    assert (await h.r(R_RES)) & 0xFFFF == tw.stand_in_error_count(5, 17, 1, 0, 2, 3)
+
+
+@cocotb.test()
 async def drive_registers_reach_the_gt_ports(dut):
     h = await start(dut)
     await h.w(R_DRIVE, 0x10000 | (6 << 10) | (3 << 5) | 0b10000)

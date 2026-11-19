@@ -98,10 +98,8 @@ Verified in simulation and by tests: the RTL's register layout and DRP traffic a
 derived numbers against the model the synthetic counts were drawn from. **Not verified until a board run:** that the real GTHE4 answers these DRP accesses as UG576 describes, the 32-bit reading of "bits per sample",
 the SDATA mask for this width, and every number of every real eye.
 
-## Known gaps (from the one review of brief 96D; the RTL was built before the review and is not changed)
+## Known gaps (from the one review of brief 96D; the DRP-timeout abort and the point latch it found were fixed in the RTL and tested in `tests/eyescan_cocotb.py`)
 
-- **`es_ctrl` continues after a DRP timeout.** If an access gets no DRDY the sequencer still runs its read-modify-writes on stale data; the host sees `drp_tmo` and records an error, and `restore` repairs the words, but the sequencer does not abort. Fix needs an RTL change and a rebuild.
-- **`ES_POINT` and `ES_TMO` are read live during a point.** Do not write them while `ES_STAT` bit 0 is set (the host never does).
 - **JSON `ber: 0.0` means no errors seen**, not a BER of zero: read `ber_ub` (the 3/bits bound). Plots show it correctly.
 - **Contours and bathtub lines are drawn between grid points** (marching squares, straight segments); a gap of unmeasured points is bridged in the bathtub. The numbers (width, height, open/closed) come from the points only.
 - **A saved partial capture** (a scan that stopped) has `run.error` set and fewer points than `settings.expected_points`; `api.margin` and the `eye_scan` tool refuse to pass it.
