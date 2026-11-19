@@ -28,5 +28,5 @@ agent's access gate needs the access key.
   Icarus plug-in built from source (not approved here). Our simulations are random-vector, not exhaustive; only the 16-bit instance is built.
 - The build ran once (no seeds); the 6.206 ns constraint is on the 25 MHz oscillator pin for a timing study; no board was used and the power figure is vectorless.
 - The scripted session is not a model: no LLM-driven run on a managed project yet.
-- `eqy` against our specification: see `import_check_eqy.json`; the earlier 32 and 64-bit scaling null of stage 1 suggests XOR-heavy CRC logic is hard for its open engines.
+- `eqy` against our specification: null. eqy (abc pdr, depth 5) did not finish in 600 s (`import_check_eqy.json`); equivalence is carried by simulation (random vectors) only.
 - The upstream comparison proves the files equal the bytes at the commit in a clone the checker is given; it does not prove the commit is on the upstream's main branch.

@@ -1,0 +1,61 @@
+{
+ "design": "b102_managed_ext",
+ "components": {
+  "lfsr": {
+   "provenance": [],
+   "licence": "MIT",
+   "commit": "77320a9471d19c7dd383914bc049e02d9f4f1ffb",
+   "upstream_url": "https://github.com/alexforencich/verilog-ethernet",
+   "interface": [],
+   "upstream": [],
+   "planted_fault": {
+    "what": "removed 'lfsr_mask_state[j] = lfsr_mask_state[j] ^ state_val;' (the state feedback into one polynomial tap)",
+    "rejected_by_block_sim": true,
+    "mismatches": 2000,
+    "rejected_by_adapter_sim": true,
+    "adapter_mismatches": 386
+   },
+   "block_simulation": [
+    {
+     "width": 8,
+     "passed": true,
+     "mismatches": 0,
+     "vectors": 2000
+    },
+    {
+     "width": 16,
+     "passed": true,
+     "mismatches": 0,
+     "vectors": 2000
+    },
+    {
+     "width": 32,
+     "passed": true,
+     "mismatches": 0,
+     "vectors": 2000
+    },
+    {
+     "width": 64,
+     "passed": true,
+     "mismatches": 0,
+     "vectors": 2000
+    }
+   ],
+   "adapter_simulation": {
+    "adapter": "crc_adapter",
+    "passed": true,
+    "mismatches": 0,
+    "vectors": 400,
+    "model": "IEEE 802.3 CRC-32 over 16-bit words (flow/managed_import.crc32_model)"
+   },
+   "eqy": {
+    "ran": true,
+    "equivalent": null,
+    "why": "eqy did not finish in 600 s",
+    "seconds": 600
+   },
+   "passed": false
+  }
+ },
+ "passed": false
+}

@@ -213,7 +213,7 @@ and gives the block the port list the sequencer uses. The Verilator lint warning
 **The import check** (`python3 flow/managed_rtl_import.py check designs/<d> --upstream <clone of the upstream> --eqy`) runs the provenance checks; compares each file with
 `git show <commit>:<path>` in a clone; checks the module's ports against the contract at the parameters the design instantiates it with
 (`interface.parameters`); simulates the block alone against a Python model of one CRC-32 step at widths 8, 16, 32 and 64, and the adapter plus the
-block against the register model; plants a fault in a copy of the block and requires both simulations to reject it; and, with `--eqy`, asks `eqy` to
+block against the register model; plants a fault in a copy of the block and requires both simulations to reject it; and, with `--eqy` (null here: it did not finish in 600 s), asks `eqy` to
 prove the adapter plus the block equal to our own specification (`reference/crc32_d16.sv`, written without the block). A pass writes `verified`
 evidence. Trust `built` then needs a clean build, as for any component.
 
