@@ -1,0 +1,25 @@
+# lap route
+# write_checkpoint -force ${out}_routed.dcp
+INFO: [Timing 38-480] Writing timing data to binary archive.
+Write ShapeDB Complete: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2740.113 ; gain = 0.000 ; free physical = 5578 ; free virtual = 23065
+Wrote PlaceDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2740.113 ; gain = 0.000 ; free physical = 5578 ; free virtual = 23065
+Wrote PulsedLatchDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2740.113 ; gain = 0.000 ; free physical = 5578 ; free virtual = 23065
+Writing XDEF routing.
+Writing XDEF routing logical nets.
+Writing XDEF routing special nets.
+Wrote RouteStorage: Time (s): cpu = 00:00:00.06 ; elapsed = 00:00:00.06 . Memory (MB): peak = 2740.113 ; gain = 0.000 ; free physical = 5577 ; free virtual = 23065
+Wrote PlaceStorage: Time (s): cpu = 00:00:00.12 ; elapsed = 00:00:00.12 . Memory (MB): peak = 2740.113 ; gain = 0.000 ; free physical = 5574 ; free virtual = 23065
+Wrote Netlist Cache: Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 2740.113 ; gain = 0.000 ; free physical = 5574 ; free virtual = 23065
+Wrote Device Cache: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2740.113 ; gain = 0.000 ; free physical = 5571 ; free virtual = 23062
+Write Physdb Complete: Time (s): cpu = 00:00:00.19 ; elapsed = 00:00:00.19 . Memory (MB): peak = 2740.113 ; gain = 0.000 ; free physical = 5571 ; free virtual = 23062
+INFO: [Common 17-1381] The checkpoint '/home/brendan/Claude_sandbox/_worktrees/100b-work/e2_a7/V_p6_0_3.d/res_routed.dcp' has been generated.
+# lap write
+# set rs [report_route_status -return_string]
+# set f [open ${out}_route_status.txt w]
+# puts $f $rs
+# close $f
+# report_timing -setup -max_paths 3 -file ${out}_timing.rpt
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -1, Delay Type: max.
+INFO: [Timing 38-78] ReportTimingParams: -max_paths 3 -nworst 1 -delay_type max -sort_by slack.
+# write_run_json $out $times [get_property PART [current_design]] [env_or B100_PERIOD 0]
+INFO: [Common 17-206] Exiting Vivado at Thu Nov 19 04:43:21 2026...

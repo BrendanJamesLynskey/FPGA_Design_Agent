@@ -1,0 +1,25 @@
+Reading placement.
+Reading placer database...
+Reading routing.
+Read Old XDEF File: Time (s): cpu = 00:00:00.58 ; elapsed = 00:00:00.6 . Memory (MB): peak = 2755.355 ; gain = 0.000 ; free physical = 5623 ; free virtual = 23014
+Restored from archive | CPU: 0.600000 secs | Memory: 4.321152 MB |
+Finished XDEF File Restore: Time (s): cpu = 00:00:00.59 ; elapsed = 00:00:00.6 . Memory (MB): peak = 2755.355 ; gain = 0.000 ; free physical = 5623 ; free virtual = 23014
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2975.699 ; gain = 0.000 ; free physical = 5409 ; free virtual = 22800
+INFO: [Project 1-111] Unisim Transformation Summary:
+  A total of 6 instances were transformed.
+  IBUF => IBUF (IBUFCTRL, INBUF): 6 instances
+
+open_checkpoint: Time (s): cpu = 00:00:35 ; elapsed = 00:00:36 . Memory (MB): peak = 2975.734 ; gain = 1505.434 ; free physical = 5409 ; free virtual = 22800
+# set times [dict create]
+# set rs [report_route_status -return_string]
+# set f [open ${out}_route_status.txt w]
+# puts $f $rs
+# close $f
+# report_timing -setup -max_paths 3 -file ${out}_timing.rpt
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -2LV, Temperature grade: C, Delay Type: max.
+INFO: [Timing 38-35] Done setting XDC timing constraints.
+INFO: [Timing 38-78] ReportTimingParams: -max_paths 3 -nworst 1 -delay_type max -sort_by slack.
+report_timing: Time (s): cpu = 00:00:06 ; elapsed = 00:00:06 . Memory (MB): peak = 3411.828 ; gain = 428.191 ; free physical = 5143 ; free virtual = 22534
+# write_run_json $out $times [get_property PART [current_design]] [env_or B100_PERIOD 0]
+INFO: [Common 17-206] Exiting Vivado at Thu Nov 19 03:50:38 2026...

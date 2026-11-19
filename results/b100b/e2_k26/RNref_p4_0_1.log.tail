@@ -1,25 +1,25 @@
-##     set xd [get_cells -hier -filter {NAME =~ u_mac/x_d_reg* || NAME =~ u_mac/x_c_reg*}]
-##     set gd [get_cells -hier -filter {NAME =~ u_pcs/gt_d_reg*}]
-##     set pcs [get_cells -hier -filter {NAME =~ u_pcs/*}]
-##     set gtp [get_pins u_gt/TXDATA*]
-##     set wns [get_property SLACK [lindex [get_timing_paths -setup -max_paths 1] 0]]
-##     set f [open ${out}_chain.json w]
-##     puts $f "{\"period_ns\": $period, \"wns_all_ns\": $wns, \"wns_mac_to_pcs_ns\": [slack_of $xd $gd], \"wns_pcs_to_gt_ns\": [slack_of $gd $gtp], \"wns_inside_pcs_ns\": [slack_of $pcs $pcs]}"
-##     close $f
-## }
-# b100_threads
-# set out $::env(B100_OUT)
-# open_checkpoint $::env(B100_IN_DCP)
-Command: open_checkpoint /home/brendan/Claude_sandbox/_worktrees/100b-work/e2_k26/RN_p4_0_1.d/res_routed.dcp
+Reading placement.
+Reading placer database...
+Reading routing.
+Read Old XDEF File: Time (s): cpu = 00:00:00.58 ; elapsed = 00:00:00.58 . Memory (MB): peak = 2755.355 ; gain = 0.000 ; free physical = 5663 ; free virtual = 23037
+Restored from archive | CPU: 0.590000 secs | Memory: 4.269119 MB |
+Finished XDEF File Restore: Time (s): cpu = 00:00:00.59 ; elapsed = 00:00:00.59 . Memory (MB): peak = 2755.355 ; gain = 0.000 ; free physical = 5663 ; free virtual = 23037
+INFO: [Opt 31-138] Pushed 0 inverter(s) to 0 load pin(s).
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2975.699 ; gain = 0.000 ; free physical = 5440 ; free virtual = 22815
+INFO: [Project 1-111] Unisim Transformation Summary:
+  A total of 6 instances were transformed.
+  IBUF => IBUF (IBUFCTRL, INBUF): 6 instances
 
-Starting open_checkpoint Task
-
-Time (s): cpu = 00:00:00.05 ; elapsed = 00:00:00.05 . Memory (MB): peak = 1485.176 ; gain = 8.906 ; free physical = 6858 ; free virtual = 24237
-WARNING: [Vivado 12-8410] Design file '/home/brendan/Claude_sandbox/_worktrees/100b-work/e2_k26/RN_p4_0_1.d/res_routed.dcp' has failed integrity check (2). There is either a missing chekcsum or mismatch. Please regenerate the DCP file.
-INFO: [Device 21-403] Loading part xck26-sfvc784-2LV-c
-Netlist sorting complete. Time (s): cpu = 00:00:00.02 ; elapsed = 00:00:00.02 . Memory (MB): peak = 2755.355 ; gain = 0.000 ; free physical = 5696 ; free virtual = 23069
-INFO: [Netlist 29-17] Analyzing 6 Unisim elements for replacement
-INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
-INFO: [Project 1-479] Netlist was created with RapidWright 2026.1.2
-INFO: [Project 1-570] Preparing netlist for logic optimization
-Parsing XDC File [/home/brendan/Claude_sandbox/_worktrees/100b-work/e2_k26/RN_p4_0_1.d/res_routed/reloc_top_late.xdc]
+open_checkpoint: Time (s): cpu = 00:00:36 ; elapsed = 00:00:36 . Memory (MB): peak = 2975.734 ; gain = 1505.434 ; free physical = 5440 ; free virtual = 22814
+# set times [dict create]
+# set rs [report_route_status -return_string]
+# set f [open ${out}_route_status.txt w]
+# puts $f $rs
+# close $f
+# report_timing -setup -max_paths 3 -file ${out}_timing.rpt
+INFO: [Timing 38-91] UpdateTimingParams: Speed grade: -2LV, Temperature grade: C, Delay Type: max.
+INFO: [Timing 38-35] Done setting XDC timing constraints.
+INFO: [Timing 38-78] ReportTimingParams: -max_paths 3 -nworst 1 -delay_type max -sort_by slack.
+report_timing: Time (s): cpu = 00:00:06 ; elapsed = 00:00:06 . Memory (MB): peak = 3411.797 ; gain = 428.160 ; free physical = 5161 ; free virtual = 22536
+# write_run_json $out $times [get_property PART [current_design]] [env_or B100_PERIOD 0]
+INFO: [Common 17-206] Exiting Vivado at Thu Nov 19 03:46:21 2026...

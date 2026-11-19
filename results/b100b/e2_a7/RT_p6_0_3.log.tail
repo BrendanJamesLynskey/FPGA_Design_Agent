@@ -1,0 +1,25 @@
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::arrayBaseOffset has been called by com.esotericsoftware.kryo.unsafe.UnsafeUtil (file:/home/brendan/Claude_sandbox/_worktrees/100b-rw-speed/tools/rapidwright_env/venv/lib/python3.12/site-packages/rapidwright/rapidwright-2026.1.2-standalone-lin64.jar)
+WARNING: Please consider reporting this to the maintainers of class com.esotericsoftware.kryo.unsafe.UnsafeUtil
+WARNING: sun.misc.Unsafe::arrayBaseOffset will be removed in a future release
+ XML Parse & Device Load:     0.655s
+    (Read PhysDB Caches):            (    0.207s)
+   (Read PhysDB Routing):            (    0.043s)
+ (Read PhysDB Placement):            (    0.274s)
+(Read PhysDB Finalizing):            (    0.002s)
+            (EDIF Parse):            (    0.988s)
+   Read Netlist & PhysDB:     0.993s
+------------------------------------------------------------------------------
+         [No GC] *Total*:     1.648s
+WARNING: Not masking nodes across RCLK could result in delay optimism.
+Traceback (most recent call last):
+  File "RWRoute.java", line 3968, in com.xilinx.rapidwright.rwroute.RWRoute.routeDesignFullTimingDriven
+Exception: Java Exception
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/brendan/Claude_sandbox/_worktrees/100b-rw-speed/flow/rw/speed/../../../flow/rw/route.py", line 24, in <module>
+    d = RWRoute.routeDesignFullTimingDriven(d) if timing else RWRoute.routeDesignFullNonTimingDriven(d)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+java.lang.java.lang.RuntimeException: java.lang.RuntimeException: ERROR: RWRoute does not support routing the xc7a100tcsg324-1 from the Series7 series. Please re-target the design to a part from a supported series: [UltraScale, UltraScalePlus, Versal]
