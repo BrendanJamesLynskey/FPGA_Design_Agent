@@ -650,6 +650,28 @@ def _fsm_applies(design: Path) -> str | None:
     return None if (design / "verif" / "fsm.yaml").is_file() else "no verif/fsm.yaml (the design declares no state machine to cover)"
 
 
+def _constants(ctx: Ctx) -> dict[str, Any]:
+    """The derived-constants gate (brief 106, flow/derived_constants.py): the shell design ID derived from the spec's quoted
+    string, spec identity words, and the board clock period, each checked against the RTL and the XDC."""
+    from flow import derived_constants as DC
+    t = DC.derive(ctx.design, ctx.root)
+    out = ctx.design / "build" / "derived_constants.json"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_text(json.dumps(t, indent=1) + "\n")
+    fs = [{"tool": "constants", "code": f["code"], "severity": f["severity"], "where": f["where"], "key": f"constants:{f['code']} {f['where']}",
+           "message": f["message"], "blocking": f["blocking"]} for f in t["findings"]]
+    return _result(fs, records=[out])
+
+
+def _stale(ctx: Ctx) -> dict[str, Any]:
+    """The stale-data check (brief 106, flow/stale_check.py): a build or simulation result whose inputs changed since, and a
+    document that cites a build that is not the current one. A design with no build and no stamp has nothing to compare."""
+    from flow import stale_check as SC
+    fs = [{"tool": "stale", "code": f["code"], "severity": f["severity"], "where": f["where"], "key": f"stale:{f['code']} {f['where']}",
+           "message": f["message"], "blocking": f["blocking"]} for f in SC.findings(ctx.design, ctx.root)]
+    return _result(fs, records=[ctx.design / "build" / "lineage.json"])
+
+
 ALL = ("rtl", "synth", "route")
 POST = ("synth", "route")
 register(Check("lint", "source", ALL, {"verilator": ("*",)},
@@ -700,6 +722,12 @@ register(Check("axi_profile", "source", ALL, {"axi_profile": ("AXI-PROFILE-SPEC"
 register(Check("gt_plan", "source", ALL, {"gt": ("GT-PLAN",)},
                "the transceiver link plan (flow/gt_plan.py, brief 56A): every reason the link cannot be built", _gt,
                applies=_gt_applies))
+register(Check("constants", "source", ALL, {"constants": ("CONST-ID-01", "CONST-ID-02", "CONST-LIT-01", "CONST-CLK-01")},
+               "constants derived by code from the spec and the board file (design ID, identity words, clock period) against the RTL and XDC "
+               "(flow/derived_constants.py, brief 106)", _constants))
+register(Check("stale", "records", ALL, {"stale": ("STALE-EVID-01", "STALE-CLAIM-01")},
+               "build and simulation evidence whose inputs changed since it was made, and documents citing a build that is not current "
+               "(flow/stale_check.py, brief 106)", _stale, waivable=False))
 register(Check("doc", "records", ALL, {"doc": ("DOC-PROBLEM",)},
                "the DOC gate (brief 68: flow/handover.py problems, required gaps, over-claims)", _doc, applies=_doc_applies,
                waivable=False))

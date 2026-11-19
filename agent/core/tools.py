@@ -526,6 +526,7 @@ def simulate(s: Session, sim: str = "auto", coverage: bool = False) -> dict:
                    + "".join("\n  cause: " + e for e in ff.get("cause") or [])
                    + "".join("\n  log: " + e for e in ff.get("log_errors") or []) + "\n[end first failure]\n" + out)
     res.update({"output": out, "returncode": r.returncode, "sim": sim, "seconds_run": r.seconds})
+    _stamp(s, "sim")
     if r.returncode == 0 and not coverage:
         record_sim_baseline(s.design, sim, r.seconds)
     return res
@@ -706,6 +707,7 @@ def build(s: Session, until: str = "bitstream", variant: str = "base") -> dict:
     r = s.runner.run("build", [str(s.root / "flow" / "run_vivado.sh"), str(s.design), variant], s.root,
                      {"FDA_STOP_AFTER": until}, timeout=3600)
     bdir = s.design / "build" / variant
+    _stamp(s, f"build:{variant}")
     info: dict[str, Any] = {}
     rj = bdir / "run.json"
     if rj.is_file():
@@ -771,15 +773,43 @@ def gates(s: Session, kind: str = "stages", variant: str = "base") -> dict:
             argv += ["--hw", _rel(s, s.design / "build" / "bringup" / f"{s.design.name}_bringup.json")]
         r = s.runner.run("verif_gates", argv, s.root, timeout=300)
         data = _read_json(out)
-        return {"ok": r.returncode == 0, "output": _text_out(r), "returncode": r.returncode, "gates": data}
+        return _stale_note(s, {"ok": r.returncode == 0, "output": _text_out(r), "returncode": r.returncode, "gates": data}, "sim")
     bdir = s.design / "build" / variant
     (bdir / "gates.json").unlink(missing_ok=True)
     r = s.runner.run("gates", [PY, str(s.root / "flow" / "gates.py"), str(bdir), "--json", str(bdir / "gates.json")],
                      s.root, timeout=300)
     data = _read_json(bdir / "gates.json")
-    return {"ok": r.returncode == 0, "output": _text_out(r), "returncode": r.returncode, "variant": variant,
-            "gates": data, "first_failed_stage": (data or {}).get("first_failed_stage"),
-            "stages_ran": {k: v.get("ran") for k, v in ((data or {}).get("stages") or {}).items()}}
+    res = {"ok": r.returncode == 0, "output": _text_out(r), "returncode": r.returncode, "variant": variant,
+           "gates": data, "first_failed_stage": (data or {}).get("first_failed_stage"),
+           "stages_ran": {k: v.get("ran") for k, v in ((data or {}).get("stages") or {}).items()}}
+    return _stale_note(s, res, f"build:{variant}")
+
+
+def _stamp(s: Session, kind: str) -> None:
+    """Brief 106: record the inputs a build or simulation was made from (flow/stale_check.py). Never fails the tool."""
+    try:
+        from flow import stale_check
+        stale_check.stamp(s.design, kind, s.root)
+    except Exception:                                  # noqa: BLE001 (a missing record is reported as no_record, never as fresh)
+        pass
+
+
+def _stale_note(s: Session, res: dict, kind: str) -> dict:
+    """Brief 106: a gate result read from a build whose inputs changed since is marked stale. The note is always added;
+    ``FDA_STALE=enforce`` also makes the result fail, so the agent has to rebuild before it can read a pass."""
+    try:
+        from flow import stale_check
+        st = stale_check.check(s.design, kind, s.root)
+    except Exception:                                  # noqa: BLE001
+        return res
+    if st["status"] != "stale":
+        return res
+    what = "; ".join([*(f"changed {x}" for x in st["changed"][:5]), *(f"new {x}" for x in st["added"][:3]), *(f"gone {x}" for x in st["removed"][:3])])
+    res["stale"] = st
+    res["output"] = f"STALE: this result was made before the inputs changed ({what}); rebuild first.\n" + str(res.get("output", ""))
+    if os.environ.get("FDA_STALE") == "enforce":
+        res["ok"] = False
+    return res
 
 
 def _read_json(p: Path) -> Any:
@@ -819,7 +849,7 @@ def report_digest(s: Session, name: str, variant: str = "base", level: str = "su
 
 
 CHECK_NAMES = ("all", "lint", "standards", "resets", "cdc", "methodology", "drc", "exceptions", "io", "clocking",
-               "dsp_ram_mapping", "control_sets", "fsm", "axi", "axi_profile", "gt_plan", "doc")
+               "dsp_ram_mapping", "control_sets", "fsm", "axi", "axi_profile", "gt_plan", "constants", "stale", "doc")
 
 
 @tool("check", "Run design checks from the check suite (flow/checks) and get a compact digest: per check pass, fail, "
@@ -829,7 +859,7 @@ CHECK_NAMES = ("all", "lint", "standards", "resets", "cdc", "methodology", "drc"
                "(sources only), synth or route (the build's reports; reports the build did not write are made in one Vivado "
                "session on the checkpoint), auto (the latest build stage). level: summary, standard (5 findings per check) or "
                "detail (30). The full result is written under build/checks/ and named in the digest; read it with read_file.",
-      {"names": {"type": "array", "items": {"type": "string", "enum": list(CHECK_NAMES)}, "maxItems": 17},
+      {"names": {"type": "array", "items": {"type": "string", "enum": list(CHECK_NAMES)}, "maxItems": 19},
        "scope": {"type": "string", "enum": ["auto", "rtl", "synth", "route"]},
        "level": {"type": "string", "enum": ["summary", "standard", "detail"]},
        "variant": {"type": "string", "enum": ["base", "ila"]}})

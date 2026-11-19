@@ -190,6 +190,14 @@ Changes: (1) the padding comments were removed from every reference RTL and hidd
 
 Comparability: no scored or agent run exists for any domain-E task, so no earlier result is affected.
 
+## 2026-11-19: the `check` tool gains `constants` and `stale` (brief 106)
+
+The Designer's `check` tool (offered at stages 1 to 9) lists two more checks, so `check names=["all"]` runs them: `constants` (the
+shell design ID derived from the spec's quoted string, spec identity words, the board clock period) and `stale` (build and simulation
+evidence whose inputs changed since it was made). The tool schema is 1.17.0 and `agent/tests/fixtures/b106_request_golden.json` is the new
+golden (only `tool_registry` differs from the brief 104 golden). Agent runs before this change belong to the earlier golden and are not
+comparable on the Designer's tool list. No benchmark task, reference or grader changed.
+
 ## New hashes
 
 v1 and course units (SHA-256 of the unit's sorted file lines, as in MANIFEST.json):

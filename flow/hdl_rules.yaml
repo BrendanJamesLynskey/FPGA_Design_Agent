@@ -15,11 +15,12 @@
 # A finding that no rule maps lands in the catch-all rule of its tool (HDL-LINT-00, HDL-VIV-00, HDL-STD-00), so nothing is lost.
 # Waivers: designs/<d>/lint/waivers.yaml, {rule, match (a glob over the finding key), reason, owner, date}.
 standard: FDA-HDL
-version: "1.3"            # 1.0 2026-11-12 (first release); 1.1 2026-11-14 (brief 71: reset rules split into HDL-RST-01..05,
+version: "1.4"            # 1.0 2026-11-12 (first release); 1.1 2026-11-14 (brief 71: reset rules split into HDL-RST-01..05,
                           # HDL-CLK-02, HDL-VER-01, HDL-IF-02/03, HDL-GT-01, HDL-DOC-01; check-suite tool keys; fix and skill);
                           # 1.2 2026-11-14 (brief 73: HDL-IF-04..06, the axi_profile check);
-                          # 1.3 2026-11-14 (brief 70: REQP-1840 in HDL-RST-03, HDL-RST-06 AMD IP resets)
-date: 2026-11-14
+                          # 1.3 2026-11-14 (brief 70: REQP-1840 in HDL-RST-03, HDL-RST-06 AMD IP resets);
+                          # 1.4 2026-11-19 (brief 106: HDL-ORC-01 derived constants, HDL-ORC-02 stale evidence)
+date: 2026-11-19
 rules:
   - id: HDL-SYN-01
     title: No latches
@@ -228,6 +229,21 @@ rules:
     checks: {doc: [DOC-PROBLEM]}
     fix: correct handover.yaml (records, gaps, prose) and re-run flow/handover.py write
     skill: docs/documentation_standard.md
+  - id: HDL-ORC-01
+    title: A constant the spec or the board file defines is derived by code, never retyped
+    rationale: A model that retypes a design ID, an identity word or a clock period can pick the wrong one of two near-named
+      constants (in 82P3 four of six runs bound the register-0 word 0x55445031 where the spec's quoted design ID "UEP1" is
+      0x55455031). Code derives the value from the structured source; the RTL and XDC are checked against it.
+    checks: {constants: [CONST-ID-01, CONST-ID-02, CONST-LIT-01, CONST-CLK-01]}
+    fix: use the value the finding names (it is derived from the spec text or the board file), or correct the spec if the spec is wrong
+    skill: docs/agent_lessons.md
+  - id: HDL-ORC-02
+    title: Evidence is read only while the inputs it was made from are unchanged
+    rationale: A build, a simulation result or a report is a claim about the inputs at the time it ran. After any input changes
+      it describes a design that no longer exists, and a pass read from it is not a pass.
+    checks: {stale: [STALE-EVID-01, STALE-CLAIM-01]}
+    fix: rebuild or re-run the stage the finding names, then read its result; cite the fresh build ID
+    skill: docs/agent_lessons.md
   - id: HDL-LINT-00
     title: Verilator -Wall clean (any warning no other rule maps)
     rationale: A new Verilator warning code is never dropped for want of a rule; it is fixed or waived with a reason.
