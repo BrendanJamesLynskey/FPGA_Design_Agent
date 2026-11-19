@@ -78,7 +78,7 @@ module tb_lat_core #(
         end
         if (RATE_MATCH && have_x && !have_w7 && m_v && td_wi == 7 && td_feed) begin t_w7 = t; have_w7 = 1; end
         if (RATE_MATCH && have_w7 && !have_fire && fire) begin t_fire = t; have_fire = 1; end
-        if (have_x && !have_rxsop && rxsop_p) begin t_rxsop = t; have_rxsop = 1; end
+        if (nbx >= 0 && !have_rxsop && rxsop_p && t > t_x_start) begin t_rxsop = t; have_rxsop = 1; end
         if (have_fire && !have_go && go_p) begin t_go = t; have_go = 1; end
         if (have_go && sop && kind0) begin
             t_sop = t;
