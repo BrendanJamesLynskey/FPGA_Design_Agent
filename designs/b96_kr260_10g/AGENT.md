@@ -9,7 +9,7 @@ A Kria KR260 design that carries our own 10GBASE-R PCS (64B/66B, scrambler, gear
 not: an interoperability proof: a PCS talking to itself accepts its own symmetric mistakes, only a network card proves it; the full 58A trading core (book, rule table, interlocks, ARP) at 64 bits: trade64 is a small stand-in with one rule; the reconciliation sublayer link-fault state machine, the BER monitor, an ARP or ICMP responder
 
 ## state
-stage=built vivado=2026.1 kb_pin=93d158c build_id=92e3dd74
+stage=built vivado=2026.1 kb_pin=93d158c build_id=3e5c621e
 gates: build_2026_1=pass
 
 ## interface
@@ -21,10 +21,15 @@ if SFP+ lane and control pins one GTH lane at 10.3125 Gb/s; tx_disable, mod_abs,
 param NEAR_END=0 (variant b), 1 (variant a) legal=0 or 1
 param TRADE=1 (variant b), 0 (variant a) legal=0 or 1
 param RATE_MATCH=0 (default), 1 (the 96C elastic buffer) legal=0 or 1
+param EYESCAN=0 (default), 1 (the eyescan build) legal=0 or 1
 param GO_REG=1 (default), 0 in lat_all3 legal=0 or 1
 param line rate=10.3125 Gb/s legal=fixed by 10GBASE-R
 
 ## files
+designs/b96_kr260_10g/rtl/es_ctrl.sv d2f00e1814: DRP master and eye-scan point sequencer for the GTHE4 channel (EYESCAN = 1), brief 96D
+designs/b96_kr260_10g/es.xdc 9f571dada7: powers up the GT's eye-scan circuit (ES_EYE_SCAN_EN, ES_ERRDET_EN) in the eyescan build
+designs/b96_kr260_10g/model/eyescan.py 9e408b13c6: Python twin of the eye-scan point sequencer's DRP traffic
+designs/b96_kr260_10g/tests/eyescan_cocotb.py 46221e1751: cocotb bench of the sequencer against the twin and a DRP stand-in
 designs/b96_kr260_10g/rtl/b96_pkg.sv ac2ee00c42: block codes, scrambler, CRC-32 functions
 designs/b96_kr260_10g/rtl/pcs_tx.sv e0e68141d9: transmit PCS (encode, scramble, gearbox)
 designs/b96_kr260_10g/rtl/pcs_rx.sv 161c35209b: receive PCS (gearbox with slip, block lock, descramble, decode)
@@ -34,8 +39,8 @@ designs/b96_kr260_10g/rtl/frame_src.sv a745598f6a: frame builder for orders, fee
 designs/b96_kr260_10g/rtl/trade64.sv 1999e01a37: the 64-bit mock trading decision
 designs/b96_kr260_10g/rtl/tx_path.sv 91039813b5: transmit domain: sources, generator, timestamps
 designs/b96_kr260_10g/rtl/rx_path.sv fdfa0f70a8: receive domain: PCS, MAC, decision, counters
-designs/b96_kr260_10g/rtl/b96_core.sv b5347c5c94: registers, GT wrapper and clock-domain crossings
-designs/b96_kr260_10g/rtl/kr260_10g_top.sv d16b00df87: board top (MMCM, SYSMON, pins)
+designs/b96_kr260_10g/rtl/b96_core.sv 33009a57e1: registers, GT wrapper and clock-domain crossings
+designs/b96_kr260_10g/rtl/kr260_10g_top.sv 728a27e311: board top (MMCM, SYSMON, pins)
 designs/b96_kr260_10g/rtl/rx_path_legacy.sv 4c9412a3ce: the 97C receive path (main 6909e43f), used when RATE_MATCH = 0
 designs/b96_kr260_10g/rtl/rate_match.sv 89bdb4e820: rate-matching elastic buffer (idle insert and delete between frames, xpm_fifo_async), brief 96C
 designs/b96_kr260_10g/model/ratematch.py 29ed3ac9f2: Python twin of the rate matcher, compared output for output with the RTL
@@ -43,11 +48,11 @@ designs/b96_kr260_10g/host/b96c_ppm.py a5a5b3d64e: board driver for the ppm swee
 designs/b96_kr260_10g/rtl/hs_vec.sv bb5cad4fa9: coherent vector crossing
 designs/b96_kr260_10g/model/pcs.py 92790d45d7: bit-serial Python reference of the PCS (the twin)
 designs/b96_kr260_10g/design.xdc 4dec8c5ba8: pins, clocks, slow-pin constraints
-designs/b96_kr260_10g/docs/design.md 37875bf0a7: design note: decisions and alternatives
+designs/b96_kr260_10g/docs/design.md 9a7e7521c7: design note: decisions and alternatives
 designs/b96_kr260_10g/docs/board_run_plan.md 678413f0be: stage 3 plan for the board
 designs/b96_kr260_10g/docs/what_we_found.md 376623bbd5: results and gaps
-designs/b96_kr260_10g/regmap.py 09f678b5a2: register map as data
-designs/b96_kr260_10g/docs/register_map.md 429377b3c9: interface datasheet
+designs/b96_kr260_10g/regmap.py 215ac283ff: register map as data
+designs/b96_kr260_10g/docs/register_map.md c381e4cc15: interface datasheet
 
 ## commands
 simulate the PCS, MAC and core against the Python reference (~2min): python -m pytest -q designs/b96_kr260_10g/tests
@@ -55,7 +60,7 @@ simulate the PCS, MAC and core against the Python reference (~2min): python -m p
 [heavy] build variant (a), the near-end loopback self-test (~22min): flow/run_vivado.sh designs/b96_kr260_10g/selftest base
 
 ## records (path sha256-prefix; claims below cite R<n>)
-R1 designs/b96_kr260_10g/tests/test_b96_pcs_rtl.py eb7f06c32b
+R1 designs/b96_kr260_10g/tests/test_b96_pcs_rtl.py ce198a4ff9
 R2 results/b96c/builds/control/digest.json f4c148e6e1
 R3 results/b96c/eqy_default/result_default.txt 0144f4bfb6
 R4 results/b96c/hw/20261119_080724/control/stage3.json 269183b66c
@@ -105,6 +110,7 @@ M9 timing wns_ns_all3=0.004 ns R11#timing.wns_ns: worst setup slack, latency var
 - Does the PL load over JTAG with the PS idle on the KR260 (flow/program.py has no KR260 board entry yet)?
 
 ## history
+2026-11-19 - pr=-: brief 96D: on-chip RX eye scan (EYESCAN build option, es_ctrl, flow/eyescan); built with all 29 gates; simulated against a stand-in; not yet run on the board
 2026-11-19 - pr=-: brief 96C addendum 2: RATE_MATCH build parameter, default 0 (the 97C path, shown equivalent by eqy and the 97C bench); the board measured the buffer at +11 clocks and no relative offset by the TX phase interpolator
 2026-11-19 - pr=-: brief 96C: elastic-buffer rate matcher (xpm_fifo_async) in the base design and lat_all3, TX phase-interpolator ppm controls, four builds with all 29 gates, board session pending
 2026-11-17 - pr=-: brief 96 stages 0 to 2: board facts, design note, PCS, MAC, trading path, host code, builds; one review round

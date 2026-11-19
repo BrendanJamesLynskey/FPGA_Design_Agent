@@ -315,3 +315,25 @@ Brief 96E (a lower-latency buffer: no first-word-fall-through count, an own read
 1. **Brief 96E, a lower-latency elastic buffer:** the cost above is the macro's synchroniser and register stages plus the fill it rests at; a buffer of the same policy with its own gray-pointer crossing (checked by report_cdc) and a fill target of one block is the aim; the figure to beat is +11 clocks (68 ns).
 2. **A real offset:** two boards, or one board with a second oscillator on the receive side; the TX phase-interpolator route does not give one (this section). Until then the buffer is shown by simulation only under an offset.
 3. The default stays the 97C path (`RATE_MATCH = 0`); a build for a real NIC link sets `RATE_MATCH = 1`.
+
+## 10. On-chip RX eye scan (brief 96D, 2026-11-19)
+
+**What it adds.** A build parameter `EYESCAN` (default 0: the build is unchanged, the GT's DRP and drive ports are tied to the constants they always had). With `EYESCAN = 1` (the `eyescan/` build, with `es.xdc`): a DRP
+master and eye-scan point sequencer in the free-running clock (`rtl/es_ctrl.sv`), eight registers (DRP_ADDR, DRP_DATA, ES_CMD, ES_STAT, ES_POINT, ES_TMO, ES_RES at 0x024 to 0x03C, and GT_DRIVE at 0x084; FEATURES bit 4), and the host
+side in `flow/eyescan/` (`python -m flow.eyescan`, datasheet in `flow/eyescan/README.md`).
+
+**Why the sequencer is in RTL.** One point is about ten DRP accesses; over the JTAG cable each register operation costs tens of milliseconds, so a 1023-point scan would spend minutes in overhead per access type. The sequencer does one
+point per command (a read-modify-write of three DRP words, a poll, two reads, a stop) in under a microsecond of fabric time; the host adds the adaptive prescale ladder, the save and restore and the maths. The twin
+(`model/eyescan.py`) lists the DRP traffic one point must produce; `tests/eyescan_cocotb.py` compares it access by access with the RTL's, against a DRP stand-in in `sim/gth_wiz_model96.sv` (a 1024-word register file and the
+WAIT, RESET, COUNT, END state machine of UG576 Figure 4-21; its error count is a fixed mixing function of the offsets, a fixture, not physics).
+
+**Decisions and what a user could get wrong.**
+- `ES_EYE_SCAN_EN` and `ES_ERRDET_EN` are set in the bitstream (`es.xdc`), because the Wizard leaves both FALSE (read in the generated channel wrapper) and UG576 says re-enabling needs a PMA reset, which would restart the link.
+  The host refuses a build where they read 0 (DRP 0x03C [9:8]).
+- The sequencer does not restore the offsets and prescale it writes; the host saves 18 DRP words first and writes them back and reads them again (`restore.ok` in every capture).
+- TX swing and cursors are driven from a register (GT_DRIVE) in `EYESCAN` builds only. The reset value is the design's old constant (TXDIFFCTRL 11000, 873 mVppd, no cursors); the host and the owner's script never go above it.
+- The eye is after the equaliser and each point's depth is limited by its bits; see `flow/eyescan/README.md`.
+- The default build was not rebuilt for this brief: with `EYESCAN = 0` the new logic is not elaborated and the GT ports carry the same constants. The regression benches of both `RATE_MATCH` settings pass; an equivalence proof of the default
+  against main was not rerun (the change is a generate branch that is not taken).
+
+**Not measured.** Nothing in this section has run on a board. The DRP addresses, the 32-bit reading of "bits per sample" and the masks are from UG576 v1.7.1 and are checked in simulation only against our own stand-in.

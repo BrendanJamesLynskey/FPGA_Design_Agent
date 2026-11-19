@@ -1,5 +1,5 @@
 {
- "schema_version": "1.14.0",
+ "schema_version": "1.15.0",
  "tools": [
   {
    "name": "axi_board_run",
@@ -20,7 +20,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.14.0"
+   "version": "1.15.0"
   },
   {
    "name": "axi_program_check",
@@ -41,7 +41,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.14.0"
+   "version": "1.15.0"
   },
   {
    "name": "axi_simulate",
@@ -62,7 +62,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.14.0"
+   "version": "1.15.0"
   },
   {
    "name": "board_constraints",
@@ -99,7 +99,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.14.0"
+   "version": "1.15.0"
   },
   {
    "name": "bringup",
@@ -110,7 +110,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.14.0"
+   "version": "1.15.0"
   },
   {
    "name": "build",
@@ -138,7 +138,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.14.0"
+   "version": "1.15.0"
   },
   {
    "name": "check",
@@ -200,7 +200,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.14.0"
+   "version": "1.15.0"
   },
   {
    "name": "check_constraints",
@@ -211,7 +211,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.14.0"
+   "version": "1.15.0"
   },
   {
    "name": "debug_capture",
@@ -233,7 +233,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.14.0"
+   "version": "1.15.0"
   },
   {
    "name": "debug_plan",
@@ -255,7 +255,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.14.0"
+   "version": "1.15.0"
   },
   {
    "name": "debug_query",
@@ -281,7 +281,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.14.0"
+   "version": "1.15.0"
   },
   {
    "name": "eqy_check",
@@ -322,7 +322,39 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.14.0"
+   "version": "1.15.0"
+  },
+  {
+   "name": "eye_scan",
+   "description": "Read an on-chip RX eye-scan capture of a GTH link (a JSON file written by `python -m flow.eyescan run`, under the design directory) and return the eye width (UI) and height (mV) at a stated BER depth, and the margin against thresholds you state. The eye is the receiver's statistical eye AFTER its equaliser, from the transceiver's own error counters, not the eye at the pins; each point's depth is limited by the bits it examined (points that cannot vouch for the depth are counted as 'shallow', not open). A synthetic (offline model) capture never passes. This tool does not run the board: with measure=true it returns the plan for the owner to run.",
+   "inputSchema": {
+    "type": "object",
+    "properties": {
+     "capture": {
+      "type": "string",
+      "description": "path of the capture JSON, relative to the design directory"
+     },
+     "depth": {
+      "type": "number",
+      "description": "BER depth to read the eye at (default 1e-9)"
+     },
+     "min_width_ui": {
+      "type": "number",
+      "description": "required eye width in UI (default 0.3)"
+     },
+     "min_height_mv": {
+      "type": "number",
+      "description": "required eye height in mV (default 30)"
+     },
+     "measure": {
+      "type": "boolean",
+      "description": "return the plan for the owner to take a new scan instead of reading a capture"
+     }
+    },
+    "required": [],
+    "additionalProperties": false
+   },
+   "version": "1.15.0"
   },
   {
    "name": "formal",
@@ -333,7 +365,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.14.0"
+   "version": "1.15.0"
   },
   {
    "name": "gates",
@@ -362,7 +394,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.14.0"
+   "version": "1.15.0"
   },
   {
    "name": "gt_plan",
@@ -373,7 +405,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.14.0"
+   "version": "1.15.0"
   },
   {
    "name": "latency_budget",
@@ -397,7 +429,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.14.0"
+   "version": "1.15.0"
   },
   {
    "name": "latency_path",
@@ -421,7 +453,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.14.0"
+   "version": "1.15.0"
   },
   {
    "name": "lint",
@@ -432,7 +464,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.14.0"
+   "version": "1.15.0"
   },
   {
    "name": "list_files",
@@ -448,7 +480,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.14.0"
+   "version": "1.15.0"
   },
   {
    "name": "load_skill",
@@ -476,7 +508,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.14.0"
+   "version": "1.15.0"
   },
   {
    "name": "mutate",
@@ -503,7 +535,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.14.0"
+   "version": "1.15.0"
   },
   {
    "name": "oss_synth",
@@ -560,7 +592,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.14.0"
+   "version": "1.15.0"
   },
   {
    "name": "program",
@@ -582,7 +614,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.14.0"
+   "version": "1.15.0"
   },
   {
    "name": "read_file",
@@ -609,7 +641,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.14.0"
+   "version": "1.15.0"
   },
   {
    "name": "report",
@@ -643,7 +675,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.14.0"
+   "version": "1.15.0"
   },
   {
    "name": "report_digest",
@@ -680,7 +712,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.14.0"
+   "version": "1.15.0"
   },
   {
    "name": "search_docs",
@@ -711,7 +743,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.14.0"
+   "version": "1.15.0"
   },
   {
    "name": "simulate",
@@ -734,7 +766,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.14.0"
+   "version": "1.15.0"
   },
   {
    "name": "skill_excerpt",
@@ -757,7 +789,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.14.0"
+   "version": "1.15.0"
   },
   {
    "name": "skill_index",
@@ -780,7 +812,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.14.0"
+   "version": "1.15.0"
   },
   {
    "name": "spec_items",
@@ -791,7 +823,7 @@
     "required": [],
     "additionalProperties": false
    },
-   "version": "1.14.0"
+   "version": "1.15.0"
   },
   {
    "name": "stage_note",
@@ -825,7 +857,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.14.0"
+   "version": "1.15.0"
   },
   {
    "name": "write_file",
@@ -848,7 +880,7 @@
     ],
     "additionalProperties": false
    },
-   "version": "1.14.0"
+   "version": "1.15.0"
   }
  ]
 }

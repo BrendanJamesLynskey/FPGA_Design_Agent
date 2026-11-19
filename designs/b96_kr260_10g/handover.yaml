@@ -62,6 +62,12 @@ parameters:
   note: 0 is the receive path of main 6909e43f (brief 97C, board-proven); 1 puts rate_match between the receive PCS and
     the MAC (11 clocks slower on the board); the register map is the same, with the rate-match and frequency words reading
     0 at 0
+- name: EYESCAN
+  value: 0 (default), 1 (the eyescan build)
+  legal: 0 or 1
+  note: 1 adds brief 96D's DRP access, eye-scan point sequencer (es_ctrl) and TX drive registers (FEATURES bit 4); with
+    0 they read 0 and the GT's DRP and drive ports are tied to the old constants; es.xdc also powers up the GT's eye-scan
+    circuit in the eyescan build
 - name: GO_REG
   value: 1 (default), 0 in lat_all3
   legal: 0 or 1
@@ -72,6 +78,18 @@ parameters:
   note: QPLL0 from the 156.25 MHz reference; the user clocks (161.133 MHz) carry 64 bits a word and the PCS takes one clock
     pause in 33
 files:
+- path: designs/b96_kr260_10g/rtl/es_ctrl.sv
+  what: DRP master and eye-scan point sequencer for the GTHE4 channel (EYESCAN = 1), brief 96D
+  sha256: d2f00e1814cc66993a61104e74c2076fb051c7a884b84661b4f576873eb35a54
+- path: designs/b96_kr260_10g/es.xdc
+  what: powers up the GT's eye-scan circuit (ES_EYE_SCAN_EN, ES_ERRDET_EN) in the eyescan build
+  sha256: 9f571dada72bcee3dcc3d06baeb96ae5afc504079fc2f156a7f30cde56227573
+- path: designs/b96_kr260_10g/model/eyescan.py
+  what: Python twin of the eye-scan point sequencer's DRP traffic
+  sha256: 9e408b13c60ea02f701c2295e4f5ec3bedb7f80290c3c4326bc5e5cfa572a3bf
+- path: designs/b96_kr260_10g/tests/eyescan_cocotb.py
+  what: cocotb bench of the sequencer against the twin and a DRP stand-in
+  sha256: 46221e1751750b834b5466379a4ae4cac2133e13e8dbcbc5c3e7751dbb2b0ed9
 - path: designs/b96_kr260_10g/rtl/b96_pkg.sv
   what: block codes, scrambler, CRC-32 functions
   sha256: ac2ee00c42c8be41a66dae4c04b565c55ed01910aa4c8f12ea7919adaeb77e7c
@@ -101,10 +119,10 @@ files:
   sha256: fdfa0f70a8c9c293a8d285bc09e71bd5519626a6d8c4aa6617e23aa57f6f5c4a
 - path: designs/b96_kr260_10g/rtl/b96_core.sv
   what: registers, GT wrapper and clock-domain crossings
-  sha256: b5347c5c94e15bae83c6697ce7c4981428b91de33e12a277cd69afd55eb7b3ac
+  sha256: 33009a57e183035542b9e2031f6aeb107092af80fe21e2051a52945d02288220
 - path: designs/b96_kr260_10g/rtl/kr260_10g_top.sv
   what: board top (MMCM, SYSMON, pins)
-  sha256: d16b00df873146a215f773c29438e72c0bc2b5995abc5c6b815a183ab1d218f0
+  sha256: 728a27e311b4c12ae4ca2e863a9cc8bb84588ac0ccd9a81e25fa1bd5b0725345
 - path: designs/b96_kr260_10g/rtl/rx_path_legacy.sv
   what: the 97C receive path (main 6909e43f), used when RATE_MATCH = 0
   sha256: 4c9412a3ce8de3b3ee966add7b5b293e4c9b968a4ce2f1e063f62d537a24573f
@@ -128,7 +146,7 @@ files:
   sha256: 4dec8c5ba8f6dccc6273f45d40a7d95a6668f5fe09350c0a0d80cc6c07ea1118
 - path: designs/b96_kr260_10g/docs/design.md
   what: 'design note: decisions and alternatives'
-  sha256: 37875bf0a7a1c03786312011810768fb90368b1abf5adfc225d78404b0134f92
+  sha256: 9a7e7521c75b117967f45d171798d9491649450c8def166ff898eb3cf028d045
 - path: designs/b96_kr260_10g/docs/board_run_plan.md
   what: stage 3 plan for the board
   sha256: 678413f0be0f0c2692b2d1118cd8a8e54ec6514bd5e643485402e34ecc83c61b
@@ -137,10 +155,10 @@ files:
   sha256: 376623bbd5f6b71f50a352b59b252e1c27ab8ecc4643c3cc2871f7614e4bc588
 - path: designs/b96_kr260_10g/regmap.py
   what: register map as data
-  sha256: 09f678b5a234468a77035f973bba5df93c189866b18e827490a020fe1f8aca94
+  sha256: 215ac283ff15a1208209c31f824375e1aa0be6e01f6bbbaa9c64d7624aaa1e0b
 - path: designs/b96_kr260_10g/docs/register_map.md
   what: interface datasheet
-  sha256: 429377b3c9d4f50cd1bc9fe700c0eebe7bdfa0b576699204cd3c2513d711625c
+  sha256: c381e4cc15fc7ebee953b7d9fcfcf7fd24798b449bfcd75750a35ced480d160b
 commands:
 - what: simulate the PCS, MAC and core against the Python reference
   cmd: python -m pytest -q designs/b96_kr260_10g/tests
@@ -166,7 +184,7 @@ evidence:
     length residue, any bit offset; the whole core with a stand-in for the GT: probe echo, trading loop, decisions, poisoned
     orders'
   record: designs/b96_kr260_10g/tests/test_b96_pcs_rtl.py
-  sha256: eb7f06c32b02355a7dae15e0aa1d1171549978c4ac514f90a6a71778dea21763
+  sha256: ce198a4ff99c11ba1612a6db4e11ed2a1c57c054c8c37ebcf68baecc812f0703
 - id: E2
   activity: build
   result: pass
@@ -340,6 +358,9 @@ open_questions:
 - Does the PL load over JTAG with the PS idle on the KR260 (flow/program.py has no KR260 board entry yet)?
 history:
 - date: '2026-11-19'
+  note: 'brief 96D: on-chip RX eye scan (EYESCAN build option, es_ctrl, flow/eyescan); built with all 29 gates; simulated
+    against a stand-in; not yet run on the board'
+- date: '2026-11-19'
   note: 'brief 96C addendum 2: RATE_MATCH build parameter, default 0 (the 97C path, shown equivalent by eqy and the 97C
     bench); the board measured the buffer at +11 clocks and no relative offset by the TX phase interpolator'
 - date: '2026-11-19'
@@ -380,4 +401,4 @@ state:
     build_2026_1: pass
   vivado: '2026.1'
   kb_pin: 93d158c
-  build_id: 92e3dd74
+  build_id: 3e5c621e
