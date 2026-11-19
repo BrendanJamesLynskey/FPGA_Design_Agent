@@ -13,6 +13,29 @@ Code: `flow/constraint_gates.py`; tests: `flow/tests/test_105a_constraint_gates.
 - `probe_a` (board `nexys_video`): the flow wrote `board_config.xdc`; report_drc has no row; gates pass except none (`reports/probe_a/`).
 - `probe_b` (board with no file): report_drc shows CFGBVS-1 as a Warning, `drc_clean` is true; only `power_junction_ok` fails, because no board thermal environment is set for an unlisted board (`reports/probe_b/`). The rule applied to that real report fails a confirmed board and passes an unconfirmed one.
 
+## Records
+
+- `reports/probe_a/`, `reports/probe_b/`: `drc.rpt`, `gates.json`, `prepare.json` of the two Vivado runs; `probe_a/`, `probe_b/`, `probe/`: their inputs.
+- Tests: `flow/tests/test_105a_constraint_gates.py` (planted cases for each rule, a repo-wide sweep for rule 3).
+
 ## Stamps
 
 The SIM_ASSERT_CHK edits change `sources_sha256` and the build stamp of every KR260 design that builds the edited RTL (b56a, b58a, b96 and variants); see the report.
+
+## Reproduce
+
+The tests need no tool; the two probes need Vivado 2026.1 and a heavy slot taken through the shared script.
+
+```
+python3 -m pytest -q flow/tests/test_105a_constraint_gates.py
+# the probes (Vivado 2026.1, heavy slot, one thread):
+export FDA_VIVADO_THREADS=1
+flow/run_vivado.sh results/105A_constraint_gates/probe_a base
+flow/run_vivado.sh results/105A_constraint_gates/probe_b base     # fails power_junction_ok only: no board thermal file for an unlisted board
+```
+
+## Known gaps and limits
+
+- The real XPM macros (xsim) were not run with the new setting: only the Icarus stand-ins, which ignore `SIM_ASSERT_CHK`, were; see the report.
+- Variant snapshots of the 10G design (`pre96c`, `lat_*`) keep `SIM_ASSERT_CHK(0)`: they are recorded experiments.
+- A board's confirmed status rests on the vendor XDC setting the two lines; no schematic was read.

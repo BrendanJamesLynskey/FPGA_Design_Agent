@@ -9,7 +9,7 @@ A Kria KR260 design that carries our own 10GBASE-R PCS (64B/66B, scrambler, gear
 not: an interoperability proof: a PCS talking to itself accepts its own symmetric mistakes, only a network card proves it; the full 58A trading core (book, rule table, interlocks, ARP) at 64 bits: trade64 is a small stand-in with one rule; the reconciliation sublayer link-fault state machine, the BER monitor, an ARP or ICMP responder
 
 ## state
-stage=built vivado=2026.1 kb_pin=93d158c build_id=357b9db7
+stage=built vivado=2026.1 kb_pin=93d158c build_id=c9106c0d
 gates: build_2026_1=pass
 
 ## interface
@@ -40,16 +40,16 @@ designs/b96_kr260_10g/rtl/mac64_rx.sv 35a0ed74f5: 64-bit MAC receiver
 designs/b96_kr260_10g/rtl/frame_src.sv a745598f6a: frame builder for orders, feed, probe and test frames
 designs/b96_kr260_10g/rtl/trade64.sv 1999e01a37: the 64-bit mock trading decision
 designs/b96_kr260_10g/rtl/tx_path.sv 91039813b5: transmit domain: sources, generator, timestamps
-designs/b96_kr260_10g/rtl/rx_path.sv fd582fc7eb: receive domain: PCS, MAC, decision, counters
-designs/b96_kr260_10g/rtl/b96_core.sv 2939f61681: registers, GT wrapper and clock-domain crossings
-designs/b96_kr260_10g/rtl/kr260_10g_top.sv c40a5092b1: board top (MMCM, SYSMON, pins)
+designs/b96_kr260_10g/rtl/rx_path.sv 926b9f9901: receive domain: PCS, MAC, decision, counters
+designs/b96_kr260_10g/rtl/b96_core.sv bc8ac81d24: registers, GT wrapper and clock-domain crossings
+designs/b96_kr260_10g/rtl/kr260_10g_top.sv 3d4ca01e5a: board top (MMCM, SYSMON, pins)
 designs/b96_kr260_10g/rtl/rx_path_legacy.sv 4c9412a3ce: the 97C receive path (main 6909e43f), used when RATE_MATCH = 0
-designs/b96_kr260_10g/rtl/rate_match.sv 99afaeec54: rate-matching elastic buffer (idle insert and delete between frames, xpm_fifo_async), brief 96C
-designs/b96_kr260_10g/rtl/rate_match_gp.sv 155d714e23: low-latency elastic buffer with our own gray-pointer crossing (RM_OWN = 1), brief 96E
+designs/b96_kr260_10g/rtl/rate_match.sv f16fa46d1d: rate-matching elastic buffer (idle insert and delete between frames, xpm_fifo_async), brief 96C
+designs/b96_kr260_10g/rtl/rate_match_gp.sv 09ba730191: low-latency elastic buffer with our own gray-pointer crossing (RM_OWN = 1), brief 96E
 designs/b96_kr260_10g/rate_match_gp.xdc 68705f884b: set_max_delay -datapath_only for the direct-read variant of rate_match_gp (build rm_gp_direct only)
 designs/b96_kr260_10g/model/ratematch.py 8794519d31: Python twin of the rate matcher, compared output for output with the RTL
 designs/b96_kr260_10g/host/b96c_ppm.py a5a5b3d64e: board driver for the ppm sweep (TX phase-interpolator offset, measured ppm, SYSMON conditions)
-designs/b96_kr260_10g/rtl/hs_vec.sv bb5cad4fa9: coherent vector crossing
+designs/b96_kr260_10g/rtl/hs_vec.sv e0fc43a9b5: coherent vector crossing
 designs/b96_kr260_10g/model/pcs.py 92790d45d7: bit-serial Python reference of the PCS (the twin)
 designs/b96_kr260_10g/design.xdc 4dec8c5ba8: pins, clocks, slow-pin constraints
 designs/b96_kr260_10g/docs/design.md 237a6b73c0: design note: decisions and alternatives
