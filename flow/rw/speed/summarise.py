@@ -93,7 +93,7 @@ def e2() -> dict:
             if tag.startswith("prep"):
                 continue
             mm = load(f)
-            arm, per, rep = (tag.split("_") + ["", ""])[:3]
+            parts = tag.split("_"); arm, per, rep = parts[0], "_".join(parts[1:-1]), parts[-1]
             key = f"{arm}_{per}"
             rows.setdefault(key, {}).setdefault(rep, {})["meas"] = mm
             run = load(d / f"{tag}_res_run.json")
