@@ -99,14 +99,14 @@ def clean(intent: dict[str, Any]) -> dict[str, Any]:
     return out
 
 
-def parse(request: str, design: Path, client: Any = None, model: str = DEFAULT_MODEL,
+def parse(request: str, design: Path, client: Any = None, model: str | None = None,
           index: RtlIndex | None = None) -> tuple[dict[str, Any], dict[str, Any]]:
     """Returns (intent, meta). meta: model, cost (provider-reported, None if not reported), tokens, attempts, raw replies."""
     design = design if design.is_absolute() else ROOT / design
     idx = index or RtlIndex.from_design(design)
     if client is None:
-        from agent.graph.llm import OpenRouterClient
-        client = OpenRouterClient(model=model, timeout_s=120)
+        from agent.models import chat_client
+        client = chat_client("interpret", model=model, timeout_s=120)       # brief 108: the model table decides unless a model is named
     messages = [{"role": "system", "content": SYSTEM + "\n" + signal_menu(idx, register_map(design))},
                 {"role": "user", "content": request}]
     meta: dict[str, Any] = {"model": getattr(client, "model", model), "cost": 0.0, "prompt_tokens": 0,

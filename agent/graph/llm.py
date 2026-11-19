@@ -1,8 +1,8 @@
 """The model client for the Deep Agents agent (brief 05b).
 
-- :class:`OpenRouterClient`: OpenRouter's chat completions through the ``openai`` SDK, ``provider:
-  {data_collection: "deny"}``, ``usage: {include: true}``; cost is only what the provider reports (never estimated;
-  unreported cost is recorded as ``None`` and counted against the cap as the per-call ceiling).
+- The model clients (:class:`OpenRouterClient` and the others) live in :mod:`agent.models.endpoints` and are built only by the
+  resolver (brief 108). Cost is only what the provider reports (never estimated; unreported cost is recorded as ``None`` and
+  counted against the cap as the per-call ceiling).
 - :class:`Recorder` wraps a client and writes every call to an episode fixture; :class:`Replay` serves the
   fixture back in order (CI: no network, no spend).
 - :func:`chat_model`: a LangChain chat model whose every call goes through a :class:`Meter` that enforces the
@@ -15,8 +15,6 @@ provider-reported cost rule, and the LangChain adapter for Deep Agents), MIT.
 from __future__ import annotations
 
 import json
-import os
-import sys
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -39,60 +37,13 @@ class Reply:
     provider: str | None = None
 
 
-KEY_FILE = Path.home() / ".config" / "fpga_design_agent" / "openrouter.env"
-
-
-def _key_from_file() -> str | None:
-    """OPENROUTER_API_KEY=... from the local key file (outside the repo, mode 600); never printed."""
-    try:
-        if KEY_FILE.stat().st_mode & 0o077:
-            raise ValueError(f"{KEY_FILE} must be readable by its owner only (chmod 600)")
-        for line in KEY_FILE.read_text().splitlines():
-            if line.startswith("OPENROUTER_API_KEY="):
-                return line.split("=", 1)[1].strip() or None
-    except FileNotFoundError:
-        return None
-    return None
-
-
-class OpenRouterClient:
-    def __init__(self, model: str = DEFAULT_MODEL, timeout_s: float = 180.0):
-        import openai
-        if any(f in model.lower() for f in FORBIDDEN):
-            raise ValueError(f"model {model!r} is not allowed through OpenRouter (owner rule)")
-        key = os.environ.get("OPENROUTER_API_KEY") or _key_from_file()
-        if not key:
-            raise ValueError(f"OPENROUTER_API_KEY is not set and {KEY_FILE} has none")
-        self.model = model
-        self._c = openai.OpenAI(api_key=key, base_url=OPENROUTER_BASE, timeout=timeout_s, max_retries=1)
-
-    #: brief 42 amendment 3: a response that cannot be parsed (the SDK's body parse, or a tool call whose ``arguments`` are not
-    #: JSON) is asked for again, up to this many extra times; every arm gets it. Three of the first six brief 42 runs died on one.
-    MALFORMED_RETRIES = 2
-
-    def __call__(self, messages: list[dict], tools: list[dict] | None = None) -> Reply:
-        t0 = time.monotonic()
-        body = {"usage": {"include": True}, "provider": {"data_collection": "deny"}}
-        for attempt in range(self.MALFORMED_RETRIES + 1):
-            try:
-                r = self._c.chat.completions.create(model=self.model, messages=messages, temperature=0.2, extra_body=body,
-                                                    **({"tools": tools} if tools else {}))
-                u = r.usage
-                extra = (getattr(u, "model_extra", None) or {}) if u else {}
-                m = r.choices[0].message if r.choices else None
-                calls = [{"id": c.id, "name": c.function.name, "args": json.loads(c.function.arguments or "{}")}
-                         for c in (getattr(m, "tool_calls", None) or [])]
-                break
-            except json.JSONDecodeError as e:
-                self.malformed_retries = getattr(self, "malformed_retries", 0) + 1
-                print(f"FDA_MALFORMED attempt {attempt + 1}: {type(e).__name__}: {str(e)[:160]}", file=sys.stderr, flush=True)
-                if attempt == self.MALFORMED_RETRIES:
-                    raise
-        return Reply(text=(m.content if m else "") or "", tool_calls=calls,
-                     prompt_tokens=getattr(u, "prompt_tokens", 0) or 0,
-                     completion_tokens=getattr(u, "completion_tokens", 0) or 0,
-                     cost=extra.get("cost"), seconds=round(time.monotonic() - t0, 2),
-                     provider=getattr(r, "provider", None) or (r.model_extra or {}).get("provider"))
+def __getattr__(name: str):
+    """``OpenRouterClient`` and the key-file helpers moved to :mod:`agent.models.endpoints` (brief 108: only the resolver builds
+    a model client); the old import path still names them."""
+    if name in ("OpenRouterClient", "KEY_FILE", "_key_from_file"):
+        from agent.models import endpoints
+        return getattr(endpoints, name)
+    raise AttributeError(name)
 
 
 class Recorder:

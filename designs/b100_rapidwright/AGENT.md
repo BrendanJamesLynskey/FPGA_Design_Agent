@@ -31,7 +31,7 @@ designs/b100_rapidwright/rtl/pcs_unit.sv c825d999f4: the relocatable block (brie
 designs/b100_rapidwright/rtl/chain_top.sv 0204d59663: the transmit chain with a bare GT
 designs/b100_rapidwright/scripts/run_c1.sh 501cd38a76: capability 1 end to end
 designs/b100_rapidwright/scripts/run_c23.sh ea789b7cfd: capabilities 2 and 3 end to end
-designs/b100_rapidwright/agent_run/run_arm.py e2b2564bca: the stage 2 agent runs, with and without the tools
+designs/b100_rapidwright/agent_run/run_arm.py 298aa401e6: the stage 2 agent runs, with and without the tools
 flow/rw/place_chain.py b8004684aa: the annealing placer
 flow/rw/route.py 2ddfda190f: RWRoute full and net-list routing
 flow/rw/relocate.py d1fd27257f: block relocation

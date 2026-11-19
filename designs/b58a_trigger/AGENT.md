@@ -9,7 +9,7 @@ A bench model of a low-latency trading path. A packet arrives on a PL Ethernet p
 not: a real market path: a mock. The message format is our own (docs/bench_feed_v1.md), the traffic sources are our own, and there is no exchange, broker or market data; a board result; no latency figure here was measured on hardware, and the PHYs, the cable and the real RGMII timing are outside every number; a proof of the whole design; only interlocks.sv has a k-induction proof, and the order slot and the MAC state machines have bounded checks
 
 ## state
-stage=built vivado=2026.1 kb_pin=5c10d51 build_id=188bd921
+stage=built vivado=2026.1 kb_pin=93d158c build_id=ee23a7c5
 gates: build_2026_1=pass board_run=not-run
 
 ## interface
@@ -39,7 +39,7 @@ designs/b58a_trigger/model/ref_model.py bf2f0369fc: Python reference model writt
 designs/b58a_trigger/tests/test_b58a_rtl.py 85faa7d825: cocotb tests against the model, with hostile frames
 designs/b58a_trigger/tests/test_rev_adv_rtl.py d3c1ce109d: adversarial regression tests from the independent review
 designs/b58a_trigger/tests/test_b58a_formal.py ed84d82687: runs the SymbiYosys jobs
-designs/b58a_trigger/host/nl_rule.py 933decf496: turns a sentence into a rule through a hosted language model, validated by model/rules.py
+designs/b58a_trigger/host/nl_rule.py 7588eaa25a: turns a sentence into a rule through a hosted language model, validated by model/rules.py
 designs/b58a_trigger/docs/board_run_plan.md f7c240f3ce: the board run plan; no step has been run
 designs/b58a_trigger/showcase/trading_path.yaml a9ef8b6cc2: the showcase entry, in progress, no numbers until a board result
 

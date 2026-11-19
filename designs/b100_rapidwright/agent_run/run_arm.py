@@ -88,15 +88,15 @@ def main() -> int:
         "--tools", ",".join(tools)], "env": env}}}
     (work / "mcp.json").write_text(json.dumps(mcp))
     task = TASK.format(turns=turns, minutes=minutes)
-    argv = ["claude", "-p", task, "--output-format", "stream-json", "--verbose", "--system-prompt", SYSTEM, "--tools", "",
-            "--mcp-config", str(work / "mcp.json"), "--strict-mcp-config", "--allowedTools", *[f"mcp__{MCP_NAME}__{t}" for t in tools],
-            "--permission-mode", "dontAsk", "--setting-sources", "", "--disable-slash-commands", "--no-session-persistence",
-            "--model", MODEL, "--max-turns", str(turns)]
+    from agent.models import claude_cli                    # brief 108: the one place that builds a claude argv
+    from agent.models import resolver_for                  # the guardrails of the model table apply to the script's own model too
+    entry = resolver_for("rtl", model=MODEL, endpoint="claude_code").entry("rtl")
+    argv = claude_cli.build_argv(system=SYSTEM, prompt=task, model=entry.model, output_format="stream-json", verbose=True, effort=None, max_turns=turns,
+                                 mcp_file=work / "mcp.json", allowed_tools=[f"mcp__{MCP_NAME}__{t}" for t in tools])
     (out / "task.txt").write_text(SYSTEM + "\n\n" + task + "\n\ntools: " + ", ".join(tools) + "\n")
     t0 = time.time()
     try:
-        p = subprocess.run(argv, cwd=work, env=isolated_env(work, token), capture_output=True, text=True, timeout=minutes * 60,
-                           stdin=subprocess.DEVNULL)
+        p = claude_cli.run(argv, cwd=work, env=isolated_env(work, token), timeout=minutes * 60)
         stream, err = p.stdout, p.stderr
     except subprocess.TimeoutExpired as e:
         stream, err = (e.stdout.decode() if isinstance(e.stdout, bytes) else e.stdout or ""), "timeout"

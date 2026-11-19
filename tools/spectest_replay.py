@@ -46,8 +46,10 @@ def replay(run_dir: Path, label: str, out: Path, model: str, max_loops: int) -> 
     d = scratch_design(run_dir, label)
     log = out / label / "claude_code_calls.jsonl"
     log.parent.mkdir(parents=True, exist_ok=True)
-    role = spectest.cc_llm(model, "medium", log, "spectest")
-    tri = spectest.cc_llm(model, "low", log, "spectest_triage")
+    from agent.models import resolver_for
+    rs = resolver_for("spectest", model=model, endpoint="claude_code", options={"effort": "medium"})
+    role = rs.text("spectest", label="spectest", claude_log=log)
+    tri = rs.text("spectest", label="spectest_triage", claude_log=log, overrides={"effort": "low"})
     board = json.loads((run_dir / "config.json").read_text()).get("board", "nexys_a7_100t") if (run_dir / "config.json").is_file() \
         else "nexys_a7_100t"
     res = spectest.gate(d, board, LocalRunner(), role, tri, max_loops=max_loops)

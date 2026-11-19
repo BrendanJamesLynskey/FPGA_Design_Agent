@@ -76,7 +76,7 @@ def merge(suite_findings: list[Finding], reply: dict[str, Any]) -> tuple[list[Fi
 
 
 def review(design: Path, out: Path, *, intent_file: Path | None = None, improvements: list[str] | None = None, use_judge: bool = True,
-           model: str = J.DEFAULT_MODEL, effort: str | None = "medium", claude_bin: str = "claude", scope: str = "rtl",
+           model: str | None = None, effort: Any = J.UNSET, claude_bin: str = "claude", scope: str = "rtl",
            runner: Callable[..., dict[str, Any]] | None = None, name: str | None = None, write_files: bool = True,
            tag: str = "review", label: str | None = None) -> dict[str, Any]:
     t0 = time.time()
@@ -117,7 +117,7 @@ def review(design: Path, out: Path, *, intent_file: Path | None = None, improvem
     if improvements and use_judge:
         from flow.review import judge as JJ
         files_text = "\n\n".join(J.numbered(p, t) for p, t in J.gather(prep["src"]))
-        run = runner or (lambda s, p: J.call_claude(s, p, model=model, effort=effort, claude_bin=claude_bin, out_dir=(out / "calls") if write_files else None, tag=tag + "_plan"))
+        run = runner or J.make_runner(model, effort, claude_bin, (out / "calls") if write_files else None, tag + "_plan")[0]
         rep["improvements"] = improve.plan(improvements, rep, files_text, run)
     if not (design / "handover.yaml").is_file() and write_files:
         rep["handover"] = handover_review.write(out / "handover", rep)

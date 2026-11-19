@@ -96,12 +96,9 @@ def mcp_config(rt, plan: dict[str, Any]) -> dict[str, Any]:
 
 
 def cli_argv(rt, plan: dict[str, Any], mcp_file: Path, model: str, effort: str, max_turns: int) -> list[str]:
-    return ["claude", "-p", plan["user_message"], "--output-format", "stream-json", "--verbose",
-            "--system-prompt", plan["system_prompt"], "--tools", "",
-            "--mcp-config", str(mcp_file), "--strict-mcp-config",
-            "--allowedTools", *tool_ids(plan), "--permission-mode", "dontAsk",
-            "--setting-sources", "", "--disable-slash-commands", "--no-session-persistence",
-            "--model", model, *(["--effort", effort] if effort else []), "--max-turns", str(max_turns)]
+    from agent.models import claude_cli
+    return claude_cli.build_argv(system=plan["system_prompt"], prompt=plan["user_message"], model=model, output_format="stream-json",
+                                 verbose=True, effort=effort, max_turns=max_turns, mcp_file=mcp_file, allowed_tools=tool_ids(plan))
 
 
 def isolated_env(home: Path, token: str) -> dict[str, str]:
@@ -177,9 +174,10 @@ def run_subagent_cc(rt, plan: dict[str, Any]) -> dict[str, str]:
     from agent.access import require_or_exit
     require_or_exit("claude_code_arm")
     from agent.graph.run import ArmBlocked, drop_superseded
-    if shutil.which("claude") is None:
+    from agent.models import claude_cli
+    if not claude_cli.available():
         raise ArmBlocked("the claude CLI is not on PATH")
-    ver = subprocess.run(["claude", "--version"], capture_output=True, text=True).stdout.strip()
+    ver = claude_cli.version()
     if not ver.startswith(ACCEPTED_CLI):
         raise ArmBlocked(f"Claude Code {ver!r} is not a tested version {ACCEPTED_CLI}")
     token = oauth_token()
@@ -205,9 +203,8 @@ def run_subagent_cc(rt, plan: dict[str, Any]) -> dict[str, str]:
     model = plan.get("model") or rt.cfg.cc_model
     effort = plan["effort"] if "effort" in plan else rt.cfg.cc_effort
     argv = cli_argv(rt, plan, mcp_file, model, effort, left)
-    shown = list(argv)
-    shown[2], shown[argv.index("--system-prompt") + 1] = f"<user message: sha256 in {out_dir.name}/{tag}.prompt.json>", \
-        f"<system prompt: sha256 in {out_dir.name}/{tag}.prompt.json>"
+    shown = claude_cli.redacted(argv, f"<user message: sha256 in {out_dir.name}/{tag}.prompt.json>",
+                                f"<system prompt: sha256 in {out_dir.name}/{tag}.prompt.json>")
     (out_dir / f"{tag}.argv.json").write_text(json.dumps(shown, indent=1))
     # brief 99: the prompts are private; a record keeps their hashes and the pin, not the text
     from agent.core import prompts as _prompts
@@ -215,8 +212,7 @@ def run_subagent_cc(rt, plan: dict[str, Any]) -> dict[str, str]:
         _prompts.record(user_message=plan["user_message"], system_prompt=plan["system_prompt"]), indent=1))
     t0, timed_out = time.time(), False
     try:
-        p = subprocess.run(argv, cwd=work, env=isolated_env(work, token), capture_output=True, text=True,
-                           timeout=wall, stdin=subprocess.DEVNULL)
+        p = claude_cli.run(argv, cwd=work, env=isolated_env(work, token), timeout=wall)
         out, err = p.stdout, p.stderr
     except subprocess.TimeoutExpired as e:
         timed_out = True
@@ -243,8 +239,12 @@ def run_subagent_cc(rt, plan: dict[str, Any]) -> dict[str, str]:
            "subtype": res.get("subtype"), "is_error": res.get("is_error"), "tokens": info["tokens"],
            "cost_usd": "unreported", "plan_cost_estimate_usd": res.get("total_cost_usd"),
            "init": init_report(info["init"]), "stderr_tail": err[-500:]}
+    from agent.models.config import ROLE_PURPOSE
+    ent = rt.resolver.entry(ROLE_PURPOSE[plan["role"]], plan["stage"])           # brief 108: which table entry made this call
+    rec.update(purpose=ent.purpose, endpoint=ent.endpoint, entry_hash=ent.hash, table_hash=rt.resolver.table.hash)
     with (rt.run_dir / "claude_code_calls.jsonl").open("a") as f:
         f.write(json.dumps(rec) + "\n")
+    rt.resolver.log_text_call(ent, secs, tokens=info["tokens"]["input"] + info["tokens"]["output"])
     written = {str(p.relative_to(rt.design)): "" for p in rt.design.rglob("*")
                if p.is_file() and "build" not in p.parts and "__pycache__" not in p.parts
                and p.stat().st_mtime > before.get(str(p), 0)}

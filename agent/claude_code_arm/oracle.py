@@ -8,19 +8,15 @@ from __future__ import annotations
 
 import json
 import re
-import shutil
-import subprocess
-import tempfile
 from pathlib import Path
 from typing import Any, Callable
 
-from agent.claude_code_arm import arm
+from agent.models import claude_cli
 
 
 def _argv(system: str, user: str, model: str) -> list[str]:
-    return ["claude", "-p", user, "--output-format", "json", "--system-prompt", system, "--tools", "",
-            "--strict-mcp-config", "--permission-mode", "dontAsk", "--setting-sources", "", "--disable-slash-commands",
-            "--no-session-persistence", "--model", model, "--max-turns", "1"]
+    from agent.models import claude_cli
+    return claude_cli.build_argv(system=system, prompt=user, model=model)
 
 
 def parse_answer(text: str) -> dict[str, Any]:
@@ -44,27 +40,16 @@ def parse_answer(text: str) -> dict[str, Any]:
     return {"answer": "not specified", "quote": None}
 
 
-def cc_oracle(model: str, log: Path | None = None, timeout_s: float = 300) -> Callable[[str, str], dict[str, Any]]:
+def cc_oracle(model: str, log: Path | None = None, timeout_s: float = 300, entry=None, resolver=None) -> Callable[[str, str], dict[str, Any]]:
     from agent.access import require_or_exit      # brief 94
     require_or_exit("claude_code_arm.oracle")
     """An ``llm(system, user) -> {"answer", "quote"}`` callable for :class:`agent.graph.interview.SpecOracle`."""
     def llm(system: str, user: str) -> dict[str, Any]:
-        from agent.graph.run import ArmBlocked
-        if shutil.which("claude") is None:
-            raise ArmBlocked("the claude CLI is not on PATH")
-        token = arm.oauth_token()
-        if not token:
-            raise ArmBlocked("CLAUDE_CODE_OAUTH_TOKEN is not set and the token file is missing")
-        work = Path(tempfile.mkdtemp(prefix="fda_oracle_"))
-        try:
-            p = subprocess.run(_argv(system, user, model), cwd=work, env=arm.isolated_env(work, token), capture_output=True,
-                               text=True, timeout=timeout_s, stdin=subprocess.DEVNULL)
-        finally:
-            shutil.rmtree(work, ignore_errors=True)
-        try:
-            res = json.loads(p.stdout)
-        except ValueError:
-            res = {}
+        import time
+        t0 = time.monotonic()
+        res = claude_cli.text_call(system, user, model=model, timeout_s=timeout_s, prefix="fda_oracle_")
+        if resolver is not None and entry is not None:
+            resolver.log_text_call(entry, time.monotonic() - t0)
         out = parse_answer(str(res.get("result", "")))
         if log:
             with log.open("a") as f:

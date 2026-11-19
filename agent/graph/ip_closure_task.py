@@ -171,7 +171,7 @@ def main(argv=None) -> int:
     ap.add_argument("--extra-latency", type=int, required=True, help="clocks of latency the change may add (stated before the run)")
     ap.add_argument("--max-iter", type=int, default=6)
     ap.add_argument("--max-usd", type=float, default=1.0)
-    ap.add_argument("--model", default="openai/gpt-6-luna")
+    ap.add_argument("--model", help="the purpose's model (default: the model table, brief 108)")
     ap.add_argument("--replay", type=Path)
     ap.add_argument("--out", type=Path)
     ap.add_argument("--rtl", type=Path, help="start from this RTL directory instead of ip_lib/<block>/rtl")
@@ -237,15 +237,17 @@ def main(argv=None) -> int:
                 failed.append(f"point {i} does not meet {a.clock_mhz:g} MHz")
         return {"pass": not failed, "failed": failed}
 
-    from agent.graph.llm import OpenRouterClient, Recorder, Replay
+    from agent.models import resolver_for
     calls: list = []
-    client = Replay(a.replay) if a.replay else Recorder(OpenRouterClient(a.model), out / "llm_replay.json")
+    rs = resolver_for("closure", model=a.model, replay=a.replay, record=None if a.replay else out / "llm_replay.json")
+    client = rs.chat("closure")
+    model = rs.entry("closure").model
     c = cl.Closure(ws=cl.Workspace(d), goals=cl.goals_from_spec(spec), g1=pytest_g1(a.block, d, a.extra_latency), build=build,
                    editor=cl.llm_editor(client, calls), contract=contract, spec=spec,
                    max_iter=0 if a.build_only else a.max_iter, max_usd=a.max_usd, record=out, joint=True, case=a.case,
                    synth=None, signoff=signoff)
     rep = c.run()
-    rep.update({"case": a.case, "block": a.block, "part": a.part, "model": a.model, "clock_mhz": a.clock_mhz,
+    rep.update({"case": a.case, "block": a.block, "part": a.part, "model": model, "clock_mhz": a.clock_mhz,
                 "extra_latency": a.extra_latency})
     (out / "summary.json").write_text(json.dumps(rep, indent=1, default=str) + "\n")
     with (out / "llm_calls.jsonl").open("w") as f:

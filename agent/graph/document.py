@@ -1040,20 +1040,9 @@ def replay_llm(path: Path) -> LLM:
 
 
 def designer_llm(rt) -> LLM:
-    """The Designer's model for the DOC step: a headless Claude Code call when the Designer runs on Claude Code (the Max
-    plan), else one OpenRouter call metered like any role turn."""
-    rm = rt.cfg.role_models().get("rtl") or {}
-    if rm.get("harness") == "claude_code":
-        from agent.graph.spectest import cc_llm
-        return cc_llm(rm.get("model") or rt.cfg.cc_model, rm.get("effort"), rt.run_dir / "claude_code_calls.jsonl", "doc")
-    from agent.graph.run import role_client
-
-    def llm(system: str, user: str) -> str:
-        reply = role_client(rt, rm.get("model") or rt.cfg.model)([{"role": "system", "content": system},
-                                                                 {"role": "user", "content": user}])
-        rt.meter.add(reply)
-        return reply.text
-    return llm
+    """The model of the DOC step (the ``doc`` purpose, which follows the Designer's ``rtl`` entry unless set): a headless Claude
+    Code call on a claude_code endpoint (the Max plan), else one chat call metered like any role turn."""
+    return rt.resolver.text("doc", label="doc", claude_log=rt.run_dir / "claude_code_calls.jsonl", on_reply=rt.meter.add)
 
 
 __getattr__ = _prompts.module_getattr(__name__, {'DOC_SYSTEM': 'graph/document/doc_system'})

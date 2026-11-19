@@ -122,7 +122,7 @@ def test_oracle_register_questions_work_for_every_course_task_with_a_map() -> No
     assert n >= 5
 
 
-def test_cc_oracle_parses_replies_and_never_uses_openrouter() -> None:
+def test_cc_oracle_parses_replies_and_builds_its_argv_in_the_one_place() -> None:
     from agent.claude_code_arm.oracle import _argv, parse_answer
     assert parse_answer('{"answer": "x", "quote": "y"}') == {"answer": "x", "quote": "y"}
     assert parse_answer('```json\n{"answer": "x", "quote": null}\n```')["answer"] == "x"
@@ -130,9 +130,6 @@ def test_cc_oracle_parses_replies_and_never_uses_openrouter() -> None:
     assert parse_answer("no json")["answer"] == "not specified"
     a = _argv("S", "U", "claude-haiku-5-5")
     assert a[a.index("--tools") + 1] == "" and "--strict-mcp-config" in a and "claude-haiku-5-5" in a
-    from agent.__main__ import _NoOpenRouter
-    with pytest.raises(RuntimeError):
-        _NoOpenRouter()()
 
 
 def test_a_caller_that_holds_the_heavy_slot_can_give_mutate_its_own_lock(monkeypatch: pytest.MonkeyPatch) -> None:

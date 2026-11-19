@@ -111,7 +111,7 @@ def _spec(a: argparse.Namespace, root: Path) -> int:
     from agent.access import require_or_exit      # brief 94: this subcommand drafts and answers with a model
     require_or_exit("python -m project spec")
     from agent.graph.interview import SpecOracle
-    from agent.graph.llm import DEFAULT_MODEL, OpenRouterClient, Recorder, Replay
+    from agent.models import resolver_for
     from project.phase0 import Calls, Drafter, Session, Terminal, oracle_llm
     if not (root / "system" / "spec.md").is_file():
         print(f"project: {root}/system/spec.md is missing (the user's words)")
@@ -119,14 +119,11 @@ def _spec(a: argparse.Namespace, root: Path) -> int:
     if a.interview == "oracle" and not (a.hidden_spec and a.hidden_spec.is_file()):
         print("project: --interview oracle needs --hidden-spec <file>")
         return 1
-    if a.replay:
-        client = Replay(a.replay)
-    else:
-        client = OpenRouterClient(a.model or DEFAULT_MODEL)
-        client = Recorder(client, a.record) if a.record else client
+    rs = resolver_for(("interpret", "oracle"), model=a.model, replay=a.replay, record=None if a.replay else a.record)
+    client = rs.chat("interpret")                      # brief 108: the drafter is the interpret purpose, the simulated user the oracle purpose
     calls = Calls()
     who = {"on": Terminal(), "off": None}.get(a.interview) if a.interview != "oracle" else \
-        SpecOracle(a.hidden_spec, oracle_llm(client, calls))
+        SpecOracle(a.hidden_spec, oracle_llm(rs.chat("oracle"), calls))
     out = Session(root, Drafter(client, calls, a.usd_cap), who, board=a.board).run()
     if isinstance(who, SpecOracle):                   # the oracle's own record: refused quotes, register-map answers
         (root / "phase0" / "oracle_log.json").write_text(json.dumps(who.log, indent=1) + "\n")
