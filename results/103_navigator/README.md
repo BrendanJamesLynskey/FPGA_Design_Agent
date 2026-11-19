@@ -19,6 +19,11 @@ The service ran against this repository's records and the owner's 24 local run r
 
 One Sonnet review (security and correctness; the three questions of the brief) and one fix round. Findings fixed: the eye page built HTML from capture text (an XSS that, same-origin, could reach the actions): it now escapes every interpolated value and is served and embedded sandboxed (opaque origin, height by `postMessage`); the record viewer could follow a committed symlink and showed JSON as raw text: it refuses symlinks and key, prompt, secret and token file names, and parses and scrubs JSON; the scrubber now matches normalised key names by substring and knows JWT, Google and Basic-auth patterns; run-record fields are scalar-only and capped; tool errors show one capped line; a negative Content-Length is clamped; each action runs one at a time; an action needs the token in a header (the cookie alone is refused). **The fixes were not re-reviewed** (check once). No finding on reachability from another machine or origin, nor on a free check starting a costly or hardware command.
 
+## Reproduce
+
+Tests: `python -m pytest navigator/tests`. Service: `python -m navigator [--runs DIR]`, then open the printed `http://127.0.0.1:<port>/?t=<token>` address.
+Screenshots: with the service running, `NODE_PATH=<node_modules> node navigator/shoot.js <url with token> results/103_navigator/screenshots` (writes `check.json`).
+
 ## Known gaps and limits
 
 - **Stage 1 only.** No run is started from the page; the scope picker builds a command to paste. Live progress, starting and refining runs, and hosting for named people are stage 2.
