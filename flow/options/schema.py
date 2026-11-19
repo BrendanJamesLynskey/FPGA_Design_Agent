@@ -193,6 +193,18 @@ def check_options(doc: Any, analysis: dict[str, Any], project: managed.Project |
     return out
 
 
+def check_single(raw: Any, oid: str, analysis: dict[str, Any], project: managed.Project | None, *, goal: str | None = None, pinned: list[str] | None = None,
+                 blind: bool = False) -> tuple[dict[str, Any] | None, list[str]]:
+    """Run every per-option check on one raw option (the same checks as ``check_options``): ``(completed option or None, problems)``. Brief 104A uses it
+    to validate an option the combiner built, so a combined option passes exactly the rules a model's option does."""
+    owned_names = [c.name for c in (project.owned() if project else [])]
+    visible = {c.name: c for c in (project.components if project else []) if c.ownership != "excluded"}
+    stage_by_id = {s["id"]: s for s in ((analysis.get("latency") or {}).get("stages") or [])}
+    probs: list[str] = []
+    opt = _check_one(raw, oid, analysis, project, owned_names, visible, stage_by_id, analysis["facts"], goal, pinned or [], blind, probs)
+    return (None if probs else opt), probs
+
+
 def _check_one(raw: Any, oid: str, analysis: dict[str, Any], project: managed.Project | None, owned_names: list[str], visible: dict[str, managed.Component],
                stage_by_id: dict[str, dict[str, Any]], facts: dict[str, dict[str, Any]], goal: str | None, pinned: list[str], blind: bool,
                probs: list[str]) -> dict[str, Any] | None:

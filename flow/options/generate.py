@@ -19,7 +19,7 @@ from collections.abc import Callable
 from typing import Any
 
 from agent.core import managed, prompts
-from flow.options import schema
+from flow.options import combine, schema
 
 PROMPTS = {"system": "graph/options/system", "user": "graph/options/user", "repair": "graph/options/repair"}
 RECORD_SCHEMA = "fda-strategy-record/1"
@@ -73,7 +73,7 @@ def _sha(s: str) -> str:
 
 def improve(analysis: dict[str, Any], request: str, project: managed.Project | None, llm: Callable[[str, str], str] | None, *, blind: bool = False,
             mode: str = "new", previous: list[dict[str, Any]] | None = None, edit: dict[str, str] | None = None, max_repairs: int = 1,
-            model_info: dict[str, Any] | None = None, prompt_root: Any = None) -> dict[str, Any]:
+            model_info: dict[str, Any] | None = None, prompt_root: Any = None, combiner: bool = True) -> dict[str, Any]:
     """The strategy record for ``request``. ``mode`` is ``new``, ``more`` (different options from ``previous``) or ``edit`` (``edit`` =
     {id, instruction}: the user's change to one previous option). A question comes back as ``status: question`` with no model call when the
     request cannot be served."""
@@ -119,5 +119,7 @@ def improve(analysis: dict[str, Any], request: str, project: managed.Project | N
                unresolved=result.get("repairable") if result["status"] != "question" else [], wall_s=round(time.time() - t0, 1))
     if mode == "edit" and edit and status == "options" and result["options"]:
         result["options"][0]["id"] = edit["id"]
+    if combiner and mode == "new" and status == "options" and rec["options"]:      # brief 104A: code builds the cumulative options from the valid single ones
+        combine.apply(rec, analysis, project, goal=goal, pinned=pinned, blind=blind)
     rec["options_hash"] = _sha(json.dumps(rec["options"], sort_keys=True))
     return rec

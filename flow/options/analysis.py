@@ -393,11 +393,51 @@ def analyse(design: Path, *, build_dir: Path | None = None, base: Path | None = 
     else:
         gaps.append("no latency_stages.yaml: the design has not declared its latency chain, so latency by stage is unknown")
 
+    # earlier measured changes the design supplies (brief 104A): facts with origin prior_run, usable as a gain's `measurement` basis
+    pr_file = design / "prior_runs.yaml"
+    if pr_file.is_file():
+        try:
+            out["prior_runs"], unused = _prior_runs(pr_file, facts, {s["id"] for s in ((out["latency"] or {}).get("stages") or [])})
+            if unused:
+                notes.append("prior_runs.yaml: " + "; ".join(f"{n} (stage(s) {', '.join(m)} are not in this design's latency chain)" for n, m in unused)
+                             + ": measured on another chain, so they are not facts of this analysis")
+        except (OSError, KeyError, ValueError, TypeError, yaml.YAMLError) as e:
+            gaps.append(f"prior_runs.yaml could not be read: {e}")
+
     out["facts"] = facts.items
     out["sources"] = sorted(facts.files.values(), key=lambda x: x["file"])
     out["component_hashes"] = {c.name: managed.component_hash(project, c) for c in visible}      # an RTL edit with unchanged reports still makes the analysis stale
-    out["hash"] = hashlib.sha256(json.dumps({k: out[k] for k in ("components", "latency", "timing", "resources", "cdc", "facts", "sources", "component_hashes")}, sort_keys=True, default=str).encode()).hexdigest()
+    out["hash"] = hashlib.sha256(json.dumps({k: out[k] for k in ("components", "latency", "timing", "resources", "cdc", "facts", "sources", "component_hashes", "prior_runs") if k in out}, sort_keys=True, default=str).encode()).hexdigest()
     return out
+
+
+def _prior_runs(pr_file: Path, facts: Facts, stage_ids: set[str]) -> tuple[list[dict[str, Any]], list[tuple[str, list[str]]]]:
+    """``prior_runs.yaml``: earlier changes to this design that were measured (schema ``fda-prior-runs/1``). Each run lists the latency stages it changed
+    and its evidence entries; every entry becomes the fact ``prior.<run>.<id>`` (origin ``prior_run``) and must point at an existing file. A run whose stages
+    are not all in the analysis's latency chain is left out (an excluded component's stages are not in it: what is hidden stays hidden; a stage the chain no longer has was
+    measured on a different chain). Returns ``(runs used, [(name, missing stages)] left out)``. The evidence entry with id ``gain`` is a run's headline."""
+    doc = yaml.safe_load(pr_file.read_text()) or {}
+    if doc.get("schema") != "fda-prior-runs/1":
+        raise ValueError("schema must be fda-prior-runs/1")
+    out = []
+    unused: list[tuple[str, list[str]]] = []
+    for r in doc.get("runs") or []:
+        name = r["name"]
+        stages = list(r["stages"])
+        if not set(stages) <= stage_ids:
+            unused.append((name, sorted(set(stages) - stage_ids)))
+            continue
+        ids = {}
+        for e in r["evidence"]:
+            f = facts.base / e["file"]
+            if not f.is_file():
+                raise OSError(f"{name}: evidence file {e['file']} not found")
+            ids[e["id"]] = facts.add(f"prior.{name}.{e['id']}", e["value"], e["unit"], f"{name}: {e['text']}", f, e["locator"], "prior_run")
+        if "gain" not in ids:
+            raise ValueError(f"{name}: no evidence entry with id gain")
+        out.append({"name": name, "metric": r.get("metric", "latency_clocks"), "stages": stages, "gain": facts.items[ids["gain"]]["value"], "fact": ids["gain"],
+                    "facts": ids, "summary": r.get("summary", "")})
+    return out, unused
 
 
 def _first_dir(*ds: Path) -> Path | None:
