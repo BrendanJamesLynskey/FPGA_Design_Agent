@@ -6,7 +6,7 @@ Families covered: 7-series (Artix-7 on the Nexys A7, the Zynq-7000 PL on the Zed
 
 ## 1. Sources and how to read the tables
 
-Every row cites the AMD guide and chapter, in our own words. Chapter map of the guides used (local copies: UG903, UG949, UG901, UG912, UG906, UG908, UG907 v2025.2; UG835 v2025.2; UG974 v2026.1):
+Every row cites the AMD guide and chapter, in our own words. Chapter map of the guides used (local copies: UG903, UG949, UG901, UG912, UG906, UG908, UG907, UG835 and UG974, document dates in the local copies' headers):
 
 | Guide | Chapters used |
 |---|---|
