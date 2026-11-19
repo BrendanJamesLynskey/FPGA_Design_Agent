@@ -13,6 +13,7 @@ module b96_core #(
     parameter bit          NEAR_END    = 1'b0,    // reset value of the loopback field: 1 = near-end PMA loopback (variant a)
     parameter bit          TRADE       = 1'b1,    // 1 = the mock trading path is armed to be enabled (variant b); reported in FEATURES
     parameter bit          RATE_MATCH  = 1'b0,    // 1 = brief 96C's elastic buffer on the receive path; 0 = the receive path of main 6909e43f (brief 97C); reported in FEATURES bit 3
+    parameter bit          EYESCAN     = 1'b0,    // 1 = brief 96D's DRP access, eye-scan point sequencer and TX drive registers (reported in FEATURES bit 4); 0 = none (the GT's DRP and drive ports are tied as before)
     parameter bit          GO_REG      = 1'b1     // RATE_MATCH = 0 only: REG_OUTPUT of the go-pulse crossing u_p_go (1 as on main; brief 97's latency variant all3 builds it 0)
 ) (
     input  logic        clk,
@@ -83,6 +84,11 @@ module b96_core #(
         wz_utx   <= ~txpmadone;
         wz_urx   <= ~rxpmadone;
     end
+    logic [9:0]  drp_addr;
+    logic [15:0] drp_di, drp_do;
+    logic        drp_en, drp_we, drp_rdy;
+    logic [4:0]  tx_diff, tx_pre, tx_post;
+    logic        rx_dfelpm_rst;
     logic       txusr1, ppm_en_t, ppm_sel_t;
     logic [4:0] ppm_step_t;
     logic [1:0] txbuf_c;
@@ -99,15 +105,15 @@ module b96_core #(
         .gtwiz_reset_rx_done_out(rx_done_r),
         .gtwiz_userdata_tx_in(tx_data), .gtwiz_userdata_rx_out(rx_data),
         .gtrefclk00_in(refclk), .qpll0outclk_out(), .qpll0outrefclk_out(),
-        .drpaddr_in(10'd0), .drpclk_in(clk), .drpdi_in(16'd0), .drpen_in(1'b0), .drpwe_in(1'b0),
-        .drpdo_out(), .drprdy_out(),
+        .drpaddr_in(drp_addr), .drpclk_in(clk), .drpdi_in(drp_di), .drpen_in(drp_en), .drpwe_in(drp_we),
+        .drpdo_out(drp_do), .drprdy_out(drp_rdy),
         .eyescanreset_in(1'b0), .eyescantrigger_in(1'b0), .eyescandataerror_out(),
         .gthrxn_in(rx_n), .gthrxp_in(rx_p), .gthtxn_out(tx_n), .gthtxp_out(tx_p),
-        .loopback_in(loopback), .rxcdrhold_in(1'b0), .rxdfelpmreset_in(1'b0), .rxlpmen_in(rx_lpm),
+        .loopback_in(loopback), .rxcdrhold_in(1'b0), .rxdfelpmreset_in(rx_dfelpm_rst), .rxlpmen_in(rx_lpm),
         .rxpolarity_in(rx_pol_r), .rxprbscntreset_in(1'b0), .rxprbssel_in(4'd0),
-        .txdiffctrl_in(5'b11000), .txelecidle_in(1'b0), .txpippmen_in(ppm_en_t), .txpippmsel_in(ppm_sel_t),
-        .txpippmstepsize_in(ppm_step_t), .txpolarity_in(tx_pol_t), .txpostcursor_in(5'd0), .txprbsforceerr_in(1'b0),
-        .txprbssel_in(4'd0), .txprecursor_in(5'd0),
+        .txdiffctrl_in(tx_diff), .txelecidle_in(1'b0), .txpippmen_in(ppm_en_t), .txpippmsel_in(ppm_sel_t),
+        .txpippmstepsize_in(ppm_step_t), .txpolarity_in(tx_pol_t), .txpostcursor_in(tx_post), .txprbsforceerr_in(1'b0),
+        .txprbssel_in(4'd0), .txprecursor_in(tx_pre),
         .gtpowergood_out(pgood_c), .rxcdrlock_out(cdrlock_c), .rxpmaresetdone_out(rxpmadone_c),
         .rxprbserr_out(), .rxprbslocked_out(), .txpmaresetdone_out(txpmadone_c),
         .txbufstatus_out(txbuf_c), .rxbufstatus_out(rxbuf_c));
@@ -211,6 +217,38 @@ module b96_core #(
     logic [32 * NRXW - 1:0] rx_snap;
     logic [32 * NTXW - 1:0] tx_snap;
 
+    // ---------------------------------------------------------------- brief 96D: DRP access, eye-scan point sequencer, TX drive (EYESCAN = 1 only)
+    // The DRP clock is clk (the GT's DRPCLK), so these registers need no crossing. TXDIFFCTRL, TXPRECURSOR, TXPOSTCURSOR and RXDFELPMRESET are asynchronous ports
+    // of the GT (UG576 Tables 3-35 and 4-x): a static level from clk is fine. With EYESCAN = 0 they are the constants the design always drove.
+    logic [9:0]  es_raw_addr;
+    logic [15:0] es_raw_wd, es_raw_rd, es_res_err, es_res_samp, es_pt_count;
+    logic        es_raw_rd_p, es_raw_wr_p, es_start_p, es_clr_p;
+    logic        es_busy, es_done, es_ptmo, es_drptmo, es_rej;
+    logic [3:0]  es_status;
+    logic [7:0]  es_step;
+    logic [11:0] pt_horz;
+    logic [6:0]  pt_code;
+    logic        pt_neg, pt_ut;
+    logic [1:0]  pt_range;
+    logic [4:0]  pt_pre_scale;
+    logic [31:0] pt_tmo_clks;
+    logic [4:0]  tx_diff_r, tx_pre_r, tx_post_r;
+    logic        dfelpm_r;
+    if (EYESCAN) begin : g_es
+        es_ctrl u_es (.clk, .rst, .raw_addr(es_raw_addr), .raw_wdata(es_raw_wd), .raw_rd(es_raw_rd_p), .raw_wr(es_raw_wr_p), .pt_start(es_start_p), .clr_flags(es_clr_p),
+            .pt_horz, .pt_vs_code(pt_code), .pt_vs_neg(pt_neg), .pt_vs_ut(pt_ut), .pt_vs_range(pt_range), .pt_prescale(pt_pre_scale), .pt_timeout(pt_tmo_clks),
+            .raw_rdata(es_raw_rd), .busy(es_busy), .pt_done(es_done), .pt_tmo(es_ptmo), .drp_tmo(es_drptmo), .rejected(es_rej), .es_status, .step_o(es_step),
+            .pt_count(es_pt_count), .res_err(es_res_err), .res_samp(es_res_samp), .drp_addr, .drp_di, .drp_en, .drp_we, .drp_do, .drp_rdy);
+        assign tx_diff = tx_diff_r; assign tx_pre = tx_pre_r; assign tx_post = tx_post_r; assign rx_dfelpm_rst = dfelpm_r;
+    end else begin : g_nes
+        assign drp_addr = 10'd0; assign drp_di = 16'd0; assign drp_en = 1'b0; assign drp_we = 1'b0;
+        assign tx_diff = 5'b11000; assign tx_pre = 5'd0; assign tx_post = 5'd0; assign rx_dfelpm_rst = 1'b0;
+        assign es_raw_rd = '0; assign es_busy = 1'b0; assign es_done = 1'b0; assign es_ptmo = 1'b0; assign es_drptmo = 1'b0; assign es_rej = 1'b0; assign es_status = '0;
+        assign es_step = '0; assign es_pt_count = '0; assign es_res_err = '0; assign es_res_samp = '0;
+    end
+    logic _unused_es;
+    assign _unused_es = &{1'b0, drp_do, drp_rdy, es_raw_rd, es_busy, es_done, es_ptmo, es_drptmo, es_rej, es_status, es_step, es_pt_count, es_res_err, es_res_samp};
+
     // ---------------------------------------------------------------- host registers
     logic [31:0] rd;
     int          rx_i, tx_i;
@@ -220,6 +258,7 @@ module b96_core #(
     logic [7:0]  gen_dly;      // the run command is held back so the configuration (hs_vec, a few dozen clocks) has arrived first
     always_ff @(posedge clk) begin
         p_clr <= 1'b0; p_gen <= 1'b0; p_snap <= 1'b0;
+        es_raw_rd_p <= 1'b0; es_raw_wr_p <= 1'b0; es_start_p <= 1'b0; es_clr_p <= 1'b0;
         // 97C: any restart of either side (a GT reset command, or either side's done level changing) restarts the order number on both sides
         tx_done_q <= tx_done; rx_done_q <= rx_done;
         p_seq <= (tx_done != tx_done_q) || (rx_done != rx_done_q) || (h_we && h_addr == 12'h010 && (h_wdata[4:0] != 5'd0));
@@ -241,6 +280,8 @@ module b96_core #(
             gen_kind <= 2'd2; gen_len <= 16'd66; gen_inst <= 16'd1; gen_price <= 32'd9950; gen_interval <= 32'd2000; gen_count <= 32'd1;
             i2c_scl_r <= 1'b0; i2c_sda_r <= 1'b0; sm_en <= 1'b0; sm_valid <= 1'b0; sm_data <= '0; sm_addr_r <= '0;
             rx_snap <= '0; tx_snap <= '0;
+            es_raw_addr <= '0; es_raw_wd <= '0; pt_horz <= '0; pt_code <= '0; pt_neg <= 1'b0; pt_ut <= 1'b0; pt_range <= '0; pt_pre_scale <= '0; pt_tmo_clks <= 32'd500_000_000;
+            tx_diff_r <= 5'b11000; tx_pre_r <= '0; tx_post_r <= '0; dfelpm_r <= 1'b0;
         end else begin
             sm_en <= 1'b0;
             if (sm_rdy) begin sm_data <= sm_do; sm_valid <= 1'b1; end
@@ -259,6 +300,12 @@ module b96_core #(
                         p_clr <= h_wdata[0]; if (h_wdata[0]) begin txb_seen <= txbuf; rxb_seen <= rxbuf; end if (h_wdata[1]) gen_dly <= 8'd200;
                         if (h_wdata[2]) begin rx_snap <= rx_live; tx_snap <= tx_live; end
                     end
+                    12'h024: if (EYESCAN) es_raw_addr <= h_wdata[9:0];
+                    12'h028: if (EYESCAN) es_raw_wd <= h_wdata[15:0];
+                    12'h02C: if (EYESCAN) begin es_raw_rd_p <= h_wdata[0]; es_raw_wr_p <= h_wdata[1]; es_start_p <= h_wdata[2]; es_clr_p <= h_wdata[3]; end
+                    12'h034: if (EYESCAN) begin pt_horz <= h_wdata[11:0]; pt_code <= h_wdata[18:12]; pt_neg <= h_wdata[19]; pt_ut <= h_wdata[20]; pt_range <= h_wdata[22:21]; pt_pre_scale <= h_wdata[27:23]; end
+                    12'h038: if (EYESCAN) pt_tmo_clks <= h_wdata;
+                    12'h084: if (EYESCAN) begin tx_diff_r <= h_wdata[4:0]; tx_pre_r <= h_wdata[9:5]; tx_post_r <= h_wdata[14:10]; dfelpm_r <= h_wdata[16]; end
                     12'h040: my_mac[31:0] <= h_wdata;
                     12'h044: my_mac[47:32] <= h_wdata[15:0];
                     12'h048: venue_mac[31:0] <= h_wdata;
@@ -286,11 +333,18 @@ module b96_core #(
         case (h_addr)
             12'h000: rd = ID;
             12'h004: rd = BUILD_STAMP;
-            12'h008: rd = {28'd0, RATE_MATCH, TRADE, NEAR_END, 1'b1};
+            12'h008: rd = {27'd0, EYESCAN, RATE_MATCH, TRADE, NEAR_END, 1'b1};
             12'h00C: rd = {25'd0, rx_lpm, rx_pol, tx_pol, tx_disable, loopback};
             12'h01C: rd = {25'd0, ppm_sel, ppm_en, ppm_step};
             12'h020: rd = {22'd0, rxb_seen, txb_seen, rxbuf, txbuf};
             12'h014: rd = {19'd0, tx_fault_c, rx_los_c, mod_abs_c, pcs_lock, cdr_stable, 2'b00, rxpmadone, txpmadone, cdrlock, pgood, rx_done, tx_done};
+            12'h024: rd = EYESCAN ? {22'd0, es_raw_addr} : 32'd0;
+            12'h028: rd = EYESCAN ? {16'd0, es_raw_rd} : 32'd0;
+            12'h030: rd = EYESCAN ? {es_pt_count, es_step[3:0], es_status, 3'd0, es_rej, es_drptmo, es_ptmo, es_done, es_busy} : 32'd0;
+            12'h034: rd = EYESCAN ? {4'd0, pt_pre_scale, pt_range, pt_ut, pt_neg, pt_code, pt_horz} : 32'd0;
+            12'h038: rd = EYESCAN ? pt_tmo_clks : 32'd0;
+            12'h03C: rd = EYESCAN ? {es_res_samp, es_res_err} : 32'd0;
+            12'h084: rd = EYESCAN ? {15'd0, dfelpm_r, 1'b0, tx_post_r, tx_pre_r, tx_diff_r} : 32'd0;
             12'h040: rd = my_mac[31:0];
             12'h044: rd = {16'd0, my_mac[47:32]};
             12'h048: rd = venue_mac[31:0];

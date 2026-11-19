@@ -12,6 +12,7 @@ blocks:
   - {name: rx_path, function: "receive side when RATE_MATCH = 1 (brief 96C): PCS in RXUSRCLK2, the elastic buffer rate_match across, MAC and trading decision in TXUSRCLK2, counters and the frequency counter"}
   - {name: rate_match, function: "elastic buffer on xpm_fifo_async: idle insertion and deletion between frames only (brief 96C)"}
   - {name: rx_path_legacy, function: "receive side of main 6909e43f (brief 97C), used when RATE_MATCH = 0 (the default): PCS, MAC and trading decision in RXUSRCLK2, the decision crossing to TXUSRCLK2 by pulses and a quasi-static bus"}
+  - {name: es_ctrl, function: "DRP master and eye-scan point sequencer for the GTHE4 channel (brief 96D; instantiated only when EYESCAN = 1): raw DRP read/write for the host, one eye-scan point per command, in the free-running clock"}
   - {name: b96_core, function: "register block, GT wrapper and the crossings between the clk, TXUSRCLK2 and RXUSRCLK2 domains"}
   - {name: jtag_bus, function: "host register bus over the JTAG cable (BSCANE2 USER4), reused from b58a_trigger"}
 interfaces:
