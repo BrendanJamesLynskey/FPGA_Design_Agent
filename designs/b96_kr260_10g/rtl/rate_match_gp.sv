@@ -4,15 +4,16 @@
 // Why the macro is slow: its `empty` flag and read data count come from a pointer that crosses by xpm_cdc_gray (2 flops) and is then registered again, and `empty` is itself a register;
 // first-word-fall-through adds a registered output stage. Here the pointer crossing is the bare minimum AMD allows for a safe multi-bit pointer (UG974, xpm_cdc_gray: DEST_SYNC_FF = 2).
 //
-// This is the standard asynchronous FIFO (what xpm_fifo_async does inside, and Cummings' gray-pointer FIFO):
 //   storage: DEPTH blocks in flip-flops in the write clock. An entry is written once and then held until the reader has released it: the writer sees the read pointer (old, so conservative)
 //     and never overwrites an entry the reader has not passed.
-//   write pointer: binary count in the write clock, crossing by xpm_cdc_gray (a gray register in the write clock = one write clock after the entry was loaded, then 2 flops in the read clock).
-//     The read side therefore sees the pointer admit an entry no earlier than about 2 read clocks after the entry's flops changed, so the entry is stable when it is read.
-//   read: the reader selects an entry's flops directly with its own read pointer (a multiplexer in the read clock's logic) and registers the result in the read clock (r_d, r_c and the policy
-//     state). That path, write-clock flops to read-clock flops, is NOT a synchroniser path: it is safe only because of the rule above, and it is bounded, not timed, by
-//     designs/b96_kr260_10g/rate_match_gp.xdc (set_max_delay -datapath_only, one read-clock period, scoped to this instance), as AMD's XPM FIFO constraint style does for its memory read path
-//     (flow/xpm_cdc.tcl). The pointers themselves are gray-coded and synchronised by xpm_cdc_gray (ASYNC_REG, two flops), the structure whose MTBF AMD documents.
+//   write pointer: binary count in the write clock, crossing by xpm_cdc_gray (a gray register in the write clock = one write clock after the entry was loaded, then DEST_SYNC_FF flops in the read clock).
+//   ENT_SYNC = 1 (the default, what rm_gp builds): every entry is also copied bit for bit through its own two-flop ASYNC_REG synchroniser (xpm_cdc_array_single) into the read clock, continuously, and the
+//     write pointer crosses with THREE flops. A data bit that goes metastable in its first flop resolves within a clock, so after its second flop it has settled; the pointer's third flop makes the pointer
+//     arrive at least one clock after the data copies have settled, whatever the routing skew between the bits is (as long as it is under a clock). The reader selects among the settled copies with its own read pointer.
+//     This costs one clock against ENT_SYNC = 0 and passes report_cdc (the data bits are CDC-3, synchronised with ASYNC_REG).
+//   ENT_SYNC = 0 (rm_gp_direct, kept as evidence): the standard asynchronous FIFO read, the reader selects the entry flops directly with its read pointer and registers the result in the read clock;
+//     bounded by rate_match_gp.xdc (set_max_delay -datapath_only, one read-clock period). It is faster by one clock and safe by the pointer rule (the pointer admits an entry about 2 read clocks after it
+//     changed), but report_cdc cannot classify a write-clock flop (or RAM) read through logic in the read clock: 38 CDC-1 Critical rows, so the flow's cdc_no_critical gate fails (docs/design.md section 11).
 //   read pointer: binary in the read clock, crosses to the write clock by xpm_cdc_gray; the writer stops when DEPTH blocks are outstanding as it sees them (conservative: its view is old).
 //   read side policy (identical to rate_match.sv except the fill the policy reads is exact in the read clock's view: blocks whose pointer has crossed):
 //     slot, a block visible       -> pop and output it;     slot, none, not in a frame -> insert one idle block;     slot, none, inside a frame -> output nothing for one clock (stall);
@@ -24,6 +25,7 @@
 module rate_match_gp #(
     parameter int AW       = 4,     // 2**AW blocks (16: the writer's view of the read pointer is about 4 clocks old and the reader's of the write pointer about 4, so about 8 blocks are outstanding in steady state)
     parameter int HI       = 1,     // delete idles while the visible fill is above this
+    parameter bit ENT_SYNC = 1'b1,  // 1: every entry is copied through its own 2-flop synchroniser and the write pointer crosses with 3 flops (passes report_cdc); 0: the reader reads the entry flops directly (set_max_delay in rate_match_gp.xdc; report_cdc flags it CDC-1 Critical, see docs/design.md section 11)
     parameter int MIN_KEEP = 0      // as rate_match.sv: delete only after this many consecutive pure idle blocks were output (0 or 1 or 2 or 3)
 ) (
     input  logic        wclk,
@@ -73,11 +75,20 @@ module rate_match_gp #(
 
     // ---------------------------------------------------------------- the crossings
     logic [CW-1:0] wbin_r;                               // the write pointer in the read clock
-    xpm_cdc_gray #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .REG_OUTPUT(0), .SIM_ASSERT_CHK(0), .SIM_LOSSLESS_GRAY_CHK(0), .WIDTH(CW)) u_wp (
+    xpm_cdc_gray #(.DEST_SYNC_FF(ENT_SYNC ? 3 : 2), .INIT_SYNC_FF(0), .REG_OUTPUT(0), .SIM_ASSERT_CHK(0), .SIM_LOSSLESS_GRAY_CHK(0), .WIDTH(CW)) u_wp (
         .src_clk(wclk), .src_in_bin(wbin), .dest_clk(rclk), .dest_out_bin(wbin_r));
     logic [CW-1:0] rbin = '0;
     xpm_cdc_gray #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .REG_OUTPUT(0), .SIM_ASSERT_CHK(0), .SIM_LOSSLESS_GRAY_CHK(0), .WIDTH(CW)) u_rp (
         .src_clk(rclk), .src_in_bin(rbin), .dest_clk(wclk), .dest_out_bin(rbin_w));
+    logic [EW-1:0] ent_r [DEPTH];                        // ENT_SYNC = 1: every entry copied into the read clock (stable long before the write pointer admits it)
+    for (genvar gi = 0; gi < DEPTH; gi++) begin : g_ent
+        if (ENT_SYNC) begin : s
+            xpm_cdc_array_single #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(0), .WIDTH(EW)) u_e (
+                .src_clk(wclk), .src_in(ent[gi]), .dest_clk(rclk), .dest_out(ent_r[gi]));
+        end else begin : d
+            assign ent_r[gi] = ent[gi];
+        end
+    end
     logic lock_s;
     xpm_cdc_single #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(0)) u_lk (
         .src_clk(1'b0), .src_in(w_lock), .dest_clk(rclk), .dest_out(lock_s));
@@ -88,7 +99,7 @@ module rate_match_gp #(
     logic            slot, in_frame, head_idle, head_frame, can_read, do_pop, do_del, keep_ok;
     logic [5:0]      pace;
     logic [1:0]      idle_run;
-    assign head      = ent[rbin[AW-1:0]];            // the write clock's entry flops, selected by the read pointer (see the header: bounded by rate_match_gp.xdc)
+    assign head      = ent_r[rbin[AW-1:0]];          // ENT_SYNC = 0: the write clock's entry flops directly (see the header: bounded by rate_match_gp.xdc)
     assign fill      = (wbin_r - rbin) & {CW{1'b1}};     // blocks whose write pointer has crossed and that are not yet read
     assign can_read  = (fill != '0);
     assign slot      = (pace != 6'd32);

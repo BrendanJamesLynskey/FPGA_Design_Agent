@@ -46,5 +46,12 @@ def test_every_build_sets_only_parameters_the_core_has() -> None:
 
 def test_rm_gp_is_the_own_buffer_on_the_base() -> None:
     got = _generics(DESIGN / "rm_gp" / "build.yaml")
-    assert got["RATE_MATCH"] == 1 and got["RM_OWN"] == 1
+    assert got["RATE_MATCH"] == 1 and got["RM_OWN"] == 1 and got.get("RM_DIRECT", 0) == 0
     assert "rate_match_gp.sv" in (DESIGN / "rm_gp" / "build.yaml").read_text()
+    assert "rate_match_gp.xdc" not in (DESIGN / "rm_gp" / "build.yaml").read_text()
+
+
+def test_rm_gp_direct_is_the_direct_read_variant_with_its_constraint() -> None:
+    got = _generics(DESIGN / "rm_gp_direct" / "build.yaml")
+    assert got["RATE_MATCH"] == 1 and got["RM_OWN"] == 1 and got["RM_DIRECT"] == 1
+    assert "rate_match_gp.xdc" in (DESIGN / "rm_gp_direct" / "build.yaml").read_text()

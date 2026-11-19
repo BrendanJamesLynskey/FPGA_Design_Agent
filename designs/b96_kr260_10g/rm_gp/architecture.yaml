@@ -37,7 +37,7 @@ crossings:
   - {from: sys, to: rxusr2, signal: "clear counters, polarity", primitive: xpm_cdc_pulse}
   - {from: rxusr2, to: txusr2, signal: "write pointer of the elastic buffer (5-bit gray code)", primitive: xpm_cdc_gray}
   - {from: txusr2, to: rxusr2, signal: "read pointer of the elastic buffer (5-bit gray code)", primitive: xpm_cdc_gray}
-  - {from: rxusr2, to: txusr2, signal: "the 16 buffer entries (74 bits each, write-clock flops written once and held, read by the read pointer, which the gray write pointer admits about 2 read clocks later; bounded by rate_match_gp.xdc set_max_delay -datapath_only)", primitive: async_fifo}
+  - {from: rxusr2, to: txusr2, signal: "the 16 buffer entries (74 bits each, written once and held; each copied bit for bit through its own two-flop synchroniser; the write pointer crosses with three flops, so it arrives at least one clock after the data copies have settled)", primitive: xpm_cdc_array_single}
   - {from: rxusr2, to: txusr2, signal: "PCS block lock level", primitive: xpm_cdc_single}
   - {from: rxusr2, to: txusr2, signal: "free-running receive-clock count for the frequency counter (32-bit gray code)", primitive: xpm_cdc_gray}
   - {from: sys, to: txusr2, signal: "TX phase-interpolator ppm controls (7 bits, static)", primitive: xpm_cdc_array_single}

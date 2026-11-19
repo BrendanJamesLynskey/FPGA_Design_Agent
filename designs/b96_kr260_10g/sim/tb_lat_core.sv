@@ -7,6 +7,7 @@
 module tb_lat_core #(
     parameter bit RATE_MATCH = 1'b1,
     parameter bit RM_OWN = 1'b0,
+    parameter bit RM_DIRECT = 1'b0,
     parameter int NORD = 8
 );
     localparam real TREF = 6.2058;
@@ -19,7 +20,7 @@ module tb_lat_core #(
     logic [7:0] sm_addr;
     always #5.0 clk = ~clk;
     always #(TREF / 2.0) refclk = ~refclk;
-    b96_core #(.BUILD_STAMP(32'h96), .NEAR_END(1'b1), .TRADE(1'b1), .RATE_MATCH(RATE_MATCH), .RM_OWN(RM_OWN)) u (.clk, .rst, .h_we, .h_re, .h_addr, .h_wdata, .h_rdata, .refclk,
+    b96_core #(.BUILD_STAMP(32'h96), .NEAR_END(1'b1), .TRADE(1'b1), .RATE_MATCH(RATE_MATCH), .RM_OWN(RM_OWN), .RM_DIRECT(RM_DIRECT)) u (.clk, .rst, .h_we, .h_re, .h_addr, .h_wdata, .h_rdata, .refclk,
         .rx_p(1'b0), .rx_n(1'b1), .tx_p, .tx_n, .sfp_tx_disable, .sfp_mod_abs(1'b0), .sfp_rx_los(1'b0), .sfp_tx_fault(1'b0),
         .i2c_scl_low(scl_low), .i2c_sda_low(sda_low), .i2c_scl_i(1'b1), .i2c_sda_i(1'b1), .sm_en, .sm_addr, .sm_do(16'h0), .sm_rdy(sm_en), .led);
 

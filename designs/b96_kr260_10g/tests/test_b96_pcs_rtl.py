@@ -51,6 +51,13 @@ def test_rate_match_gp_cocotb() -> None:
                    extra_env={"PYTHONPATH": str(ROOT), "B96_RM_IMPL": "gp", "B96_RM_HI": "1"})
 
 
+def test_rate_match_gp_direct_read_cocotb() -> None:
+    """Brief 96E: the ENT_SYNC = 0 variant of rate_match_gp (the reader reads the entry flops directly; build rm_gp_direct) against its twin."""
+    srcs = [RTL / "rate_match.sv", RTL / "rate_match_gp.sv", DESIGN / "sim" / "tb_rate_match.sv"]
+    cocotb_run.run("b96_rate_match_gp_direct", "tb_rate_match", srcs, "ratematch_cocotb", HERE, parameters={"IMPL": 1, "HI": 1, "ENT_SYNC": 0},
+                   extra_env={"PYTHONPATH": str(ROOT), "B96_RM_IMPL": "gp", "B96_RM_HI": "1", "B96_RM_ENT_SYNC": "0"})
+
+
 def test_rate_match_min_keep_1_shows_the_limit() -> None:
     """MIN_KEEP = 1 (delete only after an idle block was output): the minimum-gap stream at +300 ppm overflows, as design.md section 9 says."""
     srcs = [RTL / "rate_match.sv", RTL / "rate_match_gp.sv", DESIGN / "sim" / "tb_rate_match.sv"]

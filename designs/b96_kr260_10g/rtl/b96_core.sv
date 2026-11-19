@@ -15,6 +15,7 @@ module b96_core #(
     parameter bit          RATE_MATCH  = 1'b0,    // 1 = brief 96C's elastic buffer on the receive path; 0 = the receive path of main 6909e43f (brief 97C); reported in FEATURES bit 3
     parameter bit          EYESCAN     = 1'b0,    // 1 = brief 96D's DRP access, eye-scan point sequencer and TX drive registers (reported in FEATURES bit 4); 0 = none (the GT's DRP and drive ports are tied as before)
     parameter bit          GO_REG      = 1'b1,    // RATE_MATCH = 0 only: REG_OUTPUT of the go-pulse crossing u_p_go (1 as on main; brief 97's latency variant all3 builds it 0)
+    parameter bit          RM_DIRECT   = 1'b0,    // RM_OWN = 1 only (brief 96E): 1 = rate_match_gp with ENT_SYNC = 0 (direct read of the entry flops, build rm_gp_direct; fails report_cdc); 0 = ENT_SYNC = 1 (the default)
     parameter bit          RM_OWN      = 1'b0     // RATE_MATCH = 1 only (brief 96E): 1 = our own gray-pointer elastic buffer (rate_match_gp.sv), 0 = the one on AMD's xpm_fifo_async (rate_match.sv); reported in FEATURES bit 5
 ) (
     input  logic        clk,
@@ -166,7 +167,7 @@ module b96_core #(
         logic [31:0] r_price, r_qty, r_seq, r_verdict_seq;
         logic [32 * NRXV_W - 1:0] rxw_t, rxw_live;
         logic [32 * NRXV_C - 1:0] rxc_t, rxc_live;
-        rx_path #(.RM_OWN(RM_OWN)) u_rx (.clk(rxusr2), .rst(!rx_done_r), .clk_c(txusr2), .rst_c(!tx_done_t), .cfg(cfg_tx), .clr_w(clr_rx), .clr_c(clr_tx), .seq_c(seq_tx), .gt_d(rx_data),
+        rx_path #(.RM_OWN(RM_OWN), .RM_DIRECT(RM_DIRECT)) u_rx (.clk(rxusr2), .rst(!rx_done_r), .clk_c(txusr2), .rst_c(!tx_done_t), .cfg(cfg_tx), .clr_w(clr_rx), .clr_c(clr_tx), .seq_c(seq_tx), .gt_d(rx_data),
             .fire(r_fire), .o_inst(r_inst), .o_price(r_price), .o_qty(r_qty), .o_seq(r_seq), .verdict_v(r_verdict_v), .verdict_bad(r_verdict_bad),
             .verdict_seq(r_verdict_seq), .rx_sop(r_sop), .cls_feed(r_feed), .cls_order(r_order), .cls_probe(r_probe), .lock(pcs_lock_rx),
             .rx_vec_w(rxw_t), .rx_vec_c(rxc_t));

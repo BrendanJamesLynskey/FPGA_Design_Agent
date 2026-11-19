@@ -198,6 +198,7 @@ class RateMatchGP:
     min_keep: int = 0
     sync: int = 2
     lock_sync: int = 2
+    ent_sync: bool = True         # ENT_SYNC of the RTL: per-entry 2-flop copies and a 3-flop write pointer; False = the reader reads the entry flops directly
     # write side
     wbin: int = 0
     wg_src: int = 0
@@ -227,8 +228,9 @@ class RateMatchGP:
         self.depth = 1 << self.aw
         self.mask = (1 << (self.aw + 1)) - 1
         self.ent = [(0, 0, 0)] * self.depth             # write clock registers
+        self.ent_s = [[(0, 0, 0)] * self.depth for _ in range(2)]            # the per-entry synchronisers, read clock (ent_sync only)
         self.w_rs = [0] * self.sync
-        self.r_ws = [0] * self.sync
+        self.r_ws = [0] * (self.sync + (1 if self.ent_sync else 0))
         self.r_ls = [0] * self.lock_sync
 
     def w_edge(self, clr: bool, v: bool, blk: tuple) -> None:
@@ -254,7 +256,7 @@ class RateMatchGP:
         wbin_r = ungray(self.r_ws[-1], self.aw + 1)
         lock_s = bool(self.r_ls[-1])
         fill = (wbin_r - self.rbin) & self.mask
-        head = self.ent[self.rbin & (self.depth - 1)]
+        head = (self.ent_s[-1] if self.ent_sync else self.ent)[self.rbin & (self.depth - 1)]
         can_read = fill != 0
         slot = self.pace != 32
         d, c, os = head
@@ -263,6 +265,7 @@ class RateMatchGP:
         rd_en = do_pop or do_del or ((not rst) and can_read and not lock_s)
         new_ws = [self.wg_src] + self.r_ws[:-1]
         new_ls = [int(w_lock)] + self.r_ls[:-1]
+        new_ent_s = [list(self.ent)] + [list(x) for x in self.ent_s[:-1]]
         self.rg_src_next = gray(self.rbin)
         rbn = (self.rbin + (1 if rd_en else 0)) & self.mask
         self.r_v = False
@@ -306,6 +309,7 @@ class RateMatchGP:
         self.rg_src = self.rg_src_next
         self.r_ws = new_ws
         self.r_ls = new_ls
+        self.ent_s = new_ent_s
 
     def _clear(self) -> None:
         self.n_ins = self.n_del = self.n_stall = self.n_out = self.n_drain = 0

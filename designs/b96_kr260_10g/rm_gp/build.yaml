@@ -1,5 +1,5 @@
-# rm_gp (brief 96E): the base design with RATE_MATCH = 1 and RM_OWN = 1: the elastic buffer is our own gray-pointer one (rtl/rate_match_gp.sv, about 5 clocks) instead of the one on
-# AMD's xpm_fifo_async (rm_ctl, 9 to 13). Everything else as rm_ctl.
+# rm_gp (brief 96E): the base design with RATE_MATCH = 1 and RM_OWN = 1: the elastic buffer is our own gray-pointer one (rtl/rate_match_gp.sv, ENT_SYNC = 1: per-entry synchronisers and a 3-flop write pointer, about 6 clocks)
+# instead of the one on AMD's xpm_fifo_async (rm_ctl, 9 to 13). Everything else as rm_ctl.
 top: kr260_10g_top
 part: xck26-sfvc784-2LV-c
 board: kr260           # boards/kr260/board.yaml
@@ -23,7 +23,6 @@ sources:
   - designs/b96_kr260_10g/rtl/kr260_10g_top.sv
 constraints:
   - designs/b96_kr260_10g/design.xdc
-  - designs/b96_kr260_10g/rate_match_gp.xdc
 ip_tcl:                 # AMD IP created in the in-memory project (flow/prepare.py, flow/build.tcl): brief 56A's GT Wizard, unchanged
   - designs/b96_kr260_10g/ip/amd_ip.tcl
 generics:

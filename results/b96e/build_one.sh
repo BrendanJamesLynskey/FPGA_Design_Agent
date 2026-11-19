@@ -7,7 +7,7 @@ V="${1:?rm_gp}"; WAIT="${2:-300}"
 ROOT=/home/brendan/Claude_sandbox/_worktrees/96e-rm
 H=/home/brendan/Claude_sandbox/_handoff
 cd "$ROOT"
-case "$V" in control) D=designs/b96_kr260_10g;; ppm_*|rm_*) D=designs/b96_kr260_10g/$V;; *) D=designs/b96_kr260_10g/lat_$V;; esac
+case "$V" in control) D=designs/b96_kr260_10g;; rm_*|rm_*) D=designs/b96_kr260_10g/$V;; *) D=designs/b96_kr260_10g/lat_$V;; esac
 TEXT="96E: Vivado impl $V peak 6G, $(date +%H:%M), expected end $(date -d '+45 min' +%H:%M)"
 n=0
 while true; do

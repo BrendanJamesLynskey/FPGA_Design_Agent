@@ -11,8 +11,9 @@ import glob, json, re, statistics as st, sys
 T = 6.2058
 rows = {}
 for f in sorted(glob.glob(sys.argv[1] + "/ord_*.log")):
-    m = re.search(r"ord_(\d)_(\d)_(\d+)\.log", f)
-    rm, own, ph = int(m[1]), int(m[2]), int(m[3])
+    m = re.search(r"ord_(\d)_(\d)_(?:(\d)_)?(\d+)\.log", f)
+    rm, own, ph = int(m[1]), int(m[2]), int(m[4])
+    direct = int(m[3]) if m[3] else 0
     orders = []
     for ln in open(f):
         if ln.startswith("ORD"):
@@ -34,7 +35,7 @@ for f in sorted(glob.glob(sys.argv[1] + "/ord_*.log")):
     if rm == 1:
         rec["pcs_out_to_buffer_out"] = stat(lambda o: (o["y_price"] - o["x_price"]) / T)
         rec["buffer_out_to_mac_word7"] = stat(lambda o: (o["w7_mac"] - o["y_price"]) / T)
-    rows.setdefault(f"rate_match_{rm}_rm_own_{own}", {})[str(ph)] = rec
+    rows.setdefault(f"rate_match_{rm}_rm_own_{own}" + ("_direct" if direct else ""), {})[str(ph)] = rec
 import statistics
 means = {k: {q: round(statistics.mean(v[ph][q]["mean"] for ph in v), 1) for q in ("tick_to_trade", "rx_start_strobe", "d_strobe_to_order")} for k, v in rows.items()}
 base = means.get("rate_match_0_rm_own_0", {}).get("tick_to_trade")

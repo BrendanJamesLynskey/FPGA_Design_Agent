@@ -18,6 +18,7 @@ from designs.b96_kr260_10g.tests import ratematch_stim as st
 MIN_KEEP = int(os.environ.get("B96_RM_MIN_KEEP", "0"))
 IMPL = os.environ.get("B96_RM_IMPL", "macro")        # brief 96E: "gp" = rtl/rate_match_gp.sv (own gray-pointer buffer), twin RateMatchGP
 HI = int(os.environ.get("B96_RM_HI", "4"))
+ENT_SYNC = os.environ.get("B96_RM_ENT_SYNC", "1") == "1"      # rate_match_gp's ENT_SYNC (the twin follows)
 P_NOM_FS = 6_205_800          # 161.1328125 MHz is 6205.8 ps
 RESULTS: dict = {}
 
@@ -94,7 +95,7 @@ async def run_case(dut, name, ppm, n_frames=300, gaps=(2,), seed=1, hi=None, os_
     # twin on the same edges and inputs
     r_t = in_flight["r_t"]
     w_t = [t for t in in_flight["w_t"] if t < r_t[-1]]
-    out, m = rm.run(w_t, r_t, in_flight["w_in"][:len(w_t)], w_lock=in_flight["w_lock"], r_rst=in_flight["r_rst"][:len(r_t)], clr=in_flight["clr"][:len(r_t)], w_clr=in_flight["wclr"], hi=hi, min_keep=MIN_KEEP, impl=IMPL)
+    out, m = rm.run(w_t, r_t, in_flight["w_in"][:len(w_t)], w_lock=in_flight["w_lock"], r_rst=in_flight["r_rst"][:len(r_t)], clr=in_flight["clr"][:len(r_t)], w_clr=in_flight["wclr"], hi=hi, min_keep=MIN_KEEP, impl=IMPL, **({"ent_sync": ENT_SYNC} if IMPL == "gp" else {}))
     # RTL output sampled at read edge j (pre-edge) = state after edge j-1
     bad = 0
     first = None
