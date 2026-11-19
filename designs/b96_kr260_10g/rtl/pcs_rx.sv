@@ -13,6 +13,7 @@ module pcs_rx (
     output logic        x_v,        // a decoded block, with block lock held
     output logic [63:0] x_d,
     output logic [7:0]  x_c,
+    output logic        x_os,       // the block was an ordered set (the decoder shows it as an all-idle control block)
     output logic        lock,
     output logic        ev_sh_err,  // pulses, one per event, for the counters
     output logic        ev_type_err,
@@ -61,7 +62,7 @@ module pcs_rx (
         ev_sh_err <= 1'b0; ev_type_err <= 1'b0; ev_os <= 1'b0; ev_slip <= 1'b0; ev_loss <= 1'b0; ev_lock <= 1'b0;
         if (rst) begin
             hist <= '0; lock <= 1'b0; sh_cnt <= '0; inv_cnt <= '0; settle <= 1'b0; slip_r <= 1'b0;
-            x_v <= 1'b0; x_d <= '0; x_c <= '0;
+            x_v <= 1'b0; x_d <= '0; x_c <= '0; x_os <= 1'b0;
         end else begin
             slip_r <= 1'b0;
             x_v    <= 1'b0;
@@ -69,6 +70,7 @@ module pcs_rx (
                 hist <= hist_next(blk[65:2]);
                 x_d  <= dec[63:0];
                 x_c  <= dec[71:64];
+                x_os <= (dec[73:72] == 2'd3);
                 if (lock) begin
                     x_v <= 1'b1;
                     ev_sh_err   <= (dec[73:72] == 2'd1);

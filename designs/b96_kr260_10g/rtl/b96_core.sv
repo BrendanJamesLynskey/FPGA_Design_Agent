@@ -3,13 +3,18 @@
 // reference), our own PCS and MAC in each user-clock domain (tx_path, rx_path), the host register block (docs/register_map.md is the
 // specification) and the crossings between the three clock domains:
 //   clk (free-running 100 MHz: registers, reset helper) | tx_clk (TXUSRCLK2, 161.1328125 MHz) | rx_clk (RXUSRCLK2, recovered)
-// Crossings: configuration, counters and status by hs_vec (XPM request/acknowledge handshake, always coherent); command pulses and
-// the receive-to-transmit events by xpm_cdc_pulse; the order's fields (instrument, price, quantity, number) and the FCS verdict of the frame that
-// caused it by xpm_cdc_array_single as a quasi-static bus (frame_src samples it 5 clocks after the order starts; `stale` counts misses).
+// Crossings: configuration, counters and status by hs_vec (XPM request/acknowledge handshake, always coherent); command pulses by xpm_cdc_pulse.
+// With RATE_MATCH = 1 (brief 96C) the receive path's blocks cross from rx_clk to tx_clk once, through the elastic buffer rate_match (idle insertion and deletion
+// between frames keep the +-100 ppm difference of a real link from ever corrupting a frame); the MAC, the trading path and the order
+// path then share the transmit user clock, so the decision reaches the order logic with no further crossing. With RATE_MATCH = 0 (the default) the receive
+// path is the one of main 6909e43f (rx_path_legacy: pulse and bus crossings, no elastic buffer; board-proven by brief 97C).
 module b96_core #(
     parameter logic [31:0] BUILD_STAMP = 32'h0,
     parameter bit          NEAR_END    = 1'b0,    // reset value of the loopback field: 1 = near-end PMA loopback (variant a)
-    parameter bit          TRADE       = 1'b1     // 1 = the mock trading path is armed to be enabled (variant b); reported in FEATURES
+    parameter bit          TRADE       = 1'b1,    // 1 = the mock trading path is armed to be enabled (variant b); reported in FEATURES
+    parameter bit          RATE_MATCH  = 1'b0,    // 1 = brief 96C's elastic buffer on the receive path; 0 = the receive path of main 6909e43f (brief 97C); reported in FEATURES bit 3
+    parameter bit          EYESCAN     = 1'b0,    // 1 = brief 96D's DRP access, eye-scan point sequencer and TX drive registers (reported in FEATURES bit 4); 0 = none (the GT's DRP and drive ports are tied as before)
+    parameter bit          GO_REG      = 1'b1     // RATE_MATCH = 0 only: REG_OUTPUT of the go-pulse crossing u_p_go (1 as on main; brief 97's latency variant all3 builds it 0)
 ) (
     input  logic        clk,
     input  logic        rst,
@@ -38,7 +43,6 @@ module b96_core #(
     output logic [1:0]  led
 );
     import b96_pkg::*;
-    localparam int NRXW = 18;
     localparam int NTXW = 26;
     localparam logic [31:0] ID = 32'h96A0_0001;
 
@@ -47,6 +51,8 @@ module b96_core #(
     logic        tx_disable, tx_pol, rx_pol, rx_lpm;
     logic [3:0]  rs_all, rs_txpll, rs_rxpll, rs_txdp, rs_rxdp;
     logic        p_clr, p_gen, p_snap, p_seq, tx_done_q, rx_done_q;
+    logic [4:0]  ppm_step;
+    logic        ppm_en, ppm_sel;
     logic [47:0] my_mac, venue_mac;
     logic [31:0] my_ip, venue_ip, thr, qty;
     logic [15:0] sport, port_feed, port_order, port_probe;
@@ -78,8 +84,17 @@ module b96_core #(
         wz_utx   <= ~txpmadone;
         wz_urx   <= ~rxpmadone;
     end
+    logic [9:0]  drp_addr;
+    logic [15:0] drp_di, drp_do;
+    logic        drp_en, drp_we, drp_rdy;
+    logic [4:0]  tx_diff, tx_pre, tx_post;
+    logic        rx_dfelpm_rst;
+    logic       txusr1, ppm_en_t, ppm_sel_t;
+    logic [4:0] ppm_step_t;
+    logic [1:0] txbuf_c;
+    logic [2:0] rxbuf_c;
     gth_wiz u_gt (
-        .gtwiz_userclk_tx_reset_in(wz_utx), .gtwiz_userclk_tx_srcclk_out(), .gtwiz_userclk_tx_usrclk_out(),
+        .gtwiz_userclk_tx_reset_in(wz_utx), .gtwiz_userclk_tx_srcclk_out(), .gtwiz_userclk_tx_usrclk_out(txusr1),
         .gtwiz_userclk_tx_usrclk2_out(txusr2), .gtwiz_userclk_tx_active_out(utx_act_t),
         .gtwiz_userclk_rx_reset_in(wz_urx), .gtwiz_userclk_rx_srcclk_out(), .gtwiz_userclk_rx_usrclk_out(),
         .gtwiz_userclk_rx_usrclk2_out(rxusr2), .gtwiz_userclk_rx_active_out(urx_act_r),
@@ -90,18 +105,21 @@ module b96_core #(
         .gtwiz_reset_rx_done_out(rx_done_r),
         .gtwiz_userdata_tx_in(tx_data), .gtwiz_userdata_rx_out(rx_data),
         .gtrefclk00_in(refclk), .qpll0outclk_out(), .qpll0outrefclk_out(),
-        .drpaddr_in(10'd0), .drpclk_in(clk), .drpdi_in(16'd0), .drpen_in(1'b0), .drpwe_in(1'b0),
-        .drpdo_out(), .drprdy_out(),
+        .drpaddr_in(drp_addr), .drpclk_in(clk), .drpdi_in(drp_di), .drpen_in(drp_en), .drpwe_in(drp_we),
+        .drpdo_out(drp_do), .drprdy_out(drp_rdy),
         .eyescanreset_in(1'b0), .eyescantrigger_in(1'b0), .eyescandataerror_out(),
         .gthrxn_in(rx_n), .gthrxp_in(rx_p), .gthtxn_out(tx_n), .gthtxp_out(tx_p),
-        .loopback_in(loopback), .rxcdrhold_in(1'b0), .rxdfelpmreset_in(1'b0), .rxlpmen_in(rx_lpm),
+        .loopback_in(loopback), .rxcdrhold_in(1'b0), .rxdfelpmreset_in(rx_dfelpm_rst), .rxlpmen_in(rx_lpm),
         .rxpolarity_in(rx_pol_r), .rxprbscntreset_in(1'b0), .rxprbssel_in(4'd0),
-        .txdiffctrl_in(5'b11000), .txelecidle_in(1'b0), .txpippmen_in(1'b0), .txpippmsel_in(1'b0),
-        .txpippmstepsize_in(5'd0), .txpolarity_in(tx_pol_t), .txpostcursor_in(5'd0), .txprbsforceerr_in(1'b0),
-        .txprbssel_in(4'd0), .txprecursor_in(5'd0),
+        .txdiffctrl_in(tx_diff), .txelecidle_in(1'b0), .txpippmen_in(ppm_en_t), .txpippmsel_in(ppm_sel_t),
+        .txpippmstepsize_in(ppm_step_t), .txpolarity_in(tx_pol_t), .txpostcursor_in(tx_post), .txprbsforceerr_in(1'b0),
+        .txprbssel_in(4'd0), .txprecursor_in(tx_pre),
         .gtpowergood_out(pgood_c), .rxcdrlock_out(cdrlock_c), .rxpmaresetdone_out(rxpmadone_c),
-        .rxprbserr_out(), .rxprbslocked_out(), .txpmaresetdone_out(txpmadone_c));
+        .rxprbserr_out(), .rxprbslocked_out(), .txpmaresetdone_out(txpmadone_c),
+        .txbufstatus_out(txbuf_c), .rxbufstatus_out(rxbuf_c));
     logic tx_pol_t, rx_pol_r;
+    // the TX phase-interpolator ppm controller's controls (UG576 Table 3-33: TXUSRCLK domain, and TXUSRCLK (not TXUSRCLK2) when the internal data width is below the user width, as here): one bus into TXUSRCLK
+    xpm_cdc_array_single #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(1), .WIDTH(7)) u_c_ppm (.src_clk(clk), .src_in({ppm_sel, ppm_en, ppm_step}), .dest_clk(txusr1), .dest_out({ppm_sel_t, ppm_en_t, ppm_step_t}));
     xpm_cdc_single #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(1)) u_c_tp (.src_clk(clk), .src_in(tx_pol), .dest_clk(txusr2), .dest_out(tx_pol_t));
     xpm_cdc_single #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(1)) u_c_rp (.src_clk(clk), .src_in(rx_pol), .dest_clk(rxusr2), .dest_out(rx_pol_r));
 
@@ -113,6 +131,11 @@ module b96_core #(
     xpm_cdc_single #(.DEST_SYNC_FF(4), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(0)) u_s_cl (.src_clk(1'b0), .src_in(cdrlock_c), .dest_clk(clk), .dest_out(cdrlock));
     xpm_cdc_single #(.DEST_SYNC_FF(4), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(0)) u_s_tp (.src_clk(1'b0), .src_in(txpmadone_c), .dest_clk(clk), .dest_out(txpmadone));
     xpm_cdc_single #(.DEST_SYNC_FF(4), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(0)) u_s_rp (.src_clk(1'b0), .src_in(rxpmadone_c), .dest_clk(clk), .dest_out(rxpmadone));
+    logic [1:0] txbuf;
+    logic [2:0] rxbuf;
+    logic [1:0] txb_seen;
+    logic [2:0] rxb_seen;
+    xpm_cdc_array_single #(.DEST_SYNC_FF(4), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(0), .WIDTH(5)) u_s_bf (.src_clk(1'b0), .src_in({rxbuf_c, txbuf_c}), .dest_clk(clk), .dest_out({rxbuf, txbuf}));
     logic pcs_lock_rx, pcs_lock, mod_abs_c, rx_los_c, tx_fault_c, scl_c, sda_c;
     xpm_cdc_single #(.DEST_SYNC_FF(4), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(1)) u_s_pl (.src_clk(rxusr2), .src_in(pcs_lock_rx), .dest_clk(clk), .dest_out(pcs_lock));
     xpm_cdc_single #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(0)) u_s_ma (.src_clk(1'b0), .src_in(sfp_mod_abs), .dest_clk(clk), .dest_out(mod_abs_c));
@@ -122,44 +145,109 @@ module b96_core #(
     xpm_cdc_single #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(0)) u_s_sd (.src_clk(1'b0), .src_in(i2c_sda_i), .dest_clk(clk), .dest_out(sda_c));
 
     // ---------------------------------------------------------------- the two paths and their crossings
-    logic [CFGW-1:0] cfg_tx, cfg_rx;
+    // RATE_MATCH = 1 (brief 96C): the receive path's blocks cross from rx_clk to tx_clk once, through the elastic buffer rate_match; the MAC, the trading path and
+    // the order path then share the transmit user clock. RATE_MATCH = 0 (the default): the receive path of main 6909e43f (brief 97C), unchanged: the MAC and the
+    // trading path run in rx_clk and the decision crosses to tx_clk by pulses and a quasi-static bus. Both fill the same register map; the 96C-only words
+    // (rate-match counters RXV18..RXV26, frequency counter RXV27/28) read 0 when RATE_MATCH = 0.
+    logic [CFGW-1:0] cfg_tx;
     hs_vec #(.W(CFGW)) u_cfg_tx (.src_clk(clk), .src_vec(cfg), .dst_clk(txusr2), .dst_vec(cfg_tx));
-    hs_vec #(.W(CFGW)) u_cfg_rx (.src_clk(clk), .src_vec(cfg), .dst_clk(rxusr2), .dst_vec(cfg_rx));
-    logic clr_tx, clr_rx, gen_tx, seq_tx, seq_rx;
+    logic clr_tx, clr_rx, gen_tx, seq_tx;
     xpm_cdc_pulse #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(0)) u_p_ct (.src_clk(clk), .src_pulse(p_clr), .src_rst(1'b0), .dest_clk(txusr2), .dest_pulse(clr_tx), .dest_rst(1'b0));
     xpm_cdc_pulse #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(0)) u_p_cr (.src_clk(clk), .src_pulse(p_clr), .src_rst(1'b0), .dest_clk(rxusr2), .dest_pulse(clr_rx), .dest_rst(1'b0));
     xpm_cdc_pulse #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(0)) u_p_st (.src_clk(clk), .src_pulse(p_seq), .src_rst(1'b0), .dest_clk(txusr2), .dest_pulse(seq_tx), .dest_rst(1'b0));
-    xpm_cdc_pulse #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(0)) u_p_sr (.src_clk(clk), .src_pulse(p_seq), .src_rst(1'b0), .dest_clk(rxusr2), .dest_pulse(seq_rx), .dest_rst(1'b0));
     xpm_cdc_pulse #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(0)) u_p_gt (.src_clk(clk), .src_pulse(p_gen), .src_rst(1'b0), .dest_clk(txusr2), .dest_pulse(gen_tx), .dest_rst(1'b0));
 
-    logic        r_fire, r_sop, r_feed, r_order, r_probe, r_verdict_v, r_verdict_bad;
-    logic [15:0] r_inst;
-    logic [31:0] r_price, r_qty, r_seq;
-    logic [32 * NRXW - 1:0] rx_vec_r, rx_live;
+    logic [32 * NRXW - 1:0] rx_live;
     logic [32 * NTXW - 1:0] tx_vec_t, tx_live;
-    logic        go_t, sop_t, feed_t, order_t, probe_t;
-    logic [15:0] go_inst;
-    logic [31:0] go_price, go_qty, go_seq;
-    logic        vd_v, vd_bad;
-    logic [31:0] r_verdict_seq, vd_seq;
-    rx_path #(.NRXW(NRXW)) u_rx (.clk(rxusr2), .rst(!rx_done_r), .cfg(cfg_rx), .clr_p(clr_rx), .seq_p(seq_rx), .gt_d(rx_data), .fire(r_fire), .o_inst(r_inst),
-        .o_price(r_price), .o_qty(r_qty), .o_seq(r_seq), .verdict_v(r_verdict_v), .verdict_bad(r_verdict_bad), .verdict_seq(r_verdict_seq), .rx_sop(r_sop),
-        .cls_feed(r_feed), .cls_order(r_order), .cls_probe(r_probe), .lock(pcs_lock_rx), .rx_vec(rx_vec_r));
-    xpm_cdc_pulse #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(0)) u_p_go (.src_clk(rxusr2), .src_pulse(r_fire), .src_rst(1'b0), .dest_clk(txusr2), .dest_pulse(go_t), .dest_rst(1'b0));
-    xpm_cdc_pulse #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(0)) u_p_so (.src_clk(rxusr2), .src_pulse(r_sop), .src_rst(1'b0), .dest_clk(txusr2), .dest_pulse(sop_t), .dest_rst(1'b0));
-    xpm_cdc_pulse #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(0)) u_p_fe (.src_clk(rxusr2), .src_pulse(r_feed), .src_rst(1'b0), .dest_clk(txusr2), .dest_pulse(feed_t), .dest_rst(1'b0));
-    xpm_cdc_pulse #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(0)) u_p_or (.src_clk(rxusr2), .src_pulse(r_order), .src_rst(1'b0), .dest_clk(txusr2), .dest_pulse(order_t), .dest_rst(1'b0));
-    xpm_cdc_pulse #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(0)) u_p_pr (.src_clk(rxusr2), .src_pulse(r_probe), .src_rst(1'b0), .dest_clk(txusr2), .dest_pulse(probe_t), .dest_rst(1'b0));
-    xpm_cdc_array_single #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(0), .WIDTH(146)) u_bus (
-        .src_clk(rxusr2), .src_in({r_verdict_v, r_verdict_bad, r_verdict_seq, r_inst, r_price, r_qty, r_seq}), .dest_clk(txusr2),
-        .dest_out({vd_v, vd_bad, vd_seq, go_inst, go_price, go_qty, go_seq}));
-    tx_path #(.NTXW(NTXW)) u_tx (.clk(txusr2), .rst(!tx_done_t), .cfg(cfg_tx), .clr_p(clr_tx), .seq_p(seq_tx), .gen_go_p(gen_tx), .go_p(go_t), .go_inst, .go_price,
-        .go_qty, .go_seq, .verdict_v(vd_v), .verdict_bad(vd_bad), .verdict_seq(vd_seq), .rx_sop_p(sop_t), .rx_feed_p(feed_t), .rx_order_p(order_t),
-        .rx_probe_p(probe_t), .gt_d(tx_data), .tx_vec(tx_vec_t));
-    hs_vec #(.W(32 * NRXW)) u_rxv (.src_clk(rxusr2), .src_vec(rx_vec_r), .dst_clk(clk), .dst_vec(rx_live));
+    if (RATE_MATCH) begin : g_rm
+        logic        r_fire, r_sop, r_feed, r_order, r_probe, r_verdict_v, r_verdict_bad;
+        logic [15:0] r_inst;
+        logic [31:0] r_price, r_qty, r_seq, r_verdict_seq;
+        logic [32 * NRXV_W - 1:0] rxw_t, rxw_live;
+        logic [32 * NRXV_C - 1:0] rxc_t, rxc_live;
+        rx_path u_rx (.clk(rxusr2), .rst(!rx_done_r), .clk_c(txusr2), .rst_c(!tx_done_t), .cfg(cfg_tx), .clr_w(clr_rx), .clr_c(clr_tx), .seq_c(seq_tx), .gt_d(rx_data),
+            .fire(r_fire), .o_inst(r_inst), .o_price(r_price), .o_qty(r_qty), .o_seq(r_seq), .verdict_v(r_verdict_v), .verdict_bad(r_verdict_bad),
+            .verdict_seq(r_verdict_seq), .rx_sop(r_sop), .cls_feed(r_feed), .cls_order(r_order), .cls_probe(r_probe), .lock(pcs_lock_rx),
+            .rx_vec_w(rxw_t), .rx_vec_c(rxc_t));
+        tx_path #(.NTXW(NTXW)) u_tx (.clk(txusr2), .rst(!tx_done_t), .cfg(cfg_tx), .clr_p(clr_tx), .seq_p(seq_tx), .gen_go_p(gen_tx), .go_p(r_fire), .go_inst(r_inst), .go_price(r_price),
+            .go_qty(r_qty), .go_seq(r_seq), .verdict_v(r_verdict_v), .verdict_bad(r_verdict_bad), .verdict_seq(r_verdict_seq), .rx_sop_p(r_sop), .rx_feed_p(r_feed), .rx_order_p(r_order),
+            .rx_probe_p(r_probe), .gt_d(tx_data), .tx_vec(tx_vec_t));
+        hs_vec #(.W(32 * NRXV_W)) u_rxv_w (.src_clk(rxusr2), .src_vec(rxw_t), .dst_clk(clk), .dst_vec(rxw_live));
+        hs_vec #(.W(32 * NRXV_C)) u_rxv_c (.src_clk(txusr2), .src_vec(rxc_t), .dst_clk(clk), .dst_vec(rxc_live));
+        for (genvar gi = 0; gi < NRXW; gi++) begin : g_rxv
+            if (RXV_OWN_W[gi]) begin : w
+                assign rx_live[32 * gi +: 32] = rxw_live[32 * rxv_pos(1'b1, gi) +: 32];
+            end else begin : c
+                assign rx_live[32 * gi +: 32] = rxc_live[32 * rxv_pos(1'b0, gi) +: 32];
+            end
+        end
+    end else begin : g_old
+        localparam int NRXW_OLD = 18;     // the words main 6909e43f had: RXV0..RXV17
+        logic [CFGW-1:0] cfg_rx;
+        logic        seq_rx;
+        hs_vec #(.W(CFGW)) u_cfg_rx (.src_clk(clk), .src_vec(cfg), .dst_clk(rxusr2), .dst_vec(cfg_rx));
+        xpm_cdc_pulse #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(0)) u_p_sr (.src_clk(clk), .src_pulse(p_seq), .src_rst(1'b0), .dest_clk(rxusr2), .dest_pulse(seq_rx), .dest_rst(1'b0));
+        logic        r_fire, r_sop, r_feed, r_order, r_probe, r_verdict_v, r_verdict_bad;
+        logic [15:0] r_inst;
+        logic [31:0] r_price, r_qty, r_seq;
+        logic [32 * NRXW_OLD - 1:0] rx_vec_r, rx_live_old;
+        logic        go_t, sop_t, feed_t, order_t, probe_t;
+        logic [15:0] go_inst;
+        logic [31:0] go_price, go_qty, go_seq;
+        logic        vd_v, vd_bad;
+        logic [31:0] r_verdict_seq, vd_seq;
+        rx_path_legacy #(.NRXW(NRXW_OLD)) u_rx (.clk(rxusr2), .rst(!rx_done_r), .cfg(cfg_rx), .clr_p(clr_rx), .seq_p(seq_rx), .gt_d(rx_data), .fire(r_fire), .o_inst(r_inst),
+            .o_price(r_price), .o_qty(r_qty), .o_seq(r_seq), .verdict_v(r_verdict_v), .verdict_bad(r_verdict_bad), .verdict_seq(r_verdict_seq), .rx_sop(r_sop),
+            .cls_feed(r_feed), .cls_order(r_order), .cls_probe(r_probe), .lock(pcs_lock_rx), .rx_vec(rx_vec_r));
+        xpm_cdc_pulse #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .REG_OUTPUT(GO_REG), .RST_USED(0), .SIM_ASSERT_CHK(0)) u_p_go (.src_clk(rxusr2), .src_pulse(r_fire), .src_rst(1'b0), .dest_clk(txusr2), .dest_pulse(go_t), .dest_rst(1'b0));
+        xpm_cdc_pulse #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(0)) u_p_so (.src_clk(rxusr2), .src_pulse(r_sop), .src_rst(1'b0), .dest_clk(txusr2), .dest_pulse(sop_t), .dest_rst(1'b0));
+        xpm_cdc_pulse #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(0)) u_p_fe (.src_clk(rxusr2), .src_pulse(r_feed), .src_rst(1'b0), .dest_clk(txusr2), .dest_pulse(feed_t), .dest_rst(1'b0));
+        xpm_cdc_pulse #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(0)) u_p_or (.src_clk(rxusr2), .src_pulse(r_order), .src_rst(1'b0), .dest_clk(txusr2), .dest_pulse(order_t), .dest_rst(1'b0));
+        xpm_cdc_pulse #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(0)) u_p_pr (.src_clk(rxusr2), .src_pulse(r_probe), .src_rst(1'b0), .dest_clk(txusr2), .dest_pulse(probe_t), .dest_rst(1'b0));
+        xpm_cdc_array_single #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(0), .WIDTH(146)) u_bus (
+            .src_clk(rxusr2), .src_in({r_verdict_v, r_verdict_bad, r_verdict_seq, r_inst, r_price, r_qty, r_seq}), .dest_clk(txusr2),
+            .dest_out({vd_v, vd_bad, vd_seq, go_inst, go_price, go_qty, go_seq}));
+        tx_path #(.NTXW(NTXW)) u_tx (.clk(txusr2), .rst(!tx_done_t), .cfg(cfg_tx), .clr_p(clr_tx), .seq_p(seq_tx), .gen_go_p(gen_tx), .go_p(go_t), .go_inst, .go_price,
+            .go_qty, .go_seq, .verdict_v(vd_v), .verdict_bad(vd_bad), .verdict_seq(vd_seq), .rx_sop_p(sop_t), .rx_feed_p(feed_t), .rx_order_p(order_t),
+            .rx_probe_p(probe_t), .gt_d(tx_data), .tx_vec(tx_vec_t));
+        hs_vec #(.W(32 * NRXW_OLD)) u_rxv (.src_clk(rxusr2), .src_vec(rx_vec_r), .dst_clk(clk), .dst_vec(rx_live_old));
+        assign rx_live = {{(32 * (NRXW - NRXW_OLD)){1'b0}}, rx_live_old};      // the 96C words read 0
+    end
     hs_vec #(.W(32 * NTXW)) u_txv (.src_clk(txusr2), .src_vec(tx_vec_t), .dst_clk(clk), .dst_vec(tx_live));
     logic [32 * NRXW - 1:0] rx_snap;
     logic [32 * NTXW - 1:0] tx_snap;
+
+    // ---------------------------------------------------------------- brief 96D: DRP access, eye-scan point sequencer, TX drive (EYESCAN = 1 only)
+    // The DRP clock is clk (the GT's DRPCLK), so these registers need no crossing. TXDIFFCTRL, TXPRECURSOR, TXPOSTCURSOR and RXDFELPMRESET are asynchronous ports
+    // of the GT (UG576 Tables 3-35 and 4-x): a static level from clk is fine. With EYESCAN = 0 they are the constants the design always drove.
+    logic [9:0]  es_raw_addr;
+    logic [15:0] es_raw_wd, es_raw_rd, es_res_err, es_res_samp, es_pt_count;
+    logic        es_raw_rd_p, es_raw_wr_p, es_start_p, es_clr_p;
+    logic        es_busy, es_done, es_ptmo, es_drptmo, es_rej;
+    logic [3:0]  es_status;
+    logic [7:0]  es_step;
+    logic [11:0] pt_horz;
+    logic [6:0]  pt_code;
+    logic        pt_neg, pt_ut;
+    logic [1:0]  pt_range;
+    logic [4:0]  pt_pre_scale;
+    logic [31:0] pt_tmo_clks;
+    logic [4:0]  tx_diff_r, tx_pre_r, tx_post_r;
+    logic        dfelpm_r;
+    if (EYESCAN) begin : g_es
+        es_ctrl u_es (.clk, .rst, .raw_addr(es_raw_addr), .raw_wdata(es_raw_wd), .raw_rd(es_raw_rd_p), .raw_wr(es_raw_wr_p), .pt_start(es_start_p), .clr_flags(es_clr_p),
+            .pt_horz, .pt_vs_code(pt_code), .pt_vs_neg(pt_neg), .pt_vs_ut(pt_ut), .pt_vs_range(pt_range), .pt_prescale(pt_pre_scale), .pt_timeout(pt_tmo_clks),
+            .raw_rdata(es_raw_rd), .busy(es_busy), .pt_done(es_done), .pt_tmo(es_ptmo), .drp_tmo(es_drptmo), .rejected(es_rej), .es_status, .step_o(es_step),
+            .pt_count(es_pt_count), .res_err(es_res_err), .res_samp(es_res_samp), .drp_addr, .drp_di, .drp_en, .drp_we, .drp_do, .drp_rdy);
+        assign tx_diff = tx_diff_r; assign tx_pre = tx_pre_r; assign tx_post = tx_post_r; assign rx_dfelpm_rst = dfelpm_r;
+    end else begin : g_nes
+        assign drp_addr = 10'd0; assign drp_di = 16'd0; assign drp_en = 1'b0; assign drp_we = 1'b0;
+        assign tx_diff = 5'b11000; assign tx_pre = 5'd0; assign tx_post = 5'd0; assign rx_dfelpm_rst = 1'b0;
+        assign es_raw_rd = '0; assign es_busy = 1'b0; assign es_done = 1'b0; assign es_ptmo = 1'b0; assign es_drptmo = 1'b0; assign es_rej = 1'b0; assign es_status = '0;
+        assign es_step = '0; assign es_pt_count = '0; assign es_res_err = '0; assign es_res_samp = '0;
+    end
+    logic _unused_es;
+    assign _unused_es = &{1'b0, drp_do, drp_rdy, es_raw_rd, es_busy, es_done, es_ptmo, es_drptmo, es_rej, es_status, es_step, es_pt_count, es_res_err, es_res_samp};
 
     // ---------------------------------------------------------------- host registers
     logic [31:0] rd;
@@ -170,6 +258,7 @@ module b96_core #(
     logic [7:0]  gen_dly;      // the run command is held back so the configuration (hs_vec, a few dozen clocks) has arrived first
     always_ff @(posedge clk) begin
         p_clr <= 1'b0; p_gen <= 1'b0; p_snap <= 1'b0;
+        es_raw_rd_p <= 1'b0; es_raw_wr_p <= 1'b0; es_start_p <= 1'b0; es_clr_p <= 1'b0;
         // 97C: any restart of either side (a GT reset command, or either side's done level changing) restarts the order number on both sides
         tx_done_q <= tx_done; rx_done_q <= rx_done;
         p_seq <= (tx_done != tx_done_q) || (rx_done != rx_done_q) || (h_we && h_addr == 12'h010 && (h_wdata[4:0] != 5'd0));
@@ -179,8 +268,10 @@ module b96_core #(
         if (rs_rxpll != 0) rs_rxpll <= rs_rxpll - 4'd1;
         if (rs_txdp != 0) rs_txdp <= rs_txdp - 4'd1;
         if (rs_rxdp != 0) rs_rxdp <= rs_rxdp - 4'd1;
+        txb_seen <= txb_seen | txbuf; rxb_seen <= rxb_seen | rxbuf;      // sticky since the last clear (CMD bit 0)
         if (rst) begin
             loopback <= NEAR_END ? 3'b010 : 3'b000; tx_disable <= 1'b1; tx_pol <= 1'b0; rx_pol <= 1'b0; rx_lpm <= 1'b1;
+            ppm_step <= '0; ppm_en <= 1'b0; ppm_sel <= 1'b0; txb_seen <= '0; rxb_seen <= '0;
             rs_all <= '0; rs_txpll <= '0; rs_rxpll <= '0; rs_txdp <= '0; rs_rxdp <= '0; gen_dly <= '0;
             my_mac <= 48'h0A58_0000_0002; venue_mac <= 48'h0F58_0000_0002;
             my_ip <= 32'hC0A8_3A0A; venue_ip <= 32'hC0A8_3A0F; sport <= 16'd5800;
@@ -189,6 +280,8 @@ module b96_core #(
             gen_kind <= 2'd2; gen_len <= 16'd66; gen_inst <= 16'd1; gen_price <= 32'd9950; gen_interval <= 32'd2000; gen_count <= 32'd1;
             i2c_scl_r <= 1'b0; i2c_sda_r <= 1'b0; sm_en <= 1'b0; sm_valid <= 1'b0; sm_data <= '0; sm_addr_r <= '0;
             rx_snap <= '0; tx_snap <= '0;
+            es_raw_addr <= '0; es_raw_wd <= '0; pt_horz <= '0; pt_code <= '0; pt_neg <= 1'b0; pt_ut <= 1'b0; pt_range <= '0; pt_pre_scale <= '0; pt_tmo_clks <= 32'd500_000_000;
+            tx_diff_r <= 5'b11000; tx_pre_r <= '0; tx_post_r <= '0; dfelpm_r <= 1'b0;
         end else begin
             sm_en <= 1'b0;
             if (sm_rdy) begin sm_data <= sm_do; sm_valid <= 1'b1; end
@@ -202,10 +295,17 @@ module b96_core #(
                         if (h_wdata[3]) rs_txdp <= 4'd8;
                         if (h_wdata[4]) rs_rxdp <= 4'd8;
                     end
+                    12'h01C: begin ppm_step <= h_wdata[4:0]; ppm_en <= h_wdata[5]; ppm_sel <= h_wdata[6]; end
                     12'h018: begin
-                        p_clr <= h_wdata[0]; if (h_wdata[1]) gen_dly <= 8'd200;
+                        p_clr <= h_wdata[0]; if (h_wdata[0]) begin txb_seen <= txbuf; rxb_seen <= rxbuf; end if (h_wdata[1]) gen_dly <= 8'd200;
                         if (h_wdata[2]) begin rx_snap <= rx_live; tx_snap <= tx_live; end
                     end
+                    12'h024: if (EYESCAN) es_raw_addr <= h_wdata[9:0];
+                    12'h028: if (EYESCAN) es_raw_wd <= h_wdata[15:0];
+                    12'h02C: if (EYESCAN) begin es_raw_rd_p <= h_wdata[0]; es_raw_wr_p <= h_wdata[1]; es_start_p <= h_wdata[2]; es_clr_p <= h_wdata[3]; end
+                    12'h034: if (EYESCAN) begin pt_horz <= h_wdata[11:0]; pt_code <= h_wdata[18:12]; pt_neg <= h_wdata[19]; pt_ut <= h_wdata[20]; pt_range <= h_wdata[22:21]; pt_pre_scale <= h_wdata[27:23]; end
+                    12'h038: if (EYESCAN) pt_tmo_clks <= h_wdata;
+                    12'h084: if (EYESCAN) begin tx_diff_r <= h_wdata[4:0]; tx_pre_r <= h_wdata[9:5]; tx_post_r <= h_wdata[14:10]; dfelpm_r <= h_wdata[16]; end
                     12'h040: my_mac[31:0] <= h_wdata;
                     12'h044: my_mac[47:32] <= h_wdata[15:0];
                     12'h048: venue_mac[31:0] <= h_wdata;
@@ -233,9 +333,18 @@ module b96_core #(
         case (h_addr)
             12'h000: rd = ID;
             12'h004: rd = BUILD_STAMP;
-            12'h008: rd = {29'd0, TRADE, NEAR_END, 1'b1};
+            12'h008: rd = {27'd0, EYESCAN, RATE_MATCH, TRADE, NEAR_END, 1'b1};
             12'h00C: rd = {25'd0, rx_lpm, rx_pol, tx_pol, tx_disable, loopback};
+            12'h01C: rd = {25'd0, ppm_sel, ppm_en, ppm_step};
+            12'h020: rd = {22'd0, rxb_seen, txb_seen, rxbuf, txbuf};
             12'h014: rd = {19'd0, tx_fault_c, rx_los_c, mod_abs_c, pcs_lock, cdr_stable, 2'b00, rxpmadone, txpmadone, cdrlock, pgood, rx_done, tx_done};
+            12'h024: rd = EYESCAN ? {22'd0, es_raw_addr} : 32'd0;
+            12'h028: rd = EYESCAN ? {16'd0, es_raw_rd} : 32'd0;
+            12'h030: rd = EYESCAN ? {es_pt_count, es_step[3:0], es_status, 3'd0, es_rej, es_drptmo, es_ptmo, es_done, es_busy} : 32'd0;
+            12'h034: rd = EYESCAN ? {4'd0, pt_pre_scale, pt_range, pt_ut, pt_neg, pt_code, pt_horz} : 32'd0;
+            12'h038: rd = EYESCAN ? pt_tmo_clks : 32'd0;
+            12'h03C: rd = EYESCAN ? {es_res_samp, es_res_err} : 32'd0;
+            12'h084: rd = EYESCAN ? {15'd0, dfelpm_r, 1'b0, tx_post_r, tx_pre_r, tx_diff_r} : 32'd0;
             12'h040: rd = my_mac[31:0];
             12'h044: rd = {16'd0, my_mac[47:32]};
             12'h048: rd = venue_mac[31:0];

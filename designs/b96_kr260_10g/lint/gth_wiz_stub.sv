@@ -60,11 +60,13 @@ module gth_wiz (
     output logic        rxpmaresetdone_out,
     output logic        rxprbserr_out,
     output logic        rxprbslocked_out,
-    output logic        txpmaresetdone_out
+    output logic        txpmaresetdone_out,
+    output logic [1:0]  txbufstatus_out,
+    output logic [2:0]  rxbufstatus_out
 );
     assign {gtwiz_userclk_tx_srcclk_out, gtwiz_userclk_tx_usrclk_out, gtwiz_userclk_tx_usrclk2_out, gtwiz_userclk_tx_active_out} = '0;
     assign {gtwiz_userclk_rx_srcclk_out, gtwiz_userclk_rx_usrclk_out, gtwiz_userclk_rx_usrclk2_out, gtwiz_userclk_rx_active_out} = '0;
     assign {gtwiz_reset_rx_cdr_stable_out, gtwiz_reset_tx_done_out, gtwiz_reset_rx_done_out} = '0;
     assign {gtwiz_userdata_rx_out, qpll0outclk_out, qpll0outrefclk_out, drpdo_out, drprdy_out, eyescandataerror_out} = '0;
-    assign {gthtxn_out, gthtxp_out, gtpowergood_out, rxcdrlock_out, rxpmaresetdone_out, rxprbserr_out, rxprbslocked_out, txpmaresetdone_out} = '0;
+    assign {gthtxn_out, gthtxp_out, gtpowergood_out, rxcdrlock_out, rxpmaresetdone_out, rxprbserr_out, rxprbslocked_out, txpmaresetdone_out, txbufstatus_out, rxbufstatus_out} = '0;
 endmodule

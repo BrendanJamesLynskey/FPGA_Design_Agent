@@ -14,7 +14,7 @@ module ibert_top (
     BUFG  u_bg (.I(clk_i), .O(clk));
     IBUFDS_GTE4 #(.REFCLK_EN_TX_PATH(1'b0), .REFCLK_HROW_CK_SEL(2'b00), .REFCLK_ICNTL_RX(2'b00)) u_ref (
         .I(refclk_p), .IB(refclk_n), .CEB(1'b0), .O(ref0), .ODIV2());
-    p_ibert_gth u_ibert (
+    p_ibert_gth_top u_ibert (
         .txn_o(txn), .txp_o(txp), .rxoutclk_o(), .rxn_i(rxn), .rxp_i(rxp),
         .gtrefclk0_i(ref0), .gtrefclk1_i(1'b0), .gtnorthrefclk0_i(1'b0), .gtnorthrefclk1_i(1'b0), .gtsouthrefclk0_i(1'b0), .gtsouthrefclk1_i(1'b0),
         .gtrefclk00_i(1'b0), .gtrefclk10_i(1'b0), .gtrefclk01_i(1'b0), .gtrefclk11_i(1'b0),

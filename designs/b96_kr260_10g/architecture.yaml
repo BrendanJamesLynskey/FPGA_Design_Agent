@@ -9,7 +9,10 @@ blocks:
   - {name: frame_src, function: "builds order, feed, probe and test frames in Bench Feed v1 format word by word"}
   - {name: trade64, function: "the mock trading decision of brief 58A at 64 bits: one rule on the first message, speculative, FCS verdict later"}
   - {name: tx_path, function: "transmit side: frame source, generator, order start, timestamps and counters, in TXUSRCLK2"}
-  - {name: rx_path, function: "receive side: PCS, MAC, trading decision, counters, in RXUSRCLK2"}
+  - {name: rx_path, function: "receive side when RATE_MATCH = 1 (brief 96C): PCS in RXUSRCLK2, the elastic buffer rate_match across, MAC and trading decision in TXUSRCLK2, counters and the frequency counter"}
+  - {name: rate_match, function: "elastic buffer on xpm_fifo_async: idle insertion and deletion between frames only (brief 96C)"}
+  - {name: rx_path_legacy, function: "receive side of main 6909e43f (brief 97C), used when RATE_MATCH = 0 (the default): PCS, MAC and trading decision in RXUSRCLK2, the decision crossing to TXUSRCLK2 by pulses and a quasi-static bus"}
+  - {name: es_ctrl, function: "DRP master and eye-scan point sequencer for the GTHE4 channel (brief 96D; instantiated only when EYESCAN = 1): raw DRP read/write for the host, one eye-scan point per command, in the free-running clock"}
   - {name: b96_core, function: "register block, GT wrapper and the crossings between the clk, TXUSRCLK2 and RXUSRCLK2 domains"}
   - {name: jtag_bus, function: "host register bus over the JTAG cable (BSCANE2 USER4), reused from b58a_trigger"}
 interfaces:
@@ -28,13 +31,21 @@ crossings:
   - {from: txusr2, to: sys, signal: "tx_done, GT status levels", primitive: xpm_cdc_single}
   - {from: rxusr2, to: sys, signal: "rx_done, PCS block lock", primitive: xpm_cdc_single}
   - {from: sys, to: txusr2, signal: "configuration vector (421 bits)", primitive: xpm_cdc_handshake}
-  - {from: sys, to: rxusr2, signal: "configuration vector (421 bits)", primitive: xpm_cdc_handshake}
   - {from: txusr2, to: sys, signal: "transmit counters and timestamps (832 bits)", primitive: xpm_cdc_handshake}
-  - {from: rxusr2, to: sys, signal: "receive counters (512 bits)", primitive: xpm_cdc_handshake}
+  - {from: rxusr2, to: sys, signal: "receive-clock counters (320 bits)", primitive: xpm_cdc_handshake}
+  - {from: txusr2, to: sys, signal: "core-clock receive counters (608 bits)", primitive: xpm_cdc_handshake}
   - {from: sys, to: txusr2, signal: "clear counters, start generator, polarity", primitive: xpm_cdc_pulse}
   - {from: sys, to: rxusr2, signal: "clear counters, polarity", primitive: xpm_cdc_pulse}
-  - {from: rxusr2, to: txusr2, signal: "order wanted, receive start, frame classes", primitive: xpm_cdc_pulse}
-  - {from: rxusr2, to: txusr2, signal: "order fields and FCS verdict (quasi-static bus, sampled five clocks after the order pulse)", primitive: xpm_cdc_array_single}
+  - {from: rxusr2, to: txusr2, signal: "decoded 66-bit blocks and their idle/ordered-set flags (the elastic buffer rate_match, brief 96C; RATE_MATCH = 1 only)", primitive: xpm_fifo_async}
+  - {from: rxusr2, to: txusr2, signal: "PCS block lock level", primitive: xpm_cdc_single}
+  - {from: rxusr2, to: txusr2, signal: "free-running receive-clock count for the frequency counter (32-bit gray code)", primitive: xpm_cdc_gray}
+  - {from: sys, to: txusr2, signal: "TX phase-interpolator ppm controls (7 bits, static)", primitive: xpm_cdc_array_single}
+  - {from: async, to: sys, signal: "GT TX and RX buffer status (5 bits)", primitive: xpm_cdc_array_single}
+  - {from: sys, to: rxusr2, signal: "configuration vector (421 bits) (RATE_MATCH = 0 only)", primitive: xpm_cdc_handshake}
+  - {from: rxusr2, to: sys, signal: "receive counters (576 bits) (RATE_MATCH = 0 only)", primitive: xpm_cdc_handshake}
+  - {from: sys, to: rxusr2, signal: "restart the order number (RATE_MATCH = 0 only)", primitive: xpm_cdc_pulse}
+  - {from: rxusr2, to: txusr2, signal: "order wanted, receive start, frame classes (RATE_MATCH = 0 only)", primitive: xpm_cdc_pulse}
+  - {from: rxusr2, to: txusr2, signal: "order fields and FCS verdict (quasi-static bus, sampled five clocks after the order pulse) (RATE_MATCH = 0 only)", primitive: xpm_cdc_array_single}
   - {from: tck, to: sys, signal: "host command", primitive: xpm_cdc_handshake}
   - {from: async, to: sys, signal: "SFP+ status and I2C pins", primitive: xpm_cdc_single}
 predicted_resources:
