@@ -2,7 +2,10 @@
   place_chain.py <in_placed.dcp> <out.dcp> <chain.json> [--seed N] [--iters N] [--crit file]
 chain.json: {"cells": ["u_pcs/*", "u_mac/x_d_reg[*]", ...] (fnmatch on full cell names), "anchor": "GTHE4_CHANNEL_X0Y6",
              "window": {"cols": 60, "rows": 40}  (tile columns/rows around the anchor that the chain may use),
-             "anchor_weight": 4.0 (weight of the nets that touch the anchor)}
+             "anchor_weight": 4.0 (weight of the nets that touch the anchor),
+             "protect": {"cells": ["u_blk/*", "u_blk"], "regions": ["SLICE_X26Y70:SLICE_X37Y89"]}  (brief 102: a locked placed-and-routed block;
+             optional: no chain cell may match a protected pattern (the run fails), no slice holding a protected cell moves, and no site inside a
+             protected region is a target, free or not)}
 The units that move are whole slices (a SiteInst with its LUT/FF assignment, so Vivado's packing stays legal), only slices with no
 carry chain, no LUT-RAM and no shift-register cell, only to a free site of the same type. Simulated annealing on a weighted half-perimeter
 wire length in tile units. That cost is RapidWright's estimate of nothing physical: it is never reported as a result. The output checkpoint
@@ -43,6 +46,30 @@ def is_chain(name):
     return any(fnmatch.fnmatchcase(name, p) for p in pats)
 
 
+import re  # noqa: E402
+prot_cells = (cfg.get("protect") or {}).get("cells", [])
+prot_rects = []
+for r in (cfg.get("protect") or {}).get("regions", []):
+    m = re.match(r"SLICE_X(\d+)Y(\d+):SLICE_X(\d+)Y(\d+)$", r)
+    x0, y0, x1, y1 = (int(v) for v in m.groups())
+    prot_rects.append((min(x0, x1), min(y0, y1), max(x0, x1), max(y0, y1)))
+
+
+def is_protected(name):
+    return any(fnmatch.fnmatchcase(name, p) for p in prot_cells)
+
+
+def in_protected_region(site_name):
+    m = re.match(r"SLICE_X(\d+)Y(\d+)$", site_name)
+    return bool(m) and any(r[0] <= int(m.group(1)) <= r[2] and r[1] <= int(m.group(2)) <= r[3] for r in prot_rects)
+
+
+bad = [str(c.getName()) for c in d.getCells() if is_chain(str(c.getName())) and is_protected(str(c.getName()))]
+if bad:
+    print(json.dumps({"ok": False, "error": "chain patterns select cells inside a protected (locked, placed-and-routed) block", "cells": bad[:5]}))
+    sys.exit(2)
+
+
 # --- units: slices that hold at least one chain cell and nothing that must stay put ---------------------------------
 units, fixed_units = {}, 0
 for si in d.getSiteInsts():
@@ -50,6 +77,9 @@ for si in d.getSiteInsts():
         continue
     cells = list(si.getCells())
     if not any(is_chain(str(c.getName())) for c in cells):
+        continue
+    if any(is_protected(str(c.getName())) for c in cells):
+        fixed_units += 1                            # a slice shared with a protected cell never moves
         continue
     if any(str(c.getType()).startswith(BAD_PREFIX) for c in cells):
         fixed_units += 1
@@ -77,7 +107,7 @@ for st in SLICE_TYPES:
         c, r = xy(s)
         if abs(c - acol) <= win_c and abs(r - arow) <= win_r:
             n = str(s.getName())
-            if n not in occupied or n in mine:
+            if (n not in occupied or n in mine) and not in_protected_region(n):
                 free[st].append(s)
 site_of = {n: units[n].getSite() for n in units}
 unit_type = {n: units[n].getSiteTypeEnum() for n in units}

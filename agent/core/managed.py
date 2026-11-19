@@ -10,7 +10,10 @@ A design directory may hold a ``project.yaml`` (schema ``fda-managed-project/1``
   drops an excluded (or any) component is refused (:meth:`ManagedPolicy.check_build`).
 
 Levels: ``rtl``, ``netlist`` (EDIF or a post-synthesis checkpoint), ``placed_routed``, ``vendor_ip``, ``encrypted_ip``. Stage 1
-implements ``rtl`` and ``netlist`` imports (flow/managed_import.py); the others validate and are enforced the same way.
+implements ``rtl`` and ``netlist`` imports (flow/managed_import.py); stage 2 adds ``placed_routed`` (a routed checkpoint locked
+with ``lock_design -level routing``, always frozen, with a ``placement`` keep-out region the placement tools and the constraints
+must respect: :meth:`ManagedPolicy.check_xdc`, :meth:`ManagedPolicy.check_rw`); ``vendor_ip`` and ``encrypted_ip`` validate and are
+enforced the same way.
 
 **Ownership is enforced in :class:`agent.core.security.PathJail`**, which every file tool already goes through: the jail
 holds a :class:`ManagedPolicy` and calls it with the resolved, design-relative path (``..`` and symlinks already resolved).
@@ -52,8 +55,10 @@ MANAGED_DIR = Path("build") / "managed"
 _ID = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 _TOP_KEYS = {"schema", "name", "top", "unclaimed", "components", "approved_contract_changes"}
 _COMP_KEYS = {"name", "ownership", "level", "module", "instance", "paths", "build_sources", "netlist", "aliases", "interface",
-              "provenance", "reference_rtl", "description"}
+              "provenance", "reference_rtl", "description", "placement"}
 _PROV_KEYS = {"origin", "version", "licence", "sha256", "tests"}
+_PLACE_KEYS = {"lock", "region", "anchor", "timing_tolerance_ps"}
+_SLICE_RANGE = re.compile(r"^SLICE_X(\d+)Y(\d+):SLICE_X(\d+)Y(\d+)$")
 _DIRS = ("input", "output", "inout")
 
 
@@ -74,6 +79,7 @@ class Component:
     provenance: dict[str, Any] = field(default_factory=dict)
     reference_rtl: list[str] = field(default_factory=list)       # design-relative RTL the netlist must be equivalent to
     description: str = ""
+    placement: dict[str, Any] = field(default_factory=dict)      # placed_routed: {lock: routing, region: SLICE_XaYb:SLICE_XcYd, anchor, timing_tolerance_ps}
 
 
 @dataclass
@@ -174,9 +180,27 @@ def validate(raw: Any, design: Path | None = None) -> list[str]:
                 errs.append(f"{where}: a checkpoint import needs netlist.cell (the black-box instance it fills)")
             if not c.get("module"):
                 errs.append(f"{where}: a netlist component needs its module name")
+        if c.get("level") == "placed_routed":
+            nl, pl = c.get("netlist") or {}, c.get("placement") or {}
+            if c.get("ownership") != "frozen":
+                errs.append(f"{where}: a placed_routed component is frozen (the agent may place around a locked block, never inside it)")
+            if nl.get("format") != "checkpoint" or not nl.get("file") or not nl.get("cell"):
+                errs.append(f"{where}: a placed_routed component needs netlist: {{file, format: checkpoint, cell}} (the locked routed checkpoint)")
+            if not c.get("module") or not c.get("instance"):
+                errs.append(f"{where}: a placed_routed component needs its module and instance")
+            if pl.get("lock") != "routing":
+                errs.append(f"{where}: placement.lock must be 'routing' (lock_design -level routing)")
+            if not isinstance(pl.get("region"), str) or not _SLICE_RANGE.match(pl.get("region", "")):
+                errs.append(f"{where}: placement.region must be a slice range such as SLICE_X26Y70:SLICE_X37Y89 (the keep-out)")
+            if not isinstance(pl.get("timing_tolerance_ps", 0), int) or isinstance(pl.get("timing_tolerance_ps", 0), bool) or pl.get("timing_tolerance_ps", 0) < 0:
+                errs.append(f"{where}: placement.timing_tolerance_ps must be a whole number of picoseconds, 0 or more")
+            for k in sorted(set(pl) - _PLACE_KEYS):
+                errs.append(f"{where}: unknown placement key {k!r}")
+        elif c.get("placement") is not None:
+            errs.append(f"{where}: placement belongs to a placed_routed component")
         if c.get("level") == "rtl" and not (c.get("build_sources") or []):
             errs.append(f"{where}: an rtl component lists its build_sources so a build.yaml that drops it is refused")
-        for k in ("interface", "netlist", "provenance"):
+        for k in ("interface", "netlist", "provenance", "placement"):
             if c.get(k) is not None and not isinstance(c.get(k), dict):
                 errs.append(f"{where}: {k} must be a mapping")
         for k in ("aliases", "build_sources", "reference_rtl"):
@@ -207,7 +231,8 @@ def load(design: Path) -> Project | None:
                        module=c.get("module"), instance=c.get("instance"), build_sources=list(c.get("build_sources") or []),
                        netlist=dict(c.get("netlist") or {}), aliases=[a.lower() for a in c.get("aliases") or []],
                        interface=dict(c.get("interface") or {}), provenance=dict(c.get("provenance") or {}),
-                       reference_rtl=list(c.get("reference_rtl") or []), description=c.get("description", ""))
+                       reference_rtl=list(c.get("reference_rtl") or []), description=c.get("description", ""),
+                       placement=dict(c.get("placement") or {}))
              for c in raw["components"]]
     return Project(name=raw.get("name") or Path(design).name, top=raw["top"], components=comps, design=Path(design).resolve(),
                    unclaimed=raw.get("unclaimed", "owned"), approved_contract_changes=list(raw.get("approved_contract_changes") or []),
@@ -255,6 +280,8 @@ def sha256_file(p: Path) -> str:
 def component_hash(project: Project, comp: Component) -> str:
     """One SHA-256 over the component's files (relative name and content hash, sorted)."""
     h = hashlib.sha256()
+    raw = next((c for c in project.raw.get("components", []) if c.get("name") == comp.name), {})
+    h.update(b"manifest\0" + json.dumps(raw, sort_keys=True, default=str).encode() + b"\n")      # a changed contract, region or tolerance is new content
     for p in component_files(project, comp):
         h.update(f"{p.relative_to(project.design).as_posix()}\0{sha256_file(p)}\n".encode())
     return h.hexdigest()
@@ -266,7 +293,7 @@ def evidence_path(project: Project, comp: Component) -> Path:
 
 def write_evidence(project: Project, comp: Component, kind: str, data: dict[str, Any]) -> Path:
     """The flow records evidence here (``kind`` is ``verified`` or ``built``); the record names the content it covers."""
-    assert kind in ("verified", "built")
+    assert kind in ("verified", "built", "placement")
     f = evidence_path(project, comp)
     cur = json.loads(f.read_text()) if f.is_file() else {}
     cur[kind] = {**data, "component_sha256": component_hash(project, comp), "time": time.strftime("%Y-%m-%d %H:%M:%S")}
@@ -281,7 +308,7 @@ def provenance_gaps(project: Project, comp: Component) -> list[str]:
     for k in ("origin", "version", "licence"):
         if not prov.get(k):
             gaps.append(f"provenance.{k} is missing")
-    if comp.level == "netlist":
+    if comp.level in ("netlist", "placed_routed"):
         f = project.design / (comp.netlist.get("file") or "")
         if not f.is_file():
             gaps.append(f"netlist file {comp.netlist.get('file')!r} is missing")
@@ -303,6 +330,11 @@ def trust(project: Project, comp: Component) -> tuple[str, list[str]]:
     v = ev.get("verified") or {}
     if not (v.get("passed") is True and v.get("component_sha256") == h):
         return "documented", ["no passing own-tests evidence for the current content" if not v else "verified evidence is stale or failed"]
+    if comp.level == "placed_routed":
+        pe = ev.get("placement") or {}
+        if not (pe.get("passed") is True and pe.get("component_sha256") == h and pe.get("placements_tried") in range(2, 10_000)):
+            return "verified", ["no passing placement evidence (the block's internal timing across every placement tried) for the current content"
+                                if not pe else "placement evidence is stale, failed, or covers fewer than two placements"]
     b = ev.get("built") or {}
     if not (b.get("gates_clean") is True and b.get("component_sha256") == h):
         return "verified", ["no build in this project with every gate clean on the current content"]
@@ -407,9 +439,9 @@ def build_coverage_problems(project: Project, cfg: dict[str, Any]) -> list[str]:
     for c in project.components:
         who = "*" if c.ownership == "excluded" else c.name
         miss += [f"{s} (component {who})" for s in c.build_sources if s not in srcs]
-        if c.level == "netlist" and f"{rel}/{c.netlist.get('file') or ''}" not in nets:
+        if c.level in ("netlist", "placed_routed") and f"{rel}/{c.netlist.get('file') or ''}" not in nets:
             miss.append(f"netlist {rel}/{c.netlist.get('file')} (component {who})")
-    allowed = {f"{rel}/{c.netlist.get('file')}" for c in project.components if c.level == "netlist"}
+    allowed = {f"{rel}/{c.netlist.get('file')}" for c in project.components if c.level in ("netlist", "placed_routed")}
     miss += [f"netlist {n} is not a netlist component of project.yaml" for n in sorted(nets - allowed)]
     return miss
 
@@ -478,6 +510,9 @@ class ManagedPolicy:
                 return                                              # write_file's own artefact check reports a malformed one
             self.check_build(cfg)
             return
+        if rel.lower().endswith((".xdc", ".tcl")) or self._is_listed_constraint(rel):
+            self.check_xdc(rel, content)
+            return
         c = self.classify(rel)
         if c is None or c.ownership != "owned" or not c.module or not c.interface.get("ports"):
             return
@@ -503,9 +538,96 @@ class ManagedPolicy:
     def check_build(self, cfg: dict[str, Any]) -> None:
         """The whole design is always built: every component's sources (or netlist) must be in build.yaml, excluded or not."""
         miss = build_coverage_problems(self.project, cfg)
+        if cfg.get("top") != self.project.top:
+            miss.append(f"top {self.project.top!r} (build.yaml names {cfg.get('top')!r})")
+        rel = f"{self.project.design.parent.name}/{self.project.design.name}"
+        have = {str(n.get("file")): n for n in cfg.get("netlists") or [] if isinstance(n, dict)}
+        for c in self.project.components:
+            if c.level in ("netlist", "placed_routed"):
+                n = have.get(f"{rel}/{c.netlist.get('file')}")
+                if n is not None and (n.get("format") != c.netlist.get("format") or n.get("cell") != c.netlist.get("cell")):
+                    miss.append(f"netlist {c.netlist.get('file')} with format {c.netlist.get('format')!r} and cell {c.netlist.get('cell')!r} (component {c.name})")
+        for f in cfg.get("constraints") or []:                 # a constraints file under any name is checked against the keep-outs
+            p = self.project.design.parent.parent / str(f)
+            if p.is_file() and p.resolve().is_relative_to(self.project.design):
+                self.check_xdc(p.relative_to(self.project.design).as_posix(), p.read_text(errors="replace"), force=True)
         if miss:
             self._refuse("build.yaml must still build every component: missing " + ", ".join(miss) +
                          " (excluded or frozen parts are part of the build and the sign-off)", "managed-build")
+
+    # -- placed-and-routed components (stage 2): the keep-out region and the placement tools
+    def keepouts(self) -> list[tuple[Component, tuple[int, int, int, int]]]:
+        """Each placed_routed component with its keep-out rectangle (slice columns and rows, inclusive)."""
+        return [(c, slice_rect(c.placement["region"])) for c in self.project.components if c.level == "placed_routed" and c.placement.get("region")]
+
+    def check_xdc(self, rel: str, content: str, force: bool = False) -> None:
+        """A constraints file (``.xdc``) the agent writes may not place anything inside a placed-and-routed component's keep-out region or
+        constrain its cells: a pblock slice range overlapping the region, a ``LOC`` on a slice inside it, or a placement property
+        (``LOC``, ``BEL``, ``PBLOCK``, ``IS_*_FIXED``, ``FIXED_ROUTE``, ``DONT_TOUCH``) or ``add_cells_to_pblock`` on a cell of its instance. Timing
+        exceptions are not placement and are not checked here. Clock-region pblocks are not evaluated (a documented gap): Vivado
+        itself cannot move a locked cell."""
+        ko = self.keepouts()
+        if not ko or not (force or rel.lower().endswith((".xdc", ".tcl")) or self._is_listed_constraint(rel)):
+            return
+        text = re.sub(r"\\\n", " ", content)
+        for raw in re.split(r"[\n;]", text):
+            line = raw.split("#", 1)[0].strip()
+            if not line:
+                continue
+            for c, rect in ko:
+                inst = c.instance or ""
+                low = line.lower()
+                names_inst = bool(re.search(rf"(?<![a-z0-9_$]){re.escape(inst.lower())}(?![a-z0-9_$])", low))
+                for tok in re.findall(r"[^\s\[\]{}]+", low):        # a wildcard pattern that could select the instance's cells or nets
+                    if any(ch in tok for ch in "*?") and any(fnmatch.fnmatchcase(pr, tok) for pr in (inst.lower(), inst.lower() + "/x", inst.lower() + "/a/b")):
+                        names_inst = True
+                places = bool(re.search(r"\b(loc|bel|pblock|is_loc_fixed|is_bel_fixed|is_route_fixed|fixed_route|route|dont_touch|lock_pins)\b|add_cells_to_pblock|"
+                                        r"resize_pblock|unplace_cell|place_cell|reset_property", low))
+                captured = names_inst and bool(re.match(r"set\s+\w+\s+\[?\s*get_(cells|nets)", low))      # a variable holding the block's objects
+                if names_inst and (places or captured):
+                    self._refuse(f"{rel}: {line[:100]!r} constrains the placement of {c.name!r}, a placed-and-routed block that is locked: "
+                                 f"place around it, never inside it", "managed-keepout")
+                if re.search(r"\bresize_pblock\b|\bLOC\b", line, re.I):
+                    for m in re.finditer(r"SLICE_X(\d+)Y(\d+)(?::SLICE_X(\d+)Y(\d+))?", line, re.I):
+                        x0, y0 = int(m.group(1)), int(m.group(2))
+                        x1, y1 = int(m.group(3) or x0), int(m.group(4) or y0)
+                        if rects_overlap((min(x0, x1), min(y0, y1), max(x0, x1), max(y0, y1)), rect):
+                            self._refuse(f"{rel}: {m.group(0)} overlaps the keep-out region {c.placement['region']} of {c.name!r} (a locked "
+                                         f"placed-and-routed block): place around it, never inside it", "managed-keepout")
+
+    def _is_listed_constraint(self, rel: str) -> bool:
+        f = self.project.design / "build.yaml"
+        try:
+            cfg = yaml.safe_load(f.read_text()) or {}
+        except (OSError, yaml.YAMLError):
+            return False
+        base = f"{self.project.design.parent.name}/{self.project.design.name}/"
+        return any(str(x) in (rel, base + rel) for x in cfg.get("constraints") or [])
+
+    def check_rw(self, tool: str, args: dict[str, Any]) -> None:
+        """The RapidWright tools' arguments against the placed-and-routed components: no cell pattern or net name that selects a cell or net
+        inside one, no whole-design RWRoute (it may re-route locked nets). ``rw_relocate_block`` is checked in the tool (it moves a block as a whole)."""
+        for c, _ in self.keepouts():
+            inst = c.instance or ""
+            if tool == "rw_place_chain":
+                for pat in args.get("cells") or []:
+                    if any(fnmatch.fnmatchcase(probe, pat) for probe in (inst, f"{inst}/x", f"{inst}/a/b", f"{inst}/x_reg[0]")) or pat.startswith(inst + "/"):
+                        self._refuse(f"cell pattern {pat!r} could select cells inside {c.name!r} ({inst}), a locked placed-and-routed block: "
+                                     f"name the owned cells explicitly", "managed-keepout")
+            elif tool == "rw_route":
+                if args.get("mode") == "full":
+                    self._refuse(f"rw_route mode full may re-route the locked nets of {c.name!r}: use mode nets on owned nets, or Vivado's router "
+                                 f"(rw_referee route=true), which keeps locked routing", "managed-keepout")
+                owned = [(o.instance or "") + "/" for o in self.project.owned() if o.instance]
+                for n in args.get("nets") or []:
+                    if n == inst or n.startswith(inst + "/"):
+                        self._refuse(f"net {n!r} is inside {c.name!r} ({inst}), a locked placed-and-routed block", "managed-keepout")
+                    if not any(n.startswith(o) for o in owned):       # a boundary net (clk, a port net) has pins inside the block: unrouting it could free its nodes
+                        self._refuse(f"net {n!r} is not under an owned component's instance: it may have pins inside {c.name!r} (a locked block), "
+                                     f"so it is not re-routed here", "managed-keepout")
+
+    def placed_by_file(self, rel: str) -> Component | None:
+        return next((c for c in self.project.components if c.level == "placed_routed" and c.netlist.get("file") == rel), None)
 
     # -- the filtered view the agent reads as project.yaml
     def agent_view(self) -> str:
@@ -571,6 +693,19 @@ class ManagedPolicy:
 
 
 # --- interface contracts ------------------------------------------------------------------------------------------
+
+def slice_rect(text: str) -> tuple[int, int, int, int]:
+    """``SLICE_X26Y70:SLICE_X37Y89`` as (x0, y0, x1, y1)."""
+    m = _SLICE_RANGE.match(text)
+    if not m:
+        raise ValueError(f"not a slice range: {text!r}")
+    x0, y0, x1, y1 = (int(v) for v in m.groups())
+    return (min(x0, x1), min(y0, y1), max(x0, x1), max(y0, y1))
+
+
+def rects_overlap(a: tuple[int, int, int, int], b: tuple[int, int, int, int]) -> bool:
+    return a[0] <= b[2] and b[0] <= a[2] and a[1] <= b[3] and b[1] <= a[3]
+
 
 def _eval_width(expr: str, params: dict[str, int]) -> int | None:
     try:

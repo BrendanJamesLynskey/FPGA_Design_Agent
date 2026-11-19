@@ -1,0 +1,139 @@
+# project.yaml: the managed-project manifest of this design (brief 102, stage 2; schema in agent/core/managed.py). Ownership, scope and
+# contracts are the owner's: the agent cannot write this file. Trust labels are computed from evidence files, never written here.
+schema: fda-managed-project/1
+name: b102_managed_pr
+top: pr_top
+unclaimed: owned
+components:
+- name: top
+  ownership: owned
+  level: rtl
+  module: pr_top
+  paths:
+  - rtl/pr_top.sv
+  - design.xdc
+  build_sources:
+  - designs/b102_managed_pr/rtl/pr_top.sv
+  aliases:
+  - top
+  - led
+  - leds
+  - reset
+  - constraints
+  description: 'top level: power-on reset, the LEDs, the wiring of the three blocks below, and the constraints file'
+- name: src
+  ownership: owned
+  level: rtl
+  module: pr_src
+  instance: u_src
+  paths:
+  - rtl/pr_src.sv
+  build_sources:
+  - designs/b102_managed_pr/rtl/pr_src.sv
+  aliases:
+  - stimulus
+  - lfsr
+  - source
+  description: the LFSR that feeds the placed-and-routed block's serial input
+  interface:
+    ports:
+    - name: clk
+      dir: input
+      width: 1
+    - name: rst
+      dir: input
+      width: 1
+    - name: bit_o
+      dir: output
+      width: 1
+- name: sink
+  ownership: owned
+  level: rtl
+  module: pr_sink
+  instance: u_sink
+  paths:
+  - rtl/pr_sink.sv
+  build_sources:
+  - designs/b102_managed_pr/rtl/pr_sink.sv
+  aliases:
+  - consumer
+  - counter
+  - blink
+  description: the consumer of the block's serial output (a registered copy and a count of ones) and the LED drivers
+  interface:
+    ports:
+    - name: clk
+      dir: input
+      width: 1
+    - name: rst
+      dir: input
+      width: 1
+    - name: d_i
+      dir: input
+      width: 1
+    - name: led
+      dir: output
+      width: 2
+- name: blk
+  ownership: frozen
+  level: placed_routed
+  module: pcs_unit
+  instance: u_blk
+  paths:
+  - ext/**
+  build_sources:
+  - designs/b102_managed_pr/ext/pcs_unit.sv
+  netlist:
+    file: ext/pcs_unit_p0.dcp
+    format: checkpoint
+    cell: u_blk
+  reference_rtl:
+  - ext/reference/b96_pkg.sv
+  - ext/reference/pcs_tx.sv
+  - ext/reference/pcs_unit.sv
+  placement:
+    lock: routing
+    region: SLICE_X26Y70:SLICE_X37Y91
+    anchor: SLICE_X29Y80
+    timing_tolerance_ps: 0
+  aliases:
+  - block
+  - pcs
+  - encoder
+  - scrambler
+  - gearbox
+  description: brief 96's 64b/66b PCS transmit path between a shift-register source and an XOR sink, delivered as a placed, routed and locked checkpoint
+  interface:
+    ports:
+    - name: clk
+      dir: input
+      width: 1
+    - name: rst
+      dir: input
+      width: 1
+    - name: din
+      dir: input
+      width: 1
+    - name: dout
+      dir: output
+      width: 1
+    clocks:
+    - name: clk_25
+      port: clk
+    resets:
+    - port: rst
+      active: high
+      sync: true
+    timing_budgets:
+    - name: block_to_sink
+      dir: out
+      max_ns: 3.0
+    - name: src_to_block
+      dir: in
+      max_ns: 3.0
+  provenance:
+    origin: Vivado 2026.1 out-of-context implementation of ext/reference/pcs_unit.sv in the pblock SLICE_X26Y70:SLICE_X37Y89 at 4.0 ns,
+      locked with lock_design -level routing, run by designs/b102_managed_pr/scripts/produce_block.sh outside the project build (ext/PRODUCED.txt)
+    version: '1.0'
+    licence: MIT (this repository's licence; the supplier's source is ext/reference/)
+    sha256: 71ca7f7bcd4ce6bc2dcca691d5a329beb2e566acb72858efb19a9c40a529b452

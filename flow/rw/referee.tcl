@@ -1,5 +1,6 @@
 # referee.tcl: Vivado's verdict on a checkpoint (brief 100). Vivado's timing analysis is the referee; nothing else is used to claim closure.
 #   B100_IN_DCP, B100_OUT (prefix), B100_ROUTE (1: run route_design first, which completes or repairs the routing and checks it),
+#   B100_WRITE_DCP (1: write the checkpoint after routing to <out>_routed.dcp; brief 102 reads a managed block's routing back from it),
 #   B100_PERIOD (only for a design with no clock), B100_BITSTREAM (1: write_bitstream to <out>.bit)
 source [file join [file dirname [info script]] common.tcl]
 b100_threads
@@ -11,6 +12,7 @@ set_property SEVERITY {Warning} [get_drc_checks {NSTD-1 UCIO-1}]
 if {[env_or B100_ROUTE 0] eq "1"} {
     route_design
     lap route
+    if {[env_or B100_WRITE_DCP 0] eq "1"} { write_checkpoint -force ${out}_routed.dcp }
 }
 report_route_status -file ${out}_route_status.rpt
 report_timing -setup -max_paths 10 -nworst 1 -file ${out}_timing.rpt
