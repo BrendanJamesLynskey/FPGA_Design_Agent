@@ -206,7 +206,7 @@ def crc32_model(vectors: list[tuple[int, int, int, int]], width: int = 16) -> li
     return out
 
 
-def simulate_crc_netlist(flat_v: Path, top: str, work: Path, width: int = 16) -> dict[str, Any]:
+def simulate_crc_netlist(flat_v: Path | list[Path], top: str, work: Path, width: int = 16) -> dict[str, Any]:
     """Simulate a CRC32 block netlist (ports clk, rst, init, en, d[width-1:0], crc[31:0]) with Icarus against the reference model."""
     work.mkdir(parents=True, exist_ok=True)
     vec = _sim_vectors(width)
@@ -220,7 +220,7 @@ def simulate_crc_netlist(flat_v: Path, top: str, work: Path, width: int = 16) ->
     tb += [f"    step({r}, {i}, {e}, {width}'h{d:0{hx}x}, 32'h{x:08x});" for (r, i, e, d), x in zip(vec, exp)]
     tb += ["    $display(\"RESULT bad=%0d of %0d\", bad, " + str(len(vec)) + "); $finish;", "  end", "endmodule"]
     (work / "tb.sv").write_text("\n".join(tb) + "\n")
-    c = subprocess.run(["iverilog", "-g2012", "-o", str(work / "sim.vvp"), str(work / "tb.sv"), str(flat_v)], capture_output=True, text=True)
+    c = subprocess.run(["iverilog", "-g2012", "-o", str(work / "sim.vvp"), str(work / "tb.sv"), *[str(f) for f in (flat_v if isinstance(flat_v, list) else [flat_v])]], capture_output=True, text=True)
     if c.returncode:
         return {"passed": False, "error": c.stderr[-300:]}
     r = subprocess.run(["vvp", str(work / "sim.vvp")], capture_output=True, text=True, timeout=300)

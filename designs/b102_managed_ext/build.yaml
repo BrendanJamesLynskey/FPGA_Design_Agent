@@ -1,0 +1,13 @@
+# How flow/run_vivado.sh builds this design (paths are relative to the repo root). The LFSR block is third-party RTL, vendored
+# unmodified (third_party/verilog-ethernet/lfsr.v); the adapter, the sequencer and the top are ours.
+top: fcs_top
+part: xck26-sfvc784-2LV-c
+board: kr260           # boards/kr260/board.yaml
+sources:
+  - designs/b102_managed_ext/third_party/verilog-ethernet/lfsr.v
+  - designs/b102_managed_ext/rtl/crc32_d16.sv
+  - designs/b102_managed_ext/rtl/fcs_ctrl.sv
+  - designs/b102_managed_ext/rtl/fcs_top.sv
+constraints:
+  - designs/b102_managed_ext/design.xdc
+generics: {}           # BUILD_STAMP is added by the flow

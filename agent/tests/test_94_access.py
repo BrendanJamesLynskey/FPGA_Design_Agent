@@ -128,6 +128,7 @@ NOT_RUNNING_THE_AGENT = {
     "tools/vhdl_translate.py": "translator", "benchmark/drills/lib/grade_io.py": "grader", "benchmark/drills/lib/grade_constraints.py": "grader",
     "tools/board_smoke.py": "writes a smoke design from a board file through the constraints writer; no model, no tools (brief 95)",
     "flow/managed_import.py": "import checks of a managed project's netlists (brief 102); no model, no tools",
+    "flow/managed_rtl_import.py": "import checks of a managed project's third-party RTL blocks (brief 102 stage 3); no model, no tools",
     "flow/managed_placed.py": "import check and placement evidence of a managed project's placed-and-routed block (brief 102, stage 2); no model, no tools",
     "flow/prepare.py": "writes a build directory's Tcl; reads the managed-project manifest only to check build coverage (brief 102)",
     "site/export.py": "site build", "site/build.py": "site build", "agent/tests/test_mcp.py": "a test module",

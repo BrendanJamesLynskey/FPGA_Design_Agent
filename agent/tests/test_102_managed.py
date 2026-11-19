@@ -244,7 +244,7 @@ def test_the_build_gates_never_consult_the_policy():
     managed code it runs is the coverage check, which demands MORE of build.yaml, never less."""
     root = Path(__file__).resolve().parents[2]
     for f in list((root / "flow").glob("*.py")) + list((root / "flow").glob("*.tcl")):
-        if f.name == "managed_import.py":                    # the import tool, not the build path
+        if f.name in ("managed_import.py", "managed_rtl_import.py"):                    # the import tool, not the build path
             continue
         t = f.read_text()
         assert "ManagedPolicy" not in t and "ownership" not in t.lower().replace("ownership of", ""), f

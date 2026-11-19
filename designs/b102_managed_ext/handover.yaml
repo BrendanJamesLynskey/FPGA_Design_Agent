@@ -1,0 +1,212 @@
+# Brief 68 handover: the facts behind README.md and AGENT.md (docs/documentation_standard.md).
+# Measurement values and every sha256 are filled from the records by `python -m flow.handover fill`;
+# do not type them. Render with `python -m flow.handover write <this directory>`.
+schema: fda-handover/1
+id: b102_managed_ext
+title: Managed-project stage 3 - an FCS self-test around a frozen third-party LFSR block
+kind: demonstration
+produced_by: human
+summary: A KR260 self-test of an Ethernet FCS stage that integrates one real third-party block under a managed project (brief
+  102, stage 3). Alex Forencich's parallel CRC/LFSR (verilog-ethernet, MIT, commit 77320a9471d1) is vendored unmodified
+  and frozen; our adapter (owned) adds the register, the restart and the enable around it; an owned sequencer sends a fixed
+  sixteen-word frame and shows the verdict on an LED. project.yaml records the licence, the commit and the hash of every
+  file of theirs, and the agent's tools refuse every route to edit them.
+scope_not:
+- a 10G Ethernet FCS check; the block is instantiated at 16 data bits a clock, not the 64-bit word of the 96 design
+- a board design; it was not programmed, and the 161 MHz clock constraint is on the 25 MHz oscillator pin for a timing study
+target:
+  part: xck26-sfvc784-2LV-c
+  board: Kria KR260
+  top: fcs_top
+  tool: Vivado 2026.1
+clocks:
+- name: clk_25
+  mhz: 161.13
+  source: designs/b102_managed_fcs/design.xdc
+  note: the oscillator pin is 25 MHz on the board; the constraint is the 10G datapath rate to ask the real question of the
+    CRC block
+resets:
+- name: power-on counter
+  active: high
+  note: a four-clock shift register in fcs_top holds every block in synchronous reset after configuration; there is no reset
+    input
+interfaces:
+- name: lfsr block
+  type: third-party combinational RTL module (data_in, state_in, data_out, state_out) at LFSR_WIDTH 32, DATA_WIDTH 16
+  doc: designs/b102_managed_ext/project.yaml
+  note: the contract is in project.yaml; behaviour a user could guess wrong is in the header of rtl/crc32_d16.sv (register
+    not complement, little-endian words, hold on en low, reset wins) and in the block's own header (CRC32 = Galois, bit-reverse,
+    polynomial 04C11DB7, initial FFFFFFFF)
+parameters:
+- name: N_WORDS
+  value: 16
+  legal: at least 1; the sequencer counter is sized from it and the word function takes an eight-bit index
+  note: words per frame, two bytes each
+- name: EXPECT
+  value: '0x79D3D43A'
+  legal: the CRC register value of the frame, from flow/managed_import.crc32_model
+  note: checked against zlib in designs/b102_managed_fcs/tests/test_b102_fcs.py
+files:
+- path: designs/b102_managed_ext/project.yaml
+  what: 'the managed-project manifest: ownership, contracts and the third-party provenance of the four components'
+  sha256: 5071ecb805cd2b3ed7094469e1baf2cd45a886f023869eb1b7afc139ec5ad2a2
+- path: designs/b102_managed_ext/rtl/fcs_top.sv
+  what: top level, power-on reset and the LEDs (ours)
+  sha256: 7665c80db9f68b81fd3a7cd702c9855a756863ddc9ebc40a2abcde06f0e0c1d2
+- path: designs/b102_managed_ext/rtl/fcs_ctrl.sv
+  what: the owned sequencer and FCS verdict (ours)
+  sha256: 2e11253b3f3351a8772a0fe5121044c4861e47f30b1788f34aef786c1d2e8bbb
+- path: designs/b102_managed_ext/rtl/crc32_d16.sv
+  what: the CRC adapter around the third-party block (ours)
+  sha256: 441eb31ce2c35282194efa8032e056b1c776370c3438a1a2e1c3e94460c324f5
+- path: designs/b102_managed_ext/third_party/verilog-ethernet/lfsr.v
+  what: the third-party block, unmodified (theirs, MIT)
+  sha256: 5502c8203b0dfc7246c1a2de93e60c199ded3c1d7840b106350d714f72a9a079
+- path: designs/b102_managed_ext/third_party/verilog-ethernet/COPYING
+  what: its licence text (theirs)
+  sha256: 8ea57f95365e9b16a5b516f422b71269183a1ae53bab5878ae6d69039e58fe77
+- path: designs/b102_managed_ext/reference/crc32_d16.sv
+  what: our own specification of the adapter, written without the block (not in the build)
+  sha256: b240398dd1e29a0b68be2bc144467d8da7ea7c8ef022f7ce8127c1b25a317ee1
+- path: designs/b102_managed_ext/build.yaml
+  what: how flow/run_vivado.sh builds the design
+  sha256: 532bcd6ade97e538c136a42a64b2e04725f8e7aa72e541d97a6f053b7aaf81aa
+commands:
+- what: import checks (provenance, upstream comparison, interface, simulation, planted fault, optional eqy); needs the OSS
+    CAD Suite and a clone of the upstream
+  cmd: python3 flow/managed_rtl_import.py check designs/b102_managed_ext --upstream <clone of verilog-ethernet>
+  heavy: false
+  minutes: 1
+  needs: Icarus Verilog and git; eqy needs the OSS CAD Suite (FDA_OSS_CAD)
+- what: 'the scripted agent session on a scratch copy (run under pytest: the in-process access-gate bypass applies)'
+  cmd: FDA_102_RECORD=1 python3 -m pytest -q flow/tests/test_102_stage3.py -k scripted
+  heavy: false
+  minutes: 1
+  needs: Python with PyYAML and jsonschema; Icarus Verilog
+- what: build and run the gates
+  cmd: flow/run_vivado.sh designs/b102_managed_ext base
+  heavy: true
+  minutes: 5
+  needs: local Vivado 2026.1 and a heavy slot (take_heavy_slot.sh)
+evidence:
+- id: E1
+  activity: simulation
+  result: pass
+  how: ci
+  what: provenance gaps, the licence rule, the tools refusing every route to the vendored block, the import checks and the
+    scripted session
+  record: flow/tests/test_102_stage3.py
+  sha256: 13b5a87cf39ee1f348e47782655178731e4de755ebd76f3ea59c4011e17f4490
+- id: E2
+  activity: simulation
+  result: pass
+  what: each vendored file equals the recorded hash and the bytes at the upstream commit; the block matches a CRC-32 step
+    model on 2,000 random vectors at each of 8, 16, 32 and 64 data bits; the adapter plus the block matches the register
+    model; a planted fault in a copy of the block fails both
+  record: results/102_stage3/import_check.json
+  sha256: ce5b4e0c7afc12fc835cb2ecf35e664bc6e2c2e1ec587d82bb3fca70171cb61a
+- id: E3
+  activity: review
+  result: pass
+  what: the scripted session edits only the owned controller; its attempts on the vendored files, an out-of-scope file,
+    the manifest and a build.yaml that drops the block are refused
+  record: results/102_stage3/demo_session.json
+  sha256: 33a2ba1fa6f628f65fc6a3b2adf76b74611384bd3c8f0b27884799769477e44c
+- id: E4
+  activity: build
+  result: pass
+  what: the build passes every gate on Vivado 2026.1 with the third-party block compiled in; the boundary CDC check finds
+    no row on the adapter
+  record: results/102_stage3/boundary.json
+  sha256: 387f78e2866d358e7ba83b166945c9e70b548611c1331f0c4eec1376f73bda2a
+measurements:
+- id: M1
+  what: LUTs, whole design including the third-party block
+  category: resources
+  key: lut
+  unit: LUT
+  record: results/102_stage3/builds.json
+  field: build.lut
+  conditions: routed build, Vivado 2026.1, xck26-sfvc784-2LV-c
+  value: 64
+  sha256: 9061eb9dc432a2875dacb08907b75e1e4a738eb6a1eeed8201b4e0379f143ea0
+- id: M2
+  what: flip-flops, whole design
+  category: resources
+  key: ff
+  unit: FF
+  record: results/102_stage3/builds.json
+  field: build.ff
+  conditions: routed build, Vivado 2026.1
+  value: 49
+  sha256: 9061eb9dc432a2875dacb08907b75e1e4a738eb6a1eeed8201b4e0379f143ea0
+- id: M3
+  what: worst setup slack at the 6.206 ns clock
+  category: timing
+  key: wns_ns
+  unit: ns
+  record: results/102_stage3/builds.json
+  field: build.wns_ns
+  conditions: routed, 161.13 MHz constraint on the 25 MHz pin
+  value: 4.467
+  sha256: 9061eb9dc432a2875dacb08907b75e1e4a738eb6a1eeed8201b4e0379f143ea0
+- id: M4
+  what: worst hold slack
+  category: timing
+  key: whs_ns
+  unit: ns
+  record: results/102_stage3/builds.json
+  field: build.whs_ns
+  conditions: routed, 6.206 ns clock
+  value: 0.062
+  sha256: 9061eb9dc432a2875dacb08907b75e1e4a738eb6a1eeed8201b4e0379f143ea0
+- id: M5
+  what: total on-chip power estimate
+  category: power
+  key: power_w
+  unit: W
+  record: results/102_stage3/builds.json
+  field: build.power_w
+  conditions: report_power after routing, vectorless, never run on a board
+  value: 0.336
+  sha256: 9061eb9dc432a2875dacb08907b75e1e4a738eb6a1eeed8201b4e0379f143ea0
+gaps:
+- about: power
+  text: The estimate is vectorless at default toggle rates; this is a timing study that was never run on a board, so no
+    power measurement is claimed.
+- about: throughput
+  text: Not applicable beyond the clock; the block takes two bytes a clock by construction and no throughput measurement
+    was made.
+- about: width
+  text: The block is instantiated at sixteen data bits; the 10G design uses sixty-four. The block alone is simulated at
+    8, 16, 32 and 64 bits against a model, but only the 16-bit instance is built.
+- about: board
+  text: Never programmed; no hardware evidence and no operating conditions exist.
+- about: behaviour
+  text: The design has no reset input and one fixed frame; the verdict LED is sticky until the next configuration.
+- about: upstream tests
+  text: 'The block''s upstream tests (MyHDL co-simulations of the Ethernet modules that use it) were not run: they need
+    MyHDL''s Icarus plug-in built from source, which was not approved here.'
+- about: latency
+  text: Not measured on this design; the stage 1 demonstration measured the verdict latency, and the scripted session records
+    only that the controller edit saves one clock in simulation (results/102_stage3/demo_session.json).
+next_steps:
+- A model-driven run on this managed project (the scripted session tests the rules, not a model).
+- The recorded-demo intake (docs/demo_intake.md) can use the same provenance fields for a requester's block.
+open_questions: []
+history:
+- date: '2026-11-19'
+  brief: '102'
+  note: written for stage 3 of the managed-project brief
+numbers_allow:
+- token: '161'
+  reason: the 10G datapath clock, 161.13 MHz, from designs/b96_kr260_10g/design.xdc (a 6.206 ns period constraint here)
+state:
+  stage: built
+  gates:
+    import_checks: pass
+    build_2026_1: pass
+    boundary_checks: pass
+  vivado: '2026.1'
+  kb_pin: 93d158c
+  build_id: 19e88489

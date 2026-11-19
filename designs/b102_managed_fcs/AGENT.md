@@ -9,7 +9,7 @@ A KR260 self-test of an Ethernet FCS stage that exists to demonstrate a managed 
 not: a 10G Ethernet FCS check; the CRC block takes sixteen bits a clock, not the 64-bit word of the 96 design, because the open equivalence engines could not prove 64 bits; a board design; it was not programmed, and the 161 MHz clock constraint is on the 25 MHz oscillator pin for a timing study
 
 ## state
-stage=built vivado=2026.1 kb_pin=93d158c build_id=d2f6ac31
+stage=built vivado=2026.1 kb_pin=93d158c build_id=cfb6de5f
 gates: import_checks=pass build_2026_1=pass boundary_checks=pass
 
 ## interface
@@ -33,7 +33,7 @@ the scripted agent session on a scratch copy (~1min): python3 designs/b102_manag
 [heavy] build and run the gates (~12min): flow/run_vivado.sh designs/b102_managed_fcs base
 
 ## records (path sha256-prefix; claims below cite R<n>)
-R1 agent/tests/test_102_managed.py 0b0e99cc9f
+R1 agent/tests/test_102_managed.py 540212c810
 R2 results/102_managed/import_check.json a76aed2d1e
 R3 results/102_managed/eqy_fault.json 547b2e0178
 R4 results/102_managed/demo_session.json a8da549f48
