@@ -275,3 +275,14 @@ def test_a_status_of_any_kind_makes_a_board_unconfirmed(tmp_path: Path) -> None:
         assert CG.board_config("x", tmp_path)["confirmed"] is False
     (b / "board.yaml").write_text(yaml.safe_dump({"config": {"cfgbvs": "VCCO", "config_voltage": 3.3, "source": ["XDC"]}}))
     assert CG.board_config("x", tmp_path)["confirmed"] is True
+
+
+def test_the_real_vivado_report_of_the_probe_without_the_property() -> None:
+    """results/105A_constraint_gates/reports/probe_b/drc.rpt is Vivado 2026.1's own report_drc on the Nexys Video smoke design with the two
+    lines missing: CFGBVS-1 is a Warning, so drc_clean passes; the rule fails it for the confirmed board and leaves an unconfirmed one."""
+    rows = gates.parse_rule_table((ROOT / "results/105A_constraint_gates/reports/probe_b/drc.rpt").read_text())
+    assert [(r["rule"], r["severity"]) for r in rows] == [("CFGBVS-1", "Warning")]
+    assert CG.cfgbvs_verdict(rows, CG.board_config(CONFIRMED))["ok"] is False
+    assert CG.cfgbvs_verdict(rows, CG.board_config(UNCONFIRMED))["ok"] is True
+    clean = gates.parse_rule_table((ROOT / "results/105A_constraint_gates/reports/probe_a/drc.rpt").read_text())
+    assert clean == [] and CG.cfgbvs_verdict(clean, CG.board_config(CONFIRMED))["ok"] is True
