@@ -27,6 +27,15 @@ from agent.core.boards import board_arg, board_name
 from agent.core.session import ROOT
 
 
+def with_scope(s: dict, design: Path) -> dict:
+    """Brief 102: the request's scope (build/managed/scope.json of the run's design copy) is part of the run record, summary.json."""
+    f = Path(design) / "build" / "managed" / "scope.json"
+    if f.is_file():
+        sc = json.loads(f.read_text())
+        s = {**s, "scope": {k: sc[k] for k in ("components", "source", "request", "note", "plan", "time") if k in sc}}
+    return s
+
+
 def _drive(graph, rt, cfg_lg, first_input, replies: list) -> dict:
     from langgraph.types import Command
 
@@ -48,7 +57,8 @@ def _drive(graph, rt, cfg_lg, first_input, replies: list) -> dict:
         s = {**json.loads((rt.run_dir / "summary.json").read_text()), "doc": snap.values["doc"]}
     else:
         s = summary(rt, snap.values)
-        (rt.run_dir / "summary.json").write_text(json.dumps(s, indent=1))
+    s = with_scope(s, Path(rt.design))
+    (rt.run_dir / "summary.json").write_text(json.dumps(s, indent=1))
     print(json.dumps(s, indent=1))
     return s
 
@@ -191,6 +201,16 @@ def pickup_cmd(a) -> int:
         return 2
     report["entry"] = {"stage": entry["stage"], "kind": entry["kind"], "notes": entry.get("notes") or [],
                        "reasons": [{"stage": s, "why": w} for s, w in entry["reasons"]]}
+    scope = None
+    from agent.core import managed
+    mproj = managed.load(ddir)
+    if mproj is not None:                            # brief 102: a managed project: the request is scoped (--scope or resolved from the text)
+        res = managed.resolve_request(mproj, a.change or "", [x for x in (a.scope or "").split(",") if x] or None)
+        if res.question or res.scope is None:
+            print(json.dumps({**report, "resume": "refused: " + (res.question or "the request names no component"), "question": res.question}, indent=1))
+            return 2
+        scope = res.scope
+        report["scope"] = {**scope.as_dict(), "notes": res.notes}
     if a.dry_run or entry["stage"] >= pickup.DOC_ONLY:
         report["resume"] = "dry run" if a.dry_run else "nothing to re-run: the handover is current"
         print(json.dumps(report, indent=1))
@@ -214,6 +234,8 @@ def pickup_cmd(a) -> int:
         print(f"resume: {e}", file=sys.stderr)
         return 2
     report["run_id"] = rt.run_id
+    if scope is not None:                            # the scope and the plan go to the run's design copy, where its tools read them
+        managed.start_run(managed.load(Path(rt.design)), scope)
     (rt.run_dir / "resume.json").write_text(json.dumps(report, indent=1))
     print(json.dumps(report, indent=1))
     replies = json.loads(a.replies.read_text()) if a.replies else []
@@ -325,6 +347,8 @@ def main(argv: list[str] | None = None) -> int:
                     help="design resume: the change's class, instead of the keyword classifier")
     rs.add_argument("--from-stage", type=int, help="design resume: enter at this stage, overriding the rule")
     rs.add_argument("--dry-run", action="store_true", help="design resume: report the freshness and the entry stage only")
+    rs.add_argument("--scope", help="design resume of a managed project: the components or hierarchy paths this request may touch "
+                                    "(comma separated; default: resolved from the change text, else every owned component)")
     rs.add_argument("--stop-after", type=int)
     rs.add_argument("--board", type=board_name, help="design resume: default the handover's target.board when it names a board directory")
     rs.add_argument("--model", default="openai/gpt-6-luna")

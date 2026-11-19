@@ -60,6 +60,9 @@ lists the level it arrives at (RTL or an externally made netlist) and its interf
 not in a prompt; excluded parts are hidden from the agent and still built and signed off; an imported netlist is checked (interface, licence, simulation, `eqy`
 against the supplier's RTL, boundary CDC and timing budgets) and given a trust label computed from evidence: [docs/managed_projects.md](docs/managed_projects.md),
 the demonstration [designs/b102_managed_fcs](designs/b102_managed_fcs/README.md) and [results/102_managed](results/102_managed/README.md).
+Stage 2 adds a block that arrives already placed, routed and locked (`level: placed_routed`): a keep-out region its owners' constraints and the RapidWright tools must respect,
+an import check of the lock and the footprint, and placement evidence (the block relocated by RapidWright and re-placed around, its internal interconnect delays compared, in picoseconds,
+with Vivado as the referee): the demonstration [designs/b102_managed_pr](designs/b102_managed_pr/README.md) and [results/102_managed_pr](results/102_managed_pr/README.md).
 A portfolio pack (title, facts with their sources, stills and a short animation) is in [site/portfolio/](site/portfolio/README.md).
 
 ## The flow

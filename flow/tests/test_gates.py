@@ -285,3 +285,34 @@ def test_qor_unavailable_on_the_basic_licence_tier(tmp_path: Path) -> None:
     r = gates.evaluate(d)
     assert "post_route_qor_assessment" not in r["gates"] and r["pass"]
     assert r["stages"]["post_route"]["qor_assessment"]["available"] is False
+
+
+# --- brief 102 stage 2: a placed-and-routed block imported into a cell -------------------------------------------------------------------
+
+RTSTAT = ("""
++----------+------------------+-------------------------------+--------+
+| Rule     | Severity         | Description                   | Checks |
++----------+------------------+-------------------------------+--------+
+| RTSTAT-2 | Critical Warning | Partially routed nets         | 1      |
+| RTSTAT-3 | Critical Warning | Unplaced terminals on nets    | 1      |
+| RTSTAT-9 | Critical Warning | Partially routed physical-only nets | 1 |
+%s+----------+------------------+-------------------------------+--------+
+""")
+
+
+def _routed_import_build(tmp_path: Path, extra_rows: str = "", imported: bool = True) -> Path:
+    tmp_path.mkdir(parents=True, exist_ok=True)
+    d = _build_dir(tmp_path, "good", "t1_dimmer_counter_top", bit=True, stages=True)
+    (d / "drc_synth.rpt").write_text("REPORT SUMMARY\n" + RTSTAT % extra_rows)
+    if imported:
+        (d / "inputs.tcl").write_text("set top x\nset netlists {{checkpoint {/p/ext/blk.dcp} {u_blk}}}\n")
+    return d
+
+
+def test_partially_routed_nets_of_an_imported_routed_block_are_waived_at_synthesis_only(tmp_path: Path) -> None:
+    r = gates.evaluate(_routed_import_build(tmp_path))
+    assert r["gates"]["post_synth_drc_clean"] is True
+    assert gates.evaluate(_routed_import_build(tmp_path / "x", imported=False))["gates"]["post_synth_drc_clean"] is False     # an ordinary design is not waived
+    other = "| DPIP-1   | Critical Warning | Input pipelining              | 1      |\n"
+    assert gates.evaluate(_routed_import_build(tmp_path / "y", extra_rows=other))["gates"]["post_synth_drc_clean"] is False   # other rules still gate
+    assert gates.routed_import_waived(tmp_path / "nothing") is False
