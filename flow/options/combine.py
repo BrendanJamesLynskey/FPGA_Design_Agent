@@ -48,8 +48,9 @@ def conflict(parts: list[dict[str, Any]]) -> str | None:
             return f"options {a['id']} and {b['id']} both touch stage {', '.join(sorted(common))}: they are alternatives, not additions"
         pa = {(x["component"], x.get("port") or "") for x in a.get("interface_changes", [])}
         pb = {(x["component"], x.get("port") or "") for x in b.get("interface_changes", [])}
-        if pa & pb:
-            c, p = sorted(pa & pb)[0]
+        hit = {(c, p) for c, p in pa for c2, p2 in pb if c == c2 and (p == p2 or not p or not p2)}      # an unnamed port could be any port of that component
+        if hit:
+            c, p = sorted(hit)[0]
             return f"options {a['id']} and {b['id']} both change {p or 'a port'} of {c}: their interface changes conflict"
     return None
 
@@ -86,7 +87,7 @@ def compose_gain(parts: list[dict[str, Any]], analysis: dict[str, Any], *, blind
             if pr["metric"] == metric and set(pr["stages"]) == set(stages):
                 gain = pr["gain"]
                 out.update(low=gain, high=gain, basis="measurement", cites=sorted({pr["fact"], *_stage_facts(stages, analysis)}),
-                           basis_note=f"Measured earlier: this exact set of stages was built and simulated in an earlier run ({pr['name']}: {pr['summary']}); the cut was {gain:g} clock(s) ({pr['fact']}). "
+                           basis_note=f"Measured earlier on the same set of stages ({pr['name']}: {pr['summary']}); this option's own changes may differ from that run's change, so check them against it; the cut was {gain:g} clock(s) ({pr['fact']}). "
                                       f"The sum of the parts would have been {sum(p['gain']['low'] for p in parts):g} to {sum(p['gain']['high'] for p in parts):g}.")
                 break
         return out, None

@@ -399,7 +399,7 @@ def analyse(design: Path, *, build_dir: Path | None = None, base: Path | None = 
         try:
             out["prior_runs"], unused = _prior_runs(pr_file, facts, {s["id"] for s in ((out["latency"] or {}).get("stages") or [])})
             if unused:
-                notes.append("prior_runs.yaml: " + "; ".join(f"{n} (stage(s) {', '.join(m)} are not in this design's latency chain)" for n, m in unused)
+                notes.append("prior_runs.yaml: " + "; ".join(f"{n} (a stage it names is not in this design's latency chain)" for n, m in unused)
                              + ": measured on another chain, so they are not facts of this analysis")
         except (OSError, KeyError, ValueError, TypeError, yaml.YAMLError) as e:
             gaps.append(f"prior_runs.yaml could not be read: {e}")

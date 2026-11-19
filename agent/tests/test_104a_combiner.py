@@ -268,7 +268,7 @@ def test_prior_runs_become_facts_when_the_chain_has_the_stages(tmp_path: Path) -
 
 def test_the_current_design_lists_but_does_not_use_runs_measured_on_another_chain() -> None:
     an = A.analyse(ROOT / "designs" / "b96_kr260_10g", build_dir=FX10 / "evidence")
-    assert an["prior_runs"] == [] and any("prior_runs.yaml" in n and "cross_go" in n for n in an["notes"])
+    assert an["prior_runs"] == [] and any("prior_runs.yaml" in n and "latency chain" in n for n in an["notes"])
 
 
 def test_an_exact_measured_set_replaces_the_sum_and_ranks_first(tmp_path: Path) -> None:
