@@ -336,4 +336,6 @@ WAIT, RESET, COUNT, END state machine of UG576 Figure 4-21; its error count is a
 - The default build was not rebuilt for this brief: with `EYESCAN = 0` the new logic is not elaborated and the GT ports carry the same constants. The regression benches of both `RATE_MATCH` settings pass; an equivalence proof of the default
   against main was not rerun (the change is a generate branch that is not taken).
 
+**IBERT cross-check is not available on the Basic licence.** `ibert_ultrascale_gth` 1.4 creates, generates and synthesises out of context, but top synthesis of a wrapper that instantiates it stops with `ERROR: [Chipscope 16-620] Detected ibert instance 'u_ibert' in the design. Your current selected license is BASIC. This license doesn't cover the feature you selected.` (`results/b96d/ibert_probe_results.txt`; a first run failed only because of a wrapper error, fixed and rerun). The check on the real link is therefore the repeat scans and the TX sweep, not IBERT.
+
 **Not measured.** Nothing in this section has run on a board. The DRP addresses, the 32-bit reading of "bits per sample" and the masks are from UG576 v1.7.1 and are checked in simulation only against our own stand-in.

@@ -13,6 +13,8 @@ the software and to show what the displays look like.
 ## Measured
 Build, simulation and software tests only; see the report. No board number exists yet.
 
+- `ibert_probe_results.txt`: the IBERT GTH licence probe (Vivado 2026.1, Basic): refused at top synthesis with `Chipscope 16-620` (a licence refusal, not a wrapper error; the first run's wrapper error was fixed and rerun).
+
 ## Reproduce
 `python3 -m pytest designs/b96_kr260_10g/tests/test_b96_pcs_rtl.py -k eyescan flow/tests/test_eyescan.py agent/tests/test_96d_eye_tool.py`; offline demo: `python3 -m flow.eyescan run --fake --out /tmp/eye --name demo` then `python3 -m flow.eyescan page /tmp/eye/demo.json -o /tmp/eye/page.html`;
 board: `bash _handoff/fpga_agent/run_96d_stage3.sh <loop lead metres> YES` (owner).
