@@ -332,8 +332,22 @@ USAGE_FIELDS = ("stage", "visit", "role", "harness", "model", "effort", "turns",
 RUN_ID = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,80}$")
 
 
+def _scalar(v: Any) -> Any:
+    """Numbers, booleans and short strings only (a free-text field is capped and scrubbed); a stage list or a gate map keeps its scalars."""
+    from navigator import redact
+    if isinstance(v, bool) or v is None or isinstance(v, (int, float)):
+        return v
+    if isinstance(v, str):
+        return redact.text(v[:160])
+    if isinstance(v, list):
+        return [_scalar(x) for x in v[:64]]
+    if isinstance(v, dict):
+        return {str(k)[:60]: _scalar(x) for k, x in list(v.items())[:64]}
+    return None
+
+
 def _pick(d: Any, fields: tuple[str, ...]) -> dict[str, Any]:
-    return {k: d[k] for k in fields if isinstance(d, dict) and k in d}
+    return {k: _scalar(d[k]) for k in fields if isinstance(d, dict) and k in d}
 
 
 def _jsonl(p: Path, limit: int = 2000) -> list[Any]:
@@ -385,16 +399,16 @@ def run_detail(runs_dir: Path, run_id: str, root: Path) -> dict[str, Any] | None
         j = load_json(pf)
         if isinstance(j, dict):
             prompts.append({"call": pf.name[:-len(".prompt.json")], "user_fp": _fp(j.get("user_message")), "system_fp": _fp(j.get("system_prompt")),
-                            "prompt_manifest_sha256": ((j.get("prompts_pin") or {}).get("manifest_sha256") if isinstance(j.get("prompts_pin"), dict) else None),
-                            "enforced": ((j.get("prompts_pin") or {}).get("enforced") if isinstance(j.get("prompts_pin"), dict) else None)})
+                            "manifest_sha256": (lambda m: m if isinstance(m, str) and HEX64.match(m) else None)((j.get("prompts_pin") or {}).get("manifest_sha256") if isinstance(j.get("prompts_pin"), dict) else None),
+                            "enforced": (lambda e: e if isinstance(e, bool) else None)((j.get("prompts_pin") or {}).get("enforced") if isinstance(j.get("prompts_pin"), dict) else None)})
     return {"id": run_id, "summary": _pick(s, SUMMARY_FIELDS),
             "scope": {k: sc.get(k) for k in ("components", "source", "time", "plan") if k in sc} or None,
-            "per_stage": s.get("per_stage"), "per_role": s.get("per_role"),
+            "per_stage": _scalar(s.get("per_stage")), "per_role": _scalar(s.get("per_role")),
             "calls": [_pick(r, CALL_FIELDS) for r in _jsonl(d / "model_calls.jsonl")],
             "claude_code_calls": [_pick(r, CC_FIELDS) for r in _jsonl(d / "claude_code_calls.jsonl")],
             "usage": [_pick(r, USAGE_FIELDS) for r in _jsonl(d / "role_usage.jsonl")],
-            "prompts": prompts,
-            "prompts_note": "prompt names and hashes only; the rendered prompt text is private and is never read by the navigator",
+            "fingerprints": prompts,
+            "fp_note": "prompt names and hashes only; the rendered prompt text is private and is never read by the navigator",
             "source": {"file": f"runs/{run_id}/summary.json", "date": file_date(root, d / "summary.json")}}
 
 
@@ -422,16 +436,26 @@ RECORD_LIMIT = 400_000
 _DESIGN_FILES = re.compile(r"^designs/[A-Za-z0-9_.-]+/(project|latency_stages)\.yaml$")
 
 
+_NAME_DENY = re.compile(r"(prompt|key|secret|token|passw|credential|transcript)", re.I)
+
+
 def read_record(root: Path, rel: str) -> dict[str, Any] | None:
-    """A committed record, shown as plain text: only a file under results/ or a design's project.yaml or latency_stages.yaml, of a text type, inside the
-    repository once symlinks are resolved. Anything else, however it is spelled, is None."""
-    if not rel or "\x00" in rel or rel.startswith("/") or ".." in Path(rel).parts:
+    """A committed record: only a file under results/ or a design's project.yaml or latency_stages.yaml, of a text type, whose path contains no symlink and
+    whose name is not a key, prompt, secret or token file. JSON is parsed and passed through the scrubber, then shown indented; other types as lines."""
+    from navigator import redact
+    if not rel or "\x00" in rel or rel.startswith("/") or ".." in Path(rel).parts or _NAME_DENY.search(Path(rel).name):
         return None
     if not (rel.startswith("results/") or _DESIGN_FILES.match(rel)) or Path(rel).suffix not in RECORD_SUFFIX:
         return None
-    p = (Path(root) / rel).resolve()
+    base = Path(root).resolve()
+    cur = base
+    for part in Path(rel).parts:                               # no symlink anywhere on the path, so it cannot point out of the allowed area
+        cur = cur / part
+        if cur.is_symlink():
+            return None
+    p = cur.resolve()
     try:
-        p.relative_to(Path(root).resolve())
+        p.relative_to(base / "results") if rel.startswith("results/") else p.relative_to(base / "designs")
     except ValueError:
         return None
     if not p.is_file() or p.stat().st_size > RECORD_LIMIT:
@@ -440,4 +464,11 @@ def read_record(root: Path, rel: str) -> dict[str, Any] | None:
         body = p.read_text(errors="replace")
     except OSError:
         return None
+    if p.suffix == ".json":
+        try:
+            body = json.dumps(redact.scrub(json.loads(body)), indent=1)
+        except ValueError:
+            body = redact.text(body)
+    else:
+        body = redact.text(body)
     return {"file": rel, "date": file_date(root, p), "bytes": p.stat().st_size, "lines": body.splitlines()[:6000]}

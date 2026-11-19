@@ -10,6 +10,7 @@ Statuses: ``ok``, ``warn``, ``fail``, ``unknown`` (could not be checked; the det
 from __future__ import annotations
 
 import datetime as dt
+import threading
 import json
 import os
 import re
@@ -61,6 +62,7 @@ class Health:
         self.sysfs_usb, self.python, self.cache_s = sysfs_usb, python, cache_s
         self._cache: dict[str, tuple[float, Any]] = {}
         self.actions_run: dict[str, dict[str, Any]] = {}
+        self._locks = {a: threading.Lock() for a in self.ACTIONS}
 
     def _cached(self, key: str, fn: Callable[[], Any]) -> Any:
         t = time.monotonic()
@@ -75,7 +77,7 @@ class Health:
     def claude_cli(self) -> list[dict[str, Any]]:
         rc, out, err = self.runner.run(["claude", "--version"], timeout=10)
         v = chk("claude_cli", "LLM availability", "Claude Code CLI", "ok" if rc == 0 and out.strip() else "fail",
-                out.strip().splitlines()[0] if rc == 0 and out.strip() else f"not available: {(err or out).strip()[:120]}", "claude --version (a local version query; no model call)")
+                out.strip().splitlines()[0] if rc == 0 and out.strip() else f"not available: {redact.brief(err or out)}", "claude --version (a local version query; no model call)")
         rc, out, err = self.runner.run(["claude", "auth", "status", "--json"], timeout=15)
         a = None
         try:
@@ -92,7 +94,7 @@ class Health:
             if ok and s is not None and (s - dt.date.today()).days < 3:
                 status = "warn"
         else:
-            status, detail = "unknown", f"could not read the sign-in state: {(err or out).strip()[:120]}"
+            status, detail = "unknown", f"could not read the sign-in state: {redact.brief(err or out)}"
         au = chk("claude_auth", "LLM availability", "Claude Code sign-in", status, detail, "claude auth status (local; only logged-in state, method, provider and expiry are read: never the account or token)")
         return [v, au]
 
@@ -111,7 +113,7 @@ class Health:
             rec = json.loads(out)
             tab = rec["purposes"]
         except (ValueError, KeyError, TypeError):
-            return {"error": f"could not read the table: {(err or out).strip()[:160]}", "how": how, "checked_at": now()}
+            return {"error": f"could not read the table: {redact.brief(err or out)}", "how": how, "checked_at": now()}
         rc2, txt, _ = self.runner.run([self.python, "-m", "agent", "models", "show"], timeout=60, cwd=self.root)
         frm: dict[str, str] = {}
         for ln in txt.splitlines():
@@ -422,7 +424,12 @@ class Health:
         if name not in self.ACTIONS:
             raise KeyError(name)
         fn = getattr(self, "_act_" + name)
-        res = fn()
+        if not self._locks[name].acquire(blocking=False):             # a second click or request while one is running starts nothing
+            return {"id": name, "status": "warn", "detail": "already running: wait for it to finish", "checked_at": now(), "how": "one run of each action at a time", "output": None}
+        try:
+            res = fn()
+        finally:
+            self._locks[name].release()
         self.actions_run[name] = res
         if name == "usage_live":
             self._cache.pop("usage", None)
@@ -433,14 +440,14 @@ class Health:
         u = self.usage()
         u.update(how="_handoff/usage_check.sh (headless /usage, 0 tokens), run on your click")
         if rc != 0:
-            u.update(status="unknown", detail=f"usage_check.sh failed (exit {rc}): {(err or out).strip()[:160]}")
+            u.update(status="unknown", detail=f"usage_check.sh failed (exit {rc}): {redact.brief(err or out)}")
         return {"status": u["status"], "detail": u["detail"], "checked_at": now(), "how": u["how"], "output": None}
 
     def _act_llm_probe(self) -> dict[str, Any]:
         rc, out, err = self.runner.run([self.python, "-m", "agent", "models", "check", "--probe"], timeout=300, cwd=self.root)
         rows = [ln for ln in out.splitlines() if re.match(r"(ok  |FAIL) ", ln)]
         status = "ok" if rc == 0 and rows else "fail" if rows else "unknown"
-        return {"status": status, "detail": f"{sum(r.startswith('ok') for r in rows)} of {len(rows)} endpoints answered" if rows else f"no probe result (exit {rc}): {(err or out).strip()[:160]}",
+        return {"status": status, "detail": f"{sum(r.startswith('ok') for r in rows)} of {len(rows)} endpoints answered" if rows else f"no probe result (exit {rc}): {redact.brief(err or out)}",
                 "checked_at": now(), "how": "python -m agent models check --probe: one minimal call per endpoint in use (spends tokens), run on your click",
                 "output": [redact.text(r)[:200] for r in rows]}
 
@@ -452,7 +459,7 @@ class Health:
         rc, out, err = self.runner.run([self.python, "-m", "navigator.jtag_list"], timeout=240, cwd=self.root)
         lines = [ln for ln in out.splitlines() if ln.startswith(("target ", "device "))]
         if rc != 0 or not lines:
-            return {"status": "unknown", "detail": f"no listing (exit {rc}): {(err or out).strip()[:160]}", "checked_at": now(), "how": how, "output": None}
+            return {"status": "unknown", "detail": f"no listing (exit {rc}): {redact.brief(err or out)}", "checked_at": now(), "how": how, "output": None}
         return {"status": "ok", "detail": f"{sum(ln.startswith('target ') for ln in lines)} target(s) visible", "checked_at": now(), "how": how, "output": [redact.text(ln)[:160] for ln in lines]}
 
     def _act_ci_main(self) -> dict[str, Any]:
@@ -461,7 +468,7 @@ class Health:
         try:
             r = json.loads(out)[0]
         except (ValueError, IndexError):
-            return {"status": "unknown", "detail": f"no answer from GitHub (exit {rc}): {(err or out).strip()[:140]}", "checked_at": now(), "how": how, "output": None}
+            return {"status": "unknown", "detail": f"no answer from GitHub (exit {rc}): {redact.brief(err or out)}", "checked_at": now(), "how": how, "output": None}
         ok = r.get("conclusion") == "success"
         return {"status": "ok" if ok else "fail" if r.get("conclusion") else "warn",
                 "detail": f"{r.get('workflowName')} on {str(r.get('headSha'))[:8]}: {r.get('conclusion') or r.get('status')} ({str(r.get('createdAt'))[:16]})", "checked_at": now(), "how": how, "output": None}

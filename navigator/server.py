@@ -40,7 +40,7 @@ CTYPE = {".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=u
 #: CSP of the navigator's own pages: no inline script, no external host of any kind
 CSP_APP = "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; frame-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'self'"
 #: CSP of the eye page (flow/eyescan/page.py is one self-contained file with inline script and style): still nothing external, and no network at all
-CSP_EYE = "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'self'"
+CSP_EYE = "sandbox allow-scripts; default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'self'"
 SEGMENT = re.compile(r"^[A-Za-z0-9_.-]{1,80}$")
 
 
@@ -79,6 +79,8 @@ class App:
     def api(self, path: str, q: dict[str, list[str]]) -> tuple[int, str, bytes, dict[str, str]]:
         one = lambda k, d="": (q.get(k) or [d])[0]                 # noqa: E731
         r = self.root
+        if path == "/api/session":
+            return self.json(200, {"nav_value": self.token})
         if path == "/api/overview":
             return self.json(200, self.overview())
         if path == "/api/projects":
@@ -220,8 +222,11 @@ def make_handler(app: App) -> type[BaseHTTPRequestHandler]:
                 self._refuse(403, "an action needs the service's own Origin and Content-Type: application/json")
                 return
             m = re.fullmatch(r"/api/action/([a-z_]+)", u.path)
+            if not hmac.compare_digest((self.headers.get("X-Navigator-Token") or "").encode(), app.token.encode()):
+                self._refuse(403, "an action needs the token in the X-Navigator-Token header (the cookie alone is not enough)")
+                return
             try:
-                n = min(int(self.headers.get("Content-Length") or 0), 4096)
+                n = max(0, min(int(self.headers.get("Content-Length") or 0), 4096))
                 self.rfile.read(n)                                         # the body is ignored: an action takes no argument
                 res = app.action(m.group(1)) if m else app.json(404, {"error": "no such endpoint"})
             except Exception:

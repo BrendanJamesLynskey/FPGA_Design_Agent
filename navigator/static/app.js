@@ -35,8 +35,12 @@
       return r.json().then(function (j) { if (!r.ok) throw new Error(j.error || r.statusText); return j; }, function () { throw new Error(r.status + " " + r.statusText); });
     });
   }
+  var navValue = null;
   function post(path) {
-    return fetch(path, { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: "{}" }).then(function (r) { return r.json(); });
+    var tok = navValue ? Promise.resolve(navValue) : api("/api/session").then(function (j) { navValue = j.nav_value; return navValue; });
+    return tok.then(function (t) {
+      return fetch(path, { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json", "X-Navigator-Token": t }, body: "{}" }).then(function (r) { return r.json(); });
+    });
   }
   function num(x, d) { return x === null || x === undefined ? "not recorded" : (typeof x === "number" ? (d === undefined ? String(x) : x.toFixed(d)) : String(x)); }
   function short(x, n) { return x ? String(x).slice(0, n || 12) : ""; }
@@ -269,8 +273,8 @@
         r.usage.length ? [h("h3", { class: "mt" }, "Roles"), table(["stage", "role", "model", "turns", "tokens", "wall s", "ended"], r.usage.map(function (u) { return [u.stage, u.role, u.model || "", num(u.turns), num(u.tokens), num(u.wall_s, 0), u.ended || ""]; }), { num: [3, 4, 5] })] : null,
         r.calls.length ? [h("h3", { class: "mt" }, "Model calls (the resolver's log)"), table(["#", "purpose", "endpoint", "model", "in", "out", "cost"], r.calls.map(function (c) { return [num(c.seq), c.purpose, c.endpoint, c.model || "", num(c.prompt_tokens), num(c.completion_tokens), c.cost_usd === "unreported" ? "unreported" : c.cost_usd === null || c.cost_usd === undefined ? "-" : "$" + num(c.cost_usd, 4)]; }), { num: [0, 4, 5] })] : null,
         r.claude_code_calls.length ? [h("h3", { class: "mt" }, "Claude Code calls"), table(["call", "model", "turns", "wall s", "plan est. $"], r.claude_code_calls.map(function (c) { return [c.tag, (c.models_served || [c.model_requested]).join(", "), num(c.turns), num(c.wall_s, 0), num(c.plan_cost_estimate_usd, 3)]; }), { num: [2, 3, 4] })] : null,
-        h("h3", { class: "mt" }, "Prompts: names and hashes"), r.prompts.length ? table(["call", "user message sha256", "chars", "system prompt sha256", "chars"], r.prompts.map(function (p) { return [p.call, p.user_fp ? short(p.user_fp.sha256, 16) : "-", p.user_fp ? num(p.user_fp.chars) : "", p.system_fp ? short(p.system_fp.sha256, 16) : "-", p.system_fp ? num(p.system_fp.chars) : ""]; }), { num: [2, 4] }) : h("p", { class: "mute" }, "This run recorded no prompt fingerprints (it is older than brief 99, or used another harness)."),
-        h("p", { class: "mute" }, r.prompts_note), srcLine(r.source, "summary")]);
+        h("h3", { class: "mt" }, "Prompts: names and hashes"), r.fingerprints.length ? table(["call", "user message sha256", "chars", "system prompt sha256", "chars"], r.fingerprints.map(function (p) { return [p.call, p.user_fp ? short(p.user_fp.sha256, 16) : "-", p.user_fp ? num(p.user_fp.chars) : "", p.system_fp ? short(p.system_fp.sha256, 16) : "-", p.system_fp ? num(p.system_fp.chars) : ""]; }), { num: [2, 4] }) : h("p", { class: "mute" }, "This run recorded no prompt fingerprints (it is older than brief 99, or used another harness)."),
+        h("p", { class: "mute" }, r.fp_note), srcLine(r.source, "summary")]);
     }, function (e) { var b = document.getElementById("drawer-body"); b.textContent = ""; add(b, fail(e)); });
   }
 
@@ -333,12 +337,8 @@
     if (!caps.length) { add(body, h("p", null, "No eye-scan captures (schema fda-capture-eye/1) under results/. Write one with python -m flow.eyescan run, or point the navigator at a directory with --captures.")); return; }
     if (!state.capA || !caps.some(function (c) { return c.id === state.capA; })) state.capA = caps[0].id;
     if (state.capB && !caps.some(function (c) { return c.id === state.capB; })) state.capB = null;
-    var frame = h("iframe", { id: "eye", title: "Eye scan viewer", scrolling: "no" });
-    function fitFrame() { try { var d = frame.contentDocument; if (d && d.documentElement) frame.style.height = Math.ceil(d.body.getBoundingClientRect().height) + 8 + "px"; } catch (e) {} }
-    frame.addEventListener("load", function () {
-      fitFrame();
-      try { if (window.ResizeObserver) new ResizeObserver(fitFrame).observe(frame.contentDocument.body); } catch (e) {}
-    });
+    var frame = h("iframe", { id: "eye", title: "Eye scan viewer", scrolling: "no", sandbox: "allow-scripts" });
+    window.onmessage = function (e) { if (e.source === frame.contentWindow && e.data && typeof e.data.eyeHeight === "number") frame.style.height = Math.min(20000, e.data.eyeHeight + 8) + "px"; };
     function load() {
       var u = "/measure/page?a=" + encodeURIComponent(state.capA) + (state.capB ? "&b=" + encodeURIComponent(state.capB) : "") + "&theme=" + state.theme;
       frame.setAttribute("src", u);

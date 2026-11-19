@@ -152,7 +152,10 @@ def test_post_rules(live):
     assert live.req("POST", "/api/action/usage_live", {"X-Navigator-Token": TOKEN}, "{}")[0] == 403                           # no JSON content type
     assert live.req("POST", "/api/action/usage_live", {**ok, "Origin": "http://evil.example"}, "{}")[0] == 403                # foreign origin
     assert live.req("POST", "/api/action/usage_live", {"Content-Type": "application/json"}, "{}")[0] == 401                  # no token
-    assert live.req("POST", "/api/action/rm_rf", ok, "{}")[0] == 404                                                            # only the fixed actions
+    assert live.req("POST", "/api/action/rm_rf", ok, "{}")[0] == 404
+    cookie_only = {"Cookie": f"{SV.COOKIE}={TOKEN}", "Content-Type": "application/json", "Origin": f"http://127.0.0.1:{live.port}"}
+    assert live.req("POST", "/api/action/usage_live", cookie_only, "{}")[0] == 403                                              # the cookie alone cannot start an action
+    assert live.req("POST", "/api/action/usage_live", {**ok, "Content-Length": "-1"}, None)[0] in (200, 400, 500)                                                            # only the fixed actions
     assert live.req("PUT", "/api/overview", ok, "{}")[0] == 405
 
 
@@ -236,8 +239,8 @@ def test_no_secret_or_prompt_text_in_any_response(tmp_path):
             text = body.decode()
             assert SECRET not in text and "PLANTED" not in text and "someone@example.com" not in text and "org-123" not in text, p
         run = json.loads(s.get(f"/api/run?id={d.name}")[2])
-        assert run["prompts"][0]["user_fp"] == {"sha256": "a" * 64, "chars": 10}
-        assert run["prompts"][0]["system_fp"] is None and run["prompts"][1]["user_fp"] is None and run["prompts"][1]["system_fp"] is None
+        assert run["fingerprints"][0]["user_fp"] == {"sha256": "a" * 64, "chars": 10}
+        assert run["fingerprints"][0]["system_fp"] is None and run["fingerprints"][1]["user_fp"] is None and run["fingerprints"][1]["system_fp"] is None
         assert run["calls"][0]["purpose"] == "rtl" and "prompt" not in run["calls"][0]
         assert s.get("/api/run?id=../../etc")[0] == 404
         for ac in ("llm_probe", "usage_live", "ci_main"):
@@ -250,6 +253,8 @@ def test_no_secret_or_prompt_text_in_any_response(tmp_path):
 def test_scrub_unit():
     o = redact.scrub({"api_key": "x", "ok": f"a {SECRET} b", "n": [{"prompt": "p", "text": "t", "k": "Bearer abcdefghijklmnop"}], "sha": "a" * 64})
     assert o == {"ok": "a [redacted] b", "n": [{"k": "[redacted]"}], "sha": "a" * 64}
+    o = redact.scrub({"x-api-key": "v", "authToken": "v", "stdout_tail": "v", "prompt_tokens": 5, "key_state": "key present", "Account_ID": "v", "jwt": "eyJhbGciOiJIUzI1.eyJzdWIiOiIxMjM0.abcdEFGH"})
+    assert o == {"prompt_tokens": 5, "key_state": "key present", "jwt": "[redacted]"}
 
 
 # --- health: nothing that costs money or touches hardware runs without a click ---------------------------------------------------------------
@@ -313,3 +318,35 @@ def test_stale_lock_is_flagged(tmp_path):
     os.utime(f, (old, old))
     c = {x["id"]: x for x in app.health.locks()}["heavy_slot.lock"]
     assert c["status"] == "warn" and "STALE" in c["detail"]
+
+
+def test_record_viewer_scrubs_json_and_refuses_symlinks(tmp_path):
+    import shutil
+    root = tmp_path / "repo"
+    (root / "results" / "x").mkdir(parents=True)
+    (root / "agent" / "access").mkdir(parents=True)
+    (root / "agent/access/keys.json").write_text('{"salt": "s"}')
+    (root / "results/x/a.json").write_text(json.dumps({"api-key": SECRET, "note": f"v {SECRET}", "ok": 1}))
+    (root / "results/x/link.json").symlink_to(root / "agent/access/keys.json")
+    (root / "results/x/prompt_dump.json").write_text("{}")
+    from navigator import sources as S
+    r = S.read_record(root, "results/x/a.json")
+    body = "\n".join(r["lines"])
+    assert SECRET not in body and "api-key" not in body and '"ok": 1' in body
+    assert S.read_record(root, "results/x/link.json") is None and S.read_record(root, "results/x/prompt_dump.json") is None
+    shutil.rmtree(root)
+
+
+def test_concurrent_action_is_refused(tmp_path):
+    app, runner = make_app(tmp_path)
+    assert app.health._locks["llm_probe"].acquire(blocking=False)
+    r = app.health.run_action("llm_probe")
+    assert r["status"] == "warn" and "already running" in r["detail"] and runner.calls == []
+
+
+def test_eye_page_is_sandboxed_and_escapes_capture_text(live):
+    caps = json.loads(live.get("/api/captures")[2])["captures"]
+    st, hd, body = live.get(f"/measure/page?a={caps[0]['id']}")
+    assert hd["Content-Security-Policy"].startswith("sandbox allow-scripts")
+    assert b"function esc(" in body and b"esc(r[1])" in body
+    assert b'sandbox: "allow-scripts"' in (SV.STATIC / "app.js").read_bytes()
