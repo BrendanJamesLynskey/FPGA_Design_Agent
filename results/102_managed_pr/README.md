@@ -36,6 +36,7 @@ A placed-and-routed block imported into a managed project, relocated with RapidW
 | `placements/placement_evidence_all.json` | `designs/b102_managed_pr/scripts/run_placements.sh`, `run_dumps.sh`, then `python3 flow/managed_placed.py compare` | all six placements: per-placement verdicts, the two problems |
 | `placements/placement_evidence.json` | `designs/b102_managed_pr/scripts/finalize_evidence.sh` (`compare ... --only p0,p0x,p0y,p1`) | the adopted placements: passed |
 | `placements/*_run.json`, `*_block.csv`, `*_budgets.txt` | `flow/managed_placement_run.tcl` | whole-design WNS and hold, routing errors, the block-internal setup paths and the boundary budgets, per placement |
+| `placements/work_files.sha256` | `sha256sum` of the run's work files (route strings, sites, dumps, checkpoints: too large to commit) | what the evidence was computed from |
 | `demo_session.json` | `python3 designs/b102_managed_pr/scripts/demo_managed_session.py --rapidwright <p0_routed.dcp>` | a scripted session through the agent's real tool surface: refusals of the keep-out, and the real RapidWright tools placing owned cells around the block |
 | `builds.json`, `build_base/`, `boundary.json`, `budgets_baseline.txt`, `trust.json` | `flow/run_vivado.sh designs/b102_managed_pr base` and `flow/managed_import.py` | the project's own flow build (gates, resources, timing) with the block read from its checkpoint, the boundary budgets, the computed trust labels |
 
