@@ -5,7 +5,7 @@
 #   <out>_block.csv    the block-internal setup paths: endpoint, data-path delay, slack, logic levels (Vivado's report_timing)
 #   <out>_routes_before.txt / _routes_after.txt   one line per net inside the block: name|ROUTE (before opt_design, after route_design)
 #   BUDGET|name|delay|slack lines in the log: the contract's boundary budgets, when FDA_PR_BUDGET_TCL names the Tcl (managed_import.py budget-tcl)
-# Environment: FDA_PR_PART FDA_PR_TOP FDA_PR_SRC (space-separated) FDA_PR_XDC FDA_PR_CELL FDA_PR_DCP FDA_PR_OUT [FDA_PR_DIRECTIVE FDA_PR_BUDGET_TCL FDA_PR_THREADS]
+# Environment: FDA_PR_PART FDA_PR_TOP FDA_PR_SRC (space-separated) FDA_PR_XDC FDA_PR_CELL FDA_PR_DCP FDA_PR_OUT [FDA_PR_DIRECTIVE FDA_PR_BUDGET_TCL FDA_PR_THREADS FDA_PR_EXTRA_XDC]
 proc env_or {k d} { if {[info exists ::env($k)] && $::env($k) ne ""} { return $::env($k) } else { return $d } }
 set n [env_or FDA_PR_THREADS 1]
 set_param general.maxThreads $n
@@ -19,6 +19,7 @@ foreach f $::env(FDA_PR_SRC) { if {[string match *.sv $f]} { read_verilog -sv $f
 synth_design -top $::env(FDA_PR_TOP) -part $::env(FDA_PR_PART) -flatten_hierarchy rebuilt
 lap synth
 read_xdc $::env(FDA_PR_XDC)
+if {[env_or FDA_PR_EXTRA_XDC ""] ne ""} { read_xdc $::env(FDA_PR_EXTRA_XDC) }   ;# the agent's own constraints around the block, for one arm
 read_checkpoint -cell $cell $::env(FDA_PR_DCP)
 lap read_block
 proc block_cells {cell} { return [get_cells -hier -filter "IS_PRIMITIVE && NAME =~ $cell/*"] }

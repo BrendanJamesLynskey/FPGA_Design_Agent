@@ -207,8 +207,10 @@ def test_route_full_and_nets_inside_the_block_are_refused(rwsess):
     r = dispatch(rwsess, "rw_route", {"checkpoint": "post_route.dcp", "output": "r.dcp", "mode": "nets", "nets": ["a", "u_blk/n[3]"]})
     assert r["refused"] and "inside" in r["output"]
     assert not rwsess.runner.calls
-    dispatch(rwsess, "rw_route", {"checkpoint": "post_route.dcp", "output": "r.dcp", "mode": "nets", "nets": ["u_glue/n", "u_blk_other/n"]})
+    dispatch(rwsess, "rw_route", {"checkpoint": "post_route.dcp", "output": "r.dcp", "mode": "nets", "nets": ["u_glue/n"]})
     assert rwsess.runner.calls                                                            # owned nets are fine
+    r = dispatch(rwsess, "rw_route", {"checkpoint": "post_route.dcp", "output": "r.dcp", "mode": "nets", "nets": ["clk"]})
+    assert r["refused"] and "pins inside" in r["output"]                                  # a boundary net may reach into the block
 
 
 def test_relocating_a_checkpoint_that_may_hold_the_block_is_refused(rwsess):
@@ -473,3 +475,64 @@ def test_summary_json_carries_the_scope(proj):
     M.start_run(M.load(proj), M.Scope(("glue",), "explicit", "faster", "explicit --scope"))
     s = cli.with_scope({"stop": "done"}, proj)
     assert s["stop"] == "done" and s["scope"]["components"] == ["glue"] and s["scope"]["request"] == "faster" and s["scope"]["plan"]["read_only"] == ["blk"]
+
+
+@pytest.mark.parametrize("path,line", [
+    ("cons.txt", "set_property LOC SLICE_X30Y80 [get_cells u_glue/x]"),        # a constraints file under another name, once listed in build.yaml
+    ("design.XDC", "set_property LOC SLICE_X30Y80 [get_cells u_glue/x]"),
+    ("design.xdc", "set b [get_cells u_blk/*]"),                                # a variable holding the block's objects
+    ("design.xdc", "set_property IS_LOC_FIXED false [get_cells -hier u_b*/*]"),  # a wildcard that reaches the instance
+    ("design.xdc", "set_property IS_LOC_FIXED false [get_cells -nocase U_BLK/x]"),
+    ("design.xdc", "set_property ROUTE {} [get_nets u_blk/n1]"),
+    ("design.xdc", "set_property loc slice_x30y80 [get_cells u_glue/q]"),
+])
+def test_review_bypasses_of_the_keepout_are_refused(proj, path, line):
+    s = sess(proj)
+    if path == "cons.txt":
+        cfg = yaml.safe_load((proj / "build.yaml").read_text())
+        cfg["constraints"].append("designs/pr/cons.txt")
+        (proj / "build.yaml").write_text(yaml.safe_dump(cfg))
+        s = sess(proj)
+    (proj / path).parent.mkdir(exist_ok=True)
+    r = write(s, path, line + "\n")
+    assert r["refused"] and r["rule"] == "managed-keepout", (path, line, r)
+
+
+def test_build_yaml_must_keep_top_format_and_cell_and_listed_constraints_are_checked(proj):
+    s = sess(proj)
+    cfg = yaml.safe_load((proj / "build.yaml").read_text())
+    for edit in (lambda c: c.update(top="glue"), lambda c: c["netlists"][0].update(cell="u_other"), lambda c: c["netlists"][0].update(format="edif")):
+        c2 = json.loads(json.dumps(cfg))
+        edit(c2)
+        assert write(s, "build.yaml", yaml.safe_dump(c2))["rule"] == "managed-build"
+    (proj / "bad.xdc").write_text("resize_pblock pb -add SLICE_X30Y75:SLICE_X40Y80\n")      # already on disk: listing it is refused too
+    c3 = json.loads(json.dumps(cfg))
+    c3["constraints"].append("designs/pr/bad.xdc")
+    assert write(s, "build.yaml", yaml.safe_dump(c3))["rule"] == "managed-keepout"
+
+
+def test_a_changed_manifest_is_new_content_for_the_evidence(proj):
+    p = M.load(proj)
+    c = p.component("blk")
+    M.write_evidence(p, c, "verified", {"passed": True})
+    M.write_evidence(p, c, "placement", {"passed": True, "placements_tried": 3})
+    M.write_evidence(p, c, "built", {"gates_clean": True})
+    assert M.trust(p, c)[0] == "built"
+    raw = yaml.safe_load((proj / "project.yaml").read_text())
+    raw["components"][1]["placement"]["timing_tolerance_ps"] = 5000
+    (proj / "project.yaml").write_text(yaml.safe_dump(raw, sort_keys=False))
+    p2 = M.load(proj)
+    assert M.trust(p2, p2.component("blk"))[0] == "documented"
+
+
+def test_strict_evidence_cannot_pass_vacuously(tmp_path):
+    _run(tmp_path, "p0", **BASE)
+    _run(tmp_path, "p1", **BASE)                                                       # same region: not a placement at all
+    a = {"tag": "p0", "dir": str(tmp_path), "prefix": "p0"}
+    b = {"tag": "p1", "dir": str(tmp_path), "prefix": "p1", "note": "", "eqy": {"equivalent": True}, "dump": "BLOCK|u/a|SLICE_X30Y80|A6LUT|1\n"}
+    text = "\n".join(MP.compare_placements([a, b], 0, [{"name": "x", "dir": "out", "max_ns": 1}], "SLICE_X26Y70:SLICE_X37Y91", strict=True)["problems"])
+    assert "nothing was relocated" in text and "budget" in text
+    ev = MP.compare_placements([a, {**b, "eqy": {"equivalent": "no"}}], 0)
+    assert not ev["passed"] and "eqy" in "\n".join(ev["problems"])
+    ev = MP.compare_placements([a, {k: v for k, v in b.items() if k != "eqy"}], 0, strict=True)
+    assert "no eqy result" in "\n".join(ev["problems"]) or "same" in "\n".join(ev["problems"])

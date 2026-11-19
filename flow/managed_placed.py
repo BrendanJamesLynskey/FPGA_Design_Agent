@@ -210,11 +210,14 @@ def observed_rect(sites_file: Path) -> tuple[int, int, int, int] | None:
 
 
 def compare_placements(runs: list[dict[str, Any]], tolerance_ps: int, declared_budgets: list[dict[str, Any]] | None = None,
-                       declared_region: str | None = None) -> dict[str, Any]:
+                       declared_region: str | None = None, strict: bool = False) -> dict[str, Any]:
     """``runs[0]`` is the delivered placement. Each run: ``tag``, ``dir`` (where the run's files are), ``prefix`` (their common name),
     optionally ``eqy`` (the equivalence result against runs[0]), ``budgets`` (the run's log, with its BUDGET lines), ``dump`` (the text of
     ``managed_block_dump.tcl`` run on the run's written checkpoint) and ``note``. ``declared_region`` is the manifest's keep-out for the
-    delivered placement; a relocated run's keep-out is that region moved by the block's own shift."""
+    delivered placement; a relocated run's keep-out is that region moved by the block's own shift. ``strict`` (the command line) makes
+    every run after the first need an eqy result, a written-checkpoint dump and, when budgets are declared, the log with their lines; a run
+    whose block sits in a different region is a relocation whatever its note says (shape checked, eqy needed), and a block with no cells or nets
+    is no evidence."""
     base = None
     out: dict[str, Any] = {"tolerance_ps": tolerance_ps, "placements": {}}
     for run in runs:
@@ -245,6 +248,7 @@ def compare_placements(runs: list[dict[str, Any]], tolerance_ps: int, declared_b
                 "identical_endpoints": sum(1 for x in diffs if x == 0), "mean_abs_diff_ps": round(sum(abs(x) for x in diffs) / len(diffs), 1) if diffs else None,
                 "max_abs_diff_ps": max((abs(x) for x in diffs), default=None), "worst_delay_diff_ps": round((rec["worst_internal_delay_ns"] - max(base["delays"].values())) * 1000),
                 "route_shape_equal": {n: shape(v[1]) for n, v in rb.items()} == base["shape"]})
+        rec["relocated"] = bool(base is not None and rec["region"] != base_region)
         if run.get("eqy") is not None:
             rec["eqy_equal_to_delivered"] = run["eqy"].get("equivalent")
             rec["eqy"] = {k: run["eqy"].get(k) for k in ("equivalent", "seconds", "strategy", "why") if run["eqy"].get(k) is not None}
@@ -276,15 +280,29 @@ def compare_placements(runs: list[dict[str, Any]], tolerance_ps: int, declared_b
             problems.append(f"{tag}: {w['other_cells_inside_region_count']} cells of the rest of the design sit inside the keep-out region")
         if v.get("budget_problems"):
             problems.append(f"{tag}: boundary budgets: {'; '.join(v['budget_problems'])}")
-        if v.get("eqy_equal_to_delivered") is False or ("eqy" in v and v["eqy_equal_to_delivered"] is None):
+        if "eqy" in v and v["eqy_equal_to_delivered"] is not True:
             problems.append(f"{tag}: eqy did not prove the netlist equal to the delivered one")
     for tag, v in list(ps.items())[1:]:
         if v["endpoints_only_here"] or v["endpoints_missing"]:
             problems.append(f"{tag}: the set of internal endpoints differs")
         if v["max_abs_diff_ps"] is None or v["max_abs_diff_ps"] > tolerance_ps:
             problems.append(f"{tag}: an internal path delay differs by {v['max_abs_diff_ps']} ps, tolerance {tolerance_ps} ps")
-        if not v["route_shape_equal"] and v["note"].startswith("relocated"):
+        if not v["route_shape_equal"] and (v["relocated"] or v["note"].startswith("relocated")):
             problems.append(f"{tag}: the relocated routing has a different shape from the delivered one")
+    if strict:
+        for i, (tag, v) in enumerate(ps.items()):
+            if v["block_cells"] <= 0 or v["block_nets"] <= 0:
+                problems.append(f"{tag}: no block cells or nets were read")
+            if i == 0:
+                continue
+            if "eqy" not in v and v["relocated"]:
+                problems.append(f"{tag}: no eqy result for a relocated block")
+            if "written_checkpoint" not in v:
+                problems.append(f"{tag}: no read-back of the written checkpoint (dump)")
+            if declared_budgets and "budgets" not in v:
+                problems.append(f"{tag}: the declared boundary budgets were not measured (no budget lines)")
+        if len(ps) >= 2 and not any(v["relocated"] for v in list(ps.values())[1:]):
+            problems.append("no run has the block in a different region from the delivered one: nothing was relocated")
     out["problems"] = problems
     out["passed"] = bool(len(ps) >= 2 and not problems)
     out["summary"] = {"relocated_max_abs_diff_ps": max((v["max_abs_diff_ps"] for v in rest if v.get("max_abs_diff_ps") is not None), default=None),
@@ -363,7 +381,7 @@ def main(argv: list[str] | None = None) -> int:
             if logf.is_file():
                 run["budgets"] = logf.read_text(errors="replace")
             runs.append(run)
-        rep = compare_placements(runs, int(comp.placement.get("timing_tolerance_ps", 0)), comp.interface.get("timing_budgets"), comp.placement.get("region"))
+        rep = compare_placements(runs, int(comp.placement.get("timing_tolerance_ps", 0)), comp.interface.get("timing_budgets"), comp.placement.get("region"), strict=True)
         rep["component"] = comp.name
         if a.out:
             record_placement_evidence(design, comp.name, rep)
