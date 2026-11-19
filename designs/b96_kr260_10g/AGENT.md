@@ -9,7 +9,7 @@ A Kria KR260 design that carries our own 10GBASE-R PCS (64B/66B, scrambler, gear
 not: an interoperability proof: a PCS talking to itself accepts its own symmetric mistakes, only a network card proves it; the full 58A trading core (book, rule table, interlocks, ARP) at 64 bits: trade64 is a small stand-in with one rule; the reconciliation sublayer link-fault state machine, the BER monitor, an ARP or ICMP responder
 
 ## state
-stage=built vivado=2026.1 kb_pin=93d158c build_id=dd5144c3
+stage=built vivado=2026.1 kb_pin=93d158c build_id=fec2fc2f
 gates: build_2026_1=pass
 
 ## interface
@@ -34,7 +34,7 @@ designs/b96_kr260_10g/rtl/tx_path.sv 91039813b5: transmit domain: sources, gener
 designs/b96_kr260_10g/rtl/rx_path.sv fdfa0f70a8: receive domain: PCS, MAC, decision, counters
 designs/b96_kr260_10g/rtl/b96_core.sv bea03470de: registers, GT wrapper and clock-domain crossings
 designs/b96_kr260_10g/rtl/kr260_10g_top.sv 79baa37536: board top (MMCM, SYSMON, pins)
-designs/b96_kr260_10g/rtl/rate_match.sv 6e79e5c972: rate-matching elastic buffer (idle insert and delete between frames, xpm_fifo_async), brief 96C
+designs/b96_kr260_10g/rtl/rate_match.sv 89bdb4e820: rate-matching elastic buffer (idle insert and delete between frames, xpm_fifo_async), brief 96C
 designs/b96_kr260_10g/model/ratematch.py 29ed3ac9f2: Python twin of the rate matcher, compared output for output with the RTL
 designs/b96_kr260_10g/host/b96c_ppm.py a5a5b3d64e: board driver for the ppm sweep (TX phase-interpolator offset, measured ppm, SYSMON conditions)
 designs/b96_kr260_10g/rtl/hs_vec.sv bb5cad4fa9: coherent vector crossing

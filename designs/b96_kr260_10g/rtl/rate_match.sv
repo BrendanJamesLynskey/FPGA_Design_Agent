@@ -75,7 +75,13 @@ module rate_match #(
     // a start block (lane 0 or lane 4) or a data block leaves the stream inside a frame
     assign head_frame = (head[71:64] == 8'h00) || (head[71:64] == 8'h01 && head[7:0] == 8'hFB) || (head[71:64] == 8'h1F && head[39:32] == 8'hFB);
     assign do_pop = !rrst && can_read && lock_s && slot;                                  // a block is output
-    assign do_del = !rrst && can_read && lock_s && !slot && (fill > CW'(HI)) && !in_frame && (idle_run >= 2'(MIN_KEEP)) && head_idle;
+    logic            keep_ok;                                                             // enough pure idles output since the last frame (always true for MIN_KEEP = 0)
+    if (MIN_KEEP == 0) begin : g_keep_none
+        assign keep_ok = 1'b1;
+    end else begin : g_keep_n
+        assign keep_ok = (idle_run >= 2'(MIN_KEEP));
+    end
+    assign do_del = !rrst && can_read && lock_s && !slot && (fill > CW'(HI)) && !in_frame && keep_ok && head_idle;
     assign rd_en  = do_pop || do_del || (!rrst && can_read && !lock_s);                   // output, delete, or drain while the lock is low
     initial begin
         n_ins = '0; n_del = '0; n_stall = '0; n_out = '0; n_drain = '0; fill_min = '1; fill_max = '0; r_v = 1'b0; r_d = '0; r_c = '0; r_lock = 1'b0;
