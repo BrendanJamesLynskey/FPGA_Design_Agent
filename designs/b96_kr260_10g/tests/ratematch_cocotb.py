@@ -16,14 +16,17 @@ from designs.b96_kr260_10g.model import ratematch as rm
 from designs.b96_kr260_10g.tests import ratematch_stim as st
 
 MIN_KEEP = int(os.environ.get("B96_RM_MIN_KEEP", "0"))
+IMPL = os.environ.get("B96_RM_IMPL", "macro")        # brief 96E: "gp" = rtl/rate_match_gp.sv (own gray-pointer buffer), twin RateMatchGP
+HI = int(os.environ.get("B96_RM_HI", "4"))
 P_NOM_FS = 6_205_800          # 161.1328125 MHz is 6205.8 ps
 RESULTS: dict = {}
 
 
-async def run_case(dut, name, ppm, n_frames=300, gaps=(2,), seed=1, hi=4, os_every=0, err_every=0, lock_drop=None, w_offset_fs=1_234_567,
+async def run_case(dut, name, ppm, n_frames=300, gaps=(2,), seed=1, hi=None, os_every=0, err_every=0, lock_drop=None, w_offset_fs=1_234_567,
                    r_start_fs=0, phase=0, clr_at=None):
     """One run. The write clock is nominal (the partner's) and the read clock is offset by `ppm` (ours = partner * (1 - ppm*1e-6), so a
     positive ppm means the partner is faster than we are). Returns a dict of results and asserts RTL == twin."""
+    hi = HI if hi is None else hi
     rng = random.Random(seed)
     pw = P_NOM_FS
     pr = round(P_NOM_FS * (1 + ppm * 1e-6) / 2) * 2
@@ -91,7 +94,7 @@ async def run_case(dut, name, ppm, n_frames=300, gaps=(2,), seed=1, hi=4, os_eve
     # twin on the same edges and inputs
     r_t = in_flight["r_t"]
     w_t = [t for t in in_flight["w_t"] if t < r_t[-1]]
-    out, m = rm.run(w_t, r_t, in_flight["w_in"][:len(w_t)], w_lock=in_flight["w_lock"], r_rst=in_flight["r_rst"][:len(r_t)], clr=in_flight["clr"][:len(r_t)], w_clr=in_flight["wclr"], hi=hi, min_keep=MIN_KEEP)
+    out, m = rm.run(w_t, r_t, in_flight["w_in"][:len(w_t)], w_lock=in_flight["w_lock"], r_rst=in_flight["r_rst"][:len(r_t)], clr=in_flight["clr"][:len(r_t)], w_clr=in_flight["wclr"], hi=hi, min_keep=MIN_KEEP, impl=IMPL)
     # RTL output sampled at read edge j (pre-edge) = state after edge j-1
     bad = 0
     first = None
