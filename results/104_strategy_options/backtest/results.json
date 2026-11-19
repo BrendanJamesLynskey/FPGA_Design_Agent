@@ -2,6 +2,326 @@
  "schema": "fda-backtest-results/1",
  "runs": [
   {
+   "run": "b96_10g_pre97__A2__1",
+   "case": "b96_10g_pre97",
+   "arm": "A2",
+   "k": 1,
+   "exit": 0,
+   "wall_s": 29.4,
+   "claude_version": "2.1.321 (Claude Code)",
+   "time": "2026-11-19 16:10:38",
+   "attempts": 1,
+   "status": "options",
+   "score": {
+    "status": "options",
+    "n_options": 4,
+    "variants": {
+     "agent_cdc": {
+      "found": true,
+      "option": "O2",
+      "scope": [
+       "core"
+      ],
+      "gain": [
+       0,
+       1
+      ],
+      "basis": "model",
+      "measured": 1,
+      "in_range": true,
+      "over": 0
+     },
+     "hand_ref": {
+      "found": false,
+      "best_overlap": 0.5,
+      "best_option": "O2",
+      "measured": 2
+     },
+     "agent_both": {
+      "found": false,
+      "best_overlap": 0.5,
+      "best_option": "O2",
+      "measured": 2
+     },
+     "all3": {
+      "found": false,
+      "best_overlap": 0.6,
+      "best_option": "O4",
+      "measured": 3
+     }
+    },
+    "matched_options": [],
+    "other_options": [
+     {
+      "id": "O1",
+      "title": "Raise s_valid with start in the frame source",
+      "stages": [
+       "fs_start"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0,
+       1
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "O3",
+      "title": "Transmit-side chain: start, preamble and the frame source",
+      "stages": [
+       "fs_start",
+       "mac_preamble"
+      ],
+      "scope_kind": "subsystem",
+      "gain": [
+       0,
+       2
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "O4",
+      "title": "All removable stages on the receive-to-transmit chain",
+      "stages": [
+       "rx_descramble",
+       "decide",
+       "cross_go",
+       "fs_start",
+       "mac_preamble"
+      ],
+      "scope_kind": "whole_design",
+      "gain": [
+       1,
+       5
+      ],
+      "basis": "model"
+     }
+    ],
+    "found_named": 1,
+    "found_all": 1,
+    "in_range": 1,
+    "n_variants": 4,
+    "n_named": 3
+   },
+   "rejected": [],
+   "notes": [],
+   "options_hash": "6559f73535d1e5789021b24b3c894869312bf19dd6f915e72f79d3985e2ea4a4",
+   "analysis_hash": "25c04f9e61c4d049e7d66c376d3a58847d2410baf71c844b3312c9c56a64a246"
+  },
+  {
+   "run": "b96_10g_pre97__A2__2",
+   "case": "b96_10g_pre97",
+   "arm": "A2",
+   "k": 2,
+   "exit": 0,
+   "wall_s": 29.3,
+   "claude_version": "2.1.321 (Claude Code)",
+   "time": "2026-11-19 16:11:07",
+   "attempts": 1,
+   "status": "options",
+   "score": {
+    "status": "options",
+    "n_options": 4,
+    "variants": {
+     "agent_cdc": {
+      "found": true,
+      "option": "O2",
+      "scope": [
+       "core"
+      ],
+      "gain": [
+       0,
+       1
+      ],
+      "basis": "model",
+      "measured": 1,
+      "in_range": true,
+      "over": 0
+     },
+     "hand_ref": {
+      "found": false,
+      "best_overlap": 0.5,
+      "best_option": "O4",
+      "measured": 2
+     },
+     "agent_both": {
+      "found": false,
+      "best_overlap": 0.5,
+      "best_option": "O4",
+      "measured": 2
+     },
+     "all3": {
+      "found": false,
+      "best_overlap": 0.75,
+      "best_option": "O4",
+      "measured": 3
+     }
+    },
+    "matched_options": [],
+    "other_options": [
+     {
+      "id": "O1",
+      "title": "Precompute frame word 0 so s_valid rises with start",
+      "stages": [
+       "fs_start"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0,
+       1
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "O3",
+      "title": "Transmit-side start: precompute word 0 and merge the MAC preamble register",
+      "stages": [
+       "fs_start",
+       "mac_preamble"
+      ],
+      "scope_kind": "subsystem",
+      "gain": [
+       0,
+       2
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "O4",
+      "title": "Whole-design ladder: transmit start, go crossing and decision register",
+      "stages": [
+       "fs_start",
+       "mac_preamble",
+       "cross_go",
+       "decide"
+      ],
+      "scope_kind": "whole_design",
+      "gain": [
+       0,
+       4
+      ],
+      "basis": "model"
+     }
+    ],
+    "found_named": 1,
+    "found_all": 1,
+    "in_range": 1,
+    "n_variants": 4,
+    "n_named": 3
+   },
+   "rejected": [],
+   "notes": [],
+   "options_hash": "3f9e09ee8e02f05d8e1c0f301f013839fb3cd3e2cb4e7d57063489793c24b581",
+   "analysis_hash": "25c04f9e61c4d049e7d66c376d3a58847d2410baf71c844b3312c9c56a64a246"
+  },
+  {
+   "run": "b96_10g_pre97__A2__3",
+   "case": "b96_10g_pre97",
+   "arm": "A2",
+   "k": 3,
+   "exit": 0,
+   "wall_s": 27.7,
+   "claude_version": "2.1.321 (Claude Code)",
+   "time": "2026-11-19 16:11:35",
+   "attempts": 1,
+   "status": "options",
+   "score": {
+    "status": "options",
+    "n_options": 4,
+    "variants": {
+     "agent_cdc": {
+      "found": true,
+      "option": "O2",
+      "scope": [
+       "core"
+      ],
+      "gain": [
+       0,
+       1
+      ],
+      "basis": "model",
+      "measured": 1,
+      "in_range": true,
+      "over": 0
+     },
+     "hand_ref": {
+      "found": false,
+      "best_overlap": 0.5,
+      "best_option": "O2",
+      "measured": 2
+     },
+     "agent_both": {
+      "found": false,
+      "best_overlap": 0.5,
+      "best_option": "O2",
+      "measured": 2
+     },
+     "all3": {
+      "found": false,
+      "best_overlap": 0.6,
+      "best_option": "O4",
+      "measured": 3
+     }
+    },
+    "matched_options": [],
+    "other_options": [
+     {
+      "id": "O1",
+      "title": "Precompute frame word 0 so s_valid rises with start",
+      "stages": [
+       "fs_start"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0,
+       1
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "O3",
+      "title": "Transmit side: remove the frame-start and MAC-preamble registers",
+      "stages": [
+       "fs_start",
+       "mac_preamble"
+      ],
+      "scope_kind": "subsystem",
+      "gain": [
+       1,
+       2
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "O4",
+      "title": "Whole path: transmit merges plus crossing, decision and receive descramble",
+      "stages": [
+       "fs_start",
+       "mac_preamble",
+       "cross_go",
+       "decide",
+       "rx_descramble"
+      ],
+      "scope_kind": "whole_design",
+      "gain": [
+       2,
+       5
+      ],
+      "basis": "model"
+     }
+    ],
+    "found_named": 1,
+    "found_all": 1,
+    "in_range": 1,
+    "n_variants": 4,
+    "n_named": 3
+   },
+   "rejected": [],
+   "notes": [],
+   "options_hash": "e71fdaf9e8e3661d13513e10dd0511f9c893634c42c6ea1388ad72d9f34a3206",
+   "analysis_hash": "25c04f9e61c4d049e7d66c376d3a58847d2410baf71c844b3312c9c56a64a246"
+  },
+  {
    "run": "b96_10g_pre97__A__1",
    "case": "b96_10g_pre97",
    "arm": "A",
@@ -313,6 +633,324 @@
    "rejected": [],
    "notes": [],
    "options_hash": "8956df99be89d5834e7b2ac146cfb11bda0658b22436b39b09fae5e9927e6d7a",
+   "analysis_hash": "25c04f9e61c4d049e7d66c376d3a58847d2410baf71c844b3312c9c56a64a246"
+  },
+  {
+   "run": "b96_10g_pre97__B2__1",
+   "case": "b96_10g_pre97",
+   "arm": "B2",
+   "k": 1,
+   "exit": 0,
+   "wall_s": 29.2,
+   "claude_version": "2.1.321 (Claude Code)",
+   "time": "2026-11-19 16:12:04",
+   "attempts": 1,
+   "status": "options",
+   "score": {
+    "status": "options",
+    "n_options": 4,
+    "variants": {
+     "agent_cdc": {
+      "found": true,
+      "option": "O1",
+      "scope": [
+       "core"
+      ],
+      "gain": [
+       1,
+       2
+      ],
+      "basis": "model",
+      "measured": 1,
+      "in_range": true,
+      "over": 1
+     },
+     "hand_ref": {
+      "found": false,
+      "best_overlap": 0.5,
+      "best_option": "O4",
+      "measured": 2
+     },
+     "agent_both": {
+      "found": false,
+      "best_overlap": 0.5,
+      "best_option": "O1",
+      "measured": 2
+     },
+     "all3": {
+      "found": false,
+      "best_overlap": 0.4,
+      "best_option": "O4",
+      "measured": 3
+     }
+    },
+    "matched_options": [],
+    "other_options": [
+     {
+      "id": "O2",
+      "title": "Start the transmit preamble without the s_valid register",
+      "stages": [
+       "fs_start",
+       "mac_preamble"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0,
+       1
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "O3",
+      "title": "Merge receive gearbox and descramble",
+      "stages": [
+       "rx_descramble"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0,
+       1
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "O4",
+      "title": "Whole-chain latency cut: crossing, transmit start and receive PCS",
+      "stages": [
+       "cross_go",
+       "fs_start",
+       "mac_preamble",
+       "rx_descramble"
+      ],
+      "scope_kind": "whole_design",
+      "gain": [
+       1,
+       4
+      ],
+      "basis": "model"
+     }
+    ],
+    "found_named": 1,
+    "found_all": 1,
+    "in_range": 1,
+    "n_variants": 4,
+    "n_named": 3
+   },
+   "rejected": [],
+   "notes": [],
+   "options_hash": "52ca6cc3640069564e07f42573f7657e6104224ad593acbd6c315bbe8125594e",
+   "analysis_hash": "25c04f9e61c4d049e7d66c376d3a58847d2410baf71c844b3312c9c56a64a246"
+  },
+  {
+   "run": "b96_10g_pre97__B2__2",
+   "case": "b96_10g_pre97",
+   "arm": "B2",
+   "k": 2,
+   "exit": 0,
+   "wall_s": 52.0,
+   "claude_version": "2.1.321 (Claude Code)",
+   "time": "2026-11-19 16:12:56",
+   "attempts": 2,
+   "status": "options",
+   "score": {
+    "status": "options",
+    "n_options": 4,
+    "variants": {
+     "agent_cdc": {
+      "found": true,
+      "option": "O2",
+      "scope": [
+       "core"
+      ],
+      "gain": [
+       1,
+       2
+      ],
+      "basis": "model",
+      "measured": 1,
+      "in_range": true,
+      "over": 1
+     },
+     "hand_ref": {
+      "found": false,
+      "best_overlap": 0.67,
+      "best_option": "O4",
+      "measured": 2
+     },
+     "agent_both": {
+      "found": false,
+      "best_overlap": 0.5,
+      "best_option": "O2",
+      "measured": 2
+     },
+     "all3": {
+      "found": false,
+      "best_overlap": 0.5,
+      "best_option": "O4",
+      "measured": 3
+     }
+    },
+    "matched_options": [],
+    "other_options": [
+     {
+      "id": "O1",
+      "title": "Start the MAC preamble from the frame_src start",
+      "stages": [
+       "fs_start"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0,
+       1
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "O3",
+      "title": "Merge receive PCS gearbox extraction and descramble",
+      "stages": [
+       "rx_descramble"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0,
+       1
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "O4",
+      "title": "All three latency changes together (whole design, cumulative)",
+      "stages": [
+       "cross_go",
+       "fs_start",
+       "rx_descramble"
+      ],
+      "scope_kind": "whole_design",
+      "gain": [
+       1,
+       4
+      ],
+      "basis": "model"
+     }
+    ],
+    "found_named": 1,
+    "found_all": 1,
+    "in_range": 1,
+    "n_variants": 4,
+    "n_named": 3
+   },
+   "rejected": [],
+   "notes": [],
+   "options_hash": "9717dc8fcc0c9f184c8f2e688ea6d42a9407d58a6b5041459b8c0448930fa21c",
+   "analysis_hash": "25c04f9e61c4d049e7d66c376d3a58847d2410baf71c844b3312c9c56a64a246"
+  },
+  {
+   "run": "b96_10g_pre97__B2__3",
+   "case": "b96_10g_pre97",
+   "arm": "B2",
+   "k": 3,
+   "exit": 0,
+   "wall_s": 28.7,
+   "claude_version": "2.1.321 (Claude Code)",
+   "time": "2026-11-19 16:13:25",
+   "attempts": 1,
+   "status": "options",
+   "score": {
+    "status": "options",
+    "n_options": 4,
+    "variants": {
+     "agent_cdc": {
+      "found": true,
+      "option": "O1",
+      "scope": [
+       "core"
+      ],
+      "gain": [
+       1,
+       2
+      ],
+      "basis": "model",
+      "measured": 1,
+      "in_range": true,
+      "over": 1
+     },
+     "hand_ref": {
+      "found": false,
+      "best_overlap": 0.67,
+      "best_option": "O3",
+      "measured": 2
+     },
+     "agent_both": {
+      "found": false,
+      "best_overlap": 0.5,
+      "best_option": "O1",
+      "measured": 2
+     },
+     "all3": {
+      "found": false,
+      "best_overlap": 0.5,
+      "best_option": "O3",
+      "measured": 3
+     }
+    },
+    "matched_options": [],
+    "other_options": [
+     {
+      "id": "O2",
+      "title": "Start the preamble straight from start",
+      "stages": [
+       "fs_start",
+       "mac_preamble"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       1,
+       2
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "O3",
+      "title": "Go-pulse crossing plus transmit start path",
+      "stages": [
+       "cross_go",
+       "fs_start",
+       "mac_preamble"
+      ],
+      "scope_kind": "subsystem",
+      "gain": [
+       2,
+       4
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "O4",
+      "title": "Full chain: add the receive-side merge",
+      "stages": [
+       "rx_descramble",
+       "cross_go",
+       "fs_start",
+       "mac_preamble"
+      ],
+      "scope_kind": "whole_design",
+      "gain": [
+       2,
+       5
+      ],
+      "basis": "model"
+     }
+    ],
+    "found_named": 1,
+    "found_all": 1,
+    "in_range": 1,
+    "n_variants": 4,
+    "n_named": 3
+   },
+   "rejected": [],
+   "notes": [],
+   "options_hash": "73ffe676b36dae376966ee6de21eb231610a82392ab4ebaaea8b7eb47684c21c",
    "analysis_hash": "25c04f9e61c4d049e7d66c376d3a58847d2410baf71c844b3312c9c56a64a246"
   },
   {
@@ -874,6 +1512,7 @@
  "summary": {
   "b96_10g_pre97/A": {
    "runs": 3,
+   "pre_registered": true,
    "failed": 0,
    "found_all_per_run": [
     1,
@@ -884,6 +1523,9 @@
     1,
     1,
     1
+   ],
+   "prompt_system_sha256": [
+    "5776ae375ac6b124"
    ],
    "found_named_per_run": [
     1,
@@ -901,10 +1543,16 @@
     "hand_ref": 0,
     "agent_both": 0,
     "all3": 0
-   }
+   },
+   "range_high_over_measured": [
+    0,
+    0,
+    0
+   ]
   },
   "b96_10g_pre97/B": {
    "runs": 3,
+   "pre_registered": true,
    "failed": 0,
    "found_all_per_run": [
     1,
@@ -915,6 +1563,9 @@
     1,
     1,
     1
+   ],
+   "prompt_system_sha256": [
+    "5776ae375ac6b124"
    ],
    "found_named_per_run": [
     1,
@@ -932,10 +1583,16 @@
     "hand_ref": 0,
     "agent_both": 0,
     "all3": 0
-   }
+   },
+   "range_high_over_measured": [
+    0,
+    0,
+    1
+   ]
   },
-  "c16_montgomery_200mhz/A": {
+  "b96_10g_pre97/A2": {
    "runs": 3,
+   "pre_registered": false,
    "failed": 0,
    "found_all_per_run": [
     1,
@@ -946,6 +1603,97 @@
     1,
     1,
     1
+   ],
+   "prompt_system_sha256": [
+    "ffb71e87152c8956"
+   ],
+   "found_named_per_run": [
+    1,
+    1,
+    1
+   ],
+   "found_by_variant": {
+    "agent_cdc": 3,
+    "hand_ref": 0,
+    "agent_both": 0,
+    "all3": 0
+   },
+   "in_range_by_variant": {
+    "agent_cdc": 3,
+    "hand_ref": 0,
+    "agent_both": 0,
+    "all3": 0
+   },
+   "range_high_over_measured": [
+    0,
+    0,
+    0
+   ]
+  },
+  "b96_10g_pre97/B2": {
+   "runs": 3,
+   "pre_registered": false,
+   "failed": 0,
+   "found_all_per_run": [
+    1,
+    1,
+    1
+   ],
+   "in_range_per_run": [
+    1,
+    1,
+    1
+   ],
+   "prompt_system_sha256": [
+    "ffb71e87152c8956"
+   ],
+   "found_named_per_run": [
+    1,
+    1,
+    1
+   ],
+   "found_by_variant": {
+    "agent_cdc": 3,
+    "hand_ref": 0,
+    "agent_both": 0,
+    "all3": 0
+   },
+   "in_range_by_variant": {
+    "agent_cdc": 3,
+    "hand_ref": 0,
+    "agent_both": 0,
+    "all3": 0
+   },
+   "range_high_over_measured": [
+    1,
+    1,
+    1
+   ]
+  },
+  "c16_montgomery_200mhz/A": {
+   "runs": 3,
+   "pre_registered": true,
+   "failed": 0,
+   "found_all_per_run": [
+    1,
+    1,
+    1
+   ],
+   "in_range_per_run": [
+    1,
+    1,
+    1
+   ],
+   "prompt_system_sha256": [
+    "5776ae375ac6b124"
+   ],
+   "found_by_scope_only": 3,
+   "found_and_names_carry_save": 2,
+   "found_with_basis_guess": 2,
+   "range_high_over_measured": [
+    0.821,
+    0.821,
+    1.321
    ]
   }
  }

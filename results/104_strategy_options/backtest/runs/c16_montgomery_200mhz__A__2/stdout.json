@@ -1,0 +1,278 @@
+{
+ "schema": "fda-strategy-record/1",
+ "request": "the design misses timing at 200 MHz: improve its timing",
+ "mode": "new",
+ "blind": false,
+ "analysis_hash": "378c584387f278544d2d3e060ce630b71f8143c8ed52a2110b78f06bdc526c8d",
+ "analysis_sources": [
+  {
+   "file": "results/104_strategy_options/backtest/c16_montgomery_200mhz/evidence/digest.json",
+   "sha256": "244d2f139bc014ad59f022554bdc53df75d4aac9a4d0133360751b4e4701d610",
+   "bytes": 1261
+  }
+ ],
+ "options_schema": "fda-options/1",
+ "model": {
+  "purpose": "options",
+  "endpoint": "claude_code",
+  "kind": "claude_code",
+  "model": "claude-sonnet-5-5",
+  "effort": "medium",
+  "entry_hash": "f3f2d8f85ded614e",
+  "table_hash": "fefa480b88108b19"
+ },
+ "attempts": 1,
+ "prompts": {
+  "system": {
+   "name": "graph/options/system",
+   "sha256": "5776ae375ac6b124a3bf89d14306c7a3270f40b4c5a12afee05c4b968f293e63"
+  },
+  "user": {
+   "name": "graph/options/user",
+   "sha256": "30be8dfd004dac0b443bd9284b0dc2e6b83fc244eb9e18ea65491314bed01ede"
+  },
+  "repair": {
+   "name": "graph/options/repair",
+   "sha256": "bb56b4a42f41d6b2e0b4df594b108893c63648374235a7d5d2b5224fc192f8b0"
+  }
+ },
+ "created": "2026-11-19 16:08:36",
+ "goal": "timing",
+ "status": "options",
+ "question": null,
+ "options": [
+  {
+   "id": "O1",
+   "title": "Carry-select split of the s_reg adder",
+   "scope": {
+    "kind": "modules",
+    "components": [
+     "montgomery_core"
+    ],
+    "cli": "--scope montgomery_core"
+   },
+   "approach": "In montgomery_core, split the 64-bit add that feeds s_reg into a low and a high half. Compute the high half for carry-in 0 and 1, and pick the result with the carry out of the low half. This roughly halves the 18-CARRY4 chain on the worst path, s_reg[1]_replica to s_reg[64]. The W+2 clock latency, the ports and the other components are not changed.",
+   "techniques": [
+    "restructure_arithmetic",
+    "carry_select"
+   ],
+   "touches_stages": [],
+   "stage_components": {},
+   "gain": {
+    "metric": "wns_ns",
+    "unit": "ns",
+    "low": 0.615,
+    "high": 1.5,
+    "basis": "guess",
+    "cites": [
+     "timing.worst_path.levels",
+     "timing.worst_path.data_path_ns",
+     "timing.wns_ns"
+    ],
+    "basis_note": "The path has 18 CARRY4 levels in a 5.59 ns data path. Halving the chain should remove a good part of the carry delay, but I have no per-cell delays, so this range is a guess. The low end is the slack needed to close timing.",
+    "ceiling": 5.0,
+    "ceiling_basis": "one clock period (5.0 ns)",
+    "sources": [
+     "results/104_strategy_options/backtest/c16_montgomery_200mhz/evidence/digest.json"
+    ]
+   },
+   "cost": {
+    "iterations": {
+     "low": 2,
+     "high": 4
+    },
+    "vivado_runs": {
+     "low": 2,
+     "high": 4
+    },
+    "wall_minutes": null,
+    "model_usd": null,
+    "note": "One RTL change, then route. The mux on the carry and the other near-critical paths among the 33 failing endpoints may need a second round.",
+    "basis": "iterations are the generator's estimate (a guess); no recorded build time, so no wall-time figure"
+   },
+   "risk": {
+    "gates": [
+     "whole-core bench: results match and latency stays W+2 clocks",
+     "timing met with WNS >= 0 after route",
+     "equivalence with the previous netlist"
+    ],
+    "contract_change": false,
+    "contract_flags": [],
+    "contract_flag_added_by_checker": false,
+    "needs_owner_approval": false,
+    "contract_affected": [],
+    "needs_eqy": true,
+    "needs_board": false,
+    "summary": "Costs extra LUTs for the duplicated upper half; total is 827 LUTs. Other paths among the 33 failing endpoints may then limit the clock.",
+    "contract_note": "The change is inside montgomery_core; ports and latency are unchanged."
+   },
+   "interface_changes": [],
+   "not_touched": [
+    {
+     "component": "top",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "regs",
+     "why": "owned, outside this option's scope"
+    }
+   ],
+   "hidden_components": 0,
+   "n": 1
+  },
+  {
+   "id": "O2",
+   "title": "Carry-save accumulator in the multiplier loop",
+   "scope": {
+    "kind": "modules",
+    "components": [
+     "montgomery_core"
+    ],
+    "cli": "--scope montgomery_core"
+   },
+   "approach": "In montgomery_core, keep s in carry-save form (sum and carry vectors) inside the bit-serial loop, so the loop has no carry chain across 64 bits. Resolve the carry only once at the end, with a final add that must fit inside the fixed W+2 clocks. The register window and top are not changed.",
+   "techniques": [
+    "carry_save",
+    "restructure_arithmetic"
+   ],
+   "touches_stages": [],
+   "stage_components": {},
+   "gain": {
+    "metric": "wns_ns",
+    "unit": "ns",
+    "low": 0.615,
+    "high": 2.5,
+    "basis": "guess",
+    "cites": [
+     "timing.worst_path.levels",
+     "timing.wns_ns",
+     "timing.period_ns"
+    ],
+    "basis_note": "The 18 CARRY4 levels dominate the worst path, and a carry-save loop removes them, so the gain could be large. The final resolving add may become the new critical path, so the range is a guess. The high end stays within half of the 5.0 ns period.",
+    "ceiling": 5.0,
+    "ceiling_basis": "one clock period (5.0 ns)",
+    "sources": [
+     "results/104_strategy_options/backtest/c16_montgomery_200mhz/evidence/digest.json"
+    ]
+   },
+   "cost": {
+    "iterations": {
+     "low": 3,
+     "high": 6
+    },
+    "vivado_runs": {
+     "low": 3,
+     "high": 6
+    },
+    "wall_minutes": null,
+    "model_usd": null,
+    "note": "Larger RTL rewrite. The final carry resolution has to be fitted into the fixed latency, and the design has to be re-verified.",
+    "basis": "iterations are the generator's estimate (a guess); no recorded build time, so no wall-time figure"
+   },
+   "risk": {
+    "gates": [
+     "whole-core bench: results correct for all operand cases and latency exactly W+2 clocks",
+     "timing met with WNS >= 0 after route",
+     "equivalence with the previous netlist or a randomised bench against a reference model"
+    ],
+    "contract_change": false,
+    "contract_flags": [],
+    "contract_flag_added_by_checker": false,
+    "needs_owner_approval": false,
+    "contract_affected": [],
+    "needs_eqy": true,
+    "needs_board": false,
+    "summary": "The sum and carry vectors would roughly double the flip-flops of the s register (824 FF total). The final resolve may not fit in the fixed W+2 clocks without extra logic.",
+    "contract_note": "Ports and latency are unchanged. The course spec fixes latency at W+2, so no extra clock may be added."
+   },
+   "interface_changes": [],
+   "not_touched": [
+    {
+     "component": "top",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "regs",
+     "why": "owned, outside this option's scope"
+    }
+   ],
+   "hidden_components": 0,
+   "n": 2
+  },
+  {
+   "id": "O3",
+   "title": "Synthesis and placement strategy exploration",
+   "scope": {
+    "kind": "whole_design",
+    "components": [
+     "top",
+     "regs",
+     "montgomery_core"
+    ],
+    "cli": "--scope top,regs,montgomery_core"
+   },
+   "approach": "Leave the RTL unchanged and rerun synthesis and implementation with timing-oriented strategies, such as performance-explore directives and post-route physical optimisation. Try a few strategies and keep the best result. Routing is only about a quarter of the worst path, so only a small gain is expected.",
+   "techniques": [
+    "tool_strategy",
+    "phys_opt"
+   ],
+   "touches_stages": [],
+   "stage_components": {},
+   "gain": {
+    "metric": "wns_ns",
+    "unit": "ns",
+    "low": 0,
+    "high": 0.4,
+    "basis": "guess",
+    "cites": [
+     "timing.worst_path.data_path_ns",
+     "timing.wns_ns"
+    ],
+    "basis_note": "Routing is 26.4% of the 5.59 ns data path, about 1.5 ns, and the carry chain is fixed logic. A strategy change can recover only part of the routing share, so the range is a guess and may not reach the 0.615 ns needed.",
+    "ceiling": 5.0,
+    "ceiling_basis": "one clock period (5.0 ns)",
+    "sources": [
+     "results/104_strategy_options/backtest/c16_montgomery_200mhz/evidence/digest.json"
+    ]
+   },
+   "cost": {
+    "iterations": {
+     "low": 2,
+     "high": 5
+    },
+    "vivado_runs": {
+     "low": 2,
+     "high": 5
+    },
+    "wall_minutes": null,
+    "model_usd": null,
+    "note": "Each strategy is one full build. No RTL is changed.",
+    "basis": "iterations are the generator's estimate (a guess); no recorded build time, so no wall-time figure"
+   },
+   "risk": {
+    "gates": [
+     "timing met with WNS >= 0 after route",
+     "whole-core bench still passes on the new netlist"
+    ],
+    "contract_change": false,
+    "contract_flags": [],
+    "contract_flag_added_by_checker": false,
+    "needs_owner_approval": false,
+    "contract_affected": [],
+    "needs_eqy": false,
+    "needs_board": false,
+    "summary": "May not close timing alone, because the 18-level carry chain stays in the design. It is useful as a low-effort baseline or in combination with O1.",
+    "contract_note": "No RTL, port or latency change."
+   },
+   "interface_changes": [],
+   "not_touched": [],
+   "hidden_components": 0,
+   "n": 3
+  }
+ ],
+ "rejected": [],
+ "notes": [],
+ "unresolved": [],
+ "wall_s": 21.4,
+ "options_hash": "2d6f874585ee5b7809682de633bd517025237f11c418b5c28af47998c68eb51b"
+}

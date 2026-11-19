@@ -283,6 +283,8 @@ def analyse(design: Path, *, build_dir: Path | None = None, base: Path | None = 
             dc = component_of_path(project, re.sub(r"/[^/]+$", "", w["destination"]))
             w["source_component"] = sc.name if sc and sc.ownership != "excluded" else None
             w["destination_component"] = dc.name if dc and dc.ownership != "excluded" else None
+            if w["source_component"] is None or w["destination_component"] is None:      # the path touches an excluded (or unknown) component: no cell names to the model
+                w["source"] = w["destination"] = "(hidden: not in a component this view shows)"
             timing["worst_path"] = w
             facts.add("timing.worst_path.slack_ns", w["slack_ns"], "ns", "setup slack of the single worst path", f, "Slack", "post_route_report")
             if "logic_levels" in w:
@@ -304,8 +306,11 @@ def analyse(design: Path, *, build_dir: Path | None = None, base: Path | None = 
         sp = sp or ((d.get("digest") or {}).get("setup_path"))
         if sp and "worst_path" not in timing:
             sc = component_of_path(project, re.sub(r"/[^/]+$", "", sp.get("source", "")))
+            dcc = component_of_path(project, re.sub(r"/[^/]+$", "", sp.get("destination", "")))
             timing["worst_path"] = {**sp, "source_component": sc.name if sc and sc.ownership != "excluded" else None,
-                                    "destination_component": sc.name if sc and sc.ownership != "excluded" else None}
+                                    "destination_component": (dcc.name if dcc and dcc.ownership != "excluded" else None)}
+            if timing["worst_path"]["source_component"] is None or timing["worst_path"]["destination_component"] is None:
+                timing["worst_path"]["source"] = timing["worst_path"]["destination"] = "(hidden: not in a component this view shows)"
             facts.add("timing.worst_path.slack_ns", sp["slack_ns"], "ns", "setup slack of the single worst path", digest, "setup_path.slack_ns", "post_route_report")
             facts.add("timing.worst_path.levels", sp["logic_levels"], "levels", f"logic levels on the worst path ({sp.get('levels_by_type')})", digest,
                       "setup_path.logic_levels", "post_route_report")
@@ -336,7 +341,7 @@ def analyse(design: Path, *, build_dir: Path | None = None, base: Path | None = 
             if r is None:
                 continue
             # exclusive of the components nested under this one (the table's parents include their children)
-            sub = [x for x in visible if x is not c and _inst(x) and (_inst(x).startswith(_inst(c) + "/") if _inst(c) else True)]
+            sub = [x for x in project.components if x is not c and _inst(x) and (_inst(x).startswith(_inst(c) + "/") if _inst(c) else True)]
             nested = [s for s in sub if not any(o is not s and o is not c and _inst(o).startswith(_inst(c) + "/" if _inst(c) else "") and _inst(s).startswith(_inst(o) + "/") for o in sub)]
             ex = {k: (r[k] or 0) - sum((by.get(_inst(s), {}).get(k) or 0) for s in nested) for k in ("lut", "ff")}
             rec = {"component": c.name, "instance": _inst(c) or "(top)", "lut_total": r["lut"], "ff_total": r["ff"], "lut_own": ex["lut"], "ff_own": ex["ff"],
@@ -346,6 +351,9 @@ def analyse(design: Path, *, build_dir: Path | None = None, base: Path | None = 
             facts.add(f"res.{c.name}.lut", ex["lut"], "LUT", f"LUTs in {c.name} itself (its instance total minus nested components)", f, f"row {_inst(c) or 'top'}", "post_route_report")
             facts.add(f"res.{c.name}.ff", ex["ff"], "FF", f"flip-flops in {c.name} itself", f, f"row {_inst(c) or 'top'}", "post_route_report")
         top = rows[0] if rows else None
+        if top and n_hidden:                      # whole-design totals without the excluded components' share
+            hid = [by.get(_inst(x)) for x in project.components if x.ownership == "excluded" and _inst(x) and by.get(_inst(x))]
+            top = {**top, "lut": top["lut"] - sum(h["lut"] or 0 for h in hid), "ff": top["ff"] - sum(h["ff"] or 0 for h in hid)}
         if top:
             facts.add("res.total.lut", top["lut"], "LUT", "total LUTs of the whole design", files["util_hier"], "top row", "post_route_report")
             facts.add("res.total.ff", top["ff"], "FF", "total flip-flops of the whole design", files["util_hier"], "top row", "post_route_report")
@@ -387,7 +395,8 @@ def analyse(design: Path, *, build_dir: Path | None = None, base: Path | None = 
 
     out["facts"] = facts.items
     out["sources"] = sorted(facts.files.values(), key=lambda x: x["file"])
-    out["hash"] = hashlib.sha256(json.dumps({k: out[k] for k in ("components", "latency", "timing", "resources", "cdc", "facts", "sources")}, sort_keys=True, default=str).encode()).hexdigest()
+    out["component_hashes"] = {c.name: managed.component_hash(project, c) for c in visible}      # an RTL edit with unchanged reports still makes the analysis stale
+    out["hash"] = hashlib.sha256(json.dumps({k: out[k] for k in ("components", "latency", "timing", "resources", "cdc", "facts", "sources", "component_hashes")}, sort_keys=True, default=str).encode()).hexdigest()
     return out
 
 

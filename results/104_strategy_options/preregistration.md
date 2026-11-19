@@ -50,3 +50,11 @@ Sequential, one at a time. No Vivado, no board, no heavy slot. Prompts: private 
 ## Stopping
 
 Nine live runs. No run is added or dropped after seeing a result, except the infrastructure re-run above. Cost: reported on the plan (no dollars); wall time per run is recorded.
+
+## Addendum 2026-11-19 (after the nine runs; NOT pre-registered)
+
+Result of the nine runs: on case 1 only `agent_cdc` was found (3 of 3 runs in each arm); `hand_ref`, `agent_both` and `all3`, the combinations that contain `cross_go`, were never offered:
+the options were disjoint single changes plus one whole-design combination that left `cross_go` out. The generator offered no option that builds on another. As an exploratory step, the prompt
+`graph/options/system` was revised with one rule (include a cumulative option that adds further changes to a narrower option) and case 1 was re-run, three runs per arm, as arms `A2`
+and `B2`. These runs are labelled exploratory: the prompt was changed after seeing the truth, so they show whether the rule works, not how the first prompt performs. The pre-registered
+results above stay the primary result.

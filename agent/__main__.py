@@ -243,6 +243,11 @@ def pickup_cmd(a) -> int:
         managed.start_run(managed.load(Path(rt.design)), scope)
     if getattr(a, "strategy_file", None):            # brief 104: the options the request was chosen from go with the run
         import shutil
+        _st = json.loads(Path(a.strategy_file).read_text())
+        _ch = _st.get("choice") or {}
+        if not _ch or _ch.get("options_hash") != (_st.get("current") or {}).get("options_hash") or (scope is not None and list(scope.components) != list(_ch.get("scope") or [])):
+            print("resume: the strategy file does not match this request (no choice, a changed options list, or another scope)", file=sys.stderr)
+            return 2
         dst = Path(rt.design) / "build" / "managed" / "strategy.json"
         dst.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(a.strategy_file, dst)

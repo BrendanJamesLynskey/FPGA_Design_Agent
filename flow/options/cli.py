@@ -183,17 +183,26 @@ def improve_cmd(a, main_fn) -> int:
     if state.get("current"):
         history.append({k: state["current"][k] for k in ("created", "request", "mode", "status", "analysis_hash", "options_hash") if k in state["current"]})
     if mode == "edit" and rec["status"] == "options" and rec["options"] and previous:        # the edited option replaces its original; the others stay
-        keep = [o for o in previous if o["id"] != edit["id"]]
-        rec["options"] = sorted(keep + rec["options"], key=lambda o: o["id"])
+        new = rec["options"][0]
+        rec["options"] = [new if o["id"] == edit["id"] else o for o in previous]
         for k, o in enumerate(rec["options"], 1):
             o["n"] = k
         rec["options_hash"] = G._sha(json.dumps(rec["options"], sort_keys=True))
     if mode == "more" and rec["status"] == "options" and previous:
-        rec["options"] = previous + [dict(o, id=f"O{len(previous) + i}") for i, o in enumerate(rec["options"], 1)]
+        used = {o["id"] for o in previous}
+        fresh = []
+        for o in rec["options"]:
+            k = len(previous) + len(fresh) + 1
+            while f"O{k}" in used:
+                k += 1
+            used.add(f"O{k}")
+            fresh.append(dict(o, id=f"O{k}"))
+        rec["options"] = previous + fresh
         for k, o in enumerate(rec["options"], 1):
             o["n"] = k
         rec["options_hash"] = G._sha(json.dumps(rec["options"], sort_keys=True))
-    f = _save(design, {"current": rec, "history": history, "analysis": {k: an[k] for k in ("schema", "design", "hash", "sources", "gaps")}, "choice": None}, a.out)
+    f = _save(design, {"current": rec, "history": history, "analysis": {k: an[k] for k in ("schema", "design", "hash", "sources", "gaps")}, "choice": None,
+                       "inputs": {"build_dir": str(Path(a.build_dir).resolve()) if a.build_dir else None, "latency_path": a.latency_path}}, a.out)
     print(json.dumps(rec, indent=1, default=str) if a.json else render(rec, an))
     print(f"\nrecord: {f}", file=sys.stderr)
     return 0 if rec["status"] in ("options", "question") else 1
@@ -237,7 +246,8 @@ def _choose(a, design: Path, main_fn) -> int:
         print(f"improve --choose: no option {a.choose}; options are 1 to {len(cur['options'])}", file=sys.stderr)
         return 2
     try:
-        an = A.analyse(design, build_dir=a.build_dir)
+        inp = st.get("inputs") or {}
+        an = A.analyse(design, build_dir=a.build_dir or inp.get("build_dir"), path=inp.get("latency_path"))
     except (ValueError, OSError, KeyError) as e:
         print(f"improve --choose: {e}", file=sys.stderr)
         return 2
@@ -245,6 +255,11 @@ def _choose(a, design: Path, main_fn) -> int:
         print("improve --choose: the design or its reports changed since these options were made; ask again so the analysis matches the design", file=sys.stderr)
         return 2
     cur_project = managed.load(design)
+    if cur_project is not None:                   # the manifest as it is now: every component of the scope is still owned (the checks ran when the options were made)
+        bad = [c for c in opt["scope"]["components"] if not cur_project.component(c) or cur_project.component(c).ownership != "owned"]
+        if bad:
+            print(f"improve --choose: {', '.join(bad)} is no longer an owned component of this project; ask again", file=sys.stderr)
+            return 2
     approved = set(cur_project.approved_contract_changes) if cur_project else set()
     affected = opt["risk"].get("contract_affected") or opt["scope"]["components"]
     if opt["risk"]["contract_change"] and not set(affected) <= approved:      # the manifest as it is now: the owner may have approved since

@@ -1,0 +1,295 @@
+{
+ "current": {
+  "schema": "fda-strategy-record/1",
+  "request": "the design misses timing at 200 MHz: improve its timing",
+  "mode": "new",
+  "blind": false,
+  "analysis_hash": "378c584387f278544d2d3e060ce630b71f8143c8ed52a2110b78f06bdc526c8d",
+  "analysis_sources": [
+   {
+    "file": "results/104_strategy_options/backtest/c16_montgomery_200mhz/evidence/digest.json",
+    "sha256": "244d2f139bc014ad59f022554bdc53df75d4aac9a4d0133360751b4e4701d610",
+    "bytes": 1261
+   }
+  ],
+  "options_schema": "fda-options/1",
+  "model": {
+   "purpose": "options",
+   "endpoint": "claude_code",
+   "kind": "claude_code",
+   "model": "claude-sonnet-5-5",
+   "effort": "medium",
+   "entry_hash": "f3f2d8f85ded614e",
+   "table_hash": "fefa480b88108b19"
+  },
+  "attempts": 1,
+  "prompts": {
+   "system": {
+    "name": "graph/options/system",
+    "sha256": "5776ae375ac6b124a3bf89d14306c7a3270f40b4c5a12afee05c4b968f293e63"
+   },
+   "user": {
+    "name": "graph/options/user",
+    "sha256": "30be8dfd004dac0b443bd9284b0dc2e6b83fc244eb9e18ea65491314bed01ede"
+   },
+   "repair": {
+    "name": "graph/options/repair",
+    "sha256": "bb56b4a42f41d6b2e0b4df594b108893c63648374235a7d5d2b5224fc192f8b0"
+   }
+  },
+  "created": "2026-11-19 16:08:22",
+  "goal": "timing",
+  "status": "options",
+  "question": null,
+  "options": [
+   {
+    "id": "O1",
+    "title": "Shorten the carry chain in the s_reg update",
+    "scope": {
+     "kind": "modules",
+     "components": [
+      "montgomery_core"
+     ],
+     "cli": "--scope montgomery_core"
+    },
+    "approach": "In montgomery_core, restructure the s_reg update (the s_reg[1] replica to s_reg[64] path) so the 18-CARRY4 addition is split. Use a carry-save form for the accumulator, or a two-segment add with the carry registered between the halves, and resolve the carry in a final step. The W+2 clock latency, the operand ports and the regs and top components are not changed.",
+    "techniques": [
+     "carry_save_accumulator",
+     "restructure_arithmetic"
+    ],
+    "touches_stages": [],
+    "stage_components": {},
+    "gain": {
+     "metric": "wns_ns",
+     "unit": "ns",
+     "low": 0.615,
+     "high": 1.5,
+     "basis": "model",
+     "cites": [
+      "timing.worst_path.levels",
+      "timing.worst_path.data_path_ns",
+      "timing.worst_path.slack_ns"
+     ],
+     "basis_note": "18 of the 20 logic levels on the 5.59 ns worst path are CARRY4. The low end is the 0.615 ns needed to reach WNS 0. The high end assumes about half the carry delay is removed, and is capped by the 5.0 ns period. The real gain depends on the next-worst paths, which are not in the analysis.",
+     "ceiling": 5.0,
+     "ceiling_basis": "one clock period (5.0 ns)",
+     "sources": [
+      "results/104_strategy_options/backtest/c16_montgomery_200mhz/evidence/digest.json"
+     ]
+    },
+    "cost": {
+     "iterations": {
+      "low": 2,
+      "high": 5
+     },
+     "vivado_runs": {
+      "low": 2,
+      "high": 5
+     },
+     "wall_minutes": null,
+     "model_usd": null,
+     "note": "Carry-save changes the register structure and needs a final carry resolve. Further paths may fail once the worst is fixed (33 endpoints fail now).",
+     "basis": "iterations are the generator's estimate (a guess); no recorded build time, so no wall-time figure"
+    },
+    "risk": {
+     "gates": [
+      "whole-core bench shows result equal to the reference for the same operands",
+      "latency stays W+2 clocks",
+      "timing met with WNS >= 0 after route",
+      "equivalence with the previous netlist where the algorithm allows"
+     ],
+     "contract_change": false,
+     "contract_flags": [],
+     "contract_flag_added_by_checker": false,
+     "needs_owner_approval": false,
+     "contract_affected": [],
+     "needs_eqy": true,
+     "needs_board": false,
+     "summary": "A carry-save accumulator needs a final resolve that must fit in the fixed W+2 clocks. If the resolve cannot be hidden, the course latency spec is broken.",
+     "contract_note": "Internal to montgomery_core, if the done timing and the result format at the output stay the same."
+    },
+    "interface_changes": [],
+    "not_touched": [
+     {
+      "component": "top",
+      "why": "owned, outside this option's scope"
+     },
+     {
+      "component": "regs",
+      "why": "owned, outside this option's scope"
+     }
+    ],
+    "hidden_components": 0,
+    "n": 1
+   },
+   {
+    "id": "O2",
+    "title": "Different synthesis and placement strategy",
+    "scope": {
+     "kind": "whole_design",
+     "components": [
+      "top",
+      "regs",
+      "montgomery_core"
+     ],
+     "cli": "--scope top,regs,montgomery_core"
+    },
+    "approach": "Keep the RTL as it is and change only the Vivado flow: try performance-oriented synthesis and implementation strategies, for example retiming, physical optimisation and an extra post-route optimisation pass. Do not change any component. The path is carry-chain dominated and routing is 26% of its delay, so the placer has limited room.",
+    "techniques": [
+     "tool_strategy",
+     "phys_opt"
+    ],
+    "touches_stages": [],
+    "stage_components": {},
+    "gain": {
+     "metric": "wns_ns",
+     "unit": "ns",
+     "low": 0,
+     "high": 0.4,
+     "basis": "guess",
+     "cites": [],
+     "basis_note": "No prior run with these settings is recorded. The worst path is 5.59 ns, mostly carry logic and 26.4% routing, so I expect a small gain. This range is a guess.",
+     "ceiling": 5.0,
+     "ceiling_basis": "one clock period (5.0 ns)",
+     "sources": []
+    },
+    "cost": {
+     "iterations": {
+      "low": 2,
+      "high": 6
+     },
+     "vivado_runs": {
+      "low": 2,
+      "high": 6
+     },
+     "wall_minutes": null,
+     "model_usd": null,
+     "note": "Each strategy needs a full build. Results vary from run to run.",
+     "basis": "iterations are the generator's estimate (a guess); no recorded build time, so no wall-time figure"
+    },
+    "risk": {
+     "gates": [
+      "timing met with WNS >= 0 after route",
+      "whole-core bench passes on the new netlist"
+     ],
+     "contract_change": false,
+     "contract_flags": [],
+     "contract_flag_added_by_checker": false,
+     "needs_owner_approval": false,
+     "contract_affected": [],
+     "needs_eqy": false,
+     "needs_board": false,
+     "summary": "It may not close a 0.615 ns deficit on a carry-bound path. It has no effect on the logic structure.",
+     "contract_note": "No RTL or port change."
+    },
+    "interface_changes": [],
+    "not_touched": [],
+    "hidden_components": 0,
+    "n": 2
+   },
+   {
+    "id": "O3",
+    "title": "Pipeline the adder in two registered halves",
+    "scope": {
+     "kind": "subsystem",
+     "components": [
+      "montgomery_core",
+      "regs"
+     ],
+     "cli": "--scope montgomery_core,regs"
+    },
+    "approach": "Split the 64-bit add in montgomery_core into low and high halves with the carry registered between them. Adjust the control and done logic so the W+2 clock count seen by regs is kept, for example by overlapping the high half with the next iteration. The regs operand registers and the done and counter logic are checked but not otherwise changed.",
+    "techniques": [
+     "pipeline_path",
+     "retime"
+    ],
+    "touches_stages": [],
+    "stage_components": {},
+    "gain": {
+     "metric": "wns_ns",
+     "unit": "ns",
+     "low": 0.4,
+     "high": 1.2,
+     "basis": "model",
+     "cites": [
+      "timing.worst_path.levels",
+      "timing.worst_path.data_path_ns"
+     ],
+     "basis_note": "Halving the 18 CARRY4 levels removes up to nine of the 20 levels from the 5.59 ns path. The high end is bounded by the remaining LUT and routing delay. The low end allows for the added register setup.",
+     "ceiling": 5.0,
+     "ceiling_basis": "one clock period (5.0 ns)",
+     "sources": [
+      "results/104_strategy_options/backtest/c16_montgomery_200mhz/evidence/digest.json"
+     ]
+    },
+    "cost": {
+     "iterations": {
+      "low": 3,
+      "high": 6
+     },
+     "vivado_runs": {
+      "low": 3,
+      "high": 6
+     },
+     "wall_minutes": null,
+     "model_usd": null,
+     "note": "The overlap in the bit-serial loop needs careful verification of the cycle count and the result.",
+     "basis": "iterations are the generator's estimate (a guess); no recorded build time, so no wall-time figure"
+    },
+    "risk": {
+     "gates": [
+      "whole-core bench and the twin pass",
+      "latency stays W+2 clocks at the done flag seen by regs",
+      "timing met with WNS >= 0 after route",
+      "equivalence with the previous netlist"
+     ],
+     "contract_change": true,
+     "contract_flags": [],
+     "contract_flag_added_by_checker": false,
+     "needs_owner_approval": true,
+     "contract_affected": [
+      "montgomery_core",
+      "regs"
+     ],
+     "needs_eqy": true,
+     "needs_board": false,
+     "summary": "Overlapping iterations in a bit-serial multiplier is hard to prove right. If the cycle count changes, the course latency spec is violated.",
+     "contract_note": "If the done timing or the operand timing changes in the regs and montgomery_core handshake, the neighbour relies on it."
+    },
+    "interface_changes": [],
+    "not_touched": [
+     {
+      "component": "top",
+      "why": "owned, outside this option's scope"
+     }
+    ],
+    "hidden_components": 0,
+    "n": 3
+   }
+  ],
+  "rejected": [],
+  "notes": [],
+  "unresolved": [],
+  "wall_s": 13.7,
+  "options_hash": "96f5abef4f77717ac33e1a7321bc1c95645d5830425c39b2a9e555a53c80bef0"
+ },
+ "history": [],
+ "analysis": {
+  "schema": "fda-analysis/1",
+  "design": "c16_montgomery_mult_200mhz",
+  "hash": "378c584387f278544d2d3e060ce630b71f8143c8ed52a2110b78f06bdc526c8d",
+  "sources": [
+   {
+    "file": "results/104_strategy_options/backtest/c16_montgomery_200mhz/evidence/digest.json",
+    "sha256": "244d2f139bc014ad59f022554bdc53df75d4aac9a4d0133360751b4e4701d610",
+    "bytes": 1261
+   }
+  ],
+  "gaps": [
+   "no per-module utilisation report: resources are known for the whole design only",
+   "no report_cdc summary: clock crossings are known only from the design's stage file",
+   "no latency_stages.yaml: the design has not declared its latency chain, so latency by stage is unknown"
+  ]
+ },
+ "choice": null
+}

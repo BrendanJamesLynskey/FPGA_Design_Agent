@@ -513,7 +513,7 @@ def test_recorded_backtest_rescoring_reproduces_the_committed_scores() -> None:
         assert B.score(rec, truth) == r["score"], r["run"]
         fx = FX10 if r["case"] == "b96_10g_pre97" else FXC
         an = A.analyse(fx, build_dir=fx / "evidence")
-        assert an["hash"] == rec["analysis_hash"], r["run"]
+        assert an["sources"] == rec["analysis_sources"], r["run"]       # the same input files (the hash definition gained component file hashes after the runs)
         again = S.check_options({"status": "options", "options": [_raw(o) for o in rec["options"]]}, an, managed.load(fx), goal=rec["goal"], blind=rec["blind"], min_options=1)
         assert not again["rejected"], (r["run"], again["rejected"])
 
@@ -541,3 +541,76 @@ def test_scoring_finds_a_variant_only_by_its_exact_stage_set() -> None:
     one = {"id": "O1", "title": "t", "scope": {"kind": "modules", "components": ["montgomery_core"]}, "approach": "carry-save", "techniques": [],
            "gain": {"metric": "wns_ns", "low": 0.3, "high": 1.0, "basis": "guess"}}
     assert B.score_change({"status": "options", "options": [one]}, tc)["changes"]["carry_save"]["in_range"]
+
+
+# ---- review round (brief 104) -----------------------------------------------------------------------------------------------
+
+def test_review_fixes_in_the_checker(an10: dict, proj10: managed.Project) -> None:
+    # a stage listed twice does not double the bound; a stage with no component cannot be in a scope
+    dup = opt(touches_stages=["cross_go", "cross_go"])
+    assert check(doc_of(dup, wide()), an10, proj10)["rejected"][0]["problems"][0] == "touches_stages lists a stage twice"
+    assert "no known component" in " ".join(check(doc_of(opt(touches_stages=["tx_spill"]), wide()), an10, proj10)["rejected"][0]["problems"])
+    # no bound from the analysis: only a guess is allowed
+    an = copy.deepcopy(an10)
+    for k in [k for k in an["facts"] if k.startswith("res.")]:
+        del an["facts"][k]
+    t = opt(scope={"kind": "modules", "components": ["rx_mac"]}, touches_stages=["rx_mac"], gain={"metric": "lut", "low": 1, "high": 50, "basis": "model", "cites": ["stage.rx_mac.clocks"], "basis_note": "x"})
+    r = S.check_options(doc_of(t, wide()), an, proj10, goal="area")
+    assert r["rejected"] and "no upper bound" in " ".join(r["rejected"][0]["problems"])
+    # a port change written only in the approach is flagged, a negated mention is not
+    flagged = check(doc_of(opt(approach="Add a ready port to core and retime the go pulse."), wide()), an10, proj10)["options"][0]["risk"]
+    assert flagged["contract_change"] and flagged["contract_flag_added_by_checker"]
+    clean = check(doc_of(opt(approach="Set REG_OUTPUT to 0. Do not change any port."), wide()), an10, proj10)["options"][0]["risk"]
+    assert not clean["contract_change"]
+    # a request about throughput is unsupported even when a goal word is present
+    assert S.classify_request("more throughput and lower latency", proj10, an10)["reason"] == "unsupported"
+
+
+def test_excluded_worst_path_names_do_not_reach_the_model_view(tmp_path: Path) -> None:
+    d = tmp_path / "fcs"
+    shutil.copytree(ROOT / "designs" / "b102_managed_fcs", d, ignore=shutil.ignore_patterns("build"))
+    ev = tmp_path / "ev"
+    ev.mkdir()
+    (ev / "timing_worst_setup.rpt").write_text("Slack (MET) :             1.000ns  (required time - arrival time)\n  Source:                 u_hb/cnt_reg[3]/C\n"
+                                               "  Destination:            u_hb/cnt_reg[4]/D\n  Data Path Delay:        2.0ns\n  Logic Levels:           2  (LUT2=2)\n")
+    pf = d / "project.yaml"
+    pf.write_text(pf.read_text().replace("- name: heartbeat\n  ownership: excluded\n", "- name: heartbeat\n  ownership: excluded\n  instance: u_hb\n"))     # the manifest must give an excluded block its instance for the reports to be redacted
+    inst = "u_hb"
+    assert managed.load(d).component("heartbeat").ownership == "excluded"
+    a = A.analyse(d, build_dir=ev)
+    w = a["timing"]["worst_path"]
+    assert inst not in json.dumps(w) and w["source_component"] is None
+
+
+def test_the_analysis_hash_changes_when_a_component_file_changes(tmp_path: Path) -> None:
+    d = tmp_path / "d"
+    shutil.copytree(FX10, d)
+    h0 = A.analyse(d, build_dir=d / "evidence")["hash"]
+    f = d / "rtl" / "trade64.sv"
+    f.write_text(f.read_text() + "\n// edit\n")
+    assert A.analyse(d, build_dir=d / "evidence")["hash"] != h0
+
+
+def test_more_assigns_unique_ids_and_edit_keeps_the_order(design10: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    other = opt(id="O2", title="Drop the decision register", scope={"kind": "modules", "components": ["trade_decision"]}, touches_stages=["decide"],
+                gain={"metric": "latency_clocks", "low": 0, "high": 1, "basis": "model", "cites": ["stage.decide.clocks"], "basis_note": "one register"})
+    res = FakeResolver([json.dumps(doc_of(opt(), wide())), json.dumps(doc_of(other, wide(id="O1"))), json.dumps(doc_of(opt(id="O3", title="Edited")))])
+    monkeypatch.setattr(C, "_resolver", lambda a, d, o: res)
+    C.improve_cmd(ns(design10, "lower latency"), main_fn=None)
+    C.improve_cmd(ns(design10, more=True), main_fn=None)
+    ids = [o["id"] for o in json.loads(C.state_path(design10).read_text())["current"]["options"]]
+    assert len(set(ids)) == 4
+    C.improve_cmd(ns(design10, "x", edit=3), main_fn=None)
+    after = json.loads(C.state_path(design10).read_text())["current"]["options"]
+    assert [o["id"] for o in after] == ids and after[2]["title"] == "Edited" and [o["n"] for o in after] == [1, 2, 3, 4]
+
+
+def test_design_analysis_tool_is_read_only_and_registered() -> None:
+    from agent.core import TOOLS
+    import agent.core.tools  # noqa: F401
+    from agent.core.options_tools import design_analysis
+    assert "design_analysis" in TOOLS and TOOLS["design_analysis"].input_schema["properties"] == {}
+    before = {p: p.stat().st_mtime_ns for p in FX10.rglob("*") if p.is_file()}
+    r = design_analysis(SimpleNamespace(design=FX10))
+    assert r["ok"] and "tick-to-trade" in r["output"] and r["analysis_hash"]
+    assert before == {p: p.stat().st_mtime_ns for p in FX10.rglob("*") if p.is_file()}

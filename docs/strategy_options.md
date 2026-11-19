@@ -28,8 +28,7 @@ Other flags: `--build-dir` (where the reports are; default `<design>/build/base`
 | clock crossings | `cdc_summary.rpt` (`report_cdc -summary`) | gap |
 | build wall time | `run.json` | cost has no wall-time figure |
 
-The analysis never starts Vivado, a simulation or a build: with no reports it says so and offers to build. **Excluded components are not in it at all** (rows, stages, paths
-dropped); frozen ones are listed, read only. Every number is a **fact** with a stable id (`stage.cross_go.clocks`, `timing.wns_ns`, `res.rx_mac.lut`), a value, the file and locator it came
+The analysis never starts Vivado, a simulation or a build: with no reports it says so and offers to build. **Excluded components are not in it at all** (rows, stages, the cell names of a worst path inside one, and their share of the totals are dropped; this needs the manifest to give the excluded component its `instance`, otherwise the reports cannot be attributed to it); frozen ones are listed, read only. Every number is a **fact** with a stable id (`stage.cross_go.clocks`, `timing.wns_ns`, `res.rx_mac.lut`), a value, the file and locator it came
 from, and an origin (simulation, post_route_report, stage_file, board, prior_run). The model is shown the facts without file names; the checker maps ids to files.
 
 ## The options (schema `fda-options/1`)
@@ -39,7 +38,7 @@ Each option has a scope (whole design, a subsystem or individual modules, as the
 
 - **Gain** is the size of the improvement: clocks removed, LUT or FF removed, nanoseconds of slack gained (for a clock-rate request the model may express headroom as slack). `basis` is
   `model` (arithmetic on cited analysis facts, at least one about that quantity), `measurement` (cites a `prior_run` fact: a recorded earlier change; the analysis has such facts only when
-  the design supplies them) or `guess` (no basis; shown as GUESS). A gain with no cited basis is rejected. The high end is bounded by the analysis: the removable clocks (or, in
+  the design supplies them) or `guess` (no basis; shown as GUESS). A `model` or `measurement` gain with no cited basis is rejected, and so is a non-guess gain for which the analysis gives no upper bound; only a labelled `guess` may stand without one. The high end is bounded by the analysis: the removable clocks (or, in
   the blind arm, the clocks) of the touched stages, the LUTs or FFs in scope, one clock period. Ranges are estimates, not promises.
 - **Cost** is computed: the model gives build-and-check rounds (a guess); Vivado runs equal those; wall time is rounds times the recorded Vivado run. Model spend is not estimated.
 - **Contract change** is computed by code and the model cannot clear it: a change touching stages in two components (it moves logic across an edge), an interface change the option declares, or a
@@ -68,7 +67,11 @@ table hash), and **prompt names and hashes only** (prompts are in the private kn
 The stage file written for brief 97 carries `technique` and `removable` fields that point at the answers. `--blind` withholds them (and the removable facts) from the model so a back-test can show
 how much of an option comes from the analysis and how much from those hints. The `why` and `remove_risk` text stays in both arms.
 
+## The tool
+
+The registry tool `design_analysis` (schema 1.16.0) gives an agent the same read-only analysis as text. No stage or role is offered it yet.
+
 ## Limits
 
 Gains are ranges from the stage table and the reports, not predictions from a simulation of the change. Only latency, timing and area are analysed (no power). Per-module resources need a
-hierarchical utilisation report. Evidence files are unsigned. Back-test results and gaps: [../results/104_strategy_options/README.md](../results/104_strategy_options/README.md).
+hierarchical utilisation report. Evidence files are unsigned. The analysis hash covers the reports and the component files' hashes, not the cell-level netlist. Back-test results and gaps: [../results/104_strategy_options/README.md](../results/104_strategy_options/README.md).

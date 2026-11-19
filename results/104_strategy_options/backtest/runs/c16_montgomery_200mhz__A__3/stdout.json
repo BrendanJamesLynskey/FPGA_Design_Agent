@@ -1,0 +1,278 @@
+{
+ "schema": "fda-strategy-record/1",
+ "request": "the design misses timing at 200 MHz: improve its timing",
+ "mode": "new",
+ "blind": false,
+ "analysis_hash": "378c584387f278544d2d3e060ce630b71f8143c8ed52a2110b78f06bdc526c8d",
+ "analysis_sources": [
+  {
+   "file": "results/104_strategy_options/backtest/c16_montgomery_200mhz/evidence/digest.json",
+   "sha256": "244d2f139bc014ad59f022554bdc53df75d4aac9a4d0133360751b4e4701d610",
+   "bytes": 1261
+  }
+ ],
+ "options_schema": "fda-options/1",
+ "model": {
+  "purpose": "options",
+  "endpoint": "claude_code",
+  "kind": "claude_code",
+  "model": "claude-sonnet-5-5",
+  "effort": "medium",
+  "entry_hash": "f3f2d8f85ded614e",
+  "table_hash": "fefa480b88108b19"
+ },
+ "attempts": 1,
+ "prompts": {
+  "system": {
+   "name": "graph/options/system",
+   "sha256": "5776ae375ac6b124a3bf89d14306c7a3270f40b4c5a12afee05c4b968f293e63"
+  },
+  "user": {
+   "name": "graph/options/user",
+   "sha256": "30be8dfd004dac0b443bd9284b0dc2e6b83fc244eb9e18ea65491314bed01ede"
+  },
+  "repair": {
+   "name": "graph/options/repair",
+   "sha256": "bb56b4a42f41d6b2e0b4df594b108893c63648374235a7d5d2b5224fc192f8b0"
+  }
+ },
+ "created": "2026-11-19 16:08:57",
+ "goal": "timing",
+ "status": "options",
+ "question": null,
+ "options": [
+  {
+   "id": "O1",
+   "title": "Carry-save accumulator in the multiplier core",
+   "scope": {
+    "kind": "modules",
+    "components": [
+     "montgomery_core"
+    ],
+    "cli": "--scope montgomery_core"
+   },
+   "approach": "In montgomery_core, keep the accumulator s as a sum and a carry vector so each of the W iterations needs no full-width carry propagation. This removes the 18-CARRY4 chain from s_reg[1]_replica to s_reg[64]. One carry-propagate addition is done at the end, split across the two extra clocks of the W+2 schedule so the latency stays fixed. The ports, regs and top are not changed.",
+   "techniques": [
+    "carry_save",
+    "restructure_arithmetic"
+   ],
+   "touches_stages": [],
+   "stage_components": {},
+   "gain": {
+    "metric": "wns_ns",
+    "unit": "ns",
+    "low": 0.615,
+    "high": 2.0,
+    "basis": "guess",
+    "cites": [
+     "timing.worst_path.levels",
+     "timing.worst_path.data_path_ns",
+     "timing.wns_ns"
+    ],
+    "basis_note": "The worst path is 5.59 ns, of which 18 of 20 levels are carry chain, so removing the chain should at least close the 0.615 ns miss. The upper end is a guess because there is no per-level delay breakdown. The final conversion may become the new critical path.",
+    "ceiling": 5.0,
+    "ceiling_basis": "one clock period (5.0 ns)",
+    "sources": [
+     "results/104_strategy_options/backtest/c16_montgomery_200mhz/evidence/digest.json"
+    ]
+   },
+   "cost": {
+    "iterations": {
+     "low": 3,
+     "high": 6
+    },
+    "vivado_runs": {
+     "low": 3,
+     "high": 6
+    },
+    "wall_minutes": null,
+    "model_usd": null,
+    "note": "This is an arithmetic rewrite. The final conversion must be fitted into the existing two extra clocks, and the new critical path may need more rounds.",
+    "basis": "iterations are the generator's estimate (a guess); no recorded build time, so no wall-time figure"
+   },
+   "risk": {
+    "gates": [
+     "montgomery bench passes for random and corner operands with W+2 clocks to done",
+     "equivalence of results with the previous core",
+     "timing met with WNS >= 0 after route"
+    ],
+    "contract_change": false,
+    "contract_flags": [],
+    "contract_flag_added_by_checker": false,
+    "needs_owner_approval": false,
+    "contract_affected": [],
+    "needs_eqy": true,
+    "needs_board": false,
+    "summary": "The result must stay correct and the latency must stay exactly W+2. The final carry-propagate step could limit the clock, and the extra sum and carry registers add FFs.",
+    "contract_note": "Ports and latency of montgomery_core are kept. Only internal state representation changes."
+   },
+   "interface_changes": [],
+   "not_touched": [
+    {
+     "component": "top",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "regs",
+     "why": "owned, outside this option's scope"
+    }
+   ],
+   "hidden_components": 0,
+   "n": 1
+  },
+  {
+   "id": "O2",
+   "title": "Different synthesis and implementation strategy",
+   "scope": {
+    "kind": "whole_design",
+    "components": [
+     "top",
+     "regs",
+     "montgomery_core"
+    ],
+    "cli": "--scope top,regs,montgomery_core"
+   },
+   "approach": "Rerun synthesis and implementation with a timing-oriented strategy, such as performance-explore placement and post-route physical optimisation, without changing the RTL. The 33 failing endpoints and a TNS of -5.987 ns suggest a modest overrun spread over a few paths. Constraints and RTL are not changed.",
+   "techniques": [
+    "tool_strategy",
+    "physopt"
+   ],
+   "touches_stages": [],
+   "stage_components": {},
+   "gain": {
+    "metric": "wns_ns",
+    "unit": "ns",
+    "low": 0.0,
+    "high": 0.4,
+    "basis": "guess",
+    "cites": [
+     "timing.tns_ns",
+     "timing.failing_endpoints",
+     "timing.wns_ns"
+    ],
+    "basis_note": "The average violation is about 0.18 ns (5.987/33) against a worst of 0.615 ns. Tool strategy has no recorded result in the analysis, so the range is a guess. It may not close the worst path, which is mostly a carry chain.",
+    "ceiling": 5.0,
+    "ceiling_basis": "one clock period (5.0 ns)",
+    "sources": [
+     "results/104_strategy_options/backtest/c16_montgomery_200mhz/evidence/digest.json"
+    ]
+   },
+   "cost": {
+    "iterations": {
+     "low": 2,
+     "high": 4
+    },
+    "vivado_runs": {
+     "low": 2,
+     "high": 4
+    },
+    "wall_minutes": null,
+    "model_usd": null,
+    "note": "Each strategy is one full build. Several strategies may need trying.",
+    "basis": "iterations are the generator's estimate (a guess); no recorded build time, so no wall-time figure"
+   },
+   "risk": {
+    "gates": [
+     "timing met with WNS >= 0 after route",
+     "whole-design bench still passes"
+    ],
+    "contract_change": false,
+    "contract_flags": [],
+    "contract_flag_added_by_checker": false,
+    "needs_owner_approval": false,
+    "contract_affected": [],
+    "needs_eqy": false,
+    "needs_board": false,
+    "summary": "A fixed carry chain of 18 CARRY4 levels is hard for the tools to shorten, so this may only reduce the miss and not remove it.",
+    "contract_note": "RTL and ports are untouched."
+   },
+   "interface_changes": [],
+   "not_touched": [],
+   "hidden_components": 0,
+   "n": 2
+  },
+  {
+   "id": "O3",
+   "title": "Precompute the selected addend in the core",
+   "scope": {
+    "kind": "modules",
+    "components": [
+     "montgomery_core"
+    ],
+    "cli": "--scope montgomery_core"
+   },
+   "approach": "In montgomery_core, precompute the operand-dependent addend term (for example B+M) once into a register, so the two LUT3 levels in front of the s_reg adder chain become a single simpler select. The 18-CARRY4 chain stays, so the gain is limited. The precompute must fit inside the existing W+2 schedule. Other components are not changed.",
+   "techniques": [
+    "precompute",
+    "reduce_logic_levels"
+   ],
+   "touches_stages": [],
+   "stage_components": {},
+   "gain": {
+    "metric": "wns_ns",
+    "unit": "ns",
+    "low": 0.0,
+    "high": 0.4,
+    "basis": "guess",
+    "cites": [
+     "timing.worst_path.levels",
+     "timing.worst_path.data_path_ns"
+    ],
+    "basis_note": "2 of 20 levels on the 5.59 ns path are LUT3, so removing one level might save a few tenths of a ns at most. There is no per-level delay in the analysis, so this is a guess.",
+    "ceiling": 5.0,
+    "ceiling_basis": "one clock period (5.0 ns)",
+    "sources": [
+     "results/104_strategy_options/backtest/c16_montgomery_200mhz/evidence/digest.json"
+    ]
+   },
+   "cost": {
+    "iterations": {
+     "low": 2,
+     "high": 4
+    },
+    "vivado_runs": {
+     "low": 2,
+     "high": 4
+    },
+    "wall_minutes": null,
+    "model_usd": null,
+    "note": "The change is small but may not close timing alone.",
+    "basis": "iterations are the generator's estimate (a guess); no recorded build time, so no wall-time figure"
+   },
+   "risk": {
+    "gates": [
+     "montgomery bench passes with W+2 clocks to done",
+     "equivalence of results with the previous core",
+     "timing met with WNS >= 0 after route"
+    ],
+    "contract_change": false,
+    "contract_flags": [],
+    "contract_flag_added_by_checker": false,
+    "needs_owner_approval": false,
+    "contract_affected": [],
+    "needs_eqy": true,
+    "needs_board": false,
+    "summary": "The worst path is dominated by the carry chain, so this alone may not meet 200 MHz. It adds a register for the precomputed term.",
+    "contract_note": "Ports and latency are kept."
+   },
+   "interface_changes": [],
+   "not_touched": [
+    {
+     "component": "top",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "regs",
+     "why": "owned, outside this option's scope"
+    }
+   ],
+   "hidden_components": 0,
+   "n": 3
+  }
+ ],
+ "rejected": [],
+ "notes": [],
+ "unresolved": [],
+ "wall_s": 25.5,
+ "options_hash": "b6add0d411ba80d3e9566ed7a27962d1dfb4a09a6c135ec292e701af5571f1f0"
+}

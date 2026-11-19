@@ -45,6 +45,8 @@ OPTION_KEYS = {"id", "title", "scope", "approach", "techniques", "touches_stages
 GAIN_KEYS = {"metric", "low", "high", "basis", "cites", "basis_note"}
 RISK_KEYS = {"gates", "contract_change", "contract_note", "needs_eqy", "needs_board", "summary"}
 MAX_TEXT = 700
+NEGATION = re.compile(r"\b(not|no|never|without|unchanged|keeps?|kept|same|leave|leaves|preserv\w*)\b|n't", re.I)
+PORT_WORDS = re.compile(r"\b(ports?|interfaces?|handshakes?|signature|valid/ready|ready/valid)\b", re.I)
 MIN_OPTIONS, MAX_OPTIONS = 2, 4
 
 
@@ -57,7 +59,7 @@ def classify_request(request: str, project: managed.Project | None, analysis: di
     if not text:
         return _q("ambiguous", "What should improve: lower latency (fewer clocks from input to output), a higher clock rate (timing closure), a smaller design (LUTs and flip-flops), or lower power?")
     goals = [g for g, rx in GOALS.items() if rx.search(text)]
-    if UNSUPPORTED.search(text) and not goals:
+    if UNSUPPORTED.search(text):
         return _q("unsupported", "That is not something the analysis measures yet (it covers latency, timing, area and power). "
                                  "Which of those should improve, and by how much?")
     if len(goals) > 1:
@@ -230,6 +232,9 @@ def _check_one(raw: Any, oid: str, analysis: dict[str, Any], project: managed.Pr
         probs.append("touches_stages must be a list of stage ids")
         ts = []
     stage_comps: dict[str, str | None] = {}
+    if len(set(ts)) != len(ts):
+        probs.append("touches_stages lists a stage twice")
+        ts = list(dict.fromkeys(ts))
     for s in ts:
         st = stage_by_id.get(s)
         if st is None:
@@ -241,7 +246,7 @@ def _check_one(raw: Any, oid: str, analysis: dict[str, Any], project: managed.Pr
             probs.append(f"stage {s} lives in {c}, which is {visible[c].ownership}: it cannot be edited")
         elif c is not None and comps and c not in comps:
             probs.append(f"stage {s} lives in {c}, which is outside the option's scope ({', '.join(comps)})")
-        elif c is None and st["kind"] != "structure":
+        elif c is None:
             probs.append(f"stage {s} has no known component, so no scope can cover it")
     if goal == "latency" and not ts:
         probs.append("a latency option names the stages it touches (touches_stages)")
@@ -287,6 +292,8 @@ def _check_one(raw: Any, oid: str, analysis: dict[str, Any], project: managed.Pr
             cap, why = ceiling(metric, ts, comps, analysis, blind=blind)
             if cap is not None and hi > cap + 1e-9:
                 probs.append(f"gain.high {hi} exceeds what the analysis allows: {why}")
+            if cap is None and basis != "guess":
+                probs.append(f"the analysis gives no upper bound for a {metric} gain here ({why}); label it a guess")
             gain_out = {"metric": metric, "unit": METRICS[metric], "low": lo, "high": hi, "basis": basis, "cites": list(cites), "basis_note": str(g.get("basis_note", "")).strip(),
                         "ceiling": cap, "ceiling_basis": why,
                         "sources": sorted({facts[c]["file"] for c in cites if c in facts})}
@@ -330,11 +337,14 @@ def _check_one(raw: Any, oid: str, analysis: dict[str, Any], project: managed.Pr
     cdc_stages = [s for s in ts if stage_by_id.get(s, {}).get("kind") == "cdc"]
     if cdc_stages:
         flags.append(f"stage {', '.join(cdc_stages)} is a clock-domain crossing: report_cdc and the crossing's own tests must still pass")
-    contract = bool(risk_in.get("contract_change")) or bool(len(cs) >= 2 or ic)
+    port_hit = not ic and any(PORT_WORDS.search(sen) and not NEGATION.search(sen) for sen in re.split(r"[.;]", raw.get("approach", "") + ". " + " ".join(techniques)))
+    if port_hit:
+        flags.append("the approach text mentions a port, interface or handshake change: treated as a possible contract change until the owner confirms it is not")
+    contract = bool(risk_in.get("contract_change")) or bool(len(cs) >= 2 or ic or port_hit)
     approved = set(project.approved_contract_changes) if project else set()
     affected = sorted(set(cs) | {x["component"] for x in ic} | (set(comps) if risk_in.get("contract_change") else set()))
     needs_owner = contract and not (affected and set(affected) <= approved)
-    added = bool(len(cs) >= 2 or ic) and not risk_in.get("contract_change")
+    added = bool(len(cs) >= 2 or ic or port_hit) and not risk_in.get("contract_change")
     not_touched = [{"component": c.name, "why": ("frozen: read only" if c.ownership == "frozen" else "owned, outside this option's scope")}
                    for c in (project.components if project else []) if c.name in visible and c.name not in comps]
     wall = (facts.get("build.wall_s") or {}).get("value")
