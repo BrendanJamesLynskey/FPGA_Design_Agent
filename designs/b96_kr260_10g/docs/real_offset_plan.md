@@ -23,7 +23,7 @@ The loopback on one board cannot give an offset by any route found so far (96C m
 ## Proposed order
 
 1. **Measure the offset we already have for free (no change).** Nothing to do: with option A or B the first link-up reports the offset in RXV27 and RXV28 (the receive clock's cycles in a 2^24 core-clock window, 0.1 ppm resolution).
-   Decision: if the measured offset is below about 5 ppm the setup is useless for a rate-matching test (insert/delete would happen about once in 20,000 blocks or less); try the other option.
+   Decision: if the measured offset is below about 5 ppm the setup is useless for a rate-matching test (insert/delete would happen about once in 200,000 blocks or less); try the other option.
 2. **Setup (owner)**: option A or B as above, an SFP+ DAC or two modules and an OS2 patch lead as already used. No wiring beyond the SFP+ cage. Class 1 laser rules as before for modules.
 3. **Run (executor, board.lock)**: the same session as `run_96c_stage3.sh` (restarts, safety, dwell) on the `rm_ctl` (macro buffer) and `rm_gp` (own buffer) builds, for 20 s dwells with armed feed frames, recording RXV18 to RXV26 (inserts, deletes, stalls, overflow, fill) and the counter-measured ppm.
    Acceptance per point, as for 96C: every order sent = fired = `order_ok`, every fault counter 0, overflow 0; with an offset, inserts (partner slower) or deletes (partner faster) per second within 15 % of `ppm x 1e-6 x 161,132,812.5 x 32/33`.

@@ -339,3 +339,70 @@ WAIT, RESET, COUNT, END state machine of UG576 Figure 4-21; its error count is a
 **IBERT cross-check is not available on the Basic licence.** `ibert_ultrascale_gth` 1.4 creates, generates and synthesises out of context, but top synthesis of a wrapper that instantiates it stops with `ERROR: [Chipscope 16-620] Detected ibert instance 'u_ibert' in the design. Your current selected license is BASIC. This license doesn't cover the feature you selected.` (`results/b96d/ibert_probe_results.txt`; a first run failed only because of a wrapper error, fixed and rerun). The check on the real link is therefore the repeat scans and the TX sweep, not IBERT.
 
 **Not measured.** Nothing in this section has run on a board. The DRP addresses, the 32-bit reading of "bits per sample" and the masks are from UG576 v1.7.1 and are checked in simulation only against our own stand-in.
+
+## 11. A lower-latency elastic buffer (brief 96E, 2026-11-19)
+
+**Result in one line.** `RATE_MATCH = 1` with `RM_OWN = 1` (our own gray-pointer buffer, `rtl/rate_match_gp.sv`) adds **+1.2 clocks** (about 7 ns) of GT-port-to-GT-port tick-to-trade over the 97C path in xsim with AMD's real macros, against +5.3 clocks for the buffer of section 9 (`xpm_fifo_async`); the board measured that one at +6.5. The design is not yet measured on a board (no board session was approved for this brief): see "What the board must still show".
+
+### Where the board's +11 clocks came from (the accounting)
+
+The +11 of section 9 is the change in the loop latency `L`, and `L` counts the receive path **twice** (section 6: `L = E1 + D + E2`, `E` = transmit start of a probe to the receive-start stamp, `D` = receive-start stamp of the feed to the order's transmit start). The 96C prediction (+1 to +2) and its
+later explanation (+6.4 to +7.2) were per-traversal numbers compared with this two-traversal total, which is why "about 4 clocks stayed unexplained". Recomputed from the board's own records (`results/b96c/hw/20261119_080724/control`, `results/b97c/hw/20261118_194221/control`, medians of 100 restarts):
+
+| Quantity (clocks) | 97C board | 96C buffer, board | Change |
+|---|---|---|---|
+| E (receive-start stamp path, once) | 20 | 24.5 | +4.5 |
+| D (feed stamp to order start) | 10 | 12 | +2 |
+| L = 2E + D | 50 | 61 | **+11** (= 2 x 4.5 + 2) |
+| GT-port tick-to-trade = change in E + change in D | | | +6.5 |
+
+The same quantities in xsim with the real macros (`results/b96e/core_lat_sim.json`, mean over four phases between the clocks, `sim/tb_lat_core.sv`, whole core): receive-start stamp path `S` 5.6 (97C path) and 10.1 (96C buffer): **+4.5, the board's +4.5**; `D` 10.4 and 11.1: +0.75 (board +2); tick-to-trade 10.6 and 15.9: +5.3 (board +6.5);
+so the simulated change in `L` is 2 x 4.5 + 0.75 = **9.75 against the board's 11**. **What is left: 1.25 clocks, put in `D` because D is derived as L - 2E (E's own resolution is about half a clock: its per-link minima and maxima medians are 24.5 and 25, and a half-clock of E moves D by one, so the split between E and D is an assumption)** (the board's +2 against the simulated +0.75). It is not explained by simulation: the transceiver is a stand-in in xsim (the real GTHE4 model is refused: 54,716 instances against 50,000), so
+anything the GT adds on the board and that differs with the buffer's fill or phase is absent; a post-route timing simulation is not possible for the same reason. It needs the board build with counters (below). The earlier statement that 4 clocks were unexplained is withdrawn: 1.25 are.
+
+Per-stage reading, for the macro buffer's 9 clocks in the whole core (PCS output register to buffer output register, 8.5 to 9.3 over the phases; 10.4 to 11.2 in the buffer-only testbench, whose resting fill is higher): the macro crosses the write pointer through `xpm_cdc_gray` (two destination flops after a source register), registers it again, derives `empty` and the first-word-fall-through output from that register,
+and the read data count through two more synchroniser stages (from the macro's source, section 9). The resting fill adds to the wait: with `HI = 4` the policy leaves up to four visible blocks in the buffer. Setting only the fill target to 1 on the macro takes the buffer from 10.4 to 11.2 clocks (tb_rm_latency, section 9) down to 8.3 to 9.0
+(`results/b96e/rm_latency_sim.json`, `impl 0 hi 1`): about 2 clocks of the cost is fill; the rest is the macro's total (stages and phase), not a per-stage count. The whole table is in `latency_stages.yaml` (`accounting_96e`).
+
+### The options and what they cost
+
+| Option | Buffer latency, PCS out to buffer out (xsim, mean over 4 phases): in `tb_rm_latency` / in the whole core | Tick-to-trade change vs 97C | Safety and CDC | Verdict |
+|---|---|---|---|---|
+| 96C: `xpm_fifo_async`, fill target 4 | 10.8 / 8.9 | +5.3 (board +6.5) | report_cdc clean; AMD's macro | the build option of section 9 |
+| same macro, fill target 1 | 8.7 / not run | about +3 (estimate: 2 clocks less) | same; policy change only | not built: still +3 |
+| **96E: own gray pointers, `rate_match_gp.sv`, fill target 1** | **5.6 / 4.8** (4.4 to 5.3 in the core) | **+1.2** (+1.1 to +1.25 by phase) | two-flop `ASYNC_REG` crossings, data one clock ahead of the pointer; see below | **chosen: meets the brief's "within 2 clocks"** |
+| GT's own RX elastic buffer with clock correction (UG576) | not measurable: needs a Wizard change and the board | | | **not done**: the Wizard build of 56A uses the buffer bypass (`RXBUF_EN = 0`); enabling the RX buffer adds the GT's own latency, which is a GT property to be measured on the board; UG576's clock correction works on 8B/10B-style or user-defined sequences, and whether it applies to 64B/66B in this configuration was not established here |
+| Decision in the recovered clock, only the order crosses | 0 (it is the 97C path) | 0 | the 97C path: events cross, the stream does not | exists already as `RATE_MATCH = 0`; it needs no rate matching for the trading decision (96C showed it survives +-3000 ppm), and rate matching would be needed only for a consumer of the frame stream in the core clock, which this design does not have |
+
+### The buffer (`rtl/rate_match_gp.sv`)
+
+Same ports and the same insert/delete policy as `rate_match.sv`. Storage: 16 blocks of 74 bits in flip-flops in the write clock, each written once and held until the reader has released it (the writer sees the read pointer and never overwrites an unread entry). Every entry is also copied bit for bit through
+its own two-flop synchroniser (`xpm_cdc_array_single`, `ASYNC_REG`) into the read clock, continuously, so the read side only ever looks at a stable copy. The write pointer crosses as a gray code (`xpm_cdc_gray`, two destination flops, its source register a clock after the entry was loaded), so a block is admitted by the pointer about one clock
+**after** its data have been in the synchronisers: the data lead the pointer by one clock, which is the margin for a data flop that goes metastable (it resolves within a clock, as a pointer flop does). The read pointer crosses back the same way; the writer stops at 16 outstanding blocks as it sees them (its view is about 4 clocks old, the reader's of the
+write pointer about 4, so about 8 are outstanding in steady state). The policy reads the exact pointer difference as the read side sees it (`HI = 1`: delete idles in the pause clock while more than one block is visible, instead of the macro's lagging count with 4). The pointers are never reset (a reset of one side cannot leave them inconsistent: the reader drains while the lock is low).
+Cost (build `rm_gp`, below): 3,268 flip-flops and 223 LUTs more than the macro buffer's build `rm_ctl` (18,935 FF and 6,836 LUT against 15,667 and 6,613), no block RAM. The macro cannot be made as fast: its stages are inside it.
+
+**MTBF, stated.** Every crossing is a two-flop `ASYNC_REG` synchroniser (the same structure and `DEST_SYNC_FF` as the other `xpm_cdc_*` crossings in this design), clocked at 161 MHz; AMD's UG949/UG974 treat that as the standard safe structure and give MTBF figures for the UltraScale+ flop far beyond a product life.
+The data-before-pointer margin is 0 to 1 clock, not a guaranteed clock: it holds only if every data bit has settled by the time the pointer is admitted and the routing skew of the synchronised bits is under a clock. The gray pointer also assumes at most one step per destination clock, which a 200 ppm faster write clock can break briefly (the macro has the same exposure; the Icarus stand-ins cannot test it). The lead is not an AMD-documented structure: it is the usual "data first, then the pointer" rule, checked here in simulation, not proved. `report_cdc` of the `rm_gp` build (`designs/b96_kr260_10g/rm_gp/build/base/cdc.rpt`, not committed) lists the buffer's crossings as 1-bit synchronised with ASYNC_REG (CDC-3, info: 1,194 rows; the 96C probe report had 26; the difference includes the 16 x 74 entry bits), the same 6 multi-bit warnings (CDC-6) as before, and no critical row; the `cdc_no_critical` and `post_synth_cdc_structure_clean` gates pass.
+
+### The build (`rm_gp`)
+
+`designs/b96_kr260_10g/rm_gp/build.yaml` (the base design, `RATE_MATCH = 1`, `RM_OWN = 1`), built through the heavy slot with `FDA_VIVADO_THREADS=1` under a 6 GiB scope (`results/b96e/builds/rm_gp/`): **all 29 gates true**; DRC and methodology critical warnings 0 (15 methodology warnings: LUTAR-1 x5, XDCH-2 x10, as before);
+**WNS +0.105 ns, WHS +0.011 ns**, 6,836 LUT, 18,935 FF, 0 BRAM, 1.118 W (vectorless, Medium confidence), Tj 48.3 C; 1,465 s, Vivado resident peak 4,412 MiB, 0 scope cap hits, 0 swap. Build stamp `1a2fa1a8`, built from commit f58dbeba with a clean tree; the stamp recomputed from the current tree
+(`flow.prepare.sources_sha256` over the sources, constraints and IP Tcl) is `1a2fa1a8`, so the RTL, build file and constraints are those that were built. The bitstream (`rm_gp/build/base/kr260_10g_top.bit`, git-ignored) has not been loaded on a board.
+
+### How it was checked
+
+- `tests/ratematch_cocotb.py` against the new twin `RateMatchGP` (`model/ratematch.py`), output for output and every counter, on the 96C scenarios (same clocks, partner +-400 ppm, minimum-gap +300 ppm over 5000 frames, ordered sets and errors, lock drop, counter clear): `test_rate_match_gp_cocotb` passes; every frame intact, overflow 0.
+- The whole-core bench with the own buffer (`test_core_cocotb_rm_own`): all tests of `tests/core_cocotb.py` pass.
+- xsim with the real macros, whole core: `sim/tb_lat_core.sv` (above); the buffer alone: `sim/tb_rm_latency.sv`.
+- The default (`RATE_MATCH = 0`) path is untouched: the `eqy` proof of 96C re-run on this branch (`results/b96c/eqy_default/result_default.txt`) and the default bench.
+- `tests/test_b96_generics.py`: the structural check of `GO_REG` in `lat_all3/build.yaml` against `lat_all3/variant.json` (96C follow-up).
+- The xsim refusal of `initial` blocks beside `always_ff` in `rate_match.sv` is fixed (declaration initialisers); `b96_core.sv` has a declaration moved before its first use (`tx_pol_t`, `rx_pol_r`: xsim refuses the implicit declaration). Neither changes behaviour; the second is on the default path and is covered by the eqy re-run.
+
+### What the board must still show
+
+1. E, L and D of the `rm_gp` build (`_handoff/fpga_agent/run_96e_stage3.sh`): predicted from the simulation, with the +1.25 of `D` that simulation does not explain, L about 51.5 to 53 clocks (97C 50, 96C buffer 61), tick-to-trade about +1.2 to +2.5 clocks.
+2. The buffer's own counters at 0 ppm (RXV18 to RXV26: inserts, deletes, stalls, overflow, fill min and max).
+3. The remaining 1.25 clocks of `D`: a build with ILA or stamp counters at the buffer's input and output, or the same quantity from the E and D of two builds.
+4. Behaviour under a real offset: `docs/real_offset_plan.md` (a plan for the owner to approve; nothing bought or wired).

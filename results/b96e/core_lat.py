@@ -35,7 +35,11 @@ for f in sorted(glob.glob(sys.argv[1] + "/ord_*.log")):
         rec["pcs_out_to_buffer_out"] = stat(lambda o: (o["y_price"] - o["x_price"]) / T)
         rec["buffer_out_to_mac_word7"] = stat(lambda o: (o["w7_mac"] - o["y_price"]) / T)
     rows.setdefault(f"rate_match_{rm}_rm_own_{own}", {})[str(ph)] = rec
-json.dump({"what": "Whole-core tick-to-trade in xsim 2026.1 with AMD's real XPM macros (sim/tb_lat_core.sv, 8 orders per point, 301 clocks apart), by receive path and by the phase between the receive and transmit user clocks (ps the receive clock lags). rate_match_0 = the 97C path (RATE_MATCH = 0); rate_match_1_rm_own_0 = 96C's buffer on xpm_fifo_async; rate_match_1_rm_own_1 = 96E's own gray-pointer buffer. Clocks of 6.2058 ns.",
+import statistics
+means = {k: {q: round(statistics.mean(v[ph][q]["mean"] for ph in v), 1) for q in ("tick_to_trade", "rx_start_strobe", "d_strobe_to_order")} for k, v in rows.items()}
+base = means.get("rate_match_0_rm_own_0", {}).get("tick_to_trade")
+changes = {k: round(m["tick_to_trade"] - base, 1) for k, m in means.items()} if base is not None else {}
+json.dump({"means_over_phases_clocks": means, "tick_to_trade_change_vs_97c_clocks": changes, "what": "Whole-core tick-to-trade in xsim 2026.1 with AMD's real XPM macros (sim/tb_lat_core.sv, 8 orders per point, 301 clocks apart), by receive path and by the phase between the receive and transmit user clocks (ps the receive clock lags). rate_match_0 = the 97C path (RATE_MATCH = 0); rate_match_1_rm_own_0 = 96C's buffer on xpm_fifo_async; rate_match_1_rm_own_1 = 96E's own gray-pointer buffer. Clocks of 6.2058 ns.",
            "units": "clocks", "results": rows}, open(sys.argv[2], "w"), indent=1)
 for k, v in rows.items():
     for ph, r in v.items():
