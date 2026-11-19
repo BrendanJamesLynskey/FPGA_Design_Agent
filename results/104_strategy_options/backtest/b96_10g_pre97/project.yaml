@@ -1,0 +1,188 @@
+# project.yaml of the brief 104 back-test fixture: the KR260 10G design as it was at the start of brief 97 (RTL = designs/b96_kr260_10g/pre96c/rtl, 11 clocks tick-to-trade).
+# The component split is this fixture's own (written for brief 104 to give the options real scopes); the design itself has one owned component today.
+# The GT Wizard and the JTAG bus are frozen to show that options respect ownership. Nothing here comes from brief 97's results.
+schema: fda-managed-project/1
+name: b96_kr260_10g_pre97
+top: kr260_10g_top
+unclaimed: owned
+components:
+- name: top
+  ownership: owned
+  level: rtl
+  module: kr260_10g_top
+  paths:
+  - rtl/kr260_10g_top.sv
+  description: 'board top: reset synchroniser, clock pads, the core and the JTAG bus'
+  aliases:
+  - top
+  build_sources:
+  - designs/b96_kr260_10g/rtl/kr260_10g_top.sv
+- name: shared_pkg
+  ownership: owned
+  level: rtl
+  module: b96_pkg
+  paths:
+  - rtl/b96_pkg.sv
+  description: shared constants and the PCS and frame helpers
+  aliases:
+  - package
+  - constants
+  build_sources:
+  - designs/b96_kr260_10g/rtl/b96_pkg.sv
+- name: core
+  ownership: owned
+  level: rtl
+  module: b96_core
+  paths:
+  - rtl/b96_core.sv
+  description: 'the 10G core: GT wiring, the register bus, every clock crossing (xpm_cdc_*) between the receive, transmit and register domains'
+  instance: u_core
+  aliases:
+  - crossing
+  - crossings
+  - cdc
+  - go pulse
+  build_sources:
+  - designs/b96_kr260_10g/rtl/b96_core.sv
+- name: rx_path
+  ownership: owned
+  level: rtl
+  module: rx_path
+  paths:
+  - rtl/rx_path.sv
+  description: 'receive wrapper: PCS, MAC and the decision in the receive clock'
+  instance: u_core/u_rx
+  aliases:
+  - receive path
+  build_sources:
+  - designs/b96_kr260_10g/rtl/rx_path.sv
+- name: rx_pcs
+  ownership: owned
+  level: rtl
+  module: pcs_rx
+  paths:
+  - rtl/pcs_rx.sv
+  description: 'receive 64b/66b PCS: gearbox, block lock, descrambler, decode'
+  instance: u_core/u_rx/u_pr
+  aliases:
+  - pcs_rx
+  - descrambler
+  - gearbox
+  build_sources:
+  - designs/b96_kr260_10g/rtl/pcs_rx.sv
+- name: rx_mac
+  ownership: owned
+  level: rtl
+  module: mac64_rx
+  paths:
+  - rtl/mac64_rx.sv
+  description: 'receive 64-bit MAC: lane realignment, CRC check'
+  instance: u_core/u_rx/u_mr
+  aliases:
+  - mac_rx
+  - receive mac
+  build_sources:
+  - designs/b96_kr260_10g/rtl/mac64_rx.sv
+- name: trade_decision
+  ownership: owned
+  level: rtl
+  module: trade64
+  paths:
+  - rtl/trade64.sv
+  description: 'the mock trading decision: price compare and the arm/kill/enable interlock'
+  instance: u_core/u_rx/u_td
+  aliases:
+  - trade64
+  - decision
+  - trade
+  build_sources:
+  - designs/b96_kr260_10g/rtl/trade64.sv
+- name: tx_path
+  ownership: owned
+  level: rtl
+  module: tx_path
+  paths:
+  - rtl/tx_path.sv
+  description: 'transmit wrapper: order logic, frame source, MAC and PCS in the transmit clock'
+  instance: u_core/u_tx
+  aliases:
+  - transmit path
+  - order logic
+  build_sources:
+  - designs/b96_kr260_10g/rtl/tx_path.sv
+- name: tx_frame_src
+  ownership: owned
+  level: rtl
+  module: frame_src
+  paths:
+  - rtl/frame_src.sv
+  description: 'frame source: builds the order frame (IP and UDP checksums, payload words)'
+  instance: u_core/u_tx/u_fs
+  aliases:
+  - frame_src
+  - frame source
+  build_sources:
+  - designs/b96_kr260_10g/rtl/frame_src.sv
+- name: tx_mac
+  ownership: owned
+  level: rtl
+  module: mac64_tx
+  paths:
+  - rtl/mac64_tx.sv
+  description: 'transmit 64-bit MAC: preamble, CRC, hold-while-paused'
+  instance: u_core/u_tx/u_mt
+  aliases:
+  - mac_tx
+  - transmit mac
+  build_sources:
+  - designs/b96_kr260_10g/rtl/mac64_tx.sv
+- name: tx_pcs
+  ownership: owned
+  level: rtl
+  module: pcs_tx
+  paths:
+  - rtl/pcs_tx.sv
+  description: 'transmit 64b/66b PCS: encode, scramble, gearbox'
+  instance: u_core/u_tx/u_pt
+  aliases:
+  - pcs_tx
+  build_sources:
+  - designs/b96_kr260_10g/rtl/pcs_tx.sv
+- name: cfg_vec
+  ownership: owned
+  level: rtl
+  module: hs_vec
+  paths:
+  - rtl/hs_vec.sv
+  description: handshake vector crossings for the configuration registers
+  aliases:
+  - config vectors
+  build_sources:
+  - designs/b96_kr260_10g/rtl/hs_vec.sv
+- name: gt_wizard
+  ownership: frozen
+  level: vendor_ip
+  module: gth_wiz
+  paths:
+  - ip/amd_ip.tcl
+  description: 'AMD GTH Wizard IP (UltraScale+ 10G, 64-bit RAW): created from a Tcl recipe, never edited'
+  instance: u_core/u_gt
+  aliases:
+  - gth
+  - transceiver
+  - gt wizard
+  provenance:
+    origin: AMD GTH Wizard
+    licence: AMD IP licence (generated in the build)
+- name: jtag_bus
+  ownership: frozen
+  level: rtl
+  module: jtag_bus
+  paths:
+  - ext/jtag_bus.sv
+  description: 'JTAG-to-register bus shared with brief 58A: frozen here'
+  instance: u_jtag
+  aliases:
+  - jtag
+  build_sources:
+  - designs/b96_kr260_10g/ext/jtag_bus.sv

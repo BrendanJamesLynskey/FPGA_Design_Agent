@@ -1,0 +1,52 @@
+{
+ "schema": "fda-options-truth/1",
+ "case": "b96_10g_pre97",
+ "request": "lower latency",
+ "goal": "latency",
+ "source": "results/b97/postroute.json (sim_clocks), results/b97/ab_summary.md, docs/latency_reduction.md; the baseline is 11 clocks",
+ "baseline_clocks": 11,
+ "metric": "latency_clocks",
+ "variants": {
+  "agent_cdc": {
+   "stages": [
+    "cross_go"
+   ],
+   "measured_gain": 1,
+   "measured_clocks": 10,
+   "note": "u_p_go REG_OUTPUT 1 to 0"
+  },
+  "hand_ref": {
+   "stages": [
+    "cross_go",
+    "fs_start"
+   ],
+   "measured_gain": 2,
+   "measured_clocks": 9,
+   "note": "REG_OUTPUT 1 to 0 and an order-only early MAC start (hand reference; the brief names the other three)"
+  },
+  "agent_both": {
+   "stages": [
+    "cross_go",
+    "decide"
+   ],
+   "measured_gain": 2,
+   "measured_clocks": 9,
+   "note": "REG_OUTPUT 1 to 0 and trade64.fire combinational"
+  },
+  "all3": {
+   "stages": [
+    "cross_go",
+    "decide",
+    "fs_start"
+   ],
+   "measured_gain": 3,
+   "measured_clocks": 8,
+   "note": "all three edits"
+  }
+ },
+ "named_by_the_brief": [
+  "agent_cdc",
+  "agent_both",
+  "all3"
+ ]
+}

@@ -1,0 +1,226 @@
+{
+ "schema": "fda-strategy-record-public/1",
+ "request": "the design misses timing at 200 MHz: improve its timing",
+ "mode": "new",
+ "blind": false,
+ "goal": "timing",
+ "status": "options",
+ "attempts": 1,
+ "analysis_hash": "378c584387f278544d2d3e060ce630b71f8143c8ed52a2110b78f06bdc526c8d",
+ "analysis_sources": [
+  {
+   "file": "results/104_strategy_options/backtest/c16_montgomery_200mhz/evidence/digest.json",
+   "sha256": "244d2f139bc014ad59f022554bdc53df75d4aac9a4d0133360751b4e4701d610",
+   "bytes": 1261
+  }
+ ],
+ "model": {
+  "purpose": "options",
+  "endpoint": "claude_code",
+  "kind": "claude_code",
+  "model": "claude-sonnet-5-5",
+  "effort": "medium",
+  "entry_hash": "f3f2d8f85ded614e",
+  "table_hash": "fefa480b88108b19"
+ },
+ "prompts": {
+  "system": {
+   "name": "graph/options/system",
+   "sha256": "5776ae375ac6b124a3bf89d14306c7a3270f40b4c5a12afee05c4b968f293e63"
+  },
+  "user": {
+   "name": "graph/options/user",
+   "sha256": "30be8dfd004dac0b443bd9284b0dc2e6b83fc244eb9e18ea65491314bed01ede"
+  },
+  "repair": {
+   "name": "graph/options/repair",
+   "sha256": "bb56b4a42f41d6b2e0b4df594b108893c63648374235a7d5d2b5224fc192f8b0"
+  }
+ },
+ "options_hash": "b6add0d411ba80d3e9566ed7a27962d1dfb4a09a6c135ec292e701af5571f1f0",
+ "options": [
+  {
+   "id": "O1",
+   "n": 1,
+   "scope": {
+    "kind": "modules",
+    "components": [
+     "montgomery_core"
+    ],
+    "cli": "--scope montgomery_core"
+   },
+   "touches_stages": [],
+   "techniques": [
+    "carry_save",
+    "restructure_arithmetic"
+   ],
+   "gain": {
+    "metric": "wns_ns",
+    "unit": "ns",
+    "low": 0.615,
+    "high": 2.0,
+    "basis": "guess",
+    "cites": [
+     "timing.worst_path.levels",
+     "timing.worst_path.data_path_ns",
+     "timing.wns_ns"
+    ],
+    "ceiling": 5.0,
+    "sources": [
+     "results/104_strategy_options/backtest/c16_montgomery_200mhz/evidence/digest.json"
+    ]
+   },
+   "cost": {
+    "iterations": {
+     "low": 3,
+     "high": 6
+    },
+    "vivado_runs": {
+     "low": 3,
+     "high": 6
+    },
+    "wall_minutes": null
+   },
+   "risk": {
+    "contract_change": false,
+    "contract_flags": [],
+    "contract_flag_added_by_checker": false,
+    "needs_owner_approval": false,
+    "needs_eqy": true,
+    "needs_board": false,
+    "contract_affected": []
+   },
+   "not_touched": [
+    {
+     "component": "top",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "regs",
+     "why": "owned, outside this option's scope"
+    }
+   ],
+   "title_sha256": "60efd42d94ce8481fe30dd1338eed9dc5b3068303a5e16988120d5bfbc3a3337"
+  },
+  {
+   "id": "O2",
+   "n": 2,
+   "scope": {
+    "kind": "whole_design",
+    "components": [
+     "top",
+     "regs",
+     "montgomery_core"
+    ],
+    "cli": "--scope top,regs,montgomery_core"
+   },
+   "touches_stages": [],
+   "techniques": [
+    "tool_strategy",
+    "physopt"
+   ],
+   "gain": {
+    "metric": "wns_ns",
+    "unit": "ns",
+    "low": 0.0,
+    "high": 0.4,
+    "basis": "guess",
+    "cites": [
+     "timing.tns_ns",
+     "timing.failing_endpoints",
+     "timing.wns_ns"
+    ],
+    "ceiling": 5.0,
+    "sources": [
+     "results/104_strategy_options/backtest/c16_montgomery_200mhz/evidence/digest.json"
+    ]
+   },
+   "cost": {
+    "iterations": {
+     "low": 2,
+     "high": 4
+    },
+    "vivado_runs": {
+     "low": 2,
+     "high": 4
+    },
+    "wall_minutes": null
+   },
+   "risk": {
+    "contract_change": false,
+    "contract_flags": [],
+    "contract_flag_added_by_checker": false,
+    "needs_owner_approval": false,
+    "needs_eqy": false,
+    "needs_board": false,
+    "contract_affected": []
+   },
+   "not_touched": [],
+   "title_sha256": "ea55ba97419da20e95114b3f01f8f8ff25962f6608f462cbc95336812cfd8fb7"
+  },
+  {
+   "id": "O3",
+   "n": 3,
+   "scope": {
+    "kind": "modules",
+    "components": [
+     "montgomery_core"
+    ],
+    "cli": "--scope montgomery_core"
+   },
+   "touches_stages": [],
+   "techniques": [
+    "precompute",
+    "reduce_logic_levels"
+   ],
+   "gain": {
+    "metric": "wns_ns",
+    "unit": "ns",
+    "low": 0.0,
+    "high": 0.4,
+    "basis": "guess",
+    "cites": [
+     "timing.worst_path.levels",
+     "timing.worst_path.data_path_ns"
+    ],
+    "ceiling": 5.0,
+    "sources": [
+     "results/104_strategy_options/backtest/c16_montgomery_200mhz/evidence/digest.json"
+    ]
+   },
+   "cost": {
+    "iterations": {
+     "low": 2,
+     "high": 4
+    },
+    "vivado_runs": {
+     "low": 2,
+     "high": 4
+    },
+    "wall_minutes": null
+   },
+   "risk": {
+    "contract_change": false,
+    "contract_flags": [],
+    "contract_flag_added_by_checker": false,
+    "needs_owner_approval": false,
+    "needs_eqy": true,
+    "needs_board": false,
+    "contract_affected": []
+   },
+   "not_touched": [
+    {
+     "component": "top",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "regs",
+     "why": "owned, outside this option's scope"
+    }
+   ],
+   "title_sha256": "005c07b3e63efdd17f97f9a96487e80b0c697852a34da7070d35b60a27f2fbd3"
+  }
+ ],
+ "rejected": [],
+ "free_text_withheld": "title, approach, gains' basis note, gates and risk summaries are in the private repository (moved_to_kb.json)"
+}

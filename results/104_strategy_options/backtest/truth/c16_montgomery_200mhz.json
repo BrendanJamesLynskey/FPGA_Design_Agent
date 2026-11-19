@@ -1,0 +1,19 @@
+{
+ "schema": "fda-options-truth/1",
+ "case": "c16_montgomery_200mhz",
+ "request": "the design misses timing at 200 MHz: improve its timing",
+ "goal": "timing",
+ "source": "results/62a_closure/seed_c16_montgomery_mult_200mhz/history.jsonl (iteration 1: delta.G2.wns_ns); summary.json",
+ "metric": "wns_ns",
+ "changes": {
+  "carry_save": {
+   "scope": [
+    "montgomery_core"
+   ],
+   "measured_gain": 0.679,
+   "wns_before": -0.615,
+   "wns_after": 0.064,
+   "note": "two serial additions per Montgomery step replaced by carry-save compression and one carry-propagate addition; latency unchanged; no DSP; 3 LUT fewer"
+  }
+ }
+}

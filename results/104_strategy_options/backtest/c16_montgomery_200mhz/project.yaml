@@ -1,0 +1,45 @@
+# project.yaml of the brief 104 closure back-test fixture: the course task c16_montgomery_mult (reference RTL) on the Nexys A7-100T with the board clock raised to 200 MHz
+# (brief 62A seed). The three-way split is this fixture's own. The test shell is outside this fixture. The latency in the montgomery_core description is the course spec's.
+schema: fda-managed-project/1
+name: c16_montgomery_mult_200mhz
+top: c16_montgomery_mult_top
+unclaimed: owned
+components:
+- name: top
+  ownership: owned
+  level: rtl
+  module: c16_montgomery_mult_top
+  paths:
+  - rtl/c16_montgomery_mult_top.sv
+  description: 'board top: reset synchroniser, the test shell and the register window'
+  build_sources:
+  - designs/c16_montgomery_mult/rtl/c16_montgomery_mult_top.sv
+  aliases:
+  - top
+- name: regs
+  ownership: owned
+  level: rtl
+  module: c16_montgomery_mult_regs
+  paths:
+  - rtl/c16_montgomery_mult_regs.sv
+  description: 'the shell window: operand registers, start, done flag and the clock counter around the multiplier'
+  build_sources:
+  - designs/c16_montgomery_mult/rtl/c16_montgomery_mult_regs.sv
+  instance: u_regs
+  aliases:
+  - window
+  - registers
+- name: montgomery_core
+  ownership: owned
+  level: rtl
+  module: montgomery
+  paths:
+  - rtl/montgomery.sv
+  description: 'bit-serial radix-2 Montgomery multiplier, W = 64: W+2 clocks from start to done, the same for every operand (the course spec fixes that latency)'
+  build_sources:
+  - designs/c16_montgomery_mult/rtl/montgomery.sv
+  instance: u_regs/u_core
+  aliases:
+  - montgomery
+  - multiplier
+  - arithmetic
