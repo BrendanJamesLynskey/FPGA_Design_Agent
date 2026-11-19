@@ -81,7 +81,7 @@ module rx_path #(
     logic        primed;          // the first window end after a core restart only loads the previous sample (a difference to a stale sample would be garbage)
     initial begin rcnt = '0; rcnt_prev = '0; f_delta = '0; f_win = '0; tcnt = '0; primed = 1'b0; end
     always_ff @(posedge clk) rcnt <= rcnt + 32'd1;
-    xpm_cdc_gray #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .SIM_ASSERT_CHK(0), .SIM_LOSSLESS_GRAY_CHK(0), .WIDTH(32)) u_fc (
+    xpm_cdc_gray #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .SIM_ASSERT_CHK(1), .SIM_LOSSLESS_GRAY_CHK(0), .WIDTH(32)) u_fc (
         .src_clk(clk), .src_in_bin(rcnt), .dest_clk(clk_c), .dest_out_bin(rcnt_s));
     always_ff @(posedge clk_c) begin
         if (rst_c) begin tcnt <= '0; f_win <= '0; f_delta <= '0; primed <= 1'b0; end

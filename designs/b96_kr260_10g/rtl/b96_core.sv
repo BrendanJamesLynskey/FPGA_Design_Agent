@@ -121,30 +121,30 @@ module b96_core #(
         .rxprbserr_out(), .rxprbslocked_out(), .txpmaresetdone_out(txpmadone_c),
         .txbufstatus_out(txbuf_c), .rxbufstatus_out(rxbuf_c));
     // the TX phase-interpolator ppm controller's controls (UG576 Table 3-33: TXUSRCLK domain, and TXUSRCLK (not TXUSRCLK2) when the internal data width is below the user width, as here): one bus into TXUSRCLK
-    xpm_cdc_array_single #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(1), .WIDTH(7)) u_c_ppm (.src_clk(clk), .src_in({ppm_sel, ppm_en, ppm_step}), .dest_clk(txusr1), .dest_out({ppm_sel_t, ppm_en_t, ppm_step_t}));
-    xpm_cdc_single #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(1)) u_c_tp (.src_clk(clk), .src_in(tx_pol), .dest_clk(txusr2), .dest_out(tx_pol_t));
-    xpm_cdc_single #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(1)) u_c_rp (.src_clk(clk), .src_in(rx_pol), .dest_clk(rxusr2), .dest_out(rx_pol_r));
+    xpm_cdc_array_single #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(1), .SRC_INPUT_REG(1), .WIDTH(7)) u_c_ppm (.src_clk(clk), .src_in({ppm_sel, ppm_en, ppm_step}), .dest_clk(txusr1), .dest_out({ppm_sel_t, ppm_en_t, ppm_step_t}));
+    xpm_cdc_single #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(1), .SRC_INPUT_REG(1)) u_c_tp (.src_clk(clk), .src_in(tx_pol), .dest_clk(txusr2), .dest_out(tx_pol_t));
+    xpm_cdc_single #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(1), .SRC_INPUT_REG(1)) u_c_rp (.src_clk(clk), .src_in(rx_pol), .dest_clk(rxusr2), .dest_out(rx_pol_r));
 
     // levels from the GT into clk (as 56A)
-    xpm_cdc_single #(.DEST_SYNC_FF(4), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(0)) u_s_tx (.src_clk(txusr2), .src_in(tx_done_t), .dest_clk(clk), .dest_out(tx_done));
-    xpm_cdc_single #(.DEST_SYNC_FF(4), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(0)) u_s_rx (.src_clk(rxusr2), .src_in(rx_done_r), .dest_clk(clk), .dest_out(rx_done));
-    xpm_cdc_single #(.DEST_SYNC_FF(4), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(0)) u_s_cs (.src_clk(1'b0), .src_in(cdr_stable_c), .dest_clk(clk), .dest_out(cdr_stable));
-    xpm_cdc_single #(.DEST_SYNC_FF(4), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(0)) u_s_pg (.src_clk(1'b0), .src_in(pgood_c), .dest_clk(clk), .dest_out(pgood));
-    xpm_cdc_single #(.DEST_SYNC_FF(4), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(0)) u_s_cl (.src_clk(1'b0), .src_in(cdrlock_c), .dest_clk(clk), .dest_out(cdrlock));
-    xpm_cdc_single #(.DEST_SYNC_FF(4), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(0)) u_s_tp (.src_clk(1'b0), .src_in(txpmadone_c), .dest_clk(clk), .dest_out(txpmadone));
-    xpm_cdc_single #(.DEST_SYNC_FF(4), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(0)) u_s_rp (.src_clk(1'b0), .src_in(rxpmadone_c), .dest_clk(clk), .dest_out(rxpmadone));
+    xpm_cdc_single #(.DEST_SYNC_FF(4), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(1), .SRC_INPUT_REG(0)) u_s_tx (.src_clk(txusr2), .src_in(tx_done_t), .dest_clk(clk), .dest_out(tx_done));
+    xpm_cdc_single #(.DEST_SYNC_FF(4), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(1), .SRC_INPUT_REG(0)) u_s_rx (.src_clk(rxusr2), .src_in(rx_done_r), .dest_clk(clk), .dest_out(rx_done));
+    xpm_cdc_single #(.DEST_SYNC_FF(4), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(1), .SRC_INPUT_REG(0)) u_s_cs (.src_clk(1'b0), .src_in(cdr_stable_c), .dest_clk(clk), .dest_out(cdr_stable));
+    xpm_cdc_single #(.DEST_SYNC_FF(4), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(1), .SRC_INPUT_REG(0)) u_s_pg (.src_clk(1'b0), .src_in(pgood_c), .dest_clk(clk), .dest_out(pgood));
+    xpm_cdc_single #(.DEST_SYNC_FF(4), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(1), .SRC_INPUT_REG(0)) u_s_cl (.src_clk(1'b0), .src_in(cdrlock_c), .dest_clk(clk), .dest_out(cdrlock));
+    xpm_cdc_single #(.DEST_SYNC_FF(4), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(1), .SRC_INPUT_REG(0)) u_s_tp (.src_clk(1'b0), .src_in(txpmadone_c), .dest_clk(clk), .dest_out(txpmadone));
+    xpm_cdc_single #(.DEST_SYNC_FF(4), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(1), .SRC_INPUT_REG(0)) u_s_rp (.src_clk(1'b0), .src_in(rxpmadone_c), .dest_clk(clk), .dest_out(rxpmadone));
     logic [1:0] txbuf;
     logic [2:0] rxbuf;
     logic [1:0] txb_seen;
     logic [2:0] rxb_seen;
-    xpm_cdc_array_single #(.DEST_SYNC_FF(4), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(0), .WIDTH(5)) u_s_bf (.src_clk(1'b0), .src_in({rxbuf_c, txbuf_c}), .dest_clk(clk), .dest_out({rxbuf, txbuf}));
+    xpm_cdc_array_single #(.DEST_SYNC_FF(4), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(1), .SRC_INPUT_REG(0), .WIDTH(5)) u_s_bf (.src_clk(1'b0), .src_in({rxbuf_c, txbuf_c}), .dest_clk(clk), .dest_out({rxbuf, txbuf}));
     logic pcs_lock_rx, pcs_lock, mod_abs_c, rx_los_c, tx_fault_c, scl_c, sda_c;
-    xpm_cdc_single #(.DEST_SYNC_FF(4), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(1)) u_s_pl (.src_clk(rxusr2), .src_in(pcs_lock_rx), .dest_clk(clk), .dest_out(pcs_lock));
-    xpm_cdc_single #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(0)) u_s_ma (.src_clk(1'b0), .src_in(sfp_mod_abs), .dest_clk(clk), .dest_out(mod_abs_c));
-    xpm_cdc_single #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(0)) u_s_lo (.src_clk(1'b0), .src_in(sfp_rx_los), .dest_clk(clk), .dest_out(rx_los_c));
-    xpm_cdc_single #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(0)) u_s_tf (.src_clk(1'b0), .src_in(sfp_tx_fault), .dest_clk(clk), .dest_out(tx_fault_c));
-    xpm_cdc_single #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(0)) u_s_sc (.src_clk(1'b0), .src_in(i2c_scl_i), .dest_clk(clk), .dest_out(scl_c));
-    xpm_cdc_single #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(0)) u_s_sd (.src_clk(1'b0), .src_in(i2c_sda_i), .dest_clk(clk), .dest_out(sda_c));
+    xpm_cdc_single #(.DEST_SYNC_FF(4), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(1), .SRC_INPUT_REG(1)) u_s_pl (.src_clk(rxusr2), .src_in(pcs_lock_rx), .dest_clk(clk), .dest_out(pcs_lock));
+    xpm_cdc_single #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(1), .SRC_INPUT_REG(0)) u_s_ma (.src_clk(1'b0), .src_in(sfp_mod_abs), .dest_clk(clk), .dest_out(mod_abs_c));
+    xpm_cdc_single #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(1), .SRC_INPUT_REG(0)) u_s_lo (.src_clk(1'b0), .src_in(sfp_rx_los), .dest_clk(clk), .dest_out(rx_los_c));
+    xpm_cdc_single #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(1), .SRC_INPUT_REG(0)) u_s_tf (.src_clk(1'b0), .src_in(sfp_tx_fault), .dest_clk(clk), .dest_out(tx_fault_c));
+    xpm_cdc_single #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(1), .SRC_INPUT_REG(0)) u_s_sc (.src_clk(1'b0), .src_in(i2c_scl_i), .dest_clk(clk), .dest_out(scl_c));
+    xpm_cdc_single #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(1), .SRC_INPUT_REG(0)) u_s_sd (.src_clk(1'b0), .src_in(i2c_sda_i), .dest_clk(clk), .dest_out(sda_c));
 
     // ---------------------------------------------------------------- the two paths and their crossings
     // RATE_MATCH = 1 (brief 96C): the receive path's blocks cross from rx_clk to tx_clk once, through the elastic buffer rate_match; the MAC, the trading path and
@@ -154,10 +154,10 @@ module b96_core #(
     logic [CFGW-1:0] cfg_tx;
     hs_vec #(.W(CFGW)) u_cfg_tx (.src_clk(clk), .src_vec(cfg), .dst_clk(txusr2), .dst_vec(cfg_tx));
     logic clr_tx, clr_rx, gen_tx, seq_tx;
-    xpm_cdc_pulse #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(0)) u_p_ct (.src_clk(clk), .src_pulse(p_clr), .src_rst(1'b0), .dest_clk(txusr2), .dest_pulse(clr_tx), .dest_rst(1'b0));
-    xpm_cdc_pulse #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(0)) u_p_cr (.src_clk(clk), .src_pulse(p_clr), .src_rst(1'b0), .dest_clk(rxusr2), .dest_pulse(clr_rx), .dest_rst(1'b0));
-    xpm_cdc_pulse #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(0)) u_p_st (.src_clk(clk), .src_pulse(p_seq), .src_rst(1'b0), .dest_clk(txusr2), .dest_pulse(seq_tx), .dest_rst(1'b0));
-    xpm_cdc_pulse #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(0)) u_p_gt (.src_clk(clk), .src_pulse(p_gen), .src_rst(1'b0), .dest_clk(txusr2), .dest_pulse(gen_tx), .dest_rst(1'b0));
+    xpm_cdc_pulse #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(1)) u_p_ct (.src_clk(clk), .src_pulse(p_clr), .src_rst(1'b0), .dest_clk(txusr2), .dest_pulse(clr_tx), .dest_rst(1'b0));
+    xpm_cdc_pulse #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(1)) u_p_cr (.src_clk(clk), .src_pulse(p_clr), .src_rst(1'b0), .dest_clk(rxusr2), .dest_pulse(clr_rx), .dest_rst(1'b0));
+    xpm_cdc_pulse #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(1)) u_p_st (.src_clk(clk), .src_pulse(p_seq), .src_rst(1'b0), .dest_clk(txusr2), .dest_pulse(seq_tx), .dest_rst(1'b0));
+    xpm_cdc_pulse #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(1)) u_p_gt (.src_clk(clk), .src_pulse(p_gen), .src_rst(1'b0), .dest_clk(txusr2), .dest_pulse(gen_tx), .dest_rst(1'b0));
 
     logic [32 * NRXW - 1:0] rx_live;
     logic [32 * NTXW - 1:0] tx_vec_t, tx_live;
@@ -188,7 +188,7 @@ module b96_core #(
         logic [CFGW-1:0] cfg_rx;
         logic        seq_rx;
         hs_vec #(.W(CFGW)) u_cfg_rx (.src_clk(clk), .src_vec(cfg), .dst_clk(rxusr2), .dst_vec(cfg_rx));
-        xpm_cdc_pulse #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(0)) u_p_sr (.src_clk(clk), .src_pulse(p_seq), .src_rst(1'b0), .dest_clk(rxusr2), .dest_pulse(seq_rx), .dest_rst(1'b0));
+        xpm_cdc_pulse #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(1)) u_p_sr (.src_clk(clk), .src_pulse(p_seq), .src_rst(1'b0), .dest_clk(rxusr2), .dest_pulse(seq_rx), .dest_rst(1'b0));
         logic        r_fire, r_sop, r_feed, r_order, r_probe, r_verdict_v, r_verdict_bad;
         logic [15:0] r_inst;
         logic [31:0] r_price, r_qty, r_seq;
@@ -201,12 +201,12 @@ module b96_core #(
         rx_path_legacy #(.NRXW(NRXW_OLD)) u_rx (.clk(rxusr2), .rst(!rx_done_r), .cfg(cfg_rx), .clr_p(clr_rx), .seq_p(seq_rx), .gt_d(rx_data), .fire(r_fire), .o_inst(r_inst),
             .o_price(r_price), .o_qty(r_qty), .o_seq(r_seq), .verdict_v(r_verdict_v), .verdict_bad(r_verdict_bad), .verdict_seq(r_verdict_seq), .rx_sop(r_sop),
             .cls_feed(r_feed), .cls_order(r_order), .cls_probe(r_probe), .lock(pcs_lock_rx), .rx_vec(rx_vec_r));
-        xpm_cdc_pulse #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .REG_OUTPUT(GO_REG), .RST_USED(0), .SIM_ASSERT_CHK(0)) u_p_go (.src_clk(rxusr2), .src_pulse(r_fire), .src_rst(1'b0), .dest_clk(txusr2), .dest_pulse(go_t), .dest_rst(1'b0));
-        xpm_cdc_pulse #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(0)) u_p_so (.src_clk(rxusr2), .src_pulse(r_sop), .src_rst(1'b0), .dest_clk(txusr2), .dest_pulse(sop_t), .dest_rst(1'b0));
-        xpm_cdc_pulse #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(0)) u_p_fe (.src_clk(rxusr2), .src_pulse(r_feed), .src_rst(1'b0), .dest_clk(txusr2), .dest_pulse(feed_t), .dest_rst(1'b0));
-        xpm_cdc_pulse #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(0)) u_p_or (.src_clk(rxusr2), .src_pulse(r_order), .src_rst(1'b0), .dest_clk(txusr2), .dest_pulse(order_t), .dest_rst(1'b0));
-        xpm_cdc_pulse #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(0)) u_p_pr (.src_clk(rxusr2), .src_pulse(r_probe), .src_rst(1'b0), .dest_clk(txusr2), .dest_pulse(probe_t), .dest_rst(1'b0));
-        xpm_cdc_array_single #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_INPUT_REG(0), .WIDTH(146)) u_bus (
+        xpm_cdc_pulse #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .REG_OUTPUT(GO_REG), .RST_USED(0), .SIM_ASSERT_CHK(1)) u_p_go (.src_clk(rxusr2), .src_pulse(r_fire), .src_rst(1'b0), .dest_clk(txusr2), .dest_pulse(go_t), .dest_rst(1'b0));
+        xpm_cdc_pulse #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(1)) u_p_so (.src_clk(rxusr2), .src_pulse(r_sop), .src_rst(1'b0), .dest_clk(txusr2), .dest_pulse(sop_t), .dest_rst(1'b0));
+        xpm_cdc_pulse #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(1)) u_p_fe (.src_clk(rxusr2), .src_pulse(r_feed), .src_rst(1'b0), .dest_clk(txusr2), .dest_pulse(feed_t), .dest_rst(1'b0));
+        xpm_cdc_pulse #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(1)) u_p_or (.src_clk(rxusr2), .src_pulse(r_order), .src_rst(1'b0), .dest_clk(txusr2), .dest_pulse(order_t), .dest_rst(1'b0));
+        xpm_cdc_pulse #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(1)) u_p_pr (.src_clk(rxusr2), .src_pulse(r_probe), .src_rst(1'b0), .dest_clk(txusr2), .dest_pulse(probe_t), .dest_rst(1'b0));
+        xpm_cdc_array_single #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(1), .SRC_INPUT_REG(0), .WIDTH(146)) u_bus (
             .src_clk(rxusr2), .src_in({r_verdict_v, r_verdict_bad, r_verdict_seq, r_inst, r_price, r_qty, r_seq}), .dest_clk(txusr2),
             .dest_out({vd_v, vd_bad, vd_seq, go_inst, go_price, go_qty, go_seq}));
         tx_path #(.NTXW(NTXW)) u_tx (.clk(txusr2), .rst(!tx_done_t), .cfg(cfg_tx), .clr_p(clr_tx), .seq_p(seq_tx), .gen_go_p(gen_tx), .go_p(go_t), .go_inst, .go_price,

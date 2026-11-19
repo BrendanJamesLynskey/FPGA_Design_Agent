@@ -9,7 +9,7 @@ A Kria KR260 design that drives one UltraScale+ GTH transceiver (quad 224, chann
 not: a protocol or a link layer (RAW data, PRBS only); no Aurora or Ethernet core (10G/25G Ethernet is refused by the Basic licence); multi-lane work, meaning channel bonding, lane deskew, PCIe x4 and 40G are simulation-only on this one-lane board
 
 ## state
-stage=built vivado=2026.1 kb_pin=20d73e8 build_id=d61c218c
+stage=built vivado=2026.1 kb_pin=93d158c build_id=cef3b1f4
 gates: build_2026_1=pass
 
 ## interface
@@ -22,9 +22,9 @@ param line rate=10.3125 Gb/s legal=0.5 to 12.5 Gb/s on this part (-2LV), subject
 param user data width=64 bits on a 32-bit internal path legal=32/64 pairs allowed by DS925 table 104
 
 ## files
-designs/b56a_gth_serdes/rtl/gth_serdes_core.sv 6b12ad9c2e: GT Wizard wrapper, registers, snapshot, DRP and SYSMON windows
+designs/b56a_gth_serdes/rtl/gth_serdes_core.sv 72153c37b1: GT Wizard wrapper, registers, snapshot, DRP and SYSMON windows
 designs/b56a_gth_serdes/rtl/prbs64.sv 9b8dfb6fd1: fabric PRBS generator and checker
-designs/b56a_gth_serdes/rtl/kr260_gth_top.sv b69b051f3a: board top (MMCM, SYSMON, pins)
+designs/b56a_gth_serdes/rtl/kr260_gth_top.sv 655dc1e103: board top (MMCM, SYSMON, pins)
 designs/b56a_gth_serdes/design.xdc 60018c8f19: pins, clocks, slow-pin constraints
 designs/b56a_gth_serdes/ip/amd_ip.tcl 66d54de6a5: creates the GT Wizard core (hash-listed in flow/ip_tcl_allow.yaml)
 designs/b56a_gth_serdes/regmap.py 34a85543ac: the register map as data; generates docs/register_map.md

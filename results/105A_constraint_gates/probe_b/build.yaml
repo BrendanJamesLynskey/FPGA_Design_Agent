@@ -1,0 +1,11 @@
+# Brief 105A probe (see results/105A_constraint_gates/README.md): the Nexys Video smoke design with the two configuration-voltage lines removed from its XDC.
+top: b95_smoke_top
+part: xc7a200tsbg484-1
+board: probe_unlisted         # no board file: nothing is set for it, so the XDC without the two lines shows DRC CFGBVS-1
+sources:
+  - shell/rtl/sync2.sv
+  - shell/rtl/uart_tx.sv
+  - results/105A_constraint_gates/probe/top.sv
+constraints:
+  - results/105A_constraint_gates/probe/design.xdc
+generics: {}

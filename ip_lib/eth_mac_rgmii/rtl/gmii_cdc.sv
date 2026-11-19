@@ -46,12 +46,12 @@ module gmii_cdc (
     assign o_er  = dout[8];
     assign o_d   = dout[7:0];
 
-    xpm_cdc_pulse #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(0)) u_ovf (
+    xpm_cdc_pulse #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(1)) u_ovf (
         .src_clk(rx_clk), .src_pulse(ovf_w), .src_rst(1'b0), .dest_clk(clk), .dest_pulse(o_ovf), .dest_rst(1'b0));
 
     logic [31:0] cnt;
     always_ff @(posedge rx_clk) cnt <= rx_rst ? 32'd0 : cnt + 32'd1;
-    xpm_cdc_gray #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .SIM_ASSERT_CHK(0),
+    xpm_cdc_gray #(.DEST_SYNC_FF(2), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .SIM_ASSERT_CHK(1),
                    .SIM_LOSSLESS_GRAY_CHK(0), .WIDTH(32)) u_cnt (
         .src_clk(rx_clk), .src_in_bin(cnt), .dest_clk(clk), .dest_out_bin(o_rxclk_cnt));
 endmodule

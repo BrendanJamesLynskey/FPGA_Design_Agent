@@ -201,8 +201,8 @@ module ro_dom #(
     logic q, t, tp = 1'b0;
     logic [15:0] dc = '0;
     logic [2:0]  w = '0;
-    xpm_cdc_single #(.DEST_SYNC_FF(3), .SRC_INPUT_REG(0)) u_q (.src_clk(1'b0), .src_in(q_req_a), .dest_clk(clk), .dest_out(q));
-    xpm_cdc_single #(.DEST_SYNC_FF(3), .SRC_INPUT_REG(0)) u_t (.src_clk(1'b0), .src_in(sh_tgl_a), .dest_clk(clk), .dest_out(t));
+    xpm_cdc_single #(.DEST_SYNC_FF(3), .SRC_INPUT_REG(0), .SIM_ASSERT_CHK(1)) u_q (.src_clk(1'b0), .src_in(q_req_a), .dest_clk(clk), .dest_out(q));
+    xpm_cdc_single #(.DEST_SYNC_FF(3), .SRC_INPUT_REG(0), .SIM_ASSERT_CHK(1)) u_t (.src_clk(1'b0), .src_in(sh_tgl_a), .dest_clk(clk), .dest_out(t));
     initial begin frz = 1'b0; sh = 1'b0; bit_o = 1'b0; ack_o = 1'b0; end
     assign run = !q;
     assign hold = q;

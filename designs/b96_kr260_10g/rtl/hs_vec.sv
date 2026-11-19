@@ -16,7 +16,7 @@ module hs_vec #(
         if (!send && !rcv) begin sv <= src_vec; send <= 1'b1; end
         else if (rcv) send <= 1'b0;
     end
-    xpm_cdc_handshake #(.DEST_EXT_HSK(1), .DEST_SYNC_FF(4), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(0), .SRC_SYNC_FF(4), .WIDTH(W)) u_hs (
+    xpm_cdc_handshake #(.DEST_EXT_HSK(1), .DEST_SYNC_FF(4), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(1), .SRC_SYNC_FF(4), .WIDTH(W)) u_hs (
         .src_clk, .src_in(sv), .src_send(send), .src_rcv(rcv),
         .dest_clk(dst_clk), .dest_out(dv), .dest_req(req), .dest_ack(ack));
     initial dst_vec = '0;

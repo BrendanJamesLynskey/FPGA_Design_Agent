@@ -37,9 +37,11 @@ python3 -m flow.checks designs/<d> [--names all|resets,cdc,...] [--scope auto|rt
 | `resets` | AMD reports and ours | rtl, synth, route | source part (elaboration); AMD LUTAR/DPIR/DPOR/RMIR/RMOR/RROR/ROAS/REQP-1840 rows and report_cdc's reset rows; our netlist scan `reset_scan_synth.tsv` |
 | `cdc` | AMD report and ours | synth, route | report_cdc (Critical rows fail) and, after synthesis, `flow/cdc_structure.py` |
 | `methodology` | AMD | rtl, synth, route | report_methodology: Critical Warnings fail, Warnings are advisory |
-| `drc` | AMD | synth, route | report_drc: Errors and Critical Warnings fail |
+| `drc` | AMD | synth, route | report_drc: Errors and Critical Warnings fail; CFGBVS-1/2 (a Warning in the report) also fail when the build's board has a confirmed configuration voltage in `boards/<board>/board.yaml` (brief 105A, `flow/constraint_gates.py`, gate `config_voltage_declared`) |
 | `exceptions` | ours | synth, route | `flow/exceptions_check.py` through `flow/gates.py`'s own helper |
 | `io` | ours | synth, route | `flow/io_check.py` through `flow/gates.py`'s own helper |
+| `constraint_scope` | ours | route | advisory, never blocks (brief 105A): `set_clock_groups -asynchronous` over a clock pair that report_clock_interaction shows with endpoints between the clocks (`XDC-ASYNC-PATHS`), or one command whose groups cover every clock (`XDC-ASYNC-ALL`); `flow/constraint_gates.py` |
+| `xpm_sim` | ours | rtl, synth, route | advisory (brief 105A): an `xpm_cdc_*` instance with `SIM_ASSERT_CHK` not 1 (`XPM-SIM-01`); the build's own source list; `xpm_cdc_async_rst` has no such parameter |
 | `clocking` | AMD reports and ours | synth, route | CLKC methodology rows; MMCM/PLL VCO and PFD ranges (`flow/cmt_check.tcl`) |
 | `dsp_ram_mapping` | AMD | synth, route | DPIP/DPOP/SYNTH/RBOR/DPIR/DPOR/RMIR/RMOR/RROR rows; DSP and RAM utilisation |
 | `control_sets` | AMD | synth, route | report_control_sets (count of unique control sets); ULMTCS rows |
