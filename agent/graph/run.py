@@ -549,8 +549,11 @@ def run_subagent(rt: Runtime, role: str, prompt: str, allowed: tuple[str, ...] =
             tools[r["tool"]] = tools.get(r["tool"], 0) + 1
             if r.get("refused"):
                 refused[str(r.get("rule"))] = refused.get(str(r.get("rule")), 0) + 1
+        from agent.models.config import ROLE_PURPOSE
+        ent = rt.resolver.entry(ROLE_PURPOSE[role], rt.session.stage)
         rec = {"stage": rt.session.stage, "visit": rt.visit, "role": role, "stage_override": spec != rt.cfg.role_models()[role],
                "harness": spec["harness"], "model": spec["model"],
+               "purpose": ent.purpose, "endpoint": ent.endpoint, "entry_hash": ent.hash, "table_hash": rt.resolver.table.hash,   # brief 108
                "effort": spec["effort"], "repair": repair,
                "turns": int(rt.meter.run["turns"] - m0["turns"]), "turns_allowed": allowed_turns, "ended": ended,
                "tokens": int(rt.meter.run["tokens"] - m0["tokens"]),

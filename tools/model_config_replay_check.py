@@ -96,6 +96,10 @@ def main(argv: list[str]) -> int:
         same = a == b
         print(json.dumps({"identical": same, "episode": a["episode"] == b["episode"], "nl_requests": a["nl_requests"] == b["nl_requests"]}))
         return 0 if same else 1
+    from agent import access
+    access._TEST_BYPASS = True                                  # the replay needs no key (as the test suite's conftest does)
+    from agent.access import require_or_exit
+    require_or_exit("tools/model_config_replay_check.py")
     res = {"episode": episode(), "nl_requests": nl_requests()}
     Path(argv[0]).write_text(json.dumps(res, indent=1, sort_keys=True) + "\n")
     print(json.dumps(res, indent=1, sort_keys=True))

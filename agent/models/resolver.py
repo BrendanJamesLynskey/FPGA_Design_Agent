@@ -185,6 +185,7 @@ class Resolver:
                 tok = sum(int(u.get(k) or 0) for k in ("input_tokens", "cache_read_input_tokens", "cache_creation_input_tokens", "output_tokens"))
                 with log.open("a") as f:
                     f.write(json.dumps({"tag": f"{label}", "role": label, "stage": "rtl-design-creation", "model_requested": e.model,
+                                        "purpose": e.purpose, "endpoint": e.endpoint, "entry_hash": e.hash, "table_hash": self.table.hash,
                                         "effort": effort or "cli-default", "claude_code_version": None, "turns": res.get("num_turns"),
                                         "wall_s": round(time.time() - t0, 1), "is_error": res.get("is_error"), "tokens": tok,
                                         "cost_usd": "unreported", "plan_cost_estimate_usd": res.get("total_cost_usd")}) + "\n")

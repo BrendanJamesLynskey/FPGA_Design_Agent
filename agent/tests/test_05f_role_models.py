@@ -242,7 +242,7 @@ def test_build_note_names_the_models_by_role(runs):
 def test_stage_override_precedence():
     """base < profile role < explicit role < profile role@stage < explicit role@stage; each layer is partial."""
     S = "timing-closure"
-    cfg = gr.Config(spec_md=T1 / "spec.md", name="x", profile="cvdp",
+    cfg = gr.Config(spec_md=T1 / "spec.md", name="x", profile="cvdp", allow_fable=True,        # brief 108: Fable needs the owner's flag
                     roles={"rtl": {"effort": "high"}, f"rtl@{S}": {"model": "claude-fable-5-1"}})
     assert cfg.role_models()["rtl"] == {"harness": "claude_code", "model": "claude-opus-5-5", "effort": "high"}
     assert cfg.role_models("rtl-design-creation")["rtl"] == cfg.role_models()["rtl"]          # other stages: no override
@@ -270,7 +270,7 @@ def test_bad_stage_keys_are_refused():
 
 def test_stage_override_round_trips_and_is_dispatched_and_accounted(runs, monkeypatch):
     roles = {"rtl@timing-closure": {"harness": "claude_code", "model": "claude-fable-5-1", "effort": "high"}}
-    rt = mk(runs, profile="cvdp", roles=roles)
+    rt = mk(runs, profile="cvdp", roles=roles, allow_fable=True)
     c = json.loads((rt.run_dir / "config.json").read_text())
     assert c["roles"] == roles and cli.config_from_json(c).role_models("timing-closure") == rt.cfg.role_models("timing-closure")
     got = []

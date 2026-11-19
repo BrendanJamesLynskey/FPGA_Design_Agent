@@ -239,8 +239,12 @@ def run_subagent_cc(rt, plan: dict[str, Any]) -> dict[str, str]:
            "subtype": res.get("subtype"), "is_error": res.get("is_error"), "tokens": info["tokens"],
            "cost_usd": "unreported", "plan_cost_estimate_usd": res.get("total_cost_usd"),
            "init": init_report(info["init"]), "stderr_tail": err[-500:]}
+    from agent.models.config import ROLE_PURPOSE
+    ent = rt.resolver.entry(ROLE_PURPOSE[plan["role"]], plan["stage"])           # brief 108: which table entry made this call
+    rec.update(purpose=ent.purpose, endpoint=ent.endpoint, entry_hash=ent.hash, table_hash=rt.resolver.table.hash)
     with (rt.run_dir / "claude_code_calls.jsonl").open("a") as f:
         f.write(json.dumps(rec) + "\n")
+    rt.resolver.log_text_call(ent, secs, tokens=info["tokens"]["input"] + info["tokens"]["output"])
     written = {str(p.relative_to(rt.design)): "" for p in rt.design.rglob("*")
                if p.is_file() and "build" not in p.parts and "__pycache__" not in p.parts
                and p.stat().st_mtime > before.get(str(p), 0)}

@@ -17,7 +17,7 @@ stores the profile name and the explicit overrides, so ``resume`` rebuilds the s
 methodology reports in the closure stages may do better on another model or harness than the same role elsewhere. Each
 layer is partial (only the keys it names change). Precedence, lowest to highest: base < profile ``role`` < explicit
 ``role`` < profile ``role@stage`` < explicit ``role@stage``. To add one, put it in ``--roles``, for example
-``--roles '{"rtl@timing-closure": {"model": "claude-fable-5-1"}}'``, or add it to a profile in :data:`PROFILES`. The
+``--roles '{"rtl@timing-closure": {"model": "claude-fable-5-1"}}'`` with the owner's ``--allow-fable``, or add it to a profile in :data:`PROFILES`. The
 profile ``cvdp`` sets none.
 """
 
