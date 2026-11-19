@@ -290,3 +290,31 @@ def test_the_scoring_code_is_the_code_brief_104_used() -> None:
     """Brief 104A re-runs the same back-test with the scoring code unchanged: flow/options/backtest.py is byte-identical to its 104 version."""
     sha = hashlib.sha256((ROOT / "flow" / "options" / "backtest.py").read_bytes()).hexdigest()
     assert sha == "ce03d1c40dc551feded01a8371912e522b09540b2e39808749936d24b7170187"
+
+
+# ---- the CLI keeps the combined options consistent ---------------------------------------------------------------------------------------------
+
+def test_edit_of_a_combined_option_is_refused_and_more_rebuilds_the_combinations(tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture) -> None:
+    from test_104_options import FakeResolver, ns, wide
+    if not _prompts_ok():
+        pytest.skip("private prompts are not available here")
+    d = tmp_path / "d"
+    shutil.copytree(FX10, d)
+    first = doc_of(single("O1", "tx_frame_src", "fs_start"), single("O2", "core", "cross_go"), wide(id="O3"))
+    more = doc_of(single("O1", "trade_decision", "decide"), single("O2", "tx_mac", "mac_preamble"), wide(id="O3", touches_stages=["rx_mac"], gain={"metric": "latency_clocks", "low": 0, "high": 1, "basis": "guess", "cites": [], "basis_note": "no basis"}))
+    res = FakeResolver([json.dumps(first), json.dumps(more)])
+    monkeypatch.setattr(C, "_resolver", lambda a, dd, o: res)
+    assert C.improve_cmd(ns(d, "lower latency"), main_fn=None) == 0
+    st = json.loads(C.state_path(d).read_text())["current"]["options"]
+    assert [o["id"] for o in st[:3]] == ["O1", "O2", "O3"] and st[3]["origin"] == "combiner" and set(st[3]["combined_from"]) <= {"O1", "O2", "O3"}
+    capsys.readouterr()
+    assert C.improve_cmd(ns(d, "x", edit=4), main_fn=None) == 2 and "built by the combiner" in capsys.readouterr().err
+    assert C.improve_cmd(ns(d, more=True), main_fn=None) == 0
+    cur = json.loads(C.state_path(d).read_text())["current"]["options"]
+    assert len([o for o in cur if o["origin"] == "model"]) == 6 and len({o["id"] for o in cur}) == len(cur)
+    assert json.loads(C.state_path(d).read_text())["current"]["combiner"]["considered"] == 57      # every subset of the six singles of both rounds (2^6 - 6 - 1)
+
+
+def _prompts_ok() -> bool:
+    from test_104_options import _prompts_available
+    return _prompts_available()

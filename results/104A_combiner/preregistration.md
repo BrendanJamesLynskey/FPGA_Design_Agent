@@ -11,7 +11,7 @@ contains the measurement, **without** the analysis seeing the measured results?
 
 ## The combiner (fixed here)
 
-- Input: the options that passed every check (`origin: model`), at most four. Output: at most `MAX_COMBINED` = 4 combined options (`origin: combiner`, ids `C1`...).
+- Input: the options that passed every check (`origin: model`): at most four from one request (the checker caps a reply at four), at most six after `--more`. Output: at most `MAX_COMBINED` = 4 combined options (`origin: combiner`, ids `C1`...).
 - Two options combine only if they touch no stage in common and declare no interface change to the same port of the same component.
 - `latency_clocks`: the cuts of disjoint stages add; low and high are the sums, capped by the checker's ceiling for the union of stages. Any labelled guess among the parts makes the whole a
   guess. Where the analysis holds a `prior_run` fact for exactly that set of stages, the measured cut replaces the sum (basis `measurement`). Not applicable to either back-test fixture

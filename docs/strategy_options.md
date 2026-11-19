@@ -60,7 +60,23 @@ once for a repair; what still fails is recorded under `rejected` with the reason
 
 `strategy.json` holds the request, mode, goal, analysis hash and source files (with hashes), the options offered, the rejected ones, the model identity (purpose, endpoint, model, entry and
 table hash), and **prompt names and hashes only** (prompts are in the private knowledge repository, brief 99, `graph/options/*`). After `--choose`, the resume copies it into the run
-(`runs/<id>/strategy.json`) and `summary.json` gains `strategy` (the choice, the options offered, the chosen option in full).
+(`runs/<id>/strategy.json`) and `summary.json` gains `strategy` (the choice, the options offered with their origin, the chosen option in full).
+
+## The combiner: cumulative options built by code (brief 104A)
+
+The model offers single changes; **code** builds the cumulative options from the ones that passed the checks (`flow/options/combine.py`). The model is not asked to combine, and the combiner never reads a back-test's truth.
+
+- **Compatible** parts touch no stage in common and declare no interface change to the same port of the same component. The combined scope is the union of the parts' components (`whole_design` when that is every owned component), still owned-only.
+- **Gain composed by code.** `latency_clocks`: the cuts of disjoint stages add (stage clocks are additive along the chain), so low and high are sums, capped by the checker's ceiling for the union; a labelled guess among the parts makes the whole a guess.
+  `lut`/`ff`: added only across different components. `wns_ns`: **not composable** (the worst path sets the clock). A combination that cannot be composed is not offered; it is listed under `combiner.not_composable` with the reason. The sum is not a
+  simulation: interactions between the changes are not modelled (the basis note says so).
+- **Measured earlier.** If the design supplies `prior_runs.yaml` (schema `fda-prior-runs/1`) and a combination touches exactly the stages of one of its runs, the measured cut replaces the sum and the basis is `measurement`, citing the `prior_run` fact. A run is used only
+  when every stage it names is in the design's latency chain: `designs/b96_kr260_10g/prior_runs.yaml` holds the brief 97 and 97C variants measured on the pre-96C chain (with `cross_go`), which today's rate-matched stage file no longer has, so for that file they are listed in
+  the analysis notes and not used.
+- **Validated like any option.** The combined option is built as a raw option and goes through the same per-option checks (`schema.check_single`): contract flags (a change across components, a crossing), owner approval, cost, not-touched.
+- **Ranked by code, capped at four.** Order: measured earlier, higher composed mid-gain, fewer components touched, no owner approval needed, the model's order. The best combination of each size is kept (small, medium, full), then the cap is filled with the next best. Combined options are numbered after
+  the model's, ids `C1`..., `origin: combiner`, `combined_from`, shown as "COMBINED by code" in the CLI. `--more` and `--edit` rebuild them; `--edit` of a combined option is refused (edit one of its parts).
+- **What it cannot do.** It combines what the model offered. If the model bundles several stages into one option (as it did in the brief 104 runs), the individual stages are not available to combine. Results: [../results/104A_combiner/README.md](../results/104A_combiner/README.md).
 
 ## The `--blind` ablation
 

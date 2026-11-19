@@ -28,7 +28,7 @@ from flow.options import schema
 
 COMBINER_VERSION = "1"
 MAX_COMBINED = 4
-MAX_PARTS = 4
+MAX_PARTS = 6          # four from one request (the checker caps it); six after --more
 ORIGIN = "combiner"
 
 

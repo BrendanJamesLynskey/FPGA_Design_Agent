@@ -1,0 +1,3434 @@
+{
+ "schema": "fda-combiner-replay/1",
+ "note": "the combiner applied to the singles of the recorded brief-104 runs; no model call; not a new measurement of the generator",
+ "runs": [
+  {
+   "run": "b96_10g_pre97__A__1",
+   "case": "b96_10g_pre97",
+   "arm": "A",
+   "k": 1,
+   "singles": [
+    {
+     "id": "O1",
+     "stages": [
+      "fs_start"
+     ],
+     "scope": [
+      "tx_frame_src"
+     ],
+     "gain": [
+      0,
+      1
+     ],
+     "basis": "model"
+    },
+    {
+     "id": "O2",
+     "stages": [
+      "cross_go"
+     ],
+     "scope": [
+      "core"
+     ],
+     "gain": [
+      0,
+      1
+     ],
+     "basis": "model"
+    },
+    {
+     "id": "O3",
+     "stages": [
+      "rx_blk",
+      "rx_descramble"
+     ],
+     "scope": [
+      "rx_pcs"
+     ],
+     "gain": [
+      0,
+      1
+     ],
+     "basis": "model"
+    },
+    {
+     "id": "O4",
+     "stages": [
+      "decide",
+      "fs_start",
+      "mac_preamble"
+     ],
+     "scope": [
+      "top",
+      "shared_pkg",
+      "core",
+      "rx_path",
+      "rx_pcs",
+      "rx_mac",
+      "trade_decision",
+      "tx_path",
+      "tx_frame_src",
+      "tx_mac",
+      "tx_pcs",
+      "cfg_vec"
+     ],
+     "gain": [
+      1,
+      3
+     ],
+     "basis": "model"
+    }
+   ],
+   "combined": [
+    {
+     "id": "C1",
+     "from": [
+      "O2",
+      "O4"
+     ],
+     "stages": [
+      "cross_go",
+      "decide",
+      "fs_start",
+      "mac_preamble"
+     ],
+     "gain": [
+      1,
+      4
+     ],
+     "basis": "model",
+     "needs_owner_approval": true,
+     "contract_change": true
+    },
+    {
+     "id": "C2",
+     "from": [
+      "O3",
+      "O4"
+     ],
+     "stages": [
+      "rx_blk",
+      "rx_descramble",
+      "decide",
+      "fs_start",
+      "mac_preamble"
+     ],
+     "gain": [
+      1,
+      4
+     ],
+     "basis": "model",
+     "needs_owner_approval": true,
+     "contract_change": true
+    },
+    {
+     "id": "C3",
+     "from": [
+      "O2",
+      "O3",
+      "O4"
+     ],
+     "stages": [
+      "cross_go",
+      "rx_blk",
+      "rx_descramble",
+      "decide",
+      "fs_start",
+      "mac_preamble"
+     ],
+     "gain": [
+      1,
+      5
+     ],
+     "basis": "model",
+     "needs_owner_approval": true,
+     "contract_change": true
+    },
+    {
+     "id": "C4",
+     "from": [
+      "O1",
+      "O2",
+      "O3"
+     ],
+     "stages": [
+      "fs_start",
+      "cross_go",
+      "rx_blk",
+      "rx_descramble"
+     ],
+     "gain": [
+      0,
+      3
+     ],
+     "basis": "model",
+     "needs_owner_approval": true,
+     "contract_change": true
+    }
+   ],
+   "not_composable": [
+    {
+     "from": [
+      "O1",
+      "O4"
+     ],
+     "reason": "options O1 and O4 both touch stage fs_start: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O1",
+      "O2",
+      "O4"
+     ],
+     "reason": "options O1 and O4 both touch stage fs_start: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O1",
+      "O3",
+      "O4"
+     ],
+     "reason": "options O1 and O4 both touch stage fs_start: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O1",
+      "O2",
+      "O3",
+      "O4"
+     ],
+     "reason": "options O1 and O4 both touch stage fs_start: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O1",
+      "O2"
+     ],
+     "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+    },
+    {
+     "from": [
+      "O1",
+      "O3"
+     ],
+     "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+    },
+    {
+     "from": [
+      "O2",
+      "O3"
+     ],
+     "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+    }
+   ],
+   "before": {
+    "found_named": 1,
+    "found_all": 1,
+    "in_range": 1
+   },
+   "after": {
+    "found_named": 1,
+    "found_all": 1,
+    "in_range": 1
+   },
+   "variants_after": {
+    "agent_cdc": {
+     "found": true,
+     "option": "O2",
+     "gain": [
+      0,
+      1
+     ],
+     "basis": "model",
+     "in_range": true,
+     "over": 0,
+     "origin": "model"
+    },
+    "hand_ref": {
+     "found": false,
+     "best_overlap": 0.5
+    },
+    "agent_both": {
+     "found": false,
+     "best_overlap": 0.5
+    },
+    "all3": {
+     "found": false,
+     "best_overlap": 0.75
+    }
+   }
+  },
+  {
+   "run": "b96_10g_pre97__A__2",
+   "case": "b96_10g_pre97",
+   "arm": "A",
+   "k": 2,
+   "singles": [
+    {
+     "id": "O1",
+     "stages": [
+      "fs_start"
+     ],
+     "scope": [
+      "tx_frame_src"
+     ],
+     "gain": [
+      0,
+      1
+     ],
+     "basis": "model"
+    },
+    {
+     "id": "O2",
+     "stages": [
+      "rx_descramble"
+     ],
+     "scope": [
+      "rx_pcs"
+     ],
+     "gain": [
+      0,
+      1
+     ],
+     "basis": "model"
+    },
+    {
+     "id": "O3",
+     "stages": [
+      "cross_go"
+     ],
+     "scope": [
+      "core"
+     ],
+     "gain": [
+      0,
+      1
+     ],
+     "basis": "model"
+    },
+    {
+     "id": "O4",
+     "stages": [
+      "rx_descramble",
+      "decide",
+      "fs_start",
+      "mac_preamble"
+     ],
+     "scope": [
+      "top",
+      "shared_pkg",
+      "core",
+      "rx_path",
+      "rx_pcs",
+      "rx_mac",
+      "trade_decision",
+      "tx_path",
+      "tx_frame_src",
+      "tx_mac",
+      "tx_pcs",
+      "cfg_vec"
+     ],
+     "gain": [
+      1,
+      4
+     ],
+     "basis": "model"
+    }
+   ],
+   "combined": [
+    {
+     "id": "C1",
+     "from": [
+      "O3",
+      "O4"
+     ],
+     "stages": [
+      "cross_go",
+      "rx_descramble",
+      "decide",
+      "fs_start",
+      "mac_preamble"
+     ],
+     "gain": [
+      1,
+      5
+     ],
+     "basis": "model",
+     "needs_owner_approval": true,
+     "contract_change": true
+    },
+    {
+     "id": "C2",
+     "from": [
+      "O1",
+      "O2"
+     ],
+     "stages": [
+      "fs_start",
+      "rx_descramble"
+     ],
+     "gain": [
+      0,
+      2
+     ],
+     "basis": "model",
+     "needs_owner_approval": true,
+     "contract_change": true
+    },
+    {
+     "id": "C3",
+     "from": [
+      "O1",
+      "O3"
+     ],
+     "stages": [
+      "fs_start",
+      "cross_go"
+     ],
+     "gain": [
+      0,
+      2
+     ],
+     "basis": "model",
+     "needs_owner_approval": true,
+     "contract_change": true
+    },
+    {
+     "id": "C4",
+     "from": [
+      "O1",
+      "O2",
+      "O3"
+     ],
+     "stages": [
+      "fs_start",
+      "rx_descramble",
+      "cross_go"
+     ],
+     "gain": [
+      0,
+      3
+     ],
+     "basis": "model",
+     "needs_owner_approval": true,
+     "contract_change": true
+    }
+   ],
+   "not_composable": [
+    {
+     "from": [
+      "O1",
+      "O4"
+     ],
+     "reason": "options O1 and O4 both touch stage fs_start: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O2",
+      "O4"
+     ],
+     "reason": "options O2 and O4 both touch stage rx_descramble: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O1",
+      "O2",
+      "O4"
+     ],
+     "reason": "options O1 and O4 both touch stage fs_start: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O1",
+      "O3",
+      "O4"
+     ],
+     "reason": "options O1 and O4 both touch stage fs_start: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O2",
+      "O3",
+      "O4"
+     ],
+     "reason": "options O2 and O4 both touch stage rx_descramble: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O1",
+      "O2",
+      "O3",
+      "O4"
+     ],
+     "reason": "options O1 and O4 both touch stage fs_start: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O2",
+      "O3"
+     ],
+     "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+    }
+   ],
+   "before": {
+    "found_named": 1,
+    "found_all": 1,
+    "in_range": 1
+   },
+   "after": {
+    "found_named": 1,
+    "found_all": 2,
+    "in_range": 2
+   },
+   "variants_after": {
+    "agent_cdc": {
+     "found": true,
+     "option": "O3",
+     "gain": [
+      0,
+      1
+     ],
+     "basis": "model",
+     "in_range": true,
+     "over": 0,
+     "origin": "model"
+    },
+    "hand_ref": {
+     "found": true,
+     "option": "C3",
+     "gain": [
+      0,
+      2
+     ],
+     "basis": "model",
+     "in_range": true,
+     "over": 0,
+     "origin": "combiner"
+    },
+    "agent_both": {
+     "found": false,
+     "best_overlap": 0.5
+    },
+    "all3": {
+     "found": false,
+     "best_overlap": 0.67
+    }
+   }
+  },
+  {
+   "run": "b96_10g_pre97__A__3",
+   "case": "b96_10g_pre97",
+   "arm": "A",
+   "k": 3,
+   "singles": [
+    {
+     "id": "O1",
+     "stages": [
+      "fs_start"
+     ],
+     "scope": [
+      "tx_frame_src"
+     ],
+     "gain": [
+      0,
+      1
+     ],
+     "basis": "model"
+    },
+    {
+     "id": "O2",
+     "stages": [
+      "rx_descramble"
+     ],
+     "scope": [
+      "rx_pcs"
+     ],
+     "gain": [
+      0,
+      1
+     ],
+     "basis": "model"
+    },
+    {
+     "id": "O3",
+     "stages": [
+      "cross_go"
+     ],
+     "scope": [
+      "core"
+     ],
+     "gain": [
+      0,
+      1
+     ],
+     "basis": "model"
+    },
+    {
+     "id": "O4",
+     "stages": [
+      "decide",
+      "mac_preamble",
+      "fs_start"
+     ],
+     "scope": [
+      "top",
+      "shared_pkg",
+      "core",
+      "rx_path",
+      "rx_pcs",
+      "rx_mac",
+      "trade_decision",
+      "tx_path",
+      "tx_frame_src",
+      "tx_mac",
+      "tx_pcs",
+      "cfg_vec"
+     ],
+     "gain": [
+      0,
+      3
+     ],
+     "basis": "model"
+    }
+   ],
+   "combined": [
+    {
+     "id": "C1",
+     "from": [
+      "O2",
+      "O4"
+     ],
+     "stages": [
+      "rx_descramble",
+      "decide",
+      "mac_preamble",
+      "fs_start"
+     ],
+     "gain": [
+      0,
+      4
+     ],
+     "basis": "model",
+     "needs_owner_approval": true,
+     "contract_change": true
+    },
+    {
+     "id": "C2",
+     "from": [
+      "O3",
+      "O4"
+     ],
+     "stages": [
+      "cross_go",
+      "decide",
+      "mac_preamble",
+      "fs_start"
+     ],
+     "gain": [
+      0,
+      4
+     ],
+     "basis": "model",
+     "needs_owner_approval": true,
+     "contract_change": true
+    },
+    {
+     "id": "C3",
+     "from": [
+      "O2",
+      "O3",
+      "O4"
+     ],
+     "stages": [
+      "rx_descramble",
+      "cross_go",
+      "decide",
+      "mac_preamble",
+      "fs_start"
+     ],
+     "gain": [
+      0,
+      5
+     ],
+     "basis": "model",
+     "needs_owner_approval": true,
+     "contract_change": true
+    },
+    {
+     "id": "C4",
+     "from": [
+      "O1",
+      "O2",
+      "O3"
+     ],
+     "stages": [
+      "fs_start",
+      "rx_descramble",
+      "cross_go"
+     ],
+     "gain": [
+      0,
+      3
+     ],
+     "basis": "model",
+     "needs_owner_approval": true,
+     "contract_change": true
+    }
+   ],
+   "not_composable": [
+    {
+     "from": [
+      "O1",
+      "O4"
+     ],
+     "reason": "options O1 and O4 both touch stage fs_start: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O1",
+      "O2",
+      "O4"
+     ],
+     "reason": "options O1 and O4 both touch stage fs_start: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O1",
+      "O3",
+      "O4"
+     ],
+     "reason": "options O1 and O4 both touch stage fs_start: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O1",
+      "O2",
+      "O3",
+      "O4"
+     ],
+     "reason": "options O1 and O4 both touch stage fs_start: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O1",
+      "O2"
+     ],
+     "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+    },
+    {
+     "from": [
+      "O1",
+      "O3"
+     ],
+     "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+    },
+    {
+     "from": [
+      "O2",
+      "O3"
+     ],
+     "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+    }
+   ],
+   "before": {
+    "found_named": 1,
+    "found_all": 1,
+    "in_range": 1
+   },
+   "after": {
+    "found_named": 1,
+    "found_all": 1,
+    "in_range": 1
+   },
+   "variants_after": {
+    "agent_cdc": {
+     "found": true,
+     "option": "O3",
+     "gain": [
+      0,
+      1
+     ],
+     "basis": "model",
+     "in_range": true,
+     "over": 0,
+     "origin": "model"
+    },
+    "hand_ref": {
+     "found": false,
+     "best_overlap": 0.67
+    },
+    "agent_both": {
+     "found": false,
+     "best_overlap": 0.5
+    },
+    "all3": {
+     "found": false,
+     "best_overlap": 0.75
+    }
+   }
+  },
+  {
+   "run": "b96_10g_pre97__B__1",
+   "case": "b96_10g_pre97",
+   "arm": "B",
+   "k": 1,
+   "singles": [
+    {
+     "id": "O1",
+     "stages": [
+      "cross_go"
+     ],
+     "scope": [
+      "core"
+     ],
+     "gain": [
+      1,
+      1
+     ],
+     "basis": "model"
+    },
+    {
+     "id": "O2",
+     "stages": [
+      "mac_preamble",
+      "tx_encode"
+     ],
+     "scope": [
+      "tx_mac",
+      "tx_pcs"
+     ],
+     "gain": [
+      0,
+      1
+     ],
+     "basis": "model"
+    },
+    {
+     "id": "O3",
+     "stages": [
+      "fs_start"
+     ],
+     "scope": [
+      "tx_frame_src"
+     ],
+     "gain": [
+      0,
+      1
+     ],
+     "basis": "model"
+    },
+    {
+     "id": "O4",
+     "stages": [
+      "rx_descramble"
+     ],
+     "scope": [
+      "top",
+      "shared_pkg",
+      "core",
+      "rx_path",
+      "rx_pcs",
+      "rx_mac",
+      "trade_decision",
+      "tx_path",
+      "tx_frame_src",
+      "tx_mac",
+      "tx_pcs",
+      "cfg_vec"
+     ],
+     "gain": [
+      0,
+      1
+     ],
+     "basis": "model"
+    }
+   ],
+   "combined": [
+    {
+     "id": "C1",
+     "from": [
+      "O1",
+      "O3"
+     ],
+     "stages": [
+      "cross_go",
+      "fs_start"
+     ],
+     "gain": [
+      1,
+      2
+     ],
+     "basis": "model",
+     "needs_owner_approval": true,
+     "contract_change": true
+    },
+    {
+     "id": "C2",
+     "from": [
+      "O1",
+      "O3",
+      "O4"
+     ],
+     "stages": [
+      "cross_go",
+      "fs_start",
+      "rx_descramble"
+     ],
+     "gain": [
+      1,
+      3
+     ],
+     "basis": "model",
+     "needs_owner_approval": true,
+     "contract_change": true
+    },
+    {
+     "id": "C3",
+     "from": [
+      "O1",
+      "O2",
+      "O3"
+     ],
+     "stages": [
+      "cross_go",
+      "mac_preamble",
+      "tx_encode",
+      "fs_start"
+     ],
+     "gain": [
+      1,
+      3
+     ],
+     "basis": "model",
+     "needs_owner_approval": true,
+     "contract_change": true
+    },
+    {
+     "id": "C4",
+     "from": [
+      "O1",
+      "O2",
+      "O3",
+      "O4"
+     ],
+     "stages": [
+      "cross_go",
+      "mac_preamble",
+      "tx_encode",
+      "fs_start",
+      "rx_descramble"
+     ],
+     "gain": [
+      1,
+      4
+     ],
+     "basis": "model",
+     "needs_owner_approval": true,
+     "contract_change": true
+    }
+   ],
+   "not_composable": [
+    {
+     "from": [
+      "O1",
+      "O2",
+      "O4"
+     ],
+     "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+    },
+    {
+     "from": [
+      "O1",
+      "O4"
+     ],
+     "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+    },
+    {
+     "from": [
+      "O1",
+      "O2"
+     ],
+     "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+    },
+    {
+     "from": [
+      "O2",
+      "O3",
+      "O4"
+     ],
+     "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+    },
+    {
+     "from": [
+      "O3",
+      "O4"
+     ],
+     "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+    },
+    {
+     "from": [
+      "O2",
+      "O3"
+     ],
+     "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+    },
+    {
+     "from": [
+      "O2",
+      "O4"
+     ],
+     "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+    }
+   ],
+   "before": {
+    "found_named": 1,
+    "found_all": 1,
+    "in_range": 1
+   },
+   "after": {
+    "found_named": 1,
+    "found_all": 2,
+    "in_range": 2
+   },
+   "variants_after": {
+    "agent_cdc": {
+     "found": true,
+     "option": "O1",
+     "gain": [
+      1,
+      1
+     ],
+     "basis": "model",
+     "in_range": true,
+     "over": 0,
+     "origin": "model"
+    },
+    "hand_ref": {
+     "found": true,
+     "option": "C1",
+     "gain": [
+      1,
+      2
+     ],
+     "basis": "model",
+     "in_range": true,
+     "over": 0,
+     "origin": "combiner"
+    },
+    "agent_both": {
+     "found": false,
+     "best_overlap": 0.5
+    },
+    "all3": {
+     "found": false,
+     "best_overlap": 0.67
+    }
+   }
+  },
+  {
+   "run": "b96_10g_pre97__B__2",
+   "case": "b96_10g_pre97",
+   "arm": "B",
+   "k": 2,
+   "singles": [
+    {
+     "id": "O1",
+     "stages": [
+      "cross_go"
+     ],
+     "scope": [
+      "core"
+     ],
+     "gain": [
+      0,
+      1
+     ],
+     "basis": "model"
+    },
+    {
+     "id": "O2",
+     "stages": [
+      "fs_start"
+     ],
+     "scope": [
+      "tx_path",
+      "tx_frame_src",
+      "tx_mac"
+     ],
+     "gain": [
+      0,
+      1
+     ],
+     "basis": "model"
+    },
+    {
+     "id": "O3",
+     "stages": [
+      "rx_descramble"
+     ],
+     "scope": [
+      "rx_pcs"
+     ],
+     "gain": [
+      0,
+      1
+     ],
+     "basis": "model"
+    },
+    {
+     "id": "O4",
+     "stages": [
+      "rx_descramble",
+      "cross_go",
+      "fs_start"
+     ],
+     "scope": [
+      "top",
+      "shared_pkg",
+      "core",
+      "rx_path",
+      "rx_pcs",
+      "rx_mac",
+      "trade_decision",
+      "tx_path",
+      "tx_frame_src",
+      "tx_mac",
+      "tx_pcs",
+      "cfg_vec"
+     ],
+     "gain": [
+      0,
+      3
+     ],
+     "basis": "model"
+    }
+   ],
+   "combined": [
+    {
+     "id": "C1",
+     "from": [
+      "O1",
+      "O2"
+     ],
+     "stages": [
+      "cross_go",
+      "fs_start"
+     ],
+     "gain": [
+      0,
+      2
+     ],
+     "basis": "model",
+     "needs_owner_approval": true,
+     "contract_change": true
+    },
+    {
+     "id": "C2",
+     "from": [
+      "O1",
+      "O3"
+     ],
+     "stages": [
+      "cross_go",
+      "rx_descramble"
+     ],
+     "gain": [
+      0,
+      2
+     ],
+     "basis": "model",
+     "needs_owner_approval": true,
+     "contract_change": true
+    },
+    {
+     "id": "C3",
+     "from": [
+      "O2",
+      "O3"
+     ],
+     "stages": [
+      "fs_start",
+      "rx_descramble"
+     ],
+     "gain": [
+      0,
+      2
+     ],
+     "basis": "model",
+     "needs_owner_approval": true,
+     "contract_change": true
+    }
+   ],
+   "not_composable": [
+    {
+     "from": [
+      "O1",
+      "O4"
+     ],
+     "reason": "options O1 and O4 both touch stage cross_go: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O2",
+      "O4"
+     ],
+     "reason": "options O2 and O4 both touch stage fs_start: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O3",
+      "O4"
+     ],
+     "reason": "options O3 and O4 both touch stage rx_descramble: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O1",
+      "O2",
+      "O3"
+     ],
+     "reason": "the model already offered an option touching exactly these stages"
+    },
+    {
+     "from": [
+      "O1",
+      "O2",
+      "O4"
+     ],
+     "reason": "options O1 and O4 both touch stage cross_go: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O1",
+      "O3",
+      "O4"
+     ],
+     "reason": "options O1 and O4 both touch stage cross_go: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O2",
+      "O3",
+      "O4"
+     ],
+     "reason": "options O2 and O4 both touch stage fs_start: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O1",
+      "O2",
+      "O3",
+      "O4"
+     ],
+     "reason": "options O1 and O4 both touch stage cross_go: they are alternatives, not additions"
+    }
+   ],
+   "before": {
+    "found_named": 1,
+    "found_all": 1,
+    "in_range": 1
+   },
+   "after": {
+    "found_named": 1,
+    "found_all": 2,
+    "in_range": 2
+   },
+   "variants_after": {
+    "agent_cdc": {
+     "found": true,
+     "option": "O1",
+     "gain": [
+      0,
+      1
+     ],
+     "basis": "model",
+     "in_range": true,
+     "over": 0,
+     "origin": "model"
+    },
+    "hand_ref": {
+     "found": true,
+     "option": "C1",
+     "gain": [
+      0,
+      2
+     ],
+     "basis": "model",
+     "in_range": true,
+     "over": 0,
+     "origin": "combiner"
+    },
+    "agent_both": {
+     "found": false,
+     "best_overlap": 0.5
+    },
+    "all3": {
+     "found": false,
+     "best_overlap": 0.67
+    }
+   }
+  },
+  {
+   "run": "b96_10g_pre97__B__3",
+   "case": "b96_10g_pre97",
+   "arm": "B",
+   "k": 3,
+   "singles": [
+    {
+     "id": "O1",
+     "stages": [
+      "cross_go"
+     ],
+     "scope": [
+      "core"
+     ],
+     "gain": [
+      1,
+      2
+     ],
+     "basis": "model"
+    },
+    {
+     "id": "O2",
+     "stages": [
+      "fs_start",
+      "mac_preamble"
+     ],
+     "scope": [
+      "tx_frame_src",
+      "tx_mac"
+     ],
+     "gain": [
+      0,
+      1
+     ],
+     "basis": "model"
+    },
+    {
+     "id": "O3",
+     "stages": [
+      "rx_descramble"
+     ],
+     "scope": [
+      "rx_pcs"
+     ],
+     "gain": [
+      0,
+      1
+     ],
+     "basis": "model"
+    },
+    {
+     "id": "O4",
+     "stages": [
+      "rx_descramble",
+      "fs_start"
+     ],
+     "scope": [
+      "top",
+      "shared_pkg",
+      "core",
+      "rx_path",
+      "rx_pcs",
+      "rx_mac",
+      "trade_decision",
+      "tx_path",
+      "tx_frame_src",
+      "tx_mac",
+      "tx_pcs",
+      "cfg_vec"
+     ],
+     "gain": [
+      0,
+      2
+     ],
+     "basis": "model"
+    }
+   ],
+   "combined": [
+    {
+     "id": "C1",
+     "from": [
+      "O1",
+      "O4"
+     ],
+     "stages": [
+      "cross_go",
+      "rx_descramble",
+      "fs_start"
+     ],
+     "gain": [
+      1,
+      4
+     ],
+     "basis": "model",
+     "needs_owner_approval": true,
+     "contract_change": true
+    },
+    {
+     "id": "C2",
+     "from": [
+      "O1",
+      "O3"
+     ],
+     "stages": [
+      "cross_go",
+      "rx_descramble"
+     ],
+     "gain": [
+      1,
+      3
+     ],
+     "basis": "model",
+     "needs_owner_approval": true,
+     "contract_change": true
+    },
+    {
+     "id": "C3",
+     "from": [
+      "O1",
+      "O2"
+     ],
+     "stages": [
+      "cross_go",
+      "fs_start",
+      "mac_preamble"
+     ],
+     "gain": [
+      1,
+      3
+     ],
+     "basis": "model",
+     "needs_owner_approval": true,
+     "contract_change": true
+    },
+    {
+     "id": "C4",
+     "from": [
+      "O1",
+      "O2",
+      "O3"
+     ],
+     "stages": [
+      "cross_go",
+      "fs_start",
+      "mac_preamble",
+      "rx_descramble"
+     ],
+     "gain": [
+      1,
+      4
+     ],
+     "basis": "model",
+     "needs_owner_approval": true,
+     "contract_change": true
+    }
+   ],
+   "not_composable": [
+    {
+     "from": [
+      "O2",
+      "O4"
+     ],
+     "reason": "options O2 and O4 both touch stage fs_start: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O3",
+      "O4"
+     ],
+     "reason": "options O3 and O4 both touch stage rx_descramble: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O1",
+      "O2",
+      "O4"
+     ],
+     "reason": "options O2 and O4 both touch stage fs_start: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O1",
+      "O3",
+      "O4"
+     ],
+     "reason": "options O3 and O4 both touch stage rx_descramble: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O2",
+      "O3",
+      "O4"
+     ],
+     "reason": "options O2 and O4 both touch stage fs_start: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O1",
+      "O2",
+      "O3",
+      "O4"
+     ],
+     "reason": "options O2 and O4 both touch stage fs_start: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O2",
+      "O3"
+     ],
+     "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+    }
+   ],
+   "before": {
+    "found_named": 1,
+    "found_all": 1,
+    "in_range": 1
+   },
+   "after": {
+    "found_named": 1,
+    "found_all": 1,
+    "in_range": 1
+   },
+   "variants_after": {
+    "agent_cdc": {
+     "found": true,
+     "option": "O1",
+     "gain": [
+      1,
+      2
+     ],
+     "basis": "model",
+     "in_range": true,
+     "over": 1,
+     "origin": "model"
+    },
+    "hand_ref": {
+     "found": false,
+     "best_overlap": 0.67
+    },
+    "agent_both": {
+     "found": false,
+     "best_overlap": 0.5
+    },
+    "all3": {
+     "found": false,
+     "best_overlap": 0.5
+    }
+   }
+  },
+  {
+   "run": "b96_10g_pre97__A2__1",
+   "case": "b96_10g_pre97",
+   "arm": "A2",
+   "k": 1,
+   "singles": [
+    {
+     "id": "O1",
+     "stages": [
+      "fs_start"
+     ],
+     "scope": [
+      "tx_frame_src"
+     ],
+     "gain": [
+      0,
+      1
+     ],
+     "basis": "model"
+    },
+    {
+     "id": "O2",
+     "stages": [
+      "cross_go"
+     ],
+     "scope": [
+      "core"
+     ],
+     "gain": [
+      0,
+      1
+     ],
+     "basis": "model"
+    },
+    {
+     "id": "O3",
+     "stages": [
+      "fs_start",
+      "mac_preamble"
+     ],
+     "scope": [
+      "tx_frame_src",
+      "tx_mac"
+     ],
+     "gain": [
+      0,
+      2
+     ],
+     "basis": "model"
+    },
+    {
+     "id": "O4",
+     "stages": [
+      "rx_descramble",
+      "decide",
+      "cross_go",
+      "fs_start",
+      "mac_preamble"
+     ],
+     "scope": [
+      "top",
+      "shared_pkg",
+      "core",
+      "rx_path",
+      "rx_pcs",
+      "rx_mac",
+      "trade_decision",
+      "tx_path",
+      "tx_frame_src",
+      "tx_mac",
+      "tx_pcs",
+      "cfg_vec"
+     ],
+     "gain": [
+      1,
+      5
+     ],
+     "basis": "model"
+    }
+   ],
+   "combined": [
+    {
+     "id": "C1",
+     "from": [
+      "O2",
+      "O3"
+     ],
+     "stages": [
+      "cross_go",
+      "fs_start",
+      "mac_preamble"
+     ],
+     "gain": [
+      0,
+      3
+     ],
+     "basis": "model",
+     "needs_owner_approval": true,
+     "contract_change": true
+    },
+    {
+     "id": "C2",
+     "from": [
+      "O1",
+      "O2"
+     ],
+     "stages": [
+      "fs_start",
+      "cross_go"
+     ],
+     "gain": [
+      0,
+      2
+     ],
+     "basis": "model",
+     "needs_owner_approval": true,
+     "contract_change": true
+    }
+   ],
+   "not_composable": [
+    {
+     "from": [
+      "O1",
+      "O3"
+     ],
+     "reason": "options O1 and O3 both touch stage fs_start: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O1",
+      "O4"
+     ],
+     "reason": "options O1 and O4 both touch stage fs_start: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O2",
+      "O4"
+     ],
+     "reason": "options O2 and O4 both touch stage cross_go: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O3",
+      "O4"
+     ],
+     "reason": "options O3 and O4 both touch stage fs_start, mac_preamble: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O1",
+      "O2",
+      "O3"
+     ],
+     "reason": "options O1 and O3 both touch stage fs_start: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O1",
+      "O2",
+      "O4"
+     ],
+     "reason": "options O1 and O4 both touch stage fs_start: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O1",
+      "O3",
+      "O4"
+     ],
+     "reason": "options O1 and O3 both touch stage fs_start: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O2",
+      "O3",
+      "O4"
+     ],
+     "reason": "options O2 and O4 both touch stage cross_go: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O1",
+      "O2",
+      "O3",
+      "O4"
+     ],
+     "reason": "options O1 and O3 both touch stage fs_start: they are alternatives, not additions"
+    }
+   ],
+   "before": {
+    "found_named": 1,
+    "found_all": 1,
+    "in_range": 1
+   },
+   "after": {
+    "found_named": 1,
+    "found_all": 2,
+    "in_range": 2
+   },
+   "variants_after": {
+    "agent_cdc": {
+     "found": true,
+     "option": "O2",
+     "gain": [
+      0,
+      1
+     ],
+     "basis": "model",
+     "in_range": true,
+     "over": 0,
+     "origin": "model"
+    },
+    "hand_ref": {
+     "found": true,
+     "option": "C2",
+     "gain": [
+      0,
+      2
+     ],
+     "basis": "model",
+     "in_range": true,
+     "over": 0,
+     "origin": "combiner"
+    },
+    "agent_both": {
+     "found": false,
+     "best_overlap": 0.5
+    },
+    "all3": {
+     "found": false,
+     "best_overlap": 0.67
+    }
+   }
+  },
+  {
+   "run": "b96_10g_pre97__A2__2",
+   "case": "b96_10g_pre97",
+   "arm": "A2",
+   "k": 2,
+   "singles": [
+    {
+     "id": "O1",
+     "stages": [
+      "fs_start"
+     ],
+     "scope": [
+      "tx_frame_src"
+     ],
+     "gain": [
+      0,
+      1
+     ],
+     "basis": "model"
+    },
+    {
+     "id": "O2",
+     "stages": [
+      "cross_go"
+     ],
+     "scope": [
+      "core"
+     ],
+     "gain": [
+      0,
+      1
+     ],
+     "basis": "model"
+    },
+    {
+     "id": "O3",
+     "stages": [
+      "fs_start",
+      "mac_preamble"
+     ],
+     "scope": [
+      "tx_frame_src",
+      "tx_mac"
+     ],
+     "gain": [
+      0,
+      2
+     ],
+     "basis": "model"
+    },
+    {
+     "id": "O4",
+     "stages": [
+      "fs_start",
+      "mac_preamble",
+      "cross_go",
+      "decide"
+     ],
+     "scope": [
+      "top",
+      "shared_pkg",
+      "core",
+      "rx_path",
+      "rx_pcs",
+      "rx_mac",
+      "trade_decision",
+      "tx_path",
+      "tx_frame_src",
+      "tx_mac",
+      "tx_pcs",
+      "cfg_vec"
+     ],
+     "gain": [
+      0,
+      4
+     ],
+     "basis": "model"
+    }
+   ],
+   "combined": [
+    {
+     "id": "C1",
+     "from": [
+      "O2",
+      "O3"
+     ],
+     "stages": [
+      "cross_go",
+      "fs_start",
+      "mac_preamble"
+     ],
+     "gain": [
+      0,
+      3
+     ],
+     "basis": "model",
+     "needs_owner_approval": true,
+     "contract_change": true
+    },
+    {
+     "id": "C2",
+     "from": [
+      "O1",
+      "O2"
+     ],
+     "stages": [
+      "fs_start",
+      "cross_go"
+     ],
+     "gain": [
+      0,
+      2
+     ],
+     "basis": "model",
+     "needs_owner_approval": true,
+     "contract_change": true
+    }
+   ],
+   "not_composable": [
+    {
+     "from": [
+      "O1",
+      "O3"
+     ],
+     "reason": "options O1 and O3 both touch stage fs_start: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O1",
+      "O4"
+     ],
+     "reason": "options O1 and O4 both touch stage fs_start: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O2",
+      "O4"
+     ],
+     "reason": "options O2 and O4 both touch stage cross_go: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O3",
+      "O4"
+     ],
+     "reason": "options O3 and O4 both touch stage fs_start, mac_preamble: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O1",
+      "O2",
+      "O3"
+     ],
+     "reason": "options O1 and O3 both touch stage fs_start: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O1",
+      "O2",
+      "O4"
+     ],
+     "reason": "options O1 and O4 both touch stage fs_start: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O1",
+      "O3",
+      "O4"
+     ],
+     "reason": "options O1 and O3 both touch stage fs_start: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O2",
+      "O3",
+      "O4"
+     ],
+     "reason": "options O2 and O4 both touch stage cross_go: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O1",
+      "O2",
+      "O3",
+      "O4"
+     ],
+     "reason": "options O1 and O3 both touch stage fs_start: they are alternatives, not additions"
+    }
+   ],
+   "before": {
+    "found_named": 1,
+    "found_all": 1,
+    "in_range": 1
+   },
+   "after": {
+    "found_named": 1,
+    "found_all": 2,
+    "in_range": 2
+   },
+   "variants_after": {
+    "agent_cdc": {
+     "found": true,
+     "option": "O2",
+     "gain": [
+      0,
+      1
+     ],
+     "basis": "model",
+     "in_range": true,
+     "over": 0,
+     "origin": "model"
+    },
+    "hand_ref": {
+     "found": true,
+     "option": "C2",
+     "gain": [
+      0,
+      2
+     ],
+     "basis": "model",
+     "in_range": true,
+     "over": 0,
+     "origin": "combiner"
+    },
+    "agent_both": {
+     "found": false,
+     "best_overlap": 0.5
+    },
+    "all3": {
+     "found": false,
+     "best_overlap": 0.75
+    }
+   }
+  },
+  {
+   "run": "b96_10g_pre97__A2__3",
+   "case": "b96_10g_pre97",
+   "arm": "A2",
+   "k": 3,
+   "singles": [
+    {
+     "id": "O1",
+     "stages": [
+      "fs_start"
+     ],
+     "scope": [
+      "tx_frame_src"
+     ],
+     "gain": [
+      0,
+      1
+     ],
+     "basis": "model"
+    },
+    {
+     "id": "O2",
+     "stages": [
+      "cross_go"
+     ],
+     "scope": [
+      "core"
+     ],
+     "gain": [
+      0,
+      1
+     ],
+     "basis": "model"
+    },
+    {
+     "id": "O3",
+     "stages": [
+      "fs_start",
+      "mac_preamble"
+     ],
+     "scope": [
+      "tx_path",
+      "tx_frame_src",
+      "tx_mac"
+     ],
+     "gain": [
+      1,
+      2
+     ],
+     "basis": "model"
+    },
+    {
+     "id": "O4",
+     "stages": [
+      "fs_start",
+      "mac_preamble",
+      "cross_go",
+      "decide",
+      "rx_descramble"
+     ],
+     "scope": [
+      "top",
+      "shared_pkg",
+      "core",
+      "rx_path",
+      "rx_pcs",
+      "rx_mac",
+      "trade_decision",
+      "tx_path",
+      "tx_frame_src",
+      "tx_mac",
+      "tx_pcs",
+      "cfg_vec"
+     ],
+     "gain": [
+      2,
+      5
+     ],
+     "basis": "model"
+    }
+   ],
+   "combined": [
+    {
+     "id": "C1",
+     "from": [
+      "O2",
+      "O3"
+     ],
+     "stages": [
+      "cross_go",
+      "fs_start",
+      "mac_preamble"
+     ],
+     "gain": [
+      1,
+      3
+     ],
+     "basis": "model",
+     "needs_owner_approval": true,
+     "contract_change": true
+    },
+    {
+     "id": "C2",
+     "from": [
+      "O1",
+      "O2"
+     ],
+     "stages": [
+      "fs_start",
+      "cross_go"
+     ],
+     "gain": [
+      0,
+      2
+     ],
+     "basis": "model",
+     "needs_owner_approval": true,
+     "contract_change": true
+    }
+   ],
+   "not_composable": [
+    {
+     "from": [
+      "O1",
+      "O3"
+     ],
+     "reason": "options O1 and O3 both touch stage fs_start: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O1",
+      "O4"
+     ],
+     "reason": "options O1 and O4 both touch stage fs_start: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O2",
+      "O4"
+     ],
+     "reason": "options O2 and O4 both touch stage cross_go: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O3",
+      "O4"
+     ],
+     "reason": "options O3 and O4 both touch stage fs_start, mac_preamble: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O1",
+      "O2",
+      "O3"
+     ],
+     "reason": "options O1 and O3 both touch stage fs_start: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O1",
+      "O2",
+      "O4"
+     ],
+     "reason": "options O1 and O4 both touch stage fs_start: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O1",
+      "O3",
+      "O4"
+     ],
+     "reason": "options O1 and O3 both touch stage fs_start: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O2",
+      "O3",
+      "O4"
+     ],
+     "reason": "options O2 and O4 both touch stage cross_go: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O1",
+      "O2",
+      "O3",
+      "O4"
+     ],
+     "reason": "options O1 and O3 both touch stage fs_start: they are alternatives, not additions"
+    }
+   ],
+   "before": {
+    "found_named": 1,
+    "found_all": 1,
+    "in_range": 1
+   },
+   "after": {
+    "found_named": 1,
+    "found_all": 2,
+    "in_range": 2
+   },
+   "variants_after": {
+    "agent_cdc": {
+     "found": true,
+     "option": "O2",
+     "gain": [
+      0,
+      1
+     ],
+     "basis": "model",
+     "in_range": true,
+     "over": 0,
+     "origin": "model"
+    },
+    "hand_ref": {
+     "found": true,
+     "option": "C2",
+     "gain": [
+      0,
+      2
+     ],
+     "basis": "model",
+     "in_range": true,
+     "over": 0,
+     "origin": "combiner"
+    },
+    "agent_both": {
+     "found": false,
+     "best_overlap": 0.5
+    },
+    "all3": {
+     "found": false,
+     "best_overlap": 0.67
+    }
+   }
+  },
+  {
+   "run": "b96_10g_pre97__B2__1",
+   "case": "b96_10g_pre97",
+   "arm": "B2",
+   "k": 1,
+   "singles": [
+    {
+     "id": "O1",
+     "stages": [
+      "cross_go"
+     ],
+     "scope": [
+      "core"
+     ],
+     "gain": [
+      1,
+      2
+     ],
+     "basis": "model"
+    },
+    {
+     "id": "O2",
+     "stages": [
+      "fs_start",
+      "mac_preamble"
+     ],
+     "scope": [
+      "tx_frame_src",
+      "tx_mac"
+     ],
+     "gain": [
+      0,
+      1
+     ],
+     "basis": "model"
+    },
+    {
+     "id": "O3",
+     "stages": [
+      "rx_descramble"
+     ],
+     "scope": [
+      "rx_pcs"
+     ],
+     "gain": [
+      0,
+      1
+     ],
+     "basis": "model"
+    },
+    {
+     "id": "O4",
+     "stages": [
+      "cross_go",
+      "fs_start",
+      "mac_preamble",
+      "rx_descramble"
+     ],
+     "scope": [
+      "top",
+      "shared_pkg",
+      "core",
+      "rx_path",
+      "rx_pcs",
+      "rx_mac",
+      "trade_decision",
+      "tx_path",
+      "tx_frame_src",
+      "tx_mac",
+      "tx_pcs",
+      "cfg_vec"
+     ],
+     "gain": [
+      1,
+      4
+     ],
+     "basis": "model"
+    }
+   ],
+   "combined": [
+    {
+     "id": "C1",
+     "from": [
+      "O1",
+      "O3"
+     ],
+     "stages": [
+      "cross_go",
+      "rx_descramble"
+     ],
+     "gain": [
+      1,
+      3
+     ],
+     "basis": "model",
+     "needs_owner_approval": true,
+     "contract_change": true
+    },
+    {
+     "id": "C2",
+     "from": [
+      "O1",
+      "O2"
+     ],
+     "stages": [
+      "cross_go",
+      "fs_start",
+      "mac_preamble"
+     ],
+     "gain": [
+      1,
+      3
+     ],
+     "basis": "model",
+     "needs_owner_approval": true,
+     "contract_change": true
+    },
+    {
+     "id": "C3",
+     "from": [
+      "O2",
+      "O3"
+     ],
+     "stages": [
+      "fs_start",
+      "mac_preamble",
+      "rx_descramble"
+     ],
+     "gain": [
+      0,
+      2
+     ],
+     "basis": "model",
+     "needs_owner_approval": true,
+     "contract_change": true
+    }
+   ],
+   "not_composable": [
+    {
+     "from": [
+      "O1",
+      "O4"
+     ],
+     "reason": "options O1 and O4 both touch stage cross_go: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O2",
+      "O4"
+     ],
+     "reason": "options O2 and O4 both touch stage fs_start, mac_preamble: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O3",
+      "O4"
+     ],
+     "reason": "options O3 and O4 both touch stage rx_descramble: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O1",
+      "O2",
+      "O3"
+     ],
+     "reason": "the model already offered an option touching exactly these stages"
+    },
+    {
+     "from": [
+      "O1",
+      "O2",
+      "O4"
+     ],
+     "reason": "options O1 and O4 both touch stage cross_go: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O1",
+      "O3",
+      "O4"
+     ],
+     "reason": "options O1 and O4 both touch stage cross_go: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O2",
+      "O3",
+      "O4"
+     ],
+     "reason": "options O2 and O4 both touch stage fs_start, mac_preamble: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O1",
+      "O2",
+      "O3",
+      "O4"
+     ],
+     "reason": "options O1 and O4 both touch stage cross_go: they are alternatives, not additions"
+    }
+   ],
+   "before": {
+    "found_named": 1,
+    "found_all": 1,
+    "in_range": 1
+   },
+   "after": {
+    "found_named": 1,
+    "found_all": 1,
+    "in_range": 1
+   },
+   "variants_after": {
+    "agent_cdc": {
+     "found": true,
+     "option": "O1",
+     "gain": [
+      1,
+      2
+     ],
+     "basis": "model",
+     "in_range": true,
+     "over": 1,
+     "origin": "model"
+    },
+    "hand_ref": {
+     "found": false,
+     "best_overlap": 0.67
+    },
+    "agent_both": {
+     "found": false,
+     "best_overlap": 0.5
+    },
+    "all3": {
+     "found": false,
+     "best_overlap": 0.5
+    }
+   }
+  },
+  {
+   "run": "b96_10g_pre97__B2__2",
+   "case": "b96_10g_pre97",
+   "arm": "B2",
+   "k": 2,
+   "singles": [
+    {
+     "id": "O1",
+     "stages": [
+      "fs_start"
+     ],
+     "scope": [
+      "tx_frame_src",
+      "tx_mac"
+     ],
+     "gain": [
+      0,
+      1
+     ],
+     "basis": "model"
+    },
+    {
+     "id": "O2",
+     "stages": [
+      "cross_go"
+     ],
+     "scope": [
+      "core"
+     ],
+     "gain": [
+      1,
+      2
+     ],
+     "basis": "model"
+    },
+    {
+     "id": "O3",
+     "stages": [
+      "rx_descramble"
+     ],
+     "scope": [
+      "rx_pcs"
+     ],
+     "gain": [
+      0,
+      1
+     ],
+     "basis": "model"
+    },
+    {
+     "id": "O4",
+     "stages": [
+      "cross_go",
+      "fs_start",
+      "rx_descramble"
+     ],
+     "scope": [
+      "top",
+      "shared_pkg",
+      "core",
+      "rx_path",
+      "rx_pcs",
+      "rx_mac",
+      "trade_decision",
+      "tx_path",
+      "tx_frame_src",
+      "tx_mac",
+      "tx_pcs",
+      "cfg_vec"
+     ],
+     "gain": [
+      1,
+      4
+     ],
+     "basis": "model"
+    }
+   ],
+   "combined": [
+    {
+     "id": "C1",
+     "from": [
+      "O1",
+      "O2"
+     ],
+     "stages": [
+      "fs_start",
+      "cross_go"
+     ],
+     "gain": [
+      1,
+      3
+     ],
+     "basis": "model",
+     "needs_owner_approval": true,
+     "contract_change": true
+    },
+    {
+     "id": "C2",
+     "from": [
+      "O2",
+      "O3"
+     ],
+     "stages": [
+      "cross_go",
+      "rx_descramble"
+     ],
+     "gain": [
+      1,
+      3
+     ],
+     "basis": "model",
+     "needs_owner_approval": true,
+     "contract_change": true
+    },
+    {
+     "id": "C3",
+     "from": [
+      "O1",
+      "O3"
+     ],
+     "stages": [
+      "fs_start",
+      "rx_descramble"
+     ],
+     "gain": [
+      0,
+      2
+     ],
+     "basis": "model",
+     "needs_owner_approval": true,
+     "contract_change": true
+    }
+   ],
+   "not_composable": [
+    {
+     "from": [
+      "O1",
+      "O4"
+     ],
+     "reason": "options O1 and O4 both touch stage fs_start: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O2",
+      "O4"
+     ],
+     "reason": "options O2 and O4 both touch stage cross_go: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O3",
+      "O4"
+     ],
+     "reason": "options O3 and O4 both touch stage rx_descramble: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O1",
+      "O2",
+      "O3"
+     ],
+     "reason": "the model already offered an option touching exactly these stages"
+    },
+    {
+     "from": [
+      "O1",
+      "O2",
+      "O4"
+     ],
+     "reason": "options O1 and O4 both touch stage fs_start: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O1",
+      "O3",
+      "O4"
+     ],
+     "reason": "options O1 and O4 both touch stage fs_start: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O2",
+      "O3",
+      "O4"
+     ],
+     "reason": "options O2 and O4 both touch stage cross_go: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O1",
+      "O2",
+      "O3",
+      "O4"
+     ],
+     "reason": "options O1 and O4 both touch stage fs_start: they are alternatives, not additions"
+    }
+   ],
+   "before": {
+    "found_named": 1,
+    "found_all": 1,
+    "in_range": 1
+   },
+   "after": {
+    "found_named": 1,
+    "found_all": 2,
+    "in_range": 2
+   },
+   "variants_after": {
+    "agent_cdc": {
+     "found": true,
+     "option": "O2",
+     "gain": [
+      1,
+      2
+     ],
+     "basis": "model",
+     "in_range": true,
+     "over": 1,
+     "origin": "model"
+    },
+    "hand_ref": {
+     "found": true,
+     "option": "C1",
+     "gain": [
+      1,
+      3
+     ],
+     "basis": "model",
+     "in_range": true,
+     "over": 1,
+     "origin": "combiner"
+    },
+    "agent_both": {
+     "found": false,
+     "best_overlap": 0.5
+    },
+    "all3": {
+     "found": false,
+     "best_overlap": 0.67
+    }
+   }
+  },
+  {
+   "run": "b96_10g_pre97__B2__3",
+   "case": "b96_10g_pre97",
+   "arm": "B2",
+   "k": 3,
+   "singles": [
+    {
+     "id": "O1",
+     "stages": [
+      "cross_go"
+     ],
+     "scope": [
+      "core"
+     ],
+     "gain": [
+      1,
+      2
+     ],
+     "basis": "model"
+    },
+    {
+     "id": "O2",
+     "stages": [
+      "fs_start",
+      "mac_preamble"
+     ],
+     "scope": [
+      "tx_frame_src",
+      "tx_mac"
+     ],
+     "gain": [
+      1,
+      2
+     ],
+     "basis": "model"
+    },
+    {
+     "id": "O3",
+     "stages": [
+      "cross_go",
+      "fs_start",
+      "mac_preamble"
+     ],
+     "scope": [
+      "core",
+      "tx_path",
+      "tx_frame_src",
+      "tx_mac"
+     ],
+     "gain": [
+      2,
+      4
+     ],
+     "basis": "model"
+    },
+    {
+     "id": "O4",
+     "stages": [
+      "rx_descramble",
+      "cross_go",
+      "fs_start",
+      "mac_preamble"
+     ],
+     "scope": [
+      "top",
+      "shared_pkg",
+      "core",
+      "rx_path",
+      "rx_pcs",
+      "rx_mac",
+      "trade_decision",
+      "tx_path",
+      "tx_frame_src",
+      "tx_mac",
+      "tx_pcs",
+      "cfg_vec"
+     ],
+     "gain": [
+      2,
+      5
+     ],
+     "basis": "model"
+    }
+   ],
+   "combined": [],
+   "not_composable": [
+    {
+     "from": [
+      "O1",
+      "O2"
+     ],
+     "reason": "the model already offered an option touching exactly these stages"
+    },
+    {
+     "from": [
+      "O1",
+      "O3"
+     ],
+     "reason": "options O1 and O3 both touch stage cross_go: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O1",
+      "O4"
+     ],
+     "reason": "options O1 and O4 both touch stage cross_go: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O2",
+      "O3"
+     ],
+     "reason": "options O2 and O3 both touch stage fs_start, mac_preamble: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O2",
+      "O4"
+     ],
+     "reason": "options O2 and O4 both touch stage fs_start, mac_preamble: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O3",
+      "O4"
+     ],
+     "reason": "options O3 and O4 both touch stage cross_go, fs_start, mac_preamble: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O1",
+      "O2",
+      "O3"
+     ],
+     "reason": "options O1 and O3 both touch stage cross_go: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O1",
+      "O2",
+      "O4"
+     ],
+     "reason": "options O1 and O4 both touch stage cross_go: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O1",
+      "O3",
+      "O4"
+     ],
+     "reason": "options O1 and O3 both touch stage cross_go: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O2",
+      "O3",
+      "O4"
+     ],
+     "reason": "options O2 and O3 both touch stage fs_start, mac_preamble: they are alternatives, not additions"
+    },
+    {
+     "from": [
+      "O1",
+      "O2",
+      "O3",
+      "O4"
+     ],
+     "reason": "options O1 and O3 both touch stage cross_go: they are alternatives, not additions"
+    }
+   ],
+   "before": {
+    "found_named": 1,
+    "found_all": 1,
+    "in_range": 1
+   },
+   "after": {
+    "found_named": 1,
+    "found_all": 1,
+    "in_range": 1
+   },
+   "variants_after": {
+    "agent_cdc": {
+     "found": true,
+     "option": "O1",
+     "gain": [
+      1,
+      2
+     ],
+     "basis": "model",
+     "in_range": true,
+     "over": 1,
+     "origin": "model"
+    },
+    "hand_ref": {
+     "found": false,
+     "best_overlap": 0.67
+    },
+    "agent_both": {
+     "found": false,
+     "best_overlap": 0.5
+    },
+    "all3": {
+     "found": false,
+     "best_overlap": 0.5
+    }
+   }
+  },
+  {
+   "run": "c16_montgomery_200mhz__A__1",
+   "case": "c16_montgomery_200mhz",
+   "arm": "A",
+   "k": 1,
+   "singles": [
+    {
+     "id": "O1",
+     "stages": [],
+     "scope": [
+      "montgomery_core"
+     ],
+     "gain": [
+      0.615,
+      1.5
+     ],
+     "basis": "model"
+    },
+    {
+     "id": "O2",
+     "stages": [],
+     "scope": [
+      "top",
+      "regs",
+      "montgomery_core"
+     ],
+     "gain": [
+      0,
+      0.4
+     ],
+     "basis": "guess"
+    },
+    {
+     "id": "O3",
+     "stages": [],
+     "scope": [
+      "montgomery_core",
+      "regs"
+     ],
+     "gain": [
+      0.4,
+      1.2
+     ],
+     "basis": "model"
+    }
+   ],
+   "combined": [],
+   "not_composable": [
+    {
+     "from": [
+      "O1",
+      "O2"
+     ],
+     "reason": "slack gains do not add: the worst path sets the clock period, so the gain of two changes is not the sum of their gains"
+    },
+    {
+     "from": [
+      "O1",
+      "O3"
+     ],
+     "reason": "slack gains do not add: the worst path sets the clock period, so the gain of two changes is not the sum of their gains"
+    },
+    {
+     "from": [
+      "O2",
+      "O3"
+     ],
+     "reason": "slack gains do not add: the worst path sets the clock period, so the gain of two changes is not the sum of their gains"
+    },
+    {
+     "from": [
+      "O1",
+      "O2",
+      "O3"
+     ],
+     "reason": "slack gains do not add: the worst path sets the clock period, so the gain of two changes is not the sum of their gains"
+    }
+   ],
+   "before": {
+    "found_named": null,
+    "found_all": 1,
+    "in_range": 1
+   },
+   "after": {
+    "found_named": null,
+    "found_all": 1,
+    "in_range": 1
+   },
+   "variants_after": {
+    "carry_save": {
+     "found": true,
+     "option": "O1",
+     "gain": [
+      0.615,
+      1.5
+     ],
+     "basis": "model",
+     "in_range": true,
+     "over": 0.821
+    }
+   }
+  },
+  {
+   "run": "c16_montgomery_200mhz__A__2",
+   "case": "c16_montgomery_200mhz",
+   "arm": "A",
+   "k": 2,
+   "singles": [
+    {
+     "id": "O1",
+     "stages": [],
+     "scope": [
+      "montgomery_core"
+     ],
+     "gain": [
+      0.615,
+      1.5
+     ],
+     "basis": "guess"
+    },
+    {
+     "id": "O2",
+     "stages": [],
+     "scope": [
+      "montgomery_core"
+     ],
+     "gain": [
+      0.615,
+      2.5
+     ],
+     "basis": "guess"
+    },
+    {
+     "id": "O3",
+     "stages": [],
+     "scope": [
+      "top",
+      "regs",
+      "montgomery_core"
+     ],
+     "gain": [
+      0,
+      0.4
+     ],
+     "basis": "guess"
+    }
+   ],
+   "combined": [],
+   "not_composable": [
+    {
+     "from": [
+      "O1",
+      "O2"
+     ],
+     "reason": "slack gains do not add: the worst path sets the clock period, so the gain of two changes is not the sum of their gains"
+    },
+    {
+     "from": [
+      "O1",
+      "O3"
+     ],
+     "reason": "slack gains do not add: the worst path sets the clock period, so the gain of two changes is not the sum of their gains"
+    },
+    {
+     "from": [
+      "O2",
+      "O3"
+     ],
+     "reason": "slack gains do not add: the worst path sets the clock period, so the gain of two changes is not the sum of their gains"
+    },
+    {
+     "from": [
+      "O1",
+      "O2",
+      "O3"
+     ],
+     "reason": "slack gains do not add: the worst path sets the clock period, so the gain of two changes is not the sum of their gains"
+    }
+   ],
+   "before": {
+    "found_named": null,
+    "found_all": 1,
+    "in_range": 1
+   },
+   "after": {
+    "found_named": null,
+    "found_all": 1,
+    "in_range": 1
+   },
+   "variants_after": {
+    "carry_save": {
+     "found": true,
+     "option": "O1",
+     "gain": [
+      0.615,
+      1.5
+     ],
+     "basis": "guess",
+     "in_range": true,
+     "over": 0.821
+    }
+   }
+  },
+  {
+   "run": "c16_montgomery_200mhz__A__3",
+   "case": "c16_montgomery_200mhz",
+   "arm": "A",
+   "k": 3,
+   "singles": [
+    {
+     "id": "O1",
+     "stages": [],
+     "scope": [
+      "montgomery_core"
+     ],
+     "gain": [
+      0.615,
+      2.0
+     ],
+     "basis": "guess"
+    },
+    {
+     "id": "O2",
+     "stages": [],
+     "scope": [
+      "top",
+      "regs",
+      "montgomery_core"
+     ],
+     "gain": [
+      0.0,
+      0.4
+     ],
+     "basis": "guess"
+    },
+    {
+     "id": "O3",
+     "stages": [],
+     "scope": [
+      "montgomery_core"
+     ],
+     "gain": [
+      0.0,
+      0.4
+     ],
+     "basis": "guess"
+    }
+   ],
+   "combined": [],
+   "not_composable": [
+    {
+     "from": [
+      "O1",
+      "O2"
+     ],
+     "reason": "slack gains do not add: the worst path sets the clock period, so the gain of two changes is not the sum of their gains"
+    },
+    {
+     "from": [
+      "O1",
+      "O3"
+     ],
+     "reason": "slack gains do not add: the worst path sets the clock period, so the gain of two changes is not the sum of their gains"
+    },
+    {
+     "from": [
+      "O2",
+      "O3"
+     ],
+     "reason": "slack gains do not add: the worst path sets the clock period, so the gain of two changes is not the sum of their gains"
+    },
+    {
+     "from": [
+      "O1",
+      "O2",
+      "O3"
+     ],
+     "reason": "slack gains do not add: the worst path sets the clock period, so the gain of two changes is not the sum of their gains"
+    }
+   ],
+   "before": {
+    "found_named": null,
+    "found_all": 1,
+    "in_range": 1
+   },
+   "after": {
+    "found_named": null,
+    "found_all": 1,
+    "in_range": 1
+   },
+   "variants_after": {
+    "carry_save": {
+     "found": true,
+     "option": "O1",
+     "gain": [
+      0.615,
+      2.0
+     ],
+     "basis": "guess",
+     "in_range": true,
+     "over": 1.321
+    }
+   }
+  }
+ ],
+ "summary": {
+  "b96_10g_pre97/A": {
+   "found_named_before": [
+    1,
+    1,
+    1
+   ],
+   "found_named_after": [
+    1,
+    1,
+    1
+   ],
+   "found_all_before": [
+    1,
+    1,
+    1
+   ],
+   "found_all_after": [
+    1,
+    2,
+    1
+   ],
+   "in_range_after": [
+    1,
+    2,
+    1
+   ],
+   "found_by_variant_after": {
+    "agent_cdc": 3,
+    "hand_ref": 1,
+    "agent_both": 0,
+    "all3": 0
+   },
+   "in_range_by_variant_after": {
+    "agent_cdc": 3,
+    "hand_ref": 1,
+    "agent_both": 0,
+    "all3": 0
+   },
+   "found_by_origin_after": {
+    "agent_cdc": [
+     "model"
+    ],
+    "hand_ref": [
+     "combiner"
+    ],
+    "agent_both": [],
+    "all3": []
+   }
+  },
+  "b96_10g_pre97/B": {
+   "found_named_before": [
+    1,
+    1,
+    1
+   ],
+   "found_named_after": [
+    1,
+    1,
+    1
+   ],
+   "found_all_before": [
+    1,
+    1,
+    1
+   ],
+   "found_all_after": [
+    2,
+    2,
+    1
+   ],
+   "in_range_after": [
+    2,
+    2,
+    1
+   ],
+   "found_by_variant_after": {
+    "agent_cdc": 3,
+    "hand_ref": 2,
+    "agent_both": 0,
+    "all3": 0
+   },
+   "in_range_by_variant_after": {
+    "agent_cdc": 3,
+    "hand_ref": 2,
+    "agent_both": 0,
+    "all3": 0
+   },
+   "found_by_origin_after": {
+    "agent_cdc": [
+     "model"
+    ],
+    "hand_ref": [
+     "combiner"
+    ],
+    "agent_both": [],
+    "all3": []
+   }
+  },
+  "b96_10g_pre97/A2": {
+   "found_named_before": [
+    1,
+    1,
+    1
+   ],
+   "found_named_after": [
+    1,
+    1,
+    1
+   ],
+   "found_all_before": [
+    1,
+    1,
+    1
+   ],
+   "found_all_after": [
+    2,
+    2,
+    2
+   ],
+   "in_range_after": [
+    2,
+    2,
+    2
+   ],
+   "found_by_variant_after": {
+    "agent_cdc": 3,
+    "hand_ref": 3,
+    "agent_both": 0,
+    "all3": 0
+   },
+   "in_range_by_variant_after": {
+    "agent_cdc": 3,
+    "hand_ref": 3,
+    "agent_both": 0,
+    "all3": 0
+   },
+   "found_by_origin_after": {
+    "agent_cdc": [
+     "model"
+    ],
+    "hand_ref": [
+     "combiner"
+    ],
+    "agent_both": [],
+    "all3": []
+   }
+  },
+  "b96_10g_pre97/B2": {
+   "found_named_before": [
+    1,
+    1,
+    1
+   ],
+   "found_named_after": [
+    1,
+    1,
+    1
+   ],
+   "found_all_before": [
+    1,
+    1,
+    1
+   ],
+   "found_all_after": [
+    1,
+    2,
+    1
+   ],
+   "in_range_after": [
+    1,
+    2,
+    1
+   ],
+   "found_by_variant_after": {
+    "agent_cdc": 3,
+    "hand_ref": 1,
+    "agent_both": 0,
+    "all3": 0
+   },
+   "in_range_by_variant_after": {
+    "agent_cdc": 3,
+    "hand_ref": 1,
+    "agent_both": 0,
+    "all3": 0
+   },
+   "found_by_origin_after": {
+    "agent_cdc": [
+     "model"
+    ],
+    "hand_ref": [
+     "combiner"
+    ],
+    "agent_both": [],
+    "all3": []
+   }
+  },
+  "c16_montgomery_200mhz/A": {
+   "found_named_before": null,
+   "found_named_after": null,
+   "found_all_before": [
+    1,
+    1,
+    1
+   ],
+   "found_all_after": [
+    1,
+    1,
+    1
+   ],
+   "in_range_after": [
+    1,
+    1,
+    1
+   ]
+  }
+ }
+}
