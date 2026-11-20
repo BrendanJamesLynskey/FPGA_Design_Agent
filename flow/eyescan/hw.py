@@ -20,7 +20,8 @@ MAX_CURSOR = 12              # 3.10 dB, UG576 Table 3-35
 CLK_HZ = 100e6                       # the free-running clock the sequencer and its timeout run in
 #: DRP words that the scan reads-modifies-writes or overwrites; all are saved first and written back at the end.
 A_RX_INT = 0x066                     # [1:0] RX_INT_DATAWIDTH (read only, to check the width the masks assume)
-SAVE_ADDRS = ([tw.A_ES_CONTROL, tw.A_ES_HORZ, tw.A_VS] + tw.QUALIFIER_ADDRS + tw.QUAL_MASK_ADDRS + tw.SDATA_MASK_ADDRS)     # 33 words: GTHE4 has ten words of each 160-bit mask (96D2)
+A_CLK_PHASE = 0x094                  # [11] ES_CLK_PHASE_SEL, [10] USE_PCS_CLK_PHASE_SEL (UG576 v1.7.1 Table 4-20 p. 233, Table C-2)
+SAVE_ADDRS = ([tw.A_ES_CONTROL, tw.A_ES_HORZ, tw.A_VS] + tw.QUALIFIER_ADDRS + tw.QUAL_MASK_ADDRS + tw.SDATA_MASK_ADDRS + [A_CLK_PHASE])     # 34 words: GTHE4 has ten words of each 160-bit mask (96D2), plus the 4T clock-phase word (2026-11-20)
 N_WORDS = 10
 
 
@@ -179,6 +180,28 @@ class EyeHW:
         after = {a: self.drp_read(a) for a in self.saved}
         bad = {f"{a:#05x}": {"saved": self.saved[a], "now": after[a]} for a in self.saved if after[a] != self.saved[a]}
         return {"ok": not bad, "mismatch": bad, "words": len(self.saved)}
+
+    # ---- the eye-scan 4T clock phase (board finding 2026-11-20)
+    def set_clk_phase(self, sel: int) -> None:
+        """Force the eye-scan 4T clock phase: USE_PCS_CLK_PHASE_SEL = 1, ES_CLK_PHASE_SEL = sel (DRP 0x094 [10], [11]); other bits kept."""
+        old = self.drp_read(A_CLK_PHASE)
+        self.drp_write(A_CLK_PHASE, (old & ~0x0C00) | 0x0400 | ((sel & 1) << 11))
+
+    def choose_clk_phase(self, timeout_s: float = 1.0) -> dict[str, Any]:
+        """On the KR260 (2026-11-20) the default phase (chosen by the deserializer phase detector) and ES_CLK_PHASE_SEL = 0 gave about 50 % "errors" at every
+        offset, eye centre included: the offset sampler was on the wrong 4T phase. ES_CLK_PHASE_SEL = 1 gave an eye open from -24 to +24 counts. UG576 gives the
+        remedy and says to determine which value provides an eye, so try 1 then 0 at the eye centre (prescale 0) and keep the first with zero errors and a full
+        sample count. Raises NoDataError if neither gives a clean centre."""
+        trials = []
+        for sel in (1, 0):
+            self.set_clk_phase(sel)
+            p = self.point(0, 0, 0, 0, 0, timeout_s)
+            trials.append({"sel": sel, "err": p["err"], "samp": p["samp"], "tmo": p["tmo"]})
+            if not p["tmo"] and p["err"] == 0 and p["samp"] > 0:
+                return {"sel": sel, "trials": trials}
+        if all(t["tmo"] or t["samp"] == 0 for t in trials):
+            return {"sel": None, "trials": trials, "note": "no trial counted samples: a counting fault, not a phase fault; the self-test point reports it"}
+        raise NoDataError(f"NO DATA: no eye-scan 4T clock phase gives an error-free eye centre ({trials}); the offset sampler is not usable, no scan was run")
 
     # ---- one point
     def point(self, h: int, v: int, ut: int, rng: int, pre: int, timeout_s: float) -> dict[str, Any]:

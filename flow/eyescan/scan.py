@@ -101,10 +101,12 @@ _STATE = {0b0001: "WAIT (run not taken)", 0b0010: "RESET", 0b0110: "COUNT (the s
 
 
 def selftest(hw: H.EyeHW, cfg: ScanConfig) -> dict[str, Any]:
-    """One point at the eye centre (h = 0, v = 0, ut 0), prescale 0, before the grid: it must end and count samples. Raises NoDataError otherwise."""
+    """Choose the eye-scan 4T clock phase (hw.choose_clk_phase: the eye centre must be error-free), then one point at the eye centre (h = 0, v = 0, ut 0),
+    prescale 0, before the grid: it must end and count samples. Raises NoDataError otherwise."""
+    phase = hw.choose_clk_phase()
     p = measure_point(hw, 0, 0, 0, cfg, [0])
     r = p["rungs"][-1]
-    res = {"h": 0, "v": 0, "ut": 0, "pre": 0, "err": r["err"], "samp": r["samp"], "tmo": r["tmo"], "es_control_status": f"{r['status']:#06b}", "ok": not point_no_data(p)}
+    res = {"h": 0, "v": 0, "ut": 0, "pre": 0, "err": r["err"], "samp": r["samp"], "tmo": r["tmo"], "es_control_status": f"{r['status']:#06b}", "ok": not point_no_data(p), "clk_phase": phase}
     if not res["ok"]:
         raise H.NoDataError(f"NO DATA: the self-test point (eye centre, prescale 0) {'timed out' if r['tmo'] else 'counted no samples'} "
                             f"(es_control_status {r['status']:#06b} = {_STATE.get(r['status'], 'unknown state')}); no scan was run")
