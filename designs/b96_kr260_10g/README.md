@@ -110,6 +110,8 @@ Tool: Vivado 2026.1. Build ID of the inputs at handover: `c9106c0d` (`python flo
 | [`designs/b96_kr260_10g/docs/what_we_found.md`](docs/what_we_found.md) | results and gaps |
 | [`designs/b96_kr260_10g/docs/loop_timing_feasibility.md`](docs/loop_timing_feasibility.md) | loop-timing and buffer-bypass feasibility study (96F) |
 | [`designs/b96_kr260_10g/docs/loop_timing_board_test_plan.md`](docs/loop_timing_board_test_plan.md) | board test plan for loop timing (96F, for approval) |
+| [`designs/b96_kr260_10g/docs/loop_timing_sources.md`](docs/loop_timing_sources.md) | AMD sources read for loop timing (XAPP1276, Wizard example, TXPI, QPLL outside the core; 96F2) |
+| [`docs/latency_definitions.md`](../../docs/latency_definitions.md) | our latencies against STAC-T0 and wire-to-wire definitions (109) |
 | [`designs/b96_kr260_10g/model/loop_timing.py`](model/loop_timing.py) | Python model of the loop-timing frequency tracker (96F) |
 | [`designs/b96_kr260_10g/regmap.py`](regmap.py) | register map as data |
 | [`designs/b96_kr260_10g/docs/register_map.md`](docs/register_map.md) | interface datasheet |

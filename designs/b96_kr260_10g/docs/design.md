@@ -165,6 +165,7 @@ Scrambler: self-synchronising, polynomial x^58 + x^39 + 1, over the 64 payload b
   forwarded; the first word is the destination address word).
 - The lock time and the GT's own latency are excluded and reported separately.
 - In ns: clocks x 6.2058 ns (161.1328125 MHz).
+- How these map onto STAC-T0 and "wire-to-wire" figures (brief 109): [../../../docs/latency_definitions.md](../../../docs/latency_definitions.md).
 
 ## 6. Loop measurement method (pre-registered; stage 3)
 
@@ -446,4 +447,4 @@ Both GT elastic buffers (TX and RX) bypassed on top of build `rm_gp`; everything
 
 `report_property` of the GTHE4_CHANNEL in both post_route checkpoints: TXBUF_EN and RXBUF_EN TRUE against FALSE, TX_XCLK_SEL TXOUT against TXUSR, RX_XCLK_SEL RXDES against RXUSR, TX_FIFO_BYP_EN 0 against 1, TX_PROGDIV_CFG 0 against 16 (`results/b96f1/wizard_probe/`). The vectorless power difference is a tool estimate, not a measurement. The `rm_gp` control here (WNS +0.055) differs from 96E's record (+0.164) because the tree is current main, not the 96E branch.
 
-**Caveats.** The TX phase-interpolator ppm block is powered down by the Wizard in this configuration (`TXPIPPMPD_VAL = 1`): the ppm registers do nothing here. In loopback there is no frequency offset, so the rate matcher's slip path is not exercised. The reset-input drive of the controllers (user clock not active) is our choice, UNCONFIRMED against AMD's example design. The bypass controllers' done and error are in the status registers; TXBUFSTATUS and RXBUFSTATUS are meaningless with the buffers bypassed.
+**Caveats.** The TX phase-interpolator ppm block is powered down by the Wizard in this configuration (`TXPIPPMPD_VAL = 1`): the ppm registers do nothing here. In loopback there is no frequency offset, so the rate matcher's slip path is not exercised. The reset-input drive of the controllers (user clock not active) is our choice; checked in brief 96F2 against AMD's generated example design (`docs/loop_timing_sources.md` section 2): the same intent, but AMD passes it through a reset synchroniser, drives the receive controller's reset also from the transmit done (loopback only), does not gate on done or error, and times alignment (30 ms TX, 130 ms RX) with a retry. The bypass controllers' done and error are in the status registers; TXBUFSTATUS and RXBUFSTATUS have no documented meaning with the buffers bypassed (UG576 is silent; 96F2).

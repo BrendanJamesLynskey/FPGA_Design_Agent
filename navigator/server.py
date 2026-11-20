@@ -27,8 +27,9 @@ from pathlib import Path
 from typing import Any, Callable
 from urllib.parse import parse_qs, urlparse
 
+from navigator import boardops, guards, measure, redact, runctl
 from navigator import health as H
-from navigator import measure, redact
+from navigator import progress as PG
 from navigator import sources as S
 
 HERE = Path(__file__).resolve().parent
@@ -48,7 +49,8 @@ class App:
     """The service's state and routes, independent of the socket so tests can call it directly."""
 
     def __init__(self, root: Path, handoff: Path, runs_dir: Path | None = None, gate: Callable[[str], Any] | None = None, health: H.Health | None = None,
-                 extra_captures: list[Path] | None = None, token: str | None = None):
+                 extra_captures: list[Path] | None = None, token: str | None = None, state_dir: Path | None = None, config_dir: Path | None = None,
+                 spawner: runctl.Spawner | None = None, transport: boardops.Transport | None = None, killpg: Any = None):
         self.root, self.handoff = Path(root), Path(handoff)
         self.runs_dir = Path(runs_dir) if runs_dir else self.root / "runs"
         self.gate = gate or _default_gate
@@ -56,6 +58,12 @@ class App:
         self.extra = extra_captures or []
         self.token = token or secrets.token_urlsafe(24)
         self.port = 0
+        self.state_dir = Path(state_dir) if state_dir else Path.home() / ".local" / "state" / "fpga_design_agent" / "navigator"
+        self.runctl = runctl.RunControl(self.root, self.handoff, self.runs_dir, self.health.runner, self.state_dir, lambda: self.health._cached("models_view", self.health.models_view),
+                                        spawner=spawner, gate=self.gate, **({"killpg": killpg} if killpg else {}))
+        self.runctl.reconcile()
+        self.board = boardops.BoardOps(self.handoff, self.health.runner, config_dir if config_dir is not None else self.health.config_dir,
+                                       transport or boardops.VivadoTransport(self.state_dir / "board"))
 
     # -- the checks every request passes -------------------------------------------------------------------------------------------
     def host_ok(self, host: str | None) -> bool:
@@ -109,6 +117,15 @@ class App:
         if path == "/api/record":
             v = S.read_record(r, one("file"))
             return self.json(200, v) if v else self.json(404, {"error": "not a record the navigator shows"})
+        if path == "/api/live":
+            return self.json(200, {"runs": PG.live_list(self.runs_dir, 15), "started": self.runctl.records(), "dir": "runs/"})
+        if path == "/api/live/run":
+            v = PG.run_progress(self.runs_dir, one("id"), tail=int(one("tail", "40")) if one("tail", "40").isdigit() else 40)
+            return self.json(200, v) if v else self.json(404, {"error": "no such run"})
+        if path == "/api/start/options":
+            return self.json(200, {**self.runctl.options(), "usage": self.health.usage(), "slots": self.health.locks(), "started": self.runctl.records()})
+        if path == "/api/board":
+            return self.json(200, self.board.listing())
         if path == "/api/health":
             return self.json(200, self.health.all())
         if path == "/api/models":
@@ -121,6 +138,27 @@ class App:
         if html is None:
             return 404, "text/plain; charset=utf-8", b"no such capture", {}
         return 200, "text/html; charset=utf-8", html.encode(), {"Content-Security-Policy": CSP_EYE}
+
+    def post(self, path: str, body: Any) -> tuple[int, str, bytes, dict[str, str]]:
+        """The POST routes: the fixed health actions, and (stage 2) start/stop a run and a read-only board action. Each takes a small JSON body."""
+        m = re.fullmatch(r"/api/action/([a-z_]+)", path)
+        if m:
+            return self.action(m.group(1))
+        if not isinstance(body, dict):
+            return self.json(400, {"error": "the body must be a JSON object"})
+        if path == "/api/run/start":
+            return self.json(200, self.runctl.start(body))
+        if path == "/api/run/stop":
+            return self.json(200, self.runctl.stop(body.get("id")))
+        if path == "/api/board/run":
+            try:
+                self.gate("python -m navigator (board action)")
+            except Exception as e:
+                return self.json(403, {"ok": False, "refused": "access gate: " + redact.text(str(e))[:160]})
+            if body.get("confirm") != "read":
+                return self.json(200, {"ok": False, "refused": "a board action needs the confirmation the page sends"})
+            return self.json(200, self.board.run(body.get("board"), body.get("action")))
+        return self.json(404, {"error": "no such endpoint"})
 
     def action(self, name: str) -> tuple[int, str, bytes, dict[str, str]]:
         if name not in H.Health.ACTIONS:
@@ -135,7 +173,7 @@ class App:
                 "projects": len(S.design_dirs(self.root)), "latency_designs": S.latency_designs(self.root), "builds": len(S.builds(self.root)),
                 "captures": len(S.capture_files(self.root, self.extra)),
                 "synthetic_captures": sum(1 for c in measure.listing(self.root, self.extra) if c["synthetic"]),
-                "binds": f"{LOOPBACK}:{self.port}", "pages": ["Project", "Timing", "Runs", "Measurements", "Health", "Models"]}
+                "binds": f"{LOOPBACK}:{self.port}", "pages": ["Project", "Timing", "Runs", "Live", "Start", "Board", "Measurements", "Health", "Models"]}
 
 
 def _default_gate(entry: str) -> Any:
@@ -221,14 +259,17 @@ def make_handler(app: App) -> type[BaseHTTPRequestHandler]:
             if not app.origin_ok(self.headers.get("Origin")) or (self.headers.get("Content-Type") or "").split(";")[0].strip() != "application/json":
                 self._refuse(403, "an action needs the service's own Origin and Content-Type: application/json")
                 return
-            m = re.fullmatch(r"/api/action/([a-z_]+)", u.path)
             if not hmac.compare_digest((self.headers.get("X-Navigator-Token") or "").encode(), app.token.encode()):
                 self._refuse(403, "an action needs the token in the X-Navigator-Token header (the cookie alone is not enough)")
                 return
             try:
-                n = max(0, min(int(self.headers.get("Content-Length") or 0), 4096))
-                self.rfile.read(n)                                         # the body is ignored: an action takes no argument
-                res = app.action(m.group(1)) if m else app.json(404, {"error": "no such endpoint"})
+                n = max(0, min(int(self.headers.get("Content-Length") or 0), 16384))
+                raw = self.rfile.read(n) if n else b""
+                try:
+                    body = json.loads(raw) if raw.strip() else {}
+                except ValueError:
+                    body = None
+                res = app.post(u.path, body)
             except Exception:
                 traceback.print_exc(file=sys.stderr)
                 res = app.json(500, {"error": "internal error; see the terminal"})

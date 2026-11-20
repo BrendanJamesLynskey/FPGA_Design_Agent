@@ -15,7 +15,7 @@ Read, in an in-memory project, the Wizard 1.7 properties that mention buffer mod
 ## Stage 1: B1 bypass only, loopback (one board; `board.lock`; no new hardware)
 
 Build `rm_gp_bypass` (called `bp_rm` here before it was built): 96E `rm_gp` plus RX and TX buffer bypass (`TXOUTCLKSEL` 101, auto alignment). Same fibre loopback as 96C/96E.
-- Steps: 100 restarts; per restart record `TXPHALIGNDONE` and `RXPHALIGNDONE` sequence and time, block lock, E, L, D; `GT_BUF` status (the buffer-status bits are meaningless in bypass: record, do not judge); SYSMON at start, end and every 5 s (operating conditions are evidence); 20 s dwell with armed orders.
+- Steps: 100 restarts; per restart record `TXPHALIGNDONE` and `RXPHALIGNDONE` sequence and time, block lock, E, L, D; `GT_BUF` status (`TXBUFSTATUS`/`RXBUFSTATUS` have no documented meaning in bypass (96F2, UG576 is silent): record, do not judge; the verdict inputs are the controllers' done and error); SYSMON at start, end and every 5 s (operating conditions are evidence); 20 s dwell with armed orders.
 - **Pass:** 100 of 100 restarts reach both align-done flags; every restart `safety_ok` (the nine safety counters 0, orders sent = fired = `order_ok`); SYSMON inside the DS925 windows used in 96C; E, L, D reproducible within +-1 clock across restarts (bypass should make latency deterministic: **record the spread; a smaller spread than 97C's 100-restart distribution is the evidence**).
 - **Predicted (GT part unconfirmed):** E falls by 2.9 to 4.5 clocks (18 to 28 ns); tick-to-trade (L - E) of the `rm_gp` control build falls from about 33 clocks (205 ns) to about 28.6 to 30.2 clocks (177 to 187 ns), because B1 keeps the +2.3-clock buffer. **Fail** if E does not fall by at least 1.5 clocks (the bypass did not take effect or the GT estimate is wrong: report, do not tune); **warn** outside the predicted range.
 - Abort and report if the link does not lock, alignment never completes, or any restart corrupts a frame.
@@ -42,3 +42,9 @@ Stage 0 needs a heavy slot only. Stages 1 and 2 need one board slot each, **one 
 ## Reproduce
 
 Nothing in this plan has run; the predictions are `python3 results/b96f/latency_prediction.py results/b96f/latency_prediction.json`.
+
+## Additions from brief 96F2 (sources read; `docs/loop_timing_sources.md` section 7)
+
+- Stage 1: record the time from reset release to each controller's `done`, and add AMD's example retry as a check: if TX alignment is not done within 30 ms or RX within 130 ms of reset release (the example design's timers), count it as a failed restart. `error` must stay 0 over the 100 restarts.
+- Stage 2: a V1' step before the direct crossing: lock the loop first, then (re)run the RX bypass alignment with `RXUSRCLK` shared from the transmit clock and `RXSYNC_SKIP_DA = 1`. V1' is AMD's tested arrangement (a GTY); the single-lane GTH sequence is unconfirmed.
+- The TXPI-with-bypass question is a probe for a separate build and is not part of these stages.
