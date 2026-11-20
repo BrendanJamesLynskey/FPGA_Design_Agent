@@ -349,8 +349,6 @@ module tcp_fast (
                 o_v <= 1'b1; o_d <= nw; o_keep <= nw_last ? 8'h01 : 8'hFF;
                 if (abort_now || nw_last) begin
                     o_eof <= 1'b1; busy <= 1'b0; ph <= '0;
-                    if (nw_last) o_keep <= 8'h01;
-                    if (abort_now) o_keep <= 8'hFF;
                     if (fin_poison) begin
                         o_poison <= 1'b1; c_poison <= c_poison + 32'd1;
                         if (abort_now) c_abort <= c_abort + 32'd1;
