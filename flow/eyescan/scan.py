@@ -19,6 +19,10 @@ from flow.eyescan import hw as H
 DATA_WIDTH = 32
 LINE_RATE_GBPS = 10.3125
 LADDER_STEP = 3
+#: A scan stops (laser off by the caller, DRP words restored) after this many CONSECUTIVE points whose measurement timed out or counted zero samples. A working eye scan never times
+#: out: a closed point saturates the error counter and ends at once, an open one saturates the sample counter. Five in a row is a fault, not noise; one rare timeout (a lost lock)
+#: is tolerated and recorded. The self-test (centre point, prescale 0) is stricter: ONE failure stops the scan before the grid starts.
+K_CONSECUTIVE_NO_DATA = 5
 
 
 @dataclass
@@ -76,7 +80,7 @@ def measure_point(hw: H.EyeHW, h: int, v: int, ut: int, cfg: ScanConfig, rungs_p
     for pre in rungs_p:
         t_rung = H.rung_seconds(pre, DATA_WIDTH, cfg.line_rate_gbps)
         r = hw.point(h, v, ut, cfg.vs_range, pre, timeout_s=2.0 * t_rung + 0.5)
-        rungs.append({k: r[k] for k in ("pre", "err", "samp", "tmo")})
+        rungs.append({k: r[k] for k in ("pre", "err", "samp", "tmo", "status")})
         if r["drp_tmo"]:
             raise H.EyeScanError(f"DRP access timed out at h={h} v={v} (the sequencer saw no DRDY)")
         if r["tmo"]:
@@ -85,6 +89,28 @@ def measure_point(hw: H.EyeHW, h: int, v: int, ut: int, cfg: ScanConfig, rungs_p
         if pooled_err >= cfg.min_errors:
             break
     return {"h": h, "v": v, "ut": ut, "rungs": rungs}
+
+
+def point_no_data(p: dict[str, Any]) -> bool:
+    """True if the point's measurement timed out or counted no samples on any rung (no data, as opposed to no errors)."""
+    return any(r["tmo"] or r["samp"] == 0 for r in p["rungs"])
+
+
+_STATE = {0b0001: "WAIT (run not taken)", 0b0010: "RESET", 0b0110: "COUNT (the sample counter is not advancing: check ES_QUAL_MASK / ES_QUALIFIER, all ten words)", 0b0101: "END",
+          0b1010: "ARMED", 0b1001: "READ"}
+
+
+def selftest(hw: H.EyeHW, cfg: ScanConfig) -> dict[str, Any]:
+    """Choose the eye-scan 4T clock phase (hw.choose_clk_phase: the eye centre must be error-free), then one point at the eye centre (h = 0, v = 0, ut 0),
+    prescale 0, before the grid: it must end and count samples. Raises NoDataError otherwise."""
+    phase = hw.choose_clk_phase()
+    p = measure_point(hw, 0, 0, 0, cfg, [0])
+    r = p["rungs"][-1]
+    res = {"h": 0, "v": 0, "ut": 0, "pre": 0, "err": r["err"], "samp": r["samp"], "tmo": r["tmo"], "es_control_status": f"{r['status']:#06b}", "ok": not point_no_data(p), "clk_phase": phase}
+    if not res["ok"]:
+        raise H.NoDataError(f"NO DATA: the self-test point (eye centre, prescale 0) {'timed out' if r['tmo'] else 'counted no samples'} "
+                            f"(es_control_status {r['status']:#06b} = {_STATE.get(r['status'], 'unknown state')}); no scan was run")
+    return res
 
 
 def run_scan(hw: H.EyeHW, cfg: ScanConfig, *, conditions: Callable[[], dict[str, Any]] | None = None, link_ok: Callable[[], bool] | None = None,
@@ -103,6 +129,8 @@ def run_scan(hw: H.EyeHW, cfg: ScanConfig, *, conditions: Callable[[], dict[str,
     link_rows: list[bool] = []
     err_text = None
     saved: dict[int, int] = {}
+    selftest_res: dict[str, Any] = {}
+    n_no_data = 0
     restore: dict[str, Any] = {"ok": False, "reason": "not reached"}
     geo: dict[str, Any] = {}
     uts = [0]
@@ -121,11 +149,24 @@ def run_scan(hw: H.EyeHW, cfg: ScanConfig, *, conditions: Callable[[], dict[str,
         try:
             saved = hw.setup()
             total = len(hs) * len(vs) * len(uts)
+            try:
+                selftest_res = selftest(hw, cfg)
+            except H.NoDataError:
+                selftest_res = {"ok": False}
+                raise
+            consec = 0
             for v in vs:
                 for h in hs:
                     for ut in uts:
                         p = measure_point(hw, h, v, ut, cfg, rungs_p)
                         points.append(p)
+                        if point_no_data(p):
+                            n_no_data += 1
+                            consec += 1
+                            if consec >= K_CONSECUTIVE_NO_DATA:
+                                raise H.NoDataError(f"NO DATA: {consec} consecutive points timed out or counted no samples (the last at h={h}, v={v}); {n_no_data}/{len(points)} points so far; scan stopped early")
+                        else:
+                            consec = 0
                         if progress:
                             progress(p, len(points), total)
                 if link_ok:
@@ -160,7 +201,8 @@ def run_scan(hw: H.EyeHW, cfg: ScanConfig, *, conditions: Callable[[], dict[str,
         "attributes_before": {f"{a:#05x}": v for a, v in saved.items()},
         "restore": restore, "link": {"before": link0, "after": link1, "rows_ok": link_rows, "ok_throughout": bool(link0 and link1 and all(link_rows))} if link_ok else {},
         "conditions": {"start": cond0, "end": cond1}, "points": points,
-        "run": {"seconds": round(t_end - t_start, 2), "register_ops": hw.n_ops, "points_done": len(points), "error": err_text},
+        "selftest": selftest_res,
+        "run": {"seconds": round(t_end - t_start, 2), "register_ops": hw.n_ops, "points_done": len(points), "no_data_points": n_no_data, "error": err_text},
     }
     if gt_info:
         out["gt"] = gt_info()

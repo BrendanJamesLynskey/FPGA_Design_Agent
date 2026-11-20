@@ -84,8 +84,8 @@ def test_end_to_end_on_the_synthetic_board_restores_every_drp_word():
     assert cap["restore"]["ok"] and cap["run"]["error"] is None and cap["link"]["ok_throughout"]
     for a, v in {tw.A_ES_CONTROL: 0x0360, tw.A_ES_HORZ: 0x0005, tw.A_VS: 0x1800}.items():
         assert fb.drp[a] == v, f"{a:#x} not restored"
-    for i in range(5):
-        assert fb.drp[tw.A_ES_QUALIFIER0 + i] == 0 and fb.drp[tw.A_ES_QUAL_MASK0 + i] == 0 and fb.drp[tw.A_ES_SDATA_MASK0 + i] == 0
+    for a in tw.QUALIFIER_ADDRS + tw.QUAL_MASK_ADDRS + tw.SDATA_MASK_ADDRS:        # all thirty static words (GTHE4: ten of each, 96D2)
+        assert fb.drp[a] == 0, f"{a:#x} not restored"
     assert (fb.reg[H.R_DRIVE] & 31) == 0b11000
 
 

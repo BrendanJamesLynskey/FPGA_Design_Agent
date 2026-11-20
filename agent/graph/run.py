@@ -130,6 +130,7 @@ class Config:
     explicit: tuple = ()            # brief 108: the model flags given on the command line (they override the user and project files)
     allow_fable: bool = False       # brief 108: the owner's --allow-fable flag (command line only; no file can set it)
     replay_run: bool = False        # brief 108: the chat calls are served from a recorded fixture (--replay): nothing live on an endpoint host
+    level1_seed: int | None = None  # brief 107: --deterministic at level 1: temperature 0 (and this seed) on every purpose that can take it
 
     @property
     def arms(self) -> tuple[str, ...]:
@@ -147,7 +148,7 @@ class Config:
         from agent.graph.role_models import PROFILES
         fp = (self.harness, self.cc_model, self.cc_effort, self.model, self.oracle, self.oracle_cc_model, self.spectest_model, self.spectest_effort,
               self.router_model, self.profile, json.dumps(self.roles or {}, sort_keys=True), str(self.models_file),
-              json.dumps(self.model_config or {}, sort_keys=True), tuple(self.explicit), self.allow_fable, self.replay_run)
+              json.dumps(self.model_config or {}, sort_keys=True), tuple(self.explicit), self.allow_fable, self.replay_run, self.level1_seed)
         hit = _TABLES.get(id(self))
         if hit and hit[0] is self and hit[1] == fp:
             return hit[2]
@@ -163,8 +164,12 @@ class Config:
                              spectest_effort=given("spectest_effort"), router_model=given("router_model"),
                              profile=self.profile, roles=self.roles)
         cli = parse_cli_json(self.model_config)           # the JSON layer sits above the aliases, merged per purpose by the table
-        t = build_table(project_file=Path(self.models_file) if self.models_file else None, cli=[alias, cli] if cli else alias,
-                        allow_fable=self.allow_fable, replay=self.replay_run)
+        layers = [alias, cli] if cli else [alias]
+        kw = dict(project_file=Path(self.models_file) if self.models_file else None, allow_fable=self.allow_fable, replay=self.replay_run)
+        t = build_table(cli=layers if cli else alias, **kw)
+        if self.level1_seed is not None:                  # brief 107: level 1 is one more command-line layer (it shows in the table hash)
+            from agent.models.determinism import level1_patch
+            t = build_table(cli=[*layers, level1_patch(t, self.level1_seed)], **kw)
         _TABLES[id(self)] = (self, fp, t)
         return t
 
@@ -643,6 +648,7 @@ def _run_subagent(rt: Runtime, role: str, prompt: str, allowed: tuple[str, ...],
     """Run one sub-agent. Deep Agents: restricted roles see only their seeded inputs (in-memory backend) and
     their outputs are copied into the design through the role jail. Returns {path: content} written."""
     if spec["harness"] == "claude_code":
+        rt.resolver.unreplayable(f"the {role} role")        # brief 107: counted when recording, refused on replay and at level 1
         from agent.claude_code_arm.arm import run_subagent_cc
         return run_subagent_cc(rt, {**subagent_plan(rt, role, prompt, allowed, repair),
                                     "model": spec["model"], "effort": spec["effort"]})
@@ -1551,7 +1557,8 @@ def follow_spec_language(rt) -> bool:
 
 
 def new_runtime(cfg: Config, client: Callable | None = None, run_id: str | None = None, runner=None,
-                oracle_llm: Callable | None = None, replay: str | Path | None = None, record: str | Path | None = None) -> Runtime:
+                oracle_llm: Callable | None = None, replay: str | Path | None = None, record: str | Path | None = None,
+                tape_spec: dict | None = None) -> Runtime:
     from agent.access import require_or_exit      # brief 94: every run is created here
     require_or_exit("new_runtime")
     run_id = run_id or time.strftime("%Y%m%d-%H%M%S-") + uuid.uuid4().hex[:4]
@@ -1599,19 +1606,52 @@ def new_runtime(cfg: Config, client: Callable | None = None, run_id: str | None 
                    harness_arms=cfg.arms)
     from agent.models.resolver import Resolver
     table = cfg.model_table()
-    resolver = Resolver(table, run_dir=run_dir, injected=client, replay=replay, record=record)
+    tape, det = None, None
+    if tape_spec:                                           # brief 107: --deterministic, --record-tape, --replay-tape
+        from agent.models import determinism
+        from agent.models.tape import DeterminismError, Tape
+        rel = str(run_dir.relative_to(ROOT)) if run_dir.is_relative_to(ROOT) else None
+        subs = [(str(run_dir), "<<run_dir>>"), (rel or "", "<<run_rel>>"), (run_id, "<<run_id>>"), (str(ROOT), "<<repo>>"), (str(Path.home()), "<<home>>")]
+        tape = Tape.open(tape_spec["dir"], tape_spec["mode"], subs, table_hash=table.hash, level1_seed=cfg.level1_seed)
+        if tape.mode == "replay" and tape.header.get("table_hash") != table.hash:
+            raise DeterminismError(f"replay: the model table differs from the recorded run (table hash {tape.header.get('table_hash')} then, "
+                                   f"{table.hash} now); use the same models.yaml files and --model-config")
+        det = determinism.describe(tape.mode, tape_spec["level"], tape, table, seed=cfg.level1_seed, note=tape_spec["note"]) \
+            if tape_spec["level"] else {"requested": False, "level": 0, "mode": tape.mode, "tape": str(tape.root), "note": tape_spec["note"],
+                                        "pinned": determinism.versions(table)}
+    resolver = Resolver(table, run_dir=run_dir, injected=client, replay=replay, record=record, tape=tape,
+                        level1=bool(tape_spec and tape_spec["level"] == 1))
     rt = Runtime(cfg, run_id, run_dir, design, sess, client, Meter(cfg.run_limits), Snapshots(run_dir, design),
                  oracle_llm=oracle_llm, resolver=resolver)
     _RT[run_id] = rt
+    prior = None
+    try:                                                    # brief 107: a resume keeps the earlier determinism block in a history
+        pj = json.loads((run_dir / "config.json").read_text())
+        prior = [*(pj.get("determinism_history") or []), *([pj["determinism"]] if pj.get("determinism") else [])] or None
+    except (OSError, ValueError):
+        pass
     (run_dir / "config.json").write_text(json.dumps({**{k: str(v) for k, v in cfg.__dict__.items()},
+                                                     **({"determinism_history": prior} if prior else {}),
                                                      "run_limits": cfg.run_limits, "profile": cfg.profile,
                                                      "roles": cfg.roles or {}, "role_models": cfg.role_models(),
                                                      "oracle_model": oracle_model_name(cfg),
                                                      "models_file": str(cfg.models_file) if cfg.models_file else None,
                                                      "model_config": cfg.model_config or {}, "explicit": list(cfg.explicit),
                                                      "allow_fable": cfg.allow_fable, "models": table.record(),
+                                                     **({"determinism": det} if det else {}),
                                                      "isolation": type(runner).__name__}, indent=1))
     return rt
+
+
+def determinism_level_at_end(resolver) -> int:
+    """The level the run truly had, from what happened (brief 107): 2 only when every call was served from the tape, nothing was live and
+    no sub-agent turn escaped it; 1 when the live calls ran at temperature 0 and nothing escaped; 0 otherwise (sampled, even if recorded)."""
+    t = resolver.tape
+    if t is None:
+        return 0
+    if t.mode == "replay":
+        return 2 if t.live == 0 and t.misses == 0 and t.unused() == 0 else 0      # a partial replay (unused recordings) is not the whole run
+    return 1 if resolver.level1 and t.unreplayable == 0 and t.record_failures == 0 else 0
 
 
 def checkpointer_for(run_dir: Path):
@@ -1733,6 +1773,7 @@ def summary(rt: Runtime, state: dict) -> dict:
     return {"run_id": rt.run_id, "design": rt.cfg.name, "model": models[0] if len(models) == 1 else "per-role", **extra,
             "harness_arm": ",".join(rt.cfg.arms) or "A0",      # the arm this run used (H1 is the CLI default since 2026-11-12)
             "profile": rt.cfg.profile, "role_models": roles, "model_table_hash": rt.resolver.table.hash, "oracle_model": oracle_model_name(rt.cfg), "oracle": rt.cfg.oracle,
+            **({"model_tape": {**rt.resolver.tape.state(), "level_at_end": determinism_level_at_end(rt.resolver)}} if getattr(rt.resolver, "tape", None) is not None else {}),
             "stage_overrides": __import__("agent.graph.role_models", fromlist=["x"]).stage_overrides(rt.cfg),
             "knowledge_use": knowledge_use(rt), "knowledge_bank": knowledge_bank_status(rt),
             "turn_trace": usage_trace(usage),

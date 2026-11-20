@@ -175,7 +175,10 @@ def test_endpoints_on_real_records(live):
     assert lat["latency"]["sources"]["simulation"]["file"].startswith("results/")
     assert any(b["wns_ns"] is not None for b in lat["builds"])
     caps = json.loads(live.get("/api/captures")[2])["captures"]
-    assert caps and all(c["synthetic"] for c in caps)
+    real = [c for c in caps if not c["synthetic"]]
+    assert caps and all(c["no_data"] for c in real if "20261119_231836" in c["id"])     # the failed 96D run (NO DATA, brief 96D2)
+    assert any(not c["no_data"] for c in real if "20261120_105134" in c["id"])          # the first measured eye (2026-11-20, 4T clock phase forced)
+    assert any(c["synthetic"] for c in caps) and not any(c["no_data"] for c in caps if c["synthetic"])
     m = json.loads(live.get("/api/measures")[2])
     assert m["board"] and m["board"][0]["lock_clocks"]["histogram"]
     assert json.loads(live.get("/api/runs")[2])["runs"] == []

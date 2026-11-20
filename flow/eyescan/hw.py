@@ -20,13 +20,29 @@ MAX_CURSOR = 12              # 3.10 dB, UG576 Table 3-35
 CLK_HZ = 100e6                       # the free-running clock the sequencer and its timeout run in
 #: DRP words that the scan reads-modifies-writes or overwrites; all are saved first and written back at the end.
 A_RX_INT = 0x066                     # [1:0] RX_INT_DATAWIDTH (read only, to check the width the masks assume)
-SAVE_ADDRS = ([tw.A_ES_CONTROL, tw.A_ES_HORZ, tw.A_VS]
-              + [tw.A_ES_QUALIFIER0 + i for i in range(5)] + [tw.A_ES_QUAL_MASK0 + i for i in range(5)] + [tw.A_ES_SDATA_MASK0 + i for i in range(5)])
-#: Statistical-eye masks for a 32-bit valid data width (UG576 v1.7.1 Table 4-20, GTH: 80-bit ES_SDATA_MASK = {40'b1, 32'b0, 8'b1}; ES_QUAL_MASK all ones so every cycle counts;
-#: ES_QUALIFIER 0). Word i holds bits [16 i + 15 : 16 i].
-QUALIFIER = [0x0000] * 5
-QUAL_MASK = [0xFFFF] * 5
-SDATA_MASK_32 = [0x00FF, 0x0000, 0xFF00, 0xFFFF, 0xFFFF]
+A_CLK_PHASE = 0x094                  # [11] ES_CLK_PHASE_SEL, [10] USE_PCS_CLK_PHASE_SEL (UG576 v1.7.1 Table 4-20 p. 233, Table C-2)
+SAVE_ADDRS = ([tw.A_ES_CONTROL, tw.A_ES_HORZ, tw.A_VS] + tw.QUALIFIER_ADDRS + tw.QUAL_MASK_ADDRS + tw.SDATA_MASK_ADDRS + [A_CLK_PHASE])     # 34 words: GTHE4 has ten words of each 160-bit mask (96D2), plus the 4T clock-phase word (2026-11-20)
+N_WORDS = 10
+
+
+def sdata_mask_160(width: int) -> int:
+    """ES_SDATA_MASK of a statistical eye for a valid data width, GTHE4 / UltraScale+ (UG576 v1.7.1 Table 4-20, printed p. 230): {80'b1, width'b0, (80-width)'b1}, i.e. the
+    current cycle's `width` valid bits are the only unmasked ones. For 32 bits: {80'b1, 32'b0, 48'b1}."""
+    if width not in (16, 20, 32, 40, 64, 80):
+        raise ValueError(f"data width {width} is not one of UG576's 16, 20, 32, 40, 64, 80")
+    return (((1 << 80) - 1) << 80) | ((1 << (80 - width)) - 1)
+
+
+def words_of(v160: int) -> list[int]:
+    """160-bit value -> ten 16-bit words, word 0 = bits [15:0] (UG576: ES_xxx0 holds the low bits)."""
+    return [(v160 >> (16 * i)) & 0xFFFF for i in range(N_WORDS)]
+
+
+#: Statistical-eye settings for the 32-bit valid data width: ES_QUALIFIER 0, ES_QUAL_MASK all ones (so every cycle counts: with ANY unmasked qualifier bit that real data does not
+#: match, the sample counter never advances and the scan never reaches END: the 2026-11-19 failure), ES_SDATA_MASK {80'b1, 32'b0, 48'b1}.
+QUALIFIER = [0x0000] * N_WORDS
+QUAL_MASK = [0xFFFF] * N_WORDS
+SDATA_MASK_32 = words_of(sdata_mask_160(32))
 RXOUT_DIV_DECODE = {0: 1, 1: 2, 2: 4, 3: 8, 4: 16}     # DRP 0x63 [2:0] (UG576 appendix C)
 COUNTS_PER_HALF_UI_AT_DIV1 = 32                       # Table 4-20: full rate, -32 .. +32 counts is -0.5 .. +0.5 UI
 
@@ -38,6 +54,10 @@ class Transport(Protocol):
 
 class EyeScanError(RuntimeError):
     pass
+
+
+class NoDataError(EyeScanError):
+    """The scan counted nothing (the self-test point or K consecutive points timed out or saw zero samples): stop, the laser time is being wasted. The text starts "NO DATA"."""
 
 
 def horz_field(counts: int) -> int:
@@ -139,10 +159,16 @@ class EyeHW:
         w = self.drp_read(A_RX_INT) & 3
         if w != 1:
             raise EyeScanError(f"RX_INT_DATAWIDTH = {w}: the statistical-eye masks written here assume the 32-bit internal width (value 1)")
-        for i in range(5):
-            self.drp_write(tw.A_ES_QUALIFIER0 + i, QUALIFIER[i])
-            self.drp_write(tw.A_ES_QUAL_MASK0 + i, QUAL_MASK[i])
-            self.drp_write(tw.A_ES_SDATA_MASK0 + i, SDATA_MASK_32[i])
+        want = {}
+        for i in range(N_WORDS):
+            want[tw.QUALIFIER_ADDRS[i]] = QUALIFIER[i]
+            want[tw.QUAL_MASK_ADDRS[i]] = QUAL_MASK[i]
+            want[tw.SDATA_MASK_ADDRS[i]] = SDATA_MASK_32[i]
+        for a, v in want.items():
+            self.drp_write(a, v)
+        bad = {f"{a:#05x}": f"wrote {v:#06x}, read {r:#06x}" for a, v in want.items() if (r := self.drp_read(a)) != v}
+        if bad:
+            raise EyeScanError(f"the static eye-scan words did not read back as written: {bad}")
         return dict(self.saved)
 
     def restore(self) -> dict[str, Any]:
@@ -155,6 +181,28 @@ class EyeHW:
         bad = {f"{a:#05x}": {"saved": self.saved[a], "now": after[a]} for a in self.saved if after[a] != self.saved[a]}
         return {"ok": not bad, "mismatch": bad, "words": len(self.saved)}
 
+    # ---- the eye-scan 4T clock phase (board finding 2026-11-20)
+    def set_clk_phase(self, sel: int) -> None:
+        """Force the eye-scan 4T clock phase: USE_PCS_CLK_PHASE_SEL = 1, ES_CLK_PHASE_SEL = sel (DRP 0x094 [10], [11]); other bits kept."""
+        old = self.drp_read(A_CLK_PHASE)
+        self.drp_write(A_CLK_PHASE, (old & ~0x0C00) | 0x0400 | ((sel & 1) << 11))
+
+    def choose_clk_phase(self, timeout_s: float = 1.0) -> dict[str, Any]:
+        """On the KR260 (2026-11-20) the default phase (chosen by the deserializer phase detector) and ES_CLK_PHASE_SEL = 0 gave about 50 % "errors" at every
+        offset, eye centre included: the offset sampler was on the wrong 4T phase. ES_CLK_PHASE_SEL = 1 gave an eye open from -24 to +24 counts. UG576 gives the
+        remedy and says to determine which value provides an eye, so try 1 then 0 at the eye centre (prescale 0) and keep the first with zero errors and a full
+        sample count. Raises NoDataError if neither gives a clean centre."""
+        trials = []
+        for sel in (1, 0):
+            self.set_clk_phase(sel)
+            p = self.point(0, 0, 0, 0, 0, timeout_s)
+            trials.append({"sel": sel, "err": p["err"], "samp": p["samp"], "tmo": p["tmo"]})
+            if not p["tmo"] and p["err"] == 0 and p["samp"] > 0:
+                return {"sel": sel, "trials": trials}
+        if all(t["tmo"] or t["samp"] == 0 for t in trials):
+            return {"sel": None, "trials": trials, "note": "no trial counted samples: a counting fault, not a phase fault; the self-test point reports it"}
+        raise NoDataError(f"NO DATA: no eye-scan 4T clock phase gives an error-free eye centre ({trials}); the offset sampler is not usable, no scan was run")
+
     # ---- one point
     def point(self, h: int, v: int, ut: int, rng: int, pre: int, timeout_s: float) -> dict[str, Any]:
         self.wr(R_TMO, min(int(timeout_s * CLK_HZ), 0xFFFFFFFF))          # the register is 32 bits: 42.9 s at 100 MHz
@@ -165,7 +213,7 @@ class EyeHW:
         if st & 0x10 or ((st >> 16) - n0) & 0xFFFF != 1:
             raise EyeScanError(f"the point command did not run (ES_STAT {st:#x}, points completed {n0} -> {st >> 16}): its results would be the previous point's")
         res = self.rd(R_RES)
-        return {"pre": pre, "err": res & 0xFFFF, "samp": res >> 16, "tmo": bool(st & 0x4), "drp_tmo": bool(st & 0x8), "status": (st >> 8) & 0xF}
+        return {"pre": pre, "err": res & 0xFFFF, "samp": res >> 16, "tmo": bool(st & 0x4), "drp_tmo": bool(st & 0x8), "status": (st >> 8) & 0xF}      # status: es_control_status as last read (WAIT 0001, RESET 0010, COUNT 0110, END 0101)
 
     # ---- TX drive and equaliser (explicit, separate)
     def set_tx_drive(self, diff: int, pre: int, post: int, dfelpm_reset: bool = False) -> None:
