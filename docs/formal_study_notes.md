@@ -78,6 +78,8 @@ the old value of a bit for one more destination clock (`fv_sync_chain`):
   this is sound for the data-integrity claim and removes about 74 free bits per entry per step from the solver's problem;
 * the pointer's bits are free independently, which is what lets a multi-bit binary value be seen torn and a gray value not (mutant `mut_binary_pointer`).
 
+The earliest version let any bit that differed from the flop be late. With the write clock faster than the read clock (two pointer steps between two read edges, allowed inside 3:1) it tore the gray code: a synchronised value of binary 3 while the write pointer was 2 (two pointer bits), that is, ahead of the real pointer. The rule "only a bit that changed at the latest source edge may be late" is the physical one (skew below one source clock) and removes it.
+
 Not modelled: skew of more than one source clock (the constraint files and `report_cdc` cover it), and per-bit differences in resolution time beyond one destination clock. A first version let a bit be late at every
 destination clock while the source value differed from the flop; its counterexample showed the write pointer going backwards (`001` then `000`): a bit that has shown its new value cannot show the old one again.
 Adding that rule is an example of a modelling choice that the model checker forced into the open.
@@ -102,8 +104,8 @@ checked at every step are `G` (state predicate); the ones tied to an edge (`@(po
 | ID | In words | LTL / CTL | Kind | Proved as | A mutant that breaks it |
 |---|---|---|---|---|---|
 | P1 `p1_no_overflow`, `p1b_bound` | the writer never writes over an unread block; at most `DEPTH` blocks are outstanding | `G (wr_en -> outstanding < DEPTH)`, `G (outstanding <= DEPTH)` | safety, invariant | k-induction | `mut_overflow` |
-| P2 `p2_wview` | the writer's view of the read pointer is old, never ahead | `G (lag_r <= wview <= DEPTH)` | safety, invariant | k-induction | `mut_binary_pointer` |
-| P3 `p3_rview` | the reader's view of the write pointer is behind the real one, and never behind the read pointer | `G (lag_w <= true_fill)`, `G (fill <= true_fill)` | safety, invariant | k-induction | `mut_unsynced_pointer`, `mut_binary_pointer` |
+| P2 `p2_wview` | the writer's view of the read pointer is old, never ahead | `G (lag_r <= wview <= DEPTH)` | safety, invariant | k-induction | `mut_overflow` (also fails it) |
+| P3 `p3_rview` | the reader's view of the write pointer is behind the real one, and never behind the read pointer | `G (lag_w <= true_fill)`, `G (fill <= true_fill)` | safety, invariant | k-induction | `mut_unsynced_pointer` |
 | P4 `p4_no_underflow` | a read, delete or drain only when a block has crossed and was written | `G (rd_en -> fill != 0)` | safety | k-induction | `mut_underflow` |
 | P5 `p5_gray_w/r` | each pointer's gray code changes at most one bit per own clock | `G (popcount(gray(wbin) ^ gray(wbin_prev)) <= 1)` | safety | k-induction | `mut_gray_step` |
 | P6a `p6a_...` | an idle is inserted only between frames (judged from the output stream, not the RTL's flag) | `G ((empty slot clock && output appears next clock) -> !spec_in_frame)` | safety | k-induction | `mut_insert_in_frame` |
@@ -116,7 +118,7 @@ checked at every step are `G` (state predicate); the ones tied to an edge (`@(po
 
 Why "the block popped for item N" is a property of the whole design and not of one entry: section 8.1.
 
-The helper invariants (`h1` to `h11`, `p`-less names in the source) are also asserted and also proved; they are what makes the k-induction close (section 6).
+The helper invariants (`h1` to `h11` in the source) are also asserted and also proved; they are what makes the k-induction close (section 6).
 
 ## 6. BMC and k-induction, and the counterexamples to induction
 
@@ -140,8 +142,8 @@ read from the trace and each led to one invariant or one change to the harness.
 5. *The registered check outliving its item* (`chk_out` set with the item unwritten): `done -> written`, `chk_out -> done`.
 6. *The gray property's own history register* (`wbin_q`): the CTI started with `wbin_q` unrelated to `wbin`; making P5 a state invariant over the pair (not an edge assertion) closed it.
 
-After these, `safety_prove` closes at induction depth 8 for the shipped `AW = 4` (about 8 s) and at depth 24 for `AW = 2`; the induction step itself is solved immediately, so the depth is the base-case depth the job was given.
-A pass of the step at depth 1 would mean the invariants alone are inductive; the proofs here were run at the depths in section 10.
+After these, `safety_prove` reports a successful proof by k-induction at depth 8 for the shipped `AW = 4` (7 to 11 s a job) and at depth 24 for `AW = 2` and `AW = 1` (base case to that depth, then the step).
+The helper invariants are doing most of the work: before them the step failed at every depth tried (up to 12), after them it closes at the depth the job was given. How small `k` can be made was not measured.
 
 ## 7. Safety, liveness, fairness and the ranking function
 
@@ -194,7 +196,7 @@ would be out of the bounded check's reach; the unmutated proofs keep 33.
 | `mut_overflow` | `f_full` allows one block too many | P1, P1b, P2 |
 | `mut_underflow` | `can_read` always true | P4 |
 | `mut_gray_step` | write pointer steps by 2 | P5, H5 |
-| `mut_binary_pointer` | the pointers cross as binary, not gray (`FV_BIN_CROSSING`) | H5, P3 (tearing) |
+| `mut_binary_pointer` | the pointers cross as plain binary, not gray (`FV_BIN_CROSSING`) | H5 (the stage-order invariant: a torn sample breaks it first; P3 and P2 would follow) |
 | `mut_unsynced_pointer` | the reader uses `wbin` straight from the write clock | P3 (it reads beyond what crossed), H5 |
 | `mut_wrong_entry` | the reader selects the neighbouring entry | P8a, P8b |
 | `mut_insert_in_frame` | idle inserted inside a frame | P6a |
@@ -208,7 +210,22 @@ which the model does not claim to cover. This is a case where the proof is hones
 
 ## 10. Results
 
-RESULTS_PLACEHOLDER
+Records: `results/b115/formal_ci.json` (the 23 jobs CI runs, 5.5 minutes of solver time) and `results/b115/formal_full.json` (91 jobs: adds all 74 bits of the entry, a deeper progress check and the deletion cover; about 18 minutes). Every job passed or, for a mutant, was caught.
+
+| Claim | Config | Method | Result |
+|---|---|---|---|
+| P1 to P9 and helpers H1 to H8 | AW = 4 (16 entries), entry bits 0, 7, 39, 63, 64, 71, 72, 73 | k-induction, depth 8 | proved, 7 to 11 s a job |
+| the same | AW = 2 and AW = 1, bit 0 | k-induction, depth 24 | proved |
+| the same, all 74 bits | AW = 2 | k-induction, depth 12 | proved (full set) |
+| P1 to P9 | AW = 2, bit 0 | BMC, depth 40 | no violation (about 70 s) |
+| P10: ranking function R1, R2 (progress, bounded response) | AW = 2, ratio band 3:1, lock high | BMC, depth 40 and depth 70 | no violation (about 143 s and 480 s); NOT an unbounded proof |
+| covers: pop of the tracked item, idle insert, full buffer, stall, pointer wrap | AW = 2 | cover, depth 60 | all reached |
+| cover: deletion of the tracked item | AW = 2 | cover, depth 110 | reached (full set; needs the one non-slot clock in 33) |
+| ten mutants | AW = 2 (deletion mutants with pace period 4) | prove job, depth 32 (progress mutant: BMC) | all ten caught by a named assertion, 1 to 8 s each |
+
+Bound for progress: `RMAX = RATIO + 4 + 3 + DEPTH + 1`, which is 11 + DEPTH read clocks (15 at AW = 2, 27 at the shipped AW = 4), under assumptions A1 to A3. The bound is not tight and was not minimised.
+
+Assumptions in force: A1, A2 in every job; A3 in the progress jobs. RTL bugs found: none; the proofs found no counterexample on the unmutated RTL.
 
 ## 11. Known gaps
 
@@ -223,7 +240,7 @@ RESULTS_PLACEHOLDER
 ## 12. Exercises
 
 1. Remove the `held` rule from `fv_sync_chain` and rerun `safety_bmc`: what is the shortest counterexample, and which property fails first? Explain it as a trace of a gray pointer going backwards.
-2. Change `RATIO` to 1 (`-D FV_RATIO=1` in a copy of `rm_gp.sby`): what does the model then say about phases, and why does `progress_bmc` bound shrink?
+2. Change `RATIO` to 2 (`-D FV_RATIO=2` on the `read_slang` line of a copy of `rm_gp.sby`): the progress ranking function has `RATIO` in its bound and in its wait term; which assertions need `RMAX` to follow, and what does a 2:1 band say about a clock stalled for two periods?
 3. Write P8 in CTL with a quantifier over the item: `AG (written(N) -> AF consumed(N))` versus the safety form used here; which part needs fairness?
 4. Delete helper H6 and read the counterexample to induction. Which stage of the data copy and which stage of the pointer disagree, and why is that state unreachable?
 5. Make the bit slice `KB = 73` and `KB = 5`; which control decisions of the reader depend on which entry bits, and why is that the only data dependence the bit slice has to respect?

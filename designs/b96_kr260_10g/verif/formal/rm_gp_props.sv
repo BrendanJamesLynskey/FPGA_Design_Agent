@@ -31,10 +31,6 @@ module rm_gp_props #(
     localparam int DEPTH = 1 << AW;
     localparam int CW    = AW + 1;
     localparam logic [CW-1:0] MASK = '1;
-`ifndef FV_B
-`define FV_B 40
-`endif
-    localparam int B     = `FV_B;                  // bounded-response bound in read clocks (the progress task; how it was found: docs/formal_study_notes.md)
 
     function automatic logic [CW-1:0] gray(input logic [CW-1:0] b);
         return b ^ (b >> 1);
@@ -153,7 +149,7 @@ module rm_gp_props #(
 `ifndef FV_NW
 `define FV_NW (ENT_SYNC ? 3 : 2)
 `endif
-    localparam int NW = `FV_NW;                                 // stages in the write pointer's chain: 3 with ENT_SYNC, 2 without (the one-flop-short mutant sets FV_NW=2)
+    localparam int NW = `FV_NW;                                 // stages in the write pointer's chain: 3 with ENT_SYNC, 2 without
     wire [CW-1:0] wp_g = u_wp.g, wp_dl = u_wp.u.dlast;
     wire [NW-1:0][CW-1:0] wp_s = u_wp.u.s;
     wire [CW-1:0] rp_g = u_rp.g, rp_dl = u_rp.u.dlast;

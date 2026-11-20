@@ -298,6 +298,17 @@ evidence:
     on the reset-done edge, stale done held off, error holds the paths in reset)
   record: results/b96f1/bypass_seq/result.txt
   sha256: 457378d737a4382242b69cf84b2db58aacf9a88707d0cba642934a5b1b091dd8
+- id: E11
+  activity: formal
+  result: pass
+  what: 'the own gray-pointer rate matcher (rate_match_gp.sv, bound properties, RTL untouched; brief 115): safety (no overflow
+    or underflow, pointer views never ahead, one-bit gray steps, idle inserted or deleted only between frames and only pure
+    idles, data integrity and order of a symbolic entry) proved by k-induction at 16 entries for one bit of each class of
+    the entry and at 4 and 2 entries; progress as a bounded model check of a ranking function (not an unbounded proof);
+    covers; ten seeded bugs each caught by a named assertion; two free clocks within 3:1, synchronisers modelled with one-clock
+    skew (docs/formal_study_notes.md)'
+  record: results/b115/formal_ci.json
+  sha256: 7d1f529c4cb2f1519b939cec91c35686eafe4bd8a007737cd4eb5d2046dc91be
 measurements:
 - id: M1
   what: LUTs, variant (b)
