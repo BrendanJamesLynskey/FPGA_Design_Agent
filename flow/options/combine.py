@@ -12,8 +12,14 @@ model offers disjoint singles and does not combine them. This module takes the o
   gains cannot be bounded: they are listed with the reason and never offered. If any part is a labelled guess the whole is a guess.
 * **validated like any option**: the combined option is built as a raw option and passed through ``schema.check_single``, so its flags (a change spanning two
   components, a clock crossing) are computed by the same code and the owner-approval rule is the same.
-* **ranked by code, capped**: the best combination of each size, by (measured earlier, composed mid-gain, fewer components touched, no owner approval needed, order of the parts),
-  then the smallest sizes and the largest, at most ``MAX_COMBINED`` in all. The rule is in :func:`rank_key`; it never reads a measured result.
+* **ranked by code, capped**: the best combination of each size, by (measured earlier, composed mid-gain, fewer components touched, no owner approval needed, **model support**, **timing headroom**,
+  then a content-only canonical key), then the smallest sizes and the largest, at most ``MAX_COMBINED`` in all. The rule is in :func:`rank_key`; it never reads a measured result.
+
+Brief 104C (version 3): **the menu does not depend on the order in which the model listed its options.** Many parts tie on composed gain (each 0 to 1 clock), and the earlier rule broke
+those ties by the model's order. Now the last keys are: *model support* (how many of the model's own options name the stages: the model reached the same stage independently in
+several options, a count that does not depend on where they stand in the list), then the stage file's *timing headroom* (the leximin order of the touched stages' post-route setup slack: the combination whose
+tightest stage has the most slack first, then the next tightest; a stage with no slack figure ranks below every known one), and then a canonical key made of stage-file chain positions,
+component names and gain bounds only. Pools are truncated by that same content rule, so which option is dropped never depends on list position. See ``docs/strategy_options.md``.
 
 Brief 104B: the pool the combiner draws on is the model's options plus the per-stage **parts** that :mod:`flow.options.split` derives from the model's bundles (``origin:
 splitter``); a bundle that was split is replaced in the pool by its parts. Parts of one bundle never add up to more than that bundle's own high end (``split_bundle_gain``).
@@ -24,12 +30,13 @@ The combiner reads only the analysis and the model's checked options. It never s
 from __future__ import annotations
 
 import itertools
+import math
 import re
 from typing import Any
 
 from flow.options import schema, split
 
-COMBINER_VERSION = "2"
+COMBINER_VERSION = "3"
 MAX_COMBINED = 4
 MAX_PARTS = 6          # model options: four from one request (the checker caps it); six after --more
 MAX_POOL = 10          # model options not split, plus the parts the splitter derived (brief 104B)
@@ -39,6 +46,39 @@ ORIGIN = "combiner"
 
 def _mid(g: dict[str, Any]) -> float:
     return (g["low"] + g["high"]) / 2
+
+
+def _chain(analysis: dict[str, Any]) -> list[str]:
+    return [x["id"] for x in ((analysis.get("latency") or {}).get("stages") or [])]
+
+
+def option_key(o: dict[str, Any], chain: list[str]) -> tuple:
+    """A key made of the option's content only (stage-file chain positions, component names, gain bounds): never its id, its number or its place in a list. Equal content, equal key."""
+    st = tuple(sorted((chain.index(s) if s in chain else len(chain), s) for s in o["touches_stages"]))
+    g = o["gain"]
+    return (st, tuple(sorted(o["scope"]["components"])), g["low"], g["high"], str(g["metric"]))
+
+
+def stage_slack(analysis: dict[str, Any]) -> dict[str, float]:
+    """The post-route setup slack (ns) of each stage's registers, from the stage file's analysis; a stage without a figure is absent."""
+    return {s["id"]: float(s["setup_slack_ns"]) for s in ((analysis.get("latency") or {}).get("stages") or []) if s.get("setup_slack_ns") is not None}
+
+
+def support_counts(options: list[dict[str, Any]]) -> dict[str, int]:
+    """How many of the model's own options name each stage (an option counts once per stage). Splitter parts and combined options are derived from these, so they are not counted again."""
+    n: dict[str, int] = {}
+    for o in options:
+        if o.get("origin", "model") == "model":
+            for s in set(o.get("touches_stages") or []):
+                n[s] = n.get(s, 0) + 1
+    return n
+
+
+def headroom_key(stages: list[str], slack: dict[str, float]) -> tuple:
+    """Leximin on stage slack, as a key that sorts the best first: the touched stages' slack, tightest first, each negated (an unknown stage counts as minus infinity, so it ranks last).
+    Argument: a merge or a removal puts a stage's logic in front of the next register, so the stage with the least slack is the one most likely to fail timing; the combination whose weakest
+    stage is strongest is the safest to offer, then the one whose next weakest is strongest."""
+    return tuple(-x for x in sorted(slack.get(s, -math.inf) for s in stages))
 
 
 def _stage_facts(stages: list[str], analysis: dict[str, Any]) -> list[str]:
@@ -165,10 +205,14 @@ def build_raw(parts: list[dict[str, Any]], gain: dict[str, Any], owned: list[str
     }
 
 
-def rank_key(o: dict[str, Any], order: dict[str, int]) -> tuple:
-    """Lower sorts first: an earlier measured set of exactly these stages first, then higher composed mid-gain, then fewer components touched, then no owner approval needed, then the model's order of the parts."""
+def rank_key(o: dict[str, Any], ctx: dict[str, Any]) -> tuple:
+    """Lower sorts first: an earlier measured set of exactly these stages first, then higher composed mid-gain, then fewer components touched, then no owner approval needed, then the most
+    model support (the sum over the touched stages of :func:`support_counts`), then the most timing headroom (:func:`headroom_key`), then the canonical content key of the stages and of the parts. Nothing here reads the model's order, an option id or a measured result.
+    ``ctx`` is ``{"chain", "slack", "support", "by_id"}``."""
+    stages = sorted(set(o["touches_stages"]), key=lambda s: (ctx["chain"].index(s) if s in ctx["chain"] else len(ctx["chain"]), s))
+    parts = tuple(sorted(option_key(ctx["by_id"][i], ctx["chain"]) for i in o["combined_from"]))
     return (0 if o["gain"]["basis"] == "measurement" else 1, -_mid(o["gain"]), len({c for c in o["stage_components"].values() if c}) or len(o["scope"]["components"]), 1 if o["risk"]["needs_owner_approval"] else 0,
-            [order[i] for i in o["combined_from"]])
+            -sum(ctx["support"].get(s, 0) for s in stages), headroom_key(stages, ctx["slack"]), option_key(o, ctx["chain"]), parts)
 
 
 def combine(options: list[dict[str, Any]], analysis: dict[str, Any], project: Any, *, goal: str | None, pinned: list[str] | None = None, blind: bool = False,
@@ -177,11 +221,14 @@ def combine(options: list[dict[str, Any]], analysis: dict[str, Any], project: An
     [{"from": [ids], "reason"}], "dropped": [...]}``. The options returned carry ``origin: combiner``, ``combined_from`` and no ``n`` (the caller numbers them)."""
     cap = cap or MAX_COMBINED
     owned = [c.name for c in (project.owned() if project else [])]
-    models = [o for o in options if o.get("origin", "model") == "model" and o["touches_stages"] is not None]
-    parts = [o for o in options if o.get("origin") == split.ORIGIN]
+    chain = _chain(analysis)
+    keep_first = lambda o: (-_mid(o["gain"]), option_key(o, chain))      # noqa: E731  which option survives a truncation: by content, never by list position
+    models = sorted((o for o in options if o.get("origin", "model") == "model" and o["touches_stages"] is not None), key=keep_first)
+    parts = sorted((o for o in options if o.get("origin") == split.ORIGIN), key=keep_first)
     split_ids = {p["split_from"] for p in parts}
     singles = ([o for o in models[:MAX_PARTS] if o["id"] not in split_ids] + parts)[:MAX_POOL]      # a bundle that was split is represented by its parts
-    order = {o["id"]: k for k, o in enumerate(singles)}
+    singles.sort(key=lambda o: option_key(o, chain))                                                 # combinations are listed in the chain's order, not the model's
+    ctx = {"chain": chain, "slack": stage_slack(analysis), "support": support_counts(options), "by_id": {o["id"]: o for o in singles}}
     built: list[dict[str, Any]] = []
     not_comp: list[dict[str, Any]] = []
     seen_sets = {frozenset(o["touches_stages"]) for o in options if o["touches_stages"]}
@@ -211,7 +258,7 @@ def combine(options: list[dict[str, Any]], analysis: dict[str, Any], project: An
             opt.update(origin=ORIGIN, combined_from=ids)
             built.append(opt)
     # rank, then the best of each size; keep the smallest sizes and the largest when more sizes than the cap
-    built.sort(key=lambda o: rank_key(o, order))
+    built.sort(key=lambda o: rank_key(o, ctx))
     by_size: dict[int, dict[str, Any]] = {}
     for o in built:
         by_size.setdefault(len(o["combined_from"]), o)
@@ -224,7 +271,7 @@ def combine(options: list[dict[str, Any]], analysis: dict[str, Any], project: An
             break
         if o not in chosen:
             chosen.append(o)
-    chosen.sort(key=lambda o: (len(o["combined_from"]), rank_key(o, order)))
+    chosen.sort(key=lambda o: (len(o["combined_from"]), rank_key(o, ctx)))
     left_out = [{"from": o["combined_from"], "reason": f"valid, but not in the {cap} best (ranked below the best of its size or beyond the cap)"} for o in built if o not in chosen]
     return {"options": chosen, "considered": considered, "not_composable": not_comp + left_out, "version": COMBINER_VERSION, "cap": cap}
 
