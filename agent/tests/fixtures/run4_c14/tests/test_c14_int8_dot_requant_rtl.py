@@ -2,6 +2,12 @@
 import sys
 from pathlib import Path
 
+import pytest
+
+# The bench imports cocotb_coverage (CI's cocotb jobs install it; a plain `pip install cocotb` does not). Without it the simulator aborts with an
+# unrelated-looking cocotb error, so skip with the reason (102F; this fixture is not run by CI, see test_07a2_fix4.py for what uses it).
+pytest.importorskip("cocotb_coverage", reason="the bench needs cocotb-coverage")
+
 DESIGN_DIR = Path(__file__).resolve().parents[1]
 for _p in Path(__file__).resolve().parents:
     if (_p / "flow" / "cocotb_run.py").exists():
