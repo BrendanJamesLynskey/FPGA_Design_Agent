@@ -4,8 +4,10 @@
 // OUCH 5.0 Enter Order frames (SoupBinTCP 3.00 Unsequenced Data) out on a stub port. No Ethernet, IP, UDP or TCP here (docs/phase2_integration.md).
 // One clock (the 10G core's user clock, 161.1328125 MHz, 6.2061 ns); resets are synchronous. All configuration inputs are static while traffic runs.
 // docs/itch_ouch.md is the datasheet: interfaces, parameters, behaviour a user could guess wrong, latencies.
-module itch_ouch_top #(
-    parameter int N_INST = 4,          // instruments watched (1 to 8)
+module itch_ouch_top
+    import itch_pkg::*;
+#(
+    parameter int N_INST = 4,          // instruments watched (2 to 8)
     parameter int LEVELS = 8,          // price levels per side and instrument (4 or 8)
     parameter int ORD_AW = 8           // order table index bits: 2^ORD_AW live orders
 ) (
@@ -46,9 +48,8 @@ module itch_ouch_top #(
     output logic [N_INST*2-1:0]  tob_ok,
     output logic [15:0]          flags,               // 0 gap, 1 untrusted, 2 end of session, 3 session locked, 4 book ready, 5 frame busy, 8.. inexact per instrument
     output logic [7:0]           sys_code,
-    output logic [45*32-1:0]     cnt                  // counter k = cnt[32*k +: 32], indices in itch_pkg
+    output logic [NC*32-1:0]     cnt                  // counter k = cnt[32*k +: 32], indices in itch_pkg
 );
-    import itch_pkg::*;
     localparam int IW = $clog2(N_INST > 1 ? N_INST : 2);
 
     // mold

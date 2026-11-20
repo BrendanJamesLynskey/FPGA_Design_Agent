@@ -97,7 +97,7 @@ module risk_glue #(
     logic [31:0] c_cand, c_fire, c_rarm, c_rkill, c_rgap, c_rstale, c_rsize, c_rpos, c_rband, c_rbusy, c_abort, c_late, c_spec;
     assign cnt = {c_spec, c_late, c_abort, c_rbusy, c_rband, c_rpos, c_rsize, c_rstale, c_rgap, c_rkill, c_rarm, c_fire, c_cand};
 
-    logic go_now, pop;
+    logic pop;
     logic [IW+96-1:0] go_rec;
     always_comb begin
         go = 1'b0; go_spec = 1'b0; go_rec = '0; pop = 1'b0; commit = 1'b0; abort = 1'b0;

@@ -39,17 +39,28 @@ module itch_dec (
         for (int i = 0; i < n; i++) r = {r[55:0], a[8 * (o + i) +: 8]};
         return r;
     endfunction
+    function automatic logic [31:0] be32(input logic [383:0] a, input int o);
+        logic [31:0] r;
+        r = '0;
+        for (int i = 0; i < 4; i++) r = {r[23:0], a[8 * (o + i) +: 8]};
+        return r;
+    endfunction
+    function automatic logic [15:0] be16(input logic [383:0] a, input int o);
+        return {a[8 * o +: 8], a[8 * (o + 1) +: 8]};
+    endfunction
 
     logic [7:0]  ty;
-    logic [63:0] f_loc, f_ref, f_nref, f_sh20, f_sh19, f_sh27, f_px32, f_px31, f_stk24, f_stk11;
+    logic [15:0] f_loc;
+    logic [63:0] f_ref, f_nref, f_stk24, f_stk11;
+    logic [31:0] f_sh20, f_sh19, f_sh27, f_px32, f_px31;
     logic        known, len_ok, field_ok;
     logic [2:0]  kind;
     assign ty = al[7:0];
 
     always_comb begin
-        f_loc = be(al, 1, 2);   f_ref = be(al, 11, 8);  f_nref = be(al, 19, 8);
-        f_sh20 = be(al, 20, 4); f_sh19 = be(al, 19, 4); f_sh27 = be(al, 27, 4);
-        f_px32 = be(al, 32, 4); f_px31 = be(al, 31, 4); f_stk24 = be(al, 24, 8); f_stk11 = be(al, 11, 8);
+        f_loc = be16(al, 1);    f_ref = be(al, 11, 8);  f_nref = be(al, 19, 8);
+        f_sh20 = be32(al, 20);  f_sh19 = be32(al, 19);  f_sh27 = be32(al, 27);
+        f_px32 = be32(al, 32);  f_px31 = be32(al, 31);  f_stk24 = be(al, 24, 8); f_stk11 = be(al, 11, 8);
     end
 
     always_comb begin
@@ -67,9 +78,9 @@ module itch_dec (
             default: known = 1'b0;
         endcase
         case (kind)
-            K_ADD: field_ok = (al[8*19 +: 8] == "B" || al[8*19 +: 8] == "S") && (f_sh20[31:0] != 32'd0);
-            K_EXE, K_CAN: field_ok = (f_sh19[31:0] != 32'd0);
-            K_REP: field_ok = (f_sh27[31:0] != 32'd0);
+            K_ADD: field_ok = (al[8*19 +: 8] == "B" || al[8*19 +: 8] == "S") && (f_sh20 != 32'd0);
+            K_EXE, K_CAN: field_ok = (f_sh19 != 32'd0);
+            K_REP: field_ok = (f_sh27 != 32'd0);
             default: field_ok = 1'b1;
         endcase
     end
@@ -102,15 +113,15 @@ module itch_dec (
                     else e_v <= 1'b1;
                 end
                 e_k     <= kind;
-                e_loc   <= f_loc[15:0];
+                e_loc   <= f_loc;
                 e_seq   <= m_seq;
                 e_code  <= al[8*11 +: 8];
                 e_stock <= (kind == K_DIR) ? f_stk11 : f_stk24;
                 e_sell  <= (al[8*19 +: 8] == "S");
                 case (kind)
-                    K_ADD: begin e_ref <= f_ref; e_nref <= '0; e_sh <= f_sh20[31:0]; e_px <= f_px32[31:0]; end
-                    K_EXE, K_CAN: begin e_ref <= f_ref; e_nref <= '0; e_sh <= f_sh19[31:0]; e_px <= '0; end
-                    K_REP: begin e_ref <= f_ref; e_nref <= f_nref; e_sh <= f_sh27[31:0]; e_px <= f_px31[31:0]; end
+                    K_ADD: begin e_ref <= f_ref; e_nref <= '0; e_sh <= f_sh20; e_px <= f_px32; end
+                    K_EXE, K_CAN: begin e_ref <= f_ref; e_nref <= '0; e_sh <= f_sh19; e_px <= '0; end
+                    K_REP: begin e_ref <= f_ref; e_nref <= f_nref; e_sh <= f_sh27; e_px <= f_px31; end
                     default: begin e_ref <= f_ref; e_nref <= '0; e_sh <= '0; e_px <= '0; end
                 endcase
             end

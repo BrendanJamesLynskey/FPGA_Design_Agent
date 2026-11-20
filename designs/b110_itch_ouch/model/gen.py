@@ -34,7 +34,8 @@ class Gen:
         self.mid = mid
         self.sl = spread_levels
         self.loc0 = locate0
-        self.max_live = max_live
+        self.window = (1 << self.cfg.ord_aw) - 16         # live references stay within one table's worth of indices: no index collisions
+        self.max_live = min(max_live, self.window // 4)
         self.seq = 1
         self.ts = 34_200_000_000_000
         self.ref = 1000 + self.r.randrange(0, 5000)
@@ -68,7 +69,7 @@ class Gen:
         c = self.cfg
         x = r.random()
         live = list(self.live)
-        old = [k for k in live if k < self.ref - 200]          # keep live orders inside the order table's index window
+        old = [k for k in live if k < self.ref - self.window]          # keep live orders inside the order table's index window
         if old:
             ref = old[0]
             o = self.live.pop(ref)
@@ -185,8 +186,11 @@ class Gen:
             if r.random() < p_dup:
                 items.append(Item(pkt, idle=8, note="dup"))            # the same packet again
             if r.random() < p_overlap and len(chunk) >= 2:
+                # a retransmission that starts inside what was already sent and carries one message more
                 j = r.randrange(1, len(chunk))
-                items.append(Item(proto.mold_packet(self.session, seq + j, chunk[j:]), idle=8, note="overlap"))
+                extra = self.one()
+                items.append(Item(proto.mold_packet(self.session, seq + j, chunk[j:] + [extra]), idle=8, note="overlap"))
+                self.seq += 1
         if preamble:
             items.append(Item(proto.mold_packet(self.session, self.seq, self.epilogue()), idle=10))
             self.seq += 3

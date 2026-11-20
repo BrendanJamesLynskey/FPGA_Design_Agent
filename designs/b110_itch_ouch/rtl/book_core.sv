@@ -107,7 +107,6 @@ module book_core #(
     logic       u1_pend;
     logic [63:0] u1_nref;
     logic [31:0] u1_sh, u1_px;
-    logic        u1_gap;
 
     logic [BW-1:0] b1;
     logic          b1_v, b1_byp, b1_isu1;
@@ -183,16 +182,16 @@ module book_core #(
     logic [IW-1:0]     ctx_inst;
 
     // B3 (delta) registers
-    logic              d3_v, d3_add, d3_cand, d3_spec, d3_gap, d3_cause_a;
+    logic              d3_v, d3_add, d3_cand, d3_spec, d3_gap;
     logic [IW-1:0]     d3_inst;
     logic              d3_side;
     logic [31:0]       d3_px, d3_amt;
     // T1 registers
-    logic              t1_v, t1_side, t1_cand, t1_spec, t1_gap, t1_cause_a, t1_inx;
+    logic              t1_v, t1_side, t1_cand, t1_spec, t1_gap, t1_inx;
     logic [IW-1:0]     t1_inst;
     logic [31:0]       t1_cpx;
     // T2 registers
-    logic              t2_v, t2_side, t2_cand, t2_spec, t2_gap, t2_cause_a, t2_inx;
+    logic              t2_v, t2_side, t2_cand, t2_spec, t2_gap, t2_inx;
     logic [IW-1:0]     t2_inst;
     logic [31:0]       t2_cpx;
     logic              t2a_v, t2b_v;
@@ -387,11 +386,11 @@ module book_core #(
             for (int g = 0; g < NG; g++) begin r_tob_px[g] <= '0; r_tob_sz[g] <= '0; end
             for (int i = 0; i < N_INST; i++) loc[i] <= '0;
             b2_cand <= 1'b0; b2_spec <= 1'b0; b2_gap <= 1'b0; b2_op <= '0; b2_inst <= '0; b2_sell <= 1'b0; b2_ref <= '0; b2_sh <= '0; b2_px <= '0; b2_addr <= '0;
-            d3_add <= 1'b0; d3_cand <= 1'b0; d3_spec <= 1'b0; d3_gap <= 1'b0; d3_cause_a <= 1'b0; d3_inst <= '0; d3_side <= 1'b0; d3_px <= '0; d3_amt <= '0;
-            t1_side <= 1'b0; t1_cand <= 1'b0; t1_spec <= 1'b0; t1_gap <= 1'b0; t1_cause_a <= 1'b0; t1_inx <= 1'b0; t1_inst <= '0; t1_cpx <= '0;
-            t2_side <= 1'b0; t2_cand <= 1'b0; t2_spec <= 1'b0; t2_gap <= 1'b0; t2_cause_a <= 1'b0; t2_inx <= 1'b0; t2_inst <= '0; t2_cpx <= '0;
+            d3_add <= 1'b0; d3_cand <= 1'b0; d3_spec <= 1'b0; d3_gap <= 1'b0; d3_inst <= '0; d3_side <= 1'b0; d3_px <= '0; d3_amt <= '0;
+            t1_side <= 1'b0; t1_cand <= 1'b0; t1_spec <= 1'b0; t1_gap <= 1'b0; t1_inx <= 1'b0; t1_inst <= '0; t1_cpx <= '0;
+            t2_side <= 1'b0; t2_cand <= 1'b0; t2_spec <= 1'b0; t2_gap <= 1'b0; t2_inx <= 1'b0; t2_inst <= '0; t2_cpx <= '0;
             t2a_v <= 1'b0; t2b_v <= 1'b0; t2a_px <= '0; t2a_sz <= '0; t2b_px <= '0; t2b_sz <= '0;
-            u1_nref <= '0; u1_sh <= '0; u1_px <= '0; u1_gap <= 1'b0;
+            u1_nref <= '0; u1_sh <= '0; u1_px <= '0;
             q0 <= '0; q1 <= '0;
             tu_inst <= '0; tu_side <= 1'b0; tu_px <= '0; tu_sz <= '0; tu_ok <= 1'b0; tu_cpx <= '0; tu_cand <= 1'b0; tu_spec <= 1'b0; tu_gapblk <= 1'b0; tu_inx <= 1'b0;
         end else begin
@@ -433,10 +432,10 @@ module book_core #(
                         q0 <= q1; q_cnt <= q_cnt - 2'd1;
                     end
                     if (b1_k == K_REP) begin
-                        u1_pend <= 1'b1; u1_nref <= b1_nref; u1_sh <= b1_sh; u1_px <= b1_px; u1_gap <= b1_gap;
+                        u1_pend <= 1'b1; u1_nref <= b1_nref; u1_sh <= b1_sh; u1_px <= b1_px;
                     end
                 end else if (in_take && b1_k == K_REP) begin
-                    u1_pend <= 1'b1; u1_nref <= b1_nref; u1_sh <= b1_sh; u1_px <= b1_px; u1_gap <= b1_gap;
+                    u1_pend <= 1'b1; u1_nref <= b1_nref; u1_sh <= b1_sh; u1_px <= b1_px;
                 end
                 // ---- B1 -> B2
                 b2_v <= b1_v;
@@ -451,16 +450,15 @@ module book_core #(
                 if (n_oover) c_oover <= c_oover + 32'd1;
                 d3_v <= dl_v; d3_add <= dl_add; d3_inst <= dl_inst; d3_side <= dl_side; d3_px <= dl_px; d3_amt <= dl_amt;
                 d3_cand <= b2_cand && b2_op == OP_ADD && dl_v && dl_add; d3_spec <= b2_spec && dl_v && dl_add; d3_gap <= b2_gap;
-                d3_cause_a <= (b2_op == OP_ADD);
                 // ---- B3: ladder updated above (generate); counters; inexact flags
                 if (ovf3)  c_lvovf  <= c_lvovf  + 32'd1;
                 if (miss3) c_lvmiss <= c_lvmiss + 32'd1;
                 for (int i = 0; i < N_INST; i++) if (inx_set[i]) inx_r[i] <= 1'b1;
                 t1_v <= d3_v; t1_side <= d3_side; t1_inst <= d3_inst; t1_cand <= d3_cand; t1_spec <= d3_spec; t1_gap <= d3_gap;
-                t1_cause_a <= d3_cause_a; t1_cpx <= d3_px; t1_inx <= inx_r[d3_inst] | ovf3;
+                t1_cpx <= d3_px; t1_inx <= inx_r[d3_inst] | ovf3;
                 // ---- T1 -> T2
                 t2_v <= t1_v; t2_side <= t1_side; t2_inst <= t1_inst; t2_cand <= t1_cand; t2_spec <= t1_spec; t2_gap <= t1_gap;
-                t2_cause_a <= t1_cause_a; t2_cpx <= t1_cpx; t2_inx <= t1_inx;
+                t2_cpx <= t1_cpx; t2_inx <= t1_inx;
                 t2a_v <= w2_v[0]; t2a_px <= w2_p[0]; t2a_sz <= w2_s[0];
                 t2b_v <= w2_v[1]; t2b_px <= w2_p[1]; t2b_sz <= w2_s[1];
                 // ---- T2: best level, top-of-book registers and update record

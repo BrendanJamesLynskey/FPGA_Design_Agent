@@ -26,7 +26,7 @@ class Cfg:
     n_inst: int = 4
     levels: int = 8
     ord_aw: int = 8
-    watch: tuple = ("AAA", "BBB", "CCC", "DDD")
+    watch: tuple = ("AAA", "BBB", "CCC", "DDD", "EEE", "FFF", "GGG", "HHH")
     thr: int = 1_000_000          # ask price at or below which a new sell order is a buy trigger (Price(4): 100.0000)
     qty: int = 100
     max_qty: int = 500

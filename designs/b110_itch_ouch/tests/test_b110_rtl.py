@@ -24,5 +24,13 @@ def run(name: str, testcase=None, params=None, extra=None) -> None:
     cocotb_run.run(name, "itch_ouch_top", [RTL / f for f in FILES], "b110_cocotb", HERE, parameters=params, testcase=testcase, extra_env=env)
 
 
-def test_main_stream() -> None:
-    run("b110_main", testcase="main_stream")
+def test_all_benches() -> None:
+    """Every cocotb test of the bench in one simulation (the default parameters N_INST 4, LEVELS 8, ORD_AW 8)."""
+    run("b110_all")
+
+
+def test_other_parameters() -> None:
+    """The same random session at other N_INST, LEVELS and ORD_AW (the model's configuration follows through B110_NINST, B110_LEVELS, B110_ORDAW)."""
+    for n, lv, aw in ((2, 4, 5), (3, 8, 6), (8, 8, 10)):
+        run(f"b110_p{n}_{lv}_{aw}", testcase="main_stream_params", params={"N_INST": n, "LEVELS": lv, "ORD_AW": aw},
+            extra={"B110_NINST": str(n), "B110_LEVELS": str(lv), "B110_ORDAW": str(aw)})

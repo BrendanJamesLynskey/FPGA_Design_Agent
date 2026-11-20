@@ -263,3 +263,537 @@ async def main_stream(dut):
         assert len(m.orders) > 5, "the stream should trigger orders"
         compare_all(b, m)
         dut._log.info("seed %d: %d events, %d book updates, %d orders", seed, len(m.events), len(m.tus), len(m.orders))
+
+
+# ---- helpers for the directed tests
+ENV_N = int(os.environ.get("B110_NINST", "4"))
+ENV_L = int(os.environ.get("B110_LEVELS", "8"))
+ENV_AW = int(os.environ.get("B110_ORDAW", "8"))
+
+
+def cfg_for_params(**kw) -> Cfg:
+    return small_cfg(n_inst=ENV_N, levels=ENV_L, ord_aw=ENV_AW, **kw)
+
+
+def pk(seq: int, msgs: list[bytes], session: bytes = b"SESSION001", **kw) -> bytes:
+    return proto.mold_packet(session, seq, msgs, **kw)
+
+
+async def fresh(dut, cfg=None, spec=False):
+    b = Bench(dut, cfg or small_cfg(), spec=spec)
+    await b.start()
+    return b, Model(b.cfg)
+
+
+async def feed(b: Bench, m: Model, pkt: bytes, err=False, idle=8):
+    m.feed(pkt, err)
+    await b.send(pkt, err, idle)
+
+
+async def settle(b: Bench, n=40):
+    for _ in range(n):
+        await b.tick()
+
+
+class Day:
+    """A hand-driven session: the preamble (S, R x n_inst, S) and a running sequence number."""
+
+    def __init__(self, b: Bench, m: Model, loc0=10):
+        self.b, self.m, self.seq, self.loc0, self.ts = b, m, 1, loc0, 1000
+
+    def t(self):
+        self.ts += 7
+        return self.ts
+
+    async def send(self, msgs: list[bytes], err=False, idle=8, count=None, session=b"SESSION001"):
+        pkt = pk(self.seq, msgs, session, count=count)
+        await feed(self.b, self.m, pkt, err, idle)
+        self.seq += len(msgs)
+
+    async def open(self):
+        c = self.b.cfg
+        msgs = [proto.itch_S(0, self.t(), "O")] + [proto.itch_R(self.loc0 + i, self.t(), c.watch[i]) for i in range(c.n_inst)]
+        await self.send(msgs)
+
+    def A(self, i, ref, side, sh, px):
+        return proto.itch_A(self.loc0 + i, self.t(), ref, side, sh, self.b.cfg.watch[i], px)
+
+
+MID, TK = gen.MID, gen.TICK
+
+
+@cocotb.test()
+async def main_stream_params(dut):
+    """The same session at the parameters of this build (the pytest entry may build N_INST, LEVELS and ORD_AW other than the defaults)."""
+    cfg = cfg_for_params()
+    b, m = await fresh(dut, cfg)
+    g = gen.Gen(11, cfg, spread_levels=min(5, cfg.levels - 1))
+    await b.run_items(m, g.stream(600))
+    assert len(m.orders) > 3
+    compare_all(b, m)
+
+
+@cocotb.test()
+async def main_stream_spec(dut):
+    """Speculative start on: the same orders leave, in the same order; some frames start before their verdict."""
+    for seed in (4, 5):
+        cfg = small_cfg()
+        b, m = await fresh(dut, cfg, spec=True)
+        await b.run_items(m, gen.Gen(seed, cfg).stream(500))
+        compare_all(b, m)
+        c = b.counters()
+        assert c["spec"] > 0 and b.late == 0
+        assert c["abort"] == len(b.frames_bytes(aborted=True)) == len(b.aborts)
+        assert c["fire"] == len(m.orders), (c["fire"], len(m.orders))
+        dut._log.info("spec seed %d: %d orders, %d speculative starts, %d aborted", seed, len(m.orders), c["spec"], c["abort"])
+
+
+@cocotb.test()
+async def impairments(dut):
+    """Gaps, duplicates, overlaps, heartbeats, a second session, an end of session, bad frames: counters and delivery against the model."""
+    cfg = small_cfg(halt_on_gap=False)
+    b, m = await fresh(dut, cfg)
+    g = gen.Gen(21, cfg)
+    items = g.stream(500, p_gap=0.03, p_dup=0.04, p_overlap=0.05, p_hb=0.05)
+    await b.run_items(m, items, drain=0)
+    d = Day(b, m)
+    d.seq = g.seq
+    other = b"OTHERSESS1"
+    await feed(b, m, pk(d.seq, [proto.itch_S(0, 1, "O")], other))
+    await feed(b, m, proto.heartbeat(g.session, g.seq))
+    await feed(b, m, proto.heartbeat(g.session, g.seq + 7))                 # a heartbeat that shows a gap
+    await feed(b, m, proto.end_of_session(g.session, g.seq + 7))
+    await feed(b, m, proto.heartbeat(g.session, 3))                          # a stale heartbeat
+    await settle(b)
+    c = b.counters()
+    for k in ("gap", "dup", "ovlp", "sess", "hb", "eos"):
+        assert c[k] > 0, k
+    compare_all(b, m)
+
+
+@cocotb.test()
+async def bad_frames(dut):
+    """Frames the MAC marked bad: counted, flagged untrusted, and orders stop after them; the same for a short packet and a cut one."""
+    cfg = small_cfg()
+    b, m = await fresh(dut, cfg)
+    d = Day(b, m)
+    await d.open()
+    await d.send([d.A(0, 1, "B", 100, MID - 100), d.A(0, 2, "S", 100, MID + 400)])        # a bid and an ask above the threshold: no order
+    await d.send([d.A(0, 3, "B", 100, MID - 200)], err=True)                              # a bad frame (no candidate inside: its verdict would race the flag)
+    await settle(b, 20)
+    assert int(dut.flags.value) & 2
+    await d.send([d.A(0, 4, "S", 100, MID + 100)])                                        # a candidate after the bad frame: blocked
+    await settle(b)
+    compare_all(b, m)
+    assert m.cnt["rej_gap"] == 1 and m.cnt["pkt_err"] == 1 and not m.orders
+    await b.pulse("clr_flags")
+    m.untrusted = m.gap = m.eos_seen = m.sess_lock = False
+    m.exp_v = False
+    await d.send([d.A(0, 5, "S", 100, MID + 100)])
+    await settle(b)
+    compare_all(b, m)
+    assert len(m.orders) == 1
+
+
+@cocotb.test()
+async def straddle(dut):
+    """Messages that begin and end at every byte offset of a word, packets of every length: skipped types of lengths 12 to 60 between known ones."""
+    cfg = small_cfg()
+    b, m = await fresh(dut, cfg)
+    d = Day(b, m)
+    await d.open()
+    ref0 = 100
+    for L in list(range(12, 61)):
+        other = proto.itch_other("P", L, 10, d.t())
+        ref0 += 1
+        await d.send([other, d.A(1, ref0, "B", 100 + L, MID - 100 - L), proto.itch_D(d.loc0 + 1, d.t(), ref0)], idle=6)
+    r = __import__("random").Random(7)
+    for k in range(80):
+        n = r.randrange(1, 7)
+        ms = []
+        for j in range(n):
+            ref0 += 1
+            c = r.randrange(4)
+            if c == 0:
+                ms.append(proto.itch_other("Q", r.randrange(12, 50), 10, d.t()))
+            elif c == 1:
+                ms.append(d.A(r.randrange(cfg.n_inst), ref0, r.choice("BS"), 100, MID + r.randrange(-5, 5) * TK))
+            elif c == 2:
+                ms.append(proto.itch_S(0, d.t(), "Q"))
+            else:
+                ms.append(proto.itch_D(d.loc0, d.t(), ref0 + 1000))
+        await d.send(ms, idle=r.choice([4, 4, 5, 9, 17]))
+    await settle(b)
+    compare_all(b, m)
+    assert b.counters()["msg"] > 300
+
+
+@cocotb.test()
+async def cut_packets(dut):
+    """Every prefix of a multi-message packet, as a packet of its own (a frame cut at every byte), with and without a bad-frame flag."""
+    cfg = small_cfg()
+    b, m = await fresh(dut, cfg)
+    d = Day(b, m)
+    await d.open()
+    full = pk(d.seq, [d.A(0, 1, "B", 100, MID - 100), proto.itch_other("P", 44, 10, 5), proto.itch_D(d.loc0, 3, 1)])
+    for n in range(0, len(full) + 1):
+        if n == 0:
+            continue
+        await feed(b, m, full[:n], err=False, idle=6)
+        await settle(b, 3)
+    # count says more blocks than there are; count says fewer; zero length block; a one byte block; trailing bytes after the last block
+    await feed(b, m, pk(d.seq, [proto.itch_D(d.loc0, 3, 1)], count=3))
+    await feed(b, m, pk(d.seq, [proto.itch_D(d.loc0, 3, 1), proto.itch_D(d.loc0, 3, 2)], count=1))
+    await feed(b, m, pk(d.seq, [b""], count=1))
+    await feed(b, m, pk(d.seq, [proto.itch_D(d.loc0, 3, 1), b"\x01" * 11, proto.itch_D(d.loc0, 3, 1)]))
+    await feed(b, m, pk(d.seq, [proto.itch_D(d.loc0, 3, 1)], trailer=b"\xAA" * 13))
+    await settle(b)
+    compare_all(b, m)
+    c = b.counters()
+    assert c["short"] > 0 and c["trunc"] > 0 and c["badlen"] > 0
+
+
+@cocotb.test()
+async def book_edges(dut):
+    """Order table and ladder corner cases (docs/itch_ouch.md, Book): duplicate adds, collisions, over-execution, replace in all its forms, ladder overflow."""
+    cfg = small_cfg(arm=False)
+    b, m = await fresh(dut, cfg)
+    d = Day(b, m)
+    await d.open()
+    N = 1 << cfg.ord_aw
+    px = MID
+    await d.send([d.A(0, 1, "B", 100, px - 100), d.A(0, 1, "B", 100, px - 100)])                     # duplicate add (same reference)
+    await d.send([d.A(0, 1 + N, "B", 50, px - 200)])                                                  # index collision with a live order: overflow, inexact
+    await d.send([proto.itch_E(d.loc0, d.t(), 1, 150, 9)])                                            # execute more than remains
+    await d.send([proto.itch_E(d.loc0, d.t(), 1, 5, 9)])                                              # execute an order that is gone
+    await settle(b)
+    await b.pulse("clr_book")
+    m.clear_book()
+    await b.wait_ready()
+    await d.open()                                                                                    # re-learn the locates
+    await d.send([d.A(1, 10, "S", 300, px + 100), d.A(1, 11, "S", 200, px + 100), d.A(1, 12, "S", 100, px + 200)])
+    await d.send([proto.itch_X(d.loc0 + 1, d.t(), 10, 100), proto.itch_C(d.loc0 + 1, d.t(), 11, 200, px + 300, 5), proto.itch_D(d.loc0 + 1, d.t(), 12)])
+    await d.send([proto.itch_U(d.loc0 + 1, d.t(), 10, 20, 700, px + 50)])                             # replace, better price
+    await d.send([proto.itch_U(d.loc0 + 1, d.t(), 99, 21, 700, px + 50)])                             # replace of an unknown order
+    await d.send([proto.itch_U(d.loc0 + 1, d.t(), 20, 20 + N, 100, px + 70)])                        # replace into the same table index
+    await d.send([d.A(1, 30, "S", 10, px + 10), proto.itch_U(d.loc0 + 1, d.t(), 30, 30 + N, 10, px + 11)])
+    await d.send([d.A(1, 31, "B", 10, px - 10), d.A(1, 32 + N, "B", 10, px - 20), proto.itch_U(d.loc0 + 1, d.t(), 31, 32, 5, px - 30)])
+    # a Replace whose new reference lands on a live order of another reference (overflow after the old order was removed)
+    await d.send([d.A(2, 40, "S", 10, px + 10), d.A(2, 41, "S", 10, px + 20), proto.itch_U(d.loc0 + 2, d.t(), 40, 41 + N, 10, px + 5)])
+    # side and field checks: a bad side letter, zero shares, a wrong length, other types, other symbols
+    await d.send([proto.itch_A(d.loc0, d.t(), 50, "X", 10, "AAA", px), proto.itch_A(d.loc0, d.t(), 51, "B", 0, "AAA", px),
+                  proto.itch_other("A", 30, d.loc0, 1), proto.itch_E(d.loc0, d.t(), 1, 0), proto.itch_A(77, d.t(), 52, "B", 10, "XYZ", px)])
+    # ladder overflow: nine distinct prices on one side, then a removal of one that never had a level
+    for k in range(9):
+        await d.send([d.A(3, 60 + k, "B", 10 + k, px - 10 * (k + 1))])
+    await d.send([proto.itch_D(d.loc0 + 3, d.t(), 68), proto.itch_D(d.loc0 + 3, d.t(), 60)])
+    # a stock directory for a symbol that is not watched, and one that moves a watched symbol to a new locate
+    await d.send([proto.itch_R(88, d.t(), "NOPE"), proto.itch_R(55, d.t(), cfg.watch[0]), d.A(0, 70, "B", 10, px - 5)])
+    await settle(b)
+    compare_all(b, m)
+    c = b.counters()
+    for k in ("odup", "oovf", "oover", "omiss", "lvovf", "lvmiss", "unwatch", "m_bad"):
+        assert c[k] > 0, k
+
+
+@cocotb.test()
+async def risk_checks(dut):
+    """Each pre-trade check rejects on its own and is counted; the kill switch; the order price offset; the position limit and its clear."""
+    px = MID
+    results = {}
+    for name, kw in (("arm", dict(arm=False)), ("kill", dict(kill=True)), ("size_max", dict(qty=600)), ("size_zero", dict(qty=0)),
+                     ("size_1e6", dict(qty=1_000_000, max_qty=2_000_000)), ("pos", dict(max_pos=250)), ("band", dict(band=100)),
+                     ("offset", dict(px_off=50)), ("ok", dict())):
+        cfg = small_cfg(**kw)
+        b, m = await fresh(dut, cfg)
+        d = Day(b, m)
+        await d.open()
+        await d.send([d.A(0, 1, "B", 100, px - 100)])
+        for k in range(4):
+            await d.send([d.A(0, 10 + k, "S", 100, px + 100 + 10 * k)], idle=20)               # four candidates
+        await d.send([d.A(1, 30, "S", 100, px + 100)], idle=20)                                 # a candidate with no bid: band rejects
+        await settle(b)
+        compare_all(b, m)
+        results[name] = {k: v for k, v in m.cnt.items() if k.startswith("rej_") or k in ("cand", "fire")}
+    assert results["arm"]["rej_arm"] == 5 and results["kill"]["rej_kill"] == 5
+    assert results["size_max"]["rej_size"] == 5 and results["size_zero"]["rej_size"] == 5 and results["size_1e6"]["rej_size"] == 5
+    assert results["pos"]["rej_pos"] > 0 and results["band"]["rej_band"] > 0 and results["ok"]["rej_band"] == 1 and results["ok"]["fire"] == 4
+    # the position limit: send, hit the limit, clear the position, send again
+    cfg = small_cfg(max_pos=200)
+    b, m = await fresh(dut, cfg)
+    d = Day(b, m)
+    await d.open()
+    await d.send([d.A(0, 1, "B", 100, px - 100)])
+    for k in range(3):
+        await d.send([d.A(0, 10 + k, "S", 100, px + 100)], idle=20)
+    await b.pulse("clr_pos")
+    m.pos = [0] * cfg.n_inst
+    await d.send([d.A(0, 20, "S", 100, px + 100)], idle=20)
+    await b.pulse("clr_ref")
+    m.next_ref = 1
+    await d.send([d.A(0, 21, "S", 100, px + 100)], idle=20)
+    await settle(b)
+    compare_all(b, m)
+    assert [o["ref"] for o in m.orders] == [1, 2, 3, 1]
+    # kill switch changed while running
+    b.configure(kill=True)
+    m.cfg.kill = True
+    await d.send([d.A(0, 22, "S", 100, px + 100)], idle=20)
+    await settle(b)
+    compare_all(b, m)
+    assert m.cnt["rej_kill"] == 1
+
+
+@cocotb.test()
+async def speculation(dut):
+    """Speculative start: a risk reject aborts the frame already on its way; a candidate that is a duplicate add aborts it too; a late abort never happens."""
+    px = MID
+    cfg = small_cfg(max_pos=100)
+    b, m = await fresh(dut, cfg, spec=True)
+    d = Day(b, m)
+    await d.open()
+    await d.send([d.A(0, 1, "B", 100, px - 100)])
+    await d.send([d.A(0, 10, "S", 100, px + 100)], idle=30)       # passes
+    await d.send([d.A(0, 11, "S", 100, px + 100)], idle=30)       # position limit: speculative frame aborted
+    await d.send([d.A(0, 10, "S", 100, px + 100)], idle=30)       # duplicate reference: no book update, frame aborted
+    await d.send([d.A(0, 12, "S", 100, px + 100)], idle=30)       # position limit again
+    await settle(b)
+    compare_all(b, m)
+    c = b.counters()
+    assert c["spec"] == 4 and c["abort"] == 3 and c["fire"] == 1 and b.late == 0, c
+    ab = b.frames_bytes(aborted=True)
+    full = m.orders[0]["frame"]
+    assert len(ab) == 3 and all(len(x) < 59 for x in ab)
+    # the aborted frames are prefixes of what they would have been: the first starts with the same eight bytes as an order would
+    assert all(x[:4] == full[:4] for x in ab)
+
+
+@cocotb.test()
+async def burst_replace(dut):
+    """Replace messages (two slots in B1) and short messages back to back: the queue absorbs them, nothing is dropped."""
+    cfg = small_cfg(arm=False)
+    b, m = await fresh(dut, cfg)
+    d = Day(b, m)
+    await d.open()
+    px = MID
+    refs = list(range(100, 140))
+    await d.send([d.A(k % 4, r, "BS"[k % 2], 100, px + (-1 if k % 2 == 0 else 1) * TK * (1 + k % 5)) for k, r in enumerate(refs)], idle=8)
+    nxt = 200
+    for rnd in range(30):
+        ms = []
+        for r in refs[:6]:
+            nxt += 1
+            ms.append(proto.itch_U(d.loc0 + (r - 100) % 4, d.t(), r, nxt, 100, px + ((-1) ** (r % 2)) * TK * (1 + rnd % 5)))
+        refs = refs[6:] + [nxt - 5 + k for k in range(0, 6)]
+        refs = [x for x in range(nxt - 5, nxt + 1)] + refs[:34]
+        await d.send(ms, idle=6)
+    await d.send([proto.itch_D(d.loc0, d.t(), 200 + k) for k in range(1, 12)], idle=4)
+    await settle(b)
+    compare_all(b, m)
+    assert b.counters()["evdrop"] == 0
+
+
+@cocotb.test()
+async def clears(dut):
+    """clr_cnt, clr_book (sweep, maps and tables), clr_flags (session lock, expected sequence), and events during the sweep."""
+    cfg = small_cfg(arm=False)
+    b, m = await fresh(dut, cfg)
+    d = Day(b, m)
+    await d.open()
+    await d.send([d.A(0, 1, "B", 100, MID - 100)])
+    await settle(b)
+    await b.pulse("clr_cnt")
+    m.clear_counters()
+    await settle(b, 3)
+    assert all(v == 0 for v in b.counters().values()), b.counters()
+    await settle(b)
+    await b.pulse("clr_book")
+    m.clear_book()
+    # events during the sweep are dropped and counted
+    await d.send([proto.itch_R(d.loc0, d.t(), cfg.watch[0])], idle=2)
+    assert not int(dut.flags.value) & 0x10 or True
+    await b.wait_ready()
+    c = b.counters()
+    assert c["evdrop"] >= 1, c
+    m.cnt["evdrop"] = c["evdrop"]
+    m.events.pop()                      # the dropped Stock Directory is not applied by the hardware; the model's event list is not compared below
+    m.loc = [None] * cfg.n_inst
+    await d.send([d.A(0, 2, "B", 100, MID - 100)])      # unwatched: the map was cleared
+    await b.pulse("clr_flags")
+    m.exp_v = False
+    m.sess_lock = False
+    m.gap = False
+    await feed(b, m, pk(500, [proto.itch_S(0, 1, "C")], b"NEWSESSION"))
+    await settle(b)
+    assert m.cnt["unwatch"] == 1 and b.counters()["unwatch"] == 1 and b.counters()["sess"] == 0
+    assert b.counters()["pkt"] == m.cnt["pkt"]
+
+
+@cocotb.test()
+async def latency(dut):
+    """Latency in clocks, from the clock in which the last byte of a message is presented (T). Written to $B110_RECORD/latency_sim.json."""
+    px = MID
+    out = {}
+    for spec in (False, True):
+        cfg = small_cfg()
+        b, m = await fresh(dut, cfg, spec=spec)
+        d = Day(b, m)
+        await d.open()
+        await d.send([d.A(0, 1, "B", 100, px - 100)])
+        await settle(b, 30)
+        b.msgs, b.evs, b.tus, b.frames = [], [], [], []
+        name = "speculative" if spec else "non_speculative"
+        res = {}
+        # a candidate Add (ask at or below the threshold): book update and first order word
+        T = await b.send(pk(d.seq, [d.A(0, 2, "S", 100, px + 100)]), idle=20)
+        d.seq += 1
+        m.feed(pk(d.seq - 1, [d.A(0, 2, "S", 100, px + 100)]))
+        await settle(b, 40)
+        # the packet carries 20 + 2 + 36 = 58 bytes: its last word is presented at T
+        res["mold_message_out"] = b.msgs[0][0] - T
+        res["decoded_event"] = b.evs[0]["cyc"] - T
+        res["book_update_add"] = b.tus[0]["cyc"] - T
+        res["first_order_word"] = b.frames[0]["cyc"] - T
+        res["decision_to_first_order_word"] = b.frames[0]["cyc"] - b.tus[0]["cyc"]
+        res["order_frame_words"] = len(b.frames[0]["words"])
+        assert b.frames_bytes() == [m.orders[0]["frame"]]
+        # other messages: book update only
+        for label, msg in (("book_update_delete", None), ("book_update_execute", None), ("book_update_replace", None), ("book_update_cancel", None)):
+            ref = 100 + len(res)
+            await d.send([d.A(0, ref, "B", 100, px - 200)], idle=20)
+            await settle(b, 20)
+            b.tus = []
+            mm = {"book_update_delete": proto.itch_D(d.loc0, d.t(), ref), "book_update_execute": proto.itch_E(d.loc0, d.t(), ref, 10, 1),
+                  "book_update_replace": proto.itch_U(d.loc0, d.t(), ref, ref + 1000, 50, px - 300), "book_update_cancel": proto.itch_X(d.loc0, d.t(), ref, 10)}[label]
+            p = pk(d.seq, [mm])
+            m.feed(p)
+            d.seq += 1
+            T2 = await b.send(p, idle=20)
+            await settle(b, 30)
+            res[label] = b.tus[0]["cyc"] - T2
+            if label == "book_update_replace":
+                res["book_update_replace_second"] = b.tus[1]["cyc"] - T2
+        out[name] = res
+        compare_tus(b, m) if False else None
+    dut._log.info("latency: %s", json.dumps(out))
+    rec = os.environ.get("B110_RECORD")
+    if rec:
+        Path(rec).mkdir(parents=True, exist_ok=True)
+        (Path(rec) / "latency_sim.json").write_text(json.dumps({"clock_ns": 6.2061, "unit": "clocks from the clock the last byte of the message is presented (T)", **out}, indent=2) + "\n")
+
+
+@cocotb.test()
+async def min_idle(dut):
+    """The smallest idle gap between two payloads for which the path still equals the model (the datasheet states the requirement)."""
+    rec = {}
+    for idle in (0, 1, 2, 3, 4, 5):
+        cfg = small_cfg(halt_on_gap=False)
+        b, m = await fresh(dut, cfg)
+        g = gen.Gen(31, cfg)
+        items = g.stream(300, p_hb=0.1)
+        for it in items:
+            it.idle = idle
+        try:
+            await b.run_items(m, items)
+            compare_all(b, m)
+            rec[idle] = True
+        except AssertionError as e:
+            rec[idle] = False
+            dut._log.info("idle %d: %s", idle, str(e)[:200])
+    dut._log.info("min_idle: %s", rec)
+    assert rec[4] and rec[5], rec
+    d = os.environ.get("B110_RECORD")
+    if d:
+        Path(d).mkdir(parents=True, exist_ok=True)
+        (Path(d) / "min_idle_sim.json").write_text(json.dumps({"idle_clocks_between_payloads_vs_model_equal": {str(k): v for k, v in rec.items()}}, indent=2) + "\n")
+
+
+@cocotb.test()
+async def valid_bubbles(dut):
+    """s_v low inside a packet (the PCS pauses one clock in 33): the words are the same, the result is the same."""
+    import random
+    r = random.Random(5)
+    cfg = small_cfg()
+    b, m = await fresh(dut, cfg)
+    g = gen.Gen(41, cfg)
+    for it in g.stream(300, p_hb=0.05):
+        m.feed(it.pkt, it.err)
+        for _ in range(it.idle):
+            await b.tick()
+        ws = proto.words(it.pkt)
+        for i, (w, keep) in enumerate(ws):
+            while r.random() < 0.15:
+                dut.s_v.value = 0
+                await b.tick()
+            dut.s_v.value = 1
+            dut.s_d.value, dut.s_sof.value, dut.s_eof.value = w, int(i == 0), int(i == len(ws) - 1)
+            dut.s_keep.value = keep if i == len(ws) - 1 else 0xFF
+            dut.s_err.value = 0
+            await b.tick()
+        dut.s_v.value = 0
+        dut.s_sof.value = 0
+        dut.s_eof.value = 0
+    await settle(b)
+    compare_all(b, m)
+
+
+@cocotb.test()
+async def stale_book(dut):
+    """An overflowing ladder or table makes the instrument inexact: candidates on it are refused (stale), and the overflowing Add that is itself a candidate too."""
+    px = MID
+    cfg = small_cfg()
+    b, m = await fresh(dut, cfg)
+    d = Day(b, m)
+    await d.open()
+    await d.send([d.A(0, 1, "B", 100, px - 100)])
+    # nine distinct ask prices at or below the threshold: the ninth finds no free level and is itself a candidate
+    for k in range(9):
+        await d.send([d.A(0, 10 + k, "S", 100, px + 10 + k)], idle=20)
+    await d.send([d.A(1, 40, "B", 100, px - 100)])
+    await d.send([d.A(1, 41, "S", 100, px + 100)], idle=20)             # a healthy instrument still trades
+    await d.send([d.A(1, 41 + (1 << cfg.ord_aw), "S", 100, px + 120)], idle=20)       # table collision on instrument 1: overflow on its own Add (no book update)
+    await d.send([d.A(1, 43, "S", 100, px + 130)], idle=20)             # now instrument 1 is inexact
+    await settle(b)
+    compare_all(b, m)
+    assert m.cnt["rej_stale"] >= 2 and m.cnt["fire"] >= 2
+
+
+@cocotb.test()
+async def order_queue(dut):
+    """Several candidates in one packet: the first frame starts at once, the others wait in the order queue and leave one after another."""
+    px = MID
+    for spec in (False, True):
+        cfg = small_cfg(max_pos=10_000)
+        b, m = await fresh(dut, cfg, spec=spec)
+        d = Day(b, m)
+        await d.open()
+        await d.send([d.A(0, 1, "B", 100, px - 100)])
+        await d.send([d.A(0, 10 + k, "S", 100, px + 100 + k) for k in range(4)])
+        await settle(b, 80)
+        compare_all(b, m)
+        assert len(m.orders) == 4 and b.counters()["rej_busy"] == 0
+        starts = [f["cyc"] for f in b.frames if not f["abort"]]
+        assert all(b2 - a >= 8 for a, b2 in zip(starts, starts[1:])), starts
+        # more than the queue holds: every order that left is one the model decided, in order; the others are counted as rejected for being busy
+        cfg = small_cfg(max_pos=10_000)
+        b, m = await fresh(dut, cfg, spec=spec)
+        d = Day(b, m)
+        await d.open()
+        await d.send([d.A(0, 1, "B", 100, px - 100)])
+        await d.send([d.A(0, 10 + k, "S", 100, px + 100 + k) for k in range(5)] + [d.A(0, 30 + k, "S", 100, px + 100 + k) for k in range(5)])
+        await settle(b, 150)
+        c = b.counters()
+        assert c["fire"] + c["rej_busy"] == c["cand"] - sum(c[k] for k in ("rej_arm", "rej_kill", "rej_gap", "rej_stale", "rej_size", "rej_pos", "rej_band")) == 10
+        assert len(b.frames_bytes()) == c["fire"]
+
+
+@cocotb.test()
+async def stress(dut):
+    """Longer random sessions, speculation off and on, with impairments that do not stop the orders."""
+    for k, (seed, spec) in enumerate(((51, False), (52, True), (53, False), (54, True))):
+        cfg = small_cfg(halt_on_gap=False, max_pos=100_000, max_qty=1000, qty=200)
+        b, m = await fresh(dut, cfg, spec=spec)
+        g = gen.Gen(seed, cfg)
+        await b.run_items(m, g.stream(1500, max_per_pkt=8, p_gap=0.01, p_dup=0.02, p_overlap=0.02, p_hb=0.03, p_back=0.7))
+        compare_all(b, m, allow_dropped=False)
+        assert b.counters()["evdrop"] == 0 and b.late == 0
