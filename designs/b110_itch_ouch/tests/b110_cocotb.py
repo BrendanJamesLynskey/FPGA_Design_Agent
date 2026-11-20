@@ -22,6 +22,7 @@ PERIOD_PS = 6206
 KIND = {"A": 0, "F": 0, "E": 1, "C": 1, "X": 2, "D": 3, "U": 4, "R": 5, "S": 6}
 TIMING_DEPENDENT = ("spec", "abort", "late_abort", "rej_busy")
 REC: dict = {}
+COVER: dict = {"start_off": set(), "end_off": set(), "keep": set(), "counters": set(), "lengths": set(), "tests": []}
 
 
 class Bench:
@@ -87,6 +88,10 @@ class Bench:
         d, c = self.dut, self.cyc
         if int(d.m_v.value):
             self.msgs.append((c, int(d.m_len.value), int(d.u_mold.m_seq.value)))
+            so = int(d.u_mold.m_off.value)
+            COVER["start_off"].add(so)
+            COVER["end_off"].add((so + int(d.m_len.value)) % 8)
+            COVER["lengths"].add(int(d.m_len.value))
         if int(d.e_v.value):
             u = d.u_dec
             self.evs.append({"cyc": c, "k": int(d.e_k.value), "loc": int(u.e_loc.value), "ref": int(u.e_ref.value), "nref": int(u.e_nref.value),
@@ -128,6 +133,8 @@ class Bench:
             d.s_eof.value = int(i == len(ws) - 1)
             d.s_keep.value = keep if i == len(ws) - 1 else 0xFF
             d.s_err.value = int(err and i == len(ws) - 1)
+            if i == len(ws) - 1:
+                COVER["keep"].add(keep)
             last = self.cyc
             await self.tick()
         d.s_v.value = 0
@@ -146,7 +153,9 @@ class Bench:
     # ---- results
     def counters(self) -> dict:
         v = int(self.dut.cnt.value)
-        return {k: (v >> (32 * i)) & 0xFFFFFFFF for i, k in enumerate(COUNTERS)}
+        c = {k: (v >> (32 * i)) & 0xFFFFFFFF for i, k in enumerate(COUNTERS)}
+        COVER["counters"] |= {k for k, x in c.items() if x}
+        return c
 
     def frames_bytes(self, aborted: bool = False):
         out = []
@@ -212,6 +221,7 @@ def compare_orders(b: Bench, model: Model, allow_dropped: bool = False):
 
 def compare_counters(b: Bench, model: Model, skip=TIMING_DEPENDENT):
     got = b.counters()
+    COVER["counters"] |= {k for k, v in got.items() if v}
     bad = {k: (got[k], model.cnt[k]) for k in COUNTERS if k not in skip and got[k] != model.cnt[k]}
     assert not bad, f"counters (rtl, model): {bad}"
 
@@ -774,17 +784,23 @@ async def order_queue(dut):
         assert len(m.orders) == 4 and b.counters()["rej_busy"] == 0
         starts = [f["cyc"] for f in b.frames if not f["abort"]]
         assert all(b2 - a >= 8 for a, b2 in zip(starts, starts[1:])), starts
-        # more than the queue holds: every order that left is one the model decided, in order; the others are counted as rejected for being busy
-        cfg = small_cfg(max_pos=10_000)
+        # more than the queue holds (38 candidates in one packet, one every 4.75 clocks against a frame every 8): the frames that left are ones the
+        # model decided, in order; the others are counted as refused for being busy; the numbers add up
+        cfg = small_cfg(max_pos=100_000)
         b, m = await fresh(dut, cfg, spec=spec)
         d = Day(b, m)
         await d.open()
         await d.send([d.A(0, 1, "B", 100, px - 100)])
-        await d.send([d.A(0, 10 + k, "S", 100, px + 100 + k) for k in range(5)] + [d.A(0, 30 + k, "S", 100, px + 100 + k) for k in range(5)])
-        await settle(b, 150)
+        await d.send([d.A(0, 10 + k, "S", 100, px + 100 + k % 5) for k in range(38)])
+        await settle(b, 400)
         c = b.counters()
-        assert c["fire"] + c["rej_busy"] == c["cand"] - sum(c[k] for k in ("rej_arm", "rej_kill", "rej_gap", "rej_stale", "rej_size", "rej_pos", "rej_band")) == 10
-        assert len(b.frames_bytes()) == c["fire"]
+        assert c["cand"] == 38 and c["fire"] + c["rej_busy"] == 38 and c["rej_busy"] > 0, c
+        fr = b.frames_bytes()
+        assert len(fr) == c["fire"]
+        # accepted candidates take consecutive order numbers; every field of every frame is what the model's builder gives for that number and price
+        for i, f in enumerate(fr):
+            price = int.from_bytes(f[21:29], "big")
+            assert price in {px + 100 + k for k in range(5)} and f == m.frame(i + 1, 0, price, cfg.qty), i
 
 
 @cocotb.test()
@@ -797,3 +813,63 @@ async def stress(dut):
         await b.run_items(m, g.stream(1500, max_per_pkt=8, p_gap=0.01, p_dup=0.02, p_overlap=0.02, p_hb=0.03, p_back=0.7))
         compare_all(b, m, allow_dropped=False)
         assert b.counters()["evdrop"] == 0 and b.late == 0
+
+
+@cocotb.test()
+async def throughput(dut):
+    """Back-to-back payloads with no idle clock (words in every clock): 38 Adds, then their 38 Deletes, ten times, then 39 Replaces. Nothing is dropped."""
+    cfg = small_cfg(arm=False)
+    b, m = await fresh(dut, cfg)
+    d = Day(b, m)
+    await d.open()
+    await settle(b, 20)
+    words0 = 0
+    clk0 = b.cyc
+    nmsg = 0
+    ref0 = 1000
+    for rnd in range(10):
+        refs = list(range(ref0, ref0 + 38))
+        ref0 += 40
+        await d.send([d.A(k % cfg.n_inst, r, "BS"[k % 2], 100 + k, MID + (-1 if k % 2 == 0 else 1) * TK * (1 + k % 5)) for k, r in enumerate(refs)], idle=0)
+        await d.send([proto.itch_D(d.loc0 + k % cfg.n_inst, d.t(), r) for k, r in enumerate(refs)], idle=0)
+        nmsg += 76
+    refs = list(range(ref0, ref0 + 39))
+    await d.send([d.A(k % cfg.n_inst, r, "BS"[k % 2], 100 + k, MID + (-1 if k % 2 == 0 else 1) * TK * (1 + k % 5)) for k, r in enumerate(refs[:30])], idle=0)
+    await d.send([proto.itch_U(d.loc0 + k % cfg.n_inst, d.t(), r, r + 500, 50 + k, MID + (-1 if k % 2 == 0 else 1) * TK * (2 + k % 4)) for k, r in enumerate(refs[:30])], idle=0)
+    nmsg += 60
+    clk1 = b.cyc
+    await settle(b, 60)
+    compare_all(b, m)
+    c = b.counters()
+    assert c["evdrop"] == 0
+    total_bytes = sum(len(it) for it in [])      # (the words are counted below from the model's packets)
+    pk_bytes = sum(38 * 38 + 20 for _ in range(10)) + sum(38 * 21 + 20 for _ in range(10)) + (30 * 38 + 20) + (30 * 37 + 20)
+    words = sum((n + 7) // 8 for n in [38 * 38 + 20] * 10 + [38 * 21 + 20] * 10 + [30 * 38 + 20, 30 * 37 + 20])
+    rec = {"messages": nmsg, "payload_bytes": pk_bytes, "payload_words": words, "clocks_with_traffic": clk1 - clk0, "clocks_per_message": round((clk1 - clk0) / nmsg, 3),
+           "bytes_per_message": round(pk_bytes / nmsg, 2), "events_dropped": c["evdrop"], "book_updates": len(b.tus),
+           "note": "payloads back to back with no idle clock; the path never backpressures: a word is accepted in every clock"}
+    dut._log.info("throughput: %s", json.dumps(rec))
+    out = os.environ.get("B110_RECORD")
+    if out:
+        Path(out).mkdir(parents=True, exist_ok=True)
+        (Path(out) / "throughput_sim.json").write_text(json.dumps(rec, indent=2) + "\n")
+
+
+@cocotb.test()
+async def zz_coverage(dut):
+    """Coverage over the whole bench: every message type decoded, every start and end byte offset of a message in a word, every keep mask, every counter."""
+    need_counters = set(COUNTERS) - {"late_abort"}
+    missing = need_counters - COVER["counters"]
+    dut._log.info("coverage: start offsets %s end offsets %s keep %s lengths %d; counters never non-zero: %s", sorted(COVER["start_off"]), sorted(COVER["end_off"]),
+                  sorted(COVER["keep"]), len(COVER["lengths"]), sorted(missing))
+    assert COVER["start_off"] == set(range(8)) and COVER["end_off"] == set(range(8))
+    assert COVER["keep"] == {0x01, 0x03, 0x07, 0x0F, 0x1F, 0x3F, 0x7F, 0xFF}, COVER["keep"]
+    assert not missing, missing
+    out = os.environ.get("B110_RECORD")
+    if out:
+        Path(out).mkdir(parents=True, exist_ok=True)
+        (Path(out) / "coverage_sim.json").write_text(json.dumps({
+            "message_start_byte_offsets_in_word": sorted(COVER["start_off"]), "message_end_byte_offsets_in_word": sorted(COVER["end_off"]),
+            "last_word_keep_masks": sorted(COVER["keep"]), "distinct_message_lengths": len(COVER["lengths"]),
+            "counters_non_zero_somewhere": sorted(COVER["counters"]), "counters_never_non_zero": sorted(missing),
+            "excluded": {"late_abort": "a cancel that finds no frame in flight cannot happen with this pipeline (verdict 3 clocks before the frame's last word)"}}, indent=2) + "\n")

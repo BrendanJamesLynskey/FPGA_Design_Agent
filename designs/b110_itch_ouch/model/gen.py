@@ -65,35 +65,39 @@ class Gen:
         return self.r.randrange(0, c.n_inst)
 
     def one(self) -> bytes:
+        """One message of the mix: about 38% adds, 36% deletes, 10% replaces, 5% cancels, 5% executes, 2% executes with price, and a few others
+        (other message types, orders of other symbols, an unknown reference, a system event). Live orders are capped and aged so that the table
+        never sees two live references with the same index."""
         r = self.r
-        c = self.cfg
-        x = r.random()
         live = list(self.live)
-        old = [k for k in live if k < self.ref - self.window]          # keep live orders inside the order table's index window
+        old = [k for k in live if k < self.ref - self.window]
         if old:
             ref = old[0]
             o = self.live.pop(ref)
             return proto.itch_D(self.loc0 + o["inst"], self._t(), ref)
-        if x < 0.40 or (not live and x < 0.95) or len(live) < 4:
+        x = r.random()
+        if len(live) < 4:
+            x = 0.0
+        elif len(live) > self.max_live:
+            x = 0.45 + r.random() * 0.1
+        if x < 0.38:
             return self._add()
-        if len(live) > self.max_live:
-            x = 0.60 + r.random() * 0.1            # prune: delete
-        if x < 0.55:
-            return self._exec()
-        if x < 0.62:
-            return self._exec(price=True)
-        if x < 0.72:
-            return self._cancel()
-        if x < 0.86:
+        if x < 0.74:
             return self._delete()
-        if x < 0.94:
+        if x < 0.84:
             return self._replace()
-        if x < 0.955:
-            return proto.itch_other(r.choice("PQHYLVWKJhBINpO"[:8]), r.choice([44, 40, 25, 20, 26, 35, 12, 50]), self.loc0, self._t())
-        if x < 0.975:                                    # an order of another instrument (unwatched locate)
+        if x < 0.89:
+            return self._cancel()
+        if x < 0.94:
+            return self._exec()
+        if x < 0.96:
+            return self._exec(price=True)
+        if x < 0.975:
+            return proto.itch_other(r.choice("PQHYLVWK"), r.choice([44, 40, 25, 20, 26, 35, 12, 28]), self.loc0, self._t())
+        if x < 0.985:                                    # an order of another instrument (unwatched locate)
             ref = self._newref()
             return proto.itch_A(95, self._t(), ref, r.choice("BS"), r.randrange(1, 500), "OTHER", self.mid + TICK * r.randrange(-8, 9))
-        if x < 0.985:                                    # an unknown order reference of a watched instrument
+        if x < 0.995:                                    # an unknown order reference of a watched instrument
             return proto.itch_D(self.loc0 + self._inst(), self._t(), 5_000_000 + r.randrange(0, 1000))
         return proto.itch_S(0, self._t(), r.choice("ES"))
 
