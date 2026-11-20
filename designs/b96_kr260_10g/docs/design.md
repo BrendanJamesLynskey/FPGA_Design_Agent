@@ -450,7 +450,7 @@ Both GT elastic buffers (TX and RX) bypassed on top of build `rm_gp`; everything
 
 ### 12.1 Reset drive and alignment timeout with retry (brief 96F1b, 2026-11-20)
 
-Build `rm_gp_bypass` only; the default build and `rm_gp` are unchanged. `rm_gp_bypass/rtl/gt_bp_ctl.sv` wraps each direction's buffer-bypass controller (and `gt_bp_gate`). It follows the Wizard's generated example design (read in 96F2: PG182, the example's top and init files; the generated files are AMD's and are not committed).
+Build `rm_gp_bypass` only; the default build and `rm_gp` are unchanged. `rm_gp_bypass/rtl/gt_bp_ctl.sv` wraps each direction's buffer-bypass controller (and `gt_bp_gate`). It follows the Wizard's generated example design (PG182; the example's top and init files were generated and read in brief 96F2, whose note is `designs/b96_kr260_10g/docs/loop_timing_sources.md` section 2 on branch `b96f2-sources`, not yet on main; the generated files are AMD's and are not committed). The citation for leaving out AMD's RX term is that note's reading of the comment in AMD's generated example (the RX controller's reset also includes the TX controller's done "for this loopback configuration").
 
 | Behaviour | What it does | Why / where it differs from AMD's example |
 |---|---|---|
