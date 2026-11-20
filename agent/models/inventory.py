@@ -58,6 +58,8 @@ SITES: list[dict[str, object]] = [
      "before": "the script's MODEL constant (Claude Code arm); a recorded experiment"},
     {"file": "flow/options/generate.py", "fn": "improve (agent improve)", "purposes": ["options"], "needs": "text",
      "prompts": ["graph/options/system", "graph/options/user", "graph/options/repair"], "before": "new in brief 104"},
+    {"file": "flow/doc_crossread.py", "fn": "UsageMeter (the blind reader)", "purposes": ["doc_crossread"], "needs": "text",
+     "prompts": ["graph/doc_crossread/system", "graph/doc_crossread/user", "graph/doc_crossread/repair"], "before": "new in brief 114"},
     {"file": "agent/models/resolver.py", "fn": "Resolver.probe (agent models check --probe)", "purposes": ["*"], "needs": "chat", "prompts": [],
      "before": "new in brief 108"},
 ]
