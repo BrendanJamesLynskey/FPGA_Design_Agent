@@ -136,6 +136,11 @@ def main() -> None:
         out["features"] = ml_features(t)
         if out["features"]["ml_stage"] and out["features"]["ml_id_ok"]:
             t.wr(ML_CTRL, 0x2)                                  # shadow mode, state and counters clear (the reset value of the mode)
+        if not (out["features"]["ml_stage"] and out["features"]["ml_id_ok"]):      # ABORT before the laser is ever switched on
+            out["verdict"] = verdict({}, None, None, out["features"])
+            out["conditions_end"] = pp.safe_conditions(t)
+            print(json.dumps(out, indent=1, default=str))
+            return
         res = bb.run_all(t, a.lock_text, a.out, cable_loop_m=a.loop_m, n_restarts=a.restarts)
         sf = res.get("safety", {})
         out.update({"id": res.get("id"), "polarity_ok": res.get("polarity_ok"), "link_up": res.get("link_up"), "safety_ok": sf.get("ok", False),

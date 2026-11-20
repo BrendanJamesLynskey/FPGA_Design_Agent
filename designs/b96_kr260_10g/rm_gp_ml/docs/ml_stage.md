@@ -89,14 +89,14 @@ clocks of 6.2058 ns; price word on the GT receive port to the order's start bloc
 | counterfactual: held 2 clocks | 14.93 | +2.0 |
 
 The receive-start path (what the board's E stamps) and D move only in the counterfactual rows. **The stage costs no clock** because its class is ready before the price word (section 4); the counterfactual
-rows show that the measurement would see a clock if there were one (the 0.1 over 1.0 is the gearbox's one-in-33 pause meeting the held order). The simulated tick-to-trade of the control, 12.93, is the 96E figure (12.9).
+rows show that the measurement would see a clock if there were one (the 0.1 over 1.0 is probably the gearbox's one-in-33 pause meeting the held order; not separately measured). The simulated tick-to-trade of the control, 12.93, is the 96E figure (12.9).
 
 **Bit-exactness** (`results/b113/twin/`): a 370-frame mixed synthetic feed (the brief 87 generator and a stress set; 305 good frames; bad FCS, a frame longer than its IPv4 length, other instruments, two-message frames, a wrong
 port, a wrong header) is injected into the whole core. For each of the 350 frames the rule path accepts, the 38-bit feature vector, the class, the rule's hit, the decision and the veto equal the Python twin's (0 mismatches);
 the order count (25 in veto mode, 78 in shadow mode) and every stage counter equal the twin's. Run at two receive-clock phases in veto mode and one in shadow mode. The unmodified `rm_gp` core on the same stream sends the same
 78 orders as the stage in shadow mode. The board's own stream (50 generator frames through the near-end loop, instrument 1) gives the counters the board driver predicts (49 down, 1 up; veto mode sends 1 order, shadow mode 50).
-`ml_stage` alone against the twin in Icarus (CI): the same equality plus three seeded faults that must fail (`tests/test_b113_stage_rtl.py`). Safety counters (poisoned, dropped, underrun, late, stale, frame errors, buffer
-overflow) 0 in every run.
+`ml_stage` alone against the twin in Icarus (CI): the same equality plus three seeded faults that must fail (`tests/test_b113_stage_rtl.py`). Safety counters (dropped, underrun, late, stale, frame errors, buffer
+overflow) 0 in every run; `poisoned` is 0 on the board's stream and 1 to 3 on the mixed feed, where a rule hit in a bad-FCS frame sends an order with a deliberately wrong FCS (the design's fail-closed behaviour).
 
 **Implementation for the KR260** (Vivado 2026.1, `xck26-sfvc784-2LV-c`, one thread, 6 GiB scope, 0 cap hits, 2,219 s; `results/b113/builds/rm_gp_ml/`):
 

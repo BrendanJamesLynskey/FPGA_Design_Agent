@@ -36,7 +36,7 @@ phases**: change 0.00 clocks) and the Python twin for the counters.
 - **PASS:** all of it, with E and L within 1.0 clock of the reference and every stage counter equal to the twin's.
 
 ## Recorded, not judged
-E, L, D spread across restarts; lock clocks; the stage's last feature word (MLV11, MLV12) and book view (MLV13) for the last run; the lead correction applied; the order count of each veto run.
+D (L minus 2E, from the medians; predicted 12.0, so it is not separately judged: it moves only if E or L does), E, L, D spread across restarts; lock clocks; the stage's last feature word (MLV11, MLV12) and book view (MLV13) for the last run; the lead correction applied; the order count of each veto run.
 
 ## Not tested here
 A feed that is not the generator's (the board has no other source: the model is bit-exact against the twin on a 350-frame mixed synthetic feed in simulation, `results/b113/twin/`), real-offset partners,
