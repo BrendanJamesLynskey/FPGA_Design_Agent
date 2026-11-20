@@ -58,3 +58,29 @@ Schematics: Yosys with the slang front end through `flow/checks/elab.py` (XPM ma
 `netlistsvg` when installed (`FDA_NETLISTSVG`, `PATH`, or `~/.local/opt/netlistsvg`; it is not installed in a fixed place, install it with
 `npm install netlistsvg`) and otherwise by a plain built-in drawing. Modules over 400 cells at one level are not drawn. It is the module as written in
 today's tree with default parameters, not the netlist Vivado made.
+
+## Records
+
+- `b2_mic_pdm/` and `b96_rm_gp_bypass/`: for each trial, `INSPECT.md` (what each checkpoint holds and which Vivado view answers which question),
+  `INSPECT_STAMP.txt` (build stamp, build ID and git commit the checkpoints came from), `verify.json` and `verify.log` (the batch run that loaded every
+  checkpoint and elaborated the RTL, with the WNS read from each).
+
+## Reproduce
+
+```
+python -m flow inspect designs/b2_mic_pdm --verify --rtl           # needs a finished build and a heavy slot for the Vivado part
+python -m flow inspect designs/b96_kr260_10g/rm_gp_bypass --no-project   # browser views only, no Vivado
+python -m pytest -q flow/tests/test_118_inspect.py
+```
+
+Any Vivado use takes a heavy slot (`FDA_HEAVY_SLOT` naming a held lock file, honouring `FDA_VIVADO_MAX`) and runs in a 6 GB scope.
+
+## Known gaps and limits
+
+- Vivado 2026.1 does not attach a `.dcp` to a project as a run result (tested); the generated `open_<stage>.tcl` scripts open each checkpoint with the
+  project open instead (about 38 s and 3.5 GB for the 10G routed checkpoint).
+- The GUI launch (`--open`) is not verified (no screen capture on this machine).
+- `netlistsvg` has no fixed install location; without it a plain built-in drawing is used. Schematics are of today's RTL, one level deep, default
+  parameters; modules over 400 cells at one level are skipped.
+- A build-cache hit or a resume keeps the earlier build's checkpoints. `FDA_INSPECT_CKPTS=1` (post_opt and post_place checkpoints) was timed only on
+  `b2_mic_pdm`.

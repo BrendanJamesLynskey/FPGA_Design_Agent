@@ -1,0 +1,1843 @@
+{
+ "schema": "fda-strategy-record/1",
+ "request": "lower latency",
+ "mode": "new",
+ "blind": false,
+ "analysis_hash": "0e7ce05e9a77a97f835db2f78c88c19566da6faf09d861fb2ae836dbba8643b0",
+ "analysis_sources": [
+  {
+   "file": "results/104_strategy_options/backtest/b96_10g_pre97/evidence/cdc_summary.rpt",
+   "sha256": "c032f7c7229eac7df7cff96c40c06d94d2618de7a7ed69449476e7ad36397916",
+   "bytes": 2523
+  },
+  {
+   "file": "results/104_strategy_options/backtest/b96_10g_pre97/evidence/core_sim.json",
+   "sha256": "b1ba6d48f8bd81ecba0fae78fb5c793ea9b074a9b16e90d71a092bfabb6b8523",
+   "bytes": 508
+  },
+  {
+   "file": "results/104_strategy_options/backtest/b96_10g_pre97/evidence/latency_slack.json",
+   "sha256": "1486d7906acf1448b88eda33485da25fd9ae57752ae9910cf9eaeae57250f5bf",
+   "bytes": 1312
+  },
+  {
+   "file": "results/104_strategy_options/backtest/b96_10g_pre97/evidence/run.json",
+   "sha256": "830cf90442a2dc04d9d3d97f26ce0ee9737a0b3eeabe3eed62dab707f107d5fe",
+   "bytes": 1022
+  },
+  {
+   "file": "results/104_strategy_options/backtest/b96_10g_pre97/evidence/timing_summary.rpt",
+   "sha256": "5578d6d6cf3ba6bb9ac95eecde533afc09a12c82cc417e78b60dd93b97fd4d64",
+   "bytes": 2794
+  },
+  {
+   "file": "results/104_strategy_options/backtest/b96_10g_pre97/evidence/timing_worst_setup.rpt",
+   "sha256": "105bffaa04f1f88531073b6ee1dd16b871346451c0c842b12de9a5f6463fb7f7",
+   "bytes": 11532
+  },
+  {
+   "file": "results/104_strategy_options/backtest/b96_10g_pre97/evidence/utilization_hier.rpt",
+   "sha256": "5771a80046d5431d493b0f0154c364ed3aa1aadb330f8530af4129f961befa5d",
+   "bytes": 11539
+  },
+  {
+   "file": "results/104_strategy_options/backtest/b96_10g_pre97/latency_stages.yaml",
+   "sha256": "c883ee5e8a89670cf6735831a42f207de5b500c4fcd0faab94f11d140f01c826",
+   "bytes": 10833
+  }
+ ],
+ "model": {
+  "purpose": "options",
+  "endpoint": "claude_code",
+  "kind": "claude_code",
+  "model": "claude-sonnet-5-5",
+  "effort": "medium",
+  "entry_hash": "f3f2d8f85ded614e",
+  "table_hash": "fefa480b88108b19"
+ },
+ "attempts": 1,
+ "prompts": {
+  "system": {
+   "name": "graph/options/system",
+   "sha256": "ffb71e87152c89562f25e597b4c471401f7621f107864519b280480913becdc1"
+  },
+  "user": {
+   "name": "graph/options/user",
+   "sha256": "30be8dfd004dac0b443bd9284b0dc2e6b83fc244eb9e18ea65491314bed01ede"
+  },
+  "repair": {
+   "name": "graph/options/repair",
+   "sha256": "bb56b4a42f41d6b2e0b4df594b108893c63648374235a7d5d2b5224fc192f8b0"
+  }
+ },
+ "goal": "latency",
+ "status": "options",
+ "rejected": [],
+ "splitter": {
+  "version": "1",
+  "cap": 8,
+  "split": [
+   "O3",
+   "O4"
+  ],
+  "report": [
+   {
+    "bundle": "O3",
+    "stages": [
+     "fs_start",
+     "mac_preamble"
+    ],
+    "units": [
+     [
+      "fs_start"
+     ],
+     [
+      "mac_preamble"
+     ]
+    ],
+    "coupled": [],
+    "not_split": null,
+    "parts": [
+     {
+      "stages": [
+       "mac_preamble"
+      ],
+      "gain": [
+       0.0,
+       1.0
+      ]
+     }
+    ],
+    "dropped": [
+     {
+      "stages": [
+       "fs_start"
+      ],
+      "reason": "the model already offers exactly this stage set as its own option"
+     }
+    ]
+   },
+   {
+    "bundle": "O4",
+    "stages": [
+     "fs_start",
+     "mac_preamble",
+     "rx_descramble",
+     "decide",
+     "cross_go"
+    ],
+    "units": [
+     [
+      "rx_descramble"
+     ],
+     [
+      "decide"
+     ],
+     [
+      "cross_go"
+     ],
+     [
+      "fs_start"
+     ],
+     [
+      "mac_preamble"
+     ]
+    ],
+    "coupled": [],
+    "not_split": null,
+    "parts": [
+     {
+      "stages": [
+       "decide"
+      ],
+      "gain": [
+       0.0,
+       1.0
+      ]
+     },
+     {
+      "stages": [
+       "cross_go"
+      ],
+      "gain": [
+       0.0,
+       1.0
+      ]
+     }
+    ],
+    "dropped": [
+     {
+      "stages": [
+       "rx_descramble"
+      ],
+      "reason": "the model already offers exactly this stage set as its own option"
+     },
+     {
+      "stages": [
+       "fs_start"
+      ],
+      "reason": "the model already offers exactly this stage set as its own option"
+     },
+     {
+      "stages": [
+       "mac_preamble"
+      ],
+      "reason": "an earlier bundle already gave a part for exactly this stage set"
+     }
+    ]
+   }
+  ],
+  "offered": [
+   {
+    "id": "S1",
+    "from": "O3",
+    "stages": [
+     "mac_preamble"
+    ]
+   },
+   {
+    "id": "S2",
+    "from": "O4",
+    "stages": [
+     "decide"
+    ]
+   },
+   {
+    "id": "S3",
+    "from": "O4",
+    "stages": [
+     "cross_go"
+    ]
+   }
+  ]
+ },
+ "combiner": {
+  "version": "2",
+  "considered": 26,
+  "cap": 4,
+  "offered": [
+   {
+    "id": "C1",
+    "from": [
+     "O1",
+     "O2"
+    ]
+   },
+   {
+    "id": "C2",
+    "from": [
+     "O1",
+     "O2",
+     "S1"
+    ]
+   },
+   {
+    "id": "C3",
+    "from": [
+     "O1",
+     "O2",
+     "S1",
+     "S2"
+    ]
+   },
+   {
+    "id": "C4",
+    "from": [
+     "O1",
+     "O2",
+     "S1",
+     "S3"
+    ]
+   }
+  ],
+  "not_composable": [
+   {
+    "from": [
+     "O1",
+     "S1"
+    ],
+    "reason": "the model already offered an option touching exactly these stages"
+   },
+   {
+    "from": [
+     "O1",
+     "O2",
+     "S1",
+     "S2",
+     "S3"
+    ],
+    "reason": "the model already offered an option touching exactly these stages"
+   },
+   {
+    "from": [
+     "O1",
+     "O2",
+     "S2",
+     "S3"
+    ],
+    "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+   },
+   {
+    "from": [
+     "O1",
+     "S1",
+     "S2",
+     "S3"
+    ],
+    "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+   },
+   {
+    "from": [
+     "O2",
+     "S1",
+     "S2",
+     "S3"
+    ],
+    "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+   },
+   {
+    "from": [
+     "O1",
+     "O2",
+     "S2"
+    ],
+    "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+   },
+   {
+    "from": [
+     "O1",
+     "O2",
+     "S3"
+    ],
+    "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+   },
+   {
+    "from": [
+     "O1",
+     "S1",
+     "S2"
+    ],
+    "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+   },
+   {
+    "from": [
+     "O1",
+     "S1",
+     "S3"
+    ],
+    "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+   },
+   {
+    "from": [
+     "O1",
+     "S2",
+     "S3"
+    ],
+    "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+   },
+   {
+    "from": [
+     "O2",
+     "S1",
+     "S2"
+    ],
+    "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+   },
+   {
+    "from": [
+     "O2",
+     "S1",
+     "S3"
+    ],
+    "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+   },
+   {
+    "from": [
+     "O2",
+     "S2",
+     "S3"
+    ],
+    "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+   },
+   {
+    "from": [
+     "S1",
+     "S2",
+     "S3"
+    ],
+    "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+   },
+   {
+    "from": [
+     "O1",
+     "S2"
+    ],
+    "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+   },
+   {
+    "from": [
+     "O1",
+     "S3"
+    ],
+    "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+   },
+   {
+    "from": [
+     "O2",
+     "S1"
+    ],
+    "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+   },
+   {
+    "from": [
+     "O2",
+     "S2"
+    ],
+    "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+   },
+   {
+    "from": [
+     "O2",
+     "S3"
+    ],
+    "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+   },
+   {
+    "from": [
+     "S1",
+     "S2"
+    ],
+    "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+   },
+   {
+    "from": [
+     "S1",
+     "S3"
+    ],
+    "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+   },
+   {
+    "from": [
+     "S2",
+     "S3"
+    ],
+    "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+   }
+  ]
+ },
+ "options_hash": "82ecb28e73d4ca2f85e521506b95c976ca79a63dc7929ccfd1cc903d27bcbb56",
+ "options": [
+  {
+   "id": "O1",
+   "scope": {
+    "kind": "modules",
+    "components": [
+     "tx_frame_src"
+    ],
+    "cli": "--scope tx_frame_src"
+   },
+   "techniques": [
+    "precompute"
+   ],
+   "touches_stages": [
+    "fs_start"
+   ],
+   "cost": {
+    "iterations": {
+     "low": 2,
+     "high": 4
+    },
+    "vivado_runs": {
+     "low": 2,
+     "high": 4
+    },
+    "wall_minutes": {
+     "low": 39.2,
+     "high": 78.4,
+     "basis": "iterations x the recorded build time",
+     "cite": "build.wall_s",
+     "file": "results/104_strategy_options/backtest/b96_10g_pre97/evidence/run.json"
+    },
+    "model_usd": null,
+    "note": "A small change in one module. The worst setup path ends in frame_src (WNS 0.115 ns), so route may need a retry.",
+    "basis": "iterations are the generator's estimate (a guess); wall time is those times the recorded Vivado run"
+   },
+   "not_touched": [
+    {
+     "component": "top",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "shared_pkg",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "core",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "rx_path",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "rx_pcs",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "rx_mac",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "trade_decision",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "tx_path",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "tx_mac",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "tx_pcs",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "cfg_vec",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "gt_wizard",
+     "why": "frozen: read only"
+    },
+    {
+     "component": "jtag_bus",
+     "why": "frozen: read only"
+    }
+   ],
+   "n": 1,
+   "origin": "model",
+   "title_sha256": "0e2d2026f2cea5a5fb1d75209de92ed93223996f2f950ce9d9aecab402681ea9",
+   "gain": {
+    "metric": "latency_clocks",
+    "unit": "clocks",
+    "low": 0,
+    "high": 1,
+    "basis": "model",
+    "cites": [
+     "stage.fs_start.clocks",
+     "stage.fs_start.removable"
+    ],
+    "ceiling": 1.0,
+    "sources": [
+     "results/104_strategy_options/backtest/b96_10g_pre97/evidence/core_sim.json",
+     "results/104_strategy_options/backtest/b96_10g_pre97/latency_stages.yaml"
+    ]
+   },
+   "risk": {
+    "contract_change": false,
+    "contract_flags": [],
+    "contract_flag_added_by_checker": false,
+    "needs_owner_approval": false,
+    "contract_affected": [
+     "tx_frame_src"
+    ],
+    "needs_eqy": true,
+    "needs_board": false
+   }
+  },
+  {
+   "id": "O2",
+   "scope": {
+    "kind": "modules",
+    "components": [
+     "rx_pcs"
+    ],
+    "cli": "--scope rx_pcs"
+   },
+   "techniques": [
+    "merge_stages"
+   ],
+   "touches_stages": [
+    "rx_descramble"
+   ],
+   "cost": {
+    "iterations": {
+     "low": 3,
+     "high": 6
+    },
+    "vivado_runs": {
+     "low": 3,
+     "high": 6
+    },
+    "wall_minutes": {
+     "low": 58.8,
+     "high": 117.7,
+     "basis": "iterations x the recorded build time",
+     "cite": "build.wall_s",
+     "file": "results/104_strategy_options/backtest/b96_10g_pre97/evidence/run.json"
+    },
+    "model_usd": null,
+    "note": "The merged path may need restructuring and several route attempts.",
+    "basis": "iterations are the generator's estimate (a guess); wall time is those times the recorded Vivado run"
+   },
+   "not_touched": [
+    {
+     "component": "top",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "shared_pkg",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "core",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "rx_path",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "rx_mac",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "trade_decision",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "tx_path",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "tx_frame_src",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "tx_mac",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "tx_pcs",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "cfg_vec",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "gt_wizard",
+     "why": "frozen: read only"
+    },
+    {
+     "component": "jtag_bus",
+     "why": "frozen: read only"
+    }
+   ],
+   "n": 2,
+   "origin": "model",
+   "title_sha256": "4bef78779feaf3f0d05ee0a09b65383f68e3b130d715ee7885c0d90fd4af4e71",
+   "gain": {
+    "metric": "latency_clocks",
+    "unit": "clocks",
+    "low": 0,
+    "high": 1,
+    "basis": "model",
+    "cites": [
+     "stage.rx_descramble.clocks",
+     "stage.rx_descramble.removable"
+    ],
+    "ceiling": 1.0,
+    "sources": [
+     "results/104_strategy_options/backtest/b96_10g_pre97/evidence/core_sim.json",
+     "results/104_strategy_options/backtest/b96_10g_pre97/latency_stages.yaml"
+    ]
+   },
+   "risk": {
+    "contract_change": false,
+    "contract_flags": [],
+    "contract_flag_added_by_checker": false,
+    "needs_owner_approval": false,
+    "contract_affected": [
+     "rx_pcs"
+    ],
+    "needs_eqy": true,
+    "needs_board": false
+   }
+  },
+  {
+   "id": "O3",
+   "scope": {
+    "kind": "subsystem",
+    "components": [
+     "tx_path",
+     "tx_frame_src",
+     "tx_mac"
+    ],
+    "cli": "--scope tx_path,tx_frame_src,tx_mac"
+   },
+   "techniques": [
+    "precompute",
+    "merge_stages"
+   ],
+   "touches_stages": [
+    "fs_start",
+    "mac_preamble"
+   ],
+   "cost": {
+    "iterations": {
+     "low": 3,
+     "high": 6
+    },
+    "vivado_runs": {
+     "low": 3,
+     "high": 6
+    },
+    "wall_minutes": {
+     "low": 58.8,
+     "high": 117.7,
+     "basis": "iterations x the recorded build time",
+     "cite": "build.wall_s",
+     "file": "results/104_strategy_options/backtest/b96_10g_pre97/evidence/run.json"
+    },
+    "model_usd": null,
+    "note": "Two linked changes across three modules, plus checks of the PCS pause behaviour.",
+    "basis": "iterations are the generator's estimate (a guess); wall time is those times the recorded Vivado run"
+   },
+   "not_touched": [
+    {
+     "component": "top",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "shared_pkg",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "core",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "rx_path",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "rx_pcs",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "rx_mac",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "trade_decision",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "tx_pcs",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "cfg_vec",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "gt_wizard",
+     "why": "frozen: read only"
+    },
+    {
+     "component": "jtag_bus",
+     "why": "frozen: read only"
+    }
+   ],
+   "n": 3,
+   "origin": "model",
+   "title_sha256": "0915a0bcc86e41b0ebecbb8fd5c1e99e828477c2722cbd0851fcb4ebf287653c",
+   "gain": {
+    "metric": "latency_clocks",
+    "unit": "clocks",
+    "low": 0,
+    "high": 2,
+    "basis": "model",
+    "cites": [
+     "stage.fs_start.removable",
+     "stage.mac_preamble.removable"
+    ],
+    "ceiling": 2.0,
+    "sources": [
+     "results/104_strategy_options/backtest/b96_10g_pre97/latency_stages.yaml"
+    ]
+   },
+   "risk": {
+    "contract_change": true,
+    "contract_flags": [
+     "the change spans the boundary between tx_frame_src and tx_mac: it moves or removes logic across a component edge, so the interface contract (ports and boundary timing) must be re-checked",
+     "tx_mac: s_valid: is sampled in the same clock as `start` instead of one clock later"
+    ],
+    "contract_flag_added_by_checker": false,
+    "needs_owner_approval": true,
+    "contract_affected": [
+     "tx_frame_src",
+     "tx_mac",
+     "tx_path"
+    ],
+    "needs_eqy": true,
+    "needs_board": false
+   }
+  },
+  {
+   "id": "O4",
+   "scope": {
+    "kind": "whole_design",
+    "components": [
+     "top",
+     "shared_pkg",
+     "core",
+     "rx_path",
+     "rx_pcs",
+     "rx_mac",
+     "trade_decision",
+     "tx_path",
+     "tx_frame_src",
+     "tx_mac",
+     "tx_pcs",
+     "cfg_vec"
+    ],
+    "cli": "--scope top,shared_pkg,core,rx_path,rx_pcs,rx_mac,trade_decision,tx_path,tx_frame_src,tx_mac,tx_pcs,cfg_vec"
+   },
+   "techniques": [
+    "merge_stages",
+    "precompute",
+    "shorten_cdc"
+   ],
+   "touches_stages": [
+    "fs_start",
+    "mac_preamble",
+    "rx_descramble",
+    "decide",
+    "cross_go"
+   ],
+   "cost": {
+    "iterations": {
+     "low": 5,
+     "high": 8
+    },
+    "vivado_runs": {
+     "low": 5,
+     "high": 8
+    },
+    "wall_minutes": {
+     "low": 98.0,
+     "high": 156.9,
+     "basis": "iterations x the recorded build time",
+     "cite": "build.wall_s",
+     "file": "results/104_strategy_options/backtest/b96_10g_pre97/evidence/run.json"
+    },
+    "model_usd": null,
+    "note": "Five changes across four areas, with a CDC review and a board run for the crossing.",
+    "basis": "iterations are the generator's estimate (a guess); wall time is those times the recorded Vivado run"
+   },
+   "not_touched": [
+    {
+     "component": "gt_wizard",
+     "why": "frozen: read only"
+    },
+    {
+     "component": "jtag_bus",
+     "why": "frozen: read only"
+    }
+   ],
+   "n": 4,
+   "origin": "model",
+   "title_sha256": "8d5ea120f9d52f4f1c8033b8c3b41d4c2402b28951da02d9a429356ecec77f2c",
+   "gain": {
+    "metric": "latency_clocks",
+    "unit": "clocks",
+    "low": 1,
+    "high": 5,
+    "basis": "model",
+    "cites": [
+     "stage.fs_start.removable",
+     "stage.mac_preamble.removable",
+     "stage.rx_descramble.removable",
+     "stage.decide.removable",
+     "stage.cross_go.removable",
+     "latency.total_clocks"
+    ],
+    "ceiling": 5.0,
+    "sources": [
+     "results/104_strategy_options/backtest/b96_10g_pre97/evidence/core_sim.json",
+     "results/104_strategy_options/backtest/b96_10g_pre97/latency_stages.yaml"
+    ]
+   },
+   "risk": {
+    "contract_change": true,
+    "contract_flags": [
+     "the change spans the boundary between core and rx_pcs and trade_decision and tx_frame_src and tx_mac: it moves or removes logic across a component edge, so the interface contract (ports and boundary timing) must be re-checked",
+     "core: go pulse: one synchroniser stage is removed from the receive-to-transmit crossing, so the pulse arrives one transmit clock earlier",
+     "tx_mac: s_valid: is sampled in the same clock as `start` instead of one clock later",
+     "stage cross_go is a clock-domain crossing: report_cdc and the crossing's own tests must still pass"
+    ],
+    "contract_flag_added_by_checker": false,
+    "needs_owner_approval": true,
+    "contract_affected": [
+     "cfg_vec",
+     "core",
+     "rx_mac",
+     "rx_path",
+     "rx_pcs",
+     "shared_pkg",
+     "top",
+     "trade_decision",
+     "tx_frame_src",
+     "tx_mac",
+     "tx_path",
+     "tx_pcs"
+    ],
+    "needs_eqy": true,
+    "needs_board": true
+   }
+  },
+  {
+   "id": "S1",
+   "scope": {
+    "kind": "modules",
+    "components": [
+     "tx_mac"
+    ],
+    "cli": "--scope tx_mac"
+   },
+   "techniques": [
+    "merge_stages"
+   ],
+   "touches_stages": [
+    "mac_preamble"
+   ],
+   "cost": {
+    "iterations": {
+     "low": 1,
+     "high": 6
+    },
+    "vivado_runs": {
+     "low": 1,
+     "high": 6
+    },
+    "wall_minutes": {
+     "low": 19.6,
+     "high": 117.7,
+     "basis": "iterations x the recorded build time",
+     "cite": "build.wall_s",
+     "file": "results/104_strategy_options/backtest/b96_10g_pre97/evidence/run.json"
+    },
+    "model_usd": null,
+    "note": "one part of the bundle: its rounds are at most the bundle's",
+    "basis": "iterations are the generator's estimate (a guess); wall time is those times the recorded Vivado run"
+   },
+   "not_touched": [
+    {
+     "component": "top",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "shared_pkg",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "core",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "rx_path",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "rx_pcs",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "rx_mac",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "trade_decision",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "tx_path",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "tx_frame_src",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "tx_pcs",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "cfg_vec",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "gt_wizard",
+     "why": "frozen: read only"
+    },
+    {
+     "component": "jtag_bus",
+     "why": "frozen: read only"
+    }
+   ],
+   "origin": "splitter",
+   "split_from": "O3",
+   "split_bundle_gain": [
+    0,
+    2
+   ],
+   "n": 5,
+   "title_sha256": "bdbbd7dcd9b80bb37901f9e979c402686cbdd91e9cb8fbce0c64d775abd53839",
+   "gain": {
+    "metric": "latency_clocks",
+    "unit": "clocks",
+    "low": 0.0,
+    "high": 1.0,
+    "basis": "model",
+    "cites": [
+     "stage.mac_preamble.clocks",
+     "stage.mac_preamble.removable"
+    ],
+    "ceiling": 1.0,
+    "sources": [
+     "results/104_strategy_options/backtest/b96_10g_pre97/evidence/core_sim.json",
+     "results/104_strategy_options/backtest/b96_10g_pre97/latency_stages.yaml"
+    ]
+   },
+   "risk": {
+    "contract_change": true,
+    "contract_flags": [
+     "tx_mac: s_valid: is sampled in the same clock as `start` instead of one clock later"
+    ],
+    "contract_flag_added_by_checker": false,
+    "needs_owner_approval": true,
+    "contract_affected": [
+     "tx_mac"
+    ],
+    "needs_eqy": true,
+    "needs_board": false
+   }
+  },
+  {
+   "id": "S2",
+   "scope": {
+    "kind": "modules",
+    "components": [
+     "trade_decision"
+    ],
+    "cli": "--scope trade_decision"
+   },
+   "techniques": [
+    "merge_stages"
+   ],
+   "touches_stages": [
+    "decide"
+   ],
+   "cost": {
+    "iterations": {
+     "low": 1,
+     "high": 8
+    },
+    "vivado_runs": {
+     "low": 1,
+     "high": 8
+    },
+    "wall_minutes": {
+     "low": 19.6,
+     "high": 156.9,
+     "basis": "iterations x the recorded build time",
+     "cite": "build.wall_s",
+     "file": "results/104_strategy_options/backtest/b96_10g_pre97/evidence/run.json"
+    },
+    "model_usd": null,
+    "note": "one part of the bundle: its rounds are at most the bundle's",
+    "basis": "iterations are the generator's estimate (a guess); wall time is those times the recorded Vivado run"
+   },
+   "not_touched": [
+    {
+     "component": "top",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "shared_pkg",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "core",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "rx_path",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "rx_pcs",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "rx_mac",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "tx_path",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "tx_frame_src",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "tx_mac",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "tx_pcs",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "cfg_vec",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "gt_wizard",
+     "why": "frozen: read only"
+    },
+    {
+     "component": "jtag_bus",
+     "why": "frozen: read only"
+    }
+   ],
+   "origin": "splitter",
+   "split_from": "O4",
+   "split_bundle_gain": [
+    1,
+    5
+   ],
+   "n": 6,
+   "title_sha256": "409037711e05771dca905e2b7a521cb2d9de111a42a5a368efc8b2517f8eb815",
+   "gain": {
+    "metric": "latency_clocks",
+    "unit": "clocks",
+    "low": 0.0,
+    "high": 1.0,
+    "basis": "model",
+    "cites": [
+     "stage.decide.clocks",
+     "stage.decide.removable"
+    ],
+    "ceiling": 1.0,
+    "sources": [
+     "results/104_strategy_options/backtest/b96_10g_pre97/evidence/core_sim.json",
+     "results/104_strategy_options/backtest/b96_10g_pre97/latency_stages.yaml"
+    ]
+   },
+   "risk": {
+    "contract_change": true,
+    "contract_flags": [],
+    "contract_flag_added_by_checker": false,
+    "needs_owner_approval": true,
+    "contract_affected": [
+     "trade_decision"
+    ],
+    "needs_eqy": true,
+    "needs_board": true
+   }
+  },
+  {
+   "id": "S3",
+   "scope": {
+    "kind": "modules",
+    "components": [
+     "core"
+    ],
+    "cli": "--scope core"
+   },
+   "techniques": [
+    "shorten_cdc"
+   ],
+   "touches_stages": [
+    "cross_go"
+   ],
+   "cost": {
+    "iterations": {
+     "low": 1,
+     "high": 8
+    },
+    "vivado_runs": {
+     "low": 1,
+     "high": 8
+    },
+    "wall_minutes": {
+     "low": 19.6,
+     "high": 156.9,
+     "basis": "iterations x the recorded build time",
+     "cite": "build.wall_s",
+     "file": "results/104_strategy_options/backtest/b96_10g_pre97/evidence/run.json"
+    },
+    "model_usd": null,
+    "note": "one part of the bundle: its rounds are at most the bundle's",
+    "basis": "iterations are the generator's estimate (a guess); wall time is those times the recorded Vivado run"
+   },
+   "not_touched": [
+    {
+     "component": "top",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "shared_pkg",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "rx_path",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "rx_pcs",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "rx_mac",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "trade_decision",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "tx_path",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "tx_frame_src",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "tx_mac",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "tx_pcs",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "cfg_vec",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "gt_wizard",
+     "why": "frozen: read only"
+    },
+    {
+     "component": "jtag_bus",
+     "why": "frozen: read only"
+    }
+   ],
+   "origin": "splitter",
+   "split_from": "O4",
+   "split_bundle_gain": [
+    1,
+    5
+   ],
+   "n": 7,
+   "title_sha256": "e0b9f2960e363cda45b99e18186a6e79b9e2d57f22a8d118d9af8e469c8036b1",
+   "gain": {
+    "metric": "latency_clocks",
+    "unit": "clocks",
+    "low": 0.0,
+    "high": 1.0,
+    "basis": "model",
+    "cites": [
+     "stage.cross_go.clocks",
+     "stage.cross_go.removable"
+    ],
+    "ceiling": 1.0,
+    "sources": [
+     "results/104_strategy_options/backtest/b96_10g_pre97/evidence/core_sim.json",
+     "results/104_strategy_options/backtest/b96_10g_pre97/latency_stages.yaml"
+    ]
+   },
+   "risk": {
+    "contract_change": true,
+    "contract_flags": [
+     "core: go pulse: one synchroniser stage is removed from the receive-to-transmit crossing, so the pulse arrives one transmit clock earlier",
+     "stage cross_go is a clock-domain crossing: report_cdc and the crossing's own tests must still pass"
+    ],
+    "contract_flag_added_by_checker": false,
+    "needs_owner_approval": true,
+    "contract_affected": [
+     "core"
+    ],
+    "needs_eqy": true,
+    "needs_board": true
+   }
+  },
+  {
+   "id": "C1",
+   "scope": {
+    "kind": "modules",
+    "components": [
+     "rx_pcs",
+     "tx_frame_src"
+    ],
+    "cli": "--scope rx_pcs,tx_frame_src"
+   },
+   "techniques": [
+    "precompute",
+    "merge_stages"
+   ],
+   "touches_stages": [
+    "fs_start",
+    "rx_descramble"
+   ],
+   "cost": {
+    "iterations": {
+     "low": 3,
+     "high": 8
+    },
+    "vivado_runs": {
+     "low": 3,
+     "high": 8
+    },
+    "wall_minutes": {
+     "low": 58.8,
+     "high": 156.9,
+     "basis": "iterations x the recorded build time",
+     "cite": "build.wall_s",
+     "file": "results/104_strategy_options/backtest/b96_10g_pre97/evidence/run.json"
+    },
+    "model_usd": null,
+    "note": "all the parts' build-and-check rounds, the high end summed",
+    "basis": "iterations are the generator's estimate (a guess); wall time is those times the recorded Vivado run"
+   },
+   "not_touched": [
+    {
+     "component": "top",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "shared_pkg",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "core",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "rx_path",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "rx_mac",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "trade_decision",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "tx_path",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "tx_mac",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "tx_pcs",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "cfg_vec",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "gt_wizard",
+     "why": "frozen: read only"
+    },
+    {
+     "component": "jtag_bus",
+     "why": "frozen: read only"
+    }
+   ],
+   "origin": "combiner",
+   "combined_from": [
+    "O1",
+    "O2"
+   ],
+   "n": 8,
+   "title_sha256": "25cd4003c410624aa91f714e06a5d12ce0ace6ff81dbfe8ccdc7ccac3bcaab1b",
+   "gain": {
+    "metric": "latency_clocks",
+    "unit": "clocks",
+    "low": 0.0,
+    "high": 2.0,
+    "basis": "model",
+    "cites": [
+     "stage.fs_start.clocks",
+     "stage.fs_start.removable",
+     "stage.rx_descramble.clocks",
+     "stage.rx_descramble.removable"
+    ],
+    "ceiling": 2.0,
+    "sources": [
+     "results/104_strategy_options/backtest/b96_10g_pre97/evidence/core_sim.json",
+     "results/104_strategy_options/backtest/b96_10g_pre97/latency_stages.yaml"
+    ]
+   },
+   "risk": {
+    "contract_change": true,
+    "contract_flags": [
+     "the change spans the boundary between rx_pcs and tx_frame_src: it moves or removes logic across a component edge, so the interface contract (ports and boundary timing) must be re-checked"
+    ],
+    "contract_flag_added_by_checker": true,
+    "needs_owner_approval": true,
+    "contract_affected": [
+     "rx_pcs",
+     "tx_frame_src"
+    ],
+    "needs_eqy": true,
+    "needs_board": false
+   }
+  },
+  {
+   "id": "C2",
+   "scope": {
+    "kind": "modules",
+    "components": [
+     "rx_pcs",
+     "tx_frame_src",
+     "tx_mac"
+    ],
+    "cli": "--scope rx_pcs,tx_frame_src,tx_mac"
+   },
+   "techniques": [
+    "precompute",
+    "merge_stages"
+   ],
+   "touches_stages": [
+    "fs_start",
+    "rx_descramble",
+    "mac_preamble"
+   ],
+   "cost": {
+    "iterations": {
+     "low": 3,
+     "high": 8
+    },
+    "vivado_runs": {
+     "low": 3,
+     "high": 8
+    },
+    "wall_minutes": {
+     "low": 58.8,
+     "high": 156.9,
+     "basis": "iterations x the recorded build time",
+     "cite": "build.wall_s",
+     "file": "results/104_strategy_options/backtest/b96_10g_pre97/evidence/run.json"
+    },
+    "model_usd": null,
+    "note": "all the parts' build-and-check rounds, the high end summed",
+    "basis": "iterations are the generator's estimate (a guess); wall time is those times the recorded Vivado run"
+   },
+   "not_touched": [
+    {
+     "component": "top",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "shared_pkg",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "core",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "rx_path",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "rx_mac",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "trade_decision",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "tx_path",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "tx_pcs",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "cfg_vec",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "gt_wizard",
+     "why": "frozen: read only"
+    },
+    {
+     "component": "jtag_bus",
+     "why": "frozen: read only"
+    }
+   ],
+   "origin": "combiner",
+   "combined_from": [
+    "O1",
+    "O2",
+    "S1"
+   ],
+   "n": 9,
+   "title_sha256": "8ec938452af60fdd4529b8e6d37eef30e6a52dc901a84bc5052ccea3395b2686",
+   "gain": {
+    "metric": "latency_clocks",
+    "unit": "clocks",
+    "low": 0.0,
+    "high": 3.0,
+    "basis": "model",
+    "cites": [
+     "stage.fs_start.clocks",
+     "stage.fs_start.removable",
+     "stage.mac_preamble.clocks",
+     "stage.mac_preamble.removable",
+     "stage.rx_descramble.clocks",
+     "stage.rx_descramble.removable"
+    ],
+    "ceiling": 3.0,
+    "sources": [
+     "results/104_strategy_options/backtest/b96_10g_pre97/evidence/core_sim.json",
+     "results/104_strategy_options/backtest/b96_10g_pre97/latency_stages.yaml"
+    ]
+   },
+   "risk": {
+    "contract_change": true,
+    "contract_flags": [
+     "the change spans the boundary between rx_pcs and tx_frame_src and tx_mac: it moves or removes logic across a component edge, so the interface contract (ports and boundary timing) must be re-checked",
+     "tx_mac: s_valid: is sampled in the same clock as `start` instead of one clock later"
+    ],
+    "contract_flag_added_by_checker": false,
+    "needs_owner_approval": true,
+    "contract_affected": [
+     "rx_pcs",
+     "tx_frame_src",
+     "tx_mac"
+    ],
+    "needs_eqy": true,
+    "needs_board": false
+   }
+  },
+  {
+   "id": "C3",
+   "scope": {
+    "kind": "modules",
+    "components": [
+     "rx_pcs",
+     "trade_decision",
+     "tx_frame_src",
+     "tx_mac"
+    ],
+    "cli": "--scope rx_pcs,trade_decision,tx_frame_src,tx_mac"
+   },
+   "techniques": [
+    "precompute",
+    "merge_stages"
+   ],
+   "touches_stages": [
+    "fs_start",
+    "rx_descramble",
+    "mac_preamble",
+    "decide"
+   ],
+   "cost": {
+    "iterations": {
+     "low": 3,
+     "high": 8
+    },
+    "vivado_runs": {
+     "low": 3,
+     "high": 8
+    },
+    "wall_minutes": {
+     "low": 58.8,
+     "high": 156.9,
+     "basis": "iterations x the recorded build time",
+     "cite": "build.wall_s",
+     "file": "results/104_strategy_options/backtest/b96_10g_pre97/evidence/run.json"
+    },
+    "model_usd": null,
+    "note": "all the parts' build-and-check rounds, the high end summed",
+    "basis": "iterations are the generator's estimate (a guess); wall time is those times the recorded Vivado run"
+   },
+   "not_touched": [
+    {
+     "component": "top",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "shared_pkg",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "core",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "rx_path",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "rx_mac",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "tx_path",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "tx_pcs",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "cfg_vec",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "gt_wizard",
+     "why": "frozen: read only"
+    },
+    {
+     "component": "jtag_bus",
+     "why": "frozen: read only"
+    }
+   ],
+   "origin": "combiner",
+   "combined_from": [
+    "O1",
+    "O2",
+    "S1",
+    "S2"
+   ],
+   "n": 10,
+   "title_sha256": "caec17a392b58d3b447a81e2aff1c30942cc94dd0c97962c4324e9fe91395c97",
+   "gain": {
+    "metric": "latency_clocks",
+    "unit": "clocks",
+    "low": 0.0,
+    "high": 4.0,
+    "basis": "model",
+    "cites": [
+     "stage.decide.clocks",
+     "stage.decide.removable",
+     "stage.fs_start.clocks",
+     "stage.fs_start.removable",
+     "stage.mac_preamble.clocks",
+     "stage.mac_preamble.removable",
+     "stage.rx_descramble.clocks",
+     "stage.rx_descramble.removable"
+    ],
+    "ceiling": 4.0,
+    "sources": [
+     "results/104_strategy_options/backtest/b96_10g_pre97/evidence/core_sim.json",
+     "results/104_strategy_options/backtest/b96_10g_pre97/latency_stages.yaml"
+    ]
+   },
+   "risk": {
+    "contract_change": true,
+    "contract_flags": [
+     "the change spans the boundary between rx_pcs and trade_decision and tx_frame_src and tx_mac: it moves or removes logic across a component edge, so the interface contract (ports and boundary timing) must be re-checked",
+     "tx_mac: s_valid: is sampled in the same clock as `start` instead of one clock later"
+    ],
+    "contract_flag_added_by_checker": false,
+    "needs_owner_approval": true,
+    "contract_affected": [
+     "rx_pcs",
+     "trade_decision",
+     "tx_frame_src",
+     "tx_mac"
+    ],
+    "needs_eqy": true,
+    "needs_board": true
+   }
+  },
+  {
+   "id": "C4",
+   "scope": {
+    "kind": "modules",
+    "components": [
+     "core",
+     "rx_pcs",
+     "tx_frame_src",
+     "tx_mac"
+    ],
+    "cli": "--scope core,rx_pcs,tx_frame_src,tx_mac"
+   },
+   "techniques": [
+    "precompute",
+    "merge_stages",
+    "shorten_cdc"
+   ],
+   "touches_stages": [
+    "fs_start",
+    "rx_descramble",
+    "mac_preamble",
+    "cross_go"
+   ],
+   "cost": {
+    "iterations": {
+     "low": 3,
+     "high": 8
+    },
+    "vivado_runs": {
+     "low": 3,
+     "high": 8
+    },
+    "wall_minutes": {
+     "low": 58.8,
+     "high": 156.9,
+     "basis": "iterations x the recorded build time",
+     "cite": "build.wall_s",
+     "file": "results/104_strategy_options/backtest/b96_10g_pre97/evidence/run.json"
+    },
+    "model_usd": null,
+    "note": "all the parts' build-and-check rounds, the high end summed",
+    "basis": "iterations are the generator's estimate (a guess); wall time is those times the recorded Vivado run"
+   },
+   "not_touched": [
+    {
+     "component": "top",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "shared_pkg",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "rx_path",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "rx_mac",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "trade_decision",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "tx_path",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "tx_pcs",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "cfg_vec",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "gt_wizard",
+     "why": "frozen: read only"
+    },
+    {
+     "component": "jtag_bus",
+     "why": "frozen: read only"
+    }
+   ],
+   "origin": "combiner",
+   "combined_from": [
+    "O1",
+    "O2",
+    "S1",
+    "S3"
+   ],
+   "n": 11,
+   "title_sha256": "7944726800992e0162597a7de41fa5e7347f8ad5f863b727ce4a55118f93cc57",
+   "gain": {
+    "metric": "latency_clocks",
+    "unit": "clocks",
+    "low": 0.0,
+    "high": 4.0,
+    "basis": "model",
+    "cites": [
+     "stage.cross_go.clocks",
+     "stage.cross_go.removable",
+     "stage.fs_start.clocks",
+     "stage.fs_start.removable",
+     "stage.mac_preamble.clocks",
+     "stage.mac_preamble.removable",
+     "stage.rx_descramble.clocks",
+     "stage.rx_descramble.removable"
+    ],
+    "ceiling": 4.0,
+    "sources": [
+     "results/104_strategy_options/backtest/b96_10g_pre97/evidence/core_sim.json",
+     "results/104_strategy_options/backtest/b96_10g_pre97/latency_stages.yaml"
+    ]
+   },
+   "risk": {
+    "contract_change": true,
+    "contract_flags": [
+     "the change spans the boundary between core and rx_pcs and tx_frame_src and tx_mac: it moves or removes logic across a component edge, so the interface contract (ports and boundary timing) must be re-checked",
+     "tx_mac: s_valid: is sampled in the same clock as `start` instead of one clock later",
+     "core: go pulse: one synchroniser stage is removed from the receive-to-transmit crossing, so the pulse arrives one transmit clock earlier",
+     "stage cross_go is a clock-domain crossing: report_cdc and the crossing's own tests must still pass"
+    ],
+    "contract_flag_added_by_checker": false,
+    "needs_owner_approval": true,
+    "contract_affected": [
+     "core",
+     "rx_pcs",
+     "tx_frame_src",
+     "tx_mac"
+    ],
+    "needs_eqy": true,
+    "needs_board": true
+   }
+  }
+ ],
+ "available": {
+  "agent_cdc": {
+   "found": true,
+   "origin": "splitter",
+   "in_range": true,
+   "over": 0.0
+  },
+  "hand_ref": {
+   "found": true,
+   "origin": "combiner",
+   "in_range": true,
+   "over": 0.0
+  },
+  "agent_both": {
+   "found": true,
+   "origin": "combiner",
+   "in_range": true,
+   "over": 0.0
+  },
+  "all3": {
+   "found": true,
+   "origin": "combiner",
+   "in_range": true,
+   "over": 0.0
+  }
+ },
+ "bounds": {
+  "checked": 11,
+  "outside": []
+ },
+ "free_text_withheld": "title, approach, gain basis notes, gates and risk summaries are in the private repository (moved_to_kb.json)"
+}

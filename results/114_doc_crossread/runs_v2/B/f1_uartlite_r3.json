@@ -1,0 +1,796 @@
+{
+ "schema": "fda-doc-crossread/1",
+ "purpose": "doc_crossread",
+ "topic": "AXI UART Lite: the register offsets, the bit fields and the reset values.",
+ "target": "AXI UART Lite v2.0",
+ "document": {
+  "source": "/home/brendan/Claude_sandbox/_amd_docs/PG142_pg142-axi-uartlite-v2.0.pdf",
+  "pages": [
+   9,
+   10,
+   11
+  ],
+  "sha256": "6fa6ae2e84d651c1db009278d50d1d8ef764eef72436c7bdb27afa196cee58cb",
+  "chars": 10195
+ },
+ "code": {
+  "files": [
+   {
+    "path": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/f1_uartlite/code/tb_uartlite.sv",
+    "sha256": "266c04700cec71a43074f3edac4b423fcfb05ed0fe78a515af9df04852db3c44",
+    "lines": 135
+   }
+  ],
+  "n_facts": 5,
+  "not_parsed": [],
+  "limits": [
+   "Python: module-level and class-level assignments (including tuple unpacking), evaluated with integers, strings, lists, tuples, dicts, comprehensions over range(), and calls to simple functions defined in the given files (docstring, if-raise, local assignments, return). Not parsed: constants inside function bodies, attributes of objects, anything that calls a library or does I/O.",
+   "SystemVerilog: localparam and parameter declarations (with their declared width), `define, and enum members with explicit values. Not parsed: array literals, structs, functions, case-statement addresses, port widths, generate blocks, numbers written inline in always blocks.",
+   "C: #define NAME <integer expression>. Not parsed: enums, const variables, function-like macros.",
+   "Comments and strings are searched only for the names a text fact (step, condition) mentions; no number in a comment is read."
+  ]
+ },
+ "reader": {
+  "repairs": 0,
+  "seconds": 17.6,
+  "problems": [
+   "fact F17: the quotation was not found in the excerpt",
+   "fact F18: the quotation was not found in the excerpt",
+   "fact F22: the quotation was not found in the excerpt",
+   "fact F23: the quotation was not found in the excerpt"
+  ],
+  "prompts": {
+   "system": "graph/doc_crossread/system",
+   "user": "graph/doc_crossread/user",
+   "repair": "graph/doc_crossread/repair"
+  },
+  "prompt_hashes": {
+   "system": "39849fdea6851c68b57cbc6484d6dfa51dd282578308280247bb31ed1dd2a4e3",
+   "user": "222a588489bd69b7822fd12b58bb36ef2f1933edd2f34e29b4f09b31c2f710ae",
+   "repair": "c5de7b5659596e3b49e746badb81f31d85cf3ba8bec0d5ff020cd4161f53f400"
+  },
+  "n_facts": 28,
+  "source": "stored reply (post-hoc comparator)"
+ },
+ "model": {
+  "purpose": "doc_crossread",
+  "endpoint": "claude_code",
+  "kind": "claude_code",
+  "model": "claude-haiku-5-5",
+  "options": {
+   "effort": "medium",
+   "timeout_s": 900
+  },
+  "entry_hash": "c8579489955e37c4",
+  "table_hash": "1d495cbf804c90bf"
+ },
+ "usage": {
+  "calls": 1,
+  "seconds": 17.6,
+  "input_tokens": 2,
+  "cache_read_input_tokens": 3886,
+  "cache_creation_input_tokens": 334,
+  "output_tokens": 5655,
+  "plan_cost_estimate_usd": 0.0029,
+  "cost_usd": null
+ },
+ "summary": {
+  "agree": 4,
+  "not_in_code": 24
+ },
+ "rows": [
+  {
+   "id": "F1",
+   "status": "agree",
+   "tier": "name",
+   "why": "",
+   "kind": "address",
+   "subject": "Rx FIFO",
+   "field": null,
+   "doc": {
+    "value": 0,
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 9,
+    "ref": "Table 2-4",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "147d2f8b5d9206ff"
+   },
+   "code": [
+    {
+     "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/f1_uartlite/code/tb_uartlite.sv",
+     "line": 16,
+     "name": "RXF",
+     "value": 0,
+     "n": null
+    }
+   ]
+  },
+  {
+   "id": "F2",
+   "status": "agree",
+   "tier": "name",
+   "why": "",
+   "kind": "address",
+   "subject": "Tx FIFO",
+   "field": null,
+   "doc": {
+    "value": 4,
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 9,
+    "ref": "Table 2-4",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "0bd64ec6e36d6d94"
+   },
+   "code": [
+    {
+     "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/f1_uartlite/code/tb_uartlite.sv",
+     "line": 16,
+     "name": "TXF",
+     "value": 4,
+     "n": null
+    }
+   ]
+  },
+  {
+   "id": "F3",
+   "status": "agree",
+   "tier": "name",
+   "why": "",
+   "kind": "address",
+   "subject": "STAT_REG",
+   "field": null,
+   "doc": {
+    "value": 8,
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 9,
+    "ref": "Table 2-4",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "51c93cb97360eddb"
+   },
+   "code": [
+    {
+     "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/f1_uartlite/code/tb_uartlite.sv",
+     "line": 16,
+     "name": "STAT",
+     "value": 8,
+     "n": null
+    }
+   ]
+  },
+  {
+   "id": "F4",
+   "status": "agree",
+   "tier": "name",
+   "why": "",
+   "kind": "address",
+   "subject": "CTRL_REG",
+   "field": null,
+   "doc": {
+    "value": 12,
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 9,
+    "ref": "Table 2-4",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "172e08ee14804871"
+   },
+   "code": [
+    {
+     "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/f1_uartlite/code/tb_uartlite.sv",
+     "line": 16,
+     "name": "CTRL",
+     "value": 12,
+     "n": null
+    }
+   ]
+  },
+  {
+   "id": "F5",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "word_count",
+   "subject": "Rx FIFO",
+   "field": null,
+   "doc": {
+    "value": 16,
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": "words",
+    "applies_to": "all",
+    "for_target": true,
+    "page": 9,
+    "ref": "RX FIFO",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "fd4f42de39431d9a"
+   },
+   "code": []
+  },
+  {
+   "id": "F6",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "word_count",
+   "subject": "Tx FIFO",
+   "field": null,
+   "doc": {
+    "value": 16,
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": "words",
+    "applies_to": "all",
+    "for_target": true,
+    "page": 10,
+    "ref": "TX FIFO",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "b44da7758d9e88ba"
+   },
+   "code": []
+  },
+  {
+   "id": "F7",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "bit_range",
+   "subject": "Rx FIFO",
+   "field": "Rx Data",
+   "doc": {
+    "value": null,
+    "values": null,
+    "lo": 0,
+    "hi": 7,
+    "unit": "bits",
+    "applies_to": "Data Bits = 8",
+    "for_target": true,
+    "page": 9,
+    "ref": "Figure 2-1; Table 2-5",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "fb4d79156bccd06d"
+   },
+   "code": []
+  },
+  {
+   "id": "F8",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "bit_range",
+   "subject": "Rx FIFO",
+   "field": "Reserved",
+   "doc": {
+    "value": null,
+    "values": null,
+    "lo": 8,
+    "hi": 31,
+    "unit": "bits",
+    "applies_to": "Data Bits = 8",
+    "for_target": true,
+    "page": 9,
+    "ref": "Figure 2-1",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "96bdefa316bc0de3"
+   },
+   "code": []
+  },
+  {
+   "id": "F9",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "reset_value",
+   "subject": "Rx FIFO",
+   "field": "Rx Data",
+   "doc": {
+    "value": 0,
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 10,
+    "ref": "Table 2-5",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "eacd715db945d504"
+   },
+   "code": []
+  },
+  {
+   "id": "F10",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "reset_value",
+   "subject": "Rx FIFO",
+   "field": "Reserved",
+   "doc": {
+    "value": 0,
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 10,
+    "ref": "Table 2-5",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "3d44c31277f556cb"
+   },
+   "code": []
+  },
+  {
+   "id": "F11",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "none of RX DATA appears in the code",
+   "kind": "other",
+   "subject": "Rx FIFO",
+   "field": "Rx Data",
+   "doc": {
+    "value": "Read",
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 10,
+    "ref": "Table 2-5",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "eacd715db945d504"
+   },
+   "code": []
+  },
+  {
+   "id": "F12",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "none of RX FIFO, SLVERR appears in the code",
+   "kind": "condition",
+   "subject": "Rx FIFO",
+   "field": null,
+   "doc": {
+    "value": "A read request to an empty Rx FIFO generates SLVERR and the result is undefined; the Rx FIFO is read-only and writes have no effect.",
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 9,
+    "ref": "RX FIFO",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "362dad7f90be9fde"
+   },
+   "code": []
+  },
+  {
+   "id": "F13",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "none of SLVERR, TX FIFO appears in the code",
+   "kind": "condition",
+   "subject": "Tx FIFO",
+   "field": null,
+   "doc": {
+    "value": "A write request while the Tx FIFO is full generates SLVERR and the data is not written.",
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 10,
+    "ref": "TX FIFO",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "86cf6d14b045899e"
+   },
+   "code": []
+  },
+  {
+   "id": "F14",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "reset_value",
+   "subject": "Tx FIFO",
+   "field": "Tx Data",
+   "doc": {
+    "value": 0,
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 10,
+    "ref": "Table 2-6",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "c329ea9dead141f8"
+   },
+   "code": []
+  },
+  {
+   "id": "F15",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "none of TX DATA appears in the code",
+   "kind": "other",
+   "subject": "Tx FIFO",
+   "field": "Tx Data",
+   "doc": {
+    "value": "Write",
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 10,
+    "ref": "Table 2-6",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "c329ea9dead141f8"
+   },
+   "code": []
+  },
+  {
+   "id": "F16",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "bit_range",
+   "subject": "CTRL_REG",
+   "field": "Enable Intr",
+   "doc": {
+    "value": null,
+    "values": null,
+    "lo": 4,
+    "hi": 4,
+    "unit": "bits",
+    "applies_to": "all",
+    "for_target": true,
+    "page": 11,
+    "ref": "Table 2-7",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "b4d9fdb9cbec7ce6"
+   },
+   "code": []
+  },
+  {
+   "id": "F17",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "bit_range",
+   "subject": "CTRL_REG",
+   "field": "Rst Rx FIFO",
+   "doc": {
+    "value": null,
+    "values": null,
+    "lo": 1,
+    "hi": 1,
+    "unit": "bits",
+    "applies_to": "all",
+    "for_target": true,
+    "page": 11,
+    "ref": "Table 2-7",
+    "quote_ok": false,
+    "page_ok": false,
+    "quote_sha256": "41f65cf6ac0e46ad"
+   },
+   "code": []
+  },
+  {
+   "id": "F18",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "bit_range",
+   "subject": "CTRL_REG",
+   "field": "Rst Tx FIFO",
+   "doc": {
+    "value": null,
+    "values": null,
+    "lo": 0,
+    "hi": 0,
+    "unit": "bits",
+    "applies_to": "all",
+    "for_target": true,
+    "page": 11,
+    "ref": "Table 2-7",
+    "quote_ok": false,
+    "page_ok": false,
+    "quote_sha256": "964d6388a0fae872"
+   },
+   "code": []
+  },
+  {
+   "id": "F19",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "bit_range",
+   "subject": "CTRL_REG",
+   "field": "Reserved",
+   "doc": {
+    "value": null,
+    "values": null,
+    "lo": 5,
+    "hi": 31,
+    "unit": "bits",
+    "applies_to": "all",
+    "for_target": true,
+    "page": 11,
+    "ref": "Table 2-7",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "2dfe1b8a7bc1f6a7"
+   },
+   "code": []
+  },
+  {
+   "id": "F20",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "bit_range",
+   "subject": "CTRL_REG",
+   "field": "Reserved",
+   "doc": {
+    "value": null,
+    "values": null,
+    "lo": 2,
+    "hi": 3,
+    "unit": "bits",
+    "applies_to": "all",
+    "for_target": true,
+    "page": 11,
+    "ref": "Table 2-7",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "d4bc62de5178a9b1"
+   },
+   "code": []
+  },
+  {
+   "id": "F21",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "reset_value",
+   "subject": "CTRL_REG",
+   "field": "Enable Intr",
+   "doc": {
+    "value": 0,
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 11,
+    "ref": "Table 2-7",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "b4d9fdb9cbec7ce6"
+   },
+   "code": []
+  },
+  {
+   "id": "F22",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "reset_value",
+   "subject": "CTRL_REG",
+   "field": "Rst Rx FIFO",
+   "doc": {
+    "value": 0,
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 11,
+    "ref": "Table 2-7",
+    "quote_ok": false,
+    "page_ok": false,
+    "quote_sha256": "41f65cf6ac0e46ad"
+   },
+   "code": []
+  },
+  {
+   "id": "F23",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "reset_value",
+   "subject": "CTRL_REG",
+   "field": "Rst Tx FIFO",
+   "doc": {
+    "value": 0,
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 11,
+    "ref": "Table 2-7",
+    "quote_ok": false,
+    "page_ok": false,
+    "quote_sha256": "964d6388a0fae872"
+   },
+   "code": []
+  },
+  {
+   "id": "F24",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "a value of a field (an encoding such as '1 = enable') is not compared with the code's masks and offsets; read the evidence",
+   "kind": "value",
+   "subject": "CTRL_REG",
+   "field": "Enable Intr",
+   "doc": {
+    "value": 1,
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 11,
+    "ref": "Table 2-7",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "1409bd1b80fe8e87"
+   },
+   "code": []
+  },
+  {
+   "id": "F25",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "a value of a field (an encoding such as '1 = enable') is not compared with the code's masks and offsets; read the evidence",
+   "kind": "value",
+   "subject": "CTRL_REG",
+   "field": "Rst Rx FIFO",
+   "doc": {
+    "value": 1,
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 11,
+    "ref": "Table 2-7",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "685f839631612a02"
+   },
+   "code": []
+  },
+  {
+   "id": "F26",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "a value of a field (an encoding such as '1 = enable') is not compared with the code's masks and offsets; read the evidence",
+   "kind": "value",
+   "subject": "CTRL_REG",
+   "field": "Rst Tx FIFO",
+   "doc": {
+    "value": 1,
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 11,
+    "ref": "Table 2-7",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "9c5f2c7cfc38f65a"
+   },
+   "code": []
+  },
+  {
+   "id": "F27",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "none of CTRL_REG appears in the code",
+   "kind": "other",
+   "subject": "CTRL_REG",
+   "field": null,
+   "doc": {
+    "value": "Write",
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 10,
+    "ref": "Control Register (CTRL_REG)",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "a48c769d3f369169"
+   },
+   "code": []
+  },
+  {
+   "id": "F28",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "none of STAT_REG appears in the code",
+   "kind": "other",
+   "subject": "STAT_REG",
+   "field": null,
+   "doc": {
+    "value": "Read",
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 11,
+    "ref": "Status Register (STAT_REG)",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "f609df0504f5503d"
+   },
+   "code": []
+  }
+ ],
+ "not_in_document": [
+  {
+   "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/f1_uartlite/code/tb_uartlite.sv",
+   "line": 17,
+   "name": "CHR",
+   "value": 4600
+  }
+ ],
+ "run": "B/f1_uartlite_r3"
+}

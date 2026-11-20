@@ -486,6 +486,8 @@ def _latency(design: Path, project: managed.Project, facts: Facts, path: str | N
                "component": comp.name if comp else None, "component_ownership": comp.ownership if comp else None,
                "setup_slack_ns": (s["netlist"] or {}).get("setup_slack_ns"), "why": s["why"], "risk_of_removing": s["remove_risk"],
                "technique": b.get("technique", s["technique"]), "removable_clocks": b.get("removable_clocks", s["removable"])}
+        if s.get("coupled_with"):
+            rec["coupled_with"] = list(s["coupled_with"])         # brief 104B: the stage file marks stages that cannot be changed apart (flow/options/split.py)
         rows.append(rec)
         facts.add(f"stage.{s['id']}.clocks", s["clocks"], "clocks", f"clocks stage {s['id']} adds on the {path} chain (simulation)", core_f,
                   f"stage table row {s['id']} (segment sums reconcile with {st['paths'][path]['measured']['key']})", "simulation")
