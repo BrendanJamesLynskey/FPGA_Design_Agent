@@ -27,6 +27,11 @@ trace:
   pytest: designs/b96_kr260_10g/tests/test_b96_pcs_rtl.py::test_core_cocotb
   results_env: B96_CORE_RESULTS
   results_file: results/b96c/core_sim.json
+# brief 103S2 (2026-11-20): which build each recorded simulated chain is, for readers that show only the stage table (the navigator's Timing page). The stage table below is
+# the chain of the first file; the default build's chain has no stage table of its own (see the comment above).
+chains:
+  - {file: results/b96c/core_sim.json, label: "RATE_MATCH = 1 build (rate-matched receive path); the stage table below describes this chain"}
+  - {file: results/b96c/core_sim_default.json, label: "default build, RATE_MATCH = 0 (the 97C receive path with the go-pulse crossing); no stage table"}
 slack:
   file: results/b96c/latency_slack.json   # not yet taken on the 96C checkpoint (the b96 file described the old chain): stages show no slack, unknown, not fine. Written by flow/latency/netlist_slack.tcl on a post-route checkpoint (the stages' register patterns)
 
