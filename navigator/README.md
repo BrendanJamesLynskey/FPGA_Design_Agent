@@ -43,7 +43,7 @@ It is not a defence against someone who can edit the code or read your terminal 
 
 Every number names its source file and date (a click shows the record). The Measurements page never measures: a scan is the gated board tool
 (`python -m flow.eyescan run`, through `_handoff/board.lock`), and there is no button for it. **The eye captures in the repository are synthetic**
-(`flow/eyescan/fake.py`); every view labels them so, and the board's eye is not measured yet. Drawing is `flow/eyescan/page.py`'s code, served as it
+(`flow/eyescan/fake.py`); every view labels them so. The board's eye is measured (`results/b96d/hw/20261120_105134`, and the taller scan `20261120_221528`); those records are not synthetic. Drawing is `flow/eyescan/page.py`'s code, served as it
 is (one implementation); this brief added the difference map to its Compare tab and the two slice sliders to its 3-D tab.
 
 ## Health: free checks and actions
