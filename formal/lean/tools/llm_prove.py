@@ -71,6 +71,8 @@ def main() -> int:
     names = re.findall(r"^theorem (\S+)", spec, flags=re.M)
     root = LEAN.parents[1]
     sys.path.insert(0, str(root))
+    from agent.access import require_or_exit
+    require_or_exit("formal/lean/tools/llm_prove.py")
     from agent.models import resolver_for
     rs = resolver_for("rtl", model=a.model, endpoint="claude_code", options={"effort": a.effort, "timeout_s": 1500})
     llm = rs.text("rtl", label="lean_prove", claude_log=out / "claude_code_calls.jsonl")
