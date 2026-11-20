@@ -139,7 +139,7 @@ def test_t1_episode_interview_review_rewind(tmp_path, monkeypatch):
         shutil.rmtree(runs, ignore_errors=True)
 
 
-def _episode(tmp_path, runs):
+def _episode(tmp_path, runs, tape_spec=None, live=True):
     from agent.core.session import ROOT
     hidden = tmp_path / "t1_full_spec.yaml"
     hidden.write_text((T1 / "spec.yaml").read_text())
@@ -149,8 +149,8 @@ def _episode(tmp_path, runs):
     oracle_replies = iter([{"answer": "not specified", "quote": None}, {"answer": "not specified", "quote": None}])
     runner = FakeRunner()
     where = {}
-    rt = gr.new_runtime(cfg, scripted_client(seen, where), run_id="ci", runner=runner,
-                        oracle_llm=lambda s, u: next(oracle_replies))
+    rt = gr.new_runtime(cfg, scripted_client(seen, where) if live else None, run_id="ci", runner=runner,
+                        oracle_llm=lambda s, u: next(oracle_replies), tape_spec=tape_spec)     # brief 107: a tape records or replays the model
     (rt.design / "spec.md").write_text("A PWM dimmer counter for the board.\n")   # 07a2 fix 1: no register wording
     # build.yaml must name this run's design directory
     from agent.core.session import ROOT
@@ -183,12 +183,14 @@ def _episode(tmp_path, runs):
     assert (9, True) in reviews                                  # hardware always pauses for approval
     assert s["questions"]["asked"] == 2 and s["questions"]["defaulted"] == 2
     # sub-agent isolation: the Modeller's prompt carried only spec.yaml; the Verifier never the RTL
-    model_prompt = next(x["user"] for x in seen if x["role"] == "model")
-    assert "--- spec.yaml ---" in model_prompt and "--- model.py ---" not in model_prompt
-    tests_prompt = next(x["user"] for x in seen if x["role"] == "tests")
-    assert "--- ARCHITECTURE.md ---" not in tests_prompt and "--- rtl/" not in tests_prompt and "endmodule" not in tests_prompt
+    if live:                                                     # a replay run sees no live client, so no prompts are collected
+        model_prompt = next(x["user"] for x in seen if x["role"] == "model")
+        assert "--- spec.yaml ---" in model_prompt and "--- model.py ---" not in model_prompt
+        tests_prompt = next(x["user"] for x in seen if x["role"] == "tests")
+        assert "--- ARCHITECTURE.md ---" not in tests_prompt and "--- rtl/" not in tests_prompt and "endmodule" not in tests_prompt
     idx = (rt.design / "build" / "review" / "review_index.html").read_text()
     assert "planner" in idx and "rewind" in idx
+    rt.summary_ = s                                              # brief 107: the proof scores the run's stage path
     assert (rt.design / "build" / "review" / "06_timing-closure.html").is_file()
     assert "3.911" in (rt.design / "build" / "review" / "06_timing-closure.html").read_text()
     assert "simulate" in runner.kinds and "bringup" in runner.kinds
