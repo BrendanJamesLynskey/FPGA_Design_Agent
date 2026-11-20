@@ -61,7 +61,7 @@ designs/b96_kr260_10g/docs/board_run_plan.md 678413f0be: stage 3 plan for the bo
 designs/b96_kr260_10g/docs/what_we_found.md 376623bbd5: results and gaps
 designs/b96_kr260_10g/docs/loop_timing_feasibility.md 500557ea56: loop-timing and buffer-bypass feasibility study (96F)
 designs/b96_kr260_10g/docs/loop_timing_board_test_plan.md 9740d509f2: board test plan for loop timing (96F, for approval)
-designs/b96_kr260_10g/docs/loop_timing_sources.md 9c8b32d904: AMD sources read for loop timing (XAPP1276, Wizard example, TXPI, QPLL outside the core; 96F2)
+designs/b96_kr260_10g/docs/loop_timing_sources.md c53e4dbe34: AMD sources read for loop timing (XAPP1276, Wizard example, TXPI, QPLL outside the core; 96F2)
 docs/latency_definitions.md d378fcc14b: our latencies against STAC-T0 and wire-to-wire definitions (109)
 designs/b96_kr260_10g/model/loop_timing.py a2d1bf6428: Python model of the loop-timing frequency tracker (96F)
 designs/b96_kr260_10g/regmap.py 79db1ce95b: register map as data
