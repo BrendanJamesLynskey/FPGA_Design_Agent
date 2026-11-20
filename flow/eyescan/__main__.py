@@ -14,6 +14,7 @@ from flow.eyescan import hw as H
 
 
 SHIPPED_TXDIFF, MAX_CURSOR = H.SHIPPED_TXDIFF, H.MAX_CURSOR
+EXIT_NO_DATA = 9          # `run` exit code when the self-test or the K-consecutive guard stopped the scan: the owner's script stops the whole session on it
 
 
 def _cfg(a: argparse.Namespace) -> scan.ScanConfig:
@@ -105,8 +106,12 @@ def cmd_run(a: argparse.Namespace) -> int:
         finally:
             t.close()
     path = C.save(cap, out / f"{a.name}.json")
+    eye = C.eye_at(cap, a.target_ber) if cap["points"] else {}
     print(json.dumps({"capture": str(path), "points": len(cap["points"]), "restore_ok": cap["restore"]["ok"], "error": cap["run"]["error"], "synthetic": cap["synthetic"],
-                      "eye": {k: cap and C.eye_at(cap, a.target_ber).get(k) for k in ("width_ui", "height_mv")}}, indent=1))
+                      "eye": {k: eye.get(k) for k in ("width_ui", "height_mv")}}, indent=1))
+    if "NO DATA" in (cap["run"]["error"] or ""):
+        print(f"NO DATA: the scan stopped early ({cap['run']['error']}); no eye was measured", file=sys.stderr)
+        return EXIT_NO_DATA
     return 0 if cap["restore"]["ok"] and not cap["run"]["error"] else 1
 
 
@@ -153,6 +158,25 @@ def cmd_probe(a: argparse.Namespace) -> int:
     finally:
         t.close()
     return 0 if ok else 1
+
+
+def cmd_summary(a: argparse.Namespace) -> int:
+    """summary.txt of a results directory: one line per capture; NO DATA is said as such. Exit 9 if any capture has no data."""
+    d = Path(a.dir)
+    lines, bad = [], False
+    for f in sorted(d.glob("*.json")):
+        if f.name in ("probe.json", "program.json") or f.name.endswith(".partial.header.json"):
+            continue
+        try:
+            c = C.load(f)
+        except Exception as e:  # noqa: BLE001
+            lines.append(f"{f.name}: unreadable ({e})")
+            continue
+        lines.append(C.summary_line(f.stem, c))
+        bad = bad or C.no_data_stats(c)["no_data"]
+    (d / "summary.txt").write_text("\n".join(lines) + "\n")
+    print("\n".join(lines))
+    return EXIT_NO_DATA if bad else 0
 
 
 def cmd_plot(a: argparse.Namespace) -> int:
@@ -268,6 +292,9 @@ def main(argv: list[str] | None = None) -> int:
     pr = sub.add_parser("probe", help="READ-ONLY check of the board's eye-scan build and the DRP words (no writes, no laser)")
     pr.add_argument("--serial", required=True)
     pr.set_defaults(f=cmd_probe)
+    sm = sub.add_parser("summary", help="write summary.txt for a results directory (NO DATA is stated as such)")
+    sm.add_argument("dir")
+    sm.set_defaults(f=cmd_summary)
     p = sub.add_parser("plot", help="static heat map and bathtub SVG")
     p.add_argument("capture")
     p.add_argument("-o", "--out", default=".")

@@ -61,8 +61,18 @@ class FakeBoard:
         z = (m - mv) / (math.sqrt(2) * self.sigma)
         return min(0.5, 0.5 * math.erfc(z))
 
+    def _qual_all_masked(self) -> bool:
+        """UG576 (Table 4-20, GTHE4): the sample counter advances only on cycles whose Rdata matches ES_QUALIFIER where ES_QUAL_MASK is 0, so for a statistical eye ALL ten words of
+        ES_QUAL_MASK must be 1s. Real data never matches 80 bits of an unmasked, all-zero qualifier, so one zero bit anywhere means no sample is ever counted."""
+        return all(self.drp[a] == 0xFFFF for a in tw.QUAL_MASK_ADDRS)
+
     def _run_point(self) -> None:
         p = self.reg.get(H.R_POINT, 0)
+        if not self._qual_all_masked():           # the GT stays in COUNT (0b0110), the sequencer's poll times out: result registers 0, tmo flag, as on the board 2026-11-19
+            self.reg[H.R_RES] = 0
+            self.points += 1
+            self.stat = 0x2 | 0x4 | (0b0110 << 8)
+            return
         horz, code, neg, rng_sel, pre = p & 0xFFF, (p >> 12) & 0x7F, (p >> 19) & 1, (p >> 21) & 3, (p >> 23) & 31
         h = horz & 0x7FF
         if horz & 0x800:

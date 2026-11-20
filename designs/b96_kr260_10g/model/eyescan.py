@@ -8,7 +8,21 @@ from __future__ import annotations
 
 #: DRP addresses of GTHE4_CHANNEL (UG576 v1.7.1 appendix C, Table C-2, and chapter 4 Table 4-21), 10-bit.
 A_ES_CONTROL = 0x03C        # [15:10] ES_CONTROL, [9] ES_ERRDET_EN, [8] ES_EYE_SCAN_EN, [4:0] ES_PRESCALE
-A_ES_QUALIFIER0, A_ES_QUAL_MASK0, A_ES_SDATA_MASK0 = 0x03F, 0x044, 0x049     # five 16-bit words each (GTH uses 80-bit masks), +0..+4
+#: The static eye-scan words, GTHE4 (UltraScale+): TEN 16-bit words each (160-bit ES_QUALIFIER, ES_QUAL_MASK, ES_SDATA_MASK; UG576 v1.7.1 Table 4-20 printed pp. 230-232, Table C-2
+#: printed pp. 463 and 511). Words 0-4 are at 0x03F/0x044/0x049 (+0..+4), words 5-9 are in a different block at 0x0E7/0x0EC/0x0F1 (+0..+4). Brief 96D wrote only words 0-4 (the
+#: UltraScale 80-bit layout): brief 96D2.
+A_ES_QUALIFIER0, A_ES_QUAL_MASK0, A_ES_SDATA_MASK0 = 0x03F, 0x044, 0x049
+A_ES_QUALIFIER5, A_ES_QUAL_MASK5, A_ES_SDATA_MASK5 = 0x0E7, 0x0EC, 0x0F1
+
+
+def word_addrs(base_lo: int, base_hi: int) -> list[int]:
+    """DRP addresses of words 0..9 of one 160-bit attribute (low block, then high block)."""
+    return [base_lo + i for i in range(5)] + [base_hi + i for i in range(5)]
+
+
+QUALIFIER_ADDRS = word_addrs(A_ES_QUALIFIER0, A_ES_QUALIFIER5)
+QUAL_MASK_ADDRS = word_addrs(A_ES_QUAL_MASK0, A_ES_QUAL_MASK5)
+SDATA_MASK_ADDRS = word_addrs(A_ES_SDATA_MASK0, A_ES_SDATA_MASK5)
 A_ES_HORZ = 0x04F           # [15:4] ES_HORZ_OFFSET
 A_VS = 0x097                # [10] NEG_DIR, [9] UT_SIGN, [8:2] CODE, [1:0] RANGE
 A_ERR, A_SAMP, A_STATUS = 0x251, 0x252, 0x253

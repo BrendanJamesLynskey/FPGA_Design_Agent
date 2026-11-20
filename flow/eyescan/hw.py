@@ -20,13 +20,28 @@ MAX_CURSOR = 12              # 3.10 dB, UG576 Table 3-35
 CLK_HZ = 100e6                       # the free-running clock the sequencer and its timeout run in
 #: DRP words that the scan reads-modifies-writes or overwrites; all are saved first and written back at the end.
 A_RX_INT = 0x066                     # [1:0] RX_INT_DATAWIDTH (read only, to check the width the masks assume)
-SAVE_ADDRS = ([tw.A_ES_CONTROL, tw.A_ES_HORZ, tw.A_VS]
-              + [tw.A_ES_QUALIFIER0 + i for i in range(5)] + [tw.A_ES_QUAL_MASK0 + i for i in range(5)] + [tw.A_ES_SDATA_MASK0 + i for i in range(5)])
-#: Statistical-eye masks for a 32-bit valid data width (UG576 v1.7.1 Table 4-20, GTH: 80-bit ES_SDATA_MASK = {40'b1, 32'b0, 8'b1}; ES_QUAL_MASK all ones so every cycle counts;
-#: ES_QUALIFIER 0). Word i holds bits [16 i + 15 : 16 i].
-QUALIFIER = [0x0000] * 5
-QUAL_MASK = [0xFFFF] * 5
-SDATA_MASK_32 = [0x00FF, 0x0000, 0xFF00, 0xFFFF, 0xFFFF]
+SAVE_ADDRS = ([tw.A_ES_CONTROL, tw.A_ES_HORZ, tw.A_VS] + tw.QUALIFIER_ADDRS + tw.QUAL_MASK_ADDRS + tw.SDATA_MASK_ADDRS)     # 33 words: GTHE4 has ten words of each 160-bit mask (96D2)
+N_WORDS = 10
+
+
+def sdata_mask_160(width: int) -> int:
+    """ES_SDATA_MASK of a statistical eye for a valid data width, GTHE4 / UltraScale+ (UG576 v1.7.1 Table 4-20, printed p. 230): {80'b1, width'b0, (80-width)'b1}, i.e. the
+    current cycle's `width` valid bits are the only unmasked ones. For 32 bits: {80'b1, 32'b0, 48'b1}."""
+    if width not in (16, 20, 32, 40, 64, 80):
+        raise ValueError(f"data width {width} is not one of UG576's 16, 20, 32, 40, 64, 80")
+    return (((1 << 80) - 1) << 80) | ((1 << (80 - width)) - 1)
+
+
+def words_of(v160: int) -> list[int]:
+    """160-bit value -> ten 16-bit words, word 0 = bits [15:0] (UG576: ES_xxx0 holds the low bits)."""
+    return [(v160 >> (16 * i)) & 0xFFFF for i in range(N_WORDS)]
+
+
+#: Statistical-eye settings for the 32-bit valid data width: ES_QUALIFIER 0, ES_QUAL_MASK all ones (so every cycle counts: with ANY unmasked qualifier bit that real data does not
+#: match, the sample counter never advances and the scan never reaches END: the 2026-11-19 failure), ES_SDATA_MASK {80'b1, 32'b0, 48'b1}.
+QUALIFIER = [0x0000] * N_WORDS
+QUAL_MASK = [0xFFFF] * N_WORDS
+SDATA_MASK_32 = words_of(sdata_mask_160(32))
 RXOUT_DIV_DECODE = {0: 1, 1: 2, 2: 4, 3: 8, 4: 16}     # DRP 0x63 [2:0] (UG576 appendix C)
 COUNTS_PER_HALF_UI_AT_DIV1 = 32                       # Table 4-20: full rate, -32 .. +32 counts is -0.5 .. +0.5 UI
 
@@ -38,6 +53,10 @@ class Transport(Protocol):
 
 class EyeScanError(RuntimeError):
     pass
+
+
+class NoDataError(EyeScanError):
+    """The scan counted nothing (the self-test point or K consecutive points timed out or saw zero samples): stop, the laser time is being wasted. The text starts "NO DATA"."""
 
 
 def horz_field(counts: int) -> int:
@@ -139,10 +158,16 @@ class EyeHW:
         w = self.drp_read(A_RX_INT) & 3
         if w != 1:
             raise EyeScanError(f"RX_INT_DATAWIDTH = {w}: the statistical-eye masks written here assume the 32-bit internal width (value 1)")
-        for i in range(5):
-            self.drp_write(tw.A_ES_QUALIFIER0 + i, QUALIFIER[i])
-            self.drp_write(tw.A_ES_QUAL_MASK0 + i, QUAL_MASK[i])
-            self.drp_write(tw.A_ES_SDATA_MASK0 + i, SDATA_MASK_32[i])
+        want = {}
+        for i in range(N_WORDS):
+            want[tw.QUALIFIER_ADDRS[i]] = QUALIFIER[i]
+            want[tw.QUAL_MASK_ADDRS[i]] = QUAL_MASK[i]
+            want[tw.SDATA_MASK_ADDRS[i]] = SDATA_MASK_32[i]
+        for a, v in want.items():
+            self.drp_write(a, v)
+        bad = {f"{a:#05x}": f"wrote {v:#06x}, read {r:#06x}" for a, v in want.items() if (r := self.drp_read(a)) != v}
+        if bad:
+            raise EyeScanError(f"the static eye-scan words did not read back as written: {bad}")
         return dict(self.saved)
 
     def restore(self) -> dict[str, Any]:
@@ -165,7 +190,7 @@ class EyeHW:
         if st & 0x10 or ((st >> 16) - n0) & 0xFFFF != 1:
             raise EyeScanError(f"the point command did not run (ES_STAT {st:#x}, points completed {n0} -> {st >> 16}): its results would be the previous point's")
         res = self.rd(R_RES)
-        return {"pre": pre, "err": res & 0xFFFF, "samp": res >> 16, "tmo": bool(st & 0x4), "drp_tmo": bool(st & 0x8), "status": (st >> 8) & 0xF}
+        return {"pre": pre, "err": res & 0xFFFF, "samp": res >> 16, "tmo": bool(st & 0x4), "drp_tmo": bool(st & 0x8), "status": (st >> 8) & 0xF}      # status: es_control_status as last read (WAIT 0001, RESET 0010, COUNT 0110, END 0101)
 
     # ---- TX drive and equaliser (explicit, separate)
     def set_tx_drive(self, diff: int, pre: int, post: int, dfelpm_reset: bool = False) -> None:
