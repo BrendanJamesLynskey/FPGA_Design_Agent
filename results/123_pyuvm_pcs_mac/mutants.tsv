@@ -1,0 +1,18 @@
+id	verdict	killed_by	checks_that_fired	runs	wall_s	what
+M01	KILLED	t_smoke seed 1	E2E TXMAC	1	4	poison polarity inverted: good frames get a bad FCS
+M02	KILLED	t_smoke seed 1	TXMAC	1	4	start-of-frame delimiter 0xD4 instead of 0xD5
+M03	SURVIVED	-	-	15	169	EQUIVALENT: the dead branch of the gap after a two-word frame end replaced by its live value (cannot be detected)
+M04	KILLED	t_lens seed 1	TXMAC_IFG	2	19	interframe gap one word short when the frame ends in the first of its two words
+M05	KILLED	t_smoke seed 1	E2E SVA TXMAC	1	3	frame end with 4 data bytes in the last word is not split over two words
+M06	KILLED	t_smoke seed 1	E2E TXPCS	1	5	gearbox remainder not cleared on the pause clock
+M07	KILLED	t_smoke seed 1	RXMAC RXPCS TXPCS	1	3	scrambler tap 38 instead of 39 in the scrambler and the descrambler alike (symmetric: the loopback cannot see it)
+M08	KILLED	t_lens seed 1	RXMAC RXPCS TXPCS	2	19	terminate-in-lane-3 block type 0xB5 instead of 0xB4, in encoder and decoder alike (symmetric)
+M09	KILLED	t_smoke seed 1	RXPCS	1	3	block lock after 63 valid headers instead of 64
+M10	KILLED	t_line_blocks seed 1	RXMAC RXPCS	4	29	lock lost at the 17th invalid header instead of the 16th
+M11	KILLED	t_line_blocks seed 1	RXPCS	4	30	ordered-set event counts unknown block types
+M12	KILLED	t_line_blocks seed 1	RXPCS	4	30	ordered-set type 0x4B not decoded as an ordered set (symmetric table, line-side only)
+M13	KILLED	t_line_blocks seed 1	RXMAC	4	29	a frame is not aborted when block lock drops
+M14	KILLED	t_line_blocks seed 1	RXMAC	4	28	lane-4 frame flush word one byte too long
+M15	KILLED	t_xg seed 1	RXMAC	3	21	FCS check ignores the top residue bit (a subtle one)
+M16	KILLED	t_line_blocks seed 1	RXMAC	4	28	lane-4 start detected with the wrong control vector (line side only)
+M17	KILLED	t_smoke seed 1	E2E TXMAC TXMAC_IFG	1	3	mac64_tx ignores the PCS pause: its state advances on the clock the gearbox takes no word
