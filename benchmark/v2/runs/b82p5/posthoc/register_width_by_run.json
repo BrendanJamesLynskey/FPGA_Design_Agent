@@ -1,0 +1,106 @@
+{
+ "A r1": {
+  "run": "20261119-231744-448e",
+  "model.py": [
+   "model.py:98: need = {1: 2, 2: 6, 3: 0, 4: 2, 5: 0}",
+   "model.py:113: r = (pl[0] << 8) | pl[1]",
+   "model.py:123: self.scratch[r - 1] = int.from_bytes(bytes(pl[2:6]), 'big')",
+   "model.py:130: per = (pl[0] << 8) | pl[1]"
+  ],
+  "rtl": [
+   "rtl/udp_endpoint.sv:72: wire [15:0] regno  = {pbuf[4], pbuf[5]};",
+   "rtl/udp_endpoint.sv:114: end else if (typ == 8'd2 && !(regno == 16'd1 || regno == 16'd2 || regno == 16'd3)) begin"
+  ],
+  "bench": [
+   "tests/v2_e_udp_endpoint_bench.py:36: def rdp(r):",
+   "tests/v2_e_udp_endpoint_bench.py:40: def wrp(r, v):"
+  ]
+ },
+ "B r1": {
+  "run": "20261120-022213-afd9",
+  "model.py": [
+   "model.py:122: r = pl[1] if pl[0] == 0 else 255",
+   "model.py:130: r = pl[0]",
+   "model.py:139: self._regs[r] = (pl[1] << 24) | (pl[2] << 16) | (pl[3] << 8) | pl[4]",
+   "model.py:145: per = (pl[0] << 8) | pl[1]"
+  ],
+  "rtl": [
+   "rtl/uep_core.sv:96: wire [7:0]  d_reg   = (p_typ == 8'd2) ? pbuf[4] : ((pbuf[4] == 8'd0) ? pbuf[5] : 8'hFF);"
+  ],
+  "bench": [
+   "tests/uep_bench.py:33: def rd(seq, reg):",
+   "tests/uep_bench.py:34: return mk(1, seq, [0, reg])",
+   "tests/uep_bench.py:37: def wr(seq, reg, val):",
+   "tests/uep_bench.py:39: return mk(2, seq, [reg, (val >> 24) & 255, (val >> 16) & 255, (val >> 8) & 255, val & 255, 0])",
+   "tests/uep_bench.py:439: return mk(1, seq, [hi, lo])"
+  ]
+ },
+ "A r2": {
+  "run": "20261120-041922-a5da",
+  "model.py": [
+   "model.py:101: reg = (pl[0] << 8) | pl[1]",
+   "model.py:110: self.scratch[reg] = int.from_bytes(bytes(pl[2:6]), 'big')",
+   "model.py:118: per = (pl[0] << 8) | pl[1]"
+  ],
+  "bench": [
+   "tests/bench_v2_e_udp_endpoint.py:37: def rd_pkt(seq, reg):",
+   "tests/bench_v2_e_udp_endpoint.py:38: return mk(1, seq, [(reg >> 8) & 255, reg & 255])",
+   "tests/bench_v2_e_udp_endpoint.py:41: def wr_pkt(seq, reg, val):",
+   "tests/bench_v2_e_udp_endpoint.py:42: return mk(2, seq, [(reg >> 8) & 255, reg & 255] + list(val.to_bytes(4, \"big\")))",
+   "tests/bench_v2_e_udp_endpoint.py:186: async def rd(self, off):",
+   "tests/bench_v2_e_udp_endpoint.py:192: async def wr(self, off, val):"
+  ]
+ },
+ "B r2": {
+  "run": "20261120-072336-553a",
+  "model.py": [
+   "model.py:72: need = {1: 2, 2: 6, 3: 0, 4: 2, 5: 0}",
+   "model.py:92: r = pl[0]",
+   "model.py:98: r = pl[0]",
+   "model.py:99: v = int.from_bytes(bytes(pl[1:5]), 'big')",
+   "model.py:111: per = (pl[0] << 8) | pl[1]"
+  ],
+  "rtl": [
+   "rtl/udp_rx.sv:46: assign r     = pbuf[4];"
+  ],
+  "bench": [
+   "tests/v2_e_udp_endpoint_bench.py:48: def rd_pkt(seq, reg):",
+   "tests/v2_e_udp_endpoint_bench.py:49: return mk(1, seq, bytes([reg]))",
+   "tests/v2_e_udp_endpoint_bench.py:52: def wr_pkt(seq, reg, val):",
+   "tests/v2_e_udp_endpoint_bench.py:53: return mk(2, seq, bytes([reg]) + (val & 0xFFFFFFFF).to_bytes(4, \"big\"))",
+   "tests/v2_e_udp_endpoint_bench.py:124: async def wr(self, off, val):",
+   "tests/v2_e_udp_endpoint_bench.py:128: async def rd(self, off):"
+  ]
+ },
+ "A r3": {
+  "run": "20261120-075215-97ce",
+  "model.py": [
+   "model.py:91: reg = (pl[0] << 8) | pl[1]",
+   "model.py:103: self.scratch[reg - 1] = int.from_bytes(pl[2:6], 'big')",
+   "model.py:108: per = (pl[0] << 8) | pl[1]"
+  ],
+  "bench": [
+   "tests/v2_e_udp_endpoint_bench.py:27: def rd_pl(reg):",
+   "tests/v2_e_udp_endpoint_bench.py:31: def wr_pl(reg, val):",
+   "tests/v2_e_udp_endpoint_bench.py:129: async def wr(self, off, val):",
+   "tests/v2_e_udp_endpoint_bench.py:138: async def rd(self, off):"
+  ]
+ },
+ "B r3": {
+  "run": "20261120-104735-68eb",
+  "model.py": [
+   "model.py:87: need = {1: 2, 2: 6, 3: 0, 4: 2, 5: 0}",
+   "model.py:106: r = pay[0]",
+   "model.py:119: self.scratch[r] = (pay[2] << 24) | (pay[3] << 16) | (pay[4] << 8) | pay[5]",
+   "model.py:127: per = (pay[0] << 8) | pay[1]"
+  ],
+  "rtl": [
+   "rtl/uep_core.sv:83: reg_n    = pbuf[4];",
+   "rtl/uep_core.sv:100: else if ((typ == 8'd2) && ((reg_n == 8'd0) || (reg_n >= 8'd4))) ex_status = 8'd5;"
+  ],
+  "bench": [
+   "tests/bench_v2_e_udp_endpoint.py:173: async def wr(self, off, v):",
+   "tests/bench_v2_e_udp_endpoint.py:184: async def rd(self, off):"
+  ]
+ }
+}
