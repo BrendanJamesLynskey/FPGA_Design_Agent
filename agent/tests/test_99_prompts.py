@@ -315,11 +315,11 @@ def test_leak_scan_looks_inside_archives(tmp_path):
 
 
 def test_archives_moved_to_the_private_repository_leave_a_pointer_with_the_hash():
-    """Every b82p2/b82p3 ``run_dir.tar.gz`` is private; the public tree holds ``run_dir.tar.gz.pointer.json`` with the SHA-256, which is the
+    """Every b82p2/b82p3/b82p4 ``run_dir.tar.gz`` is private; the public tree holds ``run_dir.tar.gz.pointer.json`` with the SHA-256, which is the
     one the run's record already carries."""
     root = Path(__file__).resolve().parents[2] / "benchmark" / "v2" / "runs"
     ptrs = sorted(root.glob("b82p*/artifacts/*/run_dir.tar.gz.pointer.json"))
-    assert len(ptrs) == 21
+    assert len(ptrs) == 27
     assert not list(root.glob("b82p*/artifacts/*/run_dir.tar.gz")), "a rendered-prompt archive is tracked again"
     for p in ptrs:
         d = json.loads(p.read_text())
