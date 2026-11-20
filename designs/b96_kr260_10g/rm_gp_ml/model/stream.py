@@ -168,3 +168,33 @@ def write(out_dir: Path, **kw) -> dict:
 if __name__ == "__main__":
     import sys
     print(json.dumps(write(Path(sys.argv[1]), veto=(len(sys.argv) > 2 and sys.argv[2] == "veto")), indent=1))
+
+
+def make_lat_stream(n_pairs: int = 10, veto: bool = True, bid_sz: int = 200, ask_sz: int = 1, spacing: int = 300) -> tuple[list[int], dict]:
+    """The latency stream: n_pairs times a heavy bid (ADD, 100.00 x bid_sz) and an ask at the threshold (ADD 100.01 x ask_sz, a hit for the rule at THR 100.02), one frame each,
+    `spacing` idle words apart (so one order is in flight at a time, as results/b96e/core_lat_sim.sh). The twin says whether the model agrees with the buy; the bench's order count must equal that."""
+    items, seq = [], 1
+    for _ in range(n_pairs):
+        for m in (bf.Msg(bf.ADD, bf.BID, INST, 10000, bid_sz), bf.Msg(bf.ADD, bf.ASK, INST, 10001, ask_sz)):
+            items.append({"m": m, "frame": bf.feed_frame(seq, [m]), "kind": "good"})
+            seq += 1
+    tw = Twin(inst=INST, thr=THR, veto_mode=veto)
+    exp = []
+    for it in items:
+        o = tw.frame(it["m"], True)
+        exp.append({"kind": "good", "type": it["m"].type, "side": it["m"].side, "px": it["m"].price, "sz": it["m"].size, "trk": o.trk, "feat": o.feat, "cls": o.cls, "hit": o.hit,
+                    "dec": o.dec, "veto": o.veto, "order": o.order, "applied": o.applied})
+    class _Fixed(Gap):
+        def __call__(self) -> int:
+            return spacing
+    words = to_gt(build(items, gap=_Fixed(0)))
+    return words, {"expect": exp, "summary": {"frames": len(items), "observed": len(exp), "twin_counts": tw.n, "veto_mode": veto}}
+
+
+def write_lat(out_dir: Path, **kw) -> dict:
+    out_dir.mkdir(parents=True, exist_ok=True)
+    words, e = make_lat_stream(**kw)
+    (out_dir / "words.hex").write_text("\n".join(f"{w:016x}" for w in words) + "\n")
+    e["nw"] = len(words)
+    (out_dir / "expect.json").write_text(json.dumps(e, indent=0))
+    return e["summary"]

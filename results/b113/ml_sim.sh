@@ -1,6 +1,6 @@
 #!/bin/bash
 # Brief 113: the whole core in xsim 2026.1 with AMD's real XPM macros and a synthetic feed injected on the receive words (designs/b96_kr260_10g/rm_gp_ml/sim/tb_ml_core.sv).
-# usage: ml_sim.sh <build: ml | base> <stream dir (words.hex, expect.json)> <veto 0|1> <phase_ps> <hold> <out log>
+# usage: [LOOP=<n frames>] ml_sim.sh <build: ml | base> <stream dir (words.hex, expect.json); ignored with LOOP> <veto 0|1> <phase_ps> <hold> <out log>
 #   build ml   = rm_gp_ml (the ML stage; <hold> = trade64's simulation-only ML_HOLD: 0 in every real build, 1 or 2 to show what a class made after the message would cost)
 #   build base = the unmodified rm_gp core (RATE_MATCH 1, RM_OWN 1) with the same stimulus: the control "without the ML stage"
 # Simulation only: no heavy slot while the load is under 6 and more than 12 GB is free. The rtl is compiled from a copy with always_ff turned into always and INIT_SYNC_FF 0 -> 1 (as results/b96e/core_lat_sim.sh:
@@ -29,7 +29,11 @@ fi
 ns=$(python3 -c "print($PH/1000.0)")
 xvlog -sv -L xpm -d RXPH=$ns $DEFS $SRCS "$XILINX_VIVADO/data/verilog/src/glbl.v" > xvlog.log 2>&1 || { echo "xvlog failed (see $WORK/xvlog.log)"; tail -20 xvlog.log; exit 1; }
 xelab -L xpm -L unisims_ver -debug off -generic_top "ML_HOLD=$HOLD" tb_ml_core work.glbl -s s > xelab.log 2>&1 || { echo "xelab failed"; tail -20 xelab.log; exit 1; }
-NW=$(wc -l < "$STREAM/words.hex")
-xsim s -R -testplusarg "WORDS=$STREAM/words.hex" -testplusarg "NW=$NW" -testplusarg "VETO=$VETO" -testplusarg "INST=${INST:-3}" -testplusarg "THR=${THR:-10002}" > xsim.log 2>&1
+if [ -n "${LOOP:-}" ]; then      # the board's own stream: <LOOP> generator feed frames through the near-end loop, no injection (instrument 1, threshold 9975, as the board script)
+  xsim s -R -testplusarg "LOOP=$LOOP" -testplusarg "VETO=$VETO" -testplusarg "INST=1" -testplusarg "THR=9975" > xsim.log 2>&1
+else
+  NW=$(wc -l < "$STREAM/words.hex")
+  xsim s -R -testplusarg "WORDS=$STREAM/words.hex" -testplusarg "NW=$NW" -testplusarg "VETO=$VETO" -testplusarg "INST=${INST:-3}" -testplusarg "THR=${THR:-10002}" > xsim.log 2>&1
+fi
 grep -E "^(MSG|FIRE|ORD|REG|MLV|ML_ID|ID|FEATURES|GTSTAT|DONE|LINK|NO |TIMEOUT|DIRECT|DBG)" xsim.log > "$LOG"
 echo "$BUILD veto $VETO phase_ps $PH hold $HOLD: $(grep -c '^MSG' "$LOG") MSG lines, $(grep -c '^ORD' "$LOG") ORD, $(grep -E '^(DONE|LINK)' "$LOG" | tr '\n' ' ')"

@@ -377,6 +377,10 @@ jobs:
         run: |
           python -m pytest -q designs/b92_history_attention/tests/test_b92_gen.py designs/b92_history_attention/tests/test_b92_rtl.py
           python3 results/b92/summary.py --check
+      - name: ML decision stage in the 10G trading path (brief 113) - ml_stage against the Python twin in Icarus (veto and shadow mode, the settling window, three mutants), the ML register map, the board driver against a fake board, the twin against the 87 references; Verilator -Wall on build rm_gp_ml; the recorded simulation and build results
+        run: |
+          python -m pytest -q designs/b96_kr260_10g/rm_gp_ml/tests
+          python3 results/b113/summary.py --check
       - name: Upload simulation logs
         if: always()
         uses: actions/upload-artifact@v4

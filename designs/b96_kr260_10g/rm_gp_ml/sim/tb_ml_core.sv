@@ -41,19 +41,19 @@ module tb_ml_core #(
     logic        rxclk, txclk;
     assign txclk = u.txusr2; assign rxclk = u.rxusr2;
     logic [63:0] wmem [0:65535];
-    integer      nw, widx, veto_arg, inst_arg, thr_arg;
+    integer      nw, widx, veto_arg, inst_arg, thr_arg, loop_n;
     string       fn;
     initial begin
-        nw = 0; widx = 0; veto_arg = 0; inst_arg = 1; thr_arg = 9975;
-        if (!$value$plusargs("WORDS=%s", fn)) begin $display("NO +WORDS"); $finish; end
-        if (!$value$plusargs("NW=%d", nw)) begin $display("NO +NW"); $finish; end
+        nw = 0; widx = 0; veto_arg = 0; inst_arg = 1; thr_arg = 9975; loop_n = 0;
+        void'($value$plusargs("LOOP=%d", loop_n));        // +LOOP=<n>: no injection; the board's own stream, n generator feed frames (ADD ask 99.50, size 1, instrument 1) through the near-end loop
+        if (loop_n == 0 && !$value$plusargs("WORDS=%s", fn)) begin $display("NO +WORDS"); $finish; end
+        if (loop_n == 0 && !$value$plusargs("NW=%d", nw)) begin $display("NO +NW"); $finish; end
         void'($value$plusargs("VETO=%d", veto_arg));
         void'($value$plusargs("INST=%d", inst_arg));
         void'($value$plusargs("THR=%d", thr_arg));
-        $readmemh(fn, wmem);
-        u.u_gt.inj_en = 1'b1;
+        if (loop_n == 0) begin $readmemh(fn, wmem); u.u_gt.inj_en = 1'b1; end
     end
-    always @(posedge rxclk) begin
+    always @(posedge rxclk) if (loop_n == 0) begin
         u.u_gt.inj_d <= (widx < nw) ? wmem[widx] : wmem[nw - 1];
         widx <= widx + 1;
     end
@@ -138,12 +138,20 @@ module tb_ml_core #(
         hw(12'h018, 1);
         hw(12'h060, thr_arg); hw(12'h064, 100);
         hw(12'h06C, (inst_arg << 16) | 66);
-        hw(12'h068, 32'h1 | 32'h4);
+        hw(12'h068, 32'h1 | 32'h4 | ((loop_n > 0) ? (1 << 4) : 0));          // ARM, TRADE_EN, and for +LOOP the generator's feed kind
 `ifdef ML
         hw(12'h304, inst_arg);
         hw(12'h300, veto_arg);
 `endif
         // wait until the stream has been played (the first words are idles; the last ones are idles too), then read the counters
+        if (loop_n > 0) begin
+            hw(12'h070, 9950); hw(12'h074, 301); hw(12'h078, loop_n);
+`ifdef ML
+            hw(12'h300, 32'h2 | veto_arg);              // reset the stage's state and counters, as the board sequence does
+`endif
+            hw(12'h018, 2);
+            #(real'(loop_n) * 301.0 * TREF + 20000.0);
+        end else
         wait (widx >= nw - 560);                  // inside the tail of idle words (600), so the receiver stays locked while the counters are read
 `ifdef ML
         $display("DIRECT n_frames %0d n_obs %0d n_apply %0d", u.g_rm.u_rx.u_td.n_frames, u.g_rm.u_rx.u_td.u_ml.n_obs, u.g_rm.u_rx.u_td.u_ml.n_apply);
