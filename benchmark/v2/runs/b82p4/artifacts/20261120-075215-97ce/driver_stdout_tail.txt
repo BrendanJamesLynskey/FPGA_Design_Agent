@@ -1,0 +1,217 @@
+all_s": 47.6,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 0.1426
+  },
+  "tests": {
+   "calls": 3,
+   "turns": 23,
+   "tokens": 1180758,
+   "wall_s": 626.1,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 2.0979
+  }
+ },
+ "per_stage": {
+  "clarify": {
+   "calls": 3,
+   "turns": 9,
+   "tokens": 140057,
+   "wall_s": 167.8,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 0.5246
+  },
+  "board-and-device-planning": {
+   "calls": 2,
+   "turns": 18,
+   "tokens": 299367,
+   "wall_s": 52.5,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 0.2959
+  },
+  "rtl-design-creation": {
+   "calls": 10,
+   "turns": 113,
+   "tokens": 3931622,
+   "wall_s": 4589.8,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 4.3259
+  }
+ },
+ "interview": "oracle",
+ "review": "off",
+ "stages_visited": [
+  0,
+  0,
+  0,
+  1,
+  1,
+  2,
+  2,
+  2,
+  2,
+  2,
+  2,
+  2
+ ],
+ "loops": 9,
+ "rewinds": [],
+ "tokens": 4371046,
+ "cost_usd": 0.0,
+ "unreported_cost_calls": 0,
+ "turns": 140,
+ "wall_s": 7501.7,
+ "questions": {
+  "asked": 6,
+  "answered": 5,
+  "defaulted": 1,
+  "questions": [
+   {
+    "id": "q1",
+    "text": "What is the register map of the test shell (offset, width, reset value and access of every register)?",
+    "default": "The map in registers.map: PKT_BYTE 0x00, TICK 0x04, STATUS 0x08, REPLY_LEN 0x0C, REPLY_IDX 0x10, REPLY_WORD 0x14, TELEM_LEN 0x18, TELEM_IDX 0x1C, TELEM_WORD 0x20, TAKE 0x24, all 32 bits.",
+    "reason": "The request names shell registers but gives no offsets, so the map is proposed, not known.",
+    "answer": "IN: offset 0x00, WO, reset 0: [7:0] packet byte, [8] end flag\nSTAT: offset 0x09, RO, reset 0: [0] telemetry on, [1] busy\nRIDX: offset 0x03, RW, reset 0: [6:0] word number\nRWORD: offset 0x04, RO, reset 0: bytes 4i..4i+3 of the reply, first byte on top, zero past the end\nRLEN: offset 0x02, RO, reset 0: length in bytes of the latest reply, 0 if none\nTICK: offset 0x01, WO, reset 0: [7:0] n ticks\nTIDX: offset 0x06, RW, reset 0: [6:0] word number\nTWORD: offset 0x07, RO, reset 0: same for the telemetry frame\nTAKE: offset 0x08, WO, reset 0: any write takes the held telemetry frame\nTLEN: offset 0x05, RO, reset 0: length of the held telemetry frame, 0 if none\nshell: test shell, PROTOCOL.md 1.1\nunmapped: no register at an offset: reads 0, writes ignored (read-only registers behave the same on write)",
+    "status": "answered",
+    "by": "oracle",
+    "evidence": "IN: offset 0x00, WO, reset 0: [7:0] packet byte, [8] end flag"
+   },
+   {
+    "id": "q2",
+    "text": "How does the host give the last-byte flag?",
+    "default": "Bit 8 of PKT_BYTE.",
+    "reason": "The request says a flag on the last byte but not how the shell carries it.",
+    "answer": "Bit 8 of a write to register IN (offset 0x00), with the packet byte in bits [7:0]. The spec names this register IN, not PKT_BYTE, so the proposed default's name does not match the spec.",
+    "status": "answered",
+    "by": "oracle",
+    "evidence": "bits: '[7:0] packet byte, [8] end flag'"
+   },
+   {
+    "id": "q3",
+    "text": "Does a refused telemetry start change the period?",
+    "default": "No, refused packets change nothing.",
+    "reason": "Refusals never change state.",
+    "answer": "No. A refused packet changes no telemetry state, and the period belongs to the telemetry pacer, so a refused TLM_START leaves the period unchanged.",
+    "status": "answered",
+    "by": "oracle",
+    "evidence": "a refused packet changes no register, sequence or telemetry state"
+   },
+   {
+    "id": "q4",
+    "text": "What are the values of TIMEOUT_CYCLES and BUILD_STAMP?",
+    "default": "TIMEOUT_CYCLES 1000000 and BUILD_STAMP 0.",
+    "reason": "They are supplied by the shell and not stated.",
+    "answer": "TIMEOUT_CYCLES is 100000. BUILD_STAMP is not specified, so no value can be given for it. The proposed default of 1000000 for TIMEOUT_CYCLES does not match the specification.",
+    "status": "answered",
+    "by": "oracle",
+    "evidence": "TIMEOUT_CYCLES: 100000"
+   },
+   {
+    "id": "q5",
+    "text": "Is the first telemetry frame due on the period-th tick after start?",
+    "default": "Yes.",
+    "reason": "The request says start restarts the count and a frame falls due every period-th tick.",
+    "answer": "Yes. Telemetry frames fall due every period-th tick, and TLM_START restarts the count.",
+    "status": "answered",
+    "by": "oracle",
+    "evidence": "telemetry frames fall due every period-th tick, one is held at most, overruns are dropped, stop forgets a held frame"
+   },
+   {
+    "id": "q6",
+    "text": "Does any packet answered with status 0 count as carried out, including status, stop and start?",
+    "default": "Yes.",
+    "reason": "Not stated explicitly.",
+    "answer": "Yes.",
+    "status": "defaulted",
+    "by": "oracle",
+    "evidence": null
+   }
+  ]
+ },
+ "stop": "stage 2 visited more than 6 times",
+ "clean_stop": false,
+ "constants": {
+  "ran": true,
+  "blocking": [],
+  "advice": []
+ },
+ "gates_last": {
+  "clarify": true,
+  "board-and-device-planning": true,
+  "rtl-design-creation": false
+ },
+ "approvals": [
+  {
+   "n": 0,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 0,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 0,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 1,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 1,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  }
+ ],
+ "bringup": null
+}
