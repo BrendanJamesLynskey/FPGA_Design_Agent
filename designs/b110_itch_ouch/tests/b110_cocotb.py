@@ -15,7 +15,7 @@ import cocotb
 from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge, Timer
 
-from designs.b110_itch_ouch.model import gen, proto, ref
+from designs.b110_itch_ouch.model import gen, proto
 from designs.b110_itch_ouch.model.ref import COUNTERS, Cfg, Model
 
 PERIOD_PS = 6206
@@ -143,7 +143,7 @@ class Bench:
         d.s_err.value = 0
         return last
 
-    async def run_items(self, model: Model, items, drain: int = 40, skip_gaps_in_words: bool = False):
+    async def run_items(self, model: Model, items, drain: int = 40):
         for it in items:
             model.feed(it.pkt, it.err)
             await self.send(it.pkt, it.err, it.idle)
@@ -165,10 +165,6 @@ class Bench:
             b = b"".join(w.to_bytes(8, "little") for w in f["words"])
             out.append(b[:59] if f["keep"][-1] == 0x07 else b)
         return out
-
-
-def expect_event(m: dict) -> dict:
-    return {"k": KIND[m["t"]], "loc": m["loc"], "seq": m["seq"]}
 
 
 def compare_msgs(b: Bench, model: Model):
@@ -634,7 +630,6 @@ async def clears(dut):
     m.clear_book()
     # events during the sweep are dropped and counted
     await d.send([proto.itch_R(d.loc0, d.t(), cfg.watch[0])], idle=2)
-    assert not int(dut.flags.value) & 0x10 or True
     await b.wait_ready()
     c = b.counters()
     assert c["evdrop"] >= 1, c
@@ -697,7 +692,6 @@ async def latency(dut):
             if label == "book_update_replace":
                 res["book_update_replace_second"] = b.tus[1]["cyc"] - T2
         out[name] = res
-        compare_tus(b, m) if False else None
     dut._log.info("latency: %s", json.dumps(out))
     rec = os.environ.get("B110_RECORD")
     if rec:
@@ -836,7 +830,6 @@ async def throughput(dut):
     d = Day(b, m)
     await d.open()
     await settle(b, 20)
-    words0 = 0
     clk0 = b.cyc
     nmsg = 0
     ref0 = 1000
@@ -855,7 +848,6 @@ async def throughput(dut):
     compare_all(b, m)
     c = b.counters()
     assert c["evdrop"] == 0
-    total_bytes = sum(len(it) for it in [])      # (the words are counted below from the model's packets)
     pk_bytes = sum(38 * 38 + 20 for _ in range(10)) + sum(38 * 21 + 20 for _ in range(10)) + (30 * 38 + 20) + (30 * 37 + 20)
     words = sum((n + 7) // 8 for n in [38 * 38 + 20] * 10 + [38 * 21 + 20] * 10 + [30 * 38 + 20, 30 * 37 + 20])
     rec = {"messages": nmsg, "payload_bytes": pk_bytes, "payload_words": words, "clocks_with_traffic": clk1 - clk0, "clocks_per_message": round((clk1 - clk0) / nmsg, 3),

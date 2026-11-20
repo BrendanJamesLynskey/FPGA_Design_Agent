@@ -1,16 +1,10 @@
 {
   "mutants": 58,
   "valid": 58,
-  "killed": 53,
-  "survived": [
-    "book_replace_slots",
-    "risk_band_lt",
-    "risk_no_bid",
-    "ouch_price_byte",
-    "ouch_minqty_order"
-  ],
+  "killed": 58,
+  "survived": [],
   "invalid": [],
-  "score_pct": 91.4,
+  "score_pct": 100.0,
   "results": [
     {
       "name": "mold_minlen",
@@ -36,6 +30,7 @@
         "valid_bubbles",
         "stress",
         "throughput",
+        "high_price",
         "zz_coverage"
       ],
       "class": "condition",
@@ -58,6 +53,7 @@
         "order_queue",
         "stress",
         "throughput",
+        "high_price",
         "zz_coverage"
       ],
       "class": "constant",
@@ -87,6 +83,8 @@
         "order_queue",
         "stress",
         "throughput",
+        "high_price",
+        "field_values",
         "zz_coverage"
       ],
       "class": "condition",
@@ -116,6 +114,8 @@
         "order_queue",
         "stress",
         "throughput",
+        "high_price",
+        "field_values",
         "zz_coverage"
       ],
       "class": "constant",
@@ -179,6 +179,8 @@
         "order_queue",
         "stress",
         "throughput",
+        "high_price",
+        "field_values",
         "zz_coverage"
       ],
       "class": "condition",
@@ -217,6 +219,8 @@
         "order_queue",
         "stress",
         "throughput",
+        "high_price",
+        "field_values",
         "zz_coverage"
       ],
       "class": "condition",
@@ -245,6 +249,8 @@
         "order_queue",
         "stress",
         "throughput",
+        "high_price",
+        "field_values",
         "zz_coverage"
       ],
       "class": "constant",
@@ -265,6 +271,7 @@
         "valid_bubbles",
         "stress",
         "throughput",
+        "high_price",
         "zz_coverage"
       ],
       "class": "constant",
@@ -299,6 +306,8 @@
         "stale_book",
         "order_queue",
         "stress",
+        "high_price",
+        "field_values",
         "zz_coverage"
       ],
       "class": "constant",
@@ -327,6 +336,8 @@
         "order_queue",
         "stress",
         "throughput",
+        "high_price",
+        "field_values",
         "zz_coverage"
       ],
       "class": "constant",
@@ -348,6 +359,7 @@
         "valid_bubbles",
         "stress",
         "throughput",
+        "high_price",
         "zz_coverage"
       ],
       "class": "constant",
@@ -375,6 +387,8 @@
         "order_queue",
         "stress",
         "throughput",
+        "high_price",
+        "field_values",
         "zz_coverage"
       ],
       "class": "condition",
@@ -402,6 +416,8 @@
         "order_queue",
         "stress",
         "throughput",
+        "high_price",
+        "field_values",
         "zz_coverage"
       ],
       "class": "condition",
@@ -422,6 +438,7 @@
         "valid_bubbles",
         "stress",
         "throughput",
+        "high_price",
         "zz_coverage"
       ],
       "class": "constant",
@@ -451,6 +468,7 @@
         "min_idle",
         "valid_bubbles",
         "stress",
+        "high_price",
         "zz_coverage"
       ],
       "class": "constant",
@@ -506,7 +524,8 @@
         "impairments",
         "book_edges",
         "stress",
-        "zz_coverage"
+        "zz_coverage",
+        "queue_and_replace"
       ],
       "class": "condition",
       "file": "book_core.sv",
@@ -518,7 +537,8 @@
       "killed_by": [
         "book_edges",
         "burst_replace",
-        "zz_coverage"
+        "zz_coverage",
+        "queue_and_replace"
       ],
       "class": "condition",
       "file": "book_core.sv",
@@ -539,7 +559,9 @@
         "valid_bubbles",
         "stress",
         "throughput",
-        "zz_coverage"
+        "high_price",
+        "zz_coverage",
+        "queue_and_replace"
       ],
       "class": "condition",
       "file": "book_core.sv",
@@ -564,7 +586,10 @@
         "order_queue",
         "stress",
         "throughput",
-        "zz_coverage"
+        "high_price",
+        "field_values",
+        "zz_coverage",
+        "queue_and_replace"
       ],
       "class": "condition",
       "file": "book_core.sv",
@@ -583,7 +608,8 @@
         "min_idle",
         "valid_bubbles",
         "stress",
-        "throughput"
+        "throughput",
+        "high_price"
       ],
       "class": "condition",
       "file": "book_core.sv",
@@ -604,7 +630,8 @@
       "status": "killed",
       "killed_by": [
         "order_queue",
-        "stress"
+        "stress",
+        "high_price"
       ],
       "class": "condition",
       "file": "book_core.sv",
@@ -632,6 +659,7 @@
         "min_idle",
         "valid_bubbles",
         "stress",
+        "high_price",
         "zz_coverage"
       ],
       "class": "condition",
@@ -640,8 +668,10 @@
     },
     {
       "name": "book_replace_slots",
-      "status": "survived",
-      "killed_by": [],
+      "status": "killed",
+      "killed_by": [
+        "queue_and_replace"
+      ],
       "class": "condition",
       "file": "book_core.sv",
       "why": "a Replace taken from the queue loses its second slot"
@@ -650,7 +680,8 @@
       "name": "book_sweep_short",
       "status": "killed",
       "killed_by": [
-        "burst_replace"
+        "burst_replace",
+        "queue_and_replace"
       ],
       "class": "constant",
       "file": "book_core.sv",
@@ -681,8 +712,10 @@
     },
     {
       "name": "risk_band_lt",
-      "status": "survived",
-      "killed_by": [],
+      "status": "killed",
+      "killed_by": [
+        "risk_checks"
+      ],
       "class": "condition",
       "file": "risk_glue.sv",
       "why": "a price exactly at the band edge is refused"
@@ -722,6 +755,8 @@
         "stale_book",
         "order_queue",
         "stress",
+        "high_price",
+        "field_values",
         "zz_coverage"
       ],
       "class": "operator",
@@ -732,7 +767,9 @@
       "name": "risk_offset",
       "status": "killed",
       "killed_by": [
-        "risk_checks"
+        "risk_checks",
+        "high_price",
+        "field_values"
       ],
       "class": "operator",
       "file": "risk_glue.sv",
@@ -751,8 +788,10 @@
     },
     {
       "name": "risk_no_bid",
-      "status": "survived",
-      "killed_by": [],
+      "status": "killed",
+      "killed_by": [
+        "risk_checks"
+      ],
       "class": "condition",
       "file": "risk_glue.sv",
       "why": "the band check passes when no bid exists"
@@ -785,6 +824,7 @@
         "main_stream_spec",
         "speculation",
         "stress",
+        "high_price",
         "zz_coverage"
       ],
       "class": "condition",
@@ -809,6 +849,8 @@
         "stale_book",
         "order_queue",
         "stress",
+        "high_price",
+        "field_values",
         "zz_coverage"
       ],
       "class": "constant",
@@ -817,8 +859,10 @@
     },
     {
       "name": "ouch_price_byte",
-      "status": "survived",
-      "killed_by": [],
+      "status": "killed",
+      "killed_by": [
+        "high_price"
+      ],
       "class": "constant",
       "file": "ouch_enter.sv",
       "why": "price byte at the wrong offset"
@@ -834,7 +878,8 @@
         "straddle",
         "min_idle",
         "order_queue",
-        "stress"
+        "stress",
+        "high_price"
       ],
       "class": "constant",
       "file": "ouch_enter.sv",
@@ -858,6 +903,8 @@
         "stale_book",
         "order_queue",
         "stress",
+        "high_price",
+        "field_values",
         "zz_coverage"
       ],
       "class": "constant",
@@ -882,6 +929,8 @@
         "stale_book",
         "order_queue",
         "stress",
+        "high_price",
+        "field_values",
         "zz_coverage"
       ],
       "class": "constant",
@@ -890,8 +939,10 @@
     },
     {
       "name": "ouch_minqty_order",
-      "status": "survived",
-      "killed_by": [],
+      "status": "killed",
+      "killed_by": [
+        "field_values"
+      ],
       "class": "constant",
       "file": "ouch_enter.sv",
       "why": "MinQty bytes swapped"
@@ -914,6 +965,8 @@
         "stale_book",
         "order_queue",
         "stress",
+        "high_price",
+        "field_values",
         "zz_coverage"
       ],
       "class": "constant",
@@ -938,6 +991,8 @@
         "stale_book",
         "order_queue",
         "stress",
+        "high_price",
+        "field_values",
         "zz_coverage"
       ],
       "class": "constant",
@@ -973,6 +1028,8 @@
         "stale_book",
         "order_queue",
         "stress",
+        "high_price",
+        "field_values",
         "zz_coverage"
       ],
       "class": "operator",

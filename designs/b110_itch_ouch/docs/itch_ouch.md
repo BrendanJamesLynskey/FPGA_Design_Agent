@@ -112,7 +112,9 @@ An empty side reads price 0, size 0, `ok` 0. `sys_code` holds the last System Ev
 expected number is a **gap**: counted, `gap` flag set, all its messages delivered, nothing requested. A packet entirely below it, or one with
 count 0 below it, is a duplicate and dropped. A packet that starts below it and ends above it delivers only the messages from the expected
 number on. The messages of a packet reach the decoder as they complete, **before the packet's frame check is known**: `s_err` marks the later
-traffic `untrusted`, it cannot recall messages already applied or orders already triggered. A block shorter than 12 bytes drops the rest of
+traffic `untrusted`, it cannot recall messages already applied or orders already triggered. A candidate in the very packet that carries the mark is
+refused only if the mark had been set before its message was decoded, which depends on how near the packet's end the message is: the tests keep packets
+with `s_err` free of candidates, and the decision there is not specified. A block shorter than 12 bytes drops the rest of
 its packet. A packet may carry up to 65534 messages.
 
 **Decoder (itch_dec).** See spec_notes section 2. A malformed message (`m_bad`) is dropped whole; it does not reach the book.

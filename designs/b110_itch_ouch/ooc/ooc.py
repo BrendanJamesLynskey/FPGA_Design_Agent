@@ -81,11 +81,14 @@ def parse(wd: Path, clock_ns: float) -> dict:
     r["closed"] = r["wns_ns"] is not None and r["wns_ns"] >= 0 and r["whs_ns"] >= 0 and r["wpws_ns"] >= 0
     h = wd / "utilization_hier.rpt"
     if h.is_file():
+        blocks = {}
         for line in h.read_text().splitlines():
             c = [x.strip() for x in line.split("|")]
-            if len(c) > 8 and c[1].strip() in ("u_dut", "u_dut (itch_ouch_top)") or (len(c) > 8 and c[1].startswith("u_dut ")):
-                r["core_hier_row"] = c[1:9]
-                break
+            if len(c) > 11 and c[1] and not c[1].startswith("(") and c[3].isdigit() and c[1] not in ("Instance", "ooc_wrap"):
+                blocks[c[1]] = {"module": c[2], "lut": int(c[3]), "logic_lut": int(c[4]), "lutram": int(c[5]), "ff": int(c[7]), "bram36": int(c[8]), "bram18": int(c[9]), "dsp": int(c[11])}
+        r["blocks"] = blocks
+        if "u_dut" in blocks:
+            r["core_lut"], r["core_lutram"], r["core_ff"] = blocks["u_dut"]["lut"], blocks["u_dut"]["lutram"], blocks["u_dut"]["ff"]
     return r
 
 
@@ -121,11 +124,15 @@ def main(argv=None) -> int:
     ap.add_argument("--tag", default="itch_ouch_top")
     ap.add_argument("--param", nargs="*", default=[])
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--parse-only", action="store_true", help="rebuild the JSON from the reports of an earlier run (no Vivado)")
     a = ap.parse_args(argv)
     generics = dict(p.split("=") for p in a.param)
     n_inst = int(generics.get("N_INST", 4))
     batch = BUILD / a.tag
-    res = run([(c, batch / f"c{c}") for c in a.clocks], a.tag, n_inst, generics, a.dry_run)
+    if a.parse_only:
+        res = {c: parse(batch / f"c{c}", c) for c in a.clocks}
+    else:
+        res = run([(c, batch / f"c{c}") for c in a.clocks], a.tag, n_inst, generics, a.dry_run)
     if a.dry_run:
         return 0
     runs = [res[c] for c in a.clocks]

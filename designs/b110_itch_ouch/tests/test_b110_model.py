@@ -12,7 +12,7 @@ from pathlib import Path
 
 import yaml
 
-from designs.b110_itch_ouch.model import gen, proto, ref
+from designs.b110_itch_ouch.model import gen, proto
 from designs.b110_itch_ouch.model.ref import BID, ASK, COUNTERS, Cfg, Model
 
 D = Path(__file__).parent.parent
