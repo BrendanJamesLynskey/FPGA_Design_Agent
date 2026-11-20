@@ -1,0 +1,514 @@
+# b96_kr260_10g testplan, schema v1 (brief 116): the specification and the evidence that checks it, in one place.
+#
+# WHO DOES WHAT. A human specifies the requirements below and checks that the verification is thorough enough. The agent holds the knowledge to
+# implement and to verify. The user can open any implementation or evidence file and does not have to.
+#
+# DRAFT STATUS. Every requirement here was written from the design's own documents (docs/design.md, handover.yaml, the pre-registrations in
+# results/) by the agent, and bounds are taken from those records. None is agreed by a human yet (`spec_status: draft`); the matrix says so.
+# A bound that is a regression bound (drawn from a recorded run) says so in its text; the owner sets the target.
+#
+# Status is never typed here. `python -m flow.trace_v1 write designs/b96_kr260_10g` reads the evidence files named below and computes
+# pass / fail / not run / stale / bounded per item and a roll-up per requirement. A hook (`planned:`) is evidence that does not exist yet.
+schema: fpga-design-agent/testplan/v1
+design: b96_kr260_10g
+notes: >-
+  Variants. Unless a requirement says otherwise, "the default build" is RATE_MATCH = 0 (the board-proven 97C receive path) and "the rate-matched
+  build" is rm_gp (RATE_MATCH = 1, RM_OWN = 1). Board evidence is one KR260 on a short optical loopback; nothing has run against a network card.
+  Briefs 112 (UVM bench) and 115 (SVA and formal proofs) are not merged: their items are hooks with no evidence, shown as not run.
+
+discover:
+  - {glob: designs/b96_kr260_10g/tests/test_*.py, pattern: '^def (test_\w+)'}
+
+x-rtl-pcs-mac: &rtl_pcs_mac [designs/b96_kr260_10g/rtl/b96_pkg.sv, designs/b96_kr260_10g/rtl/pcs_tx.sv, designs/b96_kr260_10g/rtl/pcs_rx.sv,
+  designs/b96_kr260_10g/rtl/mac64_tx.sv, designs/b96_kr260_10g/rtl/mac64_rx.sv]
+x-rtl-core: &rtl_core [designs/b96_kr260_10g/rtl/b96_pkg.sv, designs/b96_kr260_10g/rtl/pcs_tx.sv, designs/b96_kr260_10g/rtl/pcs_rx.sv,
+  designs/b96_kr260_10g/rtl/mac64_tx.sv, designs/b96_kr260_10g/rtl/mac64_rx.sv, designs/b96_kr260_10g/rtl/trade64.sv, designs/b96_kr260_10g/rtl/tx_path.sv,
+  designs/b96_kr260_10g/rtl/rx_path.sv, designs/b96_kr260_10g/rtl/rx_path_legacy.sv, designs/b96_kr260_10g/rtl/b96_core.sv,
+  designs/b96_kr260_10g/rtl/rate_match.sv, designs/b96_kr260_10g/rtl/rate_match_gp.sv, designs/b96_kr260_10g/rtl/hs_vec.sv, designs/b96_kr260_10g/rtl/frame_src.sv]
+x-rtl-rm: &rtl_rm [designs/b96_kr260_10g/rtl/rate_match.sv, designs/b96_kr260_10g/rtl/rate_match_gp.sv, designs/b96_kr260_10g/rtl/rx_path.sv]
+x-rtl-es: &rtl_es [designs/b96_kr260_10g/rtl/es_ctrl.sv]
+
+requirements:
+  # ---- functional: the link ------------------------------------------------------------------------------------------
+  - id: B96-F-PCS
+    kind: functional
+    title: PCS encodes and decodes 64B/66B bit-exactly against an independent model
+    text: Scrambler, block encode and decode, gearbox and block lock produce the same bits as the bit-serial Python reference, at every bit offset, with idles, ordered sets and bit-error runs.
+    source: designs/b96_kr260_10g/docs/design.md#7-verification-plan
+    spec_status: draft
+  - id: B96-F-MAC
+    kind: functional
+    title: 64-bit MAC frames correctly in both directions
+    text: Frames start in lane 0 and lane 4, every terminate lane and every length residue is handled, FCS is generated and checked, and a bad FCS is counted.
+    source: designs/b96_kr260_10g/docs/design.md#7-verification-plan
+    spec_status: draft
+  - id: B96-F-LOCK
+    kind: functional
+    title: Block lock is acquired from any bit offset and survives bit errors
+    text: The receive gearbox slips to the block boundary from any offset, and a run of bit errors loses lock only above the documented threshold.
+    source: designs/b96_kr260_10g/docs/design.md#28-block-lock-bit-slip-errors
+    spec_status: draft
+  - id: B96-F-RESTART
+    kind: functional
+    title: The link locks after every receive-datapath restart
+    text: At least 100 receive-datapath restarts on the board, each one locks and no restart corrupts a frame.
+    source: designs/b96_kr260_10g/docs/design.md#6-loop-measurement-method-pre-registered-stage-3
+    spec_status: draft
+  - id: B96-F-DEFAULT
+    kind: functional
+    title: The default build keeps the board-proven receive path
+    text: With RATE_MATCH = 0 the core is equivalent to the core of main 6909e43f (brief 97C) and passes that brief's bench.
+    source: designs/b96_kr260_10g/handover.yaml
+    spec_status: draft
+  # ---- rate matching -------------------------------------------------------------------------------------------------
+  - id: B96-S-RATEMATCH
+    kind: safety
+    title: Rate matching never corrupts a frame
+    text: The elastic buffer inserts and deletes idles only between frames, never under- or overflows silently, and every order sent is fired and passes its content check.
+    source: designs/b96_kr260_10g/docs/design.md#9-rate-matching-and-the-receive-to-core-crossing-brief-96c
+    spec_status: draft
+  - id: B96-F-OFFSET
+    kind: functional
+    title: Rate matching holds under a real frequency offset
+    text: With a receive clock offset of +-100 ppm and +-300 ppm from the transmit clock, no frame is lost or corrupted and the buffer neither overflows nor underflows. A loopback has no offset, so this needs a second reference clock or another device on the link.
+    source: designs/b96_kr260_10g/docs/design.md#board-result-2026-11-19-kr260-and-an-optical-loopback-resultsb96cwhw20261119_080724
+    spec_status: draft
+    external: a second reference clock or a 10G network card (a loopback has no frequency offset)
+  - id: B96-F-INTEROP
+    kind: functional
+    title: Interoperates with a standard 10GBASE-R network card
+    text: The PCS and MAC exchange frames with an independent 10GBASE-R implementation. A PCS talking to itself accepts its own symmetric mistakes, so only another implementation proves the block formats and scrambler order.
+    source: designs/b96_kr260_10g/handover.yaml
+    spec_status: draft
+    external: a 10G network card and cable
+  # ---- trading path and board safety ---------------------------------------------------------------------------------
+  - id: B96-S-ORDERS
+    kind: safety
+    title: Orders are sent only for valid decisions, none is lost or poisoned
+    text: Every armed decision yields exactly one order, a poisoned order never fires, and every fault counter stays 0.
+    source: designs/b96_kr260_10g/docs/design.md#25-the-trading-path-in-variant-b-trade64-not-a-widened-trigger_core
+    spec_status: draft
+  - id: B96-S-DRIVER
+    kind: safety
+    title: The board drivers cannot report OK when a safety check fails
+    text: A stale counter, a missing order, a counter that was not read, a wrong polarity or a link that never came up fails the run and names the cause; unsafe actions are refused without the lock.
+    source: designs/b96_kr260_10g/host/b96_bench.py
+    spec_status: draft
+  - id: B96-S-LASER
+    kind: safety
+    title: The laser is off at reset and its polarity is confirmed
+    text: tx_disable is 1 at reset; the board run switches the laser on only after the polarity was read back.
+    source: designs/b96_kr260_10g/handover.yaml
+    spec_status: draft
+  - id: B96-S-ROC
+    kind: safety
+    title: Board runs stay inside the recommended operating conditions
+    text: Die temperature, VCCINT, VCCAUX and VCCBRAM read from SYSMON are inside the DS925 windows at the start and end of every board run.
+    source: _handoff/fpga_agent/fpga_agent_house_rules.md
+    spec_status: draft
+  - id: B96-S-CDC
+    kind: safety
+    title: No critical clock-domain crossing
+    text: report_cdc shows no Critical item and every crossing has the documented synchroniser structure.
+    source: designs/b96_kr260_10g/docs/design.md#26-where-the-decision-lives-and-how-it-crosses-clocks-as-built-for-brief-96-superseded-by-section-9-brief-96c
+    spec_status: draft
+  - id: B96-I-REGMAP
+    kind: interface
+    title: The register map is generated from one source and decoded exactly
+    text: Every address in regmap.py is decoded, nothing else is, vector widths agree, and the datasheet states unmapped reads return 0, counters read from a snapshot and reads have no side effects.
+    source: designs/b96_kr260_10g/docs/register_map.md
+    spec_status: draft
+  - id: B96-F-BUILDS
+    kind: functional
+    title: Every build variant sets only the parameters it documents
+    text: The build files set parameters the core has, the base build keeps the 97C defaults, and each variant differs from the base only where documented.
+    source: designs/b96_kr260_10g/handover.yaml
+    spec_status: draft
+  - id: B96-F-EYESCAN
+    kind: functional
+    title: The eye-scan sequencer drives the GT's DRP as its Python twin does
+    text: es_ctrl aborts a point on a DRP timeout, latches the point at start, restores every DRP word and is absent when EYESCAN = 0.
+    source: designs/b96_kr260_10g/docs/design.md#10-on-chip-rx-eye-scan-brief-96d-2026-11-19
+    spec_status: draft
+  # ---- performance ---------------------------------------------------------------------------------------------------
+  - id: B96-P-LAT-E
+    kind: performance
+    title: Echo latency E
+    text: Regression bound drawn from the 96E board record; the owner sets the target.
+    source: designs/b96_kr260_10g/docs/design.md#6-loop-measurement-method-pre-registered-stage-3
+    spec_status: draft
+    performance: {quantity: echo latency E (median of per-link minima), unit: clocks, op: le, bound: 22, condition: "clock 6.206 ns, 100 link restarts, KR260 optical fibre loopback, fibre lead 0.17 m"}
+  - id: B96-P-LAT-L
+    kind: performance
+    title: Trading-loop latency L
+    text: Regression bound drawn from the 96E board record (L = 2E + D); the owner sets the target.
+    source: designs/b96_kr260_10g/docs/design.md#6-loop-measurement-method-pre-registered-stage-3
+    spec_status: draft
+    performance: {quantity: trading-loop latency L (median of per-link minima), unit: clocks, op: le, bound: 55, condition: "clock 6.206 ns, 100 link restarts, KR260 optical fibre loopback, fibre lead 0.17 m"}
+  - id: B96-P-LAT-D
+    kind: performance
+    title: Decision latency D
+    text: D = L - 2E; the 96F1 pre-registration expects it unchanged within 1 clock of 12.
+    source: results/b96f1/preregistration.md
+    spec_status: draft
+    performance: {quantity: decision latency D (L - 2E from medians of minima), unit: clocks, op: le, bound: 13, condition: "clock 6.206 ns, 100 link restarts, KR260 optical fibre loopback"}
+  - id: B96-P-T2T-DIGITAL
+    kind: performance
+    title: Digital tick-to-trade, GT port to GT port
+    text: Whole core in xsim with AMD's real XPM macros and the GT stand-in, own gray-pointer buffer; the GT, optics and clock-crossing phase are not in the simulation. Regression bound drawn from the 96E record.
+    source: docs/latency_definitions.md
+    spec_status: draft
+    performance: {quantity: tick-to-trade, GT receive word to GT transmit order start (mean over 8 orders), unit: clocks, op: le, bound: 14, condition: "xsim, RATE_MATCH = 1, RM_OWN = 1, clock phase 1550 ps"}
+  - id: B96-P-TIMING
+    kind: performance
+    title: Post-route setup slack
+    text: Every build closes timing on the 161.133 MHz and 100 MHz user clocks.
+    source: designs/b96_kr260_10g/handover.yaml
+    spec_status: draft
+    performance: {quantity: worst setup slack (WNS), unit: ns, op: ge, bound: 0, condition: "routed, Vivado 2026.1, user clocks 161.133 MHz and 100 MHz"}
+  - id: B96-P-HOLD
+    kind: performance
+    title: Post-route hold slack
+    text: Every build closes hold on all clocks.
+    source: designs/b96_kr260_10g/handover.yaml
+    spec_status: draft
+    performance: {quantity: worst hold slack (WHS), unit: ns, op: ge, bound: 0, condition: "routed, Vivado 2026.1"}
+  - id: B96-P-EYE
+    kind: performance
+    title: Receive eye margin
+    text: Horizontal eye opening after the equaliser, read by the on-chip eye scan on the board. Draft bound for a short loopback; the owner sets the target.
+    source: designs/b96_kr260_10g/docs/design.md#10-on-chip-rx-eye-scan-brief-96d-2026-11-19
+    spec_status: draft
+    performance: {quantity: eye width at BER 1e-9 (LPM equaliser), unit: UI, op: ge, bound: 0.5, condition: "KR260 fibre loopback, one module, room temperature, eye-scan build"}
+  - id: B96-P-BYPASS
+    kind: performance
+    title: GT buffer bypass shortens the echo path (pre-registered)
+    text: Build rm_gp_bypass must lower E by at least 1.5 clocks against rm_gp (21.0), else the bypass did not take effect. Pre-registered before any board time; not yet run.
+    source: results/b96f1/preregistration.md
+    spec_status: draft
+    performance: {quantity: echo latency E (median of per-link minima), unit: clocks, op: le, bound: 19.5, condition: "build rm_gp_bypass, 100 receive restarts, KR260 optical fibre loopback, fibre lead 0.17 m"}
+  - id: B96-P-THROUGHPUT
+    kind: performance
+    title: Line-rate throughput without loss
+    text: A burst at line rate loses no frame. Nothing has been measured; the line and payload rates stand on configuration and gearbox arithmetic only.
+    source: designs/b96_kr260_10g/handover.yaml
+    spec_status: draft
+    performance: {quantity: frames lost in a line-rate burst, unit: frames, op: eq, bound: 0, condition: "1518-byte frames, 10 s burst, against a 10G network card"}
+    external: a 10G network card or a line-rate traffic generator
+
+verification:
+  # ---- simulation tests (pytest + cocotb + Icarus; one recorded run) -------------------------------------------------
+  - id: V-SIM-PCSMAC
+    requirements: [B96-F-PCS, B96-F-MAC]
+    method: sim_test
+    title: PCS and MAC cocotb bench against the bit-serial reference
+    evidence: {file: results/116_traceability/b96_kr260_10g/pytest_junit.xml, reader: junit, tests: ["test_b96_pcs_rtl::test_pcs_mac_cocotb"]}
+    checks: *rtl_pcs_mac
+  - id: V-SIM-PCSMODEL
+    requirements: [B96-F-PCS, B96-F-LOCK]
+    method: sim_test
+    title: Python reference properties (LFSR, descrambler self-sync, block codes, lock time, bit errors)
+    evidence: {file: results/116_traceability/b96_kr260_10g/pytest_junit.xml, reader: junit, tests: ["test_b96_model::*"]}
+    checks: [designs/b96_kr260_10g/model/pcs.py, designs/b96_kr260_10g/rtl/pcs_rx.sv, designs/b96_kr260_10g/rtl/pcs_tx.sv]
+  - id: V-SIM-CORE-DEFAULT
+    requirements: [B96-F-DEFAULT, B96-S-ORDERS]
+    method: sim_test
+    title: Whole core, RATE_MATCH = 0, under 97C's own bench
+    evidence: {file: results/116_traceability/b96_kr260_10g/pytest_junit.xml, reader: junit, tests: ["test_b96_pcs_rtl::test_core_cocotb_default_rate_match_off"]}
+    checks: *rtl_core
+  - id: V-SIM-CORE-RM
+    requirements: [B96-S-RATEMATCH, B96-S-ORDERS, B96-F-MAC]
+    method: sim_test
+    title: Whole core with the elastic buffers (macro and own gray-pointer)
+    evidence: {file: results/116_traceability/b96_kr260_10g/pytest_junit.xml, reader: junit, tests: ["test_b96_pcs_rtl::test_core_cocotb", "test_b96_pcs_rtl::test_core_cocotb_rm_own"]}
+    checks: *rtl_core
+  - id: V-SIM-RM
+    requirements: [B96-S-RATEMATCH]
+    method: sim_test
+    title: Rate matcher benches (macro, own buffer, direct-read variant, the MIN_KEEP limit)
+    evidence: {file: results/116_traceability/b96_kr260_10g/pytest_junit.xml, reader: junit, tests: ["test_b96_pcs_rtl::test_rate_match_cocotb", "test_b96_pcs_rtl::test_rate_match_gp_cocotb", "test_b96_pcs_rtl::test_rate_match_gp_direct_read_cocotb", "test_b96_pcs_rtl::test_rate_match_min_keep_1_shows_the_limit"]}
+    checks: *rtl_rm
+  - id: V-SIM-PPM-PARTNER
+    requirements: [B96-F-OFFSET]
+    method: sim_test
+    title: Simulated partner at a frequency offset (cocotb)
+    evidence: {file: results/116_traceability/b96_kr260_10g/pytest_junit.xml, reader: junit, tests: ["test_b96_pcs_rtl::test_ppm_partner_cocotb"]}
+    checks: *rtl_rm
+  - id: V-SIM-EYESCAN
+    requirements: [B96-F-EYESCAN]
+    method: sim_test
+    title: Eye-scan sequencer against its twin and a DRP stand-in
+    evidence: {file: results/116_traceability/b96_kr260_10g/pytest_junit.xml, reader: junit, tests: ["test_b96_pcs_rtl::test_eyescan_cocotb", "test_b96_pcs_rtl::test_eyescan_absent_by_default"]}
+    checks: *rtl_es
+  - id: V-SIM-REGMAP
+    requirements: [B96-I-REGMAP]
+    method: sim_test
+    title: Register map is current, decoded exactly, widths agree, stated rules hold
+    evidence: {file: results/116_traceability/b96_kr260_10g/pytest_junit.xml, reader: junit, tests: ["test_b96_docs::*", "test_b96_host::*"]}
+    checks: [designs/b96_kr260_10g/regmap.py, designs/b96_kr260_10g/docs/register_map.md]
+  - id: V-SIM-DRIVER
+    requirements: [B96-S-DRIVER, B96-S-LASER]
+    method: sim_test
+    title: Board bench, ppm and bypass drivers judged on a fake board (every safety counter, polarity, lock, verdicts)
+    evidence: {file: results/116_traceability/b96_kr260_10g/pytest_junit.xml, reader: junit, tests: ["test_b96_bench::*", "test_b96c_ppm::*", "test_b96f1_bypass::*"]}
+    checks: [designs/b96_kr260_10g/host/b96_bench.py, designs/b96_kr260_10g/host/b96c_ppm.py, designs/b96_kr260_10g/host/b96f1_bypass.py]
+  - id: V-SIM-BUILDS
+    requirements: [B96-F-BUILDS]
+    method: sim_test
+    title: Build parameter consistency
+    evidence: {file: results/116_traceability/b96_kr260_10g/pytest_junit.xml, reader: junit, tests: ["test_b96_generics::*"]}
+    checks: [designs/b96_kr260_10g/rtl/b96_core.sv]
+  - id: V-SIM-LATENCY-MODEL
+    requirements: [B96-P-LAT-E, B96-P-LAT-L, B96-P-LAT-D]
+    method: sim_test
+    title: Latency stage file reproduces the recorded numbers; board and simulation never added into one figure
+    evidence: {file: results/116_traceability/b96_kr260_10g/pytest_junit.xml, reader: junit, tests: ["test_b96_latency::*", "test_b96f_loop_timing::*"]}
+    checks: [designs/b96_kr260_10g/latency_stages.yaml]
+  # ---- formal ---------------------------------------------------------------------------------------------------------
+  - id: V-FORMAL-EQY-DEFAULT
+    requirements: [B96-F-DEFAULT]
+    method: formal
+    title: eqy equivalence of the RATE_MATCH = 0 core with main 6909e43f's core (a planted change fails it)
+    evidence: {file: results/b96c/eqy_default/result_default.txt, reader: text, regex: '^\[default\] (Successfully proved designs equivalent)', }
+    pass_when: [{op: eq, value: Successfully proved designs equivalent}]
+    checks: [designs/b96_kr260_10g/rtl/b96_core.sv, designs/b96_kr260_10g/rtl/rx_path_legacy.sv, designs/b96_kr260_10g/rtl/rx_path.sv]
+  - id: V-FORMAL-SVA-PLANNED
+    requirements: [B96-F-PCS, B96-S-RATEMATCH]
+    method: formal
+    title: SVA properties proved with SymbiYosys (brief 115, branch b115-sva-formal)
+    planned: brief 115 (not merged)
+  - id: V-SVA-PLANNED
+    requirements: [B96-F-PCS, B96-F-MAC, B96-S-RATEMATCH]
+    method: assertion
+    title: Bound SVA checkers in simulation (brief 115)
+    planned: brief 115 (not merged)
+  - id: V-UVM-PLANNED
+    requirements: [B96-F-PCS, B96-F-MAC, B96-F-LOCK]
+    method: uvm_test
+    title: UVM bench of the PCS (brief 112, branch b112-uvm-pcs)
+    planned: brief 112 (not merged)
+  - id: V-COV-PLANNED
+    requirements: [B96-F-PCS, B96-F-MAC]
+    method: coverage_bin
+    title: Functional coverage bins and code coverage of the PCS and MAC bench (no coverage run recorded)
+    planned: not planned in a brief yet
+  # ---- simulation measurements ---------------------------------------------------------------------------------------
+  - id: V-SIMM-T2T
+    requirements: [B96-P-T2T-DIGITAL]
+    method: sim_measurement
+    title: xsim, whole core, own gray-pointer buffer, phase 1550 ps
+    evidence: {file: results/b96e/core_lat_sim.json, reader: json, field: results.rate_match_1_rm_own_1.1550.tick_to_trade.mean}
+    checks: *rtl_core
+  - id: V-SIMM-PPM
+    requirements: [B96-F-OFFSET, B96-S-RATEMATCH]
+    method: sim_measurement
+    title: Simulated partner at 0, +-100 and +-300 ppm, 400 frames each
+    evidence: {file: results/b96c/ppm_sim_ratematch.json, reader: json}
+    pass_when:
+      - {field: ppm+0.verdict.counters_clean, op: "true"}
+      - {field: ppm+100.verdict.counters_clean, op: "true"}
+      - {field: ppm-100.verdict.counters_clean, op: "true"}
+      - {field: ppm+300.verdict.counters_clean, op: "true"}
+      - {field: ppm-300.verdict.counters_clean, op: "true"}
+      - {field: ppm+300.verdict.all_frames_received, op: "true"}
+      - {field: ppm-300.verdict.all_frames_received, op: "true"}
+    checks: *rtl_rm
+  - id: V-SIMM-BYPASS-SEQ
+    requirements: [B96-P-BYPASS, B96-S-RATEMATCH]
+    method: sim_measurement
+    title: Buffer-bypass run gate against a stand-in transceiver in xsim, 28 checks
+    evidence: {file: results/b96f1/bypass_seq/result.txt, reader: text, regex: '^PASS: (\d+) checks, 0 failed'}
+    pass_when: [{op: ge, value: 28}]
+    checks: [designs/b96_kr260_10g/rm_gp_bypass/rtl/gt_bp_gate.sv, designs/b96_kr260_10g/rm_gp_bypass/rtl/b96_core.sv]
+  # ---- post-route timing and reports ---------------------------------------------------------------------------------
+  - id: V-TIM-SETUP-DEFAULT
+    requirements: [B96-P-TIMING]
+    method: timing
+    title: Default build, routed
+    evidence: {file: results/b96c/builds/control/digest.json, reader: json, field: timing.wns_ns}
+    checks: *rtl_core
+  - id: V-TIM-SETUP-RMGP
+    requirements: [B96-P-TIMING]
+    method: timing
+    title: Build rm_gp, routed
+    evidence: {file: results/b96e/builds/rm_gp/digest.json, reader: json, field: timing.wns_ns}
+    checks: *rtl_core
+  - id: V-TIM-SETUP-BYPASS
+    requirements: [B96-P-TIMING]
+    method: timing
+    title: Build rm_gp_bypass, routed
+    evidence: {file: results/b96f1/builds/rm_gp_bypass/digest.json, reader: json, field: timing.wns_ns}
+    checks: *rtl_core
+  - id: V-TIM-HOLD-DEFAULT
+    requirements: [B96-P-HOLD]
+    method: timing
+    title: Default build, routed
+    evidence: {file: results/b96c/builds/control/digest.json, reader: json, field: timing.whs_ns}
+    checks: *rtl_core
+  - id: V-TIM-HOLD-RMGP
+    requirements: [B96-P-HOLD]
+    method: timing
+    title: Build rm_gp, routed
+    evidence: {file: results/b96e/builds/rm_gp/digest.json, reader: json, field: timing.whs_ns}
+    checks: *rtl_core
+  - id: V-TIM-HOLD-BYPASS
+    requirements: [B96-P-HOLD]
+    method: timing
+    title: Build rm_gp_bypass, routed
+    evidence: {file: results/b96f1/builds/rm_gp_bypass/digest.json, reader: json, field: timing.whs_ns}
+    checks: *rtl_core
+  - id: V-TIM-CDC-DEFAULT
+    requirements: [B96-S-CDC]
+    method: timing
+    title: report_cdc gates, default build (no critical, structure clean)
+    evidence: {file: results/b96c/builds/control/digest.json, reader: json}
+    pass_when: [{field: gates.cdc_no_critical, op: "true"}, {field: gates.post_synth_cdc_structure_clean, op: "true"}]
+    checks: *rtl_core
+  - id: V-TIM-CDC-RMGP
+    requirements: [B96-S-CDC]
+    method: timing
+    title: report_cdc gates, build rm_gp
+    evidence: {file: results/b96e/builds/rm_gp/digest.json, reader: json}
+    pass_when: [{field: gates.cdc_no_critical, op: "true"}, {field: gates.post_synth_cdc_structure_clean, op: "true"}]
+    checks: *rtl_core
+  - id: V-TIM-CDC-BYPASS
+    requirements: [B96-S-CDC]
+    method: timing
+    title: report_cdc gates, build rm_gp_bypass
+    evidence: {file: results/b96f1/builds/rm_gp_bypass/digest.json, reader: json}
+    pass_when: [{field: gates.cdc_no_critical, op: "true"}, {field: gates.post_synth_cdc_structure_clean, op: "true"}]
+    checks: *rtl_core
+  # ---- hardware verification on the board, by instrument ----------------------------------------------------------------
+  - id: V-HW-RESTARTS-96E
+    requirements: [B96-F-RESTART, B96-S-ORDERS]
+    method: board_measurement
+    instrument: jtag_registers
+    title: 100 receive restarts on build rm_gp, counters read over JTAG
+    evidence: {file: results/b96e/hw/20261119_231251/rm_gp/stage3.json, reader: json}
+    pass_when:
+      - {field: restarts.restarts, op: ge, value: 100}
+      - {field: restarts.failed_to_lock, op: eq, value: 0}
+      - {field: safety.ok, op: "true"}
+      - {field: safety.sums.poisoned, op: eq, value: 0}
+      - {field: safety.sums.order_bad, op: eq, value: 0}
+      - {field: safety.orders.fired_total, op: ge, value: 500}
+    checks: *rtl_core
+  - id: V-HW-RESTARTS-97C
+    requirements: [B96-F-RESTART, B96-F-DEFAULT]
+    method: board_measurement
+    instrument: jtag_registers
+    title: 100 receive restarts on the default build (brief 97C)
+    evidence: {file: results/b97c/hw/20261118_194221/control/stage3.json, reader: json}
+    pass_when: [{field: restarts.restarts, op: ge, value: 100}, {field: restarts.failed_to_lock, op: eq, value: 0}, {field: safety.ok, op: "true"}]
+    checks: *rtl_core
+  - id: V-HW-RATEMATCH-96C
+    requirements: [B96-S-RATEMATCH]
+    method: board_measurement
+    instrument: jtag_registers
+    title: Rate-matched build, 100 restarts, safety counters 0 (at 0 ppm only)
+    evidence: {file: results/b96c/hw/20261119_080724/control/stage3.json, reader: json}
+    pass_when: [{field: restarts.failed_to_lock, op: eq, value: 0}, {field: safety.ok, op: "true"}]
+    checks: *rtl_rm
+  - id: V-HW-LASER
+    requirements: [B96-S-LASER]
+    method: board_measurement
+    instrument: jtag_registers
+    title: Laser polarity read back before the laser was enabled
+    evidence: {file: results/b96e/hw/20261119_231251/rm_gp/stage3.json, reader: json}
+    pass_when: [{field: polarity_ok, op: "true"}, {field: polarity.off.tx_fault, op: eq, value: 0}]
+    checks: [designs/b96_kr260_10g/rtl/kr260_10g_top.sv, designs/b96_kr260_10g/rtl/b96_core.sv]
+  - id: V-HW-SYSMON-96E
+    requirements: [B96-S-ROC]
+    method: board_measurement
+    instrument: sysmon
+    title: SYSMON at the start and end of the 96E run
+    evidence: {file: results/b96e/hw/20261119_231251/rm_gp/session.json, reader: json}
+    pass_when: [{field: conditions_start.inside_roc, op: "true"}, {field: conditions_end.inside_roc, op: "true"}, {field: roc_ok, op: "true"}]
+  - id: V-HW-SYSMON-EYE
+    requirements: [B96-S-ROC]
+    method: board_measurement
+    instrument: sysmon
+    title: SYSMON at the start and end of the first measured eye scan
+    evidence: {file: results/b96d/hw/20261120_105134/lpm_1.json, reader: json}
+    pass_when: [{field: conditions.start.inside_roc, op: "true"}, {field: conditions.end.inside_roc, op: "true"}]
+  - id: V-HW-LAT-E-96E
+    requirements: [B96-P-LAT-E]
+    method: board_measurement
+    instrument: latency_loop
+    title: Build rm_gp, 100 restarts, median of per-link minima
+    evidence: {file: results/b96e/hw/20261119_231251/rm_gp/stage3.json, reader: json, field: restarts.E_min_per_link.median}
+    checks: *rtl_core
+  - id: V-HW-LAT-E-97C
+    requirements: [B96-P-LAT-E]
+    method: board_measurement
+    instrument: latency_loop
+    title: Default build (97C), 100 restarts
+    evidence: {file: results/b97c/hw/20261118_194221/control/stage3.json, reader: json, field: restarts.E_min_per_link.median}
+    checks: *rtl_core
+  - id: V-HW-LAT-L-96E
+    requirements: [B96-P-LAT-L]
+    method: board_measurement
+    instrument: latency_loop
+    title: Build rm_gp, 100 restarts
+    evidence: {file: results/b96e/hw/20261119_231251/rm_gp/stage3.json, reader: json, field: restarts.L_min_per_link.median}
+    checks: *rtl_core
+  - id: V-HW-LAT-L-97C
+    requirements: [B96-P-LAT-L]
+    method: board_measurement
+    instrument: latency_loop
+    title: Default build (97C), 100 restarts
+    evidence: {file: results/b97c/hw/20261118_194221/control/stage3.json, reader: json, field: restarts.L_min_per_link.median}
+    checks: *rtl_core
+  - id: V-HW-LAT-D-96E
+    requirements: [B96-P-LAT-D]
+    method: board_measurement
+    instrument: latency_loop
+    title: Build rm_gp, D = L - 2E from the medians of minima
+    evidence: {file: results/b96e/hw/20261119_231251/rm_gp/stage3.json, reader: json, field: D_clocks_from_medians_of_minima}
+    checks: *rtl_core
+  - id: V-HW-EYE
+    requirements: [B96-P-EYE]
+    method: board_measurement
+    instrument: eye_scan
+    title: First measured receive eye (LPM, first of four repeats), 1023 points
+    evidence: {file: results/b96d/hw/20261120_105134/summary.txt, reader: text, regex: '^lpm_1: LPM depth 1e-09: width ([0-9.]+) UI'}
+    checks: [designs/b96_kr260_10g/rtl/es_ctrl.sv, designs/b96_kr260_10g/es.xdc]
+  - id: V-HW-BYPASS-PLANNED
+    requirements: [B96-P-BYPASS]
+    method: board_measurement
+    instrument: latency_loop
+    title: Build rm_gp_bypass on the KR260 (pre-registered, run_96f1_stage1.sh)
+    evidence: {file: results/b96f1/hw/*/rm_gp_bypass/stage3.json, reader: json, field: restarts.E_min_per_link.median}
+    planned: brief 96F1 board run (owner's board)
+    checks: *rtl_core
+  - id: V-HW-OFFSET-PLANNED
+    requirements: [B96-F-OFFSET]
+    method: board_measurement
+    instrument: external_equipment
+    title: Receive clock offset by a second reference clock or a second device
+    evidence: {file: results/b96c/hw/offset/stage3.json, reader: json, field: safety.ok}
+    planned: needs the external element; the TX phase-interpolator route gave no relative offset
+  - id: V-HW-INTEROP-PLANNED
+    requirements: [B96-F-INTEROP]
+    method: board_measurement
+    instrument: external_equipment
+    title: Frames exchanged with a 10G network card (docs/board_run_plan.md NIC steps)
+    evidence: {file: results/b96/hw/nic/stage3.json, reader: json, field: safety.ok}
+    planned: needs the 10G network card and cable
+  - id: V-HW-THROUGHPUT-PLANNED
+    requirements: [B96-P-THROUGHPUT]
+    method: board_measurement
+    instrument: external_equipment
+    title: Line-rate burst from a traffic source
+    evidence: {file: results/b96/hw/throughput/stage3.json, reader: json, field: frames_lost}
+    planned: needs a 10G network card or a traffic generator
+  # ---- review ---------------------------------------------------------------------------------------------------------
+  - id: V-REVIEW-96
+    requirements: [B96-F-PCS, B96-F-MAC, B96-S-ORDERS]
+    method: review
+    title: One independent correctness review and one fix round (an agent, not a human)
+    reviewer: Sonnet
+    reviewer_kind: agent
+    date: "2026-11-17"
+    evidence: {file: results/b96/README.md, reader: review}
+    checks: *rtl_core

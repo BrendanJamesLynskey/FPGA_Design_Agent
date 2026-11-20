@@ -126,6 +126,8 @@ class App:
             return self.json(200, {**self.runctl.options(), "usage": self.health.usage(), "slots": self.health.locks(), "started": self.runctl.records()})
         if path == "/api/board":
             return self.json(200, self.board.listing())
+        if path == "/api/trace":
+            return self.json(200, S.trace_view(r))
         if path == "/api/health":
             return self.json(200, self.health.all())
         if path == "/api/models":
