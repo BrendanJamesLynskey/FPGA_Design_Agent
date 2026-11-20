@@ -19,6 +19,7 @@ from designs.b110_itch_ouch.model import proto
 from designs.b110_itch_ouch.model.ref import Cfg
 from designs.b119_tcp_fast.model import orders, tcpref
 from designs.b119_tcp_fast.model.tcpref import Conn, FastModel
+from designs.b119_tcp_fast.tests.netsim import Net
 
 PERIOD_PS = 6206
 REC: dict = {}
@@ -631,9 +632,197 @@ async def t_random_mix(dut):
         e = await b.order(orders.random_order(rng), spec=spec, commit_at=ca, abort_at=ab, min_k=17)
         out = settle(b, e)
         seen[out] = seen.get(out, 0) + 1
+        if out == "refused3" and rng.random() < 0.7:
+            await b.set_state(snd_una=b.model.snd_nxt, snd_wnd=rng.choice([118, 400]))        # the peer acknowledged and reopened the window
     await b.check_counters("random mix")
     assert {"sent", "aborted", "noverdict", "cancel0"} <= set(seen) and any(k.startswith("refused") for k in seen), seen
     REC["random_mix_outcomes"] = seen
+
+
+# ---- end to end: the software owner and the software exchange around the real block
+class RtlBus:
+    def __init__(self, b: Bench):
+        self.b = b
+
+    async def write(self, addr: int, val: int) -> None:
+        await self.b.wr(addr, val)
+
+    async def read(self, addr: int) -> int:
+        return await self.b.rd(addr)
+
+
+class RtlNet(Net):
+    """Net with the real block: its frames go to the exchange (a poisoned one is dropped, as the receiver's MAC would), its records to the owner."""
+
+    def __init__(self, b: Bench, **kw):
+        super().__init__(bus=RtlBus(b), **kw)
+        self.b, self.fwd, self.rec_i, self.poisoned = b, 0, 0, 0
+        self.stop = False
+        b.hooks.append(self._hook)
+
+    def _hook(self) -> None:
+        b = self.b
+        while self.fwd < len(b.frames):
+            fr = b.frames[self.fwd]
+            self.fwd += 1
+            if fr["poison"]:
+                self.poisoned += 1
+            else:
+                self.world.send("ex", fr["bytes"])
+        while self.rec_i < len(b.recs):
+            self.owner.on_hw_record(b.recs[self.rec_i])
+            self.rec_i += 1
+        self.now = b.cyc
+        self.world.step_to(b.cyc)
+        self.ex.poll(b.cyc)
+
+    async def wait(self) -> int:
+        await self.b.tick()
+        return self.b.cyc
+
+    async def service_loop(self) -> None:
+        while not self.stop:
+            await self.b.tick()
+            await self.owner.service(self.b.cyc)
+
+
+async def e2e_start(dut, **kw):
+    b = Bench(dut)
+    await b.start()
+    net = RtlNet(b, **kw)
+    await net.start(stale_limit=0)
+    cocotb.start_soon(net.service_loop())
+    return b, net
+
+
+def hw_payload(frame: bytes, dest: str, idx: int) -> bool:
+    return dest == "ex" and tcpref.parse(frame).payload.startswith(b"\x00\x39U")
+
+
+async def send_orders(b: Bench, refs, spacing: int = 30, **kw) -> list[int]:
+    """Present orders with strictly increasing numbers; returns the numbers of those the block sent unpoisoned (the others were refused or aborted)."""
+    sent = []
+    for r in refs:
+        n0 = len(b.recs)
+        await b.fire({"ref": r, "qty": 100 + r, "sym": "AAA", "px": 1_000_000 + r}, **kw)
+        if len(b.recs) > n0:
+            sent.append(r)
+        await b.idle(spacing)
+    return sent
+
+
+def check_session(b: Bench, net: RtlNet, sent: list[int], extra_bytes_ok: bool = True) -> None:
+    """The invariants of every end-to-end run: one gapless sequence space across both senders, the exchange has every byte once and in order, every sent
+    order was answered, nothing outstanding, no sequence disagreement between software and hardware."""
+    o, ex = net.owner, net.ex
+    log = sorted(o.sent_log, key=lambda x: (x[0] - o.iss) & 0xFFFFFFFF)
+    nxt = (o.iss + 1) & 0xFFFFFFFF                      # after the SYN
+    for seq, d in log:
+        assert seq == nxt, f"gap or overlap in the sequence space at {seq}, expected {nxt}"
+        nxt = (seq + len(d)) & 0xFFFFFFFF
+    assert nxt == o.snd_nxt
+    assert bytes(ex.stream_in) == b"".join(d for _, d in log), "the exchange's stream differs from what was sent"
+    assert [x["userref"] for x in o.responses] == sent and all(x["type"] == "A" for x in o.responses)
+    assert [x["userref"] for x in ex.orders] == sent and ex.dup_orders == 0
+    assert o.snd_una == o.snd_nxt and not o.rtx and not o.errors, (o.snd_una, o.snd_nxt, o.rtx, o.errors)
+    hw_segments = [d for _, d in log if d.startswith(b"\x00\x39U")]
+    assert len(hw_segments) == len(sent) == o.hw_sends == len(b.recs)
+
+
+@cocotb.test()
+async def t_e2e_session(dut):
+    """Handshake, login, hand-over, twelve orders, replies, acknowledgements flowing back into the block's window registers."""
+    b, net = await e2e_start(dut, hb=10 ** 6)
+    assert net.owner.hw_armed and net.ex.logged_in
+    sent = await send_orders(b, range(1, 13), spacing=40)
+    await b.idle(300)
+    check_session(b, net, sent)
+    assert len(sent) == 12 and net.owner.stats["retransmits"] == 0 and net.poisoned == 0
+    assert await b.rd(SND_UNA) == net.owner.snd_una == net.owner.snd_nxt and await b.rd(SND_NXT) == net.owner.snd_nxt
+    assert await b.rd(RCV_NXT) == net.owner.rcv_nxt
+    cnt = await b.counters()
+    assert cnt["sent"] == 12 and cnt["poison"] == 0
+    REC["e2e_session"] = {"orders": 12, "exchange_replies": len(net.owner.responses), "software_pure_acks": net.owner.stats["pure_acks"], "clocks": b.cyc}
+
+
+@cocotb.test()
+async def t_e2e_dropped_segment_retransmitted_by_software(dut):
+    """The network loses the fourth fast-path segment: the exchange sees a gap and duplicates acknowledgements; the owner's timer retransmits from the record."""
+    seen = {"n": 0}
+
+    def drop(frame, dest, idx):
+        if hw_payload(frame, dest, idx):
+            seen["n"] += 1
+            return seen["n"] == 4
+        return False
+    b, net = await e2e_start(dut, hb=10 ** 6, drop=drop)
+    sent = await send_orders(b, range(1, 9), spacing=40)
+    await b.idle(2500)
+    check_session(b, net, sent)
+    assert len(net.world.dropped) == 1 and net.owner.stats["retransmits"] >= 1 and net.ex.stats["out_of_order"] >= 1
+    REC["e2e_drop"] = {"retransmits": net.owner.stats["retransmits"], "exchange_out_of_order": net.ex.stats["out_of_order"], "dup_acks_at_owner": net.owner.stats["dup_acks"]}
+
+
+@cocotb.test()
+async def t_e2e_heartbeats_take_and_give_back(dut):
+    """Idle spells make the software send client heartbeats: it disarms the block, takes SND.NXT, sends, hands it back. Orders on both sides of each."""
+    b, net = await e2e_start(dut, hb=600)
+    sent = []
+    for burst in range(3):
+        sent += await send_orders(b, range(100 * burst + 1, 100 * burst + 4), spacing=60)
+        await b.idle(2000)
+    await b.idle(300)
+    check_session(b, net, sent)
+    assert net.owner.takeovers >= 4 and net.ex.client_hbs >= 4 and net.owner.server_hbs >= 2
+    assert await b.rd(SND_NXT) == net.owner.snd_nxt
+    REC["e2e_heartbeat"] = {"takeovers": net.owner.takeovers, "client_heartbeats_at_exchange": net.ex.client_hbs, "server_heartbeats_at_owner": net.owner.server_hbs}
+
+
+@cocotb.test()
+async def t_e2e_aborted_orders_never_reach_the_peer(dut):
+    """Speculative orders, every third aborted: the poisoned frames are dropped by the receiver's MAC, the peer's TCP state is untouched, the sequence space has no hole."""
+    b, net = await e2e_start(dut, hb=10 ** 6)
+    sent = []
+    for r in range(1, 19):
+        ab = 4 if r % 3 == 0 else None
+        sent += await send_orders(b, [r], spacing=25, spec=True, commit_at=None if ab else 3, abort_at=ab)
+    await b.idle(400)
+    check_session(b, net, sent)
+    assert net.poisoned == 6 and len(sent) == 12 and net.ex.stats["out_of_order"] == 0 and net.ex.stats["bad_checksum"] == 0
+    assert net.owner.snd_nxt == net.ex.rcv_nxt
+    REC["e2e_abort"] = {"aborted": net.poisoned, "sent": len(sent), "exchange_out_of_order": net.ex.stats["out_of_order"]}
+
+
+@cocotb.test()
+async def t_e2e_small_window_refuses_then_recovers(dut):
+    """The exchange advertises 150 bytes: two orders fit in flight. Orders presented faster than the acknowledgements are refused and counted in hardware."""
+    b, net = await e2e_start(dut, hb=10 ** 6, ex_window=150)
+    sent = await send_orders(b, range(1, 21), spacing=4)
+    await b.idle(500)
+    sent2 = await send_orders(b, range(21, 25), spacing=100)
+    await b.idle(500)
+    check_session(b, net, sent + sent2)
+    cnt = await b.counters()
+    assert cnt["ref_win"] >= 5 and cnt["ref_win"] + len(sent) + len(sent2) == 24 and len(sent2) == 4
+    REC["e2e_window"] = {"presented": 24, "sent": len(sent) + len(sent2), "refused_window": cnt["ref_win"]}
+
+
+@cocotb.test()
+async def t_e2e_login_rejected_never_arms(dut):
+    """A wrong password: the exchange refuses the login; the owner never hands the connection over, and orders are refused as not armed."""
+    b = Bench(dut)
+    await b.start()
+    net = RtlNet(b, hb=10 ** 6)
+    net.owner.password = "WRONG"
+    try:
+        await net.start()
+    except AssertionError as e:
+        assert "login rejected" in str(e)
+    else:
+        raise AssertionError("the login should have been rejected")
+    await b.fire({"ref": 1, "qty": 1, "sym": "AAA", "px": 1})
+    cnt = await b.counters()
+    assert cnt["ref_arm"] == 1 and cnt["sent"] == 0 and not net.owner.hw_armed
 
 
 def write_records():
