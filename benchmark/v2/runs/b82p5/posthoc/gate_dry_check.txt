@@ -1,0 +1,8 @@
+# gate dry check on planted/spec.md (2026-11-20, not the live run): the 82P4 B r3 RTL with the planted values, then with the right values
+# design dir: runs/_planted_gate_check/v2_e_udp_endpoint (removed afterwards); command: python3 -m flow.derived_constants <dir>
+## planted values (DESIGN_ID 0x55445031, period 8)
+CONST-ID-01 BLOCK runs/_planted_gate_check/v2_e_udp_endpoint/rtl/v2_e_udp_endpoint_top.sv: DESIGN_ID is 0x55445031 (literal) but the spec's design ID 'UEP1' is 0x55455031 (shell/PROTOCOL.md register 0x00: four ASCII characters, MSB first); 0x55445031 is the spec's own '0 identification word' word, a different constant
+CONST-CLK-01 BLOCK runs/_planted_gate_check/v2_e_udp_endpoint/design.xdc: create_clock -period 8.0 ns on CLK100MHZ but the board file (nexys_a7_100t) says 100 MHz = 10.000 ns
+exit code 1
+## right values (DESIGN_ID 0x55455031, period 10)
+exit code 0
