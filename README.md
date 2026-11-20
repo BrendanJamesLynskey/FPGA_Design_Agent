@@ -317,6 +317,9 @@ standard.
 - **HDL coding standard FDA-HDL v1.2.** [docs/hdl_coding_standard.md](docs/hdl_coding_standard.md),
   [flow/hdl_rules.yaml](flow/hdl_rules.yaml), checked by [flow/lint_ruleset.py](flow/lint_ruleset.py) (Verilator lint,
   Vivado methodology, DRC and CDC, the design-standards checker), with waivers recorded.
+- **Lean 4 (brief 124).** [docs/lean_assessment.md](docs/lean_assessment.md): where a proof assistant would and would not help beside SymbiYosys, a dated survey of
+  hardware proofs in ITPs and of LLM-plus-Lean work on RTL, and a proposed `formal_lean` evidence method; the experiment is [formal/lean](formal/lean/README.md)
+  (the checksum equations of brief 119's TCP fast path proved for all inputs by a model, checked by Lean's kernel; records in [results/124_lean](results/124_lean/README.md)).
 - **Tool-assessment notes** for Vivado 2026.1, Icarus, Verilator, SymbiYosys, cocotb and our gates:
   [docs/tool_assessment/](docs/tool_assessment/README.md).
 - **Specification to evidence, schema v1 (brief 116).** The human specifies the requirements (functional, performance, interface, safety) and checks that

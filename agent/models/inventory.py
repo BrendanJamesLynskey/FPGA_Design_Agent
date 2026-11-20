@@ -58,6 +58,8 @@ SITES: list[dict[str, object]] = [
      "before": "the script's MODEL constant (Claude Code arm); a recorded experiment"},
     {"file": "flow/options/generate.py", "fn": "improve (agent improve)", "purposes": ["options"], "needs": "text",
      "prompts": ["graph/options/system", "graph/options/user", "graph/options/repair"], "before": "new in brief 104"},
+    {"file": "formal/lean/tools/llm_prove.py", "fn": "main", "purposes": ["rtl"], "needs": "text", "prompts": ["public: formal/lean/tools/llm_prove.py SYSTEM"],
+     "before": "new in brief 124 (a Lean proof writer; run on claude_code through an override of the rtl purpose)"},
     {"file": "agent/models/resolver.py", "fn": "Resolver.probe (agent models check --probe)", "purposes": ["*"], "needs": "chat", "prompts": [],
      "before": "new in brief 108"},
 ]
