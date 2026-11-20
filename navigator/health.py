@@ -16,15 +16,16 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 import time
 from pathlib import Path
 from typing import Any, Callable
 
 import yaml
 
-from navigator import redact
+from navigator import guards, redact
 
-USAGE_STOP_PCT = 88            # the owner's stop line for weekly (all models) usage
+USAGE_STOP_PCT = guards.USAGE_STOP_PCT     # the owner's stop line for weekly (all models) usage: 90 % until the 23 Nov reset (guards.py)
 USAGE_WARN_PCT = 80
 USAGE_STALE_H = 6
 LOAD_LIMIT = 6                 # house rules: a second heavy job only while the load is under 6 ...
@@ -61,7 +62,7 @@ def chk(id: str, group: str, title: str, status: str, detail: str, how: str, **e
 
 class Health:
     def __init__(self, root: Path, handoff: Path, runner: Runner | None = None, config_dir: Path | None = None, sysfs_usb: Path = Path("/sys/bus/usb/devices"),
-                 python: str = "python3", cache_s: float = 60.0):
+                 python: str = sys.executable or "python3", cache_s: float = 60.0):
         self.root, self.handoff, self.runner = Path(root), Path(handoff), runner or Runner()
         self.config_dir = config_dir if config_dir is not None else Path.home() / ".config" / "fpga_design_agent"
         self.sysfs_usb, self.python, self.cache_s = sysfs_usb, python, cache_s
@@ -325,8 +326,9 @@ class Health:
         else:
             out.append(chk("board_lock", "Boards", "Board lock", "ok", "free: no board job is running", "_handoff/board.lock text", held=False))
         out.append(self.usb())
-        out.append(chk("jtag_disabled", "Boards", "JTAG target listing", "not-run", "disabled in stage 1: a listing starts the hardware server and Vivado, so it needs board.lock and a heavy slot (stage 2)",
-                       "no navigator code path starts the hardware server or Vivado"))
+        out.append(chk("board_actions", "Boards", "Read-only board actions", "not-run",
+                       "on the Board page: list JTAG targets, read the build ID and FEATURES, SYSMON and link status; each takes board.lock and a heavy slot and never programs or writes",
+                       "no free check touches the hardware server; the Board page's actions run only on a click"))
         return out
 
     def usb(self) -> dict[str, Any]:
