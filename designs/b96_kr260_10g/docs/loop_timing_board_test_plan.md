@@ -8,11 +8,13 @@ Status: **a plan only.** Nothing here has run or been built. Each stage that tou
 
 ## Stage 0: Wizard probe (no board; a heavy slot, Vivado 2026.1)
 
+**Done 2026-11-20 by brief 96F1: `results/b96f1/wizard_probe/README.md`.** Result: the core validates with `TX_BUFFER_MODE 0` and `RX_BUFFER_MODE 0` and gains the buffer-bypass controllers' done and error ports (the controllers consume `txphaligndone`/`rxphaligndone` inside the core, so those are not ports: the pass condition below is met by the controllers' done output); dynamic fractional-N is not reachable through the core, so the loop-timing build uses a hand-instantiated `GTHE4_COMMON` (`LOCATE_COMMON = EXAMPLE_DESIGN`). Stage 1's build is `rm_gp_bypass` (`results/b96f1/`), pre-registration `results/b96f1/preregistration.md`, script `_handoff/fpga_agent/run_96f1_stage1.sh`.
+
 Read, in an in-memory project, the Wizard 1.7 properties that mention buffer mode, bypass, `TXOUTCLKSEL`, `TX_PROGCLK_SEL`, QPLL fractional-N, and the optional dynamic ports; build the 56A configuration with `TX_BUFFER_MODE 0` and `RX_BUFFER_MODE 0` (brief 97's probe failed). **Pass:** the core validates and lists `txphaligndone`, `txdlysresetdone`, `rxphaligndone`; **and** either dynamic fractional-N ports are available or a hand-instantiated `GTHE4_COMMON` path is chosen. **Fail:** stop and report; stages 1 to 4 change.
 
 ## Stage 1: B1 bypass only, loopback (one board; `board.lock`; no new hardware)
 
-Build `bp_rm`: 96E `rm_gp` plus RX and TX buffer bypass (`TXOUTCLKSEL` 101, auto alignment). Same fibre loopback as 96C/96E.
+Build `rm_gp_bypass` (called `bp_rm` here before it was built): 96E `rm_gp` plus RX and TX buffer bypass (`TXOUTCLKSEL` 101, auto alignment). Same fibre loopback as 96C/96E.
 - Steps: 100 restarts; per restart record `TXPHALIGNDONE` and `RXPHALIGNDONE` sequence and time, block lock, E, L, D; `GT_BUF` status (the buffer-status bits are meaningless in bypass: record, do not judge); SYSMON at start, end and every 5 s (operating conditions are evidence); 20 s dwell with armed orders.
 - **Pass:** 100 of 100 restarts reach both align-done flags; every restart `safety_ok` (the nine safety counters 0, orders sent = fired = `order_ok`); SYSMON inside the DS925 windows used in 96C; E, L, D reproducible within +-1 clock across restarts (bypass should make latency deterministic: **record the spread; a smaller spread than 97C's 100-restart distribution is the evidence**).
 - **Predicted (GT part unconfirmed):** E falls by 2.9 to 4.5 clocks (18 to 28 ns); tick-to-trade (L - E) of the `rm_gp` control build falls from about 33 clocks (205 ns) to about 28.6 to 30.2 clocks (177 to 187 ns), because B1 keeps the +2.3-clock buffer. **Fail** if E does not fall by at least 1.5 clocks (the bypass did not take effect or the GT estimate is wrong: report, do not tune); **warn** outside the predicted range.

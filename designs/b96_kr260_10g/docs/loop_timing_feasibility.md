@@ -13,7 +13,7 @@ sources for IEEE 802.3 and ITU-T G.8262 (the standards are not on this machine).
 |---|---|---|---|
 | 1 | GTHE4 QPLL fractional-N, resolution | **Feasible, confirmed** | UG576 p.51 (Equations 2-5, 2-6, Table 2-13): `SDMDATA` 0 to 2^24 - 1, `SDMWIDTH` 16, 20 or 24, UltraScale+ only. One step at N = 66 is 0.9 ppb of the VCO (0.0009 ppm). |
 | 2 | Run-time update of the fraction | **Feasible, confirmed in principle** | UG576 p.57 to 58 ("Dynamic Frac-N", Figures 2-14, 2-15, Table 2-16): `SDM*DATA` stable one system clock, then `SDM*TOGGLE` high 3 and low 3 feedback clocks; "to achieve the same functionality that the TXPIPPM provides". A deviation of more than 200 ppm from the VCO frequency at the last QPLL reset needs a QPLL reset (p.58). |
-| 3 | Reaching the dynamic ports from the Transceiver Wizard | **Unknown** | PG182 v1.7 has a static "QPLL Fractional-N" numerator (0 to 16777215, 0 = off; search result, Advanced Clocking Section). Whether `SDM0DATA`/`SDM0TOGGLE` can be exposed is not in anything read; a Wizard property probe (a Vivado job, not run: both heavy slots were taken) or a hand-instantiated `GTHE4_COMMON` or DRP writes (UG576 Appendix C lists `SDM0DATA1_0`/`SDM0DATA1_1`) would settle it. |
+| 3 | Reaching the dynamic ports from the Transceiver Wizard | **Answered by brief 96F1 (Vivado 2026.1 probe, `results/b96f1/wizard_probe/`): not through the core; yes with the QPLL outside it** | Inside the Wizard core the SDM ports are tied to constants and only the static numerator (`TX_/RX_QPLL_FRACN_NUMERATOR`) exists; with `LOCATE_COMMON = EXAMPLE_DESIGN` the core takes `qpll0clk_in`/`qpll0refclk_in` and our own `GTHE4_COMMON` instance exposes `SDM0DATA`/`SDM0TOGGLE`. (Was: unknown. Original text follows.) PG182 v1.7 has a static "QPLL Fractional-N" numerator (0 to 16777215, 0 = off; search result, Advanced Clocking Section). Whether `SDM0DATA`/`SDM0TOGGLE` can be exposed is not in anything read; a Wizard property probe (a Vivado job, not run: both heavy slots were taken) or a hand-instantiated `GTHE4_COMMON` or DRP writes (UG576 Appendix C lists `SDM0DATA1_0`/`SDM0DATA1_1`) would settle it. |
 | 4 | CPLL as the steered PLL | **Not feasible** | UG576 p.51: fractional-N is "supported using the QPLL"; the CPLL has none (Table 2-9, p.47). DS925 v1.30 Table 99: CPLL line rate at output divider 1 is 4 to 8.5 Gb/s for this speed grade, so 10.3125 Gb/s is outside it anyway. |
 | 5 | A fabric-generated reference into the QPLL | **Not feasible** | UG576 p.42 (`GTGREFCLK`): "reserved for internal testing purposes only". |
 | 6 | What drives the SFP+ reference on the KR260 | **Unconfirmed** | See section 3. The pins (`MGTREFCLK0` of quad 224, Y6/Y5) and 156.25 MHz working on the owner's board are confirmed; the source device and whether it is programmable are not in any document read. |
@@ -93,7 +93,7 @@ user clock 161.1328125 MHz, TX and RX buffers **on**: `TXBUF_EN = TRUE`, `RXBUF_
 built checkpoint, `results/b96c/txpi_probe.log`). Both user clocks come from the PMA (`TXOUTCLKSEL` 010, `RXOUTCLKSEL` 010). The PCS and gearbox are
 in fabric. **Correction found while reading:** `docs/design.md` section 11 (table row "GT's own RX elastic buffer") says the 56A build "uses the
 buffer bypass (`RXBUF_EN = 0`)"; the probe log and section 2.7 say the opposite (buffer on). The log is the record. (To be fixed in design.md by the planner or a later brief; not edited here to
-keep this brief's diff to new files.) Brief 97's bypass probe failed (`results/b97/README.md`), so the Wizard properties `TX_BUFFER_MODE`/`RX_BUFFER_MODE` were never read.
+keep this brief's diff to new files.) Brief 97's bypass probe failed (`results/b97/README.md`), so the Wizard properties `TX_BUFFER_MODE`/`RX_BUFFER_MODE` were never read. (Read by brief 96F1: `results/b96f1/wizard_probe/README.md`.)
 
 **What bypass needs (UG576 v1.7.1).**
 
@@ -227,7 +227,7 @@ In a fibre loopback the recovered clock **is** our transmit clock (delayed by th
 
 1. Read XAPP1276 (AMD) for the clocking of V1, whether a TXPI code change or a dynamic SDM update keeps TX bypass aligned, and the update method of its controller; I could not retrieve it.
 2. Read the KR260 carrier schematic for the `MGTREFCLK0` source and its programmability (owner or a later brief).
-3. A Wizard property probe (Vivado, a heavy slot) for `TX_BUFFER_MODE`, `RX_BUFFER_MODE`, the TXOUTCLK source choices and any dynamic fractional-N port; brief 97's attempt failed.
+3. ~~A Wizard property probe~~ Done by brief 96F1 (`results/b96f1/wizard_probe/`).
 4. Retrieve AR 68177 (GTH latency values) to replace the GTY figures.
 5. Owner decision needed before any V2 RTL: the direct crossing is a CDC-1 case (decisions 3 and 9 of 2026-11-19).
 6. A sub-clock phase detector (quarter-clock sampling) is needed in V2 and is not in the design.
