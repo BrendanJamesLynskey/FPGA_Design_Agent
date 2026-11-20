@@ -1,0 +1,23 @@
+## as recorded (the V2 consequence checks are listed as the Verifier's own failures)
+repeat 0:
+  tests <- "[verification] V2 constrained_random_test_ran: no passing test with 'random' in its name in seed1: name the constrained-random tes"
+  rtl   <- '[simulate] first failing test test_reset_and_scratch: AssertionError: status 2 expected 0 (bench_v2_e_udp_endpoint.py:261) [first '
+repeat 1:
+  tests <- "[verification] V2 constrained_random_test_ran: no passing test with 'random' in its name in seed1: name the constrained-random tes"
+  rtl   <- '[simulate] first failing test test_reset_and_scratch: AssertionError: status 2 expected 0 (bench_v2_e_udp_endpoint.py:261) [first '
+repeat 2:
+  model <- '[independent check] your model disagreed with an independent check in test test_reset_and_scratch. Re-read spec.yaml for the behav'
+  tests <- "[verification] V2 constrained_random_test_ran: no passing test with 'random' in its name in seed1: name the constrained-random tes"
+  rtl   <- '[simulate] first failing test test_reset_and_scratch: AssertionError: status 2 expected 0 (bench_v2_e_udp_endpoint.py:261) [first '
+
+## proposal P1a (evidence edit only): the two consequence checks are treated as covered by the failing simulation
+repeat 0:
+  rtl   <- '[simulate] first failing test test_reset_and_scratch: AssertionError: status 2 expected 0 (bench_v2_e_udp_endpoint.py:261) [first '
+repeat 1:
+  tests <- '[simulate] the same failure survived a repair of the RTL: test test_reset_and_scratch. Check that the bench drives the ports as th'
+  rtl   <- '[simulate] first failing test test_reset_and_scratch: AssertionError: status 2 expected 0 (bench_v2_e_udp_endpoint.py:261) [first '
+repeat 2:
+  model <- '[independent check] your model disagreed with an independent check in test test_reset_and_scratch. Re-read spec.yaml for the behav'
+  tests <- '[simulate] the same failure survived a repair of the RTL: test test_reset_and_scratch. Check that the bench drives the ports as th'
+  rtl   <- '[simulate] first failing test test_reset_and_scratch: AssertionError: status 2 expected 0 (bench_v2_e_udp_endpoint.py:261) [first '
+
