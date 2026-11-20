@@ -63,7 +63,12 @@ def tool(name: str, description: str, properties: dict[str, Any], required: list
 
 
 #: tools that run agent-written code (tests, sims, builds): the managed policy re-hashes frozen and excluded files after them
-CODE_RUNNING_TOOLS = frozenset({"simulate", "mutate", "formal", "build", "gates", "lint", "check", "bringup", "program"})
+CODE_RUNNING_TOOLS = frozenset({"simulate", "mutate", "formal", "build", "gates", "lint", "check", "bringup", "program",
+                                "axi_simulate", "oss_synth", "eqy_check", "rw_referee", "debug_capture", "axi_board_run"})
+#: brief 102F: every tool except these runs under ``ManagedPolicy.write_lock`` (frozen, excluded and waiver files read-only while it runs).
+#: These only read or write through the path jail, which already refuses a protected path. A tool added later is locked by default.
+NO_WRITE_LOCK_TOOLS = frozenset({"read_file", "write_file", "list_files", "stage_note", "board_constraints", "search_docs", "load_skill",
+                                 "skill_index", "skill_excerpt", "spec_items", "design_analysis"})
 
 
 def tool_list(refined: bool = True) -> list[dict[str, Any]]:
@@ -89,8 +94,12 @@ def dispatch(session, name: str, args: dict[str, Any] | None) -> dict[str, Any]:
             raise SecurityError("unknown-tool", f"no tool named {name!r}")
         tl = TOOLS[name]
         validate_args(tl.schema(), args)
-        out = tl.fn(session, **args)
         pol = getattr(session.jail, "policy", None)
+        if pol is not None and name not in NO_WRITE_LOCK_TOOLS:   # brief 102F: frozen, excluded and waiver files are read-only while a tool runs
+            with pol.write_lock():
+                out = tl.fn(session, **args)
+        else:
+            out = tl.fn(session, **args)
         if pol is not None and name in CODE_RUNNING_TOOLS:      # brief 102: design code ran: nothing frozen or excluded may have changed
             bad = pol.integrity_violations()
             if bad:
