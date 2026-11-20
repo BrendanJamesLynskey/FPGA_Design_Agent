@@ -15,6 +15,9 @@ model offers disjoint singles and does not combine them. This module takes the o
 * **ranked by code, capped**: the best combination of each size, by (measured earlier, composed mid-gain, fewer components touched, no owner approval needed, order of the parts),
   then the smallest sizes and the largest, at most ``MAX_COMBINED`` in all. The rule is in :func:`rank_key`; it never reads a measured result.
 
+Brief 104B: the pool the combiner draws on is the model's options plus the per-stage **parts** that :mod:`flow.options.split` derives from the model's bundles (``origin:
+splitter``); a bundle that was split is replaced in the pool by its parts. Parts of one bundle never add up to more than that bundle's own high end (``split_bundle_gain``).
+
 The combiner reads only the analysis and the model's checked options. It never sees a back-test's truth.
 """
 
@@ -24,11 +27,13 @@ import itertools
 import re
 from typing import Any
 
-from flow.options import schema
+from flow.options import schema, split
 
-COMBINER_VERSION = "1"
+COMBINER_VERSION = "2"
 MAX_COMBINED = 4
-MAX_PARTS = 6          # four from one request (the checker caps it); six after --more
+MAX_PARTS = 6          # model options: four from one request (the checker caps it); six after --more
+MAX_POOL = 10          # model options not split, plus the parts the splitter derived (brief 104B)
+POOL_ORIGINS = ("model", split.ORIGIN)
 ORIGIN = "combiner"
 
 
@@ -55,6 +60,21 @@ def conflict(parts: list[dict[str, Any]]) -> str | None:
     return None
 
 
+def _sum_gain(parts: list[dict[str, Any]], key: str) -> float:
+    """The sum of ``key`` over the parts, except that the parts split from one bundle together count at most the bundle's own high end (a subset of a bundle's stages cannot
+    claim more than the bundle did)."""
+    total = 0.0
+    groups: dict[str, list[dict[str, Any]]] = {}
+    for p in parts:
+        if p.get("split_from"):
+            groups.setdefault(p["split_from"], []).append(p)
+        else:
+            total += p["gain"][key]
+    for ps in groups.values():
+        total += min(sum(p["gain"][key] for p in ps), ps[0]["split_bundle_gain"][1])
+    return total
+
+
 def compose_gain(parts: list[dict[str, Any]], analysis: dict[str, Any], *, blind: bool, scope: list[str]) -> tuple[dict[str, Any] | None, str | None]:
     """The composed gain of ``parts`` as a raw gain dict, or ``(None, why it is not composable)``."""
     metrics = {p["gain"]["metric"] for p in parts}
@@ -70,7 +90,8 @@ def compose_gain(parts: list[dict[str, Any]], analysis: dict[str, Any], *, blind
         if not stages:
             return None, "no stages are named, so the cuts cannot be shown to add"
         # disjoint stages (checked by conflict()): the cuts of separate stages on one chain add
-        low, high = sum(p["gain"]["low"] for p in parts), sum(p["gain"]["high"] for p in parts)
+        raw_low, raw_high = _sum_gain(parts, "low"), _sum_gain(parts, "high")
+        low, high = raw_low, raw_high
         cap, why = schema.ceiling(metric, stages, scope, analysis, blind=blind)
         if cap is not None and high > cap:
             high = cap
@@ -78,8 +99,9 @@ def compose_gain(parts: list[dict[str, Any]], analysis: dict[str, Any], *, blind
         basis = "guess" if any(p["gain"]["basis"] == "guess" for p in parts) else "model"
         cites = sorted({c for p in parts for c in p["gain"]["cites"]} | set(_stage_facts(stages, analysis)))
         note = (f"Composed by code: the latency cuts of options {ids} add because their stages ({', '.join(stages)}) are disjoint and stage clocks add along the chain: "
-                f"low = {sum(p['gain']['low'] for p in parts):g}, high = {sum(p['gain']['high'] for p in parts):g}"
-                + (f", capped at {cap:g} ({why})" if cap is not None and high < sum(p['gain']['high'] for p in parts) else "")
+                f"low = {raw_low:g}, high = {raw_high:g}"
+                + ("; parts split from one bundle count at most that bundle's own high end" if any(p.get("split_from") for p in parts) else "")
+                + (f", capped at {cap:g} ({why})" if cap is not None and high < raw_high else "")
                 + ". Not a simulation of the combination: interactions between the changes are not modelled.")
         out = {"metric": metric, "low": low, "high": high, "basis": basis, "cites": [] if basis == "guess" else cites, "basis_note": note}
         # an earlier run of exactly this set of stages, measured: the measurement replaces the sum
@@ -88,7 +110,7 @@ def compose_gain(parts: list[dict[str, Any]], analysis: dict[str, Any], *, blind
                 gain = pr["gain"]
                 out.update(low=gain, high=gain, basis="measurement", cites=sorted({pr["fact"], *_stage_facts(stages, analysis)}),
                            basis_note=f"Measured earlier on the same set of stages ({pr['name']}: {pr['summary']}); this option's own changes may differ from that run's change, so check them against it; the cut was {gain:g} clock(s) ({pr['fact']}). "
-                                      f"The sum of the parts would have been {sum(p['gain']['low'] for p in parts):g} to {sum(p['gain']['high'] for p in parts):g}.")
+                                      f"The sum of the parts would have been {raw_low:g} to {raw_high:g}.")
                 break
         return out, None
     if metric in ("lut", "ff"):
@@ -150,11 +172,15 @@ def rank_key(o: dict[str, Any], order: dict[str, int]) -> tuple:
 
 
 def combine(options: list[dict[str, Any]], analysis: dict[str, Any], project: Any, *, goal: str | None, pinned: list[str] | None = None, blind: bool = False,
-            cap: int = MAX_COMBINED) -> dict[str, Any]:
+            cap: int | None = None) -> dict[str, Any]:
     """Build the cumulative options from the model's valid single ``options``. Returns ``{"options": [...], "considered": n, "not_composable":
     [{"from": [ids], "reason"}], "dropped": [...]}``. The options returned carry ``origin: combiner``, ``combined_from`` and no ``n`` (the caller numbers them)."""
+    cap = cap or MAX_COMBINED
     owned = [c.name for c in (project.owned() if project else [])]
-    singles = [o for o in options if o.get("origin", "model") == "model" and o["touches_stages"] is not None][:MAX_PARTS]
+    models = [o for o in options if o.get("origin", "model") == "model" and o["touches_stages"] is not None]
+    parts = [o for o in options if o.get("origin") == split.ORIGIN]
+    split_ids = {p["split_from"] for p in parts}
+    singles = ([o for o in models[:MAX_PARTS] if o["id"] not in split_ids] + parts)[:MAX_POOL]      # a bundle that was split is represented by its parts
     order = {o["id"]: k for k, o in enumerate(singles)}
     built: list[dict[str, Any]] = []
     not_comp: list[dict[str, Any]] = []
@@ -203,23 +229,36 @@ def combine(options: list[dict[str, Any]], analysis: dict[str, Any], project: An
     return {"options": chosen, "considered": considered, "not_composable": not_comp + left_out, "version": COMBINER_VERSION, "cap": cap}
 
 
-def apply(rec: dict[str, Any], analysis: dict[str, Any], project: Any, *, goal: str | None, pinned: list[str] | None = None, blind: bool = False) -> dict[str, Any]:
-    """Replace the combiner's options in ``rec['options']`` by freshly built ones from the model's options, number everything and note the result in
-    ``rec['combiner']``. Safe to call again after a ``--more`` or ``--edit`` (it strips the old combined options first)."""
-    model_opts = [o for o in rec["options"] if o.get("origin", "model") != ORIGIN]
+def apply(rec: dict[str, Any], analysis: dict[str, Any], project: Any, *, goal: str | None, pinned: list[str] | None = None, blind: bool = False, splitter: bool = True, cap: int | None = None) -> dict[str, Any]:
+    """Replace the derived options in ``rec['options']`` by freshly built ones from the model's options: the per-stage parts of its bundles (brief 104B, ``splitter``; ids
+    ``S1``...) and then the combined options (``C1``...), number everything and note the result in ``rec['splitter']`` and ``rec['combiner']``. Safe to call again after a
+    ``--more`` or ``--edit`` (it strips the old derived options first)."""
+    model_opts = [o for o in rec["options"] if o.get("origin", "model") not in (ORIGIN, split.ORIGIN)]
     for o in model_opts:
         o.setdefault("origin", "model")
-    res = combine(model_opts, analysis, project, goal=goal, pinned=pinned, blind=blind)
     used = {o["id"] for o in model_opts}
-    new = []
-    for k, o in enumerate(res["options"], 1):
-        cid = f"C{k}"
+
+    def fresh(prefix: str, k: int) -> str:
+        cid = f"{prefix}{k}"
         while cid in used:
             cid += "x"
         used.add(cid)
-        o["id"] = cid
+        return cid
+
+    parts: list[dict[str, Any]] = []
+    sp: dict[str, Any] | None = None
+    if splitter:
+        sp = split.split(model_opts, analysis, project, goal=goal, pinned=pinned, blind=blind)
+        for k, p in enumerate(sp["parts"], 1):
+            p["id"] = fresh("S", k)
+            parts.append(p)
+        rec["splitter"] = {"version": sp["version"], "cap": sp["cap"], "split": sp["split"], "report": sp["report"], "offered": [{"id": p["id"], "from": p["split_from"], "stages": p["touches_stages"]} for p in parts]}
+    res = combine(model_opts + parts, analysis, project, goal=goal, pinned=pinned, blind=blind, cap=cap)
+    new = []
+    for k, o in enumerate(res["options"], 1):
+        o["id"] = fresh("C", k)
         new.append(o)
-    rec["options"] = model_opts + new
+    rec["options"] = model_opts + parts + new
     for k, o in enumerate(rec["options"], 1):
         o["n"] = k
     rec["combiner"] = {"version": res["version"], "considered": res["considered"], "cap": res["cap"], "offered": [{"id": o["id"], "from": o["combined_from"]} for o in new],
