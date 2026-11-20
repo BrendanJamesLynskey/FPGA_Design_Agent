@@ -77,6 +77,10 @@ Tool: Vivado 2026.1. Build ID of the inputs at handover: `c9106c0d` (`python flo
 
 | File | What |
 |---|---|
+| [`designs/b96_kr260_10g/rm_gp_bypass/rtl/b96_core.sv`](rm_gp_bypass/rtl/b96_core.sv) | copy of rtl/b96_core.sv for build rm_gp_bypass with the GT buffer-bypass controllers connected and run gates (brief 96F1) |
+| [`designs/b96_kr260_10g/rm_gp_bypass/rtl/gt_bp_gate.sv`](rm_gp_bypass/rtl/gt_bp_gate.sv) | per-direction gate that releases the paths only after the bypass controller has restarted and finished (brief 96F1) |
+| [`designs/b96_kr260_10g/ip/amd_ip_bypass.tcl`](ip/amd_ip_bypass.tcl) | the GT Wizard configuration with both buffers bypassed (brief 96F1) |
+| [`designs/b96_kr260_10g/host/b96f1_bypass.py`](host/b96f1_bypass.py) | board driver and pre-registered verdict for build rm_gp_bypass (brief 96F1) |
 | [`designs/b96_kr260_10g/rtl/es_ctrl.sv`](rtl/es_ctrl.sv) | DRP master and eye-scan point sequencer for the GTHE4 channel (EYESCAN = 1), brief 96D |
 | [`designs/b96_kr260_10g/es.xdc`](es.xdc) | powers up the GT's eye-scan circuit (ES_EYE_SCAN_EN, ES_ERRDET_EN) in the eyescan build |
 | [`designs/b96_kr260_10g/model/eyescan.py`](model/eyescan.py) | Python twin of the eye-scan point sequencer's DRP traffic |
@@ -127,6 +131,8 @@ Tool: Vivado 2026.1. Build ID of the inputs at handover: `c9106c0d` (`python flo
 | E3 | review | pass | one independent correctness review (Sonnet) and one fix round | [`results/b96/README.md`](../../results/b96/README.md) | - |
 | E7 | simulation | pass | whole core in xsim with AMD's real XPM macros, four clock phases: tick-to-trade of the 97C path, of the xpm_fifo_async buffer and of the own gray-pointer buffer (RM_OWN = 1); the numbers and the accounting of the board's loop-latency increase are in design.md section 11 | [`results/b96e/core_lat_sim.json`](../../results/b96e/core_lat_sim.json) | - |
 | E8 | build | pass | build rm_gp (RATE_MATCH = 1, RM_OWN = 1), all 29 gates, WNS +0.105 ns, WHS +0.011 ns, stamp 1a2fa1a8 recomputed from the tree; not loaded on a board | [`results/b96e/builds/rm_gp/digest.json`](../../results/b96e/builds/rm_gp/digest.json) | - |
+| E9 | build | pass | build rm_gp_bypass (both GT buffers bypassed, brief 96F1), all 29 gates, WNS +0.090 ns, WHS +0.010 ns, report_cdc no critical, stamp b2a7aeea; not loaded on a board | [`results/b96f1/builds/rm_gp_bypass/digest.json`](../../results/b96f1/builds/rm_gp_bypass/digest.json) | - |
+| E10 | simulation | pass | the Wizard's own buffer-bypass controllers with our run gate against a stand-in transceiver in xsim, 28 checks (start on the reset-done edge, stale done held off, error holds the paths in reset) | [`results/b96f1/bypass_seq/result.txt`](../../results/b96f1/bypass_seq/result.txt) | - |
 
 Gates at handover: `build_2026_1` pass.
 
@@ -170,9 +176,10 @@ Every value is read from the record by `python -m flow.handover fill`, not typed
 
 ## Next steps
 
-1. Run docs/board_run_plan.md steps 1 to 4 on the KR260 (laser polarity first), then the NIC steps after the owner buys a card and cable.
-2. Confirm the reference clock and the control pins against the carrier schematic.
-3. Widen the 58A core to 64 bits, or add the missing 58A features to trade64.
+1. Run _handoff/fpga_agent/run_96f1_stage1.sh on the KR260 (pre-registered in results/b96f1/preregistration.md), build rm_gp_bypass against the 96E rm_gp board run.
+2. Run docs/board_run_plan.md steps 1 to 4 on the KR260 (laser polarity first), then the NIC steps after the owner buys a card and cable.
+3. Confirm the reference clock and the control pins against the carrier schematic.
+4. Widen the 58A core to 64 bits, or add the missing 58A features to trade64.
 
 Open questions:
 
@@ -185,6 +192,7 @@ Open questions:
 
 | Date | Brief | PR | What |
 |---|---|---|---|
+| 2026-11-20 | - | - | brief 96F1: build rm_gp_bypass (both GT elastic buffers bypassed; Wizard probe in results/b96f1/wizard_probe), all 29 gates, timing met, report_cdc no critical; board test pre-registered and script written, nothing run on a board |
 | 2026-11-19 | - | - | brief 96E: own gray-pointer elastic buffer (RM_OWN), +1.2 clocks of tick-to-trade over 97C in xsim against +5.3 for the macro buffer; the board's +11 accounted (1.25 left in D); build rm_gp with all 29 gates; board run and real-offset plan pending the owner |
 | 2026-11-19 | - | - | brief 96D: on-chip RX eye scan (EYESCAN build option, es_ctrl, flow/eyescan); built with all 29 gates; simulated against a stand-in; not yet run on the board |
 | 2026-11-19 | - | - | brief 96C addendum 2: RATE_MATCH build parameter, default 0 (the 97C path, shown equivalent by eqy and the 97C bench); the board measured the buffer at +11 clocks and no relative offset by the TX phase interpolator |

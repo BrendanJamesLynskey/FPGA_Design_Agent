@@ -422,3 +422,28 @@ The first per-entry-synchroniser version's records (2-flop pointer, WNS +0.105 n
 2. The buffer's own counters at 0 ppm (RXV18 to RXV26: inserts, deletes, stalls, overflow, fill min and max).
 3. The remaining 1.25 clocks of `D`: a build with ILA or stamp counters at the buffer's input and output, or the same quantity from the E and D of two builds.
 4. Behaviour under a real offset: `docs/real_offset_plan.md` (a plan for the owner to approve; nothing bought or wired).
+
+## 12. GT buffer bypass, build `rm_gp_bypass` (brief 96F1, 2026-11-20)
+
+Both GT elastic buffers (TX and RX) bypassed on top of build `rm_gp`; everything else as `rm_gp` (`RATE_MATCH = 1`, `RM_OWN = 1`, `ENT_SYNC = 1`). No loop timing, no direct crossing: the elastic buffer `rm_gp` still does the receive-to-transmit crossing. The default build and `rm_gp` are unchanged. **Nothing here ran on a board**; the saving is the 96F prediction (E falls 2.9 to 4.5 clocks, tick-to-trade about 205 ns to 177 to 187 ns, third-party GTY figures, UNCONFIRMED for this GTH) and the board test is pre-registered (`results/b96f1/preregistration.md`, script `_handoff/fpga_agent/run_96f1_stage1.sh`).
+
+**How it is built.** `ip/amd_ip_bypass.tcl`: the Wizard configuration with `TX_BUFFER_MODE 0`, `RX_BUFFER_MODE 0` (the Wizard then selects `TXOUTCLKSEL` 101 itself and adds the auto-mode buffer-bypass controllers; it also moves `FREERUN_FREQUENCY`, which the script sets back to 100 MHz). `rm_gp_bypass/rtl/b96_core.sv` is a copy of `rtl/b96_core.sv` (a unit test lists the only lines that differ) with the controllers' ports connected and `rm_gp_bypass/rtl/gt_bp_gate.sv` in each direction: the paths leave reset only when the reset helper is done AND the controller has restarted and finished for this sequence with no error (the controller's done from the previous sequence stays high for 6 to 12 clocks after the reset-done edge, measured in `results/b96f1/bypass_seq/`). TX_DONE and RX_DONE (GT_STAT) follow that gate. FEATURES bit 6 and GT_BUF bits 15:10 are new (`docs/register_map.md`). Stage 0 findings (options, ports, attributes, dynamic fractional-N): `results/b96f1/wizard_probe/README.md`.
+
+**Simulated, and not.** (a) The Wizard's own controllers (generated sources) with our gate against a stand-in transceiver: 28 checks pass (start by itself on the reset-done edge, done and error, stale done, error holds the gate, reset clears; alignment times 3 to 400 clocks). (b) The whole core in xsim with the real XPM macros and a stand-in transceiver with controller ports: link up, 8 orders, tick-to-trade 13.4 clocks, identical to `rm_gp` (13.4): the datapath is unchanged. **Not simulated:** the GTHE4 itself (the Basic simulator refuses the real model), so the alignment latency, the phase it gives and the saving are unknown until the board. The stand-in's alignment time is not a measured figure.
+
+**Build results** (`results/b96f1/builds/`, both built from this tree through the heavy slot, Vivado 2026.1, 1 thread):
+
+| | `rm_gp` (rebuilt here) | `rm_gp_bypass` |
+|---|---|---|
+| Gates | 29 of 29 | 29 of 29 |
+| WNS / WHS (ns) | +0.055 / +0.011 | +0.090 / +0.010 |
+| LUT / FF / BRAM / DSP | 6,842 / 18,940 / 0 / 0 | 6,878 / 19,006 / 0 / 0 |
+| Power (vectorless) | 1.124 W | 0.933 W |
+| `report_cdc` | 0 critical (CDC-3 info 1,194; CDC-6 warning 6; CDC-15 warning 2,107) | 0 critical (CDC-3 info 1,198; CDC-6 warning 6; CDC-15 warning 2,107); no waivers |
+| Methodology | 0 critical, 15 warnings (LUTAR-1 x5, XDCH-2 x10) | 0 critical, 15 warnings (as before) |
+| Stamp | `6fd8a2bf` | `b2a7aeea` |
+| Wall, resident peak | 1,530 s, 4,436 MiB (scope cap hit 87 times) | 1,441 s, 4,413 MiB (0 hits) |
+
+`report_property` of the GTHE4_CHANNEL in both post_route checkpoints: TXBUF_EN and RXBUF_EN TRUE against FALSE, TX_XCLK_SEL TXOUT against TXUSR, RX_XCLK_SEL RXDES against RXUSR, TX_FIFO_BYP_EN 0 against 1, TX_PROGDIV_CFG 0 against 16 (`results/b96f1/wizard_probe/`). The vectorless power difference is a tool estimate, not a measurement. The `rm_gp` control here (WNS +0.055) differs from 96E's record (+0.164) because the tree is current main, not the 96E branch.
+
+**Caveats.** The TX phase-interpolator ppm block is powered down by the Wizard in this configuration (`TXPIPPMPD_VAL = 1`): the ppm registers do nothing here. In loopback there is no frequency offset, so the rate matcher's slip path is not exercised. The reset-input drive of the controllers (user clock not active) is our choice, UNCONFIRMED against AMD's example design. The bypass controllers' done and error are in the status registers; TXBUFSTATUS and RXBUFSTATUS are meaningless with the buffers bypassed.

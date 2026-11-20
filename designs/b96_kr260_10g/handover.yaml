@@ -88,6 +88,19 @@ parameters:
   note: QPLL0 from the 156.25 MHz reference; the user clocks (161.133 MHz) carry 64 bits a word and the PCS takes one clock
     pause in 33
 files:
+- path: designs/b96_kr260_10g/rm_gp_bypass/rtl/b96_core.sv
+  what: copy of rtl/b96_core.sv for build rm_gp_bypass with the GT buffer-bypass controllers connected and run gates (brief
+    96F1)
+  sha256: 292b43f4aa7f84df451ea8592ac709e7af6e46577ced5854c37177951f14ec27
+- path: designs/b96_kr260_10g/rm_gp_bypass/rtl/gt_bp_gate.sv
+  what: per-direction gate that releases the paths only after the bypass controller has restarted and finished (brief 96F1)
+  sha256: 2c7f992cf901e5eb51841d1743563b8efa17d4fd7e5fd99cfba4ab78a1d15193
+- path: designs/b96_kr260_10g/ip/amd_ip_bypass.tcl
+  what: the GT Wizard configuration with both buffers bypassed (brief 96F1)
+  sha256: 2b44c98771bbb25bbb1fcd35dcd0e72a44360a8ef81a6887391271537c0bfef9
+- path: designs/b96_kr260_10g/host/b96f1_bypass.py
+  what: board driver and pre-registered verdict for build rm_gp_bypass (brief 96F1)
+  sha256: 698657c195211ac518a67ba94c1cd7db5b15afef3e16fbf15c2f8df14a4a6aa9
 - path: designs/b96_kr260_10g/rtl/es_ctrl.sv
   what: DRP master and eye-scan point sequencer for the GTHE4 channel (EYESCAN = 1), brief 96D
   sha256: 671362a1c02eff42f9dc8af2c6919b854a62b3a93e7702d65ed7f6bf278e8e3e
@@ -162,7 +175,7 @@ files:
   sha256: 4dec8c5ba8f6dccc6273f45d40a7d95a6668f5fe09350c0a0d80cc6c07ea1118
 - path: designs/b96_kr260_10g/docs/design.md
   what: 'design note: decisions and alternatives'
-  sha256: 68b5438142089e4d639263ea7f623c63786ba86ac61997cb099f42dd39983aca
+  sha256: 8ccf90a397c6eb5aac3b72462dbd23038630253c52914d5c07da07aa3b6b9c9d
 - path: designs/b96_kr260_10g/docs/board_run_plan.md
   what: stage 3 plan for the board
   sha256: 678413f0be0f0c2692b2d1118cd8a8e54ec6514bd5e643485402e34ecc83c61b
@@ -171,19 +184,19 @@ files:
   sha256: 376623bbd5f6b71f50a352b59b252e1c27ab8ecc4643c3cc2871f7614e4bc588
 - path: designs/b96_kr260_10g/docs/loop_timing_feasibility.md
   what: loop-timing and buffer-bypass feasibility study (96F)
-  sha256: de906c5b9b03d346d5f79c657cb956624a4a5587aa8ebed7beb83f385761c6be
+  sha256: fccc26a7547e8ffb0cf187739c894ee46e9af01058fa269cec48df918828782d
 - path: designs/b96_kr260_10g/docs/loop_timing_board_test_plan.md
   what: board test plan for loop timing (96F, for approval)
-  sha256: 2f6c97b6b1d3329a927c0e221ad44dc53321fac02fa470374264848101642b0e
+  sha256: c822552f411e0e5b795e292a52a772a318a71d5611a1c44efc7ec84f3b87b325
 - path: designs/b96_kr260_10g/model/loop_timing.py
   what: Python model of the loop-timing frequency tracker (96F)
   sha256: a2d1bf64286bc5e220c47c4fe3137c9855383b087bddf33dba4c51fe6d0c35e5
 - path: designs/b96_kr260_10g/regmap.py
   what: register map as data
-  sha256: 5146c294c8f8c2f772a22b3abc3bb1924d7c35a8258ac25f6ab101eb819c77f5
+  sha256: 79db1ce95b88e3c916a8401d2769dddae7e8dfb0a7f30b69165557b99a782397
 - path: designs/b96_kr260_10g/docs/register_map.md
   what: interface datasheet
-  sha256: eb9e177aa2033fdc1afe1068aa900b10b2a813332348000e47e00142ea9927aa
+  sha256: 039fc1ce6d3ddca510db3242753495ee0a421a1924d658f19a80e660fb7002d8
 commands:
 - what: simulate the PCS, MAC and core against the Python reference
   cmd: python -m pytest -q designs/b96_kr260_10g/tests
@@ -265,6 +278,20 @@ evidence:
     from the tree; not loaded on a board
   record: results/b96e/builds/rm_gp/digest.json
   sha256: fdc4edc0935ad555d9099277e65ff2ef4a58676ec0096db0946140804ce95f9d
+- id: E9
+  activity: build
+  result: pass
+  what: build rm_gp_bypass (both GT buffers bypassed, brief 96F1), all 29 gates, WNS +0.090 ns, WHS +0.010 ns, report_cdc
+    no critical, stamp b2a7aeea; not loaded on a board
+  record: results/b96f1/builds/rm_gp_bypass/digest.json
+  sha256: f49d9a7e1a0827e729628b2985e04fb9b5debc2907345275c5fa3a6ceacd7dac
+- id: E10
+  activity: simulation
+  result: pass
+  what: the Wizard's own buffer-bypass controllers with our run gate against a stand-in transceiver in xsim, 28 checks (start
+    on the reset-done edge, stale done held off, error holds the paths in reset)
+  record: results/b96f1/bypass_seq/result.txt
+  sha256: 457378d737a4382242b69cf84b2db58aacf9a88707d0cba642934a5b1b091dd8
 measurements:
 - id: M1
   what: LUTs, variant (b)
@@ -405,6 +432,8 @@ gaps:
   text: 'The per-entry data path to the first synchroniser flop (write-clock entry flop to the first `xpm_cdc_array_single`
     flop) has no max-delay bound: the one-clock margin of `ENT_SYNC = 1` covers normal routing, but it is not constrained.'
 next_steps:
+- Run _handoff/fpga_agent/run_96f1_stage1.sh on the KR260 (pre-registered in results/b96f1/preregistration.md), build rm_gp_bypass
+  against the 96E rm_gp board run.
 - Run docs/board_run_plan.md steps 1 to 4 on the KR260 (laser polarity first), then the NIC steps after the owner buys a
   card and cable.
 - Confirm the reference clock and the control pins against the carrier schematic.
@@ -412,6 +441,9 @@ next_steps:
 open_questions:
 - Does the PL load over JTAG with the PS idle on the KR260 (flow/program.py has no KR260 board entry yet)?
 history:
+- date: '2026-11-20'
+  note: 'brief 96F1: build rm_gp_bypass (both GT elastic buffers bypassed; Wizard probe in results/b96f1/wizard_probe),
+    all 29 gates, timing met, report_cdc no critical; board test pre-registered and script written, nothing run on a board'
 - date: '2026-11-19'
   note: 'brief 96E: own gray-pointer elastic buffer (RM_OWN), +1.2 clocks of tick-to-trade over 97C in xsim against +5.3
     for the macro buffer; the board''s +11 accounted (1.25 left in D); build rm_gp with all 29 gates; board run and real-offset

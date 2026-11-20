@@ -289,8 +289,8 @@ def fibre_delay_ns(length_m: float, group_index: float = 1.468) -> float:
 
 def run_all(t: Transport, lock_text: str, out_dir: Path, *, cable_loop_m: float, n_restarts: int = 100) -> dict:
     """The stage-3 loopback sequence (board plan steps 1 to 4 and 1b). Refuses to run without the board.lock text the caller took."""
-    if not lock_text.startswith(("96:", "97:", "96C:", "96E:")):          # 97: brief 97 measures latency variants with the same sequence; 96C: the rate-matched builds
-        raise RuntimeError("take _handoff/board.lock with a text starting '96:', '97:', '96C:' or '96E:' first, and pass that text")
+    if not lock_text.startswith(("96:", "97:", "96C:", "96E:", "96F:")):          # 97: brief 97 measures latency variants with the same sequence; 96C: the rate-matched builds; 96E: the own elastic buffer; 96F: the GT buffer-bypass build (brief 96F1)
+        raise RuntimeError("take _handoff/board.lock with a text starting '96:', '97:', '96C:', '96E:' or '96F:' first, and pass that text")
     b = Board(t)
     res: dict = {"lock": lock_text, "started": time.strftime("%Y-%m-%dT%H:%M:%S")}
     res["id"] = f"{b.id():08x}"
