@@ -35,9 +35,9 @@ from typing import Any
 
 from flow.options import schema
 
-SPLITTER_VERSION = "1"
+SPLITTER_VERSION = "2"
 ORIGIN = "splitter"
-MAX_PARTS = 8          # parts offered in all; chosen in the model's order of bundles, then the stage file's chain order
+MAX_PARTS = 8          # parts offered in all; chosen bundle by bundle in a content order (widest claimed range first, then the stage file's chain order), never the model's list order
 
 
 def _clip(s: str, n: int) -> str:
@@ -180,9 +180,9 @@ def split(options: list[dict[str, Any]], analysis: dict[str, Any], project: Any,
         return out
     offered = {frozenset(o["touches_stages"]) for o in options if o.get("origin", "model") == "model" and o["touches_stages"]}
     seen: set[frozenset[str]] = set()
-    for b in options:
-        if not _is_bundle(b):
-            continue
+    chain = [x["id"] for x in (analysis.get("latency") or {}).get("stages") or []]
+    key = lambda b: (-b["gain"]["high"], tuple(sorted((chain.index(s) if s in chain else len(chain), s) for s in b["touches_stages"])), tuple(sorted(b["scope"]["components"])), b["gain"]["low"])      # noqa: E731
+    for b in sorted((o for o in options if _is_bundle(o)), key=key):      # a content order: when two bundles yield the same stage set, which one supplies it must not depend on the list
         r = split_one(b, analysis, project, goal=goal, pinned=pinned, blind=blind)
         kept, skipped = [], []
         for p in r["parts"]:
