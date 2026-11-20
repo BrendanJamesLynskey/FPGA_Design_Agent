@@ -139,6 +139,7 @@ Tool: Vivado 2026.1. Build ID of the inputs at handover: `c9106c0d` (`python flo
 Gates at handover: `build_2026_1` pass.
 
 <!-- prose:verified -->
+**Specification to evidence.** Every requirement of this design against the checks that cover it, with each status computed from the evidence files, the gaps and the stale evidence: [verif/matrix.md](verif/matrix.md) ([html](verif/matrix.html)), generated from [verif/testplan.yaml](verif/testplan.yaml) by `python -m flow.trace_v1 write`; schema and rules in [docs/traceability_v1.md](../../docs/traceability_v1.md). Requirements here are drafts written from the design documents; the matrix shows which are closed by simulation, formal proof, post-route timing or the board, and which depend on an external element (a network card, a second clock) that only hardware verification can close.
 <!-- /prose:verified -->
 
 ## Measured

@@ -481,7 +481,7 @@ def rollup(q: dict, items: list[dict]) -> dict:
     hw_done = any(i["method"] == "board_measurement" and i["status"] == "pass" for i in items)
     hw_methods = sorted({i["method"] for i in items if i["status"] == "pass"})
     row = {k: q[k] for k in ("id", "kind", "title", "text", "source", "spec_status", "performance", "external", "spec") if k in q}
-    row.update(state=state, basis=basis, items=[i["id"] for i in items], passing_methods=hw_methods,
+    row.update(state=state, basis=basis, stale_items=sum(1 for x in st if x == "stale"), items=[i["id"] for i in items], passing_methods=hw_methods,
                hardware_verified=hw_done, hardware_only=bool(ext),
                hardware_closure=None if not ext else ("done" if hw_done else "open"))
     return row
@@ -605,6 +605,8 @@ def _state_cell(r: dict) -> str:
         return "passes without hardware; hardware verification open"
     if r["state"] == "verified" and r["kind"] == "performance":
         t += f" ({'board-measured' if r['basis'] == 'board' else 'post-route timing' if r['basis'] == 'timing' else 'simulation only'})"
+    if r["state"] == "verified" and r.get("stale_items"):
+        t += f"; {r['stale_items']} item(s) stale"
     return t
 
 

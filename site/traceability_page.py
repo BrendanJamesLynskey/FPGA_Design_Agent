@@ -24,6 +24,8 @@ def state_text(r: dict) -> str:
     t = STATE[r["state"]]
     if r["state"] == "verified" and r["kind"] == "performance":
         t += " (" + {"board": "board-measured", "timing": "post-route timing"}.get(r["basis"], "simulation only") + ")"
+    if r["state"] == "verified" and r.get("stale_items"):
+        t += f"; {r['stale_items']} item(s) stale"
     return t
 
 

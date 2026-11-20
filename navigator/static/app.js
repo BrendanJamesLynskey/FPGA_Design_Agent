@@ -614,6 +614,7 @@
     var t = TRACE_STATE[r.state] || r.state;
     if (r.state === "verified" && r.external && !r.hardware_verified) return "passes without hardware; hardware open";
     if (r.state === "verified" && r.kind === "performance") t += " (" + (r.basis === "board" ? "board-measured" : r.basis === "timing" ? "post-route timing" : "simulation only") + ")";
+    if (r.state === "verified" && r.stale_items) t += "; " + r.stale_items + " item(s) stale";
     return t;
   }
   function pageTrace() {
