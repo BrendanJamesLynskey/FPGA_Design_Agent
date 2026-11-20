@@ -16,8 +16,8 @@ Design notes: [designs/b96_kr260_10g/rm_gp_ml/docs/ml_stage.md](../../designs/b9
   (hold 1) and 2.0 clocks (hold 2).
 - **Bit-exact:** 350 frames of a mixed synthetic feed, 0 mismatches in feature vector, class, hit, decision and veto; order counts 25 (veto) and 78 (shadow) equal the twin's, the unmodified `rm_gp` sends the same 78 in shadow
   mode; stage counters equal the twin's. The board's stream gives 49 down, 1 up; 1 order in veto mode, 50 in shadow mode.
-- **Build rm_gp_ml:** 29 of 29 gates, setup +0.220 ns, hold +0.010 ns at the 6.206 ns core clock, 0 critical in `report_cdc`, DRC and methodology, 8,312 LUT, 22,136 FF, 0 BRAM, 0 DSP, 1.149 W vectorless, stamp 22c35e72 (commit
-  1087beae, tree clean for the RTL; the sources have not changed since).
+- **Build rm_gp_ml:** 29 of 29 gates, setup +0.220 ns, hold +0.010 ns at the 6.206 ns core clock, 0 critical in `report_cdc`, DRC and methodology, 8,312 LUT, 22,136 FF, 0 BRAM, 0 DSP, 1.149 W vectorless, stamp 22c35e72 (input commit
+  a3f9a4a2 in `commit.txt`, working tree clean; the build inputs have not changed since: `git diff` of the RTL, build.yaml, constraints, IP script and flow is empty, and `flow/manifest.py show` gives the same build ID, 26dc74ce, at that commit and now).
 - **Stage timing in context:** the worst setup path of any part of the stage has +0.556 ns of slack (the trees' path +0.757 ns).
 
 ## Reproduce
