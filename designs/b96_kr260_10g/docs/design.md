@@ -165,6 +165,7 @@ Scrambler: self-synchronising, polynomial x^58 + x^39 + 1, over the 64 payload b
   forwarded; the first word is the destination address word).
 - The lock time and the GT's own latency are excluded and reported separately.
 - In ns: clocks x 6.2058 ns (161.1328125 MHz).
+- How these map onto STAC-T0 and "wire-to-wire" figures (brief 109): [../../../docs/latency_definitions.md](../../../docs/latency_definitions.md).
 
 ## 6. Loop measurement method (pre-registered; stage 3)
 
