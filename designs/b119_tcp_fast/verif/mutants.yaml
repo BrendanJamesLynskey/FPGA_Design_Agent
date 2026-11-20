@@ -153,14 +153,14 @@ mutants:
   why: first two payload bytes taken from the wrong place
 - name: payload_realign
   file: tcp_fast.sv
-  old: 'default: nw = {e_d[15:0], prev[63:16]};'
-  new: 'default: nw = {e_d[15:0], prev[47:0]};'
+  old: 'default: nw = {e_d[15:0], prev};'
+  new: 'default: nw = {e_d[15:0], {prev[39:0], prev[47:40]}};'
   class: constant
   why: payload realignment shifts the wrong bytes
 - name: last_byte_source
   file: tcp_fast.sv
-  old: '4''d14: nw = {56''d0, prev[23:16]};'
-  new: '4''d14: nw = {56''d0, prev[31:24]};'
+  old: '4''d14: nw = {56''d0, prev[7:0]};'
+  new: '4''d14: nw = {56''d0, prev[15:8]};'
   class: constant
   why: last payload byte taken from the wrong place
 - name: segment_ends_early
@@ -417,10 +417,16 @@ mutants:
   why: SND_NXT reads back SND_UNA
 - name: clear_not_clearing_sent
   file: tcp_fast.sv
-  old: "5'd31: begin\n                        c_sent <= '0;"
-  new: "5'd31: begin\n                        c_sent <= c_sent;"
+  old: "if (sw_we && sw_waddr == 5'd31) begin\n                c_sent <= '0;"
+  new: "if (sw_we && sw_waddr == 5'd31) begin\n                c_sent <= c_sent;"
   class: operator
   why: the counter clear misses the sent counter
+- name: clear_loses_to_events
+  file: tcp_fast.sv
+  old: if (sw_we && sw_waddr == 5'd31) begin
+  new: if (sw_we && sw_waddr == 5'd31 && !go) begin
+  class: condition
+  why: a clear in the clock of an order is lost
 - name: ttl_write
   file: tcp_fast.sv
   old: 'default: begin mss <= sw_wdata[31:16]; ttl <= sw_wdata[7:0]; end'

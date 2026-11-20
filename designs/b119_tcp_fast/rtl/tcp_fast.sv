@@ -70,6 +70,7 @@ module tcp_fast (
 
     // ---- the segment in flight
     logic [3:0]  ph;
+    logic [2:0]  phm6;
     logic        spec_c, committed;
     logic [63:0] r_sym;
     logic [31:0] r_px, r_qty, r_ref, seq_c, ack_c;
@@ -79,7 +80,7 @@ module tcp_fast (
     logic [18:0] hdr1;
     logic [22:0] tot;
     logic [16:0] f1;
-    logic [63:0] prev;
+    logic [47:0] prev;                   // the previous builder word without its first two bytes (they have gone out already)
     logic [511:0] pay;
 
     // ---- counters
@@ -154,13 +155,12 @@ module tcp_fast (
         .o_v(e_v), .o_d(e_d), .o_sof(e_sof), .o_eof(e_eof), .o_keep(e_keep), .o_abort(e_abort));
 
     // ---- decisions at the go edge
-    logic        stale, ok_win, ok_mss, go_take, cancel0;
+    logic        stale, ok_win, ok_mss, go_take;
     logic [31:0] flight;
     assign stale   = (stale_limit != 32'd0) && (age > stale_limit);
     assign flight  = snd_nxt - snd_una;
     assign ok_win  = (snd_wnd >= {16'd0, PAYLEN}) && (flight <= (snd_wnd - {16'd0, PAYLEN}));
     assign ok_mss  = (mss >= PAYLEN);
-    assign cancel0 = go && abort;
     assign go_take = go && !abort && !busy && arm_req && valid && !stale && ok_win && ok_mss;
 
     function automatic logic [15:0] fold16(input logic [19:0] x);
@@ -169,8 +169,6 @@ module tcp_fast (
         fold16 = a[15:0] + {15'd0, a[16]};
     endfunction
 
-    logic [20:0] pw0, pw1, pw2, pw3;
-    logic [19:0] hsum;
     logic [63:0] w_cur;
     logic        fin_poison, sumerr;
     logic [63:0] nw;          // the word that will be loaded at this edge
@@ -186,8 +184,8 @@ module tcp_fast (
         case (ph)
             4'd1, 4'd2, 4'd3, 4'd4, 4'd5: nw = hb[64*ph +: 64];
             4'd6:  nw = {e_d[15:0], hb[431:384]};
-            4'd14: nw = {56'd0, prev[23:16]};
-            default: nw = {e_d[15:0], prev[63:16]};
+            4'd14: nw = {56'd0, prev[7:0]};
+            default: nw = {e_d[15:0], prev};
         endcase
         fin_poison = abort_now || (spec_c && !committed && !commit) || sumerr;
     end
@@ -231,6 +229,7 @@ module tcp_fast (
         endcase
     end
 
+    assign phm6 = ph[2:0] - 3'd6;
     logic wr_lock;
     assign wr_lock = busy || bld;
 
@@ -295,10 +294,6 @@ module tcp_fast (
                     5'd13: begin rcv_wnd <= sw_wdata[15:0]; age <= '0; end
                     5'd14: if (wr_lock) c_wrign <= c_wrign + 32'd1; else ip_id <= sw_wdata[15:0];
                     5'd15: stale_limit <= sw_wdata;
-                    5'd31: begin
-                        c_sent <= '0; c_poison <= '0; c_ref_arm <= '0; c_ref_stale <= '0; c_ref_win <= '0; c_ref_mss <= '0; c_busy <= '0; c_late <= '0;
-                        c_nov <= '0; c_wrign <= '0; c_sumerr <= '0; c_cancel0 <= '0; c_build <= '0; c_abort <= '0;
-                    end
                     default: ;
                 endcase
             end
@@ -340,10 +335,10 @@ module tcp_fast (
                 if (ph == 4'd4) f1  <= {1'b0, tot[15:0]} + {10'd0, tot[22:16]};
                 if (ph == 4'd5) csum <= ~(f1[15:0] + {15'd0, f1[16]});
                 // payload capture, the streaming check and the previous word
-                prev <= e_d;
+                prev <= e_d[63:16];
                 if (ph >= 4'd6 && ph <= 4'd13) begin
                     acc <= acc + {5'd0, w_cur[7:0], w_cur[15:8]} + {5'd0, w_cur[23:16], w_cur[31:24]} + {5'd0, w_cur[39:32], w_cur[47:40]} + {5'd0, w_cur[55:48], w_cur[63:56]};
-                    pay[64*(ph - 4'd6) +: 64] <= w_cur;
+                    pay[64*phm6 +: 64] <= w_cur;
                 end
                 // the segment's words
                 o_v <= 1'b1; o_d <= nw; o_keep <= nw_last ? 8'h01 : 8'hFF;
@@ -359,6 +354,12 @@ module tcp_fast (
                         rec_v <= 1'b1; rec_seq <= seq_c; rec_len <= PAYLEN; rec_id <= id_c; rec_pay <= pay;
                     end
                 end
+            end
+
+            // a write to CLR_CNT wins over a count in the same clock (it comes last, so its assignments override the increments above)
+            if (sw_we && sw_waddr == 5'd31) begin
+                c_sent <= '0; c_poison <= '0; c_ref_arm <= '0; c_ref_stale <= '0; c_ref_win <= '0; c_ref_mss <= '0; c_busy <= '0; c_late <= '0;
+                c_nov <= '0; c_wrign <= '0; c_sumerr <= '0; c_cancel0 <= '0; c_build <= '0; c_abort <= '0;
             end
         end
     end

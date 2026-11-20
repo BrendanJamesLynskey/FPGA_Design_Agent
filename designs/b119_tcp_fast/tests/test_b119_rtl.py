@@ -28,3 +28,12 @@ def run(name: str, testcase=None, params=None, extra=None) -> None:
 def test_all_benches() -> None:
     """Every cocotb test of the bench in one simulation."""
     run("b119_all")
+
+
+def test_behind_the_risk_logic() -> None:
+    """Brief 110's path with tcp_fast in place of its stub port (rtl/itch_ouch_tcp_top.sv), against brief 110's reference model."""
+    srcs = [B110_RTL / f for f in ("itch_pkg.sv", "mold_rx.sv", "itch_dec.sv", "book_core.sv", "ouch_enter.sv", "risk_glue.sv")] + [RTL / "tcp_fast.sv", RTL / "itch_ouch_tcp_top.sv"]
+    env = {"PYTHONPATH": str(ROOT)}
+    if os.environ.get("B119_RECORD"):
+        env["B119_RECORD"] = os.environ["B119_RECORD"]
+    cocotb_run.run("b119_top", "itch_ouch_tcp_top", srcs, "b119_top_cocotb", HERE, extra_env=env)

@@ -325,6 +325,77 @@ async def t_checksum_corners(dut):
     await b.check_counters("corners")
 
 
+def template_raw_sums(c: Conn) -> tuple[int, int]:
+    """The unfolded sums the block forms when it builds the template (the fixed words of the IPv4 header, and of the TCP pseudo-header and header)."""
+    sh, sl, dh, dl = c.sip >> 16, c.sip & 0xFFFF, c.dip >> 16, c.dip & 0xFFFF
+    return (0x4500 + 0x0063 + 0x4000 + ((c.ttl << 8) | 6) + sh + sl + dh + dl, sh + sl + dh + dl + 6 + 79 + c.sport + c.dport + 0x5018)
+
+
+def single_fold_carries(x: int) -> bool:
+    return ((x & 0xFFFF) + (x >> 16)) > 0xFFFF
+
+
+def find_fold_conn(seed: int = 3) -> Conn:
+    """A connection whose IPv4 and TCP template sums both need the second end-around carry (found by search, deterministic): first a source address that makes
+    the IPv4 sum carry, then a source port that makes the TCP sum carry."""
+    rng = random.Random(seed)
+    c = Conn(sip=rng.getrandbits(32), dip=rng.getrandbits(32), sport=rng.getrandbits(16), dport=rng.getrandbits(16), ttl=rng.getrandbits(8))
+    for lo in range(0x10000):
+        c.sip = (c.sip & 0xFFFF0000) | lo
+        if single_fold_carries(template_raw_sums(c)[0]):
+            break
+    else:
+        raise AssertionError("no source address found")
+    for sp in range(0x10000):
+        c.sport = sp
+        if single_fold_carries(template_raw_sums(c)[1]):
+            return c
+    raise AssertionError("no source port found")
+
+
+def tcp_total(c: Conn, snd_nxt: int, rcv_nxt: int, win: int, pay: bytes) -> int:
+    """The exact integer the block's TCP checksum stage folds: payload words, the folded template, sequence, acknowledgement and window words."""
+    _, t = template_raw_sums(c)
+    t = tcpref.fold(t)
+    return tcpref.words_sum(pay) + t + (snd_nxt >> 16) + (snd_nxt & 0xFFFF) + (rcv_nxt >> 16) + (rcv_nxt & 0xFFFF) + win
+
+
+def steer_final_carry(c: Conn, snd_nxt: int, win: int, pay: bytes, rng: random.Random) -> int:
+    """An acknowledgement number for which the last fold of the TCP checksum carries again (its low word makes the sum's low 16 bits all ones)."""
+    for _ in range(1000):
+        ack = rng.getrandbits(32)
+        for _ in range(3):
+            low = tcp_total(c, snd_nxt, ack, win, pay) & 0xFFFF
+            ack = (ack & 0xFFFF0000) | (((ack & 0xFFFF) + (0xFFFF - low)) & 0xFFFF)
+        t = tcp_total(c, snd_nxt, ack, win, pay)
+        if ((t & 0xFFFF) + (t >> 16)) > 0xFFFF:
+            return ack
+    raise AssertionError("no acknowledgement number found")
+
+
+@cocotb.test()
+async def t_fold_carries(dut):
+    """Template sums that need the second end-around carry, and a TCP checksum whose last fold carries again: the cases a random state almost never reaches."""
+    c = find_fold_conn()
+    a, t = template_raw_sums(c)
+    assert single_fold_carries(a) and single_fold_carries(t)
+    rng = random.Random(11)
+    f = orders.random_order(rng)
+    pay = orders.payload(f["ref"], f["qty"], f["sym"], f["px"])
+    ack = steer_final_carry(c, 1000, 4000, pay, rng)
+    b = await reset_bench(dut, c, snd_nxt=1000, snd_una=1000, rcv_nxt=ack, rcv_wnd=4000)
+    e = await b.order(f)
+    assert settle(b, e) == "sent"
+    p = tcpref.parse(e["frames"][0]["bytes"])
+    assert p.ok and p.ack == ack
+    # and with the identification that makes the IPv4 sum carry again
+    for ident in (0xFFFF, 0xFFFE, 0x8000):
+        await b.set_state(ip_id=ident)
+        e = await b.order(f)
+        assert settle(b, e) == "sent"
+    await b.check_counters("fold carries")
+
+
 @cocotb.test()
 async def t_timing(dut):
     """Latencies in clocks from the clock go is presented (the clock of the order frame's first word in brief 110 is the next one)."""
@@ -458,6 +529,35 @@ async def t_refusals(dut):
     assert (e["go_clk"] - refresh - 1) == 41 and settle(b, e) == "refused2"
     await b.set_state(stale_limit=0)                          # limit 0 disables the check
     assert settle(b, await b.order()) == "sent"
+    # each live register's write, and an arm write, restart the age; a write to STALE_LIMIT does not
+    for name in ("snd_una", "snd_wnd", "rcv_nxt", "rcv_wnd"):
+        await b.set_state(stale_limit=30)
+        await b.set_state(snd_una=b.model.snd_nxt)
+        await b.idle(25)
+        await b.set_state(**{name: getattr(b.model, name)})    # the same value again: a refresh
+        await b.idle(25)                                         # 25 + 25 clocks since the first refresh, 25 since this one
+        assert settle(b, await b.order()) == "sent", name
+    await b.set_state(stale_limit=30)
+    await b.set_state(snd_una=b.model.snd_nxt)
+    await b.idle(20)
+    await b.set_state(stale_limit=30)                          # does not refresh
+    await b.idle(20)
+    assert settle(b, await b.order()) == "refused2"
+    await b.arm()                                              # an arm write refreshes (and rebuilds)
+    await b.idle(15)
+    assert settle(b, await b.order()) == "sent"
+    await b.set_state(stale_limit=0)
+    # a static write in the two clocks after an arm write is ignored and counted: the template is being built
+    await b.wr(CTRL, 1)
+    b.model.valid = False
+    b.model.counters["build"] += 1
+    await b.wr(DMAC_LO, 0x12345678)
+    b.model.counters["wrign"] += 1
+    for _ in range(4):
+        await b.tick()
+    b.model.valid, b.model.arm_req = True, True
+    assert await b.rd(DMAC_LO) == int.from_bytes(b.model.conn.dmac[2:], "big")
+    assert settle(b, await b.order()) == "sent"
     # busy: a second go in the middle of a segment is dropped and counted; the segment is not disturbed
     d = dut
     e = await b.order(f=None, min_k=1)                         # one clean segment to compare
@@ -559,6 +659,22 @@ async def t_register_semantics(dut):
     await b.set_state(snd_nxt=2 ** 32 - 10, snd_una=2 ** 32 - 10)
     e = await b.order()
     assert settle(b, e) == "sent" and b.model.snd_nxt == 49
+    # a clear in the same clock as a counted event wins over the count
+    await b.disarm()
+    f = orders.random_order(b.rng)
+    d = dut
+    d.sw_we.value, d.sw_waddr.value, d.sw_wdata.value = 1, CLR_CNT, 0
+    d.go.value = 1                                                     # refused (not armed): would count ref_arm in this very clock
+    d.f_sym.value, d.f_px.value, d.f_qty.value, d.f_ref.value = int.from_bytes(proto.alpha(f["sym"], 8), "big"), f["px"], f["qty"], f["ref"]
+    n0 = len(b.refusals)
+    await b.tick()
+    d.sw_we.value = 0
+    d.go.value = 0
+    await b.tick()
+    assert b.refusals[n0:] == [(b.cyc - 1, 1)]
+    for k in b.model.counters:
+        b.model.counters[k] = 0
+    await b.check_counters("clear in the clock of a counted event")
 
 
 @cocotb.test()
