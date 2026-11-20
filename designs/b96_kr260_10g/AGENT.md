@@ -61,7 +61,7 @@ designs/b96_kr260_10g/docs/board_run_plan.md 678413f0be: stage 3 plan for the bo
 designs/b96_kr260_10g/docs/what_we_found.md 376623bbd5: results and gaps
 designs/b96_kr260_10g/docs/loop_timing_feasibility.md fccc26a754: loop-timing and buffer-bypass feasibility study (96F)
 designs/b96_kr260_10g/docs/loop_timing_board_test_plan.md c822552f41: board test plan for loop timing (96F, for approval)
-docs/latency_definitions.md e93e2af789: our latencies against STAC-T0 and wire-to-wire definitions (109)
+docs/latency_definitions.md d378fcc14b: our latencies against STAC-T0 and wire-to-wire definitions (109)
 designs/b96_kr260_10g/model/loop_timing.py a2d1bf6428: Python model of the loop-timing frequency tracker (96F)
 designs/b96_kr260_10g/regmap.py 79db1ce95b: register map as data
 designs/b96_kr260_10g/docs/register_map.md 039fc1ce6d: interface datasheet
