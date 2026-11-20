@@ -110,12 +110,12 @@ is in `build/managed/evidence/<component>.json`, which the agent cannot write, a
 
 - Excluded hides sources from the agent's tools, not from the reports of the whole-design build, and not the existence of the instance in
   the owned parent RTL.
-- Hard links are refused only on write; an integrity re-hash catches changes by design code afterwards, it does not prevent them
-  (a test running as the agent's own code can still write a frozen file before the re-hash; it is caught, not blocked).
-- Code the agent wrote (tests, benchmarks, cocotb) runs as host code: it is not confined, so it can read an excluded file or write a frozen one;
-  the re-hash after code-running tools (now also of `project.yaml` and the scope file) detects a write and refuses the result, it does not prevent
-  or revert it, and nothing detects a read. The code-running tool list is kept by hand (`registry.CODE_RUNNING_TOOLS`).
-- Evidence files are plain JSON in `build/managed/`: the agent's tools cannot write them, but code it ran could forge one. They are not signed.
+- Hard links are refused only on write. Writes by design code are prevented in two layers since brief 102F (see "Writes prevented, not only
+  detected" below); what remains detect-only is listed there.
+- Code the agent wrote (tests, benchmarks, cocotb) runs as host code unless the container runner is used: it is not confined, so it can read an
+  excluded file (nothing detects a read). The code-running tool list (`registry.CODE_RUNNING_TOOLS`, for the after-the-fact re-hash) is kept by hand.
+- Evidence files are plain JSON in `build/managed/`: the agent's tools cannot write them, but code it ran could forge one. They are not signed
+  (a design is proposed below).
 - Constraints (`design.xdc`) are agent-owned: a false path over an excluded block's boundary is a timing exception the existing exceptions check
   reports, not something the managed policy forbids.
 - A tool that answers "not available" for an excluded path and "no such file" for an absent one tells the agent which excluded paths exist.
@@ -221,3 +221,60 @@ evidence. Trust `built` then needs a clean build, as for any component.
 that use it (`tb/test_axis_eth_fcs_*.py`), which need MyHDL's Icarus plug-in built from source. Our own simulations stand in for them.
 
 Never open an issue or PR on the upstream project without the owner's yes (house rule on third-party repositories).
+
+## Waiver files are the owner's (brief 102F)
+
+The flow reads several files to excuse a finding: `lint/` (Verilator `.vlt` configuration, lint-only `.sv` stand-ins, `lint/waivers.yaml`),
+`waivers.yaml` (TIMING-47), and `verif/justifications.yaml`. An agent that could write them could make a finding disappear. In a managed
+project the file tools refuse any write to them (rule `managed-waiver`, whoever the path's component is, including `..` and symlinked routes);
+reading them stays allowed. Three more routes are closed:
+
+- a waiver list inside a file the agent does write (`cdc_waivers` in `architecture.yaml`, `waivers` in `verif/testplan.yaml`, `waive` in
+  `verif/fsm.yaml`) may not gain or change an entry (removing one is allowed);
+- an RTL or VHDL file may not gain an in-source waiver comment (`// std-waive:`, `verilator lint_off`, `translate_off`); the count in the file may
+  not rise, so an owner's existing waiver stays;
+- the waiver files are in the integrity re-hash after code-running tools.
+
+The default is off. The owner can grant it for a project with `agent_may_write_waivers: true` in `project.yaml` (boolean; the agent cannot write
+the manifest). A design without a `project.yaml` is unchanged. The grant is in the run record (`scope.waiver_files`).
+
+## Writes prevented, not only detected (brief 102F)
+
+Every write path the agent has is a file tool or a tool that runs design code.
+
+| Write path | How a write to a frozen, excluded, waiver, manifest or scope file is handled |
+|---|---|
+| `write_file`, `board_constraints` (design.xdc), `stage_note` (BUILD_NOTE.md) | **prevented**: `PathJail.resolve` calls the policy on the resolved path (unchanged since stage 1) |
+| any other tool (simulate, mutate, formal, build, gates, lint, check, the axi, oss, eqy, rw_ and debug tools; every tool not on `registry.NO_WRITE_LOCK_TOOLS`) | **prevented for plain writes**: `ManagedPolicy.write_lock` makes the protected files read-only (and every directory in which all files are protected) for the duration of the call and puts the modes back afterwards, also after an exception |
+| the same tools with `ContainerRunner` (`simulate` by default) | **prevented outright**: the protected files are bind-mounted read-only over the read-write design mount (`ro_paths`): write, chmod-then-write and rename-over all fail inside the container (`results/102f_managed_gaps/demo_session.json`) |
+| code that chmod-s a file back, or replaces a protected file inside a directory that also holds owned files, outside a container | **detect-only**: the re-hash after the tool (`managed-integrity`) refuses the result; the file is not reverted. Why: the code runs as the same user, and the host has no mount namespace for it (user namespaces are restricted by AppArmor on this PC; `bwrap` fails) |
+| reads of excluded files by design code | **not detected, not prevented** (unchanged; excluded must still be readable by the build) |
+
+A tool added later is locked by default (the exemption list is the one that is hand-kept, and a stale exemption only costs a missing lock on a
+read-only tool).
+
+## The scope in the run record (brief 102F)
+
+`config.json` and `summary.json` of a managed run carry one `scope` block (`managed.scope_record`): `components` (what the request may touch),
+`selectable` (the owned components), `frozen`, `excluded`, `out_of_scope` (owned, not selected), `source`, `request`, `plan`, the manifest's
+SHA-256, and `waiver_files` (`owner-only` or `agent-writable`). `python -m agent resume <design> --scope a,b` (a new request on a design) writes it;
+`python -m agent resume <run id>` (the same run) re-checks it before the graph starts and refuses, with the reasons, when the run's `config.json`
+has no scope record, the design copy's scope file differs from it, a recorded component is no longer owned or no longer exists, `project.yaml`
+changed since the run began, or `--scope` names other components than the run's (a resume continues the request; a changed scope is a new
+request). `--scope` on a run whose design is not managed is refused.
+
+## Evidence signing (proposed, not built)
+
+Evidence files (`build/managed/evidence/<component>.json`) decide the trust label, and code run as the agent could forge one. Proposal:
+
+1. **What is signed**: the canonical JSON of the evidence body (component, kind, content hash, tool versions, result, time) plus the manifest hash.
+   `trust()` recomputes the label only from a record whose signature verifies against a public key it holds; an unsigned or failing record counts as
+   no evidence (label `documented` at best), and the provenance report says which.
+2. **Who signs**: only the flow scripts that produce evidence (`flow/managed_import.py record-build`, `managed_rtl_import.py`, `managed_placed.py`), run
+   by the owner or CI, never by an agent tool. Two key options: (a) an Ed25519 key in `~/.config/fpga_design_agent/evidence.key` (mode 0600), the public
+   key in the repo; (b) for runs in GitHub Actions, a GitHub build attestation (OIDC; no key to keep) verified with `gh attestation verify`.
+3. **The limit to state**: with (a) the key is readable by any code run as the same user on the host, so signing only stops forgery from code in the
+   container (which cannot see `~/.config`) and from accidents; against host-mode agent code it needs a separate user or a signing step the agent
+   cannot reach (CI attestation, or a root-owned helper). The owner decides which threat model the label is for before anything is built.
+4. **Size**: about 150 lines (canonical JSON, sign, verify, a `trust()` change, key handling, tests) and a one-time re-record of the three demo
+   projects' evidence. Not small enough to build inside a follow-up that is about prevention; recorded here for the planner.
