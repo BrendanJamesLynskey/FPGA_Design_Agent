@@ -35,7 +35,7 @@ start `96D:`, a `--tx-diff` above the shipped 11000 (873 mVppd) and a cursor abo
 | `es_ctrl.sv` | `designs/b96_kr260_10g/rtl/` | DRP master plus a point sequencer in the free-running 100 MHz clock (the GT's DRPCLK). One access at a time. A command that arrives while busy is ignored and sets `rejected`. |
 | Registers | `docs/register_map.md`: DRP_ADDR 0x024, DRP_DATA 0x028, ES_CMD 0x02C, ES_STAT 0x030, ES_POINT 0x034, ES_TMO 0x038, ES_RES 0x03C, GT_DRIVE 0x084 | read 0 and ignore writes in a build without `EYESCAN` (FEATURES bit 4) |
 | `es.xdc` | `designs/b96_kr260_10g/` | sets `ES_EYE_SCAN_EN` and `ES_ERRDET_EN` in the bitstream: the Wizard leaves both FALSE, and enabling them later through the DRP needs a PMA reset (UG576 Table 4-20) |
-| Static attributes | host, once per scan | `ES_QUALIFIER` 0, `ES_QUAL_MASK` all ones (every cycle counts), `ES_SDATA_MASK` for the 32-bit internal width: words `00FF 0000 FF00 FFFF FFFF` (UG576 Table 4-20: `{40'b1, 32'b0, 8'b1}`) |
+| Static attributes | host, once per scan | **Ten** 16-bit words of each 160-bit attribute (GTHE4 / UltraScale+; words 0-4 at 0x03F/0x044/0x049, words 5-9 at 0x0E7/0x0EC/0x0F1, UG576 v1.7.1 Table C-2 printed pp. 463, 511): `ES_QUALIFIER` 0, `ES_QUAL_MASK` all ones in all ten words (every cycle counts), `ES_SDATA_MASK` for the 32-bit internal width `{80'b1, 32'b0, 48'b1}` = words `FFFF FFFF FFFF 0000 0000 FFFF FFFF FFFF FFFF FFFF` (Table 4-20 printed p. 230). Read back after writing; a word that does not read as written stops the scan. |
 | One point | `es_ctrl` | read-modify-write 0x04F (horizontal), 0x097 (vertical word), 0x03C (prescale, then run); poll 0x253 for END (0101); read 0x251 errors and 0x252 samples; clear run |
 | Save and restore | host (`hw.py`) | every DRP word the scan touches is read first and written back and **read again** at the end; `restore.ok` in the capture says whether every word matched. The sequencer itself does not restore. |
 | Equaliser, TX drive | host | `--eq` writes GT_CTRL bit 6 and pulses RXDFELPMRESET (GT_DRIVE bit 16); both the equaliser and the TX drive are put back at the end of a scan, also after an error |
@@ -64,6 +64,12 @@ start `96D:`, a `--tx-diff` above the shipped 11000 (873 mVppd) and a cursor abo
 Host overhead is about 6 JTAG register operations a point at a few tens of milliseconds each (a planning figure; the capture records the real count and time).
 
 ## Things a user could get wrong
+
+- **No data is not an open eye (brief 96D2).** The first board run (2026-11-19, `results/b96d/hw/20261119_231836/`) timed out at every point and counted no samples, because the driver wrote five words of each
+  mask where the GTHE4 has ten (the UltraScale layout; UltraScale+ uses 160-bit masks). The scan now (1) writes and reads back all thirty words, (2) runs a **self-test** point (eye centre, prescale 0) before the grid and
+  stops at once, with `NO DATA` and the eye-scan state it saw, if it times out or counts no samples, (3) stops after `scan.K_CONSECUTIVE_NO_DATA` = 5 consecutive no-data points (a working scan never times out:
+  a closed point saturates the error counter, an open one the sample counter), and (4) `summary.txt` (`python -m flow.eyescan summary DIR`) says `NO DATA: N/M points timed out` instead of `open 0`; `api.margin` and the
+  `eye_scan` tool never pass such a capture. Exit code 9 means NO DATA. Each rung records `status`, the last `es_control_status` the sequencer read (0001 WAIT, 0010 RESET, 0110 COUNT, 0101 END).
 
 - **Post-equaliser.** See above. A wide eye here does not mean a clean signal at the pins.
 - **BER floor.** A point can only vouch for a depth its bits reach. The page and the API count a zero-error point whose bits are too few as *shallow*, not open. Width and height at a depth are

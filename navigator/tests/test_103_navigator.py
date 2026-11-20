@@ -175,7 +175,8 @@ def test_endpoints_on_real_records(live):
     assert lat["latency"]["sources"]["simulation"]["file"].startswith("results/")
     assert any(b["wns_ns"] is not None for b in lat["builds"])
     caps = json.loads(live.get("/api/captures")[2])["captures"]
-    assert caps and all(c["synthetic"] for c in caps)
+    assert caps and all(c["synthetic"] or c["no_data"] for c in caps)       # the only real captures are the failed 96D run (NO DATA, brief 96D2)
+    assert any(c["synthetic"] for c in caps) and not any(c["no_data"] for c in caps if c["synthetic"])
     m = json.loads(live.get("/api/measures")[2])
     assert m["board"] and m["board"][0]["lock_clocks"]["histogram"]
     assert json.loads(live.get("/api/runs")[2])["runs"] == []

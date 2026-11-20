@@ -34,8 +34,15 @@ def summary(cap: dict[str, Any], depth: float = 1e-9) -> dict[str, Any]:
 def margin(cap: dict[str, Any], depth: float = 1e-9, min_width_ui: float = 0.3, min_height_mv: float = 30.0) -> dict[str, Any]:
     """Width and height at `depth` against stated thresholds (the agent's `eye_scan` tool). `pass` is true only when both measures exist and meet the thresholds, and the
     capture is not synthetic; the reasons say why not."""
-    e = C.eye_at(cap, depth)
     reasons = []
+    nd = C.no_data_stats(cap)
+    if nd["no_data"]:
+        why = f"NO DATA: {nd['timed_out']}/{nd['points']} points timed out or counted no samples; no eye was measured"
+        if not cap["points"]:
+            return {"depth": depth, "width_ui": None, "height_mv": None, "width_margin_ui": None, "height_margin_mv": None, "thresholds": {"width_ui": min_width_ui, "height_mv": min_height_mv},
+                    "pass": False, "reasons": [why], "equaliser": cap["settings"]["equaliser"], "post_equaliser": True, "note": "no point was measured"}
+        reasons.append(why)
+    e = C.eye_at(cap, depth)
     if cap.get("synthetic"):
         reasons.append("the capture is SYNTHETIC (offline model), not a measurement")
     if not C.is_complete(cap):

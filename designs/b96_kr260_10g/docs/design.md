@@ -330,7 +330,7 @@ WAIT, RESET, COUNT, END state machine of UG576 Figure 4-21; its error count is a
 **Decisions and what a user could get wrong.**
 - `ES_EYE_SCAN_EN` and `ES_ERRDET_EN` are set in the bitstream (`es.xdc`), because the Wizard leaves both FALSE (read in the generated channel wrapper) and UG576 says re-enabling needs a PMA reset, which would restart the link.
   The host refuses a build where they read 0 (DRP 0x03C [9:8]).
-- The sequencer does not restore the offsets and prescale it writes; the host saves 18 DRP words first and writes them back and reads them again (`restore.ok` in every capture).
+- The sequencer does not restore the offsets and prescale it writes; the host saves 33 DRP words first (the GTHE4's ES_QUALIFIER, ES_QUAL_MASK and ES_SDATA_MASK are ten 16-bit words each; brief 96D saved 18 because it wrote only five, see `results/b96d/hw/README.md`) and writes them back and reads them again (`restore.ok` in every capture).
 - TX swing and cursors are driven from a register (GT_DRIVE) in `EYESCAN` builds only. The reset value is the design's old constant (TXDIFFCTRL 11000, 873 mVppd, no cursors); the host and the owner's script never go above it.
 - The eye is after the equaliser and each point's depth is limited by its bits; see `flow/eyescan/README.md`.
 - The default build was not rebuilt for this brief: with `EYESCAN = 0` the new logic is not elaborated and the GT ports carry the same constants. The regression benches of both `RATE_MATCH` settings pass; an equivalence proof of the default
