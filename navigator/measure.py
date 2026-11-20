@@ -27,7 +27,7 @@ def listing(root: Path, extra: list[Path] | None = None) -> list[dict[str, Any]]
         out.append({"id": S.src(root, f)["file"], "label": cap.get("label"), "synthetic": bool(cap.get("synthetic")), "created": cap.get("created"),
                     "equaliser": st.get("equaliser"), "line_rate_gbps": st.get("line_rate_gbps"), "complete": C.is_complete(cap) if st.get("expected_points") is not None else None,
                     "design": (cap.get("design") or {}).get("name"), "board": (cap.get("design") or {}).get("board"),
-                    "points": len(cap.get("points") or []), "target_ber": st.get("target_ber"),
+                    "no_data": C.no_data_stats(cap)["no_data"], "points": len(cap.get("points") or []), "target_ber": st.get("target_ber"),
                     "width_ui": (sm.get("eye") or {}).get("width_ui"), "height_mv": (sm.get("eye") or {}).get("height_mv"), "post_equaliser": True,
                     "conditions": cap.get("conditions") or {}, "source": S.src(root, f, created=cap.get("created"))})
     return out
