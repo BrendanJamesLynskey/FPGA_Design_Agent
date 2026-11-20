@@ -13,6 +13,7 @@ E = html.escape
 SET_LABEL = {"v1": "Benchmark v1", "course": "Course tier", "v2": "Benchmark v2"}
 OUTCOME = {"pass": "passed", "caught_and_repaired": "gate failed, repaired, passed",
            "escape": "escape: own checks passed, hidden tests failed", "internal_stop_hidden_pass": "stopped on an internal gate; hidden tests pass",
+           "unresolved": "unresolved: own checks passed, the spec-test verdict was unresolved (not a clean stop)",
            "fail": "failed"}
 PROOF = {"simulation": "simulation", "formal": "formal", "hardware": "on the board", "analysis": "report analysis"}
 

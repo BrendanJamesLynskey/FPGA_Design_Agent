@@ -15,7 +15,7 @@ import statistics
 import sys
 from pathlib import Path
 
-OUTCOMES = ("pass", "caught_and_repaired", "escape", "internal_stop_hidden_pass", "fail", "unknown")
+OUTCOMES = ("pass", "caught_and_repaired", "escape", "internal_stop_hidden_pass", "unresolved", "fail", "unknown")
 
 
 def load(course_dir: Path) -> list:

@@ -95,7 +95,8 @@ def table(head, rows, num=()):
 
 
 OUT_TEXT = {"pass": "passed", "caught_and_repaired": "gate failed, repaired, passed", "escape": "escape (own checks passed, hidden failed)",
-            "internal_stop_hidden_pass": "internal stop, hidden tests pass", "fail": "failed"}
+            "internal_stop_hidden_pass": "internal stop, hidden tests pass",
+            "unresolved": "unresolved spec-test verdict (not a clean stop)", "fail": "failed"}
 
 
 def block(name, d):
