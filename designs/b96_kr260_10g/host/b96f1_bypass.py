@@ -3,7 +3,7 @@
 One session, in this order (the lock text must start '96F:'; SRAM only; the laser is on for the measurement and off on every path out):
   1. the stage-3 loopback sequence of every earlier build (b96_bench.run_all: polarity, link, 100 receive-datapath restarts, E, L, D, safety counters), unchanged;
   2. `full_restarts`: N resets of the WHOLE GT (GT_RESET bit 0), which re-run both bypass controllers (the receive restarts of step 1 only re-run the RX one): the time to link-up, the controllers'
-     done and error bits (GT_BUF bits 15:10, rm_gp_bypass only), and the operating conditions;
+     done and error bits (GT_BUF bits 15:10, rm_gp_bypass only), the alignment timeout-retry counts and gave-up flags (GT_BUF bits 29:16, brief 96F1b: a gave-up flag is a FAIL), and the operating conditions;
   3. `verdict`: the PRE-REGISTERED decision of results/b96f1/preregistration.md applied to the numbers (E against the 96E rm_gp board run, 21.0 clocks), printed with the reason.
 Nothing is tuned: a result outside the prediction is reported as it is."""
 
@@ -27,11 +27,23 @@ PRED_DROP = (2.9, 4.5)
 FAIL_DROP = 1.5          # fail if E does not fall by at least this
 GT_BUF = 0x020
 BP_BITS = dict(tx_bp_done=10, rx_bp_done=11, tx_bp_err_seen=12, rx_bp_err_seen=13, tx_bp_err=14, rx_bp_err=15)
+#: Brief 96F1b (build rm_gp_bypass with gt_bp_ctl): the alignment timeout and retry fields of GT_BUF. Retry counts are 4-bit fields; the rest are single bits.
+BP_GAVE_BITS = dict(tx_gave_up=24, rx_gave_up=25, tx_gave_up_seen=26, rx_gave_up_seen=27, tx_retried_seen=28, rx_retried_seen=29)
+BP_RETRY_FIELDS = dict(tx_retries=16, rx_retries=20)
 
 
 def bp_status(t: bb.Transport) -> dict:
+    """The controllers' done and error bits (GT_BUF 15:10) and, since brief 96F1b, the retry counts and the gave-up flags (GT_BUF 29:16), as a flat dict."""
     v = t.rd(GT_BUF)
-    return {k: (v >> b) & 1 for k, b in BP_BITS.items()}
+    out = {k: (v >> b) & 1 for k, b in BP_BITS.items()}
+    out.update({k: (v >> b) & 1 for k, b in BP_GAVE_BITS.items()})
+    out.update({k: (v >> b) & 0xF for k, b in BP_RETRY_FIELDS.items()})
+    return out
+
+
+def gave_up(st: dict) -> bool:
+    """True when either controller has given up (now or seen since the last clear): a FAIL in the pre-registration (amendment 2026-11-20)."""
+    return bool(st.get("tx_gave_up") or st.get("rx_gave_up") or st.get("tx_gave_up_seen") or st.get("rx_gave_up_seen"))
 
 
 def features(t: bb.Transport) -> dict:
@@ -58,13 +70,18 @@ def full_restarts(b: bb.Board, n: int = 20, timeout_s: float = 5.0) -> dict:
     return {"n": n, "failed_to_lock": fails, "rows": rows,
             "controllers_done_at_link_up": all(r["tx_bp_done"] and r["rx_bp_done"] for r in good) if good else None,
             "controller_error_seen": any(r["tx_bp_err_seen"] or r["rx_bp_err_seen"] or r["tx_bp_err"] or r["rx_bp_err"] for r in rows),
+            # brief 96F1b: alignment timeout and retry (30 ms TX, 130 ms RX, 3 retries): gave-up is a FAIL; retries are recorded per restart and counted here, not judged
+            "gave_up_seen": any(gave_up(r) for r in rows),
+            "restarts_with_retries": sum(1 for r in rows if r["tx_retries"] or r["rx_retries"]),
+            "max_tx_retries": max((r["tx_retries"] for r in rows), default=0), "max_rx_retries": max((r["rx_retries"] for r in rows), default=0),
+            "retried_seen": any(r["tx_retried_seen"] or r["rx_retried_seen"] for r in rows),
             "time_to_link_s": bb.summarise([int(r["s"] * 1000) for r in good]) if good else {"n": 0}}      # milliseconds
 
 
-def verdict(stage3: dict, restarts: dict | None, roc_ok: bool | None, feat: dict | None) -> dict:
+def verdict(stage3: dict, restarts: dict | None, roc_ok: bool | None, feat: dict | None, bp_after_stage3: dict | None = None) -> dict:
     """The pre-registered decision (results/b96f1/preregistration.md, section 'Decision'). Returns {'result': 'PASS'|'WARN'|'FAIL'|'ABORT', 'reasons': [...], numbers}.
     ABORT: the link did not lock, the wrong design/build was loaded, or alignment never completed. FAIL: any safety counter, a failed lock, an operating-condition excursion,
-    a controller error, or E not falling by at least FAIL_DROP. WARN: E fell, but outside the predicted 2.9 to 4.5 clocks. PASS: all of it, E fall inside the prediction."""
+    a controller error, a controller that gave up after its alignment timeouts (amendment 2026-11-20, before any board time), or E not falling by at least FAIL_DROP. WARN: E fell, but outside the predicted 2.9 to 4.5 clocks. PASS: all of it, E fall inside the prediction."""
     why: list[str] = []
     r = stage3.get("restarts", {}) or {}
     sf = stage3.get("safety", {}) or {}
@@ -73,6 +90,8 @@ def verdict(stage3: dict, restarts: dict | None, roc_ok: bool | None, feat: dict
     out = {"E_median": e, "L_median": l, "ref_E": REF_E, "ref_L": REF_L}
     if feat is not None and not feat.get("gt_bypass"):
         return {"result": "ABORT", "reasons": ["FEATURES bit 6 (GT_BYPASS) is 0: the loaded bitstream is not build rm_gp_bypass"], **out}
+    if bp_after_stage3 is not None and gave_up(bp_after_stage3):          # amendment 2026-11-20: gave-up is a FAIL, also when it is why the link did not come up
+        return {"result": "FAIL", "reasons": ["a buffer-bypass controller gave up after its alignment timeouts (30 ms TX, 130 ms RX, 3 retries)"], **out}
     if not stage3.get("link_up"):
         return {"result": "ABORT", "reasons": ["the link did not come up (or alignment never completed)"], **out}
     if e is None or l is None:
@@ -91,6 +110,8 @@ def verdict(stage3: dict, restarts: dict | None, roc_ok: bool | None, feat: dict
             fail.append("a buffer-bypass controller flagged an error (PHALIGNDONE not high)")
         if restarts.get("controllers_done_at_link_up") is False:
             fail.append("link up with a controller not done (the gate failed)")
+        if restarts.get("gave_up_seen"):
+            fail.append("a buffer-bypass controller gave up after its alignment timeouts (30 ms TX, 130 ms RX, 3 retries) in a full GT restart")
     dfib = (stage3.get("fibre_one_way_ns", REF_FIBRE_NS) - REF_FIBRE_NS) / CLOCK_NS         # clocks the lead adds to E against the 96E run
     ref_e, ref_l = REF_E + dfib, REF_L + 2 * dfib
     drop = ref_e - e
@@ -130,6 +151,7 @@ def main() -> None:
         sf = res.get("safety", {})
         out.update({"id": res.get("id"), "polarity_ok": res.get("polarity_ok"), "link_up": res.get("link_up"), "safety_ok": sf.get("ok", False),
                     "safety_failing": sf.get("failing_counters", []) or sf.get("reasons", [])})
+        out["bypass_after_stage3"] = bp_status(t)           # gave-up and retry fields after the 100 receive-datapath restarts (brief 96F1b); the flags that the verdict reads
         fr = None
         if res.get("link_up"):
             b = bb.Board(t)
@@ -142,7 +164,7 @@ def main() -> None:
             out["full_restarts"] = {k: v for k, v in fr.items() if k != "rows"}
         out["conditions_end"] = pp.safe_conditions(t)
         out["roc_ok"] = all(c.get("inside_roc") for c in (out["conditions_start"], out["conditions_end"]))
-        out["verdict"] = verdict(res, fr, out["roc_ok"], out["features"])
+        out["verdict"] = verdict(res, fr, out["roc_ok"], out["features"], out["bypass_after_stage3"])
     finally:
         try:
             bb.Board(t).laser(False)

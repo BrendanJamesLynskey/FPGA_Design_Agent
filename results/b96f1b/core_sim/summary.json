@@ -1,0 +1,46 @@
+{
+ "what": "Whole core (build rm_gp_bypass with gt_bp_ctl, brief 96F1b) in xsim 2026.1 with AMD's real XPM macros, phase 0, 8 orders (results/b96e/core_lat.py reduction of results/b96f1b/core_sim.sh), stand-in transceiver with a behavioural bypass controller. The stand-in has no buffers: the bypass saving cannot appear here and is not claimed. The tick-to-trade means differ from 96F1's 13.37 to 13.38 by 0.0 to 0.1 clock because the order cadence meets the link-up time differently (min 13, max 14 clocks in every run): the datapath is unchanged.",
+ "units": "clocks of 6.2058 ns",
+ "reference": "results/b96f1/core_sim/summary.json: rm_gp_base 13.38, rm_gp_bypass_BP100 13.37",
+ "rm_gp_bypass_normal": {
+  "orders": 8,
+  "tick_to_trade": {
+   "mean": 13.5,
+   "min": 13.0,
+   "max": 14.0
+  },
+  "rx_start_strobe": {
+   "mean": 7.25,
+   "min": 7.0,
+   "max": 8.0
+  },
+  "d_strobe_to_order": {
+   "mean": 11.37,
+   "min": 11.0,
+   "max": 12.0
+  }
+ },
+ "rm_gp_bypass_one_retry": {
+  "orders": 8,
+  "tick_to_trade": {
+   "mean": 13.38,
+   "min": 13.0,
+   "max": 14.0
+  },
+  "rx_start_strobe": {
+   "mean": 7.25,
+   "min": 7.0,
+   "max": 8.0
+  },
+  "d_strobe_to_order": {
+   "mean": 11.25,
+   "min": 11.0,
+   "max": 12.0
+  }
+ },
+ "GT_BUF_at_link_up": {
+  "normal": "0x00000c00",
+  "one_retry": "0x30110c00",
+  "never_aligned (no link)": "0x3f220000"
+ }
+}
