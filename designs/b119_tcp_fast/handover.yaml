@@ -6,44 +6,52 @@ id: b119_tcp_fast
 title: TCP fast path for OUCH orders (software owns the connection, hardware sends pre-built segments)
 kind: showcase
 produced_by: human
-summary: A block that holds the TCP connection state which software hands it and sends each OUCH 5.0 order of brief 110 as one
-  complete Ethernet, IPv4 and TCP frame, with sequence number, identification and both checksums finished incrementally from partial
-  sums of a template. It supports the speculative start and abort of brief 110, where an aborted frame is poisoned and consumes no
-  sequence space, refuses to send when it is not armed, its state is stale, the window is closed or the MSS is too small, and hands
-  every sent segment back to software. A Python TCP owner and a software OUCH exchange test it end to end in simulation, seeded faults
-  in the RTL are caught, and the block is built out of context for the KR260's part at the 10G core clock.
+summary: A block that holds the TCP connection state which software hands it and sends each OUCH 5.0 order of brief 110
+  as one complete Ethernet, IPv4 and TCP frame, with sequence number, identification and both checksums finished incrementally
+  from partial sums of a template. It supports the speculative start and abort of brief 110, where an aborted frame is poisoned
+  and consumes no sequence space, refuses to send when it is not armed, its state is stale, the window is closed or the
+  MSS is too small, and hands every sent segment back to software. A Python TCP owner and a software OUCH exchange test
+  it end to end in simulation, seeded faults in the RTL are caught, and the block is built out of context for the KR260's
+  part at the 10G core clock.
 scope_not:
-- real market data, a real exchange or a real network; every order comes from our own generator and no frame is ever sent anywhere
+- real market data, a real exchange or a real network; every order comes from our own generator and no frame is ever sent
+  anywhere
 - a board run, power, or timing inside the 10G core; the numbers are simulation and an out-of-context Vivado 2026.1 build
-- receiving, parsing or acknowledging anything; software owns the receive side and writes the acknowledgement state into the block
+- receiving, parsing or acknowledging anything; software owns the receive side and writes the acknowledgement state into
+  the block
 - TCP options, selective acknowledgement, window scaling, several connections or a hardware retransmission
-- the MAC, the frame check sequence and the transmit multiplexer; the block's words go to a MAC that does not exist here (docs/phase2_integration.md is a plan)
+- the MAC, the frame check sequence and the transmit multiplexer; the block's words go to a MAC that does not exist here
+  (docs/phase2_integration.md is a plan)
 target:
   part: xck26-sfvc784-2LV-c
   board: Kria KR260 (K26 SOM)
   top: tcp_fast (wrapped with input registers in ooc_wrap for the out-of-context build)
   tool: Vivado 2026.1
-  note: no board top of its own; it replaces ouch_enter of designs/b110_itch_ouch and feeds the 10G MAC of designs/b96_kr260_10g in phase 2
+  note: no board top of its own; it replaces ouch_enter of designs/b110_itch_ouch and feeds the 10G MAC of designs/b96_kr260_10g
+    in phase 2
 clocks:
 - name: clk
   mhz: 161.132
   source: results/b119/ooc/tcp_fast.json
-  note: the 10G core user clock (nominally 161.1328125 MHz); the out-of-context build constrains the period 6.2061 ns, the 4-decimal
-    rounding of the nominal
+  note: the 10G core user clock (nominally 161.1328125 MHz); the out-of-context build constrains the period 6.2061 ns, the
+    4-decimal rounding of the nominal
 resets:
 - name: rst
   active: high
-  note: synchronous; resets every register including the counters; the block is not armed after reset; one clock domain, no asynchronous
-    input
+  note: synchronous; resets every register including the counters; the block is not armed after reset; one clock domain,
+    no asynchronous input
 interfaces:
 - name: order side
-  type: go, go_spec, f_sym, f_px, f_qty, f_ref, commit, abort, cfg_*, busy, late, refuse_v, refuse_code (the ports of ouch_enter of brief 110 and three more)
+  type: go, go_spec, f_sym, f_px, f_qty, f_ref, commit, abort, cfg_*, busy, late, refuse_v, refuse_code (the ports of ouch_enter
+    of brief 110 and three more)
   doc: designs/b119_tcp_fast/docs/tcp_fast.md
-  note: a go while busy is dropped; a refused order is lost; abort in the go clock cancels the go; cfg_* must stay static while a segment is in flight
+  note: a go while busy is dropped; a refused order is lost; abort in the go clock cancels the go; cfg_* must stay static
+    while a segment is in flight
 - name: segment output
   type: o_v, o_d[63:0], o_sof, o_eof, o_keep[7:0], o_poison (to the MAC)
   doc: designs/b119_tcp_fast/docs/tcp_fast.md
-  note: 113 bytes without the frame check sequence in fifteen words, never paused; o_poison with the last word asks the MAC to corrupt the check sequence
+  note: 113 bytes without the frame check sequence in fifteen words, never paused; o_poison with the last word asks the
+    MAC to corrupt the check sequence
 - name: sent-segment record
   type: rec_v, rec_seq, rec_len, rec_id, rec_pay[511:0]
   doc: designs/b119_tcp_fast/docs/tcp_fast.md
@@ -51,12 +59,14 @@ interfaces:
 - name: software register bus
   type: sw_we, sw_waddr[4:0], sw_wdata[31:0], sw_raddr[4:0], sw_rdata[31:0]
   doc: designs/b119_tcp_fast/docs/tcp_fast.md
-  note: static writes while busy are ignored and counted; live registers restart the staleness age; reads show the registers as they were before the next edge
+  note: static writes while busy are ignored and counted; live registers restart the staleness age; reads show the registers
+    as they were before the next edge
 parameters:
 - name: PAYLEN
   value: 59
   legal: fixed
-  note: the payload is always one SoupBinTCP Unsequenced Data packet carrying an Enter Order (brief 110); there are no module parameters
+  note: the payload is always one SoupBinTCP Unsequenced Data packet carrying an Enter Order (brief 110); there are no module
+    parameters
 - name: segment bytes
   value: 113
   legal: fixed
@@ -64,37 +74,53 @@ parameters:
 files:
 - path: designs/b119_tcp_fast/rtl/tcp_fast.sv
   what: the TCP fast path
+  sha256: dec57d4bb14ef4ec6326e78450d0caec09ef74128277be5b727bf179136359aa
 - path: designs/b119_tcp_fast/rtl/itch_ouch_tcp_top.sv
   what: brief 110's trading path with tcp_fast in place of its stub port (simulation)
+  sha256: 34ce2effbb2236b03c7cd6d032620f2ae5e1cd43e92daf53fb82e79e79e49301
 - path: designs/b119_tcp_fast/model/tcpref.py
   what: segment, checksum and decision reference
+  sha256: f6ca3aecbc5ba38e97ee5b4416f57a04c6cf4139c3a8a6553ce54aefe8a720d4
 - path: designs/b119_tcp_fast/model/softtcp.py
   what: TCP endpoint, owner and software exchange
+  sha256: 1f6b650e44a0681afc303a61e0f565158fd5981605781c11ac38fed10c6b684a
 - path: designs/b119_tcp_fast/model/soup.py
   what: SoupBinTCP and OUCH response packers and parsers
+  sha256: fb5ab8e196ed41a621feb3c1f559c88178a1c995ce13aafe8c5fff81757690a8
 - path: designs/b119_tcp_fast/model/hwmodel.py
   what: untimed stand-in for the block's register file
+  sha256: 5bdd61efa51c1e18d280b05688dbc76737b2324ce41224c605c363ea9f11a84d
 - path: designs/b119_tcp_fast/model/orders.py
   what: order payload builder from brief 110's packers
+  sha256: f2009e9338149fa4ce66b3089a65f9b017c16f53c4eb6c8efec8b7987347732c
 - path: designs/b119_tcp_fast/tests/b119_cocotb.py
   what: cocotb bench of the block
+  sha256: 8ddaee11afb9f06899d7561fe93ccfa29289b2123556d117815821053cd5d1df
 - path: designs/b119_tcp_fast/tests/b119_top_cocotb.py
   what: cocotb bench behind brief 110's risk logic
+  sha256: cb474289815aea60ee5f3609fa0964acb14126df7aaac3b58c8d7192de88a3d0
 - path: designs/b119_tcp_fast/tests/netsim.py
   what: the pure-Python network of owner, exchange and stand-in
+  sha256: 3632074a2823a167196f1983356232b3ea153e49615edcf300f04b5274ea64f0
 - path: designs/b119_tcp_fast/tests/run_mutants.py
   what: seeded-fault runner
+  sha256: c4a57bf19dc56ae3b531cb44c191feb2658fb959935b56698b777ff4d5c1ed80
 - path: designs/b119_tcp_fast/ooc/ooc.py
   what: out-of-context build driver
+  sha256: 48962fa55888673b266e5bf31fabd6f7ecbafab1349aa3404a633d3356ac1029
 - path: designs/b119_tcp_fast/docs/tcp_fast.md
   what: datasheet
+  sha256: 5c1937bbba2229c4385360110f0c3c0ab3b0892addc41c8602c0bb900af73cc7
 - path: designs/b119_tcp_fast/docs/software_side.md
   what: the Python TCP owner and exchange
+  sha256: 340d510d3942d42da49465124a8145f1bb1167b84459e8b87969639e07995b3d
 - path: designs/b119_tcp_fast/docs/phase2_integration.md
   what: integration notes for the 10G MAC and open points
+  sha256: e58721f2a65711de8105907bd671f5d8fead4ce92a516ef6b5b1c90bf33c3f26
 commands:
 - what: the whole bench (cocotb on Icarus), the Python-side tests and the lint
-  cmd: python3 -m pytest -q designs/b119_tcp_fast/tests/test_b119_model.py designs/b119_tcp_fast/tests/test_b119_rtl.py designs/b119_tcp_fast/tests/test_b119_lint.py
+  cmd: python3 -m pytest -q designs/b119_tcp_fast/tests/test_b119_model.py designs/b119_tcp_fast/tests/test_b119_rtl.py
+    designs/b119_tcp_fast/tests/test_b119_lint.py
   heavy: false
   minutes: 1
   needs: Icarus Verilog 12, cocotb 2.0.1, Verilator (the lint test is skipped without it)
@@ -118,36 +144,48 @@ evidence:
   activity: simulation
   result: pass
   how: ci
-  what: the block against the reference in cocotb - random connections and orders byte exact, checksum corner cases, an abort at every offset, speculative
-    verdicts, every refusal path, register semantics, continuity of the sequence space with software, a long random mix, and the software owner and exchange end to end
+  what: the block against the reference in cocotb - random connections and orders byte exact, checksum corner cases, an
+    abort at every offset, speculative verdicts, every refusal path, register semantics, continuity of the sequence space
+    with software, a long random mix, and the software owner and exchange end to end
   record: designs/b119_tcp_fast/tests/test_b119_rtl.py
+  sha256: 76d186b184464369619d0a648a9338f552077d3f09cc27c12de1b167df24502c
 - id: E2
   activity: model
   result: pass
   how: ci
-  what: the checksum reference against outside vectors, the TCP endpoint, the owner and the exchange against the untimed stand-in, including a dropped segment and heartbeats
+  what: the checksum reference against outside vectors, the TCP endpoint, the owner and the exchange against the untimed
+    stand-in, including a dropped segment and heartbeats
   record: designs/b119_tcp_fast/tests/test_b119_model.py
+  sha256: 7515e2264bc02ba1abd3f5884b65c6d6b9317768132fb68958e8bea092be7bf5
 - id: E3
   activity: lint
   result: pass
   how: ci
-  what: Verilator -Wall clean
+  what: Verilator -Wall lint of the block and the frame builder inside it, no warnings
   record: designs/b119_tcp_fast/tests/test_b119_lint.py
+  sha256: 7e15fe26fa843df7c7ba15618b4e95cd02ac819d40fe208e6beef4617f93e5ad
 - id: E4
   activity: faults
   result: pass
-  what: every one of the seeded faults in the block (constants, operators and conditions across the checksum, the segment, the verdict, the refusals and the registers) fails the bench
+  what: every one of the seeded faults in the block (constants, operators and conditions across the checksum, the segment,
+    the verdict, the refusals and the registers) fails the bench
   record: results/b119/mutation.json
+  sha256: f187b63a6979754ceeb321750567cafb8c2464d841f1ceafd7238b4988a750a3
 - id: E5
   activity: simulation
   result: pass
-  what: brief 110's path with the block in place of its stub port against brief 110's reference model - the same orders leave, with the same payload bytes, valid checksums and gapless sequence numbers, speculative orders that are refused are poisoned
+  what: brief 110's path with the block in place of its stub port against brief 110's reference model - the same orders
+    leave, with the same payload bytes, valid checksums and gapless sequence numbers, speculative orders that are refused
+    are poisoned
   record: results/b119/top_sim.json
+  sha256: 71c94f32fee59aaab7ae1ca59ac282695ac1d1199360aa3541d37cffb87aa3ff
 - id: E6
   activity: build
   result: pass
-  what: out-of-context, post-route builds on the K26 at the required 10G core clock and a faster one; the required clock closed (setup, hold and pulse width)
+  what: out-of-context, post-route builds on the K26 at the required 10G core clock and a faster one; the required clock
+    closed (setup, hold and pulse width)
   record: results/b119/ooc/tcp_fast.json
+  sha256: 284f533ef5852bb0c7410c28920d8b5315a9430088b3ad6a4d629017db47fb0f
 measurements:
 - id: M1
   what: clocks from the clock go is presented to the first byte of the frame
@@ -157,6 +195,8 @@ measurements:
   record: results/b119/bench_sim.json
   field: timing.first_byte_clocks_after_go
   conditions: simulation, one clock; the same clock in which brief 110's stub port shows its first word
+  value: 1
+  sha256: 8dcf52c49d0de31f6f2d937a96e2e405ca97ade1ac73025b61b43c5994dd92ca
 - id: M2
   what: clocks from go to the last byte of the TCP checksum field
   category: latency
@@ -165,6 +205,8 @@ measurements:
   record: results/b119/bench_sim.json
   field: timing.tcp_checksum_field_clocks_after_go
   conditions: simulation, one clock
+  value: 7
+  sha256: 8dcf52c49d0de31f6f2d937a96e2e405ca97ade1ac73025b61b43c5994dd92ca
 - id: M3
   what: clocks from go to the last byte of the segment
   category: latency
@@ -173,6 +215,8 @@ measurements:
   record: results/b119/bench_sim.json
   field: timing.last_byte_clocks_after_go
   conditions: simulation, one clock
+  value: 15
+  sha256: 8dcf52c49d0de31f6f2d937a96e2e405ca97ade1ac73025b61b43c5994dd92ca
 - id: M4
   what: clocks from the last byte of a triggering ITCH message to the first byte of the Ethernet frame, speculative start
   category: latency
@@ -180,7 +224,10 @@ measurements:
   unit: clocks
   record: results/b119/top_sim.json
   field: behind_risk_logic.speculative.first_ethernet_byte_clocks_after_last_itch_byte
-  conditions: simulation of brief 110's path with the block behind it, one clock; only when the frame is idle and no earlier candidate is in flight
+  conditions: simulation of brief 110's path with the block behind it, one clock; only when the frame is idle and no earlier
+    candidate is in flight
+  value: 3
+  sha256: 71c94f32fee59aaab7ae1ca59ac282695ac1d1199360aa3541d37cffb87aa3ff
 - id: M5
   what: the same with the frame started at the risk verdict
   category: latency
@@ -189,6 +236,8 @@ measurements:
   record: results/b119/top_sim.json
   field: behind_risk_logic.non_speculative.first_ethernet_byte_clocks_after_last_itch_byte
   conditions: as M4
+  value: 8
+  sha256: 71c94f32fee59aaab7ae1ca59ac282695ac1d1199360aa3541d37cffb87aa3ff
 - id: M6
   what: clocks between the starts of two segments sent back to back
   category: throughput
@@ -197,6 +246,8 @@ measurements:
   record: results/b119/bench_sim.json
   field: timing.back_to_back_clocks_between_segment_starts
   conditions: simulation; the block is busy for the whole segment and drops a go meanwhile
+  value: 15
+  sha256: 8dcf52c49d0de31f6f2d937a96e2e405ca97ade1ac73025b61b43c5994dd92ca
 - id: M7
   what: LUTs of tcp_fast at the required clock, including the frame builder inside it
   category: resources
@@ -205,6 +256,8 @@ measurements:
   record: results/b119/ooc/tcp_fast.json
   field: at_required.core_lut
   conditions: out of context, Vivado 2026.1, one thread; the wrapper's input registers are not counted
+  value: 1546
+  sha256: 284f533ef5852bb0c7410c28920d8b5315a9430088b3ad6a4d629017db47fb0f
 - id: M8
   what: registers of tcp_fast at the required clock
   category: resources
@@ -213,6 +266,8 @@ measurements:
   record: results/b119/ooc/tcp_fast.json
   field: at_required.core_ff
   conditions: as M7
+  value: 2907
+  sha256: 284f533ef5852bb0c7410c28920d8b5315a9430088b3ad6a4d629017db47fb0f
 - id: M9
   what: worst setup slack at the required clock
   category: timing
@@ -221,6 +276,8 @@ measurements:
   record: results/b119/ooc/tcp_fast.json
   field: at_required.wns_ns
   conditions: out of context, post-route, period 6.2061 ns, no clock buffer or jitter
+  value: 1.77
+  sha256: 284f533ef5852bb0c7410c28920d8b5315a9430088b3ad6a4d629017db47fb0f
 - id: M10
   what: worst hold slack at the required clock
   category: timing
@@ -229,6 +286,8 @@ measurements:
   record: results/b119/ooc/tcp_fast.json
   field: at_required.whs_ns
   conditions: as M9
+  value: 0.055
+  sha256: 284f533ef5852bb0c7410c28920d8b5315a9430088b3ad6a4d629017db47fb0f
 - id: M11
   what: fastest clock period tried that closed
   category: timing
@@ -237,6 +296,8 @@ measurements:
   record: results/b119/ooc/tcp_fast.json
   field: closed_at_ns
   conditions: a closed point out of the two tried, not a bound; as M9
+  value: 5.0
+  sha256: 284f533ef5852bb0c7410c28920d8b5315a9430088b3ad6a4d629017db47fb0f
 - id: M12
   what: block RAM tiles used
   category: resources
@@ -245,6 +306,8 @@ measurements:
   record: results/b119/ooc/tcp_fast.json
   field: at_required.bram_tiles
   conditions: as M7
+  value: 0
+  sha256: 284f533ef5852bb0c7410c28920d8b5315a9430088b3ad6a4d629017db47fb0f
 - id: M13
   what: seeded faults killed by the bench
   category: other
@@ -253,6 +316,8 @@ measurements:
   record: results/b119/mutation.json
   field: killed
   conditions: simulation, the whole bench per fault
+  value: 73
+  sha256: f187b63a6979754ceeb321750567cafb8c2464d841f1ceafd7238b4988a750a3
 - id: M14
   what: seeded faults that build and were tried
   category: other
@@ -261,6 +326,8 @@ measurements:
   record: results/b119/mutation.json
   field: valid
   conditions: as M13
+  value: 73
+  sha256: f187b63a6979754ceeb321750567cafb8c2464d841f1ceafd7238b4988a750a3
 - id: M15
   what: random segments compared byte for byte with the reference
   category: other
@@ -269,33 +336,49 @@ measurements:
   record: results/b119/bench_sim.json
   field: random_segments
   conditions: simulation, random connections, orders and states including sequence numbers at the wrap
+  value: 450
+  sha256: 8dcf52c49d0de31f6f2d937a96e2e405ca97ade1ac73025b61b43c5994dd92ca
 gaps:
 - about: board_run
   text: Not run on a board; phase 2 would put the block behind the 10G MAC of the KR260 design (docs/phase2_integration.md).
 - about: power
   text: Not measured; an out-of-context build has no realistic activity and nothing ran on a board.
 - about: E6
-  text: Out of context the clock has no buffer or jitter and the inputs are registered in the wrapper; inside the 10G core the clock and placement can differ.
+  text: Out of context the clock has no buffer or jitter and the inputs are registered in the wrapper; inside the 10G core
+    the clock and placement can differ.
 - about: mac
-  text: The pair of this block and the 10G MAC's transmit path was not simulated; whether a MAC accepts a word every clock, pads a short poisoned frame and corrupts the frame check sequence on request is the 96 design's behaviour, not shown here.
+  text: The pair of this block and the 10G MAC's transmit path was not simulated; whether a MAC accepts a word every clock,
+    pads a short poisoned frame and corrupts the frame check sequence on request is the 96 design's behaviour, not shown
+    here.
 - about: refusals
-  text: A refused order is lost and the risk logic of brief 110 is not told, so its order number and position count have already moved; the feedback is not built.
+  text: A refused order is lost and the risk logic of brief 110 is not told, so its order number and position count have
+    already moved; the feedback is not built.
 - about: tcp
-  text: No TCP options (timestamps must be off on the connection), no selective acknowledgement, no window scaling inside the block (software scales the values it writes), one connection, no hardware retransmission and no parsing of received segments.
+  text: No TCP options (timestamps must be off on the connection), no selective acknowledgement, no window scaling inside
+    the block (software scales the values it writes), one connection, no hardware retransmission and no parsing of received
+    segments.
 - about: software
-  text: The TCP endpoint is a minimal user-space model with no congestion control, delayed acknowledgements, orderly close or zero-window probes; the exchange follows the Nasdaq documents for the fields it fills but is our own model and no real port was involved.
+  text: The TCP endpoint is a minimal user-space model with no congestion control, delayed acknowledgements, orderly close
+    or zero-window probes; the exchange follows the Nasdaq documents for the fields it fills but is our own model and no
+    real port was involved.
 - about: spec
-  text: SoupBinTCP 3.00 and OUCH 5.0 layouts of the exchange's replies were read from the public documents; the padding of the Login Request's sequence number field is assumed, and brief 110's UNCONFIRMED items about the Enter Order stay open.
+  text: SoupBinTCP 3.00 and OUCH 5.0 layouts of the exchange's replies were read from the public documents; the padding
+    of the Login Request's sequence number field is assumed, and brief 110's UNCONFIRMED items about the Enter Order stay
+    open.
 - about: busy
-  text: The block is busy for fifteen clocks per segment, so brief 110's order queue sees a longer busy time than with the stub port; the effect on rejected candidates at a real feed rate was not measured.
+  text: The block is busy for fifteen clocks per segment, so brief 110's order queue sees a longer busy time than with the
+    stub port; the effect on rejected candidates at a real feed rate was not measured.
 - about: data
   text: Synthetic orders from our own generators; the figures say how the block behaves on them and nothing about a market.
 next_steps:
-- Build the transmit multiplexer and the register bridge of docs/phase2_integration.md, and simulate the block with the 96 design's MAC.
+- Build the transmit multiplexer and the register bridge of docs/phase2_integration.md, and simulate the block with the
+  96 design's MAC.
 - Add the refusal feedback from the block to the risk logic (release the order number and the position).
-- Run the owner against a real TCP peer on the host (a second machine or a namespace) and compare captures with the bench's frames.
+- Run the owner against a real TCP peer on the host (a second machine or a namespace) and compare captures with the bench's
+  frames.
 open_questions:
-- Is the fifteen-clock busy time acceptable at the feed rates of interest, or should a second segment buffer let the next order start while the last words go out?
+- Is the fifteen-clock busy time acceptable at the feed rates of interest, or should a second segment buffer let the next
+  order start while the last words go out?
 - Should the owner's pure acknowledgements go through the block so that its sequence number is always current?
 history:
 - date: '2026-11-20'
