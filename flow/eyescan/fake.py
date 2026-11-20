@@ -33,7 +33,7 @@ def poisson(rng: random.Random, lam: float) -> int:
 class FakeBoard:
     """Transport (rd/wr) with the register behaviour of the EYESCAN build, and a synthetic eye."""
 
-    def __init__(self, seed: int = 1, m0_mv: float = 150.0, sigma_mv: float = 14.0, exponent: float = 2.4, lpm: bool = True, drive_diff: int = 0b11000, link: bool = True) -> None:
+    def __init__(self, seed: int = 1, m0_mv: float = 150.0, sigma_mv: float = 14.0, exponent: float = 2.4, lpm: bool = True, drive_diff: int = 0b11000, link: bool = True, phase_trap: bool = False) -> None:
         self.rng = random.Random(seed)
         self.m0, self.sigma, self.exp = m0_mv, sigma_mv, exponent
         self.reg = {H.R_FEATURES: 0x11, H.R_GT_CTRL: 0x08 | (0x40 if lpm else 0), H.R_TMO: 500_000_000, H.R_DRIVE: drive_diff}
@@ -47,6 +47,7 @@ class FakeBoard:
         self.drp_last = 0
         self.points = 0
         self.link = link
+        self.phase_trap = phase_trap          # True: model the KR260's 2026-11-20 behaviour (an eye only with USE_PCS_CLK_PHASE_SEL = 1, ES_CLK_PHASE_SEL = 1)
         self.drp_log: list[tuple[str, int, int | None]] = []
 
     # ---- the eye
@@ -72,6 +73,12 @@ class FakeBoard:
             self.reg[H.R_RES] = 0
             self.points += 1
             self.stat = 0x2 | 0x4 | (0b0110 << 8)
+            return
+        if self.phase_trap and (self.drp[0x094] >> 10) & 3 != 3:     # wrong 4T phase: Sdata is about half ones, the error counter saturates first
+            pre0 = (p >> 23) & 31
+            self.reg[H.R_RES] = (max(1, 65535 // 32) << 16) | 65535 if pre0 == 0 else (64 << 16) | 65535
+            self.points += 1
+            self.stat = 0x2 | (0b0101 << 8)
             return
         horz, code, neg, rng_sel, pre = p & 0xFFF, (p >> 12) & 0x7F, (p >> 19) & 1, (p >> 21) & 3, (p >> 23) & 31
         h = horz & 0x7FF

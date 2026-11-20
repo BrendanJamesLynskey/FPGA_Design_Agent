@@ -34,7 +34,7 @@ def test_masks_are_the_ug576_160_bit_values_in_ten_words():
     assert tw.QUALIFIER_ADDRS == [0x3F, 0x40, 0x41, 0x42, 0x43, 0xE7, 0xE8, 0xE9, 0xEA, 0xEB]
     assert tw.QUAL_MASK_ADDRS == [0x44, 0x45, 0x46, 0x47, 0x48, 0xEC, 0xED, 0xEE, 0xEF, 0xF0]
     assert tw.SDATA_MASK_ADDRS == [0x49, 0x4A, 0x4B, 0x4C, 0x4D, 0xF1, 0xF2, 0xF3, 0xF4, 0xF5]
-    assert len(H.SAVE_ADDRS) == 33 and len(set(H.SAVE_ADDRS)) == 33
+    assert len(H.SAVE_ADDRS) == 34 and len(set(H.SAVE_ADDRS)) == 34
     with pytest.raises(ValueError):
         H.sdata_mask_160(24)
 
@@ -79,7 +79,7 @@ def test_k_consecutive_no_data_points_stop_the_scan_and_one_stray_timeout_does_n
     def breaker(a, v):
         if a == H.R_CMD and v & 4:
             state["n"] += 1
-            if state["n"] == 4:                   # the fault appears after the self-test (point 1) and two good grid points
+            if state["n"] == 5:                   # the fault appears after the self-test (points 1-2: the clock-phase trial and the centre point) and two good grid points
                 fb.drp[tw.QUAL_MASK_ADDRS[7]] = 0
         orig(a, v)
     fb.wr = breaker
@@ -97,7 +97,7 @@ def test_k_consecutive_no_data_points_stop_the_scan_and_one_stray_timeout_does_n
     def stray(a, v):
         if a == H.R_CMD and v & 4:
             n2["n"] += 1
-            fb2.drp[tw.QUAL_MASK_ADDRS[7]] = 0 if n2["n"] == 5 else 0xFFFF
+            fb2.drp[tw.QUAL_MASK_ADDRS[7]] = 0 if n2["n"] == 6 else 0xFFFF
         orig2(a, v)
     fb2.wr = stray
     cap2 = _run(fb2)
@@ -153,3 +153,25 @@ def test_run_exits_9_on_no_data_and_1_on_a_lost_write(tmp_path, monkeypatch):
     monkeypatch.setattr(fake, "FakeBoard", Stuck)
     assert cli.main(args) == 1
     assert "did not read back" in json.loads((tmp_path / "s.json").read_text())["run"]["error"]
+
+
+def test_clk_phase_trap_2026_11_20():
+    """The KR260 gave an eye only with the 4T clock phase forced to 1; the self-test must find that phase, and must stop (NO DATA) if no phase works."""
+    import pytest
+    from flow.eyescan import fake, hw as Hh, scan as S
+    fb = fake.FakeBoard(phase_trap=True)
+    eh = Hh.EyeHW(fb)
+    eh.setup()
+    p = eh.point(0, 0, 0, 0, 0, 1.0)
+    assert p["err"] == 65535                                   # default phase: centre "closed", as on the board
+    ch = eh.choose_clk_phase()
+    assert ch["sel"] == 1 and ch["trials"][0]["err"] == 0
+    assert (fb.drp[0x094] >> 10) & 3 == 3
+    r = eh.restore()
+    assert r["ok"] and fb.drp[0x094] == 0                     # the phase word goes back to the build value
+    fb2 = fake.FakeBoard(phase_trap=True)
+    eh2 = Hh.EyeHW(fb2)
+    eh2.setup()
+    eh2.set_clk_phase = lambda sel: None                      # no phase can be set: both trials stay closed
+    with pytest.raises(Hh.NoDataError):
+        eh2.choose_clk_phase()
