@@ -36,14 +36,19 @@ class _Logged:
 
     def __call__(self, messages: list[dict], tools: list[dict] | None = None):
         t0 = time.monotonic()
-        r = self._inner(messages, tools)
-        self._owner.log_call(self.entry, r, time.monotonic() - t0)
+        o = self._owner
+        if o.tape is not None:                       # brief 107: record the reply, or (replay) serve it without any live call
+            r = o.tape.call(self.entry, messages, tools, lambda: o.live_check(self.entry) or self._inner(messages, tools))
+        else:
+            o.live_check(self.entry)
+            r = self._inner(messages, tools)
+        o.log_call(self.entry, r, time.monotonic() - t0)
         return r
 
 
 class Resolver:
     def __init__(self, table: Table, *, run_dir: Path | None = None, injected: Callable | None = None, replay: Path | str | None = None,
-                 record: Path | str | None = None, factory: Callable[[Entry], Callable] | None = None):
+                 record: Path | str | None = None, factory: Callable[[Entry], Callable] | None = None, tape: Any = None, level1: bool = False):
         """``injected``: one client served for every chat-style call (tests); ``replay``: a recorded fixture served instead of any
         chat endpoint; ``record``: record the chat calls to this fixture; ``factory``: builds the client of an entry (tests)."""
         self.table = table
@@ -51,6 +56,26 @@ class Resolver:
         self.injected, self.replay_path, self.record_path, self.factory = injected, Path(replay) if replay else None, record, factory
         self._clients: dict[tuple, Callable] = {}
         self.seq = 0
+        self.tape = tape                          # brief 107: a record/replay tape (agent.models.tape.Tape), or None
+        self.level1 = level1                      # brief 107: --deterministic at level 1: every live call must be at temperature 0
+
+    def live_check(self, e: Entry) -> None:
+        """Level 1 runtime guard: a live call whose entry is not at temperature 0 on a kind that takes one is refused, never sampled."""
+        if not self.level1:
+            return
+        from agent.models.determinism import LEVEL1_KINDS
+        from agent.models.tape import DeterminismError
+        if e.kind not in LEVEL1_KINDS or e.options.get("temperature") != 0:
+            raise DeterminismError(f"--deterministic (level 1): the {e.purpose}{'@' + e.stage if e.stage else ''} call on endpoint {e.endpoint!r} "
+                                   f"({e.kind}) would not run at temperature 0; refused instead of sampling")
+
+    def unreplayable(self, what: str) -> None:
+        """A call a tape cannot hold (a claude_code sub-agent turn): counted when recording, refused on replay and at level 1."""
+        from agent.models.tape import DeterminismError
+        if self.level1:
+            raise DeterminismError(f"--deterministic (level 1): {what} is a claude_code sub-agent turn, which has no temperature setting")
+        if self.tape is not None:
+            self.tape.note_unreplayable(what)
 
     # -- the table -------------------------------------------------------------------------------------------------
     def entry(self, purpose: str, stage: str | None = None, overrides: dict[str, Any] | None = None) -> Entry:
@@ -75,13 +100,15 @@ class Resolver:
         if self.run_dir is None:
             return
         self.seq += 1
-        row = {"seq": self.seq, "purpose": e.purpose, **({"stage": e.stage} if e.stage else {}), "endpoint": e.endpoint, "kind": e.kind,
+        row = {"seq": self.seq, **({"tape": self.tape.mode} if self.tape is not None else {}), "purpose": e.purpose, **({"stage": e.stage} if e.stage else {}), "endpoint": e.endpoint, "kind": e.kind,
                "model": e.model, "entry_hash": e.hash, "table_hash": self.table.hash,
                "prompt_tokens": getattr(r, "prompt_tokens", None), "completion_tokens": getattr(r, "completion_tokens", None),
                "cost_usd": getattr(r, "cost", None), "seconds": round(seconds, 2)}
         self.run_dir.mkdir(parents=True, exist_ok=True)
         with (self.run_dir / "model_calls.jsonl").open("a") as f:
             f.write(json.dumps(row) + "\n")
+        if self.tape is not None:
+            (self.run_dir / "model_tape.json").write_text(json.dumps(self.tape.state(), indent=1))
 
     def log_text_call(self, e: Entry, seconds: float, *, tokens: int | None = None, plan_estimate: Any = None) -> None:
         """One row for a call made as plain text (a headless Claude Code call): the cost is the plan's, never dollars."""
@@ -98,6 +125,8 @@ class Resolver:
         return _Logged(self._client(e, label), e, self)
 
     def _client(self, e: Entry, label: str | None) -> Callable:
+        if self.tape is not None and self.tape.mode == "replay":
+            return self._no_live
         if e.kind != "claude_code" and self.injected is not None:
             return self.injected
         if e.kind != "claude_code" and self.replay_path is not None:
@@ -115,6 +144,20 @@ class Resolver:
         if key not in self._clients:
             self._clients[key] = make()
         return self._clients[key]
+
+    @staticmethod
+    def _no_live(messages, tools=None):
+        from agent.models.tape import DeterminismError
+        raise DeterminismError("replay: a live model call was attempted (the tape should have served it)")
+
+    def text_result(self, e: Entry, system: str, user: str, *, timeout_s: float, effort: str | None, prefix: str) -> dict[str, Any]:
+        """One headless ``claude -p`` text call, through the tape when there is one (record, or replay without calling the CLI)."""
+        def live() -> dict[str, Any]:
+            self.live_check(e)
+            return claude_cli.text_call(system, user, model=e.model, effort=effort, timeout_s=timeout_s, prefix=prefix)
+        if self.tape is not None:
+            return self.tape.call_result(e, [{"role": "system", "content": system}, {"role": "user", "content": user}], live)
+        return live()
 
     @staticmethod
     def _replay(path: Path) -> Callable:
@@ -179,7 +222,7 @@ class Resolver:
         def llm(system: str, user: str) -> str:
             from agent.graph.run import ArmBlocked
             t0 = time.time()
-            res = claude_cli.text_call(system, user, model=e.model, effort=effort, timeout_s=timeout_s, prefix=f"fda_{label}_")
+            res = self.text_result(e, system, user, timeout_s=timeout_s, effort=effort, prefix=f"fda_{label}_")
             if log is not None:
                 u = res.get("usage") or {}
                 tok = sum(int(u.get(k) or 0) for k in ("input_tokens", "cache_read_input_tokens", "cache_creation_input_tokens", "output_tokens"))

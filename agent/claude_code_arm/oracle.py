@@ -47,7 +47,10 @@ def cc_oracle(model: str, log: Path | None = None, timeout_s: float = 300, entry
     def llm(system: str, user: str) -> dict[str, Any]:
         import time
         t0 = time.monotonic()
-        res = claude_cli.text_call(system, user, model=model, timeout_s=timeout_s, prefix="fda_oracle_")
+        if resolver is not None and entry is not None:          # brief 107: through the tape when there is one
+            res = resolver.text_result(entry, system, user, timeout_s=timeout_s, effort=None, prefix="fda_oracle_")
+        else:
+            res = claude_cli.text_call(system, user, model=model, timeout_s=timeout_s, prefix="fda_oracle_")
         if resolver is not None and entry is not None:
             resolver.log_text_call(entry, time.monotonic() - t0)
         out = parse_answer(str(res.get("result", "")))

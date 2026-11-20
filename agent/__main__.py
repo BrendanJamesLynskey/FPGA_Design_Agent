@@ -94,6 +94,33 @@ def model_kwargs(a, argv: list[str]) -> dict:
                 explicit=given, allow_fable=bool(getattr(a, "allow_fable", False)), replay_run=bool(getattr(a, "replay", None)))
 
 
+def tape_spec_from(a, cfg) -> dict | None:
+    """Brief 107: the record/replay tape of this run from ``--deterministic``, ``--tape``, ``--record-tape`` and ``--replay-tape``.
+    ``--deterministic`` replays the tape (level 2) when there is one, else runs live at temperature 0 and records one (level 1); it raises
+    DeterminismError, before any model call, when neither is possible. It never falls back to sampling."""
+    from agent.models import determinism as D
+    from agent.models.tape import DeterminismError, Tape
+    if sum(bool(x) for x in (getattr(a, "deterministic", False), getattr(a, "record_tape", None), getattr(a, "replay_tape", None))) > 1:
+        raise DeterminismError("choose one of --deterministic, --record-tape, --replay-tape")
+
+    def replay(d: Path, note: str) -> dict:
+        cfg.level1_seed = Tape.open(d, "replay").header.get("level1_seed")      # the table must be the recorded one
+        cfg.replay_run = True
+        return {"dir": d, "mode": "replay", "level": 2, "note": note}
+    if getattr(a, "replay_tape", None):
+        return replay(Path(a.replay_tape), "explicit --replay-tape")
+    if getattr(a, "record_tape", None):
+        return {"dir": Path(a.record_tape), "mode": "record", "level": 0, "note": "recording only: the calls are sampled as configured"}
+    if getattr(a, "deterministic", False):
+        d = D.tape_dir_for(cfg, getattr(a, "tape", None))
+        if (d / "tape.jsonl").is_file():
+            return replay(d, "--deterministic: a recording exists, so level 2")
+        cfg.level1_seed = D.SEED
+        D.check_level1(cfg.model_table(), cfg)
+        return {"dir": d, "mode": "record", "level": 1, "note": "--deterministic: no recording, so level 1 (temperature 0, recorded for replay)"}
+    return None
+
+
 def project_models_file(spec: Path) -> Path | None:
     """The project layer: ``models.yaml`` next to the spec, when there is one."""
     f = spec.resolve().parent / "models.yaml"
@@ -126,7 +153,8 @@ def config_from_json(c: dict):
                   docs=c.get("docs", "off") or "off",                                            # brief 68 C
                   models_file=Path(c["models_file"]) if c.get("models_file") not in (None, "None") else None,   # brief 108
                   model_config=c.get("model_config") or None, explicit=tuple(c.get("explicit") or ()),
-                  allow_fable=str(c.get("allow_fable", False)) == "True")
+                  allow_fable=str(c.get("allow_fable", False)) == "True",
+                  level1_seed=int(c["level1_seed"]) if c.get("level1_seed") not in (None, "None") else None)
 
 
 def models_cmd(a, argv: list[str]) -> int:
@@ -355,6 +383,12 @@ def main(argv: list[str] | None = None) -> int:
         p.add_argument("--reply")
         p.add_argument("--replay", help="LLM replay fixture (no network)")
         p.add_argument("--record", help="record LLM calls to this fixture")
+        p.add_argument("--deterministic", action="store_true",
+                       help="brief 107: replay the recorded tape (level 2) when there is one, else run at temperature 0 and record one (level 1); "
+                            "fails before the first call when neither is possible; never samples")
+        p.add_argument("--tape", help="with --deterministic: the tape directory (default ~/.local/share/fpga_design_agent/tapes/<design name>)")
+        p.add_argument("--record-tape", help="brief 107: record every model call to this tape directory (private; outside the repo or git-ignored)")
+        p.add_argument("--replay-tape", help="brief 107: serve every model call from this tape directory (level 2); a missing call is an error")
     rs = sub._name_parser_map["resume"]
     rs.add_argument("run_id", help="a run id under runs/, or a design directory with handover.yaml (brief 68 D)")
     rs.add_argument("change", nargs="?", help="design resume: the change request")
@@ -444,7 +478,13 @@ def main(argv: list[str] | None = None) -> int:
         cfg.role_models()                                     # fail early on an unknown profile, role or forbidden model
         if a.max_usd is not None:
             cfg.run_limits["usd"] = a.max_usd
-        rt = new_runtime(cfg, None, replay=a.replay, record=a.record)
+        from agent.models.tape import DeterminismError
+        try:
+            tspec = tape_spec_from(a, cfg)
+            rt = new_runtime(cfg, None, replay=a.replay, record=a.record, tape_spec=tspec)
+        except DeterminismError as e:
+            print(f"deterministic: {e}", file=sys.stderr)
+            return 2
         graph = build_graph(checkpointer_for(rt.run_dir), routing=cfg.skill_routing != "off")
         _drive(graph, rt, {"configurable": {"thread_id": rt.run_id}},
                {"run_id": rt.run_id, "stage": 0, "visits": {}, "history": []}, replies)
@@ -461,7 +501,13 @@ def main(argv: list[str] | None = None) -> int:
         print(f"resume: the model configuration changed since the run started (table hash {was} then, {cfg.model_table().hash} now); "
               "restore the models.yaml files, or pass --allow-model-change", file=sys.stderr)
         return 2
-    rt = new_runtime(cfg, None, run_id=a.run_id, replay=a.replay, record=a.record)
+    from agent.models.tape import DeterminismError
+    try:
+        tspec = tape_spec_from(a, cfg)
+        rt = new_runtime(cfg, None, run_id=a.run_id, replay=a.replay, record=a.record, tape_spec=tspec)
+    except DeterminismError as e:
+        print(f"deterministic: {e}", file=sys.stderr)
+        return 2
     graph = build_graph(checkpointer_for(run_dir), routing=cfg.skill_routing != "off")
     lg = {"configurable": {"thread_id": a.run_id}}
     from langgraph.types import Command

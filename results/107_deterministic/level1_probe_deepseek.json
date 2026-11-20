@@ -1,0 +1,133 @@
+{
+ "model": "deepseek/deepseek-chat",
+ "endpoint": "openrouter",
+ "n": 10,
+ "arms": {
+  "A_temperature0_seed": {
+   "options": {
+    "temperature": 0,
+    "seed": 1234
+   },
+   "prompts": [
+    {
+     "prompt": 0,
+     "calls": 10,
+     "failed": 0,
+     "distinct": 4,
+     "identical_rate": 0.5,
+     "providers": {
+      "StreamLake": 9,
+      "DeepInfra": 1
+     }
+    },
+    {
+     "prompt": 1,
+     "calls": 9,
+     "failed": 1,
+     "distinct": 9,
+     "identical_rate": 0.111,
+     "providers": {
+      "StreamLake": 8,
+      "DeepInfra": 1
+     }
+    },
+    {
+     "prompt": 2,
+     "calls": 5,
+     "failed": 5,
+     "distinct": 5,
+     "identical_rate": 0.2,
+     "providers": {
+      "DeepInfra": 1,
+      "StreamLake": 4
+     }
+    },
+    {
+     "prompt": 3,
+     "calls": 8,
+     "failed": 2,
+     "distinct": 8,
+     "identical_rate": 0.125,
+     "providers": {
+      "StreamLake": 6,
+      "DeepInfra": 2
+     }
+    },
+    {
+     "prompt": 4,
+     "calls": 10,
+     "failed": 0,
+     "distinct": 8,
+     "identical_rate": 0.2,
+     "providers": {
+      "StreamLake": 10
+     }
+    }
+   ],
+   "mean_identical_rate": 0.227,
+   "fully_identical_prompts": 0
+  },
+  "B_temperature0.2_default": {
+   "options": {
+    "temperature": 0.2
+   },
+   "prompts": [
+    {
+     "prompt": 0,
+     "calls": 9,
+     "failed": 1,
+     "distinct": 6,
+     "identical_rate": 0.333,
+     "providers": {
+      "StreamLake": 4,
+      "DeepInfra": 5
+     }
+    },
+    {
+     "prompt": 1,
+     "calls": 7,
+     "failed": 3,
+     "distinct": 7,
+     "identical_rate": 0.143,
+     "providers": {
+      "StreamLake": 7
+     }
+    },
+    {
+     "prompt": 2,
+     "calls": 10,
+     "failed": 0,
+     "distinct": 10,
+     "identical_rate": 0.1,
+     "providers": {
+      "StreamLake": 9,
+      "DeepInfra": 1
+     }
+    },
+    {
+     "prompt": 3,
+     "calls": 10,
+     "failed": 0,
+     "distinct": 10,
+     "identical_rate": 0.1,
+     "providers": {
+      "DeepInfra": 2,
+      "StreamLake": 8
+     }
+    },
+    {
+     "prompt": 4,
+     "calls": 10,
+     "failed": 0,
+     "distinct": 7,
+     "identical_rate": 0.3,
+     "providers": {
+      "StreamLake": 10
+     }
+    }
+   ],
+   "mean_identical_rate": 0.195,
+   "fully_identical_prompts": 0
+  }
+ }
+}
