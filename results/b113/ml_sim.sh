@@ -13,15 +13,15 @@ set +u; source /opt/Xilinx/2026.1/Vivado/settings64.sh >/dev/null 2>&1; set -u
 mkdir -p rtl_x
 R0=$ROOT/$D/rtl; V=$ROOT/$D/rm_gp_ml
 cp_x() { sed -e 's/always_ff @(/always @(/' -e 's/INIT_SYNC_FF(0)/INIT_SYNC_FF(1)/' "$1" > rtl_x/$(basename "$1"); }
-for f in b96_pkg pcs_tx pcs_rx mac64_tx mac64_rx hs_vec frame_src rate_match rate_match_gp tx_path rx_path_legacy; do cp_x $R0/$f.sv; done
+for f in b96_pkg pcs_tx pcs_rx mac64_tx mac64_rx hs_vec frame_src rate_match rate_match_gp tx_path; do cp_x $R0/$f.sv; done
 if [ "$BUILD" = ml ]; then
-  for f in ml_pkg ml_stage trade64 rx_path b96_core; do cp_x $V/rtl/$f.sv; done
+  for f in ml_pkg ml_stage trade64 rx_path rx_path_legacy b96_core; do cp_x $V/rtl/$f.sv; done
   cp_x $ROOT/designs/b87_ml_trading/rtl/gen/gbt_comb.sv
   cp_x $V/sim/gth_wiz_model113.sv; cp_x $V/sim/tb_ml_core.sv
   SRCS="rtl_x/b96_pkg.sv rtl_x/ml_pkg.sv rtl_x/pcs_tx.sv rtl_x/pcs_rx.sv rtl_x/mac64_tx.sv rtl_x/mac64_rx.sv rtl_x/hs_vec.sv rtl_x/frame_src.sv rtl_x/gbt_comb.sv rtl_x/ml_stage.sv rtl_x/trade64.sv rtl_x/rate_match.sv rtl_x/rate_match_gp.sv rtl_x/tx_path.sv rtl_x/rx_path.sv rtl_x/rx_path_legacy.sv rtl_x/b96_core.sv rtl_x/gth_wiz_model113.sv rtl_x/tb_ml_core.sv"
   DEFS="-d ML=1 ${EXTRA_DEFS:-}"
 else
-  for f in trade64 rx_path b96_core; do cp_x $R0/$f.sv; done
+  for f in trade64 rx_path rx_path_legacy b96_core; do cp_x $R0/$f.sv; done
   cp_x $V/sim/gth_wiz_model113.sv; cp_x $V/sim/tb_ml_core.sv
   SRCS="rtl_x/b96_pkg.sv rtl_x/pcs_tx.sv rtl_x/pcs_rx.sv rtl_x/mac64_tx.sv rtl_x/mac64_rx.sv rtl_x/hs_vec.sv rtl_x/frame_src.sv rtl_x/trade64.sv rtl_x/rate_match.sv rtl_x/rate_match_gp.sv rtl_x/tx_path.sv rtl_x/rx_path.sv rtl_x/rx_path_legacy.sv rtl_x/b96_core.sv rtl_x/gth_wiz_model113.sv rtl_x/tb_ml_core.sv"
   DEFS=""
