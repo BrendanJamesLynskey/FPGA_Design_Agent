@@ -39,12 +39,12 @@ designs/b96_kr260_10g/rm_gp_ml/rtl/rx_path.sv da1472f5fa: copy of rtl/rx_path.sv
 designs/b96_kr260_10g/rm_gp_ml/rtl/rx_path_legacy.sv cc5cf55776: copy of rtl/rx_path_legacy.sv for build rm_gp_ml with the ML ports tied off (brief 113)
 designs/b96_kr260_10g/rm_gp_ml/rtl/b96_core.sv 46ceb4153e: copy of rtl/b96_core.sv for build rm_gp_ml with the ML registers, crossings and status words (brief 113)
 designs/b96_kr260_10g/rm_gp_ml/build.yaml a081d3c86e: how flow/run_vivado.sh builds rm_gp_ml (rm_gp with the ML stage, brief 113)
-designs/b96_kr260_10g/rm_gp_ml/docs/ml_stage.md 589c1ceccd: which model block was chosen and why, how the stage is arranged, the measured cost in context (brief 113)
+designs/b96_kr260_10g/rm_gp_ml/docs/ml_stage.md beb51c0a3c: which model block was chosen and why, how the stage is arranged, the measured cost in context (brief 113)
 designs/b96_kr260_10g/rm_gp_ml/docs/ml_registers.md 487b9de7fe: register map of the ML stage, generated from rm_gp_ml/regmap_ml.py (brief 113)
 designs/b96_kr260_10g/rm_gp_ml/model/twin.py ec29cc5d38: Python twin of the ML stage over the brief 87 references (brief 113)
 designs/b96_kr260_10g/rm_gp_ml/model/stream.py 7047fabb32: synthetic Bench Feed v1 streams as 10GBASE-R words, with the twin's expectation per frame (brief 113)
 designs/b96_kr260_10g/rm_gp_ml/sim/tb_ml_core.sv bcc7b0ea4d: whole-core xsim bench with a synthetic feed injected on the receive words (brief 113)
-designs/b96_kr260_10g/host/b113_ml.py ad6f218b97: board driver and pre-registered verdict for build rm_gp_ml (brief 113)
+designs/b96_kr260_10g/host/b113_ml.py 167efbfa06: board driver and pre-registered verdict for build rm_gp_ml (brief 113)
 designs/b96_kr260_10g/rtl/es_ctrl.sv 671362a1c0: DRP master and eye-scan point sequencer for the GTHE4 channel (EYESCAN = 1), brief 96D
 designs/b96_kr260_10g/es.xdc 9f571dada7: powers up the GT's eye-scan circuit (ES_EYE_SCAN_EN, ES_ERRDET_EN) in the eyescan build
 designs/b96_kr260_10g/model/eyescan.py a4f8ffb4ab: Python twin of the eye-scan point sequencer's DRP traffic
