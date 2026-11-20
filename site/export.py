@@ -486,6 +486,8 @@ def main():
     out["story"] = story.build()                                         # brief 76: how the agent was built, from site/story/story.yaml
     import verification
     out["verification"] = verification.build()                          # brief 81: how the designs are verified, from site/verification/verification.yaml
+    import worked
+    out["kr260"] = worked.build()                                       # brief 117: the worked example, from site/worked/worked.yaml and the committed records
     out["blockdesigns"] = blockdesigns()                                # brief 65A: every block design's graph, with its build
     out.update({f"tasks/{k}": v for k, v in pages.items()})
     (OUT / "tasks").mkdir(exist_ok=True)

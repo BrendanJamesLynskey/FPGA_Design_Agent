@@ -412,6 +412,10 @@ site/        the showcase site (static, Vercel): export.py (results -> data), bu
              home page's feedback loop (brief 47): [loop.py](site/loop.py) (stations, labels from run records, the replayed
              tour -> data/loop.json), [loop_page.py](site/loop_page.py) (the SVG), [data/loop_legs.yaml](site/data/loop_legs.yaml)
              (each leg of the loop: automated, being built, or needs a person, with evidence; "legs automated: N of M")
+             story pages (brief 117): the home page leads with who specifies, who implements and who judges, a flow figure with
+             hardware verification as its own layer, and an evidence matrix; [worked.py](site/worked.py) reads
+             [worked/worked.yaml](site/worked/worked.yaml) and the committed records (each fact is a JSON locator or a quote that
+             must occur in the record) -> data/kr260.json; pages "Worked example" (the KR260 10G path) and "Inspect it"
 knowledge/   PACKS.md: names, sizes and hashes of the private knowledge packs (no pack content)
 docs/        methodology.md (UG949 -> flow stages, gates, deviations, the agent's stage machine);
              verification.md (V-stages, proof methods, the simulator-portable stack, gates, mutation);

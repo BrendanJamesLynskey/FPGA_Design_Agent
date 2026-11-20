@@ -632,3 +632,34 @@ svg .bdtick { stroke: var(--ink-3); }
   .map td:not(:has(code)) { display: none; }
   .map td::before { content: attr(data-label) ": "; font-size: .78rem; color: var(--ink-3); display: block; }
 }
+
+/* brief 117: the story pages: flow figure, evidence matrix, worked example */
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.ag text.tg { font: 600 11px var(--f-mono); letter-spacing: .06em; fill: var(--ink-3); }
+.ag .youbox { stroke-width: 2.5; }
+.ag .hwband { stroke: var(--accent); stroke-width: 2; }
+.ag .chip.hw { stroke: var(--accent); }
+.ag.flow .band { fill: var(--panel); }
+.evm { width: 100%; border-collapse: collapse; font-size: .9rem; }
+.evm th, .evm td { border: 1px solid var(--rule); padding: 6px 8px; text-align: left; vertical-align: top; }
+.evm thead th { background: var(--panel); font-size: .82rem; }
+.evm tbody th { font-weight: 500; min-width: 11em; }
+.evm .rid { font: 700 .8rem var(--f-mono); color: var(--ink-3); margin-right: .4em; }
+.evm td.ev { min-width: 5.5em; transition: opacity .35s; }
+.evm td.none { color: var(--ink-3); text-align: center; background: var(--bg); }
+.evm td.ev details { margin: 0; }
+.evm td.ev summary { cursor: pointer; display: flex; align-items: center; gap: 6px; min-height: 32px; list-style: none; }
+.evm td.ev summary::-webkit-details-marker { display: none; }
+.evm td.ev p { margin: .4em 0 0; font-size: .85rem; color: var(--ink-2); min-width: 14em; }
+.evm .mk { display: inline-flex; width: 18px; height: 18px; align-items: center; justify-content: center; border: 1.5px solid var(--ink); font: 700 .8rem var(--f-mono); }
+.evm td.pass .mk { background: var(--ink); color: var(--bg); }
+.evm td.measured .mk { background: repeating-linear-gradient(135deg, var(--panel) 0 3px, var(--ink-3) 3px 4px); color: var(--ink); }
+.evm.replaying td.ev:not(.lit) { opacity: .12; }
+.evm.replaying td.ev.lit { background: var(--accent-bg); }
+.cols .card { margin: 0; }
+.cols .card h3 { margin-top: .8em; }
+.cols .card p { font-size: .94rem; }
+@media (max-width: 520px) { .cols { grid-template-columns: minmax(0, 1fr); } }
+.evm { position: relative; } .tablewrap:has(.evm) { position: relative; }
+.evm .sw { display: none; } .evm td.ev summary { min-height: 28px; }
+@media (max-width: 520px) { .evm tbody th { min-width: 9em; } }
