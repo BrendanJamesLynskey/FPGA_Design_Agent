@@ -1,0 +1,238 @@
+,
+   "refused": {},
+   "files_written": [
+    "rtl/v2_e_udp_endpoint_top.sv"
+   ],
+   "files_changed": [
+    "rtl/v2_e_udp_endpoint_top.sv"
+   ]
+  }
+ ],
+ "per_role": {
+  "clarify": {
+   "calls": 3,
+   "turns": 9,
+   "tokens": 132876,
+   "wall_s": 155.4,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 0.5049
+  },
+  "rtl": {
+   "calls": 8,
+   "turns": 81,
+   "tokens": 2409713,
+   "wall_s": 973.9,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 1.9447
+  },
+  "model": {
+   "calls": 1,
+   "turns": 2,
+   "tokens": 27587,
+   "wall_s": 36.8,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 0.1062
+  },
+  "tests": {
+   "calls": 4,
+   "turns": 28,
+   "tokens": 1260925,
+   "wall_s": 829.2,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 2.6234
+  }
+ },
+ "per_stage": {
+  "clarify": {
+   "calls": 3,
+   "turns": 9,
+   "tokens": 132876,
+   "wall_s": 155.4,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 0.5049
+  },
+  "board-and-device-planning": {
+   "calls": 2,
+   "turns": 17,
+   "tokens": 294398,
+   "wall_s": 54.6,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 0.3011
+  },
+  "rtl-design-creation": {
+   "calls": 11,
+   "turns": 94,
+   "tokens": 3403827,
+   "wall_s": 1785.3,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 4.3732
+  }
+ },
+ "interview": "oracle",
+ "review": "off",
+ "stages_visited": [
+  0,
+  0,
+  0,
+  1,
+  1,
+  2,
+  2,
+  2,
+  2,
+  2,
+  2,
+  2
+ ],
+ "loops": 9,
+ "rewinds": [],
+ "tokens": 3831101,
+ "cost_usd": 0.0,
+ "unreported_cost_calls": 0,
+ "turns": 120,
+ "wall_s": 3698.8,
+ "questions": {
+  "asked": 5,
+  "answered": 3,
+  "defaulted": 2,
+  "questions": [
+   {
+    "id": "q1",
+    "text": "What is the shell register map (offset, width, reset value and access of every register)?",
+    "default": "As in registers.map: DESIGN_ID 0x00, PKT_DATA 0x04, TICK 0x08, STATUS 0x0C, REPLY_LEN 0x10, REPLY_IDX 0x14, REPLY_WORD 0x18, TELE_LEN 0x1C, TELE_IDX 0x20, TELE_WORD 0x24, TAKE 0x28, all 32-bit.",
+    "reason": "The request names shell registers but gives no offsets.",
+    "answer": "IN: offset 0x00, WO, reset 0: [7:0] packet byte, [8] end flag\nSTAT: offset 0x09, RO, reset 0: [0] telemetry on, [1] busy\nRIDX: offset 0x03, RW, reset 0: [6:0] word number\nRWORD: offset 0x04, RO, reset 0: bytes 4i..4i+3 of the reply, first byte on top, zero past the end\nRLEN: offset 0x02, RO, reset 0: length in bytes of the latest reply, 0 if none\nTICK: offset 0x01, WO, reset 0: [7:0] n ticks\nTIDX: offset 0x06, RW, reset 0: [6:0] word number\nTWORD: offset 0x07, RO, reset 0: same for the telemetry frame\nTAKE: offset 0x08, WO, reset 0: any write takes the held telemetry frame\nTLEN: offset 0x05, RO, reset 0: length of the held telemetry frame, 0 if none\nshell: test shell, PROTOCOL.md 1.1\nunmapped: no register at an offset: reads 0, writes ignored (read-only registers behave the same on write)",
+    "status": "answered",
+    "by": "oracle",
+    "evidence": "IN: offset 0x00, WO, reset 0: [7:0] packet byte, [8] end flag"
+   },
+   {
+    "id": "q2",
+    "text": "The Nexys A7-100T oscillator is 100 MHz but the request says 125 MHz with an 8 ns constraint; which is meant?",
+    "default": "Use the 8 ns constraint as written, with CLKS_PER_BIT 1085.",
+    "reason": "The request is explicit about 125 MHz.",
+    "answer": "The spec settles it as 100 MHz with a 10 ns constraint, not 125 MHz with 8 ns. CLKS_PER_BIT stays 868, so the proposed default of 8 ns with CLKS_PER_BIT 1085 is not supported by the spec.",
+    "status": "answered",
+    "by": "oracle",
+    "evidence": "clock_constraint: 10 ns (100 MHz) on CLK100MHZ"
+   },
+   {
+    "id": "q3",
+    "text": "How is the last flag given through the shell?",
+    "default": "Bit 8 of PKT_DATA is the last flag.",
+    "reason": "Not stated in the request.",
+    "answer": "The end flag is bit 8 of register IN at offset 0x00 (write-only). The spec names that register IN, not PKT_DATA, so the proposed default's register name does not match the spec. Bits [7:0] carry the packet byte.",
+    "status": "answered",
+    "by": "oracle",
+    "evidence": "IN: offset 0x00, WO, reset 0: [7:0] packet byte, [8] end flag"
+   },
+   {
+    "id": "q4",
+    "text": "Does a frame falling due in the same clock a held frame is taken count as dropped?",
+    "default": "Yes, dropped, since the frame is still held at that clock.",
+    "reason": "Edge case not stated.",
+    "answer": "Yes, dropped, since the frame is still held at that clock.",
+    "status": "defaulted",
+    "by": "oracle",
+    "evidence": null
+   },
+   {
+    "id": "q5",
+    "text": "Does a tick write while a previous burst is running add to or restart the burst?",
+    "default": "Restart with the new n.",
+    "reason": "Not stated.",
+    "answer": "Restart with the new n.",
+    "status": "defaulted",
+    "by": "oracle",
+    "evidence": null
+   }
+  ]
+ },
+ "stop": "stage 2 visited more than 6 times",
+ "clean_stop": false,
+ "constants": {
+  "ran": true,
+  "blocking": [],
+  "advice": []
+ },
+ "gates_last": {
+  "clarify": true,
+  "board-and-device-planning": true,
+  "rtl-design-creation": false
+ },
+ "approvals": [
+  {
+   "n": 0,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 0,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 0,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 1,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 1,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  }
+ ],
+ "bringup": null
+}

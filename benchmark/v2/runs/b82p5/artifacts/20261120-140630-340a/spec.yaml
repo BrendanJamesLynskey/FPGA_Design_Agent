@@ -1,0 +1,519 @@
+name: v2_e_udp_endpoint
+title: UDP command and telemetry endpoint
+board: nexys_a7_100t
+part: xc7a100tcsg324-1
+top: v2_e_udp_endpoint_top
+clocks:
+- name: CLK100MHZ
+  port: CLK100MHZ
+  period_ns: 10
+  note: the request says 125 MHz with 8 ns; the answered question settles it as the
+    board 100 MHz oscillator with a 10 ns constraint
+reset:
+  name: CPU_RESETN
+  port: CPU_RESETN
+  polarity: active_low
+  note: resets everything; synchronised to the system clock
+parameters:
+  CLKS_PER_BIT: 868
+  TIMEOUT_CYCLES: 125000000
+  BUILD_STAMP: 0
+  DESIGN_ID: 1430540337
+  MAX_PAYLOAD: 8
+  NUM_REGS: 8
+  DEFAULT_PERIOD_TICKS: 100
+  MIN_PERIOD_TICKS: 4
+  REPLY_BUILD_MAX_CYCLES: 100
+  CRC_POLY: 3988292384
+  CRC_INIT: 4294967295
+ports:
+- name: CLK100MHZ
+  direction: input
+  width: 1
+  board_pin_role: system clock
+- name: CPU_RESETN
+  direction: input
+  width: 1
+  board_pin_role: CPU reset button, active low
+- name: UART_TXD_IN
+  direction: input
+  width: 1
+  board_pin_role: USB-UART, host to FPGA (test shell)
+- name: UART_RXD_OUT
+  direction: output
+  width: 1
+  board_pin_role: USB-UART, FPGA to host (test shell)
+- name: LED
+  direction: output
+  width: 16
+  board_pin_role: LED 15 down to 0, shows commands-carried-out count
+behaviour:
+  packet_format:
+  - 'Command: type (1 read, 2 write, 3 status, 4 telemetry start, 5 telemetry stop),
+    length byte (0 to 8), sequence number 2 bytes high first, payload, CRC-32 4 bytes
+    low byte first.'
+  - CRC-32 is the Ethernet CRC-32 (zlib.crc32) over all bytes before the trailer.
+  - 'Payload needed per type: read 2 (register number), write 6 (register number,
+    32-bit value high first), telemetry start 2 (period in ticks high first), status
+    0, stop 0.'
+  - Payload bytes arrive one at a time with a last flag on the final byte; the block
+    is ready for the next packet as soon as the last byte is handled.
+  registers:
+  - R0 identification 0x55445031, read only; the shell design-ID register shows the
+    same word.
+  - R1, R2, R3 scratch, read/write, 0 after reset.
+  - R4 commands carried out, read only.
+  - R5 packets refused of any kind, read only.
+  - R6 telemetry period, read only, 100 after reset.
+  - R7 ticks since reset, read only.
+  - A read of R4 or R5 returns the count as before that read was counted.
+  judging_order:
+  - '1 too long: length byte above 8, or more bytes than the length announces.'
+  - '2 too short: ends before its announced size, or before four bytes (fewer than
+    four bytes is too short whatever the bytes say).'
+  - 3 bad check.
+  - 4 unknown type (status 1).
+  - 5 wrong length for the type (status 2).
+  - 6 sequence number refused (status 4).
+  - 7 register number (status 3, number 8 or more) then access (status 5, write to
+    read-only register).
+  - Too long, too short and bad check are dropped silently with no reply.
+  - Each refused packet increments exactly one counter and the refused-packets register.
+  - A refused packet never changes a register, the last accepted number or the telemetry
+    state.
+  sequence:
+  - A number is new when (number - last accepted) mod 65536 is 1 to 32767.
+  - After reset the first packet may carry any number.
+  - A packet passing the sequence rule uses up its number even if register or access
+    then fails it (that failure is counted).
+  reply:
+  - Reply is type|0x80, status, sequence 2 bytes high first, payload length, payload,
+    CRC-32 low byte first over preceding bytes.
+  - Status 0 OK, 1 unknown type, 2 wrong length, 3 unknown register, 4 sequence refused,
+    5 write to read-only register.
+  - Read reply payload is the 4 register bytes high first.
+  - 'Status reply payload is 17 bytes: seven 16-bit counters (commands carried out,
+    bad check, too short, too long, repeated number, out-of-order number, type/length/register/access
+    errors), a 16-bit telemetry frame count, one byte telemetry-on flag.'
+  - Counters wrap at 65536 and show counts before the current command is counted.
+  - Reply is built within 100 clocks of the last byte.
+  telemetry:
+  - Start with non-zero period sets period (4 if lower); zero keeps it; switches telemetry
+    on and restarts the tick-period count.
+  - While on, a frame falls due every period-th tick.
+  - One frame held at most; a frame falling due while one is held is dropped, never
+    queued. A frame falling due in the clock a held frame is taken is dropped.
+  - 'Frame: type 0xC0, status 0, own sequence (0 first then +1), length 8, tick count
+    4 bytes, commands count 2 bytes, refused count 2 bytes, all high first, then CRC-32;
+    values as when due (uptime includes the due tick).'
+  - Frame sequence and frame count rise only when a frame is held; cleared only by
+    reset.
+  - Stop switches telemetry off and discards a held frame.
+  - Writing the take register releases the held frame.
+  time:
+  - Writing n (0 to 255) to the tick register makes n ticks, one on each of the next
+    n clocks. A write during a running burst restarts it with the new n.
+  readback:
+  - Latest reply length in bytes (0 if latest packet earned no reply); reply words
+    read via a word index i, giving bytes 4i..4i+3 with the first in the top byte,
+    zero past the end.
+  - 'Same for the held telemetry frame: length (0 if none) and words.'
+  - 'Status word: bit 0 telemetry on, bit 1 busy.'
+  - LED[15:0] shows the low 16 bits of commands carried out.
+registers:
+  map:
+  - offset: 0
+    name: IN
+    access: WO
+    reset: 0
+    bits: '[7:0] packet byte, [8] end flag'
+  - offset: 1
+    name: TICK
+    access: WO
+    reset: 0
+    bits: '[7:0] n ticks'
+  - offset: 2
+    name: RLEN
+    access: RO
+    reset: 0
+    bits: length in bytes of the latest reply, 0 if none
+  - offset: 3
+    name: RIDX
+    access: RW
+    reset: 0
+    bits: '[6:0] word number'
+  - offset: 4
+    name: RWORD
+    access: RO
+    reset: 0
+    bits: bytes 4i..4i+3 of the reply, first byte on top, zero past the end
+  - offset: 5
+    name: TLEN
+    access: RO
+    reset: 0
+    bits: length of the held telemetry frame, 0 if none
+  - offset: 6
+    name: TIDX
+    access: RW
+    reset: 0
+    bits: '[6:0] word number'
+  - offset: 7
+    name: TWORD
+    access: RO
+    reset: 0
+    bits: same for the telemetry frame
+  - offset: 8
+    name: TAKE
+    access: WO
+    reset: 0
+    bits: any write takes the held telemetry frame
+  - offset: 9
+    name: STAT
+    access: RO
+    reset: 0
+    bits: '[0] telemetry on, [1] busy'
+timing:
+  clock_period_ns: 10
+  uart_baud: 115200
+  latency:
+    reply_build: at most 100 clocks from the last packet byte to reply ready
+    tick_write: n ticks on the n clocks after the write
+    ready: ready for the next packet as soon as the last byte is handled
+resources_expected:
+  luts: 1500
+  ffs: 1500
+  bram: 0
+  dsp: 0
+assumptions:
+- text: Telemetry period is counted in ticks and ticks come only from the tick register.
+  reason: Time reaches the block only through the tick register.
+- text: A frame falls due when the tick count since start reaches a multiple of the
+    period.
+  reason: '''every period-th tick'' after restart of the count.'
+- text: Telemetry values are snapshotted when the frame falls due.
+  reason: Stated in the request.
+- text: Packets are fed one at a time with no overlap with reply building.
+  reason: The request promises no new packet before the reply is built.
+- text: Part is xc7a100tcsg324-1.
+  reason: Standard part of the Nexys A7-100T.
+open_questions: []
+requirements:
+- id: REQ-01
+  text: A packet with length byte above 8 or more bytes than announced gets no reply.
+  proof:
+  - simulation
+  - formal
+- id: REQ-02
+  text: A packet ending before its announced size or before four bytes gets no reply.
+  proof:
+  - simulation
+- id: REQ-03
+  text: A packet with a wrong CRC-32 gets no reply.
+  proof:
+  - simulation
+- id: REQ-04
+  text: The CRC-32 equals zlib.crc32 over the bytes before the trailer, sent low byte
+    first.
+  proof:
+  - simulation
+- id: REQ-05
+  text: An unknown type gets a reply with status 1.
+  proof:
+  - simulation
+- id: REQ-06
+  text: A known type with a wrong payload length gets a reply with status 2.
+  proof:
+  - simulation
+- id: REQ-07
+  text: A sequence number with (n - last) mod 65536 outside 1 to 32767 gets status
+    4.
+  proof:
+  - simulation
+  - formal
+- id: REQ-08
+  text: The first packet after reset is accepted with any sequence number.
+  proof:
+  - simulation
+- id: REQ-09
+  text: A register number of 8 or more gets status 3.
+  proof:
+  - simulation
+- id: REQ-10
+  text: A write to register 0, 4, 5, 6 or 7 gets status 5.
+  proof:
+  - simulation
+- id: REQ-11
+  text: A packet that passes the sequence rule updates the last accepted number even
+    when status is 3 or 5.
+  proof:
+  - simulation
+  - formal
+- id: REQ-12
+  text: A refused packet never changes a register, the last accepted number or the
+    telemetry state.
+  proof:
+  - formal
+  - simulation
+- id: REQ-13
+  text: Registers 1 to 3 read 0 after reset.
+  proof:
+  - simulation
+- id: REQ-14
+  text: Register 0 reads 0x55445031.
+  proof:
+  - simulation
+- id: REQ-15
+  text: A read of register 4 or 5 returns the count as before that read was counted.
+  proof:
+  - simulation
+- id: REQ-16
+  text: Register 6 reads 100 after reset.
+  proof:
+  - simulation
+- id: REQ-17
+  text: Register 7 counts ticks since reset.
+  proof:
+  - simulation
+- id: REQ-18
+  text: Writing n (0 to 255) to the tick register makes exactly n ticks on the next
+    n clocks.
+  proof:
+  - simulation
+  - formal
+- id: REQ-19
+  text: A reply carries the fields type|0x80, status, sequence number, length, payload,
+    CRC-32 low byte first, in that order.
+  proof:
+  - simulation
+- id: REQ-20
+  text: A status reply has a 17-byte payload.
+  proof:
+  - simulation
+- id: REQ-21
+  text: Counters wrap at 65536.
+  proof:
+  - simulation
+- id: REQ-22
+  text: Each refused packet increments exactly one counter.
+  proof:
+  - simulation
+  - formal
+- id: REQ-23
+  text: The reply is built within 100 clocks of the last packet byte.
+  proof:
+  - simulation
+  - analysis
+- id: REQ-24
+  text: Telemetry start with period 0 keeps the period.
+  proof:
+  - simulation
+- id: REQ-25
+  text: Telemetry start switches telemetry on.
+  proof:
+  - simulation
+- id: REQ-26
+  text: While on, a frame falls due every period-th tick.
+  proof:
+  - simulation
+- id: REQ-27
+  text: A frame falling due while one is held is dropped.
+  proof:
+  - simulation
+  - formal
+- id: REQ-28
+  text: A telemetry frame has type 0xC0, status 0, length 8, then tick count, commands
+    count, refused count as when due, then CRC-32.
+  proof:
+  - simulation
+- id: REQ-29
+  text: The first telemetry frame has sequence number 0.
+  proof:
+  - simulation
+- id: REQ-30
+  text: Telemetry stop switches telemetry off.
+  proof:
+  - simulation
+- id: REQ-31
+  text: Writing the take register releases the held frame.
+  proof:
+  - simulation
+- id: REQ-32
+  text: Reply length reads 0 when the latest packet earned no reply.
+  proof:
+  - simulation
+- id: REQ-33
+  text: Reading reply word i gives bytes 4i to 4i+3 with the first in the top byte.
+  proof:
+  - simulation
+- id: REQ-34
+  text: The telemetry frame length reads 0 when none is held.
+  proof:
+  - simulation
+- id: REQ-35
+  text: Status word bit 0 is telemetry on.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-36
+  text: LED[15:0] shows the low 16 bits of the commands-carried-out count.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-37
+  text: CPU_RESETN low resets all state.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-38
+  text: The design meets timing on the 10 ns clock.
+  proof:
+  - analysis
+- id: REQ-39
+  text: The block accepts the next packet right after the last-flag byte is handled.
+  proof:
+  - simulation
+- id: REQ-40
+  text: A telemetry start period of 1, 2 or 3 sets the period to 4.
+  proof:
+  - simulation
+- id: REQ-41
+  text: A telemetry start period above 3 sets that value as the period.
+  proof:
+  - simulation
+- id: REQ-42
+  text: Registers 1 to 3 hold a written 32-bit value.
+  proof:
+  - simulation
+- id: REQ-43
+  text: The shell design-ID register shows 0x55445031.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-44
+  text: Counters in a reply show the counts before the current command is counted.
+  proof:
+  - simulation
+- id: REQ-45
+  text: The telemetry frame sequence is cleared only by reset.
+  proof:
+  - simulation
+- id: REQ-46
+  text: Status word bit 1 is busy.
+  proof:
+  - simulation
+  - hardware
+- id: REQ-47
+  text: A sequence number refused by the sequence rule changes no state.
+  proof:
+  - simulation
+  - formal
+- id: REQ-48
+  text: A packet ending before its announced size increments the too-short counter
+    once.
+  proof:
+  - simulation
+- id: REQ-49
+  text: A packet with a length byte above 8 increments the too-long counter once.
+  proof:
+  - simulation
+- id: REQ-50
+  text: A packet with a wrong CRC-32 increments the bad-check counter once.
+  proof:
+  - simulation
+- id: REQ-51
+  text: Each refused packet increments the refused-packets register once.
+  proof:
+  - simulation
+  - formal
+- id: REQ-52
+  text: Telemetry start restarts the period count.
+  proof:
+  - simulation
+- id: REQ-53
+  text: Telemetry stop discards a held frame.
+  proof:
+  - simulation
+- id: REQ-54
+  text: A dropped frame leaves the frame sequence unchanged.
+  proof:
+  - simulation
+  - formal
+- id: REQ-55
+  text: A dropped frame leaves the telemetry frame count unchanged.
+  proof:
+  - simulation
+  - formal
+- id: REQ-56
+  text: Reply word bytes past the end of the reply read as zero.
+  proof:
+  - simulation
+- id: REQ-57
+  text: The frame sequence rises by one per held frame.
+  proof:
+  - simulation
+- id: REQ-58
+  text: A status reply carries a 16-bit telemetry frame count.
+  proof:
+  - simulation
+- id: REQ-59
+  text: A status reply ends with one byte that is 1 if telemetry is on.
+  proof:
+  - simulation
+resolved_questions:
+- question: What is the shell register map (offset, width, reset value and access
+    of every register)?
+  answer: 'IN: offset 0x00, WO, reset 0: [7:0] packet byte, [8] end flag
+
+    STAT: offset 0x09, RO, reset 0: [0] telemetry on, [1] busy
+
+    RIDX: offset 0x03, RW, reset 0: [6:0] word number
+
+    RWORD: offset 0x04, RO, reset 0: bytes 4i..4i+3 of the reply, first byte on top,
+    zero past the end
+
+    RLEN: offset 0x02, RO, reset 0: length in bytes of the latest reply, 0 if none
+
+    TICK: offset 0x01, WO, reset 0: [7:0] n ticks
+
+    TIDX: offset 0x06, RW, reset 0: [6:0] word number
+
+    TWORD: offset 0x07, RO, reset 0: same for the telemetry frame
+
+    TAKE: offset 0x08, WO, reset 0: any write takes the held telemetry frame
+
+    TLEN: offset 0x05, RO, reset 0: length of the held telemetry frame, 0 if none
+
+    shell: test shell, PROTOCOL.md 1.1
+
+    unmapped: no register at an offset: reads 0, writes ignored (read-only registers
+    behave the same on write)'
+  status: answered
+  by: oracle
+  default_reason: The request names shell registers but gives no offsets.
+- question: The Nexys A7-100T oscillator is 100 MHz but the request says 125 MHz with
+    an 8 ns constraint; which is meant?
+  answer: The spec settles it as 100 MHz with a 10 ns constraint, not 125 MHz with
+    8 ns. CLKS_PER_BIT stays 868, so the proposed default of 8 ns with CLKS_PER_BIT
+    1085 is not supported by the spec.
+  status: answered
+  by: oracle
+  default_reason: The request is explicit about 125 MHz.
+- question: How is the last flag given through the shell?
+  answer: The end flag is bit 8 of register IN at offset 0x00 (write-only). The spec
+    names that register IN, not PKT_DATA, so the proposed default's register name
+    does not match the spec. Bits [7:0] carry the packet byte.
+  status: answered
+  by: oracle
+  default_reason: Not stated in the request.
+- question: Does a frame falling due in the same clock a held frame is taken count
+    as dropped?
+  answer: Yes, dropped, since the frame is still held at that clock.
+  status: defaulted
+  by: oracle
+  default_reason: Edge case not stated.
+- question: Does a tick write while a previous burst is running add to or restart
+    the burst?
+  answer: Restart with the new n.
+  status: defaulted
+  by: oracle
+  default_reason: Not stated.
