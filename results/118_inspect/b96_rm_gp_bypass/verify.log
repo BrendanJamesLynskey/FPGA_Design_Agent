@@ -1,0 +1,578 @@
+Running as unit: run-rbd6ab6317d1b4902b713d338f476cbe2.scope; invocation ID: badfd4ab078844aa9ba0ccf24420b921
+INFO: [Common 17-3922] A valid Vivado Design Suite BASIC license has been detected. Your current license is active and will expire on 10-nov-2027.
+
+****** Vivado v2026.1 (64-bit)
+  **** SW Build 6511674 on Tue Jun 16 11:01:26 MDT 2026
+  **** IP Build 6504888 on Tue Jun 09 09:05:25 MDT 2026
+  **** SharedData Build 6501428 on Mon Jun 08 17:34:18 MDT 2026
+  **** Start of session at: Fri Nov 20 20:06:06 2026
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+    ** Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+
+source <worktree>/designs/b96_kr260_10g/rm_gp_bypass/build/base/inspect/verify.tcl
+# open_project {<worktree>/designs/b96_kr260_10g/rm_gp_bypass/build/base/inspect/vivado_project/rm_gp_bypass_base_86037ce1.xpr}
+INFO: [filemgmt 56-3] Default IP Output Path : Could not find the directory '<worktree>/designs/b96_kr260_10g/rm_gp_bypass/build/base/inspect/vivado_project/rm_gp_bypass_base_86037ce1.gen/sources_1'.
+Scanning sources...
+Finished scanning sources
+WARNING: [Project 1-5713] Board part '' set for the project  is not found. BoardPart property will be unset. Please select board from latest repo build 
+INFO: [IP_Flow 19-234] Refreshing IP repositories
+INFO: [IP_Flow 19-1704] No user IP repositories specified
+INFO: [IP_Flow 19-2313] Loaded Vivado IP repository '~/Xilinx/2026.1/data/ip'.
+open_project: Time (s): cpu = 00:00:22 ; elapsed = 00:00:05 . Memory (MB): peak = 1759.734 ; gain = 289.434 ; free physical = 2629 ; free virtual = 21399
+# puts "INSPECT-VERIFY project [current_project] top=[get_property top [current_fileset]] files=[llength [get_files -quiet]] sims=[llength [get_filesets -filter {FILESET_TYPE==SimulationSrcs}]]"
+INSPECT-VERIFY project rm_gp_bypass_base_86037ce1 top=kr260_10g_top files=71 sims=8
+# if {[catch {synth_design -rtl -rtl_skip_ip -name rtl_1} e]} { puts "INSPECT-VERIFY rtl FAIL $e" } else { puts "INSPECT-VERIFY rtl OK cells=[llength [get_cells -hier -filter {IS_PRIMITIVE==0} -quiet]]"; close_design }
+Command: synth_design -rtl -rtl_skip_ip -name rtl_1
+Starting synth_design
+Using part: xck26-sfvc784-2LV-c
+Top: kr260_10g_top
+INFO: [Device 21-403] Loading part xck26-sfvc784-2LV-c
+INFO: [Designutils 20-5008] Incremental synthesis strategy default
+INFO: [Synth 8-7079] Multithreading enabled for synth_design using a maximum of 7 processes.
+INFO: [Synth 8-7078] Launching helper process for spawning children vivado processes
+INFO: [Synth 8-7075] Helper process launched with PID 1548239
+---------------------------------------------------------------------------------
+Starting RTL Elaboration : Time (s): cpu = 00:00:06 ; elapsed = 00:00:06 . Memory (MB): peak = 2956.539 ; gain = 167.852 ; free physical = 1578 ; free virtual = 20226
+---------------------------------------------------------------------------------
+WARNING: [Synth 8-6901] identifier 'm_to' is used before its declaration [<worktree>/designs/b96_kr260_10g/rtl/es_ctrl.sv:58]
+WARNING: [Synth 8-6901] identifier 'm_to' is used before its declaration [<worktree>/designs/b96_kr260_10g/rtl/es_ctrl.sv:59]
+WARNING: [Synth 8-6901] identifier 'm_to' is used before its declaration [<worktree>/designs/b96_kr260_10g/rtl/es_ctrl.sv:68]
+INFO: [Synth 8-6157] synthesizing module 'kr260_10g_top' [<worktree>/designs/b96_kr260_10g/rtl/kr260_10g_top.sv:7]
+	Parameter BUILD_STAMP bound to: 32'b10000110000000110111110011100001 
+	Parameter NEAR_END bound to: 1'b0 
+	Parameter TRADE bound to: 1'b1 
+	Parameter RATE_MATCH bound to: 1'b1 
+	Parameter RM_OWN bound to: 1'b1 
+INFO: [Synth 8-6157] synthesizing module 'MMCME4_BASE' [/opt/Xilinx/2026.1/Vivado/scripts/rt/data/unisim_comp.v:96244]
+	Parameter CLKFBOUT_MULT_F bound to: 4.000000e+01 - type: double 
+	Parameter CLKIN1_PERIOD bound to: 4.000000e+01 - type: double 
+	Parameter CLKOUT0_DIVIDE_F bound to: 1.000000e+01 - type: double 
+	Parameter DIVCLK_DIVIDE bound to: 1 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'MMCME4_BASE' (0#1) [/opt/Xilinx/2026.1/Vivado/scripts/rt/data/unisim_comp.v:96244]
+INFO: [Synth 8-6157] synthesizing module 'BUFG' [/opt/Xilinx/2026.1/Vivado/scripts/rt/data/unisim_comp.v:2678]
+INFO: [Synth 8-6155] done synthesizing module 'BUFG' (0#1) [/opt/Xilinx/2026.1/Vivado/scripts/rt/data/unisim_comp.v:2678]
+INFO: [Synth 8-6157] synthesizing module 'IBUFDS_GTE4' [/opt/Xilinx/2026.1/Vivado/scripts/rt/data/unisim_comp.v:83057]
+	Parameter REFCLK_EN_TX_PATH bound to: 1'b0 
+	Parameter REFCLK_HROW_CK_SEL bound to: 2'b00 
+	Parameter REFCLK_ICNTL_RX bound to: 2'b00 
+INFO: [Synth 8-6155] done synthesizing module 'IBUFDS_GTE4' (0#1) [/opt/Xilinx/2026.1/Vivado/scripts/rt/data/unisim_comp.v:83057]
+INFO: [Synth 8-6157] synthesizing module 'xpm_cdc_sync_rst' [~/Xilinx/2026.1/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv:1059]
+	Parameter DEST_SYNC_FF bound to: 4 - type: integer 
+	Parameter INIT bound to: 32'sb00000000000000000000000000000001 
+	Parameter INIT_SYNC_FF bound to: 0 - type: integer 
+	Parameter SIM_ASSERT_CHK bound to: 1 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'xpm_cdc_sync_rst' (0#1) [~/Xilinx/2026.1/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv:1059]
+INFO: [Synth 8-6157] synthesizing module 'SYSMONE4' [/opt/Xilinx/2026.1/Vivado/scripts/rt/data/unisim_comp.v:171339]
+	Parameter SIM_DEVICE bound to: ZYNQ_ULTRASCALE - type: string 
+	Parameter SIM_MONITOR_FILE bound to: none - type: string 
+INFO: [Synth 8-6155] done synthesizing module 'SYSMONE4' (0#1) [/opt/Xilinx/2026.1/Vivado/scripts/rt/data/unisim_comp.v:171339]
+INFO: [Synth 8-6157] synthesizing module 'jtag_bus' [<worktree>/designs/b58a_trigger/rtl/jtag_bus.sv:11]
+INFO: [Synth 8-6157] synthesizing module 'BSCANE2' [/opt/Xilinx/2026.1/Vivado/scripts/rt/data/unisim_comp.v:2479]
+	Parameter JTAG_CHAIN bound to: 4 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'BSCANE2' (0#1) [/opt/Xilinx/2026.1/Vivado/scripts/rt/data/unisim_comp.v:2479]
+INFO: [Synth 8-6157] synthesizing module 'xpm_cdc_single' [~/Xilinx/2026.1/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv:152]
+	Parameter DEST_SYNC_FF bound to: 3 - type: integer 
+	Parameter INIT_SYNC_FF bound to: 0 - type: integer 
+	Parameter SIM_ASSERT_CHK bound to: 1 - type: integer 
+	Parameter SRC_INPUT_REG bound to: 0 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'xpm_cdc_single' (0#1) [~/Xilinx/2026.1/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv:152]
+INFO: [Synth 8-6157] synthesizing module 'xpm_cdc_array_single' [~/Xilinx/2026.1/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv:903]
+	Parameter DEST_SYNC_FF bound to: 2 - type: integer 
+	Parameter INIT_SYNC_FF bound to: 0 - type: integer 
+	Parameter SIM_ASSERT_CHK bound to: 1 - type: integer 
+	Parameter SRC_INPUT_REG bound to: 0 - type: integer 
+	Parameter WIDTH bound to: 46 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'xpm_cdc_array_single' (0#1) [~/Xilinx/2026.1/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv:903]
+INFO: [Synth 8-6157] synthesizing module 'xpm_cdc_array_single__parameterized0' [~/Xilinx/2026.1/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv:903]
+	Parameter DEST_SYNC_FF bound to: 2 - type: integer 
+	Parameter INIT_SYNC_FF bound to: 0 - type: integer 
+	Parameter SIM_ASSERT_CHK bound to: 1 - type: integer 
+	Parameter SRC_INPUT_REG bound to: 1 - type: integer 
+	Parameter WIDTH bound to: 40 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'xpm_cdc_array_single__parameterized0' (0#1) [~/Xilinx/2026.1/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv:903]
+INFO: [Synth 8-6155] done synthesizing module 'jtag_bus' (0#1) [<worktree>/designs/b58a_trigger/rtl/jtag_bus.sv:11]
+INFO: [Synth 8-6157] synthesizing module 'b96_core' [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/rtl/b96_core.sv:18]
+	Parameter BUILD_STAMP bound to: 32'b10000110000000110111110011100001 
+	Parameter NEAR_END bound to: 1'b0 
+	Parameter TRADE bound to: 1'b1 
+	Parameter RATE_MATCH bound to: 1'b1 
+	Parameter EYESCAN bound to: 1'b0 
+	Parameter GO_REG bound to: 1'b1 
+	Parameter RM_DIRECT bound to: 1'b0 
+	Parameter RM_OWN bound to: 1'b1 
+INFO: [Synth 8-6157] synthesizing module 'rx_path' [<worktree>/designs/b96_kr260_10g/rtl/rx_path.sv:10]
+	Parameter RM_DIRECT bound to: 1'b0 
+	Parameter RM_OWN bound to: 1'b1 
+INFO: [Synth 8-6157] synthesizing module 'rate_match_gp' [<worktree>/designs/b96_kr260_10g/rtl/rate_match_gp.sv:25]
+	Parameter ENT_SYNC bound to: 1'b1 
+INFO: [Synth 8-6157] synthesizing module 'xpm_cdc_array_single__parameterized1' [~/Xilinx/2026.1/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv:903]
+	Parameter DEST_SYNC_FF bound to: 2 - type: integer 
+	Parameter INIT_SYNC_FF bound to: 0 - type: integer 
+	Parameter SIM_ASSERT_CHK bound to: 1 - type: integer 
+	Parameter SRC_INPUT_REG bound to: 0 - type: integer 
+	Parameter WIDTH bound to: 74 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'xpm_cdc_array_single__parameterized1' (0#1) [~/Xilinx/2026.1/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv:903]
+INFO: [Synth 8-6157] synthesizing module 'xpm_cdc_gray' [~/Xilinx/2026.1/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv:283]
+	Parameter DEST_SYNC_FF bound to: 3 - type: integer 
+	Parameter INIT_SYNC_FF bound to: 0 - type: integer 
+	Parameter REG_OUTPUT bound to: 0 - type: integer 
+	Parameter SIM_ASSERT_CHK bound to: 1 - type: integer 
+	Parameter SIM_LOSSLESS_GRAY_CHK bound to: 0 - type: integer 
+	Parameter WIDTH bound to: 5 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'xpm_cdc_gray' (0#1) [~/Xilinx/2026.1/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv:283]
+INFO: [Synth 8-6157] synthesizing module 'xpm_cdc_gray__parameterized0' [~/Xilinx/2026.1/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv:283]
+	Parameter DEST_SYNC_FF bound to: 2 - type: integer 
+	Parameter INIT_SYNC_FF bound to: 0 - type: integer 
+	Parameter REG_OUTPUT bound to: 0 - type: integer 
+	Parameter SIM_ASSERT_CHK bound to: 1 - type: integer 
+	Parameter SIM_LOSSLESS_GRAY_CHK bound to: 0 - type: integer 
+	Parameter WIDTH bound to: 5 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'xpm_cdc_gray__parameterized0' (0#1) [~/Xilinx/2026.1/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv:283]
+INFO: [Synth 8-6157] synthesizing module 'xpm_cdc_single__parameterized0' [~/Xilinx/2026.1/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv:152]
+	Parameter DEST_SYNC_FF bound to: 2 - type: integer 
+	Parameter INIT_SYNC_FF bound to: 0 - type: integer 
+	Parameter SIM_ASSERT_CHK bound to: 1 - type: integer 
+	Parameter SRC_INPUT_REG bound to: 0 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'xpm_cdc_single__parameterized0' (0#1) [~/Xilinx/2026.1/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv:152]
+INFO: [Synth 8-6155] done synthesizing module 'rate_match_gp' (0#1) [<worktree>/designs/b96_kr260_10g/rtl/rate_match_gp.sv:25]
+INFO: [Synth 8-6157] synthesizing module 'pcs_rx' [<worktree>/designs/b96_kr260_10g/rtl/pcs_rx.sv:9]
+INFO: [Synth 8-6155] done synthesizing module 'pcs_rx' (0#1) [<worktree>/designs/b96_kr260_10g/rtl/pcs_rx.sv:9]
+INFO: [Synth 8-6157] synthesizing module 'mac64_rx' [<worktree>/designs/b96_kr260_10g/rtl/mac64_rx.sv:8]
+INFO: [Synth 8-6155] done synthesizing module 'mac64_rx' (0#1) [<worktree>/designs/b96_kr260_10g/rtl/mac64_rx.sv:8]
+INFO: [Synth 8-6157] synthesizing module 'trade64' [<worktree>/designs/b96_kr260_10g/rtl/trade64.sv:8]
+INFO: [Synth 8-6155] done synthesizing module 'trade64' (0#1) [<worktree>/designs/b96_kr260_10g/rtl/trade64.sv:8]
+INFO: [Synth 8-6157] synthesizing module 'xpm_cdc_gray__parameterized1' [~/Xilinx/2026.1/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv:283]
+	Parameter DEST_SYNC_FF bound to: 2 - type: integer 
+	Parameter INIT_SYNC_FF bound to: 0 - type: integer 
+	Parameter REG_OUTPUT bound to: 1 - type: integer 
+	Parameter SIM_ASSERT_CHK bound to: 1 - type: integer 
+	Parameter SIM_LOSSLESS_GRAY_CHK bound to: 0 - type: integer 
+	Parameter WIDTH bound to: 32 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'xpm_cdc_gray__parameterized1' (0#1) [~/Xilinx/2026.1/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv:283]
+INFO: [Synth 8-6155] done synthesizing module 'rx_path' (0#1) [<worktree>/designs/b96_kr260_10g/rtl/rx_path.sv:10]
+INFO: [Synth 8-6157] synthesizing module 'tx_path' [<worktree>/designs/b96_kr260_10g/rtl/tx_path.sv:10]
+	Parameter NTXW bound to: 32'sb00000000000000000000000000011010 
+INFO: [Synth 8-6157] synthesizing module 'frame_src' [<worktree>/designs/b96_kr260_10g/rtl/frame_src.sv:10]
+INFO: [Synth 8-6155] done synthesizing module 'frame_src' (0#1) [<worktree>/designs/b96_kr260_10g/rtl/frame_src.sv:10]
+INFO: [Synth 8-6157] synthesizing module 'mac64_tx' [<worktree>/designs/b96_kr260_10g/rtl/mac64_tx.sv:10]
+INFO: [Synth 8-226] default block is never used [<worktree>/designs/b96_kr260_10g/rtl/mac64_tx.sv:61]
+INFO: [Synth 8-6155] done synthesizing module 'mac64_tx' (0#1) [<worktree>/designs/b96_kr260_10g/rtl/mac64_tx.sv:10]
+INFO: [Synth 8-6157] synthesizing module 'pcs_tx' [<worktree>/designs/b96_kr260_10g/rtl/pcs_tx.sv:7]
+INFO: [Synth 8-6155] done synthesizing module 'pcs_tx' (0#1) [<worktree>/designs/b96_kr260_10g/rtl/pcs_tx.sv:7]
+INFO: [Synth 8-6155] done synthesizing module 'tx_path' (0#1) [<worktree>/designs/b96_kr260_10g/rtl/tx_path.sv:10]
+INFO: [Synth 8-6157] synthesizing module 'hs_vec' [<worktree>/designs/b96_kr260_10g/rtl/hs_vec.sv:5]
+	Parameter W bound to: 32'sb00000000000000000000000101000000 
+INFO: [Synth 8-6157] synthesizing module 'xpm_cdc_handshake' [~/Xilinx/2026.1/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv:468]
+	Parameter DEST_EXT_HSK bound to: 1 - type: integer 
+	Parameter DEST_SYNC_FF bound to: 4 - type: integer 
+	Parameter INIT_SYNC_FF bound to: 0 - type: integer 
+	Parameter SIM_ASSERT_CHK bound to: 1 - type: integer 
+	Parameter SRC_SYNC_FF bound to: 4 - type: integer 
+	Parameter WIDTH bound to: 320 - type: integer 
+INFO: [Synth 8-6157] synthesizing module 'xpm_cdc_single__parameterized1' [~/Xilinx/2026.1/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv:152]
+INFO: [Synth 8-6155] done synthesizing module 'xpm_cdc_single__parameterized1' (0#1) [~/Xilinx/2026.1/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv:152]
+INFO: [Synth 8-6155] done synthesizing module 'xpm_cdc_handshake' (0#1) [~/Xilinx/2026.1/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv:468]
+INFO: [Synth 8-6155] done synthesizing module 'hs_vec' (0#1) [<worktree>/designs/b96_kr260_10g/rtl/hs_vec.sv:5]
+INFO: [Synth 8-6157] synthesizing module 'hs_vec__parameterized0' [<worktree>/designs/b96_kr260_10g/rtl/hs_vec.sv:5]
+	Parameter W bound to: 32'sb00000000000000000000001001100000 
+INFO: [Synth 8-6157] synthesizing module 'xpm_cdc_handshake__parameterized0' [~/Xilinx/2026.1/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv:468]
+	Parameter DEST_EXT_HSK bound to: 1 - type: integer 
+	Parameter DEST_SYNC_FF bound to: 4 - type: integer 
+	Parameter INIT_SYNC_FF bound to: 0 - type: integer 
+	Parameter SIM_ASSERT_CHK bound to: 1 - type: integer 
+	Parameter SRC_SYNC_FF bound to: 4 - type: integer 
+	Parameter WIDTH bound to: 608 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'xpm_cdc_handshake__parameterized0' (0#1) [~/Xilinx/2026.1/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv:468]
+INFO: [Synth 8-6155] done synthesizing module 'hs_vec__parameterized0' (0#1) [<worktree>/designs/b96_kr260_10g/rtl/hs_vec.sv:5]
+INFO: [Synth 8-6157] synthesizing module 'gth_wiz' [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/build/base/ip/gth_wiz/synth/gth_wiz.v:53]
+INFO: [Synth 8-6157] synthesizing module 'gth_wiz_gtwizard_top' [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/build/base/ip/gth_wiz/synth/gth_wiz_gtwizard_top.v:173]
+INFO: [Synth 8-6157] synthesizing module 'gth_wiz_gtwizard_gthe4' [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/build/base/ip/gth_wiz/synth/gth_wiz_gtwizard_gthe4.v:141]
+INFO: [Synth 8-6157] synthesizing module 'gth_wiz_gthe4_common_wrapper' [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/build/base/ip/gth_wiz/synth/gth_wiz_gthe4_common_wrapper.v:56]
+INFO: [Synth 8-6157] synthesizing module 'gtwizard_ultrascale_v1_7_23_gthe4_common' [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/build/base/ip/gth_wiz/synth/gtwizard_ultrascale_v1_7_gthe4_common.v:53]
+INFO: [Synth 8-6157] synthesizing module 'GTHE4_COMMON' [/opt/Xilinx/2026.1/Vivado/scripts/rt/data/unisim_comp.v:55036]
+INFO: [Synth 8-6155] done synthesizing module 'GTHE4_COMMON' (0#1) [/opt/Xilinx/2026.1/Vivado/scripts/rt/data/unisim_comp.v:55036]
+INFO: [Synth 8-6155] done synthesizing module 'gtwizard_ultrascale_v1_7_23_gthe4_common' (0#1) [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/build/base/ip/gth_wiz/synth/gtwizard_ultrascale_v1_7_gthe4_common.v:53]
+INFO: [Synth 8-6155] done synthesizing module 'gth_wiz_gthe4_common_wrapper' (0#1) [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/build/base/ip/gth_wiz/synth/gth_wiz_gthe4_common_wrapper.v:56]
+INFO: [Synth 8-6157] synthesizing module 'gth_wiz_gthe4_channel_wrapper' [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/build/base/ip/gth_wiz/synth/gth_wiz_gthe4_channel_wrapper.v:56]
+INFO: [Synth 8-6157] synthesizing module 'gtwizard_ultrascale_v1_7_23_gthe4_channel' [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/build/base/ip/gth_wiz/synth/gtwizard_ultrascale_v1_7_gthe4_channel.v:53]
+INFO: [Synth 8-6157] synthesizing module 'GTHE4_CHANNEL' [/opt/Xilinx/2026.1/Vivado/scripts/rt/data/unisim_comp.v:53844]
+INFO: [Synth 8-6155] done synthesizing module 'GTHE4_CHANNEL' (0#1) [/opt/Xilinx/2026.1/Vivado/scripts/rt/data/unisim_comp.v:53844]
+INFO: [Synth 8-6155] done synthesizing module 'gtwizard_ultrascale_v1_7_23_gthe4_channel' (0#1) [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/build/base/ip/gth_wiz/synth/gtwizard_ultrascale_v1_7_gthe4_channel.v:53]
+INFO: [Synth 8-6155] done synthesizing module 'gth_wiz_gthe4_channel_wrapper' (0#1) [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/build/base/ip/gth_wiz/synth/gth_wiz_gthe4_channel_wrapper.v:56]
+INFO: [Synth 8-6157] synthesizing module 'gtwizard_ultrascale_v1_7_23_gthe4_delay_powergood' [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/build/base/ip/gth_wiz/hdl/gtwizard_ultrascale_v1_7_gthe4_delay_powergood.v:53]
+INFO: [Synth 8-226] default block is never used [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/build/base/ip/gth_wiz/hdl/gtwizard_ultrascale_v1_7_gthe4_delay_powergood.v:136]
+INFO: [Synth 8-6155] done synthesizing module 'gtwizard_ultrascale_v1_7_23_gthe4_delay_powergood' (0#1) [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/build/base/ip/gth_wiz/hdl/gtwizard_ultrascale_v1_7_gthe4_delay_powergood.v:53]
+INFO: [Synth 8-6157] synthesizing module 'gtwizard_ultrascale_v1_7_23_gtwiz_userclk_tx' [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/build/base/ip/gth_wiz/hdl/gtwizard_ultrascale_v1_7_gtwiz_userclk_tx.v:53]
+INFO: [Synth 8-6157] synthesizing module 'BUFG_GT' [/opt/Xilinx/2026.1/Vivado/scripts/rt/data/unisim_comp.v:2855]
+INFO: [Synth 8-6155] done synthesizing module 'BUFG_GT' (0#1) [/opt/Xilinx/2026.1/Vivado/scripts/rt/data/unisim_comp.v:2855]
+INFO: [Synth 8-6155] done synthesizing module 'gtwizard_ultrascale_v1_7_23_gtwiz_userclk_tx' (0#1) [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/build/base/ip/gth_wiz/hdl/gtwizard_ultrascale_v1_7_gtwiz_userclk_tx.v:53]
+INFO: [Synth 8-6157] synthesizing module 'gtwizard_ultrascale_v1_7_23_gtwiz_userclk_rx' [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/build/base/ip/gth_wiz/hdl/gtwizard_ultrascale_v1_7_gtwiz_userclk_rx.v:53]
+INFO: [Synth 8-6155] done synthesizing module 'gtwizard_ultrascale_v1_7_23_gtwiz_userclk_rx' (0#1) [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/build/base/ip/gth_wiz/hdl/gtwizard_ultrascale_v1_7_gtwiz_userclk_rx.v:53]
+INFO: [Synth 8-6157] synthesizing module 'gtwizard_ultrascale_v1_7_23_gtwiz_buffbypass_tx' [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/build/base/ip/gth_wiz/hdl/gtwizard_ultrascale_v1_7_gtwiz_buffbypass_tx.v:53]
+INFO: [Synth 8-6157] synthesizing module 'gtwizard_ultrascale_v1_7_23_reset_inv_synchronizer' [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/build/base/ip/gth_wiz/hdl/gtwizard_ultrascale_v1_7_reset_inv_sync.v:53]
+INFO: [Synth 8-6155] done synthesizing module 'gtwizard_ultrascale_v1_7_23_reset_inv_synchronizer' (0#1) [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/build/base/ip/gth_wiz/hdl/gtwizard_ultrascale_v1_7_reset_inv_sync.v:53]
+INFO: [Synth 8-6157] synthesizing module 'gtwizard_ultrascale_v1_7_23_bit_synchronizer' [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/build/base/ip/gth_wiz/hdl/gtwizard_ultrascale_v1_7_bit_sync.v:53]
+INFO: [Synth 8-6155] done synthesizing module 'gtwizard_ultrascale_v1_7_23_bit_synchronizer' (0#1) [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/build/base/ip/gth_wiz/hdl/gtwizard_ultrascale_v1_7_bit_sync.v:53]
+INFO: [Synth 8-6155] done synthesizing module 'gtwizard_ultrascale_v1_7_23_gtwiz_buffbypass_tx' (0#1) [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/build/base/ip/gth_wiz/hdl/gtwizard_ultrascale_v1_7_gtwiz_buffbypass_tx.v:53]
+INFO: [Synth 8-6157] synthesizing module 'gtwizard_ultrascale_v1_7_23_gtwiz_buffbypass_rx' [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/build/base/ip/gth_wiz/hdl/gtwizard_ultrascale_v1_7_gtwiz_buffbypass_rx.v:53]
+INFO: [Synth 8-6155] done synthesizing module 'gtwizard_ultrascale_v1_7_23_gtwiz_buffbypass_rx' (0#1) [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/build/base/ip/gth_wiz/hdl/gtwizard_ultrascale_v1_7_gtwiz_buffbypass_rx.v:53]
+INFO: [Synth 8-6157] synthesizing module 'gtwizard_ultrascale_v1_7_23_gtwiz_reset' [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/build/base/ip/gth_wiz/hdl/gtwizard_ultrascale_v1_7_gtwiz_reset.v:53]
+INFO: [Synth 8-6157] synthesizing module 'gtwizard_ultrascale_v1_7_23_reset_synchronizer' [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/build/base/ip/gth_wiz/hdl/gtwizard_ultrascale_v1_7_reset_sync.v:53]
+INFO: [Synth 8-6155] done synthesizing module 'gtwizard_ultrascale_v1_7_23_reset_synchronizer' (0#1) [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/build/base/ip/gth_wiz/hdl/gtwizard_ultrascale_v1_7_reset_sync.v:53]
+INFO: [Synth 8-155] case statement is not full and has no default [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/build/base/ip/gth_wiz/hdl/gtwizard_ultrascale_v1_7_gtwiz_reset.v:162]
+INFO: [Synth 8-6155] done synthesizing module 'gtwizard_ultrascale_v1_7_23_gtwiz_reset' (0#1) [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/build/base/ip/gth_wiz/hdl/gtwizard_ultrascale_v1_7_gtwiz_reset.v:53]
+INFO: [Synth 8-6157] synthesizing module 'gtwizard_ultrascale_v1_7_23_gtwiz_userdata_tx' [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/build/base/ip/gth_wiz/hdl/gtwizard_ultrascale_v1_7_gtwiz_userdata_tx.v:53]
+INFO: [Synth 8-6155] done synthesizing module 'gtwizard_ultrascale_v1_7_23_gtwiz_userdata_tx' (0#1) [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/build/base/ip/gth_wiz/hdl/gtwizard_ultrascale_v1_7_gtwiz_userdata_tx.v:53]
+INFO: [Synth 8-6157] synthesizing module 'gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx' [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/build/base/ip/gth_wiz/hdl/gtwizard_ultrascale_v1_7_gtwiz_userdata_rx.v:53]
+INFO: [Synth 8-6155] done synthesizing module 'gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx' (0#1) [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/build/base/ip/gth_wiz/hdl/gtwizard_ultrascale_v1_7_gtwiz_userdata_rx.v:53]
+INFO: [Synth 8-6155] done synthesizing module 'gth_wiz_gtwizard_gthe4' (0#1) [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/build/base/ip/gth_wiz/synth/gth_wiz_gtwizard_gthe4.v:141]
+INFO: [Synth 8-6155] done synthesizing module 'gth_wiz_gtwizard_top' (0#1) [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/build/base/ip/gth_wiz/synth/gth_wiz_gtwizard_top.v:173]
+INFO: [Synth 8-6155] done synthesizing module 'gth_wiz' (0#1) [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/build/base/ip/gth_wiz/synth/gth_wiz.v:53]
+INFO: [Synth 8-6157] synthesizing module 'gt_bp_ctl' [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/rtl/gt_bp_ctl.sv:16]
+	Parameter TIMEOUT_CLKS bound to: 32'sb00000000010010011100001011000000 
+	Parameter MAX_RETRIES bound to: 32'sb00000000000000000000000000000011 
+INFO: [Synth 8-6157] synthesizing module 'xpm_cdc_async_rst' [~/Xilinx/2026.1/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv:1175]
+	Parameter DEST_SYNC_FF bound to: 4 - type: integer 
+	Parameter INIT_SYNC_FF bound to: 0 - type: integer 
+	Parameter RST_ACTIVE_HIGH bound to: 0 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'xpm_cdc_async_rst' (0#1) [~/Xilinx/2026.1/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv:1175]
+INFO: [Synth 8-6157] synthesizing module 'gt_bp_gate' [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/rtl/gt_bp_gate.sv:7]
+INFO: [Synth 8-6155] done synthesizing module 'gt_bp_gate' (0#1) [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/rtl/gt_bp_gate.sv:7]
+INFO: [Synth 8-6155] done synthesizing module 'gt_bp_ctl' (0#1) [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/rtl/gt_bp_ctl.sv:16]
+INFO: [Synth 8-6157] synthesizing module 'gt_bp_ctl__parameterized0' [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/rtl/gt_bp_ctl.sv:16]
+	Parameter TIMEOUT_CLKS bound to: 32'sb00000001001111111010000101000010 
+	Parameter MAX_RETRIES bound to: 32'sb00000000000000000000000000000011 
+INFO: [Synth 8-6155] done synthesizing module 'gt_bp_ctl__parameterized0' (0#1) [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/rtl/gt_bp_ctl.sv:16]
+INFO: [Synth 8-6157] synthesizing module 'xpm_cdc_array_single__parameterized2' [~/Xilinx/2026.1/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv:903]
+	Parameter DEST_SYNC_FF bound to: 3 - type: integer 
+	Parameter INIT_SYNC_FF bound to: 0 - type: integer 
+	Parameter SIM_ASSERT_CHK bound to: 1 - type: integer 
+	Parameter SRC_INPUT_REG bound to: 1 - type: integer 
+	Parameter WIDTH bound to: 7 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'xpm_cdc_array_single__parameterized2' (0#1) [~/Xilinx/2026.1/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv:903]
+INFO: [Synth 8-6157] synthesizing module 'xpm_cdc_single__parameterized2' [~/Xilinx/2026.1/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv:152]
+	Parameter DEST_SYNC_FF bound to: 3 - type: integer 
+	Parameter INIT_SYNC_FF bound to: 0 - type: integer 
+	Parameter SIM_ASSERT_CHK bound to: 1 - type: integer 
+	Parameter SRC_INPUT_REG bound to: 1 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'xpm_cdc_single__parameterized2' (0#1) [~/Xilinx/2026.1/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv:152]
+INFO: [Synth 8-6157] synthesizing module 'xpm_cdc_single__parameterized3' [~/Xilinx/2026.1/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv:152]
+	Parameter DEST_SYNC_FF bound to: 4 - type: integer 
+	Parameter INIT_SYNC_FF bound to: 0 - type: integer 
+	Parameter SIM_ASSERT_CHK bound to: 1 - type: integer 
+	Parameter SRC_INPUT_REG bound to: 1 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'xpm_cdc_single__parameterized3' (0#1) [~/Xilinx/2026.1/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv:152]
+INFO: [Synth 8-6157] synthesizing module 'xpm_cdc_single__parameterized4' [~/Xilinx/2026.1/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv:152]
+	Parameter DEST_SYNC_FF bound to: 4 - type: integer 
+	Parameter INIT_SYNC_FF bound to: 0 - type: integer 
+	Parameter SIM_ASSERT_CHK bound to: 1 - type: integer 
+	Parameter SRC_INPUT_REG bound to: 0 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'xpm_cdc_single__parameterized4' (0#1) [~/Xilinx/2026.1/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv:152]
+INFO: [Synth 8-6157] synthesizing module 'xpm_cdc_array_single__parameterized3' [~/Xilinx/2026.1/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv:903]
+	Parameter DEST_SYNC_FF bound to: 4 - type: integer 
+	Parameter INIT_SYNC_FF bound to: 0 - type: integer 
+	Parameter SIM_ASSERT_CHK bound to: 1 - type: integer 
+	Parameter SRC_INPUT_REG bound to: 0 - type: integer 
+	Parameter WIDTH bound to: 5 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'xpm_cdc_array_single__parameterized3' (0#1) [~/Xilinx/2026.1/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv:903]
+INFO: [Synth 8-6157] synthesizing module 'hs_vec__parameterized1' [<worktree>/designs/b96_kr260_10g/rtl/hs_vec.sv:5]
+	Parameter W bound to: 32'sb00000000000000000000000110100101 
+INFO: [Synth 8-6157] synthesizing module 'xpm_cdc_handshake__parameterized1' [~/Xilinx/2026.1/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv:468]
+	Parameter DEST_EXT_HSK bound to: 1 - type: integer 
+	Parameter DEST_SYNC_FF bound to: 4 - type: integer 
+	Parameter INIT_SYNC_FF bound to: 0 - type: integer 
+	Parameter SIM_ASSERT_CHK bound to: 1 - type: integer 
+	Parameter SRC_SYNC_FF bound to: 4 - type: integer 
+	Parameter WIDTH bound to: 421 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'xpm_cdc_handshake__parameterized1' (0#1) [~/Xilinx/2026.1/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv:468]
+INFO: [Synth 8-6155] done synthesizing module 'hs_vec__parameterized1' (0#1) [<worktree>/designs/b96_kr260_10g/rtl/hs_vec.sv:5]
+INFO: [Synth 8-6157] synthesizing module 'xpm_cdc_pulse' [~/Xilinx/2026.1/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv:714]
+	Parameter DEST_SYNC_FF bound to: 3 - type: integer 
+	Parameter INIT_SYNC_FF bound to: 0 - type: integer 
+	Parameter REG_OUTPUT bound to: 1 - type: integer 
+	Parameter RST_USED bound to: 0 - type: integer 
+	Parameter SIM_ASSERT_CHK bound to: 1 - type: integer 
+INFO: [Synth 8-6157] synthesizing module 'xpm_cdc_single__parameterized5' [~/Xilinx/2026.1/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv:152]
+INFO: [Synth 8-6155] done synthesizing module 'xpm_cdc_single__parameterized5' (0#1) [~/Xilinx/2026.1/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv:152]
+INFO: [Synth 8-6155] done synthesizing module 'xpm_cdc_pulse' (0#1) [~/Xilinx/2026.1/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv:714]
+INFO: [Synth 8-6157] synthesizing module 'hs_vec__parameterized2' [<worktree>/designs/b96_kr260_10g/rtl/hs_vec.sv:5]
+	Parameter W bound to: 32'sb00000000000000000000001101000000 
+INFO: [Synth 8-6157] synthesizing module 'xpm_cdc_handshake__parameterized2' [~/Xilinx/2026.1/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv:468]
+	Parameter DEST_EXT_HSK bound to: 1 - type: integer 
+	Parameter DEST_SYNC_FF bound to: 4 - type: integer 
+	Parameter INIT_SYNC_FF bound to: 0 - type: integer 
+	Parameter SIM_ASSERT_CHK bound to: 1 - type: integer 
+	Parameter SRC_SYNC_FF bound to: 4 - type: integer 
+	Parameter WIDTH bound to: 832 - type: integer 
+INFO: [Synth 8-6155] done synthesizing module 'xpm_cdc_handshake__parameterized2' (0#1) [~/Xilinx/2026.1/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv:468]
+INFO: [Synth 8-6155] done synthesizing module 'hs_vec__parameterized2' (0#1) [<worktree>/designs/b96_kr260_10g/rtl/hs_vec.sv:5]
+INFO: [Synth 8-6155] done synthesizing module 'b96_core' (0#1) [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/rtl/b96_core.sv:18]
+INFO: [Synth 8-6155] done synthesizing module 'kr260_10g_top' (0#1) [<worktree>/designs/b96_kr260_10g/rtl/kr260_10g_top.sv:7]
+WARNING: [Synth 8-6014] Unused sequential element dest_out_bin_ff_reg was removed.  [~/Xilinx/2026.1/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv:417]
+WARNING: [Synth 8-6014] Unused sequential element dest_out_bin_ff_reg was removed.  [~/Xilinx/2026.1/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv:417]
+WARNING: [Synth 8-6014] Unused sequential element idle_run_reg was removed.  [<worktree>/designs/b96_kr260_10g/rtl/rate_match_gp.sv:121]
+WARNING: [Synth 8-6014] Unused sequential element ev_slip_reg was removed.  [<worktree>/designs/b96_kr260_10g/rtl/pcs_rx.sv:62]
+WARNING: [Synth 8-6014] Unused sequential element in_frame_reg was removed.  [<worktree>/designs/b96_kr260_10g/rtl/trade64.sv:68]
+WARNING: [Synth 8-6014] Unused sequential element dport_reg was removed.  [<worktree>/designs/b96_kr260_10g/rtl/trade64.sv:70]
+WARNING: [Synth 8-6014] Unused sequential element mside_reg was removed.  [<worktree>/designs/b96_kr260_10g/rtl/trade64.sv:70]
+WARNING: [Synth 8-6014] Unused sequential element order_pend_reg was removed.  [<worktree>/designs/b96_kr260_10g/rtl/tx_path.sv:98]
+WARNING: [Synth 8-6014] Unused sequential element start_q_reg was removed.  [<worktree>/designs/b96_kr260_10g/rtl/tx_path.sv:103]
+WARNING: [Synth 8-6014] Unused sequential element dest_req_ext_ff_reg was removed.  [~/Xilinx/2026.1/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv:623]
+WARNING: [Synth 8-6014] Unused sequential element dest_req_ext_ff_reg was removed.  [~/Xilinx/2026.1/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv:623]
+WARNING: [Synth 8-6014] Unused sequential element dest_req_ext_ff_reg was removed.  [~/Xilinx/2026.1/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv:623]
+WARNING: [Synth 8-6014] Unused sequential element dest_req_ext_ff_reg was removed.  [~/Xilinx/2026.1/data/ip/xpm/xpm_cdc/hdl/xpm_cdc.sv:623]
+WARNING: [Synth 8-6014] Unused sequential element p_snap_reg was removed.  [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/rtl/b96_core.sv:293]
+WARNING: [Synth 8-6014] Unused sequential element es_raw_rd_p_reg was removed.  [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/rtl/b96_core.sv:294]
+WARNING: [Synth 8-6014] Unused sequential element es_raw_wr_p_reg was removed.  [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/rtl/b96_core.sv:294]
+WARNING: [Synth 8-6014] Unused sequential element es_start_p_reg was removed.  [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/rtl/b96_core.sv:294]
+WARNING: [Synth 8-6014] Unused sequential element es_clr_p_reg was removed.  [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/rtl/b96_core.sv:294]
+WARNING: [Synth 8-6014] Unused sequential element es_raw_addr_reg was removed.  [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/rtl/b96_core.sv:320]
+WARNING: [Synth 8-6014] Unused sequential element es_raw_wd_reg was removed.  [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/rtl/b96_core.sv:320]
+WARNING: [Synth 8-6014] Unused sequential element pt_horz_reg was removed.  [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/rtl/b96_core.sv:320]
+WARNING: [Synth 8-6014] Unused sequential element pt_code_reg was removed.  [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/rtl/b96_core.sv:320]
+WARNING: [Synth 8-6014] Unused sequential element pt_neg_reg was removed.  [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/rtl/b96_core.sv:320]
+WARNING: [Synth 8-6014] Unused sequential element pt_ut_reg was removed.  [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/rtl/b96_core.sv:320]
+WARNING: [Synth 8-6014] Unused sequential element pt_range_reg was removed.  [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/rtl/b96_core.sv:320]
+WARNING: [Synth 8-6014] Unused sequential element pt_pre_scale_reg was removed.  [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/rtl/b96_core.sv:320]
+WARNING: [Synth 8-6014] Unused sequential element pt_tmo_clks_reg was removed.  [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/rtl/b96_core.sv:320]
+WARNING: [Synth 8-6014] Unused sequential element tx_diff_r_reg was removed.  [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/rtl/b96_core.sv:321]
+WARNING: [Synth 8-6014] Unused sequential element tx_pre_r_reg was removed.  [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/rtl/b96_core.sv:321]
+WARNING: [Synth 8-6014] Unused sequential element tx_post_r_reg was removed.  [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/rtl/b96_core.sv:321]
+WARNING: [Synth 8-6014] Unused sequential element dfelpm_r_reg was removed.  [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/rtl/b96_core.sv:321]
+WARNING: [Synth 8-7129] Port src_clk in module xpm_cdc_single__parameterized1 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port src_clk in module xpm_cdc_single__parameterized5 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port src_rst in module xpm_cdc_pulse is either unconnected or has no load
+WARNING: [Synth 8-7129] Port dest_rst in module xpm_cdc_pulse is either unconnected or has no load
+WARNING: [Synth 8-7129] Port src_clk in module xpm_cdc_single__parameterized0 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port src_clk in module xpm_cdc_single__parameterized4 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port src_clk in module xpm_cdc_array_single__parameterized3 is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[127] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[126] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[125] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[124] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[123] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[122] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[121] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[120] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[119] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[118] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[117] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[116] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[115] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[114] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[113] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[112] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[111] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[110] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[109] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[108] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[107] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[106] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[105] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[104] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[103] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[102] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[101] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[100] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[99] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[98] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[97] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[96] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[95] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[94] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[93] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[92] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[91] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[90] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[89] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[88] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[87] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[86] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[85] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[84] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[83] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[82] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[81] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[80] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[79] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[78] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[77] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[76] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[75] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[74] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[73] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[72] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[71] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[70] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[69] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[68] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[67] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[66] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[65] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxdata_in[64] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxctrl0_in[15] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxctrl0_in[14] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxctrl0_in[13] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxctrl0_in[12] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxctrl0_in[11] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxctrl0_in[10] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxctrl0_in[9] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxctrl0_in[8] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxctrl0_in[7] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxctrl0_in[6] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxctrl0_in[5] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxctrl0_in[4] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxctrl0_in[3] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxctrl0_in[2] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxctrl0_in[1] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxctrl0_in[0] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxctrl1_in[15] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxctrl1_in[14] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxctrl1_in[13] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxctrl1_in[12] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxctrl1_in[11] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxctrl1_in[10] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxctrl1_in[9] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxctrl1_in[8] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxctrl1_in[7] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxctrl1_in[6] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxctrl1_in[5] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxctrl1_in[4] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+WARNING: [Synth 8-7129] Port rxctrl1_in[3] in module gtwizard_ultrascale_v1_7_23_gtwiz_userdata_rx is either unconnected or has no load
+INFO: [Common 17-14] Message 'Synth 8-7129' appears 100 times and further instances of the messages will be disabled. Use the Tcl command set_msg_config to change the current settings.
+---------------------------------------------------------------------------------
+Finished RTL Elaboration : Time (s): cpu = 00:00:13 ; elapsed = 00:00:13 . Memory (MB): peak = 3157.477 ; gain = 368.789 ; free physical = 1293 ; free virtual = 19946
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:00:13 ; elapsed = 00:00:14 . Memory (MB): peak = 3157.477 ; gain = 368.789 ; free physical = 1283 ; free virtual = 19936
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 1 : Time (s): cpu = 00:00:13 ; elapsed = 00:00:14 . Memory (MB): peak = 3157.477 ; gain = 368.789 ; free physical = 1283 ; free virtual = 19936
+---------------------------------------------------------------------------------
+Netlist sorting complete. Time (s): cpu = 00:00:00.22 ; elapsed = 00:00:00.22 . Memory (MB): peak = 3157.484 ; gain = 0.000 ; free physical = 1367 ; free virtual = 20021
+INFO: [Netlist 29-17] Analyzing 3 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+INFO: [Project 1-570] Preparing netlist for logic optimization
+
+Processing XDC Constraints
+Initializing timing engine
+Parsing XDC File [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/build/base/ip/gth_wiz/synth/gth_wiz.xdc] for cell 'u_core/u_gt/inst'
+Finished Parsing XDC File [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/build/base/ip/gth_wiz/synth/gth_wiz.xdc] for cell 'u_core/u_gt/inst'
+INFO: [Project 1-236] Implementation specific constraints were found while reading constraint file [<worktree>/designs/b96_kr260_10g/rm_gp_bypass/build/base/ip/gth_wiz/synth/gth_wiz.xdc]. These constraints will be ignored for synthesis but will be used in implementation. Impacted constraints are listed in the file [.Xil/kr260_10g_top_propImpl.xdc].
+Resolution: To avoid this warning, move constraints listed in [.Xil/kr260_10g_top_propImpl.xdc] to another XDC file and exclude this new file from synthesis with the used_in_synthesis property (File Properties dialog in GUI) and re-run elaboration/synthesis.
+Parsing XDC File [<worktree>/designs/b96_kr260_10g/design.xdc]
+create_clock: Time (s): cpu = 00:00:07 ; elapsed = 00:00:07 . Memory (MB): peak = 3260.582 ; gain = 25.086 ; free physical = 1212 ; free virtual = 19879
+INFO: [Timing 38-2] Deriving generated clocks [<worktree>/designs/b96_kr260_10g/design.xdc:44]
+Finished Parsing XDC File [<worktree>/designs/b96_kr260_10g/design.xdc]
+Completed Processing XDC Constraints
+
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 3260.582 ; gain = 0.000 ; free physical = 1212 ; free virtual = 19878
+INFO: [Project 1-111] Unisim Transformation Summary:
+  A total of 3 instances were transformed.
+  BUFG => BUFGCE: 2 instances
+  MMCME4_BASE => MMCME4_ADV: 1 instance 
+
+RTL Elaboration Complete:  : Time (s): cpu = 00:00:32 ; elapsed = 00:00:27 . Memory (MB): peak = 3260.617 ; gain = 471.930 ; free physical = 1211 ; free virtual = 19878
+149 Infos, 134 Warnings, 0 Critical Warnings and 0 Errors encountered.
+synth_design completed successfully
+synth_design: Time (s): cpu = 00:00:41 ; elapsed = 00:00:37 . Memory (MB): peak = 3260.617 ; gain = 1500.883 ; free physical = 1211 ; free virtual = 19878
+INFO: [Common 17-2834] synth_design peak Physical Memory [PSS] (MB): overall = 2640.474; main = 2611.925; forked = 339.585
+INFO: [Common 17-2834] synth_design peak Virtual Memory [VSS] (MB): overall = 4110.730; main = 3260.586; forked = 1037.250
+INSPECT-VERIFY rtl OK cells=131
+# if {[catch {open_checkpoint {<worktree>/designs/b96_kr260_10g/rm_gp_bypass/build/base/post_synth.dcp}} e]} { puts "INSPECT-VERIFY synth FAIL $e" } else {
+#   puts "INSPECT-VERIFY synth OK design=[current_design] part=[get_property PART [current_design]] cells=[llength [get_cells -hier -filter {IS_PRIMITIVE==0} -quiet]]"
+#   set wns [lindex [get_property SLACK [get_timing_paths -max_paths 1 -setup -quiet]] 0]
+#   puts "INSPECT-VERIFY synth WNS=$wns"
+#   close_design }
+Command: open_checkpoint <worktree>/designs/b96_kr260_10g/rm_gp_bypass/build/base/post_synth.dcp
+
+Starting open_checkpoint Task
+
+Time (s): cpu = 00:00:00.05 ; elapsed = 00:00:00.06 . Memory (MB): peak = 3260.617 ; gain = 0.000 ; free physical = 1179 ; free virtual = 19846
+Netlist sorting complete. Time (s): cpu = 00:00:00.08 ; elapsed = 00:00:00.09 . Memory (MB): peak = 3260.617 ; gain = 0.000 ; free physical = 1204 ; free virtual = 19890
+INFO: [Netlist 29-17] Analyzing 628 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+INFO: [Project 1-479] Netlist was created with Vivado 2026.1
+INFO: [Project 1-570] Preparing netlist for logic optimization
+Read ShapeDB Complete: Time (s): cpu = 00:00:00.03 ; elapsed = 00:00:00.03 . Memory (MB): peak = 3260.617 ; gain = 0.000 ; free physical = 1162 ; free virtual = 19849
+INFO: [Timing 38-478] Restoring timing data from binary archive.
+INFO: [Timing 38-479] Binary timing data restore complete.
+INFO: [Project 1-856] Restoring constraints from binary archive.
+INFO: [Constraints 18-5170] The checkpoint was created with non-default parameter values which do not match the current Vivado settings.  Mismatching parameters are:
+  synth.maxThreads
+  general.maxThreads
+INFO: [Project 1-853] Binary constraint restore complete.
+INFO: [Designutils 20-5722] Start Reading Physical Databases.
+Reading placement.
+Read Netlist Cache: Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00 . Memory (MB): peak = 3418.469 ; gain = 0.000 ; free physical = 1274 ; free virtual = 19964
+Reading placer database...
+Read Device Cache: Time (s): cpu = 00:00:00.03 ; elapsed = 00:00:00.03 . Memory (MB): peak = 3418.469 ; gain = 0.000 ; free physical = 1266 ; free virtual = 19956
+Read PlaceDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3418.469 ; gain = 0.000 ; free physical = 1266 ; free virtual = 19956
+Read placeStorage: Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 3437.547 ; gain = 19.078 ; free physical = 1266 ; free virtual = 19956
+Read PulsedLatchDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 3437.547 ; gain = 0.000 ; free physical = 1266 ; free virtual = 19956
+Reading routing.
+Read RouteStorage: Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 3437.547 ; gain = 0.000 ; free physical = 1266 ; free virtual = 19956
+Read Physdb Files: Time (s): cpu = 00:00:00.07 ; elapsed = 00:00:00.07 . Memory (MB): peak = 3437.547 ; gain = 19.078 ; free physical = 1266 ; free virtual = 19956
+Restored from archive | CPU: 0.070000 secs | Memory: 0.050354 MB |
+Finished XDEF File Restore: Time (s): cpu = 00:00:00.07 ; elapsed = 00:00:00.07 . Memory (MB): peak = 3437.547 ; gain = 19.078 ; free physical = 1266 ; free virtual = 19956
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00 . Memory (MB): peak = 3814.688 ; gain = 0.000 ; free physical = 762 ; free virtual = 19482
+INFO: [Project 1-111] Unisim Transformation Summary:
+  A total of 6 instances were transformed.
+  IBUF => IBUF (IBUFCTRL, INBUF): 4 instances
+  IOBUF => IOBUF (IBUFCTRL, INBUF, OBUFT): 2 instances
+
+INFO: [Project 1-604] Checkpoint was created with Vivado v2026.1 (64-bit) build 6511674
+open_checkpoint: Time (s): cpu = 00:00:24 ; elapsed = 00:00:24 . Memory (MB): peak = 3814.723 ; gain = 554.105 ; free physical = 762 ; free virtual = 19481
+INSPECT-VERIFY synth OK design=checkpoint_post_synth part=xck26-sfvc784-2LV-c cells=129
+INSPECT-VERIFY synth WNS=0.684
+# if {[catch {open_checkpoint {<worktree>/designs/b96_kr260_10g/rm_gp_bypass/build/base/post_route.dcp}} e]} { puts "INSPECT-VERIFY route FAIL $e" } else {
+#   puts "INSPECT-VERIFY route OK design=[current_design] part=[get_property PART [current_design]] cells=[llength [get_cells -hier -filter {IS_PRIMITIVE==0} -quiet]]"
+#   set wns [lindex [get_property SLACK [get_timing_paths -max_paths 1 -setup -quiet]] 0]
+#   puts "INSPECT-VERIFY route WNS=$wns"
+#   close_design }
+Command: open_checkpoint <worktree>/designs/b96_kr260_10g/rm_gp_bypass/build/base/post_route.dcp
+
+Starting open_checkpoint Task
+
+Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 4696.594 ; gain = 0.000 ; free physical = 266 ; free virtual = 18357
+Netlist sorting complete. Time (s): cpu = 00:00:00.13 ; elapsed = 00:00:00.13 . Memory (MB): peak = 4696.594 ; gain = 0.000 ; free physical = 361 ; free virtual = 18336
+INFO: [Netlist 29-17] Analyzing 628 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+INFO: [Project 1-479] Netlist was created with Vivado 2026.1
+INFO: [Project 1-570] Preparing netlist for logic optimization
+Read ShapeDB Complete: Time (s): cpu = 00:00:00.04 ; elapsed = 00:00:00.04 . Memory (MB): peak = 4696.594 ; gain = 0.000 ; free physical = 360 ; free virtual = 18346
+INFO: [Timing 38-478] Restoring timing data from binary archive.
+INFO: [Timing 38-479] Binary timing data restore complete.
+INFO: [Project 1-856] Restoring constraints from binary archive.
+INFO: [Constraints 18-5170] The checkpoint was created with non-default parameter values which do not match the current Vivado settings.  Mismatching parameters are:
+  synth.maxThreads
+  general.maxThreads
+INFO: [Project 1-853] Binary constraint restore complete.
+INFO: [Designutils 20-5722] Start Reading Physical Databases.
+Reading placement.
+Read Netlist Cache: Time (s): cpu = 00:00:00.02 ; elapsed = 00:00:00.02 . Memory (MB): peak = 4698.594 ; gain = 0.000 ; free physical = 362 ; free virtual = 18357
+Reading placer database...
+Read Device Cache: Time (s): cpu = 00:00:00.04 ; elapsed = 00:00:00.04 . Memory (MB): peak = 4698.594 ; gain = 0.000 ; free physical = 362 ; free virtual = 18357
+Read PlaceDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 4698.594 ; gain = 0.000 ; free physical = 362 ; free virtual = 18357
+Read placeStorage: Time (s): cpu = 00:00:00.74 ; elapsed = 00:00:00.91 . Memory (MB): peak = 4698.594 ; gain = 0.000 ; free physical = 347 ; free virtual = 18342
+Read PulsedLatchDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 4698.594 ; gain = 0.000 ; free physical = 347 ; free virtual = 18342
+Reading routing.
+Read RouteStorage: Time (s): cpu = 00:00:13 ; elapsed = 00:00:12 . Memory (MB): peak = 4698.594 ; gain = 0.000 ; free physical = 310 ; free virtual = 18335
+Read Physdb Files: Time (s): cpu = 00:00:14 ; elapsed = 00:00:13 . Memory (MB): peak = 4698.594 ; gain = 0.000 ; free physical = 310 ; free virtual = 18335
+Restored from archive | CPU: 14.140000 secs | Memory: 421.948296 MB |
+Finished XDEF File Restore: Time (s): cpu = 00:00:14 ; elapsed = 00:00:13 . Memory (MB): peak = 4698.594 ; gain = 0.000 ; free physical = 310 ; free virtual = 18335
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 4698.594 ; gain = 0.000 ; free physical = 310 ; free virtual = 18335
+INFO: [Project 1-111] Unisim Transformation Summary:
+  A total of 6 instances were transformed.
+  IBUF => IBUF (IBUFCTRL, INBUF): 4 instances
+  IOBUF => IOBUF (IBUFCTRL, INBUF, OBUFT): 2 instances
+
+INFO: [Project 1-604] Checkpoint was created with Vivado v2026.1 (64-bit) build 6511674
+open_checkpoint: Time (s): cpu = 00:00:33 ; elapsed = 00:00:33 . Memory (MB): peak = 4698.594 ; gain = 2.000 ; free physical = 475 ; free virtual = 18347
+INSPECT-VERIFY route OK design=checkpoint_post_route part=xck26-sfvc784-2LV-c cells=129
+INSPECT-VERIFY route WNS=0.118
+# close_project
+INFO: [Common 17-206] Exiting Vivado at Fri Nov 20 20:08:25 2026...
