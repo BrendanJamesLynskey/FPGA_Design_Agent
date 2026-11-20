@@ -47,6 +47,12 @@ SEGMENT = re.compile(r"[A-Za-z0-9_.-]{1,80}")
 START_ID = re.compile(r"n-\d{8}-\d{6}-[0-9a-f]{4}")
 
 
+
+#: Planner, 2026-11-20 (103S2 review): a navigator-started run never reaches stage 9 (configuration-and-debug), the only stage
+#: with board tools (program, bringup, debug capture). Those take the board, which is owner-run under _handoff/board.lock; the
+#: navigator only holds a heavy slot for a run. agent/graph/run.py stops after the stage given by --stop-after passes.
+NAV_STOP_AFTER = 8
+
 class Refused(Exception):
     """A guard refused; the message is the reason shown to the owner. Nothing was started."""
 
@@ -285,7 +291,8 @@ class RunControl:
             raise Refused(f"the budget must be above 0 and at most ${MAX_USD:g}")
         usd = float(usd)
         argv = [self.python, "-m", "agent"]
-        summary: dict[str, Any] = {"kind": kind, "harness": harness, "model": model, "effort": effort, "max_usd": usd}
+        summary_hw = "no hardware: navigator runs stop after stage 8; stage 9 (configuration-and-debug: program, bringup, capture) needs board.lock and is run from the CLI by the owner"
+        summary: dict[str, Any] = {"hardware": summary_hw, "kind": kind, "harness": harness, "model": model, "effort": effort, "max_usd": usd}
         mflag = ["--cc-model", model, "--cc-effort", effort] if harness == "claude_code" else ["--model", model]
         if kind == "task":
             t = p.get("task")
@@ -300,7 +307,7 @@ class RunControl:
                 raise Refused(f"arms must be a list of {', '.join(ARMS)} (empty for the A0 baseline)")
             arg_arms = ",".join(arms) if arms else "A0"
             rel = specs[t].relative_to(self.root).as_posix()
-            argv += ["run", rel, "--board", board, "--harness", harness, *mflag, "--harness-arm", arg_arms, "--max-usd", f"{usd:g}"]
+            argv += ["run", rel, "--board", board, "--harness", harness, *mflag, "--harness-arm", arg_arms, "--max-usd", f"{usd:g}", "--stop-after", str(NAV_STOP_AFTER)]
             summary.update(target=t, board=board, arm=arg_arms, spec=rel)
         elif kind == "project":
             name = p.get("project")
@@ -325,7 +332,7 @@ class RunControl:
             argv += ["resume", f"designs/{name}", req]
             if comps:
                 argv += ["--scope", ",".join(comps)]
-            argv += ["--harness", harness, *mflag, "--max-usd", f"{usd:g}"]
+            argv += ["--harness", harness, *mflag, "--max-usd", f"{usd:g}", "--stop-after", str(NAV_STOP_AFTER)]
             summary.update(target=name, components=list(view["will_touch"]), request=req[:120])
         else:
             raise Refused("kind must be task or project")

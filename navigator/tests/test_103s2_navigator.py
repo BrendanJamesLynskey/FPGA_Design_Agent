@@ -865,3 +865,21 @@ def test_a_resolved_table_that_sends_a_purpose_to_opus_over_the_network_blocks_t
     rc.models_view = lambda: MODELS_BAD
     r = rc.start(dict(TASK))
     assert r["started"] is False and "forbidden model" in r["refused"] and sp.calls == [] and locks_in(env) == []
+
+
+def test_navigator_runs_never_reach_the_hardware_stage(env):
+    """Planner, 2026-11-20: stage 9 (configuration-and-debug) has the board tools (program, bringup, capture), which need
+    _handoff/board.lock; a navigator-started run holds only a heavy slot, so both run kinds stop after stage 8."""
+    from navigator import runctl
+    assert runctl.NAV_STOP_AFTER == 8
+    for req in (TASK, PROJ):
+        rc, _, sp = make_rc(env)
+        r = rc.start(dict(req))
+        assert r["started"], r
+        argv = sp.calls[0]["argv"]
+        assert argv[argv.index("--stop-after") + 1] == "8", argv
+        sp.procs[0].finish(0)
+        for _ in range(100):
+            if rc.records()[0]["status"] == "ended":
+                break
+            time.sleep(0.05)
