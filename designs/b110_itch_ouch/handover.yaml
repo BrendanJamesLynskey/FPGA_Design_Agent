@@ -1,0 +1,396 @@
+# Brief 68 handover: the facts behind README.md and AGENT.md (docs/documentation_standard.md).
+# Measurement values and every sha256 are filled from the records by `python -m flow.handover fill`;
+# do not type them. Render with `python -m flow.handover write <this directory>`.
+schema: fda-handover/1
+id: b110_itch_ouch
+title: ITCH 5.0 over MoldUDP64 in, OUCH 5.0 out, phase 1 (simulation)
+kind: showcase
+produced_by: human
+summary: A trading path in the formats a real venue speaks, in simulation. UDP payload words carrying MoldUDP64 and Nasdaq
+  TotalView-ITCH 5.0 are decoded, a small top-of-book is kept for a few instruments, a pre-trade risk check with a kill
+  switch decides, and an OUCH 5.0 Enter Order is built in a SoupBinTCP 3.00 packet and handed to a stub port, optionally
+  started before the risk verdict and cancelled if it fails. A Python reference model and a seeded synthetic generator check
+  the RTL bit for bit, seeded faults in the RTL are all caught, and the block is built out of context for the KR260's part
+  at the 10G core clock.
+scope_not:
+- real market data or a real exchange; every message comes from our own seeded generator and no order is ever sent anywhere
+- TCP, SoupBinTCP login, heartbeats or order responses; the frame goes to a stub port (docs/tcp_plan.md is a plan)
+- Ethernet, IP or UDP handling and the FCS check; the path starts at the UDP payload (docs/phase2_integration.md is a plan)
+- a full-depth book or every instrument; a few instruments with a bounded number of price levels, and a stated way to fail
+- a board run, power, or timing inside the 10G core; the numbers are simulation and an out-of-context Vivado 2026.1 build
+target:
+  part: xck26-sfvc784-2LV-c
+  board: Kria KR260 (K26 SOM)
+  top: itch_ouch_top (wrapped with input registers in ooc_wrap for the out-of-context build)
+  tool: Vivado 2026.1
+  note: no board top of its own; phase 2 puts it behind the 10G MAC of designs/b96_kr260_10g
+clocks:
+- name: clk
+  mhz: 161.132
+  source: results/b110/ooc/itch_ouch_top.json
+  note: the 10G core user clock (nominally 161.1328125 MHz); the out-of-context build constrains the period 6.2061 ns, the
+    4-decimal rounding of the nominal
+resets:
+- name: rst
+  active: high
+  note: synchronous; resets every register including the counters and starts the table sweep; one clock domain, no asynchronous
+    input
+interfaces:
+- name: payload input
+  type: s_v, s_d[63:0], s_sof, s_eof, s_keep[7:0], s_err (UDP payload words)
+  doc: designs/b110_itch_ouch/docs/itch_ouch.md
+  note: byte 0 in bits 7:0; keep is low-contiguous on the last word; the messages of a packet are delivered before its frame
+    check is known
+- name: order frame output
+  type: o_v, o_d[63:0], o_sof, o_eof, o_keep[7:0], o_abort (stub port)
+  doc: designs/b110_itch_ouch/docs/itch_ouch.md
+  note: eight words, never paused; o_abort cancels the frame in flight (speculative start only)
+- name: configuration and clears
+  type: cfg_* static inputs and one-clock clr_* pulses
+  doc: designs/b110_itch_ouch/docs/itch_ouch.md
+  note: configuration is static while traffic runs; clr_book starts a table sweep during which events are dropped and counted
+- name: observation
+  type: flags, cnt (45 counters of 32 bits), tu_* top-of-book update record, tob_* registers
+  doc: designs/b110_itch_ouch/docs/itch_ouch.md
+  note: counters wrap, never saturate; every counter is defined in the datasheet
+parameters:
+- name: N_INST
+  value: 4
+  legal: 2 to 8
+  note: instruments watched, found through Stock Directory messages
+- name: LEVELS
+  value: 8
+  legal: 4 or 8
+  note: price levels per side and instrument; more distinct prices makes the instrument inexact
+- name: ORD_AW
+  value: 8
+  legal: 4 to 16 (tested at 5, 6, 8 and 10)
+  note: order table index bits, so 2^ORD_AW live orders; two live orders with one index make the instrument inexact
+files:
+- path: designs/b110_itch_ouch/rtl/mold_rx.sv
+  what: MoldUDP64 receiver
+  sha256: 2439cc5a50ff265598da6afbf6faba81e6004bea70f7e3585c6ab8718c344d66
+- path: designs/b110_itch_ouch/rtl/itch_dec.sv
+  what: ITCH 5.0 decoder
+  sha256: 43c7f717f13f703a1bf8869f6294aee6a8eed737b8435d733a78ec87af52ec8d
+- path: designs/b110_itch_ouch/rtl/book_core.sv
+  what: order table, ladders, top of book
+  sha256: 4f9ea037d5b1a77ba56e87e340987d1155212593ceea0b1ff24cc02d4dddaf74
+- path: designs/b110_itch_ouch/rtl/risk_glue.sv
+  what: decision, risk checks, kill switch, order queue
+  sha256: 2cde343aec11afbddb108c4728157b83e11533644da80c2a7bd8bc13ffdc23f1
+- path: designs/b110_itch_ouch/rtl/ouch_enter.sv
+  what: OUCH 5.0 Enter Order in SoupBinTCP framing
+  sha256: 95066c0f3caaf67b87eb40baf88d5704b6eec8387384d00014cbe93f3f64addd
+- path: designs/b110_itch_ouch/rtl/itch_ouch_top.sv
+  what: top level
+  sha256: 6f9da0506556e3e4e8a37d2e1a77fa78ee5cffe2ad37132a318c6b12f9eacde5
+- path: designs/b110_itch_ouch/model/proto.py
+  what: packers for the four protocols, from the specifications
+  sha256: ae43fca45e818890658887462b96017b34b4bb436834f0100aaaf5496eee0c70
+- path: designs/b110_itch_ouch/model/ref.py
+  what: reference model (untimed, exact)
+  sha256: 92ebceb812f4203d0872849c5ff5b6855b36ff95875e6527537f3f10a29c0df9
+- path: designs/b110_itch_ouch/model/gen.py
+  what: seeded synthetic ITCH over MoldUDP64 generator
+  sha256: 7a5ed6f04b10ad587e3a0d3cfb7d8ec64d986ead15e5df3f37bfd8ff0ef1e305
+- path: designs/b110_itch_ouch/tests/b110_cocotb.py
+  what: cocotb bench
+  sha256: e8b7915b02e750725f206af70bf84d1d0cf471f818fea566a0982e5a671545ad
+- path: designs/b110_itch_ouch/tests/run_mutants.py
+  what: seeded-fault runner
+  sha256: d7d017acd50cadfe86ccb2c189feaa3cc4e69ca8851095bc08fa54dc767e3fdb
+- path: designs/b110_itch_ouch/ooc/ooc.py
+  what: out-of-context build driver
+  sha256: 13550cc38a0d6f45591830a089d0c1ed83d8a93b6d2990cd0cc6341dab411f85
+- path: designs/b110_itch_ouch/docs/itch_ouch.md
+  what: datasheet
+  sha256: 21f329f7ca8a43c0253af1e1b213f925d2879906eca815877df8e09b211ad154
+- path: designs/b110_itch_ouch/docs/spec_notes.md
+  what: field layouts and where each comes from
+  sha256: 5ce86ae4a2f406348508f42a54939b0b3f9c8bb52c3bd1a6d730e4d1c0c2ecf9
+- path: designs/b110_itch_ouch/docs/tcp_plan.md
+  what: TCP options and the phase 2 recommendation
+  sha256: 95463d9cfc9f2e1a0761d4ce453da709743724cbd7031278278b6d1d7d30ff56
+- path: designs/b110_itch_ouch/docs/phase2_integration.md
+  what: integration plan for the KR260 design, the host bench and the board test
+  sha256: a15fee8877bd4167dda21a610d106dd694c661768525d4e607f798c8614b024e
+commands:
+- what: the whole bench (cocotb on Icarus), the model tests and the lint
+  cmd: python3 -m pytest -q designs/b110_itch_ouch/tests/test_b110_model.py designs/b110_itch_ouch/tests/test_b110_rtl.py
+    designs/b110_itch_ouch/tests/test_b110_lint.py
+  heavy: false
+  minutes: 2
+  needs: Icarus Verilog 12, cocotb 2.0.1, Verilator (lint test is skipped without it)
+- what: the same with the measurement records written (latency, throughput, coverage, idle gap)
+  cmd: B110_RECORD=$PWD/results/b110 python3 -m pytest -q designs/b110_itch_ouch/tests/test_b110_rtl.py::test_all_benches
+  heavy: false
+  minutes: 1
+  needs: as above
+- what: the seeded faults (every mutant of verif/mutants.yaml against the bench)
+  cmd: python3 designs/b110_itch_ouch/tests/run_mutants.py --jobs 2 --json results/b110/mutation.json
+  heavy: false
+  minutes: 25
+  needs: as above; each run uses its own build root, two at a time
+- what: the out-of-context builds (three clocks)
+  cmd: python3 -m designs.b110_itch_ouch.ooc.ooc --clocks 6.2061 5.0 4.4
+  heavy: true
+  minutes: 30
+  needs: Vivado 2026.1 and a heavy slot (take_heavy_slot.sh)
+evidence:
+- id: E1
+  activity: simulation
+  result: pass
+  how: ci
+  what: the whole path against the Python reference over seeded sessions, hand-built corner cases, impairments, a stress
+    run and other parameters - events, every top-of-book update, every order frame bit for bit, every counter and flag
+  record: designs/b110_itch_ouch/tests/test_b110_rtl.py
+  sha256: ed9179dc6eab910eff6b4e26fb3204e5c2e181f3d0ce232d5b691d42bced781a
+- id: E2
+  activity: model
+  result: pass
+  how: ci
+  what: the packers against the field tables of the specifications and the reference model against hand-computed behaviour
+    of the protocol layer, the book and the risk checks
+  record: designs/b110_itch_ouch/tests/test_b110_model.py
+  sha256: 0ac06f1af3eeeb85af07a4b941809f63e3567a0488cec4aa94bdd1b5e3e3c70c
+- id: E3
+  activity: lint
+  result: pass
+  how: ci
+  what: Verilator -Wall clean at the default parameters and at three others
+  record: designs/b110_itch_ouch/tests/test_b110_lint.py
+  sha256: 3028d8b5b412cb501cda525d4e9cb1580bdd661154b2d1a8b6cef0367890f10f
+- id: E4
+  activity: faults
+  result: pass
+  what: every one of the seeded faults in the RTL (operators, constants and conditions across the five blocks) fails the
+    bench
+  record: results/b110/mutation.json
+  sha256: 2c13eb56b06109dbde9c7df9b55b6de0bab901087113473b6224a78e41ba79c8
+- id: E5
+  activity: simulation
+  result: pass
+  what: coverage over the bench - every message type decoded, every byte offset where a message starts and ends in a word,
+    every last-word keep mask, every counter
+  record: results/b110/coverage_sim.json
+  sha256: 69836756e5d091cbe526d9d9c482115c743a99d1e7bbb4847b9cd972463f6f49
+- id: E6
+  activity: build
+  result: pass
+  what: out-of-context, post-route builds on the K26 at the required 10G core clock and two faster ones; the required clock
+    closed (setup, hold and pulse width)
+  record: results/b110/ooc/itch_ouch_top.json
+  sha256: 4d84f7e2e85d9bc59fcf0e167f4bb926feedbd1a31efb06d55c695d73e4e337b
+measurements:
+- id: M1
+  what: clocks from the last byte of a message to its top-of-book update (Add Order)
+  category: latency
+  key: book_update_clocks
+  unit: clocks
+  record: results/b110/latency_sim.json
+  field: non_speculative.book_update_add
+  conditions: simulation, one clock
+  value: 7
+  sha256: c181bd7465d88060695cc9acdb13bd84cb3cd2dbc40662e3f5503a3905591d23
+- id: M2
+  what: clocks from the last byte of the triggering message to the first word of the order frame, frame started at the risk
+    verdict
+  category: latency
+  key: order_first_word_clocks
+  unit: clocks
+  record: results/b110/latency_sim.json
+  field: non_speculative.first_order_word
+  conditions: simulation, one clock
+  value: 8
+  sha256: c181bd7465d88060695cc9acdb13bd84cb3cd2dbc40662e3f5503a3905591d23
+- id: M3
+  what: the same with the frame started speculatively, before the verdict
+  category: latency
+  key: order_first_word_spec_clocks
+  unit: clocks
+  record: results/b110/latency_sim.json
+  field: speculative.first_order_word
+  conditions: simulation, one clock; only when the frame is idle and no earlier candidate is in flight
+  value: 3
+  sha256: c181bd7465d88060695cc9acdb13bd84cb3cd2dbc40662e3f5503a3905591d23
+- id: M4
+  what: the order frame's first word after the decision (the verdict, or the candidate when speculative) is known
+  category: latency
+  key: decision_to_first_word_clocks
+  unit: clocks
+  record: results/b110/latency_sim.json
+  field: non_speculative.decision_to_first_order_word
+  conditions: simulation, one clock; the same figure the 96 design has from its decision register to its order logic
+  value: 1
+  sha256: c181bd7465d88060695cc9acdb13bd84cb3cd2dbc40662e3f5503a3905591d23
+- id: M5
+  what: clocks per message with payloads back to back and no idle clock, mixed Add, Delete and Replace; nothing dropped
+  category: throughput
+  key: clocks_per_message
+  unit: clocks
+  record: results/b110/throughput_sim.json
+  field: clocks_per_message
+  conditions: simulation; one 64-bit word a clock is accepted, so the figure is the input's own rate for these message sizes
+  value: 3.838
+  sha256: a4e3cf74c37140418addf990c3f6ae79ec454fdb77a153f84a688341281137f5
+- id: M6
+  what: LUTs of itch_ouch_top at the required clock (including the LUTs used as memory)
+  category: resources
+  key: lut
+  unit: LUT
+  record: results/b110/ooc/itch_ouch_top.json
+  field: at_required.core_lut
+  conditions: out of context, Vivado 2026.1, one thread, default parameters; the wrapper's input registers are not counted
+  value: 6621
+  sha256: 4d84f7e2e85d9bc59fcf0e167f4bb926feedbd1a31efb06d55c695d73e4e337b
+- id: M7
+  what: registers of itch_ouch_top at the required clock
+  category: resources
+  key: ff
+  unit: FF
+  record: results/b110/ooc/itch_ouch_top.json
+  field: at_required.core_ff
+  conditions: as M6
+  value: 5223
+  sha256: 4d84f7e2e85d9bc59fcf0e167f4bb926feedbd1a31efb06d55c695d73e4e337b
+- id: M8
+  what: worst setup slack at the required clock
+  category: timing
+  key: wns_ns
+  unit: ns
+  record: results/b110/ooc/itch_ouch_top.json
+  field: at_required.wns_ns
+  conditions: out of context, post-route, period 6.2061 ns, no clock buffer or jitter
+  value: 0.109
+  sha256: 4d84f7e2e85d9bc59fcf0e167f4bb926feedbd1a31efb06d55c695d73e4e337b
+- id: M9
+  what: worst hold slack at the required clock
+  category: timing
+  key: whs_ns
+  unit: ns
+  record: results/b110/ooc/itch_ouch_top.json
+  field: at_required.whs_ns
+  conditions: as M8
+  value: 0.055
+  sha256: 4d84f7e2e85d9bc59fcf0e167f4bb926feedbd1a31efb06d55c695d73e4e337b
+- id: M10
+  what: fastest clock period tried that closed
+  category: timing
+  key: closed_at_ns
+  unit: ns
+  record: results/b110/ooc/itch_ouch_top.json
+  field: closed_at_ns
+  conditions: a closed point out of the three tried, not a bound; as M8
+  value: 5.0
+  sha256: 4d84f7e2e85d9bc59fcf0e167f4bb926feedbd1a31efb06d55c695d73e4e337b
+- id: M11
+  what: seeded faults killed by the bench
+  category: other
+  key: mutants_killed
+  unit: faults
+  record: results/b110/mutation.json
+  field: killed
+  conditions: simulation, the whole bench per fault
+  value: 58
+  sha256: 2c13eb56b06109dbde9c7df9b55b6de0bab901087113473b6224a78e41ba79c8
+- id: M12
+  what: seeded faults that build and were tried
+  category: other
+  key: mutants_valid
+  unit: faults
+  record: results/b110/mutation.json
+  field: valid
+  conditions: as M11
+  value: 58
+  sha256: 2c13eb56b06109dbde9c7df9b55b6de0bab901087113473b6224a78e41ba79c8
+- id: M13
+  what: of those LUTs, the ones used as distributed memory (the order table and the price ladders)
+  category: resources
+  key: lutram
+  unit: LUT
+  record: results/b110/ooc/itch_ouch_top.json
+  field: at_required.core_lutram
+  conditions: as M6
+  value: 1728
+  sha256: 4d84f7e2e85d9bc59fcf0e167f4bb926feedbd1a31efb06d55c695d73e4e337b
+- id: M14
+  what: block RAM tiles used
+  category: resources
+  key: bram_tiles
+  unit: tiles
+  record: results/b110/ooc/itch_ouch_top.json
+  field: at_required.bram_tiles
+  conditions: as M6
+  value: 0
+  sha256: 4d84f7e2e85d9bc59fcf0e167f4bb926feedbd1a31efb06d55c695d73e4e337b
+- id: M15
+  what: the 96 design's bench-feed path, simulated, from the price word in the MAC register to the order's preamble in the
+    MAC register (default build with the clock crossing)
+  category: latency
+  key: bench_feed_price_to_preamble_clocks
+  unit: clocks
+  record: results/b96c/core_sim_default.json
+  field: tick_to_trade_digital_sim.mac_register_of_price_word_to_order_preamble_clocks
+  conditions: simulation of the whole 96 core; a different quantity from M2 and M3 (see the datasheet's comparison)
+  value: 7
+  sha256: 21559dbac7b4decba1bfd5a56845ae9f91100c39890c0b53e7adf191c7c7080d
+gaps:
+- about: board_run
+  text: Not run on a board; phase 2 would bring it behind the 10G MAC of the KR260 design (docs/phase2_integration.md).
+- about: power
+  text: Not measured; an out-of-context build has no realistic activity and nothing ran on a board.
+- about: E6
+  text: Out of context the clock has no buffer or jitter and the inputs are registered in the wrapper; inside the 10G core
+    the clock and placement can differ. Only the default parameters were built.
+- about: throughput
+  text: Measured in simulation only, and the figure is the rate of the input stream for these message sizes, not a limit
+    of the path; no figure on a board.
+- about: tcp
+  text: No TCP, SoupBinTCP login, client heartbeat or response handling; the frame goes to a stub port. docs/tcp_plan.md
+    compares the options and recommends one for phase 2; it was not built or timed.
+- about: ethernet
+  text: The path starts at the UDP payload. Header handling, the frame check and the late frame verdict of the 10G MAC are
+    phase 2 (docs/phase2_integration.md); until then a bad frame cannot recall messages already applied or an order already
+    triggered.
+- about: spec
+  text: Field layouts were read from the public Nasdaq documents; the items that were recalled or assumed are marked UNCONFIRMED
+    in docs/spec_notes.md, among them whether older OUCH 5.0 ports expect a 4 byte price and whether a TagValue length counts
+    its tag byte. No order was ever accepted by anything but our own model.
+- about: book
+  text: Not a full-depth book. Behaviour a user could guess wrong - more distinct prices than LEVELS or two live orders
+    with one table index make the instrument inexact and orders on it are refused until clr_book; the position counts the
+    quantity sent, not filled; a Replace never triggers an order; the candidate's verdict uses the book after the triggering
+    message.
+- about: simulators
+  text: Simulated with Icarus Verilog and cocotb only; no Verilator simulation and no formal proof of the protocol layer.
+- about: cdc
+  text: One clock domain and no asynchronous input, so no clock-domain-crossing check applies; the crossing into the 10G
+    core's clock is phase 2.
+- about: data
+  text: Synthetic data from one generator with its own message mix; the figures say how the block behaves on that mix, nothing
+    about a market.
+next_steps:
+- Write the phase 2 brief from docs/phase2_integration.md - the adapter from the MAC's words, the late frame verdict, registers,
+  and in-context timing on the KR260.
+- Build the TCP fast path of docs/tcp_plan.md option A and test it against a software exchange on the host PC.
+- Decide with the board latency whether the book-dependent risk verdict should be replaced by a faster partial check.
+open_questions:
+- Is the speculative start worth its abort path once the TCP headers and the 10G chain are in front of the frame?
+- Should a Replace trigger an order, given that its side is known one clock after an Add's?
+history:
+- date: '2026-11-20'
+  brief: '110'
+  note: RTL, reference model, generator, bench, seeded faults, out-of-context builds, TCP and phase 2 plans
+numbers_allow: []
+state:
+  stage: built
+  gates:
+    rtl_equals_model: pass
+    lint: pass
+    seeded_faults: pass
+    ooc_build_2026_1: pass
+    board_run: not-run
+  vivado: '2026.1'
+  kb_pin: 93d158c
+  build_id: null

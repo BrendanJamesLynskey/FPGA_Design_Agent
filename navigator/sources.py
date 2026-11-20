@@ -229,10 +229,39 @@ def latency_view(root: Path, design: str) -> dict[str, Any] | None:
         board = L.board_numbers(st, Path(root) / "results")
     except (L.LatencyError, KeyError, ValueError, OSError):
         board = None
+    lp["chains"] = _chains(root, st, core_rel)
     lp["board"] = board
     lp["board_note"] = ("board numbers are measured on the KR260 (stage 3 of brief 96) and are never added to the simulated chain" if board
                         else "no board measurement is recorded for this design's chain")
     return lp
+
+
+def _chains(root: Path, st: dict[str, Any], core_rel: str) -> list[dict[str, Any]]:
+    """The simulated chains the stage file says exist (its ``chains:`` list): each file's tick-to-trade worst case from the same key the stage table reconciles to, with a label
+    saying which build it is, so a page that shows one stage table never presents it as the only chain."""
+    from flow.latency import model as L
+    out = []
+    try:
+        key = next(iter(st["paths"].values()))["measured"]["key"]
+    except (KeyError, StopIteration, AttributeError, TypeError):
+        return out
+    for c in st.get("chains") or []:
+        rel = c.get("file") if isinstance(c, dict) else None
+        if not isinstance(rel, str) or not rel.startswith("results/") or ".." in Path(rel).parts:
+            continue
+        rec = load_json(Path(root) / rel)
+        clocks = None
+        for k in (key, key[:-4] if key.endswith(".max") else key):          # a bench with no spread records the number itself, not {min, max}
+            try:
+                clocks = L._dig(rec, k) if rec is not None else None
+                break
+            except L.LatencyError:
+                continue
+        if isinstance(clocks, dict):
+            clocks = clocks.get("max")
+        out.append({"file": rel, "label": str(c.get("label") or "")[:200], "clocks": clocks if isinstance(clocks, (int, float)) else None, "is_stage_table": rel == core_rel,
+                    "source": src(root, Path(root) / rel) if rec is not None else None})
+    return out
 
 
 def builds(root: Path) -> list[dict[str, Any]]:
