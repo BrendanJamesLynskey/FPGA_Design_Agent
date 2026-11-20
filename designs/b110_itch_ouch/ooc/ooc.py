@@ -139,7 +139,7 @@ def main(argv=None) -> int:
     ok = [r for r in runs if r.get("closed")]
     at_req = next((r for r in runs if abs(r["clock_ns"] - REQUIRED_NS) < 1e-9), None)
     out = {"design": "itch_ouch_top", "part": PART, "vivado": "2026.1", "parameters": generics or {"N_INST": 4, "LEVELS": 8, "ORD_AW": 8},
-           "required_clock_ns": REQUIRED_NS, "required_closed": bool(at_req and at_req.get("closed")), "at_required": at_req,
+           "required_clock_ns": REQUIRED_NS, "required_clock_mhz": round(1000.0 / REQUIRED_NS, 3), "required_closed": bool(at_req and at_req.get("closed")), "at_required": at_req,
            "closed_at_ns": min((r["clock_ns"] for r in ok), default=None), "runs": runs,
            "note": "out of context: no clock buffer, no I/O, no jitter; inputs registered in ooc_wrap; one thread; closed means setup, hold and pulse width met"}
     OUT.mkdir(parents=True, exist_ok=True)
