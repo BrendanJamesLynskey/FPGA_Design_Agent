@@ -416,7 +416,7 @@ async def test_smoke(dut):
     st, d = await e.txn(CMD_READ, 0x00)
     assert (st, d) == (0, 0x444F5451), f"DESIGN_ID {st} {d:#x}"
     st, d = await e.txn(CMD_READ, 0x01)
-    assert (st, d) == (0, 0x00010000)
+    assert (st, d) == (0, 0x00010001)       # shell protocol 1.1 (2026-11-12); run 4 (2026-11-07) was written against 1.0: 0x00010000
     st, d = await e.txn(CMD_READ, 0x02)
     assert (st, d) == (0, BUILD)
     for off in range(11):
@@ -625,7 +625,7 @@ async def test_shell_protocol(dut):
     assert st == 0 and (d & 0xFF) == 1, f"STATUS {d:#x}"
     assert (await e.txn(3, 0x80, 0)) == (2, 0)
     assert (await e.txn(CMD_READ, 0x20)) == (3, 0)
-    assert (await e.txn(CMD_WRITE, 0x05, 1)) == (3, 0)
+    assert (await e.txn(CMD_WRITE, 0x05, 1)) == (4, 0)       # 1.1: 0x05 is the read-only BUILD_ID (a write is status 4); in 1.0 it was unmapped (3)
     assert (await e.txn(CMD_WRITE, 0x00, 5)) == (4, 0)
     assert (await e.txn(CMD_READ, 0x00)) == (0, 0x444F5451)
     await e.rreg(4)  # the bad-checksum write did not land

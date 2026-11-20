@@ -395,7 +395,7 @@ def test_cli_prints_options_saves_them_and_choose_runs_the_scoped_resume(design1
     assert json.loads(C.state_path(design10).read_text())["choice"]["chosen"] == "O1"
     # the run record keeps the analysis, the options offered and the choice
     s = C.strategy_for_run(design10)
-    assert s["chosen"] == "O1" and len([o for o in s["options_offered"] if o.get("origin") != "combiner"]) == 2 and s["analysis_hash"] and s["analysis_sources"] and s["chosen_option"]["scope"]["components"] == ["core"]
+    assert s["chosen"] == "O1" and len([o for o in s["options_offered"] if o.get("origin", "model") == "model"]) == 2 and s["analysis_hash"] and s["analysis_sources"] and s["chosen_option"]["scope"]["components"] == ["core"]
 
 
 @needs_prompts
@@ -448,10 +448,10 @@ def test_more_and_edit_keep_the_state(design10: Path, monkeypatch: pytest.Monkey
     assert C.improve_cmd(ns(design10, more=True), main_fn=None) == 0
     st = json.loads(C.state_path(design10).read_text())
     cur = st["current"]["options"]
-    assert len([o for o in cur if o.get("origin") != "combiner"]) == 4 and [o["n"] for o in cur] == list(range(1, len(cur) + 1)) and len({o["id"] for o in cur}) == len(cur)
+    assert len([o for o in cur if o.get("origin", "model") == "model"]) == 4 and [o["n"] for o in cur] == list(range(1, len(cur) + 1)) and len({o["id"] for o in cur}) == len(cur)
     assert C.improve_cmd(ns(design10, "keep the flops", edit=1), main_fn=None) == 0
     st = json.loads(C.state_path(design10).read_text())
-    assert any(o["title"] == "Edited" for o in st["current"]["options"]) and len([o for o in st["current"]["options"] if o.get("origin") != "combiner"]) == 4 and len(st["history"]) == 2
+    assert any(o["title"] == "Edited" for o in st["current"]["options"]) and len([o for o in st["current"]["options"] if o.get("origin", "model") == "model"]) == 4 and len(st["history"]) == 2
 
 
 def test_an_unclear_request_prints_a_question_and_saves_no_options(design10: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture) -> None:
@@ -612,7 +612,7 @@ def test_more_assigns_unique_ids_and_edit_keeps_the_order(design10: Path, monkey
     C.improve_cmd(ns(design10, "lower latency"), main_fn=None)
     C.improve_cmd(ns(design10, more=True), main_fn=None)
     ids = [o["id"] for o in json.loads(C.state_path(design10).read_text())["current"]["options"]]
-    assert len(set(ids)) == len(ids) and len([i for i in ids if not i.startswith("C")]) == 4
+    assert len(set(ids)) == len(ids) and len([i for i in ids if not i.startswith(("C", "S"))]) == 4
     C.improve_cmd(ns(design10, "x", edit=3), main_fn=None)
     after = json.loads(C.state_path(design10).read_text())["current"]["options"]
     assert [o["id"] for o in after] == ids and after[2]["title"] == "Edited" and [o["n"] for o in after] == list(range(1, len(after) + 1))

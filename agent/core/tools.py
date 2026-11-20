@@ -937,6 +937,8 @@ def board_constraints(s: Session, map: list[dict[str, str]] | None = None, write
     wrote = None
     if write:
         p = s.jail.resolve("design.xdc", write=True)
+        if s.jail.policy is not None:                 # brief 102F: the generated constraints get the same content checks as write_file
+            s.jail.policy.check_content("design.xdc", r["xdc"])
         p.write_text(r["xdc"])
         wrote = str(p.relative_to(s.jail.root))
     return {"ok": not found, "output": (f"wrote {wrote}\n" if wrote else "") + r["xdc"]

@@ -28,12 +28,37 @@ from agent.core.boards import board_arg, board_name
 from agent.core.session import ROOT
 
 
-def with_scope(s: dict, design: Path) -> dict:
-    """Brief 102: the request's scope (build/managed/scope.json of the run's design copy) is part of the run record, summary.json."""
+def scope_for_record(design: Path) -> dict | None:
+    """The scope block of a run record (brief 102F): the selected, selectable, frozen and excluded components, the manifest hash and the
+    waiver grant (``managed.scope_record``); None for a design that has no scope file."""
+    from agent.core import managed
+    try:
+        proj = managed.load(design)
+    except ValueError:
+        proj = None
+    if proj is not None:
+        return managed.scope_record(proj)
     f = Path(design) / "build" / "managed" / "scope.json"
     if f.is_file():
         sc = json.loads(f.read_text())
-        s = {**s, "scope": {k: sc[k] for k in ("components", "source", "request", "note", "plan", "time") if k in sc}}
+        return {k: sc[k] for k in ("components", "source", "request", "note", "plan", "time") if k in sc}
+    return None
+
+
+def record_scope_in_config(run_dir: Path, design: Path) -> dict | None:
+    """Put the run's scope block into its config.json (brief 102F), so a later ``resume <run>`` can re-check it."""
+    sc = scope_for_record(design)
+    f = Path(run_dir) / "config.json"
+    if sc is not None and f.is_file():
+        f.write_text(json.dumps({**json.loads(f.read_text()), "scope": sc}, indent=1))
+    return sc
+
+
+def with_scope(s: dict, design: Path) -> dict:
+    """Brief 102: the request's scope (build/managed/scope.json of the run's design copy) is part of the run record, summary.json."""
+    sc = scope_for_record(Path(design))
+    if sc is not None:
+        s = {**s, "scope": sc}
     from flow.options.cli import strategy_for_run      # brief 104: the strategy the request came from (analysis, options offered, the choice), when `agent improve` made it
     st = strategy_for_run(Path(design))
     if st is not None:
@@ -269,6 +294,7 @@ def pickup_cmd(a) -> int:
     report["run_id"] = rt.run_id
     if scope is not None:                            # the scope and the plan go to the run's design copy, where its tools read them
         managed.start_run(managed.load(Path(rt.design)), scope)
+        report["scope_record"] = record_scope_in_config(rt.run_dir, Path(rt.design))      # config.json (and summary.json at the end) carry it
     if getattr(a, "strategy_file", None):            # brief 104: the options the request was chosen from go with the run
         import shutil
         _st = json.loads(Path(a.strategy_file).read_text())
@@ -507,6 +533,22 @@ def main(argv: list[str] | None = None) -> int:
         rt = new_runtime(cfg, None, run_id=a.run_id, replay=a.replay, record=a.record, tape_spec=tspec)
     except DeterminismError as e:
         print(f"deterministic: {e}", file=sys.stderr)
+        return 2
+    from agent.core import managed                    # brief 102F: a managed project's run continues the request it started with
+    try:
+        mproj = managed.load(Path(rt.design))
+    except ValueError as e:
+        print(f"resume: {e}", file=sys.stderr)
+        return 2
+    if mproj is not None:
+        bad = managed.check_resume(mproj, c.get("scope"), [x for x in (a.scope or "").split(",") if x] or None)
+        if bad:
+            print("resume refused (scope): " + "; ".join(bad), file=sys.stderr)
+            return 2
+        cf = run_dir / "config.json"                  # new_runtime rewrote config.json: keep the scope the run started with
+        cf.write_text(json.dumps({**json.loads(cf.read_text()), "scope": c["scope"]}, indent=1))
+    elif a.scope:
+        print("resume: --scope is for a managed project; this run's design has no project.yaml", file=sys.stderr)
         return 2
     graph = build_graph(checkpointer_for(run_dir), routing=cfg.skill_routing != "off")
     lg = {"configurable": {"thread_id": a.run_id}}
