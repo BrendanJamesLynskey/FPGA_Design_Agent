@@ -13,7 +13,7 @@ of the KR260 10G build `rm_gp`, and does the model on the hardware give the clas
 - **Test:** build `rm_gp_ml`, in **shadow mode** (ML_CTRL bit 0 = 0, the reset value: the rule decides alone, the model only counts) for the stage-3 loopback sequence, then shadow and veto sweeps.
 
 ## Setting
-Same board, module and fibre loopback lead (0.17 m; a different lead moves the reference by the difference, which the driver applies: E once, L twice), 0 ppm, SRAM only, wall power, the same stage-3 sequence
+Same board, module and fibre loopback lead (0.17 m; a different lead moves the reference by the difference, which the driver applies: E once, L twice), 0 ppm, SRAM only, wall power, `_handoff/board.lock` held with a text starting `113:` (the host bench accepts that prefix), the same stage-3 sequence
 (`designs/b96_kr260_10g/host/b96_bench.py run_all`, 100 receive-datapath restarts, 5 feed frames and 5 probes a link), then the sweeps: 20 runs of 50 generator frames in shadow mode and 20 in veto mode, each after a
 state reset (ML_CTRL bit 1). The generator's frame is ADD ask, price 99.50, size 1, instrument 1 (the tracked instrument at reset); the rule's threshold is the reset value 99.75, so every frame is a rule hit.
 

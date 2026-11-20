@@ -22,5 +22,5 @@ run base_p1550      base 0 1550 "$W/s_v0"      # the unmodified rm_gp core on th
 for v in 1 0; do
   wait_load
   LOOP=50 WORK="$W/w" "$ROOT/results/b113/ml_sim.sh" ml "$W/s_v$v" "$v" 0 0 "$O/logs/ml_loop_v$v.log"
-  python3 results/b113/loop_check.py "$O/logs/ml_loop_v$v.log" 50 "$v" "$O/ml_loop_v$v.json"
+  PYTHONPATH="$ROOT" python3 results/b113/loop_check.py "$O/logs/ml_loop_v$v.log" 50 "$v" "$O/ml_loop_v$v.json"
 done

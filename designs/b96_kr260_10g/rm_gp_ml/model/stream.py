@@ -165,9 +165,12 @@ def write(out_dir: Path, **kw) -> dict:
     return e["summary"]
 
 
-if __name__ == "__main__":
-    import sys
-    print(json.dumps(write(Path(sys.argv[1]), veto=(len(sys.argv) > 2 and sys.argv[2] == "veto")), indent=1))
+def main(argv: list[str]) -> None:
+    """python -m designs.b96_kr260_10g.rm_gp_ml.model.stream <dir> [veto]   the mixed stream (words.hex, expect.json);  ... lat <dir>   the latency stream."""
+    if argv[1] == "lat":
+        print(json.dumps(write_lat(Path(argv[2])), indent=1))
+    else:
+        print(json.dumps(write(Path(argv[1]), veto=(len(argv) > 2 and argv[2] == "veto")), indent=1))
 
 
 def make_lat_stream(n_pairs: int = 10, veto: bool = True, bid_sz: int = 200, ask_sz: int = 1, spacing: int = 300) -> tuple[list[int], dict]:
@@ -198,3 +201,8 @@ def write_lat(out_dir: Path, **kw) -> dict:
     e["nw"] = len(words)
     (out_dir / "expect.json").write_text(json.dumps(e, indent=0))
     return e["summary"]
+
+
+if __name__ == "__main__":
+    import sys
+    main(sys.argv)

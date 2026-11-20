@@ -101,6 +101,46 @@ files:
 - path: designs/b96_kr260_10g/host/b96f1_bypass.py
   what: board driver and pre-registered verdict for build rm_gp_bypass (brief 96F1)
   sha256: 698657c195211ac518a67ba94c1cd7db5b15afef3e16fbf15c2f8df14a4a6aa9
+- path: designs/b96_kr260_10g/rm_gp_ml/rtl/ml_stage.sv
+  what: 'the ML decision stage of build rm_gp_ml: one-instrument book, order-flow features, classifier pipeline and counters
+    (brief 113)'
+  sha256: 1c1abfce186f06587f9c1ceb31e8a30cc24839884d0097753621d83023c50b1f
+- path: designs/b96_kr260_10g/rm_gp_ml/rtl/ml_pkg.sv
+  what: constants shared by the ML stage (brief 113)
+  sha256: 71363adf1475a500344a199521bfceba6a189ca0f2bd95f966eea1163576ccf8
+- path: designs/b96_kr260_10g/rm_gp_ml/rtl/trade64.sv
+  what: copy of rtl/trade64.sv for build rm_gp_ml with the model's veto on the rule's decision (brief 113)
+  sha256: 3e80ab02a49814d865299ea3830da0fb89d23126c87e612a5e4a0f39171cf262
+- path: designs/b96_kr260_10g/rm_gp_ml/rtl/rx_path.sv
+  what: copy of rtl/rx_path.sv for build rm_gp_ml with the ML stage's ports through to trade64 (brief 113)
+  sha256: da1472f5fa6964a5eab637be1141d1d86b4a51a068570f5521811c5c672eaf82
+- path: designs/b96_kr260_10g/rm_gp_ml/rtl/rx_path_legacy.sv
+  what: copy of rtl/rx_path_legacy.sv for build rm_gp_ml with the ML ports tied off (brief 113)
+  sha256: cc5cf55776ac0e5f0e27f17bc04075bf75ddc29bbdeaf83b8352a737433dcd1c
+- path: designs/b96_kr260_10g/rm_gp_ml/rtl/b96_core.sv
+  what: copy of rtl/b96_core.sv for build rm_gp_ml with the ML registers, crossings and status words (brief 113)
+  sha256: 46ceb4153e39aefc887b6d6c670df9ec60b4d62e1bf7d4b66598032ff67b2063
+- path: designs/b96_kr260_10g/rm_gp_ml/build.yaml
+  what: how flow/run_vivado.sh builds rm_gp_ml (rm_gp with the ML stage, brief 113)
+  sha256: a081d3c86e9c5c8a02284c008c3b2fc1eb43ddcf55d3f5b0a1c3f6c14601e71b
+- path: designs/b96_kr260_10g/rm_gp_ml/docs/ml_stage.md
+  what: which model block was chosen and why, how the stage is arranged, the measured cost in context (brief 113)
+  sha256: 589c1ceccd59aa924b1c55db9d1b6e54b7e3a3df639f8d615ad39aab2cf9c81c
+- path: designs/b96_kr260_10g/rm_gp_ml/docs/ml_registers.md
+  what: register map of the ML stage, generated from rm_gp_ml/regmap_ml.py (brief 113)
+  sha256: 487b9de7fe54edada45e153d870cf447f77e7e98f83c81b931c823941dc2a429
+- path: designs/b96_kr260_10g/rm_gp_ml/model/twin.py
+  what: Python twin of the ML stage over the brief 87 references (brief 113)
+  sha256: ec29cc5d3883c9ebb8623626ad5be533f53f20b3d030b919e9debd40c23efff4
+- path: designs/b96_kr260_10g/rm_gp_ml/model/stream.py
+  what: synthetic Bench Feed v1 streams as 10GBASE-R words, with the twin's expectation per frame (brief 113)
+  sha256: 7047fabb3245abb63027c83131a57d1704af6b08c4e28164116fa9a5c1e97e6d
+- path: designs/b96_kr260_10g/rm_gp_ml/sim/tb_ml_core.sv
+  what: whole-core xsim bench with a synthetic feed injected on the receive words (brief 113)
+  sha256: bcc7b0ea4d8bc0e2f5258112fb5408fcb9ad16bf4f8643e7471dae4865f7c6b1
+- path: designs/b96_kr260_10g/host/b113_ml.py
+  what: board driver and pre-registered verdict for build rm_gp_ml (brief 113)
+  sha256: ad6f218b975910c8570233e9fe85f5c3277d73329cb747c0355c35358956ddd2
 - path: designs/b96_kr260_10g/rtl/es_ctrl.sv
   what: DRP master and eye-scan point sequencer for the GTHE4 channel (EYESCAN = 1), brief 96D
   sha256: 671362a1c02eff42f9dc8af2c6919b854a62b3a93e7702d65ed7f6bf278e8e3e
@@ -295,6 +335,27 @@ evidence:
     on the reset-done edge, stale done held off, error holds the paths in reset)
   record: results/b96f1/bypass_seq/result.txt
   sha256: 457378d737a4382242b69cf84b2db58aacf9a88707d0cba642934a5b1b091dd8
+- id: E11
+  activity: build
+  result: pass
+  what: build rm_gp_ml (rm_gp with the ML decision stage, brief 113), all 29 gates, WNS +0.220 ns, WHS +0.010 ns, report_cdc
+    no critical, stamp 22c35e72; not loaded on a board
+  record: results/b113/builds/rm_gp_ml/digest.json
+  sha256: 22e113afc36382cf26ae9dd45a674796e2b0edd8107b6f2837d6a32417ed13c9
+- id: E12
+  activity: simulation
+  result: pass
+  what: whole core in xsim with a mixed synthetic feed injected on the receive words, 350 frames, features, classes, decisions
+    and vetoes equal to the Python twin, orders and stage counters equal (brief 113)
+  record: results/b113/summary.json
+  sha256: b101413a06ae4ea56eee682ed7156f9f3cd0b413a6bdc754df1c89420cdf9b86
+- id: E13
+  activity: simulation
+  result: pass
+  what: tick-to-trade with and without the ML stage, four receive-clock phases, no clock added in shadow or veto mode (brief
+    113)
+  record: results/b113/latency.json
+  sha256: b90f7520188cd2a036c1f9b7293dd576bea40aa8758436ca12c6930fc88320b7
 measurements:
 - id: M1
   what: LUTs, variant (b)
@@ -406,6 +467,38 @@ measurements:
     buffer 16.0 at the same phase; the board has not measured this build
   value: 13.0
   sha256: 77fb782b78af4c9f598f019b6f552970cdb30bdc6e28111db5ac0335b54c73ed
+- id: M12
+  what: tick-to-trade change from the ML stage (veto mode against the control without it), whole core in xsim, mean over
+    four phases
+  category: latency
+  key: ml_stage_tick_to_trade_change_clocks
+  unit: clocks
+  record: results/b113/summary.json
+  field: simulation.change_vs_base_clocks.ml_veto
+  conditions: xsim 2026.1, whole core, GT stand-in, synthetic feed injected, four receive-clock phases; the control is rm_gp
+    at 12.93 clocks; the board has not measured it
+  value: 0.0
+  sha256: b101413a06ae4ea56eee682ed7156f9f3cd0b413a6bdc754df1c89420cdf9b86
+- id: M13
+  what: worst setup slack of any path ending in the ML stage, in context after routing
+  category: timing
+  key: ml_stage_worst_slack_ns
+  unit: ns
+  record: results/b113/summary.json
+  field: build.stage_worst_slack_ns
+  conditions: routed rm_gp_ml, Vivado 2026.1, core clock 6.206 ns
+  value: 0.556
+  sha256: b101413a06ae4ea56eee682ed7156f9f3cd0b413a6bdc754df1c89420cdf9b86
+- id: M14
+  what: LUTs added by the ML stage and its registers over build rm_gp
+  category: resources
+  key: ml_stage_lut_added
+  unit: LUT
+  record: results/b113/summary.json
+  field: build.lut_added
+  conditions: routed, Vivado 2026.1; the control is brief 96F1's rebuild of rm_gp
+  value: 1470
+  sha256: b101413a06ae4ea56eee682ed7156f9f3cd0b413a6bdc754df1c89420cdf9b86
 gaps:
 - about: hardware
   text: The design has run on a KR260 optical loopback only (briefs 97 and 96C), never against a network card or a second
@@ -434,7 +527,13 @@ gaps:
 - about: constraints
   text: 'The per-entry data path to the first synchroniser flop (write-clock entry flop to the first `xpm_cdc_array_single`
     flop) has no max-delay bound: the one-clock margin of `ENT_SYNC = 1` covers normal routing, but it is not constrained.'
+- about: ml stage
+  text: Build rm_gp_ml (the ML decision stage behind the rule, brief 113) has not run on a board; its board test is pre-registered
+    in results/b113/preregistration.md and the owner's script is written. The stage tracks one instrument with a top-of-book
+    and sees the first message of a frame only; the model is brief 87's trees on one planted-signal data set.
 next_steps:
+- Run _handoff/fpga_agent/run_113_ml_stage3.sh on the KR260 (pre-registered in results/b113/preregistration.md), build rm_gp_ml
+  against the 96E rm_gp board run.
 - Run _handoff/fpga_agent/run_96f1_stage1.sh on the KR260 (pre-registered in results/b96f1/preregistration.md), build rm_gp_bypass
   against the 96E rm_gp board run.
 - Run docs/board_run_plan.md steps 1 to 4 on the KR260 (laser polarity first), then the NIC steps after the owner buys a
@@ -444,6 +543,10 @@ next_steps:
 open_questions:
 - Does the PL load over JTAG with the PS idle on the KR260 (flow/program.py has no KR260 board entry yet)?
 history:
+- date: '2026-11-20'
+  note: 'brief 113: build rm_gp_ml, the ML decision stage (30 boosted trees) behind the rule, class ready before the price
+    word so no clock is added in simulation; bit-exact against the Python twin; all 29 gates, timing met; board test pre-registered
+    and script written, nothing run on a board'
 - date: '2026-11-20'
   note: 'brief 96F1: build rm_gp_bypass (both GT elastic buffers bypassed; Wizard probe in results/b96f1/wizard_probe),
     all 29 gates, timing met, report_cdc no critical; board test pre-registered and script written, nothing run on a board'
