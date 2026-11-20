@@ -528,6 +528,19 @@ async def risk_checks(dut):
     assert results["arm"]["rej_arm"] == 5 and results["kill"]["rej_kill"] == 5
     assert results["size_max"]["rej_size"] == 5 and results["size_zero"]["rej_size"] == 5 and results["size_1e6"]["rej_size"] == 5
     assert results["pos"]["rej_pos"] > 0 and results["band"]["rej_band"] > 0 and results["ok"]["rej_band"] == 1 and results["ok"]["fire"] == 4
+    # the band edge: the ask is 200 above the bid. A band of 200 passes (at most), 199 refuses; with no bid a huge band still refuses
+    for name, kw, rej, fire in (("band_edge_pass", dict(band=200), 1, 4), ("band_edge_fail", dict(band=199), 5, 0), ("band_huge", dict(band=0x7FFFFFFF), 1, 4)):
+        cfg = small_cfg(**kw)
+        b, m = await fresh(dut, cfg)
+        d = Day(b, m)
+        await d.open()
+        await d.send([d.A(0, 1, "B", 100, px - 100)])
+        for k in range(4):
+            await d.send([d.A(0, 10 + k, "S", 100, px + 100)], idle=20)
+        await d.send([d.A(1, 30, "S", 100, px + 100)], idle=20)                               # no bid for instrument 1
+        await settle(b)
+        compare_all(b, m)
+        assert (m.cnt["rej_band"], m.cnt["fire"]) == (rej, fire), (name, m.cnt["rej_band"], m.cnt["fire"])
     # the position limit: send, hit the limit, clear the position, send again
     cfg = small_cfg(max_pos=200)
     b, m = await fresh(dut, cfg)
@@ -853,6 +866,33 @@ async def throughput(dut):
     if out:
         Path(out).mkdir(parents=True, exist_ok=True)
         (Path(out) / "throughput_sim.json").write_text(json.dumps(rec, indent=2) + "\n")
+
+
+@cocotb.test()
+async def high_price(dut):
+    """Prices with the top byte of the 32-bit field set (up to the ITCH 5.0 maximum, 200,000.0000): comparators, adders and the 8-byte OUCH price."""
+    for mid, spec in ((1_500_000_000, False), (1_900_000_000, True)):
+        cfg = small_cfg(thr=mid + 3 * gen.TICK, band=5_000_000, px_off=7, max_pos=100_000)
+        b, m = await fresh(dut, cfg, spec=spec)
+        g = gen.Gen(61, cfg, mid=mid)
+        await b.run_items(m, g.stream(400, p_hb=0.0))
+        assert len(m.orders) > 3 and any(int.from_bytes(o["frame"][21:29], "big") >= 1 << 24 for o in m.orders)
+        compare_all(b, m)
+
+
+@cocotb.test()
+async def field_values(dut):
+    """Every configurable field of the Enter Order at a non-default value, a quantity that is not a round number, and a non-zero MinQty: the frame equals the model's."""
+    cfg = small_cfg(tif="0", display="N", capacity="A", ise="Y", cross="O", minqty=0x11223344, custtype="R", qty=123, px_off=3, max_qty=999_999, max_pos=1_000_000)
+    b, m = await fresh(dut, cfg)
+    d = Day(b, m)
+    await d.open()
+    await d.send([d.A(0, 1, "B", 100, MID - 100)])
+    for k in range(3):
+        await d.send([d.A(k % 2, 0xA1B2C3 + k, "S", 100, MID + 100 + k)], idle=20)
+    await settle(b)
+    compare_all(b, m)
+    assert m.orders and m.orders[0]["frame"][29:34] == b"0NAYO" and m.orders[0]["frame"][52:56] == bytes([0x11, 0x22, 0x33, 0x44]) and m.orders[0]["frame"][58:59] == b"R"
 
 
 @cocotb.test()

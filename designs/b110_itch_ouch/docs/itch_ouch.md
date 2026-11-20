@@ -153,14 +153,24 @@ n-th clock after. Measured in simulation by `tests/b110_cocotb.py::latency`, rec
 | first word of the order frame, started at the verdict | 8 |
 
 The frame is eight words, so a speculative frame ends 10 clocks after T; its verdict (commit or abort) is at 7, 8 at the latest.
-At 6.2061 ns a clock is 6.2061 ns: 7 clocks are 43.4 ns, 3 clocks 18.6 ns. These are clocks inside this block only; they do not include the PCS,
+One clock is 6.2061 ns, so 7 clocks are 43.4 ns and 3 clocks 18.6 ns. These are clocks inside this block only; they do not include the PCS,
 the MAC, the UDP/IP header (the payload starts 42 bytes into the frame), nor the TCP stack that would take the order frame.
 
 **Speculation.** With `cfg_spec` set, the frame starts when the candidate is decoded, **if** the frame is idle, the order queue is empty and
 no earlier candidate is still in flight (otherwise it starts at the verdict, as without `cfg_spec`). The verdict then arrives while the frame is
 still being emitted: pass = commit, the frame continues; refuse, or the Add turned out a duplicate or an overflow = `o_abort`. The orders that
 leave, their content and their numbers are **the same with and without speculation**; only the start time differs, and aborted frames are extra output.
-A frame that is aborted cannot have already left: the verdict is 4 clocks before the frame's last word.
+A frame that is aborted cannot have already left: the verdict (clock 7) comes 3 clocks before the frame's last word (clock 10).
+
+**Against the bench-feed path of the 96 design.** The existing mock path (`trade64` in `designs/b96_kr260_10g`, Bench Feed v1) measures, in simulation, from
+the clock the price word is in the MAC register to the order's preamble in the MAC register: 3 clocks with the transmit-clock chain (RATE_MATCH = 1,
+`results/b96c/core_sim.json`) and 7 clocks in the default build, which crosses clocks (`results/b96c/core_sim_default.json`). This block, from the last byte of the
+price (the last byte of an Add Order) to the first word of the order frame: 3 clocks started speculatively, 8 clocks started at the verdict. The figures
+are **not the same quantity**: the bench-feed price is early in a 16-byte message and its decision needs no book, while here the price is the message's last
+byte and the verdict needs the book after the message (7 clocks); the starting point here is the block input, not a MAC register (the phase 2 adapter
+adds clocks in front, [phase2_integration.md](phase2_integration.md)); and the end here is the first word of a frame that still has 54 bytes of TCP/IP headers to
+go in front of it on the wire. What the comparison does show is the cost of a book-dependent verdict (8 against 3) and that starting the frame before the
+verdict recovers it (3 against 3).
 
 **Rate.** One 64-bit word a clock is accepted; messages of at least 14 bytes on the wire (block header included) arrive at most two in
 consecutive clocks and never three. A Replace takes two slots in the book's first stage and the two-entry queue absorbs the cost (`evdrop` stays 0
@@ -173,7 +183,7 @@ in the stress tests). The sustained rate with back-to-back D messages is in [res
 |---|---|---|---|
 | `N_INST` | 4 | 2 to 8 | instruments watched |
 | `LEVELS` | 8 | 4 or 8 | price levels per side and instrument (the best-level tree reduces them in two steps) |
-| `ORD_AW` | 8 | 4 to 16 | order table index bits: 2^ORD_AW live orders |
+| `ORD_AW` | 8 | 4 to 16 (tested at 5, 6, 8 and 10) | order table index bits: 2^ORD_AW live orders |
 
 The bench also runs 2/4/5, 3/8/6 and 8/8/10 (N_INST/LEVELS/ORD_AW) and lints clean at several points (`tests/test_b110_rtl.py`, `tests/test_b110_lint.py`).
 Resources and timing are in [README.md](../README.md) (measured, out of context).

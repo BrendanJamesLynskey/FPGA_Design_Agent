@@ -29,15 +29,16 @@ WORK = ROOT / "build" / "b110_mut"
 def run_one(name: str, rtl: Path, root: Path) -> dict:
     env = dict(os.environ, B110_RTL_DIR=str(rtl), FDA_SIM_BUILD_ROOT=str(root), PYTHONPATH=str(ROOT))
     env.pop("B110_RECORD", None)
-    r = subprocess.run([sys.executable, "-m", "pytest", "-q", "-x", "-p", "no:cacheprovider", str(D / "tests" / "test_b110_rtl.py::test_all_benches")],
-                       cwd=ROOT, env=env, capture_output=True, text=True)
-    xml = root / "b110_all" / "results.xml"
+    r = subprocess.run([sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", str(D / "tests" / "test_b110_rtl.py::test_all_benches"),
+                        str(D / "tests" / "test_b110_rtl.py::test_book_core_queue")], cwd=ROOT, env=env, capture_output=True, text=True)
+    xmls = [root / "b110_all" / "results.xml", root / "b110_book" / "results.xml"]
     failed = []
-    if xml.is_file():
-        failed = [tc.get("name") for tc in ET.parse(xml).getroot().iter("testcase") if tc.find("failure") is not None]
+    for x in xmls:
+        if x.is_file():
+            failed += [tc.get("name") for tc in ET.parse(x).getroot().iter("testcase") if tc.find("failure") is not None]
     if r.returncode == 0:
         return {"name": name, "status": "survived", "killed_by": []}
-    if not xml.is_file():
+    if not any(x.is_file() for x in xmls):
         return {"name": name, "status": "invalid", "killed_by": [], "note": (r.stdout + r.stderr)[-300:]}
     return {"name": name, "status": "killed", "killed_by": failed}
 

@@ -34,3 +34,9 @@ def test_other_parameters() -> None:
     for n, lv, aw in ((2, 4, 5), (3, 8, 6), (8, 8, 10)):
         run(f"b110_p{n}_{lv}_{aw}", testcase="main_stream_params", params={"N_INST": n, "LEVELS": lv, "ORD_AW": aw},
             extra={"B110_NINST": str(n), "B110_LEVELS": str(lv), "B110_ORDAW": str(aw)})
+
+
+def test_book_core_queue() -> None:
+    """book_core alone, events on consecutive clocks (tests/b110_book_cocotb.py): the queue and the Replace's second slot."""
+    srcs = [RTL / "itch_pkg.sv", RTL / "book_core.sv"]
+    cocotb_run.run("b110_book", "book_core", srcs, "b110_book_cocotb", HERE, extra_env={"PYTHONPATH": str(ROOT)})
