@@ -52,7 +52,7 @@ designs/b96_kr260_10g/host/b96c_ppm.py a5a5b3d64e: board driver for the ppm swee
 designs/b96_kr260_10g/rtl/hs_vec.sv e0fc43a9b5: coherent vector crossing
 designs/b96_kr260_10g/model/pcs.py 92790d45d7: bit-serial Python reference of the PCS (the twin)
 designs/b96_kr260_10g/design.xdc 4dec8c5ba8: pins, clocks, slow-pin constraints
-designs/b96_kr260_10g/docs/design.md d9d3fdbd06: design note: decisions and alternatives
+designs/b96_kr260_10g/docs/design.md 68b5438142: design note: decisions and alternatives
 designs/b96_kr260_10g/docs/board_run_plan.md 678413f0be: stage 3 plan for the board
 designs/b96_kr260_10g/docs/what_we_found.md 376623bbd5: results and gaps
 designs/b96_kr260_10g/docs/loop_timing_feasibility.md de906c5b9b: loop-timing and buffer-bypass feasibility study (96F)
