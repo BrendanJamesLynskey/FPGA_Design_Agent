@@ -1,0 +1,163 @@
+data, telemetry length, index, data, take)?",
+    "default": "The map in registers.map: 0x00 ID, 0x04 BYTE_IN, 0x08 TICK, 0x0C STATUS, 0x10 REPLY_LEN, 0x14 REPLY_IDX, 0x18 REPLY_DATA, 0x1C TELEM_LEN, 0x20 TELEM_IDX, 0x24 TELEM_DATA, 0x28 TELEM_TAKE, all 32 bits wide",
+    "reason": "The request names these registers but gives no offsets.",
+    "answer": "IN: offset 0x00, WO, reset 0: [7:0] packet byte, [8] end flag\nSTAT: offset 0x09, RO, reset 0: [0] telemetry on, [1] busy\nRIDX: offset 0x03, RW, reset 0: [6:0] word number\nRWORD: offset 0x04, RO, reset 0: bytes 4i..4i+3 of the reply, first byte on top, zero past the end\nRLEN: offset 0x02, RO, reset 0: length in bytes of the latest reply, 0 if none\nTICK: offset 0x01, WO, reset 0: [7:0] n ticks\nTIDX: offset 0x06, RW, reset 0: [6:0] word number\nTWORD: offset 0x07, RO, reset 0: same for the telemetry frame\nTAKE: offset 0x08, WO, reset 0: any write takes the held telemetry frame\nTLEN: offset 0x05, RO, reset 0: length of the held telemetry frame, 0 if none\nshell: test shell, PROTOCOL.md 1.1\nunmapped: no register at an offset: reads 0, writes ignored (read-only registers behave the same on write)",
+    "status": "answered",
+    "by": "oracle",
+    "evidence": "IN: offset 0x00, WO, reset 0: [7:0] packet byte, [8] end flag"
+   },
+   {
+    "id": "q2",
+    "text": "What is the shell ID word for design ID UEP1?",
+    "default": "0x55455031 (ASCII U E P 1)",
+    "reason": "The request gives the string UEP1 but no constant.",
+    "answer": "0x55455031 (ASCII U E P 1)",
+    "status": "defaulted",
+    "by": "oracle",
+    "evidence": null
+   },
+   {
+    "id": "q3",
+    "text": "Which counter takes a wrong register number combined with a write to a read-only register, and does an unknown register get the type/length/register/access counter?",
+    "default": "Both go to the type, length, register or access error counter (the seventh).",
+    "reason": "The status layout lists a single counter for these.",
+    "answer": "Both go to the type, length, register or access error counter (the seventh).",
+    "status": "defaulted",
+    "by": "oracle",
+    "evidence": null
+   },
+   {
+    "id": "q4",
+    "text": "Is a packet with a bad type or wrong length counted as using up its sequence number?",
+    "default": "No: those rules come before the sequence rule, so the number is not used up.",
+    "reason": "Judging order puts them before the sequence rule.",
+    "answer": "No. A packet that fails the type or length check is refused before the sequence rule, so it never passes that rule and does not use up its sequence number.",
+    "status": "answered",
+    "by": "oracle",
+    "evidence": "Checks in order: long, short, bad CRC (silent drops), type, length, sequence, then register number and access; a command that passes the sequence rule consumes its number."
+   },
+   {
+    "id": "q5",
+    "text": "Does a telemetry-start with the reply count as a command carried out, and what is the telemetry frame count in a status reply?",
+    "default": "Yes, counted when status OK; frame count is the number of frames held since reset.",
+    "reason": "The request does not state it.",
+    "answer": "Not specified for the first part: the spec does not say whether a telemetry-start command counts as carried out. For the second part, the spec gives the status reply's telemetry frame count (16 bit) and says the frame count changes only when a frame is held and only reset clears it. That supports 'frames held since reset', but the spec does not say 'when status OK'.",
+    "status": "answered",
+    "by": "oracle",
+    "evidence": "Frame sequence and frame count change only when a frame is held and only reset clears them."
+   },
+   {
+    "id": "q6",
+    "text": "Is the busy bit set while a packet is being received or a reply is being built?",
+    "default": "Busy is 1 from the first byte of a packet until its reply is built.",
+    "reason": "The request does not define busy.",
+    "answer": "Busy is 1 from the first byte of a packet until its reply is built.",
+    "status": "defaulted",
+    "by": "oracle",
+    "evidence": null
+   },
+   {
+    "id": "q7",
+    "text": "Value of TIMEOUT_CYCLES and its use?",
+    "default": "Supplied by the shell; not used by the endpoint logic.",
+    "reason": "The request names the parameter without describing it.",
+    "answer": "TIMEOUT_CYCLES is 100000. The specification does not say how it is used, so the proposed default ('Supplied by the shell; not used by the endpoint logic') is not confirmed by the spec.",
+    "status": "answered",
+    "by": "oracle",
+    "evidence": "TIMEOUT_CYCLES: 100000"
+   }
+  ]
+ },
+ "stop": "stage 2 visited more than 6 times",
+ "clean_stop": false,
+ "constants": {
+  "ran": true,
+  "blocking": [],
+  "advice": []
+ },
+ "gates_last": {
+  "clarify": true,
+  "board-and-device-planning": true,
+  "rtl-design-creation": false
+ },
+ "approvals": [
+  {
+   "n": 0,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 0,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 1,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 1,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  }
+ ],
+ "bringup": null,
+ "spec_test": {
+  "fired": true,
+  "passed": false,
+  "outcome": "design_wrong",
+  "caught_bug": false,
+  "bench_repaired": false,
+  "design_wrong_verdicts": 2,
+  "bench_wrong_verdicts": 0,
+  "bench_writes": 1,
+  "bench_runs": 2
+ }
+}
