@@ -1,0 +1,56 @@
+validate base: 0 1
+=== allowed values of selected properties (list_property_value) ===
+CONFIG.TX_BUFFER_MODE : 0 
+CONFIG.RX_BUFFER_MODE : 0 
+CONFIG.RX_BUFFER_BYPASS_MODE : 0 
+CONFIG.TX_OUTCLK_SOURCE : 0 
+CONFIG.RX_OUTCLK_SOURCE : 0 
+CONFIG.LOCATE_TX_BUFFER_BYPASS_CONTROLLER : 0 
+CONFIG.LOCATE_RX_BUFFER_BYPASS_CONTROLLER : 0 
+CONFIG.TX_QPLL_FRACN_NUMERATOR : 0 
+CONFIG.RX_QPLL_FRACN_NUMERATOR : 0 
+CONFIG.RX_SLIDE_MODE : 0 
+CONFIG.RX_RECCLK_OUTPUT : 0 
+CONFIG.TXPROGDIV_FREQ_ENABLE : 0 
+CONFIG.ENABLE_OPTIONAL_PORTS : 0 
+CONFIG.LOCATE_TX_USER_CLOCKING : 0 
+CONFIG.LOCATE_RX_USER_CLOCKING : 0 
+=== stage A: TX_BUFFER_MODE 0 only ===
+set: 0 0
+  ~ CONFIG.FREERUN_FREQUENCY : 100 -> 161.1328125
+  ~ CONFIG.TX_BUFFER_MODE : 1 -> 0
+  ~ CONFIG.TX_OUTCLK_SOURCE : TXOUTCLKPMA -> TXPROGDIVCLK
+validate: 0 1
+=== stage B: + RX_BUFFER_MODE 0 ===
+set: 0 0
+  ~ CONFIG.RX_BUFFER_MODE : 1 -> 0
+validate: 0 1
+=== allowed values after bypass ===
+CONFIG.TX_BUFFER_BYPASS_MODE : 0   (value: 1 ERROR: [Common 17-39] 'get_property' failed due to earlier errors.
+)
+CONFIG.RX_BUFFER_BYPASS_MODE : 0   (value: 0 MULTI)
+CONFIG.TX_OUTCLK_SOURCE : 0   (value: 0 TXPROGDIVCLK)
+CONFIG.RX_OUTCLK_SOURCE : 0   (value: 0 RXOUTCLKPMA)
+=== try alternatives (each from the stage B state; reverted) ===
+set RX_BUFFER_BYPASS_MODE=SINGLE: 0 SINGLE  -> now 0 MULTI ; validate: 0 1
+set TX_BUFFER_BYPASS_MODE=SINGLE: 1 ERROR: [Common 17-39] 'set_property' failed due to earlier errors.
+  -> now 1 ERROR: [Common 17-39] 'get_property' failed due to earlier errors.
+ ; validate: 0 1
+set TX_BUFFER_BYPASS_MODE=MULTI: 1 ERROR: [Common 17-39] 'set_property' failed due to earlier errors.
+  -> now 1 ERROR: [Common 17-39] 'get_property' failed due to earlier errors.
+ ; validate: 0 1
+set TX_OUTCLK_SOURCE=TXPROGDIVCLK: 0 TXPROGDIVCLK  -> now 0 TXPROGDIVCLK ; validate: 0 1
+set TX_OUTCLK_SOURCE=TXOUTCLKPMA: 1 ERROR: [Common 17-39] 'set_property' failed due to earlier errors.
+  -> now 0 TXPROGDIVCLK ; validate: 0 1
+set RX_OUTCLK_SOURCE=RXOUTCLKPMA: 0 RXOUTCLKPMA  -> now 0 RXOUTCLKPMA ; validate: 0 1
+set RX_OUTCLK_SOURCE=RXPROGDIVCLK: 1 ERROR: [Common 17-39] 'set_property' failed due to earlier errors.
+  -> now 0 RXOUTCLKPMA ; validate: 0 1
+=== fractional-N: set TX/RX_QPLL_FRACN_NUMERATOR 1000 ===
+set: 0 
+  ~ CONFIG.RX_QPLL_FRACN_NUMERATOR : 0 -> 1000
+  ~ CONFIG.RX_REFCLK_FREQUENCY : 156.25 -> 64.453101
+  ~ CONFIG.TX_QPLL_FRACN_NUMERATOR : 0 -> 1000
+  ~ CONFIG.TX_REFCLK_FREQUENCY : 156.25 -> 64.453101
+validate: 0 1
+=== generate_target on both variants; port lists compared ===
+(see ports_*.txt and the generated wrapper directories)
