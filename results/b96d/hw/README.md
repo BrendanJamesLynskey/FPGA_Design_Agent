@@ -11,7 +11,7 @@ ten-word UltraScale+ masks (brief 96D2) and forcing the eye-scan 4T clock phase 
   that matches UG576's description, so the 96D2 layout {80'b1, 32'b0, 48'b1} is right. Every counting window gave the same result at the centre and at the edges.
 - `20261120_phaseprobe/phase_probe.json` (`tools/eyescan_phase_probe.py`): horizontal and vertical sweeps at the default phase, with the 4T clock phase forced to 0 and to 1, and with ES_ERRDET_EN off. Only phase 1 shows an eye
   (no errors from -24 to +24 counts at prescale 0); the default, phase 0 and ERRDET off all read about half the bits as errors everywhere.
-- `20261120_093417/`: the first rerun, stopped by the planner after the self-test and four scans had saturated the error counter at every point: `probe.json`, `program.json`, `summary.txt`, the `run.txt` files and `git_heads.txt` are kept;
+- `20261120_093417/`: the first rerun, stopped by the planner after the self-test and four scans had saturated the error counter at every point: `probe.json`, `program.json`, the `run.txt` files and `git_heads.txt` are kept (the script was stopped before it wrote `summary.txt`);
   its capture files are **not** committed, because they look like data and are not (wrong 4T phase).
 - `20261119_231836/`: the 2026-11-19 run with no data (below).
 
