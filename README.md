@@ -64,6 +64,7 @@ Stage 2 adds a block that arrives already placed, routed and locked (`level: pla
 an import check of the lock and the footprint, and placement evidence (the block relocated by RapidWright and re-placed around, its internal interconnect delays compared, in picoseconds,
 with Vivado as the referee): the demonstration [designs/b102_managed_pr](designs/b102_managed_pr/README.md) and [results/102_managed_pr](results/102_managed_pr/README.md).
 Stage 3 integrates one real third-party RTL block (Alex Forencich's parallel CRC/LFSR from verilog-ethernet, MIT) as a frozen component vendored unmodified, with its licence, upstream commit and a hash per file checked against the source and a provenance report of what is theirs and what is ours: the demonstration [designs/b102_managed_ext](designs/b102_managed_ext/README.md) and [results/102_stage3](results/102_stage3/README.md).
+Brief 102F closes the stage 1-3 gaps: the waiver files (`lint/`, `waivers.yaml`, in-source waivers) are the owner's, writes to frozen files are prevented while a tool runs design code (and mounted read-only in the container runner), the scope is in `config.json`/`summary.json` and re-checked by `resume`, and evidence signing is proposed: [docs/managed_projects.md](docs/managed_projects.md) and [results/102f_managed_gaps](results/102f_managed_gaps/README.md).
 A portfolio pack (title, facts with their sources, stills and a short animation) is in [site/portfolio/](site/portfolio/README.md).
 
 ## The flow

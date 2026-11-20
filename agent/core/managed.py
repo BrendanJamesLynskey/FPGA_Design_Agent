@@ -33,11 +33,13 @@ cannot write.
 from __future__ import annotations
 
 import ast
+import contextlib
 import fnmatch
 import hashlib
 import json
 import os
 import re
+import threading
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -53,7 +55,7 @@ LEVELS = ("rtl", "netlist", "placed_routed", "vendor_ip", "encrypted_ip")
 TRUST = ("none", "documented", "verified", "built")
 MANAGED_DIR = Path("build") / "managed"
 _ID = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
-_TOP_KEYS = {"schema", "name", "top", "unclaimed", "components", "approved_contract_changes"}
+_TOP_KEYS = {"schema", "name", "top", "unclaimed", "components", "approved_contract_changes", "agent_may_write_waivers"}
 _COMP_KEYS = {"name", "ownership", "level", "module", "instance", "paths", "build_sources", "netlist", "aliases", "interface",
               "provenance", "reference_rtl", "description", "placement"}
 _PROV_KEYS = {"origin", "version", "licence", "sha256", "tests", "spdx", "upstream_url", "commit", "licence_file", "files", "upstream_paths"}
@@ -61,6 +63,14 @@ OPEN_LICENCES = ("Apache-2.0", "MIT", "BSD-2-Clause", "BSD-3-Clause")      # bri
 _PLACE_KEYS = {"lock", "region", "anchor", "timing_tolerance_ps"}
 _SLICE_RANGE = re.compile(r"^SLICE_X(\d+)Y(\d+):SLICE_X(\d+)Y(\d+)$")
 _DIRS = ("input", "output", "inout")
+
+#: brief 102F: files the flow reads to excuse a finding. In a managed project they are the owner's: the agent may read them and never
+#: write them, unless the manifest says ``agent_may_write_waivers: true`` (default false). A path is design-relative.
+WAIVER_PATHS = ("lint/**", "waivers.yaml", "verif/justifications.yaml")
+#: files that hold a waiver list under one key among other content the agent does write: the key may not gain or change an entry
+WAIVER_KEYS = {"architecture.yaml": "cdc_waivers", "verif/testplan.yaml": "waivers", "verif/fsm.yaml": "waive"}
+#: in-source waivers: a new one in an RTL file is refused (the count of these in the file may not rise)
+_INLINE_WAIVER = re.compile(r"std-waive\s*:|verilator\s+lint_off|synthesis\s+translate_off|pragma\s+translate_off|cdc-waive", re.I)
 
 
 # --- the manifest -------------------------------------------------------------------------------------------------
@@ -91,6 +101,7 @@ class Project:
     design: Path
     unclaimed: str = "owned"
     approved_contract_changes: list[str] = field(default_factory=list)
+    agent_may_write_waivers: bool = False                        # brief 102F: the owner grants lint/ and the other waiver files to the agent
     raw: dict[str, Any] = field(default_factory=dict)
 
     def component(self, name: str) -> Component | None:
@@ -143,6 +154,8 @@ def validate(raw: Any, design: Path | None = None) -> list[str]:
         errs.append("unclaimed must be owned or frozen")
     if not isinstance(raw.get("approved_contract_changes", []), list):
         errs.append("approved_contract_changes must be a list of component names")
+    if not isinstance(raw.get("agent_may_write_waivers", False), bool):
+        errs.append("agent_may_write_waivers must be true or false")
     comps = raw.get("components")
     if not isinstance(comps, list) or not comps:
         return errs + ["components must be a non-empty list"]
@@ -241,7 +254,7 @@ def load(design: Path) -> Project | None:
              for c in raw["components"]]
     return Project(name=raw.get("name") or Path(design).name, top=raw["top"], components=comps, design=Path(design).resolve(),
                    unclaimed=raw.get("unclaimed", "owned"), approved_contract_changes=list(raw.get("approved_contract_changes") or []),
-                   raw=raw)
+                   agent_may_write_waivers=bool(raw.get("agent_may_write_waivers", False)), raw=raw)
 
 
 def from_design(design: Path, write: bool = False) -> dict[str, Any]:
@@ -503,7 +516,16 @@ class ManagedPolicy:
         self.project = project
         self.scope = scope or default_scope(project)
         self._pats = [(c, [_glob_re(p) for p in c.paths]) for c in project.components]
+        self._waiver_pats = [_glob_re(p) for p in WAIVER_PATHS]
         self._baseline: dict[str, str] | None = None
+        self._lock_guard = threading.RLock()
+        self._lock_depth = 0
+        self._saved_modes: list[tuple[Path, int]] = []
+
+    def is_waiver_file(self, rel: str) -> bool:
+        """A file the flow reads to excuse a finding (``lint/**``, ``waivers.yaml``, ``verif/justifications.yaml``)."""
+        rel = rel.strip("/")
+        return any(r.match(rel) for r in self._waiver_pats)
 
     # -- classification
     def classify(self, rel: str) -> Component | None:
@@ -524,6 +546,10 @@ class ManagedPolicy:
             return                                                  # reading it is served as the filtered agent view
         if write and (rel == MANAGED_DIR.as_posix() or rel.startswith(MANAGED_DIR.as_posix() + "/")):
             self._refuse("build/managed/ (evidence, scope, flags, provenance) is written by the flow")
+        if write and self.is_waiver_file(rel) and not self.project.agent_may_write_waivers:
+            self._refuse(f"{rel} is a waiver or lint-configuration file the flow reads to excuse findings: in a managed project it is the "
+                         f"owner's, read-only for the agent. Fix the finding in the RTL; if a waiver is justified, ask the owner to add it "
+                         f"(or to set agent_may_write_waivers in project.yaml)", "managed-waiver")
         c = self.classify(rel)
         if c is None:
             if write and self.project.unclaimed == "frozen" and not rel.startswith("build/") and rel != "":
@@ -557,6 +583,8 @@ class ManagedPolicy:
         if rel.lower().endswith((".xdc", ".tcl")) or self._is_listed_constraint(rel):
             self.check_xdc(rel, content)
             return
+        if not self.project.agent_may_write_waivers:
+            self._no_new_waivers(rel, content)
         if rel.lower().endswith((".v", ".sv", ".svh", ".vh")):
             self._no_shadow(rel, content)
         c = self.classify(rel)
@@ -573,6 +601,33 @@ class ManagedPolicy:
             self._refuse(f"{rel} would change the interface contract of {c.name!r} ({'; '.join(diff[:4])}). That affects the "
                          f"components around it: the change is refused and flagged for the owner, who approves it by "
                          f"listing {c.name!r} under approved_contract_changes in project.yaml", "managed-contract")
+
+    def _no_new_waivers(self, rel: str, content: str) -> None:
+        """Waivers that live inside files the agent does write: a waiver list key in architecture.yaml, verif/testplan.yaml or
+        verif/fsm.yaml may not gain or change an entry, and an RTL file may not gain a lint or standards waiver comment
+        (``// std-waive:``, ``verilator lint_off``, translate_off). Removing a waiver is allowed."""
+        key = WAIVER_KEYS.get(rel.strip("/"))
+        old_p = self.project.design / rel
+        if key:
+            try:
+                new = (yaml.safe_load(content) or {}).get(key) or []
+                old = (yaml.safe_load(old_p.read_text()) or {}).get(key) or [] if old_p.is_file() else []
+            except (yaml.YAMLError, AttributeError):
+                return                                              # write_file's own artefact check reports a malformed file
+            def flat(v):                                            # a list of entries, or a mapping of category -> entries (the testplan)
+                if isinstance(v, dict):
+                    return [(k, w) for k, e in v.items() for w in (e if isinstance(e, list) else [e])]
+                return list(v) if isinstance(v, list) else [v]
+            added = [w for w in flat(new) if w not in flat(old)]
+            if added:
+                self._refuse(f"{rel}: {len(added)} new or changed entry(ies) under {key!r}: waivers excuse findings the flow reports, and in a "
+                             f"managed project they are the owner's. Fix the finding, or ask the owner to add the waiver", "managed-waiver")
+            return
+        if rel.lower().endswith((".v", ".sv", ".svh", ".vh", ".vhd", ".vhdl")):
+            before = len(_INLINE_WAIVER.findall(old_p.read_text(errors="replace"))) if old_p.is_file() else 0
+            if len(_INLINE_WAIVER.findall(content)) > before:
+                self._refuse(f"{rel} adds an in-source waiver comment (std-waive, verilator lint_off, translate_off): waivers are the owner's in a "
+                             f"managed project. Fix the finding in the code, or ask the owner to add the waiver", "managed-waiver")
 
     def _protected_modules(self) -> dict[str, str]:
         return {c.module: c.name for c in self.project.components if c.ownership in ("frozen", "excluded") and c.module}
@@ -745,11 +800,74 @@ class ManagedPolicy:
     def _hashes(self) -> dict[str, str]:
         out = {p: sha256_file(self.project.design / p) for p in (MANIFEST, (MANAGED_DIR / "scope.json").as_posix())
                if (self.project.design / p).is_file()}
+        for p in self.protected_files():
+            out[p.relative_to(self.project.design).as_posix()] = sha256_file(p)
+        return out
+
+    # -- prevention while design code runs (brief 102F)
+    def protected_files(self) -> list[Path]:
+        """Every existing regular file the agent's code must not write: the files of frozen and excluded components, the waiver files
+        (unless the owner granted them), and the manifest and scope record. Symlinks are left out (a chmod would follow them)."""
+        d = self.project.design
+        found: dict[Path, None] = {}
         for c in self.project.components:
             if c.ownership in ("frozen", "excluded"):
                 for p in component_files(self.project, c):
-                    out[p.relative_to(self.project.design).as_posix()] = sha256_file(p)
+                    found[p] = None
+        if not self.project.agent_may_write_waivers:
+            for p in [*(d / "lint").rglob("*"), d / "waivers.yaml", d / "verif" / "justifications.yaml"]:
+                if p.is_file() and self.is_waiver_file(p.relative_to(d).as_posix()):
+                    found[p] = None
+        for rel in (MANIFEST, (MANAGED_DIR / "scope.json").as_posix()):
+            if (d / rel).is_file():
+                found[d / rel] = None
+        return [p for p in found if p.is_file() and not p.is_symlink()]
+
+    def protected_dirs(self, files: list[Path]) -> list[Path]:
+        """Directories (below the design root, not ``build``) in which every file is protected: no file can be created, renamed over or
+        removed there. A directory that also holds an owned file stays writable (its protected files are only chmod-ed)."""
+        d, want = self.project.design, set(files)
+        cand = {p.parent for p in files}
+        out = []
+        for c in sorted(cand, key=lambda x: -len(x.parts)):
+            if c == d or not c.is_relative_to(d) or c.relative_to(d).parts[:1] == ("build",):
+                continue
+            if all((q in want) for q in c.rglob("*") if q.is_file()) and not any(q.is_symlink() for q in c.rglob("*")):
+                out.append(c)
         return out
+
+    @contextlib.contextmanager
+    def write_lock(self):
+        """Make the protected files (and directories made only of them) read-only for the duration of a tool that runs design code, then put
+        the modes back. A plain write by that code (open for write, truncate, create or rename in a protected directory) fails with
+        PermissionError: prevented, not only detected. It does not stop code that chmod-s the file back, or one that replaces a protected
+        file inside a directory that also holds owned files: :meth:`integrity_violations` still detects those, and the container runner
+        mounts them read-only (``ContainerRunner.ro_paths``). Calls may overlap (parallel tool calls): the first takes the modes, the last
+        puts them back, so a mode is never saved twice. A process killed inside the lock leaves them read-only: ``chmod u+w`` restores them."""
+        with self._lock_guard:
+            if self._lock_depth == 0:
+                files = self.protected_files()
+                self._saved_modes = []
+                for p in [*files, *self.protected_dirs(files)]:
+                    try:
+                        mode = os.stat(p).st_mode
+                        self._saved_modes.append((p, mode))
+                        os.chmod(p, mode & ~0o222)
+                    except OSError:
+                        pass
+            self._lock_depth += 1
+        try:
+            yield
+        finally:
+            with self._lock_guard:
+                self._lock_depth -= 1
+                if self._lock_depth == 0:
+                    for p, mode in reversed(self._saved_modes):
+                        try:
+                            os.chmod(p, mode)
+                        except OSError:
+                            pass
+                    self._saved_modes = []
 
     def integrity_violations(self) -> list[str]:
         if self._baseline is None:
@@ -893,7 +1011,8 @@ def start_run(project: Project, resolution_scope: Scope) -> dict[str, Any]:
     rec = {**resolution_scope.as_dict(), "time": time.strftime("%Y-%m-%d %H:%M:%S"),
            "plan": {"will_touch": list(resolution_scope.components),
                     "read_only": [c.name for c in project.components if c.ownership == "frozen"],
-                    "not_in_scope_owned": [c.name for c in project.owned() if c.name not in resolution_scope.components]},
+                    "not_in_scope_owned": [c.name for c in project.owned() if c.name not in resolution_scope.components],
+                    "excluded": [c.name for c in project.components if c.ownership == "excluded"]},
            "history": hist}
     f.write_text(json.dumps(rec, indent=1) + "\n")
     return rec
@@ -905,6 +1024,61 @@ def load_scope(project: Project) -> Scope | None:
         return None
     r = json.loads(f.read_text())
     return Scope(tuple(r["components"]), r.get("source", "explicit"), r.get("request", ""), r.get("note", ""))
+
+
+def manifest_sha256(project: Project) -> str:
+    return sha256_file(project.design / MANIFEST)
+
+
+def scope_record(project: Project) -> dict[str, Any] | None:
+    """The run record's scope (brief 102F): what the request may touch (``components``), what it could have touched (``selectable``: the owned
+    components), what it may only read (``frozen``), what is hidden from it (``excluded``), the owned components left out
+    (``out_of_scope``), the manifest's hash, and whether the waiver files are the owner's. None when no scope was written (an ordinary design,
+    or a managed one that has not run a request). It goes into ``summary.json`` and ``config.json`` of the run."""
+    f = project.design / MANAGED_DIR / "scope.json"
+    if not f.is_file():
+        return None
+    sc = json.loads(f.read_text())
+    comps = list(sc.get("components") or [])
+    rec = {k: sc[k] for k in ("components", "source", "request", "note", "plan", "time") if k in sc}
+    rec.update({"selectable": [c.name for c in project.owned()],
+                "frozen": [c.name for c in project.components if c.ownership == "frozen"],
+                "excluded": [c.name for c in project.components if c.ownership == "excluded"],
+                "out_of_scope": [c.name for c in project.owned() if c.name not in comps],
+                "manifest_sha256": manifest_sha256(project),
+                "waiver_files": "agent-writable" if project.agent_may_write_waivers else "owner-only"})
+    return rec
+
+
+def check_resume(project: Project, recorded: dict[str, Any] | None, scope_arg: list[str] | None = None) -> list[str]:
+    """Re-check the scope when a run is resumed. Problems (an empty list means resume): the run's recorded scope against the scope file of its
+    design copy, against the manifest as it is now (every recorded component must still exist and be owned; the manifest must be the one the
+    run started with), and against ``--scope`` when the caller gives one (it must name the same components: a resume continues a request,
+    it never widens or changes it; a new scope is a new request)."""
+    out: list[str] = []
+    now = load_scope(project)
+    if recorded is None:
+        out.append("the run's config.json has no scope record, but its design is a managed project: it was not started as a scoped request")
+        return out
+    rec = list(recorded.get("components") or [])
+    if now is None:
+        out.append("build/managed/scope.json is missing in the run's design: the scope cannot be re-checked")
+    elif sorted(now.components) != sorted(rec):
+        out.append(f"the design's scope file ({', '.join(now.components) or 'none'}) differs from the scope the run recorded ({', '.join(rec) or 'none'})")
+    for n in rec:
+        c = project.component(n)
+        if c is None or c.ownership != "owned":
+            out.append(f"component {n!r} in the run's scope is {'not in the manifest' if c is None else c.ownership + ' in the manifest'} now: it cannot be edited")
+    was = recorded.get("manifest_sha256")
+    if was and was != manifest_sha256(project):
+        out.append("project.yaml changed since the run started (ownership, contracts or the waiver grant may differ): start a new request")
+    if scope_arg:
+        res = resolve_request(project, "", scope_arg)
+        if res.scope is None:
+            out.append(f"--scope: {res.question}")
+        elif sorted(res.scope.components) != sorted(rec):
+            out.append(f"--scope {', '.join(res.scope.components)} differs from the run's scope {', '.join(rec)}: a resume continues the same request")
+    return out
 
 
 def provenance_report(project: Project, before: dict[str, str] | None = None) -> dict[str, Any]:
