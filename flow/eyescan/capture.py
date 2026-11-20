@@ -218,6 +218,39 @@ def is_complete(cap: dict[str, Any]) -> bool:
     return cap.get("run", {}).get("error") is None and exp is not None and len(cap["points"]) == exp
 
 
+def no_data_stats(cap: dict[str, Any]) -> dict[str, Any]:
+    """How many points have no data (a rung timed out or counted zero samples, as opposed to zero errors), and whether the capture as a whole has none.
+    `no_data` is true when every point taken is a no-data point, or the scan stopped on its own NO DATA guard (run.error), or it took no point at all."""
+    pts = cap["points"]
+    n = sum(1 for p in pts if any(r.get("tmo") or r.get("samp", 0) == 0 for r in p["rungs"]))
+    err = cap.get("run", {}).get("error") or ""
+    return {"points": len(pts), "timed_out": n, "expected": cap["settings"].get("expected_points"),
+            "no_data": (len(pts) > 0 and n == len(pts)) or "NO DATA" in err or (len(pts) == 0 and bool(err))}
+
+
+def require_data(cap: dict[str, Any]) -> None:
+    """Raise CaptureError if the capture has no data (every point timed out or counted nothing, or the scan stopped on its NO DATA guard). The check a results directory must pass."""
+    nd = no_data_stats(cap)
+    if nd["no_data"]:
+        raise CaptureError(f"NO DATA: {nd['timed_out']}/{nd['points']} points timed out or counted no samples; no eye was measured")
+
+
+def summary_line(name: str, cap: dict[str, Any]) -> str:
+    """One line of a results summary.txt. A scan with no data says so ("NO DATA: N/M points timed out"), never "open 0"."""
+    d = cap["settings"]["target_ber"]
+    nd = no_data_stats(cap)
+    cd = cap.get("conditions", {})
+    roc = [cd.get("start", {}).get("inside_roc"), cd.get("end", {}).get("inside_roc")]
+    tail = (f"restore {cap['restore']['ok']}, link {cap.get('link', {}).get('ok_throughout')}, ROC start/end {roc}, {cap['run']['seconds']} s, error {cap['run']['error']}")
+    if nd["no_data"]:
+        exp = f" of {nd['expected']} expected" if nd["expected"] else ""
+        return f"{name}: {cap['settings']['equaliser']} depth {d:g}: NO DATA: {nd['timed_out']}/{nd['points']} points timed out{exp}; no eye was measured; {tail}"
+    e = eye_at(cap, d)
+    warn = f"WARNING {nd['timed_out']}/{nd['points']} points timed out; " if nd["timed_out"] else ""
+    return (f"{name}: {cap['settings']['equaliser']} depth {d:g}: {warn}width {e.get('width_ui')} UI, height {e.get('height_mv')} mV, open {e['counts']['open']}, "
+            f"shallow {e['counts']['shallow']}, {tail}")
+
+
 REQUIRED = ("schema", "created", "instrument", "design", "settings", "points", "conditions")
 REQ_SETTINGS = ("line_rate_gbps", "equaliser", "data_width", "ui_per_count", "vs_range", "rxout_div", "target_ber")
 

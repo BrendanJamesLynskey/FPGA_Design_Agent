@@ -30,7 +30,7 @@ param line rate=10.3125 Gb/s legal=fixed by 10GBASE-R
 ## files
 designs/b96_kr260_10g/rtl/es_ctrl.sv 671362a1c0: DRP master and eye-scan point sequencer for the GTHE4 channel (EYESCAN = 1), brief 96D
 designs/b96_kr260_10g/es.xdc 9f571dada7: powers up the GT's eye-scan circuit (ES_EYE_SCAN_EN, ES_ERRDET_EN) in the eyescan build
-designs/b96_kr260_10g/model/eyescan.py 9e408b13c6: Python twin of the eye-scan point sequencer's DRP traffic
+designs/b96_kr260_10g/model/eyescan.py a4f8ffb4ab: Python twin of the eye-scan point sequencer's DRP traffic
 designs/b96_kr260_10g/tests/eyescan_cocotb.py b6da9be062: cocotb bench of the sequencer against the twin and a DRP stand-in
 designs/b96_kr260_10g/rtl/b96_pkg.sv ac2ee00c42: block codes, scrambler, CRC-32 functions
 designs/b96_kr260_10g/rtl/pcs_tx.sv e0e68141d9: transmit PCS (encode, scramble, gearbox)
@@ -52,7 +52,7 @@ designs/b96_kr260_10g/host/b96c_ppm.py a5a5b3d64e: board driver for the ppm swee
 designs/b96_kr260_10g/rtl/hs_vec.sv e0fc43a9b5: coherent vector crossing
 designs/b96_kr260_10g/model/pcs.py 92790d45d7: bit-serial Python reference of the PCS (the twin)
 designs/b96_kr260_10g/design.xdc 4dec8c5ba8: pins, clocks, slow-pin constraints
-designs/b96_kr260_10g/docs/design.md 237a6b73c0: design note: decisions and alternatives
+designs/b96_kr260_10g/docs/design.md d9d3fdbd06: design note: decisions and alternatives
 designs/b96_kr260_10g/docs/board_run_plan.md 678413f0be: stage 3 plan for the board
 designs/b96_kr260_10g/docs/what_we_found.md 376623bbd5: results and gaps
 designs/b96_kr260_10g/regmap.py 5146c294c8: register map as data

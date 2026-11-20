@@ -8,10 +8,10 @@ the software and to show what the displays look like.
 - `builds/eyescan/`: `digest.json` (timing, utilisation, power, gates), `run.json` (memory and wall time), `wall.txt`, `run_vivado.log`, `commit.txt`, for the `designs/b96_kr260_10g/eyescan` build (`EYESCAN = 1`, `RATE_MATCH = 0`, `es.xdc`).
 - `offline/lpm_synthetic.json`, `offline/dfe_synthetic.json`: two synthetic captures (fda-capture-eye/1) from the fake board, LPM and DFE; `offline/lpm_synthetic_eye.svg`, `offline/lpm_synthetic_bathtub.svg`: the static figures; `offline/eye_page_synthetic.html`: the interactive page with the Compare tab.
 - `es_sim.txt`: the output of `tests/eyescan_cocotb.py` (the sequencer against the Python twin) and the default-off test.
-- `hw/<stamp>/`: written by `_handoff/fpga_agent/run_96d_stage3.sh` when the owner runs it (probe, one capture per scan, `summary.txt`, `svg/`, `page.html`); absent until then.
+- `hw/<stamp>/`: written by `_handoff/fpga_agent/run_96d_stage3.sh` when the owner runs it (probe, one capture per scan, `summary.txt`, `svg/`, `page.html`). `hw/20261119_231836/` is the first board run: **it counted no samples and measured no eye** (a driver fault, fixed in brief 96D2); see `hw/README.md`.
 
 ## Measured
-Build, simulation and software tests only; see the report. No board number exists yet.
+Build, simulation and software tests only; see the report. No eye has been measured yet: the first board run (`hw/`) counted no samples at any point (see `hw/README.md`).
 
 The `eyescan` build (clean tree at commit `c5cce52a`, Vivado 2026.1, `FDA_VIVADO_THREADS=1`, 1208 s): all 29 gates true; DRC and methodology critical warnings 0 (15 methodology warnings: LUTAR-1 x5, XDCH-2 x10); CDC critical 0; **WNS +0.095 ns, WHS +0.010 ns** (6.206 ns period); 6,350 LUT, 14,545 FF, 0 BRAM, 0 DSP; 1.081 W total, junction 48 C (`builds/eyescan/digest.json`, `run.json`). `attributes_in_post_route_dcp.txt` was read from the earlier build of the same `es.xdc` (ES_EYE_SCAN_EN and ES_ERRDET_EN TRUE) and not re-read on this one.
 
