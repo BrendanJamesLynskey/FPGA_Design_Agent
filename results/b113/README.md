@@ -20,6 +20,18 @@ Design notes: [designs/b96_kr260_10g/rm_gp_ml/docs/ml_stage.md](../../designs/b9
   a3f9a4a2 in `commit.txt`, working tree clean; the build inputs have not changed since: `git diff` of the RTL, build.yaml, constraints, IP script and flow is empty, and `flow/manifest.py show` gives the same build ID, 26dc74ce, at that commit and now).
 - **Stage timing in context:** the worst setup path of any part of the stage has +0.556 ns of slack (the trees' path +0.757 ns).
 
+## Board result, 2026-11-21 (rm_gp_ml, stamp 22c35e72, build ID 0ba30107 read back over JTAG): PASS
+
+`hw/20261120_220813/rm_gp_ml/` (stage3.json, sweeps.json, session.json). How the numbers are defined (all from FPGA counters at the 6.2061 ns core clock, median of the per-link minimum over 100 link restarts, fibre loopback with the 0.17 m OS2 lead and the 10G-LR module in J24): **E** is one pass out and back through the transmit and receive paths (MAC, PCS, GT, optics, fibre); **L** is the whole trading loop, a price word in to an order out and back, which crosses the transceiver twice, so L = 2E + D; **D** is the decision logic between the two crossings; **tick-to-trade** is L - E, first bit in to first bit out at the SFP+ pins as seen by FPGA counters, optics included (not a wire-to-wire STAC-T0 figure; see docs/latency_definitions.md).
+
+| | rm_gp without the ML stage (96E) | rm_gp_ml (ML stage in the path) | change |
+|---|---|---|---|
+| E | 21.0 | 21.0 | 0.0 |
+| L | 54.0 | 53.0 | -1.0 (inside the pre-registered 1-clock band; 96E's per-link L minimum ranged 53 to 55, so this is spread, not a gain) |
+| D | 12.0 | 11.0 | |
+
+Why the stage adds no clock: the ML class is computed ahead of time from book state that changes only when a good frame ends; the order path reads the class from a register, so nothing is added between the price word arriving and the order leaving. The stage's counters equal the Python twin exactly in both the shadow and the veto sweeps. Safety counters 0; inside the operating conditions (28.4 C at the end); laser off at the end. The model was trained on synthetic data, so this shows the latency cost of an ML decision stage, not a trading edge.
+
 ## Reproduce
 Each step below writes the records named above; the simulations need Vivado 2026.1's xsim and take one to three minutes a run, the build needs a heavy slot (take_heavy_slot.sh) and about 37 minutes, and the tests need only Python, Icarus Verilog and Verilator.
 ```
