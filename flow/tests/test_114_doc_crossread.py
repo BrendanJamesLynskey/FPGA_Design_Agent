@@ -141,6 +141,28 @@ def test_register_files_correct_and_planted() -> None:
     assert status("p4_zb_accel_version_width", ("zb_accel_regs.h",), zb) == {"1": "agree", "2": "agree", "3": "disagree", "4": "agree", "5": "agree"}
 
 
+def test_post_hoc_rules_an_address_is_not_a_mask_and_a_field_encoding_is_not_compared() -> None:
+    # (found in the scored runs: a bit range of ES_CONTROL judged against the DRP address constant A_ES_CONTROL; "ID is 32 bits" against field widths;
+    # "1 = enable" against a mask; "Rx FIFO is 16 deep" against the register offset)
+    h = ("hw.py", "eyescan.py")
+    s = status("h2_96d2_ten_word", h, [F("1", "ES_CONTROL", "address", value=0x3C), F("2", "ES_CONTROL", "bit_range", lo=10, hi=15), F("3", "es_control_status", "bit_range", lo=0, hi=3)])
+    assert s["1"] == "agree" and s["2"] == "not_in_code" and s["3"] == "not_in_code"                       # A_ES_CONTROL is an address (A_ prefix, and an agreeing address fact)
+    z = status("f4_zb_accel", ("zb_accel_regs.h",), [F("1", "ID", "width_bits", value=32), F("2", "ID", "width_bits", field="VERSION", value=16)])
+    assert z == {"1": "not_in_code", "2": "agree"}                                                          # a register's width is not a field's width
+    u = status("f1_uartlite", ("tb_uartlite.sv",), [F("1", "Rx FIFO", "address", value=0), F("2", "Rx FIFO", "value", value=16)])
+    assert u["1"] == "agree" and u["2"] == "not_in_code"                                                    # a depth is not the register's offset
+    t = status("f2_timer", ("tb_timer.sv",), [F("1", "TCSR0", "value", field="LOAD0", value=1)])
+    assert t["1"] == "not_in_code"
+
+
+def test_odd_bit_numbers_never_stop_a_run() -> None:
+    facts, problems = D.validate_facts({"facts": [{"id": "F1", "subject": "ID", "kind": "bit_range", "lo": 31, "hi": 16, "value": None, "page": 230, "quote": "ES_QUALIFIER0"}]}, doc())
+    assert (facts[0]["lo"], facts[0]["hi"]) == (16, 31)                        # written [lo:hi] the wrong way round: the same bits
+    odd = F("1", "ID", "bit_range", field="MAGIC", lo=-3, hi=100000000)         # nonsense numbers: judged as nothing, not an exception
+    r = D.compare([odd], code("f4_zb_accel", "zb_accel_regs.h"))
+    assert r["rows"][0]["status"] in ("not_in_code", "disagree")
+
+
 def test_other_variants_are_not_compared() -> None:
     r = D.compare([F("1", "ES_QUALIFIER", "word_count", value=5, applies_to="UltraScale", for_target=False)], code("h2_96d2_ten_word", "hw.py", "eyescan.py"))
     assert r["rows"][0]["status"] == "other_variant"

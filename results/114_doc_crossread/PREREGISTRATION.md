@@ -82,4 +82,14 @@ code side; the planted mistakes are single-number edits of real files, which is 
 
 ## Deviations after the first scored run
 
-(none yet)
+All of these came after the 66 scored calls had been made; the numbers in `results.json` / `runs/` are the frozen code's, and `results_v2.json` / `runs_v2/` re-compare the *same stored reader replies* with the changed comparator (no new model call).
+
+1. **Comparator exception (run B/f4_zb_accel_r3).** The frozen comparator raised `negative shift count` on a reader fact whose bit range was written the wrong way round (`lo` 31, `hi` 16), and the
+   call failed twice (the pre-registered single re-run, both attempts kept in `runs/B/failed_before_fix__f4_zb_accel_r3.json`). Fix: `validate_facts` swaps a reversed range, and a fact the judge cannot take no longer stops the run
+   (`flow/tests/test_114_doc_crossread.py::test_odd_bit_numbers_never_stop_a_run`). The run was then made again, once, with the fixed code and the same prompt, arm and settings
+   (`run_eval.py --only f4_zb_accel --only-repeat 3`; `run_eval.py` gained that flag). `results.json` counts the re-run; the failed attempt is in the record.
+2. **Four comparator rules added after reading the false positives (post-hoc; all remove false positives, none was needed for a detection):** (a) a code name starting `A_` or `R_` is an address (the drivers'
+   own convention), and a code constant that an agreeing address fact has claimed is not judged against bit ranges, widths, reset values or values; (b) a code name that is more specific than the document's
+   (a field of the register the fact is about) is not judged for a width, reset value or bit range of the register; (c) a `value` fact that names a field (an encoding such as "1 = enable") is not compared;
+   (d) the `value` kind no longer compares against offset-aspect names. `results_v2.json` shows the effect on the same replies; the detections are unchanged.
+3. `flow/doc_crossread.py` (hash above) is therefore not the version that made `runs/`. `runs/` records come from the frozen file; reproduce them from the pre-registration commit, or reproduce `runs_v2/` with `rescore.py`.

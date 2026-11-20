@@ -67,7 +67,9 @@ STOP = frozenset({"A", "R", "W", "REG", "REGS", "REGISTER", "ADDR", "ADDRS", "AD
 ASPECTS = {"OFFSET": "OFFSET", "ADDR": "OFFSET", "ADDRS": "OFFSET", "ADDRESS": "OFFSET", "RESET": "RESET", "WIDTH": "WIDTH", "SHIFT": "SHIFT",
            "ACCESS": "ACCESS", "DEFAULT": "RESET"}
 ASPECT_OK = {"address": {None, "OFFSET"}, "reset_value": {"RESET"}, "width_bits": {"WIDTH"}, "bit_range": {None, "SHIFT", "WIDTH"},
-             "value": {None, "OFFSET", "RESET", "WIDTH", "SHIFT"}, "word_count": {None, "OFFSET"}}
+             "value": {None, "RESET", "WIDTH", "SHIFT"}, "word_count": {None, "OFFSET"}}
+#: kinds whose number belongs to a register or field as a whole: a code name naming a field of the document's register is about something smaller
+WHOLE_ITEM_KINDS = ("width_bits", "reset_value", "bit_range")
 
 
 def tokens(name: str) -> list[str]:
@@ -83,6 +85,8 @@ def strip_digits(t: str) -> str:
 def aspect_of(toks: list[str]) -> tuple[list[str], str | None]:
     if len(toks) > 1 and toks[-1] in ASPECTS:
         return toks[:-1], ASPECTS[toks[-1]]
+    if len(toks) > 1 and toks[0] in ("A", "R"):          # A_ES_CONTROL, R_DRP_ADDR: the drivers' own convention for an address or a register offset
+        return toks, "OFFSET"
     return toks, None
 
 
@@ -723,6 +727,8 @@ def validate_facts(reply: Any, document: dict[str, Any]) -> tuple[list[dict[str,
             if f["kind"] == "bit_range" and lo is None:
                 problems.append(f"{tag}: a bit_range fact needs lo")
                 continue
+            if lo is not None and hi is not None and hi < lo:      # [lo:hi] written the wrong way round: the field is the same bits
+                lo, hi = hi, lo
             if f["kind"] != "bit_range" and val is None and not vals:
                 problems.append(f"{tag}: a {f['kind']} fact needs a numeric value")
                 continue
@@ -878,11 +884,11 @@ def compare(doc_facts: list[dict[str, Any]], code: dict[str, Any]) -> dict[str, 
     for c in cfacts:
         for i in _ints(c["value"]):
             all_ints.setdefault(i, []).append(c)
-    rows: list[dict[str, Any]] = []
     matched_code: set[int] = set()
-    for f in doc_facts:
-        row: dict[str, Any] = {"fact": f, "status": None, "tier": None, "code": [], "why": ""}
-        rows.append(row)
+    rows = [{"fact": f, "status": None, "tier": None, "code": [], "why": ""} for f in doc_facts]
+    address_used: set[int] = set()         # code facts an agreeing address fact has claimed: they are addresses, not masks, widths or values
+    for row in sorted(rows, key=lambda r: r["fact"]["kind"] != "address"):
+        f = row["fact"]
         if not f["for_target"]:
             row.update(status="other_variant", why=f"applies to {f['applies_to']!r}, not the target; not compared")
             continue
@@ -899,12 +905,19 @@ def compare(doc_facts: list[dict[str, Any]], code: dict[str, Any]) -> dict[str, 
             else:
                 row.update(status="not_in_code", why="none of " + (", ".join(sorted(names)) or "its names") + " appears in the code")
             continue
+        if f["kind"] == "value" and f.get("field"):
+            row.update(status="not_in_code", why="a value of a field (an encoding such as '1 = enable') is not compared with the code's masks and offsets; read the evidence")
+            continue
         asp = ASPECT_OK[f["kind"]]
         cands: list[tuple[float, dict[str, Any]]] = []
         for c in cfacts:
             if c["aspect"] not in asp or c["cls"] == "map":
                 continue
+            if f["kind"] != "address" and id(c) in address_used:
+                continue
             s = max(name_score(a, c["tokens"], prefix) for a in alts)
+            if s > 0 and f["kind"] in WHOLE_ITEM_KINDS and set(_core(dtoks, frozenset())) < set(_core(c["tokens"], prefix)):
+                continue                                        # the code names a field of the register the fact is about
             if s > 0:
                 cands.append((s, c))
         pool: list[dict[str, Any]] = []
@@ -921,8 +934,14 @@ def compare(doc_facts: list[dict[str, Any]], code: dict[str, Any]) -> dict[str, 
                 if f["kind"] == "address":              # a table of addresses named for the item (QUALIFIER_ADDRS) also counts
                     pool += [c for s, c in cands if c["cls"] == "list" and c["aspect"] == "OFFSET" and c not in pool]
             row["tier"] = "name"
-        judged = [(c, _judge(f, c)) for c in pool]
-        judged = [(c, j) for c, j in judged if j is not None]
+        judged = []
+        for c in pool:
+            try:
+                j = _judge(f, c)
+            except (ValueError, OverflowError, TypeError):        # a fact the judge cannot take (odd bit numbers): this fact only, never the run
+                j = None
+            if j is not None:
+                judged.append((c, j))
         if f["kind"] == "address" and judged:
             # one fact per code name is not enough for a block: take the union of the addresses of the best-named facts
             union = {i for c, _ in judged for i in _ints(c["value"])}
@@ -938,6 +957,8 @@ def compare(doc_facts: list[dict[str, Any]], code: dict[str, Any]) -> dict[str, 
             row["code"] = [c for c, _ in judged]
             matched_code.update(id(c) for c, _ in judged)
             bad = [(c, j) for c, j in judged if j[0] == "disagree"]
+            if f["kind"] == "address" and not bad:
+                address_used.update(id(c) for c, _ in judged)
             if bad:
                 row.update(status="disagree", why="; ".join(sorted({j[1] for _, j in bad if j[1]})) or "the numbers differ")
                 row["code"] = [c for c, _ in bad]

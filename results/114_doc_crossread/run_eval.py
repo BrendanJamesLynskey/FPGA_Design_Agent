@@ -83,6 +83,7 @@ def main() -> None:
     ap.add_argument("--priv-dir", type=Path, required=True)
     ap.add_argument("--only", action="append", default=[])
     ap.add_argument("--repeats", type=int, default=SPEC["repeats"])
+    ap.add_argument("--only-repeat", type=int, help="run only this repeat number (a re-run after a code fix is recorded as such in PREREGISTRATION.md)")
     ap.add_argument("--workers", type=int, default=3)
     ap.add_argument("--spec", type=Path, help="a cases file other than cases.json (plumbing smoke tests only)")
     ap.add_argument("--runs-dir", type=Path, help="write the public records here instead of runs/ (smoke tests only)")
@@ -93,7 +94,7 @@ def main() -> None:
         RUNS = a.runs_dir
     from agent.access import require_or_exit
     require_or_exit("results/114_doc_crossread/run_eval.py")
-    jobs = [(c, k) for c in SPEC["cases"] if not a.only or c["id"] in a.only for k in range(1, a.repeats + 1)]
+    jobs = [(c, k) for c in SPEC["cases"] if not a.only or c["id"] in a.only for k in (range(1, a.repeats + 1) if not a.only_repeat else [a.only_repeat])]
     t0 = time.time()
     meta = {"arm": a.arm, "arm_spec": SPEC["arms"][a.arm], "started": time.strftime("%Y-%m-%dT%H:%M:%S"), "jobs": len(jobs),
             "git_head": subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT, capture_output=True, text=True).stdout.strip(),
@@ -103,7 +104,7 @@ def main() -> None:
     meta.update({"seconds": round(time.time() - t0), "failed": [r["run"] for r in results if not r["ok"]]})
     d = RUNS / a.arm
     d.mkdir(parents=True, exist_ok=True)
-    (d / "_meta.json").write_text(json.dumps(meta, indent=1) + "\n")
+    (d / ("_meta.json" if not a.only_repeat else f"_meta_rerun_{a.only_repeat}_{'_'.join(a.only) or 'all'}.json")).write_text(json.dumps(meta, indent=1) + "\n")
     for r in results:
         print(r["run"], "ok" if r["ok"] else "FAILED " + r["error"], r.get("summary", ""))
 

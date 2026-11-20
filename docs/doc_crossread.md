@@ -65,6 +65,7 @@ inputs (paths inside the design, or under `FDA_DOCS_DIR`) and writes `build/cros
 - **Constants inside function bodies are not read**; a register map written as `if addr == 0x0C:` is invisible to this check.
 - **A disagreement can be the document's or the reader's mistake.** Read the quotation and the page before changing code; a `[unverified citation]` mark means the
   quotation is not in the excerpt.
+- **A value of a field is not compared.** "1 = enable", "0 = output" and similar encodings carry no number the code holds as a mask or offset; they stay in the report as `not_in_code` for you to read.
 - **The reader is a model and varies from run to run.** One run is a sample: repeat it before relying on silence (results/114_doc_crossread measures this).
 - **Cost.** One reader call per check: input is the excerpt (about 1 000 tokens a page), output a few thousand tokens. It runs on the Max plan through Claude Code; no
   dollars are reported. Measured figures per case are in the results README.
