@@ -271,9 +271,9 @@ def test_free_health_checks_run_no_costly_or_hardware_command(tmp_path):
     for c in flat:
         assert not any(f in c.split() or f in c for f in FORBIDDEN), c
     st = {c["id"]: c for c in d["checks"]}
-    for k in ("llm_probe", "jtag_disabled", "ci_main"):
+    for k in ("llm_probe", "board_actions", "ci_main"):
         assert st[k]["status"] == "not-run"
-    assert "action" not in st["jtag_disabled"] and "stage 2" in st["jtag_disabled"]["detail"]
+    assert "action" not in st["board_actions"] and "Board page" in st["board_actions"]["detail"]
     assert st["claude_cli"]["status"] == "ok" and "9.9.9" in st["claude_cli"]["detail"]
     assert "someone" not in json.dumps(d) and st["claude_auth"]["detail"].startswith("signed in")
     assert st["models_table"]["endpoints"][0]["key_state"] in ("key present", "key MISSING")
@@ -292,17 +292,19 @@ def test_actions_run_only_the_fixed_commands(tmp_path):
         assert not any(w in " ".join(c) for w in ("program", "flow.eyescan", "board.lock", "ssh", "vivado", "openFPGALoader", "hw_list", "jtag"))
 
 
-def test_no_code_path_starts_the_hardware_server_or_vivado():
-    """Stage 1 has no JTAG or Vivado step: no navigator source names the tools that would start them, and the one process starter is health.Runner."""
+def test_only_the_stage_2_modules_start_processes():
+    """Stage 2 starts processes in exactly three places: health.Runner (fixed argv), runctl.Spawner (the agent's own CLI) and boardops (hw_server and Vivado, behind board.lock and a
+    heavy slot). No other navigator module starts a process, and nothing uses a shell or os.system."""
     src = {p.name: p.read_text() for p in (ROOT / "navigator").glob("*.py")}
+    allowed = {"health.py": "subprocess", "sources.py": "subprocess", "runctl.py": "subprocess", "boardops.py": "subprocess"}
     for name, text in src.items():
-        for tok in ("HwServer", "run_vivado_tcl", "hw_list.tcl", "jtag_list", "openFPGALoader", "flow.hw", "flow import hw", "Popen", "os.system"):
+        for tok in ("os.system", "shell=True", "os.popen", "pkill"):
             assert tok not in text, f"{name} mentions {tok}"
-        if name not in ("health.py", "sources.py"):          # health.Runner (fixed argv) and sources._git_date (git log) are the only starters
-            assert "subprocess" not in text, name
-    assert not (ROOT / "navigator" / "jtag_list.py").exists()
-    for bad in ("hw_server", "vivado -mode", "/bin/vivado"):
-        assert not any(bad in t for n, t in src.items() if n != "test_103_navigator.py"), bad
+        if name not in allowed:
+            assert "subprocess" not in text and "Popen" not in text, name
+        if name not in ("boardops.py",):
+            for tok in ("HwServer", "run_vivado_tcl", "hw_list.tcl", "openFPGALoader", "flow.hw", "flow import hw"):
+                assert tok not in text, f"{name} mentions {tok}"
 
 
 def test_usage_levels(tmp_path):
@@ -310,7 +312,7 @@ def test_usage_levels(tmp_path):
     log = app.handoff / "usage_log.txt"
     import datetime as dt
     now = dt.datetime.now().strftime("%Y-%m-%d %H:%M")
-    for pct, want in ((33, "ok"), (82, "warn"), (88, "fail"), (95, "fail")):
+    for pct, want in ((33, "ok"), (82, "warn"), (89, "warn"), (90, "fail"), (95, "fail")):
         log.write_text(f"{now}  Current week (all models): {pct}% used · resets Nov 23;\n")
         assert app.health.usage()["status"] == want
     log.write_text("2020-01-01 00:00  Current week (all models): 10% used · resets x;\n")

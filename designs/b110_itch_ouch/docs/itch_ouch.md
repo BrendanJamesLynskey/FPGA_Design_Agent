@@ -164,7 +164,7 @@ still being emitted: pass = commit, the frame continues; refuse, or the Add turn
 leave, their content and their numbers are **the same with and without speculation**; only the start time differs, and aborted frames are extra output.
 A frame that is aborted cannot have already left: the verdict (clock 7) comes 3 clocks before the frame's last word (clock 10).
 
-**Against the bench-feed path of the 96 design.** The existing mock path (`trade64` in `designs/b96_kr260_10g`, Bench Feed v1) measures, in simulation, from
+**Against the bench-feed path of the 96 design** (its definitions of E, L, D and tick-to-trade, and the early start of its order frame, are in [docs/latency_definitions.md](../../../docs/latency_definitions.md)). The existing mock path (`trade64` in `designs/b96_kr260_10g`, Bench Feed v1) measures, in simulation, from
 the clock the price word is in the MAC register to the order's preamble in the MAC register: 3 clocks with the transmit-clock chain (RATE_MATCH = 1,
 `results/b96c/core_sim.json`) and 7 clocks in the default build, which crosses clocks (`results/b96c/core_sim_default.json`). This block, from the last byte of the
 price (the last byte of an Add Order) to the first word of the order frame: 3 clocks started speculatively, 8 clocks started at the verdict. The figures
