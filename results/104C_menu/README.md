@@ -30,6 +30,8 @@ Per arm (found of 3 for agent_both / all3 / hand_ref; origin of the match): P1 A
 
 ## Reproduce
 
+The live runs need the agent's access key, the private prompts at the pinned commits and the pinned Claude Code copy; scoring and replay need no model call.
+
 ```
 python3 results/104C_menu/run_backtest.py run P1 b96_10g_pre97 A   # also B; and P2 (needs FDA_ACCESS_KEY, the private prompts at the pinned commits, claude 2.1.321)
 python3 results/104C_menu/run_backtest.py publish <knowledge checkout>   # raw replies to the private repository, public records here
