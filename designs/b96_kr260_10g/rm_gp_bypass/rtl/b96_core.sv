@@ -12,6 +12,8 @@
 // the GT Wizard instance connects the two buffer-bypass controllers' ports; each direction's paths leave reset through gt_bp_gate (the reset helper's done AND the controller's done for
 // the current sequence AND no controller error); tx_done and rx_done (the status bits, the LED, the order-number restart) follow that gate; FEATURES bit 6 reads 1; GT_BUF bits 15:10
 // show the controllers' done and error (the TXBUFSTATUS and RXBUFSTATUS fields it also holds are meaningless with the buffers bypassed: UNCONFIRMED against UG576, record, do not judge).
+// Brief 96F1b: each controller's reset comes from gt_bp_ctl (AMD's example's synchronised ~user-clock-active, plus an alignment timeout of 30 ms TX / 130 ms RX that resets the controller and retries, bounded,
+// then gives up and flags it); GT_BUF bits 29:16 show the retry counts and the gave-up flags. Parameters BP_TX_TO, BP_RX_TO and BP_RETRIES are new; the top shares the defaults.
 // The ports and parameters are those of the base file, so kr260_10g_top.sv is shared unchanged.
 module b96_core #(
     parameter logic [31:0] BUILD_STAMP = 32'h0,
@@ -21,7 +23,10 @@ module b96_core #(
     parameter bit          EYESCAN     = 1'b0,    // 1 = brief 96D's DRP access, eye-scan point sequencer and TX drive registers (reported in FEATURES bit 4); 0 = none (the GT's DRP and drive ports are tied as before)
     parameter bit          GO_REG      = 1'b1,    // RATE_MATCH = 0 only: REG_OUTPUT of the go-pulse crossing u_p_go (1 as on main; brief 97's latency variant all3 builds it 0)
     parameter bit          RM_DIRECT   = 1'b0,    // RM_OWN = 1 only (brief 96E): 1 = rate_match_gp with ENT_SYNC = 0 (direct read of the entry flops, build rm_gp_direct; fails report_cdc); 0 = ENT_SYNC = 1 (the default)
-    parameter bit          RM_OWN      = 1'b0     // RATE_MATCH = 1 only (brief 96E): 1 = our own gray-pointer elastic buffer (rate_match_gp.sv), 0 = the one on AMD's xpm_fifo_async (rate_match.sv); reported in FEATURES bit 5
+    parameter bit          RM_OWN      = 1'b0,    // RATE_MATCH = 1 only (brief 96E): 1 = our own gray-pointer elastic buffer (rate_match_gp.sv), 0 = the one on AMD's xpm_fifo_async (rate_match.sv); reported in FEATURES bit 5
+    parameter int          BP_TX_TO    = 4_833_984,   // brief 96F1b: TX alignment timeout in TXUSRCLK2 clocks: 30 ms at 161.1328125 MHz (AMD's example design's TX value)
+    parameter int          BP_RX_TO    = 20_947_266,  // brief 96F1b: RX alignment timeout in RXUSRCLK2 clocks: 130 ms (AMD's example design's RX value)
+    parameter int          BP_RETRIES  = 3            // brief 96F1b: retries after a timeout before a controller gives up (1 to 15)
 ) (
     input  logic        clk,
     input  logic        rst,
@@ -102,7 +107,8 @@ module b96_core #(
     logic [1:0] txbuf_c;
     logic [2:0] rxbuf_c;
     // brief 96F1: the buffer-bypass controllers of the Wizard (auto mode, one lane), in the TXUSRCLK2 and RXUSRCLK2 domains
-    logic bp_tx_done_t, bp_tx_err_t, bp_rx_done_r, bp_rx_err_r, tx_run_t, rx_run_r;
+    logic bp_tx_done_t, bp_tx_err_t, bp_rx_done_r, bp_rx_err_r, tx_run_t, rx_run_r, bp_rst_t, bp_rst_r, bp_tx_gu_t, bp_rx_gu_r;
+    logic [3:0] bp_tx_rty_t, bp_rx_rty_r;
     gth_wiz u_gt (
         .gtwiz_userclk_tx_reset_in(wz_utx), .gtwiz_userclk_tx_srcclk_out(), .gtwiz_userclk_tx_usrclk_out(txusr1),
         .gtwiz_userclk_tx_usrclk2_out(txusr2), .gtwiz_userclk_tx_active_out(utx_act_t),
@@ -127,12 +133,15 @@ module b96_core #(
         .gtpowergood_out(pgood_c), .rxcdrlock_out(cdrlock_c), .rxpmaresetdone_out(rxpmadone_c),
         .rxprbserr_out(), .rxprbslocked_out(), .txpmaresetdone_out(txpmadone_c),
         .txbufstatus_out(txbuf_c), .rxbufstatus_out(rxbuf_c),
-        // reset input: the user clock helper's active level (the controller only needs its state cleared while the clock is not running; it starts itself on the rising edge of the reset-done level, so start_user is not used)
-        .gtwiz_buffbypass_tx_reset_in(!utx_act_t), .gtwiz_buffbypass_tx_start_user_in(1'b0), .gtwiz_buffbypass_tx_done_out(bp_tx_done_t), .gtwiz_buffbypass_tx_error_out(bp_tx_err_t),
-        .gtwiz_buffbypass_rx_reset_in(!urx_act_r), .gtwiz_buffbypass_rx_start_user_in(1'b0), .gtwiz_buffbypass_rx_done_out(bp_rx_done_r), .gtwiz_buffbypass_rx_error_out(bp_rx_err_r),
+        // reset input (brief 96F1b): from gt_bp_ctl = the user clock helper's inactive level through a reset synchroniser in the controller's clock domain (as AMD's example design does) OR a timeout retry pulse; the
+        // controller starts itself on the rising edge of the reset-done level (and on the first clock after its reset is released while that level is high), so start_user is not used
+        .gtwiz_buffbypass_tx_reset_in(bp_rst_t), .gtwiz_buffbypass_tx_start_user_in(1'b0), .gtwiz_buffbypass_tx_done_out(bp_tx_done_t), .gtwiz_buffbypass_tx_error_out(bp_tx_err_t),
+        .gtwiz_buffbypass_rx_reset_in(bp_rst_r), .gtwiz_buffbypass_rx_start_user_in(1'b0), .gtwiz_buffbypass_rx_done_out(bp_rx_done_r), .gtwiz_buffbypass_rx_error_out(bp_rx_err_r),
         .txprgdivresetdone_out());
-    gt_bp_gate u_bp_tx (.clk(txusr2), .rst_done(tx_done_t), .bp_done(bp_tx_done_t), .bp_err(bp_tx_err_t), .run(tx_run_t));
-    gt_bp_gate u_bp_rx (.clk(rxusr2), .rst_done(rx_done_r), .bp_done(bp_rx_done_r), .bp_err(bp_rx_err_r), .run(rx_run_r));
+    gt_bp_ctl #(.TIMEOUT_CLKS(BP_TX_TO), .MAX_RETRIES(BP_RETRIES)) u_bp_tx (.clk(txusr2), .clk_active(utx_act_t), .rst_done(tx_done_t), .bp_done(bp_tx_done_t), .bp_err(bp_tx_err_t),
+        .bp_reset(bp_rst_t), .run(tx_run_t), .retries(bp_tx_rty_t), .gave_up(bp_tx_gu_t));
+    gt_bp_ctl #(.TIMEOUT_CLKS(BP_RX_TO), .MAX_RETRIES(BP_RETRIES)) u_bp_rx (.clk(rxusr2), .clk_active(urx_act_r), .rst_done(rx_done_r), .bp_done(bp_rx_done_r), .bp_err(bp_rx_err_r),
+        .bp_reset(bp_rst_r), .run(rx_run_r), .retries(bp_rx_rty_r), .gave_up(bp_rx_gu_r));
     // the TX phase-interpolator ppm controller's controls (UG576 Table 3-33: TXUSRCLK domain, and TXUSRCLK (not TXUSRCLK2) when the internal data width is below the user width, as here): one bus into TXUSRCLK
     xpm_cdc_array_single #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(1), .SRC_INPUT_REG(1), .WIDTH(7)) u_c_ppm (.src_clk(clk), .src_in({ppm_sel, ppm_en, ppm_step}), .dest_clk(txusr1), .dest_out({ppm_sel_t, ppm_en_t, ppm_step_t}));
     xpm_cdc_single #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(1), .SRC_INPUT_REG(1)) u_c_tp (.src_clk(clk), .src_in(tx_pol), .dest_clk(txusr2), .dest_out(tx_pol_t));
@@ -153,6 +162,9 @@ module b96_core #(
     xpm_cdc_array_single #(.DEST_SYNC_FF(4), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(1), .SRC_INPUT_REG(0), .WIDTH(5)) u_s_bf (.src_clk(1'b0), .src_in({rxbuf_c, txbuf_c}), .dest_clk(clk), .dest_out({rxbuf, txbuf}));
     // brief 96F1: the controllers' own done and error levels into clk (status register only; the paths use the gated run levels)
     logic bp_tx_done, bp_tx_err, bp_rx_done, bp_rx_err, bp_tx_err_seen, bp_rx_err_seen;
+    logic [3:0] bp_tx_rty, bp_rx_rty; logic bp_tx_gu, bp_rx_gu, bp_tx_gu_seen, bp_rx_gu_seen, bp_tx_rty_seen, bp_rx_rty_seen;
+    xpm_cdc_array_single #(.DEST_SYNC_FF(4), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(1), .SRC_INPUT_REG(0), .WIDTH(5)) u_s_brt (.src_clk(txusr2), .src_in({bp_tx_gu_t, bp_tx_rty_t}), .dest_clk(clk), .dest_out({bp_tx_gu, bp_tx_rty}));
+    xpm_cdc_array_single #(.DEST_SYNC_FF(4), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(1), .SRC_INPUT_REG(0), .WIDTH(5)) u_s_brr (.src_clk(rxusr2), .src_in({bp_rx_gu_r, bp_rx_rty_r}), .dest_clk(clk), .dest_out({bp_rx_gu, bp_rx_rty}));
     xpm_cdc_single #(.DEST_SYNC_FF(4), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(1), .SRC_INPUT_REG(0)) u_s_bdt (.src_clk(txusr2), .src_in(bp_tx_done_t), .dest_clk(clk), .dest_out(bp_tx_done));
     xpm_cdc_single #(.DEST_SYNC_FF(4), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(1), .SRC_INPUT_REG(0)) u_s_bet (.src_clk(txusr2), .src_in(bp_tx_err_t), .dest_clk(clk), .dest_out(bp_tx_err));
     xpm_cdc_single #(.DEST_SYNC_FF(4), .INIT_SYNC_FF(0), .SIM_ASSERT_CHK(1), .SRC_INPUT_REG(0)) u_s_bdr (.src_clk(rxusr2), .src_in(bp_rx_done_r), .dest_clk(clk), .dest_out(bp_rx_done));
@@ -291,9 +303,12 @@ module b96_core #(
         if (rs_rxdp != 0) rs_rxdp <= rs_rxdp - 4'd1;
         txb_seen <= txb_seen | txbuf; rxb_seen <= rxb_seen | rxbuf;      // sticky since the last clear (CMD bit 0)
         bp_tx_err_seen <= bp_tx_err_seen | bp_tx_err; bp_rx_err_seen <= bp_rx_err_seen | bp_rx_err;
+        bp_tx_gu_seen <= bp_tx_gu_seen | bp_tx_gu; bp_rx_gu_seen <= bp_rx_gu_seen | bp_rx_gu;
+        bp_tx_rty_seen <= bp_tx_rty_seen | (bp_tx_rty != 4'd0); bp_rx_rty_seen <= bp_rx_rty_seen | (bp_rx_rty != 4'd0);
         if (rst) begin
             loopback <= NEAR_END ? 3'b010 : 3'b000; tx_disable <= 1'b1; tx_pol <= 1'b0; rx_pol <= 1'b0; rx_lpm <= 1'b1;
             ppm_step <= '0; ppm_en <= 1'b0; ppm_sel <= 1'b0; txb_seen <= '0; rxb_seen <= '0; bp_tx_err_seen <= 1'b0; bp_rx_err_seen <= 1'b0;
+            bp_tx_gu_seen <= 1'b0; bp_rx_gu_seen <= 1'b0; bp_tx_rty_seen <= 1'b0; bp_rx_rty_seen <= 1'b0;
             rs_all <= '0; rs_txpll <= '0; rs_rxpll <= '0; rs_txdp <= '0; rs_rxdp <= '0; gen_dly <= '0;
             my_mac <= 48'h0A58_0000_0002; venue_mac <= 48'h0F58_0000_0002;
             my_ip <= 32'hC0A8_3A0A; venue_ip <= 32'hC0A8_3A0F; sport <= 16'd5800;
@@ -319,7 +334,8 @@ module b96_core #(
                     end
                     12'h01C: begin ppm_step <= h_wdata[4:0]; ppm_en <= h_wdata[5]; ppm_sel <= h_wdata[6]; end
                     12'h018: begin
-                        p_clr <= h_wdata[0]; if (h_wdata[0]) begin txb_seen <= txbuf; rxb_seen <= rxbuf; bp_tx_err_seen <= bp_tx_err; bp_rx_err_seen <= bp_rx_err; end if (h_wdata[1]) gen_dly <= 8'd200;
+                        p_clr <= h_wdata[0]; if (h_wdata[0]) begin txb_seen <= txbuf; rxb_seen <= rxbuf; bp_tx_err_seen <= bp_tx_err; bp_rx_err_seen <= bp_rx_err;
+                            bp_tx_gu_seen <= bp_tx_gu; bp_rx_gu_seen <= bp_rx_gu; bp_tx_rty_seen <= (bp_tx_rty != 4'd0); bp_rx_rty_seen <= (bp_rx_rty != 4'd0); end if (h_wdata[1]) gen_dly <= 8'd200;
                         if (h_wdata[2]) begin rx_snap <= rx_live; tx_snap <= tx_live; end
                     end
                     12'h024: if (EYESCAN) es_raw_addr <= h_wdata[9:0];
@@ -358,7 +374,7 @@ module b96_core #(
             12'h008: rd = {25'd0, 1'b1, (RATE_MATCH && RM_OWN), EYESCAN, RATE_MATCH, TRADE, NEAR_END, 1'b1};   // bit 6: GT_BYPASS (this build)
             12'h00C: rd = {25'd0, rx_lpm, rx_pol, tx_pol, tx_disable, loopback};
             12'h01C: rd = {25'd0, ppm_sel, ppm_en, ppm_step};
-            12'h020: rd = {16'd0, bp_rx_err, bp_tx_err, bp_rx_err_seen, bp_tx_err_seen, bp_rx_done, bp_tx_done, rxb_seen, txb_seen, rxbuf, txbuf};
+            12'h020: rd = {2'd0, bp_rx_rty_seen, bp_tx_rty_seen, bp_rx_gu_seen, bp_tx_gu_seen, bp_rx_gu, bp_tx_gu, bp_rx_rty, bp_tx_rty, bp_rx_err, bp_tx_err, bp_rx_err_seen, bp_tx_err_seen, bp_rx_done, bp_tx_done, rxb_seen, txb_seen, rxbuf, txbuf};
             12'h014: rd = {19'd0, tx_fault_c, rx_los_c, mod_abs_c, pcs_lock, cdr_stable, 2'b00, rxpmadone, txpmadone, cdrlock, pgood, rx_done, tx_done};
             12'h024: rd = EYESCAN ? {22'd0, es_raw_addr} : 32'd0;
             12'h028: rd = EYESCAN ? {16'd0, es_raw_rd} : 32'd0;
