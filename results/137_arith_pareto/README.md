@@ -19,7 +19,7 @@ and the area-against-throughput front is the same three.
 **The cost model against Vivado** ([fig2_model_vs_vivado.svg](fig2_model_vs_vivado.svg)), 13 points, none in either calibration file. Default two-anchor model, post-route: RMS error 15.5 % on LUTs
 (max 42.2 %), 3.4 % on FFs (max 5.9 %), 7.3 % on Fmax (max 20.0 %). Refit model: 14.3 %, 3.0 %, 10.7 %. Spearman rank correlation of prediction against measurement is 0.977 for LUTs, 1.0 for FFs and
 0.984 for Fmax. The model's front equals the measured front for both views, so it would not have pruned a front point on this set. Where it is wrong: LUT counts of the `unrolled_k` k=6 point P05
-(-42 % default, -31 % refit) and the iterative W=20 point P02 (+26 %, +39 % refit); the cause was not investigated; Fmax of P05 (+20 %, +31 %). Everything with a fixed shift (`pipelined`, `pipelined_m`) is within about 10 % on LUTs and 11 % on Fmax. Refitting on the 2025.2 data did not
+(-42 % default, -31 % refit) and the iterative W=20 point P02 (+26 %, +39 % refit); the cause was not investigated; Fmax of P05 (+20 %, +31 %). Everything with a fixed shift (`pipelined`, `pipelined_m`) is within about 10 % on LUTs and 11 % on Fmax. Refitting on the earlier-release data did not
 improve out-of-sample LUT error here.
 
 **Between families** ([fig3_k26_vs_artix7.svg](fig3_k26_vs_artix7.svg)). The same four RTL points on the K26 have nearly the same LUT and FF counts (LUTs 0.2 to 10 % fewer, FFs identical) and a post-route Fmax 2.3 to 2.6 times higher,
@@ -59,6 +59,6 @@ HW_Design_Space_Agent checkout (main 80415c6, unchanged).
 - Out-of-context: no input or output delays, no neighbouring logic; a block in a real design will not reach these Fmax figures unless its ports are registered. Power is vectorless (12.5 % default toggle, confidence Medium), at the target clock, Vivado's model, not a measurement.
 - CORDIC has no DSP or BRAM use, so the DSP-against-LUT and BRAM-against-LUT knobs are untested; every DSP and BRAM column is zero. A second function is needed (the plan's phase 2).
 - Verification is one simulator (Icarus), exhaustive for W <= 16 and dense above; the error bound is a measured lower bound on the worst case, not a proof. The netlist equivalence is bounded, covers four of 13 points, and P01 timed out; no point has a post-implementation simulation or a Lean proof.
-- Thirteen points are too few to say the cost model is good in general: the verdict is that it ranks well and mispredicts LUTs by up to 40 % on the unrolled and iterative shapes with guard bits. The 2025.2 refit did not generalise better than the two-anchor model on this set.
+- Thirteen points are too few to say the cost model is good in general: the verdict is that it ranks well and mispredicts LUTs by up to 40 % on the unrolled and iterative shapes with guard bits. The earlier-release refit did not generalise better than the two-anchor model on this set.
 - The Artix-7 part is the small xc7a35t used by HW_Design_Space_Agent; other devices of the family and speed grades were not run. The K26 run reuses the Artix-7-calibrated model, so its Fmax error is a calibration gap, not a model-structure finding.
 - The Vivado peak memory declared in the heavy slot was 4G; the K26 run peaked at 4.5 GB resident.

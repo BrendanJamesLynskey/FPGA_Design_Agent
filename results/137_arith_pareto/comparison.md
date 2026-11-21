@@ -16,14 +16,14 @@
 | P12 | pipelined_m | 14/12 | 539 | 126 | 60 | 58 | -13.73 | 4 | 68.9 | 58 | 8.18 | 40 | LT |
 | P13 | pipelined | 16/14 | 706 | 751 | 337 | 269 | -0.22 | 16 | 59.5 | 269 | 10.54 | 86 | LT |
 
-default (2-anchor, 2025.2): RMS % error of prediction against Vivado (max abs in brackets)
+default (2-anchor): RMS % error of prediction against Vivado (max abs in brackets)
 
 | stage | LUT | FF | Fmax |
 |---|---|---|---|
 | post-synth | 14.7 (41.5), bias -0.1 | 3.4 (5.9), bias +1.7 | 13.6 (21.2), bias -4.3 |
 | post-route | 15.5 (42.2), bias +0.0 | 3.4 (5.9), bias +1.7 | 7.3 (20.0), bias -0.8 |
 
-refit m4 (51 points, 2025.2): RMS % error of prediction against Vivado (max abs in brackets)
+refit m4 (51 points): RMS % error of prediction against Vivado (max abs in brackets)
 
 | stage | LUT | FF | Fmax |
 |---|---|---|---|
@@ -45,14 +45,14 @@ Spearman rank correlation, default model against measurement: luts_synth 0.977, 
 | P07 | pipelined | 20/18 | 1206 | 1249 | 833 | 615 | 0.38 | 20 | 32.5 | 615 | 5.04 | 101 | LT |
 | P09 | pipelined_m | 18/16 | 913 | 383 | 318 | 325 | -1.08 | 8 | 24.6 | 325 | 11.91 | 57 | LT |
 
-default (2-anchor, 2025.2): RMS % error of prediction against Vivado (max abs in brackets)
+default (2-anchor): RMS % error of prediction against Vivado (max abs in brackets)
 
 | stage | LUT | FF | Fmax |
 |---|---|---|---|
 | post-synth | 9.0 (14.0), bias -2.3 | 3.6 (5.9), bias +2.3 | 64.0 (68.2), bias -63.9 |
 | post-route | 5.9 (9.4), bias +1.6 | 3.6 (5.9), bias +2.3 | 59.9 (61.7), bias -59.9 |
 
-refit m4 (51 points, 2025.2): RMS % error of prediction against Vivado (max abs in brackets)
+refit m4 (51 points): RMS % error of prediction against Vivado (max abs in brackets)
 
 | stage | LUT | FF | Fmax |
 |---|---|---|---|

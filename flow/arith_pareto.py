@@ -32,7 +32,7 @@ RES = ROOT / "results" / "137_arith_pareto"
 
 # (id, family, params). Chosen to span the knobs, none equal to a point already in HW_Design_Space_Agent's
 # eval/data/vivado_measured*.csv (so the refit model is also tested out of sample), plus P13 = the reference pipelined
-# anchor (W=16, N=14) as a bridge to the 2025.2 data. "short" fields: angle_guard ag, frac_guard fg.
+# anchor (W=16, N=14) as a bridge to the earlier-release data. "short" fields: angle_guard ag, frac_guard fg.
 POINTS = [
     ("P01", "iterative", dict(data_width=14, n_iter=12, angle_guard=0, frac_guard=0, rounding="trunc")),
     ("P02", "iterative", dict(data_width=20, n_iter=18, angle_guard=1, frac_guard=2, rounding="round")),
@@ -354,7 +354,7 @@ def equiv(work: Path, out: Path, yosys: str, timeout: int, ids: list[str] | None
 
 # ------------------------------------------------------------------- report
 FLOOR_BITS = 8.0
-MODELS = {"default (2-anchor, 2025.2)": None, "refit m4 (51 points, 2025.2)": "REFIT"}
+MODELS = {"default (2-anchor)": None, "refit m4 (51 points)": "REFIT"}
 
 
 def _model_paths(H) -> dict:
@@ -390,14 +390,14 @@ def report(res: Path) -> int:
         for ax in ("luts", "ffs", "fmax_mhz"):
             for st in ("synth", "route"):
                 m = [r for r in rows if "error" not in r]
-                rank[f"{ax}_{st}"] = round(spearman([pred["default (2-anchor, 2025.2)"][r["id"]][ax] for r in m], [r[st][ax] for r in m]), 3)
+                rank[f"{ax}_{st}"] = round(spearman([pred["default (2-anchor)"][r["id"]][ax] for r in m], [r[st][ax] for r in m]), 3)
         m = [r for r in rows if "error" not in r]
-        rank["power_dyn_vs_luts+ffs"] = round(spearman([pred["default (2-anchor, 2025.2)"][r["id"]]["luts"] + pred["default (2-anchor, 2025.2)"][r["id"]]["ffs"] for r in m],
+        rank["power_dyn_vs_luts+ffs"] = round(spearman([pred["default (2-anchor)"][r["id"]]["luts"] + pred["default (2-anchor)"][r["id"]]["ffs"] for r in m],
                                                       [r["power"]["dynamic_w"] for r in m]), 3)
         # a spec: accuracy at least FLOOR bits; 2-D fronts (area against latency, area against 1/throughput) among the points meeting it,
         # measured and as the default cost model would have predicted them, to ask whether the model would have pruned a front point
         ok = {k: v for k, v in obj.items() if v["acc_bits"] >= FLOOR_BITS}
-        pm = pred["default (2-anchor, 2025.2)"]
+        pm = pred["default (2-anchor)"]
         def pobj(pid):
             e = pm[pid]
             return (e["luts"] + e["ffs"], e["latency_cycles"] * 1000.0 / e["fmax_mhz"], 1000.0 / (e["fmax_mhz"] * e["results_per_cycle"]))
@@ -462,7 +462,7 @@ def report(res: Path) -> int:
         fig, ax = plt.subplots(1, 3, figsize=(13, 4.4))
         for k, (axis, lab) in enumerate((("luts", "LUTs"), ("ffs", "FFs"), ("fmax_mhz", "Fmax (MHz)"))):
             lo, hi = 1e9, 0
-            for mname, mkr, c in (("default (2-anchor, 2025.2)", "o", "#555"), ("refit m4 (51 points, 2025.2)", "x", "#c33")):
+            for mname, mkr, c in (("default (2-anchor)", "o", "#555"), ("refit m4 (51 points)", "x", "#c33")):
                 xs = [r[axis] for r in [rr for rr in fabrics["xc7a35tcpg236-1"] if "error" not in rr] for r in [r["route"]]]
                 ys = [a7["predictions"][mname][r["id"]][axis] for r in fabrics["xc7a35tcpg236-1"] if "error" not in r]
                 ax[k].scatter(xs, ys, marker=mkr, color=c, label=mname, s=40)
