@@ -9,7 +9,7 @@ A 16-bit up/down/clear counter on the Nexys A7-100T. Debounced buttons step it, 
 not: an agent run; the RTL, model and tests were written by hand; a gamma-corrected or auto-repeating dimmer; brightness is linear in the duty and one press is one step; a claim of compliance with any standard; the traceability record is DO-254-style evidence only
 
 ## state
-stage=board-verified vivado=2026.1 kb_pin=0959c27 build_id=7eeb3bf5
+stage=board-verified vivado=2026.1 kb_pin=5e2eab8 build_id=10ff0ef6
 gates: build_2026_1=pass board_bringup=pass
 
 ## interface
@@ -44,7 +44,7 @@ designs/t1_dimmer_counter/tests/test_t1_hw.py 45ade63537: on-board UART tests
 designs/t1_dimmer_counter/tests/run_mutants.sh 578c194e3d: sed mutants the tests must fail
 designs/t1_dimmer_counter/verif/testplan.yaml 0a5bd04595: requirements traced to checks
 designs/t1_dimmer_counter/verif/checkers/t1_bind.sv 817eaeab2b: bound assertion checkers
-designs/t1_dimmer_counter/verif/formal/debounce.sby f866b08ab4: SymbiYosys proof of the debouncer (scan.sby does the display scanner)
+designs/t1_dimmer_counter/verif/formal/debounce.sby 2ffaf1e1b2: SymbiYosys proof of the debouncer (scan.sby does the display scanner)
 
 ## commands
 simulate the RTL against the model (~2min): python3 -m pytest -q shell/tests/test_shell_rtl.py designs/t1_dimmer_counter/tests/test_t1_rtl.py
@@ -67,7 +67,7 @@ R8 results/f0a_2026_1/t1_dimmer_counter_ila.json 902a57cf65
 ## evidence
 E1 simulation pass R1 ci: cocotb tests of the RTL against the golden model (registers, debounce, PWM on-time, display)
 E2 simulation pass R2 ci: verification bench with 23 bound assertions on seeds 1, 2 and 3 under Verilator 5.048 and under Icarus 12
-E3 formal pass R3: SymbiYosys bounded proof and cover of the debouncer and display scanner, rerun in CI by flow/formal.sh
+E3 formal pass R3: SymbiYosys bounded check, k-induction proof (brief 143c) and cover of the debouncer and display scanner, rerun in CI by flow/formal.sh
 E4 faults pass R4: 21 mutants; the bench kills all 21 in the final run, 19 of 21 in the first (see gap E4)
 E5 review pass R5: traceability matrix, all 11 requirements evidenced and every coverage hole justified; FDA-HDL lint passes with one waiver
 E6 build pass R6: base build on Vivado 2026.1; every gate passes through bitstream

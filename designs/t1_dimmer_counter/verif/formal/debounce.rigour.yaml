@@ -1,0 +1,11 @@
+schema: fpga-design-agent/formal_rigour/v1
+scope: "debounce.sv with CYCLES = 3 (the shipped design uses 1_000_000: the counter is a parameter, the structure does not depend on it)"
+# every assertion NAME is paired with the cover NAME__ante that v_macros.svh adds for it (its own antecedent, in the same guard)
+sanity: [C_DB_PRESS, C_DB_RELEASE, C_DB_GLITCH_IGNORED]
+depth:
+  bmc:
+    enough: true
+    why: >-
+      Cross-check only: the `prove` task (k-induction, depth 12) proves every assertion for every depth. The state is two synchroniser
+      flops, a counter that stops at CYCLES - 1 = 2, the level and one past-sample; a press needs the 2-clock synchroniser, the 3-count
+      and one level update, and C_DB_PRESS is reached at step 7. Depth 24 is more than three times that, so it contains each transition twice over.

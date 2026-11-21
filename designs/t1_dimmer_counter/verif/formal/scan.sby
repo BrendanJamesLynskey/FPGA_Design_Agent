@@ -1,12 +1,16 @@
-# SymbiYosys: bounded proof and cover of sevenseg_scan.sv against scan_checker.sv.
+# SymbiYosys: bounded proof, k-induction proof and cover of sevenseg_scan.sv against scan_checker.sv.
+# Rigour (brief 143c): see scan.rigour.yaml (assertion/cover pairing, depth justification).
 # req: REQ-04
 [tasks]
 bmc
+prove
 cover
 
 [options]
 bmc: mode bmc
 bmc: depth 40
+prove: mode prove
+prove: depth 12
 cover: mode cover
 cover: depth 40
 

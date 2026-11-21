@@ -123,7 +123,7 @@ files:
   sha256: 817eaeab2bf29b9ccba235858370b53d5a8108c0e6cf847e7a2f69ded84652ab
 - path: designs/t1_dimmer_counter/verif/formal/debounce.sby
   what: SymbiYosys proof of the debouncer (scan.sby does the display scanner)
-  sha256: f866b08ab4e633be2b6ad783e137bab571aca8ed8786fd0b356a9ed98eb1d6ed
+  sha256: 2ffaf1e1b2ace13d4938f1cbb0b2e3089d2e9b824c517a8b935f4927cde3aab4
 commands:
 - what: simulate the RTL against the model
   cmd: python3 -m pytest -q shell/tests/test_shell_rtl.py designs/t1_dimmer_counter/tests/test_t1_rtl.py
@@ -173,7 +173,8 @@ evidence:
 - id: E3
   activity: formal
   result: pass
-  what: SymbiYosys bounded proof and cover of the debouncer and display scanner, rerun in CI by flow/formal.sh
+  what: SymbiYosys bounded check, k-induction proof (brief 143c) and cover of the debouncer and display scanner, rerun in
+    CI by flow/formal.sh
   record: results/04f/README.md
   sha256: d7cc186f734850b0e9d3fa1e9b099ba37b7c5e6bc02e90a2ba423346f4f9a0d2
 - id: E4
@@ -342,5 +343,5 @@ state:
     build_2026_1: pass
     board_bringup: pass
   vivado: '2026.1'
-  kb_pin: 0959c27
-  build_id: 7eeb3bf5
+  kb_pin: 5e2eab8
+  build_id: 10ff0ef6

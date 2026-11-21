@@ -37,6 +37,7 @@ Schema v1 (a superset of v0, so ``flow/verif_gates.py`` still reads a v1 file th
         pass_when: [{field: a.b, op: eq, value: 0}]    # non-measuring items; a measuring item is judged against its requirement's bound
         checks: [designs/x/rtl/a.sv]                   # the RTL/spec this evidence is about (staleness)
         bounded: {depth: 24}                           # formal BMC only
+        rigour: [designs/x/verif/formal/a.sby]         # formal: SymbiYosys jobs judged by flow/formal_rigour.py (brief 143c): pass only if every assertion is proved with its antecedent reached
         planned: "brief 112"                           # a hook for evidence that does not exist yet
         reviewer: name, reviewer_kind: human|agent, date: YYYY-MM-DD   # review
         lean: {module: Gray.Spec, theorem: Gray.gray_step, project: formal/lean}                                  # formal_lean (brief 125)
@@ -447,6 +448,9 @@ def collect(design: Path, lean: str = "recorded") -> dict[str, Any]:
                 r["status"], r["stale_because"] = "stale", why
             elif it.get("bounded") is not None:
                 r["status"] = "bounded"
+        if it.get("rigour"):                    # brief 143c: a vacuous, unreachable-cover or unjustified-bounded proof is not a pass
+            from flow import formal_rigour
+            formal_rigour.apply_to_item(it, r)
         results.append(r)
     by_req: dict[str, list] = {r["id"]: [] for r in reqs}
     for r in results:

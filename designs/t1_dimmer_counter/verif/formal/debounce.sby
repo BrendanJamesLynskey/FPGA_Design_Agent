@@ -1,13 +1,17 @@
-# SymbiYosys: bounded proof and cover of debounce.sv against debounce_checker.sv (control logic, small CYCLES).
+# SymbiYosys: bounded proof, k-induction proof and cover of debounce.sv against debounce_checker.sv (control logic, small CYCLES).
 # Run from this folder (paths are relative); flow/formal.sh does it and records results/.
+# Rigour (brief 143c): see debounce.rigour.yaml (assertion/cover pairing, depth justification).
 # req: REQ-02, REQ-10
 [tasks]
 bmc
+prove
 cover
 
 [options]
 bmc: mode bmc
 bmc: depth 24
+prove: mode prove
+prove: depth 12
 cover: mode cover
 cover: depth 24
 
