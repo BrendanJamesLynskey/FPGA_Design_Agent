@@ -1,0 +1,19 @@
+# id	file (in rtl/)	old text (exactly once)	new text	what the mutant does ('\n' = newline); rows with the same id are one mutant; M03 is an equivalent mutant (n is at most 8, so n + 4 - 8 > 4 never holds): it must survive
+M01	mac64_tx.sv	s_poison ? crc_k[k] : ~crc_k[k]	s_poison ? ~crc_k[k] : crc_k[k]	poison polarity inverted: good frames get a bad FCS
+M02	mac64_tx.sv	8'hD5, 8'h55, 8'h55, 8'h55, 8'h55, 8'h55, 8'h55, X_START	8'hD4, 8'h55, 8'h55, 8'h55, 8'h55, 8'h55, 8'h55, X_START	start-of-frame delimiter 0xD4 instead of 0xD5
+M03	mac64_tx.sv	ifg <= (n + 4 - 8 > 4) ? 2'd2 : 2'd1;	ifg <= 2'd1;	EQUIVALENT: the dead branch of the gap after a two-word frame end replaced by its live value (cannot be detected)
+M04	mac64_tx.sv	ifg <= (n + 4 > 4) ? 2'd2 : 2'd1;	ifg <= 2'd1;	interframe gap one word short when the frame ends in the first of its two words
+M05	mac64_tx.sv	if (n + 4 >= 8) begin	if (n + 4 > 8) begin	frame end with 4 data bytes in the last word is not split over two words
+M06	pcs_tx.sv	            gt_d <= acc;\n            acc  <= '0;\n	            gt_d <= acc;\n	gearbox remainder not cleared on the pause clock
+M07	b96_pkg.sv	if (i < 39) a = hist[38 - i]; else a = o[i - 39];	if (i < 38) a = hist[37 - i]; else a = o[i - 38];	scrambler tap 38 instead of 39 in the scrambler and the descrambler alike (symmetric: the loopback cannot see it)
+M07	b96_pkg.sv	if (i < 39) a = hist[38 - i]; else a = s[i - 39];	if (i < 38) a = hist[37 - i]; else a = s[i - 38];	scrambler tap 38 instead of 39 in the scrambler and the descrambler alike (symmetric: the loopback cannot see it)
+M08	b96_pkg.sv	3: return 8'hB4;	3: return 8'hB5;	terminate-in-lane-3 block type 0xB5 instead of 0xB4, in encoder and decoder alike (symmetric)
+M09	pcs_rx.sv	sh_cnt == 7'd63	sh_cnt == 7'd62	block lock after 63 valid headers instead of 64
+M10	pcs_rx.sv	inv_cnt == 5'd15	inv_cnt == 5'd16	lock lost at the 17th invalid header instead of the 16th
+M11	pcs_rx.sv	ev_os       <= (dec[73:72] == 2'd3);	ev_os       <= (dec[73:72] == 2'd2);	ordered-set event counts unknown block types
+M12	b96_pkg.sv	t == 8'h4B	t == 8'h4C	ordered-set type 0x4B not decoded as an ordered set (symmetric table, line-side only)
+M13	mac64_rx.sv	else if (!lock_i && st != R_IDLE) begin	else if (1'b0 && !lock_i && st != R_IDLE) begin	a frame is not aborted when block lock drops
+M14	mac64_rx.sv	fl_nb <= 4'(tk - 4);	fl_nb <= 4'(tk - 3);	lane-4 frame flush word one byte too long
+M15	mac64_rx.sv	m_fcs_ok <= (crc_pend == CRC_RESIDUE);	m_fcs_ok <= (crc_pend[30:0] == CRC_RESIDUE[30:0]);	FCS check ignores the top residue bit (a subtle one)
+M16	mac64_rx.sv	(x_c == 8'h1F) && (x_d[39:32] == X_START)	(x_c == 8'h0F) && (x_d[39:32] == X_START)	lane-4 start detected with the wrong control vector (line side only)
+M17	mac64_tx.sv	end else if (adv) begin	end else begin	mac64_tx ignores the PCS pause: its state advances on the clock the gearbox takes no word

@@ -18,12 +18,23 @@ ten-word UltraScale+ masks (brief 96D2) and forcing the eye-scan 4T clock phase 
 ## Measured (20261120_105134, fibre loopback, one board, one module, room temperature)
 | scan | equaliser | depth | width | height |
 |---|---|---|---|---|
-| lpm_1, lpm_2, lpm_3, lpm_4 | LPM | 1e-09 | 0.71875 UI | 360.0 mV (the scan's vertical limit: still open at +-120 codes) |
+| lpm_1, lpm_2, lpm_3, lpm_4 | LPM | 1e-09 | 0.71875 UI | 360.0 mV (at that run's vertical limit, `vs_range` 0; see the tall scan below: 470.4 mV, closing inside the wider reach) |
 | dfe_1 | DFE | 1e-09 | 0.75 UI | 288.0 mV |
 | tx_d16, tx_d8, tx_post4, tx_post8, tx_pre4 | LPM | 1e-07 | 0.71875 UI | 360.0 mV |
 
-The four LPM repeats agree to one grid point. The LPM height is a lower bound: the vertical range setting (`vs_range` 0, 1.5 mV per code) stops at +-180 mV and the eye is still error-free there. The TX drive variants change nothing measurable at
+The four LPM repeats agree to one grid point. The 360 mV height is a lower bound only: that run's vertical range setting (`vs_range` 0, 1.5 mV per code) stops at +-180 mV and the eye is still error-free there. The tall scan below (`vs_range` 3) supersedes it: 470.4 mV. The TX drive variants change nothing measurable at
 1e-07 on this short, clean loop. Width is in the scan's own grid (2 counts = 1/32 UI). The scan sees the eye after the equaliser, inside the receiver, not at the pins.
+
+## Tall LPM scan (20261120_221528, board run 2026-11-21, one run)
+`20261120_221528/` holds `selftest.json` and `tall_lpm.json` (with `.partial.jsonl`, `.run.txt`, `summary.txt`, `svg/`, `probe.json`, `program.json`, `git_heads.txt`): the same fibre loopback with the scan's vertical range raised to `vs_range` 3 (2.8 mV per code, nominal, from UG576; not calibrated on this part). The self-test chose the 4T clock phase 1.
+The scan measures the eye after the LPM equaliser, inside the receiver, not at the pins.
+
+| scan | equaliser | depth | width | height |
+|---|---|---|---|---|
+| selftest | LPM | 1e-06 | 0.5 UI | 240.0 mV (`vs_range` 0) |
+| tall_lpm | LPM | 1e-09 | 0.71875 UI | 470.4 mV |
+
+At the centre column the error-free region runs from -80 to +88 codes (about -224 to +246 mV), so the eye closes inside the +-336 mV reach (+-120 codes at 2.8 mV): this height is a measured closure, not a scan-range limit. mV values use the nominal UG576 mV per code; one board, one module, one run, room temperature.
 
 ---
 
@@ -63,4 +74,4 @@ Nothing about the link's eye. What the run does show: the DRP path, the save and
 - Tables of this README: `python3 -m flow.eyescan summary results/b96d/hw/20261120_105134`.
 
 ## Known gaps and limits
-One board, one module, a 0.17 m fibre loopback at room temperature: the eye says little about a real link; a NIC link is the next test. The LPM height is a lower bound (scan range). Why the default 4T clock phase is wrong on this part is not known; the driver now picks the phase that gives an error-free eye centre and records it. The 2026-11-19 run's own gaps: none left open (words 5 to 9 read as 0 on 2026-11-20; the corrected masks count on the real part).
+One board, one module, a 0.17 m fibre loopback at room temperature: the eye says little about a real link; a NIC link is the next test. The 20261120_105134 LPM height is a lower bound (scan range); the tall scan of 20261120_221528 measured it as 470.4 mV. Why the default 4T clock phase is wrong on this part is not known; the driver now picks the phase that gives an error-free eye centre and records it. The 2026-11-19 run's own gaps: none left open (words 5 to 9 read as 0 on 2026-11-20; the corrected masks count on the real part).

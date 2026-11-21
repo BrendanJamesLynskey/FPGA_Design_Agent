@@ -1,0 +1,441 @@
+# Mutation set for the TCP fast path (brief 119; tests/run_mutants.py): each mutant replaces `old` (exactly once) by `new` in a copy of rtl/tcp_fast.sv.
+# class: operator | constant | condition. Nothing here is ever applied to the real RTL.
+mutants:
+- name: ip_df_in_template
+  file: tcp_fast.sv
+  old: 20'(16'h4000) + 20'({ttl
+  new: 20'(16'h4001) + 20'({ttl
+  class: constant
+  why: the IPv4 template sum disagrees with the flags field
+- name: ip_proto_in_template
+  file: tcp_fast.sv
+  old: 20'({ttl, 8'h06})
+  new: 20'({ttl, 8'h11})
+  class: constant
+  why: the IPv4 template sum has another protocol
+- name: ip_len_field
+  file: tcp_fast.sv
+  old: 'hb[8*17 +: 8] = 8''h63;'
+  new: 'hb[8*17 +: 8] = 8''h64;'
+  class: constant
+  why: IP total length one too long
+- name: ip_flags_field
+  file: tcp_fast.sv
+  old: 'hb[8*20 +: 8] = 8''h40;'
+  new: 'hb[8*20 +: 8] = 8''h00;'
+  class: constant
+  why: don't-fragment bit missing in the frame
+- name: tcp_len_in_template
+  file: tcp_fast.sv
+  old: 20'(16'h004F)
+  new: 20'(16'h004E)
+  class: constant
+  why: pseudo-header length wrong in the TCP template
+- name: tcp_proto_in_template
+  file: tcp_fast.sv
+  old: 20'(16'h0006)
+  new: 20'(16'h0007)
+  class: constant
+  why: pseudo-header protocol wrong in the TCP template
+- name: tcp_flags_in_template
+  file: tcp_fast.sv
+  old: 20'(16'h5018)
+  new: 20'(16'h5010)
+  class: constant
+  why: flags word of the TCP template without PSH
+- name: tcp_flags_field
+  file: tcp_fast.sv
+  old: 'hb[8*47 +: 8] = 8''h18;'
+  new: 'hb[8*47 +: 8] = 8''h10;'
+  class: constant
+  why: PSH flag missing in the frame
+- name: ethertype
+  file: tcp_fast.sv
+  old: 'hb[8*13 +: 8] = 8''h00;'
+  new: 'hb[8*13 +: 8] = 8''h01;'
+  class: constant
+  why: wrong EtherType
+- name: fold_single
+  file: tcp_fast.sv
+  old: fold16 = a[15:0] + {15'd0, a[16]};
+  new: fold16 = a[15:0];
+  class: operator
+  why: template sums fold once only
+- name: ip_id_not_added
+  file: tcp_fast.sv
+  old: ip1  <= {1'b0, ip_tmpl} + {1'b0, id_c};
+  new: ip1  <= {1'b0, ip_tmpl};
+  class: operator
+  why: IP identification missing from the header checksum
+- name: ip_csum_not_inverted
+  file: tcp_fast.sv
+  old: ipcsum <= ~(ip1[15:0] + {15'd0, ip1[16]});
+  new: ipcsum <= (ip1[15:0] + {15'd0, ip1[16]});
+  class: operator
+  why: IP checksum not complemented
+- name: ip_csum_carry_lost
+  file: tcp_fast.sv
+  old: ipcsum <= ~(ip1[15:0] + {15'd0, ip1[16]});
+  new: ipcsum <= ~(ip1[15:0]);
+  class: operator
+  why: end-around carry of the IP checksum lost
+- name: tcp_ack_low_missing
+  file: tcp_fast.sv
+  old: + 19'(ack_c[31:16]) + 19'(ack_c[15:0])
+  new: + 19'(ack_c[31:16])
+  class: operator
+  why: low half of the ACK number missing from the TCP checksum
+- name: tcp_seq_high_missing
+  file: tcp_fast.sv
+  old: 19'(seq_c[31:16]) + 19'(seq_c[15:0])
+  new: 19'(seq_c[15:0])
+  class: operator
+  why: high half of the sequence number missing from the TCP checksum
+- name: tcp_window_missing
+  file: tcp_fast.sv
+  old: + 19'(win_c);
+  new: + 19'd0;
+  class: operator
+  why: window missing from the TCP checksum
+- name: payload_last_word_missing
+  file: tcp_fast.sv
+  old: gsum(fr, 24, 30)
+  new: gsum(fr, 24, 29)
+  class: constant
+  why: the payload's last 16-bit word is not summed
+- name: payload_first_group_short
+  file: tcp_fast.sv
+  old: gsum(fr, 0, 8)
+  new: gsum(fr, 0, 7)
+  class: constant
+  why: a payload word is not summed
+- name: tcp_total_without_header
+  file: tcp_fast.sv
+  old: tot <= {2'd0, sump} + {4'd0, hdr1};
+  new: tot <= {2'd0, sump};
+  class: operator
+  why: header part missing from the TCP checksum
+- name: tcp_fold_high_lost
+  file: tcp_fast.sv
+  old: '{10''d0, tot[22:16]}'
+  new: '{10''d0, 7''d0}'
+  class: operator
+  why: carries above bit 15 of the TCP sum lost
+- name: tcp_csum_not_inverted
+  file: tcp_fast.sv
+  old: csum <= ~(f1[15:0] + {15'd0, f1[16]});
+  new: csum <= (f1[15:0] + {15'd0, f1[16]});
+  class: operator
+  why: TCP checksum not complemented
+- name: tcp_csum_carry_lost
+  file: tcp_fast.sv
+  old: csum <= ~(f1[15:0] + {15'd0, f1[16]});
+  new: csum <= ~(f1[15:0]);
+  class: operator
+  why: end-around carry of the TCP checksum lost
+- name: pipe_total_late
+  file: tcp_fast.sv
+  old: if (ph == 4'd3) tot <=
+  new: if (ph == 4'd4) tot <=
+  class: condition
+  why: TCP sum pipeline stage one edge late
+- name: builder_start_late
+  file: tcp_fast.sv
+  old: assign go_pl     = busy && (ph == 4'd5)
+  new: assign go_pl     = busy && (ph == 4'd6)
+  class: constant
+  why: payload starts one edge late
+- name: word6_payload_bytes
+  file: tcp_fast.sv
+  old: nw = {e_d[15:0], hb[431:384]};
+  new: nw = {e_d[23:8], hb[431:384]};
+  class: constant
+  why: first two payload bytes taken from the wrong place
+- name: payload_realign
+  file: tcp_fast.sv
+  old: 'default: nw = {e_d[15:0], prev};'
+  new: 'default: nw = {e_d[15:0], {prev[39:0], prev[47:40]}};'
+  class: constant
+  why: payload realignment shifts the wrong bytes
+- name: last_byte_source
+  file: tcp_fast.sv
+  old: '4''d14: nw = {56''d0, prev[7:0]};'
+  new: '4''d14: nw = {56''d0, prev[15:8]};'
+  class: constant
+  why: last payload byte taken from the wrong place
+- name: segment_ends_early
+  file: tcp_fast.sv
+  old: nw_last = (ph == 4'd14);
+  new: nw_last = (ph == 4'd13);
+  class: constant
+  why: segment one word short
+- name: last_keep
+  file: tcp_fast.sv
+  old: 'o_keep <= nw_last ? 8''h01 : 8''hFF;'
+  new: 'o_keep <= nw_last ? 8''h03 : 8''hFF;'
+  class: constant
+  why: keep of the last word
+- name: sof_missing
+  file: tcp_fast.sv
+  old: o_v <= 1'b1; o_sof <= 1'b1; o_d <= hb[63:0];
+  new: o_v <= 1'b1; o_sof <= 1'b0; o_d <= hb[63:0];
+  class: condition
+  why: start of frame not marked
+- name: seq_advance
+  file: tcp_fast.sv
+  old: snd_nxt <= seq_c + {16'd0, PAYLEN};
+  new: snd_nxt <= seq_c + 32'd58;
+  class: constant
+  why: sequence number advances by one byte too few
+- name: ip_id_advance
+  file: tcp_fast.sv
+  old: ip_id <= id_c + 16'd1;
+  new: ip_id <= id_c + 16'd2;
+  class: constant
+  why: IP identification advances by two
+- name: seq_captured_wrong
+  file: tcp_fast.sv
+  old: seq_c <= snd_nxt;
+  new: seq_c <= snd_nxt + 32'd1;
+  class: operator
+  why: segment's sequence number off by one
+- name: ack_not_captured
+  file: tcp_fast.sv
+  old: ack_c <= rcv_nxt;
+  new: ack_c <= '0;
+  class: operator
+  why: ACK number not piggybacked
+- name: window_not_captured
+  file: tcp_fast.sv
+  old: win_c <= rcv_wnd;
+  new: win_c <= '0;
+  class: operator
+  why: advertised window not carried
+- name: id_not_captured
+  file: tcp_fast.sv
+  old: id_c <= ip_id;
+  new: id_c <= '0;
+  class: operator
+  why: IP identification not taken from the register
+- name: abort_not_poisoning
+  file: tcp_fast.sv
+  old: fin_poison = abort_now ||
+  new: fin_poison = 1'b0 ||
+  class: condition
+  why: an aborted segment is not poisoned
+- name: abort_not_ending
+  file: tcp_fast.sv
+  old: if (abort_now || nw_last) begin
+  new: if (nw_last) begin
+  class: condition
+  why: an abort does not end the segment
+- name: abort_not_forwarded
+  file: tcp_fast.sv
+  old: .commit(1'b0), .abort(abort_now),
+  new: .commit(1'b0), .abort(1'b0),
+  class: condition
+  why: the frame builder is not stopped by an abort
+- name: no_verdict_not_poisoned
+  file: tcp_fast.sv
+  old: (spec_c && !committed && !commit)
+  new: (spec_c && !committed)
+  class: condition
+  why: a commit in the last edge is ignored
+- name: spec_ignored
+  file: tcp_fast.sv
+  old: spec_c <= go_spec;
+  new: spec_c <= 1'b0;
+  class: condition
+  why: a speculative segment needs no verdict
+- name: commit_at_go_ignored
+  file: tcp_fast.sv
+  old: committed <= commit;
+  new: committed <= 1'b0;
+  class: condition
+  why: a commit in the go edge is lost
+- name: commit_not_sticky
+  file: tcp_fast.sv
+  old: if (commit) committed <= 1'b1;
+  new: if (1'b0) committed <= 1'b1;
+  class: condition
+  why: a commit before the last edge is forgotten
+- name: sum_check_off
+  file: tcp_fast.sv
+  old: sumerr = (acc != sump);
+  new: sumerr = 1'b0;
+  class: condition
+  why: the payload sum check never fires
+- name: sum_check_always
+  file: tcp_fast.sv
+  old: sumerr = (acc != sump);
+  new: sumerr = (acc == sump);
+  class: condition
+  why: the payload sum check fires on a good segment
+- name: poison_bit_missing
+  file: tcp_fast.sv
+  old: o_poison <= 1'b1; c_poison <= c_poison + 32'd1;
+  new: c_poison <= c_poison + 32'd1;
+  class: condition
+  why: poison bit not raised
+- name: record_pay_zero
+  file: tcp_fast.sv
+  old: rec_pay <= pay;
+  new: rec_pay <= '0;
+  class: operator
+  why: the record does not carry the payload
+- name: record_len
+  file: tcp_fast.sv
+  old: rec_len <= PAYLEN;
+  new: rec_len <= 16'd58;
+  class: constant
+  why: record length
+- name: window_boundary
+  file: tcp_fast.sv
+  old: (flight <= (snd_wnd - {16'd0, PAYLEN}))
+  new: (flight < (snd_wnd - {16'd0, PAYLEN}))
+  class: condition
+  why: a window that fits exactly is refused
+- name: window_minimum
+  file: tcp_fast.sv
+  old: (snd_wnd >= {16'd0, PAYLEN}) &&
+  new: (snd_wnd != 32'd0) &&
+  class: condition
+  why: a window below one segment is not refused
+- name: mss_boundary
+  file: tcp_fast.sv
+  old: assign ok_mss  = (mss >= PAYLEN);
+  new: assign ok_mss  = (mss > PAYLEN);
+  class: condition
+  why: an MSS of exactly one segment is refused
+- name: stale_boundary
+  file: tcp_fast.sv
+  old: (age > stale_limit)
+  new: (age >= stale_limit)
+  class: condition
+  why: age equal to the limit counts as stale
+- name: stale_disable_lost
+  file: tcp_fast.sv
+  old: (stale_limit != 32'd0) &&
+  new: 1'b1 &&
+  class: condition
+  why: a limit of zero does not disable the check
+- name: stale_not_checked
+  file: tcp_fast.sv
+  old: else if (!valid || stale)     begin
+  new: else if (!valid)             begin
+  class: condition
+  why: stale state accepted
+- name: age_not_reset_by_una
+  file: tcp_fast.sv
+  old: '5''d10: begin snd_una <= sw_wdata; age <= ''0; end'
+  new: '5''d10: begin snd_una <= sw_wdata; end'
+  class: condition
+  why: a write to SND_UNA does not refresh
+- name: age_not_reset_by_rcv
+  file: tcp_fast.sv
+  old: '5''d12: begin rcv_nxt <= sw_wdata; age <= ''0; end'
+  new: '5''d12: begin rcv_nxt <= sw_wdata; end'
+  class: condition
+  why: a write to RCV_NXT does not refresh
+- name: cancel0_lost
+  file: tcp_fast.sv
+  old: if (go && !busy && abort) begin
+  new: if (go && !busy && abort && 1'b0) begin
+  class: condition
+  why: an abort in the go edge does not cancel
+- name: busy_drop_silent
+  file: tcp_fast.sv
+  old: c_busy <= c_busy + 32'd1; refuse_v <= 1'b1; refuse_code <= 3'd5;
+  new: refuse_v <= 1'b1; refuse_code <= 3'd5;
+  class: condition
+  why: busy drop not counted
+- name: late_not_counted
+  file: tcp_fast.sv
+  old: late <= 1'b1; c_late <= c_late + 32'd1;
+  new: late <= 1'b1;
+  class: condition
+  why: late abort not counted
+- name: write_lock_without_busy
+  file: tcp_fast.sv
+  old: assign wr_lock = busy || bld;
+  new: assign wr_lock = bld;
+  class: condition
+  why: static writes accepted while a segment is in flight
+- name: write_lock_without_build
+  file: tcp_fast.sv
+  old: assign wr_lock = busy || bld;
+  new: assign wr_lock = busy;
+  class: condition
+  why: static writes accepted during the template build
+- name: static_write_keeps_valid
+  file: tcp_fast.sv
+  old: "valid <= 1'b0;\n                            case (sw_waddr)"
+  new: case (sw_waddr)
+  class: condition
+  why: a static write does not invalidate the template
+- name: disarm_ignored
+  file: tcp_fast.sv
+  old: end else arm_req <= 1'b0;
+  new: end else arm_req <= arm_req;
+  class: condition
+  why: a write of 0 to CTRL does not disarm
+- name: build_never_valid
+  file: tcp_fast.sv
+  old: valid <= 1'b1; bld <= 1'b0; c_build
+  new: valid <= 1'b0; bld <= 1'b0; c_build
+  class: condition
+  why: the template never becomes valid
+- name: arm_write_not_rebuilding
+  file: tcp_fast.sv
+  old: else begin arm_req <= 1'b1; valid <= 1'b0; bld <= 1'b1; bph <= 2'd0; age <= '0; end
+  new: else begin arm_req <= 1'b1; age <= '0; end
+  class: condition
+  why: arming does not rebuild
+- name: sip_byte_order
+  file: tcp_fast.sv
+  old: 'hb[8*(26+i) +: 8] = sip[8*(3-i) +: 8];'
+  new: 'hb[8*(26+i) +: 8] = sip[8*i +: 8];'
+  class: operator
+  why: source address bytes reversed
+- name: dmac_byte_order
+  file: tcp_fast.sv
+  old: 'hb[8*i +: 8]     = dmac[8*(5-i) +: 8];'
+  new: 'hb[8*i +: 8]     = dmac[8*i +: 8];'
+  class: operator
+  why: destination MAC bytes reversed
+- name: ports_swapped
+  file: tcp_fast.sv
+  old: 'hb[8*34 +: 8] = sport[15:8]; hb[8*35 +: 8] = sport[7:0];'
+  new: 'hb[8*34 +: 8] = dport[15:8]; hb[8*35 +: 8] = dport[7:0];'
+  class: operator
+  why: source port field carries the destination port
+- name: read_map_snd_nxt
+  file: tcp_fast.sv
+  old: '5''d9:  rd = snd_nxt;'
+  new: '5''d9:  rd = snd_una;'
+  class: operator
+  why: SND_NXT reads back SND_UNA
+- name: clear_not_clearing_sent
+  file: tcp_fast.sv
+  old: "if (sw_we && sw_waddr == 5'd31) begin\n                c_sent <= '0;"
+  new: "if (sw_we && sw_waddr == 5'd31) begin\n                c_sent <= c_sent;"
+  class: operator
+  why: the counter clear misses the sent counter
+- name: clear_loses_to_events
+  file: tcp_fast.sv
+  old: if (sw_we && sw_waddr == 5'd31) begin
+  new: if (sw_we && sw_waddr == 5'd31 && !go) begin
+  class: condition
+  why: a clear in the clock of an order is lost
+- name: ttl_write
+  file: tcp_fast.sv
+  old: 'default: begin mss <= sw_wdata[31:16]; ttl <= sw_wdata[7:0]; end'
+  new: 'default: begin mss <= sw_wdata[31:16]; ttl <= sw_wdata[15:8]; end'
+  class: operator
+  why: TTL taken from the wrong byte of its register
+- name: refuse_code_win
+  file: tcp_fast.sv
+  old: begin refuse_code <= 3'd3; c_ref_win
+  new: begin refuse_code <= 3'd4; c_ref_win
+  class: constant
+  why: refusal code for a closed window
