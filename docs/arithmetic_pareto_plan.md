@@ -205,6 +205,16 @@ response = {
 
 Order of work: (a), (b) and (c) are phase 1 and come straight out of phase 0's driver; (d) and (g) are phase 2; (e), (h) and (i) are written when the second function needs the service. Until the service exists, the meta-project calls `flow/arith_pareto.py`-style drivers directly and checks every number against the same record schema, so moving to the service changes the transport and not the records.
 
+### Structural netlists on UltraScale+ come from Vivado, not Yosys (owner, 2026-11-21)
+
+Yosys 0.70 maps carry logic to CARRY4, the 7-series primitive, even with `synth_xilinx -family xcup`: a 32-bit adder becomes 8 CARRY4 and 32 LUT2
+for both `xc7` and `xcup` (planner's check, 2026-11-21; Yosys's `cells_sim.v` has a CARRY8 model but `arith_map.v` emits only CARRY4). The book
+"FPGA Design for Low-Latency Trading: From RTL to Tick-to-Trade" makes the same point in its tip "Yosys speaks CARRY4" (section 2.3). So, on
+UltraScale+ (K26 and later): the structural form of a library entry is taken from Vivado's synthesised or implemented netlist, or written by hand with
+CARRY8 and checked; Yosys is used there only to prove equivalence (where the primitive choice does not matter), never for the structural netlist or
+for resource and timing estimates. Brief 142 measures the other Yosys-versus-Vivado gaps on xcup (LUT6_2 packing, wide muxes, DSP48E2 features,
+BRAM/URAM, SRLs, control sets) and whether Vivado retargets a CARRY4 netlist to CARRY8.
+
 ## Goal restated: entries of an FPGA IP library that the agent retrieves from (owner decision 24, 2026-11-21 16:08)
 
 The product of this line of work is not a set of charts. It is **entries of an FPGA IP library** that the FPGA Design Agent retrieves from when it plans a design and from which
