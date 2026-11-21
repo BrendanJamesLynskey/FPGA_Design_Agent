@@ -53,6 +53,7 @@ class Unit:
         self.wire: list[tuple[int, int]] = []
         self.wire_cyc: list[int] = []
         self.loop = False
+        self.tus: list[dict] = []
 
     async def start(self, cfgd: Cfg | None = None, feed_ip="192.168.58.10", feed_port=5810, ctrl=None, **kw):
         d = self.dut
@@ -149,6 +150,10 @@ class Unit:
             rec["m_end"] = (int(d.u_mr.m_fcs_ok.value), int(d.u_mr.m_len.value))
         if int(d.u_mr.rx_sop.value):
             rec["rx_sop"] = 1
+        it = ip.u_it
+        if int(it.tu_v.value):
+            self.tus.append({"inst": int(it.tu_inst.value), "side": int(it.tu_side.value), "px": int(it.tu_px.value), "sz": int(it.tu_sz.value), "ok": bool(int(it.tu_ok.value)),
+                             "cpx": int(it.tu_cpx.value)})
         if int(ip.s_v.value):
             rec["s"] = (int(ip.s_d.value), int(ip.s_sof.value), int(ip.s_eof.value), int(ip.s_keep.value))
         if int(ip.v_v.value):
@@ -360,6 +365,19 @@ async def session_vs_model(dut):
         itch, us, od = u.counters()
         bad = {k: (itch[k], m.cnt[k]) for k in COUNTERS if k not in TIMING_DEPENDENT and itch[k] != m.cnt[k]}
         assert not bad, f"counters (rtl, model): {bad}"
+        # every top-of-book update record, in order, and the final top of book of every instrument and side (brief 110's model; bit exact)
+        assert len(u.tus) == len(m.tus), (len(u.tus), len(m.tus))
+        for i, (r, mm) in enumerate(zip(u.tus, m.tus)):
+            got = (r["inst"], r["side"], r["px"], r["sz"], r["ok"], r["cpx"])
+            want = (mm["inst"], mm["side"], mm["px"], mm["sz"], mm["ok"], mm["cause_px"])
+            assert got == want, f"book update {i}: rtl {got} model {want}"
+        it_ = dut.u_ip.u_it
+        tpx, tsz, tok = int(it_.tob_px.value), int(it_.tob_sz.value), int(it_.tob_ok.value)
+        for i in range(m.cfg.n_inst):
+            for sd in (0, 1):
+                g_ = 2 * i + sd
+                assert ((tpx >> (32 * g_)) & 0xFFFFFFFF, (tsz >> (32 * g_)) & 0xFFFFFFFF, bool((tok >> g_) & 1)) == m.tob[i][sd], f"tob[{i}][{sd}]"
+        dut._log.info(f"{len(u.tus)} book updates and the final top of book equal the model's")
         assert us["fwd"] == len(items) and us["frames"] == len(items) and us["orphan"] == 0, us
         assert od["sent"] == len(m.orders) and od["drop"] == 0 and od["pz_bad"] == 0 and od["pz_strict"] == 0 and od["pz_unres"] == 0 and od["late"] == 0, od
         assert len(poisoned) == od["pz_abort"] == itch["abort"] and (spec or not poisoned), (len(poisoned), od, itch["abort"])
@@ -445,6 +463,13 @@ async def latency_by_alignment(dut):
     if os.environ.get("B127_RECORD"):
         Path(os.environ["B127_RECORD"]).mkdir(parents=True, exist_ok=True)
         (Path(os.environ["B127_RECORD"]) / "latency_unit_sim.json").write_text(json.dumps(REC, indent=1))
+        # the record the stage file reads (results/b127/latency_sim.json): per mode and quantity, min and max over the alignments, in clocks
+        summ = {}
+        for key, rs in rows.items():
+            summ[key] = {q: {"min": min(r[q] for r in rs), "max": max(r[q] for r in rs), "n": len(rs)} for q in ("T_minus_X", "go_minus_T", "sop_minus_T", "sop_minus_X")}
+        (Path(os.environ["B127_RECORD"]) / "latency_sim.json").write_text(json.dumps({"itch_unit": summ, "what": "the new blocks with the real mac64_rx and mac64_tx in Icarus (tests/b127_unit_cocotb.py latency_by_alignment): clocks "
+            "from X (the MAC word with the message's last byte at mac64_rx's output) to T (the adapter's output word), to go, and to the start strobe of the order frame in mac64_tx; the gearbox pause is one clock in 33",
+            "units": "clocks of 6.2058 ns"}, indent=1))
 
 
 async def poison_scenario(dut, *, spec: bool, strict: bool, tail_msgs: int, bad_fcs: bool):
@@ -607,3 +632,92 @@ async def order_dropped_when_mac_busy(dut):
     assert od["drop"] > 0 and od["sent"] + od["drop"] == len(m.orders), (od, len(m.orders))
     assert all(f[1] for f in u.wire_frames()), "a frame with a bad FCS reached the wire"
     assert us["bad_fcs"] == 0 and us["cut"] == 0, us
+
+
+async def window_point(dut, *, spec: bool, tail_bytes: int, bad_fcs: bool = True):
+    """One packet: the candidate Add (36 bytes) then `tail_bytes` bytes of other messages (one filler message of tail_bytes - 2 bytes; 0 = the candidate ends the packet), in a frame with a bad FCS.
+    Returns whether the candidate's order was poisoned by the late verdict (pz_bad) or left (unverified)."""
+    cfg = Cfg(thr=gen.MID + 3 * gen.TICK, max_pos=10**6, max_qty=1000, band=1_000_000)
+    u = Unit(dut)
+    u.spec = spec
+    await u.start(cfg)
+    await u.command(1 << 6)
+    g = gen.Gen(11, cfg)
+    pre = g.preamble()
+    pkts = [(proto.mold_packet(b"SESSION001", 1, pre), False)]
+    seq = 1 + len(pre)
+    pkts.append((proto.mold_packet(b"SESSION001", seq, [buy_add(g, cfg, 0, gen.MID - 100)]), False))
+    seq += 1
+    msgs = [sell_add(g, cfg, 0, gen.MID + 100)] + ([proto.itch_other("P", tail_bytes - 2, g.loc0, 5)] if tail_bytes else [])
+    pkts.append((proto.mold_packet(b"SESSION001", seq, msgs), bad_fcs))
+    frames = [{"frame": mk_frame(p), "gap": 80, "bad_fcs": bad} for p, bad in pkts]
+    await u.send(frames)
+    await u.idle(150)
+    itch, us, od = u.counters()
+    return {"pz_bad": od["pz_bad"], "sent": od["sent"], "unv": od["unv"], "pz_abort": od["pz_abort"], "bad_fcs": us["bad_fcs"]}
+
+
+@cocotb.test()
+async def fcs_window_sweep(dut):
+    """How much of a bad packet may follow a candidate message before the order escapes the poison (the cut-through risk window, in bytes after the message's last byte), speculation off and on.
+    Written to the record when B127_RECORD is set."""
+    out = {}
+    for spec in (False, True):
+        rows = []
+        for tail in sorted({0, 14, 22, 30, 46, 62, 78, 94, 110, 126, 142, 158, 174, 190, 222, 254} | set(range(128, 142, 2)) | set(range(160, 174, 2))):
+            r = await window_point(dut, spec=spec, tail_bytes=tail)
+            rows.append({"tail_bytes": tail, **r})
+        out["speculative" if spec else "at_verdict"] = rows
+        poisoned = [r["tail_bytes"] for r in rows if r["pz_bad"] == 1]
+        left = [r["tail_bytes"] for r in rows if r["sent"] == 1]
+        dut._log.info(f"spec {spec}: poisoned at tail bytes {poisoned}; left unpoisoned (unverified) at {left}")
+        out[("speculative" if spec else "at_verdict") + "_largest_poisoned_tail_bytes"] = max(poisoned)
+        out[("speculative" if spec else "at_verdict") + "_smallest_escaping_tail_bytes"] = min(left)
+        assert rows[0]["pz_bad"] == 1 and rows[-1]["sent"] == 1 and rows[-1]["unv"] == 1, rows
+        assert all(r["pz_bad"] + r["sent"] == 1 for r in rows), rows
+        # monotone: once an order escapes, longer tails escape too
+        esc = [r["sent"] for r in rows]
+        assert esc == sorted(esc), esc
+    REC["fcs_window"] = out
+    if os.environ.get("B127_RECORD"):
+        Path(os.environ["B127_RECORD"]).mkdir(parents=True, exist_ok=True)
+        (Path(os.environ["B127_RECORD"]) / "fcs_window_unit_sim.json").write_text(json.dumps(out, indent=1))
+
+
+@cocotb.test()
+async def back_to_back_orders(dut):
+    """Two, three and four candidates in ONE packet (their messages end about 5 clocks apart): the risk logic's queue holds the later orders until the transmit path is free. All orders go out, byte exact, in
+    order, and the spacing of their start strobes is the frame's own length: written to the record."""
+    out = {}
+    for spec in (False, True):
+        for ncand in (2, 3, 4):
+            cfg = Cfg(thr=gen.MID + 3 * gen.TICK, max_pos=10**6, max_qty=1000, band=1_000_000)
+            u = Unit(dut)
+            u.spec = spec
+            await u.start(cfg)
+            await u.command(1 << 6)
+            m = Model(cfg)
+            g = gen.Gen(41, cfg)
+            pkts = [proto.mold_packet(b"SESSION001", 1, g.preamble()[:3])]
+            seq = 4
+            pkts.append(proto.mold_packet(b"SESSION001", seq, [buy_add(g, cfg, 0, gen.MID - 100)])); seq += 1
+            pkts.append(proto.mold_packet(b"SESSION001", seq, [sell_add(g, cfg, 0, gen.MID + 100 + 10 * k) for k in range(ncand)]))
+            frames = []
+            for p in pkts:
+                m.feed(p, False)
+                frames.append({"frame": mk_frame(p), "gap": 80})
+            await u.send(frames)
+            await u.idle(200)
+            itch, us, od = u.counters()
+            wf = [f for f in u.wire_frames() if f[1]]
+            assert len(m.orders) == ncand and len(wf) == ncand and od["drop"] == 0 and itch["rej_busy"] == 0, (len(m.orders), len(wf), od, itch["rej_busy"])
+            for k, ((data, ok, lane), (exp, sq)) in enumerate(zip(wf, expected_order_frames(m))):
+                assert not H.check_order_frame(data, exp, **order_check_kw(sq)), f"order {k}"
+            sops = [r["cyc"] for r in u.log if "osop" in r]
+            gaps = [b - a for a, b in zip(sops, sops[1:])]
+            out[f"{'speculative' if spec else 'at_verdict'}_{ncand}"] = gaps
+            dut._log.info(f"spec {spec}, {ncand} candidates in one packet: all {ncand} orders out, start strobes {gaps} clocks apart")
+    REC["back_to_back"] = out
+    if os.environ.get("B127_RECORD"):
+        Path(os.environ["B127_RECORD"]).mkdir(parents=True, exist_ok=True)
+        (Path(os.environ["B127_RECORD"]) / "back_to_back_unit_sim.json").write_text(json.dumps(out, indent=1))

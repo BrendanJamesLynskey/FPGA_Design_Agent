@@ -65,3 +65,32 @@ def test_whole_core_session(tmp_path) -> None:
         assert res["rp.frames"] == len(frames) and res["us.fwd"] == len(frames) and res["ord.sent"] == len(m.orders) and res["ord.drop"] == 0
         chk = B.order_frames_vs_model(res, m)
         assert not chk["problems"] and chk["compared"] == len(m.orders), chk
+
+
+def test_latency_record(tmp_path) -> None:
+    """The whole-core latency record (results/b127/core_sim.json) for the phases in B127_PHASES (default: 0 only; the committed record has four). Written to B127_CORE_RESULTS when set."""
+    import os
+    from designs.b96_kr260_10g.rm_gp_itch.tests import measure_xsim as M
+    phases = [int(x) for x in os.environ.get("B127_PHASES", "0").split()]
+    cfg = Cfg(thr=gen.MID + 3 * gen.TICK, max_pos=10**6, max_qty=1000, band=1_000_000)
+    pkts, frames, meta = M.latency_session(cfg)
+    m = Model(cfg)
+    for p in pkts:
+        m.feed(p, False)
+    modes = (False, True)
+    plan = M.plan_for(modes, cfg, frames)
+    res = {"clock_ns": X.T_CLK, "orders_per_run": len(m.orders), "phases_ps": phases, "results": {}}
+    for ph in phases:
+        log = X.run_plan(plan, tmp_path / f"ph{ph}", phase_ps=ph)
+        rd = B.decode_log(plan, log)
+        for sp in (0, 1):
+            pre = f"s{sp}."
+            assert not B.counters_vs_model({k[len(pre):]: v for k, v in rd.items() if k.startswith(pre)}, m)
+            assert rd[pre + "ord.sent"] == len(m.orders) and rd[pre + "ord.drop"] == 0
+        rows = M.analyse(log, pkts, meta, modes, len(frames))
+        res["results"][str(ph)] = {mode: {"rows": r} for mode, r in rows.items()}
+    agg = M.aggregate(res)
+    sp = agg["itch_to_order"]["speculative"]
+    assert 5 <= sp["mac_word_to_sop_clocks"]["min"] and sp["mac_word_to_sop_clocks"]["max"] <= 9, sp
+    if os.environ.get("B127_CORE_RESULTS"):
+        Path(os.environ["B127_CORE_RESULTS"]).write_text(json.dumps(agg, indent=1))

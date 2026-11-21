@@ -262,7 +262,7 @@ The two windows follow the same rules as the base map: **unmapped addresses** (0
 | ISTAT92 | 0x570 | tcpf.rdata | tcp_fast software read data (0 in this build) |
 | ISTAT93 | 0x574 | tcpf.echo | TCPF_WDATA writes executed |
 | ISTAT94 | 0x578 | cmd.echo | IT_CMD writes executed |
-| ISTAT95 | 0x57C | spare |  |
+| ISTAT95 | 0x57C | ord.refused | orders the segment builder refused before making a word (0 in this stand-in; tcp_fast: not armed, stale state, closed window, MSS) |
 
 ## What clears what (ITCH path)
 

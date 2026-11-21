@@ -16,7 +16,9 @@ SRC=("$B96/rtl/b96_pkg.sv" "$B110/rtl/itch_pkg.sv" "$D/rtl/itch_pkg2.sv" "$B96/r
      "$D/rtl/udp_strip.sv" "$D/rtl/order_seg.sv" "$D/rtl/itch_top.sv" "$D/rtl/itch_path.sv" "$D/rtl/tx_mux.sv" "$D/rtl/rx_path.sv" "$D/rtl/tx_path.sv" "$D/rtl/b96_core.sv"
      "$B96/sim/gth_wiz_model96e.sv" "$D/sim/tb_itch_core.sv")
 OUT=()
-for f in "${SRC[@]}"; do b=$(basename "$f"); sed -e 's/always_ff @(/always @(/' -e 's/INIT_SYNC_FF(0)/INIT_SYNC_FF(1)/' "$f" > "rtl_x/$b"; OUT+=("rtl_x/$b"); done
+# the frequency counter's gray crossing (rx_path.sv u_fc) takes a free-running counter that changes every clock: the macro's SIM_ASSERT_CHK complains every clock ("not stable long enough", 120,000 lines a run) though
+# the crossing is by design a sampled counter (brief 96C); the check is switched off for that one instance in the simulation copy, which changes no behaviour
+for f in "${SRC[@]}"; do b=$(basename "$f"); sed -e 's/always_ff @(/always @(/' -e 's/INIT_SYNC_FF(0)/INIT_SYNC_FF(1)/' -e 's/\.SIM_ASSERT_CHK(1), \.SIM_LOSSLESS_GRAY_CHK(0), \.WIDTH(32)/.SIM_ASSERT_CHK(0), .SIM_LOSSLESS_GRAY_CHK(0), .WIDTH(32)/' "$f" > "rtl_x/$b"; OUT+=("rtl_x/$b"); done
 NS=$(python3 -c "print($PH/1000.0)")
 xvlog -sv -L xpm -d RXPH=$NS "${OUT[@]}" "$XILINX_VIVADO/data/verilog/src/glbl.v" > xvlog.log 2>&1 || { echo "xvlog failed"; tail -20 xvlog.log; exit 2; }
 xelab -L xpm -L unisims_ver -debug off -generic_top "RM_OWN=$OWN" tb_itch_core work.glbl -s s > xelab.log 2>&1 || { echo "xelab failed"; tail -20 xelab.log; exit 3; }

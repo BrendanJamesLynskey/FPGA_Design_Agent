@@ -52,7 +52,7 @@ module itch_top
     output logic                 o_poison,
     output logic                 o_unres,
     // order side, for the poison logic and the stamps
-    output logic                 go, go_spec, commit, abort, b_late,
+    output logic                 go, go_spec, commit, abort, b_late, refuse_v,
     // observation
     output logic [15:0]          flags,
     output logic [NC*32-1:0]     cnt
@@ -103,7 +103,7 @@ module itch_top
         .spec_allow, .go, .go_spec, .f_sym, .f_px, .f_qty, .f_ref, .commit, .abort, .b_busy, .b_late, .cnt(cnt_r));
     order_seg u_seg (.clk, .rst, .go, .go_spec, .f_sym, .f_px, .f_qty, .f_ref, .commit, .abort, .cfg_tif, .cfg_display, .cfg_capacity, .cfg_ise, .cfg_cross,
                      .cfg_custtype, .cfg_minqty, .tpl_my_mac, .tpl_venue_mac, .tpl_my_ip, .tpl_venue_ip, .tpl_sport, .tpl_dport, .tpl_seq0, .tpl_ack, .tpl_load,
-                     .sw_we, .sw_waddr, .sw_wdata, .sw_raddr, .sw_rdata, .busy(seg_busy), .late(b_late), .spec_pend,
+                     .sw_we, .sw_waddr, .sw_wdata, .sw_raddr, .sw_rdata, .busy(seg_busy), .late(b_late), .spec_pend, .refuse_v,
                      .o_v, .o_d, .o_sof, .o_eof, .o_keep, .o_poison, .o_unres);
 
     assign cnt = {cnt_r, cnt_b, cnt_d, cnt_m2};
@@ -113,5 +113,5 @@ module itch_top
         for (int i = 0; i < N_INST; i++) flags[8 + i] = inexact[i];
     end
     logic unused;
-    assign unused = &{1'b0, pk_end, e_seq, m_seq, spec_pend, tu_side, tu_ok, tu_px, tu_sz, tob_sz, sys_code};
+    assign unused = &{1'b0, cnt_m[13*32-1:12*32], pk_end, e_seq, m_seq, spec_pend, tu_side, tu_ok, tu_px, tu_sz, tob_sz, sys_code};
 endmodule

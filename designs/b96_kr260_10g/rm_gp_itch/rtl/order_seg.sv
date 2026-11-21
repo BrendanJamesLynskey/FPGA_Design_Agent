@@ -42,6 +42,7 @@ module order_seg (
     output logic        busy,
     output logic        late,
     output logic        spec_pend,
+    output logic        refuse_v,        // an order was refused before any word was made (tcp_fast: not armed, stale state, closed window; always 0 in this stand-in)
     // segment out
     output logic        o_v,
     output logic [63:0] o_d,
@@ -64,15 +65,17 @@ module order_seg (
     ouch_enter u_o (.clk, .rst, .go(go && !act), .go_spec, .f_sym, .f_px, .f_qty, .f_ref, .commit, .abort, .cfg_tif, .cfg_display, .cfg_capacity, .cfg_ise, .cfg_cross,
                     .cfg_custtype, .cfg_minqty, .busy(ou_busy), .late(ou_late), .spec_pend, .o_v(ou_v), .o_d(ou_d), .o_sof(ou_sof), .o_eof(ou_eof), .o_keep(ou_keep), .o_abort(ou_abort));
     assign sw_rdata = 32'd0;
+    assign refuse_v = 1'b0;
 
     // ---- the payload, stored as it comes
     logic [63:0] pw [0:7];
     logic [2:0]  pi;
     always_ff @(posedge clk) begin
-        if (ou_v) begin
-            pw[ou_sof ? 3'd0 : pi] <= ou_d;
+        if (rst) pi <= '0;
+        else if (ou_v) begin
             pi <= (ou_sof ? 3'd0 : pi) + 3'd1;
         end
+        if (ou_v) pw[ou_sof ? 3'd0 : pi] <= ou_d;
     end
 
     // ---- IPv4 header checksum of the static fields (a pipeline: the inputs do not change while orders go out)
@@ -110,7 +113,7 @@ module order_seg (
             4'd11: w = {pw[5][15:0], pw[4][63:16]};
             4'd12: w = {pw[6][15:0], pw[5][63:16]};
             4'd13: w = {pw[7][15:0], pw[6][63:16]};
-            4'd14: w = {40'd0, pw[7][23:16]};
+            4'd14: w = {56'd0, pw[7][23:16]};
             default: w = '0;
         endcase
     end
@@ -119,7 +122,7 @@ module order_seg (
     always_ff @(posedge clk) begin
         o_v <= 1'b0; o_sof <= 1'b0; o_eof <= 1'b0; o_poison <= 1'b0; o_unres <= 1'b0;
         if (rst) begin
-            act <= 1'b0; si <= '0; snd_nxt <= '0; ab_l <= 1'b0; o_d <= '0; o_keep <= '0; pi <= '0;
+            act <= 1'b0; si <= '0; snd_nxt <= '0; ab_l <= 1'b0; o_d <= '0; o_keep <= '0;
         end else begin
             if (tpl_load) snd_nxt <= tpl_seq0;
             if (abort && act) ab_l <= 1'b1;

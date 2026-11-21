@@ -105,3 +105,33 @@ def test_counters_and_capture_check_on_a_synthetic_result() -> None:
     assert chk["compared"] == 1 and not chk["problems"], chk
     r["cap0.5.lo"] ^= 1
     assert B.order_frames_vs_model(r, m)["problems"]
+
+
+def test_board_driver_refuses_a_wrong_lock_and_a_wrong_design(tmp_path) -> None:
+    import pytest
+    from designs.b96_kr260_10g.rm_gp_itch.host import b127_board as BB
+
+    class Fake:
+        def __init__(self, id_=0x96A00001, feat=0xab): self.v = {0x000: id_, 0x008: feat}; self.w = []
+        def rd(self, a): return self.v.get(a, 0)
+        def wr(self, a, v): self.w.append((a, v))
+    with pytest.raises(RuntimeError):
+        BB.run_session(Fake(), "96F: x", tmp_path, loop_m=0.17)
+    r = BB.run_session(Fake(feat=0x2b), "97I: x", tmp_path, loop_m=0.17)          # FEATURES bit 7 clear: the base design
+    assert "not rm_gp_itch" in r["stopped"] and not Fake().w
+    r = BB.run_session(Fake(id_=0x12345678), "97I: x", tmp_path, loop_m=0.17)
+    assert "stopped" in r
+
+
+def test_stage_sessions_are_candidates_and_orders() -> None:
+    from designs.b96_kr260_10g.rm_gp_itch.host import b127_stages as S
+    cfg = S.stage_cfg()
+    frames, m, items = S.session_frames(cfg, 101, 30, 150)
+    assert len(m.orders) >= 2 and all(len(f[0]) >= 60 for f in frames)
+    # the latency session: one candidate per alignment of the message end in its word
+    pkts, fr, meta = S.latency_frames(cfg)
+    assert sorted({(42 + pl - 1) & 7 for pl, _ in meta}) == list(range(8))
+    mm = Model(cfg)
+    for p in pkts:
+        mm.feed(p)
+    assert len(mm.orders) == 8

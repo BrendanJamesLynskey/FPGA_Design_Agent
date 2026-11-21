@@ -110,7 +110,7 @@ module itch_path
     // ---------------------------------------------------------------- the 110 path
     logic [NC*32-1:0] cnt_i;
     logic [15:0]      flags;
-    logic             go, go_spec, commit, abort, b_late;
+    logic             go, go_spec, commit, abort, b_late, refuse_v;
     logic [31:0]      tcpf_rd;
     itch_top #(.N_INST(N_INST)) u_it (.clk, .rst, .s_v, .s_d, .s_sof, .s_eof, .s_keep, .v_v, .v_bad,
         .cfg_watch(watch), .cfg_thr(cw[C_THR]), .cfg_qty(cw[C_QTY]), .cfg_max_qty(cw[C_MAXQTY]), .cfg_max_pos(cw[C_MAXPOS]), .cfg_band(cw[C_BAND]), .cfg_px_off(cw[C_PXOFF]),
@@ -120,7 +120,7 @@ module itch_path
         .tpl_seq0(cw[C_TCPSEQ]), .tpl_ack(cw[C_TCPACK]), .tpl_load(c_tcp), .sw_we(tcpf_we), .sw_waddr(cw[C_TCPFA][4:0]), .sw_wdata(cw[C_TCPFD]),
         .sw_raddr(cw[C_TCPFA][12:8]), .sw_rdata(tcpf_rd),
         .clr_cnt(c_cnt), .clr_flags(c_flags), .clr_book(c_book), .clr_pos(c_pos), .clr_ref(c_ref), .tx_busy(ord_busy),
-        .o_v, .o_d, .o_sof, .o_eof, .o_keep, .o_poison, .o_unres, .go, .go_spec, .commit, .abort, .b_late, .flags, .cnt(cnt_i));
+        .o_v, .o_d, .o_sof, .o_eof, .o_keep, .o_poison, .o_unres, .go, .go_spec, .commit, .abort, .b_late, .refuse_v, .flags, .cnt(cnt_i));
 
     // ---------------------------------------------------------------- order poison policy
     logic [3:0]  pk_n, vn, o_pk;
@@ -147,7 +147,7 @@ module itch_path
     end
 
     // ---------------------------------------------------------------- order counters and latency
-    logic [31:0] n_sent, n_pz_abort, n_pz_bad, n_pz_strict, n_unv, n_drop, n_unres, n_late;
+    logic [31:0] n_sent, n_pz_abort, n_pz_bad, n_pz_strict, n_unv, n_drop, n_unres, n_late, n_refused;
     logic [31:0] ts_eof, ts_go, ts_sop, ts_rxsop, lat_last, lat_min, lat_max, lat_cnt, lat_neg;
     logic [15:0] hist [16];
     logic [31:0] lat_v;
@@ -156,7 +156,7 @@ module itch_path
     assign lat_bin = (lat_v[31] || lat_v > 32'd14) ? 4'd15 : lat_v[3:0];
     always_ff @(posedge clk) begin
         if (rst) begin
-            n_sent <= '0; n_pz_abort <= '0; n_pz_bad <= '0; n_pz_strict <= '0; n_unv <= '0; n_drop <= '0; n_unres <= '0; n_late <= '0;
+            n_sent <= '0; n_pz_abort <= '0; n_pz_bad <= '0; n_pz_strict <= '0; n_unv <= '0; n_drop <= '0; n_unres <= '0; n_late <= '0; n_refused <= '0;
             ts_eof <= '0; ts_go <= '0; ts_sop <= '0; ts_rxsop <= '0; lat_last <= '0; lat_min <= 32'h7FFFFFFF; lat_max <= 32'h80000000; lat_cnt <= '0; lat_neg <= '0;
             for (int i = 0; i < 16; i++) hist[i] <= '0;
         end else begin
@@ -165,6 +165,7 @@ module itch_path
             if (go) ts_go <= ts;
             if (ord_drop) n_drop <= n_drop + 32'd1;
             if (b_late) n_late <= n_late + 32'd1;
+            if (refuse_v) n_refused <= n_refused + 32'd1;
             if (ord_end) begin
                 if (ord_end_seg || ord_end_ofl) begin
                     if (ord_end_unres) n_unres <= n_unres + 32'd1; else n_pz_abort <= n_pz_abort + 32'd1;
@@ -182,7 +183,7 @@ module itch_path
                 end
             end
             if (c_cnt) begin
-                n_sent <= '0; n_pz_abort <= '0; n_pz_bad <= '0; n_pz_strict <= '0; n_unv <= '0; n_drop <= '0; n_unres <= '0; n_late <= '0;
+                n_sent <= '0; n_pz_abort <= '0; n_pz_bad <= '0; n_pz_strict <= '0; n_unv <= '0; n_drop <= '0; n_unres <= '0; n_late <= '0; n_refused <= '0;
             end
             if (c_lat || c_cnt) begin
                 lat_min <= 32'h7FFFFFFF; lat_max <= 32'h80000000; lat_cnt <= '0; lat_neg <= '0;
@@ -205,10 +206,10 @@ module itch_path
         sw[S_TS_EOF] = ts_eof; sw[S_TS_GO] = ts_go; sw[S_TS_SOP] = ts_sop; sw[S_TS_RXSOP] = ts_rxsop;
         sw[S_FLAGS] = {12'd0, k_en, infl, ord_busy, rp_busy, flags};
         sw[S_CAP_LO] = cap_data[31:0]; sw[S_CAP_HI] = cap_data[63:32]; sw[S_CAP_ECHO] = {25'd0, cw[C_CAPADDR][6:0]};
-        sw[S_TCPF_RD] = tcpf_rd; sw[S_TCPF_ECHO] = {24'd0, tcpf_q}; sw[S_CMD_ECHO] = {24'd0, cmd_seq_q};
+        sw[S_TCPF_RD] = tcpf_rd; sw[S_TCPF_ECHO] = {24'd0, tcpf_q}; sw[S_CMD_ECHO] = {24'd0, cmd_seq_q}; sw[S_REFUSED] = n_refused;
     end
     always_comb for (int i = 0; i < NSW; i++) stat2[32*i +: 32] = sw[i];
     logic _unused;
-    assign _unused = &{1'b0, ord_end_fcs, k_kill == 1'b0 && 1'b0, commit, abort, go_spec, thr_b, qty_b, arm_b, kill_b, trade_en_b, gen_kind, gen_len, gen_inst, gen_price, gen_interval,
+    assign _unused = &{1'b0, rp_err[31:16], ord_end_fcs, k_kill == 1'b0 && 1'b0, commit, abort, go_spec, thr_b, qty_b, arm_b, kill_b, trade_en_b, gen_kind, gen_len, gen_inst, gen_price, gen_interval,
                        gen_count, port_feed, port_probe, cw[C_FEEDPORT][31:16]};
 endmodule

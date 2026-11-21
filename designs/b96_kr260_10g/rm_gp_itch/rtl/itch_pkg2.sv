@@ -15,5 +15,5 @@ package itch_pkg2;
     localparam int S_O_SENT = 60, S_O_PZ_ABORT = 61, S_O_PZ_BAD = 62, S_O_PZ_STRICT = 63, S_O_UNV = 64, S_O_DROP = 65, S_O_OFL = 66, S_O_UNRES = 67, S_O_LATE = 68;
     localparam int S_RP_FRAMES = 69, S_RP_STAT = 70;
     localparam int S_LAT_LAST = 71, S_LAT_MIN = 72, S_LAT_MAX = 73, S_LAT_CNT = 74, S_LAT_NEG = 75, S_HIST = 76;     // 76..83: 16 bins of 16 bits
-    localparam int S_TS_EOF = 84, S_TS_GO = 85, S_TS_SOP = 86, S_TS_RXSOP = 87, S_FLAGS = 88, S_CAP_LO = 89, S_CAP_HI = 90, S_CAP_ECHO = 91, S_TCPF_RD = 92, S_TCPF_ECHO = 93, S_CMD_ECHO = 94, S_TCPFD_ECHO = 95;
+    localparam int S_TS_EOF = 84, S_TS_GO = 85, S_TS_SOP = 86, S_TS_RXSOP = 87, S_FLAGS = 88, S_CAP_LO = 89, S_CAP_HI = 90, S_CAP_ECHO = 91, S_TCPF_RD = 92, S_TCPF_ECHO = 93, S_CMD_ECHO = 94, S_REFUSED = 95;
 endpackage

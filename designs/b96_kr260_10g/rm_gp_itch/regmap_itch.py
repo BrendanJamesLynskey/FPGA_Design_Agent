@@ -51,7 +51,7 @@ STAT_NAMES = (
     + ["ord.sent", "ord.pz_abort", "ord.pz_bad", "ord.pz_strict", "ord.unverified", "ord.drop", "ord.fifo_ofl", "ord.pz_unres", "ord.late",
        "rp.frames", "rp.stat", "lat.last", "lat.min", "lat.max", "lat.count", "lat.neg"]
     + [f"lat.hist{2 * i}_{2 * i + 1}" for i in range(8)]
-    + ["ts.eof", "ts.go", "ts.sop", "ts.rxsop", "flags", "cap.lo", "cap.hi", "cap.echo", "tcpf.rdata", "tcpf.echo", "cmd.echo", "spare"])
+    + ["ts.eof", "ts.go", "ts.sop", "ts.rxsop", "flags", "cap.lo", "cap.hi", "cap.echo", "tcpf.rdata", "tcpf.echo", "cmd.echo", "ord.refused"])
 assert len(STAT_NAMES) == 96
 
 STAT_DOC = {
@@ -72,6 +72,7 @@ STAT_DOC = {
     "flags": "bits 15:0 flags of brief 110 (0 gap seen, 1 untrusted, 2 end of session, 3 session locked, 4 book ready, 5 order path busy, 8 to 11 instrument inexact), bit 16 replay busy, bit 17 order frame holds the MAC, bit 18 order in flight (poison tracker), bit 19 EN",
     "cap.lo": "low half of the capture word at CAP_ADDR", "cap.hi": "high half", "cap.echo": "the CAP_ADDR the two words belong to (compare with what you wrote)",
     "tcpf.rdata": "tcp_fast software read data (0 in this build)", "tcpf.echo": "TCPF_WDATA writes executed", "cmd.echo": "IT_CMD writes executed",
+    "ord.refused": "orders the segment builder refused before making a word (0 in this stand-in; tcp_fast: not armed, stale state, closed window, MSS)",
 }
 HIST_DOC = "latency histogram: 16-bit saturating counters, bin n = latency n clocks (bin 15 = 15 or more), two bins a word: the low half is the even bin"
 US_DOC = {

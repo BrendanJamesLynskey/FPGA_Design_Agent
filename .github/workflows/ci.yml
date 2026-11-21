@@ -183,6 +183,8 @@ jobs:
         run: python -m pytest -q designs/b56a_gth_serdes/tests/test_b56a_prbs_rtl.py designs/b56a_gth_serdes/tests/test_b56a_core_sim_rtl.py
       - name: 10G PCS, MAC and trading path against the Python twin (brief 96; the GT is a behavioural stand-in)
         run: python -m pytest -q designs/b96_kr260_10g/tests/test_b96_pcs_rtl.py
+      - name: ITCH/OUCH path inside the 10G core, build rm_gp_itch - the new blocks with the real MACs against brief 110's model (brief 127)
+        run: python -m pytest -q designs/b96_kr260_10g/rm_gp_itch/tests/test_b127_unit_rtl.py
       - name: CDC soak rig (brief 11b) - checkers, host reader, the rig with metastability injection and reset storms (one copy a variant)
         run: CDC_SIM_QUICK=1 python -m pytest -q hil/cdc_soak/tests
       - name: CDC gate fixtures - the rig's mutants and correct variants, plain and with synchroniser-delay injection (brief 16)

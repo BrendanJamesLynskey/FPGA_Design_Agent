@@ -68,7 +68,7 @@ module tx_mux (
     logic        head_v, head_last, head_pz_seg, head_pz_unres, head_pz_ofl;
     logic [63:0] head_d;
     logic [2:0]  head_nb1;
-    logic        o_consume;
+    logic        o_consume, wd_fire;
     assign own_a    = (own == OWN_A);
     assign o_take   = o_v && o_sof && own == OWN_NONE;
     assign ord_start = o_take;
@@ -87,6 +87,7 @@ module tx_mux (
     end
     always_ff @(posedge clk) begin
         if (rst) own <= OWN_NONE;
+        else if (wd_fire) own <= OWN_NONE;       // the order frame never finished (never seen): give the MAC back
         else begin
             case (own)
                 OWN_NONE: if (o_take) own <= OWN_O; else if (a_valid) own <= OWN_A; else if (r_req) own <= OWN_R;
@@ -114,7 +115,7 @@ module tx_mux (
     end
     assign in_w = o_v && (o_take || (in_acc && !o_sof));
     assign in_last = o_eof;
-    logic fifo_pop, bypass, can_load, fifo_wr, wd_fire;
+    logic fifo_pop, bypass, can_load, fifo_wr;
     assign can_load = !head_v || o_consume;
     assign bypass   = can_load && (fcnt == 4'd0) && in_w;
     assign fifo_pop = can_load && (fcnt != 4'd0);
@@ -161,20 +162,21 @@ module tx_mux (
 
     // ------------------------------------------------------------------ replay memory and engine
     logic [63:0] rmem [0:255];
+    initial for (int i = 0; i < 256; i++) rmem[i] = 64'd0;        // powers up as zeros: a zero header word ends the list
     always_ff @(posedge clk) if (wr_we) rmem[wr_addr] <= wr_data;
     typedef enum logic [2:0] {R_IDLE, R_HDR, R_GAP, R_RUN, R_PGAP} rst_t;
     rst_t        rst_s;
     logic [7:0]  ptr;
     logic [15:0] gapc, wl, flen, passes;
     logic        r_pz;
-    logic [63:0] hw;
+    logic [32:0] hw;                      // the header word's used bits: poison, gap, length
     logic [63:0] rq;
     logic        r_acc;
     logic [7:0]  raddr;
     logic [63:0] rdw;
     assign raddr   = (rst_s == R_RUN && r_acc) ? ptr + 8'd1 : ptr;       // one read port: the header word, the first data word and the next data word are all rmem[raddr]
     assign rdw     = rmem[raddr];
-    assign hw      = rdw;
+    assign hw      = rdw[32:0];
     assign r_valid = (rst_s == R_RUN);
     assign r_req   = r_valid;
     assign r_data  = rq;

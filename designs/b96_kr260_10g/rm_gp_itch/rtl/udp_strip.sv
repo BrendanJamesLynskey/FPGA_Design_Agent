@@ -60,20 +60,20 @@ module udp_strip #(
     // ------------------------------------------------------------------ frame bookkeeping (two frames can await a verdict)
     logic        cs, rs;                 // slot of the frame being received / of the oldest frame awaiting its verdict
     logic [1:0]  oc;                     // frames awaiting a verdict
-    logic [1:0]  q_fwd, q_tcp, q_cap;
+    logic [1:0]  q_fwd, q_cap;
     logic [15:0] q_len [2];
     logic [2:0]  q_cslot [2];
 
     // ------------------------------------------------------------------ per word
     logic [3:0]  wi_r, wi_n;
     assign wi_n = m_sof ? 4'd0 : wi_r;
-    logic [63:0] hold;
+    logic [63:16] hold;                  // the previous frame word without its low two bytes (the part a payload word takes from it)
     logic [47:0] mc_mac;
     logic        ip_mc;
     assign ip_mc  = (cfg_ip[31:28] == 4'hE);
     assign mc_mac = {cfg_ip[7:0], cfg_ip[15:8], 1'b0, cfg_ip[22:16], 8'h5E, 8'h00, 8'h01};
 
-    logic        mac_ok, et_ok, ver_ok, frag_bad, proto_udp, tcp_cur, hdr_ok, dip_hi_v;
+    logic        mac_ok, et_ok, ver_ok, frag_bad, proto_udp, tcp_cur, hdr_ok;
     logic [15:0] iptot, udplen, dip_hi;
     logic [19:0] acc;
     logic [16:0] s1r;
@@ -102,9 +102,9 @@ module udp_strip #(
 
     // the IPv4 header checksum: fold the running sum two steps (registered once) and compare
     logic        ipck_ok;
-    logic [16:0] s2;
-    assign s2      = {1'b0, s1r[15:0]} + {16'd0, s1r[16]};
-    assign ipck_ok = (s2[15:0] == 16'hFFFF);
+    logic [15:0] s2;
+    assign s2      = s1r[15:0] + {15'd0, s1r[16]};      // a carry out of this add (0xFFFF + 1) folds to 1 in one's complement, not 0xFFFF: the check is the same either way
+    assign ipck_ok = (s2 == 16'hFFFF);
 
     // ------------------------------------------------------------------ emission
     logic [15:0] rem_eff, rem_after;
@@ -126,13 +126,13 @@ module udp_strip #(
     logic [63:0] cap_mem [0:127];
     logic        cap_w_en;
     logic [6:0]  cap_w_addr;
-    logic [63:0] cap_w_data;
     logic [17:0] cap_meta [0:7];
     logic        vd;
     assign vd = m_end || m_err;
     logic vd_pop;
     assign vd_pop = vd && (oc != 2'd0);
     if (CAP) begin : g_cap
+        initial for (int i = 0; i < 128; i++) cap_mem[i] = 64'd0;       // a slot never written reads 0 (distributed RAM takes its initial value from the bitstream)
         always_ff @(posedge clk) if (cap_w_en) cap_mem[cap_w_addr] <= m_d;
         logic [17:0] mt;
         assign mt = cap_meta[cap_addr[6:4]];
@@ -140,14 +140,13 @@ module udp_strip #(
     end else begin : g_nocap
         assign cap_data = 64'd0;
     end
-    assign cap_w_data = m_d;
     assign cap_w_en   = CAP && m_v && tcp_cur && wi_n >= 4'd3 && wi_n <= 4'd14 && !cap_clr;
     assign cap_w_addr = {(wi_n == 4'd3) ? cap_wp : cslot_cur, 4'(wi_n - 4'd3)};
 
     always_ff @(posedge clk) begin
         s_v <= 1'b0; s_sof <= 1'b0; s_eof <= 1'b0; v_v <= 1'b0; v_bad <= 1'b0;
         if (rst) begin
-            cs <= 1'b0; rs <= 1'b1; oc <= '0; q_fwd <= '0; q_tcp <= '0; q_cap <= '0; q_len[0] <= '0; q_len[1] <= '0; q_cslot[0] <= '0; q_cslot[1] <= '0;
+            cs <= 1'b0; rs <= 1'b1; oc <= '0; q_fwd <= '0; q_cap <= '0; q_len[0] <= '0; q_len[1] <= '0; q_cslot[0] <= '0; q_cslot[1] <= '0;
             for (int i = 0; i < 8; i++) cap_meta[i] <= '0;
             wi_r <= '0; hold <= '0; mac_ok <= 1'b0; et_ok <= 1'b0; ver_ok <= 1'b0; frag_bad <= 1'b0; proto_udp <= 1'b0; tcp_cur <= 1'b0; hdr_ok <= 1'b0;
             iptot <= '0; udplen <= '0; dip_hi <= '0; acc <= '0; s1r <= '0; rem <= '0; started <= 1'b0; dropped <= 1'b0; lp <= 1'b0; cslot_cur <= '0; cap_wp <= '0;
@@ -159,7 +158,7 @@ module udp_strip #(
             if (rx_sop) begin
                 n_frames <= n_frames + 32'd1;
                 cs <= !cs;
-                q_fwd[!cs] <= 1'b0; q_tcp[!cs] <= 1'b0; q_cap[!cs] <= 1'b0; q_len[!cs] <= '0;
+                q_fwd[!cs] <= 1'b0; q_cap[!cs] <= 1'b0; q_len[!cs] <= '0;
             end
             if (vd && oc == 2'd0) n_orphan <= n_orphan + 32'd1;
             case ({rx_sop, vd_pop})
@@ -179,7 +178,7 @@ module udp_strip #(
             end
             // ---- one frame word
             if (m_v) begin
-                hold <= m_d;
+                hold <= m_d[63:16];
                 wi_r <= (wi_n == 4'd15) ? 4'd15 : wi_n + 4'd1;
                 if (m_sof) begin started <= 1'b0; dropped <= 1'b0; lp <= 1'b0; rem <= '0; hdr_ok <= 1'b0; tcp_cur <= 1'b0; end
                 case (wi_n)
@@ -230,7 +229,7 @@ module udp_strip #(
             lp <= 1'b0;
             if (attempt && !started && !ipck_ok) begin dropped <= 1'b1; n_ipck <= n_ipck + 32'd1; end
             if (can_emit) begin
-                s_v <= 1'b1; s_d <= {m_d[15:0], hold[63:16]}; s_sof <= !started; s_eof <= last_w; s_keep <= keep_w;
+                s_v <= 1'b1; s_d <= {m_d[15:0], hold}; s_sof <= !started; s_eof <= last_w; s_keep <= keep_w;
                 if (!started) begin started <= 1'b1; q_fwd[cs] <= 1'b1; n_fwd <= n_fwd + 32'd1; end
                 rem <= rem_after;
             end else if (m_v && wi_n == 4'd5) rem <= udplen - 16'd8;

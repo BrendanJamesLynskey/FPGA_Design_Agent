@@ -137,8 +137,7 @@ def snapshot(p: Plan) -> Plan:
 def read_stats(p: Plan, prefix="") -> Plan:
     snapshot(p)
     for i, n in enumerate(R.STAT_NAMES):
-        if n != "spare":
-            p.r(R.STAT_BASE + 4 * i, prefix + n)
+        p.r(R.STAT_BASE + 4 * i, prefix + n)
     return p
 
 
