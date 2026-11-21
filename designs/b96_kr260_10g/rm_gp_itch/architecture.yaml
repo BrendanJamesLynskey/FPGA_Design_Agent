@@ -1,0 +1,176 @@
+# rm_gp_itch architecture (hand-written; brief 127): b96_kr260_10g rm_gp with the standard-protocol trading path of brief 110 between the receive MAC and the transmit multiplexer.
+schema: fpga-design-agent/architecture/v1
+blocks:
+- name: gth_wiz
+  function: 'AMD UltraScale FPGAs Transceivers Wizard core of brief 56A: GTHE4 channel X0Y6, QPLL0, 10.3125 Gb/s, RAW 64-bit user data, reset helper and user clocks'
+- name: pcs_tx
+  function: '10GBASE-R transmit PCS: 64B/66B encode, x^58+x^39+1 scrambler, 66-to-64 gearbox, one register stage; adv low one clock in 33'
+- name: pcs_rx
+  function: '10GBASE-R receive PCS: 64-to-66 gearbox with bit slip, block lock, descrambler, decode; two register stages'
+- name: mac64_tx
+  function: '64-bit Ethernet MAC transmitter: preamble, FCS (CRC-32), terminate, interframe gap, poisoned FCS on request'
+- name: mac64_rx
+  function: '64-bit Ethernet MAC receiver: start in lane 0 or 4, terminate in any lane, cut-through words, FCS verdict at the end'
+- name: frame_src
+  function: builds order, feed, probe and test frames in Bench Feed v1 format word by word
+- name: trade64
+  function: 'the mock trading decision of brief 58A at 64 bits: one rule on the first message, speculative, FCS verdict later'
+- name: tx_path
+  function: 'transmit side: frame source, generator, order start, timestamps and counters, in TXUSRCLK2'
+- name: rx_path
+  function: 'receive side when RATE_MATCH = 1 (brief 96C): PCS in RXUSRCLK2, the elastic buffer rate_match across, MAC and trading decision in TXUSRCLK2, counters and the frequency counter'
+- name: rate_match
+  function: 'elastic buffer, our own gray-pointer crossing (rate_match_gp.sv, brief 96E): idle insertion and deletion between frames only'
+- name: b96_core
+  function: register block, GT wrapper and the crossings between the clk, TXUSRCLK2 and RXUSRCLK2 domains
+- name: jtag_bus
+  function: host register bus over the JTAG cable (BSCANE2 USER4), reused from b58a_trigger
+- name: udp_strip
+  function: 'adapter between mac64_rx and mold_rx: header checks (MAC, EtherType, IPv4 IHL 5, fragments, protocol, address, port, lengths, IP header checksum), 42-byte strip with a 2-byte realign, FCS and padding trimmed by the UDP length, the FCS verdict
+    as a late strobe; a ring that captures the TCP frames that come back round a loop'
+- name: itch_top
+  function: brief 110's mold_rx, itch_dec, book_core and risk_glue unchanged, the late FCS verdict as untrusted and pkt_err, and order_seg as the order builder
+- name: order_seg
+  function: 'stand-in for brief 119''s tcp_fast: ouch_enter''s 59-byte packet inside a 113-byte Ethernet/IPv4/TCP frame as a stream of fifteen words (TCP checksum 0), abort and unresolved speculation as a poison flag on the last word'
+- name: tx_mux
+  function: 'transmit multiplexer in front of mac64_tx: frame_src, the replay memory source, and the order stream (FIFO and head register), one owner at a time'
+- name: itch_path
+  function: 'core-clock wrapper: decodes the host vectors, runs the order poison policy against the late FCS verdict, keeps the counters, latency statistics and stamps, packs STAT2'
+interfaces:
+- name: host_regs
+  between:
+  - jtag_bus
+  - b96_core
+  protocol: simple
+- name: gt_words
+  between:
+  - pcs_tx
+  - gth_wiz
+  protocol: simple
+- name: xgmii_tx
+  between:
+  - mac64_tx
+  - pcs_tx
+  protocol: simple
+- name: xgmii_rx
+  between:
+  - pcs_rx
+  - mac64_rx
+  protocol: simple
+- name: order_frames
+  between:
+  - order_seg
+  - tx_mux
+  protocol: simple
+- name: payload_words
+  between:
+  - udp_strip
+  - itch_top
+  protocol: simple
+clock_domains:
+- name: sys
+  clock: clk_25
+  freq_mhz: 100
+- name: txusr2
+  clock: TXUSRCLK2 from the GT (BUFG_GT)
+  freq_mhz: 161.1328
+- name: rxusr2
+  clock: RXUSRCLK2 recovered by the CDR (BUFG_GT)
+  freq_mhz: 161.1328
+- name: tck
+  clock: JTAG TCK (BSCANE2)
+  freq_mhz: 30
+reset:
+  synchronisers:
+  - u_rst
+crossings:
+- from: txusr2
+  to: sys
+  signal: tx_done, GT status levels
+  primitive: xpm_cdc_single
+- from: rxusr2
+  to: sys
+  signal: rx_done, PCS block lock
+  primitive: xpm_cdc_single
+- from: sys
+  to: txusr2
+  signal: configuration vector (421 bits)
+  primitive: xpm_cdc_handshake
+- from: txusr2
+  to: sys
+  signal: transmit counters and timestamps (832 bits)
+  primitive: xpm_cdc_handshake
+- from: rxusr2
+  to: sys
+  signal: receive-clock counters (320 bits)
+  primitive: xpm_cdc_handshake
+- from: txusr2
+  to: sys
+  signal: core-clock receive counters (608 bits)
+  primitive: xpm_cdc_handshake
+- from: sys
+  to: txusr2
+  signal: clear counters, start generator, polarity
+  primitive: xpm_cdc_pulse
+- from: sys
+  to: rxusr2
+  signal: clear counters, polarity
+  primitive: xpm_cdc_pulse
+- from: rxusr2
+  to: txusr2
+  signal: write pointer of the elastic buffer (5-bit gray code)
+  primitive: xpm_cdc_gray
+- from: txusr2
+  to: rxusr2
+  signal: read pointer of the elastic buffer (5-bit gray code)
+  primitive: xpm_cdc_gray
+- from: rxusr2
+  to: txusr2
+  signal: the 16 buffer entries (74 bits each, written once and held; each copied bit for bit through its own two-flop synchroniser; the write pointer crosses with three flops, so it arrives at least one clock after the data copies have settled)
+  primitive: xpm_cdc_array_single
+- from: rxusr2
+  to: txusr2
+  signal: PCS block lock level
+  primitive: xpm_cdc_single
+- from: rxusr2
+  to: txusr2
+  signal: free-running receive-clock count for the frequency counter (32-bit gray code)
+  primitive: xpm_cdc_gray
+- from: sys
+  to: txusr2
+  signal: TX phase-interpolator ppm controls (7 bits, static)
+  primitive: xpm_cdc_array_single
+- from: async
+  to: sys
+  signal: GT TX and RX buffer status (5 bits)
+  primitive: xpm_cdc_array_single
+- from: tck
+  to: sys
+  signal: host command
+  primitive: xpm_cdc_handshake
+- from: async
+  to: sys
+  signal: SFP+ status and I2C pins
+  primitive: xpm_cdc_single
+- from: sys
+  to: txusr2
+  signal: 'ITCH configuration vector CFG2 (1024 bits: thresholds, risk limits, symbols, commands, replay and tcp_fast bus writes)'
+  primitive: xpm_cdc_handshake
+- from: txusr2
+  to: sys
+  signal: ITCH counter and status vector STAT2, three parts of 1024 bits (counters, stamps, capture word)
+  primitive: xpm_cdc_handshake
+predicted_resources:
+  lut:
+  - 9000
+  - 22000
+  ff:
+  - 24000
+  - 40000
+  bram_tile:
+  - 0
+  - 12
+  dsp: 0
+cdc_waivers:
+- cell: gtwiz_reset_inst/reset_synchronizer_(rx|tx)_done_inst/rst_in_out_reg$
+  reason: 'AMD GT Wizard reset helper (gtwizard_ultrascale 1.7): the final flop of its own reset synchroniser; not our logic'

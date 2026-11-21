@@ -1,0 +1,116 @@
+# latency_stages.yaml of build rm_gp_itch (brief 127): every register on the chain from an ITCH message's last byte in the receive MAC to the first word of the order frame in the transmit MAC.
+# Read by flow/latency (`latency_path`) when pointed at this directory; the stage clocks must add up to what the benches measured (results/b127/core_sim.json: the whole core in xsim, results/b127/latency_sim.json:
+# the new blocks with the real MACs in Icarus) and the tool refuses a table that does not reconcile (tests/test_b127_latency.py runs it).
+# Clocks are the delay a stage adds, counted from the clock the MAC word that carries the message's last byte is in mac64_rx's output register (X). The chain is the speculative start's; the start at the risk
+# verdict adds 5 clocks between `go` and the start of the frame (docs/itch_integration.md section 3). `adv_pause` is the transmit MAC's gearbox pause (one clock in 33), present in the worst case the benches record.
+# The receive side of the chain (GT word to X: the PCS, the elastic buffer, the MAC register) is not repeated here: it is the base design's `rx_blk`, `rx_descramble`, `rx_ratematch` and `rx_mac` stages
+# (designs/b96_kr260_10g/latency_stages.yaml) and measures 7 to 8 clocks in the same whole-core runs (core_sim.json `pcs_word_to_mac_word_clocks`).
+schema: fda.latency_stages/1
+design: b96_kr260_10g/rm_gp_itch
+period_ns: 6.2058
+domains:
+  tx: {clock: txusr2, note: core clock; everything on this chain is in it}
+trace:
+  pytest: designs/b96_kr260_10g/rm_gp_itch/tests/test_b127_xsim.py::test_latency_record
+  results_env: B127_CORE_RESULTS
+  results_file: results/b127/core_sim.json
+paths:
+  itch_to_order:
+    title: "ITCH message's last byte in the MAC word (mac64_rx output) -> first word of the order frame in the MAC register (mac64_tx output), speculative start, worst simulated case"
+    measured: {file: core_sim.json, key: "itch_to_order.speculative.mac_word_to_sop_clocks.max"}
+    segments:
+      - id: adapter
+        measured: {file: latency_sim.json, key: "itch_unit.speculative.T_minus_X.max"}
+      - id: mold_decode
+        measured: {file: latency_sim.json, key: "itch_unit.speculative.go_minus_T.max"}
+      - id: frame_to_mac
+        measured: {file: core_sim.json, key: "itch_to_order.speculative.go_to_sop_clocks.max"}
+    stages:
+      - id: us_word
+        segment: adapter
+        name: "udp_strip payload word register (s_d, s_v, s_eof)"
+        domain: tx
+        kind: reg
+        clocks: 1
+        registers: ["*u_ip/u_us/s_d_reg[*]", "*u_ip/u_us/s_v_reg"]
+        why: "a payload word is a 2-byte realignment of two MAC words, registered before the Mold receiver; the stage that makes the adapter's output timing-clean"
+        remove_risk: "driving mold_rx from the two MAC registers directly (a pure rewiring for the common case, a mux for the last word) puts the whole of mold_rx's first logic level behind the MAC's output register; mold_rx closed at 6.2 ns with registered inputs"
+        technique: merge_stages
+        removable: 1
+      - id: us_straddle
+        segment: adapter
+        name: "udp_strip straddle (a message that ends in bytes 2 to 7 of its MAC word waits for the next MAC word's low two bytes)"
+        domain: tx
+        kind: structure
+        clocks: 1
+        registers: ["*u_ip/u_us/hold_reg[*]"]
+        why: "the payload starts at byte 2 of MAC word 5: every payload word takes its low six bytes from one MAC word and its high two bytes from the next"
+        remove_risk: "none to remove without changing the framing: it is the 42-byte header's offset (42 mod 8 = 2); a message ending in byte 0 or 1 of its MAC word does not pay it"
+        technique: none
+        removable: 0
+      - id: mold_deliver
+        segment: mold_decode
+        name: "mold_rx message delivery (m_v, m_w)"
+        domain: tx
+        kind: reg
+        clocks: 1
+        registers: ["*u_ip/u_it/u_mold/mv_pre_reg", "*u_ip/u_it/u_mold/mw_r_reg[*]"]
+        why: "brief 110: the message is delivered one clock after the word that carries its last byte"
+        remove_risk: "110's design; merging it with the decoder lengthens the path from the message words"
+        technique: merge_stages
+        removable: 1
+      - id: itch_decode
+        segment: mold_decode
+        name: "itch_dec event register and the book's first stage (go is a comb of the candidate here)"
+        domain: tx
+        kind: reg
+        clocks: 1
+        registers: ["*u_ip/u_it/u_dec/e_v_reg", "*u_ip/u_it/u_book/*"]
+        why: "brief 110: the decoded event; the candidate rule (a sell at or below the threshold) starts the order frame speculatively in the same clock"
+        remove_risk: "110's design"
+        technique: merge_stages
+        removable: 1
+      - id: seg_word0
+        segment: frame_to_mac
+        name: "order_seg word 0 register (o_d, o_v, o_sof)"
+        domain: tx
+        kind: reg
+        clocks: 1
+        registers: ["*u_ip/u_it/u_seg/o_d_reg[*]", "*u_ip/u_it/u_seg/o_v_reg"]
+        why: "the frame's first word, the destination MAC from the template, registered the clock after go"
+        remove_risk: "word 0 depends only on configuration: it could be pre-registered and offered to the MAC at go (the MAC takes a word two clocks after s_valid rises)"
+        technique: precompute
+        removable: 1
+      - id: mux_head
+        segment: frame_to_mac
+        name: "tx_mux head register (s_valid, s_data)"
+        domain: tx
+        kind: reg
+        clocks: 1
+        registers: ["*u_tx/u_mx/head_d_reg[*]", "*u_tx/u_mx/head_v_reg"]
+        why: "the order stream cannot be paused and the MAC pauses one clock in 33: the head register decouples them, and keeps the multiplexer out of mac64_tx's CRC cone"
+        remove_risk: "driving the MAC from the stream's own register through the owner mux would save the clock; mac64_tx's CRC cone (eight parallel steps from s_data) did not close with more than one LUT level in front of it"
+        technique: merge_stages
+        removable: 1
+      - id: mac_preamble
+        segment: frame_to_mac
+        name: "mac64_tx output register (x_d = preamble word, sop)"
+        domain: tx
+        kind: reg
+        clocks: 1
+        registers: ["*u_tx/u_mt/x_d_reg[*]", "*u_tx/u_mt/sop_reg"]
+        why: "XGMII word register in front of the PCS; the MAC puts the preamble out the clock after s_valid rises"
+        remove_risk: "as in the base design's mac_preamble stage"
+        technique: merge_stages
+        removable: 1
+      - id: adv_pause
+        segment: frame_to_mac
+        name: "transmit MAC held by the PCS gearbox pause (adv low, one clock in 33)"
+        domain: tx
+        kind: structure
+        clocks: 1
+        registers: []
+        why: "the 64-to-66 gearbox cannot take a word in one clock of 33; the MAC holds its state then; present in the worst case only"
+        remove_risk: "set by the 64-bit RAW interface to the GT, as in the base design"
+        technique: gt_gearbox
+        removable: 0
