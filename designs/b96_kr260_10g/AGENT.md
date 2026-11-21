@@ -9,7 +9,7 @@ A Kria KR260 design that carries our own 10GBASE-R PCS (64B/66B, scrambler, gear
 not: an interoperability proof: a PCS talking to itself accepts its own symmetric mistakes, only a network card proves it; the full 58A trading core (book, rule table, interlocks, ARP) at 64 bits: trade64 is a small stand-in with one rule; the reconciliation sublayer link-fault state machine, the BER monitor, an ARP or ICMP responder
 
 ## state
-stage=built vivado=2026.1 kb_pin=93d158c build_id=c9106c0d
+stage=built vivado=2026.1 kb_pin=93d158c build_id=815a2b02
 gates: build_2026_1=pass
 
 ## interface
@@ -28,6 +28,9 @@ param GO_REG=1 (default), 0 in lat_all3 legal=0 or 1
 param line rate=10.3125 Gb/s legal=fixed by 10GBASE-R
 
 ## files
+designs/b96_kr260_10g/verif/pyuvm/README.md 0b5695e70d: how the pyuvm (Python UVM on cocotb and Icarus) bench for the PCS and MAC is built, run and limited; the same job as the SystemVerilog UVM bench (brief 123)
+designs/b96_kr260_10g/verif/pyuvm/COMPARISON.md 0f9578afff: the measured comparison of the pyuvm and the SystemVerilog UVM bench, where each fits the project, and a section for the verification course (brief 123)
+designs/b96_kr260_10g/verif/uvm/README.md 28bc0ecbd5: how the UVM 1.2 bench for the PCS and MAC is built, what each part checks, the coverage and the seeded bugs (brief 112)
 designs/b96_kr260_10g/rm_gp_bypass/rtl/b96_core.sv 82d6c44238: copy of rtl/b96_core.sv for build rm_gp_bypass with the GT buffer-bypass controllers connected, run gates and (brief 96F1b) the alignment timeout and retry status in GT_BUF
 designs/b96_kr260_10g/rm_gp_bypass/rtl/gt_bp_ctl.sv 71963d3f2f: per-direction reset synchroniser, 30 ms TX / 130 ms RX alignment timeout with bounded retry and gave-up flag for the bypass controller (brief 96F1b)
 designs/b96_kr260_10g/rm_gp_bypass/rtl/gt_bp_gate.sv 5e384b6757: per-direction gate that releases the paths only after the bypass controller has restarted and finished (brief 96F1)
@@ -35,6 +38,19 @@ designs/b96_kr260_10g/ip/amd_ip_bypass.tcl 2b44c98771: the GT Wizard configurati
 designs/b96_kr260_10g/host/b96f1_bypass.py 8e94dd345a: board driver and pre-registered verdict for build rm_gp_bypass (brief 96F1)
 designs/b96_kr260_10g/lat_all3_bypass/build.yaml bbb4d85334: build lat_all3_bypass, the default receive path with the 97C latency cuts and both GT elastic buffers bypassed; points at the parent builds' files, no copy (brief 126)
 designs/b96_kr260_10g/host/b126_all3_bypass.py 6fef448fa4: board driver and pre-registered verdict for build lat_all3_bypass (brief 126)
+designs/b96_kr260_10g/rm_gp_ml/rtl/ml_stage.sv 1c1abfce18: the ML decision stage of build rm_gp_ml: one-instrument book, order-flow features, classifier pipeline and counters (brief 113)
+designs/b96_kr260_10g/rm_gp_ml/rtl/ml_pkg.sv 71363adf14: constants shared by the ML stage (brief 113)
+designs/b96_kr260_10g/rm_gp_ml/rtl/trade64.sv 3e80ab02a4: copy of rtl/trade64.sv for build rm_gp_ml with the model's veto on the rule's decision (brief 113)
+designs/b96_kr260_10g/rm_gp_ml/rtl/rx_path.sv da1472f5fa: copy of rtl/rx_path.sv for build rm_gp_ml with the ML stage's ports through to trade64 (brief 113)
+designs/b96_kr260_10g/rm_gp_ml/rtl/rx_path_legacy.sv cc5cf55776: copy of rtl/rx_path_legacy.sv for build rm_gp_ml with the ML ports tied off (brief 113)
+designs/b96_kr260_10g/rm_gp_ml/rtl/b96_core.sv 46ceb4153e: copy of rtl/b96_core.sv for build rm_gp_ml with the ML registers, crossings and status words (brief 113)
+designs/b96_kr260_10g/rm_gp_ml/build.yaml a081d3c86e: how flow/run_vivado.sh builds rm_gp_ml (rm_gp with the ML stage, brief 113)
+designs/b96_kr260_10g/rm_gp_ml/docs/ml_stage.md beb51c0a3c: which model block was chosen and why, how the stage is arranged, the measured cost in context (brief 113)
+designs/b96_kr260_10g/rm_gp_ml/docs/ml_registers.md 487b9de7fe: register map of the ML stage, generated from rm_gp_ml/regmap_ml.py (brief 113)
+designs/b96_kr260_10g/rm_gp_ml/model/twin.py ec29cc5d38: Python twin of the ML stage over the brief 87 references (brief 113)
+designs/b96_kr260_10g/rm_gp_ml/model/stream.py 7047fabb32: synthetic Bench Feed v1 streams as 10GBASE-R words, with the twin's expectation per frame (brief 113)
+designs/b96_kr260_10g/rm_gp_ml/sim/tb_ml_core.sv bcc7b0ea4d: whole-core xsim bench with a synthetic feed injected on the receive words (brief 113)
+designs/b96_kr260_10g/host/b113_ml.py 167efbfa06: board driver and pre-registered verdict for build rm_gp_ml (brief 113)
 designs/b96_kr260_10g/rtl/es_ctrl.sv 671362a1c0: DRP master and eye-scan point sequencer for the GTHE4 channel (EYESCAN = 1), brief 96D
 designs/b96_kr260_10g/es.xdc 9f571dada7: powers up the GT's eye-scan circuit (ES_EYE_SCAN_EN, ES_ERRDET_EN) in the eyescan build
 designs/b96_kr260_10g/model/eyescan.py a4f8ffb4ab: Python twin of the eye-scan point sequencer's DRP traffic
@@ -59,7 +75,7 @@ designs/b96_kr260_10g/host/b96c_ppm.py a5a5b3d64e: board driver for the ppm swee
 designs/b96_kr260_10g/rtl/hs_vec.sv e0fc43a9b5: coherent vector crossing
 designs/b96_kr260_10g/model/pcs.py 92790d45d7: bit-serial Python reference of the PCS (the twin)
 designs/b96_kr260_10g/design.xdc 4dec8c5ba8: pins, clocks, slow-pin constraints
-designs/b96_kr260_10g/docs/design.md 84285313a5: design note: decisions and alternatives
+designs/b96_kr260_10g/docs/design.md 7007e677f1: design note: decisions and alternatives
 designs/b96_kr260_10g/docs/board_run_plan.md 678413f0be: stage 3 plan for the board
 designs/b96_kr260_10g/docs/what_we_found.md 376623bbd5: results and gaps
 designs/b96_kr260_10g/docs/loop_timing_feasibility.md 500557ea56: loop-timing and buffer-bypass feasibility study (96F)
@@ -74,6 +90,8 @@ designs/b96_kr260_10g/docs/register_map.md d2846103ad: interface datasheet
 simulate the PCS, MAC and core against the Python reference (~2min): python -m pytest -q designs/b96_kr260_10g/tests
 [heavy] build variant (b) and run all gates (~22min): flow/run_vivado.sh designs/b96_kr260_10g base
 [heavy] build variant (a), the near-end loopback self-test (~22min): flow/run_vivado.sh designs/b96_kr260_10g/selftest base
+the UVM 1.2 regression of the PCS and MAC in xsim (every test over its seeds, coverage merge, seeded bugs) (~40min): designs/b96_kr260_10g/verif/uvm/scripts/run_regress.sh --mutants --record results/112_uvm_pcs_mac
+the pyuvm regression of the PCS and MAC in Icarus (every test over its seeds, coverage merge, seeded bugs); needs pyuvm 5.0.0 and cocotb-coverage in a venv that sees cocotb 2.0.1 (~15min): PYTHONPATH=. python designs/b96_kr260_10g/verif/pyuvm/scripts/run_regress.py --mutants --record results/123_pyuvm_pcs_mac
 
 ## records (path sha256-prefix; claims below cite R<n>)
 R1 designs/b96_kr260_10g/tests/test_b96_pcs_rtl.py b26b6317ae
@@ -136,6 +154,7 @@ M13 latency tick_to_trade_all3_bypass_clocks=7.6 clocks R14#means_over_phases_cl
 [throughput] The line rate and the 10 Gb/s payload rate are by configuration and by the gearbox arithmetic; no throughput or error-rate measurement exists because nothing ran on a board.
 [build] The 96C builds of the latency variant with the buffer (rm_all3) and its ppm twin hit the 6 GiB scope cap about 1000 times and used about 700 MiB of swap (the base build did not); the Vivado resident peak of the base build is 4439 MiB. all3 closes timing with 0.004 ns of setup slack, which is thin.
 [constraints] The per-entry data path to the first synchroniser flop (write-clock entry flop to the first `xpm_cdc_array_single` flop) has no max-delay bound: the one-clock margin of `ENT_SYNC = 1` covers normal routing, but it is not constrained.
+[ml stage] Build rm_gp_ml (the ML decision stage behind the rule, brief 113) has not run on a board; its board test is pre-registered in results/b113/preregistration.md and the owner's script is written. The stage tracks one instrument with a top-of-book and sees the first message of a frame only; the model is brief 87's trees on one planted-signal data set.
 
 ## next_actions
 1. Run _handoff/fpga_agent/run_96f1_stage1.sh on the KR260 (pre-registered in results/b96f1/preregistration.md, amendment 2026-11-20), build rm_gp_bypass (stamp 86037ce1, brief 96F1b) against the 96E rm_gp board run; read the retry counts and gave-up flags.
@@ -149,6 +168,8 @@ M13 latency tick_to_trade_all3_bypass_clocks=7.6 clocks R14#means_over_phases_cl
 ## history
 2026-11-21 - pr=-: brief 126: build lat_all3_bypass (the default receive path, the 97C latency cuts and the GT buffer bypass together), all 29 gates, WNS +0.066 ns, report_cdc no critical; simulated in xsim; board test pre-registered from the two measured runs (E 16.0, L 38.0, D 6.0, tick-to-trade 22 clocks) and script written; nothing run on a board
 2026-11-20 - pr=-: brief 96F1b: build rm_gp_bypass with AMD-style synchronised controller reset and a 30 ms TX / 130 ms RX alignment timeout with 3 retries then a gave-up flag (GT_BUF bits 29:16); all 29 gates, timing met, report_cdc no critical; gave-up added as a fail line before any board time; nothing run on a board
+2026-11-20 - pr=-: brief 123: pyuvm bench for the PCS and MAC (designs/b96_kr260_10g/verif/pyuvm) with the same tests, bugs and coverage bins as brief 112, run in Icarus; same verification result, measured comparison and recommendation in COMPARISON.md; no RTL change
+2026-11-20 - pr=-: brief 112: UVM 1.2 bench for the PCS and MAC (designs/b96_kr260_10g/verif/uvm): agents, reference models, scoreboard, coverage, SVAs, regression and seeded bugs, in xsim 2026.1; no RTL bug found; xcrg refused on the Basic tier
 2026-11-20 - pr=-: brief 96F1: build rm_gp_bypass (both GT elastic buffers bypassed; Wizard probe in results/b96f1/wizard_probe), all 29 gates, timing met, report_cdc no critical; board test pre-registered and script written, nothing run on a board
 2026-11-19 - pr=-: brief 96E: own gray-pointer elastic buffer (RM_OWN), +1.2 clocks of tick-to-trade over 97C in xsim against +5.3 for the macro buffer; the board's +11 accounted (1.25 left in D); build rm_gp with all 29 gates; board run and real-offset plan pending the owner
 2026-11-19 - pr=-: brief 96D: on-chip RX eye scan (EYESCAN build option, es_ctrl, flow/eyescan); built with all 29 gates; simulated against a stand-in; not yet run on the board

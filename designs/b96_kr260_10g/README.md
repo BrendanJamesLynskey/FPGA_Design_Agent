@@ -72,11 +72,16 @@ Interfaces:
 | simulate the PCS, MAC and core against the Python reference; needs Icarus Verilog and cocotb 2.0.1 | `python -m pytest -q designs/b96_kr260_10g/tests` | no | about 2 min |
 | build variant (b) and run all gates; needs local Vivado 2026.1 (Basic tier) and a heavy slot (take_heavy_slot.sh), MEM_MAX=6G reaches the cap | `flow/run_vivado.sh designs/b96_kr260_10g base` | yes | about 22 min |
 | build variant (a), the near-end loopback self-test; needs as above | `flow/run_vivado.sh designs/b96_kr260_10g/selftest base` | yes | about 22 min |
+| the UVM 1.2 regression of the PCS and MAC in xsim (every test over its seeds, coverage merge, seeded bugs); needs Vivado 2026.1 xsim (Basic tier is enough); a simulation-only run, no heavy slot while the load is under 6 and more than 12 GB is free | `designs/b96_kr260_10g/verif/uvm/scripts/run_regress.sh --mutants --record results/112_uvm_pcs_mac` | no | about 40 min |
+| the pyuvm regression of the PCS and MAC in Icarus (every test over its seeds, coverage merge, seeded bugs); needs pyuvm 5.0.0 and cocotb-coverage in a venv that sees cocotb 2.0.1; needs Icarus Verilog 12, cocotb 2.0.1, pyuvm 5.0.0, cocotb-coverage; a simulation-only run, no heavy slot while the load is under 6 and more than 12 GB is free | `PYTHONPATH=. python designs/b96_kr260_10g/verif/pyuvm/scripts/run_regress.py --mutants --record results/123_pyuvm_pcs_mac` | no | about 15 min |
 
-Tool: Vivado 2026.1. Build ID of the inputs at handover: `c9106c0d` (`python flow/manifest.py show designs/b96_kr260_10g`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `93d158c`.
+Tool: Vivado 2026.1. Build ID of the inputs at handover: `815a2b02` (`python flow/manifest.py show designs/b96_kr260_10g`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `93d158c`.
 
 | File | What |
 |---|---|
+| [`designs/b96_kr260_10g/verif/pyuvm/README.md`](verif/pyuvm/README.md) | how the pyuvm (Python UVM on cocotb and Icarus) bench for the PCS and MAC is built, run and limited; the same job as the SystemVerilog UVM bench (brief 123) |
+| [`designs/b96_kr260_10g/verif/pyuvm/COMPARISON.md`](verif/pyuvm/COMPARISON.md) | the measured comparison of the pyuvm and the SystemVerilog UVM bench, where each fits the project, and a section for the verification course (brief 123) |
+| [`designs/b96_kr260_10g/verif/uvm/README.md`](verif/uvm/README.md) | how the UVM 1.2 bench for the PCS and MAC is built, what each part checks, the coverage and the seeded bugs (brief 112) |
 | [`designs/b96_kr260_10g/rm_gp_bypass/rtl/b96_core.sv`](rm_gp_bypass/rtl/b96_core.sv) | copy of rtl/b96_core.sv for build rm_gp_bypass with the GT buffer-bypass controllers connected, run gates and (brief 96F1b) the alignment timeout and retry status in GT_BUF |
 | [`designs/b96_kr260_10g/rm_gp_bypass/rtl/gt_bp_ctl.sv`](rm_gp_bypass/rtl/gt_bp_ctl.sv) | per-direction reset synchroniser, 30 ms TX / 130 ms RX alignment timeout with bounded retry and gave-up flag for the bypass controller (brief 96F1b) |
 | [`designs/b96_kr260_10g/rm_gp_bypass/rtl/gt_bp_gate.sv`](rm_gp_bypass/rtl/gt_bp_gate.sv) | per-direction gate that releases the paths only after the bypass controller has restarted and finished (brief 96F1) |
@@ -84,6 +89,19 @@ Tool: Vivado 2026.1. Build ID of the inputs at handover: `c9106c0d` (`python flo
 | [`designs/b96_kr260_10g/host/b96f1_bypass.py`](host/b96f1_bypass.py) | board driver and pre-registered verdict for build rm_gp_bypass (brief 96F1) |
 | [`designs/b96_kr260_10g/lat_all3_bypass/build.yaml`](lat_all3_bypass/build.yaml) | build lat_all3_bypass, the default receive path with the 97C latency cuts and both GT elastic buffers bypassed; points at the parent builds' files, no copy (brief 126) |
 | [`designs/b96_kr260_10g/host/b126_all3_bypass.py`](host/b126_all3_bypass.py) | board driver and pre-registered verdict for build lat_all3_bypass (brief 126) |
+| [`designs/b96_kr260_10g/rm_gp_ml/rtl/ml_stage.sv`](rm_gp_ml/rtl/ml_stage.sv) | the ML decision stage of build rm_gp_ml: one-instrument book, order-flow features, classifier pipeline and counters (brief 113) |
+| [`designs/b96_kr260_10g/rm_gp_ml/rtl/ml_pkg.sv`](rm_gp_ml/rtl/ml_pkg.sv) | constants shared by the ML stage (brief 113) |
+| [`designs/b96_kr260_10g/rm_gp_ml/rtl/trade64.sv`](rm_gp_ml/rtl/trade64.sv) | copy of rtl/trade64.sv for build rm_gp_ml with the model's veto on the rule's decision (brief 113) |
+| [`designs/b96_kr260_10g/rm_gp_ml/rtl/rx_path.sv`](rm_gp_ml/rtl/rx_path.sv) | copy of rtl/rx_path.sv for build rm_gp_ml with the ML stage's ports through to trade64 (brief 113) |
+| [`designs/b96_kr260_10g/rm_gp_ml/rtl/rx_path_legacy.sv`](rm_gp_ml/rtl/rx_path_legacy.sv) | copy of rtl/rx_path_legacy.sv for build rm_gp_ml with the ML ports tied off (brief 113) |
+| [`designs/b96_kr260_10g/rm_gp_ml/rtl/b96_core.sv`](rm_gp_ml/rtl/b96_core.sv) | copy of rtl/b96_core.sv for build rm_gp_ml with the ML registers, crossings and status words (brief 113) |
+| [`designs/b96_kr260_10g/rm_gp_ml/build.yaml`](rm_gp_ml/build.yaml) | how flow/run_vivado.sh builds rm_gp_ml (rm_gp with the ML stage, brief 113) |
+| [`designs/b96_kr260_10g/rm_gp_ml/docs/ml_stage.md`](rm_gp_ml/docs/ml_stage.md) | which model block was chosen and why, how the stage is arranged, the measured cost in context (brief 113) |
+| [`designs/b96_kr260_10g/rm_gp_ml/docs/ml_registers.md`](rm_gp_ml/docs/ml_registers.md) | register map of the ML stage, generated from rm_gp_ml/regmap_ml.py (brief 113) |
+| [`designs/b96_kr260_10g/rm_gp_ml/model/twin.py`](rm_gp_ml/model/twin.py) | Python twin of the ML stage over the brief 87 references (brief 113) |
+| [`designs/b96_kr260_10g/rm_gp_ml/model/stream.py`](rm_gp_ml/model/stream.py) | synthetic Bench Feed v1 streams as 10GBASE-R words, with the twin's expectation per frame (brief 113) |
+| [`designs/b96_kr260_10g/rm_gp_ml/sim/tb_ml_core.sv`](rm_gp_ml/sim/tb_ml_core.sv) | whole-core xsim bench with a synthetic feed injected on the receive words (brief 113) |
+| [`designs/b96_kr260_10g/host/b113_ml.py`](host/b113_ml.py) | board driver and pre-registered verdict for build rm_gp_ml (brief 113) |
 | [`designs/b96_kr260_10g/rtl/es_ctrl.sv`](rtl/es_ctrl.sv) | DRP master and eye-scan point sequencer for the GTHE4 channel (EYESCAN = 1), brief 96D |
 | [`designs/b96_kr260_10g/es.xdc`](es.xdc) | powers up the GT's eye-scan circuit (ES_EYE_SCAN_EN, ES_ERRDET_EN) in the eyescan build |
 | [`designs/b96_kr260_10g/model/eyescan.py`](model/eyescan.py) | Python twin of the eye-scan point sequencer's DRP traffic |
@@ -146,6 +164,7 @@ Tool: Vivado 2026.1. Build ID of the inputs at handover: `c9106c0d` (`python flo
 Gates at handover: `build_2026_1` pass.
 
 <!-- prose:verified -->
+**Specification to evidence.** Every requirement of this design against the checks that cover it, with each status computed from the evidence files, the gaps and the stale evidence: [verif/matrix.md](verif/matrix.md) ([html](verif/matrix.html)), generated from [verif/testplan.yaml](verif/testplan.yaml) by `python -m flow.trace_v1 write`; schema and rules in [docs/traceability_v1.md](../../docs/traceability_v1.md). Requirements here are drafts written from the design documents; the matrix shows which are closed by simulation, formal proof, post-route timing or the board, and which depend on an external element (a network card, a second clock) that only hardware verification can close.
 <!-- /prose:verified -->
 
 ## Measured
@@ -181,6 +200,7 @@ Every value is read from the record by `python -m flow.handover fill`, not typed
 - **throughput**: The line rate and the 10 Gb/s payload rate are by configuration and by the gearbox arithmetic; no throughput or error-rate measurement exists because nothing ran on a board.
 - **build**: The 96C builds of the latency variant with the buffer (rm_all3) and its ppm twin hit the 6 GiB scope cap about 1000 times and used about 700 MiB of swap (the base build did not); the Vivado resident peak of the base build is 4439 MiB. all3 closes timing with 0.004 ns of setup slack, which is thin.
 - **constraints**: The per-entry data path to the first synchroniser flop (write-clock entry flop to the first `xpm_cdc_array_single` flop) has no max-delay bound: the one-clock margin of `ENT_SYNC = 1` covers normal routing, but it is not constrained.
+- **ml stage**: Build rm_gp_ml (the ML decision stage behind the rule, brief 113) has not run on a board; its board test is pre-registered in results/b113/preregistration.md and the owner's script is written. The stage tracks one instrument with a top-of-book and sees the first message of a frame only; the model is brief 87's trees on one planted-signal data set.
 
 <!-- prose:gaps -->
 <!-- /prose:gaps -->
@@ -205,6 +225,8 @@ Open questions:
 |---|---|---|---|
 | 2026-11-21 | - | - | brief 126: build lat_all3_bypass (the default receive path, the 97C latency cuts and the GT buffer bypass together), all 29 gates, WNS +0.066 ns, report_cdc no critical; simulated in xsim; board test pre-registered from the two measured runs (E 16.0, L 38.0, D 6.0, tick-to-trade 22 clocks) and script written; nothing run on a board |
 | 2026-11-20 | - | - | brief 96F1b: build rm_gp_bypass with AMD-style synchronised controller reset and a 30 ms TX / 130 ms RX alignment timeout with 3 retries then a gave-up flag (GT_BUF bits 29:16); all 29 gates, timing met, report_cdc no critical; gave-up added as a fail line before any board time; nothing run on a board |
+| 2026-11-20 | - | - | brief 123: pyuvm bench for the PCS and MAC (designs/b96_kr260_10g/verif/pyuvm) with the same tests, bugs and coverage bins as brief 112, run in Icarus; same verification result, measured comparison and recommendation in COMPARISON.md; no RTL change |
+| 2026-11-20 | - | - | brief 112: UVM 1.2 bench for the PCS and MAC (designs/b96_kr260_10g/verif/uvm): agents, reference models, scoreboard, coverage, SVAs, regression and seeded bugs, in xsim 2026.1; no RTL bug found; xcrg refused on the Basic tier |
 | 2026-11-20 | - | - | brief 96F1: build rm_gp_bypass (both GT elastic buffers bypassed; Wizard probe in results/b96f1/wizard_probe), all 29 gates, timing met, report_cdc no critical; board test pre-registered and script written, nothing run on a board |
 | 2026-11-19 | - | - | brief 96E: own gray-pointer elastic buffer (RM_OWN), +1.2 clocks of tick-to-trade over 97C in xsim against +5.3 for the macro buffer; the board's +11 accounted (1.25 left in D); build rm_gp with all 29 gates; board run and real-offset plan pending the owner |
 | 2026-11-19 | - | - | brief 96D: on-chip RX eye scan (EYESCAN build option, es_ctrl, flow/eyescan); built with all 29 gates; simulated against a stand-in; not yet run on the board |

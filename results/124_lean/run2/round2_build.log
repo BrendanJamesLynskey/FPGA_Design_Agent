@@ -1,0 +1,70 @@
+✖ [2/6] Building Cksum.Spec (6.5s)
+trace: .> LEAN_PATH=/home/brendan/Claude_sandbox/_worktrees/124-lean/results/124_lean/run2/work/.lake/build/lib/lean /home/brendan/.elan/toolchains/leanprover--lean4---v4.36.0/bin/lean /home/brendan/Claude_sandbox/_worktrees/124-lean/results/124_lean/run2/work/Cksum/Spec.lean -o /home/brendan/Claude_sandbox/_worktrees/124-lean/results/124_lean/run2/work/.lake/build/lib/lean/Cksum/Spec.olean -i /home/brendan/Claude_sandbox/_worktrees/124-lean/results/124_lean/run2/work/.lake/build/lib/lean/Cksum/Spec.ilean -c /home/brendan/Claude_sandbox/_worktrees/124-lean/results/124_lean/run2/work/.lake/build/ir/Cksum/Spec.c --setup /home/brendan/Claude_sandbox/_worktrees/124-lean/results/124_lean/run2/work/.lake/build/ir/Cksum/Spec.setup.json --json
+error: Cksum/Spec.lean:47:12: omega could not prove the goal:
+a possible counterexample may satisfy the constraints
+  0 ≤ d - 65536*e ≤ 65535
+  b ≥ 0
+  0 ≤ b - 65535*c ≤ 65534
+  -1 ≤ b - d + 65536*e ≤ 65534
+  b ≥ 0
+  0 ≤ b + 65535*d + 65536*e ≤ 8388606
+  -65534 ≤ 65535*a - b - 65535*d - 65536*e ≤ 0
+  65535*a - 65535*c - 65535*d - 65536*e ≤ -1
+where
+ a := ↑(n - 1) / 65535
+ b := ↑(n % 2 ^ 16 + n / 2 ^ 16 % 2 ^ 16 - 1)
+ c := ↑(n % 2 ^ 16 + n / 2 ^ 16 % 2 ^ 16 - 1) / 65535
+ d := ↑n / 65536
+ e := ↑(n / 2 ^ 16) / 65536
+error: Cksum/Spec.lean:87:12: omega could not prove the goal:
+a possible counterexample may satisfy the constraints
+  0 ≤ i - 65536*j ≤ 65535
+  65535*e - 131072*f - 131072*g - 131072*h - 65535*i - 65536*j - 65536*k ≤ -1
+  d ≥ 0
+  0 ≤ d - 65535*e ≤ 65534
+  -1 ≤ d - 131072*f - 131072*g - 131072*h ≤ 131070
+  -1 ≤ d - 131072*f - 131072*g - 131072*h - 65536*i ≤ 65534
+  -1 ≤ d - 131072*f - 131072*g - 131072*h - 65535*i - 65536*j - 65536*k ≤ 65534
+  0 ≤ c ≤ 65535
+  -65534 ≤ c - d ≤ 1
+  -131070 ≤ c - d + 131072*f ≤ 1
+  0 ≤ c - 131072*g ≤ 131071
+where
+ c := ↑b.toNat
+ d := ↑(a.toNat + b.toNat - 1)
+ e := ↑(a.toNat + b.toNat - 1) / 65535
+ f := ↑a.toNat / 131072
+ g := ↑b.toNat / 131072
+ h := ↑(a.toNat % 2 ^ 17 + b.toNat % 2 ^ 17) / 131072
+ i := ↑((a.toNat % 2 ^ 17 + b.toNat % 2 ^ 17) % 2 ^ 17) / 65536
+ j := ↑((a.toNat % 2 ^ 17 + b.toNat % 2 ^ 17) % 2 ^ 17 / 2 ^ 16) / 65536
+ k := ↑((a.toNat % 2 ^ 17 + b.toNat % 2 ^ 17) % 2 ^ 17 % 2 ^ 16 +
+      (a.toNat % 2 ^ 17 + b.toNat % 2 ^ 17) % 2 ^ 17 / 2 ^ 16 % 2 ^ 16) /
+  65536
+error: Cksum/Spec.lean:189:2: No goals to be solved
+info: Cksum/Spec.lean:409:0: 'Cksum.ocSum_toNat' depends on axioms: [propext, sorryAx, Quot.sound]
+info: Cksum/Spec.lean:410:0: 'Cksum.rtl_ip_correct' depends on axioms: [propext,
+ sorryAx,
+ Classical.choice,
+ Quot.sound,
+ fold16_toNat._native.bv_decide.ax_1_7,
+ ip_step._native.bv_decide.ax_1_6]
+info: Cksum/Spec.lean:411:0: 'Cksum.rtl_ip_receiver' depends on axioms: [propext,
+ sorryAx,
+ Classical.choice,
+ Quot.sound,
+ fold16_toNat._native.bv_decide.ax_1_7,
+ ip_step._native.bv_decide.ax_1_6]
+info: Cksum/Spec.lean:412:0: 'Cksum.rtl_tcp_correct' depends on axioms: [propext,
+ sorryAx,
+ Classical.choice,
+ Quot.sound,
+ fin_t._native.bv_decide.ax_1_6,
+ fold16_toNat._native.bv_decide.ax_1_7]
+info: Cksum/Spec.lean:413:0: 'Cksum.incUpdate_correct' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound]
+info: Cksum/Spec.lean:414:0: 'Cksum.incUpdate_zero_corner' depends on axioms: [propext, Quot.sound]
+Some required targets logged failures:
+- Cksum.Spec
+info: cksum: no previous manifest, creating one from scratch
+info: toolchain not updated; already up-to-date
+error: build failed

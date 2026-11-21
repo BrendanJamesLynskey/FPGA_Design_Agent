@@ -1,0 +1,11 @@
+Vivado Simulator v2026.1, Basic tier, 2026-11-20. The UVM bench was run with xsim's coverage database switched on
+(xsim pcs_uvm -runall -testplusarg UVM_TESTNAME=t_smoke -cov_db_dir covdb -cov_db_name t_smoke); the run completed and wrote covdb/xsim.covdb/t_smoke.
+Reading it back, which xcrg also does for a functional-coverage database (merge across runs, HTML and text reports):
+
+  xcrg -report_format html -cov_db_dir covdb -cov_db_name t_smoke -report_dir xrep
+
+ERROR: The Vivado Simulator license tier, BASIC, does not meet the requirement to run xcrg (code coverage report generator tool.) Please upgrade to a PRO license. See the Vivado Licensing page for tier details and how to get the right license.
+Could not obtain the necessary license for Simulator.
+
+So the covergroups are real and run in xsim (get_inst_coverage() returns percentages at run time), but their bins cannot be reported or merged with the tools the Basic
+tier includes. The bench keeps a mirror counter per bin and merges those (verif/uvm/scripts/cov_merge.py). No licence workaround was attempted.

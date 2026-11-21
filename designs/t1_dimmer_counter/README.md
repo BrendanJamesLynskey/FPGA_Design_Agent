@@ -120,6 +120,7 @@ The ILA build uses the IP route (one ILA IP, the probes packed into two ports) b
 Gates at handover: `build_2026_1` pass, `board_bringup` pass.
 
 <!-- prose:verified -->
+**Specification to evidence.** Every requirement of this design against the checks that cover it, with each status computed from the evidence files, the gaps and the stale evidence: [verif/matrix.md](verif/matrix.md) ([html](verif/matrix.html)), generated from [verif/testplan.yaml](verif/testplan.yaml) by `python -m flow.trace_v1 write`; schema and rules in [docs/traceability_v1.md](../../docs/traceability_v1.md). The matrix reads the V-stage gate record of brief 04f and marks evidence stale where the design files changed after it was recorded.
 <!-- /prose:verified -->
 
 ## Measured

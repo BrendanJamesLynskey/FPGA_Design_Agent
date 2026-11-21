@@ -1,0 +1,93 @@
+✖ [2/6] Building Cksum.Spec (3.5s)
+trace: .> LEAN_PATH=/home/brendan/Claude_sandbox/_worktrees/124-lean/results/124_lean/run1/work/.lake/build/lib/lean /home/brendan/.elan/toolchains/leanprover--lean4---v4.36.0/bin/lean /home/brendan/Claude_sandbox/_worktrees/124-lean/results/124_lean/run1/work/Cksum/Spec.lean -o /home/brendan/Claude_sandbox/_worktrees/124-lean/results/124_lean/run1/work/.lake/build/lib/lean/Cksum/Spec.olean -i /home/brendan/Claude_sandbox/_worktrees/124-lean/results/124_lean/run1/work/.lake/build/lib/lean/Cksum/Spec.ilean -c /home/brendan/Claude_sandbox/_worktrees/124-lean/results/124_lean/run1/work/.lake/build/ir/Cksum/Spec.c --setup /home/brendan/Claude_sandbox/_worktrees/124-lean/results/124_lean/run1/work/.lake/build/ir/Cksum/Spec.setup.json --json
+error: Cksum/Spec.lean:27:3: unknown tactic
+error: Cksum/Spec.lean:25:60: unsolved goals
+n : Nat
+h : n ≤ 65535
+⊢ (if n = 0 then 0 else (n - 1) % 65535 + 1) = n
+error: Cksum/Spec.lean:32:3: unknown tactic
+error: Cksum/Spec.lean:30:83: unsolved goals
+n : Nat
+⊢ (if n = 0 then 0 else (n - 1) % 65535 + 1) % 65535 = n % 65535 ∧
+    ((if n = 0 then 0 else (n - 1) % 65535 + 1) = 0 → n = 0) ∧ (n = 0 → (if n = 0 then 0 else (n - 1) % 65535 + 1) = 0)
+error: Cksum/Spec.lean:36:3: unknown tactic
+error: Cksum/Spec.lean:34:77: unsolved goals
+n m : Nat
+⊢ (if (if n = 0 then 0 else (n - 1) % 65535 + 1) + m = 0 then 0
+    else ((if n = 0 then 0 else (n - 1) % 65535 + 1) + m - 1) % 65535 + 1) =
+    if n + m = 0 then 0 else (n + m - 1) % 65535 + 1
+error: Cksum/Spec.lean:41:3: unknown tactic
+error: Cksum/Spec.lean:39:52: unsolved goals
+n : Nat
+h : n < 2 ^ 23
+⊢ (if n % 2 ^ 16 + n / 2 ^ 16 % 2 ^ 16 = 0 then 0 else (n % 2 ^ 16 + n / 2 ^ 16 % 2 ^ 16 - 1) % 65535 + 1) =
+    if n = 0 then 0 else (n - 1) % 65535 + 1
+error: Cksum/Spec.lean:46:3: unknown tactic
+error: Cksum/Spec.lean:44:48: unsolved goals
+x y : Nat
+h1 : x % 65535 = y % 65535
+h2 : x = 0 → y = 0
+h3 : y = 0 → x = 0
+⊢ (if x = 0 then 0 else (x - 1) % 65535 + 1) = if y = 0 then 0 else (y - 1) % 65535 + 1
+error: Cksum/Spec.lean:50:3: unknown tactic
+error: Cksum/Spec.lean:48:72: unsolved goals
+n : Nat
+⊢ (if n + (65535 - if n = 0 then 0 else (n - 1) % 65535 + 1) = 0 then 0
+    else (n + (65535 - if n = 0 then 0 else (n - 1) % 65535 + 1) - 1) % 65535 + 1) =
+    65535
+error: Cksum/Spec.lean:55:3: unknown tactic
+error: Cksum/Spec.lean:53:77: unsolved goals
+a m : Nat
+ha : a ≤ 65535
+hm : m ≤ 65535
+⊢ (if (if a + m = 0 then 0 else (a + m - 1) % 65535 + 1) + (2 ^ 16 - 1 - m) = 0 then 0
+    else ((if a + m = 0 then 0 else (a + m - 1) % 65535 + 1) + (2 ^ 16 - 1 - m) - 1) % 65535 + 1) =
+    if a = 0 then 65535 else a
+error: Cksum/Spec.lean:62:3: unknown tactic
+error: Cksum/Spec.lean:59:76: unsolved goals
+a m m' : Nat
+ha : a ≤ 65535
+hm : m ≤ 65535
+hm' : m' ≤ 65535
+hne : a + m' ≠ 0
+⊢ (if (if a = 0 then 65535 else a) + m' = 0 then 0 else ((if a = 0 then 65535 else a) + m' - 1) % 65535 + 1) =
+    if a + m' = 0 then 0 else (a + m' - 1) % 65535 + 1
+error: Cksum/Spec.lean:76:3: unknown tactic
+error: Cksum/Spec.lean:70:89: unsolved goals
+a b : BitVec 16
+ha : a.toNat < 2 ^ 16
+hb : b.toNat < 2 ^ 16
+⊢ ((a.toNat % 2 ^ 17 + b.toNat % 2 ^ 17) % 2 ^ 17 % 2 ^ 16 +
+        (a.toNat % 2 ^ 17 + b.toNat % 2 ^ 17) % 2 ^ 17 / 2 ^ 16 % 2 ^ 16) %
+      2 ^ 16 =
+    if a.toNat + b.toNat = 0 then 0 else (a.toNat + b.toNat - 1) % 65535 + 1
+error: Cksum/Spec.lean:140:4: to use `bv_decide`, please include `import Std.Tactic.BVDecide`
+error: Cksum/Spec.lean:150:2: to use `bv_decide`, please include `import Std.Tactic.BVDecide`
+error: Cksum/Spec.lean:157:2: to use `bv_decide`, please include `import Std.Tactic.BVDecide`
+error: Cksum/Spec.lean:167:4: to use `bv_decide`, please include `import Std.Tactic.BVDecide`
+error: Cksum/Spec.lean:178:2: No goals to be solved
+error: Cksum/Spec.lean:202:13: Invalid field notation: Type of
+  x✝
+is not known; cannot resolve field `setWidth`
+
+Hint: Consider replacing the field projection `.setWidth` with a call to the function `BitVec.setWidth`.
+error: Cksum/Spec.lean:204:8: unsolved goals
+case nil
+h : [].length ≤ 32
+⊢ sorry () = 0
+error: Cksum/Spec.lean:321:22: Invalid field notation: Type of
+  x✝
+is not known; cannot resolve field `setWidth`
+
+Hint: Consider replacing the field projection `.setWidth` with a call to the function `BitVec.setWidth`.
+info: Cksum/Spec.lean:397:0: 'Cksum.ocSum_toNat' depends on axioms: [propext, sorryAx, Quot.sound]
+info: Cksum/Spec.lean:398:0: 'Cksum.rtl_ip_correct' depends on axioms: [propext, sorryAx, Quot.sound]
+info: Cksum/Spec.lean:399:0: 'Cksum.rtl_ip_receiver' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound]
+info: Cksum/Spec.lean:400:0: 'Cksum.rtl_tcp_correct' depends on axioms: [propext, sorryAx, Quot.sound]
+info: Cksum/Spec.lean:401:0: 'Cksum.incUpdate_correct' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound]
+info: Cksum/Spec.lean:402:0: 'Cksum.incUpdate_zero_corner' depends on axioms: [propext, Quot.sound]
+Some required targets logged failures:
+- Cksum.Spec
+info: cksum: no previous manifest, creating one from scratch
+info: toolchain not updated; already up-to-date
+error: build failed
