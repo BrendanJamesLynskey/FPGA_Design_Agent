@@ -511,6 +511,8 @@ def rollup(q: dict, items: list[dict]) -> dict:
     passing = [i for i in items if i["status"] == "pass"]
     lean_only = bool(passing) and all(i["method"] == "formal_lean" and (i.get("lean") or {}).get("rtl_link") != "rtl_generated" for i in passing)
     row["lean_transcription_only"] = lean_only
+    # a verified requirement whose every passing item is a Lean proof with a delegated (not human) statement acceptance (brief 135)
+    row["rests_on_delegated"] = bool(passing) and all(i["method"] == "formal_lean" and (i.get("lean") or {}).get("approver_kind") == "agent_delegated" for i in passing)
     row.update(state=state, basis=basis, stale_items=sum(1 for x in st if x == "stale"), items=[i["id"] for i in items], passing_methods=hw_methods,
                hardware_verified=hw_done, hardware_only=bool(ext),
                hardware_closure=None if not ext else ("done" if hw_done else "open"))
@@ -593,7 +595,8 @@ def summarise(rows: list, results: list, gaps: list) -> dict:
     for x in gaps:
         gt[x["type"]] = gt.get(x["type"], 0) + 1
     lean_r = [i for i in results if i["method"] == "formal_lean"]
-    lean = {"items": len(lean_r), "approved": sum(1 for i in lean_r if (i.get("lean") or {}).get("approved")),
+    lean = {"items": len(lean_r), "approved": sum(1 for i in lean_r if (i.get("lean") or {}).get("approver_kind") == "human"),
+            "delegated": sum(1 for i in lean_r if (i.get("lean") or {}).get("approver_kind") == "agent_delegated"),
             "statement_not_approved": sum(1 for i in lean_r if i["status"] == "unapproved"),
             "by_status": {k: sum(1 for i in lean_r if i["status"] == k) for k in STATUSES if any(i["status"] == k for i in lean_r)},
             "by_tier": {t: sum(1 for i in lean_r if (i.get("lean") or {}).get("tier") == t) for t in ("kernel_only", "compiled_decision_procedure", "unsound")},
@@ -601,7 +604,7 @@ def summarise(rows: list, results: list, gaps: list) -> dict:
                             ("rtl_generated", "transcription_tested", "transcription_untested", "model_only")},
             "build_sources": sorted({(i.get("lean") or {}).get("build_source") or "none" for i in lean_r})}
     s = {"requirements": len(rows), "by_kind": kinds, "lean": lean, "by_state": states, "items": len(results), "by_method": meth, "gap_counts": gt,
-         "external": len(ext), "external_hardware_done": sum(1 for r in ext if r["hardware_closure"] == "done"),
+         "verified_on_delegated": sum(1 for r in rows if r["state"] == "verified" and r.get("rests_on_delegated")), "external": len(ext), "external_hardware_done": sum(1 for r in ext if r["hardware_closure"] == "done"),
          "performance_board": sum(1 for r in rows if r["kind"] == "performance" and r["basis"] == "board"),
          "performance_sim_only": sum(1 for r in rows if r["kind"] == "performance" and r["basis"] == "simulation"),
          "performance_timing": sum(1 for r in rows if r["kind"] == "performance" and r["basis"] == "timing"),
@@ -615,7 +618,8 @@ def summary_line(s: dict) -> str:
     kinds = ", ".join(f"{n} {k}" for k, n in s["by_kind"].items() if n)
     st = s["by_state"]
     ver = st.get("verified", 0)
-    bits = [f"{s['requirements']} requirements ({kinds}); {ver} verified"]
+    dele = s.get("verified_on_delegated", 0)
+    bits = [f"{s['requirements']} requirements ({kinds}); {ver} verified" + (f", of which {dele} rest on delegated acceptances (the planner accepted the Lean statement on the owner's delegation; not human approvals)" if dele else "")]
     for k, lab in (("bounded", "bounded only"), ("stale", "stale"), ("fail", "failing"), ("no_measurement", "performance with no measurement")):
         if st.get(k):
             bits.append(f"{st[k]} {lab}")
@@ -631,7 +635,8 @@ def summary_line(s: dict) -> str:
     L = s["lean"]
     if L["items"]:
         ks, cd = L["by_tier"]["kernel_only"], L["by_tier"]["compiled_decision_procedure"]
-        bits.append(f"{L['items']} Lean proof item(s) (all widths): {L['approved']} with a human-approved statement, {L['statement_not_approved']} with statement not approved; "
+        bits.append(f"{L['items']} Lean proof item(s) (all widths): {L['approved']} with a human-approved statement, {L.get('delegated', 0)} with a statement accepted on the owner's delegation (not a human approval), "
+                    f"{L['statement_not_approved']} with statement not approved; "
                     f"{ks} kernel only, {cd} using a compiled decision procedure; build status from: {', '.join(L['build_sources'])}")
     return "; ".join(bits) + "."
 
@@ -670,6 +675,8 @@ def _tag(i: dict) -> str:
     if i["method"] == "formal_lean" and L:
         from flow import lean_tier as lt
         bits = [lt.TIER_TEXT.get(L.get("tier") or "", "no build"), lt.RTL_LINK_SHORT.get(L.get("rtl_link") or "", "no RTL link"), (L.get("build_source") or "").replace(" (not re-run)", "")]
+        if i["status"] == "pass":
+            bits.insert(0, lt.approval_short(L))
         t += " [" + "; ".join(b for b in bits if b) + "]"
     return t
 
@@ -688,6 +695,8 @@ def _state_cell(r: dict) -> str:
         t += f"; {r['stale_items']} item(s) stale"
     if r["state"] == "verified" and r.get("lean_transcription_only"):
         t += "; the Lean proof is of a transcription of the RTL, not of the RTL itself"
+    if r["state"] == "verified" and r.get("rests_on_delegated"):
+        t += "; rests on a delegated acceptance of the Lean statement, not a human approval"
     return t
 
 
