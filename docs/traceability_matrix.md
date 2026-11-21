@@ -6,10 +6,10 @@ The human specifies the requirements and checks that the verification is thoroug
 
 | Design | Summary | Matrix |
 |---|---|---|
-| `b96_kr260_10g` | 25 requirements (9 functional, 9 performance, 1 interface, 6 safety); 21 verified; 1 stale; 1 performance with no measurement; 2 with no passing evidence; 0 of 3 requirements that depend on an external element closed by hardware; performance verified: 4 on the board, 2 by post-route timing, 0 in simulation only; 0 of 25 requirements agreed by a human, 0 human review(s) recorded. | [matrix](../designs/b96_kr260_10g/verif/matrix.md) ([html](../designs/b96_kr260_10g/verif/matrix.html)) |
+| `b96_kr260_10g` | 25 requirements (9 functional, 9 performance, 1 interface, 6 safety); 18 verified; 1 stale; 3 failing; 1 performance with no measurement; 2 with no passing evidence; 0 of 3 requirements that depend on an external element closed by hardware; performance verified: 4 on the board, 2 by post-route timing, 0 in simulation only; 0 of 25 requirements agreed by a human, 0 human review(s) recorded. | [matrix](../designs/b96_kr260_10g/verif/matrix.md) ([html](../designs/b96_kr260_10g/verif/matrix.html)) |
 | `t1_dimmer_counter` | 21 requirements (21 functional); 0 verified; 21 stale; 0 of 21 requirements agreed by a human, 0 human review(s) recorded. | [matrix](../designs/t1_dimmer_counter/verif/matrix.md) ([html](../designs/t1_dimmer_counter/verif/matrix.html)) |
 
 ## Gaps by design
 
-- `b96_kr260_10g`: 1 external not hardware verified, 3 hardware open, 4 no passing evidence, 14 stale evidence
+- `b96_kr260_10g`: 1 external not hardware verified, 3 hardware open, 7 no passing evidence, 14 stale evidence
 - `t1_dimmer_counter`: 21 no passing evidence, 96 stale evidence

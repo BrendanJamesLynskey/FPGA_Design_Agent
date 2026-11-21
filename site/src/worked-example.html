@@ -1,0 +1,69 @@
+<p class="eyebrow">Worked example</p>
+<h1>A 10G link and a trading path on the KR260, seen as who did what</h1>
+<p class="lede">One design from request to board, with the work divided the way the project divides it. The person said what the design must do and judged whether the evidence was enough. The agent held the implementation: the PCS, the MAC, the decision path, the tests, the builds. Hardware verification, with instruments attached, was the layer that could settle what simulation could not.</p>
+<p class="small muted">Every number here is read from a committed record, linked from the line that uses it. Latencies are our own stamps inside the FPGA and are not comparable with any published figure unless the definitions match: we claim no parity with published results.</p>
+
+<h2 id="roles">Who did what</h2>
+<div class="who">
+<div><h3>You specified</h3><ul>
+<li>a real 10GBASE-R link on the KR260's SFP+ cage, with our own PCS and MAC, because AMD's 10G Ethernet core is refused on the free Basic licence</li>
+<li>a mock trading path behind it, with the latency of every register on the path stated</li>
+<li>that latency is always given with its definition (<a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/docs/latency_definitions.md">definitions</a>)</li>
+<li>decisions along the way: the elastic buffer is an option and the default build stays as it was; no waiver for a clock-crossing finding, decided case by case</li>
+</ul></div>
+<div><h3>The agent implemented</h3><ul>
+<li>the 64B/66B PCS (scrambler, gearbox, block lock) and a 64-bit MAC, with a Python twin as the independent reference</li>
+<li>the decision path, the register block and its generated documentation</li>
+<li>latency variants, two elastic buffers, an on-chip eye-scan sequencer and its host tool</li>
+<li>the builds: {{kr260.facts.gp_gates_all}} flow gates per build, each read from the tool's reports</li>
+</ul></div>
+<div><h3>You judged</h3><ul>
+<li>whether the evidence per requirement was thorough enough (next section)</li>
+<li>which results to trust: a summary that said "open 0" was not</li>
+<li>which design to keep when two met the numbers but one failed a clock-crossing check</li>
+<li>what the board must still show before a claim is made</li>
+</ul></div>
+</div>
+<p>What the design does not do is stated in its own README: no interoperability proof with a network card, and the trading path is a small stand-in with one rule, not the full trading core. Source: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/designs/b96_kr260_10g/README.md"><code>designs/b96_kr260_10g/README.md</code></a>.</p>
+
+<h2 id="evidence">What verified it</h2>
+<p>Each requirement, against each kind of evidence that exists for it. A filled square is passed, a hatched square is measured (no pass line), and a dash is a kind of evidence not recorded for this design. Open a cell for the figure and its record. The complete matrix, with every test and proof traced to its requirement, is on the <a href="{{TRACE_HREF}}">traceability page</a>.</p>
+{{!evidence_matrix}}
+<p class="small muted">Not recorded for this design: a UVM environment, and assertion-based formal proofs. The formal evidence is an equivalence proof between versions of the core, not a proof of the specification.</p>
+
+<h2 id="board">What the board measured</h2>
+<p>Hardware verification here means the board with its instruments: counters and time stamps inside the FPGA read over JTAG, the transceiver's eye-scan counters, the SYSMON temperature and voltage readings at the start and end of every run, and the optical module's own readings. Echo <b>E</b> is a probe frame's trip from the transmit stamp to the receive stamp. Loop <b>L</b> is a feed frame to the order it triggers, in the same loopback. Tick-to-trade is <b>L &minus; E &minus; fibre</b>, with the fibre ({{kr260.facts.fibre_ns}} ns, measured length) subtracted and the optical module's own delay <b>not</b> subtracted, because it is not known. One clock is {{kr260.facts.period}} ns, which is also the resolution. Medians over {{kr260.facts.all3_restarts}} link restarts, fibre loopback, one board and one module.</p>
+{{!builds_table}}
+<p class="small muted">Records: <code>results/b97c/hw/</code>, <code>results/b96c/hw/</code>, <code>results/b96e/hw/</code>. On the fastest build, all {{kr260.facts.all3_restarts}} restarts locked ({{kr260.facts.all3_unlocked}} failed), and {{kr260.facts.all3_order_ok}} of {{kr260.facts.all3_orders}} orders came back with the right content, checked in hardware.</p>
+
+<h3>Predicted first, then measured</h3>
+<ul>
+<li><b>Latency reductions (brief 97):</b> predicted L of {{kr260.facts.pred97_ctl}}, {{kr260.facts.pred97_both}} and {{kr260.facts.pred97_all3}} clocks; measured {{kr260.facts.ctl_L}}, {{kr260.facts.both_L}} and {{kr260.facts.all3_L}}. The fastest build came in one clock better than predicted.</li>
+<li><b>Adding an elastic buffer (brief 96C):</b> predicted L of {{kr260.facts.pred96c_lo}} to {{kr260.facts.pred96c_hi}} clocks; measured {{kr260.facts.buf_L}}. <b>Missed</b> by {{kr260.facts.miss96c_lo}} to {{kr260.facts.miss96c_hi}} clocks, and reported as missed. The simulation had used a stand-in for AMD's FIFO macro that lacks its synchroniser stages; a controlled comparison against the real macro accounts for part of the gap, not all of it (<a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/designs/b96_kr260_10g/docs/design.md"><code>design.md</code> section 9</a>).</li>
+<li><b>Our own buffer (brief 96E):</b> predicted {{kr260.facts.pred96e_lo}} to {{kr260.facts.pred96e_hi}}; measured {{kr260.facts.gp_L}}.</li>
+<li><b>Bypassing the transceiver's buffers (brief 96F1): not run on a board.</b> Pre-registered before any board time: E should fall by {{kr260.facts.byp_lo}} to {{kr260.facts.byp_hi}} clocks, and a fall of less than {{kr260.facts.byp_fail}} clocks fails. The prediction rests on third-party figures for a different transceiver family and is unconfirmed for this one (<a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/b96f1/preregistration.md">pre-registration</a>).</li>
+</ul>
+
+<h2 id="judgement">Where human judgement mattered</h2>
+<div class="cols">
+<div class="card"><h3>The eye scan that counted nothing</h3>
+<p>The first overnight eye scan took {{kr260.facts.eye_nodata_points}} points and counted no samples at any of them. Its summary said "open 0", which reads like a closed eye. The agent's twin and its simulation stand-in had been built from the same reading of the guide as the driver, so no test of its own could catch the fault. An independent read of AMD's transceiver guide found the cause: on this device family the masks are {{kr260.facts.eye_mask_words}} words, not five. The board found a second fault, the sampling clock phase, which no document-reading would have shown. The first measured eye is {{kr260.facts.eye_width}} unit intervals wide after the equaliser, on one board and one module. Records: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/b96d/hw/README.md"><code>results/b96d/hw/</code></a>.</p></div>
+<div class="card"><h3>Faster, but with a clock crossing the tool cannot classify</h3>
+<p>A variant that read the buffer directly was faster in simulation ({{kr260.facts.sim_direct_ttt}} against {{kr260.facts.sim_gp_ttt}} clocks) and met timing (worst slack +{{kr260.facts.direct_wns}} ns), but report_cdc listed {{kr260.facts.direct_cdc1}} critical rows. With no waivers allowed, it was not kept; the variant with an explicit gray-pointer crossing was, with none. Records: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/tree/main/results/b96e/builds"><code>results/b96e/builds/</code></a>.</p></div>
+<div class="card"><h3>Pre-registered, so a miss counts</h3>
+<p>Predictions were written down before the board ran (for the bypass test, with the pass and fail rule as code with unit tests). That is how the miss by {{kr260.facts.miss96c_lo}} to {{kr260.facts.miss96c_hi}} clocks above became a finding with a partly explained cause, and not a number quietly adjusted afterwards.</p></div>
+<div class="card"><h3>New option, old default</h3>
+<p>The buffer was added as a build option. The default build had to stay what the board had already verified. An equivalence proof shows it: {{kr260.facts.eqy_parts}} partitions proved equal, and a deliberately planted fault is caught. Records: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/tree/main/results/b96c/eqy_default"><code>results/b96c/eqy_default/</code></a>.</p></div>
+</div>
+
+<h2 id="hardware-only">What only hardware could settle, and what is still waiting</h2>
+<p>A fibre loopback has no frequency offset between its two ends, so it cannot exercise the buffer's rate-matching path. The transceiver's phase-interpolator route was tried as a substitute and gave no relative offset, so rate matching under a real offset is <b>not demonstrated on hardware</b>; only simulation shows it. It needs a second reference clock or a 10G network card (<a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/designs/b96_kr260_10g/docs/real_offset_plan.md"><code>real_offset_plan.md</code></a>). The same goes for interoperability: a PCS talking to itself accepts its own symmetric mistakes, so only an external device proves it. Where an external element is involved, the hardware test may be the only verification there is, so the flow has to make room for it and for the wait.</p>
+
+<h2>Gaps and limits</h2>
+<ul>
+<li>Latency figures are from stamps inside the FPGA at one-clock resolution, in a fibre loopback, with the optical module's delay inside them.</li>
+<li>The eye is the statistical eye after the equaliser, not the eye at the pins.</li>
+<li>Power figures are vectorless estimates.</li>
+<li>No network card has been connected; no interoperability is claimed.</li>
+</ul>
+<p><a href="{{TRACE_HREF}}">Traceability matrix</a> &middot; <a href="inspect.html">Inspect the implementation</a> &middot; <a href="index.html">The story in brief</a></p>

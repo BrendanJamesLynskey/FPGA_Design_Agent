@@ -6,6 +6,27 @@
     "gaps": [
      {
       "gate": false,
+      "id": "B96-F-PCS",
+      "state": "fail",
+      "text": "an item fails",
+      "type": "no_passing_evidence"
+     },
+     {
+      "gate": false,
+      "id": "B96-F-MAC",
+      "state": "fail",
+      "text": "an item fails",
+      "type": "no_passing_evidence"
+     },
+     {
+      "gate": false,
+      "id": "B96-F-LOCK",
+      "state": "fail",
+      "text": "an item fails",
+      "type": "no_passing_evidence"
+     },
+     {
+      "gate": false,
       "id": "B96-F-OFFSET",
       "text": "depends on a second reference clock or a 10G network card (a loopback has no frequency offset); only hardware verification can close it, and it has not been done",
       "type": "hardware_open"
@@ -387,20 +408,23 @@
       "value": null
      },
      {
-      "detail": "no evidence file named (planned: brief 112 (not merged))",
-      "evidence": null,
+      "detail": "0 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "results/116_traceability/b96_kr260_10g/pytest_junit.xml"
+      },
       "id": "V-UVM-PLANNED",
       "instrument": null,
       "method": "uvm_test",
-      "planned": "brief 112 (not merged)",
+      "planned": null,
       "requirements": [
        "B96-F-PCS",
        "B96-F-MAC",
        "B96-F-LOCK"
       ],
-      "status": "not_run",
-      "title": "UVM bench of the PCS (brief 112, branch b112-uvm-pcs)",
-      "value": null
+      "status": "fail",
+      "title": "UVM 1.2 bench of the PCS and MAC in xsim 2026.1 (brief 112, merged as",
+      "value": "0 of 0 tests passed"
      },
      {
       "detail": "no evidence file named (planned: not planned in a brief yet)",
@@ -971,7 +995,7 @@
       "source": "designs/b96_kr260_10g/docs/design.md#7-verification-plan",
       "spec_status": "draft",
       "stale_items": 1,
-      "state": "verified",
+      "state": "fail",
       "text": "Scrambler, block encode and decode, gearbox and block lock produce the same bits as the bit-serial Python reference, at every bit offset, with idles, ordered sets and bit-error runs.",
       "title": "PCS encodes and decodes 64B/66B bit-exactly against an independent model"
      },
@@ -996,7 +1020,7 @@
       "source": "designs/b96_kr260_10g/docs/design.md#7-verification-plan",
       "spec_status": "draft",
       "stale_items": 1,
-      "state": "verified",
+      "state": "fail",
       "text": "Frames start in lane 0 and lane 4, every terminate lane and every length residue is handled, FCS is generated and checked, and a bad FCS is counted.",
       "title": "64-bit MAC frames correctly in both directions"
      },
@@ -1017,7 +1041,7 @@
       "source": "designs/b96_kr260_10g/docs/design.md#28-block-lock-bit-slip-errors",
       "spec_status": "draft",
       "stale_items": 0,
-      "state": "verified",
+      "state": "fail",
       "text": "The receive gearbox slips to the block boundary from any offset, and a run of bit errors loses lock only above the documented threshold.",
       "title": "Block lock is acquired from any bit offset and survives bit errors"
      },
@@ -1624,29 +1648,30 @@
       },
       "uvm_test": {
        "bounded": 0,
-       "fail": 0,
-       "not_run": 1,
+       "fail": 1,
+       "not_run": 0,
        "pass": 0,
        "stale": 0
       }
      },
      "by_state": {
+      "fail": 3,
       "no_measurement": 1,
       "not_run": 2,
       "stale": 1,
-      "verified": 21
+      "verified": 18
      },
      "external": 3,
      "external_hardware_done": 0,
      "gap_counts": {
       "external_not_hardware_verified": 1,
       "hardware_open": 3,
-      "no_passing_evidence": 4,
+      "no_passing_evidence": 7,
       "stale_evidence": 14
      },
      "human_reviews": 0,
      "items": 45,
-     "line": "25 requirements (9 functional, 9 performance, 1 interface, 6 safety); 21 verified; 1 stale; 1 performance with no measurement; 2 with no passing evidence; 0 of 3 requirements that depend on an external element closed by hardware; performance verified: 4 on the board, 2 by post-route timing, 0 in simulation only; 0 of 25 requirements agreed by a human, 0 human review(s) recorded.",
+     "line": "25 requirements (9 functional, 9 performance, 1 interface, 6 safety); 18 verified; 1 stale; 3 failing; 1 performance with no measurement; 2 with no passing evidence; 0 of 3 requirements that depend on an external element closed by hardware; performance verified: 4 on the board, 2 by post-route timing, 0 in simulation only; 0 of 25 requirements agreed by a human, 0 human review(s) recorded.",
      "performance_board": 4,
      "performance_sim_only": 0,
      "performance_timing": 2,
@@ -4728,7 +4753,7 @@
   "total": {
    "designs": 2,
    "requirements": 46,
-   "verified": 21
+   "verified": 18
   }
  },
  "content": {
@@ -4738,6 +4763,27 @@
     "gaps": [
      {
       "gate": false,
+      "id": "B96-F-PCS",
+      "state": "fail",
+      "text": "an item fails",
+      "type": "no_passing_evidence"
+     },
+     {
+      "gate": false,
+      "id": "B96-F-MAC",
+      "state": "fail",
+      "text": "an item fails",
+      "type": "no_passing_evidence"
+     },
+     {
+      "gate": false,
+      "id": "B96-F-LOCK",
+      "state": "fail",
+      "text": "an item fails",
+      "type": "no_passing_evidence"
+     },
+     {
+      "gate": false,
       "id": "B96-F-OFFSET",
       "text": "depends on a second reference clock or a 10G network card (a loopback has no frequency offset); only hardware verification can close it, and it has not been done",
       "type": "hardware_open"
@@ -5119,20 +5165,23 @@
       "value": null
      },
      {
-      "detail": "no evidence file named (planned: brief 112 (not merged))",
-      "evidence": null,
+      "detail": "0 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "results/116_traceability/b96_kr260_10g/pytest_junit.xml"
+      },
       "id": "V-UVM-PLANNED",
       "instrument": null,
       "method": "uvm_test",
-      "planned": "brief 112 (not merged)",
+      "planned": null,
       "requirements": [
        "B96-F-PCS",
        "B96-F-MAC",
        "B96-F-LOCK"
       ],
-      "status": "not_run",
-      "title": "UVM bench of the PCS (brief 112, branch b112-uvm-pcs)",
-      "value": null
+      "status": "fail",
+      "title": "UVM 1.2 bench of the PCS and MAC in xsim 2026.1 (brief 112, merged as",
+      "value": "0 of 0 tests passed"
      },
      {
       "detail": "no evidence file named (planned: not planned in a brief yet)",
@@ -5703,7 +5752,7 @@
       "source": "designs/b96_kr260_10g/docs/design.md#7-verification-plan",
       "spec_status": "draft",
       "stale_items": 1,
-      "state": "verified",
+      "state": "fail",
       "text": "Scrambler, block encode and decode, gearbox and block lock produce the same bits as the bit-serial Python reference, at every bit offset, with idles, ordered sets and bit-error runs.",
       "title": "PCS encodes and decodes 64B/66B bit-exactly against an independent model"
      },
@@ -5728,7 +5777,7 @@
       "source": "designs/b96_kr260_10g/docs/design.md#7-verification-plan",
       "spec_status": "draft",
       "stale_items": 1,
-      "state": "verified",
+      "state": "fail",
       "text": "Frames start in lane 0 and lane 4, every terminate lane and every length residue is handled, FCS is generated and checked, and a bad FCS is counted.",
       "title": "64-bit MAC frames correctly in both directions"
      },
@@ -5749,7 +5798,7 @@
       "source": "designs/b96_kr260_10g/docs/design.md#28-block-lock-bit-slip-errors",
       "spec_status": "draft",
       "stale_items": 0,
-      "state": "verified",
+      "state": "fail",
       "text": "The receive gearbox slips to the block boundary from any offset, and a run of bit errors loses lock only above the documented threshold.",
       "title": "Block lock is acquired from any bit offset and survives bit errors"
      },
@@ -6356,29 +6405,30 @@
       },
       "uvm_test": {
        "bounded": 0,
-       "fail": 0,
-       "not_run": 1,
+       "fail": 1,
+       "not_run": 0,
        "pass": 0,
        "stale": 0
       }
      },
      "by_state": {
+      "fail": 3,
       "no_measurement": 1,
       "not_run": 2,
       "stale": 1,
-      "verified": 21
+      "verified": 18
      },
      "external": 3,
      "external_hardware_done": 0,
      "gap_counts": {
       "external_not_hardware_verified": 1,
       "hardware_open": 3,
-      "no_passing_evidence": 4,
+      "no_passing_evidence": 7,
       "stale_evidence": 14
      },
      "human_reviews": 0,
      "items": 45,
-     "line": "25 requirements (9 functional, 9 performance, 1 interface, 6 safety); 21 verified; 1 stale; 1 performance with no measurement; 2 with no passing evidence; 0 of 3 requirements that depend on an external element closed by hardware; performance verified: 4 on the board, 2 by post-route timing, 0 in simulation only; 0 of 25 requirements agreed by a human, 0 human review(s) recorded.",
+     "line": "25 requirements (9 functional, 9 performance, 1 interface, 6 safety); 18 verified; 1 stale; 3 failing; 1 performance with no measurement; 2 with no passing evidence; 0 of 3 requirements that depend on an external element closed by hardware; performance verified: 4 on the board, 2 by post-route timing, 0 in simulation only; 0 of 25 requirements agreed by a human, 0 human review(s) recorded.",
      "performance_board": 4,
      "performance_sim_only": 0,
      "performance_timing": 2,
@@ -9460,7 +9510,7 @@
   "total": {
    "designs": 2,
    "requirements": 46,
-   "verified": 21
+   "verified": 18
   }
  }
 }

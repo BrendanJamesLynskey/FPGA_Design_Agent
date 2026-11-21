@@ -1,0 +1,1040 @@
+{
+  "mutants": 58,
+  "valid": 58,
+  "killed": 58,
+  "survived": [],
+  "invalid": [],
+  "score_pct": 100.0,
+  "results": [
+    {
+      "name": "mold_minlen",
+      "status": "killed",
+      "killed_by": [
+        "cut_packets"
+      ],
+      "class": "constant",
+      "file": "mold_rx.sv",
+      "why": "a block of 8 to 11 bytes is accepted as a message"
+    },
+    {
+      "name": "mold_hip_off",
+      "status": "killed",
+      "killed_by": [
+        "main_stream",
+        "main_stream_params",
+        "main_stream_spec",
+        "impairments",
+        "straddle",
+        "burst_replace",
+        "min_idle",
+        "valid_bubbles",
+        "stress",
+        "throughput",
+        "high_price",
+        "zz_coverage"
+      ],
+      "class": "condition",
+      "file": "mold_rx.sv",
+      "why": "a block whose length field straddles two words is lost"
+    },
+    {
+      "name": "mold_data_word",
+      "status": "killed",
+      "killed_by": [
+        "main_stream",
+        "main_stream_params",
+        "main_stream_spec",
+        "impairments",
+        "straddle",
+        "book_edges",
+        "burst_replace",
+        "min_idle",
+        "valid_bubbles",
+        "order_queue",
+        "stress",
+        "throughput",
+        "high_price",
+        "zz_coverage"
+      ],
+      "class": "constant",
+      "file": "mold_rx.sv",
+      "why": "a block starting at byte 6 of a word takes data from that word"
+    },
+    {
+      "name": "mold_comp_lt",
+      "status": "killed",
+      "killed_by": [
+        "main_stream",
+        "main_stream_params",
+        "main_stream_spec",
+        "impairments",
+        "bad_frames",
+        "straddle",
+        "cut_packets",
+        "book_edges",
+        "risk_checks",
+        "speculation",
+        "burst_replace",
+        "clears",
+        "latency",
+        "min_idle",
+        "valid_bubbles",
+        "stale_book",
+        "order_queue",
+        "stress",
+        "throughput",
+        "high_price",
+        "field_values",
+        "zz_coverage"
+      ],
+      "class": "condition",
+      "file": "mold_rx.sv",
+      "why": "a message ending on a word's last byte completes a word late"
+    },
+    {
+      "name": "mold_nxt_wrap",
+      "status": "killed",
+      "killed_by": [
+        "main_stream",
+        "main_stream_params",
+        "main_stream_spec",
+        "impairments",
+        "bad_frames",
+        "straddle",
+        "cut_packets",
+        "book_edges",
+        "risk_checks",
+        "speculation",
+        "burst_replace",
+        "clears",
+        "latency",
+        "min_idle",
+        "valid_bubbles",
+        "stale_book",
+        "order_queue",
+        "stress",
+        "throughput",
+        "high_price",
+        "field_values",
+        "zz_coverage"
+      ],
+      "class": "constant",
+      "file": "mold_rx.sv",
+      "why": "the next block position drifts by one byte"
+    },
+    {
+      "name": "mold_missing_one",
+      "status": "killed",
+      "killed_by": [
+        "impairments",
+        "stress"
+      ],
+      "class": "operator",
+      "file": "mold_rx.sv",
+      "why": "missing messages counted as one per gap"
+    },
+    {
+      "name": "mold_dup_gt",
+      "status": "killed",
+      "killed_by": [
+        "impairments",
+        "cut_packets",
+        "stress"
+      ],
+      "class": "condition",
+      "file": "mold_rx.sv",
+      "why": "a packet that ends exactly at the expected number is treated as an overlap"
+    },
+    {
+      "name": "mold_session_unlocked",
+      "status": "killed",
+      "killed_by": [
+        "impairments",
+        "zz_coverage"
+      ],
+      "class": "condition",
+      "file": "mold_rx.sv",
+      "why": "a packet of another session is accepted"
+    },
+    {
+      "name": "mold_skip_gt",
+      "status": "killed",
+      "killed_by": [
+        "main_stream",
+        "main_stream_params",
+        "main_stream_spec",
+        "impairments",
+        "bad_frames",
+        "straddle",
+        "cut_packets",
+        "book_edges",
+        "risk_checks",
+        "speculation",
+        "burst_replace",
+        "clears",
+        "latency",
+        "min_idle",
+        "valid_bubbles",
+        "stale_book",
+        "order_queue",
+        "stress",
+        "throughput",
+        "high_price",
+        "field_values",
+        "zz_coverage"
+      ],
+      "class": "condition",
+      "file": "mold_rx.sv",
+      "why": "the first message after an overlap is dropped"
+    },
+    {
+      "name": "mold_err_ignored",
+      "status": "killed",
+      "killed_by": [
+        "bad_frames",
+        "zz_coverage"
+      ],
+      "class": "condition",
+      "file": "mold_rx.sv",
+      "why": "a bad frame does not raise untrusted"
+    },
+    {
+      "name": "mold_trunc_le",
+      "status": "killed",
+      "killed_by": [
+        "main_stream",
+        "main_stream_params",
+        "main_stream_spec",
+        "impairments",
+        "bad_frames",
+        "straddle",
+        "cut_packets",
+        "book_edges",
+        "risk_checks",
+        "speculation",
+        "burst_replace",
+        "min_idle",
+        "valid_bubbles",
+        "stale_book",
+        "order_queue",
+        "stress",
+        "throughput",
+        "high_price",
+        "field_values",
+        "zz_coverage"
+      ],
+      "class": "condition",
+      "file": "mold_rx.sv",
+      "why": "every packet is counted truncated"
+    },
+    {
+      "name": "mold_seq_bytes",
+      "status": "killed",
+      "killed_by": [
+        "main_stream",
+        "main_stream_params",
+        "main_stream_spec",
+        "impairments",
+        "bad_frames",
+        "straddle",
+        "cut_packets",
+        "book_edges",
+        "risk_checks",
+        "speculation",
+        "burst_replace",
+        "latency",
+        "min_idle",
+        "valid_bubbles",
+        "stale_book",
+        "order_queue",
+        "stress",
+        "throughput",
+        "high_price",
+        "field_values",
+        "zz_coverage"
+      ],
+      "class": "constant",
+      "file": "mold_rx.sv",
+      "why": "the low sequence bytes swapped"
+    },
+    {
+      "name": "mold_soff",
+      "status": "killed",
+      "killed_by": [
+        "main_stream",
+        "main_stream_params",
+        "main_stream_spec",
+        "impairments",
+        "straddle",
+        "burst_replace",
+        "min_idle",
+        "valid_bubbles",
+        "stress",
+        "throughput",
+        "high_price",
+        "zz_coverage"
+      ],
+      "class": "constant",
+      "file": "mold_rx.sv",
+      "why": "a message after a straddling length field starts a byte late"
+    },
+    {
+      "name": "mold_keep3",
+      "status": "killed",
+      "killed_by": [
+        "cut_packets"
+      ],
+      "class": "constant",
+      "file": "mold_rx.sv",
+      "why": "a last word with three bytes is read as four"
+    },
+    {
+      "name": "mold_hb_count",
+      "status": "killed",
+      "killed_by": [
+        "main_stream",
+        "main_stream_params",
+        "main_stream_spec",
+        "impairments",
+        "bad_frames",
+        "straddle",
+        "book_edges",
+        "risk_checks",
+        "speculation",
+        "min_idle",
+        "valid_bubbles",
+        "stale_book",
+        "order_queue",
+        "stress",
+        "high_price",
+        "field_values",
+        "zz_coverage"
+      ],
+      "class": "constant",
+      "file": "mold_rx.sv",
+      "why": "heartbeats are not counted"
+    },
+    {
+      "name": "dec_len_a",
+      "status": "killed",
+      "killed_by": [
+        "main_stream",
+        "main_stream_params",
+        "main_stream_spec",
+        "impairments",
+        "bad_frames",
+        "straddle",
+        "book_edges",
+        "risk_checks",
+        "speculation",
+        "burst_replace",
+        "clears",
+        "latency",
+        "min_idle",
+        "valid_bubbles",
+        "stale_book",
+        "order_queue",
+        "stress",
+        "throughput",
+        "high_price",
+        "field_values",
+        "zz_coverage"
+      ],
+      "class": "constant",
+      "file": "itch_dec.sv",
+      "why": "Add Order length"
+    },
+    {
+      "name": "dec_len_u",
+      "status": "killed",
+      "killed_by": [
+        "main_stream",
+        "main_stream_params",
+        "main_stream_spec",
+        "impairments",
+        "book_edges",
+        "burst_replace",
+        "latency",
+        "min_idle",
+        "valid_bubbles",
+        "stress",
+        "throughput",
+        "high_price",
+        "zz_coverage"
+      ],
+      "class": "constant",
+      "file": "itch_dec.sv",
+      "why": "Replace length"
+    },
+    {
+      "name": "dec_side_check",
+      "status": "killed",
+      "killed_by": [
+        "main_stream",
+        "main_stream_params",
+        "main_stream_spec",
+        "impairments",
+        "bad_frames",
+        "straddle",
+        "book_edges",
+        "risk_checks",
+        "speculation",
+        "burst_replace",
+        "latency",
+        "min_idle",
+        "valid_bubbles",
+        "stale_book",
+        "order_queue",
+        "stress",
+        "throughput",
+        "high_price",
+        "field_values",
+        "zz_coverage"
+      ],
+      "class": "condition",
+      "file": "itch_dec.sv",
+      "why": "sell side letter rejected"
+    },
+    {
+      "name": "dec_side_sell",
+      "status": "killed",
+      "killed_by": [
+        "main_stream",
+        "main_stream_params",
+        "main_stream_spec",
+        "impairments",
+        "bad_frames",
+        "straddle",
+        "book_edges",
+        "risk_checks",
+        "speculation",
+        "burst_replace",
+        "latency",
+        "min_idle",
+        "valid_bubbles",
+        "stale_book",
+        "order_queue",
+        "stress",
+        "throughput",
+        "high_price",
+        "field_values",
+        "zz_coverage"
+      ],
+      "class": "condition",
+      "file": "itch_dec.sv",
+      "why": "buy and sell swapped"
+    },
+    {
+      "name": "dec_u_price",
+      "status": "killed",
+      "killed_by": [
+        "main_stream",
+        "main_stream_params",
+        "main_stream_spec",
+        "impairments",
+        "book_edges",
+        "burst_replace",
+        "min_idle",
+        "valid_bubbles",
+        "stress",
+        "throughput",
+        "high_price",
+        "zz_coverage"
+      ],
+      "class": "constant",
+      "file": "itch_dec.sv",
+      "why": "Replace price taken from the wrong offset"
+    },
+    {
+      "name": "dec_shares_zero",
+      "status": "killed",
+      "killed_by": [
+        "book_edges",
+        "zz_coverage"
+      ],
+      "class": "condition",
+      "file": "itch_dec.sv",
+      "why": "zero-share execution accepted"
+    },
+    {
+      "name": "dec_c_kind",
+      "status": "killed",
+      "killed_by": [
+        "main_stream",
+        "main_stream_params",
+        "main_stream_spec",
+        "impairments",
+        "book_edges",
+        "min_idle",
+        "valid_bubbles",
+        "stress",
+        "high_price",
+        "zz_coverage"
+      ],
+      "class": "constant",
+      "file": "itch_dec.sv",
+      "why": "executed-with-price taken as a cancel"
+    },
+    {
+      "name": "book_inx_oovf",
+      "status": "killed",
+      "killed_by": [
+        "straddle",
+        "book_edges",
+        "burst_replace",
+        "stale_book",
+        "zz_coverage"
+      ],
+      "class": "condition",
+      "file": "book_core.sv",
+      "why": "a table overflow does not mark the instrument inexact"
+    },
+    {
+      "name": "book_red_ge",
+      "status": "killed",
+      "killed_by": [
+        "main_stream",
+        "main_stream_spec",
+        "stress"
+      ],
+      "class": "condition",
+      "file": "book_core.sv",
+      "why": "an execution of the exact remainder leaves an empty order"
+    },
+    {
+      "name": "book_over_ge",
+      "status": "killed",
+      "killed_by": [
+        "main_stream",
+        "main_stream_spec",
+        "book_edges",
+        "valid_bubbles",
+        "stress"
+      ],
+      "class": "condition",
+      "file": "book_core.sv",
+      "why": "over-execution counted for an exact execution"
+    },
+    {
+      "name": "book_no_forward",
+      "status": "killed",
+      "killed_by": [
+        "main_stream",
+        "main_stream_params",
+        "impairments",
+        "book_edges",
+        "stress",
+        "zz_coverage",
+        "queue_and_replace"
+      ],
+      "class": "condition",
+      "file": "book_core.sv",
+      "why": "no forwarding from the previous clock's write"
+    },
+    {
+      "name": "book_ctx_always",
+      "status": "killed",
+      "killed_by": [
+        "book_edges",
+        "burst_replace",
+        "zz_coverage",
+        "queue_and_replace"
+      ],
+      "class": "condition",
+      "file": "book_core.sv",
+      "why": "a Replace of an unknown order still adds the new one"
+    },
+    {
+      "name": "book_lv_zero",
+      "status": "killed",
+      "killed_by": [
+        "main_stream",
+        "main_stream_params",
+        "main_stream_spec",
+        "impairments",
+        "straddle",
+        "book_edges",
+        "burst_replace",
+        "min_idle",
+        "valid_bubbles",
+        "stress",
+        "throughput",
+        "high_price",
+        "zz_coverage",
+        "queue_and_replace"
+      ],
+      "class": "condition",
+      "file": "book_core.sv",
+      "why": "a level reduced to zero stays as an empty level"
+    },
+    {
+      "name": "book_better_swap",
+      "status": "killed",
+      "killed_by": [
+        "main_stream",
+        "main_stream_params",
+        "main_stream_spec",
+        "impairments",
+        "bad_frames",
+        "straddle",
+        "book_edges",
+        "risk_checks",
+        "burst_replace",
+        "min_idle",
+        "valid_bubbles",
+        "stale_book",
+        "order_queue",
+        "stress",
+        "throughput",
+        "high_price",
+        "field_values",
+        "zz_coverage",
+        "queue_and_replace"
+      ],
+      "class": "condition",
+      "file": "book_core.sv",
+      "why": "best ask is the highest, best bid the lowest"
+    },
+    {
+      "name": "book_cand_lt",
+      "status": "killed",
+      "killed_by": [
+        "main_stream",
+        "main_stream_params",
+        "main_stream_spec",
+        "impairments",
+        "straddle",
+        "burst_replace",
+        "min_idle",
+        "valid_bubbles",
+        "stress",
+        "throughput",
+        "high_price"
+      ],
+      "class": "condition",
+      "file": "book_core.sv",
+      "why": "an ask exactly at the threshold is not a candidate"
+    },
+    {
+      "name": "book_spec_fail_off",
+      "status": "killed",
+      "killed_by": [
+        "speculation"
+      ],
+      "class": "condition",
+      "file": "book_core.sv",
+      "why": "a speculative frame whose Add was a duplicate is never cancelled"
+    },
+    {
+      "name": "book_cand_ahead",
+      "status": "killed",
+      "killed_by": [
+        "order_queue",
+        "stress",
+        "high_price"
+      ],
+      "class": "condition",
+      "file": "book_core.sv",
+      "why": "speculation allowed while an earlier candidate's verdict is being taken"
+    },
+    {
+      "name": "book_inx_own",
+      "status": "killed",
+      "killed_by": [
+        "stale_book"
+      ],
+      "class": "condition",
+      "file": "book_core.sv",
+      "why": "the ladder overflow of the Add itself is not seen by its verdict"
+    },
+    {
+      "name": "book_unwatch",
+      "status": "killed",
+      "killed_by": [
+        "main_stream",
+        "main_stream_params",
+        "main_stream_spec",
+        "impairments",
+        "book_edges",
+        "min_idle",
+        "valid_bubbles",
+        "stress",
+        "high_price",
+        "zz_coverage"
+      ],
+      "class": "condition",
+      "file": "book_core.sv",
+      "why": "orders of unwatched instruments enter the book"
+    },
+    {
+      "name": "book_replace_slots",
+      "status": "killed",
+      "killed_by": [
+        "queue_and_replace"
+      ],
+      "class": "condition",
+      "file": "book_core.sv",
+      "why": "a Replace taken from the queue loses its second slot"
+    },
+    {
+      "name": "book_sweep_short",
+      "status": "killed",
+      "killed_by": [
+        "burst_replace",
+        "queue_and_replace"
+      ],
+      "class": "constant",
+      "file": "book_core.sv",
+      "why": "the sweep stops one entry short"
+    },
+    {
+      "name": "risk_kill_off",
+      "status": "killed",
+      "killed_by": [
+        "risk_checks",
+        "zz_coverage"
+      ],
+      "class": "condition",
+      "file": "risk_glue.sv",
+      "why": "the kill switch does nothing"
+    },
+    {
+      "name": "risk_pos_ge",
+      "status": "killed",
+      "killed_by": [
+        "impairments",
+        "risk_checks",
+        "speculation"
+      ],
+      "class": "condition",
+      "file": "risk_glue.sv",
+      "why": "an order that reaches the position limit exactly is refused"
+    },
+    {
+      "name": "risk_band_lt",
+      "status": "killed",
+      "killed_by": [
+        "risk_checks"
+      ],
+      "class": "condition",
+      "file": "risk_glue.sv",
+      "why": "a price exactly at the band edge is refused"
+    },
+    {
+      "name": "risk_size_1e6",
+      "status": "killed",
+      "killed_by": [
+        "risk_checks"
+      ],
+      "class": "condition",
+      "file": "risk_glue.sv",
+      "why": "a quantity of exactly one million is allowed"
+    },
+    {
+      "name": "risk_pos_step",
+      "status": "killed",
+      "killed_by": [
+        "risk_checks"
+      ],
+      "class": "operator",
+      "file": "risk_glue.sv",
+      "why": "the position grows by one share an order"
+    },
+    {
+      "name": "risk_ref_step",
+      "status": "killed",
+      "killed_by": [
+        "main_stream",
+        "main_stream_params",
+        "main_stream_spec",
+        "impairments",
+        "straddle",
+        "risk_checks",
+        "min_idle",
+        "valid_bubbles",
+        "stale_book",
+        "order_queue",
+        "stress",
+        "high_price",
+        "field_values",
+        "zz_coverage"
+      ],
+      "class": "operator",
+      "file": "risk_glue.sv",
+      "why": "order numbers skip"
+    },
+    {
+      "name": "risk_offset",
+      "status": "killed",
+      "killed_by": [
+        "risk_checks",
+        "high_price",
+        "field_values"
+      ],
+      "class": "operator",
+      "file": "risk_glue.sv",
+      "why": "the price offset is ignored"
+    },
+    {
+      "name": "risk_gap_off",
+      "status": "killed",
+      "killed_by": [
+        "bad_frames",
+        "zz_coverage"
+      ],
+      "class": "condition",
+      "file": "risk_glue.sv",
+      "why": "a sequence gap or a bad frame does not stop orders"
+    },
+    {
+      "name": "risk_no_bid",
+      "status": "killed",
+      "killed_by": [
+        "risk_checks"
+      ],
+      "class": "condition",
+      "file": "risk_glue.sv",
+      "why": "the band check passes when no bid exists"
+    },
+    {
+      "name": "risk_busy",
+      "status": "killed",
+      "killed_by": [
+        "order_queue",
+        "zz_coverage"
+      ],
+      "class": "condition",
+      "file": "risk_glue.sv",
+      "why": "a rejection for a full queue is not counted"
+    },
+    {
+      "name": "risk_pop_shift",
+      "status": "killed",
+      "killed_by": [
+        "order_queue"
+      ],
+      "class": "operator",
+      "file": "risk_glue.sv",
+      "why": "the order queue shifts wrongly"
+    },
+    {
+      "name": "risk_abort_off",
+      "status": "killed",
+      "killed_by": [
+        "main_stream_spec",
+        "speculation",
+        "stress",
+        "high_price",
+        "zz_coverage"
+      ],
+      "class": "condition",
+      "file": "risk_glue.sv",
+      "why": "a speculative frame whose risk check failed is not cancelled"
+    },
+    {
+      "name": "ouch_side",
+      "status": "killed",
+      "killed_by": [
+        "main_stream",
+        "main_stream_params",
+        "main_stream_spec",
+        "impairments",
+        "bad_frames",
+        "straddle",
+        "risk_checks",
+        "speculation",
+        "latency",
+        "min_idle",
+        "valid_bubbles",
+        "stale_book",
+        "order_queue",
+        "stress",
+        "high_price",
+        "field_values",
+        "zz_coverage"
+      ],
+      "class": "constant",
+      "file": "ouch_enter.sv",
+      "why": "side letter"
+    },
+    {
+      "name": "ouch_price_byte",
+      "status": "killed",
+      "killed_by": [
+        "high_price"
+      ],
+      "class": "constant",
+      "file": "ouch_enter.sv",
+      "why": "price byte at the wrong offset"
+    },
+    {
+      "name": "ouch_hex",
+      "status": "killed",
+      "killed_by": [
+        "main_stream",
+        "main_stream_params",
+        "main_stream_spec",
+        "impairments",
+        "straddle",
+        "min_idle",
+        "order_queue",
+        "stress",
+        "high_price"
+      ],
+      "class": "constant",
+      "file": "ouch_enter.sv",
+      "why": "hex digit letters shifted"
+    },
+    {
+      "name": "ouch_len",
+      "status": "killed",
+      "killed_by": [
+        "main_stream",
+        "main_stream_params",
+        "main_stream_spec",
+        "impairments",
+        "bad_frames",
+        "straddle",
+        "risk_checks",
+        "speculation",
+        "latency",
+        "min_idle",
+        "valid_bubbles",
+        "stale_book",
+        "order_queue",
+        "stress",
+        "high_price",
+        "field_values",
+        "zz_coverage"
+      ],
+      "class": "constant",
+      "file": "ouch_enter.sv",
+      "why": "SoupBinTCP length"
+    },
+    {
+      "name": "ouch_applen",
+      "status": "killed",
+      "killed_by": [
+        "main_stream",
+        "main_stream_params",
+        "main_stream_spec",
+        "impairments",
+        "bad_frames",
+        "straddle",
+        "risk_checks",
+        "speculation",
+        "latency",
+        "min_idle",
+        "valid_bubbles",
+        "stale_book",
+        "order_queue",
+        "stress",
+        "high_price",
+        "field_values",
+        "zz_coverage"
+      ],
+      "class": "constant",
+      "file": "ouch_enter.sv",
+      "why": "appendage length"
+    },
+    {
+      "name": "ouch_minqty_order",
+      "status": "killed",
+      "killed_by": [
+        "field_values"
+      ],
+      "class": "constant",
+      "file": "ouch_enter.sv",
+      "why": "MinQty bytes swapped"
+    },
+    {
+      "name": "ouch_keep",
+      "status": "killed",
+      "killed_by": [
+        "main_stream",
+        "main_stream_params",
+        "main_stream_spec",
+        "impairments",
+        "bad_frames",
+        "straddle",
+        "risk_checks",
+        "speculation",
+        "latency",
+        "min_idle",
+        "valid_bubbles",
+        "stale_book",
+        "order_queue",
+        "stress",
+        "high_price",
+        "field_values",
+        "zz_coverage"
+      ],
+      "class": "constant",
+      "file": "ouch_enter.sv",
+      "why": "last word keep mask"
+    },
+    {
+      "name": "ouch_last_word",
+      "status": "killed",
+      "killed_by": [
+        "main_stream",
+        "main_stream_params",
+        "main_stream_spec",
+        "impairments",
+        "bad_frames",
+        "straddle",
+        "risk_checks",
+        "speculation",
+        "latency",
+        "min_idle",
+        "valid_bubbles",
+        "stale_book",
+        "order_queue",
+        "stress",
+        "high_price",
+        "field_values",
+        "zz_coverage"
+      ],
+      "class": "constant",
+      "file": "ouch_enter.sv",
+      "why": "frame one word short"
+    },
+    {
+      "name": "ouch_abort_off",
+      "status": "killed",
+      "killed_by": [
+        "main_stream_spec",
+        "speculation"
+      ],
+      "class": "condition",
+      "file": "ouch_enter.sv",
+      "why": "an aborted frame is not announced"
+    },
+    {
+      "name": "ouch_symbol",
+      "status": "killed",
+      "killed_by": [
+        "main_stream",
+        "main_stream_params",
+        "main_stream_spec",
+        "impairments",
+        "bad_frames",
+        "straddle",
+        "risk_checks",
+        "speculation",
+        "latency",
+        "min_idle",
+        "valid_bubbles",
+        "stale_book",
+        "order_queue",
+        "stress",
+        "high_price",
+        "field_values",
+        "zz_coverage"
+      ],
+      "class": "operator",
+      "file": "ouch_enter.sv",
+      "why": "symbol bytes reversed"
+    }
+  ]
+}
