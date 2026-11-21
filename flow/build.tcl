@@ -77,6 +77,15 @@ proc stop_here {name} {
     }
 }
 
+# brief 118: FDA_INSPECT_CKPTS=1 also writes post_opt.dcp and post_place.dcp (after phys_opt), for `python -m flow inspect`. Off by default: an
+# ordinary build writes the same files, at the same times, with the same stamps. The time each write took is printed as FLOW-INSPECT-CKPT.
+proc fda_inspect_ckpt {out name} {
+    if {![info exists ::env(FDA_INSPECT_CKPTS)] || $::env(FDA_INSPECT_CKPTS) ne "1"} { return }
+    set t [clock milliseconds]
+    write_checkpoint -force $out/$name.dcp
+    puts "FLOW-INSPECT-CKPT $name [format %.1f [expr {([clock milliseconds] - $t) / 1000.0}]]s [file size $out/$name.dcp] bytes"
+}
+
 # --- resume (brief 33) --------------------------------------------------------
 # flow/run_vivado.sh sets resume_from when an earlier build of the same inputs (the same flow key: sources, XDC,
 # generics, build.yaml settings, flow scripts, thread count, Vivado) stopped at an earlier stage. "synth" opens that
@@ -201,6 +210,7 @@ if {$resume_from ne "route"} {
     }
     opt_design
     stage opt
+    fda_inspect_ckpt $out post_opt
     # brief 33: incremental implementation (FDA_INCREMENTAL=1 via flow/run_vivado.sh, which keeps the previous build's
     # post_route.dcp as the reference). Vivado reuses the reference's placement and routing for the cells that match and
     # falls back to the default flow when too little matches (report_incremental_reuse says which). Off by default: the
@@ -213,6 +223,7 @@ if {$resume_from ne "route"} {
     stage place
     phys_opt_design
     stage phys_opt
+    fda_inspect_ckpt $out post_place
     # stage post_place: UG949 ch. 6 "Pre- and Post-Placement" (large hold violations
     # must be fixed before routing) and figure 113 "Baselining the Design"
     report_timing_summary -max_paths 10 -file $out/timing_summary_place.rpt

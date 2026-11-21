@@ -129,6 +129,10 @@ files:
 - path: designs/b96_kr260_10g/rm_gp_itch/host/b127_stages.py
   what: the pre-registered board stages, shared with the simulation's dry run (brief 127)
   sha256: 0a8c138fb0b74268b8211cc6ff0abbcd1d09052da72e28d9274f8a8f2e79c52d
+- path: designs/b96_kr260_10g/verif/uvm/README.md
+  what: how the UVM 1.2 bench for the PCS and MAC is built, what each part checks, the coverage and the seeded bugs (brief
+    112)
+  sha256: 28bc0ecbd57c394ae029c90984b71916d61b1c43789e945feb54cb737a03e131
 - path: designs/b96_kr260_10g/rm_gp_bypass/rtl/b96_core.sv
   what: copy of rtl/b96_core.sv for build rm_gp_bypass with the GT buffer-bypass controllers connected and run gates (brief
     96F1)
@@ -260,6 +264,12 @@ commands:
   heavy: true
   minutes: 22
   needs: as above
+- what: the UVM 1.2 regression of the PCS and MAC in xsim (every test over its seeds, coverage merge, seeded bugs)
+  cmd: designs/b96_kr260_10g/verif/uvm/scripts/run_regress.sh --mutants --record results/112_uvm_pcs_mac
+  heavy: false
+  minutes: 40
+  needs: Vivado 2026.1 xsim (Basic tier is enough); a simulation-only run, no heavy slot while the load is under 6 and more
+    than 12 GB is free
 evidence:
 - id: E1
   activity: simulation
@@ -342,6 +352,14 @@ evidence:
 - id: E11
   activity: simulation
   result: pass
+  what: 'UVM 1.2 bench of the PCS and MAC in xsim 2026.1 (no GT model; reference-model scoreboard, SVAs, constrained-random):
+    42 runs pass, 213 of 213 coverage bins hit, 16 of 17 seeded bugs killed (the 17th is an equivalent mutant); run by hand
+    in xsim, not in CI'
+  record: results/112_uvm_pcs_mac/summary.txt
+  sha256: b4d6ac4452d7c9bab373242d1ac0ba691604352cd7f08d35f394dda38666add5
+- id: E12
+  activity: simulation
+  result: pass
   how: ci
   what: 'the new blocks of build rm_gp_itch with the real mac64_rx and mac64_tx against brief 110''s model: four seeded
     sessions with speculation off and on, every counter, every book update, the final top of book and every order frame
@@ -350,7 +368,7 @@ evidence:
     back-to-back orders'
   record: designs/b96_kr260_10g/rm_gp_itch/tests/test_b127_unit_rtl.py
   sha256: 973c292a1f06158439a8631728a252d56b40e6c3e651b3a7667a836709df56f4
-- id: E12
+- id: E13
   activity: simulation
   result: pass
   what: 'the whole core of build rm_gp_itch in xsim 2026.1 with AMD''s real XPM macros and the GT stand-in, four phases
@@ -359,7 +377,7 @@ evidence:
   record: results/b127/core_sim.json
   conditions: xsim 2026.1, GT stand-in, phases 0, 1550, 3100, 4650 ps
   sha256: 868de45ea1760e2ba4227d5e1096c8f632b730ad391ef67beea97eadfa4c2d8d
-- id: E13
+- id: E14
   activity: build
   result: pass
   what: build rm_gp_itch through the flow on Vivado 2026.1 (every flow gate; report_cdc no critical, no new waiver)
@@ -599,6 +617,9 @@ history:
     against 110''s model in xsim and Icarus; built with timing met; board test pre-registered and script written, nothing
     run on a board'
 - date: '2026-11-20'
+  note: 'brief 112: UVM 1.2 bench for the PCS and MAC (designs/b96_kr260_10g/verif/uvm): agents, reference models, scoreboard,
+    coverage, SVAs, regression and seeded bugs, in xsim 2026.1; no RTL bug found; xcrg refused on the Basic tier'
+- date: '2026-11-20'
   note: 'brief 96F1: build rm_gp_bypass (both GT elastic buffers bypassed; Wizard probe in results/b96f1/wizard_probe),
     all 29 gates, timing met, report_cdc no critical; board test pre-registered and script written, nothing run on a board'
 - date: '2026-11-19'
@@ -649,4 +670,4 @@ state:
     build_2026_1: pass
   vivado: '2026.1'
   kb_pin: 93d158c
-  build_id: c9106c0d
+  build_id: 815a2b02
