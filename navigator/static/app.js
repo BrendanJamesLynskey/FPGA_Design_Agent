@@ -609,11 +609,11 @@
 
   /* ---------- traceability (brief 116) ---------- */
   var TRACE_METHODS = [["sim_test", "sim test"], ["uvm_test", "UVM"], ["assertion", "SVA"], ["formal", "formal"], ["formal_lean", "Lean"], ["coverage_bin", "coverage"], ["timing", "timing"], ["sim_measurement", "sim measure"], ["board_measurement", "board"], ["review", "review"]];
-  var TRACE_STATE = { verified: "verified", fail: "FAILS", not_run: "not run", stale: "stale", bounded: "bounded only", no_measurement: "no measurement", unapproved: "proved, statement not approved" };
+  var TRACE_STATE = { verified: "verified", fail: "FAILS", not_run: "not run", not_in_run: "not in the recorded run", skipped: "skipped in the recorded run", stale: "stale", bounded: "bounded only", no_measurement: "no measurement", unapproved: "proved, statement not approved" };
   var TRACE_TIER = { kernel_only: "kernel only", compiled_decision_procedure: "kernel plus a compiled decision procedure", unsound: "unsound" };
   var TRACE_LINK = { rtl_generated: "RTL-generated model", transcription_tested: "transcription tested", transcription_untested: "transcription untested", model_only: "no RTL link" };
   function traceStatus(i) {
-    var t = i.status === "unapproved" ? "statement not approved" : i.status.replace("_", " ");
+    var t = i.status === "unapproved" ? "statement not approved" : i.status === "not_in_run" ? "not in the recorded run" : i.status.replace("_", " ");
     if (i.method === "formal_lean" && i.lean) t += " [" + [i.status === "pass" ? (i.lean.approver_kind === "agent_delegated" ? "statement accepted on delegation, not a human approval" : "statement approved by a human") : "", TRACE_TIER[i.lean.tier] || "no build", TRACE_LINK[i.lean.rtl_link] || "no RTL link", (i.lean.build_source || "").replace(" (not re-run)", "")].filter(Boolean).join("; ") + "]";
     return t;
   }
