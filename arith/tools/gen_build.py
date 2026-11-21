@@ -72,7 +72,7 @@ def build_text(fn: str, variant: str, spec: dict) -> str:
         "status": "prepared, not run: no Vivado in brief 139a; a Vivado out-of-context run reads this file (see arith/README.md, 'Running the Vivado characterisation')",
         "top": v["module"] + "_ooc",
         "part": ac.PARTS["a7"],
-        "sources": [f"arith/{fn}/{v['file']}", f"arith/{fn}/ooc/{v['module']}_ooc.sv"],
+        "sources": [f"arith/{fn}/{v['file']}"] + [f"arith/{d}" for d in v.get("deps", [])] + [f"arith/{fn}/ooc/{v['module']}_ooc.sv"],
         "generics": dict(v["params"]),
         "ooc": {
             "clock_port": "clk",

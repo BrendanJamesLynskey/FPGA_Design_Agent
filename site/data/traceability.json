@@ -6058,6 +6058,1926 @@
     }
    },
    {
+    "design": "arith_fp_add",
+    "gaps": [
+     {
+      "gate": false,
+      "id": "V-FPADD-LEAN-CARRY",
+      "text": "the Lean statement is not approved by a human; until it is, the proof is not counted as verification",
+      "type": "lean_statement_unapproved"
+     },
+     {
+      "gate": false,
+      "id": "V-FPADD-LEAN-NORM",
+      "text": "the Lean statement is not approved by a human; until it is, the proof is not counted as verification",
+      "type": "lean_statement_unapproved"
+     },
+     {
+      "gate": false,
+      "id": "V-FPADD-LEAN-RNE",
+      "text": "the Lean statement is not approved by a human; until it is, the proof is not counted as verification",
+      "type": "lean_statement_unapproved"
+     }
+    ],
+    "items": [
+     {
+      "detail": "10 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fp_add/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FPADD-MODEL",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FPADD-F-MODEL"
+      ],
+      "status": "pass",
+      "title": "The model against independent formulations (exhaustive small, random large) and the pinned conventions",
+      "value": "10 of 10 tests passed"
+     },
+     {
+      "detail": "16 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fp_add/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FPADD-EXHAUSTIVE",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FPADD-F-EXACT"
+      ],
+      "status": "pass",
+      "title": "Every variant against the model, every input, at the small points (Icarus + cocotb)",
+      "value": "16 of 16 tests passed"
+     },
+     {
+      "detail": "12 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fp_add/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FPADD-RANDOM",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FPADD-F-EXACT"
+      ],
+      "status": "pass",
+      "title": "Every variant against the model at the large points: edge values, carry runs and random inputs (Icarus + cocotb)",
+      "value": "12 of 12 tests passed"
+     },
+     {
+      "detail": "2 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fp_add/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FPADD-LATENCY",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FPADD-F-LAT"
+      ],
+      "status": "pass",
+      "title": "The bench passes at the stated latency and fails two clocks off, for every variant",
+      "value": "2 of 2 tests passed"
+     },
+     {
+      "detail": "6 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fp_add/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FPADD-FORMAL-PROOF",
+      "instrument": null,
+      "method": "formal",
+      "planned": null,
+      "requirements": [
+       "FPADD-F-EQUIV"
+      ],
+      "status": "pass",
+      "title": "k-induction proofs of the variants against the reference (6 jobs; widths in formal/jobs.yaml)",
+      "value": "6 of 6 tests passed"
+     },
+     {
+      "detail": "6 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fp_add/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FPADD-FORMAL-REFUTE",
+      "instrument": null,
+      "method": "formal",
+      "planned": null,
+      "requirements": [
+       "FPADD-F-EQUIV"
+      ],
+      "status": "pass",
+      "title": "Each formal check refutes a planted fault (the check can fail)",
+      "value": "6 of 6 tests passed"
+     },
+     {
+      "detail": "1 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fp_add/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FPADD-MUTANT-TEST",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FPADD-F-BENCH"
+      ],
+      "status": "pass",
+      "title": "The mutation run as a test: no mutant survives, none fails to build",
+      "value": "1 of 1 tests passed"
+     },
+     {
+      "detail": "survived = []; invalid = []; valid = 27; score_pct = 100",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fp_add/verif/results/mutation.json"
+      },
+      "id": "V-FPADD-MUTANT-SCORE",
+      "instrument": null,
+      "method": "sim_measurement",
+      "planned": null,
+      "requirements": [
+       "FPADD-F-BENCH"
+      ],
+      "status": "pass",
+      "title": "Mutants killed of valid mutants (the record of the last full run)",
+      "value": true
+     },
+     {
+      "detail": "6 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fp_add/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FPADD-HARNESS",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FPADD-F-HARNESS"
+      ],
+      "status": "pass",
+      "title": "The packaged harness run standalone on every variant (with the checker and the coverage targets) and on a planted fault",
+      "value": "6 of 6 tests passed"
+     },
+     {
+      "detail": "5 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fp_add/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FPADD-PACKAGE",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FPADD-F-PACKAGE"
+      ],
+      "status": "pass",
+      "title": "spec.yaml against the RTL headers, spec.md against spec.yaml, Verilator -Wall at every point, wrappers and build.yaml current and lint-clean",
+      "value": "5 of 5 tests passed"
+     },
+     {
+      "detail": "statement not approved; ArithFloat.pack_inc_carry: kernel only; proof of the transcription, transcription not tested; recorded build (not re-run)",
+      "evidence": {
+       "exists": true,
+       "file": "formal/lean/records/build_record.json"
+      },
+      "id": "V-FPADD-LEAN-CARRY",
+      "instrument": null,
+      "lean": {
+       "approved": false,
+       "approved_by": null,
+       "approved_on": null,
+       "axioms": [
+        "Quot.sound",
+        "propext"
+       ],
+       "build_source": "recorded build (not re-run)",
+       "module": "Arith.Float",
+       "project": "formal/lean",
+       "rtl_link": "transcription_untested",
+       "rtl_link_text": "proof of the transcription, transcription not tested",
+       "statement_sha256": "8b1d9ffba70ef2838957c9b433c957e9756418797da9f39cbb77d32d61d62c60",
+       "theorem": "ArithFloat.pack_inc_carry",
+       "tier": "kernel_only"
+      },
+      "method": "formal_lean",
+      "planned": null,
+      "requirements": [
+       "FPADD-F-LEAN-CARRY"
+      ],
+      "status": "unapproved",
+      "title": "Rounding increment carries into the exponent",
+      "value": null
+     },
+     {
+      "detail": "statement not approved; ArithFloat.norm_shift: kernel only; proof of the transcription, transcription not tested; recorded build (not re-run)",
+      "evidence": {
+       "exists": true,
+       "file": "formal/lean/records/build_record.json"
+      },
+      "id": "V-FPADD-LEAN-NORM",
+      "instrument": null,
+      "lean": {
+       "approved": false,
+       "approved_by": null,
+       "approved_on": null,
+       "axioms": [
+        "Quot.sound",
+        "propext"
+       ],
+       "build_source": "recorded build (not re-run)",
+       "module": "Arith.Float",
+       "project": "formal/lean",
+       "rtl_link": "transcription_untested",
+       "rtl_link_text": "proof of the transcription, transcription not tested",
+       "statement_sha256": "700f80677f865f81b51396aa4daea8a674f275d90ca307041b28ce1efccfd3cf",
+       "theorem": "ArithFloat.norm_shift",
+       "tier": "kernel_only"
+      },
+      "method": "formal_lean",
+      "planned": null,
+      "requirements": [
+       "FPADD-F-LEAN-NORM"
+      ],
+      "status": "unapproved",
+      "title": "Normalising left by NW - 1 - msb puts the leading one at the top",
+      "value": null
+     },
+     {
+      "detail": "statement not approved; ArithFloat.rne_nearest_even: kernel only; proof of the transcription, transcription not tested; recorded build (not re-run)",
+      "evidence": {
+       "exists": true,
+       "file": "formal/lean/records/build_record.json"
+      },
+      "id": "V-FPADD-LEAN-RNE",
+      "instrument": null,
+      "lean": {
+       "approved": false,
+       "approved_by": null,
+       "approved_on": null,
+       "axioms": [
+        "Classical.choice",
+        "Quot.sound",
+        "propext"
+       ],
+       "build_source": "recorded build (not re-run)",
+       "module": "Arith.Float",
+       "project": "formal/lean",
+       "rtl_link": "transcription_untested",
+       "rtl_link_text": "proof of the transcription, transcription not tested",
+       "statement_sha256": "5c119f89efc9a86c566e4b07f1b405e20c03cecb2ee75faf032273cd78f5428c",
+       "theorem": "ArithFloat.rne_nearest_even",
+       "tier": "kernel_only"
+      },
+      "method": "formal_lean",
+      "planned": null,
+      "requirements": [
+       "FPADD-F-LEAN-RNE"
+      ],
+      "status": "unapproved",
+      "title": "The rounding decision is round-to-nearest, ties to even",
+      "value": null
+     }
+    ],
+    "notes": "Arithmetic library, function fp_add (brief 139e). Everything here is before Vivado: the model, the RTL variants, simulation, formal equivalence, Lean statements and the prepared out-of-context build files. No performance requirement exists because nothing about LUTs, DSPs, Fmax or power has been measured yet; the Vivado runs (build/<variant>/build.yaml) will add them. Every requirement is a draft written by the agent; none is agreed by a human. Lean statements are not approved. Generated by arith/tools/gen_testplan.py.",
+    "path": "arith/fp_add",
+    "requirements": [
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FPADD-F-MODEL",
+      "items": [
+       "V-FPADD-MODEL"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "source": "arith/fp_add/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "arith/fp_add/model.py gives, for every input, the result that spec.md defines. It agrees with an independent formulation (an enumeration of every finite value of a tiny format (the nearest one, ties to even) and NumPy's hardware float32 addition) on every input at small widths and with Python's integer arithmetic on random large-width inputs, and the conventions that a user could guess wrong (spec.md, last section) are pinned by examples.",
+      "title": "The bit-exact model is right"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FPADD-F-EXACT",
+      "items": [
+       "V-FPADD-EXHAUSTIVE",
+       "V-FPADD-RANDOM"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "source": "arith/fp_add/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "At every parameter point listed in spec.yaml (16 exhaustive points, 12 random ones, across 2 variants), each variant's outputs equal the model's in every clock: every input is driven at the small points; edge values, runs of ones, and random inputs at the large ones. The function is exact, so there is no error bound.",
+      "title": "Every variant is bit-exact against the model"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FPADD-F-LAT",
+      "items": [
+       "V-FPADD-LATENCY"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "source": "arith/fp_add/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "Each variant's latency in clocks is the expression in spec.yaml (single_path: STAGES; dual_path: STAGES), and the bench, run with a latency two clocks off, fails for every variant, so the passing runs prove the latency rather than assume it.",
+      "title": "Latency is as specified and the bench would notice if it were not"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FPADD-F-EQUIV",
+      "items": [
+       "V-FPADD-FORMAL-PROOF",
+       "V-FPADD-FORMAL-REFUTE"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "formal"
+      ],
+      "source": "arith/fp_add/formal/jobs.yaml",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "SymbiYosys with the slang front end checks the variants against each other and a plain reference (a single `+` or `*`, or the specification written as RTL). The jobs in formal/jobs.yaml name the widths; a proof is by k-induction (for all inputs, any run length) at the widths listed there, a bounded check holds only to its stated depth. Widths beyond the listed ones are covered by simulation, not by proof.",
+      "title": "The variants are equivalent to a plain reference, by proof where the tools allow"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FPADD-F-BENCH",
+      "items": [
+       "V-FPADD-MUTANT-TEST",
+       "V-FPADD-MUTANT-SCORE"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_measurement",
+       "sim_test"
+      ],
+      "source": "arith/fp_add/verif/mutants.yaml",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "Every one of the mutants in verif/mutants.yaml (one exact text change each, in the variant's RTL: an inverted condition, a wrong constant, a dropped connection, a lost reset) makes the cocotb bench fail; mutants that survive or do not build are reported, never hidden.",
+      "title": "The bench catches seeded faults"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FPADD-F-HARNESS",
+      "items": [
+       "V-FPADD-HARNESS"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "source": "arith/fp_add/harness/README.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "arith/fp_add/harness holds the model, the cocotb bench, a SystemVerilog checker, coverage targets and a runner that needs nothing else from the repository. Run standalone against every variant (one small exhaustive point and one large random point each, with the checker beside the instance) it passes and the random runs meet every coverage target; run against a planted fault it fails, with and without the checker. Its generated files are the repository's own bench, so they cannot drift.",
+      "title": "The packaged verification harness is a standalone deliverable that works"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FPADD-F-PACKAGE",
+      "items": [
+       "V-FPADD-PACKAGE"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "source": "arith/fp_add/spec.yaml",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "spec.yaml states an interface contract (protocol, throughput, latency, reset, clock, stalls) and integration guidance (port timing, constraints to carry). Every variant passes Verilator -Wall at every point of spec.yaml; its ports and default parameters are the ones spec.yaml states; its header states the intended primitive use before any Vivado run; spec.md is the rendering of spec.yaml; the out-of-context wrapper and the build.yaml for each variant (Artix-7 xc7a100t and K26 xck26, prepared and not run) are current and lint-clean at every point they list, so a Vivado run can start from the repository alone.",
+      "title": "The RTL is lint-clean, and its files agree with the specification and with the Vivado build files"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FPADD-F-LEAN-CARRY",
+      "items": [
+       "V-FPADD-LEAN-CARRY"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [],
+      "source": "arith/fp_common/fp_pack.sv (wsum: the increment added to the packed pattern)",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "unapproved",
+      "text": "For a packed pattern e * m + f with fraction f < m (m = 2^MAN), adding the rounding increment 1 either raises the fraction by one or, when the fraction is all ones, raises the exponent by one and leaves a zero fraction: the identity fp_pack's single add on the packed {exponent, fraction} pattern rests on, so a significand overflow, a subnormal rounding up to the smallest normal number and a largest finite number rounding up to infinity need no special case. The statement is the specification and is NOT approved by a human (verif/lean_approvals.yaml is empty), so the proof is shown but not counted as verification. The Lean text is a hand transcription of the RTL's structure; it models no timing or clocking.",
+      "title": "Rounding increment carries into the exponent, for every width"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FPADD-F-LEAN-NORM",
+      "items": [
+       "V-FPADD-LEAN-NORM"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [],
+      "source": "arith/fp_common/fp_norm.sv (the shift by the leading-zero count)",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "unapproved",
+      "text": "For a value v with its leading one at bit k (2^k <= v < 2^(k+1)) and k < NW, shifting left by NW - 1 - k places gives a value in [2^(NW-1), 2^NW): the leading one is at bit NW - 1, which is what fp_norm's count lz = NW - 1 - msb does. The statement is the specification and is NOT approved by a human (verif/lean_approvals.yaml is empty), so the proof is shown but not counted as verification. The Lean text is a hand transcription of the RTL's structure; it models no timing or clocking.",
+      "title": "Normalising left by NW - 1 - msb puts the leading one at the top, for every width"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FPADD-F-LEAN-RNE",
+      "items": [
+       "V-FPADD-LEAN-RNE"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [],
+      "source": "arith/fp_common/fp_pack.sv (guard, rest and inc)",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "unapproved",
+      "text": "For a kept part hi and a discarded part lo below the threshold 2h, incrementing hi exactly when lo > h, or lo = h and hi is odd (the guard-and-sticky rule of fp_pack), gives a value within h of the exact one and, when it is exactly h away, even. The statement is the specification and is NOT approved by a human (verif/lean_approvals.yaml is empty), so the proof is shown but not counted as verification. The Lean text is a hand transcription of the RTL's structure; it models no timing or clocking.",
+      "title": "The rounding decision is round-to-nearest, ties to even, for every width"
+     }
+    ],
+    "source_schema": "fpga-design-agent/testplan/v1",
+    "summary": {
+     "by_kind": {
+      "functional": 10,
+      "interface": 0,
+      "performance": 0,
+      "safety": 0
+     },
+     "by_method": {
+      "assertion": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "board_measurement": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "coverage_bin": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "formal": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 2,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "formal_lean": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 0,
+       "stale": 0,
+       "unapproved": 3
+      },
+      "review": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "sim_measurement": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 1,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "sim_test": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 7,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "timing": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "uvm_test": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 0,
+       "stale": 0,
+       "unapproved": 0
+      }
+     },
+     "by_state": {
+      "unapproved": 3,
+      "verified": 7
+     },
+     "external": 0,
+     "external_hardware_done": 0,
+     "gap_counts": {
+      "lean_statement_unapproved": 3
+     },
+     "human_reviews": 0,
+     "items": 13,
+     "lean": {
+      "approved": 0,
+      "build_sources": [
+       "recorded build (not re-run)"
+      ],
+      "by_rtl_link": {
+       "model_only": 0,
+       "rtl_generated": 0,
+       "transcription_tested": 0,
+       "transcription_untested": 3
+      },
+      "by_status": {
+       "unapproved": 3
+      },
+      "by_tier": {
+       "compiled_decision_procedure": 0,
+       "kernel_only": 3,
+       "unsound": 0
+      },
+      "items": 3,
+      "statement_not_approved": 3
+     },
+     "line": "10 requirements (10 functional); 7 verified; 0 of 10 requirements agreed by a human, 0 human review(s) recorded; 3 Lean proof item(s) (all widths): 0 with a human-approved statement, 3 with statement not approved; 3 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run).",
+     "performance_board": 0,
+     "performance_sim_only": 0,
+     "performance_timing": 0,
+     "requirements": 10,
+     "spec_agreed": 0
+    }
+   },
+   {
+    "design": "arith_fp_fma",
+    "gaps": [
+     {
+      "gate": false,
+      "id": "V-FPFMA-LEAN-CARRY",
+      "text": "the Lean statement is not approved by a human; until it is, the proof is not counted as verification",
+      "type": "lean_statement_unapproved"
+     },
+     {
+      "gate": false,
+      "id": "V-FPFMA-LEAN-NORM",
+      "text": "the Lean statement is not approved by a human; until it is, the proof is not counted as verification",
+      "type": "lean_statement_unapproved"
+     },
+     {
+      "gate": false,
+      "id": "V-FPFMA-LEAN-RNE",
+      "text": "the Lean statement is not approved by a human; until it is, the proof is not counted as verification",
+      "type": "lean_statement_unapproved"
+     }
+    ],
+    "items": [
+     {
+      "detail": "17 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fp_fma/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FPFMA-MODEL",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FPFMA-F-MODEL"
+      ],
+      "status": "pass",
+      "title": "The model against independent formulations (exhaustive small, random large) and the pinned conventions",
+      "value": "17 of 17 tests passed"
+     },
+     {
+      "detail": "11 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fp_fma/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FPFMA-EXHAUSTIVE",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FPFMA-F-EXACT"
+      ],
+      "status": "pass",
+      "title": "Every variant against the model, every input, at the small points (Icarus + cocotb)",
+      "value": "11 of 11 tests passed"
+     },
+     {
+      "detail": "11 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fp_fma/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FPFMA-RANDOM",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FPFMA-F-EXACT"
+      ],
+      "status": "pass",
+      "title": "Every variant against the model at the large points: edge values, carry runs and random inputs (Icarus + cocotb)",
+      "value": "11 of 11 tests passed"
+     },
+     {
+      "detail": "2 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fp_fma/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FPFMA-LATENCY",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FPFMA-F-LAT"
+      ],
+      "status": "pass",
+      "title": "The bench passes at the stated latency and fails two clocks off, for every variant",
+      "value": "2 of 2 tests passed"
+     },
+     {
+      "detail": "5 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fp_fma/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FPFMA-FORMAL-PROOF",
+      "instrument": null,
+      "method": "formal",
+      "planned": null,
+      "requirements": [
+       "FPFMA-F-EQUIV"
+      ],
+      "status": "pass",
+      "title": "k-induction proofs of the variants against the reference (5 jobs; widths in formal/jobs.yaml)",
+      "value": "5 of 5 tests passed"
+     },
+     {
+      "detail": "6 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fp_fma/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FPFMA-FORMAL-REFUTE",
+      "instrument": null,
+      "method": "formal",
+      "planned": null,
+      "requirements": [
+       "FPFMA-F-EQUIV"
+      ],
+      "status": "pass",
+      "title": "Each formal check refutes a planted fault (the check can fail)",
+      "value": "6 of 6 tests passed"
+     },
+     {
+      "detail": "1 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fp_fma/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FPFMA-MUTANT-TEST",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FPFMA-F-BENCH"
+      ],
+      "status": "pass",
+      "title": "The mutation run as a test: no mutant survives, none fails to build",
+      "value": "1 of 1 tests passed"
+     },
+     {
+      "detail": "survived = []; invalid = []; valid = 21; score_pct = 100",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fp_fma/verif/results/mutation.json"
+      },
+      "id": "V-FPFMA-MUTANT-SCORE",
+      "instrument": null,
+      "method": "sim_measurement",
+      "planned": null,
+      "requirements": [
+       "FPFMA-F-BENCH"
+      ],
+      "status": "pass",
+      "title": "Mutants killed of valid mutants (the record of the last full run)",
+      "value": true
+     },
+     {
+      "detail": "6 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fp_fma/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FPFMA-HARNESS",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FPFMA-F-HARNESS"
+      ],
+      "status": "pass",
+      "title": "The packaged harness run standalone on every variant (with the checker and the coverage targets) and on a planted fault",
+      "value": "6 of 6 tests passed"
+     },
+     {
+      "detail": "5 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fp_fma/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FPFMA-PACKAGE",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FPFMA-F-PACKAGE"
+      ],
+      "status": "pass",
+      "title": "spec.yaml against the RTL headers, spec.md against spec.yaml, Verilator -Wall at every point, wrappers and build.yaml current and lint-clean",
+      "value": "5 of 5 tests passed"
+     },
+     {
+      "detail": "statement not approved; ArithFloat.pack_inc_carry: kernel only; proof of the transcription, transcription not tested; recorded build (not re-run)",
+      "evidence": {
+       "exists": true,
+       "file": "formal/lean/records/build_record.json"
+      },
+      "id": "V-FPFMA-LEAN-CARRY",
+      "instrument": null,
+      "lean": {
+       "approved": false,
+       "approved_by": null,
+       "approved_on": null,
+       "axioms": [
+        "Quot.sound",
+        "propext"
+       ],
+       "build_source": "recorded build (not re-run)",
+       "module": "Arith.Float",
+       "project": "formal/lean",
+       "rtl_link": "transcription_untested",
+       "rtl_link_text": "proof of the transcription, transcription not tested",
+       "statement_sha256": "8b1d9ffba70ef2838957c9b433c957e9756418797da9f39cbb77d32d61d62c60",
+       "theorem": "ArithFloat.pack_inc_carry",
+       "tier": "kernel_only"
+      },
+      "method": "formal_lean",
+      "planned": null,
+      "requirements": [
+       "FPFMA-F-LEAN-CARRY"
+      ],
+      "status": "unapproved",
+      "title": "Rounding increment carries into the exponent",
+      "value": null
+     },
+     {
+      "detail": "statement not approved; ArithFloat.norm_shift: kernel only; proof of the transcription, transcription not tested; recorded build (not re-run)",
+      "evidence": {
+       "exists": true,
+       "file": "formal/lean/records/build_record.json"
+      },
+      "id": "V-FPFMA-LEAN-NORM",
+      "instrument": null,
+      "lean": {
+       "approved": false,
+       "approved_by": null,
+       "approved_on": null,
+       "axioms": [
+        "Quot.sound",
+        "propext"
+       ],
+       "build_source": "recorded build (not re-run)",
+       "module": "Arith.Float",
+       "project": "formal/lean",
+       "rtl_link": "transcription_untested",
+       "rtl_link_text": "proof of the transcription, transcription not tested",
+       "statement_sha256": "700f80677f865f81b51396aa4daea8a674f275d90ca307041b28ce1efccfd3cf",
+       "theorem": "ArithFloat.norm_shift",
+       "tier": "kernel_only"
+      },
+      "method": "formal_lean",
+      "planned": null,
+      "requirements": [
+       "FPFMA-F-LEAN-NORM"
+      ],
+      "status": "unapproved",
+      "title": "Normalising left by NW - 1 - msb puts the leading one at the top",
+      "value": null
+     },
+     {
+      "detail": "statement not approved; ArithFloat.rne_nearest_even: kernel only; proof of the transcription, transcription not tested; recorded build (not re-run)",
+      "evidence": {
+       "exists": true,
+       "file": "formal/lean/records/build_record.json"
+      },
+      "id": "V-FPFMA-LEAN-RNE",
+      "instrument": null,
+      "lean": {
+       "approved": false,
+       "approved_by": null,
+       "approved_on": null,
+       "axioms": [
+        "Classical.choice",
+        "Quot.sound",
+        "propext"
+       ],
+       "build_source": "recorded build (not re-run)",
+       "module": "Arith.Float",
+       "project": "formal/lean",
+       "rtl_link": "transcription_untested",
+       "rtl_link_text": "proof of the transcription, transcription not tested",
+       "statement_sha256": "5c119f89efc9a86c566e4b07f1b405e20c03cecb2ee75faf032273cd78f5428c",
+       "theorem": "ArithFloat.rne_nearest_even",
+       "tier": "kernel_only"
+      },
+      "method": "formal_lean",
+      "planned": null,
+      "requirements": [
+       "FPFMA-F-LEAN-RNE"
+      ],
+      "status": "unapproved",
+      "title": "The rounding decision is round-to-nearest, ties to even",
+      "value": null
+     }
+    ],
+    "notes": "Arithmetic library, function fp_fma (brief 139e). Everything here is before Vivado: the model, the RTL variants, simulation, formal equivalence, Lean statements and the prepared out-of-context build files. No performance requirement exists because nothing about LUTs, DSPs, Fmax or power has been measured yet; the Vivado runs (build/<variant>/build.yaml) will add them. Every requirement is a draft written by the agent; none is agreed by a human. Lean statements are not approved. Generated by arith/tools/gen_testplan.py.",
+    "path": "arith/fp_fma",
+    "requirements": [
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FPFMA-F-MODEL",
+      "items": [
+       "V-FPFMA-MODEL"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "source": "arith/fp_fma/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "arith/fp_fma/model.py gives, for every input, the result that spec.md defines. It agrees with an independent formulation (an enumeration of every finite value of a tiny format (the nearest one, ties to even), the multiplier and adder models, and the identities a * 1 + c = c + a and a * b + 0 = a * b) on every input at small widths and with Python's integer arithmetic on random large-width inputs, and the conventions that a user could guess wrong (spec.md, last section) are pinned by examples.",
+      "title": "The bit-exact model is right"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FPFMA-F-EXACT",
+      "items": [
+       "V-FPFMA-EXHAUSTIVE",
+       "V-FPFMA-RANDOM"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "source": "arith/fp_fma/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "At every parameter point listed in spec.yaml (11 exhaustive points, 11 random ones, across 2 variants), each variant's outputs equal the model's in every clock: every input is driven at the small points; edge values, runs of ones, and random inputs at the large ones. The function is exact, so there is no error bound.",
+      "title": "Every variant is bit-exact against the model"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FPFMA-F-LAT",
+      "items": [
+       "V-FPFMA-LATENCY"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "source": "arith/fp_fma/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "Each variant's latency in clocks is the expression in spec.yaml (fused: STAGES; cascade: STAGES_M + STAGES_A), and the bench, run with a latency two clocks off, fails for every variant, so the passing runs prove the latency rather than assume it.",
+      "title": "Latency is as specified and the bench would notice if it were not"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FPFMA-F-EQUIV",
+      "items": [
+       "V-FPFMA-FORMAL-PROOF",
+       "V-FPFMA-FORMAL-REFUTE"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "formal"
+      ],
+      "source": "arith/fp_fma/formal/jobs.yaml",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "SymbiYosys with the slang front end checks the variants against each other and a plain reference (a single `+` or `*`, or the specification written as RTL). The jobs in formal/jobs.yaml name the widths; a proof is by k-induction (for all inputs, any run length) at the widths listed there, a bounded check holds only to its stated depth. Widths beyond the listed ones are covered by simulation, not by proof.",
+      "title": "The variants are equivalent to a plain reference, by proof where the tools allow"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FPFMA-F-BENCH",
+      "items": [
+       "V-FPFMA-MUTANT-TEST",
+       "V-FPFMA-MUTANT-SCORE"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_measurement",
+       "sim_test"
+      ],
+      "source": "arith/fp_fma/verif/mutants.yaml",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "Every one of the mutants in verif/mutants.yaml (one exact text change each, in the variant's RTL: an inverted condition, a wrong constant, a dropped connection, a lost reset) makes the cocotb bench fail; mutants that survive or do not build are reported, never hidden.",
+      "title": "The bench catches seeded faults"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FPFMA-F-HARNESS",
+      "items": [
+       "V-FPFMA-HARNESS"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "source": "arith/fp_fma/harness/README.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "arith/fp_fma/harness holds the model, the cocotb bench, a SystemVerilog checker, coverage targets and a runner that needs nothing else from the repository. Run standalone against every variant (one small exhaustive point and one large random point each, with the checker beside the instance) it passes and the random runs meet every coverage target; run against a planted fault it fails, with and without the checker. Its generated files are the repository's own bench, so they cannot drift.",
+      "title": "The packaged verification harness is a standalone deliverable that works"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FPFMA-F-PACKAGE",
+      "items": [
+       "V-FPFMA-PACKAGE"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "source": "arith/fp_fma/spec.yaml",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "spec.yaml states an interface contract (protocol, throughput, latency, reset, clock, stalls) and integration guidance (port timing, constraints to carry). Every variant passes Verilator -Wall at every point of spec.yaml; its ports and default parameters are the ones spec.yaml states; its header states the intended primitive use before any Vivado run; spec.md is the rendering of spec.yaml; the out-of-context wrapper and the build.yaml for each variant (Artix-7 xc7a100t and K26 xck26, prepared and not run) are current and lint-clean at every point they list, so a Vivado run can start from the repository alone.",
+      "title": "The RTL is lint-clean, and its files agree with the specification and with the Vivado build files"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FPFMA-F-LEAN-CARRY",
+      "items": [
+       "V-FPFMA-LEAN-CARRY"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [],
+      "source": "arith/fp_common/fp_pack.sv (wsum: the increment added to the packed pattern)",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "unapproved",
+      "text": "For a packed pattern e * m + f with fraction f < m (m = 2^MAN), adding the rounding increment 1 either raises the fraction by one or, when the fraction is all ones, raises the exponent by one and leaves a zero fraction: the identity fp_pack's single add on the packed {exponent, fraction} pattern rests on, so a significand overflow, a subnormal rounding up to the smallest normal number and a largest finite number rounding up to infinity need no special case. The statement is the specification and is NOT approved by a human (verif/lean_approvals.yaml is empty), so the proof is shown but not counted as verification. The Lean text is a hand transcription of the RTL's structure; it models no timing or clocking.",
+      "title": "Rounding increment carries into the exponent, for every width"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FPFMA-F-LEAN-NORM",
+      "items": [
+       "V-FPFMA-LEAN-NORM"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [],
+      "source": "arith/fp_common/fp_norm.sv (the shift by the leading-zero count)",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "unapproved",
+      "text": "For a value v with its leading one at bit k (2^k <= v < 2^(k+1)) and k < NW, shifting left by NW - 1 - k places gives a value in [2^(NW-1), 2^NW): the leading one is at bit NW - 1, which is what fp_norm's count lz = NW - 1 - msb does. The statement is the specification and is NOT approved by a human (verif/lean_approvals.yaml is empty), so the proof is shown but not counted as verification. The Lean text is a hand transcription of the RTL's structure; it models no timing or clocking.",
+      "title": "Normalising left by NW - 1 - msb puts the leading one at the top, for every width"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FPFMA-F-LEAN-RNE",
+      "items": [
+       "V-FPFMA-LEAN-RNE"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [],
+      "source": "arith/fp_common/fp_pack.sv (guard, rest and inc)",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "unapproved",
+      "text": "For a kept part hi and a discarded part lo below the threshold 2h, incrementing hi exactly when lo > h, or lo = h and hi is odd (the guard-and-sticky rule of fp_pack), gives a value within h of the exact one and, when it is exactly h away, even. The statement is the specification and is NOT approved by a human (verif/lean_approvals.yaml is empty), so the proof is shown but not counted as verification. The Lean text is a hand transcription of the RTL's structure; it models no timing or clocking.",
+      "title": "The rounding decision is round-to-nearest, ties to even, for every width"
+     }
+    ],
+    "source_schema": "fpga-design-agent/testplan/v1",
+    "summary": {
+     "by_kind": {
+      "functional": 10,
+      "interface": 0,
+      "performance": 0,
+      "safety": 0
+     },
+     "by_method": {
+      "assertion": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "board_measurement": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "coverage_bin": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "formal": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 2,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "formal_lean": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 0,
+       "stale": 0,
+       "unapproved": 3
+      },
+      "review": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "sim_measurement": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 1,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "sim_test": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 7,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "timing": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "uvm_test": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 0,
+       "stale": 0,
+       "unapproved": 0
+      }
+     },
+     "by_state": {
+      "unapproved": 3,
+      "verified": 7
+     },
+     "external": 0,
+     "external_hardware_done": 0,
+     "gap_counts": {
+      "lean_statement_unapproved": 3
+     },
+     "human_reviews": 0,
+     "items": 13,
+     "lean": {
+      "approved": 0,
+      "build_sources": [
+       "recorded build (not re-run)"
+      ],
+      "by_rtl_link": {
+       "model_only": 0,
+       "rtl_generated": 0,
+       "transcription_tested": 0,
+       "transcription_untested": 3
+      },
+      "by_status": {
+       "unapproved": 3
+      },
+      "by_tier": {
+       "compiled_decision_procedure": 0,
+       "kernel_only": 3,
+       "unsound": 0
+      },
+      "items": 3,
+      "statement_not_approved": 3
+     },
+     "line": "10 requirements (10 functional); 7 verified; 0 of 10 requirements agreed by a human, 0 human review(s) recorded; 3 Lean proof item(s) (all widths): 0 with a human-approved statement, 3 with statement not approved; 3 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run).",
+     "performance_board": 0,
+     "performance_sim_only": 0,
+     "performance_timing": 0,
+     "requirements": 10,
+     "spec_agreed": 0
+    }
+   },
+   {
+    "design": "arith_fp_mul",
+    "gaps": [
+     {
+      "gate": false,
+      "id": "V-FPMUL-LEAN-CARRY",
+      "text": "the Lean statement is not approved by a human; until it is, the proof is not counted as verification",
+      "type": "lean_statement_unapproved"
+     },
+     {
+      "gate": false,
+      "id": "V-FPMUL-LEAN-NORM",
+      "text": "the Lean statement is not approved by a human; until it is, the proof is not counted as verification",
+      "type": "lean_statement_unapproved"
+     },
+     {
+      "gate": false,
+      "id": "V-FPMUL-LEAN-RNE",
+      "text": "the Lean statement is not approved by a human; until it is, the proof is not counted as verification",
+      "type": "lean_statement_unapproved"
+     }
+    ],
+    "items": [
+     {
+      "detail": "10 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fp_mul/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FPMUL-MODEL",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FPMUL-F-MODEL"
+      ],
+      "status": "pass",
+      "title": "The model against independent formulations (exhaustive small, random large) and the pinned conventions",
+      "value": "10 of 10 tests passed"
+     },
+     {
+      "detail": "16 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fp_mul/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FPMUL-EXHAUSTIVE",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FPMUL-F-EXACT"
+      ],
+      "status": "pass",
+      "title": "Every variant against the model, every input, at the small points (Icarus + cocotb)",
+      "value": "16 of 16 tests passed"
+     },
+     {
+      "detail": "12 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fp_mul/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FPMUL-RANDOM",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FPMUL-F-EXACT"
+      ],
+      "status": "pass",
+      "title": "Every variant against the model at the large points: edge values, carry runs and random inputs (Icarus + cocotb)",
+      "value": "12 of 12 tests passed"
+     },
+     {
+      "detail": "2 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fp_mul/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FPMUL-LATENCY",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FPMUL-F-LAT"
+      ],
+      "status": "pass",
+      "title": "The bench passes at the stated latency and fails two clocks off, for every variant",
+      "value": "2 of 2 tests passed"
+     },
+     {
+      "detail": "6 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fp_mul/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FPMUL-FORMAL-PROOF",
+      "instrument": null,
+      "method": "formal",
+      "planned": null,
+      "requirements": [
+       "FPMUL-F-EQUIV"
+      ],
+      "status": "pass",
+      "title": "k-induction proofs of the variants against the reference (6 jobs; widths in formal/jobs.yaml)",
+      "value": "6 of 6 tests passed"
+     },
+     {
+      "detail": "6 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fp_mul/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FPMUL-FORMAL-REFUTE",
+      "instrument": null,
+      "method": "formal",
+      "planned": null,
+      "requirements": [
+       "FPMUL-F-EQUIV"
+      ],
+      "status": "pass",
+      "title": "Each formal check refutes a planted fault (the check can fail)",
+      "value": "6 of 6 tests passed"
+     },
+     {
+      "detail": "1 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fp_mul/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FPMUL-MUTANT-TEST",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FPMUL-F-BENCH"
+      ],
+      "status": "pass",
+      "title": "The mutation run as a test: no mutant survives, none fails to build",
+      "value": "1 of 1 tests passed"
+     },
+     {
+      "detail": "survived = []; invalid = []; valid = 22; score_pct = 100",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fp_mul/verif/results/mutation.json"
+      },
+      "id": "V-FPMUL-MUTANT-SCORE",
+      "instrument": null,
+      "method": "sim_measurement",
+      "planned": null,
+      "requirements": [
+       "FPMUL-F-BENCH"
+      ],
+      "status": "pass",
+      "title": "Mutants killed of valid mutants (the record of the last full run)",
+      "value": true
+     },
+     {
+      "detail": "6 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fp_mul/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FPMUL-HARNESS",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FPMUL-F-HARNESS"
+      ],
+      "status": "pass",
+      "title": "The packaged harness run standalone on every variant (with the checker and the coverage targets) and on a planted fault",
+      "value": "6 of 6 tests passed"
+     },
+     {
+      "detail": "5 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fp_mul/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FPMUL-PACKAGE",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FPMUL-F-PACKAGE"
+      ],
+      "status": "pass",
+      "title": "spec.yaml against the RTL headers, spec.md against spec.yaml, Verilator -Wall at every point, wrappers and build.yaml current and lint-clean",
+      "value": "5 of 5 tests passed"
+     },
+     {
+      "detail": "statement not approved; ArithFloat.pack_inc_carry: kernel only; proof of the transcription, transcription not tested; recorded build (not re-run)",
+      "evidence": {
+       "exists": true,
+       "file": "formal/lean/records/build_record.json"
+      },
+      "id": "V-FPMUL-LEAN-CARRY",
+      "instrument": null,
+      "lean": {
+       "approved": false,
+       "approved_by": null,
+       "approved_on": null,
+       "axioms": [
+        "Quot.sound",
+        "propext"
+       ],
+       "build_source": "recorded build (not re-run)",
+       "module": "Arith.Float",
+       "project": "formal/lean",
+       "rtl_link": "transcription_untested",
+       "rtl_link_text": "proof of the transcription, transcription not tested",
+       "statement_sha256": "8b1d9ffba70ef2838957c9b433c957e9756418797da9f39cbb77d32d61d62c60",
+       "theorem": "ArithFloat.pack_inc_carry",
+       "tier": "kernel_only"
+      },
+      "method": "formal_lean",
+      "planned": null,
+      "requirements": [
+       "FPMUL-F-LEAN-CARRY"
+      ],
+      "status": "unapproved",
+      "title": "Rounding increment carries into the exponent",
+      "value": null
+     },
+     {
+      "detail": "statement not approved; ArithFloat.norm_shift: kernel only; proof of the transcription, transcription not tested; recorded build (not re-run)",
+      "evidence": {
+       "exists": true,
+       "file": "formal/lean/records/build_record.json"
+      },
+      "id": "V-FPMUL-LEAN-NORM",
+      "instrument": null,
+      "lean": {
+       "approved": false,
+       "approved_by": null,
+       "approved_on": null,
+       "axioms": [
+        "Quot.sound",
+        "propext"
+       ],
+       "build_source": "recorded build (not re-run)",
+       "module": "Arith.Float",
+       "project": "formal/lean",
+       "rtl_link": "transcription_untested",
+       "rtl_link_text": "proof of the transcription, transcription not tested",
+       "statement_sha256": "700f80677f865f81b51396aa4daea8a674f275d90ca307041b28ce1efccfd3cf",
+       "theorem": "ArithFloat.norm_shift",
+       "tier": "kernel_only"
+      },
+      "method": "formal_lean",
+      "planned": null,
+      "requirements": [
+       "FPMUL-F-LEAN-NORM"
+      ],
+      "status": "unapproved",
+      "title": "Normalising left by NW - 1 - msb puts the leading one at the top",
+      "value": null
+     },
+     {
+      "detail": "statement not approved; ArithFloat.rne_nearest_even: kernel only; proof of the transcription, transcription not tested; recorded build (not re-run)",
+      "evidence": {
+       "exists": true,
+       "file": "formal/lean/records/build_record.json"
+      },
+      "id": "V-FPMUL-LEAN-RNE",
+      "instrument": null,
+      "lean": {
+       "approved": false,
+       "approved_by": null,
+       "approved_on": null,
+       "axioms": [
+        "Classical.choice",
+        "Quot.sound",
+        "propext"
+       ],
+       "build_source": "recorded build (not re-run)",
+       "module": "Arith.Float",
+       "project": "formal/lean",
+       "rtl_link": "transcription_untested",
+       "rtl_link_text": "proof of the transcription, transcription not tested",
+       "statement_sha256": "5c119f89efc9a86c566e4b07f1b405e20c03cecb2ee75faf032273cd78f5428c",
+       "theorem": "ArithFloat.rne_nearest_even",
+       "tier": "kernel_only"
+      },
+      "method": "formal_lean",
+      "planned": null,
+      "requirements": [
+       "FPMUL-F-LEAN-RNE"
+      ],
+      "status": "unapproved",
+      "title": "The rounding decision is round-to-nearest, ties to even",
+      "value": null
+     }
+    ],
+    "notes": "Arithmetic library, function fp_mul (brief 139e). Everything here is before Vivado: the model, the RTL variants, simulation, formal equivalence, Lean statements and the prepared out-of-context build files. No performance requirement exists because nothing about LUTs, DSPs, Fmax or power has been measured yet; the Vivado runs (build/<variant>/build.yaml) will add them. Every requirement is a draft written by the agent; none is agreed by a human. Lean statements are not approved. Generated by arith/tools/gen_testplan.py.",
+    "path": "arith/fp_mul",
+    "requirements": [
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FPMUL-F-MODEL",
+      "items": [
+       "V-FPMUL-MODEL"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "source": "arith/fp_mul/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "arith/fp_mul/model.py gives, for every input, the result that spec.md defines. It agrees with an independent formulation (an enumeration of every finite value of a tiny format (the nearest one, ties to even) and NumPy's hardware float32 multiplication) on every input at small widths and with Python's integer arithmetic on random large-width inputs, and the conventions that a user could guess wrong (spec.md, last section) are pinned by examples.",
+      "title": "The bit-exact model is right"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FPMUL-F-EXACT",
+      "items": [
+       "V-FPMUL-EXHAUSTIVE",
+       "V-FPMUL-RANDOM"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "source": "arith/fp_mul/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "At every parameter point listed in spec.yaml (16 exhaustive points, 12 random ones, across 2 variants), each variant's outputs equal the model's in every clock: every input is driven at the small points; edge values, runs of ones, and random inputs at the large ones. The function is exact, so there is no error bound.",
+      "title": "Every variant is bit-exact against the model"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FPMUL-F-LAT",
+      "items": [
+       "V-FPMUL-LATENCY"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "source": "arith/fp_mul/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "Each variant's latency in clocks is the expression in spec.yaml (dsp: STAGES; lut: STAGES), and the bench, run with a latency two clocks off, fails for every variant, so the passing runs prove the latency rather than assume it.",
+      "title": "Latency is as specified and the bench would notice if it were not"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FPMUL-F-EQUIV",
+      "items": [
+       "V-FPMUL-FORMAL-PROOF",
+       "V-FPMUL-FORMAL-REFUTE"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "formal"
+      ],
+      "source": "arith/fp_mul/formal/jobs.yaml",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "SymbiYosys with the slang front end checks the variants against each other and a plain reference (a single `+` or `*`, or the specification written as RTL). The jobs in formal/jobs.yaml name the widths; a proof is by k-induction (for all inputs, any run length) at the widths listed there, a bounded check holds only to its stated depth. Widths beyond the listed ones are covered by simulation, not by proof.",
+      "title": "The variants are equivalent to a plain reference, by proof where the tools allow"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FPMUL-F-BENCH",
+      "items": [
+       "V-FPMUL-MUTANT-TEST",
+       "V-FPMUL-MUTANT-SCORE"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_measurement",
+       "sim_test"
+      ],
+      "source": "arith/fp_mul/verif/mutants.yaml",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "Every one of the mutants in verif/mutants.yaml (one exact text change each, in the variant's RTL: an inverted condition, a wrong constant, a dropped connection, a lost reset) makes the cocotb bench fail; mutants that survive or do not build are reported, never hidden.",
+      "title": "The bench catches seeded faults"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FPMUL-F-HARNESS",
+      "items": [
+       "V-FPMUL-HARNESS"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "source": "arith/fp_mul/harness/README.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "arith/fp_mul/harness holds the model, the cocotb bench, a SystemVerilog checker, coverage targets and a runner that needs nothing else from the repository. Run standalone against every variant (one small exhaustive point and one large random point each, with the checker beside the instance) it passes and the random runs meet every coverage target; run against a planted fault it fails, with and without the checker. Its generated files are the repository's own bench, so they cannot drift.",
+      "title": "The packaged verification harness is a standalone deliverable that works"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FPMUL-F-PACKAGE",
+      "items": [
+       "V-FPMUL-PACKAGE"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "source": "arith/fp_mul/spec.yaml",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "spec.yaml states an interface contract (protocol, throughput, latency, reset, clock, stalls) and integration guidance (port timing, constraints to carry). Every variant passes Verilator -Wall at every point of spec.yaml; its ports and default parameters are the ones spec.yaml states; its header states the intended primitive use before any Vivado run; spec.md is the rendering of spec.yaml; the out-of-context wrapper and the build.yaml for each variant (Artix-7 xc7a100t and K26 xck26, prepared and not run) are current and lint-clean at every point they list, so a Vivado run can start from the repository alone.",
+      "title": "The RTL is lint-clean, and its files agree with the specification and with the Vivado build files"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FPMUL-F-LEAN-CARRY",
+      "items": [
+       "V-FPMUL-LEAN-CARRY"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [],
+      "source": "arith/fp_common/fp_pack.sv (wsum: the increment added to the packed pattern)",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "unapproved",
+      "text": "For a packed pattern e * m + f with fraction f < m (m = 2^MAN), adding the rounding increment 1 either raises the fraction by one or, when the fraction is all ones, raises the exponent by one and leaves a zero fraction: the identity fp_pack's single add on the packed {exponent, fraction} pattern rests on, so a significand overflow, a subnormal rounding up to the smallest normal number and a largest finite number rounding up to infinity need no special case. The statement is the specification and is NOT approved by a human (verif/lean_approvals.yaml is empty), so the proof is shown but not counted as verification. The Lean text is a hand transcription of the RTL's structure; it models no timing or clocking.",
+      "title": "Rounding increment carries into the exponent, for every width"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FPMUL-F-LEAN-NORM",
+      "items": [
+       "V-FPMUL-LEAN-NORM"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [],
+      "source": "arith/fp_common/fp_norm.sv (the shift by the leading-zero count)",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "unapproved",
+      "text": "For a value v with its leading one at bit k (2^k <= v < 2^(k+1)) and k < NW, shifting left by NW - 1 - k places gives a value in [2^(NW-1), 2^NW): the leading one is at bit NW - 1, which is what fp_norm's count lz = NW - 1 - msb does. The statement is the specification and is NOT approved by a human (verif/lean_approvals.yaml is empty), so the proof is shown but not counted as verification. The Lean text is a hand transcription of the RTL's structure; it models no timing or clocking.",
+      "title": "Normalising left by NW - 1 - msb puts the leading one at the top, for every width"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FPMUL-F-LEAN-RNE",
+      "items": [
+       "V-FPMUL-LEAN-RNE"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [],
+      "source": "arith/fp_common/fp_pack.sv (guard, rest and inc)",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "unapproved",
+      "text": "For a kept part hi and a discarded part lo below the threshold 2h, incrementing hi exactly when lo > h, or lo = h and hi is odd (the guard-and-sticky rule of fp_pack), gives a value within h of the exact one and, when it is exactly h away, even. The statement is the specification and is NOT approved by a human (verif/lean_approvals.yaml is empty), so the proof is shown but not counted as verification. The Lean text is a hand transcription of the RTL's structure; it models no timing or clocking.",
+      "title": "The rounding decision is round-to-nearest, ties to even, for every width"
+     }
+    ],
+    "source_schema": "fpga-design-agent/testplan/v1",
+    "summary": {
+     "by_kind": {
+      "functional": 10,
+      "interface": 0,
+      "performance": 0,
+      "safety": 0
+     },
+     "by_method": {
+      "assertion": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "board_measurement": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "coverage_bin": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "formal": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 2,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "formal_lean": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 0,
+       "stale": 0,
+       "unapproved": 3
+      },
+      "review": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "sim_measurement": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 1,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "sim_test": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 7,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "timing": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "uvm_test": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 0,
+       "stale": 0,
+       "unapproved": 0
+      }
+     },
+     "by_state": {
+      "unapproved": 3,
+      "verified": 7
+     },
+     "external": 0,
+     "external_hardware_done": 0,
+     "gap_counts": {
+      "lean_statement_unapproved": 3
+     },
+     "human_reviews": 0,
+     "items": 13,
+     "lean": {
+      "approved": 0,
+      "build_sources": [
+       "recorded build (not re-run)"
+      ],
+      "by_rtl_link": {
+       "model_only": 0,
+       "rtl_generated": 0,
+       "transcription_tested": 0,
+       "transcription_untested": 3
+      },
+      "by_status": {
+       "unapproved": 3
+      },
+      "by_tier": {
+       "compiled_decision_procedure": 0,
+       "kernel_only": 3,
+       "unsound": 0
+      },
+      "items": 3,
+      "statement_not_approved": 3
+     },
+     "line": "10 requirements (10 functional); 7 verified; 0 of 10 requirements agreed by a human, 0 human review(s) recorded; 3 Lean proof item(s) (all widths): 0 with a human-approved statement, 3 with statement not approved; 3 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run).",
+     "performance_board": 0,
+     "performance_sim_only": 0,
+     "performance_timing": 0,
+     "requirements": 10,
+     "spec_agreed": 0
+    }
+   },
+   {
     "design": "arith_mac",
     "gaps": [
      {
@@ -7240,9 +9160,9 @@
   "framing": "The human specifies the requirements and checks that the verification is thorough enough. The agent holds the knowledge to implement and to verify. You can open any of the implementation or the evidence, and you do not have to. Hardware on the board, with attached instruments, is a verification layer of its own: where a requirement depends on something outside the design (an optical link, a network card, a data source) it may be the only way to close it.",
   "schema": "fda-traceability/1",
   "total": {
-   "designs": 5,
-   "requirements": 78,
-   "verified": 35
+   "designs": 8,
+   "requirements": 108,
+   "verified": 56
   }
  },
  "content": {
@@ -13304,6 +15224,1926 @@
     }
    },
    {
+    "design": "arith_fp_add",
+    "gaps": [
+     {
+      "gate": false,
+      "id": "V-FPADD-LEAN-CARRY",
+      "text": "the Lean statement is not approved by a human; until it is, the proof is not counted as verification",
+      "type": "lean_statement_unapproved"
+     },
+     {
+      "gate": false,
+      "id": "V-FPADD-LEAN-NORM",
+      "text": "the Lean statement is not approved by a human; until it is, the proof is not counted as verification",
+      "type": "lean_statement_unapproved"
+     },
+     {
+      "gate": false,
+      "id": "V-FPADD-LEAN-RNE",
+      "text": "the Lean statement is not approved by a human; until it is, the proof is not counted as verification",
+      "type": "lean_statement_unapproved"
+     }
+    ],
+    "items": [
+     {
+      "detail": "10 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fp_add/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FPADD-MODEL",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FPADD-F-MODEL"
+      ],
+      "status": "pass",
+      "title": "The model against independent formulations (exhaustive small, random large) and the pinned conventions",
+      "value": "10 of 10 tests passed"
+     },
+     {
+      "detail": "16 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fp_add/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FPADD-EXHAUSTIVE",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FPADD-F-EXACT"
+      ],
+      "status": "pass",
+      "title": "Every variant against the model, every input, at the small points (Icarus + cocotb)",
+      "value": "16 of 16 tests passed"
+     },
+     {
+      "detail": "12 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fp_add/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FPADD-RANDOM",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FPADD-F-EXACT"
+      ],
+      "status": "pass",
+      "title": "Every variant against the model at the large points: edge values, carry runs and random inputs (Icarus + cocotb)",
+      "value": "12 of 12 tests passed"
+     },
+     {
+      "detail": "2 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fp_add/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FPADD-LATENCY",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FPADD-F-LAT"
+      ],
+      "status": "pass",
+      "title": "The bench passes at the stated latency and fails two clocks off, for every variant",
+      "value": "2 of 2 tests passed"
+     },
+     {
+      "detail": "6 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fp_add/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FPADD-FORMAL-PROOF",
+      "instrument": null,
+      "method": "formal",
+      "planned": null,
+      "requirements": [
+       "FPADD-F-EQUIV"
+      ],
+      "status": "pass",
+      "title": "k-induction proofs of the variants against the reference (6 jobs; widths in formal/jobs.yaml)",
+      "value": "6 of 6 tests passed"
+     },
+     {
+      "detail": "6 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fp_add/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FPADD-FORMAL-REFUTE",
+      "instrument": null,
+      "method": "formal",
+      "planned": null,
+      "requirements": [
+       "FPADD-F-EQUIV"
+      ],
+      "status": "pass",
+      "title": "Each formal check refutes a planted fault (the check can fail)",
+      "value": "6 of 6 tests passed"
+     },
+     {
+      "detail": "1 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fp_add/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FPADD-MUTANT-TEST",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FPADD-F-BENCH"
+      ],
+      "status": "pass",
+      "title": "The mutation run as a test: no mutant survives, none fails to build",
+      "value": "1 of 1 tests passed"
+     },
+     {
+      "detail": "survived = []; invalid = []; valid = 27; score_pct = 100",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fp_add/verif/results/mutation.json"
+      },
+      "id": "V-FPADD-MUTANT-SCORE",
+      "instrument": null,
+      "method": "sim_measurement",
+      "planned": null,
+      "requirements": [
+       "FPADD-F-BENCH"
+      ],
+      "status": "pass",
+      "title": "Mutants killed of valid mutants (the record of the last full run)",
+      "value": true
+     },
+     {
+      "detail": "6 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fp_add/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FPADD-HARNESS",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FPADD-F-HARNESS"
+      ],
+      "status": "pass",
+      "title": "The packaged harness run standalone on every variant (with the checker and the coverage targets) and on a planted fault",
+      "value": "6 of 6 tests passed"
+     },
+     {
+      "detail": "5 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fp_add/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FPADD-PACKAGE",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FPADD-F-PACKAGE"
+      ],
+      "status": "pass",
+      "title": "spec.yaml against the RTL headers, spec.md against spec.yaml, Verilator -Wall at every point, wrappers and build.yaml current and lint-clean",
+      "value": "5 of 5 tests passed"
+     },
+     {
+      "detail": "statement not approved; ArithFloat.pack_inc_carry: kernel only; proof of the transcription, transcription not tested; recorded build (not re-run)",
+      "evidence": {
+       "exists": true,
+       "file": "formal/lean/records/build_record.json"
+      },
+      "id": "V-FPADD-LEAN-CARRY",
+      "instrument": null,
+      "lean": {
+       "approved": false,
+       "approved_by": null,
+       "approved_on": null,
+       "axioms": [
+        "Quot.sound",
+        "propext"
+       ],
+       "build_source": "recorded build (not re-run)",
+       "module": "Arith.Float",
+       "project": "formal/lean",
+       "rtl_link": "transcription_untested",
+       "rtl_link_text": "proof of the transcription, transcription not tested",
+       "statement_sha256": "8b1d9ffba70ef2838957c9b433c957e9756418797da9f39cbb77d32d61d62c60",
+       "theorem": "ArithFloat.pack_inc_carry",
+       "tier": "kernel_only"
+      },
+      "method": "formal_lean",
+      "planned": null,
+      "requirements": [
+       "FPADD-F-LEAN-CARRY"
+      ],
+      "status": "unapproved",
+      "title": "Rounding increment carries into the exponent",
+      "value": null
+     },
+     {
+      "detail": "statement not approved; ArithFloat.norm_shift: kernel only; proof of the transcription, transcription not tested; recorded build (not re-run)",
+      "evidence": {
+       "exists": true,
+       "file": "formal/lean/records/build_record.json"
+      },
+      "id": "V-FPADD-LEAN-NORM",
+      "instrument": null,
+      "lean": {
+       "approved": false,
+       "approved_by": null,
+       "approved_on": null,
+       "axioms": [
+        "Quot.sound",
+        "propext"
+       ],
+       "build_source": "recorded build (not re-run)",
+       "module": "Arith.Float",
+       "project": "formal/lean",
+       "rtl_link": "transcription_untested",
+       "rtl_link_text": "proof of the transcription, transcription not tested",
+       "statement_sha256": "700f80677f865f81b51396aa4daea8a674f275d90ca307041b28ce1efccfd3cf",
+       "theorem": "ArithFloat.norm_shift",
+       "tier": "kernel_only"
+      },
+      "method": "formal_lean",
+      "planned": null,
+      "requirements": [
+       "FPADD-F-LEAN-NORM"
+      ],
+      "status": "unapproved",
+      "title": "Normalising left by NW - 1 - msb puts the leading one at the top",
+      "value": null
+     },
+     {
+      "detail": "statement not approved; ArithFloat.rne_nearest_even: kernel only; proof of the transcription, transcription not tested; recorded build (not re-run)",
+      "evidence": {
+       "exists": true,
+       "file": "formal/lean/records/build_record.json"
+      },
+      "id": "V-FPADD-LEAN-RNE",
+      "instrument": null,
+      "lean": {
+       "approved": false,
+       "approved_by": null,
+       "approved_on": null,
+       "axioms": [
+        "Classical.choice",
+        "Quot.sound",
+        "propext"
+       ],
+       "build_source": "recorded build (not re-run)",
+       "module": "Arith.Float",
+       "project": "formal/lean",
+       "rtl_link": "transcription_untested",
+       "rtl_link_text": "proof of the transcription, transcription not tested",
+       "statement_sha256": "5c119f89efc9a86c566e4b07f1b405e20c03cecb2ee75faf032273cd78f5428c",
+       "theorem": "ArithFloat.rne_nearest_even",
+       "tier": "kernel_only"
+      },
+      "method": "formal_lean",
+      "planned": null,
+      "requirements": [
+       "FPADD-F-LEAN-RNE"
+      ],
+      "status": "unapproved",
+      "title": "The rounding decision is round-to-nearest, ties to even",
+      "value": null
+     }
+    ],
+    "notes": "Arithmetic library, function fp_add (brief 139e). Everything here is before Vivado: the model, the RTL variants, simulation, formal equivalence, Lean statements and the prepared out-of-context build files. No performance requirement exists because nothing about LUTs, DSPs, Fmax or power has been measured yet; the Vivado runs (build/<variant>/build.yaml) will add them. Every requirement is a draft written by the agent; none is agreed by a human. Lean statements are not approved. Generated by arith/tools/gen_testplan.py.",
+    "path": "arith/fp_add",
+    "requirements": [
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FPADD-F-MODEL",
+      "items": [
+       "V-FPADD-MODEL"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "source": "arith/fp_add/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "arith/fp_add/model.py gives, for every input, the result that spec.md defines. It agrees with an independent formulation (an enumeration of every finite value of a tiny format (the nearest one, ties to even) and NumPy's hardware float32 addition) on every input at small widths and with Python's integer arithmetic on random large-width inputs, and the conventions that a user could guess wrong (spec.md, last section) are pinned by examples.",
+      "title": "The bit-exact model is right"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FPADD-F-EXACT",
+      "items": [
+       "V-FPADD-EXHAUSTIVE",
+       "V-FPADD-RANDOM"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "source": "arith/fp_add/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "At every parameter point listed in spec.yaml (16 exhaustive points, 12 random ones, across 2 variants), each variant's outputs equal the model's in every clock: every input is driven at the small points; edge values, runs of ones, and random inputs at the large ones. The function is exact, so there is no error bound.",
+      "title": "Every variant is bit-exact against the model"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FPADD-F-LAT",
+      "items": [
+       "V-FPADD-LATENCY"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "source": "arith/fp_add/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "Each variant's latency in clocks is the expression in spec.yaml (single_path: STAGES; dual_path: STAGES), and the bench, run with a latency two clocks off, fails for every variant, so the passing runs prove the latency rather than assume it.",
+      "title": "Latency is as specified and the bench would notice if it were not"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FPADD-F-EQUIV",
+      "items": [
+       "V-FPADD-FORMAL-PROOF",
+       "V-FPADD-FORMAL-REFUTE"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "formal"
+      ],
+      "source": "arith/fp_add/formal/jobs.yaml",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "SymbiYosys with the slang front end checks the variants against each other and a plain reference (a single `+` or `*`, or the specification written as RTL). The jobs in formal/jobs.yaml name the widths; a proof is by k-induction (for all inputs, any run length) at the widths listed there, a bounded check holds only to its stated depth. Widths beyond the listed ones are covered by simulation, not by proof.",
+      "title": "The variants are equivalent to a plain reference, by proof where the tools allow"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FPADD-F-BENCH",
+      "items": [
+       "V-FPADD-MUTANT-TEST",
+       "V-FPADD-MUTANT-SCORE"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_measurement",
+       "sim_test"
+      ],
+      "source": "arith/fp_add/verif/mutants.yaml",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "Every one of the mutants in verif/mutants.yaml (one exact text change each, in the variant's RTL: an inverted condition, a wrong constant, a dropped connection, a lost reset) makes the cocotb bench fail; mutants that survive or do not build are reported, never hidden.",
+      "title": "The bench catches seeded faults"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FPADD-F-HARNESS",
+      "items": [
+       "V-FPADD-HARNESS"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "source": "arith/fp_add/harness/README.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "arith/fp_add/harness holds the model, the cocotb bench, a SystemVerilog checker, coverage targets and a runner that needs nothing else from the repository. Run standalone against every variant (one small exhaustive point and one large random point each, with the checker beside the instance) it passes and the random runs meet every coverage target; run against a planted fault it fails, with and without the checker. Its generated files are the repository's own bench, so they cannot drift.",
+      "title": "The packaged verification harness is a standalone deliverable that works"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FPADD-F-PACKAGE",
+      "items": [
+       "V-FPADD-PACKAGE"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "source": "arith/fp_add/spec.yaml",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "spec.yaml states an interface contract (protocol, throughput, latency, reset, clock, stalls) and integration guidance (port timing, constraints to carry). Every variant passes Verilator -Wall at every point of spec.yaml; its ports and default parameters are the ones spec.yaml states; its header states the intended primitive use before any Vivado run; spec.md is the rendering of spec.yaml; the out-of-context wrapper and the build.yaml for each variant (Artix-7 xc7a100t and K26 xck26, prepared and not run) are current and lint-clean at every point they list, so a Vivado run can start from the repository alone.",
+      "title": "The RTL is lint-clean, and its files agree with the specification and with the Vivado build files"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FPADD-F-LEAN-CARRY",
+      "items": [
+       "V-FPADD-LEAN-CARRY"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [],
+      "source": "arith/fp_common/fp_pack.sv (wsum: the increment added to the packed pattern)",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "unapproved",
+      "text": "For a packed pattern e * m + f with fraction f < m (m = 2^MAN), adding the rounding increment 1 either raises the fraction by one or, when the fraction is all ones, raises the exponent by one and leaves a zero fraction: the identity fp_pack's single add on the packed {exponent, fraction} pattern rests on, so a significand overflow, a subnormal rounding up to the smallest normal number and a largest finite number rounding up to infinity need no special case. The statement is the specification and is NOT approved by a human (verif/lean_approvals.yaml is empty), so the proof is shown but not counted as verification. The Lean text is a hand transcription of the RTL's structure; it models no timing or clocking.",
+      "title": "Rounding increment carries into the exponent, for every width"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FPADD-F-LEAN-NORM",
+      "items": [
+       "V-FPADD-LEAN-NORM"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [],
+      "source": "arith/fp_common/fp_norm.sv (the shift by the leading-zero count)",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "unapproved",
+      "text": "For a value v with its leading one at bit k (2^k <= v < 2^(k+1)) and k < NW, shifting left by NW - 1 - k places gives a value in [2^(NW-1), 2^NW): the leading one is at bit NW - 1, which is what fp_norm's count lz = NW - 1 - msb does. The statement is the specification and is NOT approved by a human (verif/lean_approvals.yaml is empty), so the proof is shown but not counted as verification. The Lean text is a hand transcription of the RTL's structure; it models no timing or clocking.",
+      "title": "Normalising left by NW - 1 - msb puts the leading one at the top, for every width"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FPADD-F-LEAN-RNE",
+      "items": [
+       "V-FPADD-LEAN-RNE"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [],
+      "source": "arith/fp_common/fp_pack.sv (guard, rest and inc)",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "unapproved",
+      "text": "For a kept part hi and a discarded part lo below the threshold 2h, incrementing hi exactly when lo > h, or lo = h and hi is odd (the guard-and-sticky rule of fp_pack), gives a value within h of the exact one and, when it is exactly h away, even. The statement is the specification and is NOT approved by a human (verif/lean_approvals.yaml is empty), so the proof is shown but not counted as verification. The Lean text is a hand transcription of the RTL's structure; it models no timing or clocking.",
+      "title": "The rounding decision is round-to-nearest, ties to even, for every width"
+     }
+    ],
+    "source_schema": "fpga-design-agent/testplan/v1",
+    "summary": {
+     "by_kind": {
+      "functional": 10,
+      "interface": 0,
+      "performance": 0,
+      "safety": 0
+     },
+     "by_method": {
+      "assertion": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "board_measurement": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "coverage_bin": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "formal": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 2,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "formal_lean": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 0,
+       "stale": 0,
+       "unapproved": 3
+      },
+      "review": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "sim_measurement": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 1,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "sim_test": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 7,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "timing": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "uvm_test": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 0,
+       "stale": 0,
+       "unapproved": 0
+      }
+     },
+     "by_state": {
+      "unapproved": 3,
+      "verified": 7
+     },
+     "external": 0,
+     "external_hardware_done": 0,
+     "gap_counts": {
+      "lean_statement_unapproved": 3
+     },
+     "human_reviews": 0,
+     "items": 13,
+     "lean": {
+      "approved": 0,
+      "build_sources": [
+       "recorded build (not re-run)"
+      ],
+      "by_rtl_link": {
+       "model_only": 0,
+       "rtl_generated": 0,
+       "transcription_tested": 0,
+       "transcription_untested": 3
+      },
+      "by_status": {
+       "unapproved": 3
+      },
+      "by_tier": {
+       "compiled_decision_procedure": 0,
+       "kernel_only": 3,
+       "unsound": 0
+      },
+      "items": 3,
+      "statement_not_approved": 3
+     },
+     "line": "10 requirements (10 functional); 7 verified; 0 of 10 requirements agreed by a human, 0 human review(s) recorded; 3 Lean proof item(s) (all widths): 0 with a human-approved statement, 3 with statement not approved; 3 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run).",
+     "performance_board": 0,
+     "performance_sim_only": 0,
+     "performance_timing": 0,
+     "requirements": 10,
+     "spec_agreed": 0
+    }
+   },
+   {
+    "design": "arith_fp_fma",
+    "gaps": [
+     {
+      "gate": false,
+      "id": "V-FPFMA-LEAN-CARRY",
+      "text": "the Lean statement is not approved by a human; until it is, the proof is not counted as verification",
+      "type": "lean_statement_unapproved"
+     },
+     {
+      "gate": false,
+      "id": "V-FPFMA-LEAN-NORM",
+      "text": "the Lean statement is not approved by a human; until it is, the proof is not counted as verification",
+      "type": "lean_statement_unapproved"
+     },
+     {
+      "gate": false,
+      "id": "V-FPFMA-LEAN-RNE",
+      "text": "the Lean statement is not approved by a human; until it is, the proof is not counted as verification",
+      "type": "lean_statement_unapproved"
+     }
+    ],
+    "items": [
+     {
+      "detail": "17 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fp_fma/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FPFMA-MODEL",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FPFMA-F-MODEL"
+      ],
+      "status": "pass",
+      "title": "The model against independent formulations (exhaustive small, random large) and the pinned conventions",
+      "value": "17 of 17 tests passed"
+     },
+     {
+      "detail": "11 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fp_fma/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FPFMA-EXHAUSTIVE",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FPFMA-F-EXACT"
+      ],
+      "status": "pass",
+      "title": "Every variant against the model, every input, at the small points (Icarus + cocotb)",
+      "value": "11 of 11 tests passed"
+     },
+     {
+      "detail": "11 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fp_fma/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FPFMA-RANDOM",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FPFMA-F-EXACT"
+      ],
+      "status": "pass",
+      "title": "Every variant against the model at the large points: edge values, carry runs and random inputs (Icarus + cocotb)",
+      "value": "11 of 11 tests passed"
+     },
+     {
+      "detail": "2 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fp_fma/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FPFMA-LATENCY",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FPFMA-F-LAT"
+      ],
+      "status": "pass",
+      "title": "The bench passes at the stated latency and fails two clocks off, for every variant",
+      "value": "2 of 2 tests passed"
+     },
+     {
+      "detail": "5 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fp_fma/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FPFMA-FORMAL-PROOF",
+      "instrument": null,
+      "method": "formal",
+      "planned": null,
+      "requirements": [
+       "FPFMA-F-EQUIV"
+      ],
+      "status": "pass",
+      "title": "k-induction proofs of the variants against the reference (5 jobs; widths in formal/jobs.yaml)",
+      "value": "5 of 5 tests passed"
+     },
+     {
+      "detail": "6 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fp_fma/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FPFMA-FORMAL-REFUTE",
+      "instrument": null,
+      "method": "formal",
+      "planned": null,
+      "requirements": [
+       "FPFMA-F-EQUIV"
+      ],
+      "status": "pass",
+      "title": "Each formal check refutes a planted fault (the check can fail)",
+      "value": "6 of 6 tests passed"
+     },
+     {
+      "detail": "1 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fp_fma/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FPFMA-MUTANT-TEST",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FPFMA-F-BENCH"
+      ],
+      "status": "pass",
+      "title": "The mutation run as a test: no mutant survives, none fails to build",
+      "value": "1 of 1 tests passed"
+     },
+     {
+      "detail": "survived = []; invalid = []; valid = 21; score_pct = 100",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fp_fma/verif/results/mutation.json"
+      },
+      "id": "V-FPFMA-MUTANT-SCORE",
+      "instrument": null,
+      "method": "sim_measurement",
+      "planned": null,
+      "requirements": [
+       "FPFMA-F-BENCH"
+      ],
+      "status": "pass",
+      "title": "Mutants killed of valid mutants (the record of the last full run)",
+      "value": true
+     },
+     {
+      "detail": "6 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fp_fma/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FPFMA-HARNESS",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FPFMA-F-HARNESS"
+      ],
+      "status": "pass",
+      "title": "The packaged harness run standalone on every variant (with the checker and the coverage targets) and on a planted fault",
+      "value": "6 of 6 tests passed"
+     },
+     {
+      "detail": "5 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fp_fma/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FPFMA-PACKAGE",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FPFMA-F-PACKAGE"
+      ],
+      "status": "pass",
+      "title": "spec.yaml against the RTL headers, spec.md against spec.yaml, Verilator -Wall at every point, wrappers and build.yaml current and lint-clean",
+      "value": "5 of 5 tests passed"
+     },
+     {
+      "detail": "statement not approved; ArithFloat.pack_inc_carry: kernel only; proof of the transcription, transcription not tested; recorded build (not re-run)",
+      "evidence": {
+       "exists": true,
+       "file": "formal/lean/records/build_record.json"
+      },
+      "id": "V-FPFMA-LEAN-CARRY",
+      "instrument": null,
+      "lean": {
+       "approved": false,
+       "approved_by": null,
+       "approved_on": null,
+       "axioms": [
+        "Quot.sound",
+        "propext"
+       ],
+       "build_source": "recorded build (not re-run)",
+       "module": "Arith.Float",
+       "project": "formal/lean",
+       "rtl_link": "transcription_untested",
+       "rtl_link_text": "proof of the transcription, transcription not tested",
+       "statement_sha256": "8b1d9ffba70ef2838957c9b433c957e9756418797da9f39cbb77d32d61d62c60",
+       "theorem": "ArithFloat.pack_inc_carry",
+       "tier": "kernel_only"
+      },
+      "method": "formal_lean",
+      "planned": null,
+      "requirements": [
+       "FPFMA-F-LEAN-CARRY"
+      ],
+      "status": "unapproved",
+      "title": "Rounding increment carries into the exponent",
+      "value": null
+     },
+     {
+      "detail": "statement not approved; ArithFloat.norm_shift: kernel only; proof of the transcription, transcription not tested; recorded build (not re-run)",
+      "evidence": {
+       "exists": true,
+       "file": "formal/lean/records/build_record.json"
+      },
+      "id": "V-FPFMA-LEAN-NORM",
+      "instrument": null,
+      "lean": {
+       "approved": false,
+       "approved_by": null,
+       "approved_on": null,
+       "axioms": [
+        "Quot.sound",
+        "propext"
+       ],
+       "build_source": "recorded build (not re-run)",
+       "module": "Arith.Float",
+       "project": "formal/lean",
+       "rtl_link": "transcription_untested",
+       "rtl_link_text": "proof of the transcription, transcription not tested",
+       "statement_sha256": "700f80677f865f81b51396aa4daea8a674f275d90ca307041b28ce1efccfd3cf",
+       "theorem": "ArithFloat.norm_shift",
+       "tier": "kernel_only"
+      },
+      "method": "formal_lean",
+      "planned": null,
+      "requirements": [
+       "FPFMA-F-LEAN-NORM"
+      ],
+      "status": "unapproved",
+      "title": "Normalising left by NW - 1 - msb puts the leading one at the top",
+      "value": null
+     },
+     {
+      "detail": "statement not approved; ArithFloat.rne_nearest_even: kernel only; proof of the transcription, transcription not tested; recorded build (not re-run)",
+      "evidence": {
+       "exists": true,
+       "file": "formal/lean/records/build_record.json"
+      },
+      "id": "V-FPFMA-LEAN-RNE",
+      "instrument": null,
+      "lean": {
+       "approved": false,
+       "approved_by": null,
+       "approved_on": null,
+       "axioms": [
+        "Classical.choice",
+        "Quot.sound",
+        "propext"
+       ],
+       "build_source": "recorded build (not re-run)",
+       "module": "Arith.Float",
+       "project": "formal/lean",
+       "rtl_link": "transcription_untested",
+       "rtl_link_text": "proof of the transcription, transcription not tested",
+       "statement_sha256": "5c119f89efc9a86c566e4b07f1b405e20c03cecb2ee75faf032273cd78f5428c",
+       "theorem": "ArithFloat.rne_nearest_even",
+       "tier": "kernel_only"
+      },
+      "method": "formal_lean",
+      "planned": null,
+      "requirements": [
+       "FPFMA-F-LEAN-RNE"
+      ],
+      "status": "unapproved",
+      "title": "The rounding decision is round-to-nearest, ties to even",
+      "value": null
+     }
+    ],
+    "notes": "Arithmetic library, function fp_fma (brief 139e). Everything here is before Vivado: the model, the RTL variants, simulation, formal equivalence, Lean statements and the prepared out-of-context build files. No performance requirement exists because nothing about LUTs, DSPs, Fmax or power has been measured yet; the Vivado runs (build/<variant>/build.yaml) will add them. Every requirement is a draft written by the agent; none is agreed by a human. Lean statements are not approved. Generated by arith/tools/gen_testplan.py.",
+    "path": "arith/fp_fma",
+    "requirements": [
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FPFMA-F-MODEL",
+      "items": [
+       "V-FPFMA-MODEL"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "source": "arith/fp_fma/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "arith/fp_fma/model.py gives, for every input, the result that spec.md defines. It agrees with an independent formulation (an enumeration of every finite value of a tiny format (the nearest one, ties to even), the multiplier and adder models, and the identities a * 1 + c = c + a and a * b + 0 = a * b) on every input at small widths and with Python's integer arithmetic on random large-width inputs, and the conventions that a user could guess wrong (spec.md, last section) are pinned by examples.",
+      "title": "The bit-exact model is right"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FPFMA-F-EXACT",
+      "items": [
+       "V-FPFMA-EXHAUSTIVE",
+       "V-FPFMA-RANDOM"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "source": "arith/fp_fma/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "At every parameter point listed in spec.yaml (11 exhaustive points, 11 random ones, across 2 variants), each variant's outputs equal the model's in every clock: every input is driven at the small points; edge values, runs of ones, and random inputs at the large ones. The function is exact, so there is no error bound.",
+      "title": "Every variant is bit-exact against the model"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FPFMA-F-LAT",
+      "items": [
+       "V-FPFMA-LATENCY"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "source": "arith/fp_fma/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "Each variant's latency in clocks is the expression in spec.yaml (fused: STAGES; cascade: STAGES_M + STAGES_A), and the bench, run with a latency two clocks off, fails for every variant, so the passing runs prove the latency rather than assume it.",
+      "title": "Latency is as specified and the bench would notice if it were not"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FPFMA-F-EQUIV",
+      "items": [
+       "V-FPFMA-FORMAL-PROOF",
+       "V-FPFMA-FORMAL-REFUTE"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "formal"
+      ],
+      "source": "arith/fp_fma/formal/jobs.yaml",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "SymbiYosys with the slang front end checks the variants against each other and a plain reference (a single `+` or `*`, or the specification written as RTL). The jobs in formal/jobs.yaml name the widths; a proof is by k-induction (for all inputs, any run length) at the widths listed there, a bounded check holds only to its stated depth. Widths beyond the listed ones are covered by simulation, not by proof.",
+      "title": "The variants are equivalent to a plain reference, by proof where the tools allow"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FPFMA-F-BENCH",
+      "items": [
+       "V-FPFMA-MUTANT-TEST",
+       "V-FPFMA-MUTANT-SCORE"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_measurement",
+       "sim_test"
+      ],
+      "source": "arith/fp_fma/verif/mutants.yaml",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "Every one of the mutants in verif/mutants.yaml (one exact text change each, in the variant's RTL: an inverted condition, a wrong constant, a dropped connection, a lost reset) makes the cocotb bench fail; mutants that survive or do not build are reported, never hidden.",
+      "title": "The bench catches seeded faults"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FPFMA-F-HARNESS",
+      "items": [
+       "V-FPFMA-HARNESS"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "source": "arith/fp_fma/harness/README.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "arith/fp_fma/harness holds the model, the cocotb bench, a SystemVerilog checker, coverage targets and a runner that needs nothing else from the repository. Run standalone against every variant (one small exhaustive point and one large random point each, with the checker beside the instance) it passes and the random runs meet every coverage target; run against a planted fault it fails, with and without the checker. Its generated files are the repository's own bench, so they cannot drift.",
+      "title": "The packaged verification harness is a standalone deliverable that works"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FPFMA-F-PACKAGE",
+      "items": [
+       "V-FPFMA-PACKAGE"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "source": "arith/fp_fma/spec.yaml",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "spec.yaml states an interface contract (protocol, throughput, latency, reset, clock, stalls) and integration guidance (port timing, constraints to carry). Every variant passes Verilator -Wall at every point of spec.yaml; its ports and default parameters are the ones spec.yaml states; its header states the intended primitive use before any Vivado run; spec.md is the rendering of spec.yaml; the out-of-context wrapper and the build.yaml for each variant (Artix-7 xc7a100t and K26 xck26, prepared and not run) are current and lint-clean at every point they list, so a Vivado run can start from the repository alone.",
+      "title": "The RTL is lint-clean, and its files agree with the specification and with the Vivado build files"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FPFMA-F-LEAN-CARRY",
+      "items": [
+       "V-FPFMA-LEAN-CARRY"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [],
+      "source": "arith/fp_common/fp_pack.sv (wsum: the increment added to the packed pattern)",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "unapproved",
+      "text": "For a packed pattern e * m + f with fraction f < m (m = 2^MAN), adding the rounding increment 1 either raises the fraction by one or, when the fraction is all ones, raises the exponent by one and leaves a zero fraction: the identity fp_pack's single add on the packed {exponent, fraction} pattern rests on, so a significand overflow, a subnormal rounding up to the smallest normal number and a largest finite number rounding up to infinity need no special case. The statement is the specification and is NOT approved by a human (verif/lean_approvals.yaml is empty), so the proof is shown but not counted as verification. The Lean text is a hand transcription of the RTL's structure; it models no timing or clocking.",
+      "title": "Rounding increment carries into the exponent, for every width"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FPFMA-F-LEAN-NORM",
+      "items": [
+       "V-FPFMA-LEAN-NORM"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [],
+      "source": "arith/fp_common/fp_norm.sv (the shift by the leading-zero count)",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "unapproved",
+      "text": "For a value v with its leading one at bit k (2^k <= v < 2^(k+1)) and k < NW, shifting left by NW - 1 - k places gives a value in [2^(NW-1), 2^NW): the leading one is at bit NW - 1, which is what fp_norm's count lz = NW - 1 - msb does. The statement is the specification and is NOT approved by a human (verif/lean_approvals.yaml is empty), so the proof is shown but not counted as verification. The Lean text is a hand transcription of the RTL's structure; it models no timing or clocking.",
+      "title": "Normalising left by NW - 1 - msb puts the leading one at the top, for every width"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FPFMA-F-LEAN-RNE",
+      "items": [
+       "V-FPFMA-LEAN-RNE"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [],
+      "source": "arith/fp_common/fp_pack.sv (guard, rest and inc)",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "unapproved",
+      "text": "For a kept part hi and a discarded part lo below the threshold 2h, incrementing hi exactly when lo > h, or lo = h and hi is odd (the guard-and-sticky rule of fp_pack), gives a value within h of the exact one and, when it is exactly h away, even. The statement is the specification and is NOT approved by a human (verif/lean_approvals.yaml is empty), so the proof is shown but not counted as verification. The Lean text is a hand transcription of the RTL's structure; it models no timing or clocking.",
+      "title": "The rounding decision is round-to-nearest, ties to even, for every width"
+     }
+    ],
+    "source_schema": "fpga-design-agent/testplan/v1",
+    "summary": {
+     "by_kind": {
+      "functional": 10,
+      "interface": 0,
+      "performance": 0,
+      "safety": 0
+     },
+     "by_method": {
+      "assertion": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "board_measurement": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "coverage_bin": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "formal": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 2,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "formal_lean": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 0,
+       "stale": 0,
+       "unapproved": 3
+      },
+      "review": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "sim_measurement": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 1,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "sim_test": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 7,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "timing": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "uvm_test": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 0,
+       "stale": 0,
+       "unapproved": 0
+      }
+     },
+     "by_state": {
+      "unapproved": 3,
+      "verified": 7
+     },
+     "external": 0,
+     "external_hardware_done": 0,
+     "gap_counts": {
+      "lean_statement_unapproved": 3
+     },
+     "human_reviews": 0,
+     "items": 13,
+     "lean": {
+      "approved": 0,
+      "build_sources": [
+       "recorded build (not re-run)"
+      ],
+      "by_rtl_link": {
+       "model_only": 0,
+       "rtl_generated": 0,
+       "transcription_tested": 0,
+       "transcription_untested": 3
+      },
+      "by_status": {
+       "unapproved": 3
+      },
+      "by_tier": {
+       "compiled_decision_procedure": 0,
+       "kernel_only": 3,
+       "unsound": 0
+      },
+      "items": 3,
+      "statement_not_approved": 3
+     },
+     "line": "10 requirements (10 functional); 7 verified; 0 of 10 requirements agreed by a human, 0 human review(s) recorded; 3 Lean proof item(s) (all widths): 0 with a human-approved statement, 3 with statement not approved; 3 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run).",
+     "performance_board": 0,
+     "performance_sim_only": 0,
+     "performance_timing": 0,
+     "requirements": 10,
+     "spec_agreed": 0
+    }
+   },
+   {
+    "design": "arith_fp_mul",
+    "gaps": [
+     {
+      "gate": false,
+      "id": "V-FPMUL-LEAN-CARRY",
+      "text": "the Lean statement is not approved by a human; until it is, the proof is not counted as verification",
+      "type": "lean_statement_unapproved"
+     },
+     {
+      "gate": false,
+      "id": "V-FPMUL-LEAN-NORM",
+      "text": "the Lean statement is not approved by a human; until it is, the proof is not counted as verification",
+      "type": "lean_statement_unapproved"
+     },
+     {
+      "gate": false,
+      "id": "V-FPMUL-LEAN-RNE",
+      "text": "the Lean statement is not approved by a human; until it is, the proof is not counted as verification",
+      "type": "lean_statement_unapproved"
+     }
+    ],
+    "items": [
+     {
+      "detail": "10 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fp_mul/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FPMUL-MODEL",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FPMUL-F-MODEL"
+      ],
+      "status": "pass",
+      "title": "The model against independent formulations (exhaustive small, random large) and the pinned conventions",
+      "value": "10 of 10 tests passed"
+     },
+     {
+      "detail": "16 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fp_mul/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FPMUL-EXHAUSTIVE",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FPMUL-F-EXACT"
+      ],
+      "status": "pass",
+      "title": "Every variant against the model, every input, at the small points (Icarus + cocotb)",
+      "value": "16 of 16 tests passed"
+     },
+     {
+      "detail": "12 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fp_mul/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FPMUL-RANDOM",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FPMUL-F-EXACT"
+      ],
+      "status": "pass",
+      "title": "Every variant against the model at the large points: edge values, carry runs and random inputs (Icarus + cocotb)",
+      "value": "12 of 12 tests passed"
+     },
+     {
+      "detail": "2 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fp_mul/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FPMUL-LATENCY",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FPMUL-F-LAT"
+      ],
+      "status": "pass",
+      "title": "The bench passes at the stated latency and fails two clocks off, for every variant",
+      "value": "2 of 2 tests passed"
+     },
+     {
+      "detail": "6 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fp_mul/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FPMUL-FORMAL-PROOF",
+      "instrument": null,
+      "method": "formal",
+      "planned": null,
+      "requirements": [
+       "FPMUL-F-EQUIV"
+      ],
+      "status": "pass",
+      "title": "k-induction proofs of the variants against the reference (6 jobs; widths in formal/jobs.yaml)",
+      "value": "6 of 6 tests passed"
+     },
+     {
+      "detail": "6 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fp_mul/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FPMUL-FORMAL-REFUTE",
+      "instrument": null,
+      "method": "formal",
+      "planned": null,
+      "requirements": [
+       "FPMUL-F-EQUIV"
+      ],
+      "status": "pass",
+      "title": "Each formal check refutes a planted fault (the check can fail)",
+      "value": "6 of 6 tests passed"
+     },
+     {
+      "detail": "1 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fp_mul/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FPMUL-MUTANT-TEST",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FPMUL-F-BENCH"
+      ],
+      "status": "pass",
+      "title": "The mutation run as a test: no mutant survives, none fails to build",
+      "value": "1 of 1 tests passed"
+     },
+     {
+      "detail": "survived = []; invalid = []; valid = 22; score_pct = 100",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fp_mul/verif/results/mutation.json"
+      },
+      "id": "V-FPMUL-MUTANT-SCORE",
+      "instrument": null,
+      "method": "sim_measurement",
+      "planned": null,
+      "requirements": [
+       "FPMUL-F-BENCH"
+      ],
+      "status": "pass",
+      "title": "Mutants killed of valid mutants (the record of the last full run)",
+      "value": true
+     },
+     {
+      "detail": "6 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fp_mul/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FPMUL-HARNESS",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FPMUL-F-HARNESS"
+      ],
+      "status": "pass",
+      "title": "The packaged harness run standalone on every variant (with the checker and the coverage targets) and on a planted fault",
+      "value": "6 of 6 tests passed"
+     },
+     {
+      "detail": "5 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fp_mul/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FPMUL-PACKAGE",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FPMUL-F-PACKAGE"
+      ],
+      "status": "pass",
+      "title": "spec.yaml against the RTL headers, spec.md against spec.yaml, Verilator -Wall at every point, wrappers and build.yaml current and lint-clean",
+      "value": "5 of 5 tests passed"
+     },
+     {
+      "detail": "statement not approved; ArithFloat.pack_inc_carry: kernel only; proof of the transcription, transcription not tested; recorded build (not re-run)",
+      "evidence": {
+       "exists": true,
+       "file": "formal/lean/records/build_record.json"
+      },
+      "id": "V-FPMUL-LEAN-CARRY",
+      "instrument": null,
+      "lean": {
+       "approved": false,
+       "approved_by": null,
+       "approved_on": null,
+       "axioms": [
+        "Quot.sound",
+        "propext"
+       ],
+       "build_source": "recorded build (not re-run)",
+       "module": "Arith.Float",
+       "project": "formal/lean",
+       "rtl_link": "transcription_untested",
+       "rtl_link_text": "proof of the transcription, transcription not tested",
+       "statement_sha256": "8b1d9ffba70ef2838957c9b433c957e9756418797da9f39cbb77d32d61d62c60",
+       "theorem": "ArithFloat.pack_inc_carry",
+       "tier": "kernel_only"
+      },
+      "method": "formal_lean",
+      "planned": null,
+      "requirements": [
+       "FPMUL-F-LEAN-CARRY"
+      ],
+      "status": "unapproved",
+      "title": "Rounding increment carries into the exponent",
+      "value": null
+     },
+     {
+      "detail": "statement not approved; ArithFloat.norm_shift: kernel only; proof of the transcription, transcription not tested; recorded build (not re-run)",
+      "evidence": {
+       "exists": true,
+       "file": "formal/lean/records/build_record.json"
+      },
+      "id": "V-FPMUL-LEAN-NORM",
+      "instrument": null,
+      "lean": {
+       "approved": false,
+       "approved_by": null,
+       "approved_on": null,
+       "axioms": [
+        "Quot.sound",
+        "propext"
+       ],
+       "build_source": "recorded build (not re-run)",
+       "module": "Arith.Float",
+       "project": "formal/lean",
+       "rtl_link": "transcription_untested",
+       "rtl_link_text": "proof of the transcription, transcription not tested",
+       "statement_sha256": "700f80677f865f81b51396aa4daea8a674f275d90ca307041b28ce1efccfd3cf",
+       "theorem": "ArithFloat.norm_shift",
+       "tier": "kernel_only"
+      },
+      "method": "formal_lean",
+      "planned": null,
+      "requirements": [
+       "FPMUL-F-LEAN-NORM"
+      ],
+      "status": "unapproved",
+      "title": "Normalising left by NW - 1 - msb puts the leading one at the top",
+      "value": null
+     },
+     {
+      "detail": "statement not approved; ArithFloat.rne_nearest_even: kernel only; proof of the transcription, transcription not tested; recorded build (not re-run)",
+      "evidence": {
+       "exists": true,
+       "file": "formal/lean/records/build_record.json"
+      },
+      "id": "V-FPMUL-LEAN-RNE",
+      "instrument": null,
+      "lean": {
+       "approved": false,
+       "approved_by": null,
+       "approved_on": null,
+       "axioms": [
+        "Classical.choice",
+        "Quot.sound",
+        "propext"
+       ],
+       "build_source": "recorded build (not re-run)",
+       "module": "Arith.Float",
+       "project": "formal/lean",
+       "rtl_link": "transcription_untested",
+       "rtl_link_text": "proof of the transcription, transcription not tested",
+       "statement_sha256": "5c119f89efc9a86c566e4b07f1b405e20c03cecb2ee75faf032273cd78f5428c",
+       "theorem": "ArithFloat.rne_nearest_even",
+       "tier": "kernel_only"
+      },
+      "method": "formal_lean",
+      "planned": null,
+      "requirements": [
+       "FPMUL-F-LEAN-RNE"
+      ],
+      "status": "unapproved",
+      "title": "The rounding decision is round-to-nearest, ties to even",
+      "value": null
+     }
+    ],
+    "notes": "Arithmetic library, function fp_mul (brief 139e). Everything here is before Vivado: the model, the RTL variants, simulation, formal equivalence, Lean statements and the prepared out-of-context build files. No performance requirement exists because nothing about LUTs, DSPs, Fmax or power has been measured yet; the Vivado runs (build/<variant>/build.yaml) will add them. Every requirement is a draft written by the agent; none is agreed by a human. Lean statements are not approved. Generated by arith/tools/gen_testplan.py.",
+    "path": "arith/fp_mul",
+    "requirements": [
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FPMUL-F-MODEL",
+      "items": [
+       "V-FPMUL-MODEL"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "source": "arith/fp_mul/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "arith/fp_mul/model.py gives, for every input, the result that spec.md defines. It agrees with an independent formulation (an enumeration of every finite value of a tiny format (the nearest one, ties to even) and NumPy's hardware float32 multiplication) on every input at small widths and with Python's integer arithmetic on random large-width inputs, and the conventions that a user could guess wrong (spec.md, last section) are pinned by examples.",
+      "title": "The bit-exact model is right"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FPMUL-F-EXACT",
+      "items": [
+       "V-FPMUL-EXHAUSTIVE",
+       "V-FPMUL-RANDOM"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "source": "arith/fp_mul/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "At every parameter point listed in spec.yaml (16 exhaustive points, 12 random ones, across 2 variants), each variant's outputs equal the model's in every clock: every input is driven at the small points; edge values, runs of ones, and random inputs at the large ones. The function is exact, so there is no error bound.",
+      "title": "Every variant is bit-exact against the model"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FPMUL-F-LAT",
+      "items": [
+       "V-FPMUL-LATENCY"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "source": "arith/fp_mul/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "Each variant's latency in clocks is the expression in spec.yaml (dsp: STAGES; lut: STAGES), and the bench, run with a latency two clocks off, fails for every variant, so the passing runs prove the latency rather than assume it.",
+      "title": "Latency is as specified and the bench would notice if it were not"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FPMUL-F-EQUIV",
+      "items": [
+       "V-FPMUL-FORMAL-PROOF",
+       "V-FPMUL-FORMAL-REFUTE"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "formal"
+      ],
+      "source": "arith/fp_mul/formal/jobs.yaml",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "SymbiYosys with the slang front end checks the variants against each other and a plain reference (a single `+` or `*`, or the specification written as RTL). The jobs in formal/jobs.yaml name the widths; a proof is by k-induction (for all inputs, any run length) at the widths listed there, a bounded check holds only to its stated depth. Widths beyond the listed ones are covered by simulation, not by proof.",
+      "title": "The variants are equivalent to a plain reference, by proof where the tools allow"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FPMUL-F-BENCH",
+      "items": [
+       "V-FPMUL-MUTANT-TEST",
+       "V-FPMUL-MUTANT-SCORE"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_measurement",
+       "sim_test"
+      ],
+      "source": "arith/fp_mul/verif/mutants.yaml",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "Every one of the mutants in verif/mutants.yaml (one exact text change each, in the variant's RTL: an inverted condition, a wrong constant, a dropped connection, a lost reset) makes the cocotb bench fail; mutants that survive or do not build are reported, never hidden.",
+      "title": "The bench catches seeded faults"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FPMUL-F-HARNESS",
+      "items": [
+       "V-FPMUL-HARNESS"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "source": "arith/fp_mul/harness/README.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "arith/fp_mul/harness holds the model, the cocotb bench, a SystemVerilog checker, coverage targets and a runner that needs nothing else from the repository. Run standalone against every variant (one small exhaustive point and one large random point each, with the checker beside the instance) it passes and the random runs meet every coverage target; run against a planted fault it fails, with and without the checker. Its generated files are the repository's own bench, so they cannot drift.",
+      "title": "The packaged verification harness is a standalone deliverable that works"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FPMUL-F-PACKAGE",
+      "items": [
+       "V-FPMUL-PACKAGE"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "source": "arith/fp_mul/spec.yaml",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "spec.yaml states an interface contract (protocol, throughput, latency, reset, clock, stalls) and integration guidance (port timing, constraints to carry). Every variant passes Verilator -Wall at every point of spec.yaml; its ports and default parameters are the ones spec.yaml states; its header states the intended primitive use before any Vivado run; spec.md is the rendering of spec.yaml; the out-of-context wrapper and the build.yaml for each variant (Artix-7 xc7a100t and K26 xck26, prepared and not run) are current and lint-clean at every point they list, so a Vivado run can start from the repository alone.",
+      "title": "The RTL is lint-clean, and its files agree with the specification and with the Vivado build files"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FPMUL-F-LEAN-CARRY",
+      "items": [
+       "V-FPMUL-LEAN-CARRY"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [],
+      "source": "arith/fp_common/fp_pack.sv (wsum: the increment added to the packed pattern)",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "unapproved",
+      "text": "For a packed pattern e * m + f with fraction f < m (m = 2^MAN), adding the rounding increment 1 either raises the fraction by one or, when the fraction is all ones, raises the exponent by one and leaves a zero fraction: the identity fp_pack's single add on the packed {exponent, fraction} pattern rests on, so a significand overflow, a subnormal rounding up to the smallest normal number and a largest finite number rounding up to infinity need no special case. The statement is the specification and is NOT approved by a human (verif/lean_approvals.yaml is empty), so the proof is shown but not counted as verification. The Lean text is a hand transcription of the RTL's structure; it models no timing or clocking.",
+      "title": "Rounding increment carries into the exponent, for every width"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FPMUL-F-LEAN-NORM",
+      "items": [
+       "V-FPMUL-LEAN-NORM"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [],
+      "source": "arith/fp_common/fp_norm.sv (the shift by the leading-zero count)",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "unapproved",
+      "text": "For a value v with its leading one at bit k (2^k <= v < 2^(k+1)) and k < NW, shifting left by NW - 1 - k places gives a value in [2^(NW-1), 2^NW): the leading one is at bit NW - 1, which is what fp_norm's count lz = NW - 1 - msb does. The statement is the specification and is NOT approved by a human (verif/lean_approvals.yaml is empty), so the proof is shown but not counted as verification. The Lean text is a hand transcription of the RTL's structure; it models no timing or clocking.",
+      "title": "Normalising left by NW - 1 - msb puts the leading one at the top, for every width"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FPMUL-F-LEAN-RNE",
+      "items": [
+       "V-FPMUL-LEAN-RNE"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [],
+      "source": "arith/fp_common/fp_pack.sv (guard, rest and inc)",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "unapproved",
+      "text": "For a kept part hi and a discarded part lo below the threshold 2h, incrementing hi exactly when lo > h, or lo = h and hi is odd (the guard-and-sticky rule of fp_pack), gives a value within h of the exact one and, when it is exactly h away, even. The statement is the specification and is NOT approved by a human (verif/lean_approvals.yaml is empty), so the proof is shown but not counted as verification. The Lean text is a hand transcription of the RTL's structure; it models no timing or clocking.",
+      "title": "The rounding decision is round-to-nearest, ties to even, for every width"
+     }
+    ],
+    "source_schema": "fpga-design-agent/testplan/v1",
+    "summary": {
+     "by_kind": {
+      "functional": 10,
+      "interface": 0,
+      "performance": 0,
+      "safety": 0
+     },
+     "by_method": {
+      "assertion": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "board_measurement": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "coverage_bin": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "formal": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 2,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "formal_lean": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 0,
+       "stale": 0,
+       "unapproved": 3
+      },
+      "review": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "sim_measurement": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 1,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "sim_test": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 7,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "timing": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "uvm_test": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 0,
+       "stale": 0,
+       "unapproved": 0
+      }
+     },
+     "by_state": {
+      "unapproved": 3,
+      "verified": 7
+     },
+     "external": 0,
+     "external_hardware_done": 0,
+     "gap_counts": {
+      "lean_statement_unapproved": 3
+     },
+     "human_reviews": 0,
+     "items": 13,
+     "lean": {
+      "approved": 0,
+      "build_sources": [
+       "recorded build (not re-run)"
+      ],
+      "by_rtl_link": {
+       "model_only": 0,
+       "rtl_generated": 0,
+       "transcription_tested": 0,
+       "transcription_untested": 3
+      },
+      "by_status": {
+       "unapproved": 3
+      },
+      "by_tier": {
+       "compiled_decision_procedure": 0,
+       "kernel_only": 3,
+       "unsound": 0
+      },
+      "items": 3,
+      "statement_not_approved": 3
+     },
+     "line": "10 requirements (10 functional); 7 verified; 0 of 10 requirements agreed by a human, 0 human review(s) recorded; 3 Lean proof item(s) (all widths): 0 with a human-approved statement, 3 with statement not approved; 3 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run).",
+     "performance_board": 0,
+     "performance_sim_only": 0,
+     "performance_timing": 0,
+     "requirements": 10,
+     "spec_agreed": 0
+    }
+   },
+   {
     "design": "arith_mac",
     "gaps": [
      {
@@ -14486,9 +18326,9 @@
   "framing": "The human specifies the requirements and checks that the verification is thorough enough. The agent holds the knowledge to implement and to verify. You can open any of the implementation or the evidence, and you do not have to. Hardware on the board, with attached instruments, is a verification layer of its own: where a requirement depends on something outside the design (an optical link, a network card, a data source) it may be the only way to close it.",
   "schema": "fda-traceability/1",
   "total": {
-   "designs": 5,
-   "requirements": 78,
-   "verified": 35
+   "designs": 8,
+   "requirements": 108,
+   "verified": 56
   }
  }
 }

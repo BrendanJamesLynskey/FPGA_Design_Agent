@@ -1,0 +1,273 @@
+{
+ "function": "fp_fma",
+ "tool": "Yosys 0.70+385 (git sha1 098e46a36, Release, Clang /usr/bin/clang++ 21.1.8)",
+ "jobs": 11,
+ "ok": 11,
+ "results": [
+  {
+   "name": "eq_e2m1_s1_f4_c21",
+   "top": "fp_fma_fv",
+   "params": {
+    "EXP": 2,
+    "MAN": 1,
+    "SUBNORM": 1,
+    "ST_F": 4,
+    "ST_M": 2,
+    "ST_A": 1
+   },
+   "mode": "prove",
+   "depth": 8,
+   "engine": "boolector",
+   "claim": "fused (4 ranks) == the exact a*b+c rounded once, and cascade (2 + 1 ranks) == the product rounded then the sum rounded, EXP 2 MAN 1, subnormals: proved for all inputs (k-induction)",
+   "mutant": null,
+   "expected": "PASS",
+   "status": "PASS",
+   "ok": true,
+   "seconds": 5.2,
+   "failed_assertions": [],
+   "tail": ""
+  },
+  {
+   "name": "eq_e2m1_s0_f0_c00",
+   "top": "fp_fma_fv",
+   "params": {
+    "EXP": 2,
+    "MAN": 1,
+    "SUBNORM": 0,
+    "ST_F": 0,
+    "ST_M": 0,
+    "ST_A": 0
+   },
+   "mode": "prove",
+   "depth": 8,
+   "engine": "boolector",
+   "claim": "fused (0 ranks) == the exact a*b+c rounded once, and cascade (0 + 0 ranks) == the product rounded then the sum rounded, EXP 2 MAN 1, flush to zero: proved for all inputs (k-induction)",
+   "mutant": null,
+   "expected": "PASS",
+   "status": "PASS",
+   "ok": true,
+   "seconds": 5.1,
+   "failed_assertions": [],
+   "tail": ""
+  },
+  {
+   "name": "eq_e2m2_s1_f2_c12",
+   "top": "fp_fma_fv",
+   "params": {
+    "EXP": 2,
+    "MAN": 2,
+    "SUBNORM": 1,
+    "ST_F": 2,
+    "ST_M": 1,
+    "ST_A": 2
+   },
+   "mode": "prove",
+   "depth": 8,
+   "engine": "boolector",
+   "claim": "fused (2 ranks) == the exact a*b+c rounded once, and cascade (1 + 2 ranks) == the product rounded then the sum rounded, EXP 2 MAN 2, subnormals: proved for all inputs (k-induction)",
+   "mutant": null,
+   "expected": "PASS",
+   "status": "PASS",
+   "ok": true,
+   "seconds": 15.9,
+   "failed_assertions": [],
+   "tail": ""
+  },
+  {
+   "name": "eq_e2m2_s0_f3_c30",
+   "top": "fp_fma_fv",
+   "params": {
+    "EXP": 2,
+    "MAN": 2,
+    "SUBNORM": 0,
+    "ST_F": 3,
+    "ST_M": 3,
+    "ST_A": 0
+   },
+   "mode": "prove",
+   "depth": 8,
+   "engine": "boolector",
+   "claim": "fused (3 ranks) == the exact a*b+c rounded once, and cascade (3 + 0 ranks) == the product rounded then the sum rounded, EXP 2 MAN 2, flush to zero: proved for all inputs (k-induction)",
+   "mutant": null,
+   "expected": "PASS",
+   "status": "PASS",
+   "ok": true,
+   "seconds": 6.6,
+   "failed_assertions": [],
+   "tail": ""
+  },
+  {
+   "name": "eq_e3m1_s1_f1_c01",
+   "top": "fp_fma_fv",
+   "params": {
+    "EXP": 3,
+    "MAN": 1,
+    "SUBNORM": 1,
+    "ST_F": 1,
+    "ST_M": 0,
+    "ST_A": 1
+   },
+   "mode": "prove",
+   "depth": 8,
+   "engine": "boolector",
+   "claim": "fused (1 ranks) == the exact a*b+c rounded once, and cascade (0 + 1 ranks) == the product rounded then the sum rounded, EXP 3 MAN 1, subnormals: proved for all inputs (k-induction)",
+   "mutant": null,
+   "expected": "PASS",
+   "status": "PASS",
+   "ok": true,
+   "seconds": 24.8,
+   "failed_assertions": [],
+   "tail": ""
+  },
+  {
+   "name": "mutant_sticky",
+   "top": "fp_fma_fv",
+   "params": {
+    "EXP": 4,
+    "MAN": 2,
+    "SUBNORM": 1,
+    "ST_F": 0,
+    "ST_M": 0,
+    "ST_A": 0
+   },
+   "mode": "bmc",
+   "depth": 2,
+   "engine": "boolector",
+   "claim": "a build with the seeded fault fu_no_sticky is refuted",
+   "mutant": "fu_no_sticky",
+   "expected": "FAIL",
+   "status": "FAIL",
+   "ok": true,
+   "seconds": 2.2,
+   "failed_assertions": [
+    "P_FUSED"
+   ],
+   "tail": ""
+  },
+  {
+   "name": "mutant_anchor",
+   "top": "fp_fma_fv",
+   "params": {
+    "EXP": 2,
+    "MAN": 2,
+    "SUBNORM": 1,
+    "ST_F": 0,
+    "ST_M": 2,
+    "ST_A": 0
+   },
+   "mode": "bmc",
+   "depth": 3,
+   "engine": "boolector",
+   "claim": "a build with the seeded fault fu_anchor is refuted",
+   "mutant": "fu_anchor",
+   "expected": "FAIL",
+   "status": "FAIL",
+   "ok": true,
+   "seconds": 0.9,
+   "failed_assertions": [
+    "P_FUSED"
+   ],
+   "tail": ""
+  },
+  {
+   "name": "mutant_addend_sign",
+   "top": "fp_fma_fv",
+   "params": {
+    "EXP": 2,
+    "MAN": 2,
+    "SUBNORM": 1,
+    "ST_F": 0,
+    "ST_M": 2,
+    "ST_A": 0
+   },
+   "mode": "bmc",
+   "depth": 3,
+   "engine": "boolector",
+   "claim": "a build with the seeded fault fu_addend_sign is refuted",
+   "mutant": "fu_addend_sign",
+   "expected": "FAIL",
+   "status": "FAIL",
+   "ok": true,
+   "seconds": 0.9,
+   "failed_assertions": [
+    "P_FUSED"
+   ],
+   "tail": ""
+  },
+  {
+   "name": "mutant_zero_sign",
+   "top": "fp_fma_fv",
+   "params": {
+    "EXP": 2,
+    "MAN": 2,
+    "SUBNORM": 1,
+    "ST_F": 0,
+    "ST_M": 2,
+    "ST_A": 0
+   },
+   "mode": "bmc",
+   "depth": 3,
+   "engine": "boolector",
+   "claim": "a build with the seeded fault fu_zero_sign is refuted",
+   "mutant": "fu_zero_sign",
+   "expected": "FAIL",
+   "status": "FAIL",
+   "ok": true,
+   "seconds": 1.1,
+   "failed_assertions": [
+    "P_FUSED"
+   ],
+   "tail": ""
+  },
+  {
+   "name": "mutant_c_delay",
+   "top": "fp_fma_fv",
+   "params": {
+    "EXP": 2,
+    "MAN": 2,
+    "SUBNORM": 1,
+    "ST_F": 0,
+    "ST_M": 2,
+    "ST_A": 0
+   },
+   "mode": "bmc",
+   "depth": 3,
+   "engine": "boolector",
+   "claim": "a build with the seeded fault ca_delay_tap is refuted",
+   "mutant": "ca_delay_tap",
+   "expected": "FAIL",
+   "status": "FAIL",
+   "ok": true,
+   "seconds": 2.6,
+   "failed_assertions": [
+    "P_CASCADE"
+   ],
+   "tail": ""
+  },
+  {
+   "name": "mutant_ties_down",
+   "top": "fp_fma_fv",
+   "params": {
+    "EXP": 2,
+    "MAN": 2,
+    "SUBNORM": 1,
+    "ST_F": 0,
+    "ST_M": 2,
+    "ST_A": 0
+   },
+   "mode": "bmc",
+   "depth": 3,
+   "engine": "boolector",
+   "claim": "a build with the seeded fault pk_ties_down is refuted",
+   "mutant": "pk_ties_down",
+   "expected": "FAIL",
+   "status": "FAIL",
+   "ok": true,
+   "seconds": 1.0,
+   "failed_assertions": [
+    "P_FUSED"
+   ],
+   "tail": ""
+  }
+ ]
+}

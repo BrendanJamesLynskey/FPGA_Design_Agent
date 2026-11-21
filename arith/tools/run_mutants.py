@@ -63,13 +63,14 @@ def main() -> int:
     jobs = []
     for m in muts:
         vd = spec["variants"][m["variant"]]
-        src = (d / vd["file"]).read_text()
+        tf = d / m["file"] if m.get("file") else d / vd["file"]          # a mutant may name a shared file instead (``file``, relative to the function's folder)
+        src = tf.read_text()
         if src.count(m["old"]) != 1:
             print("mutant", m["name"], "does not apply exactly once:", src.count(m["old"]))
             return 2
         rd = work / m["name"] / "rtl"
         rd.mkdir(parents=True)
-        (rd / Path(vd["file"]).name).write_text(src.replace(m["old"], m["new"]))
+        (rd / tf.name).write_text(src.replace(m["old"], m["new"]))
         jobs.append((m, rd, vd))
     with ThreadPoolExecutor(max_workers=a.jobs) as ex:
         out = list(ex.map(lambda j: one(fn, j[0]["variant"], j[1], work / j[0]["name"] / "sim", j[2]["mutant_run"]), jobs))

@@ -14,7 +14,9 @@ from pathlib import Path
 
 from arith.tools import arith_common as ac
 
-EXAMPLE = {"adder": ('"WIDTH": 32', 0), "multiplier": ('"WA": 18, "WB": 18, "SIGNED": 1', 3), "mac": ('"WA": 16, "WB": 16, "LANES": 1, "ACCW": 40, "SIGNED": 1', 3)}
+EXAMPLE = {"adder": ('"WIDTH": 32', 0), "multiplier": ('"WA": 18, "WB": 18, "SIGNED": 1', 3), "mac": ('"WA": 16, "WB": 16, "LANES": 1, "ACCW": 40, "SIGNED": 1', 3),
+           "fp_add": ('"EXP": 8, "MAN": 23, "SUBNORM": 1, "STAGES": 3', 3), "fp_mul": ('"EXP": 8, "MAN": 23, "SUBNORM": 1, "STAGES": 3', 3),
+           "fp_fma": ('"EXP": 8, "MAN": 23, "SUBNORM": 1, "STAGES": 4', 4)}
 
 
 def common_text() -> str:
@@ -25,6 +27,7 @@ def common_text() -> str:
 
 def cocotb_text(fn: str) -> str:
     t = (ac.ARITH / fn / "tests" / f"{fn}_cocotb.py").read_text()
+    t = t.replace("from arith.fp_common import fp_ref", "import fp_ref")
     t = t.replace(f"from arith.{fn} import model", "import model").replace("from arith.tools import arith_common as ac", "import harness_common as ac").replace("from arith.tools import bench", "import bench")
     t = t.replace("arith/", "").replace("arith.", "")
     return t
@@ -38,7 +41,7 @@ def readme(fn: str) -> str:
          "This folder is a deliverable: rerun it against your own instance after you integrate or change the block. It needs nothing else from the repository.", "",
          "## What is in it", "",
          "| File | What |", "|---|---|",
-         "| `model.py` | the bit-exact model of the specification ([../spec.md](../spec.md)), in Python integers |",
+         "| `model.py` | the bit-exact model of the specification ([../spec.md](../spec.md)), in Python integers (the floating-point functions also have `fp_ref.py`, the exact-rational reference it calls, and `fpx_ref.sv`, the specification as wide integer RTL that the checker uses) |",
          f"| `bench.py`, `{fn}_cocotb.py`, `harness_common.py` | the cocotb bench: drives one vector per clock (exhaustive at small widths; edge values, runs of ones and random inputs at large ones) and compares every output bit with the model, allowing for your latency |",
          "| `assertions.sv` | a passive SystemVerilog checker with the specification as plain wide arithmetic; put it beside your instance in your own bench or in the simulator of your choice; its `errors` counter is 0 when the instance conforms |",
          "| `chk_top.sv` | your instance with the checker beside it, used by `run_harness.py --checker` |",
@@ -69,8 +72,12 @@ def outputs(fn: str) -> dict[Path, str]:
     run = (ac.ARITH / "tools" / "run_harness_template.py").read_text().replace("@FN@", fn)
     ex, lat = EXAMPLE[fn]
     run = run.replace("@EXAMPLE_PARAMS@", ex).replace("@EXAMPLE_LAT@", str(lat))
-    return {h / "model.py": (ac.ARITH / fn / "model.py").read_text(), h / "bench.py": (ac.ARITH / "tools" / "bench.py").read_text(),
-            h / "harness_common.py": common_text(), h / f"{fn}_cocotb.py": cocotb_text(fn), h / "run_harness.py": run, h / "README.md": readme(fn)}
+    out = {h / "model.py": (ac.ARITH / fn / "model.py").read_text(), h / "bench.py": (ac.ARITH / "tools" / "bench.py").read_text(),
+           h / "harness_common.py": common_text(), h / f"{fn}_cocotb.py": cocotb_text(fn), h / "run_harness.py": run, h / "README.md": readme(fn)}
+    if fn.startswith("fp_"):                       # the floating-point functions share a reference (Python) and a specification as RTL (for the checker)
+        out[h / "fp_ref.py"] = (ac.ARITH / "fp_common" / "fp_ref.py").read_text()
+        out[h / "fpx_ref.sv"] = (ac.ARITH / "fp_common" / "fpx_ref.sv").read_text()
+    return out
 
 
 def main() -> int:
