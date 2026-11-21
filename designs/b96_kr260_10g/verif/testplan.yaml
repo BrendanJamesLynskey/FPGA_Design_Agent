@@ -587,9 +587,16 @@ verification:
   - id: V-XVC-CDC
     requirements: [B96-S-CDC, B96-F-DBGXVC]
     method: timing
-    title: report_cdc gates, build dbg_xvc
+    title: report_cdc after routing, build dbg_xvc (no critical item)
     evidence: {file: results/b131/builds/dbg_xvc/digest.json, reader: json}
-    pass_when: [{field: gates.cdc_no_critical, op: "true"}, {field: gates.post_synth_cdc_structure_clean, op: "true"}]
+    pass_when: [{field: gates.cdc_no_critical, op: "true"}]
+    checks: [designs/b96_kr260_10g/dbg_xvc/rtl/xvc_debug.sv, designs/b96_kr260_10g/dbg_xvc/rtl/b96_core.sv]
+  - id: V-XVC-CDC-STRUCT
+    requirements: [B96-S-CDC, B96-F-DBGXVC]
+    method: timing
+    title: "The flow's post-synthesis CDC structure gate on dbg_xvc (open: 2203 crossings of the core's own hs_vec buses are not matched to their max-delay exceptions in this build; the exceptions exist in the routed design)"
+    evidence: {file: results/b131/builds/dbg_xvc/digest.json, reader: json}
+    pass_when: [{field: gates.post_synth_cdc_structure_clean, op: "true"}]
     checks: [designs/b96_kr260_10g/dbg_xvc/rtl/xvc_debug.sv, designs/b96_kr260_10g/dbg_xvc/rtl/b96_core.sv]
   - id: V-XVC-VERDICT
     requirements: [B96-F-DBGXVC]
