@@ -1,0 +1,159 @@
+{
+ "schema": "fda.b136.cut_through/1",
+ "source": {
+  "branch": "b127-itch-phase2",
+  "commit": "6f603bb3",
+  "records": [
+   "results/b127/fcs_window_share.json",
+   "results/b127/fcs_window_unit_sim.json",
+   "results/b127/latency_sim.json",
+   "results/b127/core_lat_sim.json (whole-core numbers quoted from the 127 report)"
+  ],
+  "copied_to": "results/b136/inputs_b127/"
+ },
+ "window_bytes": {
+  "speculative": {
+   "largest_poisoned_tail": 126,
+   "smallest_escaping_tail": 128
+  },
+  "at_verdict": {
+   "largest_poisoned_tail": 166,
+   "smallest_escaping_tail": 168
+  }
+ },
+ "per_messages_per_packet": [
+  {
+   "messages_per_packet": 1,
+   "candidates": 984,
+   "cut_through_speculative": {
+    "orders_unverified_share": 0.0,
+    "orders_leaving_on_a_bad_frame_per_million_orders_if_p_bad": {
+     "1e-09": 0.0,
+     "1e-06": 0.0,
+     "0.001": 0.0,
+     "0.01": 0.0
+    }
+   },
+   "start_at_verdict": {
+    "orders_unverified_share": 0.0,
+    "orders_leaving_on_a_bad_frame_per_million_orders_if_p_bad": {
+     "1e-09": 0.0,
+     "1e-06": 0.0,
+     "0.001": 0.0,
+     "0.01": 0.0
+    }
+   },
+   "strict_with_speculative_start": {
+    "good_orders_poisoned_share": 0.0,
+    "orders_leaving_on_a_bad_frame": 0,
+    "note": "STRICT (IT_CTRL bit 5) poisons every order whose packet's verdict is not yet known and good: nothing unverified leaves; the share lost is the same share"
+   },
+   "mean_tail_bytes_after_the_message": 0.0
+  },
+  {
+   "messages_per_packet": 3,
+   "candidates": 1015,
+   "cut_through_speculative": {
+    "orders_unverified_share": 0.0,
+    "orders_leaving_on_a_bad_frame_per_million_orders_if_p_bad": {
+     "1e-09": 0.0,
+     "1e-06": 0.0,
+     "0.001": 0.0,
+     "0.01": 0.0
+    }
+   },
+   "start_at_verdict": {
+    "orders_unverified_share": 0.0,
+    "orders_leaving_on_a_bad_frame_per_million_orders_if_p_bad": {
+     "1e-09": 0.0,
+     "1e-06": 0.0,
+     "0.001": 0.0,
+     "0.01": 0.0
+    }
+   },
+   "strict_with_speculative_start": {
+    "good_orders_poisoned_share": 0.0,
+    "orders_leaving_on_a_bad_frame": 0,
+    "note": "STRICT (IT_CTRL bit 5) poisons every order whose packet's verdict is not yet known and good: nothing unverified leaves; the share lost is the same share"
+   },
+   "mean_tail_bytes_after_the_message": 20.4
+  },
+  {
+   "messages_per_packet": 6,
+   "candidates": 988,
+   "cut_through_speculative": {
+    "orders_unverified_share": 0.085,
+    "orders_leaving_on_a_bad_frame_per_million_orders_if_p_bad": {
+     "1e-09": 0.0001,
+     "1e-06": 0.085,
+     "0.001": 85.0,
+     "0.01": 850.0
+    }
+   },
+   "start_at_verdict": {
+    "orders_unverified_share": 0.01,
+    "orders_leaving_on_a_bad_frame_per_million_orders_if_p_bad": {
+     "1e-09": 0.0,
+     "1e-06": 0.01,
+     "0.001": 10.0,
+     "0.01": 100.0
+    }
+   },
+   "strict_with_speculative_start": {
+    "good_orders_poisoned_share": 0.085,
+    "orders_leaving_on_a_bad_frame": 0,
+    "note": "STRICT (IT_CTRL bit 5) poisons every order whose packet's verdict is not yet known and good: nothing unverified leaves; the share lost is the same share"
+   },
+   "mean_tail_bytes_after_the_message": 51.9
+  }
+ ],
+ "latency": {
+  "unit_sim_T_to_start_strobe_clocks": {
+   "speculative": [
+    5,
+    6
+   ],
+   "at_verdict": [
+    10,
+    11
+   ]
+  },
+  "unit_sim_X_to_start_strobe_clocks": {
+   "speculative": [
+    6,
+    8
+   ],
+   "at_verdict": [
+    11,
+    13
+   ]
+  },
+  "gained_by_speculative_start_clocks_range": [
+   4,
+   6
+  ],
+  "gained_ns_range": [
+   24.8,
+   37.2
+  ],
+  "whole_core_gt_port_to_gt_port_mean_clocks": {
+   "speculative": 16.8,
+   "at_verdict": 21.6,
+   "gained": 4.8,
+   "gained_ns": 29.8,
+   "source": "report 127 item 6 (xsim 2026.1, four phases, 32 orders a mode)"
+  }
+ },
+ "p_bad_grid_is_assumed": [
+  1e-09,
+  1e-06,
+  0.001,
+  0.01
+ ],
+ "not_measured": [
+  "the rate of frames that fail their check on a real link (P(frame bad)); the grid is assumed",
+  "the real feed's packet lengths (the generator's distribution is used)",
+  "any risk-logic behaviour after an unverified order: that is design reasoning, nothing was built or simulated in brief 136",
+  "board: nothing here ran on hardware"
+ ]
+}
