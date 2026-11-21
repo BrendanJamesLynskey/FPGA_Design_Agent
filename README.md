@@ -321,8 +321,8 @@ standard.
   hardware proofs in ITPs and of LLM-plus-Lean work on RTL; the experiment is [formal/lean](formal/lean/README.md)
   (the checksum equations of brief 119's TCP fast path proved for all inputs by a model, checked by Lean's kernel; records in [results/124_lean](results/124_lean/README.md)).
 - **Lean as a "proved for all widths" evidence tier (brief 125).** The `formal_lean` method of [the schema v1 matrix](docs/traceability_v1.md#lean-proofs-formal_lean-brief-125)
-  ([flow/lean_tier.py](flow/lean_tier.py)): a theorem statement is the specification and only a human approves it (`verif/lean_approvals.yaml`; until then the matrix says "statement not approved"
-  and does not count the proof), an approved statement that changes fails the gate, the axiom tier (kernel only, or with a compiled decision procedure) and the RTL link (a proof of a transcription,
+  ([flow/lean_tier.py](flow/lean_tier.py)): a theorem statement is the specification and a human approves it (`verif/lean_approvals.yaml`; until then the matrix says "statement not approved"
+  and does not count the proof); since brief 135 the planner's acceptance on the owner's delegation is a second, separately shown and separately counted kind (`agent_delegated`, never a human approval), an approved statement that changes fails the gate, the axiom tier (kernel only, or with a compiled decision procedure) and the RTL link (a proof of a transcription,
   transcription tested, is shown as different from a proof about the RTL) are always printed, and the build status comes from `lake build` where Lean is installed and from a committed hash-pinned record
   (shown as "recorded build") in CI. Also a `proof` purpose in the [model table](docs/model_config.md) and a [proof driver](formal/lean/tools/prove.py); the gray-code lemma for every width
   ([formal/lean/Gray](formal/lean/Gray/Spec.lean), proved by a model in two rounds, statements for the owner's approval; records in [results/125_lean](results/125_lean/README.md)).
