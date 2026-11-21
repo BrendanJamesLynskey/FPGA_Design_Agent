@@ -513,10 +513,14 @@ def simulate(s: Session, sim: str = "auto", coverage: bool = False) -> dict:
     out = _text_out(r)
     res: dict[str, Any] = {"ok": r.returncode == 0}
     hang = _parse_hang(out) if h2 else None
+    if r.returncode == 124 and "timed out after" in (r.stderr or "") and not hang:     # brief 82P7: a time-out says where it was
+        ff = timeout_failure(s, sim, limit, r.stderr, _baseline(s.design, "verilator"), out)
+        res.update({"kind": "sim_timeout", "first_failure": ff, "log_tail": out[-4000:]})
+        out = ("[simulation timed out] " + ff["message"][0] + "\n[log tail]\n" + "\n".join(ff["cause"]) + "\n[end log tail]\n" + out[-1500:])
     if hang:                                # brief 42 H2: a structured result instead of a silent timeout
         res.update({"kind": "sim_hang", "hang": hang})
         out = hang_text(hang) + "\n" + out[-3000:]
-    if r.returncode != 0 and not hang:
+    if r.returncode != 0 and not hang and res.get("kind") != "sim_timeout":
         # structured and raw: the first failing assertion as the log prints it, and the log's tail (never the clipped middle)
         ff = first_failure(out)
         res["first_failure"], res["log_tail"] = ff, out[-4000:]
@@ -569,12 +573,49 @@ def hang_text(h: dict) -> str:
     return head + ".\n[log tail]\n" + (h.get("tail") or "") + "\n[end log tail]"
 
 
+#: brief 82P7: with no Icarus run of this design yet, the Icarus limit comes from the Verilator run of the same bench instead of the fixed
+#: 1800 s: 6 x the Verilator baseline + 120 s, never under 1800 s, never over 5400 s. (82P6: the benches ran 4 to 12 minutes on Verilator
+#: and 17 to 24 minutes on Icarus when Icarus finished; nine 1800 s time-outs ended the other cross-checks without a verdict.)
+SIM_CROSS_RATIO, SIM_CROSS_MAX = 6, 5400
+
+
 def sim_timeout(design: Path, sim: str) -> int:
     try:
         base = float(json.loads(design.joinpath(*_BASELINE_FILE).read_text())[sim])
     except (OSError, ValueError, KeyError, TypeError):
+        vb = _baseline(design, "verilator") if sim == "icarus" else None
+        if vb:
+            return int(min(SIM_CROSS_MAX, max(SIM_TIMEOUT_DEFAULT, SIM_CROSS_RATIO * vb + 120)))
         return SIM_TIMEOUT_DEFAULT
     return int(min(SIM_TIMEOUT_MAX, max(SIM_TIMEOUT_MIN, 4 * base + 120)))
+
+
+_SIM_TIME = re.compile(r"^\s*(\d+(?:\.\d+)?)\s*(fs|ps|ns|us|ms)\b")
+
+
+def timeout_failure(s: Session, sim: str, limit: int, stderr: str, verilator_s: float | None, out: str = "") -> dict[str, Any]:
+    """Brief 82P7: the first-failure record of a simulation that hit its wall limit, so a time-out has a diagnosing reason (the log's
+    tail and the simulation time reached) and never an empty assertion. ``timeout`` marks it: it is not a mismatch between the RTL and
+    the model, so the bench's owner is not asked to check the bench's port driving."""
+    log = None
+    sims = s.root / "build" / "sim"
+    if sims.is_dir():
+        logs = sorted(sims.glob("*/sim.log"), key=lambda p: p.stat().st_mtime)
+        log = logs[-1] if logs else None
+    try:
+        lines = [x.rstrip() for x in log.read_text(errors="replace").splitlines() if x.strip()] if log else []
+    except OSError:
+        lines = []
+    if not lines:
+        lines = [x.rstrip() for x in out.splitlines() if x.strip()]
+    tail = [re.sub(r"/\S+/", "", x)[:300] for x in lines[-12:]]          # absolute paths stripped
+    last_t = next((f"{m.group(1)} {m.group(2)}" for x in reversed(lines) for m in [_SIM_TIME.match(x)] if m), None)
+    msg = f"{sim} did not finish within {limit} s of wall time" + (f"; the last simulation time in the log is {last_t}" if last_t else
+                                                                    "; the log shows no simulation time")
+    if sim == "icarus" and verilator_s:
+        msg += f"; the same bench ran in {verilator_s:.0f} s on Verilator"
+    return {"test": f"{sim} run (timed out)", "message": [msg], "where": None, "log_errors": [], "cause": tail, "frames": [],
+            "timeout": True}
 
 
 def record_sim_baseline(design: Path, sim: str, seconds: float) -> None:

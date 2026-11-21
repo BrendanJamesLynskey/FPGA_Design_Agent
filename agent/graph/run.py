@@ -1079,17 +1079,29 @@ def v3_evidence(rt: Runtime, sim_ok: bool) -> dict:
     return st
 
 
-def simulate_gate(session, d=lambda name, r: r) -> dict:
+def simulate_gate(session, d=lambda name, r: r, cross_check: bool = True) -> dict:
     """07a2 fix 5 E: the stage-2 simulation gate. The bench runs on Verilator first (``simulate(sim="auto")``: a few times
     faster, and a failure comes back in a minute instead of ten); only when that passes does Icarus run the same bench as
     the final cross-check, and the gate passes only if both do. A design that does not build in Verilator runs on Icarus
-    alone (the tool falls back). ``d`` records a failed result into the visit's detail."""
+    alone (the tool falls back). ``d`` records a failed result into the visit's detail.
+
+    Brief 82P7: ``cross_check=False`` stops after the first run. Stage 2 then runs the cross-check itself, once its other gates pass
+    (:func:`icarus_cross_check`), because on the 82P6 benches the Icarus run took 17 to 30 minutes and ran at every visit."""
     sr = d("simulate", dispatch(session, "simulate", {"sim": "auto"}))
     used = sr.get("sim") or "icarus"
-    if sr.get("ok") and used != "icarus":
-        sr = d("simulate [icarus cross-check]", dispatch(session, "simulate", {"sim": "icarus"}))
-        used = "verilator+icarus" if sr.get("ok") else "icarus (cross-check)"
+    if sr.get("ok") and used != "icarus" and cross_check:
+        return icarus_cross_check(session, sr, d)
     return {"ok": sr.get("ok"), "first_failure": sr.get("first_failure"), "sim": used,
+            "text": str(sr.get("log_tail") or sr.get("output", ""))[-3000:]}
+
+
+def icarus_cross_check(session, first: dict, d=lambda name, r: r) -> dict:
+    """The second simulator's run of the same bench (what the cross-check protects: behaviour that only one simulator shows, such as
+    Icarus 12's stricter reading of SystemVerilog). ``first`` is the passing first run's result; the returned dict is the gate's."""
+    t0 = time.monotonic()
+    sr = d("simulate [icarus cross-check]", dispatch(session, "simulate", {"sim": "icarus"}))
+    used = "verilator+icarus" if sr.get("ok") else "icarus (cross-check)"
+    return {"ok": sr.get("ok"), "first_failure": sr.get("first_failure"), "sim": used, "cross_check_s": round(time.monotonic() - t0, 1),
             "text": str(sr.get("log_tail") or sr.get("output", ""))[-3000:]}
 
 
@@ -1119,12 +1131,18 @@ def spec_constants_findings(rt: Runtime) -> list[dict]:
         return []
 
 
-def mark_persisted(prev: dict | None, new: dict) -> dict:
+def _const_ids(t: dict | None) -> set:
+    return {f.get("bound") for f in ((t or {}).get("findings") or []) if f.get("code") == "CONST-ID-01" and f.get("blocking")}
+
+
+def mark_persisted(prev: dict | None, new: dict, seen: list | None = None) -> dict:
     """Brief 82P6: ``new`` (this visit's constants table) gets ``persisted: true`` when a blocking ``CONST-ID-01`` with the same
-    bound value was also in ``prev`` (the earlier visit's table): the repair of that visit did not remove it."""
-    def ids(t):
-        return {f.get("bound") for f in ((t or {}).get("findings") or []) if f.get("code") == "CONST-ID-01" and f.get("blocking")}
-    if ids(prev) & ids(new):
+    bound value was also in ``prev`` (the earlier visit's table): the repair of that visit did not remove it.
+
+    Brief 82P7: also when the same bound value was in ANY earlier stage-2 visit (``seen``: the values of every earlier visit, kept in
+    the evidence as ``const_id_seen``). 82P6's A r3 bound the wrong ID at visits 1, 3 and 5 and the right one between, so it was never in two
+    consecutive visits and owner routing never fired."""
+    if (_const_ids(prev) | set(seen or ())) & _const_ids(new):
         new = {**new, "persisted": True}
     return new
 
@@ -1207,7 +1225,7 @@ def node_gate(state: State) -> dict:
         ev["lint"] = {"ok": lr.get("ok"), "text": str(lr.get("output", ""))[-1500:]}
         ev["contract"] = _contract(rt, detail)
         if ev["contract"]["ok"]:                       # fail fast: no simulate on a model the tests cannot load
-            ev["simulate"] = simulate_gate(rt.session, d)
+            ev["simulate"] = simulate_gate(rt.session, d, cross_check=False)     # brief 82P7: Icarus runs below, once the rest passes
         else:
             ev["simulate"] = {"ok": False}
         ev["verif"] = d("verif_gates", dispatch(rt.session, "gates", {"kind": "verif"})).get("gates") or {}
@@ -1227,7 +1245,9 @@ def node_gate(state: State) -> dict:
         ev["standards_fails"] = standards_stage(ev["standards"], "rtl")[1]
         if ev["standards_fails"]:
             detail.append("[standards] " + "\n".join(ev["standards_fails"])[:1800])
-        ev["constants"] = mark_persisted(ev.get("constants"), constants_gate(rt))   # brief 82P4: the derived-constants gate (HDL-ORC-01);
+        seen_ids = list(ev.get("const_id_seen") or [])
+        ev["constants"] = mark_persisted(ev.get("constants"), constants_gate(rt), seen_ids)   # brief 82P4: the derived-constants gate (HDL-ORC-01);
+        ev["const_id_seen"] = sorted(x for x in set(seen_ids) | _const_ids(ev["constants"]) if x is not None)   # 82P7: every earlier visit's wrong ID
         # ev still holds the earlier visit's table here (82P6: a wrong ID that survived a visit is routed to every holder)
         if constants_blocks(ev):
             from agent.graph.stages import _spec_holder_tag
@@ -1240,6 +1260,15 @@ def node_gate(state: State) -> dict:
             spec_blocks = ev["spec_test"]["blocks"]
             if spec_blocks:
                 detail.append(ev["spec_test"]["evidence"][:3000])
+        # brief 82P7: the Icarus cross-check runs once, when every other gate of this visit that comes before synthesis has passed (lint,
+        # contract, the Verilator run, V2/V3 verification, standards, constants, the spec-test bench), not at every visit that gets
+        # past the Verilator run. It still decides the gate: a failure here is a simulation failure for the repair, as before.
+        ev["cross_check"] = {"ran": False}
+        if (ev["lint"]["ok"] and ev["simulate"]["ok"] and ev["simulate"].get("sim") == "verilator" and not ev["standards_fails"]
+                and not spec_blocks and not constants_blocks(ev) and (ev["verif"].get("reached") or "") >= rt.cfg.verif_level):
+            ev["simulate"] = icarus_cross_check(rt.session, ev["simulate"], d)
+            ev["cross_check"] = {"ran": True, "ok": bool(ev["simulate"]["ok"]), "seconds": ev["simulate"].get("cross_check_s")}
+            log_routing_event(rt, "icarus_cross_check", ok=bool(ev["simulate"]["ok"]), seconds=ev["simulate"].get("cross_check_s"))
         if ev["lint"]["ok"] and ev["simulate"]["ok"] and not spec_blocks and not constants_blocks(ev):   # no Vivado time on a design that fails its tests
             ev["gates_base"] = _build(rt, "synth")["gates"]
     elif n in (3, 4):

@@ -18,7 +18,8 @@ VIVADO="${VIVADO:-$(python3 "$ROOT/flow/version_pin.py" --vivado)}"
 [ -x "$VIVADO" ] || die "Vivado not found at $VIVADO"
 command -v systemd-run >/dev/null || die "systemd-run not found"
 max="${FDA_VIVADO_MAX:-1}"; case "$max" in ''|*[!0-9]*) max=1 ;; esac; [ "$max" -le 2 ] || max=2
-n="$(pgrep -af 'unwrapped/lnx64.o/vivado' | grep -vc task_worker.tcl || true)"
+# brief 82P7: count by argv[0] (as flow/run_vivado.sh does), not by command-line text: a shell that names the path is not a job
+n="$(ps -ww -eo pid=,args= | awk '$2 ~ /unwrapped\/lnx64\.o\/vivado$/ && $0 !~ /task_worker\.tcl/' | wc -l || true)"
 if [ -n "${FDA_TEST_VIVADO_RUNNING:-}" ]; then n="$FDA_TEST_VIVADO_RUNNING"; fi
 [ "${n:-0}" -lt "$max" ] || die "$n Vivado job(s) running, limit FDA_VIVADO_MAX=$max on this PC"
 mkdir -p "$OUT"
