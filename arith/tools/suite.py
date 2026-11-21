@@ -185,7 +185,7 @@ def check_formal_job(fn: str, name: str) -> None:
 def run_harness(fn: str, rtl: Path, top: str, params: dict, lat: int, mode: str, extra: list[str] | None = None, n: int = 800, variant: str = "") -> subprocess.CompletedProcess:
     h = ac.ARITH / fn / "harness"
     cmd = [sys.executable, str(h / "run_harness.py"), "--rtl", str(rtl), "--top", top, "--params", json.dumps(params), "--latency", str(lat), "--mode", mode,
-           "--n", str(n)] + (["--variant", variant] if variant else []) + (extra or [])
+           "--n", str(n)] + (["--variant", variant] if variant and fn in ac.ELEMENTARY else []) + (extra or [])
     return subprocess.run(cmd, capture_output=True, text=True, cwd=h)
 
 
