@@ -88,6 +88,48 @@ parameters:
   note: QPLL0 from the 156.25 MHz reference; the user clocks (161.133 MHz) carry 64 bits a word and the PCS takes one clock
     pause in 33
 files:
+- path: designs/b96_kr260_10g/dbg_xvc/rtl/xvc_debug.sv
+  what: 'the debug path of build dbg_xvc: PS AXI master, AXI4 to AXI4-Lite converter, Debug Bridge (AXI to BSCAN) and one
+    ILA on status taps (brief 131)'
+  sha256: 9c60f6a9711bb5a619b81f8c3f2c23023c7423de9dd0f6c7f6e0905cc6d792fc
+- path: designs/b96_kr260_10g/dbg_xvc/rtl/b96_core.sv
+  what: copy of rtl/b96_core.sv for build dbg_xvc with three read-only tap ports for the debug ILA (brief 131)
+  sha256: f97848c5f7d49743757e3c410e81ce128952682cc8974e9856a42c6e1637948a
+- path: designs/b96_kr260_10g/dbg_xvc/rtl/kr260_10g_top.sv
+  what: copy of rtl/kr260_10g_top.sv for build dbg_xvc with the debug path instantiated (brief 131)
+  sha256: e96c04a223b64f2256b67c48067aadce5dc435bb4f209bd9f9282278a3353ae4
+- path: designs/b96_kr260_10g/dbg_xvc/build.yaml
+  what: how flow/run_vivado.sh builds dbg_xvc (the eyescan build plus the debug path, brief 131)
+  sha256: 241abf02aa94e194e24cd7630e32d8adc48a821e7b3dac9c3e01699edc269b60
+- path: designs/b96_kr260_10g/ip/amd_ip_xvc.tcl
+  what: 'the AMD IP of build dbg_xvc: Zynq UltraScale+ PS, AXI Protocol Converter, Debug Bridge, ILA (brief 131)'
+  sha256: 322bd679d33e15d5ce4b9654ac129bd2e7a526b2b1001cd3aa35157a3c12014c
+- path: designs/b96_kr260_10g/dbg_xvc/docs/dbg_xvc.md
+  what: what build dbg_xvc is, what the ILA watches and why, what the debug logic changes, measured against the parent build
+    (brief 131)
+  sha256: 04e5ffaad1e56e15b9c6eb220ca3a70a5334f3b8276f4bbfaaf0f291fc71a9fb
+- path: designs/b96_kr260_10g/dbg_xvc/docs/xvc_board_side.md
+  what: 'how XVC would run on the KR260''s Ubuntu: which variant fits, the overlay, the Vivado connection; written, not
+    run (brief 131)'
+  sha256: b5fcf54a0354ff4daaed0ed66faca14be368a5f309217aedb5018a872736c3e1
+- path: designs/b96_kr260_10g/dbg_xvc/docs/xvc_board_test.md
+  what: 'the pre-registered board test for build dbg_xvc: criteria written before any board time (brief 131)'
+  sha256: 1c31caf2089e3f8072d0b9534ec235ff954bc54786958b9b403ba249fe3f3902
+- path: designs/b96_kr260_10g/dbg_xvc/board/pl-dbg-xvc.dtsi
+  what: device-tree overlay fragment for the debug bridge on the KR260; not loaded on a board (brief 131)
+  sha256: 6b0dd3f24b69b7dff3d0bc35056f927d7e8d52445179c194ebfd3b6fc1b4b109
+- path: designs/b96_kr260_10g/dbg_xvc/board/xvc_board_session.sh
+  what: the board-session script for the dbg_xvc test, given by the planner at the board; not run (brief 131)
+  sha256: bb8534601aaca3e642822440c19d07f7baaaadca77c4f06c70f1851fce217c4d
+- path: designs/b96_kr260_10g/dbg_xvc/board/xvc_capture.tcl
+  what: 'Vivado hardware-manager side of the dbg_xvc board test: XVC connection and ILA captures; not run (brief 131)'
+  sha256: c43a40ce6f463a4d59611be873820169e8dd01ee7cd56239284c5edf48f6128c
+- path: designs/b96_kr260_10g/dbg_xvc/model/xvc_verdict.py
+  what: the pre-registered verdict of the dbg_xvc board test (brief 131)
+  sha256: 6e5f94a16926eba46a1fcfedf561fff1035cdc3dee231d520b748b573bb2eb40
+- path: designs/b96_kr260_10g/dbg_xvc/scripts/dump_netlist_timing.tcl
+  what: dumps a routed build's core cells and slacks so the debug build can be compared with its parent (brief 131)
+  sha256: edb515502ca690a94ea7faa813393ea3e743d005547c7b24057a78855718c934
 - path: designs/b96_kr260_10g/verif/pyuvm/README.md
   what: how the pyuvm (Python UVM on cocotb and Icarus) bench for the PCS and MAC is built, run and limited; the same job
     as the SystemVerilog UVM bench (brief 123)

@@ -79,6 +79,19 @@ Tool: Vivado 2026.1. Build ID of the inputs at handover: `815a2b02` (`python flo
 
 | File | What |
 |---|---|
+| [`designs/b96_kr260_10g/dbg_xvc/rtl/xvc_debug.sv`](dbg_xvc/rtl/xvc_debug.sv) | the debug path of build dbg_xvc: PS AXI master, AXI4 to AXI4-Lite converter, Debug Bridge (AXI to BSCAN) and one ILA on status taps (brief 131) |
+| [`designs/b96_kr260_10g/dbg_xvc/rtl/b96_core.sv`](dbg_xvc/rtl/b96_core.sv) | copy of rtl/b96_core.sv for build dbg_xvc with three read-only tap ports for the debug ILA (brief 131) |
+| [`designs/b96_kr260_10g/dbg_xvc/rtl/kr260_10g_top.sv`](dbg_xvc/rtl/kr260_10g_top.sv) | copy of rtl/kr260_10g_top.sv for build dbg_xvc with the debug path instantiated (brief 131) |
+| [`designs/b96_kr260_10g/dbg_xvc/build.yaml`](dbg_xvc/build.yaml) | how flow/run_vivado.sh builds dbg_xvc (the eyescan build plus the debug path, brief 131) |
+| [`designs/b96_kr260_10g/ip/amd_ip_xvc.tcl`](ip/amd_ip_xvc.tcl) | the AMD IP of build dbg_xvc: Zynq UltraScale+ PS, AXI Protocol Converter, Debug Bridge, ILA (brief 131) |
+| [`designs/b96_kr260_10g/dbg_xvc/docs/dbg_xvc.md`](dbg_xvc/docs/dbg_xvc.md) | what build dbg_xvc is, what the ILA watches and why, what the debug logic changes, measured against the parent build (brief 131) |
+| [`designs/b96_kr260_10g/dbg_xvc/docs/xvc_board_side.md`](dbg_xvc/docs/xvc_board_side.md) | how XVC would run on the KR260's Ubuntu: which variant fits, the overlay, the Vivado connection; written, not run (brief 131) |
+| [`designs/b96_kr260_10g/dbg_xvc/docs/xvc_board_test.md`](dbg_xvc/docs/xvc_board_test.md) | the pre-registered board test for build dbg_xvc: criteria written before any board time (brief 131) |
+| [`designs/b96_kr260_10g/dbg_xvc/board/pl-dbg-xvc.dtsi`](dbg_xvc/board/pl-dbg-xvc.dtsi) | device-tree overlay fragment for the debug bridge on the KR260; not loaded on a board (brief 131) |
+| [`designs/b96_kr260_10g/dbg_xvc/board/xvc_board_session.sh`](dbg_xvc/board/xvc_board_session.sh) | the board-session script for the dbg_xvc test, given by the planner at the board; not run (brief 131) |
+| [`designs/b96_kr260_10g/dbg_xvc/board/xvc_capture.tcl`](dbg_xvc/board/xvc_capture.tcl) | Vivado hardware-manager side of the dbg_xvc board test: XVC connection and ILA captures; not run (brief 131) |
+| [`designs/b96_kr260_10g/dbg_xvc/model/xvc_verdict.py`](dbg_xvc/model/xvc_verdict.py) | the pre-registered verdict of the dbg_xvc board test (brief 131) |
+| [`designs/b96_kr260_10g/dbg_xvc/scripts/dump_netlist_timing.tcl`](dbg_xvc/scripts/dump_netlist_timing.tcl) | dumps a routed build's core cells and slacks so the debug build can be compared with its parent (brief 131) |
 | [`designs/b96_kr260_10g/verif/pyuvm/README.md`](verif/pyuvm/README.md) | how the pyuvm (Python UVM on cocotb and Icarus) bench for the PCS and MAC is built, run and limited; the same job as the SystemVerilog UVM bench (brief 123) |
 | [`designs/b96_kr260_10g/verif/pyuvm/COMPARISON.md`](verif/pyuvm/COMPARISON.md) | the measured comparison of the pyuvm and the SystemVerilog UVM bench, where each fits the project, and a section for the verification course (brief 123) |
 | [`designs/b96_kr260_10g/verif/uvm/README.md`](verif/uvm/README.md) | how the UVM 1.2 bench for the PCS and MAC is built, what each part checks, the coverage and the seeded bugs (brief 112) |
