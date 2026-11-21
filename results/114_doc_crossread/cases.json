@@ -1,0 +1,42 @@
+{
+ "schema": "fda-crossread-cases/1",
+ "documents": {
+  "ug576": {"kind": "pdf", "path": "/home/brendan/Claude_sandbox/_amd_docs/UG576_ug576-ultrascale-gth-transceivers.pdf", "version": "UG576 v1.7.1, 18 August 2021 (PDF page = printed page)"},
+  "pg142": {"kind": "pdf", "path": "/home/brendan/Claude_sandbox/_amd_docs/PG142_pg142-axi-uartlite-v2.0.pdf", "version": "PG142 AXI UART Lite v2.0 (PDF page numbers)"},
+  "pg079": {"kind": "pdf", "path": "/home/brendan/Claude_sandbox/_amd_docs/PG079_pg079-axi-timer.pdf", "version": "PG079 AXI Timer v2.0 (PDF page numbers)"},
+  "pg144": {"kind": "pdf", "path": "/home/brendan/Claude_sandbox/_amd_docs/PG144_pg144-axi-gpio.pdf", "version": "PG144 AXI GPIO v2.0 (PDF page numbers)"},
+  "zb_accel_md": {"kind": "txt", "path": "designs/b64b_zedboard/gen/regs/zb_accel_regs.md", "version": "the design's own generated datasheet, 1 page"}
+ },
+ "cases": [
+  {"id": "h1_96d_five_word", "role": "history", "doc": "ug576", "pages": "226-234,462-464,503,511", "code": ["hw.py", "eyescan.py"],
+   "topic": "A software driver for the GTH transceiver's on-chip eye scan (statistical eye): the eye-scan attributes it writes and reads over the DRP, their DRP addresses and sizes, and the run and status sequence.",
+   "target": "UltraScale+ GTHE4 (the GTHE4_CHANNEL primitive)"},
+  {"id": "h2_96d2_ten_word", "role": "history", "doc": "ug576", "pages": "226-234,462-464,503,511", "code": ["hw.py", "eyescan.py"],
+   "topic": "A software driver for the GTH transceiver's on-chip eye scan (statistical eye): the eye-scan attributes it writes and reads over the DRP, their DRP addresses and sizes, and the run and status sequence.",
+   "target": "UltraScale+ GTHE4 (the GTHE4_CHANNEL primitive)"},
+  {"id": "h3_clock_phase", "role": "history", "doc": "ug576", "pages": "226-234,462-464,503,511", "code": ["hw.py", "eyescan.py"], "code_case": "h2_96d2_ten_word",
+   "topic": "Conditions and clocking requirements for running the GTH on-chip eye scan, for the statistical-eye and the scan-edge measurement points.",
+   "target": "UltraScale+ GTHE4 (the GTHE4_CHANNEL primitive)"},
+  {"id": "p1_uartlite_stat_ctrl_swapped", "role": "plant", "doc": "pg142", "pages": "9-11", "code": ["tb_uartlite.sv"],
+   "topic": "AXI UART Lite: the register offsets, the bit fields and the reset values.", "target": "AXI UART Lite v2.0"},
+  {"id": "p2_timer_load_bit", "role": "plant", "doc": "pg079", "pages": "14-17", "code": ["tb_timer.sv"],
+   "topic": "AXI Timer: the register offsets and the bit fields of the Control/Status Register 0.", "target": "AXI Timer v2.0"},
+  {"id": "p3_zb_accel_id_reset", "role": "plant", "doc": "zb_accel_md", "pages": null, "code": ["zb_accel_regs.h"],
+   "topic": "The zb_accel block's register map: offsets, reset values and field bit positions of its ID register.", "target": "zb_accel 0.1.0"},
+  {"id": "p4_zb_accel_version_width", "role": "plant", "doc": "zb_accel_md", "pages": null, "code": ["zb_accel_regs.h"],
+   "topic": "The zb_accel block's register map: offsets, reset values and field bit positions of its ID register.", "target": "zb_accel 0.1.0"},
+  {"id": "f1_uartlite", "role": "correct", "doc": "pg142", "pages": "9-11", "code": ["tb_uartlite.sv"],
+   "topic": "AXI UART Lite: the register offsets, the bit fields and the reset values.", "target": "AXI UART Lite v2.0"},
+  {"id": "f2_timer", "role": "correct", "doc": "pg079", "pages": "14-17", "code": ["tb_timer.sv"],
+   "topic": "AXI Timer: the register offsets and the bit fields of the Control/Status Register 0.", "target": "AXI Timer v2.0"},
+  {"id": "f3_gpio", "role": "correct", "doc": "pg144", "pages": "22-26", "code": ["tb_gpio.sv"],
+   "topic": "AXI GPIO: the register offsets and the bits of the global interrupt and the IP interrupt registers.", "target": "AXI GPIO v2.0"},
+  {"id": "f4_zb_accel", "role": "correct", "doc": "zb_accel_md", "pages": null, "code": ["zb_accel_regs.h"],
+   "topic": "The zb_accel block's register map: offsets, reset values and field bit positions of its ID register.", "target": "zb_accel 0.1.0"}
+ ],
+ "arms": {
+  "A": {"model": "claude-sonnet-5-5", "effort": "medium"},
+  "B": {"model": "claude-haiku-5-5", "effort": "medium"}
+ },
+ "repeats": 3
+}

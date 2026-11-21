@@ -88,6 +88,10 @@ parameters:
   note: QPLL0 from the 156.25 MHz reference; the user clocks (161.133 MHz) carry 64 bits a word and the PCS takes one clock
     pause in 33
 files:
+- path: designs/b96_kr260_10g/verif/uvm/README.md
+  what: how the UVM 1.2 bench for the PCS and MAC is built, what each part checks, the coverage and the seeded bugs (brief
+    112)
+  sha256: 28bc0ecbd57c394ae029c90984b71916d61b1c43789e945feb54cb737a03e131
 - path: designs/b96_kr260_10g/rm_gp_bypass/rtl/b96_core.sv
   what: copy of rtl/b96_core.sv for build rm_gp_bypass with the GT buffer-bypass controllers connected and run gates (brief
     96F1)
@@ -219,6 +223,12 @@ commands:
   heavy: true
   minutes: 22
   needs: as above
+- what: the UVM 1.2 regression of the PCS and MAC in xsim (every test over its seeds, coverage merge, seeded bugs)
+  cmd: designs/b96_kr260_10g/verif/uvm/scripts/run_regress.sh --mutants --record results/112_uvm_pcs_mac
+  heavy: false
+  minutes: 40
+  needs: Vivado 2026.1 xsim (Basic tier is enough); a simulation-only run, no heavy slot while the load is under 6 and more
+    than 12 GB is free
 evidence:
 - id: E1
   activity: simulation
@@ -298,6 +308,17 @@ evidence:
     on the reset-done edge, stale done held off, error holds the paths in reset)
   record: results/b96f1/bypass_seq/result.txt
   sha256: 457378d737a4382242b69cf84b2db58aacf9a88707d0cba642934a5b1b091dd8
+- id: E11
+  activity: formal
+  result: pass
+  what: 'the own gray-pointer rate matcher (rate_match_gp.sv, bound properties, RTL untouched; brief 115): safety (no overflow
+    or underflow, pointer views never ahead, one-bit gray steps, idle inserted or deleted only between frames and only pure
+    idles, data integrity and order of a symbolic entry) proved by k-induction at 16 entries for one bit of each class of
+    the entry and at 4 and 2 entries; progress as a bounded model check of a ranking function (not an unbounded proof);
+    covers; ten seeded bugs each caught by a named assertion; two free clocks within 3:1, synchronisers modelled with one-clock
+    skew (docs/formal_study_notes.md)'
+  record: results/b115/formal_ci.json
+  sha256: 7d1f529c4cb2f1519b939cec91c35686eafe4bd8a007737cd4eb5d2046dc91be
 measurements:
 - id: M1
   what: LUTs, variant (b)
@@ -448,6 +469,9 @@ open_questions:
 - Does the PL load over JTAG with the PS idle on the KR260 (flow/program.py has no KR260 board entry yet)?
 history:
 - date: '2026-11-20'
+  note: 'brief 112: UVM 1.2 bench for the PCS and MAC (designs/b96_kr260_10g/verif/uvm): agents, reference models, scoreboard,
+    coverage, SVAs, regression and seeded bugs, in xsim 2026.1; no RTL bug found; xcrg refused on the Basic tier'
+- date: '2026-11-20'
   note: 'brief 96F1: build rm_gp_bypass (both GT elastic buffers bypassed; Wizard probe in results/b96f1/wizard_probe),
     all 29 gates, timing met, report_cdc no critical; board test pre-registered and script written, nothing run on a board'
 - date: '2026-11-19'
@@ -498,4 +522,4 @@ state:
     build_2026_1: pass
   vivado: '2026.1'
   kb_pin: 93d158c
-  build_id: c9106c0d
+  build_id: 815a2b02

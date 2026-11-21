@@ -1,0 +1,1310 @@
+{
+ "schema": "fda-doc-crossread/1",
+ "purpose": "doc_crossread",
+ "topic": "A software driver for the GTH transceiver's on-chip eye scan (statistical eye): the eye-scan attributes it writes and reads over the DRP, their DRP addresses and sizes, and the run and status sequence.",
+ "target": "UltraScale+ GTHE4 (the GTHE4_CHANNEL primitive)",
+ "document": {
+  "source": "/home/brendan/Claude_sandbox/_amd_docs/UG576_ug576-ultrascale-gth-transceivers.pdf",
+  "pages": [
+   226,
+   227,
+   228,
+   229,
+   230,
+   231,
+   232,
+   233,
+   234,
+   462,
+   463,
+   464,
+   503,
+   511
+  ],
+  "sha256": "cd7b5c29a6759dc86f225186aaa82a8f71049cb5c04b0e0c41da5201a33cc906",
+  "chars": 56717
+ },
+ "code": {
+  "files": [
+   {
+    "path": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/h1_96d_five_word/code/hw.py",
+    "sha256": "44ca9f6fad096c45b74d29ded6357820776d26f586a274dbf1ba7b1451b8761c",
+    "lines": 194
+   },
+   {
+    "path": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/h1_96d_five_word/code/eyescan.py",
+    "sha256": "9e408b13c60ea02f701c2295e4f5ec3bedb7f80290c3c4326bc5e5cfa572a3bf",
+    "lines": 39
+   }
+  ],
+  "n_facts": 31,
+  "not_parsed": [],
+  "limits": [
+   "Python: module-level and class-level assignments (including tuple unpacking), evaluated with integers, strings, lists, tuples, dicts, comprehensions over range(), and calls to simple functions defined in the given files (docstring, if-raise, local assignments, return). Not parsed: constants inside function bodies, attributes of objects, anything that calls a library or does I/O.",
+   "SystemVerilog: localparam and parameter declarations (with their declared width), `define, and enum members with explicit values. Not parsed: array literals, structs, functions, case-statement addresses, port widths, generate blocks, numbers written inline in always blocks.",
+   "C: #define NAME <integer expression>. Not parsed: enums, const variables, function-like macros.",
+   "Comments and strings are searched only for the names a text fact (step, condition) mentions; no number in a comment is read."
+  ]
+ },
+ "reader": {
+  "repairs": 0,
+  "seconds": 50.3,
+  "problems": [
+   "fact F20: a value fact needs a numeric value",
+   "fact F21: a value fact needs a numeric value",
+   "fact F22: a value fact needs a numeric value",
+   "fact F23: a value fact needs a numeric value",
+   "fact F24: a value fact needs a numeric value",
+   "fact F26: the quotation was not found in the excerpt",
+   "fact F41: a value fact needs a numeric value"
+  ],
+  "prompts": {
+   "system": "graph/doc_crossread/system",
+   "user": "graph/doc_crossread/user",
+   "repair": "graph/doc_crossread/repair"
+  },
+  "prompt_hashes": {
+   "system": "39849fdea6851c68b57cbc6484d6dfa51dd282578308280247bb31ed1dd2a4e3",
+   "user": "222a588489bd69b7822fd12b58bb36ef2f1933edd2f34e29b4f09b31c2f710ae",
+   "repair": "c5de7b5659596e3b49e746badb81f31d85cf3ba8bec0d5ff020cd4161f53f400"
+  },
+  "n_facts": 39,
+  "source": "stored reply (post-hoc comparator)"
+ },
+ "model": {
+  "purpose": "doc_crossread",
+  "endpoint": "claude_code",
+  "kind": "claude_code",
+  "model": "claude-sonnet-5-5",
+  "options": {
+   "effort": "medium",
+   "timeout_s": 900
+  },
+  "entry_hash": "0cf18c40829002da",
+  "table_hash": "f3a2bdec3aabbb28"
+ },
+ "usage": {
+  "calls": 1,
+  "seconds": 50.3,
+  "input_tokens": 2,
+  "cache_read_input_tokens": 0,
+  "cache_creation_input_tokens": 19129,
+  "output_tokens": 10221,
+  "plan_cost_estimate_usd": 0.1787,
+  "cost_usd": null
+ },
+ "summary": {
+  "agree": 5,
+  "not_in_code": 21,
+  "mentioned": 10,
+  "disagree": 3
+ },
+ "rows": [
+  {
+   "id": "F1",
+   "status": "agree",
+   "tier": "name",
+   "why": "",
+   "kind": "address",
+   "subject": "ES_CONTROL",
+   "field": null,
+   "doc": {
+    "value": 60,
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "GTHE4_CHANNEL",
+    "for_target": true,
+    "page": 462,
+    "ref": "Table C-2",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "29b822d2842f1183"
+   },
+   "code": [
+    {
+     "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/h1_96d_five_word/code/eyescan.py",
+     "line": 10,
+     "name": "A_ES_CONTROL",
+     "value": 60,
+     "n": null
+    }
+   ]
+  },
+  {
+   "id": "F2",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "bit_range",
+   "subject": "ES_CONTROL",
+   "field": null,
+   "doc": {
+    "value": null,
+    "values": null,
+    "lo": 10,
+    "hi": 15,
+    "unit": "bits",
+    "applies_to": "GTHE4_CHANNEL",
+    "for_target": true,
+    "page": 462,
+    "ref": "Table C-2",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "29b822d2842f1183"
+   },
+   "code": []
+  },
+  {
+   "id": "F3",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "bit_range",
+   "subject": "ES_ERRDET_EN",
+   "field": null,
+   "doc": {
+    "value": null,
+    "values": null,
+    "lo": 9,
+    "hi": 9,
+    "unit": null,
+    "applies_to": "GTHE4_CHANNEL",
+    "for_target": true,
+    "page": 462,
+    "ref": "Table C-2",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "02939b1852f8a832"
+   },
+   "code": []
+  },
+  {
+   "id": "F4",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "bit_range",
+   "subject": "ES_EYE_SCAN_EN",
+   "field": null,
+   "doc": {
+    "value": null,
+    "values": null,
+    "lo": 8,
+    "hi": 8,
+    "unit": null,
+    "applies_to": "GTHE4_CHANNEL",
+    "for_target": true,
+    "page": 462,
+    "ref": "Table C-2",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "1eea5e92e5b74b2a"
+   },
+   "code": []
+  },
+  {
+   "id": "F5",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "bit_range",
+   "subject": "ES_PRESCALE",
+   "field": null,
+   "doc": {
+    "value": null,
+    "values": null,
+    "lo": 0,
+    "hi": 4,
+    "unit": "bits",
+    "applies_to": "GTHE4_CHANNEL",
+    "for_target": true,
+    "page": 462,
+    "ref": "Table C-2",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "61edec32b00bd1e0"
+   },
+   "code": []
+  },
+  {
+   "id": "F6",
+   "status": "agree",
+   "tier": "name",
+   "why": "",
+   "kind": "address",
+   "subject": "ES_HORZ_OFFSET",
+   "field": null,
+   "doc": {
+    "value": 79,
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "GTHE4_CHANNEL",
+    "for_target": true,
+    "page": 464,
+    "ref": "Table C-2",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "0f17ba9ee3cae482"
+   },
+   "code": [
+    {
+     "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/h1_96d_five_word/code/eyescan.py",
+     "line": 12,
+     "name": "A_ES_HORZ",
+     "value": 79,
+     "n": null
+    }
+   ]
+  },
+  {
+   "id": "F7",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "bit_range",
+   "subject": "ES_HORZ_OFFSET",
+   "field": null,
+   "doc": {
+    "value": null,
+    "values": null,
+    "lo": 4,
+    "hi": 15,
+    "unit": "bits",
+    "applies_to": "GTHE4_CHANNEL",
+    "for_target": true,
+    "page": 464,
+    "ref": "Table C-2",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "0f17ba9ee3cae482"
+   },
+   "code": []
+  },
+  {
+   "id": "F8",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "bit_range",
+   "subject": "ES_HORZ_OFFSET",
+   "field": "phase offset",
+   "doc": {
+    "value": null,
+    "values": null,
+    "lo": 0,
+    "hi": 10,
+    "unit": "bits",
+    "applies_to": "all",
+    "for_target": true,
+    "page": 229,
+    "ref": "Table 4-20",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "4ce03aab89ca1a9d"
+   },
+   "code": []
+  },
+  {
+   "id": "F9",
+   "status": "mentioned",
+   "tier": null,
+   "why": "named only in comments or strings: ES_HORZ_OFFSET",
+   "kind": "condition",
+   "subject": "ES_HORZ_OFFSET",
+   "field": "phase unification",
+   "doc": {
+    "value": "Bit [11] must be 0 for positive counts (including zero) and 1 for negative counts",
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 229,
+    "ref": "Table 4-20",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "2ef0a48d4154bb7c"
+   },
+   "code": []
+  },
+  {
+   "id": "F10",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "value",
+   "subject": "ES_HORZ_OFFSET",
+   "field": null,
+   "doc": {
+    "value": null,
+    "values": [
+     -32,
+     32,
+     -64,
+     64,
+     -128,
+     128,
+     -256,
+     256,
+     -512,
+     512
+    ],
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 229,
+    "ref": "Table 4-20",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "56ef45af7cb31a24"
+   },
+   "code": []
+  },
+  {
+   "id": "F11",
+   "status": "mentioned",
+   "tier": null,
+   "why": "named only in comments or strings: ES_PRESCALE",
+   "kind": "other",
+   "subject": "ES_PRESCALE",
+   "field": null,
+   "doc": {
+    "value": "Prescale = 2^(1 + register value)",
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 229,
+    "ref": "Table 4-20",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "9797af0e375c8402"
+   },
+   "code": []
+  },
+  {
+   "id": "F12",
+   "status": "agree",
+   "tier": "name",
+   "why": "the code holds the base address only; the other words are not listed in code",
+   "kind": "address",
+   "subject": "ES_QUALIFIER0",
+   "field": null,
+   "doc": {
+    "value": 63,
+    "values": [
+     63,
+     64,
+     65,
+     66,
+     67
+    ],
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "GTHE4_CHANNEL",
+    "for_target": true,
+    "page": 463,
+    "ref": "Table C-2",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "a88b2e788269010d"
+   },
+   "code": [
+    {
+     "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/h1_96d_five_word/code/eyescan.py",
+     "line": 11,
+     "name": "A_ES_QUALIFIER0",
+     "value": 63,
+     "n": null
+    }
+   ]
+  },
+  {
+   "id": "F13",
+   "status": "disagree",
+   "tier": "name",
+   "why": "document address(es) 0xe7, 0xe8, 0xe9, 0xea, 0xeb not among the code's 0x3f",
+   "kind": "address",
+   "subject": "ES_QUALIFIER5",
+   "field": null,
+   "doc": {
+    "value": 231,
+    "values": [
+     231,
+     232,
+     233,
+     234,
+     235
+    ],
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "GTHE4_CHANNEL",
+    "for_target": true,
+    "page": 511,
+    "ref": "Table C-2",
+    "quote": "00E7h        [15:0]   R/W   ES_QUALIFIER5                     [15:0]     0\u201365535        0\u201365535",
+    "quote_ok": true,
+    "page_ok": true,
+    "statement": "ES_QUALIFIER5..9 are at DRP addresses 0x00E7..0x00EB, 16-bit each.",
+    "quote_sha256": "9f719f9f781619de"
+   },
+   "code": [
+    {
+     "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/h1_96d_five_word/code/eyescan.py",
+     "line": 11,
+     "name": "A_ES_QUALIFIER0",
+     "value": 63,
+     "n": null
+    }
+   ]
+  },
+  {
+   "id": "F14",
+   "status": "agree",
+   "tier": "name",
+   "why": "the code holds the base address only; the other words are not listed in code",
+   "kind": "address",
+   "subject": "ES_QUAL_MASK0",
+   "field": null,
+   "doc": {
+    "value": 68,
+    "values": [
+     68,
+     69,
+     70,
+     71,
+     72
+    ],
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "GTHE4_CHANNEL",
+    "for_target": true,
+    "page": 463,
+    "ref": "Table C-2",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "a8c36e21e4136acf"
+   },
+   "code": [
+    {
+     "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/h1_96d_five_word/code/eyescan.py",
+     "line": 11,
+     "name": "A_ES_QUAL_MASK0",
+     "value": 68,
+     "n": null
+    }
+   ]
+  },
+  {
+   "id": "F15",
+   "status": "disagree",
+   "tier": "name",
+   "why": "document address(es) 0xec, 0xed, 0xee, 0xef, 0xf0 not among the code's 0x44",
+   "kind": "address",
+   "subject": "ES_QUAL_MASK5",
+   "field": null,
+   "doc": {
+    "value": 236,
+    "values": [
+     236,
+     237,
+     238,
+     239,
+     240
+    ],
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "GTHE4_CHANNEL",
+    "for_target": true,
+    "page": 511,
+    "ref": "Table C-2",
+    "quote": "00ECh        [15:0]   R/W   ES_QUAL_MASK5                     [15:0]     0\u201365535        0\u201365535",
+    "quote_ok": true,
+    "page_ok": true,
+    "statement": "ES_QUAL_MASK5..9 are at DRP addresses 0x00EC..0x00F0.",
+    "quote_sha256": "8fd7916a35eb40b6"
+   },
+   "code": [
+    {
+     "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/h1_96d_five_word/code/eyescan.py",
+     "line": 11,
+     "name": "A_ES_QUAL_MASK0",
+     "value": 68,
+     "n": null
+    }
+   ]
+  },
+  {
+   "id": "F16",
+   "status": "agree",
+   "tier": "name",
+   "why": "the code holds the base address only; the other words are not listed in code",
+   "kind": "address",
+   "subject": "ES_SDATA_MASK0",
+   "field": null,
+   "doc": {
+    "value": 73,
+    "values": [
+     73,
+     74,
+     75,
+     76,
+     77
+    ],
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "GTHE4_CHANNEL",
+    "for_target": true,
+    "page": 464,
+    "ref": "Table C-2",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "5c1efc167300cb2e"
+   },
+   "code": [
+    {
+     "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/h1_96d_five_word/code/eyescan.py",
+     "line": 11,
+     "name": "A_ES_SDATA_MASK0",
+     "value": 73,
+     "n": null
+    }
+   ]
+  },
+  {
+   "id": "F17",
+   "status": "disagree",
+   "tier": "name",
+   "why": "document address(es) 0xf1, 0xf2, 0xf3, 0xf4, 0xf5 not among the code's 0x49",
+   "kind": "address",
+   "subject": "ES_SDATA_MASK5",
+   "field": null,
+   "doc": {
+    "value": 241,
+    "values": [
+     241,
+     242,
+     243,
+     244,
+     245
+    ],
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "GTHE4_CHANNEL",
+    "for_target": true,
+    "page": 511,
+    "ref": "Table C-2",
+    "quote": "00F1h        [15:0]   R/W   ES_SDATA_MASK5                    [15:0]     0\u201365535        0\u201365535",
+    "quote_ok": true,
+    "page_ok": true,
+    "statement": "ES_SDATA_MASK5..9 are at DRP addresses 0x00F1..0x00F5 in the GTHE4 map (note says these are for GTY only).",
+    "quote_sha256": "01ef02693d99d0ac"
+   },
+   "code": [
+    {
+     "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/h1_96d_five_word/code/eyescan.py",
+     "line": 11,
+     "name": "A_ES_SDATA_MASK0",
+     "value": 73,
+     "n": null
+    }
+   ]
+  },
+  {
+   "id": "F18",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "none of ES_SDATA_MASK5, ES_SDATA_MASK9 appears in the code",
+   "kind": "condition",
+   "subject": "ES_SDATA_MASK5",
+   "field": null,
+   "doc": {
+    "value": "ES_SDATA_MASK5 through ES_SDATA_MASK9 are for GTY transceivers only",
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "UltraScale+ FPGAs",
+    "for_target": true,
+    "page": 234,
+    "ref": "Table 4-20 Notes",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "a6c69ba0601b764f"
+   },
+   "code": []
+  },
+  {
+   "id": "F19",
+   "status": "mentioned",
+   "tier": null,
+   "why": "named only in comments or strings: ES_QUAL_MASK",
+   "kind": "condition",
+   "subject": "ES_QUAL_MASK",
+   "field": null,
+   "doc": {
+    "value": "For a statistical eye, ES_QUAL_MASK is 80 1s",
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 226,
+    "ref": "Figure 4-20 text",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "7509647d5bfebed0"
+   },
+   "code": []
+  },
+  {
+   "id": "F25",
+   "status": "mentioned",
+   "tier": null,
+   "why": "named only in comments or strings: ES_QUAL_MASK, ES_SDATA_MASK",
+   "kind": "condition",
+   "subject": "ES_SDATA_MASK",
+   "field": null,
+   "doc": {
+    "value": "This attribute and ES_QUAL_MASK must also mask out unused bits for bus widths narrower than 80 bits",
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "UltraScale+ FPGAs",
+    "for_target": true,
+    "page": 230,
+    "ref": "Table 4-20",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "baf56c07c0636a68"
+   },
+   "code": []
+  },
+  {
+   "id": "F26",
+   "status": "mentioned",
+   "tier": null,
+   "why": "named only in comments or strings: ES_SDATA_MASK",
+   "kind": "other",
+   "subject": "ES_SDATA_MASK",
+   "field": null,
+   "doc": {
+    "value": "Binary 1 masks the bus bit; binary 0 leaves it unmasked",
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 230,
+    "ref": "Table 4-20",
+    "quote_ok": false,
+    "page_ok": false,
+    "quote_sha256": "d0e20cc64b05444f"
+   },
+   "code": []
+  },
+  {
+   "id": "F27",
+   "status": "mentioned",
+   "tier": null,
+   "why": "named only in comments or strings: ES_EYE_SCAN_EN",
+   "kind": "condition",
+   "subject": "ES_EYE_SCAN_EN",
+   "field": null,
+   "doc": {
+    "value": "Must be 1 when using Eye Scan; 0 powers down eye scan and forces WAIT; re-enabling requires reasserting and asserting/deasserting PMA reset",
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 232,
+    "ref": "Table 4-20",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "d912f0de82375991"
+   },
+   "code": []
+  },
+  {
+   "id": "F28",
+   "status": "mentioned",
+   "tier": null,
+   "why": "named only in comments or strings: ES_ERRDET_EN",
+   "kind": "condition",
+   "subject": "ES_ERRDET_EN",
+   "field": null,
+   "doc": {
+    "value": "1 for statistical eye (Sdata bit=1 when offset sample differs); 0 for scope/waveform views",
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 232,
+    "ref": "Table 4-20",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "00e0e870f0f9c27d"
+   },
+   "code": []
+  },
+  {
+   "id": "F29",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "bit_range",
+   "subject": "ES_CONTROL",
+   "field": "RUN",
+   "doc": {
+    "value": null,
+    "values": null,
+    "lo": 0,
+    "hi": 0,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 232,
+    "ref": "Table 4-20",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "d3b59d2aa5863de7"
+   },
+   "code": []
+  },
+  {
+   "id": "F30",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "bit_range",
+   "subject": "ES_CONTROL",
+   "field": "ARM",
+   "doc": {
+    "value": null,
+    "values": null,
+    "lo": 1,
+    "hi": 1,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 232,
+    "ref": "Table 4-20",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "af1ad8943f3f8805"
+   },
+   "code": []
+  },
+  {
+   "id": "F31",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "bit_range",
+   "subject": "ES_CONTROL",
+   "field": "trig",
+   "doc": {
+    "value": null,
+    "values": null,
+    "lo": 2,
+    "hi": 5,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 232,
+    "ref": "Table 4-20",
+    "quote_ok": true,
+    "page_ok": false,
+    "quote_sha256": "0e123c4e436e86a4"
+   },
+   "code": []
+  },
+  {
+   "id": "F32",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "bit_range",
+   "subject": "es_control_status",
+   "field": "DONE",
+   "doc": {
+    "value": null,
+    "values": null,
+    "lo": 0,
+    "hi": 0,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 233,
+    "ref": "Table 4-20",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "69147bdf3571eed2"
+   },
+   "code": []
+  },
+  {
+   "id": "F33",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "bit_range",
+   "subject": "es_control_status",
+   "field": "state",
+   "doc": {
+    "value": null,
+    "values": null,
+    "lo": 1,
+    "hi": 3,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 233,
+    "ref": "Table 4-20",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "1b8ee7d4498962fe"
+   },
+   "code": []
+  },
+  {
+   "id": "F34",
+   "status": "mentioned",
+   "tier": null,
+   "why": "named only in comments or strings: ES_ERROR_COUNT",
+   "kind": "condition",
+   "subject": "es_error_count",
+   "field": null,
+   "doc": {
+    "value": "Readable in END and WAIT states; 16-bit",
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": "bits",
+    "applies_to": "all",
+    "for_target": true,
+    "page": 228,
+    "ref": "State machine text",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "86466afb8e6ef7b4"
+   },
+   "code": []
+  },
+  {
+   "id": "F35",
+   "status": "mentioned",
+   "tier": null,
+   "why": "named only in comments or strings: ES_CONTROL, ES_CONTROL_STATUS",
+   "kind": "step",
+   "subject": "eye scan run sequence",
+   "field": null,
+   "doc": {
+    "value": "Set run (ES_CONTROL[0]) in WAIT; RESET zeros counters then COUNT; poll es_control_status[3:0] until done; read counts; set run to 0 to return END to WAIT",
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 228,
+    "ref": "State machine text",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "4d933800e61c7394"
+   },
+   "code": []
+  },
+  {
+   "id": "F36",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "word_count",
+   "subject": "es_rdata",
+   "field": null,
+   "doc": {
+    "value": 5,
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": "words",
+    "applies_to": "all",
+    "for_target": true,
+    "page": 233,
+    "ref": "Table 4-20",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "e81c93369de624c9"
+   },
+   "code": []
+  },
+  {
+   "id": "F37",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "bit_range",
+   "subject": "RX_EYESCAN_VS_CODE",
+   "field": null,
+   "doc": {
+    "value": null,
+    "values": null,
+    "lo": 2,
+    "hi": 8,
+    "unit": "bits",
+    "applies_to": "GTHE4_CHANNEL",
+    "for_target": true,
+    "page": 503,
+    "ref": "Table C-2",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "d1b62735f53c72d2"
+   },
+   "code": []
+  },
+  {
+   "id": "F38",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "bit_range",
+   "subject": "RX_EYESCAN_VS_UT_SIGN",
+   "field": null,
+   "doc": {
+    "value": null,
+    "values": null,
+    "lo": 9,
+    "hi": 9,
+    "unit": null,
+    "applies_to": "GTHE4_CHANNEL",
+    "for_target": true,
+    "page": 503,
+    "ref": "Table C-2",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "16506993f3b0e99a"
+   },
+   "code": []
+  },
+  {
+   "id": "F39",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "bit_range",
+   "subject": "RX_EYESCAN_VS_NEG_DIR",
+   "field": null,
+   "doc": {
+    "value": null,
+    "values": null,
+    "lo": 10,
+    "hi": 10,
+    "unit": null,
+    "applies_to": "GTHE4_CHANNEL",
+    "for_target": true,
+    "page": 503,
+    "ref": "Table C-2",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "3ddc6ccf6f402869"
+   },
+   "code": []
+  },
+  {
+   "id": "F40",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "bit_range",
+   "subject": "RX_EYESCAN_VS_RANGE",
+   "field": null,
+   "doc": {
+    "value": null,
+    "values": null,
+    "lo": 0,
+    "hi": 1,
+    "unit": "bits",
+    "applies_to": "GTHE4_CHANNEL",
+    "for_target": true,
+    "page": 503,
+    "ref": "Table C-2",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "8416079b715fe556"
+   },
+   "code": []
+  },
+  {
+   "id": "F42",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "bit_range",
+   "subject": "ES_CLK_PHASE_SEL",
+   "field": null,
+   "doc": {
+    "value": null,
+    "values": null,
+    "lo": 11,
+    "hi": 11,
+    "unit": null,
+    "applies_to": "GTHE4_CHANNEL",
+    "for_target": true,
+    "page": 503,
+    "ref": "Table C-2",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "df4d5923b6da4886"
+   },
+   "code": []
+  },
+  {
+   "id": "F43",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "bit_range",
+   "subject": "USE_PCS_CLK_PHASE_SEL",
+   "field": null,
+   "doc": {
+    "value": null,
+    "values": null,
+    "lo": 10,
+    "hi": 10,
+    "unit": null,
+    "applies_to": "GTHE4_CHANNEL",
+    "for_target": true,
+    "page": 503,
+    "ref": "Table C-2",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "19558cc8a9485ed4"
+   },
+   "code": []
+  },
+  {
+   "id": "F44",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "none of ES_CLK_PHASE_SEL, USE_PCS_CLK_PHASE_SEL appears in the code",
+   "kind": "condition",
+   "subject": "ES_CLK_PHASE_SEL",
+   "field": null,
+   "doc": {
+    "value": "Only effective if USE_PCS_CLK_PHASE_SEL is asserted",
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 233,
+    "ref": "Table 4-20",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "1f2cdb898ee8ecab"
+   },
+   "code": []
+  },
+  {
+   "id": "F45",
+   "status": "mentioned",
+   "tier": null,
+   "why": "named only in comments or strings: RXLPMEN",
+   "kind": "condition",
+   "subject": "eye scan DFE mode",
+   "field": null,
+   "doc": {
+    "value": "In DFE mode (RXLPMEN=0) two measurements are needed, at +UT and -UT, for total BER",
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 226,
+    "ref": "Chapter 4",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "47e419c8b9b5d953"
+   },
+   "code": []
+  }
+ ],
+ "not_in_document": [
+  {
+   "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/h1_96d_five_word/code/hw.py",
+   "line": 15,
+   "name": "R_FEATURES",
+   "value": 8
+  },
+  {
+   "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/h1_96d_five_word/code/hw.py",
+   "line": 15,
+   "name": "R_GT_CTRL",
+   "value": 12
+  },
+  {
+   "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/h1_96d_five_word/code/hw.py",
+   "line": 16,
+   "name": "R_DRP_ADDR",
+   "value": 36
+  },
+  {
+   "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/h1_96d_five_word/code/hw.py",
+   "line": 16,
+   "name": "R_DRP_DATA",
+   "value": 40
+  },
+  {
+   "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/h1_96d_five_word/code/hw.py",
+   "line": 16,
+   "name": "R_CMD",
+   "value": 44
+  },
+  {
+   "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/h1_96d_five_word/code/hw.py",
+   "line": 16,
+   "name": "R_STAT",
+   "value": 48
+  },
+  {
+   "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/h1_96d_five_word/code/hw.py",
+   "line": 16,
+   "name": "R_POINT",
+   "value": 52
+  },
+  {
+   "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/h1_96d_five_word/code/hw.py",
+   "line": 16,
+   "name": "R_TMO",
+   "value": 56
+  },
+  {
+   "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/h1_96d_five_word/code/hw.py",
+   "line": 16,
+   "name": "R_RES",
+   "value": 60
+  },
+  {
+   "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/h1_96d_five_word/code/hw.py",
+   "line": 16,
+   "name": "R_DRIVE",
+   "value": 132
+  },
+  {
+   "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/h1_96d_five_word/code/hw.py",
+   "line": 17,
+   "name": "FEATURE_EYESCAN",
+   "value": 16
+  },
+  {
+   "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/h1_96d_five_word/code/hw.py",
+   "line": 18,
+   "name": "SHIPPED_TXDIFF",
+   "value": 24
+  },
+  {
+   "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/h1_96d_five_word/code/hw.py",
+   "line": 19,
+   "name": "MAX_CURSOR",
+   "value": 12
+  },
+  {
+   "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/h1_96d_five_word/code/hw.py",
+   "line": 22,
+   "name": "A_RX_INT",
+   "value": 102
+  },
+  {
+   "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/h1_96d_five_word/code/hw.py",
+   "line": 23,
+   "name": "SAVE_ADDRS",
+   "value": "list of 18"
+  },
+  {
+   "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/h1_96d_five_word/code/hw.py",
+   "line": 27,
+   "name": "QUALIFIER",
+   "value": "list of 5"
+  },
+  {
+   "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/h1_96d_five_word/code/hw.py",
+   "line": 28,
+   "name": "QUAL_MASK",
+   "value": "list of 5"
+  },
+  {
+   "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/h1_96d_five_word/code/hw.py",
+   "line": 29,
+   "name": "SDATA_MASK_32",
+   "value": "list of 5"
+  },
+  {
+   "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/h1_96d_five_word/code/hw.py",
+   "line": 31,
+   "name": "COUNTS_PER_HALF_UI_AT_DIV1",
+   "value": 32
+  },
+  {
+   "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/h1_96d_five_word/code/eyescan.py",
+   "line": 13,
+   "name": "A_VS",
+   "value": 151
+  },
+  {
+   "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/h1_96d_five_word/code/eyescan.py",
+   "line": 14,
+   "name": "A_ERR",
+   "value": 593
+  },
+  {
+   "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/h1_96d_five_word/code/eyescan.py",
+   "line": 14,
+   "name": "A_SAMP",
+   "value": 594
+  },
+  {
+   "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/h1_96d_five_word/code/eyescan.py",
+   "line": 14,
+   "name": "A_STATUS",
+   "value": 595
+  },
+  {
+   "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/h1_96d_five_word/code/eyescan.py",
+   "line": 15,
+   "name": "A_RXOUT_DIV",
+   "value": 99
+  },
+  {
+   "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/h1_96d_five_word/code/eyescan.py",
+   "line": 16,
+   "name": "STATUS_END",
+   "value": 5
+  }
+ ],
+ "run": "A/h1_96d_five_word_r2"
+}

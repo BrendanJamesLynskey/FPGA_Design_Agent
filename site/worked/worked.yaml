@@ -1,0 +1,97 @@
+# The worked example (brief 117): the KR260 10G trading path, seen as who did what. Every fact is read from a committed record:
+# `path` is a dotted locator into a JSON file; `quote` is text that must occur in the file (the exporter fails otherwise) and `value`
+# is the number the page then shows. Nothing on the page that is a number comes from anywhere else.
+schema: fda-worked/1
+design: designs/b96_kr260_10g
+period_ns: 6.206           # the transmit user clock, 161.1328125 MHz; the board bench's own constant (results/b97c/README.md, "x 6.206")
+facts:
+  # board runs of 2026-11-18 (97C) and 2026-11-19 (96C buffer, 96E own buffer): clocks of the transmit user clock, medians of per-link minima
+  - {id: ctl_E,   file: results/b97c/hw/20261118_194221/control/stage3.json,    path: restarts.E_min_per_link.median}
+  - {id: ctl_L,   file: results/b97c/hw/20261118_194221/control/stage3.json,    path: restarts.L_min_per_link.median}
+  - {id: both_E,  file: results/b97c/hw/20261118_194221/agent_both/stage3.json, path: restarts.E_min_per_link.median}
+  - {id: both_L,  file: results/b97c/hw/20261118_194221/agent_both/stage3.json, path: restarts.L_min_per_link.median}
+  - {id: all3_E,  file: results/b97c/hw/20261118_194221/all3/stage3.json,       path: restarts.E_min_per_link.median}
+  - {id: all3_L,  file: results/b97c/hw/20261118_194221/all3/stage3.json,       path: restarts.L_min_per_link.median}
+  - {id: all3_restarts, file: results/b97c/hw/20261118_194221/all3/stage3.json, path: restarts.restarts}
+  - {id: all3_unlocked, file: results/b97c/hw/20261118_194221/all3/stage3.json, path: restarts.failed_to_lock}
+  - {id: all3_orders,   file: results/b97c/hw/20261118_194221/all3/stage3.json, path: safety.sums.n_order}
+  - {id: all3_order_ok, file: results/b97c/hw/20261118_194221/all3/stage3.json, path: safety.sums.order_ok}
+  - {id: all3_order_bad, file: results/b97c/hw/20261118_194221/all3/stage3.json, path: safety.sums.order_bad}
+  - {id: fibre_ns, file: results/b97c/hw/20261118_194221/all3/stage3.json, path: fibre_one_way_ns, round: 2}
+  - {id: buf_E,   file: results/b96c/hw/20261119_080724/control/stage3.json,    path: restarts.E_min_per_link.median}
+  - {id: buf_L,   file: results/b96c/hw/20261119_080724/control/stage3.json,    path: restarts.L_min_per_link.median}
+  - {id: gp_E,    file: results/b96e/hw/20261119_231251/rm_gp/stage3.json,      path: restarts.E_min_per_link.median}
+  - {id: gp_L,    file: results/b96e/hw/20261119_231251/rm_gp/stage3.json,      path: restarts.L_min_per_link.median}
+  # what was predicted before those runs
+  - {id: pred97_ctl,  file: results/b97c/README.md, quote: "The 97 predictions were L 50, 48 and 47", value: 50}
+  - {id: pred97_both, file: results/b97c/README.md, quote: "The 97 predictions were L 50, 48 and 47", value: 48}
+  - {id: pred97_all3, file: results/b97c/README.md, quote: "The 97 predictions were L 50, 48 and 47", value: 47}
+  - {id: pred96c_lo,  file: designs/b96_kr260_10g/docs/design.md, quote: "L 52 to 54 and tick-to-trade 191 to 198 ns for the base", value: 52}
+  - {id: pred96c_hi,  file: designs/b96_kr260_10g/docs/design.md, quote: "L 52 to 54 and tick-to-trade 191 to 198 ns for the base", value: 54}
+  - {id: miss96c_lo,  file: designs/b96_kr260_10g/docs/design.md, quote: "was missed by 7 to 9 clocks", value: 7}
+  - {id: miss96c_hi,  file: designs/b96_kr260_10g/docs/design.md, quote: "was missed by 7 to 9 clocks", value: 9}
+  - {id: sim_buf_ttt, file: results/b96e/core_lat_sim.json, path: means_over_phases_clocks.rate_match_0_rm_own_0.tick_to_trade}
+  - {id: sim_pass,    file: results/b97c/README.md, quote: "all 15 pass", value: 15}
+  - {id: sim_before_pass, file: results/b97c/README.md, quote: "7 pass, 8 fail", value: 7}
+  - {id: sim_before_fail, file: results/b97c/README.md, quote: "7 pass, 8 fail", value: 8}
+  - {id: pred96e_lo, file: results/b96e/README.md, quote: "Predicted before the run: L of about 54 to 55 clocks", value: 54}
+  - {id: pred96e_hi, file: results/b96e/README.md, quote: "Predicted before the run: L of about 54 to 55 clocks", value: 55}
+  - {id: sim_gp_ttt,     file: results/b96e/core_lat_sim.json, path: means_over_phases_clocks.rate_match_1_rm_own_1.tick_to_trade}
+  - {id: sim_direct_ttt, file: results/b96e/core_lat_sim.json, path: means_over_phases_clocks.rate_match_1_rm_own_1_direct.tick_to_trade}
+  # verification records
+  - {id: eqy_parts,   file: results/b96c/eqy_default/result_default.txt, quote: "partitions proved: 219", value: 219}
+  - {id: gp_wns,      file: results/b96e/builds/rm_gp/digest.json,      path: timing.wns_ns}
+  - {id: all3_wns,    file: results/b97c/builds/all3/digest.json,       path: timing.wns_ns}
+  - {id: gp_gates,    file: results/b96e/builds/rm_gp/digest.json,      count_true: gates}
+  - {id: gp_gates_all, file: results/b96e/builds/rm_gp/digest.json,     count_all: gates}
+  - {id: direct_cdc1, file: results/b96e/builds/rm_gp_direct/cdc_summary.txt, quote: "CDC-1   Critical     38", value: 38}
+  - {id: direct_wns,  file: results/b96e/builds/rm_gp_direct/digest.json, path: timing.wns_ns}
+  - {id: byp_fail, file: results/b96f1/preregistration.md, quote: "**E not falling by at least 1.5 clocks**", value: 1.5}
+  # the eye scan
+  - {id: eye_nodata_points, file: results/b96d/hw/README.md, quote: "11,253 points in all", value: 11253}
+  - {id: eye_width,   file: results/b96d/hw/20261120_105134/summary.txt, quote: "lpm_1: LPM depth 1e-09: width 0.71875 UI", value: 0.71875}
+  - {id: eye_mask_words, file: results/b96d/hw/README.md, quote: "ten-word UltraScale+ masks", value: 10}
+  # a pre-registered test that has not been run
+  - {id: byp_lo, file: results/b96f1/preregistration.md, quote: "**E falls by 2.9 to 4.5 clocks:**", value: 2.9}
+  - {id: byp_hi, file: results/b96f1/preregistration.md, quote: "**E falls by 2.9 to 4.5 clocks:**", value: 4.5}
+# The mini traceability matrix: what the evidence for each requirement is, by kind. state: pass | measured | none. The full matrix is the
+# traceability page (brief 116); this one is hand-picked from the same records so the home page can show how evidence accumulates.
+kinds:
+  - {id: sim,    label: Simulation}
+  - {id: formal, label: Formal}
+  - {id: timing, label: Timing}
+  - {id: cdc,    label: Clock crossings}
+  - {id: board,  label: Board}
+requirements:
+  - id: R1
+    text: Blocks and frames are exactly what an independent reference model says
+    cells:
+      sim:    {state: pass, text: "the whole-core bench passes {sim_pass} of {sim_pass} tests, frame bytes compared with the reference builders", file: results/b97c/README.md}
+      board:  {state: pass, text: "{all3_order_ok} of {all3_orders} orders came back with the right content", file: results/b97c/hw/20261118_194221/all3/stage3.json}
+  - id: R2
+    text: A wrong or stale order is never sent unflagged
+    cells:
+      sim:    {state: pass, text: "the bench found the resync bug first ({sim_before_pass} pass, {sim_before_fail} fail), then {sim_pass} of {sim_pass} after the fix", file: results/b97c/README.md}
+      board:  {state: pass, text: "{all3_order_bad} bad orders in {all3_orders}", file: results/b97c/hw/20261118_194221/all3/stage3.json}
+  - id: R3
+    text: The default build is unchanged by the new rate-match option
+    cells:
+      sim:    {state: pass, text: "the same bench passes on the default build", file: results/b97c/README.md}
+      formal: {state: pass, text: "equivalence proof: {eqy_parts} partitions proved equal; a planted fault is caught", file: results/b96c/eqy_default/README.md}
+  - id: R4
+    text: Timing is met at the transmit user clock, 161.13 MHz
+    cells:
+      timing: {state: pass, text: "worst setup slack +{gp_wns} ns, every one of {gp_gates_all} flow gates true", file: results/b96e/builds/rm_gp/digest.json}
+  - id: R5
+    text: No clock crossing the tools cannot see, and no waiver
+    cells:
+      cdc:    {state: pass, text: "report_cdc: no critical row, no waiver; the variant with {direct_cdc1} critical rows was rejected", file: results/b96e/builds/rm_gp_direct/cdc_summary.txt}
+  - id: R6
+    text: Every latency is stated with its definition
+    cells:
+      sim:    {state: measured, text: "{sim_buf_ttt} clocks from price word to order start block (GT stand-in)", file: results/b96e/core_lat_sim.json}
+      board:  {state: measured, text: "echo {all3_E}, loop {all3_L} clocks of 6.206 ns, from stamps inside the FPGA", file: results/b97c/hw/20261118_194221/all3/stage3.json}
+  - id: R7
+    text: The receiver has margin (eye after the equaliser)
+    cells:
+      board:  {state: measured, text: "width {eye_width} UI after the equaliser; one board, one module, fibre loopback", file: results/b96d/hw/20261120_105134/summary.txt}
