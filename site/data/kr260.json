@@ -1,0 +1,273 @@
+{
+ "builds": [
+  {
+   "E": 20.0,
+   "L": 50.0,
+   "LE": 30.0,
+   "id": "ctl",
+   "label": "control (97C)",
+   "note": "the default build",
+   "ttt": 185.3
+  },
+  {
+   "E": 20.0,
+   "L": 48.0,
+   "LE": 28.0,
+   "id": "both",
+   "label": "agent_both (97C)",
+   "note": "two latency changes (brief 97)",
+   "ttt": 172.9
+  },
+  {
+   "E": 20.0,
+   "L": 46.0,
+   "LE": 26.0,
+   "id": "all3",
+   "label": "all3 (97C)",
+   "note": "three latency changes (brief 97)",
+   "ttt": 160.5
+  },
+  {
+   "E": 24.5,
+   "L": 61.0,
+   "LE": 36.5,
+   "id": "buf",
+   "label": "with the AMD-macro elastic buffer (96C)",
+   "note": "needed for a real network card",
+   "ttt": 225.7
+  },
+  {
+   "E": 21.0,
+   "L": 54.0,
+   "LE": 33.0,
+   "id": "gp",
+   "label": "with our own elastic buffer (96E)",
+   "note": "the same job, less delay",
+   "ttt": 204.0
+  }
+ ],
+ "facts": {
+  "all3_E": 20.0,
+  "all3_L": 46.0,
+  "all3_LE": 26.0,
+  "all3_order_bad": 0,
+  "all3_order_ok": 500,
+  "all3_orders": 500,
+  "all3_restarts": 100,
+  "all3_ttt": 160.5,
+  "all3_unlocked": 0,
+  "all3_wns": 0.193,
+  "both_E": 20.0,
+  "both_L": 48.0,
+  "both_LE": 28.0,
+  "both_ttt": 172.9,
+  "buf_E": 24.5,
+  "buf_L": 61.0,
+  "buf_LE": 36.5,
+  "buf_ttt": 225.7,
+  "byp_fail": 1.5,
+  "byp_hi": 4.5,
+  "byp_lo": 2.9,
+  "ctl_E": 20.0,
+  "ctl_L": 50.0,
+  "ctl_LE": 30.0,
+  "ctl_ttt": 185.3,
+  "direct_cdc1": 38,
+  "direct_wns": 0.079,
+  "eqy_parts": 219,
+  "eye_mask_words": 10,
+  "eye_nodata_points": 11253,
+  "eye_width": 0.71875,
+  "fibre_ns": 0.83,
+  "gp_E": 21.0,
+  "gp_L": 54.0,
+  "gp_LE": 33.0,
+  "gp_gates": 29,
+  "gp_gates_all": 29,
+  "gp_ttt": 204.0,
+  "gp_wns": 0.164,
+  "miss96c_hi": 9,
+  "miss96c_lo": 7,
+  "period": 6.206,
+  "pred96c_hi": 54,
+  "pred96c_lo": 52,
+  "pred96e_hi": 55,
+  "pred96e_lo": 54,
+  "pred97_all3": 47,
+  "pred97_both": 48,
+  "pred97_ctl": 50,
+  "sim_before_fail": 8,
+  "sim_before_pass": 7,
+  "sim_buf_ttt": 10.6,
+  "sim_direct_ttt": 11.8,
+  "sim_gp_ttt": 12.9,
+  "sim_pass": 15
+ },
+ "kinds": [
+  {
+   "id": "sim",
+   "label": "Simulation"
+  },
+  {
+   "id": "formal",
+   "label": "Formal"
+  },
+  {
+   "id": "timing",
+   "label": "Timing"
+  },
+  {
+   "id": "cdc",
+   "label": "Clock crossings"
+  },
+  {
+   "id": "board",
+   "label": "Board"
+  }
+ ],
+ "requirements": [
+  {
+   "cells": {
+    "board": {
+     "file": "results/b97c/hw/20261118_194221/all3/stage3.json",
+     "state": "pass",
+     "text": "500 of 500 orders came back with the right content"
+    },
+    "sim": {
+     "file": "results/b97c/README.md",
+     "state": "pass",
+     "text": "the whole-core bench passes 15 of 15 tests, frame bytes compared with the reference builders"
+    }
+   },
+   "id": "R1",
+   "text": "Blocks and frames are exactly what an independent reference model says"
+  },
+  {
+   "cells": {
+    "board": {
+     "file": "results/b97c/hw/20261118_194221/all3/stage3.json",
+     "state": "pass",
+     "text": "0 bad orders in 500"
+    },
+    "sim": {
+     "file": "results/b97c/README.md",
+     "state": "pass",
+     "text": "the bench found the resync bug first (7 pass, 8 fail), then 15 of 15 after the fix"
+    }
+   },
+   "id": "R2",
+   "text": "A wrong or stale order is never sent unflagged"
+  },
+  {
+   "cells": {
+    "formal": {
+     "file": "results/b96c/eqy_default/README.md",
+     "state": "pass",
+     "text": "equivalence proof: 219 partitions proved equal; a planted fault is caught"
+    },
+    "sim": {
+     "file": "results/b97c/README.md",
+     "state": "pass",
+     "text": "the same bench passes on the default build"
+    }
+   },
+   "id": "R3",
+   "text": "The default build is unchanged by the new rate-match option"
+  },
+  {
+   "cells": {
+    "timing": {
+     "file": "results/b96e/builds/rm_gp/digest.json",
+     "state": "pass",
+     "text": "worst setup slack +0.164 ns, every one of 29 flow gates true"
+    }
+   },
+   "id": "R4",
+   "text": "Timing is met at the transmit user clock, 161.13 MHz"
+  },
+  {
+   "cells": {
+    "cdc": {
+     "file": "results/b96e/builds/rm_gp_direct/cdc_summary.txt",
+     "state": "pass",
+     "text": "report_cdc: no critical row, no waiver; the variant with 38 critical rows was rejected"
+    }
+   },
+   "id": "R5",
+   "text": "No clock crossing the tools cannot see, and no waiver"
+  },
+  {
+   "cells": {
+    "board": {
+     "file": "results/b97c/hw/20261118_194221/all3/stage3.json",
+     "state": "measured",
+     "text": "echo 20, loop 46 clocks of 6.206 ns, from stamps inside the FPGA"
+    },
+    "sim": {
+     "file": "results/b96e/core_lat_sim.json",
+     "state": "measured",
+     "text": "10.6 clocks from price word to order start block (GT stand-in)"
+    }
+   },
+   "id": "R6",
+   "text": "Every latency is stated with its definition"
+  },
+  {
+   "cells": {
+    "board": {
+     "file": "results/b96d/hw/20261120_105134/summary.txt",
+     "state": "measured",
+     "text": "width 0.71875 UI after the equaliser; one board, one module, fibre loopback"
+    }
+   },
+   "id": "R7",
+   "text": "The receiver has margin (eye after the equaliser)"
+  }
+ ],
+ "sources": {
+  "all3_E": "results/b97c/hw/20261118_194221/all3/stage3.json",
+  "all3_L": "results/b97c/hw/20261118_194221/all3/stage3.json",
+  "all3_order_bad": "results/b97c/hw/20261118_194221/all3/stage3.json",
+  "all3_order_ok": "results/b97c/hw/20261118_194221/all3/stage3.json",
+  "all3_orders": "results/b97c/hw/20261118_194221/all3/stage3.json",
+  "all3_restarts": "results/b97c/hw/20261118_194221/all3/stage3.json",
+  "all3_unlocked": "results/b97c/hw/20261118_194221/all3/stage3.json",
+  "all3_wns": "results/b97c/builds/all3/digest.json",
+  "both_E": "results/b97c/hw/20261118_194221/agent_both/stage3.json",
+  "both_L": "results/b97c/hw/20261118_194221/agent_both/stage3.json",
+  "buf_E": "results/b96c/hw/20261119_080724/control/stage3.json",
+  "buf_L": "results/b96c/hw/20261119_080724/control/stage3.json",
+  "byp_fail": "results/b96f1/preregistration.md",
+  "byp_hi": "results/b96f1/preregistration.md",
+  "byp_lo": "results/b96f1/preregistration.md",
+  "ctl_E": "results/b97c/hw/20261118_194221/control/stage3.json",
+  "ctl_L": "results/b97c/hw/20261118_194221/control/stage3.json",
+  "direct_cdc1": "results/b96e/builds/rm_gp_direct/cdc_summary.txt",
+  "direct_wns": "results/b96e/builds/rm_gp_direct/digest.json",
+  "eqy_parts": "results/b96c/eqy_default/result_default.txt",
+  "eye_mask_words": "results/b96d/hw/README.md",
+  "eye_nodata_points": "results/b96d/hw/README.md",
+  "eye_width": "results/b96d/hw/20261120_105134/summary.txt",
+  "fibre_ns": "results/b97c/hw/20261118_194221/all3/stage3.json",
+  "gp_E": "results/b96e/hw/20261119_231251/rm_gp/stage3.json",
+  "gp_L": "results/b96e/hw/20261119_231251/rm_gp/stage3.json",
+  "gp_gates": "results/b96e/builds/rm_gp/digest.json",
+  "gp_gates_all": "results/b96e/builds/rm_gp/digest.json",
+  "gp_wns": "results/b96e/builds/rm_gp/digest.json",
+  "miss96c_hi": "designs/b96_kr260_10g/docs/design.md",
+  "miss96c_lo": "designs/b96_kr260_10g/docs/design.md",
+  "pred96c_hi": "designs/b96_kr260_10g/docs/design.md",
+  "pred96c_lo": "designs/b96_kr260_10g/docs/design.md",
+  "pred96e_hi": "results/b96e/README.md",
+  "pred96e_lo": "results/b96e/README.md",
+  "pred97_all3": "results/b97c/README.md",
+  "pred97_both": "results/b97c/README.md",
+  "pred97_ctl": "results/b97c/README.md",
+  "sim_before_fail": "results/b97c/README.md",
+  "sim_before_pass": "results/b97c/README.md",
+  "sim_buf_ttt": "results/b96e/core_lat_sim.json",
+  "sim_direct_ttt": "results/b96e/core_lat_sim.json",
+  "sim_gp_ttt": "results/b96e/core_lat_sim.json",
+  "sim_pass": "results/b97c/README.md"
+ }
+}

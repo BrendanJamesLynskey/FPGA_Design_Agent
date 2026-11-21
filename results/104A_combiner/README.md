@@ -55,3 +55,5 @@ Public run records are added with `git add -f` (the folder name `runs/` is git-i
   stage file has the stages of an earlier run.
 - `designs/b96_kr260_10g/prior_runs.yaml` records the 97/97C variants, but today's stage file describes the rate-matched chain (no `cross_go`), so for that design they are listed and not used; a stage file for the default 97C build would activate them.
 - Ranking keeps one combination per size plus the next best; a user may want a different one (the others are listed under `combiner.not_composable` as "valid, not in the best four").
+
+Update (brief 104B): the splitter that this README names as the first fix was built and back-tested live; see [../104B_split/README.md](../104B_split/README.md).

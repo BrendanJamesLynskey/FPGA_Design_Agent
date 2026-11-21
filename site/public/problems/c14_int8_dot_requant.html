@@ -641,11 +641,43 @@ svg .bdtick { stroke: var(--ink-3); }
   .map td:not(:has(code)) { display: none; }
   .map td::before { content: attr(data-label) ": "; font-size: .78rem; color: var(--ink-3); display: block; }
 }
+
+/* brief 117: the story pages: flow figure, evidence matrix, worked example */
+.vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.ag text.tg { font: 600 11px var(--f-mono); letter-spacing: .06em; fill: var(--ink-3); }
+.ag .youbox { stroke-width: 2.5; }
+.ag .hwband { stroke: var(--accent); stroke-width: 2; }
+.ag .chip.hw { stroke: var(--accent); }
+.ag.flow .band { fill: var(--panel); }
+.evm { width: 100%; border-collapse: collapse; font-size: .9rem; }
+.evm th, .evm td { border: 1px solid var(--rule); padding: 6px 8px; text-align: left; vertical-align: top; }
+.evm thead th { background: var(--panel); font-size: .82rem; }
+.evm tbody th { font-weight: 500; min-width: 11em; }
+.evm .rid { font: 700 .8rem var(--f-mono); color: var(--ink-3); margin-right: .4em; }
+.evm td.ev { min-width: 5.5em; transition: opacity .35s; }
+.evm td.none { color: var(--ink-3); text-align: center; background: var(--bg); }
+.evm td.ev details { margin: 0; }
+.evm td.ev summary { cursor: pointer; display: flex; align-items: center; gap: 6px; min-height: 32px; list-style: none; }
+.evm td.ev summary::-webkit-details-marker { display: none; }
+.evm td.ev p { margin: .4em 0 0; font-size: .85rem; color: var(--ink-2); min-width: 14em; }
+.evm .mk { display: inline-flex; width: 18px; height: 18px; align-items: center; justify-content: center; border: 1.5px solid var(--ink); font: 700 .8rem var(--f-mono); }
+.evm td.pass .mk { background: var(--ink); color: var(--bg); }
+.evm td.measured .mk { background: repeating-linear-gradient(135deg, var(--panel) 0 3px, var(--ink-3) 3px 4px); color: var(--ink); }
+.evm.replaying td.ev:not(.lit) { opacity: .12; }
+.evm.replaying td.ev.lit { background: var(--accent-bg); }
+.cols .card { margin: 0; }
+.cols .card h3 { margin-top: .8em; }
+.cols .card p { font-size: .94rem; }
+@media (max-width: 520px) { .cols { grid-template-columns: minmax(0, 1fr); } }
+.evm { position: relative; } .tablewrap:has(.evm) { position: relative; }
+.evm .sw { display: none; } .evm td.ev summary { min-height: 28px; }
+@media (max-width: 520px) { .evm tbody th { min-width: 9em; } }
+@media (max-width: 520px) { .evm tbody th { white-space: normal; min-width: 8em; max-width: 9em; font-size: .8rem; } .evm td.ev { min-width: 4.2em; } .evm thead th { font-size: .72rem; } }
 </style>
 </head>
 <body>
 <a class="visually-hidden" href="#main">Skip to content</a>
-<header class="bar"><div class="wrap"><a class="brand" href="../index.html">FPGA Design Agent</a><nav aria-label="Pages"><a href="../agent.html">The agent</a><a class="sub" href="../agent.html#harness">Harness</a><a href="../story.html">How it was built</a><a href="../how.html">How it works</a><a href="../verification.html">Verification</a><a href="../flow-notes.html">Beyond the flow</a><a href="../expertise.html">Expertise</a><a href="../examples.html">Examples</a><a href="../showcase.html">Showcase</a><a href="../problems.html" aria-current="page">Problems</a><a href="../evaluation.html">Evaluation</a><a href="../results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
+<header class="bar"><div class="wrap"><a class="brand" href="../index.html">FPGA Design Agent</a><nav aria-label="Pages"><a href="../agent.html">The agent</a><a class="sub" href="../agent.html#harness">Harness</a><a href="../story.html">How it was built</a><a href="../worked-example.html">Worked example</a><a href="../inspect.html">Inspect it</a><a href="../how.html">How it works</a><a href="../verification.html">Verification</a><a href="../flow-notes.html">Beyond the flow</a><a href="../expertise.html">Expertise</a><a href="../examples.html">Examples</a><a href="../showcase.html">Showcase</a><a href="../problems.html" aria-current="page">Problems</a><a href="../evaluation.html">Evaluation</a><a href="../results.html">Results</a></nav><button id="theme" type="button" aria-label="Switch to dark theme">Dark</button></div></header>
 <main id="main" class="wrap">
 <p class="crumbs small"><a href="../problems.html">Problems</a> / <a href="../problems.html#dom-I">I. Machine learning inference</a></p>
 <h1>Quantised-layer arithmetic unit behind the test shell</h1>
@@ -2099,6 +2131,28 @@ A_LO, A_HI, W_LO, W_HI, BIAS, MULT, CTRL, GO, Y, ACC, STATUS = range(11)
       pos.textContent = k; if (lab) lab.textContent = 'step ' + k;
     }
     r.addEventListener('input', set); set();
+  });
+})();
+
+/* brief 117: the home page's evidence matrix: replay lights each kind of evidence in turn (a table is already complete without script) */
+(function () {
+  "use strict";
+  var t = document.getElementById("evm"), b = document.getElementById("evm-replay");
+  if (!t || !b) return;
+  var rm = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var timers = [];
+  b.hidden = false;
+  function end() { t.classList.remove("replaying"); t.querySelectorAll("td.ev.lit").forEach(function (c) { c.classList.remove("lit"); }); b.textContent = "Replay"; }
+  b.addEventListener("click", function () {
+    timers.forEach(clearTimeout); timers = [];
+    if (rm) { return; }
+    t.classList.add("replaying");
+    t.querySelectorAll("td.ev").forEach(function (c) { c.classList.remove("lit"); });
+    b.textContent = "Replaying";
+    for (var k = 0; k < 5; k++) (function (k) {
+      timers.push(setTimeout(function () { t.querySelectorAll('td.ev[data-order="' + k + '"]').forEach(function (c) { c.classList.add("lit"); }); }, 500 + k * 900));
+    })(k);
+    timers.push(setTimeout(end, 500 + 5 * 900 + 1500));
   });
 })();
 </script>

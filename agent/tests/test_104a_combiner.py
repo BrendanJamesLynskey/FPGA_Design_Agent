@@ -306,13 +306,17 @@ def test_edit_of_a_combined_option_is_refused_and_more_rebuilds_the_combinations
     monkeypatch.setattr(C, "_resolver", lambda a, dd, o: res)
     assert C.improve_cmd(ns(d, "lower latency"), main_fn=None) == 0
     st = json.loads(C.state_path(d).read_text())["current"]["options"]
-    assert [o["id"] for o in st[:3]] == ["O1", "O2", "O3"] and st[3]["origin"] == "combiner" and set(st[3]["combined_from"]) <= {"O1", "O2", "O3"}
+    assert [o["id"] for o in st[:3]] == ["O1", "O2", "O3"]
+    comb = next(o for o in st if o["origin"] == "combiner")
+    assert set(comb["combined_from"]) <= {o["id"] for o in st if o["origin"] != "combiner"}
     capsys.readouterr()
-    assert C.improve_cmd(ns(d, "x", edit=4), main_fn=None) == 2 and "built by the combiner" in capsys.readouterr().err
+    assert C.improve_cmd(ns(d, "x", edit=comb["n"]), main_fn=None) == 2 and "built by code" in capsys.readouterr().err
     assert C.improve_cmd(ns(d, more=True), main_fn=None) == 0
     cur = json.loads(C.state_path(d).read_text())["current"]["options"]
     assert len([o for o in cur if o["origin"] == "model"]) == 6 and len({o["id"] for o in cur}) == len(cur)
-    assert json.loads(C.state_path(d).read_text())["current"]["combiner"]["considered"] == 57      # every subset of the six singles of both rounds (2^6 - 6 - 1)
+    rec = json.loads(C.state_path(d).read_text())["current"]
+    pool = [o for o in cur if o["origin"] != "combiner" and not (o["origin"] == "model" and o["id"] in {p["split_from"] for p in cur if p["origin"] == "splitter"})]
+    assert rec["combiner"]["considered"] == 2 ** min(len(pool), 10) - min(len(pool), 10) - 1      # every subset of the pool (the six singles of both rounds, the bundle's parts in place of the bundle)
 
 
 def _prompts_ok() -> bool:

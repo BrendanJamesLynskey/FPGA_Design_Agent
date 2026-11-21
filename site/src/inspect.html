@@ -1,0 +1,21 @@
+<p class="eyebrow">Inspect it</p>
+<h1>Everything the agent writes is open to inspection. You do not have to read it.</h1>
+<p class="lede">The agent holds the implementation know-how, so that you can spend your attention on the specification and on whether the evidence is thorough enough. Nothing is hidden from you: the RTL, the generated documents, the tool reports, the checkpoints and the run records are all there, and this page says where and how to open them.</p>
+
+<h2>Where each part is</h2>
+<div class="tablewrap" tabindex="0"><table><thead><tr><th>What</th><th>Where, for the KR260 10G design</th><th>How to look at it</th></tr></thead><tbody>
+<tr><td>The specification</td><td><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/designs/b96_kr260_10g/docs/design.md"><code>designs/b96_kr260_10g/docs/design.md</code></a> and <code>handover.yaml</code></td><td>Any text editor or the GitHub page.</td></tr>
+<tr><td>The RTL</td><td><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/tree/main/designs/b96_kr260_10g/rtl"><code>designs/b96_kr260_10g/rtl/</code></a></td><td>SystemVerilog; any editor.</td></tr>
+<tr><td>Generated documents</td><td><a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/designs/b96_kr260_10g/README.md"><code>README.md</code></a>, <code>docs/register_map.md</code>, <code>docs/handover/*.svg</code></td><td>Generated from the design's own settings and checked against the RTL by tests, so a stale document fails a test.</td></tr>
+<tr><td>Tool reports</td><td><code>results/&lt;brief&gt;/builds/&lt;variant&gt;/</code>: <code>digest.json</code> (timing, utilisation, power, flow gates), <code>cdc_summary.txt</code>, <code>run.json</code></td><td>JSON and text; the gate list is in <code>digest.json</code>.</td></tr>
+<tr><td>Checkpoints</td><td><code>build/&lt;variant&gt;/post_synth.dcp</code> and <code>post_route.dcp</code> in the design's directory after a local build. They are not committed (git-ignored).</td><td>In Vivado, <code>open_checkpoint post_route.dcp</code> shows the placed and routed design, with timing and the device view.</td></tr>
+<tr><td>Hardware records</td><td><code>results/b96e/hw/</code>, <code>results/b97c/hw/</code>, <code>results/b96d/hw/</code>: what was programmed, the counters, the operating conditions, every capture</td><td>JSON, plus the eye-scan page and plots in <code>results/b96d/hw/20261120_105134/</code>.</td></tr>
+<tr><td>The agent's own run records</td><td><code>results/course/</code> and the <a href="results.html">results</a> page</td><td>Each run's stages, gates and files.</td></tr>
+</tbody></table></div>
+
+<h2>Rebuilding it yourself</h2>
+<p>Each design carries a <code>build.yaml</code> and the flow that builds it is in <code>flow/</code>. A build writes its checkpoints and reports under the design's <code>build/</code> directory; a design's <code>README.md</code> states the part, the clocks, the build and the run commands, and what was verified.</p>
+<div class="stub"><p><b>One command to open the design in Vivado: not yet available.</b> Brief 118 is building <code>python -m flow inspect &lt;design&gt;</code>, which finds the checkpoints and generates a Vivado project with the sources, constraints and simulation sets, and a view for people without Vivado. This page will link its documentation when it lands. Until then, the checkpoint route above works.</p></div>
+
+<h2>What to look at first</h2>
+<p>You are not meant to audit the RTL line by line. Start from the evidence: the <a href="{{TRACE_HREF}}">traceability matrix</a> lists each requirement and the checks that cover it, and each cell links to its record. Open the implementation where the evidence leaves you unsure, which is the point of keeping it open. The <a href="worked-example.html">worked example</a> shows how that looked for one design.</p>

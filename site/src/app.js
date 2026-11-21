@@ -1127,3 +1127,25 @@
     r.addEventListener('input', set); set();
   });
 })();
+
+/* brief 117: the home page's evidence matrix: replay lights each kind of evidence in turn (a table is already complete without script) */
+(function () {
+  "use strict";
+  var t = document.getElementById("evm"), b = document.getElementById("evm-replay");
+  if (!t || !b) return;
+  var rm = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var timers = [];
+  b.hidden = false;
+  function end() { t.classList.remove("replaying"); t.querySelectorAll("td.ev.lit").forEach(function (c) { c.classList.remove("lit"); }); b.textContent = "Replay"; }
+  b.addEventListener("click", function () {
+    timers.forEach(clearTimeout); timers = [];
+    if (rm) { return; }
+    t.classList.add("replaying");
+    t.querySelectorAll("td.ev").forEach(function (c) { c.classList.remove("lit"); });
+    b.textContent = "Replaying";
+    for (var k = 0; k < 5; k++) (function (k) {
+      timers.push(setTimeout(function () { t.querySelectorAll('td.ev[data-order="' + k + '"]').forEach(function (c) { c.classList.add("lit"); }); }, 500 + k * 900));
+    })(k);
+    timers.push(setTimeout(end, 500 + 5 * 900 + 1500));
+  });
+})();
