@@ -9,9 +9,9 @@ module gt_bp_gate (
     input  logic rst_done,   // gtwiz_reset_{tx,rx}_done_out, used as the paths' reset today
     input  logic bp_done,    // gtwiz_buffbypass_{tx,rx}_done_out
     input  logic bp_err,     // gtwiz_buffbypass_{tx,rx}_error_out
-    output logic run         // 1 = this direction's PCS, MAC and paths may leave reset
+    output logic run,        // 1 = this direction's PCS, MAC and paths may leave reset
+    output logic armed = 1'b0 // 1 = the controller has restarted for the current reset sequence (brief 96F1b: gt_bp_ctl's alignment timer runs until armed AND done)
 );
-    logic armed = 1'b0;
     always_ff @(posedge clk) begin
         if (!rst_done)    armed <= 1'b0;
         else if (!bp_done) armed <= 1'b1;

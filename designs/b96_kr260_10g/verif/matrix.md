@@ -4,7 +4,7 @@
 
 The human specifies the requirements and checks that the verification is thorough enough. The agent holds the knowledge to implement and to verify. You can open any of the implementation or the evidence, and you do not have to. Hardware on the board, with attached instruments, is a verification layer of its own: where a requirement depends on something outside the design (an optical link, a network card, a data source) it may be the only way to close it.
 
-**Summary.** 25 requirements (9 functional, 9 performance, 1 interface, 6 safety); 17 verified; 1 stale; 4 failing; 1 performance with no measurement; 2 with no passing evidence; 0 of 3 requirements that depend on an external element closed by hardware; performance verified: 4 on the board, 2 by post-route timing, 0 in simulation only; 0 of 25 requirements agreed by a human, 0 human review(s) recorded.
+**Summary.** 25 requirements (9 functional, 9 performance, 1 interface, 6 safety); 15 verified; 4 stale; 4 failing; 2 with no passing evidence; 0 of 3 requirements that depend on an external element closed by hardware; performance verified: 4 on the board, 2 by post-route timing, 0 in simulation only; 0 of 25 requirements agreed by a human, 0 human review(s) recorded.
 
 Variants. Unless a requirement says otherwise, "the default build" is RATE_MATCH = 0 (the board-proven 97C receive path) and "the rate-matched build" is rm_gp (RATE_MATCH = 1, RM_OWN = 1). Board evidence is one KR260 on a short optical loopback; nothing has run against a network card. Briefs 112 (UVM bench) and 115 (SVA and formal proofs) are not merged: their items are hooks with no evidence, shown as not run.
 
@@ -19,15 +19,15 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 | **B96-F-LOCK** Block lock is acquired from any bit offset and survives bit errors | functional | FAILS | pass: [V-SIM-PCSMODEL](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml) | FAIL: [V-UVM-PLANNED](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml) |  |  |  |  |  |  |  |
 | **B96-F-RESTART** The link locks after every receive-datapath restart | functional | verified; 1 item(s) stale |  |  |  |  |  |  |  | pass [jtag_registers]: [V-HW-RESTARTS-96E](../../../results/b96e/hw/20261119_231251/rm_gp/stage3.json)<br>stale [jtag_registers]: [V-HW-RESTARTS-97C](../../../results/b97c/hw/20261118_194221/control/stage3.json) |  |
 | **B96-F-DEFAULT** The default build keeps the board-proven receive path | functional | verified; 2 item(s) stale | pass: [V-SIM-CORE-DEFAULT](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml) |  |  | stale: [V-FORMAL-EQY-DEFAULT](../../../results/b96c/eqy_default/result_default.txt) |  |  |  | stale [jtag_registers]: [V-HW-RESTARTS-97C](../../../results/b97c/hw/20261118_194221/control/stage3.json) |  |
-| **B96-S-RATEMATCH** Rate matching never corrupts a frame | safety | FAILS | pass: [V-SIM-CORE-RM](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml)<br>pass: [V-SIM-RM](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml) |  | not run: V-SVA-PLANNED | FAIL: [V-FORMAL-SVA-PLANNED](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml) |  |  | stale: [V-SIMM-PPM](../../../results/b96c/ppm_sim_ratematch.json)<br>pass: [V-SIMM-BYPASS-SEQ](../../../results/b96f1/bypass_seq/result.txt) | stale [jtag_registers]: [V-HW-RATEMATCH-96C](../../../results/b96c/hw/20261119_080724/control/stage3.json) |  |
+| **B96-S-RATEMATCH** Rate matching never corrupts a frame | safety | FAILS | pass: [V-SIM-CORE-RM](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml)<br>pass: [V-SIM-RM](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml) |  | not run: V-SVA-PLANNED | FAIL: [V-FORMAL-SVA-PLANNED](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml) |  |  | stale: [V-SIMM-PPM](../../../results/b96c/ppm_sim_ratematch.json)<br>stale: [V-SIMM-BYPASS-SEQ](../../../results/b96f1/bypass_seq/result.txt) | stale [jtag_registers]: [V-HW-RATEMATCH-96C](../../../results/b96c/hw/20261119_080724/control/stage3.json) |  |
 | **B96-F-OFFSET** Rate matching holds under a real frequency offset Depends on: a second reference clock or a 10G network card (a loopback has no frequency offset); hardware verification open. | functional | passes without hardware; hardware verification open | pass: [V-SIM-PPM-PARTNER](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml) |  |  |  |  |  | stale: [V-SIMM-PPM](../../../results/b96c/ppm_sim_ratematch.json) | not run [external_equipment]: V-HW-OFFSET-PLANNED |  |
 | **B96-F-INTEROP** Interoperates with a standard 10GBASE-R network card Depends on: a 10G network card and cable; hardware verification open. | functional | not run |  |  |  |  |  |  |  | not run [external_equipment]: V-HW-INTEROP-PLANNED |  |
 | **B96-S-ORDERS** Orders are sent only for valid decisions, none is lost or poisoned | safety | verified; 1 item(s) stale | pass: [V-SIM-CORE-DEFAULT](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml)<br>pass: [V-SIM-CORE-RM](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml) |  |  |  |  |  |  | pass [jtag_registers]: [V-HW-RESTARTS-96E](../../../results/b96e/hw/20261119_231251/rm_gp/stage3.json) | stale: [V-REVIEW-96](../../../results/b96/README.md) |
-| **B96-S-DRIVER** The board drivers cannot report OK when a safety check fails | safety | verified | pass: [V-SIM-DRIVER](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml) |  |  |  |  |  |  |  |  |
-| **B96-S-LASER** The laser is off at reset and its polarity is confirmed | safety | verified | pass: [V-SIM-DRIVER](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml) |  |  |  |  |  |  | pass [jtag_registers]: [V-HW-LASER](../../../results/b96e/hw/20261119_231251/rm_gp/stage3.json) |  |
+| **B96-S-DRIVER** The board drivers cannot report OK when a safety check fails | safety | stale | stale: [V-SIM-DRIVER](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml) |  |  |  |  |  |  |  |  |
+| **B96-S-LASER** The laser is off at reset and its polarity is confirmed | safety | verified; 1 item(s) stale | stale: [V-SIM-DRIVER](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml) |  |  |  |  |  |  | pass [jtag_registers]: [V-HW-LASER](../../../results/b96e/hw/20261119_231251/rm_gp/stage3.json) |  |
 | **B96-S-ROC** Board runs stay inside the recommended operating conditions | safety | verified |  |  |  |  |  |  |  | pass [sysmon]: [V-HW-SYSMON-96E](../../../results/b96e/hw/20261119_231251/rm_gp/session.json)<br>pass [sysmon]: [V-HW-SYSMON-EYE](../../../results/b96d/hw/20261120_105134/lpm_1.json) |  |
 | **B96-S-CDC** No critical clock-domain crossing | safety | verified; 2 item(s) stale |  |  |  |  |  | stale: [V-TIM-CDC-DEFAULT](../../../results/b96c/builds/control/digest.json)<br>stale: [V-TIM-CDC-RMGP](../../../results/b96e/builds/rm_gp/digest.json)<br>pass: [V-TIM-CDC-BYPASS](../../../results/b96f1/builds/rm_gp_bypass/digest.json) |  |  |  |
-| **B96-I-REGMAP** The register map is generated from one source and decoded exactly | interface | verified | pass: [V-SIM-REGMAP](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml) |  |  |  |  |  |  |  |  |
+| **B96-I-REGMAP** The register map is generated from one source and decoded exactly | interface | stale | stale: [V-SIM-REGMAP](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml) |  |  |  |  |  |  |  |  |
 | **B96-F-BUILDS** Every build variant sets only the parameters it documents | functional | verified | pass: [V-SIM-BUILDS](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml) |  |  |  |  |  |  |  |  |
 | **B96-F-EYESCAN** The eye-scan sequencer drives the GT's DRP as its Python twin does | functional | verified | pass: [V-SIM-EYESCAN](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml) |  |  |  |  |  |  |  |  |
 | **B96-P-LAT-E** Echo latency E | performance | verified (board-measured); 1 item(s) stale | pass: [V-SIM-LATENCY-MODEL](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml) |  |  |  |  |  |  | pass [latency_loop]: [V-HW-LAT-E-96E](../../../results/b96e/hw/20261119_231251/rm_gp/stage3.json)<br>stale [latency_loop]: [V-HW-LAT-E-97C](../../../results/b97c/hw/20261118_194221/control/stage3.json) |  |
@@ -37,7 +37,7 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 | **B96-P-TIMING** Post-route setup slack | performance | verified (post-route timing); 2 item(s) stale |  |  |  |  |  | stale: [V-TIM-SETUP-DEFAULT](../../../results/b96c/builds/control/digest.json)<br>stale: [V-TIM-SETUP-RMGP](../../../results/b96e/builds/rm_gp/digest.json)<br>pass: [V-TIM-SETUP-BYPASS](../../../results/b96f1/builds/rm_gp_bypass/digest.json) |  |  |  |
 | **B96-P-HOLD** Post-route hold slack | performance | verified (post-route timing); 2 item(s) stale |  |  |  |  |  | stale: [V-TIM-HOLD-DEFAULT](../../../results/b96c/builds/control/digest.json)<br>stale: [V-TIM-HOLD-RMGP](../../../results/b96e/builds/rm_gp/digest.json)<br>pass: [V-TIM-HOLD-BYPASS](../../../results/b96f1/builds/rm_gp_bypass/digest.json) |  |  |  |
 | **B96-P-EYE** Receive eye margin | performance | verified (board-measured) |  |  |  |  |  |  |  | pass [eye_scan]: [V-HW-EYE](../../../results/b96d/hw/20261120_105134/summary.txt) |  |
-| **B96-P-BYPASS** GT buffer bypass shortens the echo path (pre-registered) | performance | no measurement |  |  |  |  |  |  | pass: [V-SIMM-BYPASS-SEQ](../../../results/b96f1/bypass_seq/result.txt) | not run [latency_loop]: V-HW-BYPASS-PLANNED |  |
+| **B96-P-BYPASS** GT buffer bypass shortens the echo path (pre-registered) | performance | stale |  |  |  |  |  |  | stale: [V-SIMM-BYPASS-SEQ](../../../results/b96f1/bypass_seq/result.txt) | stale [latency_loop]: [V-HW-BYPASS-PLANNED](../../../results/b96f1/hw/20261120_215255/rm_gp_bypass/stage3.json) |  |
 | **B96-P-THROUGHPUT** Line-rate throughput without loss Depends on: a 10G network card or a line-rate traffic generator; hardware verification open. | performance | not run |  |  |  |  |  |  |  | not run [external_equipment]: V-HW-THROUGHPUT-PLANNED |  |
 
 ## Gaps
@@ -59,15 +59,20 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 - `B96-F-LOCK`: an item fails
 - `B96-S-RATEMATCH`: an item fails
 - `B96-F-INTEROP`: no passing evidence
+- `B96-S-DRIVER`: its evidence is stale
+- `B96-I-REGMAP`: its evidence is stale
 - `B96-P-T2T-DIGITAL`: its evidence is stale
-- `B96-P-BYPASS`: a performance requirement with no measured value inside the bound
+- `B96-P-BYPASS`: its evidence is stale
 - `B96-P-THROUGHPUT`: no passing evidence
 
 ### Stale evidence
 
+- `V-SIM-REGMAP`: changed since the evidence was recorded: designs/b96_kr260_10g/docs/register_map.md, designs/b96_kr260_10g/regmap.py
+- `V-SIM-DRIVER`: changed since the evidence was recorded: designs/b96_kr260_10g/host/b96f1_bypass.py
 - `V-FORMAL-EQY-DEFAULT`: changed since the evidence was recorded: designs/b96_kr260_10g/rtl/b96_core.sv, designs/b96_kr260_10g/rtl/rx_path.sv
 - `V-SIMM-T2T`: changed since the evidence was recorded: designs/b96_kr260_10g/rtl/b96_core.sv, designs/b96_kr260_10g/rtl/hs_vec.sv, designs/b96_kr260_10g/rtl/rate_match.sv, designs/b96_kr260_10g/rtl/rate_match_gp.sv (+1 more)
 - `V-SIMM-PPM`: changed since the evidence was recorded: designs/b96_kr260_10g/rtl/rate_match.sv, designs/b96_kr260_10g/rtl/rate_match_gp.sv, designs/b96_kr260_10g/rtl/rx_path.sv
+- `V-SIMM-BYPASS-SEQ`: changed since the evidence was recorded: designs/b96_kr260_10g/rm_gp_bypass/rtl/b96_core.sv, designs/b96_kr260_10g/rm_gp_bypass/rtl/gt_bp_gate.sv
 - `V-TIM-SETUP-DEFAULT`: changed since the evidence was recorded: designs/b96_kr260_10g/rtl/b96_core.sv, designs/b96_kr260_10g/rtl/hs_vec.sv, designs/b96_kr260_10g/rtl/rate_match.sv, designs/b96_kr260_10g/rtl/rate_match_gp.sv (+1 more)
 - `V-TIM-SETUP-RMGP`: changed since the evidence was recorded: designs/b96_kr260_10g/rtl/b96_core.sv, designs/b96_kr260_10g/rtl/hs_vec.sv, designs/b96_kr260_10g/rtl/rate_match.sv, designs/b96_kr260_10g/rtl/rate_match_gp.sv (+1 more)
 - `V-TIM-HOLD-DEFAULT`: changed since the evidence was recorded: designs/b96_kr260_10g/rtl/b96_core.sv, designs/b96_kr260_10g/rtl/hs_vec.sv, designs/b96_kr260_10g/rtl/rate_match.sv, designs/b96_kr260_10g/rtl/rate_match_gp.sv (+1 more)
@@ -78,6 +83,7 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 - `V-HW-RATEMATCH-96C`: changed since the evidence was recorded: designs/b96_kr260_10g/rtl/rate_match.sv, designs/b96_kr260_10g/rtl/rate_match_gp.sv, designs/b96_kr260_10g/rtl/rx_path.sv
 - `V-HW-LAT-E-97C`: changed since the evidence was recorded: designs/b96_kr260_10g/rtl/b96_core.sv, designs/b96_kr260_10g/rtl/b96_pkg.sv, designs/b96_kr260_10g/rtl/hs_vec.sv, designs/b96_kr260_10g/rtl/pcs_rx.sv (+5 more)
 - `V-HW-LAT-L-97C`: changed since the evidence was recorded: designs/b96_kr260_10g/rtl/b96_core.sv, designs/b96_kr260_10g/rtl/b96_pkg.sv, designs/b96_kr260_10g/rtl/hs_vec.sv, designs/b96_kr260_10g/rtl/pcs_rx.sv (+5 more)
+- `V-HW-BYPASS-PLANNED`: no pin recorded (run: python -m flow.trace_v1 pin)
 - `V-REVIEW-96`: changed since the evidence was recorded: designs/b96_kr260_10g/rtl/b96_core.sv, designs/b96_kr260_10g/rtl/b96_pkg.sv, designs/b96_kr260_10g/rtl/frame_src.sv, designs/b96_kr260_10g/rtl/hs_vec.sv (+7 more)
 
 ## Requirements in full
@@ -142,7 +148,7 @@ Rows are requirements, columns are verification methods. A cell lists each item 
   - formal: **FAIL**, SVA properties of the gray-pointer rate matcher with SymbiYosys (brief 115; designs/b96_kr260_10g/verif/formal/, results/b115); safety by k-induction, progress by BMC only; not yet in a recorded run: 0 test(s) passed in the recorded run. [evidence](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml)
   - assertion (SVA): **not run**, Bound SVA checkers in simulation (brief 115): no evidence file named (planned: brief 115 (not merged)).
   - simulation measurement: **stale**, Simulated partner at 0, +-100 and +-300 ppm, 400 frames each: ppm+0.verdict.counters_clean = True; ppm+100.verdict.counters_clean = True; ppm-100.verdict.counters_clean = True; ppm+300.verdict.counters_clean = True; ppm-300.verdict.counters_clean = True; ppm+300.verdict.all_frames_received = True; ppm-300.verdict.all_frames_received = True (changed since the evidence was recorded: designs/b96_kr260_10g/rtl/rate_match.sv, designs/b96_kr260_10g/rtl/rate_match_gp.sv, designs/b96_kr260_10g/rtl/rx_path.sv). [evidence](../../../results/b96c/ppm_sim_ratematch.json)
-  - simulation measurement: **pass**, Buffer-bypass run gate against a stand-in transceiver in xsim, 28 checks: value = 28. [evidence](../../../results/b96f1/bypass_seq/result.txt)
+  - simulation measurement: **stale**, Buffer-bypass run gate against a stand-in transceiver in xsim, 28 checks: value = 28 (changed since the evidence was recorded: designs/b96_kr260_10g/rm_gp_bypass/rtl/b96_core.sv, designs/b96_kr260_10g/rm_gp_bypass/rtl/gt_bp_gate.sv). [evidence](../../../results/b96f1/bypass_seq/result.txt)
   - board measurement / jtag_registers: **stale**, Rate-matched build, 100 restarts, safety counters 0 (at 0 ppm only): restarts.failed_to_lock = 0; safety.ok = True (changed since the evidence was recorded: designs/b96_kr260_10g/rtl/rate_match.sv, designs/b96_kr260_10g/rtl/rate_match_gp.sv, designs/b96_kr260_10g/rtl/rx_path.sv). [evidence](../../../results/b96c/hw/20261119_080724/control/stage3.json)
 
 ### B96-F-OFFSET: Rate matching holds under a real frequency offset
@@ -175,17 +181,17 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### B96-S-DRIVER: The board drivers cannot report OK when a safety check fails
 
-- Kind: safety; state: verified; specification status: draft.
+- Kind: safety; state: stale; specification status: draft.
 - Source: `designs/b96_kr260_10g/host/b96_bench.py`
 - A stale counter, a missing order, a counter that was not read, a wrong polarity or a link that never came up fails the run and names the cause; unsafe actions are refused without the lock.
-  - simulation test: **pass**, Board bench, ppm and bypass drivers judged on a fake board (every safety counter, polarity, lock, verdicts): 37 test(s) passed in the recorded run. [evidence](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml)
+  - simulation test: **stale**, Board bench, ppm and bypass drivers judged on a fake board (every safety counter, polarity, lock, verdicts): 37 test(s) passed in the recorded run (changed since the evidence was recorded: designs/b96_kr260_10g/host/b96f1_bypass.py). [evidence](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml)
 
 ### B96-S-LASER: The laser is off at reset and its polarity is confirmed
 
-- Kind: safety; state: verified; specification status: draft.
+- Kind: safety; state: verified; 1 item(s) stale; specification status: draft.
 - Source: `designs/b96_kr260_10g/handover.yaml`
 - tx_disable is 1 at reset; the board run switches the laser on only after the polarity was read back.
-  - simulation test: **pass**, Board bench, ppm and bypass drivers judged on a fake board (every safety counter, polarity, lock, verdicts): 37 test(s) passed in the recorded run. [evidence](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml)
+  - simulation test: **stale**, Board bench, ppm and bypass drivers judged on a fake board (every safety counter, polarity, lock, verdicts): 37 test(s) passed in the recorded run (changed since the evidence was recorded: designs/b96_kr260_10g/host/b96f1_bypass.py). [evidence](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml)
   - board measurement / jtag_registers: **pass**, Laser polarity read back before the laser was enabled: polarity_ok = True; polarity.off.tx_fault = 0. [evidence](../../../results/b96e/hw/20261119_231251/rm_gp/stage3.json)
 
 ### B96-S-ROC: Board runs stay inside the recommended operating conditions
@@ -207,10 +213,10 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### B96-I-REGMAP: The register map is generated from one source and decoded exactly
 
-- Kind: interface; state: verified; specification status: draft.
+- Kind: interface; state: stale; specification status: draft.
 - Source: `designs/b96_kr260_10g/docs/register_map.md`
 - Every address in regmap.py is decoded, nothing else is, vector widths agree, and the datasheet states unmapped reads return 0, counters read from a snapshot and reads have no side effects.
-  - simulation test: **pass**, Register map is current, decoded exactly, widths agree, stated rules hold: 8 test(s) passed in the recorded run. [evidence](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml)
+  - simulation test: **stale**, Register map is current, decoded exactly, widths agree, stated rules hold: 8 test(s) passed in the recorded run (changed since the evidence was recorded: designs/b96_kr260_10g/docs/register_map.md, designs/b96_kr260_10g/regmap.py). [evidence](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml)
 
 ### B96-F-BUILDS: Every build variant sets only the parameters it documents
 
@@ -293,12 +299,12 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### B96-P-BYPASS: GT buffer bypass shortens the echo path (pre-registered)
 
-- Kind: performance; state: no measurement; specification status: draft.
+- Kind: performance; state: stale; specification status: draft.
 - Source: `results/b96f1/preregistration.md`
 - Build rm_gp_bypass must lower E by at least 1.5 clocks against rm_gp (21.0), else the bypass did not take effect. Pre-registered before any board time; not yet run.
 - Bound: echo latency E (median of per-link minima) at most 19.5 clocks; condition: build rm_gp_bypass, 100 receive restarts, KR260 optical fibre loopback, fibre lead 0.17 m.
-  - simulation measurement: **pass**, Buffer-bypass run gate against a stand-in transceiver in xsim, 28 checks: value = 28. [evidence](../../../results/b96f1/bypass_seq/result.txt)
-  - board measurement / latency_loop: **not run**, Build rm_gp_bypass on the KR260 (pre-registered, run_96f1_stage1.sh): evidence not found: results/b96f1/hw/*/rm_gp_bypass/stage3.json (planned: brief 96F1 board run (owner's board)).
+  - simulation measurement: **stale**, Buffer-bypass run gate against a stand-in transceiver in xsim, 28 checks: value = 28 (changed since the evidence was recorded: designs/b96_kr260_10g/rm_gp_bypass/rtl/b96_core.sv, designs/b96_kr260_10g/rm_gp_bypass/rtl/gt_bp_gate.sv). [evidence](../../../results/b96f1/bypass_seq/result.txt)
+  - board measurement / latency_loop: **stale**, Build rm_gp_bypass on the KR260 (pre-registered, run_96f1_stage1.sh): measured 17 clocks; bound at most 19.5 clocks (no pin recorded (run: python -m flow.trace_v1 pin)). [evidence](../../../results/b96f1/hw/20261120_215255/rm_gp_bypass/stage3.json)
 
 ### B96-P-THROUGHPUT: Line-rate throughput without loss
 
