@@ -618,6 +618,38 @@ def _constraint_scope(d: Path, prep: dict[str, Any], drc: list[dict[str, Any]], 
     return info, warn
 
 
+def _iob_packing(d: Path, prep: dict[str, Any], strict: bool, g: dict[str, bool]) -> dict[str, Any] | None:
+    """Brief 129 (flow/iob_check.py). Adds gate ``iob_packed`` when the design marks a register ``IOB TRUE`` (on the register or its
+    port) or declares an interface ``iob: true``: such a register that is not in the I/O block fails it, with the cell and the reason
+    (Vivado's own critical warning when the log has one). A design that marks nothing gets no gate and no record, so its gates do not
+    change. Advice (an unmarked register next to a synchronous interface's pin) is returned as warnings, never a gate. Never raises."""
+    try:
+        from flow import iob_check, io_check
+    except ImportError:      # run as a script: flow/ is on sys.path, not the repo
+        import iob_check
+        import io_check
+    f = d / "iob_route.txt"
+    if not f.exists():
+        return None         # a build from before brief 129 (or one that never routed): no dump, no gate
+    root = Path(__file__).resolve().parents[1]
+    design = root / prep["design"] if prep.get("design") else d.parent.parent
+    try:
+        ifs, _asy, _errs = io_check.load_interfaces(design / "spec.yaml", design / "build.yaml")
+        text = f.read_text(errors="replace")
+        if not iob_check.applies(text, ifs) and not [i for i in ifs if i.get("kind") != "asynchronous" and i.get("iob") is not False]:
+            return None
+        log = d / "vivado.log"
+        r = iob_check.evaluate(text, log.read_text(errors="replace") if log.is_file() else "", ifs)
+    except (OSError, ValueError) as e:
+        g["iob_packed"] = False
+        return {"pass": False, "error": f"{type(e).__name__}: {e}"}
+    if iob_check.applies(text, ifs):
+        g["iob_packed"] = r["pass"]
+    r["warnings"] = [{"name": "iob_register_advice", "stage": "post_route", "code": x["code"], "where": x["where"], "note": x["message"]}
+                     for x in r["findings"] if not x["blocking"]]
+    return r
+
+
 def _margin(d: Path) -> dict[str, Any] | None:
     """Brief 20 part B: the implementation-only setup margin (timing_margin.txt from flow/build.tcl) and the placed WNS
     with and without it. Sign-off (timing_summary.rpt) is after its removal."""
@@ -794,10 +826,12 @@ def evaluate(build_dir: Path, architecture: Path | None = None) -> dict[str, Any
             hub_info = None
         exc_r = _exceptions(d, "route", strict, route_gates, "exceptions_clean")
         io_r = _io(d, "route", strict, route_gates, "io_timing_clean")
+        iob_r = _iob_packing(d, prep, strict, route_gates)
         stages["post_route"] = {"ran": True, "gates": route_gates, "qor_assessment": q_r, "exceptions": exc_r,
                                 "io_timing": io_r, "timing_margin": _margin(d), "ila_hub_crossing": hub_info,
                                 "config_voltage": cfg_info,
-                                "warnings": (io_r or {}).get("warnings", []) + cfg_warn,
+                                **({"iob_packing": iob_r} if iob_r is not None else {}),
+                                "warnings": (io_r or {}).get("warnings", []) + cfg_warn + (iob_r or {}).get("warnings", []),
                                 "unconstrained_ports": parse_check_timing_ports(checks_text)}
 
         # --- bitstream ---

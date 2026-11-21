@@ -308,6 +308,47 @@ files:
 - path: designs/b96_kr260_10g/docs/register_map.md
   what: interface datasheet
   sha256: d2846103ad9f272c61ce8c19447647d40564796dd4c67900e9c989dcf0a0bae1
+- path: designs/b96_kr260_10g/rm_gp_itch/rtl/udp_strip.sv
+  what: 'adapter from mac64_rx to the Mold receiver (build rm_gp_itch, brief 127): header checks, strip with a 2-byte realign,
+    FCS verdict as a late strobe, capture ring'
+  sha256: 18ecd60fabbb24dcc5b8337dd255272ddbf94adeb08a21af839e3e1c9b125cb5
+- path: designs/b96_kr260_10g/rm_gp_itch/rtl/itch_top.sv
+  what: brief 110's mold_rx, itch_dec, book_core, risk_glue (unchanged) with the late verdict and the segment builder (brief
+    127)
+  sha256: 186388568e0ad6c5c654da191aa290776b4bfd8934d60afae04607bf7d2b4764
+- path: designs/b96_kr260_10g/rm_gp_itch/rtl/order_seg.sv
+  what: the order frame as a 113-byte Ethernet/IPv4/TCP stream, the stand-in for brief 119's tcp_fast (brief 127)
+  sha256: 0d885e6b8420c7e836b9486c5bd81247de3e0e24eada6d57a22ad2e1b2789a64
+- path: designs/b96_kr260_10g/rm_gp_itch/rtl/order_seg_tcpfast.sv
+  what: 'the same module with tcp_fast in place of the stand-in: the hook, not in the build (brief 127)'
+  sha256: b6234fcd54a1dcf298915a2b971f40aa90d120026df7bfefa1ad6d2e77dbf5ac
+- path: designs/b96_kr260_10g/rm_gp_itch/rtl/tx_mux.sv
+  what: 'transmit multiplexer in front of mac64_tx: frame source, replay memory, order stream with FIFO and head register
+    (brief 127)'
+  sha256: 60060254bf35df39db013b4a9cd347c13d241a22d7932966dd33ae05faabb7fb
+- path: designs/b96_kr260_10g/rm_gp_itch/rtl/itch_path.sv
+  what: 'core-clock wrapper of the ITCH path: host vectors, order poison policy, counters, latency statistics (brief 127)'
+  sha256: 1672408a82201beab1b68ae768a80c8e4eef09b60cadafaff0ee5f192bac9b4f
+- path: designs/b96_kr260_10g/rm_gp_itch/rtl/b96_core.sv
+  what: 'copy of rtl/b96_core.sv for build rm_gp_itch: RATE_MATCH = 1 only, the ITCH path and its registers 0x300 to 0x57C
+    (brief 127)'
+  sha256: d026de610da6fec06738012b285b70a2a087fcc09f70c58d945d7f9ef949ba7d
+- path: designs/b96_kr260_10g/rm_gp_itch/regmap_itch.py
+  what: register map of build rm_gp_itch as data, generates its datasheet (brief 127)
+  sha256: b9835200246c05d653a0f64f79607ff9c14ffd37fc68ef5c7ed05d3a65ae36ae
+- path: designs/b96_kr260_10g/rm_gp_itch/docs/itch_integration.md
+  what: 'the ITCH/OUCH path inside the 10G design: path, latency, the late frame check, registers, hook for tcp_fast, results
+    (brief 127)'
+  sha256: b50a92b1aa06573f1bf9389ab3fa994ea2ee666c840f85b306fdd5cdf5160486
+- path: designs/b96_kr260_10g/rm_gp_itch/docs/board_test_plan.md
+  what: pre-registered board test of build rm_gp_itch (brief 127), not run
+  sha256: 2801a79865f1efd303d5c223b70416b186304d54dca9c349a58eca2151f27e13
+- path: designs/b96_kr260_10g/rm_gp_itch/host/itch_host.py
+  what: synthetic MoldUDP64/ITCH frames, replay image, expected order frame and the order check (brief 127)
+  sha256: 61c12a6515117fbc3be06993f12371ec609a80f6b5cf44d6bc4f60c529ba5ce1
+- path: designs/b96_kr260_10g/rm_gp_itch/host/b127_stages.py
+  what: the pre-registered board stages, shared with the simulation's dry run (brief 127)
+  sha256: 0a8c138fb0b74268b8211cc6ff0abbcd1d09052da72e28d9274f8a8f2e79c52d
 commands:
 - what: simulate the PCS, MAC and core against the Python reference
   cmd: python -m pytest -q designs/b96_kr260_10g/tests
@@ -449,6 +490,32 @@ evidence:
     nothing
   record: results/b126/core_sim/all3_bypass.json
   sha256: 0f8de19801b2b7b3ab1369e5b7d9641929e2f9f7952eb31dbe0c4aee73935822
+- id: E15
+  activity: simulation
+  result: pass
+  how: ci
+  what: 'the new blocks of build rm_gp_itch with the real mac64_rx and mac64_tx against brief 110''s model: four seeded
+    sessions with speculation off and on, every counter, every book update, the final top of book and every order frame
+    byte for byte; the adapter''s frame lengths and alignments with bubbles and bad FCS; the poison of an order on a bad
+    frame, the FCS window sweep, the replay and the capture ring on a closed loop, orders dropped when the MAC is busy,
+    back-to-back orders'
+  record: designs/b96_kr260_10g/rm_gp_itch/tests/test_b127_unit_rtl.py
+  sha256: 973c292a1f06158439a8631728a252d56b40e6c3e651b3a7667a836709df56f4
+- id: E16
+  activity: simulation
+  result: pass
+  what: 'the whole core of build rm_gp_itch in xsim 2026.1 with AMD''s real XPM macros and the GT stand-in, four phases
+    between the clocks: 16 orders a phase from replayed frames round a closed loop, every counter equal to the model''s,
+    tick-to-trade GT port to GT port recorded; the board test''s five stages run against it as a dry run'
+  record: results/b127/core_sim.json
+  conditions: xsim 2026.1, GT stand-in, phases 0, 1550, 3100, 4650 ps
+  sha256: 868de45ea1760e2ba4227d5e1096c8f632b730ad391ef67beea97eadfa4c2d8d
+- id: E17
+  activity: build
+  result: pass
+  what: build rm_gp_itch through the flow on Vivado 2026.1 (every flow gate; report_cdc no critical, no new waiver)
+  record: results/b127/builds/rm_gp_itch/digest.json
+  sha256: 547ee036d524ab1b1517532b813d66b74bc666a01fce682500108ac9f167eb78
 measurements:
 - id: M1
   what: LUTs, variant (b)
@@ -581,6 +648,77 @@ measurements:
   conditions: xsim 2026.1, whole core, GT stand-in with the bypass controllers' ports, four phases between the clocks
   value: 7.6
   sha256: 0f8de19801b2b7b3ab1369e5b7d9641929e2f9f7952eb31dbe0c4aee73935822
+- id: M14
+  what: LUTs, build rm_gp_itch
+  category: resources
+  key: lut_itch
+  unit: LUT
+  record: results/b127/builds/rm_gp_itch/digest.json
+  field: utilization.lut
+  conditions: routed, Vivado 2026.1
+  value: 17258
+  sha256: 547ee036d524ab1b1517532b813d66b74bc666a01fce682500108ac9f167eb78
+- id: M15
+  what: registers, build rm_gp_itch
+  category: resources
+  key: ff_itch
+  unit: FF
+  record: results/b127/builds/rm_gp_itch/digest.json
+  field: utilization.ff
+  conditions: as M14
+  value: 46116
+  sha256: 547ee036d524ab1b1517532b813d66b74bc666a01fce682500108ac9f167eb78
+- id: M16
+  what: worst setup slack, build rm_gp_itch
+  category: timing
+  key: wns_ns_itch
+  unit: ns
+  record: results/b127/builds/rm_gp_itch/digest.json
+  field: timing.wns_ns
+  conditions: routed, user clocks 161.133 MHz and 100 MHz
+  value: 0.153
+  sha256: 547ee036d524ab1b1517532b813d66b74bc666a01fce682500108ac9f167eb78
+- id: M17
+  what: worst hold slack, build rm_gp_itch
+  category: timing
+  key: whs_ns_itch
+  unit: ns
+  record: results/b127/builds/rm_gp_itch/digest.json
+  field: timing.whs_ns
+  conditions: as M16
+  value: 0.01
+  sha256: 547ee036d524ab1b1517532b813d66b74bc666a01fce682500108ac9f167eb78
+- id: M18
+  what: total on-chip power estimate, build rm_gp_itch
+  category: power
+  key: power_itch_w
+  unit: W
+  record: results/b127/builds/rm_gp_itch/digest.json
+  field: power.total_w
+  conditions: report_power after routing, vectorless
+  value: 1.253
+  sha256: 547ee036d524ab1b1517532b813d66b74bc666a01fce682500108ac9f167eb78
+- id: M19
+  what: ITCH tick-to-trade, GT port to GT port, speculative start, mean over four phases
+  category: latency
+  key: itch_t2t_spec_clocks
+  unit: clocks
+  record: results/b127/core_sim.json
+  field: itch_to_order.speculative.tick_to_trade_gt_clocks.mean
+  conditions: xsim 2026.1, whole core, GT stand-in; from the last byte of the message at the receive PCS output to the order's
+    start block on the transmit GT port
+  value: 16.78
+  sha256: 868de45ea1760e2ba4227d5e1096c8f632b730ad391ef67beea97eadfa4c2d8d
+- id: M20
+  what: ITCH tick-to-trade, GT port to GT port, order started at the risk verdict, mean over four phases
+  category: latency
+  key: itch_t2t_verdict_clocks
+  unit: clocks
+  record: results/b127/core_sim.json
+  field: itch_to_order.at_verdict.tick_to_trade_gt_clocks.mean
+  conditions: as M19
+  value: 21.63
+  sha256: 868de45ea1760e2ba4227d5e1096c8f632b730ad391ef67beea97eadfa4c2d8d
 gaps:
 - about: hardware
   text: The design has run on a KR260 optical loopback only (briefs 97 and 96C), never against a network card or a second
@@ -613,6 +751,11 @@ gaps:
   text: Build rm_gp_ml (the ML decision stage behind the rule, brief 113) has not run on a board; its board test is pre-registered
     in results/b113/preregistration.md and the owner's script is written. The stage tracks one instrument with a top-of-book
     and sees the first message of a frame only; the model is brief 87's trees on one planted-signal data set.
+- about: itch path
+  text: Build rm_gp_itch has not run on a board (the test is pre-registered, the script written); its order frame is a stand-in
+    for brief 119's TCP fast path with the TCP checksum 0, so no real TCP stack would accept it; the loopback tests only
+    our own frames; a bad frame's order can leave before the frame's check is known when its trigger message is far from
+    the packet's end (rm_gp_itch/docs/itch_integration.md section 4).
 next_steps:
 - Run _handoff/fpga_agent/run_96f1_stage1.sh on the KR260 (pre-registered in results/b96f1/preregistration.md, amendment
   2026-11-20), build rm_gp_bypass (stamp 86037ce1, brief 96F1b) against the 96E rm_gp board run; read the retry counts and
@@ -621,9 +764,17 @@ next_steps:
   card and cable.
 - Confirm the reference clock and the control pins against the carrier schematic.
 - Widen the 58A core to 64 bits, or add the missing 58A features to trade64.
+- Run _handoff/fpga_agent/run_127_stage1.sh on the KR260 (pre-registered in results/b127/preregistration.md), build rm_gp_itch.
+- 'Merge brief 119''s PR #245 and swap order_seg.sv for order_seg_tcpfast.sv (rm_gp_itch/docs/itch_integration.md section
+  8).'
 open_questions:
 - Does the PL load over JTAG with the PS idle on the KR260 (flow/program.py has no KR260 board entry yet)?
 history:
+- date: '2026-11-21'
+  note: 'brief 127: build rm_gp_itch, brief 110''s MoldUDP64/ITCH/book/risk/OUCH path inside the 10G design (udp_strip adapter
+    with a late FCS verdict, transmit multiplexer, replay memory and capture ring, stand-in for tcp_fast with a hook); bit-exact
+    against 110''s model in xsim and Icarus; built with timing met; board test pre-registered and script written, nothing
+    run on a board'
 - date: '2026-11-21'
   note: 'brief 126: build lat_all3_bypass (the default receive path, the 97C latency cuts and the GT buffer bypass together),
     all 29 gates, WNS +0.066 ns, report_cdc no critical; simulated in xsim; board test pre-registered from the two measured
@@ -689,5 +840,5 @@ state:
   gates:
     build_2026_1: pass
   vivado: '2026.1'
-  kb_pin: 93d158c
-  build_id: 43708f17
+  kb_pin: 5e2eab8
+  build_id: ae9764f8
