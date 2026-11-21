@@ -378,7 +378,7 @@ def vivado_path() -> str:
         p = ""
     p = os.environ.get("VIVADO") or p
     if not p or not Path(p).is_file():
-        raise InspectError("Vivado not found (set VIVADO=/opt/Xilinx/2026.1/Vivado/bin/vivado)")
+        raise InspectError("Vivado not found: set VIVADO to the Vivado binary (python3 flow/version_pin.py --vivado prints the pinned path)")
     return p
 
 
