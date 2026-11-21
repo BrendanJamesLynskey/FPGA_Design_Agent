@@ -7,6 +7,7 @@ Evidence files that exist so that a requirement can point at them. The matrices 
 | File | What | Made by |
 |---|---|---|
 | `b96_kr260_10g/pytest_junit.xml` | JUnit record of every pytest test under `designs/b96_kr260_10g/tests`: the cocotb benches run through their pytest entry points (Icarus Verilog, cocotb 2.0.1) and the board-driver tests on a fake board | simulation only, no board, no Vivado, 2026-11-20 |
+| `b119_tcp_fast/pytest_junit.xml` | JUnit record of every pytest test under `designs/b119_tcp_fast/tests`: the Python-side model tests, the cocotb bench and the bench behind brief 110's risk logic (Icarus Verilog, cocotb 2.0.1), and the Verilator lint | simulation only, no board, no Vivado, 2026-11-21 (brief 133) |
 
 ## Reproduce
 
@@ -14,6 +15,14 @@ Evidence files that exist so that a requirement can point at them. The matrices 
 python -m pytest -q designs/b96_kr260_10g/tests --junitxml=results/116_traceability/b96_kr260_10g/pytest_junit.xml
 python -m flow.trace_v1 pin designs/b96_kr260_10g     # after committing the record
 python -m flow.trace_v1 write designs/b96_kr260_10g
+```
+
+For b119 (about 15 seconds):
+
+```
+python -m pytest -q designs/b119_tcp_fast/tests --junitxml=results/116_traceability/b119_tcp_fast/pytest_junit.xml
+python -m flow.trace_v1 pin designs/b119_tcp_fast
+python -m flow.trace_v1 write designs/b119_tcp_fast
 ```
 
 The cocotb benches take well over half an hour on a loaded machine (the rate-match benches are the slow ones), so run it under `systemd-run --user --scope -p MemoryMax=3G`.

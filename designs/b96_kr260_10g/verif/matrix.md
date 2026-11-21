@@ -4,7 +4,7 @@
 
 The human specifies the requirements and checks that the verification is thorough enough. The agent holds the knowledge to implement and to verify. You can open any of the implementation or the evidence, and you do not have to. Hardware on the board, with attached instruments, is a verification layer of its own: where a requirement depends on something outside the design (an optical link, a network card, a data source) it may be the only way to close it.
 
-**Summary.** 30 requirements (14 functional, 9 performance, 1 interface, 6 safety); 14 verified; 3 stale; 6 failing; 2 with no passing evidence; 0 of 3 requirements that depend on an external element closed by hardware; performance verified: 4 on the board, 2 by post-route timing, 0 in simulation only; 0 of 30 requirements agreed by a human, 0 human review(s) recorded; 10 Lean proof item(s) (all widths): 0 with a human-approved statement, 10 with statement not approved; 7 kernel only, 3 using a compiled decision procedure; build status from: recorded build (not re-run).
+**Summary.** 27 requirements (11 functional, 9 performance, 1 interface, 6 safety); 14 verified; 3 stale; 6 failing; 2 with no passing evidence; 0 of 3 requirements that depend on an external element closed by hardware; performance verified: 4 on the board, 2 by post-route timing, 0 in simulation only; 0 of 27 requirements agreed by a human, 0 human review(s) recorded; 4 Lean proof item(s) (all widths): 0 with a human-approved statement, 4 with statement not approved; 4 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run).
 
 Variants. Unless a requirement says otherwise, "the default build" is RATE_MATCH = 0 (the board-proven 97C receive path) and "the rate-matched build" is rm_gp (RATE_MATCH = 1, RM_OWN = 1). Board evidence is one KR260 on a short optical loopback; nothing has run against a network card. Briefs 112 (UVM bench) and 115 (SVA and formal proofs) are not merged: their items are hooks with no evidence, shown as not run.
 
@@ -41,9 +41,6 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 | **B96-P-THROUGHPUT** Line-rate throughput without loss Depends on: a 10G network card or a line-rate traffic generator; hardware verification open. | performance | not run |  |  |  |  |  |  |  |  | not run [external_equipment]: V-HW-THROUGHPUT-PLANNED |  |
 | **B96-F-LEAN-GRAY-STEP** A pointer's gray code changes in exactly one bit per count, at every width | functional | proved, statement not approved |  |  |  |  | statement not approved [kernel only; transcription tested; recorded build]: [V-LEAN-GRAY-STEP](../../../formal/lean/records/build_record.json) |  |  |  |  |  |
 | **B96-F-LEAN-GRAY-DECODE** Gray decoding inverts gray encoding, at every width | functional | proved, statement not approved |  |  |  |  | statement not approved [kernel only; transcription tested; recorded build]: [V-LEAN-GRAY-DECODE](../../../formal/lean/records/build_record.json)<br>statement not approved [kernel only; transcription tested; recorded build]: [V-LEAN-GRAY-ENCODE](../../../formal/lean/records/build_record.json)<br>statement not approved [kernel only; transcription tested; recorded build]: [V-LEAN-GRAY-SAMPLE](../../../formal/lean/records/build_record.json) |  |  |  |  |  |
-| **B96-F-LEAN-CKSUM-IP** The IPv4 header checksum of the TCP fast path equals the Internet checksum, for all inputs | functional | proved, statement not approved |  |  |  |  | statement not approved [kernel plus a compiled decision procedure; transcription tested; recorded build]: [V-LEAN-CKSUM-IP](../../../formal/lean/records/build_record.json)<br>statement not approved [kernel plus a compiled decision procedure; transcription tested; recorded build]: [V-LEAN-CKSUM-IP-RX](../../../formal/lean/records/build_record.json) |  |  |  |  |  |
-| **B96-F-LEAN-CKSUM-TCP** The TCP checksum of the TCP fast path equals the Internet checksum, for all inputs and payloads up to 30 words | functional | proved, statement not approved |  |  |  |  | statement not approved [kernel plus a compiled decision procedure; transcription tested; recorded build]: [V-LEAN-CKSUM-TCP](../../../formal/lean/records/build_record.json) |  |  |  |  |  |
-| **B96-F-LEAN-CKSUM-MODEL** The ones' complement arithmetic the checksum equations rest on is correct, for lists of any length | functional | proved, statement not approved |  |  |  |  | statement not approved [kernel only; no RTL link; recorded build]: [V-LEAN-CKSUM-SUM](../../../formal/lean/records/build_record.json)<br>statement not approved [kernel only; no RTL link; recorded build]: [V-LEAN-CKSUM-INC](../../../formal/lean/records/build_record.json)<br>statement not approved [kernel only; no RTL link; recorded build]: [V-LEAN-CKSUM-INC-ZERO](../../../formal/lean/records/build_record.json) |  |  |  |  |  |
 
 ## Gaps
 
@@ -53,12 +50,6 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 - `V-LEAN-GRAY-DECODE`: the Lean statement is not approved by a human; until it is, the proof is not counted as verification
 - `V-LEAN-GRAY-ENCODE`: the Lean statement is not approved by a human; until it is, the proof is not counted as verification
 - `V-LEAN-GRAY-SAMPLE`: the Lean statement is not approved by a human; until it is, the proof is not counted as verification
-- `V-LEAN-CKSUM-IP`: the Lean statement is not approved by a human; until it is, the proof is not counted as verification
-- `V-LEAN-CKSUM-IP-RX`: the Lean statement is not approved by a human; until it is, the proof is not counted as verification
-- `V-LEAN-CKSUM-TCP`: the Lean statement is not approved by a human; until it is, the proof is not counted as verification
-- `V-LEAN-CKSUM-SUM`: the Lean statement is not approved by a human; until it is, the proof is not counted as verification
-- `V-LEAN-CKSUM-INC`: the Lean statement is not approved by a human; until it is, the proof is not counted as verification
-- `V-LEAN-CKSUM-INC-ZERO`: the Lean statement is not approved by a human; until it is, the proof is not counted as verification
 
 ### Requirements that depend on an external element and are not yet verified on hardware
 
@@ -354,27 +345,3 @@ Rows are requirements, columns are verification methods. A cell lists each item 
   - Lean proof (all widths): **statement not approved**, Decode after encode is the identity, every width: statement not approved; Gray.gray2bin_bin2gray: kernel only; proof of the transcription, transcription tested; recorded build (not re-run). [evidence](../../../formal/lean/records/build_record.json)
   - Lean proof (all widths): **statement not approved**, Encode after decode is the identity, every width: statement not approved; Gray.bin2gray_gray2bin: kernel only; proof of the transcription, transcription tested; recorded build (not re-run). [evidence](../../../formal/lean/records/build_record.json)
   - Lean proof (all widths): **statement not approved**, A code sampled mid-step decodes to the old or the new count: statement not approved; Gray.gray_sample: kernel only; proof of the transcription, transcription tested; recorded build (not re-run). [evidence](../../../formal/lean/records/build_record.json)
-
-### B96-F-LEAN-CKSUM-IP: The IPv4 header checksum of the TCP fast path equals the Internet checksum, for all inputs
-
-- Kind: functional; state: proved, statement not approved; specification status: draft.
-- Source: `brief 119 (PR 245), designs/b119_tcp_fast/rtl/tcp_fast.sv; results/124_lean/README.md`
-- Brief 119's tcp_fast.sv builds the IPv4 header checksum from a precomputed template plus the changing fields. For all TTL, address and identification values it equals the complement of the ones' complement sum of the header, and the filled-in header sums to 0xFFFF.
-  - Lean proof (all widths): **statement not approved**, IPv4 header checksum equals the Internet checksum: statement not approved; Cksum.rtl_ip_correct: kernel plus a compiled decision procedure; proof of the transcription, transcription tested; recorded build (not re-run). [evidence](../../../formal/lean/records/build_record.json)
-  - Lean proof (all widths): **statement not approved**, The filled-in header sums to 0xFFFF (receiver check): statement not approved; Cksum.rtl_ip_receiver: kernel plus a compiled decision procedure; proof of the transcription, transcription tested; recorded build (not re-run). [evidence](../../../formal/lean/records/build_record.json)
-
-### B96-F-LEAN-CKSUM-TCP: The TCP checksum of the TCP fast path equals the Internet checksum, for all inputs and payloads up to 30 words
-
-- Kind: functional; state: proved, statement not approved; specification status: draft.
-- Source: `brief 119 (PR 245), designs/b119_tcp_fast/rtl/tcp_fast.sv; results/124_lean/README.md`
-- For all addresses, ports, sequence and acknowledgement numbers, windows and payloads of up to 30 sixteen-bit words, the checksum the RTL equations produce equals the complement of the ones' complement sum over pseudo-header, header and payload. The byte-pair swapping, the streaming receive check and the timing are not modelled.
-  - Lean proof (all widths): **statement not approved**, TCP checksum equals the Internet checksum, payloads up to 30 words: statement not approved; Cksum.rtl_tcp_correct: kernel plus a compiled decision procedure; proof of the transcription, transcription tested; recorded build (not re-run). [evidence](../../../formal/lean/records/build_record.json)
-
-### B96-F-LEAN-CKSUM-MODEL: The ones' complement arithmetic the checksum equations rest on is correct, for lists of any length
-
-- Kind: functional; state: proved, statement not approved; specification status: draft.
-- Source: `results/124_lean/README.md`
-- The ones' complement sum of any list of 16-bit words equals the natural-number sum reduced mod 65535, and RFC 1624 equation 3 (incremental update) is correct for a header of any length when the new header is not all zero words; for an all-zero header it gives 0x0000. No current RTL patches a checksum in place; this is the arithmetic the fast path's template-plus-fields form relies on.
-  - Lean proof (all widths): **statement not approved**, Ones complement sum equals the natural-number sum mod 65535: statement not approved; Cksum.ocSum_toNat: kernel only; proof of a model, no RTL link; recorded build (not re-run). [evidence](../../../formal/lean/records/build_record.json)
-  - Lean proof (all widths): **statement not approved**, RFC 1624 equation 3 is correct for headers of any length: statement not approved; Cksum.incUpdate_correct: kernel only; proof of a model, no RTL link; recorded build (not re-run). [evidence](../../../formal/lean/records/build_record.json)
-  - Lean proof (all widths): **statement not approved**, The all-zero header corner gives 0x0000: statement not approved; Cksum.incUpdate_zero_corner: kernel only; proof of a model, no RTL link; recorded build (not re-run). [evidence](../../../formal/lean/records/build_record.json)
