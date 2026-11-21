@@ -1,0 +1,160 @@
+# Fresh evidence (brief 143d): CI otherwise reads committed evidence records and never regenerates them. This workflow re-runs the cheap evidence from the
+# current tree every night (the pytest/cocotb benches behind the sim_test items, the seeded-fault set of b119, the reduced formal set, the pyuvm bench, the
+# Lean build), keeps the fresh records as workflow artefacts, and compares them with the committed records (python -m flow.fresh_evidence compare).
+# A difference fails the scheduled run and opens (or comments on) an issue labelled `fresh-evidence`; the issue is closed by the next run that agrees.
+# What does not fit a runner (xsim UVM, the full formal set, Vivado) is run by tools/fresh_evidence_local.sh on the owner's PC, which writes records the same way.
+name: Fresh evidence
+
+on:
+  schedule:
+    - cron: "43 2 * * *"
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - .github/workflows/fresh-evidence.yml
+      - flow/fresh_evidence.py
+
+concurrency:
+  group: fresh-evidence-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  run:
+    name: Re-run ${{ matrix.job }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: ${{ matrix.timeout }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {job: b119-tests, timeout: 45}
+          - {job: b119-mutation, timeout: 75}
+          - {job: b96-pcs-rtl, timeout: 165}
+          - {job: b96-rest, timeout: 135}
+          - {job: lean-build, timeout: 55}
+    env:
+      FDA_OSS_CAD: ${{ github.workspace }}/oss-cad-suite
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install the simulators and Python packages (the same pins as ci.yml)
+        if: matrix.job != 'lean-build'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y iverilog verilator
+          pip install pyyaml pyserial pytest cocotb==2.0.1 cocotb-coverage numpy==2.4.3 pyuvm==5.0.0 jsonschema scipy
+      - name: Cache the OSS CAD Suite (SymbiYosys for the reduced formal set)
+        if: matrix.job == 'b96-rest'
+        id: oss
+        uses: actions/cache@v4
+        with:
+          path: oss-cad-suite
+          key: oss-cad-suite-20261112
+      - name: Download the pinned OSS CAD Suite (release 2026-11-12, build 20261112)
+        if: matrix.job == 'b96-rest' && steps.oss.outputs.cache-hit != 'true'
+        run: |
+          curl -fsSL -o oss.tgz https://github.com/YosysHQ/oss-cad-suite-build/releases/download/2026-11-12/oss-cad-suite-linux-x64-20261112.tgz
+          echo "346499255e3e5e6e9bf67e1d378a4e6bc249abd3de3b0caf5b57604bc8ba1752  oss.tgz" | sha256sum -c -
+          tar -xzf oss.tgz
+          rm oss.tgz
+      - name: Install pyyaml (the Lean job needs only the trace tool)
+        if: matrix.job == 'lean-build'
+        run: pip install pyyaml
+      - name: Cache the Lean toolchain
+        if: matrix.job == 'lean-build'
+        uses: actions/cache@v4
+        with:
+          path: ~/.elan
+          key: elan-${{ hashFiles('formal/lean/lean-toolchain') }}
+      - name: Install elan 4.4.0 (pinned) and the toolchain named in formal/lean/lean-toolchain
+        if: matrix.job == 'lean-build'
+        run: |
+          curl -fsSL -o elan.tgz https://github.com/leanprover/elan/releases/download/v4.4.0/elan-x86_64-unknown-linux-gnu.tar.gz
+          echo "0e8250aa2be86c7af929ade68db617af9edc8b9ccf6eaf5ece228250d0d032e2  elan.tgz" | sha256sum -c -
+          tar -xzf elan.tgz
+          ./elan-init -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+          cd formal/lean && "$HOME/.elan/bin/lake" --version
+      - name: Re-run the evidence (records are written under fresh_out, mirroring the repository paths; the tree is not touched)
+        run: python -m flow.fresh_evidence run ${{ matrix.job }} --out fresh_out
+      - name: Log tail
+        if: always()
+        run: tail -n 40 fresh_out/_logs/*.log || true
+      - name: Keep the fresh records
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fresh-${{ matrix.job }}
+          path: fresh_out
+          retention-days: 30
+
+  compare:
+    name: Compare with the committed records
+    needs: run
+    if: always()
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pyyaml
+      - name: Fetch every job's records
+        uses: actions/download-artifact@v4
+        with:
+          pattern: fresh-*
+          path: fresh_in
+      - name: Assemble, compare, and mark the matrices
+        id: cmp
+        run: |
+          python -m flow.fresh_evidence assemble --out fresh_all fresh_in/*
+          rc=0
+          python -m flow.fresh_evidence compare --tier github --fresh fresh_all --json fresh_all/differs.json --md fresh_all/report.md > /dev/null || rc=$?
+          for d in designs/*/verif/testplan.yaml; do python -m flow.trace_v1 write "$(dirname "$(dirname "$d")")" --fresh fresh_all > /dev/null; done
+          cat fresh_all/report.md >> "$GITHUB_STEP_SUMMARY"
+          echo "differs=$rc" >> "$GITHUB_OUTPUT"
+      - name: Keep the report and the marked matrices
+        uses: actions/upload-artifact@v4
+        with:
+          name: evidence-report
+          path: |
+            fresh_all/report.md
+            fresh_all/differs.json
+            fresh_all/manifest.json
+            fresh_all/matrices
+          retention-days: 30
+      - name: Open or update the issue (scheduled runs)
+        if: github.event_name == 'schedule' && steps.cmp.outputs.differs != '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          printf '\nRun: %s/%s/actions/runs/%s\n' "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" >> fresh_all/report.md
+          gh label create fresh-evidence --color B60205 --description "A committed evidence record differs from a fresh run of the tree" 2>/dev/null || true
+          n=$(gh issue list --label fresh-evidence --state open --json number -q '.[0].number')
+          if [ -n "$n" ]; then gh issue comment "$n" --body-file fresh_all/report.md
+          else gh issue create --title "Fresh evidence: a committed record differs from a run of the tree ($(date +%F))" --label fresh-evidence --body-file fresh_all/report.md; fi
+      - name: Close the issue when the records agree again (scheduled runs)
+        if: github.event_name == 'schedule' && steps.cmp.outputs.differs == '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for n in $(gh issue list --label fresh-evidence --state open --json number -q '.[].number'); do
+            gh issue close "$n" --comment "The nightly fresh-evidence run agrees with every committed record again ($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID)."
+          done
+      - name: Fail the scheduled or manual run on a difference (a pull request only reports it)
+        if: github.event_name != 'pull_request' && steps.cmp.outputs.differs != '0'
+        run: |
+          echo "::error::a committed evidence record differs from the fresh run (see the summary and the evidence-report artefact)"
+          exit 1
+      - name: Report a difference on a pull request without failing it
+        if: github.event_name == 'pull_request' && steps.cmp.outputs.differs != '0'
+        run: echo "::warning::a committed evidence record differs from the fresh run (see the summary); a scheduled run would fail and open an issue"

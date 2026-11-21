@@ -337,6 +337,11 @@ standard.
   requirement that depends on an external element shows plainly whether hardware has closed it. The CI gate fails on an orphan check or an untraced requirement
   and reports staleness. Showcase: [designs/b96_kr260_10g/verif/matrix.md](designs/b96_kr260_10g/verif/matrix.md); schema and rules:
   [docs/traceability_v1.md](docs/traceability_v1.md); also on the site's Traceability page and the navigator's Traceability page.
+- **Fresh evidence (brief 143d).** CI reads committed evidence records; it did not regenerate them. The nightly workflow
+  [.github/workflows/fresh-evidence.yml](.github/workflows/fresh-evidence.yml) re-runs the cheap evidence from the current tree and opens an issue when a committed record differs;
+  [flow/fresh_evidence.py](flow/fresh_evidence.py) does the runs and the comparison, [tools/fresh_evidence_local.sh](tools/fresh_evidence_local.sh) the expensive set on the local PC
+  (timer proposed in [tools/systemd/](tools/systemd/), not enabled), and `python -m flow.trace_v1 show --fresh DIR` marks an item "committed record differs from fresh run";
+  see [docs/traceability_v1.md](docs/traceability_v1.md#fresh-evidence-brief-143d).
 - **Results:** the matrices of T1 and two agent-built development designs, and three deliberately broken runs that
   each fail the right gate: [results/53_traceability](results/53_traceability/README.md).
 

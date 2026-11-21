@@ -158,14 +158,20 @@ def upgrade_v0(design: Path, raw: dict) -> dict[str, Any]:
 
 
 # ---- evidence readers ------------------------------------------------------------------------------------
+FRESH_DIR: Path | None = None      # brief 143d: when set, `resolve` looks for the evidence in this directory of fresh records (mirroring repository paths)
+
+
 def resolve(pattern: str) -> Path | None:
     """A repo-relative path or glob; the last match in sorted order (run directories are time stamps)."""
-    hits = sorted(glob.glob(str(ROOT / pattern)))
+    hits = sorted(glob.glob(str((FRESH_DIR or ROOT) / pattern)))
     return Path(hits[-1]) if hits else None
 
 
 def rel(p: Path) -> str:
-    return p.resolve().relative_to(ROOT).as_posix()
+    try:
+        return p.resolve().relative_to(ROOT).as_posix()
+    except ValueError:
+        return p.resolve().as_posix()
 
 
 def sha(p: Path) -> str:
@@ -422,8 +428,10 @@ def claimed(plan: dict) -> set[str]:
     return out
 
 
-def collect(design: Path, lean: str = "recorded") -> dict[str, Any]:
-    """``lean``: where a formal_lean item's build status comes from (see flow/lean_tier.py): the committed record, ``lake build`` now, or auto."""
+def collect(design: Path, lean: str = "recorded", fresh: Path | None = None) -> dict[str, Any]:
+    """``lean``: where a formal_lean item's build status comes from (see flow/lean_tier.py): the committed record, ``lake build`` now, or auto.
+    ``fresh``: a directory of fresh records (flow/fresh_evidence.py). Verdicts still come from the committed records; each item also gets
+    ``fresh = {state, detail}`` with state ``differs`` (committed record differs from the fresh run), ``agrees`` or ``not_rerun`` (brief 143d)."""
     plan = load(design)
     reqs = plan["requirements"]
     req_by_id = {r["id"]: r for r in reqs}
@@ -458,6 +466,11 @@ def collect(design: Path, lean: str = "recorded") -> dict[str, Any]:
         items = by_req[q["id"]]
         rows.append(rollup(q, items))
     gaps = find_gaps(plan, rows, results, req_by_id, design)
+    if fresh is not None:
+        from flow import fresh_evidence
+        fresh_evidence.annotate(plan, results, design, Path(fresh))
+        for r in rows:
+            r["fresh_differs"] = sum(1 for i in results if r["id"] in i["requirements"] and (i.get("fresh") or {}).get("state") == "differs")
     return {"design": plan["design"], "path": rel(design), "source_schema": plan["source_schema"], "requirements": rows, "items": results,
             "gaps": gaps, "summary": summarise(rows, results, gaps), "notes": plan.get("notes", "")}
 
@@ -619,9 +632,9 @@ def summary_line(s: dict) -> str:
     return "; ".join(bits) + "."
 
 
-def collect_all(designs: list[Path] | None = None, lean: str = "recorded") -> dict[str, Any]:
+def collect_all(designs: list[Path] | None = None, lean: str = "recorded", fresh: Path | None = None) -> dict[str, Any]:
     ds = designs if designs is not None else v1_designs()
-    out = [collect(d, lean) for d in ds]
+    out = [collect(d, lean, fresh) for d in ds]
     tot = {"requirements": sum(d["summary"]["requirements"] for d in out), "verified": sum(d["summary"]["by_state"].get("verified", 0) for d in out),
            "designs": len(out)}
     return {"schema": "fda-traceability/1", "framing": FRAMING, "designs": out, "total": tot}
@@ -649,6 +662,8 @@ MARK = {"pass": "pass", "fail": "FAIL", "not_run": "not run", "stale": "stale", 
 def _tag(i: dict) -> str:
     """The status of a cell item; a Lean proof also says its axiom tier, how the Lean model meets the RTL, and where the build status came from."""
     t = MARK[i["status"]] + (f" [{i['instrument']}]" if i.get("instrument") else "")
+    if (i.get("fresh") or {}).get("state") == "differs":
+        t += " [committed record differs from fresh run]"
     L = i.get("lean")
     if i["method"] == "formal_lean" and L:
         from flow import lean_tier as lt
@@ -673,6 +688,8 @@ def _state_cell(r: dict) -> str:
         t += f"; {r['stale_items']} item(s) stale"
     if r["state"] == "verified" and r.get("lean_transcription_only"):
         t += "; the Lean proof is of a transcription of the RTL, not of the RTL itself"
+    if r.get("fresh_differs"):
+        t += f"; {r['fresh_differs']} item(s): committed record differs from fresh run"
     if r["state"] == "verified" and r.get("rests_on_delegated"):
         t += "; rests on a delegated acceptance of the Lean statement, not a human approval"
     return t
@@ -833,11 +850,20 @@ def outputs(designs: list[Path], lean: str = "recorded") -> dict[Path, str]:
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("cmd", choices=["check", "write", "pin", "show", "lean-record", "lean-statement"])
+    ap.add_argument("cmd", choices=["check", "write", "pin", "show", "lean-record", "lean-statement", "fresh"])
     ap.add_argument("designs", nargs="*")
     ap.add_argument("--lean", choices=["recorded", "live", "auto"], default=None,
                     help="where a formal_lean item's build status comes from (default: recorded for write and check, auto for show)")
+    ap.add_argument("--fresh", default=None, metavar="DIR",
+                    help="a directory of fresh records (python -m flow.fresh_evidence run ...): show and write mark items whose committed record differs from the fresh run; "
+                         "write puts the marked matrices in DIR/matrices instead of the tree; the command `fresh` compares and exits 1 on a difference (brief 143d)")
     a = ap.parse_args(argv)
+    if a.cmd == "fresh":
+        from flow import fresh_evidence
+        if not a.fresh:
+            print("usage: fresh --fresh DIR [DESIGN ...]")
+            return 2
+        return fresh_evidence.main(["compare", "--fresh", a.fresh, *a.designs])
     if a.cmd == "lean-statement":
         from flow import lean_tier
         if len(a.designs) != 2:
@@ -874,10 +900,23 @@ def main(argv: list[str] | None = None) -> int:
         return bad
     if a.cmd == "show":
         for d in ds:
-            c = collect(d, a.lean or "auto")
+            c = collect(d, a.lean or "auto", Path(a.fresh) if a.fresh else None)
             print(c["design"], "-", c["summary"]["line"])
             for x in c["gaps"]:
                 print("  ", x["type"], x["id"], "-", x["text"])
+            for x in c["items"]:
+                if (x.get("fresh") or {}).get("state") == "differs":
+                    print("   committed record differs from fresh run:", x["id"], "-", x["fresh"]["detail"])
+        return 0
+    if a.fresh:
+        fd = Path(a.fresh)
+        all_ = collect_all(ds, a.lean or "recorded", fd)
+        for d, dp in zip(all_["designs"], ds):
+            od = fd / "matrices" / dp.name
+            od.mkdir(parents=True, exist_ok=True)
+            (od / "matrix.md").write_text(render_md(d, od))
+            (od / "matrix.html").write_text(render_html(d, od))
+            print("wrote", od / "matrix.md")
         return 0
     for p, t in outputs(ds, a.lean or "recorded").items():
         p.write_text(t)

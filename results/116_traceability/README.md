@@ -27,6 +27,11 @@ python -m flow.trace_v1 write designs/b119_tcp_fast
 
 The cocotb benches take well over half an hour on a loaded machine (the rate-match benches are the slow ones), so run it under `systemd-run --user --scope -p MemoryMax=3G`.
 
+## Fresh runs
+
+`python -m flow.fresh_evidence run b119-tests --out DIR` and the nightly workflow re-make these JUnit records (and `results/b119/*.json`) from the current tree into DIR and compare them with the committed ones
+(brief 143d, [docs/traceability_v1.md](../../docs/traceability_v1.md#fresh-evidence-brief-143d)); a difference is a stale or wrong committed record.
+
 ## Known gaps and limits
 
 The simulation tests are not otherwise recorded in the repository (CI runs them and keeps no file), so this record is what the `sim_test` items of the b96 testplan read.
