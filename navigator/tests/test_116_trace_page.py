@@ -18,7 +18,7 @@ def test_trace_endpoint_returns_every_design_with_computed_statuses(tmp_path):
     d = json.loads(body)
     assert "b96_kr260_10g" in {g["design"] for g in d["designs"]}
     b = next(g for g in d["designs"] if g["design"] == "b96_kr260_10g")
-    assert {i["status"] for i in b["items"]} <= {"pass", "fail", "not_run", "stale", "bounded", "unapproved"}
+    assert {i["status"] for i in b["items"]} <= {"pass", "fail", "not_run", "not_in_run", "skipped", "stale", "bounded", "unapproved"}
     assert any(r.get("external") for r in b["requirements"])
     assert any(i["method"] == "board_measurement" and i.get("instrument") for i in b["items"])
 
