@@ -28,6 +28,23 @@ x-rtl-core: &rtl_core [designs/b96_kr260_10g/rtl/b96_pkg.sv, designs/b96_kr260_1
 x-rtl-rm: &rtl_rm [designs/b96_kr260_10g/rtl/rate_match.sv, designs/b96_kr260_10g/rtl/rate_match_gp.sv, designs/b96_kr260_10g/rtl/rx_path.sv]
 x-rtl-es: &rtl_es [designs/b96_kr260_10g/rtl/es_ctrl.sv]
 
+x-lean-gray-link: &lean_gray_link
+  kind: transcription_tested
+  source:
+    - {file: designs/b96_kr260_10g/rtl/rate_match_gp.sv, lines: "78-82"}
+    - {file: flow/cdc_models/xpm_cdc_models.sv, lines: "71-87"}
+  transcribed_in: formal/lean/Gray/Spec.lean (bin2gray, parity, gray2bin)
+  crosscheck: {file: formal/lean/Gray/CrossCheck.lean, reference: "the repository's behavioural model of xpm_cdc_gray (flow/cdc_models/xpm_cdc_models.sv, written from UG974) run in Icarus Verilog, every value of widths 1 to 8, by formal/lean/tools/crosscheck_gray.py; AMD's own macro is not what is compared"}
+x-lean-cksum-link: &lean_cksum_link
+  kind: transcription_tested
+  source:
+    - {file: designs/b119_tcp_fast/rtl/tcp_fast.sv, lines: "256-260", commit: 9f8d760788e4a8afcd8756e29eca348d49858765}
+    - {file: designs/b119_tcp_fast/rtl/tcp_fast.sv, lines: "326-336", commit: 9f8d760788e4a8afcd8756e29eca348d49858765}
+  transcribed_in: formal/lean/Cksum/Spec.lean (fold16, ipTmpl, rtlIpCsum, tcpTmpl, rtlTcpCsum)
+  crosscheck: {file: formal/lean/Cksum/CrossCheck.lean, reference: "brief 119's Python reference designs/b119_tcp_fast/model/tcpref.py, which 119's cocotb tests check against the RTL; 300 random connections and orders, by formal/lean/tools/crosscheck_b119.py"}
+x-lean-model-link: &lean_model_link
+  kind: model_only
+
 requirements:
   # ---- functional: the link ------------------------------------------------------------------------------------------
   - id: B96-F-PCS
@@ -196,6 +213,41 @@ requirements:
     performance: {quantity: frames lost in a line-rate burst, unit: frames, op: eq, bound: 0, condition: "1518-byte frames, 10 s burst, against a 10G network card"}
     external: a 10G network card or a line-rate traffic generator
 
+  # ---- Lean: properties proved for all widths (brief 125) --------------------------------------------------------------
+  # A formal_lean item is a Lean 4 proof, checked by Lean's kernel. Its statement is the specification and only a human approves it
+  # (verif/lean_approvals.yaml, empty today: every statement below is "statement not approved"). The axiom tier and how the Lean model meets the
+  # RTL are shown next to the result. Nothing here models timing, control or metastability.
+  - id: B96-F-LEAN-GRAY-STEP
+    kind: functional
+    title: A pointer's gray code changes in exactly one bit per count, at every width
+    text: The write and read pointers of rate_match_gp count modulo 2^CW and cross by gray code. For every width CW > 0 and every value, the gray codes of b and b + 1 (including the wrap from 2^CW - 1 to 0) differ in exactly one bit, so a sample taken while the pointer moves is the old or the new code.
+    source: designs/b96_kr260_10g/rtl/rate_match_gp.sv (pointer crossings u_wp and u_rp, xpm_cdc_gray)
+    spec_status: draft
+  - id: B96-F-LEAN-GRAY-DECODE
+    kind: functional
+    title: Gray decoding inverts gray encoding, at every width
+    text: For every width and value, the decoder of the pointer crossing returns the count the encoder was given; and a sampled code that is the old or the new code decodes to the old or the new count.
+    source: designs/b96_kr260_10g/rtl/rate_match_gp.sv (pointer crossings u_wp and u_rp, xpm_cdc_gray)
+    spec_status: draft
+  - id: B96-F-LEAN-CKSUM-IP
+    kind: functional
+    title: The IPv4 header checksum of the TCP fast path equals the Internet checksum, for all inputs
+    text: Brief 119's tcp_fast.sv builds the IPv4 header checksum from a precomputed template plus the changing fields. For all TTL, address and identification values it equals the complement of the ones' complement sum of the header, and the filled-in header sums to 0xFFFF.
+    source: brief 119 (PR 245), designs/b119_tcp_fast/rtl/tcp_fast.sv; results/124_lean/README.md
+    spec_status: draft
+  - id: B96-F-LEAN-CKSUM-TCP
+    kind: functional
+    title: The TCP checksum of the TCP fast path equals the Internet checksum, for all inputs and payloads up to 30 words
+    text: For all addresses, ports, sequence and acknowledgement numbers, windows and payloads of up to 30 sixteen-bit words, the checksum the RTL equations produce equals the complement of the ones' complement sum over pseudo-header, header and payload. The byte-pair swapping, the streaming receive check and the timing are not modelled.
+    source: brief 119 (PR 245), designs/b119_tcp_fast/rtl/tcp_fast.sv; results/124_lean/README.md
+    spec_status: draft
+  - id: B96-F-LEAN-CKSUM-MODEL
+    kind: functional
+    title: The ones' complement arithmetic the checksum equations rest on is correct, for lists of any length
+    text: The ones' complement sum of any list of 16-bit words equals the natural-number sum reduced mod 65535, and RFC 1624 equation 3 (incremental update) is correct for a header of any length when the new header is not all zero words; for an all-zero header it gives 0x0000. No current RTL patches a checksum in place; this is the arithmetic the fast path's template-plus-fields form relies on.
+    source: results/124_lean/README.md
+    spec_status: draft
+
 verification:
   # ---- simulation tests (pytest + cocotb + Icarus; one recorded run) -------------------------------------------------
   - id: V-SIM-PCSMAC
@@ -252,6 +304,12 @@ verification:
     title: Board bench, ppm and bypass drivers judged on a fake board (every safety counter, polarity, lock, verdicts)
     evidence: {file: results/116_traceability/b96_kr260_10g/pytest_junit.xml, reader: junit, tests: ["test_b96_bench::*", "test_b96c_ppm::*", "test_b96f1_bypass::*"]}
     checks: [designs/b96_kr260_10g/host/b96_bench.py, designs/b96_kr260_10g/host/b96c_ppm.py, designs/b96_kr260_10g/host/b96f1_bypass.py]
+  - id: V-SIM-126-ALL3
+    requirements: [B96-F-BUILDS, B96-S-DRIVER]
+    method: sim_test
+    title: Build lat_all3_bypass composes 97C's cuts with the bypass build's files, and its board driver's verdicts, references and lock prefix (brief 126); not yet in a recorded run
+    evidence: {file: results/116_traceability/b96_kr260_10g/pytest_junit.xml, reader: junit, tests: ["test_126_all3_bypass::*"]}
+    checks: [designs/b96_kr260_10g/lat_all3_bypass/build.yaml]
   - id: V-SIM-BUILDS
     requirements: [B96-F-BUILDS]
     method: sim_test
@@ -509,6 +567,67 @@ verification:
     title: Line-rate burst from a traffic source
     evidence: {file: results/b96/hw/throughput/stage3.json, reader: json, field: frames_lost}
     planned: needs a 10G network card or a traffic generator
+  # ---- Lean proofs, all widths (brief 125; statements not approved, build status from formal/lean/records/build_record.json) ----------------
+  - id: V-LEAN-GRAY-STEP
+    requirements: [B96-F-LEAN-GRAY-STEP]
+    method: formal_lean
+    title: One bit changes per count, wrap included, every width
+    lean: {module: Gray.Spec, theorem: Gray.gray_step}
+    rtl_link: *lean_gray_link
+  - id: V-LEAN-GRAY-DECODE
+    requirements: [B96-F-LEAN-GRAY-DECODE]
+    method: formal_lean
+    title: Decode after encode is the identity, every width
+    lean: {module: Gray.Spec, theorem: Gray.gray2bin_bin2gray}
+    rtl_link: *lean_gray_link
+  - id: V-LEAN-GRAY-ENCODE
+    requirements: [B96-F-LEAN-GRAY-DECODE]
+    method: formal_lean
+    title: Encode after decode is the identity, every width
+    lean: {module: Gray.Spec, theorem: Gray.bin2gray_gray2bin}
+    rtl_link: *lean_gray_link
+  - id: V-LEAN-GRAY-SAMPLE
+    requirements: [B96-F-LEAN-GRAY-DECODE]
+    method: formal_lean
+    title: A code sampled mid-step decodes to the old or the new count
+    lean: {module: Gray.Spec, theorem: Gray.gray_sample}
+    rtl_link: *lean_gray_link
+  - id: V-LEAN-CKSUM-IP
+    requirements: [B96-F-LEAN-CKSUM-IP]
+    method: formal_lean
+    title: IPv4 header checksum equals the Internet checksum
+    lean: {module: Cksum.Spec, theorem: Cksum.rtl_ip_correct}
+    rtl_link: *lean_cksum_link
+  - id: V-LEAN-CKSUM-IP-RX
+    requirements: [B96-F-LEAN-CKSUM-IP]
+    method: formal_lean
+    title: The filled-in header sums to 0xFFFF (receiver check)
+    lean: {module: Cksum.Spec, theorem: Cksum.rtl_ip_receiver}
+    rtl_link: *lean_cksum_link
+  - id: V-LEAN-CKSUM-TCP
+    requirements: [B96-F-LEAN-CKSUM-TCP]
+    method: formal_lean
+    title: TCP checksum equals the Internet checksum, payloads up to 30 words
+    lean: {module: Cksum.Spec, theorem: Cksum.rtl_tcp_correct}
+    rtl_link: *lean_cksum_link
+  - id: V-LEAN-CKSUM-SUM
+    requirements: [B96-F-LEAN-CKSUM-MODEL]
+    method: formal_lean
+    title: Ones complement sum equals the natural-number sum mod 65535
+    lean: {module: Cksum.Spec, theorem: Cksum.ocSum_toNat}
+    rtl_link: *lean_model_link
+  - id: V-LEAN-CKSUM-INC
+    requirements: [B96-F-LEAN-CKSUM-MODEL]
+    method: formal_lean
+    title: RFC 1624 equation 3 is correct for headers of any length
+    lean: {module: Cksum.Spec, theorem: Cksum.incUpdate_correct}
+    rtl_link: *lean_model_link
+  - id: V-LEAN-CKSUM-INC-ZERO
+    requirements: [B96-F-LEAN-CKSUM-MODEL]
+    method: formal_lean
+    title: The all-zero header corner gives 0x0000
+    lean: {module: Cksum.Spec, theorem: Cksum.incUpdate_zero_corner}
+    rtl_link: *lean_model_link
   # ---- review ---------------------------------------------------------------------------------------------------------
   - id: V-REVIEW-96
     requirements: [B96-F-PCS, B96-F-MAC, B96-S-ORDERS]

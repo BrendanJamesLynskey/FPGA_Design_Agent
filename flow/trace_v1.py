@@ -5,6 +5,10 @@
     python -m flow.trace_v1 write  [DESIGN ...]      write verif/matrix.md and verif/matrix.html per design and docs/traceability_matrix.{md,html}
     python -m flow.trace_v1 pin    DESIGN            write verif/evidence_pins.yaml (what each checked file was when its evidence was recorded)
     python -m flow.trace_v1 show   DESIGN            the one-line thoroughness summary and the gaps
+    python -m flow.trace_v1 lean-record [DESIGN ...] rebuild the Lean project with `lake build` and write its hash-pinned build record (brief 125; needs the toolchain)
+    python -m flow.trace_v1 lean-statement DESIGN ITEM   print the Lean statement and hashes a human reads before approving it (writes nothing)
+    --lean {recorded,live,auto}                      where a formal_lean item's build status comes from: the committed record (default for `write`, `check`,
+                                                     so committed matrices do not depend on the machine), `lake build` now, or live when the toolchain exists
 
 The human specifies the requirements and checks that the verification is thorough; the agent holds the knowledge to implement and to
 verify; the user can read any of the implementation but does not have to. This module is the place where those two meet: it reads
@@ -26,7 +30,7 @@ Schema v1 (a superset of v0, so ``flow/verif_gates.py`` still reads a v1 file th
     verification:
       - id: V-...
         requirements: [B96-P-LAT-E]
-        method: sim_test | uvm_test | assertion | formal | coverage_bin | timing | sim_measurement | board_measurement | review
+        method: sim_test | uvm_test | assertion | formal | formal_lean | coverage_bin | timing | sim_measurement | board_measurement | review
         instrument: eye_scan | jtag_registers | sysmon | ila_capture | latency_loop | optical_ddm | external_equipment   # board_measurement
         title: ...
         evidence: {file: results/x/*.json, reader: json|text|junit|gates|exists, field: a.b.c, regex: ..., tests: [stem::name]}
@@ -35,6 +39,12 @@ Schema v1 (a superset of v0, so ``flow/verif_gates.py`` still reads a v1 file th
         bounded: {depth: 24}                           # formal BMC only
         planned: "brief 112"                           # a hook for evidence that does not exist yet
         reviewer: name, reviewer_kind: human|agent, date: YYYY-MM-DD   # review
+        lean: {module: Gray.Spec, theorem: Gray.gray_step, project: formal/lean}                                  # formal_lean (brief 125)
+        rtl_link: {kind: rtl_generated|transcription_tested|transcription_untested|model_only,                     # how the Lean model meets the RTL
+                   source: [{file: designs/x/rtl/a.sv, lines: "77-82", commit: <sha, optional>}], transcribed_in: Gray/Spec.lean,
+                   crosscheck: {file: formal/lean/Gray/CrossCheck.lean, reference: "what independent thing it is compared with"}}
+
+A formal_lean statement is approved only by a human, in ``verif/lean_approvals.yaml`` (never in this file; see flow/lean_tier.py).
 """
 
 from __future__ import annotations
@@ -58,14 +68,14 @@ ROOT = Path(__file__).resolve().parents[1]
 SCHEMA_V1 = "fpga-design-agent/testplan/v1"
 SCHEMA_V0 = "fpga-design-agent/testplan/v0"
 KINDS = ("functional", "performance", "interface", "safety")
-METHODS = ("sim_test", "uvm_test", "assertion", "formal", "coverage_bin", "timing", "sim_measurement", "board_measurement", "review")
+METHODS = ("sim_test", "uvm_test", "assertion", "formal", "formal_lean", "coverage_bin", "timing", "sim_measurement", "board_measurement", "review")
 MEASURING = ("timing", "sim_measurement", "board_measurement")
 INSTRUMENTS = ("eye_scan", "jtag_registers", "sysmon", "ila_capture", "latency_loop", "optical_ddm", "external_equipment")
-STATUSES = ("pass", "fail", "not_run", "stale", "bounded")
+STATUSES = ("pass", "fail", "not_run", "stale", "bounded", "unapproved")
 OPS = ("eq", "ne", "le", "ge", "lt", "gt", "true", "false", "in")
-LABEL = {"sim_test": "simulation test", "uvm_test": "UVM test", "assertion": "assertion (SVA)", "formal": "formal", "coverage_bin": "coverage",
+LABEL = {"sim_test": "simulation test", "uvm_test": "UVM test", "assertion": "assertion (SVA)", "formal": "formal", "formal_lean": "Lean proof (all widths)", "coverage_bin": "coverage",
          "timing": "post-route timing", "sim_measurement": "simulation measurement", "board_measurement": "board measurement", "review": "review"}
-COL = {"sim_test": "sim test", "uvm_test": "UVM", "assertion": "SVA", "formal": "formal", "coverage_bin": "coverage", "timing": "timing",
+COL = {"sim_test": "sim test", "uvm_test": "UVM", "assertion": "SVA", "formal": "formal", "formal_lean": "Lean", "coverage_bin": "coverage", "timing": "timing",
        "sim_measurement": "sim measure", "board_measurement": "board", "review": "review"}
 FRAMING = ("The human specifies the requirements and checks that the verification is thorough enough. The agent holds the knowledge to "
            "implement and to verify. You can open any of the implementation or the evidence, and you do not have to. Hardware on the board, "
@@ -412,15 +422,18 @@ def claimed(plan: dict) -> set[str]:
     return out
 
 
-def collect(design: Path) -> dict[str, Any]:
+def collect(design: Path, lean: str = "recorded") -> dict[str, Any]:
+    """``lean``: where a formal_lean item's build status comes from (see flow/lean_tier.py): the committed record, ``lake build`` now, or auto."""
     plan = load(design)
     reqs = plan["requirements"]
     req_by_id = {r["id"]: r for r in reqs}
     pins = load_pins(design)
     cache: dict = {}
+    from flow import lean_tier
+    lean_tier.prime(plan, cache)
     results = []
     for it in plan["verification"]:
-        r = judge(it, req_by_id, cache)
+        r = lean_tier.judge_lean(it, design, lean, cache) if it.get("method") == "formal_lean" else judge(it, req_by_id, cache)
         r["requirements"] = list(it.get("requirements") or [])
         r["checks"] = list(it.get("checks") or [])
         if it.get("bounded") is not None:
@@ -444,7 +457,7 @@ def collect(design: Path) -> dict[str, Any]:
     for q in reqs:
         items = by_req[q["id"]]
         rows.append(rollup(q, items))
-    gaps = find_gaps(plan, rows, results, req_by_id)
+    gaps = find_gaps(plan, rows, results, req_by_id, design)
     return {"design": plan["design"], "path": rel(design), "source_schema": plan["source_schema"], "requirements": rows, "items": results,
             "gaps": gaps, "summary": summarise(rows, results, gaps), "notes": plan.get("notes", "")}
 
@@ -475,19 +488,24 @@ def rollup(q: dict, items: list[dict]) -> dict:
             state = "bounded"
         elif "stale" in st:
             state = "stale"
+        elif "unapproved" in st:
+            state = "unapproved"
         else:
             state = "not_run"
     ext = q.get("external")
     hw_done = any(i["method"] == "board_measurement" and i["status"] == "pass" for i in items)
     hw_methods = sorted({i["method"] for i in items if i["status"] == "pass"})
     row = {k: q[k] for k in ("id", "kind", "title", "text", "source", "spec_status", "performance", "external", "spec") if k in q}
+    passing = [i for i in items if i["status"] == "pass"]
+    lean_only = bool(passing) and all(i["method"] == "formal_lean" and (i.get("lean") or {}).get("rtl_link") != "rtl_generated" for i in passing)
+    row["lean_transcription_only"] = lean_only
     row.update(state=state, basis=basis, stale_items=sum(1 for x in st if x == "stale"), items=[i["id"] for i in items], passing_methods=hw_methods,
                hardware_verified=hw_done, hardware_only=bool(ext),
                hardware_closure=None if not ext else ("done" if hw_done else "open"))
     return row
 
 
-def find_gaps(plan: dict, rows: list, results: list, req_by_id: dict) -> list[dict]:
+def find_gaps(plan: dict, rows: list, results: list, req_by_id: dict, design: Path | None = None) -> list[dict]:
     g: list[dict] = []
     for r in rows:
         if not r["items"]:
@@ -510,11 +528,25 @@ def find_gaps(plan: dict, rows: list, results: list, req_by_id: dict) -> list[di
                 g.append({"type": "orphan_check", "id": i["id"], "text": f"traces to unknown requirement {q}", "gate": True})
         if i["status"] == "stale":
             g.append({"type": "stale_evidence", "id": i["id"], "text": i.get("stale_because", ""), "gate": False})
+        if i["status"] == "unapproved":
+            g.append({"type": "lean_statement_unapproved", "id": i["id"], "text": "the Lean statement is not approved by a human; until it is, the proof is not counted as verification", "gate": False})
+        if i["status"] == "fail" and i["method"] == "formal_lean":
+            g.append({"type": "lean_failing", "id": i["id"], "text": i["detail"], "gate": False})
     cl = claimed(plan)
     wild = tuple(c[:-1] for c in cl if c.endswith("::*"))
     for n in sorted(n for n in discovered(plan) - cl if not n.startswith(wild)):
         g.append({"type": "orphan_check", "id": n, "text": "a test found in the bench that no item names", "gate": True})
+    from flow import lean_tier
+    lean_its = {it["id"]: it for it in plan["verification"] if it.get("method") == "formal_lean"}
+    apps = lean_tier.load_approvals(design) if design is not None else {}
+    if design is not None:
+        for t in lean_tier.approval_problems(design, set(lean_its), lean_its):
+            g.append({"type": "lean_approval", "id": design.name, "text": t, "gate": True})
     for it in plan["verification"]:
+        if it.get("method") == "formal_lean":
+            for t in lean_tier.item_problems(it, apps):
+                changed = t.startswith("frozen ")
+                g.append({"type": "lean_frozen_statement_changed" if changed else "bad_item", "id": it.get("id"), "text": t, "gate": True})
         if it.get("method") not in METHODS:
             g.append({"type": "bad_item", "id": it.get("id"), "text": f"unknown method {it.get('method')!r}", "gate": True})
         if it.get("method") == "board_measurement" and it.get("instrument") not in INSTRUMENTS:
@@ -542,7 +574,15 @@ def summarise(rows: list, results: list, gaps: list) -> dict:
     gt: dict[str, int] = {}
     for x in gaps:
         gt[x["type"]] = gt.get(x["type"], 0) + 1
-    s = {"requirements": len(rows), "by_kind": kinds, "by_state": states, "items": len(results), "by_method": meth, "gap_counts": gt,
+    lean_r = [i for i in results if i["method"] == "formal_lean"]
+    lean = {"items": len(lean_r), "approved": sum(1 for i in lean_r if (i.get("lean") or {}).get("approved")),
+            "statement_not_approved": sum(1 for i in lean_r if i["status"] == "unapproved"),
+            "by_status": {k: sum(1 for i in lean_r if i["status"] == k) for k in STATUSES if any(i["status"] == k for i in lean_r)},
+            "by_tier": {t: sum(1 for i in lean_r if (i.get("lean") or {}).get("tier") == t) for t in ("kernel_only", "compiled_decision_procedure", "unsound")},
+            "by_rtl_link": {t: sum(1 for i in lean_r if (i.get("lean") or {}).get("rtl_link") == t) for t in
+                            ("rtl_generated", "transcription_tested", "transcription_untested", "model_only")},
+            "build_sources": sorted({(i.get("lean") or {}).get("build_source") or "none" for i in lean_r})}
+    s = {"requirements": len(rows), "by_kind": kinds, "lean": lean, "by_state": states, "items": len(results), "by_method": meth, "gap_counts": gt,
          "external": len(ext), "external_hardware_done": sum(1 for r in ext if r["hardware_closure"] == "done"),
          "performance_board": sum(1 for r in rows if r["kind"] == "performance" and r["basis"] == "board"),
          "performance_sim_only": sum(1 for r in rows if r["kind"] == "performance" and r["basis"] == "simulation"),
@@ -566,19 +606,24 @@ def summary_line(s: dict) -> str:
     if s["performance_board"] or s["performance_sim_only"] or s["performance_timing"]:
         bits.append(f"performance verified: {s['performance_board']} on the board, {s['performance_timing']} by post-route timing, {s['performance_sim_only']} in simulation only")
     bits.append(f"{s['spec_agreed']} of {s['requirements']} requirements agreed by a human, {s['human_reviews']} human review(s) recorded")
+    L = s["lean"]
+    if L["items"]:
+        ks, cd = L["by_tier"]["kernel_only"], L["by_tier"]["compiled_decision_procedure"]
+        bits.append(f"{L['items']} Lean proof item(s) (all widths): {L['approved']} with a human-approved statement, {L['statement_not_approved']} with statement not approved; "
+                    f"{ks} kernel only, {cd} using a compiled decision procedure; build status from: {', '.join(L['build_sources'])}")
     return "; ".join(bits) + "."
 
 
-def collect_all(designs: list[Path] | None = None) -> dict[str, Any]:
+def collect_all(designs: list[Path] | None = None, lean: str = "recorded") -> dict[str, Any]:
     ds = designs if designs is not None else v1_designs()
-    out = [collect(d) for d in ds]
+    out = [collect(d, lean) for d in ds]
     tot = {"requirements": sum(d["summary"]["requirements"] for d in out), "verified": sum(d["summary"]["by_state"].get("verified", 0) for d in out),
            "designs": len(out)}
     return {"schema": "fda-traceability/1", "framing": FRAMING, "designs": out, "total": tot}
 
 
 # ---- gate ------------------------------------------------------------------------------------------------
-def gate(design: Path) -> list[str]:
+def gate(design: Path, lean: str = "recorded") -> list[str]:
     """Problems that fail CI for a v1 testplan: an orphan check, an untraced requirement, a malformed item. Staleness and
     missing evidence are reported, not failed."""
     try:
@@ -587,12 +632,24 @@ def gate(design: Path) -> list[str]:
         return [str(e)]
     if plan["source_schema"] != SCHEMA_V1:
         return []                              # v0 files are gated by flow/verif_gates.py
-    return [f"{x['type']}: {x['id']}: {x['text']}" for x in collect(design)["gaps"] if x["gate"]]
+    return [f"{x['type']}: {x['id']}: {x['text']}" for x in collect(design, lean)["gaps"] if x["gate"]]
 
 
 # ---- rendering -------------------------------------------------------------------------------------------
-STATE_TEXT = {"verified": "verified", "fail": "FAILS", "not_run": "not run", "stale": "stale", "bounded": "bounded only", "no_measurement": "no measurement"}
-MARK = {"pass": "pass", "fail": "FAIL", "not_run": "not run", "stale": "stale", "bounded": "bounded"}
+STATE_TEXT = {"verified": "verified", "fail": "FAILS", "not_run": "not run", "stale": "stale", "bounded": "bounded only", "no_measurement": "no measurement",
+              "unapproved": "proved, statement not approved"}
+MARK = {"pass": "pass", "fail": "FAIL", "not_run": "not run", "stale": "stale", "bounded": "bounded", "unapproved": "statement not approved"}
+
+
+def _tag(i: dict) -> str:
+    """The status of a cell item; a Lean proof also says its axiom tier, how the Lean model meets the RTL, and where the build status came from."""
+    t = MARK[i["status"]] + (f" [{i['instrument']}]" if i.get("instrument") else "")
+    L = i.get("lean")
+    if i["method"] == "formal_lean" and L:
+        from flow import lean_tier as lt
+        bits = [lt.TIER_TEXT.get(L.get("tier") or "", "no build"), lt.RTL_LINK_SHORT.get(L.get("rtl_link") or "", "no RTL link"), (L.get("build_source") or "").replace(" (not re-run)", "")]
+        t += " [" + "; ".join(b for b in bits if b) + "]"
+    return t
 
 
 def _link(from_dir: Path, target: str) -> str:
@@ -607,6 +664,8 @@ def _state_cell(r: dict) -> str:
         t += f" ({'board-measured' if r['basis'] == 'board' else 'post-route timing' if r['basis'] == 'timing' else 'simulation only'})"
     if r["state"] == "verified" and r.get("stale_items"):
         t += f"; {r['stale_items']} item(s) stale"
+    if r["state"] == "verified" and r.get("lean_transcription_only"):
+        t += "; the Lean proof is of a transcription of the RTL, not of the RTL itself"
     return t
 
 
@@ -629,7 +688,7 @@ def render_md(d: dict, out_dir: Path) -> str:
                 i = items[iid]
                 if i["method"] != m:
                     continue
-                tag = MARK[i["status"]] + (f" [{i['instrument']}]" if i.get("instrument") else "")
+                tag = _tag(i)
                 ev = i.get("evidence")
                 parts.append(f"{tag}: [{i['id'].split(':')[-1][:28]}]({_link(out_dir, ev['file'])})" if ev and ev.get("exists") else f"{tag}: {i['id'].split(':')[-1][:28]}")
             cells.append("<br>".join(parts) or "")
@@ -638,8 +697,10 @@ def render_md(d: dict, out_dir: Path) -> str:
     L += ["", "## Gaps", ""]
     if not d["gaps"]:
         L.append("None.")
-    order = ["untraced_requirement", "orphan_check", "hardware_open", "external_not_hardware_verified", "performance_sim_only", "no_passing_evidence", "stale_evidence", "bad_item"]
-    names = {"untraced_requirement": "Requirements with no verification item", "orphan_check": "Orphan checks (trace to no requirement)",
+    order = ["lean_frozen_statement_changed", "lean_approval", "lean_failing", "lean_statement_unapproved", "untraced_requirement", "orphan_check", "hardware_open", "external_not_hardware_verified", "performance_sim_only", "no_passing_evidence", "stale_evidence", "bad_item"]
+    names = {"lean_frozen_statement_changed": "Lean: an approved statement changed (the statement is the specification)", "lean_approval": "Lean: approval file problems",
+             "lean_failing": "Lean proofs that fail", "lean_statement_unapproved": "Lean proofs whose statement is not approved by a human",
+             "untraced_requirement": "Requirements with no verification item", "orphan_check": "Orphan checks (trace to no requirement)",
              "hardware_open": "Requirements that depend on an external element and are not yet verified on hardware",
              "external_not_hardware_verified": "Depend on an external element, passing without hardware verification",
              "performance_sim_only": "Performance requirements verified in simulation only", "no_passing_evidence": "Requirements with no passing evidence",
@@ -679,7 +740,7 @@ CSS = """:root{--bg:#fff;--fg:#111;--mut:#555;--line:#c9c9c9;--ok:#111;--bad:#b0
 body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,sans-serif}main{max-width:1200px;margin:0 auto;padding:16px}
 h1{font-size:1.4rem}h2{font-size:1.15rem;margin-top:2rem}.wrap{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:13px}
 th,td{border:1px solid var(--line);padding:4px 6px;text-align:left;vertical-align:top}th{background:var(--soft)}
-.pass{font-weight:600}.fail{color:var(--bad);font-weight:700}.not_run,.stale,.bounded{color:var(--mut);font-style:italic}.gap{border-left:3px solid var(--fg);padding-left:8px}
+.pass{font-weight:600}.fail{color:var(--bad);font-weight:700}.not_run,.stale,.bounded,.unapproved{color:var(--mut);font-style:italic}.gap{border-left:3px solid var(--fg);padding-left:8px}
 a{color:inherit}code{font-size:12px}.mut{color:var(--mut)}"""
 
 
@@ -700,7 +761,10 @@ def render_html(d: dict, out_dir: Path) -> str:
                 ev = i.get("evidence")
                 lab = E(i["id"].split(":")[-1][:28]) + (f" <span class=mut>[{E(i['instrument'])}]</span>" if i.get("instrument") else "")
                 lab = f"<a href='{E(_link(out_dir, ev['file']))}'>{lab}</a>" if ev and ev.get("exists") else lab
-                parts.append(f"<span class={i['status']}>{MARK[i['status']]}</span> {lab}")
+                extra = ""
+                if i["method"] == "formal_lean":
+                    extra = " <span class=mut>[" + E(_tag(i).split("[", 1)[1].rstrip("]")) + "]</span>" if "[" in _tag(i) else ""
+                parts.append(f"<span class={i['status']}>{MARK[i['status']]}</span> {lab}{extra}")
             cells.append("<td>" + "<br>".join(parts))
         ext = f"<br><span class=mut>Depends on: {E(r['external'])}; hardware verification {r['hardware_closure']}.</span>" if r.get("external") else ""
         h.append(f"<tr><th><b>{E(r['id'])}</b> {E(r['title'])}{ext}<td>{r['kind']}<td><span class={'pass' if r['state'] == 'verified' else r['state']}>{E(_state_cell(r))}</span>" + "".join(cells) + "</tr>")
@@ -746,8 +810,8 @@ def render_project_html(all_: dict) -> str:
     return "".join(h)
 
 
-def outputs(designs: list[Path]) -> dict[Path, str]:
-    all_ = collect_all(designs)
+def outputs(designs: list[Path], lean: str = "recorded") -> dict[Path, str]:
+    all_ = collect_all(designs, lean)
     out: dict[Path, str] = {}
     for d, dp in zip(all_["designs"], designs):
         od = dp / "verif"
@@ -760,10 +824,33 @@ def outputs(designs: list[Path]) -> dict[Path, str]:
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("cmd", choices=["check", "write", "pin", "show"])
+    ap.add_argument("cmd", choices=["check", "write", "pin", "show", "lean-record", "lean-statement"])
     ap.add_argument("designs", nargs="*")
+    ap.add_argument("--lean", choices=["recorded", "live", "auto"], default=None,
+                    help="where a formal_lean item's build status comes from (default: recorded for write and check, auto for show)")
     a = ap.parse_args(argv)
+    if a.cmd == "lean-statement":
+        from flow import lean_tier
+        if len(a.designs) != 2:
+            print("usage: lean-statement DESIGN ITEM-ID")
+            return 2
+        d = ROOT / a.designs[0] if not Path(a.designs[0]).is_absolute() else Path(a.designs[0])
+        its = [i for i in load(d)["verification"] if i["id"] == a.designs[1] and i.get("method") == "formal_lean"]
+        if not its:
+            print("no such formal_lean item")
+            return 2
+        print(lean_tier.statement_report(d, its[0]))
+        return 0
     ds = [(ROOT / x if not Path(x).is_absolute() else Path(x)) for x in a.designs] or v1_designs()
+    if a.cmd == "lean-record":
+        from flow import lean_tier
+        if not lean_tier.toolchain_available():
+            print("the Lean toolchain (lake) is not installed; install elan, or run this where it is")
+            return 2
+        items = lean_tier.lean_items([load(d) for d in ds])
+        for project in sorted({(i["lean"].get("project", lean_tier.DEFAULT_PROJECT)) for i in items}):
+            print("wrote", lean_tier.write_record(items, project))
+        return 0
     if a.cmd == "pin":
         for d in ds:
             print("wrote", write_pins(d))
@@ -771,19 +858,19 @@ def main(argv: list[str] | None = None) -> int:
     if a.cmd == "check":
         bad = 0
         for d in ds:
-            for p in gate(d):
+            for p in gate(d, a.lean or "recorded"):
                 print(f"{d.name}: {p}")
                 bad = 1
         print("traceability gate:", "FAIL" if bad else "ok")
         return bad
     if a.cmd == "show":
         for d in ds:
-            c = collect(d)
+            c = collect(d, a.lean or "auto")
             print(c["design"], "-", c["summary"]["line"])
             for x in c["gaps"]:
                 print("  ", x["type"], x["id"], "-", x["text"])
         return 0
-    for p, t in outputs(ds).items():
+    for p, t in outputs(ds, a.lean or "recorded").items():
         p.write_text(t)
         print("wrote", rel(p))
     return 0

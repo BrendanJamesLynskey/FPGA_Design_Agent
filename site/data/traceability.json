@@ -60,8 +60,8 @@
      {
       "gate": false,
       "id": "B96-S-DRIVER",
-      "state": "stale",
-      "text": "its evidence is stale",
+      "state": "fail",
+      "text": "an item fails",
       "type": "no_passing_evidence"
      },
      {
@@ -69,6 +69,13 @@
       "id": "B96-I-REGMAP",
       "state": "stale",
       "text": "its evidence is stale",
+      "type": "no_passing_evidence"
+     },
+     {
+      "gate": false,
+      "id": "B96-F-BUILDS",
+      "state": "fail",
+      "text": "an item fails",
       "type": "no_passing_evidence"
      },
      {
@@ -199,6 +206,66 @@
       "id": "V-HW-BYPASS",
       "text": "no pin recorded (run: python -m flow.trace_v1 pin)",
       "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-LEAN-GRAY-STEP",
+      "text": "the Lean statement is not approved by a human; until it is, the proof is not counted as verification",
+      "type": "lean_statement_unapproved"
+     },
+     {
+      "gate": false,
+      "id": "V-LEAN-GRAY-DECODE",
+      "text": "the Lean statement is not approved by a human; until it is, the proof is not counted as verification",
+      "type": "lean_statement_unapproved"
+     },
+     {
+      "gate": false,
+      "id": "V-LEAN-GRAY-ENCODE",
+      "text": "the Lean statement is not approved by a human; until it is, the proof is not counted as verification",
+      "type": "lean_statement_unapproved"
+     },
+     {
+      "gate": false,
+      "id": "V-LEAN-GRAY-SAMPLE",
+      "text": "the Lean statement is not approved by a human; until it is, the proof is not counted as verification",
+      "type": "lean_statement_unapproved"
+     },
+     {
+      "gate": false,
+      "id": "V-LEAN-CKSUM-IP",
+      "text": "the Lean statement is not approved by a human; until it is, the proof is not counted as verification",
+      "type": "lean_statement_unapproved"
+     },
+     {
+      "gate": false,
+      "id": "V-LEAN-CKSUM-IP-RX",
+      "text": "the Lean statement is not approved by a human; until it is, the proof is not counted as verification",
+      "type": "lean_statement_unapproved"
+     },
+     {
+      "gate": false,
+      "id": "V-LEAN-CKSUM-TCP",
+      "text": "the Lean statement is not approved by a human; until it is, the proof is not counted as verification",
+      "type": "lean_statement_unapproved"
+     },
+     {
+      "gate": false,
+      "id": "V-LEAN-CKSUM-SUM",
+      "text": "the Lean statement is not approved by a human; until it is, the proof is not counted as verification",
+      "type": "lean_statement_unapproved"
+     },
+     {
+      "gate": false,
+      "id": "V-LEAN-CKSUM-INC",
+      "text": "the Lean statement is not approved by a human; until it is, the proof is not counted as verification",
+      "type": "lean_statement_unapproved"
+     },
+     {
+      "gate": false,
+      "id": "V-LEAN-CKSUM-INC-ZERO",
+      "text": "the Lean statement is not approved by a human; until it is, the proof is not counted as verification",
+      "type": "lean_statement_unapproved"
      },
      {
       "gate": false,
@@ -368,6 +435,24 @@
       "status": "stale",
       "title": "Board bench, ppm and bypass drivers judged on a fake board (every safety counter, polarity, lock, verdicts)",
       "value": "37 of 37 tests passed"
+     },
+     {
+      "detail": "0 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "results/116_traceability/b96_kr260_10g/pytest_junit.xml"
+      },
+      "id": "V-SIM-126-ALL3",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "B96-F-BUILDS",
+       "B96-S-DRIVER"
+      ],
+      "status": "fail",
+      "title": "Build lat_all3_bypass composes 97C's cuts with the bypass build's files, and its board driver's verdicts, references and lock prefix (brief 126); not yet in a recorded run",
+      "value": "0 of 0 tests passed"
      },
      {
       "detail": "5 test(s) passed in the recorded run",
@@ -1019,6 +1104,360 @@
       "value": null
      },
      {
+      "detail": "statement not approved; Gray.gray_step: kernel only; proof of the transcription, transcription tested; recorded build (not re-run)",
+      "evidence": {
+       "exists": true,
+       "file": "formal/lean/records/build_record.json"
+      },
+      "id": "V-LEAN-GRAY-STEP",
+      "instrument": null,
+      "lean": {
+       "approved": false,
+       "approved_by": null,
+       "approved_on": null,
+       "axioms": [
+        "Classical.choice",
+        "Quot.sound",
+        "propext"
+       ],
+       "build_source": "recorded build (not re-run)",
+       "module": "Gray.Spec",
+       "project": "formal/lean",
+       "rtl_link": "transcription_tested",
+       "rtl_link_text": "proof of the transcription, transcription tested",
+       "statement_sha256": "e2e793b6b398c0f02ebab7dc6832b565542f0b90fd7fba29c5873505c3752b6a",
+       "theorem": "Gray.gray_step",
+       "tier": "kernel_only"
+      },
+      "method": "formal_lean",
+      "planned": null,
+      "requirements": [
+       "B96-F-LEAN-GRAY-STEP"
+      ],
+      "status": "unapproved",
+      "title": "One bit changes per count, wrap included, every width",
+      "value": null
+     },
+     {
+      "detail": "statement not approved; Gray.gray2bin_bin2gray: kernel only; proof of the transcription, transcription tested; recorded build (not re-run)",
+      "evidence": {
+       "exists": true,
+       "file": "formal/lean/records/build_record.json"
+      },
+      "id": "V-LEAN-GRAY-DECODE",
+      "instrument": null,
+      "lean": {
+       "approved": false,
+       "approved_by": null,
+       "approved_on": null,
+       "axioms": [
+        "Classical.choice",
+        "Quot.sound",
+        "propext"
+       ],
+       "build_source": "recorded build (not re-run)",
+       "module": "Gray.Spec",
+       "project": "formal/lean",
+       "rtl_link": "transcription_tested",
+       "rtl_link_text": "proof of the transcription, transcription tested",
+       "statement_sha256": "3fcde7c6898796cc709eb2d409bc52a2593cb3772e293fad362332c2cd736d70",
+       "theorem": "Gray.gray2bin_bin2gray",
+       "tier": "kernel_only"
+      },
+      "method": "formal_lean",
+      "planned": null,
+      "requirements": [
+       "B96-F-LEAN-GRAY-DECODE"
+      ],
+      "status": "unapproved",
+      "title": "Decode after encode is the identity, every width",
+      "value": null
+     },
+     {
+      "detail": "statement not approved; Gray.bin2gray_gray2bin: kernel only; proof of the transcription, transcription tested; recorded build (not re-run)",
+      "evidence": {
+       "exists": true,
+       "file": "formal/lean/records/build_record.json"
+      },
+      "id": "V-LEAN-GRAY-ENCODE",
+      "instrument": null,
+      "lean": {
+       "approved": false,
+       "approved_by": null,
+       "approved_on": null,
+       "axioms": [
+        "Classical.choice",
+        "Quot.sound",
+        "propext"
+       ],
+       "build_source": "recorded build (not re-run)",
+       "module": "Gray.Spec",
+       "project": "formal/lean",
+       "rtl_link": "transcription_tested",
+       "rtl_link_text": "proof of the transcription, transcription tested",
+       "statement_sha256": "96d4bc1cf98f0d1fce57235977557e4a4c15aae6005f9e58c7c2464d8d318b89",
+       "theorem": "Gray.bin2gray_gray2bin",
+       "tier": "kernel_only"
+      },
+      "method": "formal_lean",
+      "planned": null,
+      "requirements": [
+       "B96-F-LEAN-GRAY-DECODE"
+      ],
+      "status": "unapproved",
+      "title": "Encode after decode is the identity, every width",
+      "value": null
+     },
+     {
+      "detail": "statement not approved; Gray.gray_sample: kernel only; proof of the transcription, transcription tested; recorded build (not re-run)",
+      "evidence": {
+       "exists": true,
+       "file": "formal/lean/records/build_record.json"
+      },
+      "id": "V-LEAN-GRAY-SAMPLE",
+      "instrument": null,
+      "lean": {
+       "approved": false,
+       "approved_by": null,
+       "approved_on": null,
+       "axioms": [
+        "Classical.choice",
+        "Quot.sound",
+        "propext"
+       ],
+       "build_source": "recorded build (not re-run)",
+       "module": "Gray.Spec",
+       "project": "formal/lean",
+       "rtl_link": "transcription_tested",
+       "rtl_link_text": "proof of the transcription, transcription tested",
+       "statement_sha256": "c51035fc6a648c64e4db77f90c10cf2c176aab3fe57bfc6be2836699e6581bf0",
+       "theorem": "Gray.gray_sample",
+       "tier": "kernel_only"
+      },
+      "method": "formal_lean",
+      "planned": null,
+      "requirements": [
+       "B96-F-LEAN-GRAY-DECODE"
+      ],
+      "status": "unapproved",
+      "title": "A code sampled mid-step decodes to the old or the new count",
+      "value": null
+     },
+     {
+      "detail": "statement not approved; Cksum.rtl_ip_correct: kernel plus a compiled decision procedure; proof of the transcription, transcription tested; recorded build (not re-run)",
+      "evidence": {
+       "exists": true,
+       "file": "formal/lean/records/build_record.json"
+      },
+      "id": "V-LEAN-CKSUM-IP",
+      "instrument": null,
+      "lean": {
+       "approved": false,
+       "approved_by": null,
+       "approved_on": null,
+       "axioms": [
+        "Classical.choice",
+        "Quot.sound",
+        "fold16_toNat._native.bv_decide.ax_1_7",
+        "ip_step._native.bv_decide.ax_1_6",
+        "propext"
+       ],
+       "build_source": "recorded build (not re-run)",
+       "module": "Cksum.Spec",
+       "project": "formal/lean",
+       "rtl_link": "transcription_tested",
+       "rtl_link_text": "proof of the transcription, transcription tested",
+       "statement_sha256": "16a88adc0fbd323fe935ab5f75f461d91349ad14f1aa3c5feaa57a1d1e6433c5",
+       "theorem": "Cksum.rtl_ip_correct",
+       "tier": "compiled_decision_procedure"
+      },
+      "method": "formal_lean",
+      "planned": null,
+      "requirements": [
+       "B96-F-LEAN-CKSUM-IP"
+      ],
+      "status": "unapproved",
+      "title": "IPv4 header checksum equals the Internet checksum",
+      "value": null
+     },
+     {
+      "detail": "statement not approved; Cksum.rtl_ip_receiver: kernel plus a compiled decision procedure; proof of the transcription, transcription tested; recorded build (not re-run)",
+      "evidence": {
+       "exists": true,
+       "file": "formal/lean/records/build_record.json"
+      },
+      "id": "V-LEAN-CKSUM-IP-RX",
+      "instrument": null,
+      "lean": {
+       "approved": false,
+       "approved_by": null,
+       "approved_on": null,
+       "axioms": [
+        "Classical.choice",
+        "Quot.sound",
+        "fold16_toNat._native.bv_decide.ax_1_7",
+        "ip_step._native.bv_decide.ax_1_6",
+        "propext"
+       ],
+       "build_source": "recorded build (not re-run)",
+       "module": "Cksum.Spec",
+       "project": "formal/lean",
+       "rtl_link": "transcription_tested",
+       "rtl_link_text": "proof of the transcription, transcription tested",
+       "statement_sha256": "34cfc39cafdc594fbda614401ccc8e625338a97da474d4785469f6d069c46623",
+       "theorem": "Cksum.rtl_ip_receiver",
+       "tier": "compiled_decision_procedure"
+      },
+      "method": "formal_lean",
+      "planned": null,
+      "requirements": [
+       "B96-F-LEAN-CKSUM-IP"
+      ],
+      "status": "unapproved",
+      "title": "The filled-in header sums to 0xFFFF (receiver check)",
+      "value": null
+     },
+     {
+      "detail": "statement not approved; Cksum.rtl_tcp_correct: kernel plus a compiled decision procedure; proof of the transcription, transcription tested; recorded build (not re-run)",
+      "evidence": {
+       "exists": true,
+       "file": "formal/lean/records/build_record.json"
+      },
+      "id": "V-LEAN-CKSUM-TCP",
+      "instrument": null,
+      "lean": {
+       "approved": false,
+       "approved_by": null,
+       "approved_on": null,
+       "axioms": [
+        "Classical.choice",
+        "Quot.sound",
+        "fin_t._native.bv_decide.ax_1_6",
+        "fold16_toNat._native.bv_decide.ax_1_7",
+        "propext"
+       ],
+       "build_source": "recorded build (not re-run)",
+       "module": "Cksum.Spec",
+       "project": "formal/lean",
+       "rtl_link": "transcription_tested",
+       "rtl_link_text": "proof of the transcription, transcription tested",
+       "statement_sha256": "445f831f8fc4f98c489b157cbddf30812a5453373c21ea44c4e26836dc161b69",
+       "theorem": "Cksum.rtl_tcp_correct",
+       "tier": "compiled_decision_procedure"
+      },
+      "method": "formal_lean",
+      "planned": null,
+      "requirements": [
+       "B96-F-LEAN-CKSUM-TCP"
+      ],
+      "status": "unapproved",
+      "title": "TCP checksum equals the Internet checksum, payloads up to 30 words",
+      "value": null
+     },
+     {
+      "detail": "statement not approved; Cksum.ocSum_toNat: kernel only; proof of a model, no RTL link; recorded build (not re-run)",
+      "evidence": {
+       "exists": true,
+       "file": "formal/lean/records/build_record.json"
+      },
+      "id": "V-LEAN-CKSUM-SUM",
+      "instrument": null,
+      "lean": {
+       "approved": false,
+       "approved_by": null,
+       "approved_on": null,
+       "axioms": [
+        "Quot.sound",
+        "propext"
+       ],
+       "build_source": "recorded build (not re-run)",
+       "module": "Cksum.Spec",
+       "project": "formal/lean",
+       "rtl_link": "model_only",
+       "rtl_link_text": "proof of a model, no RTL link",
+       "statement_sha256": "144db4f61cba814b8c54ca8949debcfd58a492c55af0ab43c653923c92c7ef8d",
+       "theorem": "Cksum.ocSum_toNat",
+       "tier": "kernel_only"
+      },
+      "method": "formal_lean",
+      "planned": null,
+      "requirements": [
+       "B96-F-LEAN-CKSUM-MODEL"
+      ],
+      "status": "unapproved",
+      "title": "Ones complement sum equals the natural-number sum mod 65535",
+      "value": null
+     },
+     {
+      "detail": "statement not approved; Cksum.incUpdate_correct: kernel only; proof of a model, no RTL link; recorded build (not re-run)",
+      "evidence": {
+       "exists": true,
+       "file": "formal/lean/records/build_record.json"
+      },
+      "id": "V-LEAN-CKSUM-INC",
+      "instrument": null,
+      "lean": {
+       "approved": false,
+       "approved_by": null,
+       "approved_on": null,
+       "axioms": [
+        "Classical.choice",
+        "Quot.sound",
+        "propext"
+       ],
+       "build_source": "recorded build (not re-run)",
+       "module": "Cksum.Spec",
+       "project": "formal/lean",
+       "rtl_link": "model_only",
+       "rtl_link_text": "proof of a model, no RTL link",
+       "statement_sha256": "fdce7349bcd40ed054ab516db827db8f58677a7440d4c24ba399d17a7671ed8a",
+       "theorem": "Cksum.incUpdate_correct",
+       "tier": "kernel_only"
+      },
+      "method": "formal_lean",
+      "planned": null,
+      "requirements": [
+       "B96-F-LEAN-CKSUM-MODEL"
+      ],
+      "status": "unapproved",
+      "title": "RFC 1624 equation 3 is correct for headers of any length",
+      "value": null
+     },
+     {
+      "detail": "statement not approved; Cksum.incUpdate_zero_corner: kernel only; proof of a model, no RTL link; recorded build (not re-run)",
+      "evidence": {
+       "exists": true,
+       "file": "formal/lean/records/build_record.json"
+      },
+      "id": "V-LEAN-CKSUM-INC-ZERO",
+      "instrument": null,
+      "lean": {
+       "approved": false,
+       "approved_by": null,
+       "approved_on": null,
+       "axioms": [
+        "Quot.sound",
+        "propext"
+       ],
+       "build_source": "recorded build (not re-run)",
+       "module": "Cksum.Spec",
+       "project": "formal/lean",
+       "rtl_link": "model_only",
+       "rtl_link_text": "proof of a model, no RTL link",
+       "statement_sha256": "cf1f019bc0d1b91d6aeda9c73ec8d025c8867e6e282cc323dbb1a806b740a236",
+       "theorem": "Cksum.incUpdate_zero_corner",
+       "tier": "kernel_only"
+      },
+      "method": "formal_lean",
+      "planned": null,
+      "requirements": [
+       "B96-F-LEAN-CKSUM-MODEL"
+      ],
+      "status": "unapproved",
+      "title": "The all-zero header corner gives 0x0000",
+      "value": null
+     },
+     {
       "date": "2026-11-17",
       "detail": "Sonnet (agent), 2026-11-17",
       "evidence": {
@@ -1062,6 +1501,7 @@
        "V-REVIEW-96"
       ],
       "kind": "functional",
+      "lean_transcription_only": false,
       "passing_methods": [
        "sim_test"
       ],
@@ -1088,6 +1528,7 @@
        "V-REVIEW-96"
       ],
       "kind": "functional",
+      "lean_transcription_only": false,
       "passing_methods": [
        "sim_test"
       ],
@@ -1110,6 +1551,7 @@
        "V-PYUVM"
       ],
       "kind": "functional",
+      "lean_transcription_only": false,
       "passing_methods": [
        "sim_test"
       ],
@@ -1131,6 +1573,7 @@
        "V-HW-RESTARTS-97C"
       ],
       "kind": "functional",
+      "lean_transcription_only": false,
       "passing_methods": [
        "board_measurement"
       ],
@@ -1153,6 +1596,7 @@
        "V-HW-RESTARTS-97C"
       ],
       "kind": "functional",
+      "lean_transcription_only": false,
       "passing_methods": [
        "sim_test"
       ],
@@ -1179,6 +1623,7 @@
        "V-HW-RATEMATCH-96C"
       ],
       "kind": "safety",
+      "lean_transcription_only": false,
       "passing_methods": [
        "sim_test"
       ],
@@ -1202,6 +1647,7 @@
        "V-HW-OFFSET-PLANNED"
       ],
       "kind": "functional",
+      "lean_transcription_only": false,
       "passing_methods": [
        "sim_test"
       ],
@@ -1223,6 +1669,7 @@
        "V-HW-INTEROP-PLANNED"
       ],
       "kind": "functional",
+      "lean_transcription_only": false,
       "passing_methods": [],
       "source": "designs/b96_kr260_10g/handover.yaml",
       "spec_status": "draft",
@@ -1244,6 +1691,7 @@
        "V-REVIEW-96"
       ],
       "kind": "safety",
+      "lean_transcription_only": false,
       "passing_methods": [
        "board_measurement",
        "sim_test"
@@ -1262,14 +1710,16 @@
       "hardware_verified": false,
       "id": "B96-S-DRIVER",
       "items": [
-       "V-SIM-DRIVER"
+       "V-SIM-DRIVER",
+       "V-SIM-126-ALL3"
       ],
       "kind": "safety",
+      "lean_transcription_only": false,
       "passing_methods": [],
       "source": "designs/b96_kr260_10g/host/b96_bench.py",
       "spec_status": "draft",
       "stale_items": 1,
-      "state": "stale",
+      "state": "fail",
       "text": "A stale counter, a missing order, a counter that was not read, a wrong polarity or a link that never came up fails the run and names the cause; unsafe actions are refused without the lock.",
       "title": "The board drivers cannot report OK when a safety check fails"
      },
@@ -1284,6 +1734,7 @@
        "V-HW-LASER"
       ],
       "kind": "safety",
+      "lean_transcription_only": false,
       "passing_methods": [
        "board_measurement"
       ],
@@ -1305,6 +1756,7 @@
        "V-HW-SYSMON-EYE"
       ],
       "kind": "safety",
+      "lean_transcription_only": false,
       "passing_methods": [
        "board_measurement"
       ],
@@ -1327,6 +1779,7 @@
        "V-TIM-CDC-BYPASS"
       ],
       "kind": "safety",
+      "lean_transcription_only": false,
       "passing_methods": [
        "timing"
       ],
@@ -1347,6 +1800,7 @@
        "V-SIM-REGMAP"
       ],
       "kind": "interface",
+      "lean_transcription_only": false,
       "passing_methods": [],
       "source": "designs/b96_kr260_10g/docs/register_map.md",
       "spec_status": "draft",
@@ -1362,16 +1816,18 @@
       "hardware_verified": false,
       "id": "B96-F-BUILDS",
       "items": [
+       "V-SIM-126-ALL3",
        "V-SIM-BUILDS"
       ],
       "kind": "functional",
+      "lean_transcription_only": false,
       "passing_methods": [
        "sim_test"
       ],
       "source": "designs/b96_kr260_10g/handover.yaml",
       "spec_status": "draft",
       "stale_items": 0,
-      "state": "verified",
+      "state": "fail",
       "text": "The build files set parameters the core has, the base build keeps the 97C defaults, and each variant differs from the base only where documented.",
       "title": "Every build variant sets only the parameters it documents"
      },
@@ -1385,6 +1841,7 @@
        "V-SIM-EYESCAN"
       ],
       "kind": "functional",
+      "lean_transcription_only": false,
       "passing_methods": [
        "sim_test"
       ],
@@ -1407,6 +1864,7 @@
        "V-HW-LAT-E-97C"
       ],
       "kind": "performance",
+      "lean_transcription_only": false,
       "passing_methods": [
        "board_measurement",
        "sim_test"
@@ -1437,6 +1895,7 @@
        "V-HW-LAT-L-97C"
       ],
       "kind": "performance",
+      "lean_transcription_only": false,
       "passing_methods": [
        "board_measurement",
        "sim_test"
@@ -1466,6 +1925,7 @@
        "V-HW-LAT-D-96E"
       ],
       "kind": "performance",
+      "lean_transcription_only": false,
       "passing_methods": [
        "board_measurement",
        "sim_test"
@@ -1494,6 +1954,7 @@
        "V-SIMM-T2T"
       ],
       "kind": "performance",
+      "lean_transcription_only": false,
       "passing_methods": [],
       "performance": {
        "GT receive word to GT transmit order start (mean over 8 orders)": null,
@@ -1522,6 +1983,7 @@
        "V-TIM-SETUP-BYPASS"
       ],
       "kind": "performance",
+      "lean_transcription_only": false,
       "passing_methods": [
        "timing"
       ],
@@ -1551,6 +2013,7 @@
        "V-TIM-HOLD-BYPASS"
       ],
       "kind": "performance",
+      "lean_transcription_only": false,
       "passing_methods": [
        "timing"
       ],
@@ -1578,6 +2041,7 @@
        "V-HW-EYE"
       ],
       "kind": "performance",
+      "lean_transcription_only": false,
       "passing_methods": [
        "board_measurement"
       ],
@@ -1606,6 +2070,7 @@
        "V-HW-BYPASS"
       ],
       "kind": "performance",
+      "lean_transcription_only": false,
       "passing_methods": [],
       "performance": {
        "bound": 19.5,
@@ -1632,6 +2097,7 @@
        "V-HW-THROUGHPUT-PLANNED"
       ],
       "kind": "performance",
+      "lean_transcription_only": false,
       "passing_methods": [],
       "performance": {
        "bound": 0,
@@ -1646,12 +2112,112 @@
       "state": "not_run",
       "text": "A burst at line rate loses no frame. Nothing has been measured; the line and payload rates stand on configuration and gearbox arithmetic only.",
       "title": "Line-rate throughput without loss"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "B96-F-LEAN-GRAY-STEP",
+      "items": [
+       "V-LEAN-GRAY-STEP"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [],
+      "source": "designs/b96_kr260_10g/rtl/rate_match_gp.sv (pointer crossings u_wp and u_rp, xpm_cdc_gray)",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "unapproved",
+      "text": "The write and read pointers of rate_match_gp count modulo 2^CW and cross by gray code. For every width CW > 0 and every value, the gray codes of b and b + 1 (including the wrap from 2^CW - 1 to 0) differ in exactly one bit, so a sample taken while the pointer moves is the old or the new code.",
+      "title": "A pointer's gray code changes in exactly one bit per count, at every width"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "B96-F-LEAN-GRAY-DECODE",
+      "items": [
+       "V-LEAN-GRAY-DECODE",
+       "V-LEAN-GRAY-ENCODE",
+       "V-LEAN-GRAY-SAMPLE"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [],
+      "source": "designs/b96_kr260_10g/rtl/rate_match_gp.sv (pointer crossings u_wp and u_rp, xpm_cdc_gray)",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "unapproved",
+      "text": "For every width and value, the decoder of the pointer crossing returns the count the encoder was given; and a sampled code that is the old or the new code decodes to the old or the new count.",
+      "title": "Gray decoding inverts gray encoding, at every width"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "B96-F-LEAN-CKSUM-IP",
+      "items": [
+       "V-LEAN-CKSUM-IP",
+       "V-LEAN-CKSUM-IP-RX"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [],
+      "source": "brief 119 (PR 245), designs/b119_tcp_fast/rtl/tcp_fast.sv; results/124_lean/README.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "unapproved",
+      "text": "Brief 119's tcp_fast.sv builds the IPv4 header checksum from a precomputed template plus the changing fields. For all TTL, address and identification values it equals the complement of the ones' complement sum of the header, and the filled-in header sums to 0xFFFF.",
+      "title": "The IPv4 header checksum of the TCP fast path equals the Internet checksum, for all inputs"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "B96-F-LEAN-CKSUM-TCP",
+      "items": [
+       "V-LEAN-CKSUM-TCP"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [],
+      "source": "brief 119 (PR 245), designs/b119_tcp_fast/rtl/tcp_fast.sv; results/124_lean/README.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "unapproved",
+      "text": "For all addresses, ports, sequence and acknowledgement numbers, windows and payloads of up to 30 sixteen-bit words, the checksum the RTL equations produce equals the complement of the ones' complement sum over pseudo-header, header and payload. The byte-pair swapping, the streaming receive check and the timing are not modelled.",
+      "title": "The TCP checksum of the TCP fast path equals the Internet checksum, for all inputs and payloads up to 30 words"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "B96-F-LEAN-CKSUM-MODEL",
+      "items": [
+       "V-LEAN-CKSUM-SUM",
+       "V-LEAN-CKSUM-INC",
+       "V-LEAN-CKSUM-INC-ZERO"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [],
+      "source": "results/124_lean/README.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "unapproved",
+      "text": "The ones' complement sum of any list of 16-bit words equals the natural-number sum reduced mod 65535, and RFC 1624 equation 3 (incremental update) is correct for a header of any length when the new header is not all zero words; for an all-zero header it gives 0x0000. No current RTL patches a checksum in place; this is the arithmetic the fast path's template-plus-fields form relies on.",
+      "title": "The ones' complement arithmetic the checksum equations rest on is correct, for lists of any length"
      }
     ],
     "source_schema": "fpga-design-agent/testplan/v1",
     "summary": {
      "by_kind": {
-      "functional": 9,
+      "functional": 14,
       "interface": 1,
       "performance": 9,
       "safety": 6
@@ -1662,86 +2228,127 @@
        "fail": 0,
        "not_run": 1,
        "pass": 0,
-       "stale": 0
+       "stale": 0,
+       "unapproved": 0
       },
       "board_measurement": {
        "bounded": 0,
        "fail": 0,
        "not_run": 3,
        "pass": 8,
-       "stale": 5
+       "stale": 5,
+       "unapproved": 0
       },
       "coverage_bin": {
        "bounded": 0,
        "fail": 0,
        "not_run": 1,
        "pass": 0,
-       "stale": 0
+       "stale": 0,
+       "unapproved": 0
       },
       "formal": {
        "bounded": 0,
        "fail": 1,
        "not_run": 0,
        "pass": 0,
-       "stale": 1
+       "stale": 1,
+       "unapproved": 0
+      },
+      "formal_lean": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 0,
+       "stale": 0,
+       "unapproved": 10
       },
       "review": {
        "bounded": 0,
        "fail": 0,
        "not_run": 0,
        "pass": 0,
-       "stale": 1
+       "stale": 1,
+       "unapproved": 0
       },
       "sim_measurement": {
        "bounded": 0,
        "fail": 0,
        "not_run": 0,
        "pass": 0,
-       "stale": 3
+       "stale": 3,
+       "unapproved": 0
       },
       "sim_test": {
        "bounded": 0,
-       "fail": 0,
+       "fail": 1,
        "not_run": 0,
        "pass": 9,
-       "stale": 2
+       "stale": 2,
+       "unapproved": 0
       },
       "timing": {
        "bounded": 0,
        "fail": 0,
        "not_run": 0,
        "pass": 3,
-       "stale": 6
+       "stale": 6,
+       "unapproved": 0
       },
       "uvm_test": {
        "bounded": 0,
        "fail": 2,
        "not_run": 0,
        "pass": 0,
-       "stale": 0
+       "stale": 0,
+       "unapproved": 0
       }
      },
      "by_state": {
-      "fail": 4,
+      "fail": 6,
       "not_run": 2,
-      "stale": 4,
-      "verified": 15
+      "stale": 3,
+      "unapproved": 5,
+      "verified": 14
      },
      "external": 3,
      "external_hardware_done": 0,
      "gap_counts": {
       "external_not_hardware_verified": 1,
       "hardware_open": 3,
-      "no_passing_evidence": 10,
+      "lean_statement_unapproved": 10,
+      "no_passing_evidence": 11,
       "stale_evidence": 18
      },
      "human_reviews": 0,
-     "items": 46,
-     "line": "25 requirements (9 functional, 9 performance, 1 interface, 6 safety); 15 verified; 4 stale; 4 failing; 2 with no passing evidence; 0 of 3 requirements that depend on an external element closed by hardware; performance verified: 4 on the board, 2 by post-route timing, 0 in simulation only; 0 of 25 requirements agreed by a human, 0 human review(s) recorded.",
+     "items": 57,
+     "lean": {
+      "approved": 0,
+      "build_sources": [
+       "recorded build (not re-run)"
+      ],
+      "by_rtl_link": {
+       "model_only": 3,
+       "rtl_generated": 0,
+       "transcription_tested": 7,
+       "transcription_untested": 0
+      },
+      "by_status": {
+       "unapproved": 10
+      },
+      "by_tier": {
+       "compiled_decision_procedure": 3,
+       "kernel_only": 7,
+       "unsound": 0
+      },
+      "items": 10,
+      "statement_not_approved": 10
+     },
+     "line": "30 requirements (14 functional, 9 performance, 1 interface, 6 safety); 14 verified; 3 stale; 6 failing; 2 with no passing evidence; 0 of 3 requirements that depend on an external element closed by hardware; performance verified: 4 on the board, 2 by post-route timing, 0 in simulation only; 0 of 30 requirements agreed by a human, 0 human review(s) recorded; 10 Lean proof item(s) (all widths): 0 with a human-approved statement, 10 with statement not approved; 7 kernel only, 3 using a compiled decision procedure; build status from: recorded build (not re-run).",
      "performance_board": 4,
      "performance_sim_only": 0,
      "performance_timing": 2,
-     "requirements": 25,
+     "requirements": 30,
      "spec_agreed": 0
     }
    },
@@ -4236,6 +4843,7 @@
        "R01:t1.op.kind_x_count"
       ],
       "kind": "functional",
+      "lean_transcription_only": false,
       "passing_methods": [],
       "source": "designs/t1_dimmer_counter/spec.yaml",
       "spec": [
@@ -4263,6 +4871,7 @@
        "R02:t1.op.kind"
       ],
       "kind": "functional",
+      "lean_transcription_only": false,
       "passing_methods": [],
       "source": "designs/t1_dimmer_counter/spec.yaml",
       "spec": [
@@ -4288,6 +4897,7 @@
        "R03:t1.clock.mix"
       ],
       "kind": "functional",
+      "lean_transcription_only": false,
       "passing_methods": [],
       "source": "designs/t1_dimmer_counter/spec.yaml",
       "spec": [
@@ -4314,6 +4924,7 @@
        "R04:t1.clock.mix"
       ],
       "kind": "functional",
+      "lean_transcription_only": false,
       "passing_methods": [],
       "source": "designs/t1_dimmer_counter/spec.yaml",
       "spec": [
@@ -4341,6 +4952,7 @@
        "R05:debounce"
       ],
       "kind": "functional",
+      "lean_transcription_only": false,
       "passing_methods": [],
       "source": "designs/t1_dimmer_counter/spec.yaml",
       "spec": [
@@ -4370,6 +4982,7 @@
        "R06:debounce"
       ],
       "kind": "functional",
+      "lean_transcription_only": false,
       "passing_methods": [],
       "source": "designs/t1_dimmer_counter/spec.yaml",
       "spec": [
@@ -4391,6 +5004,7 @@
        "R07:t1.duty.class_x_source"
       ],
       "kind": "functional",
+      "lean_transcription_only": false,
       "passing_methods": [],
       "source": "designs/t1_dimmer_counter/spec.yaml",
       "spec": [
@@ -4412,6 +5026,7 @@
        "R08:A_PWM_SUBSET"
       ],
       "kind": "functional",
+      "lean_transcription_only": false,
       "passing_methods": [],
       "source": "designs/t1_dimmer_counter/spec.yaml",
       "spec": [
@@ -4437,6 +5052,7 @@
        "R09:t1.duty.class"
       ],
       "kind": "functional",
+      "lean_transcription_only": false,
       "passing_methods": [],
       "source": "designs/t1_dimmer_counter/spec.yaml",
       "spec": [
@@ -4465,6 +5081,7 @@
        "R10:scan"
       ],
       "kind": "functional",
+      "lean_transcription_only": false,
       "passing_methods": [],
       "source": "designs/t1_dimmer_counter/spec.yaml",
       "spec": [
@@ -4485,6 +5102,7 @@
        "R11:t1_cocotb.display_shows_count_and_duty"
       ],
       "kind": "functional",
+      "lean_transcription_only": false,
       "passing_methods": [],
       "source": "designs/t1_dimmer_counter/spec.yaml",
       "spec": [
@@ -4508,6 +5126,7 @@
        "R12:scan"
       ],
       "kind": "functional",
+      "lean_transcription_only": false,
       "passing_methods": [],
       "source": "designs/t1_dimmer_counter/spec.yaml",
       "spec": [
@@ -4531,6 +5150,7 @@
        "R13:scan"
       ],
       "kind": "functional",
+      "lean_transcription_only": false,
       "passing_methods": [],
       "source": "designs/t1_dimmer_counter/spec.yaml",
       "spec": [
@@ -4553,6 +5173,7 @@
        "R14:t1.display.glyph"
       ],
       "kind": "functional",
+      "lean_transcription_only": false,
       "passing_methods": [],
       "source": "designs/t1_dimmer_counter/spec.yaml",
       "spec": [
@@ -4576,6 +5197,7 @@
        "R15:A_CT_RESET"
       ],
       "kind": "functional",
+      "lean_transcription_only": false,
       "passing_methods": [],
       "source": "designs/t1_dimmer_counter/spec.yaml",
       "spec": [
@@ -4600,6 +5222,7 @@
        "R16:t1.reg.name_x_dir"
       ],
       "kind": "functional",
+      "lean_transcription_only": false,
       "passing_methods": [],
       "source": "designs/t1_dimmer_counter/spec.yaml",
       "spec": [
@@ -4622,6 +5245,7 @@
        "R17:A_CT_DUTY_WRITE"
       ],
       "kind": "functional",
+      "lean_transcription_only": false,
       "passing_methods": [],
       "source": "designs/t1_dimmer_counter/spec.yaml",
       "spec": [
@@ -4644,6 +5268,7 @@
        "R18:A_CT_CTRL_WRITE"
       ],
       "kind": "functional",
+      "lean_transcription_only": false,
       "passing_methods": [],
       "source": "designs/t1_dimmer_counter/spec.yaml",
       "spec": [
@@ -4664,6 +5289,7 @@
        "R19:t1_cocotb.inputs_register_shows_levels"
       ],
       "kind": "functional",
+      "lean_transcription_only": false,
       "passing_methods": [],
       "source": "designs/t1_dimmer_counter/spec.yaml",
       "spec": [
@@ -4688,6 +5314,7 @@
        "R20:A_CT_PRESS_COUNTED_CLEAR"
       ],
       "kind": "functional",
+      "lean_transcription_only": false,
       "passing_methods": [],
       "source": "designs/t1_dimmer_counter/spec.yaml",
       "spec": [
@@ -4710,6 +5337,7 @@
        "R21:A_CT_RO_IGNORED"
       ],
       "kind": "functional",
+      "lean_transcription_only": false,
       "passing_methods": [],
       "source": "designs/t1_dimmer_counter/spec.yaml",
       "spec": [
@@ -4735,63 +5363,80 @@
        "fail": 0,
        "not_run": 0,
        "pass": 0,
-       "stale": 46
+       "stale": 46,
+       "unapproved": 0
       },
       "board_measurement": {
        "bounded": 0,
        "fail": 0,
        "not_run": 0,
        "pass": 0,
-       "stale": 0
+       "stale": 0,
+       "unapproved": 0
       },
       "coverage_bin": {
        "bounded": 0,
        "fail": 0,
        "not_run": 0,
        "pass": 0,
-       "stale": 10
+       "stale": 10,
+       "unapproved": 0
       },
       "formal": {
        "bounded": 0,
        "fail": 0,
        "not_run": 0,
        "pass": 0,
-       "stale": 5
+       "stale": 5,
+       "unapproved": 0
+      },
+      "formal_lean": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 0,
+       "stale": 0,
+       "unapproved": 0
       },
       "review": {
        "bounded": 0,
        "fail": 0,
        "not_run": 0,
        "pass": 0,
-       "stale": 0
+       "stale": 0,
+       "unapproved": 0
       },
       "sim_measurement": {
        "bounded": 0,
        "fail": 0,
        "not_run": 0,
        "pass": 0,
-       "stale": 0
+       "stale": 0,
+       "unapproved": 0
       },
       "sim_test": {
        "bounded": 0,
        "fail": 0,
        "not_run": 0,
        "pass": 0,
-       "stale": 35
+       "stale": 35,
+       "unapproved": 0
       },
       "timing": {
        "bounded": 0,
        "fail": 0,
        "not_run": 0,
        "pass": 0,
-       "stale": 0
+       "stale": 0,
+       "unapproved": 0
       },
       "uvm_test": {
        "bounded": 0,
        "fail": 0,
        "not_run": 0,
        "pass": 0,
-       "stale": 0
+       "stale": 0,
+       "unapproved": 0
       }
      },
      "by_state": {
@@ -4805,6 +5450,24 @@
      },
      "human_reviews": 0,
      "items": 96,
+     "lean": {
+      "approved": 0,
+      "build_sources": [],
+      "by_rtl_link": {
+       "model_only": 0,
+       "rtl_generated": 0,
+       "transcription_tested": 0,
+       "transcription_untested": 0
+      },
+      "by_status": {},
+      "by_tier": {
+       "compiled_decision_procedure": 0,
+       "kernel_only": 0,
+       "unsound": 0
+      },
+      "items": 0,
+      "statement_not_approved": 0
+     },
      "line": "21 requirements (21 functional); 0 verified; 21 stale; 0 of 21 requirements agreed by a human, 0 human review(s) recorded.",
      "performance_board": 0,
      "performance_sim_only": 0,
@@ -4818,8 +5481,8 @@
   "schema": "fda-traceability/1",
   "total": {
    "designs": 2,
-   "requirements": 46,
-   "verified": 15
+   "requirements": 51,
+   "verified": 14
   }
  },
  "content": {
@@ -4883,8 +5546,8 @@
      {
       "gate": false,
       "id": "B96-S-DRIVER",
-      "state": "stale",
-      "text": "its evidence is stale",
+      "state": "fail",
+      "text": "an item fails",
       "type": "no_passing_evidence"
      },
      {
@@ -4892,6 +5555,13 @@
       "id": "B96-I-REGMAP",
       "state": "stale",
       "text": "its evidence is stale",
+      "type": "no_passing_evidence"
+     },
+     {
+      "gate": false,
+      "id": "B96-F-BUILDS",
+      "state": "fail",
+      "text": "an item fails",
       "type": "no_passing_evidence"
      },
      {
@@ -5022,6 +5692,66 @@
       "id": "V-HW-BYPASS",
       "text": "no pin recorded (run: python -m flow.trace_v1 pin)",
       "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-LEAN-GRAY-STEP",
+      "text": "the Lean statement is not approved by a human; until it is, the proof is not counted as verification",
+      "type": "lean_statement_unapproved"
+     },
+     {
+      "gate": false,
+      "id": "V-LEAN-GRAY-DECODE",
+      "text": "the Lean statement is not approved by a human; until it is, the proof is not counted as verification",
+      "type": "lean_statement_unapproved"
+     },
+     {
+      "gate": false,
+      "id": "V-LEAN-GRAY-ENCODE",
+      "text": "the Lean statement is not approved by a human; until it is, the proof is not counted as verification",
+      "type": "lean_statement_unapproved"
+     },
+     {
+      "gate": false,
+      "id": "V-LEAN-GRAY-SAMPLE",
+      "text": "the Lean statement is not approved by a human; until it is, the proof is not counted as verification",
+      "type": "lean_statement_unapproved"
+     },
+     {
+      "gate": false,
+      "id": "V-LEAN-CKSUM-IP",
+      "text": "the Lean statement is not approved by a human; until it is, the proof is not counted as verification",
+      "type": "lean_statement_unapproved"
+     },
+     {
+      "gate": false,
+      "id": "V-LEAN-CKSUM-IP-RX",
+      "text": "the Lean statement is not approved by a human; until it is, the proof is not counted as verification",
+      "type": "lean_statement_unapproved"
+     },
+     {
+      "gate": false,
+      "id": "V-LEAN-CKSUM-TCP",
+      "text": "the Lean statement is not approved by a human; until it is, the proof is not counted as verification",
+      "type": "lean_statement_unapproved"
+     },
+     {
+      "gate": false,
+      "id": "V-LEAN-CKSUM-SUM",
+      "text": "the Lean statement is not approved by a human; until it is, the proof is not counted as verification",
+      "type": "lean_statement_unapproved"
+     },
+     {
+      "gate": false,
+      "id": "V-LEAN-CKSUM-INC",
+      "text": "the Lean statement is not approved by a human; until it is, the proof is not counted as verification",
+      "type": "lean_statement_unapproved"
+     },
+     {
+      "gate": false,
+      "id": "V-LEAN-CKSUM-INC-ZERO",
+      "text": "the Lean statement is not approved by a human; until it is, the proof is not counted as verification",
+      "type": "lean_statement_unapproved"
      },
      {
       "gate": false,
@@ -5191,6 +5921,24 @@
       "status": "stale",
       "title": "Board bench, ppm and bypass drivers judged on a fake board (every safety counter, polarity, lock, verdicts)",
       "value": "37 of 37 tests passed"
+     },
+     {
+      "detail": "0 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "results/116_traceability/b96_kr260_10g/pytest_junit.xml"
+      },
+      "id": "V-SIM-126-ALL3",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "B96-F-BUILDS",
+       "B96-S-DRIVER"
+      ],
+      "status": "fail",
+      "title": "Build lat_all3_bypass composes 97C's cuts with the bypass build's files, and its board driver's verdicts, references and lock prefix (brief 126); not yet in a recorded run",
+      "value": "0 of 0 tests passed"
      },
      {
       "detail": "5 test(s) passed in the recorded run",
@@ -5842,6 +6590,360 @@
       "value": null
      },
      {
+      "detail": "statement not approved; Gray.gray_step: kernel only; proof of the transcription, transcription tested; recorded build (not re-run)",
+      "evidence": {
+       "exists": true,
+       "file": "formal/lean/records/build_record.json"
+      },
+      "id": "V-LEAN-GRAY-STEP",
+      "instrument": null,
+      "lean": {
+       "approved": false,
+       "approved_by": null,
+       "approved_on": null,
+       "axioms": [
+        "Classical.choice",
+        "Quot.sound",
+        "propext"
+       ],
+       "build_source": "recorded build (not re-run)",
+       "module": "Gray.Spec",
+       "project": "formal/lean",
+       "rtl_link": "transcription_tested",
+       "rtl_link_text": "proof of the transcription, transcription tested",
+       "statement_sha256": "e2e793b6b398c0f02ebab7dc6832b565542f0b90fd7fba29c5873505c3752b6a",
+       "theorem": "Gray.gray_step",
+       "tier": "kernel_only"
+      },
+      "method": "formal_lean",
+      "planned": null,
+      "requirements": [
+       "B96-F-LEAN-GRAY-STEP"
+      ],
+      "status": "unapproved",
+      "title": "One bit changes per count, wrap included, every width",
+      "value": null
+     },
+     {
+      "detail": "statement not approved; Gray.gray2bin_bin2gray: kernel only; proof of the transcription, transcription tested; recorded build (not re-run)",
+      "evidence": {
+       "exists": true,
+       "file": "formal/lean/records/build_record.json"
+      },
+      "id": "V-LEAN-GRAY-DECODE",
+      "instrument": null,
+      "lean": {
+       "approved": false,
+       "approved_by": null,
+       "approved_on": null,
+       "axioms": [
+        "Classical.choice",
+        "Quot.sound",
+        "propext"
+       ],
+       "build_source": "recorded build (not re-run)",
+       "module": "Gray.Spec",
+       "project": "formal/lean",
+       "rtl_link": "transcription_tested",
+       "rtl_link_text": "proof of the transcription, transcription tested",
+       "statement_sha256": "3fcde7c6898796cc709eb2d409bc52a2593cb3772e293fad362332c2cd736d70",
+       "theorem": "Gray.gray2bin_bin2gray",
+       "tier": "kernel_only"
+      },
+      "method": "formal_lean",
+      "planned": null,
+      "requirements": [
+       "B96-F-LEAN-GRAY-DECODE"
+      ],
+      "status": "unapproved",
+      "title": "Decode after encode is the identity, every width",
+      "value": null
+     },
+     {
+      "detail": "statement not approved; Gray.bin2gray_gray2bin: kernel only; proof of the transcription, transcription tested; recorded build (not re-run)",
+      "evidence": {
+       "exists": true,
+       "file": "formal/lean/records/build_record.json"
+      },
+      "id": "V-LEAN-GRAY-ENCODE",
+      "instrument": null,
+      "lean": {
+       "approved": false,
+       "approved_by": null,
+       "approved_on": null,
+       "axioms": [
+        "Classical.choice",
+        "Quot.sound",
+        "propext"
+       ],
+       "build_source": "recorded build (not re-run)",
+       "module": "Gray.Spec",
+       "project": "formal/lean",
+       "rtl_link": "transcription_tested",
+       "rtl_link_text": "proof of the transcription, transcription tested",
+       "statement_sha256": "96d4bc1cf98f0d1fce57235977557e4a4c15aae6005f9e58c7c2464d8d318b89",
+       "theorem": "Gray.bin2gray_gray2bin",
+       "tier": "kernel_only"
+      },
+      "method": "formal_lean",
+      "planned": null,
+      "requirements": [
+       "B96-F-LEAN-GRAY-DECODE"
+      ],
+      "status": "unapproved",
+      "title": "Encode after decode is the identity, every width",
+      "value": null
+     },
+     {
+      "detail": "statement not approved; Gray.gray_sample: kernel only; proof of the transcription, transcription tested; recorded build (not re-run)",
+      "evidence": {
+       "exists": true,
+       "file": "formal/lean/records/build_record.json"
+      },
+      "id": "V-LEAN-GRAY-SAMPLE",
+      "instrument": null,
+      "lean": {
+       "approved": false,
+       "approved_by": null,
+       "approved_on": null,
+       "axioms": [
+        "Classical.choice",
+        "Quot.sound",
+        "propext"
+       ],
+       "build_source": "recorded build (not re-run)",
+       "module": "Gray.Spec",
+       "project": "formal/lean",
+       "rtl_link": "transcription_tested",
+       "rtl_link_text": "proof of the transcription, transcription tested",
+       "statement_sha256": "c51035fc6a648c64e4db77f90c10cf2c176aab3fe57bfc6be2836699e6581bf0",
+       "theorem": "Gray.gray_sample",
+       "tier": "kernel_only"
+      },
+      "method": "formal_lean",
+      "planned": null,
+      "requirements": [
+       "B96-F-LEAN-GRAY-DECODE"
+      ],
+      "status": "unapproved",
+      "title": "A code sampled mid-step decodes to the old or the new count",
+      "value": null
+     },
+     {
+      "detail": "statement not approved; Cksum.rtl_ip_correct: kernel plus a compiled decision procedure; proof of the transcription, transcription tested; recorded build (not re-run)",
+      "evidence": {
+       "exists": true,
+       "file": "formal/lean/records/build_record.json"
+      },
+      "id": "V-LEAN-CKSUM-IP",
+      "instrument": null,
+      "lean": {
+       "approved": false,
+       "approved_by": null,
+       "approved_on": null,
+       "axioms": [
+        "Classical.choice",
+        "Quot.sound",
+        "fold16_toNat._native.bv_decide.ax_1_7",
+        "ip_step._native.bv_decide.ax_1_6",
+        "propext"
+       ],
+       "build_source": "recorded build (not re-run)",
+       "module": "Cksum.Spec",
+       "project": "formal/lean",
+       "rtl_link": "transcription_tested",
+       "rtl_link_text": "proof of the transcription, transcription tested",
+       "statement_sha256": "16a88adc0fbd323fe935ab5f75f461d91349ad14f1aa3c5feaa57a1d1e6433c5",
+       "theorem": "Cksum.rtl_ip_correct",
+       "tier": "compiled_decision_procedure"
+      },
+      "method": "formal_lean",
+      "planned": null,
+      "requirements": [
+       "B96-F-LEAN-CKSUM-IP"
+      ],
+      "status": "unapproved",
+      "title": "IPv4 header checksum equals the Internet checksum",
+      "value": null
+     },
+     {
+      "detail": "statement not approved; Cksum.rtl_ip_receiver: kernel plus a compiled decision procedure; proof of the transcription, transcription tested; recorded build (not re-run)",
+      "evidence": {
+       "exists": true,
+       "file": "formal/lean/records/build_record.json"
+      },
+      "id": "V-LEAN-CKSUM-IP-RX",
+      "instrument": null,
+      "lean": {
+       "approved": false,
+       "approved_by": null,
+       "approved_on": null,
+       "axioms": [
+        "Classical.choice",
+        "Quot.sound",
+        "fold16_toNat._native.bv_decide.ax_1_7",
+        "ip_step._native.bv_decide.ax_1_6",
+        "propext"
+       ],
+       "build_source": "recorded build (not re-run)",
+       "module": "Cksum.Spec",
+       "project": "formal/lean",
+       "rtl_link": "transcription_tested",
+       "rtl_link_text": "proof of the transcription, transcription tested",
+       "statement_sha256": "34cfc39cafdc594fbda614401ccc8e625338a97da474d4785469f6d069c46623",
+       "theorem": "Cksum.rtl_ip_receiver",
+       "tier": "compiled_decision_procedure"
+      },
+      "method": "formal_lean",
+      "planned": null,
+      "requirements": [
+       "B96-F-LEAN-CKSUM-IP"
+      ],
+      "status": "unapproved",
+      "title": "The filled-in header sums to 0xFFFF (receiver check)",
+      "value": null
+     },
+     {
+      "detail": "statement not approved; Cksum.rtl_tcp_correct: kernel plus a compiled decision procedure; proof of the transcription, transcription tested; recorded build (not re-run)",
+      "evidence": {
+       "exists": true,
+       "file": "formal/lean/records/build_record.json"
+      },
+      "id": "V-LEAN-CKSUM-TCP",
+      "instrument": null,
+      "lean": {
+       "approved": false,
+       "approved_by": null,
+       "approved_on": null,
+       "axioms": [
+        "Classical.choice",
+        "Quot.sound",
+        "fin_t._native.bv_decide.ax_1_6",
+        "fold16_toNat._native.bv_decide.ax_1_7",
+        "propext"
+       ],
+       "build_source": "recorded build (not re-run)",
+       "module": "Cksum.Spec",
+       "project": "formal/lean",
+       "rtl_link": "transcription_tested",
+       "rtl_link_text": "proof of the transcription, transcription tested",
+       "statement_sha256": "445f831f8fc4f98c489b157cbddf30812a5453373c21ea44c4e26836dc161b69",
+       "theorem": "Cksum.rtl_tcp_correct",
+       "tier": "compiled_decision_procedure"
+      },
+      "method": "formal_lean",
+      "planned": null,
+      "requirements": [
+       "B96-F-LEAN-CKSUM-TCP"
+      ],
+      "status": "unapproved",
+      "title": "TCP checksum equals the Internet checksum, payloads up to 30 words",
+      "value": null
+     },
+     {
+      "detail": "statement not approved; Cksum.ocSum_toNat: kernel only; proof of a model, no RTL link; recorded build (not re-run)",
+      "evidence": {
+       "exists": true,
+       "file": "formal/lean/records/build_record.json"
+      },
+      "id": "V-LEAN-CKSUM-SUM",
+      "instrument": null,
+      "lean": {
+       "approved": false,
+       "approved_by": null,
+       "approved_on": null,
+       "axioms": [
+        "Quot.sound",
+        "propext"
+       ],
+       "build_source": "recorded build (not re-run)",
+       "module": "Cksum.Spec",
+       "project": "formal/lean",
+       "rtl_link": "model_only",
+       "rtl_link_text": "proof of a model, no RTL link",
+       "statement_sha256": "144db4f61cba814b8c54ca8949debcfd58a492c55af0ab43c653923c92c7ef8d",
+       "theorem": "Cksum.ocSum_toNat",
+       "tier": "kernel_only"
+      },
+      "method": "formal_lean",
+      "planned": null,
+      "requirements": [
+       "B96-F-LEAN-CKSUM-MODEL"
+      ],
+      "status": "unapproved",
+      "title": "Ones complement sum equals the natural-number sum mod 65535",
+      "value": null
+     },
+     {
+      "detail": "statement not approved; Cksum.incUpdate_correct: kernel only; proof of a model, no RTL link; recorded build (not re-run)",
+      "evidence": {
+       "exists": true,
+       "file": "formal/lean/records/build_record.json"
+      },
+      "id": "V-LEAN-CKSUM-INC",
+      "instrument": null,
+      "lean": {
+       "approved": false,
+       "approved_by": null,
+       "approved_on": null,
+       "axioms": [
+        "Classical.choice",
+        "Quot.sound",
+        "propext"
+       ],
+       "build_source": "recorded build (not re-run)",
+       "module": "Cksum.Spec",
+       "project": "formal/lean",
+       "rtl_link": "model_only",
+       "rtl_link_text": "proof of a model, no RTL link",
+       "statement_sha256": "fdce7349bcd40ed054ab516db827db8f58677a7440d4c24ba399d17a7671ed8a",
+       "theorem": "Cksum.incUpdate_correct",
+       "tier": "kernel_only"
+      },
+      "method": "formal_lean",
+      "planned": null,
+      "requirements": [
+       "B96-F-LEAN-CKSUM-MODEL"
+      ],
+      "status": "unapproved",
+      "title": "RFC 1624 equation 3 is correct for headers of any length",
+      "value": null
+     },
+     {
+      "detail": "statement not approved; Cksum.incUpdate_zero_corner: kernel only; proof of a model, no RTL link; recorded build (not re-run)",
+      "evidence": {
+       "exists": true,
+       "file": "formal/lean/records/build_record.json"
+      },
+      "id": "V-LEAN-CKSUM-INC-ZERO",
+      "instrument": null,
+      "lean": {
+       "approved": false,
+       "approved_by": null,
+       "approved_on": null,
+       "axioms": [
+        "Quot.sound",
+        "propext"
+       ],
+       "build_source": "recorded build (not re-run)",
+       "module": "Cksum.Spec",
+       "project": "formal/lean",
+       "rtl_link": "model_only",
+       "rtl_link_text": "proof of a model, no RTL link",
+       "statement_sha256": "cf1f019bc0d1b91d6aeda9c73ec8d025c8867e6e282cc323dbb1a806b740a236",
+       "theorem": "Cksum.incUpdate_zero_corner",
+       "tier": "kernel_only"
+      },
+      "method": "formal_lean",
+      "planned": null,
+      "requirements": [
+       "B96-F-LEAN-CKSUM-MODEL"
+      ],
+      "status": "unapproved",
+      "title": "The all-zero header corner gives 0x0000",
+      "value": null
+     },
+     {
       "date": "2026-11-17",
       "detail": "Sonnet (agent), 2026-11-17",
       "evidence": {
@@ -5885,6 +6987,7 @@
        "V-REVIEW-96"
       ],
       "kind": "functional",
+      "lean_transcription_only": false,
       "passing_methods": [
        "sim_test"
       ],
@@ -5911,6 +7014,7 @@
        "V-REVIEW-96"
       ],
       "kind": "functional",
+      "lean_transcription_only": false,
       "passing_methods": [
        "sim_test"
       ],
@@ -5933,6 +7037,7 @@
        "V-PYUVM"
       ],
       "kind": "functional",
+      "lean_transcription_only": false,
       "passing_methods": [
        "sim_test"
       ],
@@ -5954,6 +7059,7 @@
        "V-HW-RESTARTS-97C"
       ],
       "kind": "functional",
+      "lean_transcription_only": false,
       "passing_methods": [
        "board_measurement"
       ],
@@ -5976,6 +7082,7 @@
        "V-HW-RESTARTS-97C"
       ],
       "kind": "functional",
+      "lean_transcription_only": false,
       "passing_methods": [
        "sim_test"
       ],
@@ -6002,6 +7109,7 @@
        "V-HW-RATEMATCH-96C"
       ],
       "kind": "safety",
+      "lean_transcription_only": false,
       "passing_methods": [
        "sim_test"
       ],
@@ -6025,6 +7133,7 @@
        "V-HW-OFFSET-PLANNED"
       ],
       "kind": "functional",
+      "lean_transcription_only": false,
       "passing_methods": [
        "sim_test"
       ],
@@ -6046,6 +7155,7 @@
        "V-HW-INTEROP-PLANNED"
       ],
       "kind": "functional",
+      "lean_transcription_only": false,
       "passing_methods": [],
       "source": "designs/b96_kr260_10g/handover.yaml",
       "spec_status": "draft",
@@ -6067,6 +7177,7 @@
        "V-REVIEW-96"
       ],
       "kind": "safety",
+      "lean_transcription_only": false,
       "passing_methods": [
        "board_measurement",
        "sim_test"
@@ -6085,14 +7196,16 @@
       "hardware_verified": false,
       "id": "B96-S-DRIVER",
       "items": [
-       "V-SIM-DRIVER"
+       "V-SIM-DRIVER",
+       "V-SIM-126-ALL3"
       ],
       "kind": "safety",
+      "lean_transcription_only": false,
       "passing_methods": [],
       "source": "designs/b96_kr260_10g/host/b96_bench.py",
       "spec_status": "draft",
       "stale_items": 1,
-      "state": "stale",
+      "state": "fail",
       "text": "A stale counter, a missing order, a counter that was not read, a wrong polarity or a link that never came up fails the run and names the cause; unsafe actions are refused without the lock.",
       "title": "The board drivers cannot report OK when a safety check fails"
      },
@@ -6107,6 +7220,7 @@
        "V-HW-LASER"
       ],
       "kind": "safety",
+      "lean_transcription_only": false,
       "passing_methods": [
        "board_measurement"
       ],
@@ -6128,6 +7242,7 @@
        "V-HW-SYSMON-EYE"
       ],
       "kind": "safety",
+      "lean_transcription_only": false,
       "passing_methods": [
        "board_measurement"
       ],
@@ -6150,6 +7265,7 @@
        "V-TIM-CDC-BYPASS"
       ],
       "kind": "safety",
+      "lean_transcription_only": false,
       "passing_methods": [
        "timing"
       ],
@@ -6170,6 +7286,7 @@
        "V-SIM-REGMAP"
       ],
       "kind": "interface",
+      "lean_transcription_only": false,
       "passing_methods": [],
       "source": "designs/b96_kr260_10g/docs/register_map.md",
       "spec_status": "draft",
@@ -6185,16 +7302,18 @@
       "hardware_verified": false,
       "id": "B96-F-BUILDS",
       "items": [
+       "V-SIM-126-ALL3",
        "V-SIM-BUILDS"
       ],
       "kind": "functional",
+      "lean_transcription_only": false,
       "passing_methods": [
        "sim_test"
       ],
       "source": "designs/b96_kr260_10g/handover.yaml",
       "spec_status": "draft",
       "stale_items": 0,
-      "state": "verified",
+      "state": "fail",
       "text": "The build files set parameters the core has, the base build keeps the 97C defaults, and each variant differs from the base only where documented.",
       "title": "Every build variant sets only the parameters it documents"
      },
@@ -6208,6 +7327,7 @@
        "V-SIM-EYESCAN"
       ],
       "kind": "functional",
+      "lean_transcription_only": false,
       "passing_methods": [
        "sim_test"
       ],
@@ -6230,6 +7350,7 @@
        "V-HW-LAT-E-97C"
       ],
       "kind": "performance",
+      "lean_transcription_only": false,
       "passing_methods": [
        "board_measurement",
        "sim_test"
@@ -6260,6 +7381,7 @@
        "V-HW-LAT-L-97C"
       ],
       "kind": "performance",
+      "lean_transcription_only": false,
       "passing_methods": [
        "board_measurement",
        "sim_test"
@@ -6289,6 +7411,7 @@
        "V-HW-LAT-D-96E"
       ],
       "kind": "performance",
+      "lean_transcription_only": false,
       "passing_methods": [
        "board_measurement",
        "sim_test"
@@ -6317,6 +7440,7 @@
        "V-SIMM-T2T"
       ],
       "kind": "performance",
+      "lean_transcription_only": false,
       "passing_methods": [],
       "performance": {
        "GT receive word to GT transmit order start (mean over 8 orders)": null,
@@ -6345,6 +7469,7 @@
        "V-TIM-SETUP-BYPASS"
       ],
       "kind": "performance",
+      "lean_transcription_only": false,
       "passing_methods": [
        "timing"
       ],
@@ -6374,6 +7499,7 @@
        "V-TIM-HOLD-BYPASS"
       ],
       "kind": "performance",
+      "lean_transcription_only": false,
       "passing_methods": [
        "timing"
       ],
@@ -6401,6 +7527,7 @@
        "V-HW-EYE"
       ],
       "kind": "performance",
+      "lean_transcription_only": false,
       "passing_methods": [
        "board_measurement"
       ],
@@ -6429,6 +7556,7 @@
        "V-HW-BYPASS"
       ],
       "kind": "performance",
+      "lean_transcription_only": false,
       "passing_methods": [],
       "performance": {
        "bound": 19.5,
@@ -6455,6 +7583,7 @@
        "V-HW-THROUGHPUT-PLANNED"
       ],
       "kind": "performance",
+      "lean_transcription_only": false,
       "passing_methods": [],
       "performance": {
        "bound": 0,
@@ -6469,12 +7598,112 @@
       "state": "not_run",
       "text": "A burst at line rate loses no frame. Nothing has been measured; the line and payload rates stand on configuration and gearbox arithmetic only.",
       "title": "Line-rate throughput without loss"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "B96-F-LEAN-GRAY-STEP",
+      "items": [
+       "V-LEAN-GRAY-STEP"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [],
+      "source": "designs/b96_kr260_10g/rtl/rate_match_gp.sv (pointer crossings u_wp and u_rp, xpm_cdc_gray)",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "unapproved",
+      "text": "The write and read pointers of rate_match_gp count modulo 2^CW and cross by gray code. For every width CW > 0 and every value, the gray codes of b and b + 1 (including the wrap from 2^CW - 1 to 0) differ in exactly one bit, so a sample taken while the pointer moves is the old or the new code.",
+      "title": "A pointer's gray code changes in exactly one bit per count, at every width"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "B96-F-LEAN-GRAY-DECODE",
+      "items": [
+       "V-LEAN-GRAY-DECODE",
+       "V-LEAN-GRAY-ENCODE",
+       "V-LEAN-GRAY-SAMPLE"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [],
+      "source": "designs/b96_kr260_10g/rtl/rate_match_gp.sv (pointer crossings u_wp and u_rp, xpm_cdc_gray)",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "unapproved",
+      "text": "For every width and value, the decoder of the pointer crossing returns the count the encoder was given; and a sampled code that is the old or the new code decodes to the old or the new count.",
+      "title": "Gray decoding inverts gray encoding, at every width"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "B96-F-LEAN-CKSUM-IP",
+      "items": [
+       "V-LEAN-CKSUM-IP",
+       "V-LEAN-CKSUM-IP-RX"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [],
+      "source": "brief 119 (PR 245), designs/b119_tcp_fast/rtl/tcp_fast.sv; results/124_lean/README.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "unapproved",
+      "text": "Brief 119's tcp_fast.sv builds the IPv4 header checksum from a precomputed template plus the changing fields. For all TTL, address and identification values it equals the complement of the ones' complement sum of the header, and the filled-in header sums to 0xFFFF.",
+      "title": "The IPv4 header checksum of the TCP fast path equals the Internet checksum, for all inputs"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "B96-F-LEAN-CKSUM-TCP",
+      "items": [
+       "V-LEAN-CKSUM-TCP"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [],
+      "source": "brief 119 (PR 245), designs/b119_tcp_fast/rtl/tcp_fast.sv; results/124_lean/README.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "unapproved",
+      "text": "For all addresses, ports, sequence and acknowledgement numbers, windows and payloads of up to 30 sixteen-bit words, the checksum the RTL equations produce equals the complement of the ones' complement sum over pseudo-header, header and payload. The byte-pair swapping, the streaming receive check and the timing are not modelled.",
+      "title": "The TCP checksum of the TCP fast path equals the Internet checksum, for all inputs and payloads up to 30 words"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "B96-F-LEAN-CKSUM-MODEL",
+      "items": [
+       "V-LEAN-CKSUM-SUM",
+       "V-LEAN-CKSUM-INC",
+       "V-LEAN-CKSUM-INC-ZERO"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [],
+      "source": "results/124_lean/README.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "unapproved",
+      "text": "The ones' complement sum of any list of 16-bit words equals the natural-number sum reduced mod 65535, and RFC 1624 equation 3 (incremental update) is correct for a header of any length when the new header is not all zero words; for an all-zero header it gives 0x0000. No current RTL patches a checksum in place; this is the arithmetic the fast path's template-plus-fields form relies on.",
+      "title": "The ones' complement arithmetic the checksum equations rest on is correct, for lists of any length"
      }
     ],
     "source_schema": "fpga-design-agent/testplan/v1",
     "summary": {
      "by_kind": {
-      "functional": 9,
+      "functional": 14,
       "interface": 1,
       "performance": 9,
       "safety": 6
@@ -6485,86 +7714,127 @@
        "fail": 0,
        "not_run": 1,
        "pass": 0,
-       "stale": 0
+       "stale": 0,
+       "unapproved": 0
       },
       "board_measurement": {
        "bounded": 0,
        "fail": 0,
        "not_run": 3,
        "pass": 8,
-       "stale": 5
+       "stale": 5,
+       "unapproved": 0
       },
       "coverage_bin": {
        "bounded": 0,
        "fail": 0,
        "not_run": 1,
        "pass": 0,
-       "stale": 0
+       "stale": 0,
+       "unapproved": 0
       },
       "formal": {
        "bounded": 0,
        "fail": 1,
        "not_run": 0,
        "pass": 0,
-       "stale": 1
+       "stale": 1,
+       "unapproved": 0
+      },
+      "formal_lean": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 0,
+       "stale": 0,
+       "unapproved": 10
       },
       "review": {
        "bounded": 0,
        "fail": 0,
        "not_run": 0,
        "pass": 0,
-       "stale": 1
+       "stale": 1,
+       "unapproved": 0
       },
       "sim_measurement": {
        "bounded": 0,
        "fail": 0,
        "not_run": 0,
        "pass": 0,
-       "stale": 3
+       "stale": 3,
+       "unapproved": 0
       },
       "sim_test": {
        "bounded": 0,
-       "fail": 0,
+       "fail": 1,
        "not_run": 0,
        "pass": 9,
-       "stale": 2
+       "stale": 2,
+       "unapproved": 0
       },
       "timing": {
        "bounded": 0,
        "fail": 0,
        "not_run": 0,
        "pass": 3,
-       "stale": 6
+       "stale": 6,
+       "unapproved": 0
       },
       "uvm_test": {
        "bounded": 0,
        "fail": 2,
        "not_run": 0,
        "pass": 0,
-       "stale": 0
+       "stale": 0,
+       "unapproved": 0
       }
      },
      "by_state": {
-      "fail": 4,
+      "fail": 6,
       "not_run": 2,
-      "stale": 4,
-      "verified": 15
+      "stale": 3,
+      "unapproved": 5,
+      "verified": 14
      },
      "external": 3,
      "external_hardware_done": 0,
      "gap_counts": {
       "external_not_hardware_verified": 1,
       "hardware_open": 3,
-      "no_passing_evidence": 10,
+      "lean_statement_unapproved": 10,
+      "no_passing_evidence": 11,
       "stale_evidence": 18
      },
      "human_reviews": 0,
-     "items": 46,
-     "line": "25 requirements (9 functional, 9 performance, 1 interface, 6 safety); 15 verified; 4 stale; 4 failing; 2 with no passing evidence; 0 of 3 requirements that depend on an external element closed by hardware; performance verified: 4 on the board, 2 by post-route timing, 0 in simulation only; 0 of 25 requirements agreed by a human, 0 human review(s) recorded.",
+     "items": 57,
+     "lean": {
+      "approved": 0,
+      "build_sources": [
+       "recorded build (not re-run)"
+      ],
+      "by_rtl_link": {
+       "model_only": 3,
+       "rtl_generated": 0,
+       "transcription_tested": 7,
+       "transcription_untested": 0
+      },
+      "by_status": {
+       "unapproved": 10
+      },
+      "by_tier": {
+       "compiled_decision_procedure": 3,
+       "kernel_only": 7,
+       "unsound": 0
+      },
+      "items": 10,
+      "statement_not_approved": 10
+     },
+     "line": "30 requirements (14 functional, 9 performance, 1 interface, 6 safety); 14 verified; 3 stale; 6 failing; 2 with no passing evidence; 0 of 3 requirements that depend on an external element closed by hardware; performance verified: 4 on the board, 2 by post-route timing, 0 in simulation only; 0 of 30 requirements agreed by a human, 0 human review(s) recorded; 10 Lean proof item(s) (all widths): 0 with a human-approved statement, 10 with statement not approved; 7 kernel only, 3 using a compiled decision procedure; build status from: recorded build (not re-run).",
      "performance_board": 4,
      "performance_sim_only": 0,
      "performance_timing": 2,
-     "requirements": 25,
+     "requirements": 30,
      "spec_agreed": 0
     }
    },
@@ -9059,6 +10329,7 @@
        "R01:t1.op.kind_x_count"
       ],
       "kind": "functional",
+      "lean_transcription_only": false,
       "passing_methods": [],
       "source": "designs/t1_dimmer_counter/spec.yaml",
       "spec": [
@@ -9086,6 +10357,7 @@
        "R02:t1.op.kind"
       ],
       "kind": "functional",
+      "lean_transcription_only": false,
       "passing_methods": [],
       "source": "designs/t1_dimmer_counter/spec.yaml",
       "spec": [
@@ -9111,6 +10383,7 @@
        "R03:t1.clock.mix"
       ],
       "kind": "functional",
+      "lean_transcription_only": false,
       "passing_methods": [],
       "source": "designs/t1_dimmer_counter/spec.yaml",
       "spec": [
@@ -9137,6 +10410,7 @@
        "R04:t1.clock.mix"
       ],
       "kind": "functional",
+      "lean_transcription_only": false,
       "passing_methods": [],
       "source": "designs/t1_dimmer_counter/spec.yaml",
       "spec": [
@@ -9164,6 +10438,7 @@
        "R05:debounce"
       ],
       "kind": "functional",
+      "lean_transcription_only": false,
       "passing_methods": [],
       "source": "designs/t1_dimmer_counter/spec.yaml",
       "spec": [
@@ -9193,6 +10468,7 @@
        "R06:debounce"
       ],
       "kind": "functional",
+      "lean_transcription_only": false,
       "passing_methods": [],
       "source": "designs/t1_dimmer_counter/spec.yaml",
       "spec": [
@@ -9214,6 +10490,7 @@
        "R07:t1.duty.class_x_source"
       ],
       "kind": "functional",
+      "lean_transcription_only": false,
       "passing_methods": [],
       "source": "designs/t1_dimmer_counter/spec.yaml",
       "spec": [
@@ -9235,6 +10512,7 @@
        "R08:A_PWM_SUBSET"
       ],
       "kind": "functional",
+      "lean_transcription_only": false,
       "passing_methods": [],
       "source": "designs/t1_dimmer_counter/spec.yaml",
       "spec": [
@@ -9260,6 +10538,7 @@
        "R09:t1.duty.class"
       ],
       "kind": "functional",
+      "lean_transcription_only": false,
       "passing_methods": [],
       "source": "designs/t1_dimmer_counter/spec.yaml",
       "spec": [
@@ -9288,6 +10567,7 @@
        "R10:scan"
       ],
       "kind": "functional",
+      "lean_transcription_only": false,
       "passing_methods": [],
       "source": "designs/t1_dimmer_counter/spec.yaml",
       "spec": [
@@ -9308,6 +10588,7 @@
        "R11:t1_cocotb.display_shows_count_and_duty"
       ],
       "kind": "functional",
+      "lean_transcription_only": false,
       "passing_methods": [],
       "source": "designs/t1_dimmer_counter/spec.yaml",
       "spec": [
@@ -9331,6 +10612,7 @@
        "R12:scan"
       ],
       "kind": "functional",
+      "lean_transcription_only": false,
       "passing_methods": [],
       "source": "designs/t1_dimmer_counter/spec.yaml",
       "spec": [
@@ -9354,6 +10636,7 @@
        "R13:scan"
       ],
       "kind": "functional",
+      "lean_transcription_only": false,
       "passing_methods": [],
       "source": "designs/t1_dimmer_counter/spec.yaml",
       "spec": [
@@ -9376,6 +10659,7 @@
        "R14:t1.display.glyph"
       ],
       "kind": "functional",
+      "lean_transcription_only": false,
       "passing_methods": [],
       "source": "designs/t1_dimmer_counter/spec.yaml",
       "spec": [
@@ -9399,6 +10683,7 @@
        "R15:A_CT_RESET"
       ],
       "kind": "functional",
+      "lean_transcription_only": false,
       "passing_methods": [],
       "source": "designs/t1_dimmer_counter/spec.yaml",
       "spec": [
@@ -9423,6 +10708,7 @@
        "R16:t1.reg.name_x_dir"
       ],
       "kind": "functional",
+      "lean_transcription_only": false,
       "passing_methods": [],
       "source": "designs/t1_dimmer_counter/spec.yaml",
       "spec": [
@@ -9445,6 +10731,7 @@
        "R17:A_CT_DUTY_WRITE"
       ],
       "kind": "functional",
+      "lean_transcription_only": false,
       "passing_methods": [],
       "source": "designs/t1_dimmer_counter/spec.yaml",
       "spec": [
@@ -9467,6 +10754,7 @@
        "R18:A_CT_CTRL_WRITE"
       ],
       "kind": "functional",
+      "lean_transcription_only": false,
       "passing_methods": [],
       "source": "designs/t1_dimmer_counter/spec.yaml",
       "spec": [
@@ -9487,6 +10775,7 @@
        "R19:t1_cocotb.inputs_register_shows_levels"
       ],
       "kind": "functional",
+      "lean_transcription_only": false,
       "passing_methods": [],
       "source": "designs/t1_dimmer_counter/spec.yaml",
       "spec": [
@@ -9511,6 +10800,7 @@
        "R20:A_CT_PRESS_COUNTED_CLEAR"
       ],
       "kind": "functional",
+      "lean_transcription_only": false,
       "passing_methods": [],
       "source": "designs/t1_dimmer_counter/spec.yaml",
       "spec": [
@@ -9533,6 +10823,7 @@
        "R21:A_CT_RO_IGNORED"
       ],
       "kind": "functional",
+      "lean_transcription_only": false,
       "passing_methods": [],
       "source": "designs/t1_dimmer_counter/spec.yaml",
       "spec": [
@@ -9558,63 +10849,80 @@
        "fail": 0,
        "not_run": 0,
        "pass": 0,
-       "stale": 46
+       "stale": 46,
+       "unapproved": 0
       },
       "board_measurement": {
        "bounded": 0,
        "fail": 0,
        "not_run": 0,
        "pass": 0,
-       "stale": 0
+       "stale": 0,
+       "unapproved": 0
       },
       "coverage_bin": {
        "bounded": 0,
        "fail": 0,
        "not_run": 0,
        "pass": 0,
-       "stale": 10
+       "stale": 10,
+       "unapproved": 0
       },
       "formal": {
        "bounded": 0,
        "fail": 0,
        "not_run": 0,
        "pass": 0,
-       "stale": 5
+       "stale": 5,
+       "unapproved": 0
+      },
+      "formal_lean": {
+       "bounded": 0,
+       "fail": 0,
+       "not_run": 0,
+       "pass": 0,
+       "stale": 0,
+       "unapproved": 0
       },
       "review": {
        "bounded": 0,
        "fail": 0,
        "not_run": 0,
        "pass": 0,
-       "stale": 0
+       "stale": 0,
+       "unapproved": 0
       },
       "sim_measurement": {
        "bounded": 0,
        "fail": 0,
        "not_run": 0,
        "pass": 0,
-       "stale": 0
+       "stale": 0,
+       "unapproved": 0
       },
       "sim_test": {
        "bounded": 0,
        "fail": 0,
        "not_run": 0,
        "pass": 0,
-       "stale": 35
+       "stale": 35,
+       "unapproved": 0
       },
       "timing": {
        "bounded": 0,
        "fail": 0,
        "not_run": 0,
        "pass": 0,
-       "stale": 0
+       "stale": 0,
+       "unapproved": 0
       },
       "uvm_test": {
        "bounded": 0,
        "fail": 0,
        "not_run": 0,
        "pass": 0,
-       "stale": 0
+       "stale": 0,
+       "unapproved": 0
       }
      },
      "by_state": {
@@ -9628,6 +10936,24 @@
      },
      "human_reviews": 0,
      "items": 96,
+     "lean": {
+      "approved": 0,
+      "build_sources": [],
+      "by_rtl_link": {
+       "model_only": 0,
+       "rtl_generated": 0,
+       "transcription_tested": 0,
+       "transcription_untested": 0
+      },
+      "by_status": {},
+      "by_tier": {
+       "compiled_decision_procedure": 0,
+       "kernel_only": 0,
+       "unsound": 0
+      },
+      "items": 0,
+      "statement_not_approved": 0
+     },
      "line": "21 requirements (21 functional); 0 verified; 21 stale; 0 of 21 requirements agreed by a human, 0 human review(s) recorded.",
      "performance_board": 0,
      "performance_sim_only": 0,
@@ -9641,8 +10967,8 @@
   "schema": "fda-traceability/1",
   "total": {
    "designs": 2,
-   "requirements": 46,
-   "verified": 15
+   "requirements": 51,
+   "verified": 14
   }
  }
 }

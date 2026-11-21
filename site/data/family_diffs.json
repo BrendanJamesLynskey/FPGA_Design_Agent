@@ -144,6 +144,11 @@
      "confirmed": "doc"
     },
     {
+     "topic": "Missing ASYNC_REG on a synchroniser stage",
+     "summary": "Without ASYNC_REG both families raise TIMING-10 and CDC-5 (Warnings only); UltraScale+ report_synchronizer_mtbf then finds no synchroniser and writes no report; Artix-7 packed 11 of 24 chains in one slice, not 24.",
+     "confirmed": "tool"
+    },
+    {
      "topic": "PS-PL clock crossings",
      "summary": "Both Zynq families clock PS-PL AXI ports from a PL-supplied clock and cross inside the PS, but ZU+ adds the LPD/FPD split, so a crossing into a powered-down domain behaves differently.",
      "confirmed": "doc"
@@ -197,7 +202,7 @@
     },
     {
      "topic": "Global and regional clock buffers",
-     "summary": "BUFR, BUFIO, BUFMR and BUFH exist only on 7-series; UltraScale+ uses BUFGCE, BUFGCE_DIV, BUFG_GT and BUFG_PS, and synthesis maps BUFG to BUFGCE.",
+     "summary": "BUFR, BUFIO, BUFMR and BUFH exist only on 7-series; UltraScale+ uses BUFGCE, BUFGCE_DIV, BUFG_GT, BUFG_PS. Synthesis maps BUFG to BUFGCE and, measured, silently retargets BUFR and BUFIO.",
      "confirmed": "tool"
     },
     {
@@ -666,6 +671,26 @@
      "topic": "LUT RAM shapes for table emulation",
      "summary": "Both families have 32-, 64-, 128- and 256-deep single-bit LUT RAMs; UltraScale+ adds RAM32M16, RAM64M8, RAM256X1D and RAM512X1S, so wide multi-port shapes and 512-deep columns exist only there.",
      "confirmed": "doc"
+    },
+    {
+     "topic": "GTH/GTY TX phase-interpolator ppm controller (a controlled line-rate offset)",
+     "summary": "UltraScale/UltraScale+ GTH/GTY can program a ppm offset of the TX line rate (244 ppm a step with the Wizard's settings). With one reference the user clocks follow it: a loopback sees none (KR260: 0.0 ppm).",
+     "confirmed": "doc"
+    },
+    {
+     "topic": "GTH/GTY on-chip RX eye scan (margin analysis) and the attributes the Wizard leaves off",
+     "summary": "Every GT family has an RX eye-scan block (ES_* attributes, prescale, error and sample counters) measuring margin after the equaliser. The Wizard leaves it off on GTHE4: set ES_EYE_SCAN_EN and ES_ERRDET_EN in the build.",
+     "confirmed": "doc"
+    },
+    {
+     "topic": "GTH/GTY transmit and receive buffer bypass (fixed, lower transceiver latency)",
+     "summary": "Both families can bypass the TX and RX buffers, cutting the GT delay by tens of UI for a phase-alignment procedure. On the K26 the Wizard builds it from two properties; AR 68177 gives the saving; not board-measured yet.",
+     "confirmed": "doc"
+    },
+    {
+     "topic": "Registers in the I/O block (IOB packing)",
+     "summary": "A marked first input or last output flop packs into the I/O logic on both families when only the pad is next to it; failure is a critical warning that drc_clean never sees. BELs, messages and DRC rows differ.",
+     "confirmed": "tool"
     }
    ],
    "docs": {
@@ -1007,7 +1032,7 @@
    "rows": [
     {
      "topic": "Porting RTL that instantiates primitives",
-     "summary": "Generic RTL and XPM macros port between families; instantiated 7-series primitives (BUFR, IDELAYE2, XADC, CARRY4, STARTUPE2) have no UltraScale+ lib cell and must be rewritten.",
+     "summary": "Generic RTL and XPM macros port between families; instantiated 7-series primitives (IDELAYE2, XADC, CARRY4, STARTUPE2) have no UltraScale+ lib cell; BUFR and BUFIO are silently retargeted. Rewrite all of them.",
      "confirmed": "tool"
     },
     {
@@ -1077,7 +1102,7 @@
     },
     {
      "topic": "Wide multiplexers",
-     "summary": "UltraScale+ has MUXF9 (a 64:1 mux within one CLB); 7-series stops at MUXF8 (16:1 per slice).",
+     "summary": "UltraScale+ has MUXF9 and 7-series stops at MUXF8, but a 64:1 mux was built identically on both parts (measured, no MUXF9 used).",
      "confirmed": "tool"
     },
     {
@@ -1173,7 +1198,7 @@
     },
     {
      "topic": "Primitive retargeting in synthesis",
-     "summary": "On UltraScale+ synthesis retargets some 7-series primitives (BUFG to BUFGCE, MMCME2_ADV to MMCME4_ADV) but not regional buffers, IDELAYE2, XADC or CARRY4, which have no lib cell.",
+     "summary": "On UltraScale+ synthesis retargets some 7-series primitives (BUFG to BUFGCE, MMCME2_ADV to MMCME4_ADV, and measured BUFR, BUFIO to BUFGCE_DIV or BUFGCE); IDELAYE2, XADC, CARRY4 have no lib cell.",
      "confirmed": "tool"
     }
    ],

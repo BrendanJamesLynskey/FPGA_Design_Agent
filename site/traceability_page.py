@@ -6,11 +6,15 @@ import html
 from story_page import REPO
 
 E = html.escape
-METHODS = [("sim_test", "Simulation test"), ("uvm_test", "UVM"), ("assertion", "SVA"), ("formal", "Formal"), ("coverage_bin", "Coverage"),
+METHODS = [("sim_test", "Simulation test"), ("uvm_test", "UVM"), ("assertion", "SVA"), ("formal", "Formal"), ("formal_lean", "Lean (all widths)"), ("coverage_bin", "Coverage"),
            ("timing", "Timing"), ("sim_measurement", "Sim measure"), ("board_measurement", "Board"), ("review", "Review")]
-STATE = {"verified": "verified", "fail": "fails", "not_run": "not run", "stale": "stale", "bounded": "bounded only", "no_measurement": "no measurement"}
-MARK = {"pass": "pass", "fail": "FAIL", "not_run": "not run", "stale": "stale", "bounded": "bounded"}
-GAP = {"untraced_requirement": "Requirements with no verification item", "orphan_check": "Orphan checks (trace to no requirement)",
+STATE = {"verified": "verified", "fail": "fails", "not_run": "not run", "stale": "stale", "bounded": "bounded only", "no_measurement": "no measurement",
+         "unapproved": "proved, statement not approved"}
+MARK = {"pass": "pass", "fail": "FAIL", "not_run": "not run", "stale": "stale", "bounded": "bounded", "unapproved": "statement not approved"}
+TIER = {"kernel_only": "kernel only", "compiled_decision_procedure": "kernel plus a compiled decision procedure", "unsound": "unsound"}
+RTL_LINK = {"rtl_generated": "RTL-generated model", "transcription_tested": "transcription tested", "transcription_untested": "transcription untested", "model_only": "no RTL link"}
+GAP = {"lean_frozen_statement_changed": "Lean: an approved statement changed", "lean_approval": "Lean: approval file problems", "lean_failing": "Lean proofs that fail",
+       "lean_statement_unapproved": "Lean proofs whose statement is not approved by a human", "untraced_requirement": "Requirements with no verification item", "orphan_check": "Orphan checks (trace to no requirement)",
        "hardware_open": "Depend on an external element and not yet verified on hardware",
        "external_not_hardware_verified": "Depend on an external element and pass without hardware",
        "performance_sim_only": "Performance verified in simulation only", "no_passing_evidence": "No passing evidence",
@@ -26,7 +30,17 @@ def state_text(r: dict) -> str:
         t += " (" + {"board": "board-measured", "timing": "post-route timing"}.get(r["basis"], "simulation only") + ")"
     if r["state"] == "verified" and r.get("stale_items"):
         t += f"; {r['stale_items']} item(s) stale"
+    if r["state"] == "verified" and r.get("lean_transcription_only"):
+        t += "; the Lean proof is of a transcription of the RTL, not of the RTL itself"
     return t
+
+
+def lean_note(i: dict) -> str:
+    L = i.get("lean")
+    if i["method"] != "formal_lean" or not L:
+        return ""
+    bits = [TIER.get(L.get("tier") or "", "no build"), RTL_LINK.get(L.get("rtl_link") or "", "no RTL link"), (L.get("build_source") or "").replace(" (not re-run)", "")]
+    return ' <span class="muted small">' + E("; ".join(b for b in bits if b)) + "</span>"
 
 
 def link(path: str, text: str) -> str:
@@ -42,7 +56,7 @@ def matrix(g: dict) -> str:
         for m, _ in METHODS:
             its = [items[x] for x in r["items"] if items[x]["method"] == m]
             cells.append('<td class="mk">' + "<br>".join(
-                f'<span class="tr-{i["status"]}">{MARK[i["status"]]}</span>' + (f' <span class="muted small">{E(i["instrument"])}</span>' if i.get("instrument") else "")
+                f'<span class="tr-{i["status"]}">{MARK[i["status"]]}</span>' + (f' <span class="muted small">{E(i["instrument"])}</span>' if i.get("instrument") else "") + lean_note(i)
                 for i in its) + "</td>")
         ext = f'<br><span class="muted small">Depends on {E(r["external"])}; hardware verification {r["hardware_closure"]}.</span>' if r.get("external") else ""
         st = "" if r["state"] == "verified" else " muted"
