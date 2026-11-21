@@ -33,7 +33,7 @@ Schema v1 (a superset of v0, so ``flow/verif_gates.py`` still reads a v1 file th
         method: sim_test | uvm_test | assertion | formal | formal_lean | coverage_bin | timing | sim_measurement | board_measurement | review
         instrument: eye_scan | jtag_registers | sysmon | ila_capture | latency_loop | optical_ddm | external_equipment   # board_measurement
         title: ...
-        evidence: {file: results/x/*.json, reader: json|text|junit|gates|exists, field: a.b.c, regex: ..., tests: [stem::name]}
+        evidence: {file: results/x/*.json, reader: json|text|junit|gates|exists|mutation, field: a.b.c, regex: ..., tests: [stem::name]}
         pass_when: [{field: a.b, op: eq, value: 0}]    # non-measuring items; a measuring item is judged against its requirement's bound
         checks: [designs/x/rtl/a.sv]                   # the RTL/spec this evidence is about (staleness)
         bounded: {depth: 24}                           # formal BMC only
@@ -264,6 +264,9 @@ def judge(item: dict, req_by_id: dict, cache: dict) -> dict[str, Any]:
         if reader == "review":
             res.update(status="pass", detail=f"{item.get('reviewer', '?')} ({item.get('reviewer_kind', 'unspecified')}), {item.get('date', 'undated')}")
             return res
+        if reader == "mutation":            # brief 143b: a mutation-score record judged against a `mutation_floor` (flow/mutation_score.py)
+            from flow import mutation_score
+            return mutation_score.judge(item, req_by_id, p, res, ROOT)
         value = read_value(ev, p)
     except (KeyError, IndexError, ValueError, TypeError, ET.ParseError, json.JSONDecodeError, re.error) as e:
         res.update(status="not_run", detail=f"field not readable ({type(e).__name__}: {e})")
