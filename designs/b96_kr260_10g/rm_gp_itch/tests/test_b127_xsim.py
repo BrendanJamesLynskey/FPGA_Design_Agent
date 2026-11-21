@@ -106,3 +106,20 @@ def test_latency_record(tmp_path) -> None:
     assert 5 <= sp["mac_word_to_sop_clocks"]["min"] and sp["mac_word_to_sop_clocks"]["max"] <= 9, sp
     if os.environ.get("B127_CORE_RESULTS"):
         Path(os.environ["B127_CORE_RESULTS"]).write_text(json.dumps(agg, indent=1))
+
+
+def test_base_generator_and_echo_still_work(tmp_path) -> None:
+    """The base design's own frame source (probe frames and their echo timing, registers 0x068 to 0x078 and TXV0 to TXV25) goes through the new multiplexer unchanged: three probe frames are sent, come back, are counted
+    and timed, with no underrun."""
+    p = B.Plan()
+    p.link()
+    p.w(0x068, 2 << 4).w(0x06C, (1 << 16) | 66).w(0x074, 300).w(0x078, 3)          # kind probe, 66 bytes, 300 clocks apart, 3 frames
+    p.w(0x018, 1).d(2000).w(0x018, 2).d(20_000).w(0x018, 4).d(2000)                  # clear, start the generator, wait, snapshot
+    for i, n in ((2, "n_probe"), (6, "underrun"), (4, "poisoned"), (5, "dropped"), (19, "e_cnt"), (17, "e_min"), (18, "e_max")):
+        p.r(0x200 + 4 * i, n)
+    p.r(0x100 + 4 * 8, "rx_good").r(0x100 + 4 * 9, "rx_bad").r(0x008, "features")
+    log = X.run_plan(p, tmp_path / "gen")
+    r = B.decode_log(p, log)
+    assert r["n_probe"] == 3 and r["e_cnt"] == 3 and r["underrun"] == 0 and r["poisoned"] == 0 and r["dropped"] == 0, r
+    assert r["rx_good"] >= 3 and r["rx_bad"] == 0 and (r["features"] >> 7) & 1, r
+    assert 8 <= r["e_min"] <= 40 and r["e_max"] - r["e_min"] <= 1, r
