@@ -136,7 +136,7 @@ theorem foldl_toNat (l : List (BitVec 16)) :
     exact congrArg canon (by omega)
 
 /-- Mathematical meaning of the ones' complement sum, for lists of any length.
-    req: B119-CKSUM-MODEL -/
+    req: B119-F-CKSUM-MODEL -/
 theorem ocSum_toNat (l : List (BitVec 16)) :
     (ocSum l).toNat = canon ((l.map BitVec.toNat).sum) := by
   unfold ocSum
@@ -294,7 +294,7 @@ def ipHeader (ttl : BitVec 8) (sip dip : BitVec 32) (id : BitVec 16) : List (Bit
    dip.extractLsb' 16 16, dip.extractLsb' 0 16]
 
 /-- S1: the RTL's IPv4 checksum is the Internet checksum of the whole header, for all inputs.
-    req: B119-CKSUM-IP -/
+    req: B119-F-CKSUM-IP -/
 theorem rtl_ip_correct (ttl : BitVec 8) (sip dip : BitVec 32) (id : BitVec 16) :
     rtlIpCsum ttl sip dip id = ~~~ ocSum (ipHeader ttl sip dip id) := by
   have key : ocSum (ipHeader ttl sip dip id) = ocAdd (ipTmpl ttl sip dip) id := by
@@ -345,7 +345,7 @@ theorem recv_gen (A B : List (BitVec 16)) :
   exact key _ (by omega)
 
 /-- S2: the receiver's check passes: the header with the checksum filled in sums to 0xFFFF.
-    req: B119-CKSUM-IP -/
+    req: B119-F-CKSUM-IP -/
 theorem rtl_ip_receiver (ttl : BitVec 8) (sip dip : BitVec 32) (id : BitVec 16) :
     ocSum (ipHeader ttl sip dip id |>.set 5 (rtlIpCsum ttl sip dip id)) = 0xFFFF := by
   have h := recv_gen [0x4500, 0x0063, id, 0x4000, ttl ++ 0x06#8]
@@ -363,7 +363,7 @@ def tcpWords (sip dip : BitVec 32) (sport dport : BitVec 16) (seq ack : BitVec 3
 /-- S3: the RTL's TCP checksum is the Internet checksum of pseudo-header, header and payload,
     for all addresses, ports, sequence numbers, windows and payloads of at most 30 words
     (the RTL's payload sum register is 21 bits, enough for up to 32).
-    req: B119-CKSUM-TCP -/
+    req: B119-F-CKSUM-TCP -/
 theorem rtl_tcp_correct (sip dip : BitVec 32) (sport dport : BitVec 16) (seq ack : BitVec 32)
     (win : BitVec 16) (pw : List (BitVec 16)) (h : pw.length ≤ 30) :
     rtlTcpCsum sip dip sport dport seq ack win pw
@@ -407,7 +407,7 @@ theorem ocSum_snoc (l : List (BitVec 16)) (x : BitVec 16) :
   simp [List.foldl_append]
 
 /-- S4: updating the checksum of a header (any length) after word `m` becomes `m'` gives the
-    req: B119-CKSUM-INC
+    req: B119-F-CKSUM-MODEL
     checksum of the recomputed header, provided the new header is not all zero words. -/
 theorem incUpdate_correct (l : List (BitVec 16)) (m m' : BitVec 16)
     (h : ocSum (l ++ [m']) ≠ 0) :
@@ -439,7 +439,7 @@ theorem incUpdate_correct (l : List (BitVec 16)) (m m' : BitVec 16)
   exact canon_inc _ _ _ ha hm hm' hne
 
 /-- S4 needs its side condition: for an all-zero header the update gives 0x0000, not 0xFFFF.
-    req: B119-CKSUM-INC -/
+    req: B119-F-CKSUM-MODEL -/
 theorem incUpdate_zero_corner :
     incUpdate (~~~ ocSum ([] ++ [(0 : BitVec 16)])) 0 0 ≠ ~~~ ocSum ([] ++ [(0 : BitVec 16)]) := by
   first
