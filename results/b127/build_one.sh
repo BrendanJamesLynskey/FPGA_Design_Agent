@@ -36,4 +36,8 @@ keep = {k: d.get(k) for k in ("timing", "utilization", "power", "gates", "drc", 
 print(json.dumps(keep["timing"], default=str)[:600])
 PY
 cp "$B/run.json" "$OUT/run.json" 2>/dev/null || true
+{ sed -n '/^CDC Report/,/^Source Clock/p' "$B/cdc.rpt" | head -40; } > "$OUT/cdc_summary.txt" 2>/dev/null || true
+# in-context timing of brief 110's critical paths (results/b127/ctx_timing.tcl) in the same slot, same memory cap
+VIVADO="$(python3 flow/version_pin.py --vivado)"
+systemd-run --user --scope -p MemoryMax=6G nice -n 15 "$VIVADO" -mode batch -nojournal -nolog -source results/b127/ctx_timing.tcl -tclargs "$B/post_route.dcp" "$OUT" > "$OUT/ctx_timing.log" 2>&1 || echo "ctx timing failed (see $OUT/ctx_timing.log)"
 ls "$B"/*.bit
