@@ -154,6 +154,7 @@ def stage_counters(run: Runner, *, n_msgs=120, seed=202) -> dict:
     bad = B.counters_vs_model(res, m)
     if bad:
         reasons.append(f"counters differ from the model (hardware, model): {bad}")
+    expect_us["drop_mac"] += res["ord.sent"] + res["ord.pz_abort"]        # our own order frames come back addressed to the venue MAC: the adapter drops them for the destination MAC
     for k, v in expect_us.items():
         got = res["us." + k]
         if got != v:
