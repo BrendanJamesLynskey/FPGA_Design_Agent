@@ -6,24 +6,24 @@ The human specifies the requirements and checks that the verification is thoroug
 
 | Design | Summary | Matrix |
 |---|---|---|
-| `divider` | 11 requirements (11 functional); 9 verified; 2 with no passing evidence; 0 of 11 requirements agreed by a human, 0 human review(s) recorded; 3 Lean proof item(s) (all widths): 0 with a human-approved statement, 0 with statement not approved; 0 kernel only, 0 using a compiled decision procedure; build status from: none. | [matrix](../arith/divider/verif/matrix.md) ([html](../arith/divider/verif/matrix.html)) |
-| `fxp_round` | 11 requirements (11 functional); 9 verified; 2 with no passing evidence; 0 of 11 requirements agreed by a human, 0 human review(s) recorded; 6 Lean proof item(s) (all widths): 0 with a human-approved statement, 0 with statement not approved; 0 kernel only, 0 using a compiled decision procedure; build status from: none. | [matrix](../arith/fxp_round/verif/matrix.md) ([html](../arith/fxp_round/verif/matrix.html)) |
-| `isqrt` | 10 requirements (10 functional); 9 verified; 1 with no passing evidence; 0 of 10 requirements agreed by a human, 0 human review(s) recorded; 1 Lean proof item(s) (all widths): 0 with a human-approved statement, 0 with statement not approved; 0 kernel only, 0 using a compiled decision procedure; build status from: none. | [matrix](../arith/isqrt/verif/matrix.md) ([html](../arith/isqrt/verif/matrix.html)) |
-| `lzc_norm` | 10 requirements (10 functional); 9 verified; 1 with no passing evidence; 0 of 10 requirements agreed by a human, 0 human review(s) recorded; 1 Lean proof item(s) (all widths): 0 with a human-approved statement, 0 with statement not approved; 0 kernel only, 0 using a compiled decision procedure; build status from: none. | [matrix](../arith/lzc_norm/verif/matrix.md) ([html](../arith/lzc_norm/verif/matrix.html)) |
-| `sqrt_r4` | 10 requirements (10 functional); 9 verified; 1 with no passing evidence; 0 of 10 requirements agreed by a human, 0 human review(s) recorded; 1 Lean proof item(s) (all widths): 0 with a human-approved statement, 0 with statement not approved; 0 kernel only, 0 using a compiled decision procedure; build status from: none. | [matrix](../arith/sqrt_r4/verif/matrix.md) ([html](../arith/sqrt_r4/verif/matrix.html)) |
-| `divider_hr` | 11 requirements (11 functional); 10 verified; 1 with no passing evidence; 0 of 11 requirements agreed by a human, 0 human review(s) recorded; 3 Lean proof item(s) (all widths): 0 with a human-approved statement, 0 with statement not approved; 0 kernel only, 0 using a compiled decision procedure; build status from: none. | [matrix](../arith/divider_hr/verif/matrix.md) ([html](../arith/divider_hr/verif/matrix.html)) |
-| `recip` | 9 requirements (9 functional); 8 verified; 1 with no passing evidence; 0 of 9 requirements agreed by a human, 0 human review(s) recorded; 2 Lean proof item(s) (all widths): 0 with a human-approved statement, 0 with statement not approved; 0 kernel only, 0 using a compiled decision procedure; build status from: none. | [matrix](../arith/recip/verif/matrix.md) ([html](../arith/recip/verif/matrix.html)) |
-| `rsqrt` | 9 requirements (9 functional); 8 verified; 1 with no passing evidence; 0 of 9 requirements agreed by a human, 0 human review(s) recorded; 2 Lean proof item(s) (all widths): 0 with a human-approved statement, 0 with statement not approved; 0 kernel only, 0 using a compiled decision procedure; build status from: none. | [matrix](../arith/rsqrt/verif/matrix.md) ([html](../arith/rsqrt/verif/matrix.html)) |
-| `div_nr` | 9 requirements (9 functional); 8 verified; 1 with no passing evidence; 0 of 9 requirements agreed by a human, 0 human review(s) recorded; 2 Lean proof item(s) (all widths): 0 with a human-approved statement, 0 with statement not approved; 0 kernel only, 0 using a compiled decision procedure; build status from: none. | [matrix](../arith/div_nr/verif/matrix.md) ([html](../arith/div_nr/verif/matrix.html)) |
+| `divider` | 11 requirements (11 functional); 9 verified; 0 of 11 requirements agreed by a human, 0 human review(s) recorded; 3 Lean proof item(s) (all widths): 0 with a human-approved statement, 3 with statement not approved; 3 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run). | [matrix](../arith/divider/verif/matrix.md) ([html](../arith/divider/verif/matrix.html)) |
+| `fxp_round` | 11 requirements (11 functional); 9 verified; 0 of 11 requirements agreed by a human, 0 human review(s) recorded; 6 Lean proof item(s) (all widths): 0 with a human-approved statement, 6 with statement not approved; 6 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run). | [matrix](../arith/fxp_round/verif/matrix.md) ([html](../arith/fxp_round/verif/matrix.html)) |
+| `isqrt` | 10 requirements (10 functional); 9 verified; 0 of 10 requirements agreed by a human, 0 human review(s) recorded; 1 Lean proof item(s) (all widths): 0 with a human-approved statement, 1 with statement not approved; 1 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run). | [matrix](../arith/isqrt/verif/matrix.md) ([html](../arith/isqrt/verif/matrix.html)) |
+| `lzc_norm` | 10 requirements (10 functional); 9 verified; 0 of 10 requirements agreed by a human, 0 human review(s) recorded; 1 Lean proof item(s) (all widths): 0 with a human-approved statement, 1 with statement not approved; 1 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run). | [matrix](../arith/lzc_norm/verif/matrix.md) ([html](../arith/lzc_norm/verif/matrix.html)) |
+| `sqrt_r4` | 10 requirements (10 functional); 9 verified; 0 of 10 requirements agreed by a human, 0 human review(s) recorded; 1 Lean proof item(s) (all widths): 0 with a human-approved statement, 1 with statement not approved; 1 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run). | [matrix](../arith/sqrt_r4/verif/matrix.md) ([html](../arith/sqrt_r4/verif/matrix.html)) |
+| `divider_hr` | 11 requirements (11 functional); 10 verified; 0 of 11 requirements agreed by a human, 0 human review(s) recorded; 3 Lean proof item(s) (all widths): 0 with a human-approved statement, 3 with statement not approved; 3 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run). | [matrix](../arith/divider_hr/verif/matrix.md) ([html](../arith/divider_hr/verif/matrix.html)) |
+| `recip` | 9 requirements (9 functional); 8 verified; 0 of 9 requirements agreed by a human, 0 human review(s) recorded; 2 Lean proof item(s) (all widths): 0 with a human-approved statement, 2 with statement not approved; 2 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run). | [matrix](../arith/recip/verif/matrix.md) ([html](../arith/recip/verif/matrix.html)) |
+| `rsqrt` | 9 requirements (9 functional); 8 verified; 0 of 9 requirements agreed by a human, 0 human review(s) recorded; 2 Lean proof item(s) (all widths): 0 with a human-approved statement, 2 with statement not approved; 2 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run). | [matrix](../arith/rsqrt/verif/matrix.md) ([html](../arith/rsqrt/verif/matrix.html)) |
+| `div_nr` | 9 requirements (9 functional); 8 verified; 0 of 9 requirements agreed by a human, 0 human review(s) recorded; 2 Lean proof item(s) (all widths): 0 with a human-approved statement, 2 with statement not approved; 2 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run). | [matrix](../arith/div_nr/verif/matrix.md) ([html](../arith/div_nr/verif/matrix.html)) |
 
 ## Gaps by design
 
-- `divider`: 2 no passing evidence
-- `fxp_round`: 2 no passing evidence
-- `isqrt`: 1 no passing evidence
-- `lzc_norm`: 1 no passing evidence
-- `sqrt_r4`: 1 no passing evidence
-- `divider_hr`: 1 no passing evidence
-- `recip`: 1 no passing evidence
-- `rsqrt`: 1 no passing evidence
-- `div_nr`: 1 no passing evidence
+- `divider`: 3 lean statement unapproved
+- `fxp_round`: 6 lean statement unapproved
+- `isqrt`: 1 lean statement unapproved
+- `lzc_norm`: 1 lean statement unapproved
+- `sqrt_r4`: 1 lean statement unapproved
+- `divider_hr`: 3 lean statement unapproved
+- `recip`: 2 lean statement unapproved
+- `rsqrt`: 2 lean statement unapproved
+- `div_nr`: 2 lean statement unapproved
