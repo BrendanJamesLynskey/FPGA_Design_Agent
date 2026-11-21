@@ -78,6 +78,8 @@ def evaluate(target: dict, mutants: list[dict], jobs: int, mutant_timeout_s: int
         row |= {"status": {"fail": "killed", "pass": "survived", "timeout": "timed_out", "invalid": "invalid"}[st], "seconds": round(time.monotonic() - t0, 1)}
         if st == "invalid":
             row["note"] = "the mutated RTL does not build"
+        if target.get("stage_of"):
+            row["bench_stage"] = target["stage_of"](d)         # which stage of a staged bench decided the mutant (b96: reduced | long | none)
         log(f"  {m['name']:46s} {row['status']:9s} {row['seconds']:6.1f} s", flush=True)
         if st != "pass":
             shutil.rmtree(d, ignore_errors=True)
@@ -117,7 +119,6 @@ def filter_survivors(target: dict, rows: list[dict], work: Path, bmc_depth: int,
             verdict = "undecided"
         r["formal"] = {"verdict": verdict, "per_config": per, "seconds": round(sum(p.get("seconds", 0) for p in per), 1)}
         log(f"  filter {r['name']:40s} {verdict}  ({r['formal']['seconds']} s)", flush=True)
-        shutil.rmtree(d, ignore_errors=True)
 
 
 def formal_bench_kills(target: dict, rows: list[dict], work: Path, log=print) -> None:
@@ -134,6 +135,13 @@ def formal_bench_kills(target: dict, rows: list[dict], work: Path, log=print) ->
         st = fb(d)
         r["formal_bench"] = st
         log(f"  formal bench {r['name']:36s} {st}", flush=True)
+
+
+def drop_mutant_dirs(rows: list[dict], work: Path) -> None:
+    """Brief 152: the survivors' copies are kept until the filter and the formal bench have both used them. (Brief 143b deleted each copy at the end of the filter, so
+    formal_bench_kills found no directory and never ran: its b96 record's ``killed_by_formal_bench`` 0 was not a result.)"""
+    for r in rows:
+        shutil.rmtree(work / r["name"], ignore_errors=True)
 
 
 def summarise(rows: list[dict], has_formal_bench: bool) -> dict:
@@ -182,6 +190,7 @@ def run_target(target: dict, seed: int, count: int | None, jobs: int = 1, mutant
         if do_filter:
             filter_survivors(target, rows, work, bmc_depth, bmc_s, prove_s, log)
         formal_bench_kills(target, rows, work, log)
+        drop_mutant_dirs(rows, work)
         S = summarise(rows, bool(target.get("formal_bench")))
         rec = {"schema": SCHEMA, "target": target["name"], "design": target["design"], "what": target["what"], "date": time.strftime("%Y-%m-%d"),
                "generator": {"name": "flow/mutation_blind.py", "blind_to_tests": True, "seed": seed, "requested": count, "candidates": gen["candidates"],
@@ -220,7 +229,7 @@ def tool_versions() -> dict:
 def judge(item: dict, req_by_id: dict, path: Path, res: dict, root: Path = ROOT) -> dict:
     """flow/trace_v1.py reader ``mutation``: pass when the record meets the floor of the item or of one of its requirements.
 
-    floor = {score_pct: 90, min_mutants: 20, max_undecided: 0}, put on the item as ``mutation_floor`` or on a requirement as ``mutation_floor`` (the item's wins).
+    floor = {score_pct: 90, worst_case_pct: 90, min_mutants: 30, max_undecided: 0}, put on the item as ``mutation_floor`` or on a requirement as ``mutation_floor`` (the item's wins).
     The headline score judged is ``score_pct`` (killed / (killed + real survivors)); the record must have been filtered (a record made with ``--no-filter`` fails, its
     equivalents are unknown), at least ``min_mutants`` evaluated, at most ``max_undecided`` undecided, no bench timeouts beyond ``max_timed_out`` (default 0), and
     its recorded RTL hashes must match the RTL now (a record for other RTL is not evidence about this RTL). Detail text names every count."""
@@ -253,6 +262,10 @@ def judge(item: dict, req_by_id: dict, path: Path, res: dict, root: Path = ROOT)
     score = rec.get("score_pct")
     if score is None or float(score) < float(floor["score_pct"]):
         problems.append(f"score {score}% is below the floor {floor['score_pct']}%")
+    if "worst_case_pct" in floor:                       # brief 152: a floor on the worst case (every undecided mutant and bench timeout counted as a survivor)
+        wc = rec.get("score_worst_case_pct")
+        if wc is None or float(wc) < float(floor["worst_case_pct"]):
+            problems.append(f"worst-case score {wc}% is below the floor {floor['worst_case_pct']}%")
     if rec.get("evaluated", 0) < floor.get("min_mutants", 0):
         problems.append(f"{rec.get('evaluated', 0)} mutants evaluated, fewer than {floor['min_mutants']}")
     if rec.get("undecided", 0) > floor.get("max_undecided", 0):

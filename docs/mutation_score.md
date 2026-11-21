@@ -62,7 +62,7 @@ requirements:
   - id: B119-V-BENCH
     kind: functional
     title: the bench catches seeded bugs
-    mutation_floor: {score_pct: 90, min_mutants: 20, max_undecided: 0}      # max_timed_out defaults to 0
+    mutation_floor: {score_pct: 90, min_mutants: 20, max_undecided: 0}      # max_timed_out defaults to 0; worst_case_pct: N (brief 152) also floors the worst case
 verification:
   - id: V-B119-MUT
     requirements: [B119-V-BENCH]
@@ -71,7 +71,7 @@ verification:
 ```
 
 The item passes when the record was filtered, has at least `min_mutants` evaluated, a headline score at or above `score_pct`, no more than `max_undecided`
-undecided and `max_timed_out` timed-out mutants, and its recorded RTL hashes match the RTL now. The detail line names the counts, the worst-case score and
+undecided and `max_timed_out` timed-out mutants (and, when the floor has `worst_case_pct`, a worst-case score at or above it), and its recorded RTL hashes match the RTL now. The detail line names the counts, the worst-case score and
 the seed. No real testplan binds a floor yet: which requirement carries one, and at what number, is the planner's and the human's decision (a floor is a
 specification of how thorough verification must be).
 

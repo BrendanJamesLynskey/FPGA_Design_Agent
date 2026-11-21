@@ -238,3 +238,32 @@ def test_committed_records_are_well_formed():
         assert r["killed"] + r["survived_after_bench"] + r["bench_timed_out"] + r["invalid"] == r["generator"]["sampled"] + r["generator"]["llm_proposals_valid"]
         assert r["survived_after_bench"] == r["equivalent"] + r["real_survivors"] + r["undecided"]
         assert r["timeout_policy"] and r["rows"] and all(x["status"] in ("killed", "survived", "timed_out", "invalid") for x in r["rows"])
+
+
+# ---- brief 152 ----------------------------------------------------------------------------------------------------------------
+
+def test_the_floor_can_bind_the_worst_case(repo):
+    """Brief 152: floor = worst case >= 90 % over >= 30 evaluated mutants (the planner's floor for a design's bench)."""
+    floor = {"score_pct": 90, "worst_case_pct": 90, "min_mutants": 30}
+    record(repo, score_worst_case_pct=93.1)
+    assert collect(repo, floor)[0]["status"] == "pass"
+    record(repo, score_worst_case_pct=80.0)
+    i = collect(repo, floor)[0]
+    assert i["status"] == "fail" and "worst-case score 80.0% is below the floor 90%" in i["detail"]
+    record(repo, evaluated=29)
+    assert "fewer than 30" in collect(repo, floor)[0]["detail"]
+
+
+def test_the_formal_bench_still_finds_the_survivors_copy(tmp_path):
+    """Brief 143b deleted a survivor's directory at the end of the filter, so the design's own formal bench never ran on it (record: killed_by_formal_bench 0 for a mutant that its
+    assertion p6c catches in 2 s). The directories now live until drop_mutant_dirs."""
+    d = tmp_path / "s1"
+    d.mkdir()
+    seen = []
+    target = {"rtl_dir": tmp_path / "rtl", "rtl_files": ["a.sv"], "configs": [{"label": "c", "params": {}}], "formal_bench": lambda p: seen.append(p.is_dir()) or "killed"}
+    rows = [{"name": "s1", "status": "survived", "formal": {"verdict": "not_equivalent"}}]
+    S.formal_bench_kills(target, rows, tmp_path, log=lambda *a, **k: None)
+    assert seen == [True] and rows[0]["formal_bench"] == "killed"
+    assert "rmtree" not in inspect.getsource(S.filter_survivors)
+    S.drop_mutant_dirs(rows, tmp_path)
+    assert not d.exists()
