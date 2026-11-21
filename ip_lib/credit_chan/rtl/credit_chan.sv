@@ -152,18 +152,22 @@ module credit_core #(
 
     // ---- forward wires: LF plain register stages (valid and data, no ready) ---------------------------------------
     // fv[0] / fd[0] are the sender's beat in the clock it is sent; fv[i] / fd[i] is that beat after i edges
-    logic [LF:0]         fv;
-    logic [(LF+1)*W-1:0] fd;
-    always_comb fv[0] = send;
-    always_comb fd[0 +: W] = s_data;
+    wire [LF:0]         fv;
+    wire [(LF+1)*W-1:0] fd;
+    assign fv[0]      = send;
+    assign fd[0 +: W] = s_data;
     genvar i;
     generate
         for (i = 1; i <= LF; i++) begin : g_f
+            logic         vq;
+            logic [W-1:0] dq;
             always_ff @(posedge clk) begin
-                if (rst) fv[i] <= 1'b0;
-                else     fv[i] <= fv[i-1];
-                fd[i*W +: W] <= fd[(i-1)*W +: W];
+                if (rst) vq <= 1'b0;
+                else     vq <= fv[i-1];
+                dq <= fd[(i-1)*W +: W];
             end
+            assign fv[i]      = vq;
+            assign fd[i*W +: W] = dq;
         end
     endgenerate
     wire          f_valid = fv[LF];
@@ -198,16 +202,18 @@ module credit_core #(
 
     // ---- credit return: LB plain register stages (one bit: a credit per beat taken) --------------------------------
     // bv[0] is the take in the clock it happens; bv[j] is that credit after j edges
-    logic [LB:0] bv;
-    always_comb bv[0] = pop;
+    wire [LB:0] bv;
+    assign bv[0]     = pop;
     assign credit_in = bv[LB];
     genvar j;
     generate
         for (j = 1; j <= LB; j++) begin : g_b
+            logic cq;
             always_ff @(posedge clk) begin
-                if (rst) bv[j] <= 1'b0;
-                else     bv[j] <= bv[j-1];
+                if (rst) cq <= 1'b0;
+                else     cq <= bv[j-1];
             end
+            assign bv[j] = cq;
         end
     endgenerate
 

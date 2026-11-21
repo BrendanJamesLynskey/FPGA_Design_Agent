@@ -60,22 +60,22 @@ faults:
     test: ip_lib/credit_chan/tb/test_credit_chan_rtl.py -k test_random_traffic
   - name: forward_stage_skips
     file: credit_chan.sv
-    old: "fd[i*W +: W] <= fd[(i-1)*W +: W];"
-    new: "fd[i*W +: W] <= fd[0 +: W];"
+    old: "dq <= fd[(i-1)*W +: W];"
+    new: "dq <= fd[0 +: W];"
     class: data-corruption
     why: "a forward stage takes its data from the first stage, not the previous one"
     test: ip_lib/credit_chan/tb/test_credit_chan_rtl.py -k test_random_traffic
   - name: return_stage_drops
     file: credit_chan.sv
-    old: "else     bv[j] <= bv[j-1];"
-    new: "else     bv[j] <= 1'b0;"
+    old: "else     cq <= bv[j-1];"
+    new: "else     cq <= 1'b0;"
     class: performance
     why: "a credit-return stage past the first drops every credit"
     test: ip_lib/credit_chan/tb/test_credit_chan_rtl.py -k test_random_traffic
   - name: count_unaccepted_beat
     file: credit_chan.sv
-    old: "always_comb fv[0] = send;"
-    new: "always_comb fv[0] = s_valid;"
+    old: "assign fv[0]      = send;"
+    new: "assign fv[0]      = s_valid;"
     class: data-corruption
     why: "a beat that was offered but not accepted enters the channel"
     test: ip_lib/credit_chan/tb/test_credit_chan_rtl.py -k test_random_traffic
