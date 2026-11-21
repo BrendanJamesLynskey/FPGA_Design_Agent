@@ -276,7 +276,7 @@ def r_fsm(d: Path, lang: str) -> dict[str, str]:
         rep = F.evaluate(d, [vcd])
     except (OSError, ValueError, KeyError) as e:
         msg = f"{type(e).__name__}: {e}"
-        return _outcome("no_reader" if re.search(r"no reader|VHDL", msg, re.I) else "wrong", f"raised {msg[:160]}")
+        return _outcome("no_reader" if re.search(r"no reader for", msg) else "wrong", f"raised {msg[:160]}")
     return _outcome("caught", f"states read: {sorted(rep.get('fsms', [{}])[0].get('states', []) or [])}")
 
 
@@ -365,13 +365,16 @@ def r_review(d: Path, lang: str) -> dict[str, str]:
 
 
 def r_inspect(d: Path, lang: str) -> dict[str, str]:
-    """flow.inspect_views: the source files handed to the schematic drawer."""
-    src = (ROOT / "flow" / "inspect_views.py").read_text()
-    m = re.search(r"src_files = (.+)\n", src)
-    if "sources.readable" in (m.group(1) if m else ""):
-        return _outcome("caught", "schematic sources come from the shared helper")
-    files = [p for p in sorted((d / "rtl").iterdir()) if p.suffix in (".sv", ".v")]
-    return _outcome("caught", f"{len(files)} file(s)") if files else _outcome("silent", "src_files is empty for VHDL: no schematic, and no note that VHDL was not read")
+    """flow.inspect_views: the source files handed to the schematic drawer, and what is said about the ones it cannot read."""
+    from flow import inspect_views as IV
+    srcs = sorted((d / "rtl").iterdir())
+    if hasattr(IV, "schematic_sources"):
+        files, note = IV.schematic_sources(srcs)
+    else:                                                # before brief 153 the filter was inline: ``[p for p in srcs if p.suffix in (".sv", ".v")]``
+        files, note = [p for p in srcs if p.suffix in (".sv", ".v")], None
+    if files:
+        return _outcome("caught", f"{len(files)} file(s)")
+    return _outcome("no_reader", note) if note else _outcome("silent", "src_files is empty for VHDL: no schematic, and no note that VHDL was not read")
 
 
 #: id, where it lives, the planted defect, the reader function
@@ -406,7 +409,7 @@ def run_readers() -> dict[str, Any]:
             try:
                 row[lang] = r["fn"](d, lang)
             except Exception as e:                      # noqa: BLE001 - a reader that raises on VHDL is a result, not a crash of the probe
-                row[lang] = _outcome("wrong", f"raised {type(e).__name__}: {e}")
+                row[lang] = _outcome("no_reader" if re.search(r"no reader for", str(e)) else "wrong", f"raised {type(e).__name__}: {e}")
         rows.append(row)
     n = {k: sum(1 for r in rows if r["vhdl"]["outcome"] == k) for k in ("caught", "no_reader", "silent", "wrong", "control")}
     return {"schema": "fda-vhdl-parity-probe/1", "task": TASK, "readers": rows, "vhdl_summary": n,
@@ -453,6 +456,10 @@ def run_all_checks() -> dict[str, Any]:
                 r = C.run_one(name, d, "rtl")
                 res[name] = {"status": r.get("status"), "incomplete": r.get("incomplete"), "why": (r.get("why") or "")[:160],
                              "codes": sorted({f["code"] for f in r.get("findings") or []})[:6]}
+                if name == "constants":                 # what the check read: the design ID bindings it found, and its own notes
+                    tab = json.loads((d / "build" / "derived_constants.json").read_text())
+                    res[name]["read"] = {"design_id_bindings": [hex(b["value"]) if b["value"] is not None else None for b in tab["design_id_bindings"]],
+                                         "notes": tab["notes"]}
             out["tasks"].setdefault(task, {})[lang] = res
     return out
 

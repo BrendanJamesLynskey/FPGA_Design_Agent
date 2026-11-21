@@ -67,6 +67,15 @@ Stage 3 integrates one real third-party RTL block (Alex Forencich's parallel CRC
 Brief 102F closes the stage 1-3 gaps: the waiver files (`lint/`, `waivers.yaml`, in-source waivers) are the owner's, writes to frozen files are prevented while a tool runs design code (and mounted read-only in the container runner), the scope is in `config.json`/`summary.json` and re-checked by `resume`, and evidence signing is proposed: [docs/managed_projects.md](docs/managed_projects.md) and [results/102f_managed_gaps](results/102f_managed_gaps/README.md).
 A portfolio pack (title, facts with their sources, stills and a short animation) is in [site/portfolio/](site/portfolio/README.md).
 
+## Start here: which command for which job
+
+Every `python -m agent ...` command needs the access key ([Access key](#access-key)); the `flow` and `project` commands below
+do not, apart from `project spec`. "Read-only" means nothing in the design directory is changed.
+
+| You want to | Command | Know first |
+|---|---|---|
+| know which checks read a VHDL design | `python -m flow.sources <design-dir>` (`--help` lists the traps) | plain Python, read-only; a check that cannot read VHDL is PARTIAL or NOT RUN with "no reader for .vhd", never a clean pass; the CDC injection run fails closed on a VHDL crossing ([docs/vhdl.md](docs/vhdl.md)) |
+
 ## The flow
 
 ```

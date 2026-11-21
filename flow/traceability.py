@@ -220,15 +220,17 @@ def rtl_elements(rtl_files: list[Path], chk_dir: Path, known: set[str]) -> tuple
         except OSError:
             continue
         module, pending = None, []                  # tags in a header comment apply to the next module
+        vh = f.suffix.lower() in (".vhd", ".vhdl")  # brief 153: a VHDL entity is the design element, and its comments start with --
+        cmt = "--" if vh else "//"
         for l in lines:
-            mm = re.match(r"\s*module\s+(\w+)", l)
+            mm = re.match(r"(?i)\s*entity\s+(\w+)\s+is\b", l) if vh else re.match(r"\s*module\s+(\w+)", l)
             if mm:
                 module = mm.group(1)
                 for i in pending:
                     by_req.setdefault(i, set()).add(module)
                 pending = []
-            if "//" in l:
-                tag = _parse_tag_text([l.split("//", 1)[1]], known)
+            if cmt in l:
+                tag = _parse_tag_text([l.split(cmt, 1)[1]], known)
                 if not re.search(r"\breq\s*:", l, re.I):
                     continue                            # only an explicit `req:` tag names a design element
                 if module:
@@ -283,8 +285,9 @@ def inline_waivers(rtl_files: list[Path]) -> list[dict[str, Any]]:
             lines = f.read_text().splitlines()
         except OSError:
             continue
+        cmt = r"--" if f.suffix.lower() in (".vhd", ".vhdl") else r"//"
         for i, l in enumerate(lines):
-            m = re.search(r"//\s*std-waive:\s*(\S+)\s*(.*)", l)
+            m = re.search(cmt + r"\s*std-waive:\s*(\S+)\s*(.*)", l)
             if not m:
                 continue
             rest = m.group(2)
@@ -442,7 +445,8 @@ def build(design: Path, runs: Path | None, also: list[Path] | None = None, cover
     bench_dir = vg.plan_file(design, plan["bench"]["dir"])
     chk_dir = vg.plan_file(design, plan["checkers"])
     formal_src = vg.plan_file(design, plan["formal_dir"])
-    rtl_files = sorted((design / "rtl").glob("*.sv")) + sorted((design / "rtl").glob("*.v"))
+    from flow import sources
+    rtl_files = sources.design_rtl(design)                  # SystemVerilog, Verilog and VHDL (brief 153)
 
     arts = (bench_artefacts(bench_dir, plan["bench"]["modules"], known) + checker_artefacts(chk_dir, known)
             + formal_artefacts(formal_src, known))
