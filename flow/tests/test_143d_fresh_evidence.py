@@ -134,6 +134,8 @@ def test_lean_record_comparison_ignores_the_log_hash_only():
     other = json.loads(json.dumps(rec))
     other["build_log_sha256"] = "bb"
     assert F.lean_diff(rec, other) == []
+    other["lean_version"] = ""
+    assert F.lean_diff(rec, other) == []
     other["theorems"]["th"]["tier"] = "unsound"
     other["files"]["A.lean"] = "h2"
     assert len(F.lean_diff(rec, other)) == 2

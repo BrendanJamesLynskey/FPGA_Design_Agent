@@ -292,6 +292,8 @@ LEAN_KEYS = ("build_ok", "axioms", "tier", "statement_sha256", "definitions_sha2
 def lean_diff(a: dict, b: dict) -> list[str]:
     out = []
     for k in ("build_ok", "toolchain", "lean_version", "files", "rtl_sources"):
+        if k == "lean_version" and not (a.get(k) and b.get(k)):
+            continue        # `lean --version` printed nothing (the elan proxy outside a project): no evidence either way
         out += json_diff(a.get(k), b.get(k), k)
     for name in sorted(set(a.get("theorems") or {}) | set(b.get("theorems") or {})):
         ta, tb = (a.get("theorems") or {}).get(name), (b.get("theorems") or {}).get(name)
