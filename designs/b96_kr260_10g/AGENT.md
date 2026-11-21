@@ -36,7 +36,7 @@ designs/b96_kr260_10g/rm_gp_itch/rtl/tx_mux.sv 60060254bf: transmit multiplexer 
 designs/b96_kr260_10g/rm_gp_itch/rtl/itch_path.sv 1672408a82: core-clock wrapper of the ITCH path: host vectors, order poison policy, counters, latency statistics (brief 127)
 designs/b96_kr260_10g/rm_gp_itch/rtl/b96_core.sv d026de610d: copy of rtl/b96_core.sv for build rm_gp_itch: RATE_MATCH = 1 only, the ITCH path and its registers 0x300 to 0x57C (brief 127)
 designs/b96_kr260_10g/rm_gp_itch/regmap_itch.py b983520024: register map of build rm_gp_itch as data, generates its datasheet (brief 127)
-designs/b96_kr260_10g/rm_gp_itch/docs/itch_integration.md 74a49a2c10: the ITCH/OUCH path inside the 10G design: path, latency, the late frame check, registers, hook for tcp_fast, results (brief 127)
+designs/b96_kr260_10g/rm_gp_itch/docs/itch_integration.md b50a92b1aa: the ITCH/OUCH path inside the 10G design: path, latency, the late frame check, registers, hook for tcp_fast, results (brief 127)
 designs/b96_kr260_10g/rm_gp_itch/docs/board_test_plan.md 2801a79865: pre-registered board test of build rm_gp_itch (brief 127), not run
 designs/b96_kr260_10g/rm_gp_itch/host/itch_host.py 61c12a6515: synthetic MoldUDP64/ITCH frames, replay image, expected order frame and the order check (brief 127)
 designs/b96_kr260_10g/rm_gp_itch/host/b127_stages.py 0a8c138fb0: the pre-registered board stages, shared with the simulation's dry run (brief 127)
