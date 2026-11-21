@@ -206,7 +206,7 @@ def test_no_agent_can_approve_through_the_testplan_or_as_a_non_human(repo):
     d = make_plan(repo)
     record(repo)
     approve(repo, kind="agent")
-    assert any("must be human" in p for p in T.gate(d))
+    assert any("approver_kind must be human" in p for p in T.gate(d))
     approve(repo, item="V-NOT-THERE")
     assert any("unknown item" in p for p in T.gate(d))
     assert item_of(T.collect(d))["status"] == "unapproved"                 # an approval for another item approves nothing here
@@ -255,6 +255,73 @@ def test_the_statement_report_writes_nothing_and_shows_both_hashes(repo):
     f = LT.frozen("formal/lean", "Foo.Spec", "Foo.f_pos")
     assert f["statement_sha256"] in out and f["definitions_sha256"] in out and "Nothing in this repository writes that file" in out
     assert not (d / "verif" / "lean_approvals.yaml").exists()
+
+
+# ---- brief 135: a delegated acceptance is not a human approval ----------------------------------------------
+def delegate(repo, item="V1", theorem="Foo.f_pos", **over):
+    f = LT.frozen("formal/lean", "Foo.Spec", theorem)
+    a = {"item": item, "theorem": theorem, "statement_sha256": f["statement_sha256"], "definitions_sha256": f["definitions_sha256"],
+         "accepted_by": "planner (Session A)", "delegated_by": "owner decision 23", "approver_kind": "agent_delegated", "date": "2026-11-21", **over}
+    a = {k: v for k, v in a.items() if v is not None}
+    (repo / "designs" / "d" / "verif" / "lean_approvals.yaml").write_text(yaml.safe_dump({"schema": LT.APPROVAL_SCHEMA, "approvals": [a]}))
+
+
+def test_a_delegated_acceptance_passes_but_is_shown_and_counted_apart_from_a_human_approval(repo):
+    d = make_plan(repo)
+    record(repo)
+    delegate(repo)
+    c = T.collect(d)
+    i = item_of(c)
+    assert i["status"] == "pass" and i["lean"]["approver_kind"] == "agent_delegated" and i["lean"]["accepted_by"] == "planner (Session A)"
+    assert "accepted by planner (Session A) on the owner's delegation (owner decision 23)" in i["detail"] and "not a human approval" in i["detail"]
+    assert "approved by a human" not in i["detail"]
+    r = c["requirements"][0]
+    assert r["state"] == "verified" and r["rests_on_delegated"] is True
+    s = c["summary"]
+    assert s["lean"]["delegated"] == 1 and s["lean"]["approved"] == 0 and s["verified_on_delegated"] == 1
+    assert "1 verified, of which 1 rest on delegated acceptances" in s["line"]
+    md = T.render_md(c, repo / "designs" / "d" / "verif")
+    assert "statement accepted on delegation, not a human approval" in md and "rests on a delegated acceptance" in md
+    assert T.gate(d) == []
+
+
+def test_a_human_approval_is_shown_as_human_and_is_not_counted_as_delegated(repo):
+    d = make_plan(repo)
+    record(repo)
+    approve(repo)
+    c = T.collect(d)
+    assert "proved; statement approved by a human (A. Person)" in item_of(c)["detail"]
+    s = c["summary"]
+    assert s["lean"]["approved"] == 1 and s["lean"]["delegated"] == 0 and s["verified_on_delegated"] == 0
+    assert "of which" not in s["line"].split("Lean proof")[0]
+    assert "statement approved by a human" in T.render_md(c, repo / "designs" / "d" / "verif")
+
+
+def test_the_frozen_statement_gate_applies_to_a_delegated_acceptance_too(repo):
+    d = make_plan(repo)
+    record(repo)
+    delegate(repo)
+    (repo / "formal" / "lean" / "Foo" / "Spec.lean").write_text(SPEC.replace("0 < f n", "0 ≤ f n"))
+    assert any(p.startswith("lean_frozen_statement_changed") and "planner (Session A) accepted it" in p for p in T.gate(d))
+
+
+def test_a_delegated_entry_must_name_who_and_on_whose_delegation_and_never_says_approved_by(repo):
+    d = make_plan(repo)
+    record(repo)
+    delegate(repo, delegated_by=None)
+    assert any("lacks delegated_by" in p for p in T.gate(d))
+    delegate(repo, approved_by="owner")
+    assert any("never approved_by" in p for p in T.gate(d))
+    approve(repo, accepted_by="planner")
+    assert any("not accepted_by" in p for p in T.gate(d))
+
+
+def test_no_agent_can_set_a_delegated_acceptance_through_the_testplan(repo):
+    for k in ("accepted_by", "delegated_by"):
+        d = make_plan(repo, extra_item={k: "planner"})
+        assert any(k in p and "refused" in p for p in T.gate(d))
+    d = make_plan(repo, extra_item={"lean": {"module": "Foo.Spec", "theorem": "Foo.f_pos", "approver_kind": "agent_delegated"}})
+    assert any("refused" in p for p in T.gate(d))
 
 
 # ---- the committed repository ----------------------------------------------------------------------------
