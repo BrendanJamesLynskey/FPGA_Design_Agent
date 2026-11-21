@@ -67,6 +67,14 @@ Stage 3 integrates one real third-party RTL block (Alex Forencich's parallel CRC
 Brief 102F closes the stage 1-3 gaps: the waiver files (`lint/`, `waivers.yaml`, in-source waivers) are the owner's, writes to frozen files are prevented while a tool runs design code (and mounted read-only in the container runner), the scope is in `config.json`/`summary.json` and re-checked by `resume`, and evidence signing is proposed: [docs/managed_projects.md](docs/managed_projects.md) and [results/102f_managed_gaps](results/102f_managed_gaps/README.md).
 A portfolio pack (title, facts with their sources, stills and a short animation) is in [site/portfolio/](site/portfolio/README.md).
 
+## Start here: which command for which job
+
+Every `python -m agent ...` command needs the access key ([Access key](#access-key)). "Read-only" means nothing in the design directory is changed. (Brief 149 adds this row; PR #275 holds the full table, so the planner reconciles the two.)
+
+| You want to | Command | Know first |
+|---|---|---|
+| a change to a design the agent made | `python -m agent resume <design-dir> "<change>" --dry-run` | the dry run prints the class, the entry stage and the words that matched. Classes and entry stages: area, latency, retarget 1; language, mapping 2; fmax, power 3; plus spec 0, arch 1, rtl 2, constraints 3, timing 6, board 9. A request that matches no class is a question, not stage 0 (`resume` exits 2 and asks); a documentation-only request is never guessed, so pass `--kind docs`. The earliest match wins, so "lower the latency but keep the interface" goes back to the spec (stage 0): split it or pass `--kind latency`. A bare "200 MHz" is a clock change (stage 3), but with a closure word ("close timing at 200 MHz") it is stage 6. `--kind` and `--from-stage` override ([agent/graph/pickup.py](agent/graph/pickup.py), [results/149_goal_kinds](results/149_goal_kinds/README.md)) |
+
 ## The flow
 
 ```
