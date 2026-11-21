@@ -249,6 +249,8 @@ The FF count is dominated by the host vectors (about 12,000 flip-flops for STAT2
 | mac64_tx (the CRC path with the multiplexer in front) | +0.214 ns | 11 | `u_tx/u_mt/crc_reg[5]/C` to `u_tx/u_mt/crc_reg[30]/D` |
 | itch_path (poison policy, counters, statistics) | +0.193 ns | 11 | `u_ip/u_it/u_book/t1_inst_reg[0]/C` to `u_ip/u_it/u_book/t2b_px_reg[31]/D` |
 
+Rows with 0 logic levels and a start in the transceiver's reset synchroniser are the reset pins of the block's registers (the first selection did not exclude them), not its logic: only the rows with logic levels measure the block. The price-ladder row matched no cells; the corrected selection is in `results/b127/ctx_timing.tcl` and `results/b127/ctx_only.sh` re-runs it (no heavy slot was free to do it before hand-back).
+
 In context the risk verdict into the position register has about +0.79 ns where brief 110 had +0.109 ns out of context; the two are not the same measurement (placement and the clock's uncertainty differ), and the worst paths of the whole design are the base's receive MAC (0.153 ns) and the CRC cone of the transmit MAC (0.214 ns, with the multiplexer in front of it).
 
 ## 10. Known gaps
