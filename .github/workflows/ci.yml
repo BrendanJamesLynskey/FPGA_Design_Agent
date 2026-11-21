@@ -414,8 +414,10 @@ jobs:
           python -m pytest -q designs/b96_kr260_10g/rm_gp_ml/tests
           python3 results/b113/summary.py --check
       - name: Standard-protocol trading path (brief 110) - MoldUDP64 and ITCH 5.0 in, OUCH 5.0 out - cocotb against the Python reference (frames, book updates, counters bit exact; coverage; other parameters), model unit tests, Verilator -Wall at four parameter points
+        run: |
           python -m pytest -q designs/b110_itch_ouch/tests/test_b110_model.py designs/b110_itch_ouch/tests/test_b110_rtl.py designs/b110_itch_ouch/tests/test_b110_lint.py
       - name: TCP fast path for OUCH orders (brief 119) - software owns the connection, hardware sends pre-built segments - cocotb against the Python reference (byte-exact segments, abort, refusals, registers, the software exchange end to end, behind brief 110's risk logic), the Python TCP side, Verilator -Wall
+        run: |
           python -m pytest -q designs/b119_tcp_fast/tests/test_b119_model.py designs/b119_tcp_fast/tests/test_b119_rtl.py designs/b119_tcp_fast/tests/test_b119_lint.py
       - name: Upload simulation logs
         if: always()
