@@ -70,7 +70,7 @@ requirements:
   - id: B96-F-OFFSET
     kind: functional
     title: Rate matching holds under a real frequency offset
-    text: With a receive clock offset of +-100 ppm and +-300 ppm from the transmit clock, no frame is lost or corrupted and the buffer neither overflows nor underflows. A loopback has no offset, so this needs a second reference clock or another device on the link.
+    text: For any constant receive clock offset from -300 to +300 ppm relative to the transmit clock, no frame is lost or corrupted and the buffer neither overflows nor underflows. IEEE 802.3 allows +-100 ppm at each end, so two compliant ends differ by at most 200 ppm; +-300 ppm gives margin. A loopback has no offset, so a board test needs a second reference clock or another device on the link.
     source: designs/b96_kr260_10g/docs/design.md#board-result-2026-11-19-kr260-and-an-optical-loopback-resultsb96cwhw20261119_080724
     spec_status: draft
     external: a second reference clock or a 10G network card (a loopback has no frequency offset)
@@ -307,7 +307,7 @@ verification:
   - id: V-SIMM-PPM
     requirements: [B96-F-OFFSET, B96-S-RATEMATCH]
     method: sim_measurement
-    title: Simulated partner at 0, +-100 and +-300 ppm, 400 frames each
+    title: Simulated partner at test points -300, -100, 0, +100 and +300 ppm across the required range, 400 frames each
     evidence: {file: results/b96c/ppm_sim_ratematch.json, reader: json}
     pass_when:
       - {field: ppm+0.verdict.counters_clean, op: "true"}
@@ -315,6 +315,9 @@ verification:
       - {field: ppm-100.verdict.counters_clean, op: "true"}
       - {field: ppm+300.verdict.counters_clean, op: "true"}
       - {field: ppm-300.verdict.counters_clean, op: "true"}
+      - {field: ppm+0.verdict.all_frames_received, op: "true"}
+      - {field: ppm+100.verdict.all_frames_received, op: "true"}
+      - {field: ppm-100.verdict.all_frames_received, op: "true"}
       - {field: ppm+300.verdict.all_frames_received, op: "true"}
       - {field: ppm-300.verdict.all_frames_received, op: "true"}
     checks: *rtl_rm
