@@ -1,0 +1,64 @@
+Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+| Tool Version : Vivado v.2026.1 (lin64) Build 6511674 Tue Jun 16 11:01:26 MDT 2026
+| Date         : Sat Nov 21 22:28:09 2026
+| Host         : bren-ubuntu24-04 running 64-bit Ubuntu 24.04.4 LTS
+| Command      : report_timing -max_paths 1 -setup -file /tmp/claude-1000/-home-brendan-Claude-sandbox/a54cc85c-2645-4343-9056-2e450c5dac3c/scratchpad/viv/a7/viv_default/m16_fir4/timing_worst_synth.rpt
+| Design       : m16_fir4
+| Device       : 7a100t-csg324
+| Speed File   : -1  PRODUCTION 1.23 2018-06-13
+| Design State : Synthesized
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Timing Report
+
+Slack (MET) :             1.538ns  (required time - arrival time)
+  Source:                 s_reg[0]/CLK
+                            (rising edge-triggered cell DSP48E1 clocked by clk  {rise@0.000ns fall@1.750ns period=3.500ns})
+  Destination:            s_reg[1]/PCIN[0]
+                            (rising edge-triggered cell DSP48E1 clocked by clk  {rise@0.000ns fall@1.750ns period=3.500ns})
+  Path Group:             clk
+  Path Type:              Setup (Max at Slow Process Corner)
+  Requirement:            3.500ns  (clk rise@3.500ns - clk rise@0.000ns)
+  Data Path Delay:        0.478ns  (logic 0.478ns (100.000%)  route 0.000ns (0.000%))
+  Logic Levels:           0  
+  Clock Path Skew:        -0.049ns (DCD - SCD + CPR)
+    Destination Clock Delay (DCD):    0.924ns = ( 4.424 - 3.500 ) 
+    Source Clock Delay      (SCD):    0.973ns
+    Clock Pessimism Removal (CPR):    0.000ns
+  Clock Uncertainty:      0.035ns  ((TSJ^2 + TIJ^2)^1/2 + DJ) / 2 + PE
+    Total System Jitter     (TSJ):    0.071ns
+    Total Input Jitter      (TIJ):    0.000ns
+    Discrete Jitter          (DJ):    0.000ns
+    Phase Error              (PE):    0.000ns
+
+    Location             Delay type                Incr(ns)  Path(ns)    Netlist Resource(s)
+  -------------------------------------------------------------------    -------------------
+                         (clock clk rise edge)        0.000     0.000 r  <hidden>
+                                                      0.000     0.000 r  clk
+                         net (fo=43, unset)           0.973     0.973    clk
+                         DSP48E1                                      r  s_reg[0]/CLK
+  -------------------------------------------------------------------    -------------------
+                         DSP48E1 (Prop_dsp48e1_CLK_PCOUT[0])
+                                                      0.478     1.451 r  s_reg[0]/PCOUT[0]
+                         net (fo=1, unplaced)         0.000     1.451    s_reg_n_153_[0]
+                         DSP48E1                                      r  s_reg[1]/PCIN[0]
+  -------------------------------------------------------------------    -------------------
+
+                         (clock clk rise edge)        3.500     3.500 r  <hidden>
+                                                      0.000     3.500 r  clk
+                         net (fo=43, unset)           0.924     4.424    clk
+                         DSP48E1                                      r  s_reg[1]/CLK
+                         clock pessimism              0.000     4.424    <hidden>
+                         clock uncertainty           -0.035     4.389    <hidden>
+                         DSP48E1 (Setup_dsp48e1_CLK_PCIN[0])
+                                                     -1.400     2.989    s_reg[1]
+  -------------------------------------------------------------------
+                         required time                          2.989    <hidden>
+                         arrival time                          -1.451    <hidden>
+  -------------------------------------------------------------------
+                         slack                                  1.538    <hidden>
+
+
+
+
