@@ -16,9 +16,14 @@ import yaml
 from arith.tools import arith_common as ac
 from arith.tools.suite import job_kind
 
-P = {"adder": "ADD", "multiplier": "MUL", "mac": "MAC"}
+P = {"adder": "ADD", "multiplier": "MUL", "mac": "MAC", "exp2": "EXP", "log2": "LOG", "sincos": "SIN", "atan2_mag": "ATN"}
+ELEM = ("exp2", "log2", "sincos", "atan2_mag")          # the elementary functions of brief 139d: not exact, an error bound against the exact function, a model per variant
 INDEP = {"adder": "a bit-serial chain of full adders", "multiplier": "a shift-and-add formulation (and, for the Booth recoding, the digit-sum identity)",
-         "mac": "a structure-free reference that applies the samples one at a time with Python integers"}
+         "mac": "a structure-free reference that applies the samples one at a time with Python integers",
+         "exp2": "exact rational (Fraction) evaluations of the interpolation and Horner formulas, a floating-point hyperbolic CORDIC, and the maths library's 2**x",
+         "log2": "exact rational (Fraction) evaluations of the interpolation and Horner formulas, a floating-point hyperbolic CORDIC, and the maths library's log2",
+         "sincos": "an exact rational (Fraction) evaluation of the interpolation formula, a floating-point CORDIC, and the maths library's sin and cos",
+         "atan2_mag": "a floating-point CORDIC and the maths library's atan2 and hypot"}
 
 
 def lines_of(fn: str, rel: str, start: str, end: str) -> str:
@@ -51,6 +56,40 @@ LEAN = {
 }
 
 
+_LERP = ("LERP", "ArithLerp.lerp_between", "Arith.Lerp", "Linear interpolation stays between the segment's end values",
+         "In a rising segment with break-point value c0 and slope s, the interpolated value (c0 * 2^D + s * d) / 2^D lies between c0 and c0 + s for every position d below 2^D and every D: the table variant cannot overshoot its segment",
+         "{rtl}", ("assign prod_{l}", "assign sh_{l}"), "arith/{fn}/{rtl} (the product, sum and shift lines of the interpolation)", "formal/lean/Arith/Lerp.lean (interp)")
+_MONO = ("LERP-MONO", "ArithLerp.lerp_mono", "Arith.Lerp", "Linear interpolation does not fall as the position grows",
+         "Within a segment of non-negative slope the interpolated value is non-decreasing in the position d, for every D, c0 and s",
+         "{rtl}", ("assign prod_{l}", "assign sh_{l}"), "arith/{fn}/{rtl} (the product, sum and shift lines of the interpolation)", "formal/lean/Arith/Lerp.lean (interp)")
+_HYP = ("HYP", "ArithCordic.hyp_step_invariant", "Arith.Cordic", "A hyperbolic CORDIC step scales x^2 - y^2 by a constant",
+        "For every direction d = +-1 and every shift (scaled by u = 2^i), the step (u x + d y, u y + d x) multiplies x^2 - y^2 by exactly u^2 - 1, whatever the data: the hyperbolic gain is a data-independent constant",
+        "rtl/{fn}_cordic.sv", ("xr <= dpos ? xi + (yi >>> SHI)", "yr <= dpos ? yi + (xi >>> SHI)"), "arith/{fn}/rtl/{fn}_cordic.sv (the x and y adders of one stage)", "formal/lean/Arith/Cordic.lean (the statement itself)")
+_CIRC = ("CIRC", "ArithCordic.circ_step_norm", "Arith.Cordic", "A circular CORDIC step scales the squared length by a constant",
+         "For every direction d = +-1 and every shift (scaled by u = 2^i), the step (u x - d y, u y + d x) multiplies x^2 + y^2 by exactly u^2 + 1, whatever the data: the CORDIC gain is a data-independent constant",
+         "{rtl}", ("{c1}", "{c2}"), "arith/{fn}/{rtl} (the x and y adders of one stage)", "formal/lean/Arith/Cordic.lean (the statement itself)")
+
+
+def _fill(e, **kw):
+    return tuple(x.format(**kw) if isinstance(x, str) else tuple(y.format(**kw) for y in x) for x in e)
+
+
+LEAN["exp2"] = [_fill(_LERP, rtl="rtl/exp2_lerp.sv", l="y", fn="exp2"), _fill(_MONO, rtl="rtl/exp2_lerp.sv", l="y", fn="exp2"), _fill(_HYP, fn="exp2")]
+LEAN["log2"] = [_fill(_LERP, rtl="rtl/log2_lerp.sv", l="y", fn="log2"), _fill(_MONO, rtl="rtl/log2_lerp.sv", l="y", fn="log2"),
+                (_HYP[0], _HYP[1], _HYP[2], _HYP[3], _HYP[4], "rtl/log2_cordic.sv", ("xr <= dpos ? xi + (yi >>> SHI)", "yr <= dpos ? yi + (xi >>> SHI)"),
+                 "arith/log2/rtl/log2_cordic.sv (the x and y adders of one stage)", _HYP[8])]
+LEAN["sincos"] = [
+    ("QUAD-SPLIT", "ArithQuadrant.quadrant_split", "Arith.Quadrant", "The phase splits into a quadrant and an angle without loss",
+     "For every width k, a phase below 4 * 2^k splits into a quadrant (its top two bits) below 4 and an angle (the rest) so that quadrant * 2^k + angle is the phase again",
+     "rtl/sincos_lerp.sv", ("assign {q, idx, d} = phase;", "assign {q, idx, d} = phase;"), "arith/sincos/rtl/sincos_lerp.sv (the bit-field split of the phase)", "formal/lean/Arith/Quadrant.lean (the statement itself)"),
+    ("QUAD-JOIN", "ArithQuadrant.quadrant_join", "Arith.Quadrant", "Every quadrant and angle pair is one phase",
+     "For every width k, any quadrant and any angle below 2^k put together split back into the same quadrant and the same angle: the split is a bijection",
+     "rtl/sincos_lerp.sv", ("assign {q, idx, d} = phase;", "assign {q, idx, d} = phase;"), "arith/sincos/rtl/sincos_lerp.sv (the bit-field split of the phase)", "formal/lean/Arith/Quadrant.lean (the statement itself)"),
+    _fill(_LERP, rtl="rtl/sincos_lerp.sv", l="s", fn="sincos"),
+    _fill(_CIRC, rtl="rtl/sincos_cordic.sv", c1="xr <= dpos ? xi - (yi >>> k)", c2="yr <= dpos ? yi + (xi >>> k)", fn="sincos")]
+LEAN["atan2_mag"] = [_fill(_CIRC, rtl="rtl/atan2_cordic.sv", c1="xn = xt + (yt >>> (s * GR + j));", c2="yn = yt - (xt >>> (s * GR + j));", fn="atan2_mag")]
+
+
 def acc_lines(fn: str) -> str:
     ls = (ac.ARITH / fn / "rtl/mac_dsp.sv").read_text().splitlines()
     a = next(i for i, l in enumerate(ls, 1) if "else if (en_m) acc <=" in l)
@@ -66,7 +105,7 @@ def plan(fn: str) -> str:
     rtl = [f"{base}/{v['file']}" for v in s["variants"].values()]
     res = f"{base}/verif/results"
     junit = f"{res}/pytest_junit.xml"
-    bench = [f"{base}/tests/{fn}_cocotb.py", f"{base}/model.py"]
+    bench = [f"{base}/tests/{fn}_cocotb.py", f"{base}/model.py"] + (["arith/tools/fxlib.py"] if fn in ELEM else [])
     formal_files = [f"{base}/formal/{x.name}" for x in sorted((ac.ARITH / fn / "formal").glob("*.sv"))] + [f"{base}/formal/jobs.yaml"]
     lat = {v: vd["latency"] for v, vd in s["variants"].items()}
     nv = len(s["variants"])
@@ -96,6 +135,25 @@ def plan(fn: str) -> str:
              text="spec.yaml states an interface contract (protocol, throughput, latency, reset, clock, stalls) and integration guidance (port timing, constraints to carry). Every variant passes Verilator -Wall at every point of spec.yaml; its ports and default parameters are the ones spec.yaml states; its header states the intended primitive use before any Vivado run; spec.md is the rendering of spec.yaml; the out-of-context wrapper and the build.yaml for each variant (Artix-7 xc7a100t and K26 xck26, prepared and not run) are current and lint-clean at every point they list, so a Vivado run can start from the repository alone.",
              source=f"{base}/spec.yaml", spec_status="draft"),
     ]
+    if fn in ELEM:
+        npts = sum(len(v["accuracy_points"]) for v in s["variants"].values())
+        for r in R:
+            if r["id"] == f"{pre}-F-EXACT":
+                r["title"] = "Every variant is bit-exact against its own model"
+                r["text"] = (f"At every parameter point listed in spec.yaml ({sum(len(v['exhaustive_points']) for v in s['variants'].values())} exhaustive points, {sum(len(v['random_points']) for v in s['variants'].values())} random ones, "
+                             f"across {nv} variants), each variant's outputs equal its own model's (model.py, selected by variant) in every clock: every input is driven at the small points; edge values, table break points and random "
+                             "inputs at the large ones. The variants round differently and are not bit-identical to each other; the model of each is the bit-exact definition of that variant, and its distance from the exact function is "
+                             "the accuracy requirement.")
+            if r["id"] == f"{pre}-F-EQUIV":
+                r["title"] = "The error against the exact function is bounded for all inputs, by proof, at a small input width"
+                r["text"] = ("SymbiYosys with the slang front end compares each variant, delayed by its latency, with the exact function on 8 input bits to 24 fractional bits (a reference ROM written from the maths library, formal/*_ref.sv) "
+                             "and asserts the error stays within the bound of the job, which is the model's measured error at that point plus one unit for the reference's own rounding. A proof is by k-induction (for all inputs, any run length) "
+                             "at the widths in formal/jobs.yaml; wider points are covered by the exhaustive scan of the accuracy requirement and by simulation, not by proof. The quadrant map and the variants' structural identities are inside the checks.")
+        R.insert(next(i for i, r in enumerate(R) if r["id"] == f"{pre}-F-LAT"),
+                 dict(id=f"{pre}-F-ACC", kind="functional", title="The error against the exact function is within the stated bound, at every listed point",
+                      text=(f"Each of the {npts} accuracy points of spec.yaml states a bound in last places; the model's error against the exact function (the maths library, real arithmetic, unrounded) over EVERY input of that point is at most the bound "
+                            "and within 0.06 of it (so the bound is neither false nor loose). A point not listed has no stated bound."),
+                      source=f"{base}/spec.md", spec_status="draft"))
     for key, thm, mod, title, text, rtlf, rng, rtls, trans in LEAN[fn]:
         R.append(dict(id=f"{pre}-F-LEAN-{key}", kind="functional", title=f"{title}, for every width",
                       text=text + ". The statement is the specification and is NOT approved by a human (verif/lean_approvals.yaml is empty), so the proof is shown but not counted as verification. The Lean text is a hand transcription of the RTL's structure; it models no timing or clocking.",
@@ -110,14 +168,17 @@ def plan(fn: str) -> str:
         V.append(d)
 
     item(f"V-{pre}-MODEL", [f"{pre}-F-MODEL"], "sim_test", "The model against independent formulations (exhaustive small, random large) and the pinned conventions",
-         {"file": junit, "reader": "junit", "tests": [f"test_{fn}_model::*"]}, checks=[f"{base}/model.py"])
+         {"file": junit, "reader": "junit", "tests": [f"test_{fn}_model::*"]}, checks=[f"{base}/model.py"] + (["arith/tools/fxlib.py"] if fn in ELEM else []))
     item(f"V-{pre}-EXHAUSTIVE", [f"{pre}-F-EXACT"], "sim_test", "Every variant against the model, every input, at the small points (Icarus + cocotb)",
          {"file": junit, "reader": "junit", "tests": [f"test_{fn}_exhaustive_rtl::*"]}, checks=rtl + bench)
     item(f"V-{pre}-RANDOM", [f"{pre}-F-EXACT"], "sim_test", "Every variant against the model at the large points: edge values, carry runs and random inputs (Icarus + cocotb)",
          {"file": junit, "reader": "junit", "tests": [f"test_{fn}_random_rtl::*"]}, checks=rtl + bench)
+    if fn in ELEM:
+        item(f"V-{pre}-ACCURACY", [f"{pre}-F-ACC"], "sim_test", "The model's error against the exact function over every input of every listed point, against the stated bounds",
+             {"file": junit, "reader": "junit", "tests": [f"test_{fn}_accuracy::*"]}, checks=[f"{base}/model.py", f"{base}/spec.yaml", "arith/tools/fxlib.py"])
     item(f"V-{pre}-LATENCY", [f"{pre}-F-LAT"], "sim_test", "The bench passes at the stated latency and fails two clocks off, for every variant",
          {"file": junit, "reader": "junit", "tests": [f"test_{fn}_latency_rtl::*"]}, checks=rtl + bench)
-    item(f"V-{pre}-FORMAL-PROOF", [f"{pre}-F-EQUIV"], "formal", f"k-induction proofs of the variants against the reference ({len(proofs)} jobs; widths in formal/jobs.yaml)",
+    item(f"V-{pre}-FORMAL-PROOF", [f"{pre}-F-EQUIV"], "formal", (f"k-induction proofs of the variants' error bounds against the exact function ({len(proofs)} jobs; widths in formal/jobs.yaml)" if fn in ELEM else f"k-induction proofs of the variants against the reference ({len(proofs)} jobs; widths in formal/jobs.yaml)"),
          {"file": junit, "reader": "junit", "tests": [f"test_{fn}_formal_proof_rtl::*"]}, checks=rtl + formal_files)
     if "bounded" in kinds:
         item(f"V-{pre}-FORMAL-BOUNDED", [f"{pre}-F-EQUIV"], "formal", f"Bounded model checking from reset ({len(bounded)} job: a larger width than the proofs reach)",
@@ -142,12 +203,12 @@ def plan(fn: str) -> str:
         item(f"V-{pre}-LEAN-{key}", [f"{pre}-F-LEAN-{key}"], "formal_lean", title, None, lean={"module": mod, "theorem": thm},
              rtl_link={"kind": "transcription_untested", "source": [{"file": f"{base}/{rtlf}", "lines": lines}], "transcribed_in": trans})
     doc = {"schema": "fpga-design-agent/testplan/v1", "design": f"arith_{fn}",
-           "notes": (f"Arithmetic library, function {fn} (brief 139a). Everything here is before Vivado: the model, the RTL variants, simulation, formal equivalence, Lean statements and the prepared out-of-context build files. "
+           "notes": (f"Arithmetic library, function {fn} (brief {'139d' if fn in ELEM else '139a'}). Everything here is before Vivado: the model, the RTL variants, simulation, formal equivalence, Lean statements and the prepared out-of-context build files. "
                      "No performance requirement exists because nothing about LUTs, DSPs, Fmax or power has been measured yet; the Vivado runs (build/<variant>/build.yaml) will add them. "
                      "Every requirement is a draft written by the agent; none is agreed by a human. Lean statements are not approved. Generated by arith/tools/gen_testplan.py."),
            "discover": [{"glob": f"arith/{fn}/tests/test_*.py", "pattern": r"^def (test_\w+)"}],
            "requirements": R, "verification": V}
-    head = (f"# {fn} testplan, schema v1 (brief 116) for the arithmetic library (brief 139a). GENERATED by `python -m arith.tools.gen_testplan` from spec.yaml, formal/jobs.yaml and the\n"
+    head = (f"# {fn} testplan, schema v1 (brief 116) for the arithmetic library (brief {ac.brief_of(fn)}). GENERATED by `python -m arith.tools.gen_testplan` from spec.yaml, formal/jobs.yaml and the\n"
             "# test files: edit those, not this file. Status is never typed here: `python -m flow.trace_v1 write` reads the recorded evidence in verif/results/ and computes it.\n")
     return head + yaml.safe_dump(doc, sort_keys=False, width=180, allow_unicode=True)
 

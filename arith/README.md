@@ -1,4 +1,4 @@
-# Arithmetic library: adders, multipliers, multiply-accumulate (brief 139a)
+# Arithmetic library: adders, multipliers, multiply-accumulate (brief 139a), exp2, log2, sincos, atan2_mag (brief 139d)
 
 The first functions of a library of FPGA arithmetic, taken as far as they can go before Vivado: each has a specification, a bit-exact model, 2 to 3 RTL variants
 that differ in a real PPA trade-off, simulation against the model (exhaustive at small widths, edge-value and random at large ones, with seeded faults to show the
@@ -15,6 +15,10 @@ worktree, not yet merged, so this layout follows the brief's own and is mapped t
 | Integer adder and subtractor, with carry/borrow in and out and signed overflow | `ripple` (one carry chain), `carry_select` (blocks computed for carry 0 and 1), `pipelined` (a chunk of the carry chain per clock) | [adder/spec.md](adder/spec.md) | [adder/verif/testplan.yaml](adder/verif/testplan.yaml), [matrix](adder/verif/matrix.md) |
 | Multiplier, exact WA + WB bit product, signed or unsigned | `dsp` (DSP blocks, 0 to 3 registers), `lut_array` (shifted partial products in LUTs), `booth_r4` (radix-4 Booth array in LUTs) | [multiplier/spec.md](multiplier/spec.md) | [multiplier/verif/testplan.yaml](multiplier/verif/testplan.yaml), [matrix](multiplier/verif/matrix.md) |
 | Multiply-accumulate, LANES products per clock into one wrapping accumulator | `dsp` (DSP-mapped, 1 to 3 registers), `dsp_cascade` (lanes chained like a DSP cascade), `fabric` (no DSP) | [mac/spec.md](mac/spec.md) | [mac/verif/testplan.yaml](mac/verif/testplan.yaml), [matrix](mac/verif/matrix.md) |
+| Base-2 exponential of a fraction, 2**x for x in [0, 1) (brief 139d) | `table` (256-entry ROM), `lerp` (segment table + linear interpolation, 1 DSP), `poly2` (segment table + quadratic, 2 DSPs), `cordic` (hyperbolic rotation, no DSP in the iterations) | [exp2/spec.md](exp2/spec.md) | [exp2/verif/testplan.yaml](exp2/verif/testplan.yaml), [matrix](exp2/verif/matrix.md) |
+| log2 of a mantissa in [1, 2) (brief 139d) | `table`, `lerp`, `poly2`, `cordic` (hyperbolic vectoring) | [log2/spec.md](log2/spec.md) | [log2/verif/testplan.yaml](log2/verif/testplan.yaml), [matrix](log2/verif/matrix.md) |
+| Sine and cosine of a phase (brief 139d; the alternatives to brief 137's CORDIC design) | `lerp`, `poly2` (quarter-wave tables), `cordic` (rotation mode) | [sincos/spec.md](sincos/spec.md) | [sincos/verif/testplan.yaml](sincos/verif/testplan.yaml), [matrix](sincos/verif/matrix.md) |
+| atan2 and vector magnitude (brief 139d) | `cordic` (a register per iteration), `cordic_g2` (a register per GRP iterations) | [atan2_mag/spec.md](atan2_mag/spec.md) | [atan2_mag/verif/testplan.yaml](atan2_mag/verif/testplan.yaml), [matrix](atan2_mag/verif/matrix.md) |
 
 ## Layout (one folder per function)
 
@@ -29,7 +33,7 @@ worktree, not yet merged, so this layout follows the brief's own and is mapped t
 | `<fn>/formal/` | the SymbiYosys tops and `jobs.yaml` |
 | `<fn>/ooc/`, `<fn>/build/<variant>/build.yaml` | the generated register wrapper and the out-of-context build file of each variant (`tools/gen_build.py`) |
 | `tools/` | the shared pieces: `arith_common.py`, `bench.py`, `suite.py`, `run_mutants.py`, `run_formal.py`, `gen_*.py` |
-| `../formal/lean/Arith/` | the Lean statements and proofs (`Adder.lean`, `Booth.lean`, `Mac.lean`) in the repository's Lean project |
+| `../formal/lean/Arith/` | the Lean statements and proofs (`Adder.lean`, `Booth.lean`, `Mac.lean`; brief 139d: `Lerp.lean`, `Quadrant.lean`, `Cordic.lean`) in the repository's Lean project |
 
 The plan of brief 137 describes `library/<function>/` with `spec`, `model/`, `lean/`, `impl/<variant>/` and `surface/<fabric>/`. Here `model.py` is the model, `rtl/<variant>.sv`
 is `impl/<variant>/` (flat, one file per variant), the Lean files are in the repository's one Lean project, and `surface/<fabric>/` does not exist yet: it is where the Vivado
@@ -52,6 +56,29 @@ Exact numbers and their dates are in each `verif/results/` and in the function's
 - The Lean proofs use Lean 4.36 core only (no Mathlib) and are checked by `lake build` in `formal/lean`.
 - Simulation uses Icarus; Verilator is used for lint only.
 
+## Elementary functions (brief 139d): exp2, log2, sincos, atan2_mag
+
+These four differ from the first three in one way that changes what "verified" means: they are **not exact**. Each variant is bit-exact against **its own model** (`model.compute(variant, params, ...)`; the
+variants round differently and are not bit-identical to each other, except the two atan2_mag variants, which are), and its distance from the exact function is a separate, stated, **measured** error bound per
+variant and listed point (`spec.yaml` `accuracy_points`, rendered in each `spec.md` under "Accuracy"; `tests/test_<fn>_accuracy.py` scans every input of the point and fails if the bound is false or loose).
+
+| What | Where |
+|---|---|
+| shared constants (table break points and slopes, Chebyshev-fitted quadratics, CORDIC angle and gain constants) and the integer table-plus-polynomial arithmetic | [tools/fxlib.py](tools/fxlib.py): the one place a constant is defined; the models, the RTL and the tests all use it |
+| the generated RTL | [tools/gen_rtl.py](tools/gen_rtl.py) writes every `rtl/*.sv` of these four functions and the formal reference ROMs `formal/*_ref.sv`; `--check` (a test and CI) fails if a committed file differs, so a table in the RTL is the model's table |
+| table variants (`table`, `lerp`, `poly2`) | a 256-entry direct ROM, or a 2**SB-segment table of break-point values and slopes (one DSP) or quadratic coefficients (two DSPs in a Horner chain); coefficients have 20 fractional bits, the datapath rounds once at the end |
+| CORDIC variants | circular rotation (sincos), circular vectoring (atan2_mag), hyperbolic rotation (exp2: z = x ln 2) and hyperbolic vectoring (log2: z = atanh((m-1)/(m+1))); one stage per iteration, no DSP in the iterations |
+| formal | SymbiYosys against a reference ROM written straight from the maths library (`formal/*_ref.sv`, 8 input bits): the error bound of each variant proved by k-induction for all inputs at that width, the quadrant map included, planted faults refuted; a constant table is a read-only memory, so every formal script runs `memory_map` (otherwise a k-induction step would treat the table as free) |
+| Lean | statements about the pieces that hold for every width: linear interpolation stays between the segment's end values and is monotone, the quadrant split of the phase is a bijection, a CORDIC step scales the squared length (circular) or x**2 - y**2 (hyperbolic) by a data-independent constant. The error bounds of the table-plus-polynomial and CORDIC variants are NOT proved for all widths: they are an exhaustive computation per listed point, and a proof (interval arithmetic on the second and third derivatives, or a CORDIC convergence argument) is a research item |
+| harness | as for the first three, plus `--variant` (which model to compare bit for bit) and `--err-ulp` (the SystemVerilog checker's error bound, which uses the maths library's `$sin`, `$atan2`, `$pow`, `$ln`, `$hypot` in simulation) |
+
+Limits specific to these four: the clamps of the exp2 and log2 variants are unreachable (their results are inside the range by construction) and so are not mutated; accuracy is stated at listed points only and the
+error moves with the parameters (`model.max_error` measures any other point); the formal error bounds hold at 8 input bits (4 bits per coordinate for atan2_mag), wider points are covered by simulation and the exhaustive
+accuracy scan; Verilator is used for lint only; the CORDIC constants and table values come from double-precision arithmetic (53 bits for 20 to 28-bit constants, no ties in practice, and a test pins the generated RTL to the
+model's). The sincos entry is the table-based alternative to brief 137's CORDIC design; its cordic variant uses the same interface as the table variants, not 137's.
+
+Next steps for the engineer who picks this up: (1) the Vivado characterisation of every `build/<variant>/build.yaml` on xc7a100t and xck26 (see "Running the Vivado characterisation"), with a clock sweep, and one run per parameter point of `ooc_points`, to turn the expectations in the RTL headers into surfaces (the table variants' BRAM against distributed-RAM choice, the DSP count of poly2, the CORDIC stage cost per bit are the open questions); (2) range-reduction wrappers that make `exp`, `exp2` of any fixed-point number, and `log2`, `ln`, `log10` of any positive number from these cores, with `lzc_norm` of brief 139b for the mantissa, each as its own verified entry; (3) a proof of the error bounds for all widths of the table variants (interval arithmetic over the second and third derivative bounds of the function, per segment) and a convergence argument for the CORDIC variants, both research; (4) formal error bounds at wider inputs than 8 bits (a reference ROM does not scale: a real-number reference or a high-precision second implementation would); (5) a bounded mutation of the clamps, if a use makes them reachable.
+
 ## Running it
 
 ```
@@ -59,7 +86,7 @@ pip install pyyaml pytest cocotb==2.0.1          # Icarus (iverilog), Verilator 
 python -m pytest -q arith/adder/tests             # one function: model, simulation, latency, mutants, formal, package checks
 python -m arith.tools.run_mutants adder           # the mutation run, writing verif/results/mutation.json
 python -m arith.tools.run_formal adder            # the formal jobs, writing verif/results/formal.json
-python -m arith.tools.gen_build; python -m arith.tools.gen_spec_md; python -m arith.tools.gen_harness; python -m arith.tools.gen_testplan    # regenerate; add --check to compare
+python -m arith.tools.gen_rtl; python -m arith.tools.gen_build; python -m arith.tools.gen_spec_md; python -m arith.tools.gen_harness; python -m arith.tools.gen_testplan    # regenerate; add --check to compare
 python -m flow.trace_v1 check                     # the 116 gate: every test named by an item, every requirement traced
 ```
 

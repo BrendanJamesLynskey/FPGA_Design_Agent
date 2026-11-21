@@ -1,11 +1,14 @@
 {
- "build_log_sha256": "a1da19e73e8ef098802ddab0b34285446bb4fcc22057e9330ba3fe887e7b5619",
+ "build_log_sha256": "9f67cd502da5ece4ec2c349e2ee927544331995648efac4ce11657f3c0c4ad58",
  "build_ok": true,
  "files": {
-  "Arith.lean": "37125652434dfacc1e7c76350cd4dcfe223249532ba219f11d60633bc79e0ef4",
+  "Arith.lean": "74d0b939185f09d06d40d6454cc6260f6f535a95cc8d7f637b4990b40f972904",
   "Arith/Adder.lean": "843fecb41430d6029bb632f7aa6ab731ef9400db774c70ed5c84f8f36aab25ce",
   "Arith/Booth.lean": "e0f4e895e69a2678c580a12d3477a664aa80649fd39a4b951f57d9f3acae2303",
+  "Arith/Cordic.lean": "600bada5c70ae145cb021234befa388b0a3b2ea4fae3333771f6e8d30d50a070",
+  "Arith/Lerp.lean": "68df8c2358aabddbc79b03ca1341f1a783bd4071f6e8928db0e6481ca4ea1dd0",
   "Arith/Mac.lean": "b6b6def9b20250bceb2da2da2780663d324b9522023dc6d629ba03668e41bfc7",
+  "Arith/Quadrant.lean": "6b563f79a455c472b896bf4417de44ac05d8825fad249ad5efde451c691c592f",
   "Cksum.lean": "aa6990c7c4cc33b524f81c7b633240613fe2a0393ca904ab2164447fb424307c",
   "Cksum/CrossCheck.lean": "08436e62554b56e55fd65f0989c957c15bd962ad288b3f4ae847729dc51278b7",
   "Cksum/Spec.lean": "0e7abfc90f72a6b46f0d664427663f9ee527351c04a2720ea2a6cf4721d4c7ef",
@@ -22,8 +25,16 @@
  "rtl_sources": {
   "arith/adder/rtl/adder_carry_select.sv:39-47": "edfd0c914d857f445269613384bb5ee196f7bf86b780373086e8230e65800e88",
   "arith/adder/rtl/adder_ripple.sv:26-28": "dce2678218b049ad133281b015e24d473f6bb2108de61241c71f292b1eb92db7",
+  "arith/atan2_mag/rtl/atan2_cordic.sv:126-127": "48fe8d0ac39fe43475fa90d8b413ece092fdaafdcc58203be2e1204837e783d6",
+  "arith/exp2/rtl/exp2_cordic.sv:132-133": "7bfa9345d0637349e1de3010644affccfa32c2273ac8ac595aa86e1fd992642a",
+  "arith/exp2/rtl/exp2_lerp.sv:283-285": "34fe7deda62cc0602a1cf9ef991fd739567bc08ce90c8d56974f4ad1afabb550",
+  "arith/log2/rtl/log2_cordic.sv:100-101": "7bfa9345d0637349e1de3010644affccfa32c2273ac8ac595aa86e1fd992642a",
+  "arith/log2/rtl/log2_lerp.sv:283-285": "34fe7deda62cc0602a1cf9ef991fd739567bc08ce90c8d56974f4ad1afabb550",
   "arith/mac/rtl/mac_dsp.sv:108-109": "cc78a75c3fee29679b946eb44847730e92d99154de9b3e46a82b1dc65aba697e",
   "arith/multiplier/rtl/mult_booth_r4.sv:26-39": "bf32ab1b15df0714032d18afe3b34a368391178f74b0262f2f2e6cb897d4ea8e",
+  "arith/sincos/rtl/sincos_cordic.sv:105-106": "a4b7734cc2432485e537f0e406870bda2a7c90b27ff52c1d0fc8a512701e898b",
+  "arith/sincos/rtl/sincos_lerp.sv:527-527": "dc019fb32cef78a2ab15075ed22cccea4b398a90998c96b5a64a49caa858f7db",
+  "arith/sincos/rtl/sincos_lerp.sv:540-542": "6489e71d1cdd2697ff831e63cb60086093f30126a054dada9c92899ca7c52ad7",
   "designs/b119_tcp_fast/rtl/tcp_fast.sv:256-260@9f8d760788e4a8afcd8756e29eca348d49858765": "9a9272bbf1eab0aa07f2b150d662fe0f98f075cd2c162e116cd941e181e726bc",
   "designs/b119_tcp_fast/rtl/tcp_fast.sv:326-336@9f8d760788e4a8afcd8756e29eca348d49858765": "ddeb015f9e9c7a7c0f837e7c2e89dd40803dfb629fbd96ba5d2e2fb52fea19ad",
   "designs/b96_kr260_10g/rtl/rate_match_gp.sv:78-82": "4437715e5ac7150d752a88436fc28046cc1d5b5181325a674c20d6d89ba7a93c",
@@ -76,6 +87,52 @@
    "statement_sha256": "96db3186959b8cf4c2f3cb10f06c81573c0ac1fd8d923d08c2c76547e438448b",
    "tier": "kernel_only"
   },
+  "ArithCordic.circ_step_norm": {
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "build_ok": true,
+   "definitions_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "module": "Arith.Cordic",
+   "statement_sha256": "082fad8e899ec8638b226fa785b1716bbe855e62d9d2aff8714f542f7464d370",
+   "tier": "kernel_only"
+  },
+  "ArithCordic.hyp_step_invariant": {
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "build_ok": true,
+   "definitions_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "module": "Arith.Cordic",
+   "statement_sha256": "cc3f5edf7f81e19fdac6a74d53a98d628360b0076a0efff28de182070505edc2",
+   "tier": "kernel_only"
+  },
+  "ArithLerp.lerp_between": {
+   "axioms": [
+    "Quot.sound",
+    "propext"
+   ],
+   "build_ok": true,
+   "definitions_sha256": "b5e065ae40a1607d70d1128924d3c909a0c91c0277e85019e6526f117348231a",
+   "module": "Arith.Lerp",
+   "statement_sha256": "d976638313466cf44cc385027f511e5ebb4d8dbddd1c763e7c944bc49472a9c3",
+   "tier": "kernel_only"
+  },
+  "ArithLerp.lerp_mono": {
+   "axioms": [
+    "Quot.sound",
+    "propext"
+   ],
+   "build_ok": true,
+   "definitions_sha256": "b5e065ae40a1607d70d1128924d3c909a0c91c0277e85019e6526f117348231a",
+   "module": "Arith.Lerp",
+   "statement_sha256": "b999545f625f1baf05ca6cbb7d793a1074c229e1b5590f64979a8ad6b30c21e7",
+   "tier": "kernel_only"
+  },
   "ArithMac.run_after_clr": {
    "axioms": [
     "propext"
@@ -94,6 +151,27 @@
    "definitions_sha256": "728a209082942fc3b4737ef182713748557c5b5f42ac37707dfc2170599ebe98",
    "module": "Arith.Mac",
    "statement_sha256": "26ba95f62b5f4c0a32eb9e90a5c5de1b93e58ae6f98457ecd0e512aeee467a29",
+   "tier": "kernel_only"
+  },
+  "ArithQuadrant.quadrant_join": {
+   "axioms": [
+    "Quot.sound",
+    "propext"
+   ],
+   "build_ok": true,
+   "definitions_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "module": "Arith.Quadrant",
+   "statement_sha256": "6a6c4fffce2bb506f2c4587372fb8ef941a2263a5ac0801392002073452bd339",
+   "tier": "kernel_only"
+  },
+  "ArithQuadrant.quadrant_split": {
+   "axioms": [
+    "propext"
+   ],
+   "build_ok": true,
+   "definitions_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "module": "Arith.Quadrant",
+   "statement_sha256": "4e391e92e8817baa9acda5a2b66275d8f6a7d6c98bb6c4051839092d6fd6674e",
    "tier": "kernel_only"
   },
   "Cksum.incUpdate_correct": {
