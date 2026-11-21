@@ -27,6 +27,13 @@
      },
      {
       "gate": false,
+      "id": "B96-F-DEFAULT",
+      "state": "stale",
+      "text": "its evidence is stale",
+      "type": "no_passing_evidence"
+     },
+     {
+      "gate": false,
       "id": "B96-S-RATEMATCH",
       "state": "fail",
       "text": "an item fails",
@@ -35,14 +42,15 @@
      {
       "gate": false,
       "id": "B96-F-OFFSET",
-      "text": "depends on a second reference clock or a 10G network card (a loopback has no frequency offset); only hardware verification can close it, and it has not been done",
-      "type": "hardware_open"
+      "state": "stale",
+      "text": "its evidence is stale",
+      "type": "no_passing_evidence"
      },
      {
       "gate": false,
       "id": "B96-F-OFFSET",
-      "text": "passes in simulation but depends on a second reference clock or a 10G network card (a loopback has no frequency offset)",
-      "type": "external_not_hardware_verified"
+      "text": "depends on a second reference clock or a 10G network card (a loopback has no frequency offset); only hardware verification can close it, and it has not been done",
+      "type": "hardware_open"
      },
      {
       "gate": false,
@@ -66,6 +74,13 @@
      },
      {
       "gate": false,
+      "id": "B96-S-CDC",
+      "state": "fail",
+      "text": "an item fails",
+      "type": "no_passing_evidence"
+     },
+     {
+      "gate": false,
       "id": "B96-I-REGMAP",
       "state": "stale",
       "text": "its evidence is stale",
@@ -76,6 +91,13 @@
       "id": "B96-F-BUILDS",
       "state": "fail",
       "text": "an item fails",
+      "type": "no_passing_evidence"
+     },
+     {
+      "gate": false,
+      "id": "B96-F-EYESCAN",
+      "state": "stale",
+      "text": "its evidence is stale",
       "type": "no_passing_evidence"
      },
      {
@@ -107,14 +129,75 @@
      },
      {
       "gate": false,
+      "id": "B96-F-DBGXVC",
+      "state": "fail",
+      "text": "an item fails",
+      "type": "no_passing_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-SIM-PCSMAC",
+      "text": "the evidence file changed after it was pinned (run: python -m flow.trace_v1 pin)",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-SIM-PCSMODEL",
+      "text": "the evidence file changed after it was pinned (run: python -m flow.trace_v1 pin)",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-SIM-CORE-DEFAULT",
+      "text": "the evidence file changed after it was pinned (run: python -m flow.trace_v1 pin)",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-SIM-CORE-RM",
+      "text": "the evidence file changed after it was pinned (run: python -m flow.trace_v1 pin)",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-SIM-RM",
+      "text": "the evidence file changed after it was pinned (run: python -m flow.trace_v1 pin)",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-SIM-PPM-PARTNER",
+      "text": "the evidence file changed after it was pinned (run: python -m flow.trace_v1 pin)",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-SIM-EYESCAN",
+      "text": "the evidence file changed after it was pinned (run: python -m flow.trace_v1 pin)",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
       "id": "V-SIM-REGMAP",
-      "text": "changed since the evidence was recorded: designs/b96_kr260_10g/docs/register_map.md, designs/b96_kr260_10g/regmap.py",
+      "text": "the evidence file changed after it was pinned (run: python -m flow.trace_v1 pin)",
       "type": "stale_evidence"
      },
      {
       "gate": false,
       "id": "V-SIM-DRIVER",
-      "text": "changed since the evidence was recorded: designs/b96_kr260_10g/host/b96_bench.py, designs/b96_kr260_10g/host/b96f1_bypass.py",
+      "text": "the evidence file changed after it was pinned (run: python -m flow.trace_v1 pin)",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-SIM-BUILDS",
+      "text": "the evidence file changed after it was pinned (run: python -m flow.trace_v1 pin)",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-SIM-LATENCY-MODEL",
+      "text": "the evidence file changed after it was pinned (run: python -m flow.trace_v1 pin)",
       "type": "stale_evidence"
      },
      {
@@ -289,7 +372,8 @@
        "B96-F-PCS",
        "B96-F-MAC"
       ],
-      "status": "pass",
+      "stale_because": "the evidence file changed after it was pinned (run: python -m flow.trace_v1 pin)",
+      "status": "stale",
       "title": "PCS and MAC cocotb bench against the bit-serial reference",
       "value": "1 of 1 tests passed"
      },
@@ -307,7 +391,8 @@
        "B96-F-PCS",
        "B96-F-LOCK"
       ],
-      "status": "pass",
+      "stale_because": "the evidence file changed after it was pinned (run: python -m flow.trace_v1 pin)",
+      "status": "stale",
       "title": "Python reference properties (LFSR, descrambler self-sync, block codes, lock time, bit errors)",
       "value": "9 of 9 tests passed"
      },
@@ -325,7 +410,8 @@
        "B96-F-DEFAULT",
        "B96-S-ORDERS"
       ],
-      "status": "pass",
+      "stale_because": "the evidence file changed after it was pinned (run: python -m flow.trace_v1 pin)",
+      "status": "stale",
       "title": "Whole core, RATE_MATCH = 0, under 97C's own bench",
       "value": "1 of 1 tests passed"
      },
@@ -344,7 +430,8 @@
        "B96-S-ORDERS",
        "B96-F-MAC"
       ],
-      "status": "pass",
+      "stale_because": "the evidence file changed after it was pinned (run: python -m flow.trace_v1 pin)",
+      "status": "stale",
       "title": "Whole core with the elastic buffers (macro and own gray-pointer)",
       "value": "2 of 2 tests passed"
      },
@@ -361,7 +448,8 @@
       "requirements": [
        "B96-S-RATEMATCH"
       ],
-      "status": "pass",
+      "stale_because": "the evidence file changed after it was pinned (run: python -m flow.trace_v1 pin)",
+      "status": "stale",
       "title": "Rate matcher benches (macro, own buffer, direct-read variant, the MIN_KEEP limit)",
       "value": "4 of 4 tests passed"
      },
@@ -378,7 +466,8 @@
       "requirements": [
        "B96-F-OFFSET"
       ],
-      "status": "pass",
+      "stale_because": "the evidence file changed after it was pinned (run: python -m flow.trace_v1 pin)",
+      "status": "stale",
       "title": "Simulated partner at a frequency offset (cocotb)",
       "value": "1 of 1 tests passed"
      },
@@ -395,7 +484,8 @@
       "requirements": [
        "B96-F-EYESCAN"
       ],
-      "status": "pass",
+      "stale_because": "the evidence file changed after it was pinned (run: python -m flow.trace_v1 pin)",
+      "status": "stale",
       "title": "Eye-scan sequencer against its twin and a DRP stand-in",
       "value": "2 of 2 tests passed"
      },
@@ -412,7 +502,7 @@
       "requirements": [
        "B96-I-REGMAP"
       ],
-      "stale_because": "changed since the evidence was recorded: designs/b96_kr260_10g/docs/register_map.md, designs/b96_kr260_10g/regmap.py",
+      "stale_because": "the evidence file changed after it was pinned (run: python -m flow.trace_v1 pin)",
       "status": "stale",
       "title": "Register map is current, decoded exactly, widths agree, stated rules hold",
       "value": "8 of 8 tests passed"
@@ -431,7 +521,7 @@
        "B96-S-DRIVER",
        "B96-S-LASER"
       ],
-      "stale_because": "changed since the evidence was recorded: designs/b96_kr260_10g/host/b96_bench.py, designs/b96_kr260_10g/host/b96f1_bypass.py",
+      "stale_because": "the evidence file changed after it was pinned (run: python -m flow.trace_v1 pin)",
       "status": "stale",
       "title": "Board bench, ppm and bypass drivers judged on a fake board (every safety counter, polarity, lock, verdicts)",
       "value": "37 of 37 tests passed"
@@ -467,7 +557,8 @@
       "requirements": [
        "B96-F-BUILDS"
       ],
-      "status": "pass",
+      "stale_because": "the evidence file changed after it was pinned (run: python -m flow.trace_v1 pin)",
+      "status": "stale",
       "title": "Build parameter consistency",
       "value": "5 of 5 tests passed"
      },
@@ -486,7 +577,8 @@
        "B96-P-LAT-L",
        "B96-P-LAT-D"
       ],
-      "status": "pass",
+      "stale_because": "the evidence file changed after it was pinned (run: python -m flow.trace_v1 pin)",
+      "status": "stale",
       "title": "Latency stage file reproduces the recorded numbers; board and simulation never added into one figure",
       "value": "15 of 15 tests passed"
      },
@@ -1104,6 +1196,131 @@
       "value": null
      },
      {
+      "detail": "measured 0.323 ns; bound at least 0 ns",
+      "evidence": {
+       "exists": true,
+       "file": "results/b131/builds/dbg_xvc/digest.json"
+      },
+      "id": "V-XVC-TIM-SETUP",
+      "instrument": null,
+      "judged_by_bound": true,
+      "method": "timing",
+      "planned": null,
+      "requirements": [
+       "B96-P-TIMING",
+       "B96-F-DBGXVC"
+      ],
+      "status": "pass",
+      "title": "Build dbg_xvc, routed",
+      "value": 0.323
+     },
+     {
+      "detail": "measured 0.011 ns; bound at least 0 ns",
+      "evidence": {
+       "exists": true,
+       "file": "results/b131/builds/dbg_xvc/digest.json"
+      },
+      "id": "V-XVC-TIM-HOLD",
+      "instrument": null,
+      "judged_by_bound": true,
+      "method": "timing",
+      "planned": null,
+      "requirements": [
+       "B96-P-HOLD",
+       "B96-F-DBGXVC"
+      ],
+      "status": "pass",
+      "title": "Build dbg_xvc, routed",
+      "value": 0.011
+     },
+     {
+      "detail": "gates.cdc_no_critical = True",
+      "evidence": {
+       "exists": true,
+       "file": "results/b131/builds/dbg_xvc/digest.json"
+      },
+      "id": "V-XVC-CDC",
+      "instrument": null,
+      "method": "timing",
+      "planned": null,
+      "requirements": [
+       "B96-S-CDC",
+       "B96-F-DBGXVC"
+      ],
+      "status": "pass",
+      "title": "report_cdc after routing, build dbg_xvc (no critical item)",
+      "value": true
+     },
+     {
+      "detail": "gates.post_synth_cdc_structure_clean = False",
+      "evidence": {
+       "exists": true,
+       "file": "results/b131/builds/dbg_xvc/digest.json"
+      },
+      "id": "V-XVC-CDC-STRUCT",
+      "instrument": null,
+      "method": "timing",
+      "planned": null,
+      "requirements": [
+       "B96-S-CDC",
+       "B96-F-DBGXVC"
+      ],
+      "status": "fail",
+      "title": "The flow's post-synthesis CDC structure gate on dbg_xvc (open: 2203 crossings of the core's own hs_vec buses are not matched to their max-delay exceptions in this build; the exceptions exist in the routed design)",
+      "value": true
+     },
+     {
+      "detail": "6 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "results/116_traceability/b96_kr260_10g/pytest_junit.xml"
+      },
+      "id": "V-XVC-VERDICT",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "B96-F-DBGXVC"
+      ],
+      "status": "pass",
+      "title": "The board test's pre-registered verdict fails on each broken criterion; the debug build differs from the parent only in the debug files",
+      "value": "6 of 6 tests passed"
+     },
+     {
+      "detail": "core_cells_removed = 0; core_cells_added_outside_taps = 0",
+      "evidence": {
+       "exists": true,
+       "file": "results/b131/compare/summary.json"
+      },
+      "id": "V-XVC-TRADING-PATH",
+      "instrument": null,
+      "method": "timing",
+      "planned": null,
+      "requirements": [
+       "B96-F-DBGXVC"
+      ],
+      "status": "pass",
+      "title": "Parent (eyescan) against dbg_xvc, same flow, same commit: the core's cells, and the worst slack of paths through the trading path",
+      "value": true
+     },
+     {
+      "detail": "evidence not found: results/b131/hw/*/record.json (planned: board session with the owner (not scheduled))",
+      "evidence": {
+       "exists": false,
+       "file": "results/b131/hw/*/record.json"
+      },
+      "id": "V-HW-XVC-PLANNED",
+      "instrument": "ila_capture",
+      "method": "board_measurement",
+      "planned": "board session with the owner (not scheduled)",
+      "requirements": [
+       "B96-F-DBGXVC"
+      ],
+      "status": "not_run",
+      "title": "ILA found and captured over XVC while Linux runs (pre-registered, dbg_xvc/board/xvc_board_session.sh)",
+      "value": null
+     },
+     {
       "detail": "statement not approved; Gray.gray_step: kernel only; proof of the transcription, transcription tested; recorded build (not re-run)",
       "evidence": {
        "exists": true,
@@ -1502,12 +1719,10 @@
       ],
       "kind": "functional",
       "lean_transcription_only": false,
-      "passing_methods": [
-       "sim_test"
-      ],
+      "passing_methods": [],
       "source": "designs/b96_kr260_10g/docs/design.md#7-verification-plan",
       "spec_status": "draft",
-      "stale_items": 1,
+      "stale_items": 3,
       "state": "fail",
       "text": "Scrambler, block encode and decode, gearbox and block lock produce the same bits as the bit-serial Python reference, at every bit offset, with idles, ordered sets and bit-error runs.",
       "title": "PCS encodes and decodes 64B/66B bit-exactly against an independent model"
@@ -1529,12 +1744,10 @@
       ],
       "kind": "functional",
       "lean_transcription_only": false,
-      "passing_methods": [
-       "sim_test"
-      ],
+      "passing_methods": [],
       "source": "designs/b96_kr260_10g/docs/design.md#7-verification-plan",
       "spec_status": "draft",
-      "stale_items": 1,
+      "stale_items": 3,
       "state": "fail",
       "text": "Frames start in lane 0 and lane 4, every terminate lane and every length residue is handled, FCS is generated and checked, and a bad FCS is counted.",
       "title": "64-bit MAC frames correctly in both directions"
@@ -1552,12 +1765,10 @@
       ],
       "kind": "functional",
       "lean_transcription_only": false,
-      "passing_methods": [
-       "sim_test"
-      ],
+      "passing_methods": [],
       "source": "designs/b96_kr260_10g/docs/design.md#28-block-lock-bit-slip-errors",
       "spec_status": "draft",
-      "stale_items": 0,
+      "stale_items": 1,
       "state": "fail",
       "text": "The receive gearbox slips to the block boundary from any offset, and a run of bit errors loses lock only above the documented threshold.",
       "title": "Block lock is acquired from any bit offset and survives bit errors"
@@ -1597,13 +1808,11 @@
       ],
       "kind": "functional",
       "lean_transcription_only": false,
-      "passing_methods": [
-       "sim_test"
-      ],
+      "passing_methods": [],
       "source": "designs/b96_kr260_10g/handover.yaml",
       "spec_status": "draft",
-      "stale_items": 2,
-      "state": "verified",
+      "stale_items": 3,
+      "state": "stale",
       "text": "With RATE_MATCH = 0 the core is equivalent to the core of main 6909e43f (brief 97C) and passes that brief's bench.",
       "title": "The default build keeps the board-proven receive path"
      },
@@ -1624,12 +1833,10 @@
       ],
       "kind": "safety",
       "lean_transcription_only": false,
-      "passing_methods": [
-       "sim_test"
-      ],
+      "passing_methods": [],
       "source": "designs/b96_kr260_10g/docs/design.md#9-rate-matching-and-the-receive-to-core-crossing-brief-96c",
       "spec_status": "draft",
-      "stale_items": 3,
+      "stale_items": 5,
       "state": "fail",
       "text": "The elastic buffer inserts and deletes idles only between frames, never under- or overflows silently, and every order sent is fired and passes its content check.",
       "title": "Rate matching never corrupts a frame"
@@ -1648,13 +1855,11 @@
       ],
       "kind": "functional",
       "lean_transcription_only": false,
-      "passing_methods": [
-       "sim_test"
-      ],
+      "passing_methods": [],
       "source": "designs/b96_kr260_10g/docs/design.md#board-result-2026-11-19-kr260-and-an-optical-loopback-resultsb96cwhw20261119_080724",
       "spec_status": "draft",
-      "stale_items": 1,
-      "state": "verified",
+      "stale_items": 2,
+      "state": "stale",
       "text": "With a receive clock offset of +-100 ppm and +-300 ppm from the transmit clock, no frame is lost or corrupted and the buffer neither overflows nor underflows. A loopback has no offset, so this needs a second reference clock or another device on the link.",
       "title": "Rate matching holds under a real frequency offset"
      },
@@ -1693,12 +1898,11 @@
       "kind": "safety",
       "lean_transcription_only": false,
       "passing_methods": [
-       "board_measurement",
-       "sim_test"
+       "board_measurement"
       ],
       "source": "designs/b96_kr260_10g/docs/design.md#25-the-trading-path-in-variant-b-trade64-not-a-widened-trigger_core",
       "spec_status": "draft",
-      "stale_items": 1,
+      "stale_items": 3,
       "state": "verified",
       "text": "Every armed decision yields exactly one order, a poisoned order never fires, and every fault counter stays 0.",
       "title": "Orders are sent only for valid decisions, none is lost or poisoned"
@@ -1776,7 +1980,9 @@
       "items": [
        "V-TIM-CDC-DEFAULT",
        "V-TIM-CDC-RMGP",
-       "V-TIM-CDC-BYPASS"
+       "V-TIM-CDC-BYPASS",
+       "V-XVC-CDC",
+       "V-XVC-CDC-STRUCT"
       ],
       "kind": "safety",
       "lean_transcription_only": false,
@@ -1786,7 +1992,7 @@
       "source": "designs/b96_kr260_10g/docs/design.md#26-where-the-decision-lives-and-how-it-crosses-clocks-as-built-for-brief-96-superseded-by-section-9-brief-96c",
       "spec_status": "draft",
       "stale_items": 2,
-      "state": "verified",
+      "state": "fail",
       "text": "report_cdc shows no Critical item and every crossing has the documented synchroniser structure.",
       "title": "No critical clock-domain crossing"
      },
@@ -1821,12 +2027,10 @@
       ],
       "kind": "functional",
       "lean_transcription_only": false,
-      "passing_methods": [
-       "sim_test"
-      ],
+      "passing_methods": [],
       "source": "designs/b96_kr260_10g/handover.yaml",
       "spec_status": "draft",
-      "stale_items": 0,
+      "stale_items": 1,
       "state": "fail",
       "text": "The build files set parameters the core has, the base build keeps the 97C defaults, and each variant differs from the base only where documented.",
       "title": "Every build variant sets only the parameters it documents"
@@ -1842,13 +2046,11 @@
       ],
       "kind": "functional",
       "lean_transcription_only": false,
-      "passing_methods": [
-       "sim_test"
-      ],
+      "passing_methods": [],
       "source": "designs/b96_kr260_10g/docs/design.md#10-on-chip-rx-eye-scan-brief-96d-2026-11-19",
       "spec_status": "draft",
-      "stale_items": 0,
-      "state": "verified",
+      "stale_items": 1,
+      "state": "stale",
       "text": "es_ctrl aborts a point on a DRP timeout, latches the point at start, restores every DRP word and is absent when EYESCAN = 0.",
       "title": "The eye-scan sequencer drives the GT's DRP as its Python twin does"
      },
@@ -1866,8 +2068,7 @@
       "kind": "performance",
       "lean_transcription_only": false,
       "passing_methods": [
-       "board_measurement",
-       "sim_test"
+       "board_measurement"
       ],
       "performance": {
        "bound": 22,
@@ -1878,7 +2079,7 @@
       },
       "source": "designs/b96_kr260_10g/docs/design.md#6-loop-measurement-method-pre-registered-stage-3",
       "spec_status": "draft",
-      "stale_items": 1,
+      "stale_items": 2,
       "state": "verified",
       "text": "Regression bound drawn from the 96E board record; the owner sets the target.",
       "title": "Echo latency E"
@@ -1897,8 +2098,7 @@
       "kind": "performance",
       "lean_transcription_only": false,
       "passing_methods": [
-       "board_measurement",
-       "sim_test"
+       "board_measurement"
       ],
       "performance": {
        "bound": 55,
@@ -1909,7 +2109,7 @@
       },
       "source": "designs/b96_kr260_10g/docs/design.md#6-loop-measurement-method-pre-registered-stage-3",
       "spec_status": "draft",
-      "stale_items": 1,
+      "stale_items": 2,
       "state": "verified",
       "text": "Regression bound drawn from the 96E board record (L = 2E + D); the owner sets the target.",
       "title": "Trading-loop latency L"
@@ -1927,8 +2127,7 @@
       "kind": "performance",
       "lean_transcription_only": false,
       "passing_methods": [
-       "board_measurement",
-       "sim_test"
+       "board_measurement"
       ],
       "performance": {
        "bound": 13,
@@ -1939,7 +2138,7 @@
       },
       "source": "results/b96f1/preregistration.md",
       "spec_status": "draft",
-      "stale_items": 0,
+      "stale_items": 1,
       "state": "verified",
       "text": "D = L - 2E; the 96F1 pre-registration expects it unchanged within 1 clock of 12.",
       "title": "Decision latency D"
@@ -1980,7 +2179,8 @@
       "items": [
        "V-TIM-SETUP-DEFAULT",
        "V-TIM-SETUP-RMGP",
-       "V-TIM-SETUP-BYPASS"
+       "V-TIM-SETUP-BYPASS",
+       "V-XVC-TIM-SETUP"
       ],
       "kind": "performance",
       "lean_transcription_only": false,
@@ -2010,7 +2210,8 @@
       "items": [
        "V-TIM-HOLD-DEFAULT",
        "V-TIM-HOLD-RMGP",
-       "V-TIM-HOLD-BYPASS"
+       "V-TIM-HOLD-BYPASS",
+       "V-XVC-TIM-HOLD"
       ],
       "kind": "performance",
       "lean_transcription_only": false,
@@ -2118,6 +2319,34 @@
       "hardware_closure": null,
       "hardware_only": false,
       "hardware_verified": false,
+      "id": "B96-F-DBGXVC",
+      "items": [
+       "V-XVC-TIM-SETUP",
+       "V-XVC-TIM-HOLD",
+       "V-XVC-CDC",
+       "V-XVC-CDC-STRUCT",
+       "V-XVC-VERDICT",
+       "V-XVC-TRADING-PATH",
+       "V-HW-XVC-PLANNED"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test",
+       "timing"
+      ],
+      "source": "designs/b96_kr260_10g/dbg_xvc/docs/dbg_xvc.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "fail",
+      "text": "Build dbg_xvc (the eyescan build plus a PS-AXI Debug Bridge and one ILA) closes timing and report_cdc, adds no cell to and removes no cell from the core's hierarchy except the read-only taps, and, on the board, Vivado finds and captures from the ILA over XVC while Linux keeps running. Never part of a build whose latency is measured.",
+      "title": "A debug build reaches an ILA over the network and leaves the trading path alone"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
       "id": "B96-F-LEAN-GRAY-STEP",
       "items": [
        "V-LEAN-GRAY-STEP"
@@ -2217,7 +2446,7 @@
     "source_schema": "fpga-design-agent/testplan/v1",
     "summary": {
      "by_kind": {
-      "functional": 14,
+      "functional": 15,
       "interface": 1,
       "performance": 9,
       "safety": 6
@@ -2234,7 +2463,7 @@
       "board_measurement": {
        "bounded": 0,
        "fail": 0,
-       "not_run": 3,
+       "not_run": 4,
        "pass": 8,
        "stale": 5,
        "unapproved": 0
@@ -2283,15 +2512,15 @@
        "bounded": 0,
        "fail": 1,
        "not_run": 0,
-       "pass": 9,
-       "stale": 2,
+       "pass": 1,
+       "stale": 11,
        "unapproved": 0
       },
       "timing": {
        "bounded": 0,
-       "fail": 0,
+       "fail": 1,
        "not_run": 0,
-       "pass": 3,
+       "pass": 7,
        "stale": 6,
        "unapproved": 0
       },
@@ -2305,23 +2534,22 @@
       }
      },
      "by_state": {
-      "fail": 6,
+      "fail": 8,
       "not_run": 2,
-      "stale": 3,
+      "stale": 6,
       "unapproved": 5,
-      "verified": 14
+      "verified": 10
      },
      "external": 3,
      "external_hardware_done": 0,
      "gap_counts": {
-      "external_not_hardware_verified": 1,
       "hardware_open": 3,
       "lean_statement_unapproved": 10,
-      "no_passing_evidence": 11,
-      "stale_evidence": 18
+      "no_passing_evidence": 16,
+      "stale_evidence": 27
      },
      "human_reviews": 0,
-     "items": 57,
+     "items": 64,
      "lean": {
       "approved": 0,
       "build_sources": [
@@ -2344,11 +2572,11 @@
       "items": 10,
       "statement_not_approved": 10
      },
-     "line": "30 requirements (14 functional, 9 performance, 1 interface, 6 safety); 14 verified; 3 stale; 6 failing; 2 with no passing evidence; 0 of 3 requirements that depend on an external element closed by hardware; performance verified: 4 on the board, 2 by post-route timing, 0 in simulation only; 0 of 30 requirements agreed by a human, 0 human review(s) recorded; 10 Lean proof item(s) (all widths): 0 with a human-approved statement, 10 with statement not approved; 7 kernel only, 3 using a compiled decision procedure; build status from: recorded build (not re-run).",
+     "line": "31 requirements (15 functional, 9 performance, 1 interface, 6 safety); 10 verified; 6 stale; 8 failing; 2 with no passing evidence; 0 of 3 requirements that depend on an external element closed by hardware; performance verified: 4 on the board, 2 by post-route timing, 0 in simulation only; 0 of 31 requirements agreed by a human, 0 human review(s) recorded; 10 Lean proof item(s) (all widths): 0 with a human-approved statement, 10 with statement not approved; 7 kernel only, 3 using a compiled decision procedure; build status from: recorded build (not re-run).",
      "performance_board": 4,
      "performance_sim_only": 0,
      "performance_timing": 2,
-     "requirements": 30,
+     "requirements": 31,
      "spec_agreed": 0
     }
    },
@@ -5481,8 +5709,8 @@
   "schema": "fda-traceability/1",
   "total": {
    "designs": 2,
-   "requirements": 51,
-   "verified": 14
+   "requirements": 52,
+   "verified": 10
   }
  },
  "content": {
@@ -5513,6 +5741,13 @@
      },
      {
       "gate": false,
+      "id": "B96-F-DEFAULT",
+      "state": "stale",
+      "text": "its evidence is stale",
+      "type": "no_passing_evidence"
+     },
+     {
+      "gate": false,
       "id": "B96-S-RATEMATCH",
       "state": "fail",
       "text": "an item fails",
@@ -5521,14 +5756,15 @@
      {
       "gate": false,
       "id": "B96-F-OFFSET",
-      "text": "depends on a second reference clock or a 10G network card (a loopback has no frequency offset); only hardware verification can close it, and it has not been done",
-      "type": "hardware_open"
+      "state": "stale",
+      "text": "its evidence is stale",
+      "type": "no_passing_evidence"
      },
      {
       "gate": false,
       "id": "B96-F-OFFSET",
-      "text": "passes in simulation but depends on a second reference clock or a 10G network card (a loopback has no frequency offset)",
-      "type": "external_not_hardware_verified"
+      "text": "depends on a second reference clock or a 10G network card (a loopback has no frequency offset); only hardware verification can close it, and it has not been done",
+      "type": "hardware_open"
      },
      {
       "gate": false,
@@ -5552,6 +5788,13 @@
      },
      {
       "gate": false,
+      "id": "B96-S-CDC",
+      "state": "fail",
+      "text": "an item fails",
+      "type": "no_passing_evidence"
+     },
+     {
+      "gate": false,
       "id": "B96-I-REGMAP",
       "state": "stale",
       "text": "its evidence is stale",
@@ -5562,6 +5805,13 @@
       "id": "B96-F-BUILDS",
       "state": "fail",
       "text": "an item fails",
+      "type": "no_passing_evidence"
+     },
+     {
+      "gate": false,
+      "id": "B96-F-EYESCAN",
+      "state": "stale",
+      "text": "its evidence is stale",
       "type": "no_passing_evidence"
      },
      {
@@ -5593,14 +5843,75 @@
      },
      {
       "gate": false,
+      "id": "B96-F-DBGXVC",
+      "state": "fail",
+      "text": "an item fails",
+      "type": "no_passing_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-SIM-PCSMAC",
+      "text": "the evidence file changed after it was pinned (run: python -m flow.trace_v1 pin)",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-SIM-PCSMODEL",
+      "text": "the evidence file changed after it was pinned (run: python -m flow.trace_v1 pin)",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-SIM-CORE-DEFAULT",
+      "text": "the evidence file changed after it was pinned (run: python -m flow.trace_v1 pin)",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-SIM-CORE-RM",
+      "text": "the evidence file changed after it was pinned (run: python -m flow.trace_v1 pin)",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-SIM-RM",
+      "text": "the evidence file changed after it was pinned (run: python -m flow.trace_v1 pin)",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-SIM-PPM-PARTNER",
+      "text": "the evidence file changed after it was pinned (run: python -m flow.trace_v1 pin)",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-SIM-EYESCAN",
+      "text": "the evidence file changed after it was pinned (run: python -m flow.trace_v1 pin)",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
       "id": "V-SIM-REGMAP",
-      "text": "changed since the evidence was recorded: designs/b96_kr260_10g/docs/register_map.md, designs/b96_kr260_10g/regmap.py",
+      "text": "the evidence file changed after it was pinned (run: python -m flow.trace_v1 pin)",
       "type": "stale_evidence"
      },
      {
       "gate": false,
       "id": "V-SIM-DRIVER",
-      "text": "changed since the evidence was recorded: designs/b96_kr260_10g/host/b96_bench.py, designs/b96_kr260_10g/host/b96f1_bypass.py",
+      "text": "the evidence file changed after it was pinned (run: python -m flow.trace_v1 pin)",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-SIM-BUILDS",
+      "text": "the evidence file changed after it was pinned (run: python -m flow.trace_v1 pin)",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-SIM-LATENCY-MODEL",
+      "text": "the evidence file changed after it was pinned (run: python -m flow.trace_v1 pin)",
       "type": "stale_evidence"
      },
      {
@@ -5775,7 +6086,8 @@
        "B96-F-PCS",
        "B96-F-MAC"
       ],
-      "status": "pass",
+      "stale_because": "the evidence file changed after it was pinned (run: python -m flow.trace_v1 pin)",
+      "status": "stale",
       "title": "PCS and MAC cocotb bench against the bit-serial reference",
       "value": "1 of 1 tests passed"
      },
@@ -5793,7 +6105,8 @@
        "B96-F-PCS",
        "B96-F-LOCK"
       ],
-      "status": "pass",
+      "stale_because": "the evidence file changed after it was pinned (run: python -m flow.trace_v1 pin)",
+      "status": "stale",
       "title": "Python reference properties (LFSR, descrambler self-sync, block codes, lock time, bit errors)",
       "value": "9 of 9 tests passed"
      },
@@ -5811,7 +6124,8 @@
        "B96-F-DEFAULT",
        "B96-S-ORDERS"
       ],
-      "status": "pass",
+      "stale_because": "the evidence file changed after it was pinned (run: python -m flow.trace_v1 pin)",
+      "status": "stale",
       "title": "Whole core, RATE_MATCH = 0, under 97C's own bench",
       "value": "1 of 1 tests passed"
      },
@@ -5830,7 +6144,8 @@
        "B96-S-ORDERS",
        "B96-F-MAC"
       ],
-      "status": "pass",
+      "stale_because": "the evidence file changed after it was pinned (run: python -m flow.trace_v1 pin)",
+      "status": "stale",
       "title": "Whole core with the elastic buffers (macro and own gray-pointer)",
       "value": "2 of 2 tests passed"
      },
@@ -5847,7 +6162,8 @@
       "requirements": [
        "B96-S-RATEMATCH"
       ],
-      "status": "pass",
+      "stale_because": "the evidence file changed after it was pinned (run: python -m flow.trace_v1 pin)",
+      "status": "stale",
       "title": "Rate matcher benches (macro, own buffer, direct-read variant, the MIN_KEEP limit)",
       "value": "4 of 4 tests passed"
      },
@@ -5864,7 +6180,8 @@
       "requirements": [
        "B96-F-OFFSET"
       ],
-      "status": "pass",
+      "stale_because": "the evidence file changed after it was pinned (run: python -m flow.trace_v1 pin)",
+      "status": "stale",
       "title": "Simulated partner at a frequency offset (cocotb)",
       "value": "1 of 1 tests passed"
      },
@@ -5881,7 +6198,8 @@
       "requirements": [
        "B96-F-EYESCAN"
       ],
-      "status": "pass",
+      "stale_because": "the evidence file changed after it was pinned (run: python -m flow.trace_v1 pin)",
+      "status": "stale",
       "title": "Eye-scan sequencer against its twin and a DRP stand-in",
       "value": "2 of 2 tests passed"
      },
@@ -5898,7 +6216,7 @@
       "requirements": [
        "B96-I-REGMAP"
       ],
-      "stale_because": "changed since the evidence was recorded: designs/b96_kr260_10g/docs/register_map.md, designs/b96_kr260_10g/regmap.py",
+      "stale_because": "the evidence file changed after it was pinned (run: python -m flow.trace_v1 pin)",
       "status": "stale",
       "title": "Register map is current, decoded exactly, widths agree, stated rules hold",
       "value": "8 of 8 tests passed"
@@ -5917,7 +6235,7 @@
        "B96-S-DRIVER",
        "B96-S-LASER"
       ],
-      "stale_because": "changed since the evidence was recorded: designs/b96_kr260_10g/host/b96_bench.py, designs/b96_kr260_10g/host/b96f1_bypass.py",
+      "stale_because": "the evidence file changed after it was pinned (run: python -m flow.trace_v1 pin)",
       "status": "stale",
       "title": "Board bench, ppm and bypass drivers judged on a fake board (every safety counter, polarity, lock, verdicts)",
       "value": "37 of 37 tests passed"
@@ -5953,7 +6271,8 @@
       "requirements": [
        "B96-F-BUILDS"
       ],
-      "status": "pass",
+      "stale_because": "the evidence file changed after it was pinned (run: python -m flow.trace_v1 pin)",
+      "status": "stale",
       "title": "Build parameter consistency",
       "value": "5 of 5 tests passed"
      },
@@ -5972,7 +6291,8 @@
        "B96-P-LAT-L",
        "B96-P-LAT-D"
       ],
-      "status": "pass",
+      "stale_because": "the evidence file changed after it was pinned (run: python -m flow.trace_v1 pin)",
+      "status": "stale",
       "title": "Latency stage file reproduces the recorded numbers; board and simulation never added into one figure",
       "value": "15 of 15 tests passed"
      },
@@ -6590,6 +6910,131 @@
       "value": null
      },
      {
+      "detail": "measured 0.323 ns; bound at least 0 ns",
+      "evidence": {
+       "exists": true,
+       "file": "results/b131/builds/dbg_xvc/digest.json"
+      },
+      "id": "V-XVC-TIM-SETUP",
+      "instrument": null,
+      "judged_by_bound": true,
+      "method": "timing",
+      "planned": null,
+      "requirements": [
+       "B96-P-TIMING",
+       "B96-F-DBGXVC"
+      ],
+      "status": "pass",
+      "title": "Build dbg_xvc, routed",
+      "value": 0.323
+     },
+     {
+      "detail": "measured 0.011 ns; bound at least 0 ns",
+      "evidence": {
+       "exists": true,
+       "file": "results/b131/builds/dbg_xvc/digest.json"
+      },
+      "id": "V-XVC-TIM-HOLD",
+      "instrument": null,
+      "judged_by_bound": true,
+      "method": "timing",
+      "planned": null,
+      "requirements": [
+       "B96-P-HOLD",
+       "B96-F-DBGXVC"
+      ],
+      "status": "pass",
+      "title": "Build dbg_xvc, routed",
+      "value": 0.011
+     },
+     {
+      "detail": "gates.cdc_no_critical = True",
+      "evidence": {
+       "exists": true,
+       "file": "results/b131/builds/dbg_xvc/digest.json"
+      },
+      "id": "V-XVC-CDC",
+      "instrument": null,
+      "method": "timing",
+      "planned": null,
+      "requirements": [
+       "B96-S-CDC",
+       "B96-F-DBGXVC"
+      ],
+      "status": "pass",
+      "title": "report_cdc after routing, build dbg_xvc (no critical item)",
+      "value": true
+     },
+     {
+      "detail": "gates.post_synth_cdc_structure_clean = False",
+      "evidence": {
+       "exists": true,
+       "file": "results/b131/builds/dbg_xvc/digest.json"
+      },
+      "id": "V-XVC-CDC-STRUCT",
+      "instrument": null,
+      "method": "timing",
+      "planned": null,
+      "requirements": [
+       "B96-S-CDC",
+       "B96-F-DBGXVC"
+      ],
+      "status": "fail",
+      "title": "The flow's post-synthesis CDC structure gate on dbg_xvc (open: 2203 crossings of the core's own hs_vec buses are not matched to their max-delay exceptions in this build; the exceptions exist in the routed design)",
+      "value": true
+     },
+     {
+      "detail": "6 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "results/116_traceability/b96_kr260_10g/pytest_junit.xml"
+      },
+      "id": "V-XVC-VERDICT",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "B96-F-DBGXVC"
+      ],
+      "status": "pass",
+      "title": "The board test's pre-registered verdict fails on each broken criterion; the debug build differs from the parent only in the debug files",
+      "value": "6 of 6 tests passed"
+     },
+     {
+      "detail": "core_cells_removed = 0; core_cells_added_outside_taps = 0",
+      "evidence": {
+       "exists": true,
+       "file": "results/b131/compare/summary.json"
+      },
+      "id": "V-XVC-TRADING-PATH",
+      "instrument": null,
+      "method": "timing",
+      "planned": null,
+      "requirements": [
+       "B96-F-DBGXVC"
+      ],
+      "status": "pass",
+      "title": "Parent (eyescan) against dbg_xvc, same flow, same commit: the core's cells, and the worst slack of paths through the trading path",
+      "value": true
+     },
+     {
+      "detail": "evidence not found: results/b131/hw/*/record.json (planned: board session with the owner (not scheduled))",
+      "evidence": {
+       "exists": false,
+       "file": "results/b131/hw/*/record.json"
+      },
+      "id": "V-HW-XVC-PLANNED",
+      "instrument": "ila_capture",
+      "method": "board_measurement",
+      "planned": "board session with the owner (not scheduled)",
+      "requirements": [
+       "B96-F-DBGXVC"
+      ],
+      "status": "not_run",
+      "title": "ILA found and captured over XVC while Linux runs (pre-registered, dbg_xvc/board/xvc_board_session.sh)",
+      "value": null
+     },
+     {
       "detail": "statement not approved; Gray.gray_step: kernel only; proof of the transcription, transcription tested; recorded build (not re-run)",
       "evidence": {
        "exists": true,
@@ -6988,12 +7433,10 @@
       ],
       "kind": "functional",
       "lean_transcription_only": false,
-      "passing_methods": [
-       "sim_test"
-      ],
+      "passing_methods": [],
       "source": "designs/b96_kr260_10g/docs/design.md#7-verification-plan",
       "spec_status": "draft",
-      "stale_items": 1,
+      "stale_items": 3,
       "state": "fail",
       "text": "Scrambler, block encode and decode, gearbox and block lock produce the same bits as the bit-serial Python reference, at every bit offset, with idles, ordered sets and bit-error runs.",
       "title": "PCS encodes and decodes 64B/66B bit-exactly against an independent model"
@@ -7015,12 +7458,10 @@
       ],
       "kind": "functional",
       "lean_transcription_only": false,
-      "passing_methods": [
-       "sim_test"
-      ],
+      "passing_methods": [],
       "source": "designs/b96_kr260_10g/docs/design.md#7-verification-plan",
       "spec_status": "draft",
-      "stale_items": 1,
+      "stale_items": 3,
       "state": "fail",
       "text": "Frames start in lane 0 and lane 4, every terminate lane and every length residue is handled, FCS is generated and checked, and a bad FCS is counted.",
       "title": "64-bit MAC frames correctly in both directions"
@@ -7038,12 +7479,10 @@
       ],
       "kind": "functional",
       "lean_transcription_only": false,
-      "passing_methods": [
-       "sim_test"
-      ],
+      "passing_methods": [],
       "source": "designs/b96_kr260_10g/docs/design.md#28-block-lock-bit-slip-errors",
       "spec_status": "draft",
-      "stale_items": 0,
+      "stale_items": 1,
       "state": "fail",
       "text": "The receive gearbox slips to the block boundary from any offset, and a run of bit errors loses lock only above the documented threshold.",
       "title": "Block lock is acquired from any bit offset and survives bit errors"
@@ -7083,13 +7522,11 @@
       ],
       "kind": "functional",
       "lean_transcription_only": false,
-      "passing_methods": [
-       "sim_test"
-      ],
+      "passing_methods": [],
       "source": "designs/b96_kr260_10g/handover.yaml",
       "spec_status": "draft",
-      "stale_items": 2,
-      "state": "verified",
+      "stale_items": 3,
+      "state": "stale",
       "text": "With RATE_MATCH = 0 the core is equivalent to the core of main 6909e43f (brief 97C) and passes that brief's bench.",
       "title": "The default build keeps the board-proven receive path"
      },
@@ -7110,12 +7547,10 @@
       ],
       "kind": "safety",
       "lean_transcription_only": false,
-      "passing_methods": [
-       "sim_test"
-      ],
+      "passing_methods": [],
       "source": "designs/b96_kr260_10g/docs/design.md#9-rate-matching-and-the-receive-to-core-crossing-brief-96c",
       "spec_status": "draft",
-      "stale_items": 3,
+      "stale_items": 5,
       "state": "fail",
       "text": "The elastic buffer inserts and deletes idles only between frames, never under- or overflows silently, and every order sent is fired and passes its content check.",
       "title": "Rate matching never corrupts a frame"
@@ -7134,13 +7569,11 @@
       ],
       "kind": "functional",
       "lean_transcription_only": false,
-      "passing_methods": [
-       "sim_test"
-      ],
+      "passing_methods": [],
       "source": "designs/b96_kr260_10g/docs/design.md#board-result-2026-11-19-kr260-and-an-optical-loopback-resultsb96cwhw20261119_080724",
       "spec_status": "draft",
-      "stale_items": 1,
-      "state": "verified",
+      "stale_items": 2,
+      "state": "stale",
       "text": "With a receive clock offset of +-100 ppm and +-300 ppm from the transmit clock, no frame is lost or corrupted and the buffer neither overflows nor underflows. A loopback has no offset, so this needs a second reference clock or another device on the link.",
       "title": "Rate matching holds under a real frequency offset"
      },
@@ -7179,12 +7612,11 @@
       "kind": "safety",
       "lean_transcription_only": false,
       "passing_methods": [
-       "board_measurement",
-       "sim_test"
+       "board_measurement"
       ],
       "source": "designs/b96_kr260_10g/docs/design.md#25-the-trading-path-in-variant-b-trade64-not-a-widened-trigger_core",
       "spec_status": "draft",
-      "stale_items": 1,
+      "stale_items": 3,
       "state": "verified",
       "text": "Every armed decision yields exactly one order, a poisoned order never fires, and every fault counter stays 0.",
       "title": "Orders are sent only for valid decisions, none is lost or poisoned"
@@ -7262,7 +7694,9 @@
       "items": [
        "V-TIM-CDC-DEFAULT",
        "V-TIM-CDC-RMGP",
-       "V-TIM-CDC-BYPASS"
+       "V-TIM-CDC-BYPASS",
+       "V-XVC-CDC",
+       "V-XVC-CDC-STRUCT"
       ],
       "kind": "safety",
       "lean_transcription_only": false,
@@ -7272,7 +7706,7 @@
       "source": "designs/b96_kr260_10g/docs/design.md#26-where-the-decision-lives-and-how-it-crosses-clocks-as-built-for-brief-96-superseded-by-section-9-brief-96c",
       "spec_status": "draft",
       "stale_items": 2,
-      "state": "verified",
+      "state": "fail",
       "text": "report_cdc shows no Critical item and every crossing has the documented synchroniser structure.",
       "title": "No critical clock-domain crossing"
      },
@@ -7307,12 +7741,10 @@
       ],
       "kind": "functional",
       "lean_transcription_only": false,
-      "passing_methods": [
-       "sim_test"
-      ],
+      "passing_methods": [],
       "source": "designs/b96_kr260_10g/handover.yaml",
       "spec_status": "draft",
-      "stale_items": 0,
+      "stale_items": 1,
       "state": "fail",
       "text": "The build files set parameters the core has, the base build keeps the 97C defaults, and each variant differs from the base only where documented.",
       "title": "Every build variant sets only the parameters it documents"
@@ -7328,13 +7760,11 @@
       ],
       "kind": "functional",
       "lean_transcription_only": false,
-      "passing_methods": [
-       "sim_test"
-      ],
+      "passing_methods": [],
       "source": "designs/b96_kr260_10g/docs/design.md#10-on-chip-rx-eye-scan-brief-96d-2026-11-19",
       "spec_status": "draft",
-      "stale_items": 0,
-      "state": "verified",
+      "stale_items": 1,
+      "state": "stale",
       "text": "es_ctrl aborts a point on a DRP timeout, latches the point at start, restores every DRP word and is absent when EYESCAN = 0.",
       "title": "The eye-scan sequencer drives the GT's DRP as its Python twin does"
      },
@@ -7352,8 +7782,7 @@
       "kind": "performance",
       "lean_transcription_only": false,
       "passing_methods": [
-       "board_measurement",
-       "sim_test"
+       "board_measurement"
       ],
       "performance": {
        "bound": 22,
@@ -7364,7 +7793,7 @@
       },
       "source": "designs/b96_kr260_10g/docs/design.md#6-loop-measurement-method-pre-registered-stage-3",
       "spec_status": "draft",
-      "stale_items": 1,
+      "stale_items": 2,
       "state": "verified",
       "text": "Regression bound drawn from the 96E board record; the owner sets the target.",
       "title": "Echo latency E"
@@ -7383,8 +7812,7 @@
       "kind": "performance",
       "lean_transcription_only": false,
       "passing_methods": [
-       "board_measurement",
-       "sim_test"
+       "board_measurement"
       ],
       "performance": {
        "bound": 55,
@@ -7395,7 +7823,7 @@
       },
       "source": "designs/b96_kr260_10g/docs/design.md#6-loop-measurement-method-pre-registered-stage-3",
       "spec_status": "draft",
-      "stale_items": 1,
+      "stale_items": 2,
       "state": "verified",
       "text": "Regression bound drawn from the 96E board record (L = 2E + D); the owner sets the target.",
       "title": "Trading-loop latency L"
@@ -7413,8 +7841,7 @@
       "kind": "performance",
       "lean_transcription_only": false,
       "passing_methods": [
-       "board_measurement",
-       "sim_test"
+       "board_measurement"
       ],
       "performance": {
        "bound": 13,
@@ -7425,7 +7852,7 @@
       },
       "source": "results/b96f1/preregistration.md",
       "spec_status": "draft",
-      "stale_items": 0,
+      "stale_items": 1,
       "state": "verified",
       "text": "D = L - 2E; the 96F1 pre-registration expects it unchanged within 1 clock of 12.",
       "title": "Decision latency D"
@@ -7466,7 +7893,8 @@
       "items": [
        "V-TIM-SETUP-DEFAULT",
        "V-TIM-SETUP-RMGP",
-       "V-TIM-SETUP-BYPASS"
+       "V-TIM-SETUP-BYPASS",
+       "V-XVC-TIM-SETUP"
       ],
       "kind": "performance",
       "lean_transcription_only": false,
@@ -7496,7 +7924,8 @@
       "items": [
        "V-TIM-HOLD-DEFAULT",
        "V-TIM-HOLD-RMGP",
-       "V-TIM-HOLD-BYPASS"
+       "V-TIM-HOLD-BYPASS",
+       "V-XVC-TIM-HOLD"
       ],
       "kind": "performance",
       "lean_transcription_only": false,
@@ -7604,6 +8033,34 @@
       "hardware_closure": null,
       "hardware_only": false,
       "hardware_verified": false,
+      "id": "B96-F-DBGXVC",
+      "items": [
+       "V-XVC-TIM-SETUP",
+       "V-XVC-TIM-HOLD",
+       "V-XVC-CDC",
+       "V-XVC-CDC-STRUCT",
+       "V-XVC-VERDICT",
+       "V-XVC-TRADING-PATH",
+       "V-HW-XVC-PLANNED"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test",
+       "timing"
+      ],
+      "source": "designs/b96_kr260_10g/dbg_xvc/docs/dbg_xvc.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "fail",
+      "text": "Build dbg_xvc (the eyescan build plus a PS-AXI Debug Bridge and one ILA) closes timing and report_cdc, adds no cell to and removes no cell from the core's hierarchy except the read-only taps, and, on the board, Vivado finds and captures from the ILA over XVC while Linux keeps running. Never part of a build whose latency is measured.",
+      "title": "A debug build reaches an ILA over the network and leaves the trading path alone"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
       "id": "B96-F-LEAN-GRAY-STEP",
       "items": [
        "V-LEAN-GRAY-STEP"
@@ -7703,7 +8160,7 @@
     "source_schema": "fpga-design-agent/testplan/v1",
     "summary": {
      "by_kind": {
-      "functional": 14,
+      "functional": 15,
       "interface": 1,
       "performance": 9,
       "safety": 6
@@ -7720,7 +8177,7 @@
       "board_measurement": {
        "bounded": 0,
        "fail": 0,
-       "not_run": 3,
+       "not_run": 4,
        "pass": 8,
        "stale": 5,
        "unapproved": 0
@@ -7769,15 +8226,15 @@
        "bounded": 0,
        "fail": 1,
        "not_run": 0,
-       "pass": 9,
-       "stale": 2,
+       "pass": 1,
+       "stale": 11,
        "unapproved": 0
       },
       "timing": {
        "bounded": 0,
-       "fail": 0,
+       "fail": 1,
        "not_run": 0,
-       "pass": 3,
+       "pass": 7,
        "stale": 6,
        "unapproved": 0
       },
@@ -7791,23 +8248,22 @@
       }
      },
      "by_state": {
-      "fail": 6,
+      "fail": 8,
       "not_run": 2,
-      "stale": 3,
+      "stale": 6,
       "unapproved": 5,
-      "verified": 14
+      "verified": 10
      },
      "external": 3,
      "external_hardware_done": 0,
      "gap_counts": {
-      "external_not_hardware_verified": 1,
       "hardware_open": 3,
       "lean_statement_unapproved": 10,
-      "no_passing_evidence": 11,
-      "stale_evidence": 18
+      "no_passing_evidence": 16,
+      "stale_evidence": 27
      },
      "human_reviews": 0,
-     "items": 57,
+     "items": 64,
      "lean": {
       "approved": 0,
       "build_sources": [
@@ -7830,11 +8286,11 @@
       "items": 10,
       "statement_not_approved": 10
      },
-     "line": "30 requirements (14 functional, 9 performance, 1 interface, 6 safety); 14 verified; 3 stale; 6 failing; 2 with no passing evidence; 0 of 3 requirements that depend on an external element closed by hardware; performance verified: 4 on the board, 2 by post-route timing, 0 in simulation only; 0 of 30 requirements agreed by a human, 0 human review(s) recorded; 10 Lean proof item(s) (all widths): 0 with a human-approved statement, 10 with statement not approved; 7 kernel only, 3 using a compiled decision procedure; build status from: recorded build (not re-run).",
+     "line": "31 requirements (15 functional, 9 performance, 1 interface, 6 safety); 10 verified; 6 stale; 8 failing; 2 with no passing evidence; 0 of 3 requirements that depend on an external element closed by hardware; performance verified: 4 on the board, 2 by post-route timing, 0 in simulation only; 0 of 31 requirements agreed by a human, 0 human review(s) recorded; 10 Lean proof item(s) (all widths): 0 with a human-approved statement, 10 with statement not approved; 7 kernel only, 3 using a compiled decision procedure; build status from: recorded build (not re-run).",
      "performance_board": 4,
      "performance_sim_only": 0,
      "performance_timing": 2,
-     "requirements": 30,
+     "requirements": 31,
      "spec_agreed": 0
     }
    },
@@ -10967,8 +11423,8 @@
   "schema": "fda-traceability/1",
   "total": {
    "designs": 2,
-   "requirements": 51,
-   "verified": 14
+   "requirements": 52,
+   "verified": 10
   }
  }
 }
