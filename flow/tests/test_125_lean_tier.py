@@ -269,13 +269,26 @@ def test_committed_lean_items_pass_the_gate_and_the_record_is_not_stale():
             assert i["lean"]["tier"] in ("kernel_only", "compiled_decision_procedure")
 
 
-def test_the_committed_plan_carries_the_124_theorems_and_the_gray_lemma():
-    c = T.collect(REPO / "designs" / "b96_kr260_10g")
-    names = {i["lean"]["theorem"] for i in c["items"] if i["method"] == "formal_lean"}
-    assert {"Gray.gray_step", "Gray.gray2bin_bin2gray", "Gray.bin2gray_gray2bin", "Gray.gray_sample", "Cksum.rtl_ip_correct", "Cksum.rtl_ip_receiver",
-            "Cksum.rtl_tcp_correct", "Cksum.ocSum_toNat", "Cksum.incUpdate_correct", "Cksum.incUpdate_zero_corner"} <= names
-    kinds = {i["lean"]["rtl_link"] for i in c["items"] if i["method"] == "formal_lean"}
+def test_the_committed_plans_carry_the_124_theorems_and_the_gray_lemma():
+    """The gray-code theorems are b96's (rate_match_gp); the checksum theorems are b119's (tcp_fast), moved there by brief 133."""
+    def lean_items(design):
+        return [i for i in T.collect(REPO / "designs" / design)["items"] if i["method"] == "formal_lean"]
+    b96, b119 = lean_items("b96_kr260_10g"), lean_items("b119_tcp_fast")
+    assert {i["lean"]["theorem"] for i in b96} == {"Gray.gray_step", "Gray.gray2bin_bin2gray", "Gray.bin2gray_gray2bin", "Gray.gray_sample"}
+    assert {i["lean"]["theorem"] for i in b119} == {"Cksum.rtl_ip_correct", "Cksum.rtl_ip_receiver", "Cksum.rtl_tcp_correct", "Cksum.ocSum_toNat",
+                                                    "Cksum.incUpdate_correct", "Cksum.incUpdate_zero_corner"}
+    kinds = {i["lean"]["rtl_link"] for i in b96 + b119}
     assert kinds == {"transcription_tested", "model_only"}                       # no RTL-generated model exists, and none is claimed
+
+
+def test_the_lean_files_tag_the_ids_of_the_plan_that_owns_them():
+    """A `req:` tag in a doc comment of formal/lean must be a requirement id of the b96 or b119 testplan (brief 133 renamed the checksum tags)."""
+    import re
+    ids = {r["id"] for d in ("b96_kr260_10g", "b119_tcp_fast") for r in T.load(REPO / "designs" / d)["requirements"]}
+    tags = set()
+    for f in ("Gray/Spec.lean", "Cksum/Spec.lean"):
+        tags |= set(re.findall(r"req:\s*(\S+)", (REPO / "formal" / "lean" / f).read_text().replace("-/", " ")))
+    assert tags and tags <= ids, tags - ids
 
 
 def test_every_lean_theorem_the_plan_names_is_in_the_committed_record():
