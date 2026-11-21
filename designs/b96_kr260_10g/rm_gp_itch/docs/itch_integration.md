@@ -238,18 +238,19 @@ The FF count is dominated by the host vectors (about 12,000 flip-flops for STAT2
 | Register group | Worst setup slack | Logic levels | Path |
 |---|---|---|---|
 | risk_glue position registers (pos) | +0.790 ns | 14 | `u_ip/u_it/u_book/tu_inst_reg[0]/C` to `u_ip/u_it/u_risk/pos_reg[2][11]/CE` |
-| risk_glue verdict counters and queue (the rest of the risk verdict) | +0.903 ns | 0 | `u_gt/inst/gen_gtwizard_gthe4_top.gth_wiz_gtwizard_gthe4_inst` to `u_ip/u_it/u_risk/dq_cnt_reg[0]/R` |
-| book_core price ladder (lv_*) | no path or no cells matched | | |
-| book_core top of book and update record | +0.919 ns | 0 | `u_gt/inst/gen_gtwizard_gthe4_top.gth_wiz_gtwizard_gthe4_inst` to `u_ip/u_it/u_book/tu_cand_reg/R` |
+| risk_glue verdict counters and queue (the rest of the risk verdict) | +0.948 ns | 8 | `u_tx/u_mx/fcnt_reg[3]/C` to `u_ip/u_it/u_risk/dq_reg[2][88]/CE` |
+| book_core price ladder RAMs (g_lv[*].lm: the ladder update B3 writes them) | +0.274 ns | 12 | `u_ip/u_it/u_book/d3_side_reg/C` to `u_ip/u_it/u_book/g_lv[4].lm_reg_r2_0_7_42_55/RAMC/I` |
+| book_core ladder reduction T1 to T2 (t2b_*, t2a_*, w2_*) | +0.193 ns | 11 | `u_ip/u_it/u_book/t1_inst_reg[0]/C` to `u_ip/u_it/u_book/t2b_px_reg[31]/D` |
+| book_core top of book and update record | +2.422 ns | 4 | `u_core/u_cfg2/dst_vec_reg[720]/C` to `u_ip/u_it/u_book/tu_inst_reg[0]/CE` |
 | mold_rx | +0.528 ns | 11 | `u_ip/u_us/s_eof_reg/C` to `u_ip/u_it/u_mold/c_trunc_reg[20]/CE` |
-| itch_dec | +0.626 ns | 0 | `u_gt/inst/gen_gtwizard_gthe4_top.gth_wiz_gtwizard_gthe4_inst` to `u_ip/u_it/u_dec/e_sell_reg/R` |
-| udp_strip | +0.556 ns | 0 | `u_gt/inst/gen_gtwizard_gthe4_top.gth_wiz_gtwizard_gthe4_inst` to `u_ip/u_us/lp_reg/R` |
+| itch_dec | +1.205 ns | 7 | `u_ip/u_it/u_mold/moff_r_reg[1]/C` to `u_ip/u_it/u_dec/c_bad_reg[28]/CE` |
+| udp_strip | +0.707 ns | 6 | `u_rx/u_mr/m_v_reg/C` to `u_ip/u_us/n_fwd_reg[24]/CE` |
 | order_seg | +0.317 ns | 15 | `u_ip/u_it/u_book/tu_inst_reg[0]/C` to `u_ip/u_it/u_seg/o_d_reg[0]/CE` |
 | tx_mux | +0.538 ns | 14 | `u_tx/u_mt/FSM_sequential_st_reg[0]/C` to `u_tx/u_mx/rp_err_reg[4]/CE` |
 | mac64_tx (the CRC path with the multiplexer in front) | +0.214 ns | 11 | `u_tx/u_mt/crc_reg[5]/C` to `u_tx/u_mt/crc_reg[30]/D` |
 | itch_path (poison policy, counters, statistics) | +0.193 ns | 11 | `u_ip/u_it/u_book/t1_inst_reg[0]/C` to `u_ip/u_it/u_book/t2b_px_reg[31]/D` |
 
-Rows with 0 logic levels and a start in the transceiver's reset synchroniser are the reset pins of the block's registers (the first selection did not exclude them), not its logic: only the rows with logic levels measure the block. The price-ladder row matched no cells; the corrected selection is in `results/b127/ctx_timing.tcl` and `results/b127/ctx_only.sh` re-runs it (no heavy slot was free to do it before hand-back).
+Every row is a logic path (the corrected selection in `results/b127/ctx_timing.tcl` excludes the register reset pins that the first pass picked up from the transceiver's reset synchroniser). The price-ladder update that was brief 110's worst out-of-context path (5.0 ns) closes in context at +0.274 ns into the ladder RAMs (12 levels); the tightest block path is the ladder reduction T1 to T2 at +0.193 ns. Re-run by the planner on the routed checkpoint of build `1d8ac802` with `results/b127/ctx_only.sh`, 2026-11-22.
 
 In context the risk verdict into the position register has about +0.79 ns where brief 110 had +0.109 ns out of context; the two are not the same measurement (placement and the clock's uncertainty differ), and the worst paths of the whole design are the base's receive MAC (0.153 ns) and the CRC cone of the transmit MAC (0.214 ns, with the multiplexer in front of it).
 

@@ -1,17 +1,19 @@
 === risk_glue position registers (pos)
 SLACK 0.790 STARTPOINT u_core/g_rm.u_ip/u_it/u_book/tu_inst_reg[0]/C ENDPOINT u_core/g_rm.u_ip/u_it/u_risk/pos_reg[2][11]/CE REQ 6.206 LOGIC_LEVELS 14
 === risk_glue verdict counters and queue (the rest of the risk verdict)
-SLACK 0.903 STARTPOINT u_core/u_gt/inst/gen_gtwizard_gthe4_top.gth_wiz_gtwizard_gthe4_inst/gen_gtwizard_gthe4.gen_reset_controller_internal.gen_single_instance.gtwiz_reset_inst/reset_synchronizer_tx_done_inst/rst_in_out_reg/C ENDPOINT u_core/g_rm.u_ip/u_it/u_risk/dq_cnt_reg[0]/R REQ 6.206 LOGIC_LEVELS 0
-=== book_core price ladder (lv_*)
-no cells matched
+SLACK 0.948 STARTPOINT u_core/g_rm.u_tx/u_mx/fcnt_reg[3]/C ENDPOINT u_core/g_rm.u_ip/u_it/u_risk/dq_reg[2][88]/CE REQ 6.206 LOGIC_LEVELS 8
+=== book_core price ladder RAMs (g_lv[*].lm: the ladder update B3 writes them)
+SLACK 0.274 STARTPOINT u_core/g_rm.u_ip/u_it/u_book/d3_side_reg/C ENDPOINT u_core/g_rm.u_ip/u_it/u_book/g_lv[4].lm_reg_r2_0_7_42_55/RAMC/I REQ 6.206 LOGIC_LEVELS 12
+=== book_core ladder reduction T1 to T2 (t2b_*, t2a_*, w2_*)
+SLACK 0.193 STARTPOINT u_core/g_rm.u_ip/u_it/u_book/t1_inst_reg[0]/C ENDPOINT u_core/g_rm.u_ip/u_it/u_book/t2b_px_reg[31]/D REQ 6.206 LOGIC_LEVELS 11
 === book_core top of book and update record
-SLACK 0.919 STARTPOINT u_core/u_gt/inst/gen_gtwizard_gthe4_top.gth_wiz_gtwizard_gthe4_inst/gen_gtwizard_gthe4.gen_reset_controller_internal.gen_single_instance.gtwiz_reset_inst/reset_synchronizer_tx_done_inst/rst_in_out_reg/C ENDPOINT u_core/g_rm.u_ip/u_it/u_book/tu_cand_reg/R REQ 6.206 LOGIC_LEVELS 0
+SLACK 2.422 STARTPOINT u_core/u_cfg2/dst_vec_reg[720]/C ENDPOINT u_core/g_rm.u_ip/u_it/u_book/tu_inst_reg[0]/CE REQ 6.206 LOGIC_LEVELS 4
 === mold_rx
 SLACK 0.528 STARTPOINT u_core/g_rm.u_ip/u_us/s_eof_reg/C ENDPOINT u_core/g_rm.u_ip/u_it/u_mold/c_trunc_reg[20]/CE REQ 6.206 LOGIC_LEVELS 11
 === itch_dec
-SLACK 0.626 STARTPOINT u_core/u_gt/inst/gen_gtwizard_gthe4_top.gth_wiz_gtwizard_gthe4_inst/gen_gtwizard_gthe4.gen_reset_controller_internal.gen_single_instance.gtwiz_reset_inst/reset_synchronizer_tx_done_inst/rst_in_out_reg/C ENDPOINT u_core/g_rm.u_ip/u_it/u_dec/e_sell_reg/R REQ 6.206 LOGIC_LEVELS 0
+SLACK 1.205 STARTPOINT u_core/g_rm.u_ip/u_it/u_mold/moff_r_reg[1]/C ENDPOINT u_core/g_rm.u_ip/u_it/u_dec/c_bad_reg[28]/CE REQ 6.206 LOGIC_LEVELS 7
 === udp_strip
-SLACK 0.556 STARTPOINT u_core/u_gt/inst/gen_gtwizard_gthe4_top.gth_wiz_gtwizard_gthe4_inst/gen_gtwizard_gthe4.gen_reset_controller_internal.gen_single_instance.gtwiz_reset_inst/reset_synchronizer_tx_done_inst/rst_in_out_reg/C ENDPOINT u_core/g_rm.u_ip/u_us/lp_reg/R REQ 6.206 LOGIC_LEVELS 0
+SLACK 0.707 STARTPOINT u_core/g_rm.u_rx/u_mr/m_v_reg/C ENDPOINT u_core/g_rm.u_ip/u_us/n_fwd_reg[24]/CE REQ 6.206 LOGIC_LEVELS 6
 === order_seg
 SLACK 0.317 STARTPOINT u_core/g_rm.u_ip/u_it/u_book/tu_inst_reg[0]/C ENDPOINT u_core/g_rm.u_ip/u_it/u_seg/o_d_reg[0]/CE REQ 6.206 LOGIC_LEVELS 15
 === tx_mux
