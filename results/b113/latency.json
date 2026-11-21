@@ -1,0 +1,924 @@
+{
+ "means_over_phases_clocks": {
+  "base_rm_gp_no_ml": {
+   "tick_to_trade": 12.93,
+   "rx_start_strobe": 6.83,
+   "d_strobe_to_order": 11.3
+  },
+  "ml_shadow": {
+   "tick_to_trade": 12.93,
+   "rx_start_strobe": 6.83,
+   "d_strobe_to_order": 11.3
+  },
+  "ml_veto": {
+   "tick_to_trade": 12.93,
+   "rx_start_strobe": 6.83,
+   "d_strobe_to_order": 11.3
+  },
+  "ml_veto_hold1": {
+   "tick_to_trade": 14.03,
+   "rx_start_strobe": 6.83,
+   "d_strobe_to_order": 12.4
+  },
+  "ml_veto_hold2": {
+   "tick_to_trade": 14.93,
+   "rx_start_strobe": 6.83,
+   "d_strobe_to_order": 13.3
+  }
+ },
+ "tick_to_trade_change_vs_base_clocks": {
+  "base_rm_gp_no_ml": 0.0,
+  "ml_shadow": 0.0,
+  "ml_veto": 0.0,
+  "ml_veto_hold1": 1.1,
+  "ml_veto_hold2": 2.0
+ },
+ "rx_start_strobe_change_vs_base_clocks": {
+  "base_rm_gp_no_ml": 0.0,
+  "ml_shadow": 0.0,
+  "ml_veto": 0.0,
+  "ml_veto_hold1": 0.0,
+  "ml_veto_hold2": 0.0
+ },
+ "d_change_vs_base_clocks": {
+  "base_rm_gp_no_ml": 0.0,
+  "ml_shadow": 0.0,
+  "ml_veto": 0.0,
+  "ml_veto_hold1": 1.1,
+  "ml_veto_hold2": 2.0
+ },
+ "what": "Whole-core tick-to-trade in xsim 2026.1 with AMD's real XPM macros, a synthetic feed injected on the receive words (10 orders per point, 300 idle words apart), build rm_gp without the ML stage (base_rm_gp_no_ml) and rm_gp_ml in shadow and veto mode; ml_*_holdN is the simulation-only counterfactual in which the order is released N clocks after the decision (what the stage would cost if its class were made after the message arrived). Phases: ps the receive clock lags the transmit clock. Clocks of 6.2058 ns.",
+ "units": "clocks",
+ "results": {
+  "base_rm_gp_no_ml": {
+   "0": {
+    "orders": 10,
+    "tick_to_trade": {
+     "mean": 13.3,
+     "min": 13.0,
+     "max": 14.0
+    },
+    "rx_start_strobe": {
+     "mean": 7.2,
+     "min": 7.0,
+     "max": 8.0
+    },
+    "d_strobe_to_order": {
+     "mean": 11.3,
+     "min": 11.0,
+     "max": 12.0
+    },
+    "pcs_out_to_buffer_out": {
+     "mean": 6.3,
+     "min": 6.0,
+     "max": 7.0
+    },
+    "buffer_out_to_mac_word7": {
+     "mean": 1.0,
+     "min": 1.0,
+     "max": 1.0
+    },
+    "mac_word7_to_fire": {
+     "mean": 1.0,
+     "min": 1.0,
+     "max": 1.0
+    },
+    "fire_to_go": {
+     "mean": 0.0,
+     "min": 0.0,
+     "max": 0.0
+    },
+    "go_to_order_preamble": {
+     "mean": 2.0,
+     "min": 2.0,
+     "max": 2.0
+    }
+   },
+   "1550": {
+    "orders": 10,
+    "tick_to_trade": {
+     "mean": 13.05,
+     "min": 12.75,
+     "max": 13.75
+    },
+    "rx_start_strobe": {
+     "mean": 6.95,
+     "min": 6.75,
+     "max": 7.75
+    },
+    "d_strobe_to_order": {
+     "mean": 11.3,
+     "min": 11.0,
+     "max": 12.0
+    },
+    "pcs_out_to_buffer_out": {
+     "mean": 6.05,
+     "min": 5.75,
+     "max": 6.75
+    },
+    "buffer_out_to_mac_word7": {
+     "mean": 1.0,
+     "min": 1.0,
+     "max": 1.0
+    },
+    "mac_word7_to_fire": {
+     "mean": 1.0,
+     "min": 1.0,
+     "max": 1.0
+    },
+    "fire_to_go": {
+     "mean": 0.0,
+     "min": 0.0,
+     "max": 0.0
+    },
+    "go_to_order_preamble": {
+     "mean": 2.0,
+     "min": 2.0,
+     "max": 2.0
+    }
+   },
+   "3100": {
+    "orders": 10,
+    "tick_to_trade": {
+     "mean": 12.8,
+     "min": 12.5,
+     "max": 13.5
+    },
+    "rx_start_strobe": {
+     "mean": 6.7,
+     "min": 6.5,
+     "max": 7.5
+    },
+    "d_strobe_to_order": {
+     "mean": 11.3,
+     "min": 11.0,
+     "max": 12.0
+    },
+    "pcs_out_to_buffer_out": {
+     "mean": 5.8,
+     "min": 5.5,
+     "max": 6.5
+    },
+    "buffer_out_to_mac_word7": {
+     "mean": 1.0,
+     "min": 1.0,
+     "max": 1.0
+    },
+    "mac_word7_to_fire": {
+     "mean": 1.0,
+     "min": 1.0,
+     "max": 1.0
+    },
+    "fire_to_go": {
+     "mean": 0.0,
+     "min": 0.0,
+     "max": 0.0
+    },
+    "go_to_order_preamble": {
+     "mean": 2.0,
+     "min": 2.0,
+     "max": 2.0
+    }
+   },
+   "4650": {
+    "orders": 10,
+    "tick_to_trade": {
+     "mean": 12.55,
+     "min": 12.25,
+     "max": 13.25
+    },
+    "rx_start_strobe": {
+     "mean": 6.45,
+     "min": 6.25,
+     "max": 7.25
+    },
+    "d_strobe_to_order": {
+     "mean": 11.3,
+     "min": 11.0,
+     "max": 12.0
+    },
+    "pcs_out_to_buffer_out": {
+     "mean": 5.55,
+     "min": 5.25,
+     "max": 6.25
+    },
+    "buffer_out_to_mac_word7": {
+     "mean": 1.0,
+     "min": 1.0,
+     "max": 1.0
+    },
+    "mac_word7_to_fire": {
+     "mean": 1.0,
+     "min": 1.0,
+     "max": 1.0
+    },
+    "fire_to_go": {
+     "mean": 0.0,
+     "min": 0.0,
+     "max": 0.0
+    },
+    "go_to_order_preamble": {
+     "mean": 2.0,
+     "min": 2.0,
+     "max": 2.0
+    }
+   }
+  },
+  "ml_shadow": {
+   "0": {
+    "orders": 10,
+    "tick_to_trade": {
+     "mean": 13.3,
+     "min": 13.0,
+     "max": 14.0
+    },
+    "rx_start_strobe": {
+     "mean": 7.2,
+     "min": 7.0,
+     "max": 8.0
+    },
+    "d_strobe_to_order": {
+     "mean": 11.3,
+     "min": 11.0,
+     "max": 12.0
+    },
+    "pcs_out_to_buffer_out": {
+     "mean": 6.3,
+     "min": 6.0,
+     "max": 7.0
+    },
+    "buffer_out_to_mac_word7": {
+     "mean": 1.0,
+     "min": 1.0,
+     "max": 1.0
+    },
+    "mac_word7_to_fire": {
+     "mean": 1.0,
+     "min": 1.0,
+     "max": 1.0
+    },
+    "fire_to_go": {
+     "mean": 0.0,
+     "min": 0.0,
+     "max": 0.0
+    },
+    "go_to_order_preamble": {
+     "mean": 2.0,
+     "min": 2.0,
+     "max": 2.0
+    }
+   },
+   "1550": {
+    "orders": 10,
+    "tick_to_trade": {
+     "mean": 13.05,
+     "min": 12.75,
+     "max": 13.75
+    },
+    "rx_start_strobe": {
+     "mean": 6.95,
+     "min": 6.75,
+     "max": 7.75
+    },
+    "d_strobe_to_order": {
+     "mean": 11.3,
+     "min": 11.0,
+     "max": 12.0
+    },
+    "pcs_out_to_buffer_out": {
+     "mean": 6.05,
+     "min": 5.75,
+     "max": 6.75
+    },
+    "buffer_out_to_mac_word7": {
+     "mean": 1.0,
+     "min": 1.0,
+     "max": 1.0
+    },
+    "mac_word7_to_fire": {
+     "mean": 1.0,
+     "min": 1.0,
+     "max": 1.0
+    },
+    "fire_to_go": {
+     "mean": 0.0,
+     "min": 0.0,
+     "max": 0.0
+    },
+    "go_to_order_preamble": {
+     "mean": 2.0,
+     "min": 2.0,
+     "max": 2.0
+    }
+   },
+   "3100": {
+    "orders": 10,
+    "tick_to_trade": {
+     "mean": 12.8,
+     "min": 12.5,
+     "max": 13.5
+    },
+    "rx_start_strobe": {
+     "mean": 6.7,
+     "min": 6.5,
+     "max": 7.5
+    },
+    "d_strobe_to_order": {
+     "mean": 11.3,
+     "min": 11.0,
+     "max": 12.0
+    },
+    "pcs_out_to_buffer_out": {
+     "mean": 5.8,
+     "min": 5.5,
+     "max": 6.5
+    },
+    "buffer_out_to_mac_word7": {
+     "mean": 1.0,
+     "min": 1.0,
+     "max": 1.0
+    },
+    "mac_word7_to_fire": {
+     "mean": 1.0,
+     "min": 1.0,
+     "max": 1.0
+    },
+    "fire_to_go": {
+     "mean": 0.0,
+     "min": 0.0,
+     "max": 0.0
+    },
+    "go_to_order_preamble": {
+     "mean": 2.0,
+     "min": 2.0,
+     "max": 2.0
+    }
+   },
+   "4650": {
+    "orders": 10,
+    "tick_to_trade": {
+     "mean": 12.55,
+     "min": 12.25,
+     "max": 13.25
+    },
+    "rx_start_strobe": {
+     "mean": 6.45,
+     "min": 6.25,
+     "max": 7.25
+    },
+    "d_strobe_to_order": {
+     "mean": 11.3,
+     "min": 11.0,
+     "max": 12.0
+    },
+    "pcs_out_to_buffer_out": {
+     "mean": 5.55,
+     "min": 5.25,
+     "max": 6.25
+    },
+    "buffer_out_to_mac_word7": {
+     "mean": 1.0,
+     "min": 1.0,
+     "max": 1.0
+    },
+    "mac_word7_to_fire": {
+     "mean": 1.0,
+     "min": 1.0,
+     "max": 1.0
+    },
+    "fire_to_go": {
+     "mean": 0.0,
+     "min": 0.0,
+     "max": 0.0
+    },
+    "go_to_order_preamble": {
+     "mean": 2.0,
+     "min": 2.0,
+     "max": 2.0
+    }
+   }
+  },
+  "ml_veto": {
+   "0": {
+    "orders": 10,
+    "tick_to_trade": {
+     "mean": 13.3,
+     "min": 13.0,
+     "max": 14.0
+    },
+    "rx_start_strobe": {
+     "mean": 7.2,
+     "min": 7.0,
+     "max": 8.0
+    },
+    "d_strobe_to_order": {
+     "mean": 11.3,
+     "min": 11.0,
+     "max": 12.0
+    },
+    "pcs_out_to_buffer_out": {
+     "mean": 6.3,
+     "min": 6.0,
+     "max": 7.0
+    },
+    "buffer_out_to_mac_word7": {
+     "mean": 1.0,
+     "min": 1.0,
+     "max": 1.0
+    },
+    "mac_word7_to_fire": {
+     "mean": 1.0,
+     "min": 1.0,
+     "max": 1.0
+    },
+    "fire_to_go": {
+     "mean": 0.0,
+     "min": 0.0,
+     "max": 0.0
+    },
+    "go_to_order_preamble": {
+     "mean": 2.0,
+     "min": 2.0,
+     "max": 2.0
+    }
+   },
+   "1550": {
+    "orders": 10,
+    "tick_to_trade": {
+     "mean": 13.05,
+     "min": 12.75,
+     "max": 13.75
+    },
+    "rx_start_strobe": {
+     "mean": 6.95,
+     "min": 6.75,
+     "max": 7.75
+    },
+    "d_strobe_to_order": {
+     "mean": 11.3,
+     "min": 11.0,
+     "max": 12.0
+    },
+    "pcs_out_to_buffer_out": {
+     "mean": 6.05,
+     "min": 5.75,
+     "max": 6.75
+    },
+    "buffer_out_to_mac_word7": {
+     "mean": 1.0,
+     "min": 1.0,
+     "max": 1.0
+    },
+    "mac_word7_to_fire": {
+     "mean": 1.0,
+     "min": 1.0,
+     "max": 1.0
+    },
+    "fire_to_go": {
+     "mean": 0.0,
+     "min": 0.0,
+     "max": 0.0
+    },
+    "go_to_order_preamble": {
+     "mean": 2.0,
+     "min": 2.0,
+     "max": 2.0
+    }
+   },
+   "3100": {
+    "orders": 10,
+    "tick_to_trade": {
+     "mean": 12.8,
+     "min": 12.5,
+     "max": 13.5
+    },
+    "rx_start_strobe": {
+     "mean": 6.7,
+     "min": 6.5,
+     "max": 7.5
+    },
+    "d_strobe_to_order": {
+     "mean": 11.3,
+     "min": 11.0,
+     "max": 12.0
+    },
+    "pcs_out_to_buffer_out": {
+     "mean": 5.8,
+     "min": 5.5,
+     "max": 6.5
+    },
+    "buffer_out_to_mac_word7": {
+     "mean": 1.0,
+     "min": 1.0,
+     "max": 1.0
+    },
+    "mac_word7_to_fire": {
+     "mean": 1.0,
+     "min": 1.0,
+     "max": 1.0
+    },
+    "fire_to_go": {
+     "mean": 0.0,
+     "min": 0.0,
+     "max": 0.0
+    },
+    "go_to_order_preamble": {
+     "mean": 2.0,
+     "min": 2.0,
+     "max": 2.0
+    }
+   },
+   "4650": {
+    "orders": 10,
+    "tick_to_trade": {
+     "mean": 12.55,
+     "min": 12.25,
+     "max": 13.25
+    },
+    "rx_start_strobe": {
+     "mean": 6.45,
+     "min": 6.25,
+     "max": 7.25
+    },
+    "d_strobe_to_order": {
+     "mean": 11.3,
+     "min": 11.0,
+     "max": 12.0
+    },
+    "pcs_out_to_buffer_out": {
+     "mean": 5.55,
+     "min": 5.25,
+     "max": 6.25
+    },
+    "buffer_out_to_mac_word7": {
+     "mean": 1.0,
+     "min": 1.0,
+     "max": 1.0
+    },
+    "mac_word7_to_fire": {
+     "mean": 1.0,
+     "min": 1.0,
+     "max": 1.0
+    },
+    "fire_to_go": {
+     "mean": 0.0,
+     "min": 0.0,
+     "max": 0.0
+    },
+    "go_to_order_preamble": {
+     "mean": 2.0,
+     "min": 2.0,
+     "max": 2.0
+    }
+   }
+  },
+  "ml_veto_hold1": {
+   "0": {
+    "orders": 10,
+    "tick_to_trade": {
+     "mean": 14.4,
+     "min": 14.0,
+     "max": 15.0
+    },
+    "rx_start_strobe": {
+     "mean": 7.2,
+     "min": 7.0,
+     "max": 8.0
+    },
+    "d_strobe_to_order": {
+     "mean": 12.4,
+     "min": 12.0,
+     "max": 13.0
+    },
+    "pcs_out_to_buffer_out": {
+     "mean": 6.3,
+     "min": 6.0,
+     "max": 7.0
+    },
+    "buffer_out_to_mac_word7": {
+     "mean": 1.0,
+     "min": 1.0,
+     "max": 1.0
+    },
+    "mac_word7_to_fire": {
+     "mean": 2.0,
+     "min": 2.0,
+     "max": 2.0
+    },
+    "fire_to_go": {
+     "mean": 0.0,
+     "min": 0.0,
+     "max": 0.0
+    },
+    "go_to_order_preamble": {
+     "mean": 2.1,
+     "min": 2.0,
+     "max": 3.0
+    }
+   },
+   "1550": {
+    "orders": 10,
+    "tick_to_trade": {
+     "mean": 14.15,
+     "min": 13.75,
+     "max": 14.75
+    },
+    "rx_start_strobe": {
+     "mean": 6.95,
+     "min": 6.75,
+     "max": 7.75
+    },
+    "d_strobe_to_order": {
+     "mean": 12.4,
+     "min": 12.0,
+     "max": 13.0
+    },
+    "pcs_out_to_buffer_out": {
+     "mean": 6.05,
+     "min": 5.75,
+     "max": 6.75
+    },
+    "buffer_out_to_mac_word7": {
+     "mean": 1.0,
+     "min": 1.0,
+     "max": 1.0
+    },
+    "mac_word7_to_fire": {
+     "mean": 2.0,
+     "min": 2.0,
+     "max": 2.0
+    },
+    "fire_to_go": {
+     "mean": 0.0,
+     "min": 0.0,
+     "max": 0.0
+    },
+    "go_to_order_preamble": {
+     "mean": 2.1,
+     "min": 2.0,
+     "max": 3.0
+    }
+   },
+   "3100": {
+    "orders": 10,
+    "tick_to_trade": {
+     "mean": 13.9,
+     "min": 13.5,
+     "max": 14.5
+    },
+    "rx_start_strobe": {
+     "mean": 6.7,
+     "min": 6.5,
+     "max": 7.5
+    },
+    "d_strobe_to_order": {
+     "mean": 12.4,
+     "min": 12.0,
+     "max": 13.0
+    },
+    "pcs_out_to_buffer_out": {
+     "mean": 5.8,
+     "min": 5.5,
+     "max": 6.5
+    },
+    "buffer_out_to_mac_word7": {
+     "mean": 1.0,
+     "min": 1.0,
+     "max": 1.0
+    },
+    "mac_word7_to_fire": {
+     "mean": 2.0,
+     "min": 2.0,
+     "max": 2.0
+    },
+    "fire_to_go": {
+     "mean": 0.0,
+     "min": 0.0,
+     "max": 0.0
+    },
+    "go_to_order_preamble": {
+     "mean": 2.1,
+     "min": 2.0,
+     "max": 3.0
+    }
+   },
+   "4650": {
+    "orders": 10,
+    "tick_to_trade": {
+     "mean": 13.65,
+     "min": 13.25,
+     "max": 14.25
+    },
+    "rx_start_strobe": {
+     "mean": 6.45,
+     "min": 6.25,
+     "max": 7.25
+    },
+    "d_strobe_to_order": {
+     "mean": 12.4,
+     "min": 12.0,
+     "max": 13.0
+    },
+    "pcs_out_to_buffer_out": {
+     "mean": 5.55,
+     "min": 5.25,
+     "max": 6.25
+    },
+    "buffer_out_to_mac_word7": {
+     "mean": 1.0,
+     "min": 1.0,
+     "max": 1.0
+    },
+    "mac_word7_to_fire": {
+     "mean": 2.0,
+     "min": 2.0,
+     "max": 2.0
+    },
+    "fire_to_go": {
+     "mean": 0.0,
+     "min": 0.0,
+     "max": 0.0
+    },
+    "go_to_order_preamble": {
+     "mean": 2.1,
+     "min": 2.0,
+     "max": 3.0
+    }
+   }
+  },
+  "ml_veto_hold2": {
+   "0": {
+    "orders": 10,
+    "tick_to_trade": {
+     "mean": 15.3,
+     "min": 15.0,
+     "max": 16.0
+    },
+    "rx_start_strobe": {
+     "mean": 7.2,
+     "min": 7.0,
+     "max": 8.0
+    },
+    "d_strobe_to_order": {
+     "mean": 13.3,
+     "min": 13.0,
+     "max": 14.0
+    },
+    "pcs_out_to_buffer_out": {
+     "mean": 6.3,
+     "min": 6.0,
+     "max": 7.0
+    },
+    "buffer_out_to_mac_word7": {
+     "mean": 1.0,
+     "min": 1.0,
+     "max": 1.0
+    },
+    "mac_word7_to_fire": {
+     "mean": 3.0,
+     "min": 3.0,
+     "max": 3.0
+    },
+    "fire_to_go": {
+     "mean": 0.0,
+     "min": 0.0,
+     "max": 0.0
+    },
+    "go_to_order_preamble": {
+     "mean": 2.0,
+     "min": 2.0,
+     "max": 2.0
+    }
+   },
+   "1550": {
+    "orders": 10,
+    "tick_to_trade": {
+     "mean": 15.05,
+     "min": 14.75,
+     "max": 15.75
+    },
+    "rx_start_strobe": {
+     "mean": 6.95,
+     "min": 6.75,
+     "max": 7.75
+    },
+    "d_strobe_to_order": {
+     "mean": 13.3,
+     "min": 13.0,
+     "max": 14.0
+    },
+    "pcs_out_to_buffer_out": {
+     "mean": 6.05,
+     "min": 5.75,
+     "max": 6.75
+    },
+    "buffer_out_to_mac_word7": {
+     "mean": 1.0,
+     "min": 1.0,
+     "max": 1.0
+    },
+    "mac_word7_to_fire": {
+     "mean": 3.0,
+     "min": 3.0,
+     "max": 3.0
+    },
+    "fire_to_go": {
+     "mean": 0.0,
+     "min": 0.0,
+     "max": 0.0
+    },
+    "go_to_order_preamble": {
+     "mean": 2.0,
+     "min": 2.0,
+     "max": 2.0
+    }
+   },
+   "3100": {
+    "orders": 10,
+    "tick_to_trade": {
+     "mean": 14.8,
+     "min": 14.5,
+     "max": 15.5
+    },
+    "rx_start_strobe": {
+     "mean": 6.7,
+     "min": 6.5,
+     "max": 7.5
+    },
+    "d_strobe_to_order": {
+     "mean": 13.3,
+     "min": 13.0,
+     "max": 14.0
+    },
+    "pcs_out_to_buffer_out": {
+     "mean": 5.8,
+     "min": 5.5,
+     "max": 6.5
+    },
+    "buffer_out_to_mac_word7": {
+     "mean": 1.0,
+     "min": 1.0,
+     "max": 1.0
+    },
+    "mac_word7_to_fire": {
+     "mean": 3.0,
+     "min": 3.0,
+     "max": 3.0
+    },
+    "fire_to_go": {
+     "mean": 0.0,
+     "min": 0.0,
+     "max": 0.0
+    },
+    "go_to_order_preamble": {
+     "mean": 2.0,
+     "min": 2.0,
+     "max": 2.0
+    }
+   },
+   "4650": {
+    "orders": 10,
+    "tick_to_trade": {
+     "mean": 14.55,
+     "min": 14.25,
+     "max": 15.25
+    },
+    "rx_start_strobe": {
+     "mean": 6.45,
+     "min": 6.25,
+     "max": 7.25
+    },
+    "d_strobe_to_order": {
+     "mean": 13.3,
+     "min": 13.0,
+     "max": 14.0
+    },
+    "pcs_out_to_buffer_out": {
+     "mean": 5.55,
+     "min": 5.25,
+     "max": 6.25
+    },
+    "buffer_out_to_mac_word7": {
+     "mean": 1.0,
+     "min": 1.0,
+     "max": 1.0
+    },
+    "mac_word7_to_fire": {
+     "mean": 3.0,
+     "min": 3.0,
+     "max": 3.0
+    },
+    "fire_to_go": {
+     "mean": 0.0,
+     "min": 0.0,
+     "max": 0.0
+    },
+    "go_to_order_preamble": {
+     "mean": 2.0,
+     "min": 2.0,
+     "max": 2.0
+    }
+   }
+  }
+ }
+}

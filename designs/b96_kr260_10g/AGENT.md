@@ -34,6 +34,19 @@ designs/b96_kr260_10g/rm_gp_bypass/rtl/gt_bp_ctl.sv 71963d3f2f: per-direction re
 designs/b96_kr260_10g/rm_gp_bypass/rtl/gt_bp_gate.sv 5e384b6757: per-direction gate that releases the paths only after the bypass controller has restarted and finished (brief 96F1)
 designs/b96_kr260_10g/ip/amd_ip_bypass.tcl 2b44c98771: the GT Wizard configuration with both buffers bypassed (brief 96F1)
 designs/b96_kr260_10g/host/b96f1_bypass.py 8e94dd345a: board driver and pre-registered verdict for build rm_gp_bypass (brief 96F1)
+designs/b96_kr260_10g/rm_gp_ml/rtl/ml_stage.sv 1c1abfce18: the ML decision stage of build rm_gp_ml: one-instrument book, order-flow features, classifier pipeline and counters (brief 113)
+designs/b96_kr260_10g/rm_gp_ml/rtl/ml_pkg.sv 71363adf14: constants shared by the ML stage (brief 113)
+designs/b96_kr260_10g/rm_gp_ml/rtl/trade64.sv 3e80ab02a4: copy of rtl/trade64.sv for build rm_gp_ml with the model's veto on the rule's decision (brief 113)
+designs/b96_kr260_10g/rm_gp_ml/rtl/rx_path.sv da1472f5fa: copy of rtl/rx_path.sv for build rm_gp_ml with the ML stage's ports through to trade64 (brief 113)
+designs/b96_kr260_10g/rm_gp_ml/rtl/rx_path_legacy.sv cc5cf55776: copy of rtl/rx_path_legacy.sv for build rm_gp_ml with the ML ports tied off (brief 113)
+designs/b96_kr260_10g/rm_gp_ml/rtl/b96_core.sv 46ceb4153e: copy of rtl/b96_core.sv for build rm_gp_ml with the ML registers, crossings and status words (brief 113)
+designs/b96_kr260_10g/rm_gp_ml/build.yaml a081d3c86e: how flow/run_vivado.sh builds rm_gp_ml (rm_gp with the ML stage, brief 113)
+designs/b96_kr260_10g/rm_gp_ml/docs/ml_stage.md beb51c0a3c: which model block was chosen and why, how the stage is arranged, the measured cost in context (brief 113)
+designs/b96_kr260_10g/rm_gp_ml/docs/ml_registers.md 487b9de7fe: register map of the ML stage, generated from rm_gp_ml/regmap_ml.py (brief 113)
+designs/b96_kr260_10g/rm_gp_ml/model/twin.py ec29cc5d38: Python twin of the ML stage over the brief 87 references (brief 113)
+designs/b96_kr260_10g/rm_gp_ml/model/stream.py 7047fabb32: synthetic Bench Feed v1 streams as 10GBASE-R words, with the twin's expectation per frame (brief 113)
+designs/b96_kr260_10g/rm_gp_ml/sim/tb_ml_core.sv bcc7b0ea4d: whole-core xsim bench with a synthetic feed injected on the receive words (brief 113)
+designs/b96_kr260_10g/host/b113_ml.py 167efbfa06: board driver and pre-registered verdict for build rm_gp_ml (brief 113)
 designs/b96_kr260_10g/rtl/es_ctrl.sv 671362a1c0: DRP master and eye-scan point sequencer for the GTHE4 channel (EYESCAN = 1), brief 96D
 designs/b96_kr260_10g/es.xdc 9f571dada7: powers up the GT's eye-scan circuit (ES_EYE_SCAN_EN, ES_ERRDET_EN) in the eyescan build
 designs/b96_kr260_10g/model/eyescan.py a4f8ffb4ab: Python twin of the eye-scan point sequencer's DRP traffic
@@ -86,13 +99,14 @@ R7 results/b96e/core_lat_sim.json 77fb782b78
 R8 results/b96e/builds/rm_gp/digest.json fdc4edc093
 R9 results/b96f1/builds/rm_gp_bypass/digest.json f49d9a7e1a
 R10 results/b96f1/bypass_seq/result.txt 457378d737
-R11 results/b96f1b/builds/rm_gp_bypass/digest.json e4681b81a1
-R12 results/b96f1b/bypass_ctl/result.txt 6d13cfb7e4
-R13 results/b96c/builds/control/run.json 699ba4c7ee
-R14 results/b96/latency_sim.json e5453d4c0b
-R15 results/b96c/core_sim.json 227e0284e2
-R16 results/b96c/core_sim_default.json 21559dbac7
-R17 results/b96c/builds/rm_all3/digest.json 53fa66d4a7
+R11 results/b113/builds/rm_gp_ml/digest.json 22e113afc3
+R12 results/b113/summary.json b101413a06
+R13 results/b113/latency.json b90f752018
+R14 results/b96c/builds/control/run.json 699ba4c7ee
+R15 results/b96/latency_sim.json e5453d4c0b
+R16 results/b96c/core_sim.json 227e0284e2
+R17 results/b96c/core_sim_default.json 21559dbac7
+R18 results/b96c/builds/rm_all3/digest.json 53fa66d4a7
 
 ## evidence
 E1 simulation pass R1 ci: PCS and MAC against an independent bit-serial Python model clock for clock; frames in lane 0 and lane 4, every length residue, any bit offset; the whole core with a stand-in for the GT: probe echo, trading loop, decisions, poisoned orders
@@ -105,8 +119,9 @@ E7 simulation pass R7: whole core in xsim with AMD's real XPM macros, four clock
 E8 build pass R8: build rm_gp (RATE_MATCH = 1, RM_OWN = 1), all 29 gates, WNS +0.105 ns, WHS +0.011 ns, stamp 1a2fa1a8 recomputed from the tree; not loaded on a board
 E9 build pass R9: build rm_gp_bypass (both GT buffers bypassed, brief 96F1), all 29 gates, WNS +0.090 ns, WHS +0.010 ns, report_cdc no critical, stamp b2a7aeea; not loaded on a board
 E10 simulation pass R10: the Wizard's own buffer-bypass controllers with our run gate against a stand-in transceiver in xsim, 28 checks (start on the reset-done edge, stale done held off, error holds the paths in reset)
-E11 build pass R11: build rm_gp_bypass rebuilt with the reset synchroniser and the alignment timeout and retry (brief 96F1b), all 29 gates, WNS +0.118 ns, WHS +0.010 ns, report_cdc no critical and no waivers, stamp 86037ce1; not loaded on a board; supersedes E9
-E12 simulation pass R12: gt_bp_ctl with the Wizard's own controllers against a stand-in transceiver in xsim (reset assert and release, normal start, retries, give-up, error not retried, clock inactive), plus the 28 checks of E10 unchanged; the whole core in three scenarios; the real 30 ms and 130 ms values
+E11 build pass R11: build rm_gp_ml (rm_gp with the ML decision stage, brief 113), all 29 gates, WNS +0.220 ns, WHS +0.010 ns, report_cdc no critical, stamp 22c35e72; not loaded on a board
+E12 simulation pass R12: whole core in xsim with a mixed synthetic feed injected on the receive words, 350 frames, features, classes, decisions and vetoes equal to the Python twin, orders and stage counters equal (brief 113)
+E13 simulation pass R13: tick-to-trade with and without the ML stage, four receive-clock phases, no clock added in shadow or veto mode (brief 113)
 
 ## measured
 M1 resources lut=6167 LUT R2#utilization.lut: LUTs, variant (b) | routed, Vivado 2026.1
@@ -114,12 +129,15 @@ M2 resources ff=14,183 FF R2#utilization.ff: registers, variant (b) | as M1
 M3 timing wns_ns=0.221 ns R2#timing.wns_ns: worst setup slack, variant (b) | routed, user clocks 161.133 MHz and 100 MHz
 M4 timing whs_ns=0.011 ns R2#timing.whs_ns: worst hold slack, variant (b) | as M3
 M5 power power_w=1.087 W R2#power.total_w: total on-chip power estimate, variant (b) | report_power after routing, vectorless, confidence Medium
-M6 other -=4439 MiB R13#vivado_peak_rss_mib: Vivado peak resident memory of the variant (b) build | 1 thread, MemoryMax=6G scope, one run, no cap hits
-M7 latency -=3 clocks R14#tx_clocks_max: transmit latency, worst gearbox phase | simulation, 161.13 MHz clock, MAC output register to the GT word with the last bit of the start block
-M8 latency -=13 clocks R15#tick_to_trade_digital_sim.gt_rxdata_price_word_to_gt_txdata_order_start_clocks.max: digital tick-to-trade, worst simulated case with the rate matcher (RATE_MATCH = 1) | simulation, same-phase clocks, the Icarus stand-in of the FIFO macro; GT, optics and clock-crossing phase not included; the board measured 11 clocks more than 97C, see E6 and design.md section 9
-M10 latency tick_to_trade_default_clocks=11 clocks R16#tick_to_trade_digital_sim.gt_rxdata_price_word_to_gt_txdata_order_start_clocks: digital tick-to-trade, simulation of the default build (RATE_MATCH = 0, the 97C path) | simulation, same-phase clocks; as M8
-M9 timing wns_ns_all3=0.004 ns R17#timing.wns_ns: worst setup slack, latency variant all3 with the rate matcher (RATE_MATCH = 1) | as M3; the margin is thin
+M6 other -=4439 MiB R14#vivado_peak_rss_mib: Vivado peak resident memory of the variant (b) build | 1 thread, MemoryMax=6G scope, one run, no cap hits
+M7 latency -=3 clocks R15#tx_clocks_max: transmit latency, worst gearbox phase | simulation, 161.13 MHz clock, MAC output register to the GT word with the last bit of the start block
+M8 latency -=13 clocks R16#tick_to_trade_digital_sim.gt_rxdata_price_word_to_gt_txdata_order_start_clocks.max: digital tick-to-trade, worst simulated case with the rate matcher (RATE_MATCH = 1) | simulation, same-phase clocks, the Icarus stand-in of the FIFO macro; GT, optics and clock-crossing phase not included; the board measured 11 clocks more than 97C, see E6 and design.md section 9
+M10 latency tick_to_trade_default_clocks=11 clocks R17#tick_to_trade_digital_sim.gt_rxdata_price_word_to_gt_txdata_order_start_clocks: digital tick-to-trade, simulation of the default build (RATE_MATCH = 0, the 97C path) | simulation, same-phase clocks; as M8
+M9 timing wns_ns_all3=0.004 ns R18#timing.wns_ns: worst setup slack, latency variant all3 with the rate matcher (RATE_MATCH = 1) | as M3; the margin is thin
 M11 latency tick_to_trade_own_buffer_clocks=13 clocks R7#results.rate_match_1_rm_own_1.1550.tick_to_trade.mean: GT-port tick-to-trade in simulation with AMD's real macros, own gray-pointer buffer (RM_OWN = 1), mean over four phases at phase 1550 ps | xsim 2026.1, whole core, GT stand-in, phase 1550 ps between the clocks; the 97C path is 10.75 and the xpm_fifo_async buffer 16.0 at the same phase; the board has not measured this build
+M12 latency ml_stage_tick_to_trade_change_clocks=0 clocks R12#simulation.change_vs_base_clocks.ml_veto: tick-to-trade change from the ML stage (veto mode against the control without it), whole core in xsim, mean over four phases | xsim 2026.1, whole core, GT stand-in, synthetic feed injected, four receive-clock phases; the control is rm_gp at 12.93 clocks; the board has not measured it
+M13 timing ml_stage_worst_slack_ns=0.556 ns R12#build.stage_worst_slack_ns: worst setup slack of any path ending in the ML stage, in context after routing | routed rm_gp_ml, Vivado 2026.1, core clock 6.206 ns
+M14 resources ml_stage_lut_added=1470 LUT R12#build.lut_added: LUTs added by the ML stage and its registers over build rm_gp | routed, Vivado 2026.1; the control is brief 96F1's rebuild of rm_gp
 
 ## gaps
 [hardware] The design has run on a KR260 optical loopback only (briefs 97 and 96C), never against a network card or a second reference clock, so rate matching (RATE_MATCH = 1) has not been seen under a real frequency offset; the TX phase-interpolator route gave none. The reference clock source and frequency, the 25 MHz input and the SFP+ control pin functions are unconfirmed against the schematic (third-party example).
@@ -130,18 +148,20 @@ M11 latency tick_to_trade_own_buffer_clocks=13 clocks R7#results.rate_match_1_rm
 [throughput] The line rate and the 10 Gb/s payload rate are by configuration and by the gearbox arithmetic; no throughput or error-rate measurement exists because nothing ran on a board.
 [build] The 96C builds of the latency variant with the buffer (rm_all3) and its ppm twin hit the 6 GiB scope cap about 1000 times and used about 700 MiB of swap (the base build did not); the Vivado resident peak of the base build is 4439 MiB. all3 closes timing with 0.004 ns of setup slack, which is thin.
 [constraints] The per-entry data path to the first synchroniser flop (write-clock entry flop to the first `xpm_cdc_array_single` flop) has no max-delay bound: the one-clock margin of `ENT_SYNC = 1` covers normal routing, but it is not constrained.
+[ml stage] Build rm_gp_ml (the ML decision stage behind the rule, brief 113) has not run on a board; its board test is pre-registered in results/b113/preregistration.md and the owner's script is written. The stage tracks one instrument with a top-of-book and sees the first message of a frame only; the model is brief 87's trees on one planted-signal data set.
 
 ## next_actions
-1. Run _handoff/fpga_agent/run_96f1_stage1.sh on the KR260 (pre-registered in results/b96f1/preregistration.md, amendment 2026-11-20), build rm_gp_bypass (stamp 86037ce1, brief 96F1b) against the 96E rm_gp board run; read the retry counts and gave-up flags.
-2. Run docs/board_run_plan.md steps 1 to 4 on the KR260 (laser polarity first), then the NIC steps after the owner buys a card and cable.
-3. Confirm the reference clock and the control pins against the carrier schematic.
-4. Widen the 58A core to 64 bits, or add the missing 58A features to trade64.
+1. Run _handoff/fpga_agent/run_113_ml_stage3.sh on the KR260 (pre-registered in results/b113/preregistration.md), build rm_gp_ml against the 96E rm_gp board run.
+2. Run _handoff/fpga_agent/run_96f1_stage1.sh on the KR260 (pre-registered in results/b96f1/preregistration.md), build rm_gp_bypass against the 96E rm_gp board run.
+3. Run docs/board_run_plan.md steps 1 to 4 on the KR260 (laser polarity first), then the NIC steps after the owner buys a card and cable.
+4. Confirm the reference clock and the control pins against the carrier schematic.
+5. Widen the 58A core to 64 bits, or add the missing 58A features to trade64.
 
 ## open_questions
 - Does the PL load over JTAG with the PS idle on the KR260 (flow/program.py has no KR260 board entry yet)?
 
 ## history
-2026-11-20 - pr=-: brief 96F1b: build rm_gp_bypass with AMD-style synchronised controller reset and a 30 ms TX / 130 ms RX alignment timeout with 3 retries then a gave-up flag (GT_BUF bits 29:16); all 29 gates, timing met, report_cdc no critical; gave-up added as a fail line before any board time; nothing run on a board
+2026-11-20 - pr=-: brief 113: build rm_gp_ml, the ML decision stage (30 boosted trees) behind the rule, class ready before the price word so no clock is added in simulation; bit-exact against the Python twin; all 29 gates, timing met; board test pre-registered and script written, nothing run on a board
 2026-11-20 - pr=-: brief 96F1: build rm_gp_bypass (both GT elastic buffers bypassed; Wizard probe in results/b96f1/wizard_probe), all 29 gates, timing met, report_cdc no critical; board test pre-registered and script written, nothing run on a board
 2026-11-19 - pr=-: brief 96E: own gray-pointer elastic buffer (RM_OWN), +1.2 clocks of tick-to-trade over 97C in xsim against +5.3 for the macro buffer; the board's +11 accounted (1.25 left in D); build rm_gp with all 29 gates; board run and real-offset plan pending the owner
 2026-11-19 - pr=-: brief 96D: on-chip RX eye scan (EYESCAN build option, es_ctrl, flow/eyescan); built with all 29 gates; simulated against a stand-in; not yet run on the board
