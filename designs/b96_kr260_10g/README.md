@@ -72,11 +72,13 @@ Interfaces:
 | simulate the PCS, MAC and core against the Python reference; needs Icarus Verilog and cocotb 2.0.1 | `python -m pytest -q designs/b96_kr260_10g/tests` | no | about 2 min |
 | build variant (b) and run all gates; needs local Vivado 2026.1 (Basic tier) and a heavy slot (take_heavy_slot.sh), MEM_MAX=6G reaches the cap | `flow/run_vivado.sh designs/b96_kr260_10g base` | yes | about 22 min |
 | build variant (a), the near-end loopback self-test; needs as above | `flow/run_vivado.sh designs/b96_kr260_10g/selftest base` | yes | about 22 min |
+| the UVM 1.2 regression of the PCS and MAC in xsim (every test over its seeds, coverage merge, seeded bugs); needs Vivado 2026.1 xsim (Basic tier is enough); a simulation-only run, no heavy slot while the load is under 6 and more than 12 GB is free | `designs/b96_kr260_10g/verif/uvm/scripts/run_regress.sh --mutants --record results/112_uvm_pcs_mac` | no | about 40 min |
 
-Tool: Vivado 2026.1. Build ID of the inputs at handover: `c9106c0d` (`python flow/manifest.py show designs/b96_kr260_10g`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `93d158c`.
+Tool: Vivado 2026.1. Build ID of the inputs at handover: `815a2b02` (`python flow/manifest.py show designs/b96_kr260_10g`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `93d158c`.
 
 | File | What |
 |---|---|
+| [`designs/b96_kr260_10g/verif/uvm/README.md`](verif/uvm/README.md) | how the UVM 1.2 bench for the PCS and MAC is built, what each part checks, the coverage and the seeded bugs (brief 112) |
 | [`designs/b96_kr260_10g/rm_gp_bypass/rtl/b96_core.sv`](rm_gp_bypass/rtl/b96_core.sv) | copy of rtl/b96_core.sv for build rm_gp_bypass with the GT buffer-bypass controllers connected and run gates (brief 96F1) |
 | [`designs/b96_kr260_10g/rm_gp_bypass/rtl/gt_bp_gate.sv`](rm_gp_bypass/rtl/gt_bp_gate.sv) | per-direction gate that releases the paths only after the bypass controller has restarted and finished (brief 96F1) |
 | [`designs/b96_kr260_10g/ip/amd_ip_bypass.tcl`](ip/amd_ip_bypass.tcl) | the GT Wizard configuration with both buffers bypassed (brief 96F1) |
@@ -140,6 +142,7 @@ Tool: Vivado 2026.1. Build ID of the inputs at handover: `c9106c0d` (`python flo
 Gates at handover: `build_2026_1` pass.
 
 <!-- prose:verified -->
+**Specification to evidence.** Every requirement of this design against the checks that cover it, with each status computed from the evidence files, the gaps and the stale evidence: [verif/matrix.md](verif/matrix.md) ([html](verif/matrix.html)), generated from [verif/testplan.yaml](verif/testplan.yaml) by `python -m flow.trace_v1 write`; schema and rules in [docs/traceability_v1.md](../../docs/traceability_v1.md). Requirements here are drafts written from the design documents; the matrix shows which are closed by simulation, formal proof, post-route timing or the board, and which depend on an external element (a network card, a second clock) that only hardware verification can close.
 <!-- /prose:verified -->
 
 ## Measured
@@ -195,6 +198,7 @@ Open questions:
 
 | Date | Brief | PR | What |
 |---|---|---|---|
+| 2026-11-20 | - | - | brief 112: UVM 1.2 bench for the PCS and MAC (designs/b96_kr260_10g/verif/uvm): agents, reference models, scoreboard, coverage, SVAs, regression and seeded bugs, in xsim 2026.1; no RTL bug found; xcrg refused on the Basic tier |
 | 2026-11-20 | - | - | brief 96F1: build rm_gp_bypass (both GT elastic buffers bypassed; Wizard probe in results/b96f1/wizard_probe), all 29 gates, timing met, report_cdc no critical; board test pre-registered and script written, nothing run on a board |
 | 2026-11-19 | - | - | brief 96E: own gray-pointer elastic buffer (RM_OWN), +1.2 clocks of tick-to-trade over 97C in xsim against +5.3 for the macro buffer; the board's +11 accounted (1.25 left in D); build rm_gp with all 29 gates; board run and real-offset plan pending the owner |
 | 2026-11-19 | - | - | brief 96D: on-chip RX eye scan (EYESCAN build option, es_ctrl, flow/eyescan); built with all 29 gates; simulated against a stand-in; not yet run on the board |

@@ -28,6 +28,7 @@ python -m agent models check [--probe]                                         #
 | `doc` | the DOC step (handover, README, AGENT.md) | text | inherits `rtl` |
 | `route` | the cheap skill-section classifier | chat | off (no model) |
 | `options` | the strategy generator of `agent improve` (brief 104): two to four ways to improve a loaded design, checked by code | text | Claude Code, `claude-sonnet-5-5`, effort medium (a `default:` does not move it; name it explicitly) |
+| `doc_crossread` | the blind document reader (brief 114): sees only a vendor-document excerpt, writes the facts code depends on with citations; code does the comparison, never a model | text, chat | Claude Code, `claude-sonnet-5-5`, effort medium (opt-in like `options`: a `default:` does not move it; name it explicitly) |
 | `embed` | reserved: embeddings | chat | off; the only embedder is fastembed's local model in `agent/core/skill_index.py` (in-process, tied to the bank's stored vectors), not routed |
 
 A key is a purpose, or `purpose@stage` for one stage of the machine (`rtl@timing-closure`; stage names as in `agent/graph/stages.py`).
@@ -92,7 +93,7 @@ default does not hide the file.
   kind supports. The one exception is the built-in soft defaults (`temperature 0.2`, `timeout_s 180`, `retries 1` on chat kinds, `effort
   medium` on `claude_code`): they are dropped when the kind cannot take them, so switching a purpose from one kind to another is a one-line change.
 - **`effort: null` means unset** (the CLI default), not "medium".
-- **`default:` skips** the opt-in purposes (`route`, `embed` stay off; `options` keeps its own entry, Claude Code on the plan) and any purpose the kind cannot serve (`latency` needs
+- **`default:` skips** the opt-in purposes (`route`, `embed` stay off; `options` and `doc_crossread` keep their own entries, Claude Code on the plan) and any purpose the kind cannot serve (`latency` needs
   tool calls through a chat endpoint). Naming such a purpose explicitly on `claude_code` is an error at load.
 - **`doc` and `constraints` inherit `rtl`** until a layer sets them. A `default:` sets them explicitly.
 - **`anthropic_api` and `claude_code` calls are counted differently:** the run's USD cap counts provider-reported dollars (OpenRouter); an

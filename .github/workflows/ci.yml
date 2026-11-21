@@ -409,6 +409,9 @@ jobs:
         run: |
           python -m pytest -q designs/b92_history_attention/tests/test_b92_gen.py designs/b92_history_attention/tests/test_b92_rtl.py
           python3 results/b92/summary.py --check
+      - name: Standard-protocol trading path (brief 110) - MoldUDP64 and ITCH 5.0 in, OUCH 5.0 out - cocotb against the Python reference (frames, book updates, counters bit exact; coverage; other parameters), model unit tests, Verilator -Wall at four parameter points
+        run: |
+          python -m pytest -q designs/b110_itch_ouch/tests/test_b110_model.py designs/b110_itch_ouch/tests/test_b110_rtl.py designs/b110_itch_ouch/tests/test_b110_lint.py
       - name: Upload simulation logs
         if: always()
         uses: actions/upload-artifact@v4

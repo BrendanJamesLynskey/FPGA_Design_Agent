@@ -1,6 +1,6 @@
 "use strict";
 (function () {
-  var PAGES = [["project", "Project"], ["timing", "Timing"], ["runs", "Runs"], ["live", "Live"], ["start", "Start"], ["board", "Board"], ["measure", "Measurements"], ["health", "Health"], ["models", "Models"]];
+  var PAGES = [["project", "Project"], ["timing", "Timing"], ["runs", "Runs"], ["live", "Live"], ["start", "Start"], ["board", "Board"], ["measure", "Measurements"], ["trace", "Traceability"], ["health", "Health"], ["models", "Models"]];
   var main = document.getElementById("main");
   var state = { theme: "dark", scope: {}, request: "", project: null, measureTab: "eye", capA: null, capB: null, session: 0, lastFocus: null };
 
@@ -607,8 +607,57 @@
     return out;
   }
 
+  /* ---------- traceability (brief 116) ---------- */
+  var TRACE_METHODS = [["sim_test", "sim test"], ["uvm_test", "UVM"], ["assertion", "SVA"], ["formal", "formal"], ["coverage_bin", "coverage"], ["timing", "timing"], ["sim_measurement", "sim measure"], ["board_measurement", "board"], ["review", "review"]];
+  var TRACE_STATE = { verified: "verified", fail: "FAILS", not_run: "not run", stale: "stale", bounded: "bounded only", no_measurement: "no measurement" };
+  function traceState(r) {
+    var t = TRACE_STATE[r.state] || r.state;
+    if (r.state === "verified" && r.external && !r.hardware_verified) return "passes without hardware; hardware open";
+    if (r.state === "verified" && r.kind === "performance") t += " (" + (r.basis === "board" ? "board-measured" : r.basis === "timing" ? "post-route timing" : "simulation only") + ")";
+    if (r.state === "verified" && r.stale_items) t += "; " + r.stale_items + " item(s) stale";
+    return t;
+  }
+  function pageTrace() {
+    var root = h("div", null, h("h1", null, "Traceability"), loading()); main.textContent = ""; main.appendChild(root);
+    api("/api/trace").then(function (d) {
+      root.textContent = "";
+      if (d.error) { add(root, [h("h1", null, "Traceability"), h("div", { class: "banner" }, d.error)]); return; }
+      add(root, [h("h1", null, "Traceability"), h("p", { class: "mute" }, d.framing),
+        h("p", { class: "src" }, "how: python -m flow.trace_v1 show <design>. Status is computed from the evidence files, never typed.")]);
+      d.designs.forEach(function (g) {
+        var byId = {}; g.items.forEach(function (i) { byId[i.id] = i; });
+        var rows = g.requirements.map(function (r) {
+          var cells = [h("span", null, h("b", null, r.id + " "), r.title), r.kind, h("span", { class: r.state === "verified" ? "" : "mute" }, traceState(r))];
+          TRACE_METHODS.forEach(function (m) {
+            var its = r.items.filter(function (id) { return byId[id].method === m[0]; }).map(function (id) { return byId[id]; });
+            cells.push(its.length ? its.map(function (i) { return h("div", null, i.status.replace("_", " ") + (i.instrument ? " [" + i.instrument + "]" : "")); }) : "");
+          });
+          return { cells: cells, onclick: function () { openRequirement(r, byId); } };
+        });
+        add(root, [h("div", { class: "panel mt" }, h("h2", null, g.design), h("p", null, g.summary.line),
+          table(["requirement", "kind", "state"].concat(TRACE_METHODS.map(function (m) { return m[1]; })), rows, {}),
+          h("h3", { class: "mt" }, "Gaps (" + g.gaps.length + ")"),
+          g.gaps.length ? h("ul", null, g.gaps.map(function (x) { return h("li", null, h("code", null, x.id), " " + x.type.replace(/_/g, " ") + ": " + x.text); })) : h("p", null, "None."))]);
+      });
+    }, function (e) { root.textContent = ""; add(root, [h("h1", null, "Traceability"), fail(e)]); });
+  }
+  function openRequirement(r, byId) {
+    var pf = r.performance;
+    openDrawer(r.id, [h("p", null, r.title), r.text ? h("p", null, r.text) : null,
+      h("dl", null, h("dt", null, "kind"), h("dd", null, r.kind), h("dt", null, "state"), h("dd", null, traceState(r)), h("dt", null, "specification status"), h("dd", null, r.spec_status || "unspecified"),
+        r.source ? [h("dt", null, "source"), h("dd", { class: "mono" }, r.source)] : null,
+        pf ? [h("dt", null, "bound"), h("dd", null, pf.quantity + " " + pf.op + " " + pf.bound + " " + pf.unit + "; " + pf.condition)] : null,
+        r.external ? [h("dt", null, "external element"), h("dd", null, r.external + "; hardware verification " + r.hardware_closure)] : null),
+      h("h3", null, "Evidence"),
+      table(["item", "method", "status", "result", "evidence"], r.items.map(function (id) {
+        var i = byId[id];
+        return [i.title || i.id, i.method + (i.instrument ? " / " + i.instrument : ""), i.status.replace("_", " "), i.detail + (i.stale_because ? " (" + i.stale_because + ")" : ""),
+          i.evidence && i.evidence.exists ? h("button", { type: "button", class: "name", on: { click: function () { openRecord(i.evidence.file); } } }, i.evidence.file) : "none"];
+      }), {})]);
+  }
+
   /* ---------- router ---------- */
-  var ROUTES = { project: pageProject, timing: pageTiming, runs: pageRuns, live: pageLive, start: pageStart, board: pageBoard, measure: pageMeasure, health: pageHealth, models: pageModels };
+  var ROUTES = { project: pageProject, timing: pageTiming, runs: pageRuns, live: pageLive, start: pageStart, board: pageBoard, measure: pageMeasure, trace: pageTrace, health: pageHealth, models: pageModels };
   function route() {
     var k = (location.hash || "#/project").replace(/^#\//, "");
     if (!ROUTES[k]) k = "project";

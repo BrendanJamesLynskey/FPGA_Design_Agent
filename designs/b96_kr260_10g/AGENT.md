@@ -9,7 +9,7 @@ A Kria KR260 design that carries our own 10GBASE-R PCS (64B/66B, scrambler, gear
 not: an interoperability proof: a PCS talking to itself accepts its own symmetric mistakes, only a network card proves it; the full 58A trading core (book, rule table, interlocks, ARP) at 64 bits: trade64 is a small stand-in with one rule; the reconciliation sublayer link-fault state machine, the BER monitor, an ARP or ICMP responder
 
 ## state
-stage=built vivado=2026.1 kb_pin=93d158c build_id=c9106c0d
+stage=built vivado=2026.1 kb_pin=93d158c build_id=815a2b02
 gates: build_2026_1=pass
 
 ## interface
@@ -28,6 +28,7 @@ param GO_REG=1 (default), 0 in lat_all3 legal=0 or 1
 param line rate=10.3125 Gb/s legal=fixed by 10GBASE-R
 
 ## files
+designs/b96_kr260_10g/verif/uvm/README.md 28bc0ecbd5: how the UVM 1.2 bench for the PCS and MAC is built, what each part checks, the coverage and the seeded bugs (brief 112)
 designs/b96_kr260_10g/rm_gp_bypass/rtl/b96_core.sv 292b43f4aa: copy of rtl/b96_core.sv for build rm_gp_bypass with the GT buffer-bypass controllers connected and run gates (brief 96F1)
 designs/b96_kr260_10g/rm_gp_bypass/rtl/gt_bp_gate.sv 2c7f992cf9: per-direction gate that releases the paths only after the bypass controller has restarted and finished (brief 96F1)
 designs/b96_kr260_10g/ip/amd_ip_bypass.tcl 2b44c98771: the GT Wizard configuration with both buffers bypassed (brief 96F1)
@@ -71,6 +72,7 @@ designs/b96_kr260_10g/docs/register_map.md 039fc1ce6d: interface datasheet
 simulate the PCS, MAC and core against the Python reference (~2min): python -m pytest -q designs/b96_kr260_10g/tests
 [heavy] build variant (b) and run all gates (~22min): flow/run_vivado.sh designs/b96_kr260_10g base
 [heavy] build variant (a), the near-end loopback self-test (~22min): flow/run_vivado.sh designs/b96_kr260_10g/selftest base
+the UVM 1.2 regression of the PCS and MAC in xsim (every test over its seeds, coverage merge, seeded bugs) (~40min): designs/b96_kr260_10g/verif/uvm/scripts/run_regress.sh --mutants --record results/112_uvm_pcs_mac
 
 ## records (path sha256-prefix; claims below cite R<n>)
 R1 designs/b96_kr260_10g/tests/test_b96_pcs_rtl.py b26b6317ae
@@ -136,6 +138,7 @@ M11 latency tick_to_trade_own_buffer_clocks=13 clocks R7#results.rate_match_1_rm
 - Does the PL load over JTAG with the PS idle on the KR260 (flow/program.py has no KR260 board entry yet)?
 
 ## history
+2026-11-20 - pr=-: brief 112: UVM 1.2 bench for the PCS and MAC (designs/b96_kr260_10g/verif/uvm): agents, reference models, scoreboard, coverage, SVAs, regression and seeded bugs, in xsim 2026.1; no RTL bug found; xcrg refused on the Basic tier
 2026-11-20 - pr=-: brief 96F1: build rm_gp_bypass (both GT elastic buffers bypassed; Wizard probe in results/b96f1/wizard_probe), all 29 gates, timing met, report_cdc no critical; board test pre-registered and script written, nothing run on a board
 2026-11-19 - pr=-: brief 96E: own gray-pointer elastic buffer (RM_OWN), +1.2 clocks of tick-to-trade over 97C in xsim against +5.3 for the macro buffer; the board's +11 accounted (1.25 left in D); build rm_gp with all 29 gates; board run and real-offset plan pending the owner
 2026-11-19 - pr=-: brief 96D: on-chip RX eye scan (EYESCAN build option, es_ctrl, flow/eyescan); built with all 29 gates; simulated against a stand-in; not yet run on the board
