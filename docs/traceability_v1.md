@@ -83,6 +83,11 @@ waiver" with the waiver id and expiry, counted separately in the summary, and li
 waives nothing** (gap `waiver_expired`; the date is today's, or `TRACE_TODAY` in tests, so a matrix with a waiver changes when it expires). **A safety requirement is waived only by a human**: a delegated
 waiver of a safety requirement fails the gate and is not applied. A malformed waiver (no reason, no expiry, unknown group or requirement) fails the gate.
 
+**Pins and builds.** `python -m flow.trace_v1 pin` never moves an existing pin forward while the evidence file is unchanged: if a checked file differs from its pin and the evidence has the same hash as when it
+was pinned, the old pin is kept (the command prints `pin kept`) and the evidence stays stale until it is re-recorded; only a changed evidence file, or a file newly added to `checks`, is pinned afresh. A fresh pin
+reads the checked files as of the commit that last changed the evidence, or as of `evidence.run_commit: <sha>` where the run's own commit is known. An item that ran a build says `build: path/build.yaml`; the build
+file and every `sources`, `constraints` and `ip_tcl` entry then join its `checks`, so a variant's own RTL (for example `rm_gp_bypass/rtl/b96_core.sv`) makes the evidence stale when it changes. The gate fails a `build:` file that does not exist.
+
 ## Lean proofs (`formal_lean`, brief 125)
 
 Lean 4 is used narrowly: for datapath algorithms and arithmetic identities where per-width SymbiYosys proofs do not cover the claim ("proved for all widths"), and as a

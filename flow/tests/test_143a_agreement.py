@@ -272,3 +272,34 @@ def test_a_waiver_does_not_rescue_a_requirement_with_nothing_passing(repo):
     d = plan(repo, [req(kind="safety")], [it("s", "R1", "sim_test", {"file": "results/none.json", "reader": "json", "field": "v"})])
     rec(repo, "waivers.yaml", [waiver(waives=["simulation", "formal"])], TR.WAIVERS_SCHEMA, "waivers")
     assert state(repo, d)["state"] == "not_run"
+
+
+# ---- pins and builds (coordinator findings from merging 260) ---------------------------------------------
+def test_a_build_items_sources_join_its_checks_so_staleness_covers_what_ran(repo):
+    (repo / "designs" / "d" / "variant").mkdir()
+    (repo / "designs" / "d" / "variant" / "v.sv").write_text("module v; endmodule\n")
+    (repo / "designs" / "d" / "variant" / "build.yaml").write_text(yaml.safe_dump({"sources": ["designs/d/variant/v.sv", "designs/d/rtl/a.sv"], "constraints": ["designs/d/variant/v.sv"]}))
+    i = it("b", "R1", "board_measurement", ok(repo), instrument="jtag_registers", pass_when=[{"field": "v", "op": "true"}], checks=["designs/d/rtl/a.sv"], build="designs/d/variant/build.yaml")
+    d = plan(repo, [req()], [i])
+    assert T.effective_checks(i) == ["designs/d/rtl/a.sv", "designs/d/variant/build.yaml", "designs/d/variant/v.sv"]
+    T.write_pins(d)
+    assert T.collect(d)["items"][0]["status"] == "pass"
+    (repo / "designs" / "d" / "variant" / "v.sv").write_text("module v; wire w; endmodule\n")       # a file only the variant build uses
+    c = T.collect(d)["items"][0]
+    assert c["status"] == "stale" and "variant/v.sv" in c["stale_because"]
+    plan(repo, [req()], [{**i, "build": "designs/d/variant/missing.yaml"}])
+    assert any("build file" in p for p in T.gate(d))
+
+
+def test_pin_does_not_move_an_existing_pin_forward_unless_the_evidence_changed(repo, capsys):
+    i = it("b", "R1", "sim_measurement", ok(repo), checks=["designs/d/rtl/a.sv"], pass_when=[{"field": "v", "op": "true"}])
+    d = plan(repo, [req()], [i])
+    T.write_pins(d)
+    (repo / "designs/d/rtl/a.sv").write_text("module a; wire changed; endmodule\n")
+    assert T.collect(d)["items"][0]["status"] == "stale"
+    T.write_pins(d)                                           # re-pinning with the same evidence must not make it look fresh
+    assert "pin kept" in capsys.readouterr().out
+    assert T.collect(d)["items"][0]["status"] == "stale"
+    (repo / "results" / "v.json").write_text(json.dumps({"v": True, "run": 2}))     # the evidence itself was re-recorded: now the pin moves
+    T.write_pins(d)
+    assert T.collect(d)["items"][0]["status"] == "pass"

@@ -14,7 +14,7 @@ design: b96_kr260_10g
 notes: >-
   Variants. Unless a requirement says otherwise, "the default build" is RATE_MATCH = 0 (the board-proven 97C receive path) and "the rate-matched
   build" is rm_gp (RATE_MATCH = 1, RM_OWN = 1). Board evidence is one KR260 on a short optical loopback; nothing has run against a network card.
-  Briefs 112 (UVM bench) and 115 (SVA and formal proofs) are not merged: their items are hooks with no evidence, shown as not run.
+  Briefs 112 (UVM bench), 115 (formal proofs of the rate matcher) and 123 (pyuvm bench) are merged and their tests are in the recorded run; the bound SVA checkers in simulation and the coverage run have no evidence and are shown as not run.
 
 discover:
   - {glob: designs/b96_kr260_10g/tests/test_*.py, pattern: '^def (test_\w+)'}
@@ -278,7 +278,7 @@ verification:
   - id: V-SIM-126-ALL3
     requirements: [B96-F-BUILDS, B96-S-DRIVER]
     method: sim_test
-    title: Build lat_all3_bypass composes 97C's cuts with the bypass build's files, and its board driver's verdicts, references and lock prefix (brief 126); not yet in a recorded run
+    title: Build lat_all3_bypass composes 97C's cuts with the bypass build's files, and its board driver's verdicts, references and lock prefix (brief 126)
     evidence: {file: results/116_traceability/b96_kr260_10g/pytest_junit.xml, reader: junit, tests: ["test_126_all3_bypass::*"]}
     checks: [designs/b96_kr260_10g/lat_all3_bypass/build.yaml]
   - id: V-SIM-BUILDS
@@ -304,22 +304,22 @@ verification:
   - id: V-FORMAL-SVA-PLANNED
     requirements: [B96-F-PCS, B96-S-RATEMATCH]
     method: formal
-    title: SVA properties of the gray-pointer rate matcher with SymbiYosys (brief 115; designs/b96_kr260_10g/verif/formal/, results/b115); safety by k-induction, progress by BMC only; not yet in a recorded run
+    title: SVA properties of the gray-pointer rate matcher with SymbiYosys (brief 115; designs/b96_kr260_10g/verif/formal/, results/b115); safety by k-induction, progress by BMC only; the recorded run re-proves every CI job, mutants included
     evidence: {file: results/116_traceability/b96_kr260_10g/pytest_junit.xml, reader: junit, tests: ["test_b115_formal::*"]}
   - id: V-SVA-PLANNED
     requirements: [B96-F-PCS, B96-F-MAC, B96-S-RATEMATCH]
     method: assertion
     title: Bound SVA checkers in simulation (brief 115)
-    planned: brief 115 (not merged)
+    planned: no simulation run of the bound checkers is recorded (the proofs are in V-FORMAL-SVA-PLANNED)
   - id: V-UVM-PLANNED
     requirements: [B96-F-PCS, B96-F-MAC, B96-F-LOCK]
     method: uvm_test
-    title: UVM 1.2 bench of the PCS and MAC in xsim 2026.1 (brief 112, merged as #244; designs/b96_kr260_10g/verif/uvm/); not yet in a recorded run
+    title: UVM 1.2 bench of the PCS and MAC in xsim 2026.1 (brief 112, merged as #244; designs/b96_kr260_10g/verif/uvm/); the recorded run is the smoke test (bench builds and t_smoke passes in xsim 2026.1) and every seeded bug applying to the RTL exactly once; the full regression is run by hand
     evidence: {file: results/116_traceability/b96_kr260_10g/pytest_junit.xml, reader: junit, tests: ["test_b96_uvm::*"]}
   - id: V-PYUVM
     requirements: [B96-F-PCS, B96-F-MAC, B96-F-LOCK]
     method: uvm_test
-    title: pyuvm-on-cocotb twin of the UVM bench of the PCS and MAC (brief 123; designs/b96_kr260_10g/verif/pyuvm/); not yet in a recorded run
+    title: pyuvm-on-cocotb twin of the UVM bench of the PCS and MAC (brief 123; designs/b96_kr260_10g/verif/pyuvm/); the recorded run is the reference-model checks, one smoke run in Icarus and one seeded-bug kill; the full regression is run by hand
     evidence: {file: results/116_traceability/b96_kr260_10g/pytest_junit.xml, reader: junit, tests: ["test_b96_pyuvm::*"]}
   - id: V-COV-PLANNED
     requirements: [B96-F-PCS, B96-F-MAC]
@@ -422,6 +422,7 @@ verification:
     instrument: jtag_registers
     title: 100 receive restarts on build rm_gp, counters read over JTAG
     evidence: {file: results/b96e/hw/20261119_231251/rm_gp/stage3.json, reader: json}
+    build: designs/b96_kr260_10g/rm_gp/build.yaml     # the build that ran (brief 143a: its sources join the staleness check)
     pass_when:
       - {field: restarts.restarts, op: ge, value: 100}
       - {field: restarts.failed_to_lock, op: eq, value: 0}
@@ -452,6 +453,7 @@ verification:
     instrument: jtag_registers
     title: Laser polarity read back before the laser was enabled
     evidence: {file: results/b96e/hw/20261119_231251/rm_gp/stage3.json, reader: json}
+    build: designs/b96_kr260_10g/rm_gp/build.yaml     # the build that ran (brief 143a: its sources join the staleness check)
     pass_when: [{field: polarity_ok, op: "true"}, {field: polarity.off.tx_fault, op: eq, value: 0}]
     checks: [designs/b96_kr260_10g/rtl/kr260_10g_top.sv, designs/b96_kr260_10g/rtl/b96_core.sv]
   - id: V-HW-SYSMON-96E
@@ -460,6 +462,7 @@ verification:
     instrument: sysmon
     title: SYSMON at the start and end of the 96E run
     evidence: {file: results/b96e/hw/20261119_231251/rm_gp/session.json, reader: json}
+    build: designs/b96_kr260_10g/rm_gp/build.yaml     # the build that ran (brief 143a: its sources join the staleness check)
     pass_when: [{field: conditions_start.inside_roc, op: "true"}, {field: conditions_end.inside_roc, op: "true"}, {field: roc_ok, op: "true"}]
   - id: V-HW-SYSMON-EYE
     requirements: [B96-S-ROC]
@@ -474,6 +477,7 @@ verification:
     instrument: latency_loop
     title: Build rm_gp, 100 restarts, median of per-link minima
     evidence: {file: results/b96e/hw/20261119_231251/rm_gp/stage3.json, reader: json, field: restarts.E_min_per_link.median}
+    build: designs/b96_kr260_10g/rm_gp/build.yaml     # the build that ran (brief 143a: its sources join the staleness check)
     checks: *rtl_core
   - id: V-HW-LAT-E-97C
     requirements: [B96-P-LAT-E]
@@ -488,6 +492,7 @@ verification:
     instrument: latency_loop
     title: Build rm_gp, 100 restarts
     evidence: {file: results/b96e/hw/20261119_231251/rm_gp/stage3.json, reader: json, field: restarts.L_min_per_link.median}
+    build: designs/b96_kr260_10g/rm_gp/build.yaml     # the build that ran (brief 143a: its sources join the staleness check)
     checks: *rtl_core
   - id: V-HW-LAT-L-97C
     requirements: [B96-P-LAT-L]
@@ -502,6 +507,7 @@ verification:
     instrument: latency_loop
     title: Build rm_gp, D = L - 2E from the medians of minima
     evidence: {file: results/b96e/hw/20261119_231251/rm_gp/stage3.json, reader: json, field: D_clocks_from_medians_of_minima}
+    build: designs/b96_kr260_10g/rm_gp/build.yaml     # the build that ran (brief 143a: its sources join the staleness check)
     checks: *rtl_core
   - id: V-HW-EYE
     requirements: [B96-P-EYE]
@@ -517,6 +523,7 @@ verification:
     title: Build rm_gp_bypass on the KR260, 100 receive restarts (pre-registered, board run 2026-11-21, stamp 86037ce1)
     evidence: {file: results/b96f1/hw/20261120_215255/rm_gp_bypass/stage3.json, reader: json, field: restarts.E_min_per_link.median}
     checks: *rtl_core
+    build: designs/b96_kr260_10g/rm_gp_bypass/build.yaml     # the build that ran: its own b96_core.sv, gt_bp_*.sv, constraints and IP script
   - id: V-HW-OFFSET-PLANNED
     requirements: [B96-F-OFFSET]
     method: board_measurement
