@@ -3,6 +3,7 @@ source: designs/b100_rapidwright/handover.yaml; human view: README.md; refresh: 
 
 ## identity
 kind=showcase produced_by=human part=xck26-sfvc784-2LV-c board=Kria KR260 top=chain_top (the chain); reloc_top (the block runs); s0_top (stage 0, also xc7a100tcsg324-1) tool=Vivado 2026.1
+verified: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement (record: designs/b100_rapidwright/VERIFIED.md, designs/b100_rapidwright/verified.json; definition: docs/verified.md)
 
 ## summary
 Three RapidWright capabilities built as tested agent tools and compared with Vivado alone on the K26 (xck26-sfvc784-2LV-c). They are a pre-implemented block stamped at other sites with its internal timing kept, an annealing placer for the transmit latency chain of brief 96, and RWRoute routing of the whole design or of the worst-path nets. Vivado 2026.1 times every result; RapidWright's own estimates are never used. The block capability works and is the only one that beats Vivado alone (on repeatability); placement and routing lose to Vivado on timing; the agent given the tools did no better than the agent without them.

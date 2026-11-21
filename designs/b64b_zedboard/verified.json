@@ -1,0 +1,121 @@
+{
+ "counts": {
+  "requirements": 0
+ },
+ "criteria": [
+  {
+   "detail": "no requirements recorded",
+   "id": "evidence",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement has passing evidence"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "agreement",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement is agreed (human, or delegated and labelled so)"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "method_mix",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement meets its required method mix"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "mutation",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The bench passes the mutation floor"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "formal_rigour",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The formal results pass the rigour checks"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "fresh",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The evidence is fresh"
+  }
+ ],
+ "declared": {
+  "evidence": [
+   {
+    "activity": "simulation",
+    "id": "E1",
+    "record": "designs/b64b_zedboard/tb/zb_accel_tb.sv",
+    "result": "pass"
+   },
+   {
+    "activity": "build",
+    "id": "E2",
+    "record": "results/64b_zedboard/builds/full/timing.rpt",
+    "result": "pass"
+   },
+   {
+    "activity": "board",
+    "id": "E3",
+    "record": "results/64b_zedboard/sweeps/crc32_sweep.log",
+    "result": "pass"
+   },
+   {
+    "activity": "board",
+    "id": "E4",
+    "record": "results/64b_zedboard/bus_errors/README.md",
+    "result": "pass"
+   }
+  ],
+  "note": "the design's own declared evidence; not traced to requirements and not checked by this record",
+  "source": "handover.yaml",
+  "status": "board-verified"
+ },
+ "definition": "docs/verified.md",
+ "git_commit": "eb8a2a7993c4426f49dbaa4ba89fa3c13f1c8e9c",
+ "kind": "designs",
+ "label": "not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement",
+ "label_kind": "not_assessed",
+ "limits": [
+  "Verified never means interoperability with a device the design talks to unless a board measurement against that device is listed above; a design that checks its own output against its own model accepts its own symmetric mistakes.",
+  "Verified never means timing beyond the stated corner: a post-route timing result is for the part, speed grade, clock and tool version in its evidence file, not for other corners, temperatures or devices.",
+  "Verified never means beyond the widths and depths checked: a simulation covers the vectors it ran, a bounded formal result covers the stated depth only, and a per-width proof covers the widths it names; only a Lean proof marked all widths covers every width, and only for its model.",
+  "Verified never means the requirement is the right one: the text of a requirement is the human's check (or the planner's, where the record says delegated), and a record shows that checks exist and pass, not that nothing was left out.",
+  "Verified never means a hardware or board result unless a board measurement item is listed; a simulation is not the board.",
+  "Verified is about the files in the manifest at the hashes given. A change to any of them makes the record out of date (the CI check fails), and the evidence stale until it is re-recorded.",
+  "An agreement or acceptance recorded as delegated is the planner's decision on the owner's delegation, not a human sign-off; the record counts it apart."
+ ],
+ "manifest": {
+  "designs/b64b_zedboard/handover.yaml": "a70985c61b0b3ae90d0844af975a92b5774660b16f5e0c0acfbc9daffa69ef00",
+  "designs/b64b_zedboard/rtl/zb_accel.sv": "aab15b8e30a9ddbbc977e38667e3b9b9f8ce45d7e54e02e0194180acdd2ef005",
+  "designs/b64b_zedboard/rtl/zb_ctrl.sv": "16dce53dabb5a8f754be8038254c02deb39c7ffef03210b1899b18bbd07fce32",
+  "designs/b64b_zedboard/tb/zb_accel_tb.sv": "12e8e58d33d1c4819aabec1dda57d76ae92a5f2ad94c8b82be07821834aa4e69",
+  "results/64b_zedboard/builds/full/timing.rpt": "669c4f057983a00b66d6dedadc6c02557786c751948c5b4cf1abd86c3379ca86",
+  "results/64b_zedboard/bus_errors/README.md": "1ddc931ef198b808672a0f124365c42ff07fcc2f3fff766b0651dcaef4e8f5ad",
+  "results/64b_zedboard/sweeps/crc32_sweep.log": "7af7eb5977eb9b01cc6ded4e71da2b36ddb4dde8ab9c6625d873d519e0469e14"
+ },
+ "name": "b64b_zedboard",
+ "path": "designs/b64b_zedboard",
+ "reproduce": [
+  {
+   "cmd": "make -C designs/b64b_zedboard/sw t_crc.elf t_fir.elf hello.elf && bash designs/b64b_zedboard/sw/build_err.sh",
+   "what": "build the bare-metal programs"
+  },
+  {
+   "cmd": "ZB_SERIAL=<cable serial> XSA_DIR=<unzipped XSA> ZB_FIRST=1 designs/b64b_zedboard/run_elf.sh designs/b64b_zedboard/sw/hello.elf out.log 60",
+   "what": "run one program on the board (first load after a power cycle, then ZB_LIGHT=1)"
+  },
+  {
+   "cmd": "python3 designs/b64b_zedboard/make_summary.py && python3 designs/b64b_zedboard/summarise_sweeps.py results/64b_zedboard/sweeps/crc32_sweep.log results/64b_zedboard/sweeps/fir16_sweep.log",
+   "what": "rebuild the summary record and the sweep tables"
+  }
+ ],
+ "requirements": [],
+ "schema": "fda-verified/1"
+}

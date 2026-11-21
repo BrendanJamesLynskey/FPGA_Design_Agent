@@ -97,6 +97,7 @@ def requirement(g: dict, r: dict) -> str:
 
 
 def body(S: dict) -> str:
+    import verified_page
     C = S["content"]
     out = ['<p class="eyebrow">Specification and evidence</p><h1>What is specified, and what checks it</h1>',
            f'<p class="lede">{E(C["framing"])}</p>',
@@ -107,7 +108,7 @@ def body(S: dict) -> str:
            'Requirements here were drafted from the designs&#39; own documents and none has been agreed by a human yet.</p>']
     for g in C["designs"]:
         s = g["summary"]
-        out.append(f'<h2 id="{E(g["design"])}">{E(g["design"])}</h2><p>{E(s["line"])}</p>')
+        out.append(f'<h2 id="{E(g["design"])}">{E(g["design"])}</h2>' + verified_page.panel((C.get("verified") or {}).get(g["path"])) + f'<p>{E(s["line"])}</p>')
         out.append(f'<div class="facts"><div class="fact"><div class="n">{s["requirements"]}</div><p>requirements</p></div>'
                    f'<div class="fact"><div class="n">{s["by_state"].get("verified", 0)}</div><p>verified</p></div>'
                    f'<div class="fact"><div class="n">{s["external_hardware_done"]} of {s["external"]}</div><p>requirements that depend on an external element closed by hardware verification</p></div></div>')

@@ -2,6 +2,8 @@
 
 <!-- Generated from handover.yaml by flow/handover.py (brief 68). Edit handover.yaml, or the text between the prose markers, then run: python -m flow.handover write designs/t1_dimmer_counter -->
 
+**Verification: not verified: no requirement of 21 has passing evidence.** [VERIFIED.md](VERIFIED.md) is the generated, hash-pinned record; [what the label means](../../docs/verified.md).
+
 A 16-bit up/down/clear counter on the Nexys A7-100T. Debounced buttons step it, the LEDs show it under PWM brightness (register or switches), the 7-segment display shows count and brightness in hex, and every register is reachable over the USB-UART through the test shell. The hand-written reference design for task T1.
 
 Not in scope:

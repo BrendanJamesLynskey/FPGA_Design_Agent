@@ -2,6 +2,8 @@
 
 <!-- Generated from handover.yaml by flow/handover.py (brief 68). Edit handover.yaml, or the text between the prose markers, then run: python -m flow.handover write designs/b93_precompute -->
 
+**Verification: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.** [VERIFIED.md](VERIFIED.md) is the generated, hash-pinned record; [what the label means](../../docs/verified.md).
+
 Measures how much of the brief 87 decision model can be done while a message is still arriving. The model's inputs turn out to be known three clocks before the price field, so computing the features early removes the one or three clocks the model added to the 58A path, at no LUT cost. A table of the model's class per interval of its deepest feature (partial evaluation) is built for the 87 trees and the 89 lg_small network and measured, and it saves nothing in clocks in this design.
 
 Not in scope:

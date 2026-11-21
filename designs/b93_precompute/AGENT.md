@@ -3,6 +3,7 @@ source: designs/b93_precompute/handover.yaml; human view: README.md; refresh: py
 
 ## identity
 kind=showcase produced_by=human part=xck26-sfvc784-2LV-c board=Kria KR260 (K26 SOM); also xc7a100tcsg324-1 (Nexys A7) out of context top=ooc_wrap (one block with input registers), out of context; the integration is trigger_core in simulation tool=Vivado 2026.1
+verified: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement (record: designs/b93_precompute/VERIFIED.md, designs/b93_precompute/verified.json; definition: docs/verified.md)
 
 ## summary
 Measures how much of the brief 87 decision model can be done while a message is still arriving. The model's inputs turn out to be known three clocks before the price field, so computing the features early removes the one or three clocks the model added to the 58A path, at no LUT cost. A table of the model's class per interval of its deepest feature (partial evaluation) is built for the 87 trees and the 89 lg_small network and measured, and it saves nothing in clocks in this design.

@@ -3,6 +3,7 @@ source: designs/b2_qspi_jedec/handover.yaml; human view: README.md; refresh: pyt
 
 ## identity
 kind=board-selfcheck produced_by=human part=xc7a100tcsg324-1 board=Nexys A7-100T top=b2_qspi_jedec_top tool=Vivado 2026.1
+verified: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement (record: designs/b2_qspi_jedec/VERIFIED.md, designs/b2_qspi_jedec/verified.json; definition: docs/verified.md)
 
 ## summary
 Reads the JEDEC ID of the Nexys A7's configuration flash (S25FL128S or S25FL127S) with the RDID command (9Fh) over single-bit SPI at 1 MHz, with SCK leaving through STARTUPE2. The 8-byte ID is read twice and compared with the data sheets' values. The opcode is a constant in the RTL, so the design cannot send a write, erase or register-write command. `selfcheck.py` holds the on-board pass rule, written before any board run.

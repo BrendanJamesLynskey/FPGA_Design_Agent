@@ -2,6 +2,8 @@
 
 <!-- Generated from handover.yaml by flow/handover.py (brief 68). Edit handover.yaml, or the text between the prose markers, then run: python -m flow.handover write designs/b65a_axil_soc -->
 
+**Verification: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.** [VERIFIED.md](VERIFIED.md) is the generated, hash-pinned record; [what the label means](../../docs/verified.md).
+
 The brief 65A sample block design. A DDS tone generator and a frequency and duty counter (grouped as the tone hierarchy) and a logic analyser, all from ip_lib, sit behind a generated AXI4-Lite crossbar that the host reaches through the UART test shell. blockdesign.yaml and tone.yaml are the source; everything under gen/ (top, wrappers, address map, graph) is generated from them. It shows the block-design format, its checks and the generator, and was built; it has not been run on a board.
 
 Not in scope:

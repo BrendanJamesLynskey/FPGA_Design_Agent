@@ -3,6 +3,7 @@ source: designs/b63d_nexys_net/handover.yaml; human view: README.md; refresh: py
 
 ## identity
 kind=demonstration produced_by=human part=xc7a100tcsg324-1 board=Nexys A7-100T top=b63d_nexys_net_top tool=Vivado 2026.1
+verified: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement (record: designs/b63d_nexys_net/VERIFIED.md, designs/b63d_nexys_net/verified.json; definition: docs/verified.md)
 
 ## summary
 Answers ARP and ping, receives and sends UDP, joins IGMP multicast groups and counts frames on the Nexys A7's 10/100 Ethernet PHY (LAN8720A, RMII). A UDP service on port 5000 replies with the tag N63D and 21 statistics counters. A frame injector and capture let the host check the stack through the PHY's loopback with no cable. Built and simulated; it has not been run on a board.

@@ -146,8 +146,12 @@ def readme(block: str) -> str:
     y = yaml.safe_load((IP / block / "ip.yaml").read_text())
     faults = IP / block / "faults.yaml"
     L = [f"# {block} {y['version']}", "", y["summary"], "",
-         "Generated from `ip.yaml` by `flow/net/ipdoc.py`; do not edit by hand.", "",
-         f"Status: {y['status']}.", "", "## Parameters", "", "| Name | Default | Allowed | Note |", "|---|---|---|---|"]
+         "Generated from `ip.yaml` by `flow/net/ipdoc.py`; do not edit by hand.", ""]
+    vj = IP / block / "verified.json"          # brief 144: the verification label, read from the generated record
+    if vj.exists():
+        L += [f"**Verification: {json.loads(vj.read_text())['label']}.** [VERIFIED.md](VERIFIED.md) is the generated, hash-pinned record; "
+              "[what the label means](../../docs/verified.md).", ""]
+    L += [f"Status: {y['status']}.", "", "## Parameters", "", "| Name | Default | Allowed | Note |", "|---|---|---|---|"]
     for k, s in (y["parameters"] or {}).items():
         allowed = (f"{s['range'][0]}..{s['range'][1]}" if "range" in s else ", ".join(map(str, s["set"])))
         if s.get("pow2"):

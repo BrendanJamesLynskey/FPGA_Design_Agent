@@ -2,6 +2,8 @@
 
 <!-- Generated from handover.yaml by flow/handover.py (brief 68). Edit handover.yaml, or the text between the prose markers, then run: python -m flow.handover write designs/b2_tmp_adt7420 -->
 
+**Verification: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.** [VERIFIED.md](VERIFIED.md) is the generated, hash-pinned record; [what the label means](../../docs/verified.md).
+
 Reads the Nexys A7's ADT7420 temperature sensor over I2C (address 0x4B, 100 kHz) from a small register block in the test shell. The host reads the ID register and the temperature, and the pass rule checks the ID, that no byte was not acknowledged and that the temperature is plausible. The design only sets the register pointer and reads, so it cannot change the sensor's configuration. `selfcheck.py` holds the on-board pass rule, written before any board run.
 
 Not in scope:

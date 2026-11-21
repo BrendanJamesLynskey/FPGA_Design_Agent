@@ -1,0 +1,107 @@
+{
+ "counts": {
+  "requirements": 0
+ },
+ "criteria": [
+  {
+   "detail": "no requirements recorded",
+   "id": "evidence",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement has passing evidence"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "agreement",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement is agreed (human, or delegated and labelled so)"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "method_mix",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement meets its required method mix"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "mutation",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The bench passes the mutation floor"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "formal_rigour",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The formal results pass the rigour checks"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "fresh",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The evidence is fresh"
+  }
+ ],
+ "declared": {
+  "evidence": [
+   {
+    "activity": "simulation",
+    "id": "E1",
+    "record": "designs/b56a_gth_serdes/tests/test_b56a_core_sim_rtl.py",
+    "result": "pass"
+   },
+   {
+    "activity": "build",
+    "id": "E2",
+    "record": "results/56a_serdes/gt_build/gates.json",
+    "result": "pass"
+   },
+   {
+    "activity": "review",
+    "id": "E3",
+    "record": "results/56a_serdes/README.md",
+    "result": "pass"
+   }
+  ],
+  "note": "the design's own declared evidence; not traced to requirements and not checked by this record",
+  "source": "handover.yaml",
+  "status": "built"
+ },
+ "definition": "docs/verified.md",
+ "git_commit": "eb8a2a7993c4426f49dbaa4ba89fa3c13f1c8e9c",
+ "kind": "designs",
+ "label": "not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement",
+ "label_kind": "not_assessed",
+ "limits": [
+  "Verified never means interoperability with a device the design talks to unless a board measurement against that device is listed above; a design that checks its own output against its own model accepts its own symmetric mistakes.",
+  "Verified never means timing beyond the stated corner: a post-route timing result is for the part, speed grade, clock and tool version in its evidence file, not for other corners, temperatures or devices.",
+  "Verified never means beyond the widths and depths checked: a simulation covers the vectors it ran, a bounded formal result covers the stated depth only, and a per-width proof covers the widths it names; only a Lean proof marked all widths covers every width, and only for its model.",
+  "Verified never means the requirement is the right one: the text of a requirement is the human's check (or the planner's, where the record says delegated), and a record shows that checks exist and pass, not that nothing was left out.",
+  "Verified never means a hardware or board result unless a board measurement item is listed; a simulation is not the board.",
+  "Verified is about the files in the manifest at the hashes given. A change to any of them makes the record out of date (the CI check fails), and the evidence stale until it is re-recorded.",
+  "An agreement or acceptance recorded as delegated is the planner's decision on the owner's delegation, not a human sign-off; the record counts it apart."
+ ],
+ "manifest": {
+  "designs/b56a_gth_serdes/handover.yaml": "53deadf4473c8191ae7453478222699f75f9c15bb2ca6e540f577b805c5d7594",
+  "designs/b56a_gth_serdes/rtl/gth_serdes_core.sv": "72153c37b1e083376716d399f671b5b271d53a304aa743e3a2ff693375709dee",
+  "designs/b56a_gth_serdes/rtl/kr260_gth_top.sv": "655dc1e1036ac6a42d687bd1f27745469708b1b394c6c363f738c44dbf60ff30",
+  "designs/b56a_gth_serdes/rtl/prbs64.sv": "9b8dfb6fd156e6fcb4fa2b07d1b0238af6ade0951785bfa8382cec8ee47870da",
+  "designs/b56a_gth_serdes/tests/test_b56a_core_sim_rtl.py": "d7bd3da6613ef1af2928e363df9263af781e5560f6b31ca82278d361c247d2bc",
+  "results/56a_serdes/README.md": "f9bc061b62c89b66d6f5bd23468c072bcbed61efa5b1dc84e996b9f2f76d85e9",
+  "results/56a_serdes/gt_build/gates.json": "0305a74bc04ed067fcaa2d9f65ceb7dddb844517940b3748ec0f582d1d3bbb24"
+ },
+ "name": "b56a_gth_serdes",
+ "path": "designs/b56a_gth_serdes",
+ "reproduce": [
+  {
+   "cmd": "python -m pytest -q designs/b56a_gth_serdes/tests",
+   "what": "simulate the PRBS blocks and the core against the Wizard stand-in"
+  }
+ ],
+ "requirements": [],
+ "schema": "fda-verified/1"
+}

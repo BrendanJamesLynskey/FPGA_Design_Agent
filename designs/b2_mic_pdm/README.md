@@ -2,6 +2,8 @@
 
 <!-- Generated from handover.yaml by flow/handover.py (brief 68). Edit handover.yaml, or the text between the prose markers, then run: python -m flow.handover write designs/b2_mic_pdm -->
 
+**Verification: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.** [VERIFIED.md](VERIFIED.md) is the generated, hash-pinned record; [what the label means](../../docs/verified.md).
+
 Clocks the Nexys A7's PDM microphone at 2.381 MHz and counts, over a window of PDM bits, how many bits were 1 and how many times the bit changed. The counts tell a live microphone (about half ones, frequent changes) from a dead one, a stuck data line or a missing clock. The test shell carries the registers, and `selfcheck.py` holds the on-board pass rule, written before any board run.
 
 Not in scope:

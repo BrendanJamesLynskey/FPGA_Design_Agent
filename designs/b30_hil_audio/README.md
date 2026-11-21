@@ -2,6 +2,8 @@
 
 <!-- Generated from handover.yaml by flow/handover.py (brief 68). Edit handover.yaml, or the text between the prose markers, then run: python -m flow.handover write designs/b30_hil_audio -->
 
+**Verification: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.** [VERIFIED.md](VERIFIED.md) is the generated, hash-pinned record; [what the label means](../../docs/verified.md).
+
 One design on the Nexys A7 that carries four library instruments (a tone generator, a frequency and duty counter, a logic analyser and a frame CRC) and an XADC readout behind the test shell, so that every sensing path of the brief 30 hardware-in-the-loop stage has something to read. The tone leaves the board as PWM audio, and `hil.yaml` lists eight checks that compare the board with Python golden models, including a measurement of the tone at the audio jack.
 
 Not in scope:

@@ -3,6 +3,7 @@ source: designs/b102_managed_ext/handover.yaml; human view: README.md; refresh: 
 
 ## identity
 kind=demonstration produced_by=human part=xck26-sfvc784-2LV-c board=Kria KR260 top=fcs_top tool=Vivado 2026.1
+verified: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement (record: designs/b102_managed_ext/VERIFIED.md, designs/b102_managed_ext/verified.json; definition: docs/verified.md)
 
 ## summary
 A KR260 self-test of an Ethernet FCS stage that integrates one real third-party block under a managed project (brief 102, stage 3). Alex Forencich's parallel CRC/LFSR (verilog-ethernet, MIT, commit 77320a9471d1) is vendored unmodified and frozen; our adapter (owned) adds the register, the restart and the enable around it; an owned sequencer sends a fixed sixteen-word frame and shows the verdict on an LED. project.yaml records the licence, the commit and the hash of every file of theirs, and the agent's tools refuse every route to edit them.

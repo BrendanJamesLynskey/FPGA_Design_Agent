@@ -2,6 +2,8 @@
 
 <!-- Generated from handover.yaml by flow/handover.py (brief 68). Edit handover.yaml, or the text between the prose markers, then run: python -m flow.handover write designs/b102_managed_fcs -->
 
+**Verification: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.** [VERIFIED.md](VERIFIED.md) is the generated, hash-pinned record; [what the label means](../../docs/verified.md).
+
 A KR260 self-test of an Ethernet FCS stage that exists to demonstrate a managed project (brief 102). An owned sequencer sends a fixed sixteen-word frame through a CRC-32 block that was made outside the project as an EDIF netlist and is frozen, and shows the verdict on an LED; a heartbeat divider is excluded from the agent's view but built with the rest. project.yaml marks each part, and the agent's tools enforce it.
 
 Not in scope:

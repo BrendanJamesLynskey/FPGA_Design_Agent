@@ -35,6 +35,7 @@ PAGES = [  # file, nav label, title, description, data keys inlined
     ("how.html", "How it works", "How it works", "The stages, the verification gates V0 to V3, mutation testing, the knowledge bank and the tools, with a stage walk-through replayed from a real run record.", ["replay"]),
     ("verification.html", "Verification", "How the designs are verified", "Each verification technique the agent and the flow use, simulation, hidden tests, coverage, mutation testing, protocol checkers, formal proofs, clock-crossing checks, static checks, the board and traceability: what it finds and cannot find, where it runs, and the measured evidence, with every number read from a committed result file.", []),
     ("traceability.html", "Traceability", "What is specified, and what checks it", "Every requirement of a design against the checks that cover it, by method: simulation, formal, timing, the board. Each status is computed from the evidence files; gaps, stale evidence and requirements that only hardware can close are shown plainly.", []),
+    ("verified.html", "Verified", "Verified by construction", "What the verified label means: a generated, hash-pinned record of what is verified ships with every design, arithmetic function and IP-library entry, and the label is earned only when every criterion is met; otherwise it names what is missing.", []),
     ("flow-notes.html", "Beyond the flow", "Beyond the standard flow", "Where the agent's flow goes further than the standard Vivado flow: missing CDC constraints, crossings report_cdc cannot see, timing exceptions that hide failures, and more, each with its evidence and status.", ["flow_notes"]),
     ("expertise.html", "Expertise", "Areas of expertise", "What the agent knows, what its flow checks and what has been measured, area by area, in drawers; each area states how far its evidence goes.", []),
     ("examples.html", "Examples", "Examples", "Development tasks end to end: spec, clarify, gates, timing and area, and a hand-built design on the board.", ["board"]),
@@ -196,6 +197,9 @@ def block(name, d):
     if name == "verification_body":
         import verification_page
         return verification_page.body(d["verification"])
+    if name == "verified_body":
+        import verified_page
+        return verified_page.body(d["verified"])
     if name == "traceability_body":
         import traceability_page
         return traceability_page.body(d["traceability"])
@@ -453,7 +457,7 @@ def build(outdir: Path, d, check_numbers=True):
     js = (SRC / "app.js").read_text()
     # the showcase projects' own text never enters the number check (it would vouch for its own numbers); the showcase
     # pages are checked against the shared data plus each project's resolved values and hero data
-    shared = {k: v for k, v in d.items() if k not in ("tasks", "showcase", "story", "verification", "traceability")}
+    shared = {k: v for k, v in d.items() if k not in ("tasks", "showcase", "story", "verification", "traceability", "verified")}
     sc_values = {P["id"]: {"values": P["values"], "hero": P["hero"]["data"]}
                  for P in d.get("showcase", {}).get("projects", []) if P["status"] == "published"}
     if "catalogue" in d:
@@ -465,7 +469,8 @@ def build(outdir: Path, d, check_numbers=True):
         page_data[fname] = ({"shared": shared, "showcase_values": sc_values} if fname == "showcase.html"
                             else {"shared": shared, "story": d["story"]["check"]} if fname == "story.html"
                             else {"shared": shared, "verification": d["verification"]["check"]} if fname == "verification.html"
-                            else {"shared": shared, "traceability": d["traceability"]["check"]} if fname == "traceability.html" else shared)
+                            else {"shared": shared, "traceability": d["traceability"]["check"]} if fname == "traceability.html"
+                            else {"shared": shared, "verified": d["verified"]["check"]} if fname == "verified.html" else shared)
     if "catalogue" in d:
         order = task_order(d)
         for i, r in enumerate(order):
@@ -504,7 +509,7 @@ def build(outdir: Path, d, check_numbers=True):
         allow = allow_tokens()
         cache = {}
         for fname, page in pages.items():
-            key = fname if fname.startswith(("problems/", "showcase/", "blockdesign/")) or fname in ("showcase.html", "story.html", "verification.html", "traceability.html") else "_shared"
+            key = fname if fname.startswith(("problems/", "showcase/", "blockdesign/")) or fname in ("showcase.html", "story.html", "verification.html", "traceability.html", "verified.html") else "_shared"
             if key not in cache:
                 cache[key] = data_tokens(page_data[fname]) | allow
             ok = cache[key]

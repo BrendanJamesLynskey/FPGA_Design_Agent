@@ -3,6 +3,7 @@ source: designs/b2_mic_pdm/handover.yaml; human view: README.md; refresh: python
 
 ## identity
 kind=board-selfcheck produced_by=human part=xc7a100tcsg324-1 board=Nexys A7-100T top=b2_mic_pdm_top tool=Vivado 2026.1
+verified: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement (record: designs/b2_mic_pdm/VERIFIED.md, designs/b2_mic_pdm/verified.json; definition: docs/verified.md)
 
 ## summary
 Clocks the Nexys A7's PDM microphone at 2.381 MHz and counts, over a window of PDM bits, how many bits were 1 and how many times the bit changed. The counts tell a live microphone (about half ones, frequent changes) from a dead one, a stuck data line or a missing clock. The test shell carries the registers, and `selfcheck.py` holds the on-board pass rule, written before any board run.

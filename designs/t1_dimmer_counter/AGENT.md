@@ -3,6 +3,7 @@ source: designs/t1_dimmer_counter/handover.yaml; human view: README.md; refresh:
 
 ## identity
 kind=example produced_by=human part=xc7a100tcsg324-1 board=Nexys A7-100T top=t1_dimmer_counter_top tool=Vivado 2026.1
+verified: not verified: no requirement of 21 has passing evidence (record: designs/t1_dimmer_counter/VERIFIED.md, designs/t1_dimmer_counter/verified.json; definition: docs/verified.md)
 
 ## summary
 A 16-bit up/down/clear counter on the Nexys A7-100T. Debounced buttons step it, the LEDs show it under PWM brightness (register or switches), the 7-segment display shows count and brightness in hex, and every register is reachable over the USB-UART through the test shell. The hand-written reference design for task T1.

@@ -2,6 +2,8 @@
 
 <!-- Generated from handover.yaml by flow/handover.py (brief 68). Edit handover.yaml, or the text between the prose markers, then run: python -m flow.handover write designs/b2_qspi_jedec -->
 
+**Verification: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.** [VERIFIED.md](VERIFIED.md) is the generated, hash-pinned record; [what the label means](../../docs/verified.md).
+
 Reads the JEDEC ID of the Nexys A7's configuration flash (S25FL128S or S25FL127S) with the RDID command (9Fh) over single-bit SPI at 1 MHz, with SCK leaving through STARTUPE2. The 8-byte ID is read twice and compared with the data sheets' values. The opcode is a constant in the RTL, so the design cannot send a write, erase or register-write command. `selfcheck.py` holds the on-board pass rule, written before any board run.
 
 Not in scope:

@@ -121,6 +121,11 @@ writes today): a requirement no item traces to, an orphan check (an item tracing
 method or kind, a `board_measurement` without a valid instrument, a performance requirement without quantity, unit, op, bound and condition, a `checks` file that does
 not exist. Staleness is reported, not failed.
 
+## The verification record (brief 144)
+
+The matrix is the input to a second, shorter statement: the verification record, `VERIFIED.md` and `verified.json` beside each design, arithmetic function and IP-library entry, with a
+computed label (`verified`, `verified except: ...`, `not verified: ...` or `not assessed`). What the label means and never means is in [verified.md](verified.md); the generator is `flow/verified.py`.
+
 ## Limits
 
 Staleness is a lower bound: the pin records the checked files as of the evidence's commit, so evidence generated from an older tree and committed later looks fresh.

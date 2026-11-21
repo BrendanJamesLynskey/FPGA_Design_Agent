@@ -4,6 +4,8 @@ IPv4 and UDP receive: header checksum and length checks, options skipped, fragme
 
 Generated from `ip.yaml` by `flow/net/ipdoc.py`; do not edit by hand.
 
+**Verification: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.** [VERIFIED.md](VERIFIED.md) is the generated, hash-pinned record; [what the label means](../../docs/verified.md).
+
 Status: Meets 125 MHz out of context on xc7a100t-1 (Fmax estimates 133 MHz at 4 and 8 ports) and with margin on xck26-2LV (216-244 MHz). Version 0.2.0 delays the last payload byte to 6 clocks after the frame's last input beat (was 2) and holds the input for 5 clocks after each frame (was 1). Simulated against an RFC 791/768 model with scapy checking the bench's frames; built alone out of context with Vivado 2026.1 (single runs at 8 ns, estimates); not yet run on a board (the Nexys A7 network design carries it behind eth_mac_rmii; built, not yet run: a cable check comes first, see designs/b63d_nexys_net/host/PLAN.md).
 
 ## Parameters

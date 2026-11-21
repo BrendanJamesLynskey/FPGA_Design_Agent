@@ -3,6 +3,7 @@ source: designs/b65a_axil_soc/handover.yaml; human view: README.md; refresh: pyt
 
 ## identity
 kind=example produced_by=human part=xc7a100tcsg324-1 board=Nexys A7-100T top=b65a_axil_soc_top tool=Vivado 2026.1
+verified: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement (record: designs/b65a_axil_soc/VERIFIED.md, designs/b65a_axil_soc/verified.json; definition: docs/verified.md)
 
 ## summary
 The brief 65A sample block design. A DDS tone generator and a frequency and duty counter (grouped as the tone hierarchy) and a logic analyser, all from ip_lib, sit behind a generated AXI4-Lite crossbar that the host reaches through the UART test shell. blockdesign.yaml and tone.yaml are the source; everything under gen/ (top, wrappers, address map, graph) is generated from them. It shows the block-design format, its checks and the generator, and was built; it has not been run on a board.

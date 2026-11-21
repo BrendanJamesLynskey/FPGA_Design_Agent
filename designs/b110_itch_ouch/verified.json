@@ -1,0 +1,140 @@
+{
+ "counts": {
+  "requirements": 0
+ },
+ "criteria": [
+  {
+   "detail": "no requirements recorded",
+   "id": "evidence",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement has passing evidence"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "agreement",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement is agreed (human, or delegated and labelled so)"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "method_mix",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement meets its required method mix"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "mutation",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The bench passes the mutation floor"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "formal_rigour",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The formal results pass the rigour checks"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "fresh",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The evidence is fresh"
+  }
+ ],
+ "declared": {
+  "evidence": [
+   {
+    "activity": "simulation",
+    "id": "E1",
+    "record": "designs/b110_itch_ouch/tests/test_b110_rtl.py",
+    "result": "pass"
+   },
+   {
+    "activity": "model",
+    "id": "E2",
+    "record": "designs/b110_itch_ouch/tests/test_b110_model.py",
+    "result": "pass"
+   },
+   {
+    "activity": "lint",
+    "id": "E3",
+    "record": "designs/b110_itch_ouch/tests/test_b110_lint.py",
+    "result": "pass"
+   },
+   {
+    "activity": "faults",
+    "id": "E4",
+    "record": "results/b110/mutation.json",
+    "result": "pass"
+   },
+   {
+    "activity": "simulation",
+    "id": "E5",
+    "record": "results/b110/coverage_sim.json",
+    "result": "pass"
+   },
+   {
+    "activity": "build",
+    "id": "E6",
+    "record": "results/b110/ooc/itch_ouch_top.json",
+    "result": "pass"
+   }
+  ],
+  "note": "the design's own declared evidence; not traced to requirements and not checked by this record",
+  "source": "handover.yaml",
+  "status": "built"
+ },
+ "definition": "docs/verified.md",
+ "git_commit": "eb8a2a7993c4426f49dbaa4ba89fa3c13f1c8e9c",
+ "kind": "designs",
+ "label": "not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement",
+ "label_kind": "not_assessed",
+ "limits": [
+  "Verified never means interoperability with a device the design talks to unless a board measurement against that device is listed above; a design that checks its own output against its own model accepts its own symmetric mistakes.",
+  "Verified never means timing beyond the stated corner: a post-route timing result is for the part, speed grade, clock and tool version in its evidence file, not for other corners, temperatures or devices.",
+  "Verified never means beyond the widths and depths checked: a simulation covers the vectors it ran, a bounded formal result covers the stated depth only, and a per-width proof covers the widths it names; only a Lean proof marked all widths covers every width, and only for its model.",
+  "Verified never means the requirement is the right one: the text of a requirement is the human's check (or the planner's, where the record says delegated), and a record shows that checks exist and pass, not that nothing was left out.",
+  "Verified never means a hardware or board result unless a board measurement item is listed; a simulation is not the board.",
+  "Verified is about the files in the manifest at the hashes given. A change to any of them makes the record out of date (the CI check fails), and the evidence stale until it is re-recorded.",
+  "An agreement or acceptance recorded as delegated is the planner's decision on the owner's delegation, not a human sign-off; the record counts it apart."
+ ],
+ "manifest": {
+  "designs/b110_itch_ouch/handover.yaml": "76457566e2b1208ef29afd6dff346fc65889a598f94fc03281e0fc437a9a7f1c",
+  "designs/b110_itch_ouch/rtl/book_core.sv": "4f9ea037d5b1a77ba56e87e340987d1155212593ceea0b1ff24cc02d4dddaf74",
+  "designs/b110_itch_ouch/rtl/itch_dec.sv": "43c7f717f13f703a1bf8869f6294aee6a8eed737b8435d733a78ec87af52ec8d",
+  "designs/b110_itch_ouch/rtl/itch_ouch_top.sv": "6f9da0506556e3e4e8a37d2e1a77fa78ee5cffe2ad37132a318c6b12f9eacde5",
+  "designs/b110_itch_ouch/rtl/itch_pkg.sv": "b93c375a93ee63247faab1f3b4fe756a143c338db5d079f33d57d885a5b67088",
+  "designs/b110_itch_ouch/rtl/mold_rx.sv": "2439cc5a50ff265598da6afbf6faba81e6004bea70f7e3585c6ab8718c344d66",
+  "designs/b110_itch_ouch/rtl/ouch_enter.sv": "95066c0f3caaf67b87eb40baf88d5704b6eec8387384d00014cbe93f3f64addd",
+  "designs/b110_itch_ouch/rtl/risk_glue.sv": "2cde343aec11afbddb108c4728157b83e11533644da80c2a7bd8bc13ffdc23f1",
+  "designs/b110_itch_ouch/tests/test_b110_lint.py": "3028d8b5b412cb501cda525d4e9cb1580bdd661154b2d1a8b6cef0367890f10f",
+  "designs/b110_itch_ouch/tests/test_b110_model.py": "0ac06f1af3eeeb85af07a4b941809f63e3567a0488cec4aa94bdd1b5e3e3c70c",
+  "designs/b110_itch_ouch/tests/test_b110_rtl.py": "ed9179dc6eab910eff6b4e26fb3204e5c2e181f3d0ce232d5b691d42bced781a",
+  "results/b110/coverage_sim.json": "69836756e5d091cbe526d9d9c482115c743a99d1e7bbb4847b9cd972463f6f49",
+  "results/b110/mutation.json": "2c13eb56b06109dbde9c7df9b55b6de0bab901087113473b6224a78e41ba79c8",
+  "results/b110/ooc/itch_ouch_top.json": "4d84f7e2e85d9bc59fcf0e167f4bb926feedbd1a31efb06d55c695d73e4e337b"
+ },
+ "name": "b110_itch_ouch",
+ "path": "designs/b110_itch_ouch",
+ "reproduce": [
+  {
+   "cmd": "python3 -m pytest -q designs/b110_itch_ouch/tests/test_b110_model.py designs/b110_itch_ouch/tests/test_b110_rtl.py designs/b110_itch_ouch/tests/test_b110_lint.py",
+   "what": "the whole bench (cocotb on Icarus), the model tests and the lint"
+  },
+  {
+   "cmd": "B110_RECORD=$PWD/results/b110 python3 -m pytest -q designs/b110_itch_ouch/tests/test_b110_rtl.py::test_all_benches",
+   "what": "the same with the measurement records written (latency, throughput, coverage, idle gap)"
+  },
+  {
+   "cmd": "python3 designs/b110_itch_ouch/tests/run_mutants.py --jobs 2 --json results/b110/mutation.json",
+   "what": "the seeded faults (every mutant of verif/mutants.yaml against the bench)"
+  }
+ ],
+ "requirements": [],
+ "schema": "fda-verified/1"
+}

@@ -1,0 +1,123 @@
+{
+ "counts": {
+  "requirements": 0
+ },
+ "criteria": [
+  {
+   "detail": "no requirements recorded",
+   "id": "evidence",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement has passing evidence"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "agreement",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement is agreed (human, or delegated and labelled so)"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "method_mix",
+   "ids": [],
+   "state": "not_measured",
+   "title": "Every requirement meets its required method mix"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "mutation",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The bench passes the mutation floor"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "formal_rigour",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The formal results pass the rigour checks"
+  },
+  {
+   "detail": "no requirements recorded",
+   "id": "fresh",
+   "ids": [],
+   "state": "not_measured",
+   "title": "The evidence is fresh"
+  }
+ ],
+ "declared": {
+  "evidence": [
+   {
+    "activity": "simulation",
+    "id": "E1",
+    "record": "designs/b63d_nexys_net/tests/test_b63d_nexys_net_rtl.py",
+    "result": "pass"
+   },
+   {
+    "activity": "simulation",
+    "id": "E2",
+    "record": "designs/b63d_nexys_net/tests/test_b63d_host_safety.py",
+    "result": "pass"
+   },
+   {
+    "activity": "build",
+    "id": "E3",
+    "record": "results/b63d/nexys_build/b63d_nexys_net_base.json",
+    "result": "pass"
+   },
+   {
+    "activity": "faults",
+    "id": "E4",
+    "record": "results/b63d/faults.json",
+    "result": "pass"
+   },
+   {
+    "activity": "formal",
+    "id": "E5",
+    "record": "results/b63d/formal.json",
+    "result": "pass"
+   }
+  ],
+  "note": "the design's own declared evidence; not traced to requirements and not checked by this record",
+  "source": "handover.yaml",
+  "status": "built"
+ },
+ "definition": "docs/verified.md",
+ "git_commit": "eb8a2a7993c4426f49dbaa4ba89fa3c13f1c8e9c",
+ "kind": "designs",
+ "label": "not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement",
+ "label_kind": "not_assessed",
+ "limits": [
+  "Verified never means interoperability with a device the design talks to unless a board measurement against that device is listed above; a design that checks its own output against its own model accepts its own symmetric mistakes.",
+  "Verified never means timing beyond the stated corner: a post-route timing result is for the part, speed grade, clock and tool version in its evidence file, not for other corners, temperatures or devices.",
+  "Verified never means beyond the widths and depths checked: a simulation covers the vectors it ran, a bounded formal result covers the stated depth only, and a per-width proof covers the widths it names; only a Lean proof marked all widths covers every width, and only for its model.",
+  "Verified never means the requirement is the right one: the text of a requirement is the human's check (or the planner's, where the record says delegated), and a record shows that checks exist and pass, not that nothing was left out.",
+  "Verified never means a hardware or board result unless a board measurement item is listed; a simulation is not the board.",
+  "Verified is about the files in the manifest at the hashes given. A change to any of them makes the record out of date (the CI check fails), and the evidence stale until it is re-recorded.",
+  "An agreement or acceptance recorded as delegated is the planner's decision on the owner's delegation, not a human sign-off; the record counts it apart."
+ ],
+ "manifest": {
+  "designs/b63d_nexys_net/handover.yaml": "7baedba1dfd1a6d1408b3e741748d90d6806590c9225b5db0e7cd19bb00dbb35",
+  "designs/b63d_nexys_net/rtl/b63d_nexys_net_top.sv": "a98078554475a17e89fdff88e99a98aac235d501643f8640fc3f02f924d800e4",
+  "designs/b63d_nexys_net/tests/test_b63d_host_safety.py": "a7a4d918059d66a697aa2548b417a78d75c59ff01fabfe8933fe5141c2985dce",
+  "designs/b63d_nexys_net/tests/test_b63d_nexys_net_rtl.py": "60427e5970ce4537e8553f21ae769fd3c3ff9423c83ff5dda001a2ec25f03eba",
+  "results/b63d/faults.json": "3d7e1c4f74bc1cc848e87a695452ac4c2a2fc78942423162081e3ab6fdca1b8a",
+  "results/b63d/formal.json": "3c1e137a0507f75ce8cdd2f3a2144ea894bd3a861e4a39fac4c3c615e3de326a",
+  "results/b63d/nexys_build/b63d_nexys_net_base.json": "0e12f4f40d2452b894da4142d2f8811895e98c793c445797793b8ef98ac6d535"
+ },
+ "name": "b63d_nexys_net",
+ "path": "designs/b63d_nexys_net",
+ "reproduce": [
+  {
+   "cmd": "python3 -m pytest -q designs/b63d_nexys_net/tests",
+   "what": "simulate through the shell, check the I/O constraints and the host safety checks"
+  },
+  {
+   "cmd": "python3 designs/b63d_nexys_net/host/board_run.py --port <shell UART> --phase loopback --out board_loopback.json",
+   "what": "board run phase 1, PHY loopback, no cable"
+  }
+ ],
+ "requirements": [],
+ "schema": "fda-verified/1"
+}

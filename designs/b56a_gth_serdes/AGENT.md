@@ -3,6 +3,7 @@ source: designs/b56a_gth_serdes/handover.yaml; human view: README.md; refresh: p
 
 ## identity
 kind=example produced_by=human part=xck26-sfvc784-2LV-c board=Kria KR260 top=kr260_gth_top tool=Vivado 2026.1
+verified: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement (record: designs/b56a_gth_serdes/VERIFIED.md, designs/b56a_gth_serdes/verified.json; definition: docs/verified.md)
 
 ## summary
 A Kria KR260 design that drives one UltraScale+ GTH transceiver (quad 224, channel 2, the SFP+ cage J24) at 10.3125 Gb/s with PRBS test patterns, checks them in fabric (exact bit errors) and in the transceiver (error cycles), and reports everything over the JTAG cable through a documented register block. It is the base for the board work of brief 56. Built with Vivado 2026.1 on the free Basic licence; not yet run on a board.

@@ -2,6 +2,8 @@
 
 <!-- Generated from handover.yaml by flow/handover.py (brief 68). Edit handover.yaml, or the text between the prose markers, then run: python -m flow.handover write designs/b30_hil_audio_pinfault -->
 
+**Verification: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.** [VERIFIED.md](VERIFIED.md) is the generated, hash-pinned record; [what the label means](../../docs/verified.md).
+
 The seeded-fault twin of b30_hil_audio. It builds from the same RTL, but its constraint file puts the audio output AUD_PWM on the pin of LED 0, so the tone never reaches the audio jack. It passes simulation and every check made inside the FPGA, and only the measurement at the jack fails, which is the point of the demonstration. The hardware-in-the-loop run of this design therefore reports a failure by intent.
 
 Not in scope:

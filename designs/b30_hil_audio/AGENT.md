@@ -3,6 +3,7 @@ source: designs/b30_hil_audio/handover.yaml; human view: README.md; refresh: pyt
 
 ## identity
 kind=demonstration produced_by=human part=xc7a100tcsg324-1 board=Nexys A7-100T top=b30_hil_audio_top tool=Vivado 2026.1
+verified: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement (record: designs/b30_hil_audio/VERIFIED.md, designs/b30_hil_audio/verified.json; definition: docs/verified.md)
 
 ## summary
 One design on the Nexys A7 that carries four library instruments (a tone generator, a frequency and duty counter, a logic analyser and a frame CRC) and an XADC readout behind the test shell, so that every sensing path of the brief 30 hardware-in-the-loop stage has something to read. The tone leaves the board as PWM audio, and `hil.yaml` lists eight checks that compare the board with Python golden models, including a measurement of the tone at the audio jack.

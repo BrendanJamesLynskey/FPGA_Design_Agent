@@ -2,6 +2,8 @@
 
 <!-- Generated from handover.yaml by flow/handover.py (brief 68). Edit handover.yaml, or the text between the prose markers, then run: python -m flow.handover write designs/b92_history_attention -->
 
+**Verification: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.** [VERIFIED.md](VERIFIED.md) is the generated, hash-pinned record; [what the label means](../../docs/verified.md).
+
 A gated study of whether order-flow history helps small integer classifiers on synthetic limit-order-book data, and what it costs in the fabric. A self-exciting generator (Hawkes-type arrivals, sign persistence, informed bursts) makes history matter; lagged features help the 87 trees (gate passed). On one common head, exponentially decaying sums and a learned fixed window each add about 0.015 test accuracy over the history-free head, while two softmax-free tiny attentions end about 0.012 below the decaying sums, so no attention block was built in Vivado. The stateful arms are bit-exact against a twin and built out of context on the K26 and the Artix-7 100T.
 
 Not in scope:

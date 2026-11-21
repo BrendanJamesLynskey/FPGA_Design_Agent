@@ -2,6 +2,8 @@
 
 <!-- Generated from handover.yaml by flow/handover.py (brief 68). Edit handover.yaml, or the text between the prose markers, then run: python -m flow.handover write designs/b91_lowbit -->
 
+**Verification: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.** [VERIFIED.md](VERIFIED.md) is the generated, hash-pinned record; [what the label means](../../docs/verified.md).
+
 A generator and a measurement of eight weight formats for tiny integer networks: binary, ternary, INT4, an MXFP4-style E2M1 format with a power-of-two scale, our power-of-two format log4 (with and without a zero) and a two-term log4+1. Each is trained with its quantiser in the loop, exported to integers, checked against a bit-exact Python twin and generated RTL, and built out of context on the K26 and the Artix-7 100T. On the brief 87 synthetic order flow the 4-bit-weight formats match the 89 LUT network and the 87 trees on accuracy but need about four times the LUTs, so no format is on the accuracy-against-area or accuracy-against-latency front.
 
 Not in scope:

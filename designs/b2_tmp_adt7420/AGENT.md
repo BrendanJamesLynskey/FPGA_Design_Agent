@@ -3,6 +3,7 @@ source: designs/b2_tmp_adt7420/handover.yaml; human view: README.md; refresh: py
 
 ## identity
 kind=board-selfcheck produced_by=human part=xc7a100tcsg324-1 board=Nexys A7-100T top=b2_tmp_adt7420_top tool=Vivado 2026.1
+verified: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement (record: designs/b2_tmp_adt7420/VERIFIED.md, designs/b2_tmp_adt7420/verified.json; definition: docs/verified.md)
 
 ## summary
 Reads the Nexys A7's ADT7420 temperature sensor over I2C (address 0x4B, 100 kHz) from a small register block in the test shell. The host reads the ID register and the temperature, and the pass rule checks the ID, that no byte was not acknowledged and that the temperature is plausible. The design only sets the register pointer and reads, so it cannot change the sensor's configuration. `selfcheck.py` holds the on-board pass rule, written before any board run.

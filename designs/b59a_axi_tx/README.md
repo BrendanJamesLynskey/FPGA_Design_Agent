@@ -2,6 +2,8 @@
 
 <!-- Generated from handover.yaml by flow/handover.py (brief 68). Edit handover.yaml, or the text between the prose markers, then run: python -m flow.handover write designs/b59a_axi_tx -->
 
+**Verification: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.** [VERIFIED.md](VERIFIED.md) is the generated, hash-pinned record; [what the label means](../../docs/verified.md).
+
 Board demonstration of an on-chip AXI4-Lite and AXI4-Stream traffic generator, protocol checker and scoreboard. A program loaded over the UART shell drives a vendor block-RAM controller or our own peripheral and stream FIFO, which carry run-time seeded bugs. Ten AXI4-Lite and five AXI4-Stream rules are watched and counted, a capture records the bus around the first violation, and AMD's AXI Protocol Checker watches the same AXI4-Lite bus as a cross-check.
 
 Not in scope:

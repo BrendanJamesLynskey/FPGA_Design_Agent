@@ -2,6 +2,8 @@
 
 <!-- Generated from handover.yaml by flow/handover.py (brief 68). Edit handover.yaml, or the text between the prose markers, then run: python -m flow.handover write designs/b110_itch_ouch -->
 
+**Verification: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.** [VERIFIED.md](VERIFIED.md) is the generated, hash-pinned record; [what the label means](../../docs/verified.md).
+
 A trading path in the formats a real venue speaks, in simulation. UDP payload words carrying MoldUDP64 and Nasdaq TotalView-ITCH 5.0 are decoded, a small top-of-book is kept for a few instruments, a pre-trade risk check with a kill switch decides, and an OUCH 5.0 Enter Order is built in a SoupBinTCP 3.00 packet and handed to a stub port, optionally started before the risk verdict and cancelled if it fails. A Python reference model and a seeded synthetic generator check the RTL bit for bit, seeded faults in the RTL are all caught, and the block is built out of context for the KR260's part at the 10G core clock.
 
 Not in scope:

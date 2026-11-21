@@ -2,6 +2,8 @@
 
 <!-- Generated from handover.yaml by flow/handover.py (brief 68). Edit handover.yaml, or the text between the prose markers, then run: python -m flow.handover write designs/b64b_zedboard -->
 
+**Verification: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.** [VERIFIED.md](VERIFIED.md) is the generated, hash-pinned record; [what the label means](../../docs/verified.md).
+
 Measures what a Cortex-A9 and the fabric of a Zynq-7000 cost each other, bare metal, on the ZedBoard. A PS7 with GP0, HP0 and ACP ports drives two AXI DMA to accelerator chains (CRC-32 or a 16-tap FIR) and a register plane with a latency probe and three bus-error blocks. Software against the HP path with cache maintenance against the coherent ACP path is swept over buffer sizes, and the A9's reaction to AXI SLVERR and DECERR responses is recorded for each memory mapping.
 
 Not in scope:

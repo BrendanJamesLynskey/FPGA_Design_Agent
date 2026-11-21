@@ -3,6 +3,7 @@ source: designs/b30_hil_audio_pinfault/handover.yaml; human view: README.md; ref
 
 ## identity
 kind=demonstration produced_by=human part=xc7a100tcsg324-1 board=Nexys A7-100T top=b30_hil_audio_top tool=Vivado 2026.1
+verified: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement (record: designs/b30_hil_audio_pinfault/VERIFIED.md, designs/b30_hil_audio_pinfault/verified.json; definition: docs/verified.md)
 
 ## summary
 The seeded-fault twin of b30_hil_audio. It builds from the same RTL, but its constraint file puts the audio output AUD_PWM on the pin of LED 0, so the tone never reaches the audio jack. It passes simulation and every check made inside the FPGA, and only the measurement at the jack fails, which is the point of the demonstration. The hardware-in-the-loop run of this design therefore reports a failure by intent.

@@ -2,6 +2,8 @@
 
 <!-- Generated from handover.yaml by flow/handover.py (brief 68). Edit handover.yaml, or the text between the prose markers, then run: python -m flow.handover write designs/b2_acl_adxl362 -->
 
+**Verification: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.** [VERIFIED.md](VERIFIED.md) is the generated, hash-pinned record; [what the label means](../../docs/verified.md).
+
 Drives the Nexys A7's ADXL362 accelerometer over SPI mode 0 at 1 MHz from a small register block in the test shell. The host reads the three ID registers, switches the part to measurement mode, reads one X/Y/Z sample at rest, returns it to standby and reads POWER_CTL back. `selfcheck.py` holds the on-board pass rule, written before any board run.
 
 Not in scope:

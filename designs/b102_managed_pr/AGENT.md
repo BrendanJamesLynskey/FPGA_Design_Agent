@@ -3,6 +3,7 @@ source: designs/b102_managed_pr/handover.yaml; human view: README.md; refresh: p
 
 ## identity
 kind=demonstration produced_by=human part=xck26-sfvc784-2LV-c board=Kria KR260 top=pr_top tool=Vivado 2026.1
+verified: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement (record: designs/b102_managed_pr/VERIFIED.md, designs/b102_managed_pr/verified.json; definition: docs/verified.md)
 
 ## summary
 A KR260 timing study that exists to demonstrate stage 2 of a managed project (brief 102). The block pcs_unit, brief 96's 64b/66b transmit path, arrives as a placed, routed and locked checkpoint made outside the project and is frozen; an owned stimulus and sink around it are placed and routed by Vivado. project.yaml records the block's keep-out region, the agent's tools refuse to place or constrain anything inside it, and the block's internal timing is measured at six placements, relocated by RapidWright and not.

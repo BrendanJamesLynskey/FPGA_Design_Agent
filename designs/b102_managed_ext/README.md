@@ -2,6 +2,8 @@
 
 <!-- Generated from handover.yaml by flow/handover.py (brief 68). Edit handover.yaml, or the text between the prose markers, then run: python -m flow.handover write designs/b102_managed_ext -->
 
+**Verification: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.** [VERIFIED.md](VERIFIED.md) is the generated, hash-pinned record; [what the label means](../../docs/verified.md).
+
 A KR260 self-test of an Ethernet FCS stage that integrates one real third-party block under a managed project (brief 102, stage 3). Alex Forencich's parallel CRC/LFSR (verilog-ethernet, MIT, commit 77320a9471d1) is vendored unmodified and frozen; our adapter (owned) adds the register, the restart and the enable around it; an owned sequencer sends a fixed sixteen-word frame and shows the verdict on an LED. project.yaml records the licence, the commit and the hash of every file of theirs, and the agent's tools refuse every route to edit them.
 
 Not in scope:

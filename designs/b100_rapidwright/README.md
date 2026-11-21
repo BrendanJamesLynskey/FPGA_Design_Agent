@@ -2,6 +2,8 @@
 
 <!-- Generated from handover.yaml by flow/handover.py (brief 68). Edit handover.yaml, or the text between the prose markers, then run: python -m flow.handover write designs/b100_rapidwright -->
 
+**Verification: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement.** [VERIFIED.md](VERIFIED.md) is the generated, hash-pinned record; [what the label means](../../docs/verified.md).
+
 Three RapidWright capabilities built as tested agent tools and compared with Vivado alone on the K26 (xck26-sfvc784-2LV-c). They are a pre-implemented block stamped at other sites with its internal timing kept, an annealing placer for the transmit latency chain of brief 96, and RWRoute routing of the whole design or of the worst-path nets. Vivado 2026.1 times every result; RapidWright's own estimates are never used. The block capability works and is the only one that beats Vivado alone (on repeatability); placement and routing lose to Vivado on timing; the agent given the tools did no better than the agent without them.
 
 Not in scope:

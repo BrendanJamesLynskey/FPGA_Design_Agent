@@ -3,6 +3,7 @@ source: designs/b102_managed_fcs/handover.yaml; human view: README.md; refresh: 
 
 ## identity
 kind=demonstration produced_by=human part=xck26-sfvc784-2LV-c board=Kria KR260 top=fcs_top tool=Vivado 2026.1
+verified: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement (record: designs/b102_managed_fcs/VERIFIED.md, designs/b102_managed_fcs/verified.json; definition: docs/verified.md)
 
 ## summary
 A KR260 self-test of an Ethernet FCS stage that exists to demonstrate a managed project (brief 102). An owned sequencer sends a fixed sixteen-word frame through a CRC-32 block that was made outside the project as an EDIF netlist and is frozen, and shows the verdict on an LED; a heartbeat divider is excluded from the agent's view but built with the rest. project.yaml marks each part, and the agent's tools enforce it.

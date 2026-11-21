@@ -3,6 +3,7 @@ source: designs/b58a_trigger/handover.yaml; human view: README.md; refresh: pyth
 
 ## identity
 kind=showcase produced_by=human part=xck26-sfvc784-2LV-c board=Kria KR260 top=kr260_top tool=Vivado 2026.1
+verified: not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement (record: designs/b58a_trigger/VERIFIED.md, designs/b58a_trigger/verified.json; definition: docs/verified.md)
 
 ## summary
 A bench model of a low-latency trading path. A packet arrives on a PL Ethernet port, its fields are parsed while it is still arriving, a rule loaded at run time decides, hardware interlocks check the order, and in speculative mode the response leaves before the incoming frame has finished (undone by a poisoned frame check sequence if the frame was bad). Simulated, formally checked in part, and built with Vivado 2026.1; never run on a board.
