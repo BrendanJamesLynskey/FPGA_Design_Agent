@@ -10,6 +10,13 @@ The human specifies the requirements and checks that the verification is thoroug
 | `b96_kr260_10g` | 27 requirements (11 functional, 9 performance, 1 interface, 6 safety); 23 verified, of which 2 rest on delegated acceptances (the planner accepted the Lean statement on the owner's delegation; not human approvals); 2 stale; 2 with no passing evidence; 0 of 3 requirements that depend on an external element closed by hardware; performance verified: 4 on the board, 2 by post-route timing, 0 in simulation only; 0 of 27 requirements agreed by a human, 0 human review(s) recorded; 4 Lean proof item(s) (all widths): 0 with a human-approved statement, 4 with a statement accepted on the owner's delegation (not a human approval), 0 with statement not approved; 4 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run). | [matrix](../designs/b96_kr260_10g/verif/matrix.md) ([html](../designs/b96_kr260_10g/verif/matrix.html)) |
 | `t1_dimmer_counter` | 21 requirements (21 functional); 0 verified; 21 stale; 0 of 21 requirements agreed by a human, 0 human review(s) recorded. | [matrix](../designs/t1_dimmer_counter/verif/matrix.md) ([html](../designs/t1_dimmer_counter/verif/matrix.html)) |
 | `arith_adder` | 9 requirements (9 functional); 7 verified; 0 of 9 requirements agreed by a human, 0 human review(s) recorded; 2 Lean proof item(s) (all widths): 0 with a human-approved statement, 0 with a statement accepted on the owner's delegation (not a human approval), 2 with statement not approved; 2 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run). | [matrix](../arith/adder/verif/matrix.md) ([html](../arith/adder/verif/matrix.html)) |
+| `arith_fft` | 10 requirements (10 functional); 10 verified; 0 of 10 requirements agreed by a human, 0 human review(s) recorded. | [matrix](../arith/fft/verif/matrix.md) ([html](../arith/fft/verif/matrix.html)) |
+| `arith_fft_axis` | 6 requirements (5 functional, 1 interface); 6 verified; 0 of 6 requirements agreed by a human, 0 human review(s) recorded. | [matrix](../arith/fft_axis/verif/matrix.md) ([html](../arith/fft_axis/verif/matrix.html)) |
+| `arith_fft_cmul` | 6 requirements (6 functional); 6 verified; 0 of 6 requirements agreed by a human, 0 human review(s) recorded. | [matrix](../arith/fft_cmul/verif/matrix.md) ([html](../arith/fft_cmul/verif/matrix.html)) |
+| `arith_fft_real` | 5 requirements (5 functional); 5 verified; 0 of 5 requirements agreed by a human, 0 human review(s) recorded. | [matrix](../arith/fft_real/verif/matrix.md) ([html](../arith/fft_real/verif/matrix.html)) |
+| `arith_fft_reorder` | 6 requirements (6 functional); 6 verified; 0 of 6 requirements agreed by a human, 0 human review(s) recorded. | [matrix](../arith/fft_reorder/verif/matrix.md) ([html](../arith/fft_reorder/verif/matrix.html)) |
+| `arith_fft_twiddle` | 6 requirements (6 functional); 6 verified; 0 of 6 requirements agreed by a human, 0 human review(s) recorded. | [matrix](../arith/fft_twiddle/verif/matrix.md) ([html](../arith/fft_twiddle/verif/matrix.html)) |
+| `arith_fft_window` | 6 requirements (6 functional); 6 verified; 0 of 6 requirements agreed by a human, 0 human review(s) recorded. | [matrix](../arith/fft_window/verif/matrix.md) ([html](../arith/fft_window/verif/matrix.html)) |
 | `arith_fp_add` | 10 requirements (10 functional); 7 verified; 0 of 10 requirements agreed by a human, 0 human review(s) recorded; 3 Lean proof item(s) (all widths): 0 with a human-approved statement, 0 with a statement accepted on the owner's delegation (not a human approval), 3 with statement not approved; 3 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run). | [matrix](../arith/fp_add/verif/matrix.md) ([html](../arith/fp_add/verif/matrix.html)) |
 | `arith_fp_fma` | 10 requirements (10 functional); 7 verified; 0 of 10 requirements agreed by a human, 0 human review(s) recorded; 3 Lean proof item(s) (all widths): 0 with a human-approved statement, 0 with a statement accepted on the owner's delegation (not a human approval), 3 with statement not approved; 3 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run). | [matrix](../arith/fp_fma/verif/matrix.md) ([html](../arith/fp_fma/verif/matrix.html)) |
 | `arith_fp_mul` | 10 requirements (10 functional); 7 verified; 0 of 10 requirements agreed by a human, 0 human review(s) recorded; 3 Lean proof item(s) (all widths): 0 with a human-approved statement, 0 with a statement accepted on the owner's delegation (not a human approval), 3 with statement not approved; 3 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run). | [matrix](../arith/fp_mul/verif/matrix.md) ([html](../arith/fp_mul/verif/matrix.html)) |
@@ -22,6 +29,13 @@ The human specifies the requirements and checks that the verification is thoroug
 - `b96_kr260_10g`: 1 external not hardware verified, 3 hardware open, 4 no passing evidence, 16 stale evidence
 - `t1_dimmer_counter`: 21 no passing evidence, 96 stale evidence
 - `arith_adder`: 2 lean statement unapproved
+- `arith_fft`: none
+- `arith_fft_axis`: none
+- `arith_fft_cmul`: none
+- `arith_fft_real`: none
+- `arith_fft_reorder`: none
+- `arith_fft_twiddle`: none
+- `arith_fft_window`: none
 - `arith_fp_add`: 3 lean statement unapproved
 - `arith_fp_fma`: 3 lean statement unapproved
 - `arith_fp_mul`: 3 lean statement unapproved

@@ -1,0 +1,341 @@
+{
+ "function": "fft",
+ "mutants": 40,
+ "valid": 40,
+ "killed": 40,
+ "survived": [],
+ "invalid": [],
+ "score_pct": 100.0,
+ "per_variant": {
+  "sdf": {
+   "valid": 23,
+   "killed": 23
+  },
+  "burst": {
+   "valid": 17,
+   "killed": 17
+  }
+ },
+ "results": [
+  {
+   "name": "stage_mj",
+   "variant": "sdf",
+   "class": "operator",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the -j is applied to the wrong half"
+  },
+  {
+   "name": "stage_dif",
+   "variant": "sdf",
+   "class": "operator",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the real difference adds"
+  },
+  {
+   "name": "stage_round",
+   "variant": "sdf",
+   "class": "constant",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the scaled sum is floored although RND asks for rounding"
+  },
+  {
+   "name": "stage_minus_j",
+   "variant": "sdf",
+   "class": "operator",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the -j has the sign of +j"
+  },
+  {
+   "name": "stage_store",
+   "variant": "sdf",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the sum is fed back instead of the difference"
+  },
+  {
+   "name": "stage_pos",
+   "variant": "sdf",
+   "class": "operator",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the position of the output word is wrong"
+  },
+  {
+   "name": "stage_half",
+   "variant": "sdf",
+   "class": "operator",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the halves are exchanged"
+  },
+  {
+   "name": "stage_sof",
+   "variant": "sdf",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the stage counter is never restarted"
+  },
+  {
+   "name": "tw_k",
+   "variant": "sdf",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the twiddle multiple is not the bit-reversed quarter"
+  },
+  {
+   "name": "tw_e2",
+   "variant": "sdf",
+   "class": "operator",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "twice the index is not doubled"
+  },
+  {
+   "name": "tw_e3",
+   "variant": "sdf",
+   "class": "operator",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "three times the index is doubled only"
+  },
+  {
+   "name": "tw_round",
+   "variant": "sdf",
+   "class": "constant",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the product's rounding constant is a quarter"
+  },
+  {
+   "name": "tw_swap",
+   "variant": "sdf",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the twiddle's parts are exchanged"
+  },
+  {
+   "name": "sdf_latency_tap",
+   "variant": "sdf",
+   "class": "constant",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the stage markers are one clock early after a multiplier"
+  },
+  {
+   "name": "sdf_in_swap",
+   "variant": "sdf",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the inverse does not swap at the input"
+  },
+  {
+   "name": "sdf_out_swap",
+   "variant": "sdf",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the inverse does not swap at the output"
+  },
+  {
+   "name": "sdf_tap",
+   "variant": "sdf",
+   "class": "constant",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the stage marker is a clock late"
+  },
+  {
+   "name": "sdf_frame_end",
+   "variant": "sdf",
+   "class": "constant",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "out_valid ends a word early"
+  },
+  {
+   "name": "sdf_inv_hold",
+   "variant": "sdf",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the direction is read in every clock, not held from in_sof"
+  },
+  {
+   "name": "sdf_inv_tap",
+   "variant": "sdf",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the direction flag never reaches the output swap"
+  },
+  {
+   "name": "sdf_wire_twiddle_sign",
+   "variant": "sdf",
+   "class": "operator",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "second quadrant cosine has the wrong sign (seen through the FFT)"
+  },
+  {
+   "name": "sdf_wire_cmul_sign",
+   "variant": "sdf",
+   "class": "operator",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the complex product's real part adds (seen through the FFT)"
+  },
+  {
+   "name": "sdf_reorder_bank",
+   "variant": "sdf",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the reorder buffer reads the wrong bank (seen through the FFT, natural order)"
+  },
+  {
+   "name": "b_tm",
+   "variant": "burst",
+   "class": "operator",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the twiddle index is scaled for the wrong stage"
+  },
+  {
+   "name": "b_parity",
+   "variant": "burst",
+   "class": "operator",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the bank of a is taken from b's parity"
+  },
+  {
+   "name": "b_hl",
+   "variant": "burst",
+   "class": "operator",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the butterfly span is half"
+  },
+  {
+   "name": "b_round",
+   "variant": "burst",
+   "class": "constant",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the scaled sum is floored although RND asks for rounding"
+  },
+  {
+   "name": "b_dif",
+   "variant": "burst",
+   "class": "operator",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the real difference adds"
+  },
+  {
+   "name": "b_wb",
+   "variant": "burst",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "bank 0 gets the wrong result"
+  },
+  {
+   "name": "b_drain",
+   "variant": "burst",
+   "class": "constant",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "no pipeline drain between stages: a stage reads words not yet written"
+  },
+  {
+   "name": "b_unld",
+   "variant": "burst",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the read order is exchanged"
+  },
+  {
+   "name": "b_out_swap",
+   "variant": "burst",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the inverse does not swap at the output"
+  },
+  {
+   "name": "b_ld_swap",
+   "variant": "burst",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "real and imaginary parts are stored exchanged"
+  },
+  {
+   "name": "b_inv_hold",
+   "variant": "burst",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the direction is read in every clock, not held from in_sof"
+  },
+  {
+   "name": "b_tw_align",
+   "variant": "burst",
+   "class": "latency",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the twiddle is a clock early"
+  },
+  {
+   "name": "b_sum_path",
+   "variant": "burst",
+   "class": "connection",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the difference is written back where the sum belongs"
+  },
+  {
+   "name": "b_ready",
+   "variant": "burst",
+   "class": "operator",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "in_ready never falls, so a frame can start while busy"
+  },
+  {
+   "name": "b_adv",
+   "variant": "burst",
+   "class": "operator",
+   "status": "killed",
+   "detail": "stalled {'LOGN': 4, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the unload ignores out_ready (words are lost when the sink stalls)"
+  },
+  {
+   "name": "b_hold",
+   "variant": "burst",
+   "class": "operator",
+   "status": "killed",
+   "detail": "stalled {'LOGN': 4, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the read registers are not held while the sink stalls (the data changes)"
+  },
+  {
+   "name": "b_load_end",
+   "variant": "burst",
+   "class": "constant",
+   "status": "killed",
+   "detail": "directed {'LOGN': 4, 'W': 8, 'TW': 10, 'SCALE': 1, 'RND': 1, 'ORDER': 0, 'CMUL': 4, 'TWSTAGES': 1, 'MULSTAGES': 2}",
+   "why": "the load ends a word early"
+  }
+ ]
+}

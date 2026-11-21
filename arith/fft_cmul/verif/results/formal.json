@@ -1,0 +1,326 @@
+{
+ "function": "fft_cmul",
+ "tool": "Yosys 0.70+385 (git sha1 098e46a36, Release, Clang /usr/bin/clang++ 21.1.8)",
+ "jobs": 15,
+ "ok": 15,
+ "results": [
+  {
+   "name": "equal_4x4_s0",
+   "top": "fft_cmul_fv",
+   "params": {
+    "WA": 4,
+    "WB": 4,
+    "ST": 0
+   },
+   "mode": "prove",
+   "depth": 6,
+   "engine": "boolector",
+   "claim": "both variants equal ar*br - ai*bi and ar*bi + ai*br (4 x 4 bits, STAGES 0), for all inputs and any run length (proved)",
+   "mutant": null,
+   "expected": "PASS",
+   "status": "PASS",
+   "ok": true,
+   "seconds": 63.7,
+   "failed_assertions": [],
+   "tail": ""
+  },
+  {
+   "name": "equal_4x4_s1",
+   "top": "fft_cmul_fv",
+   "params": {
+    "WA": 4,
+    "WB": 4,
+    "ST": 1
+   },
+   "mode": "prove",
+   "depth": 6,
+   "engine": "boolector",
+   "claim": "both variants equal ar*br - ai*bi and ar*bi + ai*br (4 x 4 bits, STAGES 1), for all inputs and any run length (proved)",
+   "mutant": null,
+   "expected": "PASS",
+   "status": "PASS",
+   "ok": true,
+   "seconds": 52.9,
+   "failed_assertions": [],
+   "tail": ""
+  },
+  {
+   "name": "equal_4x4_s2",
+   "top": "fft_cmul_fv",
+   "params": {
+    "WA": 4,
+    "WB": 4,
+    "ST": 2
+   },
+   "mode": "prove",
+   "depth": 6,
+   "engine": "boolector",
+   "claim": "both variants equal ar*br - ai*bi and ar*bi + ai*br (4 x 4 bits, STAGES 2), for all inputs and any run length (proved)",
+   "mutant": null,
+   "expected": "PASS",
+   "status": "PASS",
+   "ok": true,
+   "seconds": 43.7,
+   "failed_assertions": [],
+   "tail": ""
+  },
+  {
+   "name": "equal_4x4_s3",
+   "top": "fft_cmul_fv",
+   "params": {
+    "WA": 4,
+    "WB": 4,
+    "ST": 3
+   },
+   "mode": "prove",
+   "depth": 6,
+   "engine": "boolector",
+   "claim": "both variants equal ar*br - ai*bi and ar*bi + ai*br (4 x 4 bits, STAGES 3), for all inputs and any run length (proved)",
+   "mutant": null,
+   "expected": "PASS",
+   "status": "PASS",
+   "ok": true,
+   "seconds": 32.6,
+   "failed_assertions": [],
+   "tail": ""
+  },
+  {
+   "name": "equal_5x3_s3",
+   "top": "fft_cmul_fv",
+   "params": {
+    "WA": 5,
+    "WB": 3,
+    "ST": 3
+   },
+   "mode": "prove",
+   "depth": 6,
+   "engine": "boolector",
+   "claim": "both variants equal ar*br - ai*bi and ar*bi + ai*br (5 x 3 bits, STAGES 3), for all inputs and any run length (proved)",
+   "mutant": null,
+   "expected": "PASS",
+   "status": "PASS",
+   "ok": true,
+   "seconds": 22.1,
+   "failed_assertions": [],
+   "tail": ""
+  },
+  {
+   "name": "equal_3x5_s2",
+   "top": "fft_cmul_fv",
+   "params": {
+    "WA": 3,
+    "WB": 5,
+    "ST": 2
+   },
+   "mode": "prove",
+   "depth": 6,
+   "engine": "boolector",
+   "claim": "both variants equal ar*br - ai*bi and ar*bi + ai*br (3 x 5 bits, STAGES 2), for all inputs and any run length (proved)",
+   "mutant": null,
+   "expected": "PASS",
+   "status": "PASS",
+   "ok": true,
+   "seconds": 40.8,
+   "failed_assertions": [],
+   "tail": ""
+  },
+  {
+   "name": "mutant_m4_re_plus",
+   "top": "fft_cmul_fv",
+   "params": {
+    "WA": 4,
+    "WB": 4,
+    "ST": 3
+   },
+   "mode": "bmc",
+   "depth": 6,
+   "engine": "boolector",
+   "claim": "a build with the seeded fault m4_re_plus is refuted",
+   "mutant": "m4_re_plus",
+   "expected": "FAIL",
+   "status": "FAIL",
+   "ok": true,
+   "seconds": 0.4,
+   "failed_assertions": [
+    "M4"
+   ],
+   "tail": ""
+  },
+  {
+   "name": "mutant_m4_im_minus",
+   "top": "fft_cmul_fv",
+   "params": {
+    "WA": 4,
+    "WB": 4,
+    "ST": 3
+   },
+   "mode": "bmc",
+   "depth": 6,
+   "engine": "boolector",
+   "claim": "a build with the seeded fault m4_im_minus is refuted",
+   "mutant": "m4_im_minus",
+   "expected": "FAIL",
+   "status": "FAIL",
+   "ok": true,
+   "seconds": 0.4,
+   "failed_assertions": [
+    "M4"
+   ],
+   "tail": ""
+  },
+  {
+   "name": "mutant_m4_cross",
+   "top": "fft_cmul_fv",
+   "params": {
+    "WA": 4,
+    "WB": 4,
+    "ST": 3
+   },
+   "mode": "bmc",
+   "depth": 6,
+   "engine": "boolector",
+   "claim": "a build with the seeded fault m4_cross is refuted",
+   "mutant": "m4_cross",
+   "expected": "FAIL",
+   "status": "FAIL",
+   "ok": true,
+   "seconds": 0.4,
+   "failed_assertions": [
+    "M4"
+   ],
+   "tail": ""
+  },
+  {
+   "name": "mutant_m3_re_plus",
+   "top": "fft_cmul_fv",
+   "params": {
+    "WA": 4,
+    "WB": 4,
+    "ST": 3
+   },
+   "mode": "bmc",
+   "depth": 6,
+   "engine": "boolector",
+   "claim": "a build with the seeded fault m3_re_plus is refuted",
+   "mutant": "m3_re_plus",
+   "expected": "FAIL",
+   "status": "FAIL",
+   "ok": true,
+   "seconds": 0.4,
+   "failed_assertions": [
+    "M3"
+   ],
+   "tail": ""
+  },
+  {
+   "name": "mutant_m3_pre_dif",
+   "top": "fft_cmul_fv",
+   "params": {
+    "WA": 4,
+    "WB": 4,
+    "ST": 3
+   },
+   "mode": "bmc",
+   "depth": 6,
+   "engine": "boolector",
+   "claim": "a build with the seeded fault m3_pre_dif is refuted",
+   "mutant": "m3_pre_dif",
+   "expected": "FAIL",
+   "status": "FAIL",
+   "ok": true,
+   "seconds": 0.4,
+   "failed_assertions": [
+    "M3"
+   ],
+   "tail": ""
+  },
+  {
+   "name": "mutant_m3_zero_ext",
+   "top": "fft_cmul_fv",
+   "params": {
+    "WA": 4,
+    "WB": 4,
+    "ST": 3
+   },
+   "mode": "bmc",
+   "depth": 6,
+   "engine": "boolector",
+   "claim": "a build with the seeded fault m3_zero_ext is refuted",
+   "mutant": "m3_zero_ext",
+   "expected": "FAIL",
+   "status": "FAIL",
+   "ok": true,
+   "seconds": 0.4,
+   "failed_assertions": [
+    "M3"
+   ],
+   "tail": ""
+  },
+  {
+   "name": "mutant_m3_k3",
+   "top": "fft_cmul_fv",
+   "params": {
+    "WA": 4,
+    "WB": 4,
+    "ST": 3
+   },
+   "mode": "bmc",
+   "depth": 6,
+   "engine": "boolector",
+   "claim": "a build with the seeded fault m3_k3 is refuted",
+   "mutant": "m3_k3",
+   "expected": "FAIL",
+   "status": "FAIL",
+   "ok": true,
+   "seconds": 0.4,
+   "failed_assertions": [
+    "M3"
+   ],
+   "tail": ""
+  },
+  {
+   "name": "mutant_m4_operand_rank",
+   "top": "fft_cmul_fv",
+   "params": {
+    "WA": 4,
+    "WB": 4,
+    "ST": 3
+   },
+   "mode": "bmc",
+   "depth": 6,
+   "engine": "boolector",
+   "claim": "a build with the seeded fault m4_operand_rank is refuted",
+   "mutant": "m4_operand_rank",
+   "expected": "FAIL",
+   "status": "FAIL",
+   "ok": true,
+   "seconds": 0.4,
+   "failed_assertions": [
+    "M4"
+   ],
+   "tail": ""
+  },
+  {
+   "name": "mutant_m3_operand_rank",
+   "top": "fft_cmul_fv",
+   "params": {
+    "WA": 4,
+    "WB": 4,
+    "ST": 3
+   },
+   "mode": "bmc",
+   "depth": 6,
+   "engine": "boolector",
+   "claim": "a build with the seeded fault m3_operand_rank is refuted",
+   "mutant": "m3_operand_rank",
+   "expected": "FAIL",
+   "status": "FAIL",
+   "ok": true,
+   "seconds": 0.4,
+   "failed_assertions": [
+    "M3"
+   ],
+   "tail": ""
+  }
+ ]
+}

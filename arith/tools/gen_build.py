@@ -99,7 +99,7 @@ def outputs(fn: str) -> dict[Path, str]:
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("functions", nargs="*", default=list(ac.FUNCTIONS))
+    ap.add_argument("functions", nargs="*", default=list(ac.ALL_FUNCTIONS))
     ap.add_argument("--check", action="store_true")
     a = ap.parse_args()
     bad = 0

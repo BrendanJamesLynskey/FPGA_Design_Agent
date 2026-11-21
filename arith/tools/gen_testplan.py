@@ -191,12 +191,15 @@ APPROVALS = ("# Human approvals of Lean theorem statements (brief 125). THE OWNE
 
 
 def outputs(fn: str) -> dict[Path, str]:
+    if fn in ac.FFT_FUNCTIONS:                                # brief 148: the frequency-domain suite has its own plan (no harness, no Lean)
+        from arith.tools import gen_testplan_fft
+        return {ac.ARITH / fn / "verif" / "testplan.yaml": gen_testplan_fft.plan(fn)}
     return {ac.ARITH / fn / "verif" / "testplan.yaml": plan(fn), ac.ARITH / fn / "verif" / "lean_approvals.yaml": APPROVALS.format(fn=fn)}
 
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("functions", nargs="*", default=list(ac.FUNCTIONS))
+    ap.add_argument("functions", nargs="*", default=list(ac.ALL_FUNCTIONS))
     ap.add_argument("--check", action="store_true")
     a = ap.parse_args()
     bad = 0

@@ -1,0 +1,59 @@
+# Machine-readable specification of the bit-reverse reorder buffer (arith brief 148). The prose is spec.md; the two agree (tests/test_fft_reorder_package.py).
+schema: fda-arith/spec/1
+function: fft_reorder
+title: Bit-reverse reorder buffer (ping-pong, continuous frames)
+model: arith/fft_reorder/model.py
+summary: "A frame of N = 2**LOGN words of WD bits arrives in N consecutive clocks (in_valid, the first word marked by in_sof) and leaves in N consecutive clocks with the word that arrived at position p now at position bitrev(p) (LOGN-bit reversal). It converts the bit-reversed output of a decimation-in-frequency FFT to natural order, and natural order to bit-reversed (bit reversal is its own inverse). Frames may follow each other with no gap: one bank is written while the other is read. Latency from in_sof to out_sof: N + 1 clocks."
+semantics:
+  - "position p of a word is its index within its frame: 0 for the word with in_sof, 1 for the next, and so on up to N - 1"
+  - "the output frame is the input frame with its words permuted: output position k holds the input word of position bitrev(k, LOGN) (the LOGN bits of k in reverse order)"
+  - "the output frame starts N + 1 clocks after the input frame's in_sof clock and is N consecutive clocks of out_valid, the first with out_sof"
+  - "two banks of N words alternate: frame f is written into bank f mod 2 while frame f-1 is read from the other, so any number of back-to-back frames flow with no gap and no loss"
+ports:
+  - {name: clk, dir: in, width: 1, text: "clock"}
+  - {name: rst, dir: in, width: 1, text: "synchronous reset of the control state (not of the memories)"}
+  - {name: in_valid, dir: in, width: 1, text: "a word is present; high for N consecutive clocks per frame"}
+  - {name: in_sof, dir: in, width: 1, text: "with in_valid, the first word of a frame (position 0)"}
+  - {name: in_d, dir: in, width: WD, text: "the word"}
+  - {name: out_valid, dir: out, width: 1, text: "a word of an output frame is present; N consecutive clocks"}
+  - {name: out_sof, dir: out, width: 1, text: "with out_valid, the first word of the output frame (output position 0)"}
+  - {name: out_d, dir: out, width: WD, text: "the word"}
+parameters:
+  LOGN: {min: 2, text: "log2 of the frame length N (2 to 12 are simulated)"}
+  WD: {min: 1, text: "word width (an FFT sample is {real, imaginary}, so 2 * the part width)"}
+signedness: "not applicable: the words are opaque bit patterns"
+exactness: "exact permutation: every input word appears exactly once in the output frame, unchanged"
+latency_definition: "clocks from the clock in which in_sof is asserted to the clock in which out_sof is asserted: N + 1 (the whole frame must arrive before the first word of a bit-reversed read can leave, and the read is registered)"
+contract:
+  protocol: "streaming, no back-pressure: in_valid is high for exactly N consecutive clocks per frame with in_sof on the first; frames may be back to back or separated by any number of idle clocks; there is no ready"
+  throughput: "one word per clock in and out, continuously (initiation interval 1, frames back to back)"
+  latency: "N + 1 clocks from in_sof to out_sof, for every frame"
+  reset: "synchronous, clears the write and read counters and the valid flags; the memories hold data and are not reset, so a frame that was in flight is lost"
+  clock: "one clock, rising edge, no clock-enable"
+  stall: "none: there is no way to pause the input or the output; a gap inside a frame (in_valid low between its first and last word) is not allowed and its result is undefined"
+integration:
+  port_timing: "the memories are registered-read RAMs: the output word is available in the clock after the read address, then a 2:1 bank select; the output is combinational from registers"
+  constraints: "one clock, no multicycle paths. Both banks are sized for the largest N used: 2 * N * WD bits"
+guess_wrong:
+  - "the latency is N + 1, not N: the first word of the output frame leaves one clock after the last word of the input frame has arrived plus the registered read"
+  - "a new in_sof inside a frame restarts the frame silently (the words so far are lost, no error); a gap inside a frame is undefined, and nothing flags it"
+  - "the permutation is the bit reversal of the position within the frame, so it is its own inverse; it does not know about the FFT's inverse or about scaling"
+  - "rst does not clear the memories; a frame in flight when rst is asserted is lost (no test covers a reset in the middle of a frame)"
+  - "no out_valid is produced for an idle bank: outputs are only valid for N clocks after each frame (out_d is not meaningful when out_valid is 0)"
+lean_note: "Not attempted in Lean: that bit reversal is an involution and a permutation is proved exhaustively for LOGN 1 to 8 with SymbiYosys (formal/jobs.yaml), and by the model's tests for every LOGN up to 12."
+variants:
+  pingpong:
+    file: rtl/fft_reorder_pingpong.sv
+    module: fft_reorder_pingpong
+    deps: [fft_common/fft_bitrev.sv]
+    params: {LOGN: 6, WD: 32}
+    throughput: "1 word per clock, frames back to back"
+    latency: "(1<<LOGN)+1"
+    tradeoff: "two banks of N words: 2 * N * WD bits of RAM and no stalls; a single-bank in-place scheme would halve the RAM but needs a more complex address sequence (not built)"
+    exhaustive_points: [{LOGN: 2, WD: 4}, {LOGN: 3, WD: 8}, {LOGN: 4, WD: 8}, {LOGN: 5, WD: 12}, {LOGN: 6, WD: 32}, {LOGN: 7, WD: 16}, {LOGN: 8, WD: 10}, {LOGN: 10, WD: 32}]
+    random_points: [{LOGN: 5, WD: 32}, {LOGN: 8, WD: 34}, {LOGN: 12, WD: 36}]
+    expected_primitives:
+      a7: "0 DSP; 2 RAMB18 per 512 words of 36 bits or less (N = 1024, WD = 32: 4 RAMB18 or 2 RAMB36); distributed RAM below about N = 64; about 50 LUT6 and 4 * LOGN flip-flops of control"
+      k26: "0 DSP; as a7 (RAMB36/RAMB18, or UltraRAM for N * WD above 64 Kbit); about 50 LUT6 of control"
+    ooc_points: [{LOGN: 10, WD: 32}, {LOGN: 12, WD: 32}, {LOGN: 6, WD: 32}, {LOGN: 10, WD: 48}]
+    mutant_run: [{mode: directed, params: {LOGN: 4, WD: 8}}, {mode: directed, params: {LOGN: 3, WD: 8}}, {mode: randomised, params: {LOGN: 5, WD: 16}, n: 600}]
