@@ -6,7 +6,8 @@ The human specifies the requirements and checks that the verification is thoroug
 
 | Design | Summary | Matrix |
 |---|---|---|
-| `b96_kr260_10g` | 30 requirements (14 functional, 9 performance, 1 interface, 6 safety); 14 verified; 3 stale; 6 failing; 2 with no passing evidence; 0 of 3 requirements that depend on an external element closed by hardware; performance verified: 4 on the board, 2 by post-route timing, 0 in simulation only; 0 of 30 requirements agreed by a human, 0 human review(s) recorded; 10 Lean proof item(s) (all widths): 0 with a human-approved statement, 10 with statement not approved; 7 kernel only, 3 using a compiled decision procedure; build status from: recorded build (not re-run). | [matrix](../designs/b96_kr260_10g/verif/matrix.md) ([html](../designs/b96_kr260_10g/verif/matrix.html)) |
+| `b119_tcp_fast` | 27 requirements (10 functional, 10 performance, 2 interface, 5 safety); 22 verified; 2 with no passing evidence; 0 of 2 requirements that depend on an external element closed by hardware; performance verified: 0 on the board, 3 by post-route timing, 7 in simulation only; 0 of 27 requirements agreed by a human, 0 human review(s) recorded; 6 Lean proof item(s) (all widths): 0 with a human-approved statement, 6 with statement not approved; 3 kernel only, 3 using a compiled decision procedure; build status from: recorded build (not re-run). | [matrix](../designs/b119_tcp_fast/verif/matrix.md) ([html](../designs/b119_tcp_fast/verif/matrix.html)) |
+| `b96_kr260_10g` | 27 requirements (11 functional, 9 performance, 1 interface, 6 safety); 14 verified; 3 stale; 6 failing; 2 with no passing evidence; 0 of 3 requirements that depend on an external element closed by hardware; performance verified: 4 on the board, 2 by post-route timing, 0 in simulation only; 0 of 27 requirements agreed by a human, 0 human review(s) recorded; 4 Lean proof item(s) (all widths): 0 with a human-approved statement, 4 with statement not approved; 4 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run). | [matrix](../designs/b96_kr260_10g/verif/matrix.md) ([html](../designs/b96_kr260_10g/verif/matrix.html)) |
 | `t1_dimmer_counter` | 21 requirements (21 functional); 0 verified; 21 stale; 0 of 21 requirements agreed by a human, 0 human review(s) recorded. | [matrix](../designs/t1_dimmer_counter/verif/matrix.md) ([html](../designs/t1_dimmer_counter/verif/matrix.html)) |
 | `arith_adder` | 9 requirements (9 functional); 7 verified; 0 of 9 requirements agreed by a human, 0 human review(s) recorded; 2 Lean proof item(s) (all widths): 0 with a human-approved statement, 2 with statement not approved; 2 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run). | [matrix](../arith/adder/verif/matrix.md) ([html](../arith/adder/verif/matrix.html)) |
 | `arith_fp_add` | 10 requirements (10 functional); 7 verified; 0 of 10 requirements agreed by a human, 0 human review(s) recorded; 3 Lean proof item(s) (all widths): 0 with a human-approved statement, 3 with statement not approved; 3 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run). | [matrix](../arith/fp_add/verif/matrix.md) ([html](../arith/fp_add/verif/matrix.html)) |
@@ -17,7 +18,8 @@ The human specifies the requirements and checks that the verification is thoroug
 
 ## Gaps by design
 
-- `b96_kr260_10g`: 1 external not hardware verified, 3 hardware open, 10 lean statement unapproved, 11 no passing evidence, 18 stale evidence
+- `b119_tcp_fast`: 2 hardware open, 6 lean statement unapproved, 2 no passing evidence, 7 performance sim only
+- `b96_kr260_10g`: 1 external not hardware verified, 3 hardware open, 4 lean statement unapproved, 11 no passing evidence, 18 stale evidence
 - `t1_dimmer_counter`: 21 no passing evidence, 96 stale evidence
 - `arith_adder`: 2 lean statement unapproved
 - `arith_fp_add`: 3 lean statement unapproved
