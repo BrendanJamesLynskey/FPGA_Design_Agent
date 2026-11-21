@@ -309,13 +309,16 @@ evidence:
   record: results/b96f1/bypass_seq/result.txt
   sha256: 457378d737a4382242b69cf84b2db58aacf9a88707d0cba642934a5b1b091dd8
 - id: E11
-  activity: simulation
+  activity: formal
   result: pass
-  what: 'UVM 1.2 bench of the PCS and MAC in xsim 2026.1 (no GT model; reference-model scoreboard, SVAs, constrained-random):
-    42 runs pass, 213 of 213 coverage bins hit, 16 of 17 seeded bugs killed (the 17th is an equivalent mutant); run by hand
-    in xsim, not in CI'
-  record: results/112_uvm_pcs_mac/summary.txt
-  sha256: b4d6ac4452d7c9bab373242d1ac0ba691604352cd7f08d35f394dda38666add5
+  what: 'the own gray-pointer rate matcher (rate_match_gp.sv, bound properties, RTL untouched; brief 115): safety (no overflow
+    or underflow, pointer views never ahead, one-bit gray steps, idle inserted or deleted only between frames and only pure
+    idles, data integrity and order of a symbolic entry) proved by k-induction at 16 entries for one bit of each class of
+    the entry and at 4 and 2 entries; progress as a bounded model check of a ranking function (not an unbounded proof);
+    covers; ten seeded bugs each caught by a named assertion; two free clocks within 3:1, synchronisers modelled with one-clock
+    skew (docs/formal_study_notes.md)'
+  record: results/b115/formal_ci.json
+  sha256: 7d1f529c4cb2f1519b939cec91c35686eafe4bd8a007737cd4eb5d2046dc91be
 measurements:
 - id: M1
   what: LUTs, variant (b)
@@ -519,4 +522,4 @@ state:
     build_2026_1: pass
   vivado: '2026.1'
   kb_pin: 93d158c
-  build_id: c9106c0d
+  build_id: 815a2b02

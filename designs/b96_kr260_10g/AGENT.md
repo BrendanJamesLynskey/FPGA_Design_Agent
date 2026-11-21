@@ -9,7 +9,7 @@ A Kria KR260 design that carries our own 10GBASE-R PCS (64B/66B, scrambler, gear
 not: an interoperability proof: a PCS talking to itself accepts its own symmetric mistakes, only a network card proves it; the full 58A trading core (book, rule table, interlocks, ARP) at 64 bits: trade64 is a small stand-in with one rule; the reconciliation sublayer link-fault state machine, the BER monitor, an ARP or ICMP responder
 
 ## state
-stage=built vivado=2026.1 kb_pin=93d158c build_id=c9106c0d
+stage=built vivado=2026.1 kb_pin=93d158c build_id=815a2b02
 gates: build_2026_1=pass
 
 ## interface
@@ -85,7 +85,7 @@ R7 results/b96e/core_lat_sim.json 77fb782b78
 R8 results/b96e/builds/rm_gp/digest.json fdc4edc093
 R9 results/b96f1/builds/rm_gp_bypass/digest.json f49d9a7e1a
 R10 results/b96f1/bypass_seq/result.txt 457378d737
-R11 results/112_uvm_pcs_mac/summary.txt b4d6ac4452
+R11 results/b115/formal_ci.json 7d1f529c4c
 R12 results/b96c/builds/control/run.json 699ba4c7ee
 R13 results/b96/latency_sim.json e5453d4c0b
 R14 results/b96c/core_sim.json 227e0284e2
@@ -103,7 +103,7 @@ E7 simulation pass R7: whole core in xsim with AMD's real XPM macros, four clock
 E8 build pass R8: build rm_gp (RATE_MATCH = 1, RM_OWN = 1), all 29 gates, WNS +0.105 ns, WHS +0.011 ns, stamp 1a2fa1a8 recomputed from the tree; not loaded on a board
 E9 build pass R9: build rm_gp_bypass (both GT buffers bypassed, brief 96F1), all 29 gates, WNS +0.090 ns, WHS +0.010 ns, report_cdc no critical, stamp b2a7aeea; not loaded on a board
 E10 simulation pass R10: the Wizard's own buffer-bypass controllers with our run gate against a stand-in transceiver in xsim, 28 checks (start on the reset-done edge, stale done held off, error holds the paths in reset)
-E11 simulation pass R11: UVM 1.2 bench of the PCS and MAC in xsim 2026.1 (no GT model; reference-model scoreboard, SVAs, constrained-random): 42 runs pass, 213 of 213 coverage bins hit, 16 of 17 seeded bugs killed (the 17th is an equivalent mutant); run by hand in xsim, not in CI
+E11 formal pass R11: the own gray-pointer rate matcher (rate_match_gp.sv, bound properties, RTL untouched; brief 115): safety (no overflow or underflow, pointer views never ahead, one-bit gray steps, idle inserted or deleted only between frames and only pure idles, data integrity and order of a symbolic entry) proved by k-induction at 16 entries for one bit of each class of the entry and at 4 and 2 entries; progress as a bounded model check of a ranking function (not an unbounded proof); covers; ten seeded bugs each caught by a named assertion; two free clocks within 3:1, synchronisers modelled with one-clock skew (docs/formal_study_notes.md)
 
 ## measured
 M1 resources lut=6167 LUT R2#utilization.lut: LUTs, variant (b) | routed, Vivado 2026.1
