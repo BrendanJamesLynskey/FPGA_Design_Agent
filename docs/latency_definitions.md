@@ -66,6 +66,8 @@ Simulation (zero-latency GT stand-in, mean over four phases, `results/b96e/core_
 Not measured on a board (96F1's board run is pre-registered, not run): bypassing both GT buffers lowers E by 2.9 to 4.5 clocks (18 to 28 ns), tick-to-trade for `rm_gp` from about 205 ns to 177 to 187 ns; loop-timed transmit adds 3 to 4 clocks of fabric crossing saving:
 `lat_all3` 161 ns to 115 to 125 ns (V1) or 121 to 131 ns (V2) (`results/b96f/latency_prediction.json`, `reports/96F_loop_timing_feasibility_report.md`). The GT part rests on third-party GTY figures (TX 7.7 to 10.9 ns, RX 13.2 to 17.1 ns): **UNCONFIRMED for this GTH**.
 
+Update (brief 126, 2026-11-21): the bypass was then measured on a board (96F1b, `results/b96f1/hw/20261120_215255/rm_gp_bypass`: E 21.0 to 17.0 clocks, D unchanged), and the two measured improvements are combined in build `lat_all3_bypass`, whose board test is pre-registered at E 16.0, L 38.0, D 6.0, L - E 22 clocks (about 135.7 ns) and not yet run: `results/b126/README.md`, `results/b126/preregistration.md`. The definitions above are unchanged.
+
 ## 2. Industry definitions
 
 ### STAC-T0 (primary: STAC-T0 Overview, 5 November 2020)

@@ -1,0 +1,129 @@
+✖ [2/6] Building Cksum.Spec (5.1s)
+trace: .> LEAN_PATH=/home/brendan/Claude_sandbox/_worktrees/124-lean/results/124_lean/run3_kernel_only/work/.lake/build/lib/lean /home/brendan/.elan/toolchains/leanprover--lean4---v4.36.0/bin/lean /home/brendan/Claude_sandbox/_worktrees/124-lean/results/124_lean/run3_kernel_only/work/Cksum/Spec.lean -o /home/brendan/Claude_sandbox/_worktrees/124-lean/results/124_lean/run3_kernel_only/work/.lake/build/lib/lean/Cksum/Spec.olean -i /home/brendan/Claude_sandbox/_worktrees/124-lean/results/124_lean/run3_kernel_only/work/.lake/build/lib/lean/Cksum/Spec.ilean -c /home/brendan/Claude_sandbox/_worktrees/124-lean/results/124_lean/run3_kernel_only/work/.lake/build/ir/Cksum/Spec.c --setup /home/brendan/Claude_sandbox/_worktrees/124-lean/results/124_lean/run3_kernel_only/work/.lake/build/ir/Cksum/Spec.setup.json --json
+error: Cksum/Spec.lean:192:45: Unknown constant `BitVec.toNat_extractLsb'`
+error: Cksum/Spec.lean:194:4: omega could not prove the goal:
+a possible counterexample may satisfy the constraints
+  0 ≤ k ≤ 1
+  0 ≤ j ≤ 65535
+  0 ≤ j + k - 65536*l ≤ 65535
+  0 ≤ g - 65536*h ≤ 65535
+  0 ≤ b - 65536*d ≤ 65535
+  0 ≤ b - 65536*d - 131072*e ≤ 131071
+  0 ≤ a ≤ 1048575
+  0 ≤ a - 65536*b ≤ 65535
+  0 ≤ a - 65536*b - 131072*c ≤ 131071
+  0 ≤ a - 65535*b - 131072*c - 65536*d - 131072*e - 131072*f ≤ 131071
+  0 ≤ a - 65535*b - 131072*c - 65536*d - 131072*e - 131072*f - 65536*g ≤ 65535
+  0 ≤ a - 65535*b - 131072*c - 65536*d - 131072*e - 131072*f - 65535*g - 65536*h - 65536*i ≤ 65535
+  a - 65535*b - 131072*c - 65536*d - 131072*e - 131072*f - 65535*g - 65536*h - 65536*i - j - k + 65536*l ≥ 1
+where
+ a := ↑x.toNat
+ b := ↑x.toNat / 65536
+ c := ↑(x.toNat % 2 ^ 16) / 131072
+ d := ↑(x.toNat / 2 ^ 16) / 65536
+ e := ↑(x.toNat / 2 ^ 16 % 2 ^ 16) / 131072
+ f := ↑(x.toNat % 2 ^ 16 % 2 ^ 17 + x.toNat / 2 ^ 16 % 2 ^ 16 % 2 ^ 17) / 131072
+ g := ↑((x.toNat % 2 ^ 16 % 2 ^ 17 + x.toNat / 2 ^ 16 % 2 ^ 16 % 2 ^ 17) % 2 ^ 17) / 65536
+ h := ↑((x.toNat % 2 ^ 16 % 2 ^ 17 + x.toNat / 2 ^ 16 % 2 ^ 16 % 2 ^ 17) % 2 ^ 17 / 2 ^ 16) / 65536
+ i := ↑((x.toNat % 2 ^ 16 % 2 ^ 17 + x.toNat / 2 ^ 16 % 2 ^ 16 % 2 ^ 17) % 2 ^ 17 % 2 ^ 16 +
+      (x.toNat % 2 ^ 16 % 2 ^ 17 + x.toNat / 2 ^ 16 % 2 ^ 16 % 2 ^ 17) % 2 ^ 17 / 2 ^ 16 % 2 ^ 16) /
+  65536
+ j := ↑(BitVec.extractLsb' 0 16 (0#1 ++ BitVec.extractLsb' 0 16 x + (0#13 ++ BitVec.extractLsb' 16 4 x))).toNat
+ k := ↑(BitVec.extractLsb' 16 1 (0#1 ++ BitVec.extractLsb' 0 16 x + (0#13 ++ BitVec.extractLsb' 16 4 x))).toNat
+ l := ↑((BitVec.extractLsb' 0 16 (0#1 ++ BitVec.extractLsb' 0 16 x + (0#13 ++ BitVec.extractLsb' 16 4 x))).toNat +
+      (BitVec.extractLsb' 16 1 (0#1 ++ BitVec.extractLsb' 0 16 x + (0#13 ++ BitVec.extractLsb' 16 4 x))).toNat) /
+  65536
+error: Cksum/Spec.lean:206:43: Unknown constant `BitVec.toNat_extractLsb'`
+error: Cksum/Spec.lean:208:2: omega could not prove the goal:
+a possible counterexample may satisfy the constraints
+  0 ≤ k ≤ 1
+  0 ≤ j ≤ 65535
+  0 ≤ j + k - 65536*l ≤ 65535
+  0 ≤ f - 65536*g ≤ 65535
+  0 ≤ b ≤ 65535
+  0 ≤ b - 131072*d ≤ 131071
+  0 ≤ a ≤ 65535
+  0 ≤ a - 131072*c ≤ 131071
+  0 ≤ a + b - 131072*c - 131072*d - 131072*e ≤ 131071
+  0 ≤ a + b - 131072*c - 131072*d - 131072*e - 65536*f ≤ 65535
+  0 ≤ a + b - 131072*c - 131072*d - 131072*e - 65535*f - 65536*g - 65536*h ≤ 65535
+  a + b - 131072*c - 131072*d - 131072*e - 65535*f - 65536*g - 65536*h - j - k + 65536*l ≥ 1
+where
+ a := ↑t.toNat
+ b := ↑i.toNat
+ c := ↑t.toNat / 131072
+ d := ↑i.toNat / 131072
+ e := ↑(t.toNat % 2 ^ 17 + i.toNat % 2 ^ 17) / 131072
+ f := ↑((t.toNat % 2 ^ 17 + i.toNat % 2 ^ 17) % 2 ^ 17) / 65536
+ g := ↑((t.toNat % 2 ^ 17 + i.toNat % 2 ^ 17) % 2 ^ 17 / 2 ^ 16) / 65536
+ h := ↑((t.toNat % 2 ^ 17 + i.toNat % 2 ^ 17) % 2 ^ 17 % 2 ^ 16 +
+      (t.toNat % 2 ^ 17 + i.toNat % 2 ^ 17) % 2 ^ 17 / 2 ^ 16 % 2 ^ 16) /
+  65536
+ j := ↑(BitVec.extractLsb' 0 16 (0#1 ++ t + (0#1 ++ i))).toNat
+ k := ↑(BitVec.extractLsb' 16 1 (0#1 ++ t + (0#1 ++ i))).toNat
+ l := ↑((BitVec.extractLsb' 0 16 (0#1 ++ t + (0#1 ++ i))).toNat +
+      (BitVec.extractLsb' 16 1 (0#1 ++ t + (0#1 ++ i))).toNat) /
+  65536
+error: Cksum/Spec.lean:217:43: Unknown constant `BitVec.toNat_extractLsb'`
+error: Cksum/Spec.lean:219:2: omega could not prove the goal:
+a possible counterexample may satisfy the constraints
+  0 ≤ k ≤ 1
+  0 ≤ j ≤ 65535
+  0 ≤ j + k - 65536*l ≤ 65535
+  0 ≤ g - 65536*h ≤ 65535
+  0 ≤ b - 65536*d ≤ 65535
+  0 ≤ b - 65536*d - 131072*e ≤ 131071
+  0 ≤ a ≤ 8388607
+  0 ≤ a - 65536*b ≤ 65535
+  0 ≤ a - 65536*b - 131072*c ≤ 131071
+  0 ≤ a - 65535*b - 131072*c - 65536*d - 131072*e - 131072*f ≤ 131071
+  0 ≤ a - 65535*b - 131072*c - 65536*d - 131072*e - 131072*f - 65536*g ≤ 65535
+  0 ≤ a - 65535*b - 131072*c - 65536*d - 131072*e - 131072*f - 65535*g - 65536*h - 65536*i ≤ 65535
+  a - 65535*b - 131072*c - 65536*d - 131072*e - 131072*f - 65535*g - 65536*h - 65536*i - j - k + 65536*l ≥ 1
+where
+ a := ↑t.toNat
+ b := ↑t.toNat / 65536
+ c := ↑(t.toNat % 2 ^ 16) / 131072
+ d := ↑(t.toNat / 2 ^ 16) / 65536
+ e := ↑(t.toNat / 2 ^ 16 % 2 ^ 16) / 131072
+ f := ↑(t.toNat % 2 ^ 16 % 2 ^ 17 + t.toNat / 2 ^ 16 % 2 ^ 16 % 2 ^ 17) / 131072
+ g := ↑((t.toNat % 2 ^ 16 % 2 ^ 17 + t.toNat / 2 ^ 16 % 2 ^ 16 % 2 ^ 17) % 2 ^ 17) / 65536
+ h := ↑((t.toNat % 2 ^ 16 % 2 ^ 17 + t.toNat / 2 ^ 16 % 2 ^ 16 % 2 ^ 17) % 2 ^ 17 / 2 ^ 16) / 65536
+ i := ↑((t.toNat % 2 ^ 16 % 2 ^ 17 + t.toNat / 2 ^ 16 % 2 ^ 16 % 2 ^ 17) % 2 ^ 17 % 2 ^ 16 +
+      (t.toNat % 2 ^ 16 % 2 ^ 17 + t.toNat / 2 ^ 16 % 2 ^ 16 % 2 ^ 17) % 2 ^ 17 / 2 ^ 16 % 2 ^ 16) /
+  65536
+ j := ↑(BitVec.extractLsb' 0 16 (0#1 ++ BitVec.extractLsb' 0 16 t + (0#10 ++ BitVec.extractLsb' 16 7 t))).toNat
+ k := ↑(BitVec.extractLsb' 16 1 (0#1 ++ BitVec.extractLsb' 0 16 t + (0#10 ++ BitVec.extractLsb' 16 7 t))).toNat
+ l := ↑((BitVec.extractLsb' 0 16 (0#1 ++ BitVec.extractLsb' 0 16 t + (0#10 ++ BitVec.extractLsb' 16 7 t))).toNat +
+      (BitVec.extractLsb' 16 1 (0#1 ++ BitVec.extractLsb' 0 16 t + (0#10 ++ BitVec.extractLsb' 16 7 t))).toNat) /
+  65536
+info: Cksum/Spec.lean:466:0: 'Cksum.canon_id' depends on axioms: [propext, Quot.sound]
+info: Cksum/Spec.lean:467:0: 'Cksum.canon_props' depends on axioms: [propext, Quot.sound]
+info: Cksum/Spec.lean:468:0: 'Cksum.canon_canon_add' depends on axioms: [propext, Quot.sound]
+info: Cksum/Spec.lean:469:0: 'Cksum.canon_fold1' depends on axioms: [propext, Quot.sound]
+info: Cksum/Spec.lean:470:0: 'Cksum.canon_congr' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: Cksum/Spec.lean:471:0: 'Cksum.canon_recv' depends on axioms: [propext, Quot.sound]
+info: Cksum/Spec.lean:472:0: 'Cksum.canon_inc1' depends on axioms: [propext, Quot.sound]
+info: Cksum/Spec.lean:473:0: 'Cksum.canon_inc' depends on axioms: [propext, Quot.sound]
+info: Cksum/Spec.lean:474:0: 'Cksum.toNat_ushr' depends on axioms: [propext]
+info: Cksum/Spec.lean:475:0: 'Cksum.ocAdd_toNat' depends on axioms: [propext, Quot.sound]
+info: Cksum/Spec.lean:476:0: 'Cksum.foldl_toNat' depends on axioms: [propext, Quot.sound]
+info: Cksum/Spec.lean:477:0: 'Cksum.ocSum_toNat' depends on axioms: [propext, Quot.sound]
+info: Cksum/Spec.lean:478:0: 'Cksum.fold16_toNat' depends on axioms: [propext, sorryAx, Quot.sound]
+info: Cksum/Spec.lean:479:0: 'Cksum.ip_step' depends on axioms: [propext, sorryAx, Quot.sound]
+info: Cksum/Spec.lean:480:0: 'Cksum.fin_t' depends on axioms: [propext, sorryAx, Quot.sound]
+info: Cksum/Spec.lean:481:0: 'Cksum.tcp_core' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound]
+info: Cksum/Spec.lean:482:0: 'Cksum.H_toNat' depends on axioms: [propext, Quot.sound]
+info: Cksum/Spec.lean:483:0: 'Cksum.sum_bound' depends on axioms: [propext, Quot.sound]
+info: Cksum/Spec.lean:484:0: 'Cksum.sum21' depends on axioms: [propext, Quot.sound]
+info: Cksum/Spec.lean:485:0: 'Cksum.tcpTmpl_facts' depends on axioms: [propext, sorryAx, Quot.sound]
+info: Cksum/Spec.lean:486:0: 'Cksum.rtl_ip_correct' depends on axioms: [propext, sorryAx, Quot.sound]
+info: Cksum/Spec.lean:487:0: 'Cksum.recv_gen' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: Cksum/Spec.lean:488:0: 'Cksum.rtl_ip_receiver' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound]
+info: Cksum/Spec.lean:489:0: 'Cksum.rtl_tcp_correct' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound]
+info: Cksum/Spec.lean:490:0: 'Cksum.ocSum_snoc' depends on axioms: [propext, Quot.sound]
+info: Cksum/Spec.lean:491:0: 'Cksum.incUpdate_correct' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: Cksum/Spec.lean:492:0: 'Cksum.incUpdate_zero_corner' depends on axioms: [propext, Quot.sound]
+Some required targets logged failures:
+- Cksum.Spec
+error: build failed

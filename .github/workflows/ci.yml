@@ -134,6 +134,38 @@ jobs:
           $FDA_OSS_CAD/bin/eqy --version
           python -m pytest -q flow/tests/test_101_eqy.py
 
+  formal-rate-matcher:
+    name: Formal proofs of the gray-pointer rate matcher (brief 115) - SymbiYosys, slang front end, OSS CAD Suite 20261112
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    env:
+      FDA_OSS_CAD: ${{ github.workspace }}/oss-cad-suite
+      FDA_REQUIRE_FORMAL: "1"      # a formal test that skips for a missing tool fails (brief 81)
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Cache the OSS CAD Suite
+        id: oss
+        uses: actions/cache@v4
+        with:
+          path: oss-cad-suite
+          key: oss-cad-suite-20261112
+      - name: Download the pinned OSS CAD Suite (release 2026-11-12, build 20261112)
+        if: steps.oss.outputs.cache-hit != 'true'
+        run: |
+          curl -fsSL -o oss.tgz https://github.com/YosysHQ/oss-cad-suite-build/releases/download/2026-11-12/oss-cad-suite-linux-x64-20261112.tgz
+          echo "346499255e3e5e6e9bf67e1d378a4e6bc249abd3de3b0caf5b57604bc8ba1752  oss.tgz" | sha256sum -c -
+          tar -xzf oss.tgz
+          rm oss.tgz
+      - name: Install
+        run: pip install pytest
+      - name: Safety by k-induction (AW 4, 2, 1; one bit of each class of the entry), bounded progress, covers, and one mutant per key property
+        run: |
+          $FDA_OSS_CAD/bin/yosys -V
+          python -m pytest -q designs/b96_kr260_10g/tests/test_b115_formal.py
+
   rtl-sim:
     name: RTL tests (cocotb + Icarus) and mutants
     runs-on: ubuntu-24.04
@@ -155,7 +187,7 @@ jobs:
           # GHDL for the VHDL path, pinned to the Ubuntu 24.04 package used locally and in fda-sim:2-ghdl (mcode; about 8.5 MB installed)
           sudo apt-get install -y --no-install-recommends ghdl=4.1.0+dfsg-0ubuntu2.1 ghdl-mcode=4.1.0+dfsg-0ubuntu2.1 ghdl-common=4.1.0+dfsg-0ubuntu2.1
           ghdl --version | head -1
-          pip install pyyaml pyserial pytest cocotb==2.0.1 cocotb-coverage numpy==2.4.3   # numpy: the pdm_chain task bench (brief 79)
+          pip install pyyaml pyserial pytest cocotb==2.0.1 cocotb-coverage numpy==2.4.3 pyuvm==5.0.0   # numpy: the pdm_chain task bench (brief 79); pyuvm: the PCS/MAC bench (brief 123)
       - name: cocotb tests (shell at 8 clocks a bit and at 115200 baud; T1 against its model)
         run: python -m pytest -q shell/tests/test_shell_rtl.py designs/t1_dimmer_counter/tests/test_t1_rtl.py
       - name: Generic mutation tool on a tiny design (brief 05k)
@@ -183,8 +215,13 @@ jobs:
         run: python -m pytest -q designs/b56a_gth_serdes/tests/test_b56a_prbs_rtl.py designs/b56a_gth_serdes/tests/test_b56a_core_sim_rtl.py
       - name: 10G PCS, MAC and trading path against the Python twin (brief 96; the GT is a behavioural stand-in)
         run: python -m pytest -q designs/b96_kr260_10g/tests/test_b96_pcs_rtl.py
+<<<<<<< HEAD
       - name: ITCH/OUCH path inside the 10G core, build rm_gp_itch - the new blocks with the real MACs against brief 110's model (brief 127)
         run: python -m pytest -q designs/b96_kr260_10g/rm_gp_itch/tests/test_b127_unit_rtl.py
+=======
+      - name: pyuvm bench of the 10G PCS and MAC (brief 123) - reference models and channel in plain Python, t_smoke in Icarus, seeded bug M01 killed (the full regression is run by hand, see its README)
+        run: python -m pytest -q designs/b96_kr260_10g/tests/test_b96_pyuvm.py
+>>>>>>> origin/main
       - name: CDC soak rig (brief 11b) - checkers, host reader, the rig with metastability injection and reset storms (one copy a variant)
         run: CDC_SIM_QUICK=1 python -m pytest -q hil/cdc_soak/tests
       - name: CDC gate fixtures - the rig's mutants and correct variants, plain and with synchroniser-delay injection (brief 16)
@@ -379,9 +416,16 @@ jobs:
         run: |
           python -m pytest -q designs/b92_history_attention/tests/test_b92_gen.py designs/b92_history_attention/tests/test_b92_rtl.py
           python3 results/b92/summary.py --check
+      - name: ML decision stage in the 10G trading path (brief 113) - ml_stage against the Python twin in Icarus (veto and shadow mode, the settling window, three mutants), the ML register map, the board driver against a fake board, the twin against the 87 references; Verilator -Wall on build rm_gp_ml; the recorded simulation and build results
+        run: |
+          python -m pytest -q designs/b96_kr260_10g/rm_gp_ml/tests
+          python3 results/b113/summary.py --check
       - name: Standard-protocol trading path (brief 110) - MoldUDP64 and ITCH 5.0 in, OUCH 5.0 out - cocotb against the Python reference (frames, book updates, counters bit exact; coverage; other parameters), model unit tests, Verilator -Wall at four parameter points
         run: |
           python -m pytest -q designs/b110_itch_ouch/tests/test_b110_model.py designs/b110_itch_ouch/tests/test_b110_rtl.py designs/b110_itch_ouch/tests/test_b110_lint.py
+      - name: TCP fast path for OUCH orders (brief 119) - software owns the connection, hardware sends pre-built segments - cocotb against the Python reference (byte-exact segments, abort, refusals, registers, the software exchange end to end, behind brief 110's risk logic), the Python TCP side, Verilator -Wall
+        run: |
+          python -m pytest -q designs/b119_tcp_fast/tests/test_b119_model.py designs/b119_tcp_fast/tests/test_b119_rtl.py designs/b119_tcp_fast/tests/test_b119_lint.py
       - name: Upload simulation logs
         if: always()
         uses: actions/upload-artifact@v4
