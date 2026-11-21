@@ -1,0 +1,53 @@
+Skipping compilation of <scratch>/full123/mut/M01/build/sim.vvp
+     -.--ns INFO     gpi                                ..mbed/gpi_embed.cpp:93   in _embed_init_python              Using Python 3.12.4 interpreter at <venv>/bin/python
+     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:79   in gpi_print_registered_impl       VPI registered
+     0.00ns INFO     cocotb                             Running on Icarus Verilog version 12.0 (stable)
+     0.00ns INFO     cocotb                             Seeding Python random module with supplied seed 1
+     0.00ns INFO     cocotb                             Initialized cocotb v2.0.1 from <site>/lib/python3.12/site-packages/cocotb
+     0.00ns WARNING  py.warnings                        <site>/lib/python3.12/site-packages/cocotb/_init.py:102: DeprecationWarning: COCOTB_TESTCASE is deprecated in favor of COCOTB_TEST_FILTER
+                                                          _setup_regression_manager()
+     0.00ns INFO     cocotb                             Running tests
+     0.00ns INFO     cocotb.regression                  running designs.b96_kr260_10g.verif.pyuvm.tests.pcs_mac_pyuvm_cocotb.t_smoke (1/1)
+                                                            pyuvm test t_smoke
+   639.22ns ERROR    ../pcs_mac_pyuvm/scoreboard.py(57) [uvm_test_top.env.sb]: SB TXMAC: frame of 60 bytes (poison=False): 10 words out, 10 expected, first difference at word 8
+   707.48ns ERROR    ../pcs_mac_pyuvm/scoreboard.py(57) [uvm_test_top.env.sb]: SB E2E: sent 60 bytes poison=False; received len=64 fcs_ok=False
+   713.69ns ERROR    ../pcs_mac_pyuvm/scoreboard.py(57) [uvm_test_top.env.sb]: SB TXMAC: frame of 64 bytes (poison=False): 10 words out, 10 expected, first difference at word 9
+   775.75ns ERROR    ../pcs_mac_pyuvm/scoreboard.py(57) [uvm_test_top.env.sb]: SB E2E: sent 64 bytes poison=False; received len=68 fcs_ok=False
+  1942.48ns ERROR    ../pcs_mac_pyuvm/scoreboard.py(57) [uvm_test_top.env.sb]: SB TXMAC: frame of 1514 bytes (poison=False): 191 words out, 191 expected, first difference at word 190
+  2004.54ns ERROR    ../pcs_mac_pyuvm/scoreboard.py(57) [uvm_test_top.env.sb]: SB E2E: sent 1514 bytes poison=False; received len=1518 fcs_ok=False
+  2035.57ns ERROR    ../pcs_mac_pyuvm/scoreboard.py(57) [uvm_test_top.env.sb]: SB TXMAC: frame of 61 bytes (poison=False): 10 words out, 10 expected, first difference at word 8
+  2097.63ns ERROR    ../pcs_mac_pyuvm/scoreboard.py(57) [uvm_test_top.env.sb]: SB E2E: sent 61 bytes poison=False; received len=65 fcs_ok=False
+  2141.07ns ERROR    ../pcs_mac_pyuvm/scoreboard.py(57) [uvm_test_top.env.sb]: SB TXMAC: frame of 100 bytes (poison=True): 15 words out, 15 expected, first difference at word 13
+  2203.13ns ERROR    ../pcs_mac_pyuvm/scoreboard.py(57) [uvm_test_top.env.sb]: SB E2E: sent 100 bytes poison=True; received len=104 fcs_ok=True
+  2209.34ns ERROR    ../pcs_mac_pyuvm/scoreboard.py(57) [uvm_test_top.env.sb]: SB TXMAC: frame of 60 bytes (poison=False): 10 words out, 10 expected, first difference at word 8
+  2271.40ns ERROR    ../pcs_mac_pyuvm/scoreboard.py(57) [uvm_test_top.env.sb]: SB E2E: sent 60 bytes poison=False; received len=64 fcs_ok=False
+  3438.12ns ERROR    ../pcs_mac_pyuvm/scoreboard.py(57) [uvm_test_top.env.sb]: SB TXMAC: frame of 1514 bytes (poison=False): 191 words out, 191 expected, first difference at word 190
+  3500.18ns ERROR    ../pcs_mac_pyuvm/scoreboard.py(57) [uvm_test_top.env.sb]: SB E2E: sent 1514 bytes poison=False; received len=1518 fcs_ok=False
+  5914.32ns INFO     ..pcs_mac_pyuvm/scoreboard.py(231) [uvm_test_top.env.sb]: SB_SUMMARY check=TXMAC compared=7 mismatches=7
+  5914.32ns INFO     ..pcs_mac_pyuvm/scoreboard.py(231) [uvm_test_top.env.sb]: SB_SUMMARY check=TXMAC_IFG compared=6 mismatches=0
+  5914.32ns INFO     ..pcs_mac_pyuvm/scoreboard.py(231) [uvm_test_top.env.sb]: SB_SUMMARY check=TXPCS compared=952 mismatches=0
+  5914.32ns INFO     ..pcs_mac_pyuvm/scoreboard.py(231) [uvm_test_top.env.sb]: SB_SUMMARY check=RXPCS compared=952 mismatches=0
+  5914.32ns INFO     ..pcs_mac_pyuvm/scoreboard.py(231) [uvm_test_top.env.sb]: SB_SUMMARY check=RXMAC compared=8 mismatches=0
+  5914.32ns INFO     ..pcs_mac_pyuvm/scoreboard.py(231) [uvm_test_top.env.sb]: SB_SUMMARY check=E2E compared=7 mismatches=7
+  5914.32ns INFO     ..pcs_mac_pyuvm/scoreboard.py(232) [uvm_test_top.env.sb]: SB_SUMMARY aborts model=0 dut=0 frames_model_total=7
+  5914.32ns INFO     ..f/pyuvm/pcs_mac_pyuvm/env.py(80) [uvm_test_top]: RESULT FAIL test=t_smoke seed=1 errors=14
+  5914.32ns WARNING  cocotb.Test t_smoke.t_smoke        t_smoke seed 1: 14 errors
+                                                        assert 14 == 0
+                                                         +  where 14 = uvm_test_top.errors
+                                                        Traceback (most recent call last):
+                                                          File "designs/b96_kr260_10g/verif/pyuvm/tests/pcs_mac_pyuvm_cocotb.py", line 33, in t
+                                                            await _run(dut, name)
+                                                          File "designs/b96_kr260_10g/verif/pyuvm/tests/pcs_mac_pyuvm_cocotb.py", line 28, in _run
+                                                            assert test.errors == 0, f"{name} seed {env.CTX['seed']}: {test.errors} errors"
+                                                        AssertionError: t_smoke seed 1: 14 errors
+                                                        assert 14 == 0
+                                                         +  where 14 = uvm_test_top.errors
+  5914.32ns WARNING  cocotb.regression                  designs.b96_kr260_10g.verif.pyuvm.tests.pcs_mac_pyuvm_cocotb.t_smoke failed
+  5914.32ns INFO     cocotb.regression                  ******************************************************************************************************************************
+                                                        ** TEST                                                                  STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **
+                                                        ******************************************************************************************************************************
+                                                        ** designs.b96_kr260_10g.verif.pyuvm.tests.pcs_mac_pyuvm_cocotb.t_smoke   FAIL        5914.32           2.60       2276.98  **
+                                                        ******************************************************************************************************************************
+                                                        ** TESTS=1 PASS=0 FAIL=1 SKIP=0                                                       5914.32           2.61       2268.99  **
+                                                        ******************************************************************************************************************************
+FAIL t_smoke seed 1 on mutant M01

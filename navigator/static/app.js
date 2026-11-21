@@ -608,13 +608,21 @@
   }
 
   /* ---------- traceability (brief 116) ---------- */
-  var TRACE_METHODS = [["sim_test", "sim test"], ["uvm_test", "UVM"], ["assertion", "SVA"], ["formal", "formal"], ["coverage_bin", "coverage"], ["timing", "timing"], ["sim_measurement", "sim measure"], ["board_measurement", "board"], ["review", "review"]];
-  var TRACE_STATE = { verified: "verified", fail: "FAILS", not_run: "not run", stale: "stale", bounded: "bounded only", no_measurement: "no measurement" };
+  var TRACE_METHODS = [["sim_test", "sim test"], ["uvm_test", "UVM"], ["assertion", "SVA"], ["formal", "formal"], ["formal_lean", "Lean"], ["coverage_bin", "coverage"], ["timing", "timing"], ["sim_measurement", "sim measure"], ["board_measurement", "board"], ["review", "review"]];
+  var TRACE_STATE = { verified: "verified", fail: "FAILS", not_run: "not run", stale: "stale", bounded: "bounded only", no_measurement: "no measurement", unapproved: "proved, statement not approved" };
+  var TRACE_TIER = { kernel_only: "kernel only", compiled_decision_procedure: "kernel plus a compiled decision procedure", unsound: "unsound" };
+  var TRACE_LINK = { rtl_generated: "RTL-generated model", transcription_tested: "transcription tested", transcription_untested: "transcription untested", model_only: "no RTL link" };
+  function traceStatus(i) {
+    var t = i.status === "unapproved" ? "statement not approved" : i.status.replace("_", " ");
+    if (i.method === "formal_lean" && i.lean) t += " [" + [TRACE_TIER[i.lean.tier] || "no build", TRACE_LINK[i.lean.rtl_link] || "no RTL link", (i.lean.build_source || "").replace(" (not re-run)", "")].filter(Boolean).join("; ") + "]";
+    return t;
+  }
   function traceState(r) {
     var t = TRACE_STATE[r.state] || r.state;
     if (r.state === "verified" && r.external && !r.hardware_verified) return "passes without hardware; hardware open";
     if (r.state === "verified" && r.kind === "performance") t += " (" + (r.basis === "board" ? "board-measured" : r.basis === "timing" ? "post-route timing" : "simulation only") + ")";
     if (r.state === "verified" && r.stale_items) t += "; " + r.stale_items + " item(s) stale";
+    if (r.state === "verified" && r.lean_transcription_only) t += "; the Lean proof is of a transcription of the RTL, not of the RTL itself";
     return t;
   }
   function pageTrace() {
@@ -630,7 +638,7 @@
           var cells = [h("span", null, h("b", null, r.id + " "), r.title), r.kind, h("span", { class: r.state === "verified" ? "" : "mute" }, traceState(r))];
           TRACE_METHODS.forEach(function (m) {
             var its = r.items.filter(function (id) { return byId[id].method === m[0]; }).map(function (id) { return byId[id]; });
-            cells.push(its.length ? its.map(function (i) { return h("div", null, i.status.replace("_", " ") + (i.instrument ? " [" + i.instrument + "]" : "")); }) : "");
+            cells.push(its.length ? its.map(function (i) { return h("div", null, traceStatus(i) + (i.instrument ? " [" + i.instrument + "]" : "")); }) : "");
           });
           return { cells: cells, onclick: function () { openRequirement(r, byId); } };
         });
@@ -651,7 +659,7 @@
       h("h3", null, "Evidence"),
       table(["item", "method", "status", "result", "evidence"], r.items.map(function (id) {
         var i = byId[id];
-        return [i.title || i.id, i.method + (i.instrument ? " / " + i.instrument : ""), i.status.replace("_", " "), i.detail + (i.stale_because ? " (" + i.stale_because + ")" : ""),
+        return [i.title || i.id, i.method + (i.instrument ? " / " + i.instrument : ""), traceStatus(i), i.detail + (i.stale_because ? " (" + i.stale_because + ")" : ""),
           i.evidence && i.evidence.exists ? h("button", { type: "button", class: "name", on: { click: function () { openRecord(i.evidence.file); } } }, i.evidence.file) : "none"];
       }), {})]);
   }

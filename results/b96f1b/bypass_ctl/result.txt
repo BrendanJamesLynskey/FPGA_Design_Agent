@@ -1,0 +1,70 @@
+Running as unit: run-re99c72c7e3ef43f0817244d57aa9cad8.scope; invocation ID: 7b06468a566a41b4b880f18d0defb885
+== tb_bp_ctl (scaled timeouts: TX 6000, RX 26000 clocks)
+ok:   A reset is asserted while the clock-active level is low
+ok:   A synchronous release: TX reset fell 5 clocks after the level rose (4 flops)
+ok:   A the TX reset fell exactly on a TXUSRCLK2 rising edge (not between edges)
+ok:   A synchronous release: RX reset fell 5 clocks after the level rose
+ok:   A the RX reset fell exactly on a RXUSRCLK2 rising edge
+ok:   A asynchronous assert: TX reset high within 100 ps of the level falling (no clock edge)
+ok:   A asynchronous assert: RX reset high within 100 ps
+ok:   B normal start: done, no error, run, no retry, no gave-up
+ok:   B the timer never fires once aligned (no retry, no further reset, still running)
+ok:   B run never early
+ok:   C TX: reset pulse rose 6000 clocks after the reset helper's done (timeout 6000)
+ok:   C TX: controller held in reset 8 clocks (RST_CLKS 8)
+ok:   C TX: one reset only, retries = 1, done, run, no gave-up
+ok:   C TX: the run was never released before the retry's alignment finished
+ok:   C RX: reset pulse 26000 clocks after the reset helper's done (timeout 26000)
+ok:   C RX: one reset only, retries = 1, done, run, no gave-up
+ok:   D a new reset sequence clears the retry counts and the gave-up flags
+ok:   D TX: two retries, then done and run, no gave-up
+ok:   D RX: 3 retries (the maximum), then done and run, no gave-up
+ok:   D RX: successive resets are RTO + RST_CLKS clocks apart
+ok:   E TX: retries = 3, gave_up, no run, done low
+ok:   E RX: retries = 3, gave_up, no run, done low
+ok:   E after the give-up: no further resets, the flags stay, run stays low
+ok:   E the next reset sequence clears retries and gave-up
+ok:   E and the next attempt works (done, run, no retry)
+ok:   F error (PHALIGNDONE never high): done and error, no run, not retried, no gave-up
+ok:   G the clock-inactive reset clears retries and gave-up and holds the controller in reset
+ok:   G the first timeout after the restart came 6000 clocks after the reset helper's done (a full TTO 6000, not the half already waited)
+ok:   G a GT reset during a retry pulse: the next sequence is clean (done, run, no retry)
+PASS: 29 checks, 0 failed
+INFO: xsimkernel Simulation Memory Usage: 156856 KB (Peak: 209580 KB), Simulation CPU Usage: 3520 ms
+INFO: [Common 17-206] Exiting xsim at Fri Nov 20 17:43:15 2026...
+== tb_bp_seq (96F1's 28 checks, unchanged bench, new gate)
+ok:   SYNC_CLKS=20 TX: done, no error, run
+ok:   SYNC_CLKS=20 RX: done, no error, run
+ok:   SYNC_CLKS=20 run never released early (TX 0, RX 0 clocks)
+ok:   run drops with the reset helper's done
+INFO: SYNC_CLKS=20 after the 2nd reset-done edge: done was still high from the previous sequence for TX 6, RX 6 clocks (the gate held run low through them)
+ok:   SYNC_CLKS=20 second sequence: done, run, never early (TX 0 RX 0)
+ok:   the stale-done window exists (the gate is needed)
+ok:   SYNC_CLKS=100 TX: done, no error, run
+ok:   SYNC_CLKS=100 RX: done, no error, run
+ok:   SYNC_CLKS=100 run never released early (TX 0, RX 0 clocks)
+ok:   run drops with the reset helper's done
+INFO: SYNC_CLKS=100 after the 2nd reset-done edge: done was still high from the previous sequence for TX 12, RX 12 clocks (the gate held run low through them)
+ok:   SYNC_CLKS=100 second sequence: done, run, never early (TX 0 RX 0)
+ok:   the stale-done window exists (the gate is needed)
+ok:   SYNC_CLKS=400 TX: done, no error, run
+ok:   SYNC_CLKS=400 RX: done, no error, run
+ok:   SYNC_CLKS=400 run never released early (TX 0, RX 0 clocks)
+ok:   run drops with the reset helper's done
+INFO: SYNC_CLKS=400 after the 2nd reset-done edge: done was still high from the previous sequence for TX 12, RX 12 clocks (the gate held run low through them)
+ok:   SYNC_CLKS=400 second sequence: done, run, never early (TX 0 RX 0)
+ok:   the stale-done window exists (the gate is needed)
+ok:   SYNC_CLKS=3 TX: done, no error, run
+ok:   SYNC_CLKS=3 RX: done, no error, run
+ok:   SYNC_CLKS=3 run never released early (TX 0, RX 0 clocks)
+ok:   run drops with the reset helper's done
+INFO: SYNC_CLKS=3 after the 2nd reset-done edge: done was still high from the previous sequence for TX 12, RX 12 clocks (the gate held run low through them)
+ok:   SYNC_CLKS=3 second sequence: done, run, never early (TX 0 RX 0)
+ok:   the stale-done window exists (the gate is needed)
+ok:   error case: done and error both high
+ok:   error case: run stays low
+ok:   error clears at the next sequence and run is back
+ok:   reset_in clears done and error
+PASS: 28 checks, 0 failed
+INFO: xsimkernel Simulation Memory Usage: 152700 KB (Peak: 209524 KB), Simulation CPU Usage: 1770 ms
+INFO: [Common 17-206] Exiting xsim at Fri Nov 20 17:43:27 2026...

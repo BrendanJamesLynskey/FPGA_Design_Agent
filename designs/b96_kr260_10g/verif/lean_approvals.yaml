@@ -1,0 +1,20 @@
+# Human approvals of Lean theorem statements (brief 125). THE OWNER EDITS THIS FILE; no agent and no tool in this repository writes it.
+#
+# A statement is the specification. Until an entry exists for a formal_lean item, the matrix shows it as "statement not approved" and does not count the
+# proof as verification. To approve one: read the statement and the definitions it rests on, with
+#
+#     python -m flow.trace_v1 lean-statement designs/b96_kr260_10g V-LEAN-GRAY-STEP
+#
+# then add an entry like the commented one below, copying both hashes from that output. From then on `python -m flow.trace_v1 check` (and CI) fails if the
+# theorem's statement, or any definition in its module, differs from the approved hash.
+#
+# approvals:
+#   - item: V-LEAN-GRAY-STEP
+#     theorem: Gray.gray_step
+#     statement_sha256: <from lean-statement>
+#     definitions_sha256: <from lean-statement>
+#     approved_by: <your name>
+#     approver_kind: human
+#     date: YYYY-MM-DD
+schema: fpga-design-agent/lean-approvals/v1
+approvals: []
