@@ -536,14 +536,14 @@ jobs:
       - name: Models against independent formulations; spec against the RTL headers; Verilator -Wall at every point (OSS CAD Suite 20261112); wrappers and build.yaml
         run: python -m pytest -q arith/adder/tests/test_adder_model.py arith/adder/tests/test_adder_package.py arith/multiplier/tests/test_multiplier_model.py arith/multiplier/tests/test_multiplier_package.py arith/mac/tests/test_mac_model.py arith/mac/tests/test_mac_package.py
       - name: Every variant against its model (exhaustive small points, random large points) and the bench's sensitivity to the latency (Icarus + cocotb)
-        run: python -m pytest -q 'arith/*/tests/test_*_exhaustive_rtl.py' 'arith/*/tests/test_*_random_rtl.py' 'arith/*/tests/test_*_latency_rtl.py' 'arith/*/tests/test_*_harness_rtl.py'
+        run: python -m pytest -q arith/*/tests/test_*_exhaustive_rtl.py arith/*/tests/test_*_random_rtl.py arith/*/tests/test_*_latency_rtl.py arith/*/tests/test_*_harness_rtl.py
       - name: Seeded faults - every mutant killed by the bench
-        run: python -m pytest -q 'arith/*/tests/test_*_mutants_rtl.py'
+        run: python -m pytest -q arith/*/tests/test_*_mutants_rtl.py
       - name: SymbiYosys - variants against each other and a plain reference (k-induction, bounded), and a planted fault refuted by each check
         run: |
           export PATH=$FDA_OSS_CAD/bin:$PATH
           yosys -V
-          python -m pytest -q 'arith/*/tests/test_*_formal_*_rtl.py'
+          python -m pytest -q arith/*/tests/test_*_formal_*_rtl.py
 
   lint:
     name: Verilator lint
