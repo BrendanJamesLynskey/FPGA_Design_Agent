@@ -61,7 +61,7 @@ Interfaces:
 | the scripted agent session on a scratch copy; needs Python with PyYAML and jsonschema | `python3 designs/b102_managed_fcs/scripts/demo_managed_session.py` | no | about 1 min |
 | build and run the gates; needs local Vivado 2026.1 and a heavy slot (take_heavy_slot.sh) | `flow/run_vivado.sh designs/b102_managed_fcs base` | yes | about 12 min |
 
-Tool: Vivado 2026.1. Build ID of the inputs at handover: `cfb6de5f` (`python flow/manifest.py show designs/b102_managed_fcs`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `93d158c`.
+Tool: Vivado 2026.1. Build ID of the inputs at handover: `fd07818d` (`python flow/manifest.py show designs/b102_managed_fcs`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `93d158c`.
 
 | File | What |
 |---|---|

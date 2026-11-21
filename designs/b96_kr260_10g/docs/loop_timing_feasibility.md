@@ -5,7 +5,7 @@ Status: **paper and simulation only.** Nothing here ran on a board, in Vivado or
 read is marked **unconfirmed**. Documents read: UG576 v1.7.1 (18 Aug 2021, local copy `_amd_docs/UG576_ug576-ultrascale-gth-transceivers.pdf`,
 page numbers are the printed ones), DS925 v1.30 (9 Jul 2026, local), the AMD board files `kr260_carrier` 1.1 (local copy shipped with Vivado), the knowledge
 bank's KR260 and K26 notes, and, as web pages, PG182 v1.7 search results, a third-party summary of the article the brief names, and secondary
-sources for IEEE 802.3 and ITU-T G.8262 (the standards are not on this machine). XAPP1276 itself could not be retrieved (the AMD page timed out).
+sources for IEEE 802.3 and ITU-T G.8262 (the standards are not on this machine). XAPP1276 itself could not be retrieved by 96F (the AMD page timed out). **Brief 96F2 later read it (the Japanese translation, v1.2) and AMD's low-latency blog; see `docs/loop_timing_sources.md`, which corrects verdict 10, the V1 definition and the TXPI remark below.**
 
 ## 1. Verdicts
 
@@ -20,7 +20,7 @@ sources for IEEE 802.3 and ITU-T G.8262 (the standards are not on this machine).
 | 7 | Centring the fractional range (nominal sits mid-range) with the board's reference | **Not feasible as built; routes exist** | At 156.25 MHz the nominal N is exactly 66.0 for every reference divider M, so a fixed 156.25 MHz reference can only tune one way from the nominal (section 4). Two-window operation, TXPI-biased windows (modelled), or a programmable reference (unconfirmed) are the routes. |
 | 8 | RX buffer bypass | **Feasible, documented** | UG576 p.255 to 256, 259 to 260 and 270 to 271: `RXBUF_EN = FALSE`, `RX_XCLK_SEL = RXUSR`, `RXOUTCLKSEL = 010` (recovered clock drives `RXUSRCLK`), single-lane auto mode. It needs no frequency steering, because `RXUSRCLK` is the recovered clock (our RX domain already is). `RXSLIDE_MODE` must not be AUTO or PMA (p.249): our PCS slips in fabric, so unaffected. |
 | 9 | TX buffer bypass with the transmit clock from the QPLL | **Feasible, documented** | UG576 p.135, 137 to 142: `TXBUF_EN = FALSE`, `TX_XCLK_SEL = TXUSR`, `TXOUTCLKSEL` = 011, 100 or 101 (reference clock or the programmable divider of the PLL; 101 follows a tuned QPLL), auto alignment by `TXDLYSRESET`. `TX_FIFO_BYP_EN` is required in bypass (p.140). |
-| 10 | Transmit user clock taken from the recovered clock (one clock domain for the whole fabric, variant V1) | **Unknown** | UG576 only describes `TXUSRCLK` from `TXOUTCLK` (p.135, 141, 159); sharing is described for multi-lane (p.151, 269). The brief's source (XAPP1276) is the likely place; not retrieved. |
+| 10 | Transmit user clock taken from the recovered clock (one clock domain for the whole fabric, variant V1) | **Not supported as worded; a documented alternative exists (V1', corrected by 96F2)** | UG576 only describes `TXUSRCLK` from `TXOUTCLK` (p.135, 141, 159). XAPP1276 and AMD's low-latency blog (GTY, tested) keep `TXOUTCLK` (QPLL) as the one clock, pull the QPLL onto the recovered rate with a fabric DPLL, share it as `RXUSRCLK` and set `RXSYNC_SKIP_DA = 1`; UG576 p.151 documents the sharing for multi-lane GTH. Single-lane GTH: unconfirmed. `docs/loop_timing_sources.md` section 1. |
 | 11 | Loop-timed TX (frequency tracking) holds within the GT's alignment range at +-100 ppm and drift | **Feasible in the model, unknown on hardware** | Model, section 7. The GT's delay-alignment range is +-4 ns full, +-2 ns half (UG576 p.138, 259); how it behaves under a slowly moving frequency difference is not in UG576. |
 | 12 | An external jitter-cleaning PLL fed by the recovered clock (SyncE style) | **Not available on this board** | No cleaner PLL, and no path from a PL pin to `MGTREFCLK0`, appears in the board files or the knowledge bank; the Si5332 parts in the board file are 3.3 V LVCMOS system clocks into the PL (`board.xml` `hpa_clk0p_clk`, `hpb_clk0p_clk`). Unconfirmed against the schematic, which was not read. |
 | 13 | Latency saving | **Predicted, not measured** | Section 6: 97C all3 161 ns to about 115 to 131 ns; against `rm_gp` about 53 to 75 ns less. The GT part is from a third-party article about a GTY transceiver: **unconfirmed for this GTH**. |
@@ -74,9 +74,9 @@ window cannot cross the integer boundary without changing N (a DRP write plus QP
    boundary and the loop chatters between windows (model: 16 to 51 window hops in 2 s at 0 and +-1 ppm; 1,098 hops over a 400 s drift across zero). **A hazard for any partner with a very accurate oscillator.**
 2. TXPI bias: the TX phase interpolator gives a static, symmetric offset in steps of 61.04 ppm (`TXPI_PPM = 1`, `TXPI_SYNFREQ_PPM = 7`; UG576 v1.7.1 Table 3-33 formula,
    built and accepted on the board in 96C, `docs/design.md` section 9). Two overlapping windows, bias -61 and -122 ppm with the fraction always >= 0,
-   cover -122 to +139 ppm with a 40 ppm hysteresis band and no QPLL reset; model: no chatter, same accuracy as a centred reference. **Unconfirmed:** that a
+   cover -122 to +139 ppm with a 40 ppm hysteresis band and no QPLL reset; model: no chatter, same accuracy as a centred reference. **Unconfirmed, and 96F2 found it unlikely in the Wizard's bypass core:** that a
    TXPI code change coexists with TX buffer bypass and keeps `TXUSRCLK` aligned (UG576 p.160 describes `TX_PROGCLK_SEL = POSTPI` as the path that carries
-   the PI's ppm offset into the parallel clock, which is the clock that must follow).
+   the PI's ppm offset into the parallel clock, which is the clock that must follow). The Wizard's bypass core powers the ppm block down (`txpippmpd_in` = 1) and takes the user clock before the PI (`TX_PROGCLK_SEL = PREPI`, `TXOUTCLKSEL` 101): see `docs/loop_timing_sources.md` section 4.
 3. A programmable reference (unconfirmed present).
 4. Using the TXPI alone as the actuator: not recommended (61 ppm steps; section 5).
 
@@ -131,7 +131,7 @@ not confirmed for the K26's GTH**, and at a different user width. Our 64-bit use
 - **V2, two matched clocks.** B1 plus a controller that tunes the QPLL so the TX clock equals the recovered frequency. The domains are then equal in frequency with a slowly moving phase. The fabric crossing is one register stage with phase-aware capture (rising or falling edge chosen by a phase
   detector, so the crossing costs 1 to 1.5 clocks) and no rate matching. **Costs a CDC decision:** a crossing between two unrelated clock nets is a CDC-1 row in the flow's gate; the owner's decisions of 2026-11-19 are "no waiver" for the 96E direct read (item 3) and "no standing approval; owner decides each case" (item 9).
   The proof here would be dynamic (phase-bounded), not structural.
-- **V1, one clock for the whole fabric.** `TXUSRCLK2` and `RXUSRCLK2` are the same net, the recovered clock; the QPLL is tuned so its TX parallel clock matches it, and the TX phase alignment absorbs the residual phase. **No fabric crossing and no CDC row.** Status: **unknown** (verdict 10), and the TX GT then needs the lock before its alignment is meaningful, so it is a
+- **V1, one clock for the whole fabric.** *(Corrected by 96F2, `docs/loop_timing_sources.md` section 1: the one net is the transmit `TXOUTCLK` from the QPLL, not the recovered clock; the recovered clock only feeds the phase detector; `RXUSRCLK` = `TXUSRCLK`, RX bypass with `RXSYNC_SKIP_DA = 1`; AMD built this on a GTY. The text below is the original, kept for the record.)* `TXUSRCLK2` and `RXUSRCLK2` are the same net, the recovered clock; the QPLL is tuned so its TX parallel clock matches it, and the TX phase alignment absorbs the residual phase. **No fabric crossing and no CDC row.** Status: **unknown** (verdict 10), and the TX GT then needs the lock before its alignment is meaningful, so it is a
   fragile start-up. Recommended order: B1, then V2 behind the loop, then V1 only if XAPP1276 shows it is supported.
 
 ### 5.2 The controller: an FLL-assisted PLL (owner's request)
@@ -225,10 +225,10 @@ In a fibre loopback the recovered clock **is** our transmit clock (delayed by th
 
 ## 9. Open items, for the planner
 
-1. Read XAPP1276 (AMD) for the clocking of V1, whether a TXPI code change or a dynamic SDM update keeps TX bypass aligned, and the update method of its controller; I could not retrieve it.
+1. ~~Read XAPP1276~~ Done by 96F2 (Japanese v1.2; `docs/loop_timing_sources.md`): V1 redefined, controller and loop parameters recorded; still open: whether a dynamic SDM update keeps TX bypass aligned (XAPP1276 never mentions bypass).
 2. Read the KR260 carrier schematic for the `MGTREFCLK0` source and its programmability (owner or a later brief).
 3. ~~A Wizard property probe~~ Done by brief 96F1 (`results/b96f1/wizard_probe/`).
-4. Retrieve AR 68177 (GTH latency values) to replace the GTY figures.
+4. Retrieve AR 68177 (GTH latency values) to replace the GTY figures. **96F2 could not either** (AMD's support site is unreachable from here); needs a logged-in browser or a board measurement.
 5. Owner decision needed before any V2 RTL: the direct crossing is a CDC-1 case (decisions 3 and 9 of 2026-11-19).
 6. A sub-clock phase detector (quarter-clock sampling) is needed in V2 and is not in the design.
 7. Fix `docs/design.md` section 11's statement that 56A's Wizard build uses the RX buffer bypass (it does not).

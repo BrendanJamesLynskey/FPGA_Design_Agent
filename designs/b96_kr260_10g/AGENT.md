@@ -9,7 +9,7 @@ A Kria KR260 design that carries our own 10GBASE-R PCS (64B/66B, scrambler, gear
 not: an interoperability proof: a PCS talking to itself accepts its own symmetric mistakes, only a network card proves it; the full 58A trading core (book, rule table, interlocks, ARP) at 64 bits: trade64 is a small stand-in with one rule; the reconciliation sublayer link-fault state machine, the BER monitor, an ARP or ICMP responder
 
 ## state
-stage=built vivado=2026.1 kb_pin=93d158c build_id=c9106c0d
+stage=built vivado=2026.1 kb_pin=93d158c build_id=815a2b02
 gates: build_2026_1=pass
 
 ## interface
@@ -28,6 +28,7 @@ param GO_REG=1 (default), 0 in lat_all3 legal=0 or 1
 param line rate=10.3125 Gb/s legal=fixed by 10GBASE-R
 
 ## files
+designs/b96_kr260_10g/verif/uvm/README.md 28bc0ecbd5: how the UVM 1.2 bench for the PCS and MAC is built, what each part checks, the coverage and the seeded bugs (brief 112)
 designs/b96_kr260_10g/rm_gp_bypass/rtl/b96_core.sv 82d6c44238: copy of rtl/b96_core.sv for build rm_gp_bypass with the GT buffer-bypass controllers connected, run gates and (brief 96F1b) the alignment timeout and retry status in GT_BUF
 designs/b96_kr260_10g/rm_gp_bypass/rtl/gt_bp_ctl.sv 71963d3f2f: per-direction reset synchroniser, 30 ms TX / 130 ms RX alignment timeout with bounded retry and gave-up flag for the bypass controller (brief 96F1b)
 designs/b96_kr260_10g/rm_gp_bypass/rtl/gt_bp_gate.sv 5e384b6757: per-direction gate that releases the paths only after the bypass controller has restarted and finished (brief 96F1)
@@ -57,11 +58,12 @@ designs/b96_kr260_10g/host/b96c_ppm.py a5a5b3d64e: board driver for the ppm swee
 designs/b96_kr260_10g/rtl/hs_vec.sv e0fc43a9b5: coherent vector crossing
 designs/b96_kr260_10g/model/pcs.py 92790d45d7: bit-serial Python reference of the PCS (the twin)
 designs/b96_kr260_10g/design.xdc 4dec8c5ba8: pins, clocks, slow-pin constraints
-designs/b96_kr260_10g/docs/design.md ff2a2d95ac: design note: decisions and alternatives
+designs/b96_kr260_10g/docs/design.md 02a3510fe0: design note: decisions and alternatives
 designs/b96_kr260_10g/docs/board_run_plan.md 678413f0be: stage 3 plan for the board
 designs/b96_kr260_10g/docs/what_we_found.md 376623bbd5: results and gaps
-designs/b96_kr260_10g/docs/loop_timing_feasibility.md fccc26a754: loop-timing and buffer-bypass feasibility study (96F)
-designs/b96_kr260_10g/docs/loop_timing_board_test_plan.md c822552f41: board test plan for loop timing (96F, for approval)
+designs/b96_kr260_10g/docs/loop_timing_feasibility.md 500557ea56: loop-timing and buffer-bypass feasibility study (96F)
+designs/b96_kr260_10g/docs/loop_timing_board_test_plan.md 9740d509f2: board test plan for loop timing (96F, for approval)
+designs/b96_kr260_10g/docs/loop_timing_sources.md c53e4dbe34: AMD sources read for loop timing (XAPP1276, Wizard example, TXPI, QPLL outside the core; 96F2)
 docs/latency_definitions.md d378fcc14b: our latencies against STAC-T0 and wire-to-wire definitions (109)
 designs/b96_kr260_10g/model/loop_timing.py a2d1bf6428: Python model of the loop-timing frequency tracker (96F)
 designs/b96_kr260_10g/regmap.py 020260c536: register map as data
@@ -71,6 +73,7 @@ designs/b96_kr260_10g/docs/register_map.md d2846103ad: interface datasheet
 simulate the PCS, MAC and core against the Python reference (~2min): python -m pytest -q designs/b96_kr260_10g/tests
 [heavy] build variant (b) and run all gates (~22min): flow/run_vivado.sh designs/b96_kr260_10g base
 [heavy] build variant (a), the near-end loopback self-test (~22min): flow/run_vivado.sh designs/b96_kr260_10g/selftest base
+the UVM 1.2 regression of the PCS and MAC in xsim (every test over its seeds, coverage merge, seeded bugs) (~40min): designs/b96_kr260_10g/verif/uvm/scripts/run_regress.sh --mutants --record results/112_uvm_pcs_mac
 
 ## records (path sha256-prefix; claims below cite R<n>)
 R1 designs/b96_kr260_10g/tests/test_b96_pcs_rtl.py b26b6317ae

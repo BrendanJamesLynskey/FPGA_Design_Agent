@@ -937,6 +937,8 @@ def board_constraints(s: Session, map: list[dict[str, str]] | None = None, write
     wrote = None
     if write:
         p = s.jail.resolve("design.xdc", write=True)
+        if s.jail.policy is not None:                 # brief 102F: the generated constraints get the same content checks as write_file
+            s.jail.policy.check_content("design.xdc", r["xdc"])
         p.write_text(r["xdc"])
         wrote = str(p.relative_to(s.jail.root))
     return {"ok": not found, "output": (f"wrote {wrote}\n" if wrote else "") + r["xdc"]
@@ -1223,5 +1225,6 @@ from agent.core import axi_tools as _axi_tools  # noqa: E402,F401  (brief 59A: r
 from agent.core import latency_tools as _latency_tools  # noqa: E402,F401  (brief 97: registers latency_path, latency_budget)
 from agent.core import eye_tools as _eye_tools  # noqa: E402,F401  (brief 96D: registers eye_scan)
 from agent.core import options_tools as _options_tools  # noqa: E402,F401  (brief 104: registers design_analysis)
+from agent.core import crossread_tools as _crossread_tools  # noqa: E402,F401  (brief 114: registers doc_crossread)
 from agent.core import rapidwright_tools as _rw_tools  # noqa: E402,F401  (brief 100: registers rw_status, rw_relocate_block, rw_place_chain, rw_route, rw_referee)
 from agent.core import oss_tools as _oss_tools  # noqa: E402,F401  (brief 101: registers oss_synth and eqy_check)

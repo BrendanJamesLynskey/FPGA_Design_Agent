@@ -74,6 +74,8 @@ class Session:
         if self.jail.policy is None:                   # brief 102: a design with a project.yaml is a managed project
             from agent.core.managed import policy_for
             self.jail.policy = policy_for(self.design)
+        if self.jail.policy is not None and hasattr(self.runner, "ro_paths"):     # brief 102F: a container runner mounts the protected files read-only
+            self.runner.ro_paths = self.jail.policy.protected_files
         from agent import access                       # brief 94: attribute the run to the entry that admitted it (name only)
         if access.CURRENT:
             self.audit.log({"event": "access", "entry": access.CURRENT})

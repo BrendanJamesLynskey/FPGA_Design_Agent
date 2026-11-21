@@ -1,6 +1,6 @@
 "use strict";
 (function () {
-  var PAGES = [["project", "Project"], ["timing", "Timing"], ["runs", "Runs"], ["measure", "Measurements"], ["health", "Health"], ["models", "Models"]];
+  var PAGES = [["project", "Project"], ["timing", "Timing"], ["runs", "Runs"], ["live", "Live"], ["start", "Start"], ["board", "Board"], ["measure", "Measurements"], ["trace", "Traceability"], ["health", "Health"], ["models", "Models"]];
   var main = document.getElementById("main");
   var state = { theme: "dark", scope: {}, request: "", project: null, measureTab: "eye", capA: null, capB: null, session: 0, lastFocus: null };
 
@@ -36,12 +36,15 @@
     });
   }
   var navValue = null;
-  function post(path) {
+  function post(path, body) {
     var tok = navValue ? Promise.resolve(navValue) : api("/api/session").then(function (j) { navValue = j.nav_value; return navValue; });
     return tok.then(function (t) {
-      return fetch(path, { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json", "X-Navigator-Token": t }, body: "{}" }).then(function (r) { return r.json(); });
+      return fetch(path, { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json", "X-Navigator-Token": t }, body: JSON.stringify(body || {}) }).then(function (r) { return r.json(); });
     });
   }
+  var timers = [];
+  function every(ms, fn) { var id = setInterval(fn, ms); timers.push(id); }
+  function clearTimers() { timers.forEach(clearInterval); timers = []; }
   function num(x, d) { return x === null || x === undefined ? "not recorded" : (typeof x === "number" ? (d === undefined ? String(x) : x.toFixed(d)) : String(x)); }
   function short(x, n) { return x ? String(x).slice(0, n || 12) : ""; }
   function fmtBER(x) { if (x === null || x === undefined) return "-"; var e = Math.floor(Math.log10(x)); return (x / Math.pow(10, e)).toFixed(1) + "e" + e; }
@@ -135,7 +138,7 @@
       root.textContent = "";
       add(root, [
         h("h1", null, d.project.name),
-        h("p", { class: "mute" }, "top module ", h("code", null, d.project.top), "; a file in no component is ", h("strong", null, d.project.unclaimed), ". Nothing is started from this page: the picker only builds the command."),
+        h("p", { class: "mute" }, "top module ", h("code", null, d.project.top), "; a file in no component is ", h("strong", null, d.project.unclaimed), ". This page only builds the command; the Start page starts a run with the same guards as the command line."),
         projects.length > 1 ? h("div", { class: "toolbar" }, h("label", null, "Project ", h("select", { on: { change: function () { state.project = this.value; loadProject(root, projects); } } },
           projects.map(function (p) { return h("option", { value: p.name, selected: p.name === state.project }, p.name); })))) : null,
         srcLine(d.source, "manifest"),
@@ -216,8 +219,10 @@
       else if (L.error) add(root, [h("h2", null, L.design), h("div", { class: "banner" }, L.error)]);
       else {
         add(root, [h("h2", null, L.title),
-          h("div", { class: "kpi" }, h("div", null, h("b", null, L.total_clocks), h("span", null, "clocks, simulated worst case")), h("div", null, h("b", null, L.total_ns), h("span", null, "ns at " + L.period_ns + " ns a clock")),
+          h("div", { class: "kpi" }, h("div", null, h("b", null, L.total_clocks), h("span", null, "clocks, simulated worst case" + ((L.chains || []).filter(function (c) { return c.is_stage_table; }).length ? " (" + L.chains.filter(function (c) { return c.is_stage_table; })[0].label.split(";")[0].split(" (")[0] + ")" : ""))), h("div", null, h("b", null, L.total_ns), h("span", null, "ns at " + L.period_ns + " ns a clock")),
             h("div", null, h("b", null, L.reconciled ? "yes" : "NO"), h("span", null, "stages add up to the bench"))),
+          (L.chains || []).length > 1 ? [h("h3", { class: "mt" }, "Chains recorded for this design"), table(["clocks", "build", "stage table here", "record"], L.chains.map(function (c) { return { cells: [c.clocks === null ? "not recorded" : String(c.clocks), c.label, c.is_stage_table ? "yes" : "no", c.file], onclick: function () { openRecord(c.file); } }; }), { num: [0] }),
+            h("p", { class: "mute" }, "The stage table and the chart below describe one chain only: the one marked yes. A build without a stage table has its total from the same bench but no per-stage breakdown.")] : null,
           L.problems.length ? h("div", { class: "banner" }, h("strong", null, "Not reconciled. "), L.problems.join("; ")) : null,
           chainChart(L),
           h("p", { class: "mute" }, "Bar width is the clocks a stage adds (simulation, in-phase clocks, worst case). Hatched: receive clock. Crossed: the clock crossing. Solid grey: transmit clock. A dashed tick is a stage that adds no clock. A heavy outline is timing-critical (worst setup slack below the threshold); the chain is latency-critical and the two are different paths."),
@@ -346,15 +351,23 @@
       synth.hidden = !any;
     }
     var opt = function (sel, empty) { return [empty ? h("option", { value: "" }, "none (one capture)") : null].concat(caps.map(function (c) { return h("option", { value: c.id, selected: c.id === sel }, (c.synthetic ? "SYNTHETIC: " : "") + (c.label || c.id) + "  " + (c.created || "").slice(0, 10)); })); };
-    var synth = h("div", { class: "banner" }, h("strong", null, "SYNTHETIC. "), "Eye data on the board is not measured yet. A capture marked synthetic comes from an offline model (flow/eyescan/fake.py): it shows the view, not the link.");
+    var synth = h("div", { class: "banner" }, h("strong", null, "SYNTHETIC. "), "A capture marked synthetic comes from an offline model (flow/eyescan/fake.py): it shows the view, not the link. Captures under results/b96d/hw are measured on the board; their state column says so.");
     add(body, [h("div", { class: "toolbar" },
         h("label", null, "Capture A ", h("select", { on: { change: function () { state.capA = this.value; load(); } } }, opt(state.capA, false))),
         h("label", null, "Capture B (compare) ", h("select", { on: { change: function () { state.capB = this.value || null; load(); } } }, opt(state.capB, true)))),
       synth,
       h("p", { class: "mute" }, "Choose a second capture to enable the viewer's Compare tab: side by side, bathtubs overlaid, and the difference. The 3-D tab rotates, and its two sliders cut the surface into the horizontal and vertical bathtubs."),
       frame,
-      table(["capture", "equaliser", "points", "width at target", "height at target", "scan complete", "source"], caps.map(function (c) { return { cells: [(c.synthetic ? "SYNTHETIC " : "") + (c.label || c.id), c.equaliser || "", num(c.points), c.width_ui === null || c.width_ui === undefined ? "no open row" : c.width_ui.toFixed(3) + " UI", c.height_mv === null || c.height_mv === undefined ? "no open column" : c.height_mv.toFixed(0) + " mV (nominal)", c.complete === null ? "grid size not recorded" : c.complete ? "yes" : "NO", c.source.file], onclick: function () { openRecordHead(c); } }; }), { num: [2] })]);
+      table(["capture", "state", "equaliser", "TX drive", "points", "width at target", "height at target", "4T clock phase", "scan complete", "source"], caps.map(function (c) { return { cells: [(c.synthetic ? "SYNTHETIC " : "") + (c.label || c.id), capState(c), c.equaliser || "", c.tx ? c.tx.diff + "/" + c.tx.pre + "/" + c.tx.post : "", num(c.points), capSize(c, "width_ui", "UI", 3), capSize(c, "height_mv", "mV nominal", 0), c.clk_phase_sel === null || c.clk_phase_sel === undefined ? "not recorded" : "sel " + c.clk_phase_sel, c.complete === null ? "grid size not recorded" : c.complete ? "yes" : "NO", c.source.file], onclick: function () { openRecordHead(c); } }; }), { num: [4] })]);
     load();
+  }
+  function capState(c) { return c.synthetic ? "SYNTHETIC (offline model)" : c.no_data ? "NO DATA (no samples were counted)" : "measured on the board"; }
+  function capSize(c, k, unit, d) {
+    var v = c[k], lo = c[k + "_lo"], hi = c[k + "_hi"];
+    if (c.no_data) return "none: no data";
+    if (v === null || v === undefined) { var sh = c.counts && c.counts.shallow; return sh ? "not resolved: " + sh + " points too shallow to vouch for the target depth" : "no open row or column"; }
+    var rng = lo === null || lo === undefined || hi === null || hi === undefined ? "" : " (" + lo.toFixed(d) + " to " + hi.toFixed(d) + ")";
+    return v.toFixed(d) + " " + unit + rng;
   }
   function openRecordHead(c) {
     openDrawer(c.label || c.id, [h("dl", null, h("dt", null, "synthetic"), h("dd", null, c.synthetic ? "yes: an offline model, not a measurement" : "no"), h("dt", null, "design"), h("dd", null, c.design || ""), h("dt", null, "board"), h("dd", null, c.board || ""),
@@ -443,12 +456,212 @@
       h("dt", null, "key variable"), h("dd", { class: "mono" }, r.key_env || "none"), h("dt", null, "key"), h("dd", null, r.key_state), h("dt", null, "options"), h("dd", { class: "mono" }, JSON.stringify(r.options)), r.note ? [h("dt", null, "note"), h("dd", null, r.note)] : null));
   }
 
+
+  /* ---------- live progress ---------- */
+  function usd(x) { return x === null || x === undefined ? "n/a" : "$" + Number(x).toFixed(2); }
+  function age(sec) { return sec === null || sec === undefined ? "no file yet" : sec < 90 ? sec + " s ago" : sec < 5400 ? Math.round(sec / 60) + " min ago" : (sec / 3600).toFixed(1) + " h ago"; }
+  function stageTrack(p) {
+    var W = 1000, n = p.stages.length, bw = W / n;
+    var svg = s("svg", { viewBox: "0 0 " + W + " 74", role: "img", "aria-label": "Stage track: current stage " + (p.stage || "none") });
+    p.stages.forEach(function (name, i) {
+      var done = p.stages_done.some(function (d) { return d.stage === name; }), cur = p.stage === name && p.status !== "finished";
+      var v = p.visits[name] || 0;
+      svg.appendChild(s("g", null, s("title", null, name + ": " + (done ? "finished" : cur ? "in progress" : v ? "visited" : "not reached") + (v ? ", visit " + v : "")),
+        s("rect", { x: i * bw + 2, y: 4, width: bw - 4, height: 34, fill: done ? "var(--fill)" : cur ? "var(--fill2)" : "var(--bg)", stroke: cur ? "var(--ink)" : "var(--rule2)", "stroke-width": cur ? 3 : 1, "stroke-dasharray": !done && !cur && !v ? "4 3" : null }),
+        s("text", { x: i * bw + bw / 2, y: 26, "text-anchor": "middle", fill: done ? "var(--on-fill)" : "var(--ink)", style: null }, String(i)),
+        s("text", { x: i * bw + bw / 2, y: 56, "text-anchor": "middle", class: "m" }, name.length > 13 ? name.slice(0, 12) + "." : name),
+        s("text", { x: i * bw + bw / 2, y: 70, "text-anchor": "middle", class: "m" }, v ? "visit " + v : "")));
+    });
+    return svg;
+  }
+  function costBar(c) {
+    var b = c.budget_usd || 0, frac = b ? Math.min(1, c.reported_usd / b) : 0;
+    return s("svg", { viewBox: "0 0 400 22", role: "img", "aria-label": "Provider-reported cost " + usd(c.reported_usd) + " of budget " + usd(c.budget_usd), class: "bar" },
+      s("rect", { x: 0.5, y: 4.5, width: 399, height: 14, fill: "none", stroke: "var(--rule2)" }), s("rect", { x: 1, y: 5, width: 398 * frac, height: 13, fill: frac > 0.8 ? "var(--ink)" : "var(--fill2)" }));
+  }
+  function runDetail(p) {
+    var c = p.cost;
+    return h("div", null,
+      h("div", { class: "kpi" },
+        h("div", null, h("b", null, h("span", { class: "st " + (p.status === "active" ? "ok" : p.status === "finished" ? "unknown" : "warn") }, p.status.toUpperCase())), "last file write " + age(p.last_write_age_s)),
+        h("div", null, h("b", null, p.stage || "none yet"), "stage" + (p.visit ? ", visit " + p.visit : "") + (p.role ? ", role " + p.role : "")),
+        h("div", null, h("b", null, usd(c.reported_usd)), "provider-reported" + (c.budget_usd ? " of " + usd(c.budget_usd) : "")),
+        h("div", null, h("b", null, usd(c.plan_estimate_usd)), "plan estimate (Claude Code)"),
+        h("div", null, h("b", null, String(p.tokens)), "tokens")),
+      p.stop ? h("p", { class: "banner" }, "Stop reason: " + p.stop) : null,
+      stageTrack(p), costBar(c), h("p", { class: "mute" }, c.note + (c.reported_calls_without_cost ? " " + c.reported_calls_without_cost + " model calls report no cost." : "")),
+      h("h3", { class: "mt2" }, "Gate results"),
+      p.gates.length ? table(["stage", "design", "build", "verdict", "numbers", "failing"], p.gates.slice().reverse().map(function (g) {
+        return [g.stage || "", g.design, g.variant, stat(g.verdict === "PASS" ? "ok" : "fail"), g.numbers, g.failing.join("; ") || (Object.keys(g.stages).length ? "none" : "")]; })) : h("p", { class: "mute" }, "No gates call yet."),
+      h("h3", { class: "mt2" }, "Audit log, last " + p.audit_tail.length + " of " + p.audit_rows),
+      p.audit_tail.length ? table(["tool", "stage", "ok", "result"], p.audit_tail.slice().reverse().map(function (a) { return [a.tool, a.stage || "", a.refused ? "refused" : a.ok === null ? "" : a.ok ? "ok" : "failed", a.line]; })) : h("p", { class: "mute" }, "The audit log has no rows yet."),
+      h("p", { class: "src" }, "read from " + p.source.dir + " (" + p.source.files.join(", ") + "); nothing is written"));
+  }
+  function pageLive() {
+    var root = h("div", null, h("h1", null, "Live"), loading()), sel = state.liveRun || null, detail = h("div", { "aria-live": "polite" });
+    main.textContent = ""; main.appendChild(root);
+    function loadDetail() {
+      if (!sel) { detail.textContent = ""; return; }
+      api("/api/live/run?id=" + encodeURIComponent(sel)).then(function (p) { detail.textContent = ""; add(detail, [h("h2", null, p.id + (p.name ? "  " + p.name : "")), runDetail(p)]); }, function (e) { detail.textContent = ""; add(detail, fail(e)); });
+    }
+    function load() {
+      api("/api/live").then(function (d) {
+        var list = h("div", null);
+        add(list, [h("p", { class: "mute" }, "Every run directory in " + d.dir + ", whoever started it (this page or the command line). A run counts as working while one of its log files was written in the last 3 minutes; otherwise it is idle (finished, paused for an answer, stopped or crashed: the summary file says which). Refreshes every 5 s."),
+          d.started.length ? [h("h2", null, "Started from this page"), table(["id", "status", "target", "run", "started", ""], d.started.map(function (r) {
+            var b = r.status === "running" ? h("button", { type: "button", on: { click: function () { if (confirm("Stop " + r.id + "? Its process group gets SIGTERM, then SIGKILL after 20 s.")) post("/api/run/stop", { id: r.id }).then(function (j) { alert(j.stopped ? j.note : j.refused); load(); }); } } }, "Stop") : r.slot && r.slot.released === false ? "slot not released: check Health" : "";
+            return { cells: [r.id, r.status + (r.exit_code !== null && r.exit_code !== undefined ? " (exit " + r.exit_code + ")" : ""), (r.summary || {}).target || "", r.run_id || "not found yet", r.started, b], onclick: r.run_id ? function () { sel = state.liveRun = r.run_id; loadDetail(); } : null };
+          }))] : null,
+          h("h2", null, "Runs"),
+          d.runs.length ? table(["run", "design", "status", "stage", "visit", "cost", "budget", "last write"], d.runs.map(function (r) {
+            return { cells: [r.id, r.name || "", stat(r.status === "active" ? "ok" : r.status === "finished" ? "unknown" : "warn"), r.stage || "", r.visit === null ? "" : String(r.visit), usd(r.cost.reported_usd), usd(r.cost.budget_usd), age(r.last_write_age_s)], onclick: function () { sel = state.liveRun = r.id; loadDetail(); } };
+          }), { num: [4] }) : h("p", null, "No run directories yet."), h("p", { class: "mute" }, "Click a run for its stages, gates and audit log.")]);
+        root.textContent = ""; add(root, [h("h1", null, "Live"), list, detail]); loadDetail();
+      }, function (e) { root.textContent = ""; add(root, [h("h1", null, "Live"), fail(e)]); });
+    }
+    load();
+    every(5000, function () { if (!document.hidden) load(); });
+  }
+
+  /* ---------- start a run ---------- */
+  function pageStart() {
+    var root = h("div", null, h("h1", null, "Start"), loading()); main.textContent = ""; main.appendChild(root);
+    api("/api/start/options").then(function (o) {
+      var f = state.start = state.start || { kind: "task", harness: "claude_code", effort: "medium", usd: o.default_usd, arms: ["H1"], components: [], request: "" };
+      var out = h("div", { class: "panel", "aria-live": "polite" });
+      function sel(label, opts, cur, on) { return h("label", null, label + " ", h("select", { on: { change: function () { on(this.value); } } }, opts.map(function (x) { return h("option", { value: x, selected: x === cur }, x); }))); }
+      function render() {
+        var models = o.models[f.harness] || [];
+        if (models.indexOf(f.model) < 0) f.model = models[0] || "";
+        var fields = [sel("Kind", ["task", "project"], f.kind, function (v) { f.kind = v; render(); })];
+        if (f.kind === "task") {
+          if (!f.task) f.task = o.tasks[0];
+          if (!f.board) f.board = o.boards.indexOf("nexys_a7_100t") >= 0 ? "nexys_a7_100t" : o.boards[0];
+          fields.push(sel("Task", o.tasks, f.task, function (v) { f.task = v; }), sel("Board", o.boards, f.board, function (v) { f.board = v; }),
+            h("fieldset", null, h("legend", null, "Harness arms (none ticked = the A0 baseline)"), o.arms.map(function (a) { return h("label", { class: "inl" }, h("input", { type: "checkbox", checked: f.arms.indexOf(a) >= 0, on: { change: function () { var i = f.arms.indexOf(a); if (this.checked && i < 0) f.arms.push(a); if (!this.checked && i >= 0) f.arms.splice(i, 1); } } }), a); }), h("p", { class: "mute" }, o.arm_note)));
+        } else {
+          var names = o.projects.map(function (p) { return p.name; });
+          if (!f.project) f.project = names[0];
+          var cl = o.owned_components[f.project] || [];
+          fields.push(sel("Managed project", names, f.project, function (v) { f.project = v; f.components = []; render(); }),
+            h("fieldset", null, h("legend", null, "Components the request may touch (none ticked: the agent resolves the scope from the request)"), cl.map(function (c) { return h("label", { class: "inl" }, h("input", { type: "checkbox", checked: f.components.indexOf(c.name) >= 0, on: { change: function () { var i = f.components.indexOf(c.name); if (this.checked && i < 0) f.components.push(c.name); if (!this.checked && i >= 0) f.components.splice(i, 1); } } }), c.name); })),
+            h("label", null, "Change request ", h("input", { type: "text", class: "fullw", value: f.request, maxlength: 400, on: { input: function () { f.request = this.value; } } })));
+        }
+        fields.push(sel("Harness", ["claude_code", "deepagents"], f.harness, function (v) { f.harness = v; render(); }), sel("Model (from the resolved table)", models, f.model, function (v) { f.model = v; }),
+          sel("Effort", o.efforts, f.effort, function (v) { f.effort = v; }),
+          h("label", null, "Budget (USD, at most " + o.max_usd + ") ", h("input", { type: "number", min: "0.1", max: String(o.max_usd), step: "0.1", value: String(f.usd), on: { input: function () { f.usd = parseFloat(this.value); } } })));
+        var go = h("button", { type: "button", on: { click: function () {
+          var body = { kind: f.kind, harness: f.harness, model: f.model, effort: f.effort, max_usd: f.usd, confirm: "start" };
+          if (f.kind === "task") { body.task = f.task; body.board = f.board; body.arms = f.arms; } else { body.project = f.project; body.components = f.components; body.request = f.request; }
+          if (!confirm("Start this run? It spends up to $" + f.usd + " (provider-reported), takes a heavy slot, and runs until it ends or you stop it.")) return;
+          go.disabled = true; out.textContent = "Starting";
+          post("/api/run/start", body).then(function (j) { out.textContent = ""; go.disabled = false;
+            if (j.started) { add(out, [h("h3", null, "Started " + j.id), h("p", null, "process " + j.record.pid + ", slot job: " + (j.record.slot.job || "")), h("p", null, h("a", { href: "#/live" }, "Watch it on the Live page"))]); }
+            else add(out, h("div", { class: "banner" }, h("strong", null, "Refused: nothing was started. "), j.refused)); }, function (e) { go.disabled = false; out.textContent = ""; add(out, fail(e)); });
+        } } }, "Start the run");
+        form.textContent = ""; add(form, [h("div", { class: "formgrid" }, fields), go]);
+      }
+      var form = h("div", null);
+      var u = o.usage;
+      root.textContent = "";
+      add(root, [h("h1", null, "Start"),
+        h("p", { class: "mute" }, "Starts the agent's own command line with the same guards, then shows it on the Live page. " + o.never + "."),
+        h("div", { class: "kpi" }, h("div", null, h("b", null, u.percent === undefined ? "unknown" : u.percent + "%"), "weekly usage (stop at " + o.usage_stop_pct + "%)"), h("div", null, h("b", null, String(o.started.filter(function (r) { return r.status === "running"; }).length)), "navigator runs going (limit " + o.active_limit + ")"),
+          o.slots.map(function (l) { return h("div", null, h("b", null, l.status === "ok" ? "free" : "held"), l.title); })),
+        h("ul", null, o.guards.map(function (g) { return h("li", null, g); })),
+        form, out]);
+      render();
+    }, function (e) { root.textContent = ""; add(root, [h("h1", null, "Start"), fail(e)]); });
+  }
+
+  /* ---------- board (locked, read-only) ---------- */
+  function pageBoard() {
+    var root = h("div", null, h("h1", null, "Board"), loading()); main.textContent = ""; main.appendChild(root);
+    api("/api/board").then(function (d) {
+      root.textContent = "";
+      add(root, [h("h1", null, "Board"), h("p", { class: "mute" }, "Read-only actions on a board attached to this PC. Each one takes board.lock and a heavy slot, reads, and releases both. None of them programs a device, writes a register, sets a hardware property, or touches the laser, the flash or the eFUSE."),
+        h("div", { class: "kpi" }, h("div", null, h("b", null, d.lock.held ? "held" : "free"), "board.lock" + (d.lock.held ? ": " + d.lock.held_by : ""))),
+        d.boards.length ? d.boards.map(function (b) {
+          var res = h("div", { "aria-live": "polite" });
+          var btns = b.actions.map(function (a) { return h("button", { type: "button", title: "takes board.lock and a heavy slot; a Vivado session of up to a minute", on: { click: function (ev) {
+            var bt = ev.target; if (!confirm("Run '" + d.titles[a] + "' on " + b.board + "? It takes board.lock and a heavy slot, starts hw_server and Vivado's hardware manager, reads, and releases both.")) return;
+            bt.disabled = true; res.textContent = "Running: this starts Vivado and can take a minute";
+            post("/api/board/run", { board: b.board, action: a, confirm: "read" }).then(function (j) { bt.disabled = false; res.textContent = ""; add(res, boardResult(j)); }, function (e) { bt.disabled = false; res.textContent = ""; add(res, fail(e)); }); } } }, d.titles[a]); });
+          return h("div", { class: "panel mt" }, h("h2", null, b.board), h("p", { class: "mute" }, [b.part, b.device, b.power ? b.power + " power" : null, b.cable ? "cable " + b.cable : null, b.profile ? "register profile: " + b.profile : "no register profile (targets and SYSMON only)"].filter(Boolean).join(", ")),
+            b.note ? h("p", { class: "banner" }, b.note) : null, h("div", { class: "toolbar" }, btns), b.last ? h("p", { class: "src" }, "last: " + b.last.action + " at " + b.last.checked_at + (b.last.ok ? "" : " (did not complete)")) : null, res);
+        }) : h("p", null, "boards.yaml lists no board. Run flow/hw_discover.py."),
+        h("ul", { class: "mute" }, d.rules.map(function (r) { return h("li", null, r); }))]);
+    }, function (e) { root.textContent = ""; add(root, [h("h1", null, "Board"), fail(e)]); });
+  }
+  function boardResult(j) {
+    if (j.refused) return h("div", { class: "banner" }, h("strong", null, "Refused: nothing ran. "), j.refused);
+    var out = [h("h3", null, j.title + ": " + (j.ok ? "done" : "did not complete")), j.error ? h("div", { class: "banner" }, j.error) : null,
+      (j.section_errors || []).map(function (e) { return h("p", { class: "banner" }, e.section + ": " + e.what); })];
+    if (j.targets) out.push(h("h3", { class: "mt" }, "JTAG targets" + (j.targets_complete ? "" : " (list incomplete)")), j.targets.length ? table(["cable", "this board", "devices", "error"], j.targets.map(function (t) { return [t.uid, t.mine ? "yes" : "", t.devices.map(function (d) { return d.device + " " + d.part + " " + d.idcode; }).join("; "), t.error || ""]; })) : h("p", null, "none seen"));
+    if (j.sysmon) out.push(h("h3", { class: "mt" }, "SYSMON: " + j.sysmon.verdict), j.sysmon.channels.length ? table(["channel", "value", "min", "max", "inside"], j.sysmon.channels.map(function (c) { return [c.name, String(c.value), c.min === null ? "" : String(c.min), c.max === null ? "" : String(c.max), c.inside ? "yes" : "NO"]; }), { num: [1, 2, 3] }) : null,
+      h("p", { class: "src" }, "limits: " + j.sysmon.roc_source + ". " + j.sysmon.caveat));
+    if (j.design && Object.keys(j.design).length) out.push(h("h3", { class: "mt" }, "Loaded design"), h("dl", null, Object.keys(j.design).filter(function (k) { return typeof j.design[k] === "string"; }).map(function (k) { return [h("dt", null, k), h("dd", { class: "mono" }, j.design[k])]; }),
+      j.design.features_set ? [h("dt", null, "FEATURES set"), h("dd", null, j.design.features_set.join(", "))] : null));
+    if (j.link && j.link.bits) out.push(h("h3", { class: "mt" }, "Link: " + (j.link.link_up ? "up" : "not up")), table(["signal", "bit"], Object.keys(j.link.bits).map(function (k) { return [k, String(j.link.bits[k])]; })), h("p", { class: "src" }, j.link.note));
+    out.push(h("p", { class: "src" }, "locks: " + (j.locks ? "board.lock released " + (j.locks.released ? j.locks.released.board_lock : "") + ", heavy slot released " + (j.locks.released ? j.locks.released.slot : "") : "") + "; " + (j.seconds || 0) + " s"));
+    return out;
+  }
+
+  /* ---------- traceability (brief 116) ---------- */
+  var TRACE_METHODS = [["sim_test", "sim test"], ["uvm_test", "UVM"], ["assertion", "SVA"], ["formal", "formal"], ["coverage_bin", "coverage"], ["timing", "timing"], ["sim_measurement", "sim measure"], ["board_measurement", "board"], ["review", "review"]];
+  var TRACE_STATE = { verified: "verified", fail: "FAILS", not_run: "not run", stale: "stale", bounded: "bounded only", no_measurement: "no measurement" };
+  function traceState(r) {
+    var t = TRACE_STATE[r.state] || r.state;
+    if (r.state === "verified" && r.external && !r.hardware_verified) return "passes without hardware; hardware open";
+    if (r.state === "verified" && r.kind === "performance") t += " (" + (r.basis === "board" ? "board-measured" : r.basis === "timing" ? "post-route timing" : "simulation only") + ")";
+    if (r.state === "verified" && r.stale_items) t += "; " + r.stale_items + " item(s) stale";
+    return t;
+  }
+  function pageTrace() {
+    var root = h("div", null, h("h1", null, "Traceability"), loading()); main.textContent = ""; main.appendChild(root);
+    api("/api/trace").then(function (d) {
+      root.textContent = "";
+      if (d.error) { add(root, [h("h1", null, "Traceability"), h("div", { class: "banner" }, d.error)]); return; }
+      add(root, [h("h1", null, "Traceability"), h("p", { class: "mute" }, d.framing),
+        h("p", { class: "src" }, "how: python -m flow.trace_v1 show <design>. Status is computed from the evidence files, never typed.")]);
+      d.designs.forEach(function (g) {
+        var byId = {}; g.items.forEach(function (i) { byId[i.id] = i; });
+        var rows = g.requirements.map(function (r) {
+          var cells = [h("span", null, h("b", null, r.id + " "), r.title), r.kind, h("span", { class: r.state === "verified" ? "" : "mute" }, traceState(r))];
+          TRACE_METHODS.forEach(function (m) {
+            var its = r.items.filter(function (id) { return byId[id].method === m[0]; }).map(function (id) { return byId[id]; });
+            cells.push(its.length ? its.map(function (i) { return h("div", null, i.status.replace("_", " ") + (i.instrument ? " [" + i.instrument + "]" : "")); }) : "");
+          });
+          return { cells: cells, onclick: function () { openRequirement(r, byId); } };
+        });
+        add(root, [h("div", { class: "panel mt" }, h("h2", null, g.design), h("p", null, g.summary.line),
+          table(["requirement", "kind", "state"].concat(TRACE_METHODS.map(function (m) { return m[1]; })), rows, {}),
+          h("h3", { class: "mt" }, "Gaps (" + g.gaps.length + ")"),
+          g.gaps.length ? h("ul", null, g.gaps.map(function (x) { return h("li", null, h("code", null, x.id), " " + x.type.replace(/_/g, " ") + ": " + x.text); })) : h("p", null, "None."))]);
+      });
+    }, function (e) { root.textContent = ""; add(root, [h("h1", null, "Traceability"), fail(e)]); });
+  }
+  function openRequirement(r, byId) {
+    var pf = r.performance;
+    openDrawer(r.id, [h("p", null, r.title), r.text ? h("p", null, r.text) : null,
+      h("dl", null, h("dt", null, "kind"), h("dd", null, r.kind), h("dt", null, "state"), h("dd", null, traceState(r)), h("dt", null, "specification status"), h("dd", null, r.spec_status || "unspecified"),
+        r.source ? [h("dt", null, "source"), h("dd", { class: "mono" }, r.source)] : null,
+        pf ? [h("dt", null, "bound"), h("dd", null, pf.quantity + " " + pf.op + " " + pf.bound + " " + pf.unit + "; " + pf.condition)] : null,
+        r.external ? [h("dt", null, "external element"), h("dd", null, r.external + "; hardware verification " + r.hardware_closure)] : null),
+      h("h3", null, "Evidence"),
+      table(["item", "method", "status", "result", "evidence"], r.items.map(function (id) {
+        var i = byId[id];
+        return [i.title || i.id, i.method + (i.instrument ? " / " + i.instrument : ""), i.status.replace("_", " "), i.detail + (i.stale_because ? " (" + i.stale_because + ")" : ""),
+          i.evidence && i.evidence.exists ? h("button", { type: "button", class: "name", on: { click: function () { openRecord(i.evidence.file); } } }, i.evidence.file) : "none"];
+      }), {})]);
+  }
+
   /* ---------- router ---------- */
-  var ROUTES = { project: pageProject, timing: pageTiming, runs: pageRuns, measure: pageMeasure, health: pageHealth, models: pageModels };
+  var ROUTES = { project: pageProject, timing: pageTiming, runs: pageRuns, live: pageLive, start: pageStart, board: pageBoard, measure: pageMeasure, trace: pageTrace, health: pageHealth, models: pageModels };
   function route() {
     var k = (location.hash || "#/project").replace(/^#\//, "");
     if (!ROUTES[k]) k = "project";
-    closeDrawer();
+    closeDrawer(); clearTimers();
     var nav = document.getElementById("nav"); nav.textContent = "";
     PAGES.forEach(function (p) { nav.appendChild(h("a", { href: "#/" + p[0], "aria-current": p[0] === k ? "page" : null }, p[1])); });
     ROUTES[k]();

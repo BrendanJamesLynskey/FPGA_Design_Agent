@@ -88,6 +88,10 @@ parameters:
   note: QPLL0 from the 156.25 MHz reference; the user clocks (161.133 MHz) carry 64 bits a word and the PCS takes one clock
     pause in 33
 files:
+- path: designs/b96_kr260_10g/verif/uvm/README.md
+  what: how the UVM 1.2 bench for the PCS and MAC is built, what each part checks, the coverage and the seeded bugs (brief
+    112)
+  sha256: 28bc0ecbd57c394ae029c90984b71916d61b1c43789e945feb54cb737a03e131
 - path: designs/b96_kr260_10g/rm_gp_bypass/rtl/b96_core.sv
   what: copy of rtl/b96_core.sv for build rm_gp_bypass with the GT buffer-bypass controllers connected, run gates and (brief
     96F1b) the alignment timeout and retry status in GT_BUF
@@ -179,7 +183,7 @@ files:
   sha256: 4dec8c5ba8f6dccc6273f45d40a7d95a6668f5fe09350c0a0d80cc6c07ea1118
 - path: designs/b96_kr260_10g/docs/design.md
   what: 'design note: decisions and alternatives'
-  sha256: ff2a2d95ac4caa83fe5b04468c6ba45ea04723801941e2506d90cf98d8a2ebd1
+  sha256: 02a3510fe016429ec613c0ee01f06aca01cceb575d87aebc83524e414866d892
 - path: designs/b96_kr260_10g/docs/board_run_plan.md
   what: stage 3 plan for the board
   sha256: 678413f0be0f0c2692b2d1118cd8a8e54ec6514bd5e643485402e34ecc83c61b
@@ -188,10 +192,13 @@ files:
   sha256: 376623bbd5f6b71f50a352b59b252e1c27ab8ecc4643c3cc2871f7614e4bc588
 - path: designs/b96_kr260_10g/docs/loop_timing_feasibility.md
   what: loop-timing and buffer-bypass feasibility study (96F)
-  sha256: fccc26a7547e8ffb0cf187739c894ee46e9af01058fa269cec48df918828782d
+  sha256: 500557ea561e773995a3cf067fb890ed9684dfede13f3844a351658c4621275a
 - path: designs/b96_kr260_10g/docs/loop_timing_board_test_plan.md
   what: board test plan for loop timing (96F, for approval)
-  sha256: c822552f411e0e5b795e292a52a772a318a71d5611a1c44efc7ec84f3b87b325
+  sha256: 9740d509f2fb3abb92e0ecdd8074ac6ea23965d727cf50a6d943e05b91cdac12
+- path: designs/b96_kr260_10g/docs/loop_timing_sources.md
+  what: AMD sources read for loop timing (XAPP1276, Wizard example, TXPI, QPLL outside the core; 96F2)
+  sha256: c53e4dbe340fc31b4c337f9a64e31122fe54fa6f31fcecf934b5f4a8428d9b16
 - path: docs/latency_definitions.md
   what: our latencies against STAC-T0 and wire-to-wire definitions (109)
   sha256: d378fcc14b0724f1902a669dd43cbeb3960b6dd6422e8c921d4893375c9e0b75
@@ -220,6 +227,12 @@ commands:
   heavy: true
   minutes: 22
   needs: as above
+- what: the UVM 1.2 regression of the PCS and MAC in xsim (every test over its seeds, coverage merge, seeded bugs)
+  cmd: designs/b96_kr260_10g/verif/uvm/scripts/run_regress.sh --mutants --record results/112_uvm_pcs_mac
+  heavy: false
+  minutes: 40
+  needs: Vivado 2026.1 xsim (Basic tier is enough); a simulation-only run, no heavy slot while the load is under 6 and more
+    than 12 GB is free
 evidence:
 - id: E1
   activity: simulation
@@ -520,4 +533,4 @@ state:
     build_2026_1: pass
   vivado: '2026.1'
   kb_pin: 93d158c
-  build_id: c9106c0d
+  build_id: 815a2b02

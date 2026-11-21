@@ -229,10 +229,39 @@ def latency_view(root: Path, design: str) -> dict[str, Any] | None:
         board = L.board_numbers(st, Path(root) / "results")
     except (L.LatencyError, KeyError, ValueError, OSError):
         board = None
+    lp["chains"] = _chains(root, st, core_rel)
     lp["board"] = board
     lp["board_note"] = ("board numbers are measured on the KR260 (stage 3 of brief 96) and are never added to the simulated chain" if board
                         else "no board measurement is recorded for this design's chain")
     return lp
+
+
+def _chains(root: Path, st: dict[str, Any], core_rel: str) -> list[dict[str, Any]]:
+    """The simulated chains the stage file says exist (its ``chains:`` list): each file's tick-to-trade worst case from the same key the stage table reconciles to, with a label
+    saying which build it is, so a page that shows one stage table never presents it as the only chain."""
+    from flow.latency import model as L
+    out = []
+    try:
+        key = next(iter(st["paths"].values()))["measured"]["key"]
+    except (KeyError, StopIteration, AttributeError, TypeError):
+        return out
+    for c in st.get("chains") or []:
+        rel = c.get("file") if isinstance(c, dict) else None
+        if not isinstance(rel, str) or not rel.startswith("results/") or ".." in Path(rel).parts:
+            continue
+        rec = load_json(Path(root) / rel)
+        clocks = None
+        for k in (key, key[:-4] if key.endswith(".max") else key):          # a bench with no spread records the number itself, not {min, max}
+            try:
+                clocks = L._dig(rec, k) if rec is not None else None
+                break
+            except L.LatencyError:
+                continue
+        if isinstance(clocks, dict):
+            clocks = clocks.get("max")
+        out.append({"file": rel, "label": str(c.get("label") or "")[:200], "clocks": clocks if isinstance(clocks, (int, float)) else None, "is_stage_table": rel == core_rel,
+                    "source": src(root, Path(root) / rel) if rec is not None else None})
+    return out
 
 
 def builds(root: Path) -> list[dict[str, Any]]:
@@ -431,7 +460,7 @@ def capture_files(root: Path, extra: list[Path] | None = None) -> list[Path]:
 
 # --- the record viewer -----------------------------------------------------------------------------------------------------------------
 
-RECORD_SUFFIX = {".json", ".yaml", ".yml", ".md", ".txt", ".rpt", ".csv"}
+RECORD_SUFFIX = {".json", ".yaml", ".yml", ".md", ".txt", ".rpt", ".csv", ".xml"}
 RECORD_LIMIT = 400_000
 _DESIGN_FILES = re.compile(r"^designs/[A-Za-z0-9_.-]+/(project|latency_stages)\.yaml$")
 
@@ -472,3 +501,13 @@ def read_record(root: Path, rel: str) -> dict[str, Any] | None:
     else:
         body = redact.text(body)
     return {"file": rel, "date": file_date(root, p), "bytes": p.stat().st_size, "lines": body.splitlines()[:6000]}
+
+
+def trace_view(root: Path) -> dict[str, Any]:
+    """Brief 116: every design's specification-to-evidence matrix, computed by flow/trace_v1.py from the testplans and the committed evidence.
+    Read-only; the page shows the same data as `python -m flow.trace_v1 show`."""
+    from flow import trace_v1
+    try:
+        return trace_v1.collect_all()
+    except (trace_v1.PlanError, OSError, KeyError, ValueError) as e:
+        return {"error": f"{type(e).__name__}: {e}"}

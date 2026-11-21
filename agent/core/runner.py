@@ -18,7 +18,7 @@ import time
 import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Protocol
+from typing import Any, Callable, Protocol
 
 ENV_KEEP = ("PATH", "HOME", "LANG", "LC_ALL", "TMPDIR", "SIM", "VIVADO", "HW_SERVER", "MEM_MAX", "MIN_AVAIL_GB",
             "HW_MIN_AVAIL_GB", "FDA_BOARDS_FILE", "VERILATOR_ROOT", "PYTHONPATH", "XDG_RUNTIME_DIR",
@@ -206,6 +206,9 @@ class ContainerRunner:
         self.inner = inner or LocalRunner()
         self.kinds, self.image, self.engine, self.memory = kinds, image, engine, memory
         self.build_tmpfs = build_tmpfs
+        #: brief 102F: a managed project's protected files (frozen and excluded components, waiver files, the manifest): mounted read-only over
+        #: the read-write design mount, so code in the container cannot change, replace or chmod them. Set by Session; None for an ordinary design.
+        self.ro_paths: Callable[[], list[Path]] | None = None
 
     def container_argv(self, argv: list[str], env: dict[str, str] | None, name: str | None = None) -> list[str]:
         import sys
@@ -215,6 +218,7 @@ class ContainerRunner:
                "--memory", self.memory, "--pids-limit", "512",
                "--tmpfs", "/tmp:rw,exec,size=512m", "--tmpfs", f"{r}/build:rw,exec,size={self.build_tmpfs}",
                "-v", f"{self.design}:{self.design}:rw",
+               *[x for p in (self.ro_paths() if self.ro_paths else []) for x in ("-v", f"{p}:{p}:ro")],
                "-v", f"{r}/flow:{r}/flow:ro", "-v", f"{r}/shell:{r}/shell:ro",
                "-v", f"{r}/designs/__init__.py:{r}/designs/__init__.py:ro",
                "-w", r, "-e", "HOME=/tmp", "-e", "PYTHONDONTWRITEBYTECODE=1", "-e", f"PYTHONPATH={r}"]
