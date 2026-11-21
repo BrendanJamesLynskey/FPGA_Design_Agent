@@ -65,6 +65,18 @@ def test_whole_core_session(tmp_path) -> None:
         assert res["rp.frames"] == len(frames) and res["us.fwd"] == len(frames) and res["ord.sent"] == len(m.orders) and res["ord.drop"] == 0
         chk = B.order_frames_vs_model(res, m)
         assert not chk["problems"] and chk["compared"] == len(m.orders), chk
+        # every top-of-book update record of the book, in order, equal to brief 110's model (bit exact), whole core
+        tu = X.monitors(log)["tu"]
+        want = [(r["inst"], r["side"], r["px"], r["sz"], int(r["ok"]), r["cause_px"]) for r in m.tus]
+        assert tu == want, (len(tu), len(want), next((i for i, (a, b) in enumerate(zip(tu, want)) if a != b), None))
+        # the order frames on the transmit side of the MAC: every non-idle XGMII word, parsed by the independent reference parser; the good ones equal the model's frames
+        from designs.b96_kr260_10g.model import pcs
+        wire = [f for f in pcs.parse_xgmii(X.monitors(log)["txw"] + [(0x0707070707070707, 0xFF)] * 4) if "data" in f]
+        good = [f for f in wire if f.get("fcs_ok") and len(f["data"]) == 113 and f["data"][23] == 6]          # TCP frames of 113 bytes: the orders
+        assert len(good) == len(m.orders), (len(good), len(m.orders))
+        for k, (f, (fr, sq)) in enumerate(zip(good, [(o["frame"], 1 + 59 * i) for i, o in enumerate(m.orders)])):
+            assert not H.check_order_frame(f["data"], fr, my_mac=H.DEFAULTS["my_mac"], venue_mac=H.DEFAULTS["venue_mac"], my_ip=H.DEFAULTS["my_ip"], venue_ip=H.DEFAULTS["venue_ip"],
+                                           sport=H.DEFAULTS["sport"], dport=H.DEFAULTS["order_port"], seq=sq, ack=1), f"order {k} on the wire"
 
 
 def test_latency_record(tmp_path) -> None:

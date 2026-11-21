@@ -135,3 +135,31 @@ def test_stage_sessions_are_candidates_and_orders() -> None:
     for p in pkts:
         mm.feed(p)
     assert len(mm.orders) == 8
+
+
+def test_udp_sender_on_the_loopback_interface() -> None:
+    import socket
+    import threading
+    rx = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    rx.bind(("127.0.0.1", 0))
+    rx.settimeout(2.0)
+    port = rx.getsockname()[1]
+    cfg = Cfg()
+    items = gen.Gen(5, cfg).stream(20, max_per_pkt=2)
+    got = []
+    th = threading.Thread(target=lambda: [got.append(rx.recvfrom(4096)[0]) for _ in range(len(items))])
+    th.start()
+    assert H.send_udp(items, "127.0.0.1", port, pps=2000) == len(items)
+    th.join(5)
+    assert got == [it.pkt for it in items]
+    assert H.ipaddress_is_multicast("233.54.12.1") and not H.ipaddress_is_multicast("192.168.58.10")
+
+
+def test_board_driver_runs_the_latency_stage_in_two_modes(monkeypatch) -> None:
+    from designs.b96_kr260_10g.rm_gp_itch.host import b127_board as BB
+    from designs.b96_kr260_10g.rm_gp_itch.host import b127_stages as S
+    calls = []
+    monkeypatch.setattr(S, "stage_latency", lambda run, passes, spec, **kw: calls.append((passes, spec)) or {"stage": "latency", "pass": True, "reasons": [], "numbers": {}})
+    monkeypatch.setitem(S.STAGES, "smoke", lambda run, **kw: {"stage": "smoke", "pass": False, "reasons": ["x"], "numbers": {}})
+    out = BB.run_stages(object(), ("smoke", "latency"), None, 7)
+    assert calls == [(7, False), (7, True)] and list(out) == ["smoke", "latency_at_verdict", "latency_speculative", "all_pass"] and out["all_pass"] is False

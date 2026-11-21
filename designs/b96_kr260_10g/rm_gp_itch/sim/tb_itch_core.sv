@@ -7,7 +7,7 @@
 //   D <ns>                    wait                     L              wait for the link (GT_STAT TX_DONE, RX_DONE, PCS block lock)
 //   P <text>                  print a marker line      E              end
 // Monitors (printed, one line each; times are the absolute ns of the clock edge that LOADS the signal): XW <n> <idx> <t> the receiver's PCS output words of frame n (idx 0 is the
-// start word, idx 1 the first data word); MW <idx> <t> the MAC receiver's output words (idx 0 is the destination MAC word); GO <t> the risk logic's start of an order; OSOP <t> the
+// start word, idx 1 the first data word); MW <idx> <t> the MAC receiver's output words (idx 0 is the destination MAC word); TU <inst> <side> <px> <sz> <ok> <cpx> every top-of-book update record of brief 110's book (in order); GO <t> the risk logic's start of an order; OSOP <t> the
 // start strobe of an order frame in the transmit MAC (the clock its preamble word is in the MAC's output register); TXW <d> <c> every non-idle word the transmit MAC hands to the PCS.
 module tb_itch_core #(
     parameter bit RM_OWN = 1'b1
@@ -67,6 +67,7 @@ module tb_itch_core #(
             if (u.g_rm.u_rx.m_sof) nm = 0; else nm = nm + 1;
             if (nm <= 20) $display("MW %0d %0.3f", nm, t);
         end
+        if (u.g_rm.u_ip.u_it.tu_v) $display("TU %0d %0d %0d %0d %0d %0d", u.g_rm.u_ip.u_it.tu_inst, u.g_rm.u_ip.u_it.tu_side, u.g_rm.u_ip.u_it.tu_px, u.g_rm.u_ip.u_it.tu_sz, u.g_rm.u_ip.u_it.tu_ok, u.g_rm.u_ip.u_it.tu_cpx);
         if (u.g_rm.u_ip.u_it.go) $display("GO %0.3f", t);
         if (u.g_rm.u_tx.ord_sop) $display("OSOP %0.3f", t);
         if (u.g_rm.u_tx.adv && !(u.g_rm.u_tx.x_d == 64'h0707070707070707 && u.g_rm.u_tx.x_c == 8'hFF)) $display("TXW %h %h", u.g_rm.u_tx.x_d, u.g_rm.u_tx.x_c);

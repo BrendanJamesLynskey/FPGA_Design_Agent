@@ -32,7 +32,7 @@ def monitors(log: str) -> dict:
     """XW per frame: {frame n: {idx: t}}, MW {idx: [t...]}, GO [t], OSOP [t], TXW [(d, c)]."""
     xw: dict[int, dict[int, float]] = {}
     mw: list[tuple[int, float]] = []
-    go, osop, txw = [], [], []
+    go, osop, txw, tu = [], [], [], []
     for l in log.splitlines():
         t = l.split()
         if not t:
@@ -47,7 +47,9 @@ def monitors(log: str) -> dict:
             osop.append(float(t[1]))
         elif t[0] == "TXW":
             txw.append((int(t[1], 16), int(t[2], 16)))
-    return {"xw": xw, "mw": mw, "go": go, "osop": osop, "txw": txw}
+        elif t[0] == "TU":
+            tu.append(tuple(int(v) for v in t[1:7]))
+    return {"xw": xw, "mw": mw, "go": go, "osop": osop, "txw": txw, "tu": tu}
 
 
 class LazyResult(dict):

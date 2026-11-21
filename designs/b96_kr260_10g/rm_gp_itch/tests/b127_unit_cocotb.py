@@ -94,6 +94,8 @@ class Unit:
         v |= (self.cmd_seq << 16) << (32 * C["CMD"]) | (self.cw[C["CMD"]] & 0xFFFF) << (32 * C["CMD"])
         v &= ~(0xFFFFFFFF << (32 * C["RPW"]))
         v |= ((self.rpw_seq << 16) | (self.cw[C["RPW"]] & 0xFF)) << (32 * C["RPW"])
+        v &= ~(0xFFFFFFFF << (32 * C["TCPFA"]))
+        v |= ((getattr(self, "tcpf_seq", 0) << 16) | (self.cw[C["TCPFA"]] & 0x1F1F)) << (32 * C["TCPFA"])
         self.dut.cfg2.value = v
 
     async def command(self, bits: int):

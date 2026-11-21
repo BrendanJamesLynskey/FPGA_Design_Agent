@@ -50,6 +50,8 @@ payload word k is `{frame word 6+k [15:0], frame word 5+k [63:16]}`; the last wo
 protocol 6, total length 99, header checksum computed from the addresses; TCP ports `PORTS_A[31:16]` and `PORTS_B[15:0]`, sequence `IT_TCP_SEQ`, acknowledgement `IT_TCP_ACK`, PSH+ACK, window 0xFFFF), the rest is `ouch_enter`'s output, realigned by 6 bytes.
 **The TCP checksum field is 0: the stand-in's frame is not a valid TCP segment** (section 8).
 
+`ouch_enter`'s own `o_abort` pulse (it stops a frame of 8 words) is not used here: a 15-word frame cannot be stopped half way (the MAC needs every word), so the abort input is latched and becomes the poison on the last word.
+
 **`tx_mux`** has one owner at a time. The order stream wins the clock its first word arrives if the MAC is free; the frame source and the replay wait by holding their `valid`. An order frame that finds the MAC owned is **dropped whole and counted
 (`ord.drop`)**: the risk logic has already used its number and position. The stream cannot be paused (as tcp_fast's cannot), so it goes through an 8-entry FIFO and a head register; the MAC's one-clock-in-33 pause (`adv`) is absorbed there.
 
@@ -63,7 +65,7 @@ Owner rule: say what the start event, the end event and the path are. There are 
 - **T**: the clock `udp_strip`'s output holds the payload word that carries it (what brief 110's text calls T; its table starts there). T = X + 1 when the byte is in byte 0 or 1 of its MAC word, X + 2 otherwise.
 - **PCS word**: the clock the receive PCS output register loads the word (96E's measurement point; `results/b96e`).
 
-**End event:** the clock `mac64_tx`'s output register holds the **first word of the frame, the preamble** (`sop`). The first byte of the frame is the start character in it; the destination MAC follows in the next word. The PCS and the GT add
+**End event:** the clock `mac64_tx`'s output register holds the **first word of the frame, the preamble** (`sop`). The first byte of the frame is the start character in it; the destination MAC follows in the next word, and the first byte of the OUCH packet itself (its SoupBinTCP length field) is 54 bytes after the frame's first data byte: about 7 clocks later at 8 bytes a clock. The PCS and the GT add
 two more clocks before the start block is on the GT port (the same two the 96 measurements add).
 
 **Measured, in two benches** (every number is in a committed record; clocks of 6.2058 ns; the transceiver is a behavioural stand-in in both, so the GT's own delays are not in any figure):
@@ -188,7 +190,10 @@ Brief 119 (PR #245) built `tcp_fast`: software owns the TCP connection, the fabr
 4. the frame is 15 clocks long as before, so `busy` and the busy-order drop are unchanged; brief 119 measured 1546 LUTs and 2907 flip-flops for the block, to be added to this build's figures;
 5. the stand-in's frame bytes (a zero TCP checksum, sequence from `IT_TCP_SEQ`) are what the byte-for-byte checks in this brief's tests expect: they need the `tcp_frame_valid` variant of `host/itch_host.py` and tcp_fast's sequence rules.
 
-`tests/test_b127_hook.py` compiles the hook with tcp_fast's source (B119_RTL) and checks the ports agree; nothing more was simulated with it.
+**Simulated with the hook** (`tests/b127_hook_cocotb.py`, Icarus, the real MACs, brief 119's `tcp_fast.sv` from its branch; [`results/b127/hook_tcp_fast_sim.json`](../../../../results/b127/hook_tcp_fast_sim.json)): the connection is handed over
+through `TCPF_ADDR` and `TCPF_WDATA` as software would (addresses, ports, sequence, acknowledgement, window, then arm), a seeded session plays, and the order frames on the wire are checked: **both the IPv4 and the TCP checksums verify**, the payload equals brief 110's
+frame byte for byte, the sequence numbers run 1000, 1059, 1118 with the acknowledgement 777, a refused speculative candidate comes out as one **poisoned frame that consumes no sequence number**, and `go` to the start strobe is 3 clocks, the same as the stand-in. With speculation off the
+same session sends the same three orders and no poisoned frame. `tests/test_b127_hook.py` also compiles the hook and checks that its ports equal the stand-in's. Both skip unless tcp_fast's source is present (B119_RTL, or `designs/b119_tcp_fast/rtl/tcp_fast.sv` after the merge).
 
 ## 9. Build results
 

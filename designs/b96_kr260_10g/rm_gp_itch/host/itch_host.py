@@ -142,3 +142,33 @@ def check_order_frame(frame: bytes, expect59: bytes, **kw) -> list[str]:
         return [f"length {len(frame)} != {len(exp)}"]
     bad = [i for i in range(len(exp)) if frame[i] != exp[i]]
     return [f"byte {i}: {frame[i]:02x} != {exp[i]:02x}" for i in bad[:8]] + (["..."] if len(bad) > 8 else [])
+
+
+def send_udp(items: list, dest_ip: str, dest_port: int, *, pps: float = 0.0, ttl: int = 8, bind_ip: str | None = None) -> int:
+    """Send the packets of a seeded session (items from model/gen.py, or plain byte strings) as UDP datagrams to `dest_ip:dest_port`, unicast or multicast, at `pps` packets a second (0 = as fast as the
+    socket goes). For the NIC phase of the test plan (nothing here sends to a real venue: the destination is the bench board's address); the loopback test does not use it, it plays the same payloads from
+    the replay memory. Returns the number of datagrams sent. A packet marked `err` in the item is sent unchanged: a bad FCS cannot be made from a socket (the replay memory's poison bit makes one)."""
+    import socket
+    import time
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    if ipaddress_is_multicast(dest_ip):
+        s.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, ttl)
+        if bind_ip:
+            s.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_IF, socket.inet_aton(bind_ip))
+    elif bind_ip:
+        s.bind((bind_ip, 0))
+    n, t0 = 0, time.time()
+    for it in items:
+        pkt = it if isinstance(it, (bytes, bytearray)) else it.pkt
+        if pps:
+            wait = t0 + n / pps - time.time()
+            if wait > 0:
+                time.sleep(wait)
+        s.sendto(bytes(pkt), (dest_ip, dest_port))
+        n += 1
+    s.close()
+    return n
+
+
+def ipaddress_is_multicast(ip: str) -> bool:
+    return 224 <= int(ip.split(".")[0]) <= 239

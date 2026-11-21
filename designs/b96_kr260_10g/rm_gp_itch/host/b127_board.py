@@ -41,7 +41,21 @@ class BoardRunner(S.Runner):
         return plan.run(self.t)
 
 
-def run_session(t: bb.Transport, lock_text: str, out_dir: Path, *, loop_m: float, stages=("smoke", "counters", "latency", "rate", "risk"), sizes: dict | None = None) -> dict:
+def run_stages(runner: BoardRunner, stages, sizes: dict | None, latency_passes: int) -> dict:
+    """The stages in order; `latency` runs twice (speculation off, then on) as the two entries latency_at_verdict and latency_speculative."""
+    out: dict = {}
+    for name in stages:
+        kw = (sizes or {}).get(name, {})
+        if name == "latency":
+            for spec in (False, True):
+                out["latency_speculative" if spec else "latency_at_verdict"] = S.stage_latency(runner, passes=latency_passes, spec=spec, **kw)
+        else:
+            out[name] = S.STAGES[name](runner, **kw)
+    out["all_pass"] = all(v["pass"] for v in out.values())
+    return out
+
+
+def run_session(t: bb.Transport, lock_text: str, out_dir: Path, *, loop_m: float, stages=("smoke", "counters", "latency", "rate", "risk"), sizes: dict | None = None, latency_passes: int = 125) -> dict:
     if not lock_text.startswith("97I:"):
         raise RuntimeError("take _handoff/board.lock with a text starting '97I:' first, and pass that text")
     b = bb.Board(t)
@@ -73,7 +87,7 @@ def run_session(t: bb.Transport, lock_text: str, out_dir: Path, *, loop_m: float
             res["stopped"] = "link did not come up on the loop"
         else:
             t.wr(0x018, 1)                                   # clear the base counters
-            res["stages"] = S.run_all(runner, stages, sizes)
+            res["stages"] = run_stages(runner, stages, sizes, latency_passes)
             res["ddm_end"] = b.ddm()
         res["conditions_end"] = runner.sample("end")
         res["conditions"] = runner.conditions
@@ -108,14 +122,7 @@ def main() -> None:
     repo = Path(__file__).resolve().parents[4]
     t = bb.VivadoTcl(repo, a.serial, version_pin.vivado_path())
     try:
-        # latency runs twice: speculation off ("at_verdict") and on; the run_all dict keys by stage name, so the second is its own entry
-        res = run_session(t, a.lock_text, a.out, loop_m=a.loop_m, stages=tuple(s for s in a.stages.split(",") if s != "latency"), sizes=None)
-        if "stages" in res and "latency" in a.stages.split(","):
-            for spec in (False, True):
-                r = S.stage_latency(BoardRunner(t), passes=a.latency_passes, spec=spec)
-                res["stages"]["latency_speculative" if spec else "latency_at_verdict"] = r
-            res["stages"]["all_pass"] = all(v["pass"] for k, v in res["stages"].items() if k != "all_pass")
-            (a.out / "stage1.json").write_text(json.dumps(res, indent=1, default=str))
+        res = run_session(t, a.lock_text, a.out, loop_m=a.loop_m, stages=tuple(a.stages.split(",")), latency_passes=a.latency_passes)
     finally:
         t.close()
     out = {k: res.get(k) for k in ("id", "features", "link_up", "stopped", "roc_ok")}
