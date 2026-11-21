@@ -1,0 +1,41 @@
+# run_vivado.log was empty after the build: the executor's 'git stash -u' removed this folder while the build's tee held the file open (the tee wrote to a deleted file). Reconstructed: the last 40 lines of the flow's own stdout (designs/b96_kr260_10g/rm_gp_bypass/build/base/stdout.txt).
+# }
+FLOW-BUILD-ID 3e26ea6e
+# write_bitstream -force $out/$top.bit
+Command: write_bitstream -force /home/brendan/Claude_sandbox/_worktrees/96f1b/designs/b96_kr260_10g/rm_gp_bypass/build/base/kr260_10g_top.bit
+Attempting to get a license for feature 'Vivado_Implementation' and/or device 'xck26'
+INFO: [Common 17-349] Got license for feature 'Vivado_Implementation' and/or device 'xck26'
+Running DRC as a precondition to command write_bitstream
+INFO: [IP_Flow 19-1839] IP Catalog is up to date.
+INFO: [Vivado 12-3199] DRC finished with 0 Errors
+INFO: [Vivado 12-3200] Please refer to the DRC report (report_drc) for more information.
+Integrating Hard IP ELF/MEM with the PDI.
+Initializing bitstream generation complete. Time (s): cpu = 00:00:01 ; elapsed = 00:00:01 . Memory (MB): peak = 5207.719 ; gain = 0.000 ; free physical = 1965 ; free virtual = 19541
+Loading data files...
+Loading site data...
+Loading route data...
+Processing options...
+Creating bitmap...
+Creating bitstream...
+Writing bitstream /home/brendan/Claude_sandbox/_worktrees/96f1b/designs/b96_kr260_10g/rm_gp_bypass/build/base/kr260_10g_top.bit...
+Generate Bitstream complete. Time (s): cpu = 00:00:23 ; elapsed = 00:00:24 . Memory (MB): peak = 5207.719 ; gain = 0.000 ; free physical = 1851 ; free virtual = 19438
+INFO: [Vivado 12-1842] Bitgen Completed Successfully.
+INFO: [Common 17-83] Releasing license: Vivado_Implementation
+6 Infos, 0 Warnings, 0 Critical Warnings and 0 Errors encountered.
+write_bitstream completed successfully
+write_bitstream: Time (s): cpu = 00:00:31 ; elapsed = 00:01:01 . Memory (MB): peak = 5207.754 ; gain = 0.035 ; free physical = 1829 ; free virtual = 19418
+# if {$ila} {
+#     write_debug_probes -force $out/$top.ltx
+#     # brief 48: an ILA that is an IP can get a .ltx the hardware manager calls inconsistent; repair what is safe, fail the build on
+#     # any gap (flow/ltx_fix.py). The core-inserted ILA of 2025.2 has no probe_nets.txt and is not touched.
+#     if {[file exists $out/probe_nets.txt]} {
+#         if {[catch {exec python3 $flow_dir/ltx_fix.py $out} msg]} { error "ltx_fix failed: $msg" }
+#         puts "FLOW-LTX $msg"
+#     }
+# }
+# stage bitstream
+FLOW-STAGE bitstream at 1774.457s
+# close $stage_log
+# puts "FLOW-DONE $out/$top.bit"
+FLOW-DONE /home/brendan/Claude_sandbox/_worktrees/96f1b/designs/b96_kr260_10g/rm_gp_bypass/build/base/kr260_10g_top.bit
+INFO: [Common 17-206] Exiting Vivado at Fri Nov 20 17:41:27 2026...
