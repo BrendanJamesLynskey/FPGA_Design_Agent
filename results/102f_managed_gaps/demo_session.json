@@ -1,0 +1,120 @@
+{
+ "design": "b102_managed_ext",
+ "steps": [
+  {
+   "step": "write lint/third_party.vlt",
+   "refused": true,
+   "rule": "managed-waiver",
+   "output": "lint/third_party.vlt is a waiver or lint-configuration file the flow reads to excuse findings: in a managed project it is the owner's, read-only for the agent. Fix the finding in the RTL; if a waiver is justified, ask the owner to add it (or to set agent_may_write_waivers in project.yaml)"
+  },
+  {
+   "step": "write lint/x.vlt",
+   "refused": true,
+   "rule": "managed-waiver",
+   "output": "lint/x.vlt is a waiver or lint-configuration file the flow reads to excuse findings: in a managed project it is the owner's, read-only for the agent. Fix the finding in the RTL; if a waiver is justified, ask the owner to add it (or to set agent_may_write_waivers in project.yaml)"
+  },
+  {
+   "step": "write waivers.yaml",
+   "refused": true,
+   "rule": "managed-waiver",
+   "output": "waivers.yaml is a waiver or lint-configuration file the flow reads to excuse findings: in a managed project it is the owner's, read-only for the agent. Fix the finding in the RTL; if a waiver is justified, ask the owner to add it (or to set agent_may_write_waivers in project.yaml)"
+  },
+  {
+   "step": "write rtl/fcs_ctrl.sv",
+   "refused": true,
+   "rule": "managed-waiver",
+   "output": "rtl/fcs_ctrl.sv adds an in-source waiver comment (std-waive, verilator lint_off, translate_off): waivers are the owner's in a managed project. Fix the finding in the code, or ask the owner to add the waiver"
+  },
+  {
+   "step": "a tool that runs design code writes the frozen lfsr.v and the waiver file",
+   "result": {
+    "third_party/verilog-ethernet/lfsr.v": "PermissionError: Permission denied",
+    "lint/third_party.vlt": "PermissionError: Permission denied"
+   },
+   "files_unchanged": true,
+   "mode_after": "0o664",
+   "integrity_refusal": false
+  },
+  {
+   "step": "the same attempts inside the sandbox container (protected files mounted read-only)",
+   "returncode": 0,
+   "output": [
+    "lfsr.v write refused: Read-only file system",
+    "lfsr.v chmod+write refused: Read-only file system",
+    "lfsr.v replace refused: Device or resource busy",
+    "third_party.vlt write refused: Read-only file system",
+    "third_party.vlt chmod+write refused: Read-only file system",
+    "third_party.vlt replace refused: Device or resource busy"
+   ],
+   "stderr": ""
+  },
+  {
+   "step": "scope record (config.json and summary.json carry it)",
+   "scope": {
+    "components": [
+     "ctrl"
+    ],
+    "source": "resolved",
+    "request": "make the verdict one clock faster",
+    "note": "resolved from the request text",
+    "plan": {
+     "will_touch": [
+      "ctrl"
+     ],
+     "read_only": [
+      "lfsr"
+     ],
+     "not_in_scope_owned": [
+      "top",
+      "crc_adapter"
+     ],
+     "excluded": []
+    },
+    "time": "2026-11-20 17:20:28",
+    "selectable": [
+     "top",
+     "ctrl",
+     "crc_adapter"
+    ],
+    "frozen": [
+     "lfsr"
+    ],
+    "excluded": [],
+    "out_of_scope": [
+     "top",
+     "crc_adapter"
+    ],
+    "manifest_sha256": "5071ecb805cd2b3ed7094469e1baf2cd45a886f023869eb1b7afc139ec5ad2a2",
+    "waiver_files": "owner-only"
+   }
+  },
+  {
+   "step": "resume, same scope",
+   "problems": []
+  },
+  {
+   "step": "resume, another scope",
+   "problems": [
+    "--scope crc_adapter differs from the run's scope ctrl: a resume continues the same request"
+   ]
+  },
+  {
+   "step": "resume, a wider scope",
+   "problems": [
+    "--scope ctrl, crc_adapter differs from the run's scope ctrl: a resume continues the same request"
+   ]
+  },
+  {
+   "step": "resume, scope naming the frozen block",
+   "problems": [
+    "--scope: lfsr is frozen: it cannot be edited and so cannot be in a scope; owned components: top, ctrl, crc_adapter"
+   ]
+  },
+  {
+   "step": "resume after the manifest was edited",
+   "problems": [
+    "project.yaml changed since the run started (ownership, contracts or the waiver grant may differ): start a new request"
+   ]
+  }
+ ]
+}

@@ -24,11 +24,16 @@ def listing(root: Path, extra: list[Path] | None = None) -> list[dict[str, Any]]
             continue
         sm = api.summary(cap)
         st = cap["settings"]
+        eye = sm.get("eye") or {}
+        phase = ((cap.get("selftest") or {}).get("clk_phase") or {}) if isinstance(cap.get("selftest"), dict) else {}
         out.append({"id": S.src(root, f)["file"], "label": cap.get("label"), "synthetic": bool(cap.get("synthetic")), "created": cap.get("created"),
                     "equaliser": st.get("equaliser"), "line_rate_gbps": st.get("line_rate_gbps"), "complete": C.is_complete(cap) if st.get("expected_points") is not None else None,
                     "design": (cap.get("design") or {}).get("name"), "board": (cap.get("design") or {}).get("board"),
                     "no_data": C.no_data_stats(cap)["no_data"], "points": len(cap.get("points") or []), "target_ber": st.get("target_ber"),
-                    "width_ui": (sm.get("eye") or {}).get("width_ui"), "height_mv": (sm.get("eye") or {}).get("height_mv"), "post_equaliser": True,
+                    "width_ui": eye.get("width_ui"), "width_ui_lo": eye.get("width_ui_lo"), "width_ui_hi": eye.get("width_ui_hi"),
+                    "height_mv": eye.get("height_mv"), "height_mv_lo": eye.get("height_mv_lo"), "height_mv_hi": eye.get("height_mv_hi"), "counts": eye.get("counts"),
+                    "shallow_note": eye.get("shallow_note"), "clk_phase_sel": phase.get("sel") if isinstance(phase.get("sel"), int) else None,
+                    "tx": {k: (cap.get("settings") or {}).get("tx", {}).get(k) for k in ("diff", "pre", "post")} if isinstance((cap.get("settings") or {}).get("tx"), dict) else None, "post_equaliser": True,
                     "conditions": cap.get("conditions") or {}, "source": S.src(root, f, created=cap.get("created"))})
     return out
 

@@ -1,0 +1,35 @@
+# rm_gp_ml (brief 113): build rm_gp (RATE_MATCH = 1, RM_OWN = 1, ENT_SYNC = 1) with the ML decision stage in the trading path (rm_gp_ml/rtl/ml_stage.sv: the one-instrument book, the brief 87 order-flow features and the 30-tree boosted classifier gbt_comb).
+# Differences from rm_gp, and only these: copies of trade64.sv, rx_path.sv and b96_core.sv in rm_gp_ml/rtl (the lines that differ are marked 113), the new ml_pkg.sv and ml_stage.sv, the brief 87 gbt_comb.sv, and the ML registers at 0x300 (rm_gp_ml/docs/ml_registers.md). With ML_CTRL bit 0 = 0 (reset) the rule decides exactly as in rm_gp.
+top: kr260_10g_top
+part: xck26-sfvc784-2LV-c
+board: kr260           # boards/kr260/board.yaml
+sources:
+  - designs/b58a_trigger/rtl/jtag_bus.sv
+  - designs/b96_kr260_10g/rtl/b96_pkg.sv
+  - designs/b96_kr260_10g/rm_gp_ml/rtl/ml_pkg.sv
+  - designs/b96_kr260_10g/rtl/pcs_tx.sv
+  - designs/b96_kr260_10g/rtl/pcs_rx.sv
+  - designs/b96_kr260_10g/rtl/mac64_tx.sv
+  - designs/b96_kr260_10g/rtl/mac64_rx.sv
+  - designs/b96_kr260_10g/rtl/hs_vec.sv
+  - designs/b96_kr260_10g/rtl/frame_src.sv
+  - designs/b87_ml_trading/rtl/gen/gbt_comb.sv
+  - designs/b96_kr260_10g/rm_gp_ml/rtl/ml_stage.sv
+  - designs/b96_kr260_10g/rm_gp_ml/rtl/trade64.sv
+  - designs/b96_kr260_10g/rtl/rate_match.sv
+  - designs/b96_kr260_10g/rtl/rate_match_gp.sv
+  - designs/b96_kr260_10g/rtl/tx_path.sv
+  - designs/b96_kr260_10g/rm_gp_ml/rtl/rx_path.sv
+  - designs/b96_kr260_10g/rm_gp_ml/rtl/rx_path_legacy.sv
+  - designs/b96_kr260_10g/rtl/es_ctrl.sv
+  - designs/b96_kr260_10g/rm_gp_ml/rtl/b96_core.sv
+  - designs/b96_kr260_10g/rtl/kr260_10g_top.sv
+constraints:
+  - designs/b96_kr260_10g/design.xdc
+ip_tcl:                 # AMD IP created in the in-memory project (flow/prepare.py, flow/build.tcl): brief 56A's GT Wizard, unchanged
+  - designs/b96_kr260_10g/ip/amd_ip.tcl
+generics:
+  NEAR_END: "1'b0"
+  TRADE: "1'b1"         # BUILD_STAMP is added by the flow
+  RATE_MATCH: "1'b1"
+  RM_OWN: "1'b1"

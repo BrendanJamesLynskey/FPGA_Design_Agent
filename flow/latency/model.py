@@ -114,7 +114,8 @@ def latency_path(design: Path, core_sim: dict[str, Any], slack: dict[str, Any] |
                      "netlist": {"cells": sl.get("cells"), "clock": sl.get("clock"), "setup_slack_ns": sl.get("setup_slack_ns")} if sl else None,
                      "timing_critical": (sl.get("setup_slack_ns") is not None and sl["setup_slack_ns"] < CRITICAL_SLACK_NS) if sl else None,
                      "segment": s["segment"], "why": s["why"], "remove_risk": s["remove_risk"],
-                     "technique": s.get("technique", "none"), "removable": int(s.get("removable", 0))})
+                     "technique": s.get("technique", "none"), "removable": int(s.get("removable", 0)),
+                     **({"coupled_with": [str(x) for x in s["coupled_with"]]} if s.get("coupled_with") else {})})      # brief 104B: optional, read by flow/options/split.py
     problems = []
     for sg in segs.values():
         if sg["measured"] is not None and sg["sum"] != sg["measured"]:

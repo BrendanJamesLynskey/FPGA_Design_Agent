@@ -88,19 +88,82 @@ parameters:
   note: QPLL0 from the 156.25 MHz reference; the user clocks (161.133 MHz) carry 64 bits a word and the PCS takes one clock
     pause in 33
 files:
+- path: designs/b96_kr260_10g/verif/pyuvm/README.md
+  what: how the pyuvm (Python UVM on cocotb and Icarus) bench for the PCS and MAC is built, run and limited; the same job
+    as the SystemVerilog UVM bench (brief 123)
+  sha256: 0b5695e70dafc64b756dee23fde5f9a36a4a6ccfe472cc24667dca7445ddb6dc
+- path: designs/b96_kr260_10g/verif/pyuvm/COMPARISON.md
+  what: the measured comparison of the pyuvm and the SystemVerilog UVM bench, where each fits the project, and a section
+    for the verification course (brief 123)
+  sha256: 0f9578afff8be3fbe051138e67625d72f3678adf18e63fba96ab9da95b26b8e2
+- path: designs/b96_kr260_10g/verif/uvm/README.md
+  what: how the UVM 1.2 bench for the PCS and MAC is built, what each part checks, the coverage and the seeded bugs (brief
+    112)
+  sha256: 28bc0ecbd57c394ae029c90984b71916d61b1c43789e945feb54cb737a03e131
 - path: designs/b96_kr260_10g/rm_gp_bypass/rtl/b96_core.sv
-  what: copy of rtl/b96_core.sv for build rm_gp_bypass with the GT buffer-bypass controllers connected and run gates (brief
-    96F1)
-  sha256: 292b43f4aa7f84df451ea8592ac709e7af6e46577ced5854c37177951f14ec27
+  what: copy of rtl/b96_core.sv for build rm_gp_bypass with the GT buffer-bypass controllers connected, run gates and (brief
+    96F1b) the alignment timeout and retry status in GT_BUF
+  sha256: 82d6c4423879c993086ebb0e937cab87fc484486f4a418ad57604d2cd521ecb4
+- path: designs/b96_kr260_10g/rm_gp_bypass/rtl/gt_bp_ctl.sv
+  what: per-direction reset synchroniser, 30 ms TX / 130 ms RX alignment timeout with bounded retry and gave-up flag for
+    the bypass controller (brief 96F1b)
+  sha256: 71963d3f2f143fd56755e6eb8ff536f892ba05c51d8e4e365545ffc75717c328
 - path: designs/b96_kr260_10g/rm_gp_bypass/rtl/gt_bp_gate.sv
   what: per-direction gate that releases the paths only after the bypass controller has restarted and finished (brief 96F1)
-  sha256: 2c7f992cf901e5eb51841d1743563b8efa17d4fd7e5fd99cfba4ab78a1d15193
+  sha256: 5e384b6757a9df15c64934aba8fc3f3825cbd30202ef6dbaa743074b6f2ae0bf
 - path: designs/b96_kr260_10g/ip/amd_ip_bypass.tcl
   what: the GT Wizard configuration with both buffers bypassed (brief 96F1)
   sha256: 2b44c98771bbb25bbb1fcd35dcd0e72a44360a8ef81a6887391271537c0bfef9
 - path: designs/b96_kr260_10g/host/b96f1_bypass.py
   what: board driver and pre-registered verdict for build rm_gp_bypass (brief 96F1)
-  sha256: 698657c195211ac518a67ba94c1cd7db5b15afef3e16fbf15c2f8df14a4a6aa9
+  sha256: 8e94dd345a2f031e3d01134a89e567aadfb6ac37feb9a3d28b3ca0e51cafa8b7
+- path: designs/b96_kr260_10g/lat_all3_bypass/build.yaml
+  what: build lat_all3_bypass, the default receive path with the 97C latency cuts and both GT elastic buffers bypassed;
+    points at the parent builds' files, no copy (brief 126)
+  sha256: bbb4d85334c8fa42217212d9a734f0bd54b5752378ea60894b27a64b82394127
+- path: designs/b96_kr260_10g/host/b126_all3_bypass.py
+  what: board driver and pre-registered verdict for build lat_all3_bypass (brief 126)
+  sha256: 6fef448fa449cdc8e02ee097554090367e06f53faa4365f94695b3c60c245119
+- path: designs/b96_kr260_10g/rm_gp_ml/rtl/ml_stage.sv
+  what: 'the ML decision stage of build rm_gp_ml: one-instrument book, order-flow features, classifier pipeline and counters
+    (brief 113)'
+  sha256: 1c1abfce186f06587f9c1ceb31e8a30cc24839884d0097753621d83023c50b1f
+- path: designs/b96_kr260_10g/rm_gp_ml/rtl/ml_pkg.sv
+  what: constants shared by the ML stage (brief 113)
+  sha256: 71363adf1475a500344a199521bfceba6a189ca0f2bd95f966eea1163576ccf8
+- path: designs/b96_kr260_10g/rm_gp_ml/rtl/trade64.sv
+  what: copy of rtl/trade64.sv for build rm_gp_ml with the model's veto on the rule's decision (brief 113)
+  sha256: 3e80ab02a49814d865299ea3830da0fb89d23126c87e612a5e4a0f39171cf262
+- path: designs/b96_kr260_10g/rm_gp_ml/rtl/rx_path.sv
+  what: copy of rtl/rx_path.sv for build rm_gp_ml with the ML stage's ports through to trade64 (brief 113)
+  sha256: da1472f5fa6964a5eab637be1141d1d86b4a51a068570f5521811c5c672eaf82
+- path: designs/b96_kr260_10g/rm_gp_ml/rtl/rx_path_legacy.sv
+  what: copy of rtl/rx_path_legacy.sv for build rm_gp_ml with the ML ports tied off (brief 113)
+  sha256: cc5cf55776ac0e5f0e27f17bc04075bf75ddc29bbdeaf83b8352a737433dcd1c
+- path: designs/b96_kr260_10g/rm_gp_ml/rtl/b96_core.sv
+  what: copy of rtl/b96_core.sv for build rm_gp_ml with the ML registers, crossings and status words (brief 113)
+  sha256: 46ceb4153e39aefc887b6d6c670df9ec60b4d62e1bf7d4b66598032ff67b2063
+- path: designs/b96_kr260_10g/rm_gp_ml/build.yaml
+  what: how flow/run_vivado.sh builds rm_gp_ml (rm_gp with the ML stage, brief 113)
+  sha256: a081d3c86e9c5c8a02284c008c3b2fc1eb43ddcf55d3f5b0a1c3f6c14601e71b
+- path: designs/b96_kr260_10g/rm_gp_ml/docs/ml_stage.md
+  what: which model block was chosen and why, how the stage is arranged, the measured cost in context (brief 113)
+  sha256: beb51c0a3ce7d2dae7eb5fb96979faaca27001ecca29da26a9f7e152dc6f0376
+- path: designs/b96_kr260_10g/rm_gp_ml/docs/ml_registers.md
+  what: register map of the ML stage, generated from rm_gp_ml/regmap_ml.py (brief 113)
+  sha256: 487b9de7fe54edada45e153d870cf447f77e7e98f83c81b931c823941dc2a429
+- path: designs/b96_kr260_10g/rm_gp_ml/model/twin.py
+  what: Python twin of the ML stage over the brief 87 references (brief 113)
+  sha256: ec29cc5d3883c9ebb8623626ad5be533f53f20b3d030b919e9debd40c23efff4
+- path: designs/b96_kr260_10g/rm_gp_ml/model/stream.py
+  what: synthetic Bench Feed v1 streams as 10GBASE-R words, with the twin's expectation per frame (brief 113)
+  sha256: 7047fabb3245abb63027c83131a57d1704af6b08c4e28164116fa9a5c1e97e6d
+- path: designs/b96_kr260_10g/rm_gp_ml/sim/tb_ml_core.sv
+  what: whole-core xsim bench with a synthetic feed injected on the receive words (brief 113)
+  sha256: bcc7b0ea4d8bc0e2f5258112fb5408fcb9ad16bf4f8643e7471dae4865f7c6b1
+- path: designs/b96_kr260_10g/host/b113_ml.py
+  what: board driver and pre-registered verdict for build rm_gp_ml (brief 113)
+  sha256: 167efbfa06b611758d4efc6556bf0cc61e4e8f417c2edb43756bf19ebe1dda31
 - path: designs/b96_kr260_10g/rtl/es_ctrl.sv
   what: DRP master and eye-scan point sequencer for the GTHE4 channel (EYESCAN = 1), brief 96D
   sha256: 671362a1c02eff42f9dc8af2c6919b854a62b3a93e7702d65ed7f6bf278e8e3e
@@ -175,7 +238,7 @@ files:
   sha256: 4dec8c5ba8f6dccc6273f45d40a7d95a6668f5fe09350c0a0d80cc6c07ea1118
 - path: designs/b96_kr260_10g/docs/design.md
   what: 'design note: decisions and alternatives'
-  sha256: 8ccf90a397c6eb5aac3b72462dbd23038630253c52914d5c07da07aa3b6b9c9d
+  sha256: 7007e677f1416b0d16027003745afedc3f57ea4d3117ee50f3d33e7c1f2d6f80
 - path: designs/b96_kr260_10g/docs/board_run_plan.md
   what: stage 3 plan for the board
   sha256: 678413f0be0f0c2692b2d1118cd8a8e54ec6514bd5e643485402e34ecc83c61b
@@ -184,19 +247,25 @@ files:
   sha256: 376623bbd5f6b71f50a352b59b252e1c27ab8ecc4643c3cc2871f7614e4bc588
 - path: designs/b96_kr260_10g/docs/loop_timing_feasibility.md
   what: loop-timing and buffer-bypass feasibility study (96F)
-  sha256: fccc26a7547e8ffb0cf187739c894ee46e9af01058fa269cec48df918828782d
+  sha256: 500557ea561e773995a3cf067fb890ed9684dfede13f3844a351658c4621275a
 - path: designs/b96_kr260_10g/docs/loop_timing_board_test_plan.md
   what: board test plan for loop timing (96F, for approval)
-  sha256: c822552f411e0e5b795e292a52a772a318a71d5611a1c44efc7ec84f3b87b325
+  sha256: 9740d509f2fb3abb92e0ecdd8074ac6ea23965d727cf50a6d943e05b91cdac12
+- path: designs/b96_kr260_10g/docs/loop_timing_sources.md
+  what: AMD sources read for loop timing (XAPP1276, Wizard example, TXPI, QPLL outside the core; 96F2)
+  sha256: c53e4dbe340fc31b4c337f9a64e31122fe54fa6f31fcecf934b5f4a8428d9b16
+- path: docs/latency_definitions.md
+  what: our latencies against STAC-T0 and wire-to-wire definitions (109)
+  sha256: 7323927a6022db80211a3d7aa1119f4496fe426b6fe409aaab79efc1ffc2f46d
 - path: designs/b96_kr260_10g/model/loop_timing.py
   what: Python model of the loop-timing frequency tracker (96F)
   sha256: a2d1bf64286bc5e220c47c4fe3137c9855383b087bddf33dba4c51fe6d0c35e5
 - path: designs/b96_kr260_10g/regmap.py
   what: register map as data
-  sha256: 79db1ce95b88e3c916a8401d2769dddae7e8dfb0a7f30b69165557b99a782397
+  sha256: 020260c536b5e86394e3132eef6f97d1e6b700e8e9a18e70f468d00fd76250e2
 - path: designs/b96_kr260_10g/docs/register_map.md
   what: interface datasheet
-  sha256: 039fc1ce6d3ddca510db3242753495ee0a421a1924d658f19a80e660fb7002d8
+  sha256: d2846103ad9f272c61ce8c19447647d40564796dd4c67900e9c989dcf0a0bae1
 commands:
 - what: simulate the PCS, MAC and core against the Python reference
   cmd: python -m pytest -q designs/b96_kr260_10g/tests
@@ -213,6 +282,19 @@ commands:
   heavy: true
   minutes: 22
   needs: as above
+- what: the UVM 1.2 regression of the PCS and MAC in xsim (every test over its seeds, coverage merge, seeded bugs)
+  cmd: designs/b96_kr260_10g/verif/uvm/scripts/run_regress.sh --mutants --record results/112_uvm_pcs_mac
+  heavy: false
+  minutes: 40
+  needs: Vivado 2026.1 xsim (Basic tier is enough); a simulation-only run, no heavy slot while the load is under 6 and more
+    than 12 GB is free
+- what: the pyuvm regression of the PCS and MAC in Icarus (every test over its seeds, coverage merge, seeded bugs); needs
+    pyuvm 5.0.0 and cocotb-coverage in a venv that sees cocotb 2.0.1
+  cmd: PYTHONPATH=. python designs/b96_kr260_10g/verif/pyuvm/scripts/run_regress.py --mutants --record results/123_pyuvm_pcs_mac
+  heavy: false
+  minutes: 15
+  needs: Icarus Verilog 12, cocotb 2.0.1, pyuvm 5.0.0, cocotb-coverage; a simulation-only run, no heavy slot while the load
+    is under 6 and more than 12 GB is free
 evidence:
 - id: E1
   activity: simulation
@@ -292,6 +374,39 @@ evidence:
     on the reset-done edge, stale done held off, error holds the paths in reset)
   record: results/b96f1/bypass_seq/result.txt
   sha256: 457378d737a4382242b69cf84b2db58aacf9a88707d0cba642934a5b1b091dd8
+- id: E11
+  activity: build
+  result: pass
+  what: build rm_gp_bypass rebuilt with the reset synchroniser and the alignment timeout and retry (brief 96F1b), all 29
+    gates, WNS +0.118 ns, WHS +0.010 ns, report_cdc no critical and no waivers, stamp 86037ce1; not loaded on a board; supersedes
+    E9
+  record: results/b96f1b/builds/rm_gp_bypass/digest.json
+  sha256: e4681b81a17fbd359dba719b486eaa392fbfd201978db865f4051b97e02befdb
+- id: E12
+  activity: simulation
+  result: pass
+  what: gt_bp_ctl with the Wizard's own controllers against a stand-in transceiver in xsim (reset assert and release, normal
+    start, retries, give-up, error not retried, clock inactive), plus the 28 checks of E10 unchanged; the whole core in
+    three scenarios; the real 30 ms and 130 ms values
+  record: results/b96f1b/bypass_ctl/result.txt
+  sha256: 6d13cfb7e485b141eeaf7e12d06d015292c6e60942cd4b4c86d893179426d5b6
+- id: E13
+  activity: build
+  result: pass
+  what: build lat_all3_bypass (default receive path, 97C's three latency cuts, both GT buffers bypassed; brief 126), all
+    29 gates, WNS +0.066 ns, WHS +0.010 ns, report_cdc no critical, methodology no critical, stamp 9641284d; not loaded
+    on a board
+  record: results/b126/builds/lat_all3_bypass/digest.json
+  sha256: b0b2ce349a47dff5d82d6f50bc50de722179001082304fd6ebd0c09bb9309b9e
+- id: E14
+  activity: simulation
+  result: pass
+  what: the whole core of lat_all3_bypass in xsim with AMD's real XPM macros at four clock phases, with a stand-in transceiver
+    with the bypass controllers' ports and the safety counters read back; 8 of 8 orders, every safety counter 0, the same
+    digital tick-to-trade as lat_all3 within 0.1 clock; one retry recovers a hung alignment, a never-aligned link sends
+    nothing
+  record: results/b126/core_sim/all3_bypass.json
+  sha256: 0f8de19801b2b7b3ab1369e5b7d9641929e2f9f7952eb31dbe0c4aee73935822
 measurements:
 - id: M1
   what: LUTs, variant (b)
@@ -403,6 +518,27 @@ measurements:
     buffer 16.0 at the same phase; the board has not measured this build
   value: 13.0
   sha256: 77fb782b78af4c9f598f019b6f552970cdb30bdc6e28111db5ac0335b54c73ed
+- id: M12
+  what: worst setup slack, build lat_all3_bypass (the 97C cuts with both GT buffers bypassed)
+  category: timing
+  key: wns_ns_all3_bypass
+  unit: ns
+  record: results/b126/builds/lat_all3_bypass/digest.json
+  field: timing.wns_ns
+  conditions: as M3
+  value: 0.066
+  sha256: b0b2ce349a47dff5d82d6f50bc50de722179001082304fd6ebd0c09bb9309b9e
+- id: M13
+  what: GT-port tick-to-trade in simulation, build lat_all3_bypass, mean over four phases (the same as lat_all3 within 0.1
+    clock, because the stand-in has no GT buffers and the bypass's saving is not simulated)
+  category: latency
+  key: tick_to_trade_all3_bypass_clocks
+  unit: clocks
+  record: results/b126/core_sim/all3_bypass.json
+  field: means_over_phases_clocks.rate_match_0_rm_own_0.tick_to_trade
+  conditions: xsim 2026.1, whole core, GT stand-in with the bypass controllers' ports, four phases between the clocks
+  value: 7.6
+  sha256: 0f8de19801b2b7b3ab1369e5b7d9641929e2f9f7952eb31dbe0c4aee73935822
 gaps:
 - about: hardware
   text: The design has run on a KR260 optical loopback only (briefs 97 and 96C), never against a network card or a second
@@ -431,9 +567,14 @@ gaps:
 - about: constraints
   text: 'The per-entry data path to the first synchroniser flop (write-clock entry flop to the first `xpm_cdc_array_single`
     flop) has no max-delay bound: the one-clock margin of `ENT_SYNC = 1` covers normal routing, but it is not constrained.'
+- about: ml stage
+  text: Build rm_gp_ml (the ML decision stage behind the rule, brief 113) has not run on a board; its board test is pre-registered
+    in results/b113/preregistration.md and the owner's script is written. The stage tracks one instrument with a top-of-book
+    and sees the first message of a frame only; the model is brief 87's trees on one planted-signal data set.
 next_steps:
-- Run _handoff/fpga_agent/run_96f1_stage1.sh on the KR260 (pre-registered in results/b96f1/preregistration.md), build rm_gp_bypass
-  against the 96E rm_gp board run.
+- Run _handoff/fpga_agent/run_96f1_stage1.sh on the KR260 (pre-registered in results/b96f1/preregistration.md, amendment
+  2026-11-20), build rm_gp_bypass (stamp 86037ce1, brief 96F1b) against the 96E rm_gp board run; read the retry counts and
+  gave-up flags.
 - Run docs/board_run_plan.md steps 1 to 4 on the KR260 (laser polarity first), then the NIC steps after the owner buys a
   card and cable.
 - Confirm the reference clock and the control pins against the carrier schematic.
@@ -441,6 +582,21 @@ next_steps:
 open_questions:
 - Does the PL load over JTAG with the PS idle on the KR260 (flow/program.py has no KR260 board entry yet)?
 history:
+- date: '2026-11-21'
+  note: 'brief 126: build lat_all3_bypass (the default receive path, the 97C latency cuts and the GT buffer bypass together),
+    all 29 gates, WNS +0.066 ns, report_cdc no critical; simulated in xsim; board test pre-registered from the two measured
+    runs (E 16.0, L 38.0, D 6.0, tick-to-trade 22 clocks) and script written; nothing run on a board'
+- date: '2026-11-20'
+  note: 'brief 96F1b: build rm_gp_bypass with AMD-style synchronised controller reset and a 30 ms TX / 130 ms RX alignment
+    timeout with 3 retries then a gave-up flag (GT_BUF bits 29:16); all 29 gates, timing met, report_cdc no critical; gave-up
+    added as a fail line before any board time; nothing run on a board'
+- date: '2026-11-20'
+  note: 'brief 123: pyuvm bench for the PCS and MAC (designs/b96_kr260_10g/verif/pyuvm) with the same tests, bugs and coverage
+    bins as brief 112, run in Icarus; same verification result, measured comparison and recommendation in COMPARISON.md;
+    no RTL change'
+- date: '2026-11-20'
+  note: 'brief 112: UVM 1.2 bench for the PCS and MAC (designs/b96_kr260_10g/verif/uvm): agents, reference models, scoreboard,
+    coverage, SVAs, regression and seeded bugs, in xsim 2026.1; no RTL bug found; xcrg refused on the Basic tier'
 - date: '2026-11-20'
   note: 'brief 96F1: build rm_gp_bypass (both GT elastic buffers bypassed; Wizard probe in results/b96f1/wizard_probe),
     all 29 gates, timing met, report_cdc no critical; board test pre-registered and script written, nothing run on a board'
@@ -492,4 +648,4 @@ state:
     build_2026_1: pass
   vivado: '2026.1'
   kb_pin: 93d158c
-  build_id: c9106c0d
+  build_id: 815a2b02
