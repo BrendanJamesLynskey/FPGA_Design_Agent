@@ -37,7 +37,7 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 | **B96-P-TIMING** Post-route setup slack | performance | verified (post-route timing); 2 item(s) stale |  |  |  |  |  | stale: [V-TIM-SETUP-DEFAULT](../../../results/b96c/builds/control/digest.json)<br>stale: [V-TIM-SETUP-RMGP](../../../results/b96e/builds/rm_gp/digest.json)<br>pass: [V-TIM-SETUP-BYPASS](../../../results/b96f1/builds/rm_gp_bypass/digest.json) |  |  |  |
 | **B96-P-HOLD** Post-route hold slack | performance | verified (post-route timing); 2 item(s) stale |  |  |  |  |  | stale: [V-TIM-HOLD-DEFAULT](../../../results/b96c/builds/control/digest.json)<br>stale: [V-TIM-HOLD-RMGP](../../../results/b96e/builds/rm_gp/digest.json)<br>pass: [V-TIM-HOLD-BYPASS](../../../results/b96f1/builds/rm_gp_bypass/digest.json) |  |  |  |
 | **B96-P-EYE** Receive eye margin | performance | verified (board-measured) |  |  |  |  |  |  |  | pass [eye_scan]: [V-HW-EYE](../../../results/b96d/hw/20261120_105134/summary.txt) |  |
-| **B96-P-BYPASS** GT buffer bypass shortens the echo path (pre-registered) | performance | stale |  |  |  |  |  |  | stale: [V-SIMM-BYPASS-SEQ](../../../results/b96f1/bypass_seq/result.txt) | stale [latency_loop]: [V-HW-BYPASS-PLANNED](../../../results/b96f1/hw/20261120_215255/rm_gp_bypass/stage3.json) |  |
+| **B96-P-BYPASS** GT buffer bypass shortens the echo path (pre-registered) | performance | stale |  |  |  |  |  |  | stale: [V-SIMM-BYPASS-SEQ](../../../results/b96f1/bypass_seq/result.txt) | stale [latency_loop]: [V-HW-BYPASS](../../../results/b96f1/hw/20261120_215255/rm_gp_bypass/stage3.json) |  |
 | **B96-P-THROUGHPUT** Line-rate throughput without loss Depends on: a 10G network card or a line-rate traffic generator; hardware verification open. | performance | not run |  |  |  |  |  |  |  | not run [external_equipment]: V-HW-THROUGHPUT-PLANNED |  |
 
 ## Gaps
@@ -83,7 +83,7 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 - `V-HW-RATEMATCH-96C`: changed since the evidence was recorded: designs/b96_kr260_10g/rtl/rate_match.sv, designs/b96_kr260_10g/rtl/rate_match_gp.sv, designs/b96_kr260_10g/rtl/rx_path.sv
 - `V-HW-LAT-E-97C`: changed since the evidence was recorded: designs/b96_kr260_10g/rtl/b96_core.sv, designs/b96_kr260_10g/rtl/b96_pkg.sv, designs/b96_kr260_10g/rtl/hs_vec.sv, designs/b96_kr260_10g/rtl/pcs_rx.sv (+5 more)
 - `V-HW-LAT-L-97C`: changed since the evidence was recorded: designs/b96_kr260_10g/rtl/b96_core.sv, designs/b96_kr260_10g/rtl/b96_pkg.sv, designs/b96_kr260_10g/rtl/hs_vec.sv, designs/b96_kr260_10g/rtl/pcs_rx.sv (+5 more)
-- `V-HW-BYPASS-PLANNED`: no pin recorded (run: python -m flow.trace_v1 pin)
+- `V-HW-BYPASS`: no pin recorded (run: python -m flow.trace_v1 pin)
 - `V-REVIEW-96`: changed since the evidence was recorded: designs/b96_kr260_10g/rtl/b96_core.sv, designs/b96_kr260_10g/rtl/b96_pkg.sv, designs/b96_kr260_10g/rtl/frame_src.sv, designs/b96_kr260_10g/rtl/hs_vec.sv (+7 more)
 
 ## Requirements in full
@@ -304,10 +304,10 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 - Kind: performance; state: stale; specification status: draft.
 - Source: `results/b96f1/preregistration.md`
-- Build rm_gp_bypass must lower E by at least 1.5 clocks against rm_gp (21.0), else the bypass did not take effect. Pre-registered before any board time; not yet run.
+- Build rm_gp_bypass must lower E by at least 1.5 clocks against rm_gp (21.0), else the bypass did not take effect. Pre-registered before any board time. Measured 2026-11-21 (stamp 86037ce1) as E = 17.0 clocks, 4.0 lower, inside the predicted 2.9 to 4.5 (results/b96f1/README.md).
 - Bound: echo latency E (median of per-link minima) at most 19.5 clocks; condition: build rm_gp_bypass, 100 receive restarts, KR260 optical fibre loopback, fibre lead 0.17 m.
   - simulation measurement: **stale**, Buffer-bypass run gate against a stand-in transceiver in xsim, 28 checks: value = 28 (changed since the evidence was recorded: designs/b96_kr260_10g/rm_gp_bypass/rtl/b96_core.sv, designs/b96_kr260_10g/rm_gp_bypass/rtl/gt_bp_gate.sv). [evidence](../../../results/b96f1/bypass_seq/result.txt)
-  - board measurement / latency_loop: **stale**, Build rm_gp_bypass on the KR260 (pre-registered, run_96f1_stage1.sh): measured 17 clocks; bound at most 19.5 clocks (no pin recorded (run: python -m flow.trace_v1 pin)). [evidence](../../../results/b96f1/hw/20261120_215255/rm_gp_bypass/stage3.json)
+  - board measurement / latency_loop: **stale**, Build rm_gp_bypass on the KR260, 100 receive restarts (pre-registered, board run 2026-11-21, stamp 86037ce1): measured 17 clocks; bound at most 19.5 clocks (no pin recorded (run: python -m flow.trace_v1 pin)). [evidence](../../../results/b96f1/hw/20261120_215255/rm_gp_bypass/stage3.json)
 
 ### B96-P-THROUGHPUT: Line-rate throughput without loss
 
