@@ -54,10 +54,10 @@ Interfaces:
 
 | Quantity | Value | Source |
 |---|---|---|
-| Resources | LUTs, variant (b): 6167 LUT; registers, variant (b): 14,183 FF | M1, M2 |
-| Timing | worst setup slack, variant (b): 0.221 ns; worst hold slack, variant (b): 0.011 ns; worst setup slack, latency variant all3 with the rate matcher (RATE_MATCH = 1): 0.004 ns | M3, M4, M9 |
-| Power | total on-chip power estimate, variant (b): 1.087 W | M5 |
-| Latency | transmit latency, worst gearbox phase: 3 clocks; digital tick-to-trade, worst simulated case with the rate matcher (RATE_MATCH = 1): 13 clocks; digital tick-to-trade, simulation of the default build (RATE_MATCH = 0, the 97C path): 11 clocks; GT-port tick-to-trade in simulation with AMD's real macros, own gray-pointer buffer (RM_OWN = 1), mean over four phases at phase 1550 ps: 13 clocks | M7, M8, M10, M11 |
+| Resources | LUTs, variant (b): 6167 LUT; registers, variant (b): 14,183 FF; LUTs, build rm_gp_itch: 17,258 LUT; registers, build rm_gp_itch: 46,116 FF | M1, M2, M12, M13 |
+| Timing | worst setup slack, variant (b): 0.221 ns; worst hold slack, variant (b): 0.011 ns; worst setup slack, latency variant all3 with the rate matcher (RATE_MATCH = 1): 0.004 ns; worst setup slack, build rm_gp_itch: 0.153 ns; worst hold slack, build rm_gp_itch: 0.01 ns | M3, M4, M9, M14, M15 |
+| Power | total on-chip power estimate, variant (b): 1.087 W; total on-chip power estimate, build rm_gp_itch: 1.253 W | M5, M16 |
+| Latency | transmit latency, worst gearbox phase: 3 clocks; digital tick-to-trade, worst simulated case with the rate matcher (RATE_MATCH = 1): 13 clocks; digital tick-to-trade, simulation of the default build (RATE_MATCH = 0, the 97C path): 11 clocks; GT-port tick-to-trade in simulation with AMD's real macros, own gray-pointer buffer (RM_OWN = 1), mean over four phases at phase 1550 ps: 13 clocks; ITCH tick-to-trade, GT port to GT port, speculative start, mean over four phases: 16.78 clocks; ITCH tick-to-trade, GT port to GT port, order started at the risk verdict, mean over four phases: 21.63 clocks | M7, M8, M10, M11, M17, M18 |
 | Throughput | not measured | [Known gaps](#known-gaps-and-limits) |
 
 ![Resource use as a share of the part, and timing slack](docs/handover/resources.svg)
@@ -77,6 +77,18 @@ Tool: Vivado 2026.1. Build ID of the inputs at handover: `c9106c0d` (`python flo
 
 | File | What |
 |---|---|
+| [`designs/b96_kr260_10g/rm_gp_itch/rtl/udp_strip.sv`](rm_gp_itch/rtl/udp_strip.sv) | adapter from mac64_rx to the Mold receiver (build rm_gp_itch, brief 127): header checks, strip with a 2-byte realign, FCS verdict as a late strobe, capture ring |
+| [`designs/b96_kr260_10g/rm_gp_itch/rtl/itch_top.sv`](rm_gp_itch/rtl/itch_top.sv) | brief 110's mold_rx, itch_dec, book_core, risk_glue (unchanged) with the late verdict and the segment builder (brief 127) |
+| [`designs/b96_kr260_10g/rm_gp_itch/rtl/order_seg.sv`](rm_gp_itch/rtl/order_seg.sv) | the order frame as a 113-byte Ethernet/IPv4/TCP stream, the stand-in for brief 119's tcp_fast (brief 127) |
+| [`designs/b96_kr260_10g/rm_gp_itch/rtl/order_seg_tcpfast.sv`](rm_gp_itch/rtl/order_seg_tcpfast.sv) | the same module with tcp_fast in place of the stand-in: the hook, not in the build (brief 127) |
+| [`designs/b96_kr260_10g/rm_gp_itch/rtl/tx_mux.sv`](rm_gp_itch/rtl/tx_mux.sv) | transmit multiplexer in front of mac64_tx: frame source, replay memory, order stream with FIFO and head register (brief 127) |
+| [`designs/b96_kr260_10g/rm_gp_itch/rtl/itch_path.sv`](rm_gp_itch/rtl/itch_path.sv) | core-clock wrapper of the ITCH path: host vectors, order poison policy, counters, latency statistics (brief 127) |
+| [`designs/b96_kr260_10g/rm_gp_itch/rtl/b96_core.sv`](rm_gp_itch/rtl/b96_core.sv) | copy of rtl/b96_core.sv for build rm_gp_itch: RATE_MATCH = 1 only, the ITCH path and its registers 0x300 to 0x57C (brief 127) |
+| [`designs/b96_kr260_10g/rm_gp_itch/regmap_itch.py`](rm_gp_itch/regmap_itch.py) | register map of build rm_gp_itch as data, generates its datasheet (brief 127) |
+| [`designs/b96_kr260_10g/rm_gp_itch/docs/itch_integration.md`](rm_gp_itch/docs/itch_integration.md) | the ITCH/OUCH path inside the 10G design: path, latency, the late frame check, registers, hook for tcp_fast, results (brief 127) |
+| [`designs/b96_kr260_10g/rm_gp_itch/docs/board_test_plan.md`](rm_gp_itch/docs/board_test_plan.md) | pre-registered board test of build rm_gp_itch (brief 127), not run |
+| [`designs/b96_kr260_10g/rm_gp_itch/host/itch_host.py`](rm_gp_itch/host/itch_host.py) | synthetic MoldUDP64/ITCH frames, replay image, expected order frame and the order check (brief 127) |
+| [`designs/b96_kr260_10g/rm_gp_itch/host/b127_stages.py`](rm_gp_itch/host/b127_stages.py) | the pre-registered board stages, shared with the simulation's dry run (brief 127) |
 | [`designs/b96_kr260_10g/rm_gp_bypass/rtl/b96_core.sv`](rm_gp_bypass/rtl/b96_core.sv) | copy of rtl/b96_core.sv for build rm_gp_bypass with the GT buffer-bypass controllers connected and run gates (brief 96F1) |
 | [`designs/b96_kr260_10g/rm_gp_bypass/rtl/gt_bp_gate.sv`](rm_gp_bypass/rtl/gt_bp_gate.sv) | per-direction gate that releases the paths only after the bypass controller has restarted and finished (brief 96F1) |
 | [`designs/b96_kr260_10g/ip/amd_ip_bypass.tcl`](ip/amd_ip_bypass.tcl) | the GT Wizard configuration with both buffers bypassed (brief 96F1) |
@@ -135,6 +147,9 @@ Tool: Vivado 2026.1. Build ID of the inputs at handover: `c9106c0d` (`python flo
 | E8 | build | pass | build rm_gp (RATE_MATCH = 1, RM_OWN = 1), all 29 gates, WNS +0.105 ns, WHS +0.011 ns, stamp 1a2fa1a8 recomputed from the tree; not loaded on a board | [`results/b96e/builds/rm_gp/digest.json`](../../results/b96e/builds/rm_gp/digest.json) | - |
 | E9 | build | pass | build rm_gp_bypass (both GT buffers bypassed, brief 96F1), all 29 gates, WNS +0.090 ns, WHS +0.010 ns, report_cdc no critical, stamp b2a7aeea; not loaded on a board | [`results/b96f1/builds/rm_gp_bypass/digest.json`](../../results/b96f1/builds/rm_gp_bypass/digest.json) | - |
 | E10 | simulation | pass | the Wizard's own buffer-bypass controllers with our run gate against a stand-in transceiver in xsim, 28 checks (start on the reset-done edge, stale done held off, error holds the paths in reset) | [`results/b96f1/bypass_seq/result.txt`](../../results/b96f1/bypass_seq/result.txt) | - |
+| E11 | simulation | pass | the new blocks of build rm_gp_itch with the real mac64_rx and mac64_tx against brief 110's model: four seeded sessions with speculation off and on, every counter, every book update, the final top of book and every order frame byte for byte; the adapter's frame lengths and alignments with bubbles and bad FCS; the poison of an order on a bad frame, the FCS window sweep, the replay and the capture ring on a closed loop, orders dropped when the MAC is busy, back-to-back orders | [`designs/b96_kr260_10g/rm_gp_itch/tests/test_b127_unit_rtl.py`](rm_gp_itch/tests/test_b127_unit_rtl.py) (run in CI) | - |
+| E12 | simulation | pass | the whole core of build rm_gp_itch in xsim 2026.1 with AMD's real XPM macros and the GT stand-in, four phases between the clocks: 16 orders a phase from replayed frames round a closed loop, every counter equal to the model's, tick-to-trade GT port to GT port recorded; the board test's five stages run against it as a dry run | [`results/b127/core_sim.json`](../../results/b127/core_sim.json) | xsim 2026.1, GT stand-in, phases 0, 1550, 3100, 4650 ps |
+| E13 | build | pass | build rm_gp_itch through the flow on Vivado 2026.1 (every flow gate; report_cdc no critical, no new waiver) | [`results/b127/builds/rm_gp_itch/digest.json`](../../results/b127/builds/rm_gp_itch/digest.json) | - |
 
 Gates at handover: `build_2026_1` pass.
 
@@ -158,6 +173,13 @@ Every value is read from the record by `python -m flow.handover fill`, not typed
 | M10 | digital tick-to-trade, simulation of the default build (RATE_MATCH = 0, the 97C path) | 11 clocks | 1 | [`results/b96c/core_sim_default.json`](../../results/b96c/core_sim_default.json) `tick_to_trade_digital_sim.gt_rxdata_price_word_to_gt_txdata_order_start_clocks` | simulation, same-phase clocks; as M8 |
 | M9 | worst setup slack, latency variant all3 with the rate matcher (RATE_MATCH = 1) | 0.004 ns | 1 | [`results/b96c/builds/rm_all3/digest.json`](../../results/b96c/builds/rm_all3/digest.json) `timing.wns_ns` | as M3; the margin is thin |
 | M11 | GT-port tick-to-trade in simulation with AMD's real macros, own gray-pointer buffer (RM_OWN = 1), mean over four phases at phase 1550 ps | 13 clocks | 1 | [`results/b96e/core_lat_sim.json`](../../results/b96e/core_lat_sim.json) `results.rate_match_1_rm_own_1.1550.tick_to_trade.mean` | xsim 2026.1, whole core, GT stand-in, phase 1550 ps between the clocks; the 97C path is 10.75 and the xpm_fifo_async buffer 16.0 at the same phase; the board has not measured this build |
+| M12 | LUTs, build rm_gp_itch | 17,258 LUT | 1 | [`results/b127/builds/rm_gp_itch/digest.json`](../../results/b127/builds/rm_gp_itch/digest.json) `utilization.lut` | routed, Vivado 2026.1 |
+| M13 | registers, build rm_gp_itch | 46,116 FF | 1 | [`results/b127/builds/rm_gp_itch/digest.json`](../../results/b127/builds/rm_gp_itch/digest.json) `utilization.ff` | as M12 |
+| M14 | worst setup slack, build rm_gp_itch | 0.153 ns | 1 | [`results/b127/builds/rm_gp_itch/digest.json`](../../results/b127/builds/rm_gp_itch/digest.json) `timing.wns_ns` | routed, user clocks 161.133 MHz and 100 MHz |
+| M15 | worst hold slack, build rm_gp_itch | 0.01 ns | 1 | [`results/b127/builds/rm_gp_itch/digest.json`](../../results/b127/builds/rm_gp_itch/digest.json) `timing.whs_ns` | as M14 |
+| M16 | total on-chip power estimate, build rm_gp_itch | 1.253 W | 1 | [`results/b127/builds/rm_gp_itch/digest.json`](../../results/b127/builds/rm_gp_itch/digest.json) `power.total_w` | report_power after routing, vectorless |
+| M17 | ITCH tick-to-trade, GT port to GT port, speculative start, mean over four phases | 16.78 clocks | 1 | [`results/b127/core_sim.json`](../../results/b127/core_sim.json) `itch_to_order.speculative.tick_to_trade_gt_clocks.mean` | xsim 2026.1, whole core, GT stand-in; from the last byte of the message at the receive PCS output to the order's start block on the transmit GT port |
+| M18 | ITCH tick-to-trade, GT port to GT port, order started at the risk verdict, mean over four phases | 21.63 clocks | 1 | [`results/b127/core_sim.json`](../../results/b127/core_sim.json) `itch_to_order.at_verdict.tick_to_trade_gt_clocks.mean` | as M17 |
 
 <!-- prose:measured -->
 <!-- /prose:measured -->
@@ -172,6 +194,7 @@ Every value is read from the record by `python -m flow.handover fill`, not typed
 - **throughput**: The line rate and the 10 Gb/s payload rate are by configuration and by the gearbox arithmetic; no throughput or error-rate measurement exists because nothing ran on a board.
 - **build**: The 96C builds of the latency variant with the buffer (rm_all3) and its ppm twin hit the 6 GiB scope cap about 1000 times and used about 700 MiB of swap (the base build did not); the Vivado resident peak of the base build is 4439 MiB. all3 closes timing with 0.004 ns of setup slack, which is thin.
 - **constraints**: The per-entry data path to the first synchroniser flop (write-clock entry flop to the first `xpm_cdc_array_single` flop) has no max-delay bound: the one-clock margin of `ENT_SYNC = 1` covers normal routing, but it is not constrained.
+- **itch path**: Build rm_gp_itch has not run on a board (the test is pre-registered, the script written); its order frame is a stand-in for brief 119's TCP fast path with the TCP checksum 0, so no real TCP stack would accept it; the loopback tests only our own frames; a bad frame's order can leave before the frame's check is known when its trigger message is far from the packet's end (rm_gp_itch/docs/itch_integration.md section 4).
 
 <!-- prose:gaps -->
 <!-- /prose:gaps -->
@@ -182,6 +205,8 @@ Every value is read from the record by `python -m flow.handover fill`, not typed
 2. Run docs/board_run_plan.md steps 1 to 4 on the KR260 (laser polarity first), then the NIC steps after the owner buys a card and cable.
 3. Confirm the reference clock and the control pins against the carrier schematic.
 4. Widen the 58A core to 64 bits, or add the missing 58A features to trade64.
+5. Run _handoff/fpga_agent/run_127_stage1.sh on the KR260 (pre-registered in results/b127/preregistration.md), build rm_gp_itch.
+6. Merge brief 119's PR #245 and swap order_seg.sv for order_seg_tcpfast.sv (rm_gp_itch/docs/itch_integration.md section 8).
 
 Open questions:
 
@@ -194,6 +219,7 @@ Open questions:
 
 | Date | Brief | PR | What |
 |---|---|---|---|
+| 2026-11-21 | - | - | brief 127: build rm_gp_itch, brief 110's MoldUDP64/ITCH/book/risk/OUCH path inside the 10G design (udp_strip adapter with a late FCS verdict, transmit multiplexer, replay memory and capture ring, stand-in for tcp_fast with a hook); bit-exact against 110's model in xsim and Icarus; built with timing met; board test pre-registered and script written, nothing run on a board |
 | 2026-11-20 | - | - | brief 96F1: build rm_gp_bypass (both GT elastic buffers bypassed; Wizard probe in results/b96f1/wizard_probe), all 29 gates, timing met, report_cdc no critical; board test pre-registered and script written, nothing run on a board |
 | 2026-11-19 | - | - | brief 96E: own gray-pointer elastic buffer (RM_OWN), +1.2 clocks of tick-to-trade over 97C in xsim against +5.3 for the macro buffer; the board's +11 accounted (1.25 left in D); build rm_gp with all 29 gates; board run and real-offset plan pending the owner |
 | 2026-11-19 | - | - | brief 96D: on-chip RX eye scan (EYESCAN build option, es_ctrl, flow/eyescan); built with all 29 gates; simulated against a stand-in; not yet run on the board |

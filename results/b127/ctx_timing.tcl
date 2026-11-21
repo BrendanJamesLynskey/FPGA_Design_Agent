@@ -10,13 +10,17 @@ set fh [open $out/ctx_timing.txt w]
 proc one {fh title cells} {
     puts $fh "=== $title"
     if {[llength $cells] == 0} { puts $fh "no cells matched"; return }
-    set p [get_timing_paths -delay_type max -to $cells -max_paths 1 -nworst 1]
+    # data and enable endpoints only: the reset pins of these registers are fed by the GT's reset synchroniser, a different (and shorter) path than the logic of the block
+    set pins [get_pins -quiet -of_objects $cells -filter {DIRECTION == IN && REF_PIN_NAME != R && REF_PIN_NAME != S && REF_PIN_NAME != CLR && REF_PIN_NAME != PRE && REF_PIN_NAME != C && REF_PIN_NAME != CLK && REF_PIN_NAME != WCLK && REF_PIN_NAME != RST}]
+    if {[llength $pins] == 0} { puts $fh "no endpoint pins"; return }
+    set p [get_timing_paths -delay_type max -to $pins -max_paths 1 -nworst 1]
     if {[llength $p] == 0} { puts $fh "no timing path"; return }
     puts $fh "SLACK [get_property SLACK $p] STARTPOINT [get_property STARTPOINT_PIN $p] ENDPOINT [get_property ENDPOINT_PIN $p] REQ [get_property REQUIREMENT $p] LOGIC_LEVELS [get_property LOGIC_LEVELS $p]"
 }
 one $fh "risk_glue position registers (pos[])" [get_cells -hier -filter {NAME =~ *u_ip/u_it/u_risk/pos_reg*}]
 one $fh "risk_glue verdict counters and queue (the rest of the risk verdict)" [get_cells -hier -filter {NAME =~ *u_ip/u_it/u_risk/dq*}]
-one $fh "book_core price ladder (lv_*)" [get_cells -hier -filter {NAME =~ *u_ip/u_it/u_book/*lv_*}]
+one $fh "book_core price ladder RAMs (g_lv[*].lm: the ladder update B3 writes them)" [get_cells -hier -filter {NAME =~ *u_ip/u_it/u_book/g_lv* && IS_PRIMITIVE}]
+one $fh "book_core ladder reduction T1 to T2 (t2b_*, t2a_*, w2_*)" [get_cells -hier -filter {NAME =~ *u_ip/u_it/u_book/t2* && IS_SEQUENTIAL}]
 one $fh "book_core top of book and update record" [get_cells -hier -filter {NAME =~ *u_ip/u_it/u_book/tu_*}]
 one $fh "mold_rx" [get_cells -hier -filter {NAME =~ *u_ip/u_it/u_mold/*}]
 one $fh "itch_dec" [get_cells -hier -filter {NAME =~ *u_ip/u_it/u_dec/*}]

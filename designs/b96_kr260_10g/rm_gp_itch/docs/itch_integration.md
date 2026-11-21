@@ -196,7 +196,60 @@ same session sends the same three orders and no poisoned frame. `tests/test_b127
 
 ## 9. Build results
 
-TBD_BUILD
+Build `designs/b96_kr260_10g/rm_gp_itch` through the flow on Vivado 2026.1 (one thread, heavy slot, `results/b127/build_one.sh`; records in [`results/b127/builds/rm_gp_itch/`](../../../../results/b127/builds/rm_gp_itch/)), part `xck26-sfvc784-2LV-c`, user clocks 161.133 MHz and 100 MHz. **Build stamp `1d8ac802`**
+(the hash of the sources, recomputed from the tree with `flow/prepare.py sources_sha256`: it matches), BUILD ID `266acfe8`. Nothing was loaded on a board.
+
+| | `rm_gp` (96E, the base this builds on) | `rm_gp_itch` |
+|---|---|---|
+| LUTs | 6,730 | 17,258 |
+| registers | 18,938 | 46,116 |
+| block RAM tiles, DSP | 0, 0 | 0, 0 |
+| worst setup slack | +0.164 ns | **+0.153 ns** (met, 0 failing endpoints) |
+| worst hold slack | +0.01 ns | **+0.01 ns** (met) |
+| power (report_power after routing, vectorless, confidence Medium) | 1.105 W, 48.2 C | 1.253 W, 49.3 C |
+| flow gates | all 29 true | **all 29 true** (`digest.json` `gates`) |
+| `report_cdc` | no CDC-1, 0 critical | **no CDC-1, 0 critical**: 1,202 CDC-3 info, 4 CDC-9 info, 6 CDC-6 warnings and 5,792 CDC-15 warnings (the handshake vectors' enabled crossings), see `cdc_summary.txt` |
+| wall time, Vivado resident peak | 1384 s, 4,398 MiB | 5574 s, 4,875 MiB (6 GiB scope cap hit 832 times; the base hit it 35 times) |
+
+**Timing is met with 0.153 ns of setup slack on the transmit clock: thin, as in the base builds (rm_gp 0.164 ns).** The worst path is in the base design's receive MAC (`mac64_rx`, the late CRC term), not in the new blocks.
+**CDC: no new waiver.** The only entry of `architecture.yaml`'s `cdc_waivers` is the GT Wizard's own reset synchroniser, inherited from the base. The new crossings are two coherent handshakes of whole vectors (CFG2 once, STAT2 three times, `hs_vec`), the same primitive the base uses
+for its configuration and counters; every other path of the new blocks is in the transmit clock. `xpm_cdc_handshake` carries at most 1024 bits, hence the three STAT2 parts.
+
+Resources by block (post-route, `utilization_hier.rpt`; LUTs include the LUT RAM; brief 110's out-of-context figures are in its README):
+
+| Block | LUTs | of which LUT RAM | Flip-flops |
+|---|---|---|---|
+| whole core | 16,558 | 2,212 | 45,653 |
+| `itch_path` (the whole ITCH path with `udp_strip` and `order_seg`) | 7,444 | 1,876 | 7,624 |
+| `book_core` (110: 4,397 out of context) | 4,232 | 1,728 | 1,703 |
+| `mold_rx` (110: 1,394) | 1,289 | 0 | 1,650 |
+| `risk_glue` (110: 490) | 450 | 0 | 971 |
+| `itch_dec` (110: 140) | 60 | 0 | 629 |
+| `order_seg` (the stand-in segment builder) | 582 | 0 | 903 |
+| `udp_strip` (with the capture ring) | 713 | 148 | 918 |
+| `tx_mux` (with the replay memory) | 1,670 | 336 | 303 |
+| CFG2 handshake, 1024 bits | 332 | 0 | 3,112 |
+| one STAT2 handshake part, 1024 bits | 4 | 0 | 4,109 |
+
+The FF count is dominated by the host vectors (about 12,000 flip-flops for STAT2's 96 words in three coherent copies and its snapshot, 3,100 for CFG2): the cost of word-coherent reads of 96 counters over a slow bus, and the reason the flow's post-synthesis CDC dump took 55 minutes.
+
+**In-context timing of brief 110's critical paths** (`results/b127/builds/rm_gp_itch/ctx_timing.txt`, `results/b127/ctx_timing.tcl`, worst setup path ending in each group, required 6.206 ns; brief 110 out of context at 6.2061 ns: risk verdict into the position register +0.109 ns, the price ladder update the worst path at 5.0 ns):
+
+| Register group | Worst setup slack | Logic levels | Path |
+|---|---|---|---|
+| risk_glue position registers (pos) | +0.790 ns | 14 | `u_ip/u_it/u_book/tu_inst_reg[0]/C` to `u_ip/u_it/u_risk/pos_reg[2][11]/CE` |
+| risk_glue verdict counters and queue (the rest of the risk verdict) | +0.903 ns | 0 | `u_gt/inst/gen_gtwizard_gthe4_top.gth_wiz_gtwizard_gthe4_inst` to `u_ip/u_it/u_risk/dq_cnt_reg[0]/R` |
+| book_core price ladder (lv_*) | no path or no cells matched | | |
+| book_core top of book and update record | +0.919 ns | 0 | `u_gt/inst/gen_gtwizard_gthe4_top.gth_wiz_gtwizard_gthe4_inst` to `u_ip/u_it/u_book/tu_cand_reg/R` |
+| mold_rx | +0.528 ns | 11 | `u_ip/u_us/s_eof_reg/C` to `u_ip/u_it/u_mold/c_trunc_reg[20]/CE` |
+| itch_dec | +0.626 ns | 0 | `u_gt/inst/gen_gtwizard_gthe4_top.gth_wiz_gtwizard_gthe4_inst` to `u_ip/u_it/u_dec/e_sell_reg/R` |
+| udp_strip | +0.556 ns | 0 | `u_gt/inst/gen_gtwizard_gthe4_top.gth_wiz_gtwizard_gthe4_inst` to `u_ip/u_us/lp_reg/R` |
+| order_seg | +0.317 ns | 15 | `u_ip/u_it/u_book/tu_inst_reg[0]/C` to `u_ip/u_it/u_seg/o_d_reg[0]/CE` |
+| tx_mux | +0.538 ns | 14 | `u_tx/u_mt/FSM_sequential_st_reg[0]/C` to `u_tx/u_mx/rp_err_reg[4]/CE` |
+| mac64_tx (the CRC path with the multiplexer in front) | +0.214 ns | 11 | `u_tx/u_mt/crc_reg[5]/C` to `u_tx/u_mt/crc_reg[30]/D` |
+| itch_path (poison policy, counters, statistics) | +0.193 ns | 11 | `u_ip/u_it/u_book/t1_inst_reg[0]/C` to `u_ip/u_it/u_book/t2b_px_reg[31]/D` |
+
+In context the risk verdict into the position register has about +0.79 ns where brief 110 had +0.109 ns out of context; the two are not the same measurement (placement and the clock's uncertainty differ), and the worst paths of the whole design are the base's receive MAC (0.153 ns) and the CRC cone of the transmit MAC (0.214 ns, with the multiplexer in front of it).
 
 ## 10. Known gaps
 
