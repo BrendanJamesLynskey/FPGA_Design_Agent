@@ -3,7 +3,7 @@ source: designs/b96_kr260_10g/handover.yaml; human view: README.md; refresh: pyt
 
 ## identity
 kind=example produced_by=human part=xck26-sfvc784-2LV-c board=Kria KR260 top=kr260_10g_top tool=Vivado 2026.1
-verified: not verified: 6 of 27 requirements fail (record: designs/b96_kr260_10g/VERIFIED.md, designs/b96_kr260_10g/verified.json; definition: docs/verified.md)
+verified: verified except: 4 of 27 requirements without passing evidence; 27 of 27 requirements not agreed; required method mix not yet measured; mutation floor not yet measured; formal rigour not yet measured; 16 stale or differing evidence items (record: designs/b96_kr260_10g/VERIFIED.md, designs/b96_kr260_10g/verified.json; definition: docs/verified.md)
 
 ## summary
 A Kria KR260 design that carries our own 10GBASE-R PCS (64B/66B, scrambler, gearbox, block lock) and a 64-bit Ethernet MAC on one GTH lane at 10.3125 Gb/s, with the mock trading path of brief 58A behind it (a one-rule 64-bit decision in the same message format), because the AMD 10G Ethernet core is refused on the free Basic licence. Verified against an independent Python reference in simulation (the GT is a behavioural stand-in) and built to a bitstream on Vivado 2026.1 Basic with every flow gate passing in two variants. Brief 96C added a rate-matching elastic buffer as a build option (default off, the board-proven 97C receive path); the base and its rate-matched variants have run on a KR260 optical loopback, not yet against a network card or a second reference clock.
