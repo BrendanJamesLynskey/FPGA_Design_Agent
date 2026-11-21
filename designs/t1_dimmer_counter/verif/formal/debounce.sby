@@ -21,7 +21,7 @@ smtbmc z3
 [script]
 read_verilog -formal -sv sync2.sv
 read_verilog -formal -sv debounce.sv
-read_verilog -formal -sv -DFORMAL v_macros.svh debounce_checker.sv
+read_verilog -formal -sv -DFORMAL v_macros.svh v_macros_paired.svh debounce_checker.sv
 read_verilog -formal -sv -DFORMAL formal_debounce.sv
 prep -top formal_debounce
 
@@ -29,5 +29,6 @@ prep -top formal_debounce
 ../../../../shell/rtl/sync2.sv
 ../../rtl/debounce.sv
 ../checkers/v_macros.svh
+v_macros_paired.svh
 ../checkers/debounce_checker.sv
 formal_debounce.sv
