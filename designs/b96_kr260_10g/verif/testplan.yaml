@@ -87,7 +87,7 @@ requirements:
   - id: B96-F-OFFSET
     kind: functional
     title: Rate matching holds under a real frequency offset
-    text: With a receive clock offset of +-100 ppm and +-300 ppm from the transmit clock, no frame is lost or corrupted and the buffer neither overflows nor underflows. A loopback has no offset, so this needs a second reference clock or another device on the link.
+    text: For any constant receive clock offset from -300 to +300 ppm relative to the transmit clock, no frame is lost or corrupted and the buffer neither overflows nor underflows. IEEE 802.3 allows +-100 ppm at each end, so two compliant ends differ by at most 200 ppm; +-300 ppm gives margin. A loopback has no offset, so a board test needs a second reference clock or another device on the link.
     source: designs/b96_kr260_10g/docs/design.md#board-result-2026-11-19-kr260-and-an-optical-loopback-resultsb96cwhw20261119_080724
     spec_status: draft
     external: a second reference clock or a 10G network card (a loopback has no frequency offset)
@@ -200,7 +200,7 @@ requirements:
   - id: B96-P-BYPASS
     kind: performance
     title: GT buffer bypass shortens the echo path (pre-registered)
-    text: Build rm_gp_bypass must lower E by at least 1.5 clocks against rm_gp (21.0), else the bypass did not take effect. Pre-registered before any board time; not yet run.
+    text: Build rm_gp_bypass must lower E by at least 1.5 clocks against rm_gp (21.0), else the bypass did not take effect. Pre-registered before any board time. Measured 2026-11-21 (stamp 86037ce1) as E = 17.0 clocks, 4.0 lower, inside the predicted 2.9 to 4.5 (results/b96f1/README.md).
     source: results/b96f1/preregistration.md
     spec_status: draft
     performance: {quantity: echo latency E (median of per-link minima), unit: clocks, op: le, bound: 19.5, condition: "build rm_gp_bypass, 100 receive restarts, KR260 optical fibre loopback, fibre lead 0.17 m"}
@@ -365,7 +365,7 @@ verification:
   - id: V-SIMM-PPM
     requirements: [B96-F-OFFSET, B96-S-RATEMATCH]
     method: sim_measurement
-    title: Simulated partner at 0, +-100 and +-300 ppm, 400 frames each
+    title: Simulated partner at test points -300, -100, 0, +100 and +300 ppm across the required range, 400 frames each
     evidence: {file: results/b96c/ppm_sim_ratematch.json, reader: json}
     pass_when:
       - {field: ppm+0.verdict.counters_clean, op: "true"}
@@ -373,6 +373,9 @@ verification:
       - {field: ppm-100.verdict.counters_clean, op: "true"}
       - {field: ppm+300.verdict.counters_clean, op: "true"}
       - {field: ppm-300.verdict.counters_clean, op: "true"}
+      - {field: ppm+0.verdict.all_frames_received, op: "true"}
+      - {field: ppm+100.verdict.all_frames_received, op: "true"}
+      - {field: ppm-100.verdict.all_frames_received, op: "true"}
       - {field: ppm+300.verdict.all_frames_received, op: "true"}
       - {field: ppm-300.verdict.all_frames_received, op: "true"}
     checks: *rtl_rm
@@ -536,13 +539,12 @@ verification:
     title: First measured receive eye (LPM, first of four repeats), 1023 points
     evidence: {file: results/b96d/hw/20261120_105134/summary.txt, reader: text, regex: '^lpm_1: LPM depth 1e-09: width ([0-9.]+) UI'}
     checks: [designs/b96_kr260_10g/rtl/es_ctrl.sv, designs/b96_kr260_10g/es.xdc]
-  - id: V-HW-BYPASS-PLANNED
+  - id: V-HW-BYPASS
     requirements: [B96-P-BYPASS]
     method: board_measurement
     instrument: latency_loop
-    title: Build rm_gp_bypass on the KR260 (pre-registered, run_96f1_stage1.sh)
-    evidence: {file: results/b96f1/hw/*/rm_gp_bypass/stage3.json, reader: json, field: restarts.E_min_per_link.median}
-    planned: brief 96F1 board run (owner's board)
+    title: Build rm_gp_bypass on the KR260, 100 receive restarts (pre-registered, board run 2026-11-21, stamp 86037ce1)
+    evidence: {file: results/b96f1/hw/20261120_215255/rm_gp_bypass/stage3.json, reader: json, field: restarts.E_min_per_link.median}
     checks: *rtl_core
   - id: V-HW-OFFSET-PLANNED
     requirements: [B96-F-OFFSET]
