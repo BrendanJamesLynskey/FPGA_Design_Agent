@@ -88,6 +88,14 @@ parameters:
   note: QPLL0 from the 156.25 MHz reference; the user clocks (161.133 MHz) carry 64 bits a word and the PCS takes one clock
     pause in 33
 files:
+- path: designs/b96_kr260_10g/verif/pyuvm/README.md
+  what: how the pyuvm (Python UVM on cocotb and Icarus) bench for the PCS and MAC is built, run and limited; the same job
+    as the SystemVerilog UVM bench (brief 123)
+  sha256: 0b5695e70dafc64b756dee23fde5f9a36a4a6ccfe472cc24667dca7445ddb6dc
+- path: designs/b96_kr260_10g/verif/pyuvm/COMPARISON.md
+  what: the measured comparison of the pyuvm and the SystemVerilog UVM bench, where each fits the project, and a section
+    for the verification course (brief 123)
+  sha256: 0f9578afff8be3fbe051138e67625d72f3678adf18e63fba96ab9da95b26b8e2
 - path: designs/b96_kr260_10g/verif/uvm/README.md
   what: how the UVM 1.2 bench for the PCS and MAC is built, what each part checks, the coverage and the seeded bugs (brief
     112)
@@ -273,6 +281,13 @@ commands:
   minutes: 40
   needs: Vivado 2026.1 xsim (Basic tier is enough); a simulation-only run, no heavy slot while the load is under 6 and more
     than 12 GB is free
+- what: the pyuvm regression of the PCS and MAC in Icarus (every test over its seeds, coverage merge, seeded bugs); needs
+    pyuvm 5.0.0 and cocotb-coverage in a venv that sees cocotb 2.0.1
+  cmd: PYTHONPATH=. python designs/b96_kr260_10g/verif/pyuvm/scripts/run_regress.py --mutants --record results/123_pyuvm_pcs_mac
+  heavy: false
+  minutes: 15
+  needs: Icarus Verilog 12, cocotb 2.0.1, pyuvm 5.0.0, cocotb-coverage; a simulation-only run, no heavy slot while the load
+    is under 6 and more than 12 GB is free
 evidence:
 - id: E1
   activity: simulation
@@ -353,26 +368,22 @@ evidence:
   record: results/b96f1/bypass_seq/result.txt
   sha256: 457378d737a4382242b69cf84b2db58aacf9a88707d0cba642934a5b1b091dd8
 - id: E11
-  activity: build
+  activity: simulation
   result: pass
-  what: build rm_gp_ml (rm_gp with the ML decision stage, brief 113), all 29 gates, WNS +0.220 ns, WHS +0.010 ns, report_cdc
-    no critical, stamp 22c35e72; not loaded on a board
-  record: results/b113/builds/rm_gp_ml/digest.json
-  sha256: 22e113afc36382cf26ae9dd45a674796e2b0edd8107b6f2837d6a32417ed13c9
+  what: 'UVM 1.2 bench of the PCS and MAC in xsim 2026.1 (no GT model; reference-model scoreboard, SVAs, constrained-random):
+    42 runs pass, 213 of 213 coverage bins hit, 16 of 17 seeded bugs killed (the 17th is an equivalent mutant); run by hand
+    in xsim, not in CI'
+  record: results/112_uvm_pcs_mac/summary.txt
+  sha256: b4d6ac4452d7c9bab373242d1ac0ba691604352cd7f08d35f394dda38666add5
 - id: E12
   activity: simulation
   result: pass
-  what: whole core in xsim with a mixed synthetic feed injected on the receive words, 350 frames, features, classes, decisions
-    and vetoes equal to the Python twin, orders and stage counters equal (brief 113)
-  record: results/b113/summary.json
-  sha256: b101413a06ae4ea56eee682ed7156f9f3cd0b413a6bdc754df1c89420cdf9b86
-- id: E13
-  activity: simulation
-  result: pass
-  what: tick-to-trade with and without the ML stage, four receive-clock phases, no clock added in shadow or veto mode (brief
-    113)
-  record: results/b113/latency.json
-  sha256: b90f7520188cd2a036c1f9b7293dd576bea40aa8758436ca12c6930fc88320b7
+  what: 'pyuvm bench of the PCS and MAC in Icarus (same scope, tests and 17 seeded bugs as E11; Python reference models,
+    cocotb-coverage): 42 runs pass, 217 of 217 coverage bins hit, 16 of 17 seeded bugs killed (14 of 17 before the two patterns
+    added after M13 and M15 survived); the comparison with E11 is in verif/pyuvm/COMPARISON.md; the bench is in CI (smoke
+    and one mutant), the full regression is run by hand'
+  record: results/123_pyuvm_pcs_mac/summary.txt
+  sha256: 958ae63a63c89bd06b2216e6c219924d5b1867a9103e8e627e07404d348517e9
 measurements:
 - id: M1
   what: LUTs, variant (b)
@@ -561,9 +572,12 @@ open_questions:
 - Does the PL load over JTAG with the PS idle on the KR260 (flow/program.py has no KR260 board entry yet)?
 history:
 - date: '2026-11-20'
-  note: 'brief 113: build rm_gp_ml, the ML decision stage (30 boosted trees) behind the rule, class ready before the price
-    word so no clock is added in simulation; bit-exact against the Python twin; all 29 gates, timing met; board test pre-registered
-    and script written, nothing run on a board'
+  note: 'brief 123: pyuvm bench for the PCS and MAC (designs/b96_kr260_10g/verif/pyuvm) with the same tests, bugs and coverage
+    bins as brief 112, run in Icarus; same verification result, measured comparison and recommendation in COMPARISON.md;
+    no RTL change'
+- date: '2026-11-20'
+  note: 'brief 112: UVM 1.2 bench for the PCS and MAC (designs/b96_kr260_10g/verif/uvm): agents, reference models, scoreboard,
+    coverage, SVAs, regression and seeded bugs, in xsim 2026.1; no RTL bug found; xcrg refused on the Basic tier'
 - date: '2026-11-20'
   note: 'brief 96F1: build rm_gp_bypass (both GT elastic buffers bypassed; Wizard probe in results/b96f1/wizard_probe),
     all 29 gates, timing met, report_cdc no critical; board test pre-registered and script written, nothing run on a board'
