@@ -1,4 +1,4 @@
-# results/b96f1: GT buffer bypass on the KR260 (brief 96F1), stage 0 probe and stage 1 build; nothing ran on a board
+# results/b96f1: GT buffer bypass on the KR260 (brief 96F1), stage 0 probe, stage 1 build and the board run of 2026-11-21 (PASS)
 
 Two builds of `designs/b96_kr260_10g` (the control `rm_gp` and the bypass build `rm_gp_bypass`), the Wizard probe, two simulations, the pre-registered board test and the script the owner runs. Design notes: `designs/b96_kr260_10g/docs/design.md` section 12.
 
@@ -29,7 +29,7 @@ Two builds of `designs/b96_kr260_10g` (the control `rm_gp` and the bypass build 
 Pre-registered: E falls 2.9 to 4.5 clocks (amendment: AMD AR 68177 gives 3.4 to 4.4); measured 4.0, inside both. 20 of 20 full GT resets locked; both bypass controllers done, no error, no retry, no give-up; safety counters 0; inside the operating conditions (28.9 C at the end). The laser was off at the end. One board, one module, fibre loopback: no frequency offset, so the rate matcher's slip path is not exercised here.
 
 ## Illustrative or not measured
-The transceiver in both simulations is a stand-in: the alignment time, the phase and the latency saving are not simulated (prediction only: E falls 2.9 to 4.5 clocks, third-party GTY figures, UNCONFIRMED for this GTH). Power is vectorless. No bitstream was loaded on a board.
+The transceiver in both simulations is a stand-in: the alignment time, the phase and the latency saving are not simulated (prediction only: E falls 2.9 to 4.5 clocks, third-party GTY figures, UNCONFIRMED for this GTH). Power is vectorless. The simulations load no bitstream; the board run is the section above.
 
 ## Known gaps and limits
 The controllers' reset drive is our choice (UNCONFIRMED against AMD's example). TX alignment is exercised on the board only by full GT restarts (the driver does 20). The ppm registers have no effect in this build (`TXPIPPMPD_VAL = 1`). A fresh `rm_gp` was rebuilt for the comparison (it differs from 96E's record by tree, not by design).
