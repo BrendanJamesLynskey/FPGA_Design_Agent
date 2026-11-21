@@ -67,8 +67,8 @@ preflight() {
   # Vivado's own task_worker.tcl helpers (synthesis children) are part of their parent job, so they are not counted
   # count only processes whose executable (argv[0]) IS the Vivado binary: a shell that merely names the path in its command line
   # (another session waiting for Vivado to finish, a pgrep loop) is not a Vivado job (planner, 2026-11-21, after brief 118 was refused by one)
-  running="$(ps -eo pid=,args= | awk '$2 ~ /unwrapped\/lnx64\.o\/vivado$/ && $0 !~ /task_worker\.tcl/ {print $1}' | paste -sd, - || true)"
-  n="$(ps -eo pid=,args= | awk '$2 ~ /unwrapped\/lnx64\.o\/vivado$/ && $0 !~ /task_worker\.tcl/' | wc -l || true)"
+  running="$(ps -ww -eo pid=,args= | awk '$2 ~ /unwrapped\/lnx64\.o\/vivado$/ && $0 !~ /task_worker\.tcl/ {print $1}' | paste -sd, - || true)"
+  n="$(ps -ww -eo pid=,args= | awk '$2 ~ /unwrapped\/lnx64\.o\/vivado$/ && $0 !~ /task_worker\.tcl/' | wc -l || true)"
   # tests only: a test that runs a fake Vivado sets the count it wants, so other sessions' real jobs on the PC do not
   # decide its result (flow/tests/test_33_build_cache.py)
   if [ -n "${FDA_TEST_VIVADO_RUNNING:-}" ]; then n="$FDA_TEST_VIVADO_RUNNING"; running="(test override)"; fi
