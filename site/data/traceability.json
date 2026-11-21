@@ -6,34 +6,6 @@
     "gaps": [
      {
       "gate": false,
-      "id": "B96-F-PCS",
-      "state": "fail",
-      "text": "an item fails",
-      "type": "no_passing_evidence"
-     },
-     {
-      "gate": false,
-      "id": "B96-F-MAC",
-      "state": "fail",
-      "text": "an item fails",
-      "type": "no_passing_evidence"
-     },
-     {
-      "gate": false,
-      "id": "B96-F-LOCK",
-      "state": "fail",
-      "text": "an item fails",
-      "type": "no_passing_evidence"
-     },
-     {
-      "gate": false,
-      "id": "B96-S-RATEMATCH",
-      "state": "fail",
-      "text": "an item fails",
-      "type": "no_passing_evidence"
-     },
-     {
-      "gate": false,
       "id": "B96-F-OFFSET",
       "text": "depends on a second reference clock or a 10G network card (a loopback has no frequency offset); only hardware verification can close it, and it has not been done",
       "type": "hardware_open"
@@ -60,8 +32,8 @@
      {
       "gate": false,
       "id": "B96-S-DRIVER",
-      "state": "fail",
-      "text": "an item fails",
+      "state": "stale",
+      "text": "its evidence is stale",
       "type": "no_passing_evidence"
      },
      {
@@ -69,13 +41,6 @@
       "id": "B96-I-REGMAP",
       "state": "stale",
       "text": "its evidence is stale",
-      "type": "no_passing_evidence"
-     },
-     {
-      "gate": false,
-      "id": "B96-F-BUILDS",
-      "state": "fail",
-      "text": "an item fails",
       "type": "no_passing_evidence"
      },
      {
@@ -437,7 +402,7 @@
       "value": "37 of 37 tests passed"
      },
      {
-      "detail": "0 test(s) passed in the recorded run",
+      "detail": "not in the recorded run: test_126_all3_bypass::*",
       "evidence": {
        "exists": true,
        "file": "results/116_traceability/b96_kr260_10g/pytest_junit.xml"
@@ -450,9 +415,9 @@
        "B96-F-BUILDS",
        "B96-S-DRIVER"
       ],
-      "status": "fail",
+      "status": "not_in_run",
       "title": "Build lat_all3_bypass composes 97C's cuts with the bypass build's files, and its board driver's verdicts, references and lock prefix (brief 126); not yet in a recorded run",
-      "value": "0 of 0 tests passed"
+      "value": "0 of 1 tests passed"
      },
      {
       "detail": "5 test(s) passed in the recorded run",
@@ -509,7 +474,7 @@
       "value": "Successfully proved designs equivalent"
      },
      {
-      "detail": "0 test(s) passed in the recorded run",
+      "detail": "not in the recorded run: test_b115_formal::*",
       "evidence": {
        "exists": true,
        "file": "results/116_traceability/b96_kr260_10g/pytest_junit.xml"
@@ -522,9 +487,9 @@
        "B96-F-PCS",
        "B96-S-RATEMATCH"
       ],
-      "status": "fail",
+      "status": "not_in_run",
       "title": "SVA properties of the gray-pointer rate matcher with SymbiYosys (brief 115; designs/b96_kr260_10g/verif/formal/, results/b115); safety by k-induction, progress by BMC only; not yet in a recorded run",
-      "value": "0 of 0 tests passed"
+      "value": "0 of 1 tests passed"
      },
      {
       "detail": "no evidence file named (planned: brief 115 (not merged))",
@@ -543,7 +508,7 @@
       "value": null
      },
      {
-      "detail": "0 test(s) passed in the recorded run",
+      "detail": "not in the recorded run: test_b96_uvm::*",
       "evidence": {
        "exists": true,
        "file": "results/116_traceability/b96_kr260_10g/pytest_junit.xml"
@@ -557,12 +522,12 @@
        "B96-F-MAC",
        "B96-F-LOCK"
       ],
-      "status": "fail",
+      "status": "not_in_run",
       "title": "UVM 1.2 bench of the PCS and MAC in xsim 2026.1 (brief 112, merged as",
-      "value": "0 of 0 tests passed"
+      "value": "0 of 1 tests passed"
      },
      {
-      "detail": "0 test(s) passed in the recorded run",
+      "detail": "not in the recorded run: test_b96_pyuvm::*",
       "evidence": {
        "exists": true,
        "file": "results/116_traceability/b96_kr260_10g/pytest_junit.xml"
@@ -576,9 +541,9 @@
        "B96-F-MAC",
        "B96-F-LOCK"
       ],
-      "status": "fail",
+      "status": "not_in_run",
       "title": "pyuvm-on-cocotb twin of the UVM bench of the PCS and MAC (brief 123; designs/b96_kr260_10g/verif/pyuvm/); not yet in a recorded run",
-      "value": "0 of 0 tests passed"
+      "value": "0 of 1 tests passed"
      },
      {
       "detail": "no evidence file named (planned: not planned in a brief yet)",
@@ -1508,7 +1473,7 @@
       "source": "designs/b96_kr260_10g/docs/design.md#7-verification-plan",
       "spec_status": "draft",
       "stale_items": 1,
-      "state": "fail",
+      "state": "verified",
       "text": "Scrambler, block encode and decode, gearbox and block lock produce the same bits as the bit-serial Python reference, at every bit offset, with idles, ordered sets and bit-error runs.",
       "title": "PCS encodes and decodes 64B/66B bit-exactly against an independent model"
      },
@@ -1535,7 +1500,7 @@
       "source": "designs/b96_kr260_10g/docs/design.md#7-verification-plan",
       "spec_status": "draft",
       "stale_items": 1,
-      "state": "fail",
+      "state": "verified",
       "text": "Frames start in lane 0 and lane 4, every terminate lane and every length residue is handled, FCS is generated and checked, and a bad FCS is counted.",
       "title": "64-bit MAC frames correctly in both directions"
      },
@@ -1558,7 +1523,7 @@
       "source": "designs/b96_kr260_10g/docs/design.md#28-block-lock-bit-slip-errors",
       "spec_status": "draft",
       "stale_items": 0,
-      "state": "fail",
+      "state": "verified",
       "text": "The receive gearbox slips to the block boundary from any offset, and a run of bit errors loses lock only above the documented threshold.",
       "title": "Block lock is acquired from any bit offset and survives bit errors"
      },
@@ -1630,7 +1595,7 @@
       "source": "designs/b96_kr260_10g/docs/design.md#9-rate-matching-and-the-receive-to-core-crossing-brief-96c",
       "spec_status": "draft",
       "stale_items": 3,
-      "state": "fail",
+      "state": "verified",
       "text": "The elastic buffer inserts and deletes idles only between frames, never under- or overflows silently, and every order sent is fired and passes its content check.",
       "title": "Rate matching never corrupts a frame"
      },
@@ -1719,7 +1684,7 @@
       "source": "designs/b96_kr260_10g/host/b96_bench.py",
       "spec_status": "draft",
       "stale_items": 1,
-      "state": "fail",
+      "state": "stale",
       "text": "A stale counter, a missing order, a counter that was not read, a wrong polarity or a link that never came up fails the run and names the cause; unsafe actions are refused without the lock.",
       "title": "The board drivers cannot report OK when a safety check fails"
      },
@@ -1827,7 +1792,7 @@
       "source": "designs/b96_kr260_10g/handover.yaml",
       "spec_status": "draft",
       "stale_items": 0,
-      "state": "fail",
+      "state": "verified",
       "text": "The build files set parameters the core has, the base build keeps the 97C defaults, and each variant differs from the base only where documented.",
       "title": "Every build variant sets only the parameters it documents"
      },
@@ -2226,90 +2191,109 @@
       "assertion": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 1,
        "pass": 0,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 0
       },
       "board_measurement": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 3,
        "pass": 8,
+       "skipped": 0,
        "stale": 5,
        "unapproved": 0
       },
       "coverage_bin": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 1,
        "pass": 0,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 0
       },
       "formal": {
        "bounded": 0,
-       "fail": 1,
+       "fail": 0,
+       "not_in_run": 1,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 1,
        "unapproved": 0
       },
       "formal_lean": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 10
       },
       "review": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 1,
        "unapproved": 0
       },
       "sim_measurement": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 3,
        "unapproved": 0
       },
       "sim_test": {
        "bounded": 0,
-       "fail": 1,
+       "fail": 0,
+       "not_in_run": 1,
        "not_run": 0,
        "pass": 9,
+       "skipped": 0,
        "stale": 2,
        "unapproved": 0
       },
       "timing": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 3,
+       "skipped": 0,
        "stale": 6,
        "unapproved": 0
       },
       "uvm_test": {
        "bounded": 0,
-       "fail": 2,
+       "fail": 0,
+       "not_in_run": 2,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 0
       }
      },
      "by_state": {
-      "fail": 6,
       "not_run": 2,
-      "stale": 3,
+      "stale": 4,
       "unapproved": 5,
-      "verified": 14
+      "verified": 19
      },
      "external": 3,
      "external_hardware_done": 0,
@@ -2317,7 +2301,7 @@
       "external_not_hardware_verified": 1,
       "hardware_open": 3,
       "lean_statement_unapproved": 10,
-      "no_passing_evidence": 11,
+      "no_passing_evidence": 6,
       "stale_evidence": 18
      },
      "human_reviews": 0,
@@ -2344,7 +2328,7 @@
       "items": 10,
       "statement_not_approved": 10
      },
-     "line": "30 requirements (14 functional, 9 performance, 1 interface, 6 safety); 14 verified; 3 stale; 6 failing; 2 with no passing evidence; 0 of 3 requirements that depend on an external element closed by hardware; performance verified: 4 on the board, 2 by post-route timing, 0 in simulation only; 0 of 30 requirements agreed by a human, 0 human review(s) recorded; 10 Lean proof item(s) (all widths): 0 with a human-approved statement, 10 with statement not approved; 7 kernel only, 3 using a compiled decision procedure; build status from: recorded build (not re-run).",
+     "line": "30 requirements (14 functional, 9 performance, 1 interface, 6 safety); 19 verified; 4 stale; 2 with no passing evidence; 0 of 3 requirements that depend on an external element closed by hardware; performance verified: 4 on the board, 2 by post-route timing, 0 in simulation only; 0 of 30 requirements agreed by a human, 0 human review(s) recorded; 10 Lean proof item(s) (all widths): 0 with a human-approved statement, 10 with statement not approved; 7 kernel only, 3 using a compiled decision procedure; build status from: recorded build (not re-run).",
      "performance_board": 4,
      "performance_sim_only": 0,
      "performance_timing": 2,
@@ -5361,80 +5345,100 @@
       "assertion": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 46,
        "unapproved": 0
       },
       "board_measurement": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 0
       },
       "coverage_bin": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 10,
        "unapproved": 0
       },
       "formal": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 5,
        "unapproved": 0
       },
       "formal_lean": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 0
       },
       "review": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 0
       },
       "sim_measurement": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 0
       },
       "sim_test": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 35,
        "unapproved": 0
       },
       "timing": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 0
       },
       "uvm_test": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 0
       }
@@ -5482,7 +5486,7 @@
   "total": {
    "designs": 2,
    "requirements": 51,
-   "verified": 14
+   "verified": 19
   }
  },
  "content": {
@@ -5492,34 +5496,6 @@
     "gaps": [
      {
       "gate": false,
-      "id": "B96-F-PCS",
-      "state": "fail",
-      "text": "an item fails",
-      "type": "no_passing_evidence"
-     },
-     {
-      "gate": false,
-      "id": "B96-F-MAC",
-      "state": "fail",
-      "text": "an item fails",
-      "type": "no_passing_evidence"
-     },
-     {
-      "gate": false,
-      "id": "B96-F-LOCK",
-      "state": "fail",
-      "text": "an item fails",
-      "type": "no_passing_evidence"
-     },
-     {
-      "gate": false,
-      "id": "B96-S-RATEMATCH",
-      "state": "fail",
-      "text": "an item fails",
-      "type": "no_passing_evidence"
-     },
-     {
-      "gate": false,
       "id": "B96-F-OFFSET",
       "text": "depends on a second reference clock or a 10G network card (a loopback has no frequency offset); only hardware verification can close it, and it has not been done",
       "type": "hardware_open"
@@ -5546,8 +5522,8 @@
      {
       "gate": false,
       "id": "B96-S-DRIVER",
-      "state": "fail",
-      "text": "an item fails",
+      "state": "stale",
+      "text": "its evidence is stale",
       "type": "no_passing_evidence"
      },
      {
@@ -5555,13 +5531,6 @@
       "id": "B96-I-REGMAP",
       "state": "stale",
       "text": "its evidence is stale",
-      "type": "no_passing_evidence"
-     },
-     {
-      "gate": false,
-      "id": "B96-F-BUILDS",
-      "state": "fail",
-      "text": "an item fails",
       "type": "no_passing_evidence"
      },
      {
@@ -5923,7 +5892,7 @@
       "value": "37 of 37 tests passed"
      },
      {
-      "detail": "0 test(s) passed in the recorded run",
+      "detail": "not in the recorded run: test_126_all3_bypass::*",
       "evidence": {
        "exists": true,
        "file": "results/116_traceability/b96_kr260_10g/pytest_junit.xml"
@@ -5936,9 +5905,9 @@
        "B96-F-BUILDS",
        "B96-S-DRIVER"
       ],
-      "status": "fail",
+      "status": "not_in_run",
       "title": "Build lat_all3_bypass composes 97C's cuts with the bypass build's files, and its board driver's verdicts, references and lock prefix (brief 126); not yet in a recorded run",
-      "value": "0 of 0 tests passed"
+      "value": "0 of 1 tests passed"
      },
      {
       "detail": "5 test(s) passed in the recorded run",
@@ -5995,7 +5964,7 @@
       "value": "Successfully proved designs equivalent"
      },
      {
-      "detail": "0 test(s) passed in the recorded run",
+      "detail": "not in the recorded run: test_b115_formal::*",
       "evidence": {
        "exists": true,
        "file": "results/116_traceability/b96_kr260_10g/pytest_junit.xml"
@@ -6008,9 +5977,9 @@
        "B96-F-PCS",
        "B96-S-RATEMATCH"
       ],
-      "status": "fail",
+      "status": "not_in_run",
       "title": "SVA properties of the gray-pointer rate matcher with SymbiYosys (brief 115; designs/b96_kr260_10g/verif/formal/, results/b115); safety by k-induction, progress by BMC only; not yet in a recorded run",
-      "value": "0 of 0 tests passed"
+      "value": "0 of 1 tests passed"
      },
      {
       "detail": "no evidence file named (planned: brief 115 (not merged))",
@@ -6029,7 +5998,7 @@
       "value": null
      },
      {
-      "detail": "0 test(s) passed in the recorded run",
+      "detail": "not in the recorded run: test_b96_uvm::*",
       "evidence": {
        "exists": true,
        "file": "results/116_traceability/b96_kr260_10g/pytest_junit.xml"
@@ -6043,12 +6012,12 @@
        "B96-F-MAC",
        "B96-F-LOCK"
       ],
-      "status": "fail",
+      "status": "not_in_run",
       "title": "UVM 1.2 bench of the PCS and MAC in xsim 2026.1 (brief 112, merged as",
-      "value": "0 of 0 tests passed"
+      "value": "0 of 1 tests passed"
      },
      {
-      "detail": "0 test(s) passed in the recorded run",
+      "detail": "not in the recorded run: test_b96_pyuvm::*",
       "evidence": {
        "exists": true,
        "file": "results/116_traceability/b96_kr260_10g/pytest_junit.xml"
@@ -6062,9 +6031,9 @@
        "B96-F-MAC",
        "B96-F-LOCK"
       ],
-      "status": "fail",
+      "status": "not_in_run",
       "title": "pyuvm-on-cocotb twin of the UVM bench of the PCS and MAC (brief 123; designs/b96_kr260_10g/verif/pyuvm/); not yet in a recorded run",
-      "value": "0 of 0 tests passed"
+      "value": "0 of 1 tests passed"
      },
      {
       "detail": "no evidence file named (planned: not planned in a brief yet)",
@@ -6994,7 +6963,7 @@
       "source": "designs/b96_kr260_10g/docs/design.md#7-verification-plan",
       "spec_status": "draft",
       "stale_items": 1,
-      "state": "fail",
+      "state": "verified",
       "text": "Scrambler, block encode and decode, gearbox and block lock produce the same bits as the bit-serial Python reference, at every bit offset, with idles, ordered sets and bit-error runs.",
       "title": "PCS encodes and decodes 64B/66B bit-exactly against an independent model"
      },
@@ -7021,7 +6990,7 @@
       "source": "designs/b96_kr260_10g/docs/design.md#7-verification-plan",
       "spec_status": "draft",
       "stale_items": 1,
-      "state": "fail",
+      "state": "verified",
       "text": "Frames start in lane 0 and lane 4, every terminate lane and every length residue is handled, FCS is generated and checked, and a bad FCS is counted.",
       "title": "64-bit MAC frames correctly in both directions"
      },
@@ -7044,7 +7013,7 @@
       "source": "designs/b96_kr260_10g/docs/design.md#28-block-lock-bit-slip-errors",
       "spec_status": "draft",
       "stale_items": 0,
-      "state": "fail",
+      "state": "verified",
       "text": "The receive gearbox slips to the block boundary from any offset, and a run of bit errors loses lock only above the documented threshold.",
       "title": "Block lock is acquired from any bit offset and survives bit errors"
      },
@@ -7116,7 +7085,7 @@
       "source": "designs/b96_kr260_10g/docs/design.md#9-rate-matching-and-the-receive-to-core-crossing-brief-96c",
       "spec_status": "draft",
       "stale_items": 3,
-      "state": "fail",
+      "state": "verified",
       "text": "The elastic buffer inserts and deletes idles only between frames, never under- or overflows silently, and every order sent is fired and passes its content check.",
       "title": "Rate matching never corrupts a frame"
      },
@@ -7205,7 +7174,7 @@
       "source": "designs/b96_kr260_10g/host/b96_bench.py",
       "spec_status": "draft",
       "stale_items": 1,
-      "state": "fail",
+      "state": "stale",
       "text": "A stale counter, a missing order, a counter that was not read, a wrong polarity or a link that never came up fails the run and names the cause; unsafe actions are refused without the lock.",
       "title": "The board drivers cannot report OK when a safety check fails"
      },
@@ -7313,7 +7282,7 @@
       "source": "designs/b96_kr260_10g/handover.yaml",
       "spec_status": "draft",
       "stale_items": 0,
-      "state": "fail",
+      "state": "verified",
       "text": "The build files set parameters the core has, the base build keeps the 97C defaults, and each variant differs from the base only where documented.",
       "title": "Every build variant sets only the parameters it documents"
      },
@@ -7712,90 +7681,109 @@
       "assertion": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 1,
        "pass": 0,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 0
       },
       "board_measurement": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 3,
        "pass": 8,
+       "skipped": 0,
        "stale": 5,
        "unapproved": 0
       },
       "coverage_bin": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 1,
        "pass": 0,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 0
       },
       "formal": {
        "bounded": 0,
-       "fail": 1,
+       "fail": 0,
+       "not_in_run": 1,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 1,
        "unapproved": 0
       },
       "formal_lean": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 10
       },
       "review": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 1,
        "unapproved": 0
       },
       "sim_measurement": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 3,
        "unapproved": 0
       },
       "sim_test": {
        "bounded": 0,
-       "fail": 1,
+       "fail": 0,
+       "not_in_run": 1,
        "not_run": 0,
        "pass": 9,
+       "skipped": 0,
        "stale": 2,
        "unapproved": 0
       },
       "timing": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 3,
+       "skipped": 0,
        "stale": 6,
        "unapproved": 0
       },
       "uvm_test": {
        "bounded": 0,
-       "fail": 2,
+       "fail": 0,
+       "not_in_run": 2,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 0
       }
      },
      "by_state": {
-      "fail": 6,
       "not_run": 2,
-      "stale": 3,
+      "stale": 4,
       "unapproved": 5,
-      "verified": 14
+      "verified": 19
      },
      "external": 3,
      "external_hardware_done": 0,
@@ -7803,7 +7791,7 @@
       "external_not_hardware_verified": 1,
       "hardware_open": 3,
       "lean_statement_unapproved": 10,
-      "no_passing_evidence": 11,
+      "no_passing_evidence": 6,
       "stale_evidence": 18
      },
      "human_reviews": 0,
@@ -7830,7 +7818,7 @@
       "items": 10,
       "statement_not_approved": 10
      },
-     "line": "30 requirements (14 functional, 9 performance, 1 interface, 6 safety); 14 verified; 3 stale; 6 failing; 2 with no passing evidence; 0 of 3 requirements that depend on an external element closed by hardware; performance verified: 4 on the board, 2 by post-route timing, 0 in simulation only; 0 of 30 requirements agreed by a human, 0 human review(s) recorded; 10 Lean proof item(s) (all widths): 0 with a human-approved statement, 10 with statement not approved; 7 kernel only, 3 using a compiled decision procedure; build status from: recorded build (not re-run).",
+     "line": "30 requirements (14 functional, 9 performance, 1 interface, 6 safety); 19 verified; 4 stale; 2 with no passing evidence; 0 of 3 requirements that depend on an external element closed by hardware; performance verified: 4 on the board, 2 by post-route timing, 0 in simulation only; 0 of 30 requirements agreed by a human, 0 human review(s) recorded; 10 Lean proof item(s) (all widths): 0 with a human-approved statement, 10 with statement not approved; 7 kernel only, 3 using a compiled decision procedure; build status from: recorded build (not re-run).",
      "performance_board": 4,
      "performance_sim_only": 0,
      "performance_timing": 2,
@@ -10847,80 +10835,100 @@
       "assertion": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 46,
        "unapproved": 0
       },
       "board_measurement": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 0
       },
       "coverage_bin": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 10,
        "unapproved": 0
       },
       "formal": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 5,
        "unapproved": 0
       },
       "formal_lean": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 0
       },
       "review": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 0
       },
       "sim_measurement": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 0
       },
       "sim_test": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 35,
        "unapproved": 0
       },
       "timing": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 0
       },
       "uvm_test": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 0
       }
@@ -10968,7 +10976,7 @@
   "total": {
    "designs": 2,
    "requirements": 51,
-   "verified": 14
+   "verified": 19
   }
  }
 }
