@@ -15,6 +15,11 @@ module decides, from evidence and never from typed text:
   and no agent writes that file), the approval pins the statement's hash and the hash of the file's definitions. A statement or definition that
   no longer matches is a gate failure of ``python -m flow.trace_v1 check``, not a warning. A statement with no approval is shown as
   "statement not approved" and is not counted as verified.
+* **Two kinds of acceptance (brief 135).** ``approver_kind: human`` is a human's approval. ``approver_kind: agent_delegated`` is an acceptance by the
+  planner agent on the owner's standing delegation (owner decision 23), with ``accepted_by``, ``delegated_by`` and ``date``. Both pin the same hashes
+  and both are frozen by the gate. They are never shown alike: a delegated one reads "statement accepted by <planner> on the owner's delegation (not a
+  human approval)", counts as verification for the requirement, but is counted separately in the summary line ("N verified, of which M rest on
+  delegated acceptances") so it is never silently mixed with human approval.
 * **The RTL link, stated honestly.** ``rtl_generated`` (a tool made the Lean model from the RTL; none exists yet), ``transcription_tested`` (a
   person wrote the Lean model from named RTL lines, and a cross-check test compares it with an independent reference), ``transcription_untested``,
   ``model_only`` (pure mathematics, no RTL named). The matrix prints these as different things.
@@ -42,6 +47,8 @@ ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_PROJECT = "formal/lean"
 RECORD_SCHEMA = "fpga-design-agent/lean-build-record/v1"
 APPROVAL_SCHEMA = "fpga-design-agent/lean-approvals/v1"
+HUMAN, DELEGATED = "human", "agent_delegated"
+APPROVER_KINDS = (HUMAN, DELEGATED)
 ALLOWED_AXIOMS = frozenset({"propext", "Classical.choice", "Quot.sound"})
 COMPILED = re.compile(r"(\._native\.bv_decide\.ax_\d+_\d+$)|^Lean\.ofReduceBool$|^Lean\.trustCompiler$")
 TIERS = ("kernel_only", "compiled_decision_procedure", "unsound")
@@ -272,6 +279,22 @@ def load_approvals(design: Path) -> dict[str, dict]:
     return {a["item"]: a for a in raw.get("approvals") or [] if isinstance(a, dict) and a.get("item")}
 
 
+def acceptor(ap: dict) -> str:
+    """Who stands behind an entry, in the entry's own words."""
+    return str(ap.get("accepted_by") if ap.get("approver_kind") == DELEGATED else ap.get("approved_by"))
+
+
+def approval_text(li: dict) -> str:
+    """The one sentence every surface uses for how a statement was accepted."""
+    if li.get("approver_kind") == DELEGATED:
+        return f"statement accepted by {li.get('accepted_by')} on the owner's delegation ({li.get('delegated_by')}), {li.get('approved_on')}; not a human approval"
+    return f"statement approved by a human ({li.get('approved_by')}), {li.get('approved_on')}"
+
+
+def approval_short(li: dict) -> str:
+    return "statement accepted on delegation, not a human approval" if li.get("approver_kind") == DELEGATED else "statement approved by a human"
+
+
 def approval_problems(design: Path, item_ids: set[str], items: dict[str, dict]) -> list[str]:
     """Structural problems with the approvals file (gate failures): an entry for an unknown item, a missing field, or an approver that is not a
     human. An approval is never inferred, so an agent cannot set one by editing the testplan: `approved_by` in the plan itself is refused."""
@@ -286,17 +309,24 @@ def approval_problems(design: Path, item_ids: set[str], items: dict[str, dict]) 
             if iid not in item_ids:
                 out.append(f"{p.name}: approval for unknown item {iid!r}")
                 continue
-            for k in ("theorem", "statement_sha256", "definitions_sha256", "approved_by", "approver_kind", "date"):
+            kind = a.get("approver_kind")
+            who = ("accepted_by", "delegated_by") if kind == DELEGATED else ("approved_by",)
+            for k in ("theorem", "statement_sha256", "definitions_sha256", *who, "approver_kind", "date"):
                 if not a.get(k):
                     out.append(f"{p.name}: approval of {iid} lacks {k}")
-            if a.get("approver_kind") != "human":
-                out.append(f"{p.name}: approval of {iid}: approver_kind must be human (only a human approves a statement)")
+            if kind not in APPROVER_KINDS:
+                out.append(f"{p.name}: approval of {iid}: approver_kind must be human (a human's approval) or agent_delegated (the planner's acceptance on the owner's delegation); "
+                           "any other agent kind approves nothing")
+            if kind == DELEGATED and a.get("approved_by"):
+                out.append(f"{p.name}: approval of {iid}: an agent_delegated entry uses accepted_by and delegated_by, never approved_by (that word means a human)")
+            if kind == HUMAN and (a.get("accepted_by") or a.get("delegated_by")):
+                out.append(f"{p.name}: approval of {iid}: a human entry uses approved_by, not accepted_by or delegated_by")
             if a.get("theorem") and a["theorem"] != (items[iid].get("lean") or {}).get("theorem"):
                 out.append(f"{p.name}: approval of {iid} names a different theorem than the item")
     for iid, it in items.items():
-        for k in ("approved_by", "approver_kind", "approval", "statement_approved", "approved"):
+        for k in ("approved_by", "approver_kind", "approval", "statement_approved", "approved", "accepted_by", "delegated_by", "statement_accepted"):
             if k in it or k in (it.get("lean") or {}):
-                out.append(f"{iid}: `{k}` in the testplan is refused: approvals live in verif/lean_approvals.yaml and are written by a human")
+                out.append(f"{iid}: `{k}` in the testplan is refused: approvals live in verif/lean_approvals.yaml (a human's, or the planner's delegated acceptance) and an agent never sets one through the testplan")
     return out
 
 
@@ -336,7 +366,7 @@ def item_problems(item: dict, approvals: dict[str, dict]) -> list[str]:
     ap = approvals.get(item["id"])
     if ap and f is not None and (ap.get("statement_sha256") != f["statement_sha256"] or ap.get("definitions_sha256") != f["definitions_sha256"]):
         which = "statement" if ap.get("statement_sha256") != f["statement_sha256"] else "definitions"
-        out.append(f"frozen {which} of {lean['theorem']} changed since {ap.get('approved_by')} approved it on {ap.get('date')}: "
+        out.append(f"frozen {which} of {lean['theorem']} changed since {acceptor(ap)} {'accepted' if ap.get('approver_kind') == DELEGATED else 'approved'} it on {ap.get('date')}: "
                    "the statement is the specification; restore it or ask for a new approval")
     return out
 
@@ -352,7 +382,8 @@ def judge_lean(item: dict, design: Path, mode: str, cache: dict) -> dict[str, An
                            "evidence": None, "instrument": None, "planned": item.get("planned")}
     li: dict[str, Any] = {"theorem": theorem, "module": module, "project": project, "rtl_link": link.get("kind"),
                           "rtl_link_text": RTL_LINK_TEXT.get(link.get("kind", ""), "no RTL link recorded"), "build_source": None, "tier": None,
-                          "approved": False, "approved_by": None, "approved_on": None, "statement_sha256": None}
+                          "approved": False, "approver_kind": None, "approved_by": None, "accepted_by": None, "delegated_by": None, "approved_on": None,
+                          "statement_sha256": None}
     res["lean"] = li
     rp = record_path(project)
     rec = load_record(project)
@@ -413,7 +444,8 @@ def judge_lean(item: dict, design: Path, mode: str, cache: dict) -> dict[str, An
         return res
     ap = load_approvals(design).get(item["id"])
     if ap:
-        li.update(approved_by=ap.get("approved_by"), approved_on=str(ap.get("date")))
+        li.update(approver_kind=ap.get("approver_kind"), approved_by=ap.get("approved_by"), accepted_by=ap.get("accepted_by"),
+                  delegated_by=ap.get("delegated_by"), approved_on=str(ap.get("date")))
         if ap.get("statement_sha256") != f["statement_sha256"] or ap.get("definitions_sha256") != f["definitions_sha256"]:
             res.update(status="fail", detail="the frozen statement (or the definitions it rests on) changed since it was approved")
             return res
@@ -425,7 +457,7 @@ def judge_lean(item: dict, design: Path, mode: str, cache: dict) -> dict[str, An
     if not li["approved"]:
         res.update(status="unapproved", detail=f"statement not approved; {base}")
         return res
-    res.update(status="pass", detail=f"statement approved by {li['approved_by']} on {li['approved_on']}; {base}")
+    res.update(status="pass", detail=f"proved; {approval_text(li)}; {base}")
     return res
 
 
@@ -451,4 +483,5 @@ def statement_report(design: Path, item: dict) -> str:
                       "DEFINITIONS the statement rests on (every def and abbrev of the module):", *f["definitions"], "",
                       f"statement_sha256:   {f['statement_sha256']}", f"definitions_sha256: {f['definitions_sha256']}", "",
                       f"To approve, the owner adds an entry to {approvals_path(design).relative_to(ROOT).as_posix()} with item, theorem, both hashes,",
-                      "approved_by, approver_kind: human and date. Nothing in this repository writes that file."])
+                      "approved_by, approver_kind: human and date; or, for the planner's acceptance on the owner's delegation, accepted_by, delegated_by,",
+                      "approver_kind: agent_delegated and date. Nothing in this repository writes that file."])

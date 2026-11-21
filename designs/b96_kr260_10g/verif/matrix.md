@@ -4,7 +4,7 @@
 
 The human specifies the requirements and checks that the verification is thorough enough. The agent holds the knowledge to implement and to verify. You can open any of the implementation or the evidence, and you do not have to. Hardware on the board, with attached instruments, is a verification layer of its own: where a requirement depends on something outside the design (an optical link, a network card, a data source) it may be the only way to close it.
 
-**Summary.** 30 requirements (14 functional, 9 performance, 1 interface, 6 safety); 22 verified; 1 stale; 2 with no passing evidence; 0 of 3 requirements that depend on an external element closed by hardware; performance verified: 5 on the board, 2 by post-route timing, 0 in simulation only; 0 of 30 requirements agreed by a human, 0 human review(s) recorded; 10 Lean proof item(s) (all widths): 0 with a human-approved statement, 10 with statement not approved; 7 kernel only, 3 using a compiled decision procedure; build status from: recorded build (not re-run).
+**Summary.** 27 requirements (11 functional, 9 performance, 1 interface, 6 safety); 23 verified, of which 2 rest on delegated acceptances (the planner accepted the Lean statement on the owner's delegation; not human approvals); 2 stale; 2 with no passing evidence; 0 of 3 requirements that depend on an external element closed by hardware; performance verified: 4 on the board, 2 by post-route timing, 0 in simulation only; 0 of 27 requirements agreed by a human, 0 human review(s) recorded; 4 Lean proof item(s) (all widths): 0 with a human-approved statement, 4 with a statement accepted on the owner's delegation (not a human approval), 0 with statement not approved; 4 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run).
 
 Variants. Unless a requirement says otherwise, "the default build" is RATE_MATCH = 0 (the board-proven 97C receive path) and "the rate-matched build" is rm_gp (RATE_MATCH = 1, RM_OWN = 1). Board evidence is one KR260 on a short optical loopback; nothing has run against a network card. Briefs 112 (UVM bench), 115 (formal proofs of the rate matcher) and 123 (pyuvm bench) are merged and their tests are in the recorded run; the bound SVA checkers in simulation and the coverage run have no evidence and are shown as not run.
 
@@ -37,28 +37,12 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 | **B96-P-TIMING** Post-route setup slack | performance | verified (post-route timing); 2 item(s) stale |  |  |  |  |  |  | stale: [V-TIM-SETUP-DEFAULT](../../../results/b96c/builds/control/digest.json)<br>stale: [V-TIM-SETUP-RMGP](../../../results/b96e/builds/rm_gp/digest.json)<br>pass: [V-TIM-SETUP-BYPASS](../../../results/b96f1/builds/rm_gp_bypass/digest.json) |  |  |  |
 | **B96-P-HOLD** Post-route hold slack | performance | verified (post-route timing); 2 item(s) stale |  |  |  |  |  |  | stale: [V-TIM-HOLD-DEFAULT](../../../results/b96c/builds/control/digest.json)<br>stale: [V-TIM-HOLD-RMGP](../../../results/b96e/builds/rm_gp/digest.json)<br>pass: [V-TIM-HOLD-BYPASS](../../../results/b96f1/builds/rm_gp_bypass/digest.json) |  |  |  |
 | **B96-P-EYE** Receive eye margin | performance | verified (board-measured) |  |  |  |  |  |  |  |  | pass [eye_scan]: [V-HW-EYE](../../../results/b96d/hw/20261120_105134/summary.txt) |  |
-| **B96-P-BYPASS** GT buffer bypass shortens the echo path (pre-registered) | performance | verified (board-measured); 1 item(s) stale |  |  |  |  |  |  |  | stale: [V-SIMM-BYPASS-SEQ](../../../results/b96f1/bypass_seq/result.txt) | pass [latency_loop]: [V-HW-BYPASS-PLANNED](../../../results/b96f1/hw/20261120_215255/rm_gp_bypass/stage3.json) |  |
+| **B96-P-BYPASS** GT buffer bypass shortens the echo path (pre-registered) | performance | stale |  |  |  |  |  |  |  | stale: [V-SIMM-BYPASS-SEQ](../../../results/b96f1/bypass_seq/result.txt) | stale [latency_loop]: [V-HW-BYPASS](../../../results/b96f1/hw/20261120_215255/rm_gp_bypass/stage3.json) |  |
 | **B96-P-THROUGHPUT** Line-rate throughput without loss Depends on: a 10G network card or a line-rate traffic generator; hardware verification open. | performance | not run |  |  |  |  |  |  |  |  | not run [external_equipment]: V-HW-THROUGHPUT-PLANNED |  |
-| **B96-F-LEAN-GRAY-STEP** A pointer's gray code changes in exactly one bit per count, at every width | functional | proved, statement not approved |  |  |  |  | statement not approved [kernel only; transcription tested; recorded build]: [V-LEAN-GRAY-STEP](../../../formal/lean/records/build_record.json) |  |  |  |  |  |
-| **B96-F-LEAN-GRAY-DECODE** Gray decoding inverts gray encoding, at every width | functional | proved, statement not approved |  |  |  |  | statement not approved [kernel only; transcription tested; recorded build]: [V-LEAN-GRAY-DECODE](../../../formal/lean/records/build_record.json)<br>statement not approved [kernel only; transcription tested; recorded build]: [V-LEAN-GRAY-ENCODE](../../../formal/lean/records/build_record.json)<br>statement not approved [kernel only; transcription tested; recorded build]: [V-LEAN-GRAY-SAMPLE](../../../formal/lean/records/build_record.json) |  |  |  |  |  |
-| **B96-F-LEAN-CKSUM-IP** The IPv4 header checksum of the TCP fast path equals the Internet checksum, for all inputs | functional | proved, statement not approved |  |  |  |  | statement not approved [kernel plus a compiled decision procedure; transcription tested; recorded build]: [V-LEAN-CKSUM-IP](../../../formal/lean/records/build_record.json)<br>statement not approved [kernel plus a compiled decision procedure; transcription tested; recorded build]: [V-LEAN-CKSUM-IP-RX](../../../formal/lean/records/build_record.json) |  |  |  |  |  |
-| **B96-F-LEAN-CKSUM-TCP** The TCP checksum of the TCP fast path equals the Internet checksum, for all inputs and payloads up to 30 words | functional | proved, statement not approved |  |  |  |  | statement not approved [kernel plus a compiled decision procedure; transcription tested; recorded build]: [V-LEAN-CKSUM-TCP](../../../formal/lean/records/build_record.json) |  |  |  |  |  |
-| **B96-F-LEAN-CKSUM-MODEL** The ones' complement arithmetic the checksum equations rest on is correct, for lists of any length | functional | proved, statement not approved |  |  |  |  | statement not approved [kernel only; no RTL link; recorded build]: [V-LEAN-CKSUM-SUM](../../../formal/lean/records/build_record.json)<br>statement not approved [kernel only; no RTL link; recorded build]: [V-LEAN-CKSUM-INC](../../../formal/lean/records/build_record.json)<br>statement not approved [kernel only; no RTL link; recorded build]: [V-LEAN-CKSUM-INC-ZERO](../../../formal/lean/records/build_record.json) |  |  |  |  |  |
+| **B96-F-LEAN-GRAY-STEP** A pointer's gray code changes in exactly one bit per count, at every width | functional | verified; the Lean proof is of a transcription of the RTL, not of the RTL itself; rests on a delegated acceptance of the Lean statement, not a human approval |  |  |  |  | pass [statement accepted on delegation, not a human approval; kernel only; transcription tested; recorded build]: [V-LEAN-GRAY-STEP](../../../formal/lean/records/build_record.json) |  |  |  |  |  |
+| **B96-F-LEAN-GRAY-DECODE** Gray decoding inverts gray encoding, at every width | functional | verified; the Lean proof is of a transcription of the RTL, not of the RTL itself; rests on a delegated acceptance of the Lean statement, not a human approval |  |  |  |  | pass [statement accepted on delegation, not a human approval; kernel only; transcription tested; recorded build]: [V-LEAN-GRAY-DECODE](../../../formal/lean/records/build_record.json)<br>pass [statement accepted on delegation, not a human approval; kernel only; transcription tested; recorded build]: [V-LEAN-GRAY-ENCODE](../../../formal/lean/records/build_record.json)<br>pass [statement accepted on delegation, not a human approval; kernel only; transcription tested; recorded build]: [V-LEAN-GRAY-SAMPLE](../../../formal/lean/records/build_record.json) |  |  |  |  |  |
 
 ## Gaps
-
-### Lean proofs whose statement is not approved by a human
-
-- `V-LEAN-GRAY-STEP`: the Lean statement is not approved by a human; until it is, the proof is not counted as verification
-- `V-LEAN-GRAY-DECODE`: the Lean statement is not approved by a human; until it is, the proof is not counted as verification
-- `V-LEAN-GRAY-ENCODE`: the Lean statement is not approved by a human; until it is, the proof is not counted as verification
-- `V-LEAN-GRAY-SAMPLE`: the Lean statement is not approved by a human; until it is, the proof is not counted as verification
-- `V-LEAN-CKSUM-IP`: the Lean statement is not approved by a human; until it is, the proof is not counted as verification
-- `V-LEAN-CKSUM-IP-RX`: the Lean statement is not approved by a human; until it is, the proof is not counted as verification
-- `V-LEAN-CKSUM-TCP`: the Lean statement is not approved by a human; until it is, the proof is not counted as verification
-- `V-LEAN-CKSUM-SUM`: the Lean statement is not approved by a human; until it is, the proof is not counted as verification
-- `V-LEAN-CKSUM-INC`: the Lean statement is not approved by a human; until it is, the proof is not counted as verification
-- `V-LEAN-CKSUM-INC-ZERO`: the Lean statement is not approved by a human; until it is, the proof is not counted as verification
 
 ### Requirements that depend on an external element and are not yet verified on hardware
 
@@ -74,6 +58,7 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 - `B96-F-INTEROP`: no passing evidence
 - `B96-P-T2T-DIGITAL`: its evidence is stale
+- `B96-P-BYPASS`: its evidence is stale
 - `B96-P-THROUGHPUT`: no passing evidence
 
 ### Stale evidence
@@ -92,6 +77,7 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 - `V-HW-RATEMATCH-96C`: changed since the evidence was recorded: designs/b96_kr260_10g/rtl/rate_match.sv, designs/b96_kr260_10g/rtl/rate_match_gp.sv, designs/b96_kr260_10g/rtl/rx_path.sv
 - `V-HW-LAT-E-97C`: changed since the evidence was recorded: designs/b96_kr260_10g/rtl/b96_core.sv, designs/b96_kr260_10g/rtl/b96_pkg.sv, designs/b96_kr260_10g/rtl/hs_vec.sv, designs/b96_kr260_10g/rtl/pcs_rx.sv (+5 more)
 - `V-HW-LAT-L-97C`: changed since the evidence was recorded: designs/b96_kr260_10g/rtl/b96_core.sv, designs/b96_kr260_10g/rtl/b96_pkg.sv, designs/b96_kr260_10g/rtl/hs_vec.sv, designs/b96_kr260_10g/rtl/pcs_rx.sv (+5 more)
+- `V-HW-BYPASS`: no pin recorded (run: python -m flow.trace_v1 pin)
 - `V-REVIEW-96`: changed since the evidence was recorded: designs/b96_kr260_10g/rtl/b96_core.sv, designs/b96_kr260_10g/rtl/b96_pkg.sv, designs/b96_kr260_10g/rtl/frame_src.sv, designs/b96_kr260_10g/rtl/hs_vec.sv (+7 more)
 
 ## Requirements in full
@@ -158,7 +144,7 @@ Rows are requirements, columns are verification methods. A cell lists each item 
   - simulation test: **pass**, Rate matcher benches (macro, own buffer, direct-read variant, the MIN_KEEP limit): 4 test(s) passed in the recorded run. [evidence](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml)
   - formal: **pass**, SVA properties of the gray-pointer rate matcher with SymbiYosys (brief 115; designs/b96_kr260_10g/verif/formal/, results/b115); safety by k-induction, progress by BMC only; the recorded run re-proves every CI job, mutants included: 23 test(s) passed in the recorded run. [evidence](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml)
   - assertion (SVA): **not run**, Bound SVA checkers in simulation (brief 115): no evidence file named (planned: no simulation run of the bound checkers is recorded (the proofs are in V-FORMAL-SVA-PLANNED)).
-  - simulation measurement: **stale**, Simulated partner at 0, +-100 and +-300 ppm, 400 frames each: ppm+0.verdict.counters_clean = True; ppm+100.verdict.counters_clean = True; ppm-100.verdict.counters_clean = True; ppm+300.verdict.counters_clean = True; ppm-300.verdict.counters_clean = True; ppm+300.verdict.all_frames_received = True; ppm-300.verdict.all_frames_received = True (changed since the evidence was recorded: designs/b96_kr260_10g/rtl/rate_match.sv, designs/b96_kr260_10g/rtl/rate_match_gp.sv, designs/b96_kr260_10g/rtl/rx_path.sv). [evidence](../../../results/b96c/ppm_sim_ratematch.json)
+  - simulation measurement: **stale**, Simulated partner at test points -300, -100, 0, +100 and +300 ppm across the required range, 400 frames each: ppm+0.verdict.counters_clean = True; ppm+100.verdict.counters_clean = True; ppm-100.verdict.counters_clean = True; ppm+300.verdict.counters_clean = True; ppm-300.verdict.counters_clean = True; ppm+0.verdict.all_frames_received = True; ppm+100.verdict.all_frames_received = True; ppm-100.verdict.all_frames_received = True; ppm+300.verdict.all_frames_received = True; ppm-300.verdict.all_frames_received = True (changed since the evidence was recorded: designs/b96_kr260_10g/rtl/rate_match.sv, designs/b96_kr260_10g/rtl/rate_match_gp.sv, designs/b96_kr260_10g/rtl/rx_path.sv). [evidence](../../../results/b96c/ppm_sim_ratematch.json)
   - simulation measurement: **stale**, Buffer-bypass run gate against a stand-in transceiver in xsim, 28 checks: value = 28 (changed since the evidence was recorded: designs/b96_kr260_10g/rm_gp_bypass/rtl/b96_core.sv, designs/b96_kr260_10g/rm_gp_bypass/rtl/gt_bp_gate.sv). [evidence](../../../results/b96f1/bypass_seq/result.txt)
   - board measurement / jtag_registers: **stale**, Rate-matched build, 100 restarts, safety counters 0 (at 0 ppm only): restarts.failed_to_lock = 0; safety.ok = True (changed since the evidence was recorded: designs/b96_kr260_10g/rtl/rate_match.sv, designs/b96_kr260_10g/rtl/rate_match_gp.sv, designs/b96_kr260_10g/rtl/rx_path.sv). [evidence](../../../results/b96c/hw/20261119_080724/control/stage3.json)
 
@@ -166,10 +152,10 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 - Kind: functional; state: passes without hardware; hardware verification open; specification status: draft.
 - Source: `designs/b96_kr260_10g/docs/design.md#board-result-2026-11-19-kr260-and-an-optical-loopback-resultsb96cwhw20261119_080724`
-- With a receive clock offset of +-100 ppm and +-300 ppm from the transmit clock, no frame is lost or corrupted and the buffer neither overflows nor underflows. A loopback has no offset, so this needs a second reference clock or another device on the link.
+- For any constant receive clock offset from -300 to +300 ppm relative to the transmit clock, no frame is lost or corrupted and the buffer neither overflows nor underflows. IEEE 802.3 allows +-100 ppm at each end, so two compliant ends differ by at most 200 ppm; +-300 ppm gives margin. A loopback has no offset, so a board test needs a second reference clock or another device on the link.
 - External element: a second reference clock or a 10G network card (a loopback has no frequency offset). Hardware verification: open.
   - simulation test: **pass**, Simulated partner at a frequency offset (cocotb): 1 test(s) passed in the recorded run. [evidence](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml)
-  - simulation measurement: **stale**, Simulated partner at 0, +-100 and +-300 ppm, 400 frames each: ppm+0.verdict.counters_clean = True; ppm+100.verdict.counters_clean = True; ppm-100.verdict.counters_clean = True; ppm+300.verdict.counters_clean = True; ppm-300.verdict.counters_clean = True; ppm+300.verdict.all_frames_received = True; ppm-300.verdict.all_frames_received = True (changed since the evidence was recorded: designs/b96_kr260_10g/rtl/rate_match.sv, designs/b96_kr260_10g/rtl/rate_match_gp.sv, designs/b96_kr260_10g/rtl/rx_path.sv). [evidence](../../../results/b96c/ppm_sim_ratematch.json)
+  - simulation measurement: **stale**, Simulated partner at test points -300, -100, 0, +100 and +300 ppm across the required range, 400 frames each: ppm+0.verdict.counters_clean = True; ppm+100.verdict.counters_clean = True; ppm-100.verdict.counters_clean = True; ppm+300.verdict.counters_clean = True; ppm-300.verdict.counters_clean = True; ppm+0.verdict.all_frames_received = True; ppm+100.verdict.all_frames_received = True; ppm-100.verdict.all_frames_received = True; ppm+300.verdict.all_frames_received = True; ppm-300.verdict.all_frames_received = True (changed since the evidence was recorded: designs/b96_kr260_10g/rtl/rate_match.sv, designs/b96_kr260_10g/rtl/rate_match_gp.sv, designs/b96_kr260_10g/rtl/rx_path.sv). [evidence](../../../results/b96c/ppm_sim_ratematch.json)
   - board measurement / external_equipment: **not run**, Receive clock offset by a second reference clock or a second device: evidence not found: results/b96c/hw/offset/stage3.json (planned: needs the external element; the TX phase-interpolator route gave no relative offset).
 
 ### B96-F-INTEROP: Interoperates with a standard 10GBASE-R network card
@@ -312,12 +298,12 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### B96-P-BYPASS: GT buffer bypass shortens the echo path (pre-registered)
 
-- Kind: performance; state: verified (board-measured); 1 item(s) stale; specification status: draft.
+- Kind: performance; state: stale; specification status: draft.
 - Source: `results/b96f1/preregistration.md`
-- Build rm_gp_bypass must lower E by at least 1.5 clocks against rm_gp (21.0), else the bypass did not take effect. Pre-registered before any board time; not yet run.
+- Build rm_gp_bypass must lower E by at least 1.5 clocks against rm_gp (21.0), else the bypass did not take effect. Pre-registered before any board time. Measured 2026-11-21 (stamp 86037ce1) as E = 17.0 clocks, 4.0 lower, inside the predicted 2.9 to 4.5 (results/b96f1/README.md).
 - Bound: echo latency E (median of per-link minima) at most 19.5 clocks; condition: build rm_gp_bypass, 100 receive restarts, KR260 optical fibre loopback, fibre lead 0.17 m.
   - simulation measurement: **stale**, Buffer-bypass run gate against a stand-in transceiver in xsim, 28 checks: value = 28 (changed since the evidence was recorded: designs/b96_kr260_10g/rm_gp_bypass/rtl/b96_core.sv, designs/b96_kr260_10g/rm_gp_bypass/rtl/gt_bp_gate.sv). [evidence](../../../results/b96f1/bypass_seq/result.txt)
-  - board measurement / latency_loop: **pass**, Build rm_gp_bypass on the KR260 (pre-registered, run_96f1_stage1.sh): measured 17 clocks; bound at most 19.5 clocks. [evidence](../../../results/b96f1/hw/20261120_215255/rm_gp_bypass/stage3.json)
+  - board measurement / latency_loop: **stale**, Build rm_gp_bypass on the KR260, 100 receive restarts (pre-registered, board run 2026-11-21, stamp 86037ce1): measured 17 clocks; bound at most 19.5 clocks (no pin recorded (run: python -m flow.trace_v1 pin)). [evidence](../../../results/b96f1/hw/20261120_215255/rm_gp_bypass/stage3.json)
 
 ### B96-P-THROUGHPUT: Line-rate throughput without loss
 
@@ -330,40 +316,16 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### B96-F-LEAN-GRAY-STEP: A pointer's gray code changes in exactly one bit per count, at every width
 
-- Kind: functional; state: proved, statement not approved; specification status: draft.
+- Kind: functional; state: verified; the Lean proof is of a transcription of the RTL, not of the RTL itself; rests on a delegated acceptance of the Lean statement, not a human approval; specification status: draft.
 - Source: `designs/b96_kr260_10g/rtl/rate_match_gp.sv (pointer crossings u_wp and u_rp, xpm_cdc_gray)`
 - The write and read pointers of rate_match_gp count modulo 2^CW and cross by gray code. For every width CW > 0 and every value, the gray codes of b and b + 1 (including the wrap from 2^CW - 1 to 0) differ in exactly one bit, so a sample taken while the pointer moves is the old or the new code.
-  - Lean proof (all widths): **statement not approved**, One bit changes per count, wrap included, every width: statement not approved; Gray.gray_step: kernel only; proof of the transcription, transcription tested; recorded build (not re-run). [evidence](../../../formal/lean/records/build_record.json)
+  - Lean proof (all widths): **pass**, One bit changes per count, wrap included, every width: proved; statement accepted by planner (Session A) on the owner's delegation (owner decision 23), 2026-11-21; not a human approval; Gray.gray_step: kernel only; proof of the transcription, transcription tested; recorded build (not re-run). [evidence](../../../formal/lean/records/build_record.json)
 
 ### B96-F-LEAN-GRAY-DECODE: Gray decoding inverts gray encoding, at every width
 
-- Kind: functional; state: proved, statement not approved; specification status: draft.
+- Kind: functional; state: verified; the Lean proof is of a transcription of the RTL, not of the RTL itself; rests on a delegated acceptance of the Lean statement, not a human approval; specification status: draft.
 - Source: `designs/b96_kr260_10g/rtl/rate_match_gp.sv (pointer crossings u_wp and u_rp, xpm_cdc_gray)`
 - For every width and value, the decoder of the pointer crossing returns the count the encoder was given; and a sampled code that is the old or the new code decodes to the old or the new count.
-  - Lean proof (all widths): **statement not approved**, Decode after encode is the identity, every width: statement not approved; Gray.gray2bin_bin2gray: kernel only; proof of the transcription, transcription tested; recorded build (not re-run). [evidence](../../../formal/lean/records/build_record.json)
-  - Lean proof (all widths): **statement not approved**, Encode after decode is the identity, every width: statement not approved; Gray.bin2gray_gray2bin: kernel only; proof of the transcription, transcription tested; recorded build (not re-run). [evidence](../../../formal/lean/records/build_record.json)
-  - Lean proof (all widths): **statement not approved**, A code sampled mid-step decodes to the old or the new count: statement not approved; Gray.gray_sample: kernel only; proof of the transcription, transcription tested; recorded build (not re-run). [evidence](../../../formal/lean/records/build_record.json)
-
-### B96-F-LEAN-CKSUM-IP: The IPv4 header checksum of the TCP fast path equals the Internet checksum, for all inputs
-
-- Kind: functional; state: proved, statement not approved; specification status: draft.
-- Source: `brief 119 (PR 245), designs/b119_tcp_fast/rtl/tcp_fast.sv; results/124_lean/README.md`
-- Brief 119's tcp_fast.sv builds the IPv4 header checksum from a precomputed template plus the changing fields. For all TTL, address and identification values it equals the complement of the ones' complement sum of the header, and the filled-in header sums to 0xFFFF.
-  - Lean proof (all widths): **statement not approved**, IPv4 header checksum equals the Internet checksum: statement not approved; Cksum.rtl_ip_correct: kernel plus a compiled decision procedure; proof of the transcription, transcription tested; recorded build (not re-run). [evidence](../../../formal/lean/records/build_record.json)
-  - Lean proof (all widths): **statement not approved**, The filled-in header sums to 0xFFFF (receiver check): statement not approved; Cksum.rtl_ip_receiver: kernel plus a compiled decision procedure; proof of the transcription, transcription tested; recorded build (not re-run). [evidence](../../../formal/lean/records/build_record.json)
-
-### B96-F-LEAN-CKSUM-TCP: The TCP checksum of the TCP fast path equals the Internet checksum, for all inputs and payloads up to 30 words
-
-- Kind: functional; state: proved, statement not approved; specification status: draft.
-- Source: `brief 119 (PR 245), designs/b119_tcp_fast/rtl/tcp_fast.sv; results/124_lean/README.md`
-- For all addresses, ports, sequence and acknowledgement numbers, windows and payloads of up to 30 sixteen-bit words, the checksum the RTL equations produce equals the complement of the ones' complement sum over pseudo-header, header and payload. The byte-pair swapping, the streaming receive check and the timing are not modelled.
-  - Lean proof (all widths): **statement not approved**, TCP checksum equals the Internet checksum, payloads up to 30 words: statement not approved; Cksum.rtl_tcp_correct: kernel plus a compiled decision procedure; proof of the transcription, transcription tested; recorded build (not re-run). [evidence](../../../formal/lean/records/build_record.json)
-
-### B96-F-LEAN-CKSUM-MODEL: The ones' complement arithmetic the checksum equations rest on is correct, for lists of any length
-
-- Kind: functional; state: proved, statement not approved; specification status: draft.
-- Source: `results/124_lean/README.md`
-- The ones' complement sum of any list of 16-bit words equals the natural-number sum reduced mod 65535, and RFC 1624 equation 3 (incremental update) is correct for a header of any length when the new header is not all zero words; for an all-zero header it gives 0x0000. No current RTL patches a checksum in place; this is the arithmetic the fast path's template-plus-fields form relies on.
-  - Lean proof (all widths): **statement not approved**, Ones complement sum equals the natural-number sum mod 65535: statement not approved; Cksum.ocSum_toNat: kernel only; proof of a model, no RTL link; recorded build (not re-run). [evidence](../../../formal/lean/records/build_record.json)
-  - Lean proof (all widths): **statement not approved**, RFC 1624 equation 3 is correct for headers of any length: statement not approved; Cksum.incUpdate_correct: kernel only; proof of a model, no RTL link; recorded build (not re-run). [evidence](../../../formal/lean/records/build_record.json)
-  - Lean proof (all widths): **statement not approved**, The all-zero header corner gives 0x0000: statement not approved; Cksum.incUpdate_zero_corner: kernel only; proof of a model, no RTL link; recorded build (not re-run). [evidence](../../../formal/lean/records/build_record.json)
+  - Lean proof (all widths): **pass**, Decode after encode is the identity, every width: proved; statement accepted by planner (Session A) on the owner's delegation (owner decision 23), 2026-11-21; not a human approval; Gray.gray2bin_bin2gray: kernel only; proof of the transcription, transcription tested; recorded build (not re-run). [evidence](../../../formal/lean/records/build_record.json)
+  - Lean proof (all widths): **pass**, Encode after decode is the identity, every width: proved; statement accepted by planner (Session A) on the owner's delegation (owner decision 23), 2026-11-21; not a human approval; Gray.bin2gray_gray2bin: kernel only; proof of the transcription, transcription tested; recorded build (not re-run). [evidence](../../../formal/lean/records/build_record.json)
+  - Lean proof (all widths): **pass**, A code sampled mid-step decodes to the old or the new count: proved; statement accepted by planner (Session A) on the owner's delegation (owner decision 23), 2026-11-21; not a human approval; Gray.gray_sample: kernel only; proof of the transcription, transcription tested; recorded build (not re-run). [evidence](../../../formal/lean/records/build_record.json)
