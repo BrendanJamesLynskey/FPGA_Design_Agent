@@ -337,18 +337,25 @@ def main(argv: list[str] | None = None) -> int:
     require_or_exit("python -m agent")
     from agent.graph.role_models import parse_roles
     from agent.graph.run import Config, build_graph, checkpointer_for, new_runtime
-    ap = argparse.ArgumentParser(prog="python -m agent")
+    ap = argparse.ArgumentParser(prog="python -m agent",
+                                 epilog="also: python -m agent project check|status|hash|gen-tests|spec <dir> (the project layer; python -m project --help). Which command for which job: README.md, 'Start here'.")
     sub = ap.add_subparsers(dest="cmd", required=True)
-    r = sub.add_parser("run")
-    r.add_argument("spec", type=Path)
+    r = sub.add_parser("run", help="a new design from a plain-English spec.md, stage by stage (docs/agent.md)")
+    r.add_argument("spec", type=Path, help="the plain-English request, a spec.md file")
     r.add_argument("--board", default="nexys_a7_100t", type=board_arg,
                    help="a board id or the words of a request (boards/catalogue.yaml; docs/board_catalogue.md)")
-    r.add_argument("--name")
-    r.add_argument("--interview", choices=["on", "oracle", "off"], default="off")
-    r.add_argument("--review", choices=["on", "off"], default="off")
-    r.add_argument("--model", default="openai/gpt-6-luna")
-    r.add_argument("--hidden-spec", type=Path)
-    r.add_argument("--stop-after", type=int)
+    r.add_argument("--name", help="the design name (default: the name of the directory holding the spec)")
+    r.add_argument("--interview", choices=["on", "oracle", "off"], default="off",
+                   help="the spec interview: on = you answer the questions, oracle = a model answers from --hidden-spec, "
+                        "off = none (default)")
+    r.add_argument("--review", choices=["on", "off"], default="off",
+                   help="on = pause at every stage end for approve, edit or rewind (answer with resume --reply); default off")
+    r.add_argument("--model", default="openai/gpt-6-luna",
+                   help="the OpenRouter model of the deepagents harness and, with --oracle openrouter, of the interview oracle (default %(default)s)")
+    r.add_argument("--hidden-spec", type=Path, help="the full spec the interview oracle answers from (--interview oracle)")
+    r.add_argument("--stop-after", type=int,
+                   help="stop after this stage passes: 0 clarify, 1 planning, 2 RTL and verification, 3 constraints, "
+                        "4 synthesis, 5 implementation, 6 timing, 7 power, 8 DRC, 9 configuration and debug")
     r.add_argument("--harness", choices=["deepagents", "claude_code"], default="deepagents",
                    help="claude_code: each sub-agent turn is a headless `claude -p` on the Max plan (05c)")
     r.add_argument("--cc-model", default="claude-haiku-5-5", help="Claude Code model id (--harness claude_code)")
@@ -404,7 +411,7 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("--hdl", choices=["sv", "vhdl"], default="sv",
                    help="the design language; vhdl = VHDL-2008 RTL (GHDL lint, GHDL netlist or GHDL simulation, "
                         "read_vhdl -vhdl2008 in Vivado); the test shell stays SystemVerilog")
-    for p in (r, sub.add_parser("resume")):
+    for p in (r, sub.add_parser("resume", help="continue a paused run, or pick up a design from its handover.yaml with a change request")):
         p.add_argument("--replies", type=Path)
         p.add_argument("--reply")
         p.add_argument("--replay", help="LLM replay fixture (no network)")

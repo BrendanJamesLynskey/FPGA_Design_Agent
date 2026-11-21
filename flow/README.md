@@ -64,7 +64,8 @@ Python code only.
   new build opens its `post_synth.dcp` or `post_route.dcp` and copies that build's reports for the stages it skips.
   The ILA variant starts from the base build's `post_synth.dcp` when the synthesis inputs match. `FDA_BUILD_CACHE=0`
   turns it off. The resumed builds gave the same placement, routing and WNS as fresh builds (results/33_vivado_speed_2026_1).
-- `FDA_INCREMENTAL=1` (off by default) runs `read_checkpoint -incremental` against the previous build's
+- `FDA_INCREMENTAL=1` (off by default; Vivado 2026.1 refuses it under the free Basic licence, `Vivado 12-29181`, measured in
+  [results/b100b](../results/b100b/README.md)) runs `read_checkpoint -incremental` against the previous build's
   `post_route.dcp` when the inputs changed; the gates' reference builds never use it. The build ID includes the hash of
   that reference checkpoint, so with `FDA_INCREMENTAL=1` no build is a cache hit or resumes: each one differs from the
   one before ([docs/reproducibility.md](../docs/reproducibility.md)).

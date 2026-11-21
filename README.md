@@ -67,6 +67,22 @@ Stage 3 integrates one real third-party RTL block (Alex Forencich's parallel CRC
 Brief 102F closes the stage 1-3 gaps: the waiver files (`lint/`, `waivers.yaml`, in-source waivers) are the owner's, writes to frozen files are prevented while a tool runs design code (and mounted read-only in the container runner), the scope is in `config.json`/`summary.json` and re-checked by `resume`, and evidence signing is proposed: [docs/managed_projects.md](docs/managed_projects.md) and [results/102f_managed_gaps](results/102f_managed_gaps/README.md).
 A portfolio pack (title, facts with their sources, stills and a short animation) is in [site/portfolio/](site/portfolio/README.md).
 
+## Start here: which command for which job
+
+Every `python -m agent ...` command needs the access key ([Access key](#access-key)); the `flow` and `project` commands below
+do not, apart from `project spec`. "Read-only" means nothing in the design directory is changed.
+
+| You want to | Command | Know first |
+|---|---|---|
+| a new block from a plain-English request | `python -m agent run <spec.md> --board <board>` | stops for a person before the board; `--stop-after 2` ends after RTL and verification ([docs/agent.md](docs/agent.md)) |
+| find a block in the IP library | `python3 -m flow.ipvariants --search <words>`, then `python3 -m flow.ipvariants <entry> --budget dsp=0` | plain Python, no Vivado; costs are measured on the Artix-7 only ([docs/ip_variants.md](docs/ip_variants.md)) |
+| a review of RTL you wrote | `python -m agent review <design-dir>` (`--no-judge`: the check suite alone) | read-only; no synthesis or simulation is run, so it reasons about the tests rather than running them ([docs/review.md](docs/review.md)) |
+| options to improve an existing design | `python -m agent improve <design> "<request>"`, `--analyse-only` first | reads existing reports only: with no `build/base` or `evidence` reports it has no timing or resource facts ([docs/strategy_options.md](docs/strategy_options.md)) |
+| a change to a design the agent made | `python -m agent resume <design-dir> "<change>" --dry-run` | the dry run prints the stage it would re-enter; a request with no keyword it knows (for example "fewer LUTs") re-enters at stage 0, so pass `--kind` or `--from-stage` ([agent/graph/pickup.py](agent/graph/pickup.py)) |
+| a VHDL design | `python -m agent run <spec.md> --hdl vhdl`, or `python -m flow.vhdl lint rtl --top <top>` | VHDL-2008 through GHDL; the test shell stays SystemVerilog ([docs/vhdl.md](docs/vhdl.md)) |
+| a Vivado build of a design directory | `flow/run_vivado.sh designs/<name> base` | local Vivado 2026.1 only; then `python -m flow inspect designs/<name>` opens the checkpoints ([flow/README.md](flow/README.md)) |
+| the project in a browser | `python -m navigator` | needs the access key; local only (127.0.0.1); prints a one-time address ([navigator/README.md](navigator/README.md)) |
+
 ## The flow
 
 ```
@@ -326,7 +342,6 @@ standard.
   transcription tested, is shown as different from a proof about the RTL) are always printed, and the build status comes from `lake build` where Lean is installed and from a committed hash-pinned record
   (shown as "recorded build") in CI. Also a `proof` purpose in the [model table](docs/model_config.md) and a [proof driver](formal/lean/tools/prove.py); the gray-code lemma for every width
   ([formal/lean/Gray](formal/lean/Gray/Spec.lean), proved by a model in two rounds, statements for the owner's approval; records in [results/125_lean](results/125_lean/README.md)).
-  hardware proofs in ITPs and of LLM-plus-Lean work on RTL, and a proposed `formal_lean` evidence method; the experiment is [formal/lean](formal/lean/README.md)
 - **Tool-assessment notes** for Vivado 2026.1, Icarus, Verilator, SymbiYosys, cocotb and our gates:
   [docs/tool_assessment/](docs/tool_assessment/README.md).
 - **Specification to evidence, schema v1 (brief 116).** The human specifies the requirements (functional, performance, interface, safety) and checks that
@@ -350,6 +365,14 @@ python3 -m venv .venv && .venv/bin/pip install pyyaml pyserial pytest cocotb==2.
 designs/t1_dimmer_counter/tests/run_mutants.sh                  # every deliberate bug must be caught
 flow/lint.sh                                                    # needs Verilator
 ```
+
+Running the agent itself needs more than the tests do: the `agent` and `graph` extras of [pyproject.toml](pyproject.toml) (`.venv/bin/pip install mcp==2.3.0 jsonschema langgraph==1.2.19
+langgraph-checkpoint-sqlite==3.1.3 deepagents==0.7.32 langchain-openai==1.7.3`), an
+access key in `.env` ([Access key](#access-key)), the bench sandbox image (`docker build -t fda-sim:2 agent/container`; agent-written
+benches run in it without network), the private prompts and knowledge packs (owner access only, see [Private prompts](#private-prompts-brief-99)),
+and model access: in the built-in model table a plain `run` (the default `--harness deepagents`) uses OpenRouter only, while
+`review`, `improve`, `--spec-tests`, Lean proofs and the document cross-read use a signed-in Claude Code CLI.
+`python -m agent models show` prints which endpoint and model each purpose will use before anything is spent.
 
 The bitstream (local only: **Vivado 2026.1** at `/opt/Xilinx/2026.1`, at least 7 GB of available memory (the runner checks), Linux
 with `systemd-run --user`):
@@ -455,6 +478,10 @@ docs/        methodology.md (UG949 -> flow stages, gates, deviations, the agent'
 
 ## Status
 
+The Status column records each brief's state when its row was written and is not updated on merge: many rows that say
+`PR open` or `in review` have since merged (for example 59A #139, 62A #140, 103 #214, 114 #239, 115 #247, 118 #242). The pull
+request list is the record.
+
 | Milestone | What | Status |
 |---|---|---|
 | F0A | Repo, CI, runner, flow, gates, ILA, test shell, T1 by hand | done |
@@ -529,7 +556,6 @@ docs/        methodology.md (UG949 -> flow stages, gates, deviations, the agent'
 | 115 | Formal proofs of the 10G design's gray-pointer rate matcher, written as worked examples for a model-checking course ([docs/formal_study_notes.md](docs/formal_study_notes.md), [designs/b96_kr260_10g/verif/formal](designs/b96_kr260_10g/verif/formal/run_formal.py), [results/b115](results/b115/README.md)): properties bound to `rate_match_gp.sv` with the RTL untouched; safety (no overflow or underflow, pointer views never ahead, one-bit gray steps, idles inserted and deleted only between frames, data integrity and order of a symbolic entry) proved by k-induction on two free clocks within 3:1; progress as a bounded model check (not an unbounded proof); ten seeded bugs each caught by a named assertion; each property tied to its LTL or CTL form. The free SystemVerilog front end reads only Boolean assertions, so each property is written as SVA text and as a hand-compiled Boolean form; the SVA text was not run. The ITCH parser of brief 110 was not covered (not merged when this started). Try it: `python3 designs/b96_kr260_10g/verif/formal/run_formal.py --set ci` | PR open |
 | 118 | Inspect any implementation ([results/118_inspect](results/118_inspect/README.md)): `python -m flow inspect designs/<name>` turns a build's checkpoints into an openable Vivado 2026.1 project plus `open_<stage>.tcl` scripts (a checkpoint cannot be attached as a run result: tested), records the build stamp and git commit and warns when the tree has changed, writes INSPECT.md, and writes static browser views (hierarchy and utilisation, worst paths with cells and RTL links, module schematics). Optional `FDA_INSPECT_CKPTS=1` adds `post_opt.dcp` and `post_place.dcp`. Tried on the 10G design and `b2_mic_pdm`; proved in Vivado batch | PR open |
 | 114 | A blind document cross-read: a reader model that sees only a vendor-document excerpt writes the facts code depends on (with page and quotation), code checks the quotations, reads the numbers out of the code (Python, SystemVerilog, C) and compares them; an optional read-only agent tool and a CLI ([docs/doc_crossread.md](docs/doc_crossread.md), [flow/doc_crossread.py](flow/doc_crossread.py), [results/114_doc_crossread](results/114_doc_crossread/README.md)). Pre-registered on 11 cases, 2 readers, 3 runs each: the 96D five-word driver was flagged (addresses 6 of 6 runs, word count 5 of 6), the ten-word driver agreed in the Sonnet runs, the clock-phase condition was read in 6 of 6 and found absent from the code, 4 of 4 planted mistakes detected; every false positive on correct files was a limit of the comparison, not a finding | PR open |
-| 110 | A trading path in the formats an exchange speaks, phase 1 ([designs/b110_itch_ouch](designs/b110_itch_ouch/README.md), [datasheet](designs/b110_itch_ouch/docs/itch_ouch.md), [spec notes](designs/b110_itch_ouch/docs/spec_notes.md), [TCP plan](designs/b110_itch_ouch/docs/tcp_plan.md), [phase 2 plan](designs/b110_itch_ouch/docs/phase2_integration.md), [results/b110](results/b110/README.md)): MoldUDP64 and Nasdaq TotalView-ITCH 5.0 in, a small top-of-book for a few instruments, pre-trade risk with a kill switch, and an OUCH 5.0 Enter Order in SoupBinTCP 3.00 framing out, optionally started before the risk verdict and cancelled if it fails. Equal bit for bit to a Python reference model on seeded synthetic streams, all 58 seeded faults caught; book update 7 clocks after an ITCH message's last byte, first order word 8 clocks (3 when started speculatively); 6,621 LUTs and no block RAM, WNS +0.109 ns at the 10G core clock out of context on the K26 (Vivado 2026.1). Simulation and out-of-context builds only: no TCP (a plan recommends one), no Ethernet handling, no board | in review |
 | 127 | The standard-protocol trading path inside the KR260 10G design, phase 2 ([designs/b96_kr260_10g/rm_gp_itch](designs/b96_kr260_10g/rm_gp_itch/build.yaml), [integration note](designs/b96_kr260_10g/rm_gp_itch/docs/itch_integration.md), [register map](designs/b96_kr260_10g/rm_gp_itch/docs/register_map.md), [board test plan](designs/b96_kr260_10g/rm_gp_itch/docs/board_test_plan.md), [results/b127](results/b127/README.md)): brief 110's MoldUDP64, ITCH 5.0, book, risk and OUCH path behind our own PCS and MAC in the transmit clock, with an adapter from the MAC's words (header checks, 42-byte strip, FCS as a late verdict that poisons an order built on a bad frame), a replay memory and a capture ring for a fibre-loopback test, and a stand-in for brief 119's TCP fast path with a hook for it. Equal to brief 110's model on seeded synthetic sessions (every counter, every book update, every order frame byte for byte); tick-to-trade, GT port to GT port, 16.8 clocks with the speculative start and 21.6 started at the risk verdict (means over four clock phases), in xsim; Vivado 2026.1 build stamp 1d8ac802: timing met (setup +0.153 ns, hold +0.010 ns), all 29 flow gates true, no critical CDC, no waivers, 17,258 LUTs and 46,116 flip-flops. Nothing ran on a board: the test is pre-registered and the script written, not run |
 | F3 | Scored runs | `eval-1` stopped 2026-11-09 before analysis, no score ([pre-registration](docs/eval/eval1_preregistration.md)); baseline evaluation on a larger benchmark next |
 
@@ -545,8 +571,8 @@ with its licence alongside). The notice is plain words, not legal advice.
 
 While the agent is developed it refuses to start without an access key (see [agent/access/README.md](agent/access/README.md)).
 The key keeps casual users of a checkout from running the agent; it does not stop anyone who edits the code, and the
-licence is what forbids that. The gate is **off until the owner commits `agent/access/keys.json`**. To set up your own
-key: copy [.env.example](.env.example) to `.env` (git-ignored) and put the key you were given after `FDA_ACCESS_KEY=`.
+licence is what forbids that. The gate is **armed**: `agent/access/keys.json` is committed (since 2026-11-17), so even
+`python -m agent --help` exits with status 2 until a key is set. To set up your own key: copy [.env.example](.env.example) to `.env` (git-ignored) and put the key you were given after `FDA_ACCESS_KEY=`.
 
 ### Private prompts (brief 99)
 
