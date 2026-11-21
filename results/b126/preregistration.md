@@ -31,7 +31,7 @@ The bypass acts only inside the transceiver: the TX phase FIFO and serialiser pa
 - **ABORT**: the loaded build has the GT buffers on (FEATURES bit 6 = 0) or is rate-matched (bit 3 = 1); the link does not lock; alignment never completes; no E or L reading.
 - **FAIL**: any safety counter non-zero; any receive or full restart not locking; a controller error flag; a controller that gave up; a link up with a controller not done; operating conditions outside the window (the run is void until repeated inside it); **E not falling by at least 1.5 clocks** against 20.0 (the bypass did not take effect); **L - E not below 26** (the combination is not faster than `lat_all3`). A different fibre lead is corrected for (E once, L twice).
 - **WARN**: all of the above pass, but E falls by less than 3.4 or more than 4.4 clocks, or D leaves 5 to 7.
-- **PASS**: all of it, E fall inside 3.4 to 4.4 and D inside 5 to 7. (Then L - E lies inside 21 to 23.)
+- **PASS**: all of it, E fall inside 3.4 to 4.4 and D inside 5 to 7. (L - E then lies between 20.6 and 23.6 clocks, the sum of the two bands; the predicted value is 22.)
 
 ## Recorded, not judged
 E, L and D spread across restarts against run A (E minima 19 to 20, L minima 45 to 47) and run B1 (E 17 to 18): the bypass narrowed E's spread in B1; lock clocks; time to link-up after a full GT reset (coarse); GT_BUF TXBUFSTATUS and RXBUFSTATUS (meaningless with buffers bypassed); retry counts; SYSMON at the start, end and every fifth full restart.
