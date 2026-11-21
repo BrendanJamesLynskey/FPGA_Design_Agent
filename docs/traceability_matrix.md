@@ -10,4 +10,4 @@ The human specifies the requirements and checks that the verification is thoroug
 
 ## Gaps by design
 
-- `b96_kr260_10g`: 3 hardware open, 10 lean statement unapproved, 16 no passing evidence, 31 stale evidence
+- `b96_kr260_10g`: 3 hardware open, 10 lean statement unapproved, 16 no passing evidence, 32 stale evidence
