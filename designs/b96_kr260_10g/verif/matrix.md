@@ -68,7 +68,7 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 ### Stale evidence
 
 - `V-SIM-REGMAP`: changed since the evidence was recorded: designs/b96_kr260_10g/docs/register_map.md, designs/b96_kr260_10g/regmap.py
-- `V-SIM-DRIVER`: changed since the evidence was recorded: designs/b96_kr260_10g/host/b96f1_bypass.py
+- `V-SIM-DRIVER`: changed since the evidence was recorded: designs/b96_kr260_10g/host/b96_bench.py, designs/b96_kr260_10g/host/b96f1_bypass.py
 - `V-FORMAL-EQY-DEFAULT`: changed since the evidence was recorded: designs/b96_kr260_10g/rtl/b96_core.sv, designs/b96_kr260_10g/rtl/rx_path.sv
 - `V-SIMM-T2T`: changed since the evidence was recorded: designs/b96_kr260_10g/rtl/b96_core.sv, designs/b96_kr260_10g/rtl/hs_vec.sv, designs/b96_kr260_10g/rtl/rate_match.sv, designs/b96_kr260_10g/rtl/rate_match_gp.sv (+1 more)
 - `V-SIMM-PPM`: changed since the evidence was recorded: designs/b96_kr260_10g/rtl/rate_match.sv, designs/b96_kr260_10g/rtl/rate_match_gp.sv, designs/b96_kr260_10g/rtl/rx_path.sv
@@ -184,14 +184,14 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 - Kind: safety; state: stale; specification status: draft.
 - Source: `designs/b96_kr260_10g/host/b96_bench.py`
 - A stale counter, a missing order, a counter that was not read, a wrong polarity or a link that never came up fails the run and names the cause; unsafe actions are refused without the lock.
-  - simulation test: **stale**, Board bench, ppm and bypass drivers judged on a fake board (every safety counter, polarity, lock, verdicts): 37 test(s) passed in the recorded run (changed since the evidence was recorded: designs/b96_kr260_10g/host/b96f1_bypass.py). [evidence](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml)
+  - simulation test: **stale**, Board bench, ppm and bypass drivers judged on a fake board (every safety counter, polarity, lock, verdicts): 37 test(s) passed in the recorded run (changed since the evidence was recorded: designs/b96_kr260_10g/host/b96_bench.py, designs/b96_kr260_10g/host/b96f1_bypass.py). [evidence](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml)
 
 ### B96-S-LASER: The laser is off at reset and its polarity is confirmed
 
 - Kind: safety; state: verified; 1 item(s) stale; specification status: draft.
 - Source: `designs/b96_kr260_10g/handover.yaml`
 - tx_disable is 1 at reset; the board run switches the laser on only after the polarity was read back.
-  - simulation test: **stale**, Board bench, ppm and bypass drivers judged on a fake board (every safety counter, polarity, lock, verdicts): 37 test(s) passed in the recorded run (changed since the evidence was recorded: designs/b96_kr260_10g/host/b96f1_bypass.py). [evidence](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml)
+  - simulation test: **stale**, Board bench, ppm and bypass drivers judged on a fake board (every safety counter, polarity, lock, verdicts): 37 test(s) passed in the recorded run (changed since the evidence was recorded: designs/b96_kr260_10g/host/b96_bench.py, designs/b96_kr260_10g/host/b96f1_bypass.py). [evidence](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml)
   - board measurement / jtag_registers: **pass**, Laser polarity read back before the laser was enabled: polarity_ok = True; polarity.off.tx_fault = 0. [evidence](../../../results/b96e/hw/20261119_231251/rm_gp/stage3.json)
 
 ### B96-S-ROC: Board runs stay inside the recommended operating conditions
