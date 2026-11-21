@@ -1,7 +1,11 @@
 {
- "build_log_sha256": "b7bc49f7a74f5a9ba41ed54dafe294066c06ef202a2180833dcfde7087c8e2a3",
+ "build_log_sha256": "a1da19e73e8ef098802ddab0b34285446bb4fcc22057e9330ba3fe887e7b5619",
  "build_ok": true,
  "files": {
+  "Arith.lean": "37125652434dfacc1e7c76350cd4dcfe223249532ba219f11d60633bc79e0ef4",
+  "Arith/Adder.lean": "843fecb41430d6029bb632f7aa6ab731ef9400db774c70ed5c84f8f36aab25ce",
+  "Arith/Booth.lean": "e0f4e895e69a2678c580a12d3477a664aa80649fd39a4b951f57d9f3acae2303",
+  "Arith/Mac.lean": "b6b6def9b20250bceb2da2da2780663d324b9522023dc6d629ba03668e41bfc7",
   "Cksum.lean": "aa6990c7c4cc33b524f81c7b633240613fe2a0393ca904ab2164447fb424307c",
   "Cksum/CrossCheck.lean": "08436e62554b56e55fd65f0989c957c15bd962ad288b3f4ae847729dc51278b7",
   "Cksum/Spec.lean": "0e7abfc90f72a6b46f0d664427663f9ee527351c04a2720ea2a6cf4721d4c7ef",
@@ -9,13 +13,17 @@
   "Gray/CrossCheck.lean": "20c99c046c77da0a7a203e3ca5e2c3d8a843485a0eb877f9c2a05bdf594af573",
   "Gray/Spec.lean": "865a08d45c6d0f00a6fcad34b216c6ad55df802882de6a31cac093cef830c5ad",
   "lake-manifest.json": "62c46e292849e1dfb23d69e49b2d9357a86b57c71dd26096bc3002600e9fb535",
-  "lakefile.toml": "3f60733a2b9fe246c93c2e2a0ec98af1aef799f34bfc88431b080032bb4a8475",
+  "lakefile.toml": "b021b8d45139dac3dfdc1b335194dc9442f0f7f3a9fdbc2b43dd908b0ae6f6b8",
   "lean-toolchain": "582a63f8f9c5128067b688778c1051cf1464c3ca9d57b9325025c051c29b774a"
  },
  "how": "python -m flow.trace_v1 lean-record; the build ran `lake build` in a scratch copy with `#print axioms` appended",
  "lean_version": "Lean (version 4.36.0, x86_64-unknown-linux-gnu, commit 611c117bfaf7b7ae1cfcf246ce6fba31e8f509e9, Release)",
  "note": "A record is evidence that a build succeeded at these file hashes. CI without Lean reads it and shows the status as a recorded build, never as a re-run.",
  "rtl_sources": {
+  "arith/adder/rtl/adder_carry_select.sv:39-47": "edfd0c914d857f445269613384bb5ee196f7bf86b780373086e8230e65800e88",
+  "arith/adder/rtl/adder_ripple.sv:26-28": "dce2678218b049ad133281b015e24d473f6bb2108de61241c71f292b1eb92db7",
+  "arith/mac/rtl/mac_dsp.sv:108-109": "cc78a75c3fee29679b946eb44847730e92d99154de9b3e46a82b1dc65aba697e",
+  "arith/multiplier/rtl/mult_booth_r4.sv:26-39": "bf32ab1b15df0714032d18afe3b34a368391178f74b0262f2f2e6cb897d4ea8e",
   "designs/b119_tcp_fast/rtl/tcp_fast.sv:256-260@9f8d760788e4a8afcd8756e29eca348d49858765": "9a9272bbf1eab0aa07f2b150d662fe0f98f075cd2c162e116cd941e181e726bc",
   "designs/b119_tcp_fast/rtl/tcp_fast.sv:326-336@9f8d760788e4a8afcd8756e29eca348d49858765": "ddeb015f9e9c7a7c0f837e7c2e89dd40803dfb629fbd96ba5d2e2fb52fea19ad",
   "designs/b96_kr260_10g/rtl/rate_match_gp.sv:78-82": "4437715e5ac7150d752a88436fc28046cc1d5b5181325a674c20d6d89ba7a93c",
@@ -23,6 +31,71 @@
  },
  "schema": "fpga-design-agent/lean-build-record/v1",
  "theorems": {
+  "ArithAdder.cs_correct": {
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "build_ok": true,
+   "definitions_sha256": "79e7e05ab8bdde92cb3f60ee9bd9dfc80b560ff1a7d958df25fbc99699bfd74e",
+   "module": "Arith.Adder",
+   "statement_sha256": "063a6d5ec124444f7d707ec36ee851752babc718799a218d4c5913b16f7f1a56",
+   "tier": "kernel_only"
+  },
+  "ArithAdder.sub_is_add_complement": {
+   "axioms": [
+    "Quot.sound",
+    "propext"
+   ],
+   "build_ok": true,
+   "definitions_sha256": "79e7e05ab8bdde92cb3f60ee9bd9dfc80b560ff1a7d958df25fbc99699bfd74e",
+   "module": "Arith.Adder",
+   "statement_sha256": "0f66958fead188e20c02a5038836847da0cc5e2ff2254c82eb8341a048a3c4af",
+   "tier": "kernel_only"
+  },
+  "ArithBooth.booth_correct": {
+   "axioms": [
+    "Quot.sound",
+    "propext"
+   ],
+   "build_ok": true,
+   "definitions_sha256": "6b13de0c6c5211e9ec165985a522c12bedcede0331c651aba164cb10e0f88e87",
+   "module": "Arith.Booth",
+   "statement_sha256": "dc3b43561b8457640c5569525235758b0c0a098560e84ed0d3ddc13da134a264",
+   "tier": "kernel_only"
+  },
+  "ArithBooth.booth_unsigned": {
+   "axioms": [
+    "Quot.sound",
+    "propext"
+   ],
+   "build_ok": true,
+   "definitions_sha256": "6b13de0c6c5211e9ec165985a522c12bedcede0331c651aba164cb10e0f88e87",
+   "module": "Arith.Booth",
+   "statement_sha256": "96db3186959b8cf4c2f3cb10f06c81573c0ac1fd8d923d08c2c76547e438448b",
+   "tier": "kernel_only"
+  },
+  "ArithMac.run_after_clr": {
+   "axioms": [
+    "propext"
+   ],
+   "build_ok": true,
+   "definitions_sha256": "728a209082942fc3b4737ef182713748557c5b5f42ac37707dfc2170599ebe98",
+   "module": "Arith.Mac",
+   "statement_sha256": "e21b081be2d5a2b40ed4e636776c90c66b5c2bc1560e4f0b88d00b044e64c3da",
+   "tier": "kernel_only"
+  },
+  "ArithMac.run_noclr": {
+   "axioms": [
+    "propext"
+   ],
+   "build_ok": true,
+   "definitions_sha256": "728a209082942fc3b4737ef182713748557c5b5f42ac37707dfc2170599ebe98",
+   "module": "Arith.Mac",
+   "statement_sha256": "26ba95f62b5f4c0a32eb9e90a5c5de1b93e58ae6f98457ecd0e512aeee467a29",
+   "tier": "kernel_only"
+  },
   "Cksum.incUpdate_correct": {
    "axioms": [
     "Classical.choice",
