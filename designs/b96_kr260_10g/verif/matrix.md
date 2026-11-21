@@ -4,55 +4,66 @@
 
 The human specifies the requirements and checks that the verification is thorough enough. The agent holds the knowledge to implement and to verify. You can open any of the implementation or the evidence, and you do not have to. Hardware on the board, with attached instruments, is a verification layer of its own: where a requirement depends on something outside the design (an optical link, a network card, a data source) it may be the only way to close it.
 
-**Summary.** 27 requirements (11 functional, 9 performance, 1 interface, 6 safety); 16 verified, of which 2 rest on delegated acceptances (the planner accepted the Lean statement on the owner's delegation; not human approvals); 3 stale; 6 failing; 2 with no passing evidence; 0 of 3 requirements that depend on an external element closed by hardware; performance verified: 4 on the board, 2 by post-route timing, 0 in simulation only; 0 of 27 requirements agreed by a human, 0 human review(s) recorded; 4 Lean proof item(s) (all widths): 0 with a human-approved statement, 4 with a statement accepted on the owner's delegation (not a human approval), 0 with statement not approved; 4 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run).
+**Summary.** 27 requirements (11 functional, 9 performance, 1 interface, 6 safety); 10 verified, of which 2 rest on delegated acceptances (the planner accepted the Lean statement on the owner's delegation; not human approvals); 6 partially verified (the required mix of methods is not met); 3 stale; 6 failing; 2 with no passing evidence; 0 of 3 requirements that depend on an external element closed by hardware; performance verified: 4 on the board, 2 by post-route timing, 0 in simulation only; 0 of 27 requirements agreed by a human, 0 agreed on the owner's delegation (not human), 27 draft; 8 resting only on the implementing agent's own tests; 0 human and 0 delegated review(s) recorded; 4 Lean proof item(s) (all widths): 0 with a human-approved statement, 4 with a statement accepted on the owner's delegation (not a human approval), 0 with statement not approved; 4 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run).
 
 Variants. Unless a requirement says otherwise, "the default build" is RATE_MATCH = 0 (the board-proven 97C receive path) and "the rate-matched build" is rm_gp (RATE_MATCH = 1, RM_OWN = 1). Board evidence is one KR260 on a short optical loopback; nothing has run against a network card. Briefs 112 (UVM bench) and 115 (SVA and formal proofs) are not merged: their items are hooks with no evidence, shown as not run.
 
 ## Matrix
 
-Rows are requirements, columns are verification methods. A cell lists each item with its computed status and links to its evidence. Status is read from the evidence by code; it is never typed. `stale` means a file the evidence is about changed after the evidence was recorded; `bounded` means a formal bounded model check only.
+Rows are requirements, columns are verification methods. A cell lists each item with its computed status and links to its evidence. Status is read from the evidence by code; it is never typed. `stale` means a file the evidence is about changed after the evidence was recorded; `bounded` means a formal bounded model check only. A requirement is verified only when its passing items meet the method mix for its kind (`flow/method_mix_policy.yaml`); a test is marked with who wrote it, and a test whose author is not recorded counts as the implementing agent's own. Agreement comes only from `verif/agreements.yaml`, never from the testplan.
 
-| Requirement | Kind | State | sim test | UVM | SVA | formal | Lean | coverage | timing | sim measure | board | review |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| **B96-F-PCS** PCS encodes and decodes 64B/66B bit-exactly against an independent model | functional | FAILS | pass: [V-SIM-PCSMAC](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml)<br>pass: [V-SIM-PCSMODEL](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml) | FAIL: [V-UVM-PLANNED](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml)<br>FAIL: [V-PYUVM](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml) | not run: V-SVA-PLANNED | FAIL: [V-FORMAL-SVA-PLANNED](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml) |  | not run: V-COV-PLANNED |  |  |  | stale: [V-REVIEW-96](../../../results/b96/README.md) |
-| **B96-F-MAC** 64-bit MAC frames correctly in both directions | functional | FAILS | pass: [V-SIM-PCSMAC](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml)<br>pass: [V-SIM-CORE-RM](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml) | FAIL: [V-UVM-PLANNED](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml)<br>FAIL: [V-PYUVM](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml) | not run: V-SVA-PLANNED |  |  | not run: V-COV-PLANNED |  |  |  | stale: [V-REVIEW-96](../../../results/b96/README.md) |
-| **B96-F-LOCK** Block lock is acquired from any bit offset and survives bit errors | functional | FAILS | pass: [V-SIM-PCSMODEL](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml) | FAIL: [V-UVM-PLANNED](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml)<br>FAIL: [V-PYUVM](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml) |  |  |  |  |  |  |  |  |
-| **B96-F-RESTART** The link locks after every receive-datapath restart | functional | verified; 1 item(s) stale |  |  |  |  |  |  |  |  | pass [jtag_registers]: [V-HW-RESTARTS-96E](../../../results/b96e/hw/20261119_231251/rm_gp/stage3.json)<br>stale [jtag_registers]: [V-HW-RESTARTS-97C](../../../results/b97c/hw/20261118_194221/control/stage3.json) |  |
-| **B96-F-DEFAULT** The default build keeps the board-proven receive path | functional | verified; 2 item(s) stale | pass: [V-SIM-CORE-DEFAULT](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml) |  |  | stale: [V-FORMAL-EQY-DEFAULT](../../../results/b96c/eqy_default/result_default.txt) |  |  |  |  | stale [jtag_registers]: [V-HW-RESTARTS-97C](../../../results/b97c/hw/20261118_194221/control/stage3.json) |  |
-| **B96-S-RATEMATCH** Rate matching never corrupts a frame | safety | FAILS | pass: [V-SIM-CORE-RM](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml)<br>pass: [V-SIM-RM](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml) |  | not run: V-SVA-PLANNED | FAIL: [V-FORMAL-SVA-PLANNED](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml) |  |  |  | stale: [V-SIMM-PPM](../../../results/b96c/ppm_sim_ratematch.json)<br>stale: [V-SIMM-BYPASS-SEQ](../../../results/b96f1/bypass_seq/result.txt) | stale [jtag_registers]: [V-HW-RATEMATCH-96C](../../../results/b96c/hw/20261119_080724/control/stage3.json) |  |
-| **B96-F-OFFSET** Rate matching holds under a real frequency offset Depends on: a second reference clock or a 10G network card (a loopback has no frequency offset); hardware verification open. | functional | passes without hardware; hardware verification open | pass: [V-SIM-PPM-PARTNER](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml) |  |  |  |  |  |  | stale: [V-SIMM-PPM](../../../results/b96c/ppm_sim_ratematch.json) | not run [external_equipment]: V-HW-OFFSET-PLANNED |  |
-| **B96-F-INTEROP** Interoperates with a standard 10GBASE-R network card Depends on: a 10G network card and cable; hardware verification open. | functional | not run |  |  |  |  |  |  |  |  | not run [external_equipment]: V-HW-INTEROP-PLANNED |  |
-| **B96-S-ORDERS** Orders are sent only for valid decisions, none is lost or poisoned | safety | verified; 1 item(s) stale | pass: [V-SIM-CORE-DEFAULT](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml)<br>pass: [V-SIM-CORE-RM](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml) |  |  |  |  |  |  |  | pass [jtag_registers]: [V-HW-RESTARTS-96E](../../../results/b96e/hw/20261119_231251/rm_gp/stage3.json) | stale: [V-REVIEW-96](../../../results/b96/README.md) |
-| **B96-S-DRIVER** The board drivers cannot report OK when a safety check fails | safety | FAILS | stale: [V-SIM-DRIVER](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml)<br>FAIL: [V-SIM-126-ALL3](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml) |  |  |  |  |  |  |  |  |  |
-| **B96-S-LASER** The laser is off at reset and its polarity is confirmed | safety | verified; 1 item(s) stale | stale: [V-SIM-DRIVER](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml) |  |  |  |  |  |  |  | pass [jtag_registers]: [V-HW-LASER](../../../results/b96e/hw/20261119_231251/rm_gp/stage3.json) |  |
-| **B96-S-ROC** Board runs stay inside the recommended operating conditions | safety | verified |  |  |  |  |  |  |  |  | pass [sysmon]: [V-HW-SYSMON-96E](../../../results/b96e/hw/20261119_231251/rm_gp/session.json)<br>pass [sysmon]: [V-HW-SYSMON-EYE](../../../results/b96d/hw/20261120_105134/lpm_1.json) |  |
-| **B96-S-CDC** No critical clock-domain crossing | safety | verified; 2 item(s) stale |  |  |  |  |  |  | stale: [V-TIM-CDC-DEFAULT](../../../results/b96c/builds/control/digest.json)<br>stale: [V-TIM-CDC-RMGP](../../../results/b96e/builds/rm_gp/digest.json)<br>pass: [V-TIM-CDC-BYPASS](../../../results/b96f1/builds/rm_gp_bypass/digest.json) |  |  |  |
-| **B96-I-REGMAP** The register map is generated from one source and decoded exactly | interface | stale | stale: [V-SIM-REGMAP](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml) |  |  |  |  |  |  |  |  |  |
-| **B96-F-BUILDS** Every build variant sets only the parameters it documents | functional | FAILS | FAIL: [V-SIM-126-ALL3](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml)<br>pass: [V-SIM-BUILDS](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml) |  |  |  |  |  |  |  |  |  |
-| **B96-F-EYESCAN** The eye-scan sequencer drives the GT's DRP as its Python twin does | functional | verified | pass: [V-SIM-EYESCAN](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml) |  |  |  |  |  |  |  |  |  |
-| **B96-P-LAT-E** Echo latency E | performance | verified (board-measured); 1 item(s) stale | pass: [V-SIM-LATENCY-MODEL](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml) |  |  |  |  |  |  |  | pass [latency_loop]: [V-HW-LAT-E-96E](../../../results/b96e/hw/20261119_231251/rm_gp/stage3.json)<br>stale [latency_loop]: [V-HW-LAT-E-97C](../../../results/b97c/hw/20261118_194221/control/stage3.json) |  |
-| **B96-P-LAT-L** Trading-loop latency L | performance | verified (board-measured); 1 item(s) stale | pass: [V-SIM-LATENCY-MODEL](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml) |  |  |  |  |  |  |  | pass [latency_loop]: [V-HW-LAT-L-96E](../../../results/b96e/hw/20261119_231251/rm_gp/stage3.json)<br>stale [latency_loop]: [V-HW-LAT-L-97C](../../../results/b97c/hw/20261118_194221/control/stage3.json) |  |
-| **B96-P-LAT-D** Decision latency D | performance | verified (board-measured) | pass: [V-SIM-LATENCY-MODEL](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml) |  |  |  |  |  |  |  | pass [latency_loop]: [V-HW-LAT-D-96E](../../../results/b96e/hw/20261119_231251/rm_gp/stage3.json) |  |
-| **B96-P-T2T-DIGITAL** Digital tick-to-trade, GT port to GT port | performance | stale |  |  |  |  |  |  |  | stale: [V-SIMM-T2T](../../../results/b96e/core_lat_sim.json) |  |  |
-| **B96-P-TIMING** Post-route setup slack | performance | verified (post-route timing); 2 item(s) stale |  |  |  |  |  |  | stale: [V-TIM-SETUP-DEFAULT](../../../results/b96c/builds/control/digest.json)<br>stale: [V-TIM-SETUP-RMGP](../../../results/b96e/builds/rm_gp/digest.json)<br>pass: [V-TIM-SETUP-BYPASS](../../../results/b96f1/builds/rm_gp_bypass/digest.json) |  |  |  |
-| **B96-P-HOLD** Post-route hold slack | performance | verified (post-route timing); 2 item(s) stale |  |  |  |  |  |  | stale: [V-TIM-HOLD-DEFAULT](../../../results/b96c/builds/control/digest.json)<br>stale: [V-TIM-HOLD-RMGP](../../../results/b96e/builds/rm_gp/digest.json)<br>pass: [V-TIM-HOLD-BYPASS](../../../results/b96f1/builds/rm_gp_bypass/digest.json) |  |  |  |
-| **B96-P-EYE** Receive eye margin | performance | verified (board-measured) |  |  |  |  |  |  |  |  | pass [eye_scan]: [V-HW-EYE](../../../results/b96d/hw/20261120_105134/summary.txt) |  |
-| **B96-P-BYPASS** GT buffer bypass shortens the echo path (pre-registered) | performance | stale |  |  |  |  |  |  |  | stale: [V-SIMM-BYPASS-SEQ](../../../results/b96f1/bypass_seq/result.txt) | stale [latency_loop]: [V-HW-BYPASS](../../../results/b96f1/hw/20261120_215255/rm_gp_bypass/stage3.json) |  |
-| **B96-P-THROUGHPUT** Line-rate throughput without loss Depends on: a 10G network card or a line-rate traffic generator; hardware verification open. | performance | not run |  |  |  |  |  |  |  |  | not run [external_equipment]: V-HW-THROUGHPUT-PLANNED |  |
-| **B96-F-LEAN-GRAY-STEP** A pointer's gray code changes in exactly one bit per count, at every width | functional | verified; the Lean proof is of a transcription of the RTL, not of the RTL itself; rests on a delegated acceptance of the Lean statement, not a human approval |  |  |  |  | pass [statement accepted on delegation, not a human approval; kernel only; transcription tested; recorded build]: [V-LEAN-GRAY-STEP](../../../formal/lean/records/build_record.json) |  |  |  |  |  |
-| **B96-F-LEAN-GRAY-DECODE** Gray decoding inverts gray encoding, at every width | functional | verified; the Lean proof is of a transcription of the RTL, not of the RTL itself; rests on a delegated acceptance of the Lean statement, not a human approval |  |  |  |  | pass [statement accepted on delegation, not a human approval; kernel only; transcription tested; recorded build]: [V-LEAN-GRAY-DECODE](../../../formal/lean/records/build_record.json)<br>pass [statement accepted on delegation, not a human approval; kernel only; transcription tested; recorded build]: [V-LEAN-GRAY-ENCODE](../../../formal/lean/records/build_record.json)<br>pass [statement accepted on delegation, not a human approval; kernel only; transcription tested; recorded build]: [V-LEAN-GRAY-SAMPLE](../../../formal/lean/records/build_record.json) |  |  |  |  |  |
+| Requirement | Kind | Agreement | State | sim test | UVM | SVA | formal | Lean | coverage | timing | sim measure | board | review |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| **B96-F-PCS** PCS encodes and decodes 64B/66B bit-exactly against an independent model | functional | draft | FAILS | pass [author not recorded]: [V-SIM-PCSMAC](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml)<br>pass [author not recorded]: [V-SIM-PCSMODEL](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml) | FAIL [author not recorded]: [V-UVM-PLANNED](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml)<br>FAIL [author not recorded]: [V-PYUVM](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml) | not run [author not recorded]: V-SVA-PLANNED | FAIL: [V-FORMAL-SVA-PLANNED](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml) |  | not run [author not recorded]: V-COV-PLANNED |  |  |  | not run: [V-REVIEW-96](../../../results/b96/README.md) |
+| **B96-F-MAC** 64-bit MAC frames correctly in both directions | functional | draft | FAILS | pass [author not recorded]: [V-SIM-PCSMAC](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml)<br>pass [author not recorded]: [V-SIM-CORE-RM](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml) | FAIL [author not recorded]: [V-UVM-PLANNED](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml)<br>FAIL [author not recorded]: [V-PYUVM](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml) | not run [author not recorded]: V-SVA-PLANNED |  |  | not run [author not recorded]: V-COV-PLANNED |  |  |  | not run: [V-REVIEW-96](../../../results/b96/README.md) |
+| **B96-F-LOCK** Block lock is acquired from any bit offset and survives bit errors | functional | draft | FAILS | pass [author not recorded]: [V-SIM-PCSMODEL](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml) | FAIL [author not recorded]: [V-UVM-PLANNED](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml)<br>FAIL [author not recorded]: [V-PYUVM](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml) |  |  |  |  |  |  |  |  |
+| **B96-F-RESTART** The link locks after every receive-datapath restart | functional | draft | verified; 1 item(s) stale |  |  |  |  |  |  |  |  | pass [jtag_registers]: [V-HW-RESTARTS-96E](../../../results/b96e/hw/20261119_231251/rm_gp/stage3.json)<br>stale [jtag_registers]: [V-HW-RESTARTS-97C](../../../results/b97c/hw/20261118_194221/control/stage3.json) |  |
+| **B96-F-DEFAULT** The default build keeps the board-proven receive path | functional | draft | partially verified; lacks a simulation check from a bench the implementing agent did not write; rests only on the implementing agent's own tests | pass [author not recorded]: [V-SIM-CORE-DEFAULT](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml) |  |  | stale: [V-FORMAL-EQY-DEFAULT](../../../results/b96c/eqy_default/result_default.txt) |  |  |  |  | stale [jtag_registers]: [V-HW-RESTARTS-97C](../../../results/b97c/hw/20261118_194221/control/stage3.json) |  |
+| **B96-S-RATEMATCH** Rate matching never corrupts a frame | safety | draft | FAILS | pass [author not recorded]: [V-SIM-CORE-RM](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml)<br>pass [author not recorded]: [V-SIM-RM](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml) |  | not run [author not recorded]: V-SVA-PLANNED | FAIL: [V-FORMAL-SVA-PLANNED](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml) |  |  |  | stale [author not recorded]: [V-SIMM-PPM](../../../results/b96c/ppm_sim_ratematch.json)<br>stale [author not recorded]: [V-SIMM-BYPASS-SEQ](../../../results/b96f1/bypass_seq/result.txt) | stale [jtag_registers]: [V-HW-RATEMATCH-96C](../../../results/b96c/hw/20261119_080724/control/stage3.json) |  |
+| **B96-F-OFFSET** Rate matching holds under a real frequency offset Depends on: a second reference clock or a 10G network card (a loopback has no frequency offset); hardware verification open. | functional | draft | partially verified; lacks a simulation check from a bench the implementing agent did not write; rests only on the implementing agent's own tests | pass [author not recorded]: [V-SIM-PPM-PARTNER](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml) |  |  |  |  |  |  | stale [author not recorded]: [V-SIMM-PPM](../../../results/b96c/ppm_sim_ratematch.json) | not run [external_equipment]: V-HW-OFFSET-PLANNED |  |
+| **B96-F-INTEROP** Interoperates with a standard 10GBASE-R network card Depends on: a 10G network card and cable; hardware verification open. | functional | draft | not run |  |  |  |  |  |  |  |  | not run [external_equipment]: V-HW-INTEROP-PLANNED |  |
+| **B96-S-ORDERS** Orders are sent only for valid decisions, none is lost or poisoned | safety | draft | verified | pass [author not recorded]: [V-SIM-CORE-DEFAULT](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml)<br>pass [author not recorded]: [V-SIM-CORE-RM](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml) |  |  |  |  |  |  |  | pass [jtag_registers]: [V-HW-RESTARTS-96E](../../../results/b96e/hw/20261119_231251/rm_gp/stage3.json) | not run: [V-REVIEW-96](../../../results/b96/README.md) |
+| **B96-S-DRIVER** The board drivers cannot report OK when a safety check fails | safety | draft | FAILS | stale [author not recorded]: [V-SIM-DRIVER](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml)<br>FAIL [author not recorded]: [V-SIM-126-ALL3](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml) |  |  |  |  |  |  |  |  |  |
+| **B96-S-LASER** The laser is off at reset and its polarity is confirmed | safety | draft | partially verified; lacks a simulation check | stale [author not recorded]: [V-SIM-DRIVER](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml) |  |  |  |  |  |  |  | pass [jtag_registers]: [V-HW-LASER](../../../results/b96e/hw/20261119_231251/rm_gp/stage3.json) |  |
+| **B96-S-ROC** Board runs stay inside the recommended operating conditions | safety | draft | partially verified; lacks a simulation check |  |  |  |  |  |  |  |  | pass [sysmon]: [V-HW-SYSMON-96E](../../../results/b96e/hw/20261119_231251/rm_gp/session.json)<br>pass [sysmon]: [V-HW-SYSMON-EYE](../../../results/b96d/hw/20261120_105134/lpm_1.json) |  |
+| **B96-S-CDC** No critical clock-domain crossing | safety | draft | partially verified; lacks a simulation check; a formal proof (SymbiYosys or Lean) |  |  |  |  |  |  | stale: [V-TIM-CDC-DEFAULT](../../../results/b96c/builds/control/digest.json)<br>stale: [V-TIM-CDC-RMGP](../../../results/b96e/builds/rm_gp/digest.json)<br>pass: [V-TIM-CDC-BYPASS](../../../results/b96f1/builds/rm_gp_bypass/digest.json) |  |  |  |
+| **B96-I-REGMAP** The register map is generated from one source and decoded exactly | interface | draft | stale | stale [author not recorded]: [V-SIM-REGMAP](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml) |  |  |  |  |  |  |  |  |  |
+| **B96-F-BUILDS** Every build variant sets only the parameters it documents | functional | draft | FAILS | FAIL [author not recorded]: [V-SIM-126-ALL3](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml)<br>pass [author not recorded]: [V-SIM-BUILDS](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml) |  |  |  |  |  |  |  |  |  |
+| **B96-F-EYESCAN** The eye-scan sequencer drives the GT's DRP as its Python twin does | functional | draft | partially verified; lacks a simulation check from a bench the implementing agent did not write; rests only on the implementing agent's own tests | pass [author not recorded]: [V-SIM-EYESCAN](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml) |  |  |  |  |  |  |  |  |  |
+| **B96-P-LAT-E** Echo latency E | performance | draft | verified (board-measured); 1 item(s) stale | pass [author not recorded]: [V-SIM-LATENCY-MODEL](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml) |  |  |  |  |  |  |  | pass [latency_loop]: [V-HW-LAT-E-96E](../../../results/b96e/hw/20261119_231251/rm_gp/stage3.json)<br>stale [latency_loop]: [V-HW-LAT-E-97C](../../../results/b97c/hw/20261118_194221/control/stage3.json) |  |
+| **B96-P-LAT-L** Trading-loop latency L | performance | draft | verified (board-measured); 1 item(s) stale | pass [author not recorded]: [V-SIM-LATENCY-MODEL](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml) |  |  |  |  |  |  |  | pass [latency_loop]: [V-HW-LAT-L-96E](../../../results/b96e/hw/20261119_231251/rm_gp/stage3.json)<br>stale [latency_loop]: [V-HW-LAT-L-97C](../../../results/b97c/hw/20261118_194221/control/stage3.json) |  |
+| **B96-P-LAT-D** Decision latency D | performance | draft | verified (board-measured) | pass [author not recorded]: [V-SIM-LATENCY-MODEL](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml) |  |  |  |  |  |  |  | pass [latency_loop]: [V-HW-LAT-D-96E](../../../results/b96e/hw/20261119_231251/rm_gp/stage3.json) |  |
+| **B96-P-T2T-DIGITAL** Digital tick-to-trade, GT port to GT port | performance | draft | stale |  |  |  |  |  |  |  | stale [author not recorded]: [V-SIMM-T2T](../../../results/b96e/core_lat_sim.json) |  |  |
+| **B96-P-TIMING** Post-route setup slack | performance | draft | verified (post-route timing); 2 item(s) stale |  |  |  |  |  |  | stale: [V-TIM-SETUP-DEFAULT](../../../results/b96c/builds/control/digest.json)<br>stale: [V-TIM-SETUP-RMGP](../../../results/b96e/builds/rm_gp/digest.json)<br>pass: [V-TIM-SETUP-BYPASS](../../../results/b96f1/builds/rm_gp_bypass/digest.json) |  |  |  |
+| **B96-P-HOLD** Post-route hold slack | performance | draft | verified (post-route timing); 2 item(s) stale |  |  |  |  |  |  | stale: [V-TIM-HOLD-DEFAULT](../../../results/b96c/builds/control/digest.json)<br>stale: [V-TIM-HOLD-RMGP](../../../results/b96e/builds/rm_gp/digest.json)<br>pass: [V-TIM-HOLD-BYPASS](../../../results/b96f1/builds/rm_gp_bypass/digest.json) |  |  |  |
+| **B96-P-EYE** Receive eye margin | performance | draft | verified (board-measured) |  |  |  |  |  |  |  |  | pass [eye_scan]: [V-HW-EYE](../../../results/b96d/hw/20261120_105134/summary.txt) |  |
+| **B96-P-BYPASS** GT buffer bypass shortens the echo path (pre-registered) | performance | draft | stale |  |  |  |  |  |  |  | stale [author not recorded]: [V-SIMM-BYPASS-SEQ](../../../results/b96f1/bypass_seq/result.txt) | stale [latency_loop]: [V-HW-BYPASS](../../../results/b96f1/hw/20261120_215255/rm_gp_bypass/stage3.json) |  |
+| **B96-P-THROUGHPUT** Line-rate throughput without loss Depends on: a 10G network card or a line-rate traffic generator; hardware verification open. | performance | draft | not run |  |  |  |  |  |  |  |  | not run [external_equipment]: V-HW-THROUGHPUT-PLANNED |  |
+| **B96-F-LEAN-GRAY-STEP** A pointer's gray code changes in exactly one bit per count, at every width | functional | draft | verified; the Lean proof is of a transcription of the RTL, not of the RTL itself; rests on a delegated acceptance of the Lean statement, not a human approval |  |  |  |  | pass [statement accepted on delegation, not a human approval; kernel only; transcription tested; recorded build]: [V-LEAN-GRAY-STEP](../../../formal/lean/records/build_record.json) |  |  |  |  |  |
+| **B96-F-LEAN-GRAY-DECODE** Gray decoding inverts gray encoding, at every width | functional | draft | verified; the Lean proof is of a transcription of the RTL, not of the RTL itself; rests on a delegated acceptance of the Lean statement, not a human approval |  |  |  |  | pass [statement accepted on delegation, not a human approval; kernel only; transcription tested; recorded build]: [V-LEAN-GRAY-DECODE](../../../formal/lean/records/build_record.json)<br>pass [statement accepted on delegation, not a human approval; kernel only; transcription tested; recorded build]: [V-LEAN-GRAY-ENCODE](../../../formal/lean/records/build_record.json)<br>pass [statement accepted on delegation, not a human approval; kernel only; transcription tested; recorded build]: [V-LEAN-GRAY-SAMPLE](../../../formal/lean/records/build_record.json) |  |  |  |  |  |
 
 ## Gaps
+
+### Requirements whose passing items do not meet the required method mix
+
+- `B96-F-DEFAULT`: functional requirement: passes, but the required mix of methods is not met; lacks a simulation check from a bench the implementing agent did not write
+- `B96-F-OFFSET`: functional requirement: passes, but the required mix of methods is not met; lacks a simulation check from a bench the implementing agent did not write
+- `B96-S-LASER`: safety requirement: passes, but the required mix of methods is not met; lacks a simulation check
+- `B96-S-ROC`: safety requirement: passes, but the required mix of methods is not met; lacks a simulation check
+- `B96-S-CDC`: safety requirement: passes, but the required mix of methods is not met; lacks a simulation check; a formal proof (SymbiYosys or Lean)
+- `B96-F-EYESCAN`: functional requirement: passes, but the required mix of methods is not met; lacks a simulation check from a bench the implementing agent did not write
+
+### Requirements resting only on the implementing agent's own tests
+
+- `B96-F-DEFAULT`: everything that passes is a test the implementing agent wrote (or whose author is not recorded); the house rule is that these never count alone
+- `B96-F-OFFSET`: everything that passes is a test the implementing agent wrote (or whose author is not recorded); the house rule is that these never count alone
+- `B96-F-EYESCAN`: everything that passes is a test the implementing agent wrote (or whose author is not recorded); the house rule is that these never count alone
 
 ### Requirements that depend on an external element and are not yet verified on hardware
 
 - `B96-F-OFFSET`: depends on a second reference clock or a 10G network card (a loopback has no frequency offset); only hardware verification can close it, and it has not been done
 - `B96-F-INTEROP`: depends on a 10G network card and cable; only hardware verification can close it, and it has not been done
 - `B96-P-THROUGHPUT`: depends on a 10G network card or a line-rate traffic generator; only hardware verification can close it, and it has not been done
-
-### Depend on an external element, passing without hardware verification
-
-- `B96-F-OFFSET`: passes in simulation but depends on a second reference clock or a 10G network card (a loopback has no frequency offset)
 
 ### Requirements with no passing evidence
 
@@ -87,13 +98,12 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 - `V-HW-LAT-E-97C`: changed since the evidence was recorded: designs/b96_kr260_10g/rtl/b96_core.sv, designs/b96_kr260_10g/rtl/b96_pkg.sv, designs/b96_kr260_10g/rtl/hs_vec.sv, designs/b96_kr260_10g/rtl/pcs_rx.sv (+5 more)
 - `V-HW-LAT-L-97C`: changed since the evidence was recorded: designs/b96_kr260_10g/rtl/b96_core.sv, designs/b96_kr260_10g/rtl/b96_pkg.sv, designs/b96_kr260_10g/rtl/hs_vec.sv, designs/b96_kr260_10g/rtl/pcs_rx.sv (+5 more)
 - `V-HW-BYPASS`: no pin recorded (run: python -m flow.trace_v1 pin)
-- `V-REVIEW-96`: changed since the evidence was recorded: designs/b96_kr260_10g/rtl/b96_core.sv, designs/b96_kr260_10g/rtl/b96_pkg.sv, designs/b96_kr260_10g/rtl/frame_src.sv, designs/b96_kr260_10g/rtl/hs_vec.sv (+7 more)
 
 ## Requirements in full
 
 ### B96-F-PCS: PCS encodes and decodes 64B/66B bit-exactly against an independent model
 
-- Kind: functional; state: FAILS; specification status: draft.
+- Kind: functional; state: FAILS; agreement: draft.
 - Source: `designs/b96_kr260_10g/docs/design.md#7-verification-plan`
 - Scrambler, block encode and decode, gearbox and block lock produce the same bits as the bit-serial Python reference, at every bit offset, with idles, ordered sets and bit-error runs.
   - simulation test: **pass**, PCS and MAC cocotb bench against the bit-serial reference: 1 test(s) passed in the recorded run. [evidence](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml)
@@ -103,11 +113,11 @@ Rows are requirements, columns are verification methods. A cell lists each item 
   - UVM test: **FAIL**, UVM 1.2 bench of the PCS and MAC in xsim 2026.1 (brief 112, merged as: 0 test(s) passed in the recorded run. [evidence](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml)
   - UVM test: **FAIL**, pyuvm-on-cocotb twin of the UVM bench of the PCS and MAC (brief 123; designs/b96_kr260_10g/verif/pyuvm/); not yet in a recorded run: 0 test(s) passed in the recorded run. [evidence](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml)
   - coverage: **not run**, Functional coverage bins and code coverage of the PCS and MAC bench (no coverage run recorded): no evidence file named (planned: not planned in a brief yet).
-  - review: **stale**, One independent correctness review and one fix round (an agent, not a human): Sonnet (agent), 2026-11-17 (changed since the evidence was recorded: designs/b96_kr260_10g/rtl/b96_core.sv, designs/b96_kr260_10g/rtl/b96_pkg.sv, designs/b96_kr260_10g/rtl/frame_src.sv, designs/b96_kr260_10g/rtl/hs_vec.sv (+7 more)). [evidence](../../../results/b96/README.md)
+  - review: **not run**, One independent correctness review and one fix round (an agent, not a human): no review record in verif/reviews.yaml (the reviewer named in the testplan is not a record). [evidence](../../../results/b96/README.md)
 
 ### B96-F-MAC: 64-bit MAC frames correctly in both directions
 
-- Kind: functional; state: FAILS; specification status: draft.
+- Kind: functional; state: FAILS; agreement: draft.
 - Source: `designs/b96_kr260_10g/docs/design.md#7-verification-plan`
 - Frames start in lane 0 and lane 4, every terminate lane and every length residue is handled, FCS is generated and checked, and a bad FCS is counted.
   - simulation test: **pass**, PCS and MAC cocotb bench against the bit-serial reference: 1 test(s) passed in the recorded run. [evidence](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml)
@@ -116,11 +126,11 @@ Rows are requirements, columns are verification methods. A cell lists each item 
   - UVM test: **FAIL**, UVM 1.2 bench of the PCS and MAC in xsim 2026.1 (brief 112, merged as: 0 test(s) passed in the recorded run. [evidence](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml)
   - UVM test: **FAIL**, pyuvm-on-cocotb twin of the UVM bench of the PCS and MAC (brief 123; designs/b96_kr260_10g/verif/pyuvm/); not yet in a recorded run: 0 test(s) passed in the recorded run. [evidence](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml)
   - coverage: **not run**, Functional coverage bins and code coverage of the PCS and MAC bench (no coverage run recorded): no evidence file named (planned: not planned in a brief yet).
-  - review: **stale**, One independent correctness review and one fix round (an agent, not a human): Sonnet (agent), 2026-11-17 (changed since the evidence was recorded: designs/b96_kr260_10g/rtl/b96_core.sv, designs/b96_kr260_10g/rtl/b96_pkg.sv, designs/b96_kr260_10g/rtl/frame_src.sv, designs/b96_kr260_10g/rtl/hs_vec.sv (+7 more)). [evidence](../../../results/b96/README.md)
+  - review: **not run**, One independent correctness review and one fix round (an agent, not a human): no review record in verif/reviews.yaml (the reviewer named in the testplan is not a record). [evidence](../../../results/b96/README.md)
 
 ### B96-F-LOCK: Block lock is acquired from any bit offset and survives bit errors
 
-- Kind: functional; state: FAILS; specification status: draft.
+- Kind: functional; state: FAILS; agreement: draft.
 - Source: `designs/b96_kr260_10g/docs/design.md#28-block-lock-bit-slip-errors`
 - The receive gearbox slips to the block boundary from any offset, and a run of bit errors loses lock only above the documented threshold.
   - simulation test: **pass**, Python reference properties (LFSR, descrambler self-sync, block codes, lock time, bit errors): 9 test(s) passed in the recorded run. [evidence](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml)
@@ -129,7 +139,7 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### B96-F-RESTART: The link locks after every receive-datapath restart
 
-- Kind: functional; state: verified; 1 item(s) stale; specification status: draft.
+- Kind: functional; state: verified; 1 item(s) stale; agreement: draft.
 - Source: `designs/b96_kr260_10g/docs/design.md#6-loop-measurement-method-pre-registered-stage-3`
 - At least 100 receive-datapath restarts on the board, each one locks and no restart corrupts a frame.
   - board measurement / jtag_registers: **pass**, 100 receive restarts on build rm_gp, counters read over JTAG: restarts.restarts = 100; restarts.failed_to_lock = 0; safety.ok = True; safety.sums.poisoned = 0; safety.sums.order_bad = 0; safety.orders.fired_total = 500. [evidence](../../../results/b96e/hw/20261119_231251/rm_gp/stage3.json)
@@ -137,7 +147,7 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### B96-F-DEFAULT: The default build keeps the board-proven receive path
 
-- Kind: functional; state: verified; 2 item(s) stale; specification status: draft.
+- Kind: functional; state: partially verified; lacks a simulation check from a bench the implementing agent did not write; rests only on the implementing agent's own tests; agreement: draft.
 - Source: `designs/b96_kr260_10g/handover.yaml`
 - With RATE_MATCH = 0 the core is equivalent to the core of main 6909e43f (brief 97C) and passes that brief's bench.
   - simulation test: **pass**, Whole core, RATE_MATCH = 0, under 97C's own bench: 1 test(s) passed in the recorded run. [evidence](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml)
@@ -146,7 +156,7 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### B96-S-RATEMATCH: Rate matching never corrupts a frame
 
-- Kind: safety; state: FAILS; specification status: draft.
+- Kind: safety; state: FAILS; agreement: draft.
 - Source: `designs/b96_kr260_10g/docs/design.md#9-rate-matching-and-the-receive-to-core-crossing-brief-96c`
 - The elastic buffer inserts and deletes idles only between frames, never under- or overflows silently, and every order sent is fired and passes its content check.
   - simulation test: **pass**, Whole core with the elastic buffers (macro and own gray-pointer): 2 test(s) passed in the recorded run. [evidence](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml)
@@ -159,7 +169,7 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### B96-F-OFFSET: Rate matching holds under a real frequency offset
 
-- Kind: functional; state: passes without hardware; hardware verification open; specification status: draft.
+- Kind: functional; state: partially verified; lacks a simulation check from a bench the implementing agent did not write; rests only on the implementing agent's own tests; agreement: draft.
 - Source: `designs/b96_kr260_10g/docs/design.md#board-result-2026-11-19-kr260-and-an-optical-loopback-resultsb96cwhw20261119_080724`
 - For any constant receive clock offset from -300 to +300 ppm relative to the transmit clock, no frame is lost or corrupted and the buffer neither overflows nor underflows. IEEE 802.3 allows +-100 ppm at each end, so two compliant ends differ by at most 200 ppm; +-300 ppm gives margin. A loopback has no offset, so a board test needs a second reference clock or another device on the link.
 - External element: a second reference clock or a 10G network card (a loopback has no frequency offset). Hardware verification: open.
@@ -169,7 +179,7 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### B96-F-INTEROP: Interoperates with a standard 10GBASE-R network card
 
-- Kind: functional; state: not run; specification status: draft.
+- Kind: functional; state: not run; agreement: draft.
 - Source: `designs/b96_kr260_10g/handover.yaml`
 - The PCS and MAC exchange frames with an independent 10GBASE-R implementation. A PCS talking to itself accepts its own symmetric mistakes, so only another implementation proves the block formats and scrambler order.
 - External element: a 10G network card and cable. Hardware verification: open.
@@ -177,17 +187,17 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### B96-S-ORDERS: Orders are sent only for valid decisions, none is lost or poisoned
 
-- Kind: safety; state: verified; 1 item(s) stale; specification status: draft.
+- Kind: safety; state: verified; agreement: draft.
 - Source: `designs/b96_kr260_10g/docs/design.md#25-the-trading-path-in-variant-b-trade64-not-a-widened-trigger_core`
 - Every armed decision yields exactly one order, a poisoned order never fires, and every fault counter stays 0.
   - simulation test: **pass**, Whole core, RATE_MATCH = 0, under 97C's own bench: 1 test(s) passed in the recorded run. [evidence](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml)
   - simulation test: **pass**, Whole core with the elastic buffers (macro and own gray-pointer): 2 test(s) passed in the recorded run. [evidence](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml)
   - board measurement / jtag_registers: **pass**, 100 receive restarts on build rm_gp, counters read over JTAG: restarts.restarts = 100; restarts.failed_to_lock = 0; safety.ok = True; safety.sums.poisoned = 0; safety.sums.order_bad = 0; safety.orders.fired_total = 500. [evidence](../../../results/b96e/hw/20261119_231251/rm_gp/stage3.json)
-  - review: **stale**, One independent correctness review and one fix round (an agent, not a human): Sonnet (agent), 2026-11-17 (changed since the evidence was recorded: designs/b96_kr260_10g/rtl/b96_core.sv, designs/b96_kr260_10g/rtl/b96_pkg.sv, designs/b96_kr260_10g/rtl/frame_src.sv, designs/b96_kr260_10g/rtl/hs_vec.sv (+7 more)). [evidence](../../../results/b96/README.md)
+  - review: **not run**, One independent correctness review and one fix round (an agent, not a human): no review record in verif/reviews.yaml (the reviewer named in the testplan is not a record). [evidence](../../../results/b96/README.md)
 
 ### B96-S-DRIVER: The board drivers cannot report OK when a safety check fails
 
-- Kind: safety; state: FAILS; specification status: draft.
+- Kind: safety; state: FAILS; agreement: draft.
 - Source: `designs/b96_kr260_10g/host/b96_bench.py`
 - A stale counter, a missing order, a counter that was not read, a wrong polarity or a link that never came up fails the run and names the cause; unsafe actions are refused without the lock.
   - simulation test: **stale**, Board bench, ppm and bypass drivers judged on a fake board (every safety counter, polarity, lock, verdicts): 37 test(s) passed in the recorded run (changed since the evidence was recorded: designs/b96_kr260_10g/host/b96_bench.py, designs/b96_kr260_10g/host/b96f1_bypass.py). [evidence](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml)
@@ -195,7 +205,7 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### B96-S-LASER: The laser is off at reset and its polarity is confirmed
 
-- Kind: safety; state: verified; 1 item(s) stale; specification status: draft.
+- Kind: safety; state: partially verified; lacks a simulation check; agreement: draft.
 - Source: `designs/b96_kr260_10g/handover.yaml`
 - tx_disable is 1 at reset; the board run switches the laser on only after the polarity was read back.
   - simulation test: **stale**, Board bench, ppm and bypass drivers judged on a fake board (every safety counter, polarity, lock, verdicts): 37 test(s) passed in the recorded run (changed since the evidence was recorded: designs/b96_kr260_10g/host/b96_bench.py, designs/b96_kr260_10g/host/b96f1_bypass.py). [evidence](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml)
@@ -203,7 +213,7 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### B96-S-ROC: Board runs stay inside the recommended operating conditions
 
-- Kind: safety; state: verified; specification status: draft.
+- Kind: safety; state: partially verified; lacks a simulation check; agreement: draft.
 - Source: `_handoff/fpga_agent/fpga_agent_house_rules.md`
 - Die temperature, VCCINT, VCCAUX and VCCBRAM read from SYSMON are inside the DS925 windows at the start and end of every board run.
   - board measurement / sysmon: **pass**, SYSMON at the start and end of the 96E run: conditions_start.inside_roc = True; conditions_end.inside_roc = True; roc_ok = True. [evidence](../../../results/b96e/hw/20261119_231251/rm_gp/session.json)
@@ -211,7 +221,7 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### B96-S-CDC: No critical clock-domain crossing
 
-- Kind: safety; state: verified; 2 item(s) stale; specification status: draft.
+- Kind: safety; state: partially verified; lacks a simulation check; a formal proof (SymbiYosys or Lean); agreement: draft.
 - Source: `designs/b96_kr260_10g/docs/design.md#26-where-the-decision-lives-and-how-it-crosses-clocks-as-built-for-brief-96-superseded-by-section-9-brief-96c`
 - report_cdc shows no Critical item and every crossing has the documented synchroniser structure.
   - post-route timing: **stale**, report_cdc gates, default build (no critical, structure clean): gates.cdc_no_critical = True; gates.post_synth_cdc_structure_clean = True (changed since the evidence was recorded: designs/b96_kr260_10g/rtl/b96_core.sv, designs/b96_kr260_10g/rtl/hs_vec.sv, designs/b96_kr260_10g/rtl/rate_match.sv, designs/b96_kr260_10g/rtl/rate_match_gp.sv (+1 more)). [evidence](../../../results/b96c/builds/control/digest.json)
@@ -220,14 +230,14 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### B96-I-REGMAP: The register map is generated from one source and decoded exactly
 
-- Kind: interface; state: stale; specification status: draft.
+- Kind: interface; state: stale; agreement: draft.
 - Source: `designs/b96_kr260_10g/docs/register_map.md`
 - Every address in regmap.py is decoded, nothing else is, vector widths agree, and the datasheet states unmapped reads return 0, counters read from a snapshot and reads have no side effects.
   - simulation test: **stale**, Register map is current, decoded exactly, widths agree, stated rules hold: 8 test(s) passed in the recorded run (changed since the evidence was recorded: designs/b96_kr260_10g/docs/register_map.md, designs/b96_kr260_10g/regmap.py). [evidence](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml)
 
 ### B96-F-BUILDS: Every build variant sets only the parameters it documents
 
-- Kind: functional; state: FAILS; specification status: draft.
+- Kind: functional; state: FAILS; agreement: draft.
 - Source: `designs/b96_kr260_10g/handover.yaml`
 - The build files set parameters the core has, the base build keeps the 97C defaults, and each variant differs from the base only where documented.
   - simulation test: **FAIL**, Build lat_all3_bypass composes 97C's cuts with the bypass build's files, and its board driver's verdicts, references and lock prefix (brief 126); not yet in a recorded run: 0 test(s) passed in the recorded run. [evidence](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml)
@@ -235,14 +245,14 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### B96-F-EYESCAN: The eye-scan sequencer drives the GT's DRP as its Python twin does
 
-- Kind: functional; state: verified; specification status: draft.
+- Kind: functional; state: partially verified; lacks a simulation check from a bench the implementing agent did not write; rests only on the implementing agent's own tests; agreement: draft.
 - Source: `designs/b96_kr260_10g/docs/design.md#10-on-chip-rx-eye-scan-brief-96d-2026-11-19`
 - es_ctrl aborts a point on a DRP timeout, latches the point at start, restores every DRP word and is absent when EYESCAN = 0.
   - simulation test: **pass**, Eye-scan sequencer against its twin and a DRP stand-in: 2 test(s) passed in the recorded run. [evidence](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml)
 
 ### B96-P-LAT-E: Echo latency E
 
-- Kind: performance; state: verified (board-measured); 1 item(s) stale; specification status: draft.
+- Kind: performance; state: verified (board-measured); 1 item(s) stale; agreement: draft.
 - Source: `designs/b96_kr260_10g/docs/design.md#6-loop-measurement-method-pre-registered-stage-3`
 - Regression bound drawn from the 96E board record; the owner sets the target.
 - Bound: echo latency E (median of per-link minima) at most 22 clocks; condition: clock 6.206 ns, 100 link restarts, KR260 optical fibre loopback, fibre lead 0.17 m.
@@ -252,7 +262,7 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### B96-P-LAT-L: Trading-loop latency L
 
-- Kind: performance; state: verified (board-measured); 1 item(s) stale; specification status: draft.
+- Kind: performance; state: verified (board-measured); 1 item(s) stale; agreement: draft.
 - Source: `designs/b96_kr260_10g/docs/design.md#6-loop-measurement-method-pre-registered-stage-3`
 - Regression bound drawn from the 96E board record (L = 2E + D); the owner sets the target.
 - Bound: trading-loop latency L (median of per-link minima) at most 55 clocks; condition: clock 6.206 ns, 100 link restarts, KR260 optical fibre loopback, fibre lead 0.17 m.
@@ -262,7 +272,7 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### B96-P-LAT-D: Decision latency D
 
-- Kind: performance; state: verified (board-measured); specification status: draft.
+- Kind: performance; state: verified (board-measured); agreement: draft.
 - Source: `results/b96f1/preregistration.md`
 - D = L - 2E; the 96F1 pre-registration expects it unchanged within 1 clock of 12.
 - Bound: decision latency D (L - 2E from medians of minima) at most 13 clocks; condition: clock 6.206 ns, 100 link restarts, KR260 optical fibre loopback.
@@ -271,7 +281,7 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### B96-P-T2T-DIGITAL: Digital tick-to-trade, GT port to GT port
 
-- Kind: performance; state: stale; specification status: draft.
+- Kind: performance; state: stale; agreement: draft.
 - Source: `docs/latency_definitions.md`
 - Whole core in xsim with AMD's real XPM macros and the GT stand-in, own gray-pointer buffer; the GT, optics and clock-crossing phase are not in the simulation. Regression bound drawn from the 96E record.
 - Bound: tick-to-trade at most 14 clocks; condition: xsim, RATE_MATCH = 1, RM_OWN = 1, clock phase 1550 ps.
@@ -279,7 +289,7 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### B96-P-TIMING: Post-route setup slack
 
-- Kind: performance; state: verified (post-route timing); 2 item(s) stale; specification status: draft.
+- Kind: performance; state: verified (post-route timing); 2 item(s) stale; agreement: draft.
 - Source: `designs/b96_kr260_10g/handover.yaml`
 - Every build closes timing on the 161.133 MHz and 100 MHz user clocks.
 - Bound: worst setup slack (WNS) at least 0 ns; condition: routed, Vivado 2026.1, user clocks 161.133 MHz and 100 MHz.
@@ -289,7 +299,7 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### B96-P-HOLD: Post-route hold slack
 
-- Kind: performance; state: verified (post-route timing); 2 item(s) stale; specification status: draft.
+- Kind: performance; state: verified (post-route timing); 2 item(s) stale; agreement: draft.
 - Source: `designs/b96_kr260_10g/handover.yaml`
 - Every build closes hold on all clocks.
 - Bound: worst hold slack (WHS) at least 0 ns; condition: routed, Vivado 2026.1.
@@ -299,7 +309,7 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### B96-P-EYE: Receive eye margin
 
-- Kind: performance; state: verified (board-measured); specification status: draft.
+- Kind: performance; state: verified (board-measured); agreement: draft.
 - Source: `designs/b96_kr260_10g/docs/design.md#10-on-chip-rx-eye-scan-brief-96d-2026-11-19`
 - Horizontal eye opening after the equaliser, read by the on-chip eye scan on the board. Draft bound for a short loopback; the owner sets the target.
 - Bound: eye width at BER 1e-9 (LPM equaliser) at least 0.5 UI; condition: KR260 fibre loopback, one module, room temperature, eye-scan build.
@@ -307,7 +317,7 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### B96-P-BYPASS: GT buffer bypass shortens the echo path (pre-registered)
 
-- Kind: performance; state: stale; specification status: draft.
+- Kind: performance; state: stale; agreement: draft.
 - Source: `results/b96f1/preregistration.md`
 - Build rm_gp_bypass must lower E by at least 1.5 clocks against rm_gp (21.0), else the bypass did not take effect. Pre-registered before any board time. Measured 2026-11-21 (stamp 86037ce1) as E = 17.0 clocks, 4.0 lower, inside the predicted 2.9 to 4.5 (results/b96f1/README.md).
 - Bound: echo latency E (median of per-link minima) at most 19.5 clocks; condition: build rm_gp_bypass, 100 receive restarts, KR260 optical fibre loopback, fibre lead 0.17 m.
@@ -316,7 +326,7 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### B96-P-THROUGHPUT: Line-rate throughput without loss
 
-- Kind: performance; state: not run; specification status: draft.
+- Kind: performance; state: not run; agreement: draft.
 - Source: `designs/b96_kr260_10g/handover.yaml`
 - A burst at line rate loses no frame. Nothing has been measured; the line and payload rates stand on configuration and gearbox arithmetic only.
 - Bound: frames lost in a line-rate burst equal to 0 frames; condition: 1518-byte frames, 10 s burst, against a 10G network card.
@@ -325,14 +335,14 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### B96-F-LEAN-GRAY-STEP: A pointer's gray code changes in exactly one bit per count, at every width
 
-- Kind: functional; state: verified; the Lean proof is of a transcription of the RTL, not of the RTL itself; rests on a delegated acceptance of the Lean statement, not a human approval; specification status: draft.
+- Kind: functional; state: verified; the Lean proof is of a transcription of the RTL, not of the RTL itself; rests on a delegated acceptance of the Lean statement, not a human approval; agreement: draft.
 - Source: `designs/b96_kr260_10g/rtl/rate_match_gp.sv (pointer crossings u_wp and u_rp, xpm_cdc_gray)`
 - The write and read pointers of rate_match_gp count modulo 2^CW and cross by gray code. For every width CW > 0 and every value, the gray codes of b and b + 1 (including the wrap from 2^CW - 1 to 0) differ in exactly one bit, so a sample taken while the pointer moves is the old or the new code.
   - Lean proof (all widths): **pass**, One bit changes per count, wrap included, every width: proved; statement accepted by planner (Session A) on the owner's delegation (owner decision 23), 2026-11-21; not a human approval; Gray.gray_step: kernel only; proof of the transcription, transcription tested; recorded build (not re-run). [evidence](../../../formal/lean/records/build_record.json)
 
 ### B96-F-LEAN-GRAY-DECODE: Gray decoding inverts gray encoding, at every width
 
-- Kind: functional; state: verified; the Lean proof is of a transcription of the RTL, not of the RTL itself; rests on a delegated acceptance of the Lean statement, not a human approval; specification status: draft.
+- Kind: functional; state: verified; the Lean proof is of a transcription of the RTL, not of the RTL itself; rests on a delegated acceptance of the Lean statement, not a human approval; agreement: draft.
 - Source: `designs/b96_kr260_10g/rtl/rate_match_gp.sv (pointer crossings u_wp and u_rp, xpm_cdc_gray)`
 - For every width and value, the decoder of the pointer crossing returns the count the encoder was given; and a sampled code that is the old or the new code decodes to the old or the new count.
   - Lean proof (all widths): **pass**, Decode after encode is the identity, every width: proved; statement accepted by planner (Session A) on the owner's delegation (owner decision 23), 2026-11-21; not a human approval; Gray.gray2bin_bin2gray: kernel only; proof of the transcription, transcription tested; recorded build (not re-run). [evidence](../../../formal/lean/records/build_record.json)
