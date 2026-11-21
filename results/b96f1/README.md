@@ -15,6 +15,19 @@ Two builds of `designs/b96_kr260_10g` (the control `rm_gp` and the bypass build 
 - **Sequence simulation:** the Wizard's controllers start by themselves on the reset-done edge and leave the previous sequence's done high for 6 to 12 clocks, which the gate holds off; an alignment error holds the paths in reset (28 of 28 checks).
 - **Whole-core simulation:** tick-to-trade 13.4 clocks for both builds (8 orders, phase 0); link up with the bypass-done delayed by 100 or 2,000 clocks.
 
+## Board result, 2026-11-21 (rm_gp_bypass, stamp 86037ce1, build ID 3e26ea6e read back over JTAG): PASS
+
+`hw/20261120_215255/rm_gp_bypass/` (stage3.json, full_restarts.json, session.json). How the numbers are defined (all from FPGA counters at the 6.2061 ns core clock, median of the per-link minimum over 100 link restarts, fibre loopback with the 0.17 m OS2 lead and the 10G-LR module in J24): **E** is one pass out and back through the transmit and receive paths (MAC, PCS, GT, optics, fibre); **L** is the whole trading loop, a price word in to an order out and back, which crosses the transceiver twice, so L = 2E + D; **D** is the decision logic between the two crossings; **tick-to-trade** is L - E, first bit in to first bit out at the SFP+ pins as seen by FPGA counters, optics included (not a wire-to-wire STAC-T0 figure; see docs/latency_definitions.md).
+
+| | rm_gp, GT buffers on (96E, 2026-11-19) | rm_gp_bypass, both GT buffers bypassed | change |
+|---|---|---|---|
+| E | 21.0 clocks | 17.0 clocks | -4.0 clocks (about 24.8 ns per pass) |
+| L | 54.0 | 46.0 | -8.0 (twice E: two crossings) |
+| D | 12.0 | 12.0 | 0 |
+| tick-to-trade (L - E) | 33 clocks, about 205 ns | 29 clocks, about 180 ns | -4 clocks |
+
+Pre-registered: E falls 2.9 to 4.5 clocks (amendment: AMD AR 68177 gives 3.4 to 4.4); measured 4.0, inside both. 20 of 20 full GT resets locked; both bypass controllers done, no error, no retry, no give-up; safety counters 0; inside the operating conditions (28.9 C at the end). The laser was off at the end. One board, one module, fibre loopback: no frequency offset, so the rate matcher's slip path is not exercised here.
+
 ## Illustrative or not measured
 The transceiver in both simulations is a stand-in: the alignment time, the phase and the latency saving are not simulated (prediction only: E falls 2.9 to 4.5 clocks, third-party GTY figures, UNCONFIRMED for this GTH). Power is vectorless. No bitstream was loaded on a board.
 

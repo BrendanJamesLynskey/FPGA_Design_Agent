@@ -460,7 +460,7 @@ def capture_files(root: Path, extra: list[Path] | None = None) -> list[Path]:
 
 # --- the record viewer -----------------------------------------------------------------------------------------------------------------
 
-RECORD_SUFFIX = {".json", ".yaml", ".yml", ".md", ".txt", ".rpt", ".csv"}
+RECORD_SUFFIX = {".json", ".yaml", ".yml", ".md", ".txt", ".rpt", ".csv", ".xml"}
 RECORD_LIMIT = 400_000
 _DESIGN_FILES = re.compile(r"^designs/[A-Za-z0-9_.-]+/(project|latency_stages)\.yaml$")
 
@@ -501,3 +501,13 @@ def read_record(root: Path, rel: str) -> dict[str, Any] | None:
     else:
         body = redact.text(body)
     return {"file": rel, "date": file_date(root, p), "bytes": p.stat().st_size, "lines": body.splitlines()[:6000]}
+
+
+def trace_view(root: Path) -> dict[str, Any]:
+    """Brief 116: every design's specification-to-evidence matrix, computed by flow/trace_v1.py from the testplans and the committed evidence.
+    Read-only; the page shows the same data as `python -m flow.trace_v1 show`."""
+    from flow import trace_v1
+    try:
+        return trace_v1.collect_all()
+    except (trace_v1.PlanError, OSError, KeyError, ValueError) as e:
+        return {"error": f"{type(e).__name__}: {e}"}
