@@ -15,7 +15,7 @@
 # A finding that no rule maps lands in the catch-all rule of its tool (HDL-LINT-00, HDL-VIV-00, HDL-STD-00), so nothing is lost.
 # Waivers: designs/<d>/lint/waivers.yaml, {rule, match (a glob over the finding key), reason, owner, date}.
 standard: FDA-HDL
-version: "1.5"            # 1.0 2026-11-12 (first release); 1.1 2026-11-14 (brief 71: reset rules split into HDL-RST-01..05,
+version: "1.6"            # 1.0 2026-11-12 (first release); 1.1 2026-11-14 (brief 71: reset rules split into HDL-RST-01..05,
                           # HDL-CLK-02, HDL-VER-01, HDL-IF-02/03, HDL-GT-01, HDL-DOC-01; check-suite tool keys; fix and skill);
                           # 1.2 2026-11-14 (brief 73: HDL-IF-04..06, the axi_profile check);
                           # 1.3 2026-11-14 (brief 70: REQP-1840 in HDL-RST-03, HDL-RST-06 AMD IP resets);
@@ -149,6 +149,17 @@ rules:
     checks: {vivado: ["TIMING-*", "XDCH-*", "XDCC-*", "XDCB-*", "XDCV-*"], exceptions: ["EXC-*"], io: ["IO-*"]}
     fix: constrain every clock and I/O from the data sheet; an exception must cover the paths it names and no others
     skill: xdc-coverage-and-audit-checks
+  - id: HDL-IO-01
+    title: Registers meant for the I/O block are in it
+    rationale: A first input or last output register of a synchronous interface only goes into the I/O block when nothing but the pad
+      sits between it and the pin; otherwise Vivado leaves it in the fabric with a critical warning that
+      the DRC and timing gates never see, and the interface timing depends on placement (UG903, UG904). A register marked IOB TRUE (or in
+      an interface declared iob true) that is not packed fails; an unmarked register beside a synchronous interface's pin is advice.
+    checks: {io: ["IOB-*"]}
+    fix: remove the gate between the pad and the register (an AND, a mux, an inversion into a LUT; the first input register must be fed by the pad alone
+      and the output register must drive the pad alone), then mark it (* IOB = "TRUE" *), the finding names the cell and Vivado's reason
+      (KB skills artix7-iob-register-packing and zynqmp-iob-register-packing)
+    skill: artix7-iob-register-packing
   - id: HDL-METH-01
     title: Methodology findings on the synthesised and routed design fixed or waived
     rationale: The vendor methodology checks are the tool's own list of constructs it handles badly.
