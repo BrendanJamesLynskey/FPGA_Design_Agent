@@ -16,3 +16,6 @@ Records of build `designs/b96_kr260_10g/rm_gp_itch`: simulation (xsim with AMD's
 
 ## Reproduce
 `python3 -m pytest -q designs/b96_kr260_10g/rm_gp_itch/tests` (Icarus: the unit bench, about 2 minutes; xsim: the whole-core session and the stage dry runs, 10 to 40 minutes each, skipped without Vivado); the build: `results/b127/build_one.sh`.
+
+## Known gaps and limits
+Nothing here ran on a board: the test is pre-registered and the script written, not run. The transceiver is a stand-in in xsim, so no GT or optics are in any latency figure, and the clock phases are four fixed offsets, not a real frequency offset. The order frame is a stand-in with TCP checksum 0 until brief 119's `tcp_fast` lands (the hook is simulated). Every message and price is synthetic. The in-context timing selection for the price-ladder RAMs matched no cells in the first pass (`ctx_timing.txt`); `ctx_only.sh` re-runs it under a heavy slot. Full list: `designs/b96_kr260_10g/rm_gp_itch/docs/itch_integration.md`.
