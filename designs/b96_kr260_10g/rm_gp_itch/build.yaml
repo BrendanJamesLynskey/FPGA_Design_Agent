@@ -1,0 +1,45 @@
+# rm_gp_itch (brief 127): the build rm_gp (RATE_MATCH = 1, RM_OWN = 1: our own gray-pointer elastic buffer) with brief 110's standard-protocol trading path inside: MoldUDP64 over UDP over IPv4 over Ethernet in,
+# ITCH 5.0 decode, book, risk, OUCH 5.0 order out in a (stand-in) TCP/IPv4/Ethernet frame. Differences from rm_gp, and only these: rm_gp_itch/rtl/{b96_core,rx_path,tx_path}.sv in place of rtl/{b96_core,rx_path,tx_path}.sv
+# (no RATE_MATCH = 0 path, no eye scan registers, the ITCH path and its registers), the new files in rm_gp_itch/rtl (udp_strip, itch_top, itch_path, order_seg, tx_mux, itch_pkg2), brief 110's blocks unchanged from
+# designs/b110_itch_ouch/rtl, TRADE = 0 (the Bench Feed rule is off at reset; ARM of the ITCH path is IT_CTRL.ARM), and rtl/rx_path_legacy.sv left out. Same part, same GT Wizard, same constraints.
+top: kr260_10g_top
+part: xck26-sfvc784-2LV-c
+board: kr260
+sources:
+- designs/b58a_trigger/rtl/jtag_bus.sv
+- designs/b96_kr260_10g/rtl/b96_pkg.sv
+- designs/b110_itch_ouch/rtl/itch_pkg.sv
+- designs/b96_kr260_10g/rm_gp_itch/rtl/itch_pkg2.sv
+- designs/b96_kr260_10g/rtl/pcs_tx.sv
+- designs/b96_kr260_10g/rtl/pcs_rx.sv
+- designs/b96_kr260_10g/rtl/mac64_tx.sv
+- designs/b96_kr260_10g/rtl/mac64_rx.sv
+- designs/b96_kr260_10g/rtl/hs_vec.sv
+- designs/b96_kr260_10g/rtl/frame_src.sv
+- designs/b96_kr260_10g/rtl/trade64.sv
+- designs/b96_kr260_10g/rtl/rate_match.sv
+- designs/b96_kr260_10g/rtl/rate_match_gp.sv
+- designs/b110_itch_ouch/rtl/mold_rx.sv
+- designs/b110_itch_ouch/rtl/itch_dec.sv
+- designs/b110_itch_ouch/rtl/book_core.sv
+- designs/b110_itch_ouch/rtl/risk_glue.sv
+- designs/b110_itch_ouch/rtl/ouch_enter.sv
+- designs/b96_kr260_10g/rm_gp_itch/rtl/udp_strip.sv
+- designs/b96_kr260_10g/rm_gp_itch/rtl/order_seg.sv
+- designs/b96_kr260_10g/rm_gp_itch/rtl/itch_top.sv
+- designs/b96_kr260_10g/rm_gp_itch/rtl/itch_path.sv
+- designs/b96_kr260_10g/rm_gp_itch/rtl/tx_mux.sv
+- designs/b96_kr260_10g/rm_gp_itch/rtl/tx_path.sv
+- designs/b96_kr260_10g/rm_gp_itch/rtl/rx_path.sv
+- designs/b96_kr260_10g/rtl/es_ctrl.sv
+- designs/b96_kr260_10g/rm_gp_itch/rtl/b96_core.sv
+- designs/b96_kr260_10g/rtl/kr260_10g_top.sv
+constraints:
+- designs/b96_kr260_10g/design.xdc
+ip_tcl:
+- designs/b96_kr260_10g/ip/amd_ip.tcl
+generics:
+  NEAR_END: 1'b0
+  TRADE: 1'b0
+  RATE_MATCH: 1'b1
+  RM_OWN: 1'b1

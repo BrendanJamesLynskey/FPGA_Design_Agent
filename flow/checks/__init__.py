@@ -513,7 +513,15 @@ def _gate_backed(kind: str):
             r = (G._exceptions if kind == "exceptions" else G._io)(ctx.build, stage, strict, g, "x")
         except (OSError, ValueError, KeyError) as e:
             return _not_run(f"{type(e).__name__}: {e}")
-        if r is None and "x" not in g:
+        ri, gi = None, {}
+        if kind == "io" and stage == "route":
+            # brief 129: the I/O-block packing of every marked register (flow/iob_check.py), with the cell and the reason
+            try:
+                prep = json.loads((ctx.build / "prepare.json").read_text()) if (ctx.build / "prepare.json").exists() else {}
+                ri = G._iob_packing(ctx.build, prep, strict, gi)
+            except (OSError, ValueError, KeyError):
+                ri = None
+        if r is None and "x" not in g and ri is None:
             return _not_run(f"the build has no {kind} reports for {stage}")
         fs = []
         for f in (r or {}).get("failures") or []:
@@ -525,7 +533,16 @@ def _gate_backed(kind: str):
             fs.append({"tool": kind, "code": "EXC-NO-PATH" if kind == "exceptions" else "IO-NO-PATH", "severity": "error",
                        "where": stage, "message": (r or {}).get("error", "the gate failed with no listed finding"),
                        "blocking": True})
-        return {**_result(fs), "verdict": g.get("x")}
+        verdict = g.get("x")
+        if ri is not None:
+            for f in ri.get("findings") or []:
+                fs.append({"tool": kind, "code": f["code"], "severity": "error" if f["blocking"] else "advisory", "where": f["where"],
+                           "key": f"io:{f['code']} {f['where']}", "message": f["message"][:300], "blocking": f["blocking"]})
+            if gi.get("iob_packed") is False:
+                verdict = False
+            elif verdict is None and "iob_packed" in gi:
+                verdict = True
+        return {**_result(fs), "verdict": verdict}
     return run
 
 
@@ -765,8 +782,9 @@ register(Check("drc", "records", POST, {"vivado": ("*",)},
 register(Check("exceptions", "records", POST, {"exceptions": ("EXC-*",)},
                "timing exceptions (flow/exceptions_check.py: ignored, covering no path, dropped by an XDC message)",
                _gate_backed("exceptions"), gate_mirror=True))
-register(Check("io", "records", POST, {"io": ("IO-*",)},
-               "I/O timing constraints (flow/io_check.py: invented delays, -min/-max from the data sheet, IOB packing)",
+register(Check("io", "records", POST, {"io": ("IO-*", "IOB-*")},
+               "I/O timing constraints (flow/io_check.py: invented delays, -min/-max from the data sheet, IOB packing) and the I/O-block "
+               "packing of every marked register with Vivado's reason (flow/iob_check.py, brief 129)",
                _gate_backed("io"), gate_mirror=True))
 register(Check("clocking", "vivado", POST, {"vivado": ("CLKC-*",), "clocking": ("CMT-RANGE-01",)},
                "AMD's CLKC methodology rows and the MMCM/PLL VCO and PFD range check (flow/cmt_check.tcl)", _clocking,
