@@ -37,7 +37,7 @@ Host side (`host/`): `itch_host.py` (synthetic frames, replay image, expected or
 ```
 Everything from `mac64_rx` on is in one clock, the transmit user clock (161.1328125 MHz, 6.2058 ns): the elastic buffer is the only receive-to-transmit crossing, as in `rm_gp`.
 
-**`udp_strip`** (one clock after the frame word that carries a payload word's last byte). Checks, in the order the words arrive: destination MAC (our `MY_MAC`, or the group's multicast MAC `01:00:5E:xx:xx:xx` when `IT_FEED_IP` is in
+**`udp_strip`** (one clock after the frame word that carries a payload word's last byte). Checks, in the order the words arrive: destination MAC (our `MY_MAC`, always; and also the group's multicast MAC `01:00:5E:xx:xx:xx` when `IT_FEED_IP` is in
 224.0.0.0/4), EtherType 0x0800, IPv4 version 4 **and header length 5** (anything else, IPv6 and VLAN included, is dropped and counted `drop_type`), no fragment, protocol 17, destination address, destination UDP port, UDP length of at least 9
 and equal to the IP total length minus 20, and the IPv4 header checksum (the ten 16-bit words are summed as they pass and folded in the two clocks before the first payload word is made). The first failing check is counted; the frame is
 not forwarded and its verdict is swallowed. **The UDP checksum is not checked** (the frame check sequence protects the frame on this link; whether a feed carries one is UNCONFIRMED, see `spec_notes.md`). The payload starts at byte 2 of frame word 5, so
@@ -114,8 +114,7 @@ long behind a 54-byte header. **Throughput:** two orders in a row (the second wa
 ## 4. The late frame check, and what happens to an order on a bad frame
 
 `mac64_rx` forwards every byte of a frame as it arrives and reports the frame check (m_end, m_fcs_ok, m_len) a few clocks **after** the last word. Brief 110 put the verdict on the last payload word (`s_err`); here each payload word would
-have to wait two clocks for it, so the verdict is its own strobe (`v_v` once per forwarded frame, `v_bad` = bad FCS, cut by an error character or a lost block lock, or shorter than its IP length says), about 3 clocks after the frame's last word and never before its
-last payload word. No word is delayed for it. Consequences, measured in simulation with the real MACs (`tests/b127_unit_cocotb.py`: `poison_policy`, `fcs_window_sweep`):
+have to wait two clocks for it, so the verdict is its own strobe (`v_v` once per forwarded frame, `v_bad` = bad FCS, cut by an error character or a lost block lock, or shorter than its IP length says), 3 to 4 clocks after the frame's last word at `mac64_rx`'s output and 1 to 2 clocks after the adapter's last payload word (`results/b127/verdict_lag_unit_sim.json`), never before it. No word is delayed for it. Consequences, measured in simulation with the real MACs (`tests/b127_unit_cocotb.py`: `poison_policy`, `fcs_window_sweep`):
 
 1. **The flag `untrusted` and the counter `pkt_err` are set by the strobe**, a few clocks after the frame's last word instead of on it. A candidate decoded in those few clocks (a candidate in the last message of the bad packet) is not blocked by its own packet's
    flag. Brief 110 left that case "not specified"; here it is **specified by the order's poison, below**.

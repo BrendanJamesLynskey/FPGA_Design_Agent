@@ -277,6 +277,23 @@ async def strip_payload_and_verdict(dut):
     for (cyc, got), (pl, _) in zip(pk, want):
         assert got == pl, (len(got), len(pl))
     assert [b for _, b in vd] == [b for _, b in want], vd
+    # the lag of the late verdict: clocks from the frame's last word at mac64_rx's output to the strobe (and to the adapter's last payload word)
+    last_m, cur = [], None
+    for r in u.log:
+        if "m_v" in r:
+            if r["m_v"][1]:
+                if cur is not None:
+                    last_m.append(cur)
+            cur = r["cyc"]
+    last_m.append(cur)
+    lag = [v[0] - lm for v, lm in zip(vd, last_m[:len(vd)])]
+    lag_s = [vc - pc for (vc, _), (pc, _) in zip(vd, pk)]
+    assert min(lag) >= 1 and max(lag) <= 5, lag
+    REC["verdict_lag"] = {"verdict_minus_last_frame_word_clocks": {"min": min(lag), "max": max(lag), "n": len(lag)}, "verdict_minus_last_payload_word_clocks": {"min": min(lag_s), "max": max(lag_s), "n": len(lag_s)}}
+    dut._log.info(f"late verdict lag: {REC['verdict_lag']}")
+    if os.environ.get("B127_RECORD"):
+        Path(os.environ["B127_RECORD"]).mkdir(parents=True, exist_ok=True)
+        (Path(os.environ["B127_RECORD"]) / "verdict_lag_unit_sim.json").write_text(json.dumps(REC["verdict_lag"], indent=1))
     _, us, _ = u.counters()
     assert us["fwd"] == len(want) and us["frames"] == len(want) + len(drops), us
     assert us["bad_fcs"] == 1 and us["drop_mac"] == 1 and us["drop_type"] == 1 and us["drop_port"] == 1 and us["drop_dip"] == 1 and us["drop_proto"] == 1, us
@@ -723,3 +740,24 @@ async def back_to_back_orders(dut):
     if os.environ.get("B127_RECORD"):
         Path(os.environ["B127_RECORD"]).mkdir(parents=True, exist_ok=True)
         (Path(os.environ["B127_RECORD"]) / "back_to_back_unit_sim.json").write_text(json.dumps(out, indent=1))
+
+
+@cocotb.test()
+async def multicast_feed(dut):
+    """A feed on a multicast group: with IT_FEED_IP in 224.0.0.0/4 the adapter accepts the group's MAC (01:00:5E + the low 23 bits of the address) as well as our own unicast MAC, with the group address; it drops
+    another group's MAC and, with this group's MAC, another destination address."""
+    group = "233.54.12.1"
+    u = Unit(dut)
+    await u.start(Cfg(), feed_ip=group)
+    rng = random.Random(3)
+    pl = bytes(rng.randrange(256) for _ in range(60))
+    good = mk_frame(pl, dst_mac=H.mcast_mac(group), dst_ip=group)
+    own_mac = mk_frame(pl, dst_mac=H.DEFAULTS["my_mac"], dst_ip=group)                   # our unicast MAC with the group address: accepted (the unicast MAC is always accepted)
+    other_group = mk_frame(pl, dst_mac=H.mcast_mac("233.54.12.2"), dst_ip="233.54.12.2")    # another group (and its MAC): the MAC differs from this group's: dropped
+    same_mac_other_ip = mk_frame(pl, dst_mac=H.mcast_mac(group), dst_ip="233.54.12.2")       # this group's MAC, another address: dropped on the destination address
+    await u.send([{"frame": f, "gap": 3} for f in (good, own_mac, other_group, same_mac_other_ip, good)])
+    await u.idle(40)
+    pk = u.stripped_packets()
+    _, us, _ = u.counters()
+    assert [p for _, p in pk] == [pl, pl, pl], len(pk)
+    assert us["fwd"] == 3 and us["drop_mac"] == 1 and us["drop_dip"] == 1, us

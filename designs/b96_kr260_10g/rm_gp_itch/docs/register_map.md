@@ -148,7 +148,7 @@ The two windows follow the same rules as the base map: **unmapped addresses** (0
 | 0x33C | IT_WATCH2_HI | RW | 0x43434320 | Watched symbol 2: 8 ASCII characters, space padded, first character in bits 31:24 of the _HI word. |
 | 0x340 | IT_WATCH3_LO | RW | 0x20202020 | Watched symbol 3: 8 ASCII characters, space padded, first character in bits 31:24 of the _HI word. |
 | 0x344 | IT_WATCH3_HI | RW | 0x44444420 | Watched symbol 3: 8 ASCII characters, space padded, first character in bits 31:24 of the _HI word. |
-| 0x348 | IT_FEED_IP | RW | 0xC0A83A0A | Destination IPv4 address the feed is sent to (first octet in bits 31:24). A 224.0.0.0/4 address selects the multicast MAC 01:00:5E:xx:xx:xx of the group as the accepted destination MAC; any other address needs the destination MAC to be MY_MAC. |
+| 0x348 | IT_FEED_IP | RW | 0xC0A83A0A | Destination IPv4 address the feed is sent to (first octet in bits 31:24). The destination MACs accepted are MY_MAC (always) and, when this address is in 224.0.0.0/4, also the group's multicast MAC 01:00:5E:xx:xx:xx (the low 23 bits of the address); the destination address of the frame must equal this register. |
 | 0x34C | IT_FEED_PORT | RW | 5810 | UDP destination port of the feed (bits 15:0; bits 31:16 read 0). |
 | 0x350 | IT_TCP_SEQ | RW | 1 | TCP sequence number of the next order segment; takes effect on IT_CMD TCP_LOAD, then advances by 59 for every segment that left unpoisoned. Stand-in header only (see docs/itch_integration.md section 8). |
 | 0x354 | IT_TCP_ACK | RW | 1 | TCP acknowledgement number in every order segment (stand-in header). |

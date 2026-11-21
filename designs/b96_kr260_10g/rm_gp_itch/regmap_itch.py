@@ -28,7 +28,7 @@ CFG = [
     (9, "IT_ORDF1", "RW", "0x00004E4E", "bits 7:0 cross type (N), 15:8 customer type (N); bits 31:16 reserved (read 0)."),
 ] + [(10 + 2 * i + h, f"IT_WATCH{i}_{'HI' if h else 'LO'}", "RW", ("0x%08X" % (0x20202020 if not h else 0x41414120 + 0x01010100 * i)),
       f"Watched symbol {i}: 8 ASCII characters, space padded, first character in bits 31:24 of the _HI word.") for i in range(4) for h in (0, 1)] + [
-    (18, "IT_FEED_IP", "RW", "0xC0A83A0A", "Destination IPv4 address the feed is sent to (first octet in bits 31:24). A 224.0.0.0/4 address selects the multicast MAC 01:00:5E:xx:xx:xx of the group as the accepted destination MAC; any other address needs the destination MAC to be MY_MAC."),
+    (18, "IT_FEED_IP", "RW", "0xC0A83A0A", "Destination IPv4 address the feed is sent to (first octet in bits 31:24). The destination MACs accepted are MY_MAC (always) and, when this address is in 224.0.0.0/4, also the group's multicast MAC 01:00:5E:xx:xx:xx (the low 23 bits of the address); the destination address of the frame must equal this register."),
     (19, "IT_FEED_PORT", "RW", "5810", "UDP destination port of the feed (bits 15:0; bits 31:16 read 0)."),
     (20, "IT_TCP_SEQ", "RW", "1", "TCP sequence number of the next order segment; takes effect on IT_CMD TCP_LOAD, then advances by 59 for every segment that left unpoisoned. Stand-in header only (see docs/itch_integration.md section 8)."),
     (21, "IT_TCP_ACK", "RW", "1", "TCP acknowledgement number in every order segment (stand-in header)."),

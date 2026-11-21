@@ -8,6 +8,7 @@ Records of build `designs/b96_kr260_10g/rm_gp_itch`: simulation (xsim with AMD's
   `core_sim.json` is the aggregate the stage file reads (tick-to-trade GT port to GT port, MAC word to the order's start strobe, PCS word to MAC word, `go` to the start strobe); `core_lat_sim.json` has every order's times; the logs are the testbench's monitor and register lines (the simulator's own
   noise filtered out). Made by `python3 -m designs.b96_kr260_10g.rm_gp_itch.tests.measure_xsim build/measure 0 1550 3100 4650`.
 - `latency_sim.json`, `latency_unit_sim.json`: the new blocks with the real MACs (Icarus), the clocks from the MAC word with the message's last byte to the adapter's output word, to `go`, and to the order's start strobe, for all 8 byte positions, both modes.
+- `verdict_lag_unit_sim.json`: the clocks from a frame's last word (and from the adapter's last payload word) to the late verdict strobe.
 - `fcs_window_unit_sim.json`, `fcs_window_share.json`: how many bytes may follow a candidate message in a bad packet before its order escapes the late frame check, and the share of the synthetic generator's candidates beyond that.
 - `back_to_back_unit_sim.json`: the spacing of the start strobes of two to four orders in a row.
 - `builds/rm_gp_itch/`: the Vivado build (digest, run record, report_cdc summary, in-context timing of brief 110's critical paths).
