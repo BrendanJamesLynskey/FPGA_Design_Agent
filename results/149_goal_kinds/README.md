@@ -41,3 +41,17 @@ earlier stage re-runs more), never a silent skip.
 The entry stage per class (area 1, latency 1, retarget 1, fmax 3, power 3, language 2, mapping 2) is the executor's choice,
 recorded in `PREREGISTRATION.md`; the accuracy measures agreement with those labels, not whether the stage is the best one for
 a real design. The 74 requests are the executor's wording, not a sample of real users. No model, no Vivado, no cost.
+
+## Records
+`PREREGISTRATION.md` (written first), `labelled_requests.json` (74 labelled requests), `measure.py`, `measure_before.json` (main at
+2fdba7dd), `measure_after.json` (first rules), `measure_after2.json` (plus the docs-only rule). Tests: `agent/tests/test_149_goal_kinds.py`.
+
+## Reproduce
+`python3 results/149_goal_kinds/measure.py --label after2` from the repository root (plain Python, no key, no Vivado, no model call, under a
+second). `--label before` reproduces the baseline only on main's classifier (before PR #277); on this branch it re-measures the new one.
+
+## Known gaps and limits
+- Labels and per-class entry stages are the executor's judgement; the requests are not real users'.
+- No numeric goal is parsed or kept (the typed goals of review item F5); the classes only choose the entry stage.
+- Four requests stay wrong because older rules are kept on purpose (listed above).
+- The check split is clean only for the first-rules row.
