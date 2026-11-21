@@ -5,6 +5,8 @@
 //                            does not read `assert property (@(posedge clk) ...)`.
 //   Icarus 12              : no concurrent assertions at all, so the checker compiles to nothing (__ICARUS__).
 // Every property is named (A_* assertion, C_* cover) so the testplan can trace to it by name.
+// Yosys only (-DFORMAL): every assertion NAME is paired with a cover NAME__ante of its own antecedent in the same guard
+// (brief 143c, flow/formal_rigour.py): if the cover is unreachable the assertion never has anything to check.
 // The module that includes this file must declare `clk`, `rst`, `seen_rst` (high once reset has been seen:
 // nothing is checked before the first reset) and (for FORMAL) `past_ok`.
 `ifndef V_MACROS_SVH
@@ -15,9 +17,9 @@
   `define V_RST(name, cons)
   `define V_COVER(name, expr)
 `elsif FORMAL
-  `define V_SAME(name, ante, cons) always @(posedge clk) if (past_ok && seen_rst && !rst && !$past(rst) && (ante)) name: assert (cons);
-  `define V_NEXT(name, ante, cons) always @(posedge clk) if (past_ok && seen_rst && !rst && !$past(rst) && $past(ante)) name: assert (cons);
-  `define V_RST(name, cons)        always @(posedge clk) if (past_ok && $past(rst)) name: assert (cons);
+  `define V_SAME(name, ante, cons) always @(posedge clk) if (past_ok && seen_rst && !rst && !$past(rst) && (ante)) begin name: assert (cons); name``__ante: cover (1'b1); end
+  `define V_NEXT(name, ante, cons) always @(posedge clk) if (past_ok && seen_rst && !rst && !$past(rst) && $past(ante)) begin name: assert (cons); name``__ante: cover (1'b1); end
+  `define V_RST(name, cons)        always @(posedge clk) if (past_ok && $past(rst)) begin name: assert (cons); name``__ante: cover (1'b1); end
   `define V_COVER(name, expr)      always @(posedge clk) if (past_ok && !rst) name: cover (expr);
 `else
   `define V_SAME(name, ante, cons) name: assert property (@(posedge clk) disable iff (rst || !seen_rst) (!$past(rst) && (ante)) |-> (cons));
