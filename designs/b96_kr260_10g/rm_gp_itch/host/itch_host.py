@@ -62,27 +62,30 @@ def words64(frame: bytes) -> list[int]:
     return [int.from_bytes(frame[i:i + 8].ljust(8, b"\0"), "little") for i in range(0, len(frame), 8)]
 
 
-def replay_image(frames: list[tuple[bytes, int]]) -> list[int]:
-    """The replay memory for [(frame without FCS, gap clocks before it)]: header word {gap, length}, then the frame's words; ends with a zero header. Max 256 words."""
+def replay_image(frames: list[tuple], end_gap: int = 0) -> list[int]:
+    """The replay memory for [(frame without FCS, gap clocks before it[, poison])]: header word {poison, gap, length}, then the frame's words; ends with a zero header whose gap field is the
+    pause between passes (RP_CFG). poison = 1 makes the MAC's FCS of that frame wrong. Max 256 words."""
     img: list[int] = []
-    for f, gap in frames:
+    for fr in frames:
+        f, gap = fr[0], fr[1]
+        pz = int(fr[2]) if len(fr) > 2 else 0
         assert 60 <= len(f) <= 1514
-        img.append((gap << 16) | len(f))
+        img.append((pz << 32) | (gap << 16) | len(f))
         img += words64(f)
-    img.append(0)
+    img.append(end_gap << 16)
     assert len(img) <= 256, f"{len(img)} words do not fit the 256-word replay memory"
     return img
 
 
-def split_frames_for_memory(frames: list[tuple[bytes, int]], capacity: int = 255) -> list[list[tuple[bytes, int]]]:
+def split_frames_for_memory(frames: list[tuple], capacity: int = 255) -> list[list[tuple[bytes, int]]]:
     """Cut a long list of frames into chunks that each fit the replay memory (the host reloads between chunks)."""
     chunks, cur, n = [], [], 1
-    for f, g in frames:
-        w = 1 + (len(f) + 7) // 8
+    for fr in frames:
+        w = 1 + (len(fr[0]) + 7) // 8
         if n + w > capacity:
             chunks.append(cur)
             cur, n = [], 1
-        cur.append((f, g))
+        cur.append(fr)
         n += w
     if cur:
         chunks.append(cur)

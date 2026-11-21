@@ -7,7 +7,8 @@
 // dropped whole and counted (`ord_drop`): it was already fired by the risk logic (its position and number are used): that is the price of not holding orders back.
 // The MAC's `adv` (the gearbox pause, one clock in 33) holds the MAC; the FIFO absorbs it. Timing of O: stream word 0 is visible in clock G+1 (G = the clock `go` is high): it
 // loads the head register at the end of G+1, s_valid is up in G+2, the MAC's start strobe (preamble word in its output register) is in G+3.
-// Replay memory format (docs/itch_integration.md section 6): per frame one header word {32'd0, gap clocks[15:0], length bytes[15:0]} (length 0 ends the list) followed by
+// Replay memory format (docs/itch_integration.md section 6): per frame one header word {31'd0, poison, gap clocks[15:0], length bytes[15:0]} (length 0 ends the list; poison makes the
+// MAC's FCS of that frame wrong: a frame for the receiver's bad-FCS path; at the end marker the gap field is the pause before the next pass when rp_loops asks for several) followed by
 // ceil(length/8) data words; byte 0 of the frame in bits 7:0 of the first data word; the frame without its FCS, length 60 to 1514 (the MAC does not pad: a shorter frame is
 // skipped and counted in `rp_err`). `gap` clocks of silence follow the previous frame's last word accepted by the MAC.
 module tx_mux (
@@ -47,6 +48,7 @@ module tx_mux (
     // replay: host commands (already in this clock domain)
     input  logic        rp_start,
     input  logic        rp_stop,
+    input  logic [15:0] rp_loops,            // passes over the memory per RP_START (0 or 1: one)
     input  logic        wr_we,               // one clock: write wr_data into the replay memory at wr_addr
     input  logic [7:0]  wr_addr,
     input  logic [63:0] wr_data,
@@ -60,7 +62,7 @@ module tx_mux (
     typedef enum logic [1:0] {OWN_NONE = 2'd0, OWN_A = 2'd1, OWN_R = 2'd2, OWN_O = 2'd3} own_t;
     own_t own;
     logic o_take;
-    logic r_valid, r_last, r_ready, r_req;
+    logic r_valid, r_last, r_ready, r_req, r_poison;
     logic [63:0] r_data;
     logic [2:0]  r_nb1;
     logic        head_v, head_last, head_pz_seg, head_pz_unres, head_pz_ofl;
@@ -78,7 +80,7 @@ module tx_mux (
         s_valid = 1'b0; s_data = '0; s_last = 1'b0; s_nb1 = 3'd0; s_poison = 1'b0;
         case (own)
             OWN_A: begin s_valid = a_valid; s_data = a_data; s_last = a_last; s_nb1 = a_nb1; s_poison = a_poison; end
-            OWN_R: begin s_valid = r_valid; s_data = r_data; s_last = r_last; s_nb1 = r_nb1; end
+            OWN_R: begin s_valid = r_valid; s_data = r_data; s_last = r_last; s_nb1 = r_nb1; s_poison = r_poison; end
             OWN_O: begin s_valid = head_v; s_data = head_d; s_last = head_last; s_nb1 = head_nb1; s_poison = head_last && (head_pz_seg || head_pz_ofl || fcs_poison); end
             default: ;
         endcase
@@ -160,42 +162,54 @@ module tx_mux (
     // ------------------------------------------------------------------ replay memory and engine
     logic [63:0] rmem [0:255];
     always_ff @(posedge clk) if (wr_we) rmem[wr_addr] <= wr_data;
-    typedef enum logic [2:0] {R_IDLE, R_HDR, R_GAP, R_RUN} rst_t;
+    typedef enum logic [2:0] {R_IDLE, R_HDR, R_GAP, R_RUN, R_PGAP} rst_t;
     rst_t        rst_s;
     logic [7:0]  ptr;
-    logic [15:0] gapc, wl, flen;
+    logic [15:0] gapc, wl, flen, passes;
+    logic        r_pz;
     logic [63:0] hw;
     logic [63:0] rq;
     logic        r_acc;
-    assign hw      = rmem[ptr];
+    logic [7:0]  raddr;
+    logic [63:0] rdw;
+    assign raddr   = (rst_s == R_RUN && r_acc) ? ptr + 8'd1 : ptr;       // one read port: the header word, the first data word and the next data word are all rmem[raddr]
+    assign rdw     = rmem[raddr];
+    assign hw      = rdw;
     assign r_valid = (rst_s == R_RUN);
     assign r_req   = r_valid;
     assign r_data  = rq;
     assign r_last  = (wl == 16'd1);
     assign r_nb1   = r_last ? 3'((flen - 16'd1) & 16'd7) : 3'd7;
+    assign r_poison = r_pz && r_last;
     assign rp_busy = (rst_s != R_IDLE);
     assign r_acc   = r_valid && r_ready;
     always_ff @(posedge clk) begin
         if (rst) begin
-            rst_s <= R_IDLE; ptr <= '0; gapc <= '0; wl <= '0; flen <= '0; rq <= '0; rp_frames <= '0; rp_err <= '0;
+            rst_s <= R_IDLE; ptr <= '0; gapc <= '0; wl <= '0; flen <= '0; rq <= '0; rp_frames <= '0; rp_err <= '0; passes <= '0; r_pz <= 1'b0;
         end else begin
             case (rst_s)
-                R_IDLE: if (rp_start) begin ptr <= 8'd0; rst_s <= R_HDR; end
+                R_IDLE: if (rp_start) begin ptr <= 8'd0; passes <= (rp_loops == 16'd0) ? 16'd1 : rp_loops; rst_s <= R_HDR; end
+                R_PGAP: begin
+                    if (gapc == 16'd0) begin ptr <= 8'd0; rst_s <= R_HDR; end else gapc <= gapc - 16'd1;
+                end
                 R_HDR: begin
-                    if (hw[15:0] == 16'd0) rst_s <= R_IDLE;
+                    if (hw[15:0] == 16'd0) begin
+                        if (passes > 16'd1) begin passes <= passes - 16'd1; gapc <= hw[31:16]; rst_s <= R_PGAP; end
+                        else rst_s <= R_IDLE;
+                    end
                     else if (hw[15:0] < 16'd60 || hw[15:0] > 16'd1514 || ({1'b0, ptr} + 9'd1 + 9'((hw[15:0] + 16'd7) >> 3)) > 9'd256) begin
                         rp_err <= rp_err + 32'd1; rst_s <= R_IDLE;
                     end else begin
-                        gapc <= hw[31:16]; flen <= hw[15:0]; wl <= (hw[15:0] + 16'd7) >> 3; ptr <= ptr + 8'd1; rst_s <= R_GAP;
+                        gapc <= hw[31:16]; flen <= hw[15:0]; r_pz <= hw[32]; wl <= (hw[15:0] + 16'd7) >> 3; ptr <= ptr + 8'd1; rst_s <= R_GAP;
                     end
                 end
                 R_GAP: begin
-                    rq <= rmem[ptr];
+                    rq <= rdw;
                     if (gapc == 16'd0) rst_s <= R_RUN; else gapc <= gapc - 16'd1;
                 end
                 R_RUN: begin
                     if (r_acc) begin
-                        ptr <= ptr + 8'd1; wl <= wl - 16'd1; rq <= rmem[ptr + 8'd1];
+                        ptr <= ptr + 8'd1; wl <= wl - 16'd1; rq <= rdw;
                         if (r_last) begin rp_frames <= rp_frames + 32'd1; rst_s <= R_HDR; end
                     end
                 end

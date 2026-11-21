@@ -47,6 +47,7 @@ module itch_path
     output logic        o_unres,
     output logic        fcs_poison,
     output logic        rp_start, rp_stop,
+    output logic [15:0] rp_loops,
     output logic        wr_we,
     output logic [7:0]  wr_addr,
     output logic [63:0] wr_data,
@@ -91,6 +92,7 @@ module itch_path
         rpw_q <= cw[C_RPW][23:16]; tcpf_q <= cw[C_TCPFA][23:16];
     end
     assign wr_we   = (cw[C_RPW][23:16] != rpw_q) && !rst;
+    assign rp_loops = cw[C_RPCFG][15:0];
     assign wr_addr = cw[C_RPW][7:0];
     assign wr_data = {cw[C_RPWHI], cw[C_RPWLO]};
     assign tcpf_we = (cw[C_TCPFA][23:16] != tcpf_q) && !rst;

@@ -170,7 +170,7 @@ module b96_core #(
     logic [32*NSW-1:0] stat2_t, stat2_live, stat2_snap;
     logic        i_m_v, i_m_sof, i_m_end, i_m_fcs, i_m_err, i_o_v, i_o_sof, i_o_eof, i_o_poison, i_o_unres, i_fcs_poison, i_rp_start, i_rp_stop, i_wr_we;
     logic [63:0] i_m_d, i_o_d, i_wr_data;
-    logic [15:0] i_m_len;
+    logic [15:0] i_m_len, i_rp_loops;
     logic [7:0]  i_o_keep, i_wr_addr;
     logic [31:0] i_ts, t_rp_frames, t_rp_err, t_n_ofl;
     logic        t_ord_start, t_ord_drop, t_ord_end, t_ord_end_seg, t_ord_end_unres, t_ord_end_fcs, t_ord_end_ofl, t_ord_sop, t_ord_busy, t_rp_busy;
@@ -184,9 +184,6 @@ module b96_core #(
 
     logic [32 * NRXW - 1:0] rx_live;
     logic [32 * NTXW - 1:0] tx_vec_t, tx_live;
-    if (!RATE_MATCH) begin : g_bad
-        initial $error("rm_gp_itch needs RATE_MATCH = 1: the ITCH path runs in the transmit clock behind the elastic buffer");
-    end
     if (1'b1) begin : g_rm
         logic        r_fire, r_sop, r_feed, r_order, r_probe, r_verdict_v, r_verdict_bad;
         logic [15:0] r_inst;
@@ -202,12 +199,12 @@ module b96_core #(
             .go_qty(r_qty), .go_seq(r_seq), .verdict_v(r_verdict_v), .verdict_bad(r_verdict_bad), .verdict_seq(r_verdict_seq), .rx_sop_p(r_sop), .rx_feed_p(r_feed), .rx_order_p(r_order),
             .rx_probe_p(r_probe), .gt_d(tx_data), .tx_vec(tx_vec_t),
             .ts_o(i_ts), .i_o_v(i_o_v), .i_o_d(i_o_d), .i_o_sof(i_o_sof), .i_o_eof(i_o_eof), .i_o_keep(i_o_keep), .i_o_poison(i_o_poison), .i_o_unres(i_o_unres),
-            .i_fcs_poison(i_fcs_poison), .i_rp_start(i_rp_start), .i_rp_stop(i_rp_stop), .i_wr_we(i_wr_we), .i_wr_addr(i_wr_addr), .i_wr_data(i_wr_data),
+            .i_fcs_poison(i_fcs_poison), .i_rp_start(i_rp_start), .i_rp_stop(i_rp_stop), .i_rp_loops(i_rp_loops), .i_wr_we(i_wr_we), .i_wr_addr(i_wr_addr), .i_wr_data(i_wr_data),
             .ord_start(t_ord_start), .ord_drop(t_ord_drop), .ord_end(t_ord_end), .ord_end_seg(t_ord_end_seg), .ord_end_unres(t_ord_end_unres), .ord_end_fcs(t_ord_end_fcs),
             .ord_end_ofl(t_ord_end_ofl), .ord_sop(t_ord_sop), .ord_busy(t_ord_busy), .rp_frames(t_rp_frames), .rp_err(t_rp_err), .n_ofl(t_n_ofl), .rp_busy(t_rp_busy));
         itch_path u_ip (.clk(txusr2), .rst(!tx_done_t), .ts(i_ts), .cfg(cfg_tx), .rx_sop(r_sop), .m_v(i_m_v), .m_d(i_m_d), .m_sof(i_m_sof), .m_end(i_m_end), .m_fcs_ok(i_m_fcs), .m_len(i_m_len),
             .m_err(i_m_err), .cfg2(cfg2_tx), .stat2(stat2_t), .o_v(i_o_v), .o_d(i_o_d), .o_sof(i_o_sof), .o_eof(i_o_eof), .o_keep(i_o_keep), .o_poison(i_o_poison), .o_unres(i_o_unres),
-            .fcs_poison(i_fcs_poison), .rp_start(i_rp_start), .rp_stop(i_rp_stop), .wr_we(i_wr_we), .wr_addr(i_wr_addr), .wr_data(i_wr_data), .ord_start(t_ord_start), .ord_drop(t_ord_drop),
+            .fcs_poison(i_fcs_poison), .rp_start(i_rp_start), .rp_stop(i_rp_stop), .rp_loops(i_rp_loops), .wr_we(i_wr_we), .wr_addr(i_wr_addr), .wr_data(i_wr_data), .ord_start(t_ord_start), .ord_drop(t_ord_drop),
             .ord_end(t_ord_end), .ord_end_seg(t_ord_end_seg), .ord_end_unres(t_ord_end_unres), .ord_end_fcs(t_ord_end_fcs), .ord_end_ofl(t_ord_end_ofl), .ord_sop(t_ord_sop),
             .ord_busy(t_ord_busy), .rp_frames(t_rp_frames), .rp_err(t_rp_err), .n_ofl(t_n_ofl), .rp_busy(t_rp_busy));
         hs_vec #(.W(32 * NRXV_W)) u_rxv_w (.src_clk(rxusr2), .src_vec(rxw_t), .dst_clk(clk), .dst_vec(rxw_live));
@@ -220,7 +217,10 @@ module b96_core #(
             end
         end
     end
-    hs_vec #(.W(32 * NSW)) u_st2 (.src_clk(txusr2), .src_vec(stat2_t), .dst_clk(clk), .dst_vec(stat2_live));
+    // STAT2 is 96 words: xpm_cdc_handshake takes at most 1024 bits, so three coherent parts of 32 words (each part is one snapshot of the core clock; the three can be a few clocks apart)
+    for (genvar gp = 0; gp < 3; gp++) begin : g_st2
+        hs_vec #(.W(1024)) u_st2 (.src_clk(txusr2), .src_vec(stat2_t[1024 * gp +: 1024]), .dst_clk(clk), .dst_vec(stat2_live[1024 * gp +: 1024]));
+    end
     hs_vec #(.W(32 * NTXW)) u_txv (.src_clk(txusr2), .src_vec(tx_vec_t), .dst_clk(clk), .dst_vec(tx_live));
     logic [32 * NRXW - 1:0] rx_snap;
     logic [32 * NTXW - 1:0] tx_snap;
@@ -347,11 +347,12 @@ module b96_core #(
                             C_FEEDPORT: c2[C_FEEDPORT] <= {16'd0, h_wdata[15:0]};
                             C_CMD:      begin c2_cmd_bits <= h_wdata[15:0]; c2_cmd_seq <= c2_cmd_seq + 8'd1; end
                             C_RPW:      c2[C_RPW] <= {24'd0, h_wdata[7:0]};
+                            C_RPCFG:    c2[C_RPCFG] <= {16'd0, h_wdata[15:0]};
                             C_RPWHI:    begin c2[C_RPWHI] <= h_wdata; c2_rpw_seq <= c2_rpw_seq + 8'd1; end
                             C_CAPADDR:  c2[C_CAPADDR] <= {25'd0, h_wdata[6:0]};
                             C_TCPFA:    c2[C_TCPFA] <= {19'd0, h_wdata[12:8], 3'd0, h_wdata[4:0]};
                             C_TCPFD:    begin c2[C_TCPFD] <= h_wdata; c2_tcpf_seq <= c2_tcpf_seq + 8'd1; end
-                            default:    if (c2_wi < C_TCPFD) c2[c2_wi] <= h_wdata;
+                            default:    if (c2_wi < C_TCPFD) c2[c2_wi] <= h_wdata;     // words 0 to 27 not listed above
                         endcase
                     end
                 endcase
@@ -400,7 +401,7 @@ module b96_core #(
                     if (c2_wi == C_RPW) rd = {8'd0, c2_rpw_seq, 8'd0, c2[C_RPW][7:0]};
                     if (c2_wi == C_TCPFA) rd = {8'd0, c2_tcpf_seq, c2[C_TCPFA][15:0]};
                     if (c2_wi == C_TCPFD) rd = c2[C_TCPFD];
-                    if (c2_wi > C_TCPFD) rd = 32'd0;
+                    if (c2_wi > C_RPCFG) rd = 32'd0;
                 end
                 else if (h_addr >= 12'h400 && h_addr < 12'h400 + 12'(4 * NSW)) rd = stat2_snap[32 * s2_i +: 32];
                 else if (h_addr >= 12'h100 && h_addr < 12'h100 + 12'(4 * NRXW)) rd = rx_snap[32 * rx_i +: 32];

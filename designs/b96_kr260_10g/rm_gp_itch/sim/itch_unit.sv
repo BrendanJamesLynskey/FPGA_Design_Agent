@@ -27,12 +27,13 @@ module itch_unit #(
     mac64_rx u_mr (.clk, .rst, .lock_i(1'b1), .x_v, .x_d, .x_c, .m_v, .m_d, .m_sof, .m_nb, .m_end, .m_fcs_ok, .m_len, .m_err, .rx_sop);
     always_ff @(posedge clk) ts <= rst ? 32'd0 : ts + 32'd1;
     logic        o_v, o_sof, o_eof, o_poison, o_unres, fcs_poison, rp_start, rp_stop, wr_we;
+    logic [15:0] rp_loops;
     logic [63:0] o_d, wr_data;
     logic [7:0]  o_keep, wr_addr;
     logic        ord_start, ord_drop, ord_end, ord_end_seg, ord_end_unres, ord_end_fcs, ord_end_ofl, ord_sop, ord_busy, own_a, rp_busy;
     logic [31:0] rp_frames, rp_err, n_ofl;
     itch_path u_ip (.clk, .rst, .ts, .cfg, .rx_sop, .m_v, .m_d, .m_sof, .m_end, .m_fcs_ok, .m_len, .m_err, .cfg2, .stat2, .o_v, .o_d, .o_sof, .o_eof, .o_keep, .o_poison, .o_unres,
-        .fcs_poison, .rp_start, .rp_stop, .wr_we, .wr_addr, .wr_data, .ord_start, .ord_drop, .ord_end, .ord_end_seg, .ord_end_unres, .ord_end_fcs, .ord_end_ofl, .ord_sop,
+        .fcs_poison, .rp_start, .rp_stop, .rp_loops, .wr_we, .wr_addr, .wr_data, .ord_start, .ord_drop, .ord_end, .ord_end_seg, .ord_end_unres, .ord_end_fcs, .ord_end_ofl, .ord_sop,
         .ord_busy, .rp_frames, .rp_err, .n_ofl, .rp_busy);
     logic        s_valid, s_last, s_poison, s_ready, sop, eop, underrun;
     logic        adv;
@@ -40,7 +41,7 @@ module itch_unit #(
     logic [2:0]  s_nb1;
     tx_mux u_mx (.clk, .rst, .s_valid, .s_data, .s_last, .s_nb1, .s_poison, .s_ready, .mac_sop(sop), .a_valid(1'b0), .a_data(64'd0), .a_last(1'b0), .a_nb1(3'd0), .a_poison(1'b0), .a_ready(),
         .o_v, .o_d, .o_sof, .o_eof, .o_keep, .o_poison, .o_unres, .fcs_poison, .ord_start, .ord_drop, .ord_end, .ord_end_seg, .ord_end_unres, .ord_end_fcs, .ord_end_ofl, .ord_sop, .ord_busy, .own_a,
-        .rp_start, .rp_stop, .wr_we, .wr_addr, .wr_data, .rp_frames, .rp_err, .rp_busy, .n_ofl);
+        .rp_start, .rp_stop, .rp_loops, .wr_we, .wr_addr, .wr_data, .rp_frames, .rp_err, .rp_busy, .n_ofl);
     logic [5:0] pc;
     always_ff @(posedge clk) pc <= (rst || pc == 6'd32) ? 6'd0 : pc + 6'd1;
     assign adv = PAUSE ? (pc != 6'd32) : 1'b1;

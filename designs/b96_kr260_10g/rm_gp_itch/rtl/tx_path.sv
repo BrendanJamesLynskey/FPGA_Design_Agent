@@ -35,6 +35,7 @@ module tx_path #(
     input  logic [7:0]  i_o_keep,
     input  logic        i_o_poison, i_o_unres, i_fcs_poison,
     input  logic        i_rp_start, i_rp_stop, i_wr_we,
+    input  logic [15:0] i_rp_loops,
     input  logic [7:0]  i_wr_addr,
     input  logic [63:0] i_wr_data,
     output logic        ord_start, ord_drop, ord_end, ord_end_seg, ord_end_unres, ord_end_fcs, ord_end_ofl, ord_sop, ord_busy,
@@ -102,7 +103,7 @@ module tx_path #(
         .a_valid(s_valid), .a_data(s_data), .a_last(s_last), .a_nb1(s_nb1), .a_poison(poison), .a_ready(s_ready),
         .o_v(i_o_v), .o_d(i_o_d), .o_sof(i_o_sof), .o_eof(i_o_eof), .o_keep(i_o_keep), .o_poison(i_o_poison), .o_unres(i_o_unres), .fcs_poison(i_fcs_poison),
         .ord_start, .ord_drop, .ord_end, .ord_end_seg, .ord_end_unres, .ord_end_fcs, .ord_end_ofl, .ord_sop, .ord_busy, .own_a,
-        .rp_start(i_rp_start), .rp_stop(i_rp_stop), .wr_we(i_wr_we), .wr_addr(i_wr_addr), .wr_data(i_wr_data), .rp_frames, .rp_err, .rp_busy, .n_ofl);
+        .rp_start(i_rp_start), .rp_stop(i_rp_stop), .rp_loops(i_rp_loops), .wr_we(i_wr_we), .wr_addr(i_wr_addr), .wr_data(i_wr_data), .rp_frames, .rp_err, .rp_busy, .n_ofl);
     mac64_tx u_mt (.clk, .rst, .adv, .s_valid(m_valid), .s_data(m_data), .s_last(m_last), .s_nb1(m_nb1), .s_poison(m_poison), .s_ready(m_ready), .x_d, .x_c, .sop, .eop, .underrun);
     pcs_tx   u_pt (.clk, .rst, .x_d, .x_c, .adv, .gt_d);
 

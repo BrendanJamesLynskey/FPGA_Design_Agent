@@ -3,7 +3,7 @@
 package itch_pkg2;
     localparam int NCW = 32;       // words of CFG2
     localparam int C_CTRL = 0, C_THR = 1, C_QTY = 2, C_MAXQTY = 3, C_MAXPOS = 4, C_BAND = 5, C_PXOFF = 6, C_MINQTY = 7, C_ORDF0 = 8, C_ORDF1 = 9, C_WATCH = 10,
-                   C_FEEDIP = 18, C_FEEDPORT = 19, C_TCPSEQ = 20, C_TCPACK = 21, C_CMD = 22, C_RPW = 23, C_RPWLO = 24, C_RPWHI = 25, C_CAPADDR = 26, C_TCPFA = 27, C_TCPFD = 28;
+                   C_FEEDIP = 18, C_FEEDPORT = 19, C_TCPSEQ = 20, C_TCPACK = 21, C_CMD = 22, C_RPW = 23, C_RPWLO = 24, C_RPWHI = 25, C_CAPADDR = 26, C_TCPFA = 27, C_TCPFD = 28, C_RPCFG = 29;
     // CTRL bits
     localparam int K_EN = 0, K_ARM = 1, K_KILL = 2, K_SPEC = 3, K_HALT = 4, K_STRICT = 5;
     // CMD bits (a command is executed once when CMD[23:16] changes)

@@ -39,6 +39,7 @@ CFG = [
     (26, "CAP_ADDR", "RW", "0", "Capture read address: bits 6:4 slot (0 to 7), bits 3:0 entry: 0 to 11 are words 3 to 14 of a captured TCP frame (bytes 24 to 119: IP checksum, addresses, TCP header, payload, FCS), 12 is the slot's meta word {bit 17 valid, bit 16 FCS good, bits 15:0 frame length with FCS}, 13 to 15 read 0. The data appears in the counter window (CAP_LO, CAP_HI) after the next snapshot; CAP_ECHO shows the address it belongs to."),
     (27, "TCPF_ADDR", "RW", "0", "Software bus of brief 119's tcp_fast (only meaningful when that block replaces order_seg; reads 0 in this build): bits 4:0 write address, bits 12:8 read address; a read returns the count of TCPF_WDATA writes in bits 23:16."),
     (28, "TCPF_WDATA", "RW", "0", "Writing it commits {data} to the tcp_fast register at TCPF_ADDR[4:0] (once). Stand-in build: no effect."),
+    (29, "RP_CFG", "RW", "0", "bits 15:0 passes over the replay memory per IT_CMD RP_START (0 or 1: one pass). At the end of a pass the replay waits the `gap` field of the end-marker header word, then starts again from word 0; bits 31:16 reserved (read 0)."),
 ]
 STAT_NAMES = (
     ["itch.pkt", "itch.msg", "itch.gap", "itch.missing", "itch.dup", "itch.ovlp", "itch.sess", "itch.hb", "itch.eos", "itch.short", "itch.trunc", "itch.badlen", "itch.pkt_err",
@@ -89,13 +90,13 @@ def render() -> str:
          "Everything above is the register map of the base design, unchanged, with two differences: **FEATURES bit 7** reads 1 (the ITCH path is built in), and this build has "
          "RATE_MATCH = 1 always (the ITCH path runs in the transmit clock behind the elastic buffer), no eye scan (the 0x024 to 0x03C and 0x084 registers read 0) and no GT bypass. "
          "CMD bit 2 (snapshot) also snapshots the counter window below.", "",
-         "The two windows follow the same rules as the base map: **unmapped addresses** (0x374 to 0x37C and 0x578 to 0x5FC and everything else between) read 0 and ignore writes; **reserved bits** read 0 and "
+         "The two windows follow the same rules as the base map: **unmapped addresses** (0x378 to 0x37C and 0x578 to 0x5FC and everything else between) read 0 and ignore writes; **reserved bits** read 0 and "
          "are ignored on write; **reads have no side effects**; write-only effects are stated per register. The configuration registers cross to the core clock as ONE coherent 1024-bit vector "
          "(a few dozen clocks after a write, the same handshake as the base configuration), so **a write takes effect together with every earlier write**, never half of one.", "",
          "| Address | Name | Access | Reset | Description |", "|---|---|---|---|---|"]
     for i, n, acc, rst, d in CFG:
         o.append(f"| 0x{CFG_BASE + 4 * i:03X} | {n} | {acc} | {rst} | {d} |")
-    o.append(f"| 0x374 to 0x37C | - | - | 0 | reserved: read 0, writes ignored. |")
+    o.append(f"| 0x378 to 0x37C | - | - | 0 | reserved: read 0, writes ignored. |")
     o.append(f"| 0x{STAT_BASE:03X} to 0x{STAT_BASE + 4 * 95:03X} | ISTAT0 to ISTAT95 | RO | 0 | Counter and status snapshot of the ITCH path, 96 words (table below), taken together with the base snapshot by CMD bit 2. All counters are 32 bit and clear with IT_CMD CLR_CNT. |")
     o += ["", "## ISTAT words (core clock domain, TXUSRCLK2)", "", "| Word | Address | Name | Content |", "|---|---|---|---|"]
     for i, n in enumerate(STAT_NAMES):

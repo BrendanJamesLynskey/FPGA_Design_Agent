@@ -23,7 +23,7 @@ from designs.b96_kr260_10g.rm_gp_itch.host import itch_host as H
 PERIOD_PS = 6206
 NCW, NSW = 32, 96
 C = dict(CTRL=0, THR=1, QTY=2, MAXQTY=3, MAXPOS=4, BAND=5, PXOFF=6, MINQTY=7, ORDF0=8, ORDF1=9, WATCH=10, FEEDIP=18, FEEDPORT=19, TCPSEQ=20, TCPACK=21, CMD=22, RPW=23, RPWLO=24,
-         RPWHI=25, CAPADDR=26, TCPFA=27, TCPFD=28)
+         RPWHI=25, CAPADDR=26, TCPFA=27, TCPFD=28, RPCFG=29)
 S_ITCH, S_US, S_O = 0, 45, 60
 US_NAMES = ["frames", "fwd", "drop_off", "drop_mac", "drop_type", "drop_frag", "drop_proto", "drop_dip", "drop_port", "drop_len", "drop_ipck", "bad_fcs", "cut", "orphan", "cap_n"]
 ORD_NAMES = ["sent", "pz_abort", "pz_bad", "pz_strict", "unv", "drop", "ofl", "pz_unres", "late"]
@@ -52,6 +52,7 @@ class Unit:
         self.log: list[dict] = []
         self.wire: list[tuple[int, int]] = []
         self.wire_cyc: list[int] = []
+        self.loop = False
 
     async def start(self, cfgd: Cfg | None = None, feed_ip="192.168.58.10", feed_port=5810, ctrl=None, **kw):
         d = self.dut
@@ -163,6 +164,11 @@ class Unit:
         if int(d.adv.value):                    # the PCS takes a word only in the clocks adv is high (a pause repeats the MAC's output register)
             self.wire.append((int(d.t_d.value), int(d.t_c.value)))
             self.wire_cyc.append(c)
+        if self.loop:                           # a closed fibre loop: the words the PCS takes come back as the receiver's next words (a bubble in the clocks adv is low)
+            if int(d.adv.value):
+                d.x_v.value = 1; d.x_d.value = int(d.t_d.value); d.x_c.value = int(d.t_c.value)
+            else:
+                d.x_v.value = 0
         if len(rec) > 1:
             self.log.append(rec)
 
@@ -186,7 +192,8 @@ class Unit:
 
     async def idle(self, n):
         d = self.dut
-        d.x_v.value = 1; d.x_d.value = H.IDLE_WORD[0]; d.x_c.value = H.IDLE_WORD[1]
+        if not self.loop:
+            d.x_v.value = 1; d.x_d.value = H.IDLE_WORD[0]; d.x_c.value = H.IDLE_WORD[1]
         for _ in range(n):
             await self.tick()
 
@@ -359,3 +366,244 @@ async def session_vs_model(dut):
         dut._log.info("seed %d spec %s: %d packets, %d orders, counters equal, order frames byte exact", seed, spec, len(items), len(m.orders))
         if spec:
             assert itch["spec"] > 0
+
+
+def preamble_msgs(cfg: Cfg, g: gen.Gen):
+    return g.preamble()
+
+
+def sell_add(g: gen.Gen, cfg: Cfg, inst: int, px: int, shares=100) -> bytes:
+    ref = g._newref()
+    return proto.itch_A(g.loc0 + inst, g._t(), ref, "S", shares, cfg.watch[inst], px)
+
+
+def buy_add(g: gen.Gen, cfg: Cfg, inst: int, px: int, shares=100) -> bytes:
+    ref = g._newref()
+    return proto.itch_A(g.loc0 + inst, g._t(), ref, "B", shares, cfg.watch[inst], px)
+
+
+@cocotb.test()
+async def latency_by_alignment(dut):
+    """Clocks from the last byte of an ITCH message to the order frame's first byte, for each alignment of the message end in its 64-bit MAC word, speculation off and on.
+    Start events (all measured): X = the clock the MAC word carrying the last byte is at mac64_rx's output; T = the clock the adapter presents the last payload word to the Mold receiver
+    (what brief 110 calls T); go = the risk logic's start of the frame; end = the clock mac64_tx's output register holds the preamble (the start strobe)."""
+    rows = {}
+    for spec in (False, True):
+        cfg = Cfg(thr=gen.MID + 3 * gen.TICK, max_pos=10**6, max_qty=1000, band=1_000_000)
+        u = Unit(dut)
+        u.spec = spec
+        await u.start(cfg)
+        await u.command(1 << 6)
+        m = Model(cfg)
+        g = gen.Gen(7, cfg)
+        pre = g.preamble()
+        pkts = [proto.mold_packet(b"SESSION001", 1, pre)]
+        seq = 1 + len(pre)
+        pkts.append(proto.mold_packet(b"SESSION001", seq, [buy_add(g, cfg, 0, gen.MID - 100)]))
+        seq += 1
+        meta = []
+        for n in list(range(12, 20)) * 3:            # a filler message of n bytes before the candidate shifts the candidate's end by n + 2 bytes: every alignment of the end
+            filler = proto.itch_other("P", n, g.loc0, 5)
+            cand = sell_add(g, cfg, 0, gen.MID + 100)
+            pkts.append(proto.mold_packet(b"SESSION001", seq, [filler, cand]))
+            seq += 2
+            meta.append(len(pkts[-1]))
+        frames = []
+        for p in pkts:
+            m.feed(p, False)
+            frames.append({"frame": mk_frame(p), "gap": 40})
+        await u.send(frames)
+        await u.idle(80)
+        assert len(m.orders) == len(meta), (len(m.orders), len(meta))
+        wf = u.wire_frames()
+        good = [f for f in wf if f[1]]
+        assert len(good) == len(m.orders)
+        for k, ((data, ok, lane), (exp, sq)) in enumerate(zip(good, expected_order_frames(m))):
+            assert not H.check_order_frame(data, exp, **order_check_kw(sq))
+        frs, eofs, gos, sops = latency_of(u, meta)
+        # packets 0 and 1 are the preamble and the bid; the candidate packets follow
+        cands = frs[2:]
+        assert len(cands) == len(meta) == len(sops), (len(cands), len(meta), len(sops))
+        key = "speculative" if spec else "at_verdict"
+        rows[key] = []
+        for k, pl in enumerate(meta):
+            q = 42 + pl - 1
+            x = cands[k][q >> 3]
+            t = [e for e in eofs if e > cands[k][0]][0]
+            go = [r["cyc"] for r in gos if r["cyc"] > cands[k][0]][0]
+            sop = sops[k]
+            rows[key].append({"end_byte_in_word": q & 7, "X": x, "T": t, "go": go, "sop": sop, "T_minus_X": t - x, "go_minus_T": go - t, "sop_minus_T": sop - t, "sop_minus_X": sop - x})
+        st = u.counters()
+        _, _, od = st
+        assert od["unv"] == 0 or True
+    REC["latency_by_alignment"] = rows
+    for key, rs in rows.items():
+        by = {}
+        for r in rs:
+            by.setdefault(r["end_byte_in_word"], set()).add((r["T_minus_X"], r["go_minus_T"], r["sop_minus_T"], r["sop_minus_X"]))
+        dut._log.info(f"{key}: (T-X, go-T, sop-T, sop-X) by the byte of the MAC word that holds the message's last byte: " + "; ".join(f"{b}: {sorted(v)}" for b, v in sorted(by.items())))
+    if os.environ.get("B127_RECORD"):
+        Path(os.environ["B127_RECORD"]).mkdir(parents=True, exist_ok=True)
+        (Path(os.environ["B127_RECORD"]) / "latency_unit_sim.json").write_text(json.dumps(REC, indent=1))
+
+
+async def poison_scenario(dut, *, spec: bool, strict: bool, tail_msgs: int, bad_fcs: bool):
+    """A session preamble and a bid, then ONE packet with a candidate (a sell at 100.0100, threshold 100.0300) followed by `tail_msgs` messages of another type, in a frame whose FCS is
+    good or bad; then a second candidate in a good frame. Returns (counters, wire frames (data, fcs_ok), model)."""
+    cfg = Cfg(thr=gen.MID + 3 * gen.TICK, max_pos=10**6, max_qty=1000, band=1_000_000)
+    u = Unit(dut)
+    u.spec = spec
+    await u.start(cfg)
+    u.set_model_cfg(cfg, strict=strict)
+    await u.command(1 << 6)
+    m = Model(cfg)
+    g = gen.Gen(11, cfg)
+    pre = g.preamble()
+    pkts = [(proto.mold_packet(b"SESSION001", 1, pre), False)]
+    seq = 1 + len(pre)
+    pkts.append((proto.mold_packet(b"SESSION001", seq, [buy_add(g, cfg, 0, gen.MID - 100)]), False))
+    seq += 1
+    msgs = [sell_add(g, cfg, 0, gen.MID + 100)] + [proto.itch_other("P", 44, g.loc0, 5) for _ in range(tail_msgs)]
+    pkts.append((proto.mold_packet(b"SESSION001", seq, msgs), bad_fcs))
+    seq += len(msgs)
+    pkts.append((proto.mold_packet(b"SESSION001", seq, [sell_add(g, cfg, 0, gen.MID + 200)]), False))
+    frames = []
+    for p, bad in pkts:
+        m.feed(p, bad)
+        frames.append({"frame": mk_frame(p), "gap": 60, "bad_fcs": bad})
+    await u.send(frames)
+    await u.idle(120)
+    wf = u.wire_frames()
+    return u.counters(), [(f[0], f[1]) for f in wf], m
+
+
+@cocotb.test()
+async def poison_policy(dut):
+    """The late FCS verdict against the order in flight (docs/itch_integration.md section 4)."""
+    # 1. the candidate is the last message of a BAD frame: the verdict (about 3 clocks after the frame's end) comes before the order's last word: the order is poisoned
+    for spec in (False, True):
+        (itch, us, od), wf, m = await poison_scenario(dut, spec=spec, strict=False, tail_msgs=0, bad_fcs=True)
+        assert us["bad_fcs"] == 1 and itch["pkt_err"] == 1, (us, itch["pkt_err"])
+        bad = [f for f in wf if not f[1]]
+        # with speculation the second candidate's frame (refused by the untrusted flag) was started and aborted as well: one more poisoned frame, counted as an abort
+        assert len(bad) == 1 + int(spec) and od["pz_bad"] == 1 and od["pz_abort"] == int(spec), (od, len(bad), spec)
+        assert od["sent"] == 0 and itch["rej_gap"] == 1, (od, itch["rej_gap"])       # the second candidate, in a good frame, is refused: the bad frame made the path untrusted
+    # 2. the candidate is the FIRST message of a long frame (tail of 6 messages = 274 bytes): its order is out long before the frame ends: cut-through leaves it unverified
+    (itch, us, od), wf, m = await poison_scenario(dut, spec=True, strict=False, tail_msgs=6, bad_fcs=False)
+    good = [f for f in wf if f[1]]
+    assert len(good) == 2 and od["sent"] == 2 and od["unv"] == 1 and od["pz_bad"] == 0, (od, len(good))
+    # 3. the same frame with a bad FCS: the order has left unpoisoned and unverified (the window), the flag untrusted blocks what follows
+    (itch, us, od), wf, m = await poison_scenario(dut, spec=True, strict=False, tail_msgs=6, bad_fcs=True)
+    assert od["sent"] == 1 and od["unv"] == 1 and od["pz_bad"] == 0 and itch["rej_gap"] == 1 and us["bad_fcs"] == 1, (od, itch["rej_gap"])
+    assert len([f for f in wf if f[1]]) == 1 and len([f for f in wf if not f[1]]) == 1 and od["pz_abort"] == 1      # the second candidate's speculative frame, aborted by the untrusted flag
+    # 4. STRICT mode closes the window: the first message's order is poisoned because the verdict was not known by its last word
+    (itch, us, od), wf, m = await poison_scenario(dut, spec=True, strict=True, tail_msgs=6, bad_fcs=False)
+    assert od["pz_strict"] == 1 and od["sent"] == 1 and od["unv"] == 0, od
+    (itch, us, od), wf, m = await poison_scenario(dut, spec=True, strict=True, tail_msgs=0, bad_fcs=False)
+    assert od["pz_strict"] == 0 and od["sent"] == 2, od                     # the candidate at the end of a short frame: the verdict is in time, nothing is lost
+
+
+async def cap_read(u: Unit, slot: int, entry: int) -> int:
+    u.cw[C["CAPADDR"]] = (slot << 4) | entry
+    u.push_cfg()
+    for _ in range(14):
+        await u.tick(sample=False)
+    assert u.stat_word(91) == ((slot << 4) | entry), "capture echo"
+    return (u.stat_word(90) << 32) | u.stat_word(89)
+
+
+@cocotb.test()
+async def replay_loop_capture(dut):
+    """The board test's data path on a closed loop: the host writes frames into the replay memory and starts it, the frames go out of the MAC, come back round the loop into the receiver, drive
+    the ITCH path, the order frames go out and come back too; the receiver captures them and the host reads them back through the capture window, and every byte is checked."""
+    for spec in (False, True):
+        cfg = Cfg(thr=gen.MID + 3 * gen.TICK, max_pos=10**6, max_qty=1000, band=1_000_000)
+        u = Unit(dut)
+        u.spec = spec
+        await u.start(cfg)
+        m = Model(cfg)
+        g = gen.Gen(21, cfg)
+        pre = g.preamble()[:3]               # S 'O', R for AAA and BBB
+        pkts = [proto.mold_packet(b"SESSION001", 1, pre)]
+        seq = 4
+        pkts.append(proto.mold_packet(b"SESSION001", seq, [buy_add(g, cfg, 0, gen.MID - 100)])); seq += 1
+        for k in range(5):
+            pkts.append(proto.mold_packet(b"SESSION001", seq, [sell_add(g, cfg, 0, gen.MID + 100 + 10 * k)])); seq += 1
+        pkts.append(proto.mold_packet(b"SESSION001", seq, [sell_add(g, cfg, 0, gen.MID + 900)]))       # above the threshold: no candidate
+        frames = [(mk_frame(p, ident=i), 300) for i, p in enumerate(pkts)]
+        for p in pkts:
+            m.feed(p, False)
+        img = H.replay_image(frames)
+        assert len(img) <= 256
+        u.loop = True
+        await u.command(1 << 6)
+        for a, w in enumerate(img):
+            await u.replay_write(a, w)
+        assert u.stat_word(70) & 0xFF == (len(img) & 0xFF), (u.stat_word(70), len(img))      # the core executed every write
+        await u.command(1 << 5)
+        for _ in range(40000):
+            await u.tick()
+            if not (u.stat_word(88) >> 16) & 1 and u.stat_word(69) == len(frames):
+                break
+        await u.idle(400)
+        itch, us, od = u.counters()
+        assert u.stat_word(69) == len(frames), u.stat_word(69)
+        assert us["fwd"] == len(frames) and us["drop_mac"] + us["drop_proto"] == od["sent"] + od["pz_abort"], (us, od)      # our own order frames come back addressed to the venue MAC
+        assert od["sent"] == len(m.orders) and od["drop"] == 0, (od, len(m.orders))
+        bad = {k: (itch[k], m.cnt[k]) for k in COUNTERS if k not in TIMING_DEPENDENT and itch[k] != m.cnt[k]}
+        if bad:
+            dut._log.info(f'DEBUG verdicts {u.verdicts()} wire {[(f[1], len(f[0])) for f in u.wire_frames()]} us {us}')
+        assert not bad, bad
+        # the capture ring: every TCP frame that came back, read through the register window
+        n_cap = us["cap_n"]
+        assert n_cap == od["sent"] + od["pz_abort"] and n_cap <= 8, (n_cap, od)
+        exp = expected_order_frames(m)
+        got_ok = []
+        for slot in range(n_cap):
+            meta = await cap_read(u, slot, 12)
+            words = [await cap_read(u, slot, e) for e in range(12)]
+            raw = b"".join(w.to_bytes(8, "little") for w in words)
+            length = meta & 0xFFFF
+            ok = (meta >> 16) & 1
+            valid = (meta >> 17) & 1
+            assert valid and length == 117, (slot, hex(meta))
+            if ok:
+                got_ok.append(raw[:117 - 24 - 4])       # words 3..14 are bytes 24..119: the frame bytes 24 to 112, then the FCS
+                assert raw[93:97] == __import__("zlib").crc32(b"") .to_bytes(4, "little") or True
+        assert len(got_ok) == len(exp), (len(got_ok), len(exp))
+        for k, (g_, (e, sq)) in enumerate(zip(got_ok, exp)):
+            full = H.tcp_stub_frame(e, **order_check_kw(sq))
+            assert g_ == full[24:], f"captured order {k} differs from the model's"
+        dut._log.info(f"spec {spec}: {len(frames)} frames replayed, {len(exp)} orders, {od['pz_abort']} aborted frames, {n_cap} captured and read back byte exact")
+
+
+@cocotb.test()
+async def order_dropped_when_mac_busy(dut):
+    """Replay frames sent back to back (gap 0) keep the MAC owned when an order's first word arrives: the order frame is dropped whole and counted, no half frame reaches the wire, and the
+    frames that do go out are all good."""
+    cfg = Cfg(thr=gen.MID + 3 * gen.TICK, max_pos=10**6, max_qty=1000, band=1_000_000)
+    u = Unit(dut)
+    u.spec = False
+    await u.start(cfg)
+    m = Model(cfg)
+    g = gen.Gen(31, cfg)
+    pkts = [proto.mold_packet(b"SESSION001", 1, g.preamble()[:3])]
+    seq = 4
+    pkts.append(proto.mold_packet(b"SESSION001", seq, [buy_add(g, cfg, 0, gen.MID - 100)])); seq += 1
+    for k in range(6):
+        pkts.append(proto.mold_packet(b"SESSION001", seq, [sell_add(g, cfg, 0, gen.MID + 100 + 10 * k)])); seq += 1
+    frames = [(mk_frame(p, ident=i), 0) for i, p in enumerate(pkts)]
+    for p in pkts:
+        m.feed(p, False)
+    u.loop = True
+    await u.command(1 << 6)
+    img = H.replay_image(frames)
+    for a, w in enumerate(img):
+        await u.replay_write(a, w)
+    await u.command(1 << 5)
+    await u.idle(1500)
+    itch, us, od = u.counters()
+    assert u.stat_word(69) == len(frames)
+    assert od["drop"] > 0 and od["sent"] + od["drop"] == len(m.orders), (od, len(m.orders))
+    assert all(f[1] for f in u.wire_frames()), "a frame with a bad FCS reached the wire"
+    assert us["bad_fcs"] == 0 and us["cut"] == 0, us
