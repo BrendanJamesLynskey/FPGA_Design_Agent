@@ -319,6 +319,14 @@ standard.
   Vivado methodology, DRC and CDC, the design-standards checker), with waivers recorded.
 - **Tool-assessment notes** for Vivado 2026.1, Icarus, Verilator, SymbiYosys, cocotb and our gates:
   [docs/tool_assessment/](docs/tool_assessment/README.md).
+- **Specification to evidence, schema v1 (brief 116).** The human specifies the requirements (functional, performance, interface, safety) and checks that
+  the verification is thorough enough; the agent holds the knowledge to implement and verify; you can open any of it and do not have to.
+  [flow/trace_v1.py](flow/trace_v1.py) reads each `designs/*/verif/testplan.yaml` and the evidence files it names, computes pass, fail, not run, stale or
+  bounded per item (never typed), rolls them up per requirement (a performance requirement is verified only by a measured value inside its bound), and
+  writes a matrix per design and [a project roll-up](docs/traceability_matrix.md). Hardware verification on the board, by instrument, is its own method, and a
+  requirement that depends on an external element shows plainly whether hardware has closed it. The CI gate fails on an orphan check or an untraced requirement
+  and reports staleness. Showcase: [designs/b96_kr260_10g/verif/matrix.md](designs/b96_kr260_10g/verif/matrix.md); schema and rules:
+  [docs/traceability_v1.md](docs/traceability_v1.md); also on the site's Traceability page and the navigator's Traceability page.
 - **Results:** the matrices of T1 and two agent-built development designs, and three deliberately broken runs that
   each fail the right gate: [results/53_traceability](results/53_traceability/README.md).
 
