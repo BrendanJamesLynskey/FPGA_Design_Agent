@@ -4,7 +4,7 @@
 
 **Verified except: 2 of 27 requirements without passing evidence; 27 of 27 requirements not agreed; required method mix not yet measured; mutation floor not yet measured; fresh re-run not yet measured.**
 
-What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `eb8a2a7993c4426f49dbaa4ba89fa3c13f1c8e9c` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
+What the label means, what "verified" never means and how it is earned: [docs/verified.md](../../docs/verified.md). The label is computed from the testplan and the evidence files named below; it is never typed. Generated at git commit `495b452f4baceaf0af32e15851a790c95a669c2a` (informational: the hashes in the manifest, not the commit, are what the CI check compares).
 
 Traceability summary: 27 requirements (10 functional, 10 performance, 2 interface, 5 safety); 25 verified, of which 3 rest on delegated acceptances (the planner accepted the Lean statement on the owner's delegation; not human approvals); 2 with no passing evidence; 0 of 2 requirements that depend on an external element closed by hardware; performance verified: 0 on the board, 3 by post-route timing, 7 in simulation only; 0 of 27 requirements agreed by a human, 0 human review(s) recorded; 6 Lean proof item(s) (all widths): 0 with a human-approved statement, 6 with a statement accepted on the owner's delegation (not a human approval), 0 with statement not approved; 3 kernel only, 3 using a compiled decision procedure; build status from: recorded build (not re-run).
 
@@ -296,7 +296,7 @@ Per requirement: its text, kind, agreement, state and every evidence item with i
 
 ## Limits
 
-- Verified never means interoperability with a device the design talks to unless a board measurement against that device is listed above; a design that checks its own output against its own model accepts its own symmetric mistakes.
+- Verified never means interoperability with a device the design talks to unless a board measurement against that device is listed in the record; a design that checks its own output against its own model accepts its own symmetric mistakes.
 - Verified never means timing beyond the stated corner: a post-route timing result is for the part, speed grade, clock and tool version in its evidence file, not for other corners, temperatures or devices.
 - Verified never means beyond the widths and depths checked: a simulation covers the vectors it ran, a bounded formal result covers the stated depth only, and a per-width proof covers the widths it names; only a Lean proof marked all widths covers every width, and only for its model.
 - Verified never means the requirement is the right one: the text of a requirement is the human's check (or the planner's, where the record says delegated), and a record shows that checks exist and pass, not that nothing was left out.

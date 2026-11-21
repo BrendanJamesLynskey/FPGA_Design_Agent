@@ -52,12 +52,12 @@
   "status": "Meets 125 MHz out of context on xc7a100t-1 at every characterised point (Fmax estimates 142-149 MHz with block RAM; 143 MHz and, by +0.005 ns only, 125 MHz with LUT RAM at 1472 and 8972 bytes) and with margin on xck26-2LV (215-309 MHz). Version 0.2.0 sends the first header byte 7 clocks after the payload's last beat (was 4). Simulated against an RFC 791/768 model with scapy recomputing both checksums; built alone out of context with Vivado 2026.1 (single runs at 8 ns, estimates); not yet run on a board (the Nexys A7 network design carries it behind eth_mac_rmii; built, not yet run: a cable check comes first, see designs/b63d_nexys_net/host/PLAN.md)"
  },
  "definition": "docs/verified.md",
- "git_commit": "eb8a2a7993c4426f49dbaa4ba89fa3c13f1c8e9c",
+ "git_commit": "495b452f4baceaf0af32e15851a790c95a669c2a",
  "kind": "ip_lib",
  "label": "not assessed: no requirements recorded (no verif/testplan.yaml), so nothing here is traced to a requirement",
  "label_kind": "not_assessed",
  "limits": [
-  "Verified never means interoperability with a device the design talks to unless a board measurement against that device is listed above; a design that checks its own output against its own model accepts its own symmetric mistakes.",
+  "Verified never means interoperability with a device the design talks to unless a board measurement against that device is listed in the record; a design that checks its own output against its own model accepts its own symmetric mistakes.",
   "Verified never means timing beyond the stated corner: a post-route timing result is for the part, speed grade, clock and tool version in its evidence file, not for other corners, temperatures or devices.",
   "Verified never means beyond the widths and depths checked: a simulation covers the vectors it ran, a bounded formal result covers the stated depth only, and a per-width proof covers the widths it names; only a Lean proof marked all widths covers every width, and only for its model.",
   "Verified never means the requirement is the right one: the text of a requirement is the human's check (or the planner's, where the record says delegated), and a record shows that checks exist and pass, not that nothing was left out.",
