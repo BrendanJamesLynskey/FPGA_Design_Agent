@@ -59,6 +59,20 @@
      },
      {
       "gate": false,
+      "id": "B96-S-DRIVER",
+      "state": "stale",
+      "text": "its evidence is stale",
+      "type": "no_passing_evidence"
+     },
+     {
+      "gate": false,
+      "id": "B96-I-REGMAP",
+      "state": "stale",
+      "text": "its evidence is stale",
+      "type": "no_passing_evidence"
+     },
+     {
+      "gate": false,
       "id": "B96-P-T2T-DIGITAL",
       "state": "stale",
       "text": "its evidence is stale",
@@ -67,8 +81,8 @@
      {
       "gate": false,
       "id": "B96-P-BYPASS",
-      "state": "no_measurement",
-      "text": "a performance requirement with no measured value inside the bound",
+      "state": "stale",
+      "text": "its evidence is stale",
       "type": "no_passing_evidence"
      },
      {
@@ -86,6 +100,18 @@
      },
      {
       "gate": false,
+      "id": "V-SIM-REGMAP",
+      "text": "changed since the evidence was recorded: designs/b96_kr260_10g/docs/register_map.md, designs/b96_kr260_10g/regmap.py",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-SIM-DRIVER",
+      "text": "changed since the evidence was recorded: designs/b96_kr260_10g/host/b96f1_bypass.py",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
       "id": "V-FORMAL-EQY-DEFAULT",
       "text": "changed since the evidence was recorded: designs/b96_kr260_10g/rtl/b96_core.sv, designs/b96_kr260_10g/rtl/rx_path.sv",
       "type": "stale_evidence"
@@ -100,6 +126,12 @@
       "gate": false,
       "id": "V-SIMM-PPM",
       "text": "changed since the evidence was recorded: designs/b96_kr260_10g/rtl/rate_match.sv, designs/b96_kr260_10g/rtl/rate_match_gp.sv, designs/b96_kr260_10g/rtl/rx_path.sv",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-SIMM-BYPASS-SEQ",
+      "text": "changed since the evidence was recorded: designs/b96_kr260_10g/rm_gp_bypass/rtl/b96_core.sv, designs/b96_kr260_10g/rm_gp_bypass/rtl/gt_bp_gate.sv",
       "type": "stale_evidence"
      },
      {
@@ -160,6 +192,12 @@
       "gate": false,
       "id": "V-HW-LAT-L-97C",
       "text": "changed since the evidence was recorded: designs/b96_kr260_10g/rtl/b96_core.sv, designs/b96_kr260_10g/rtl/b96_pkg.sv, designs/b96_kr260_10g/rtl/hs_vec.sv, designs/b96_kr260_10g/rtl/pcs_rx.sv (+5 more)",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-HW-BYPASS-PLANNED",
+      "text": "no pin recorded (run: python -m flow.trace_v1 pin)",
       "type": "stale_evidence"
      },
      {
@@ -307,7 +345,8 @@
       "requirements": [
        "B96-I-REGMAP"
       ],
-      "status": "pass",
+      "stale_because": "changed since the evidence was recorded: designs/b96_kr260_10g/docs/register_map.md, designs/b96_kr260_10g/regmap.py",
+      "status": "stale",
       "title": "Register map is current, decoded exactly, widths agree, stated rules hold",
       "value": "8 of 8 tests passed"
      },
@@ -325,7 +364,8 @@
        "B96-S-DRIVER",
        "B96-S-LASER"
       ],
-      "status": "pass",
+      "stale_because": "changed since the evidence was recorded: designs/b96_kr260_10g/host/b96f1_bypass.py",
+      "status": "stale",
       "title": "Board bench, ppm and bypass drivers judged on a fake board (every safety counter, polarity, lock, verdicts)",
       "value": "37 of 37 tests passed"
      },
@@ -503,7 +543,8 @@
        "B96-P-BYPASS",
        "B96-S-RATEMATCH"
       ],
-      "status": "pass",
+      "stale_because": "changed since the evidence was recorded: designs/b96_kr260_10g/rm_gp_bypass/rtl/b96_core.sv, designs/b96_kr260_10g/rm_gp_bypass/rtl/gt_bp_gate.sv",
+      "status": "stale",
       "title": "Buffer-bypass run gate against a stand-in transceiver in xsim, 28 checks",
       "value": 28.0
      },
@@ -889,21 +930,23 @@
       "value": 0.71875
      },
      {
-      "detail": "evidence not found: results/b96f1/hw/*/rm_gp_bypass/stage3.json (planned: brief 96F1 board run (owner's board))",
+      "detail": "measured 17 clocks; bound at most 19.5 clocks",
       "evidence": {
-       "exists": false,
-       "file": "results/b96f1/hw/*/rm_gp_bypass/stage3.json"
+       "exists": true,
+       "file": "results/b96f1/hw/20261120_215255/rm_gp_bypass/stage3.json"
       },
       "id": "V-HW-BYPASS-PLANNED",
       "instrument": "latency_loop",
+      "judged_by_bound": true,
       "method": "board_measurement",
       "planned": "brief 96F1 board run (owner's board)",
       "requirements": [
        "B96-P-BYPASS"
       ],
-      "status": "not_run",
+      "stale_because": "no pin recorded (run: python -m flow.trace_v1 pin)",
+      "status": "stale",
       "title": "Build rm_gp_bypass on the KR260 (pre-registered, run_96f1_stage1.sh)",
-      "value": null
+      "value": 17.0
      },
      {
       "detail": "evidence not found: results/b96c/hw/offset/stage3.json (planned: needs the external element; the TX phase-interpolator route gave no relative offset)",
@@ -1115,12 +1158,11 @@
       ],
       "kind": "safety",
       "passing_methods": [
-       "sim_measurement",
        "sim_test"
       ],
       "source": "designs/b96_kr260_10g/docs/design.md#9-rate-matching-and-the-receive-to-core-crossing-brief-96c",
       "spec_status": "draft",
-      "stale_items": 2,
+      "stale_items": 3,
       "state": "fail",
       "text": "The elastic buffer inserts and deletes idles only between frames, never under- or overflows silently, and every order sent is fired and passes its content check.",
       "title": "Rate matching never corrupts a frame"
@@ -1201,13 +1243,11 @@
        "V-SIM-DRIVER"
       ],
       "kind": "safety",
-      "passing_methods": [
-       "sim_test"
-      ],
+      "passing_methods": [],
       "source": "designs/b96_kr260_10g/host/b96_bench.py",
       "spec_status": "draft",
-      "stale_items": 0,
-      "state": "verified",
+      "stale_items": 1,
+      "state": "stale",
       "text": "A stale counter, a missing order, a counter that was not read, a wrong polarity or a link that never came up fails the run and names the cause; unsafe actions are refused without the lock.",
       "title": "The board drivers cannot report OK when a safety check fails"
      },
@@ -1223,12 +1263,11 @@
       ],
       "kind": "safety",
       "passing_methods": [
-       "board_measurement",
-       "sim_test"
+       "board_measurement"
       ],
       "source": "designs/b96_kr260_10g/handover.yaml",
       "spec_status": "draft",
-      "stale_items": 0,
+      "stale_items": 1,
       "state": "verified",
       "text": "tx_disable is 1 at reset; the board run switches the laser on only after the polarity was read back.",
       "title": "The laser is off at reset and its polarity is confirmed"
@@ -1286,13 +1325,11 @@
        "V-SIM-REGMAP"
       ],
       "kind": "interface",
-      "passing_methods": [
-       "sim_test"
-      ],
+      "passing_methods": [],
       "source": "designs/b96_kr260_10g/docs/register_map.md",
       "spec_status": "draft",
-      "stale_items": 0,
-      "state": "verified",
+      "stale_items": 1,
+      "state": "stale",
       "text": "Every address in regmap.py is decoded, nothing else is, vector widths agree, and the datasheet states unmapped reads return 0, counters read from a snapshot and reads have no side effects.",
       "title": "The register map is generated from one source and decoded exactly"
      },
@@ -1547,9 +1584,7 @@
        "V-HW-BYPASS-PLANNED"
       ],
       "kind": "performance",
-      "passing_methods": [
-       "sim_measurement"
-      ],
+      "passing_methods": [],
       "performance": {
        "bound": 19.5,
        "condition": "build rm_gp_bypass, 100 receive restarts, KR260 optical fibre loopback, fibre lead 0.17 m",
@@ -1559,8 +1594,8 @@
       },
       "source": "results/b96f1/preregistration.md",
       "spec_status": "draft",
-      "stale_items": 0,
-      "state": "no_measurement",
+      "stale_items": 2,
+      "state": "stale",
       "text": "Build rm_gp_bypass must lower E by at least 1.5 clocks against rm_gp (21.0), else the bypass did not take effect. Pre-registered before any board time; not yet run.",
       "title": "GT buffer bypass shortens the echo path (pre-registered)"
      },
@@ -1610,9 +1645,9 @@
       "board_measurement": {
        "bounded": 0,
        "fail": 0,
-       "not_run": 4,
+       "not_run": 3,
        "pass": 8,
-       "stale": 4
+       "stale": 5
       },
       "coverage_bin": {
        "bounded": 0,
@@ -1639,15 +1674,15 @@
        "bounded": 0,
        "fail": 0,
        "not_run": 0,
-       "pass": 1,
-       "stale": 2
+       "pass": 0,
+       "stale": 3
       },
       "sim_test": {
        "bounded": 0,
        "fail": 0,
        "not_run": 0,
-       "pass": 11,
-       "stale": 0
+       "pass": 9,
+       "stale": 2
       },
       "timing": {
        "bounded": 0,
@@ -1666,22 +1701,21 @@
      },
      "by_state": {
       "fail": 4,
-      "no_measurement": 1,
       "not_run": 2,
-      "stale": 1,
-      "verified": 17
+      "stale": 4,
+      "verified": 15
      },
      "external": 3,
      "external_hardware_done": 0,
      "gap_counts": {
       "external_not_hardware_verified": 1,
       "hardware_open": 3,
-      "no_passing_evidence": 8,
-      "stale_evidence": 14
+      "no_passing_evidence": 10,
+      "stale_evidence": 18
      },
      "human_reviews": 0,
      "items": 45,
-     "line": "25 requirements (9 functional, 9 performance, 1 interface, 6 safety); 17 verified; 1 stale; 4 failing; 1 performance with no measurement; 2 with no passing evidence; 0 of 3 requirements that depend on an external element closed by hardware; performance verified: 4 on the board, 2 by post-route timing, 0 in simulation only; 0 of 25 requirements agreed by a human, 0 human review(s) recorded.",
+     "line": "25 requirements (9 functional, 9 performance, 1 interface, 6 safety); 15 verified; 4 stale; 4 failing; 2 with no passing evidence; 0 of 3 requirements that depend on an external element closed by hardware; performance verified: 4 on the board, 2 by post-route timing, 0 in simulation only; 0 of 25 requirements agreed by a human, 0 human review(s) recorded.",
      "performance_board": 4,
      "performance_sim_only": 0,
      "performance_timing": 2,
@@ -4763,7 +4797,7 @@
   "total": {
    "designs": 2,
    "requirements": 46,
-   "verified": 17
+   "verified": 15
   }
  },
  "content": {
@@ -4826,6 +4860,20 @@
      },
      {
       "gate": false,
+      "id": "B96-S-DRIVER",
+      "state": "stale",
+      "text": "its evidence is stale",
+      "type": "no_passing_evidence"
+     },
+     {
+      "gate": false,
+      "id": "B96-I-REGMAP",
+      "state": "stale",
+      "text": "its evidence is stale",
+      "type": "no_passing_evidence"
+     },
+     {
+      "gate": false,
       "id": "B96-P-T2T-DIGITAL",
       "state": "stale",
       "text": "its evidence is stale",
@@ -4834,8 +4882,8 @@
      {
       "gate": false,
       "id": "B96-P-BYPASS",
-      "state": "no_measurement",
-      "text": "a performance requirement with no measured value inside the bound",
+      "state": "stale",
+      "text": "its evidence is stale",
       "type": "no_passing_evidence"
      },
      {
@@ -4853,6 +4901,18 @@
      },
      {
       "gate": false,
+      "id": "V-SIM-REGMAP",
+      "text": "changed since the evidence was recorded: designs/b96_kr260_10g/docs/register_map.md, designs/b96_kr260_10g/regmap.py",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-SIM-DRIVER",
+      "text": "changed since the evidence was recorded: designs/b96_kr260_10g/host/b96f1_bypass.py",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
       "id": "V-FORMAL-EQY-DEFAULT",
       "text": "changed since the evidence was recorded: designs/b96_kr260_10g/rtl/b96_core.sv, designs/b96_kr260_10g/rtl/rx_path.sv",
       "type": "stale_evidence"
@@ -4867,6 +4927,12 @@
       "gate": false,
       "id": "V-SIMM-PPM",
       "text": "changed since the evidence was recorded: designs/b96_kr260_10g/rtl/rate_match.sv, designs/b96_kr260_10g/rtl/rate_match_gp.sv, designs/b96_kr260_10g/rtl/rx_path.sv",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-SIMM-BYPASS-SEQ",
+      "text": "changed since the evidence was recorded: designs/b96_kr260_10g/rm_gp_bypass/rtl/b96_core.sv, designs/b96_kr260_10g/rm_gp_bypass/rtl/gt_bp_gate.sv",
       "type": "stale_evidence"
      },
      {
@@ -4927,6 +4993,12 @@
       "gate": false,
       "id": "V-HW-LAT-L-97C",
       "text": "changed since the evidence was recorded: designs/b96_kr260_10g/rtl/b96_core.sv, designs/b96_kr260_10g/rtl/b96_pkg.sv, designs/b96_kr260_10g/rtl/hs_vec.sv, designs/b96_kr260_10g/rtl/pcs_rx.sv (+5 more)",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-HW-BYPASS-PLANNED",
+      "text": "no pin recorded (run: python -m flow.trace_v1 pin)",
       "type": "stale_evidence"
      },
      {
@@ -5074,7 +5146,8 @@
       "requirements": [
        "B96-I-REGMAP"
       ],
-      "status": "pass",
+      "stale_because": "changed since the evidence was recorded: designs/b96_kr260_10g/docs/register_map.md, designs/b96_kr260_10g/regmap.py",
+      "status": "stale",
       "title": "Register map is current, decoded exactly, widths agree, stated rules hold",
       "value": "8 of 8 tests passed"
      },
@@ -5092,7 +5165,8 @@
        "B96-S-DRIVER",
        "B96-S-LASER"
       ],
-      "status": "pass",
+      "stale_because": "changed since the evidence was recorded: designs/b96_kr260_10g/host/b96f1_bypass.py",
+      "status": "stale",
       "title": "Board bench, ppm and bypass drivers judged on a fake board (every safety counter, polarity, lock, verdicts)",
       "value": "37 of 37 tests passed"
      },
@@ -5270,7 +5344,8 @@
        "B96-P-BYPASS",
        "B96-S-RATEMATCH"
       ],
-      "status": "pass",
+      "stale_because": "changed since the evidence was recorded: designs/b96_kr260_10g/rm_gp_bypass/rtl/b96_core.sv, designs/b96_kr260_10g/rm_gp_bypass/rtl/gt_bp_gate.sv",
+      "status": "stale",
       "title": "Buffer-bypass run gate against a stand-in transceiver in xsim, 28 checks",
       "value": 28.0
      },
@@ -5656,21 +5731,23 @@
       "value": 0.71875
      },
      {
-      "detail": "evidence not found: results/b96f1/hw/*/rm_gp_bypass/stage3.json (planned: brief 96F1 board run (owner's board))",
+      "detail": "measured 17 clocks; bound at most 19.5 clocks",
       "evidence": {
-       "exists": false,
-       "file": "results/b96f1/hw/*/rm_gp_bypass/stage3.json"
+       "exists": true,
+       "file": "results/b96f1/hw/20261120_215255/rm_gp_bypass/stage3.json"
       },
       "id": "V-HW-BYPASS-PLANNED",
       "instrument": "latency_loop",
+      "judged_by_bound": true,
       "method": "board_measurement",
       "planned": "brief 96F1 board run (owner's board)",
       "requirements": [
        "B96-P-BYPASS"
       ],
-      "status": "not_run",
+      "stale_because": "no pin recorded (run: python -m flow.trace_v1 pin)",
+      "status": "stale",
       "title": "Build rm_gp_bypass on the KR260 (pre-registered, run_96f1_stage1.sh)",
-      "value": null
+      "value": 17.0
      },
      {
       "detail": "evidence not found: results/b96c/hw/offset/stage3.json (planned: needs the external element; the TX phase-interpolator route gave no relative offset)",
@@ -5882,12 +5959,11 @@
       ],
       "kind": "safety",
       "passing_methods": [
-       "sim_measurement",
        "sim_test"
       ],
       "source": "designs/b96_kr260_10g/docs/design.md#9-rate-matching-and-the-receive-to-core-crossing-brief-96c",
       "spec_status": "draft",
-      "stale_items": 2,
+      "stale_items": 3,
       "state": "fail",
       "text": "The elastic buffer inserts and deletes idles only between frames, never under- or overflows silently, and every order sent is fired and passes its content check.",
       "title": "Rate matching never corrupts a frame"
@@ -5968,13 +6044,11 @@
        "V-SIM-DRIVER"
       ],
       "kind": "safety",
-      "passing_methods": [
-       "sim_test"
-      ],
+      "passing_methods": [],
       "source": "designs/b96_kr260_10g/host/b96_bench.py",
       "spec_status": "draft",
-      "stale_items": 0,
-      "state": "verified",
+      "stale_items": 1,
+      "state": "stale",
       "text": "A stale counter, a missing order, a counter that was not read, a wrong polarity or a link that never came up fails the run and names the cause; unsafe actions are refused without the lock.",
       "title": "The board drivers cannot report OK when a safety check fails"
      },
@@ -5990,12 +6064,11 @@
       ],
       "kind": "safety",
       "passing_methods": [
-       "board_measurement",
-       "sim_test"
+       "board_measurement"
       ],
       "source": "designs/b96_kr260_10g/handover.yaml",
       "spec_status": "draft",
-      "stale_items": 0,
+      "stale_items": 1,
       "state": "verified",
       "text": "tx_disable is 1 at reset; the board run switches the laser on only after the polarity was read back.",
       "title": "The laser is off at reset and its polarity is confirmed"
@@ -6053,13 +6126,11 @@
        "V-SIM-REGMAP"
       ],
       "kind": "interface",
-      "passing_methods": [
-       "sim_test"
-      ],
+      "passing_methods": [],
       "source": "designs/b96_kr260_10g/docs/register_map.md",
       "spec_status": "draft",
-      "stale_items": 0,
-      "state": "verified",
+      "stale_items": 1,
+      "state": "stale",
       "text": "Every address in regmap.py is decoded, nothing else is, vector widths agree, and the datasheet states unmapped reads return 0, counters read from a snapshot and reads have no side effects.",
       "title": "The register map is generated from one source and decoded exactly"
      },
@@ -6314,9 +6385,7 @@
        "V-HW-BYPASS-PLANNED"
       ],
       "kind": "performance",
-      "passing_methods": [
-       "sim_measurement"
-      ],
+      "passing_methods": [],
       "performance": {
        "bound": 19.5,
        "condition": "build rm_gp_bypass, 100 receive restarts, KR260 optical fibre loopback, fibre lead 0.17 m",
@@ -6326,8 +6395,8 @@
       },
       "source": "results/b96f1/preregistration.md",
       "spec_status": "draft",
-      "stale_items": 0,
-      "state": "no_measurement",
+      "stale_items": 2,
+      "state": "stale",
       "text": "Build rm_gp_bypass must lower E by at least 1.5 clocks against rm_gp (21.0), else the bypass did not take effect. Pre-registered before any board time; not yet run.",
       "title": "GT buffer bypass shortens the echo path (pre-registered)"
      },
@@ -6377,9 +6446,9 @@
       "board_measurement": {
        "bounded": 0,
        "fail": 0,
-       "not_run": 4,
+       "not_run": 3,
        "pass": 8,
-       "stale": 4
+       "stale": 5
       },
       "coverage_bin": {
        "bounded": 0,
@@ -6406,15 +6475,15 @@
        "bounded": 0,
        "fail": 0,
        "not_run": 0,
-       "pass": 1,
-       "stale": 2
+       "pass": 0,
+       "stale": 3
       },
       "sim_test": {
        "bounded": 0,
        "fail": 0,
        "not_run": 0,
-       "pass": 11,
-       "stale": 0
+       "pass": 9,
+       "stale": 2
       },
       "timing": {
        "bounded": 0,
@@ -6433,22 +6502,21 @@
      },
      "by_state": {
       "fail": 4,
-      "no_measurement": 1,
       "not_run": 2,
-      "stale": 1,
-      "verified": 17
+      "stale": 4,
+      "verified": 15
      },
      "external": 3,
      "external_hardware_done": 0,
      "gap_counts": {
       "external_not_hardware_verified": 1,
       "hardware_open": 3,
-      "no_passing_evidence": 8,
-      "stale_evidence": 14
+      "no_passing_evidence": 10,
+      "stale_evidence": 18
      },
      "human_reviews": 0,
      "items": 45,
-     "line": "25 requirements (9 functional, 9 performance, 1 interface, 6 safety); 17 verified; 1 stale; 4 failing; 1 performance with no measurement; 2 with no passing evidence; 0 of 3 requirements that depend on an external element closed by hardware; performance verified: 4 on the board, 2 by post-route timing, 0 in simulation only; 0 of 25 requirements agreed by a human, 0 human review(s) recorded.",
+     "line": "25 requirements (9 functional, 9 performance, 1 interface, 6 safety); 15 verified; 4 stale; 4 failing; 2 with no passing evidence; 0 of 3 requirements that depend on an external element closed by hardware; performance verified: 4 on the board, 2 by post-route timing, 0 in simulation only; 0 of 25 requirements agreed by a human, 0 human review(s) recorded.",
      "performance_board": 4,
      "performance_sim_only": 0,
      "performance_timing": 2,
@@ -9530,7 +9598,7 @@
   "total": {
    "designs": 2,
    "requirements": 46,
-   "verified": 17
+   "verified": 15
   }
  }
 }
