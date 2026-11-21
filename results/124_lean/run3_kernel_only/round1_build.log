@@ -1,0 +1,131 @@
+✖ [2/6] Building Cksum.Spec (5.1s)
+trace: .> LEAN_PATH=/home/brendan/Claude_sandbox/_worktrees/124-lean/results/124_lean/run3_kernel_only/work/.lake/build/lib/lean /home/brendan/.elan/toolchains/leanprover--lean4---v4.36.0/bin/lean /home/brendan/Claude_sandbox/_worktrees/124-lean/results/124_lean/run3_kernel_only/work/Cksum/Spec.lean -o /home/brendan/Claude_sandbox/_worktrees/124-lean/results/124_lean/run3_kernel_only/work/.lake/build/lib/lean/Cksum/Spec.olean -i /home/brendan/Claude_sandbox/_worktrees/124-lean/results/124_lean/run3_kernel_only/work/.lake/build/lib/lean/Cksum/Spec.ilean -c /home/brendan/Claude_sandbox/_worktrees/124-lean/results/124_lean/run3_kernel_only/work/.lake/build/ir/Cksum/Spec.c --setup /home/brendan/Claude_sandbox/_worktrees/124-lean/results/124_lean/run3_kernel_only/work/.lake/build/ir/Cksum/Spec.setup.json --json
+error: Cksum/Spec.lean:188:64: Unknown constant `BitVec.toNat_extractLsb'`
+error: Cksum/Spec.lean:191:14: omega could not prove the goal:
+a possible counterexample may satisfy the constraints
+  0 ≤ f - 2*g ≤ 1
+  c - 65536*d + 16*e - f + 2*g + 65536*h ≥ 1
+  0 ≤ b - 16*e ≤ 15
+  0 ≤ b - 65536*i ≤ 65535
+  0 ≤ a ≤ 1048575
+  0 ≤ a - 65536*b ≤ 65535
+  0 ≤ a - 65535*b - 65536*c - 65536*i - 131072*j ≤ 65535
+  0 ≤ a - 65535*b - 16*e - 65536*f - 131072*k ≤ 65535
+  0 ≤ a - 65535*b - 16*e - 131072*k ≤ 131071
+  0 ≤ a - 65535*b - 65536*i - 131072*j ≤ 131071
+  0 ≤ a + b - 16*e + f - 2*g - 65536*h ≤ 65535
+  0 ≤ a + b + c - 65536*d ≤ 65535
+where
+ a := ↑x.toNat
+ b := ↑x.toNat / 65536
+ c := ↑((x.toNat % 65536 + x.toNat / 65536 % 65536) % 131072) / 65536
+ d := ↑(x.toNat + x.toNat / 65536 + (x.toNat % 65536 + x.toNat / 65536 % 65536) % 131072 / 65536) / 65536
+ e := ↑(x.toNat / 65536) / 16
+ f := ↑((x.toNat % 65536 + x.toNat / 65536 % 16) % 131072) / 65536
+ g := ↑((x.toNat % 65536 + x.toNat / 65536 % 16) % 131072 / 65536) / 2
+ h := ↑(x.toNat + x.toNat / 65536 % 16 + (x.toNat % 65536 + x.toNat / 65536 % 16) % 131072 / 65536 % 2) / 65536
+ i := ↑(x.toNat / 65536) / 65536
+ j := ↑(x.toNat % 65536 + x.toNat / 65536 % 65536) / 131072
+ k := ↑(x.toNat % 65536 + x.toNat / 65536 % 16) / 131072
+warning: Cksum/Spec.lean:189:29: This simp argument is unused:
+  toNat_ushr
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [fold16, ocAdd, BitVec.toNat_add, BitVec.toNat_append, BitVec.toNat_extractLsb', BitVec.toNat_setWidth,
+    BitVec.toNat_ofNat, Nat.shiftRight_eq_div_pow, Nat.shiftLeft_eq]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+error: Cksum/Spec.lean:203:54: Unknown constant `BitVec.toNat_extractLsb'`
+error: Cksum/Spec.lean:206:12: omega could not prove the goal:
+a possible counterexample may satisfy the constraints
+  32768*d - e - 32768*f ≤ -1
+  0 ≤ c - 2*e ≤ 1
+  0 ≤ b ≤ 65535
+  0 ≤ a ≤ 65535
+  0 ≤ a + b - 65536*c - 131072*g ≤ 65535
+  0 ≤ a + b - 131072*g ≤ 131071
+  0 ≤ a + b + c - 65536*d ≤ 65535
+  0 ≤ a + b + c - 2*e - 65536*f ≤ 65535
+where
+ a := ↑t.toNat
+ b := ↑i.toNat
+ c := ↑((t.toNat + i.toNat) % 131072) / 65536
+ d := ↑(t.toNat + i.toNat + (t.toNat + i.toNat) % 131072 / 65536) / 65536
+ e := ↑((t.toNat + i.toNat) % 131072 / 65536) / 2
+ f := ↑(t.toNat + i.toNat + (t.toNat + i.toNat) % 131072 / 65536 % 2) / 65536
+ g := ↑(t.toNat + i.toNat) / 131072
+warning: Cksum/Spec.lean:204:27: This simp argument is unused:
+  toNat_ushr
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [ocAdd, BitVec.toNat_add, BitVec.toNat_append, BitVec.toNat_extractLsb', BitVec.toNat_setWidth,
+    BitVec.toNat_ofNat, Nat.shiftRight_eq_div_pow, Nat.shiftLeft_eq]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+error: Cksum/Spec.lean:214:54: Unknown constant `BitVec.toNat_extractLsb'`
+error: Cksum/Spec.lean:217:12: omega could not prove the goal:
+a possible counterexample may satisfy the constraints
+  0 ≤ f - 2*g ≤ 1
+  c - 65536*d + 128*e - f + 2*g + 65536*h ≥ 1
+  0 ≤ b - 128*e ≤ 127
+  0 ≤ b - 65536*i ≤ 65535
+  0 ≤ a ≤ 8388607
+  0 ≤ a - 65536*b ≤ 65535
+  0 ≤ a - 65535*b - 65536*c - 65536*i - 131072*j ≤ 65535
+  0 ≤ a - 65535*b - 128*e - 65536*f - 131072*k ≤ 65535
+  0 ≤ a - 65535*b - 128*e - 131072*k ≤ 131071
+  0 ≤ a - 65535*b - 65536*i - 131072*j ≤ 131071
+  0 ≤ a + b - 128*e + f - 2*g - 65536*h ≤ 65535
+  0 ≤ a + b + c - 65536*d ≤ 65535
+where
+ a := ↑t.toNat
+ b := ↑t.toNat / 65536
+ c := ↑((t.toNat % 65536 + t.toNat / 65536 % 65536) % 131072) / 65536
+ d := ↑(t.toNat + t.toNat / 65536 + (t.toNat % 65536 + t.toNat / 65536 % 65536) % 131072 / 65536) / 65536
+ e := ↑(t.toNat / 65536) / 128
+ f := ↑((t.toNat % 65536 + t.toNat / 65536 % 128) % 131072) / 65536
+ g := ↑((t.toNat % 65536 + t.toNat / 65536 % 128) % 131072 / 65536) / 2
+ h := ↑(t.toNat + t.toNat / 65536 % 128 + (t.toNat % 65536 + t.toNat / 65536 % 128) % 131072 / 65536 % 2) / 65536
+ i := ↑(t.toNat / 65536) / 65536
+ j := ↑(t.toNat % 65536 + t.toNat / 65536 % 65536) / 131072
+ k := ↑(t.toNat % 65536 + t.toNat / 65536 % 128) / 131072
+warning: Cksum/Spec.lean:215:27: This simp argument is unused:
+  toNat_ushr
+
+Hint: Omit it from the simp argument list.
+  [apply] simp [ocAdd, BitVec.toNat_add, BitVec.toNat_append, BitVec.toNat_extractLsb', BitVec.toNat_setWidth,
+    BitVec.toNat_ofNat, Nat.shiftRight_eq_div_pow, Nat.shiftLeft_eq]
+
+Note: This linter can be disabled with `set_option linter.unusedSimpArgs false`
+info: Cksum/Spec.lean:465:0: 'Cksum.canon_id' depends on axioms: [propext, Quot.sound]
+info: Cksum/Spec.lean:466:0: 'Cksum.canon_props' depends on axioms: [propext, Quot.sound]
+info: Cksum/Spec.lean:467:0: 'Cksum.canon_canon_add' depends on axioms: [propext, Quot.sound]
+info: Cksum/Spec.lean:468:0: 'Cksum.canon_fold1' depends on axioms: [propext, Quot.sound]
+info: Cksum/Spec.lean:469:0: 'Cksum.canon_congr' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: Cksum/Spec.lean:470:0: 'Cksum.canon_recv' depends on axioms: [propext, Quot.sound]
+info: Cksum/Spec.lean:471:0: 'Cksum.canon_inc1' depends on axioms: [propext, Quot.sound]
+info: Cksum/Spec.lean:472:0: 'Cksum.canon_inc' depends on axioms: [propext, Quot.sound]
+info: Cksum/Spec.lean:473:0: 'Cksum.toNat_ushr' depends on axioms: [propext]
+info: Cksum/Spec.lean:474:0: 'Cksum.ocAdd_toNat' depends on axioms: [propext, Quot.sound]
+info: Cksum/Spec.lean:475:0: 'Cksum.foldl_toNat' depends on axioms: [propext, Quot.sound]
+info: Cksum/Spec.lean:476:0: 'Cksum.ocSum_toNat' depends on axioms: [propext, Quot.sound]
+info: Cksum/Spec.lean:477:0: 'Cksum.fold16_toNat' depends on axioms: [propext, sorryAx, Quot.sound]
+info: Cksum/Spec.lean:478:0: 'Cksum.ip_step' depends on axioms: [propext, sorryAx, Quot.sound]
+info: Cksum/Spec.lean:479:0: 'Cksum.fin_t' depends on axioms: [propext, sorryAx, Quot.sound]
+info: Cksum/Spec.lean:480:0: 'Cksum.tcp_core' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound]
+info: Cksum/Spec.lean:481:0: 'Cksum.H_toNat' depends on axioms: [propext, Quot.sound]
+info: Cksum/Spec.lean:482:0: 'Cksum.sum_bound' depends on axioms: [propext, Quot.sound]
+info: Cksum/Spec.lean:483:0: 'Cksum.sum21' depends on axioms: [propext, Quot.sound]
+info: Cksum/Spec.lean:484:0: 'Cksum.tcpTmpl_facts' depends on axioms: [propext, sorryAx, Quot.sound]
+info: Cksum/Spec.lean:485:0: 'Cksum.rtl_ip_correct' depends on axioms: [propext, sorryAx, Quot.sound]
+info: Cksum/Spec.lean:486:0: 'Cksum.recv_gen' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: Cksum/Spec.lean:487:0: 'Cksum.rtl_ip_receiver' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound]
+info: Cksum/Spec.lean:488:0: 'Cksum.rtl_tcp_correct' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound]
+info: Cksum/Spec.lean:489:0: 'Cksum.ocSum_snoc' depends on axioms: [propext, Quot.sound]
+info: Cksum/Spec.lean:490:0: 'Cksum.incUpdate_correct' depends on axioms: [propext, Classical.choice, Quot.sound]
+info: Cksum/Spec.lean:491:0: 'Cksum.incUpdate_zero_corner' depends on axioms: [propext, Quot.sound]
+Some required targets logged failures:
+- Cksum.Spec
+info: cksum: no previous manifest, creating one from scratch
+info: toolchain not updated; already up-to-date
+error: build failed

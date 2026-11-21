@@ -1,0 +1,44 @@
+✖ [2/6] Building Cksum.Spec (5.7s)
+trace: .> LEAN_PATH=/home/brendan/Claude_sandbox/_worktrees/124-lean/results/124_lean/run2/work/.lake/build/lib/lean /home/brendan/.elan/toolchains/leanprover--lean4---v4.36.0/bin/lean /home/brendan/Claude_sandbox/_worktrees/124-lean/results/124_lean/run2/work/Cksum/Spec.lean -o /home/brendan/Claude_sandbox/_worktrees/124-lean/results/124_lean/run2/work/.lake/build/lib/lean/Cksum/Spec.olean -i /home/brendan/Claude_sandbox/_worktrees/124-lean/results/124_lean/run2/work/.lake/build/lib/lean/Cksum/Spec.ilean -c /home/brendan/Claude_sandbox/_worktrees/124-lean/results/124_lean/run2/work/.lake/build/ir/Cksum/Spec.c --setup /home/brendan/Claude_sandbox/_worktrees/124-lean/results/124_lean/run2/work/.lake/build/ir/Cksum/Spec.setup.json --json
+error: Cksum/Spec.lean:108:12: omega could not prove the goal:
+a possible counterexample may satisfy the constraints
+  0 ≤ f - 65536*g ≤ 65535
+  65535*e - 65535*f - 65536*g - 65536*h ≤ -1
+  0 ≤ d ≤ 131070
+  0 ≤ d - 65535*e ≤ 65534
+  -1 ≤ d - 65536*f ≤ 65534
+  -1 ≤ d - 65535*f - 65536*g - 65536*h ≤ 65534
+  0 ≤ c ≤ 65535
+  0 ≤ c ≤ 131071
+  -65534 ≤ c - d ≤ 1
+where
+ c := ↑y
+ d := ↑(x + y - 1)
+ e := ↑(x + y - 1) / 65535
+ f := ↑(x + y) / 65536
+ g := ↑((x + y) / 65536) / 65536
+ h := ↑((x + y) % 65536 + (x + y) / 65536 % 65536) / 65536
+info: Cksum/Spec.lean:430:0: 'Cksum.ocSum_toNat' depends on axioms: [propext, sorryAx, Quot.sound]
+info: Cksum/Spec.lean:431:0: 'Cksum.rtl_ip_correct' depends on axioms: [propext,
+ sorryAx,
+ Classical.choice,
+ Quot.sound,
+ fold16_toNat._native.bv_decide.ax_1_7,
+ ip_step._native.bv_decide.ax_1_6]
+info: Cksum/Spec.lean:432:0: 'Cksum.rtl_ip_receiver' depends on axioms: [propext,
+ sorryAx,
+ Classical.choice,
+ Quot.sound,
+ fold16_toNat._native.bv_decide.ax_1_7,
+ ip_step._native.bv_decide.ax_1_6]
+info: Cksum/Spec.lean:433:0: 'Cksum.rtl_tcp_correct' depends on axioms: [propext,
+ sorryAx,
+ Classical.choice,
+ Quot.sound,
+ fin_t._native.bv_decide.ax_1_6,
+ fold16_toNat._native.bv_decide.ax_1_7]
+info: Cksum/Spec.lean:434:0: 'Cksum.incUpdate_correct' depends on axioms: [propext, sorryAx, Classical.choice, Quot.sound]
+info: Cksum/Spec.lean:435:0: 'Cksum.incUpdate_zero_corner' depends on axioms: [propext, Quot.sound]
+Some required targets logged failures:
+- Cksum.Spec
+error: build failed
