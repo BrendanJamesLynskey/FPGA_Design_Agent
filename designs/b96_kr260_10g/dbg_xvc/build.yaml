@@ -1,0 +1,34 @@
+# dbg_xvc (brief 131): the eyescan build (RATE_MATCH = 0, EYESCAN = 1) with a debug path added: the PS's AXI master -> Debug Bridge (AXI to BSCAN) -> one ILA on status taps, so Vivado's hardware manager
+# can reach the ILA over Ethernet (XVC) with no JTAG traffic while Linux runs. A debug build only: never a build whose latency is measured. Differences from eyescan: dbg_xvc/rtl/{b96_core,kr260_10g_top,xvc_debug}.sv and ip/amd_ip_xvc.tcl.
+top: kr260_10g_top
+part: xck26-sfvc784-2LV-c
+board: kr260
+sources:
+- designs/b58a_trigger/rtl/jtag_bus.sv
+- designs/b96_kr260_10g/rtl/b96_pkg.sv
+- designs/b96_kr260_10g/rtl/pcs_tx.sv
+- designs/b96_kr260_10g/rtl/pcs_rx.sv
+- designs/b96_kr260_10g/rtl/mac64_tx.sv
+- designs/b96_kr260_10g/rtl/mac64_rx.sv
+- designs/b96_kr260_10g/rtl/hs_vec.sv
+- designs/b96_kr260_10g/rtl/frame_src.sv
+- designs/b96_kr260_10g/rtl/trade64.sv
+- designs/b96_kr260_10g/rtl/rate_match.sv
+- designs/b96_kr260_10g/rtl/tx_path.sv
+- designs/b96_kr260_10g/rtl/rx_path.sv
+- designs/b96_kr260_10g/rtl/rx_path_legacy.sv
+- designs/b96_kr260_10g/rtl/es_ctrl.sv
+- designs/b96_kr260_10g/dbg_xvc/rtl/b96_core.sv
+- designs/b96_kr260_10g/dbg_xvc/rtl/xvc_debug.sv
+- designs/b96_kr260_10g/dbg_xvc/rtl/kr260_10g_top.sv
+constraints:
+- designs/b96_kr260_10g/design.xdc
+- designs/b96_kr260_10g/es.xdc
+ip_tcl:
+- designs/b96_kr260_10g/ip/amd_ip.tcl
+- designs/b96_kr260_10g/ip/amd_ip_xvc.tcl
+generics:
+  NEAR_END: 1'b0
+  TRADE: 1'b1
+  RATE_MATCH: 1'b0
+  EYESCAN: 1'b1

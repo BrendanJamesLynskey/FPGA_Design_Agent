@@ -60,6 +60,7 @@ source $flow_dir/checks/vivado_checks.tcl
 source $flow_dir/cdc_paths.tcl
 source $flow_dir/mcp_paths.tcl
 source $flow_dir/io_paths.tcl
+source $flow_dir/iob_paths.tcl
 source $flow_dir/result_hash.tcl
 proc exception_reports {out sfx} {
     mcp_dump_paths $out/mcp_paths_$sfx.txt
@@ -258,6 +259,8 @@ if {$resume_from ne "route"} {
     fda_qor $out route
     exception_reports $out route
     io_dump_paths $out/io_paths_route.txt
+    # brief 129: each port's register and whether it is in the I/O block, for flow/iob_check.py (gate iob_packed)
+    iob_dump $out/iob_route.txt
     report_timing -delay_type max -max_paths 1 -file $out/timing_worst_setup.rpt
     report_timing -delay_type min -max_paths 1 -file $out/timing_worst_hold.rpt
     # the board's thermal environment (boards/<board>/board.yaml, via prepare.py) so that the

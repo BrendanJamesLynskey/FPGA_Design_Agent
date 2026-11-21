@@ -86,7 +86,7 @@ second round did; all four are kernel only. Records: [results/125_lean](../../re
 ## How it enters the traceability matrix (brief 125)
 
 `python -m flow.trace_v1 lean-record` runs `lake build` here and writes `records/build_record.json` (file hashes, each theorem's axioms and tier, the transcribed RTL lines' hashes). The v1 testplan's `formal_lean`
-items (for example in `designs/b96_kr260_10g/verif/testplan.yaml`) name a theorem and how it meets the RTL; the matrix reads the record when Lean is not installed and shows "recorded build (not re-run)". Re-run `lean-record` and
+items (for example in `designs/b96_kr260_10g/verif/testplan.yaml` for the gray code and `designs/b119_tcp_fast/verif/testplan.yaml` for the checksums) name a theorem and how it meets the RTL; the matrix reads the record when Lean is not installed and shows "recorded build (not re-run)". Re-run `lean-record` and
 commit the record after any change to a `.lean` file, the lakefile or a transcribed RTL line, or the items go stale. See [docs/traceability_v1.md](../../docs/traceability_v1.md#lean-proofs-formal_lean-brief-125).
 
 ```

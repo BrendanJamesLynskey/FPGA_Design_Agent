@@ -206,7 +206,7 @@ def test_no_agent_can_approve_through_the_testplan_or_as_a_non_human(repo):
     d = make_plan(repo)
     record(repo)
     approve(repo, kind="agent")
-    assert any("must be human" in p for p in T.gate(d))
+    assert any("approver_kind must be human" in p for p in T.gate(d))
     approve(repo, item="V-NOT-THERE")
     assert any("unknown item" in p for p in T.gate(d))
     assert item_of(T.collect(d))["status"] == "unapproved"                 # an approval for another item approves nothing here
@@ -257,6 +257,73 @@ def test_the_statement_report_writes_nothing_and_shows_both_hashes(repo):
     assert not (d / "verif" / "lean_approvals.yaml").exists()
 
 
+# ---- brief 135: a delegated acceptance is not a human approval ----------------------------------------------
+def delegate(repo, item="V1", theorem="Foo.f_pos", **over):
+    f = LT.frozen("formal/lean", "Foo.Spec", theorem)
+    a = {"item": item, "theorem": theorem, "statement_sha256": f["statement_sha256"], "definitions_sha256": f["definitions_sha256"],
+         "accepted_by": "planner (Session A)", "delegated_by": "owner decision 23", "approver_kind": "agent_delegated", "date": "2026-11-21", **over}
+    a = {k: v for k, v in a.items() if v is not None}
+    (repo / "designs" / "d" / "verif" / "lean_approvals.yaml").write_text(yaml.safe_dump({"schema": LT.APPROVAL_SCHEMA, "approvals": [a]}))
+
+
+def test_a_delegated_acceptance_passes_but_is_shown_and_counted_apart_from_a_human_approval(repo):
+    d = make_plan(repo)
+    record(repo)
+    delegate(repo)
+    c = T.collect(d)
+    i = item_of(c)
+    assert i["status"] == "pass" and i["lean"]["approver_kind"] == "agent_delegated" and i["lean"]["accepted_by"] == "planner (Session A)"
+    assert "accepted by planner (Session A) on the owner's delegation (owner decision 23)" in i["detail"] and "not a human approval" in i["detail"]
+    assert "approved by a human" not in i["detail"]
+    r = c["requirements"][0]
+    assert r["state"] == "verified" and r["rests_on_delegated"] is True
+    s = c["summary"]
+    assert s["lean"]["delegated"] == 1 and s["lean"]["approved"] == 0 and s["verified_on_delegated"] == 1
+    assert "1 verified, of which 1 rest on delegated acceptances" in s["line"]
+    md = T.render_md(c, repo / "designs" / "d" / "verif")
+    assert "statement accepted on delegation, not a human approval" in md and "rests on a delegated acceptance" in md
+    assert T.gate(d) == []
+
+
+def test_a_human_approval_is_shown_as_human_and_is_not_counted_as_delegated(repo):
+    d = make_plan(repo)
+    record(repo)
+    approve(repo)
+    c = T.collect(d)
+    assert "proved; statement approved by a human (A. Person)" in item_of(c)["detail"]
+    s = c["summary"]
+    assert s["lean"]["approved"] == 1 and s["lean"]["delegated"] == 0 and s["verified_on_delegated"] == 0
+    assert "of which" not in s["line"].split("Lean proof")[0]
+    assert "statement approved by a human" in T.render_md(c, repo / "designs" / "d" / "verif")
+
+
+def test_the_frozen_statement_gate_applies_to_a_delegated_acceptance_too(repo):
+    d = make_plan(repo)
+    record(repo)
+    delegate(repo)
+    (repo / "formal" / "lean" / "Foo" / "Spec.lean").write_text(SPEC.replace("0 < f n", "0 ≤ f n"))
+    assert any(p.startswith("lean_frozen_statement_changed") and "planner (Session A) accepted it" in p for p in T.gate(d))
+
+
+def test_a_delegated_entry_must_name_who_and_on_whose_delegation_and_never_says_approved_by(repo):
+    d = make_plan(repo)
+    record(repo)
+    delegate(repo, delegated_by=None)
+    assert any("lacks delegated_by" in p for p in T.gate(d))
+    delegate(repo, approved_by="owner")
+    assert any("never approved_by" in p for p in T.gate(d))
+    approve(repo, accepted_by="planner")
+    assert any("not accepted_by" in p for p in T.gate(d))
+
+
+def test_no_agent_can_set_a_delegated_acceptance_through_the_testplan(repo):
+    for k in ("accepted_by", "delegated_by"):
+        d = make_plan(repo, extra_item={k: "planner"})
+        assert any(k in p and "refused" in p for p in T.gate(d))
+    d = make_plan(repo, extra_item={"lean": {"module": "Foo.Spec", "theorem": "Foo.f_pos", "approver_kind": "agent_delegated"}})
+    assert any("refused" in p for p in T.gate(d))
+
+
 # ---- the committed repository ----------------------------------------------------------------------------
 def test_committed_lean_items_pass_the_gate_and_the_record_is_not_stale():
     for d in T.v1_designs():
@@ -269,13 +336,26 @@ def test_committed_lean_items_pass_the_gate_and_the_record_is_not_stale():
             assert i["lean"]["tier"] in ("kernel_only", "compiled_decision_procedure")
 
 
-def test_the_committed_plan_carries_the_124_theorems_and_the_gray_lemma():
-    c = T.collect(REPO / "designs" / "b96_kr260_10g")
-    names = {i["lean"]["theorem"] for i in c["items"] if i["method"] == "formal_lean"}
-    assert {"Gray.gray_step", "Gray.gray2bin_bin2gray", "Gray.bin2gray_gray2bin", "Gray.gray_sample", "Cksum.rtl_ip_correct", "Cksum.rtl_ip_receiver",
-            "Cksum.rtl_tcp_correct", "Cksum.ocSum_toNat", "Cksum.incUpdate_correct", "Cksum.incUpdate_zero_corner"} <= names
-    kinds = {i["lean"]["rtl_link"] for i in c["items"] if i["method"] == "formal_lean"}
+def test_the_committed_plans_carry_the_124_theorems_and_the_gray_lemma():
+    """The gray-code theorems are b96's (rate_match_gp); the checksum theorems are b119's (tcp_fast), moved there by brief 133."""
+    def lean_items(design):
+        return [i for i in T.collect(REPO / "designs" / design)["items"] if i["method"] == "formal_lean"]
+    b96, b119 = lean_items("b96_kr260_10g"), lean_items("b119_tcp_fast")
+    assert {i["lean"]["theorem"] for i in b96} == {"Gray.gray_step", "Gray.gray2bin_bin2gray", "Gray.bin2gray_gray2bin", "Gray.gray_sample"}
+    assert {i["lean"]["theorem"] for i in b119} == {"Cksum.rtl_ip_correct", "Cksum.rtl_ip_receiver", "Cksum.rtl_tcp_correct", "Cksum.ocSum_toNat",
+                                                    "Cksum.incUpdate_correct", "Cksum.incUpdate_zero_corner"}
+    kinds = {i["lean"]["rtl_link"] for i in b96 + b119}
     assert kinds == {"transcription_tested", "model_only"}                       # no RTL-generated model exists, and none is claimed
+
+
+def test_the_lean_files_tag_the_ids_of_the_plan_that_owns_them():
+    """A `req:` tag in a doc comment of formal/lean must be a requirement id of the b96 or b119 testplan (brief 133 renamed the checksum tags)."""
+    import re
+    ids = {r["id"] for d in ("b96_kr260_10g", "b119_tcp_fast") for r in T.load(REPO / "designs" / d)["requirements"]}
+    tags = set()
+    for f in ("Gray/Spec.lean", "Cksum/Spec.lean"):
+        tags |= set(re.findall(r"req:\s*(\S+)", (REPO / "formal" / "lean" / f).read_text().replace("-/", " ")))
+    assert tags and tags <= ids, tags - ids
 
 
 def test_every_lean_theorem_the_plan_names_is_in_the_committed_record():
