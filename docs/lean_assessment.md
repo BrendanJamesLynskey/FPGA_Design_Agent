@@ -87,7 +87,7 @@ The original proposal follows for the record.
 
 
 - `spec.yaml` requirement `proof:` list gains `formal_lean`.
-- Tag: a `req: REQ-ID` line inside the theorem's doc comment (the experiment uses `B119-CKSUM-IP`, `-TCP`, `-INC`, `-MODEL`; they are placeholders, 119's spec has no such ids yet).
+- Tag: a `req: REQ-ID` line inside the theorem's doc comment (the experiment used `B119-CKSUM-IP`, `-TCP`, `-INC`, `-MODEL` as placeholders; since brief 133 they are the requirements `B119-F-CKSUM-IP`, `-TCP` and `-MODEL` of `designs/b119_tcp_fast/verif/testplan.yaml`, `-INC` folded into `-MODEL`, and the Lean files carry those ids).
 - Artefact kind `lean_theorem`, read from `lean_evidence.json` (schema in `formal/lean/tools/lean_evidence.py`): theorem, line, req tags, statement SHA-256, axioms, status computed from `lake build` and `#print axioms`: `proved` (kernel only), `proved_bv_decide`, `failed`, `unsound`.
 - Gates: `requirements_verified` passes the method on `proved` or `proved_bv_decide` and fails on `failed` or `unsound`; a new gate `lean_statements_unchanged` compares each statement's hash with the hash recorded in the approved spec; `changed_requirements_reverified` already forces a re-check when a requirement's text changes.
 - The review index shows the tier next to the result, so a reader sees which proofs rest on the compiler.

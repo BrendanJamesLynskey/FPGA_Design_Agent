@@ -35,16 +35,6 @@ x-lean-gray-link: &lean_gray_link
     - {file: flow/cdc_models/xpm_cdc_models.sv, lines: "71-87"}
   transcribed_in: formal/lean/Gray/Spec.lean (bin2gray, parity, gray2bin)
   crosscheck: {file: formal/lean/Gray/CrossCheck.lean, reference: "the repository's behavioural model of xpm_cdc_gray (flow/cdc_models/xpm_cdc_models.sv, written from UG974) run in Icarus Verilog, every value of widths 1 to 8, by formal/lean/tools/crosscheck_gray.py; AMD's own macro is not what is compared"}
-x-lean-cksum-link: &lean_cksum_link
-  kind: transcription_tested
-  source:
-    - {file: designs/b119_tcp_fast/rtl/tcp_fast.sv, lines: "256-260", commit: 9f8d760788e4a8afcd8756e29eca348d49858765}
-    - {file: designs/b119_tcp_fast/rtl/tcp_fast.sv, lines: "326-336", commit: 9f8d760788e4a8afcd8756e29eca348d49858765}
-  transcribed_in: formal/lean/Cksum/Spec.lean (fold16, ipTmpl, rtlIpCsum, tcpTmpl, rtlTcpCsum)
-  crosscheck: {file: formal/lean/Cksum/CrossCheck.lean, reference: "brief 119's Python reference designs/b119_tcp_fast/model/tcpref.py, which 119's cocotb tests check against the RTL; 300 random connections and orders, by formal/lean/tools/crosscheck_b119.py"}
-x-lean-model-link: &lean_model_link
-  kind: model_only
-
 requirements:
   # ---- functional: the link ------------------------------------------------------------------------------------------
   - id: B96-F-PCS
@@ -229,25 +219,6 @@ requirements:
     text: For every width and value, the decoder of the pointer crossing returns the count the encoder was given; and a sampled code that is the old or the new code decodes to the old or the new count.
     source: designs/b96_kr260_10g/rtl/rate_match_gp.sv (pointer crossings u_wp and u_rp, xpm_cdc_gray)
     spec_status: draft
-  - id: B96-F-LEAN-CKSUM-IP
-    kind: functional
-    title: The IPv4 header checksum of the TCP fast path equals the Internet checksum, for all inputs
-    text: Brief 119's tcp_fast.sv builds the IPv4 header checksum from a precomputed template plus the changing fields. For all TTL, address and identification values it equals the complement of the ones' complement sum of the header, and the filled-in header sums to 0xFFFF.
-    source: brief 119 (PR 245), designs/b119_tcp_fast/rtl/tcp_fast.sv; results/124_lean/README.md
-    spec_status: draft
-  - id: B96-F-LEAN-CKSUM-TCP
-    kind: functional
-    title: The TCP checksum of the TCP fast path equals the Internet checksum, for all inputs and payloads up to 30 words
-    text: For all addresses, ports, sequence and acknowledgement numbers, windows and payloads of up to 30 sixteen-bit words, the checksum the RTL equations produce equals the complement of the ones' complement sum over pseudo-header, header and payload. The byte-pair swapping, the streaming receive check and the timing are not modelled.
-    source: brief 119 (PR 245), designs/b119_tcp_fast/rtl/tcp_fast.sv; results/124_lean/README.md
-    spec_status: draft
-  - id: B96-F-LEAN-CKSUM-MODEL
-    kind: functional
-    title: The ones' complement arithmetic the checksum equations rest on is correct, for lists of any length
-    text: The ones' complement sum of any list of 16-bit words equals the natural-number sum reduced mod 65535, and RFC 1624 equation 3 (incremental update) is correct for a header of any length when the new header is not all zero words; for an all-zero header it gives 0x0000. No current RTL patches a checksum in place; this is the arithmetic the fast path's template-plus-fields form relies on.
-    source: results/124_lean/README.md
-    spec_status: draft
-
 verification:
   # ---- simulation tests (pytest + cocotb + Icarus; one recorded run) -------------------------------------------------
   - id: V-SIM-PCSMAC
@@ -592,42 +563,6 @@ verification:
     title: A code sampled mid-step decodes to the old or the new count
     lean: {module: Gray.Spec, theorem: Gray.gray_sample}
     rtl_link: *lean_gray_link
-  - id: V-LEAN-CKSUM-IP
-    requirements: [B96-F-LEAN-CKSUM-IP]
-    method: formal_lean
-    title: IPv4 header checksum equals the Internet checksum
-    lean: {module: Cksum.Spec, theorem: Cksum.rtl_ip_correct}
-    rtl_link: *lean_cksum_link
-  - id: V-LEAN-CKSUM-IP-RX
-    requirements: [B96-F-LEAN-CKSUM-IP]
-    method: formal_lean
-    title: The filled-in header sums to 0xFFFF (receiver check)
-    lean: {module: Cksum.Spec, theorem: Cksum.rtl_ip_receiver}
-    rtl_link: *lean_cksum_link
-  - id: V-LEAN-CKSUM-TCP
-    requirements: [B96-F-LEAN-CKSUM-TCP]
-    method: formal_lean
-    title: TCP checksum equals the Internet checksum, payloads up to 30 words
-    lean: {module: Cksum.Spec, theorem: Cksum.rtl_tcp_correct}
-    rtl_link: *lean_cksum_link
-  - id: V-LEAN-CKSUM-SUM
-    requirements: [B96-F-LEAN-CKSUM-MODEL]
-    method: formal_lean
-    title: Ones complement sum equals the natural-number sum mod 65535
-    lean: {module: Cksum.Spec, theorem: Cksum.ocSum_toNat}
-    rtl_link: *lean_model_link
-  - id: V-LEAN-CKSUM-INC
-    requirements: [B96-F-LEAN-CKSUM-MODEL]
-    method: formal_lean
-    title: RFC 1624 equation 3 is correct for headers of any length
-    lean: {module: Cksum.Spec, theorem: Cksum.incUpdate_correct}
-    rtl_link: *lean_model_link
-  - id: V-LEAN-CKSUM-INC-ZERO
-    requirements: [B96-F-LEAN-CKSUM-MODEL]
-    method: formal_lean
-    title: The all-zero header corner gives 0x0000
-    lean: {module: Cksum.Spec, theorem: Cksum.incUpdate_zero_corner}
-    rtl_link: *lean_model_link
   # ---- review ---------------------------------------------------------------------------------------------------------
   - id: V-REVIEW-96
     requirements: [B96-F-PCS, B96-F-MAC, B96-S-ORDERS]
