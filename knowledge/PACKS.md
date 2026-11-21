@@ -4,7 +4,7 @@ The knowledge bank lives in the **private** repository `BrendanJamesLynskey/FPGA
 file records only each unit's and section's name, version, size and hash, so a scored run can prove which frozen
 skills it loaded. **No pack content is published here.**
 
-- Private repo commit: `93d158c` (main, merge of PR #69, 2026-11-17, brief 98: board units updated (ZedBoard Vadj 1.8 V owner-confirmed with JP6 removed, KR260 targetable with its measured facts, AUP-ZU3 built, Arty S7 VREF cited)), on top of `5c10d51` (main, merge of PR #67, 2026-11-17, brief 95: board units for the 21-board catalogue, one KB test example updated because `kv260` is now a real board unit), on top of `2338b83` (main, merge of PR #64, 2026-11-15, brief 64B: `axi-error-responses-reach-arm-cores` in `vendor/amba_axi` and `zynq7000-acp-vs-hp-measured-crossover` in `family/zynq7000`, measured on ZedBoard bump; `register-maps-for-software` corrected (posted-write SLVERR is precise for strongly-ordered, lost for device and non-cacheable); claims and two Zynq-7000 family-matrix rows), on top of `0959c27` (main, merge of PR #62, 2026-11-14, brief 70: measured reset polarity and cost skills for Artix-7 and Zynq UltraScale+, the AMD IP reset map in `vendor/amba_axi`, family-matrix reset rows, a VHDL reset wording fix, eight claims; `family/artix7` budget 236,000), on top of `9b284da` (main, merge of PR #61, 2026-11-13, brief 73: `register-maps-for-software` describes the three interface profiles (house, AMD-compatible, strict), one claim), on top of `20d73e8` (main, merge of PR #60, 2026-11-13, brief 69: `amd-axi4-lite-ip-register-behaviour` in `vendor/amba_axi` section `ip-cores`, the measured register and bus-response behaviour of nine AMD AXI4-Lite IPs against the house convention, ten claims; `register-maps-for-software` links it), on top of `aa71844` (main, merge of PR #59, 2026-11-13, brief 64A3: `register-maps-for-software` states the `split` default (SLVERR on reads of a hole, OKAY on writes) and the error-capture registers, one claim), on top of `bd26415` (main, merge of PR #58, 2026-11-13, brief 56A: the `high-speed-serial` section of `family/zynq_ultrascale_plus` (eight GTH skills: basics, clocking and line rates, reset and initialisation, line coding and bonding, loopback/PRBS/eye scan, protocol IPs, 2026.1 licences, design gates), the KR260 SFP+ lane corrected to `GTHE4_CHANNEL_X0Y6`, claims, an I/O family-matrix note and the 2026.1 Basic tier notes), on top of `1fc7ed8` (main, merge of PR #57, 2026-11-13, brief 64A2: `register-maps-for-software` house conventions (OKAY inside a block, DECERR outside, no read side effects, same-clock priority, snapshot groups, datasheets), `zynq-cache-coherency-for-dma` ZU+ HPC minimum set, `custom-instruction-or-accelerator` complete-in-MEM style and the stalled-mispredict pitfall, two claims, an AMBA family-matrix note), on top of `3e9ede5` (main, merge of PR #56, 2026-11-13: one word in `custom-instruction-or-accelerator`, the merged logic is "likely" the operand muxes), on top of `44e6eee` (main, merge of PR #54, 2026-11-13: a family-matrix row for DDR input and output registers per family, outside every hashed unit), on top of `d2ef56e` (main, merge of PR #55, 2026-11-13: the HW/SW interface and partitioning unit `vendor/hw_sw_codesign`, section `hw-sw-codesign`, six skills, two family-matrix rows (PL DMA coherency, PL-to-PS interrupt numbers), four claims), on top of `c6f19ab` (main, merge of PR #52, 2026-11-12: the 7-series delay model for the design-time timing plan, an arithmetic family-matrix row and DSP inference notes, outside every hashed unit), on top of `8d6f300` (main, merge of PR #53, 2026-11-12: `axi-protocol-assertions-and-formal` states the checker-proof result after the review round) and `d5fa30b` (main, merge of PR #51, 2026-11-12: the measured checker-proof pattern and the Vivado 2026.1 Basic build test of five AXI cores; unit `vendor/amba_axi` and its `ip-cores` and `simulation` sections re-hashed), on top of `58ee00d` (main, merge of PR #48, 2026-11-12, brief 49: the family matrix cites 2026.1 guide editions and probe records; the pin check re-run on 2026.1; `amd-axi-infrastructure-ip-and-licences` and `amd-ip-non-project-flow-and-licences` cite the 2026.1 licence query), on top of `edb6a88` (main, merge of PR #50, 2026-11-12: the build-reproducibility unit `vendor/build_reproducibility`, section `build-reproducibility`, three skills, one family-matrix row, four claims), on top of `315c10e` (main, merge of PR #47, 2026-11-12: the assurance and traceability unit `vendor/assurance`, section `assurance-traceability`, five skills, one family-matrix row), on top of `92a6493` (main, merge of PR #49, 2026-11-12: the VHDL units `vendor/vhdl_design`, section `vhdl`, five skills, and `vendor/vhdl_verification`, section `simulation`, three skills), and earlier at `811b840` (main, merge of PR #46, 2026-11-11, brief 48: Vivado 2026.1 re-pin; `amd-ip-non-project-flow-and-licences` states the 2026.1 licence counts and xxv_ethernet 5.1), on top of `cf8408f` (main, 2026-11-11; merges PR #45 (brief 30: hardware-in-the-loop unit `vendor/hil_verification`, section `hardware-in-the-loop`, four skills), and earlier at `283afd9`: PR #44 (brief 24: FSM discipline skill `artix7-fsm-discipline` in `family/artix7`, `fsm-coverage` in `vendor/free_simulators`, budgets 229,000 and 16,000, one family-matrix row), and earlier at `e709554`: PR #42 (brief 36: skill-index vectors under `indexes/`, outside every layer), PR #43 (brief 40: packet-processing unit `vendor/packet_processing`, section `packet-processing`, two family-matrix rows), and earlier at `e3cf892`: PR #41 (brief 20 part B: measured I/O timing, virtual clocks, uncertainty; family-matrix rows), and earlier at `a598197`: PR #40 (index and test fixes), PR #39 (brief 41: fanout/replication skill from the 2014 training cross-check), PR #37 (brief 20 part A: measured multicycle and slow-FSM skill), and earlier at `af81c89`: PR #38 (brief 31: family-difference matrix `family_matrix/`, family notes in 10 skills, new skill `zynqmp-porting-from-7-series`, part-aware selection), PR #36 (brief 21: version claims sidecar and probe), and earlier at `68673cb`: PR #35 (brief 19: four ipgen adapter notes in `vendor/amd_ip_cores`, budget 46,000), PR #34 (AVAL-46 measured in the MMCM skill), and earlier at `ab7fc4c`: PR #33 (brief 17: AMBA and AXI, new unit `vendor/amba_axi`), PR #32 (brief 16: CDC check skill), PR #29 `qr-area1-xpm`, PR #30 `qr-area3-kb` and PR #31 (XPM skill back under the 6,000-byte cap), after the briefs 10 B0, 13 and 13b layers: Zynq-7000, Zynq UltraScale+, ZedBoard, KR260, `vendor/amd_constraints`, `vendor/amd_ip_cores`; earlier: `1e589ea` PR #9 `kb-device-knowhow` brief 04j: device primitives, MMCM/PLL configuration,
+- Private repo commit: `5e2eab8` (main, merge of PR #87, 2026-11-21, brief 129: IOB register packing skills artix7-iob-register-packing and zynqmp-iob-register-packing; units and sections below re-hashed from this commit, with the 17 b95 board units), on top of `93d158c` (main, merge of PR #69, 2026-11-17, brief 98: board units updated (ZedBoard Vadj 1.8 V owner-confirmed with JP6 removed, KR260 targetable with its measured facts, AUP-ZU3 built, Arty S7 VREF cited)), on top of `5c10d51` (main, merge of PR #67, 2026-11-17, brief 95: board units for the 21-board catalogue, one KB test example updated because `kv260` is now a real board unit), on top of `2338b83` (main, merge of PR #64, 2026-11-15, brief 64B: `axi-error-responses-reach-arm-cores` in `vendor/amba_axi` and `zynq7000-acp-vs-hp-measured-crossover` in `family/zynq7000`, measured on ZedBoard bump; `register-maps-for-software` corrected (posted-write SLVERR is precise for strongly-ordered, lost for device and non-cacheable); claims and two Zynq-7000 family-matrix rows), on top of `0959c27` (main, merge of PR #62, 2026-11-14, brief 70: measured reset polarity and cost skills for Artix-7 and Zynq UltraScale+, the AMD IP reset map in `vendor/amba_axi`, family-matrix reset rows, a VHDL reset wording fix, eight claims; `family/artix7` budget 236,000), on top of `9b284da` (main, merge of PR #61, 2026-11-13, brief 73: `register-maps-for-software` describes the three interface profiles (house, AMD-compatible, strict), one claim), on top of `20d73e8` (main, merge of PR #60, 2026-11-13, brief 69: `amd-axi4-lite-ip-register-behaviour` in `vendor/amba_axi` section `ip-cores`, the measured register and bus-response behaviour of nine AMD AXI4-Lite IPs against the house convention, ten claims; `register-maps-for-software` links it), on top of `aa71844` (main, merge of PR #59, 2026-11-13, brief 64A3: `register-maps-for-software` states the `split` default (SLVERR on reads of a hole, OKAY on writes) and the error-capture registers, one claim), on top of `bd26415` (main, merge of PR #58, 2026-11-13, brief 56A: the `high-speed-serial` section of `family/zynq_ultrascale_plus` (eight GTH skills: basics, clocking and line rates, reset and initialisation, line coding and bonding, loopback/PRBS/eye scan, protocol IPs, 2026.1 licences, design gates), the KR260 SFP+ lane corrected to `GTHE4_CHANNEL_X0Y6`, claims, an I/O family-matrix note and the 2026.1 Basic tier notes), on top of `1fc7ed8` (main, merge of PR #57, 2026-11-13, brief 64A2: `register-maps-for-software` house conventions (OKAY inside a block, DECERR outside, no read side effects, same-clock priority, snapshot groups, datasheets), `zynq-cache-coherency-for-dma` ZU+ HPC minimum set, `custom-instruction-or-accelerator` complete-in-MEM style and the stalled-mispredict pitfall, two claims, an AMBA family-matrix note), on top of `3e9ede5` (main, merge of PR #56, 2026-11-13: one word in `custom-instruction-or-accelerator`, the merged logic is "likely" the operand muxes), on top of `44e6eee` (main, merge of PR #54, 2026-11-13: a family-matrix row for DDR input and output registers per family, outside every hashed unit), on top of `d2ef56e` (main, merge of PR #55, 2026-11-13: the HW/SW interface and partitioning unit `vendor/hw_sw_codesign`, section `hw-sw-codesign`, six skills, two family-matrix rows (PL DMA coherency, PL-to-PS interrupt numbers), four claims), on top of `c6f19ab` (main, merge of PR #52, 2026-11-12: the 7-series delay model for the design-time timing plan, an arithmetic family-matrix row and DSP inference notes, outside every hashed unit), on top of `8d6f300` (main, merge of PR #53, 2026-11-12: `axi-protocol-assertions-and-formal` states the checker-proof result after the review round) and `d5fa30b` (main, merge of PR #51, 2026-11-12: the measured checker-proof pattern and the Vivado 2026.1 Basic build test of five AXI cores; unit `vendor/amba_axi` and its `ip-cores` and `simulation` sections re-hashed), on top of `58ee00d` (main, merge of PR #48, 2026-11-12, brief 49: the family matrix cites 2026.1 guide editions and probe records; the pin check re-run on 2026.1; `amd-axi-infrastructure-ip-and-licences` and `amd-ip-non-project-flow-and-licences` cite the 2026.1 licence query), on top of `edb6a88` (main, merge of PR #50, 2026-11-12: the build-reproducibility unit `vendor/build_reproducibility`, section `build-reproducibility`, three skills, one family-matrix row, four claims), on top of `315c10e` (main, merge of PR #47, 2026-11-12: the assurance and traceability unit `vendor/assurance`, section `assurance-traceability`, five skills, one family-matrix row), on top of `92a6493` (main, merge of PR #49, 2026-11-12: the VHDL units `vendor/vhdl_design`, section `vhdl`, five skills, and `vendor/vhdl_verification`, section `simulation`, three skills), and earlier at `811b840` (main, merge of PR #46, 2026-11-11, brief 48: Vivado 2026.1 re-pin; `amd-ip-non-project-flow-and-licences` states the 2026.1 licence counts and xxv_ethernet 5.1), on top of `cf8408f` (main, 2026-11-11; merges PR #45 (brief 30: hardware-in-the-loop unit `vendor/hil_verification`, section `hardware-in-the-loop`, four skills), and earlier at `283afd9`: PR #44 (brief 24: FSM discipline skill `artix7-fsm-discipline` in `family/artix7`, `fsm-coverage` in `vendor/free_simulators`, budgets 229,000 and 16,000, one family-matrix row), and earlier at `e709554`: PR #42 (brief 36: skill-index vectors under `indexes/`, outside every layer), PR #43 (brief 40: packet-processing unit `vendor/packet_processing`, section `packet-processing`, two family-matrix rows), and earlier at `e3cf892`: PR #41 (brief 20 part B: measured I/O timing, virtual clocks, uncertainty; family-matrix rows), and earlier at `a598197`: PR #40 (index and test fixes), PR #39 (brief 41: fanout/replication skill from the 2014 training cross-check), PR #37 (brief 20 part A: measured multicycle and slow-FSM skill), and earlier at `af81c89`: PR #38 (brief 31: family-difference matrix `family_matrix/`, family notes in 10 skills, new skill `zynqmp-porting-from-7-series`, part-aware selection), PR #36 (brief 21: version claims sidecar and probe), and earlier at `68673cb`: PR #35 (brief 19: four ipgen adapter notes in `vendor/amd_ip_cores`, budget 46,000), PR #34 (AVAL-46 measured in the MMCM skill), and earlier at `ab7fc4c`: PR #33 (brief 17: AMBA and AXI, new unit `vendor/amba_axi`), PR #32 (brief 16: CDC check skill), PR #29 `qr-area1-xpm`, PR #30 `qr-area3-kb` and PR #31 (XPM skill back under the 6,000-byte cap), after the briefs 10 B0, 13 and 13b layers: Zynq-7000, Zynq UltraScale+, ZedBoard, KR260, `vendor/amd_constraints`, `vendor/amd_ip_cores`; earlier: `1e589ea` PR #9 `kb-device-knowhow` brief 04j: device primitives, MMCM/PLL configuration,
   LUT6 fabric design, Vivado synthesis attributes and inference templates, STA report interpretation; earlier: `d6679f5`
   PR #8 `rtl-pack-v3`, generic layer re-pinned to RTL_Knowledge_Pack v3.0; PR #7
   `217c751` brief 04h, the Artix-7 family and device layers; earlier: `16696e6` PR #6 brief 04f, `6db99dd` PR #5 04e,
@@ -49,9 +49,9 @@ The axes are: techniques and functions (together the `generic` bundle), vendor, 
 | **bundle `generic`** | techniques + functions | `v3.0` | 33 | - | 137,695 (<= 152,000; was 116,872 <= 120,000 at v2.2) | 12,113 | 34,424 | `d5819522e0ff050785b2191b3bc333e9560da0924a2e8b796090783935e8b6b5` |
 | `vendor/ross_distilled/` | vendor: Ross distilled | 1 (2026-10-30; sectioned 2026-10-31) | 14 | 24 | 57,716 (<= 60,000) | 4,429 | 14,429 | `71b0be3612dd70311a092aaf9e108dbc68fe9efd324253a25eba2607ec9e3175` |
 | `vendor/free_simulators/` | vendor: free-simulator capabilities and cocotb_coverage usage (ours, from the owner's matrix and the cocotb-coverage 2.0 source) | 3 (2026-11-11, 24: fsm-coverage) | 4 | 6 | 14,449 (<= 16,000) | 1,183 | 3,612 | `eb33c59d3f68448098d06c215c7afa886377e335a8a3435d3e1c8f299df7e803` |
-| `vendor/vivado_synthesis/` | vendor: Vivado synthesis attributes and inference templates (ours, from UG901/UG912/UG949) | 1 (2026-11-03, 04j) | 4 | 7 | 20,965 (<= 22,000) | 1,845 | 5,241 | `469e9d29c156f2ef8dfdff723e8a80a254e3ff805b7ac4b7d0667098213eef61` |
+| `vendor/vivado_synthesis/` | vendor: Vivado synthesis attributes and inference templates (ours, from UG901/UG912/UG949) | 1 (2026-11-03, 04j) | 4 | 7 | 21,080 (<= 22,000) | 1,845 | 5,270 | `7e0c5a6cbd5c6d5efb1fca4e59fbb5df7df361525480cc358f66fbcfb60db091` |
 | `vendor/ross_shipped/` | vendor: Ross as shipped | Ross release 2026.10.1 | 50 | 1,195 | 918,458 (none) | 12,578 | 225,565 | `3d2cf1b50012d4676a3b432f0725b00848795059224f913935e37cc98846e773` |
-| `family/artix7/` | family: Artix-7 technology (04h added 4; 04j added 10: primitives catalogue, clocking configuration, LUT6 fabric) | 6 (2026-11-14, 70: measured reset polarity and cost) | 45 | 60 | 230,225 (<= 236,000) | 16,792 | 57,556 | `e1b4a9e1af97afda037c091f53541c4e628162e85e880c992c50af7dce5b5e24` |
+| `family/artix7/` | family: Artix-7 technology (04h added 4; 04j added 10: primitives catalogue, clocking configuration, LUT6 fabric) | 6 (2026-11-14, 70: measured reset polarity and cost) | 46 | 61 | 235,102 (<= 236,000) | 17,139 | 58,776 | `38e4f72b02ceb439be88f373cc540477687842d4bb574e61937d31199939e519` |
 | `device/xc7a100tcsg324-1/` | device: the part on the Nexys A7-100T (xc7a100tcsg324-1) | 2 (2026-11-03, 04j: +1 primitives) | 5 | 11 | 16,295 (<= 18,000) | 2,992 | 4,074 | `a92427e0c7a38d2a6c4409c265cfdf19b5fbc37636d53234bac16e5d5b7ffad7` |
 | `board/nexys_a7_100t/` | board: Digilent Nexys A7-100T | 2 (2026-10-31, 04c: v2) | 13 | 24 | 39,073 (<= 45,000) | 5,036 | 9,768 | `15c781ea57ce3c45ef22b945aac180d0a01b525c5d9c1432f6a06503a8baaccf` |
 | `procedures/` | procedures: board onboarding; UltraFast stages; verification stages | 5 (2026-11-04: the V2 skill names the `V_*` checker macros) | 15 | 19 | 58,749 (<= 72,000) | 4,048 | 14,687 | `7f1d3c10d7b25589ea75b99e15f036d3ad0b528bc9f26ef415358f53efb1fa80` |
@@ -66,15 +66,32 @@ The axes are: techniques and functions (together the `generic` bundle), vendor, 
 | `vendor/build_reproducibility/` | vendor: reproducible builds and build identity (ours; non-determinism sources and how to pin and record them, a build ID in USR_ACCESS read back over JTAG, release bundles; brief 54) | 1 (2026-11-12, 54) | 3 | 5 | 11,774 (<= 24,000) | 1,508 | 2,944 | `07225b0d81c260566bcbff707b420f655881c7e27cbf2fac550649de5b709e7c` |
 | `vendor/hw_sw_codesign/` | vendor: HW/SW interface and partitioning (ours; profiling and the cost model, custom instruction against accelerator against software, register maps, AXI-Stream with DMA, descriptor rings, interrupts, cache coherency on the Zynq PS ports, Linux UIO and device-tree overlays; brief 64) | 2 (2026-11-15, 64B: measured on ZedBoard) | 6 | 8 | 35,332 (<= 36,000) | 2,873 | 8,833 | `79932702f7f17cc6aeeb87cbd5ce173ba98fad87c2eb12459894ec118493dcfb` |
 | `family/zynq7000/` | family: Zynq-7000 PS7 basics (ours, from UG585/UG470) | 2 (2026-11-15, 64B: measured on ZedBoard) | 9 | 15 | 27,333 (none) | 2,771 | 6,833 | `44052dbac298edd0ac9b5ee8d3a029dac93001cc9d17ef2e65b049ad81c69200` |
-| `family/zynq_ultrascale_plus/` | family: Zynq UltraScale+ (PS8, GTH, K26 SOM; ours) | 4 (2026-11-14, 70: measured reset polarity and cost) | 21 | 30 | 79,396 (none) | 6,973 | 19,849 | `a650db148ce447c45bdfbcc9464f210cd7323fd850d169535f69f9282b6d7714` |
+| `family/zynq_ultrascale_plus/` | family: Zynq UltraScale+ (PS8, GTH, K26 SOM; ours) | 4 (2026-11-14, 70: measured reset polarity and cost) | 24 | 33 | 98,030 (none) | 7,786 | 24,507 | `cb4c59779a02343258eaa8e69308ba6ac536df62c6c8ce7ff145ce71b8144ec3` |
 | `device/xc7z020clg484-1/` | device: the Zynq-7020 part on the ZedBoard (xc7z020clg484-1) | 1 (2026-11-09, 10 B0) | 3 | 7 | 7,062 (none) | 1,153 | 1,766 | `541c7bbd3add40d205c65840f038d96e17b023b061fa4c65a1887658e9488a6f` |
 | `device/xck26/` | device: the K26 SOM part (xck26-sfvc784-2LV-c) | 1 (2026-11-09, 10 B0) | 3 | 7 | 6,497 (none) | 1,149 | 1,624 | `111bbb00559b7f8add60d3721c7c838085b5564b7e58bd713115567c913dd354` |
-| `board/kr260/` | board: AMD Kria KR260 | 2 (2026-11-13, 56A: SFP+ lane site) | 12 | 23 | 28,171 (none) | 3,704 | 7,043 | `f77ffc32175166d535464f1b3b167d74be9f26a36b0b260fb84b66dd7df695d3` |
-| `board/zedboard/` | board: Avnet/Digilent ZedBoard | 1 (2026-11-09, 10 B0) | 15 | 28 | 36,556 (none) | 4,634 | 9,139 | `9fa5567f88f707b07efc84c456e8027a76064fd0981b0642739f85a90f42c18b` |
-| `library/` | library (search_docs corpus: 1,783 chunks) | 2 (2026-11-02, 04h: +15 chunks) | - | 16 | see `library/MANIFEST.sha256` | - | - | `04ede99be370ae925d7596cc4a63af9c1a136500de661f6acfb8dfdf35c228d6` |
+| `board/kr260/` | board: AMD Kria KR260 | 2 (2026-11-13, 56A: SFP+ lane site) | 12 | 23 | 29,791 (none) | 3,704 | 7,448 | `8a97c7e489f5892b161669f4a408f9bc704049c8bb092ad470b344570ed1f861` |
+| `board/zedboard/` | board: Avnet/Digilent ZedBoard | 1 (2026-11-09, 10 B0) | 15 | 28 | 37,036 (none) | 4,634 | 9,259 | `1d00393949d8c3b90226232405c4036e2e2fabc4b5d569eb2d0d03877d902305` |
+| `board/adalm_pluto/` | board: adalm_pluto | 1 (2026-11-20, b95) | 1 | 3 | 3,033 (none) | 446 | 758 | `7b35d5bce6a299dac968810b5ba4973220ee5221af93cef937c713b92cf58f47` |
+| `board/arty_a7_100t/` | board: arty_a7_100t | 1 (2026-11-20, b95) | 1 | 3 | 3,039 (none) | 433 | 760 | `b2d4e5df0ba454bcb43f78a1b45dfb7df9d5b22ff31af8c28782253e5e47117b` |
+| `board/arty_a7_35t/` | board: arty_a7_35t | 1 (2026-11-20, b95) | 1 | 3 | 3,056 (none) | 431 | 764 | `37832b065b9d8776c3bf18fac3ad497aeaac500fa7f45a4baf15f4b4e73a59e3` |
+| `board/arty_s7_50/` | board: arty_s7_50 | 1 (2026-11-20, b95) | 1 | 3 | 3,346 (none) | 426 | 836 | `0e2f8ac27b1d892a57aeed0b2428a91b476f39acdc8a5cc94fdd200a238e86e5` |
+| `board/aup_zu3/` | board: aup_zu3 | 1 (2026-11-20, b95) | 1 | 3 | 5,738 (none) | 425 | 1,434 | `adbf22915e6814c74a7422b7711932aaa7316a46a672e0662824217262843717` |
+| `board/basys3/` | board: basys3 | 1 (2026-11-20, b95) | 1 | 3 | 3,456 (none) | 415 | 864 | `a5b961addd45c40d57852a6193755b5cf74938c7581458fc69803b75b1bd5326` |
+| `board/cmod_a7_35t/` | board: cmod_a7_35t | 1 (2026-11-20, b95) | 1 | 3 | 3,048 (none) | 429 | 762 | `54f69a34f241f57162e3b186b0efbdf6cce4f9fffff5b346a168fcaff7989b76` |
+| `board/cora_z7_07s/` | board: cora_z7_07s | 1 (2026-11-20, b95) | 1 | 3 | 2,950 (none) | 430 | 738 | `8f3a23af92d0eb73ce09ec746eb3fad3498cfb5af599b09ee9a0dc940d9ec028` |
+| `board/cora_z7_10/` | board: cora_z7_10 | 1 (2026-11-20, b95) | 1 | 3 | 2,938 (none) | 426 | 734 | `b37709b300129f0ab92221746b4cbb69179e6556692f1474e9ff13c4b1a698f4` |
+| `board/genesys2/` | board: genesys2 | 1 (2026-11-20, b95) | 1 | 3 | 3,053 (none) | 422 | 763 | `019efc287bf849526b7031a8082b9377ebc26ffc044ccb07c5e7040e5d654f41` |
+| `board/kv260/` | board: kv260 | 1 (2026-11-20, b95) | 1 | 3 | 3,398 (none) | 437 | 850 | `8f31b2905ac68e3b2acea0195dd84046b2100246680d2504441c28afb16121d0` |
+| `board/nexys_video/` | board: nexys_video | 1 (2026-11-20, b95) | 1 | 3 | 3,414 (none) | 430 | 854 | `37e475c0cbd39a52327115c0c13445fc991ad2b572c144d95a09df01440ce779` |
+| `board/pynq_z2/` | board: pynq_z2 | 1 (2026-11-20, b95) | 1 | 3 | 3,192 (none) | 412 | 798 | `937946363361d8dc007d4b074ef78d427540c88d8f2e7b083c107ccb2bb7bcc7` |
+| `board/ultra96_v2/` | board: ultra96_v2 | 1 (2026-11-20, b95) | 1 | 3 | 2,798 (none) | 427 | 700 | `34aa56e03daf8b70b8423013f404882920a555ea449b7122c8a6d7e630ef1d91` |
+| `board/zcu104/` | board: zcu104 | 1 (2026-11-20, b95) | 1 | 3 | 3,111 (none) | 414 | 778 | `ea2b3db2ce55738e6bbb9a363a6edec3853d243b381f938ee1b23b79d3acc587` |
+| `board/zybo_z7_10/` | board: zybo_z7_10 | 1 (2026-11-20, b95) | 1 | 3 | 3,056 (none) | 426 | 764 | `715e783d4c9caeaed2bf23db85d5cbb68eb82f98f3fb803a5f070769c1e3722c` |
+| `board/zybo_z7_20/` | board: zybo_z7_20 | 1 (2026-11-20, b95) | 1 | 3 | 2,967 (none) | 426 | 742 | `1d873b7326af484f8baa3d4e6872c5a4495586a32dd7dc4b6884c855ef34dfa7` |
+| `library/` | library (search_docs corpus: 1,783 chunks) | 2 (2026-11-02, 04h: +15 chunks) | 0 | 16 | 0 (none) | 0 | 0 | `04ede99be370ae925d7596cc4a63af9c1a136500de661f6acfb8dfdf35c228d6` |
 
 Root files: `SECTIONS.yaml` sha256 `98a853be4b563073b3dab72ac1aacb39c3478bb4d3bf6705db3a429c12c9b1d4`; `INDEX.md` sha256
-`ba57ee66c881035f679ca9e7b15af679d97dc6e9d6038cd63111065df3db123f`.
+`e28519bd128eb97e497011149668cdd70dd3b28c44a67f9664459686243259ea`.
 
 ## The vocabulary
 
@@ -93,6 +110,104 @@ kinds and definitions come from RTL_Knowledge_Pack `v3.0` and must match it), 4 
 
 | Unit | Section | Kind | Skills | Skill bytes | Hash |
 |---|---|---|---|---|---|
+| `board/adalm_pluto/` | `clocking` | technique | 1 | 3,033 | `149b50ec5c3de4ce2d0c4552823c0d602872ceeb2acd7fb48e6962bca4bf0c3e` |
+| `board/arty_a7_100t/` | `clocking` | technique | 1 | 3,039 | `6c91d468b41f6cc95e1534fc5107f4abf7d7d136b29e7259a78f7ba0be28aaf1` |
+| `board/arty_a7_35t/` | `clocking` | technique | 1 | 3,056 | `b3420a80dbcbad491a036db82a6df913f1b2dbd4c886f88b7154f9ca5582ee5a` |
+| `board/arty_s7_50/` | `clocking` | technique | 1 | 3,346 | `bae5084b1c54fa0c78ba3b58366ef743e41655f86b3b0401c1cd03c6ce16c42e` |
+| `board/aup_zu3/` | `clocking` | technique | 1 | 5,738 | `700baf2b61991b36517cea83b44db3bd1c8ad7a99c11abb87cf069a2f62c0ce9` |
+| `board/basys3/` | `clocking` | technique | 1 | 3,456 | `7b274e999e2c40df04b1b945df164b3f41905376b39304c6a42a795d168f8d88` |
+| `board/cmod_a7_35t/` | `clocking` | technique | 1 | 3,048 | `b9a1b0b536d71bb6181f0ab50ea5b17211556067037b06a67688721f148f99f3` |
+| `board/cora_z7_07s/` | `clocking` | technique | 1 | 2,950 | `5bba2a23a6d9f686129a19805959002c1e90ec53add7d07c5910e594aa714e08` |
+| `board/cora_z7_10/` | `clocking` | technique | 1 | 2,938 | `e50f42b0ef8fc6c98655c9b88e415fc5bca500c649d3fc794d2204f4c629a99c` |
+| `board/genesys2/` | `clocking` | technique | 1 | 3,053 | `7f0f56606de323156ab03cef561972183988906937f7479eb221c1063354c93b` |
+| `board/kr260/` | `clocking` | technique | 1 | 3,399 | `29d145181d1fab75d8704aeb31febe424385d99bb0083784fd26a6f1d0564d81` |
+| `board/kr260/` | `dram` | function | 1 | 1,781 | `1a670fc749958b6f595501b93dbfe3f5fd4523e2f3802e5f2d82331e57a46153` |
+| `board/kr260/` | `ethernet` | function | 2 | 8,056 | `83a5dd6cb2e6d714bfe6ef0cef9bd3c2fe3403e0caa47550a798fe7ebdbb88c6` |
+| `board/kr260/` | `expansion-io` | function | 1 | 2,303 | `e632cd7209e8ca892e620453f54f96f22804c2907f952a3de8b145d7f1190acf` |
+| `board/kr260/` | `flash` | function | 1 | 1,556 | `430aaea671b0710fead1081af84cbb9ce0351123f48a0b89e2c5bac48757b0c5` |
+| `board/kr260/` | `power-config` | function | 2 | 5,562 | `80f12506cfcd89794a8cb4b597ff239e67f1d21fca164aae3f5c8fbb4ef6ea71` |
+| `board/kr260/` | `sd-card` | function | 1 | 1,498 | `10ce75854459b3f632ba3dd7e722c0f09c288e689816b2f45034a723db1c1d82` |
+| `board/kr260/` | `usb` | function | 1 | 1,614 | `8da2e063e16039a4087ae57ba49e0a79cd1fac15deb7089d7d62889450c3de9c` |
+| `board/kr260/` | `user-io` | function | 1 | 1,917 | `e79adbd27f26bdcb9b7a6484afd7e6b95b76106acc40855e6cc4e7ab288cf363` |
+| `board/kr260/` | `video` | function | 1 | 2,105 | `8740c57bf24351a2bc09d8281d92bc446aebe2c3b9220b29187ffb332751ec8a` |
+| `board/kv260/` | `clocking` | technique | 1 | 3,398 | `0bf9f28bd09353e0811f3abdf4c7f990639cff7c9f6ba70fd1b2855dc23a5dad` |
+| `board/nexys_a7_100t/` | `audio` | function | 2 | 4,684 | `04611adfe9cfacef48c52da63f781a321ecb7640d1e955a952efe8938ae52f7f` |
+| `board/nexys_a7_100t/` | `clocking` | technique | 1 | 3,678 | `cdfc9164dab9e6d708af0f9e3b53d6f2e430b7588c95840d28ac879eba0a9e48` |
+| `board/nexys_a7_100t/` | `ethernet` | function | 1 | 2,810 | `4d43a9efead8ce3cc2140fec81e31c97d2abc51d1290be81a03f14331e00df25` |
+| `board/nexys_a7_100t/` | `flash` | function | 1 | 2,991 | `1246a646d92a41c079b0818c0b3e883ff131b89aa8c06992ba20c266d513ef4e` |
+| `board/nexys_a7_100t/` | `power-config` | function | 1 | 4,395 | `0082d947bd859ef7b79e006cd63cd0e84b2fa53c85cc47bb43e42d370e5c131c` |
+| `board/nexys_a7_100t/` | `sd-card` | function | 1 | 2,168 | `10d803cee86a9c6331e5abad26eab8882615868e245eb7ef83ce3d66453631a8` |
+| `board/nexys_a7_100t/` | `sensors` | function | 2 | 4,899 | `859e60e28ade9ae7818981d8038f7729ad831877aea9cd8d5b0947aea747e373` |
+| `board/nexys_a7_100t/` | `serial-buses` | function | 1 | 3,141 | `634d673ecf3dc3eb474ac76736d77a226e292471316bed1b08454521386855a0` |
+| `board/nexys_a7_100t/` | `usb` | function | 1 | 2,616 | `08904a4de332fa07dfcda408b6193db43174f55f30b599a3250001576a168bc3` |
+| `board/nexys_a7_100t/` | `user-io` | function | 2 | 7,691 | `d032b38fc6d90706c471346a56f44039cac5afa2c12623045a6ee2431e5dd6b9` |
+| `board/nexys_video/` | `clocking` | technique | 1 | 3,414 | `d5e4536740d1d597d309519dc825dd90135afbedc4e5571f63d919eae2ba3128` |
+| `board/pynq_z2/` | `clocking` | technique | 1 | 3,192 | `71c58204c47924eee64c9fb3dceef0f88f8c7e5f24e1fddfb699869bd402e1bc` |
+| `board/ultra96_v2/` | `clocking` | technique | 1 | 2,798 | `dd41ee5946f47fd72b4afc28c3adf1ce2a2a0fff6b044e5bfe68eae1688e9ed9` |
+| `board/zcu104/` | `clocking` | technique | 1 | 3,111 | `062346652ac822bfbb68bcb820083324560d049340b55dba534d5e195a44293c` |
+| `board/zedboard/` | `audio` | function | 1 | 2,350 | `0b084ff8d460695e796aa4f9261c79a6c3e5880538ef418322876f5a52dc988d` |
+| `board/zedboard/` | `clocking` | technique | 1 | 2,635 | `8ccbc7eed95a273eeace5132089cbf074f2dc1273ef0cd0f3ebd09ced2bdaacd` |
+| `board/zedboard/` | `dram` | function | 1 | 2,479 | `08a8de9f6a0ac178576625faf4d9b1be9f7ae6457ea7782148e7baec596a27bb` |
+| `board/zedboard/` | `ethernet` | function | 1 | 2,002 | `fd32d2d4120b9beed7f4c51d8bd48d30cdb5b413c84f72aee32bb9550d6b2ce7` |
+| `board/zedboard/` | `expansion-io` | function | 2 | 4,895 | `faca826cec8d7d3711fea04439cd3c46b92a4dc31511e5ee7bde4705de820fc3` |
+| `board/zedboard/` | `flash` | function | 1 | 2,385 | `d2bc33e3d36bf2675def22f81e64f0293acf9640a6f06ac46778f8541d776fda` |
+| `board/zedboard/` | `power-config` | function | 1 | 3,846 | `f9345bdf6e939b1120bd393103ea4a059883fca1cdececb24fe54f688663f26b` |
+| `board/zedboard/` | `sd-card` | function | 1 | 2,144 | `7964f0d64f15967eb6670fd72bfb4d600e8d50249ee3f04a100baa01a15fbb2f` |
+| `board/zedboard/` | `serial-buses` | function | 1 | 2,000 | `0c2dd785e227545af9001d8852a7f03a2db4ebfd62bee31b73edc5b0cfd5db92` |
+| `board/zedboard/` | `usb` | function | 1 | 2,370 | `c098b803f7bb8c48661a3f0e1e3c78aaa4fc0ae7ca3ded69dafcf4780bb3b593` |
+| `board/zedboard/` | `user-io` | function | 2 | 5,234 | `ac13182f673178860a1aa74cb2f9fe4120f39fddfa6a3bd73d75ca8874593f12` |
+| `board/zedboard/` | `video` | function | 2 | 4,696 | `ec1f5f505f7fd45a5bc0511b78da02d377924aeb5430cdef38a52d00412fd6ca` |
+| `board/zybo_z7_10/` | `clocking` | technique | 1 | 3,056 | `6cd1f8acdd87312b63855e2ea0c6bb1b3ef74ec1988cd9b156af5ddc9b26cb45` |
+| `board/zybo_z7_20/` | `clocking` | technique | 1 | 2,967 | `05317575cea8207a51cc5404c416d8833d1cac42d76dffec5d71c15ee031e418` |
+| `device/xc7a100tcsg324-1/` | `analog` | function | 1 | 3,025 | `1e1fc1efc184db3a695597cf54135da60fbcf1ee33de981eb7c4ad1460f8e704` |
+| `device/xc7a100tcsg324-1/` | `io-standards` | device | 1 | 3,438 | `caff21b59a60ba8561dedeedd8bf610479d8b20a35c2a6ece89ff4e3adf32d6f` |
+| `device/xc7a100tcsg324-1/` | `logic-fabric` | device | 1 | 2,981 | `dd3e1d0913e54847ef47313f30d5ccb51fae16e7030d106637a1c6cdec835a47` |
+| `device/xc7a100tcsg324-1/` | `pin-planning` | device | 1 | 3,300 | `5732913f63c198e5a0e456b5b357111c073c32e6ef16739855beb5866803be54` |
+| `device/xc7a100tcsg324-1/` | `primitives` | device | 1 | 3,551 | `ce246609ebe86412a7514481a58b45b6098c505e54b5d788fd3f4af1ff327784` |
+| `device/xc7z020clg484-1/` | `analog` | function | 1 | 1,983 | `9204c4bf099d0a49a1db6667ea9b44e65b65d48d5f5b7f35b53915760f75cf48` |
+| `device/xc7z020clg484-1/` | `io-standards` | device | 1 | 2,512 | `53279a3cabed434b4e5a24ddf8112deca29bbaeb7f05a7cd84b59033cadfd2ac` |
+| `device/xc7z020clg484-1/` | `logic-fabric` | device | 1 | 2,567 | `dca07d5e8d3c11aecf9823f442e05377ebeb0d72bb7e197ca4dc5db7a2eb7242` |
+| `device/xck26/` | `io-standards` | device | 1 | 2,764 | `8cbaf1b91b3c140ffb492277f0f10a6ee10791d5e1b0393667782a10100c8a4e` |
+| `device/xck26/` | `logic-fabric` | device | 1 | 2,182 | `5c814ecdc1cf2f85e39b21ec79f2f8ff032366cacfba991f0e20b17291720845` |
+| `device/xck26/` | `primitives` | device | 1 | 1,551 | `4281b5885850e9dcca9d8b4c729722d68c2def432de5f6c9bd1482a4abff2724` |
+| `family/artix7/` | `analog` | function | 1 | 4,513 | `67821cec9f1c40a7b5f1adcb5bb9d473f821789a5202c0e1d2e5c1c0332f9680` |
+| `family/artix7/` | `cdc` | technique | 6 | 33,651 | `998c3c15278a5ec564840ea9e5e1a321c5af912405ebe234642617b5c06790e9` |
+| `family/artix7/` | `clocking` | technique | 5 | 27,383 | `5d4ac58990501a5dd8a0b512de6c94a867a91bab0484fbd80cebb0a70d0f59d7` |
+| `family/artix7/` | `dram` | function | 1 | 3,661 | `24cb37aa9fd9f7eb1e02b77ab24f121770abdeacb5d04a360b5b4344dfd1cef1` |
+| `family/artix7/` | `dsp` | function | 2 | 10,009 | `4973a91067e8209b476fd6504bb31d732b8b9ea5d99fc95a7b4c116a0cc783ab` |
+| `family/artix7/` | `fsm` | technique | 4 | 22,710 | `f7ef5ed659ba17e35ca7b492e7526a5c5d15c626269f52622cfc35a84030c3e0` |
+| `family/artix7/` | `io-standards` | device | 4 | 20,499 | `fc8837ccf2450724bab2ae508b536b2e0fa545dc1e060abde839d7e1eeb18c89` |
+| `family/artix7/` | `logic-fabric` | device | 4 | 19,605 | `9e86ae2caa9dc8aa8fe702973802a8ab79b39313a5794484f2ecb49ef38fabab` |
+| `family/artix7/` | `on-chip-memory` | function | 2 | 9,437 | `3def687be06300a50b4ae01830e6bc5effd1bf55415768c93fc42d2ed2d127ab` |
+| `family/artix7/` | `pin-planning` | device | 5 | 25,643 | `8f24a38122f15ed4abd45ec56b3f6173ef00f4016eace43ed5f7abfe96fc9a24` |
+| `family/artix7/` | `power-config` | function | 2 | 8,595 | `dc1004cf4a70e20234b4b0278c1c244952045af9749ead7f6ab76ed98780f0be` |
+| `family/artix7/` | `primitives` | device | 6 | 28,882 | `973db3a1cde48f595f0c1afce9d37229d87a2d2d2fa949526101730c3ba4830b` |
+| `family/artix7/` | `reset` | technique | 3 | 17,092 | `b528e969bb904725e58be4a71fce85be667d227a4ae1ca396392ef6719d9a97c` |
+| `family/artix7/` | `timing-concepts` | technique | 1 | 3,422 | `566f1f9f5374de1c8339c65d8044c6c04c6ab44a2a925bbe0808f5dd487f0105` |
+| `family/zynq7000/` | `clocking` | technique | 1 | 2,792 | `5c912bd3b6b5a58b1498b9c8080e41809b9feb7b374ea9ecb9dbb23494f99d12` |
+| `family/zynq7000/` | `dram` | function | 3 | 10,399 | `63b267b9aa34d4faf541e8606f902a1cbe62704595a33a754e8019e29dbd3492` |
+| `family/zynq7000/` | `io-standards` | device | 1 | 2,360 | `21c40f7d09d06e4e75ca094e5d29b1b5c0287ff060b66c7d5c78c643db98d546` |
+| `family/zynq7000/` | `power-config` | function | 3 | 9,000 | `d7fb1f4d2f7fba199ec3c9d506d75e1e713af0b2df83debcc3f8160f4886d070` |
+| `family/zynq7000/` | `reset` | technique | 1 | 2,782 | `73463a1e7941f304a34f349f2917f742c4b441ab97f9c8750c58b67ef14bac28` |
+| `family/zynq_ultrascale_plus/` | `clocking` | technique | 2 | 7,951 | `345899ee2c8b5e5c950eb67dec5579ae2110c108a0f39da23b1d12f9e2d20353` |
+| `family/zynq_ultrascale_plus/` | `dram` | function | 2 | 6,573 | `8d00e24db9e1513d93b90842af33062c52ff118cb8632f1a7c7cbde1c5c77f3a` |
+| `family/zynq_ultrascale_plus/` | `high-speed-serial` | function | 10 | 46,871 | `de40e99055e99525a63a437d6c54ba061c2838d6b85061c59ced99b7cc709d02` |
+| `family/zynq_ultrascale_plus/` | `io-standards` | device | 3 | 10,963 | `10400a26764d64e13dfc0051da53c0e0fa681a7eb94fcd0568d959bf689ad193` |
+| `family/zynq_ultrascale_plus/` | `pin-planning` | device | 1 | 4,297 | `1e5d9ff23f148496d3dab78a8231cc95c2fc405a4b3d80c5ee357cc89c5d5b80` |
+| `family/zynq_ultrascale_plus/` | `power-config` | function | 2 | 5,362 | `1430521d662229ecb22e718fd74df8302a85726ad55691690ee35fd510a58fec` |
+| `family/zynq_ultrascale_plus/` | `primitives` | device | 2 | 9,353 | `d7ef63ee818d2007610c861cfaf094915bf6ac5dfbc75c1b1981531e013d5bd9` |
+| `family/zynq_ultrascale_plus/` | `reset` | technique | 2 | 6,660 | `eb3dc4d7f95a91c729a0ff6f9f70da084268ba0644ca7cd881231c14bf4e5a4c` |
+| `functions/` | `buses-axi` | function | 1 | 4,250 | `d00940b597d88f7df859b76a1d8446e2a2de54cda296ca6b6a5a139778e7a695` |
+| `functions/` | `caches-and-dma` | function | 1 | 4,511 | `966294937adb7b877a6c793f830d3a278d0b47db370d231fbae2d741e2660b89` |
+| `functions/` | `crc-and-line-codes` | function | 1 | 4,502 | `b0dbc8ee1924fe9ef3a335b0a531c61f026e08bf2c0bcd0589e547c6168a8b70` |
+| `functions/` | `crypto` | function | 1 | 4,493 | `570ffd28b9f46568accae2fffede4e239ffd9e0d096779a203297a82e13bcfee` |
+| `functions/` | `dsp` | function | 2 | 7,924 | `cf2af6c7904f2ffcd27aed526c64d382a1339273aaa116126e6f3240022cc133` |
+| `functions/` | `on-chip-memory` | function | 2 | 8,547 | `794d37f27a48727da47794adfad43fe0b4a680682f7f939d02b825adfaa28f7b` |
+| `functions/` | `serial-buses` | function | 2 | 8,328 | `035238ea6a7f94ab7202c98c0d6e813a5c2c25066f7fb7d7a029d9d5dc49e15c` |
+| `functions/` | `video` | function | 1 | 3,401 | `4a8f1d4d9b5b4414ad07a753e2aa7d8e37b58285478e14c2aeca8fd04739b069` |
+| `procedures/` | `board-onboarding` | procedure | 1 | 5,285 | `6994af76389f07628736ade90381fe9cbaa272a4862bbb48c760966db50e59f4` |
+| `procedures/` | `ultrafast` | procedure | 10 | 41,418 | `70ed44173d32eb2e86ce473780cb6216985c5c6d6094f283ae2c440f20959c61` |
+| `procedures/` | `verification-stages` | procedure | 4 | 12,046 | `a27d6ed9f50dc94a5f9a1ad6c67250fb068a7eb725d4038a2a95338cfa4f5766` |
 | `techniques/` | `arbitration-and-muxing` | technique | 1 | 3,922 | `a02dbb12426160a6cc68e2f63d4bfb2549b90803d5b6d2d7fba53eee1ecbcc2a` |
 | `techniques/` | `arithmetic` | technique | 1 | 4,085 | `bf6c6ea120e886b8a2a42ec4d856de4db09560cbf1e9f3c6551f917f26548cd2` |
 | `techniques/` | `cdc` | technique | 1 | 4,139 | `5dfd4b5cc4840d1f425855831b01bfbe124e0670b5a8e9d77afd6872f5edd69e` |
@@ -110,27 +225,17 @@ kinds and definitions come from RTL_Knowledge_Pack `v3.0` and must match it), 4 
 | `techniques/` | `spec-reading` | technique | 1 | 4,480 | `d03339fa8300f69cdb3e9498800a547ebf9e398845a78a169d4427e858f556ff` |
 | `techniques/` | `timing-concepts` | technique | 1 | 4,302 | `c2d22b0cf915c2a4d975f7ad1a254225c048181a09186685606a4574a20390b9` |
 | `techniques/` | `verification` | technique | 1 | 4,202 | `0e1f14eadcf48fa66b1357fbedd9c5991daa18584b7c1f3ed13246c312a652f8` |
-| `functions/` | `buses-axi` | function | 1 | 4,250 | `d00940b597d88f7df859b76a1d8446e2a2de54cda296ca6b6a5a139778e7a695` |
-| `functions/` | `caches-and-dma` | function | 1 | 4,511 | `966294937adb7b877a6c793f830d3a278d0b47db370d231fbae2d741e2660b89` |
-| `functions/` | `crc-and-line-codes` | function | 1 | 4,502 | `b0dbc8ee1924fe9ef3a335b0a531c61f026e08bf2c0bcd0589e547c6168a8b70` |
-| `functions/` | `crypto` | function | 1 | 4,493 | `570ffd28b9f46568accae2fffede4e239ffd9e0d096779a203297a82e13bcfee` |
-| `functions/` | `dsp` | function | 2 | 7,924 | `cf2af6c7904f2ffcd27aed526c64d382a1339273aaa116126e6f3240022cc133` |
-| `functions/` | `on-chip-memory` | function | 2 | 8,547 | `794d37f27a48727da47794adfad43fe0b4a680682f7f939d02b825adfaa28f7b` |
-| `functions/` | `serial-buses` | function | 2 | 8,328 | `035238ea6a7f94ab7202c98c0d6e813a5c2c25066f7fb7d7a029d9d5dc49e15c` |
-| `functions/` | `video` | function | 1 | 3,401 | `4a8f1d4d9b5b4414ad07a753e2aa7d8e37b58285478e14c2aeca8fd04739b069` |
-| `vendor/amd_constraints/` | `constraints` | tool-flow | 9 | 48,653 | `3b584f2ad3df698c3d018b7a0a974a652dcb3428080a29a293828166934a3daa` |
-| `vendor/amd_ip_cores/` | `ip-cores` | tool-flow | 10 | 44,128 | `a59843f7b7915ec6759d4a20bcb5e00c9f7f247794cbcd59df83bf8c8a8d803a` |
 | `vendor/amba_axi/` | `amba` | tool-flow | 9 | 34,898 | `ccf425bc3cf1c3c03375ece826aceb7dc6fdab2021210cba0dc8b7413a40243e` |
 | `vendor/amba_axi/` | `ip-cores` | tool-flow | 6 | 27,020 | `3c287da6a0845e68f85765f13a0009252387ac3e839fbff8f38ca38995d8e5c8` |
 | `vendor/amba_axi/` | `simulation` | tool-flow | 3 | 14,418 | `c15a4b51e6f1555a3b25d7261a4efffdb8f3cca0b2f5d43ec50fd135f0759f17` |
-| `vendor/packet_processing/` | `packet-processing` | tool-flow | 4 | 16,473 | `2bc013f6fea3b56f677f99a517b20cf0ed8c60a0ee5e89f6ef215bf715354835` |
-| `vendor/hil_verification/` | `hardware-in-the-loop` | tool-flow | 4 | 14,502 | `a96afe96bcc38b0c5ca432d1247b12770616d1e2b07627b8fd894b3c53abce43` |
-| `vendor/vhdl_design/` | `vhdl` | tool-flow | 5 | 25,498 | `64ece802e694f7c3a271719477b7c3d8d6a6decaed40b4cbc06005b127e22055` |
-| `vendor/vhdl_verification/` | `simulation` | tool-flow | 3 | 12,576 | `52c0df56b655e471dc750785e9dbc2a59ae59fe6141635ec60d3842953392475` |
+| `vendor/amd_constraints/` | `constraints` | tool-flow | 9 | 48,653 | `3b584f2ad3df698c3d018b7a0a974a652dcb3428080a29a293828166934a3daa` |
+| `vendor/amd_ip_cores/` | `ip-cores` | tool-flow | 10 | 44,128 | `a59843f7b7915ec6759d4a20bcb5e00c9f7f247794cbcd59df83bf8c8a8d803a` |
 | `vendor/assurance/` | `assurance-traceability` | tool-flow | 5 | 21,795 | `c9e18a29170a0eed9471ae9df0f9174d4e872ddfd486aa81d88266c3f24d153b` |
 | `vendor/build_reproducibility/` | `build-reproducibility` | tool-flow | 3 | 11,774 | `8da925a1e9cafe00986be6c720a63959f46732d796e46165e8e12b6dbe061470` |
-| `vendor/hw_sw_codesign/` | `hw-sw-codesign` | tool-flow | 6 | 35,332 | `0fd548d7855a914a94f10bd61457ba9bc1157f3a215602aa6ec833eabdec292f` |
 | `vendor/free_simulators/` | `simulation` | tool-flow | 4 | 14,449 | `cb3be883de11e549bd074c404ecf8162f53426b1f18eec668024224b064a2ab9` |
+| `vendor/hil_verification/` | `hardware-in-the-loop` | tool-flow | 4 | 14,502 | `a96afe96bcc38b0c5ca432d1247b12770616d1e2b07627b8fd894b3c53abce43` |
+| `vendor/hw_sw_codesign/` | `hw-sw-codesign` | tool-flow | 6 | 35,332 | `0fd548d7855a914a94f10bd61457ba9bc1157f3a215602aa6ec833eabdec292f` |
+| `vendor/packet_processing/` | `packet-processing` | tool-flow | 4 | 16,473 | `2bc013f6fea3b56f677f99a517b20cf0ed8c60a0ee5e89f6ef215bf715354835` |
 | `vendor/ross_distilled/` | `clocking-ip` | tool-flow | 1 | 4,495 | `9cb66d5f9a42742c53be67e8270c1c81229132dc49ba1602986b9ecd4044e13f` |
 | `vendor/ross_distilled/` | `constraints` | tool-flow | 1 | 4,495 | `2dfb95cff49e1da9a6edf6b2d4dc192306f6bffd1d363326b2655871979ecd57` |
 | `vendor/ross_distilled/` | `debug-ila-vio` | tool-flow | 2 | 7,023 | `2be1ea67875613b39f7fa6cb9d7c0c4abd49a0c82599b7f1e69d992e72a717af` |
@@ -139,81 +244,10 @@ kinds and definitions come from RTL_Knowledge_Pack `v3.0` and must match it), 4 
 | `vendor/ross_distilled/` | `non-project-flow` | tool-flow | 2 | 6,907 | `665264ec5caf2df20fae50174c8b08ea02afb9a82b0b314676e0356fd58e4d0e` |
 | `vendor/ross_distilled/` | `simulation` | tool-flow | 1 | 4,310 | `80dc14d75b047f67d705c3d891a3bd7c25bea8782da8f1bdc4363ba61661a648` |
 | `vendor/ross_distilled/` | `timing-methodology` | tool-flow | 4 | 17,913 | `2fbc4f783120d8b4f77fafae89d1af6eac79ec81a2c9eceb71ac7dba78897347` |
-| `vendor/vivado_synthesis/` | `synthesis-attributes` | tool-flow | 3 | 15,138 | `f1ea1633419300a00ab48d55f1cee2e23ef3908cce82e53a8785a0607b714c50` |
+| `vendor/vhdl_design/` | `vhdl` | tool-flow | 5 | 25,498 | `64ece802e694f7c3a271719477b7c3d8d6a6decaed40b4cbc06005b127e22055` |
+| `vendor/vhdl_verification/` | `simulation` | tool-flow | 3 | 12,576 | `52c0df56b655e471dc750785e9dbc2a59ae59fe6141635ec60d3842953392475` |
+| `vendor/vivado_synthesis/` | `synthesis-attributes` | tool-flow | 3 | 15,253 | `7cd8521d95df98c989d27e953d8bfb46ebd5e08fd60492741645a8f136e8feba` |
 | `vendor/vivado_synthesis/` | `timing-methodology` | tool-flow | 1 | 5,827 | `873cf6cae5a8eb79af076d496512670e30c481ae0ad06da5fb1971a1e32fb6de` |
-| `family/artix7/` | `analog` | function | 1 | 4,513 | `67821cec9f1c40a7b5f1adcb5bb9d473f821789a5202c0e1d2e5c1c0332f9680` |
-| `family/artix7/` | `cdc` | technique | 6 | 33,651 | `998c3c15278a5ec564840ea9e5e1a321c5af912405ebe234642617b5c06790e9` |
-| `family/artix7/` | `clocking` | technique | 5 | 27,223 | `cd05dc1c3016a00d5484038932a6ee92a35de9343dcb09bacf56e78fa4aaa70b` |
-| `family/artix7/` | `dram` | function | 1 | 3,661 | `24cb37aa9fd9f7eb1e02b77ab24f121770abdeacb5d04a360b5b4344dfd1cef1` |
-| `family/artix7/` | `dsp` | function | 2 | 9,896 | `289af58c8172d22e678a5cf1748f58b983b37c2258bffe5843f3cc65a37f9ae1` |
-| `family/artix7/` | `fsm` | technique | 4 | 22,710 | `f7ef5ed659ba17e35ca7b492e7526a5c5d15c626269f52622cfc35a84030c3e0` |
-| `family/artix7/` | `io-standards` | device | 3 | 15,895 | `e9d03ac87c513e9e34dcd533e9298f2128b657fc3b88decbf13d8fc72d0a2c9c` |
-| `family/artix7/` | `logic-fabric` | device | 4 | 19,605 | `9e86ae2caa9dc8aa8fe702973802a8ab79b39313a5794484f2ecb49ef38fabab` |
-| `family/artix7/` | `on-chip-memory` | function | 2 | 9,437 | `3def687be06300a50b4ae01830e6bc5effd1bf55415768c93fc42d2ed2d127ab` |
-| `family/artix7/` | `pin-planning` | device | 5 | 25,643 | `8f24a38122f15ed4abd45ec56b3f6173ef00f4016eace43ed5f7abfe96fc9a24` |
-| `family/artix7/` | `power-config` | function | 2 | 8,595 | `dc1004cf4a70e20234b4b0278c1c244952045af9749ead7f6ab76ed98780f0be` |
-| `family/artix7/` | `primitives` | device | 6 | 28,882 | `973db3a1cde48f595f0c1afce9d37229d87a2d2d2fa949526101730c3ba4830b` |
-| `family/artix7/` | `reset` | technique | 3 | 17,092 | `b528e969bb904725e58be4a71fce85be667d227a4ae1ca396392ef6719d9a97c` |
-| `family/artix7/` | `timing-concepts` | technique | 1 | 3,422 | `566f1f9f5374de1c8339c65d8044c6c04c6ab44a2a925bbe0808f5dd487f0105` |
-| `family/zynq7000/` | `clocking` | technique | 1 | 2,792 | `5c912bd3b6b5a58b1498b9c8080e41809b9feb7b374ea9ecb9dbb23494f99d12` |
-| `family/zynq7000/` | `dram` | function | 3 | 10,399 | `63b267b9aa34d4faf541e8606f902a1cbe62704595a33a754e8019e29dbd3492` |
-| `family/zynq7000/` | `io-standards` | device | 1 | 2,360 | `21c40f7d09d06e4e75ca094e5d29b1b5c0287ff060b66c7d5c78c643db98d546` |
-| `family/zynq7000/` | `power-config` | function | 3 | 9,000 | `d7fb1f4d2f7fba199ec3c9d506d75e1e713af0b2df83debcc3f8160f4886d070` |
-| `family/zynq7000/` | `reset` | technique | 1 | 2,782 | `73463a1e7941f304a34f349f2917f742c4b441ab97f9c8750c58b67ef14bac28` |
-| `family/zynq_ultrascale_plus/` | `clocking` | technique | 2 | 7,700 | `b5cd91cc16f036ee930c1c53b3e98c7531613d166e1a5ea4df33d268f5109ce6` |
-| `family/zynq_ultrascale_plus/` | `dram` | function | 2 | 6,573 | `8d00e24db9e1513d93b90842af33062c52ff118cb8632f1a7c7cbde1c5c77f3a` |
-| `family/zynq_ultrascale_plus/` | `high-speed-serial` | function | 8 | 32,420 | `28a9e64d42060604a1b4332d15d881a777298159deaaed1157b16f20fcad03a2` |
-| `family/zynq_ultrascale_plus/` | `io-standards` | device | 2 | 7,651 | `38d18797cf351911e9578ff360fe95d6f5e68d1711c12ca7c995c3758e115d3d` |
-| `family/zynq_ultrascale_plus/` | `pin-planning` | device | 1 | 4,297 | `1e5d9ff23f148496d3dab78a8231cc95c2fc405a4b3d80c5ee357cc89c5d5b80` |
-| `family/zynq_ultrascale_plus/` | `power-config` | function | 2 | 5,362 | `1430521d662229ecb22e718fd74df8302a85726ad55691690ee35fd510a58fec` |
-| `family/zynq_ultrascale_plus/` | `primitives` | device | 2 | 8,733 | `0fef4b8ca622e6ec6f9f9a38de9e09f3f0f3df0ecfc59e53bee9711f8b060c52` |
-| `family/zynq_ultrascale_plus/` | `reset` | technique | 2 | 6,660 | `eb3dc4d7f95a91c729a0ff6f9f70da084268ba0644ca7cd881231c14bf4e5a4c` |
-| `device/xc7a100tcsg324-1/` | `analog` | function | 1 | 3,025 | `1e1fc1efc184db3a695597cf54135da60fbcf1ee33de981eb7c4ad1460f8e704` |
-| `device/xc7a100tcsg324-1/` | `io-standards` | device | 1 | 3,438 | `caff21b59a60ba8561dedeedd8bf610479d8b20a35c2a6ece89ff4e3adf32d6f` |
-| `device/xc7a100tcsg324-1/` | `logic-fabric` | device | 1 | 2,981 | `dd3e1d0913e54847ef47313f30d5ccb51fae16e7030d106637a1c6cdec835a47` |
-| `device/xc7a100tcsg324-1/` | `pin-planning` | device | 1 | 3,300 | `5732913f63c198e5a0e456b5b357111c073c32e6ef16739855beb5866803be54` |
-| `device/xc7a100tcsg324-1/` | `primitives` | device | 1 | 3,551 | `ce246609ebe86412a7514481a58b45b6098c505e54b5d788fd3f4af1ff327784` |
-| `device/xc7z020clg484-1/` | `analog` | function | 1 | 1,983 | `9204c4bf099d0a49a1db6667ea9b44e65b65d48d5f5b7f35b53915760f75cf48` |
-| `device/xc7z020clg484-1/` | `io-standards` | device | 1 | 2,512 | `53279a3cabed434b4e5a24ddf8112deca29bbaeb7f05a7cd84b59033cadfd2ac` |
-| `device/xc7z020clg484-1/` | `logic-fabric` | device | 1 | 2,567 | `dca07d5e8d3c11aecf9823f442e05377ebeb0d72bb7e197ca4dc5db7a2eb7242` |
-| `device/xck26/` | `io-standards` | device | 1 | 2,764 | `8cbaf1b91b3c140ffb492277f0f10a6ee10791d5e1b0393667782a10100c8a4e` |
-| `device/xck26/` | `logic-fabric` | device | 1 | 2,182 | `5c814ecdc1cf2f85e39b21ec79f2f8ff032366cacfba991f0e20b17291720845` |
-| `device/xck26/` | `primitives` | device | 1 | 1,551 | `4281b5885850e9dcca9d8b4c729722d68c2def432de5f6c9bd1482a4abff2724` |
-| `board/kr260/` | `clocking` | technique | 1 | 2,734 | `c130709a14bcb1349d9adef62001f4f6ecbb3d72f2841457cb84316d5f9c03a2` |
-| `board/kr260/` | `dram` | function | 1 | 1,781 | `1a670fc749958b6f595501b93dbfe3f5fd4523e2f3802e5f2d82331e57a46153` |
-| `board/kr260/` | `ethernet` | function | 2 | 7,101 | `234cf913fdde61369c172dc8265bc4608ef60fed5f244f7ea9d0b4bf3d95ada2` |
-| `board/kr260/` | `expansion-io` | function | 1 | 2,303 | `e632cd7209e8ca892e620453f54f96f22804c2907f952a3de8b145d7f1190acf` |
-| `board/kr260/` | `flash` | function | 1 | 1,556 | `430aaea671b0710fead1081af84cbb9ce0351123f48a0b89e2c5bac48757b0c5` |
-| `board/kr260/` | `power-config` | function | 2 | 5,562 | `80f12506cfcd89794a8cb4b597ff239e67f1d21fca164aae3f5c8fbb4ef6ea71` |
-| `board/kr260/` | `sd-card` | function | 1 | 1,498 | `10ce75854459b3f632ba3dd7e722c0f09c288e689816b2f45034a723db1c1d82` |
-| `board/kr260/` | `usb` | function | 1 | 1,614 | `8da2e063e16039a4087ae57ba49e0a79cd1fac15deb7089d7d62889450c3de9c` |
-| `board/kr260/` | `user-io` | function | 1 | 1,917 | `e79adbd27f26bdcb9b7a6484afd7e6b95b76106acc40855e6cc4e7ab288cf363` |
-| `board/kr260/` | `video` | function | 1 | 2,105 | `8740c57bf24351a2bc09d8281d92bc446aebe2c3b9220b29187ffb332751ec8a` |
-| `board/nexys_a7_100t/` | `audio` | function | 2 | 4,684 | `04611adfe9cfacef48c52da63f781a321ecb7640d1e955a952efe8938ae52f7f` |
-| `board/nexys_a7_100t/` | `clocking` | technique | 1 | 3,678 | `cdfc9164dab9e6d708af0f9e3b53d6f2e430b7588c95840d28ac879eba0a9e48` |
-| `board/nexys_a7_100t/` | `ethernet` | function | 1 | 2,810 | `4d43a9efead8ce3cc2140fec81e31c97d2abc51d1290be81a03f14331e00df25` |
-| `board/nexys_a7_100t/` | `flash` | function | 1 | 2,991 | `1246a646d92a41c079b0818c0b3e883ff131b89aa8c06992ba20c266d513ef4e` |
-| `board/nexys_a7_100t/` | `power-config` | function | 1 | 4,395 | `0082d947bd859ef7b79e006cd63cd0e84b2fa53c85cc47bb43e42d370e5c131c` |
-| `board/nexys_a7_100t/` | `sd-card` | function | 1 | 2,168 | `10d803cee86a9c6331e5abad26eab8882615868e245eb7ef83ce3d66453631a8` |
-| `board/nexys_a7_100t/` | `sensors` | function | 2 | 4,899 | `859e60e28ade9ae7818981d8038f7729ad831877aea9cd8d5b0947aea747e373` |
-| `board/nexys_a7_100t/` | `serial-buses` | function | 1 | 3,141 | `634d673ecf3dc3eb474ac76736d77a226e292471316bed1b08454521386855a0` |
-| `board/nexys_a7_100t/` | `usb` | function | 1 | 2,616 | `08904a4de332fa07dfcda408b6193db43174f55f30b599a3250001576a168bc3` |
-| `board/nexys_a7_100t/` | `user-io` | function | 2 | 7,691 | `d032b38fc6d90706c471346a56f44039cac5afa2c12623045a6ee2431e5dd6b9` |
-| `board/zedboard/` | `audio` | function | 1 | 2,350 | `0b084ff8d460695e796aa4f9261c79a6c3e5880538ef418322876f5a52dc988d` |
-| `board/zedboard/` | `clocking` | technique | 1 | 2,635 | `8ccbc7eed95a273eeace5132089cbf074f2dc1273ef0cd0f3ebd09ced2bdaacd` |
-| `board/zedboard/` | `dram` | function | 1 | 2,479 | `08a8de9f6a0ac178576625faf4d9b1be9f7ae6457ea7782148e7baec596a27bb` |
-| `board/zedboard/` | `ethernet` | function | 1 | 2,002 | `fd32d2d4120b9beed7f4c51d8bd48d30cdb5b413c84f72aee32bb9550d6b2ce7` |
-| `board/zedboard/` | `expansion-io` | function | 2 | 4,895 | `faca826cec8d7d3711fea04439cd3c46b92a4dc31511e5ee7bde4705de820fc3` |
-| `board/zedboard/` | `flash` | function | 1 | 2,385 | `d2bc33e3d36bf2675def22f81e64f0293acf9640a6f06ac46778f8541d776fda` |
-| `board/zedboard/` | `power-config` | function | 1 | 3,757 | `29286b89802ce1da28c6315645a891bd8e251b3245df93d14c86f0982107b9db` |
-| `board/zedboard/` | `sd-card` | function | 1 | 2,144 | `7964f0d64f15967eb6670fd72bfb4d600e8d50249ee3f04a100baa01a15fbb2f` |
-| `board/zedboard/` | `serial-buses` | function | 1 | 2,000 | `0c2dd785e227545af9001d8852a7f03a2db4ebfd62bee31b73edc5b0cfd5db92` |
-| `board/zedboard/` | `usb` | function | 1 | 2,370 | `c098b803f7bb8c48661a3f0e1e3c78aaa4fc0ae7ca3ded69dafcf4780bb3b593` |
-| `board/zedboard/` | `user-io` | function | 2 | 4,843 | `80f4ebb1febfd338ab277544bb95cfad9a0e79bfcf58560f0134e2b9e83006ad` |
-| `board/zedboard/` | `video` | function | 2 | 4,696 | `ec1f5f505f7fd45a5bc0511b78da02d377924aeb5430cdef38a52d00412fd6ca` |
-| `procedures/` | `board-onboarding` | procedure | 1 | 5,285 | `6994af76389f07628736ade90381fe9cbaa272a4862bbb48c760966db50e59f4` |
-| `procedures/` | `ultrafast` | procedure | 10 | 41,418 | `70ed44173d32eb2e86ce473780cb6216985c5c6d6094f283ae2c440f20959c61` |
-| `procedures/` | `verification-stages` | procedure | 4 | 12,046 | `a27d6ed9f50dc94a5f9a1ad6c67250fb068a7eb725d4038a2a95338cfa4f5766` |
 
 ## Sources, per unit
 
