@@ -28,6 +28,7 @@ python -m agent models check [--probe]                                         #
 | `doc` | the DOC step (handover, README, AGENT.md) | text | inherits `rtl` |
 | `route` | the cheap skill-section classifier | chat | off (no model) |
 | `options` | the strategy generator of `agent improve` (brief 104): two to four ways to improve a loaded design, checked by code | text | Claude Code, `claude-sonnet-5-5`, effort medium (a `default:` does not move it; name it explicitly) |
+| `proof` | the Lean proof writer (brief 125, `formal/lean/tools/prove.py`): writes a proof for a theorem statement a human approved, with `lake build` feedback; the kernel is the checker | text | Claude Code, `claude-sonnet-5-5`, effort medium, 1500 s timeout (a `default:` does not move it; name it explicitly) |
 | `embed` | reserved: embeddings | chat | off; the only embedder is fastembed's local model in `agent/core/skill_index.py` (in-process, tied to the bank's stored vectors), not routed |
 
 A key is a purpose, or `purpose@stage` for one stage of the machine (`rtl@timing-closure`; stage names as in `agent/graph/stages.py`).

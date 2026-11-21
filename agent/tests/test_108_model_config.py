@@ -145,7 +145,7 @@ def test_default_applies_to_every_non_opt_in_purpose_and_all_on_the_subscription
     t = table(layer("cli", {"default": {"endpoint": "claude_code", "model": "claude-haiku-5-5"}}))
     for p, spec in PURPOSES.items():
         e = t.entry(p)
-        if p == "options":                # brief 104: opt-in, but it has its own built-in entry on the subscription (Sonnet), which a default does not move
+        if p in ("options", "proof"):     # briefs 104 and 125: opt-in, but each has its own built-in entry on the subscription (Sonnet), which a default does not move
             assert (e.kind, e.model) == ("claude_code", "claude-sonnet-5-5")
         elif spec.get("opt_in"):
             assert e.model is None

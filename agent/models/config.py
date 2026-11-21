@@ -49,6 +49,7 @@ PURPOSES: dict[str, dict[str, Any]] = {
     "doc": {"doc": "the DOC step: handover, README and AGENT.md (inherits rtl unless set)", "needs": ("text",)},
     "route": {"doc": "the cheap skill-section classifier (off while it has no model)", "needs": ("chat",), "opt_in": True},
     "options": {"doc": "the strategy generator (brief 104): proposes two to four ways to improve a loaded design; a reply is checked by code, never scored", "needs": ("text", "chat"), "opt_in": True},
+    "proof": {"doc": "the proof writer (brief 125): writes Lean 4 proofs for theorem statements a human approved, with the Lean checker's feedback; the kernel checks the result, never a model", "needs": ("text",), "opt_in": True},
     "embed": {"doc": "reserved: embeddings; the agent calls none today", "needs": ("chat",), "opt_in": True},
 }
 #: the agent's four roles are purposes (clarify is ``interpret``); ``rtl`` in the constraints stage is ``constraints``
@@ -89,6 +90,7 @@ BUILTIN_PURPOSES: dict[str, dict[str, Any]] = {
     "review": {"endpoint": "claude_code", "model": "claude-sonnet-5-5", "options": {"effort": "medium", "timeout_s": 900}},
     "route": {"endpoint": "openrouter", "model": None},
     "options": {"endpoint": "claude_code", "model": "claude-sonnet-5-5", "options": {"effort": "medium", "timeout_s": 900}},
+    "proof": {"endpoint": "claude_code", "model": "claude-sonnet-5-5", "options": {"effort": "medium", "timeout_s": 1500}},
     "embed": {"endpoint": "openrouter", "model": None},
 }
 OPTION_NAMES = frozenset().union(*(s["options"] for s in SUPPORTS.values()))
