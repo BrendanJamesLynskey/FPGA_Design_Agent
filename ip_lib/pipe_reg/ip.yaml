@@ -1,0 +1,170 @@
+# ip.yaml for pipe_reg: the declared parameter space and contract (the library's reuse rules; brief 151).
+name: pipe_reg
+version: 0.1.0
+status: simulated clock by clock against a Python model with an AXI4-Stream rule monitor (cocotb, Icarus Verilog 12) at 5 modes
+  and several depths; data and AXI4-Stream rules proved by k-induction at W = 4 (SymbiYosys); 15 of 15 seeded faults caught by
+  simulation; not built with Vivado yet (queued); not run on a board
+summary: 'AXI4-Stream pipeline register with back-pressure: N register slices in series of one of five kinds (forward-only, skid
+  buffer, full register slice, half-rate slice, combinational-ready slice), tdata plus optional tlast, tkeep and tuser. Datasheet:
+  ip_lib/pipe_reg/DATASHEET.md.'
+top: pipe_reg
+rtl:
+- rtl/pipe_reg.sv
+- rtl/pipe_reg_slice.sv
+depends: []
+interfaces:
+- name: s_axis
+  type: axi4-stream
+  dir: slave
+  tdata: W
+  note: tlast, tkeep (W/8 bits) and tuser (TUSER_W bits) are carried when TLAST_EN, TKEEP_EN and TUSER_W enable them; a sideband
+    that is off is ignored at the input and 0 at the output
+- name: m_axis
+  type: axi4-stream
+  dir: master
+  tdata: W
+  note: m_axis_tvalid is a flop in every mode; a beat offered and not taken stays offered unchanged
+clocks:
+- name: aclk
+resets:
+- name: aresetn
+  polarity: low
+  style: synchronous
+parameters:
+  W:
+    type: int
+    default: 32
+    range:
+    - 1
+    - 1024
+    note: tdata width in bits
+  N:
+    type: int
+    default: 1
+    range:
+    - 0
+    - 16
+    note: slices in series; 0 is a wire (no register, no latency, s_axis_tready = m_axis_tready)
+  MODE:
+    type: int
+    default: 1
+    set:
+    - 0
+    - 1
+    - 2
+    - 3
+    - 4
+    note: 0 forward-only, 1 skid buffer, 2 full register slice, 3 half-rate slice, 4 combinational-ready slice
+  TLAST_EN:
+    type: int
+    default: 0
+    set:
+    - 0
+    - 1
+    note: carry tlast
+  TKEEP_EN:
+    type: int
+    default: 0
+    set:
+    - 0
+    - 1
+    note: carry tkeep (W must be a multiple of 8)
+  TUSER_W:
+    type: int
+    default: 0
+    range:
+    - 0
+    - 64
+    note: width of tuser carried; 0 = none
+constraints:
+- TKEEP_EN == 0 or W % 8 == 0
+latency:
+  forward: 'N clocks in every mode: a beat accepted into an empty chain at edge t is visible at m_axis after edge t plus N-1 more
+    edges (measured at every point; 0 for N = 0)'
+  ready response: 'clocks from m_axis_tready rising (chain full, source offering) to s_axis_tready rising: 0 for modes 0 and 4
+    and for N = 0 (combinational), N for modes 1, 2 and 3 (measured)'
+  ready after reset: s_axis_tready is low in reset and for one clock after it in modes 1, 2 and 3; modes 0 and 4 follow m_axis_tready
+    at once (a source must hold tvalid low in reset and for one clock after, AXI4-Stream 2.8)
+throughput: 'one beat per clock in modes 0, 1, 2, 4 and for N = 0; one beat per two clocks in mode 3 at any N (measured); stored
+  beats when the sink stops: N in modes 0, 3 and 4, 2N in modes 1 and 2'
+guards:
+- W: 0
+- W: 1025
+- N: -1
+- N: 17
+- MODE: 5
+- MODE: -1
+- TLAST_EN: 2
+- TUSER_W: 65
+sweep_tested:
+- W: 16
+  N: 1
+  MODE: 0
+- W: 16
+  N: 2
+  MODE: 1
+- W: 16
+  N: 5
+  MODE: 2
+- W: 16
+  N: 2
+  MODE: 3
+- W: 16
+  N: 2
+  MODE: 4
+- W: 16
+  N: 0
+  MODE: 1
+- W: 1
+  N: 2
+  MODE: 1
+- W: 64
+  N: 2
+  MODE: 2
+- W: 8
+  N: 16
+  MODE: 1
+- W: 32
+  N: 3
+  MODE: 1
+  TLAST_EN: 1
+  TKEEP_EN: 1
+  TUSER_W: 4
+- W: 8
+  N: 1
+  MODE: 4
+  TLAST_EN: 1
+  TUSER_W: 3
+boundary:
+  registered_outputs: m_axis_tvalid is a flop in every slice; m_axis_tdata is a flop in modes 0, 1, 3 and 4 and a 2:1 read of two
+    flops in mode 2; s_axis_tready is a flop in modes 1, 2 and 3 and combinational from m_axis_tready in modes 0 and 4
+  cdc: none (one clock)
+  part_specific: none
+limits: one clock domain; no packet-level behaviour (tlast is only carried); tvalid of an N = 0 wire follows the source, so the
+  AXI4-Stream rules hold there only if the source keeps them; the formal proofs are at W = 4 with the sideband off (the sideband
+  moves as part of the packed word and is covered by simulation)
+evidence:
+  summary: 'cocotb against ip_lib/pipe_reg/model.py, clock by clock: s_tready, m_tvalid and the packed word every clock at 25 parameter
+    points with random source and sink profiles and mid-run resets, an independent in-order scoreboard, the AXI4-Stream rule monitor
+    of axi_tx/rtl/axis_rules.sv on both ports, and a check that tvalid does not move when tready is flipped within a clock; the
+    declared latency, throughput, capacity and ready response checked against measured ones. Formal: SymbiYosys k-induction proofs
+    of order and loss (a beat number carried in the data), stability while stalled and the stream rules as SVA (tb/axis_sva.sv,
+    slang front end)'
+  tests:
+  - ip_lib/pipe_reg/tb/test_pipe_reg_rtl.py
+  - ip_lib/pipe_reg/tb/test_pipe_reg_formal.py
+  faults: ip_lib/pipe_reg/faults.yaml
+  results: results/b151/faults.json, results/b151/pipe_reg_measure.jsonl, results/b151/pipe_reg_formal.json
+  simulator: Icarus Verilog 12, cocotb 2.0.1; SymbiYosys with boolector (OSS CAD Suite 20261112)
+cost_table: 'pending: out-of-context Vivado runs are queued in partition/sweep.py and _handoff/fpga_agent/vivado_later_queue.md;
+  Yosys counts for 64-bit boundaries are in results/b151/part_sys_yosys.json'
+licence: MIT (this repository)
+gaps:
+- 'no Vivado number: Fmax and resources per mode and stage count are expectations until the queued runs, and the comparison with
+  AMD''s AXI Register Slice is hypothesis until the vendor run (partition/vendor)'
+- tvalid independence from tready is established by construction and by a simulation check, not by a property on the ports (a port-level
+  property cannot see it)
+next_steps:
+- Run the queued partition sweep and the vendor slice build, fill the cost table, and replace the draft rules in the knowledge
+  base with measured ones.
+- Add a reverse-registered mode if the owner or the vendor comparison shows a use for one.

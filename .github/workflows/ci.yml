@@ -160,11 +160,14 @@ jobs:
           tar -xzf oss.tgz
           rm oss.tgz
       - name: Install
-        run: pip install pytest
+        run: pip install pytest pyyaml
       - name: Safety by k-induction (AW 4, 2, 1; one bit of each class of the entry), bounded progress, covers, and one mutant per key property
         run: |
           $FDA_OSS_CAD/bin/yosys -V
           python -m pytest -q designs/b96_kr260_10g/tests/test_b115_formal.py
+      - name: Partitioning blocks (brief 151) - pipe_reg and credit_chan proofs by k-induction (data, order, credits, the AXI4-Stream rules as SVA) and the planted faults refuted
+        run: |
+          python -m pytest -q ip_lib/pipe_reg/tb/test_pipe_reg_formal.py ip_lib/credit_chan/tb/test_credit_chan_formal.py
 
   rtl-sim:
     name: RTL tests (cocotb + Icarus) and mutants
@@ -209,6 +212,10 @@ jobs:
           python -m pytest -q ip_lib/axil_xbar/tb/test_axil_xbar_rtl.py
           python hil/ip_faults.py --blocks axil_xbar
           python -m pytest -q designs/b65a_axil_soc/tests/test_b65a_rtl.py
+      - name: Partitioning blocks (brief 151) - pipe_reg, credit_chan and the AXI slices against their models clock by clock with the AXI4-Stream rule monitor; the synthetic system's latency, throughput and data; seeded faults
+        run: |
+          python -m pytest -q ip_lib/pipe_reg/tb/test_pipe_reg_rtl.py ip_lib/credit_chan/tb/test_credit_chan_rtl.py ip_lib/axi_reg_slice/tb/test_axi_reg_slice_rtl.py partition/tests/test_partition_sim.py flow/tests/test_151_partition_testplans.py
+          python flow/net/faults.py --only "$(python -c "import yaml;print(','.join(m['name'] for b in ('pipe_reg','credit_chan','axi_reg_slice') for m in yaml.safe_load(open(f'ip_lib/{b}/faults.yaml'))['faults']))")"
       - name: AXI missing-response rule (brief 71) - seeded faults for axil_resp_rules (Icarus)
         run: python -m pytest -q axi_tx/tests/test_71_resp_rules_rtl.py
       - name: GT serdes design (brief 56A) - the fabric PRBS generator and checker against a model, the register block against a stand-in for the GT Wizard (Icarus)

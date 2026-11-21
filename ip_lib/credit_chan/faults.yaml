@@ -1,0 +1,88 @@
+# Seeded faults (run by flow/net/faults.py): each replaces `old` (exactly once) by `new` in a copy of rtl/;
+# the tests named in `test` must fail. The real RTL is never touched.
+runner: flow/net/faults.py          # the fault runner that owns this block's faults
+faults:
+  - name: credit_double_return
+    file: credit_chan.sv
+    old: "else if (!send && credit_in) credits_next = credits + CW'(1);"
+    new: "else if (!send && credit_in) credits_next = credits + CW'(2);"
+    class: data-loss
+    why: "a returned credit counts as two: the sender sends into a full receiver buffer"
+    test: ip_lib/credit_chan/tb/test_credit_chan_rtl.py -k test_random_traffic
+  - name: ready_without_credit
+    file: credit_chan.sv
+    old: "s_ready <= (credits_next != '0);"
+    new: "s_ready <= 1'b1;"
+    class: data-loss
+    why: "s_ready ignores the credit count: the sender sends with no credit and the receiver buffer overflows"
+    test: ip_lib/credit_chan/tb/test_credit_chan_rtl.py -k test_random_traffic
+  - name: credit_lost_when_both
+    file: credit_chan.sv
+    old: "if (send && !credit_in) credits_next = credits - CW'(1);"
+    new: "if (send) credits_next = credits - CW'(1);"
+    class: performance
+    why: "a credit arriving in the clock a beat is sent is dropped: credits leak and the channel slows then stops"
+    test: ip_lib/credit_chan/tb/test_credit_chan_rtl.py -k test_random_traffic
+  - name: credit_start_zero
+    file: credit_chan.sv
+    old: "credits <= CW'(CREDITS);"
+    new: "credits <= '0;"
+    class: deadlock
+    why: "the sender starts with no credits: nothing is ever sent"
+    test: ip_lib/credit_chan/tb/test_credit_chan_rtl.py -k test_random_traffic
+  - name: write_pointer_no_wrap
+    file: credit_chan.sv
+    old: "if (f_valid) wp <= (wp == PW'(CREDITS - 1)) ? '0 : wp + PW'(1);"
+    new: "if (f_valid) wp <= wp + PW'(1);"
+    class: data-corruption
+    why: "the write pointer does not wrap at CREDITS: wrong entries for a depth that is not a power of two"
+    test: ip_lib/credit_chan/tb/test_credit_chan_rtl.py -k test_random_traffic
+  - name: read_wrong_entry
+    file: credit_chan.sv
+    old: "assign m_data = mem[rp];"
+    new: "assign m_data = mem[wp];"
+    class: data-corruption
+    why: "the output reads the write position, not the read position"
+    test: ip_lib/credit_chan/tb/test_credit_chan_rtl.py -k test_random_traffic
+  - name: pop_without_ready
+    file: credit_chan.sv
+    old: "if (pop)     rp <= (rp == PW'(CREDITS - 1)) ? '0 : rp + PW'(1);"
+    new: "if (m_valid) rp <= (rp == PW'(CREDITS - 1)) ? '0 : rp + PW'(1);"
+    class: data-loss
+    why: "the read pointer advances whenever the output is valid, not when it is taken: a stalled beat is skipped"
+    test: ip_lib/credit_chan/tb/test_credit_chan_rtl.py -k test_random_traffic
+  - name: valid_one_clock_late
+    file: credit_chan.sv
+    old: "m_valid <= (cnt_next != '0);"
+    new: "m_valid <= (cnt != '0);"
+    class: protocol
+    why: "m_valid follows the buffer count one clock late: a beat is offered after it was popped"
+    test: ip_lib/credit_chan/tb/test_credit_chan_rtl.py -k test_random_traffic
+  - name: forward_stage_skips
+    file: credit_chan.sv
+    old: "fd[i*W +: W] <= fd[(i-1)*W +: W];"
+    new: "fd[i*W +: W] <= fd[0 +: W];"
+    class: data-corruption
+    why: "a forward stage takes its data from the first stage, not the previous one"
+    test: ip_lib/credit_chan/tb/test_credit_chan_rtl.py -k test_random_traffic
+  - name: return_stage_drops
+    file: credit_chan.sv
+    old: "else     bv[j] <= bv[j-1];"
+    new: "else     bv[j] <= 1'b0;"
+    class: performance
+    why: "a credit-return stage past the first drops every credit"
+    test: ip_lib/credit_chan/tb/test_credit_chan_rtl.py -k test_random_traffic
+  - name: count_unaccepted_beat
+    file: credit_chan.sv
+    old: "always_comb fv[0] = send;"
+    new: "always_comb fv[0] = s_valid;"
+    class: data-corruption
+    why: "a beat that was offered but not accepted enters the channel"
+    test: ip_lib/credit_chan/tb/test_credit_chan_rtl.py -k test_random_traffic
+  - name: buffer_write_ignores_valid
+    file: credit_chan.sv
+    old: "if (f_valid) mem[wp] <= f_data;"
+    new: "mem[wp] <= f_data;"
+    class: data-corruption
+    why: "the receiver buffer is written on every clock: an entry is overwritten by an invalid beat"
+    test: ip_lib/credit_chan/tb/test_credit_chan_rtl.py -k test_random_traffic
