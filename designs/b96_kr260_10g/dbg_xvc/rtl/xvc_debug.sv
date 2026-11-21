@@ -7,7 +7,7 @@
 module xvc_debug (
     input  logic        clk,            // the design's 100 MHz free-running clock (MMCM output): the ILA's sample clock
     input  logic [34:0] dbg_s,          // clk-domain taps, bit meaning in docs/dbg_xvc.md
-    input  logic        dbg_rxclk,      // RXUSRCLK2
+    input  logic        rxusr2,         // RXUSRCLK2 (named rxusr2 so the clock keeps the name the flow's gates expect)
     input  logic [2:0]  dbg_rxp         // RXUSRCLK2-domain strobes
 );
     // ---- the PS and its AXI master (default configuration: M_AXI_HPM0_LPD enabled, pl_clk0 = 100 MHz; nothing else of the PS is used) ----
@@ -69,7 +69,7 @@ module xvc_debug (
     logic [2:0] rxp_c;
     for (genvar i = 0; i < 3; i++) begin : g_p
         xpm_cdc_pulse #(.DEST_SYNC_FF(3), .INIT_SYNC_FF(0), .REG_OUTPUT(1), .RST_USED(0), .SIM_ASSERT_CHK(1)) u_x (
-            .src_clk(dbg_rxclk), .src_pulse(dbg_rxp[i]), .src_rst(1'b0), .dest_clk(clk), .dest_pulse(rxp_c[i]), .dest_rst(1'b0));
+            .src_clk(rxusr2), .src_pulse(dbg_rxp[i]), .src_rst(1'b0), .dest_clk(clk), .dest_pulse(rxp_c[i]), .dest_rst(1'b0));
     end
     ila_xvc u_ila (.clk, .probe0({rxp_c, dbg_s}));
 endmodule

@@ -1,6 +1,6 @@
 # Build dbg_xvc: an ILA reached over Ethernet (brief 131)
 
-Status: built on Vivado 2026.1 with the flow's gates (numbers below, measured); **not loaded on a board** (the board test is pre-registered in `xvc_board_test.md`, the Linux side is in `xvc_board_side.md`).
+Status: built and routed on Vivado 2026.1 (numbers below, measured; some flow gates fail for debug-IP reasons, listed); **not loaded on a board** (the board test is pre-registered in `xvc_board_test.md`, the Linux side is in `xvc_board_side.md`).
 Terms: ILA = integrated logic analyser (a capture memory in the PL that records chosen signals around a trigger); XVC = Xilinx Virtual Cable (JTAG shifts carried over TCP); PS = the Zynq UltraScale+ processing system (the ARM cores and Linux);
 BSCAN = the FPGA's boundary-scan (JTAG) user chains; hardware manager = the Vivado tool that talks to ILAs.
 
@@ -59,4 +59,38 @@ which would let the existing register scripts run over XVC. **Not built and not 
 
 ## Measured: what the debug logic changes (Vivado 2026.1, same flow and commit for both builds)
 
-RESULTS_PLACEHOLDER
+Both builds: Vivado 2026.1 (Basic licence), 2 threads, the same commit, `flow/run_vivado.sh ... base`, MemoryMax 12G (owner's decision of 2026-11-21: the 6G cap OOM-killed dbg_xvc three times; the parent had also only just fitted its earlier 6G run). Records: `results/b131/builds/{eyescan,dbg_xvc}/` (run.json, trimmed gates.json, digest.json), `results/b131/compare/summary.json`, netlist and timing dumps in `results/b131/dump/` (made by `dbg_xvc/scripts/dump_netlist_timing.tcl`, compared by `compare_builds.py`).
+
+| | eyescan (parent) | dbg_xvc | difference |
+|---|---|---|---|
+| WNS, routed (ns) | 0.314 | 0.323 | +0.009 |
+| WHS, routed (ns) | 0.011 | 0.011 | 0 |
+| LUT | 6395 | 8216 | +1821 |
+| FF | 14545 | 17410 | +2865 |
+| BRAM tiles | 0 | 1.5 | +1.5 (the ILA) |
+| DSP | 0 | 0 | 0 |
+| Peak memory (scope, anonymous) | 8111 MiB | 9647 MiB | +1536 MiB |
+| Wall time | 1048 s | 1745 s | +697 s |
+
+**Where the added logic is.** About 1.8k LUTs and 2.9k FFs is mostly the PS8 wrapper's fabric glue, the AXI converter, the Debug Bridge with its soft TAP and the ILA with its debug hub; the split between them was not measured.
+
+**The trading path and the core are untouched at cell level (measured).** `compare_builds.py` compares every cell under `u_core` of the two routed checkpoints. The 14311 cells with names from the RTL (flops, RAM, GT, clock buffers) are identical in name and library cell in both builds: 0 removed, 0 added, 0 changed. LUTs, carry chains and muxes have tool-made names that change from run to run, so they are compared by count per `u_core` child: `g_old.u_rx` (the receive path with MAC and trading decision) 0 change, every crossing and the transmit-side vectors 0, `g_old.u_tx` 11 fewer, `g_es.u_es` 7 fewer, `u_cfg_tx` 38 more, the register-block level 5 more; the net total is 25 more LUT-type cells under `u_core`. Those changes are the synthesis tool re-mapping logic that did not change in the source; they are reported as observed and not explained.
+Each of the three tapped nets (decision fired, start of packet, order frame seen, RXUSRCLK2 domain) has two load pins in dbg_xvc, the design's own load and the first flop of the tap's crossing: one extra load per net.
+
+**Timing through the trading path.** Worst slack of paths that start or end in the receive path (`u_rx`): setup 0.444 ns parent, 0.333 ns dbg_xvc; hold 0.017 / 0.015. In the transmit path (`u_tx`): setup 0.314 / 0.323; hold 0.011 / 0.011. The receive-path setup slack is 0.111 ns lower in the debug build although none of its cells changed; the placement and routing of a different netlist differ, and the cells and constraints do not. Whether the 0.111 ns is run-to-run variation was not measured (one run of each build). Both builds meet timing with positive slack on every clock.
+
+**One naming effect found and fixed.** In the first dbg_xvc build the receive user clock took the name `dbg_rxclk` (Vivado names a clock after the net at the highest level of the hierarchy), which the flow's gates do not expect; the top now names that net `rxusr2`. The gate failures below did not change with the rename.
+
+**Flow gates (`flow/gates.py`): the parent passes all of them; dbg_xvc does not.** All post-route timing gates pass for dbg_xvc: setup, hold, pulse width, no unconstrained endpoints, DRC, methodology (no critical warnings), `report_cdc` (no critical), power, I/O timing, bitstream. These fail:
+
+| Gate | What the record shows | Cause |
+|---|---|---|
+| `post_synth_no_unconstrained_endpoints`, `post_synth_methodology_no_critical` | 1008 register pins with no clock, in the ILA's capture memory and debug hub, root `dbg_hub/sl_iport0_o[1]`; 1000 TIMING-17 critical warnings | at synthesis the debug hub's clock (a divided TCK made by the Debug Bridge's soft TAP) is not yet defined; the bridge's constraint file creates it (it is in `ip/dbb_xvc/.../axi_jtag.xdc`). The same pins pass after routing (`no_unconstrained_endpoints` ok). The reason it is missing at synthesis is not confirmed. |
+| `post_synth_cdc_structure_clean` | 2203 crossings classed unsafe, rule U5 ("xpm_handshake bus without its Max Delay Datapath Only exception"), all between the core's clock domains (hs_vec crossings) | the exceptions do exist in the routed design (`exceptions_route.rpt` lists them with max_dpo 6.206 and 10 ns); the flow's checker does not match them in this build. Cause not found. The routed `report_cdc` has no critical item. |
+| `post_synth_exceptions_clean`, `exceptions_clean` | exceptions "ignored" or "non-existent" in the Debug Bridge's and ILA's own constraint files, plus XPM exceptions "totally overridden" by others | debug IP constraints; the flow classifies some as `EXC-IGNORED-DEBUG-IP` and still fails on others |
+| `post_place_hold` | worst hold slack at placement -2.3 ns (limit -0.5) | the routed design closes hold (0.011 ns); the worst place-stage path is not in the trading path |
+
+`post_synth_resources_in_range` failed on the first run because the parent's architecture predicts 0 BRAM; `dbg_xvc/architecture.yaml` now predicts 1 to 2 and it passes.
+These are the open items for the planner: either the debug IP needs its clocks constrained for the flow's synthesis-stage gates (a flow change, not made here), or the gates need a debug-build mode.
+
+**Bitstream.** The flow's base build wrote `kr260_10g_top.bit` and the probe file `kr260_10g_top.ltx` was written from the routed checkpoint (it names the debug hub and `u_dbg/u_ila`); both are in the gitignored build directory and are not loaded on any board. Build ID `4a9ae66a`.

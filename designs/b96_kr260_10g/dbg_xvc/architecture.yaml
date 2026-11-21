@@ -1,3 +1,4 @@
+# dbg_xvc architecture: the eyescan build's (hand-written; brief 96) plus the debug path of brief 131 (xvc_debug block, pl_clk0 domain, the BRAM of the ILA)
 # b96_kr260_10g architecture (hand-written; brief 96): one GTH lane on the KR260 SFP+ cage carrying our own 10GBASE-R PCS and 64-bit MAC, with the mock trading path.
 schema: fpga-design-agent/architecture/v1
 blocks:
@@ -12,6 +13,7 @@ blocks:
   - {name: rx_path, function: "receive side: PCS, MAC, trading decision, counters, in RXUSRCLK2"}
   - {name: es_ctrl, function: "DRP master and eye-scan point sequencer for the GTHE4 channel (brief 96D; instantiated only when EYESCAN = 1): raw DRP read/write for the host, one eye-scan point per command, in the free-running clock"}
   - {name: b96_core, function: "register block, GT wrapper and the crossings between the clk, TXUSRCLK2 and RXUSRCLK2 domains"}
+  - {name: xvc_debug, function: "brief 131, debug build only: PS M_AXI_HPM0_LPD -> AXI4-Lite converter -> Debug Bridge (AXI to BSCAN) -> one ILA (1024 x 38 bits) on read-only status taps; three RXUSRCLK2 strobes cross to sys by xpm_cdc_pulse"}
   - {name: jtag_bus, function: "host register bus over the JTAG cable (BSCANE2 USER4), reused from b58a_trigger"}
 interfaces:
   - {name: host_regs, between: [jtag_bus, b96_core], protocol: simple}
@@ -22,6 +24,7 @@ clock_domains:
   - {name: sys, clock: clk_25, freq_mhz: 100}
   - {name: txusr2, clock: "TXUSRCLK2 from the GT (BUFG_GT)", freq_mhz: 161.1328}
   - {name: rxusr2, clock: "RXUSRCLK2 recovered by the CDR (BUFG_GT)", freq_mhz: 161.1328}
+  - {name: pl_clk0, clock: "PS pl_clk0 (brief 131)", freq_mhz: 100}
   - {name: tck, clock: "JTAG TCK (BSCANE2)", freq_mhz: 30}
 reset:
   synchronisers: [u_rst]
@@ -36,12 +39,13 @@ crossings:
   - {from: sys, to: rxusr2, signal: "clear counters, polarity", primitive: xpm_cdc_pulse}
   - {from: rxusr2, to: txusr2, signal: "order wanted, receive start, frame classes", primitive: xpm_cdc_pulse}
   - {from: rxusr2, to: txusr2, signal: "order fields and FCS verdict (quasi-static bus, sampled five clocks after the order pulse)", primitive: xpm_cdc_array_single}
+  - {from: rxusr2, to: sys, signal: "decision fired, start of packet, order frame seen (debug ILA taps)", primitive: xpm_cdc_pulse}
   - {from: tck, to: sys, signal: "host command", primitive: xpm_cdc_handshake}
   - {from: async, to: sys, signal: "SFP+ status and I2C pins", primitive: xpm_cdc_single}
 predicted_resources:
   lut: [3000, 12000]
   ff: [6000, 20000]
-  bram_tile: 0
+  bram_tile: [1, 2]      # the ILA's capture memory (brief 131); the other builds predict 0
   dsp: 0
 cdc_waivers:
   - {cell: 'gtwiz_reset_inst/reset_synchronizer_(rx|tx)_done_inst/rst_in_out_reg$', reason: "AMD GT Wizard reset helper (gtwizard_ultrascale 1.7): the final flop of its own reset synchroniser; not our logic"}

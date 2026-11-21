@@ -68,7 +68,7 @@ module kr260_10g_top #(
 `endif
 
     logic [34:0] dbg_s;
-    logic        dbg_rxclk;
+    logic        rxusr2;     // named rxusr2 on purpose: Vivado names the receive user clock after the highest-level net, and the flow's gates and constraints expect the name rxusr2
     logic [2:0]  dbg_rxp;
     logic        h_we, h_re;
     logic [11:0] h_addr;
@@ -79,8 +79,8 @@ module kr260_10g_top #(
         .refclk, .rx_p(sfp_rx_p), .rx_n(sfp_rx_n), .tx_p(sfp_tx_p), .tx_n(sfp_tx_n),
         .sfp_tx_disable, .sfp_mod_abs, .sfp_rx_los, .sfp_tx_fault,
         .i2c_scl_low(scl_low), .i2c_sda_low(sda_low), .i2c_scl_i(scl_i), .i2c_sda_i(sda_i),
-        .sm_en, .sm_addr, .sm_do, .sm_rdy, .led, .dbg_s, .dbg_rxclk, .dbg_rxp);
+        .sm_en, .sm_addr, .sm_do, .sm_rdy, .led, .dbg_s, .dbg_rxclk(rxusr2), .dbg_rxp);
 
     // brief 131: the debug path (PS AXI -> Debug Bridge -> ILA), a debug build only: nothing here feeds the design
-    xvc_debug u_dbg (.clk, .dbg_s, .dbg_rxclk, .dbg_rxp);
+    xvc_debug u_dbg (.clk, .dbg_s, .rxusr2, .dbg_rxp);
 endmodule
