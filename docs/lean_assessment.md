@@ -65,7 +65,7 @@ Source: [formal/lean/README.md](../formal/lean/README.md). The statements (all p
 **Not claimable:** that ITP on hardware is new (ACL2 at AMD, Kami, Silver predate Lean 4); that LLM agents with Lean on RTL are new (Rtl2lean, CircuitProver and CktFormalizer, May to July 2026, do this and are peer work to be cited); that this experiment is a first. It is one small proof about one datapath piece.
 
 **Candidate novelty, to be stated as a combination, as far as the search showed:** an LLM agent that designs the RTL for a real FPGA, a human who writes and approves the theorem statements (the specification), a script that checks that a proved file leaves every definition and statement unchanged, the Lean kernel as the checker with an axiom audit that
-separates kernel-only proofs from SAT-certificate ones, the RTL link cross-checked against an independent reference, and the proof recorded as computed evidence in the same traceability matrix as simulation and SymbiYosys results. The search found no work that records Lean proofs in a requirements traceability matrix for an FPGA flow; a shallow US-only search does not show that none exists. In this repo the last part is a **proposal** (below), not yet in `flow/traceability.py`.
+separates kernel-only proofs from SAT-certificate ones, the RTL link cross-checked against an independent reference, and the proof recorded as computed evidence in the same traceability matrix as simulation and SymbiYosys results. The search found no work that records Lean proofs in a requirements traceability matrix for an FPGA flow; a shallow US-only search does not show that none exists. In this repo the last part was a proposal in brief 124 and is implemented by brief 125 (section 6), in the v1 traceability flow.
 
 Defensible interview phrasing: "ITP on hardware has a long history and LLM agents writing Lean proofs about RTL are an active research area; I ran a small, honest instance on my own design: the specification was fixed and approved by a human, a model wrote the proofs with the checker's feedback, Lean's kernel checked them, and I kept the trust tiers explicit. I did not invent the approach; what I added was putting it in the evidence matrix next to the SymbiYosys proofs."
 
@@ -77,7 +77,14 @@ Defensible interview phrasing: "ITP on hardware has a long history and LLM agent
 4. **Costs and risks.** A separate model of the RTL (transcription risk, mitigated by a cross-check and, later, by generation from RTL as Rtl2lean does); a 3 GB toolchain; proof-writing time (about 17 minutes of model time here, 13.6 of them for the first, failed attempt; a human must still read the statements); a trust base that needs two tiers; a model can write a theorem that is true but too weak, so statements need human approval and a frozen-statement check.
 5. **Next step if adopted (a brief of its own):** the gray-code one-bit-step lemma for all widths (complements brief 115), then a Rtl2lean-style generated link for one small module, then the matrix method below. Do not add Lean to CI until the toolchain is cached.
 
-## 6. Proposed `formal_lean` method for the traceability matrix (not implemented; flow/traceability.py untouched)
+## 6. The `formal_lean` method (implemented by brief 125)
+
+This section proposed the method; brief 125 built it, with changes. It is in `flow/trace_v1.py` and `flow/lean_tier.py`, not in the older per-artefact `flow/traceability.py`, and is documented in
+[traceability_v1.md](traceability_v1.md#lean-proofs-formal_lean-brief-125). What changed from the proposal: the item lives in the v1 testplan (an item names its theorem; there is no `req:` tag
+read from the Lean file); the status comes from `lake build` when the toolchain is present and otherwise from a committed hash-pinned record; the frozen-statement gate pins the statement and the
+module's definitions to a human approval in `verif/lean_approvals.yaml`; the RTL link has four stated tiers; the statuses are `pass`, `fail`, `stale`, `not_run` and `statement not approved`.
+The original proposal follows for the record.
+
 
 - `spec.yaml` requirement `proof:` list gains `formal_lean`.
 - Tag: a `req: REQ-ID` line inside the theorem's doc comment (the experiment uses `B119-CKSUM-IP`, `-TCP`, `-INC`, `-MODEL`; they are placeholders, 119's spec has no such ids yet).
