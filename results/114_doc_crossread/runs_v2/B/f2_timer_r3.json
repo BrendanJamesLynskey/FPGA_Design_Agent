@@ -1,0 +1,1508 @@
+{
+ "schema": "fda-doc-crossread/1",
+ "purpose": "doc_crossread",
+ "topic": "AXI Timer: the register offsets and the bit fields of the Control/Status Register 0.",
+ "target": "AXI Timer v2.0",
+ "document": {
+  "source": "/home/brendan/Claude_sandbox/_amd_docs/PG079_pg079-axi-timer.pdf",
+  "pages": [
+   14,
+   15,
+   16,
+   17
+  ],
+  "sha256": "25487030b42e81b5353ee2fe24abeaf283ca36b7ba5a4bb83934046c282dcdcb",
+  "chars": 17143
+ },
+ "code": {
+  "files": [
+   {
+    "path": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/f2_timer/code/tb_timer.sv",
+    "sha256": "3fe250def2375c11d0643c2936bdcd62540e1ff6737375108a928b049adfe683",
+    "lines": 162
+   }
+  ],
+  "n_facts": 13,
+  "not_parsed": [],
+  "limits": [
+   "Python: module-level and class-level assignments (including tuple unpacking), evaluated with integers, strings, lists, tuples, dicts, comprehensions over range(), and calls to simple functions defined in the given files (docstring, if-raise, local assignments, return). Not parsed: constants inside function bodies, attributes of objects, anything that calls a library or does I/O.",
+   "SystemVerilog: localparam and parameter declarations (with their declared width), `define, and enum members with explicit values. Not parsed: array literals, structs, functions, case-statement addresses, port widths, generate blocks, numbers written inline in always blocks.",
+   "C: #define NAME <integer expression>. Not parsed: enums, const variables, function-like macros.",
+   "Comments and strings are searched only for the names a text fact (step, condition) mentions; no number in a comment is read."
+  ]
+ },
+ "reader": {
+  "repairs": 0,
+  "seconds": 54.8,
+  "problems": [
+   "fact F53: the quotation was not found in the excerpt"
+  ],
+  "prompts": {
+   "system": "graph/doc_crossread/system",
+   "user": "graph/doc_crossread/user",
+   "repair": "graph/doc_crossread/repair"
+  },
+  "prompt_hashes": {
+   "system": "39849fdea6851c68b57cbc6484d6dfa51dd282578308280247bb31ed1dd2a4e3",
+   "user": "222a588489bd69b7822fd12b58bb36ef2f1933edd2f34e29b4f09b31c2f710ae",
+   "repair": "c5de7b5659596e3b49e746badb81f31d85cf3ba8bec0d5ff020cd4161f53f400"
+  },
+  "n_facts": 55,
+  "source": "stored reply (post-hoc comparator)"
+ },
+ "model": {
+  "purpose": "doc_crossread",
+  "endpoint": "claude_code",
+  "kind": "claude_code",
+  "model": "claude-haiku-5-5",
+  "options": {
+   "effort": "medium",
+   "timeout_s": 900
+  },
+  "entry_hash": "c8579489955e37c4",
+  "table_hash": "1d495cbf804c90bf"
+ },
+ "usage": {
+  "calls": 1,
+  "seconds": 54.7,
+  "input_tokens": 2,
+  "cache_read_input_tokens": 4993,
+  "cache_creation_input_tokens": 334,
+  "output_tokens": 16502,
+  "plan_cost_estimate_usd": 0.0084,
+  "cost_usd": null
+ },
+ "summary": {
+  "agree": 13,
+  "not_in_code": 30,
+  "mentioned": 12
+ },
+ "rows": [
+  {
+   "id": "F1",
+   "status": "agree",
+   "tier": "name",
+   "why": "",
+   "kind": "address",
+   "subject": "TCSR0",
+   "field": null,
+   "doc": {
+    "value": 0,
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 14,
+    "ref": "Table 4: Register Overview",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "e285df33a6264b65"
+   },
+   "code": [
+    {
+     "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/f2_timer/code/tb_timer.sv",
+     "line": 16,
+     "name": "TCSR0",
+     "value": 0,
+     "n": null
+    }
+   ]
+  },
+  {
+   "id": "F2",
+   "status": "agree",
+   "tier": "name",
+   "why": "",
+   "kind": "address",
+   "subject": "TLR0",
+   "field": null,
+   "doc": {
+    "value": 4,
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 14,
+    "ref": "Table 4: Register Overview",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "94bc85c113a0297a"
+   },
+   "code": [
+    {
+     "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/f2_timer/code/tb_timer.sv",
+     "line": 16,
+     "name": "TLR0",
+     "value": 4,
+     "n": null
+    }
+   ]
+  },
+  {
+   "id": "F3",
+   "status": "agree",
+   "tier": "name",
+   "why": "",
+   "kind": "address",
+   "subject": "TCR0",
+   "field": null,
+   "doc": {
+    "value": 8,
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 14,
+    "ref": "Table 4: Register Overview",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "06a9d3e47fcd79d8"
+   },
+   "code": [
+    {
+     "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/f2_timer/code/tb_timer.sv",
+     "line": 16,
+     "name": "TCR0",
+     "value": 8,
+     "n": null
+    }
+   ]
+  },
+  {
+   "id": "F4",
+   "status": "agree",
+   "tier": "name",
+   "why": "",
+   "kind": "address",
+   "subject": "TCSR1",
+   "field": null,
+   "doc": {
+    "value": 16,
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 14,
+    "ref": "Table 4: Register Overview",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "5768a37ebaa94e56"
+   },
+   "code": [
+    {
+     "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/f2_timer/code/tb_timer.sv",
+     "line": 16,
+     "name": "TCSR1",
+     "value": 16,
+     "n": null
+    }
+   ]
+  },
+  {
+   "id": "F5",
+   "status": "agree",
+   "tier": "name",
+   "why": "",
+   "kind": "address",
+   "subject": "TLR1",
+   "field": null,
+   "doc": {
+    "value": 20,
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 14,
+    "ref": "Table 4: Register Overview",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "acf295ce772b54c7"
+   },
+   "code": [
+    {
+     "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/f2_timer/code/tb_timer.sv",
+     "line": 16,
+     "name": "TLR1",
+     "value": 20,
+     "n": null
+    }
+   ]
+  },
+  {
+   "id": "F6",
+   "status": "agree",
+   "tier": "name",
+   "why": "",
+   "kind": "address",
+   "subject": "TCR1",
+   "field": null,
+   "doc": {
+    "value": 24,
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 14,
+    "ref": "Table 4: Register Overview",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "b61ba1cfeaf34af2"
+   },
+   "code": [
+    {
+     "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/f2_timer/code/tb_timer.sv",
+     "line": 16,
+     "name": "TCR1",
+     "value": 24,
+     "n": null
+    }
+   ]
+  },
+  {
+   "id": "F7",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "bit_range",
+   "subject": "TCSR0",
+   "field": "Reserved",
+   "doc": {
+    "value": null,
+    "values": null,
+    "lo": 12,
+    "hi": 31,
+    "unit": "bits",
+    "applies_to": "all",
+    "for_target": true,
+    "page": 14,
+    "ref": "Table 5: Control/Status Register 0 Bit Definitions",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "3385ffe6747065e4"
+   },
+   "code": []
+  },
+  {
+   "id": "F8",
+   "status": "agree",
+   "tier": "name",
+   "why": "",
+   "kind": "bit_range",
+   "subject": "TCSR0",
+   "field": "CASC",
+   "doc": {
+    "value": null,
+    "values": null,
+    "lo": 11,
+    "hi": 11,
+    "unit": "bits",
+    "applies_to": "all",
+    "for_target": true,
+    "page": 14,
+    "ref": "Table 5: Control/Status Register 0 Bit Definitions",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "370292d4cc2cb5d8"
+   },
+   "code": [
+    {
+     "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/f2_timer/code/tb_timer.sv",
+     "line": 17,
+     "name": "CASC",
+     "value": 2048,
+     "n": null
+    }
+   ]
+  },
+  {
+   "id": "F9",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "bit_range",
+   "subject": "TCSR0",
+   "field": "ENALL",
+   "doc": {
+    "value": null,
+    "values": null,
+    "lo": 10,
+    "hi": 10,
+    "unit": "bits",
+    "applies_to": "all",
+    "for_target": true,
+    "page": 15,
+    "ref": "Table 5: Control/Status Register 0 Bit Definitions (cont'd)",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "3d7c053bb9a0e4c9"
+   },
+   "code": []
+  },
+  {
+   "id": "F10",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "bit_range",
+   "subject": "TCSR0",
+   "field": "PWMA0",
+   "doc": {
+    "value": null,
+    "values": null,
+    "lo": 9,
+    "hi": 9,
+    "unit": "bits",
+    "applies_to": "all",
+    "for_target": true,
+    "page": 15,
+    "ref": "Table 5: Control/Status Register 0 Bit Definitions (cont'd)",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "0c23eb5a3bf8ff40"
+   },
+   "code": []
+  },
+  {
+   "id": "F11",
+   "status": "agree",
+   "tier": "name",
+   "why": "",
+   "kind": "bit_range",
+   "subject": "TCSR0",
+   "field": "T0INT",
+   "doc": {
+    "value": null,
+    "values": null,
+    "lo": 8,
+    "hi": 8,
+    "unit": "bits",
+    "applies_to": "all",
+    "for_target": true,
+    "page": 15,
+    "ref": "Table 5: Control/Status Register 0 Bit Definitions (cont'd)",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "01db17f58b0910ee"
+   },
+   "code": [
+    {
+     "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/f2_timer/code/tb_timer.sv",
+     "line": 17,
+     "name": "T0INT",
+     "value": 256,
+     "n": null
+    }
+   ]
+  },
+  {
+   "id": "F12",
+   "status": "agree",
+   "tier": "name",
+   "why": "",
+   "kind": "bit_range",
+   "subject": "TCSR0",
+   "field": "ENT0",
+   "doc": {
+    "value": null,
+    "values": null,
+    "lo": 7,
+    "hi": 7,
+    "unit": "bits",
+    "applies_to": "all",
+    "for_target": true,
+    "page": 15,
+    "ref": "Table 5: Control/Status Register 0 Bit Definitions (cont'd)",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "d518a9573d45d4d1"
+   },
+   "code": [
+    {
+     "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/f2_timer/code/tb_timer.sv",
+     "line": 17,
+     "name": "ENT",
+     "value": 128,
+     "n": null
+    }
+   ]
+  },
+  {
+   "id": "F13",
+   "status": "agree",
+   "tier": "name",
+   "why": "",
+   "kind": "bit_range",
+   "subject": "TCSR0",
+   "field": "ENIT0",
+   "doc": {
+    "value": null,
+    "values": null,
+    "lo": 6,
+    "hi": 6,
+    "unit": "bits",
+    "applies_to": "all",
+    "for_target": true,
+    "page": 15,
+    "ref": "Table 5: Control/Status Register 0 Bit Definitions (cont'd)",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "dbebf597d4289bb3"
+   },
+   "code": [
+    {
+     "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/f2_timer/code/tb_timer.sv",
+     "line": 17,
+     "name": "ENIT",
+     "value": 64,
+     "n": null
+    }
+   ]
+  },
+  {
+   "id": "F14",
+   "status": "agree",
+   "tier": "name",
+   "why": "",
+   "kind": "bit_range",
+   "subject": "TCSR0",
+   "field": "LOAD0",
+   "doc": {
+    "value": null,
+    "values": null,
+    "lo": 5,
+    "hi": 5,
+    "unit": "bits",
+    "applies_to": "all",
+    "for_target": true,
+    "page": 16,
+    "ref": "Table 5: Control/Status Register 0 Bit Definitions (cont'd)",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "2636e3e8f6029453"
+   },
+   "code": [
+    {
+     "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/f2_timer/code/tb_timer.sv",
+     "line": 17,
+     "name": "LOAD",
+     "value": 32,
+     "n": null
+    }
+   ]
+  },
+  {
+   "id": "F15",
+   "status": "agree",
+   "tier": "name",
+   "why": "",
+   "kind": "bit_range",
+   "subject": "TCSR0",
+   "field": "ARHT0",
+   "doc": {
+    "value": null,
+    "values": null,
+    "lo": 4,
+    "hi": 4,
+    "unit": "bits",
+    "applies_to": "all",
+    "for_target": true,
+    "page": 16,
+    "ref": "Table 5: Control/Status Register 0 Bit Definitions (cont'd)",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "8a44ecaae8372fd5"
+   },
+   "code": [
+    {
+     "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/f2_timer/code/tb_timer.sv",
+     "line": 17,
+     "name": "ARHT",
+     "value": 16,
+     "n": null
+    }
+   ]
+  },
+  {
+   "id": "F16",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "bit_range",
+   "subject": "TCSR0",
+   "field": "CAPT0",
+   "doc": {
+    "value": null,
+    "values": null,
+    "lo": 3,
+    "hi": 3,
+    "unit": "bits",
+    "applies_to": "all",
+    "for_target": true,
+    "page": 16,
+    "ref": "Table 5: Control/Status Register 0 Bit Definitions (cont'd)",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "88352d7e1a8e0c30"
+   },
+   "code": []
+  },
+  {
+   "id": "F17",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "bit_range",
+   "subject": "TCSR0",
+   "field": "GENT0",
+   "doc": {
+    "value": null,
+    "values": null,
+    "lo": 2,
+    "hi": 2,
+    "unit": "bits",
+    "applies_to": "all",
+    "for_target": true,
+    "page": 16,
+    "ref": "Table 5: Control/Status Register 0 Bit Definitions (cont'd)",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "c2054a93d939c39d"
+   },
+   "code": []
+  },
+  {
+   "id": "F18",
+   "status": "agree",
+   "tier": "name",
+   "why": "",
+   "kind": "bit_range",
+   "subject": "TCSR0",
+   "field": "UDT0",
+   "doc": {
+    "value": null,
+    "values": null,
+    "lo": 1,
+    "hi": 1,
+    "unit": "bits",
+    "applies_to": "all",
+    "for_target": true,
+    "page": 16,
+    "ref": "Table 5: Control/Status Register 0 Bit Definitions (cont'd)",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "6bb5be523509f808"
+   },
+   "code": [
+    {
+     "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/f2_timer/code/tb_timer.sv",
+     "line": 17,
+     "name": "UDT",
+     "value": 2,
+     "n": null
+    }
+   ]
+  },
+  {
+   "id": "F19",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "bit_range",
+   "subject": "TCSR0",
+   "field": "MDT0",
+   "doc": {
+    "value": null,
+    "values": null,
+    "lo": 0,
+    "hi": 0,
+    "unit": "bits",
+    "applies_to": "all",
+    "for_target": true,
+    "page": 16,
+    "ref": "Table 5: Control/Status Register 0 Bit Definitions (cont'd)",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "00683094a4f33329"
+   },
+   "code": []
+  },
+  {
+   "id": "F20",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "reset_value",
+   "subject": "TCSR0",
+   "field": "CASC",
+   "doc": {
+    "value": 0,
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 14,
+    "ref": "Table 5: Control/Status Register 0 Bit Definitions",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "370292d4cc2cb5d8"
+   },
+   "code": []
+  },
+  {
+   "id": "F21",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "reset_value",
+   "subject": "TCSR0",
+   "field": "ENALL",
+   "doc": {
+    "value": 0,
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 15,
+    "ref": "Table 5: Control/Status Register 0 Bit Definitions (cont'd)",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "3d7c053bb9a0e4c9"
+   },
+   "code": []
+  },
+  {
+   "id": "F22",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "reset_value",
+   "subject": "TCSR0",
+   "field": "PWMA0",
+   "doc": {
+    "value": 0,
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 15,
+    "ref": "Table 5: Control/Status Register 0 Bit Definitions (cont'd)",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "0c23eb5a3bf8ff40"
+   },
+   "code": []
+  },
+  {
+   "id": "F23",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "reset_value",
+   "subject": "TCSR0",
+   "field": "T0INT",
+   "doc": {
+    "value": 0,
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 15,
+    "ref": "Table 5: Control/Status Register 0 Bit Definitions (cont'd)",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "01db17f58b0910ee"
+   },
+   "code": []
+  },
+  {
+   "id": "F24",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "reset_value",
+   "subject": "TCSR0",
+   "field": "ENT0",
+   "doc": {
+    "value": 0,
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 15,
+    "ref": "Table 5: Control/Status Register 0 Bit Definitions (cont'd)",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "d518a9573d45d4d1"
+   },
+   "code": []
+  },
+  {
+   "id": "F25",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "reset_value",
+   "subject": "TCSR0",
+   "field": "ENIT0",
+   "doc": {
+    "value": 0,
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 15,
+    "ref": "Table 5: Control/Status Register 0 Bit Definitions (cont'd)",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "dbebf597d4289bb3"
+   },
+   "code": []
+  },
+  {
+   "id": "F26",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "reset_value",
+   "subject": "TCSR0",
+   "field": "LOAD0",
+   "doc": {
+    "value": 0,
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 16,
+    "ref": "Table 5: Control/Status Register 0 Bit Definitions (cont'd)",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "2636e3e8f6029453"
+   },
+   "code": []
+  },
+  {
+   "id": "F27",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "reset_value",
+   "subject": "TCSR0",
+   "field": "ARHT0",
+   "doc": {
+    "value": 0,
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 16,
+    "ref": "Table 5: Control/Status Register 0 Bit Definitions (cont'd)",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "8a44ecaae8372fd5"
+   },
+   "code": []
+  },
+  {
+   "id": "F28",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "reset_value",
+   "subject": "TCSR0",
+   "field": "CAPT0",
+   "doc": {
+    "value": 0,
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 16,
+    "ref": "Table 5: Control/Status Register 0 Bit Definitions (cont'd)",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "88352d7e1a8e0c30"
+   },
+   "code": []
+  },
+  {
+   "id": "F29",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "reset_value",
+   "subject": "TCSR0",
+   "field": "GENT0",
+   "doc": {
+    "value": 0,
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 16,
+    "ref": "Table 5: Control/Status Register 0 Bit Definitions (cont'd)",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "c2054a93d939c39d"
+   },
+   "code": []
+  },
+  {
+   "id": "F30",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "reset_value",
+   "subject": "TCSR0",
+   "field": "UDT0",
+   "doc": {
+    "value": 0,
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 16,
+    "ref": "Table 5: Control/Status Register 0 Bit Definitions (cont'd)",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "6bb5be523509f808"
+   },
+   "code": []
+  },
+  {
+   "id": "F31",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "reset_value",
+   "subject": "TCSR0",
+   "field": "MDT0",
+   "doc": {
+    "value": 0,
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 16,
+    "ref": "Table 5: Control/Status Register 0 Bit Definitions (cont'd)",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "00683094a4f33329"
+   },
+   "code": []
+  },
+  {
+   "id": "F32",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "a value of a field (an encoding such as '1 = enable') is not compared with the code's masks and offsets; read the evidence",
+   "kind": "value",
+   "subject": "TCSR0",
+   "field": "CASC",
+   "doc": {
+    "value": 1,
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 14,
+    "ref": "Table 5: Control/Status Register 0 Bit Definitions",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "1514e01803d2fa3a"
+   },
+   "code": []
+  },
+  {
+   "id": "F33",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "a value of a field (an encoding such as '1 = enable') is not compared with the code's masks and offsets; read the evidence",
+   "kind": "value",
+   "subject": "TCSR0",
+   "field": "ENALL",
+   "doc": {
+    "value": 1,
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 15,
+    "ref": "Table 5: Control/Status Register 0 Bit Definitions (cont'd)",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "bb4c39c97645c58d"
+   },
+   "code": []
+  },
+  {
+   "id": "F34",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "a value of a field (an encoding such as '1 = enable') is not compared with the code's masks and offsets; read the evidence",
+   "kind": "value",
+   "subject": "TCSR0",
+   "field": "PWMA0",
+   "doc": {
+    "value": 1,
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 15,
+    "ref": "Table 5: Control/Status Register 0 Bit Definitions (cont'd)",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "49e8eb34681c2756"
+   },
+   "code": []
+  },
+  {
+   "id": "F35",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "a value of a field (an encoding such as '1 = enable') is not compared with the code's masks and offsets; read the evidence",
+   "kind": "value",
+   "subject": "TCSR0",
+   "field": "T0INT",
+   "doc": {
+    "value": 1,
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 15,
+    "ref": "Table 5: Control/Status Register 0 Bit Definitions (cont'd)",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "764da3185a058907"
+   },
+   "code": []
+  },
+  {
+   "id": "F36",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "a value of a field (an encoding such as '1 = enable') is not compared with the code's masks and offsets; read the evidence",
+   "kind": "value",
+   "subject": "TCSR0",
+   "field": "ENT0",
+   "doc": {
+    "value": 1,
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 15,
+    "ref": "Table 5: Control/Status Register 0 Bit Definitions (cont'd)",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "9cd6020848003ffd"
+   },
+   "code": []
+  },
+  {
+   "id": "F37",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "a value of a field (an encoding such as '1 = enable') is not compared with the code's masks and offsets; read the evidence",
+   "kind": "value",
+   "subject": "TCSR0",
+   "field": "ENIT0",
+   "doc": {
+    "value": 1,
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 15,
+    "ref": "Table 5: Control/Status Register 0 Bit Definitions (cont'd)",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "1409bd1b80fe8e87"
+   },
+   "code": []
+  },
+  {
+   "id": "F38",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "a value of a field (an encoding such as '1 = enable') is not compared with the code's masks and offsets; read the evidence",
+   "kind": "value",
+   "subject": "TCSR0",
+   "field": "LOAD0",
+   "doc": {
+    "value": 1,
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 16,
+    "ref": "Table 5: Control/Status Register 0 Bit Definitions (cont'd)",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "b75ef4448a5be151"
+   },
+   "code": []
+  },
+  {
+   "id": "F39",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "a value of a field (an encoding such as '1 = enable') is not compared with the code's masks and offsets; read the evidence",
+   "kind": "value",
+   "subject": "TCSR0",
+   "field": "ARHT0",
+   "doc": {
+    "value": 1,
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 16,
+    "ref": "Table 5: Control/Status Register 0 Bit Definitions (cont'd)",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "80bdd8340d181e22"
+   },
+   "code": []
+  },
+  {
+   "id": "F40",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "a value of a field (an encoding such as '1 = enable') is not compared with the code's masks and offsets; read the evidence",
+   "kind": "value",
+   "subject": "TCSR0",
+   "field": "CAPT0",
+   "doc": {
+    "value": 1,
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 16,
+    "ref": "Table 5: Control/Status Register 0 Bit Definitions (cont'd)",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "251f7717b6913b39"
+   },
+   "code": []
+  },
+  {
+   "id": "F41",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "a value of a field (an encoding such as '1 = enable') is not compared with the code's masks and offsets; read the evidence",
+   "kind": "value",
+   "subject": "TCSR0",
+   "field": "GENT0",
+   "doc": {
+    "value": 1,
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 16,
+    "ref": "Table 5: Control/Status Register 0 Bit Definitions (cont'd)",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "2d8dc6efd89bef9c"
+   },
+   "code": []
+  },
+  {
+   "id": "F42",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "a value of a field (an encoding such as '1 = enable') is not compared with the code's masks and offsets; read the evidence",
+   "kind": "value",
+   "subject": "TCSR0",
+   "field": "UDT0",
+   "doc": {
+    "value": 1,
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 16,
+    "ref": "Table 5: Control/Status Register 0 Bit Definitions (cont'd)",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "e480bd5ea97cd654"
+   },
+   "code": []
+  },
+  {
+   "id": "F43",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "a value of a field (an encoding such as '1 = enable') is not compared with the code's masks and offsets; read the evidence",
+   "kind": "value",
+   "subject": "TCSR0",
+   "field": "MDT0",
+   "doc": {
+    "value": 1,
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 16,
+    "ref": "Table 5: Control/Status Register 0 Bit Definitions (cont'd)",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "fbdaffc84371a4dd"
+   },
+   "code": []
+  },
+  {
+   "id": "F44",
+   "status": "mentioned",
+   "tier": null,
+   "why": "the code uses CASC, TCSR0; the sentence itself is not compared (read the evidence)",
+   "kind": "condition",
+   "subject": "TCSR0",
+   "field": "CASC",
+   "doc": {
+    "value": "This CASC bit must be set before enabling the timer/counter.",
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 14,
+    "ref": "Table 5: Control/Status Register 0 Bit Definitions",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "72ce480817c5dc6d"
+   },
+   "code": []
+  },
+  {
+   "id": "F45",
+   "status": "mentioned",
+   "tier": null,
+   "why": "the code uses CASC, TCSR0; the sentence itself is not compared (read the evidence)",
+   "kind": "condition",
+   "subject": "TCSR0",
+   "field": "CASC",
+   "doc": {
+    "value": "Cascaded operation requires using Timer 0 and Timer 1 together as a pair.",
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 14,
+    "ref": "Table 5: Control/Status Register 0 Bit Definitions",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "56d5c7acd734480a"
+   },
+   "code": []
+  },
+  {
+   "id": "F46",
+   "status": "mentioned",
+   "tier": null,
+   "why": "the code uses CASC, TCSR0; the sentence itself is not compared (read the evidence)",
+   "kind": "condition",
+   "subject": "TCSR0",
+   "field": "CASC",
+   "doc": {
+    "value": "Only TCSR0 is valid for both the timer/counters in this mode.",
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 14,
+    "ref": "Table 5: Control/Status Register 0 Bit Definitions",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "62d688636fb5fc72"
+   },
+   "code": []
+  },
+  {
+   "id": "F47",
+   "status": "mentioned",
+   "tier": null,
+   "why": "the code uses ENALL, TCSR0; the sentence itself is not compared (read the evidence)",
+   "kind": "other",
+   "subject": "TCSR0",
+   "field": "ENALL",
+   "doc": {
+    "value": "Writing a 1 to this bit sets ENALL, ENT0, and ENT1.",
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 15,
+    "ref": "Table 5: Control/Status Register 0 Bit Definitions (cont'd)",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "b2e15dc8eae48c8d"
+   },
+   "code": []
+  },
+  {
+   "id": "F48",
+   "status": "mentioned",
+   "tier": null,
+   "why": "the code uses ENALL, TCSR0; the sentence itself is not compared (read the evidence)",
+   "kind": "other",
+   "subject": "TCSR0",
+   "field": "ENALL",
+   "doc": {
+    "value": "Writing a 0 to this register clears ENALL but has no effect on ENT0 and ENT1.",
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 15,
+    "ref": "Table 5: Control/Status Register 0 Bit Definitions (cont'd)",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "e7a1fe9e0141499e"
+   },
+   "code": []
+  },
+  {
+   "id": "F49",
+   "status": "mentioned",
+   "tier": null,
+   "why": "the code uses TCSR0; the sentence itself is not compared (read the evidence)",
+   "kind": "condition",
+   "subject": "TCSR0",
+   "field": "PWMA0",
+   "doc": {
+    "value": "For PWM mode, MDT0 and MDT1 must be 0 and C_GEN0_ASSERT and C_GEN1_ASSERT must be 1.",
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 15,
+    "ref": "Table 5: Control/Status Register 0 Bit Definitions (cont'd)",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "a2da57697deb5b6e"
+   },
+   "code": []
+  },
+  {
+   "id": "F50",
+   "status": "mentioned",
+   "tier": null,
+   "why": "the code uses TCSR0; the sentence itself is not compared (read the evidence)",
+   "kind": "condition",
+   "subject": "TCSR0",
+   "field": "PWMA0",
+   "doc": {
+    "value": "PWM requires using Timer 0 and Timer 1 together as a pair.",
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 15,
+    "ref": "Table 5: Control/Status Register 0 Bit Definitions (cont'd)",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "af2b51b59af2a310"
+   },
+   "code": []
+  },
+  {
+   "id": "F51",
+   "status": "mentioned",
+   "tier": null,
+   "why": "the code uses T0INT, TCSR0; the sentence itself is not compared (read the evidence)",
+   "kind": "condition",
+   "subject": "TCSR0",
+   "field": "T0INT",
+   "doc": {
+    "value": "Must be cleared by writing a 1.",
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 15,
+    "ref": "Table 5: Control/Status Register 0 Bit Definitions (cont'd)",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "dbdd628ce1991336"
+   },
+   "code": []
+  },
+  {
+   "id": "F52",
+   "status": "mentioned",
+   "tier": null,
+   "why": "the code uses TCSR0; the sentence itself is not compared (read the evidence)",
+   "kind": "condition",
+   "subject": "TCSR0",
+   "field": "LOAD0",
+   "doc": {
+    "value": "this should be cleared alongside setting Enable Timer/Counter (ENT0) bit in TCSR0.",
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 16,
+    "ref": "Table 5: Control/Status Register 0 Bit Definitions (cont'd)",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "4ee27fa4a8073185"
+   },
+   "code": []
+  },
+  {
+   "id": "F53",
+   "status": "mentioned",
+   "tier": null,
+   "why": "the code uses TCSR0; the sentence itself is not compared (read the evidence)",
+   "kind": "condition",
+   "subject": "TCSR0",
+   "field": "LOAD0",
+   "doc": {
+    "value": "This bit prevents the running of the timer/counter.",
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 16,
+    "ref": "Table 5: Control/Status Register 0 Bit Definitions (cont'd)",
+    "quote_ok": false,
+    "page_ok": false,
+    "quote_sha256": "591c6290f383f63c"
+   },
+   "code": []
+  },
+  {
+   "id": "F54",
+   "status": "mentioned",
+   "tier": null,
+   "why": "the code uses TCSR0, TLR0; the sentence itself is not compared (read the evidence)",
+   "kind": "condition",
+   "subject": "TCSR0",
+   "field": "ARHT0",
+   "doc": {
+    "value": "0 = Hold counter or capture value. The TLR must be read before providing the external capture.",
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 16,
+    "ref": "Table 5: Control/Status Register 0 Bit Definitions (cont'd)",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "a8caf4e5d62f7800"
+   },
+   "code": []
+  },
+  {
+   "id": "F55",
+   "status": "mentioned",
+   "tier": null,
+   "why": "the code uses T0INT, TCSR0; the sentence itself is not compared (read the evidence)",
+   "kind": "other",
+   "subject": "TCSR0",
+   "field": "ENIT0",
+   "doc": {
+    "value": "Has no effect on the interrupt flag (T0INT) in TCSR0.",
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 15,
+    "ref": "Table 5: Control/Status Register 0 Bit Definitions (cont'd)",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "868e18f799b62fe2"
+   },
+   "code": []
+  }
+ ],
+ "not_in_document": [],
+ "run": "B/f2_timer_r3"
+}

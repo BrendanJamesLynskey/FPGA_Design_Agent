@@ -1,0 +1,26 @@
+# b110_itch_ouch architecture (hand-written; brief 110): MoldUDP64 + ITCH 5.0 in, a small top-of-book, risk and decision, OUCH 5.0 Enter Order in SoupBinTCP framing out. One clock, simulation and out-of-context timing only.
+schema: fpga-design-agent/architecture/v1
+blocks:
+  - {name: mold_rx, function: "MoldUDP64 1.00 receiver on 64-bit UDP payload words: header, session lock, sequence checks (gap, duplicate, overlap), message blocks of any alignment, delivered raw one clock after their last byte"}
+  - {name: itch_dec, function: "Nasdaq TotalView-ITCH 5.0 decoder: aligns a message and gives one registered event for A, F, E, C, X, D, U, S and R; other types are skipped by length; malformed messages counted"}
+  - {name: book_core, function: "stock-locate map from Stock Directory messages, order table (direct mapped on the reference), per-instrument per-side price ladders, best-level tree, top-of-book registers and update record; two-entry event queue; speculative-start candidate flag"}
+  - {name: risk_glue, function: "decision rule of trade64 on the book's candidate, pre-trade risk (arm, kill switch, gap, stale, size, position, price band), order numbers, positions, four-entry order queue, speculative commit or abort"}
+  - {name: ouch_enter, function: "OUCH 5.0 Enter Order (56 bytes) in a SoupBinTCP 3.00 Unsequenced Data packet (59 bytes) as eight 64-bit words, started speculatively and abortable"}
+  - {name: itch_ouch_top, function: "wiring, flags and the 45-counter bus"}
+interfaces:
+  - {name: payload_words, between: [itch_ouch_top, mold_rx], protocol: simple}
+  - {name: raw_message, between: [mold_rx, itch_dec], protocol: simple}
+  - {name: decoded_event, between: [itch_dec, book_core], protocol: simple}
+  - {name: book_update, between: [book_core, risk_glue], protocol: simple}
+  - {name: order_go, between: [risk_glue, ouch_enter], protocol: simple}
+  - {name: order_frame, between: [ouch_enter, itch_ouch_top], protocol: simple}
+clock_domains:
+  - {name: core, clock: clk, freq_mhz: 161.1328}
+reset:
+  synchronisers: []
+crossings: []
+predicted_resources:
+  lut: [3000, 12000]
+  ff: [3000, 12000]
+  bram_tile: 0
+  dsp: 0

@@ -1,0 +1,67 @@
+First scoreboard or assertion errors of the test that killed each seeded bug (mutant); paths shortened. Full logs are not kept; rerun with run_regress.sh --mutants --only <id>.
+
+M01 KILLED t_smoke seed 1: poison polarity inverted: good frames get a bad FCS
+    UVM_ERROR env/pcs_mac_scoreboard.sv(70) @ 655000: uvm_test_top.env.sb [SB] TXMAC: frame of 60 bytes (poison=0): 10 words out, 10 expected, first difference at word 8
+    UVM_ERROR env/pcs_mac_scoreboard.sv(70) @ 717000: uvm_test_top.env.sb [SB] E2E: sent 60 bytes poison=0; received len=64 fcs_ok=0
+
+M02 KILLED t_smoke seed 1: start-of-frame delimiter 0xD4 instead of 0xD5
+    UVM_ERROR env/pcs_mac_scoreboard.sv(70) @ 655000: uvm_test_top.env.sb [SB] TXMAC: frame of 60 bytes (poison=0): 10 words out, 10 expected, first difference at word 0
+    UVM_ERROR env/pcs_mac_scoreboard.sv(70) @ 723000: uvm_test_top.env.sb [SB] TXMAC: frame of 64 bytes (poison=0): 10 words out, 10 expected, first difference at word 0
+
+M03 SURVIVED -: EQUIVALENT: the dead branch of the gap after a two-word frame end replaced by its live value (cannot be detected)
+
+M04 KILLED t_lens seed 1: interframe gap one word short when the frame ends in the first of its two words
+    UVM_ERROR env/pcs_mac_scoreboard.sv(70) @ 1015000: uvm_test_top.env.sb [SB] TXMAC_IFG: interframe gap 11 byte times, less than 12
+    UVM_ERROR env/pcs_mac_scoreboard.sv(70) @ 1089000: uvm_test_top.env.sb [SB] TXMAC_IFG: interframe gap 10 byte times, less than 12
+
+M05 KILLED t_smoke seed 1: frame end with 4 data bytes in the last word is not split over two words
+    UVM_ERROR sva/pcs_mac_sva.sv(30) @ 642000: reporter [SVA] tb_uvm_top.u_mt.u_sva: eop without a terminate word
+    UVM_ERROR env/pcs_mac_scoreboard.sv(70) @ 704000: uvm_test_top.env.sb [SB] E2E: mac64_rx aborted a frame on a clean channel
+
+M06 KILLED t_smoke seed 1: gearbox remainder not cleared on the pause clock
+    UVM_ERROR env/pcs_mac_scoreboard.sv(70) @ 251000: uvm_test_top.env.sb [SB] TXPCS: TXDATA at clock 40: DUT efdf7e3fb6d670fb, model a4dc6e3e94d04032
+    UVM_ERROR env/pcs_mac_scoreboard.sv(70) @ 456000: uvm_test_top.env.sb [SB] TXPCS: TXDATA at clock 73: DUT fc87efb21bafffce, model ec07a30209a79fce
+
+M07 KILLED t_smoke seed 1: scrambler tap 38 instead of 39 in the scrambler and the descrambler alike (symmetric: the loopback cannot see it)
+    UVM_ERROR env/pcs_mac_scoreboard.sv(70) @ 47000: uvm_test_top.env.sb [SB] TXPCS: TXDATA at clock 7: DUT e0001e000000007a, model e0003c000000007a
+    UVM_ERROR env/pcs_mac_scoreboard.sv(70) @ 53000: uvm_test_top.env.sb [SB] TXPCS: TXDATA at clock 8: DUT 99807800001e01e9, model a200f000007801e9
+
+M08 KILLED t_lens seed 1: terminate-in-lane-3 block type 0xB5 instead of 0xB4, in encoder and decoder alike (symmetric)
+    UVM_ERROR env/pcs_mac_scoreboard.sv(70) @ 872000: uvm_test_top.env.sb [SB] TXPCS: TXDATA at clock 140: DUT 927b36ec356e1a8a, model d27b3eec356e1a9a
+    UVM_ERROR env/pcs_mac_scoreboard.sv(70) @ 878000: uvm_test_top.env.sb [SB] TXPCS: TXDATA at clock 141: DUT 94b8924a353b3e60, model 98b8924a352b3e60
+
+M09 KILLED t_smoke seed 1: block lock after 63 valid headers instead of 64
+    UVM_ERROR env/pcs_mac_scoreboard.sv(70) @ 450000: uvm_test_top.env.sb [SB] RXPCS: clock 72: DUT lock=1 v=0 os=0 ev=000001 d=0707070707070707 c=ff; model lock=0 v=0 os=0 ev=000000 d=0707070707070707 c=ff
+    UVM_ERROR env/pcs_mac_scoreboard.sv(70) @ 456000: uvm_test_top.env.sb [SB] RXPCS: clock 73: DUT lock=1 v=1 os=0 ev=000000 d=0707070707070707 c=ff; model lock=1 v=0 os=0 ev=000001 d=0707070707070707 c=ff
+
+M10 KILLED t_line_blocks seed 1: lock lost at the 17th invalid header instead of the 16th
+    UVM_ERROR env/pcs_mac_scoreboard.sv(70) @ 6557000: uvm_test_top.env.sb [SB] RXPCS: clock 1056: DUT lock=1 v=1 os=0 ev=100000 d=fefefefefefefefe c=ff; model lock=0 v=1 os=0 ev=100110 d=fefefefefefefefe c=ff
+    UVM_ERROR env/pcs_mac_scoreboard.sv(70) @ 6563000: uvm_test_top.env.sb [SB] RXPCS: clock 1057: DUT lock=1 v=1 os=0 ev=000000 d=065d9a533f554bb3 c=00; model lock=0 v=0 os=0 ev=000000 d=065d9a533f554bb3 c=00
+
+M11 KILLED t_line_blocks seed 1: ordered-set event counts unknown block types
+    UVM_ERROR env/pcs_mac_scoreboard.sv(70) @ 4627000: uvm_test_top.env.sb [SB] RXPCS: clock 745: DUT lock=1 v=1 os=1 ev=000000 d=0707070707070707 c=ff; model lock=1 v=1 os=1 ev=001000 d=0707070707070707 c=ff
+    UVM_ERROR env/pcs_mac_scoreboard.sv(70) @ 4645000: uvm_test_top.env.sb [SB] RXPCS: clock 748: DUT lock=1 v=1 os=1 ev=000000 d=0707070707070707 c=ff; model lock=1 v=1 os=1 ev=001000 d=0707070707070707 c=ff
+
+M12 KILLED t_line_blocks seed 1: ordered-set type 0x4B not decoded as an ordered set (symmetric table, line-side only)
+    UVM_ERROR env/pcs_mac_scoreboard.sv(70) @ 4645000: uvm_test_top.env.sb [SB] RXPCS: clock 748: DUT lock=1 v=1 os=0 ev=010000 d=fefefefefefefefe c=ff; model lock=1 v=1 os=1 ev=001000 d=0707070707070707 c=ff
+    UVM_ERROR env/pcs_mac_scoreboard.sv(70) @ 4732000: uvm_test_top.env.sb [SB] RXPCS: clock 762: DUT lock=1 v=1 os=0 ev=010000 d=fefefefefefefefe c=ff; model lock=1 v=1 os=1 ev=001000 d=0707070707070707 c=ff
+
+M13 KILLED t_line_blocks seed 1: a frame is not aborted when block lock drops
+    UVM_ERROR env/pcs_mac_scoreboard.sv(70) @ 28346000: uvm_test_top.env.sb [SB] RXMAC: 3 frames reported by mac64_rx that the reference receiver did not find
+    UVM_ERROR env/pcs_mac_scoreboard.sv(70) @ 28346000: uvm_test_top.env.sb [SB] RXMAC: aborted frames: DUT 10, model 13
+
+M14 KILLED t_line_blocks seed 1: lane-4 frame flush word one byte too long
+    UVM_ERROR env/pcs_mac_scoreboard.sv(70) @ 934000: uvm_test_top.env.sb [SB] RXMAC: frame: DUT len=66 fcs_ok=0 bytes=66; model len=65 fcs_ok=1 bytes=65
+    UVM_ERROR env/pcs_mac_scoreboard.sv(70) @ 1089000: uvm_test_top.env.sb [SB] RXMAC: frame: DUT len=67 fcs_ok=0 bytes=67; model len=66 fcs_ok=1 bytes=66
+
+M15 KILLED t_xg seed 1: FCS check ignores the top residue bit (a subtle one)
+    UVM_ERROR env/pcs_mac_scoreboard.sv(70) @ 7047000: uvm_test_top.env.sb [SB] RXMAC: frame: DUT len=75 fcs_ok=1 bytes=75; model len=75 fcs_ok=0 bytes=75
+
+M16 KILLED t_line_blocks seed 1: lane-4 start detected with the wrong control vector (line side only)
+    UVM_ERROR env/pcs_mac_scoreboard.sv(70) @ 847000: uvm_test_top.env.sb [SB] RXMAC: frame: DUT len=65 fcs_ok=1 bytes=65; model len=64 fcs_ok=1 bytes=64
+    UVM_ERROR env/pcs_mac_scoreboard.sv(70) @ 1002000: uvm_test_top.env.sb [SB] RXMAC: frame: DUT len=66 fcs_ok=1 bytes=66; model len=65 fcs_ok=1 bytes=65
+
+M17 KILLED t_smoke seed 1: mac64_tx ignores the PCS pause: its state advances on the clock the gearbox takes no word
+    UVM_ERROR env/pcs_mac_scoreboard.sv(70) @ 704000: uvm_test_top.env.sb [SB] E2E: mac64_rx aborted a frame on a clean channel
+    UVM_ERROR env/pcs_mac_scoreboard.sv(70) @ 717000: uvm_test_top.env.sb [SB] TXMAC: frame of 60 bytes (poison=0): 20 words out, 10 expected, first difference at word 9
+

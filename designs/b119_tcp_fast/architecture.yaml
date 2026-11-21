@@ -1,0 +1,28 @@
+# b119_tcp_fast architecture (hand-written; brief 119): a TCP fast path for OUCH orders. Software owns the connection; this block holds the state software hands it and sends pre-built segments. One clock, simulation and out-of-context timing only.
+schema: fpga-design-agent/architecture/v1
+blocks:
+  - {name: reg_file, function: "register bus: connection addressing, sequence and window state, stale limit, arm request, counters; static writes invalidate the template, live writes restart the staleness age"}
+  - {name: template_build, function: "two clocks after an arm write: folded partial sums of the fixed IPv4 header words and of the TCP pseudo-header and header words"}
+  - {name: decide, function: "at the go edge: busy, not armed, template not valid or state stale, window closed, MSS too small; captures sequence, acknowledgement, window, identification"}
+  - {name: csum_pipe, function: "IPv4 checksum final at edge 2 and TCP checksum final at edge 5 by adding the changing fields and the payload sum of the order's fields to the template sums; independent check against the bytes sent"}
+  - {name: seg_out, function: "header words from the template and captured fields, payload realigned by six bytes behind the 54-byte header, one 64-bit word a clock, poison with the last word on abort, no verdict or sum mismatch"}
+  - {name: ouch_enter, function: "brief 110's OUCH 5.0 Enter Order in SoupBinTCP 3.00 framing (59 bytes, eight words), started at edge 5 and aborted with the segment"}
+  - {name: record, function: "on an unpoisoned segment: sequence number, length, identification and payload to software; SND_NXT and IP_ID advance"}
+interfaces:
+  - {name: order_side, between: [tcp_fast, ouch_enter], protocol: simple}
+  - {name: register_bus, between: [reg_file, template_build], protocol: simple}
+  - {name: template, between: [template_build, csum_pipe], protocol: simple}
+  - {name: captured_state, between: [decide, csum_pipe], protocol: simple}
+  - {name: segment_words, between: [seg_out, tcp_fast], protocol: simple}
+  - {name: frame_words, between: [ouch_enter, seg_out], protocol: simple}
+  - {name: sent_record, between: [record, tcp_fast], protocol: simple}
+clock_domains:
+  - {name: core, clock: clk, freq_mhz: 161.1328}
+reset:
+  synchronisers: []
+crossings: []
+predicted_resources:
+  lut: [500, 3000]
+  ff: [800, 4000]
+  bram_tile: 0
+  dsp: 0
