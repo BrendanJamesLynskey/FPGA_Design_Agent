@@ -167,9 +167,9 @@ jobs:
           python -m pytest -q designs/b96_kr260_10g/tests/test_b115_formal.py
 
   arith-library:
-    name: Arithmetic library (brief 139b) - models, RTL against models (Icarus), Verilator lint, seeded mutants, SymbiYosys proofs, traceability gate - OSS CAD Suite 20261112
+    name: Arithmetic library (briefs 139b, 139c) - models, RTL against models (Icarus), Verilator lint, seeded mutants, SymbiYosys proofs, traceability gate - OSS CAD Suite 20261112
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 90
     env:
       FDA_OSS_CAD: ${{ github.workspace }}/oss-cad-suite
       FDA_REQUIRE_FORMAL: "1"      # a test that needs a tool and does not find it fails instead of skipping (the same rule as brief 81)
@@ -197,14 +197,14 @@ jobs:
         run: |
           python -m arith.tools.gen_spec --check
           python -m arith.tools.gen_build --check
-      - name: Divider, rounding, square root, leading-zero/normaliser - model tests, RTL against the models, lint, mutants, formal proofs, build descriptions
+      - name: Divider, rounding, square root, leading-zero/normaliser (139b); radix-4 square root, SRT divider, reciprocal, reciprocal square root, reciprocal-multiply divider (139c) - model tests, RTL against the models, lint, mutants, formal proofs, build descriptions
         run: |
           $FDA_OSS_CAD/bin/yosys -V
           $FDA_OSS_CAD/bin/iverilog -V | head -1
           $FDA_OSS_CAD/bin/verilator --version
           python -m pytest -q arith
-      - name: Traceability gate (testplan schema v1, the orphan gate) for the four functions
-        run: python -m flow.trace_v1 check arith/divider arith/fxp_round arith/isqrt arith/lzc_norm
+      - name: Traceability gate (testplan schema v1, the orphan gate) for the nine functions
+        run: python -m flow.trace_v1 check arith/divider arith/fxp_round arith/isqrt arith/lzc_norm arith/sqrt_r4 arith/divider_hr arith/recip arith/rsqrt arith/div_nr
 
   rtl-sim:
     name: RTL tests (cocotb + Icarus) and mutants
