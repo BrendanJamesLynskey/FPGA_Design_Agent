@@ -159,6 +159,13 @@ files:
 - path: designs/b96_kr260_10g/host/b96f1_bypass.py
   what: board driver and pre-registered verdict for build rm_gp_bypass (brief 96F1)
   sha256: 8e94dd345a2f031e3d01134a89e567aadfb6ac37feb9a3d28b3ca0e51cafa8b7
+- path: designs/b96_kr260_10g/lat_all3_bypass/build.yaml
+  what: build lat_all3_bypass, the default receive path with the 97C latency cuts and both GT elastic buffers bypassed;
+    points at the parent builds' files, no copy (brief 126)
+  sha256: bbb4d85334c8fa42217212d9a734f0bd54b5752378ea60894b27a64b82394127
+- path: designs/b96_kr260_10g/host/b126_all3_bypass.py
+  what: board driver and pre-registered verdict for build lat_all3_bypass (brief 126)
+  sha256: 6fef448fa449cdc8e02ee097554090367e06f53faa4365f94695b3c60c245119
 - path: designs/b96_kr260_10g/rm_gp_ml/rtl/ml_stage.sv
   what: 'the ML decision stage of build rm_gp_ml: one-instrument book, order-flow features, classifier pipeline and counters
     (brief 113)'
@@ -273,7 +280,7 @@ files:
   sha256: 4dec8c5ba8f6dccc6273f45d40a7d95a6668f5fe09350c0a0d80cc6c07ea1118
 - path: designs/b96_kr260_10g/docs/design.md
   what: 'design note: decisions and alternatives'
-  sha256: 02a3510fe016429ec613c0ee01f06aca01cceb575d87aebc83524e414866d892
+  sha256: 7007e677f1416b0d16027003745afedc3f57ea4d3117ee50f3d33e7c1f2d6f80
 - path: designs/b96_kr260_10g/docs/board_run_plan.md
   what: stage 3 plan for the board
   sha256: 678413f0be0f0c2692b2d1118cd8a8e54ec6514bd5e643485402e34ecc83c61b
@@ -291,7 +298,7 @@ files:
   sha256: c53e4dbe340fc31b4c337f9a64e31122fe54fa6f31fcecf934b5f4a8428d9b16
 - path: docs/latency_definitions.md
   what: our latencies against STAC-T0 and wire-to-wire definitions (109)
-  sha256: d378fcc14b0724f1902a669dd43cbeb3960b6dd6422e8c921d4893375c9e0b75
+  sha256: 7323927a6022db80211a3d7aa1119f4496fe426b6fe409aaab79efc1ffc2f46d
 - path: designs/b96_kr260_10g/model/loop_timing.py
   what: Python model of the loop-timing frequency tracker (96F)
   sha256: a2d1bf64286bc5e220c47c4fe3137c9855383b087bddf33dba4c51fe6d0c35e5
@@ -410,22 +417,38 @@ evidence:
   record: results/b96f1/bypass_seq/result.txt
   sha256: 457378d737a4382242b69cf84b2db58aacf9a88707d0cba642934a5b1b091dd8
 - id: E11
-  activity: simulation
+  activity: build
   result: pass
-  what: 'UVM 1.2 bench of the PCS and MAC in xsim 2026.1 (no GT model; reference-model scoreboard, SVAs, constrained-random):
-    42 runs pass, 213 of 213 coverage bins hit, 16 of 17 seeded bugs killed (the 17th is an equivalent mutant); run by hand
-    in xsim, not in CI'
-  record: results/112_uvm_pcs_mac/summary.txt
-  sha256: b4d6ac4452d7c9bab373242d1ac0ba691604352cd7f08d35f394dda38666add5
+  what: build rm_gp_bypass rebuilt with the reset synchroniser and the alignment timeout and retry (brief 96F1b), all 29
+    gates, WNS +0.118 ns, WHS +0.010 ns, report_cdc no critical and no waivers, stamp 86037ce1; not loaded on a board; supersedes
+    E9
+  record: results/b96f1b/builds/rm_gp_bypass/digest.json
+  sha256: e4681b81a17fbd359dba719b486eaa392fbfd201978db865f4051b97e02befdb
 - id: E12
   activity: simulation
   result: pass
-  what: 'pyuvm bench of the PCS and MAC in Icarus (same scope, tests and 17 seeded bugs as E11; Python reference models,
-    cocotb-coverage): 42 runs pass, 217 of 217 coverage bins hit, 16 of 17 seeded bugs killed (14 of 17 before the two patterns
-    added after M13 and M15 survived); the comparison with E11 is in verif/pyuvm/COMPARISON.md; the bench is in CI (smoke
-    and one mutant), the full regression is run by hand'
-  record: results/123_pyuvm_pcs_mac/summary.txt
-  sha256: 958ae63a63c89bd06b2216e6c219924d5b1867a9103e8e627e07404d348517e9
+  what: gt_bp_ctl with the Wizard's own controllers against a stand-in transceiver in xsim (reset assert and release, normal
+    start, retries, give-up, error not retried, clock inactive), plus the 28 checks of E10 unchanged; the whole core in
+    three scenarios; the real 30 ms and 130 ms values
+  record: results/b96f1b/bypass_ctl/result.txt
+  sha256: 6d13cfb7e485b141eeaf7e12d06d015292c6e60942cd4b4c86d893179426d5b6
+- id: E13
+  activity: build
+  result: pass
+  what: build lat_all3_bypass (default receive path, 97C's three latency cuts, both GT buffers bypassed; brief 126), all
+    29 gates, WNS +0.066 ns, WHS +0.010 ns, report_cdc no critical, methodology no critical, stamp 9641284d; not loaded
+    on a board
+  record: results/b126/builds/lat_all3_bypass/digest.json
+  sha256: b0b2ce349a47dff5d82d6f50bc50de722179001082304fd6ebd0c09bb9309b9e
+- id: E14
+  activity: simulation
+  result: pass
+  what: the whole core of lat_all3_bypass in xsim with AMD's real XPM macros at four clock phases, with a stand-in transceiver
+    with the bypass controllers' ports and the safety counters read back; 8 of 8 orders, every safety counter 0, the same
+    digital tick-to-trade as lat_all3 within 0.1 clock; one retry recovers a hung alignment, a never-aligned link sends
+    nothing
+  record: results/b126/core_sim/all3_bypass.json
+  sha256: 0f8de19801b2b7b3ab1369e5b7d9641929e2f9f7952eb31dbe0c4aee73935822
 measurements:
 - id: M1
   what: LUTs, variant (b)
@@ -538,37 +561,26 @@ measurements:
   value: 13.0
   sha256: 77fb782b78af4c9f598f019b6f552970cdb30bdc6e28111db5ac0335b54c73ed
 - id: M12
-  what: tick-to-trade change from the ML stage (veto mode against the control without it), whole core in xsim, mean over
-    four phases
-  category: latency
-  key: ml_stage_tick_to_trade_change_clocks
-  unit: clocks
-  record: results/b113/summary.json
-  field: simulation.change_vs_base_clocks.ml_veto
-  conditions: xsim 2026.1, whole core, GT stand-in, synthetic feed injected, four receive-clock phases; the control is rm_gp
-    at 12.93 clocks; the board has not measured it
-  value: 0.0
-  sha256: b101413a06ae4ea56eee682ed7156f9f3cd0b413a6bdc754df1c89420cdf9b86
-- id: M13
-  what: worst setup slack of any path ending in the ML stage, in context after routing
+  what: worst setup slack, build lat_all3_bypass (the 97C cuts with both GT buffers bypassed)
   category: timing
-  key: ml_stage_worst_slack_ns
+  key: wns_ns_all3_bypass
   unit: ns
-  record: results/b113/summary.json
-  field: build.stage_worst_slack_ns
-  conditions: routed rm_gp_ml, Vivado 2026.1, core clock 6.206 ns
-  value: 0.556
-  sha256: b101413a06ae4ea56eee682ed7156f9f3cd0b413a6bdc754df1c89420cdf9b86
-- id: M14
-  what: LUTs added by the ML stage and its registers over build rm_gp
-  category: resources
-  key: ml_stage_lut_added
-  unit: LUT
-  record: results/b113/summary.json
-  field: build.lut_added
-  conditions: routed, Vivado 2026.1; the control is brief 96F1's rebuild of rm_gp
-  value: 1470
-  sha256: b101413a06ae4ea56eee682ed7156f9f3cd0b413a6bdc754df1c89420cdf9b86
+  record: results/b126/builds/lat_all3_bypass/digest.json
+  field: timing.wns_ns
+  conditions: as M3
+  value: 0.066
+  sha256: b0b2ce349a47dff5d82d6f50bc50de722179001082304fd6ebd0c09bb9309b9e
+- id: M13
+  what: GT-port tick-to-trade in simulation, build lat_all3_bypass, mean over four phases (the same as lat_all3 within 0.1
+    clock, because the stand-in has no GT buffers and the bypass's saving is not simulated)
+  category: latency
+  key: tick_to_trade_all3_bypass_clocks
+  unit: clocks
+  record: results/b126/core_sim/all3_bypass.json
+  field: means_over_phases_clocks.rate_match_0_rm_own_0.tick_to_trade
+  conditions: xsim 2026.1, whole core, GT stand-in with the bypass controllers' ports, four phases between the clocks
+  value: 7.6
+  sha256: 0f8de19801b2b7b3ab1369e5b7d9641929e2f9f7952eb31dbe0c4aee73935822
 gaps:
 - about: hardware
   text: The design has run on a KR260 optical loopback only (briefs 97 and 96C), never against a network card or a second
@@ -602,10 +614,9 @@ gaps:
     in results/b113/preregistration.md and the owner's script is written. The stage tracks one instrument with a top-of-book
     and sees the first message of a frame only; the model is brief 87's trees on one planted-signal data set.
 next_steps:
-- Run _handoff/fpga_agent/run_113_ml_stage3.sh on the KR260 (pre-registered in results/b113/preregistration.md), build rm_gp_ml
-  against the 96E rm_gp board run.
-- Run _handoff/fpga_agent/run_96f1_stage1.sh on the KR260 (pre-registered in results/b96f1/preregistration.md), build rm_gp_bypass
-  against the 96E rm_gp board run.
+- Run _handoff/fpga_agent/run_96f1_stage1.sh on the KR260 (pre-registered in results/b96f1/preregistration.md, amendment
+  2026-11-20), build rm_gp_bypass (stamp 86037ce1, brief 96F1b) against the 96E rm_gp board run; read the retry counts and
+  gave-up flags.
 - Run docs/board_run_plan.md steps 1 to 4 on the KR260 (laser polarity first), then the NIC steps after the owner buys a
   card and cable.
 - Confirm the reference clock and the control pins against the carrier schematic.
@@ -613,6 +624,14 @@ next_steps:
 open_questions:
 - Does the PL load over JTAG with the PS idle on the KR260 (flow/program.py has no KR260 board entry yet)?
 history:
+- date: '2026-11-21'
+  note: 'brief 126: build lat_all3_bypass (the default receive path, the 97C latency cuts and the GT buffer bypass together),
+    all 29 gates, WNS +0.066 ns, report_cdc no critical; simulated in xsim; board test pre-registered from the two measured
+    runs (E 16.0, L 38.0, D 6.0, tick-to-trade 22 clocks) and script written; nothing run on a board'
+- date: '2026-11-20'
+  note: 'brief 96F1b: build rm_gp_bypass with AMD-style synchronised controller reset and a 30 ms TX / 130 ms RX alignment
+    timeout with 3 retries then a gave-up flag (GT_BUF bits 29:16); all 29 gates, timing met, report_cdc no critical; gave-up
+    added as a fail line before any board time; nothing run on a board'
 - date: '2026-11-20'
   note: 'brief 123: pyuvm bench for the PCS and MAC (designs/b96_kr260_10g/verif/pyuvm) with the same tests, bugs and coverage
     bins as brief 112, run in Icarus; same verification result, measured comparison and recommendation in COMPARISON.md;

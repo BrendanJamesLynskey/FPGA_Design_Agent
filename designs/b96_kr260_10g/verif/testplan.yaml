@@ -310,6 +310,12 @@ verification:
     title: Board bench, ppm and bypass drivers judged on a fake board (every safety counter, polarity, lock, verdicts)
     evidence: {file: results/116_traceability/b96_kr260_10g/pytest_junit.xml, reader: junit, tests: ["test_b96_bench::*", "test_b96c_ppm::*", "test_b96f1_bypass::*"]}
     checks: [designs/b96_kr260_10g/host/b96_bench.py, designs/b96_kr260_10g/host/b96c_ppm.py, designs/b96_kr260_10g/host/b96f1_bypass.py]
+  - id: V-SIM-126-ALL3
+    requirements: [B96-F-BUILDS, B96-S-DRIVER]
+    method: sim_test
+    title: Build lat_all3_bypass composes 97C's cuts with the bypass build's files, and its board driver's verdicts, references and lock prefix (brief 126); not yet in a recorded run
+    evidence: {file: results/116_traceability/b96_kr260_10g/pytest_junit.xml, reader: junit, tests: ["test_126_all3_bypass::*"]}
+    checks: [designs/b96_kr260_10g/lat_all3_bypass/build.yaml]
   - id: V-SIM-BUILDS
     requirements: [B96-F-BUILDS]
     method: sim_test
