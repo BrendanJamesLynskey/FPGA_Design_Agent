@@ -1,9 +1,46 @@
 <section class="hero">
 <p class="eyebrow">FPGA Design Agent</p>
-<h1>An agentic FPGA design environment: from a plain-English request to a bitstream proven on the board</h1>
+<h1>You specify and judge. The agent implements. The board closes the loop.</h1>
+<p class="lede">What decides whether an FPGA design is right is what it was asked to do and whether the verification is thorough enough to trust. Those two jobs stay with the person. The agent holds the implementation know-how: it interviews you about what the request leaves out, writes the model, the tests and the SystemVerilog, and drives the simulators, Vivado {{board.vivado}} and the board. You can look at any of it. You do not have to.</p>
 <p class="chip-status">So far on the board: the hand-built reference design passes every test; the one agent-built design programmed passed {{board.agent_board.uart_passed}} of {{board.agent_board.uart_tests}} serial-link tests and failed its logic-analyser captures. No held-out score yet.</p>
-<p class="lede">Describe a block in plain English. Language-model agents interview you about what you left out, write the spec, a model of it, the tests and the SystemVerilog, then drive the simulators and Vivado {{board.vivado}} to a bitstream and test it on a Digilent Nexys A7-100T. Every stage ends in a check run by code, not by a model, and a failed check sends the work back to the agent that owns it.</p>
 </section>
+
+<h2 id="premise">The premise</h2>
+<p>Writing the RTL is the part the agent takes over. The part that decides whether a design can be trusted is upstream and downstream of it: stating exactly what the design must do, and judging whether the evidence covers that statement. We think this is the under-weighted insight in FPGA work, and it is the reason this agent exists: to take the implementation off the person's hands so the person's attention goes to the specification and to the evidence.</p>
+<div class="who">
+<div><h3>You specify</h3><ul>
+<li>ports, clocks, rules, limits and what the design is for</li>
+<li>the agent asks about what you left out; the spec counts as signed off only when no question is open</li>
+</ul></div>
+<div><h3>The agent implements</h3><ul>
+<li>model, tests, RTL, constraints, builds and repairs</li>
+<li>it carries the tool and device knowledge ({{packs.sections}} sections in its knowledge bank)</li>
+<li>code, not a model, decides whether a check passed</li>
+</ul></div>
+<div><h3>You judge</h3><ul>
+<li>read the evidence against every requirement</li>
+<li>decide whether it is thorough enough, and send the work back if not</li>
+<li>approve anything that touches the board</li>
+</ul></div>
+</div>
+<p>The implementation stays open to inspection: <a href="inspect.html">where it is and how to open it</a>.</p>
+
+<h2 id="flow">The flow</h2>
+{{!flow_figure}}
+<p class="small muted">A failed check inside the agent's stages sends the work back to the stage that can fix it. The loop at the bottom is yours: a gap in the evidence, or a specification that turns out to be wrong.</p>
+
+<h2 id="hardware">Hardware verification is its own layer</h2>
+<p>Simulation and formal tools check a design against a model of the world. An FPGA can also be checked against the world itself, with instruments attached: the on-chip eye scan, register reads over JTAG, SYSMON temperature and voltage, debug captures, a latency loop with predictions written down first, and the optical module's own readings. This extra layer should always be used. Where an external element is involved, such as an external data source, a network card, an optical link or another device, it may be the only way to verify at all, so the flow makes room for it, including the wait when the hardware has not arrived.</p>
+<ul>
+<li>The first measured receive eye of the KR260's 10G link, after two faults found on the way: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/b96d/hw/README.md">record</a>.</li>
+<li>A board latency run against pre-registered predictions: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/b96e/README.md">record</a>.</li>
+<li>What a fibre loopback cannot show, and the network-card test that waits for hardware: <a href="https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/designs/b96_kr260_10g/docs/real_offset_plan.md">plan</a>.</li>
+</ul>
+
+<h2 id="evidence">Evidence accumulating against requirements</h2>
+<p>For one design, the 10G link on the KR260, each requirement against each kind of evidence recorded for it. <button type="button" id="evm-replay" hidden>Replay</button> With script on, the replay lights each kind in turn; a filled square is passed, a hatched square is measured (no pass line), a dash is a kind of evidence not recorded for that requirement.</p>
+{{!evidence_matrix}}
+<p class="small muted">Open a cell for its figure and record. The full matrix is on the <a href="{{TRACE_HREF}}">traceability page</a>; <a href="worked-example.html">the worked example</a> tells the same design's story: what was specified, what was built, what the board measured and where judgement mattered.</p>
 
 <h2 id="today">Where it stands today</h2>
 <div class="facts status">

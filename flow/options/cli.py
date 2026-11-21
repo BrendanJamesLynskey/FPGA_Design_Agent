@@ -79,7 +79,8 @@ def render(rec: dict[str, Any], analysis: dict[str, Any] | None = None) -> str:
         out.append(f"gap: {g}")
     for o in rec["options"]:
         out += ["", f"Option {o['n']} ({o['id']}): {o['title']}   [{o['scope']['kind'].replace('_', ' ')}]" +
-                (f"   [COMBINED by code from {' + '.join(o['combined_from'])}]" if o.get("origin") == "combiner" else ""),
+                (f"   [COMBINED by code from {' + '.join(o['combined_from'])}]" if o.get("origin") == "combiner" else
+                 f"   [SPLIT by code from {o['split_from']}]" if o.get("origin") == "splitter" else ""),
                 f"  scope: {', '.join(o['scope']['components'])}   ({o['scope']['cli']})",
                 f"  approach: {o['approach']}"]
         g = o["gain"]
@@ -107,6 +108,10 @@ def render(rec: dict[str, Any], analysis: dict[str, Any] | None = None) -> str:
     cb = rec.get("combiner")
     if cb and cb.get("not_composable"):
         out += ["", "combinations not offered (the combiner, code):"] + [f"  {' + '.join(x['from'])}: {x['reason']}" for x in cb["not_composable"][:8]]
+    sp = rec.get("splitter")
+    if sp and sp.get("report"):
+        out += ["", "bundles the splitter looked at (code):"] + [f"  {x['bundle']} ({', '.join(x['stages'])}): " + (f"not split: {x['not_split']}" if x["not_split"] else f"split into {len(x['parts'])} part(s)"
+                                                                                                                  + (f"; dropped: {'; '.join(', '.join(d['stages']) + ' (' + d['reason'] + ')' for d in x['dropped'][:3])}" if x["dropped"] else "")) for x in sp["report"]]
     if rec.get("rejected"):
         out += ["", f"{len(rec['rejected'])} proposed option(s) failed the checks and are not offered: " +
                 "; ".join(f"{r['id']}: {r['problems'][0]}" for r in rec["rejected"] if r["problems"])]
@@ -173,8 +178,9 @@ def improve_cmd(a, main_fn) -> int:
             if tgt is None or not a.request:
                 print(f"improve: --edit N \"<your change>\": option {a.edit} not found, or no change given", file=sys.stderr)
                 return 2
-            if tgt.get("origin") == "combiner":
-                print(f"improve: option {a.edit} was built by the combiner from options {' + '.join(tgt['combined_from'])}: edit one of those (the combined options are rebuilt), or ask with --more", file=sys.stderr)
+            if tgt.get("origin") in ("combiner", "splitter"):
+                print(f"improve: option {a.edit} was built by code from " + (f"options {' + '.join(tgt['combined_from'])} (the combiner)" if tgt.get("origin") == "combiner" else f"option {tgt['split_from']} (the splitter)")
+                      + ": edit the model's option it came from (the derived options are rebuilt), or ask with --more", file=sys.stderr)
                 return 2
             mode, edit = "edit", {"id": tgt["id"], "instruction": a.request}
         else:
@@ -192,7 +198,7 @@ def improve_cmd(a, main_fn) -> int:
         history.append({k: state["current"][k] for k in ("created", "request", "mode", "status", "analysis_hash", "options_hash") if k in state["current"]})
     if mode == "edit" and rec["status"] == "options" and rec["options"] and previous:        # the edited option replaces its original; the others stay
         new = rec["options"][0]
-        rec["options"] = [new if o["id"] == edit["id"] else o for o in previous if o.get("origin") != "combiner"]
+        rec["options"] = [new if o["id"] == edit["id"] else o for o in previous if o.get("origin") not in ("combiner", "splitter")]
         C.apply(rec, an, project, goal=rec["goal"], pinned=G.schema.classify_request(request, project, an)["pinned"], blind=a.blind)      # a combined option built from the old option is rebuilt
         rec["options_hash"] = G._sha(json.dumps(rec["options"], sort_keys=True))
     if mode == "more" and rec["status"] == "options" and previous:
@@ -204,7 +210,7 @@ def improve_cmd(a, main_fn) -> int:
                 k += 1
             used.add(f"O{k}")
             fresh.append(dict(o, id=f"O{k}"))
-        rec["options"] = [o for o in previous if o.get("origin") != "combiner"] + fresh
+        rec["options"] = [o for o in previous if o.get("origin") not in ("combiner", "splitter")] + fresh
         C.apply(rec, an, project, goal=rec["goal"], pinned=G.schema.classify_request(request, project, an)["pinned"], blind=a.blind)      # the combined options are rebuilt from every single option now offered
         rec["options_hash"] = G._sha(json.dumps(rec["options"], sort_keys=True))
     f = _save(design, {"current": rec, "history": history, "analysis": {k: an[k] for k in ("schema", "design", "hash", "sources", "gaps")}, "choice": None,
@@ -305,5 +311,6 @@ def strategy_for_run(design: Path) -> dict[str, Any] | None:
     opt = next((o for o in cur["options"] if o["id"] == ch["chosen"]), None)
     return {"chosen": ch["chosen"], "scope": ch["scope"], "request": cur["request"], "goal": cur.get("goal"), "analysis_hash": cur["analysis_hash"],
             "options_hash": cur["options_hash"], "options_offered": [{"id": o["id"], "title": o["title"], "scope": o["scope"]["components"], "origin": o.get("origin", "model"),
-                                                  **({"combined_from": o["combined_from"]} if o.get("origin") == "combiner" else {})} for o in cur["options"]],
+                                                  **({"combined_from": o["combined_from"]} if o.get("origin") == "combiner" else {}),
+                                                  **({"split_from": o["split_from"]} if o.get("origin") == "splitter" else {})} for o in cur["options"]],
             "chosen_option": opt, "model": cur.get("model"), "prompts": cur.get("prompts"), "analysis_sources": cur.get("analysis_sources"), "time": ch["time"]}

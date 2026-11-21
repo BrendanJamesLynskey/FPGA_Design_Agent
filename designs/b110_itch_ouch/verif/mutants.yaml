@@ -1,0 +1,351 @@
+# Mutation set for the ITCH/OUCH path (brief 110; tests/run_mutants.py): each mutant replaces `old` (exactly once) by `new` in a copy of rtl/.
+# class: operator | constant | condition. Nothing here is ever applied to the real RTL.
+mutants:
+- name: mold_minlen
+  file: mold_rx.sv
+  old: parameter int MIN_LEN = 12
+  new: parameter int MIN_LEN = 8
+  class: constant
+  why: a block of 8 to 11 bytes is accepted as a message
+- name: mold_hip_off
+  file: mold_rx.sv
+  old: hip_start = e_hip;
+  new: hip_start = 1'b0;
+  class: condition
+  why: a block whose length field straddles two words is lost
+- name: mold_data_word
+  file: mold_rx.sv
+  old: data_in_word = hip_start || (ph <= 3'd5);
+  new: data_in_word = hip_start || (ph <= 3'd6);
+  class: constant
+  why: a block starting at byte 6 of a word takes data from that word
+- name: mold_comp_lt
+  file: mold_rx.sv
+  old: comp      = e_ind && (e_nxt <= {13'd0, nv});
+  new: comp      = e_ind && (e_nxt < {13'd0, nv});
+  class: condition
+  why: a message ending on a word's last byte completes a word late
+- name: mold_nxt_wrap
+  file: mold_rx.sv
+  old: nxt     <= e_rel - 17'd8;
+  new: nxt     <= e_rel - 17'd7;
+  class: constant
+  why: the next block position drifts by one byte
+- name: mold_missing_one
+  file: mold_rx.sv
+  old: c_missing <= c_missing + (seq_r[31:0] - exp_seq[31:0]);
+  new: c_missing <= c_missing + 32'd1;
+  class: operator
+  why: missing messages counted as one per gap
+- name: mold_dup_gt
+  file: mold_rx.sv
+  old: (d_delta >= {16'd0, d_neff})
+  new: (d_delta > {16'd0, d_neff})
+  class: condition
+  why: a packet that ends exactly at the expected number is treated as an overlap
+- name: mold_session_unlocked
+  file: mold_rx.sv
+  old: d_sess_ok = !sess_lock || (sess_r == sess_l);
+  new: d_sess_ok = 1'b1;
+  class: condition
+  why: a packet of another session is accepted
+- name: mold_skip_gt
+  file: mold_rx.sv
+  old: assign gate_ok   = !pk_bad && (midx_r >= skip);
+  new: assign gate_ok   = !pk_bad && (midx_r > skip);
+  class: condition
+  why: the first message after an overlap is dropped
+- name: mold_err_ignored
+  file: mold_rx.sv
+  old: untrusted <= 1'b1;
+  new: untrusted <= untrusted;
+  class: condition
+  why: a bad frame does not raise untrusted
+- name: mold_trunc_le
+  file: mold_rx.sv
+  old: ((e_dn + {15'd0, comp}) < cnt_now)
+  new: ((e_dn + {15'd0, comp}) <= cnt_now)
+  class: condition
+  why: every packet is counted truncated
+- name: mold_seq_bytes
+  file: mold_rx.sv
+  old: "s_d[7:0], s_d[15:8]};\n                    cnt_r"
+  new: "s_d[15:8], s_d[7:0]};\n                    cnt_r"
+  class: constant
+  why: the low sequence bytes swapped
+- name: mold_soff
+  file: mold_rx.sv
+  old: 'soff    <= hip_start ? 3''d1 : (ph <= 3''d5 ? ph + 3''d2 : 3''d0);'
+  new: 'soff    <= hip_start ? 3''d2 : (ph <= 3''d5 ? ph + 3''d2 : 3''d0);'
+  class: constant
+  why: a message after a straddling length field starts a byte late
+- name: mold_keep3
+  file: mold_rx.sv
+  old: '8''h07:   nv = 4''d3;'
+  new: '8''h07:   nv = 4''d4;'
+  class: constant
+  why: a last word with three bytes is read as four
+- name: mold_hb_count
+  file: mold_rx.sv
+  old: if (cnt_r == 16'd0) c_hb <= c_hb + 32'd1;
+  new: if (cnt_r == 16'd1) c_hb <= c_hb + 32'd1;
+  class: constant
+  why: heartbeats are not counted
+- name: dec_len_a
+  file: itch_dec.sv
+  old: '"A": begin len_ok = (m_len == 16''d36);'
+  new: '"A": begin len_ok = (m_len == 16''d35);'
+  class: constant
+  why: Add Order length
+- name: dec_len_u
+  file: itch_dec.sv
+  old: '"U": begin len_ok = (m_len == 16''d35);'
+  new: '"U": begin len_ok = (m_len == 16''d36);'
+  class: constant
+  why: Replace length
+- name: dec_side_check
+  file: itch_dec.sv
+  old: '(al[8*19 +: 8] == "B" || al[8*19 +: 8] == "S")'
+  new: '(al[8*19 +: 8] == "B" || al[8*19 +: 8] == "B")'
+  class: condition
+  why: sell side letter rejected
+- name: dec_side_sell
+  file: itch_dec.sv
+  old: 'e_sell  <= (al[8*19 +: 8] == "S");'
+  new: 'e_sell  <= (al[8*19 +: 8] == "B");'
+  class: condition
+  why: buy and sell swapped
+- name: dec_u_price
+  file: itch_dec.sv
+  old: e_px <= f_px31;
+  new: e_px <= f_px32;
+  class: constant
+  why: Replace price taken from the wrong offset
+- name: dec_shares_zero
+  file: itch_dec.sv
+  old: 'K_EXE, K_CAN: field_ok = (f_sh19 != 32''d0);'
+  new: 'K_EXE, K_CAN: field_ok = 1''b1;'
+  class: condition
+  why: zero-share execution accepted
+- name: dec_c_kind
+  file: itch_dec.sv
+  old: '"C": begin len_ok = (m_len == 16''d36); kind = K_EXE; end'
+  new: '"C": begin len_ok = (m_len == 16''d36); kind = K_CAN; end'
+  class: constant
+  why: executed-with-price taken as a cancel
+- name: book_inx_oovf
+  file: book_core.sv
+  old: else begin n_oovf = 1'b1; set_inx2 = 1'b1; end
+  new: else begin n_oovf = 1'b1; end
+  class: condition
+  why: a table overflow does not mark the instrument inexact
+- name: book_red_ge
+  file: book_core.sv
+  old: if (b2_sh >= e2_rem) begin
+  new: if (b2_sh > e2_rem) begin
+  class: condition
+  why: an execution of the exact remainder leaves an empty order
+- name: book_over_ge
+  file: book_core.sv
+  old: n_oover = (b2_sh > e2_rem);
+  new: n_oover = (b2_sh >= e2_rem);
+  class: condition
+  why: over-execution counted for an exact execution
+- name: book_no_forward
+  file: book_core.sv
+  old: 'e2 = (wb_we && wb_addr == b2_addr) ? wb_data : rd_q;'
+  new: e2 = rd_q;
+  class: condition
+  why: no forwarding from the previous clock's write
+- name: book_ctx_always
+  file: book_core.sv
+  old: ctx_v <= hit2; ctx_inst <= e2_inst; ctx_side <= e2_side;
+  new: ctx_v <= 1'b1; ctx_inst <= e2_inst; ctx_side <= e2_side;
+  class: condition
+  why: a Replace of an unknown order still adds the new one
+- name: book_lv_zero
+  file: book_core.sv
+  old: 'lv_wd = (d3_amt >= sz_hit) ? 65''d0 : {1''b1, d3_px, sz_hit - d3_amt};'
+  new: 'lv_wd = (d3_amt > sz_hit) ? 65''d0 : {1''b1, d3_px, sz_hit - d3_amt};'
+  class: condition
+  why: a level reduced to zero stays as an empty level
+- name: book_better_swap
+  file: book_core.sv
+  old: 'else better = ask ? (ap <= bp) : (ap >= bp);'
+  new: 'else better = ask ? (ap >= bp) : (ap <= bp);'
+  class: condition
+  why: best ask is the highest, best bid the lowest
+- name: book_cand_lt
+  file: book_core.sv
+  old: (b1_px <= cfg_thr)
+  new: (b1_px < cfg_thr)
+  class: condition
+  why: an ask exactly at the threshold is not a candidate
+- name: book_spec_fail_off
+  file: book_core.sv
+  old: assign spec_fail = b2_v && b2_spec && !(dl_v && dl_add);
+  new: assign spec_fail = 1'b0;
+  class: condition
+  why: a speculative frame whose Add was a duplicate is never cancelled
+- name: book_cand_ahead
+  file: book_core.sv
+  old: ' || (tu_v && tu_cand);'
+  new: ;
+  class: condition
+  why: speculation allowed while an earlier candidate's verdict is being taken
+- name: book_inx_own
+  file: book_core.sv
+  old: t1_inx <= inx_r[d3_inst] | ovf3;
+  new: t1_inx <= inx_r[d3_inst];
+  class: condition
+  why: the ladder overflow of the Add itself is not seen by its verdict
+- name: book_unwatch
+  file: book_core.sv
+  old: assign in_take = in_ord && in_watch && !sweep;
+  new: assign in_take = in_ord && !sweep;
+  class: condition
+  why: orders of unwatched instruments enter the book
+- name: book_replace_slots
+  file: book_core.sv
+  old: "if (b1_k == K_REP) begin\n                        u1_pend <= 1'b1;"
+  new: "if (1'b0) begin\n                        u1_pend <= 1'b1;"
+  class: condition
+  why: a Replace taken from the queue loses its second slot
+- name: book_sweep_short
+  file: book_core.sv
+  old: if (sw_cnt == (ORD_AW + 1)'(ORD_N - 1)) sweep <= 1'b0;
+  new: if (sw_cnt == (ORD_AW + 1)'(ORD_N - 2)) sweep <= 1'b0;
+  class: constant
+  why: the sweep stops one entry short
+- name: risk_kill_off
+  file: risk_glue.sv
+  old: else if (cfg_kill) reason = 3'd2;
+  new: else if (1'b0) reason = 3'd2;
+  class: condition
+  why: the kill switch does nothing
+- name: risk_pos_ge
+  file: risk_glue.sv
+  old: else if (pos_sum > {1'b0, cfg_max_pos}) reason = 3'd6;
+  new: else if (pos_sum >= {1'b0, cfg_max_pos}) reason = 3'd6;
+  class: condition
+  why: an order that reaches the position limit exactly is refused
+- name: risk_band_lt
+  file: risk_glue.sv
+  old: ({1'b0, v_price} <= band_lim)
+  new: ({1'b0, v_price} < band_lim)
+  class: condition
+  why: a price exactly at the band edge is refused
+- name: risk_size_1e6
+  file: risk_glue.sv
+  old: cfg_qty >= 32'd1000000
+  new: cfg_qty > 32'd1000000
+  class: condition
+  why: a quantity of exactly one million is allowed
+- name: risk_pos_step
+  file: risk_glue.sv
+  old: pos[tu_inst] <= pos[tu_inst] + cfg_qty;
+  new: pos[tu_inst] <= pos[tu_inst] + 32'd1;
+  class: operator
+  why: the position grows by one share an order
+- name: risk_ref_step
+  file: risk_glue.sv
+  old: next_ref <= next_ref + 32'd1;
+  new: next_ref <= next_ref + 32'd2;
+  class: operator
+  why: order numbers skip
+- name: risk_offset
+  file: risk_glue.sv
+  old: v_price  = tu_cpx + cfg_px_off;
+  new: v_price  = tu_cpx;
+  class: operator
+  why: the price offset is ignored
+- name: risk_gap_off
+  file: risk_glue.sv
+  old: else if (tu_gapblk) reason = 3'd3;
+  new: else if (1'b0) reason = 3'd3;
+  class: condition
+  why: a sequence gap or a bad frame does not stop orders
+- name: risk_no_bid
+  file: risk_glue.sv
+  old: '!(bid_ok && ({1''b0, v_price} <= band_lim))'
+  new: '!({1''b0, v_price} <= band_lim)'
+  class: condition
+  why: the band check passes when no bid exists
+- name: risk_busy
+  file: risk_glue.sv
+  old: end else c_rbusy <= c_rbusy + 32'd1;
+  new: end else c_rbusy <= c_rbusy;
+  class: condition
+  why: a rejection for a full queue is not counted
+- name: risk_pop_shift
+  file: risk_glue.sv
+  old: dq[0] <= dq[1]; dq[1] <= dq[2]; dq[2] <= dq[3];
+  new: dq[0] <= dq[1]; dq[1] <= dq[1]; dq[2] <= dq[3];
+  class: operator
+  why: the order queue shifts wrongly
+- name: risk_abort_off
+  file: risk_glue.sv
+  old: if ((v_cand && !pass && tu_spec) || spec_fail) abort = 1'b1;
+  new: if (spec_fail) abort = 1'b1;
+  class: condition
+  why: a speculative frame whose risk check failed is not cancelled
+- name: ouch_side
+  file: ouch_enter.sv
+  old: 'fr[8*8 +: 8] = "B";'
+  new: 'fr[8*8 +: 8] = "S";'
+  class: constant
+  why: side letter
+- name: ouch_price_byte
+  file: ouch_enter.sv
+  old: 'fr[8*25 +: 8] = c_px[31:24];'
+  new: 'fr[8*24 +: 8] = c_px[31:24];'
+  class: constant
+  why: price byte at the wrong offset
+- name: ouch_hex
+  file: ouch_enter.sv
+  old: (8'h41 + {4'd0, n} - 8'd10)
+  new: (8'h41 + {4'd0, n} - 8'd9)
+  class: constant
+  why: hex digit letters shifted
+- name: ouch_len
+  file: ouch_enter.sv
+  old: 'fr[8*1 +: 8] = 8''h39;'
+  new: 'fr[8*1 +: 8] = 8''h3A;'
+  class: constant
+  why: SoupBinTCP length
+- name: ouch_applen
+  file: ouch_enter.sv
+  old: 'fr[8*49 +: 8] = 8''h09;'
+  new: 'fr[8*49 +: 8] = 8''h08;'
+  class: constant
+  why: appendage length
+- name: ouch_minqty_order
+  file: ouch_enter.sv
+  old: 'fr[8*52 +: 8] = cfg_minqty[31:24]; fr[8*53 +: 8] = cfg_minqty[23:16];'
+  new: 'fr[8*53 +: 8] = cfg_minqty[31:24]; fr[8*52 +: 8] = cfg_minqty[23:16];'
+  class: constant
+  why: MinQty bytes swapped
+- name: ouch_keep
+  file: ouch_enter.sv
+  old: o_keep <= 8'h07;
+  new: o_keep <= 8'h0F;
+  class: constant
+  why: last word keep mask
+- name: ouch_last_word
+  file: ouch_enter.sv
+  old: if (widx == 3'd7) begin
+  new: if (widx == 3'd6) begin
+  class: constant
+  why: frame one word short
+- name: ouch_abort_off
+  file: ouch_enter.sv
+  old: busy <= 1'b0; o_abort <= 1'b1; spec_pend <= 1'b0;
+  new: busy <= 1'b0; spec_pend <= 1'b0;
+  class: condition
+  why: an aborted frame is not announced
+- name: ouch_symbol
+  file: ouch_enter.sv
+  old: 'fr[8*(13+i) +: 8] = c_sym[8*(7-i) +: 8];'
+  new: 'fr[8*(13+i) +: 8] = c_sym[8*i +: 8];'
+  class: operator
+  why: symbol bytes reversed

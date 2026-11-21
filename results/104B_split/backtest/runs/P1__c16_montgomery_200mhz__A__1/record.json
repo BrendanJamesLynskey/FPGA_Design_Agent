@@ -1,0 +1,286 @@
+{
+ "schema": "fda-strategy-record/1",
+ "request": "the design misses timing at 200 MHz: improve its timing",
+ "mode": "new",
+ "blind": false,
+ "analysis_hash": "51dc0b73dbaec29e339935d768037b1d8be7c995f2e37691bdbb51e2d5ecc989",
+ "analysis_sources": [
+  {
+   "file": "results/104_strategy_options/backtest/c16_montgomery_200mhz/evidence/digest.json",
+   "sha256": "244d2f139bc014ad59f022554bdc53df75d4aac9a4d0133360751b4e4701d610",
+   "bytes": 1261
+  }
+ ],
+ "model": {
+  "purpose": "options",
+  "endpoint": "claude_code",
+  "kind": "claude_code",
+  "model": "claude-sonnet-5-5",
+  "effort": "medium",
+  "entry_hash": "f3f2d8f85ded614e",
+  "table_hash": "fefa480b88108b19"
+ },
+ "attempts": 1,
+ "prompts": {
+  "system": {
+   "name": "graph/options/system",
+   "sha256": "ffb71e87152c89562f25e597b4c471401f7621f107864519b280480913becdc1"
+  },
+  "user": {
+   "name": "graph/options/user",
+   "sha256": "30be8dfd004dac0b443bd9284b0dc2e6b83fc244eb9e18ea65491314bed01ede"
+  },
+  "repair": {
+   "name": "graph/options/repair",
+   "sha256": "bb56b4a42f41d6b2e0b4df594b108893c63648374235a7d5d2b5224fc192f8b0"
+  }
+ },
+ "goal": "timing",
+ "status": "options",
+ "rejected": [],
+ "splitter": {
+  "version": "1",
+  "cap": 8,
+  "split": [],
+  "report": [],
+  "offered": []
+ },
+ "combiner": {
+  "version": "2",
+  "considered": 4,
+  "cap": 4,
+  "offered": [],
+  "not_composable": [
+   {
+    "from": [
+     "O1",
+     "O2"
+    ],
+    "reason": "slack gains do not add: the worst path sets the clock period, so the gain of two changes is not the sum of their gains"
+   },
+   {
+    "from": [
+     "O1",
+     "O3"
+    ],
+    "reason": "slack gains do not add: the worst path sets the clock period, so the gain of two changes is not the sum of their gains"
+   },
+   {
+    "from": [
+     "O2",
+     "O3"
+    ],
+    "reason": "slack gains do not add: the worst path sets the clock period, so the gain of two changes is not the sum of their gains"
+   },
+   {
+    "from": [
+     "O1",
+     "O2",
+     "O3"
+    ],
+    "reason": "slack gains do not add: the worst path sets the clock period, so the gain of two changes is not the sum of their gains"
+   }
+  ]
+ },
+ "options_hash": "9c5a7f3c8753f998efbbe9bb1dd1f540c2b5afea45f5930b4760c89200f00627",
+ "options": [
+  {
+   "id": "O1",
+   "scope": {
+    "kind": "modules",
+    "components": [
+     "montgomery_core"
+    ],
+    "cli": "--scope montgomery_core"
+   },
+   "techniques": [
+    "carry_save",
+    "restructure_arithmetic"
+   ],
+   "touches_stages": [],
+   "cost": {
+    "iterations": {
+     "low": 3,
+     "high": 6
+    },
+    "vivado_runs": {
+     "low": 3,
+     "high": 6
+    },
+    "wall_minutes": null,
+    "model_usd": null,
+    "note": "The arithmetic is rewritten and the end-of-operation conversion has to be fitted into the fixed W+2 latency, so several rounds are likely.",
+    "basis": "iterations are the generator's estimate (a guess); no recorded build time, so no wall-time figure"
+   },
+   "not_touched": [
+    {
+     "component": "top",
+     "why": "owned, outside this option's scope"
+    },
+    {
+     "component": "regs",
+     "why": "owned, outside this option's scope"
+    }
+   ],
+   "n": 1,
+   "origin": "model",
+   "title_sha256": "ee091e23a31eff27c18e09ea61ffa624310acb1403752007492b3bd6b4a4eae8",
+   "gain": {
+    "metric": "wns_ns",
+    "unit": "ns",
+    "low": 0.615,
+    "high": 2.0,
+    "basis": "guess",
+    "cites": [
+     "timing.worst_path.levels",
+     "timing.worst_path.data_path_ns"
+    ],
+    "ceiling": 5.0,
+    "sources": [
+     "results/104_strategy_options/backtest/c16_montgomery_200mhz/evidence/digest.json"
+    ]
+   },
+   "risk": {
+    "contract_change": false,
+    "contract_flags": [],
+    "contract_flag_added_by_checker": false,
+    "needs_owner_approval": false,
+    "contract_affected": [],
+    "needs_eqy": true,
+    "needs_board": false
+   }
+  },
+  {
+   "id": "O2",
+   "scope": {
+    "kind": "whole_design",
+    "components": [
+     "top",
+     "regs",
+     "montgomery_core"
+    ],
+    "cli": "--scope top,regs,montgomery_core"
+   },
+   "techniques": [
+    "tool_strategy",
+    "phys_opt"
+   ],
+   "touches_stages": [],
+   "cost": {
+    "iterations": {
+     "low": 2,
+     "high": 4
+    },
+    "vivado_runs": {
+     "low": 2,
+     "high": 4
+    },
+    "wall_minutes": null,
+    "model_usd": null,
+    "note": "Each strategy or seed is a full build and no RTL changes are needed.",
+    "basis": "iterations are the generator's estimate (a guess); no recorded build time, so no wall-time figure"
+   },
+   "not_touched": [],
+   "n": 2,
+   "origin": "model",
+   "title_sha256": "36e7d4d61dc54481ff132591ea9425e8964a698b447244e1c9aa3c7726fd5c97",
+   "gain": {
+    "metric": "wns_ns",
+    "unit": "ns",
+    "low": 0.0,
+    "high": 0.4,
+    "basis": "guess",
+    "cites": [
+     "timing.worst_path.levels",
+     "timing.wns_ns"
+    ],
+    "ceiling": 5.0,
+    "sources": [
+     "results/104_strategy_options/backtest/c16_montgomery_200mhz/evidence/digest.json"
+    ]
+   },
+   "risk": {
+    "contract_change": false,
+    "contract_flags": [],
+    "contract_flag_added_by_checker": false,
+    "needs_owner_approval": false,
+    "contract_affected": [],
+    "needs_eqy": false,
+    "needs_board": false
+   }
+  },
+  {
+   "id": "O3",
+   "scope": {
+    "kind": "whole_design",
+    "components": [
+     "top",
+     "regs",
+     "montgomery_core"
+    ],
+    "cli": "--scope top,regs,montgomery_core"
+   },
+   "techniques": [
+    "carry_save",
+    "tool_strategy",
+    "restructure_arithmetic",
+    "constraint_review"
+   ],
+   "touches_stages": [],
+   "cost": {
+    "iterations": {
+     "low": 5,
+     "high": 8
+    },
+    "vivado_runs": {
+     "low": 5,
+     "high": 8
+    },
+    "wall_minutes": null,
+    "model_usd": null,
+    "note": "This is the O1 rounds plus the strategy sweep and a pass over the remaining failing endpoints.",
+    "basis": "iterations are the generator's estimate (a guess); no recorded build time, so no wall-time figure"
+   },
+   "not_touched": [],
+   "n": 3,
+   "origin": "model",
+   "title_sha256": "5d752e12112c6a8667678659dee1aa30f2028dec352d15d9ccb5b2fb04dc381d",
+   "gain": {
+    "metric": "wns_ns",
+    "unit": "ns",
+    "low": 0.615,
+    "high": 2.5,
+    "basis": "guess",
+    "cites": [
+     "timing.wns_ns",
+     "timing.failing_endpoints",
+     "timing.period_ns"
+    ],
+    "ceiling": 5.0,
+    "sources": [
+     "results/104_strategy_options/backtest/c16_montgomery_200mhz/evidence/digest.json"
+    ]
+   },
+   "risk": {
+    "contract_change": false,
+    "contract_flags": [],
+    "contract_flag_added_by_checker": false,
+    "needs_owner_approval": false,
+    "contract_affected": [],
+    "needs_eqy": true,
+    "needs_board": false
+   }
+  }
+ ],
+ "available": {
+  "carry_save": {
+   "found": true,
+   "in_range": true
+  }
+ },
+ "bounds": {
+  "checked": 0,
+  "outside": []
+ },
+ "free_text_withheld": "title, approach, gain basis notes, gates and risk summaries are in the private repository (moved_to_kb.json)"
+}
