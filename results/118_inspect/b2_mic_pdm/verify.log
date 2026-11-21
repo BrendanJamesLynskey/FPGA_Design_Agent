@@ -1,0 +1,281 @@
+Running as unit: run-r15fc9a48cab84a259abe5af6c8517d00.scope; invocation ID: 9df027ba2c6742af84cda2892fce0c9c
+INFO: [Common 17-3922] A valid Vivado Design Suite BASIC license has been detected. Your current license is active and will expire on 10-nov-2027.
+
+****** Vivado v2026.1 (64-bit)
+  **** SW Build 6511674 on Tue Jun 16 11:01:26 MDT 2026
+  **** IP Build 6504888 on Tue Jun 09 09:05:25 MDT 2026
+  **** SharedData Build 6501428 on Mon Jun 08 17:34:18 MDT 2026
+  **** Start of session at: Fri Nov 20 20:02:28 2026
+    ** Copyright 1986-2022 Xilinx, Inc. All Rights Reserved.
+    ** Copyright 2022-2026 Advanced Micro Devices, Inc. All Rights Reserved.
+
+source <worktree>/designs/b2_mic_pdm/build/base/inspect/verify.tcl
+# open_project {<worktree>/designs/b2_mic_pdm/build/base/inspect/vivado_project/b2_mic_pdm_base_dde4e7d0.xpr}
+INFO: [filemgmt 56-3] Default IP Output Path : Could not find the directory '<worktree>/designs/b2_mic_pdm/build/base/inspect/vivado_project/b2_mic_pdm_base_dde4e7d0.gen/sources_1'.
+Scanning sources...
+Finished scanning sources
+WARNING: [Project 1-5713] Board part '' set for the project  is not found. BoardPart property will be unset. Please select board from latest repo build 
+open_project: Time (s): cpu = 00:00:21 ; elapsed = 00:00:08 . Memory (MB): peak = 1746.293 ; gain = 275.059 ; free physical = 2084 ; free virtual = 20662
+# puts "INSPECT-VERIFY project [current_project] top=[get_property top [current_fileset]] files=[llength [get_files -quiet]] sims=[llength [get_filesets -filter {FILESET_TYPE==SimulationSrcs}]]"
+INSPECT-VERIFY project b2_mic_pdm_base_dde4e7d0 top=b2_mic_pdm_top files=12 sims=1
+# if {[catch {synth_design -rtl -rtl_skip_ip -name rtl_1} e]} { puts "INSPECT-VERIFY rtl FAIL $e" } else { puts "INSPECT-VERIFY rtl OK cells=[llength [get_cells -hier -filter {IS_PRIMITIVE==0} -quiet]]"; close_design }
+Command: synth_design -rtl -rtl_skip_ip -name rtl_1
+Starting synth_design
+Using part: xc7a100tcsg324-1
+Top: b2_mic_pdm_top
+INFO: [Device 21-403] Loading part xc7a100tcsg324-1
+INFO: [Designutils 20-5008] Incremental synthesis strategy default
+INFO: [Synth 8-7079] Multithreading enabled for synth_design using a maximum of 7 processes.
+INFO: [Synth 8-7078] Launching helper process for spawning children vivado processes
+INFO: [Synth 8-7075] Helper process launched with PID 1541933
+---------------------------------------------------------------------------------
+Starting RTL Elaboration : Time (s): cpu = 00:00:07 ; elapsed = 00:00:08 . Memory (MB): peak = 2412.418 ; gain = 518.977 ; free physical = 2082 ; free virtual = 20662
+---------------------------------------------------------------------------------
+INFO: [Synth 8-6157] synthesizing module 'b2_mic_pdm_top' [<worktree>/designs/b2_mic_pdm/rtl/b2_mic_pdm_top.sv:5]
+	Parameter BUILD_STAMP bound to: 32'b11011101111001001110011111010000 
+INFO: [Synth 8-6157] synthesizing module 'reset_sync' [<worktree>/shell/rtl/reset_sync.sv:6]
+INFO: [Synth 8-6155] done synthesizing module 'reset_sync' (0#1) [<worktree>/shell/rtl/reset_sync.sv:6]
+INFO: [Synth 8-6157] synthesizing module 'fpga_shell' [<worktree>/shell/rtl/fpga_shell.sv:12]
+	Parameter CLKS_PER_BIT bound to: 32'sb00000000000000000000001101100100 
+	Parameter TIMEOUT_CYCLES bound to: 32'sb00000000000000011000011010100000 
+	Parameter DESIGN_ID bound to: 1110592835 - type: integer 
+	Parameter BUILD_STAMP bound to: 32'b11011101111001001110011111010000 
+INFO: [Synth 8-6157] synthesizing module 'USR_ACCESSE2' [/opt/Xilinx/2026.1/Vivado/scripts/rt/data/unisim_comp.v:174394]
+INFO: [Synth 8-6155] done synthesizing module 'USR_ACCESSE2' (0#1) [/opt/Xilinx/2026.1/Vivado/scripts/rt/data/unisim_comp.v:174394]
+INFO: [Synth 8-6157] synthesizing module 'uart_rx' [<worktree>/shell/rtl/uart_rx.sv:7]
+	Parameter CLKS_PER_BIT bound to: 32'sb00000000000000000000001101100100 
+INFO: [Synth 8-6157] synthesizing module 'sync2' [<worktree>/shell/rtl/sync2.sv:5]
+	Parameter WIDTH bound to: 32'sb00000000000000000000000000000001 
+	Parameter RESET_VALUE bound to: 1'b1 
+INFO: [Synth 8-6155] done synthesizing module 'sync2' (0#1) [<worktree>/shell/rtl/sync2.sv:5]
+INFO: [Synth 8-6155] done synthesizing module 'uart_rx' (0#1) [<worktree>/shell/rtl/uart_rx.sv:7]
+INFO: [Synth 8-6157] synthesizing module 'uart_tx' [<worktree>/shell/rtl/uart_tx.sv:5]
+	Parameter CLKS_PER_BIT bound to: 32'sb00000000000000000000001101100100 
+INFO: [Synth 8-6155] done synthesizing module 'uart_tx' (0#1) [<worktree>/shell/rtl/uart_tx.sv:5]
+INFO: [Synth 8-6157] synthesizing module 'shell_core' [<worktree>/shell/rtl/shell_core.sv:10]
+	Parameter TIMEOUT_CYCLES bound to: 32'sb00000000000000011000011010100000 
+	Parameter DESIGN_ID bound to: 1110592835 - type: integer 
+	Parameter BUILD_STAMP bound to: 32'b11011101111001001110011111010000 
+INFO: [Synth 8-6155] done synthesizing module 'shell_core' (0#1) [<worktree>/shell/rtl/shell_core.sv:10]
+INFO: [Synth 8-6155] done synthesizing module 'fpga_shell' (0#1) [<worktree>/shell/rtl/fpga_shell.sv:12]
+INFO: [Synth 8-6157] synthesizing module 'sync2__parameterized0' [<worktree>/shell/rtl/sync2.sv:5]
+INFO: [Synth 8-6155] done synthesizing module 'sync2__parameterized0' (0#1) [<worktree>/shell/rtl/sync2.sv:5]
+INFO: [Synth 8-6157] synthesizing module 'mic_regs' [<worktree>/designs/b2_mic_pdm/rtl/mic_regs.sv:12]
+	Parameter HALF bound to: 32'sb00000000000000000000000000010101 
+INFO: [Synth 8-294] found qualifier unique on case statement: implementing as parallel_case [<worktree>/designs/b2_mic_pdm/rtl/mic_regs.sv:35]
+INFO: [Synth 8-6157] synthesizing module 'pdm_stats' [<worktree>/designs/b2_mic_pdm/rtl/pdm_stats.sv:11]
+	Parameter HALF bound to: 32'sb00000000000000000000000000010101 
+INFO: [Synth 8-6155] done synthesizing module 'pdm_stats' (0#1) [<worktree>/designs/b2_mic_pdm/rtl/pdm_stats.sv:11]
+INFO: [Synth 8-6155] done synthesizing module 'mic_regs' (0#1) [<worktree>/designs/b2_mic_pdm/rtl/mic_regs.sv:12]
+INFO: [Synth 8-6155] done synthesizing module 'b2_mic_pdm_top' (0#1) [<worktree>/designs/b2_mic_pdm/rtl/b2_mic_pdm_top.sv:5]
+WARNING: [Synth 8-3917] design b2_mic_pdm_top has port M_LRSEL driven by constant 0
+---------------------------------------------------------------------------------
+Finished RTL Elaboration : Time (s): cpu = 00:00:10 ; elapsed = 00:00:10 . Memory (MB): peak = 2516.387 ; gain = 622.945 ; free physical = 1886 ; free virtual = 20469
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Start Handling Custom Attributes
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished Handling Custom Attributes : Time (s): cpu = 00:00:10 ; elapsed = 00:00:10 . Memory (MB): peak = 2522.324 ; gain = 628.883 ; free physical = 1885 ; free virtual = 20468
+---------------------------------------------------------------------------------
+---------------------------------------------------------------------------------
+Finished RTL Optimization Phase 1 : Time (s): cpu = 00:00:10 ; elapsed = 00:00:10 . Memory (MB): peak = 2522.324 ; gain = 628.883 ; free physical = 1885 ; free virtual = 20468
+---------------------------------------------------------------------------------
+Netlist sorting complete. Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 2525.293 ; gain = 0.000 ; free physical = 1885 ; free virtual = 20468
+INFO: [Project 1-570] Preparing netlist for logic optimization
+
+Processing XDC Constraints
+Initializing timing engine
+Parsing XDC File [<worktree>/designs/b2_mic_pdm/design.xdc]
+Finished Parsing XDC File [<worktree>/designs/b2_mic_pdm/design.xdc]
+Completed Processing XDC Constraints
+
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2635.062 ; gain = 0.000 ; free physical = 1844 ; free virtual = 20427
+INFO: [Project 1-111] Unisim Transformation Summary:
+No Unisim elements were transformed.
+
+RTL Elaboration Complete:  : Time (s): cpu = 00:00:16 ; elapsed = 00:00:13 . Memory (MB): peak = 2635.098 ; gain = 741.656 ; free physical = 1843 ; free virtual = 20427
+30 Infos, 1 Warnings, 0 Critical Warnings and 0 Errors encountered.
+synth_design completed successfully
+synth_design: Time (s): cpu = 00:00:21 ; elapsed = 00:00:18 . Memory (MB): peak = 2635.098 ; gain = 888.805 ; free physical = 1843 ; free virtual = 20427
+INFO: [Common 17-2834] synth_design peak Physical Memory [PSS] (MB): overall = 2066.748; main = 1933.059; forked = 339.581
+INFO: [Common 17-2834] synth_design peak Virtual Memory [VSS] (MB): overall = 3553.641; main = 2635.066; forked = 1037.250
+INSPECT-VERIFY rtl OK cells=9
+# if {[catch {open_checkpoint {<worktree>/designs/b2_mic_pdm/build/base/post_synth.dcp}} e]} { puts "INSPECT-VERIFY synth FAIL $e" } else {
+#   puts "INSPECT-VERIFY synth OK design=[current_design] part=[get_property PART [current_design]] cells=[llength [get_cells -hier -filter {IS_PRIMITIVE==0} -quiet]]"
+#   set wns [lindex [get_property SLACK [get_timing_paths -max_paths 1 -setup -quiet]] 0]
+#   puts "INSPECT-VERIFY synth WNS=$wns"
+#   close_design }
+Command: open_checkpoint <worktree>/designs/b2_mic_pdm/build/base/post_synth.dcp
+
+Starting open_checkpoint Task
+
+Time (s): cpu = 00:00:00.05 ; elapsed = 00:00:00.05 . Memory (MB): peak = 2635.098 ; gain = 0.000 ; free physical = 1841 ; free virtual = 20425
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2635.098 ; gain = 0.000 ; free physical = 1854 ; free virtual = 20437
+INFO: [Netlist 29-17] Analyzing 30 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+INFO: [Project 1-479] Netlist was created with Vivado 2026.1
+INFO: [Project 1-570] Preparing netlist for logic optimization
+Read ShapeDB Complete: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2635.098 ; gain = 0.000 ; free physical = 1790 ; free virtual = 20373
+INFO: [Timing 38-478] Restoring timing data from binary archive.
+INFO: [Timing 38-479] Binary timing data restore complete.
+INFO: [Project 1-856] Restoring constraints from binary archive.
+INFO: [Constraints 18-5170] The checkpoint was created with non-default parameter values which do not match the current Vivado settings.  Mismatching parameters are:
+  synth.maxThreads
+  general.maxThreads
+INFO: [Project 1-853] Binary constraint restore complete.
+INFO: [Designutils 20-5722] Start Reading Physical Databases.
+Reading placement.
+Read Netlist Cache: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2866.203 ; gain = 0.000 ; free physical = 1862 ; free virtual = 20443
+Reading placer database...
+Read Device Cache: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2866.203 ; gain = 0.000 ; free physical = 1862 ; free virtual = 20443
+Read PlaceDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2866.203 ; gain = 0.000 ; free physical = 1862 ; free virtual = 20443
+Read placeStorage: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2885.281 ; gain = 19.078 ; free physical = 1862 ; free virtual = 20443
+Read PulsedLatchDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2885.281 ; gain = 0.000 ; free physical = 1862 ; free virtual = 20443
+Reading routing.
+Read RouteStorage: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2885.281 ; gain = 0.000 ; free physical = 1862 ; free virtual = 20443
+Read Physdb Files: Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 2885.281 ; gain = 19.078 ; free physical = 1861 ; free virtual = 20442
+Restored from archive | CPU: 0.020000 secs | Memory: 0.027802 MB |
+Finished XDEF File Restore: Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 2885.281 ; gain = 19.078 ; free physical = 1861 ; free virtual = 20442
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2885.281 ; gain = 0.000 ; free physical = 1859 ; free virtual = 20440
+INFO: [Project 1-111] Unisim Transformation Summary:
+No Unisim elements were transformed.
+
+INFO: [Project 1-604] Checkpoint was created with Vivado v2026.1 (64-bit) build 6511674
+open_checkpoint: Time (s): cpu = 00:00:10 ; elapsed = 00:00:10 . Memory (MB): peak = 2885.316 ; gain = 250.219 ; free physical = 1855 ; free virtual = 20436
+INSPECT-VERIFY synth OK design=checkpoint_post_synth part=xc7a100tcsg324-1 cells=9
+INSPECT-VERIFY synth WNS=5.330
+# if {[catch {open_checkpoint {<worktree>/designs/b2_mic_pdm/build/base/post_opt.dcp}} e]} { puts "INSPECT-VERIFY opt FAIL $e" } else {
+#   puts "INSPECT-VERIFY opt OK design=[current_design] part=[get_property PART [current_design]] cells=[llength [get_cells -hier -filter {IS_PRIMITIVE==0} -quiet]]"
+#   set wns [lindex [get_property SLACK [get_timing_paths -max_paths 1 -setup -quiet]] 0]
+#   puts "INSPECT-VERIFY opt WNS=$wns"
+#   close_design }
+Command: open_checkpoint <worktree>/designs/b2_mic_pdm/build/base/post_opt.dcp
+
+Starting open_checkpoint Task
+
+Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2972.062 ; gain = 0.000 ; free physical = 1831 ; free virtual = 20412
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.01 . Memory (MB): peak = 2972.062 ; gain = 0.000 ; free physical = 1828 ; free virtual = 20409
+INFO: [Netlist 29-17] Analyzing 30 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+INFO: [Project 1-479] Netlist was created with Vivado 2026.1
+INFO: [Project 1-570] Preparing netlist for logic optimization
+Read ShapeDB Complete: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.01 . Memory (MB): peak = 2972.062 ; gain = 0.000 ; free physical = 1732 ; free virtual = 20315
+INFO: [Timing 38-478] Restoring timing data from binary archive.
+INFO: [Timing 38-479] Binary timing data restore complete.
+INFO: [Project 1-856] Restoring constraints from binary archive.
+INFO: [Constraints 18-5170] The checkpoint was created with non-default parameter values which do not match the current Vivado settings.  Mismatching parameters are:
+  synth.maxThreads
+  general.maxThreads
+INFO: [Project 1-853] Binary constraint restore complete.
+INFO: [Designutils 20-5722] Start Reading Physical Databases.
+Reading placement.
+Read Netlist Cache: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2972.062 ; gain = 0.000 ; free physical = 1351 ; free virtual = 19935
+Reading placer database...
+Read Device Cache: Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 2972.062 ; gain = 0.000 ; free physical = 1351 ; free virtual = 19935
+Read PlaceDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2972.062 ; gain = 0.000 ; free physical = 1351 ; free virtual = 19935
+Read placeStorage: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2972.062 ; gain = 0.000 ; free physical = 1351 ; free virtual = 19935
+Read PulsedLatchDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2972.062 ; gain = 0.000 ; free physical = 1351 ; free virtual = 19935
+Reading routing.
+Read RouteStorage: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00.01 . Memory (MB): peak = 2972.062 ; gain = 0.000 ; free physical = 1351 ; free virtual = 19935
+Read Physdb Files: Time (s): cpu = 00:00:00.02 ; elapsed = 00:00:00.02 . Memory (MB): peak = 2972.062 ; gain = 0.000 ; free physical = 1351 ; free virtual = 19935
+Restored from archive | CPU: 0.020000 secs | Memory: 0.024597 MB |
+Finished XDEF File Restore: Time (s): cpu = 00:00:00.02 ; elapsed = 00:00:00.02 . Memory (MB): peak = 2972.062 ; gain = 0.000 ; free physical = 1351 ; free virtual = 19935
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2972.062 ; gain = 0.000 ; free physical = 1351 ; free virtual = 19935
+INFO: [Project 1-111] Unisim Transformation Summary:
+No Unisim elements were transformed.
+
+INFO: [Project 1-604] Checkpoint was created with Vivado v2026.1 (64-bit) build 6511674
+open_checkpoint: Time (s): cpu = 00:00:09 ; elapsed = 00:00:09 . Memory (MB): peak = 2972.098 ; gain = 0.035 ; free physical = 1351 ; free virtual = 19935
+INSPECT-VERIFY opt OK design=checkpoint_post_opt part=xc7a100tcsg324-1 cells=9
+INSPECT-VERIFY opt WNS=5.330
+# if {[catch {open_checkpoint {<worktree>/designs/b2_mic_pdm/build/base/post_place.dcp}} e]} { puts "INSPECT-VERIFY place FAIL $e" } else {
+#   puts "INSPECT-VERIFY place OK design=[current_design] part=[get_property PART [current_design]] cells=[llength [get_cells -hier -filter {IS_PRIMITIVE==0} -quiet]]"
+#   set wns [lindex [get_property SLACK [get_timing_paths -max_paths 1 -setup -quiet]] 0]
+#   puts "INSPECT-VERIFY place WNS=$wns"
+#   close_design }
+Command: open_checkpoint <worktree>/designs/b2_mic_pdm/build/base/post_place.dcp
+
+Starting open_checkpoint Task
+
+Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2978.000 ; gain = 0.000 ; free physical = 1280 ; free virtual = 19864
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2978.000 ; gain = 0.000 ; free physical = 1264 ; free virtual = 19848
+INFO: [Netlist 29-17] Analyzing 30 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+INFO: [Project 1-479] Netlist was created with Vivado 2026.1
+INFO: [Project 1-570] Preparing netlist for logic optimization
+Read ShapeDB Complete: Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 2978.000 ; gain = 0.000 ; free physical = 1254 ; free virtual = 19838
+INFO: [Timing 38-478] Restoring timing data from binary archive.
+INFO: [Timing 38-479] Binary timing data restore complete.
+INFO: [Project 1-856] Restoring constraints from binary archive.
+INFO: [Constraints 18-5170] The checkpoint was created with non-default parameter values which do not match the current Vivado settings.  Mismatching parameters are:
+  synth.maxThreads
+  general.maxThreads
+INFO: [Project 1-853] Binary constraint restore complete.
+INFO: [Designutils 20-5722] Start Reading Physical Databases.
+Reading placement.
+Read Netlist Cache: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2978.000 ; gain = 0.000 ; free physical = 1602 ; free virtual = 20183
+Reading placer database...
+Read Device Cache: Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00.01 . Memory (MB): peak = 2978.000 ; gain = 0.000 ; free physical = 1602 ; free virtual = 20183
+Read PlaceDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2978.000 ; gain = 0.000 ; free physical = 1602 ; free virtual = 20183
+Read placeStorage: Time (s): cpu = 00:00:00.03 ; elapsed = 00:00:00.03 . Memory (MB): peak = 2997.078 ; gain = 19.078 ; free physical = 1602 ; free virtual = 20183
+Read PulsedLatchDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2997.078 ; gain = 0.000 ; free physical = 1602 ; free virtual = 20183
+Reading routing.
+Read RouteStorage: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2997.078 ; gain = 0.000 ; free physical = 1602 ; free virtual = 20183
+Read Physdb Files: Time (s): cpu = 00:00:00.05 ; elapsed = 00:00:00.05 . Memory (MB): peak = 2997.078 ; gain = 19.078 ; free physical = 1602 ; free virtual = 20183
+Restored from archive | CPU: 0.050000 secs | Memory: 0.506531 MB |
+Finished XDEF File Restore: Time (s): cpu = 00:00:00.05 ; elapsed = 00:00:00.05 . Memory (MB): peak = 2997.078 ; gain = 19.078 ; free physical = 1602 ; free virtual = 20183
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2997.078 ; gain = 0.000 ; free physical = 1602 ; free virtual = 20183
+INFO: [Project 1-111] Unisim Transformation Summary:
+No Unisim elements were transformed.
+
+INFO: [Project 1-604] Checkpoint was created with Vivado v2026.1 (64-bit) build 6511674
+open_checkpoint: Time (s): cpu = 00:00:09 ; elapsed = 00:00:09 . Memory (MB): peak = 2997.113 ; gain = 19.113 ; free physical = 1602 ; free virtual = 20183
+INSPECT-VERIFY place OK design=checkpoint_post_place part=xc7a100tcsg324-1 cells=9
+INSPECT-VERIFY place WNS=4.354
+# if {[catch {open_checkpoint {<worktree>/designs/b2_mic_pdm/build/base/post_route.dcp}} e]} { puts "INSPECT-VERIFY route FAIL $e" } else {
+#   puts "INSPECT-VERIFY route OK design=[current_design] part=[get_property PART [current_design]] cells=[llength [get_cells -hier -filter {IS_PRIMITIVE==0} -quiet]]"
+#   set wns [lindex [get_property SLACK [get_timing_paths -max_paths 1 -setup -quiet]] 0]
+#   puts "INSPECT-VERIFY route WNS=$wns"
+#   close_design }
+Command: open_checkpoint <worktree>/designs/b2_mic_pdm/build/base/post_route.dcp
+
+Starting open_checkpoint Task
+
+Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2997.113 ; gain = 0.000 ; free physical = 1596 ; free virtual = 20179
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2997.113 ; gain = 0.000 ; free physical = 1573 ; free virtual = 20156
+INFO: [Netlist 29-17] Analyzing 30 Unisim elements for replacement
+INFO: [Netlist 29-28] Unisim Transformation completed in 0 CPU seconds
+INFO: [Project 1-479] Netlist was created with Vivado 2026.1
+INFO: [Project 1-570] Preparing netlist for logic optimization
+Read ShapeDB Complete: Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00 . Memory (MB): peak = 2997.113 ; gain = 0.000 ; free physical = 1547 ; free virtual = 20133
+INFO: [Timing 38-478] Restoring timing data from binary archive.
+INFO: [Timing 38-479] Binary timing data restore complete.
+INFO: [Project 1-856] Restoring constraints from binary archive.
+INFO: [Constraints 18-5170] The checkpoint was created with non-default parameter values which do not match the current Vivado settings.  Mismatching parameters are:
+  synth.maxThreads
+  general.maxThreads
+INFO: [Project 1-853] Binary constraint restore complete.
+INFO: [Designutils 20-5722] Start Reading Physical Databases.
+Reading placement.
+Read Netlist Cache: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2997.113 ; gain = 0.000 ; free physical = 1304 ; free virtual = 19890
+Reading placer database...
+Read Device Cache: Time (s): cpu = 00:00:00.01 ; elapsed = 00:00:00 . Memory (MB): peak = 2997.113 ; gain = 0.000 ; free physical = 1304 ; free virtual = 19890
+Read PlaceDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2997.113 ; gain = 0.000 ; free physical = 1304 ; free virtual = 19890
+Read placeStorage: Time (s): cpu = 00:00:00.03 ; elapsed = 00:00:00.03 . Memory (MB): peak = 2997.113 ; gain = 0.000 ; free physical = 1304 ; free virtual = 19890
+Read PulsedLatchDB: Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2997.113 ; gain = 0.000 ; free physical = 1304 ; free virtual = 19890
+Reading routing.
+Read RouteStorage: Time (s): cpu = 00:00:00.04 ; elapsed = 00:00:00.01 . Memory (MB): peak = 2997.113 ; gain = 0.000 ; free physical = 1304 ; free virtual = 19890
+Read Physdb Files: Time (s): cpu = 00:00:00.09 ; elapsed = 00:00:00.07 . Memory (MB): peak = 2997.113 ; gain = 0.000 ; free physical = 1304 ; free virtual = 19890
+Restored from archive | CPU: 0.090000 secs | Memory: 0.843475 MB |
+Finished XDEF File Restore: Time (s): cpu = 00:00:00.09 ; elapsed = 00:00:00.07 . Memory (MB): peak = 2997.113 ; gain = 0.000 ; free physical = 1304 ; free virtual = 19890
+Netlist sorting complete. Time (s): cpu = 00:00:00 ; elapsed = 00:00:00 . Memory (MB): peak = 2997.113 ; gain = 0.000 ; free physical = 1304 ; free virtual = 19890
+INFO: [Project 1-111] Unisim Transformation Summary:
+No Unisim elements were transformed.
+
+INFO: [Project 1-604] Checkpoint was created with Vivado v2026.1 (64-bit) build 6511674
+open_checkpoint: Time (s): cpu = 00:00:09 ; elapsed = 00:00:09 . Memory (MB): peak = 2997.113 ; gain = 0.000 ; free physical = 1304 ; free virtual = 19890
+INSPECT-VERIFY route OK design=checkpoint_post_route part=xc7a100tcsg324-1 cells=9
+INSPECT-VERIFY route WNS=2.850
+# close_project
+INFO: [Common 17-206] Exiting Vivado at Fri Nov 20 20:03:39 2026...

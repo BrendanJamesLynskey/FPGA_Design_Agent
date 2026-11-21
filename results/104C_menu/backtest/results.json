@@ -1,0 +1,7719 @@
+{
+ "schema": "fda-backtest-results/1",
+ "runs": [
+  {
+   "run": "P1__b96_10g_pre97__A__1",
+   "set": "P1",
+   "case": "b96_10g_pre97",
+   "arm": "A",
+   "k": 1,
+   "exit": 0,
+   "wall_s": 29.3,
+   "claude_version": "2.1.321 (Claude Code)",
+   "time": "2026-11-20 18:23:06",
+   "available": {
+    "agent_cdc": {
+     "found": true,
+     "origin": "model",
+     "in_range": true,
+     "over": 0
+    },
+    "hand_ref": {
+     "found": true,
+     "origin": "model",
+     "in_range": true,
+     "over": 0
+    },
+    "agent_both": {
+     "found": true,
+     "origin": "combiner",
+     "in_range": true,
+     "over": 0.0
+    },
+    "all3": {
+     "found": true,
+     "origin": "combiner",
+     "in_range": true,
+     "over": 0.0
+    }
+   },
+   "bounds": {
+    "checked": 11,
+    "outside": []
+   },
+   "order_check": {
+    "orders": 24,
+    "different": 0,
+    "recorded_menu_matches_rebuild": true
+   },
+   "splitter": {
+    "split": [
+     "O4",
+     "O3"
+    ],
+    "n_parts": 3,
+    "not_split": []
+   },
+   "attempts": 1,
+   "status": "options",
+   "score": {
+    "status": "options",
+    "n_options": 11,
+    "variants": {
+     "agent_cdc": {
+      "found": true,
+      "option": "O2",
+      "scope": [
+       "core"
+      ],
+      "gain": [
+       0,
+       1
+      ],
+      "basis": "model",
+      "measured": 1,
+      "in_range": true,
+      "over": 0,
+      "origin": "model"
+     },
+     "hand_ref": {
+      "found": true,
+      "option": "O3",
+      "scope": [
+       "core",
+       "tx_frame_src"
+      ],
+      "gain": [
+       0,
+       2
+      ],
+      "basis": "model",
+      "measured": 2,
+      "in_range": true,
+      "over": 0,
+      "origin": "model"
+     },
+     "agent_both": {
+      "found": false,
+      "best_overlap": 0.5,
+      "best_option": "S2",
+      "measured": 2
+     },
+     "all3": {
+      "found": false,
+      "best_overlap": 0.75,
+      "best_option": "C3",
+      "measured": 3
+     }
+    },
+    "matched_options": [],
+    "other_options": [
+     {
+      "id": "O1",
+      "title": "",
+      "stages": [
+       "fs_start"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0,
+       1
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "O4",
+      "title": "",
+      "stages": [
+       "rx_descramble",
+       "decide",
+       "cross_go",
+       "fs_start",
+       "mac_preamble"
+      ],
+      "scope_kind": "whole_design",
+      "gain": [
+       0,
+       5
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "S1",
+      "title": "",
+      "stages": [
+       "rx_descramble"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0.0,
+       1.0
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "S2",
+      "title": "",
+      "stages": [
+       "decide"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0.0,
+       1.0
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "S3",
+      "title": "",
+      "stages": [
+       "mac_preamble"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0.0,
+       1.0
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "C1",
+      "title": "",
+      "stages": [
+       "rx_descramble",
+       "fs_start",
+       "cross_go"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0.0,
+       3.0
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "C2",
+      "title": "",
+      "stages": [
+       "rx_descramble",
+       "decide",
+       "fs_start",
+       "cross_go"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0.0,
+       4.0
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "C3",
+      "title": "",
+      "stages": [
+       "rx_descramble",
+       "decide",
+       "cross_go",
+       "fs_start"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0.0,
+       4.0
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "C4",
+      "title": "",
+      "stages": [
+       "rx_descramble",
+       "cross_go",
+       "fs_start",
+       "mac_preamble"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0.0,
+       4.0
+      ],
+      "basis": "model"
+     }
+    ],
+    "found_named": 1,
+    "found_all": 2,
+    "in_range": 2,
+    "n_variants": 4,
+    "n_named": 3
+   },
+   "n_model": 4,
+   "n_parts": 3,
+   "n_combined": 4,
+   "rejected": [],
+   "combiner": {
+    "version": "3",
+    "considered": 57,
+    "cap": 4,
+    "offered": [
+     {
+      "id": "C1",
+      "from": [
+       "S1",
+       "O3"
+      ]
+     },
+     {
+      "id": "C2",
+      "from": [
+       "S1",
+       "S2",
+       "O3"
+      ]
+     },
+     {
+      "id": "C3",
+      "from": [
+       "S1",
+       "S2",
+       "O2",
+       "O1"
+      ]
+     },
+     {
+      "id": "C4",
+      "from": [
+       "S1",
+       "O2",
+       "O1",
+       "S3"
+      ]
+     }
+    ],
+    "not_composable": [
+     {
+      "from": [
+       "O2",
+       "O3"
+      ],
+      "reason": "options O2 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "O1"
+      ],
+      "reason": "the model already offered an option touching exactly these stages"
+     },
+     {
+      "from": [
+       "O3",
+       "O1"
+      ],
+      "reason": "options O3 and O1 both touch stage fs_start: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "O2",
+       "O3"
+      ],
+      "reason": "options O2 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "O3",
+       "O1"
+      ],
+      "reason": "options O3 and O1 both touch stage fs_start: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S2",
+       "O2",
+       "O3"
+      ],
+      "reason": "options O2 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S2",
+       "O3",
+       "O1"
+      ],
+      "reason": "options O3 and O1 both touch stage fs_start: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "O3",
+       "O1"
+      ],
+      "reason": "options O2 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "O3",
+       "S3"
+      ],
+      "reason": "options O2 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O3",
+       "O1",
+       "S3"
+      ],
+      "reason": "options O3 and O1 both touch stage fs_start: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "S2",
+       "O2",
+       "O3"
+      ],
+      "reason": "options O2 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "S2",
+       "O3",
+       "O1"
+      ],
+      "reason": "options O3 and O1 both touch stage fs_start: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "S2",
+       "O3",
+       "S3"
+      ],
+      "reason": "the model already offered an option touching exactly these stages"
+     },
+     {
+      "from": [
+       "S1",
+       "O2",
+       "O3",
+       "O1"
+      ],
+      "reason": "options O2 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "O2",
+       "O3",
+       "S3"
+      ],
+      "reason": "options O2 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "O3",
+       "O1",
+       "S3"
+      ],
+      "reason": "options O3 and O1 both touch stage fs_start: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S2",
+       "O2",
+       "O3",
+       "O1"
+      ],
+      "reason": "options O2 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S2",
+       "O2",
+       "O3",
+       "S3"
+      ],
+      "reason": "options O2 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S2",
+       "O3",
+       "O1",
+       "S3"
+      ],
+      "reason": "options O3 and O1 both touch stage fs_start: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "O3",
+       "O1",
+       "S3"
+      ],
+      "reason": "options O2 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "S2",
+       "O2",
+       "O3",
+       "O1"
+      ],
+      "reason": "options O2 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "S2",
+       "O2",
+       "O3",
+       "S3"
+      ],
+      "reason": "options O2 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "S2",
+       "O2",
+       "O1",
+       "S3"
+      ],
+      "reason": "the model already offered an option touching exactly these stages"
+     },
+     {
+      "from": [
+       "S1",
+       "S2",
+       "O3",
+       "O1",
+       "S3"
+      ],
+      "reason": "options O3 and O1 both touch stage fs_start: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "O2",
+       "O3",
+       "O1",
+       "S3"
+      ],
+      "reason": "options O2 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S2",
+       "O2",
+       "O3",
+       "O1",
+       "S3"
+      ],
+      "reason": "options O2 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "S2",
+       "O2",
+       "O3",
+       "O1",
+       "S3"
+      ],
+      "reason": "options O2 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "O3",
+       "S3"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S2",
+       "O2",
+       "O1",
+       "S3"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S2",
+       "O3",
+       "S3"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S2",
+       "O2",
+       "S3"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S2",
+       "O1",
+       "S3"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "O2",
+       "O1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S2",
+       "O2",
+       "O1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S2",
+       "O3"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "O2",
+       "O1",
+       "S3"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "O3",
+       "S3"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S2",
+       "O2"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S2",
+       "O1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "O2",
+       "S3"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S2",
+       "O2",
+       "S3"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "O1",
+       "S3"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S2",
+       "O1",
+       "S3"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S2",
+       "S3"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "O2"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S2",
+       "O2"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "O1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S2",
+       "O1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "O2",
+       "S3"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "O1",
+       "S3"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S2"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S3"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S2",
+       "S3"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     }
+    ]
+   },
+   "prompt_system_sha256": "ffb71e87152c8956"
+  },
+  {
+   "run": "P1__b96_10g_pre97__A__2",
+   "set": "P1",
+   "case": "b96_10g_pre97",
+   "arm": "A",
+   "k": 2,
+   "exit": 0,
+   "wall_s": 28.5,
+   "claude_version": "2.1.321 (Claude Code)",
+   "time": "2026-11-20 18:23:35",
+   "available": {
+    "agent_cdc": {
+     "found": true,
+     "origin": "model",
+     "in_range": true,
+     "over": 0
+    },
+    "hand_ref": {
+     "found": true,
+     "origin": "combiner",
+     "in_range": true,
+     "over": 0.0
+    },
+    "agent_both": {
+     "found": true,
+     "origin": "combiner",
+     "in_range": true,
+     "over": 0.0
+    },
+    "all3": {
+     "found": true,
+     "origin": "combiner",
+     "in_range": true,
+     "over": 0.0
+    }
+   },
+   "bounds": {
+    "checked": 9,
+    "outside": []
+   },
+   "order_check": {
+    "orders": 24,
+    "different": 0,
+    "recorded_menu_matches_rebuild": true
+   },
+   "splitter": {
+    "split": [
+     "O4"
+    ],
+    "n_parts": 1,
+    "not_split": []
+   },
+   "attempts": 1,
+   "status": "options",
+   "score": {
+    "status": "options",
+    "n_options": 9,
+    "variants": {
+     "agent_cdc": {
+      "found": true,
+      "option": "O2",
+      "scope": [
+       "core"
+      ],
+      "gain": [
+       0,
+       1
+      ],
+      "basis": "model",
+      "measured": 1,
+      "in_range": true,
+      "over": 0,
+      "origin": "model"
+     },
+     "hand_ref": {
+      "found": false,
+      "best_overlap": 0.67,
+      "best_option": "C4",
+      "measured": 2
+     },
+     "agent_both": {
+      "found": false,
+      "best_overlap": 0.67,
+      "best_option": "C4",
+      "measured": 2
+     },
+     "all3": {
+      "found": true,
+      "option": "C4",
+      "scope": [
+       "core",
+       "trade_decision",
+       "tx_frame_src"
+      ],
+      "gain": [
+       0.0,
+       3.0
+      ],
+      "basis": "model",
+      "measured": 3,
+      "in_range": true,
+      "over": 0.0,
+      "origin": "combiner"
+     }
+    },
+    "matched_options": [],
+    "other_options": [
+     {
+      "id": "O1",
+      "title": "",
+      "stages": [
+       "fs_start"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0,
+       1
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "O3",
+      "title": "",
+      "stages": [
+       "rx_descramble"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0,
+       1
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "O4",
+      "title": "",
+      "stages": [
+       "rx_descramble",
+       "decide",
+       "cross_go",
+       "fs_start"
+      ],
+      "scope_kind": "whole_design",
+      "gain": [
+       1,
+       4
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "S1",
+      "title": "",
+      "stages": [
+       "decide"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0.0,
+       1.0
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "C1",
+      "title": "",
+      "stages": [
+       "rx_descramble",
+       "cross_go"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0.0,
+       2.0
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "C2",
+      "title": "",
+      "stages": [
+       "rx_descramble",
+       "cross_go",
+       "fs_start"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0.0,
+       3.0
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "C3",
+      "title": "",
+      "stages": [
+       "rx_descramble",
+       "decide",
+       "cross_go"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0.0,
+       3.0
+      ],
+      "basis": "model"
+     }
+    ],
+    "found_named": 2,
+    "found_all": 2,
+    "in_range": 2,
+    "n_variants": 4,
+    "n_named": 3
+   },
+   "n_model": 4,
+   "n_parts": 1,
+   "n_combined": 4,
+   "rejected": [],
+   "combiner": {
+    "version": "3",
+    "considered": 11,
+    "cap": 4,
+    "offered": [
+     {
+      "id": "C1",
+      "from": [
+       "O3",
+       "O2"
+      ]
+     },
+     {
+      "id": "C2",
+      "from": [
+       "O3",
+       "O2",
+       "O1"
+      ]
+     },
+     {
+      "id": "C3",
+      "from": [
+       "O3",
+       "S1",
+       "O2"
+      ]
+     },
+     {
+      "id": "C4",
+      "from": [
+       "S1",
+       "O2",
+       "O1"
+      ]
+     }
+    ],
+    "not_composable": [
+     {
+      "from": [
+       "O3",
+       "S1",
+       "O2",
+       "O1"
+      ],
+      "reason": "the model already offered an option touching exactly these stages"
+     },
+     {
+      "from": [
+       "O3",
+       "S1",
+       "O1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "O2",
+       "O1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "O3",
+       "O1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "O2"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "O3",
+       "S1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "O1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     }
+    ]
+   },
+   "prompt_system_sha256": "ffb71e87152c8956"
+  },
+  {
+   "run": "P1__b96_10g_pre97__A__3",
+   "set": "P1",
+   "case": "b96_10g_pre97",
+   "arm": "A",
+   "k": 3,
+   "exit": 0,
+   "wall_s": 27.5,
+   "claude_version": "2.1.321 (Claude Code)",
+   "time": "2026-11-20 18:24:02",
+   "available": {
+    "agent_cdc": {
+     "found": true,
+     "origin": "splitter",
+     "in_range": true,
+     "over": 0.0
+    },
+    "hand_ref": {
+     "found": true,
+     "origin": "model",
+     "in_range": true,
+     "over": 0
+    },
+    "agent_both": {
+     "found": true,
+     "origin": "combiner",
+     "in_range": true,
+     "over": 0.0
+    },
+    "all3": {
+     "found": true,
+     "origin": "combiner",
+     "in_range": true,
+     "over": 0.0
+    }
+   },
+   "bounds": {
+    "checked": 13,
+    "outside": []
+   },
+   "order_check": {
+    "orders": 24,
+    "different": 0,
+    "recorded_menu_matches_rebuild": true
+   },
+   "splitter": {
+    "split": [
+     "O4",
+     "O3",
+     "O2"
+    ],
+    "n_parts": 5,
+    "not_split": []
+   },
+   "attempts": 1,
+   "status": "options",
+   "score": {
+    "status": "options",
+    "n_options": 13,
+    "variants": {
+     "agent_cdc": {
+      "found": true,
+      "option": "S4",
+      "scope": [
+       "core"
+      ],
+      "gain": [
+       0.0,
+       1.0
+      ],
+      "basis": "model",
+      "measured": 1,
+      "in_range": true,
+      "over": 0.0,
+      "origin": "splitter"
+     },
+     "hand_ref": {
+      "found": true,
+      "option": "O3",
+      "scope": [
+       "tx_frame_src",
+       "core"
+      ],
+      "gain": [
+       0,
+       2
+      ],
+      "basis": "model",
+      "measured": 2,
+      "in_range": true,
+      "over": 0,
+      "origin": "model"
+     },
+     "agent_both": {
+      "found": false,
+      "best_overlap": 0.5,
+      "best_option": "S4",
+      "measured": 2
+     },
+     "all3": {
+      "found": false,
+      "best_overlap": 0.67,
+      "best_option": "O3",
+      "measured": 3
+     }
+    },
+    "matched_options": [],
+    "other_options": [
+     {
+      "id": "O1",
+      "title": "",
+      "stages": [
+       "fs_start"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0,
+       1
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "O2",
+      "title": "",
+      "stages": [
+       "rx_blk",
+       "rx_descramble"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0,
+       1
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "O4",
+      "title": "",
+      "stages": [
+       "rx_blk",
+       "rx_descramble",
+       "rx_mac",
+       "decide",
+       "cross_go",
+       "fs_start",
+       "mac_preamble"
+      ],
+      "scope_kind": "whole_design",
+      "gain": [
+       1,
+       6
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "S1",
+      "title": "",
+      "stages": [
+       "rx_descramble"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0.0,
+       1.0
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "S2",
+      "title": "",
+      "stages": [
+       "rx_mac"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0.0,
+       1.0
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "S3",
+      "title": "",
+      "stages": [
+       "decide"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0.0,
+       1.0
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "S5",
+      "title": "",
+      "stages": [
+       "mac_preamble"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0.0,
+       1.0
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "C1",
+      "title": "",
+      "stages": [
+       "rx_blk",
+       "rx_descramble",
+       "fs_start",
+       "cross_go"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0.0,
+       3.0
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "C2",
+      "title": "",
+      "stages": [
+       "rx_blk",
+       "rx_descramble",
+       "decide",
+       "fs_start",
+       "cross_go"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0.0,
+       4.0
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "C3",
+      "title": "",
+      "stages": [
+       "rx_blk",
+       "rx_descramble",
+       "decide",
+       "fs_start",
+       "cross_go",
+       "mac_preamble"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0.0,
+       5.0
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "C4",
+      "title": "",
+      "stages": [
+       "rx_descramble",
+       "rx_mac",
+       "decide",
+       "cross_go",
+       "fs_start",
+       "mac_preamble"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0.0,
+       6.0
+      ],
+      "basis": "model"
+     }
+    ],
+    "found_named": 1,
+    "found_all": 2,
+    "in_range": 2,
+    "n_variants": 4,
+    "n_named": 3
+   },
+   "n_model": 4,
+   "n_parts": 5,
+   "n_combined": 4,
+   "rejected": [],
+   "combiner": {
+    "version": "3",
+    "considered": 247,
+    "cap": 4,
+    "offered": [
+     {
+      "id": "C1",
+      "from": [
+       "O2",
+       "O3"
+      ]
+     },
+     {
+      "id": "C2",
+      "from": [
+       "O2",
+       "S3",
+       "O3"
+      ]
+     },
+     {
+      "id": "C3",
+      "from": [
+       "O2",
+       "S3",
+       "O3",
+       "S5"
+      ]
+     },
+     {
+      "id": "C4",
+      "from": [
+       "S1",
+       "S2",
+       "S3",
+       "S4",
+       "O1",
+       "S5"
+      ]
+     }
+    ],
+    "not_composable": [
+     {
+      "from": [
+       "O2",
+       "S1"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S4",
+       "O3"
+      ],
+      "reason": "options S4 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S4",
+       "O1"
+      ],
+      "reason": "the model already offered an option touching exactly these stages"
+     },
+     {
+      "from": [
+       "O3",
+       "O1"
+      ],
+      "reason": "options O3 and O1 both touch stage fs_start: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "S2"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "S3"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "S4"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "O3"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "O1"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "S5"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S4",
+       "O3"
+      ],
+      "reason": "options S4 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "O3",
+       "O1"
+      ],
+      "reason": "options O3 and O1 both touch stage fs_start: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "S4",
+       "O3"
+      ],
+      "reason": "options S4 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "O3",
+       "O1"
+      ],
+      "reason": "options O3 and O1 both touch stage fs_start: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S2",
+       "S4",
+       "O3"
+      ],
+      "reason": "options S4 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S2",
+       "O3",
+       "O1"
+      ],
+      "reason": "options O3 and O1 both touch stage fs_start: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S3",
+       "S4",
+       "O3"
+      ],
+      "reason": "options S4 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S3",
+       "O3",
+       "O1"
+      ],
+      "reason": "options O3 and O1 both touch stage fs_start: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S4",
+       "O3",
+       "O1"
+      ],
+      "reason": "options S4 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S4",
+       "O3",
+       "S5"
+      ],
+      "reason": "options S4 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O3",
+       "O1",
+       "S5"
+      ],
+      "reason": "options O3 and O1 both touch stage fs_start: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "S2",
+       "S3"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "S2",
+       "S4"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "S2",
+       "O3"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "S2",
+       "O1"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "S2",
+       "S5"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "S3",
+       "S4"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "S3",
+       "O3"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "S3",
+       "O1"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "S3",
+       "S5"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "S4",
+       "O3"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "S4",
+       "O1"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "S4",
+       "S5"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "O3",
+       "O1"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "O3",
+       "S5"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "O1",
+       "S5"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S2",
+       "S4",
+       "O3"
+      ],
+      "reason": "options S4 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S2",
+       "O3",
+       "O1"
+      ],
+      "reason": "options O3 and O1 both touch stage fs_start: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S3",
+       "S4",
+       "O3"
+      ],
+      "reason": "options S4 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S3",
+       "O3",
+       "O1"
+      ],
+      "reason": "options O3 and O1 both touch stage fs_start: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S4",
+       "O3",
+       "O1"
+      ],
+      "reason": "options S4 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S4",
+       "O3",
+       "S5"
+      ],
+      "reason": "options S4 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "O3",
+       "O1",
+       "S5"
+      ],
+      "reason": "options O3 and O1 both touch stage fs_start: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "S2",
+       "S4",
+       "O3"
+      ],
+      "reason": "options S4 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "S2",
+       "O3",
+       "O1"
+      ],
+      "reason": "options O3 and O1 both touch stage fs_start: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "S3",
+       "S4",
+       "O3"
+      ],
+      "reason": "options S4 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "S3",
+       "O3",
+       "O1"
+      ],
+      "reason": "options O3 and O1 both touch stage fs_start: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "S4",
+       "O3",
+       "O1"
+      ],
+      "reason": "options S4 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "S4",
+       "O3",
+       "S5"
+      ],
+      "reason": "options S4 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "O3",
+       "O1",
+       "S5"
+      ],
+      "reason": "options O3 and O1 both touch stage fs_start: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S2",
+       "S3",
+       "S4",
+       "O3"
+      ],
+      "reason": "options S4 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S2",
+       "S3",
+       "O3",
+       "O1"
+      ],
+      "reason": "options O3 and O1 both touch stage fs_start: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S2",
+       "S4",
+       "O3",
+       "O1"
+      ],
+      "reason": "options S4 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S2",
+       "S4",
+       "O3",
+       "S5"
+      ],
+      "reason": "options S4 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S2",
+       "O3",
+       "O1",
+       "S5"
+      ],
+      "reason": "options O3 and O1 both touch stage fs_start: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S3",
+       "S4",
+       "O3",
+       "O1"
+      ],
+      "reason": "options S4 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S3",
+       "S4",
+       "O3",
+       "S5"
+      ],
+      "reason": "options S4 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S3",
+       "O3",
+       "O1",
+       "S5"
+      ],
+      "reason": "options O3 and O1 both touch stage fs_start: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S4",
+       "O3",
+       "O1",
+       "S5"
+      ],
+      "reason": "options S4 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "S2",
+       "S3",
+       "S4"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "S2",
+       "S3",
+       "O3"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "S2",
+       "S3",
+       "O1"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "S2",
+       "S3",
+       "S5"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "S2",
+       "S4",
+       "O3"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "S2",
+       "S4",
+       "O1"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "S2",
+       "S4",
+       "S5"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "S2",
+       "O3",
+       "O1"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "S2",
+       "O3",
+       "S5"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "S2",
+       "O1",
+       "S5"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "S3",
+       "S4",
+       "O3"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "S3",
+       "S4",
+       "O1"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "S3",
+       "S4",
+       "S5"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "S3",
+       "O3",
+       "O1"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "S3",
+       "O3",
+       "S5"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "S3",
+       "O1",
+       "S5"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "S4",
+       "O3",
+       "O1"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "S4",
+       "O3",
+       "S5"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "S4",
+       "O1",
+       "S5"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "O3",
+       "O1",
+       "S5"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S2",
+       "S3",
+       "S4",
+       "O3"
+      ],
+      "reason": "options S4 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S2",
+       "S3",
+       "O3",
+       "O1"
+      ],
+      "reason": "options O3 and O1 both touch stage fs_start: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S2",
+       "S3",
+       "O3",
+       "S5"
+      ],
+      "reason": "the model already offered an option touching exactly these stages"
+     },
+     {
+      "from": [
+       "O2",
+       "S2",
+       "S4",
+       "O3",
+       "O1"
+      ],
+      "reason": "options S4 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S2",
+       "S4",
+       "O3",
+       "S5"
+      ],
+      "reason": "options S4 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S2",
+       "O3",
+       "O1",
+       "S5"
+      ],
+      "reason": "options O3 and O1 both touch stage fs_start: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S3",
+       "S4",
+       "O3",
+       "O1"
+      ],
+      "reason": "options S4 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S3",
+       "S4",
+       "O3",
+       "S5"
+      ],
+      "reason": "options S4 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S3",
+       "O3",
+       "O1",
+       "S5"
+      ],
+      "reason": "options O3 and O1 both touch stage fs_start: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S4",
+       "O3",
+       "O1",
+       "S5"
+      ],
+      "reason": "options S4 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "S2",
+       "S3",
+       "S4",
+       "O3"
+      ],
+      "reason": "options S4 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "S2",
+       "S3",
+       "O3",
+       "O1"
+      ],
+      "reason": "options O3 and O1 both touch stage fs_start: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "S2",
+       "S4",
+       "O3",
+       "O1"
+      ],
+      "reason": "options S4 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "S2",
+       "S4",
+       "O3",
+       "S5"
+      ],
+      "reason": "options S4 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "S2",
+       "O3",
+       "O1",
+       "S5"
+      ],
+      "reason": "options O3 and O1 both touch stage fs_start: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "S3",
+       "S4",
+       "O3",
+       "O1"
+      ],
+      "reason": "options S4 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "S3",
+       "S4",
+       "O3",
+       "S5"
+      ],
+      "reason": "options S4 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "S3",
+       "O3",
+       "O1",
+       "S5"
+      ],
+      "reason": "options O3 and O1 both touch stage fs_start: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "S4",
+       "O3",
+       "O1",
+       "S5"
+      ],
+      "reason": "options S4 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S2",
+       "S3",
+       "S4",
+       "O3",
+       "O1"
+      ],
+      "reason": "options S4 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S2",
+       "S3",
+       "S4",
+       "O3",
+       "S5"
+      ],
+      "reason": "options S4 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S2",
+       "S3",
+       "O3",
+       "O1",
+       "S5"
+      ],
+      "reason": "options O3 and O1 both touch stage fs_start: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S2",
+       "S4",
+       "O3",
+       "O1",
+       "S5"
+      ],
+      "reason": "options S4 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S3",
+       "S4",
+       "O3",
+       "O1",
+       "S5"
+      ],
+      "reason": "options S4 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "S2",
+       "S3",
+       "S4",
+       "O3"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "S2",
+       "S3",
+       "S4",
+       "O1"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "S2",
+       "S3",
+       "S4",
+       "S5"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "S2",
+       "S3",
+       "O3",
+       "O1"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "S2",
+       "S3",
+       "O3",
+       "S5"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "S2",
+       "S3",
+       "O1",
+       "S5"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "S2",
+       "S4",
+       "O3",
+       "O1"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "S2",
+       "S4",
+       "O3",
+       "S5"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "S2",
+       "S4",
+       "O1",
+       "S5"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "S2",
+       "O3",
+       "O1",
+       "S5"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "S3",
+       "S4",
+       "O3",
+       "O1"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "S3",
+       "S4",
+       "O3",
+       "S5"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "S3",
+       "S4",
+       "O1",
+       "S5"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "S3",
+       "O3",
+       "O1",
+       "S5"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "S4",
+       "O3",
+       "O1",
+       "S5"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S2",
+       "S3",
+       "S4",
+       "O3",
+       "O1"
+      ],
+      "reason": "options S4 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S2",
+       "S3",
+       "S4",
+       "O3",
+       "S5"
+      ],
+      "reason": "options S4 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S2",
+       "S3",
+       "S4",
+       "O1",
+       "S5"
+      ],
+      "reason": "the model already offered an option touching exactly these stages"
+     },
+     {
+      "from": [
+       "O2",
+       "S2",
+       "S3",
+       "O3",
+       "O1",
+       "S5"
+      ],
+      "reason": "options O3 and O1 both touch stage fs_start: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S2",
+       "S4",
+       "O3",
+       "O1",
+       "S5"
+      ],
+      "reason": "options S4 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S3",
+       "S4",
+       "O3",
+       "O1",
+       "S5"
+      ],
+      "reason": "options S4 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "S2",
+       "S3",
+       "S4",
+       "O3",
+       "O1"
+      ],
+      "reason": "options S4 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "S2",
+       "S3",
+       "S4",
+       "O3",
+       "S5"
+      ],
+      "reason": "options S4 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "S2",
+       "S3",
+       "O3",
+       "O1",
+       "S5"
+      ],
+      "reason": "options O3 and O1 both touch stage fs_start: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "S2",
+       "S4",
+       "O3",
+       "O1",
+       "S5"
+      ],
+      "reason": "options S4 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "S3",
+       "S4",
+       "O3",
+       "O1",
+       "S5"
+      ],
+      "reason": "options S4 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S2",
+       "S3",
+       "S4",
+       "O3",
+       "O1",
+       "S5"
+      ],
+      "reason": "options S4 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "S2",
+       "S3",
+       "S4",
+       "O3",
+       "O1"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "S2",
+       "S3",
+       "S4",
+       "O3",
+       "S5"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "S2",
+       "S3",
+       "S4",
+       "O1",
+       "S5"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "S2",
+       "S3",
+       "O3",
+       "O1",
+       "S5"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "S2",
+       "S4",
+       "O3",
+       "O1",
+       "S5"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "S3",
+       "S4",
+       "O3",
+       "O1",
+       "S5"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S2",
+       "S3",
+       "S4",
+       "O3",
+       "O1",
+       "S5"
+      ],
+      "reason": "options S4 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "S2",
+       "S3",
+       "S4",
+       "O3",
+       "O1",
+       "S5"
+      ],
+      "reason": "options S4 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "S2",
+       "S3",
+       "S4",
+       "O3",
+       "O1",
+       "S5"
+      ],
+      "reason": "options O2 and S1 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "S2",
+       "S3",
+       "O3",
+       "S5"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "O2",
+       "S3",
+       "S4",
+       "O1",
+       "S5"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "O2",
+       "S2",
+       "S3",
+       "S4",
+       "O1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "O2",
+       "S2",
+       "S3",
+       "O3"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "O2",
+       "S2",
+       "S4",
+       "O1",
+       "S5"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "O2",
+       "S2",
+       "O3",
+       "S5"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "O2",
+       "S2",
+       "S3",
+       "O1",
+       "S5"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S3",
+       "S4",
+       "O1",
+       "S5"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S3",
+       "O3",
+       "S5"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S2",
+       "S3",
+       "S4",
+       "O1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S2",
+       "S3",
+       "O3"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "O2",
+       "S2",
+       "S3",
+       "S4",
+       "S5"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S2",
+       "S4",
+       "O1",
+       "S5"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S2",
+       "O3",
+       "S5"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S2",
+       "S3",
+       "S4",
+       "O1",
+       "S5"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S2",
+       "S3",
+       "O3",
+       "S5"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S2",
+       "S3",
+       "O1",
+       "S5"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S2",
+       "S3",
+       "S4",
+       "S5"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "O2",
+       "S3",
+       "S4",
+       "O1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "O2",
+       "S4",
+       "O1",
+       "S5"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "O2",
+       "O3",
+       "S5"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "O2",
+       "S2",
+       "S4",
+       "O1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "O2",
+       "S2",
+       "O3"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "O2",
+       "S3",
+       "O1",
+       "S5"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "O2",
+       "S2",
+       "S3",
+       "O1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "O2",
+       "S2",
+       "O1",
+       "S5"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S3",
+       "S4",
+       "O1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S3",
+       "O3"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "O2",
+       "S3",
+       "S4",
+       "S5"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S4",
+       "O1",
+       "S5"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "O3",
+       "S5"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "O2",
+       "S2",
+       "S3",
+       "S4"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S2",
+       "S4",
+       "O1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S2",
+       "O3"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "O2",
+       "S2",
+       "S4",
+       "S5"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S3",
+       "S4",
+       "O1",
+       "S5"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S3",
+       "O3",
+       "S5"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S3",
+       "O1",
+       "S5"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S2",
+       "S3",
+       "S4",
+       "O1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S2",
+       "S3",
+       "O3"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S2",
+       "S3",
+       "O1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "O2",
+       "S2",
+       "S3",
+       "S5"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S2",
+       "S4",
+       "O1",
+       "S5"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S2",
+       "O3",
+       "S5"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S2",
+       "O1",
+       "S5"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S3",
+       "S4",
+       "S5"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S2",
+       "S3",
+       "S4"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S2",
+       "S4",
+       "S5"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S2",
+       "S3",
+       "O1",
+       "S5"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S2",
+       "S3",
+       "S4",
+       "S5"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S2",
+       "S3",
+       "S5"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "O2",
+       "S4",
+       "O1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "O2",
+       "S3",
+       "O1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "O2",
+       "O1",
+       "S5"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "O2",
+       "S2",
+       "O1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "O2",
+       "S3",
+       "S4"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S4",
+       "O1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "O3"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "O2",
+       "S4",
+       "S5"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "O2",
+       "S2",
+       "S4"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S3",
+       "S4",
+       "O1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S3",
+       "O3"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S3",
+       "O1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "O2",
+       "S3",
+       "S5"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S4",
+       "O1",
+       "S5"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "O3",
+       "S5"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "O1",
+       "S5"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "O2",
+       "S2",
+       "S3"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S2",
+       "S4",
+       "O1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S2",
+       "O3"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S2",
+       "O1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "O2",
+       "S2",
+       "S5"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S3",
+       "S4"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S4",
+       "S5"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S3",
+       "O1",
+       "S5"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S2",
+       "S4"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S2",
+       "S3",
+       "O1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S2",
+       "O1",
+       "S5"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S3",
+       "S4",
+       "S5"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S3",
+       "S5"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S2",
+       "S3",
+       "S4"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S2",
+       "S3"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S2",
+       "S4",
+       "S5"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S2",
+       "S5"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S2",
+       "S3",
+       "S5"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "O2",
+       "O1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "O2",
+       "S4"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "O2",
+       "S3"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "O1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "O2",
+       "S5"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "O2",
+       "S2"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S4"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S3",
+       "O1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "O1",
+       "S5"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S2",
+       "O1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S3",
+       "S4"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S3"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S4",
+       "S5"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S5"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S2",
+       "S4"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S2"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S3",
+       "S5"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S2",
+       "S3"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S2",
+       "S5"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     }
+    ]
+   },
+   "prompt_system_sha256": "ffb71e87152c8956"
+  },
+  {
+   "run": "P1__b96_10g_pre97__B__1",
+   "set": "P1",
+   "case": "b96_10g_pre97",
+   "arm": "B",
+   "k": 1,
+   "exit": 0,
+   "wall_s": 46.0,
+   "claude_version": "2.1.321 (Claude Code)",
+   "time": "2026-11-20 18:24:52",
+   "available": {
+    "agent_cdc": {
+     "found": true,
+     "origin": "model",
+     "in_range": true,
+     "over": 1
+    },
+    "hand_ref": {
+     "found": true,
+     "origin": "combiner",
+     "in_range": true,
+     "over": 1.0
+    },
+    "agent_both": {
+     "found": false
+    },
+    "all3": {
+     "found": false
+    }
+   },
+   "bounds": {
+    "checked": 7,
+    "outside": []
+   },
+   "order_check": {
+    "orders": 24,
+    "different": 0,
+    "recorded_menu_matches_rebuild": true
+   },
+   "splitter": {
+    "split": [],
+    "n_parts": 0,
+    "not_split": [
+     {
+      "bundle": "O4",
+      "reason": "the interface change on tx_mac.s_valid belongs to none of the bundle's stages (rx_descramble, cross_go, fs_start), so no part could carry it: it may be what ties the stages together"
+     }
+    ]
+   },
+   "attempts": 2,
+   "status": "options",
+   "score": {
+    "status": "options",
+    "n_options": 7,
+    "variants": {
+     "agent_cdc": {
+      "found": true,
+      "option": "O1",
+      "scope": [
+       "core"
+      ],
+      "gain": [
+       1,
+       2
+      ],
+      "basis": "model",
+      "measured": 1,
+      "in_range": true,
+      "over": 1,
+      "origin": "model"
+     },
+     "hand_ref": {
+      "found": true,
+      "option": "C2",
+      "scope": [
+       "core",
+       "tx_frame_src",
+       "tx_mac"
+      ],
+      "gain": [
+       1.0,
+       3.0
+      ],
+      "basis": "model",
+      "measured": 2,
+      "in_range": true,
+      "over": 1.0,
+      "origin": "combiner"
+     },
+     "agent_both": {
+      "found": false,
+      "best_overlap": 0.5,
+      "best_option": "O1",
+      "measured": 2
+     },
+     "all3": {
+      "found": false,
+      "best_overlap": 0.67,
+      "best_option": "C2",
+      "measured": 3
+     }
+    },
+    "matched_options": [],
+    "other_options": [
+     {
+      "id": "O2",
+      "title": "",
+      "stages": [
+       "fs_start"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0,
+       1
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "O3",
+      "title": "",
+      "stages": [
+       "rx_descramble"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0,
+       1
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "O4",
+      "title": "",
+      "stages": [
+       "cross_go",
+       "fs_start",
+       "rx_descramble"
+      ],
+      "scope_kind": "whole_design",
+      "gain": [
+       1,
+       4
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "C1",
+      "title": "",
+      "stages": [
+       "rx_descramble",
+       "cross_go"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       1.0,
+       3.0
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "C3",
+      "title": "",
+      "stages": [
+       "rx_descramble",
+       "fs_start"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0.0,
+       2.0
+      ],
+      "basis": "model"
+     }
+    ],
+    "found_named": 1,
+    "found_all": 2,
+    "in_range": 2,
+    "n_variants": 4,
+    "n_named": 3
+   },
+   "n_model": 4,
+   "n_parts": 0,
+   "n_combined": 3,
+   "rejected": [],
+   "combiner": {
+    "version": "3",
+    "considered": 11,
+    "cap": 4,
+    "offered": [
+     {
+      "id": "C1",
+      "from": [
+       "O3",
+       "O1"
+      ]
+     },
+     {
+      "id": "C2",
+      "from": [
+       "O1",
+       "O2"
+      ]
+     },
+     {
+      "id": "C3",
+      "from": [
+       "O3",
+       "O2"
+      ]
+     }
+    ],
+    "not_composable": [
+     {
+      "from": [
+       "O3",
+       "O4"
+      ],
+      "reason": "options O3 and O4 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O4",
+       "O1"
+      ],
+      "reason": "options O4 and O1 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O4",
+       "O2"
+      ],
+      "reason": "options O4 and O2 both touch stage fs_start: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O3",
+       "O4",
+       "O1"
+      ],
+      "reason": "options O3 and O4 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O3",
+       "O4",
+       "O2"
+      ],
+      "reason": "options O3 and O4 both touch stage rx_descramble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O3",
+       "O1",
+       "O2"
+      ],
+      "reason": "the model already offered an option touching exactly these stages"
+     },
+     {
+      "from": [
+       "O4",
+       "O1",
+       "O2"
+      ],
+      "reason": "options O4 and O1 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O3",
+       "O4",
+       "O1",
+       "O2"
+      ],
+      "reason": "options O3 and O4 both touch stage rx_descramble: they are alternatives, not additions"
+     }
+    ]
+   },
+   "prompt_system_sha256": "ffb71e87152c8956"
+  },
+  {
+   "run": "P1__b96_10g_pre97__B__2",
+   "set": "P1",
+   "case": "b96_10g_pre97",
+   "arm": "B",
+   "k": 2,
+   "exit": 0,
+   "wall_s": 32.1,
+   "claude_version": "2.1.321 (Claude Code)",
+   "time": "2026-11-20 18:25:24",
+   "available": {
+    "agent_cdc": {
+     "found": true,
+     "origin": "model",
+     "in_range": true,
+     "over": 1
+    },
+    "hand_ref": {
+     "found": true,
+     "origin": "combiner",
+     "in_range": true,
+     "over": 1.0
+    },
+    "agent_both": {
+     "found": true,
+     "origin": "combiner",
+     "in_range": true,
+     "over": 1.0
+    },
+    "all3": {
+     "found": true,
+     "origin": "model",
+     "in_range": true,
+     "over": 1
+    }
+   },
+   "bounds": {
+    "checked": 10,
+    "outside": []
+   },
+   "order_check": {
+    "orders": 24,
+    "different": 0,
+    "recorded_menu_matches_rebuild": true
+   },
+   "splitter": {
+    "split": [
+     "O4",
+     "O3"
+    ],
+    "n_parts": 2,
+    "not_split": []
+   },
+   "attempts": 1,
+   "status": "options",
+   "score": {
+    "status": "options",
+    "n_options": 10,
+    "variants": {
+     "agent_cdc": {
+      "found": true,
+      "option": "O1",
+      "scope": [
+       "core"
+      ],
+      "gain": [
+       1,
+       2
+      ],
+      "basis": "model",
+      "measured": 1,
+      "in_range": true,
+      "over": 1,
+      "origin": "model"
+     },
+     "hand_ref": {
+      "found": true,
+      "option": "C1",
+      "scope": [
+       "core",
+       "tx_frame_src",
+       "tx_mac"
+      ],
+      "gain": [
+       1.0,
+       3.0
+      ],
+      "basis": "model",
+      "measured": 2,
+      "in_range": true,
+      "over": 1.0,
+      "origin": "combiner"
+     },
+     "agent_both": {
+      "found": true,
+      "option": "C2",
+      "scope": [
+       "core",
+       "trade_decision"
+      ],
+      "gain": [
+       1.0,
+       3.0
+      ],
+      "basis": "model",
+      "measured": 2,
+      "in_range": true,
+      "over": 1.0,
+      "origin": "combiner"
+     },
+     "all3": {
+      "found": true,
+      "option": "O3",
+      "scope": [
+       "core",
+       "rx_path",
+       "trade_decision",
+       "tx_path",
+       "tx_frame_src",
+       "tx_mac"
+      ],
+      "gain": [
+       1,
+       4
+      ],
+      "basis": "model",
+      "measured": 3,
+      "in_range": true,
+      "over": 1,
+      "origin": "model"
+     }
+    },
+    "matched_options": [],
+    "other_options": [
+     {
+      "id": "O2",
+      "title": "",
+      "stages": [
+       "fs_start"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0,
+       1
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "O4",
+      "title": "",
+      "stages": [
+       "rx_descramble",
+       "cross_go",
+       "fs_start",
+       "decide"
+      ],
+      "scope_kind": "whole_design",
+      "gain": [
+       1,
+       5
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "S1",
+      "title": "",
+      "stages": [
+       "rx_descramble"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0.0,
+       1.0
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "S2",
+      "title": "",
+      "stages": [
+       "decide"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0.0,
+       1.0
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "C3",
+      "title": "",
+      "stages": [
+       "rx_descramble",
+       "cross_go",
+       "fs_start"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       1.0,
+       4.0
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "C4",
+      "title": "",
+      "stages": [
+       "rx_descramble",
+       "decide",
+       "cross_go"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       1.0,
+       4.0
+      ],
+      "basis": "model"
+     }
+    ],
+    "found_named": 3,
+    "found_all": 4,
+    "in_range": 4,
+    "n_variants": 4,
+    "n_named": 3
+   },
+   "n_model": 4,
+   "n_parts": 2,
+   "n_combined": 4,
+   "rejected": [],
+   "combiner": {
+    "version": "3",
+    "considered": 26,
+    "cap": 4,
+    "offered": [
+     {
+      "id": "C1",
+      "from": [
+       "O1",
+       "O2"
+      ]
+     },
+     {
+      "id": "C2",
+      "from": [
+       "S2",
+       "O1"
+      ]
+     },
+     {
+      "id": "C3",
+      "from": [
+       "S1",
+       "O1",
+       "O2"
+      ]
+     },
+     {
+      "id": "C4",
+      "from": [
+       "S1",
+       "S2",
+       "O1"
+      ]
+     }
+    ],
+    "not_composable": [
+     {
+      "from": [
+       "S1",
+       "O3"
+      ],
+      "reason": "the model already offered an option touching exactly these stages"
+     },
+     {
+      "from": [
+       "S2",
+       "O3"
+      ],
+      "reason": "options S2 and O3 both touch stage decide: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O3",
+       "O1"
+      ],
+      "reason": "options O3 and O1 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O3",
+       "O2"
+      ],
+      "reason": "options O3 and O2 both touch stage fs_start: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "S2",
+       "O3"
+      ],
+      "reason": "options S2 and O3 both touch stage decide: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "O3",
+       "O1"
+      ],
+      "reason": "options O3 and O1 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "O3",
+       "O2"
+      ],
+      "reason": "options O3 and O2 both touch stage fs_start: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S2",
+       "O3",
+       "O1"
+      ],
+      "reason": "options S2 and O3 both touch stage decide: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S2",
+       "O3",
+       "O2"
+      ],
+      "reason": "options S2 and O3 both touch stage decide: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S2",
+       "O1",
+       "O2"
+      ],
+      "reason": "the model already offered an option touching exactly these stages"
+     },
+     {
+      "from": [
+       "O3",
+       "O1",
+       "O2"
+      ],
+      "reason": "options O3 and O1 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "S2",
+       "O3",
+       "O1"
+      ],
+      "reason": "options S2 and O3 both touch stage decide: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "S2",
+       "O3",
+       "O2"
+      ],
+      "reason": "options S2 and O3 both touch stage decide: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "S2",
+       "O1",
+       "O2"
+      ],
+      "reason": "the model already offered an option touching exactly these stages"
+     },
+     {
+      "from": [
+       "S1",
+       "O3",
+       "O1",
+       "O2"
+      ],
+      "reason": "options O3 and O1 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S2",
+       "O3",
+       "O1",
+       "O2"
+      ],
+      "reason": "options S2 and O3 both touch stage decide: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "S2",
+       "O3",
+       "O1",
+       "O2"
+      ],
+      "reason": "options S2 and O3 both touch stage decide: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "O1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S2",
+       "O2"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S2",
+       "O2"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "O2"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S2"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     }
+    ]
+   },
+   "prompt_system_sha256": "ffb71e87152c8956"
+  },
+  {
+   "run": "P1__b96_10g_pre97__B__3",
+   "set": "P1",
+   "case": "b96_10g_pre97",
+   "arm": "B",
+   "k": 3,
+   "exit": 0,
+   "wall_s": 30.6,
+   "claude_version": "2.1.321 (Claude Code)",
+   "time": "2026-11-20 18:25:55",
+   "available": {
+    "agent_cdc": {
+     "found": true,
+     "origin": "model",
+     "in_range": true,
+     "over": 1
+    },
+    "hand_ref": {
+     "found": true,
+     "origin": "combiner",
+     "in_range": true,
+     "over": 1.0
+    },
+    "agent_both": {
+     "found": false
+    },
+    "all3": {
+     "found": false
+    }
+   },
+   "bounds": {
+    "checked": 11,
+    "outside": []
+   },
+   "order_check": {
+    "orders": 24,
+    "different": 0,
+    "recorded_menu_matches_rebuild": true
+   },
+   "splitter": {
+    "split": [
+     "O4",
+     "O3",
+     "O2"
+    ],
+    "n_parts": 3,
+    "not_split": []
+   },
+   "attempts": 1,
+   "status": "options",
+   "score": {
+    "status": "options",
+    "n_options": 11,
+    "variants": {
+     "agent_cdc": {
+      "found": true,
+      "option": "O1",
+      "scope": [
+       "core"
+      ],
+      "gain": [
+       1,
+       2
+      ],
+      "basis": "model",
+      "measured": 1,
+      "in_range": true,
+      "over": 1,
+      "origin": "model"
+     },
+     "hand_ref": {
+      "found": true,
+      "option": "C1",
+      "scope": [
+       "core",
+       "tx_frame_src"
+      ],
+      "gain": [
+       1.0,
+       3.0
+      ],
+      "basis": "model",
+      "measured": 2,
+      "in_range": true,
+      "over": 1.0,
+      "origin": "combiner"
+     },
+     "agent_both": {
+      "found": false,
+      "best_overlap": 0.5,
+      "best_option": "O1",
+      "measured": 2
+     },
+     "all3": {
+      "found": false,
+      "best_overlap": 0.67,
+      "best_option": "C1",
+      "measured": 3
+     }
+    },
+    "matched_options": [],
+    "other_options": [
+     {
+      "id": "O2",
+      "title": "",
+      "stages": [
+       "fs_start",
+       "mac_preamble"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0,
+       1
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "O3",
+      "title": "",
+      "stages": [
+       "cross_go",
+       "fs_start",
+       "mac_preamble"
+      ],
+      "scope_kind": "subsystem",
+      "gain": [
+       1,
+       3
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "O4",
+      "title": "",
+      "stages": [
+       "rx_descramble",
+       "cross_go",
+       "fs_start",
+       "mac_preamble"
+      ],
+      "scope_kind": "whole_design",
+      "gain": [
+       1,
+       5
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "S1",
+      "title": "",
+      "stages": [
+       "rx_descramble"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0.0,
+       1.0
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "S2",
+      "title": "",
+      "stages": [
+       "fs_start"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0.0,
+       1.0
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "S3",
+      "title": "",
+      "stages": [
+       "mac_preamble"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0.0,
+       1.0
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "C2",
+      "title": "",
+      "stages": [
+       "cross_go",
+       "mac_preamble"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       1.0,
+       3.0
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "C3",
+      "title": "",
+      "stages": [
+       "rx_descramble",
+       "cross_go",
+       "fs_start"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       1.0,
+       4.0
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "C4",
+      "title": "",
+      "stages": [
+       "rx_descramble",
+       "cross_go",
+       "mac_preamble"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       1.0,
+       4.0
+      ],
+      "basis": "model"
+     }
+    ],
+    "found_named": 1,
+    "found_all": 2,
+    "in_range": 2,
+    "n_variants": 4,
+    "n_named": 3
+   },
+   "n_model": 4,
+   "n_parts": 3,
+   "n_combined": 4,
+   "rejected": [],
+   "combiner": {
+    "version": "3",
+    "considered": 57,
+    "cap": 4,
+    "offered": [
+     {
+      "id": "C1",
+      "from": [
+       "O1",
+       "S2"
+      ]
+     },
+     {
+      "id": "C2",
+      "from": [
+       "O1",
+       "S3"
+      ]
+     },
+     {
+      "id": "C3",
+      "from": [
+       "S1",
+       "O1",
+       "S2"
+      ]
+     },
+     {
+      "id": "C4",
+      "from": [
+       "S1",
+       "O1",
+       "S3"
+      ]
+     }
+    ],
+    "not_composable": [
+     {
+      "from": [
+       "S1",
+       "O3"
+      ],
+      "reason": "the model already offered an option touching exactly these stages"
+     },
+     {
+      "from": [
+       "O1",
+       "O3"
+      ],
+      "reason": "options O1 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O1",
+       "O2"
+      ],
+      "reason": "the model already offered an option touching exactly these stages"
+     },
+     {
+      "from": [
+       "O3",
+       "S2"
+      ],
+      "reason": "options O3 and S2 both touch stage fs_start: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O3",
+       "O2"
+      ],
+      "reason": "options O3 and O2 both touch stage fs_start, mac_preamble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O3",
+       "S3"
+      ],
+      "reason": "options O3 and S3 both touch stage mac_preamble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S2",
+       "O2"
+      ],
+      "reason": "options S2 and O2 both touch stage fs_start: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S2",
+       "S3"
+      ],
+      "reason": "the model already offered an option touching exactly these stages"
+     },
+     {
+      "from": [
+       "O2",
+       "S3"
+      ],
+      "reason": "options O2 and S3 both touch stage mac_preamble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "O1",
+       "O3"
+      ],
+      "reason": "options O1 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "O1",
+       "O2"
+      ],
+      "reason": "the model already offered an option touching exactly these stages"
+     },
+     {
+      "from": [
+       "S1",
+       "O3",
+       "S2"
+      ],
+      "reason": "options O3 and S2 both touch stage fs_start: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "O3",
+       "O2"
+      ],
+      "reason": "options O3 and O2 both touch stage fs_start, mac_preamble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "O3",
+       "S3"
+      ],
+      "reason": "options O3 and S3 both touch stage mac_preamble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "S2",
+       "O2"
+      ],
+      "reason": "options S2 and O2 both touch stage fs_start: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "O2",
+       "S3"
+      ],
+      "reason": "options O2 and S3 both touch stage mac_preamble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O1",
+       "O3",
+       "S2"
+      ],
+      "reason": "options O1 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O1",
+       "O3",
+       "O2"
+      ],
+      "reason": "options O1 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O1",
+       "O3",
+       "S3"
+      ],
+      "reason": "options O1 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O1",
+       "S2",
+       "O2"
+      ],
+      "reason": "options S2 and O2 both touch stage fs_start: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O1",
+       "S2",
+       "S3"
+      ],
+      "reason": "the model already offered an option touching exactly these stages"
+     },
+     {
+      "from": [
+       "O1",
+       "O2",
+       "S3"
+      ],
+      "reason": "options O2 and S3 both touch stage mac_preamble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O3",
+       "S2",
+       "O2"
+      ],
+      "reason": "options O3 and S2 both touch stage fs_start: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O3",
+       "S2",
+       "S3"
+      ],
+      "reason": "options O3 and S2 both touch stage fs_start: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O3",
+       "O2",
+       "S3"
+      ],
+      "reason": "options O3 and O2 both touch stage fs_start, mac_preamble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S2",
+       "O2",
+       "S3"
+      ],
+      "reason": "options S2 and O2 both touch stage fs_start: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "O1",
+       "O3",
+       "S2"
+      ],
+      "reason": "options O1 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "O1",
+       "O3",
+       "O2"
+      ],
+      "reason": "options O1 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "O1",
+       "O3",
+       "S3"
+      ],
+      "reason": "options O1 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "O1",
+       "S2",
+       "O2"
+      ],
+      "reason": "options S2 and O2 both touch stage fs_start: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "O1",
+       "S2",
+       "S3"
+      ],
+      "reason": "the model already offered an option touching exactly these stages"
+     },
+     {
+      "from": [
+       "S1",
+       "O1",
+       "O2",
+       "S3"
+      ],
+      "reason": "options O2 and S3 both touch stage mac_preamble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "O3",
+       "S2",
+       "O2"
+      ],
+      "reason": "options O3 and S2 both touch stage fs_start: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "O3",
+       "S2",
+       "S3"
+      ],
+      "reason": "options O3 and S2 both touch stage fs_start: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "O3",
+       "O2",
+       "S3"
+      ],
+      "reason": "options O3 and O2 both touch stage fs_start, mac_preamble: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "S2",
+       "O2",
+       "S3"
+      ],
+      "reason": "options S2 and O2 both touch stage fs_start: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O1",
+       "O3",
+       "S2",
+       "O2"
+      ],
+      "reason": "options O1 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O1",
+       "O3",
+       "S2",
+       "S3"
+      ],
+      "reason": "options O1 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O1",
+       "O3",
+       "O2",
+       "S3"
+      ],
+      "reason": "options O1 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O1",
+       "S2",
+       "O2",
+       "S3"
+      ],
+      "reason": "options S2 and O2 both touch stage fs_start: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O3",
+       "S2",
+       "O2",
+       "S3"
+      ],
+      "reason": "options O3 and S2 both touch stage fs_start: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "O1",
+       "O3",
+       "S2",
+       "O2"
+      ],
+      "reason": "options O1 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "O1",
+       "O3",
+       "S2",
+       "S3"
+      ],
+      "reason": "options O1 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "O1",
+       "O3",
+       "O2",
+       "S3"
+      ],
+      "reason": "options O1 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "O1",
+       "S2",
+       "O2",
+       "S3"
+      ],
+      "reason": "options S2 and O2 both touch stage fs_start: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "O3",
+       "S2",
+       "O2",
+       "S3"
+      ],
+      "reason": "options O3 and S2 both touch stage fs_start: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O1",
+       "O3",
+       "S2",
+       "O2",
+       "S3"
+      ],
+      "reason": "options O1 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "O1",
+       "O3",
+       "S2",
+       "O2",
+       "S3"
+      ],
+      "reason": "options O1 and O3 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "S1",
+       "O1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S2",
+       "S3"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S2"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S3"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "O2"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     }
+    ]
+   },
+   "prompt_system_sha256": "ffb71e87152c8956"
+  },
+  {
+   "run": "P2__b96_10g_pre97__A__1",
+   "set": "P2",
+   "case": "b96_10g_pre97",
+   "arm": "A",
+   "k": 1,
+   "exit": 0,
+   "wall_s": 28.8,
+   "claude_version": "2.1.321 (Claude Code)",
+   "time": "2026-11-20 18:26:29",
+   "available": {
+    "agent_cdc": {
+     "found": true,
+     "origin": "model",
+     "in_range": true,
+     "over": 0
+    },
+    "hand_ref": {
+     "found": true,
+     "origin": "combiner",
+     "in_range": true,
+     "over": 0.0
+    },
+    "agent_both": {
+     "found": true,
+     "origin": "combiner",
+     "in_range": true,
+     "over": 0.0
+    },
+    "all3": {
+     "found": true,
+     "origin": "model",
+     "in_range": true,
+     "over": 0
+    }
+   },
+   "bounds": {
+    "checked": 7,
+    "outside": []
+   },
+   "order_check": {
+    "orders": 24,
+    "different": 0,
+    "recorded_menu_matches_rebuild": true
+   },
+   "splitter": {
+    "split": [
+     "O4"
+    ],
+    "n_parts": 0,
+    "not_split": []
+   },
+   "attempts": 1,
+   "status": "options",
+   "score": {
+    "status": "options",
+    "n_options": 7,
+    "variants": {
+     "agent_cdc": {
+      "found": true,
+      "option": "O2",
+      "scope": [
+       "core",
+       "tx_frame_src"
+      ],
+      "gain": [
+       0,
+       1
+      ],
+      "basis": "model",
+      "measured": 1,
+      "in_range": true,
+      "over": 0,
+      "origin": "model"
+     },
+     "hand_ref": {
+      "found": true,
+      "option": "C2",
+      "scope": [
+       "core",
+       "tx_frame_src"
+      ],
+      "gain": [
+       0.0,
+       2.0
+      ],
+      "basis": "model",
+      "measured": 2,
+      "in_range": true,
+      "over": 0.0,
+      "origin": "combiner"
+     },
+     "agent_both": {
+      "found": true,
+      "option": "C1",
+      "scope": [
+       "core",
+       "trade_decision",
+       "tx_frame_src"
+      ],
+      "gain": [
+       0.0,
+       2.0
+      ],
+      "basis": "model",
+      "measured": 2,
+      "in_range": true,
+      "over": 0.0,
+      "origin": "combiner"
+     },
+     "all3": {
+      "found": true,
+      "option": "O4",
+      "scope": [
+       "top",
+       "shared_pkg",
+       "core",
+       "rx_path",
+       "rx_pcs",
+       "rx_mac",
+       "trade_decision",
+       "tx_path",
+       "tx_frame_src",
+       "tx_mac",
+       "tx_pcs",
+       "cfg_vec"
+      ],
+      "gain": [
+       0,
+       3
+      ],
+      "basis": "model",
+      "measured": 3,
+      "in_range": true,
+      "over": 0,
+      "origin": "model"
+     }
+    },
+    "matched_options": [],
+    "other_options": [
+     {
+      "id": "O1",
+      "title": "",
+      "stages": [
+       "fs_start"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0,
+       1
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "O3",
+      "title": "",
+      "stages": [
+       "decide"
+      ],
+      "scope_kind": "subsystem",
+      "gain": [
+       0,
+       1
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "C3",
+      "title": "",
+      "stages": [
+       "decide",
+       "fs_start"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0.0,
+       2.0
+      ],
+      "basis": "model"
+     }
+    ],
+    "found_named": 3,
+    "found_all": 4,
+    "in_range": 4,
+    "n_variants": 4,
+    "n_named": 3
+   },
+   "n_model": 4,
+   "n_parts": 0,
+   "n_combined": 3,
+   "rejected": [],
+   "combiner": {
+    "version": "3",
+    "considered": 11,
+    "cap": 4,
+    "offered": [
+     {
+      "id": "C1",
+      "from": [
+       "O3",
+       "O2"
+      ]
+     },
+     {
+      "id": "C2",
+      "from": [
+       "O2",
+       "O1"
+      ]
+     },
+     {
+      "id": "C3",
+      "from": [
+       "O3",
+       "O1"
+      ]
+     }
+    ],
+    "not_composable": [
+     {
+      "from": [
+       "O3",
+       "O4"
+      ],
+      "reason": "options O3 and O4 both touch stage decide: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O4",
+       "O2"
+      ],
+      "reason": "options O4 and O2 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O4",
+       "O1"
+      ],
+      "reason": "options O4 and O1 both touch stage fs_start: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O3",
+       "O4",
+       "O2"
+      ],
+      "reason": "options O3 and O4 both touch stage decide: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O3",
+       "O4",
+       "O1"
+      ],
+      "reason": "options O3 and O4 both touch stage decide: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O3",
+       "O2",
+       "O1"
+      ],
+      "reason": "the model already offered an option touching exactly these stages"
+     },
+     {
+      "from": [
+       "O4",
+       "O2",
+       "O1"
+      ],
+      "reason": "options O4 and O2 both touch stage cross_go: they are alternatives, not additions"
+     },
+     {
+      "from": [
+       "O3",
+       "O4",
+       "O2",
+       "O1"
+      ],
+      "reason": "options O3 and O4 both touch stage decide: they are alternatives, not additions"
+     }
+    ]
+   },
+   "prompt_system_sha256": "5776ae375ac6b124"
+  },
+  {
+   "run": "P2__b96_10g_pre97__A__2",
+   "set": "P2",
+   "case": "b96_10g_pre97",
+   "arm": "A",
+   "k": 2,
+   "exit": 0,
+   "wall_s": 17.9,
+   "claude_version": "2.1.321 (Claude Code)",
+   "time": "2026-11-20 18:26:47",
+   "available": {
+    "agent_cdc": {
+     "found": true,
+     "origin": "model",
+     "in_range": true,
+     "over": 0
+    },
+    "hand_ref": {
+     "found": true,
+     "origin": "combiner",
+     "in_range": true,
+     "over": 0.0
+    },
+    "agent_both": {
+     "found": true,
+     "origin": "combiner",
+     "in_range": true,
+     "over": 0.0
+    },
+    "all3": {
+     "found": true,
+     "origin": "combiner",
+     "in_range": true,
+     "over": 0.0
+    }
+   },
+   "bounds": {
+    "checked": 12,
+    "outside": []
+   },
+   "order_check": {
+    "orders": 24,
+    "different": 0,
+    "recorded_menu_matches_rebuild": true
+   },
+   "splitter": {
+    "split": [
+     "O4",
+     "O2"
+    ],
+    "n_parts": 4,
+    "not_split": []
+   },
+   "attempts": 1,
+   "status": "options",
+   "score": {
+    "status": "options",
+    "n_options": 12,
+    "variants": {
+     "agent_cdc": {
+      "found": true,
+      "option": "O3",
+      "scope": [
+       "core"
+      ],
+      "gain": [
+       0,
+       1
+      ],
+      "basis": "model",
+      "measured": 1,
+      "in_range": true,
+      "over": 0,
+      "origin": "model"
+     },
+     "hand_ref": {
+      "found": true,
+      "option": "C1",
+      "scope": [
+       "core",
+       "tx_frame_src",
+       "tx_mac"
+      ],
+      "gain": [
+       0.0,
+       2.0
+      ],
+      "basis": "model",
+      "measured": 2,
+      "in_range": true,
+      "over": 0.0,
+      "origin": "combiner"
+     },
+     "agent_both": {
+      "found": false,
+      "best_overlap": 0.5,
+      "best_option": "S4",
+      "measured": 2
+     },
+     "all3": {
+      "found": false,
+      "best_overlap": 0.75,
+      "best_option": "C3",
+      "measured": 3
+     }
+    },
+    "matched_options": [],
+    "other_options": [
+     {
+      "id": "O1",
+      "title": "",
+      "stages": [
+       "fs_start"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0,
+       1
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "O2",
+      "title": "",
+      "stages": [
+       "rx_mac",
+       "decide"
+      ],
+      "scope_kind": "subsystem",
+      "gain": [
+       0,
+       1
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "O4",
+      "title": "",
+      "stages": [
+       "rx_descramble",
+       "mac_preamble",
+       "fs_start"
+      ],
+      "scope_kind": "whole_design",
+      "gain": [
+       0,
+       3
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "S1",
+      "title": "",
+      "stages": [
+       "rx_descramble"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0.0,
+       1.0
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "S2",
+      "title": "",
+      "stages": [
+       "mac_preamble"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0.0,
+       1.0
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "S3",
+      "title": "",
+      "stages": [
+       "rx_mac"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0.0,
+       1.0
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "S4",
+      "title": "",
+      "stages": [
+       "decide"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0.0,
+       1.0
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "C2",
+      "title": "",
+      "stages": [
+       "rx_descramble",
+       "cross_go",
+       "fs_start"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0.0,
+       3.0
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "C3",
+      "title": "",
+      "stages": [
+       "rx_descramble",
+       "decide",
+       "cross_go",
+       "fs_start"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0.0,
+       4.0
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "C4",
+      "title": "",
+      "stages": [
+       "rx_descramble",
+       "rx_mac",
+       "decide",
+       "cross_go",
+       "fs_start",
+       "mac_preamble"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0.0,
+       5.0
+      ],
+      "basis": "model"
+     }
+    ],
+    "found_named": 1,
+    "found_all": 2,
+    "in_range": 2,
+    "n_variants": 4,
+    "n_named": 3
+   },
+   "n_model": 4,
+   "n_parts": 4,
+   "n_combined": 4,
+   "rejected": [],
+   "combiner": {
+    "version": "3",
+    "considered": 57,
+    "cap": 4,
+    "offered": [
+     {
+      "id": "C1",
+      "from": [
+       "O3",
+       "O1"
+      ]
+     },
+     {
+      "id": "C2",
+      "from": [
+       "S1",
+       "O3",
+       "O1"
+      ]
+     },
+     {
+      "id": "C3",
+      "from": [
+       "S1",
+       "S4",
+       "O3",
+       "O1"
+      ]
+     },
+     {
+      "id": "C4",
+      "from": [
+       "S1",
+       "S3",
+       "S4",
+       "O3",
+       "O1",
+       "S2"
+      ]
+     }
+    ],
+    "not_composable": [
+     {
+      "from": [
+       "S3",
+       "S4"
+      ],
+      "reason": "the model already offered an option touching exactly these stages"
+     },
+     {
+      "from": [
+       "S1",
+       "O1",
+       "S2"
+      ],
+      "reason": "the model already offered an option touching exactly these stages"
+     },
+     {
+      "from": [
+       "S1",
+       "S4",
+       "O3",
+       "O1",
+       "S2"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S3",
+       "O3",
+       "O1",
+       "S2"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "O3",
+       "O1",
+       "S2"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S4",
+       "O3",
+       "O1",
+       "S2"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S4",
+       "O1",
+       "S2"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S3",
+       "O3",
+       "O1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S3",
+       "O3",
+       "O1",
+       "S2"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S3",
+       "O1",
+       "S2"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S4",
+       "O3",
+       "S2"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S3",
+       "O3",
+       "S2"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S3",
+       "S4",
+       "O3",
+       "O1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S3",
+       "S4",
+       "O3",
+       "O1",
+       "S2"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S3",
+       "S4",
+       "O1",
+       "S2"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S3",
+       "S4",
+       "O3",
+       "S2"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S4",
+       "O3",
+       "O1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S4",
+       "O1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "O3",
+       "O1",
+       "S2"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S4",
+       "O1",
+       "S2"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S3",
+       "O3",
+       "O1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S3",
+       "O1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S3",
+       "O1",
+       "S2"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S4",
+       "O3"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "O3",
+       "S2"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S4",
+       "O3",
+       "S2"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S4",
+       "S2"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S3",
+       "O3"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S3",
+       "O3",
+       "S2"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S3",
+       "S2"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S3",
+       "S4",
+       "O3",
+       "O1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S3",
+       "S4",
+       "O1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S3",
+       "S4",
+       "O1",
+       "S2"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S3",
+       "S4",
+       "O3"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S3",
+       "S4",
+       "O3",
+       "S2"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S3",
+       "S4",
+       "S2"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "O1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S4",
+       "O1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "O1",
+       "S2"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S3",
+       "O1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "O3"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S4",
+       "O3"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S4"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "O3",
+       "S2"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S2"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S4",
+       "S2"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S3",
+       "O3"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S3"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S3",
+       "S2"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S3",
+       "S4",
+       "O1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S3",
+       "S4",
+       "O3"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S3",
+       "S4"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S3",
+       "S4",
+       "S2"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     }
+    ]
+   },
+   "prompt_system_sha256": "5776ae375ac6b124"
+  },
+  {
+   "run": "P2__b96_10g_pre97__A__3",
+   "set": "P2",
+   "case": "b96_10g_pre97",
+   "arm": "A",
+   "k": 3,
+   "exit": 0,
+   "wall_s": 28.8,
+   "claude_version": "2.1.321 (Claude Code)",
+   "time": "2026-11-20 18:27:15",
+   "available": {
+    "agent_cdc": {
+     "found": true,
+     "origin": "model",
+     "in_range": true,
+     "over": 0
+    },
+    "hand_ref": {
+     "found": true,
+     "origin": "combiner",
+     "in_range": true,
+     "over": 0.0
+    },
+    "agent_both": {
+     "found": true,
+     "origin": "combiner",
+     "in_range": true,
+     "over": 0.0
+    },
+    "all3": {
+     "found": true,
+     "origin": "combiner",
+     "in_range": true,
+     "over": 0.0
+    }
+   },
+   "bounds": {
+    "checked": 9,
+    "outside": []
+   },
+   "order_check": {
+    "orders": 24,
+    "different": 0,
+    "recorded_menu_matches_rebuild": true
+   },
+   "splitter": {
+    "split": [
+     "O4"
+    ],
+    "n_parts": 1,
+    "not_split": []
+   },
+   "attempts": 1,
+   "status": "options",
+   "score": {
+    "status": "options",
+    "n_options": 9,
+    "variants": {
+     "agent_cdc": {
+      "found": true,
+      "option": "O3",
+      "scope": [
+       "core"
+      ],
+      "gain": [
+       0,
+       1
+      ],
+      "basis": "model",
+      "measured": 1,
+      "in_range": true,
+      "over": 0,
+      "origin": "model"
+     },
+     "hand_ref": {
+      "found": false,
+      "best_overlap": 0.67,
+      "best_option": "C4",
+      "measured": 2
+     },
+     "agent_both": {
+      "found": false,
+      "best_overlap": 0.67,
+      "best_option": "C4",
+      "measured": 2
+     },
+     "all3": {
+      "found": true,
+      "option": "C4",
+      "scope": [
+       "core",
+       "trade_decision",
+       "tx_frame_src"
+      ],
+      "gain": [
+       0.0,
+       3.0
+      ],
+      "basis": "model",
+      "measured": 3,
+      "in_range": true,
+      "over": 0.0,
+      "origin": "combiner"
+     }
+    },
+    "matched_options": [],
+    "other_options": [
+     {
+      "id": "O1",
+      "title": "",
+      "stages": [
+       "fs_start"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0,
+       1
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "O2",
+      "title": "",
+      "stages": [
+       "rx_descramble"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0,
+       1
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "O4",
+      "title": "",
+      "stages": [
+       "decide",
+       "rx_descramble",
+       "fs_start",
+       "cross_go"
+      ],
+      "scope_kind": "whole_design",
+      "gain": [
+       0,
+       4
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "S1",
+      "title": "",
+      "stages": [
+       "decide"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0.0,
+       1.0
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "C1",
+      "title": "",
+      "stages": [
+       "rx_descramble",
+       "cross_go"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0.0,
+       2.0
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "C2",
+      "title": "",
+      "stages": [
+       "rx_descramble",
+       "cross_go",
+       "fs_start"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0.0,
+       3.0
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "C3",
+      "title": "",
+      "stages": [
+       "rx_descramble",
+       "decide",
+       "cross_go"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0.0,
+       3.0
+      ],
+      "basis": "model"
+     }
+    ],
+    "found_named": 2,
+    "found_all": 2,
+    "in_range": 2,
+    "n_variants": 4,
+    "n_named": 3
+   },
+   "n_model": 4,
+   "n_parts": 1,
+   "n_combined": 4,
+   "rejected": [],
+   "combiner": {
+    "version": "3",
+    "considered": 11,
+    "cap": 4,
+    "offered": [
+     {
+      "id": "C1",
+      "from": [
+       "O2",
+       "O3"
+      ]
+     },
+     {
+      "id": "C2",
+      "from": [
+       "O2",
+       "O3",
+       "O1"
+      ]
+     },
+     {
+      "id": "C3",
+      "from": [
+       "O2",
+       "S1",
+       "O3"
+      ]
+     },
+     {
+      "id": "C4",
+      "from": [
+       "S1",
+       "O3",
+       "O1"
+      ]
+     }
+    ],
+    "not_composable": [
+     {
+      "from": [
+       "O2",
+       "S1",
+       "O3",
+       "O1"
+      ],
+      "reason": "the model already offered an option touching exactly these stages"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "O1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "O3",
+       "O1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "O2",
+       "O1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "O3"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "O2",
+       "S1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "O1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     }
+    ]
+   },
+   "prompt_system_sha256": "5776ae375ac6b124"
+  },
+  {
+   "run": "P2__b96_10g_pre97__B__1",
+   "set": "P2",
+   "case": "b96_10g_pre97",
+   "arm": "B",
+   "k": 1,
+   "exit": 0,
+   "wall_s": 30.3,
+   "claude_version": "2.1.321 (Claude Code)",
+   "time": "2026-11-20 18:27:46",
+   "available": {
+    "agent_cdc": {
+     "found": true,
+     "origin": "model",
+     "in_range": true,
+     "over": 1
+    },
+    "hand_ref": {
+     "found": true,
+     "origin": "combiner",
+     "in_range": true,
+     "over": 1.0
+    },
+    "agent_both": {
+     "found": true,
+     "origin": "combiner",
+     "in_range": true,
+     "over": 1.0
+    },
+    "all3": {
+     "found": true,
+     "origin": "model",
+     "in_range": true,
+     "over": 0
+    }
+   },
+   "bounds": {
+    "checked": 9,
+    "outside": []
+   },
+   "order_check": {
+    "orders": 24,
+    "different": 0,
+    "recorded_menu_matches_rebuild": true
+   },
+   "splitter": {
+    "split": [
+     "O4"
+    ],
+    "n_parts": 1,
+    "not_split": []
+   },
+   "attempts": 1,
+   "status": "options",
+   "score": {
+    "status": "options",
+    "n_options": 9,
+    "variants": {
+     "agent_cdc": {
+      "found": true,
+      "option": "O2",
+      "scope": [
+       "core"
+      ],
+      "gain": [
+       0,
+       2
+      ],
+      "basis": "model",
+      "measured": 1,
+      "in_range": true,
+      "over": 1,
+      "origin": "model"
+     },
+     "hand_ref": {
+      "found": true,
+      "option": "C1",
+      "scope": [
+       "core",
+       "tx_frame_src",
+       "tx_mac"
+      ],
+      "gain": [
+       0.0,
+       3.0
+      ],
+      "basis": "model",
+      "measured": 2,
+      "in_range": true,
+      "over": 1.0,
+      "origin": "combiner"
+     },
+     "agent_both": {
+      "found": false,
+      "best_overlap": 0.67,
+      "best_option": "O4",
+      "measured": 2
+     },
+     "all3": {
+      "found": true,
+      "option": "O4",
+      "scope": [
+       "top",
+       "shared_pkg",
+       "core",
+       "rx_path",
+       "rx_pcs",
+       "rx_mac",
+       "trade_decision",
+       "tx_path",
+       "tx_frame_src",
+       "tx_mac",
+       "tx_pcs",
+       "cfg_vec"
+      ],
+      "gain": [
+       0,
+       3
+      ],
+      "basis": "model",
+      "measured": 3,
+      "in_range": true,
+      "over": 0,
+      "origin": "model"
+     }
+    },
+    "matched_options": [],
+    "other_options": [
+     {
+      "id": "O1",
+      "title": "",
+      "stages": [
+       "fs_start"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0,
+       1
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "O3",
+      "title": "",
+      "stages": [
+       "rx_descramble"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0,
+       1
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "S1",
+      "title": "",
+      "stages": [
+       "decide"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0.0,
+       1.0
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "C2",
+      "title": "",
+      "stages": [
+       "rx_descramble",
+       "cross_go",
+       "fs_start"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0.0,
+       4.0
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "C3",
+      "title": "",
+      "stages": [
+       "rx_descramble",
+       "decide",
+       "cross_go"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0.0,
+       4.0
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "C4",
+      "title": "",
+      "stages": [
+       "rx_descramble",
+       "decide",
+       "cross_go",
+       "fs_start"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0.0,
+       5.0
+      ],
+      "basis": "model"
+     }
+    ],
+    "found_named": 2,
+    "found_all": 3,
+    "in_range": 3,
+    "n_variants": 4,
+    "n_named": 3
+   },
+   "n_model": 4,
+   "n_parts": 1,
+   "n_combined": 4,
+   "rejected": [],
+   "combiner": {
+    "version": "3",
+    "considered": 11,
+    "cap": 4,
+    "offered": [
+     {
+      "id": "C1",
+      "from": [
+       "O2",
+       "O1"
+      ]
+     },
+     {
+      "id": "C2",
+      "from": [
+       "O3",
+       "O2",
+       "O1"
+      ]
+     },
+     {
+      "id": "C3",
+      "from": [
+       "O3",
+       "S1",
+       "O2"
+      ]
+     },
+     {
+      "id": "C4",
+      "from": [
+       "O3",
+       "S1",
+       "O2",
+       "O1"
+      ]
+     }
+    ],
+    "not_composable": [
+     {
+      "from": [
+       "S1",
+       "O2",
+       "O1"
+      ],
+      "reason": "the model already offered an option touching exactly these stages"
+     },
+     {
+      "from": [
+       "O3",
+       "O2"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "O2"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "O3",
+       "S1",
+       "O1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "O3",
+       "O1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "O1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "O3",
+       "S1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     }
+    ]
+   },
+   "prompt_system_sha256": "5776ae375ac6b124"
+  },
+  {
+   "run": "P2__b96_10g_pre97__B__2",
+   "set": "P2",
+   "case": "b96_10g_pre97",
+   "arm": "B",
+   "k": 2,
+   "exit": 0,
+   "wall_s": 24.0,
+   "claude_version": "2.1.321 (Claude Code)",
+   "time": "2026-11-20 18:28:10",
+   "available": {
+    "agent_cdc": {
+     "found": true,
+     "origin": "splitter",
+     "in_range": true,
+     "over": 2
+    },
+    "hand_ref": {
+     "found": true,
+     "origin": "combiner",
+     "in_range": true,
+     "over": 2.0
+    },
+    "agent_both": {
+     "found": true,
+     "origin": "combiner",
+     "in_range": true,
+     "over": 1.0
+    },
+    "all3": {
+     "found": true,
+     "origin": "model",
+     "in_range": true,
+     "over": 0
+    }
+   },
+   "bounds": {
+    "checked": 9,
+    "outside": []
+   },
+   "order_check": {
+    "orders": 24,
+    "different": 0,
+    "recorded_menu_matches_rebuild": true
+   },
+   "splitter": {
+    "split": [
+     "O3"
+    ],
+    "n_parts": 2,
+    "not_split": []
+   },
+   "attempts": 1,
+   "status": "options",
+   "score": {
+    "status": "options",
+    "n_options": 9,
+    "variants": {
+     "agent_cdc": {
+      "found": true,
+      "option": "S2",
+      "scope": [
+       "core"
+      ],
+      "gain": [
+       0.0,
+       3
+      ],
+      "basis": "model",
+      "measured": 1,
+      "in_range": true,
+      "over": 2,
+      "origin": "splitter"
+     },
+     "hand_ref": {
+      "found": true,
+      "option": "C1",
+      "scope": [
+       "core",
+       "tx_frame_src",
+       "tx_mac"
+      ],
+      "gain": [
+       0.0,
+       4.0
+      ],
+      "basis": "model",
+      "measured": 2,
+      "in_range": true,
+      "over": 2.0,
+      "origin": "combiner"
+     },
+     "agent_both": {
+      "found": false,
+      "best_overlap": 0.67,
+      "best_option": "O3",
+      "measured": 2
+     },
+     "all3": {
+      "found": true,
+      "option": "O3",
+      "scope": [
+       "top",
+       "shared_pkg",
+       "core",
+       "rx_path",
+       "rx_pcs",
+       "rx_mac",
+       "trade_decision",
+       "tx_path",
+       "tx_frame_src",
+       "tx_mac",
+       "tx_pcs",
+       "cfg_vec"
+      ],
+      "gain": [
+       0,
+       3
+      ],
+      "basis": "model",
+      "measured": 3,
+      "in_range": true,
+      "over": 0,
+      "origin": "model"
+     }
+    },
+    "matched_options": [],
+    "other_options": [
+     {
+      "id": "O1",
+      "title": "",
+      "stages": [
+       "fs_start"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0,
+       1
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "O2",
+      "title": "",
+      "stages": [
+       "rx_descramble"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0,
+       1
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "S1",
+      "title": "",
+      "stages": [
+       "decide"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0.0,
+       1.0
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "C2",
+      "title": "",
+      "stages": [
+       "rx_descramble",
+       "cross_go"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0.0,
+       4.0
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "C3",
+      "title": "",
+      "stages": [
+       "rx_descramble",
+       "cross_go",
+       "fs_start"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0.0,
+       5.0
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "C4",
+      "title": "",
+      "stages": [
+       "rx_descramble",
+       "decide",
+       "cross_go",
+       "fs_start"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0.0,
+       5.0
+      ],
+      "basis": "model"
+     }
+    ],
+    "found_named": 2,
+    "found_all": 3,
+    "in_range": 3,
+    "n_variants": 4,
+    "n_named": 3
+   },
+   "n_model": 3,
+   "n_parts": 2,
+   "n_combined": 4,
+   "rejected": [],
+   "combiner": {
+    "version": "3",
+    "considered": 11,
+    "cap": 4,
+    "offered": [
+     {
+      "id": "C1",
+      "from": [
+       "S2",
+       "O1"
+      ]
+     },
+     {
+      "id": "C2",
+      "from": [
+       "O2",
+       "S2"
+      ]
+     },
+     {
+      "id": "C3",
+      "from": [
+       "O2",
+       "S2",
+       "O1"
+      ]
+     },
+     {
+      "id": "C4",
+      "from": [
+       "O2",
+       "S1",
+       "S2",
+       "O1"
+      ]
+     }
+    ],
+    "not_composable": [
+     {
+      "from": [
+       "S1",
+       "S2",
+       "O1"
+      ],
+      "reason": "the model already offered an option touching exactly these stages"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "S2"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "S2"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "O2",
+       "S1",
+       "O1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "O2",
+       "O1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "O1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "O2",
+       "S1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     }
+    ]
+   },
+   "prompt_system_sha256": "5776ae375ac6b124"
+  },
+  {
+   "run": "P2__b96_10g_pre97__B__3",
+   "set": "P2",
+   "case": "b96_10g_pre97",
+   "arm": "B",
+   "k": 3,
+   "exit": 0,
+   "wall_s": 27.2,
+   "claude_version": "2.1.321 (Claude Code)",
+   "time": "2026-11-20 18:28:37",
+   "available": {
+    "agent_cdc": {
+     "found": true,
+     "origin": "model",
+     "in_range": true,
+     "over": 1
+    },
+    "hand_ref": {
+     "found": true,
+     "origin": "combiner",
+     "in_range": true,
+     "over": 1.0
+    },
+    "agent_both": {
+     "found": true,
+     "origin": "combiner",
+     "in_range": true,
+     "over": 1.0
+    },
+    "all3": {
+     "found": true,
+     "origin": "model",
+     "in_range": true,
+     "over": 1
+    }
+   },
+   "bounds": {
+    "checked": 9,
+    "outside": []
+   },
+   "order_check": {
+    "orders": 24,
+    "different": 0,
+    "recorded_menu_matches_rebuild": true
+   },
+   "splitter": {
+    "split": [
+     "O4"
+    ],
+    "n_parts": 1,
+    "not_split": []
+   },
+   "attempts": 1,
+   "status": "options",
+   "score": {
+    "status": "options",
+    "n_options": 9,
+    "variants": {
+     "agent_cdc": {
+      "found": true,
+      "option": "O1",
+      "scope": [
+       "core"
+      ],
+      "gain": [
+       1,
+       2
+      ],
+      "basis": "model",
+      "measured": 1,
+      "in_range": true,
+      "over": 1,
+      "origin": "model"
+     },
+     "hand_ref": {
+      "found": true,
+      "option": "C1",
+      "scope": [
+       "core",
+       "tx_frame_src",
+       "tx_mac"
+      ],
+      "gain": [
+       1.0,
+       3.0
+      ],
+      "basis": "model",
+      "measured": 2,
+      "in_range": true,
+      "over": 1.0,
+      "origin": "combiner"
+     },
+     "agent_both": {
+      "found": false,
+      "best_overlap": 0.67,
+      "best_option": "O4",
+      "measured": 2
+     },
+     "all3": {
+      "found": true,
+      "option": "O4",
+      "scope": [
+       "top",
+       "shared_pkg",
+       "core",
+       "rx_path",
+       "rx_pcs",
+       "rx_mac",
+       "trade_decision",
+       "tx_path",
+       "tx_frame_src",
+       "tx_mac",
+       "tx_pcs",
+       "cfg_vec"
+      ],
+      "gain": [
+       1,
+       4
+      ],
+      "basis": "model",
+      "measured": 3,
+      "in_range": true,
+      "over": 1,
+      "origin": "model"
+     }
+    },
+    "matched_options": [],
+    "other_options": [
+     {
+      "id": "O2",
+      "title": "",
+      "stages": [
+       "fs_start"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0,
+       1
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "O3",
+      "title": "",
+      "stages": [
+       "rx_descramble"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0,
+       1
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "S1",
+      "title": "",
+      "stages": [
+       "decide"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       0.0,
+       1.0
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "C2",
+      "title": "",
+      "stages": [
+       "rx_descramble",
+       "cross_go",
+       "fs_start"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       1.0,
+       4.0
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "C3",
+      "title": "",
+      "stages": [
+       "rx_descramble",
+       "decide",
+       "cross_go"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       1.0,
+       4.0
+      ],
+      "basis": "model"
+     },
+     {
+      "id": "C4",
+      "title": "",
+      "stages": [
+       "rx_descramble",
+       "decide",
+       "cross_go",
+       "fs_start"
+      ],
+      "scope_kind": "modules",
+      "gain": [
+       1.0,
+       5.0
+      ],
+      "basis": "model"
+     }
+    ],
+    "found_named": 2,
+    "found_all": 3,
+    "in_range": 3,
+    "n_variants": 4,
+    "n_named": 3
+   },
+   "n_model": 4,
+   "n_parts": 1,
+   "n_combined": 4,
+   "rejected": [],
+   "combiner": {
+    "version": "3",
+    "considered": 11,
+    "cap": 4,
+    "offered": [
+     {
+      "id": "C1",
+      "from": [
+       "O1",
+       "O2"
+      ]
+     },
+     {
+      "id": "C2",
+      "from": [
+       "O3",
+       "O1",
+       "O2"
+      ]
+     },
+     {
+      "id": "C3",
+      "from": [
+       "O3",
+       "S1",
+       "O1"
+      ]
+     },
+     {
+      "id": "C4",
+      "from": [
+       "O3",
+       "S1",
+       "O1",
+       "O2"
+      ]
+     }
+    ],
+    "not_composable": [
+     {
+      "from": [
+       "S1",
+       "O1",
+       "O2"
+      ],
+      "reason": "the model already offered an option touching exactly these stages"
+     },
+     {
+      "from": [
+       "O3",
+       "O1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "O1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "O3",
+       "S1",
+       "O2"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "O3",
+       "O2"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "S1",
+       "O2"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     },
+     {
+      "from": [
+       "O3",
+       "S1"
+      ],
+      "reason": "valid, but not in the 4 best (ranked below the best of its size or beyond the cap)"
+     }
+    ]
+   },
+   "prompt_system_sha256": "5776ae375ac6b124"
+  }
+ ],
+ "summary": {
+  "P1/b96_10g_pre97/A": {
+   "runs": 3,
+   "failed": 0,
+   "n_model": [
+    4,
+    4,
+    4
+   ],
+   "n_parts": [
+    3,
+    1,
+    5
+   ],
+   "n_combined": [
+    4,
+    4,
+    4
+   ],
+   "found_named": [
+    1,
+    2,
+    1
+   ],
+   "found_all": [
+    2,
+    2,
+    2
+   ],
+   "in_range": [
+    2,
+    2,
+    2
+   ],
+   "found_by_variant": {
+    "agent_cdc": 3,
+    "hand_ref": 2,
+    "agent_both": 0,
+    "all3": 1
+   },
+   "in_range_by_variant": {
+    "agent_cdc": 3,
+    "hand_ref": 2,
+    "agent_both": 0,
+    "all3": 1
+   },
+   "over_by_variant": {
+    "agent_cdc": [
+     0,
+     0,
+     0.0
+    ],
+    "hand_ref": [
+     0,
+     0
+    ],
+    "agent_both": [],
+    "all3": [
+     0.0
+    ]
+   },
+   "origin_by_variant": {
+    "agent_cdc": [
+     "model",
+     "model",
+     "splitter"
+    ],
+    "hand_ref": [
+     "model",
+     "model"
+    ],
+    "agent_both": [],
+    "all3": [
+     "combiner"
+    ]
+   },
+   "available_by_variant": {
+    "agent_cdc": 3,
+    "hand_ref": 3,
+    "agent_both": 3,
+    "all3": 3
+   }
+  },
+  "P1/b96_10g_pre97/B": {
+   "runs": 3,
+   "failed": 0,
+   "n_model": [
+    4,
+    4,
+    4
+   ],
+   "n_parts": [
+    0,
+    2,
+    3
+   ],
+   "n_combined": [
+    3,
+    4,
+    4
+   ],
+   "found_named": [
+    1,
+    3,
+    1
+   ],
+   "found_all": [
+    2,
+    4,
+    2
+   ],
+   "in_range": [
+    2,
+    4,
+    2
+   ],
+   "found_by_variant": {
+    "agent_cdc": 3,
+    "hand_ref": 3,
+    "agent_both": 1,
+    "all3": 1
+   },
+   "in_range_by_variant": {
+    "agent_cdc": 3,
+    "hand_ref": 3,
+    "agent_both": 1,
+    "all3": 1
+   },
+   "over_by_variant": {
+    "agent_cdc": [
+     1,
+     1,
+     1
+    ],
+    "hand_ref": [
+     1.0,
+     1.0,
+     1.0
+    ],
+    "agent_both": [
+     1.0
+    ],
+    "all3": [
+     1
+    ]
+   },
+   "origin_by_variant": {
+    "agent_cdc": [
+     "model",
+     "model",
+     "model"
+    ],
+    "hand_ref": [
+     "combiner",
+     "combiner",
+     "combiner"
+    ],
+    "agent_both": [
+     "combiner"
+    ],
+    "all3": [
+     "model"
+    ]
+   },
+   "available_by_variant": {
+    "agent_cdc": 3,
+    "hand_ref": 3,
+    "agent_both": 1,
+    "all3": 1
+   }
+  },
+  "P2/b96_10g_pre97/A": {
+   "runs": 3,
+   "failed": 0,
+   "n_model": [
+    4,
+    4,
+    4
+   ],
+   "n_parts": [
+    0,
+    4,
+    1
+   ],
+   "n_combined": [
+    3,
+    4,
+    4
+   ],
+   "found_named": [
+    3,
+    1,
+    2
+   ],
+   "found_all": [
+    4,
+    2,
+    2
+   ],
+   "in_range": [
+    4,
+    2,
+    2
+   ],
+   "found_by_variant": {
+    "agent_cdc": 3,
+    "hand_ref": 2,
+    "agent_both": 1,
+    "all3": 2
+   },
+   "in_range_by_variant": {
+    "agent_cdc": 3,
+    "hand_ref": 2,
+    "agent_both": 1,
+    "all3": 2
+   },
+   "over_by_variant": {
+    "agent_cdc": [
+     0,
+     0,
+     0
+    ],
+    "hand_ref": [
+     0.0,
+     0.0
+    ],
+    "agent_both": [
+     0.0
+    ],
+    "all3": [
+     0,
+     0.0
+    ]
+   },
+   "origin_by_variant": {
+    "agent_cdc": [
+     "model",
+     "model",
+     "model"
+    ],
+    "hand_ref": [
+     "combiner",
+     "combiner"
+    ],
+    "agent_both": [
+     "combiner"
+    ],
+    "all3": [
+     "model",
+     "combiner"
+    ]
+   },
+   "available_by_variant": {
+    "agent_cdc": 3,
+    "hand_ref": 3,
+    "agent_both": 3,
+    "all3": 3
+   }
+  },
+  "P2/b96_10g_pre97/B": {
+   "runs": 3,
+   "failed": 0,
+   "n_model": [
+    4,
+    3,
+    4
+   ],
+   "n_parts": [
+    1,
+    2,
+    1
+   ],
+   "n_combined": [
+    4,
+    4,
+    4
+   ],
+   "found_named": [
+    2,
+    2,
+    2
+   ],
+   "found_all": [
+    3,
+    3,
+    3
+   ],
+   "in_range": [
+    3,
+    3,
+    3
+   ],
+   "found_by_variant": {
+    "agent_cdc": 3,
+    "hand_ref": 3,
+    "agent_both": 0,
+    "all3": 3
+   },
+   "in_range_by_variant": {
+    "agent_cdc": 3,
+    "hand_ref": 3,
+    "agent_both": 0,
+    "all3": 3
+   },
+   "over_by_variant": {
+    "agent_cdc": [
+     1,
+     2,
+     1
+    ],
+    "hand_ref": [
+     1.0,
+     2.0,
+     1.0
+    ],
+    "agent_both": [],
+    "all3": [
+     0,
+     0,
+     1
+    ]
+   },
+   "origin_by_variant": {
+    "agent_cdc": [
+     "model",
+     "splitter",
+     "model"
+    ],
+    "hand_ref": [
+     "combiner",
+     "combiner",
+     "combiner"
+    ],
+    "agent_both": [],
+    "all3": [
+     "model",
+     "model",
+     "model"
+    ]
+   },
+   "available_by_variant": {
+    "agent_cdc": 3,
+    "hand_ref": 3,
+    "agent_both": 3,
+    "all3": 3
+   }
+  }
+ },
+ "bounds_outside": [],
+ "order_check": {
+  "runs_checked": 12,
+  "runs_with_a_different_menu": []
+ },
+ "totals_b96": {
+  "agent_cdc": {
+   "found_104B": 12,
+   "found_104C": 12,
+   "in_range_104C": 12,
+   "available_104C": 12,
+   "runs": 12
+  },
+  "hand_ref": {
+   "found_104B": 9,
+   "found_104C": 10,
+   "in_range_104C": 10,
+   "available_104C": 12,
+   "runs": 12
+  },
+  "agent_both": {
+   "found_104B": 0,
+   "found_104C": 2,
+   "in_range_104C": 2,
+   "available_104C": 10,
+   "runs": 12
+  },
+  "all3": {
+   "found_104B": 1,
+   "found_104C": 7,
+   "in_range_104C": 7,
+   "available_104C": 10,
+   "runs": 12
+  }
+ }
+}

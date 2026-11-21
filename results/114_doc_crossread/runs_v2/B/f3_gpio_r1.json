@@ -1,0 +1,1016 @@
+{
+ "schema": "fda-doc-crossread/1",
+ "purpose": "doc_crossread",
+ "topic": "AXI GPIO: the register offsets and the bits of the global interrupt and the IP interrupt registers.",
+ "target": "AXI GPIO v2.0",
+ "document": {
+  "source": "/home/brendan/Claude_sandbox/_amd_docs/PG144_pg144-axi-gpio.pdf",
+  "pages": [
+   22,
+   23,
+   24,
+   25,
+   26
+  ],
+  "sha256": "f2e148d6b22d3a5bc108d1e52f5883e5caba889edd329fc6ce469183b5551a5e",
+  "chars": 15407
+ },
+ "code": {
+  "files": [
+   {
+    "path": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/f3_gpio/code/tb_gpio.sv",
+    "sha256": "f92106e86aa16e0915719b705e1ab2caf016a700e561be8747d3e31bbab37caa",
+    "lines": 242
+   }
+  ],
+  "n_facts": 8,
+  "not_parsed": [],
+  "limits": [
+   "Python: module-level and class-level assignments (including tuple unpacking), evaluated with integers, strings, lists, tuples, dicts, comprehensions over range(), and calls to simple functions defined in the given files (docstring, if-raise, local assignments, return). Not parsed: constants inside function bodies, attributes of objects, anything that calls a library or does I/O.",
+   "SystemVerilog: localparam and parameter declarations (with their declared width), `define, and enum members with explicit values. Not parsed: array literals, structs, functions, case-statement addresses, port widths, generate blocks, numbers written inline in always blocks.",
+   "C: #define NAME <integer expression>. Not parsed: enums, const variables, function-like macros.",
+   "Comments and strings are searched only for the names a text fact (step, condition) mentions; no number in a comment is read."
+  ]
+ },
+ "reader": {
+  "repairs": 0,
+  "seconds": 33.6,
+  "problems": [
+   "fact F30: the quotation was not found in the excerpt"
+  ],
+  "prompts": {
+   "system": "graph/doc_crossread/system",
+   "user": "graph/doc_crossread/user",
+   "repair": "graph/doc_crossread/repair"
+  },
+  "prompt_hashes": {
+   "system": "39849fdea6851c68b57cbc6484d6dfa51dd282578308280247bb31ed1dd2a4e3",
+   "user": "222a588489bd69b7822fd12b58bb36ef2f1933edd2f34e29b4f09b31c2f710ae",
+   "repair": "c5de7b5659596e3b49e746badb81f31d85cf3ba8bec0d5ff020cd4161f53f400"
+  },
+  "n_facts": 35,
+  "source": "stored reply (post-hoc comparator)"
+ },
+ "model": {
+  "purpose": "doc_crossread",
+  "endpoint": "claude_code",
+  "kind": "claude_code",
+  "model": "claude-haiku-5-5",
+  "options": {
+   "effort": "medium",
+   "timeout_s": 900
+  },
+  "entry_hash": "c8579489955e37c4",
+  "table_hash": "1d495cbf804c90bf"
+ },
+ "usage": {
+  "calls": 1,
+  "seconds": 33.6,
+  "input_tokens": 2,
+  "cache_read_input_tokens": 791,
+  "cache_creation_input_tokens": 5110,
+  "output_tokens": 10284,
+  "plan_cost_estimate_usd": 0.0062,
+  "cost_usd": null
+ },
+ "summary": {
+  "agree": 7,
+  "not_in_code": 24,
+  "mentioned": 4
+ },
+ "rows": [
+  {
+   "id": "F1",
+   "status": "agree",
+   "tier": "name",
+   "why": "",
+   "kind": "address",
+   "subject": "GPIO_DATA",
+   "field": null,
+   "doc": {
+    "value": 0,
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 22,
+    "ref": "Table 4: Registers",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "08f9e77ede6c4869"
+   },
+   "code": [
+    {
+     "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/f3_gpio/code/tb_gpio.sv",
+     "line": 21,
+     "name": "DATA1",
+     "value": 0,
+     "n": null
+    },
+    {
+     "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/f3_gpio/code/tb_gpio.sv",
+     "line": 21,
+     "name": "DATA2",
+     "value": 8,
+     "n": null
+    }
+   ]
+  },
+  {
+   "id": "F2",
+   "status": "agree",
+   "tier": "name",
+   "why": "",
+   "kind": "address",
+   "subject": "GPIO_TRI",
+   "field": null,
+   "doc": {
+    "value": 4,
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 22,
+    "ref": "Table 4: Registers",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "cb239dc40e74bed2"
+   },
+   "code": [
+    {
+     "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/f3_gpio/code/tb_gpio.sv",
+     "line": 21,
+     "name": "TRI1",
+     "value": 4,
+     "n": null
+    },
+    {
+     "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/f3_gpio/code/tb_gpio.sv",
+     "line": 21,
+     "name": "TRI2",
+     "value": 12,
+     "n": null
+    }
+   ]
+  },
+  {
+   "id": "F3",
+   "status": "agree",
+   "tier": "name",
+   "why": "",
+   "kind": "address",
+   "subject": "GPIO2_DATA",
+   "field": null,
+   "doc": {
+    "value": 8,
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 22,
+    "ref": "Table 4: Registers",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "d7c1a24ce9bb3c2b"
+   },
+   "code": [
+    {
+     "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/f3_gpio/code/tb_gpio.sv",
+     "line": 21,
+     "name": "DATA1",
+     "value": 0,
+     "n": null
+    },
+    {
+     "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/f3_gpio/code/tb_gpio.sv",
+     "line": 21,
+     "name": "DATA2",
+     "value": 8,
+     "n": null
+    }
+   ]
+  },
+  {
+   "id": "F4",
+   "status": "agree",
+   "tier": "name",
+   "why": "",
+   "kind": "address",
+   "subject": "GPIO2_TRI",
+   "field": null,
+   "doc": {
+    "value": 12,
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 22,
+    "ref": "Table 4: Registers",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "64df60c1018acdfe"
+   },
+   "code": [
+    {
+     "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/f3_gpio/code/tb_gpio.sv",
+     "line": 21,
+     "name": "TRI1",
+     "value": 4,
+     "n": null
+    },
+    {
+     "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/f3_gpio/code/tb_gpio.sv",
+     "line": 21,
+     "name": "TRI2",
+     "value": 12,
+     "n": null
+    }
+   ]
+  },
+  {
+   "id": "F5",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "none of C_BASEADDR appears in the code",
+   "kind": "other",
+   "subject": "Address Space Offset",
+   "field": null,
+   "doc": {
+    "value": "Address Space Offset is relative to C_BASEADDR assignment.",
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 22,
+    "ref": "Table 4: Registers, note 3",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "7e7cf2fd11729bab"
+   },
+   "code": []
+  },
+  {
+   "id": "F6",
+   "status": "agree",
+   "tier": "name",
+   "why": "",
+   "kind": "address",
+   "subject": "GIER1",
+   "field": null,
+   "doc": {
+    "value": 284,
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 22,
+    "ref": "Table 4: Registers",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "9deeb94e90554501"
+   },
+   "code": [
+    {
+     "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/f3_gpio/code/tb_gpio.sv",
+     "line": 21,
+     "name": "GIER",
+     "value": 284,
+     "n": null
+    }
+   ]
+  },
+  {
+   "id": "F7",
+   "status": "agree",
+   "tier": "name",
+   "why": "",
+   "kind": "address",
+   "subject": "IP IER1",
+   "field": null,
+   "doc": {
+    "value": 296,
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 22,
+    "ref": "Table 4: Registers",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "5c38015079ff8cd3"
+   },
+   "code": [
+    {
+     "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/f3_gpio/code/tb_gpio.sv",
+     "line": 21,
+     "name": "IER",
+     "value": 296,
+     "n": null
+    }
+   ]
+  },
+  {
+   "id": "F8",
+   "status": "agree",
+   "tier": "name",
+   "why": "",
+   "kind": "address",
+   "subject": "IP ISR1",
+   "field": null,
+   "doc": {
+    "value": 288,
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 22,
+    "ref": "Table 4: Registers",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "b1c0d9ca14c0358b"
+   },
+   "code": [
+    {
+     "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/f3_gpio/code/tb_gpio.sv",
+     "line": 21,
+     "name": "ISR",
+     "value": 288,
+     "n": null
+    }
+   ]
+  },
+  {
+   "id": "F9",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "reset_value",
+   "subject": "GIER1",
+   "field": null,
+   "doc": {
+    "value": 0,
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 22,
+    "ref": "Table 4: Registers",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "9deeb94e90554501"
+   },
+   "code": []
+  },
+  {
+   "id": "F10",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "reset_value",
+   "subject": "IP IER1",
+   "field": null,
+   "doc": {
+    "value": 0,
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 22,
+    "ref": "Table 4: Registers",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "5c38015079ff8cd3"
+   },
+   "code": []
+  },
+  {
+   "id": "F11",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "reset_value",
+   "subject": "IP ISR1",
+   "field": null,
+   "doc": {
+    "value": 0,
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 22,
+    "ref": "Table 4: Registers",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "b1c0d9ca14c0358b"
+   },
+   "code": []
+  },
+  {
+   "id": "F12",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "bit_range",
+   "subject": "GIER",
+   "field": "Global Interrupt Enable",
+   "doc": {
+    "value": null,
+    "values": null,
+    "lo": 31,
+    "hi": 31,
+    "unit": "bits",
+    "applies_to": "all",
+    "for_target": true,
+    "page": 25,
+    "ref": "Table 8: Global Interrupt Enable Register Description",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "36292852358c9233"
+   },
+   "code": []
+  },
+  {
+   "id": "F13",
+   "status": "mentioned",
+   "tier": null,
+   "why": "the code uses GIER; the sentence itself is not compared (read the evidence)",
+   "kind": "other",
+   "subject": "GIER",
+   "field": "Global Interrupt Enable",
+   "doc": {
+    "value": "0 = Disabled, 1 = Enabled",
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 25,
+    "ref": "Table 8: Global Interrupt Enable Register Description",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "7d89720b191dc5fc"
+   },
+   "code": []
+  },
+  {
+   "id": "F14",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "bit_range",
+   "subject": "GIER",
+   "field": "Reserved",
+   "doc": {
+    "value": null,
+    "values": null,
+    "lo": 0,
+    "hi": 30,
+    "unit": "bits",
+    "applies_to": "all",
+    "for_target": true,
+    "page": 25,
+    "ref": "Table 8: Global Interrupt Enable Register Description",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "463dd502de275422"
+   },
+   "code": []
+  },
+  {
+   "id": "F15",
+   "status": "mentioned",
+   "tier": null,
+   "why": "the code uses GIER; the sentence itself is not compared (read the evidence)",
+   "kind": "condition",
+   "subject": "GIER",
+   "field": "Global Interrupt Enable",
+   "doc": {
+    "value": "GIER must be set to generate interrupts, even if the interrupts are enabled in the IP Interrupt Enable Register (IP IER).",
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 25,
+    "ref": "Table 8 note, Global Interrupt Enable Register",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "3ae63b52875e1598"
+   },
+   "code": []
+  },
+  {
+   "id": "F16",
+   "status": "mentioned",
+   "tier": null,
+   "why": "the code uses GIER; the sentence itself is not compared (read the evidence)",
+   "kind": "condition",
+   "subject": "GIER",
+   "field": null,
+   "doc": {
+    "value": "GIER is valid only if the Enable Interrupt parameter is set.",
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 25,
+    "ref": "Global Interrupt Enable Register (GIER)",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "13c6a53d78034193"
+   },
+   "code": []
+  },
+  {
+   "id": "F17",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "bit_range",
+   "subject": "IP IER1",
+   "field": "Reserved",
+   "doc": {
+    "value": null,
+    "values": null,
+    "lo": 2,
+    "hi": 31,
+    "unit": "bits",
+    "applies_to": "all",
+    "for_target": true,
+    "page": 26,
+    "ref": "Table 9: IP Interrupt Enable Register Description",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "463dd502de275422"
+   },
+   "code": []
+  },
+  {
+   "id": "F18",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "bit_range",
+   "subject": "IP IER1",
+   "field": "Channel 1 Interrupt Enable",
+   "doc": {
+    "value": null,
+    "values": null,
+    "lo": 0,
+    "hi": 0,
+    "unit": "bits",
+    "applies_to": "all",
+    "for_target": true,
+    "page": 26,
+    "ref": "Table 9: IP Interrupt Enable Register Description",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "f892bf652f5c071c"
+   },
+   "code": []
+  },
+  {
+   "id": "F19",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "none of CHANNEL 1 INTERRUPT ENABLE, IP IER1 appears in the code",
+   "kind": "other",
+   "subject": "IP IER1",
+   "field": "Channel 1 Interrupt Enable",
+   "doc": {
+    "value": "0 = Disabled (masked), 1 = Enabled",
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 26,
+    "ref": "Table 9: IP Interrupt Enable Register Description",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "4f5b0a159ef22f50"
+   },
+   "code": []
+  },
+  {
+   "id": "F20",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "bit_range",
+   "subject": "IP IER1",
+   "field": "Channel 2 Interrupt Enable",
+   "doc": {
+    "value": null,
+    "values": null,
+    "lo": 1,
+    "hi": 1,
+    "unit": "bits",
+    "applies_to": "all",
+    "for_target": true,
+    "page": 26,
+    "ref": "Table 9: IP Interrupt Enable Register Description",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "94b022f33198c08d"
+   },
+   "code": []
+  },
+  {
+   "id": "F21",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "bit_range",
+   "subject": "IP ISR1",
+   "field": "Reserved",
+   "doc": {
+    "value": null,
+    "values": null,
+    "lo": 2,
+    "hi": 31,
+    "unit": "bits",
+    "applies_to": "all",
+    "for_target": true,
+    "page": 26,
+    "ref": "Table 10: IP Interrupt Status Register Description",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "463dd502de275422"
+   },
+   "code": []
+  },
+  {
+   "id": "F22",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "bit_range",
+   "subject": "IP ISR1",
+   "field": "Channel 1 Interrupt Status",
+   "doc": {
+    "value": null,
+    "values": null,
+    "lo": 0,
+    "hi": 0,
+    "unit": "bits",
+    "applies_to": "all",
+    "for_target": true,
+    "page": 26,
+    "ref": "Table 10: IP Interrupt Status Register Description",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "a4fe2629b6f5dc2b"
+   },
+   "code": []
+  },
+  {
+   "id": "F23",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "none of CHANNEL 1 INTERRUPT STATUS, IP ISR1 appears in the code",
+   "kind": "other",
+   "subject": "IP ISR1",
+   "field": "Channel 1 Interrupt Status",
+   "doc": {
+    "value": "0 = No Channel 1 input interrupt, 1 = Channel 1 input interrupt",
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 26,
+    "ref": "Table 10: IP Interrupt Status Register Description",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "a2ec5bede5dd8563"
+   },
+   "code": []
+  },
+  {
+   "id": "F24",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "bit_range",
+   "subject": "IP ISR1",
+   "field": "Channel 2 Interrupt Status",
+   "doc": {
+    "value": null,
+    "values": null,
+    "lo": 1,
+    "hi": 1,
+    "unit": "bits",
+    "applies_to": "all",
+    "for_target": true,
+    "page": 26,
+    "ref": "Table 10: IP Interrupt Status Register Description",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "fb49883bcc019d84"
+   },
+   "code": []
+  },
+  {
+   "id": "F25",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "none of IP ISR1, TOGGLE-ON-WRITE, TOW appears in the code",
+   "kind": "other",
+   "subject": "IP ISR1",
+   "field": null,
+   "doc": {
+    "value": "Toggle-On-Write access toggles the status of the bit when a value of 1 is written to the corresponding bit.",
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 22,
+    "ref": "Table 4 note 2",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "434e3a57b49623e6"
+   },
+   "code": []
+  },
+  {
+   "id": "F26",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "none of IP ISR1 appears in the code",
+   "kind": "other",
+   "subject": "IP ISR1",
+   "field": null,
+   "doc": {
+    "value": "The IP ISR can also be manually set to generate an interrupt for testing purposes.",
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 25,
+    "ref": "Interrupts",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "8a2dc345228ede7b"
+   },
+   "code": []
+  },
+  {
+   "id": "F27",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "none of ENABLE INTERRUPT, IP IER1, IP ISR1, IPIER, IPISR appears in the code",
+   "kind": "condition",
+   "subject": "IP IER1 and IP ISR1",
+   "field": null,
+   "doc": {
+    "value": "IP IER and IP ISR are valid only if the Enable Interrupt parameter is set.",
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 26,
+    "ref": "IP Interrupt Enable (IPIER) and IP Status Registers (IPISR)",
+    "quote_ok": true,
+    "page_ok": false,
+    "quote_sha256": "2b2ef2e0b9fa7303"
+   },
+   "code": []
+  },
+  {
+   "id": "F28",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "none of IP IER1, IP ISR1 appears in the code",
+   "kind": "condition",
+   "subject": "IP IER1 and IP ISR1",
+   "field": null,
+   "doc": {
+    "value": "IP IER enable bits have a one-to-one correspondence with IP ISR status bits.",
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 25,
+    "ref": "IP Interrupt Enable (IPIER) and IP Status Registers (IPISR)",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "7bc347cdaa321aa0"
+   },
+   "code": []
+  },
+  {
+   "id": "F29",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "none of ENABLE INTERRUPT, GIER1, IP IER1, IP ISR1 appears in the code",
+   "kind": "condition",
+   "subject": "Enable Interrupt",
+   "field": null,
+   "doc": {
+    "value": "Interrupt registers are available only if AXI GPIO is compiled using the Enable Interrupt parameter.",
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "Enable Interrupt = 1",
+    "for_target": true,
+    "page": 22,
+    "ref": "Table 4: Registers, note 1",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "674e2f5a7f10c057"
+   },
+   "code": []
+  },
+  {
+   "id": "F30",
+   "status": "mentioned",
+   "tier": null,
+   "why": "the code uses GIER; the sentence itself is not compared (read the evidence)",
+   "kind": "condition",
+   "subject": "GIER, IP IER, IP ISR",
+   "field": null,
+   "doc": {
+    "value": "GIER, IP IER and IP ISR are removed (not retained) when Enable Interrupt is 0.",
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "Enable Interrupt = 0",
+    "for_target": true,
+    "page": 22,
+    "ref": "Table 5: AXI Parameter-Register Dependency",
+    "quote_ok": false,
+    "page_ok": false,
+    "quote_sha256": "2a64b6ece57af5c6"
+   },
+   "code": []
+  },
+  {
+   "id": "F31",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "none of ENABLE DUAL CHANNEL, GPIO2_DATA, GPIO2_TRI appears in the code",
+   "kind": "condition",
+   "subject": "GPIO2_DATA and GPIO2_TRI",
+   "field": null,
+   "doc": {
+    "value": "GPIO2_DATA and GPIO2_TRI are present only if the core is configured for dual channel (Enable Dual Channel = 1).",
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "Enable Dual Channel = 1",
+    "for_target": true,
+    "page": 23,
+    "ref": "AXI GPIO Data Register (GPIOx_DATA)",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "900f1e5f77a9907f"
+   },
+   "code": []
+  },
+  {
+   "id": "F32",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "none of GPIO_DATA, GPIO_TRI appears in the code",
+   "kind": "condition",
+   "subject": "GPIO_DATA and GPIO_TRI",
+   "field": null,
+   "doc": {
+    "value": "The channel 1 registers are always present.",
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 23,
+    "ref": "AXI GPIO Data Register (GPIOx_DATA)",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "853eae7c917f47c4"
+   },
+   "code": []
+  },
+  {
+   "id": "F33",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "none of its names appears in the code",
+   "kind": "other",
+   "subject": "Unimplemented registers",
+   "field": null,
+   "doc": {
+    "value": "A write to an unimplemented register has no effect; a read returns an all-zero value.",
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 22,
+    "ref": "Register Space",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "f565031a723472f3"
+   },
+   "code": []
+  },
+  {
+   "id": "F34",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "reset_value",
+   "subject": "GPIO2_DATA",
+   "field": null,
+   "doc": {
+    "value": 0,
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 22,
+    "ref": "Table 4: Registers",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "d7c1a24ce9bb3c2b"
+   },
+   "code": []
+  },
+  {
+   "id": "F35",
+   "status": "not_in_code",
+   "tier": null,
+   "why": "no code name matches (the code may use another name: pass an alias, or read the document fact)",
+   "kind": "reset_value",
+   "subject": "GPIO2_TRI",
+   "field": null,
+   "doc": {
+    "value": 0,
+    "values": null,
+    "lo": null,
+    "hi": null,
+    "unit": null,
+    "applies_to": "all",
+    "for_target": true,
+    "page": 22,
+    "ref": "Table 4: Registers",
+    "quote_ok": true,
+    "page_ok": true,
+    "quote_sha256": "64df60c1018acdfe"
+   },
+   "code": []
+  }
+ ],
+ "not_in_document": [
+  {
+   "file": "/home/brendan/Claude_sandbox/_worktrees/114-crossread/results/114_doc_crossread/cases/f3_gpio/code/tb_gpio.sv",
+   "line": 23,
+   "name": "NREG",
+   "value": 7
+  }
+ ],
+ "run": "B/f3_gpio_r1"
+}

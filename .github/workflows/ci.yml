@@ -134,6 +134,38 @@ jobs:
           $FDA_OSS_CAD/bin/eqy --version
           python -m pytest -q flow/tests/test_101_eqy.py
 
+  formal-rate-matcher:
+    name: Formal proofs of the gray-pointer rate matcher (brief 115) - SymbiYosys, slang front end, OSS CAD Suite 20261112
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    env:
+      FDA_OSS_CAD: ${{ github.workspace }}/oss-cad-suite
+      FDA_REQUIRE_FORMAL: "1"      # a formal test that skips for a missing tool fails (brief 81)
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Cache the OSS CAD Suite
+        id: oss
+        uses: actions/cache@v4
+        with:
+          path: oss-cad-suite
+          key: oss-cad-suite-20261112
+      - name: Download the pinned OSS CAD Suite (release 2026-11-12, build 20261112)
+        if: steps.oss.outputs.cache-hit != 'true'
+        run: |
+          curl -fsSL -o oss.tgz https://github.com/YosysHQ/oss-cad-suite-build/releases/download/2026-11-12/oss-cad-suite-linux-x64-20261112.tgz
+          echo "346499255e3e5e6e9bf67e1d378a4e6bc249abd3de3b0caf5b57604bc8ba1752  oss.tgz" | sha256sum -c -
+          tar -xzf oss.tgz
+          rm oss.tgz
+      - name: Install
+        run: pip install pytest
+      - name: Safety by k-induction (AW 4, 2, 1; one bit of each class of the entry), bounded progress, covers, and one mutant per key property
+        run: |
+          $FDA_OSS_CAD/bin/yosys -V
+          python -m pytest -q designs/b96_kr260_10g/tests/test_b115_formal.py
+
   rtl-sim:
     name: RTL tests (cocotb + Icarus) and mutants
     runs-on: ubuntu-24.04
@@ -381,6 +413,10 @@ jobs:
         run: |
           python -m pytest -q designs/b96_kr260_10g/rm_gp_ml/tests
           python3 results/b113/summary.py --check
+      - name: Standard-protocol trading path (brief 110) - MoldUDP64 and ITCH 5.0 in, OUCH 5.0 out - cocotb against the Python reference (frames, book updates, counters bit exact; coverage; other parameters), model unit tests, Verilator -Wall at four parameter points
+          python -m pytest -q designs/b110_itch_ouch/tests/test_b110_model.py designs/b110_itch_ouch/tests/test_b110_rtl.py designs/b110_itch_ouch/tests/test_b110_lint.py
+      - name: TCP fast path for OUCH orders (brief 119) - software owns the connection, hardware sends pre-built segments - cocotb against the Python reference (byte-exact segments, abort, refusals, registers, the software exchange end to end, behind brief 110's risk logic), the Python TCP side, Verilator -Wall
+          python -m pytest -q designs/b119_tcp_fast/tests/test_b119_model.py designs/b119_tcp_fast/tests/test_b119_rtl.py designs/b119_tcp_fast/tests/test_b119_lint.py
       - name: Upload simulation logs
         if: always()
         uses: actions/upload-artifact@v4
