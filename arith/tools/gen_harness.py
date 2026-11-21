@@ -41,7 +41,7 @@ def readme(fn: str) -> str:
          "This folder is a deliverable: rerun it against your own instance after you integrate or change the block. It needs nothing else from the repository.", "",
          "## What is in it", "",
          "| File | What |", "|---|---|",
-         "| `model.py` | the bit-exact model of the specification ([../spec.md](../spec.md)), in Python integers (the floating-point functions also have `fp_ref.py`, the exact-rational reference it calls, and `fpx_ref.sv`, the specification as wide integer RTL that the checker uses) |",
+         "| `model.py` | the bit-exact model of the specification ([../spec.md](../spec.md)), in Python integers" + (" (it calls `fp_ref.py`, the exact-rational reference; the checker uses `fpx_ref.sv`, the specification as wide integer RTL)" if fn.startswith("fp_") else "") + " |",
          f"| `bench.py`, `{fn}_cocotb.py`, `harness_common.py` | the cocotb bench: drives one vector per clock (exhaustive at small widths; edge values, runs of ones and random inputs at large ones) and compares every output bit with the model, allowing for your latency |",
          "| `assertions.sv` | a passive SystemVerilog checker with the specification as plain wide arithmetic; put it beside your instance in your own bench or in the simulator of your choice; its `errors` counter is 0 when the instance conforms |",
          "| `chk_top.sv` | your instance with the checker beside it, used by `run_harness.py --checker` |",
@@ -72,6 +72,12 @@ def outputs(fn: str) -> dict[Path, str]:
     run = (ac.ARITH / "tools" / "run_harness_template.py").read_text().replace("@FN@", fn)
     ex, lat = EXAMPLE[fn]
     run = run.replace("@EXAMPLE_PARAMS@", ex).replace("@EXAMPLE_LAT@", str(lat))
+    if fn.startswith("fp_"):                       # the default mode is chosen from the operand bits of all inputs (two for fp_add and fp_mul, three for fp_fma)
+        old = ('        bits = sum(v for k, v in params.items() if k in ("WIDTH", "WA", "WB", "LANES")) if FUNCTION != "adder" else 2 * params.get("WIDTH", 99)\n'
+               '        mode = "exhaustive" if bits <= (12 if FUNCTION != "adder" else 12) else "randomised"')
+        assert old in run
+        run = run.replace(old, '        bits = (3 if FUNCTION == "fp_fma" else 2) * (1 + params.get("EXP", 99) + params.get("MAN", 99))      # operand bits in all\n'
+                               '        mode = "exhaustive" if bits <= (18 if FUNCTION == "fp_fma" else 16) else "randomised"')
     out = {h / "model.py": (ac.ARITH / fn / "model.py").read_text(), h / "bench.py": (ac.ARITH / "tools" / "bench.py").read_text(),
            h / "harness_common.py": common_text(), h / f"{fn}_cocotb.py": cocotb_text(fn), h / "run_harness.py": run, h / "README.md": readme(fn)}
     if fn.startswith("fp_"):                       # the floating-point functions share a reference (Python) and a specification as RTL (for the checker)

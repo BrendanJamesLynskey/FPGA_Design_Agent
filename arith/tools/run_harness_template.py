@@ -50,12 +50,8 @@ def main() -> int:
         hdl_params = {**params, "LAT": a.latency}
     mode = a.mode
     if mode == "auto":
-        if FUNCTION.startswith("fp_"):
-            bits = (3 if FUNCTION == "fp_fma" else 2) * (1 + params.get("EXP", 99) + params.get("MAN", 99))      # operand bits in all
-            mode = "exhaustive" if bits <= (18 if FUNCTION == "fp_fma" else 16) else "randomised"
-        else:
-            bits = sum(v for k, v in params.items() if k in ("WIDTH", "WA", "WB", "LANES")) if FUNCTION != "adder" else 2 * params.get("WIDTH", 99)
-            mode = "exhaustive" if bits <= (12 if FUNCTION != "adder" else 12) else "randomised"
+        bits = sum(v for k, v in params.items() if k in ("WIDTH", "WA", "WB", "LANES")) if FUNCTION != "adder" else 2 * params.get("WIDTH", 99)
+        mode = "exhaustive" if bits <= (12 if FUNCTION != "adder" else 12) else "randomised"
     tests = ["exhaustive", "randomised"] if mode == "both" else [mode]
     sim = get_runner("icarus")
     sim.build(sources=sources, hdl_toplevel=top, parameters=hdl_params, build_dir=build / "sim_build", always=True, build_args=["-g2012", f"-I{build}"], timescale=("1ns", "1ps"))
