@@ -1,0 +1,96 @@
+     -.--ns INFO     gpi                                ..mbed/gpi_embed.cpp:93   in _embed_init_python              Using Python 3.12.4 interpreter at /usr/bin/python3
+     -.--ns INFO     gpi                                ../gpi/GpiCommon.cpp:79   in gpi_print_registered_impl       VPI registered
+     0.00ns INFO     cocotb                             Running on Icarus Verilog version 12.0 (stable)
+     0.00ns INFO     cocotb                             Seeding Python random module with 1795220623
+     0.00ns INFO     cocotb                             Initialized cocotb v2.0.1 from /home/brendan/.local/lib/python3.12/site-packages/cocotb
+     0.00ns INFO     cocotb                             Running tests
+     0.00ns INFO     cocotb.regression                  running core_cocotb_default.echo_probe (1/16)
+                                                            A probe frame sent by the generator comes back through the (near-end) loop: counted once, FCS good, echo time recorded.
+ 20161.00ns INFO     cocotb.tb_core                     echo: sent 3 cnt 3 E 12..12 good 3 bad 0
+ 20191.00ns INFO     cocotb.regression                  core_cocotb_default.echo_probe passed
+ 20191.00ns INFO     cocotb.regression                  running core_cocotb_default.trading_loop_armed (2/16)
+                                                            A feed frame (ask 99.50, threshold 99.75) loops back, the trading path fires, the order frame loops back: all frame bytes checked.
+ 40502.00ns INFO     cocotb.tb_core                     tx {'n_order': 1, 'n_feed': 1, 'n_probe': 0, 'n_test': 0, 'poisoned': 0, 'dropped': 0, 'underrun': 0, 'late': 0, 'stale': 0, 'go': 1, 't_tx_feed': 1611, 't_tx_probe': 0, 't_tx_order': 1632, 't_rx_feed': 1623, 't_rx_probe': 0, 't_rx_order': 1644, 'e_last': 0, 'e_min': 4294967295, 'e_max': 0, 'e_cnt': 0, 'l_last': 33, 'l_min': 33, 'l_max': 33, 'l_cnt': 1, 'd_last': 9, 'ts': 2542}
+                                                        rx {'lock': 1, 'slip': 0, 'loss': 0, 'lock_ev': 0, 'sh': 0, 'type': 0, 'os': 0, 'frames': 2, 'good': 2, 'bad': 0, 'err': 0, 'fired': 1, 'blocked': 0, 'toolong': 0, 'last_len': 70, 'lock_clk': 91}
+ 40502.00ns INFO     cocotb.regression                  core_cocotb_default.trading_loop_armed passed
+ 40502.00ns INFO     cocotb.regression                  running core_cocotb_default.trade_decisions (3/16)
+                                                            Prices above the threshold, the kill bit and the disarmed state send no order; counters say why.
+ 57683.00ns INFO     cocotb.tb_core                     price 10000 arm 1 kill 0: fired 0 sent 0 blocked 0
+ 63903.00ns INFO     cocotb.tb_core                     price 9975 arm 1 kill 0: fired 1 sent 1 blocked 0
+ 70123.00ns INFO     cocotb.tb_core                     price 9950 arm 0 kill 0: fired 0 sent 0 blocked 1
+ 76343.00ns INFO     cocotb.tb_core                     price 9950 arm 1 kill 1: fired 0 sent 0 blocked 1
+ 76343.00ns INFO     cocotb.regression                  core_cocotb_default.trade_decisions passed
+ 76343.00ns INFO     cocotb.regression                  running core_cocotb_default.poisoned_order_bad_fcs (4/16)
+                                                            The feed frame is damaged on the wire after the decision (its FCS fails): the order, already under way, leaves with a wrong FCS.
+ 96784.00ns INFO     cocotb.tb_core                     poison 4: tx {'n_order': 1, 'n_feed': 1, 'n_probe': 0, 'n_test': 0, 'poisoned': 1, 'dropped': 0, 'underrun': 0, 'late': 0, 'stale': 0, 'go': 1, 't_tx_feed': 1611, 't_tx_probe': 0, 't_tx_order': 1632, 't_rx_feed': 1623, 't_rx_probe': 0, 't_rx_order': 1644, 'e_last': 0, 'e_min': 4294967295, 'e_max': 0, 'e_cnt': 0, 'l_last': 33, 'l_min': 33, 'l_max': 33, 'l_cnt': 1, 'd_last': 9, 'ts': 2573}
+                                                        rx {'lock': 1, 'slip': 0, 'loss': 0, 'lock_ev': 0, 'sh': 0, 'type': 1, 'os': 0, 'frames': 2, 'good': 0, 'bad': 2, 'err': 0, 'fired': 1, 'blocked': 0, 'toolong': 0, 'last_len': 70, 'lock_clk': 91}
+ 96784.00ns INFO     cocotb.regression                  core_cocotb_default.poisoned_order_bad_fcs passed
+ 96784.00ns INFO     cocotb.regression                  running core_cocotb_default.poisoned_order_cut_frame (5/16)
+                                                            The feed frame is cut by a line error that makes a block an error block: the order leaves with a wrong FCS too.
+117225.00ns INFO     cocotb.tb_core                     poison 3: tx {'n_order': 1, 'n_feed': 1, 'n_probe': 0, 'n_test': 0, 'poisoned': 1, 'dropped': 0, 'underrun': 0, 'late': 0, 'stale': 0, 'go': 1, 't_tx_feed': 1611, 't_tx_probe': 0, 't_tx_order': 1632, 't_rx_feed': 1623, 't_rx_probe': 0, 't_rx_order': 1644, 'e_last': 0, 'e_min': 4294967295, 'e_max': 0, 'e_cnt': 0, 'l_last': 33, 'l_min': 33, 'l_max': 33, 'l_cnt': 1, 'd_last': 9, 'ts': 2557}
+                                                        rx {'lock': 1, 'slip': 0, 'loss': 0, 'lock_ev': 0, 'sh': 0, 'type': 1, 'os': 0, 'frames': 1, 'good': 0, 'bad': 1, 'err': 1, 'fired': 1, 'blocked': 0, 'toolong': 0, 'last_len': 70, 'lock_clk': 91}
+117225.00ns INFO     cocotb.regression                  core_cocotb_default.poisoned_order_cut_frame passed
+117225.00ns INFO     cocotb.regression                  running core_cocotb_default.tick_to_trade_digital (6/16)
+                                                            The fabric's own tick-to-trade in clocks, from the clock edge that captures the GT word completing the price field (RX side) to the clock
+130437.68ns INFO     cocotb.tb_core                     TTT {"price_word_captured_at_gt_to_mac_register_clocks": 2, "mac_register_to_fire_register_clocks": 0, "fire_register_to_go_pulse_in_tx_domain_clocks": 4, "go_pulse_to_order_preamble_in_mac_register_clocks": 1, "mac_register_of_price_word_to_order_preamble_clocks": 5, "gt_rxdata_price_word_to_gt_txdata_order_start_clocks": 9}
+130437.68ns INFO     cocotb.regression                  core_cocotb_default.tick_to_trade_digital passed
+130437.68ns INFO     cocotb.regression                  running core_cocotb_default.seq_after_counter_clear (7/16)
+                                                            Brief 97C: CMD bit 0 clears the order number on the receive side; the transmit side's expectation must follow.
+195808.68ns INFO     cocotb.tb_core                     SEQ counter_clear {"start": {"t_n_order": 3, "t_n_feed": 3, "t_poisoned": 0, "t_late": 0, "t_stale": 0, "t_go": 3, "t_dropped": 0, "t_underrun": 0, "r_fired": 3, "r_good": 6, "r_bad": 0, "r_err": 0, "r_order_ok": 3, "r_order_bad": 0}, "round0": {"t_n_order": 3, "t_n_feed": 3, "t_poisoned": 0, "t_late": 0, "t_stale": 0, "t_go": 3, "t_dropped": 0, "t_underrun": 0, "r_fired": 3, "r_good": 6, "r_bad": 0, "r_err": 0, "r_order_ok": 3, "r_order_bad": 0}, "round1": {"t_n_order": 3, "t_n_feed": 3, "t_poisoned": 0, "t_late": 0, "t_stale": 0, "t_go": 3, "t_dropped": 0, "t_underrun": 0, "r_fired": 3, "r_good": 6, "r_bad": 0, "r_err": 0, "r_order_ok": 3, "r_order_bad": 0}}
+195808.68ns INFO     cocotb.regression                  core_cocotb_default.seq_after_counter_clear passed
+195808.68ns INFO     cocotb.regression                  running core_cocotb_default.seq_after_rx_relink (8/16)
+                                                            An RX datapath restart (no clear) leaves the order sequence in step.
+267759.68ns INFO     cocotb.tb_core                     SEQ rx_relink {"start": {"t_n_order": 3, "t_n_feed": 3, "t_poisoned": 0, "t_late": 0, "t_stale": 0, "t_go": 3, "t_dropped": 0, "t_underrun": 0, "r_fired": 3, "r_good": 6, "r_bad": 0, "r_err": 0, "r_order_ok": 3, "r_order_bad": 0}, "round0": {"t_n_order": 3, "t_n_feed": 3, "t_poisoned": 0, "t_late": 0, "t_stale": 0, "t_go": 3, "t_dropped": 0, "t_underrun": 0, "r_fired": 3, "r_good": 6, "r_bad": 0, "r_err": 0, "r_order_ok": 3, "r_order_bad": 0}, "round1": {"t_n_order": 3, "t_n_feed": 3, "t_poisoned": 0, "t_late": 0, "t_stale": 0, "t_go": 3, "t_dropped": 0, "t_underrun": 0, "r_fired": 3, "r_good": 6, "r_bad": 0, "r_err": 0, "r_order_ok": 3, "r_order_bad": 0}}
+267759.68ns INFO     cocotb.regression                  core_cocotb_default.seq_after_rx_relink passed
+267759.68ns INFO     cocotb.regression                  running core_cocotb_default.seq_after_tx_relink (9/16)
+                                                            A TX datapath restart (no clear) leaves the order sequence in step.
+335340.68ns INFO     cocotb.tb_core                     SEQ tx_relink {"start": {"t_n_order": 3, "t_n_feed": 3, "t_poisoned": 0, "t_late": 0, "t_stale": 0, "t_go": 3, "t_dropped": 0, "t_underrun": 0, "r_fired": 3, "r_good": 6, "r_bad": 0, "r_err": 0, "r_order_ok": 3, "r_order_bad": 0}, "round0": {"t_n_order": 3, "t_n_feed": 3, "t_poisoned": 0, "t_late": 0, "t_stale": 0, "t_go": 3, "t_dropped": 0, "t_underrun": 0, "r_fired": 3, "r_good": 6, "r_bad": 0, "r_err": 0, "r_order_ok": 3, "r_order_bad": 0}, "round1": {"t_n_order": 3, "t_n_feed": 3, "t_poisoned": 0, "t_late": 0, "t_stale": 0, "t_go": 3, "t_dropped": 0, "t_underrun": 0, "r_fired": 3, "r_good": 6, "r_bad": 0, "r_err": 0, "r_order_ok": 3, "r_order_bad": 0}}
+335340.68ns INFO     cocotb.regression                  core_cocotb_default.seq_after_tx_relink passed
+335340.68ns INFO     cocotb.regression                  running core_cocotb_default.seq_after_all_reset (10/16)
+                                                            A reset of the whole GT leaves the order sequence in step.
+409591.68ns INFO     cocotb.tb_core                     SEQ all_reset {"start": {"t_n_order": 3, "t_n_feed": 3, "t_poisoned": 0, "t_late": 0, "t_stale": 0, "t_go": 3, "t_dropped": 0, "t_underrun": 0, "r_fired": 3, "r_good": 6, "r_bad": 0, "r_err": 0, "r_order_ok": 3, "r_order_bad": 0}, "round0": {"t_n_order": 3, "t_n_feed": 3, "t_poisoned": 0, "t_late": 0, "t_stale": 0, "t_go": 3, "t_dropped": 0, "t_underrun": 0, "r_fired": 3, "r_good": 6, "r_bad": 0, "r_err": 0, "r_order_ok": 3, "r_order_bad": 0}, "round1": {"t_n_order": 3, "t_n_feed": 3, "t_poisoned": 0, "t_late": 0, "t_stale": 0, "t_go": 3, "t_dropped": 0, "t_underrun": 0, "r_fired": 3, "r_good": 6, "r_bad": 0, "r_err": 0, "r_order_ok": 3, "r_order_bad": 0}}
+409591.68ns INFO     cocotb.regression                  core_cocotb_default.seq_after_all_reset passed
+409591.68ns INFO     cocotb.regression                  running core_cocotb_default.seq_bench_restart_sequence (11/16)
+                                                            The stage-3 bench's own sequence: restart the RX datapath, clear, send orders; four times over, then two more rounds.
+581062.68ns INFO     cocotb.tb_core                     SEQ bench_sequence {"start": {"t_n_order": 3, "t_n_feed": 3, "t_poisoned": 0, "t_late": 0, "t_stale": 0, "t_go": 3, "t_dropped": 0, "t_underrun": 0, "r_fired": 3, "r_good": 6, "r_bad": 0, "r_err": 0, "r_order_ok": 3, "r_order_bad": 0}, "round0": {"t_n_order": 3, "t_n_feed": 3, "t_poisoned": 0, "t_late": 0, "t_stale": 0, "t_go": 3, "t_dropped": 0, "t_underrun": 0, "r_fired": 3, "r_good": 6, "r_bad": 0, "r_err": 0, "r_order_ok": 3, "r_order_bad": 0}, "round1": {"t_n_order": 3, "t_n_feed": 3, "t_poisoned": 0, "t_late": 0, "t_stale": 0, "t_go": 3, "t_dropped": 0, "t_underrun": 0, "r_fired": 3, "r_good": 6, "r_bad": 0, "r_err": 0, "r_order_ok": 3, "r_order_bad": 0}}
+581062.68ns INFO     cocotb.regression                  core_cocotb_default.seq_bench_restart_sequence passed
+581062.68ns INFO     cocotb.regression                  running core_cocotb_default.seq_clear_while_orders_flow (12/16)
+                                                            A counter clear in the middle of a stream of orders (the window where a fire and the clear straddle in the two domains): the orders around
+806813.69ns INFO     cocotb.regression                  core_cocotb_default.seq_clear_while_orders_flow passed
+806813.69ns INFO     cocotb.regression                  running core_cocotb_default.seq_mismatch_still_poisons (13/16)
+                                                            Fail-safe kept: if the transmit side's count is forced out of step with the order number, the next order is flagged stale, late and
+853444.69ns INFO     cocotb.tb_core                     MISMATCH {"t_n_order": 3, "t_n_feed": 3, "t_poisoned": 1, "t_late": 1, "t_stale": 1, "t_go": 3, "t_dropped": 0, "t_underrun": 0, "r_fired": 3, "r_good": 5, "r_bad": 1, "r_err": 0, "r_order_ok": 2, "r_order_bad": 1}
+889134.69ns INFO     cocotb.regression                  core_cocotb_default.seq_mismatch_still_poisons passed
+889134.69ns INFO     cocotb.regression                  running core_cocotb_default.order_content_check_catches_a_wrong_order (14/16)
+                                                            An order that leaves with a good FCS but a wrong quantity (the receive side's decision register is changed after the frame source
+913765.69ns INFO     cocotb.tb_core                     content: tx {'n_order': 1, 'n_feed': 1, 'n_probe': 0, 'n_test': 0, 'poisoned': 0, 'dropped': 0, 'underrun': 0, 'late': 0, 'stale': 0, 'go': 1, 't_tx_feed': 1611, 't_tx_probe': 0, 't_tx_order': 1632, 't_rx_feed': 1623, 't_rx_probe': 0, 't_rx_order': 1644, 'e_last': 0, 'e_min': 4294967295, 'e_max': 0, 'e_cnt': 0, 'l_last': 33, 'l_min': 33, 'l_max': 33, 'l_cnt': 1, 'd_last': 9, 'ts': 3227}
+                                                        rx {'lock': 1, 'slip': 0, 'loss': 0, 'lock_ev': 0, 'sh': 0, 'type': 0, 'os': 0, 'frames': 2, 'good': 2, 'bad': 0, 'err': 0, 'fired': 1, 'blocked': 0, 'toolong': 0, 'last_len': 70, 'lock_clk': 91, 'order_ok': 0, 'order_bad': 1}
+913765.69ns INFO     cocotb.regression                  core_cocotb_default.order_content_check_catches_a_wrong_order passed
+913765.69ns INFO     cocotb.regression                  running core_cocotb_default.default_has_no_rate_match_words (15/16)
+                                                            RATE_MATCH = 0: FEATURES bit 3 is 0, and the words only brief 96C's design drives (RXV18..RXV28) read 0 after traffic.
+943846.69ns INFO     cocotb.tb_core                     FEATURES 0x7 RXV18..28 [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+943846.69ns INFO     cocotb.regression                  core_cocotb_default.default_has_no_rate_match_words passed
+943846.69ns INFO     cocotb.regression                  running core_cocotb_default.zz_write_results (16/16)
+943846.69ns INFO     cocotb.regression                  core_cocotb_default.zz_write_results passed
+943846.69ns INFO     cocotb.regression                  ***********************************************************************************************************************
+                                                        ** TEST                                                           STATUS  SIM TIME (ns)  REAL TIME (s)  RATIO (ns/s) **
+                                                        ***********************************************************************************************************************
+                                                        ** core_cocotb_default.echo_probe                                  PASS       20191.00           7.43       2718.22  **
+                                                        ** core_cocotb_default.trading_loop_armed                          PASS       20311.00           7.26       2795.97  **
+                                                        ** core_cocotb_default.trade_decisions                             PASS       35841.00          15.13       2368.86  **
+                                                        ** core_cocotb_default.poisoned_order_bad_fcs                      PASS       20441.00           4.73       4317.88  **
+                                                        ** core_cocotb_default.poisoned_order_cut_frame                    PASS       20441.00           4.80       4258.01  **
+                                                        ** core_cocotb_default.tick_to_trade_digital                       PASS       13212.67           2.59       5110.70  **
+                                                        ** core_cocotb_default.seq_after_counter_clear                     PASS       65371.00          19.97       3273.96  **
+                                                        ** core_cocotb_default.seq_after_rx_relink                         PASS       71951.00          18.77       3832.66  **
+                                                        ** core_cocotb_default.seq_after_tx_relink                         PASS       67581.00          17.86       3783.24  **
+                                                        ** core_cocotb_default.seq_after_all_reset                         PASS       74251.00          18.06       4111.21  **
+                                                        ** core_cocotb_default.seq_bench_restart_sequence                  PASS      171471.00          47.02       3646.50  **
+                                                        ** core_cocotb_default.seq_clear_while_orders_flow                 PASS      225751.00          61.45       3673.90  **
+                                                        ** core_cocotb_default.seq_mismatch_still_poisons                  PASS       82321.00          24.98       3295.48  **
+                                                        ** core_cocotb_default.order_content_check_catches_a_wrong_order   PASS       24631.00           6.03       4082.19  **
+                                                        ** core_cocotb_default.default_has_no_rate_match_words             PASS       30081.00           8.49       3544.03  **
+                                                        ** core_cocotb_default.zz_write_results                            PASS           0.00           0.00          0.00  **
+                                                        ***********************************************************************************************************************
+                                                        ** TESTS=16 PASS=16 FAIL=0 SKIP=0                                            943846.69         264.60       3567.11  **
+                                                        ***********************************************************************************************************************
