@@ -61,6 +61,35 @@ source $flow_dir/cdc_paths.tcl
 source $flow_dir/mcp_paths.tcl
 source $flow_dir/io_paths.tcl
 source $flow_dir/result_hash.tcl
+# brief 140: check_timing's no_clock list at the synthesis stage names output pins of a hard block that drive nothing (measured in dbg_xvc: the
+# PS8's EMIO clock outputs, nets with no load; opt_design removes the nets and the routed check_timing lists none). A pin with no load is
+# no endpoint and nothing can be timed from it. This writes the pins of that list that are outputs with no loads, one per line, to
+# <file>; flow/gates.py takes them out of the no_clock count of the post-synthesis gate only (input pins, and any output that has a load,
+# stay counted).
+proc fda_unloaded_noclock {check_file out_file} {
+    set f [open $check_file r]; set txt [read $f]; close $f
+    set lines [split $txt "\n"]
+    set pins {}
+    set n [llength $lines]
+    for {set i 0} {$i < $n} {incr i} {
+        if {[regexp {There are ([0-9]+) register/latch pins with no clock} [lindex $lines $i] -> cnt]} {
+            if {$cnt == 0} { break }      ;# no pin listed: the lines that follow belong to the next check
+            incr i
+            while {$i < $n && [string trim [lindex $lines $i]] eq ""} { incr i }
+            while {$i < $n && [string trim [lindex $lines $i]] ne ""} { lappend pins [string trim [lindex $lines $i]]; incr i }
+            break
+        }
+    }
+    set o [open $out_file w]
+    foreach nm $pins {
+        if {[string match *<hidden>* $nm] || ![regexp {^[A-Za-z_]} $nm]} { continue }
+        set p [get_pins -quiet $nm]
+        if {$p eq "" || [get_property DIRECTION $p] ne "OUT"} { continue }
+        set net [get_nets -quiet -of_objects $p]
+        if {$net eq "" || [llength [get_pins -quiet -leaf -of_objects $net -filter {DIRECTION == IN}]] == 0} { puts $o $nm }
+    }
+    close $o
+}
 proc exception_reports {out sfx} {
     mcp_dump_paths $out/mcp_paths_$sfx.txt
     report_exceptions           -file $out/exceptions_$sfx.rpt
@@ -148,6 +177,28 @@ if {$resume_from eq ""} {
     # brief 102: a post-synthesis (or placed) checkpoint of an imported block fills its black-box cell (UG835 read_checkpoint -cell)
     if {[info exists netlists]} { foreach n $netlists { if {[lindex $n 0] eq "checkpoint"} { read_checkpoint -cell [lindex $n 2] [lindex $n 1] } } }
     stage synth
+    # brief 140: a design that instantiates AMD debug IP (an ILA IP, a Debug Bridge) gets its debug hub only in opt_design, so the post-synthesis
+    # netlist holds a hub with no inside: the clock that reaches the ILA's capture memory and registers through the hub (dbg_hub/sl_iport0_o[1])
+    # cannot be followed, 1000 register pins read as unclocked (check_timing no_clock, TIMING-17 Critical), and the hub's own timing is absent.
+    # implement_debug_core (UG908: "Implementing the debug cores") builds the hub now, as opt_design would; a design with no debug core has
+    # nothing to do. The ILA variant makes its own hub in flow/debug.tcl.
+    if {$ila eq "0" && [llength [get_debug_cores -quiet]]} {
+        implement_debug_core
+        puts "FLOW-DEBUG-CORES-IMPLEMENTED [get_debug_cores -quiet]"
+        # With the hub in, report_drc raises AVAL-244/-245 (Critical) on the ILA's trace RAM: AMD ships it with CLOCK_DOMAINS=INDEPENDENT and
+        # both ports on one clock. opt_design corrects exactly this (Opt 31-422 in dbg_xvc's log: "The CLOCK_DOMAINS attribute on the BRAM cell
+        # ... has been changed"), so the finding would otherwise be gone one step later. Do the same here, for RAMs inside a debug core only.
+        set n_cd 0
+        foreach core [get_debug_cores -quiet] {
+            foreach r [get_cells -quiet -hierarchical -filter "IS_PRIMITIVE && REF_NAME =~ RAMB* && NAME =~ $core/* && CLOCK_DOMAINS == INDEPENDENT"] {
+                # the two clock pins sit on different net objects of one hierarchical net: compare the driving pins (AVAL-244's own test)
+                set a [get_pins -quiet -leaf -of_objects [get_nets -quiet -of_objects [get_pins -quiet $r/CLKARDCLK]] -filter {DIRECTION == OUT}]
+                set b [get_pins -quiet -leaf -of_objects [get_nets -quiet -of_objects [get_pins -quiet $r/CLKBWRCLK]] -filter {DIRECTION == OUT}]
+                if {$a ne "" && $a eq $b} { set_property CLOCK_DOMAINS COMMON $r; incr n_cd }
+            }
+        }
+        puts "FLOW-DEBUG-RAM-CLOCK-DOMAINS set to COMMON on $n_cd RAM(s) inside debug cores (both clock pins on one driver)"
+    }
     # AMD's scoped XPM constraints are not applied in this non-project flow (QR1, docs/methodology.md): apply them by cell name.
     # FDA_XPM_CDC=0 skips this, only to measure the gap (brief 49 re-measured the QR1 probe both ways); never set it in a real build.
     if {![info exists ::env(FDA_XPM_CDC)] || $::env(FDA_XPM_CDC) ne "0"} { apply_xpm_cdc_constraints }
@@ -158,6 +209,7 @@ if {$resume_from eq ""} {
     # clock networks, clock interaction, high-fanout nets).
     report_timing_summary -max_paths 10 -report_unconstrained -file $out/timing_summary_synth.rpt
     check_timing -verbose -file $out/check_timing_synth.rpt
+    fda_unloaded_noclock $out/check_timing_synth.rpt $out/no_clock_unloaded_synth.txt
     report_methodology    -file $out/methodology_synth.rpt
     # design standard STD-CDC-02 (docs/design_standards.md, brief 05d): report_cdc on the synthesised netlist
     report_cdc -details   -file $out/cdc_synth.rpt
