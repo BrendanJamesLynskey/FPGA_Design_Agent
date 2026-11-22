@@ -94,23 +94,23 @@ Vivado 2026.1 (build 6511674), out-of-context synthesis, placement and routing o
 
 | Variant | Part | Point | Clock ns | LUT | FF | SRL | Carry | DSP | BRAM | WNS ns | Fmax MHz | Logic levels | Latency | Fronts | Expectation |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| carry_select | a7 | WIDTH=32, BLOCK=8 | 5.0 | 67 | 100 | 0 | 12 | 0 | 0 | 0.461 | >=220.3 | 6 | 0 |  | met |
+| carry_select | a7 | WIDTH=32, BLOCK=8 | 5.0 | 67 | 100 | 0 | 12 | 0 | 0 | 0.461 | 216.0 | 6 | 0 |  | met |
 | carry_select | a7 | WIDTH=64, BLOCK=8 | 5.0 | 145 | 196 | 0 | 24 | 0 | 0 | -0.656 | 176.8 | 8 | 0 |  | met |
 | carry_select | a7 | WIDTH=64, BLOCK=16 | 5.0 | 114 | 196 | 0 | 32 | 0 | 0 | -0.426 | 184.3 | 8 | 0 |  | met |
-| carry_select | k26 | WIDTH=32, BLOCK=8 | 3.0 | 65 | 100 | 0 | 1 | 0 | 0 | 0.824 | >=459.6 | 6 | 0 |  | missed |
-| carry_select | k26 | WIDTH=64, BLOCK=8 | 3.0 | 141 | 196 | 0 | 1 | 0 | 0 | 0.573 | >=412.0 | 8 | 0 |  | missed |
-| carry_select | k26 | WIDTH=64, BLOCK=16 | 3.0 | 108 | 196 | 0 | 14 | 0 | 0 | 0.225 | >=360.4 | 7 | 0 |  | met |
-| pipelined | a7 | WIDTH=64, STAGES=2 | 5.0 | 82 | 359 | 0 | 18 | 0 | 0 | 1.357 | >=274.5 | 10 | 2 | F | met |
-| pipelined | a7 | WIDTH=64, STAGES=4 | 5.0 | 122 | 409 | 32 | 20 | 0 | 0 | 1.776 | >=310.2 | 5 | 4 | F | missed |
-| pipelined | a7 | WIDTH=64, STAGES=8 | 5.0 | 158 | 405 | 64 | 24 | 0 | 0 | 1.533 | >=288.4 | 1 | 8 |  | missed |
-| pipelined | a7 | WIDTH=128, STAGES=4 | 5.0 | 242 | 809 | 64 | 36 | 0 | 0 | 1.238 | >=265.8 | 1 | 4 |  | missed |
+| carry_select | k26 | WIDTH=32, BLOCK=8 | 3.0 | 65 | 100 | 0 | 1 | 0 | 0 | 0.824 | 662.3 | 6 | 0 | F | missed |
+| carry_select | k26 | WIDTH=64, BLOCK=8 | 3.0 | 141 | 196 | 0 | 1 | 0 | 0 | 0.573 | 523.0 | 8 | 0 |  | missed |
+| carry_select | k26 | WIDTH=64, BLOCK=16 | 3.0 | 108 | 196 | 0 | 14 | 0 | 0 | 0.225 | 460.2 | 7 | 0 |  | met |
+| pipelined | a7 | WIDTH=64, STAGES=2 | 5.0 | 82 | 359 | 0 | 18 | 0 | 0 | 1.357 | 299.5 | 10 | 2 | F | met |
+| pipelined | a7 | WIDTH=64, STAGES=4 | 5.0 | 122 | 409 | 32 | 20 | 0 | 0 | 1.776 | 344.6 | 5 | 4 | F | missed |
+| pipelined | a7 | WIDTH=64, STAGES=8 | 5.0 | 158 | 405 | 64 | 24 | 0 | 0 | 1.533 | 359.1 | 1 | 8 | F | missed |
+| pipelined | a7 | WIDTH=128, STAGES=4 | 5.0 | 242 | 809 | 64 | 36 | 0 | 0 | 1.238 | 296.6 | 1 | 4 |  | missed |
 | pipelined | k26 | WIDTH=64, STAGES=2 | 3.0 | 82 | 359 | 0 | 8 | 0 | 0 | 1.304 | >=589.6 | 5 | 2 | F | met |
 | pipelined | k26 | WIDTH=64, STAGES=4 | 3.0 | 122 | 409 | 32 | 8 | 0 | 0 | 1.494 | >=664.0 | 0 | 4 | F | missed |
 | pipelined | k26 | WIDTH=64, STAGES=8 | 3.0 | 222 | 405 | 128 | 8 | 0 | 0 | 1.542 | >=685.9 | 1 | 8 | F | missed |
 | pipelined | k26 | WIDTH=128, STAGES=4 | 3.0 | 242 | 809 | 64 | 16 | 0 | 0 | 1.304 | >=589.6 | 1 | 4 |  | missed |
-| ripple | a7 | WIDTH=16 | 5.0 | 18 | 52 | 0 | 5 | 0 | 0 | 1.243 | >=266.2 | 6 | 0 |  | met |
-| ripple | a7 | WIDTH=32 | 5.0 | 34 | 100 | 0 | 9 | 0 | 0 | 0.471 | >=220.8 | 10 | 0 | FL | met |
-| ripple | a7 | WIDTH=64 | 5.0 | 66 | 196 | 0 | 17 | 0 | 0 | 0.545 | >=224.5 | 17 | 0 | FL | met |
+| ripple | a7 | WIDTH=16 | 5.0 | 18 | 52 | 0 | 5 | 0 | 0 | 1.243 | 317.6 | 6 | 0 |  | met |
+| ripple | a7 | WIDTH=32 | 5.0 | 34 | 100 | 0 | 9 | 0 | 0 | 0.471 | 278.3 | 10 | 0 | FL | met |
+| ripple | a7 | WIDTH=64 | 5.0 | 66 | 196 | 0 | 17 | 0 | 0 | 0.545 | 218.7 | 17 | 0 | FL | met |
 | ripple | k26 | WIDTH=16 | 3.0 | 18 | 52 | 0 | 2 | 0 | 0 | 1.459 | >=648.9 | 4 | 0 |  | met |
 | ripple | k26 | WIDTH=32 | 3.0 | 34 | 100 | 0 | 4 | 0 | 0 | 1.47 | >=653.6 | 6 | 0 | FL | met |
 | ripple | k26 | WIDTH=64 | 3.0 | 66 | 196 | 0 | 8 | 0 | 0 | 1.072 | >=518.7 | 10 | 0 | FL | met |
