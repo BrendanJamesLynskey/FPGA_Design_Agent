@@ -1,0 +1,176 @@
+ost_estimate_usd": 0.3266
+  },
+  "rtl-design-creation": {
+   "calls": 4,
+   "turns": 58,
+   "tokens": 2947220,
+   "wall_s": 2048.3,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 2.8414
+  }
+ },
+ "interview": "oracle",
+ "review": "off",
+ "stages_visited": [
+  0,
+  0,
+  1,
+  1,
+  2,
+  2
+ ],
+ "loops": 3,
+ "rewinds": [],
+ "tokens": 3374052,
+ "cost_usd": 0.0,
+ "unreported_cost_calls": 0,
+ "turns": 84,
+ "wall_s": 2668.2,
+ "questions": {
+  "asked": 6,
+  "answered": 3,
+  "defaulted": 3,
+  "questions": [
+   {
+    "id": "q1",
+    "text": "What is the register map of the test shell (offset, width, reset value and access of every register)?",
+    "default": "32-bit registers at 0x00 SHELL_ID, 0x04 TICK, 0x08 STATUS, 0x0C REPLY_LEN, 0x10 REPLY_WORD_IDX, 0x14 REPLY_WORD, 0x18 TELE_LEN, 0x1C TELE_WORD_IDX, 0x20 TELE_WORD, 0x24 TELE_TAKE, 0x28 PACKET_BYTE, as in registers.map",
+    "reason": "The request names shell registers but gives no offsets, so the map is a proposal.",
+    "answer": "IN: offset 0x00, WO, reset 0: [7:0] packet byte, [8] end flag\nSTAT: offset 0x09, RO, reset 0: [0] telemetry on, [1] busy\nRIDX: offset 0x03, RW, reset 0: [6:0] word number\nRWORD: offset 0x04, RO, reset 0: bytes 4i..4i+3 of the reply, first byte on top, zero past the end\nRLEN: offset 0x02, RO, reset 0: length in bytes of the latest reply, 0 if none\nTICK: offset 0x01, WO, reset 0: [7:0] n ticks\nTIDX: offset 0x06, RW, reset 0: [6:0] word number\nTWORD: offset 0x07, RO, reset 0: same for the telemetry frame\nTAKE: offset 0x08, WO, reset 0: any write takes the held telemetry frame\nTLEN: offset 0x05, RO, reset 0: length of the held telemetry frame, 0 if none\nshell: test shell, PROTOCOL.md 1.1\nunmapped: no register at an offset: reads 0, writes ignored (read-only registers behave the same on write)",
+    "status": "answered",
+    "by": "oracle",
+    "evidence": "IN: offset 0x00, WO, reset 0: [7:0] packet byte, [8] end flag"
+   },
+   {
+    "id": "q2",
+    "text": "How is the last flag of a payload byte given through the shell?",
+    "default": "Bit 8 of the PACKET_BYTE write.",
+    "reason": "Not stated.",
+    "answer": "Through the IN register at offset 0 (WO). Bits [7:0] carry the packet byte and bit 8 is the end flag. The spec does not use the name PACKET_BYTE, so the proposed default is correct on the bit but should refer to IN.",
+    "status": "answered",
+    "by": "oracle",
+    "evidence": "bits: '[7:0] packet byte, [8] end flag'"
+   },
+   {
+    "id": "q3",
+    "text": "Does a tick write while earlier ticks are pending restart or add?",
+    "default": "Restart the burst with n.",
+    "reason": "Not stated.",
+    "answer": "Restart the burst with n.",
+    "status": "defaulted",
+    "by": "oracle",
+    "evidence": null
+   },
+   {
+    "id": "q4",
+    "text": "Which counter takes a refused sequence number?",
+    "default": "Repeated if equal to the last accepted number, out-of-order otherwise.",
+    "reason": "Both counters are listed but the split is not defined.",
+    "answer": "Repeated if equal to the last accepted number, out-of-order otherwise.",
+    "status": "defaulted",
+    "by": "oracle",
+    "evidence": null
+   },
+   {
+    "id": "q5",
+    "text": "Does a refused packet count toward the commands carried out count?",
+    "default": "No, only successfully executed commands (including status, start, stop).",
+    "reason": "The count is of commands carried out.",
+    "answer": "No, only successfully executed commands (including status, start, stop).",
+    "status": "defaulted",
+    "by": "oracle",
+    "evidence": null
+   },
+   {
+    "id": "q6",
+    "text": "When does the first telemetry frame fall due after a start?",
+    "default": "After period ticks counted from the start command.",
+    "reason": "The request says start restarts the count.",
+    "answer": "Confirmed: the first frame falls due at the period-th tick counted from the start command. The spec says TLM_START restarts the count and that a frame falls due every period ticks. A period of 0 keeps the current period, and a period below 4 is raised to 4.",
+    "status": "answered",
+    "by": "oracle",
+    "evidence": "Pacer: TLM_START restarts the count (period 0 keeps, below 4 raised to 4); a frame falls due every period ticks; one held frame; overruns dropped; STOP forgets the held frame; TAKE releases it."
+   }
+  ]
+ },
+ "stop": "done",
+ "stop_detail": null,
+ "last_rtl_message": {
+  "stage": "rtl-design-creation",
+  "visit": 2,
+  "text": "The shell's `DESIGN_ID` is now `32'h55455031` (\"UEP1\"), set through a new `localparam DESIGN_ID` in `rtl/v2_e_udp_endpoint_top.sv`. I did not rerun `check` after this change.\n\n`ID_WORD` keeps its value of `0x55445031` and still feeds `udp_core` only. The spec's REQ-28 says register 0 reads `0x55445031`, and I left that as it was. I did not run `simulate`, so I haven't confirmed that the benches still pass. Lint is clean.\n\nDONE"
+ },
+ "routing_events": [
+  {
+   "event": "clarify_constants_check",
+   "stage": "clarify",
+   "visit": 1,
+   "findings": [],
+   "failed": false
+  },
+  {
+   "event": "clarify_constants_check",
+   "stage": "clarify",
+   "visit": 2,
+   "findings": [],
+   "failed": false
+  },
+  {
+   "event": "icarus_cross_check",
+   "stage": "rtl-design-creation",
+   "visit": 2,
+   "ok": true,
+   "seconds": 1950.6
+  }
+ ],
+ "clean_stop": true,
+ "constants": {
+  "ran": true,
+  "blocking": [],
+  "advice": []
+ },
+ "gates_last": {
+  "clarify": true,
+  "board-and-device-planning": true,
+  "rtl-design-creation": true
+ },
+ "approvals": [
+  {
+   "n": 0,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 0,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 1,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 1,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  }
+ ],
+ "bringup": null
+}

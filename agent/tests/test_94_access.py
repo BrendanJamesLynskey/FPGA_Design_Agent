@@ -118,6 +118,7 @@ def test_arm_config_never_holds_the_key(monkeypatch, tmp_path):
 
 #: Scripts that import the agent package but do not run the agent (no model, no tools); each with its reason.
 NOT_RUNNING_THE_AGENT = {
+    "agent/graph/killed.py": "writes summary.json for a run stopped from outside (reads the run directory; no model, no tools)",
     "tools/access/set_key_hash.py": "manages the key file; reads the key to hash it",
     "agent/tools/harness_audit.py": "builds the harness over a stub client; no model, no tools",
     "results/36_skill_routing/measure.py": "an old measurement script under results/ (frozen record)",

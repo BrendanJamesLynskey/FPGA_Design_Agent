@@ -1,0 +1,156 @@
+: offset 0x08, WO, reset 0: any write takes the held telemetry frame\nTLEN: offset 0x05, RO, reset 0: length of the held telemetry frame, 0 if none\nshell: test shell, PROTOCOL.md 1.1\nunmapped: no register at an offset: reads 0, writes ignored (read-only registers behave the same on write)",
+    "status": "answered",
+    "by": "oracle",
+    "evidence": "IN: offset 0x00, WO, reset 0: [7:0] packet byte, [8] end flag"
+   },
+   {
+    "id": "q2",
+    "text": "Do unknown-type, wrong-length and register-error replies carry a payload?",
+    "default": "No, payload length 0.",
+    "reason": "Request defines payload only for read and status replies.",
+    "answer": "No, payload length 0.",
+    "status": "defaulted",
+    "by": "oracle",
+    "evidence": null
+   },
+   {
+    "id": "q3",
+    "text": "Is a status reply 16 or 17 bytes of payload?",
+    "default": "17 bytes: 7x2 + 2 + 1.",
+    "reason": "The text says sixteen bytes and one more, which sums to 17.",
+    "answer": "17 bytes: seven 16-bit counters (14 bytes), the 16-bit telemetry frame count (2 bytes), and the TLM_ON byte (1 byte).",
+    "status": "answered",
+    "by": "oracle",
+    "evidence": "STATUS: seven 16-bit counters, telemetry frame count (16 bit), TLM_ON byte, all before this command is counted."
+   },
+   {
+    "id": "q4",
+    "text": "Does the held frame get counted in the frame count when taken or when held?",
+    "default": "When held.",
+    "reason": "Request says counts rise only when a frame is held.",
+    "answer": "When held. The frame count changes only when a frame is held, so the default is correct.",
+    "status": "answered",
+    "by": "oracle",
+    "evidence": "Frame sequence and frame count change only when a frame is held and only reset clears them."
+   },
+   {
+    "id": "q5",
+    "text": "Does a tick injected while telemetry is off still advance uptime?",
+    "default": "Yes.",
+    "reason": "Register 7 counts ticks since reset.",
+    "answer": "Yes.",
+    "status": "defaulted",
+    "by": "oracle",
+    "evidence": null
+   },
+   {
+    "id": "q6",
+    "text": "Do telemetry start and stop and scratch writes count as commands carried out?",
+    "default": "Yes, every OK-status command counts.",
+    "reason": "Not stated explicitly.",
+    "answer": "Yes, every OK-status command counts.",
+    "status": "defaulted",
+    "by": "oracle",
+    "evidence": null
+   }
+  ]
+ },
+ "stop": "done",
+ "stop_detail": null,
+ "last_rtl_message": {
+  "stage": "rtl-design-creation",
+  "visit": 1,
+  "text": "DONE for the RTL part of stage 2, but the V3 gate still fails on items I can't fix from here.\n\n**What I wrote** (all in `rtl/`, plus a `build.yaml` I had to create so lint could run):\n- `v2_e_udp_endpoint_top.sv` is the board top. It has the CLKS_PER_BIT, TIMEOUT_CYCLES and BUILD_STAMP parameters. I\n[... 35 characters cut ...]\nync`, `fpga_shell` and `uep_core`.\n- `uep_core.sv` holds the packet parser, the refusal-order decision, the counters, the sequence rule, command execution, the reply builder, telemetry and the register window.\n- `crc32_byte.sv` is a one-byte-per-clock CRC-32 step, used in three places: receive check, reply build and frame build. The architecture note said one shared engine. I used three because a frame can fall due while a reply is being built.\n- I did not add my own reset synchroniser, because `reset_sync.sv` already exists in the shell and the tool refuses a file of that name.\n\n**Results:**\n- Lint is clean.\n- The cocotb bench passes on all 3 seeds, with and without coverage.\n- Line coverage is 100%.\n- `check` at the rtl scope: lint, standards, xpm_sim, axi and constants pass; resets is partial and methodology not run. Both need a synthesised design, so they remain open.\n- Gates V0 to V2 pass.\n\n**What still fails at V3, outside the RTL:**\n- `verif/testplan.yaml` plans no functional bins and no cover properties, so those percentages are 0 of 0.\n- Toggle coverage is 66.99% against the 75% floor. Most of the missing toggles are the high bits of the 32-bit counters and uptime, which a bounded run can't reach. Someone has to add tests or write waivers with reasons.\n- The mutation score hasn't been measured; the flow runs that step itself.\n- Hardware and post-route analysis evidence is pending. That needs a build and a bring-up.\n\n**One behaviour to know about:** the decision and reply build assume a packet's first byte never arrives within about 3 clocks of the previous packet's end byte. The UART shell can't deliver bytes that close together, so this can't happen in practice."
+ },
+ "routing_events": [
+  {
+   "event": "clarify_constants_check",
+   "stage": "clarify",
+   "visit": 1,
+   "findings": [],
+   "failed": false
+  },
+  {
+   "event": "clarify_constants_check",
+   "stage": "clarify",
+   "visit": 2,
+   "findings": [],
+   "failed": false
+  },
+  {
+   "event": "clarify_constants_check",
+   "stage": "clarify",
+   "visit": 3,
+   "findings": [],
+   "failed": false
+  },
+  {
+   "event": "icarus_cross_check",
+   "stage": "rtl-design-creation",
+   "visit": 1,
+   "ok": true,
+   "seconds": 546.3
+  }
+ ],
+ "clean_stop": true,
+ "constants": {
+  "ran": true,
+  "blocking": [],
+  "advice": []
+ },
+ "gates_last": {
+  "clarify": true,
+  "board-and-device-planning": true,
+  "rtl-design-creation": true
+ },
+ "approvals": [
+  {
+   "n": 0,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 0,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 0,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 1,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 1,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  }
+ ],
+ "bringup": null,
+ "spec_test": {
+  "fired": true,
+  "passed": true,
+  "outcome": "pass",
+  "caught_bug": false,
+  "bench_repaired": false,
+  "design_wrong_verdicts": 0,
+  "bench_wrong_verdicts": 0,
+  "bench_writes": 1,
+  "bench_runs": 1
+ }
+}

@@ -246,3 +246,28 @@ from the 82P4 and 82P5 runs (owner decisions 19 and 20):
   the clarify stage when spec.yaml writes it. Which artefact "writes the value as a design ID" is a heuristic (a line with the value and a
   design-ID word); an endpoint's own identification word with the same number is not counted unless its line says design ID.
 - `routing_events.jsonl` in the run directory (and `routing_events` in `summary.json`) records each of these firing, so a run record says whether it did.
+
+## Stage-2 time: the Icarus cross-check, time-outs, clean stop (brief 82P7)
+
+82P6's wall-time table (`benchmark/v2/runs/b82p7/posthoc/time_table.md`) put 29 % of all run time in the Icarus cross-check of the stage-2 simulation gate.
+It ran after every Verilator pass, at every visit, and took 17 to 30 minutes on the UDP endpoint bench (Verilator: 4 to 12).
+
+- **The cross-check runs once, last.** The gate runs the bench on Verilator at every visit. Icarus runs the same bench only when every other stage-2 gate before
+  synthesis has passed (lint, model contract, V2/V3 verification, standards, constants, the spec-test bench). It still decides the gate (a failure goes to the
+  RTL role as a simulation failure), so a behaviour only one simulator shows is still caught before the stage passes. `routing_events.jsonl` has an
+  `icarus_cross_check` event with its seconds. A design that does not build in Verilator runs on Icarus alone, as before.
+- **Time limit.** With no Icarus baseline for the design the limit is 6 x the Verilator baseline + 120 s (1800 s to 5400 s), not a fixed 1800 s.
+- **A time-out says where it was.** The failing result is `kind: sim_timeout`; its first failure names the limit, the last simulation time in the log, the
+  Verilator time of the same bench and the log tail (absolute paths removed). It is routed to the RTL role without the "check the bench" hint for the Verifier.
+- **Clean stop.** With `--stop-after 2` the first stage-2 evaluation whose gates all pass ends the run with stop `done` (`clean_stop`); nothing in the graph
+  loops a passing stage. A run stopped from outside (the benchmark driver's wall limit) gets a `summary.json` from `agent.graph.killed` (stop `budget`, cost so
+  far, stage-2 visits, gate simulation seconds).
+- **Persistence and stop text.** A `CONST-ID-01` counts as persisting when the same wrong value was in any earlier stage-2 visit (`const_id_seen` in the
+  evidence). A stop reason's failing assertion is the last failing line, absolute paths reduced to the file name, no traceback.
+- **Vivado cap.** `flow/vivado_count.py`, `flow/run_vivado.sh` and `flow/checks/run_vivado_checks.sh` count a process as a Vivado job only when its argv[0]
+  is the Vivado binary; a shell that names the path in its command line is not one.
+
+Measured result (six 4 h runs of the UDP endpoint task, results in `benchmark/v2/runs/b82p7/results.md`): 2 of 6 pass by the 4 h rule (82P6: 0 of 6; the Wilson intervals overlap), 4 of 6
+end with a clean stop, 1 of 6 is killed at 4 h, and no Icarus time-out occurred. The cross-check is still 31 % of pooled wall time (about 27 minutes per call, one call per run
+at least), and two of the four clean stops (arm A, no spec tests) scored 6/10 and 1/10 on the hidden bench: a clean stop means the run's own gates passed, not that the design is right.
+Report: `_handoff/fpga_agent/reports/82P7_stage2_time_report.md`.

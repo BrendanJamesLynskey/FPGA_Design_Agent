@@ -319,7 +319,7 @@ def test_archives_moved_to_the_private_repository_leave_a_pointer_with_the_hash(
     one the run's record already carries."""
     root = Path(__file__).resolve().parents[2] / "benchmark" / "v2" / "runs"
     ptrs = sorted(root.glob("b82p*/artifacts/*/run_dir.tar.gz.pointer.json"))
-    assert len(ptrs) == 34
+    assert len(ptrs) == 40
     assert not list(root.glob("b82p*/artifacts/*/run_dir.tar.gz")), "a rendered-prompt archive is tracked again"
     for p in ptrs:
         d = json.loads(p.read_text())

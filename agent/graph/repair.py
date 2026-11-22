@@ -64,6 +64,8 @@ def classify_sim(ff: dict[str, Any] | None, output: str = "") -> tuple[str, str]
     """(role, kind) for a failed simulate. kind is ``code`` (an exception or compile error: the owner is certain) or
     ``mismatch`` (an assertion between the RTL and the model: the RTL is the first suspect)."""
     ff = ff or {}
+    if ff.get("timeout"):             # brief 82P7: a simulation that ran out of wall time says nothing about the bench's port driving
+        return "rtl", "timeout"
     text = "\n".join([str(ff.get("where") or ""), *ff.get("message", []), *ff.get("cause", []), *ff.get("log_errors", []),
                       *ff.get("frames", [])]) or output          # outermost frame first, the innermost last
     if _HDL_ERR.search(text) or _HDL_ERR.search(output[-6000:]):
@@ -185,6 +187,32 @@ _GATE_OF_TAG = {"lint": "lint", "standards": "design standards", "constants": "d
                 "sim": "simulate"}
 
 
+_ABS_PATH = re.compile(r"(?:[A-Za-z]:)?(?:/[\w.+@%-]+){2,}/([\w.+@%-]+)")
+_TB_LINE = re.compile(r'^\s*(Traceback \(most recent call last\)|File "|During handling|The above exception)')
+_FAIL_WORDS = re.compile(r"Error|assert|expected|mismatch|!=|timed out|did not finish|failed", re.I)
+
+
+def clean_assertion(ff: dict[str, Any], limit: int = 200) -> str:
+    """Brief 82P7: the one line that says what failed, for a stop reason: the last ``E`` line of the failing test (the last element
+    of its message, split into lines) that reads like a failure, else the last non-empty line; no traceback, no absolute path
+    (a path keeps its file name). A time-out's message is returned as it is (it already names the limit and the last time)."""
+    msgs = [str(m) for m in ff.get("message", [])]
+    if ff.get("timeout"):
+        text = msgs[0] if msgs else "the simulation timed out"
+    else:
+        lines = [ln.strip() for m in msgs for ln in m.splitlines() if ln.strip()]
+        lines = [ln for ln in lines if not _TB_LINE.match(ln) and "cocotb run failed" not in ln
+                 and not re.match(r"^\(?runs/\S+\)?$", ln)]
+        hits = [ln for ln in lines if _FAIL_WORDS.search(ln)]
+        text = (hits or lines or [""])[-1]
+        if text.startswith("E "):
+            text = text[2:].strip()
+        if not text:                                   # nothing but a traceback: its innermost frame's location
+            text = next((_ABS_PATH.sub(r"\1", m) for m in reversed(msgs) if m.strip()), "")
+    text = _ABS_PATH.sub(r"\1", text)
+    return " ".join(text.split())[:limit]
+
+
 def stop_diagnosis(n: int, limit: int, state: dict[str, Any]) -> tuple[str, dict[str, Any]]:
     """Brief 82P6, P3: the stop reason of a stage that ran out of visits, and the same facts as a record. The reason keeps the
     prefix ``stage N visited more than L times`` (the handover reads it) and adds what the last gate evaluation says: the failing
@@ -211,8 +239,7 @@ def stop_diagnosis(n: int, limit: int, state: dict[str, Any]) -> tuple[str, dict
     ff = ((ev.get("simulate") or {}).get("first_failure")) or {}
     assertion = ""
     if ff:
-        msgs = [m for m in ff.get("message", []) if "cocotb run failed" not in m] or ff.get("message", [])    # skip the wrapper's line
-        assertion = f"{ff.get('test')}: " + " | ".join(msgs[:2]) + (f" ({ff['where']})" if ff.get("where") else "")
+        assertion = f"{ff.get('test')}: " + clean_assertion(ff)
     elif (ev.get("verif") or {}).get("first_failed"):
         vf = verif_failures(ev.get("verif"), ev.get("verif_level") or "V3", limit=3)
         assertion = vf[0] if vf else ""

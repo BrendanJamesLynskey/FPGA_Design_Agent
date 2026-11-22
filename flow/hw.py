@@ -83,8 +83,9 @@ def vivado_max() -> int:
 def preflight(min_avail_gb: float = HW_MIN_AVAIL_GB) -> int:
     # brief 50A: count the real Vivado binaries as flow/run_vivado.sh does (not the wrapper scripts, not synthesis helpers),
     # and allow FDA_VIVADO_MAX of them (default 1; a caller sets 2 only when _handoff/take_heavy_slot.sh admitted the job)
-    out = subprocess.run(["pgrep", "-af", "unwrapped/lnx64.o/vivado"], capture_output=True, text=True).stdout.splitlines()
-    running = [l.split()[0] for l in out if "task_worker.tcl" not in l]
+    # brief 82P7: by argv[0] (flow/vivado_count.py), so a shell that names the path in its command line is not a job
+    from flow import vivado_count
+    running = vivado_count.running_pids(subprocess.run(["ps", "-ww", "-eo", "pid=,args="], capture_output=True, text=True).stdout)
     limit = vivado_max()
     if len(running) >= limit:
         raise HwError(f"another Vivado is running (PIDs {','.join(running)}); limit FDA_VIVADO_MAX={limit} on this PC")
