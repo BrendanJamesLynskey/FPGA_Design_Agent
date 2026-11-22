@@ -1,0 +1,182 @@
+akes the held telemetry frame\nTLEN: offset 0x05, RO, reset 0: length of the held telemetry frame, 0 if none\nshell: test shell, PROTOCOL.md 1.1\nunmapped: no register at an offset: reads 0, writes ignored (read-only registers behave the same on write)",
+    "status": "answered",
+    "by": "oracle",
+    "evidence": "IN: offset 0x00, WO, reset 0: [7:0] packet byte, [8] end flag"
+   },
+   {
+    "id": "q2",
+    "text": "Is the identification word 0x55445031 (UDP1) or the design ID UEP1 (0x55455031) what the shell DESIGN_ID register reads?",
+    "default": "Shell DESIGN_ID reads 0x55455031 (UEP1); endpoint register 0 reads 0x55445031.",
+    "reason": "The two values differ in the request.",
+    "answer": "Shell DESIGN_ID reads 0x55455031 (UEP1); endpoint register 0 reads 0x55445031.",
+    "status": "defaulted",
+    "by": "oracle",
+    "evidence": null
+   },
+   {
+    "id": "q3",
+    "text": "What does the busy bit (status bit 1) mean?",
+    "default": "Busy is 1 from the first byte of a packet until its reply or drop is built.",
+    "reason": "The request does not define it.",
+    "answer": "Busy is 1 from the first byte of a packet until its reply or drop is built.",
+    "status": "defaulted",
+    "by": "oracle",
+    "evidence": null
+   },
+   {
+    "id": "q4",
+    "text": "What happens if the take register is written with no frame held, or a tick write arrives while earlier ticks are pending?",
+    "default": "Take with no frame is ignored; a new tick write replaces the remaining pending count.",
+    "reason": "The request does not say.",
+    "answer": "Take with no frame is ignored; a new tick write replaces the remaining pending count.",
+    "status": "defaulted",
+    "by": "oracle",
+    "evidence": null
+   },
+   {
+    "id": "q5",
+    "text": "If the packet length byte is above 8 but the packet is under 4 bytes, which counter?",
+    "default": "Too short, since fewer than four bytes is too short whatever its bytes say.",
+    "reason": "The rule order lists too long first but also says under 4 bytes is too short whatever the bytes say.",
+    "answer": "Too short, since fewer than four bytes is too short whatever its bytes say.",
+    "status": "defaulted",
+    "by": "oracle",
+    "evidence": null
+   },
+   {
+    "id": "q6",
+    "text": "What is the maximum packet size the block must buffer, and what happens beyond it?",
+    "default": "Buffer 16 bytes (4 header + 8 payload + 4 CRC); any longer packet is counted too long.",
+    "reason": "A packet can never validly exceed 16 bytes.",
+    "answer": "Buffer 16 bytes (4 header + 8 payload + 4 CRC); any longer packet is counted too long.",
+    "status": "defaulted",
+    "by": "oracle",
+    "evidence": null
+   },
+   {
+    "id": "q7",
+    "text": "Is the telemetry frame count the number of frames held since reset?",
+    "default": "Yes, frames held since reset, wrapping at 65536.",
+    "reason": "The request states it only loosely.",
+    "answer": "Partly. The specification says the frame count changes only when a frame is held and is cleared only by reset, which supports counting frames held since reset. It does not state the wrap-at-65536 behaviour explicitly; the only related text is that the count is 16 bit wide. The wrap part is not specified.",
+    "status": "answered",
+    "by": "oracle",
+    "evidence": "Frame sequence and frame count change only when a frame is held and only reset clears them."
+   }
+  ]
+ },
+ "stop": "done",
+ "stop_detail": null,
+ "last_rtl_message": {
+  "stage": "rtl-design-creation",
+  "visit": 3,
+  "text": "I made no change this visit, because the simulation passes with the RTL as it stands. `simulate` on Verilator ran all 3 test entries and they all passed (about 4 minutes). `lint` is clean.\n\nI couldn't reproduce the reported failure. The failing reads and writes (types 1, 2 and 4) all came back with status 2, \"wrong length for type\". I read `rtl/udp_endpoint_core.sv` and its length rule matches the spec: read 2, write 6, start 2, status and stop 0. I didn't find a cause in the code. My best guess is that the failing run used an older copy of the core, but I haven't confirmed that.\n\nI haven't run `check` with `names: [\"all\"]`, `formal`, `gates`, or an Icarus cross-check, so those are untested this visit.\n\nDONE"
+ },
+ "routing_events": [
+  {
+   "event": "clarify_constants_check",
+   "stage": "clarify",
+   "visit": 1,
+   "findings": [],
+   "failed": false
+  },
+  {
+   "event": "clarify_constants_check",
+   "stage": "clarify",
+   "visit": 2,
+   "findings": [],
+   "failed": false
+  },
+  {
+   "event": "p1_consequences_covered",
+   "stage": "rtl-design-creation",
+   "visit": 1,
+   "repeat": 0,
+   "checks": [
+    "failing_tests",
+    "assertions_bound_zero_failures"
+   ]
+  },
+  {
+   "event": "p1_consequences_covered",
+   "stage": "rtl-design-creation",
+   "visit": 2,
+   "repeat": 1,
+   "checks": [
+    "failing_tests",
+    "assertions_bound_zero_failures"
+   ]
+  },
+  {
+   "event": "p1_hint_sent",
+   "stage": "rtl-design-creation",
+   "visit": 2,
+   "repeat": 1,
+   "test": "test_rtl[1]",
+   "bench_owner_for_other_reasons": false
+  },
+  {
+   "event": "icarus_cross_check",
+   "stage": "rtl-design-creation",
+   "visit": 3,
+   "ok": true,
+   "seconds": 1526.5
+  }
+ ],
+ "clean_stop": true,
+ "constants": {
+  "ran": true,
+  "blocking": [],
+  "advice": []
+ },
+ "gates_last": {
+  "clarify": true,
+  "board-and-device-planning": true,
+  "rtl-design-creation": true
+ },
+ "approvals": [
+  {
+   "n": 0,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 0,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 1,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 1,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  }
+ ],
+ "bringup": null
+}

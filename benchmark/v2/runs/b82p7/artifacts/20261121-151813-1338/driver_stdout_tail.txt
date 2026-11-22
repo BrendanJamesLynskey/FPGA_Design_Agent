@@ -1,0 +1,217 @@
+s command is counted."
+   },
+   {
+    "id": "q3",
+    "text": "Which counter takes a sequence-refused packet that is old rather than repeated?",
+    "default": "Difference 0 goes to the repeated-number counter, difference 32768 to 65535 goes to the out-of-order counter",
+    "reason": "the request lists both counters but does not define the split",
+    "answer": "Difference 0 goes to the repeated-number counter, difference 32768 to 65535 goes to the out-of-order counter",
+    "status": "defaulted",
+    "by": "oracle",
+    "evidence": null
+   },
+   {
+    "id": "q4",
+    "text": "Do telemetry start and stop count as commands carried out?",
+    "default": "Both count as carried out when accepted with status 0",
+    "reason": "the request does not say",
+    "answer": "Both count as carried out when accepted with status 0",
+    "status": "defaulted",
+    "by": "oracle",
+    "evidence": null
+   },
+   {
+    "id": "q5",
+    "text": "What is the status reply payload length given sixteen bytes and one more?",
+    "default": "17 bytes of payload",
+    "reason": "the request wording gives 16 bytes plus 1 byte",
+    "answer": "17 bytes of payload. The status payload is seven 16-bit counters (14 bytes), the 16-bit telemetry frame count (2 bytes), and the TLM_ON byte (1 byte), totalling 17.",
+    "status": "answered",
+    "by": "oracle",
+    "evidence": "STATUS: seven 16-bit counters, telemetry frame count (16 bit), TLM_ON byte, all before this command is counted."
+   },
+   {
+    "id": "q6",
+    "text": "Is a reply with status 1 to 5 readable through the reply length and words?",
+    "default": "Yes, readable until the next packet",
+    "reason": "the request says zero only if the latest packet earned no reply",
+    "answer": "Yes, readable until the next packet",
+    "status": "defaulted",
+    "by": "oracle",
+    "evidence": null
+   },
+   {
+    "id": "q7",
+    "text": "When is the busy bit high?",
+    "default": "Busy is high from the first byte of a packet until the reply is built",
+    "reason": "the request does not define busy",
+    "answer": "Busy is high from the first byte of a packet until the reply is built",
+    "status": "defaulted",
+    "by": "oracle",
+    "evidence": null
+   },
+   {
+    "id": "q8",
+    "text": "Does a tick written while earlier ticks are pending add to or replace the pending count?",
+    "default": "It adds, saturating at 255 pending ticks",
+    "reason": "the request does not define overlapping tick writes",
+    "answer": "It adds, saturating at 255 pending ticks",
+    "status": "defaulted",
+    "by": "oracle",
+    "evidence": null
+   }
+  ]
+ },
+ "stop": "unresolved: the spec-test verdict is unresolved (not a clean stop)",
+ "stop_detail": null,
+ "last_rtl_message": {
+  "stage": "rtl-design-creation",
+  "visit": 4,
+  "text": "Simulation passes now: 3 passed.\n\nI fixed the register-number decode in `rtl/uep_core.sv`. The bench and `model.py` put the register number in payload byte 0 (`pbuf[4]`) and the 32-bit write value in `pbuf[5..8]`. The RTL was reading the register number from `pbuf[5]`, so a read of register 0 returned 0 instead of 0x55445031. It now uses:\n- `rbad` as `pbuf[4] > 7`\n- `rnum` as `pbuf[4][2:0]`\n- the write value as `{pbuf[5], pbuf[6], pbuf[7], pbuf[8]}`\n\nI briefly overwrote `rtl/uep_core.sv` with a placeholder by mistake. I restored the full file with this fix applied.\n\nI did not run `check` (names `[\"all\"]`) or the other gates this visit.\n\nDONE"
+ },
+ "routing_events": [
+  {
+   "event": "clarify_constants_check",
+   "stage": "clarify",
+   "visit": 1,
+   "findings": [],
+   "failed": false
+  },
+  {
+   "event": "clarify_constants_check",
+   "stage": "clarify",
+   "visit": 2,
+   "findings": [],
+   "failed": false
+  },
+  {
+   "event": "p1_consequences_covered",
+   "stage": "rtl-design-creation",
+   "visit": 1,
+   "repeat": 0,
+   "checks": [
+    "failing_tests",
+    "constrained_random_test_ran",
+    "assertions_bound_zero_failures"
+   ]
+  },
+  {
+   "event": "p1_consequences_covered",
+   "stage": "rtl-design-creation",
+   "visit": 2,
+   "repeat": 1,
+   "checks": [
+    "failing_tests",
+    "constrained_random_test_ran",
+    "assertions_bound_zero_failures"
+   ]
+  },
+  {
+   "event": "p1_hint_sent",
+   "stage": "rtl-design-creation",
+   "visit": 2,
+   "repeat": 1,
+   "test": "test_v2_e_udp_endpoint_rtl[1]",
+   "bench_owner_for_other_reasons": false
+  },
+  {
+   "event": "p1_consequences_covered",
+   "stage": "rtl-design-creation",
+   "visit": 3,
+   "repeat": 2,
+   "checks": [
+    "failing_tests",
+    "constrained_random_test_ran",
+    "assertions_bound_zero_failures"
+   ]
+  },
+  {
+   "event": "p1_hint_sent",
+   "stage": "rtl-design-creation",
+   "visit": 3,
+   "repeat": 2,
+   "test": "test_v2_e_udp_endpoint_rtl[1]",
+   "bench_owner_for_other_reasons": false
+  },
+  {
+   "event": "icarus_cross_check",
+   "stage": "rtl-design-creation",
+   "visit": 4,
+   "ok": true,
+   "seconds": 4405.9
+  }
+ ],
+ "clean_stop": false,
+ "constants": {
+  "ran": true,
+  "blocking": [],
+  "advice": []
+ },
+ "gates_last": {
+  "clarify": true,
+  "board-and-device-planning": true,
+  "rtl-design-creation": true
+ },
+ "approvals": [
+  {
+   "n": 0,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 0,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 1,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 1,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  },
+  {
+   "n": 2,
+   "decision": "approve",
+   "by": "auto",
+   "note": ""
+  }
+ ],
+ "bringup": null,
+ "spec_test": {
+  "fired": true,
+  "passed": false,
+  "outcome": "unresolved",
+  "caught_bug": false,
+  "bench_repaired": true,
+  "design_wrong_verdicts": 0,
+  "bench_wrong_verdicts": 2,
+  "bench_writes": 2,
+  "bench_runs": 2
+ }
+}

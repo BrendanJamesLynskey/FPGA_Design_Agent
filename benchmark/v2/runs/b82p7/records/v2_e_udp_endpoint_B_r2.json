@@ -1,0 +1,155 @@
+{
+ "task": "v2_e_udp_endpoint",
+ "level": "L2",
+ "arm": "B",
+ "repeat": 2,
+ "attempt": 1,
+ "run_id": "20261121-192124-b927",
+ "rc": -9,
+ "wall_s": 14400.6,
+ "hard_limit": true,
+ "worker": "w1",
+ "code": "51807dbb",
+ "claude_cli": "2.1.321",
+ "spec_tests": true,
+ "started": "2026-11-21 19:21:24",
+ "tokens": 3562829,
+ "plan_cost_estimate_usd": 4.3097,
+ "turns": 89,
+ "stop": "budget: the wall limit of 14400 s was reached and the run was stopped from outside; stage 2 had 3 visit(s); no clean evaluation had passed",
+ "stages_visited": [
+  0,
+  0,
+  1,
+  1,
+  2,
+  2
+ ],
+ "stage2_visits": 2,
+ "gates_last": {},
+ "stage2_gates_passed": false,
+ "claude_code_version": "2.1.321 (Claude Code)",
+ "knowledge_use": null,
+ "questions": null,
+ "per_stage": {
+  "clarify": {
+   "calls": 2,
+   "turns": 7,
+   "tokens": 95916,
+   "wall_s": 118.1,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 0.3672
+  },
+  "board-and-device-planning": {
+   "calls": 2,
+   "turns": 18,
+   "tokens": 331565,
+   "wall_s": 60.2,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 0.3221
+  },
+  "rtl-design-creation": {
+   "calls": 5,
+   "turns": 64,
+   "tokens": 3135348,
+   "wall_s": 2386.6,
+   "cost_usd": 0.0,
+   "plan_cost_estimate_usd": 3.3889
+  }
+ },
+ "spec_test": {
+  "fired": true,
+  "passed": true,
+  "outcome": "pass",
+  "caught_bug": false,
+  "bench_repaired": false,
+  "design_wrong_verdicts": 0,
+  "bench_wrong_verdicts": 0,
+  "bench_writes": 1,
+  "bench_runs": 1
+ },
+ "clean_stop": false,
+ "constants": null,
+ "model_table_hash": null,
+ "stop_detail": {
+  "kind": "wall_limit",
+  "wall_limit_s": 14400.0,
+  "wall_s": 14400.6,
+  "stage2_visits": 3,
+  "last_role_call": {
+   "stage": "rtl-design-creation",
+   "visit": 3,
+   "role": "rtl",
+   "ended": "done",
+   "wall_s": 17.6
+  },
+  "last_verif_reached": "V2",
+  "gate_simulation_s": {
+   "gate_verilator": 1135.0,
+   "gate_icarus": 3135.5
+  }
+ },
+ "has_last_rtl_message": false,
+ "reached_first_model_turn": true,
+ "score": {
+  "pass": true,
+  "tests_passed": 10,
+  "tests": 10,
+  "failed": []
+ },
+ "score_3h": {
+  "basis": "last snapshot before the 3 h mark",
+  "snapshot": "0e826dc85817",
+  "snapshot_age_s": 7917,
+  "snapshot_note": "02 rtl-design-creation: rtl: did not run",
+  "pass": true,
+  "tests_passed": 10,
+  "tests": 10,
+  "failed": [],
+  "reason": null
+ },
+ "routing_events": [
+  {
+   "event": "clarify_constants_check",
+   "stage": "clarify",
+   "visit": 1,
+   "findings": [],
+   "failed": false
+  },
+  {
+   "event": "clarify_constants_check",
+   "stage": "clarify",
+   "visit": 2,
+   "findings": [],
+   "failed": false
+  },
+  {
+   "event": "icarus_cross_check",
+   "stage": "rtl-design-creation",
+   "visit": 1,
+   "ok": true,
+   "seconds": 1892.0
+  },
+  {
+   "event": "icarus_cross_check",
+   "stage": "rtl-design-creation",
+   "visit": 2,
+   "ok": true,
+   "seconds": 1243.5
+  }
+ ],
+ "time_s": {
+  "gate_verilator": 1135.0,
+  "gate_icarus_crosscheck": 3135.5,
+  "icarus_calls": 2,
+  "icarus_timeouts": 0,
+  "role_simulate": 1245.5,
+  "synth_gate_calls": 359.0
+ },
+ "tool_calls": 298,
+ "simulate_calls": 8,
+ "artifact_tarball_sha256": "3765b318962054cf3f18e8be622603c60f86bfc96b25730c80c01234c914f467",
+ "artifact_tarball_bytes": 694986,
+ "weekly_pct_before": 71.0,
+ "weekly_pct_after": 78.0
+}

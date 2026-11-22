@@ -266,3 +266,8 @@ It ran after every Verilator pass, at every visit, and took 17 to 30 minutes on 
   evidence). A stop reason's failing assertion is the last failing line, absolute paths reduced to the file name, no traceback.
 - **Vivado cap.** `flow/vivado_count.py`, `flow/run_vivado.sh` and `flow/checks/run_vivado_checks.sh` count a process as a Vivado job only when its argv[0]
   is the Vivado binary; a shell that names the path in its command line is not one.
+
+Measured result (six 4 h runs of the UDP endpoint task, results in `benchmark/v2/runs/b82p7/results.md`): 2 of 6 pass by the 4 h rule (82P6: 0 of 6; the Wilson intervals overlap), 4 of 6
+end with a clean stop, 1 of 6 is killed at 4 h, and no Icarus time-out occurred. The cross-check is still 31 % of pooled wall time (about 27 minutes per call, one call per run
+at least), and two of the four clean stops (arm A, no spec tests) scored 6/10 and 1/10 on the hidden bench: a clean stop means the run's own gates passed, not that the design is right.
+Report: `_handoff/fpga_agent/reports/82P7_stage2_time_report.md`.
