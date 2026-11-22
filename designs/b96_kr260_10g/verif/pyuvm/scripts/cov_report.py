@@ -4,7 +4,7 @@
     cov_report.py <merged coverage.dat> <out_dir>
 
 Reads a merged Verilator coverage.dat (`verilator_coverage --write merged.dat run*/coverage.dat`) and writes into <out_dir>:
-  coverage_summary.json   per module and per kind (line, branch, expr, toggle): covered, total, percent; the totals the testplan item reads
+  coverage_summary.json   per module and per kind (line, branch, expr, toggle): covered, total, open, percent; the totals the testplan item reads
   coverage_by_module.md   the same as a table
   uncovered.tsv           every uncovered line, branch and expression point (kind, module, file, line, source text) and the toggle bits never seen to toggle, by signal
 Points in the bench top (tb_pyuvm_top) are reported apart from the design's four modules and the package."""
@@ -59,13 +59,13 @@ def main(argv: list[str]) -> int:
     def cell(c, t):
         return "n/a" if not t else f"{100.0 * c / t:.1f} % ({c}/{t})"
     for m in mods:
-        summ["modules"][m] = {k: {"covered": tot[(m, k)][0], "total": tot[(m, k)][1], "percent": round(100.0 * tot[(m, k)][0] / tot[(m, k)][1], 2) if tot[(m, k)][1] else None} for k in KINDS}
+        summ["modules"][m] = {k: {"covered": tot[(m, k)][0], "total": tot[(m, k)][1], "open": tot[(m, k)][1] - tot[(m, k)][0], "percent": round(100.0 * tot[(m, k)][0] / tot[(m, k)][1], 2) if tot[(m, k)][1] else None} for k in KINDS}
         rows.append(f"| {m} | " + " | ".join(cell(*tot[(m, k)]) for k in KINDS) + " |")
     dm = [m for m in mods if m != "tb_pyuvm_top"]
     summ["design"] = {}
     for k in KINDS:
         c = sum(tot[(m, k)][0] for m in dm); t = sum(tot[(m, k)][1] for m in dm)
-        summ["design"][k] = {"covered": c, "total": t, "percent": round(100.0 * c / t, 2) if t else None}
+        summ["design"][k] = {"covered": c, "total": t, "open": t - c, "percent": round(100.0 * c / t, 2) if t else None}
     rows.append("| **design (all but the bench top)** | " + " | ".join(cell(summ["design"][k]["covered"], summ["design"][k]["total"]) for k in KINDS) + " |")
     (out / "coverage_summary.json").write_text(json.dumps(summ, indent=1) + "\n")
     (out / "coverage_by_module.md").write_text("\n".join(rows) + "\n")

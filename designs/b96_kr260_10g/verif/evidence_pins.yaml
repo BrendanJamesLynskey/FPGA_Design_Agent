@@ -2,6 +2,20 @@
 # For each item: the evidence file's hash, and the hash of every file the evidence is about as of the commit that last changed
 # the evidence. The collector compares them with the files today: a difference marks the evidence stale.
 pins:
+  V-COV-CODE:
+    checks:
+      designs/b96_kr260_10g/rtl/b96_pkg.sv: ac2ee00c42c8be41a66dae4c04b565c55ed01910aa4c8f12ea7919adaeb77e7c
+      designs/b96_kr260_10g/rtl/mac64_rx.sv: 35a0ed74f5449979bdbbfa0c57d66e8c8ce127f6132c53690212653a5a97ee8c
+      designs/b96_kr260_10g/rtl/mac64_tx.sv: 0cbc07b0268f1c0d3e4c916808bb87930fc6c17d3c60eba2cc90e17ad945246a
+      designs/b96_kr260_10g/rtl/pcs_rx.sv: 161c35209b39e014a62c3f4624ea52b99ef3316abc7250a7f5b132e19a651c0a
+      designs/b96_kr260_10g/rtl/pcs_tx.sv: e0e68141d910f428c25b37d8c8cc1c73ad0bb6c79fe6dd8d69307b9c430dc45d
+    evidence: results/146_verilator_cov/coverage_summary.json
+    evidence_sha256: 4e0e6e282e3364aaca1533f0e2891e194eaafccf37b6a9ce3d0ee4ba0116b39a
+  V-COV-FUNC:
+    checks:
+      designs/b96_kr260_10g/verif/pyuvm/pcs_mac_pyuvm/cov.py: 3eb7e24ee7cfd616026cd1bc9ab3dc438993312081f7b0b3210bafc6a3394c2c
+    evidence: results/146_verilator_cov/summary.txt
+    evidence_sha256: fa4f87f7f5071393657ebeccb7291c1fd91b5cde706882210e76ba1b14bd1205
   V-FORMAL-EQY-DEFAULT:
     checks:
       designs/b96_kr260_10g/rtl/b96_core.sv: b5347c5c94e15bae83c6697ce7c4981428b91de33e12a277cd69afd55eb7b3ac

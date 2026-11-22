@@ -136,7 +136,7 @@ def test_cov_report_reads_a_verilator_coverage_file(tmp_path: Path) -> None:
     spec.loader.exec_module(cr)
     cr.main(["cov_report.py", str(dat), str(tmp_path / "out")])
     d = json.loads((tmp_path / "out" / "coverage_summary.json").read_text())
-    assert d["modules"]["m"]["line"] == {"covered": 1, "total": 1, "percent": 100.0}
+    assert d["modules"]["m"]["line"] == {"covered": 1, "total": 1, "open": 0, "percent": 100.0}
     assert d["modules"]["m"]["branch"]["covered"] == 0 and d["modules"]["m"]["toggle"]["covered"] == 1 and d["modules"]["m"]["toggle"]["total"] == 2
     unc = (tmp_path / "out" / "uncovered.tsv").read_text()
     assert "branch\tm\tm.sv\t4" in unc and "q[0]:1->0" in unc

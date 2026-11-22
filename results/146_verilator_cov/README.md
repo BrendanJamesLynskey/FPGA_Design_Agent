@@ -16,9 +16,9 @@ The Verilator build is a heavy job on the shared machine (heavy slot, `systemd-r
 
 ## Records
 - `summary.txt`, `results.tsv`, `scoreboard_totals.tsv`, `protocol_cover.tsv`, `coverage_report.md`, `coverage_merged.tsv`: the regression and its functional coverage, in the format of `results/123_pyuvm_pcs_mac/`.
-- `coverage_summary.json`: per module and kind, covered, total, percent, plus `design` (all modules but the bench top); the testplan item `V-COV-CODE` reads it. `coverage_by_module.md`: the same as a table. `verilator_coverage_summary.txt`: Verilator's own summary (it counts the bench top too).
+- `coverage_summary.json`: per module and kind, covered, total, open, percent, plus `design` (all modules but the bench top); the testplan item `V-COV-CODE` reads it. `coverage_by_module.md`: the same as a table. `verilator_coverage_summary.txt`: Verilator's own summary (it counts the bench top too).
 - `uncovered.tsv`: every uncovered line, branch and expression point with its source text, and each toggle bit never seen to move. `coverage_lcov.info`: the merged line coverage as lcov.
-- `before_added_stimulus/`: the same records for the regression as brief 123 left it (before the stimulus added here), and its `results.tsv` and `coverage_merged.tsv`, which are identical to Icarus's.
+- `coverage_summary_before_added_stimulus.json`: the same summary before the stimulus added here. `before_added_stimulus/`: the same records for the regression as brief 123 left it (before the stimulus added here), and its `results.tsv` and `coverage_merged.tsv`, which are identical to Icarus's.
 - `return_arm_artifact/`: two small SystemVerilog files with their outputs, showing a Verilator reporting artefact (see below).
 - `icarus_vs_verilator.txt`: the engine comparison on the final stimulus.
 
@@ -28,7 +28,7 @@ The Verilator build is a heavy job on the shared machine (heavy slot, `systemd-r
 | line | 81.25 % (65/80) | 81.25 % (65/80) | 15, all explained below |
 | branch | 81.90 % (95/116) | 85.34 % (99/116) | 17 |
 | expression | 88.17 % (82/93) | 92.47 % (86/93) | 7 |
-| toggle | 96.06 % (5523/5750) | 96.33 % (5539/5750) | 211 bit points |
+| toggle | 96.05 % (5523/5750) | 96.33 % (5539/5750) | 211 bit points |
 | functional bins (cocotb-coverage) | 217 of 217 | 217 of 217 | 0 |
 
 The line count is small because Verilator makes one line point per basic block, and 37 of the 80 points sit in `b96_pkg`'s functions. Per module: `pcs_tx` 100 % line, 99.8 % toggle; `pcs_rx` 100 % line, branch and expression, 99.7 % toggle; `mac64_rx` 90.9 % line, 100 % branch and expression, 89.2 % toggle; `mac64_tx` 80 % line, 85.7 % branch, 75 % expression, 96.3 % toggle (`coverage_by_module.md`).
@@ -68,6 +68,11 @@ Same bench, same 42 (test, seed) runs. Measured by `icarus_vs_verilator.txt` and
 - **Two-state.** Verilator has no X or Z. The bench already avoids reading unresolved values (it skips the first edge); nothing differed. The one place a difference would show is reset-time X propagation, which this bench does not test.
 - **Coverage reporting quirks** (above): early-`return` arms report 0, and expression points in loops inside functions report 0.
 - **Not repeated on Verilator:** the 17-mutant run (brief 123's 16 of 17 stands for Icarus), the `PYUVM_WAVES` waveform path, concurrent SVA.
+
+## Known gaps and limits
+- The underrun path of `mac64_tx` is not driven (above). The formal `cover` that would confirm the three unreachable conditions was not written.
+- The 17-mutant run, the waveform path and concurrent assertions were not repeated on Verilator.
+- `uncovered.tsv` lists toggle points by signal, one row per bit and direction, not by line.
 
 ## Illustrative or not measured
 Code coverage describes this bench's stimulus against these four modules and the package, not the design in the larger core: `b96_core`, `trade64`, `rate_match*` are not in scope. A high percentage shows the code ran, not that it was checked; the checking is the scoreboard and the mutants. Toggle coverage here counts a bit as covered when it has moved in both directions, so it is a measure of datapath activity, not of correctness. Nothing ran on a board.
