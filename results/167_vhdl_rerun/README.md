@@ -21,7 +21,7 @@ Model: Claude Haiku 5.5 through Claude Code 2.1.321 (every role, plan-billed, no
 6 runs, one at a time: round 1 (gray stepper A, B, sync fifo A, B) and round 2 (gray stepper A, B). Round 2 sync fifo A and B were not run (prereg amendment 4).
 Tasks, arms, flags: prereg.md.
 
-## Known gaps
+## Known gaps and limits
 
 - The short stage-1 stops (about 7 minutes each) mean the stage-2 comparison has n = 1 (A) and n = 0 (B).
 - `r1_G_A` was cut by the 90 minute wall cap at stage-2 visit 6, with every visit a fresh write; it was scored on the RTL it had (0 of 9 tests; the register map fails like brief 55's runs).
@@ -30,3 +30,14 @@ Tasks, arms, flags: prereg.md.
 ## Next step the data points to
 
 Make stage 1 accept a VHDL `build.yaml` whose RTL does not exist yet (or tell the agent in the stage-1 prompt not to write `build.yaml` until stage 2), then repeat this brief.
+
+## Records
+
+[records/](records/): one folder per run (`r<round>_<G|F>_<A|B>`): `role_usage.jsonl` (per role and visit, with the `repair` flag), `summary.json` (stop reason; absent for `r1_G_A`),
+`spec.yaml`, `build.yaml`, the design's `rtl/`, `score.txt` (only `r1_G_A` had RTL), `run_stdout.log`, `RUN_ID.txt`. Not run: `r2_F_A`, `r2_F_B`.
+
+## Reproduce
+
+Two checkouts: arm A at `33896b29`, arm B at this branch's base (`b153-vhdl-parity`); the knowledge repo at `5e2eab87` (`FDA_KNOWLEDGE`, `FDA_PROMPTS_DIR`); Claude Code 2.1.321 first on PATH; a `.env` with the access key. Then, in each checkout:
+`python -m agent run benchmark/tasks/<task>/spec.md --hdl vhdl --stop-after 2 --verif-level V1 --harness claude_code --cc-model claude-haiku-5-5 --cc-effort medium --max-usd 0.75 --name <tag>`
+(the driver is [run_one.sh.txt](run_one.sh.txt)), score with `python -m flow.vhdl_score benchmark/tasks/<task> --rtl <design>/rtl`, and `python results/167_vhdl_rerun/summarise.py`.
