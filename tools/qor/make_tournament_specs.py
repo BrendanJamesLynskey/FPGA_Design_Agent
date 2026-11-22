@@ -32,7 +32,7 @@ def main() -> None:
             part, clock, xdc = pd["part"], float(pd["clock_ns"]), None
         else:                                            # 139b layout: one file per part
             part, clock, xdc = y["part"], float(y["clock_ns"]), y.get("constraints")
-        spec = {"name": name, "part": part, "top": y["top"], "sources": y["sources"], "clock_ns": clock, "generics": gen,
+        spec = {"name": name, "function": fn, "part": part, "top": y["top"], "sources": y["sources"], "clock_ns": clock, "generics": gen,
                 "from": f"arith/{fn}/build/{var} ({key}), generics as the 160 point {re.sub(r'[ {}:]', '', str(gen))}"}
         if xdc:
             spec["xdc"] = xdc

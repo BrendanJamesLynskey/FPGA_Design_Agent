@@ -104,3 +104,20 @@ def test_score_joins_outcome(tmp_path):
     p = tmp_path / "r.json"; p.write_text(json.dumps(rec))
     s = t.score(str(p), {"a": 0.2, "b": 0.1, "c": 0.4})
     assert s["n"] == 3 and s["early_best"] == "b" and s["routed_best"] == "c" and not s["early_best_is_routed_best"]
+
+
+def test_triage_post_thresholds_and_decision():
+    assert t.triage_post(0.8)["class"] == "easy" and t.triage_post(0.1)["class"] == "marginal" and t.triage_post(-0.5)["class"] == "hard"
+    assert t.triage_post(None)["class"] == "unknown"
+    spec = {"part": "xck26-sfvc784-2LV-c", "clock_ns": 1.4, "function": "nosuchfn"}
+    d = t.triage(spec)
+    assert d["decision"] == "unknown" and "default synthesis" in d["next"]
+    assert t.triage(spec, 0.9, True)["decision"] == "easy"                    # the post-synthesis signal overrides an unknown pre signal
+
+
+def test_triage_pre_uses_nearest_rows(tmp_path):
+    ds = tmp_path / "d.csv"
+    ds.write_text("source,row_id,clock_ns,rt_wns\n" + "".join(f"arith,f/v/k26/P{i},2.0,0.0\n" for i in range(4)))   # Fmax 500 MHz
+    assert t.triage_pre({"part": "xck26", "clock_ns": 1.5, "function": "f"}, ds)["class"] == "hard"       # 667 MHz target
+    assert t.triage_pre({"part": "xck26", "clock_ns": 2.2, "function": "f"}, ds)["class"] == "easy"       # 455 MHz
+    assert t.triage_pre({"part": "xck26", "clock_ns": 2.0, "function": "f"}, ds)["class"] == "hard"       # exactly at Fmax

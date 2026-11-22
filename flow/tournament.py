@@ -431,6 +431,56 @@ def probe_strategies() -> Path:
     return STRATEGIES
 
 
+# ---- up-front triage (owner 2026-11-22: decide whether a design is difficult enough to warrant a tournament) -----------------------------
+#: thresholds, documented in docs/tournament.md; set from the evaluation (results/178_tournament/triage_eval.json), changed only with a dated note
+TRIAGE = {"pre_hard": 1.00, "pre_marginal": 0.85,      # target frequency / typical routed Fmax of the nearest rows
+          "syn_easy_wns": 0.50, "syn_hard_wns": -0.30,    # estimated post-synthesis WNS (ns): >= easy_wns easy, < hard_wns hard, between marginal
+          "min_rows": 3}
+
+
+def triage_pre(spec: dict[str, Any], dataset: Path | None = None) -> dict[str, Any]:
+    """Cheapest signal first, before any synthesis: the target clock against the routed Fmax of the nearest rows of the 177 dataset (same function
+    and part; Fmax = 1000 / (clock - routed WNS)). No rows, or fewer than ``min_rows``: ``unknown`` (the caller then runs one default synthesis)."""
+    import csv
+    import statistics
+    ds = dataset or ROOT / "results" / "177_qor" / "dataset.csv"
+    fn = spec.get("function") or str(spec.get("from", "")).split("/")[1:2] and str(spec.get("from")).split("arith/")[-1].split("/")[0]
+    key = "k26" if "xck26" in spec["part"] else "a7" if "xc7a100" in spec["part"] else None
+    fm = []
+    if ds.exists() and fn and key:
+        for r in csv.DictReader(ds.open()):
+            if r["source"] == "arith" and r["row_id"].startswith(fn + "/") and f"/{key}/" in r["row_id"] and r["rt_wns"]:
+                fm.append(1000.0 / (float(r["clock_ns"]) - float(r["rt_wns"])))
+    out: dict[str, Any] = {"signal": "pre_synthesis", "function": fn, "n_rows": len(fm)}
+    if len(fm) < TRIAGE["min_rows"]:
+        return {**out, "class": "unknown", "reason": f"only {len(fm)} nearest rows in the 177 dataset"}
+    typ = statistics.median(fm)
+    ratio = (1000.0 / spec["clock_ns"]) / typ
+    cls = "hard" if ratio >= TRIAGE["pre_hard"] else "marginal" if ratio >= TRIAGE["pre_marginal"] else "easy"
+    return {**out, "class": cls, "target_mhz": round(1000.0 / spec["clock_ns"], 1), "typical_fmax_mhz": round(typ, 1), "ratio": round(ratio, 3),
+            "reason": f"target is {ratio:.2f} x the median routed Fmax of {len(fm)} nearest {fn}/{key} rows"}
+
+
+def triage_post(wns: float | None) -> dict[str, Any]:
+    """After ONE default synthesis: the estimated post-synthesis WNS (and brief 177's p_pass, which is a step function of it)."""
+    if wns is None:
+        return {"signal": "post_synthesis", "class": "unknown", "reason": "no constrained path"}
+    cls = "easy" if wns >= TRIAGE["syn_easy_wns"] else "hard" if wns < TRIAGE["syn_hard_wns"] else "marginal"
+    return {"signal": "post_synthesis", "class": cls, "wns_ns": wns, "p_pass": p_pass(wns, "synth"),
+            "reason": f"default synthesis estimates WNS {wns} ns (easy >= {TRIAGE['syn_easy_wns']}, hard < {TRIAGE['syn_hard_wns']})"}
+
+
+def triage(spec: dict[str, Any], default_wns: float | None = None, have_default: bool = False) -> dict[str, Any]:
+    """The decision: ``easy`` = default flow only, ``marginal`` = synthesis tournament, ``hard`` = synthesis plus place-and-route tournament.
+    The post-synthesis signal overrides the pre-synthesis one when the default synthesis has run; both are recorded with reasons."""
+    pre = triage_pre(spec)
+    post = triage_post(default_wns) if have_default else None
+    final = (post if post and post["class"] != "unknown" else pre)["class"]
+    return {"decision": final, "pre": pre, "post": post,
+            "next": {"easy": "default flow only", "marginal": "synthesis tournament", "hard": "synthesis + place-and-route tournament",
+                     "unknown": "run one default synthesis, then triage again"}[final]}
+
+
 def score(path: str, routed: dict[str, float]) -> dict[str, Any]:
     """Join the tournament's early ranking with routed WNS values (``id`` -> WNS). Spearman rho and whether rank 1 was best routed."""
     import numpy as np
@@ -462,6 +512,9 @@ def main(argv: list[str] | None = None) -> int:
         p.add_argument("--tag", default="", help="impl: output directory suffix (several impl runs of one design)")
         p.add_argument("--no-slot", action="store_true", help="the caller already holds a slot (tests, scripted sweeps)")
     sub.add_parser("strategies", help="probe AMD's own -strategy sets in Vivado")
+    tr = sub.add_parser("triage", help="classify a design easy / marginal / hard before any candidate runs")
+    tr.add_argument("spec")
+    tr.add_argument("--default-wns", type=float, help="estimated WNS of one default synthesis, if it has run")
     sc = sub.add_parser("score")
     sc.add_argument("record")
     sc.add_argument("--routed", action="append", default=[], metavar="ID=WNS")
@@ -473,6 +526,9 @@ def main(argv: list[str] | None = None) -> int:
         print(probe_strategies())
         return 0
     spec = load_spec(a.spec)
+    if a.cmd == "triage":
+        print(json.dumps(triage(spec, a.default_wns, a.default_wns is not None), indent=1))
+        return 0
     menu = a.menu.split(",") if a.menu else None
     if a.cmd == "plan":
         cs = synth_candidates(spec, menu) if a.stage == "synth" else impl_candidates(menu)
