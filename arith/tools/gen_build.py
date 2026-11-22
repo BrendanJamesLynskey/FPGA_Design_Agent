@@ -150,7 +150,7 @@ def xdc_text(fn: str, var: dict, fab: str) -> str:
 
 def outputs(only: str | None = None) -> dict[Path, str]:
     """Every generated file; with `only`, the files of that one function (either brief's layout)."""
-    if only in ac.FUNCTIONS:
+    if only in ac.ALL_FUNCTIONS:
         return outputs_a(only)
     out: dict[Path, str] = {}
     for sp in sorted(ARITH.glob("*/spec.yaml")):
@@ -165,7 +165,7 @@ def outputs(only: str | None = None) -> dict[Path, str]:
                 out[d / "build.yaml"] = build_text(fn, spec, var, fab)
                 out[d / "ooc.xdc"] = xdc_text(fn, var, fab)
     if only is None:
-        for fn in ac.FUNCTIONS:
+        for fn in ac.ALL_FUNCTIONS:
             out.update(outputs_a(fn))
     else:
         out = {p: t for p, t in out.items() if only in p.parts}

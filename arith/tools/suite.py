@@ -148,7 +148,7 @@ def check_latency_is_exact(fn: str, variant: str, params: dict) -> None:
         ac.run_point(fn, variant, params, "randomised", n=200, lat=good + 2)
 
 
-def check_mutants(fn: str) -> None:
+def check_mutants(fn: str, min_valid: int = 10) -> None:
     with tempfile.TemporaryDirectory() as t:
         out = Path(t) / "mutation.json"
         r = subprocess.run([sys.executable, "-m", "arith.tools.run_mutants", fn, "--jobs", "2", "--json", str(out)], cwd=ac.ROOT, capture_output=True, text=True)
@@ -156,7 +156,7 @@ def check_mutants(fn: str) -> None:
         res = json.loads(out.read_text())
     assert not res["invalid"], f"mutants that do not build: {res['invalid']}"
     assert not res["survived"], f"mutants the bench did not kill: {res['survived']}"
-    assert res["killed"] == res["valid"] and res["valid"] >= 10
+    assert res["killed"] == res["valid"] and res["valid"] >= min_valid
 
 
 def job_kind(j: dict) -> str:

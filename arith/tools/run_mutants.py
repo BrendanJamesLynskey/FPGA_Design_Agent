@@ -48,7 +48,7 @@ def main() -> int:
     if a.only:
         keep = set(a.only.split(","))
         muts = [m for m in muts if m["name"] in keep]
-    work = ac.ROOT / "build" / "arith_mut" / fn
+    work = ac.ROOT / "build" / "arith_mut" / f"{fn}_{__import__('os').getpid()}"          # one folder per run, so two runs of one function (a pytest and a recording run) cannot clash
     shutil.rmtree(work, ignore_errors=True)
     work.mkdir(parents=True)
     # the unmutated variants first

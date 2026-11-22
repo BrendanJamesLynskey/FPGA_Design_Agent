@@ -41,6 +41,29 @@ What is different from the integer functions: the bit-exact model is a reference
 by SymbiYosys only at TINY formats (EXP up to 3 or 4, MAN up to 3; the proofs are unbounded in time and cover every input there) and by simulation at binary32, bfloat16 and binary16; Lean states only three small
 integer facts (the rounding increment carries into the exponent, the normalisation shift, ties-to-even), because core Lean has no IEEE-754 library, and the rest is marked research in each `spec.md`.
 
+### Frequency-domain suite: FFT and its helper blocks (brief 148, phase 0)
+
+A configurable FFT and the small blocks it is made of, each taken as far as it can go before Vivado, in the same form as the functions above (specification, bit-exact model, variants, simulation
+against the model, seeded faults, formal properties, a traced testplan, prepared out-of-context builds for Artix-7 and K26). They sit in this folder because they use its tooling unchanged
+(`tools/`, `verif/`, `formal/`, `build/` of each function); their shared files are in [fft_common/](fft_common/). The study, the architectures and when each wins, the scaling and the real-input
+arrangement, and the fast-convolution plan are in [../docs/fft_suite_plan.md](../docs/fft_suite_plan.md). **Nothing here has been run through Vivado**: every statement about LUTs, DSPs, RAM or Fmax is an
+expectation written down before measuring, and the runs are queued in `_handoff/fpga_agent/vivado_later_queue.md`.
+
+| Function | Variants | Specification | Testplan and evidence |
+|---|---|---|---|
+| Configurable FFT, N = 8 to 4096, complex, forward or inverse per frame, scaled or growing, natural or bit-reversed output | `sdf` (radix-2^2 streaming, one sample per clock), `burst` (memory-based, one butterfly, one frame at a time) | [fft/spec.md](fft/spec.md) | [fft/verif/testplan.yaml](fft/verif/testplan.yaml), [matrix](fft/verif/matrix.md), [accuracy](fft/verif/results/accuracy.json) |
+| Complex multiplier, exact | `m4` (four real multipliers), `m3` (three) | [fft_cmul/spec.md](fft_cmul/spec.md) | [fft_cmul/verif/testplan.yaml](fft_cmul/verif/testplan.yaml), [matrix](fft_cmul/verif/matrix.md) |
+| Twiddle-factor generator, any circle up to 4096 points | `quarter` (one quarter-wave ROM) | [fft_twiddle/spec.md](fft_twiddle/spec.md) | [fft_twiddle/verif/testplan.yaml](fft_twiddle/verif/testplan.yaml), [matrix](fft_twiddle/verif/matrix.md) |
+| Bit-reverse reorder buffer, continuous frames | `pingpong` (two banks) | [fft_reorder/spec.md](fft_reorder/spec.md) | [fft_reorder/verif/testplan.yaml](fft_reorder/verif/testplan.yaml), [matrix](fft_reorder/verif/matrix.md) |
+| Window multiplier | `dsp` | [fft_window/spec.md](fft_window/spec.md) | [fft_window/verif/testplan.yaml](fft_window/verif/testplan.yaml), [matrix](fft_window/verif/matrix.md) |
+| AMBA AXI4-Stream FFT: the two FFT variants behind `s_axis`/`m_axis` (tdata, tvalid, tready, tlast, tuser = inverse), `sdf` with no back-pressure and `burst` with full back-pressure, with simulation protocol checkers | `sdf`, `burst` | [fft_axis/spec.md](fft_axis/spec.md) | [fft_axis/verif/testplan.yaml](fft_axis/verif/testplan.yaml), [matrix](fft_axis/verif/matrix.md) |
+| Real-input FFT: N real samples (two per clock) through an N/2-point complex FFT and post-processing, bins 0 .. N/2 | `post` | [fft_real/spec.md](fft_real/spec.md) | [fft_real/verif/testplan.yaml](fft_real/verif/testplan.yaml), [matrix](fft_real/verif/matrix.md) |
+
+Differences from the functions above, so nothing is assumed: these blocks stream frames of N samples (the benches in `fft_common/frames.py` drive frames, not single operands); the directed bench
+is a basis of stimuli (impulses, tones, corner values), not every input; the FFT is checked against NumPy's FFT for accuracy, and its results are bit-exact against its own models only; the AXI4-Stream interface (owner direction 2026-11-21: favour AMBA AXI) is on the `fft_axis` wrappers of the two FFT variants only: the cores (`fft`, `fft_real`) and the helper blocks keep plain valid/start-of-frame or fixed-latency pipeline ports, because they are internal datapath blocks whose handshake would add logic without adding a stream to connect to (comparison with AMD's FFT interface in the plan, section 9); there is **no
+packaged harness** and **no Lean statement** for any of them (not built in this phase; stated in each `spec.md`); the formal jobs are properties of the parts (the reorder address map, the complex
+multiplier, the twiddle symmetry, the window rounding, the delay-feedback stage) and not of the whole FFT. The fast-convolution model is `fft_common/fastconv.py` (Python only, with an interface proposal in the plan: its RTL is the next phase); the real-input transform is built (`fft_real`).
+
 ### Layout (one folder per function)
 
 | Path | What |
