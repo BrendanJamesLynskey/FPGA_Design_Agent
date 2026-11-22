@@ -1,6 +1,12 @@
 {
  "schema": "fda-arith/vivado_surface/1",
  "function": "adder",
+ "summary": {
+  "points": 20,
+  "routed_points": 20,
+  "expectation_met": 12,
+  "expectation_missed": 8
+ },
  "points": [
   {
    "function": "adder",
@@ -286,7 +292,7 @@
     }
    ],
    "expectation": "missed",
-   "group_size": 1,
+   "group_size": 2,
    "front_fmax": false,
    "front_latency": false
   },
@@ -358,8 +364,8 @@
     }
    ],
    "expectation": "missed",
-   "group_size": 2,
-   "front_fmax": true,
+   "group_size": 6,
+   "front_fmax": false,
    "front_latency": false
   },
   {
@@ -430,9 +436,9 @@
     }
    ],
    "expectation": "met",
-   "group_size": 2,
-   "front_fmax": true,
-   "front_latency": true
+   "group_size": 6,
+   "front_fmax": false,
+   "front_latency": false
   },
   {
    "function": "adder",
@@ -692,6 +698,262 @@
   },
   {
    "function": "adder",
+   "variant": "pipelined",
+   "part_key": "k26",
+   "part": "xck26-sfvc784-2LV-c",
+   "generics": {
+    "WIDTH": 64,
+    "STAGES": 2
+   },
+   "shape": {
+    "WIDTH": 64
+   },
+   "clock_ns": 3.0,
+   "tool": "Vivado 2026.1 (build 6511674)",
+   "date": "2026-11-22",
+   "status": "ok",
+   "record": "vivado_ooc_pipelined_k26.json",
+   "lut": 82,
+   "ff": 359,
+   "carry": 8,
+   "carry4": 0,
+   "carry8": 8,
+   "dsp": 0,
+   "bram_tiles": 0,
+   "wns_ns": 1.304,
+   "whs_ns": 0.07,
+   "logic_levels": 5,
+   "runtime_s": 196,
+   "power_total_w": 0.296,
+   "fmax_mhz": 589.6,
+   "lower_bound": true,
+   "latency_clocks": 2,
+   "wrapper_register_bits": 196,
+   "expectations": [
+    {
+     "what": "FF beyond the wrapper",
+     "expected_lo": 130,
+     "expected_hi": 130,
+     "measured": 163,
+     "verdict": "met",
+     "text": "about 2*WIDTH*(STAGES-1) + STAGES"
+    },
+    {
+     "what": "carry cells",
+     "expected_lo": 8,
+     "expected_hi": 8,
+     "measured": 8,
+     "verdict": "met",
+     "text": "STAGES chains of about WIDTH/STAGES bits"
+    },
+    {
+     "what": "DSP",
+     "expected_lo": 0,
+     "expected_hi": 0,
+     "measured": 0,
+     "verdict": "met",
+     "text": "0 DSP"
+    }
+   ],
+   "expectation": "met",
+   "group_size": 6,
+   "front_fmax": true,
+   "front_latency": false
+  },
+  {
+   "function": "adder",
+   "variant": "pipelined",
+   "part_key": "k26",
+   "part": "xck26-sfvc784-2LV-c",
+   "generics": {
+    "WIDTH": 64,
+    "STAGES": 4
+   },
+   "shape": {
+    "WIDTH": 64
+   },
+   "clock_ns": 3.0,
+   "tool": "Vivado 2026.1 (build 6511674)",
+   "date": "2026-11-22",
+   "status": "ok",
+   "record": "vivado_ooc_pipelined_k26.json",
+   "lut": 122,
+   "ff": 409,
+   "carry": 8,
+   "carry4": 0,
+   "carry8": 8,
+   "dsp": 0,
+   "bram_tiles": 0,
+   "wns_ns": 1.494,
+   "whs_ns": 0.06,
+   "logic_levels": 0,
+   "runtime_s": 173,
+   "power_total_w": 0.3,
+   "fmax_mhz": 664.0,
+   "lower_bound": true,
+   "latency_clocks": 4,
+   "wrapper_register_bits": 196,
+   "expectations": [
+    {
+     "what": "FF beyond the wrapper",
+     "expected_lo": 388,
+     "expected_hi": 388,
+     "measured": 213,
+     "verdict": "missed",
+     "text": "about 2*WIDTH*(STAGES-1) + STAGES"
+    },
+    {
+     "what": "carry cells",
+     "expected_lo": 8,
+     "expected_hi": 8,
+     "measured": 8,
+     "verdict": "met",
+     "text": "STAGES chains of about WIDTH/STAGES bits"
+    },
+    {
+     "what": "DSP",
+     "expected_lo": 0,
+     "expected_hi": 0,
+     "measured": 0,
+     "verdict": "met",
+     "text": "0 DSP"
+    }
+   ],
+   "expectation": "missed",
+   "group_size": 6,
+   "front_fmax": true,
+   "front_latency": false
+  },
+  {
+   "function": "adder",
+   "variant": "pipelined",
+   "part_key": "k26",
+   "part": "xck26-sfvc784-2LV-c",
+   "generics": {
+    "WIDTH": 64,
+    "STAGES": 8
+   },
+   "shape": {
+    "WIDTH": 64
+   },
+   "clock_ns": 3.0,
+   "tool": "Vivado 2026.1 (build 6511674)",
+   "date": "2026-11-22",
+   "status": "ok",
+   "record": "vivado_ooc_pipelined_k26.json",
+   "lut": 222,
+   "ff": 405,
+   "carry": 8,
+   "carry4": 0,
+   "carry8": 8,
+   "dsp": 0,
+   "bram_tiles": 0,
+   "wns_ns": 1.542,
+   "whs_ns": 0.072,
+   "logic_levels": 1,
+   "runtime_s": 168,
+   "power_total_w": 0.302,
+   "fmax_mhz": 685.9,
+   "lower_bound": true,
+   "latency_clocks": 8,
+   "wrapper_register_bits": 196,
+   "expectations": [
+    {
+     "what": "FF beyond the wrapper",
+     "expected_lo": 904,
+     "expected_hi": 904,
+     "measured": 209,
+     "verdict": "missed",
+     "text": "about 2*WIDTH*(STAGES-1) + STAGES"
+    },
+    {
+     "what": "carry cells",
+     "expected_lo": 8,
+     "expected_hi": 8,
+     "measured": 8,
+     "verdict": "met",
+     "text": "STAGES chains of about WIDTH/STAGES bits"
+    },
+    {
+     "what": "DSP",
+     "expected_lo": 0,
+     "expected_hi": 0,
+     "measured": 0,
+     "verdict": "met",
+     "text": "0 DSP"
+    }
+   ],
+   "expectation": "missed",
+   "group_size": 6,
+   "front_fmax": true,
+   "front_latency": false
+  },
+  {
+   "function": "adder",
+   "variant": "pipelined",
+   "part_key": "k26",
+   "part": "xck26-sfvc784-2LV-c",
+   "generics": {
+    "WIDTH": 128,
+    "STAGES": 4
+   },
+   "shape": {
+    "WIDTH": 128
+   },
+   "clock_ns": 3.0,
+   "tool": "Vivado 2026.1 (build 6511674)",
+   "date": "2026-11-22",
+   "status": "ok",
+   "record": "vivado_ooc_pipelined_k26.json",
+   "lut": 242,
+   "ff": 809,
+   "carry": 16,
+   "carry4": 0,
+   "carry8": 16,
+   "dsp": 0,
+   "bram_tiles": 0,
+   "wns_ns": 1.304,
+   "whs_ns": 0.057,
+   "logic_levels": 1,
+   "runtime_s": 174,
+   "power_total_w": 0.311,
+   "fmax_mhz": 589.6,
+   "lower_bound": true,
+   "latency_clocks": 4,
+   "wrapper_register_bits": 388,
+   "expectations": [
+    {
+     "what": "FF beyond the wrapper",
+     "expected_lo": 772,
+     "expected_hi": 772,
+     "measured": 421,
+     "verdict": "missed",
+     "text": "about 2*WIDTH*(STAGES-1) + STAGES"
+    },
+    {
+     "what": "carry cells",
+     "expected_lo": 16,
+     "expected_hi": 16,
+     "measured": 16,
+     "verdict": "met",
+     "text": "STAGES chains of about WIDTH/STAGES bits"
+    },
+    {
+     "what": "DSP",
+     "expected_lo": 0,
+     "expected_hi": 0,
+     "measured": 0,
+     "verdict": "met",
+     "text": "0 DSP"
+    }
+   ],
+   "expectation": "missed",
+   "group_size": 1,
+   "front_fmax": false,
+   "front_latency": false
+  },
+  {
+   "function": "adder",
    "variant": "ripple",
    "part_key": "a7",
    "part": "xc7a100tcsg324-1",
@@ -870,6 +1132,219 @@
      "expected_lo": 16,
      "expected_hi": 16,
      "measured": 17,
+     "verdict": "met",
+     "text": "ceil(WIDTH/4 or 8) in one chain"
+    },
+    {
+     "what": "LUT",
+     "expected_lo": 64,
+     "expected_hi": 64,
+     "measured": 66,
+     "verdict": "met",
+     "text": "about WIDTH"
+    },
+    {
+     "what": "FF beyond the wrapper",
+     "expected_lo": 0,
+     "expected_hi": 0,
+     "measured": 0,
+     "verdict": "met",
+     "text": "0 FF"
+    },
+    {
+     "what": "DSP",
+     "expected_lo": 0,
+     "expected_hi": 0,
+     "measured": 0,
+     "verdict": "met",
+     "text": "0 DSP"
+    }
+   ],
+   "expectation": "met",
+   "group_size": 6,
+   "front_fmax": true,
+   "front_latency": true
+  },
+  {
+   "function": "adder",
+   "variant": "ripple",
+   "part_key": "k26",
+   "part": "xck26-sfvc784-2LV-c",
+   "generics": {
+    "WIDTH": 16
+   },
+   "shape": {
+    "WIDTH": 16
+   },
+   "clock_ns": 3.0,
+   "tool": "Vivado 2026.1 (build 6511674)",
+   "date": "2026-11-22",
+   "status": "ok",
+   "record": "vivado_ooc_ripple_k26.json",
+   "lut": 18,
+   "ff": 52,
+   "carry": 2,
+   "carry4": 0,
+   "carry8": 2,
+   "dsp": 0,
+   "bram_tiles": 0,
+   "wns_ns": 1.459,
+   "whs_ns": 0.139,
+   "logic_levels": 4,
+   "runtime_s": 203,
+   "power_total_w": 0.289,
+   "fmax_mhz": 648.9,
+   "lower_bound": true,
+   "latency_clocks": 0,
+   "wrapper_register_bits": 52,
+   "expectations": [
+    {
+     "what": "carry cells",
+     "expected_lo": 2,
+     "expected_hi": 2,
+     "measured": 2,
+     "verdict": "met",
+     "text": "ceil(WIDTH/4 or 8) in one chain"
+    },
+    {
+     "what": "LUT",
+     "expected_lo": 16,
+     "expected_hi": 16,
+     "measured": 18,
+     "verdict": "met",
+     "text": "about WIDTH"
+    },
+    {
+     "what": "FF beyond the wrapper",
+     "expected_lo": 0,
+     "expected_hi": 0,
+     "measured": 0,
+     "verdict": "met",
+     "text": "0 FF"
+    },
+    {
+     "what": "DSP",
+     "expected_lo": 0,
+     "expected_hi": 0,
+     "measured": 0,
+     "verdict": "met",
+     "text": "0 DSP"
+    }
+   ],
+   "expectation": "met",
+   "group_size": 1,
+   "front_fmax": false,
+   "front_latency": false
+  },
+  {
+   "function": "adder",
+   "variant": "ripple",
+   "part_key": "k26",
+   "part": "xck26-sfvc784-2LV-c",
+   "generics": {
+    "WIDTH": 32
+   },
+   "shape": {
+    "WIDTH": 32
+   },
+   "clock_ns": 3.0,
+   "tool": "Vivado 2026.1 (build 6511674)",
+   "date": "2026-11-22",
+   "status": "ok",
+   "record": "vivado_ooc_ripple_k26.json",
+   "lut": 34,
+   "ff": 100,
+   "carry": 4,
+   "carry4": 0,
+   "carry8": 4,
+   "dsp": 0,
+   "bram_tiles": 0,
+   "wns_ns": 1.47,
+   "whs_ns": 0.137,
+   "logic_levels": 6,
+   "runtime_s": 193,
+   "power_total_w": 0.29,
+   "fmax_mhz": 653.6,
+   "lower_bound": true,
+   "latency_clocks": 0,
+   "wrapper_register_bits": 100,
+   "expectations": [
+    {
+     "what": "carry cells",
+     "expected_lo": 4,
+     "expected_hi": 4,
+     "measured": 4,
+     "verdict": "met",
+     "text": "ceil(WIDTH/4 or 8) in one chain"
+    },
+    {
+     "what": "LUT",
+     "expected_lo": 32,
+     "expected_hi": 32,
+     "measured": 34,
+     "verdict": "met",
+     "text": "about WIDTH"
+    },
+    {
+     "what": "FF beyond the wrapper",
+     "expected_lo": 0,
+     "expected_hi": 0,
+     "measured": 0,
+     "verdict": "met",
+     "text": "0 FF"
+    },
+    {
+     "what": "DSP",
+     "expected_lo": 0,
+     "expected_hi": 0,
+     "measured": 0,
+     "verdict": "met",
+     "text": "0 DSP"
+    }
+   ],
+   "expectation": "met",
+   "group_size": 2,
+   "front_fmax": true,
+   "front_latency": true
+  },
+  {
+   "function": "adder",
+   "variant": "ripple",
+   "part_key": "k26",
+   "part": "xck26-sfvc784-2LV-c",
+   "generics": {
+    "WIDTH": 64
+   },
+   "shape": {
+    "WIDTH": 64
+   },
+   "clock_ns": 3.0,
+   "tool": "Vivado 2026.1 (build 6511674)",
+   "date": "2026-11-22",
+   "status": "ok",
+   "record": "vivado_ooc_ripple_k26.json",
+   "lut": 66,
+   "ff": 196,
+   "carry": 8,
+   "carry4": 0,
+   "carry8": 8,
+   "dsp": 0,
+   "bram_tiles": 0,
+   "wns_ns": 1.072,
+   "whs_ns": 0.138,
+   "logic_levels": 10,
+   "runtime_s": 167,
+   "power_total_w": 0.292,
+   "fmax_mhz": 518.7,
+   "lower_bound": true,
+   "latency_clocks": 0,
+   "wrapper_register_bits": 196,
+   "expectations": [
+    {
+     "what": "carry cells",
+     "expected_lo": 8,
+     "expected_hi": 8,
+     "measured": 8,
      "verdict": "met",
      "text": "ceil(WIDTH/4 or 8) in one chain"
     },

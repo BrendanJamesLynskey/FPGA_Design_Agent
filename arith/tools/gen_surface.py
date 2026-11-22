@@ -289,6 +289,31 @@ def readme(data: dict, pc: list[dict]) -> str:
     return "\n".join(L)
 
 
+def ooc_point_count(fn: str) -> int:
+    """Points of every build.yaml of a function, counting each part (139a: one file, two parts; 139b: one file per part)."""
+    n = 0
+    for f in (ROOT / "arith" / fn / "build").glob("**/build.yaml"):
+        y = yaml.safe_load(f.read_text())
+        n += len(y["points"]) * (len(y["ooc"]["parts"]) if "ooc" in y else 1)
+    return n
+
+
+def ooc_requirement(fn: str, pre: str) -> tuple[dict, dict]:
+    """The performance requirement and its timing item for a function's testplan (brief 160): every prepared point has a routed Vivado result."""
+    base, n = f"arith/{fn}", ooc_point_count(fn)
+    req = {"id": f"{pre}-P-OOC", "kind": "performance", "title": "Every prepared point places and routes out of context on Artix-7 and K26",
+           "text": f"Each point of the build files of {fn} (build/<variant>/build.yaml; {n} in all, both parts) goes through Vivado 2026.1 out-of-context synthesis, placement and routing and leaves a recorded result "
+                   "(utilisation, WNS, WHS, Fmax, logic levels, vectorless power) in verif/results/vivado_ooc_<variant>_<part>.json. The measured values and each point's pre-stated expectation are in the Measured table of spec.md and in verif/results/vivado_surface.json; "
+                   "this requirement states only that the measurement exists for every point, because no Fmax or area bound has been agreed.",
+           "source": f"{base}/spec.md", "spec_status": "draft",
+           "performance": {"quantity": "prepared points with a routed out-of-context Vivado result", "unit": "points", "op": "ge", "bound": n,
+                           "condition": "Vivado 2026.1 out-of-context, one thread, the clocks of the build files, brief 160"}}
+    item = {"id": f"V-{pre}-OOC", "requirements": [req["id"]], "method": "timing", "title": "The routed Vivado results of every prepared point (the records of the last run)",
+            "evidence": {"file": f"{base}/verif/results/vivado_surface.json", "reader": "json", "field": "summary.routed_points"},
+            "checks": sorted(str(x.relative_to(ROOT)) for x in (ROOT / base / "build").glob("**/build.yaml"))}
+    return req, item
+
+
 def measured_section(fn: str) -> list[str]:
     """Markdown lines for spec.md: the measured table of one function (empty when there are no records)."""
     f = ROOT / "arith" / fn / "verif" / "results" / "vivado_surface.json"
@@ -326,7 +351,7 @@ def main() -> int:
         if not rows:
             continue
         p = ROOT / "arith" / fn / "verif" / "results" / "vivado_surface.json"
-        txt = json.dumps({"schema": "fda-arith/vivado_surface/1", "function": fn, "points": rows}, indent=1) + "\n"
+        txt = json.dumps({"schema": "fda-arith/vivado_surface/1", "function": fn, "summary": {"points": len(rows), "routed_points": sum(r["status"] == "ok" for r in rows), "expectation_met": sum(r.get("expectation") == "met" for r in rows if r["status"] == "ok"), "expectation_missed": sum(r.get("expectation") == "missed" for r in rows if r["status"] == "ok")}, "points": rows}, indent=1) + "\n"
         if a.check:
             bad |= (not p.exists() or p.read_text() != txt)
         else:
