@@ -37,7 +37,7 @@ The same placed netlist differs between arms in `m01_add32`: the flat and draft-
 
 The second round of searches was cut short by GitHub's rate limit (5,000 requests an hour, shared across sessions); the DSP and SRL searches above completed before it. None of this was checked against a current master build (the machine cannot build one), so each draft says so.
 
-## Not done, and gaps
+## Known gaps and limits
 
 * Vivado synthesis-stage reports are missing for six K26 cases (`r02_adder_pipelined32x4`, `r03_adder_csel32`, `r12_div_iter16`, `r14_lznorm_tree32`, `c02_cordic_unrolled_k_k4`, `c04_cordic_pipelined_m_m3`) and for 24 of the 38 micro cases on xc7a100t (the control used 14): the first run of the batch stopped part-way (`hs_err` log not kept) and a second batch covered the rest of the planned set. The table shows `n/a` for them.
 * Place and route covers 6 designs, one run per arm (the brief asked for "a few points"); no repeat runs except the incidental one in the spread section.
@@ -46,7 +46,18 @@ The second round of searches was cut short by GitHub's rate limit (5,000 request
 * The draft pull request was tested through the installed Yosys driven by hand with the same commands the patched `synth_xilinx` would run; the C++ change was never compiled (no cmake on this machine). `-family xcup` runs of `add_sub_xcup.ys` need the rebuilt binary.
 * Not covered by the brief's list, not measured: cascaded DSPs across columns beyond `r09_mac_cascade4` (Vivado 5 DSP + 40 LUT against Yosys 4 DSP + 139 LUT, 37 CARRY4), URAM cascades, flip-flop control-set packing beyond `m28` to `m30`.
 
-## Files
+## Records
 
 `drafts/issue_1.md`, `issue_2.md`, `issue_4.md` (with `issue_*_repro/`), `drafts/pr_1/`, `drafts/kb_claim.md`; `scripts/` (runners and table generators); `summary.json`; `tables.md`; `impl_table.md`; `upstream/queries.txt`; `vivado/`; `yosys/`; `rtl/`.
 Report: `_handoff/fpga_agent/reports/142_yosys_xcup_report.md`.
+
+## Reproduce
+
+Needs the OSS CAD Suite (Yosys 0.70+385 with the slang plugin) at `~/.local/opt/oss-cad-suite` (or `FDA_OSS_CAD`) and Vivado 2026.1 (run in a heavy slot; one thread, under `systemd-run --scope -p MemoryMax=6G`).
+
+```
+python3 results/b142/scripts/yosys_run.py                 # Yosys runs, writes yosys/<family>/<variant>/
+python3 results/b142/scripts/vivado_jobs.py ...            # writes the job files for scripts/vivado_ooc.tcl (see its docstring); run_vivado_142.sh takes the slot and runs them
+bash results/b142/scripts/collect_vivado.sh <scratch dir>  # copies the small reports into vivado/
+python3 results/b142/scripts/summarize.py && python3 results/b142/scripts/tables.py && python3 results/b142/scripts/impl_table.py
+```
