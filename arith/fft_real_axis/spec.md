@@ -62,7 +62,7 @@ Each variant is one SystemVerilog file under `rtl/`, with the same ports. Parame
 
 ## Interface contract
 
-Written without knowing the design the block will sit in (brief 139a, owner decision 24): this is what a user can rely on and must provide.
+Written without knowing the design the block will sit in (brief 161, owner decision 24): this is what a user can rely on and must provide.
 
 - Protocol: AMBA AXI4-Stream on both interfaces. Slave: frames of N/2 beats, tlast on the last, tvalid held high through a frame; the wrapper provides back-pressure only between frames (N/8 clocks of tready low after each frame). Master: frames of N/2 + 1 beats, tlast on the last, no back-pressure (the sink's tready must be 1). No AXI4-Lite
 - Throughput: 2 real samples per clock inside a frame; N real samples per N/2 + N/8 clocks at the fastest legal frame spacing (the output frame takes N/2 + 1 clocks, so output frames never overlap)

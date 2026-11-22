@@ -71,7 +71,7 @@ Each variant is one SystemVerilog file under `rtl/`, with the same ports. Parame
 
 ## Interface contract
 
-Written without knowing the design the block will sit in (brief 139a, owner decision 24): this is what a user can rely on and must provide.
+Written without knowing the design the block will sit in (brief 148, owner decision 24): this is what a user can rely on and must provide.
 
 - Protocol: streaming frames, no valid/ready back-pressure. sdf: in_valid is high for N consecutive clocks per frame (in_sof on the first), the next frame follows with no gap, or after at least N/4 idle clocks (a gap of 1 to N/4 - 1 clocks is not allowed), in_ready is always 1. burst: the same frame, but in_sof may be asserted only while in_ready is 1 (idle), a new frame cannot overlap the previous one's computation and read-out; out_ready stalls the output (out_valid, out_sof and the data are held), sdf ignores out_ready
 - Throughput: sdf: one sample per clock continuously, a frame every N clocks. burst: one frame per N + LOGN * (N/2 + MULSTAGES + 3) + N clocks (load, compute, unload; no overlap)

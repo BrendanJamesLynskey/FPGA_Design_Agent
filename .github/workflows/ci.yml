@@ -167,9 +167,9 @@ jobs:
           python -m pytest -q designs/b96_kr260_10g/tests/test_b115_formal.py
 
   arith-library:
-    name: Arithmetic library (brief 139b) - models, RTL against models (Icarus), Verilator lint, seeded mutants, SymbiYosys proofs, traceability gate - OSS CAD Suite 20261112
+    name: Arithmetic library (briefs 139b, 139c) - models, RTL against models (Icarus), Verilator lint, seeded mutants, SymbiYosys proofs, traceability gate - OSS CAD Suite 20261112
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 90
     env:
       FDA_OSS_CAD: ${{ github.workspace }}/oss-cad-suite
       FDA_REQUIRE_FORMAL: "1"      # a test that needs a tool and does not find it fails instead of skipping (the same rule as brief 81)
@@ -197,14 +197,14 @@ jobs:
         run: |
           python -m arith.tools.gen_spec --check
           python -m arith.tools.gen_build --check
-      - name: Divider, rounding, square root, leading-zero/normaliser - model tests, RTL against the models, lint, mutants, formal proofs, build descriptions
+      - name: Divider, rounding, square root, leading-zero/normaliser (139b); radix-4 square root, SRT divider, reciprocal, reciprocal square root, reciprocal-multiply divider (139c) - model tests, RTL against the models, lint, mutants, formal proofs, build descriptions
         run: |
           $FDA_OSS_CAD/bin/yosys -V
           $FDA_OSS_CAD/bin/iverilog -V | head -1
           $FDA_OSS_CAD/bin/verilator --version
-          python -m pytest -q arith/common arith/divider arith/fxp_round arith/isqrt arith/lzc_norm
-      - name: Traceability gate (testplan schema v1, the orphan gate) for the four functions
-        run: python -m flow.trace_v1 check arith/divider arith/fxp_round arith/isqrt arith/lzc_norm
+          python -m pytest -q arith/divider arith/fxp_round arith/isqrt arith/lzc_norm arith/sqrt_r4 arith/divider_hr arith/recip arith/rsqrt arith/div_nr arith/common
+      - name: Traceability gate (testplan schema v1, the orphan gate) for the nine functions
+        run: python -m flow.trace_v1 check arith/divider arith/fxp_round arith/isqrt arith/lzc_norm arith/sqrt_r4 arith/divider_hr arith/recip arith/rsqrt arith/div_nr
 
   rtl-sim:
     name: RTL tests (cocotb + Icarus) and mutants
@@ -538,7 +538,7 @@ jobs:
             build/64a/cfu/*/marks.txt
 
   arith-library-139a:
-    name: Arithmetic library (briefs 139a, 139e) - adders, multipliers, MAC, floating point - models, cocotb + Icarus against the models, seeded faults, SymbiYosys equivalence, Verilator -Wall, build files, traceability gate
+    name: Arithmetic library (briefs 139a, 139d, 139e) - adders, multipliers, MAC, exp2, log2, sincos, atan2/magnitude, floating point - models, cocotb + Icarus against the models, seeded faults, SymbiYosys equivalence and error bounds, Verilator -Wall, build files, traceability gate
     runs-on: ubuntu-24.04
     timeout-minutes: 90
     env:
@@ -569,12 +569,13 @@ jobs:
       - name: Generated files are current (wrappers, build.yaml, spec.md, testplans); the traceability gate (every test named by an item, every requirement traced)
         run: |
           python -m arith.tools.gen_build --check
+          python -m arith.tools.gen_rtl --check
           python -m arith.tools.gen_spec_md --check
           python -m arith.tools.gen_harness --check
           python -m arith.tools.gen_testplan --check
-          python -m flow.trace_v1 check arith/adder arith/multiplier arith/mac arith/fp_add arith/fp_mul arith/fp_fma
+          python -m flow.trace_v1 check arith/adder arith/multiplier arith/mac arith/exp2 arith/log2 arith/sincos arith/atan2_mag arith/fp_add arith/fp_mul arith/fp_fma
       - name: Models against independent formulations; spec against the RTL headers; Verilator -Wall at every point (OSS CAD Suite 20261112); wrappers and build.yaml
-        run: python -m pytest -q arith/adder/tests/test_adder_model.py arith/adder/tests/test_adder_package.py arith/multiplier/tests/test_multiplier_model.py arith/multiplier/tests/test_multiplier_package.py arith/mac/tests/test_mac_model.py arith/mac/tests/test_mac_package.py arith/fp_add/tests/test_fp_add_model.py arith/fp_add/tests/test_fp_add_package.py arith/fp_mul/tests/test_fp_mul_model.py arith/fp_mul/tests/test_fp_mul_package.py arith/fp_fma/tests/test_fp_fma_model.py arith/fp_fma/tests/test_fp_fma_package.py
+        run: python -m pytest -q arith/adder/tests/test_adder_model.py arith/adder/tests/test_adder_package.py arith/multiplier/tests/test_multiplier_model.py arith/multiplier/tests/test_multiplier_package.py arith/mac/tests/test_mac_model.py arith/mac/tests/test_mac_package.py arith/exp2/tests/test_exp2_model.py arith/exp2/tests/test_exp2_package.py arith/exp2/tests/test_exp2_accuracy.py arith/log2/tests/test_log2_model.py arith/log2/tests/test_log2_package.py arith/log2/tests/test_log2_accuracy.py arith/sincos/tests/test_sincos_model.py arith/sincos/tests/test_sincos_package.py arith/sincos/tests/test_sincos_accuracy.py arith/atan2_mag/tests/test_atan2_mag_model.py arith/atan2_mag/tests/test_atan2_mag_package.py arith/atan2_mag/tests/test_atan2_mag_accuracy.py arith/fp_add/tests/test_fp_add_model.py arith/fp_add/tests/test_fp_add_package.py arith/fp_mul/tests/test_fp_mul_model.py arith/fp_mul/tests/test_fp_mul_package.py arith/fp_fma/tests/test_fp_fma_model.py arith/fp_fma/tests/test_fp_fma_package.py
       - name: Every variant against its model (exhaustive small points, random large points) and the bench's sensitivity to the latency (Icarus + cocotb)
         run: python -m pytest -q arith/{adder,multiplier,mac,fp_add,fp_mul,fp_fma}/tests/test_*_exhaustive_rtl.py arith/{adder,multiplier,mac,fp_add,fp_mul,fp_fma}/tests/test_*_random_rtl.py arith/{adder,multiplier,mac,fp_add,fp_mul,fp_fma}/tests/test_*_latency_rtl.py arith/{adder,multiplier,mac,fp_add,fp_mul,fp_fma}/tests/test_*_harness_rtl.py
       - name: Seeded faults - every mutant killed by the bench
