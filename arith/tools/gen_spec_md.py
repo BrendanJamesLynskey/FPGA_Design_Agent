@@ -8,6 +8,7 @@ import argparse
 import sys
 
 from arith.tools import arith_common as ac
+from arith.tools import gen_surface as gs
 
 
 def render(fn: str) -> str:
@@ -43,12 +44,13 @@ def render(fn: str) -> str:
           "- Verification after integration: rerun the packaged harness against your instance ([harness/README.md](harness/README.md)); it needs no other file of this repository.",
           "", "## What a user could guess wrong", ""]
     L += [f"- {g}" for g in s["guess_wrong"]]
+    L += gs.measured_section(fn)
     L += ["", "## Files", "",
           "- [model.py](model.py): the bit-exact model; tests/test_*_model.py check it against independent formulations",
           "- [harness/](harness/): the packaged verification harness a user reruns against their own instance (model, bench, SystemVerilog checker, coverage targets, standalone runner)",
           "- [tests/](tests/): the cocotb bench, exhaustive and random points, mutation and formal tests; [verif/testplan.yaml](verif/testplan.yaml) names each",
           "- [verif/mutants.yaml](verif/mutants.yaml), [formal/jobs.yaml](formal/jobs.yaml): the seeded faults and the formal jobs; results in [verif/results/](verif/results/)",
-          "- [build/](build/): one `build.yaml` per variant for an out-of-context Vivado run on Artix-7 and K26 (prepared, not run); [ooc/](ooc/): the generated register wrappers",
+          "- [build/](build/): one `build.yaml` per variant for an out-of-context Vivado run on Artix-7 and K26 (prepared in brief 139a, run in brief 160); [ooc/](ooc/): the generated register wrappers",
           "- [../../formal/lean/Arith/](../../formal/lean/Arith/): Lean statements (not approved by a human)", ""]
     return "\n".join(L)
 

@@ -91,5 +91,5 @@ Written without knowing the design the block will sit in (brief 139a, owner deci
 - [harness/](harness/): the packaged verification harness a user reruns against their own instance (model, bench, SystemVerilog checker, coverage targets, standalone runner)
 - [tests/](tests/): the cocotb bench, exhaustive and random points, mutation and formal tests; [verif/testplan.yaml](verif/testplan.yaml) names each
 - [verif/mutants.yaml](verif/mutants.yaml), [formal/jobs.yaml](formal/jobs.yaml): the seeded faults and the formal jobs; results in [verif/results/](verif/results/)
-- [build/](build/): one `build.yaml` per variant for an out-of-context Vivado run on Artix-7 and K26 (prepared, not run); [ooc/](ooc/): the generated register wrappers
+- [build/](build/): one `build.yaml` per variant for an out-of-context Vivado run on Artix-7 and K26 (prepared in brief 139a, run in brief 160); [ooc/](ooc/): the generated register wrappers
 - [../../formal/lean/Arith/](../../formal/lean/Arith/): Lean statements (not approved by a human)

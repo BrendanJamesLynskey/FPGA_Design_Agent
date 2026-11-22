@@ -7,8 +7,8 @@ Two briefs built the first functions side by side, each with its own layout and 
 The first functions of a library of FPGA arithmetic, taken as far as they can go before Vivado: each has a specification, a bit-exact model, 2 to 3 RTL variants
 that differ in a real PPA trade-off, simulation against the model (exhaustive at small widths, edge-value and random at large ones, with seeded faults to show the
 bench can fail), formal equivalence between the variants where SymbiYosys allows, Lean statements for all widths, an interface contract and integration guidance, a packaged verification harness, a traced testplan, and prepared out-of-context
-Vivado builds for Artix-7 (xc7a100t) and Kria K26 (xck26). **Nothing here has been run through Vivado**: every statement about LUTs, carry chains, DSPs, Fmax or power
-is an expectation written down before measuring (marked "intended primitive use" in each RTL header and in each spec), and there is no performance requirement in the
+Vivado builds for Artix-7 (xc7a100t) and Kria K26 (xck26). **Brief 139a ran nothing through Vivado; brief 160 then did** (see "Measured" below): every statement in the RTL headers and specs about LUTs, carry chains, DSPs, Fmax or power
+was an expectation written down before measuring (marked "intended primitive use" in each RTL header and in each spec), and there is no performance requirement in the
 testplans until the runs exist. The plan this sits in is [docs/arithmetic_pareto_plan.md](../docs/arithmetic_pareto_plan.md) (brief 137; at the time of writing it is a draft in that brief's
 worktree, not yet merged, so this layout follows the brief's own and is mapped to the plan's library format under "Layout" below).
 
@@ -67,18 +67,20 @@ python -m arith.tools.gen_build; python -m arith.tools.gen_spec_md; python -m ar
 python -m flow.trace_v1 check                     # the 116 gate: every test named by an item, every requirement traced
 ```
 
-### Running the Vivado characterisation (not done yet)
+### Running the Vivado characterisation (done in brief 160)
 
 Each `<fn>/build/<variant>/build.yaml` is in the format of `flow/prepare.py` (`top`, `part`, `sources`, `generics`) with the out-of-context keys of `flow/ipchar.tcl`: the wrapper
 top (every input and output registered, clock on port `clk`), the two parts and a target clock for each, the points to run (`points`) and the primitive use expected at each part.
 A run is `synth_design -mode out_of_context`, `opt_design`, `place_design`, `route_design` on one thread, with a heavy slot (`_handoff/take_heavy_slot.sh`, peak declared from
 `_handoff/fpga_agent/resources/vivado_peak.py`). A tight target clock matters: at an easy clock the tool stops optimising and Fmax is hidden (the FPGA course's Part 8), so the
-clocks in the build files are starting points and the characterisation should sweep them. The results go to `<fn>/surface/<part>/`, one row per variant and point with the Vivado
-release, the target clock, utilisation, WNS and WHS, vectorless power and the latency from `spec.yaml`.
+clocks in the build files are starting points and the characterisation should sweep them. The runner is `python -m arith.tools.run_vivado_ooc` (it reads these build files, takes a heavy slot per session and runs one session per function, variant and part); the records are
+`<fn>/verif/results/vivado_ooc_<variant>_<part>.json` (one row per point: LUT, FF, carry cells, DSP, BRAM, WNS, WHS, logic levels, vectorless power, run time, Vivado release, target clock), and
+`python -m arith.tools.gen_surface` turns them into `<fn>/verif/results/vivado_surface.json` (latency, expectation verdicts, Pareto marks), the Measured table of each `spec.md` and
+[results/160_arith_vivado/README.md](../results/160_arith_vivado/README.md).
 
 ## Fixed-point, divide, square root, leading-zero count (brief 139b)
 
-The first functions of the owner's FPGA arithmetic library (plan: [docs/arithmetic_pareto_plan.md](../docs/arithmetic_pareto_plan.md) on brief 137's branch `b137-arith-pareto`, not yet on main when this was written; the layout below is the brief's own, one folder per function, and is to be aligned with brief 137's library format when that merges). Each function is specified, modelled bit-exactly, implemented in several variants that differ in a real power/performance/area trade-off, verified in simulation, checked formally, given a Lean statement where one is tractable, and **prepared for Vivado but not built**: there is no Fmax, area or power figure anywhere in this folder.
+The first functions of the owner's FPGA arithmetic library (plan: [docs/arithmetic_pareto_plan.md](../docs/arithmetic_pareto_plan.md) on brief 137's branch `b137-arith-pareto`, not yet on main when this was written; the layout below is the brief's own, one folder per function, and is to be aligned with brief 137's library format when that merges). Each function is specified, modelled bit-exactly, implemented in several variants that differ in a real power/performance/area trade-off, verified in simulation, checked formally, given a Lean statement where one is tractable, and **prepared for Vivado**; brief 139b built nothing, and the measured Fmax, area and power from brief 160 are in each spec's Measured section and in [results/160_arith_vivado](../results/160_arith_vivado/README.md).
 
 | Function | Variants | Spec | Lean (all widths, statements not approved) |
 |---|---|---|---|
@@ -98,7 +100,7 @@ tests/                  test_<f>_model.py (no simulator), test_<f>_rtl.py (Icaru
 harness/                the packaged verification harness a user reruns against their own instance (run.py, coverage.yaml, README.md; owner decision 24)
 formal/                 <function>_fv.sv, the SymbiYosys harness (reference or characterisation, variant against variant)
 verif/                  testplan.yaml (schema v1, the 116 gate), mutants.yaml, lean_approvals.yaml (the owner's, empty), generated matrix.md and matrix.html
-build/<variant>/{a7,k26}/   build.yaml and ooc.xdc for an out-of-context Vivado run (generated by arith/tools/gen_build.py; not run)
+build/<variant>/{a7,k26}/   build.yaml and ooc.xdc for an out-of-context Vivado run (generated by arith/tools/gen_build.py; run in brief 160)
 ```
 
 The Lean files are in [formal/lean/Arith](../formal/lean/Arith/Divide.lean) (`Divide`, `Rounding`, `Isqrt`, `Lzc`, and the generated `CrossCheck.lean`).
@@ -117,4 +119,4 @@ Tools: Icarus Verilog, Verilator and SymbiYosys with the slang front end, from t
 
 ### What is not done
 
-Vivado out-of-context runs (the prepared `build.yaml` files are for a free heavy slot), post-implementation simulation, a structural netlist, Lean proofs of the non-restoring square root and of the stagewise normaliser, and the human approval of any specification or Lean statement. Every requirement is `spec_status: draft`.
+Post-implementation simulation (the Vivado out-of-context runs were made in brief 160), a structural netlist, Lean proofs of the non-restoring square root and of the stagewise normaliser, and the human approval of any specification or Lean statement. Every requirement is `spec_status: draft`.

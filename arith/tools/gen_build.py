@@ -117,7 +117,7 @@ def build_text(fn: str, spec: dict, var: dict, fab: str) -> str:
         "constraints": [f"arith/{fn}/build/{var['id']}/{fab}/ooc.xdc"],
         "generics": {**base, **{k: v for k, v in pts[0]["generics"].items() if k not in base}},
         "points": [{"generics": {**base, **p["generics"]}, "expected_primitives": p["expected_primitives"]} for p in pts],
-        "status": "prepared, not run (no Vivado in brief 139b)",
+        "status": "prepared in brief 139b, run in brief 160 (python -m arith.tools.run_vivado_ooc); records in arith/<function>/verif/results/vivado_ooc_*.json",
         "variant": var["id"],
         "function": fn,
     }
@@ -125,7 +125,7 @@ def build_text(fn: str, spec: dict, var: dict, fab: str) -> str:
             f"# {f['note']}.\n"
             "# Keys top, part, sources, constraints, generics are the flow's design build.yaml; mode, clock_ns, points and expected_primitives extend it for an\n"
             "# out-of-context run (one Vivado run per entry of `points`). expected_primitives is a planning estimate from spec.yaml, NOT a measurement; carry4 is the\n"
-            "# 7-series CARRY4 count (UltraScale+ CARRY8 is about half). The runs are for a free heavy slot; none has been made.\n")
+            "# 7-series CARRY4 count (UltraScale+ CARRY8 is about half). The runs were made in brief 160 (arith/tools/run_vivado_ooc.py).\n")
     return head + yaml.safe_dump(doc, sort_keys=False, default_flow_style=None, width=160)
 
 
@@ -209,7 +209,7 @@ def build_text_a(fn: str, variant: str, spec: dict) -> str:
     y = {
         "variant": variant,
         "function": fn,
-        "status": "prepared, not run: no Vivado in brief 139a; a Vivado out-of-context run reads this file (see arith/README.md, 'Running the Vivado characterisation')",
+        "status": "prepared in brief 139a, run in brief 160 (python -m arith.tools.run_vivado_ooc reads this file; see arith/README.md, 'Running the Vivado characterisation'); records in arith/<function>/verif/results/vivado_ooc_*.json",
         "top": v["module"] + "_ooc",
         "part": ac.PARTS["a7"],
         "sources": [f"arith/{fn}/{v['file']}", f"arith/{fn}/ooc/{v['module']}_ooc.sv"],
