@@ -229,6 +229,12 @@ def validate(spec: dict[str, Any], allow_rates: bool = False, need_proof: bool =
             interfaces_errors = None
         if interfaces_errors is not None:
             errs += [f"spec.yaml interfaces: {e}" for e in interfaces_errors(spec["interfaces"])]
+    if "off_chip" in spec:                           # brief 155: optional off-chip load and line per port group (flow/offchip_check.py)
+        try:
+            from flow.offchip_check import off_chip_errors
+        except ImportError:
+            from offchip_check import off_chip_errors      # run as a script: flow/ is on sys.path
+        errs += [f"spec.yaml {e}" for e in off_chip_errors(spec["off_chip"])]
     params = spec.get("parameters") or {}
     if not isinstance(params, dict):
         errs.append("'parameters' must be a mapping")
