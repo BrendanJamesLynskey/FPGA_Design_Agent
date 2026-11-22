@@ -69,4 +69,4 @@ Brief 153 fixed both (`flow.sources.design_rtl`). Brief 55's end-to-end VHDL run
   (mismatch: PREFLIGHT_FAIL line, no record, stop flag). `DISABLE_AUTOUPDATER=1` already set in `~/.claude/settings.json`.
 - Other tools as found: GHDL from `~/.local/bin/ghdl`, Vivado under `/opt/Xilinx`, repo venv `FPGA_Design_Agent/.venv`; no installs during the runs.
 - Records: each run's `runs/<id>/` directory is copied (role_usage.jsonl, run.json-style summary, the design's `rtl/` and `spec.yaml`, no keys) to
-  `results/167_vhdl_rerun/runs/`. `agent/tests/test_99_prompts.py` runs before any push of them. Private transcripts, if any, go to a Knowledge PR.
+  `results/167_vhdl_rerun/records/`. `agent/tests/test_99_prompts.py` runs before any push of them. Private transcripts, if any, go to a Knowledge PR.
