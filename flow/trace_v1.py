@@ -71,7 +71,7 @@ KINDS = ("functional", "performance", "interface", "safety")
 METHODS = ("sim_test", "uvm_test", "assertion", "formal", "formal_lean", "coverage_bin", "timing", "sim_measurement", "board_measurement", "review")
 MEASURING = ("timing", "sim_measurement", "board_measurement")
 INSTRUMENTS = ("eye_scan", "jtag_registers", "sysmon", "ila_capture", "latency_loop", "optical_ddm", "external_equipment")
-STATUSES = ("pass", "fail", "not_run", "stale", "bounded", "unapproved")
+STATUSES = ("pass", "fail", "not_run", "not_in_run", "skipped", "stale", "bounded", "unapproved")
 OPS = ("eq", "ne", "le", "ge", "lt", "gt", "true", "false", "in")
 LABEL = {"sim_test": "simulation test", "uvm_test": "UVM test", "assertion": "assertion (SVA)", "formal": "formal", "formal_lean": "Lean proof (all widths)", "coverage_bin": "coverage",
          "timing": "post-route timing", "sim_measurement": "simulation measurement", "board_measurement": "board measurement", "review": "review"}
@@ -96,6 +96,8 @@ def v1_designs() -> list[Path]:
     """Designs whose testplan is schema v1 or v0 (every one is rendered; only v1 files are gated)."""
     out = []
     for p in sorted((ROOT / "designs").glob("*/verif/testplan.yaml")):
+        out.append(p.parent.parent)
+    for p in sorted((ROOT / "arith").glob("*/verif/testplan.yaml")):          # brief 139b: the arithmetic library's functions
         out.append(p.parent.parent)
     return out
 
@@ -201,11 +203,13 @@ def cmp(value: Any, op: str, bound: Any) -> bool:
     return {"le": v <= b, "ge": v >= b, "lt": v < b, "gt": v > b}[op]
 
 
-def _junit(p: Path) -> dict[str, bool]:
-    out: dict[str, bool] = {}
+def _junit(p: Path) -> dict[str, str]:
+    """Test name to "pass", "fail" or "skipped" as recorded in the JUnit file (brief 138: a skip is not a failure)."""
+    out: dict[str, str] = {}
     for tc in ET.parse(p).getroot().iter("testcase"):
         stem = (tc.get("classname") or "").split(".")[-1]
-        out[f"{stem}::{tc.get('name')}"] = not any(c.tag in ("failure", "error", "skipped") for c in tc)
+        tags = {c.tag for c in tc}
+        out[f"{stem}::{tc.get('name')}"] = "fail" if tags & {"failure", "error"} else "skipped" if "skipped" in tags else "pass"
     return out
 
 
@@ -251,12 +255,17 @@ def judge(item: dict, req_by_id: dict, cache: dict) -> dict[str, Any]:
                     want += [k for k in runs if k.startswith(t[:-1])]
                 else:
                     want.append(t)
-            missing = [t for t in want if t not in runs]
-            bad = [t for t in want if t in runs and not runs[t]]
-            ok = bool(want) and not missing and not bad
-            res.update(status="pass" if ok else "fail", value=f"{len(want) - len(bad) - len(missing)} of {len(want)} tests passed",
-                       detail=("; ".join(([f"failed: {', '.join(bad[:4])}"] if bad else []) + ([f"absent from the run: {', '.join(missing[:4])}"] if missing else []))
-                              or f"{len(want)} test(s) passed in the recorded run"))
+            # Brief 138: failed (present and failed) is `fail`; a name absent from the recorded run, or a `stem::*` that matches nothing, is `not_in_run`
+            # (the evidence predates the test); skipped in the run is `skipped`. Neither of the last two is a failure.
+            missing = [t for t in want if t not in runs] + ([t for t in ev.get("tests") or [] if t.endswith("::*") and not any(k.startswith(t[:-1]) for k in runs)])
+            bad = [t for t in want if runs.get(t) == "fail"]
+            skipped = [t for t in want if runs.get(t) == "skipped"]
+            npass = sum(1 for t in want if runs.get(t) == "pass")
+            status = "fail" if bad else "not_in_run" if missing else "skipped" if skipped else "pass" if want else "not_in_run"
+            parts = ([f"failed: {', '.join(bad)}"] if bad else []) + ([f"not in the recorded run: {', '.join(missing)}"] if missing else []) \
+                + ([f"skipped in the recorded run: {', '.join(skipped)}"] if skipped else [])
+            res.update(status=status, value=f"{npass} of {len(want) + sum(1 for t in missing if t.endswith('::*'))} tests passed",
+                       detail="; ".join(parts) or f"{len(want)} test(s) passed in the recorded run")
             return res
         if reader == "gates":
             g = cache.setdefault(("json", str(p)), json.loads(p.read_text()))
@@ -462,6 +471,11 @@ def collect(design: Path, lean: str = "recorded") -> dict[str, Any]:
             "gaps": gaps, "summary": summarise(rows, results, gaps), "notes": plan.get("notes", "")}
 
 
+def _no_pass_state(st: list[str]) -> str:
+    """With no passing item: skipped or not-in-the-recorded-run (brief 138) if an item says so, else not_run. All three count as no passing evidence."""
+    return "not_in_run" if "not_in_run" in st else "skipped" if "skipped" in st else "not_run"
+
+
 def rollup(q: dict, items: list[dict]) -> dict:
     st = [i["status"] for i in items]
     meas = [i for i in items if i["method"] in MEASURING and i.get("judged_by_bound")]
@@ -480,7 +494,7 @@ def rollup(q: dict, items: list[dict]) -> dict:
         elif any(i["status"] == "pass" for i in items):
             state = "no_measurement"
         else:
-            state = "not_run"
+            state = _no_pass_state(st)
     else:
         if "pass" in st:
             state = "verified"
@@ -491,7 +505,7 @@ def rollup(q: dict, items: list[dict]) -> dict:
         elif "unapproved" in st:
             state = "unapproved"
         else:
-            state = "not_run"
+            state = _no_pass_state(st)
     ext = q.get("external")
     hw_done = any(i["method"] == "board_measurement" and i["status"] == "pass" for i in items)
     hw_methods = sorted({i["method"] for i in items if i["status"] == "pass"})
@@ -507,14 +521,20 @@ def rollup(q: dict, items: list[dict]) -> dict:
     return row
 
 
+def _names(results: list, rid: str, status: str) -> str:
+    """The detail of this requirement's items with the given status, so the gap list names the missing or skipped tests."""
+    return "; ".join(i["detail"] for i in results if rid in (i.get("requirements") or []) and i["status"] == status)
+
+
 def find_gaps(plan: dict, rows: list, results: list, req_by_id: dict, design: Path | None = None) -> list[dict]:
     g: list[dict] = []
     for r in rows:
         if not r["items"]:
             g.append({"type": "untraced_requirement", "id": r["id"], "text": "no verification item traces to this requirement", "gate": True})
-        elif r["state"] in ("not_run", "no_measurement", "stale", "bounded", "fail"):
+        elif r["state"] in ("not_run", "not_in_run", "skipped", "no_measurement", "stale", "bounded", "fail"):
             g.append({"type": "no_passing_evidence", "id": r["id"], "state": r["state"], "text": {
-                "not_run": "no passing evidence", "no_measurement": "a performance requirement with no measured value inside the bound",
+                "not_run": "no passing evidence", "not_in_run": "no passing evidence: " + _names(results, r["id"], "not_in_run"),
+                "skipped": "no passing evidence: " + _names(results, r["id"], "skipped"), "no_measurement": "a performance requirement with no measured value inside the bound",
                 "stale": "its evidence is stale", "bounded": "only a bounded formal result", "fail": "an item fails"}[r["state"]], "gate": False})
         if r["state"] == "verified" and r["kind"] == "performance" and r["basis"] == "simulation":
             g.append({"type": "performance_sim_only", "id": r["id"], "text": "verified in simulation only, not measured on the board", "gate": False})
@@ -602,9 +622,13 @@ def summary_line(s: dict) -> str:
     ver = st.get("verified", 0)
     dele = s.get("verified_on_delegated", 0)
     bits = [f"{s['requirements']} requirements ({kinds}); {ver} verified" + (f", of which {dele} rest on delegated acceptances (the planner accepted the Lean statement on the owner's delegation; not human approvals)" if dele else "")]
-    for k, lab in (("bounded", "bounded only"), ("stale", "stale"), ("fail", "failing"), ("no_measurement", "performance with no measurement"), ("not_run", "with no passing evidence")):
+    for k, lab in (("bounded", "bounded only"), ("stale", "stale"), ("fail", "failing"), ("no_measurement", "performance with no measurement")):
         if st.get(k):
             bits.append(f"{st[k]} {lab}")
+    nop = st.get("not_run", 0) + st.get("not_in_run", 0) + st.get("skipped", 0)      # brief 138: all three are "no passing evidence", none is failing
+    if nop:
+        why = [f"{st[k]} {lab}" for k, lab in (("not_in_run", "not in the recorded run"), ("skipped", "skipped in the recorded run")) if st.get(k)]
+        bits.append(f"{nop} with no passing evidence" + (f" ({', '.join(why)})" if why else ""))
     if s["external"]:
         bits.append(f"{s['external_hardware_done']} of {s['external']} requirements that depend on an external element closed by hardware")
     if s["performance_board"] or s["performance_sim_only"] or s["performance_timing"]:
@@ -641,9 +665,9 @@ def gate(design: Path, lean: str = "recorded") -> list[str]:
 
 
 # ---- rendering -------------------------------------------------------------------------------------------
-STATE_TEXT = {"verified": "verified", "fail": "FAILS", "not_run": "not run", "stale": "stale", "bounded": "bounded only", "no_measurement": "no measurement",
-              "unapproved": "proved, statement not approved"}
-MARK = {"pass": "pass", "fail": "FAIL", "not_run": "not run", "stale": "stale", "bounded": "bounded", "unapproved": "statement not approved"}
+STATE_TEXT = {"verified": "verified", "fail": "FAILS", "not_run": "not run", "not_in_run": "not in the recorded run", "skipped": "skipped in the recorded run", "stale": "stale", "bounded": "bounded only",
+              "no_measurement": "no measurement", "unapproved": "proved, statement not approved"}
+MARK = {"pass": "pass", "fail": "FAIL", "not_run": "not run", "not_in_run": "not in the recorded run", "skipped": "skipped", "stale": "stale", "bounded": "bounded", "unapproved": "statement not approved"}
 
 
 def _tag(i: dict) -> str:
@@ -749,7 +773,7 @@ CSS = """:root{--bg:#fff;--fg:#111;--mut:#555;--line:#c9c9c9;--ok:#111;--bad:#b0
 body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,sans-serif}main{max-width:1200px;margin:0 auto;padding:16px}
 h1{font-size:1.4rem}h2{font-size:1.15rem;margin-top:2rem}.wrap{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:13px}
 th,td{border:1px solid var(--line);padding:4px 6px;text-align:left;vertical-align:top}th{background:var(--soft)}
-.pass{font-weight:600}.fail{color:var(--bad);font-weight:700}.not_run,.stale,.bounded,.unapproved{color:var(--mut);font-style:italic}.gap{border-left:3px solid var(--fg);padding-left:8px}
+.pass{font-weight:600}.fail{color:var(--bad);font-weight:700}.not_run,.not_in_run,.skipped,.stale,.bounded,.unapproved{color:var(--mut);font-style:italic}.gap{border-left:3px solid var(--fg);padding-left:8px}
 a{color:inherit}code{font-size:12px}.mut{color:var(--mut)}"""
 
 

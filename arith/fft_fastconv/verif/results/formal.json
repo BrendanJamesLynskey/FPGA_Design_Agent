@@ -1,0 +1,204 @@
+{
+ "function": "fft_fastconv",
+ "tool": "Yosys 0.70+385 (git sha1 098e46a36, Release, Clang /usr/bin/clang++ 21.1.8)",
+ "jobs": 8,
+ "ok": 8,
+ "results": [
+  {
+   "name": "axil_n16_wh12",
+   "top": "fft_fastconv_axil_fv",
+   "params": {
+    "FH": 8,
+    "GB": 1,
+    "L": 9,
+    "LOGN": 4,
+    "W": 8,
+    "WH": 12
+   },
+   "mode": "bmc",
+   "depth": 26,
+   "engine": "boolector",
+   "claim": "the register file's handshakes, responses, register map and commit rules (HB, ONE, RESP, RID, RUNM, COMMIT, DROP, SATP in the fv top) hold for every master that obeys the AXI4-Lite master rules and every busy and sat_pulse sequence, bounded to 26 clocks from reset",
+   "mutant": null,
+   "expected": "PASS",
+   "status": "PASS",
+   "ok": true,
+   "seconds": 6.4,
+   "failed_assertions": [],
+   "tail": ""
+  },
+  {
+   "name": "axil_n32_wh16",
+   "top": "fft_fastconv_axil_fv",
+   "params": {
+    "FH": 12,
+    "GB": 2,
+    "L": 17,
+    "LOGN": 5,
+    "W": 16,
+    "WH": 16
+   },
+   "mode": "bmc",
+   "depth": 26,
+   "engine": "boolector",
+   "claim": "the same, at LOGN 5, WH 16, bounded to 26 clocks from reset",
+   "mutant": null,
+   "expected": "PASS",
+   "status": "PASS",
+   "ok": true,
+   "seconds": 5.2,
+   "failed_assertions": [],
+   "tail": ""
+  },
+  {
+   "name": "mutant_axil_partial_strobes",
+   "top": "fft_fastconv_axil_fv",
+   "params": {
+    "FH": 8,
+    "GB": 1,
+    "L": 9,
+    "LOGN": 4,
+    "W": 8,
+    "WH": 12
+   },
+   "mode": "bmc",
+   "depth": 26,
+   "engine": "boolector",
+   "claim": "a build with the seeded fault axil_partial_strobes is refuted",
+   "mutant": "axil_partial_strobes",
+   "expected": "FAIL",
+   "status": "FAIL",
+   "ok": true,
+   "seconds": 0.7,
+   "failed_assertions": [
+    "COMMIT"
+   ],
+   "tail": ""
+  },
+  {
+   "name": "mutant_axil_refusal_ok",
+   "top": "fft_fastconv_axil_fv",
+   "params": {
+    "FH": 8,
+    "GB": 1,
+    "L": 9,
+    "LOGN": 4,
+    "W": 8,
+    "WH": 12
+   },
+   "mode": "bmc",
+   "depth": 26,
+   "engine": "boolector",
+   "claim": "a build with the seeded fault axil_refusal_ok is refuted",
+   "mutant": "axil_refusal_ok",
+   "expected": "FAIL",
+   "status": "FAIL",
+   "ok": true,
+   "seconds": 0.8,
+   "failed_assertions": [
+    "RESP_W"
+   ],
+   "tail": ""
+  },
+  {
+   "name": "mutant_axil_unmapped_read_ok",
+   "top": "fft_fastconv_axil_fv",
+   "params": {
+    "FH": 8,
+    "GB": 1,
+    "L": 9,
+    "LOGN": 4,
+    "W": 8,
+    "WH": 12
+   },
+   "mode": "bmc",
+   "depth": 26,
+   "engine": "boolector",
+   "claim": "a build with the seeded fault axil_unmapped_read_ok is refuted",
+   "mutant": "axil_unmapped_read_ok",
+   "expected": "FAIL",
+   "status": "FAIL",
+   "ok": true,
+   "seconds": 0.7,
+   "failed_assertions": [
+    "RUNM"
+   ],
+   "tail": ""
+  },
+  {
+   "name": "mutant_axil_ro_write_ok",
+   "top": "fft_fastconv_axil_fv",
+   "params": {
+    "FH": 8,
+    "GB": 1,
+    "L": 9,
+    "LOGN": 4,
+    "W": 8,
+    "WH": 12
+   },
+   "mode": "bmc",
+   "depth": 26,
+   "engine": "boolector",
+   "claim": "a build with the seeded fault axil_ro_write_ok is refuted",
+   "mutant": "axil_ro_write_ok",
+   "expected": "FAIL",
+   "status": "FAIL",
+   "ok": true,
+   "seconds": 0.9,
+   "failed_assertions": [
+    "RESP_W"
+   ],
+   "tail": ""
+  },
+  {
+   "name": "mutant_axil_commit_register",
+   "top": "fft_fastconv_axil_fv",
+   "params": {
+    "FH": 8,
+    "GB": 1,
+    "L": 9,
+    "LOGN": 4,
+    "W": 8,
+    "WH": 12
+   },
+   "mode": "bmc",
+   "depth": 26,
+   "engine": "boolector",
+   "claim": "a build with the seeded fault axil_commit_register is refuted",
+   "mutant": "axil_commit_register",
+   "expected": "FAIL",
+   "status": "FAIL",
+   "ok": true,
+   "seconds": 0.7,
+   "failed_assertions": [
+    "COMMIT"
+   ],
+   "tail": ""
+  },
+  {
+   "name": "mutant_axil_address_bits",
+   "top": "fft_fastconv_axil_fv",
+   "params": {
+    "FH": 8,
+    "GB": 1,
+    "L": 9,
+    "LOGN": 4,
+    "W": 8,
+    "WH": 12
+   },
+   "mode": "bmc",
+   "depth": 26,
+   "engine": "boolector",
+   "claim": "a build with the seeded fault axil_address_bits is refuted",
+   "mutant": "axil_address_bits",
+   "expected": "FAIL",
+   "status": "FAIL",
+   "ok": true,
+   "seconds": 0.7,
+   "failed_assertions": [
+    "COMMIT"
+   ],
+   "tail": ""
+  }
+ ]
+}

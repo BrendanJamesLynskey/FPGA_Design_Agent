@@ -1,0 +1,325 @@
+{
+ "function": "fft",
+ "tool": "Yosys 0.70+385 (git sha1 098e46a36, Release, Clang /usr/bin/clang++ 21.1.8)",
+ "jobs": 13,
+ "ok": 13,
+ "results": [
+  {
+   "name": "stage_n16_d2_t0_w4_s1_r1",
+   "top": "fft_sdf_stage_fv",
+   "params": {
+    "LOGN": 4,
+    "LD": 1,
+    "TYP": 0,
+    "WI": 4,
+    "SCALE": 1,
+    "RND": 1
+   },
+   "mode": "bmc",
+   "depth": 10,
+   "engine": "boolector",
+   "claim": "the stage's butterfly (delay 2, type 0, 4-bit words, SCALE 1, RND 1) and position output equal the integer shadow on every input sequence, bounded to 10 clocks from an arbitrary state",
+   "mutant": null,
+   "expected": "PASS",
+   "status": "PASS",
+   "ok": true,
+   "seconds": 0.7,
+   "failed_assertions": [],
+   "tail": ""
+  },
+  {
+   "name": "stage_n16_d2_t1_w4_s1_r1",
+   "top": "fft_sdf_stage_fv",
+   "params": {
+    "LOGN": 4,
+    "LD": 1,
+    "TYP": 1,
+    "WI": 4,
+    "SCALE": 1,
+    "RND": 1
+   },
+   "mode": "bmc",
+   "depth": 10,
+   "engine": "boolector",
+   "claim": "the stage's butterfly (delay 2, type 1, 4-bit words, SCALE 1, RND 1) and position output equal the integer shadow on every input sequence, bounded to 10 clocks from an arbitrary state",
+   "mutant": null,
+   "expected": "PASS",
+   "status": "PASS",
+   "ok": true,
+   "seconds": 0.5,
+   "failed_assertions": [],
+   "tail": ""
+  },
+  {
+   "name": "stage_n16_d2_t1_w4_s0_r0",
+   "top": "fft_sdf_stage_fv",
+   "params": {
+    "LOGN": 4,
+    "LD": 1,
+    "TYP": 1,
+    "WI": 4,
+    "SCALE": 0,
+    "RND": 0
+   },
+   "mode": "bmc",
+   "depth": 10,
+   "engine": "boolector",
+   "claim": "the stage's butterfly (delay 2, type 1, 4-bit words, SCALE 0, RND 0) and position output equal the integer shadow on every input sequence, bounded to 10 clocks from an arbitrary state",
+   "mutant": null,
+   "expected": "PASS",
+   "status": "PASS",
+   "ok": true,
+   "seconds": 0.6,
+   "failed_assertions": [],
+   "tail": ""
+  },
+  {
+   "name": "stage_n32_d4_t1_w4_s1_r1",
+   "top": "fft_sdf_stage_fv",
+   "params": {
+    "LOGN": 5,
+    "LD": 2,
+    "TYP": 1,
+    "WI": 4,
+    "SCALE": 1,
+    "RND": 1
+   },
+   "mode": "bmc",
+   "depth": 14,
+   "engine": "boolector",
+   "claim": "the stage's butterfly (delay 4, type 1, 4-bit words, SCALE 1, RND 1) and position output equal the integer shadow on every input sequence, bounded to 14 clocks from an arbitrary state",
+   "mutant": null,
+   "expected": "PASS",
+   "status": "PASS",
+   "ok": true,
+   "seconds": 1.1,
+   "failed_assertions": [],
+   "tail": ""
+  },
+  {
+   "name": "stage_n32_d4_t0_w5_s0_r1",
+   "top": "fft_sdf_stage_fv",
+   "params": {
+    "LOGN": 5,
+    "LD": 2,
+    "TYP": 0,
+    "WI": 5,
+    "SCALE": 0,
+    "RND": 1
+   },
+   "mode": "bmc",
+   "depth": 14,
+   "engine": "boolector",
+   "claim": "the stage's butterfly (delay 4, type 0, 5-bit words, SCALE 0, RND 1) and position output equal the integer shadow on every input sequence, bounded to 14 clocks from an arbitrary state",
+   "mutant": null,
+   "expected": "PASS",
+   "status": "PASS",
+   "ok": true,
+   "seconds": 1.0,
+   "failed_assertions": [],
+   "tail": ""
+  },
+  {
+   "name": "mutant_stage_mj",
+   "top": "fft_sdf_stage_fv",
+   "params": {
+    "LOGN": 4,
+    "LD": 1,
+    "TYP": 1,
+    "WI": 4,
+    "SCALE": 1,
+    "RND": 1
+   },
+   "mode": "bmc",
+   "depth": 10,
+   "engine": "boolector",
+   "claim": "a build with the seeded fault stage_mj is refuted",
+   "mutant": "stage_mj",
+   "expected": "FAIL",
+   "status": "FAIL",
+   "ok": true,
+   "seconds": 0.7,
+   "failed_assertions": [
+    "BFLY_IM",
+    "BFLY_RE"
+   ],
+   "tail": ""
+  },
+  {
+   "name": "mutant_stage_dif",
+   "top": "fft_sdf_stage_fv",
+   "params": {
+    "LOGN": 4,
+    "LD": 1,
+    "TYP": 1,
+    "WI": 4,
+    "SCALE": 1,
+    "RND": 1
+   },
+   "mode": "bmc",
+   "depth": 10,
+   "engine": "boolector",
+   "claim": "a build with the seeded fault stage_dif is refuted",
+   "mutant": "stage_dif",
+   "expected": "FAIL",
+   "status": "FAIL",
+   "ok": true,
+   "seconds": 0.7,
+   "failed_assertions": [
+    "BFLY_RE"
+   ],
+   "tail": ""
+  },
+  {
+   "name": "mutant_stage_round",
+   "top": "fft_sdf_stage_fv",
+   "params": {
+    "LOGN": 4,
+    "LD": 1,
+    "TYP": 1,
+    "WI": 4,
+    "SCALE": 1,
+    "RND": 1
+   },
+   "mode": "bmc",
+   "depth": 10,
+   "engine": "boolector",
+   "claim": "a build with the seeded fault stage_round is refuted",
+   "mutant": "stage_round",
+   "expected": "FAIL",
+   "status": "FAIL",
+   "ok": true,
+   "seconds": 0.7,
+   "failed_assertions": [
+    "BFLY_RE"
+   ],
+   "tail": ""
+  },
+  {
+   "name": "mutant_stage_minus_j",
+   "top": "fft_sdf_stage_fv",
+   "params": {
+    "LOGN": 4,
+    "LD": 1,
+    "TYP": 1,
+    "WI": 4,
+    "SCALE": 1,
+    "RND": 1
+   },
+   "mode": "bmc",
+   "depth": 10,
+   "engine": "boolector",
+   "claim": "a build with the seeded fault stage_minus_j is refuted",
+   "mutant": "stage_minus_j",
+   "expected": "FAIL",
+   "status": "FAIL",
+   "ok": true,
+   "seconds": 0.7,
+   "failed_assertions": [
+    "BFLY_IM"
+   ],
+   "tail": ""
+  },
+  {
+   "name": "mutant_stage_store",
+   "top": "fft_sdf_stage_fv",
+   "params": {
+    "LOGN": 4,
+    "LD": 1,
+    "TYP": 1,
+    "WI": 4,
+    "SCALE": 1,
+    "RND": 1
+   },
+   "mode": "bmc",
+   "depth": 10,
+   "engine": "boolector",
+   "claim": "a build with the seeded fault stage_store is refuted",
+   "mutant": "stage_store",
+   "expected": "FAIL",
+   "status": "FAIL",
+   "ok": true,
+   "seconds": 0.7,
+   "failed_assertions": [
+    "BFLY_RE"
+   ],
+   "tail": ""
+  },
+  {
+   "name": "mutant_stage_pos",
+   "top": "fft_sdf_stage_fv",
+   "params": {
+    "LOGN": 4,
+    "LD": 1,
+    "TYP": 1,
+    "WI": 4,
+    "SCALE": 1,
+    "RND": 1
+   },
+   "mode": "bmc",
+   "depth": 10,
+   "engine": "boolector",
+   "claim": "a build with the seeded fault stage_pos is refuted",
+   "mutant": "stage_pos",
+   "expected": "FAIL",
+   "status": "FAIL",
+   "ok": true,
+   "seconds": 0.6,
+   "failed_assertions": [
+    "POS"
+   ],
+   "tail": ""
+  },
+  {
+   "name": "mutant_stage_half",
+   "top": "fft_sdf_stage_fv",
+   "params": {
+    "LOGN": 4,
+    "LD": 1,
+    "TYP": 1,
+    "WI": 4,
+    "SCALE": 1,
+    "RND": 1
+   },
+   "mode": "bmc",
+   "depth": 10,
+   "engine": "boolector",
+   "claim": "a build with the seeded fault stage_half is refuted",
+   "mutant": "stage_half",
+   "expected": "FAIL",
+   "status": "FAIL",
+   "ok": true,
+   "seconds": 0.7,
+   "failed_assertions": [
+    "BFLY_IM",
+    "BFLY_RE"
+   ],
+   "tail": ""
+  },
+  {
+   "name": "mutant_stage_sof",
+   "top": "fft_sdf_stage_fv",
+   "params": {
+    "LOGN": 4,
+    "LD": 1,
+    "TYP": 1,
+    "WI": 4,
+    "SCALE": 1,
+    "RND": 1
+   },
+   "mode": "bmc",
+   "depth": 10,
+   "engine": "boolector",
+   "claim": "a build with the seeded fault stage_sof is refuted",
+   "mutant": "stage_sof",
+   "expected": "FAIL",
+   "status": "FAIL",
+   "ok": true,
+   "seconds": 0.8,
+   "failed_assertions": [
+    "POS"
+   ],
+   "tail": ""
+  }
+ ]
+}

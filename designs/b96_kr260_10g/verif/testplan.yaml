@@ -207,6 +207,12 @@ requirements:
   # A formal_lean item is a Lean 4 proof, checked by Lean's kernel. Its statement is the specification and only a human approves it
   # (verif/lean_approvals.yaml, empty today: every statement below is "statement not approved"). The axiom tier and how the Lean model meets the
   # RTL are shown next to the result. Nothing here models timing, control or metastability.
+  - id: B96-F-DBGXVC
+    kind: functional
+    title: A debug build reaches an ILA over the network and leaves the trading path alone
+    text: Build dbg_xvc (the eyescan build plus a PS-AXI Debug Bridge and one ILA) closes timing and report_cdc, adds no cell to and removes no cell from the core's hierarchy except the read-only taps, and, on the board, Vivado finds and captures from the ILA over XVC while Linux keeps running. Never part of a build whose latency is measured.
+    source: designs/b96_kr260_10g/dbg_xvc/docs/dbg_xvc.md
+    spec_status: draft
   - id: B96-F-LEAN-GRAY-STEP
     kind: functional
     title: A pointer's gray code changes in exactly one bit per count, at every width
@@ -538,6 +544,61 @@ verification:
     title: Line-rate burst from a traffic source
     evidence: {file: results/b96/hw/throughput/stage3.json, reader: json, field: frames_lost}
     planned: needs a 10G network card or a traffic generator
+  # ---- build dbg_xvc: ILA over Ethernet (brief 131; the board test is pre-registered in dbg_xvc/docs/xvc_board_test.md, not run) ----------------
+  - id: V-XVC-TIM-SETUP
+    requirements: [B96-P-TIMING, B96-F-DBGXVC]
+    method: timing
+    title: Build dbg_xvc, routed
+    evidence: {file: results/b131/builds/dbg_xvc/digest.json, reader: json, field: timing.wns_ns}
+    checks: [designs/b96_kr260_10g/dbg_xvc/rtl/xvc_debug.sv, designs/b96_kr260_10g/dbg_xvc/rtl/b96_core.sv, designs/b96_kr260_10g/dbg_xvc/rtl/kr260_10g_top.sv]
+  - id: V-XVC-TIM-HOLD
+    requirements: [B96-P-HOLD, B96-F-DBGXVC]
+    method: timing
+    title: Build dbg_xvc, routed
+    evidence: {file: results/b131/builds/dbg_xvc/digest.json, reader: json, field: timing.whs_ns}
+    checks: [designs/b96_kr260_10g/dbg_xvc/rtl/xvc_debug.sv, designs/b96_kr260_10g/dbg_xvc/rtl/b96_core.sv, designs/b96_kr260_10g/dbg_xvc/rtl/kr260_10g_top.sv]
+  - id: V-XVC-CDC
+    requirements: [B96-S-CDC, B96-F-DBGXVC]
+    method: timing
+    title: report_cdc after routing, build dbg_xvc (no critical item)
+    evidence: {file: results/b131/builds/dbg_xvc/digest.json, reader: json}
+    pass_when: [{field: gates.cdc_no_critical, op: "true"}]
+    checks: [designs/b96_kr260_10g/dbg_xvc/rtl/xvc_debug.sv, designs/b96_kr260_10g/dbg_xvc/rtl/b96_core.sv]
+  - id: V-XVC-CDC-STRUCT
+    requirements: [B96-S-CDC, B96-F-DBGXVC]
+    method: timing
+    title: "The flow's post-synthesis CDC structure gate on dbg_xvc (brief 140: AMD's CDC-15 waiver for the XPM handshake left report_cdc no row for the 2203 hs_vec crossings; the flow now reads their exception from the timing exceptions)"
+    evidence: {file: results/b140/builds/dbg_xvc/digest.json, reader: json}
+    pass_when: [{field: gates.post_synth_cdc_structure_clean, op: "true"}]
+    checks: [designs/b96_kr260_10g/dbg_xvc/rtl/xvc_debug.sv, designs/b96_kr260_10g/dbg_xvc/rtl/b96_core.sv]
+  - id: V-XVC-FLOW-GATES
+    requirements: [B96-F-DBGXVC]
+    method: timing
+    title: "Every flow gate of build dbg_xvc, synthesis to bitstream (brief 140: six that failed in brief 131 now pass, by flow fixes and no waiver; the eyescan and default builds are unchanged)"
+    evidence: {file: results/b140/builds/dbg_xvc/gates.json, reader: json}
+    pass_when: [{field: pass, op: "true"}]
+    checks: [designs/b96_kr260_10g/dbg_xvc/rtl/xvc_debug.sv, designs/b96_kr260_10g/dbg_xvc/rtl/b96_core.sv, designs/b96_kr260_10g/dbg_xvc/rtl/kr260_10g_top.sv]
+  - id: V-XVC-VERDICT
+    requirements: [B96-F-DBGXVC]
+    method: sim_test
+    title: "The board test's pre-registered verdict fails on each broken criterion; the debug build differs from the parent only in the debug files"
+    evidence: {file: results/116_traceability/b96_kr260_10g/pytest_junit.xml, reader: junit, tests: ["test_b131_xvc::*"]}
+    checks: [designs/b96_kr260_10g/dbg_xvc/model/xvc_verdict.py, designs/b96_kr260_10g/dbg_xvc/build.yaml, designs/b96_kr260_10g/dbg_xvc/rtl/b96_core.sv]
+  - id: V-XVC-TRADING-PATH
+    requirements: [B96-F-DBGXVC]
+    method: timing
+    title: "Parent (eyescan) against dbg_xvc, same flow, same commit: the core's cells, and the worst slack of paths through the trading path"
+    evidence: {file: results/b131/compare/summary.json, reader: json}
+    pass_when: [{field: core_cells_removed, op: eq, value: 0}, {field: core_cells_added_outside_taps, op: eq, value: 0}]
+    checks: [designs/b96_kr260_10g/dbg_xvc/rtl/b96_core.sv, designs/b96_kr260_10g/dbg_xvc/scripts/dump_netlist_timing.tcl]
+  - id: V-HW-XVC-PLANNED
+    requirements: [B96-F-DBGXVC]
+    method: board_measurement
+    instrument: ila_capture
+    title: "ILA found and captured over XVC while Linux runs (pre-registered, dbg_xvc/board/xvc_board_session.sh)"
+    evidence: {file: results/b131/hw/*/record.json, reader: json, field: xvc.connected}
+    planned: board session with the owner (not scheduled)
+    checks: [designs/b96_kr260_10g/dbg_xvc/rtl/xvc_debug.sv]
   # ---- Lean proofs, all widths (brief 125; statements not approved, build status from formal/lean/records/build_record.json) ----------------
   - id: V-LEAN-GRAY-STEP
     requirements: [B96-F-LEAN-GRAY-STEP]
