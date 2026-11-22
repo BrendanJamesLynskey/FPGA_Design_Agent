@@ -94,13 +94,23 @@ Vivado 2026.1 (build 6511674), out-of-context synthesis, placement and routing o
 | booth_r4 | a7 | WA=16, WB=16, SIGNED=1, REG=1 | 5.0 | 359 | 96 | 0 | 61 | 0 | 0 | -2.665 | 130.5 | 10 | 1 | FL | missed |
 | booth_r4 | a7 | WA=18, WB=18, SIGNED=1, REG=1 | 5.0 | 491 | 108 | 0 | 77 | 0 | 0 | -3.2 | 122.0 | 13 | 1 | FL | missed |
 | booth_r4 | a7 | WA=32, WB=32, SIGNED=1, REG=1 | 5.0 | 1392 | 194 | 0 | 249 | 0 | 0 | -6.038 | 90.6 | 22 | 1 | FL | missed |
+| booth_r4 | k26 | WA=16, WB=16, SIGNED=1, REG=1 | 3.0 | 348 | 96 | 0 | 31 | 0 | 0 | 0.001 | >=333.4 | 9 | 1 | FL | missed |
+| booth_r4 | k26 | WA=18, WB=18, SIGNED=1, REG=1 | 3.0 | 484 | 108 | 0 | 43 | 0 | 0 | -0.148 | 317.7 | 10 | 1 | F | missed |
+| booth_r4 | k26 | WA=32, WB=32, SIGNED=1, REG=1 | 3.0 | 1392 | 194 | 0 | 125 | 0 | 0 | -1.608 | 217.0 | 13 | 1 | FL | missed |
 | dsp | a7 | WA=18, WB=18, SIGNED=1, STAGES=3 | 5.0 | 0 | 36 | 0 | 0 | 1 | 0 | 3.53 | >=680.3 | 0 | 3 | FL | met |
 | dsp | a7 | WA=25, WB=18, SIGNED=1, STAGES=3 | 5.0 | 0 | 43 | 0 | 0 | 1 | 0 | 3.53 | >=680.3 | 0 | 3 |  | met |
 | dsp | a7 | WA=32, WB=32, SIGNED=1, STAGES=3 | 5.0 | 0 | 98 | 0 | 0 | 4 | 0 | 1.103 | >=256.6 | 0 | 3 | FL | met |
 | dsp | a7 | WA=32, WB=32, SIGNED=1, STAGES=1 | 5.0 | 47 | 98 | 0 | 12 | 4 | 0 | 1.026 | >=251.6 | 0 | 1 | L | met |
+| dsp | k26 | WA=18, WB=18, SIGNED=1, STAGES=3 | 3.0 | 0 | 36 | 0 | 0 | 1 | 0 | 1.805 | >=836.8 | 2 | 3 | FL | met |
+| dsp | k26 | WA=25, WB=18, SIGNED=1, STAGES=3 | 3.0 | 0 | 43 | 0 | 0 | 1 | 0 | 1.805 | >=836.8 | 2 | 3 |  | met |
+| dsp | k26 | WA=32, WB=32, SIGNED=1, STAGES=3 | 3.0 | 0 | 98 | 0 | 0 | 4 | 0 | 1.029 | >=507.4 | 4 | 3 | FL | met |
+| dsp | k26 | WA=32, WB=32, SIGNED=1, STAGES=1 | 3.0 | 47 | 98 | 0 | 6 | 4 | 0 | 0.109 | >=345.9 | 6 | 1 | L | met |
 | lut_array | a7 | WA=16, WB=16, SIGNED=1, REG=1 | 5.0 | 405 | 96 | 0 | 51 | 0 | 0 | -3.284 | 120.7 | 11 | 1 |  | missed |
 | lut_array | a7 | WA=18, WB=18, SIGNED=1, REG=1 | 5.0 | 519 | 108 | 0 | 63 | 0 | 0 | -4.024 | 110.8 | 10 | 1 |  | missed |
 | lut_array | a7 | WA=32, WB=32, SIGNED=1, REG=1 | 5.0 | 1552 | 194 | 0 | 199 | 0 | 0 | -5.958 | 91.3 | 20 | 1 | F | missed |
+| lut_array | k26 | WA=16, WB=16, SIGNED=1, REG=1 | 3.0 | 378 | 96 | 0 | 26 | 0 | 0 | -0.088 | 323.8 | 11 | 1 |  | missed |
+| lut_array | k26 | WA=18, WB=18, SIGNED=1, REG=1 | 3.0 | 481 | 108 | 0 | 34 | 0 | 0 | -0.297 | 303.3 | 11 | 1 | FL | missed |
+| lut_array | k26 | WA=32, WB=32, SIGNED=1, REG=1 | 3.0 | 1535 | 195 | 0 | 102 | 0 | 0 | -1.763 | 210.0 | 11 | 1 |  | missed |
 
 ## Files
 

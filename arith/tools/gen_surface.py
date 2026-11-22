@@ -15,7 +15,7 @@ Method:
     and the variants differ): area against Fmax, area against latency in clocks. A point is on a front when no other point of its group is
     at least as good on every axis and better on one.
   * Expectation: the spec's pre-stated primitive use as a number or range, where it gives one; met when the measured value is inside the range
-    widened by 25 % (and 2 cells), else missed, with both numbers shown. Wrapper FFs (the registers on every wrapper port) are removed from
+    widened by 25 % and 2 (LUTs, FFs, carry cells; DSP and BRAM counts must be exact), else missed, with both numbers shown. Wrapper FFs (the registers on every wrapper port) are removed from
     the FF expectation.
   * Planning-estimate check: for every numeric expectation, predicted against measured, Spearman rank correlation and relative error.
     The HW_Design_Space_Agent cost model (brief 137) is a CORDIC-structure model (ArchConfig of four CORDIC families) and cannot be called on these functions.
@@ -91,7 +91,8 @@ def expect(fn: str, variant: str, g: dict, a7: bool, r: dict, wrap: int | None, 
     out = []
 
     def add(what, lo, hi, meas, text):
-        ok = meas is not None and (lo * 0.75 - 2) <= meas <= (hi * 1.25 + 2)
+        exact = what in ("DSP", "BRAM tiles")          # whole blocks: no tolerance
+        ok = meas is not None and ((lo <= meas <= hi) if exact else (lo * 0.75 - 2) <= meas <= (hi * 1.25 + 2))
         out.append({"what": what, "expected_lo": lo, "expected_hi": hi, "measured": meas, "verdict": "met" if ok else "missed", "text": text})
 
     carry, lut, ff, dsp = r["carry"], r["lut"], r["ff"], r["dsp"]
@@ -258,7 +259,7 @@ def readme(data: dict, pc: list[dict]) -> str:
             rs = [r for r in rows if r["part_key"] == part and r["status"] == "ok"]
             if rs:
                 L.append(f"| {fn} | {part} | {len(rs)} | {sum(r['lower_bound'] for r in rs)} | {sum(r['expectation'] == 'met' for r in rs)} | {sum(r['expectation'] == 'missed' for r in rs)} | {sum(r['expectation'] == 'none stated' for r in rs)} |")
-    L += ["", "## Pre-stated expectations that were missed", "", "A point is missed when any numeric expectation fails (inside the stated range widened by 25 % and 2 cells counts as met).", "",
+    L += ["", "## Pre-stated expectations that were missed", "", "A point is missed when any numeric expectation fails (inside the stated range widened by 25 % and 2 counts as met for LUTs, FFs and carry cells; DSP and BRAM counts must be exact).", "",
           "| Function | Part | Point | Quantity | Expected | Measured |", "|---|---|---|---|---|---|"]
     for r in ok:
         for e in r["expectations"]:

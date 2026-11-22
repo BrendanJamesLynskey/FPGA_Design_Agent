@@ -98,16 +98,26 @@ Vivado 2026.1 (build 6511674), out-of-context synthesis, placement and routing o
 
 | Variant | Part | Point | Clock ns | LUT | FF | SRL | Carry | DSP | BRAM | WNS ns | Fmax MHz | Logic levels | Latency | Fronts | Expectation |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| dsp | a7 | WA=16, WB=16, LANES=1, ACCW=40, SIGNED=1, NREG=3 | 5.0 | 1 | 47 | 0 | 0 | 2 | 0 | 1.502 | >=285.9 | 0 | 3 |  | met |
+| dsp | a7 | WA=16, WB=16, LANES=1, ACCW=40, SIGNED=1, NREG=3 | 5.0 | 1 | 47 | 0 | 0 | 2 | 0 | 1.502 | >=285.9 | 0 | 3 |  | missed |
 | dsp | a7 | WA=16, WB=16, LANES=1, ACCW=40, SIGNED=1, NREG=1 | 5.0 | 0 | 42 | 0 | 0 | 1 | 0 | 3.394 | >=622.7 | 0 | 1 | FL | met |
-| dsp | a7 | WA=16, WB=16, LANES=2, ACCW=40, SIGNED=1, NREG=3 | 5.0 | 21 | 47 | 0 | 0 | 3 | 0 | 0.221 | >=209.2 | 1 | 3 | L | met |
+| dsp | a7 | WA=16, WB=16, LANES=2, ACCW=40, SIGNED=1, NREG=3 | 5.0 | 21 | 47 | 0 | 0 | 3 | 0 | 0.221 | >=209.2 | 1 | 3 | L | missed |
 | dsp | a7 | WA=16, WB=16, LANES=4, ACCW=40, SIGNED=1, NREG=3 | 5.0 | 167 | 183 | 0 | 20 | 4 | 0 | -0.641 | 177.3 | 13 | 3 | FL | met |
 | dsp_cascade | a7 | WA=16, WB=16, LANES=2, ACCW=40, SIGNED=1 | 5.0 | 21 | 47 | 0 | 0 | 3 | 0 | 0.511 | >=222.8 | 1 | 3 | FL | met |
 | dsp_cascade | a7 | WA=16, WB=16, LANES=4, ACCW=40, SIGNED=1 | 5.0 | 21 | 80 | 1 | 0 | 5 | 0 | 0.375 | >=216.2 | 1 | 5 | FL | met |
 | dsp_cascade | a7 | WA=16, WB=16, LANES=8, ACCW=40, SIGNED=1 | 5.0 | 70 | 245 | 49 | 0 | 9 | 0 | 0.439 | >=219.3 | 1 | 9 |  | met |
+| dsp_cascade | k26 | WA=16, WB=16, LANES=2, ACCW=40, SIGNED=1 | 3.0 | 20 | 47 | 0 | 0 | 3 | 0 | 0.736 | >=441.7 | 3 | 3 |  | met |
+| dsp_cascade | k26 | WA=16, WB=16, LANES=4, ACCW=40, SIGNED=1 | 3.0 | 21 | 144 | 1 | 0 | 5 | 0 | 0.644 | >=424.4 | 3 | 5 | FL | met |
+| dsp_cascade | k26 | WA=16, WB=16, LANES=8, ACCW=40, SIGNED=1 | 3.0 | 69 | 436 | 49 | 0 | 9 | 0 | 0.785 | >=451.5 | 3 | 9 |  | met |
+| dsp | k26 | WA=16, WB=16, LANES=1, ACCW=40, SIGNED=1, NREG=3 | 3.0 | 0 | 47 | 0 | 0 | 2 | 0 | 1.029 | >=507.4 | 4 | 3 |  | missed |
+| dsp | k26 | WA=16, WB=16, LANES=1, ACCW=40, SIGNED=1, NREG=1 | 3.0 | 0 | 42 | 0 | 0 | 1 | 0 | 1.029 | >=507.4 | 4 | 1 | FL | met |
+| dsp | k26 | WA=16, WB=16, LANES=2, ACCW=40, SIGNED=1, NREG=3 | 3.0 | 0 | 47 | 0 | 0 | 2 | 0 | 1.029 | >=507.4 | 4 | 3 | FL | met |
+| dsp | k26 | WA=16, WB=16, LANES=4, ACCW=40, SIGNED=1, NREG=3 | 3.0 | 141 | 87 | 0 | 10 | 4 | 0 | 0.25 | >=363.6 | 4 | 3 | FL | met |
 | fabric | a7 | WA=16, WB=16, LANES=1, ACCW=40, SIGNED=1, NREG=1 | 5.0 | 489 | 116 | 0 | 72 | 0 | 0 | -3.825 | 113.3 | 13 | 1 | FL | missed |
 | fabric | a7 | WA=16, WB=16, LANES=1, ACCW=40, SIGNED=1, NREG=2 | 5.0 | 534 | 157 | 0 | 75 | 0 | 0 | -3.583 | 116.5 | 11 | 2 | F | missed |
 | fabric | a7 | WA=16, WB=16, LANES=2, ACCW=40, SIGNED=1, NREG=2 | 5.0 | 992 | 193 | 0 | 146 | 0 | 0 | -4.895 | 101.1 | 14 | 2 | FL | missed |
+| fabric | k26 | WA=16, WB=16, LANES=1, ACCW=40, SIGNED=1, NREG=1 | 3.0 | 478 | 116 | 0 | 37 | 0 | 0 | -0.161 | 316.4 | 10 | 1 | FL | missed |
+| fabric | k26 | WA=16, WB=16, LANES=1, ACCW=40, SIGNED=1, NREG=2 | 3.0 | 509 | 157 | 0 | 38 | 0 | 0 | -0.296 | 303.4 | 11 | 2 |  | missed |
+| fabric | k26 | WA=16, WB=16, LANES=2, ACCW=40, SIGNED=1, NREG=2 | 3.0 | 973 | 193 | 0 | 75 | 0 | 0 | -0.748 | 266.8 | 11 | 2 | FL | missed |
 
 ## Files
 

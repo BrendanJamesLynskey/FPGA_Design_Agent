@@ -92,13 +92,25 @@ Vivado 2026.1 (build 6511674), out-of-context synthesis, placement and routing o
 | nonrestoring_pipe | a7 | PIPE=1, W=32 | 2.0 | 1209 | 2289 | 60 | 296 | 0 | 0 | -3.801 | 172.4 | 19 | 32 |  | missed |
 | nonrestoring_pipe | a7 | PIPE=4, W=32 | 2.0 | 1228 | 677 | 48 | 296 | 0 | 0 | -11.173 | 75.9 | 42 | 8 |  | missed |
 | nonrestoring_pipe | a7 | PIPE=8, W=32 | 2.0 | 1196 | 424 | 16 | 296 | 0 | 0 | -21.581 | 42.4 | 80 | 4 | L | met |
+| nonrestoring_pipe | k26 | PIPE=1, W=16 | 1.4 | 345 | 625 | 28 | 50 | 0 | 0 | -0.397 | 556.5 | 7 | 16 |  | missed |
+| nonrestoring_pipe | k26 | PIPE=4, W=16 | 1.4 | 343 | 211 | 16 | 49 | 0 | 0 | -2.919 | 231.5 | 17 | 4 | L | met |
+| nonrestoring_pipe | k26 | PIPE=1, W=32 | 1.4 | 1206 | 2273 | 60 | 164 | 0 | 0 | -0.77 | 460.8 | 11 | 32 |  | missed |
+| nonrestoring_pipe | k26 | PIPE=4, W=32 | 1.4 | 1221 | 671 | 48 | 163 | 0 | 0 | -3.811 | 191.9 | 26 | 8 |  | missed |
+| nonrestoring_pipe | k26 | PIPE=8, W=32 | 1.4 | 1204 | 408 | 32 | 163 | 0 | 0 | -8.031 | 106.0 | 49 | 4 | L | met |
 | restoring_iter | a7 | PIPE=1, W=16 | 2.0 | 61 | 123 | 0 | 5 | 0 | 0 | -1.438 | 290.9 | 7 | 17 | FL | met |
 | restoring_iter | a7 | PIPE=1, W=32 | 2.0 | 109 | 236 | 0 | 9 | 0 | 0 | -2.066 | 245.9 | 11 | 33 | FL | met |
+| restoring_iter | k26 | PIPE=1, W=16 | 1.4 | 58 | 123 | 0 | 2 | 0 | 0 | 0.125 | >=784.3 | 4 | 17 | FL | met |
+| restoring_iter | k26 | PIPE=1, W=32 | 1.4 | 107 | 236 | 0 | 4 | 0 | 0 | -0.065 | 682.6 | 6 | 33 | FL | met |
 | restoring_pipe | a7 | PIPE=1, W=16 | 2.0 | 511 | 598 | 28 | 80 | 0 | 0 | -1.849 | 259.8 | 6 | 16 |  | missed |
 | restoring_pipe | a7 | PIPE=4, W=16 | 2.0 | 393 | 203 | 16 | 80 | 0 | 0 | -8.371 | 96.4 | 25 | 4 |  | met |
 | restoring_pipe | a7 | PIPE=1, W=32 | 2.0 | 2046 | 2212 | 60 | 288 | 0 | 0 | -2.364 | 229.1 | 10 | 32 |  | missed |
 | restoring_pipe | a7 | PIPE=4, W=32 | 2.0 | 1569 | 656 | 48 | 288 | 0 | 0 | -10.869 | 77.7 | 40 | 8 |  | missed |
 | restoring_pipe | a7 | PIPE=8, W=32 | 2.0 | 1535 | 416 | 16 | 288 | 0 | 0 | -22.717 | 40.5 | 78 | 4 |  | met |
+| restoring_pipe | k26 | PIPE=1, W=16 | 1.4 | 509 | 594 | 28 | 48 | 0 | 0 | -0.031 | 606.8 | 5 | 16 |  | missed |
+| restoring_pipe | k26 | PIPE=4, W=16 | 1.4 | 391 | 204 | 16 | 48 | 0 | 0 | -2.57 | 251.9 | 18 | 4 |  | met |
+| restoring_pipe | k26 | PIPE=1, W=32 | 1.4 | 1968 | 2210 | 60 | 160 | 0 | 0 | -0.306 | 586.2 | 5 | 32 |  | missed |
+| restoring_pipe | k26 | PIPE=4, W=32 | 1.4 | 1556 | 661 | 48 | 160 | 0 | 0 | -3.538 | 202.5 | 23 | 8 |  | missed |
+| restoring_pipe | k26 | PIPE=8, W=32 | 1.4 | 1542 | 404 | 32 | 160 | 0 | 0 | -8.266 | 103.5 | 48 | 4 |  | met |
 
 ## Traceability
 
