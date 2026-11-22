@@ -1,4 +1,4 @@
-# Brief 159: pre-registration (written 2026-11-22 03:3x GMT, before any goal code was written)
+# Brief 159: pre-registration (written 2026-11-22 03:11 GMT, before any goal code was written)
 
 Set: `labelled_changes.json`, ten scripted goal changes on three committed designs that have a handover:
 `t1_dimmer_counter` (5), `b58a_trigger` (3), `b96_kr260_10g` (2). The brief asked for "t1, one library entry, b96 subset": library

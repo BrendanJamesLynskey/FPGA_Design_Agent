@@ -112,7 +112,9 @@ def load(design: Path) -> dict[str, Any]:
         raise PlanError(f"{p}: not a mapping")
     schema = raw.get("schema")
     if schema == SCHEMA_V0:
-        return upgrade_v0(design, raw)
+        plan0 = upgrade_v0(design, raw)
+        _add_goal_requirements(design, plan0)
+        return plan0
     if schema != SCHEMA_V1:
         raise PlanError(f"{p}: unknown schema {schema!r}")
     plan = {"design": raw.get("design") or design.name, "schema": schema, "source_schema": schema,
@@ -126,7 +128,25 @@ def load(design: Path) -> dict[str, Any]:
             r.setdefault("title", ", ".join(r.get("spec", [])))
             r.setdefault("spec_status", "unspecified")
             r.setdefault("source", raw.get("spec", ""))
+    _add_goal_requirements(design, plan)
     return plan
+
+
+def _add_goal_requirements(design: Path, plan: dict[str, Any]) -> None:
+    """Brief 159: the typed goals of ``<design>/spec.yaml goals:`` (``agent.graph.goals``) become ``performance`` requirements
+    ``GOAL-<metric>[-<name>]`` unless the plan already defines that id. A verification item must still trace to each (until one does, the
+    goal is an untraced requirement, a gate gap): a goal is never counted as verified because it was written down."""
+    sp = design / "spec.yaml"
+    if not sp.is_file():
+        return
+    from flow import goals as G
+    try:
+        spec = yaml.safe_load(sp.read_text()) or {}
+        reqs = G.requirements(spec) if isinstance(spec, dict) and spec.get("goals") else []
+    except (G.GoalError, yaml.YAMLError) as e:
+        raise PlanError(f"{sp}: {e}")
+    have = {r.get("id") for r in plan["requirements"]}
+    plan["requirements"] += [r for r in reqs if r["id"] not in have]
 
 
 def legacy_items(design: Path, raw: dict) -> list[dict]:
