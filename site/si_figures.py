@@ -196,7 +196,7 @@ def _path(pts, sx, sy, x0=0.0) -> str:
 
 def _wave_panel(f: Fig, p: dict, ox: float, oy: float, w: float, h: float, layout: str, lines: list[tuple[str, str, float, list, list]]):
     """One waveform plot. lines: (label, dash, width, rise points, fall points). The rising edge is drawn left, the falling edge right."""
-    pad_l, pad_b, pad_t = (34, 32, 6) if layout == "wide" else (40, 36, 6)
+    pad_l, pad_b, pad_t = (42, 32, 6) if layout == "wide" else (48, 36, 6)
     x_lo, x_hi, y_lo, y_hi = -0.5, 24.5, p["y_lo"], p["y_hi"]
     pw, ph = w - pad_l - 4, h - pad_b - pad_t
     sx = lambda t: ox + pad_l + (t - x_lo) / (x_hi - x_lo) * pw
@@ -218,16 +218,16 @@ def _wave_panel(f: Fig, p: dict, ox: float, oy: float, w: float, h: float, layou
         for t in p["xticks"]:
             f.add(f'<line x1="{sx(half + t):.1f}" y1="{sy(y_lo):.1f}" x2="{sx(half + t):.1f}" y2="{sy(y_lo) + 3:.1f}" class="ink"/>')
             f.text(sx(half + t), sy(y_lo) + 14, g(t), "middle")
-        f.text(sx(half + 6), sy(y_lo) + (26 if layout == "wide" else 30), name + (", ns from the edge" if layout == "wide" else ", ns"), "middle")
+        f.text(sx(half + 6), sy(y_lo) + (26 if layout == "wide" else 30), name + ", ns", "middle")
     for _lab, dash, width, rise, fall in lines:
         for pts, x0 in ((rise, 0.0), (fall, 12.0)):
             f.add(f'<path d="{_path(pts, sx, sy, x0)}" class="ink" stroke-width="{width}"' + (f' stroke-dasharray="{dash}"' if dash else "") + ' stroke-linejoin="round"/>')
     return sx, sy
 
 
-def _key(f: Fig, x: float, y: float, items: list[tuple[str, str, float]], cols: int, cw: float):
+def _key(f: Fig, x: float, y: float, items: list[tuple[str, str, float]], cols: int, cw: float, pitch: float = 16):
     for i, (lab, dash, width) in enumerate(items):
-        cx, cy = x + (i % cols) * cw, y + (i // cols) * 16
+        cx, cy = x + (i % cols) * cw, y + (i // cols) * pitch
         f.add(f'<line x1="{cx:.1f}" y1="{cy:.1f}" x2="{cx + 22:.1f}" y2="{cy:.1f}" class="ink" stroke-width="{width}"' + (f' stroke-dasharray="{dash}"' if dash else "") + "/>")
         f.text(cx + 27, cy + 4, lab)
 
@@ -237,18 +237,18 @@ def waveforms(fig: dict, layout: str) -> str:
     wide = layout == "wide"
     w, ph = (640, 250) if wide else (360, 250)
     n = len(P)
-    h = (ph + 66) if wide else n * (ph + 6) + 96
+    h = (ph + 92) if wide else n * (ph + 30) + 120
     f = Fig(f"wf{layout}", w, h, "Receiver waveforms with 0, 22, 33 and 47 ohm in series",
             "Rising and falling edges at the receiver of a 50 ohm line, one panel per I/O standard, with the data sheet overshoot and undershoot limits drawn as lines.")
     for i, p in enumerate(P):
-        ox, oy = (i * (w / n), 18) if wide else (0, 18 + i * (ph + 6))
+        ox, oy = (i * (w / n), 18) if wide else (0, 18 + i * (ph + 30))
         f.text(ox + 36, oy - 6, f'{p["standard"]} DRIVE {p["drive_ma"]} {p["slew"]}, {g(p["length_in"])} in', "start")
         lines = [(f'{s["ohm"]}', DASH[s["ohm"]], WIDTH[s["ohm"]], s["rise"], s["fall"]) for s in p["series"]]
         _wave_panel(f, p, ox, oy, w / n if wide else w, ph, layout, lines)
-    ky = ph + 42 if wide else n * (ph + 6) + 24
+    ky = ph + 42 if wide else n * (ph + 30) + 20
     key = [(f'{s["ohm"]} ohm in series', DASH[s["ohm"]], WIDTH[s["ohm"]]) for s in P[0]["series"]]
-    _key(f, 40 if wide else 8, ky, key, 4 if wide else 2, 150 if wide else 160)
-    ky2 = ky + (22 if wide else 38)
+    _key(f, 40 if wide else 8, ky, key, 4 if wide else 2, 150 if wide else 178, 16 if wide else 22)
+    ky2 = ky + (22 if wide else 52)
     f.add(f'<rect x="{40 if wide else 8}" y="{ky2:.1f}" width="22" height="9" fill="url(#{f.uid}h)" class="ink" stroke-width="0.6"/>')
     wrap_text(f, 68 if wide else 36, ky2 + 8, f'beyond the data sheet limit (VCCO + {g(P[0]["limit_over_v"] - P[0]["vcco_v"])} V, GND - {g(-P[0]["limit_under_v"])} V)', layout)
     return f.svg()
@@ -258,9 +258,9 @@ def sweep(fig: dict, layout: str) -> str:
     P = fig["data"]["panels"]
     wide = layout == "wide"
     cw, ch = (58, 26) if wide else (54, 26)
-    lm, tm = 52, 40
+    lm, tm = 52, 50
     pw = lm + cw * len(P[0]["lengths"]) + 12
-    ph = tm + ch * len(P[0]["series"]) + 40
+    ph = tm + ch * len(P[0]["series"]) + 34
     w = pw * len(P) if wide else max(pw, 300)
     h = ph if wide else ph * len(P)
     f = Fig(f"sw{layout}", int(w), int(h), "Where a series resistor passes: resistor value against line length",
@@ -268,9 +268,9 @@ def sweep(fig: dict, layout: str) -> str:
     for i, p in enumerate(P):
         ox, oy = (i * pw, 0) if wide else (0, i * ph)
         f.text(ox + 4, oy + 16, f'{p["standard"]}, {p["bank"]}')
-        f.text(ox + lm, oy + 33, "line length, in")
+        f.text(ox + lm, oy + 32, "line length, in")
         for c, ln in enumerate(p["lengths"]):
-            f.text(ox + lm + c * cw + cw / 2, oy + tm - 2, g(ln), "middle")
+            f.text(ox + lm + c * cw + cw / 2, oy + tm - 5, g(ln), "middle")
         for r, rs in enumerate(p["series"]):
             y = oy + tm + r * ch
             f.text(ox + lm - 6, y + ch / 2 + 4, g(rs), "end")
@@ -296,23 +296,23 @@ def kr260(fig: dict, layout: str) -> str:
     panel_w = w / 2 if wide else w
     top = 18
     wave_h = ph
-    bar_y0 = (top + wave_h + 64) if wide else (top + 2 * (wave_h + 8) + 64)
+    bar_y0 = (top + wave_h + 96) if wide else (top + 2 * (wave_h + 30) + 112)
     h = bar_y0 + 400
     f = Fig(f"kr{layout}", w, int(h), "KR260 ports A and B: as set, best as built and optimal",
             "Receiver waveforms for the two PL Ethernet transmit groups of the KR260 under three settings, and the time each spends beyond the 0.2 V limit.")
     for i, p in enumerate(meas):
-        ox, oy = (i * panel_w, top) if wide else (0, top + i * (wave_h + 8))
+        ox, oy = (i * panel_w, top) if wide else (0, top + i * (wave_h + 30))
         pan = {"y_lo": -0.5, "y_hi": 3.4, "limit_over_v": 1.8 + D["limit_v"], "limit_under_v": -D["limit_v"], "vcco_v": 1.8, "yticks": [0.0, 1.8], "xticks": [0, 4, 8]}
         f.text(ox + 36, oy - 6, f'Port {p["port"]}, {g(p["length_in"])} in on the carrier')
         lines = [(a, ANS_DASH[a], 2.0 if a == "xdc" else 1.6, p["waves"][a]["rise"], p["waves"][a]["fall"]) for a in ("xdc", "as_built", "optimal")]
         _wave_panel(f, pan, ox, oy, panel_w, wave_h, layout, lines)
-    ky = (top + wave_h + 40) if wide else (top + 2 * (wave_h + 8) + 22)
-    _key(f, 40 if wide else 8, ky, [(ANS_NAME[a], ANS_DASH[a], 2.0 if a == "xdc" else 1.6) for a in ("xdc", "as_built", "optimal")], 3 if wide else 1, 190)
+    ky = (top + wave_h + 44) if wide else (top + 2 * (wave_h + 30) + 20)
+    _key(f, 40 if wide else 8, ky, [(ANS_NAME[a], ANS_DASH[a], 2.0 if a == "xdc" else 1.6) for a in ("xdc", "as_built", "optimal")], 3 if wide else 1, 190, 16 if wide else 22)
     # bars: time beyond the limit, ns
     by = bar_y0
     y = wrap_text(f, 4, by - 14, f'Time beyond the {g(D["limit_v"])} V limit at the worst corner, ns (unit interval {g(meas[0]["ui_ns"])} ns)', layout)
     by = y + 2
-    lab_w = 220 if wide else 8
+    lab_w = 246 if wide else 8
     xmax = max(max(a["t_over_ns"], a["t_under_ns"]) for p in D["ports"] for a in p["answers"].values())
     sc = (w - lab_w - 50) / max(xmax, 0.1)
     y = by
