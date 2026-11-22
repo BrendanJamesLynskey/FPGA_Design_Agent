@@ -83,7 +83,7 @@ Interfaces:
 | the proofs, covers and mutants of the CI set; needs the OSS CAD Suite release 2026-11-12 (SymbiYosys, Yosys with the slang plugin, Boolector, ABC); FDA_OSS_CAD or ~/.local/opt/oss-cad-suite | `python3 -m pytest -q designs/m141_ddr2_sched/tests/test_m141_formal.py` | no | about 20 min |
 | the measured simulation runs of results/b141; needs Icarus Verilog 12; single process, nice it on a shared machine | `python3 designs/m141_ddr2_sched/tests/m141_measure.py --json results/b141/sim_summary.json` | no | about 60 min |
 
-Tool: Vivado 2026.1. Build ID of the inputs at handover: none (no Vivado build of this directory). Knowledge-bank pin: `93d158c`.
+Tool: Vivado 2026.1. Build ID of the inputs at handover: none (no Vivado build of this directory). Knowledge-bank pin: `5e2eab8`.
 
 | File | What |
 |---|---|

@@ -9,7 +9,7 @@ A request queue in front of a DDR2 command bus for the Micron MT47H64M16 on the 
 not: a data path, a PHY, a MIG core, DDR2 initialisation or calibration, ZQ, on-die termination, power-down or self-refresh; the scheduler issues commands and the data bursts follow them at fixed latencies; any Vivado build or board run; both heavy slots were taken by other sessions during the work, and the build plan and the pre-registered board test are written but not run; the four-wide command packing a controller clock slower than the memory clock needs; the scheduler decides one command per memory clock
 
 ## state
-stage=simulated vivado=2026.1 kb_pin=93d158c build_id=None
+stage=simulated vivado=2026.1 kb_pin=5e2eab8 build_id=None
 gates: sim_vs_model=pass formal_rules=pass board_run=not-run
 
 ## interface
@@ -29,8 +29,8 @@ param timing parameters T_RCD to T_REFI, RL, WL, BL2=MT47H64M16-25 at a clock pe
 designs/m141_ddr2_sched/rtl/ddr2_sched.sv 8bf988b3a0: the scheduler
 designs/m141_ddr2_sched/rtl/ddr2_addrmap.sv e833a65470: burst address to row, bank and column
 designs/m141_ddr2_sched/tb/tb_ddr2.sv 3a3dee9c61: bench with the behavioural DDR2 timing model
-designs/m141_ddr2_sched/verif/formal/ddr2_props.sv 3ebbc30bca: timing rules, helper invariants, ordering, refresh and bounded-response properties
-designs/m141_ddr2_sched/verif/formal/run_formal.py 2017e11ff7: runner of the proofs, covers and mutants
+designs/m141_ddr2_sched/verif/formal/ddr2_props.sv dbbc2b0420: timing rules, helper invariants, ordering, refresh and bounded-response properties
+designs/m141_ddr2_sched/verif/formal/run_formal.py f234574485: runner of the proofs, covers and mutants
 designs/m141_ddr2_sched/tests/m141_measure.py 70562c2700: runs the bench for a policy, map, pattern and timing profile and reduces the output to numbers
 designs/m141_ddr2_sched/tests/m141_timing.py 268fa31dbb: data sheet values and the conversion to clocks for each timing profile
 
