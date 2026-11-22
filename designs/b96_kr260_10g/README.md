@@ -158,7 +158,7 @@ Tool: Vivado 2026.1. Build ID of the inputs at handover: `f387f9e5` (`python flo
 | [`designs/b96_kr260_10g/rm_gp_itch/rtl/b96_core.sv`](rm_gp_itch/rtl/b96_core.sv) | copy of rtl/b96_core.sv for build rm_gp_itch: RATE_MATCH = 1 only, the ITCH path and its registers 0x300 to 0x57C (brief 127) |
 | [`designs/b96_kr260_10g/rm_gp_itch/regmap_itch.py`](rm_gp_itch/regmap_itch.py) | register map of build rm_gp_itch as data, generates its datasheet (brief 127) |
 | [`designs/b96_kr260_10g/rm_gp_itch/docs/itch_integration.md`](rm_gp_itch/docs/itch_integration.md) | the ITCH/OUCH path inside the 10G design: path, latency, the late frame check, registers, hook for tcp_fast, results (brief 127) |
-| [`designs/b96_kr260_10g/rm_gp_itch/docs/board_test_plan.md`](rm_gp_itch/docs/board_test_plan.md) | pre-registered board test of build rm_gp_itch (brief 127), not run |
+| [`designs/b96_kr260_10g/rm_gp_itch/docs/board_test_plan.md`](rm_gp_itch/docs/board_test_plan.md) | pre-registered board test of build rm_gp_itch (brief 127; run B 2026-11-22 and the rp.frames amendment, brief 172) |
 | [`designs/b96_kr260_10g/rm_gp_itch/host/itch_host.py`](rm_gp_itch/host/itch_host.py) | synthetic MoldUDP64/ITCH frames, replay image, expected order frame and the order check (brief 127) |
 | [`designs/b96_kr260_10g/rm_gp_itch/host/b127_stages.py`](rm_gp_itch/host/b127_stages.py) | the pre-registered board stages, shared with the simulation's dry run (brief 127) |
 
