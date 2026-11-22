@@ -15,4 +15,4 @@ fi
 eval "$(opam env --switch=hardcaml-5.3.0)"
 systemd-run --user --scope -p MemoryMax=4G nice -n 15 opam install -y -j2 \
   hardcaml hardcaml_waveterm hardcaml_step_testbench hardcaml_verify ppx_hardcaml ppx_jane
-opam list --installed > "$(dirname "$0")/../../results/b171/opam_list.txt" 2>/dev/null || true
+opam list --installed --short --columns=name,installed-version > "$(dirname "$0")/../../results/b171/opam_list.txt" 2>/dev/null || true
