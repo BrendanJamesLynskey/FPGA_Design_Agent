@@ -428,6 +428,7 @@ verification:
     instrument: jtag_registers
     title: 100 receive restarts on build rm_gp, counters read over JTAG
     evidence: {file: results/b96e/hw/20261119_231251/rm_gp/stage3.json, reader: json}
+    build: designs/b96_kr260_10g/rm_gp/build.yaml     # the build that ran (brief 143a: its sources join the staleness check)
     pass_when:
       - {field: restarts.restarts, op: ge, value: 100}
       - {field: restarts.failed_to_lock, op: eq, value: 0}
@@ -458,6 +459,7 @@ verification:
     instrument: jtag_registers
     title: Laser polarity read back before the laser was enabled
     evidence: {file: results/b96e/hw/20261119_231251/rm_gp/stage3.json, reader: json}
+    build: designs/b96_kr260_10g/rm_gp/build.yaml     # the build that ran (brief 143a: its sources join the staleness check)
     pass_when: [{field: polarity_ok, op: "true"}, {field: polarity.off.tx_fault, op: eq, value: 0}]
     checks: [designs/b96_kr260_10g/rtl/kr260_10g_top.sv, designs/b96_kr260_10g/rtl/b96_core.sv]
   - id: V-HW-SYSMON-96E
@@ -466,6 +468,7 @@ verification:
     instrument: sysmon
     title: SYSMON at the start and end of the 96E run
     evidence: {file: results/b96e/hw/20261119_231251/rm_gp/session.json, reader: json}
+    build: designs/b96_kr260_10g/rm_gp/build.yaml     # the build that ran (brief 143a: its sources join the staleness check)
     pass_when: [{field: conditions_start.inside_roc, op: "true"}, {field: conditions_end.inside_roc, op: "true"}, {field: roc_ok, op: "true"}]
   - id: V-HW-SYSMON-EYE
     requirements: [B96-S-ROC]
@@ -480,6 +483,7 @@ verification:
     instrument: latency_loop
     title: Build rm_gp, 100 restarts, median of per-link minima
     evidence: {file: results/b96e/hw/20261119_231251/rm_gp/stage3.json, reader: json, field: restarts.E_min_per_link.median}
+    build: designs/b96_kr260_10g/rm_gp/build.yaml     # the build that ran (brief 143a: its sources join the staleness check)
     checks: *rtl_core
   - id: V-HW-LAT-E-97C
     requirements: [B96-P-LAT-E]
@@ -494,6 +498,7 @@ verification:
     instrument: latency_loop
     title: Build rm_gp, 100 restarts
     evidence: {file: results/b96e/hw/20261119_231251/rm_gp/stage3.json, reader: json, field: restarts.L_min_per_link.median}
+    build: designs/b96_kr260_10g/rm_gp/build.yaml     # the build that ran (brief 143a: its sources join the staleness check)
     checks: *rtl_core
   - id: V-HW-LAT-L-97C
     requirements: [B96-P-LAT-L]
@@ -508,6 +513,7 @@ verification:
     instrument: latency_loop
     title: Build rm_gp, D = L - 2E from the medians of minima
     evidence: {file: results/b96e/hw/20261119_231251/rm_gp/stage3.json, reader: json, field: D_clocks_from_medians_of_minima}
+    build: designs/b96_kr260_10g/rm_gp/build.yaml     # the build that ran (brief 143a: its sources join the staleness check)
     checks: *rtl_core
   - id: V-HW-EYE
     requirements: [B96-P-EYE]
@@ -523,6 +529,7 @@ verification:
     title: Build rm_gp_bypass on the KR260, 100 receive restarts (pre-registered, board run 2026-11-21, stamp 86037ce1)
     evidence: {file: results/b96f1/hw/20261120_215255/rm_gp_bypass/stage3.json, reader: json, field: restarts.E_min_per_link.median}
     checks: *rtl_core
+    build: designs/b96_kr260_10g/rm_gp_bypass/build.yaml     # the build that ran: its own b96_core.sv, gt_bp_*.sv, constraints and IP script
   - id: V-HW-OFFSET-PLANNED
     requirements: [B96-F-OFFSET]
     method: board_measurement
