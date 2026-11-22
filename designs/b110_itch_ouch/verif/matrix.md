@@ -4,7 +4,7 @@
 
 The human specifies the requirements and checks that the verification is thorough enough. The agent holds the knowledge to implement and to verify. You can open any of the implementation or the evidence, and you do not have to. Hardware on the board, with attached instruments, is a verification layer of its own: where a requirement depends on something outside the design (an optical link, a network card, a data source) it may be the only way to close it.
 
-**Summary.** 9 requirements (7 functional, 2 safety); 7 verified; 1 failing; 1 with no passing evidence; 0 of 9 requirements agreed by a human, 0 human review(s) recorded.
+**Summary.** 9 requirements (7 functional, 2 safety); 7 verified; 2 failing; 0 of 9 requirements agreed by a human, 0 human review(s) recorded.
 
 Simulation only (xsim 2026.1, UVM 1.2; Icarus is not used by this bench). One recorded regression (results/176_seq_poison/summary.json) and one mutation record (results/170_itch_uvm/mutation_seed*.json). No board, no real feed, every message synthetic.
 
@@ -22,14 +22,14 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 | **B110-S-STRICT** Under STRICT an order is never sent on an unverified or bad frame | safety | verified |  | pass: [V-UVM-STRICT](../../../results/176_seq_poison/summary.json) | pass: [V-UVM-SVA](../../../results/176_seq_poison/summary.json) |  |  |  |  |  |  |  |
 | **B110-F-SEQ-POISON** A poisoned order frame consumes no TCP sequence number | functional | FAILS |  | FAIL: [V-UVM-SEQ](../../../results/176_seq_poison/summary.json) |  |  |  |  |  |  |  |  |
 | **B110-V-COVERAGE** The bench's functional coverage plan is closed | functional | verified |  |  |  |  |  | pass: [V-UVM-COV](../../../results/176_seq_poison/summary.json) |  |  |  |  |
-| **B110-V-MUTATION** The bench kills at least 90 % of blind mutants of the path (worst case, over at least 30) | functional | not run |  |  |  |  |  |  |  | not run: V-UVM-MUT |  |  |
+| **B110-V-MUTATION** The bench kills at least 90 % of blind mutants of the path (worst case, over at least 30) | functional | FAILS |  |  |  |  |  |  |  | FAIL: [V-UVM-MUT](../../../results/170_itch_uvm/mutation_seed1.json) |  |  |
 
 ## Gaps
 
 ### Requirements with no passing evidence
 
 - `B110-F-SEQ-POISON`: an item fails
-- `B110-V-MUTATION`: no passing evidence
+- `B110-V-MUTATION`: an item fails
 
 ## Requirements in full
 
@@ -93,7 +93,7 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### B110-V-MUTATION: The bench kills at least 90 % of blind mutants of the path (worst case, over at least 30)
 
-- Kind: functional; state: not run; specification status: draft.
+- Kind: functional; state: FAILS; specification status: draft.
 - Source: `designs/b96_kr260_10g/rm_gp_itch/verif/uvm/README.md#mutation-score`
 - A blind mutation sweep (mutants made from the RTL text and a seed only, equivalent mutants decided by a formal miter) scores at least 90 % even if every undecided mutant counted as a survivor.
-  - simulation measurement: **not run**, Blind mutation sweep with the fixed tool (flow/mutation_score.py): score, worst case and undecided against the floor: evidence not found: results/170_itch_uvm/mutation_seed1.json.
+  - simulation measurement: **FAIL**, Blind mutation sweep with the fixed tool (flow/mutation_score.py): score, worst case and undecided against the floor: mutation score 100.0% (floor 90%): 18 killed, 0 real survivors, 0 equivalent dropped, 12 undecided; worst case 60.0%; seed 1; worst-case score 60.0% is below the floor 90%; 12 undecided (limit 3). [evidence](../../../results/170_itch_uvm/mutation_seed1.json)
