@@ -58,7 +58,7 @@ The planner's floor (worst case at least 90 %, at least 30 evaluated mutants) is
 `mutation_floor: {score_pct: 90, worst_case_pct: 90, min_mutants: 30, max_undecided: 3}`, checked by item `V-RM-MUTATION` against the seed 2 record (the `worst_case_pct` key is new in
 `flow/mutation_score.py`, brief 152). It passes: 29 killed, 1 equivalent dropped, worst case 100 %.
 
-## Known gaps
+## Known gaps and limits
 
 * Seed 1's two added cases were written after seeing seed 1's survivors, so seed 1's 100 % is in-sample for them. Seed 2 was run on the final bench; it still has 4 mutants that only the added cases
   kill (L70 twice, L107 twice), so the additions are not specific to seed 1's survivors, but 8 of seed 2's 30 mutants are also in seed 1's (the pool has 135 candidates). Together the two seeds
