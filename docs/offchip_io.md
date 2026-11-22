@@ -9,8 +9,8 @@ This page is the study, the model, the spec section and the check. The numbers a
 the CSV files beside it); the code is `flow/offchip_model.py` and `flow/offchip_check.py`; the tests are `flow/tests/test_155_offchip.py`. The check is **advisory**
 until the owner approves it. It is not a build gate, and the model has never been compared with a scope trace (a board measurement is planned in section 11, not done).
 
-Sources, in our own words: UG471 (7 series SelectIO) v1.10, UG571 (UltraScale SelectIO) v1.16, UG912 (properties) 2025.2, UG899 (I/O planning) 2025.2, DS181 v1.27.1,
-DS187, DS925 v1.30, and AMD's IBIS output models shipped with Vivado 2025.2 (`artix7.ibs` file revision 2.8, IBIS 4.2, dated 28-AUG-2017; `zynq.ibs` revision 2.8,
+Sources, in our own words: UG471 (7 series SelectIO) v1.10, UG571 (UltraScale SelectIO) v1.16, UG912 (properties) and UG899 (I/O planning), November 2025 editions, DS181 v1.27.1,
+DS187, DS925 v1.30, and AMD's IBIS output models shipped with the local Vivado install (files dated 2016 to 2022, so their data does not change with the Vivado release; `artix7.ibs` file revision 2.8, IBIS 4.2, dated 28-AUG-2017; `zynq.ibs` revision 2.8,
 27-JAN-2016; `zynquplus.ibs` revision 2.11, IBIS 5.1, 10-FEB-2022). The IBIS files carry AMD's copyright and are not committed: `tools/ibis_extract.py` reads them
 from the local install and writes our own compact summary (`flow/offchip_data/driver_models.json`: the pull-up and pull-down curves sampled at 21 voltages per corner,
 die capacitance, receiver thresholds and the 20-80 % edge time; 157 models).
