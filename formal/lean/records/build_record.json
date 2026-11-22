@@ -1,7 +1,13 @@
 {
- "build_log_sha256": "9f4aa728b423df4115ae984c8199b5dab93883ebb3a1ca1e7d374ec50d4db263",
+ "build_log_sha256": "8e2d2a2c6561d0e1686a0c15cedf4a24ff194e83c9a5c1595aa0ee8b5905dd3b",
  "build_ok": true,
  "files": {
+  "Arith.lean": "7640773857a69c737d5a03ca61b1ac6eab2484a6f794a0632b896d71ef6837e5",
+  "Arith/CrossCheck.lean": "46e8f8e6bee82f7f936229a6ff9b3349e10effeb482e6b67b5d85880012263cc",
+  "Arith/Divide.lean": "5544ff0e1742fd7733b7284583bba21cb78f20c7eda8099374d209920682de3f",
+  "Arith/Isqrt.lean": "63b3a8ef084d36e7bb605d2782c3ffbad2d51f0a40b75f67a2b683b223629ae8",
+  "Arith/Lzc.lean": "24660877fcf28bd7a6bc6700ac0959cd5c89bd39d9d92fe3d85f8d3c279f6d53",
+  "Arith/Rounding.lean": "b5a22dc15c253f758d21a2889c0887e074bcc23210c82431a8db7e3269f93429",
   "Cksum.lean": "aa6990c7c4cc33b524f81c7b633240613fe2a0393ca904ab2164447fb424307c",
   "Cksum/CrossCheck.lean": "08436e62554b56e55fd65f0989c957c15bd962ad288b3f4ae847729dc51278b7",
   "Cksum/Spec.lean": "8527b638b4716d4d70fd1a9ab57e0e029b1fa3b3e05fd6945b716782005d3d7a",
@@ -9,13 +15,21 @@
   "Gray/CrossCheck.lean": "20c99c046c77da0a7a203e3ca5e2c3d8a843485a0eb877f9c2a05bdf594af573",
   "Gray/Spec.lean": "865a08d45c6d0f00a6fcad34b216c6ad55df802882de6a31cac093cef830c5ad",
   "lake-manifest.json": "62c46e292849e1dfb23d69e49b2d9357a86b57c71dd26096bc3002600e9fb535",
-  "lakefile.toml": "3f60733a2b9fe246c93c2e2a0ec98af1aef799f34bfc88431b080032bb4a8475",
+  "lakefile.toml": "b021b8d45139dac3dfdc1b335194dc9442f0f7f3a9fdbc2b43dd908b0ae6f6b8",
   "lean-toolchain": "582a63f8f9c5128067b688778c1051cf1464c3ca9d57b9325025c051c29b774a"
  },
  "how": "python -m flow.trace_v1 lean-record; the build ran `lake build` in a scratch copy with `#print axioms` appended",
  "lean_version": "Lean (version 4.36.0, x86_64-unknown-linux-gnu, commit 611c117bfaf7b7ae1cfcf246ce6fba31e8f509e9, Release)",
  "note": "A record is evidence that a build succeeded at these file hashes. CI without Lean reads it and shows the status as a recorded build, never as a re-run.",
  "rtl_sources": {
+  "arith/divider/rtl/div_nonrestoring_iter.sv:32-33": "a489abf4ec6f7f65d3a98cac3521d40b4fe37b5ecccbdb0eb507aa638317f1df",
+  "arith/divider/rtl/div_nonrestoring_iter.sv:63-67": "3b2ecd110a95b9a1c160644daec5548c53c1cb4f342310d2a35237604d11ba7a",
+  "arith/divider/rtl/div_restoring_iter.sv:30-31": "f732d38a11456f1226b3962158f1439d25d15392c87d77779516d29f5ab6516b",
+  "arith/divider/rtl/div_restoring_iter.sv:61-62": "8fc57376ed856c545c8492514fac92a551c068f28ee1256021a30715dfcef8c9",
+  "arith/fxp_round/rtl/fxp_round_fold.sv:32-35": "d752a0e45970531b240709de31aff9fdb8455949846ccea0ff343a0347bae856",
+  "arith/isqrt/rtl/isqrt_restoring_iter.sv:33-35": "995ae9135f40c1b68b796fe46d26423162ea475a010f7efa1c94fff5c9a8c167",
+  "arith/isqrt/rtl/isqrt_restoring_iter.sv:67-68": "b3d59a9b790f4e197bd36036d3f1c16e668b510766b1585f7b21a460f480280e",
+  "arith/lzc_norm/rtl/lzc_tree.sv:12-23": "f292359796ab33cb4a03d3acf34b00830aba1284fe6fe03b54c691ab0ab8fab2",
   "designs/b119_tcp_fast/rtl/tcp_fast.sv:256-260": "9a9272bbf1eab0aa07f2b150d662fe0f98f075cd2c162e116cd941e181e726bc",
   "designs/b119_tcp_fast/rtl/tcp_fast.sv:326-336": "ddeb015f9e9c7a7c0f837e7c2e89dd40803dfb629fbd96ba5d2e2fb52fea19ad",
   "designs/b96_kr260_10g/rtl/rate_match_gp.sv:78-82": "4437715e5ac7150d752a88436fc28046cc1d5b5181325a674c20d6d89ba7a93c",
@@ -23,6 +37,135 @@
  },
  "schema": "fpga-design-agent/lean-build-record/v1",
  "theorems": {
+  "Arith.Divide.nr_correct": {
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "build_ok": true,
+   "definitions_sha256": "febc35c3c508ca6c7176affab397dd43f5063cf00199f5fe880ae4370541e4b5",
+   "module": "Arith.Divide",
+   "statement_sha256": "9d6553c05ba59451cdf44f87799e638b5b8a09c190a374336a81a23b903cecc3",
+   "tier": "kernel_only"
+  },
+  "Arith.Divide.restDiv_correct": {
+   "axioms": [
+    "Quot.sound",
+    "propext"
+   ],
+   "build_ok": true,
+   "definitions_sha256": "febc35c3c508ca6c7176affab397dd43f5063cf00199f5fe880ae4370541e4b5",
+   "module": "Arith.Divide",
+   "statement_sha256": "28c22a963a8549d73e61c714bdffb95de62bb44d3bbd538084eb156fb2c95c9a",
+   "tier": "kernel_only"
+  },
+  "Arith.Divide.restDiv_zero": {
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "build_ok": true,
+   "definitions_sha256": "febc35c3c508ca6c7176affab397dd43f5063cf00199f5fe880ae4370541e4b5",
+   "module": "Arith.Divide",
+   "statement_sha256": "4ec3f22c5625a14afda66899f21c1b53801d5c6a962f025e06668039e37179a9",
+   "tier": "kernel_only"
+  },
+  "Arith.Isqrt.rsqrt_correct": {
+   "axioms": [
+    "Quot.sound",
+    "propext"
+   ],
+   "build_ok": true,
+   "definitions_sha256": "fd9de64ed6c6c3fef67bce78cccb279795caf88037b21e93d6f1b544192e23aa",
+   "module": "Arith.Isqrt",
+   "statement_sha256": "622b1ea7f451aeab446ded19f2c52ebf160870dce88479d9d52a523468c7bbf9",
+   "tier": "kernel_only"
+  },
+  "Arith.Lzc.lzcTree_correct": {
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "build_ok": true,
+   "definitions_sha256": "82db7c6983d183092601b8482dd4ead9d9c0c9b131545338064a01c3422ee882",
+   "module": "Arith.Lzc",
+   "statement_sha256": "ed9c02765010bc410ca92d44a9a415b18670178f2a7665c99c89c2125938f27c",
+   "tier": "kernel_only"
+  },
+  "Arith.Rounding.convFold_eq": {
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "build_ok": true,
+   "definitions_sha256": "022459eede1abf956c5dfc26347e1f4433b3615995fa0299ef5be103bfbb7b1e",
+   "module": "Arith.Rounding",
+   "statement_sha256": "d3b2f99a03c4469a0c6c62e56984c5c809453734b25cb9669f158db89d44951b",
+   "tier": "kernel_only"
+  },
+  "Arith.Rounding.convergent_error": {
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "build_ok": true,
+   "definitions_sha256": "022459eede1abf956c5dfc26347e1f4433b3615995fa0299ef5be103bfbb7b1e",
+   "module": "Arith.Rounding",
+   "statement_sha256": "a38389622020758cc7bc7e14074911af8a2dabcee316f8438525dd52d7a5e270",
+   "tier": "kernel_only"
+  },
+  "Arith.Rounding.convergent_tie_even": {
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "build_ok": true,
+   "definitions_sha256": "022459eede1abf956c5dfc26347e1f4433b3615995fa0299ef5be103bfbb7b1e",
+   "module": "Arith.Rounding",
+   "statement_sha256": "4610110e006d4e7b72443ae5218d5d8365f3606a6ad37732f9375d26306c81ef",
+   "tier": "kernel_only"
+  },
+  "Arith.Rounding.halfUp_def": {
+   "axioms": [
+    "Quot.sound",
+    "propext"
+   ],
+   "build_ok": true,
+   "definitions_sha256": "022459eede1abf956c5dfc26347e1f4433b3615995fa0299ef5be103bfbb7b1e",
+   "module": "Arith.Rounding",
+   "statement_sha256": "4fb935ff58ad6c814b6233a1fbf9a3000a15cdb9ade15fec13213fb27e2dfba4",
+   "tier": "kernel_only"
+  },
+  "Arith.Rounding.halfUp_error": {
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "build_ok": true,
+   "definitions_sha256": "022459eede1abf956c5dfc26347e1f4433b3615995fa0299ef5be103bfbb7b1e",
+   "module": "Arith.Rounding",
+   "statement_sha256": "2c742a28294c642570fed5d237ecb69bfdbc2a0963202ff075d5d4eb3155563c",
+   "tier": "kernel_only"
+  },
+  "Arith.Rounding.trunc_error": {
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "build_ok": true,
+   "definitions_sha256": "022459eede1abf956c5dfc26347e1f4433b3615995fa0299ef5be103bfbb7b1e",
+   "module": "Arith.Rounding",
+   "statement_sha256": "dbc9e241e29daa544cdf25b47de83a59d7a3aab0b4f266d3f4affc844b6d8c3e",
+   "tier": "kernel_only"
+  },
   "Cksum.incUpdate_correct": {
    "axioms": [
     "Classical.choice",
