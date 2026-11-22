@@ -110,6 +110,8 @@ def main() -> int:
     a = ap.parse_args()
     bad = 0
     for sp in sorted(ARITH.glob("*/spec.yaml")):
+        if yaml.safe_load(sp.read_text()).get("schema") == "fda-arith/spec/1":      # a function of the 139a / 148 toolchain (arith/tools/gen_build_ooc.py), not this one
+            continue
         fn = sp.parent.name
         p, t = sp.parent / "spec.md", render(fn)
         if a.check:
