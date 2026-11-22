@@ -8,20 +8,30 @@ Tool: Vivado 2026.1 (build 6511674). Points run: 164; with a routed result: 164;
 
 | Function | Part | Points | Fmax is a lower bound (WNS > 0) | Expectation met | Expectation missed | No numeric expectation |
 |---|---|---|---|---|---|---|
-| adder | a7 | 10 | 8 | 7 | 3 | 0 |
-| adder | k26 | 10 | 10 | 5 | 5 | 0 |
+| adder | a7 | 10 | 0 | 7 | 3 | 0 |
+| adder | k26 | 10 | 7 | 5 | 5 | 0 |
 | multiplier | a7 | 10 | 4 | 4 | 6 | 0 |
 | multiplier | k26 | 10 | 5 | 4 | 6 | 0 |
 | mac | a7 | 10 | 6 | 5 | 5 | 0 |
 | mac | k26 | 10 | 7 | 6 | 4 | 0 |
 | divider | a7 | 14 | 0 | 8 | 6 | 0 |
 | divider | k26 | 14 | 2 | 8 | 6 | 0 |
-| fxp_round | a7 | 12 | 3 | 9 | 3 | 0 |
+| fxp_round | a7 | 12 | 1 | 9 | 3 | 0 |
 | fxp_round | k26 | 12 | 6 | 9 | 3 | 0 |
 | isqrt | a7 | 12 | 0 | 4 | 8 | 0 |
 | isqrt | k26 | 12 | 4 | 4 | 8 | 0 |
 | lzc_norm | a7 | 14 | 0 | 14 | 0 | 0 |
 | lzc_norm | k26 | 14 | 6 | 14 | 0 | 0 |
+
+## Clock sweep (brief 166)
+
+Points whose Fmax was a lower bound at the build file's clock were re-run at tighter clocks (`python -m arith.tools.run_sweep`; method in its docstring and in the `method` field of `vivado_sweep_<variant>_<part>.json`). Measured = some round gave WNS <= 0, Fmax = 1000 / (clock - WNS). Bracketed = no round did within the round limit, the last bound stands. The table above now counts, in its lower-bound column, only the bracketed points.
+
+| Function | Part | Points swept | Measured | Bracketed | Median Fmax change against the 160 bound |
+|---|---|---|---|---|---|
+| adder | a7 | 8 | 8 | 0 | +12% |
+| adder | k26 | 3 | 3 | 0 | +28% |
+| fxp_round | a7 | 2 | 2 | 0 | +14% |
 
 ## Pre-stated expectations that were missed
 
@@ -110,8 +120,8 @@ Per function, part and problem shape: the points of the group that no other poin
 | Part | Shape | Points in group | Area against Fmax front | Area against latency front |
 |---|---|---|---|---|
 | a7 | WIDTH=32 | 2 | ripple WIDTH=32 | ripple WIDTH=32 |
-| a7 | WIDTH=64 | 6 | pipelined WIDTH=64, STAGES=2; pipelined WIDTH=64, STAGES=4; ripple WIDTH=64 | ripple WIDTH=64 |
-| k26 | WIDTH=32 | 2 | ripple WIDTH=32 | ripple WIDTH=32 |
+| a7 | WIDTH=64 | 6 | pipelined WIDTH=64, STAGES=2; pipelined WIDTH=64, STAGES=4; pipelined WIDTH=64, STAGES=8; ripple WIDTH=64 | ripple WIDTH=64 |
+| k26 | WIDTH=32 | 2 | carry_select WIDTH=32, BLOCK=8; ripple WIDTH=32 | ripple WIDTH=32 |
 | k26 | WIDTH=64 | 6 | pipelined WIDTH=64, STAGES=2; pipelined WIDTH=64, STAGES=4; pipelined WIDTH=64, STAGES=8; ripple WIDTH=64 | ripple WIDTH=64 |
 
 ### multiplier
