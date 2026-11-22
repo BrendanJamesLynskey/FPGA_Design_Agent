@@ -7,7 +7,7 @@ The brief-123 pyuvm bench (`designs/b96_kr260_10g/verif/pyuvm`) run on **Verilat
 source ~/.local/opt/verilator-5048/env.sh            # Verilator 5.048; cocotb 2.0.1 needs 5.036 or newer, Ubuntu's 5.020 is refused
 export PYTHONPATH=. SIM=verilator PYUVM_COV=1
 PY=~/.local/opt/verif-venv/bin/python                # cocotb 2.0.1, pyuvm 5.0.0, cocotb-coverage 2.0
-$PY designs/b96_kr260_10g/verif/pyuvm/scripts/run_regress.py --out /tmp/v146 --record results/146_verilator_cov     # build 15.6 s; 42 runs in 186 s of simulator time
+$PY designs/b96_kr260_10g/verif/pyuvm/scripts/run_regress.py --out /tmp/v146 --record results/146_verilator_cov     # build 17.6 s; 42 runs in 186 s of simulator time
 verilator_coverage --write /tmp/v146/merged.dat /tmp/v146/runs/*/coverage.dat
 verilator_coverage --write-info results/146_verilator_cov/coverage_lcov.info /tmp/v146/merged.dat
 $PY designs/b96_kr260_10g/verif/pyuvm/scripts/cov_report.py /tmp/v146/merged.dat results/146_verilator_cov designs/b96_kr260_10g
@@ -62,7 +62,7 @@ So of the points open at the end, none is a plain stimulus gap that the bench co
 ## Verilator against Icarus (the second engine)
 Same bench, same 42 (test, seed) runs. Measured by `icarus_vs_verilator.txt` and the records in `before_added_stimulus/`:
 - **Same results.** The simulated time of every run is identical to the nanosecond, the scoreboard comparison totals are identical, and the merged functional-coverage hit counts (`coverage_merged.tsv`) are byte-identical (before the added stimulus, against `results/123_pyuvm_pcs_mac/`).
-- **Faster to run, slower to build.** The 42 runs took 186 s of simulator wall time on Verilator against 495 s on Icarus; the build took 15.6 s against 0.1 s.
+- **Faster to run, slower to build.** The 42 runs took 186 s of simulator wall time on Verilator against 538 s on Icarus (2.9 times, `icarus_vs_verilator.txt`, same final stimulus); the build took 15.6 to 17.6 s (two builds) against 0.1 s.
 - **Verilator needs flags Icarus does not.** `--timing` (the bench awaits `RisingEdge`; the top has `timescale` delays) and `-Wno-fatal`: the RTL has no `timescale` and the bench top does, which is a fatal TIMESCALEMOD warning. With `-Wall` there are 5 TIMESCALEMOD, 3 UNUSEDPARAM and 2 UNUSEDSIGNAL warnings and no others.
 - **Version.** cocotb 2.0.1 supports Verilator 5.036 or newer; Ubuntu's package is 5.020, so CI (apt) cannot run this; the repo's machine has 5.048 under `~/.local/opt`. The Verilator coverage run is therefore by hand, not in CI.
 - **Two-state.** Verilator has no X or Z. The bench already avoids reading unresolved values (it skips the first edge); nothing differed. The one place a difference would show is reset-time X propagation, which this bench does not test.
