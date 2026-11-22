@@ -232,7 +232,8 @@ def test_an_item_without_a_floor_fails_loudly(repo):
 
 
 def test_committed_records_are_well_formed():
-    for p in sorted((Path(__file__).resolve().parents[2] / "results" / "143b_mutation").glob("*.json")):
+    root = Path(__file__).resolve().parents[2] / "results"
+    for p in sorted([*(root / "143b_mutation").glob("*.json"), *(root / "152_b96_mutation").glob("*.json")]):
         r = json.loads(p.read_text())
         assert r["schema"] == S.SCHEMA and r["generator"]["blind_to_tests"] is True and r["generator"]["seed"] is not None
         assert r["killed"] + r["survived_after_bench"] + r["bench_timed_out"] + r["invalid"] == r["generator"]["sampled"] + r["generator"]["llm_proposals_valid"]
