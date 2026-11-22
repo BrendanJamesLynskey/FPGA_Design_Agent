@@ -16,7 +16,7 @@ import pytest
 import yaml
 
 from arith.tools import arith_common as ac
-from arith.tools import gen_build_ooc as gen_build
+from arith.tools import gen_build
 
 
 def point_params(fn: str, key: str) -> list:
@@ -114,8 +114,8 @@ def check_build_files(fn: str) -> None:
     spec = ac.load_spec(fn)
     outs = gen_build.outputs(fn)
     for p, t in outs.items():
-        assert p.exists(), f"{p.relative_to(ac.ROOT)}: run python -m arith.tools.gen_build_ooc"
-        assert p.read_text() == t, f"{p.relative_to(ac.ROOT)} is out of date: run python -m arith.tools.gen_build_ooc"
+        assert p.exists(), f"{p.relative_to(ac.ROOT)}: run python -m arith.tools.gen_build"
+        assert p.read_text() == t, f"{p.relative_to(ac.ROOT)} is out of date: run python -m arith.tools.gen_build"
     bad = []
     for v, vd in spec["variants"].items():
         y = yaml.safe_load((ac.ARITH / fn / "build" / v / "build.yaml").read_text())

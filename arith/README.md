@@ -121,24 +121,6 @@ Vivado out-of-context runs (the prepared `build.yaml` files are for a free heavy
 
 ---
 
-# Arithmetic library: adders, multipliers, multiply-accumulate (brief 139a)
-
-The first functions of a library of FPGA arithmetic, taken as far as they can go before Vivado: each has a specification, a bit-exact model, 2 to 3 RTL variants
-that differ in a real PPA trade-off, simulation against the model (exhaustive at small widths, edge-value and random at large ones, with seeded faults to show the
-bench can fail), formal equivalence between the variants where SymbiYosys allows, Lean statements for all widths, an interface contract and integration guidance, a packaged verification harness, a traced testplan, and prepared out-of-context
-Vivado builds for Artix-7 (xc7a100t) and Kria K26 (xck26). **Nothing here has been run through Vivado**: every statement about LUTs, carry chains, DSPs, Fmax or power
-is an expectation written down before measuring (marked "intended primitive use" in each RTL header and in each spec), and there is no performance requirement in the
-testplans until the runs exist. The plan this sits in is [docs/arithmetic_pareto_plan.md](../docs/arithmetic_pareto_plan.md) (brief 137; at the time of writing it is a draft in that brief's
-worktree, not yet merged, so this layout follows the brief's own and is mapped to the plan's library format under "Layout" below).
-
-## Functions
-
-| Function | Variants | Specification | Testplan and evidence |
-|---|---|---|---|
-| Integer adder and subtractor, with carry/borrow in and out and signed overflow | `ripple` (one carry chain), `carry_select` (blocks computed for carry 0 and 1), `pipelined` (a chunk of the carry chain per clock) | [adder/spec.md](adder/spec.md) | [adder/verif/testplan.yaml](adder/verif/testplan.yaml), [matrix](adder/verif/matrix.md) |
-| Multiplier, exact WA + WB bit product, signed or unsigned | `dsp` (DSP blocks, 0 to 3 registers), `lut_array` (shifted partial products in LUTs), `booth_r4` (radix-4 Booth array in LUTs) | [multiplier/spec.md](multiplier/spec.md) | [multiplier/verif/testplan.yaml](multiplier/verif/testplan.yaml), [matrix](multiplier/verif/matrix.md) |
-| Multiply-accumulate, LANES products per clock into one wrapping accumulator | `dsp` (DSP-mapped, 1 to 3 registers), `dsp_cascade` (lanes chained like a DSP cascade), `fabric` (no DSP) | [mac/spec.md](mac/spec.md) | [mac/verif/testplan.yaml](mac/verif/testplan.yaml), [matrix](mac/verif/matrix.md) |
-
 ## Floating-point functions (brief 139e)
 
 IEEE-754-style binary formats of any exponent and fraction width (`EXP`, `MAN`: binary32 is 8/23, bfloat16 8/7, binary16 5/10), round to nearest even, a canonical quiet NaN, no exception
@@ -199,39 +181,3 @@ The plan of brief 137 describes `library/<function>/` with `spec`, `model/`, `le
 is `impl/<variant>/` (flat, one file per variant), the Lean files are in the repository's one Lean project, and `surface/<fabric>/` does not exist yet: it is where the Vivado
 runs will write their records. Moving to the plan's exact layout is a mechanical rename.
 
-## What is checked, and how far
-
-| Evidence | adder | multiplier | MAC |
-|---|---|---|---|
-| Model against an independent formulation | exhaustive to width 6, 4000 random up to 128 | exhaustive on 8 shapes, 3000 random | 300 random configurations against a structure-free reference |
-| Variants against the model (Icarus + cocotb) | 4 + 6 + 6 exhaustive points, 4 + 5 + 5 random | 7 + 8 + 9 exhaustive, 5 + 4 + 5 random | 6 + 5 + 5 exhaustive, 5 + 4 + 3 random |
-| Seeded faults killed by the bench | see [adder/verif/results/mutation.json](adder/verif/results/mutation.json) | [multiplier/verif/results/mutation.json](multiplier/verif/results/mutation.json) | [mac/verif/results/mutation.json](mac/verif/results/mutation.json) |
-| Formal (SymbiYosys, slang) | variants against each other and a plain `+`: proved for all inputs at widths 8, 16, 32, 33, 64 | against a plain `*`: proved at 8 x 8, 9 x 6, 6 x 9 (and 10 x 10 when the record says so); larger widths by simulation only | against the specification as RTL: proved at three small shapes, bounded at one larger |
-| Lean (for all widths) | carry-select composition adds; subtraction is addition of complements | radix-4 Booth digits sum to the multiplier's value | a clear-free run adds modulo 2^ACCW; a clear forgets the history |
-
-Exact numbers and their dates are in each `verif/results/` and in the function's report; they are not repeated here so they cannot go stale. Limits to keep in mind:
-
-- A formal proof is at the widths listed in `formal/jobs.yaml`. A multiplier equivalence is an SMT problem that grows quickly with width, so wide multipliers are checked by simulation only.
-- The Lean statements are **not approved**: only a human approves a statement (`verif/lean_approvals.yaml`), and until then the matrix shows "statement not approved" and does not count the proof as verification. The Lean text is a hand transcription of the RTL's structure (kind `transcription_untested`): it proves the algorithm, not the RTL.
-- The Lean proofs use Lean 4.36 core only (no Mathlib) and are checked by `lake build` in `formal/lean`.
-- Simulation uses Icarus; Verilator is used for lint only.
-
-## Running it
-
-```
-pip install pyyaml pytest cocotb==2.0.1          # Icarus (iverilog), Verilator and the OSS CAD Suite (yosys, sby, boolector) are on PATH or in ~/.local/opt/oss-cad-suite
-python -m pytest -q arith/adder/tests             # one function: model, simulation, latency, mutants, formal, package checks
-python -m arith.tools.run_mutants adder           # the mutation run, writing verif/results/mutation.json
-python -m arith.tools.run_formal adder            # the formal jobs, writing verif/results/formal.json
-python -m arith.tools.gen_build_ooc; python -m arith.tools.gen_spec_md; python -m arith.tools.gen_harness; python -m arith.tools.gen_testplan    # regenerate; add --check to compare
-python -m flow.trace_v1 check                     # the 116 gate: every test named by an item, every requirement traced
-```
-
-## Running the Vivado characterisation (not done yet)
-
-Each `<fn>/build/<variant>/build.yaml` is in the format of `flow/prepare.py` (`top`, `part`, `sources`, `generics`) with the out-of-context keys of `flow/ipchar.tcl`: the wrapper
-top (every input and output registered, clock on port `clk`), the two parts and a target clock for each, the points to run (`points`) and the primitive use expected at each part.
-A run is `synth_design -mode out_of_context`, `opt_design`, `place_design`, `route_design` on one thread, with a heavy slot (`_handoff/take_heavy_slot.sh`, peak declared from
-`_handoff/fpga_agent/resources/vivado_peak.py`). A tight target clock matters: at an easy clock the tool stops optimising and Fmax is hidden (the FPGA course's Part 8), so the
-clocks in the build files are starting points and the characterisation should sweep them. The results go to `<fn>/surface/<part>/`, one row per variant and point with the Vivado
-release, the target clock, utilisation, WNS and WHS, vectorless power and the latency from `spec.yaml`.

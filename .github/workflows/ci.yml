@@ -568,7 +568,7 @@ jobs:
           pip install pyyaml pytest cocotb==2.0.1 numpy==2.4.3   # numpy: the floating-point models are checked against float32 and float16 (brief 139e)
       - name: Generated files are current (wrappers, build.yaml, spec.md, testplans); the traceability gate (every test named by an item, every requirement traced)
         run: |
-          python -m arith.tools.gen_build_ooc --check
+          python -m arith.tools.gen_build --check
           python -m arith.tools.gen_spec_md --check
           python -m arith.tools.gen_harness --check
           python -m arith.tools.gen_testplan --check
@@ -616,7 +616,7 @@ jobs:
           pip install pyyaml pytest cocotb==2.0.1 numpy==2.4.3   # numpy: the floating-point models are checked against float32 and float16 (brief 139e)
       - name: Generated files are current (wrappers, build.yaml, spec.md, testplans, mutants, the cosine ROM); the traceability gate
         run: |
-          python -m arith.tools.gen_build_ooc --check
+          python -m arith.tools.gen_build --check
           python -m arith.tools.gen_spec_md --check
           python -m arith.tools.gen_testplan --check
           python -m arith.fft_common.gen_cos_rom --check
