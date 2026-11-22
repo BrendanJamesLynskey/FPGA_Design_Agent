@@ -14,7 +14,7 @@ environments. A pass count after the change that is not the whole set is reporte
 
 ## Measured
 
-Each row is one run of [measure.py](measure.py) on a clone with no `.env`, no `FDA_ACCESS_KEY` and no private prompts: "before" is origin/main at 17b4dd19, "after" is this branch at ccd6df4c, with the same labelled set. A case passes when the command line gives its label's exit status and text. The `full` environment has the agent and graph extras installed; `bare` has `pyyaml` and `pyserial` only (Python 3.12.3). Records: `before_full.json`, `after_full.json`, `before_bare.json`, `after_bare.json`.
+Each row is one run of [measure.py](measure.py) on a clone with no `.env`, no `FDA_ACCESS_KEY` and no private prompts: "before" is origin/main at 17b4dd19, "after" is this branch at 4e20c2eb, with the same labelled set. A case passes when the command line gives its label's exit status and text. The `full` environment has the agent and graph extras installed; `bare` has `pyyaml` and `pyserial` only (Python 3.12.3). Records: `before_full.json`, `after_full.json`, `before_bare.json`, `after_bare.json`.
 
 | Environment | Cases | Before: passing | After: passing |
 |---|---|---|---|
