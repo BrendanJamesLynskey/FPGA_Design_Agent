@@ -1,0 +1,37 @@
+{
+ "tool": "Yosys 0.70+385 (git sha1 098e46a36, Release, Clang /usr/bin/clang++ 21.1.8)",
+ "results": [
+  {
+   "name": "mut_keep_ignored",
+   "task": "safety_prove",
+   "AW": 2,
+   "MIN_KEEP": 2,
+   "KB": 0,
+   "defines": [],
+   "status": "FAIL",
+   "seconds": 4.6,
+   "failed_assertions": [
+    "p6d_delete_after_min_keep"
+   ],
+   "caught": true,
+   "verdict": "CAUGHT",
+   "why": "the idle-run condition is ignored: a block is deleted straight after a frame"
+  },
+  {
+   "name": "mut_keep_off_by_one",
+   "task": "safety_prove",
+   "AW": 2,
+   "MIN_KEEP": 2,
+   "KB": 0,
+   "defines": [],
+   "status": "FAIL",
+   "seconds": 4.3,
+   "failed_assertions": [
+    "p6d_delete_after_min_keep"
+   ],
+   "caught": true,
+   "verdict": "CAUGHT",
+   "why": "one idle block too few is required before a deletion"
+  }
+ ]
+}

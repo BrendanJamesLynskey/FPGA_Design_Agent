@@ -29,7 +29,7 @@ def test_formal(job, tmp_path):
     j.setdefault("mutate", None)
     j.setdefault("expect_fail_any", None)
     j.pop("why", None)
-    res = rf.run_job(j["name"], j["task"], j["aw"], j["kb"], j["defines"], j["mutate"], j["bmc"], j["prove"], j["cover"], j["expect_fail_any"], tmp_path, BINDIR)
+    res = rf.run_job(j["name"], j["task"], j["aw"], j["kb"], j["defines"], j["mutate"], j["bmc"], j["prove"], j["cover"], j["expect_fail_any"], tmp_path, BINDIR, j.get("min_keep", 0))
     assert res.get("verdict") in ("PASS", "CAUGHT"), res
     if j["task"] == "cover":
         assert not res.get("unreached_covers"), res

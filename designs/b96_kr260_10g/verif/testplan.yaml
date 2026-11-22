@@ -81,6 +81,13 @@ requirements:
     source: results/152_b96_mutation/README.md
     spec_status: draft
     mutation_floor: {score_pct: 90, worst_case_pct: 90, min_mutants: 30, max_undecided: 3}
+  - id: B96-V-RM-KEEP
+    kind: safety
+    title: The rate matcher's simulation bench catches seeded bugs at MIN_KEEP 1, 2 and 3
+    text: The same floor as B96-V-RM-BENCH, for each of the documented MIN_KEEP settings 1, 2 and 3 of rate_match_gp.sv, which no earlier bench instantiated on the own buffer (design.md section 9; brief 152 found the gap). A blind sample of at least 30 one-line changes (flow/mutation_blind.py, seed 1) scores a worst case of at least 90 percent at each setting, survivors decided by a formal miter at that setting, every undecided mutant and bench timeout counted as a survivor. The bench is the keep_* cases of ratematch_cocotb.py (RTL against the Python twin output for output) and the five cases of the MIN_KEEP 0 bench that do not depend on the stream's gaps; its stages are in flow/mutation_targets.py.
+    source: results/168_rm_minkeep/README.md
+    spec_status: draft
+    mutation_floor: {score_pct: 90, worst_case_pct: 90, min_mutants: 30, max_undecided: 3}
   - id: B96-F-OFFSET
     kind: functional
     title: Rate matching holds under a real frequency offset
@@ -269,6 +276,33 @@ verification:
     method: coverage_bin
     title: Mutation score of the rate matcher's bench (brief 152; seed 2, 30 blind mutants, all nine cases of test_rate_match_gp_cocotb; the formal miter decides survivors); seed 1 and the as-found counts are in results/152_b96_mutation
     evidence: {file: results/152_b96_mutation/b96_rate_match_gp_seed2.json, reader: mutation}
+  - id: V-RM-MUTATION-K1
+    requirements: [B96-V-RM-KEEP, B96-S-RATEMATCH]
+    method: coverage_bin
+    title: Mutation score of the rate matcher's bench at MIN_KEEP 1 (brief 168; seed 1, 30 blind mutants; the formal miter at MIN_KEEP 1 decides survivors)
+    evidence: {file: results/168_rm_minkeep/b96_rate_match_gp_k1_seed1.json, reader: mutation}
+  - id: V-RM-MUTATION-K2
+    requirements: [B96-V-RM-KEEP, B96-S-RATEMATCH]
+    method: coverage_bin
+    title: Mutation score of the rate matcher's bench at MIN_KEEP 2 (brief 168; seed 1, 30 blind mutants)
+    evidence: {file: results/168_rm_minkeep/b96_rate_match_gp_k2_seed1.json, reader: mutation}
+  - id: V-RM-MUTATION-K3
+    requirements: [B96-V-RM-KEEP, B96-S-RATEMATCH]
+    method: coverage_bin
+    title: Mutation score of the rate matcher's bench at MIN_KEEP 3 (brief 168; seed 1, 30 blind mutants)
+    evidence: {file: results/168_rm_minkeep/b96_rate_match_gp_k3_seed1.json, reader: mutation}
+  - id: V-RM-KEEP-SIM
+    requirements: [B96-V-RM-KEEP, B96-S-RATEMATCH]
+    method: sim_test
+    title: rate_match_gp at MIN_KEEP 1, 2 and 3 against its Python twin, output for output (brief 168; the keep_* cases and five unchanged cases)
+    evidence: {file: results/168_rm_minkeep/pytest_junit.xml, reader: junit, tests: ["test_b96_pcs_rtl::test_rate_match_gp_min_keep_cocotb[1]", "test_b96_pcs_rtl::test_rate_match_gp_min_keep_cocotb[2]", "test_b96_pcs_rtl::test_rate_match_gp_min_keep_cocotb[3]"]}
+    checks: *rtl_rm
+  - id: V-RM-KEEP-FORMAL
+    requirements: [B96-V-RM-KEEP, B96-S-RATEMATCH]
+    method: formal
+    title: Safety proved by k-induction at MIN_KEEP 1, 2 and 3 (AW 2; AW 4 at 2), including P6d (a deletion only after MIN_KEEP idle blocks were output) and its helper, with four seeded faults of the idle-run logic caught (brief 168; results/168_rm_minkeep)
+    evidence: {file: results/168_rm_minkeep/pytest_junit.xml, reader: junit, tests: ["test_b115_formal::test_formal[safety_prove_aw2_kb0_mk1]", "test_b115_formal::test_formal[safety_prove_aw2_kb0_mk2]", "test_b115_formal::test_formal[safety_prove_aw2_kb0_mk3]", "test_b115_formal::test_formal[safety_prove_aw4_kb0_mk2]", "test_b115_formal::test_formal[mut_keep_ignored]", "test_b115_formal::test_formal[mut_keep_off_by_one]", "test_b115_formal::test_formal[mut_idle_run_kept]", "test_b115_formal::test_formal[mut_idle_run_not_counting_inserted]"]}
+    checks: [designs/b96_kr260_10g/rtl/rate_match_gp.sv, designs/b96_kr260_10g/verif/formal/rm_gp_props.sv, designs/b96_kr260_10g/verif/formal/rm_gp_bind.sv, designs/b96_kr260_10g/verif/formal/run_formal.py]
   - id: V-SIM-PPM-PARTNER
     requirements: [B96-F-OFFSET]
     method: sim_test

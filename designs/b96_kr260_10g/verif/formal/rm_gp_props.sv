@@ -11,6 +11,7 @@
 module rm_gp_props #(
     parameter int AW = 2,
     parameter bit ENT_SYNC = 1'b1,               // rate_match_gp's ENT_SYNC (the pointer crosses with ENT_SYNC ? 3 : 2 flops; the entry copies exist only with 1)
+    parameter int MIN_KEEP = 0,                  // rate_match_gp's MIN_KEEP (brief 168): delete only after this many consecutive pure idle blocks were output
     parameter int KB = 0                         // the bit of the 74-bit entry the symbolic-entry proof follows: 0..63 data, 64..71 control mask, 72 ordered-set flag, 73 pure-idle flag
 ) (
     input logic wclk, rclk, wrst, rrst,
@@ -22,6 +23,7 @@ module rm_gp_props #(
     input logic [AW:0] wbin, rbin, rbin_w, wbin_r, fill,
     input logic can_read, lock_s, slot, in_frame, do_pop, do_del, rd_en,
     input logic [5:0] pace,
+    input logic [1:0] idle_run,
     input logic [73:0] head,
     input logic [73:0] ent [1 << AW],
     input logic r_v,
@@ -210,6 +212,17 @@ module rm_gp_props #(
     `FV_BOTH(p6a_insert_idle_only_between_frames, !(ins_q && r_v) || !sp_q)
     `FV_BOTH(p6b_delete_only_between_frames, !armed || !do_del || !spec_in)
     `FV_BOTH(p6c_spec_matches_rtl, !armed || in_frame == spec_in)
+    // P6d (brief 168) with MIN_KEEP > 0, a block is deleted only after at least MIN_KEEP consecutive pure idle blocks were output (a passed idle block or an inserted one). run_s is the spec's own count of the
+    //    output stream's trailing pure idle blocks (saturating at 3 like the RTL's 2-bit idle_run, which it shares no code with): it restarts at a reset or lock loss and after any output block that is not a pure idle.
+    //    SVA: do_del |-> run_s >= MIN_KEEP
+    logic [1:0] run_s = 2'd0;
+    always_ff @(posedge rclk) begin
+        if (rrst || !lock_s) run_s <= 2'd0;
+        else if (slot && can_read) run_s <= head[73] ? ((run_s == 2'd3) ? 2'd3 : run_s + 2'd1) : 2'd0;
+        else if (slot && !spec_in) run_s <= (run_s == 2'd3) ? 2'd3 : run_s + 2'd1;
+    end
+    `FV_BOTH(p6d_delete_after_min_keep, !armed || !do_del || run_s >= 2'(MIN_KEEP))
+    `FV_BOTH(p6e_idle_run_is_the_specs_count, !armed || idle_run == run_s)        // the helper that makes P6d inductive: the RTL's register equals the spec's count
 `ifndef FV_PROGRESS
     // P7 only pure idle blocks are deleted. Two parts. (a) At the write: the pure-idle flag (entry bit 73) is set only for the idle pattern, judged on the raw inputs.
     //    SVA: wr_en |-> (w_ent[73] |-> (w_c == 8'hFF && w_d == 64'h0707070707070707 && !w_os))

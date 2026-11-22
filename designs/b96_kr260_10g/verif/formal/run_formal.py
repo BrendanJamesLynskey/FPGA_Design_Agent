@@ -53,10 +53,18 @@ MUTANTS = [
     ("mut_no_pop", r"assign slot      = \(pace != 6'd32\);", "assign slot      = 1'b0;", [], "progress_bmc", 0, 2, ["r2_rank_decreases", "r1_rank_bounded"], "the reader never has a slot: nothing is ever popped, a written block waits for ever"),
 ]
 
+# brief 168, mutants that only exist with MIN_KEEP > 0 (name, regex, replacement, MIN_KEEP, why): each must break p6d_delete_after_min_keep (the deletion rule) or p6e_idle_run_is_the_specs_count (the register that rule reads)
+MUTANTS_KEEP = [
+    ("mut_keep_ignored", r"assign keep_ok = \(idle_run >= 2'\(MIN_KEEP\)\);", "assign keep_ok = 1'b1;", 2, "the idle-run condition is ignored: a block is deleted straight after a frame"),
+    ("mut_keep_off_by_one", r"assign keep_ok = \(idle_run >= 2'\(MIN_KEEP\)\);", "assign keep_ok = (idle_run >= 2'(MIN_KEEP - 1));", 2, "one idle block too few is required before a deletion"),
+    ("mut_idle_run_kept", r"idle_run <= head_idle \? \(\(idle_run == 2'd3\) \? 2'd3 : idle_run \+ 2'd1\) : 2'd0;", "idle_run <= head_idle ? ((idle_run == 2'd3) ? 2'd3 : idle_run + 2'd1) : idle_run;", 1, "a block that is not a pure idle does not restart the idle run: the run of the stream before a frame counts again after it"),
+    ("mut_idle_run_not_counting_inserted", r"idle_run <= \(idle_run == 2'd3\) \? 2'd3 : idle_run \+ 2'd1;", "idle_run <= idle_run;", 2, "an inserted idle block is not counted as an output idle"),
+]
 
-def sby_text(aw: int, kb: int, defines: list[str], depth_bmc: int, depth_prove: int, depth_cover: int) -> str:
+
+def sby_text(aw: int, kb: int, defines: list[str], depth_bmc: int, depth_prove: int, depth_cover: int, min_keep: int = 0) -> str:
     t = (HERE / "rm_gp.sby").read_text()
-    t = re.sub(r"-G AW=\d+", f"-G AW={aw}", t)
+    t = re.sub(r"-G AW=\d+", f"-G AW={aw}" + (f" -G MIN_KEEP={min_keep}" if min_keep else ""), t)
     t = re.sub(r"-D FV_KB=\d+", f"-D FV_KB={kb}" + "".join(f" -D {d}" for d in defines), t)
     t = re.sub(r"(?m)^bmc: depth \d+", f"bmc: depth {depth_bmc}", t)
     t = re.sub(r"(?m)^prove: depth \d+", f"prove: depth {depth_prove}", t)
@@ -65,7 +73,7 @@ def sby_text(aw: int, kb: int, defines: list[str], depth_bmc: int, depth_prove: 
     return t
 
 
-def run_job(name: str, task: str, aw: int, kb: int, defines: list[str], mutate: tuple[str, str] | None, bmc: int, prove: int, cover: int, expect_fail_any: list[str] | None, outroot: Path, bindir: str) -> dict:
+def run_job(name: str, task: str, aw: int, kb: int, defines: list[str], mutate: tuple[str, str] | None, bmc: int, prove: int, cover: int, expect_fail_any: list[str] | None, outroot: Path, bindir: str, min_keep: int = 0) -> dict:
     work = outroot / name
     shutil.rmtree(work, ignore_errors=True)
     work.mkdir(parents=True)
@@ -78,7 +86,7 @@ def run_job(name: str, task: str, aw: int, kb: int, defines: list[str], mutate: 
             return {"name": name, "task": task, "status": "BAD_MUTANT", "verdict": "BAD_MUTANT", "detail": f"pattern {pat!r} matched {n} times"}
         rtl = new
     (work / "rate_match_gp.sv").write_text(rtl)
-    (work / "rm_gp.sby").write_text(sby_text(aw, kb, defines, bmc, prove, cover))
+    (work / "rm_gp.sby").write_text(sby_text(aw, kb, defines, bmc, prove, cover, min_keep))
     env = dict(os.environ, PATH=bindir + ":" + os.environ["PATH"])
     t0 = time.time()
     cmd = ["sby", "-f", "-d", "out", "rm_gp.sby", task]
@@ -89,7 +97,7 @@ def run_job(name: str, task: str, aw: int, kb: int, defines: list[str], mutate: 
     log = (work / "out" / "logfile.txt").read_text() if (work / "out" / "logfile.txt").exists() else r.stdout + r.stderr
     status = (work / "out" / "status").read_text().split()[0] if (work / "out" / "status").exists() else "ABSENT"
     failed = sorted(set(re.findall(r"Assert failed in rm_gp_fv_top: dut\.u_props\.(?:g_\w+\.)?(\w+)", log)))
-    res = {"name": name, "task": task, "AW": aw, "KB": kb, "defines": defines, "status": status, "seconds": round(dt, 1), "failed_assertions": failed}
+    res = {"name": name, "task": task, "AW": aw, "MIN_KEEP": min_keep, "KB": kb, "defines": defines, "status": status, "seconds": round(dt, 1), "failed_assertions": failed}
     unreached = sorted(set(re.findall(r"Unreached cover statement at rm_gp_fv_top: dut\.u_props\.(\w+)", log)))
     if task == "cover":
         res["unreached_covers"] = unreached
@@ -112,15 +120,22 @@ def plan(which: str):
     jobs.append(dict(name="safety_bmc_aw2_kb0", task="safety_bmc", aw=2, kb=0, bmc=40, prove=24, cover=60))
     jobs.append(dict(name="progress_bmc_aw2", task="progress_bmc", aw=2, kb=0, bmc=40, prove=24, cover=60))
     jobs.append(dict(name="cover_aw2", task="cover", aw=2, kb=0, bmc=40, prove=24, cover=60))
+    for mk in (1, 2, 3):                                                      # brief 168: the documented MIN_KEEP 1 to 3, which no earlier job instantiated
+        jobs.append(dict(name=f"safety_prove_aw2_kb0_mk{mk}", task="safety_prove", aw=2, kb=0, bmc=40, prove=24, cover=60, min_keep=mk))
+    jobs.append(dict(name="safety_prove_aw4_kb0_mk2", task="safety_prove", aw=4, kb=0, bmc=40, prove=8, cover=60, min_keep=2))
     if which == "full":
         for kb in range(74):
             if kb not in REP_BITS:
                 jobs.append(dict(name=f"safety_prove_aw2_kb{kb}", task="safety_prove", aw=2, kb=kb, bmc=24, prove=12, cover=60))
         jobs.append(dict(name="progress_bmc_aw2_deep", task="progress_bmc", aw=2, kb=0, bmc=70, prove=24, cover=60))
         jobs.append(dict(name="cover_del_aw2", task="cover", aw=2, kb=0, defines=["FV_COVER_DEL"], bmc=40, prove=24, cover=110))
+        for mk in (1, 2, 3):
+            jobs.append(dict(name=f"cover_del_aw2_mk{mk}", task="cover", aw=2, kb=0, defines=["FV_COVER_DEL"], bmc=40, prove=24, cover=130, min_keep=mk))
     for m in MUTANTS:
         name, pat, rep, defs, task, kb, aw, expect, why = m
         jobs.append(dict(name=name, task=task, aw=aw, kb=kb, defines=defs, mutate=([(pat, rep)] + SHORT_PACE * (name in NEEDS_SHORT_PACE)) if pat else None, bmc=40, prove=32, cover=60, expect_fail_any=expect, why=why))
+    for name, pat, rep, mk, why in MUTANTS_KEEP:
+        jobs.append(dict(name=name, task="safety_prove", aw=2, kb=0, defines=[], mutate=[(pat, rep)] + SHORT_PACE, bmc=40, prove=32, cover=60, expect_fail_any=["p6d_delete_after_min_keep", "p6e_idle_run_is_the_specs_count"], min_keep=mk, why=why))
     return jobs
 
 
@@ -146,7 +161,7 @@ def main() -> int:
         j.setdefault("mutate", None)
         j.setdefault("expect_fail_any", None)
         why = j.pop("why", None)
-        res = run_job(j["name"], j["task"], j["aw"], j["kb"], j["defines"], j["mutate"], j["bmc"], j["prove"], j["cover"], j["expect_fail_any"], outroot, bindir)
+        res = run_job(j["name"], j["task"], j["aw"], j["kb"], j["defines"], j["mutate"], j["bmc"], j["prove"], j["cover"], j["expect_fail_any"], outroot, bindir, j.get("min_keep", 0))
         if why:
             res["why"] = why
         results.append(res)

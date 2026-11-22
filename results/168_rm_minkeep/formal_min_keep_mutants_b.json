@@ -1,0 +1,37 @@
+{
+ "tool": "Yosys 0.70+385 (git sha1 098e46a36, Release, Clang /usr/bin/clang++ 21.1.8)",
+ "results": [
+  {
+   "name": "mut_idle_run_kept",
+   "task": "safety_prove",
+   "AW": 2,
+   "MIN_KEEP": 1,
+   "KB": 0,
+   "defines": [],
+   "status": "FAIL",
+   "seconds": 4.9,
+   "failed_assertions": [
+    "p6e_idle_run_is_the_specs_count"
+   ],
+   "caught": true,
+   "verdict": "CAUGHT",
+   "why": "a block that is not a pure idle does not restart the idle run: the run of the stream before a frame counts again after it"
+  },
+  {
+   "name": "mut_idle_run_not_counting_inserted",
+   "task": "safety_prove",
+   "AW": 2,
+   "MIN_KEEP": 2,
+   "KB": 0,
+   "defines": [],
+   "status": "FAIL",
+   "seconds": 2.3,
+   "failed_assertions": [
+    "p6e_idle_run_is_the_specs_count"
+   ],
+   "caught": true,
+   "verdict": "CAUGHT",
+   "why": "an inserted idle block is not counted as an output idle"
+  }
+ ]
+}

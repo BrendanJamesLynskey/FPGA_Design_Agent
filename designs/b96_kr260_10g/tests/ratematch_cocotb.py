@@ -195,3 +195,55 @@ async def writer_outruns_a_reader_held_in_reset(dut):
     the SymbiYosys bench of brief 115 (p1_no_overflow) caught it."""
     r = await run_case(dut, "reader_in_reset", 0, n_frames=30, gaps=(2, 3), seed=13, r_rst_clks=400)
     assert r["rtl"]["n_ovf"] > 0 and r["rtl"]["fill_max"] >= 15, r
+
+
+# ---- Brief 168: MIN_KEEP 1 to 3 on rate_match_gp ----------------------------------------------------------------------------------------------------------------------------------------------
+# A documented parameter (design.md section 9: delete only after MIN_KEEP consecutive pure idle blocks were output) that no earlier bench instantiated on the own buffer (the MIN_KEEP = 1 case ran the xpm macro).
+# The cases below run only when B96_RM_MIN_KEEP is 1, 2 or 3 (they skip at 0, so the nine cases above and their mutation records are unchanged); the Python twin follows min_keep. Stream gaps are written in
+# terms of K = MIN_KEEP: a deletion needs K pure idles output and then one more idle at the head, in the one clock in 33 that is not a read slot, so a gap of K idle blocks cannot allow one (the block after the K
+# idles is a frame start) and a gap of K + 6 gives six chances per gap. The partner is 1000 to 2500 ppm fast (or slow) so that a few hundred frames are enough for the buffer to need many deletions
+# (+400 ppm would need thousands of frames); the deletion capacity of a K + 6 gap is a few thousand ppm, so the stream is sustainable, and that of a gap of K is none.
+K = MIN_KEEP
+
+
+@cocotb.test(timeout_time=50, timeout_unit="ms", skip=(MIN_KEEP == 0))
+async def keep_deletes_after_enough_idles(dut):
+    """Every gap is MIN_KEEP + 6 idle blocks: the reader may delete after MIN_KEEP idles, so the fast partner never overflows the buffer, deletions happen, every frame is intact, RTL == twin."""
+    r = await run_case(dut, "keep_deletes", 1500, n_frames=250, gaps=(K + 6,), seed=21)
+    assert r["frames_equal"] and r["rtl"]["n_del"] > 5 and r["rtl"]["n_ovf"] == 0, r
+
+
+@cocotb.test(timeout_time=50, timeout_unit="ms", skip=(MIN_KEEP == 0))
+async def keep_refuses_short_gaps(dut):
+    """Every gap is MIN_KEEP idle blocks (one idle fewer than a deletion needs) and the partner is fast: nothing can be deleted between frames, the 16-entry buffer fills and overflows (counted in n_ovf,
+    never silent: the frames it cuts fail their FCS), RTL == twin. This is the documented limit of MIN_KEEP (design.md section 9), now shown on the own buffer for 1 to 3."""
+    r = await run_case(dut, "keep_short", 2500, n_frames=200, gaps=(K,), seed=22)
+    assert r["rtl"]["n_ovf"] > 0 and not r["frames_equal"], r
+
+
+@cocotb.test(timeout_time=50, timeout_unit="ms", skip=(MIN_KEEP == 0))
+async def keep_mixed_gaps(dut):
+    """Gaps of MIN_KEEP, MIN_KEEP + 1, 1, MIN_KEEP + 6, MIN_KEEP + 3 and 1 idle blocks in turn: some gaps allow a deletion and some do not; RTL == twin, deletions happen."""
+    r = await run_case(dut, "keep_mixed", 1000, n_frames=300, gaps=(K, K + 1, 1, K + 6, K + 3, 1), seed=23)
+    assert r["rtl"]["n_del"] > 0, r
+
+
+@cocotb.test(timeout_time=50, timeout_unit="ms", skip=(MIN_KEEP == 0))
+async def keep_with_ordered_sets_and_errors(dut):
+    """Ordered-set and error blocks between frames (they are not pure idles, so they restart the idle run), gaps of MIN_KEEP + 6 and MIN_KEEP + 7; RTL == twin, counters included."""
+    r = await run_case(dut, "keep_os_err", 1000, n_frames=250, gaps=(K + 6, K + 7), seed=24, os_every=3, err_every=5)
+    assert r["rtl"]["n_out"] > 0, r
+
+
+@cocotb.test(timeout_time=50, timeout_unit="ms", skip=(MIN_KEEP == 0))
+async def keep_inserted_idles_count(dut):
+    """The partner is 1500 ppm slow: the buffer runs empty and the reader inserts idle blocks (they count as output idles for the run); gaps of MIN_KEEP + 6; RTL == twin, insertions happen, frames intact."""
+    r = await run_case(dut, "keep_inserts", -1500, n_frames=250, gaps=(K + 6,), seed=25)
+    assert r["frames_equal"] and r["rtl"]["n_ins"] > 0, r
+
+
+@cocotb.test(timeout_time=50, timeout_unit="ms", skip=(MIN_KEEP == 0))
+async def keep_run_restarts_after_lock_loss(dut):
+    """The block lock drops mid-stream (the idle run restarts with it, the buffer is discarded) in a stream that needs deletions; RTL == twin."""
+    r = await run_case(dut, "keep_lockdrop", 1000, n_frames=250, gaps=(K + 6,), seed=26, lock_drop=(3000, 3100))
+    assert r["rtl"]["n_out"] > 0, r

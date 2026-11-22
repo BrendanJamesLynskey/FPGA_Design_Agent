@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 from flow import cocotb_run
 
 HERE = Path(__file__).parent
@@ -63,6 +65,19 @@ def test_rate_match_min_keep_1_shows_the_limit() -> None:
     srcs = [RTL / "rate_match.sv", RTL / "rate_match_gp.sv", DESIGN / "sim" / "tb_rate_match.sv"]
     cocotb_run.run("b96_rate_match_k1", "tb_rate_match", srcs, "ratematch_cocotb", HERE, parameters={"MIN_KEEP": 1}, testcase="minimum_gap_partner_faster",
                    extra_env={"PYTHONPATH": str(ROOT), "B96_RM_MIN_KEEP": "1"})
+
+
+KEEP_CASES = ["keep_deletes_after_enough_idles", "keep_refuses_short_gaps", "keep_mixed_gaps", "keep_with_ordered_sets_and_errors", "keep_inserted_idles_count", "keep_run_restarts_after_lock_loss",
+              "same_clocks", "lock_loss_discards", "clear_wins_over_a_count", "pause_right_after_a_frame_start", "writer_outruns_a_reader_held_in_reset"]
+
+
+@pytest.mark.parametrize("min_keep", [1, 2, 3])
+def test_rate_match_gp_min_keep_cocotb(min_keep: int) -> None:
+    """Brief 168: rtl/rate_match_gp.sv (own gray-pointer buffer, HI = 1) at MIN_KEEP 1, 2 and 3 against its twin, output for output: the six keep_* cases (a deletion needs MIN_KEEP idles output; gaps one idle short
+    overflow, as design.md section 9 says; mixed gaps; ordered sets and errors; inserted idles; lock loss) and the five unchanged cases that do not depend on the stream's gaps. MIN_KEEP 0 is test_rate_match_gp_cocotb."""
+    srcs = [RTL / "rate_match.sv", RTL / "rate_match_gp.sv", DESIGN / "sim" / "tb_rate_match.sv"]
+    cocotb_run.run(f"b96_rate_match_gp_k{min_keep}", "tb_rate_match", srcs, "ratematch_cocotb", HERE, parameters={"IMPL": 1, "HI": 1, "MIN_KEEP": min_keep}, testcase=[rf"\.{t}$" for t in KEEP_CASES],
+                   extra_env={"PYTHONPATH": str(ROOT), "B96_RM_IMPL": "gp", "B96_RM_HI": "1", "B96_RM_MIN_KEEP": str(min_keep)})
 
 
 def test_ppm_partner_cocotb() -> None:

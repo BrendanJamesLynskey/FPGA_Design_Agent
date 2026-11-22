@@ -1,0 +1,552 @@
+{
+ "schema": "fpga-design-agent/mutation-score/v1",
+ "target": "b96_rate_match_gp_k1",
+ "design": "designs/b96_kr260_10g",
+ "what": "the receive elastic buffer rate_match_gp (own gray-pointer FIFO, two clock domains) with MIN_KEEP = 1",
+ "date": "2026-11-22",
+ "generator": {
+  "name": "flow/mutation_blind.py",
+  "blind_to_tests": true,
+  "seed": 1,
+  "requested": 30,
+  "candidates": 135,
+  "sampled": 30,
+  "operators": [
+   "and_to_or",
+   "band_to_bor",
+   "bit0_to_1",
+   "bit1_to_0",
+   "bor_to_band",
+   "const_minus1",
+   "const_plus1",
+   "eq_to_ne",
+   "ge_to_gt",
+   "ge_to_lt",
+   "gt_to_ge",
+   "gt_to_le",
+   "lt_to_le",
+   "minus_to_plus",
+   "ne_to_eq",
+   "not_removed",
+   "or_to_and",
+   "plus_to_minus",
+   "shl_to_shr",
+   "shr_to_shl",
+   "ternary_swap",
+   "tilde_removed",
+   "xor_to_or"
+  ],
+  "llm_proposals_valid": 0,
+  "llm_proposals_dropped": 0,
+  "rtl_sha256": "2944471e62316a0e3d24c48e4ec78d33e1462223d845bfe541a2f93a8c3581bf"
+ },
+ "rtl": {
+  "rate_match_gp.sv": "09ba730191a05f348c4b512e0203fad604872ef66608f925caab1c2c600c5653"
+ },
+ "rtl_source": null,
+ "bench": {
+  "description": "at MIN_KEEP = 1 (cocotb + Icarus, output for output against the Python twin, frame checks), three stages: keep_deletes_after_enough_idles; then, for a mutant that survives it, keep_refuses_short_gaps, keep_mixed_gaps; then keep_with_ordered_sets_and_errors, keep_inserted_idles_count, keep_run_restarts_after_lock_loss, same_clocks, lock_loss_discards, clear_wins_over_a_count, pause_right_after_a_frame_start, writer_outruns_a_reader_held_in_reset",
+  "baseline_seconds": 802.6,
+  "mutant_timeout_s": 5400,
+  "jobs": 1
+ },
+ "timeout_policy": "A bench run that exceeds its time limit is `timed_out`: it is not counted as killed and not as a survivor; it is listed, and the worst-case score counts it as a survivor. A formal run that exceeds its limit is `undecided`, handled the same way. Neither is ever counted as a kill.",
+ "filter": {
+  "method": "miter: BMC, then register-matched induction (yosys equiv_induct), then an unbounded proof (sby)",
+  "bmc_depth": 30,
+  "bmc_limit_s": 120,
+  "prove_limit_s": 300,
+  "configs": [
+   "AW=4 HI=1 (the bench's) MIN_KEEP=1",
+   "AW=2 HI=1 MIN_KEEP=1"
+  ],
+  "assumptions": [],
+  "compared": "every output of the block, at every step (both clocks free)",
+  "reset": null,
+  "start_state": "registers without an initial value start at 0 in both versions"
+ },
+ "evaluated": 30,
+ "invalid": 0,
+ "bench_timed_out": 0,
+ "killed_by_simulation": 26,
+ "killed_by_formal_bench": 2,
+ "killed": 28,
+ "survived_after_bench": 2,
+ "equivalent": 0,
+ "real_survivors": 0,
+ "undecided": 2,
+ "score_pct": 100.0,
+ "score_simulation_only_pct": 92.86,
+ "score_worst_case_pct": 93.33,
+ "score_before_filter_pct": 93.33,
+ "formal_bench_bound": true,
+ "invalid_listed": [],
+ "timed_out_listed": [],
+ "survivors": [
+  {
+   "name": "rate_match_gp_L130_lt_to_le_30",
+   "change": "rate_match_gp.sv line 130: `if (32'(fill) < fill_min) fill_min <= 32'(fill);` became `if (32'(fill) <= fill_min) fill_min <= 32'(fill);` ('<' replaced by '<=')",
+   "verdict": "undecided",
+   "note": "BMC to 30 clocks timed out after 120 s; the unbounded proof (smtbmc boolector) ended TIMEOUT within 300 s"
+  },
+  {
+   "name": "rate_match_gp_L131_gt_to_ge_30",
+   "change": "rate_match_gp.sv line 131: `if (32'(fill) > fill_max) fill_max <= 32'(fill);` became `if (32'(fill) >= fill_max) fill_max <= 32'(fill);` ('>' replaced by '>=')",
+   "verdict": "undecided",
+   "note": "BMC to 30 clocks timed out after 120 s; the unbounded proof (smtbmc boolector) ended TIMEOUT within 300 s"
+  }
+ ],
+ "rows": [
+  {
+   "name": "rate_match_gp_L53_eq_to_ne_25",
+   "file": "rate_match_gp.sv",
+   "line": 53,
+   "class": "eq_to_ne",
+   "why": "'==' replaced by '!='",
+   "change": "rate_match_gp.sv line 53: `assign w_ent = {(w_c == 8'hFF) && (w_d == 64'h0707070707070707) && !w_os, w_os, w_c, w_d};` became `assign w_ent = {(w_c != 8'hFF) && (w_d == 64'h0707070707070707) && !w_os, w_os, w_c, w_d};` ('==' replaced by '!=')",
+   "status": "killed",
+   "seconds": 119.0,
+   "bench_stage": "keep_a"
+  },
+  {
+   "name": "rate_match_gp_L53_and_to_or_68",
+   "file": "rate_match_gp.sv",
+   "line": 53,
+   "class": "and_to_or",
+   "why": "'&&' replaced by '||'",
+   "change": "rate_match_gp.sv line 53: `assign w_ent = {(w_c == 8'hFF) && (w_d == 64'h0707070707070707) && !w_os, w_os, w_c, w_d};` became `assign w_ent = {(w_c == 8'hFF) && (w_d == 64'h0707070707070707) || !w_os, w_os, w_c, w_d};` ('&&' replaced by '||')",
+   "status": "killed",
+   "seconds": 124.8,
+   "bench_stage": "keep_a"
+  },
+  {
+   "name": "rate_match_gp_L60_bit1_to_0_43",
+   "file": "rate_match_gp.sv",
+   "line": 60,
+   "class": "bit1_to_0",
+   "why": "constant 1'b1 replaced by 1'b0",
+   "change": "rate_match_gp.sv line 60: `assign f_full = ((wbin - rbin_w) & {CW{1'b1}}) >= CW'(DEPTH);` became `assign f_full = ((wbin - rbin_w) & {CW{1'b0}}) >= CW'(DEPTH);` (constant 1'b1 replaced by 1'b0)",
+   "status": "killed",
+   "seconds": 201.9,
+   "bench_stage": "keep_b"
+  },
+  {
+   "name": "rate_match_gp_L61_and_to_or_24",
+   "file": "rate_match_gp.sv",
+   "line": 61,
+   "class": "and_to_or",
+   "why": "'&&' replaced by '||'",
+   "change": "rate_match_gp.sv line 61: `assign wr_en  = w_v && !f_full && !wrst;` became `assign wr_en  = w_v || !f_full && !wrst;` ('&&' replaced by '||')",
+   "status": "killed",
+   "seconds": 92.3,
+   "bench_stage": "keep_a"
+  },
+  {
+   "name": "rate_match_gp_L61_not_removed_38",
+   "file": "rate_match_gp.sv",
+   "line": 61,
+   "class": "not_removed",
+   "why": "a logical negation '!' removed",
+   "change": "rate_match_gp.sv line 61: `assign wr_en  = w_v && !f_full && !wrst;` became `assign wr_en  = w_v && !f_full && wrst;` (a logical negation '!' removed)",
+   "status": "killed",
+   "seconds": 110.3,
+   "bench_stage": "keep_a"
+  },
+  {
+   "name": "rate_match_gp_L78_ternary_swap_44",
+   "file": "rate_match_gp.sv",
+   "line": 78,
+   "class": "ternary_swap",
+   "why": "the two arms of a ?: swapped",
+   "change": "rate_match_gp.sv line 78: `xpm_cdc_gray #(.DEST_SYNC_FF(ENT_SYNC ? 3 : 2), .INIT_SYNC_FF(0), .REG_OUTPUT(0), .SIM_ASSERT_CHK(1), .SIM_LOSSLESS_GRAY_CHK(0), .WIDTH(CW)) u_wp (` became `xpm_cdc_gray #(.DEST_SYNC_FF(ENT_SYNC ? 2 : 3), .INIT_SYNC_FF(0), .REG_OUTPUT(0), .SIM_ASSERT_CHK(1), .SIM_LOSSLESS_GRAY_CHK(0), .WIDTH(CW)) u_wp (` (the two arms of a ?: swapped)",
+   "status": "killed",
+   "seconds": 91.9,
+   "bench_stage": "keep_a"
+  },
+  {
+   "name": "rate_match_gp_L103_band_to_bor_39",
+   "file": "rate_match_gp.sv",
+   "line": 103,
+   "class": "band_to_bor",
+   "why": "bitwise '&' replaced by '|'",
+   "change": "rate_match_gp.sv line 103: `assign fill      = (wbin_r - rbin) & {CW{1'b1}};` became `assign fill      = (wbin_r - rbin) | {CW{1'b1}};` (bitwise '&' replaced by '|')",
+   "status": "killed",
+   "seconds": 2.9,
+   "bench_stage": "keep_a"
+  },
+  {
+   "name": "rate_match_gp_L103_minus_to_plus_30",
+   "file": "rate_match_gp.sv",
+   "line": 103,
+   "class": "minus_to_plus",
+   "why": "'-' replaced by '+'",
+   "change": "rate_match_gp.sv line 103: `assign fill      = (wbin_r - rbin) & {CW{1'b1}};` became `assign fill      = (wbin_r + rbin) & {CW{1'b1}};` ('-' replaced by '+')",
+   "status": "killed",
+   "seconds": 70.5,
+   "bench_stage": "keep_a"
+  },
+  {
+   "name": "rate_match_gp_L105_const_plus1_32",
+   "file": "rate_match_gp.sv",
+   "line": 105,
+   "class": "const_plus1",
+   "why": "constant 6'd32 changed to 6'd33",
+   "change": "rate_match_gp.sv line 105: `assign slot      = (pace != 6'd32);` became `assign slot      = (pace != 6'd33);` (constant 6'd32 changed to 6'd33)",
+   "status": "killed",
+   "seconds": 98.4,
+   "bench_stage": "keep_a"
+  },
+  {
+   "name": "rate_match_gp_L107_eq_to_ne_135",
+   "file": "rate_match_gp.sv",
+   "line": 107,
+   "class": "eq_to_ne",
+   "why": "'==' replaced by '!='",
+   "change": "rate_match_gp.sv line 107: `assign head_frame = (head[71:64] == 8'h00) || (head[71:64] == 8'h01 && head[7:0] == 8'hFB) || (head[71:64] == 8'h1F && head[39:32] == 8'hFB);` became `assign head_frame = (head[71:64] == 8'h00) || (head[71:64] == 8'h01 && head[7:0] == 8'hFB) || (head[71:64] == 8'h1F && head[39:32] != 8'hFB);` ('==' replaced by '!=')",
+   "status": "killed",
+   "seconds": 721.9,
+   "bench_stage": "keep_more"
+  },
+  {
+   "name": "rate_match_gp_L107_const_minus1_88",
+   "file": "rate_match_gp.sv",
+   "line": 107,
+   "class": "const_minus1",
+   "why": "constant 8'hFB changed to 8'hfa",
+   "change": "rate_match_gp.sv line 107: `assign head_frame = (head[71:64] == 8'h00) || (head[71:64] == 8'h01 && head[7:0] == 8'hFB) || (head[71:64] == 8'h1F && head[39:32] == 8'hFB);` became `assign head_frame = (head[71:64] == 8'h00) || (head[71:64] == 8'h01 && head[7:0] == 8'hfa) || (head[71:64] == 8'h1F && head[39:32] == 8'hFB);` (constant 8'hFB changed to 8'hfa)",
+   "status": "killed",
+   "seconds": 636.6,
+   "bench_stage": "keep_more"
+  },
+  {
+   "name": "rate_match_gp_L108_and_to_or_38",
+   "file": "rate_match_gp.sv",
+   "line": 108,
+   "class": "and_to_or",
+   "why": "'&&' replaced by '||'",
+   "change": "rate_match_gp.sv line 108: `assign do_pop = !rrst && can_read && lock_s && slot;` became `assign do_pop = !rrst && can_read || lock_s && slot;` ('&&' replaced by '||')",
+   "status": "killed",
+   "seconds": 2.1,
+   "bench_stage": "keep_a"
+  },
+  {
+   "name": "rate_match_gp_L108_not_removed_20",
+   "file": "rate_match_gp.sv",
+   "line": 108,
+   "class": "not_removed",
+   "why": "a logical negation '!' removed",
+   "change": "rate_match_gp.sv line 108: `assign do_pop = !rrst && can_read && lock_s && slot;` became `assign do_pop = rrst && can_read && lock_s && slot;` (a logical negation '!' removed)",
+   "status": "killed",
+   "seconds": 60.2,
+   "bench_stage": "keep_a"
+  },
+  {
+   "name": "rate_match_gp_L114_gt_to_ge_66",
+   "file": "rate_match_gp.sv",
+   "line": 114,
+   "class": "gt_to_ge",
+   "why": "'>' replaced by '>='",
+   "change": "rate_match_gp.sv line 114: `assign do_del = !rrst && can_read && lock_s && !slot && (fill > CW'(HI)) && !in_frame && keep_ok && head_idle;` became `assign do_del = !rrst && can_read && lock_s && !slot && (fill >= CW'(HI)) && !in_frame && keep_ok && head_idle;` ('>' replaced by '>=')",
+   "status": "killed",
+   "seconds": 79.9,
+   "bench_stage": "keep_a"
+  },
+  {
+   "name": "rate_match_gp_L114_and_to_or_38",
+   "file": "rate_match_gp.sv",
+   "line": 114,
+   "class": "and_to_or",
+   "why": "'&&' replaced by '||'",
+   "change": "rate_match_gp.sv line 114: `assign do_del = !rrst && can_read && lock_s && !slot && (fill > CW'(HI)) && !in_frame && keep_ok && head_idle;` became `assign do_del = !rrst && can_read || lock_s && !slot && (fill > CW'(HI)) && !in_frame && keep_ok && head_idle;` ('&&' replaced by '||')",
+   "status": "killed",
+   "seconds": 72.6,
+   "bench_stage": "keep_a"
+  },
+  {
+   "name": "rate_match_gp_L116_and_to_or_59",
+   "file": "rate_match_gp.sv",
+   "line": 116,
+   "class": "and_to_or",
+   "why": "'&&' replaced by '||'",
+   "change": "rate_match_gp.sv line 116: `assign rd_en  = do_pop || do_del || (!rrst && can_read && !lock_s);` became `assign rd_en  = do_pop || do_del || (!rrst && can_read || !lock_s);` ('&&' replaced by '||')",
+   "status": "killed",
+   "seconds": 2.1,
+   "bench_stage": "keep_a"
+  },
+  {
+   "name": "rate_match_gp_L116_or_to_and_37",
+   "file": "rate_match_gp.sv",
+   "line": 116,
+   "class": "or_to_and",
+   "why": "'||' replaced by '&&'",
+   "change": "rate_match_gp.sv line 116: `assign rd_en  = do_pop || do_del || (!rrst && can_read && !lock_s);` became `assign rd_en  = do_pop || do_del && (!rrst && can_read && !lock_s);` ('||' replaced by '&&')",
+   "status": "killed",
+   "seconds": 60.9,
+   "bench_stage": "keep_a"
+  },
+  {
+   "name": "rate_match_gp_L124_const_plus1_52",
+   "file": "rate_match_gp.sv",
+   "line": 124,
+   "class": "const_plus1",
+   "why": "constant 6'd1 changed to 6'd2",
+   "change": "rate_match_gp.sv line 124: `pace <= (pace == 6'd32) ? 6'd0 : pace + 6'd1;` became `pace <= (pace == 6'd32) ? 6'd0 : pace + 6'd2;` (constant 6'd1 changed to 6'd2)",
+   "status": "killed",
+   "seconds": 73.9,
+   "bench_stage": "keep_a"
+  },
+  {
+   "name": "rate_match_gp_L126_not_removed_16",
+   "file": "rate_match_gp.sv",
+   "line": 126,
+   "class": "not_removed",
+   "why": "a logical negation '!' removed",
+   "change": "rate_match_gp.sv line 126: `if (!lock_s) begin` became `if (lock_s) begin` (a logical negation '!' removed)",
+   "status": "killed",
+   "seconds": 81.9,
+   "bench_stage": "keep_a"
+  },
+  {
+   "name": "rate_match_gp_L130_lt_to_le_30",
+   "file": "rate_match_gp.sv",
+   "line": 130,
+   "class": "lt_to_le",
+   "why": "'<' replaced by '<='",
+   "change": "rate_match_gp.sv line 130: `if (32'(fill) < fill_min) fill_min <= 32'(fill);` became `if (32'(fill) <= fill_min) fill_min <= 32'(fill);` ('<' replaced by '<=')",
+   "status": "survived",
+   "seconds": 689.9,
+   "bench_stage": "none",
+   "formal": {
+    "verdict": "undecided",
+    "per_config": [
+     {
+      "config": "AW=4 HI=1 (the bench's) MIN_KEEP=1",
+      "bmc_depth": 30,
+      "bmc_status": "TIMEOUT",
+      "note": "BMC to 30 clocks timed out after 120 s; the unbounded proof (smtbmc boolector) ended TIMEOUT within 300 s",
+      "register_matched_proof": "proved",
+      "prove_status": "TIMEOUT",
+      "prove_engine": "smtbmc boolector",
+      "verdict": "undecided",
+      "seconds": 463.3
+     },
+     {
+      "config": "AW=2 HI=1 MIN_KEEP=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 72.7
+     }
+    ],
+    "seconds": 536.0
+   },
+   "formal_bench": "passed"
+  },
+  {
+   "name": "rate_match_gp_L131_gt_to_ge_30",
+   "file": "rate_match_gp.sv",
+   "line": 131,
+   "class": "gt_to_ge",
+   "why": "'>' replaced by '>='",
+   "change": "rate_match_gp.sv line 131: `if (32'(fill) > fill_max) fill_max <= 32'(fill);` became `if (32'(fill) >= fill_max) fill_max <= 32'(fill);` ('>' replaced by '>=')",
+   "status": "survived",
+   "seconds": 702.5,
+   "bench_stage": "none",
+   "formal": {
+    "verdict": "undecided",
+    "per_config": [
+     {
+      "config": "AW=4 HI=1 (the bench's) MIN_KEEP=1",
+      "bmc_depth": 30,
+      "bmc_status": "TIMEOUT",
+      "note": "BMC to 30 clocks timed out after 120 s; the unbounded proof (smtbmc boolector) ended TIMEOUT within 300 s",
+      "register_matched_proof": "proved",
+      "prove_status": "TIMEOUT",
+      "prove_engine": "smtbmc boolector",
+      "verdict": "undecided",
+      "seconds": 459.6
+     },
+     {
+      "config": "AW=2 HI=1 MIN_KEEP=1",
+      "bmc_depth": 30,
+      "bmc_status": "PASS",
+      "register_matched_proof": "proved",
+      "verdict": "equivalent",
+      "method": "register-matched induction (yosys equiv_induct) after a clean BMC",
+      "note": "",
+      "seconds": 75.6
+     }
+    ],
+    "seconds": 535.2
+   },
+   "formal_bench": "passed"
+  },
+  {
+   "name": "rate_match_gp_L133_bit1_to_0_27",
+   "file": "rate_match_gp.sv",
+   "line": 133,
+   "class": "bit1_to_0",
+   "why": "constant 1'b1 replaced by 1'b0",
+   "change": "rate_match_gp.sv line 133: `r_v <= 1'b1; r_d <= head[63:0]; r_c <= head[71:64];` became `r_v <= 1'b0; r_d <= head[63:0]; r_c <= head[71:64];` (constant 1'b1 replaced by 1'b0)",
+   "status": "killed",
+   "seconds": 64.2,
+   "bench_stage": "keep_a"
+  },
+  {
+   "name": "rate_match_gp_L135_plus_to_minus_81",
+   "file": "rate_match_gp.sv",
+   "line": 135,
+   "class": "plus_to_minus",
+   "why": "'+' replaced by '-'",
+   "change": "rate_match_gp.sv line 135: `idle_run <= head_idle ? ((idle_run == 2'd3) ? 2'd3 : idle_run + 2'd1) : 2'd0;` became `idle_run <= head_idle ? ((idle_run == 2'd3) ? 2'd3 : idle_run - 2'd1) : 2'd0;` ('+' replaced by '-')",
+   "status": "survived",
+   "seconds": 749.0,
+   "bench_stage": "none",
+   "formal": {
+    "verdict": "undecided",
+    "per_config": [
+     {
+      "config": "AW=4 HI=1 (the bench's) MIN_KEEP=1",
+      "bmc_depth": 30,
+      "bmc_status": "TIMEOUT",
+      "note": "BMC to 30 clocks timed out after 120 s; the unbounded proof (smtbmc boolector) ended TIMEOUT within 300 s",
+      "register_matched_proof": "not_proved",
+      "prove_status": "TIMEOUT",
+      "prove_engine": "smtbmc boolector",
+      "verdict": "undecided",
+      "seconds": 478.6
+     },
+     {
+      "config": "AW=2 HI=1 MIN_KEEP=1",
+      "bmc_depth": 30,
+      "bmc_status": "TIMEOUT",
+      "note": "BMC to 30 clocks timed out after 120 s; the unbounded proof (smtbmc boolector) ended TIMEOUT within 300 s",
+      "register_matched_proof": "not_proved",
+      "prove_status": "TIMEOUT",
+      "prove_engine": "smtbmc boolector",
+      "verdict": "undecided",
+      "seconds": 431.9
+     }
+    ],
+    "seconds": 910.5
+   },
+   "formal_bench": "killed"
+  },
+  {
+   "name": "rate_match_gp_L135_const_minus1_84",
+   "file": "rate_match_gp.sv",
+   "line": 135,
+   "class": "const_minus1",
+   "why": "constant 2'd1 changed to 2'd0",
+   "change": "rate_match_gp.sv line 135: `idle_run <= head_idle ? ((idle_run == 2'd3) ? 2'd3 : idle_run + 2'd1) : 2'd0;` became `idle_run <= head_idle ? ((idle_run == 2'd3) ? 2'd3 : idle_run + 2'd0) : 2'd0;` (constant 2'd1 changed to 2'd0)",
+   "status": "killed",
+   "seconds": 90.1,
+   "bench_stage": "keep_a"
+  },
+  {
+   "name": "rate_match_gp_L138_const_minus1_40",
+   "file": "rate_match_gp.sv",
+   "line": 138,
+   "class": "const_minus1",
+   "why": "constant 64'h0707070707070707 changed to 64'h707070707070706",
+   "change": "rate_match_gp.sv line 138: `r_v <= 1'b1; r_d <= 64'h0707070707070707; r_c <= 8'hFF;` became `r_v <= 1'b1; r_d <= 64'h707070707070706; r_c <= 8'hFF;` (constant 64'h0707070707070707 changed to 64'h707070707070706)",
+   "status": "killed",
+   "seconds": 97.7,
+   "bench_stage": "keep_a"
+  },
+  {
+   "name": "rate_match_gp_L138_const_minus1_69",
+   "file": "rate_match_gp.sv",
+   "line": 138,
+   "class": "const_minus1",
+   "why": "constant 8'hFF changed to 8'hfe",
+   "change": "rate_match_gp.sv line 138: `r_v <= 1'b1; r_d <= 64'h0707070707070707; r_c <= 8'hFF;` became `r_v <= 1'b1; r_d <= 64'h0707070707070707; r_c <= 8'hfe;` (constant 8'hFF changed to 8'hfe)",
+   "status": "killed",
+   "seconds": 68.6,
+   "bench_stage": "keep_a"
+  },
+  {
+   "name": "rate_match_gp_L139_const_plus1_71",
+   "file": "rate_match_gp.sv",
+   "line": 139,
+   "class": "const_plus1",
+   "why": "constant 2'd1 changed to 2'd2",
+   "change": "rate_match_gp.sv line 139: `idle_run <= (idle_run == 2'd3) ? 2'd3 : idle_run + 2'd1;` became `idle_run <= (idle_run == 2'd3) ? 2'd3 : idle_run + 2'd2;` (constant 2'd1 changed to 2'd2)",
+   "status": "survived",
+   "seconds": 809.5,
+   "bench_stage": "none",
+   "formal": {
+    "verdict": "error",
+    "per_config": [
+     {
+      "config": "AW=4 HI=1 (the bench's) MIN_KEEP=1",
+      "bmc_depth": 30,
+      "bmc_status": "TIMEOUT",
+      "note": "BMC to 30 clocks timed out after 120 s; the unbounded proof (smtbmc boolector) ended TIMEOUT within 300 s",
+      "register_matched_proof": "not_proved",
+      "prove_status": "TIMEOUT",
+      "prove_engine": "smtbmc boolector",
+      "verdict": "undecided",
+      "seconds": 490.3
+     },
+     {
+      "config": "AW=2 HI=1 MIN_KEEP=1",
+      "bmc_depth": 30,
+      "bmc_status": "TIMEOUT",
+      "note": "cking assertions in step 20..\nSBY 18:40:15 [prove] engine_0.induction: ##   0:01:34  Trying induction in step 12..\nSBY ---- Keyboard interrupt or external termination signal ----\nSBY 18:40:15 [prove] engine_0.basecase: terminating process\nSBY 18:40:15 [prove] engine_0.induction: terminating process\n",
+      "register_matched_proof": "not_proved",
+      "prove_status": "ERROR",
+      "prove_engine": "smtbmc boolector",
+      "verdict": "error",
+      "seconds": 235.1
+     }
+    ],
+    "seconds": 725.4
+   },
+   "formal_bench": "killed"
+  },
+  {
+   "name": "rate_match_gp_L140_const_minus1_37",
+   "file": "rate_match_gp.sv",
+   "line": 140,
+   "class": "const_minus1",
+   "why": "constant 32'd1 changed to 32'd0",
+   "change": "rate_match_gp.sv line 140: `n_ins <= n_ins + 32'd1; n_out <= n_out + 32'd1;` became `n_ins <= n_ins + 32'd0; n_out <= n_out + 32'd1;` (constant 32'd1 changed to 32'd0)",
+   "status": "killed",
+   "seconds": 78.1,
+   "bench_stage": "keep_a"
+  },
+  {
+   "name": "rate_match_gp_L140_const_plus1_61",
+   "file": "rate_match_gp.sv",
+   "line": 140,
+   "class": "const_plus1",
+   "why": "constant 32'd1 changed to 32'd2",
+   "change": "rate_match_gp.sv line 140: `n_ins <= n_ins + 32'd1; n_out <= n_out + 32'd1;` became `n_ins <= n_ins + 32'd1; n_out <= n_out + 32'd2;` (constant 32'd1 changed to 32'd2)",
+   "status": "killed",
+   "seconds": 103.0,
+   "bench_stage": "keep_a"
+  },
+  {
+   "name": "rate_match_gp_L142_const_minus1_50",
+   "file": "rate_match_gp.sv",
+   "line": 142,
+   "class": "const_minus1",
+   "why": "constant 32'd1 changed to 32'd0",
+   "change": "rate_match_gp.sv line 142: `end else if (do_del) n_del <= n_del + 32'd1;` became `end else if (do_del) n_del <= n_del + 32'd0;` (constant 32'd1 changed to 32'd0)",
+   "status": "killed",
+   "seconds": 79.2,
+   "bench_stage": "keep_a"
+  }
+ ],
+ "wall_seconds": 10011.9,
+ "tools": {
+  "yosys": "Yosys 0.70+385 (git sha1 098e46a36, Release, Clang /usr/bin/clang++ 21.1.8)",
+  "sby": "SBY v0.70-9-g79fc9ed",
+  "iverilog": "Icarus Verilog version 14.0 (devel) (s20260301-966-g3992ea6a3-dirty)"
+ },
+ "rtl_dir": "designs/b96_kr260_10g/rtl"
+}

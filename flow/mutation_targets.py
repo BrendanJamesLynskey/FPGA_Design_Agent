@@ -90,6 +90,15 @@ B96_DIRECTED_TESTS = ["pause_right_after_a_frame_start", "writer_outruns_a_reade
 #: $FDA_B96_CASES picks the cases one run of the bench executes: ``reduced`` (143b's five), ``long`` (the two left out), ``directed`` (brief 152's), ``full`` (all nine =
 #: test_rate_match_gp_cocotb), or a comma list of case names
 B96_CASE_SETS = {"reduced": B96_TESTS, "long": B96_LONG_TESTS, "directed": B96_DIRECTED_TESTS, "full": B96_TESTS + B96_LONG_TESTS + B96_DIRECTED_TESTS}
+#: brief 168: the bench for MIN_KEEP 1 to 3 ($FDA_B96_MIN_KEEP; the bench's keep_* cases skip at 0). Stage ``keep`` (the three cases that need deletions or refuse them) decides most mutants; a survivor is run on stage
+#: ``keep_more`` (the other three keep_* cases and, unchanged from MIN_KEEP 0, same_clocks, lock_loss_discards, clear_wins_over_a_count and brief 152's two directed cases). The 600- and 700-frame cases of the MIN_KEEP 0
+#: bench (partner_faster, ordered_sets_and_errors_pass, partner_slower, minimum_gap_partner_faster) are not in it: their streams do not suit MIN_KEEP above 0 (the keep_* cases replace them).
+B96K_A = ["keep_deletes_after_enough_idles"]
+B96K_B = ["keep_refuses_short_gaps", "keep_mixed_gaps"]
+B96K_FIRST = B96K_A + B96K_B
+B96K_MORE = ["keep_with_ordered_sets_and_errors", "keep_inserted_idles_count", "keep_run_restarts_after_lock_loss", "same_clocks", "lock_loss_discards", "clear_wins_over_a_count"] + B96_DIRECTED_TESTS
+B96_CASE_SETS |= {"keep_a": B96K_A, "keep_b": B96K_B, "keep_more": B96K_MORE, "keep_all": B96K_FIRST + B96K_MORE}
+B96_MIN_KEEP = int(os.environ.get("FDA_B96_MIN_KEEP", "0"))
 
 
 def b96_cases() -> list[str]:
@@ -103,12 +112,13 @@ def _b96_run(mdir: Path) -> None:
     from flow import cocotb_run
     D = ROOT / "designs" / "b96_kr260_10g"
     srcs = [D / "rtl" / "rate_match.sv", D / "rtl" / "rate_match_gp.sv", D / "sim" / "tb_rate_match.sv"]
-    cocotb_run.run("b96_rate_match_gp", "tb_rate_match", srcs, "ratematch_cocotb", D / "tests", parameters={"IMPL": 1, "HI": 1}, testcase=[rf"\.{t}$" for t in b96_cases()],
-                   extra_env={"PYTHONPATH": str(ROOT), "B96_RM_IMPL": "gp", "B96_RM_HI": "1"})
+    mk = int(os.environ.get("FDA_B96_MIN_KEEP", "0"))
+    cocotb_run.run("b96_rate_match_gp", "tb_rate_match", srcs, "ratematch_cocotb", D / "tests", parameters={"IMPL": 1, "HI": 1, **({"MIN_KEEP": mk} if mk else {})}, testcase=[rf"\.{t}$" for t in b96_cases()],
+                   extra_env={"PYTHONPATH": str(ROOT), "B96_RM_IMPL": "gp", "B96_RM_HI": "1", "B96_RM_MIN_KEEP": str(mk)})
 
 
-def _b96_swap(d: Path) -> dict:
-    return {"FDA_MUTANT_ORIG": str((ROOT / "designs/b96_kr260_10g/rtl").resolve()), "FDA_MUTANT_DIR": str(d.resolve())}
+def _b96_swap(d: Path, mk: int = 0) -> dict:
+    return {"FDA_MUTANT_ORIG": str((ROOT / "designs/b96_kr260_10g/rtl").resolve()), "FDA_MUTANT_DIR": str(d.resolve()), "FDA_B96_MIN_KEEP": str(mk)}
 
 
 def _b96_staged() -> tuple["callable", "callable", dict]:
@@ -135,11 +145,29 @@ def _b96_staged() -> tuple["callable", "callable", dict]:
     return bench, lambda d: stages.get(Path(d).name, ""), one
 
 
+def _b96k_staged(mk: int) -> tuple["callable", "callable", dict]:
+    """Brief 168: the bench of rate_match_gp at MIN_KEEP = mk in three stages (``keep_a``, ``keep_b``, ``keep_more``, each run on the survivors of the one before); stage_of is the stage that killed
+    the mutant, or ``none`` (survived every case)."""
+    stages: dict[str, str] = {}
+    names = ("keep_a", "keep_b", "keep_more")
+    one = {k: pytest_bench([python(), "-m", "flow.mutation_targets", "b96-bench"], "b96_rate_match_gp/results.xml", lambda d, k=k: _b96_swap(d, mk) | {"FDA_B96_CASES": k}) for k in names}
+
+    def bench(d: Path, timeout_s: float) -> str:
+        for k in names:
+            st = one[k](d, timeout_s)
+            if st != "pass":
+                stages[d.name] = k
+                return st
+        stages[d.name] = "none"
+        return "pass"
+    return bench, lambda d: stages.get(Path(d).name, ""), one
+
+
 def _b119_swap(d: Path) -> dict:
     return {"B119_RTL_DIR": str(d.resolve())}
 
 
-def b96_formal_bench(d: Path) -> str:
+def b96_formal_bench(d: Path, mk: int = 0) -> str:
     """The design's own SymbiYosys property bench (brief 115, rm_gp.sby, task safety_bmc: overflow, underflow, pointer views, gray, idle policy, entry integrity) run
     against the mutant: ``killed`` when an assertion fails, ``passed`` when none does, ``timeout``/``error`` otherwise."""
     from flow import mutation_equiv
@@ -149,6 +177,9 @@ def b96_formal_bench(d: Path) -> str:
     try:
         fdir = base / "x" / "y" / "formal"
         shutil.copytree(ROOT / "designs/b96_kr260_10g/verif/formal", fdir)
+        if mk:                                                           # brief 168: the bench's own proof harness at MIN_KEEP = mk (its property p6d is about MIN_KEEP)
+            sby = (fdir / "rm_gp.sby").read_text().replace("-G AW=2", f"-G AW=2 -G MIN_KEEP={mk}")
+            (fdir / "rm_gp.sby").write_text(sby)
         (base / "x" / "rtl").mkdir(parents=True)
         shutil.copy(d / "rate_match_gp.sv", base / "x" / "rtl" / "rate_match_gp.sv")
         rc, out = mutation_equiv.run_cmd(["sby", "-f", "rm_gp.sby", "safety_bmc"], fdir, 400)
@@ -250,18 +281,20 @@ def _arith_target(fn: str, top: str, text: str) -> dict:
             "configs": [{"label": f"VARIANT={v} W={w} PIPE={p}", "params": {"VARIANT": v, "W": w, "PIPE": p}} for v, w, p in arith_cfgs(fn, ARITH_FORMAL_WIDTHS[fn])]}
 
 
-def _b96() -> dict:
+def _b96(mk: int = 0) -> dict:
     D = ROOT / "designs" / "b96_kr260_10g"
-    bench, stage_of, stage_benches = _b96_staged()
-    return {"name": "b96_rate_match_gp", "design": "designs/b96_kr260_10g", "what": "the receive elastic buffer rate_match_gp (own gray-pointer FIFO, two clock domains)",
+    bench, stage_of, stage_benches = _b96k_staged(mk) if mk else _b96_staged()
+    kp = {"MIN_KEEP": mk} if mk else {}
+    return {"name": "b96_rate_match_gp" + (f"_k{mk}" if mk else ""), "design": "designs/b96_kr260_10g", "what": "the receive elastic buffer rate_match_gp (own gray-pointer FIFO, two clock domains)" + (f" with MIN_KEEP = {mk}" if mk else ""),
             "rtl_dir": D / "rtl", "rtl_dir_rel": "designs/b96_kr260_10g/rtl", "rtl_files": ["rate_match_gp.sv"], "copy_files": ["rate_match_gp.sv"],
             "bench": bench, "stage_of": stage_of, "stage_benches": stage_benches,
-            "bench_text": (f"every case of test_rate_match_gp_cocotb (cocotb + Icarus, output for output against the Python twin, frame checks), run in two stages: {', '.join(B96_TESTS)}; "
+            "bench_text": (f"at MIN_KEEP = {mk} (cocotb + Icarus, output for output against the Python twin, frame checks), three stages: {', '.join(B96K_A)}; then, for a mutant that survives it, {', '.join(B96K_B)}; then {', '.join(B96K_MORE)}" if mk else
+                           f"every case of test_rate_match_gp_cocotb (cocotb + Icarus, output for output against the Python twin, frame checks), run in two stages: {', '.join(B96_TESTS)}; "
                            f"then, for a mutant that survives those, {', '.join(B96_LONG_TESTS)} and (added by brief 152) {', '.join(B96_DIRECTED_TESTS)}"),
             "top": "rate_match_gp", "clocks": ["wclk", "rclk"], "reset": None, "assume": [], "qualifiers": {},
             "extra_sources": [str(D / "verif/formal/xpm_formal.sv")], "compared_text": "every output of the block, at every step (both clocks free)",
-            "formal_bench": b96_formal_bench,
-            "configs": [{"label": "AW=4 HI=1 (the bench's)", "params": {"AW": 4, "HI": 1}}, {"label": "AW=2 HI=1", "params": {"AW": 2, "HI": 1}}]}
+            "formal_bench": (lambda d, mk=mk: b96_formal_bench(d, mk)),
+            "configs": [{"label": "AW=4 HI=1 (the bench's)" + (f" MIN_KEEP={mk}" if mk else ""), "params": {"AW": 4, "HI": 1, **kp}}, {"label": "AW=2 HI=1" + (f" MIN_KEEP={mk}" if mk else ""), "params": {"AW": 2, "HI": 1, **kp}}]}
 
 
 def _b119() -> dict:
@@ -275,10 +308,11 @@ def _b119() -> dict:
             "compared_text": "every output, every clock", "configs": [{"label": "default parameters", "params": {}}]}
 
 
-BUILDERS = {"b96_rate_match_gp": _b96, "b119_tcp_fast": _b119,
+BUILDERS = {"b96_rate_match_gp": _b96, "b96_rate_match_gp_k1": lambda: _b96(1), "b96_rate_match_gp_k2": lambda: _b96(2), "b96_rate_match_gp_k3": lambda: _b96(3), "b119_tcp_fast": _b119,
             "arith_lzc_norm": lambda: _arith_target("lzc_norm", "lznorm_sel", "leading-zero count and normaliser, four variants (arith library, brief 139b)"),
             "arith_isqrt": lambda: _arith_target("isqrt", "isqrt_sel", "integer square root with remainder, three variants (arith library, brief 139b)")}
-TARGETS = {n: {"what": {"b96_rate_match_gp": "receive elastic buffer rate_match_gp", "b119_tcp_fast": "TCP fast path tcp_fast",
+TARGETS = {n: {"what": {"b96_rate_match_gp": "receive elastic buffer rate_match_gp", "b96_rate_match_gp_k1": "receive elastic buffer rate_match_gp at MIN_KEEP = 1",
+                        "b96_rate_match_gp_k2": "receive elastic buffer rate_match_gp at MIN_KEEP = 2", "b96_rate_match_gp_k3": "receive elastic buffer rate_match_gp at MIN_KEEP = 3", "b119_tcp_fast": "TCP fast path tcp_fast",
                         "arith_lzc_norm": "arith leading-zero count / normaliser", "arith_isqrt": "arith integer square root"}[n]} for n in BUILDERS}
 
 
