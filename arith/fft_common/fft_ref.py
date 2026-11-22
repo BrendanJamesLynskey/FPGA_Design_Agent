@@ -205,3 +205,25 @@ def to_signed(v: int, w: int) -> int:
 
 def to_unsigned(v: int, w: int) -> int:
     return v & ((1 << w) - 1)
+
+
+# ---- block floating point (brief 161) ---------------------------------------------------------------------------------------
+def bfp_exponent(words: list[tuple[int, int]], wo: int) -> int:
+    """The frame exponent s: the smallest right shift (negative: a left shift) after which every part of every word fits wo signed bits.
+    The OR of the ones-complement magnitudes (x for x >= 0, -x - 1 for x < 0) of all parts has bit length BL, so the largest part needs BL + 1 bits including the sign: s = BL + 1 - wo."""
+    acc = 0
+    for a, b in words:
+        acc |= (a if a >= 0 else ~a) | (b if b >= 0 else ~b)
+    return acc.bit_length() + 1 - wo
+
+
+def bfp_normalise(words: list[tuple[int, int]], wo: int, rnd: int) -> tuple[list[tuple[int, int]], int]:
+    """(output words, exponent s): every part shifted right by s (rounded half up when rnd = 1, floor otherwise; a negative s shifts left, exactly) and, when the rounding carries a
+    positive part to 2**(wo-1), saturated to 2**(wo-1) - 1. The true (unscaled) value of a part is its output times 2**s, to within the stated error."""
+    s = bfp_exponent(words, wo)
+    hi = (1 << (wo - 1)) - 1
+
+    def one(x: int) -> int:
+        return x << -s if s <= 0 else min(hi, rshift_round(x, s, rnd))
+
+    return [(one(a), one(b)) for a, b in words], s
