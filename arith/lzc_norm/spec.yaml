@@ -1,0 +1,71 @@
+# Machine-readable specification of the leading-zero count and normaliser (brief 139b). Human-readable form: spec.md. spec_status is set by a human only.
+function: lzc_norm
+spec_version: 1
+spec_status: draft
+summary: Count the leading zeros of an unsigned W-bit word and shift it left so that its first one sits in the MSB (a normaliser).
+parameters:
+  W: {meaning: word width in bits, range: "2 or more (any value, not only powers of two)", derived: "LW = ceil(log2(W+1)) count bits; K = ceil(log2 W) shifter stages"}
+  PIPE: {meaning: "stagewise variant only: shifter stages per register group", range: "1 to K (more than K behaves as K)"}
+interface:
+  clock: "clk (rising edge)"
+  reset: "rst (synchronous, active high; clears only the valid flags)"
+  in: {in_valid: 1, in_ready: "always 1", in_data: "x, W bits, unsigned"}
+  out: {out_valid: 1, out_data: "{lz, y}: lz LW bits, y W bits; meaningful only while out_valid is high"}
+function_definition:
+  x_nonzero: "lz = number of zero bits above the highest one bit (0 to W - 1); y = x << lz truncated to W bits, so y[W-1] = 1"
+  x_zero: "lz = W; y = 0"
+error_bound: exact
+latency_definition: "clock edges from the accepting edge to the edge that samples out_valid high"
+variants:
+  - id: tree_barrel
+    module: lznorm_tree_barrel
+    selector: {VARIANT: 0}
+    protocol: "valid only: in_ready is constant 1, fixed latency, one result per clock, no stall or enable (a free-running pipeline); out_valid is in_valid delayed by the latency, results in input order"
+    reset_clock_assumptions: "one clock, rising edge; rst is synchronous and must be held for at least one clock before the first in_valid (the formal harness assumes reset in the first cycle only); outputs and in_ready are defined from the first clock after reset; data-path registers are not reset"
+    latency: "1"
+    throughput: one per clock
+    expected_primitives: {carry4: 0, dsp48: 0, bram: 0, ff: "W + LW + 1", lut: "about W * ceil(K/2) for the shifter plus about W/2 for the tree"}
+    trade_off: logarithmic-depth count, then a barrel shifter; both in one clock
+    points: [{W: 16}, {W: 32}, {W: 64}]
+  - id: loop_barrel
+    module: lznorm_loop_barrel
+    selector: {VARIANT: 1}
+    protocol: "valid only: in_ready is constant 1, fixed latency, one result per clock, no stall or enable (a free-running pipeline); out_valid is in_valid delayed by the latency, results in input order"
+    reset_clock_assumptions: "one clock, rising edge; rst is synchronous and must be held for at least one clock before the first in_valid (the formal harness assumes reset in the first cycle only); outputs and in_ready are defined from the first clock after reset; data-path registers are not reset"
+    latency: "1"
+    throughput: one per clock
+    expected_primitives: {carry4: 0, dsp48: 0, bram: 0, ff: "W + LW + 1", lut: "as tree_barrel if the tool restructures the loop; more if it keeps the priority chain"}
+    trade_off: the same function written as a priority loop; the Vivado runs decide whether it costs more than the tree
+    points: [{W: 16}, {W: 32}, {W: 64}]
+  - id: stagewise_pipe
+    module: lznorm_stagewise_pipe
+    selector: {VARIANT: 2}
+    protocol: "valid only: in_ready is constant 1, fixed latency, one result per clock, no stall or enable (a free-running pipeline); out_valid is in_valid delayed by the latency, results in input order"
+    reset_clock_assumptions: "one clock, rising edge; rst is synchronous and must be held for at least one clock before the first in_valid (the formal harness assumes reset in the first cycle only); outputs and in_ready are defined from the first clock after reset; data-path registers are not reset"
+    latency: "ceil(K / PIPE)"
+    throughput: one per clock
+    expected_primitives: {carry4: 0, dsp48: 0, bram: 0, ff: "ceil(K/PIPE) * (P + K) + ceil(K/PIPE)", lut: "about K * P (one 2:1 mux per bit per stage) plus K NOR trees"}
+    trade_off: log shifter whose decisions are the count (no separate count); PIPE sets the register spacing; P = 2**K flip-flops per group
+    points: [{W: 16, PIPE: 1}, {W: 32, PIPE: 1}, {W: 32, PIPE: 2}, {W: 32, PIPE: 5}, {W: 64, PIPE: 2}]
+  - id: tree_barrel_2st
+    module: lznorm_tree_barrel_2st
+    selector: {VARIANT: 3}
+    protocol: "valid only: in_ready is constant 1, fixed latency, one result per clock, no stall or enable (a free-running pipeline); out_valid is in_valid delayed by the latency, results in input order"
+    reset_clock_assumptions: "one clock, rising edge; rst is synchronous and must be held for at least one clock before the first in_valid (the formal harness assumes reset in the first cycle only); outputs and in_ready are defined from the first clock after reset; data-path registers are not reset"
+    latency: "2"
+    throughput: one per clock
+    expected_primitives: {carry4: 0, dsp48: 0, bram: 0, ff: "2*W + 2*LW + 2"}
+    trade_off: "the tree and the shifter in separate clocks (more flip-flops, one more clock, about half the depth per stage)"
+    points: [{W: 16}, {W: 32}, {W: 64}]
+integration:
+  port_timing: "All inputs are sampled on the rising edge and all outputs change after it; there is no combinational path from in_data or in_valid to out_data or out_valid in any variant except that the unrolled pipelines' first stage logic is between the input pins and the first register, so register the inputs (the out-of-context wrapper does) when the source is slow. in_ready of an iterative variant is a registered state and may drive a source's enable directly."
+  constraints_to_carry: "One clock constraint on clk. No multicycle or false-path exceptions are needed or valid: every path is single-cycle register to register. rst is synchronous: do not give it an asynchronous or set_false_path treatment. Do not retime across the valid pipeline of a multi-stage variant without re-running the harness (latency is part of the contract). Out-of-context numbers (Fmax, area, power) for the variants are not yet measured: see build/<variant>/<fabric>/build.yaml, prepared and not run."
+  after_integration: "Rerun the packaged harness against your instance (harness/README.md): it checks values, order and the measured latency of every result and reports coverage of the target bins."
+what_a_user_could_guess_wrong:
+  - "A zero input gives lz = W (not W - 1 and not 0) and y = 0: lz needs ceil(log2(W+1)) bits, one more than the largest non-zero count when W is a power of two."
+  - "The shift is left, by lz, within W bits: y has its MSB set for every non-zero x, and the bits shifted in at the bottom are zeros."
+  - "Widths that are not powers of two are handled by padding the word with zeros at the bottom to the next power of two inside the block (the count is unaffected); the padding costs nothing in the count but may cost flip-flops in the stagewise variant."
+  - "out_data packs {lz, y} with lz in the high bits."
+  - "The count of consecutive words is not carried between words: each word is independent."
+  - "The tree and the loop variants have the same function and latency; whether they synthesise to the same logic is for the Vivado runs, and the simulation cannot tell them apart."
+requirements: [LZN-F-MODEL, LZN-F-RTL-EXH, LZN-F-RTL-RAND, LZN-F-LAT, LZN-F-LINT, LZN-F-MUTANT, LZN-F-FORMAL-REF, LZN-F-FORMAL-PAIR, LZN-F-LEAN-TREE, LZN-F-BUILD]

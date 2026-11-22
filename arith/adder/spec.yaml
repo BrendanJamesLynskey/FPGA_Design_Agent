@@ -1,0 +1,87 @@
+# Machine-readable specification of the integer adder/subtractor (arith brief 139a). The prose is spec.md; the two agree (tests/test_adder_package.py).
+schema: fda-arith/spec/1
+function: adder
+title: Integer adder and subtractor
+model: arith/adder/model.py
+summary: "A WIDTH-bit integer adder that is also a subtractor, with a carry (or borrow) in and out and a signed-overflow flag. Three implementations trade fabric area, delay and latency: one carry chain, carry-select blocks, and a pipeline of carry-chain chunks."
+semantics:
+  - "sub = 0: s = (a + b + cin) mod 2**WIDTH and co = (a + b + cin) div 2**WIDTH"
+  - "sub = 1: s = (a - b - cin) mod 2**WIDTH and co = 1 when a >= b + cin (as unsigned numbers), else 0"
+  - "ovf = 1 when the true signed result (two's complement readings of a and b, minus or plus cin) is outside -2**(WIDTH-1) .. 2**(WIDTH-1)-1"
+  - "the hardware identity behind every variant: a - b - cin = a + ~b + ~cin on WIDTH bits, so one adder serves both operations (Lean: ArithAdder.sub_is_add_complement)"
+ports:
+  - {name: clk, dir: in, width: 1, text: "clock; unused (and kept for a common port list) by the combinational variants"}
+  - {name: a, dir: in, width: WIDTH, text: "first operand, a bit pattern (unsigned value; two's-complement reading only for ovf)"}
+  - {name: b, dir: in, width: WIDTH, text: "second operand"}
+  - {name: cin, dir: in, width: 1, text: "carry in when sub = 0; borrow in when sub = 1"}
+  - {name: sub, dir: in, width: 1, text: "0 = add, 1 = subtract"}
+  - {name: s, dir: out, width: WIDTH, text: "a + b + cin or a - b - cin, modulo 2**WIDTH"}
+  - {name: co, dir: out, width: 1, text: "carry out of the underlying adder; with sub = 1 it is 1 when there is NO borrow (a >= b + cin as unsigned numbers)"}
+  - {name: ovf, dir: out, width: 1, text: "signed (two's complement) overflow of the operation"}
+parameters:
+  WIDTH: {min: 1, text: "operand width in bits (the library points go to 64)"}
+signedness: "one datapath for both readings: s and co are the same bits either way; ovf is the signed flag, co the unsigned one"
+exactness: "exact (no error bound): every output bit equals the model's for every input"
+latency_definition: "clocks from the operands being presented to s, co and ovf being valid; 0 means combinational; throughput is one operation per clock in every variant"
+contract:
+  protocol: "plain registered-or-combinational ports, no handshake: operands are sampled every clock and one result per clock leaves, with no valid, ready or backpressure. A caller that needs a valid bit delays its own valid by the variant's latency"
+  throughput: "one operation per clock in every variant (initiation interval 1)"
+  latency: "per variant, in clocks: ripple 0, carry_select 0, pipelined STAGES (spec.yaml variants.<v>.latency); combinational variants are not registered, so the caller registers the outputs (or the inputs) to get a timing-clean path"
+  reset: "none: the datapath holds no control state; the pipelined variant has no reset and its outputs are meaningless for STAGES clocks after power-up or after the inputs were last changed from an unrelated stream"
+  clock: "one clock, rising edge, no clock-enable and no gating; clk is present but unused on the combinational variants"
+  stall: "none: a stalled consumer must drop or buffer results itself; the pipeline cannot be frozen (no enable)"
+integration:
+  port_timing: "combinational variants: a to s/co/ovf is one combinational path (a carry chain of WIDTH bits for ripple, about BLOCK bits plus a select chain for carry_select), so register both sides in the surrounding design and budget the path as one clock; pipelined: inputs and outputs are directly registered inside the block, so they can be driven from and sampled by ordinary registers with a full clock of slack"
+  constraints: "no special constraints: no multicycle or false paths, one clock. For the combinational variants constrain the path from the source registers to the sink registers at one clock period; keep the carry chain in one column (do not break the adder across a hierarchy that a keep_hierarchy or a pblock splits). A wider adder than the fabric's carry-chain column height crosses columns and slows sharply: check the post-route path"
+guess_wrong:
+  - "co with sub = 1 is NOT a borrow flag: it is the carry out of a + ~b + ~cin, so it is 1 when no borrow occurs"
+  - "cin is a borrow in when sub = 1 (s = a - b - cin), not a carry in"
+  - "ovf is the signed flag; for unsigned arithmetic read co (add) or its inverse (sub)"
+  - "the pipelined variant has no reset and no valid: for STAGES clocks after power-up its outputs are not meaningful, and a new operation can enter every clock"
+  - "a combinational variant has a clk port it ignores"
+  - "WIDTH 1 is legal; its signed range is -1..0, so ovf is set for 0+0+1 and for -1+-1 (a + b + cin outside -1..0)"
+  - "STAGES must be between 1 and WIDTH and BLOCK at least 1; other values are not rejected by an assertion (they fail to elaborate or give the wrong widths)"
+
+variants:
+  ripple:
+    file: rtl/adder_ripple.sv
+    module: adder_ripple
+    params: {WIDTH: 32}
+    throughput: "1 per clock"
+    latency: "0"
+    tradeoff: "smallest: one carry chain; delay grows with WIDTH at the carry chain's rate; no flip-flops"
+    exhaustive_points: [{WIDTH: 1}, {WIDTH: 2}, {WIDTH: 5}, {WIDTH: 6}]
+    random_points: [{WIDTH: 16}, {WIDTH: 32}, {WIDTH: 33}, {WIDTH: 64}]
+    expected_primitives:
+      a7: "ceil(WIDTH/4) CARRY4 in one chain; about WIDTH LUTs; 0 FF; 0 DSP"
+      k26: "ceil(WIDTH/8) CARRY8 in one chain; about WIDTH LUTs; 0 FF; 0 DSP"
+    ooc_points: [{WIDTH: 16}, {WIDTH: 32}, {WIDTH: 64}]
+    mutant_run: [{mode: exhaustive, params: {WIDTH: 4}}, {mode: randomised, params: {WIDTH: 16}, n: 800}]
+  carry_select:
+    file: rtl/adder_carry_select.sv
+    module: adder_carry_select
+    params: {WIDTH: 32, BLOCK: 8}
+    throughput: "1 per clock"
+    latency: "0"
+    tradeoff: "about twice the adder LUTs of ripple for shorter chains; whether it is faster on a hard carry chain is exactly what the Vivado runs will measure"
+    exhaustive_points: [{WIDTH: 1, BLOCK: 4}, {WIDTH: 4, BLOCK: 4}, {WIDTH: 5, BLOCK: 2}, {WIDTH: 6, BLOCK: 2}, {WIDTH: 6, BLOCK: 4}, {WIDTH: 6, BLOCK: 1}]
+    random_points: [{WIDTH: 16, BLOCK: 4}, {WIDTH: 32, BLOCK: 8}, {WIDTH: 33, BLOCK: 8}, {WIDTH: 32, BLOCK: 5}, {WIDTH: 64, BLOCK: 16}]
+    expected_primitives:
+      a7: "1 + 2*(NB-1) carry chains (NB = ceil(WIDTH/BLOCK), each ceil(BLOCK/4) CARRY4); about 2*WIDTH - BLOCK LUTs for sums plus NB-1 for the carries; 0 FF; 0 DSP"
+      k26: "as a7 with CARRY8 cells (ceil(BLOCK/8) per chain)"
+    ooc_points: [{WIDTH: 32, BLOCK: 8}, {WIDTH: 64, BLOCK: 8}, {WIDTH: 64, BLOCK: 16}]
+    mutant_run: [{mode: exhaustive, params: {WIDTH: 6, BLOCK: 2}}, {mode: randomised, params: {WIDTH: 33, BLOCK: 8}, n: 800}]
+  pipelined:
+    file: rtl/adder_pipelined.sv
+    module: adder_pipelined
+    params: {WIDTH: 32, STAGES: 4}
+    throughput: "1 per clock"
+    latency: "STAGES"
+    tradeoff: "STAGES clocks of latency and a triangle of skew registers (about WIDTH*(STAGES-1) flip-flops each way) buy a carry path of WIDTH/STAGES bits"
+    exhaustive_points: [{WIDTH: 1, STAGES: 1}, {WIDTH: 5, STAGES: 1}, {WIDTH: 5, STAGES: 2}, {WIDTH: 6, STAGES: 3}, {WIDTH: 6, STAGES: 6}, {WIDTH: 5, STAGES: 4}]
+    random_points: [{WIDTH: 16, STAGES: 2}, {WIDTH: 32, STAGES: 4}, {WIDTH: 33, STAGES: 3}, {WIDTH: 64, STAGES: 8}, {WIDTH: 64, STAGES: 5}]
+    expected_primitives:
+      a7: "STAGES carry chains of about WIDTH/STAGES bits (CARRY4 cells); about WIDTH*(STAGES-1) flip-flops each way (a triangle of skew registers on the operands and of de-skew registers on the sum), plus STAGES carry flip-flops; 0 DSP"
+      k26: "as a7 with CARRY8 cells"
+    ooc_points: [{WIDTH: 64, STAGES: 2}, {WIDTH: 64, STAGES: 4}, {WIDTH: 64, STAGES: 8}, {WIDTH: 128, STAGES: 4}]
+    mutant_run: [{mode: exhaustive, params: {WIDTH: 5, STAGES: 3}}, {mode: randomised, params: {WIDTH: 33, STAGES: 3}, n: 800}]
