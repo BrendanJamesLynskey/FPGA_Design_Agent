@@ -1,16 +1,22 @@
 #!/usr/bin/env python3
-"""Write the out-of-context wrappers and the per-variant build.yaml files of an arithmetic function (arith brief 139a), from its spec.yaml.
+"""Generate the out-of-context build descriptions of the arithmetic library (brief 139b): no Vivado is run here.
 
-    python3 -m arith.tools.gen_build [adder multiplier mac] [--check]
+For every function in arith/*/spec.yaml and every variant, for the Artix-7 part and the K26 part, write
+arith/<function>/build/<variant>/<fabric>/build.yaml and ooc.xdc, and arith/<function>/rtl/<function>_ooc.sv (a wrapper that registers every
+input and output of the selector module, so every path of the core is register to register). `python -m arith.tools.gen_build --check`
+fails if a committed file differs from what this writes today (the build descriptions are generated, never edited).
 
-The wrapper arith/<fn>/ooc/<module>_ooc.sv registers every input and every output of a variant (so the timing is register to register, with no pad or
-port delay) and passes the parameters through. The file arith/<fn>/build/<variant>/build.yaml is in the format flow/prepare.py reads (top, part, sources,
-generics) plus the keys of an out-of-context characterisation run (flow/ipchar.tcl): ``ooc`` (clock port and target clocks per part), ``points`` (the parameter
-sets to run), ``expected_primitives`` and ``status``. Nothing here runs Vivado. ``--check`` writes nothing and fails if a committed file differs."""
+build.yaml keys: the flow's design build.yaml (top, part, sources, constraints, generics) plus mode (out_of_context), clock_ns (the tight
+target: the run reports WNS and Fmax = 1000 / (clock_ns - WNS)), points (generic overrides, one Vivado run each), expected_primitives (the
+planning estimate per point, evaluated from the spec's formula; replaced by the measured count when the run exists) and status.
+
+Functions of brief 139a (adder, multiplier, mac; spec.yaml with `variants` as a mapping) keep their own layout: arith/<fn>/ooc/<module>_ooc.sv and
+arith/<fn>/build/<variant>/build.yaml (functions `*_a` below). Functions of brief 139b (`variants` as a list) have a7/k26 directories. `outputs()` returns both.
+"""
 from __future__ import annotations
 
 import argparse
-import re
+import math
 import sys
 from pathlib import Path
 
@@ -18,14 +24,162 @@ import yaml
 
 from arith.tools import arith_common as ac
 
-CLOCK_NS = {"a7": 5.0, "k26": 3.0}
+ARITH = Path(__file__).resolve().parents[1]
+ROOT = ARITH.parent
+FABRICS = {
+    "a7": {"part": "xc7a100tcsg324-1", "clock_ns": 2.0, "note": "Artix-7 xc7a100t (the family brief 137 calibrates); speed grade -1; 2.0 ns is below any of these cores' reach, so WNS is negative and Fmax = 1000 / (2.0 - WNS)"},
+    "k26": {"part": "xck26-sfvc784-2LV-c", "clock_ns": 1.4, "note": "Zynq UltraScale+ K26 (xck26), speed grade -2LV; 1.4 ns for the same reason"},
+}
+# the wrapper's data-port widths as SystemVerilog expressions of the function's parameters
+PORTS = {
+    "divider": {"params": ["VARIANT", "W", "PIPE"], "in": "2*W", "out": "2*W"},
+    "fxp_round": {"params": ["VARIANT", "W_IN", "S", "W_OUT", "MODE", "SAT"], "in": "W_IN", "out": "W_OUT"},
+    "isqrt": {"params": ["VARIANT", "W", "PIPE"], "in": "W", "out": "2*((W+1)/2)+1"},
+    "lzc_norm": {"params": ["VARIANT", "W", "PIPE"], "in": "W", "out": "W+$clog2(W+1)"},
+    # brief 139c
+    "sqrt_r4": {"params": ["VARIANT", "W", "PIPE"], "in": "W", "out": "2*((W+1)/2)+1"},
+    "divider_hr": {"params": ["VARIANT", "W", "K", "PIPE"], "in": "2*W", "out": "2*K+1+W"},
+    "div_nr": {"params": ["VARIANT", "W", "A", "IT"], "in": "2*W", "out": "W"},
+    "recip": {"params": ["VARIANT", "W", "A"], "in": "W", "out": "W+1"},
+    "rsqrt": {"params": ["VARIANT", "W", "A"], "in": "W", "out": "W+1"},
+}
+PARAM_DEFAULTS = {"VARIANT": 0, "W": 16, "PIPE": 1, "W_IN": 32, "S": 12, "W_OUT": 18, "MODE": 2, "SAT": 1, "K": 8, "A": 7, "IT": 2}
+DEFAULTS = {"PIPE": 1, "SAT": 1}
 
 
-def width_expr(w) -> str:
+def brief(fn: str) -> str:
+    return "139c" if fn in ("sqrt_r4", "divider_hr", "div_nr", "recip", "rsqrt") else "139b"
+
+
+def ceil_log2(n: int) -> int:
+    return (n - 1).bit_length()
+
+
+def evaluate(expr, params: dict) -> int | str:
+    """Evaluate an expected-primitives formula (ceil, log2 and the point's parameters; RW, K, P, LW derived) or return a descriptive string."""
+    if isinstance(expr, int):
+        return expr
+    env = {"ceil": lambda x: math.ceil(x), "log2": math.log2, **params}
+    if "W" in params:
+        rw = (params["W"] + 1) // 2
+        rp = (rw + 1) // 2
+        env.update(RW=rw, RP=rp, QW=2 * rp, P=1 << ceil_log2(params["W"]), LW=params["W"].bit_length())
+        env.setdefault("K", ceil_log2(params["W"]))
+    try:
+        return int(eval(expr, {"__builtins__": {}}, env))
+    except Exception:                                # a prose estimate (LUT counts), kept as text
+        return expr
+
+
+def wrapper_text(fn: str, spec: dict) -> str:
+    p = PORTS[fn]
+    pdecl = ",\n".join(f"    parameter int {k} = {PARAM_DEFAULTS[k]}" for k in p["params"])
+    conn = ", ".join(f".{k}({k})" for k in p["params"])
+    sel = f"{fn if fn != 'lzc_norm' else 'lznorm'}_sel"
+    return f"""// {fn}_ooc: out-of-context wrapper for the {fn} variants (brief {brief(fn)}, generated by arith/tools/gen_build.py: do not edit).
+// Registers every input and every output of {sel}, so the paths Vivado times are the core's own, register to register, and the
+// ports (which an out-of-context run leaves unplaced) carry no timing. rst is registered once; the core's reset is the synchronous one.
+// This is a timing harness: in_ready is registered too, so for an iterative variant (whose in_ready is not constant) the wrapper does not keep the
+// handshake; it is functionally exact for the always-ready (pipelined, one-clock) variants, which tb_<function>.sv simulates through it with WRAP = 1.
+module {fn}_ooc #(
+{pdecl}
+) (
+    input  logic                 clk,
+    input  logic                 rst,
+    input  logic                 in_valid,
+    output logic                 in_ready,
+    input  logic [{p['in']}-1:0]  in_data,
+    output logic                 out_valid,
+    output logic [{p['out']}-1:0] out_data
+);
+    logic                 rst_q, v_q, ready_c, ov_c;
+    logic [{p['in']}-1:0]  d_q;
+    logic [{p['out']}-1:0] od_c;
+
+    always_ff @(posedge clk) begin
+        rst_q <= rst;
+        v_q   <= in_valid;
+        d_q   <= in_data;
+    end
+
+    {sel} #({", ".join(f".{k}({k})" for k in p['params'])}) u_core (
+        .clk, .rst(rst_q), .in_valid(v_q), .in_ready(ready_c), .in_data(d_q), .out_valid(ov_c), .out_data(od_c));
+
+    always_ff @(posedge clk) begin
+        in_ready  <= ready_c;
+        out_valid <= ov_c;
+        out_data  <= od_c;
+    end
+endmodule
+"""
+
+
+def build_text(fn: str, spec: dict, var: dict, fab: str) -> str:
+    f = FABRICS[fab]
+    base = {k: v for k, v in var["selector"].items()}
+    pts = []
+    for pt in var["points"]:
+        full = {**DEFAULTS, **pt}
+        exp = {k: evaluate(v, full) for k, v in var["expected_primitives"].items()}
+        pts.append({"generics": {**{k: v for k, v in full.items() if k in PORTS[fn]["params"]}}, "expected_primitives": exp})
+    doc = {
+        "top": f"{fn}_ooc",
+        "part": f["part"],
+        "mode": "out_of_context",
+        "clock_ns": f["clock_ns"],
+        "sources": [f"arith/{fn}/rtl/*.sv"],
+        "constraints": [f"arith/{fn}/build/{var['id']}/{fab}/ooc.xdc"],
+        "generics": {**base, **{k: v for k, v in pts[0]["generics"].items() if k not in base}},
+        "points": [{"generics": {**base, **p["generics"]}, "expected_primitives": p["expected_primitives"]} for p in pts],
+        "status": f"prepared, not run (no Vivado in brief {brief(fn)})",
+        "variant": var["id"],
+        "function": fn,
+    }
+    head = (f"# {fn} / {var['id']} on {f['part']}: out-of-context run description (brief {brief(fn)}, generated by arith/tools/gen_build.py; do not edit).\n"
+            f"# {f['note']}.\n"
+            "# Keys top, part, sources, constraints, generics are the flow's design build.yaml; mode, clock_ns, points and expected_primitives extend it for an\n"
+            "# out-of-context run (one Vivado run per entry of `points`). expected_primitives is a planning estimate from spec.yaml, NOT a measurement; carry4 is the\n"
+            "# 7-series CARRY4 count (UltraScale+ CARRY8 is about half). The runs are for a free heavy slot; none has been made.\n")
+    return head + yaml.safe_dump(doc, sort_keys=False, default_flow_style=None, width=160)
+
+
+def xdc_text(fn: str, var: dict, fab: str) -> str:
+    return (f"# {fn} / {var['id']} / {fab}: out-of-context clock (brief {brief(fn)}, generated by arith/tools/gen_build.py; do not edit).\n"
+            f"create_clock -name clk -period {FABRICS[fab]['clock_ns']:.3f} [get_ports clk]\n")
+
+
+def outputs(only: str | None = None) -> dict[Path, str]:
+    """Every generated file; with `only`, the files of that one function (either brief's layout)."""
+    if only in ac.FUNCTIONS:
+        return outputs_a(only)
+    out: dict[Path, str] = {}
+    for sp in sorted(ARITH.glob("*/spec.yaml")):
+        spec = yaml.safe_load(sp.read_text())
+        if isinstance(spec["variants"], dict):                 # brief 139a's layout: see outputs_a
+            continue
+        fn = spec["function"]
+        out[ARITH / fn / "rtl" / f"{fn}_ooc.sv"] = wrapper_text(fn, spec)
+        for var in spec["variants"]:
+            for fab in FABRICS:
+                d = ARITH / fn / "build" / var["id"] / fab
+                out[d / "build.yaml"] = build_text(fn, spec, var, fab)
+                out[d / "ooc.xdc"] = xdc_text(fn, var, fab)
+    if only is None:
+        for fn in ac.FUNCTIONS:
+            out.update(outputs_a(fn))
+    else:
+        out = {p: t for p, t in out.items() if only in p.parts}
+    return out
+
+
+CLOCK_NS_A = {"a7": 5.0, "k26": 3.0}
+
+
+def width_expr_a(w) -> str:
     return str(w)
 
 
-def wrapper_text(fn: str, variant: str, spec: dict) -> str:
+def wrapper_text_a(fn: str, variant: str, spec: dict) -> str:
     v = spec["variants"][variant]
     mod = v["module"]
     params = v["params"]
@@ -64,7 +218,7 @@ def wrapper_text(fn: str, variant: str, spec: dict) -> str:
     return "\n".join(L) + "\n"
 
 
-def build_text(fn: str, variant: str, spec: dict) -> str:
+def build_text_a(fn: str, variant: str, spec: dict) -> str:
     v = spec["variants"][variant]
     y = {
         "variant": variant,
@@ -76,7 +230,7 @@ def build_text(fn: str, variant: str, spec: dict) -> str:
         "generics": dict(v["params"]),
         "ooc": {
             "clock_port": "clk",
-            "parts": {k: {"part": ac.PARTS[k], "clock_ns": CLOCK_NS[k]} for k in ("a7", "k26")},
+            "parts": {k: {"part": ac.PARTS[k], "clock_ns": CLOCK_NS_A[k]} for k in ("a7", "k26")},
             "flow": "synth_design -mode out_of_context, opt_design, place_design, route_design, one thread (flow/ipchar.tcl); WNS at the target clock gives Fmax = 1000 / (clock_ns - WNS)",
         },
         "points": v["ooc_points"],
@@ -88,31 +242,29 @@ def build_text(fn: str, variant: str, spec: dict) -> str:
     return head + yaml.safe_dump(y, sort_keys=False, width=200)
 
 
-def outputs(fn: str) -> dict[Path, str]:
+def outputs_a(fn: str) -> dict[Path, str]:
     spec = ac.load_spec(fn)
     out = {}
     for v, vd in spec["variants"].items():
-        out[ac.ARITH / fn / "ooc" / f"{vd['module']}_ooc.sv"] = wrapper_text(fn, v, spec)
-        out[ac.ARITH / fn / "build" / v / "build.yaml"] = build_text(fn, v, spec)
+        out[ac.ARITH / fn / "ooc" / f"{vd['module']}_ooc.sv"] = wrapper_text_a(fn, v, spec)
+        out[ac.ARITH / fn / "build" / v / "build.yaml"] = build_text_a(fn, v, spec)
     return out
 
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("functions", nargs="*", default=list(ac.FUNCTIONS))
     ap.add_argument("--check", action="store_true")
     a = ap.parse_args()
     bad = 0
-    for fn in a.functions:
-        for p, t in outputs(fn).items():
-            if a.check:
-                if not p.exists() or p.read_text() != t:
-                    print("out of date:", p.relative_to(ac.ROOT))
-                    bad = 1
-            else:
-                p.parent.mkdir(parents=True, exist_ok=True)
-                p.write_text(t)
-                print("wrote", p.relative_to(ac.ROOT))
+    for p, t in outputs().items():
+        if a.check:
+            if not p.exists() or p.read_text() != t:
+                print("out of date:", p.relative_to(ROOT))
+                bad = 1
+        else:
+            p.parent.mkdir(parents=True, exist_ok=True)
+            p.write_text(t)
+    print("build descriptions:", "FAIL" if bad else ("ok" if a.check else "written"))
     return bad
 
 

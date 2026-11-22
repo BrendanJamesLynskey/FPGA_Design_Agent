@@ -97,8 +97,35 @@ def test_junit_wildcard_and_missing_tests(repo):
     req = {"id": "F1", "kind": "functional", "title": "t"}
     j = lambda tests: item("i", "F1", "sim_test", {"file": "results/j.xml", "reader": "junit", "tests": tests})
     assert T.collect(plan(repo, [req], [j(["m::t1"])]))["items"][0]["status"] == "pass"
-    assert T.collect(plan(repo, [req], [j(["m::*"])]))["items"][0]["status"] == "fail"
-    assert T.collect(plan(repo, [req], [j(["m::t9"])]))["items"][0]["status"] == "fail"
+    assert T.collect(plan(repo, [req], [j(["m::*"])]))["items"][0]["status"] == "fail"          # t2 is present and failed
+    assert T.collect(plan(repo, [req], [j(["m::t9"])]))["items"][0]["status"] == "not_in_run"   # brief 138: absent is not a failure
+
+
+def _junit_plan(repo, xml, tests):
+    (repo / "results" / "j.xml").write_text(xml)
+    req = {"id": "F1", "kind": "functional", "title": "t"}
+    return T.collect(plan(repo, [req], [item("i", "F1", "sim_test", {"file": "results/j.xml", "reader": "junit", "tests": tests})]))
+
+
+def test_status_pass_fail_not_in_run_and_skipped_are_distinct(repo):
+    xml = ('<testsuite><testcase classname="x.m" name="ok"/><testcase classname="x.m" name="bad"><failure/></testcase>'
+           '<testcase classname="x.m" name="sk"><skipped/></testcase></testsuite>')
+    got = {name: _junit_plan(repo, xml, tests) for name, tests in
+           {"pass": ["m::ok"], "fail": ["m::ok", "m::bad", "m::new"], "not_in_run": ["m::ok", "m::new"], "skipped": ["m::ok", "m::sk"]}.items()}
+    assert {k: c["items"][0]["status"] for k, c in got.items()} == {k: k for k in got}
+    assert {k: c["requirements"][0]["state"] for k, c in got.items()} == {"pass": "verified", "fail": "fail", "not_in_run": "not_in_run", "skipped": "skipped"}
+
+
+def test_not_in_run_and_skipped_are_no_passing_evidence_not_failing_and_name_the_tests(repo):
+    xml = '<testsuite><testcase classname="x.m" name="sk"><skipped/></testcase></testsuite>'
+    c = _junit_plan(repo, xml, ["m::new", "n::*"])
+    assert "not in the recorded run: m::new, n::*" in c["items"][0]["detail"]          # an empty wildcard counts as absent too
+    gap = [g for g in c["gaps"] if g["type"] == "no_passing_evidence"][0]
+    assert gap["state"] == "not_in_run" and "m::new" in gap["text"] and not gap["gate"]
+    assert "1 with no passing evidence (1 not in the recorded run)" in c["summary"]["line"] and "failing" not in c["summary"]["line"]
+    c = _junit_plan(repo, xml, ["m::sk"])
+    assert c["requirements"][0]["state"] == "skipped" and "m::sk" in [g for g in c["gaps"] if g["type"] == "no_passing_evidence"][0]["text"]
+    assert "1 with no passing evidence (1 skipped in the recorded run)" in c["summary"]["line"]
 
 
 def test_gate_fails_on_orphans_untraced_requirements_and_bad_entries(repo):

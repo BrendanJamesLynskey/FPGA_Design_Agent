@@ -1,0 +1,36 @@
+# Seeded mutants of the reciprocal square-root RTL (brief 139c): one text change each, run under `config` with every input of that width.
+mutants:
+  - {id: M01, file: rsqrt_seed.sv, what: "table index not offset by 2**A (the first interval of X = 1 is index 2**A)", config: {variant: 1, w: 8, a: 3},
+     find: "assign idx = top - (A+2)'(1 << A);", replace: "assign idx = top;"}
+  - {id: M02, file: rsqrt_seed.sv, what: "table entry for the low edge of the interval, not the midpoint", config: {variant: 1, w: 8, a: 3},
+     find: "+ 64'(2 * i) + 64'd1;", replace: "+ 64'(2 * i);"}
+  - {id: M03, file: rsqrt_seed.sv, what: "table scaled by 2**-1/2 (radicand of the square root halved)", config: {variant: 1, w: 8, a: 3},
+     find: "n  = (64'd1 << (2 * F + A + 1)) / m;", replace: "n  = (64'd1 << (2 * F + A)) / m;"}
+  - {id: M04, file: rsqrt_seed.sv, what: "table address taken one bit lower in x", config: {variant: 1, w: 8, a: 3},
+     find: "assign top = x[W-1 -: A+2];", replace: "assign top = x[W-2 -: A+2];"}
+  - {id: M05, file: rsqrt_iter.sv, what: "y squared taken with F - 1 fractional bits", config: {variant: 1, w: 8, a: 3},
+     find: "s_q <= sq_w[F +: YW];", replace: "s_q <= sq_w[F-1 +: YW];"}
+  - {id: M06, file: rsqrt_iter.sv, what: "second multiplier takes the unregistered operand (one stage misaligned)", config: {variant: 1, w: 8, a: 3},
+     find: "t_q <= x1 * s_q;", replace: "t_q <= x * s_q;"}
+  - {id: M07, file: rsqrt_iter.sv, what: "residual shifted by W - 3, not W - 2", config: {variant: 1, w: 8, a: 3},
+     find: "d_full = r_w >>> (W - 2);", replace: "d_full = r_w >>> (W - 3);"}
+  - {id: M08, file: rsqrt_iter.sv, what: "third multiplier takes the previous stage's estimate", config: {variant: 1, w: 8, a: 3},
+     find: "p_q <= $signed({1'b0, y3}) * d_q;", replace: "p_q <= $signed({1'b0, y2}) * d_q;"}
+  - {id: M09, file: rsqrt_iter.sv, what: "correction shifted by F, not F + 1", config: {variant: 1, w: 8, a: 3},
+     find: "p_q >>> (F + 1)", replace: "p_q >>> F"}
+  - {id: M10, file: rsqrt_iter.sv, what: "correction subtracted instead of added", config: {variant: 1, w: 8, a: 3},
+     find: "y_o <= YW'(y4 + ", replace: "y_o <= YW'(y4 - "}
+  - {id: M11, file: rsqrt_iter.sv, what: "operand passed on one stage early (the second iteration sees a misaligned x)", config: {variant: 2, w: 8, a: 3},
+     find: "x_o <= x4;", replace: "x_o <= x3;"}
+  - {id: M12, file: rsqrt_nr.sv, what: "output taken from the estimate shifted one bit", config: {variant: 1, w: 8, a: 3},
+     find: "assign y = y_fin[YW-1:2];", replace: "assign y = y_fin[YW-2:1];"}
+  - {id: M13, file: rsqrt_nr.sv, what: "valid pipeline fed a constant one", config: {variant: 1, w: 8, a: 3},
+     find: "else     v_q <= {v_q[NV-2:0], in_valid};", replace: "else     v_q <= {v_q[NV-2:0], 1'b1};"}
+  - {id: M14, file: rsqrt_table.sv, what: "table value one low", config: {variant: 0, w: 8, a: 3},
+     find: "always_ff @(posedge clk) y <= {1'b0, y0};", replace: "always_ff @(posedge clk) y <= {1'b0, y0 - W'(1)};"}
+  - {id: M15, file: rsqrt_table.sv, what: "valid held high after reset release", config: {variant: 0, w: 8, a: 3},
+     find: "else     out_valid <= in_valid;", replace: "else     out_valid <= 1'b1;"}
+equivalent:
+  - {id: E01, file: rsqrt_iter.sv, what: "residual reference value is 2 ** (W - 1 + F), not 2 ** (W - 2 + F): the difference, 2 ** (W - 2 + F), is shifted down by W - 2 to 2 ** F, a multiple of 2 ** DW (DW = F - A + 2 is at most F), and only the low DW bits of the shifted residual are kept, so the stored word is unchanged",
+     config: {variant: 1, w: 8, a: 3},
+     find: "<< (W - 2 + F)) - $signed", replace: "<< (W - 1 + F)) - $signed"}
