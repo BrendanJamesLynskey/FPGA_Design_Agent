@@ -14,6 +14,7 @@ points are written and queued (`partition/sweep.py`). The study that uses them i
 | `faults.json` | the 33 seeded faults of the three entries and whether the tests caught each |
 | `pipe_reg_formal.json`, `credit_chan_formal.json` | the SymbiYosys jobs (k-induction proofs, covers, the stream rules as SVA) and the planted faults each proof refutes; seconds per job |
 | `partition_queue_rows.md` | the Vivado queue rows written by `partition/sweep.py --queue` (appended to `vivado_later_queue.md`), one per sweep group and part |
+| `ssi_parts_query.txt` | which parts of the installed Vivado 2026.1 device support have more than one SLR: none (all 1689 have one) |
 | `part_sys_yosys.json` | Yosys `synth_xilinx` cell counts of the synthetic system (flattened, no placement) per boundary kind and depth |
 
 Simulated end-to-end figures of the synthetic system (4 sub-modules, 5 boundaries, 64-bit; `part_sys_sim.jsonl`):

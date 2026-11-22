@@ -159,6 +159,29 @@ Owner direction: "measure the vendor convention first". What we can say now, and
 9. Do you floorplan with pblocks on a part this size, or only for SLR parts and hard-block-heavy designs?
 10. What is your rule for the number of logic levels allowed between two boundary registers at a given clock?
 
+## 5a. Multi-die and multi-chip (scope note for phase 1; nothing is built here)
+
+Owner scope note, 2026-11-22: phase 1 extends this work to multi-die FPGAs (AMD stacked silicon interconnect, SSI) and to multi-chip
+designs. In phase 0 we only prepare for it.
+
+* **What phase 1 will have to cover (paper, to check against the guides):** an SLR crossing goes over super-long lines (SLLs) between the dies,
+  entered and left through the Laguna TX/RX flip-flops; a crossing needs registers on both sides, `USER_SLR_ASSIGNMENT` (or a pblock per SLR)
+  decides which die a sub-module lands in, and AMD's AXI Register Slice has an SLR-crossing mode (and multi-SLR and auto-pipeline modes) for it.
+  A multi-chip design replaces the crossing by a chip-to-chip link (a source-synchronous or serial interface with its own clocking, framing and
+  flow control), where credits are the usual answer because the round trip is long: this is where `credit_chan`'s question (Q7) may turn.
+* **What is ready:** the generator and sweep take a per-sub-module placement target. `partition/run_point.tcl` reads `TARGETS`, one entry per
+  sub-module (`SLR0`, `SLR1`, or a clock region); `python3 partition/sweep.py --run-point <name> --targets "SLR0 SLR0 SLR1 SLR1" ...` sets it. A
+  target for a chip is not handled (a chip is a separate build in phase 1). The credit link's `LF` and `LB` are the knobs for a crossing's registers.
+* **Can the installed Vivado 2026.1 implement an SSI part? No part is installed.** `get_parts` on the installed device support lists 1689 parts and
+  every one has `SLRS` = 1: no Virtex UltraScale or UltraScale+, no Versal, and the Kintex UltraScale+ and Zynq UltraScale+ parts that are listed are
+  single-die. So SSI experiments are impossible on this installation, and the question "does the licence allow synthesis of an SSI part" cannot even
+  be asked until device support for an SSI family is installed. Record: `results/b151/ssi_parts_query.txt`, script `partition/ssi/query_ssi_parts.tcl`.
+  Phase 1 first step: install a multi-SLR family's device support, then a synthesis-only check with the installed licence.
+* **Owner questions on this:** (a) Which multi-die family would you target first (a Virtex UltraScale+ part, or Versal), and is installing its device
+  support acceptable on this PC (disk space and download)? (b) For a chip-to-chip link, do you use credits, valid/ready with a deep skid, or a bare
+  pipeline with a fixed latency, and how many register stages per crossing in practice? (c) Do you place by pblock per SLR or by
+  `USER_SLR_ASSIGNMENT`, and do you let the tool pipeline the crossing (`phys_opt_design` SLR optimisation) or register by hand?
+
 ## 6. Files
 
 `ip_lib/pipe_reg`, `ip_lib/credit_chan`, `ip_lib/axi_reg_slice` (library entries); `partition/` (the synthetic system, the sweep,

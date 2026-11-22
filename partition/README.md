@@ -14,6 +14,7 @@ written and queued (decision 27), not run: what exists now is simulation (latenc
 | `tests/test_partition_sim.py`, `tests/part_cocotb.py` | latency, throughput and data of the system at every boundary kind and depth, against the figures the models declare |
 | `sweep.py` | the 90 Vivado points (parts, boundary kind, stages, `KEEP`, retiming, distance, number of sub-modules), the Yosys area run, the queue rows, the command for one point |
 | `run_point.tcl` | one point, out of context, non-project: pblocks from one corner of the device to the other, place, route, WNS, utilisation, the worst boundary path and its route share, compile time. Not run; checked for Tcl syntax only |
+| `ssi/query_ssi_parts.tcl` | which installed parts have more than one SLR (result: none; `results/b151/ssi_parts_query.txt`) |
 | `vendor/vendor_slice_ooc.tcl`, `vendor/vendor_slice_tb.sv` | AMD's AXI Register Slice IP in each register configuration the tool offers (area, Fmax), and an xsim bench for its latency, throughput and bubbles. Not run |
 
 ## The sweep and the questions
@@ -25,6 +26,8 @@ pblocks along the line from the lowest to the highest clock region (0 the same r
 The expected outcome of each is in `docs/partitioning_study.md` section 2. The queue rows are in
 `_handoff/fpga_agent/vivado_later_queue.md`; the planner runs a group (`--run-group q1_a7`) when a slot is free, after taking it with
 `take_heavy_slot.sh` ("Vivado impl" and the declared peak in the text).
+
+Per-sub-module placement: `run_point.tcl` takes `TARGETS` (one entry per sub-module: an SLR name or a clock region); `sweep.py --run-point <name> --targets "SLR0 SLR1"` passes it (for phase 1, multi-die).
 
 ## Known gaps and limits
 

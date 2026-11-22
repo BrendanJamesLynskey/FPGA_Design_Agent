@@ -32,6 +32,20 @@ set c0 [tcl::mathfunc::min {*}$cols]; set c1 [tcl::mathfunc::max {*}$cols]
 set r0 [tcl::mathfunc::min {*}$rows]; set r1 [tcl::mathfunc::max {*}$rows]
 set dist $::env(DIST)
 set nm $::env(NM)
+# Per-sub-module placement targets (phase 1 of brief 151: one pblock per SLR, or per chip): TARGETS is a space-separated list, one entry
+# per sub-module (a shorter list repeats its last entry). An entry is an SLR name (SLR0, SLR1: the pblock covers that die), or a clock
+# region (X1Y2). When TARGETS is set it replaces the corner-to-corner line below. A chip (multi-chip designs) is a separate build
+# in phase 1, so a target such as chip1 is not handled here.
+if {[info exists ::env(TARGETS)] && $::env(TARGETS) ne ""} {
+    set tl $::env(TARGETS)
+    for {set i 0} {$i < $nm} {incr i} {
+        set tg [lindex $tl [expr {min($i, [llength $tl] - 1)}]]
+        create_pblock pb_$i
+        if {[string match SLR* $tg]} { resize_pblock pb_$i -add [get_slrs $tg] } else { resize_pblock pb_$i -add [get_clock_regions $tg] }
+        add_cells_to_pblock pb_$i [get_cells -hier -filter "NAME =~ g_m\\\[$i\\\].*"]
+    }
+    set dist -1
+}
 for {set i 0} {$i < $nm && $dist >= 0} {incr i} {
     set f [expr {$nm > 1 ? double($i) / ($nm - 1) * $dist : 0.0}]
     set c [expr {int(round($c0 + ($c1 - $c0) * $f))}]

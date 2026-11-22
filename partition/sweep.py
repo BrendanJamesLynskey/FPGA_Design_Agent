@@ -132,16 +132,18 @@ def queue_rows() -> str:
     return "\n".join(L) + "\n"
 
 
-def run_point(name: str, dry: bool):
-    p = next(q for q in points() if q["name"] == name)
+def run_point(name: str, dry: bool, targets: str = ""):
+    p = dict(next(q for q in points() if q["name"] == name))
+    if targets:
+        p["targets"] = targets.split()
     part, t, _ = PARTS[p["part"]]
     out = ROOT / "results" / "b151" / "vivado" / name
     env = dict(os.environ, PART=part, T_NS=str(t), HS=str(p["HS"]), STAGES=str(p["STAGES"]), KEEP=str(p["KEEP"]), RETIME=str(p["RETIME"]),
-               DIST=str(p["DIST"]), NM=str(p["NM"]), W=str(p["W"]), D=str(p["D"]), OUT=str(out))
+               DIST=str(p["DIST"]), TARGETS=" ".join(p.get("targets", [])), NM=str(p["NM"]), W=str(p["W"]), D=str(p["D"]), OUT=str(out))
     cmd = ["systemd-run", "--user", "--scope", "-p", "MemoryMax=6G", "nice", "-n", "15", "/opt/Xilinx/2026.1/Vivado/bin/vivado",
            "-mode", "batch", "-nojournal", "-log", str(out / "vivado.log"), "-source", str(ROOT / "partition" / "run_point.tcl")]
     print(" ".join(cmd))
-    print({k: env[k] for k in ("PART", "T_NS", "HS", "STAGES", "KEEP", "RETIME", "DIST", "NM")})
+    print({k: env[k] for k in ("PART", "T_NS", "HS", "STAGES", "KEEP", "RETIME", "DIST", "NM", "TARGETS")})
     if dry:
         return 0
     print("Take a heavy slot first (take_heavy_slot.sh, text with 'Vivado impl' and the declared peak) and release it after.")
@@ -158,6 +160,7 @@ def main() -> int:
     ap.add_argument("--run-point", default="")
     ap.add_argument("--run-group", default="", help="q1_a7, q4_k26, ...: every point of the group, one after another")
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--targets", default="", help="with --run-point: per-sub-module placement targets, e.g. 'SLR0 SLR0 SLR1 SLR1' or 'X0Y0 X1Y2' (phase 1: one pblock per SLR)")
     a = ap.parse_args()
     if a.list:
         for p in points():
@@ -182,7 +185,7 @@ def main() -> int:
     if a.queue:
         Path(a.queue).write_text(queue_rows())
     if a.run_point:
-        return run_point(a.run_point, a.dry_run)
+        return run_point(a.run_point, a.dry_run, a.targets)
     if a.run_group:
         q, part = a.run_group.split("_")
         rc = 0
