@@ -79,22 +79,36 @@ Finding while building it: The loop variant and the tree variant are the same fu
 
 Vivado 2026.1 (build 6511674), out-of-context synthesis, placement and routing on one thread, one run per point, at the clock shown. LUT, FF and carry cells are as reported after routing for the wrapper (which registers every port, so the FF column includes the wrapper's register bits); WNS at the target clock gives Fmax = 1000 / (clock - WNS), a lower bound (marked `>=`) when WNS is positive; latency is the spec's, in clocks, without the wrapper's two. `F` marks a point on the area-against-Fmax front of its group, `L` on the area-against-latency front (see [../../results/160_arith_vivado/README.md](../../results/160_arith_vivado/README.md)). Records: [verif/results/](verif/results/), the pre-stated expectation and its verdict per point: [verif/results/vivado_surface.json](verif/results/vivado_surface.json).
 
-| Variant | Part | Point | Clock ns | LUT | FF | Carry | DSP | BRAM | WNS ns | Fmax MHz | Logic levels | Latency | Fronts | Expectation |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| loop_barrel | a7 | PIPE=1, W=16 | 2.0 | 86 | 62 | 0 | 0 | 0 | -0.879 | 347.3 | 3 | 1 |  | missed |
-| loop_barrel | a7 | PIPE=1, W=32 | 2.0 | 150 | 112 | 0 | 0 | 0 | -3.419 | 184.5 | 6 | 1 |  | missed |
-| loop_barrel | a7 | PIPE=1, W=64 | 2.0 | 324 | 210 | 0 | 0 | 0 | -4.659 | 150.2 | 7 | 1 |  | missed |
-| loop_barrel | k26 | PIPE=1, W=16 | 1.4 | 77 | 62 | 0 | 0 | 0 | 0.242 | >=863.6 | 4 | 1 |  | missed |
-| loop_barrel | k26 | PIPE=1, W=32 | 1.4 | 146 | 112 | 0 | 0 | 0 | -0.682 | 480.3 | 6 | 1 |  | missed |
-| loop_barrel | k26 | PIPE=1, W=64 | 1.4 | 319 | 210 | 0 | 0 | 0 | -1.235 | 379.5 | 7 | 1 |  | missed |
-| stagewise_pipe | a7 | PIPE=1, W=16 | 2.0 | 61 | 111 | 0 | 0 | 0 | -0.547 | 392.6 | 2 | 4 | F | missed |
-| stagewise_pipe | a7 | PIPE=1, W=32 | 2.0 | 147 | 241 | 0 | 0 | 0 | -1.212 | 311.3 | 2 | 5 |  | missed |
-| stagewise_pipe | a7 | PIPE=2, W=32 | 2.0 | 100 | 179 | 0 | 0 | 0 | -0.947 | 339.3 | 3 | 3 | FL | missed |
-| stagewise_pipe | a7 | PIPE=5, W=32 | 2.0 | 122 | 111 | 0 | 0 | 0 | -4.622 | 151.0 | 7 | 1 | L | missed |
-| stagewise_pipe | a7 | PIPE=2, W=64 | 2.0 | 210 | 341 | 0 | 0 | 0 | -3.614 | 178.1 | 5 | 3 | FL | missed |
-| tree_barrel | a7 | PIPE=1, W=16 | 2.0 | 56 | 62 | 0 | 0 | 0 | -1.942 | 253.7 | 4 | 1 | FL | missed |
-| tree_barrel | a7 | PIPE=1, W=32 | 2.0 | 143 | 112 | 0 | 0 | 0 | -3.166 | 193.6 | 5 | 1 |  | missed |
-| tree_barrel | a7 | PIPE=1, W=64 | 2.0 | 278 | 210 | 0 | 0 | 0 | -4.067 | 164.8 | 6 | 1 | L | missed |
+| Variant | Part | Point | Clock ns | LUT | FF | SRL | Carry | DSP | BRAM | WNS ns | Fmax MHz | Logic levels | Latency | Fronts | Expectation |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| loop_barrel | a7 | PIPE=1, W=16 | 2.0 | 86 | 62 | 0 | 0 | 0 | 0 | -0.879 | 347.3 | 3 | 1 |  | met |
+| loop_barrel | a7 | PIPE=1, W=32 | 2.0 | 150 | 112 | 0 | 0 | 0 | 0 | -3.419 | 184.5 | 6 | 1 |  | met |
+| loop_barrel | a7 | PIPE=1, W=64 | 2.0 | 324 | 210 | 0 | 0 | 0 | 0 | -4.659 | 150.2 | 7 | 1 |  | met |
+| loop_barrel | k26 | PIPE=1, W=16 | 1.4 | 77 | 62 | 0 | 0 | 0 | 0 | 0.242 | >=863.6 | 4 | 1 |  | met |
+| loop_barrel | k26 | PIPE=1, W=32 | 1.4 | 146 | 112 | 0 | 0 | 0 | 0 | -0.682 | 480.3 | 6 | 1 |  | met |
+| loop_barrel | k26 | PIPE=1, W=64 | 1.4 | 319 | 210 | 0 | 0 | 0 | 0 | -1.235 | 379.5 | 7 | 1 |  | met |
+| stagewise_pipe | a7 | PIPE=1, W=16 | 2.0 | 61 | 111 | 2 | 0 | 0 | 0 | -0.547 | 392.6 | 2 | 4 |  | met |
+| stagewise_pipe | a7 | PIPE=1, W=32 | 2.0 | 147 | 241 | 3 | 0 | 0 | 0 | -1.212 | 311.3 | 2 | 5 |  | met |
+| stagewise_pipe | a7 | PIPE=2, W=32 | 2.0 | 100 | 179 | 2 | 0 | 0 | 0 | -0.947 | 339.3 | 3 | 3 | FL | met |
+| stagewise_pipe | a7 | PIPE=5, W=32 | 2.0 | 122 | 111 | 0 | 0 | 0 | 0 | -4.622 | 151.0 | 7 | 1 | L | met |
+| stagewise_pipe | a7 | PIPE=2, W=64 | 2.0 | 210 | 341 | 2 | 0 | 0 | 0 | -3.614 | 178.1 | 5 | 3 | FL | met |
+| stagewise_pipe | k26 | PIPE=1, W=16 | 1.4 | 57 | 111 | 2 | 0 | 0 | 0 | 0.456 | >=606.8 | 2 | 4 |  | met |
+| stagewise_pipe | k26 | PIPE=1, W=32 | 1.4 | 145 | 241 | 3 | 0 | 0 | 0 | 0.198 | >=606.8 | 2 | 5 |  | met |
+| stagewise_pipe | k26 | PIPE=2, W=32 | 1.4 | 111 | 177 | 2 | 0 | 0 | 0 | 0.124 | >=606.8 | 3 | 3 | FL | met |
+| stagewise_pipe | k26 | PIPE=5, W=32 | 1.4 | 121 | 111 | 0 | 0 | 0 | 0 | -1.103 | 399.5 | 7 | 1 | L | met |
+| stagewise_pipe | k26 | PIPE=2, W=64 | 1.4 | 208 | 341 | 2 | 0 | 0 | 0 | -0.544 | 514.4 | 5 | 3 | FL | met |
+| tree_barrel_2st | a7 | PIPE=1, W=16 | 2.0 | 56 | 84 | 0 | 0 | 0 | 0 | -0.464 | 405.8 | 3 | 2 | F | met |
+| tree_barrel_2st | a7 | PIPE=1, W=32 | 2.0 | 129 | 151 | 0 | 0 | 0 | 0 | -1.372 | 296.6 | 3 | 2 |  | met |
+| tree_barrel_2st | a7 | PIPE=1, W=64 | 2.0 | 281 | 282 | 0 | 0 | 0 | 0 | -1.912 | 255.6 | 4 | 2 | F | met |
+| tree_barrel_2st | k26 | PIPE=1, W=16 | 1.4 | 48 | 84 | 0 | 0 | 0 | 0 | 0.27 | >=885.0 | 1 | 2 | FL | met |
+| tree_barrel_2st | k26 | PIPE=1, W=32 | 1.4 | 114 | 151 | 0 | 0 | 0 | 0 | 0.046 | >=738.6 | 2 | 2 | FL | met |
+| tree_barrel_2st | k26 | PIPE=1, W=64 | 1.4 | 274 | 282 | 0 | 0 | 0 | 0 | -0.047 | 691.1 | 3 | 2 | F | met |
+| tree_barrel | a7 | PIPE=1, W=16 | 2.0 | 56 | 62 | 0 | 0 | 0 | 0 | -1.942 | 253.7 | 4 | 1 | L | met |
+| tree_barrel | a7 | PIPE=1, W=32 | 2.0 | 143 | 112 | 0 | 0 | 0 | 0 | -3.166 | 193.6 | 5 | 1 |  | met |
+| tree_barrel | a7 | PIPE=1, W=64 | 2.0 | 278 | 210 | 0 | 0 | 0 | 0 | -4.067 | 164.8 | 6 | 1 | L | met |
+| tree_barrel | k26 | PIPE=1, W=16 | 1.4 | 55 | 62 | 0 | 0 | 0 | 0 | -0.007 | 710.7 | 4 | 1 | L | met |
+| tree_barrel | k26 | PIPE=1, W=32 | 1.4 | 140 | 112 | 0 | 0 | 0 | 0 | -0.486 | 530.2 | 5 | 1 |  | met |
+| tree_barrel | k26 | PIPE=1, W=64 | 1.4 | 273 | 210 | 0 | 0 | 0 | 0 | -1.075 | 404.0 | 6 | 1 | L | met |
 
 ## Traceability
 

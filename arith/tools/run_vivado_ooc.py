@@ -193,9 +193,16 @@ def main() -> int:
     ap.add_argument("--only", default="", help="function/variant/part_key prefix")
     ap.add_argument("--shard", default="0/1")
     ap.add_argument("--dry-run", action="store_true")
+    ap.add_argument("--part", default="", help="only this part key (a7 or k26)")
+    ap.add_argument("--reverse", action="store_true", help="last session first")
+    ap.add_argument("--claim", action="store_true", help="skip a session another worker has claimed (a file in build/arith_ooc/claims), and claim each before running")
     ap.add_argument("--deadline", default="", help="HH:MM today: do not start a session after this time")
     a = ap.parse_args()
     ss = [s for s in order(sessions()) if sid(s).startswith(a.only)]
+    if a.part:
+        ss = [s for s in ss if s["part_key"] == a.part]
+    if a.reverse:
+        ss.reverse()
     i, n = map(int, a.shard.split("/"))
     ss = [s for k, s in enumerate(ss) if k % n == i]
     if a.cmd == "list" or a.dry_run:
@@ -217,6 +224,14 @@ def main() -> int:
         if dl and time.time() > dl:
             print("deadline reached; stopping before", sid(s))
             break
+        if a.claim:
+            c = WORK / "claims" / (sid(s).replace("/", "__"))
+            c.parent.mkdir(parents=True, exist_ok=True)
+            try:
+                with open(c, "x") as fh:
+                    fh.write(str(os.getpid()))
+            except FileExistsError:
+                continue
         run_session(s, dl)
     return 0
 

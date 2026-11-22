@@ -85,6 +85,23 @@ Written without knowing the design the block will sit in (brief 139a, owner deci
 - STAGES (dsp) and REG (lut_array, booth_r4) are register stages in the variant, not retiming requests: Vivado does not move them unless retiming is enabled
 - STAGES above 3 behaves as 3 and REG other than 0 behaves as 1; SIGNED other than 0 or 1 behaves as 1; none of this is rejected by an assertion
 
+## Measured (Vivado out-of-context, brief 160)
+
+Vivado 2026.1 (build 6511674), out-of-context synthesis, placement and routing on one thread, one run per point, at the clock shown. LUT, FF and carry cells are as reported after routing for the wrapper (which registers every port, so the FF column includes the wrapper's register bits); WNS at the target clock gives Fmax = 1000 / (clock - WNS), a lower bound (marked `>=`) when WNS is positive; latency is the spec's, in clocks, without the wrapper's two. `F` marks a point on the area-against-Fmax front of its group, `L` on the area-against-latency front (see [../../results/160_arith_vivado/README.md](../../results/160_arith_vivado/README.md)). Records: [verif/results/](verif/results/), the pre-stated expectation and its verdict per point: [verif/results/vivado_surface.json](verif/results/vivado_surface.json).
+
+| Variant | Part | Point | Clock ns | LUT | FF | SRL | Carry | DSP | BRAM | WNS ns | Fmax MHz | Logic levels | Latency | Fronts | Expectation |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| booth_r4 | a7 | WA=16, WB=16, SIGNED=1, REG=1 | 5.0 | 359 | 96 | 0 | 61 | 0 | 0 | -2.665 | 130.5 | 10 | 1 | FL | missed |
+| booth_r4 | a7 | WA=18, WB=18, SIGNED=1, REG=1 | 5.0 | 491 | 108 | 0 | 77 | 0 | 0 | -3.2 | 122.0 | 13 | 1 | FL | missed |
+| booth_r4 | a7 | WA=32, WB=32, SIGNED=1, REG=1 | 5.0 | 1392 | 194 | 0 | 249 | 0 | 0 | -6.038 | 90.6 | 22 | 1 | FL | missed |
+| dsp | a7 | WA=18, WB=18, SIGNED=1, STAGES=3 | 5.0 | 0 | 36 | 0 | 0 | 1 | 0 | 3.53 | >=680.3 | 0 | 3 | FL | met |
+| dsp | a7 | WA=25, WB=18, SIGNED=1, STAGES=3 | 5.0 | 0 | 43 | 0 | 0 | 1 | 0 | 3.53 | >=680.3 | 0 | 3 |  | met |
+| dsp | a7 | WA=32, WB=32, SIGNED=1, STAGES=3 | 5.0 | 0 | 98 | 0 | 0 | 4 | 0 | 1.103 | >=256.6 | 0 | 3 | FL | met |
+| dsp | a7 | WA=32, WB=32, SIGNED=1, STAGES=1 | 5.0 | 47 | 98 | 0 | 12 | 4 | 0 | 1.026 | >=251.6 | 0 | 1 | L | met |
+| lut_array | a7 | WA=16, WB=16, SIGNED=1, REG=1 | 5.0 | 405 | 96 | 0 | 51 | 0 | 0 | -3.284 | 120.7 | 11 | 1 |  | missed |
+| lut_array | a7 | WA=18, WB=18, SIGNED=1, REG=1 | 5.0 | 519 | 108 | 0 | 63 | 0 | 0 | -4.024 | 110.8 | 10 | 1 |  | missed |
+| lut_array | a7 | WA=32, WB=32, SIGNED=1, REG=1 | 5.0 | 1552 | 194 | 0 | 199 | 0 | 0 | -5.958 | 91.3 | 20 | 1 | F | missed |
+
 ## Files
 
 - [model.py](model.py): the bit-exact model; tests/test_*_model.py check it against independent formulations

@@ -103,7 +103,7 @@ def expect(fn: str, variant: str, g: dict, a7: bool, r: dict, wrap: int | None, 
         add("DSP", given.get("dsp48", 0), given.get("dsp48", 0), dsp, "dsp48")
         add("BRAM tiles", given.get("bram", 0), given.get("bram", 0), r["bram_tiles"], "bram")
         if given.get("ff") is not None:
-            add("FF (total, wrapper included)", given["ff"], given["ff"], ff, "ff")
+            add("FF beyond the wrapper", given["ff"], given["ff"], cff, "ff (the build files' number excludes the wrapper's port registers)")
         return out
     if fn == "adder":
         w = g["WIDTH"]
@@ -199,7 +199,7 @@ def load() -> dict[str, list[dict]]:
                 r = {"function": fn, "variant": d["variant"], "part_key": d["part_key"], "part": d["part"], "generics": g, "shape": shape,
                      "clock_ns": d["clock_ns"], "tool": d["tool"], "date": d["date"], "status": p["status"], "record": f.name}
                 if p["status"] == "ok":
-                    r.update({k: p[k] for k in ("lut", "ff", "carry", "carry4", "carry8", "dsp", "bram_tiles", "wns_ns", "whs_ns", "logic_levels", "runtime_s")})
+                    r.update({k: p[k] for k in ("lut", "ff", "carry", "carry4", "carry8", "dsp", "bram_tiles", "srl", "wns_ns", "whs_ns", "logic_levels", "runtime_s")})
                     r["power_total_w"] = p["power_w"]["total"]
                     r["fmax_mhz"] = p["fmax_mhz"]
                     r["lower_bound"] = bool(p["wns_ns"] is not None and p["wns_ns"] > 0)
@@ -221,7 +221,7 @@ def planning_check(data: dict) -> list[dict]:
     res = []
     for fn, rows in data.items():
         for part in ("a7", "k26"):
-            for what, key in (("LUT", "lut"), ("carry cells", "carry"), ("FF beyond the wrapper", "ff"), ("FF (total, wrapper included)", "ff")):
+            for what, key in (("LUT", "lut"), ("carry cells", "carry"), ("FF beyond the wrapper", "ff")):
                 pr, me, errs = [], [], []
                 for r in rows:
                     if r["part_key"] != part or r["status"] != "ok":
@@ -328,14 +328,14 @@ def measured_section(fn: str) -> list[str]:
          "Fmax = 1000 / (clock - WNS), a lower bound (marked `>=`) when WNS is positive; latency is the spec's, in clocks, without the wrapper's two. "
          "`F` marks a point on the area-against-Fmax front of its group, `L` on the area-against-latency front (see [../../results/160_arith_vivado/README.md](../../results/160_arith_vivado/README.md)). "
          "Records: [verif/results/](verif/results/), the pre-stated expectation and its verdict per point: [verif/results/vivado_surface.json](verif/results/vivado_surface.json).", "",
-         "| Variant | Part | Point | Clock ns | LUT | FF | Carry | DSP | BRAM | WNS ns | Fmax MHz | Logic levels | Latency | Fronts | Expectation |", "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
+         "| Variant | Part | Point | Clock ns | LUT | FF | SRL | Carry | DSP | BRAM | WNS ns | Fmax MHz | Logic levels | Latency | Fronts | Expectation |", "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
     for r in rows:
         pt = ", ".join(f"{k}={v}" for k, v in r["generics"].items() if k != "VARIANT")
         if r["status"] != "ok":
-            L.append(f"| {r['variant']} | {r['part_key']} | {pt} | {r['clock_ns']} | {r['status']} | | | | | | | | | | |")
+            L.append(f"| {r['variant']} | {r['part_key']} | {pt} | {r['clock_ns']} | {r['status']} | | | | | | | | | | | |")
             continue
         fr = ("F" if r.get("front_fmax") else "") + ("L" if r.get("front_latency") else "")
-        L.append(f"| {r['variant']} | {r['part_key']} | {pt} | {r['clock_ns']} | {r['lut']} | {r['ff']} | {r['carry']} | {r['dsp']} | {r['bram_tiles']} | {r['wns_ns']} | "
+        L.append(f"| {r['variant']} | {r['part_key']} | {pt} | {r['clock_ns']} | {r['lut']} | {r['ff']} | {r['srl']} | {r['carry']} | {r['dsp']} | {r['bram_tiles']} | {r['wns_ns']} | "
                  f"{'>=' if r['lower_bound'] else ''}{r['fmax_mhz']} | {r['logic_levels']} | {r['latency_clocks']} | {fr} | {r['expectation']} |")
     return L
 

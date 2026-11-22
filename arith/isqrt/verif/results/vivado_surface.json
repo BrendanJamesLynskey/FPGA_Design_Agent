@@ -2,10 +2,10 @@
  "schema": "fda-arith/vivado_surface/1",
  "function": "isqrt",
  "summary": {
-  "points": 12,
-  "routed_points": 12,
-  "expectation_met": 2,
-  "expectation_missed": 10
+  "points": 24,
+  "routed_points": 24,
+  "expectation_met": 8,
+  "expectation_missed": 16
  },
  "points": [
   {
@@ -33,6 +33,7 @@
    "carry8": 0,
    "dsp": 0,
    "bram_tiles": 0,
+   "srl": 10,
    "wns_ns": -1.922,
    "whs_ns": 0.122,
    "logic_levels": 7,
@@ -68,12 +69,12 @@
      "text": "bram"
     },
     {
-     "what": "FF (total, wrapper included)",
+     "what": "FF beyond the wrapper",
      "expected_lo": 264,
      "expected_hi": 264,
-     "measured": 159,
+     "measured": 121.0,
      "verdict": "missed",
-     "text": "ff"
+     "text": "ff (the build files' number excludes the wrapper's port registers)"
     }
    ],
    "expectation": "missed",
@@ -106,6 +107,7 @@
    "carry8": 0,
    "dsp": 0,
    "bram_tiles": 0,
+   "srl": 0,
    "wns_ns": -8.44,
    "whs_ns": 0.153,
    "logic_levels": 19,
@@ -141,12 +143,12 @@
      "text": "bram"
     },
     {
-     "what": "FF (total, wrapper included)",
+     "what": "FF beyond the wrapper",
      "expected_lo": 54,
      "expected_hi": 54,
-     "measured": 76,
+     "measured": 38.0,
      "verdict": "missed",
-     "text": "ff"
+     "text": "ff (the build files' number excludes the wrapper's port registers)"
     }
    ],
    "expectation": "missed",
@@ -179,6 +181,7 @@
    "carry8": 0,
    "dsp": 0,
    "bram_tiles": 0,
+   "srl": 26,
    "wns_ns": -2.33,
    "whs_ns": 0.109,
    "logic_levels": 12,
@@ -214,12 +217,12 @@
      "text": "bram"
     },
     {
-     "what": "FF (total, wrapper included)",
+     "what": "FF beyond the wrapper",
      "expected_lo": 1040,
      "expected_hi": 1040,
-     "measured": 481,
+     "measured": 411.0,
      "verdict": "missed",
-     "text": "ff"
+     "text": "ff (the build files' number excludes the wrapper's port registers)"
     }
    ],
    "expectation": "missed",
@@ -252,6 +255,7 @@
    "carry8": 0,
    "dsp": 0,
    "bram_tiles": 0,
+   "srl": 4,
    "wns_ns": -9.911,
    "whs_ns": 0.1,
    "logic_levels": 29,
@@ -287,15 +291,15 @@
      "text": "bram"
     },
     {
-     "what": "FF (total, wrapper included)",
+     "what": "FF beyond the wrapper",
      "expected_lo": 236,
      "expected_hi": 236,
-     "measured": 214,
-     "verdict": "met",
-     "text": "ff"
+     "measured": 144.0,
+     "verdict": "missed",
+     "text": "ff (the build files' number excludes the wrapper's port registers)"
     }
    ],
-   "expectation": "met",
+   "expectation": "missed",
    "group_size": 7,
    "front_fmax": false,
    "front_latency": false
@@ -325,6 +329,7 @@
    "carry8": 0,
    "dsp": 0,
    "bram_tiles": 0,
+   "srl": 0,
    "wns_ns": -32.03,
    "whs_ns": 0.11,
    "logic_levels": 83,
@@ -360,15 +365,385 @@
      "text": "bram"
     },
     {
-     "what": "FF (total, wrapper included)",
+     "what": "FF beyond the wrapper",
      "expected_lo": 35,
      "expected_hi": 35,
-     "measured": 102,
+     "measured": 32.0,
+     "verdict": "met",
+     "text": "ff (the build files' number excludes the wrapper's port registers)"
+    }
+   ],
+   "expectation": "met",
+   "group_size": 7,
+   "front_fmax": false,
+   "front_latency": true
+  },
+  {
+   "function": "isqrt",
+   "variant": "nonrestoring_pipe",
+   "part_key": "k26",
+   "part": "xck26-sfvc784-2LV-c",
+   "generics": {
+    "VARIANT": 2,
+    "PIPE": 1,
+    "W": 16
+   },
+   "shape": {
+    "W": 16
+   },
+   "clock_ns": 1.4,
+   "tool": "Vivado 2026.1 (build 6511674)",
+   "date": "2026-11-22",
+   "status": "ok",
+   "record": "vivado_ooc_nonrestoring_pipe_k26.json",
+   "lut": 87,
+   "ff": 161,
+   "carry": 14,
+   "carry4": 0,
+   "carry8": 14,
+   "dsp": 0,
+   "bram_tiles": 0,
+   "srl": 10,
+   "wns_ns": -0.173,
+   "whs_ns": 0.064,
+   "logic_levels": 6,
+   "runtime_s": 284,
+   "power_total_w": 0.299,
+   "fmax_mhz": 606.8,
+   "lower_bound": false,
+   "latency_clocks": 8,
+   "wrapper_register_bits": 38.0,
+   "expectations": [
+    {
+     "what": "carry cells",
+     "expected_lo": 14,
+     "expected_hi": 14,
+     "measured": 14,
+     "verdict": "met",
+     "text": "carry4 (a7) / about half as many CARRY8 (k26)"
+    },
+    {
+     "what": "DSP",
+     "expected_lo": 0,
+     "expected_hi": 0,
+     "measured": 0,
+     "verdict": "met",
+     "text": "dsp48"
+    },
+    {
+     "what": "BRAM tiles",
+     "expected_lo": 0,
+     "expected_hi": 0,
+     "measured": 0,
+     "verdict": "met",
+     "text": "bram"
+    },
+    {
+     "what": "FF beyond the wrapper",
+     "expected_lo": 264,
+     "expected_hi": 264,
+     "measured": 123.0,
      "verdict": "missed",
-     "text": "ff"
+     "text": "ff (the build files' number excludes the wrapper's port registers)"
     }
    ],
    "expectation": "missed",
+   "group_size": 5,
+   "front_fmax": false,
+   "front_latency": false
+  },
+  {
+   "function": "isqrt",
+   "variant": "nonrestoring_pipe",
+   "part_key": "k26",
+   "part": "xck26-sfvc784-2LV-c",
+   "generics": {
+    "VARIANT": 2,
+    "PIPE": 4,
+    "W": 16
+   },
+   "shape": {
+    "W": 16
+   },
+   "clock_ns": 1.4,
+   "tool": "Vivado 2026.1 (build 6511674)",
+   "date": "2026-11-22",
+   "status": "ok",
+   "record": "vivado_ooc_nonrestoring_pipe_k26.json",
+   "lut": 78,
+   "ff": 76,
+   "carry": 13,
+   "carry4": 0,
+   "carry8": 13,
+   "dsp": 0,
+   "bram_tiles": 0,
+   "srl": 0,
+   "wns_ns": -2.616,
+   "whs_ns": 0.076,
+   "logic_levels": 15,
+   "runtime_s": 235,
+   "power_total_w": 0.296,
+   "fmax_mhz": 249.0,
+   "lower_bound": false,
+   "latency_clocks": 2,
+   "wrapper_register_bits": 38.0,
+   "expectations": [
+    {
+     "what": "carry cells",
+     "expected_lo": 14,
+     "expected_hi": 14,
+     "measured": 13,
+     "verdict": "met",
+     "text": "carry4 (a7) / about half as many CARRY8 (k26)"
+    },
+    {
+     "what": "DSP",
+     "expected_lo": 0,
+     "expected_hi": 0,
+     "measured": 0,
+     "verdict": "met",
+     "text": "dsp48"
+    },
+    {
+     "what": "BRAM tiles",
+     "expected_lo": 0,
+     "expected_hi": 0,
+     "measured": 0,
+     "verdict": "met",
+     "text": "bram"
+    },
+    {
+     "what": "FF beyond the wrapper",
+     "expected_lo": 54,
+     "expected_hi": 54,
+     "measured": 38.0,
+     "verdict": "missed",
+     "text": "ff (the build files' number excludes the wrapper's port registers)"
+    }
+   ],
+   "expectation": "missed",
+   "group_size": 5,
+   "front_fmax": false,
+   "front_latency": false
+  },
+  {
+   "function": "isqrt",
+   "variant": "nonrestoring_pipe",
+   "part_key": "k26",
+   "part": "xck26-sfvc784-2LV-c",
+   "generics": {
+    "VARIANT": 2,
+    "PIPE": 1,
+    "W": 32
+   },
+   "shape": {
+    "W": 32
+   },
+   "clock_ns": 1.4,
+   "tool": "Vivado 2026.1 (build 6511674)",
+   "date": "2026-11-22",
+   "status": "ok",
+   "record": "vivado_ooc_nonrestoring_pipe_k26.json",
+   "lut": 279,
+   "ff": 483,
+   "carry": 40,
+   "carry4": 0,
+   "carry8": 40,
+   "dsp": 0,
+   "bram_tiles": 0,
+   "srl": 26,
+   "wns_ns": -0.377,
+   "whs_ns": 0.072,
+   "logic_levels": 6,
+   "runtime_s": 246,
+   "power_total_w": 0.327,
+   "fmax_mhz": 562.7,
+   "lower_bound": false,
+   "latency_clocks": 16,
+   "wrapper_register_bits": 70.0,
+   "expectations": [
+    {
+     "what": "carry cells",
+     "expected_lo": 43,
+     "expected_hi": 43,
+     "measured": 40,
+     "verdict": "met",
+     "text": "carry4 (a7) / about half as many CARRY8 (k26)"
+    },
+    {
+     "what": "DSP",
+     "expected_lo": 0,
+     "expected_hi": 0,
+     "measured": 0,
+     "verdict": "met",
+     "text": "dsp48"
+    },
+    {
+     "what": "BRAM tiles",
+     "expected_lo": 0,
+     "expected_hi": 0,
+     "measured": 0,
+     "verdict": "met",
+     "text": "bram"
+    },
+    {
+     "what": "FF beyond the wrapper",
+     "expected_lo": 1040,
+     "expected_hi": 1040,
+     "measured": 413.0,
+     "verdict": "missed",
+     "text": "ff (the build files' number excludes the wrapper's port registers)"
+    }
+   ],
+   "expectation": "missed",
+   "group_size": 7,
+   "front_fmax": false,
+   "front_latency": false
+  },
+  {
+   "function": "isqrt",
+   "variant": "nonrestoring_pipe",
+   "part_key": "k26",
+   "part": "xck26-sfvc784-2LV-c",
+   "generics": {
+    "VARIANT": 2,
+    "PIPE": 4,
+    "W": 32
+   },
+   "shape": {
+    "W": 32
+   },
+   "clock_ns": 1.4,
+   "tool": "Vivado 2026.1 (build 6511674)",
+   "date": "2026-11-22",
+   "status": "ok",
+   "record": "vivado_ooc_nonrestoring_pipe_k26.json",
+   "lut": 266,
+   "ff": 210,
+   "carry": 41,
+   "carry4": 0,
+   "carry8": 41,
+   "dsp": 0,
+   "bram_tiles": 0,
+   "srl": 8,
+   "wns_ns": -3.393,
+   "whs_ns": 0.075,
+   "logic_levels": 20,
+   "runtime_s": 226,
+   "power_total_w": 0.316,
+   "fmax_mhz": 208.6,
+   "lower_bound": false,
+   "latency_clocks": 4,
+   "wrapper_register_bits": 70.0,
+   "expectations": [
+    {
+     "what": "carry cells",
+     "expected_lo": 43,
+     "expected_hi": 43,
+     "measured": 41,
+     "verdict": "met",
+     "text": "carry4 (a7) / about half as many CARRY8 (k26)"
+    },
+    {
+     "what": "DSP",
+     "expected_lo": 0,
+     "expected_hi": 0,
+     "measured": 0,
+     "verdict": "met",
+     "text": "dsp48"
+    },
+    {
+     "what": "BRAM tiles",
+     "expected_lo": 0,
+     "expected_hi": 0,
+     "measured": 0,
+     "verdict": "met",
+     "text": "bram"
+    },
+    {
+     "what": "FF beyond the wrapper",
+     "expected_lo": 236,
+     "expected_hi": 236,
+     "measured": 140.0,
+     "verdict": "missed",
+     "text": "ff (the build files' number excludes the wrapper's port registers)"
+    }
+   ],
+   "expectation": "missed",
+   "group_size": 7,
+   "front_fmax": false,
+   "front_latency": false
+  },
+  {
+   "function": "isqrt",
+   "variant": "nonrestoring_pipe",
+   "part_key": "k26",
+   "part": "xck26-sfvc784-2LV-c",
+   "generics": {
+    "VARIANT": 2,
+    "PIPE": 16,
+    "W": 32
+   },
+   "shape": {
+    "W": 32
+   },
+   "clock_ns": 1.4,
+   "tool": "Vivado 2026.1 (build 6511674)",
+   "date": "2026-11-22",
+   "status": "ok",
+   "record": "vivado_ooc_nonrestoring_pipe_k26.json",
+   "lut": 260,
+   "ff": 102,
+   "carry": 41,
+   "carry4": 0,
+   "carry8": 41,
+   "dsp": 0,
+   "bram_tiles": 0,
+   "srl": 0,
+   "wns_ns": -12.07,
+   "whs_ns": 0.087,
+   "logic_levels": 58,
+   "runtime_s": 252,
+   "power_total_w": 0.312,
+   "fmax_mhz": 74.2,
+   "lower_bound": false,
+   "latency_clocks": 1,
+   "wrapper_register_bits": 70.0,
+   "expectations": [
+    {
+     "what": "carry cells",
+     "expected_lo": 43,
+     "expected_hi": 43,
+     "measured": 41,
+     "verdict": "met",
+     "text": "carry4 (a7) / about half as many CARRY8 (k26)"
+    },
+    {
+     "what": "DSP",
+     "expected_lo": 0,
+     "expected_hi": 0,
+     "measured": 0,
+     "verdict": "met",
+     "text": "dsp48"
+    },
+    {
+     "what": "BRAM tiles",
+     "expected_lo": 0,
+     "expected_hi": 0,
+     "measured": 0,
+     "verdict": "met",
+     "text": "bram"
+    },
+    {
+     "what": "FF beyond the wrapper",
+     "expected_lo": 35,
+     "expected_hi": 35,
+     "measured": 32.0,
+     "verdict": "met",
+     "text": "ff (the build files' number excludes the wrapper's port registers)"
+    }
+   ],
+   "expectation": "met",
    "group_size": 7,
    "front_fmax": false,
    "front_latency": true
@@ -398,6 +773,7 @@
    "carry8": 0,
    "dsp": 0,
    "bram_tiles": 0,
+   "srl": 0,
    "wns_ns": -0.975,
    "whs_ns": 0.139,
    "logic_levels": 5,
@@ -433,15 +809,15 @@
      "text": "bram"
     },
     {
-     "what": "FF (total, wrapper included)",
+     "what": "FF beyond the wrapper",
      "expected_lo": 31,
      "expected_hi": 31,
-     "measured": 76,
-     "verdict": "missed",
-     "text": "ff"
+     "measured": 38.0,
+     "verdict": "met",
+     "text": "ff (the build files' number excludes the wrapper's port registers)"
     }
    ],
-   "expectation": "missed",
+   "expectation": "met",
    "group_size": 5,
    "front_fmax": true,
    "front_latency": true
@@ -471,6 +847,7 @@
    "carry8": 0,
    "dsp": 0,
    "bram_tiles": 0,
+   "srl": 0,
    "wns_ns": -1.422,
    "whs_ns": 0.164,
    "logic_levels": 7,
@@ -506,15 +883,163 @@
      "text": "bram"
     },
     {
-     "what": "FF (total, wrapper included)",
+     "what": "FF beyond the wrapper",
      "expected_lo": 56,
      "expected_hi": 56,
-     "measured": 141,
-     "verdict": "missed",
-     "text": "ff"
+     "measured": 71.0,
+     "verdict": "met",
+     "text": "ff (the build files' number excludes the wrapper's port registers)"
     }
    ],
-   "expectation": "missed",
+   "expectation": "met",
+   "group_size": 7,
+   "front_fmax": true,
+   "front_latency": true
+  },
+  {
+   "function": "isqrt",
+   "variant": "restoring_iter",
+   "part_key": "k26",
+   "part": "xck26-sfvc784-2LV-c",
+   "generics": {
+    "VARIANT": 0,
+    "PIPE": 1,
+    "W": 16
+   },
+   "shape": {
+    "W": 16
+   },
+   "clock_ns": 1.4,
+   "tool": "Vivado 2026.1 (build 6511674)",
+   "date": "2026-11-22",
+   "status": "ok",
+   "record": "vivado_ooc_restoring_iter_k26.json",
+   "lut": 44,
+   "ff": 76,
+   "carry": 2,
+   "carry4": 0,
+   "carry8": 2,
+   "dsp": 0,
+   "bram_tiles": 0,
+   "srl": 0,
+   "wns_ns": 0.241,
+   "whs_ns": 0.076,
+   "logic_levels": 4,
+   "runtime_s": 252,
+   "power_total_w": 0.291,
+   "fmax_mhz": 862.8,
+   "lower_bound": true,
+   "latency_clocks": 9,
+   "wrapper_register_bits": 38.0,
+   "expectations": [
+    {
+     "what": "carry cells",
+     "expected_lo": 2,
+     "expected_hi": 2,
+     "measured": 2,
+     "verdict": "met",
+     "text": "carry4 (a7) / about half as many CARRY8 (k26)"
+    },
+    {
+     "what": "DSP",
+     "expected_lo": 0,
+     "expected_hi": 0,
+     "measured": 0,
+     "verdict": "met",
+     "text": "dsp48"
+    },
+    {
+     "what": "BRAM tiles",
+     "expected_lo": 0,
+     "expected_hi": 0,
+     "measured": 0,
+     "verdict": "met",
+     "text": "bram"
+    },
+    {
+     "what": "FF beyond the wrapper",
+     "expected_lo": 31,
+     "expected_hi": 31,
+     "measured": 38.0,
+     "verdict": "met",
+     "text": "ff (the build files' number excludes the wrapper's port registers)"
+    }
+   ],
+   "expectation": "met",
+   "group_size": 5,
+   "front_fmax": true,
+   "front_latency": true
+  },
+  {
+   "function": "isqrt",
+   "variant": "restoring_iter",
+   "part_key": "k26",
+   "part": "xck26-sfvc784-2LV-c",
+   "generics": {
+    "VARIANT": 0,
+    "PIPE": 1,
+    "W": 32
+   },
+   "shape": {
+    "W": 32
+   },
+   "clock_ns": 1.4,
+   "tool": "Vivado 2026.1 (build 6511674)",
+   "date": "2026-11-22",
+   "status": "ok",
+   "record": "vivado_ooc_restoring_iter_k26.json",
+   "lut": 74,
+   "ff": 141,
+   "carry": 3,
+   "carry4": 0,
+   "carry8": 3,
+   "dsp": 0,
+   "bram_tiles": 0,
+   "srl": 0,
+   "wns_ns": 0.008,
+   "whs_ns": 0.075,
+   "logic_levels": 5,
+   "runtime_s": 219,
+   "power_total_w": 0.295,
+   "fmax_mhz": 718.4,
+   "lower_bound": true,
+   "latency_clocks": 17,
+   "wrapper_register_bits": 70.0,
+   "expectations": [
+    {
+     "what": "carry cells",
+     "expected_lo": 3,
+     "expected_hi": 3,
+     "measured": 3,
+     "verdict": "met",
+     "text": "carry4 (a7) / about half as many CARRY8 (k26)"
+    },
+    {
+     "what": "DSP",
+     "expected_lo": 0,
+     "expected_hi": 0,
+     "measured": 0,
+     "verdict": "met",
+     "text": "dsp48"
+    },
+    {
+     "what": "BRAM tiles",
+     "expected_lo": 0,
+     "expected_hi": 0,
+     "measured": 0,
+     "verdict": "met",
+     "text": "bram"
+    },
+    {
+     "what": "FF beyond the wrapper",
+     "expected_lo": 56,
+     "expected_hi": 56,
+     "measured": 71.0,
+     "verdict": "met",
+     "text": "ff (the build files' number excludes the wrapper's port registers)"
+    }
+   ],
+   "expectation": "met",
    "group_size": 7,
    "front_fmax": true,
    "front_latency": true
@@ -544,6 +1069,7 @@
    "carry8": 0,
    "dsp": 0,
    "bram_tiles": 0,
+   "srl": 10,
    "wns_ns": -1.12,
    "whs_ns": 0.1,
    "logic_levels": 5,
@@ -579,12 +1105,12 @@
      "text": "bram"
     },
     {
-     "what": "FF (total, wrapper included)",
+     "what": "FF beyond the wrapper",
      "expected_lo": 256,
      "expected_hi": 256,
-     "measured": 149,
+     "measured": 111.0,
      "verdict": "missed",
-     "text": "ff"
+     "text": "ff (the build files' number excludes the wrapper's port registers)"
     }
    ],
    "expectation": "missed",
@@ -617,6 +1143,7 @@
    "carry8": 0,
    "dsp": 0,
    "bram_tiles": 0,
+   "srl": 0,
    "wns_ns": -6.734,
    "whs_ns": 0.104,
    "logic_levels": 15,
@@ -652,12 +1179,12 @@
      "text": "bram"
     },
     {
-     "what": "FF (total, wrapper included)",
+     "what": "FF beyond the wrapper",
      "expected_lo": 52,
      "expected_hi": 52,
-     "measured": 74,
+     "measured": 36.0,
      "verdict": "missed",
-     "text": "ff"
+     "text": "ff (the build files' number excludes the wrapper's port registers)"
     }
    ],
    "expectation": "missed",
@@ -690,6 +1217,7 @@
    "carry8": 0,
    "dsp": 0,
    "bram_tiles": 0,
+   "srl": 26,
    "wns_ns": -1.49,
    "whs_ns": 0.1,
    "logic_levels": 7,
@@ -725,12 +1253,12 @@
      "text": "bram"
     },
     {
-     "what": "FF (total, wrapper included)",
+     "what": "FF beyond the wrapper",
      "expected_lo": 1024,
      "expected_hi": 1024,
-     "measured": 453,
+     "measured": 383.0,
      "verdict": "missed",
-     "text": "ff"
+     "text": "ff (the build files' number excludes the wrapper's port registers)"
     }
    ],
    "expectation": "missed",
@@ -763,6 +1291,7 @@
    "carry8": 0,
    "dsp": 0,
    "bram_tiles": 0,
+   "srl": 4,
    "wns_ns": -9.173,
    "whs_ns": 0.09,
    "logic_levels": 21,
@@ -798,15 +1327,15 @@
      "text": "bram"
     },
     {
-     "what": "FF (total, wrapper included)",
+     "what": "FF beyond the wrapper",
      "expected_lo": 232,
      "expected_hi": 232,
-     "measured": 209,
-     "verdict": "met",
-     "text": "ff"
+     "measured": 139.0,
+     "verdict": "missed",
+     "text": "ff (the build files' number excludes the wrapper's port registers)"
     }
    ],
-   "expectation": "met",
+   "expectation": "missed",
    "group_size": 7,
    "front_fmax": false,
    "front_latency": false
@@ -836,6 +1365,7 @@
    "carry8": 0,
    "dsp": 0,
    "bram_tiles": 0,
+   "srl": 0,
    "wns_ns": -33.911,
    "whs_ns": 0.11,
    "logic_levels": 69,
@@ -871,15 +1401,385 @@
      "text": "bram"
     },
     {
-     "what": "FF (total, wrapper included)",
+     "what": "FF beyond the wrapper",
      "expected_lo": 34,
      "expected_hi": 34,
-     "measured": 102,
+     "measured": 32.0,
+     "verdict": "met",
+     "text": "ff (the build files' number excludes the wrapper's port registers)"
+    }
+   ],
+   "expectation": "met",
+   "group_size": 7,
+   "front_fmax": false,
+   "front_latency": false
+  },
+  {
+   "function": "isqrt",
+   "variant": "restoring_pipe",
+   "part_key": "k26",
+   "part": "xck26-sfvc784-2LV-c",
+   "generics": {
+    "VARIANT": 1,
+    "PIPE": 1,
+    "W": 16
+   },
+   "shape": {
+    "W": 16
+   },
+   "clock_ns": 1.4,
+   "tool": "Vivado 2026.1 (build 6511674)",
+   "date": "2026-11-22",
+   "status": "ok",
+   "record": "vivado_ooc_restoring_pipe_k26.json",
+   "lut": 108,
+   "ff": 149,
+   "carry": 9,
+   "carry4": 0,
+   "carry8": 9,
+   "dsp": 0,
+   "bram_tiles": 0,
+   "srl": 10,
+   "wns_ns": 0.097,
+   "whs_ns": 0.073,
+   "logic_levels": 4,
+   "runtime_s": 266,
+   "power_total_w": 0.299,
+   "fmax_mhz": 606.8,
+   "lower_bound": true,
+   "latency_clocks": 8,
+   "wrapper_register_bits": 38.0,
+   "expectations": [
+    {
+     "what": "carry cells",
+     "expected_lo": 12,
+     "expected_hi": 12,
+     "measured": 9,
+     "verdict": "met",
+     "text": "carry4 (a7) / about half as many CARRY8 (k26)"
+    },
+    {
+     "what": "DSP",
+     "expected_lo": 0,
+     "expected_hi": 0,
+     "measured": 0,
+     "verdict": "met",
+     "text": "dsp48"
+    },
+    {
+     "what": "BRAM tiles",
+     "expected_lo": 0,
+     "expected_hi": 0,
+     "measured": 0,
+     "verdict": "met",
+     "text": "bram"
+    },
+    {
+     "what": "FF beyond the wrapper",
+     "expected_lo": 256,
+     "expected_hi": 256,
+     "measured": 111.0,
      "verdict": "missed",
-     "text": "ff"
+     "text": "ff (the build files' number excludes the wrapper's port registers)"
     }
    ],
    "expectation": "missed",
+   "group_size": 5,
+   "front_fmax": false,
+   "front_latency": false
+  },
+  {
+   "function": "isqrt",
+   "variant": "restoring_pipe",
+   "part_key": "k26",
+   "part": "xck26-sfvc784-2LV-c",
+   "generics": {
+    "VARIANT": 1,
+    "PIPE": 4,
+    "W": 16
+   },
+   "shape": {
+    "W": 16
+   },
+   "clock_ns": 1.4,
+   "tool": "Vivado 2026.1 (build 6511674)",
+   "date": "2026-11-22",
+   "status": "ok",
+   "record": "vivado_ooc_restoring_pipe_k26.json",
+   "lut": 67,
+   "ff": 72,
+   "carry": 2,
+   "carry4": 0,
+   "carry8": 2,
+   "dsp": 0,
+   "bram_tiles": 0,
+   "srl": 0,
+   "wns_ns": -1.154,
+   "whs_ns": 0.078,
+   "logic_levels": 12,
+   "runtime_s": 248,
+   "power_total_w": 0.296,
+   "fmax_mhz": 391.5,
+   "lower_bound": false,
+   "latency_clocks": 2,
+   "wrapper_register_bits": 38.0,
+   "expectations": [
+    {
+     "what": "carry cells",
+     "expected_lo": 12,
+     "expected_hi": 12,
+     "measured": 2,
+     "verdict": "missed",
+     "text": "carry4 (a7) / about half as many CARRY8 (k26)"
+    },
+    {
+     "what": "DSP",
+     "expected_lo": 0,
+     "expected_hi": 0,
+     "measured": 0,
+     "verdict": "met",
+     "text": "dsp48"
+    },
+    {
+     "what": "BRAM tiles",
+     "expected_lo": 0,
+     "expected_hi": 0,
+     "measured": 0,
+     "verdict": "met",
+     "text": "bram"
+    },
+    {
+     "what": "FF beyond the wrapper",
+     "expected_lo": 52,
+     "expected_hi": 52,
+     "measured": 34.0,
+     "verdict": "missed",
+     "text": "ff (the build files' number excludes the wrapper's port registers)"
+    }
+   ],
+   "expectation": "missed",
+   "group_size": 5,
+   "front_fmax": false,
+   "front_latency": true
+  },
+  {
+   "function": "isqrt",
+   "variant": "restoring_pipe",
+   "part_key": "k26",
+   "part": "xck26-sfvc784-2LV-c",
+   "generics": {
+    "VARIANT": 1,
+    "PIPE": 1,
+    "W": 32
+   },
+   "shape": {
+    "W": 32
+   },
+   "clock_ns": 1.4,
+   "tool": "Vivado 2026.1 (build 6511674)",
+   "date": "2026-11-22",
+   "status": "ok",
+   "record": "vivado_ooc_restoring_pipe_k26.json",
+   "lut": 425,
+   "ff": 473,
+   "carry": 35,
+   "carry4": 0,
+   "carry8": 35,
+   "dsp": 0,
+   "bram_tiles": 0,
+   "srl": 26,
+   "wns_ns": 0.002,
+   "whs_ns": 0.059,
+   "logic_levels": 4,
+   "runtime_s": 257,
+   "power_total_w": 0.333,
+   "fmax_mhz": 606.8,
+   "lower_bound": true,
+   "latency_clocks": 16,
+   "wrapper_register_bits": 70.0,
+   "expectations": [
+    {
+     "what": "carry cells",
+     "expected_lo": 40,
+     "expected_hi": 40,
+     "measured": 35,
+     "verdict": "met",
+     "text": "carry4 (a7) / about half as many CARRY8 (k26)"
+    },
+    {
+     "what": "DSP",
+     "expected_lo": 0,
+     "expected_hi": 0,
+     "measured": 0,
+     "verdict": "met",
+     "text": "dsp48"
+    },
+    {
+     "what": "BRAM tiles",
+     "expected_lo": 0,
+     "expected_hi": 0,
+     "measured": 0,
+     "verdict": "met",
+     "text": "bram"
+    },
+    {
+     "what": "FF beyond the wrapper",
+     "expected_lo": 1024,
+     "expected_hi": 1024,
+     "measured": 403.0,
+     "verdict": "missed",
+     "text": "ff (the build files' number excludes the wrapper's port registers)"
+    }
+   ],
+   "expectation": "missed",
+   "group_size": 7,
+   "front_fmax": false,
+   "front_latency": false
+  },
+  {
+   "function": "isqrt",
+   "variant": "restoring_pipe",
+   "part_key": "k26",
+   "part": "xck26-sfvc784-2LV-c",
+   "generics": {
+    "VARIANT": 1,
+    "PIPE": 4,
+    "W": 32
+   },
+   "shape": {
+    "W": 32
+   },
+   "clock_ns": 1.4,
+   "tool": "Vivado 2026.1 (build 6511674)",
+   "date": "2026-11-22",
+   "status": "ok",
+   "record": "vivado_ooc_restoring_pipe_k26.json",
+   "lut": 304,
+   "ff": 204,
+   "carry": 35,
+   "carry4": 0,
+   "carry8": 35,
+   "dsp": 0,
+   "bram_tiles": 0,
+   "srl": 8,
+   "wns_ns": -2.611,
+   "whs_ns": 0.076,
+   "logic_levels": 16,
+   "runtime_s": 226,
+   "power_total_w": 0.319,
+   "fmax_mhz": 249.3,
+   "lower_bound": false,
+   "latency_clocks": 4,
+   "wrapper_register_bits": 70.0,
+   "expectations": [
+    {
+     "what": "carry cells",
+     "expected_lo": 40,
+     "expected_hi": 40,
+     "measured": 35,
+     "verdict": "met",
+     "text": "carry4 (a7) / about half as many CARRY8 (k26)"
+    },
+    {
+     "what": "DSP",
+     "expected_lo": 0,
+     "expected_hi": 0,
+     "measured": 0,
+     "verdict": "met",
+     "text": "dsp48"
+    },
+    {
+     "what": "BRAM tiles",
+     "expected_lo": 0,
+     "expected_hi": 0,
+     "measured": 0,
+     "verdict": "met",
+     "text": "bram"
+    },
+    {
+     "what": "FF beyond the wrapper",
+     "expected_lo": 232,
+     "expected_hi": 232,
+     "measured": 134.0,
+     "verdict": "missed",
+     "text": "ff (the build files' number excludes the wrapper's port registers)"
+    }
+   ],
+   "expectation": "missed",
+   "group_size": 7,
+   "front_fmax": false,
+   "front_latency": false
+  },
+  {
+   "function": "isqrt",
+   "variant": "restoring_pipe",
+   "part_key": "k26",
+   "part": "xck26-sfvc784-2LV-c",
+   "generics": {
+    "VARIANT": 1,
+    "PIPE": 16,
+    "W": 32
+   },
+   "shape": {
+    "W": 32
+   },
+   "clock_ns": 1.4,
+   "tool": "Vivado 2026.1 (build 6511674)",
+   "date": "2026-11-22",
+   "status": "ok",
+   "record": "vivado_ooc_restoring_pipe_k26.json",
+   "lut": 319,
+   "ff": 102,
+   "carry": 35,
+   "carry4": 0,
+   "carry8": 35,
+   "dsp": 0,
+   "bram_tiles": 0,
+   "srl": 0,
+   "wns_ns": -12.209,
+   "whs_ns": 0.059,
+   "logic_levels": 61,
+   "runtime_s": 229,
+   "power_total_w": 0.315,
+   "fmax_mhz": 73.5,
+   "lower_bound": false,
+   "latency_clocks": 1,
+   "wrapper_register_bits": 70.0,
+   "expectations": [
+    {
+     "what": "carry cells",
+     "expected_lo": 40,
+     "expected_hi": 40,
+     "measured": 35,
+     "verdict": "met",
+     "text": "carry4 (a7) / about half as many CARRY8 (k26)"
+    },
+    {
+     "what": "DSP",
+     "expected_lo": 0,
+     "expected_hi": 0,
+     "measured": 0,
+     "verdict": "met",
+     "text": "dsp48"
+    },
+    {
+     "what": "BRAM tiles",
+     "expected_lo": 0,
+     "expected_hi": 0,
+     "measured": 0,
+     "verdict": "met",
+     "text": "bram"
+    },
+    {
+     "what": "FF beyond the wrapper",
+     "expected_lo": 34,
+     "expected_hi": 34,
+     "measured": 32.0,
+     "verdict": "met",
+     "text": "ff (the build files' number excludes the wrapper's port registers)"
+    }
+   ],
+   "expectation": "met",
    "group_size": 7,
    "front_fmax": false,
    "front_latency": false

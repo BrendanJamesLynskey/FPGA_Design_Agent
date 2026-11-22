@@ -92,6 +92,23 @@ Written without knowing the design the block will sit in (brief 139a, owner deci
 - ACCW must be at least WA + WB (the model and the tests assume it) and LANES at least 1; NREG above the stated range behaves as the maximum (3 for dsp, 2 for fabric); none of this is rejected by an assertion
 - the data registers inside the pipeline are not reset: only en is, so after rst the accumulator is 0 and stays 0 until a new sample with en = 1 arrives
 
+## Measured (Vivado out-of-context, brief 160)
+
+Vivado 2026.1 (build 6511674), out-of-context synthesis, placement and routing on one thread, one run per point, at the clock shown. LUT, FF and carry cells are as reported after routing for the wrapper (which registers every port, so the FF column includes the wrapper's register bits); WNS at the target clock gives Fmax = 1000 / (clock - WNS), a lower bound (marked `>=`) when WNS is positive; latency is the spec's, in clocks, without the wrapper's two. `F` marks a point on the area-against-Fmax front of its group, `L` on the area-against-latency front (see [../../results/160_arith_vivado/README.md](../../results/160_arith_vivado/README.md)). Records: [verif/results/](verif/results/), the pre-stated expectation and its verdict per point: [verif/results/vivado_surface.json](verif/results/vivado_surface.json).
+
+| Variant | Part | Point | Clock ns | LUT | FF | SRL | Carry | DSP | BRAM | WNS ns | Fmax MHz | Logic levels | Latency | Fronts | Expectation |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| dsp | a7 | WA=16, WB=16, LANES=1, ACCW=40, SIGNED=1, NREG=3 | 5.0 | 1 | 47 | 0 | 0 | 2 | 0 | 1.502 | >=285.9 | 0 | 3 |  | met |
+| dsp | a7 | WA=16, WB=16, LANES=1, ACCW=40, SIGNED=1, NREG=1 | 5.0 | 0 | 42 | 0 | 0 | 1 | 0 | 3.394 | >=622.7 | 0 | 1 | FL | met |
+| dsp | a7 | WA=16, WB=16, LANES=2, ACCW=40, SIGNED=1, NREG=3 | 5.0 | 21 | 47 | 0 | 0 | 3 | 0 | 0.221 | >=209.2 | 1 | 3 | L | met |
+| dsp | a7 | WA=16, WB=16, LANES=4, ACCW=40, SIGNED=1, NREG=3 | 5.0 | 167 | 183 | 0 | 20 | 4 | 0 | -0.641 | 177.3 | 13 | 3 | FL | met |
+| dsp_cascade | a7 | WA=16, WB=16, LANES=2, ACCW=40, SIGNED=1 | 5.0 | 21 | 47 | 0 | 0 | 3 | 0 | 0.511 | >=222.8 | 1 | 3 | FL | met |
+| dsp_cascade | a7 | WA=16, WB=16, LANES=4, ACCW=40, SIGNED=1 | 5.0 | 21 | 80 | 1 | 0 | 5 | 0 | 0.375 | >=216.2 | 1 | 5 | FL | met |
+| dsp_cascade | a7 | WA=16, WB=16, LANES=8, ACCW=40, SIGNED=1 | 5.0 | 70 | 245 | 49 | 0 | 9 | 0 | 0.439 | >=219.3 | 1 | 9 |  | met |
+| fabric | a7 | WA=16, WB=16, LANES=1, ACCW=40, SIGNED=1, NREG=1 | 5.0 | 489 | 116 | 0 | 72 | 0 | 0 | -3.825 | 113.3 | 13 | 1 | FL | missed |
+| fabric | a7 | WA=16, WB=16, LANES=1, ACCW=40, SIGNED=1, NREG=2 | 5.0 | 534 | 157 | 0 | 75 | 0 | 0 | -3.583 | 116.5 | 11 | 2 | F | missed |
+| fabric | a7 | WA=16, WB=16, LANES=2, ACCW=40, SIGNED=1, NREG=2 | 5.0 | 992 | 193 | 0 | 146 | 0 | 0 | -4.895 | 101.1 | 14 | 2 | FL | missed |
+
 ## Files
 
 - [model.py](model.py): the bit-exact model; tests/test_*_model.py check it against independent formulations
