@@ -11,6 +11,7 @@ import random
 
 import cocotb
 
+from arith.fft_common import fcover
 from arith.fft_common import frames as fr
 from arith.fft_mdc2 import model
 from arith.tools import bench
@@ -73,6 +74,14 @@ async def run(dut, p, lat, frames_in, xs, label, do_reset=True, check=True):
         if errors >= 3:
             break
     assert errors == 0, f"{label}: {errors} problems in {len(outs)} frames"
+    if hasattr(dut, "chk_errs"):                                        # the packaged harness's frame checker (chk_top.sv) around an instance
+        assert int(dut.chk_errs.value) == 0, f"{label}: the frame checker counted {int(dut.chk_errs.value)} violations"
+    cv = fcover.cover()
+    for f in frames_in:
+        cv.hit("frames")
+        cv.hit("inverse_frames" if f.inverse else "forward_frames")
+        cv.hit("gap_zero" if f.gap == 0 else "gap_nonzero")
+    cv.dump()
     return outs, starts
 
 

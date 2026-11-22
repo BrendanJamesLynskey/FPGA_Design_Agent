@@ -17,7 +17,8 @@ import yaml
 ROOT = Path(__file__).resolve().parents[2]
 ARITH = ROOT / "arith"
 FUNCTIONS = ("adder", "multiplier", "mac", "fp_add", "fp_mul", "fp_fma")
-FFT_FUNCTIONS = ("fft_cmul", "fft_twiddle", "fft_reorder", "fft_window", "fft", "fft_real", "fft_axis", "fft_bfp", "fft_mdc2", "fft_real_axis")      # the frequency-domain suite (brief 148): no packaged harness, see arith/README.md
+FFT_FUNCTIONS = ("fft_cmul", "fft_twiddle", "fft_reorder", "fft_window", "fft", "fft_real", "fft_axis", "fft_bfp", "fft_mdc2", "fft_real_axis", "fft_fastconv")      # the frequency-domain suite (brief 148): no packaged harness, see arith/README.md
+HARNESS_FFT_FUNCTIONS = ("fft_bfp", "fft_mdc2", "fft_real_axis", "fft_fastconv")      # the phase 1 functions of the suite (brief 161) have a packaged harness; the phase 0 ones do not
 ALL_FUNCTIONS = FUNCTIONS + FFT_FUNCTIONS
 PARTS = {"a7": "xc7a100tcsg324-1", "k26": "xck26-sfvc784-2LV-c"}      # the two parts of the brief: Artix-7 (xc7a100t) and Kria K26 (xck26)
 

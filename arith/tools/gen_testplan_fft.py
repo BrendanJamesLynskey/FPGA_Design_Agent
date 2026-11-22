@@ -10,7 +10,8 @@ import yaml
 from arith.tools import arith_common as ac
 from arith.tools.suite import job_kind
 
-P = {"fft_cmul": "FCMUL", "fft_twiddle": "FTW", "fft_reorder": "FRO", "fft_window": "FWIN", "fft": "FFT", "fft_real": "FREAL", "fft_axis": "FAXIS"}
+P = {"fft_cmul": "FCMUL", "fft_twiddle": "FTW", "fft_reorder": "FRO", "fft_window": "FWIN", "fft": "FFT", "fft_real": "FREAL", "fft_axis": "FAXIS",
+     "fft_bfp": "FBFP", "fft_mdc2": "FMDC", "fft_real_axis": "FRAXIS", "fft_fastconv": "FFC"}      # the last four: brief 161
 INDEP = {
     "fft_cmul": "a second formulation (the three-multiplication identity) in Python integers",
     "fft_twiddle": "high-precision (60 decimal digit) cosines and sines of every angle, with the stated rounding error bound",
@@ -19,6 +20,10 @@ INDEP = {
     "fft_axis": "the wrapped variants' own models (arith/fft/model.py) and the packing of {imaginary, real} words",
     "fft_real": "numpy.fft.rfft (the N/2 + 1 bins, both scaling modes, both FFT variants as the core) and the equality of the complex-core path with a direct split",
     "fft": "NumPy's FFT (forward and inverse), checked for both variants at every N from 8 to 1024, and the identity that the inverse is the swap of a forward transform",
+    "fft_bfp": "NumPy's FFT (the value of every word times 2**exponent against the transform, within the stated bound, both variants, N = 8 to 1024, three input levels), a brute-force search for the smallest shift after which every part fits, and the identities of the order and of the inverse",
+    "fft_mdc2": "NumPy's FFT (forward and inverse, both scaling modes, N = 16 to 1024, the pairs put back into natural order) and the identities of the pair order, the swap and the even/odd split",
+    "fft_real_axis": "the wrapped core's own model (arith/fft_real/model.py) and the packing of the AXI words (the even sample in the low half of the input word, the real part in the low half of the output word)",
+    "fft_fastconv": "numpy.convolve of the same samples and the unquantised taps (the overlap-save identity, within the stated bound), the bit-exact FFT models it is built from, and the overlap-save and overlap-add models of arith/fft_common/fastconv.py",
 }
 EXACT_TEXT = {
     "fft_cmul": "every input is driven at the small points (4 operands of 2 to 4 bits); edge values and random inputs at the large ones. The function is exact, so there is no error bound.",
@@ -27,6 +32,10 @@ EXACT_TEXT = {
     "fft_window": "every (xr, xi, w) is driven at the small points; edge values and random inputs at the large ones. The error bound (half a unit in the last place) is the model's rounding.",
     "fft_axis": "the directed points send the FFT bench's frames as AXI4-Stream beats with no pauses (the first-beat latency equals the formula); the random points send random frames, the burst variant with random tvalid pauses inside and between frames and a sink that stalls 40 per cent of the clocks, the sdf variant with the legal gaps. Every output frame equals the model bit for bit, tlast is on the right beat, and the protocol checkers (valid stability, data stability, no unknowns, tlast position, no stall for sdf, no pause inside a frame for sdf) count no error.",
     "fft_real": "the directed points drive impulses at several positions, tones, DC, Nyquist and corner values as pairs of real samples, with the shortest legal spacing and longer ones; the random points drive random real frames with random legal spacing up to N = 2048. Each output frame of N/2 + 1 bins equals the model bit for bit, the latency from in_sof to out_sof equals the formula, and out_valid is N/2 + 1 consecutive clocks.",
+    "fft_bfp": "the directed points drive impulses at every position and tones at every bin (small N), DC, Nyquist, a chirp and corner values, forward and inverse, back to back and after the shortest legal gap; the random points drive random frames with random direction and legal gaps up to N = 4096 (sdf) and 1024 (burst); the level frames drive all-zero, one-LSB, quiet and loud noise, loud and quiet tones, the most negative value and a frame whose rounding carries and saturates, so that every exponent range is visited. Each output frame, its exponent word included, equals the model bit for bit, the latency from in_sof to out_sof equals the formula, out_valid is N consecutive clocks and the exponent is the same on every word of a frame.",
+    "fft_mdc2": "the directed points drive impulses, tones, DC, Nyquist, a chirp and corner values as pairs (x[2m], x[2m+1]), forward and inverse, back to back and after the shortest legal gap (N/8); the random points drive random frames with random direction and legal gaps up to N = 4096. Each output frame of N/2 pairs equals the model bit for bit, the latency from in_sof to out_sof equals the formula and out_valid is N/2 consecutive clocks.",
+    "fft_real_axis": "the directed points send the real-FFT bench's frames as AXI4-Stream beats from a source that never pauses: the wrapper itself opens the gap, which the bench measures and requires to equal N/8 exactly, and the first-beat latency equals the formula; the random points send random real frames with random idle times up to N = 2048. Every output frame of N/2 + 1 bins equals the model bit for bit, tlast is on the right beat and the protocol checkers count no error.",
+    "fft_fastconv": "the directed points drive the register defaults, a zero filter (zero output), a filter loaded through the registers and a random stream through it with random stalls on both streams; the random points use random taps, random streams with random stalls, register traffic while the stream runs and a new filter after the stream drains. The whole output stream equals the model bit for bit (no sample lost, added or reordered), the latency from the last input beat of the first block to its first output beat equals the formula, and the three protocol checkers count no error.",
     "fft": "the directed points drive impulses at every position and tones at every bin (small N), DC, Nyquist, a chirp and corner values, forward and inverse, back to back and after the shortest legal gap; the random points drive random frames with random direction and legal gaps up to N = 4096. Each output frame equals the model bit for bit, the latency from in_sof to out_sof equals the formula, and out_valid is N consecutive clocks.",
 }
 
@@ -44,7 +53,8 @@ def plan(fn: str) -> str:
                 rtl.append(x)
     res = f"{base}/verif/results"
     junit = f"{res}/pytest_junit.xml"
-    bench = [f"{base}/tests/{fn}_cocotb.py", f"{base}/model.py"] + (["arith/fft_common/frames.py", "arith/fft_common/fft_ref.py"] if fn in ("fft", "fft_reorder", "fft_real", "fft_axis") else [])
+    bench = [f"{base}/tests/{fn}_cocotb.py", f"{base}/model.py"] + (["arith/fft_common/frames.py", "arith/fft_common/fft_ref.py"] if fn in ("fft", "fft_reorder", "fft_real", "fft_axis", "fft_bfp", "fft_mdc2", "fft_real_axis") else []) + (
+        ["arith/fft_real/tests/fft_real_cocotb.py", "arith/fft_real/model.py"] if fn == "fft_real_axis" else ["arith/fft_common/fft_ref.py", "arith/fft_common/fastconv.py"] if fn == "fft_fastconv" else [])
     formal_files = [f"{base}/formal/{x.name}" for x in sorted((d / "formal").glob("*.sv"))] + [f"{base}/formal/jobs.yaml"] if jobs else []
     lat = {v: vd["latency"] for v, vd in s["variants"].items()}
     nv = len(s["variants"])
@@ -141,10 +151,76 @@ def plan(fn: str) -> str:
              {"file": junit, "reader": "junit", "tests": [f"test_{fn}_fastconv::*"]}, checks=["arith/fft_common/fastconv.py", "arith/fft_common/fft_ref.py", f"{base}/model.py"])
         item(f"V-{pre}-ROUNDTRIP", [f"{pre}-F-ROUNDTRIP"], "sim_test", "Forward then inverse through the RTL returns the input; the inverse is the swap of a forward transform",
              {"file": junit, "reader": "junit", "tests": [f"test_{fn}_roundtrip_rtl::*"]}, checks=rtl + bench)
+    # ---- brief 161: the phase 1 functions -------------------------------------------------------------------------------------------------------
+    if fn == "fft_bfp":
+        R.append(dict(id=f"{pre}-F-ACCURACY", kind="functional", title="Accuracy against NumPy is measured beside the scaled and unscaled modes, and the stated bound holds",
+                      text="For both architectures, every N from 8 to 4096 and four input levels (0, -20, -40 and -60 dB of a full-scale noise-like frame), the error of the bit-exact model (which the RTL equals) against numpy.fft is recorded in verif/results/accuracy.json for the block-floating-point mode, the scaled mode and the unscaled mode (worst and rms error in the mode's own output LSB, and the SQNR). The bound is: the error of every part is at most the unscaled core's own worst error plus 2**exponent (the final rounding at the frame's exponent); it holds at every recorded point. The recorded SQNR of the block-floating-point mode at full level is at least 80 dB, its worst error at full level at most 2 output LSB, and at -60 dB its SQNR is at least 30 dB where the scaled mode's is negative.",
+                      source=f"{base}/spec.md", spec_status="draft"))
+        R.append(dict(id=f"{pre}-F-LEVELS", kind="functional", title="Every exponent range is visited and the exponent word is bit exact",
+                      text="Frames of very different level (all zero, one LSB, noise at six amplitudes, a loud and a quiet tone, the most negative value, a frame whose bin 0 is 2**W - 1 so that the rounding carries and the word saturates) are sent through both architectures; each output frame and its exponent equal the model, the frames reach at least six different exponents, and the exponent is the same on every word of its frame and travels with the data when frames follow each other at different levels.",
+                      source=f"{base}/spec.md", spec_status="draft"))
+        R.append(dict(id=f"{pre}-F-BACKPRESSURE", kind="functional", title="The burst variant honours out_ready, even when both frame banks fill",
+                      text="With out_ready low in 40 per cent of the clocks, and again in 92 per cent (reading a frame then takes longer than the core needs for the next, so both banks fill and the core must wait), the burst variant's frames, exponents and order equal the model, and out_valid, out_sof, the data and the exponent stay unchanged in every clock in which out_valid is high and out_ready low. The sdf variant ignores out_ready (stated).",
+                      source=f"{base}/spec.md", spec_status="draft"))
+        item(f"V-{pre}-ACCURACY", [f"{pre}-F-ACCURACY"], "sim_measurement", "Error against NumPy at every recorded point, three modes (the record of the last run)",
+             {"file": f"{res}/accuracy.json", "reader": "json"},
+             pass_when=[{"field": "all_within_bound", "op": "eq", "value": True}, {"field": "bfp_sqnr_db_min_full_level", "op": "ge", "value": 80.0}, {"field": "bfp_worst_lsb_max_full_level", "op": "le", "value": 2.0},
+                        {"field": "bfp_sqnr_db_min_minus60", "op": "ge", "value": 30.0}, {"field": "scaled_sqnr_db_min_minus60", "op": "le", "value": 0.0}, {"field": "points", "op": "ge", "value": 80}],
+             checks=["arith/fft_common/fft_ref.py", f"{base}/model.py", "arith/tools/fft_bfp_accuracy.py"])
+        item(f"V-{pre}-LEVELS", [f"{pre}-F-LEVELS"], "sim_test", "Frames of every level through the RTL, exponent included",
+             {"file": junit, "reader": "junit", "tests": [f"test_{fn}_levels_rtl::*"]}, checks=rtl + bench)
+        item(f"V-{pre}-BACKPRESSURE", [f"{pre}-F-BACKPRESSURE"], "sim_test", "The burst variant under a stalled sink, including one that fills both frame banks",
+             {"file": junit, "reader": "junit", "tests": [f"test_{fn}_backpressure_rtl::*"]}, checks=rtl + bench)
+    if fn == "fft_mdc2":
+        R.append(dict(id=f"{pre}-F-GAPS", kind="functional", title="The frame-gap rule (0 or at least N/8 clocks) is measured, not assumed",
+                      text="At N = 32, 64, 128 and 256 a source that leaves exactly N/8 idle clocks between frames gets every frame right, and one that leaves N/8 - 1 clocks corrupts at least one frame, so the stated rule is the real minimum, not a guess.",
+                      source=f"{base}/spec.md", spec_status="draft"))
+        item(f"V-{pre}-GAPS", [f"{pre}-F-GAPS"], "sim_test", "N/8 idle clocks work and N/8 - 1 do not",
+             {"file": junit, "reader": "junit", "tests": [f"test_{fn}_gaps_rtl::*"]}, checks=rtl + bench)
+    if fn == "fft_real_axis":
+        R.append(dict(id=f"{pre}-F-AXIS", kind="interface", title="The AXI4-Stream rules hold on both streams, and the checkers can fail",
+                      text="On both streams the wrapper's SystemVerilog protocol checkers (fft_common/axis_checker.sv: valid stays high until accepted, tdata and tlast stable while stalled, no unknowns after reset, tlast on every (N/2)-th beat of the input and every (N/2 + 1)-th beat of the output, no stall on the output, no pause inside an input frame) count zero violations in every run of the directed and random benches, the source of which presents the next frame at once and waits on tready. A deliberate-violation test shows each checker can fail (a pause inside a frame, a stalled sink). tvalid is registered and independent of tready by construction.",
+                      source=f"{base}/spec.md", spec_status="draft"))
+        R.append(dict(id=f"{pre}-F-GAP", kind="interface", title="The wrapper enforces the transform's frame gap by back-pressure",
+                      text="After every beat with tlast on the input stream s_axis_tready is low for N/8 clocks (the measured gap rule of the real-input core), and a source that never pauses sees exactly N/8 idle clocks between its frames; every such frame is correct. Mutants that remove the gap, shorten it or lengthen it are killed.",
+                      source=f"{base}/spec.md", spec_status="draft"))
+        item(f"V-{pre}-CHECKER", [f"{pre}-F-AXIS"], "sim_test", "The protocol checkers can fail (a pause inside a frame, a stalled sink)",
+             {"file": junit, "reader": "junit", "tests": [f"test_{fn}_checker_rtl::*"]}, checks=rtl + bench)
+        item(f"V-{pre}-GAP", [f"{pre}-F-GAP"], "sim_test", "A source that never pauses sees exactly N/8 idle clocks between frames; every frame is right",
+             {"file": junit, "reader": "junit", "tests": [f"test_{fn}_directed_rtl::*"]}, checks=rtl + bench)
+    if fn == "fft_fastconv":
+        R.append(dict(id=f"{pre}-F-AXIL", kind="interface", title="The AXI4-Lite register file follows the contract's register map and response rules",
+                      text="The ID, CFG0 and CFG1 registers read their documented values; read-only and unmapped addresses answer SLVERR and change nothing; byte address bits [1:0] are ignored; writes with partial strobes are refused with SLVERR and no effect; COEF_ADDR masks its upper bits and wraps; the staging registers read back sign-extended; a commit auto-increments COEF_ADDR and wraps at the last bin; a commit while BUSY (during the clear after reset, and while a block is in flight) is refused with SLVERR, sets DROPPED, does not advance COEF_ADDR and changes nothing; DROPPED and SAT are cleared by writing 1; reads have no side effects; address and data may arrive in either order and the response channels may wait. The AXI4-Lite protocol checker (fft_common/axil_checker.sv) counts no violation. The handshake rules and the response of every executed write are also checked by bounded model checks (formal/jobs.yaml) against shadow state.",
+                      source=f"{base}/spec.md", spec_status="draft"))
+        R.append(dict(id=f"{pre}-F-SAT", kind="functional", title="Output saturation is exact and reported",
+                      text="With a filter of gain 2**GB and a loud input the output parts that leave the W-bit range are clamped to the nearest end exactly as the model says, STATUS.SAT is set, and it is cleared by writing 1 to it.",
+                      source=f"{base}/spec.md", spec_status="draft"))
+        R.append(dict(id=f"{pre}-F-AXIS", kind="interface", title="The AXI4-Stream rules hold on both streams under random stalls",
+                      text="The checkers on s_axis and m_axis (valid stays high until accepted, tdata stable while stalled, no unknowns after reset) count no violation while both streams stall at random, including a sink so slow that the block controller must wait for output room: no sample is lost, added or reordered. A mutant that makes tvalid depend on tready is killed.",
+                      source=f"{base}/spec.md", spec_status="draft"))
+        R.append(dict(id=f"{pre}-F-ACCURACY", kind="functional", title="The filter output equals numpy.convolve within a stated error",
+                      text="For N = 64 to 4096, L from N/8 + 1 to 3N/4 + 1 taps (low-pass, random and delta filters of absolute gain at most 2**GB) and a random complex stream, the output of the model (which the RTL equals bit for bit) differs from numpy.convolve of the same samples and the unquantised taps by at most the recorded error (verif/results/accuracy.json: worst and rms error in output LSB, SQNR) at W = 16, TW = 18, WH = 24, FH = 14; the test enforces a worst error of at most 8 LSB.",
+                      source=f"{base}/spec.md", spec_status="draft"))
+        item(f"V-{pre}-AXIL", [f"{pre}-F-AXIL"], "sim_test", "The register contract, every access type, with the AXI4-Lite checker",
+             {"file": junit, "reader": "junit", "tests": [f"test_{fn}_axil_rtl::*"]}, checks=rtl + bench)
+        item(f"V-{pre}-SATURATE", [f"{pre}-F-SAT"], "sim_test", "A loud input through a filter of gain 2**GB saturates as the model says",
+             {"file": junit, "reader": "junit", "tests": [f"test_{fn}_saturate_rtl::*"]}, checks=rtl + bench)
+        item(f"V-{pre}-STREAMS", [f"{pre}-F-AXIS"], "sim_test", "Both streams under random stalls, with the protocol checkers (the random points)",
+             {"file": junit, "reader": "junit", "tests": [f"test_{fn}_random_rtl::*"]}, checks=rtl + bench)
+        item(f"V-{pre}-ACCURACY", [f"{pre}-F-ACCURACY"], "sim_measurement", "Error against numpy.convolve at every recorded point (the record of the last run)",
+             {"file": f"{res}/accuracy.json", "reader": "json"},
+             pass_when=[{"field": "worst_lsb_max", "op": "le", "value": 8.0}, {"field": "sqnr_db_min", "op": "ge", "value": 40.0}, {"field": "points", "op": "ge", "value": 16}],
+             checks=["arith/fft_common/fft_ref.py", "arith/fft_common/fastconv.py", f"{base}/model.py", "arith/tools/fft_fastconv_accuracy.py"])
+    if fn in ac.HARNESS_FFT_FUNCTIONS:
+        R.append(dict(id=f"{pre}-F-HARNESS", kind="functional", title="The packaged harness runs standalone, passes on the repository's variants and catches faults",
+                      text="arith/" + fn + "/harness/ (model, bench, SystemVerilog checkers, coverage targets, standalone runner: owner decision 24) needs no other file of the repository. Run against each variant of this function with the checkers beside it, in every mode, it passes and meets every coverage target; against one planted fault (a mutant of verif/mutants.yaml), or with a latency two clocks off, it fails; its model, bench and checker files are the repository's own, generated by arith/tools/gen_harness_fft.py, so they cannot drift.",
+                      source=f"{base}/harness/README.md", spec_status="draft"))
+        item(f"V-{pre}-HARNESS", [f"{pre}-F-HARNESS"], "sim_test", "The harness against the repository's variants, a planted fault and a wrong latency",
+             {"file": junit, "reader": "junit", "tests": [f"test_{fn}_harness_rtl::*"]}, checks=rtl + bench + [f"{base}/harness/{x}" for x in ("assertions.sv", "chk_top.sv", "coverage.yaml", "run_harness.py", f"{fn}_cocotb.py", "model.py")])
     doc = {"schema": "fpga-design-agent/testplan/v1", "design": f"arith_{fn}",
            "notes": (f"Frequency-domain suite, function {fn} (brief 148). Everything here is before Vivado: the model, the RTL variants, simulation, formal properties and the prepared out-of-context build files. "
                      "No performance requirement on LUTs, DSPs, Fmax or power exists because none has been measured; the Vivado runs (build/<variant>/build.yaml, queued in _handoff/fpga_agent/vivado_later_queue.md) will add them. "
-                     "Every requirement is a draft written by the agent; none is agreed by a human. There are no Lean statements and no packaged harness for this suite (stated in the report). Generated by arith/tools/gen_testplan_fft.py."),
+                     "Every requirement is a draft written by the agent; none is agreed by a human. There are no Lean statements" + (" (the packaged harness of this function, in harness/, is evidenced by the harness item)" if fn in ac.HARNESS_FFT_FUNCTIONS else " and no packaged harness for this suite (stated in the report)") + ". Generated by arith/tools/gen_testplan_fft.py."),
            "discover": [{"glob": f"arith/{fn}/tests/test_*.py", "pattern": r"^def (test_\w+)"}],
            "requirements": R, "verification": V}
     head = (f"# {fn} testplan, schema v1 (brief 116) for the frequency-domain suite (brief 148). GENERATED by `python -m arith.tools.gen_testplan` from spec.yaml, formal/jobs.yaml and the\n"

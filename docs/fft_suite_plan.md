@@ -38,7 +38,7 @@ butterfly serves a whole frame.
 |---|---|---|---|---|
 | Unscaled with growth | no division, every butterfly stage adds one bit | n bits over the whole transform | widest memories and adders; exact apart from the twiddle and multiplier rounding | **built** (`SCALE = 0`, output W + LOGN bits) |
 | Scaled, per stage /2 | every butterfly sum and difference is halved | none: the word stays W bits | narrowest; signal-to-noise falls as 1/N-scaled output approaches the LSB: the output of an N-point transform of white noise has rms about 1/sqrt(N) of the input's | **built** (`SCALE = 1`, total 1/N in both directions) |
-| Block floating point | one exponent per frame; the frame is shifted right by 0 or 1 bit per stage only when the largest word needs it | variable | needs a stage-wide maximum detector and a frame buffer for the exponent decision (in a streaming core the decision is made one frame late or the data are delayed) | not built: the exponent-per-frame output interface is a design decision (a side word) that the owner has not asked for yet |
+| Block floating point | one exponent per frame; the frame is shifted right by 0 or 1 bit per stage only when the largest word needs it | variable | needs a stage-wide maximum detector and a frame buffer for the exponent decision (in a streaming core the decision is made one frame late or the data are delayed) | phase 1 builds the OUTPUT form (`fft_bfp`, section 9.1): the unscaled wide core, then one exponent per frame and a W-bit output; the per-stage form above is not built |
 
 Overflow rule used here: no overflow occurs if re^2 + im^2 < 2^(2W-2) at the input (magnitude below full scale), in both built modes; a full-scale corner can overflow and wraps without a flag.
 
@@ -94,7 +94,7 @@ the output takes N/2 + 1 clocks per frame, one more than the input, so frames ca
 the result is X/N like the complex transform's. Input is two real samples per clock (a real stream at one sample per clock needs a 2:1 gearbox in front, not built). Latency: (N/2 - 1) + (LOGN - 1) + ((LOGN - 2) // 2) * (TWSTAGES +
 MULSTAGES + 1) + N/2 + MULSTAGES + 3 clocks, checked in simulation. A first single-bank version failed its bench: the read-out of a frame can start only after the whole frame is stored, so the next frame's writes (a period of N/2 + N/8 later) overwrote words that were not yet read; which is why the memory has two banks.
 
-## 5. Fast convolution (model and interface proposal; the RTL is the phase 1 target)
+## 5. Fast convolution (model and interface proposal; the RTL is built in phase 1: section 9.4)
 
 `fft_common/fastconv.py` models overlap-save and overlap-add FIR filtering on top of the FFT models: a filter of L taps, transforms of N points, B = N - L + 1 new input samples per block. The pipeline:
 forward FFT unscaled (W + LOGN bits) -> multiply by the resident filter spectrum Hq = round(FFT(h) * 2^FH) (WH bits, computed once, offline) -> exact complex product, rounded shift of FH -> inverse FFT scaled by 1/N
@@ -160,9 +160,78 @@ and no pause inside a frame where the variant forbids it; a deliberate-violation
 What was not done: AXI4-Stream ports on the helper blocks (`fft_cmul`, `fft_twiddle`, `fft_reorder`, `fft_window`) and on `fft_real` and the cores themselves: they are fixed-latency pipelines or internal blocks
 with a start-of-frame interface, and a handshake on them would add logic and stall paths without a stream to connect to. An AXI4-Stream wrapper of `fft_real`, an AXI4-Stream
 input/output FIFO that gives the `sdf` variant back-pressure, an AXI4-Lite configuration block (needed only if run-time scaling or run-time N are added), and concurrent-SVA or formal proofs of the handshake rules are
-the follow-ups.
+the follow-ups (phase 1, section 9, built the AXI4-Stream wrapper of `fft_real`, the AXI4-Stream/AXI4-Lite fast-convolution block and the BFP and 2-parallel entries).
 
-## 8. Sources
+## 9. Phase 1 (brief 161): block floating point, 2-parallel, real-input AXI4-Stream, fast-convolution RTL
+
+Four entries added to `arith/` (same form as phase 0: specification, bit-exact model, RTL, bench, seeded faults, traced testplan, prepared Vivado builds, now also a packaged harness). **Nothing here has been through Vivado**; every resource and Fmax statement is a prediction in `expected_primitives` and in `_handoff/fpga_agent/vivado_later_queue.md`.
+
+### 9.1 Block floating point: `fft_bfp` (variants `sdf`, `burst`)
+
+Design: the unscaled core (`SCALE = 0`, bit-reversed output, W + LOGN bit words) writes a frame into a two-bank store while the OR of the ones-complement magnitudes of every part is collected; at the end of
+the frame the bit length BL of that OR gives the exponent `s = BL + 1 - W`; the frame is read out in natural or bit-reversed order with every part shifted by `s` (right, rounded half up, saturated if the rounding
+carries; or left, exactly, for a quiet frame), and `out_exp = s` rides with every word. The value of a word is `(out_re + j out_im) * 2**s`. The exponent is a documented SIDE CHANNEL (`out_exp`, valid with every word, constant over the frame); an AXI4-Stream wrapper that carries it on `m_axis_tuser` is not built. The latency is the core's plus N + 2 clocks (the frame store). **This is block floating point at the output of a wide unscaled transform, not a per-stage scaling schedule**:
+the datapath is W + LOGN bits whatever the signal level, which costs DSP width and memory against a per-stage scheme (a 26-bit operand needs two DSP48E1 blocks), in return for no overflow and no
+schedule. The bound stated in `arith/fft_bfp/spec.md` and enforced by a test: every part's error is at most the unscaled core's own worst error plus `2**s` (the final rounding).
+
+Measured (the records are `arith/fft_bfp/verif/results/accuracy.json`, 80 points: both architectures, every N from 8 to 4096, input levels 0, -20, -40 and -60 dB of a noise-like frame, W = 16, TW = 18; the
+bit-exact models, equal to the RTL, against `numpy.fft`); "worst / rms" in the mode's own output LSB (scaled: N units of the transform; unscaled: 1; BFP: `2**s`), SQNR in dB, `sdf` rows:
+
+| N | level (dB) | scaled: worst / rms / SQNR | unscaled: worst / rms / SQNR | BFP exponent | BFP: worst / rms / SQNR |
+|---|---|---|---|---|---|
+| 8 | 0 | 0.848 / 0.708 / 79.2 | 0.472 / 0.266 / 105.7 | 2 | 0.5 / 0.454 / 89.1 |
+| 8 | -40 | 0.87 / 0.595 / 41.9 | 0.373 / 0.274 / 66.7 | -4 | 5.971 / 4.384 / 66.7 |
+| 8 | -60 | 1.375 / 0.835 / 19.1 | 0.373 / 0.25 / 47.7 | -8 | 95.381 / 63.991 / 47.7 |
+| 64 | 0 | 1.938 / 0.989 / 67.3 | 3.446 / 1.78 / 98.3 | 4 | 0.683 / 0.442 / 86.3 |
+| 64 | -40 | 2.219 / 1.05 / 26.3 | 3.262 / 1.425 / 59.8 | -3 | 26.096 / 11.398 / 59.8 |
+| 64 | -60 | 1.835 / 1.011 / 6.8 | 2.565 / 1.358 / 40.4 | -6 | 164.132 / 86.942 / 40.4 |
+| 1024 | 0 | 2.851 / 0.999 / 54.7 | 23.824 / 8.546 / 96.3 | 6 | 0.766 / 0.431 / 86.1 |
+| 1024 | -40 | 3.421 / 1.023 / 14.2 | 18.184 / 6.552 / 58.3 | -1 | 36.368 / 13.104 / 58.3 |
+| 1024 | -60 | 3.022 / 1.007 / -5.1 | 16.877 / 6.531 / 38.9 | -4 | 270.025 / 104.492 / 38.9 |
+| 4096 | 0 | 3.651 / 1.006 / 48.6 | 48.331 / 18.161 / 95.7 | 7 | 0.819 / 0.432 / 86.0 |
+| 4096 | -40 | 2.947 / 1.007 / 8.6 | 41.118 / 13.074 / 58.6 | 1 | 21.059 / 6.551 / 58.6 |
+| 4096 | -60 | 3.19 / 0.975 / -11.0 | 39.896 / 12.954 / 38.8 | -3 | 319.17 / 103.633 / 38.8 |
+
+Reading it: at full level the BFP output is within 1.2 output LSB (`2**s`) everywhere and its SQNR is at least 85.8 dB over all N (the scaled mode falls to 48.6 dB at N = 4096, the unscaled mode keeps 93.7 dB but
+needs W + LOGN output bits); at -60 dB the BFP SQNR equals the unscaled mode's (35.4 dB at worst, 38.8 dB at N = 4096) because the error is then the core's absolute rounding noise, which the output
+normalisation cannot recover, while the scaled mode has no signal left (-11 dB). So BFP gives the unscaled mode's accuracy in a W-bit word with an exponent; it does not give a quiet frame more precision
+than the wide core has. The worst error in BFP LSB looks large for quiet frames (319 LSB at -60 dB) because the LSB is then tiny (`2**s`, s = -3 to -8).
+
+### 9.2 2-parallel pipeline: `fft_mdc2` (variant `par2`)
+
+Two samples per clock: a frame is N/2 clocks of the pair (x[2m], x[2m + 1]) and the output is N/2 clocks of the pair (X[k], X[k + N/2]). Built as two N/2-point radix-2^2 `sdf` pipelines (even and odd samples)
+and one combining radix-2 stage (one complex multiplier, the same twiddle ROM, rounding as stated in the spec). **It is the decimation-in-time split, not the delay-commutator network usually called
+MDC**: it has the throughput and the delay memory (N - 2 words) of the radix-2^2 MDC, but 2 * ((LOGN - 2) // 2) + 1 complex multipliers where the MDC needs about LOGN - 2 (the commutator form was costed
+in section 2 and not built, because its bit-exact model and a verified control network would have been a second architecture rather than a variant). Latency formula, checked in simulation at every point:
+N/2 - 1 + (LOGN - 1) + ((LOGN - 2) // 2) * LMUL (+ N/2 + 1 for natural order) + LMUL + 1, LMUL = TWSTAGES + MULSTAGES + 1; throughput exactly 2 samples per clock. **Frame-gap rule measured**
+(`tests/test_fft_mdc2_gaps_rtl.py`, N = 32 to 256 and both orders): a frame may follow after no gap or at least N/8 idle clocks (the N/2-point sub-pipelines' N'/4); N/8 - 1 corrupts a frame.
+
+### 9.3 Real-input FFT behind AXI4-Stream: `fft_real_axis`
+
+The wrapper of `fft_real` (tdata in = {x[2m+1], x[2m]}, N/2 beats, tlast; tdata out = {imaginary, real}, N/2 + 1 beats, tlast). Its measured gap rule (N/8 idle clocks, no back-to-back frames) is enforced by
+back-pressure: `s_axis_tready` is low for N/8 clocks after every tlast beat, and the bench measures exactly N/8 idle clocks for a source that never pauses. Inside a frame the stream cannot pause and the
+output cannot stall (both stated, and flagged by the simulation checkers). No register is added: the first-beat latency equals the core's.
+
+### 9.4 Fast convolution, overlap-save: `fft_fastconv` (variant `os`)
+
+AXI4-Stream samples in, AXI4-Stream filtered samples out (full back-pressure), the filter spectrum (N complex words of WH bits) loaded over AXI4-Lite (eight 32-bit registers; the register map and every response
+rule are in the spec's contract and tested). Data path: a ring buffer holds the last N samples (so the L - 1 overlap needs no copy); a four-state controller (clear, collect B = N - L + 1 samples, wait for output
+room, feed the ring to the forward transform) forms blocks; forward `sdf` unscaled (W + LOGN bits, natural order), the exact complex product with the filter word and a rounded shift of FH bits, inverse `sdf`
+scaled by 1/N on W + LOGN + GB bit words (GB: headroom bits for the filter's absolute gain), the first L - 1 outputs dropped, the rest saturated to W bits and stored in a FIFO of N words behind a credit counter
+(a block starts only when its B results fit, because the pipelines cannot stall). Overlap-add is not built (it needs an output accumulator RAM). The output is bit-exact against `arith/fft_fastconv/model.py`
+for streams with random stalls on both sides, filter changes between blocks and random register traffic; the latency from the last input beat of a block to its first output is
+2 * (2N + LOGN + ((LOGN - 1) // 2) * LMUL) + MULSTAGES + L + 7 (checked exactly). Against `numpy.convolve` of the unquantised taps and the same samples (W = 16, TW = 18, WH = 24, FH = 14, GB = 1;
+`arith/fft_fastconv/verif/results/accuracy.json`, 16 points, N = 64 to 4096, L from N/8 + 1 to 3N/4 + 1): worst error 3.6 LSB, rms about 1 LSB, SQNR at least 44.5 dB (the minimum is a small-gain random filter,
+whose output is small).
+Throughput is B / (B + N) samples per clock (the input pauses N + 1 clocks per block): 0.47 samples per clock at N = 1024, L = 129. The coefficient memory can be written only while STATUS.BUSY is 0; with a continuous
+stream BUSY is nearly always 1, so a filter is changed with the input stopped. The AXI4-Lite register file is also checked by bounded model checks (SymbiYosys, `arith/fft_fastconv/formal`).
+
+### 9.5 What phase 1 did not do
+
+No per-stage block floating point; no commutator-network MDC; no radix-4 burst; no overlap-add RTL; no AXI4-Stream wrapper for `fft_bfp` (exponent on tuser) or `fft_mdc2`; no back-pressured `sdf` (an input/output FIFO); no run-time N; no Vivado run;
+`python -m flow.verified` records (PR #271, not on main when this phase ran) are not produced; no Lean statement.
+
+## 10. Sources
 
 Cited by name; they were not re-fetched in this run, and the AMD guide is for comparison only (no vendor code or text is used): Cooley and Tukey, "An algorithm for the machine calculation of complex Fourier series",
 Math. Comp. 1965; S. He and M. Torkelson, "A new approach to pipeline FFT processor", IPPS 1996 (radix-2^2 SDF); E. H. Wold and A. M. Despain, "Pipeline and parallel-pipeline FFT processors for VLSI
