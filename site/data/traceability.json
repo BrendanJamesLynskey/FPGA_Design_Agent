@@ -700,20 +700,6 @@
      },
      {
       "gate": false,
-      "id": "B119-F-CKSUM-IP",
-      "state": "stale",
-      "text": "its evidence is stale",
-      "type": "no_passing_evidence"
-     },
-     {
-      "gate": false,
-      "id": "B119-F-CKSUM-TCP",
-      "state": "stale",
-      "text": "its evidence is stale",
-      "type": "no_passing_evidence"
-     },
-     {
-      "gate": false,
       "id": "V-SIM-BENCH",
       "text": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv, designs/b119_tcp_fast/tests/b119_cocotb.py",
       "type": "stale_evidence"
@@ -842,24 +828,6 @@
       "gate": false,
       "id": "V-RES-OTHER",
       "text": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
-      "type": "stale_evidence"
-     },
-     {
-      "gate": false,
-      "id": "V-LEAN-CKSUM-IP",
-      "text": "transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:256-260; transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:326-336",
-      "type": "stale_evidence"
-     },
-     {
-      "gate": false,
-      "id": "V-LEAN-CKSUM-IP-RX",
-      "text": "transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:256-260; transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:326-336",
-      "type": "stale_evidence"
-     },
-     {
-      "gate": false,
-      "id": "V-LEAN-CKSUM-TCP",
-      "text": "transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:256-260; transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:326-336",
       "type": "stale_evidence"
      }
     ],
@@ -1410,7 +1378,7 @@
       "value": null
      },
      {
-      "detail": "Cksum.rtl_ip_correct: kernel plus a compiled decision procedure; proof of the transcription, transcription tested; recorded build (not re-run)",
+      "detail": "proved; statement accepted by planner (Session A) on the owner's delegation (owner decision 23), 2026-11-21; not a human approval; Cksum.rtl_ip_correct: kernel plus a compiled decision procedure; proof of the transcription, transcription tested; recorded build (not re-run)",
       "evidence": {
        "exists": true,
        "file": "formal/lean/records/build_record.json"
@@ -1445,13 +1413,12 @@
       "requirements": [
        "B119-F-CKSUM-IP"
       ],
-      "stale_because": "transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:256-260; transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:326-336",
-      "status": "stale",
+      "status": "pass",
       "title": "IPv4 header checksum equals the Internet checksum",
       "value": null
      },
      {
-      "detail": "Cksum.rtl_ip_receiver: kernel plus a compiled decision procedure; proof of the transcription, transcription tested; recorded build (not re-run)",
+      "detail": "proved; statement accepted by planner (Session A) on the owner's delegation (owner decision 23), 2026-11-21; not a human approval; Cksum.rtl_ip_receiver: kernel plus a compiled decision procedure; proof of the transcription, transcription tested; recorded build (not re-run)",
       "evidence": {
        "exists": true,
        "file": "formal/lean/records/build_record.json"
@@ -1486,13 +1453,12 @@
       "requirements": [
        "B119-F-CKSUM-IP"
       ],
-      "stale_because": "transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:256-260; transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:326-336",
-      "status": "stale",
+      "status": "pass",
       "title": "The filled-in header sums to 0xFFFF (receiver check)",
       "value": null
      },
      {
-      "detail": "Cksum.rtl_tcp_correct: kernel plus a compiled decision procedure; proof of the transcription, transcription tested; recorded build (not re-run)",
+      "detail": "proved; statement accepted by planner (Session A) on the owner's delegation (owner decision 23), 2026-11-21; not a human approval; Cksum.rtl_tcp_correct: kernel plus a compiled decision procedure; proof of the transcription, transcription tested; recorded build (not re-run)",
       "evidence": {
        "exists": true,
        "file": "formal/lean/records/build_record.json"
@@ -1527,8 +1493,7 @@
       "requirements": [
        "B119-F-CKSUM-TCP"
       ],
-      "stale_because": "transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:256-260; transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:326-336",
-      "status": "stale",
+      "status": "pass",
       "title": "TCP checksum equals the Internet checksum, payloads up to 30 words",
       "value": null
      },
@@ -2250,13 +2215,15 @@
        "V-LEAN-CKSUM-IP-RX"
       ],
       "kind": "functional",
-      "lean_transcription_only": false,
-      "passing_methods": [],
-      "rests_on_delegated": false,
+      "lean_transcription_only": true,
+      "passing_methods": [
+       "formal_lean"
+      ],
+      "rests_on_delegated": true,
       "source": "brief 119 (PR 245), designs/b119_tcp_fast/rtl/tcp_fast.sv; results/124_lean/README.md",
       "spec_status": "draft",
-      "stale_items": 2,
-      "state": "stale",
+      "stale_items": 0,
+      "state": "verified",
       "text": "Brief 119's tcp_fast.sv builds the IPv4 header checksum from a precomputed template plus the changing fields. For all TTL, address and identification values it equals the complement of the ones' complement sum of the header, and the filled-in header sums to 0xFFFF.",
       "title": "The IPv4 header checksum of the TCP fast path equals the Internet checksum, for all inputs"
      },
@@ -2270,13 +2237,15 @@
        "V-LEAN-CKSUM-TCP"
       ],
       "kind": "functional",
-      "lean_transcription_only": false,
-      "passing_methods": [],
-      "rests_on_delegated": false,
+      "lean_transcription_only": true,
+      "passing_methods": [
+       "formal_lean"
+      ],
+      "rests_on_delegated": true,
       "source": "brief 119 (PR 245), designs/b119_tcp_fast/rtl/tcp_fast.sv; results/124_lean/README.md",
       "spec_status": "draft",
-      "stale_items": 1,
-      "state": "stale",
+      "stale_items": 0,
+      "state": "verified",
       "text": "For all addresses, ports, sequence and acknowledgement numbers, windows and payloads of up to 30 sixteen-bit words, the checksum the RTL equations produce equals the complement of the ones' complement sum over pseudo-header, header and payload. The byte-pair swapping, the streaming receive check and the timing are not modelled.",
       "title": "The TCP checksum of the TCP fast path equals the Internet checksum, for all inputs and payloads up to 30 words"
      },
@@ -2359,9 +2328,9 @@
        "fail": 0,
        "not_in_run": 0,
        "not_run": 0,
-       "pass": 3,
+       "pass": 6,
        "skipped": 0,
-       "stale": 3,
+       "stale": 0,
        "unapproved": 0
       },
       "review": {
@@ -2417,15 +2386,15 @@
      },
      "by_state": {
       "not_run": 2,
-      "stale": 18,
-      "verified": 7
+      "stale": 16,
+      "verified": 9
      },
      "external": 2,
      "external_hardware_done": 0,
      "gap_counts": {
       "hardware_open": 2,
-      "no_passing_evidence": 20,
-      "stale_evidence": 25
+      "no_passing_evidence": 18,
+      "stale_evidence": 22
      },
      "human_reviews": 0,
      "items": 35,
@@ -2441,8 +2410,7 @@
        "transcription_untested": 0
       },
       "by_status": {
-       "pass": 3,
-       "stale": 3
+       "pass": 6
       },
       "by_tier": {
        "compiled_decision_procedure": 3,
@@ -2453,13 +2421,13 @@
       "items": 6,
       "statement_not_approved": 0
      },
-     "line": "27 requirements (10 functional, 10 performance, 2 interface, 5 safety); 7 verified, of which 1 rest on delegated acceptances (the planner accepted the Lean statement on the owner's delegation; not human approvals); 18 stale; 2 with no passing evidence; 0 of 2 requirements that depend on an external element closed by hardware; 0 of 27 requirements agreed by a human, 0 human review(s) recorded; 6 Lean proof item(s) (all widths): 0 with a human-approved statement, 6 with a statement accepted on the owner's delegation (not a human approval), 0 with statement not approved; 3 kernel only, 3 using a compiled decision procedure; build status from: recorded build (not re-run).",
+     "line": "27 requirements (10 functional, 10 performance, 2 interface, 5 safety); 9 verified, of which 3 rest on delegated acceptances (the planner accepted the Lean statement on the owner's delegation; not human approvals); 16 stale; 2 with no passing evidence; 0 of 2 requirements that depend on an external element closed by hardware; 0 of 27 requirements agreed by a human, 0 human review(s) recorded; 6 Lean proof item(s) (all widths): 0 with a human-approved statement, 6 with a statement accepted on the owner's delegation (not a human approval), 0 with statement not approved; 3 kernel only, 3 using a compiled decision procedure; build status from: recorded build (not re-run).",
      "performance_board": 0,
      "performance_sim_only": 0,
      "performance_timing": 0,
      "requirements": 27,
      "spec_agreed": 0,
-     "verified_on_delegated": 1
+     "verified_on_delegated": 3
     }
    },
    {
@@ -26552,7 +26520,7 @@
   "total": {
    "designs": 34,
    "requirements": 355,
-   "verified": 256
+   "verified": 258
   }
  },
  "content": {
@@ -27256,20 +27224,6 @@
      },
      {
       "gate": false,
-      "id": "B119-F-CKSUM-IP",
-      "state": "stale",
-      "text": "its evidence is stale",
-      "type": "no_passing_evidence"
-     },
-     {
-      "gate": false,
-      "id": "B119-F-CKSUM-TCP",
-      "state": "stale",
-      "text": "its evidence is stale",
-      "type": "no_passing_evidence"
-     },
-     {
-      "gate": false,
       "id": "V-SIM-BENCH",
       "text": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv, designs/b119_tcp_fast/tests/b119_cocotb.py",
       "type": "stale_evidence"
@@ -27398,24 +27352,6 @@
       "gate": false,
       "id": "V-RES-OTHER",
       "text": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
-      "type": "stale_evidence"
-     },
-     {
-      "gate": false,
-      "id": "V-LEAN-CKSUM-IP",
-      "text": "transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:256-260; transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:326-336",
-      "type": "stale_evidence"
-     },
-     {
-      "gate": false,
-      "id": "V-LEAN-CKSUM-IP-RX",
-      "text": "transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:256-260; transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:326-336",
-      "type": "stale_evidence"
-     },
-     {
-      "gate": false,
-      "id": "V-LEAN-CKSUM-TCP",
-      "text": "transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:256-260; transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:326-336",
       "type": "stale_evidence"
      }
     ],
@@ -27966,7 +27902,7 @@
       "value": null
      },
      {
-      "detail": "Cksum.rtl_ip_correct: kernel plus a compiled decision procedure; proof of the transcription, transcription tested; recorded build (not re-run)",
+      "detail": "proved; statement accepted by planner (Session A) on the owner's delegation (owner decision 23), 2026-11-21; not a human approval; Cksum.rtl_ip_correct: kernel plus a compiled decision procedure; proof of the transcription, transcription tested; recorded build (not re-run)",
       "evidence": {
        "exists": true,
        "file": "formal/lean/records/build_record.json"
@@ -28001,13 +27937,12 @@
       "requirements": [
        "B119-F-CKSUM-IP"
       ],
-      "stale_because": "transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:256-260; transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:326-336",
-      "status": "stale",
+      "status": "pass",
       "title": "IPv4 header checksum equals the Internet checksum",
       "value": null
      },
      {
-      "detail": "Cksum.rtl_ip_receiver: kernel plus a compiled decision procedure; proof of the transcription, transcription tested; recorded build (not re-run)",
+      "detail": "proved; statement accepted by planner (Session A) on the owner's delegation (owner decision 23), 2026-11-21; not a human approval; Cksum.rtl_ip_receiver: kernel plus a compiled decision procedure; proof of the transcription, transcription tested; recorded build (not re-run)",
       "evidence": {
        "exists": true,
        "file": "formal/lean/records/build_record.json"
@@ -28042,13 +27977,12 @@
       "requirements": [
        "B119-F-CKSUM-IP"
       ],
-      "stale_because": "transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:256-260; transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:326-336",
-      "status": "stale",
+      "status": "pass",
       "title": "The filled-in header sums to 0xFFFF (receiver check)",
       "value": null
      },
      {
-      "detail": "Cksum.rtl_tcp_correct: kernel plus a compiled decision procedure; proof of the transcription, transcription tested; recorded build (not re-run)",
+      "detail": "proved; statement accepted by planner (Session A) on the owner's delegation (owner decision 23), 2026-11-21; not a human approval; Cksum.rtl_tcp_correct: kernel plus a compiled decision procedure; proof of the transcription, transcription tested; recorded build (not re-run)",
       "evidence": {
        "exists": true,
        "file": "formal/lean/records/build_record.json"
@@ -28083,8 +28017,7 @@
       "requirements": [
        "B119-F-CKSUM-TCP"
       ],
-      "stale_because": "transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:256-260; transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:326-336",
-      "status": "stale",
+      "status": "pass",
       "title": "TCP checksum equals the Internet checksum, payloads up to 30 words",
       "value": null
      },
@@ -28806,13 +28739,15 @@
        "V-LEAN-CKSUM-IP-RX"
       ],
       "kind": "functional",
-      "lean_transcription_only": false,
-      "passing_methods": [],
-      "rests_on_delegated": false,
+      "lean_transcription_only": true,
+      "passing_methods": [
+       "formal_lean"
+      ],
+      "rests_on_delegated": true,
       "source": "brief 119 (PR 245), designs/b119_tcp_fast/rtl/tcp_fast.sv; results/124_lean/README.md",
       "spec_status": "draft",
-      "stale_items": 2,
-      "state": "stale",
+      "stale_items": 0,
+      "state": "verified",
       "text": "Brief 119's tcp_fast.sv builds the IPv4 header checksum from a precomputed template plus the changing fields. For all TTL, address and identification values it equals the complement of the ones' complement sum of the header, and the filled-in header sums to 0xFFFF.",
       "title": "The IPv4 header checksum of the TCP fast path equals the Internet checksum, for all inputs"
      },
@@ -28826,13 +28761,15 @@
        "V-LEAN-CKSUM-TCP"
       ],
       "kind": "functional",
-      "lean_transcription_only": false,
-      "passing_methods": [],
-      "rests_on_delegated": false,
+      "lean_transcription_only": true,
+      "passing_methods": [
+       "formal_lean"
+      ],
+      "rests_on_delegated": true,
       "source": "brief 119 (PR 245), designs/b119_tcp_fast/rtl/tcp_fast.sv; results/124_lean/README.md",
       "spec_status": "draft",
-      "stale_items": 1,
-      "state": "stale",
+      "stale_items": 0,
+      "state": "verified",
       "text": "For all addresses, ports, sequence and acknowledgement numbers, windows and payloads of up to 30 sixteen-bit words, the checksum the RTL equations produce equals the complement of the ones' complement sum over pseudo-header, header and payload. The byte-pair swapping, the streaming receive check and the timing are not modelled.",
       "title": "The TCP checksum of the TCP fast path equals the Internet checksum, for all inputs and payloads up to 30 words"
      },
@@ -28915,9 +28852,9 @@
        "fail": 0,
        "not_in_run": 0,
        "not_run": 0,
-       "pass": 3,
+       "pass": 6,
        "skipped": 0,
-       "stale": 3,
+       "stale": 0,
        "unapproved": 0
       },
       "review": {
@@ -28973,15 +28910,15 @@
      },
      "by_state": {
       "not_run": 2,
-      "stale": 18,
-      "verified": 7
+      "stale": 16,
+      "verified": 9
      },
      "external": 2,
      "external_hardware_done": 0,
      "gap_counts": {
       "hardware_open": 2,
-      "no_passing_evidence": 20,
-      "stale_evidence": 25
+      "no_passing_evidence": 18,
+      "stale_evidence": 22
      },
      "human_reviews": 0,
      "items": 35,
@@ -28997,8 +28934,7 @@
        "transcription_untested": 0
       },
       "by_status": {
-       "pass": 3,
-       "stale": 3
+       "pass": 6
       },
       "by_tier": {
        "compiled_decision_procedure": 3,
@@ -29009,13 +28945,13 @@
       "items": 6,
       "statement_not_approved": 0
      },
-     "line": "27 requirements (10 functional, 10 performance, 2 interface, 5 safety); 7 verified, of which 1 rest on delegated acceptances (the planner accepted the Lean statement on the owner's delegation; not human approvals); 18 stale; 2 with no passing evidence; 0 of 2 requirements that depend on an external element closed by hardware; 0 of 27 requirements agreed by a human, 0 human review(s) recorded; 6 Lean proof item(s) (all widths): 0 with a human-approved statement, 6 with a statement accepted on the owner's delegation (not a human approval), 0 with statement not approved; 3 kernel only, 3 using a compiled decision procedure; build status from: recorded build (not re-run).",
+     "line": "27 requirements (10 functional, 10 performance, 2 interface, 5 safety); 9 verified, of which 3 rest on delegated acceptances (the planner accepted the Lean statement on the owner's delegation; not human approvals); 16 stale; 2 with no passing evidence; 0 of 2 requirements that depend on an external element closed by hardware; 0 of 27 requirements agreed by a human, 0 human review(s) recorded; 6 Lean proof item(s) (all widths): 0 with a human-approved statement, 6 with a statement accepted on the owner's delegation (not a human approval), 0 with statement not approved; 3 kernel only, 3 using a compiled decision procedure; build status from: recorded build (not re-run).",
      "performance_board": 0,
      "performance_sim_only": 0,
      "performance_timing": 0,
      "requirements": 27,
      "spec_agreed": 0,
-     "verified_on_delegated": 1
+     "verified_on_delegated": 3
     }
    },
    {
@@ -53108,7 +53044,7 @@
   "total": {
    "designs": 34,
    "requirements": 355,
-   "verified": 256
+   "verified": 258
   }
  }
 }

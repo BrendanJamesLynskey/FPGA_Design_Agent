@@ -4,7 +4,7 @@
 
 The human specifies the requirements and checks that the verification is thorough enough. The agent holds the knowledge to implement and to verify. You can open any of the implementation or the evidence, and you do not have to. Hardware on the board, with attached instruments, is a verification layer of its own: where a requirement depends on something outside the design (an optical link, a network card, a data source) it may be the only way to close it.
 
-**Summary.** 27 requirements (10 functional, 10 performance, 2 interface, 5 safety); 7 verified, of which 1 rest on delegated acceptances (the planner accepted the Lean statement on the owner's delegation; not human approvals); 18 stale; 2 with no passing evidence; 0 of 2 requirements that depend on an external element closed by hardware; 0 of 27 requirements agreed by a human, 0 human review(s) recorded; 6 Lean proof item(s) (all widths): 0 with a human-approved statement, 6 with a statement accepted on the owner's delegation (not a human approval), 0 with statement not approved; 3 kernel only, 3 using a compiled decision procedure; build status from: recorded build (not re-run).
+**Summary.** 27 requirements (10 functional, 10 performance, 2 interface, 5 safety); 9 verified, of which 3 rest on delegated acceptances (the planner accepted the Lean statement on the owner's delegation; not human approvals); 16 stale; 2 with no passing evidence; 0 of 2 requirements that depend on an external element closed by hardware; 0 of 27 requirements agreed by a human, 0 human review(s) recorded; 6 Lean proof item(s) (all widths): 0 with a human-approved statement, 6 with a statement accepted on the owner's delegation (not a human approval), 0 with statement not approved; 3 kernel only, 3 using a compiled decision procedure; build status from: recorded build (not re-run).
 
 Simulation (cocotb on Icarus Verilog 12, one recorded pytest run) and out-of-context Vivado 2026.1 results only. No board run, no MAC of the 96 design in the simulation, no real TCP peer, no real exchange; every order is synthetic. Requirements that need those are hooks and show as not run.
 
@@ -38,8 +38,8 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 | **B119-P-TIMING** Post-route setup slack at the 10G core clock, out of context | performance | stale |  |  |  |  |  |  | stale: [V-TIM-SETUP](../../../results/b119/ooc/tcp_fast.json)<br>stale: [V-TIM-PULSE](../../../results/b119/ooc/tcp_fast.json) |  |  |  |
 | **B119-P-HOLD** Post-route hold slack at the 10G core clock, out of context | performance | stale |  |  |  |  |  |  | stale: [V-TIM-HOLD](../../../results/b119/ooc/tcp_fast.json) |  |  |  |
 | **B119-P-AREA** LUTs of tcp_fast at the required clock | performance | stale |  |  |  |  |  |  | stale: [V-RES-LUT](../../../results/b119/ooc/tcp_fast.json)<br>stale: [V-RES-OTHER](../../../results/b119/ooc/tcp_fast.json) |  |  |  |
-| **B119-F-CKSUM-IP** The IPv4 header checksum of the TCP fast path equals the Internet checksum, for all inputs | functional | stale |  |  |  |  | stale [kernel plus a compiled decision procedure; transcription tested; recorded build]: [V-LEAN-CKSUM-IP](../../../formal/lean/records/build_record.json)<br>stale [kernel plus a compiled decision procedure; transcription tested; recorded build]: [V-LEAN-CKSUM-IP-RX](../../../formal/lean/records/build_record.json) |  |  |  |  |  |
-| **B119-F-CKSUM-TCP** The TCP checksum of the TCP fast path equals the Internet checksum, for all inputs and payloads up to 30 words | functional | stale |  |  |  |  | stale [kernel plus a compiled decision procedure; transcription tested; recorded build]: [V-LEAN-CKSUM-TCP](../../../formal/lean/records/build_record.json) |  |  |  |  |  |
+| **B119-F-CKSUM-IP** The IPv4 header checksum of the TCP fast path equals the Internet checksum, for all inputs | functional | verified; the Lean proof is of a transcription of the RTL, not of the RTL itself; rests on a delegated acceptance of the Lean statement, not a human approval |  |  |  |  | pass [statement accepted on delegation, not a human approval; kernel plus a compiled decision procedure; transcription tested; recorded build]: [V-LEAN-CKSUM-IP](../../../formal/lean/records/build_record.json)<br>pass [statement accepted on delegation, not a human approval; kernel plus a compiled decision procedure; transcription tested; recorded build]: [V-LEAN-CKSUM-IP-RX](../../../formal/lean/records/build_record.json) |  |  |  |  |  |
+| **B119-F-CKSUM-TCP** The TCP checksum of the TCP fast path equals the Internet checksum, for all inputs and payloads up to 30 words | functional | verified; the Lean proof is of a transcription of the RTL, not of the RTL itself; rests on a delegated acceptance of the Lean statement, not a human approval |  |  |  |  | pass [statement accepted on delegation, not a human approval; kernel plus a compiled decision procedure; transcription tested; recorded build]: [V-LEAN-CKSUM-TCP](../../../formal/lean/records/build_record.json) |  |  |  |  |  |
 | **B119-F-CKSUM-MODEL** The ones' complement arithmetic the checksum equations rest on is correct, for lists of any length | functional | verified; the Lean proof is of a transcription of the RTL, not of the RTL itself; rests on a delegated acceptance of the Lean statement, not a human approval |  |  |  |  | pass [statement accepted on delegation, not a human approval; kernel only; no RTL link; recorded build]: [V-LEAN-CKSUM-SUM](../../../formal/lean/records/build_record.json)<br>pass [statement accepted on delegation, not a human approval; kernel only; no RTL link; recorded build]: [V-LEAN-CKSUM-INC](../../../formal/lean/records/build_record.json)<br>pass [statement accepted on delegation, not a human approval; kernel only; no RTL link; recorded build]: [V-LEAN-CKSUM-INC-ZERO](../../../formal/lean/records/build_record.json) |  |  |  |  |  |
 
 ## Gaps
@@ -69,8 +69,6 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 - `B119-P-TIMING`: its evidence is stale
 - `B119-P-HOLD`: its evidence is stale
 - `B119-P-AREA`: its evidence is stale
-- `B119-F-CKSUM-IP`: its evidence is stale
-- `B119-F-CKSUM-TCP`: its evidence is stale
 
 ### Stale evidence
 
@@ -96,9 +94,6 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 - `V-TIM-HOLD`: changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv
 - `V-RES-LUT`: changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv
 - `V-RES-OTHER`: changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv
-- `V-LEAN-CKSUM-IP`: transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:256-260; transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:326-336
-- `V-LEAN-CKSUM-IP-RX`: transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:256-260; transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:326-336
-- `V-LEAN-CKSUM-TCP`: transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:256-260; transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:326-336
 
 ## Requirements in full
 
@@ -309,18 +304,18 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### B119-F-CKSUM-IP: The IPv4 header checksum of the TCP fast path equals the Internet checksum, for all inputs
 
-- Kind: functional; state: stale; specification status: draft.
+- Kind: functional; state: verified; the Lean proof is of a transcription of the RTL, not of the RTL itself; rests on a delegated acceptance of the Lean statement, not a human approval; specification status: draft.
 - Source: `brief 119 (PR 245), designs/b119_tcp_fast/rtl/tcp_fast.sv; results/124_lean/README.md`
 - Brief 119's tcp_fast.sv builds the IPv4 header checksum from a precomputed template plus the changing fields. For all TTL, address and identification values it equals the complement of the ones' complement sum of the header, and the filled-in header sums to 0xFFFF.
-  - Lean proof (all widths): **stale**, IPv4 header checksum equals the Internet checksum: Cksum.rtl_ip_correct: kernel plus a compiled decision procedure; proof of the transcription, transcription tested; recorded build (not re-run) (transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:256-260; transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:326-336). [evidence](../../../formal/lean/records/build_record.json)
-  - Lean proof (all widths): **stale**, The filled-in header sums to 0xFFFF (receiver check): Cksum.rtl_ip_receiver: kernel plus a compiled decision procedure; proof of the transcription, transcription tested; recorded build (not re-run) (transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:256-260; transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:326-336). [evidence](../../../formal/lean/records/build_record.json)
+  - Lean proof (all widths): **pass**, IPv4 header checksum equals the Internet checksum: proved; statement accepted by planner (Session A) on the owner's delegation (owner decision 23), 2026-11-21; not a human approval; Cksum.rtl_ip_correct: kernel plus a compiled decision procedure; proof of the transcription, transcription tested; recorded build (not re-run). [evidence](../../../formal/lean/records/build_record.json)
+  - Lean proof (all widths): **pass**, The filled-in header sums to 0xFFFF (receiver check): proved; statement accepted by planner (Session A) on the owner's delegation (owner decision 23), 2026-11-21; not a human approval; Cksum.rtl_ip_receiver: kernel plus a compiled decision procedure; proof of the transcription, transcription tested; recorded build (not re-run). [evidence](../../../formal/lean/records/build_record.json)
 
 ### B119-F-CKSUM-TCP: The TCP checksum of the TCP fast path equals the Internet checksum, for all inputs and payloads up to 30 words
 
-- Kind: functional; state: stale; specification status: draft.
+- Kind: functional; state: verified; the Lean proof is of a transcription of the RTL, not of the RTL itself; rests on a delegated acceptance of the Lean statement, not a human approval; specification status: draft.
 - Source: `brief 119 (PR 245), designs/b119_tcp_fast/rtl/tcp_fast.sv; results/124_lean/README.md`
 - For all addresses, ports, sequence and acknowledgement numbers, windows and payloads of up to 30 sixteen-bit words, the checksum the RTL equations produce equals the complement of the ones' complement sum over pseudo-header, header and payload. The byte-pair swapping, the streaming receive check and the timing are not modelled.
-  - Lean proof (all widths): **stale**, TCP checksum equals the Internet checksum, payloads up to 30 words: Cksum.rtl_tcp_correct: kernel plus a compiled decision procedure; proof of the transcription, transcription tested; recorded build (not re-run) (transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:256-260; transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:326-336). [evidence](../../../formal/lean/records/build_record.json)
+  - Lean proof (all widths): **pass**, TCP checksum equals the Internet checksum, payloads up to 30 words: proved; statement accepted by planner (Session A) on the owner's delegation (owner decision 23), 2026-11-21; not a human approval; Cksum.rtl_tcp_correct: kernel plus a compiled decision procedure; proof of the transcription, transcription tested; recorded build (not re-run). [evidence](../../../formal/lean/records/build_record.json)
 
 ### B119-F-CKSUM-MODEL: The ones' complement arithmetic the checksum equations rest on is correct, for lists of any length
 
