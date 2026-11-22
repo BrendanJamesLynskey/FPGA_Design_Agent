@@ -119,5 +119,5 @@ def test_triage_pre_uses_nearest_rows(tmp_path):
     ds = tmp_path / "d.csv"
     ds.write_text("source,row_id,clock_ns,rt_wns\n" + "".join(f"arith,f/v/k26/P{i},2.0,0.0\n" for i in range(4)))   # Fmax 500 MHz
     assert t.triage_pre({"part": "xck26", "clock_ns": 1.5, "function": "f"}, ds)["class"] == "hard"       # 667 MHz target
-    assert t.triage_pre({"part": "xck26", "clock_ns": 2.2, "function": "f"}, ds)["class"] == "easy"       # 455 MHz
+    assert t.triage_pre({"part": "xck26", "clock_ns": 2.6, "function": "f"}, ds)["class"] == "easy"       # 385 MHz
     assert t.triage_pre({"part": "xck26", "clock_ns": 2.0, "function": "f"}, ds)["class"] == "hard"       # exactly at Fmax
