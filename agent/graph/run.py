@@ -59,7 +59,7 @@ from flow import srcorder
 RUNS = ROOT / "runs"
 FLOW_TOOLS = ("read_file", "list_files", "lint", "simulate", "formal", "mutate", "build", "gates", "report", "check_constraints", "search_docs",
               "load_skill", "board_constraints", "spec_items", "skill_index", "skill_excerpt", "report_digest",
-              "check", "gt_plan")                         # brief 71: the check suite; the 56A link planner
+              "check", "gt_plan", "ip_lookup")           # brief 71; brief 150: the IP-library query (stage 1): the check suite; the 56A link planner
 
 
 class ArmBlocked(Exception):
@@ -783,6 +783,9 @@ def node_work(state: State) -> dict:
     if rt.cfg.design_plan:                   # closure-loop hook: the datapaths bullet (stage 1) and the computed plan (later stages)
         from flow import timing_plan as _tp
         conv0 += _tp.DATAPATHS_CONVENTION + (("\n" + (rt.design / _tp.PLAN_MD).read_text()) if (rt.design / _tp.PLAN_MD).is_file() else "")
+    if n == 1 and "ip_lookup" in st.tools:   # brief 150: the library is consulted before a block is invented, and the choice is recorded
+        from flow import iplookup as _ipl
+        conv0 += _ipl.IP_LOOKUP_CONVENTION
     conv_tests = tests_conventions_text(fmt)
     conv = conv0 + ("\nLast gate output:\n" + state["detail"][:3000] if state.get("detail") else "")
     # the owner's edit prompt (brief 05d, addition 6) goes to the role it names, default the stage's writer

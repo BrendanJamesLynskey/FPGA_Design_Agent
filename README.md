@@ -67,6 +67,15 @@ Stage 3 integrates one real third-party RTL block (Alex Forencich's parallel CRC
 Brief 102F closes the stage 1-3 gaps: the waiver files (`lint/`, `waivers.yaml`, in-source waivers) are the owner's, writes to frozen files are prevented while a tool runs design code (and mounted read-only in the container runner), the scope is in `config.json`/`summary.json` and re-checked by `resume`, and evidence signing is proposed: [docs/managed_projects.md](docs/managed_projects.md) and [results/102f_managed_gaps](results/102f_managed_gaps/README.md).
 A portfolio pack (title, facts with their sources, stills and a short animation) is in [site/portfolio/](site/portfolio/README.md).
 
+## Start here: which command for which job
+
+Every `python -m agent ...` command needs the access key ([Access key](#access-key)); the `flow` and `project` commands below
+do not, apart from `project spec`. "Read-only" means nothing in the design directory is changed.
+
+| You want to | Command | Know first |
+|---|---|---|
+| find a block in the IP library | `python -m agent ip search "<what you need, in words>"`, then `python -m agent ip show <entry>` (also `python3 -m flow.iplookup search ...`, no key) | matches by meaning, needs two matching words, and answers "nothing fits" with the near misses labelled as such; costs are measured on the Artix-7 only; SystemVerilog only, no FIFO (use AMD's XPM); `ip use` is the owner's command and adds a frozen component to an existing `project.yaml` ([docs/ip_lookup.md](docs/ip_lookup.md)) |
+
 ## The flow
 
 ```
@@ -381,7 +390,7 @@ arith/       the arithmetic library (brief 139b; [arith/README.md](arith/README.
 ip_lib/      the project's own IP library ([ip_lib/README.md](ip_lib/README.md)); first entries: the brief-40 networking
              blocks (RMII MAC, parser, exact/LPM/ternary tables, rewrite, queues and schedulers, L2 switch); entries can hold
              several implementations, each with a measured cost ([docs/ip_variants.md](docs/ip_variants.md),
-             flow/ipvariants.py, flow/ipchar.py) and a FIR entry with four variants; the
+             flow/ipvariants.py, flow/ipchar.py; find an entry by plain words with `python -m agent ip search`, [docs/ip_lookup.md](docs/ip_lookup.md), flow/iplookup.py) and a FIR entry with four variants; the
              tri-mode RGMII MAC ([ip_lib/eth_mac_rgmii](ip_lib/eth_mac_rgmii/README.md)) with its 0.2 filter, VLAN,
              pause, statistics and jumbo frames, and the network blocks (MDIO, ARP, ICMP echo, IPv4/UDP
              receive and transmit, IGMPv2), run together in [designs/b63d_nexys_net](designs/b63d_nexys_net/README.md)
