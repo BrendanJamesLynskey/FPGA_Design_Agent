@@ -125,6 +125,7 @@ class vseq_mix extends vseq_base;
   function new(string name = "vseq_mix"); super.new(name); endfunction
   task body();
     int sizes [3] = '{1, 3, 6};
+    void'($value$plusargs("ROUNDS=%d", rounds));
     setup(); directory();
     for (int i = 0; i < 4; i++) one(mA(i, nref++, "B", 1000, 994000));        // a bid in every book
     checkpoint();
@@ -432,6 +433,7 @@ class vseq_rand extends vseq_base;
   int rounds = 40;
   function new(string name = "vseq_rand"); super.new(name); endfunction
   task body();
+    void'($value$plusargs("ROUNDS=%d", rounds));
     setup(); directory();
     for (int i = 0; i < 4; i++) one(mA(i, nref++, "B", 1000, 994000 + 1000 * $urandom_range(2)));
     gap = 70;
@@ -448,7 +450,7 @@ class vseq_rand extends vseq_base;
         bq_t q [$]; q.push_back(rand_msg());
         if (seq > 3) send_pay(itch_gen::mold(sess, seq - 1 - $urandom_range(1), q));
       end else if (k < 77) begin                                 // a bad frame
-        one(rand_msg(), 1, rl4()); cmd(2); idle(10);
+        one(mD($urandom_range(3), 70000 + r), 1, rl4()); cmd(2); idle(10);    // no candidate in the LAST message of a bad frame: whether the late verdict reaches the risk check first depends on the start lane (README, finding 2)
       end else if (k < 81) begin send_pay(itch_gen::mold_hb(sess, seq));
       end else if (k < 85) begin                                 // a risk or mode change
         case ($urandom_range(6))
@@ -468,6 +470,21 @@ class vseq_rand extends vseq_base;
       end
       if (r % 6 == 5) checkpoint();
     end
+    checkpoint();
+  endtask
+endclass
+
+// ---------------------------------------------------------------------------------------------------------------- the minimal failing test of the finding (README, "Finding"): the TCP sequence number after a poisoned order frame
+class vseq_seq_poison extends vseq_base;
+  `uvm_object_utils(vseq_seq_poison)
+  function new(string name = "vseq_seq_poison"); super.new(name); endfunction
+  task body();
+    setup(); directory();
+    one(mA(0, nref++, "B", 500, 995000));
+    one(mA(0, nref++, "S", 100, 990000));                    // order 1: leaves, TCP sequence number 1000
+    one(mA(0, nref++, "S", 100, 990100), 1);                 // order 2: in a frame with a bad FCS, STRICT: poisoned, must consume no sequence number
+    cmd(2); idle(10); seq = 5000;                            // clr_flags: the bad frame set `untrusted`
+    one(mA(0, nref++, "S", 100, 990200));                    // order 3: datasheet says sequence number 1059, the design sends 1118
     checkpoint();
   endtask
 endclass

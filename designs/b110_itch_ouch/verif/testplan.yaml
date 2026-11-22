@@ -1,0 +1,157 @@
+# b110_itch_ouch testplan, schema v1 (brief 170): the trading path (brief 110's blocks as brief 127 builds them into the 10G design, simulated as `itch_unit` with the real MACs).
+#
+# SCOPE OF THIS FILE. Brief 170 adds the independent UVM bench and writes this plan around it. The earlier evidence of briefs 110 and 127 (cocotb tests, 58 seeded faults, out-of-context
+# Vivado builds) is NOT listed here yet: a later brief can add those items. The requirements below are written by the agent from the datasheets (docs/itch_ouch.md,
+# ../b96_kr260_10g/rm_gp_itch/docs/itch_integration.md); none is agreed by a human yet (`spec_status: draft`).
+#
+# WHO WROTE THE EVIDENCE. Every UVM item is `written_by: independent_bench`: by the planner's delegated decision of 2026-11-21 (decision 23) a bench counts as independent only when a
+# different brief from the RTL wrote it, with its own reference model, in UVM or pyuvm. Brief 170's reference model was written from the public specifications and the datasheets without
+# opening the design's Python model or the RTL code; verif/uvm/README.md lists the places where it shares an assumption with the design's model.
+schema: fpga-design-agent/testplan/v1
+design: b110_itch_ouch
+notes: >-
+  Simulation only (xsim 2026.1, UVM 1.2; Icarus is not used by this bench). One recorded regression (results/170_itch_uvm/summary.json) and one mutation record
+  (results/170_itch_uvm/mutation_seed*.json). No board, no real feed, every message synthetic.
+
+x-rtl: &rtl [designs/b110_itch_ouch/rtl/mold_rx.sv, designs/b110_itch_ouch/rtl/itch_dec.sv, designs/b110_itch_ouch/rtl/book_core.sv, designs/b110_itch_ouch/rtl/risk_glue.sv,
+  designs/b110_itch_ouch/rtl/ouch_enter.sv, designs/b96_kr260_10g/rm_gp_itch/rtl/udp_strip.sv, designs/b96_kr260_10g/rm_gp_itch/rtl/order_seg.sv, designs/b96_kr260_10g/rm_gp_itch/rtl/itch_top.sv,
+  designs/b96_kr260_10g/rm_gp_itch/rtl/itch_path.sv, designs/b96_kr260_10g/rm_gp_itch/rtl/tx_mux.sv]
+x-rec: &rec {file: results/170_itch_uvm/summary.json, reader: json}
+
+requirements:
+  - id: B110-F-ORDER-BYTES
+    kind: functional
+    title: Every order that leaves with a good frame check sequence is byte exact
+    text: Each order frame with a good FCS equals the reference frame byte for byte (Ethernet, IPv4, TCP headers, SoupBinTCP 3.00 length and type, OUCH 5.0 Enter Order fields, ClOrdID, appendage), the orders come in order with UserRefNum rising by one per accepted candidate, and a frame with a wrong FCS is never an order.
+    source: designs/b110_itch_ouch/docs/spec_notes.md#3-ouch-50-hardware-rtlouch_entersv-section-21-type-o-enter-order
+    spec_status: draft
+  - id: B110-F-MOLD
+    kind: functional
+    title: MoldUDP64 sessions, sequence gaps, duplicates, overlaps, heartbeats and broken packets are counted and delivered as the reference says
+    text: For every packet the packet, message, gap, missing, duplicate, overlap, session, heartbeat, end-of-session, short, truncated and bad-length counters and the gap, session-lock and end-of-session flags equal the reference model's at every checkpoint, with 1, 3 and 6 messages a packet and at every frame alignment.
+    source: designs/b110_itch_ouch/docs/itch_ouch.md#2-behaviour-in-detail
+    spec_status: draft
+  - id: B110-F-BOOK
+    kind: functional
+    title: The ITCH decoder and the book keep the counters, the inexact flags and the candidates the reference model computes
+    text: Message-type counters, malformed and skipped messages, unwatched locates, missing/duplicate/overflowing orders, ladder overflow and over-execution counters, the candidate count and the per-instrument inexact flags equal the reference model's, including the edge cases of an empty book, a full ladder, a table-index collision and a replace.
+    source: designs/b110_itch_ouch/docs/itch_ouch.md#2-behaviour-in-detail
+    spec_status: draft
+  - id: B110-F-RISK
+    kind: safety
+    title: Every risk refusal is the first failing check, counted once, and no order starts on a refused candidate
+    text: Not armed, kill switch, untrusted or gap-halted, inexact book, quantity, position limit per instrument, price band and missing bid refuse a candidate exactly as the reference does; the position and the order number advance only for an accepted candidate.
+    source: designs/b110_itch_ouch/docs/itch_ouch.md#2-behaviour-in-detail
+    spec_status: draft
+  - id: B110-F-UDP
+    kind: functional
+    title: Frames are forwarded or dropped by the first failing header check, and each drop is counted
+    text: Destination MAC (unicast or the group's multicast address), EtherType, IPv4 version and header length, fragments, protocol, destination address and port, UDP length against the IP length, and the IPv4 header checksum; EN = 0 drops everything.
+    source: designs/b96_kr260_10g/rm_gp_itch/docs/itch_integration.md#2-the-path-block-by-block
+    spec_status: draft
+  - id: B110-S-STRICT
+    kind: safety
+    title: Under STRICT an order is never sent on an unverified or bad frame
+    text: With STRICT set (the default, owner decision 31) no order leaves with a good FCS when the frame that carried its message has a bad FCS, or when that frame's verdict is not yet known at the order's last word; such an order leaves with a wrong FCS. Cut-through is a documented option with a measured window.
+    source: designs/b96_kr260_10g/rm_gp_itch/docs/itch_integration.md#4-the-late-frame-check-and-what-happens-to-an-order-on-a-bad-frame
+    spec_status: draft
+  - id: B110-F-SEQ-POISON
+    kind: functional
+    title: A poisoned order frame consumes no TCP sequence number
+    text: The TCP sequence number of an order is the loaded number plus 59 for every segment that left with a good FCS; a frame poisoned (wrong FCS) by the multiplexer, because its trigger frame was bad or unverified, does not advance it.
+    source: designs/b96_kr260_10g/rm_gp_itch/docs/itch_integration.md#5-registers-and-what-a-user-could-guess-wrong
+    spec_status: draft
+  - id: B110-V-COVERAGE
+    kind: functional
+    title: The bench's functional coverage plan is closed
+    text: Every bin of the bench's coverage plan (message types, messages a packet, Mold events, header drops, book edge cases, risk refusals, order outcomes, bad-FCS crosses, frame alignments, backpressure) is hit by the recorded regression.
+    source: designs/b96_kr260_10g/rm_gp_itch/verif/uvm/README.md#functional-coverage
+    spec_status: draft
+  - id: B110-V-MUTATION
+    kind: functional
+    title: The bench kills at least 90 % of blind mutants of the path (worst case, over at least 30)
+    text: A blind mutation sweep (mutants made from the RTL text and a seed only, equivalent mutants decided by a formal miter) scores at least 90 % even if every undecided mutant counted as a survivor.
+    source: designs/b96_kr260_10g/rm_gp_itch/verif/uvm/README.md#mutation-score
+    spec_status: draft
+    mutation_floor: {score_pct: 90, worst_case_pct: 90, min_mutants: 30, max_undecided: 3}
+
+verification:
+  - id: V-UVM-ORDERS
+    requirements: [B110-F-ORDER-BYTES]
+    method: uvm_test
+    written_by: independent_bench
+    title: UVM scoreboard ORDERS check, every order frame byte for byte against the SV reference model (all sequences, all seeds)
+    evidence: *rec
+    pass_when: [{field: checks.ORDERS.mismatches, op: eq, value: 0}, {field: checks.ORDERS.compared, op: ge, value: 1000}, {field: failed, op: eq, value: 0}]
+    checks: *rtl
+  - id: V-UVM-MOLD
+    requirements: [B110-F-MOLD]
+    method: uvm_test
+    written_by: independent_bench
+    title: UVM scoreboard COUNTERS and FLAGS at every checkpoint (Mold counters and flags, gaps, duplicates, overlaps, heartbeats, truncation)
+    evidence: *rec
+    pass_when: [{field: checks.COUNTERS.mismatches, op: eq, value: 0}, {field: checks.FLAGS.mismatches, op: eq, value: 0}, {field: checks.COUNTERS.compared, op: ge, value: 5000}]
+    checks: *rtl
+  - id: V-UVM-BOOK
+    requirements: [B110-F-BOOK]
+    method: uvm_test
+    written_by: independent_bench
+    title: UVM book edge-case sequence and random mix, counters and inexact flags against the reference model
+    evidence: *rec
+    pass_when: [{field: checks.COUNTERS.mismatches, op: eq, value: 0}, {field: checks.FLAGS.mismatches, op: eq, value: 0}, {field: failed, op: eq, value: 0}]
+    checks: *rtl
+  - id: V-UVM-RISK
+    requirements: [B110-F-RISK]
+    method: uvm_test
+    written_by: independent_bench
+    title: UVM risk sequence, every refusal counter and the orders that follow
+    evidence: *rec
+    pass_when: [{field: checks.COUNTERS.mismatches, op: eq, value: 0}, {field: checks.ORDERS.mismatches, op: eq, value: 0}, {field: failed, op: eq, value: 0}]
+    checks: *rtl
+  - id: V-UVM-UDP
+    requirements: [B110-F-UDP]
+    method: uvm_test
+    written_by: independent_bench
+    title: UVM header sequence, every drop reason, the multicast address and EN = 0, udp_strip counters against the reference model
+    evidence: *rec
+    pass_when: [{field: checks.US.mismatches, op: eq, value: 0}, {field: checks.US.compared, op: ge, value: 500}]
+    checks: *rtl
+  - id: V-UVM-STRICT
+    requirements: [B110-S-STRICT]
+    method: uvm_test
+    written_by: independent_bench
+    title: UVM bad-FCS and tail-distance sequences, STRICT and cut-through, orders classed must, may and must-not against the measured window
+    evidence: *rec
+    pass_when: [{field: checks.ORDERS.mismatches, op: eq, value: 0}, {field: checks.ORDERCNT.mismatches, op: eq, value: 0}, {field: failed, op: eq, value: 0}]
+    checks: *rtl
+  - id: V-UVM-SEQ
+    requirements: [B110-F-SEQ-POISON]
+    method: uvm_test
+    written_by: independent_bench
+    title: UVM sequence-number check on the datasheet's rule; t_seq_poison (run with +SEQ_STRICT) is the minimal failing test, the other sequences run under a counted waiver
+    evidence: *rec
+    pass_when: [{field: seq_waived, op: eq, value: 0}, {field: finding_seq_poison.failed, op: false}]
+    checks: *rtl
+  - id: V-UVM-SVA
+    requirements: [B110-S-STRICT, B110-F-ORDER-BYTES]
+    method: assertion
+    written_by: independent_bench
+    title: SVAs on the transmit words, the order-frame stream and the status vector, zero failures in every run
+    evidence: *rec
+    pass_when: [{field: sva_failures, op: eq, value: 0}]
+    checks: *rtl
+  - id: V-UVM-COV
+    requirements: [B110-V-COVERAGE]
+    method: coverage_bin
+    written_by: independent_bench
+    title: Closure of the bench's functional coverage plan over the recorded regression
+    evidence: *rec
+    pass_when: [{field: coverage.holes, op: eq, value: []}]
+    checks: *rtl
+  - id: V-UVM-MUT
+    requirements: [B110-V-MUTATION]
+    method: sim_measurement
+    written_by: independent_bench
+    title: "Blind mutation sweep with the fixed tool (flow/mutation_score.py): score, worst case and undecided against the floor"
+    evidence: {file: results/170_itch_uvm/mutation_seed1.json, reader: mutation}
+    checks: *rtl

@@ -153,7 +153,8 @@ package itch_ref_pkg;
     int unsigned next_ref;
     bit [7:0]    sys_code;
     // frame context for the classification of orders
-    int          cur_tail; bit cur_bad; int cur_fired; longint unsigned cur_c_start, cur_c_end;
+    longint unsigned cur_stretch;
+    int          cur_tail, cur_tail_e; bit cur_bad; int cur_fired; longint unsigned cur_c_start, cur_c_end;
     longint unsigned last_fire_end;
     string       log_q [$];
     // coverage hooks (the scoreboard forwards these to the coverage collector)
@@ -278,7 +279,8 @@ package itch_ref_pkg;
           else if (cur_tail <= tlo && isolated) begin o.klass = K_MUSTNOT; o.why = "bad FCS known before the last word"; end
           else begin o.klass = K_MAY; o.why = "bad FCS, verdict late or order queued"; end
         end else begin
-          if (!cfg.strict) begin o.klass = isolated ? K_MUST : K_MAY; o.why = isolated ? "good frame, cut-through" : "cut-through, order may queue"; end
+          if (cur_stretch > 105) begin o.klass = K_MAY; o.why = "good frame with bubbles: the verdict's clock is not known from the byte count"; end
+          else if (!cfg.strict) begin o.klass = isolated ? K_MUST : K_MAY; o.why = isolated ? "good frame, cut-through" : "cut-through, order may queue"; end
           else if (isolated && cur_tail <= tlo) begin o.klass = K_MUST; o.why = "good frame, STRICT, verdict known"; end
           else if (isolated && cur_tail >= thi) begin o.klass = K_MUSTNOT; o.why = "good frame, STRICT, verdict not yet known"; end
           else begin o.klass = K_MAY; o.why = "STRICT, near the window or queued"; end
@@ -286,7 +288,12 @@ package itch_ref_pkg;
       end
       cur_fired++;
       exp_q.push_back(o);
-      ev($sformatf("tail_%s_%s", (cur_tail <= (cfg.spec ? 118 : 158)) ? "near" : ((cur_tail >= (cfg.spec ? 136 : 176)) ? "far" : "edge"), cfg.strict ? "strict" : "cut"));
+      begin
+        string tc, md;
+        if (cur_tail <= (cfg.spec ? 118 : 158)) tc = "near"; else if (cur_tail >= (cfg.spec ? 136 : 176)) tc = "far"; else tc = "edge";
+        md = cfg.strict ? "strict" : "cut";
+        ev({"tail_", tc, "_", md});
+      end
       if (cfg.spec) ev("fire_spec");
       if (cur_fired >= 3) ev("burst_3");
       ev(cfg.strict ? "fire_strict" : "fire_cut");
@@ -404,7 +411,7 @@ package itch_ref_pkg;
           cnt[C_MSG]++;
           m.delete();
           for (int k = 0; k < int'(L); k++) m.push_back(p[pos_i + 2 + k]);
-          cur_tail = n - (pos_i + 2 + int'(L));
+          cur_tail = n - (pos_i + 2 + int'(L)); cur_tail_e = int'(cur_tail * cur_stretch / 100);
           itch_msg(m, int'(L));
         end
         pos_i += 2 + int'(L);
@@ -437,7 +444,9 @@ package itch_ref_pkg;
       us[1]++;
       pl.delete();
       for (int i = 0; i < udp_len - 8 && 42 + i < n; i++) pl.push_back(f.data[42 + i]);
-      cur_bad = !f.fcs_ok; cur_fired = 0; cur_c_start = f.c_start; cur_c_end = f.c_end; cur_tail = 0;
+      cur_stretch = (f.c_end - f.c_start + 1) * 100 / (((n + 12 + 7) / 8) + 1);
+      if (cur_stretch < 100) cur_stretch = 100;
+      cur_bad = !f.fcs_ok; cur_fired = 0; cur_c_start = f.c_start; cur_c_end = f.c_end; cur_tail = 0; cur_tail_e = 0;
       mold(pl, cur_bad);
       if (cur_fired > 0) last_fire_end = f.c_end;
       if (cur_bad) begin

@@ -25,7 +25,7 @@ class itch_cov extends uvm_component;
     add("drop_off drop_mac drop_type drop_frag drop_proto drop_dip drop_port drop_len drop_ipck");
     add("odup oovf lvovf oover omiss unwatch");
     add("fire_strict fire_cut fire_spec rej_arm rej_kill rej_gap rej_stale rej_size rej_pos rej_band rej_nobid");
-    add("bad_fcs bad_fcs_with_order tail_near_strict tail_far_strict tail_near_cut tail_far_cut burst_3");
+    add("bad_fcs bad_fcs_with_order tail_near_strict tail_far_strict tail_edge_strict tail_near_cut tail_far_cut tail_edge_cut burst_3");
     add("cmd_clr_cnt cmd_clr_flags cmd_clr_book cmd_clr_pos cmd_clr_ref cmd_tcp_load reset");
     add("in_bubbles out_pause_in_frame obs_good obs_poisoned obs_must_present obs_mustnot_absent obs_may_present obs_may_absent");
     for (int k = 0; k < 8; k++) begin add($sformatf("align_%0d_l0", k)); add($sformatf("align_%0d_l4", k)); end

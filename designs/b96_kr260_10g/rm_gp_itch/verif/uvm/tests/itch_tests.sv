@@ -41,3 +41,4 @@ endclass
 `ITCH_TEST(t_risk, vseq_risk)
 `ITCH_TEST(t_hdr, vseq_hdr)
 `ITCH_TEST(t_rand, vseq_rand)
+`ITCH_TEST(t_seq_poison, vseq_seq_poison)

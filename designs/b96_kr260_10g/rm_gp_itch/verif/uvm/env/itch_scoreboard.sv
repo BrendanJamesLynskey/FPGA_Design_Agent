@@ -48,6 +48,11 @@ class itch_scoreboard extends uvm_scoreboard;
     if (!ok) begin mis[name]++; `uvm_error("SB", $sformatf("[%s] %s", name, msg)) end
   endfunction
 
+  function string ev_str();
+    string r; r = "";
+    foreach (m.ev_q[i]) r = {r, m.ev_q[i], " "};
+    return r;
+  endfunction
   function void drain_ev();
     foreach (m.ev_q[i]) cov.hit(m.ev_q[i]);
     m.ev_q.delete();
@@ -138,7 +143,9 @@ class itch_scoreboard extends uvm_scoreboard;
         0: begin
           in_frame_t f; f = in_q.pop_front();
           cov.hit($sformatf("align_%0d_l%0d", (f.data.size() + 4) % 8, f.lane4 ? 4 : 0));
-          m.frame(f); drain_ev();
+          m.frame(f);
+          if ($test$plusargs("TRACE")) `uvm_info("TRACE", $sformatf("frame c=%0d..%0d len=%0d fcs_ok=%0d lane4=%0d events: %s", f.c_start, f.c_end, f.data.size(), f.fcs_ok, f.lane4, ev_str()), UVM_NONE)
+          drain_ev();
         end
         1: begin
           cfg_evt_t e; e = cfg_q.pop_front();
