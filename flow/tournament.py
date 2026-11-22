@@ -186,6 +186,8 @@ def synth_tcl(spec: dict[str, Any], cand: dict[str, Any], wd: Path) -> str:
     gen = " ".join(f"-generic {k}={v}" for k, v in (spec.get("generics") or {}).items())
     reads = "\n".join(f"read_{'vhdl' if f.endswith(('.vhd', '.vhdl')) else 'verilog -sv'} {_tcl(f)}" for f in spec["files"])
     xdc = [f"create_clock -period {spec['clock_ns']} -name clk [get_ports clk]"]
+    if spec.get("xdc"):                                  # the build file's own constraints (arith ooc.xdc) replace the generated clock
+        xdc = [Path(ROOT / x).read_text() for x in spec["xdc"]]
     if cand["id"] == "fanout_nets":
         xdc += [f"set_property MAX_FANOUT 50 [get_nets {_tcl(n)}]" for n in spec["fanout_nets"]]
     return f"""set_param general.maxThreads 1
@@ -306,8 +308,8 @@ def run_children(jobs: list[dict[str, Any]], peak_g: float, max_children: int = 
 
 
 def run(spec: dict[str, Any], stage: str, menu: list[str] | None, k: int, jobs: int, src: str | None = None, take: bool = True,
-        out: Path | None = None) -> dict[str, Any]:
-    out = out or WORK / spec["name"] / stage
+        out: Path | None = None, tag: str = "") -> dict[str, Any]:
+    out = out or WORK / spec["name"] / (stage + (("_" + tag) if tag else ""))
     out.mkdir(parents=True, exist_ok=True)
     cands = synth_candidates(spec, menu) if stage == "synth" else impl_candidates(menu)
     for i, c in enumerate(cands):
@@ -334,21 +336,24 @@ def run(spec: dict[str, Any], stage: str, menu: list[str] | None, k: int, jobs: 
                 release_slot(lock, prefix)
     else:
         if not src:
-            raise SystemExit("tournament: --stage impl needs --from <synth candidate id> (its post_synth.dcp)")
-        dcp = WORK / spec["name"] / "synth" / src / "post_synth.dcp"
-        for c in cands:                      # one at a time, each its own slot (CLAUDE.md section 4)
-            wd = Path(c["wd"])
-            wd.mkdir(parents=True, exist_ok=True)
-            (wd / "run.tcl").write_text(impl_tcl(dcp, c, wd))
-            text = (f"178: tournament {spec['name']} impl {c['id']} from {src}, {datetime.datetime.now():%H:%M}, expected end "
-                    f"{(datetime.datetime.now() + datetime.timedelta(minutes=15)):%H:%M}, peak {os.environ.get('TOURNAMENT_IMPL_PEAK', '4')}G")
-            lock = take_slot(text) if take else None
-            try:
+            raise SystemExit("tournament: --stage impl needs --from <synth candidate id[,id...]> (their post_synth.dcp)")
+        srcs = src.split(",")
+        cands = [dict(c, id=f"{sid}/{c['id']}", synth=sid, order=i * 100 + c["order"], wd=str(out / (sid + "_" + c["id"].replace(":", "_"))))
+                 for i, sid in enumerate(srcs) for c in cands]
+        # place and route candidates stay under the normal slot rule (CLAUDE.md section 4, decision 32): ONE slot, one Vivado at a time, never fanned out
+        text = (f"178: tournament {spec['name']} impl, {len(cands)} place-and-route runs one after another, {datetime.datetime.now():%H:%M}, expected end "
+                f"{(datetime.datetime.now() + datetime.timedelta(minutes=5 * len(cands))):%H:%M}, peak {os.environ.get('TOURNAMENT_IMPL_PEAK', '4')}G")
+        lock = take_slot(text) if take else None
+        try:
+            for c in cands:
+                wd = Path(c["wd"])
+                wd.mkdir(parents=True, exist_ok=True)
+                (wd / "run.tcl").write_text(impl_tcl(WORK / spec["name"] / "synth" / c["synth"] / "post_synth.dcp", c, wd))
                 run_children([{"tcl": wd / "run.tcl", "log": wd / "vivado.log"}], float(os.environ.get("TOURNAMENT_IMPL_PEAK", "4")), 1,
                              avail=lambda: 99.0)
-            finally:
-                if lock:
-                    release_slot(lock, prefix)
+        finally:
+            if lock:
+                release_slot(lock, prefix)
     for c in cands:
         c.update(parse(Path(c["wd"])))
         c["p_pass"] = p_pass(c.get("wns_ns"), stage) if c.get("status") == "ok" else None
@@ -366,6 +371,64 @@ def run(spec: dict[str, Any], stage: str, menu: list[str] | None, k: int, jobs: 
             f.write(json.dumps({"design": spec["name"], "stage": stage, "id": c["id"], "rank": c["rank"], "p_pass": c.get("p_pass"),
                                 "wns_ns": c.get("wns_ns"), "kept": c["kept"], "routed_wns_ns": None}) + "\n")
     return rec
+
+
+PROBE_TCL = '''set_param general.maxThreads 1
+create_project -force probe {wd} -part xc7a100tcsg324-1
+set out [open {res} w]
+set impl [get_runs impl_1]
+set synth [get_runs synth_1]
+puts $out "FLOWS [get_property FLOW $synth] | [get_property FLOW $impl]"
+foreach {{kind run}} [list synth $synth impl $impl] {{
+    foreach s [list_property_value STRATEGY $run] {{
+        if {{[catch {{
+            if {{$kind eq "synth"}} {{ set r [create_run probe_s_[regsub -all {{[^A-Za-z0-9]}} $s _] -flow [get_property FLOW $synth] -strategy $s] }} else {{
+                set r [create_run probe_i_[regsub -all {{[^A-Za-z0-9]}} $s _] -flow [get_property FLOW $impl] -parent_run synth_1 -strategy $s] }}
+            foreach p [list_property $r -regexp {{^STEPS\\..*(ARGS|IS_ENABLED)}}] {{ puts $out "$kind\t$s\t$p\t[get_property $p $r]" }}
+        }} e]}} {{ puts $out "$kind\t$s\tERROR\t$e" }}
+    }}
+}}
+close $out
+'''
+
+
+def probe_strategies() -> Path:
+    """Measure AMD's own -strategy sets (the vendor convention) from Vivado itself: every strategy's step arguments, written to
+    results/178_tournament/strategies_raw.tsv and condensed to vendor_strategies.json (impl directives, used as menu entries)."""
+    wd = WORK / "strategy_probe"
+    wd.mkdir(parents=True, exist_ok=True)
+    raw = ROOT / "results" / "178_tournament" / "strategies_raw.tsv"
+    tcl = wd / "probe.tcl"
+    tcl.write_text(PROBE_TCL.format(wd=_tcl(str(wd / "proj")), res=_tcl(str(raw))))
+    lock = take_slot(f"178: strategy probe (Vivado, a few seconds, no implementation), {datetime.datetime.now():%H:%M}, expected end "
+                     f"{(datetime.datetime.now() + datetime.timedelta(minutes=5)):%H:%M}, peak 2G")
+    try:
+        subprocess.run(_child_cmd(tcl, wd / "vivado.log", 2.0), check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    finally:
+        release_slot(lock, "178")
+    cond: dict[str, Any] = {"impl": {}, "synth": {}}
+    for ln in raw.read_text().splitlines() if raw.exists() else []:
+        f = ln.split("\t")
+        if len(f) != 4:
+            continue
+        kind, strat, prop, val = f
+        e = cond[kind].setdefault(strat, {})
+        m = re.match(r"STEPS\.(\w+)\.(ARGS\.DIRECTIVE|IS_ENABLED)$", prop)
+        if kind == "impl" and m:
+            step, what = m.groups()
+            key = {"OPT_DESIGN": "opt", "PLACE_DESIGN": "place", "PHYS_OPT_DESIGN": "phys", "ROUTE_DESIGN": "route", "POST_ROUTE_PHYS_OPT_DESIGN": "post"}.get(step)
+            if key and what == "ARGS.DIRECTIVE":
+                e[key] = val
+            elif key in ("phys", "post") and what == "IS_ENABLED" and val in ("0", "false"):
+                e[key + "_off"] = True
+        elif kind == "synth":
+            e[prop] = val
+    for st in cond["impl"].values():                       # a disabled phys_opt step has no directive in the candidate
+        for key in ("phys", "post"):
+            if st.pop(key + "_off", False):
+                st.pop(key, None)
+    STRATEGIES.write_text(json.dumps(cond, indent=1, sort_keys=True))
+    return STRATEGIES
 
 
 def score(path: str, routed: dict[str, float]) -> dict[str, Any]:
@@ -396,7 +459,9 @@ def main(argv: list[str] | None = None) -> int:
         p.add_argument("--k", type=int, default=2)
         p.add_argument("--jobs", type=int, default=3, help="children at once under the one slot (max 4)")
         p.add_argument("--from", dest="src", help="impl: the synthesis candidate whose checkpoint to implement")
+        p.add_argument("--tag", default="", help="impl: output directory suffix (several impl runs of one design)")
         p.add_argument("--no-slot", action="store_true", help="the caller already holds a slot (tests, scripted sweeps)")
+    sub.add_parser("strategies", help="probe AMD's own -strategy sets in Vivado")
     sc = sub.add_parser("score")
     sc.add_argument("record")
     sc.add_argument("--routed", action="append", default=[], metavar="ID=WNS")
@@ -404,13 +469,16 @@ def main(argv: list[str] | None = None) -> int:
     if a.cmd == "score":
         print(json.dumps(score(a.record, {k: float(v) for k, v in (x.split("=") for x in a.routed)}), indent=1))
         return 0
+    if a.cmd == "strategies":
+        print(probe_strategies())
+        return 0
     spec = load_spec(a.spec)
     menu = a.menu.split(",") if a.menu else None
     if a.cmd == "plan":
         cs = synth_candidates(spec, menu) if a.stage == "synth" else impl_candidates(menu)
         print(json.dumps({"stage": a.stage, "candidates": cs, "skipped": spec.get("_skipped", [])}, indent=1))
         return 0
-    rec = run(spec, a.stage, menu, a.k, a.jobs, a.src, take=not a.no_slot)
+    rec = run(spec, a.stage, menu, a.k, a.jobs, a.src, take=not a.no_slot, tag=a.tag)
     print(json.dumps({k: rec[k] for k in ("design", "stage", "winner", "default_rank", "wall_s", "cpu_s")}))
     return 0
 
