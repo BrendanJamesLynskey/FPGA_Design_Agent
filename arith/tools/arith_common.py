@@ -16,7 +16,15 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
 ARITH = ROOT / "arith"
-FUNCTIONS = ("adder", "multiplier", "mac", "fp_add", "fp_mul", "fp_fma")
+FUNCTIONS = ("adder", "multiplier", "mac", "exp2", "log2", "sincos", "atan2_mag", "fp_add", "fp_mul", "fp_fma")
+ELEMENTARY = ("exp2", "log2", "sincos", "atan2_mag")        # brief 139d; the first three functions are brief 139a
+FLOAT = ("fp_add", "fp_mul", "fp_fma")                     # brief 139e
+
+
+def brief_of(fn: str) -> str:
+    return "139d" if fn in ELEMENTARY else "139e" if fn in FLOAT else "139a"
+
+
 PARTS = {"a7": "xc7a100tcsg324-1", "k26": "xck26-sfvc784-2LV-c"}      # the two parts of the brief: Artix-7 (xc7a100t) and Kria K26 (xck26)
 
 
@@ -69,7 +77,7 @@ def run_point(fn: str, variant: str, params: dict, mode: str, rtl_dir: Path | No
     tests = ARITH / fn / "tests"
     tag = name or f"{fn}_{variant}_{mode}{'_lat' + str(lat) if lat is not None else ''}_" + "_".join(f"{k}{x}" for k, x in sorted(p.items()))
     env = {"PYTHONPATH": str(ROOT), "ARITH_PARAMS": json.dumps(p), "ARITH_LAT": str(latency_of(spec, variant, p) if lat is None else lat),
-           "ARITH_SEED": str(seed), "ARITH_N": str(n)}
+           "ARITH_SEED": str(seed), "ARITH_N": str(n), "ARITH_VARIANT": variant}
     cocotb_run.run(tag, v["module"], files, f"{fn}_cocotb", tests, parameters=p, testcase=mode, extra_env=env, build_root=build_root)
 
 

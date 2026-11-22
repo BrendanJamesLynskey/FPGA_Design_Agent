@@ -182,10 +182,10 @@ def check_formal_job(fn: str, name: str) -> None:
 
 
 # ---- the packaged harness -------------------------------------------------------------------------------------
-def run_harness(fn: str, rtl: "Path | list[Path]", top: str, params: dict, lat: int, mode: str, extra: list[str] | None = None, n: int = 800) -> subprocess.CompletedProcess:
+def run_harness(fn: str, rtl: "Path | list[Path]", top: str, params: dict, lat: int, mode: str, extra: list[str] | None = None, n: int = 800, variant: str = "") -> subprocess.CompletedProcess:
     h = ac.ARITH / fn / "harness"
     cmd = [sys.executable, str(h / "run_harness.py"), "--rtl", *[str(x) for x in (rtl if isinstance(rtl, list) else [rtl])], "--top", top, "--params", json.dumps(params), "--latency", str(lat), "--mode", mode,
-           "--n", str(n)] + (extra or [])
+           "--n", str(n)] + (["--variant", variant] if variant and fn in ac.ELEMENTARY else []) + (extra or [])
     return subprocess.run(cmd, capture_output=True, text=True, cwd=h)
 
 
@@ -203,7 +203,7 @@ def check_harness_passes(fn: str, variant: str, params: dict, mode: str) -> None
     spec = ac.load_spec(fn)
     vd = spec["variants"][variant]
     p = ac.merged_params(spec, variant, params)
-    r = run_harness(fn, ac.rtl_files(fn, vd), vd["module"], p, ac.latency_of(spec, variant, p), mode, ["--checker"])
+    r = run_harness(fn, ac.rtl_files(fn, vd), vd["module"], p, ac.latency_of(spec, variant, p), mode, ["--checker"], variant=variant)
     assert r.returncode == 0, r.stdout[-700:] + r.stderr[-300:]
     if mode == "randomised":
         assert "bins met" in r.stdout and "NOT met" not in r.stdout, r.stdout[-500:]
@@ -229,7 +229,7 @@ def check_harness_catches_a_fault(fn: str, mutant: str) -> None:
                 x.write_text(src.replace(m["old"], m["new"]))
             new.append(x)
         for extra in ([], ["--checker"]):
-            r = run_harness(fn, new, vd["module"], p, ac.latency_of(spec, m["variant"], p), run0["mode"], extra)
+            r = run_harness(fn, new, vd["module"], p, ac.latency_of(spec, m["variant"], p), run0["mode"], extra, variant=m["variant"])
             assert r.returncode == 1 and "FAIL" in r.stdout, r.stdout[-500:]
 
 
@@ -241,7 +241,35 @@ def check_harness_files(fn: str) -> None:
     for f in ("assertions.sv", "chk_top.sv", "coverage.yaml", "README.md", "run_harness.py"):
         assert (h / f).is_file()
     # the checker is a simulation checker (initial values, a display): it must parse and elaborate in Verilator; warnings are not a failure
-    top = {"adder": "adder_checker", "multiplier": "mult_checker", "mac": "mac_checker", "fp_add": "fp_add_checker", "fp_mul": "fp_mul_checker", "fp_fma": "fp_fma_checker"}[fn]
+    top = {"adder": "adder_checker", "multiplier": "mult_checker", "mac": "mac_checker", "exp2": "exp2_checker", "log2": "log2_checker", "sincos": "sincos_checker",
+           "atan2_mag": "atan2_checker", "fp_add": "fp_add_checker", "fp_mul": "fp_mul_checker", "fp_fma": "fp_fma_checker"}[fn]
     r = subprocess.run([ac.tool("verilator"), "--lint-only", "-Wno-fatal", "-Wno-lint", "-Wno-style", "--top-module", top, str(h / "assertions.sv")] + [str(x) for x in sorted(h.glob("mac_ref.sv")) + sorted(h.glob("fpx_ref.sv"))],
                        capture_output=True, text=True)
     assert r.returncode == 0 and "%Error" not in r.stderr, r.stderr[-600:]
+
+
+# ---- accuracy (the elementary functions of brief 139d) ------------------------------------------------------------------------------------
+def accuracy_points(fn: str) -> list:
+    spec = ac.load_spec(fn)
+    return [pytest.param(v, pt["params"], pt["bound_ulp"], id=f"{v}-" + "-".join(f"{k}{x}" for k, x in pt["params"].items())) for v, vd in spec["variants"].items() for pt in vd["accuracy_points"]]
+
+
+def check_accuracy(fn: str, variant: str, params: dict, bound: dict, slack: float = 0.06) -> None:
+    """The stated error bound at a listed point is true (the model's error over every input is at most the bound) and not loose (within `slack` of the measured maximum)."""
+    import importlib
+    model = importlib.import_module(f"arith.{fn}.model")
+    spec = ac.load_spec(fn)
+    p = ac.merged_params(spec, variant, params)
+    got = model.max_error(variant, p)
+    assert set(got) == set(bound), (got, bound)
+    for k, v in bound.items():
+        assert got[k] <= v, f"{fn} {variant} {p}: measured error {got[k]:.4f} exceeds the stated bound {v} ({k})"
+        assert v - got[k] < slack, f"{fn} {variant} {p}: the stated bound {v} is loose: measured {got[k]:.4f} ({k})"
+
+
+def check_generated_rtl_is_current(fn: str) -> None:
+    """The committed RTL of the generated variants is what arith/tools/gen_rtl.py writes now (so the tables in it are the model's)."""
+    from arith.tools import gen_rtl
+    for p, t in gen_rtl.outputs().items():
+        if p.parent.parent.name == fn:
+            assert p.exists() and p.read_text() == t, f"{p.relative_to(ac.ROOT)} is out of date: run python -m arith.tools.gen_rtl"
