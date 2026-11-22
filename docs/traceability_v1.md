@@ -121,7 +121,33 @@ writes today): a requirement no item traces to, an orphan check (an item tracing
 method or kind, a `board_measurement` without a valid instrument, a performance requirement without quantity, unit, op, bound and condition, a `checks` file that does
 not exist. Staleness is reported, not failed.
 
+## Fresh evidence (brief 143d)
+
+The matrices read committed records, and a record that was true when it was made can be wrong for today's tree without the pins noticing (evidence generated from an older
+tree and committed later looks fresh). [flow/fresh_evidence.py](../flow/fresh_evidence.py) re-runs the evidence from the current tree and compares:
+
+- `python -m flow.fresh_evidence run JOB --out DIR` writes fresh records into DIR at the same repository paths as the committed ones (`DIR/results/b119/bench_sim.json` is the fresh
+  copy of `results/b119/bench_sim.json`) and a manifest per job (command, exit code, seconds, commit, tool versions, output hashes). Nothing in the tree is overwritten.
+  `python -m flow.fresh_evidence list` shows the jobs. Tier `github` fits a free runner; tier `local` needs xsim, the full formal set or Vivado.
+- The nightly workflow [fresh-evidence.yml](../.github/workflows/fresh-evidence.yml) runs the `github` jobs in parallel (b119 tests and benches, the 73 b119 seeded faults, the b96 cocotb
+  benches in two shards, the reduced formal set and the pyuvm bench, the Lean build), keeps the fresh records as an artefact for 30 days, and compares. A difference fails the scheduled run and opens or
+  updates an issue labelled `fresh-evidence` in this repository; the next agreeing run closes it. A pull request that touches the workflow runs it and only warns.
+- [tools/fresh_evidence_local.sh](../tools/fresh_evidence_local.sh) runs the `local` jobs on the owner's PC (xsim UVM with the whole b96 test directory, the full SymbiYosys set, the b119
+  out-of-context Vivado build) under a heavy slot and a memory cap and writes the same records and report. The systemd user timer for it, [tools/systemd/](../tools/systemd/), is a
+  proposal: it is not enabled.
+- `python -m flow.trace_v1 show --fresh DIR` and `write --fresh DIR` read the fresh records. An item whose committed record disagrees with the fresh run gets the distinct mark
+  **committed record differs from fresh run** (its verdict is still the committed record's; the mark is a second signal, not a fifth status), and its requirement's state cell counts the marked items.
+  `write --fresh` puts the marked matrices in `DIR/matrices`, never in the tree. `python -m flow.trace_v1 fresh --fresh DIR` prints the comparison and exits 1 on a difference.
+
+What counts as a difference: for a JUnit record, a test present in both with a different outcome, or a test in the fresh run that the committed record lacks (the record is out of date);
+for a JSON record, any value that differs once seconds, the tool banner and time stamps are removed; for the Lean record, build success, axioms and tier per theorem, statement and definition
+hashes, file hashes and the toolchain. A test the fresh run skipped or did not run (an xsim test on a runner) is *not re-run here*, never a difference. Board records, post-route digests and
+anything else a runner cannot regenerate show *not re-run* and keep their committed verdict.
+
 ## Limits
+
+A fresh run shows that the committed record is what the current tree produces; it does not show the tests are the right tests. Records that need xsim, the full formal set or Vivado are only
+re-run by the local script, when the owner or planner runs it.
 
 Staleness is a lower bound: the pin records the checked files as of the evidence's commit, so evidence generated from an older tree and committed later looks fresh.
 A requirement is only as good as its text; the matrix shows that checks exist and pass, not that the requirement is the right one, which is the human's check.
