@@ -78,7 +78,7 @@ M_P1: dict[str, list[tuple]] = {
         ("filter_swapped_m3", "os", "connection", None, ".br(hre), .bi(him), .pr(pr), .pi(pi));\n        end else begin : g_m4", ".br(him), .bi(hre), .pr(pr), .pi(pi));\n        end else begin : g_m4", "the three-multiplier product has the filter's real and imaginary parts exchanged"),
         ("filter_halves_read_swapped", "os", "connection", None, "hre = hrd[WH-1:0];", "hre = hrd[2*WH-1:WH];", "the real part of the filter word is read from the imaginary half"),
         ("spectrum_real_swapped", "os", "connection", None, "dr <= fre;", "dr <= fim;", "the spectral product takes the imaginary part as the real one"),
-        ("drop_count_off", "os", "constant", None, "keep      = iv && (opos >= LOGN'(L - 1));", "keep      = iv && (opos >= LOGN'(L));", "one valid output too many is dropped"),
+        ("drop_count_off", "os", "constant", None, "keep      = iv && (int'(opos) >= L - 1);", "keep      = iv && (int'(opos) >= L);", "one valid output too many is dropped"),
         ("sat_real_only", "os", "connection", None, "sat_pulse = keep && (sat_r || sat_i);", "sat_pulse = keep && sat_r;", "an imaginary part that saturates is not flagged"),
         ("clamp_low_to_high", "os", "constant", None, "if (v < -WI'(1 <<< (W - 1))) return W'(1 <<< (W - 1));", "if (v < -WI'(1 <<< (W - 1))) return W'((1 <<< (W - 1)) - 1);", "a part below the range saturates to the positive end"),
         ("imag_from_real", "os", "connection", None, "ci        = clampw(iim);", "ci        = clampw(ire);", "the imaginary output part is the real one"),

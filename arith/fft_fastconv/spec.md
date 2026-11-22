@@ -72,7 +72,7 @@ Each variant is one SystemVerilog file under `rtl/`, with the same ports. Parame
 
 | Variant | Module | Latency (clocks) | Trade-off |
 |---|---|---|---|
-| `os` | `fft_fastconv_os` ([rtl/fft_fastconv_os.sv](rtl/fft_fastconv_os.sv)) | `2*(2*(1<<LOGN)+LOGN+((LOGN-1)//2)*(TWSTAGES+MULSTAGES+1))+MULSTAGES+L+7` | overlap-save with one forward and one inverse streaming FFT and one spectral multiplier: the cost per output sample falls as N log N / B against L multiplies for the direct form, so it pays for long filters (about L > 100) at sample rates below the clock; it needs the ring and filter memories (N words), an output FIFO of 4 N words and the FFTs' reorder buffers and about 40 DSP blocks, and has a block-sized latency |
+| `os` | `fft_fastconv_os` ([rtl/fft_fastconv_os.sv](rtl/fft_fastconv_os.sv)) | `2*(2*(1<<LOGN)+LOGN+((LOGN-1)//2)*(TWSTAGES+MULSTAGES+1))+MULSTAGES+L+7` | overlap-save with one forward and one inverse streaming FFT and one spectral multiplier: the cost per output sample falls as N log N / B against L multiplies for the direct form, so it pays for long filters (about L > 100) at sample rates below the clock; it needs the ring and filter memories (N words), an output FIFO of 4 N words and the FFTs' reorder buffers and a predicted 80 DSP blocks at N = 1024 (expected_primitives), and has a block-sized latency |
 
 ### Intended primitive use
 

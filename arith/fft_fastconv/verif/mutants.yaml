@@ -20,7 +20,7 @@ mutants:
 - {class: connection, name: filter_swapped_m3, new: ".br(him), .bi(hre), .pr(pr), .pi(pi));\n        end else begin : g_m4", old: ".br(hre), .bi(him), .pr(pr), .pi(pi));\n        end else begin : g_m4", variant: os, why: the three-multiplier product has the filter's real and imaginary parts exchanged}
 - {class: connection, name: filter_halves_read_swapped, new: 'hre = hrd[2*WH-1:WH];', old: 'hre = hrd[WH-1:0];', variant: os, why: the real part of the filter word is read from the imaginary half}
 - {class: connection, name: spectrum_real_swapped, new: dr <= fim;, old: dr <= fre;, variant: os, why: the spectral product takes the imaginary part as the real one}
-- {class: constant, name: drop_count_off, new: keep      = iv && (opos >= LOGN'(L));, old: keep      = iv && (opos >= LOGN'(L - 1));, variant: os, why: one valid output too many is dropped}
+- {class: constant, name: drop_count_off, new: keep      = iv && (int'(opos) >= L);, old: keep      = iv && (int'(opos) >= L - 1);, variant: os, why: one valid output too many is dropped}
 - {class: connection, name: sat_real_only, new: sat_pulse = keep && sat_r;, old: sat_pulse = keep && (sat_r || sat_i);, variant: os, why: an imaginary part that saturates is not flagged}
 - {class: constant, name: clamp_low_to_high, new: if (v < -WI'(1 <<< (W - 1))) return W'((1 <<< (W - 1)) - 1);, old: if (v < -WI'(1 <<< (W - 1))) return W'(1 <<< (W - 1));, variant: os, why: a part below the range saturates to the positive end}
 - {class: connection, name: imag_from_real, new: ci        = clampw(ire);, old: ci        = clampw(iim);, variant: os, why: the imaginary output part is the real one}

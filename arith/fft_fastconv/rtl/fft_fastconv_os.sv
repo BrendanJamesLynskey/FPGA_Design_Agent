@@ -272,7 +272,7 @@ module fft_fastconv_os #(
     endfunction
     always_comb begin
         opos      = is_ ? '0 : ocnt;
-        keep      = iv && (opos >= LOGN'(L - 1));
+        keep      = iv && (int'(opos) >= L - 1);
         wen       = keep;
         cr        = clampw(ire);
         ci        = clampw(iim);
