@@ -37,3 +37,26 @@ def test_rate_alone_and_after_the_stages_agree() -> None:
 def test_rate_still_fails_when_the_player_is_short() -> None:
     r = S.stage_rate(_rate_runner(before=2734, short=1), passes=100)  # one frame fewer played AND forwarded: the criterion is unchanged
     assert not r["pass"] and any("frames played 1899 of 1900" in x for x in r["reasons"]), r
+
+
+def test_play_keeps_the_baseline_across_memory_chunks() -> None:
+    """A session longer than the replay memory is played in several chunks, each its own plan; the baseline is read in the first chunk's plan and the counters in the last one's (this was a KeyError in the first
+    version of the fix, found by the continuous simulation)."""
+    from designs.b96_kr260_10g.rm_gp_itch.host import itch_host as H
+    cfg = S.stage_cfg()
+    frames, _, _ = S.session_frames(cfg, 101, 60, gap=150)
+    chunks = [len(c) for c in H.split_frames_for_memory(frames)]
+    assert len(chunks) > 1 and sum(chunks) == len(frames)
+    state = {"rp": 2734, "plan": 0}
+
+    def execute(plan):
+        res = {tag: 0 for tag in plan.reads}
+        if "base.rp.frames" in plan.reads:
+            res["base.rp.frames"] = state["rp"]
+        state["rp"] += chunks[state["plan"]]
+        state["plan"] += 1
+        if "rp.frames" in plan.reads:
+            res["rp.frames"] = state["rp"]
+        return res
+    res = S.play(S.Runner(execute=execute, sim=False, link_ready=True), cfg, frames, read_cap=False)
+    assert S.frames_played(res) == len(frames) and res["base.rp.frames"] == 2734

@@ -47,6 +47,7 @@ class Runner:
 def play(run: Runner, cfg: Cfg, frames: list[tuple], *, spec=False, strict=False, first=True, read_cap=True, prefix="", cap_slots=8) -> dict:
     """Configure (when `first`), then load and play the frames in chunks that fit the replay memory, and read the counters and the capture ring after the last chunk."""
     res = {}
+    base = None
     chunks = H.split_frames_for_memory(frames)
     for i, ch in enumerate(chunks):
         p = B.Plan()
@@ -63,7 +64,11 @@ def play(run: Runner, cfg: Cfg, frames: list[tuple], *, spec=False, strict=False
             if read_cap:
                 B.read_capture(p, slots=cap_slots, prefix=prefix)
         res = run.execute(p)
+        if i == 0:
+            base = res                          # the player's counter before the first chunk (the plan of chunk 0 read it); the result of the LAST chunk is the one returned
         run.link_ready = True
+    if first:
+        res[prefix + "base.rp.frames"] = base[prefix + "base.rp.frames"]
     return res
 
 
