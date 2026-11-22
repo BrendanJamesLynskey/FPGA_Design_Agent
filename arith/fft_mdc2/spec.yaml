@@ -39,7 +39,7 @@ parameters:
   TWSTAGES: {values: [1, 2], text: "twiddle ROM latency"}
   MULSTAGES: {min: 0, text: "register ranks in each complex multiplier, 0 to 3"}
 signedness: "all data ports are two's complement"
-exactness: "bit-exact against the model (arith/fft_mdc2/model.py: two N/2-point sdf models and the combining stage) for every frame within the overflow guarantee; against the real DFT the error is the rounding noise of the sub-pipelines and the combining stage, measured against NumPy in arith/fft_mdc2/tests/test_fft_mdc2_model.py (scaled: worst error at most 4 LSB for N up to 1024, unscaled SQNR at least 80 dB at TW >= 16)"
+exactness: "bit-exact against the model (arith/fft_mdc2/model.py: two N/2-point sdf models and the combining stage) for every frame within the overflow guarantee; against the real DFT the error is the rounding noise of the sub-pipelines and the combining stage, measured against NumPy in arith/fft_mdc2/tests/test_fft_mdc2_model.py (TW = 18, W = 16, N = 16 to 1024, forward and inverse: scaled worst error below 5 LSB, unscaled worst error below 2 * sqrt(N) + 6 LSB of the W + LOGN bit word)"
 latency_definition: "clocks from the clock in which in_sof is asserted to the clock in which out_sof is asserted; throughput is two samples per clock"
 contract:
   protocol: "streaming frames of N/2 pairs, no back-pressure: in_valid high for N/2 consecutive clocks per frame (in_sof on the first), the next frame after no gap or at least N/8 idle clocks, in_ready always 1, the consumer takes every output pair in the clock it is presented"

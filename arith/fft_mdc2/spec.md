@@ -15,7 +15,7 @@ The N = 2**LOGN point discrete Fourier transform of frames of complex samples (s
 
 Signedness: all data ports are two's complement.
 
-Exactness: bit-exact against the model (arith/fft_mdc2/model.py: two N/2-point sdf models and the combining stage) for every frame within the overflow guarantee; against the real DFT the error is the rounding noise of the sub-pipelines and the combining stage, measured against NumPy in arith/fft_mdc2/tests/test_fft_mdc2_model.py (scaled: worst error at most 4 LSB for N up to 1024, unscaled SQNR at least 80 dB at TW >= 16).
+Exactness: bit-exact against the model (arith/fft_mdc2/model.py: two N/2-point sdf models and the combining stage) for every frame within the overflow guarantee; against the real DFT the error is the rounding noise of the sub-pipelines and the combining stage, measured against NumPy in arith/fft_mdc2/tests/test_fft_mdc2_model.py (TW = 18, W = 16, N = 16 to 1024, forward and inverse: scaled worst error below 5 LSB, unscaled worst error below 2 * sqrt(N) + 6 LSB of the W + LOGN bit word).
 
 Latency: clocks from the clock in which in_sof is asserted to the clock in which out_sof is asserted; throughput is two samples per clock.
 

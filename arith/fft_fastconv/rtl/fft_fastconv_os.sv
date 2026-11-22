@@ -5,15 +5,15 @@
 // B = N - L + 1 new samples make a block; the block goes through a forward FFT (arith/fft sdf, unscaled, natural order), a product with Hq (fft_cmul, exact, then a rounded shift of FH bits) and an inverse FFT
 // (scaled by 1/N, so the result is the circular convolution); the first L - 1 outputs of the block are the wrap-around and are dropped, the other B are the filter output.
 // Control: a ring of N input words (the last L - 1 samples stay in it from block to block), a four-state machine (clear, collect B samples, wait for output room, feed the ring to the forward FFT in N clocks),
-// and an output FIFO of N words with a credit counter: a block starts only when the FIFO has room for its B results, so the FFT pipelines, which cannot be stalled, never lose a word; m_axis honours
-// tready fully. s_axis_tready is high only while collecting (it is low during the clear after reset and while a block is fed to the FFT); the average rate is B samples per B + N clocks.
+// and an output FIFO of 4 N words with a credit counter: a block starts only when the FIFO has room for its B results, so the FFT pipelines, which cannot be stalled, never lose a word (4 N words are the results of
+// the up to three blocks that are in flight at once, since a block's results arrive about 4 N clocks after it starts, plus one block's room to start); m_axis honours tready fully. s_axis_tready is high only while collecting (it is low during the clear after reset and while a block is fed to the FFT); the average rate is B samples per B + N + 1 clocks while the sink keeps up (a sink that does not drain 4 N words in about 4 N clocks throttles it).
 // Filter: the first N clocks after reset the ring and the filter memory are cleared (s_axis_tready low, STATUS.BUSY 1); until coefficients are loaded the filter is zero and the output is zero.
 // Gain: the inverse FFT's input is WI = W + LOGN + GB bits wide; the filter's absolute gain (sum of |h|) must not exceed 2**GB or the transform overflows and wraps; outputs beyond W bits saturate (STATUS.SAT).
 // Latency (last input beat of a block to the first output beat of that block, empty pipeline, sink ready, room available): 2 * (2 * N + LOGN + ((LOGN - 1) // 2) * LMUL) + MULSTAGES + L + 7, LMUL = TWSTAGES + MULSTAGES + 1.
 //
 // Intended primitive use (stated before any Vivado run; not yet measured): two sdf FFT pipelines (forward on W bit words growing to W + LOGN, inverse on W + LOGN + GB bit words, each with its natural-order
 // reorder buffer of 2 x N words), one complex multiplier (3 or 4 DSP48E1 for the spectral product, WF x WH operands: with WH = 24 and WF = W + LOGN = 26 bits each real multiplier needs 2 x 2 DSP blocks, 16 in all),
-// three RAMs of N words (the ring 2W bits, the filter memory 2 WH bits, the output FIFO 2W bits), and the AXI4-Lite register file (about 70 flip-flops).
+// three RAMs (the ring N x 2W bits, the filter memory N x 2 WH bits, the output FIFO 4 N x 2W bits), and the AXI4-Lite register file (about 70 flip-flops).
 module fft_fastconv_os #(
     parameter int LOGN      = 8,
     parameter int L         = 33,
@@ -58,6 +58,7 @@ module fft_fastconv_os #(
     localparam int WF   = W + LOGN;                 // forward FFT output word
     localparam int WI   = WF + GB;                  // inverse FFT word
     localparam int WP   = WF + WH + 1;              // exact complex product
+    localparam int OL   = LOGN + 2;                 // the output FIFO holds 2**OL = 4 N words: the results of the blocks that are in flight at once (see the header)
 
 `ifndef SYNTHESIS
     initial begin
@@ -75,7 +76,7 @@ module fft_fastconv_os #(
     logic [LOGN-1:0] wr_ptr;                        // ring write pointer; at the end of a collect it is the start of the next block
     logic [LOGN:0]   ccnt;                          // samples collected in this block
     logic [LOGN:0]   fcnt;                          // words fed to the forward FFT
-    logic [LOGN:0]   credit;                        // free output slots not yet reserved
+    logic [OL:0]     credit;                        // free output FIFO slots not yet reserved
     logic [31:0]     blocks;
     logic [3:0]      pending;                       // blocks fed whose spectral product has not finished reading the filter memory
     logic            feed_start, mul_done, pop;
@@ -89,7 +90,7 @@ module fft_fastconv_os #(
         s_axis_tready = (state == S_COLLECT);
         in_xfer       = s_axis_tvalid && s_axis_tready;
         ra            = wr_ptr + fcnt[LOGN-1:0];
-        feed_start    = (state == S_WAIT) && (credit >= (LOGN + 1)'(B));
+        feed_start    = (state == S_WAIT) && (credit >= (OL + 1)'(B));
     end
     always_ff @(posedge clk) begin
         if (state == S_INIT) ring[icnt[LOGN-1:0]] <= '0;
@@ -285,9 +286,9 @@ module fft_fastconv_os #(
     end
 
     // ---- output FIFO: N words in a RAM with a registered read, a prefetch register and an output register; credit counter reserves room per block ----------------------
-    logic [2*W-1:0]  fmem [N];
-    logic [LOGN-1:0] wp, rp;
-    logic [LOGN:0]   cnt_ram;
+    logic [2*W-1:0]  fmem [1 << OL];
+    logic [OL-1:0]   wp, rp;
+    logic [OL:0]     cnt_ram;
     logic [2*W-1:0]  rdq, od;
     logic            have, ov, adv2, can_load, load;
     always_comb begin
@@ -310,14 +311,14 @@ module fft_fastconv_os #(
             cnt_ram <= '0;
             have    <= 1'b0;
             ov      <= 1'b0;
-            credit  <= (LOGN + 1)'(N);
+            credit  <= (OL + 1)'(1 << OL);
         end else begin
             if (wen) wp <= wp + 1'b1;
             if (load) rp <= rp + 1'b1;
-            cnt_ram <= cnt_ram + (LOGN + 1)'(wen) - (LOGN + 1)'(load);
+            cnt_ram <= cnt_ram + (OL + 1)'(wen) - (OL + 1)'(load);
             if (can_load) have <= load;
             if (adv2) ov <= have;
-            credit <= credit - ((feed_start) ? (LOGN + 1)'(B) : '0) + (LOGN + 1)'(pop);
+            credit <= credit - ((feed_start) ? (OL + 1)'(B) : '0) + (OL + 1)'(pop);
         end
     end
 

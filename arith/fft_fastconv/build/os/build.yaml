@@ -69,6 +69,6 @@ latency_clocks: 2*(2*(1<<LOGN)+LOGN+((LOGN-1)//2)*(TWSTAGES+MULSTAGES+1))+MULSTA
 expected_primitives:
   a7: 'N = 1024, L = 257, W = 16, WH = 24, GB = 1, CMUL 4, MULSTAGES 3: the forward FFT''s multipliers see up to 16 + 10 = 26-bit operands (2 DSP48E1 per real multiplier, about 32 DSP48E1 for 4 complex
     multipliers) and the inverse FFT''s up to 27 bits (about 32), the spectral product a 26 x 24 multiplier x 4 (16 DSP48E1): about 80 DSP48E1 in all (the K26''s DSP48E2 27 x 18 needs 2 x 2 blocks per real
-    multiplier above 18 bits as well: about the same); RAMs: ring 1024 x 32 bits, filter 1024 x 48 bits, FIFO 1024 x 32 bits, the two FFTs'' delay lines (about 1023 words of up to 54 bits) and reorder buffers
-    (2 x 2048 words of 26 and 54 bits): about 90 RAMB18 in all; 6 to 10 k LUT; expected Fmax 200 to 300 MHz (the 26 x 24 multipliers are the critical path)'
+    multiplier above 18 bits as well: about the same); RAMs: ring 1024 x 32 bits, filter 1024 x 48 bits, FIFO 4096 x 32 bits, the two FFTs'' delay lines (about 1023 words of up to 54 bits) and reorder buffers
+    (2 x 2048 words of 26 and 54 bits): about 100 RAMB18 in all; 6 to 10 k LUT; expected Fmax 200 to 300 MHz (the 26 x 24 multipliers are the critical path)'
   k26: as a7 with DSP48E2; URAM for the larger memories; Fmax 350 to 500 MHz expected

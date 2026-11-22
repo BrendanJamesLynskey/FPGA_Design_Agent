@@ -5,7 +5,8 @@ either order, random delays, a response channel that waits), and compares the ou
   directed    a small point: the register defaults, a zero filter (zero output), the filter loaded through the registers, a stream through it; the LATENCY probe (the last input beat of the first block to
               the first output beat, sink always ready) must equal spec.yaml's formula exactly;
   randomised  random taps and a random stream with random stalls on both sides and random register traffic while the stream runs (a commit while BUSY is refused with SLVERR and sets DROPPED), then a
-              new filter after the stream drains and more samples (the history carries over); the latency probe first;
+              new filter after the stream drains and more samples (the history carries over); the latency probe first (three blocks with no stalls: the latency of the first, and the period B + N + 1
+              of the blocks);
   axil        the register file alone: every access type of the register map in the contract (read-only and unmapped addresses, partial strobes, write-1-to-clear, auto-increment, the address-then-data and
               data-then-address orders, a slow bready and rready), with the AXI4-Lite protocol checker silent;
   saturate    a filter of gain 2**GB and a loud input: the outputs saturate exactly as the model says and STATUS.SAT is set, then cleared by writing 1.
@@ -288,13 +289,30 @@ async def randomised(dut):
     env = Env(dut, p, rng)
     env.start()
     st = model.Stream(p)
-    x0 = samples(p, rng, d["B"])
+    x0 = samples(p, rng, 3 * d["B"])                                      # three blocks, source always valid and sink always ready: latency of the first and the block period
     env.push(x0)
-    await env.drain(d["B"])
+    await env.drain(3 * d["B"])
     got = env.out_t[0] - env.in_t[d["B"] - 1]
     assert got == lat, f"latency {got} clocks, spec.yaml says {lat}"
+    period = (env.in_t[d["B"]] - env.in_t[0], env.in_t[2 * d["B"]] - env.in_t[d["B"]])
+    assert period == (d["B"] + d["N"] + 1,) * 2, f"block period {period} clocks, spec.yaml says B + N + 1 = {d['B'] + d['N'] + 1}"
     st.feed(hq, x0)
     assert env.out == st.out
+    # a sink that takes nothing: the input must stop once the output FIFO (4 N words) is committed, nothing is lost or overwritten, and every sample comes out when the sink wakes up
+    kb = (4 * d["N"]) // d["B"] + 3
+    x_st = samples(p, rng, kb * d["B"])
+    s0 = env.si
+    env.p_ready = 0.0
+    env.push(x_st)
+    for _ in range(kb * (d["B"] + d["N"] + 1) + 4 * d["N"] + 200):
+        await FallingEdge(dut.clk)
+    taken = env.si - s0
+    assert taken <= ((4 * d["N"]) // d["B"] + 1) * d["B"], f"{taken} samples accepted while the sink took nothing: more than the output FIFO can hold results for"
+    assert taken >= ((4 * d["N"]) // d["B"]) * d["B"] - d["B"], f"only {taken} samples accepted while the sink took nothing"
+    env.p_ready = 1.0
+    st.feed(hq, x_st)
+    await env.drain(len(st.out))
+    assert env.out == st.out, "after a long stall of the sink the output differs from the model (a result was lost or overwritten)"
     # a longer stream with stalls on both sides and register traffic in parallel
     env.p_valid, env.p_ready = rng.choice((1.0, 0.5, 0.2)), rng.choice((1.0, 0.5, 0.15))
     k = max(3, int(os.environ["ARITH_N"]) // (d["N"] * 2))

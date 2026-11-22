@@ -217,13 +217,14 @@ output cannot stall (both stated, and flagged by the simulation checkers). No re
 AXI4-Stream samples in, AXI4-Stream filtered samples out (full back-pressure), the filter spectrum (N complex words of WH bits) loaded over AXI4-Lite (eight 32-bit registers; the register map and every response
 rule are in the spec's contract and tested). Data path: a ring buffer holds the last N samples (so the L - 1 overlap needs no copy); a four-state controller (clear, collect B = N - L + 1 samples, wait for output
 room, feed the ring to the forward transform) forms blocks; forward `sdf` unscaled (W + LOGN bits, natural order), the exact complex product with the filter word and a rounded shift of FH bits, inverse `sdf`
-scaled by 1/N on W + LOGN + GB bit words (GB: headroom bits for the filter's absolute gain), the first L - 1 outputs dropped, the rest saturated to W bits and stored in a FIFO of N words behind a credit counter
-(a block starts only when its B results fit, because the pipelines cannot stall). Overlap-add is not built (it needs an output accumulator RAM). The output is bit-exact against `arith/fft_fastconv/model.py`
+scaled by 1/N on W + LOGN + GB bit words (GB: headroom bits for the filter's absolute gain), the first L - 1 outputs dropped, the rest saturated to W bits and stored in a FIFO of 4N words behind a credit counter
+(a block starts only when its B results fit, because the pipelines cannot stall; 4N words hold the results of the up to three blocks that are in flight at once, since a block's results arrive about 4N clocks
+after it starts: a first version with N words throttled the input whenever B was above N/2, found while checking the throughput formula). Overlap-add is not built (it needs an output accumulator RAM). The output is bit-exact against `arith/fft_fastconv/model.py`
 for streams with random stalls on both sides, filter changes between blocks and random register traffic; the latency from the last input beat of a block to its first output is
 2 * (2N + LOGN + ((LOGN - 1) // 2) * LMUL) + MULSTAGES + L + 7 (checked exactly). Against `numpy.convolve` of the unquantised taps and the same samples (W = 16, TW = 18, WH = 24, FH = 14, GB = 1;
 `arith/fft_fastconv/verif/results/accuracy.json`, 16 points, N = 64 to 4096, L from N/8 + 1 to 3N/4 + 1): worst error 3.6 LSB, rms about 1 LSB, SQNR at least 44.5 dB (the minimum is a small-gain random filter,
 whose output is small).
-Throughput is B / (B + N) samples per clock (the input pauses N + 1 clocks per block): 0.47 samples per clock at N = 1024, L = 129. The coefficient memory can be written only while STATUS.BUSY is 0; with a continuous
+Throughput is B / (B + N + 1) samples per clock (the input pauses N + 1 clocks per block; the bench measures the block period B + N + 1 exactly): 0.47 samples per clock at N = 1024, L = 129. The coefficient memory can be written only while STATUS.BUSY is 0; with a continuous
 stream BUSY is nearly always 1, so a filter is changed with the input stopped. The AXI4-Lite register file is also checked by bounded model checks (SymbiYosys, `arith/fft_fastconv/formal`).
 
 ### 9.5 What phase 1 did not do

@@ -66,7 +66,8 @@ M_P1: dict[str, list[tuple]] = {
     "fft_fastconv": [
         ("feed_start_address", "os", "connection", None, "ra            = wr_ptr + fcnt[LOGN-1:0];", "ra            = fcnt[LOGN-1:0];", "the block is fed from ring position 0, not from its start"),
         ("collect_one_more", "os", "constant", None, "if (ccnt == (LOGN + 1)'(B - 1)) begin", "if (ccnt == (LOGN + 1)'(B)) begin", "a block collects B + 1 samples"),
-        ("credit_ignored", "os", "connection", None, "feed_start    = (state == S_WAIT) && (credit >= (LOGN + 1)'(B));", "feed_start    = (state == S_WAIT);", "a block starts although the output FIFO may lack room for its results"),
+        ("credit_ignored", "os", "connection", None, "feed_start    = (state == S_WAIT) && (credit >= (OL + 1)'(B));", "feed_start    = (state == S_WAIT);", "a block starts although the output FIFO may lack room for its results"),
+        ("credit_n_words", "os", "constant", None, "credit  <= (OL + 1)'(1 << OL);", "credit  <= (OL + 1)'(1 << LOGN);", "only N words of output room are credited: a block with B above N/2 waits for the previous block's results to drain, so the block period is no longer B + N + 1"),
         ("sof_always", "os", "connection", None, "sof_r <= (fcnt == '0);", "sof_r <= 1'b1;", "every fed word is a start of frame"),
         ("ring_write_swapped", "os", "connection", None, "else if (in_xfer) ring[wr_ptr] <= s_axis_tdata;", "else if (in_xfer) ring[wr_ptr] <= {s_axis_tdata[W-1:0], s_axis_tdata[2*W-1:W]};", "real and imaginary parts exchanged on the way into the ring"),
         ("inverse_is_forward", "os", "connection", None, ".in_inverse(1'b1), .in_re(xr)", ".in_inverse(1'b0), .in_re(xr)", "the second transform is a forward one"),

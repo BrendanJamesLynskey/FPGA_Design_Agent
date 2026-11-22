@@ -8,7 +8,8 @@
 mutants:
 - {class: connection, name: feed_start_address, new: 'ra            = fcnt[LOGN-1:0];', old: 'ra            = wr_ptr + fcnt[LOGN-1:0];', variant: os, why: 'the block is fed from ring position 0, not from its start'}
 - {class: constant, name: collect_one_more, new: if (ccnt == (LOGN + 1)'(B)) begin, old: if (ccnt == (LOGN + 1)'(B - 1)) begin, variant: os, why: a block collects B + 1 samples}
-- {class: connection, name: credit_ignored, new: feed_start    = (state == S_WAIT);, old: feed_start    = (state == S_WAIT) && (credit >= (LOGN + 1)'(B));, variant: os, why: a block starts although the output FIFO may lack room for its results}
+- {class: connection, name: credit_ignored, new: feed_start    = (state == S_WAIT);, old: feed_start    = (state == S_WAIT) && (credit >= (OL + 1)'(B));, variant: os, why: a block starts although the output FIFO may lack room for its results}
+- {class: constant, name: credit_n_words, new: credit  <= (OL + 1)'(1 << LOGN);, old: credit  <= (OL + 1)'(1 << OL);, variant: os, why: 'only N words of output room are credited: a block with B above N/2 waits for the previous block''s results to drain, so the block period is no longer B + N + 1'}
 - {class: connection, name: sof_always, new: sof_r <= 1'b1;, old: sof_r <= (fcnt == '0);, variant: os, why: every fed word is a start of frame}
 - {class: connection, name: ring_write_swapped, new: 'else if (in_xfer) ring[wr_ptr] <= {s_axis_tdata[W-1:0], s_axis_tdata[2*W-1:W]};', old: 'else if (in_xfer) ring[wr_ptr] <= s_axis_tdata;', variant: os, why: real and imaginary parts exchanged on the way into the ring}
 - {class: connection, name: inverse_is_forward, new: '.in_inverse(1''b0), .in_re(xr)', old: '.in_inverse(1''b1), .in_re(xr)', variant: os, why: the second transform is a forward one}

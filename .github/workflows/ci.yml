@@ -586,7 +586,7 @@ jobs:
           python -m pytest -q arith/{adder,multiplier,mac,fp_add,fp_mul,fp_fma}/tests/test_*_formal_*_rtl.py
 
   arith-fft-suite:
-    name: Frequency-domain suite (brief 148) - FFT, complex multiplier, twiddle generator, reorder buffer, window multiplier - models against NumPy, cocotb + Icarus, seeded faults, SymbiYosys, Verilator -Wall, build files, traceability gate
+    name: Frequency-domain suite (briefs 148, 161) - FFT, block floating point, 2-parallel, real-input, fast convolution, complex multiplier, twiddle generator, reorder buffer, window multiplier - models against NumPy, cocotb + Icarus, packaged harnesses, seeded faults, SymbiYosys, Verilator -Wall, build files, traceability gate
     runs-on: ubuntu-24.04
     timeout-minutes: 150
     env:
@@ -619,12 +619,13 @@ jobs:
           python -m arith.tools.gen_build --check
           python -m arith.tools.gen_spec_md --check
           python -m arith.tools.gen_testplan --check
+          python -m arith.tools.gen_harness_fft --check
           python -m arith.fft_common.gen_cos_rom --check
-          python -m flow.trace_v1 check arith/fft arith/fft_real arith/fft_axis arith/fft_cmul arith/fft_twiddle arith/fft_reorder arith/fft_window
+          python -m flow.trace_v1 check arith/fft arith/fft_real arith/fft_axis arith/fft_cmul arith/fft_twiddle arith/fft_reorder arith/fft_window arith/fft_bfp arith/fft_mdc2 arith/fft_real_axis arith/fft_fastconv
       - name: Models against NumPy and independent formulations, fast convolution, spec against the RTL headers, Verilator -Wall at every point, wrappers and build.yaml
         run: python -m pytest -q arith/fft*/tests/test_*_model.py arith/fft*/tests/test_*_package.py arith/fft/tests/test_fft_fastconv.py
       - name: Every variant against its model (directed and random points), latency sensitivity, forward-then-inverse (Icarus + cocotb)
-        run: python -m pytest -q arith/fft*/tests/test_*_directed_rtl.py arith/fft*/tests/test_*_random_rtl.py arith/fft*/tests/test_*_latency_rtl.py arith/fft*/tests/test_*_roundtrip_rtl.py
+        run: python -m pytest -q arith/fft*/tests/test_*_{directed,random,latency,roundtrip,levels,gaps,axil,saturate,backpressure,checker,harness}_rtl.py
       - name: Seeded faults - every mutant killed by the bench
         run: python -m pytest -q arith/fft*/tests/test_*_mutants_rtl.py
       - name: SymbiYosys - properties of the parts (proved or bounded) and a planted fault refuted by each
