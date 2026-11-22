@@ -98,7 +98,7 @@ A failure is a `UVM_ERROR` with tag `SVA` and fails the test.
 
 Bins are named counters (`env/itch_cov.sv`), hit by what the model and the monitors **saw** (never by what a sequence meant to send), and merged over all runs by `scripts/cov_merge.py`: message types, messages
 a packet (1, 3, 6, other), the Mold events, every header drop, book edge cases, every risk refusal, the order outcomes, bad FCS crossed with order and with STRICT, the tail window bins, every frame length remainder (mod 8)
-by start lane (16 bins), backpressure (bubbles in a frame, a transmit pause inside a frame), and every command. Result of the recorded regression: **97 of 97 bins hit, 0 holes** (`results/170_itch_uvm/coverage_report.md`). The first full regression had the same 97 bins hit; one sequence-dependent bin (`tail_*`) was split in two after a formatting bug made it print wrongly, so closure is shown on the final run.
+by start lane (16 bins), backpressure (bubbles in a frame, a transmit pause inside a frame), and every command. Result of the recorded regression: **97 of 97 bins hit, 0 holes** (`results/170_itch_uvm/coverage_report.md`).
 
 ## Running it
 

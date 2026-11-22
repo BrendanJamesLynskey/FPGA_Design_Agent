@@ -2,6 +2,549 @@
  "check": {
   "designs": [
    {
+    "design": "b110_itch_ouch",
+    "gaps": [
+     {
+      "gate": false,
+      "id": "B110-F-SEQ-POISON",
+      "state": "fail",
+      "text": "an item fails",
+      "type": "no_passing_evidence"
+     },
+     {
+      "gate": false,
+      "id": "B110-V-MUTATION",
+      "state": "not_run",
+      "text": "no passing evidence",
+      "type": "no_passing_evidence"
+     }
+    ],
+    "items": [
+     {
+      "detail": "checks.ORDERS.mismatches = 0; checks.ORDERS.compared = 3112; failed = 0",
+      "evidence": {
+       "exists": true,
+       "file": "results/170_itch_uvm/summary.json"
+      },
+      "id": "V-UVM-ORDERS",
+      "instrument": null,
+      "method": "uvm_test",
+      "planned": null,
+      "requirements": [
+       "B110-F-ORDER-BYTES"
+      ],
+      "status": "pass",
+      "title": "UVM scoreboard ORDERS check, every order frame byte for byte against the SV reference model (all sequences, all seeds)",
+      "value": true
+     },
+     {
+      "detail": "checks.COUNTERS.mismatches = 0; checks.FLAGS.mismatches = 0; checks.COUNTERS.compared = 8897",
+      "evidence": {
+       "exists": true,
+       "file": "results/170_itch_uvm/summary.json"
+      },
+      "id": "V-UVM-MOLD",
+      "instrument": null,
+      "method": "uvm_test",
+      "planned": null,
+      "requirements": [
+       "B110-F-MOLD"
+      ],
+      "status": "pass",
+      "title": "UVM scoreboard COUNTERS and FLAGS at every checkpoint (Mold counters and flags, gaps, duplicates, overlaps, heartbeats, truncation)",
+      "value": true
+     },
+     {
+      "detail": "checks.COUNTERS.mismatches = 0; checks.FLAGS.mismatches = 0; failed = 0",
+      "evidence": {
+       "exists": true,
+       "file": "results/170_itch_uvm/summary.json"
+      },
+      "id": "V-UVM-BOOK",
+      "instrument": null,
+      "method": "uvm_test",
+      "planned": null,
+      "requirements": [
+       "B110-F-BOOK"
+      ],
+      "status": "pass",
+      "title": "UVM book edge-case sequence and random mix, counters and inexact flags against the reference model",
+      "value": true
+     },
+     {
+      "detail": "checks.COUNTERS.mismatches = 0; checks.ORDERS.mismatches = 0; failed = 0",
+      "evidence": {
+       "exists": true,
+       "file": "results/170_itch_uvm/summary.json"
+      },
+      "id": "V-UVM-RISK",
+      "instrument": null,
+      "method": "uvm_test",
+      "planned": null,
+      "requirements": [
+       "B110-F-RISK"
+      ],
+      "status": "pass",
+      "title": "UVM risk sequence, every refusal counter and the orders that follow",
+      "value": true
+     },
+     {
+      "detail": "checks.US.mismatches = 0; checks.US.compared = 2604",
+      "evidence": {
+       "exists": true,
+       "file": "results/170_itch_uvm/summary.json"
+      },
+      "id": "V-UVM-UDP",
+      "instrument": null,
+      "method": "uvm_test",
+      "planned": null,
+      "requirements": [
+       "B110-F-UDP"
+      ],
+      "status": "pass",
+      "title": "UVM header sequence, every drop reason, the multicast address and EN = 0, udp_strip counters against the reference model",
+      "value": true
+     },
+     {
+      "detail": "checks.ORDERS.mismatches = 0; checks.ORDERCNT.mismatches = 0; failed = 0",
+      "evidence": {
+       "exists": true,
+       "file": "results/170_itch_uvm/summary.json"
+      },
+      "id": "V-UVM-STRICT",
+      "instrument": null,
+      "method": "uvm_test",
+      "planned": null,
+      "requirements": [
+       "B110-S-STRICT"
+      ],
+      "status": "pass",
+      "title": "UVM bad-FCS and tail-distance sequences, STRICT and cut-through, orders classed must, may and must-not against the measured window",
+      "value": true
+     },
+     {
+      "detail": "seq_waived = 11; finding_seq_poison.failed unreadable",
+      "evidence": {
+       "exists": true,
+       "file": "results/170_itch_uvm/summary.json"
+      },
+      "id": "V-UVM-SEQ",
+      "instrument": null,
+      "method": "uvm_test",
+      "planned": null,
+      "requirements": [
+       "B110-F-SEQ-POISON"
+      ],
+      "status": "fail",
+      "title": "UVM sequence-number check on the datasheet's rule; t_seq_poison (run with +SEQ_STRICT) is the minimal failing test, the other sequences run under a counted waiver",
+      "value": true
+     },
+     {
+      "detail": "sva_failures = 0",
+      "evidence": {
+       "exists": true,
+       "file": "results/170_itch_uvm/summary.json"
+      },
+      "id": "V-UVM-SVA",
+      "instrument": null,
+      "method": "assertion",
+      "planned": null,
+      "requirements": [
+       "B110-S-STRICT",
+       "B110-F-ORDER-BYTES"
+      ],
+      "status": "pass",
+      "title": "SVAs on the transmit words, the order-frame stream and the status vector, zero failures in every run",
+      "value": true
+     },
+     {
+      "detail": "coverage.holes = []",
+      "evidence": {
+       "exists": true,
+       "file": "results/170_itch_uvm/summary.json"
+      },
+      "id": "V-UVM-COV",
+      "instrument": null,
+      "method": "coverage_bin",
+      "planned": null,
+      "requirements": [
+       "B110-V-COVERAGE"
+      ],
+      "status": "pass",
+      "title": "Closure of the bench's functional coverage plan over the recorded regression",
+      "value": true
+     },
+     {
+      "detail": "evidence not found: results/170_itch_uvm/mutation_seed1.json",
+      "evidence": {
+       "exists": false,
+       "file": "results/170_itch_uvm/mutation_seed1.json"
+      },
+      "id": "V-UVM-MUT",
+      "instrument": null,
+      "method": "sim_measurement",
+      "planned": null,
+      "requirements": [
+       "B110-V-MUTATION"
+      ],
+      "status": "not_run",
+      "title": "Blind mutation sweep with the fixed tool (flow/mutation_score.py): score, worst case and undecided against the floor",
+      "value": null
+     }
+    ],
+    "notes": "Simulation only (xsim 2026.1, UVM 1.2; Icarus is not used by this bench). One recorded regression (results/170_itch_uvm/summary.json) and one mutation record (results/170_itch_uvm/mutation_seed*.json). No board, no real feed, every message synthetic.",
+    "path": "designs/b110_itch_ouch",
+    "requirements": [
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "B110-F-ORDER-BYTES",
+      "items": [
+       "V-UVM-ORDERS",
+       "V-UVM-SVA"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "assertion",
+       "uvm_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "designs/b110_itch_ouch/docs/spec_notes.md#3-ouch-50-hardware-rtlouch_entersv-section-21-type-o-enter-order",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "Each order frame with a good FCS equals the reference frame byte for byte (Ethernet, IPv4, TCP headers, SoupBinTCP 3.00 length and type, OUCH 5.0 Enter Order fields, ClOrdID, appendage), the orders come in order with UserRefNum rising by one per accepted candidate, and a frame with a wrong FCS is never an order.",
+      "title": "Every order that leaves with a good frame check sequence is byte exact"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "B110-F-MOLD",
+      "items": [
+       "V-UVM-MOLD"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "uvm_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "designs/b110_itch_ouch/docs/itch_ouch.md#2-behaviour-in-detail",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "For every packet the packet, message, gap, missing, duplicate, overlap, session, heartbeat, end-of-session, short, truncated and bad-length counters and the gap, session-lock and end-of-session flags equal the reference model's at every checkpoint, with 1, 3 and 6 messages a packet and at every frame alignment.",
+      "title": "MoldUDP64 sessions, sequence gaps, duplicates, overlaps, heartbeats and broken packets are counted and delivered as the reference says"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "B110-F-BOOK",
+      "items": [
+       "V-UVM-BOOK"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "uvm_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "designs/b110_itch_ouch/docs/itch_ouch.md#2-behaviour-in-detail",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "Message-type counters, malformed and skipped messages, unwatched locates, missing/duplicate/overflowing orders, ladder overflow and over-execution counters, the candidate count and the per-instrument inexact flags equal the reference model's, including the edge cases of an empty book, a full ladder, a table-index collision and a replace.",
+      "title": "The ITCH decoder and the book keep the counters, the inexact flags and the candidates the reference model computes"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "B110-F-RISK",
+      "items": [
+       "V-UVM-RISK"
+      ],
+      "kind": "safety",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "uvm_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "designs/b110_itch_ouch/docs/itch_ouch.md#2-behaviour-in-detail",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "Not armed, kill switch, untrusted or gap-halted, inexact book, quantity, position limit per instrument, price band and missing bid refuse a candidate exactly as the reference does; the position and the order number advance only for an accepted candidate.",
+      "title": "Every risk refusal is the first failing check, counted once, and no order starts on a refused candidate"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "B110-F-UDP",
+      "items": [
+       "V-UVM-UDP"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "uvm_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "designs/b96_kr260_10g/rm_gp_itch/docs/itch_integration.md#2-the-path-block-by-block",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "Destination MAC (unicast or the group's multicast address), EtherType, IPv4 version and header length, fragments, protocol, destination address and port, UDP length against the IP length, and the IPv4 header checksum; EN = 0 drops everything.",
+      "title": "Frames are forwarded or dropped by the first failing header check, and each drop is counted"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "B110-S-STRICT",
+      "items": [
+       "V-UVM-STRICT",
+       "V-UVM-SVA"
+      ],
+      "kind": "safety",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "assertion",
+       "uvm_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "designs/b96_kr260_10g/rm_gp_itch/docs/itch_integration.md#4-the-late-frame-check-and-what-happens-to-an-order-on-a-bad-frame",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "With STRICT set (the default, owner decision 31) no order leaves with a good FCS when the frame that carried its message has a bad FCS, or when that frame's verdict is not yet known at the order's last word; such an order leaves with a wrong FCS. Cut-through is a documented option with a measured window.",
+      "title": "Under STRICT an order is never sent on an unverified or bad frame"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "B110-F-SEQ-POISON",
+      "items": [
+       "V-UVM-SEQ"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [],
+      "rests_on_delegated": false,
+      "source": "designs/b96_kr260_10g/rm_gp_itch/docs/itch_integration.md#5-registers-and-what-a-user-could-guess-wrong",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "fail",
+      "text": "The TCP sequence number of an order is the loaded number plus 59 for every segment that left with a good FCS; a frame poisoned (wrong FCS) by the multiplexer, because its trigger frame was bad or unverified, does not advance it.",
+      "title": "A poisoned order frame consumes no TCP sequence number"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "B110-V-COVERAGE",
+      "items": [
+       "V-UVM-COV"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "coverage_bin"
+      ],
+      "rests_on_delegated": false,
+      "source": "designs/b96_kr260_10g/rm_gp_itch/verif/uvm/README.md#functional-coverage",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "Every bin of the bench's coverage plan (message types, messages a packet, Mold events, header drops, book edge cases, risk refusals, order outcomes, bad-FCS crosses, frame alignments, backpressure) is hit by the recorded regression.",
+      "title": "The bench's functional coverage plan is closed"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "B110-V-MUTATION",
+      "items": [
+       "V-UVM-MUT"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [],
+      "rests_on_delegated": false,
+      "source": "designs/b96_kr260_10g/rm_gp_itch/verif/uvm/README.md#mutation-score",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "not_run",
+      "text": "A blind mutation sweep (mutants made from the RTL text and a seed only, equivalent mutants decided by a formal miter) scores at least 90 % even if every undecided mutant counted as a survivor.",
+      "title": "The bench kills at least 90 % of blind mutants of the path (worst case, over at least 30)"
+     }
+    ],
+    "source_schema": "fpga-design-agent/testplan/v1",
+    "summary": {
+     "by_kind": {
+      "functional": 7,
+      "interface": 0,
+      "performance": 0,
+      "safety": 2
+     },
+     "by_method": {
+      "assertion": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 1,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "board_measurement": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "coverage_bin": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 1,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "formal": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "formal_lean": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "review": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "sim_measurement": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 1,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "sim_test": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "timing": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "uvm_test": {
+       "bounded": 0,
+       "fail": 1,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 6,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      }
+     },
+     "by_state": {
+      "fail": 1,
+      "not_run": 1,
+      "verified": 7
+     },
+     "external": 0,
+     "external_hardware_done": 0,
+     "gap_counts": {
+      "no_passing_evidence": 2
+     },
+     "human_reviews": 0,
+     "items": 10,
+     "lean": {
+      "approved": 0,
+      "build_sources": [],
+      "by_rtl_link": {
+       "model_only": 0,
+       "rtl_generated": 0,
+       "transcription_tested": 0,
+       "transcription_untested": 0
+      },
+      "by_status": {},
+      "by_tier": {
+       "compiled_decision_procedure": 0,
+       "kernel_only": 0,
+       "unsound": 0
+      },
+      "delegated": 0,
+      "items": 0,
+      "statement_not_approved": 0
+     },
+     "line": "9 requirements (7 functional, 2 safety); 7 verified; 1 failing; 1 with no passing evidence; 0 of 9 requirements agreed by a human, 0 human review(s) recorded.",
+     "performance_board": 0,
+     "performance_sim_only": 0,
+     "performance_timing": 0,
+     "requirements": 9,
+     "spec_agreed": 0,
+     "verified_on_delegated": 0
+    }
+   },
+   {
     "design": "b119_tcp_fast",
     "gaps": [
      {
@@ -25779,14 +26322,557 @@
   "framing": "The human specifies the requirements and checks that the verification is thorough enough. The agent holds the knowledge to implement and to verify. You can open any of the implementation or the evidence, and you do not have to. Hardware on the board, with attached instruments, is a verification layer of its own: where a requirement depends on something outside the design (an optical link, a network card, a data source) it may be the only way to close it.",
   "schema": "fda-traceability/1",
   "total": {
-   "designs": 33,
-   "requirements": 346,
-   "verified": 267
+   "designs": 34,
+   "requirements": 355,
+   "verified": 274
   }
  },
  "content": {
   "designs": [
    {
+    "design": "b110_itch_ouch",
+    "gaps": [
+     {
+      "gate": false,
+      "id": "B110-F-SEQ-POISON",
+      "state": "fail",
+      "text": "an item fails",
+      "type": "no_passing_evidence"
+     },
+     {
+      "gate": false,
+      "id": "B110-V-MUTATION",
+      "state": "not_run",
+      "text": "no passing evidence",
+      "type": "no_passing_evidence"
+     }
+    ],
+    "items": [
+     {
+      "detail": "checks.ORDERS.mismatches = 0; checks.ORDERS.compared = 3112; failed = 0",
+      "evidence": {
+       "exists": true,
+       "file": "results/170_itch_uvm/summary.json"
+      },
+      "id": "V-UVM-ORDERS",
+      "instrument": null,
+      "method": "uvm_test",
+      "planned": null,
+      "requirements": [
+       "B110-F-ORDER-BYTES"
+      ],
+      "status": "pass",
+      "title": "UVM scoreboard ORDERS check, every order frame byte for byte against the SV reference model (all sequences, all seeds)",
+      "value": true
+     },
+     {
+      "detail": "checks.COUNTERS.mismatches = 0; checks.FLAGS.mismatches = 0; checks.COUNTERS.compared = 8897",
+      "evidence": {
+       "exists": true,
+       "file": "results/170_itch_uvm/summary.json"
+      },
+      "id": "V-UVM-MOLD",
+      "instrument": null,
+      "method": "uvm_test",
+      "planned": null,
+      "requirements": [
+       "B110-F-MOLD"
+      ],
+      "status": "pass",
+      "title": "UVM scoreboard COUNTERS and FLAGS at every checkpoint (Mold counters and flags, gaps, duplicates, overlaps, heartbeats, truncation)",
+      "value": true
+     },
+     {
+      "detail": "checks.COUNTERS.mismatches = 0; checks.FLAGS.mismatches = 0; failed = 0",
+      "evidence": {
+       "exists": true,
+       "file": "results/170_itch_uvm/summary.json"
+      },
+      "id": "V-UVM-BOOK",
+      "instrument": null,
+      "method": "uvm_test",
+      "planned": null,
+      "requirements": [
+       "B110-F-BOOK"
+      ],
+      "status": "pass",
+      "title": "UVM book edge-case sequence and random mix, counters and inexact flags against the reference model",
+      "value": true
+     },
+     {
+      "detail": "checks.COUNTERS.mismatches = 0; checks.ORDERS.mismatches = 0; failed = 0",
+      "evidence": {
+       "exists": true,
+       "file": "results/170_itch_uvm/summary.json"
+      },
+      "id": "V-UVM-RISK",
+      "instrument": null,
+      "method": "uvm_test",
+      "planned": null,
+      "requirements": [
+       "B110-F-RISK"
+      ],
+      "status": "pass",
+      "title": "UVM risk sequence, every refusal counter and the orders that follow",
+      "value": true
+     },
+     {
+      "detail": "checks.US.mismatches = 0; checks.US.compared = 2604",
+      "evidence": {
+       "exists": true,
+       "file": "results/170_itch_uvm/summary.json"
+      },
+      "id": "V-UVM-UDP",
+      "instrument": null,
+      "method": "uvm_test",
+      "planned": null,
+      "requirements": [
+       "B110-F-UDP"
+      ],
+      "status": "pass",
+      "title": "UVM header sequence, every drop reason, the multicast address and EN = 0, udp_strip counters against the reference model",
+      "value": true
+     },
+     {
+      "detail": "checks.ORDERS.mismatches = 0; checks.ORDERCNT.mismatches = 0; failed = 0",
+      "evidence": {
+       "exists": true,
+       "file": "results/170_itch_uvm/summary.json"
+      },
+      "id": "V-UVM-STRICT",
+      "instrument": null,
+      "method": "uvm_test",
+      "planned": null,
+      "requirements": [
+       "B110-S-STRICT"
+      ],
+      "status": "pass",
+      "title": "UVM bad-FCS and tail-distance sequences, STRICT and cut-through, orders classed must, may and must-not against the measured window",
+      "value": true
+     },
+     {
+      "detail": "seq_waived = 11; finding_seq_poison.failed unreadable",
+      "evidence": {
+       "exists": true,
+       "file": "results/170_itch_uvm/summary.json"
+      },
+      "id": "V-UVM-SEQ",
+      "instrument": null,
+      "method": "uvm_test",
+      "planned": null,
+      "requirements": [
+       "B110-F-SEQ-POISON"
+      ],
+      "status": "fail",
+      "title": "UVM sequence-number check on the datasheet's rule; t_seq_poison (run with +SEQ_STRICT) is the minimal failing test, the other sequences run under a counted waiver",
+      "value": true
+     },
+     {
+      "detail": "sva_failures = 0",
+      "evidence": {
+       "exists": true,
+       "file": "results/170_itch_uvm/summary.json"
+      },
+      "id": "V-UVM-SVA",
+      "instrument": null,
+      "method": "assertion",
+      "planned": null,
+      "requirements": [
+       "B110-S-STRICT",
+       "B110-F-ORDER-BYTES"
+      ],
+      "status": "pass",
+      "title": "SVAs on the transmit words, the order-frame stream and the status vector, zero failures in every run",
+      "value": true
+     },
+     {
+      "detail": "coverage.holes = []",
+      "evidence": {
+       "exists": true,
+       "file": "results/170_itch_uvm/summary.json"
+      },
+      "id": "V-UVM-COV",
+      "instrument": null,
+      "method": "coverage_bin",
+      "planned": null,
+      "requirements": [
+       "B110-V-COVERAGE"
+      ],
+      "status": "pass",
+      "title": "Closure of the bench's functional coverage plan over the recorded regression",
+      "value": true
+     },
+     {
+      "detail": "evidence not found: results/170_itch_uvm/mutation_seed1.json",
+      "evidence": {
+       "exists": false,
+       "file": "results/170_itch_uvm/mutation_seed1.json"
+      },
+      "id": "V-UVM-MUT",
+      "instrument": null,
+      "method": "sim_measurement",
+      "planned": null,
+      "requirements": [
+       "B110-V-MUTATION"
+      ],
+      "status": "not_run",
+      "title": "Blind mutation sweep with the fixed tool (flow/mutation_score.py): score, worst case and undecided against the floor",
+      "value": null
+     }
+    ],
+    "notes": "Simulation only (xsim 2026.1, UVM 1.2; Icarus is not used by this bench). One recorded regression (results/170_itch_uvm/summary.json) and one mutation record (results/170_itch_uvm/mutation_seed*.json). No board, no real feed, every message synthetic.",
+    "path": "designs/b110_itch_ouch",
+    "requirements": [
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "B110-F-ORDER-BYTES",
+      "items": [
+       "V-UVM-ORDERS",
+       "V-UVM-SVA"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "assertion",
+       "uvm_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "designs/b110_itch_ouch/docs/spec_notes.md#3-ouch-50-hardware-rtlouch_entersv-section-21-type-o-enter-order",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "Each order frame with a good FCS equals the reference frame byte for byte (Ethernet, IPv4, TCP headers, SoupBinTCP 3.00 length and type, OUCH 5.0 Enter Order fields, ClOrdID, appendage), the orders come in order with UserRefNum rising by one per accepted candidate, and a frame with a wrong FCS is never an order.",
+      "title": "Every order that leaves with a good frame check sequence is byte exact"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "B110-F-MOLD",
+      "items": [
+       "V-UVM-MOLD"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "uvm_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "designs/b110_itch_ouch/docs/itch_ouch.md#2-behaviour-in-detail",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "For every packet the packet, message, gap, missing, duplicate, overlap, session, heartbeat, end-of-session, short, truncated and bad-length counters and the gap, session-lock and end-of-session flags equal the reference model's at every checkpoint, with 1, 3 and 6 messages a packet and at every frame alignment.",
+      "title": "MoldUDP64 sessions, sequence gaps, duplicates, overlaps, heartbeats and broken packets are counted and delivered as the reference says"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "B110-F-BOOK",
+      "items": [
+       "V-UVM-BOOK"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "uvm_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "designs/b110_itch_ouch/docs/itch_ouch.md#2-behaviour-in-detail",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "Message-type counters, malformed and skipped messages, unwatched locates, missing/duplicate/overflowing orders, ladder overflow and over-execution counters, the candidate count and the per-instrument inexact flags equal the reference model's, including the edge cases of an empty book, a full ladder, a table-index collision and a replace.",
+      "title": "The ITCH decoder and the book keep the counters, the inexact flags and the candidates the reference model computes"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "B110-F-RISK",
+      "items": [
+       "V-UVM-RISK"
+      ],
+      "kind": "safety",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "uvm_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "designs/b110_itch_ouch/docs/itch_ouch.md#2-behaviour-in-detail",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "Not armed, kill switch, untrusted or gap-halted, inexact book, quantity, position limit per instrument, price band and missing bid refuse a candidate exactly as the reference does; the position and the order number advance only for an accepted candidate.",
+      "title": "Every risk refusal is the first failing check, counted once, and no order starts on a refused candidate"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "B110-F-UDP",
+      "items": [
+       "V-UVM-UDP"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "uvm_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "designs/b96_kr260_10g/rm_gp_itch/docs/itch_integration.md#2-the-path-block-by-block",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "Destination MAC (unicast or the group's multicast address), EtherType, IPv4 version and header length, fragments, protocol, destination address and port, UDP length against the IP length, and the IPv4 header checksum; EN = 0 drops everything.",
+      "title": "Frames are forwarded or dropped by the first failing header check, and each drop is counted"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "B110-S-STRICT",
+      "items": [
+       "V-UVM-STRICT",
+       "V-UVM-SVA"
+      ],
+      "kind": "safety",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "assertion",
+       "uvm_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "designs/b96_kr260_10g/rm_gp_itch/docs/itch_integration.md#4-the-late-frame-check-and-what-happens-to-an-order-on-a-bad-frame",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "With STRICT set (the default, owner decision 31) no order leaves with a good FCS when the frame that carried its message has a bad FCS, or when that frame's verdict is not yet known at the order's last word; such an order leaves with a wrong FCS. Cut-through is a documented option with a measured window.",
+      "title": "Under STRICT an order is never sent on an unverified or bad frame"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "B110-F-SEQ-POISON",
+      "items": [
+       "V-UVM-SEQ"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [],
+      "rests_on_delegated": false,
+      "source": "designs/b96_kr260_10g/rm_gp_itch/docs/itch_integration.md#5-registers-and-what-a-user-could-guess-wrong",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "fail",
+      "text": "The TCP sequence number of an order is the loaded number plus 59 for every segment that left with a good FCS; a frame poisoned (wrong FCS) by the multiplexer, because its trigger frame was bad or unverified, does not advance it.",
+      "title": "A poisoned order frame consumes no TCP sequence number"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "B110-V-COVERAGE",
+      "items": [
+       "V-UVM-COV"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "coverage_bin"
+      ],
+      "rests_on_delegated": false,
+      "source": "designs/b96_kr260_10g/rm_gp_itch/verif/uvm/README.md#functional-coverage",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "Every bin of the bench's coverage plan (message types, messages a packet, Mold events, header drops, book edge cases, risk refusals, order outcomes, bad-FCS crosses, frame alignments, backpressure) is hit by the recorded regression.",
+      "title": "The bench's functional coverage plan is closed"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "B110-V-MUTATION",
+      "items": [
+       "V-UVM-MUT"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [],
+      "rests_on_delegated": false,
+      "source": "designs/b96_kr260_10g/rm_gp_itch/verif/uvm/README.md#mutation-score",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "not_run",
+      "text": "A blind mutation sweep (mutants made from the RTL text and a seed only, equivalent mutants decided by a formal miter) scores at least 90 % even if every undecided mutant counted as a survivor.",
+      "title": "The bench kills at least 90 % of blind mutants of the path (worst case, over at least 30)"
+     }
+    ],
+    "source_schema": "fpga-design-agent/testplan/v1",
+    "summary": {
+     "by_kind": {
+      "functional": 7,
+      "interface": 0,
+      "performance": 0,
+      "safety": 2
+     },
+     "by_method": {
+      "assertion": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 1,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "board_measurement": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "coverage_bin": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 1,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "formal": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "formal_lean": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "review": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "sim_measurement": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 1,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "sim_test": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "timing": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "uvm_test": {
+       "bounded": 0,
+       "fail": 1,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 6,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      }
+     },
+     "by_state": {
+      "fail": 1,
+      "not_run": 1,
+      "verified": 7
+     },
+     "external": 0,
+     "external_hardware_done": 0,
+     "gap_counts": {
+      "no_passing_evidence": 2
+     },
+     "human_reviews": 0,
+     "items": 10,
+     "lean": {
+      "approved": 0,
+      "build_sources": [],
+      "by_rtl_link": {
+       "model_only": 0,
+       "rtl_generated": 0,
+       "transcription_tested": 0,
+       "transcription_untested": 0
+      },
+      "by_status": {},
+      "by_tier": {
+       "compiled_decision_procedure": 0,
+       "kernel_only": 0,
+       "unsound": 0
+      },
+      "delegated": 0,
+      "items": 0,
+      "statement_not_approved": 0
+     },
+     "line": "9 requirements (7 functional, 2 safety); 7 verified; 1 failing; 1 with no passing evidence; 0 of 9 requirements agreed by a human, 0 human review(s) recorded.",
+     "performance_board": 0,
+     "performance_sim_only": 0,
+     "performance_timing": 0,
+     "requirements": 9,
+     "spec_agreed": 0,
+     "verified_on_delegated": 0
+    }
+   },
+   {
     "design": "b119_tcp_fast",
     "gaps": [
      {
@@ -51564,9 +52650,9 @@
   "framing": "The human specifies the requirements and checks that the verification is thorough enough. The agent holds the knowledge to implement and to verify. You can open any of the implementation or the evidence, and you do not have to. Hardware on the board, with attached instruments, is a verification layer of its own: where a requirement depends on something outside the design (an optical link, a network card, a data source) it may be the only way to close it.",
   "schema": "fda-traceability/1",
   "total": {
-   "designs": 33,
-   "requirements": 346,
-   "verified": 267
+   "designs": 34,
+   "requirements": 355,
+   "verified": 274
   }
  }
 }
