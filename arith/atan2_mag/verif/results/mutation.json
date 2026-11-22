@@ -1,0 +1,237 @@
+{
+ "function": "atan2_mag",
+ "mutants": 27,
+ "valid": 27,
+ "killed": 27,
+ "survived": [],
+ "invalid": [],
+ "score_pct": 100.0,
+ "per_variant": {
+  "cordic": {
+   "valid": 13,
+   "killed": 13
+  },
+  "cordic_g2": {
+   "valid": 14,
+   "killed": 14
+  }
+ },
+ "results": [
+  {
+   "name": "ac_neg_from_y",
+   "variant": "cordic",
+   "class": "connection",
+   "status": "killed",
+   "detail": "exhaustive {'W': 5, 'PH': 8, 'NIT': 9, 'G': 6}",
+   "why": "the reflection is decided by the sign of y"
+  },
+  {
+   "name": "ac_y_not_reflected",
+   "variant": "cordic",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'W': 5, 'PH': 8, 'NIT': 9, 'G': 6}",
+   "why": "y is not negated with x in the reflection"
+  },
+  {
+   "name": "ac_zero_sign",
+   "variant": "cordic",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'W': 5, 'PH': 8, 'NIT': 9, 'G': 6}",
+   "why": "y = 0 rotates the other way"
+  },
+  {
+   "name": "ac_x_sign",
+   "variant": "cordic",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'W': 5, 'PH': 8, 'NIT': 9, 'G': 6}",
+   "why": "x grows the wrong way"
+  },
+  {
+   "name": "ac_y_sign",
+   "variant": "cordic",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'W': 5, 'PH': 8, 'NIT': 9, 'G': 6}",
+   "why": "y is driven the wrong way when negative"
+  },
+  {
+   "name": "ac_z_sign",
+   "variant": "cordic",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'W': 5, 'PH': 8, 'NIT': 9, 'G': 6}",
+   "why": "the angle accumulates with the wrong sign"
+  },
+  {
+   "name": "ac_half_turn",
+   "variant": "cordic",
+   "class": "constant",
+   "status": "killed",
+   "detail": "exhaustive {'W': 5, 'PH': 8, 'NIT': 9, 'G': 6}",
+   "why": "the reflection adds a quarter turn, not a half"
+  },
+  {
+   "name": "ac_no_round_ang",
+   "variant": "cordic",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'W': 5, 'PH': 8, 'NIT': 9, 'G': 6}",
+   "why": "the angle is truncated, not rounded"
+  },
+  {
+   "name": "ac_no_round_mag",
+   "variant": "cordic",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'W': 5, 'PH': 8, 'NIT': 9, 'G': 6}",
+   "why": "the magnitude is truncated, not rounded"
+  },
+  {
+   "name": "ac_gain",
+   "variant": "cordic",
+   "class": "constant",
+   "status": "killed",
+   "detail": "exhaustive {'W': 5, 'PH': 8, 'NIT': 9, 'G': 6}",
+   "why": "the gain compensation constant is wrong"
+  },
+  {
+   "name": "ac_neg_dropped",
+   "variant": "cordic",
+   "class": "connection",
+   "status": "killed",
+   "detail": "exhaustive {'W': 5, 'PH': 8, 'NIT': 9, 'G': 6}",
+   "why": "the reflection flag is lost"
+  },
+  {
+   "name": "ac_neg_misaligned",
+   "variant": "cordic",
+   "class": "connection",
+   "status": "killed",
+   "detail": "exhaustive {'W': 5, 'PH': 8, 'NIT': 9, 'G': 6}",
+   "why": "the reflection flag is not delayed with the data"
+  },
+  {
+   "name": "ac_z_halved",
+   "variant": "cordic",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'W': 5, 'PH': 8, 'NIT': 9, 'G': 6}",
+   "why": "the accumulated angle is halved at each stage register"
+  },
+  {
+   "name": "ag_neg_from_y",
+   "variant": "cordic_g2",
+   "class": "connection",
+   "status": "killed",
+   "detail": "exhaustive {'W': 5, 'PH': 8, 'NIT': 9, 'G': 6, 'GRP': 2}",
+   "why": "the reflection is decided by the sign of y"
+  },
+  {
+   "name": "ag_y_not_reflected",
+   "variant": "cordic_g2",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'W': 5, 'PH': 8, 'NIT': 9, 'G': 6, 'GRP': 2}",
+   "why": "y is not negated with x in the reflection"
+  },
+  {
+   "name": "ag_zero_sign",
+   "variant": "cordic_g2",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'W': 5, 'PH': 8, 'NIT': 9, 'G': 6, 'GRP': 2}",
+   "why": "y = 0 rotates the other way"
+  },
+  {
+   "name": "ag_x_sign",
+   "variant": "cordic_g2",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'W': 5, 'PH': 8, 'NIT': 9, 'G': 6, 'GRP': 2}",
+   "why": "x grows the wrong way"
+  },
+  {
+   "name": "ag_y_sign",
+   "variant": "cordic_g2",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'W': 5, 'PH': 8, 'NIT': 9, 'G': 6, 'GRP': 2}",
+   "why": "y is driven the wrong way when negative"
+  },
+  {
+   "name": "ag_z_sign",
+   "variant": "cordic_g2",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'W': 5, 'PH': 8, 'NIT': 9, 'G': 6, 'GRP': 2}",
+   "why": "the angle accumulates with the wrong sign"
+  },
+  {
+   "name": "ag_half_turn",
+   "variant": "cordic_g2",
+   "class": "constant",
+   "status": "killed",
+   "detail": "exhaustive {'W': 5, 'PH': 8, 'NIT': 9, 'G': 6, 'GRP': 2}",
+   "why": "the reflection adds a quarter turn, not a half"
+  },
+  {
+   "name": "ag_no_round_ang",
+   "variant": "cordic_g2",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'W': 5, 'PH': 8, 'NIT': 9, 'G': 6, 'GRP': 2}",
+   "why": "the angle is truncated, not rounded"
+  },
+  {
+   "name": "ag_no_round_mag",
+   "variant": "cordic_g2",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'W': 5, 'PH': 8, 'NIT': 9, 'G': 6, 'GRP': 2}",
+   "why": "the magnitude is truncated, not rounded"
+  },
+  {
+   "name": "ag_gain",
+   "variant": "cordic_g2",
+   "class": "constant",
+   "status": "killed",
+   "detail": "exhaustive {'W': 5, 'PH': 8, 'NIT': 9, 'G': 6, 'GRP': 2}",
+   "why": "the gain compensation constant is wrong"
+  },
+  {
+   "name": "ag_neg_dropped",
+   "variant": "cordic_g2",
+   "class": "connection",
+   "status": "killed",
+   "detail": "exhaustive {'W': 5, 'PH': 8, 'NIT': 9, 'G': 6, 'GRP': 2}",
+   "why": "the reflection flag is lost"
+  },
+  {
+   "name": "ag_neg_misaligned",
+   "variant": "cordic_g2",
+   "class": "connection",
+   "status": "killed",
+   "detail": "exhaustive {'W': 5, 'PH': 8, 'NIT': 9, 'G': 6, 'GRP': 2}",
+   "why": "the reflection flag is not delayed with the data"
+  },
+  {
+   "name": "ag_z_halved",
+   "variant": "cordic_g2",
+   "class": "operator",
+   "status": "killed",
+   "detail": "exhaustive {'W': 5, 'PH': 8, 'NIT': 9, 'G': 6, 'GRP': 2}",
+   "why": "the accumulated angle is halved at each stage register"
+  },
+  {
+   "name": "ag_extra_iteration",
+   "variant": "cordic_g2",
+   "class": "condition",
+   "status": "killed",
+   "detail": "exhaustive {'W': 5, 'PH': 8, 'NIT': 9, 'G': 6, 'GRP': 2}",
+   "why": "an extra iteration runs when NIT is not a multiple of GRP"
+  }
+ ]
+}

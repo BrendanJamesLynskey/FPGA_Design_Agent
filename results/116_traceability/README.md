@@ -8,6 +8,7 @@ Evidence files that exist so that a requirement can point at them. The matrices 
 |---|---|---|
 | `b96_kr260_10g/pytest_junit.xml` | JUnit record of every pytest test under `designs/b96_kr260_10g/tests`: the cocotb benches run through their pytest entry points (Icarus Verilog, cocotb 2.0.1) and the board-driver tests on a fake board | simulation only, no board, no Vivado, 2026-11-20 |
 | `b119_tcp_fast/pytest_junit.xml` | JUnit record of every pytest test under `designs/b119_tcp_fast/tests`: the Python-side model tests, the cocotb bench and the bench behind brief 110's risk logic (Icarus Verilog, cocotb 2.0.1), and the Verilator lint | simulation only, no board, no Vivado, 2026-11-21 (brief 133) |
+| `m141_ddr2_sched/pytest_junit.xml` | JUnit record of every pytest test under `designs/m141_ddr2_sched/tests` (brief 141): the bench against the behavioural DDR2 model, the seeded faults, the Verilator lint and the SymbiYosys proof, cover and mutant jobs (Icarus Verilog 12, Verilator 5, the OSS CAD Suite); two pytest runs merged into one file | simulation and formal only, no board, no Vivado, 2026-11-21 |
 
 ## Reproduce
 
@@ -15,6 +16,11 @@ Evidence files that exist so that a requirement can point at them. The matrices 
 python -m pytest -q designs/b96_kr260_10g/tests --junitxml=results/116_traceability/b96_kr260_10g/pytest_junit.xml
 python -m flow.trace_v1 pin designs/b96_kr260_10g     # after committing the record
 python -m flow.trace_v1 write designs/b96_kr260_10g
+
+# brief 141: two runs, merged (the proofs take about half an hour)
+python -m pytest -q designs/m141_ddr2_sched/tests/test_m141_clean_rtl.py designs/m141_ddr2_sched/tests/test_m141_faults_rtl.py designs/m141_ddr2_sched/tests/test_m141_lint_rtl.py --junitxml=sim.xml
+python -m pytest -q designs/m141_ddr2_sched/tests/test_m141_formal.py --junitxml=formal.xml
+# then concatenate the testcase elements of both into results/116_traceability/m141_ddr2_sched/pytest_junit.xml
 ```
 
 For b119 (about 15 seconds):
@@ -26,6 +32,11 @@ python -m flow.trace_v1 write designs/b119_tcp_fast
 ```
 
 The cocotb benches take well over half an hour on a loaded machine (the rate-match benches are the slow ones), so run it under `systemd-run --user --scope -p MemoryMax=3G`.
+
+## Fresh runs
+
+`python -m flow.fresh_evidence run b119-tests --out DIR` and the nightly workflow re-make these JUnit records (and `results/b119/*.json`) from the current tree into DIR and compare them with the committed ones
+(brief 143d, [docs/traceability_v1.md](../../docs/traceability_v1.md#fresh-evidence-brief-143d)); a difference is a stale or wrong committed record.
 
 ## Known gaps and limits
 

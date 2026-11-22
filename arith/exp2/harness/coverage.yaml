@@ -1,0 +1,12 @@
+# Coverage targets of the exp2 harness (arith brief 139d). Each bin is a Python expression over v (the inputs of one vector), r (the model's outputs) and
+# p (the parameters); a bin is hit when it is true for at least `min` vectors. run_harness.py fails if a target is not met (in randomised mode).
+bins:
+  - {name: x_zero, expr: "v['x'] == 0", min: 1}
+  - {name: x_max, expr: "v['x'] == (1 << p['IW']) - 1", min: 1}
+  - {name: x_half, expr: "v['x'] == 1 << (p['IW'] - 1)", min: 1}
+  - {name: x_low_half, expr: "v['x'] < 1 << (p['IW'] - 1)", min: 50}
+  - {name: x_high_half, expr: "v['x'] >= 1 << (p['IW'] - 1)", min: 50}
+  - {name: x_low_bits_ones, expr: "v['x'] & 15 == 15", min: 10}
+  - {name: y_near_zero, expr: "r['y'] <= 1", min: 1}
+  - {name: y_low_quarter, expr: "r['y'] < 1 << (p['OW'] - 2)", min: 20}
+  - {name: y_top_quarter, expr: "r['y'] >= 3 << (p['OW'] - 2)", min: 20}

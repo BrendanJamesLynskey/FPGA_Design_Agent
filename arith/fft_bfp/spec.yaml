@@ -1,0 +1,92 @@
+# Machine-readable specification of the block-floating-point FFT (arith brief 161). The prose is spec.md; the two agree (tests/test_fft_bfp_package.py).
+schema: fda-arith/spec/1
+function: fft_bfp
+title: Block-floating-point FFT (one exponent per frame, W-bit output words, two architectures)
+model: arith/fft_bfp/model.py
+summary: "The N = 2**LOGN point DFT of frames of complex samples (signed W-bit parts), forward or inverse per frame, with BLOCK FLOATING POINT scaling: the transform runs unscaled (arith/fft with SCALE = 0, W + LOGN bit words inside, so nothing overflows and the only errors are the twiddle and rounding noise of the unscaled core), the frame is held in a two-bank frame store while the largest word is found, and the frame leaves as W-bit words with ONE exponent s for the whole frame: the unscaled transform of the frame is (out_re + j out_im) * 2**s, with s chosen so that the largest part of the frame uses all but one of the W bits. The exponent is a side channel (out_exp, valid with every word of the frame, constant over it); an AXI4-Stream wrapper that carries it on m_axis_tuser is not built (the exponent is a documented side channel). Two architectures behind the same ports: sdf (the streaming radix-2^2 core, one sample per clock) and burst (the memory-based single-butterfly core, full handshakes). This is block floating point at the OUTPUT of a wide unscaled transform, not a per-stage scaling schedule inside the transform: the datapath is W + LOGN bits wide whatever the signal level, which costs memory and DSP width against a per-stage scheme (docs/fft_suite_plan.md section 3)."
+semantics:
+  - "frame: N = 2**LOGN consecutive accepted clocks of in_valid, the first with in_sof; sample n is in_re[n] + j in_im[n], two's complement, W bits each; in_inverse is sampled with in_sof and holds for the frame. The transform and its sign convention are those of arith/fft with SCALE = 0: forward X[k] = sum x[n] exp(-j 2 pi n k / N), inverse exp(+j ...), no 1/N"
+  - "output: N words per frame, (out_re, out_im) signed W bits plus out_exp, a signed EW-bit exponent with EW = $clog2(2 * W + LOGN) + 1; out_exp is the same on every word of a frame. The unscaled transform value of output word k is (out_re + j out_im) * 2**out_exp, to within the stated error; a positive exponent means the words were shifted right (information discarded, rounded), zero or negative means no information was discarded (a negative exponent: a small frame was shifted left, exactly, to use the word)"
+  - "exponent rule: every part of the core's unscaled output is a (W + LOGN)-bit integer. Let M be the OR over all parts of the frame of x (x >= 0) or -x - 1 (x < 0) and BL its bit length; then s = BL + 1 - W: the smallest shift after which the largest part fits W signed bits. An all-zero frame has BL = 0 and s = 1 - W (the output is zero, the exponent is the extreme negative one); so the exponent ranges from 1 - W to LOGN"
+  - "shift: a positive s shifts right, rounding half up when RND = 1 (floor when RND = 0); a negative s shifts left exactly; a positive part that the rounding carries to 2**(W-1) is saturated to 2**(W-1) - 1 (the one place where the output word is wrong by more than half a unit, by one unit)"
+  - "ORDER = 0: natural order (X[0], X[1], ... in output position order); ORDER = 1: the core's bit-reversed order (the word at output position p is X[bitrev(p)]). The frame store absorbs the reordering: natural order costs no extra memory here (the store is read at bit-reversed addresses)"
+  - "error: the output word error, in units of the unscaled transform, is at most the unscaled core's own error (arith/fft, SCALE = 0: twiddle quantisation and rounding at each stage, measured in arith/fft/verif/results/accuracy.json) plus the final rounding, at most 2**(s-1) (2**s when a part saturates; RND = 0: below 2**s). Relative to the frame's largest part the final rounding is at most 2**-(W-1), about -6.02 * (W - 1) dB; the core's absolute error does not shrink with the signal level, so the SQNR of a QUIET frame is limited by the core, not by the word length: see accuracy.json, which records the error beside the scaled and unscaled modes of arith/fft over N = 8 to 4096"
+  - "no overflow is possible: the core is unscaled and wide, the output is normalised from the actual frame. A full-scale corner sample can overflow the core's own (W + LOGN)-bit arithmetic only where it could in arith/fft SCALE = 0 (magnitude at full scale, see arith/fft/spec.md); a magnitude below full scale cannot"
+ports:
+  - {name: clk, dir: in, width: 1, text: "clock"}
+  - {name: rst, dir: in, width: 1, text: "synchronous reset of the control state (the data memories and delay lines are not reset)"}
+  - {name: in_valid, dir: in, width: 1, text: "an input sample is present; N consecutive clocks per frame"}
+  - {name: in_sof, dir: in, width: 1, text: "with in_valid, the first sample of a frame"}
+  - {name: in_inverse, dir: in, width: 1, text: "sampled with in_sof: 1 = inverse transform for this frame"}
+  - {name: in_re, dir: in, width: W, text: "real part of the sample, two's complement"}
+  - {name: in_im, dir: in, width: W, text: "imaginary part of the sample"}
+  - {name: out_ready, dir: in, width: 1, text: "the consumer takes the output word in this clock; honoured by burst, IGNORED by sdf"}
+  - {name: in_ready, dir: out, width: 1, text: "a frame may start in this clock: always 1 for sdf; for burst 1 only while the core is idle"}
+  - {name: out_valid, dir: out, width: 1, text: "an output word is present; N consecutive clocks per frame"}
+  - {name: out_sof, dir: out, width: 1, text: "with out_valid, the first word of an output frame"}
+  - {name: out_re, dir: out, width: W, text: "real part of the output word, two's complement, normalised by the frame exponent"}
+  - {name: out_im, dir: out, width: W, text: "imaginary part of the output word"}
+  - {name: out_exp, dir: out, width: "$clog2(2*W+LOGN) + 1", text: "the frame exponent s, two's complement, the same on every word of the frame: value = (out_re + j out_im) * 2**s"}
+parameters:
+  LOGN: {min: 3, text: "log2 of the frame length N: 3 to 12 (N = 8 to 4096)"}
+  W: {min: 4, text: "input and output part width"}
+  TW: {min: 4, text: "twiddle width, 4 to 28 (scale 2**(TW-2))"}
+  RND: {values: [0, 1], text: "1: round half up at every shift (stages and the final normalisation); 0: truncate (floor)"}
+  ORDER: {values: [0, 1], text: "0: natural-order output; 1: bit-reversed output"}
+  CMUL: {values: [3, 4], text: "twiddle multiplier form: 4 real multipliers or 3 (identical results)"}
+  TWSTAGES: {values: [1, 2], text: "twiddle ROM latency"}
+  MULSTAGES: {min: 0, text: "register ranks in each complex multiplier, 0 to 3"}
+signedness: "all data ports are two's complement; out_exp is a signed exponent"
+exactness: "bit-exact against the model (arith/fft_bfp/model.py: the unscaled bit-exact core model, the exponent rule above and the normalisation) for every frame within the core's overflow guarantee; against the real DFT the error is bounded as stated in the semantics and measured in verif/results/accuracy.json (worst and rms error and SQNR, beside the scaled and unscaled modes of arith/fft, N = 8 to 4096, input levels from full scale to -60 dB)"
+latency_definition: "clocks from the clock in which in_sof is asserted to the clock in which out_sof is asserted; throughput is stated per variant"
+contract:
+  protocol: "streaming frames as arith/fft: sdf has no back-pressure (in_valid high for N consecutive clocks per frame, the next frame after no gap or at least N/4 idle clocks, out_ready ignored, in_ready always 1); burst: in_sof only while in_ready is 1, out_ready stalls the output with every output signal held. The exponent out_exp is valid together with out_valid and is the same on all N words of a frame"
+  throughput: "sdf: one sample per clock continuously, a frame every N clocks (the frame store is two banks, one being written while the other is read). burst: one frame per N + LOGN * (N/2 + MULSTAGES + 3) + N clocks as arith/fft burst; the store adds no time"
+  latency: "sdf: N - 1 + LOGN + ((LOGN - 1) // 2) * (TWSTAGES + MULSTAGES + 1) + N + 2 (the core's bit-reversed latency, a frame to store, 2 clocks to read) for both orders. burst: N + LOGN * (N/2 + MULSTAGES + 3) + 1 + N + 2"
+  reset: "synchronous: clears the control state of the core and the store (bank flags, counters); the memories are not cleared. A frame in flight when rst is asserted is lost; no test covers a reset in the middle of a frame"
+  clock: "one clock, rising edge, no clock-enable"
+  stall: "sdf: none (the sink must take every word when presented; in_valid must stay high for N clocks per frame); burst: in_ready low means busy, out_ready low stalls the output and, when both store banks are full, the core"
+integration:
+  port_timing: "outputs come from registers; the longest paths are the core's complex multiplier (MULSTAGES 3 lets the DSPs absorb their registers), the (W + LOGN + W)-bit barrel shifter and rounding adder before the output register, and the exponent's priority encoder from the stored OR (a register) to the exponent register"
+  constraints: "one clock, no multicycle paths. The frame store is one simple dual-port memory of 2 x N words of 2 * (W + LOGN) bits (one write port, one read port); the read of a bank never overlaps a write of the same bank (the store is two banks; for sdf the schedule guarantees it as long as the sink takes every word)"
+guess_wrong:
+  - "the exponent is of the whole FRAME, and it is the shift that was applied: value = word * 2**out_exp. A quiet frame has a NEGATIVE exponent (it was shifted left to use the word), a loud frame a positive one. The exponent is not the position of a peak, and it is not an exponent of the INPUT: the input is integers; the exponent belongs to the output relative to the plain unscaled sum"
+  - "there is no 1/N anywhere: with the exponent the output equals the unscaled transform (forward and inverse alike), unlike arith/fft SCALE = 1 which divides by N. A consumer that expects the inverse transform of an inverse-transform-of-a-spectrum to give back the original must multiply by 2**out_exp / N"
+  - "the words are normalised to the frame, so two frames of different level are NOT in the same scale: compare or accumulate them only after applying (or aligning) their exponents. An all-zero frame has the exponent 1 - W (the extreme), not zero"
+  - "the quiet-signal accuracy is limited by the unscaled core's absolute rounding noise, not by the W-bit word: normalising the output cannot recover precision lost inside the transform (a frame at -60 dB of full scale has an SQNR of at least 35.4 dB against at least 85.8 dB for a full-scale one, accuracy.json); a scheme that scales the INPUT up first (a frame buffer in front, not built) or scales per stage would do better and costs more"
+  - "the datapath is W + LOGN bits wide whatever the signal: the saving over the unscaled mode is only in the output word, not in the multipliers (the twiddle multipliers see up to W + LOGN bit operands: with W = 16 and N = 4096 that is 28 bits, which does not fit a DSP48E1 25 x 18 multiplier in one block)"
+  - "ORDER = 0 natural order costs no reorder buffer here but the output is delayed by one whole frame (the store), so the latency is N + 2 clocks longer than the unscaled arith/fft core's bit-reversed one"
+  - "sdf needs the frame to be N consecutive clocks and the gap rule of arith/fft sdf (0 or at least N/4 clocks); out_ready is ignored, a sink that stalls loses words; burst ignores in_sof while in_ready is 0"
+  - "saturation: a positive part that the rounding carries to 2**(W-1) is clamped to 2**(W-1) - 1, so one word can be off by one unit; RND = 0 never saturates"
+lean_note: "Not attempted. The normalisation is arithmetic on integers (OR of magnitudes, bit length, shift) checked exhaustively against the model at the small points and by the exponent test frames; a proof that the shifted value fits W bits needs the bit-length lemma, which is a candidate for formal/Lean later."
+variants:
+  sdf:
+    file: rtl/fft_bfp_sdf.sv
+    module: fft_bfp_sdf
+    deps: [fft_common/fft_bfp_out.sv, fft/rtl/fft_sdf_r22.sv, fft_common/fft_sdf_stage.sv, fft_common/fft_sdf_twmul.sv, fft_common/fft_bitrev.sv, fft_common/fft_cos_rom.sv, fft_reorder/rtl/fft_reorder_pingpong.sv, fft_twiddle/rtl/fft_twiddle_quarter.sv, fft_cmul/rtl/fft_cmul_m4.sv, fft_cmul/rtl/fft_cmul_m3.sv]
+    params: {LOGN: 6, W: 16, TW: 16, RND: 1, ORDER: 0, CMUL: 4, TWSTAGES: 1, MULSTAGES: 2}
+    throughput: "1 sample per clock, a frame every N clocks (gap 0 or at least N/4), continuously"
+    latency: "(1<<LOGN)-1+LOGN+((LOGN-1)//2)*(TWSTAGES+MULSTAGES+1)+(1<<LOGN)+2"
+    tradeoff: "streaming, one sample per clock, the unscaled core's multipliers and delay lines at W + LOGN bits, plus a two-bank frame store: the BFP output with the highest throughput, the widest datapath"
+    exhaustive_points: [{LOGN: 3, W: 8, TW: 8, RND: 1, ORDER: 1, CMUL: 4, TWSTAGES: 1, MULSTAGES: 1}, {LOGN: 4, W: 8, TW: 10, RND: 1, ORDER: 0, CMUL: 4, TWSTAGES: 1, MULSTAGES: 2}, {LOGN: 5, W: 16, TW: 16, RND: 0, ORDER: 0, CMUL: 4, TWSTAGES: 1, MULSTAGES: 2}, {LOGN: 6, W: 12, TW: 18, RND: 1, ORDER: 1, CMUL: 3, TWSTAGES: 2, MULSTAGES: 0}, {LOGN: 7, W: 16, TW: 14, RND: 1, ORDER: 0, CMUL: 4, TWSTAGES: 1, MULSTAGES: 3}]
+    random_points: [{LOGN: 6, W: 16, TW: 16, RND: 1, ORDER: 0, CMUL: 4, TWSTAGES: 1, MULSTAGES: 2}, {LOGN: 9, W: 16, TW: 18, RND: 1, ORDER: 1, CMUL: 4, TWSTAGES: 1, MULSTAGES: 3}, {LOGN: 12, W: 16, TW: 16, RND: 1, ORDER: 0, CMUL: 4, TWSTAGES: 1, MULSTAGES: 2}]
+    expected_primitives:
+      a7: "N = 1024, W = TW = 16, CMUL 4, MULSTAGES 3: the twiddle multipliers see operands up to W + LOGN = 26 bits against 16: a 26 x 16 product does not fit one DSP48E1 (25 x 18), so each real multiplier takes 2 DSP blocks (about 4 x 2 x 4 = 32 DSP48E1 for (LOGN - 1) // 2 = 4 complex multipliers; the first stages' narrower words use fewer), delay memory N - 1 words of up to 52 bits (about 2 x the scaled mode), the frame store 2 x 1024 x 52 bits = 104 Kbit (6 RAMB18 + 1 RAMB36 equivalents, about 12 RAMB18), a 43-bit barrel shifter (about 300 LUT); expected Fmax 200 to 300 MHz"
+      k26: "as a7 with DSP48E2 (27 x 18: the 26-bit operand fits, so 4 DSP per complex multiplier again); the frame store in URAM (one 288 Kbit block) or RAMB36; Fmax 350 to 500 MHz expected"
+    ooc_points: [{LOGN: 10, W: 16, TW: 16, RND: 1, ORDER: 0, CMUL: 4, TWSTAGES: 2, MULSTAGES: 3}, {LOGN: 8, W: 16, TW: 16, RND: 1, ORDER: 1, CMUL: 3, TWSTAGES: 2, MULSTAGES: 3}]
+    mutant_run: [{mode: directed, params: {LOGN: 4, W: 8, TW: 10, RND: 1, ORDER: 0, CMUL: 4, TWSTAGES: 1, MULSTAGES: 2}}, {mode: levels, params: {LOGN: 5, W: 8, TW: 10, RND: 1, ORDER: 1, CMUL: 3, TWSTAGES: 2, MULSTAGES: 0}}, {mode: randomised, params: {LOGN: 6, W: 16, TW: 16, RND: 1, ORDER: 0, CMUL: 4, TWSTAGES: 1, MULSTAGES: 2}, n: 512}]
+  burst:
+    file: rtl/fft_bfp_burst.sv
+    module: fft_bfp_burst
+    deps: [fft_common/fft_bfp_out.sv, fft/rtl/fft_burst_r2.sv, fft_common/fft_bitrev.sv, fft_common/fft_cos_rom.sv, fft_twiddle/rtl/fft_twiddle_quarter.sv, fft_cmul/rtl/fft_cmul_m4.sv, fft_cmul/rtl/fft_cmul_m3.sv]
+    params: {LOGN: 6, W: 16, TW: 16, RND: 1, ORDER: 0, CMUL: 4, TWSTAGES: 1, MULSTAGES: 2}
+    throughput: "one frame per N + LOGN * (N/2 + MULSTAGES + 3) + N clocks (load, compute, unload), no overlap"
+    latency: "(1<<LOGN)+LOGN*((1<<LOGN)//2+MULSTAGES+3)+1+(1<<LOGN)+2"
+    tradeoff: "one butterfly and one complex multiplier on W + LOGN bit words, in-place memory, plus the two-bank frame store: the smallest BFP design, at about N / 2 * LOGN clocks of compute per frame"
+    exhaustive_points: [{LOGN: 3, W: 8, TW: 8, RND: 1, ORDER: 1, CMUL: 4, TWSTAGES: 1, MULSTAGES: 1}, {LOGN: 4, W: 8, TW: 10, RND: 1, ORDER: 0, CMUL: 4, TWSTAGES: 1, MULSTAGES: 2}, {LOGN: 5, W: 16, TW: 16, RND: 0, ORDER: 0, CMUL: 4, TWSTAGES: 1, MULSTAGES: 2}, {LOGN: 6, W: 12, TW: 18, RND: 1, ORDER: 1, CMUL: 3, TWSTAGES: 2, MULSTAGES: 0}, {LOGN: 7, W: 16, TW: 14, RND: 1, ORDER: 0, CMUL: 4, TWSTAGES: 1, MULSTAGES: 3}]
+    random_points: [{LOGN: 6, W: 16, TW: 16, RND: 1, ORDER: 0, CMUL: 4, TWSTAGES: 1, MULSTAGES: 2}, {LOGN: 8, W: 16, TW: 18, RND: 1, ORDER: 1, CMUL: 4, TWSTAGES: 1, MULSTAGES: 3}, {LOGN: 10, W: 16, TW: 16, RND: 1, ORDER: 0, CMUL: 4, TWSTAGES: 1, MULSTAGES: 2}]
+    expected_primitives:
+      a7: "N = 1024, W = TW = 16: one complex multiplier on up to 26 x 16 bit operands: 2 DSP48E1 per real multiplier, so 8 (CMUL 4); two banks of 512 x 52 bits in the core (about 2 x 26 Kbit) and the frame store 104 Kbit; about 700 to 1100 LUT; expected Fmax 200 to 300 MHz at MULSTAGES 3"
+      k26: "as a7 with DSP48E2 (27 x 18: 4 DSP for the complex multiplier); BRAM or URAM for the store; Fmax 350 to 500 MHz expected"
+    ooc_points: [{LOGN: 10, W: 16, TW: 16, RND: 1, ORDER: 0, CMUL: 4, TWSTAGES: 2, MULSTAGES: 3}, {LOGN: 8, W: 16, TW: 16, RND: 1, ORDER: 1, CMUL: 3, TWSTAGES: 2, MULSTAGES: 3}]
+    mutant_run: [{mode: directed, params: {LOGN: 4, W: 8, TW: 10, RND: 1, ORDER: 0, CMUL: 4, TWSTAGES: 1, MULSTAGES: 2}}, {mode: levels, params: {LOGN: 5, W: 8, TW: 10, RND: 1, ORDER: 1, CMUL: 3, TWSTAGES: 2, MULSTAGES: 0}}, {mode: randomised, params: {LOGN: 6, W: 16, TW: 16, RND: 1, ORDER: 0, CMUL: 4, TWSTAGES: 1, MULSTAGES: 2}, n: 512}, {mode: stalled, params: {LOGN: 4, W: 8, TW: 10, RND: 1, ORDER: 0, CMUL: 4, TWSTAGES: 1, MULSTAGES: 2}, n: 400}, {mode: stalled_hard, params: {LOGN: 4, W: 8, TW: 10, RND: 1, ORDER: 0, CMUL: 4, TWSTAGES: 1, MULSTAGES: 2}, n: 400}]
