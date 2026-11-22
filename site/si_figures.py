@@ -83,8 +83,8 @@ def _sweep() -> dict:
                 p, t = cells[(bank, std, ln, r)]
                 vals[f"{key}_{r}_{ln}"] = p
                 vals[f"{key}_total"] = t
-    vals.update(n_runs=len(rows), z0_ohm=50, c_pf=5)
-    return {"data": {"panels": panels, "z0_ohm": 50, "c_pf": 5, "n_runs": len(rows)}, "vals": vals}
+    vals.update(n_runs=len(rows), z0_ohm=50, c_pf=5, ui_ns=10)
+    return {"data": {"panels": panels, "z0_ohm": 50, "c_pf": 5, "n_runs": len(rows), "ui_ns": 10}, "vals": vals}
 
 
 def _kr260() -> dict:

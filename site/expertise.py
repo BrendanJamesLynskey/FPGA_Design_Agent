@@ -46,8 +46,8 @@ PROSE_OK = re.compile(r"Brief \d+|PR #\d+|Vivado \d+\.\d+|AXI4|AXI3|DSP48E?\d?|D
                       r"IEEE-1735|AVAL-46|PLIO-3|BUFC-1|FDA-CON-\d(?:\s+to\s+FDA-CON-\d)?|STD-[A-Z]+-\d+|V[0-3](?: to V[0-3])?|"
                       r"CDC-\d+|M\d+[a-c]?|C\d+|UG\d+|PG\d+|XAPP\d+|PS7|PS8|K26|KR260|xc7[az]\d+[a-z]*\d*|Artix-7|SPI|I2C|HDMI|10G|"
                       r"xpm_cdc_\w+|report_\w+|2025\.2|"
-                      # experimental conditions of a model run (a line of 6 in, 50 ohm, 22 ohm in series, 3.3 V, 12 mA, 5 pF, 10 ns), not results
-                      r"\d+(?:\.\d+)? (?:ohm|in|inch|inches|V|mA|pF|ns)\b")
+                      # experimental conditions of a model run (a line of 6 in, 50 ohm, 22 ohm in series, 3.3 V, 12 mA, 5 pF), not results
+                      r"\d+(?:\.\d+)? (?:ohm|in|inch|inches|V|mA|pF)\b")
 NUM = re.compile(r"(?<![\w.#-])\d[\d,]*(?:\.\d+)?")
 
 
