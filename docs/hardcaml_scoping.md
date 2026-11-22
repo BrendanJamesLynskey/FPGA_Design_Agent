@@ -16,7 +16,7 @@ probe asked Sonnet for three small blocks in each language. This page is the res
   `credit_chan` points pass. The unbounded k-induction proofs do **not** close (UNKNOWN at every point): the SV proofs lean on invariants written
   inside the slices (`ifdef FORMAL`), and Hardcaml's Verilog has no place for them. So formal assurance of generated code is weaker than for the
   hand-written code until invariants can be bound from outside (next steps).
-- **Quality of results:** see "Vivado comparison" below.
+- **Quality of results:** the Vivado comparison is written and **not yet run** (no heavy slot became free); no area or timing claim is made.
 - **Agent fluency (a probe, not an eval):** Sonnet wrote all three small blocks in both languages; SV passed first time 9 of 9, Hardcaml 8 of 9
   (9 of 9 after one repair round). Ceiling effect: the tasks were too easy to separate the languages.
 - **Recommendation:** do not make Hardcaml a first-class agent input language now. Offer it as an optional, human-driven source for generated
@@ -84,7 +84,11 @@ The slices' own invariants are the missing part (see summary). Run: `ip_lib/<blo
 
 ## 4. Vivado comparison (out of context)
 
-OOC_PLACEHOLDER
+**Not run yet.** The comparison is written (`tools/hardcaml/ooc_compare.py`, `tools/hardcaml/ooc_compare.tcl`: 24 builds, six parameter
+points of the two blocks, SV and Hardcaml, on the Artix-7 `xc7a100tcsg324-1` and the Kria K26 `xck26-sfvc784-2LV-c`, one Vivado 2026.1 session, one
+thread) but no heavy slot was free for 90 minutes (both held by Vivado and xsim jobs of other briefs). No LUT, FF, Fmax or WNS number is claimed
+here. To run it: take a slot, then `python3 tools/hardcaml/ooc_compare.py run`; it writes `results/b171/ooc_compare.json` and the reports under
+`build/hc_ooc/`. Until it runs, nothing in this page says whether the generated Verilog costs more area or timing than the SV.
 
 ## 5. Readability of the generated Verilog
 
