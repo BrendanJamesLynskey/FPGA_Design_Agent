@@ -10,6 +10,13 @@
     python -m agent project check|status|hash|gen-tests <dir> ...     (the project layer, project/cli.py)
     python -m agent improve <design-dir> "<request>" [--more | --edit N "<change>" | --choose N]   (brief 104: analysis, then strategy options; --choose runs one)
 
+    python -m agent doctor [--json] [--no-probe]        (brief 157: what this machine is missing before a first run; no key needed)
+    python -m agent models show                          (brief 157: the model table; no key needed)
+
+Without the access key only these run: ``--help`` at any level, ``doctor``, ``models show`` and ``resume <design-dir> ... --dry-run``
+(``agent/newcomer.py``, the single place that decides it; ``agent/tests/test_157_newcomer_cli.py`` proves everything else still stops at
+the gate). Every other command exits 2 with one line naming FDA_ACCESS_KEY.
+
 A paused run (an interview question or a stage review) prints what it waits for; answer with ``resume --reply``
 ({"answer": ...} for a question; {"decision": "approve"|"edit"|"rewind", "note": ..., "to": N} for a review).
 ``--replies`` is a JSON list of such replies fed in order (scripted reviewer: the planner's smokes).
@@ -24,8 +31,23 @@ import json
 import sys
 from pathlib import Path
 
-from agent.core.boards import board_arg, board_name
-from agent.core.session import ROOT
+ROOT = Path(__file__).resolve().parents[1]           # the checkout (agent.core.session.ROOT is the same path; no import, so --help and doctor need no extras)
+
+
+def newcomer_is_design_resume(run_id: str) -> bool:
+    from agent.newcomer import is_design_resume
+    return is_design_resume(run_id)
+
+
+def board_arg(text: str):
+    """``--board``: a board id or the words of a request (agent.core.boards, imported when the option is used)."""
+    from agent.core.boards import board_arg as f
+    return f(text)
+
+
+def board_name(text: str):
+    from agent.core.boards import board_name as f
+    return f(text)
 
 
 def scope_for_record(design: Path) -> dict | None:
@@ -197,6 +219,8 @@ def models_cmd(a, argv: list[str]) -> int:
     if a.action == "show":
         print(json.dumps(table.record(), indent=1) if a.json else table.show())
         return 0
+    from agent.access import require_or_exit      # brief 157: `check` (and --probe, which spends tokens) is not the exempt `show`
+    require_or_exit("python -m agent models check")
     print(table.show())
     print(f"\nthe table is valid ({len(table.entries())} entries, hash {table.hash})")
     if not a.probe:
@@ -273,6 +297,8 @@ def pickup_cmd(a) -> int:
         report["resume"] = "dry run" if a.dry_run else "nothing to re-run: the handover is current"
         print(json.dumps(report, indent=1))
         return 0
+    from agent.access import require_or_exit      # brief 157: past the dry run this resume calls models and writes a run: the gate again,
+    require_or_exit("python -m agent resume")     # in case main() let the command line through without a key
     hb = (ld["handover"].get("target") or {}).get("board")
     board = a.board or (hb if hb and (ROOT / "boards" / str(hb)).is_dir() else "nexys_a7_100t")
     ar = ld["handover"].get("agent_run") or {}
@@ -328,27 +354,28 @@ def review_cmd(a) -> int:
     return 0 if rep["design"]["unchanged"] else 2
 
 
-def main(argv: list[str] | None = None) -> int:
-    args = sys.argv[1:] if argv is None else argv
-    if args[:1] == ["project"]:                      # brief 27B: the project layer (project/), not part of the agent graph
-        from project.cli import main as project_main
-        return project_main(args[1:])
-    from agent.access import require_or_exit      # brief 94: run, resume and document all start here
-    require_or_exit("python -m agent")
-    from agent.graph.role_models import parse_roles
-    from agent.graph.run import Config, build_graph, checkpointer_for, new_runtime
-    ap = argparse.ArgumentParser(prog="python -m agent")
-    sub = ap.add_subparsers(dest="cmd", required=True)
-    r = sub.add_parser("run")
-    r.add_argument("spec", type=Path)
+def build_parser() -> argparse.ArgumentParser:
+    """The command line. Building it reads no key and no private file; ``--help`` is argparse's own, so it prints and exits 0 before the
+    access gate (brief 157). Which commands need the key is in ``agent.newcomer.COMMANDS`` and in the epilog."""
+    from agent import newcomer
+    ap = argparse.ArgumentParser(prog="python -m agent", description=newcomer.TOP_DESCRIPTION, epilog=newcomer.TOP_EPILOG,
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+    sub = ap.add_subparsers(dest="cmd", required=True, metavar="command")
+    r = sub.add_parser("run", help=newcomer.COMMANDS["run"][0], description=newcomer.COMMANDS["run"][1], epilog=newcomer.RUN_EPILOG,
+                       formatter_class=argparse.RawDescriptionHelpFormatter)
+    r.add_argument("spec", type=Path, help="the plain-English spec (spec.md); a task directory's data/ and bench.yaml sit beside it")
     r.add_argument("--board", default="nexys_a7_100t", type=board_arg,
                    help="a board id or the words of a request (boards/catalogue.yaml; docs/board_catalogue.md)")
-    r.add_argument("--name")
-    r.add_argument("--interview", choices=["on", "oracle", "off"], default="off")
-    r.add_argument("--review", choices=["on", "off"], default="off")
-    r.add_argument("--model", default="openai/gpt-6-luna")
-    r.add_argument("--hidden-spec", type=Path)
-    r.add_argument("--stop-after", type=int)
+    r.add_argument("--name", help="the design's name (default: the spec's directory name)")
+    r.add_argument("--interview", choices=["on", "oracle", "off"], default="off",
+                   help="on: the clarifier asks a person questions; oracle: a model answers them from --hidden-spec; off (default): it assumes")
+    r.add_argument("--review", choices=["on", "off"], default="off", help="on: pause for a person's decision after every stage")
+    r.add_argument("--model", default="openai/gpt-6-luna", help="the OpenRouter model of the default endpoint (see `models show` for every purpose)")
+    r.add_argument("--hidden-spec", type=Path, help="the full spec an interview oracle answers from (evaluation runs)")
+    r.add_argument("--stop-after", type=int, metavar="N",
+                   help="stop after stage N passes; stages count from 0: 0 clarify, 1 board-and-device-planning, 2 rtl-design-creation, "
+                        "3 constraints, 4 synthesis, 5 implementation, 6 timing-closure, 7 power-closure, 8 drc-closure, "
+                        "9 configuration-and-debug. 0-2 need no Vivado; the default (no flag) runs to 9")
     r.add_argument("--harness", choices=["deepagents", "claude_code"], default="deepagents",
                    help="claude_code: each sub-agent turn is a headless `claude -p` on the Max plan (05c)")
     r.add_argument("--cc-model", default="claude-haiku-5-5", help="Claude Code model id (--harness claude_code)")
@@ -404,9 +431,10 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("--hdl", choices=["sv", "vhdl"], default="sv",
                    help="the design language; vhdl = VHDL-2008 RTL (GHDL lint, GHDL netlist or GHDL simulation, "
                         "read_vhdl -vhdl2008 in Vivado); the test shell stays SystemVerilog")
-    for p in (r, sub.add_parser("resume")):
-        p.add_argument("--replies", type=Path)
-        p.add_argument("--reply")
+    for p in (r, sub.add_parser("resume", help=newcomer.COMMANDS["resume"][0], description=newcomer.COMMANDS["resume"][1],
+                                epilog=newcomer.RESUME_EPILOG, formatter_class=argparse.RawDescriptionHelpFormatter)):
+        p.add_argument("--replies", type=Path, help="a JSON list of replies fed in order to the questions and reviews that pause the run")
+        p.add_argument("--reply", help="one JSON reply to the question or review the run is paused on")
         p.add_argument("--replay", help="LLM replay fixture (no network)")
         p.add_argument("--record", help="record LLM calls to this fixture")
         p.add_argument("--deterministic", action="store_true",
@@ -416,18 +444,21 @@ def main(argv: list[str] | None = None) -> int:
         p.add_argument("--record-tape", help="brief 107: record every model call to this tape directory (private; outside the repo or git-ignored)")
         p.add_argument("--replay-tape", help="brief 107: serve every model call from this tape directory (level 2); a missing call is an error")
     rs = sub._name_parser_map["resume"]
-    rs.add_argument("run_id", help="a run id under runs/, or a design directory with handover.yaml (brief 68 D)")
-    rs.add_argument("change", nargs="?", help="design resume: the change request")
-    rs.add_argument("--rewind", type=int)
+    rs.add_argument("run_id", help="a run id under runs/, or a design directory containing handover.yaml; a name that is not such a "
+                                   "directory is taken as a run id")
+    rs.add_argument("change", nargs="?", help="design resume: the change request, in plain words")
+    rs.add_argument("--rewind", type=int, metavar="N", help="run resume: restore the end of stage N (files, .dcp, checkpoint; hash-checked) and continue there")
     rs.add_argument("--max-usd", type=float, help="cost cap for this resumed process (the meter starts at 0)")
     rs.add_argument("--kind", choices=sorted(__import__("agent.graph.pickup", fromlist=["x"]).STAGE_OF_KIND),
                     help="design resume: the change's class, instead of the keyword classifier")
     rs.add_argument("--from-stage", type=int, help="design resume: enter at this stage, overriding the rule")
-    rs.add_argument("--dry-run", action="store_true", help="design resume: report the freshness and the entry stage only")
+    rs.add_argument("--dry-run", action="store_true",
+                    help="design resume only: report the freshness and the entry stage, then stop; needs no key, writes nothing, calls no model. "
+                         "For a run id it does nothing (the run continues, with the key)")
     rs.add_argument("--scope", help="design resume of a managed project: the components or hierarchy paths this request may touch "
                                     "(comma separated; default: resolved from the change text, else every owned component)")
     rs.add_argument("--strategy-file", type=Path, help="design resume: the strategy.json `agent improve --choose` saved (the options offered and the choice go into the run record)")
-    rs.add_argument("--stop-after", type=int)
+    rs.add_argument("--stop-after", type=int, metavar="N", help="stop after stage N passes (stages count from 0; see `run --help`)")
     rs.add_argument("--board", type=board_name, help="design resume: default the handover's target.board when it names a board directory")
     rs.add_argument("--model", default="openai/gpt-6-luna")
     rs.add_argument("--harness", choices=["deepagents", "claude_code"], default="deepagents")
@@ -468,7 +499,16 @@ def main(argv: list[str] | None = None) -> int:
     _latency_parser(sub)
     from flow.options.cli import add_parser as _improve_parser           # brief 104
     _improve_parser(sub)
-    a = ap.parse_args(argv)
+    sub.add_parser("doctor", help=newcomer.COMMANDS["doctor"][0], description=newcomer.COMMANDS["doctor"][1],
+                   add_help=False)                      # dispatched in main() before this parser: listed here so --help shows it
+    sub.add_parser("project", help=newcomer.COMMANDS["project"][0], add_help=False)
+    return ap
+
+
+def _run_main(a, args: list[str], ap: argparse.ArgumentParser) -> int:
+    """Everything after the access gate (or after an exemption): the parsed command line ``a`` runs."""
+    from agent.graph.role_models import parse_roles
+    from agent.graph.run import Config, build_graph, checkpointer_for, new_runtime
     if a.cmd == "models":
         return models_cmd(a, args)
     if a.cmd == "latency":
@@ -481,7 +521,7 @@ def main(argv: list[str] | None = None) -> int:
         return review_cmd(a)
     if a.cmd == "document":
         return document_cmd(a)
-    if a.cmd == "resume" and (Path(a.run_id) / "handover.yaml").is_file():
+    if a.cmd == "resume" and newcomer_is_design_resume(a.run_id):
         return pickup_cmd(a)
     replies = json.loads(a.replies.read_text()) if a.replies else []
     if a.reply:
@@ -573,6 +613,29 @@ def main(argv: list[str] | None = None) -> int:
         first = None
     _drive(graph, rt, lg, first, replies)
     return 0
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = sys.argv[1:] if argv is None else argv
+    if args[:1] == ["project"]:                      # brief 27B: the project layer (project/), not part of the agent graph
+        from project.cli import main as project_main
+        return project_main(args[1:])
+    from agent import newcomer
+    if args[:1] == ["doctor"]:                       # brief 157: reads no private file without the key; never prints the key
+        return newcomer.doctor_main(args[1:])
+    try:
+        ap = build_parser()
+        a = ap.parse_args(args)                      # --help and usage errors end here, before the gate: they print text only
+    except ImportError as e:                         # an extra is not installed: help still answers; anything else is gated first
+        return newcomer.without_extras(args, e)
+    from agent.access import require_or_exit      # brief 94: run, resume and document all start here
+    why = newcomer.ungated(a)                        # brief 157: the only commands that run without a key, each with its reason
+    if why is None:
+        require_or_exit("python -m agent")
+    try:
+        return _run_main(a, args, ap)
+    except ImportError as e:
+        return newcomer.missing_extra(a, e)
 
 
 if __name__ == "__main__":

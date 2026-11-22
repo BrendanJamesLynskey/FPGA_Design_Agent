@@ -1,0 +1,818 @@
+{
+ "version": 1,
+ "note": "labelled set of brief 157: each case is a command line and the exit status and text it must give on a fresh clone with no key and no private prompts. 'bare' = Python with pyyaml and pyserial only; 'full' = the agent and graph extras installed. null = not run there. Written before the change was measured.",
+ "cases": [
+  {
+   "id": "help_top",
+   "class": "help",
+   "argv": [
+    "--help"
+   ],
+   "full": {
+    "exit": 0,
+    "stdout_has": [
+     "usage:"
+    ],
+    "stderr_not": [
+     "access key required"
+    ]
+   },
+   "bare": {
+    "exit": 0,
+    "stdout_has": [
+     "commands:"
+    ],
+    "stderr_not": [
+     "access key required"
+    ]
+   }
+  },
+  {
+   "id": "help_short",
+   "class": "help",
+   "argv": [
+    "-h"
+   ],
+   "full": {
+    "exit": 0,
+    "stdout_has": [
+     "usage:"
+    ],
+    "stderr_not": [
+     "access key required"
+    ]
+   },
+   "bare": {
+    "exit": 0,
+    "stdout_has": [
+     "commands:"
+    ],
+    "stderr_not": [
+     "access key required"
+    ]
+   }
+  },
+  {
+   "id": "help_run",
+   "class": "help",
+   "argv": [
+    "run",
+    "--help"
+   ],
+   "full": {
+    "exit": 0,
+    "stdout_has": [
+     "usage:"
+    ],
+    "stderr_not": [
+     "access key required"
+    ]
+   },
+   "bare": {
+    "exit": 0,
+    "stdout_has": [
+     "commands:"
+    ],
+    "stderr_not": [
+     "access key required"
+    ]
+   }
+  },
+  {
+   "id": "help_resume",
+   "class": "help",
+   "argv": [
+    "resume",
+    "--help"
+   ],
+   "full": {
+    "exit": 0,
+    "stdout_has": [
+     "usage:"
+    ],
+    "stderr_not": [
+     "access key required"
+    ]
+   },
+   "bare": {
+    "exit": 0,
+    "stdout_has": [
+     "commands:"
+    ],
+    "stderr_not": [
+     "access key required"
+    ]
+   }
+  },
+  {
+   "id": "help_document",
+   "class": "help",
+   "argv": [
+    "document",
+    "--help"
+   ],
+   "full": {
+    "exit": 0,
+    "stdout_has": [
+     "usage:"
+    ],
+    "stderr_not": [
+     "access key required"
+    ]
+   },
+   "bare": {
+    "exit": 0,
+    "stdout_has": [
+     "commands:"
+    ],
+    "stderr_not": [
+     "access key required"
+    ]
+   }
+  },
+  {
+   "id": "help_review",
+   "class": "help",
+   "argv": [
+    "review",
+    "--help"
+   ],
+   "full": {
+    "exit": 0,
+    "stdout_has": [
+     "usage:"
+    ],
+    "stderr_not": [
+     "access key required"
+    ]
+   },
+   "bare": {
+    "exit": 0,
+    "stdout_has": [
+     "commands:"
+    ],
+    "stderr_not": [
+     "access key required"
+    ]
+   }
+  },
+  {
+   "id": "help_models",
+   "class": "help",
+   "argv": [
+    "models",
+    "--help"
+   ],
+   "full": {
+    "exit": 0,
+    "stdout_has": [
+     "usage:"
+    ],
+    "stderr_not": [
+     "access key required"
+    ]
+   },
+   "bare": {
+    "exit": 0,
+    "stdout_has": [
+     "commands:"
+    ],
+    "stderr_not": [
+     "access key required"
+    ]
+   }
+  },
+  {
+   "id": "help_latency",
+   "class": "help",
+   "argv": [
+    "latency",
+    "--help"
+   ],
+   "full": {
+    "exit": 0,
+    "stdout_has": [
+     "usage:"
+    ],
+    "stderr_not": [
+     "access key required"
+    ]
+   },
+   "bare": {
+    "exit": 0,
+    "stdout_has": [
+     "commands:"
+    ],
+    "stderr_not": [
+     "access key required"
+    ]
+   }
+  },
+  {
+   "id": "help_improve",
+   "class": "help",
+   "argv": [
+    "improve",
+    "--help"
+   ],
+   "full": {
+    "exit": 0,
+    "stdout_has": [
+     "usage:"
+    ],
+    "stderr_not": [
+     "access key required"
+    ]
+   },
+   "bare": {
+    "exit": 0,
+    "stdout_has": [
+     "commands:"
+    ],
+    "stderr_not": [
+     "access key required"
+    ]
+   }
+  },
+  {
+   "id": "help_doctor",
+   "class": "help",
+   "argv": [
+    "doctor",
+    "--help"
+   ],
+   "full": {
+    "exit": 0,
+    "stdout_has": [
+     "usage:"
+    ],
+    "stderr_not": [
+     "access key required"
+    ]
+   },
+   "bare": {
+    "exit": 0,
+    "stdout_has": [
+     "usage:"
+    ],
+    "stderr_not": [
+     "access key required"
+    ]
+   }
+  },
+  {
+   "id": "help_run_stages",
+   "class": "help",
+   "argv": [
+    "run",
+    "--help"
+   ],
+   "full": {
+    "exit": 0,
+    "stdout_has": [
+     "2 rtl-design-creation",
+     "Vivado"
+    ],
+    "stderr_not": [
+     "access key required"
+    ]
+   },
+   "bare": null
+  },
+  {
+   "id": "dry_run_design",
+   "class": "dry-run",
+   "argv": [
+    "resume",
+    "designs/b110_itch_ouch",
+    "widen the price field",
+    "--dry-run"
+   ],
+   "full": {
+    "exit": 0,
+    "stdout_has": [
+     "\"resume\": \"dry run\"",
+     "\"entry\""
+    ],
+    "stderr_not": [
+     "access key required"
+    ]
+   },
+   "bare": {
+    "exit": 2,
+    "stderr_has": [
+     "not installed here"
+    ],
+    "stderr_not": [
+     "access key required"
+    ]
+   }
+  },
+  {
+   "id": "dry_run_design_kind",
+   "class": "dry-run",
+   "argv": [
+    "resume",
+    "designs/b110_itch_ouch",
+    "--dry-run",
+    "--kind",
+    "docs"
+   ],
+   "full": {
+    "exit": 0,
+    "stdout_has": [
+     "\"resume\": \"dry run\""
+    ],
+    "stderr_not": [
+     "access key required"
+    ]
+   },
+   "bare": {
+    "exit": 2,
+    "stderr_has": [
+     "not installed here"
+    ],
+    "stderr_not": [
+     "access key required"
+    ]
+   }
+  },
+  {
+   "id": "models_show",
+   "class": "models show",
+   "argv": [
+    "models",
+    "show"
+   ],
+   "full": {
+    "exit": 0,
+    "stdout_has": [
+     "table hash"
+    ],
+    "stderr_not": [
+     "access key required"
+    ]
+   },
+   "bare": {
+    "exit": 2,
+    "stderr_has": [
+     "not installed here"
+    ],
+    "stderr_not": [
+     "access key required"
+    ]
+   }
+  },
+  {
+   "id": "models_show_json",
+   "class": "models show",
+   "argv": [
+    "models",
+    "show",
+    "--json"
+   ],
+   "full": {
+    "exit": 0,
+    "stdout_has": [
+     "{"
+    ],
+    "stderr_not": [
+     "access key required"
+    ]
+   },
+   "bare": {
+    "exit": 2,
+    "stderr_has": [
+     "not installed here"
+    ],
+    "stderr_not": [
+     "access key required"
+    ]
+   }
+  },
+  {
+   "id": "gated_run",
+   "class": "gated",
+   "argv": [
+    "run",
+    "spec.md"
+   ],
+   "full": {
+    "exit": 2,
+    "stderr_has": [
+     "access key required"
+    ],
+    "stdout_has": []
+   },
+   "bare": {
+    "exit": 2,
+    "stderr_has": [
+     "access key required"
+    ],
+    "stdout_has": []
+   }
+  },
+  {
+   "id": "gated_run_stop_after",
+   "class": "gated",
+   "argv": [
+    "run",
+    "spec.md",
+    "--stop-after",
+    "0"
+   ],
+   "full": {
+    "exit": 2,
+    "stderr_has": [
+     "access key required"
+    ],
+    "stdout_has": []
+   },
+   "bare": {
+    "exit": 2,
+    "stderr_has": [
+     "access key required"
+    ],
+    "stdout_has": []
+   }
+  },
+  {
+   "id": "gated_resume_runid",
+   "class": "gated",
+   "argv": [
+    "resume",
+    "someid"
+   ],
+   "full": {
+    "exit": 2,
+    "stderr_has": [
+     "access key required"
+    ],
+    "stdout_has": []
+   },
+   "bare": {
+    "exit": 2,
+    "stderr_has": [
+     "access key required"
+    ],
+    "stdout_has": []
+   }
+  },
+  {
+   "id": "gated_resume_runid_dry_run",
+   "class": "gated",
+   "argv": [
+    "resume",
+    "someid",
+    "--dry-run"
+   ],
+   "full": {
+    "exit": 2,
+    "stderr_has": [
+     "access key required"
+    ],
+    "stdout_has": []
+   },
+   "bare": {
+    "exit": 2,
+    "stderr_has": [
+     "access key required"
+    ],
+    "stdout_has": []
+   }
+  },
+  {
+   "id": "gated_resume_design_no_dry_run",
+   "class": "gated",
+   "argv": [
+    "resume",
+    "designs/b110_itch_ouch",
+    "widen the price field"
+   ],
+   "full": {
+    "exit": 2,
+    "stderr_has": [
+     "access key required"
+    ],
+    "stdout_has": []
+   },
+   "bare": {
+    "exit": 2,
+    "stderr_has": [
+     "access key required"
+    ],
+    "stdout_has": []
+   }
+  },
+  {
+   "id": "gated_document",
+   "class": "gated",
+   "argv": [
+    "document",
+    "rundir"
+   ],
+   "full": {
+    "exit": 2,
+    "stderr_has": [
+     "access key required"
+    ],
+    "stdout_has": []
+   },
+   "bare": {
+    "exit": 2,
+    "stderr_has": [
+     "access key required"
+    ],
+    "stdout_has": []
+   }
+  },
+  {
+   "id": "gated_review",
+   "class": "gated",
+   "argv": [
+    "review",
+    "designs/b110_itch_ouch"
+   ],
+   "full": {
+    "exit": 2,
+    "stderr_has": [
+     "access key required"
+    ],
+    "stdout_has": []
+   },
+   "bare": {
+    "exit": 2,
+    "stderr_has": [
+     "access key required"
+    ],
+    "stdout_has": []
+   }
+  },
+  {
+   "id": "gated_review_no_judge",
+   "class": "gated",
+   "argv": [
+    "review",
+    "designs/b110_itch_ouch",
+    "--no-judge"
+   ],
+   "full": {
+    "exit": 2,
+    "stderr_has": [
+     "access key required"
+    ],
+    "stdout_has": []
+   },
+   "bare": {
+    "exit": 2,
+    "stderr_has": [
+     "access key required"
+    ],
+    "stdout_has": []
+   }
+  },
+  {
+   "id": "gated_models_check",
+   "class": "gated",
+   "argv": [
+    "models",
+    "check"
+   ],
+   "full": {
+    "exit": 2,
+    "stderr_has": [
+     "access key required"
+    ],
+    "stdout_has": []
+   },
+   "bare": {
+    "exit": 2,
+    "stderr_has": [
+     "access key required"
+    ],
+    "stdout_has": []
+   }
+  },
+  {
+   "id": "gated_models_check_probe",
+   "class": "gated",
+   "argv": [
+    "models",
+    "check",
+    "--probe"
+   ],
+   "full": {
+    "exit": 2,
+    "stderr_has": [
+     "access key required"
+    ],
+    "stdout_has": []
+   },
+   "bare": {
+    "exit": 2,
+    "stderr_has": [
+     "access key required"
+    ],
+    "stdout_has": []
+   }
+  },
+  {
+   "id": "gated_latency",
+   "class": "gated",
+   "argv": [
+    "latency",
+    "--arm",
+    "A0",
+    "some_checkout"
+   ],
+   "full": {
+    "exit": 2,
+    "stderr_has": [
+     "access key required"
+    ],
+    "stdout_has": []
+   },
+   "bare": {
+    "exit": 2,
+    "stderr_has": [
+     "access key required"
+    ],
+    "stdout_has": []
+   }
+  },
+  {
+   "id": "gated_improve",
+   "class": "gated",
+   "argv": [
+    "improve",
+    "designs/b110_itch_ouch",
+    "use fewer LUTs"
+   ],
+   "full": {
+    "exit": 2,
+    "stderr_has": [
+     "access key required"
+    ],
+    "stdout_has": []
+   },
+   "bare": {
+    "exit": 2,
+    "stderr_has": [
+     "access key required"
+    ],
+    "stdout_has": []
+   }
+  },
+  {
+   "id": "gated_improve_analyse_only",
+   "class": "gated",
+   "argv": [
+    "improve",
+    "designs/b110_itch_ouch",
+    "use fewer LUTs",
+    "--analyse-only"
+   ],
+   "full": {
+    "exit": 2,
+    "stderr_has": [
+     "access key required"
+    ],
+    "stdout_has": []
+   },
+   "bare": {
+    "exit": 2,
+    "stderr_has": [
+     "access key required"
+    ],
+    "stdout_has": []
+   }
+  },
+  {
+   "id": "gated_improve_choose_dry_run",
+   "class": "gated",
+   "argv": [
+    "improve",
+    "designs/b110_itch_ouch",
+    "x",
+    "--choose",
+    "1",
+    "--dry-run"
+   ],
+   "full": {
+    "exit": 2,
+    "stderr_has": [
+     "access key required"
+    ],
+    "stdout_has": []
+   },
+   "bare": {
+    "exit": 2,
+    "stderr_has": [
+     "access key required"
+    ],
+    "stdout_has": []
+   }
+  },
+  {
+   "id": "doctor_noprobe",
+   "class": "doctor",
+   "argv": [
+    "doctor",
+    "--no-probe"
+   ],
+   "full": {
+    "exit": 1,
+    "stderr_not": [
+     "access key required"
+    ],
+    "stdout_regex": [
+     "\\[MISSING\\] access_key",
+     "\\[MISSING\\] prompts_path",
+     "\\[MISSING\\] prompts_pin",
+     "\\[ok +\\] agent_extra",
+     "\\[ok +\\] graph_extra",
+     "\\] sim_image:",
+     "\\] vivado:",
+     "^not ready: "
+    ]
+   },
+   "bare": {
+    "exit": 1,
+    "stderr_not": [
+     "access key required"
+    ],
+    "stdout_regex": [
+     "\\[MISSING\\] agent_extra",
+     "\\[MISSING\\] graph_extra",
+     "\\[MISSING\\] access_key",
+     "\\[MISSING\\] prompts_path",
+     "\\[MISSING\\] prompts_pin",
+     "\\] sim_image:",
+     "\\] vivado:",
+     "^not ready: "
+    ]
+   }
+  },
+  {
+   "id": "doctor_probe",
+   "class": "doctor",
+   "argv": [
+    "doctor"
+   ],
+   "full": {
+    "exit": 1,
+    "stderr_not": [
+     "access key required"
+    ],
+    "stdout_regex": [
+     "\\[MISSING\\] access_key",
+     "\\] sim_image:",
+     "\\] vivado:",
+     "\\] verilator:",
+     "\\] yosys:"
+    ]
+   },
+   "bare": {
+    "exit": 1,
+    "stderr_not": [
+     "access key required"
+    ],
+    "stdout_regex": [
+     "\\[MISSING\\] agent_extra",
+     "\\[MISSING\\] access_key",
+     "\\] sim_image:",
+     "\\] vivado:"
+    ]
+   }
+  },
+  {
+   "id": "doctor_json",
+   "class": "doctor",
+   "argv": [
+    "doctor",
+    "--no-probe",
+    "--json"
+   ],
+   "full": {
+    "exit": 1,
+    "stdout_has": [
+     "\"missing_required\"",
+     "access_key"
+    ],
+    "stderr_not": [
+     "access key required"
+    ]
+   },
+   "bare": {
+    "exit": 1,
+    "stdout_has": [
+     "\"missing_required\"",
+     "agent_extra"
+    ],
+    "stderr_not": [
+     "access key required"
+    ]
+   }
+  }
+ ]
+}

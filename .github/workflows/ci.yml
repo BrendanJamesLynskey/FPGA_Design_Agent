@@ -100,6 +100,32 @@ jobs:
           done
           exit $rc
 
+  newcomer-cli:
+    name: Newcomer CLI on a fresh clone (brief 157) - no access key, no private prompts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    # Deliberately no secrets and no FDA_ACCESS_KEY: this job is what a stranger's clone sees. The labelled set
+    # (results/157_newcomer_cli/cases.json) says what each command line must print and exit with; --check fails the job on any mismatch.
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: "Bare install (pyyaml and pyserial only): help, doctor and the gate"
+        run: |
+          python -m venv "$RUNNER_TEMP/bare"
+          "$RUNNER_TEMP/bare/bin/pip" install pyyaml pyserial
+          "$RUNNER_TEMP/bare/bin/python" results/157_newcomer_cli/measure.py --env bare --check --out "$RUNNER_TEMP/newcomer_bare.json"
+      - name: Install the agent extras (the pins of pyproject.toml)
+        run: pip install pyyaml pyserial mcp==2.3.0 jsonschema langgraph==1.2.19 langgraph-checkpoint-sqlite==3.1.3 deepagents==0.7.32 langchain-openai==1.7.3
+      - name: "Labelled set with the extras: every --help, --dry-run and models show exits 0, run exits 2, doctor names what is missing"
+        run: python results/157_newcomer_cli/measure.py --env full --check --out "$RUNNER_TEMP/newcomer_full.json"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: newcomer-cli-records
+          path: ${{ runner.temp }}/newcomer_*.json
+
   reset-elab:
     name: Reset check by elaboration (brief 71B) - OSS CAD Suite 20261112 (Yosys + slang + ghdl plugins), 23 + 212 regression designs
     runs-on: ubuntu-24.04

@@ -67,6 +67,19 @@ Stage 3 integrates one real third-party RTL block (Alex Forencich's parallel CRC
 Brief 102F closes the stage 1-3 gaps: the waiver files (`lint/`, `waivers.yaml`, in-source waivers) are the owner's, writes to frozen files are prevented while a tool runs design code (and mounted read-only in the container runner), the scope is in `config.json`/`summary.json` and re-checked by `resume`, and evidence signing is proposed: [docs/managed_projects.md](docs/managed_projects.md) and [results/102f_managed_gaps](results/102f_managed_gaps/README.md).
 A portfolio pack (title, facts with their sources, stills and a short animation) is in [site/portfolio/](site/portfolio/README.md).
 
+## Start here: which command for which job
+
+Most `python -m agent ...` commands need the access key ([Access key](#access-key)); the rows below marked "no key" do not.
+Nothing on this table is checked by a model: `--help`, `--dry-run`, `models show` and `doctor` print text and call nothing.
+
+| You want to | Command | Know first |
+|---|---|---|
+| to know what this machine is missing before a first run | `python -m agent doctor` (no key) | names each missing prerequisite with the command that fixes it (agent and graph extras, the access key, the private prompts path and its pin, the `fda-sim:2` image, Vivado, tool versions) and exits 1 while something the agent cannot run without is missing; never prints the key; the prompt manifest is compared with the pin only when a valid key is present ([agent/newcomer.py](agent/newcomer.py)) |
+| to see which models a run would spend on | `python -m agent models show` (no key) | prints the table and where each value came from; makes no call (`models check`, and `--probe`, need the key) |
+| a command's options | `python -m agent <command> --help` (no key) | on an install without the agent extras the help is a short command table, with the install line |
+| to see which stage a change would re-enter | `python -m agent resume <design-dir> "<change>" --dry-run` (no key) | only for a directory that holds `handover.yaml`; for a run id `--dry-run` does nothing and the run continues, so it needs the key. A request with no keyword the classifier knows re-enters at stage 0 |
+| everything else (`run`, `resume`, `document`, `review`, `models check`, `latency`, `improve`, including `improve --choose --dry-run`) | the same commands | exit status 2 with one line naming `FDA_ACCESS_KEY`; measured in [results/157_newcomer_cli](results/157_newcomer_cli/README.md) |
+
 ## The flow
 
 ```
