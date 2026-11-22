@@ -214,6 +214,83 @@ def run_target(target: dict, seed: int, count: int | None, jobs: int = 1, mutant
         shutil.rmtree(work, ignore_errors=True)
 
 
+def redecide(rec: dict, target: dict, bmc_s: int, prove_s: int, log=print) -> dict:
+    """Brief 152: runs the formal filter again, with longer limits, on the survivors whose verdict is ``undecided`` (a BMC that ran out of its 60 s under load decides nothing:
+    the register-matched proof is accepted only after a clean BMC). The mutants are made again from the record's seed and count (the RTL hash must match), the rows and the
+    summary are updated, and ``filter.redecided`` records what was run. Returns the new record."""
+    g = rec["generator"]
+    files = [target["rtl_dir"] / n for n in target["rtl_files"]]
+    gen = mutation_blind.generate(files, g["seed"], g["requested"])
+    if gen["rtl_sha256"] != g["rtl_sha256"]:
+        raise RuntimeError("the RTL is not the RTL the record was made from")
+    by_name = {m["name"]: m for m in gen["mutants"]}
+    work = Path(tempfile.mkdtemp(prefix=f"mt_re_{target['name']}_"))
+    todo = []
+    try:
+        for r in rec["rows"]:
+            if r["status"] == "survived" and (r.get("formal") or {}).get("verdict") in ("undecided", "error", "skipped"):
+                m = by_name[r["name"]]
+                d = work / r["name"]
+                d.mkdir(parents=True)
+                for n in target.get("copy_files") or target["rtl_files"]:
+                    shutil.copy(target["rtl_dir"] / n, d / n)
+                (d / m["file"]).write_text(mutation_blind.apply(m, (d / m["file"]).read_text()))
+                before = r["formal"]["verdict"]
+                r.pop("formal")
+                todo.append((r, before))
+        filter_survivors(target, [r for r, _ in todo], work, rec["filter"]["bmc_depth"], bmc_s, prove_s, log)
+        for r, before in todo:
+            r["formal"]["redecided_from"] = before
+        S = summarise(rec["rows"], bool(target.get("formal_bench")))
+        rec = {**rec, **S, "survivors": [{"name": r["name"], "change": r["change"], "verdict": (r.get("formal") or {}).get("verdict", "not_run"),
+                                           "note": "; ".join(p.get("note", "") for p in (r.get("formal") or {}).get("per_config", []) if p.get("note"))[:300]}
+                                          for r in rec["rows"] if r["status"] == "survived" and r.get("formal_bench") != "killed"]}
+        rec["filter"] = {**rec["filter"], "redecided": {"names": [r["name"] for r, _ in todo], "bmc_limit_s": bmc_s, "prove_limit_s": prove_s,
+                                                        "why": "these survivors were undecided at the first limits (BMC timed out under machine load)"}}
+        return rec
+    finally:
+        shutil.rmtree(work, ignore_errors=True)
+
+
+def rebench(rec: dict, target: dict, stage: str, log=print) -> dict:
+    """Brief 152: a bench that has grown a case since the record was made is run again, that stage only (``target['stage_benches'][stage]``), on the mutants that survived. A mutant it
+    kills becomes ``killed`` with ``bench_stage`` set to the stage; the others keep their verdicts. Nothing already killed is run again (a kill by any case stands). The summary is
+    recomputed and ``bench.rebenched`` records what was done. Returns the new record."""
+    g = rec["generator"]
+    files = [target["rtl_dir"] / n for n in target["rtl_files"]]
+    gen = mutation_blind.generate(files, g["seed"], g["requested"])
+    if gen["rtl_sha256"] != g["rtl_sha256"]:
+        raise RuntimeError("the RTL is not the RTL the record was made from")
+    by_name = {m["name"]: m for m in gen["mutants"]}
+    fn = target["stage_benches"][stage]
+    work = Path(tempfile.mkdtemp(prefix=f"mt_rb_{target['name']}_"))
+    done = []
+    try:
+        for r in rec["rows"]:
+            if r["status"] != "survived":
+                continue
+            m = by_name[r["name"]]
+            d = work / r["name"]
+            d.mkdir(parents=True)
+            for n in target.get("copy_files") or target["rtl_files"]:
+                shutil.copy(target["rtl_dir"] / n, d / n)
+            (d / m["file"]).write_text(mutation_blind.apply(m, (d / m["file"]).read_text()))
+            st = fn(d, rec["bench"]["mutant_timeout_s"])
+            log(f"  rebench {stage:9s} {r['name']:44s} {st}", flush=True)
+            done.append({"name": r["name"], "result": st})
+            if st == "fail":
+                r["status"], r["bench_stage"] = "killed", stage
+                r.pop("formal", None)
+        S = summarise(rec["rows"], bool(target.get("formal_bench")))
+        rec = {**rec, **S, "survivors": [{"name": r["name"], "change": r["change"], "verdict": (r.get("formal") or {}).get("verdict", "not_run"),
+                                           "note": "; ".join(p.get("note", "") for p in (r.get("formal") or {}).get("per_config", []) if p.get("note"))[:300]}
+                                          for r in rec["rows"] if r["status"] == "survived" and r.get("formal_bench") != "killed"]}
+        rec["bench"] = {**rec["bench"], "description": target["bench_text"], "rebenched": {"stage": stage, "date": time.strftime("%Y-%m-%d"), "runs": done}}
+        return rec
+    finally:
+        shutil.rmtree(work, ignore_errors=True)
+
+
 def tool_versions() -> dict:
     out = {}
     for name, argv in (("yosys", ["yosys", "-V"]), ("sby", ["sby", "--version"]), ("iverilog", ["iverilog", "-V"])):
@@ -311,6 +388,17 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("--prove-s", type=int, default=180)
     r.add_argument("--llm-proposals", default="")
     r.add_argument("--json", default="")
+    d = sub.add_parser("redecide", help="run the formal filter again, with longer limits, on the undecided survivors of a record (brief 152)")
+    d.add_argument("target")
+    d.add_argument("record")
+    d.add_argument("--bmc-s", type=int, default=900)
+    d.add_argument("--prove-s", type=int, default=600)
+    d.add_argument("--json", default="")
+    b = sub.add_parser("rebench", help="run one stage of the bench again on the survivors of a record (brief 152)")
+    b.add_argument("target")
+    b.add_argument("record")
+    b.add_argument("--stage", default="directed")
+    b.add_argument("--json", default="")
     s = sub.add_parser("show")
     s.add_argument("record")
     sub.add_parser("targets")
@@ -323,6 +411,16 @@ def main(argv: list[str] | None = None) -> int:
         print(show(json.loads(Path(a.record).read_text())))
         return 0
     t = T.get(a.target)
+    if a.cmd == "rebench":
+        rec = rebench(json.loads(Path(a.record).read_text()), t, a.stage)
+        Path(a.json or a.record).write_text(json.dumps(rec, indent=1) + "\n")
+        print(show(rec))
+        return 0
+    if a.cmd == "redecide":
+        rec = redecide(json.loads(Path(a.record).read_text()), t, a.bmc_s, a.prove_s)
+        Path(a.json or a.record).write_text(json.dumps(rec, indent=1) + "\n")
+        print(show(rec))
+        return 0
     rec = run_target(t, a.seed, a.count, a.jobs, a.mutant_timeout_s, not a.no_filter, a.bmc_depth, a.bmc_s, a.prove_s, Path(a.llm_proposals) if a.llm_proposals else None)
     rec["rtl_dir"] = t["rtl_dir_rel"]
     out = Path(a.json) if a.json else ROOT / "results" / "143b_mutation" / f"{a.target}.json"
