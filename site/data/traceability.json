@@ -1548,80 +1548,100 @@
       "assertion": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 0
       },
       "board_measurement": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 1,
        "pass": 0,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 0
       },
       "coverage_bin": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 0
       },
       "formal": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 0
       },
       "formal_lean": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 6,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 0
       },
       "review": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 0
       },
       "sim_measurement": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 14,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 0
       },
       "sim_test": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 1,
        "pass": 8,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 0
       },
       "timing": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 5,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 0
       },
       "uvm_test": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 0
       }
@@ -1701,14 +1721,14 @@
      },
      {
       "gate": false,
-      "id": "B96-P-T2T-DIGITAL",
-      "state": "stale",
-      "text": "its evidence is stale",
+      "id": "B96-S-CDC",
+      "state": "fail",
+      "text": "an item fails",
       "type": "no_passing_evidence"
      },
      {
       "gate": false,
-      "id": "B96-P-BYPASS",
+      "id": "B96-P-T2T-DIGITAL",
       "state": "stale",
       "text": "its evidence is stale",
       "type": "no_passing_evidence"
@@ -1725,6 +1745,13 @@
       "id": "B96-P-THROUGHPUT",
       "text": "depends on a 10G network card or a line-rate traffic generator; only hardware verification can close it, and it has not been done",
       "type": "hardware_open"
+     },
+     {
+      "gate": false,
+      "id": "B96-F-DBGXVC",
+      "state": "fail",
+      "text": "an item fails",
+      "type": "no_passing_evidence"
      },
      {
       "gate": false,
@@ -1808,12 +1835,6 @@
       "gate": false,
       "id": "V-HW-LAT-L-97C",
       "text": "changed since the evidence was recorded: designs/b96_kr260_10g/rtl/b96_core.sv, designs/b96_kr260_10g/rtl/b96_pkg.sv, designs/b96_kr260_10g/rtl/hs_vec.sv, designs/b96_kr260_10g/rtl/pcs_rx.sv (+5 more)",
-      "type": "stale_evidence"
-     },
-     {
-      "gate": false,
-      "id": "V-HW-BYPASS",
-      "text": "no pin recorded (run: python -m flow.trace_v1 pin)",
       "type": "stale_evidence"
      },
      {
@@ -2594,8 +2615,7 @@
       "requirements": [
        "B96-P-BYPASS"
       ],
-      "stale_because": "no pin recorded (run: python -m flow.trace_v1 pin)",
-      "status": "stale",
+      "status": "pass",
       "title": "Build rm_gp_bypass on the KR260, 100 receive restarts (pre-registered, board run 2026-11-21, stamp 86037ce1)",
       "value": 17.0
      },
@@ -2648,6 +2668,131 @@
       ],
       "status": "not_run",
       "title": "Line-rate burst from a traffic source",
+      "value": null
+     },
+     {
+      "detail": "measured 0.323 ns; bound at least 0 ns",
+      "evidence": {
+       "exists": true,
+       "file": "results/b131/builds/dbg_xvc/digest.json"
+      },
+      "id": "V-XVC-TIM-SETUP",
+      "instrument": null,
+      "judged_by_bound": true,
+      "method": "timing",
+      "planned": null,
+      "requirements": [
+       "B96-P-TIMING",
+       "B96-F-DBGXVC"
+      ],
+      "status": "pass",
+      "title": "Build dbg_xvc, routed",
+      "value": 0.323
+     },
+     {
+      "detail": "measured 0.011 ns; bound at least 0 ns",
+      "evidence": {
+       "exists": true,
+       "file": "results/b131/builds/dbg_xvc/digest.json"
+      },
+      "id": "V-XVC-TIM-HOLD",
+      "instrument": null,
+      "judged_by_bound": true,
+      "method": "timing",
+      "planned": null,
+      "requirements": [
+       "B96-P-HOLD",
+       "B96-F-DBGXVC"
+      ],
+      "status": "pass",
+      "title": "Build dbg_xvc, routed",
+      "value": 0.011
+     },
+     {
+      "detail": "gates.cdc_no_critical = True",
+      "evidence": {
+       "exists": true,
+       "file": "results/b131/builds/dbg_xvc/digest.json"
+      },
+      "id": "V-XVC-CDC",
+      "instrument": null,
+      "method": "timing",
+      "planned": null,
+      "requirements": [
+       "B96-S-CDC",
+       "B96-F-DBGXVC"
+      ],
+      "status": "pass",
+      "title": "report_cdc after routing, build dbg_xvc (no critical item)",
+      "value": true
+     },
+     {
+      "detail": "gates.post_synth_cdc_structure_clean = False",
+      "evidence": {
+       "exists": true,
+       "file": "results/b131/builds/dbg_xvc/digest.json"
+      },
+      "id": "V-XVC-CDC-STRUCT",
+      "instrument": null,
+      "method": "timing",
+      "planned": null,
+      "requirements": [
+       "B96-S-CDC",
+       "B96-F-DBGXVC"
+      ],
+      "status": "fail",
+      "title": "The flow's post-synthesis CDC structure gate on dbg_xvc (open: 2203 crossings of the core's own hs_vec buses are not matched to their max-delay exceptions in this build; the exceptions exist in the routed design)",
+      "value": true
+     },
+     {
+      "detail": "6 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "results/116_traceability/b96_kr260_10g/pytest_junit.xml"
+      },
+      "id": "V-XVC-VERDICT",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "B96-F-DBGXVC"
+      ],
+      "status": "pass",
+      "title": "The board test's pre-registered verdict fails on each broken criterion; the debug build differs from the parent only in the debug files",
+      "value": "6 of 6 tests passed"
+     },
+     {
+      "detail": "core_cells_removed = 0; core_cells_added_outside_taps = 0",
+      "evidence": {
+       "exists": true,
+       "file": "results/b131/compare/summary.json"
+      },
+      "id": "V-XVC-TRADING-PATH",
+      "instrument": null,
+      "method": "timing",
+      "planned": null,
+      "requirements": [
+       "B96-F-DBGXVC"
+      ],
+      "status": "pass",
+      "title": "Parent (eyescan) against dbg_xvc, same flow, same commit: the core's cells, and the worst slack of paths through the trading path",
+      "value": true
+     },
+     {
+      "detail": "evidence not found: results/b131/hw/*/record.json (planned: board session with the owner (not scheduled))",
+      "evidence": {
+       "exists": false,
+       "file": "results/b131/hw/*/record.json"
+      },
+      "id": "V-HW-XVC-PLANNED",
+      "instrument": "ila_capture",
+      "method": "board_measurement",
+      "planned": "board session with the owner (not scheduled)",
+      "requirements": [
+       "B96-F-DBGXVC"
+      ],
+      "status": "not_run",
+      "title": "ILA found and captured over XVC while Linux runs (pre-registered, dbg_xvc/board/xvc_board_session.sh)",
       "value": null
      },
      {
@@ -3141,7 +3286,9 @@
       "items": [
        "V-TIM-CDC-DEFAULT",
        "V-TIM-CDC-RMGP",
-       "V-TIM-CDC-BYPASS"
+       "V-TIM-CDC-BYPASS",
+       "V-XVC-CDC",
+       "V-XVC-CDC-STRUCT"
       ],
       "kind": "safety",
       "lean_transcription_only": false,
@@ -3152,7 +3299,7 @@
       "source": "designs/b96_kr260_10g/docs/design.md#26-where-the-decision-lives-and-how-it-crosses-clocks-as-built-for-brief-96-superseded-by-section-9-brief-96c",
       "spec_status": "draft",
       "stale_items": 2,
-      "state": "verified",
+      "state": "fail",
       "text": "report_cdc shows no Critical item and every crossing has the documented synchroniser structure.",
       "title": "No critical clock-domain crossing"
      },
@@ -3355,7 +3502,8 @@
       "items": [
        "V-TIM-SETUP-DEFAULT",
        "V-TIM-SETUP-RMGP",
-       "V-TIM-SETUP-BYPASS"
+       "V-TIM-SETUP-BYPASS",
+       "V-XVC-TIM-SETUP"
       ],
       "kind": "performance",
       "lean_transcription_only": false,
@@ -3386,7 +3534,8 @@
       "items": [
        "V-TIM-HOLD-DEFAULT",
        "V-TIM-HOLD-RMGP",
-       "V-TIM-HOLD-BYPASS"
+       "V-TIM-HOLD-BYPASS",
+       "V-XVC-TIM-HOLD"
       ],
       "kind": "performance",
       "lean_transcription_only": false,
@@ -3438,10 +3587,10 @@
       "title": "Receive eye margin"
      },
      {
-      "basis": null,
+      "basis": "board",
       "hardware_closure": null,
       "hardware_only": false,
-      "hardware_verified": false,
+      "hardware_verified": true,
       "id": "B96-P-BYPASS",
       "items": [
        "V-SIMM-BYPASS-SEQ",
@@ -3449,7 +3598,9 @@
       ],
       "kind": "performance",
       "lean_transcription_only": false,
-      "passing_methods": [],
+      "passing_methods": [
+       "board_measurement"
+      ],
       "performance": {
        "bound": 19.5,
        "condition": "build rm_gp_bypass, 100 receive restarts, KR260 optical fibre loopback, fibre lead 0.17 m",
@@ -3460,8 +3611,8 @@
       "rests_on_delegated": false,
       "source": "results/b96f1/preregistration.md",
       "spec_status": "draft",
-      "stale_items": 2,
-      "state": "stale",
+      "stale_items": 1,
+      "state": "verified",
       "text": "Build rm_gp_bypass must lower E by at least 1.5 clocks against rm_gp (21.0), else the bypass did not take effect. Pre-registered before any board time. Measured 2026-11-21 (stamp 86037ce1) as E = 17.0 clocks, 4.0 lower, inside the predicted 2.9 to 4.5 (results/b96f1/README.md).",
       "title": "GT buffer bypass shortens the echo path (pre-registered)"
      },
@@ -3492,6 +3643,35 @@
       "state": "not_run",
       "text": "A burst at line rate loses no frame. Nothing has been measured; the line and payload rates stand on configuration and gearbox arithmetic only.",
       "title": "Line-rate throughput without loss"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "B96-F-DBGXVC",
+      "items": [
+       "V-XVC-TIM-SETUP",
+       "V-XVC-TIM-HOLD",
+       "V-XVC-CDC",
+       "V-XVC-CDC-STRUCT",
+       "V-XVC-VERDICT",
+       "V-XVC-TRADING-PATH",
+       "V-HW-XVC-PLANNED"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test",
+       "timing"
+      ],
+      "rests_on_delegated": false,
+      "source": "designs/b96_kr260_10g/dbg_xvc/docs/dbg_xvc.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "fail",
+      "text": "Build dbg_xvc (the eyescan build plus a PS-AXI Debug Bridge and one ILA) closes timing and report_cdc, adds no cell to and removes no cell from the core's hierarchy except the read-only taps, and, on the board, Vivado finds and captures from the ILA over XVC while Linux keeps running. Never part of a build whose latency is measured.",
+      "title": "A debug build reaches an ILA over the network and leaves the trading path alone"
      },
      {
       "basis": null,
@@ -3543,7 +3723,7 @@
     "source_schema": "fpga-design-agent/testplan/v1",
     "summary": {
      "by_kind": {
-      "functional": 11,
+      "functional": 12,
       "interface": 1,
       "performance": 9,
       "safety": 6
@@ -3552,87 +3732,108 @@
       "assertion": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 1,
        "pass": 0,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 0
       },
       "board_measurement": {
        "bounded": 0,
        "fail": 0,
-       "not_run": 3,
-       "pass": 8,
-       "stale": 5,
+       "not_in_run": 0,
+       "not_run": 4,
+       "pass": 9,
+       "skipped": 0,
+       "stale": 4,
        "unapproved": 0
       },
       "coverage_bin": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 1,
        "pass": 0,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 0
       },
       "formal": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 1,
+       "skipped": 0,
        "stale": 1,
        "unapproved": 0
       },
       "formal_lean": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 4,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 0
       },
       "review": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 1,
        "unapproved": 0
       },
       "sim_measurement": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 3,
        "unapproved": 0
       },
       "sim_test": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
-       "pass": 12,
+       "pass": 13,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 0
       },
       "timing": {
        "bounded": 0,
-       "fail": 0,
+       "fail": 1,
+       "not_in_run": 0,
        "not_run": 0,
-       "pass": 3,
+       "pass": 7,
+       "skipped": 0,
        "stale": 6,
        "unapproved": 0
       },
       "uvm_test": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 2,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 0
       }
      },
      "by_state": {
+      "fail": 2,
       "not_run": 2,
-      "stale": 2,
+      "stale": 1,
       "verified": 23
      },
      "external": 3,
@@ -3640,11 +3841,11 @@
      "gap_counts": {
       "external_not_hardware_verified": 1,
       "hardware_open": 3,
-      "no_passing_evidence": 4,
-      "stale_evidence": 16
+      "no_passing_evidence": 5,
+      "stale_evidence": 15
      },
      "human_reviews": 0,
-     "items": 51,
+     "items": 58,
      "lean": {
       "approved": 0,
       "build_sources": [
@@ -3668,11 +3869,11 @@
       "items": 4,
       "statement_not_approved": 0
      },
-     "line": "27 requirements (11 functional, 9 performance, 1 interface, 6 safety); 23 verified, of which 2 rest on delegated acceptances (the planner accepted the Lean statement on the owner's delegation; not human approvals); 2 stale; 2 with no passing evidence; 0 of 3 requirements that depend on an external element closed by hardware; performance verified: 4 on the board, 2 by post-route timing, 0 in simulation only; 0 of 27 requirements agreed by a human, 0 human review(s) recorded; 4 Lean proof item(s) (all widths): 0 with a human-approved statement, 4 with a statement accepted on the owner's delegation (not a human approval), 0 with statement not approved; 4 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run).",
-     "performance_board": 4,
+     "line": "28 requirements (12 functional, 9 performance, 1 interface, 6 safety); 23 verified, of which 2 rest on delegated acceptances (the planner accepted the Lean statement on the owner's delegation; not human approvals); 1 stale; 2 failing; 2 with no passing evidence; 0 of 3 requirements that depend on an external element closed by hardware; performance verified: 5 on the board, 2 by post-route timing, 0 in simulation only; 0 of 28 requirements agreed by a human, 0 human review(s) recorded; 4 Lean proof item(s) (all widths): 0 with a human-approved statement, 4 with a statement accepted on the owner's delegation (not a human approval), 0 with statement not approved; 4 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run).",
+     "performance_board": 5,
      "performance_sim_only": 0,
      "performance_timing": 2,
-     "requirements": 27,
+     "requirements": 28,
      "spec_agreed": 0,
      "verified_on_delegated": 2
     }
@@ -6707,80 +6908,100 @@
       "assertion": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 46,
        "unapproved": 0
       },
       "board_measurement": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 0
       },
       "coverage_bin": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 10,
        "unapproved": 0
       },
       "formal": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 5,
        "unapproved": 0
       },
       "formal_lean": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 0
       },
       "review": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 0
       },
       "sim_measurement": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 0
       },
       "sim_test": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 35,
        "unapproved": 0
       },
       "timing": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 0
       },
       "uvm_test": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 0
       }
@@ -6829,7 +7050,7 @@
   "schema": "fda-traceability/1",
   "total": {
    "designs": 3,
-   "requirements": 75,
+   "requirements": 76,
    "verified": 48
   }
  },
@@ -8382,80 +8603,100 @@
       "assertion": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 0
       },
       "board_measurement": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 1,
        "pass": 0,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 0
       },
       "coverage_bin": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 0
       },
       "formal": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 0
       },
       "formal_lean": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 6,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 0
       },
       "review": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 0
       },
       "sim_measurement": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 14,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 0
       },
       "sim_test": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 1,
        "pass": 8,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 0
       },
       "timing": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 5,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 0
       },
       "uvm_test": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 0
       }
@@ -8535,14 +8776,14 @@
      },
      {
       "gate": false,
-      "id": "B96-P-T2T-DIGITAL",
-      "state": "stale",
-      "text": "its evidence is stale",
+      "id": "B96-S-CDC",
+      "state": "fail",
+      "text": "an item fails",
       "type": "no_passing_evidence"
      },
      {
       "gate": false,
-      "id": "B96-P-BYPASS",
+      "id": "B96-P-T2T-DIGITAL",
       "state": "stale",
       "text": "its evidence is stale",
       "type": "no_passing_evidence"
@@ -8559,6 +8800,13 @@
       "id": "B96-P-THROUGHPUT",
       "text": "depends on a 10G network card or a line-rate traffic generator; only hardware verification can close it, and it has not been done",
       "type": "hardware_open"
+     },
+     {
+      "gate": false,
+      "id": "B96-F-DBGXVC",
+      "state": "fail",
+      "text": "an item fails",
+      "type": "no_passing_evidence"
      },
      {
       "gate": false,
@@ -8642,12 +8890,6 @@
       "gate": false,
       "id": "V-HW-LAT-L-97C",
       "text": "changed since the evidence was recorded: designs/b96_kr260_10g/rtl/b96_core.sv, designs/b96_kr260_10g/rtl/b96_pkg.sv, designs/b96_kr260_10g/rtl/hs_vec.sv, designs/b96_kr260_10g/rtl/pcs_rx.sv (+5 more)",
-      "type": "stale_evidence"
-     },
-     {
-      "gate": false,
-      "id": "V-HW-BYPASS",
-      "text": "no pin recorded (run: python -m flow.trace_v1 pin)",
       "type": "stale_evidence"
      },
      {
@@ -9428,8 +9670,7 @@
       "requirements": [
        "B96-P-BYPASS"
       ],
-      "stale_because": "no pin recorded (run: python -m flow.trace_v1 pin)",
-      "status": "stale",
+      "status": "pass",
       "title": "Build rm_gp_bypass on the KR260, 100 receive restarts (pre-registered, board run 2026-11-21, stamp 86037ce1)",
       "value": 17.0
      },
@@ -9482,6 +9723,131 @@
       ],
       "status": "not_run",
       "title": "Line-rate burst from a traffic source",
+      "value": null
+     },
+     {
+      "detail": "measured 0.323 ns; bound at least 0 ns",
+      "evidence": {
+       "exists": true,
+       "file": "results/b131/builds/dbg_xvc/digest.json"
+      },
+      "id": "V-XVC-TIM-SETUP",
+      "instrument": null,
+      "judged_by_bound": true,
+      "method": "timing",
+      "planned": null,
+      "requirements": [
+       "B96-P-TIMING",
+       "B96-F-DBGXVC"
+      ],
+      "status": "pass",
+      "title": "Build dbg_xvc, routed",
+      "value": 0.323
+     },
+     {
+      "detail": "measured 0.011 ns; bound at least 0 ns",
+      "evidence": {
+       "exists": true,
+       "file": "results/b131/builds/dbg_xvc/digest.json"
+      },
+      "id": "V-XVC-TIM-HOLD",
+      "instrument": null,
+      "judged_by_bound": true,
+      "method": "timing",
+      "planned": null,
+      "requirements": [
+       "B96-P-HOLD",
+       "B96-F-DBGXVC"
+      ],
+      "status": "pass",
+      "title": "Build dbg_xvc, routed",
+      "value": 0.011
+     },
+     {
+      "detail": "gates.cdc_no_critical = True",
+      "evidence": {
+       "exists": true,
+       "file": "results/b131/builds/dbg_xvc/digest.json"
+      },
+      "id": "V-XVC-CDC",
+      "instrument": null,
+      "method": "timing",
+      "planned": null,
+      "requirements": [
+       "B96-S-CDC",
+       "B96-F-DBGXVC"
+      ],
+      "status": "pass",
+      "title": "report_cdc after routing, build dbg_xvc (no critical item)",
+      "value": true
+     },
+     {
+      "detail": "gates.post_synth_cdc_structure_clean = False",
+      "evidence": {
+       "exists": true,
+       "file": "results/b131/builds/dbg_xvc/digest.json"
+      },
+      "id": "V-XVC-CDC-STRUCT",
+      "instrument": null,
+      "method": "timing",
+      "planned": null,
+      "requirements": [
+       "B96-S-CDC",
+       "B96-F-DBGXVC"
+      ],
+      "status": "fail",
+      "title": "The flow's post-synthesis CDC structure gate on dbg_xvc (open: 2203 crossings of the core's own hs_vec buses are not matched to their max-delay exceptions in this build; the exceptions exist in the routed design)",
+      "value": true
+     },
+     {
+      "detail": "6 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "results/116_traceability/b96_kr260_10g/pytest_junit.xml"
+      },
+      "id": "V-XVC-VERDICT",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "B96-F-DBGXVC"
+      ],
+      "status": "pass",
+      "title": "The board test's pre-registered verdict fails on each broken criterion; the debug build differs from the parent only in the debug files",
+      "value": "6 of 6 tests passed"
+     },
+     {
+      "detail": "core_cells_removed = 0; core_cells_added_outside_taps = 0",
+      "evidence": {
+       "exists": true,
+       "file": "results/b131/compare/summary.json"
+      },
+      "id": "V-XVC-TRADING-PATH",
+      "instrument": null,
+      "method": "timing",
+      "planned": null,
+      "requirements": [
+       "B96-F-DBGXVC"
+      ],
+      "status": "pass",
+      "title": "Parent (eyescan) against dbg_xvc, same flow, same commit: the core's cells, and the worst slack of paths through the trading path",
+      "value": true
+     },
+     {
+      "detail": "evidence not found: results/b131/hw/*/record.json (planned: board session with the owner (not scheduled))",
+      "evidence": {
+       "exists": false,
+       "file": "results/b131/hw/*/record.json"
+      },
+      "id": "V-HW-XVC-PLANNED",
+      "instrument": "ila_capture",
+      "method": "board_measurement",
+      "planned": "board session with the owner (not scheduled)",
+      "requirements": [
+       "B96-F-DBGXVC"
+      ],
+      "status": "not_run",
+      "title": "ILA found and captured over XVC while Linux runs (pre-registered, dbg_xvc/board/xvc_board_session.sh)",
       "value": null
      },
      {
@@ -9975,7 +10341,9 @@
       "items": [
        "V-TIM-CDC-DEFAULT",
        "V-TIM-CDC-RMGP",
-       "V-TIM-CDC-BYPASS"
+       "V-TIM-CDC-BYPASS",
+       "V-XVC-CDC",
+       "V-XVC-CDC-STRUCT"
       ],
       "kind": "safety",
       "lean_transcription_only": false,
@@ -9986,7 +10354,7 @@
       "source": "designs/b96_kr260_10g/docs/design.md#26-where-the-decision-lives-and-how-it-crosses-clocks-as-built-for-brief-96-superseded-by-section-9-brief-96c",
       "spec_status": "draft",
       "stale_items": 2,
-      "state": "verified",
+      "state": "fail",
       "text": "report_cdc shows no Critical item and every crossing has the documented synchroniser structure.",
       "title": "No critical clock-domain crossing"
      },
@@ -10189,7 +10557,8 @@
       "items": [
        "V-TIM-SETUP-DEFAULT",
        "V-TIM-SETUP-RMGP",
-       "V-TIM-SETUP-BYPASS"
+       "V-TIM-SETUP-BYPASS",
+       "V-XVC-TIM-SETUP"
       ],
       "kind": "performance",
       "lean_transcription_only": false,
@@ -10220,7 +10589,8 @@
       "items": [
        "V-TIM-HOLD-DEFAULT",
        "V-TIM-HOLD-RMGP",
-       "V-TIM-HOLD-BYPASS"
+       "V-TIM-HOLD-BYPASS",
+       "V-XVC-TIM-HOLD"
       ],
       "kind": "performance",
       "lean_transcription_only": false,
@@ -10272,10 +10642,10 @@
       "title": "Receive eye margin"
      },
      {
-      "basis": null,
+      "basis": "board",
       "hardware_closure": null,
       "hardware_only": false,
-      "hardware_verified": false,
+      "hardware_verified": true,
       "id": "B96-P-BYPASS",
       "items": [
        "V-SIMM-BYPASS-SEQ",
@@ -10283,7 +10653,9 @@
       ],
       "kind": "performance",
       "lean_transcription_only": false,
-      "passing_methods": [],
+      "passing_methods": [
+       "board_measurement"
+      ],
       "performance": {
        "bound": 19.5,
        "condition": "build rm_gp_bypass, 100 receive restarts, KR260 optical fibre loopback, fibre lead 0.17 m",
@@ -10294,8 +10666,8 @@
       "rests_on_delegated": false,
       "source": "results/b96f1/preregistration.md",
       "spec_status": "draft",
-      "stale_items": 2,
-      "state": "stale",
+      "stale_items": 1,
+      "state": "verified",
       "text": "Build rm_gp_bypass must lower E by at least 1.5 clocks against rm_gp (21.0), else the bypass did not take effect. Pre-registered before any board time. Measured 2026-11-21 (stamp 86037ce1) as E = 17.0 clocks, 4.0 lower, inside the predicted 2.9 to 4.5 (results/b96f1/README.md).",
       "title": "GT buffer bypass shortens the echo path (pre-registered)"
      },
@@ -10326,6 +10698,35 @@
       "state": "not_run",
       "text": "A burst at line rate loses no frame. Nothing has been measured; the line and payload rates stand on configuration and gearbox arithmetic only.",
       "title": "Line-rate throughput without loss"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "B96-F-DBGXVC",
+      "items": [
+       "V-XVC-TIM-SETUP",
+       "V-XVC-TIM-HOLD",
+       "V-XVC-CDC",
+       "V-XVC-CDC-STRUCT",
+       "V-XVC-VERDICT",
+       "V-XVC-TRADING-PATH",
+       "V-HW-XVC-PLANNED"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test",
+       "timing"
+      ],
+      "rests_on_delegated": false,
+      "source": "designs/b96_kr260_10g/dbg_xvc/docs/dbg_xvc.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "fail",
+      "text": "Build dbg_xvc (the eyescan build plus a PS-AXI Debug Bridge and one ILA) closes timing and report_cdc, adds no cell to and removes no cell from the core's hierarchy except the read-only taps, and, on the board, Vivado finds and captures from the ILA over XVC while Linux keeps running. Never part of a build whose latency is measured.",
+      "title": "A debug build reaches an ILA over the network and leaves the trading path alone"
      },
      {
       "basis": null,
@@ -10377,7 +10778,7 @@
     "source_schema": "fpga-design-agent/testplan/v1",
     "summary": {
      "by_kind": {
-      "functional": 11,
+      "functional": 12,
       "interface": 1,
       "performance": 9,
       "safety": 6
@@ -10386,87 +10787,108 @@
       "assertion": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 1,
        "pass": 0,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 0
       },
       "board_measurement": {
        "bounded": 0,
        "fail": 0,
-       "not_run": 3,
-       "pass": 8,
-       "stale": 5,
+       "not_in_run": 0,
+       "not_run": 4,
+       "pass": 9,
+       "skipped": 0,
+       "stale": 4,
        "unapproved": 0
       },
       "coverage_bin": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 1,
        "pass": 0,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 0
       },
       "formal": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 1,
+       "skipped": 0,
        "stale": 1,
        "unapproved": 0
       },
       "formal_lean": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 4,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 0
       },
       "review": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 1,
        "unapproved": 0
       },
       "sim_measurement": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 3,
        "unapproved": 0
       },
       "sim_test": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
-       "pass": 12,
+       "pass": 13,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 0
       },
       "timing": {
        "bounded": 0,
-       "fail": 0,
+       "fail": 1,
+       "not_in_run": 0,
        "not_run": 0,
-       "pass": 3,
+       "pass": 7,
+       "skipped": 0,
        "stale": 6,
        "unapproved": 0
       },
       "uvm_test": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 2,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 0
       }
      },
      "by_state": {
+      "fail": 2,
       "not_run": 2,
-      "stale": 2,
+      "stale": 1,
       "verified": 23
      },
      "external": 3,
@@ -10474,11 +10896,11 @@
      "gap_counts": {
       "external_not_hardware_verified": 1,
       "hardware_open": 3,
-      "no_passing_evidence": 4,
-      "stale_evidence": 16
+      "no_passing_evidence": 5,
+      "stale_evidence": 15
      },
      "human_reviews": 0,
-     "items": 51,
+     "items": 58,
      "lean": {
       "approved": 0,
       "build_sources": [
@@ -10502,11 +10924,11 @@
       "items": 4,
       "statement_not_approved": 0
      },
-     "line": "27 requirements (11 functional, 9 performance, 1 interface, 6 safety); 23 verified, of which 2 rest on delegated acceptances (the planner accepted the Lean statement on the owner's delegation; not human approvals); 2 stale; 2 with no passing evidence; 0 of 3 requirements that depend on an external element closed by hardware; performance verified: 4 on the board, 2 by post-route timing, 0 in simulation only; 0 of 27 requirements agreed by a human, 0 human review(s) recorded; 4 Lean proof item(s) (all widths): 0 with a human-approved statement, 4 with a statement accepted on the owner's delegation (not a human approval), 0 with statement not approved; 4 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run).",
-     "performance_board": 4,
+     "line": "28 requirements (12 functional, 9 performance, 1 interface, 6 safety); 23 verified, of which 2 rest on delegated acceptances (the planner accepted the Lean statement on the owner's delegation; not human approvals); 1 stale; 2 failing; 2 with no passing evidence; 0 of 3 requirements that depend on an external element closed by hardware; performance verified: 5 on the board, 2 by post-route timing, 0 in simulation only; 0 of 28 requirements agreed by a human, 0 human review(s) recorded; 4 Lean proof item(s) (all widths): 0 with a human-approved statement, 4 with a statement accepted on the owner's delegation (not a human approval), 0 with statement not approved; 4 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run).",
+     "performance_board": 5,
      "performance_sim_only": 0,
      "performance_timing": 2,
-     "requirements": 27,
+     "requirements": 28,
      "spec_agreed": 0,
      "verified_on_delegated": 2
     }
@@ -13541,80 +13963,100 @@
       "assertion": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 46,
        "unapproved": 0
       },
       "board_measurement": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 0
       },
       "coverage_bin": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 10,
        "unapproved": 0
       },
       "formal": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 5,
        "unapproved": 0
       },
       "formal_lean": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 0
       },
       "review": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 0
       },
       "sim_measurement": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 0
       },
       "sim_test": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 35,
        "unapproved": 0
       },
       "timing": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 0
       },
       "uvm_test": {
        "bounded": 0,
        "fail": 0,
+       "not_in_run": 0,
        "not_run": 0,
        "pass": 0,
+       "skipped": 0,
        "stale": 0,
        "unapproved": 0
       }
@@ -13663,7 +14105,7 @@
   "schema": "fda-traceability/1",
   "total": {
    "designs": 3,
-   "requirements": 75,
+   "requirements": 76,
    "verified": 48
   }
  }

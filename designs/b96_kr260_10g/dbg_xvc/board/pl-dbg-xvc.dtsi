@@ -1,0 +1,29 @@
+/* pl-dbg-xvc.dtsi (brief 131, NOT YET LOADED ON A BOARD): device-tree overlay fragment for build dbg_xvc on the KR260 (Kria, Ubuntu).
+ * The Debug Bridge's five registers sit behind the PS master M_AXI_HPM0_LPD. The base address 0x80000000 is the LPD master window of the Zynq UltraScale+ address map
+ * (UG1085 address map; confirm in Vivado's Address Editor or the PS IP before the first load). The converter and bridge decode no address bits above bit 4, so the whole 64 KiB
+ * window below aliases the same five registers; 64 KiB keeps the UIO region page-aligned. "generic-uio" is the user-space (mmap) route of AMD's XVC server; for the kernel
+ * driver route the compatible string would be "xlnx,xvc" (AMD's xvc_fragment.dts). Which route works on the board's Ubuntu kernel is unconfirmed: docs/xvc_board_side.md.
+ * Package as a Kria app with shell.json and the converted bitstream; compile with dtc (docs/xvc_board_side.md). */
+/dts-v1/;
+/plugin/;
+/ {
+    fragment@0 {
+        target = <&fpga_full>;
+        overlay0: __overlay__ {
+            #address-cells = <2>;
+            #size-cells = <2>;
+            firmware-name = "dbg_xvc.bit.bin";
+        };
+    };
+    fragment@1 {
+        target = <&amba>;
+        overlay1: __overlay__ {
+            #address-cells = <2>;
+            #size-cells = <2>;
+            debug_bridge_0: debug_bridge@80000000 {
+                compatible = "generic-uio";
+                reg = <0x0 0x80000000 0x0 0x10000>;
+            };
+        };
+    };
+};
