@@ -202,7 +202,7 @@ jobs:
           $FDA_OSS_CAD/bin/yosys -V
           $FDA_OSS_CAD/bin/iverilog -V | head -1
           $FDA_OSS_CAD/bin/verilator --version
-          python -m pytest -q arith
+          python -m pytest -q arith/divider arith/fxp_round arith/isqrt arith/lzc_norm arith/common
       - name: Traceability gate (testplan schema v1, the orphan gate) for the four functions
         run: python -m flow.trace_v1 check arith/divider arith/fxp_round arith/isqrt arith/lzc_norm
 
@@ -537,7 +537,7 @@ jobs:
             build/64a/formal/*/*.log
             build/64a/cfu/*/marks.txt
 
-  arith-library:
+  arith-library-139a:
     name: Arithmetic library (brief 139a) - adders, multipliers, MAC - models, cocotb + Icarus against the models, seeded faults, SymbiYosys equivalence, Verilator -Wall, build files, traceability gate
     runs-on: ubuntu-24.04
     timeout-minutes: 90
