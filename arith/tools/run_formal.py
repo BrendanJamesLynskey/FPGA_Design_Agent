@@ -46,7 +46,7 @@ def run_job(fn: str, job: dict, work: Path, mutants: dict) -> dict:
         src = (d / s).read_text()
         if job.get("mutant"):
             m = mutants[job["mutant"]]
-            if (d / spec["variants"][m["variant"]]["file"]).name == Path(s).name:
+            if ((d / m["file"]) if m.get("file") else (d / spec["variants"][m["variant"]]["file"])).resolve() == (d / s).resolve():
                 assert src.count(m["old"]) == 1, f"mutant {job['mutant']} does not apply once"
                 src = src.replace(m["old"], m["new"])
         (jd / "src").mkdir(exist_ok=True)

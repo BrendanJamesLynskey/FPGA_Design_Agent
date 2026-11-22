@@ -1,0 +1,29 @@
+# Mutation set for the floating-point multiply-add variants (arith brief 139e; tools/run_mutants.py): each mutant replaces `old` (exactly once) by `new` in a copy of the file it names
+# (the variant's own file, or `file`, relative to this folder, for a mutant of the shared fp_pack.sv or fp_norm.sv, which fused uses).
+# Mutants considered and left out, each with its reason, so that the 100 % kill rate is not hiding survivors:
+#   - clearing the shift amount when the product or the addend is zero: the operand that would be shifted is itself zero, so no amount changes anything (the line was removed from the RTL);
+#   - the aligner clamped at WW - 1, WW - 2 or WW / 2 instead of WW: the shifted significand then still ends well below the guard position, where only whether anything is there matters, and the result cannot tell;
+#   - fp_pack without the denormalisation's sticky bit: killed in fp_mul (whose product is wide), NOT killed by this bench, and not shown equivalent here either (the window has SP + 2 zero bits
+#     under the product, which argues that the discarded bits are zero whenever it matters, but that is an argument, not a proof): it is left out of this set, and a gap.
+mutants:
+- {name: fu_no_sticky, variant: fused, class: connection, old: "al     = {al_raw[WW-1:1], al_raw[0] | (|tsh[WW-1:0])};", new: "al     = al_raw;", why: "the bits shifted out of the aligner are not kept as a sticky bit"}
+- {name: fu_anchor, variant: fused, class: condition, old: "assign anchor_p = !pz2 && (cz2 || dlt >= 0);", new: "assign anchor_p = !pz2 && (cz2 || dlt >= 2);", why: "the product is not the fixed operand when the exponents differ by one"}
+- {name: fu_product_place, variant: fused, class: constant, old: "pw    = WW'(pp3) << (SP + 2);", new: "pw    = WW'(pp3) << (SP + 1);", why: "the product is placed one bit too low in the window"}
+- {name: fu_addend_sign, variant: fused, class: operator, old: "assign tc = sc2 ? -$signed({1'b0, cf}) : $signed({1'b0, cf});", new: "assign tc = sc2 ? $signed({1'b0, cf}) : -$signed({1'b0, cf});", why: "the addend's sign is inverted"}
+- {name: fu_zero_sign, variant: fused, class: condition, old: "assign zs3  = pz2 && cz2 && sp2 && sc2;", new: "assign zs3  = pz2 && cz2 && (sp2 || sc2);", why: "a sum of zeros of different sign gives -0"}
+- {name: fu_no_input_norm, variant: fused, class: connection, old: "assign xa  = $signed(EW'(ea == '0 ? EXP'(1) : ea)) - $signed(EW'(lza));", new: "assign xa  = $signed(EW'(ea == '0 ? EXP'(1) : ea));", why: "a subnormal multiplicand is normalised but its exponent is not corrected"}
+- {name: fu_product_exp, variant: fused, class: constant, old: "assign emp = ep2 + 1;", new: "assign emp = ep2;", why: "the product's nominal leading-bit exponent is one too small"}
+- {name: fu_inf_c_sign, variant: fused, class: connection, old: "else if (c_inf)                                             spx0 = {sc, ONES, {MAN{1'b0}}};", new: "else if (c_inf)                                             spx0 = {sp0, ONES, {MAN{1'b0}}};", why: "an infinite addend takes the product's sign"}
+- {name: fu_inf_minus_inf, variant: fused, class: condition, old: "spx0 = (c_inf && sc != sp0) ? QNAN : {sp0, ONES, {MAN{1'b0}}};", new: "spx0 = (c_inf && sc == sp0) ? QNAN : {sp0, ONES, {MAN{1'b0}}};", why: "infinity plus infinity of the same sign is NaN"}
+- {name: fu_c_zero_flag, variant: fused, class: connection, old: "assign cz0 = c_zero;", new: "assign cz0 = 1'b0;", why: "a zero addend is not recognised"}
+- {name: fu_clamp, variant: fused, class: constant, old: "if (amt > EW'(WW)) amt = EW'(WW);", new: "if (amt > EW'(WW)) amt = EW'(SP);", why: "an operand far below the window is shifted only SP places, so its leading bits land at the guard position instead of in the sticky bit"}
+- {name: fu_rank3_mag, variant: fused, class: connection, old: "mag4 <= mag3;", new: "mag4 <= mag4;", why: "the rank between the adder and the normaliser never loads the magnitude"}
+- {name: fu_exponent, variant: fused, class: constant, old: "assign er = ea4 + 1 - $signed(EW'(lz));", new: "assign er = ea4 - $signed(EW'(lz));", why: "the result exponent is one too small"}
+- {name: fu_no_daz, variant: fused, class: condition, old: "assign c_zero = (ec == '0) && (SUBNORM == 0 || fc == '0);", new: "assign c_zero = (ec == '0) && (fc == '0);", why: "flush-to-zero does not flush a subnormal addend"}
+- {name: fu_out_reg_or, variant: fused, class: operator, old: "always_ff @(posedge clk) y <= y_c;", new: "always_ff @(posedge clk) y <= y | y_c;", why: "the output register accumulates instead of loading"}
+- {name: ca_delay_tap, variant: cascade, class: connection, old: "assign c_d = r[STAGES_M-1];", new: "assign c_d = r[0];", why: "c is taken from the first delay register whatever the multiplier's latency"}
+- {name: ca_no_delay, variant: cascade, class: connection, old: ".a(prod), .b(c_d), .y(y));", new: ".a(prod), .b(c), .y(y));", why: "c is not delayed to meet the product"}
+- {name: ca_swap_stages, variant: cascade, class: connection, old: ".STAGES(STAGES_A)) u_add", new: ".STAGES(STAGES_M)) u_add", why: "the adder gets the multiplier's rank count"}
+- {name: pk_ties_down, variant: fused, file: ../fp_common/fp_pack.sv, class: condition, old: "assign inc   = guard & (rest | frac[0]);", new: "assign inc   = guard & rest;", why: "a tie always rounds down instead of to even"}
+- {name: pk_denorm_shift, variant: fused, file: ../fp_common/fp_pack.sv, class: constant, old: "kc = 1 - int'(er);", new: "kc = 2 - int'(er);", why: "a subnormal result is shifted one place too far"}
+- {name: nm_first_one, variant: fused, file: ../fp_common/fp_norm.sv, class: condition, old: "if (v[i] && !found) begin", new: "if (v[i]) begin", why: "the leading-zero count takes the lowest set bit instead of the highest"}

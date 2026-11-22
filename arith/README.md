@@ -24,6 +24,23 @@ worktree, not yet merged, so this layout follows the brief's own and is mapped t
 | Sine and cosine of a phase (brief 139d; the alternatives to brief 137's CORDIC design) | `lerp`, `poly2` (quarter-wave tables), `cordic` (rotation mode) | [sincos/spec.md](sincos/spec.md) | [sincos/verif/testplan.yaml](sincos/verif/testplan.yaml), [matrix](sincos/verif/matrix.md) |
 | atan2 and vector magnitude (brief 139d) | `cordic` (a register per iteration), `cordic_g2` (a register per GRP iterations) | [atan2_mag/spec.md](atan2_mag/spec.md) | [atan2_mag/verif/testplan.yaml](atan2_mag/verif/testplan.yaml), [matrix](atan2_mag/verif/matrix.md) |
 
+### Floating-point functions (brief 139e)
+
+IEEE-754-style binary formats of any exponent and fraction width (`EXP`, `MAN`: binary32 is 8/23, bfloat16 8/7, binary16 5/10), round to nearest even, a canonical quiet NaN, no exception
+flags, full subnormal support or flush-to-zero (`SUBNORM`), and `STAGES` register ranks. All three share one reference ([fp_common/fp_ref.py](fp_common/fp_ref.py): exact rational arithmetic, one rounding), one
+rounding-and-packing stage ([fp_common/fp_pack.sv](fp_common/fp_pack.sv)), one normaliser ([fp_common/fp_norm.sv](fp_common/fp_norm.sv)) and one specification written as wide-integer RTL for the proofs and the
+harness checkers ([fp_common/fpx_ref.sv](fp_common/fpx_ref.sv)). Each variant lists the shared files it needs in `deps` in its `spec.yaml`.
+
+| Function | Variants | Specification | Testplan and evidence |
+|---|---|---|---|
+| Floating-point adder | `single_path` (one datapath, two full-width shifters), `dual_path` (near and far path, no path with both a full aligner and a full normaliser) | [fp_add/spec.md](fp_add/spec.md) | [fp_add/verif/testplan.yaml](fp_add/verif/testplan.yaml), [matrix](fp_add/verif/matrix.md) |
+| Floating-point multiplier | `dsp` (significand product on DSP blocks), `lut` (shift-and-add array in fabric) | [fp_mul/spec.md](fp_mul/spec.md) | [fp_mul/verif/testplan.yaml](fp_mul/verif/testplan.yaml), [matrix](fp_mul/verif/matrix.md) |
+| Floating-point multiply-add | `fused` (one rounding, 3 * SP + 3 bit window), `cascade` (multiplier then adder: two roundings, NOT the same function) | [fp_fma/spec.md](fp_fma/spec.md) | [fp_fma/verif/testplan.yaml](fp_fma/verif/testplan.yaml), [matrix](fp_fma/verif/matrix.md) |
+
+What is different from the integer functions: the bit-exact model is a reference with exact rational arithmetic (it needs no float of the host); the variants are proved equal to the wide-integer specification
+by SymbiYosys only at TINY formats (EXP up to 3 or 4, MAN up to 3; the proofs are unbounded in time and cover every input there) and by simulation at binary32, bfloat16 and binary16; Lean states only three small
+integer facts (the rounding increment carries into the exponent, the normalisation shift, ties-to-even), because core Lean has no IEEE-754 library, and the rest is marked research in each `spec.md`.
+
 ### Layout (one folder per function)
 
 | Path | What |
@@ -37,7 +54,8 @@ worktree, not yet merged, so this layout follows the brief's own and is mapped t
 | `<fn>/formal/` | the SymbiYosys tops and `jobs.yaml` |
 | `<fn>/ooc/`, `<fn>/build/<variant>/build.yaml` | the generated register wrapper and the out-of-context build file of each variant (`tools/gen_build.py`) |
 | `tools/` | the shared pieces: `arith_common.py`, `bench.py`, `suite.py`, `run_mutants.py`, `run_formal.py`, `gen_*.py` |
-| `../formal/lean/Arith/` | the Lean statements and proofs (`Adder.lean`, `Booth.lean`, `Mac.lean`; brief 139d: `Lerp.lean`, `Quadrant.lean`, `Cordic.lean`) in the repository's Lean project |
+| `fp_common/` | what the floating-point functions share (brief 139e): `fp_ref.py`, `fp_pack.sv`, `fp_norm.sv`, `fpx_ref.sv` |
+| `../formal/lean/Arith/` | the Lean statements and proofs (`Adder.lean`, `Booth.lean`, `Mac.lean`, `Float.lean`; brief 139d: `Lerp.lean`, `Quadrant.lean`, `Cordic.lean`) in the repository's Lean project |
 
 The plan of brief 137 describes `library/<function>/` with `spec`, `model/`, `lean/`, `impl/<variant>/` and `surface/<fabric>/`. Here `model.py` is the model, `rtl/<variant>.sv`
 is `impl/<variant>/` (flat, one file per variant), the Lean files are in the repository's one Lean project, and `surface/<fabric>/` does not exist yet: it is where the Vivado

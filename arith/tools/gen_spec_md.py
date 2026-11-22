@@ -49,6 +49,8 @@ def render(fn: str) -> str:
           "- Verification after integration: rerun the packaged harness against your instance ([harness/README.md](harness/README.md)); it needs no other file of this repository.",
           "", "## What a user could guess wrong", ""]
     L += [f"- {g}" for g in s["guess_wrong"]]
+    if s.get("lean_note"):
+        L += ["", "## Lean, and what is research", "", s["lean_note"]]
     L += ["", "## Files", "",
           "- [model.py](model.py): the bit-exact model; tests/test_*_model.py check it against independent formulations",
           "- [harness/](harness/): the packaged verification harness a user reruns against their own instance (model, bench, SystemVerilog checker, coverage targets, standalone runner)",

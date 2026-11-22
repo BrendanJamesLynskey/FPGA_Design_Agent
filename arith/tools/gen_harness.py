@@ -16,7 +16,9 @@ from arith.tools import arith_common as ac
 
 EXAMPLE = {"adder": ('"WIDTH": 32', 0), "multiplier": ('"WA": 18, "WB": 18, "SIGNED": 1', 3), "mac": ('"WA": 16, "WB": 16, "LANES": 1, "ACCW": 40, "SIGNED": 1', 3),
            "exp2": ('"IW": 12, "OW": 12, "SB": 5', 2), "log2": ('"IW": 12, "OW": 12, "SB": 5', 2), "sincos": ('"PH": 14, "OW": 14, "SB": 5', 2),
-           "atan2_mag": ('"W": 12, "PH": 12, "NIT": 14, "G": 12', 16)}
+           "atan2_mag": ('"W": 12, "PH": 12, "NIT": 14, "G": 12', 16),
+           "fp_add": ('"EXP": 8, "MAN": 23, "SUBNORM": 1, "STAGES": 3', 3), "fp_mul": ('"EXP": 8, "MAN": 23, "SUBNORM": 1, "STAGES": 3', 3),
+           "fp_fma": ('"EXP": 8, "MAN": 23, "SUBNORM": 1, "STAGES": 4', 4)}
 EXAMPLE_VARIANT = {"exp2": "lerp", "log2": "lerp", "sincos": "lerp", "atan2_mag": "cordic"}
 
 
@@ -28,6 +30,7 @@ def common_text() -> str:
 
 def cocotb_text(fn: str) -> str:
     t = (ac.ARITH / fn / "tests" / f"{fn}_cocotb.py").read_text()
+    t = t.replace("from arith.fp_common import fp_ref", "import fp_ref")
     t = t.replace(f"from arith.{fn} import model", "import model").replace("from arith.tools import arith_common as ac", "import harness_common as ac").replace("from arith.tools import bench", "import bench")
     t = t.replace("arith/", "").replace("arith.", "")
     return t
@@ -41,7 +44,7 @@ def readme(fn: str) -> str:
          "This folder is a deliverable: rerun it against your own instance after you integrate or change the block. It needs nothing else from the repository.", "",
          "## What is in it", "",
          "| File | What |", "|---|---|",
-         "| `model.py` | the bit-exact model of the specification ([../spec.md](../spec.md)), in Python integers |",
+         "| `model.py` | the bit-exact model of the specification ([../spec.md](../spec.md)), in Python integers" + (" (it calls `fp_ref.py`, the exact-rational reference; the checker uses `fpx_ref.sv`, the specification as wide integer RTL)" if fn.startswith("fp_") else "") + " |",
          f"| `bench.py`, `{fn}_cocotb.py`, `harness_common.py` | the cocotb bench: drives one vector per clock (exhaustive at small widths; edge values, runs of ones and random inputs at large ones) and compares every output bit with the model, allowing for your latency |",
          ("| `assertions.sv` | a passive SIMULATION checker with the exact function in real arithmetic (the simulator's `$sin`, `$atan2`, `$pow`, `$ln`, `$hypot`) and an error bound in last places; put it beside your instance in your own bench or in the simulator of your choice; its `errors` counter is 0 when the instance is within the bound |"
           if fn in ac.ELEMENTARY else
@@ -76,11 +79,20 @@ def outputs(fn: str) -> dict[Path, str]:
     run = (ac.ARITH / "tools" / ("run_harness_template_elem.py" if fn in ac.ELEMENTARY else "run_harness_template.py")).read_text().replace("@FN@", fn).replace("@BRIEF@", ac.brief_of(fn))
     ex, lat = EXAMPLE[fn]
     run = run.replace("@EXAMPLE_PARAMS@", ex).replace("@EXAMPLE_LAT@", str(lat)).replace("@EXAMPLE_VARIANT@", f"--variant {EXAMPLE_VARIANT[fn]} " if fn in EXAMPLE_VARIANT else "")
+    if fn.startswith("fp_"):                       # the default mode is chosen from the operand bits of all inputs (two for fp_add and fp_mul, three for fp_fma)
+        old = ('        bits = sum(v for k, v in params.items() if k in ("WIDTH", "WA", "WB", "LANES")) if FUNCTION != "adder" else 2 * params.get("WIDTH", 99)\n'
+               '        mode = "exhaustive" if bits <= (12 if FUNCTION != "adder" else 12) else "randomised"')
+        assert old in run
+        run = run.replace(old, '        bits = (3 if FUNCTION == "fp_fma" else 2) * (1 + params.get("EXP", 99) + params.get("MAN", 99))      # operand bits in all\n'
+                               '        mode = "exhaustive" if bits <= (18 if FUNCTION == "fp_fma" else 16) else "randomised"')
     model = (ac.ARITH / fn / "model.py").read_text()
     extra = {}
     if "from arith.tools import fxlib" in model:           # the elementary-function models share the constant tables of fxlib.py: the harness carries a copy
         model = model.replace("from arith.tools import fxlib", "import fxlib")
         extra[h / "fxlib.py"] = (ac.ARITH / "tools" / "fxlib.py").read_text()
+    if fn.startswith("fp_"):                       # the floating-point functions share a reference (Python) and a specification as RTL (for the checker)
+        extra[h / "fp_ref.py"] = (ac.ARITH / "fp_common" / "fp_ref.py").read_text()
+        extra[h / "fpx_ref.sv"] = (ac.ARITH / "fp_common" / "fpx_ref.sv").read_text()
     return {**extra, h / "model.py": model, h / "bench.py": (ac.ARITH / "tools" / "bench.py").read_text(),
             h / "harness_common.py": common_text(), h / f"{fn}_cocotb.py": cocotb_text(fn), h / "run_harness.py": run, h / "README.md": readme(fn)}
 

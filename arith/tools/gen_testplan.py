@@ -16,14 +16,17 @@ import yaml
 from arith.tools import arith_common as ac
 from arith.tools.suite import job_kind
 
-P = {"adder": "ADD", "multiplier": "MUL", "mac": "MAC", "exp2": "EXP", "log2": "LOG", "sincos": "SIN", "atan2_mag": "ATN"}
+P = {"adder": "ADD", "multiplier": "MUL", "mac": "MAC", "exp2": "EXP", "log2": "LOG", "sincos": "SIN", "atan2_mag": "ATN", "fp_add": "FPADD", "fp_mul": "FPMUL", "fp_fma": "FPFMA"}
 ELEM = ("exp2", "log2", "sincos", "atan2_mag")          # the elementary functions of brief 139d: not exact, an error bound against the exact function, a model per variant
 INDEP = {"adder": "a bit-serial chain of full adders", "multiplier": "a shift-and-add formulation (and, for the Booth recoding, the digit-sum identity)",
          "mac": "a structure-free reference that applies the samples one at a time with Python integers",
          "exp2": "exact rational (Fraction) evaluations of the interpolation and Horner formulas, a floating-point hyperbolic CORDIC, and the maths library's 2**x",
          "log2": "exact rational (Fraction) evaluations of the interpolation and Horner formulas, a floating-point hyperbolic CORDIC, and the maths library's log2",
          "sincos": "an exact rational (Fraction) evaluation of the interpolation formula, a floating-point CORDIC, and the maths library's sin and cos",
-         "atan2_mag": "a floating-point CORDIC and the maths library's atan2 and hypot"}
+         "atan2_mag": "a floating-point CORDIC and the maths library's atan2 and hypot",
+         "fp_add": "an enumeration of every finite value of a tiny format (the nearest one, ties to even) and NumPy's hardware float32 addition",
+         "fp_mul": "an enumeration of every finite value of a tiny format (the nearest one, ties to even) and NumPy's hardware float32 multiplication",
+         "fp_fma": "an enumeration of every finite value of a tiny format (the nearest one, ties to even), the multiplier and adder models, and the identities a * 1 + c = c + a and a * b + 0 = a * b"}
 
 
 def lines_of(fn: str, rel: str, start: str, end: str) -> str:
@@ -90,6 +93,30 @@ LEAN["sincos"] = [
 LEAN["atan2_mag"] = [_fill(_CIRC, rtl="rtl/atan2_cordic.sv", c1="xn = xt + (yt >>> (s * GR + j));", c2="yn = yt - (xt >>> (s * GR + j));", fn="atan2_mag")]
 
 
+_FLOAT_LEAN = [
+    ("CARRY", "ArithFloat.pack_inc_carry", "Arith.Float", "Rounding increment carries into the exponent",
+     "For a packed pattern e * m + f with fraction f < m (m = 2^MAN), adding the rounding increment 1 either raises the fraction by one or, when the fraction is all ones, raises the exponent by one and leaves a zero fraction: the identity fp_pack's single add on the packed {exponent, fraction} pattern rests on, so a significand overflow, a subnormal rounding up to the smallest normal number and a largest finite number rounding up to infinity need no special case",
+     "arith/fp_common/fp_pack.sv", ("assign wsum", "assign wsum"), "arith/fp_common/fp_pack.sv (wsum: the increment added to the packed pattern)", "formal/lean/Arith/Float.lean (pack_inc_carry)"),
+    ("NORM", "ArithFloat.norm_shift", "Arith.Float", "Normalising left by NW - 1 - msb puts the leading one at the top",
+     "For a value v with its leading one at bit k (2^k <= v < 2^(k+1)) and k < NW, shifting left by NW - 1 - k places gives a value in [2^(NW-1), 2^NW): the leading one is at bit NW - 1, which is what fp_norm's count lz = NW - 1 - msb does",
+     "arith/fp_common/fp_norm.sv", ("n = v << lz;", "n = v << lz;"), "arith/fp_common/fp_norm.sv (the shift by the leading-zero count)", "formal/lean/Arith/Float.lean (norm_shift)"),
+    ("RNE", "ArithFloat.rne_nearest_even", "Arith.Float", "The rounding decision is round-to-nearest, ties to even",
+     "For a kept part hi and a discarded part lo below the threshold 2h, incrementing hi exactly when lo > h, or lo = h and hi is odd (the guard-and-sticky rule of fp_pack), gives a value within h of the exact one and, when it is exactly h away, even",
+     "arith/fp_common/fp_pack.sv", ("assign inc", "assign inc"), "arith/fp_common/fp_pack.sv (guard, rest and inc)", "formal/lean/Arith/Float.lean (rneInc, rne_nearest_even)"),
+]
+LEAN["fp_add"] = LEAN["fp_mul"] = LEAN["fp_fma"] = _FLOAT_LEAN
+
+
+def lean_lines(fn: str, rtlf: str, rng: tuple) -> tuple[str, str]:
+    """(file path as the testplan names it, line range): a path starting arith/ is relative to the repository, else to the function's folder."""
+    if rtlf.startswith("arith/"):
+        ls = (ac.ROOT / rtlf).read_text().splitlines()
+        a = next(i for i, l in enumerate(ls, 1) if rng[0] in l)
+        b = next(i for i, l in enumerate(ls, 1) if i >= a and rng[1] in l)
+        return rtlf, f"{a}-{b}"
+    return f"arith/{fn}/{rtlf}", lines_of(fn, rtlf, rng[0], rng[1])
+
+
 def acc_lines(fn: str) -> str:
     ls = (ac.ARITH / fn / "rtl/mac_dsp.sv").read_text().splitlines()
     a = next(i for i, l in enumerate(ls, 1) if "else if (en_m) acc <=" in l)
@@ -102,7 +129,11 @@ def plan(fn: str) -> str:
     base = f"arith/{fn}"
     jobs = yaml.safe_load((ac.ARITH / fn / "formal" / "jobs.yaml").read_text())["jobs"]
     kinds = {job_kind(j) for j in jobs}
-    rtl = [f"{base}/{v['file']}" for v in s["variants"].values()]
+    rtl = []                                                  # every file whose change makes the evidence stale: the variants and the shared files they need
+    for v in s["variants"].values():
+        for x in [f"{base}/{v['file']}"] + [f"arith/{d}" for d in v.get("deps", [])]:
+            if x not in rtl:
+                rtl.append(x)
     res = f"{base}/verif/results"
     junit = f"{res}/pytest_junit.xml"
     bench = [f"{base}/tests/{fn}_cocotb.py", f"{base}/model.py"] + (["arith/tools/fxlib.py"] if fn in ELEM else [])
@@ -192,18 +223,18 @@ def plan(fn: str) -> str:
          pass_when=[{"field": "survived", "op": "eq", "value": []}, {"field": "invalid", "op": "eq", "value": []}, {"field": "valid", "op": "ge", "value": 10},
                     {"field": "score_pct", "op": "eq", "value": 100.0}], checks=rtl + bench + [f"{base}/verif/mutants.yaml"])
     item(f"V-{pre}-HARNESS", [f"{pre}-F-HARNESS"], "sim_test", "The packaged harness run standalone on every variant (with the checker and the coverage targets) and on a planted fault",
-         {"file": junit, "reader": "junit", "tests": [f"test_{fn}_harness_rtl::*"]}, checks=rtl + [f"{base}/harness/{x}" for x in ("assertions.sv", "chk_top.sv", "coverage.yaml", "run_harness.py", "model.py", "bench.py")])
+         {"file": junit, "reader": "junit", "tests": [f"test_{fn}_harness_rtl::*"]}, checks=rtl + [f"{base}/harness/{x}" for x in ("assertions.sv", "chk_top.sv", "coverage.yaml", "run_harness.py", "model.py", "bench.py") + (("fp_ref.py", "fpx_ref.sv") if fn.startswith("fp_") else ())])
     item(f"V-{pre}-PACKAGE", [f"{pre}-F-PACKAGE"], "sim_test", "spec.yaml against the RTL headers, spec.md against spec.yaml, Verilator -Wall at every point, wrappers and build.yaml current and lint-clean",
          {"file": junit, "reader": "junit", "tests": [f"test_{fn}_package::*"]}, checks=rtl + [f"{base}/spec.yaml", f"{base}/spec.md"] + [f"{base}/build/{v}/build.yaml" for v in s["variants"]])
     for key, thm, mod, title, text, rtlf, rng, rtls, trans in LEAN[fn]:
         if fn == "mac":
-            lines = acc_lines(fn)
+            lines, rfile = acc_lines(fn), f"{base}/{rtlf}"
         else:
-            lines = lines_of(fn, rtlf, rng[0], rng[1])
+            rfile, lines = lean_lines(fn, rtlf, rng)
         item(f"V-{pre}-LEAN-{key}", [f"{pre}-F-LEAN-{key}"], "formal_lean", title, None, lean={"module": mod, "theorem": thm},
-             rtl_link={"kind": "transcription_untested", "source": [{"file": f"{base}/{rtlf}", "lines": lines}], "transcribed_in": trans})
+             rtl_link={"kind": "transcription_untested", "source": [{"file": rfile, "lines": lines}], "transcribed_in": trans})
     doc = {"schema": "fpga-design-agent/testplan/v1", "design": f"arith_{fn}",
-           "notes": (f"Arithmetic library, function {fn} (brief {'139d' if fn in ELEM else '139a'}). Everything here is before Vivado: the model, the RTL variants, simulation, formal equivalence, Lean statements and the prepared out-of-context build files. "
+           "notes": (f"Arithmetic library, function {fn} (brief {'139d' if fn in ELEM else '139e' if fn.startswith('fp_') else '139a'}). Everything here is before Vivado: the model, the RTL variants, simulation, formal equivalence, Lean statements and the prepared out-of-context build files. "
                      "No performance requirement exists because nothing about LUTs, DSPs, Fmax or power has been measured yet; the Vivado runs (build/<variant>/build.yaml) will add them. "
                      "Every requirement is a draft written by the agent; none is agreed by a human. Lean statements are not approved. Generated by arith/tools/gen_testplan.py."),
            "discover": [{"glob": f"arith/{fn}/tests/test_*.py", "pattern": r"^def (test_\w+)"}],
