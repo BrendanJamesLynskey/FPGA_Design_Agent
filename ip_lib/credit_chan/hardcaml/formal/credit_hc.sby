@@ -1,0 +1,52 @@
+# SymbiYosys on the Hardcaml-generated credit_chan (brief 171): the existing formal/formal_credit.sv wrapper and its assertions,
+# unchanged, on build/credit_chan_formal.sv (made by ../run_hc.sh with `gen.exe ... -formal`: adds the ghost counters f_in_o, f_out_o).
+# The SV's internal invariants are not in the generated Verilog, so k-induction may not close: each point has a `_prove` and a `_bmc` (depth 24)
+# task; a BMC pass is a bounded check, not a proof.
+[tasks]
+c1f0b0_prove prove c1f0b0
+c2f0b0_prove prove c2f0b0
+c1f1b1_prove prove c1f1b1
+c2f1b1_prove prove c2f1b1
+c3f1b1_prove prove c3f1b1
+c4f1b1_prove prove c4f1b1
+c2f2b1_prove prove c2f2b1
+c3f0b2_prove prove c3f0b2
+c5f2b2_prove prove c5f2b2
+c4f3b0_prove prove c4f3b0
+c1f0b0_bmc bmc c1f0b0
+c2f0b0_bmc bmc c2f0b0
+c1f1b1_bmc bmc c1f1b1
+c2f1b1_bmc bmc c2f1b1
+c3f1b1_bmc bmc c3f1b1
+c4f1b1_bmc bmc c4f1b1
+c2f2b1_bmc bmc c2f2b1
+c3f0b2_bmc bmc c3f0b2
+c5f2b2_bmc bmc c5f2b2
+c4f3b0_bmc bmc c4f3b0
+
+[options]
+prove: mode prove
+prove: depth 16
+bmc: mode bmc
+bmc: depth 24
+
+[engines]
+smtbmc boolector
+
+[script]
+read_verilog -formal -sv credit_chan_formal.sv formal_credit.sv
+c1f0b0: chparam -set CREDITS 1 -set LF 0 -set LB 0 formal_credit
+c2f0b0: chparam -set CREDITS 2 -set LF 0 -set LB 0 formal_credit
+c1f1b1: chparam -set CREDITS 1 -set LF 1 -set LB 1 formal_credit
+c2f1b1: chparam -set CREDITS 2 -set LF 1 -set LB 1 formal_credit
+c3f1b1: chparam -set CREDITS 3 -set LF 1 -set LB 1 formal_credit
+c4f1b1: chparam -set CREDITS 4 -set LF 1 -set LB 1 formal_credit
+c2f2b1: chparam -set CREDITS 2 -set LF 2 -set LB 1 formal_credit
+c3f0b2: chparam -set CREDITS 3 -set LF 0 -set LB 2 formal_credit
+c5f2b2: chparam -set CREDITS 5 -set LF 2 -set LB 2 formal_credit
+c4f3b0: chparam -set CREDITS 4 -set LF 3 -set LB 0 formal_credit
+prep -top formal_credit
+
+[files]
+../build/credit_chan_formal.sv
+../../formal/formal_credit.sv
