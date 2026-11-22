@@ -81,7 +81,7 @@ def _metrics(fc, bt, std, drive, slew, rs, length, c_pf, z0, ui, ext):
     return {"drive": drive, "slew": slew, "series_ohm": rs, "worst_over_v": round(ev["worst_over_vcco_v"], 3),
             "worst_under_v": round(ev["worst_under_gnd_v"], 3), "t_over_ns": round(ev["t_over_roc_ns"], 2), "t_under_ns": round(ev["t_under_roc_ns"], 2),
             "ui_ns": ui, "flags": sorted({f[0] for f in flags}), "meets_overshoot_limit": max(ev["worst_over_vcco_v"], ev["worst_under_gnd_v"]) <= lim["roc_over"],
-            "first_incident_margin_v": ev["min_first_incident_margin_always_v"], "rx_rise_2080_ns_weak": ev["rx_rise_2080_ns"]["min"],
+            "first_incident_margin_v": round(ev["min_first_incident_margin_always_v"], 3), "rx_rise_2080_ns_weak": round(ev["rx_rise_2080_ns"]["min"], 2),
             "source": ev["source"]}
 
 
@@ -109,6 +109,8 @@ def kr260(out: Path) -> None:
             answers = {"xdc": _metrics(fc, bt, "LVCMOS18", 12, "FAST", 0.0, ln, cpf, 50.0, ui, {}),
                        "as_built": _metrics(fc, bt, "LVCMOS18", asb["drive"], asb["slew"], asb["rs_ohm"], ln, cpf, 50.0, ui, {}),
                        "optimal": _metrics(fc, bt, "LVCMOS18", opt["drive"], opt["slew"], opt["rs_ohm"], ln, cpf, 50.0, ui, {})}
+            for a in answers.values():
+                a["max_rise_ns"] = float(g.get("max_rise_ns", C.RISE_FRACTION_OF_UI * ui))        # the house assumption: a quarter of the unit interval
             answers["as_built"]["all_limits_met"] = bool(t["as_built"]["best"])
             answers["as_built"]["fails"] = [] if t["as_built"]["best"] else t["as_built"]["least_bad"]["fails"]
             answers["optimal"]["all_limits_met"] = bool(t["optimal"]["best"])

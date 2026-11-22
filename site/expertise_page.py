@@ -30,12 +30,27 @@ FAMILY_LABEL = {"7series": "7-series (Artix-7, Zynq-7000 PL)", "ultrascale_plus"
                 "zynq7000_ps": "Zynq-7000 PS", "zynqmp_ps": "Zynq UltraScale+ PS", "common": "All families (tool guides)"}
 
 
-KIND_LEAD = {"measured": "Measured.", "agent": "In agent runs.", "example": "Hand-built examples."}
+KIND_LEAD = {"measured": "Measured.", "agent": "In agent runs.", "example": "Hand-built examples.",
+             "model": "Modelled, not measured (the model on AMD's IBIS data and the vendor's board file; no scope, no Vivado run)."}
 
 
 def _src(srcs) -> str:
     """A small source link after an evidence sentence; the path is in the link's label and title, not the sentence."""
     return " ".join(f'<a class="evsrc" href="{e(s["url"])}" title="{e(s["path"])}" aria-label="Source: {e(s["path"])}">source</a>' for s in srcs)
+
+
+def figures(a: dict) -> str:
+    """Plots of an area (brief 164), drawn from the committed result files by site/si_figures.py: a wide and a narrow drawing of each, one shown by CSS,
+    with a caption that says what it shows, how it was measured and what a reader could get wrong."""
+    out = ""
+    for fg in a.get("figures", []):
+        import si_figures
+        svgs = "".join(f'<div class="{cls}">{si_figures.render(fg["kind"], fg, lay)}</div>' for cls, lay in (("lay-w", "wide"), ("lay-n", "narrow")))
+        src = " ".join(f'<a class="evsrc" href="{e(s["url"])}" title="{e(s["path"])}" aria-label="Source: {e(s["path"])}">source</a>' for s in fg["sources"])
+        out += (f'<figure class="sifig" id="{e(a["id"])}-{e(fg["id"])}"><figcaption class="figt">{e(fg["title"])}</figcaption>{svgs}'
+                f'<figcaption><strong>What it shows.</strong> {e(fg["caption"])} <strong>How it was obtained.</strong> {e(fg["how"])} '
+                f'<strong>What a reader could get wrong.</strong> {e(fg["wrong"])} {src}</figcaption></figure>')
+    return out
 
 
 def drawer(a: dict) -> str:
@@ -46,13 +61,14 @@ def drawer(a: dict) -> str:
             f'<span class="ac">{c["skills"]} skills, {c["checks"]} flow check{"" if c["checks"] == 1 else "s"}</span>'
             f'<span class="tag lvl">{_seg(a["level_n"])} {e(a["level_label"])}</span></summary>')
     shown = ""
-    for kind in ("measured", "agent", "example"):
+    for kind in ("measured", "agent", "model", "example"):
         items = [x for x in a["evidence"] if x["kind"] == kind]
         if items:
             shown += (f'<p><strong>{KIND_LEAD[kind]}</strong> ' +
                       " ".join(f'{e(x["text"])} {_src(x["sources"])}' for x in items) + "</p>")
     if not shown:
         shown = "<p><strong>Measured.</strong> Nothing yet for this area.</p>"
+    shown += figures(a)
     gaps = " ".join(e(g) for g in a["gaps"])
     cap = f' {e(a["cap_reason"])}' if a["cap_reason"] else ""
     notyet = f"<p><strong>Not yet shown.</strong> {gaps}{cap}</p>"
