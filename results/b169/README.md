@@ -7,7 +7,7 @@ Branch `b169-next-cuts`. The fastest build so far is `lat_all3_bypass` (brief 12
 - `skew_sim.sh`, `skew/`: the D experiment (section "Why D came out 8").
 - `budget.py`, `budget.json`, `budget.svg`: the clock-by-clock budget, generated from the records. `board_inputs.json`, `board_per_link.py`, `board_per_link.txt`: the board figures it uses, read from the brief 126 and 97C board records (not copied).
 - `preregistration.md`: the board test for the build `lat_cuts169`, written before any board time.
-- `build_one.sh`, `record_extra.sh`, `builds/lat_cuts169/`: the Vivado 2026.1 build with both cuts on (section "Timing").
+- `build_one.sh`, `record_extra.sh`, `builds/lat_cuts169/`: the Vivado 2026.1 build with both cuts on (section "Timing": closes).
 - Tests: `designs/b96_kr260_10g/tests/test_169_cuts.py` (the 97C core bench, 16 tests, in all four parameter combinations, plus structure checks); the bench `core_cocotb_default.py` got three small edits that change nothing when the new environment variable is unset (see Gotchas).
 
 ## Definitions (the owner's rule: every figure says what it is)
@@ -87,6 +87,16 @@ The bypass wrapper start-up (one hung alignment per side, one retry) was not re-
  2. *Minutes, one light Vivado session on an existing checkpoint (no build):* open brief 126's routed checkpoint and report the net delay from the toggle flop to the first synchroniser flop of `u_p_go` against `u_p_so`, `u_p_fe` and `u_p_or` (`report_timing -from ... -to ...` shows data path delay and clock skew). If the go crossing's is 1 to 2 ns longer than the strobe's, cause A is supported quantitatively (rerun `skew_sim.sh` at the measured value); if equal, A falls and D is a candidate. The brief's rules put Vivado under a heavy slot, so this was not run here (both slots were held by other sessions for the whole run).
  3. *Board, same bench, no hardware change:* run the buffers-on (`lat_all3`) and bypass bitstreams in one session and compare the per-link (E, D) pairs; A and B predict the anti-correlation only with the bypass; repeat the bypass over 3 power cycles: if the pairs' distribution is stable, the phase distribution is a property of the bypass alignment (B), if it changes between power-ups, it is the lock phase (A).
  4. *If A is confirmed and one clock matters:* give the go crossing and the strobe crossings the same structure (both `DEST_SYNC_FF 2`, no output register, placed together), or remove the crossing (cut C6).
+
+## Timing (Vivado 2026.1, build `lat_cuts169` with EARLY_MAC = 1 and FAST_PRE = 1; `builds/lat_cuts169/`)
+Built in heavy slot 2 (`169: Vivado impl lat_cuts169 peak 6G`, released; the slot text carries the start time of the script's first poll, not of the build: the slots were held by other sessions for 90 minutes), single thread, 1,977 s wall. Stamp **5a45b3bd** (sources hash; commit d45eb7d9, the tree's only dirty file was this folder's own build log). **All 29 flow gates pass; timing met: WNS +0.116 ns, WHS +0.011 ns, 0 failing endpoints** at 6.206 ns; 6,218 LUT, 14,370 FF, 0 BRAM, 0 DSP; 0.93 W (vectorless, a tool estimate); `report_cdc` the same classes and counts as `lat_all3_bypass` (CDC-3 151, CDC-6 6, CDC-9 4, CDC-15 1,926; no critical); methodology 0 critical (LUTAR-1 5, XDCH-2 10: unchanged).
+
+| Build | WNS / WHS (ns) | LUT / FF | Power (vectorless) |
+|---|---|---|---|
+| `lat_all3_bypass` (brief 126) | +0.066 / +0.010 | 6,206 / 14,372 | 0.915 W |
+| **`lat_cuts169` (both cuts)** | **+0.116 / +0.011** | **6,218 / 14,370** | **0.93 W** |
+
+The two cuts cost 12 LUT and save 2 FF, and the worst slack is 0.05 ns better than the parent's: placement and routing differ between builds (the worst path is somewhere else; I did not open the checkpoint to read the slack of the new paths specifically: the early-decision path into the go toggle flop and the `go_p` select into the PCS registers, which are the ones the prototypes lengthen, close with at least +0.116 ns because it is the worst slack of the whole design). Not a claim that the cuts are free in general: one seed, one placement; the 126 build moved by 0.127 ns from its parent for no logic reason. No path was changed and nothing waived to get timing; the structural CDC gate carries the base architecture's existing waiver entry for two reset-helper flops inside AMD's Wizard, as in every b96 build (the bypass wrapper is unchanged).
 
 ## Reproduce
 - Simulation (no heavy slot while the load is under 6 and more than 12 GB is free): `bash results/b169/core_sim.sh` (cases `base early fast both`, about 2 minutes each at 8 orders; `NORD=33 PHASES="0 3100" OUTD=sweep33 bash results/b169/core_sim.sh early fast both`); `SK=2.2 PHASES="0 800 1600 2400 3200 4000 4800 5600" bash results/b169/skew_sim.sh` (needs `core_sim.sh base` once); `python3 results/b169/budget.py`.
