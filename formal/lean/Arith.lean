@@ -8,4 +8,7 @@ import Arith.Lzc
 import Arith.SqrtR4
 import Arith.DividerHr
 import Arith.Newton
+import Arith.Lerp
+import Arith.Quadrant
+import Arith.Cordic
 import Arith.CrossCheck
