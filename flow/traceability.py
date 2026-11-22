@@ -445,7 +445,10 @@ def build(design: Path, runs: Path | None, also: list[Path] | None = None, cover
     bench_dir = vg.plan_file(design, plan["bench"]["dir"])
     chk_dir = vg.plan_file(design, plan["checkers"])
     formal_src = vg.plan_file(design, plan["formal_dir"])
-    from flow import sources
+    try:
+        from flow import sources
+    except ImportError:                       # run as a script: flow/ itself is on sys.path
+        import sources                     # type: ignore[no-redef]
     rtl_files = sources.design_rtl(design)                  # SystemVerilog, Verilog and VHDL (brief 153)
 
     arts = (bench_artefacts(bench_dir, plan["bench"]["modules"], known) + checker_artefacts(chk_dir, known)

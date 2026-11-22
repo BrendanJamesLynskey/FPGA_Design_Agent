@@ -79,7 +79,7 @@ source). Two changes show:
   the stage-2 plan's "has RTL" test and the closure snapshot (both looked only at `rtl/*.sv`: every stage-2 visit on a VHDL design
   rewrote its RTL instead of repairing it).
 - Say "no reader": `axi_profile`, `fsm` (fsm_coverage), the managed RTL import, inspect schematics, and the CDC injection run (fails closed).
-- Tests: [flow/tests/test_153_vhdl_parity.py](../../flow/tests/test_153_vhdl_parity.py) (69 tests; each port on a VHDL fixture, the
+- Tests: [flow/tests/test_153_vhdl_parity.py](../../flow/tests/test_153_vhdl_parity.py) (70 tests; each port on a VHDL fixture, the
   SystemVerilog behaviour beside it, and the whole labelled set).
 
 ## Not done

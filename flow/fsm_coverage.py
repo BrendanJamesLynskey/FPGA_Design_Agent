@@ -49,7 +49,10 @@ def read_states(path: Path, enum: str) -> dict[str, int]:
     """The state table of the enum ``enum`` in the RTL file ``path``. Only SystemVerilog is read (brief 153): a VHDL file raises a
     ValueError that says so, so the check is NOT RUN with that reason (a VHDL ``type st_t is (A, B)`` has no values, and the trace of a
     VHDL state register is not read here); it never reports "no typedef enum" for a file it cannot read."""
-    from flow.sources import language, no_reader
+    try:
+        from flow.sources import language, no_reader
+    except ImportError:                       # run as a script: flow/ itself is on sys.path
+        from sources import language, no_reader          # type: ignore[no-redef]
     if language(path) == "vhdl":
         raise ValueError(no_reader([path], {"sv"}, "fsm_coverage (state table from a `typedef enum`)") or "no reader for VHDL")
     return parse_enum(Path(path).read_text(), enum)

@@ -81,7 +81,10 @@ _VHDL_SHELL = re.compile(r"(?is):\s*(?:component\s+|entity\s+(?:\w+\.)?)?fpga_sh
 
 def _vhdl_params(texts: dict[str, str]) -> dict[str, list[tuple[str, int | None]]]:
     """name -> [(file, value)] for every ``constant``/generic default of a VHDL file whose value is a literal."""
-    from flow.sources import language, parse_vhdl_literal
+    try:
+        from flow.sources import language, parse_vhdl_literal
+    except ImportError:                       # run as a script: flow/ itself is on sys.path
+        from sources import language, parse_vhdl_literal          # type: ignore[no-redef]
     out: dict[str, list[tuple[str, int | None]]] = {}
     for f, t in texts.items():
         if language(f) != "vhdl":
@@ -105,7 +108,10 @@ def _top_level_split(body: str) -> list[str]:
 
 def vhdl_design_id_bindings(texts: dict[str, str], cfg_generics: dict | None = None) -> list[dict[str, Any]]:
     """Each ``DESIGN_ID => expr`` in the generic map of an ``fpga_shell`` instance in the VHDL files: file, expression, value or None."""
-    from flow.sources import language, parse_vhdl_literal
+    try:
+        from flow.sources import language, parse_vhdl_literal
+    except ImportError:                       # run as a script: flow/ itself is on sys.path
+        from sources import language, parse_vhdl_literal          # type: ignore[no-redef]
     params = _vhdl_params(texts)
     out = []
     for f, t in texts.items():
@@ -268,7 +274,10 @@ def derive(design: Path, root: Path = ROOT) -> dict[str, Any]:
                                  "message": f"DESIGN_ID is 0x{b['value']:08X} ({b['how']}) but the spec's design ID "
                                             f"{did['string']!r} is 0x{did['value']:08X} ({did['rule']}){why}"})
 
-    from flow.sources import parse_vhdl_literal
+    try:
+        from flow.sources import parse_vhdl_literal
+    except ImportError:                       # run as a script: flow/ itself is on sys.path
+        from sources import parse_vhdl_literal          # type: ignore[no-redef]
     all_lits = {parse_literal(m.group(0)) for t in texts.values() for m in re.finditer(r"\d*'[sS]?[hH][0-9a-fA-F_]+", t)}
     all_lits |= {parse_vhdl_literal(m.group(0)) for f, t in texts.items() if f.lower().endswith((".vhd", ".vhdl"))
                  for m in re.finditer(r'\d*[xX]"[0-9a-fA-F_]+"|\d+#[0-9a-fA-F_]+#', t)}

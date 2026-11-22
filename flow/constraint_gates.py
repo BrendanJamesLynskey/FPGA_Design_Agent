@@ -279,7 +279,10 @@ def xpm_sim_findings_vhdl(text: str, where: str = "") -> list[dict[str, Any]]:
     """The VHDL twin of :func:`xpm_sim_findings` (brief 153): an instance ``label : xpm_cdc_single ...``, ``label : entity xpm.xpm_cdc_single
     ...`` or ``label : component xpm_cdc_single ...`` whose ``generic map`` has no ``SIM_ASSERT_CHK => 1``. A component declaration (no
     label before the name) and a mention in a comment or string are not instances. The instance statement ends at its ``;``."""
-    from flow.sources import strip_comments
+    try:
+        from flow.sources import strip_comments
+    except ImportError:                       # run as a script: flow/ itself is on sys.path
+        from sources import strip_comments          # type: ignore[no-redef]
     t = re.sub(r'"(?:[^"\n]|"")*"', lambda m: " " * len(m.group(0)), strip_comments(text, "vhdl"))
     out = []
     for m in _XPM_INST_VHDL.finditer(t):

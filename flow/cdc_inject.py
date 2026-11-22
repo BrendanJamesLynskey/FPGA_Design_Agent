@@ -234,7 +234,10 @@ def prepare(sources: list[Path], work_dir: Path, seed: int | None) -> tuple[list
 def design_crosses(design: Path) -> bool:
     """True when a design has a clock-domain crossing to check: an ASYNC_REG register or an XPM CDC macro in its RTL, or more
     than one clock domain declared in its architecture.yaml."""
-    from flow import sources
+    try:
+        from flow import sources
+    except ImportError:                       # run as a script: flow/ itself is on sys.path
+        import sources                     # type: ignore[no-redef]
     design = Path(design)
     for f in sources.design_rtl(design):
         if sources.language(f) == "vhdl":                # brief 153: VHDL attribute ASYNC_REG, or an xpm_cdc_* / xpm_fifo_async instance

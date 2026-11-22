@@ -496,3 +496,23 @@ def test_closure_snapshot_covers_vhdl(tmp_path: Path) -> None:
     (tmp_path / "rtl" / "c.vhd").write_text("entity c is end entity;\n")
     ws.restore(snap)
     assert (tmp_path / "rtl" / "a.vhd").read_text() == "entity a is end entity;\n" and not (tmp_path / "rtl" / "c.vhd").exists()
+
+
+def test_flow_scripts_still_work_with_only_flow_on_the_path(tmp_path: Path) -> None:
+    """``python flow/verif_gates.py`` imports ``cdc_inject`` as a top-level module, with no repo root on sys.path: the new
+    ``flow.sources`` import must fall back to the sibling module (the first version of brief 153 broke this)."""
+    import subprocess
+    import sys
+    d = tmp_path / "d"
+    (d / "rtl").mkdir(parents=True)
+    (d / "rtl" / "t.vhd").write_text('architecture r of t is\n  attribute ASYNC_REG of sy : signal is "TRUE";\nbegin\nend architecture;\n')
+    code = ("import sys; sys.path[:] = [p for p in sys.path if p not in ('', %r)] ; sys.path.insert(0, %r)\n"
+            "import cdc_inject, trace_v1, hw_dry_check, fsm_coverage, constraint_gates, traceability\n"
+            "from pathlib import Path\n"
+            "assert cdc_inject.design_crosses(Path(%r))\n"
+            "assert hw_dry_check.check_design(Path(%r))['problems']\n"
+            "assert constraint_gates.xpm_sim_findings_vhdl('u : xpm_cdc_single port map (a => b);')\n"
+            "try:\n    fsm_coverage.read_states(Path('x.vhd'), 'st')\nexcept ValueError as e:\n    assert 'no reader' in str(e)\n"
+            "print('ok')\n") % (str(ROOT), str(ROOT / "flow"), str(d), str(d))
+    r = subprocess.run([sys.executable, "-c", code], cwd=tmp_path, capture_output=True, text=True, env={"PATH": "/usr/bin:/bin"})
+    assert r.returncode == 0 and r.stdout.strip() == "ok", r.stderr[-800:]

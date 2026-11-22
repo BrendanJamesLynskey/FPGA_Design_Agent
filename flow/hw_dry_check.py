@@ -74,7 +74,10 @@ def check_design(design: Path) -> dict[str, Any]:
                             probs.append(f"hw_checks.py: CAPTURES[{i}] lacks "
                                          f"{', '.join(f for f in CAPTURE_FIELDS if f not in kw)}")
                         probs += _or_problem(i, e)
-    from flow import sources
+    try:
+        from flow import sources
+    except ImportError:                       # run as a script: flow/ itself is on sys.path
+        import sources                     # type: ignore[no-redef]
     for sv in sources.design_rtl(design):
         text = sources.strip_comments(sv.read_text(errors="replace"), sources.language(sv) or "sv")
         zero = (r"(?i)\bBUILD_STAMP\s*=>\s*(?:\d*[xbo]\s*\"[0_]*\"|0+\b|\(\s*others\s*=>\s*'0'\s*\))" if sources.language(sv) == "vhdl"

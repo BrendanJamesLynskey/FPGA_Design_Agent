@@ -129,7 +129,10 @@ def load(design: Path) -> dict[str, Any]:
 
 def legacy_items(design: Path, raw: dict) -> list[dict]:
     rec = raw.get("evidence_record") or f"results/04f/{design.name}_verif_gates.json"
-    from flow import sources
+    try:
+        from flow import sources
+    except ImportError:                       # run as a script: flow/ itself is on sys.path
+        import sources                     # type: ignore[no-redef]
     rtl = [str(p.relative_to(ROOT)) for p in sources.design_rtl(design)]       # every language (brief 153)
     items = []
     for r in raw.get("requirements") or []:
