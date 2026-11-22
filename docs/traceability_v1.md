@@ -102,11 +102,11 @@ that the hashes still match.
 
 ## Status rules (computed, never typed)
 
-Per item: `fail` if a condition does not hold or a measured value is outside the bound; `not_run` if the evidence file or field is missing (a `planned:` hook
+Per item: `fail` if a condition does not hold, a measured value is outside the bound, or a named test is present in the recorded JUnit run and failed; `not_in_run` (shown "not in the recorded run") if a named test is absent from the recorded JUnit or a `stem::*` matches nothing, i.e. the evidence predates the test, with the missing names listed; `skipped` if a named test was skipped in the recorded run; `not_run` if the evidence file or field is missing (a `planned:` hook
 says why); `stale` if it passes but a file in `checks` differs from its pinned hash, the evidence file differs from its pin, or there is no pin; `bounded` if it
 passes and `bounded:` is set; `unapproved` for a `formal_lean` item that builds while its statement is not accepted (neither a human approval nor a delegated acceptance); otherwise `pass`.
 
-Per requirement: `fail` if any item fails. A **performance** requirement is `verified` only when a measuring item (`timing`, `sim_measurement`,
+Per requirement: `fail` if any item fails. `not_in_run`, `skipped` and `not_run` are all "no passing evidence" and are counted together in the summary line (with the first two broken out), never as failing; the gap list names the missing or skipped tests. A **performance** requirement is `verified` only when a measuring item (`timing`, `sim_measurement`,
 `board_measurement`, judged against the bound) passes; the basis is recorded as board, post-route timing or simulation only; a passing test alone gives
 `no_measurement`. Other kinds are `verified` with one passing item, `bounded` with only bounded formal, `stale`, `unapproved` (only Lean items whose statement is not approved), or `not_run`.
 
@@ -115,7 +115,7 @@ matrix says "passes without hardware; hardware verification open".
 
 ## Gaps and the gate
 
-Reported: requirements with no passing evidence, stale evidence, performance verified in simulation only, external requirements not closed by hardware.
+Reported: requirements with no passing evidence (not run, not in the recorded run, skipped), stale evidence, performance verified in simulation only, external requirements not closed by hardware.
 **Fail CI** (`python -m flow.trace_v1 check`, and the tests in `flow/tests/test_116_traceability.py`, which also compare the committed matrices with what the code
 writes today): a requirement no item traces to, an orphan check (an item tracing to no or an unknown requirement, or a bench test no item names), an approved Lean statement that changed, a malformed `formal_lean` item or approvals file, an unknown
 method or kind, a `board_measurement` without a valid instrument, a performance requirement without quantity, unit, op, bound and condition, a `checks` file that does

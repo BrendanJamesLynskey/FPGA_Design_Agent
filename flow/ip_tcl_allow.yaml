@@ -14,3 +14,6 @@
 - path: designs/b96_kr260_10g/ip/amd_ip_bypass.tcl
   sha256: 2b44c98771bbb25bbb1fcd35dcd0e72a44360a8ef81a6887391271537c0bfef9
   why: "the brief 96C GT Wizard configuration with TX_BUFFER_MODE 0 and RX_BUFFER_MODE 0 (both GT elastic buffers bypassed, auto-mode controllers; brief 96F1, build rm_gp_bypass), the free-running clock set back to 100 MHz after the Wizard moves it"
+- path: designs/b96_kr260_10g/ip/amd_ip_xvc.tcl
+  sha256: 322bd679d33e15d5ce4b9654ac129bd2e7a526b2b1001cd3aa35157a3c12014c
+  why: "the debug path of build dbg_xvc (brief 131): Zynq UltraScale+ PS (default, only M_AXI_HPM0_LPD and pl_clk0 used), AXI Protocol Converter, Debug Bridge (AXI to BSCAN) and one ILA, so an ILA is reachable over Ethernet (XVC) in a debug build"

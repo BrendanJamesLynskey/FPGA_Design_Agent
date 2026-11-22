@@ -1,0 +1,10 @@
+# Coverage targets of the packaged harness (brief 139c): each bin is a Python expression over one input vector; every bin must be hit at least once.
+bins:
+  b_min: "b == 1 << (w - 1)"
+  b_max: "b == (1 << w) - 1"
+  table_first_interval: "idx == 0"
+  table_last_interval: "idx == na"
+  table_middle_interval: "idx == (na + 1) // 2"
+  low_half_of_range: "b < (3 << (w - 2))"
+  high_half_of_range: "b >= (3 << (w - 2))"
+  interval_edge_low: "(b & ((1 << (w - 1 - 3)) - 1)) == 0"

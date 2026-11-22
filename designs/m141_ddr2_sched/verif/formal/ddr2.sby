@@ -1,0 +1,35 @@
+# SymbiYosys: ddr2_sched (brief 141), single clock, properties bound from ddr2_props.sv.
+#   bmc    : bounded model check (depth set by run_formal.py)
+#   prove  : unbounded proof by property-directed reachability (abc pdr) or k-induction (smtbmc)
+#   cover  : the proofs are not vacuous
+# run_formal.py writes the parameter overrides (-G) and the engine into the [script] and [engines] sections of a copy of this file; run it for any job:
+#   python3 designs/m141_ddr2_sched/verif/formal/run_formal.py --only <job>
+# (OSS CAD Suite 2026-11-12, found as run_formal.py's docstring says)
+[tasks]
+bmc
+prove
+cover
+
+[options]
+bmc: mode bmc
+bmc: depth 40
+prove: mode prove
+cover: mode cover
+cover: depth 80
+
+[engines]
+bmc: smtbmc boolector
+prove: abc pdr
+cover: smtbmc boolector
+
+[script]
+plugin -i slang
+read_slang --top ddr2_fv_top -G POLICY=0 ddr2_addrmap.sv ddr2_sched.sv ddr2_props.sv ddr2_bind.sv ddr2_fv_top.sv
+prep -top ddr2_fv_top
+
+[files]
+../../rtl/ddr2_addrmap.sv
+../../rtl/ddr2_sched.sv
+ddr2_props.sv
+ddr2_bind.sv
+ddr2_fv_top.sv

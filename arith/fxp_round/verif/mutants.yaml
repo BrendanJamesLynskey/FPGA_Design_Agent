@@ -1,0 +1,30 @@
+# Seeded mutants of the rounding RTL (brief 139b): one text change each, run under `config` (variant, W_IN, S, W_OUT, mode, sat) with every x.
+mutants:
+  - {id: M01, file: fxp_round_fold.sv, what: "convergent carry-in taken from the wrong bit (x[S-1] instead of x[S])", config: {variant: 0, w: 7, s: 3, w_out: 6, mode: 2, sat: 1},
+     find: "assign cin = (S > 0 && MODE == 2) ? x[S] : 1'b0;", replace: "assign cin = (S > 0 && MODE == 2) ? x[SM1] : 1'b0;"}
+  - {id: M02, file: fxp_round_fold.sv, what: "convergent constant is 2**(S-1) (half up) instead of 2**(S-1) - 1", config: {variant: 0, w: 7, s: 3, w_out: 6, mode: 2, sat: 1},
+     find: "(((W_IN + 1)'(1) << SM1) - (W_IN + 1)'(1))", replace: "((W_IN + 1)'(1) << SM1)"}
+  - {id: M03, file: fxp_round_fold.sv, what: "no sign extension of the input (the adder is W_IN bits of zero-extended x)", config: {variant: 0, w: 7, s: 2, w_out: 6, mode: 1, sat: 1},
+     find: "assign xe  = {x[W_IN-1], x};", replace: "assign xe  = {1'b0, x};"}
+  - {id: M04, file: fxp_round_fold.sv, what: "carry-in dropped for convergent", config: {variant: 0, w: 7, s: 3, w_out: 6, mode: 2, sat: 1},
+     find: "assign sum = xe + cst + {{W_IN{1'b0}}, cin};", replace: "assign sum = xe + cst;"}
+  - {id: M05, file: fxp_round_inc.sv, what: "tie test omits the result-LSB term (round half down on ties)", config: {variant: 1, w: 7, s: 3, w_out: 6, mode: 2, sat: 1},
+     find: "assign inc = x[S-1] & ((|x[S-2:0]) | x[S]);", replace: "assign inc = x[S-1] & (|x[S-2:0]);"}
+  - {id: M06, file: fxp_round_inc.sv, what: "half-up increments on any non-zero fraction", config: {variant: 1, w: 7, s: 3, w_out: 6, mode: 1, sat: 1},
+     find: "assign inc = x[S-1];", replace: "assign inc = |x[S-1:0];"}
+  - {id: M07, file: fxp_round_inc.sv, what: "S = 1 convergent tie ignores the result LSB", config: {variant: 1, w: 6, s: 1, w_out: 6, mode: 2, sat: 1},
+     find: "assign inc = x[0] & x[1];", replace: "assign inc = x[0];"}
+  - {id: M08, file: fxp_round_inc.sv, what: "floor sign bit not repeated (the incrementer sees a zero-extended value)", config: {variant: 1, w: 7, s: 2, w_out: 7, mode: 1, sat: 1},
+     find: "assign r = {fl[W_IN-S-1], fl} + {{(W_R-1){1'b0}}, inc};", replace: "assign r = {1'b0, fl} + {{(W_R-1){1'b0}}, inc};"}
+  - {id: M09, file: fxp_sat.sv, what: "saturated value has the wrong sign (not r's sign bit)", config: {variant: 0, w: 7, s: 1, w_out: 4, mode: 1, sat: 1},
+     find: "{r[W_R-1], {(W_OUT-1){~r[W_R-1]}}}", replace: "{~r[W_R-1], {(W_OUT-1){r[W_R-1]}}}"}
+  - {id: M10, file: fxp_sat.sv, what: "fits test one bit too narrow (r[W_R-1:W_OUT] instead of r[W_R-1:W_OUT-1])", config: {variant: 0, w: 7, s: 1, w_out: 4, mode: 1, sat: 1},
+     find: "assign fits = (&r[W_R-1:W_OUT-1]) | ~(|r[W_R-1:W_OUT-1]);", replace: "assign fits = (&r[W_R-1:W_OUT]) | ~(|r[W_R-1:W_OUT]);"}
+  - {id: M11, file: fxp_sat.sv, what: "saturation disabled in the wrap-or-saturate branch (always wraps)", config: {variant: 0, w: 7, s: 1, w_out: 4, mode: 1, sat: 1},
+     find: "assign y    = fits ? r[W_OUT-1:0] : {r[W_R-1], {(W_OUT-1){~r[W_R-1]}}};", replace: "assign y    = r[W_OUT-1:0];"}
+  - {id: M12, file: fxp_round_2st.sv, what: "second stage bypassed (saturation sees the unregistered rounded value: latency 1)", config: {variant: 2, w: 7, s: 2, w_out: 5, mode: 2, sat: 1},
+     find: "fxp_sat #(.W_R(W_R), .W_OUT(W_OUT), .SAT(SAT)) u_sat (.r(r_q), .y(y_c));", replace: "fxp_sat #(.W_R(W_R), .W_OUT(W_OUT), .SAT(SAT)) u_sat (.r(r), .y(y_c));"}
+  - {id: M13, file: fxp_round_2st.sv, what: "valid pipeline one stage short", config: {variant: 2, w: 7, s: 2, w_out: 5, mode: 2, sat: 1},
+     find: "out_valid <= v1;", replace: "out_valid <= in_valid;"}
+  - {id: M14, file: fxp_round_sel.sv, what: "SAT parameter not passed to the two-stage variant", config: {variant: 2, w: 7, s: 1, w_out: 4, mode: 1, sat: 1},
+     find: "fxp_round_2st #(.W_IN(W_IN), .S(S), .W_OUT(W_OUT), .MODE(MODE), .SAT(SAT))", replace: "fxp_round_2st #(.W_IN(W_IN), .S(S), .W_OUT(W_OUT), .MODE(MODE), .SAT(1'b0))"}
