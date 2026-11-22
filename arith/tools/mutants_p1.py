@@ -50,6 +50,19 @@ M_P1: dict[str, list[tuple]] = {
         ("flag_a_clock_early", "par2", "latency", None, "inv_f  = sof_in ? invc[LCH-1] : inv_h;", "inv_f  = sof_in ? invc[LCH-2] : inv_h;", "the direction flag is taken one clock early"),
         ("flag_update_late", "par2", "latency", None, "v_in   = vv[LC-2];", "v_in   = vv[LC-1];", "the held direction flag is updated one clock late"),
     ],
+    "fft_real_axis": [
+        ("gap_not_enforced", "post", "connection", None, "s_axis_tready = (gap == '0);", "s_axis_tready = 1'b1;", "tready never falls: the frame gap rule is not enforced"),
+        ("gap_one_short", "post", "constant", None, "gap <= LOGN'(GAP);", "gap <= LOGN'(GAP - 1);", "tready is low one clock too short"),
+        ("gap_quarter", "post", "constant", None, "localparam int GAP = N / 8;", "localparam int GAP = N / 4;", "the gap is N/4 (the complex streaming rule) instead of the measured N/8"),
+        ("core_sees_unaccepted", "post", "operator", None, "in_valid      = s_axis_tvalid && s_axis_tready;", "in_valid      = s_axis_tvalid;", "beats are taken that were not accepted (tready low)"),
+        ("start_polarity", "post", "operator", None, "if (in_valid) at_start <= s_axis_tlast;", "if (in_valid) at_start <= !s_axis_tlast;", "the start flag follows the wrong polarity of tlast"),
+        ("sof_always", "post", "connection", None, "in_sof        = at_start;", "in_sof        = 1'b1;", "every beat is a start of frame"),
+        ("samples_exchanged", "post", "connection", None, ".in_even(s_axis_tdata[W-1:0]), .in_odd(s_axis_tdata[2*W-1:W])", ".in_even(s_axis_tdata[2*W-1:W]), .in_odd(s_axis_tdata[W-1:0])", "the even and the odd sample exchanged"),
+        ("pack_out", "post", "connection", None, "m_axis_tdata  = {out_im, out_re};", "m_axis_tdata  = {out_re, out_im};", "real and imaginary parts exchanged on the output"),
+        ("tlast_early", "post", "constant", None, "m_axis_tlast  = out_valid && (cnt == LOGN'(H));", "m_axis_tlast  = out_valid && (cnt == LOGN'(H - 1));", "tlast one beat early (N/2 instead of N/2 + 1 beats)"),
+        ("ocnt_stuck", "post", "connection", None, "else if (out_valid) ocnt <= cnt + 1'b1;", "else if (out_valid) ocnt <= cnt;", "the output beat counter never advances"),
+        ("ocnt_not_restarted", "post", "connection", None, "cnt           = out_sof ? '0 : ocnt;", "cnt           = ocnt;", "the output beat counter is not restarted at out_sof"),
+    ],
 }
 EQ_P1 = {
     "fft_mdc2": ["`pos = cnt` instead of `ev_sof ? 0 : cnt`: the counter wraps at N/2 and holds between frames, so for the contiguous frames the sub-pipelines deliver it equals the restarted counter",
