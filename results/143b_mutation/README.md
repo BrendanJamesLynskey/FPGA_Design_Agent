@@ -1,6 +1,6 @@
 # Brief 143b: mutation score records
 
-**Correction (brief 152, 2026-11-22).** The b96 row below is superseded by [results/152_b96_mutation](../152_b96_mutation/README.md). Two statements on this page about it are wrong: the design's SymbiYosys bench
+**Correction (brief 152, 2026-11-22).** The b96 row below is replaced by [results/152_b96_mutation](../152_b96_mutation/README.md). Two statements on this page about it are wrong: the design's SymbiYosys bench
 *did* catch the L107 survivor (it fails `p6c_spec_matches_rtl` at step 10 in 2 s; the 143b run never started it, because the filter deleted each survivor's copy before the formal bench looked for it,
 so `killed_by_formal_bench` 0 meant not run), and the left-out 5000-frame cases do not catch it either. The record itself is kept as it was made.
 

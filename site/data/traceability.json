@@ -1936,6 +1936,38 @@
       "value": "4 of 4 tests passed"
      },
      {
+      "detail": "mutation score 100.0% (floor 90%): 29 killed, 0 real survivors, 1 equivalent dropped, 0 undecided; worst case 100.0%; seed 2",
+      "evidence": {
+       "exists": true,
+       "file": "results/152_b96_mutation/b96_rate_match_gp_seed2.json"
+      },
+      "id": "V-RM-MUTATION",
+      "instrument": null,
+      "method": "coverage_bin",
+      "mutation": {
+       "bench_timed_out": 0,
+       "equivalent": 1,
+       "invalid": 0,
+       "killed": 29,
+       "killed_by_formal_bench": 0,
+       "killed_by_simulation": 29,
+       "real_survivors": 0,
+       "score_before_filter_pct": 96.67,
+       "score_pct": 100.0,
+       "score_worst_case_pct": 100.0,
+       "seed": 2,
+       "undecided": 0
+      },
+      "planned": null,
+      "requirements": [
+       "B96-V-RM-BENCH",
+       "B96-S-RATEMATCH"
+      ],
+      "status": "pass",
+      "title": "Mutation score of the rate matcher's bench (brief 152; seed 2, 30 blind mutants, all nine cases of test_rate_match_gp_cocotb; the formal miter decides survivors); seed 1 and the as-found counts are in results/152_b96_mutation",
+      "value": 100.0
+     },
+     {
       "detail": "1 test(s) passed in the recorded run",
       "evidence": {
        "exists": true,
@@ -3115,6 +3147,7 @@
       "items": [
        "V-SIM-CORE-RM",
        "V-SIM-RM",
+       "V-RM-MUTATION",
        "V-FORMAL-SVA-PLANNED",
        "V-SVA-PLANNED",
        "V-SIMM-PPM",
@@ -3124,6 +3157,7 @@
       "kind": "safety",
       "lean_transcription_only": false,
       "passing_methods": [
+       "coverage_bin",
        "formal",
        "sim_test"
       ],
@@ -3134,6 +3168,28 @@
       "state": "verified",
       "text": "The elastic buffer inserts and deletes idles only between frames, never under- or overflows silently, and every order sent is fired and passes its content check.",
       "title": "Rate matching never corrupts a frame"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "B96-V-RM-BENCH",
+      "items": [
+       "V-RM-MUTATION"
+      ],
+      "kind": "safety",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "coverage_bin"
+      ],
+      "rests_on_delegated": false,
+      "source": "results/152_b96_mutation/README.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "A blind sample of at least 30 one-line changes to rate_match_gp.sv (flow/mutation_blind.py, 23 operator classes), with survivors decided by a formal miter, scores a worst case of at least 90 percent (every undecided mutant and bench timeout counted as a survivor). The floor is the planner's, delegated by the owner (decision 23, brief 152); whether it is high enough is the human's check.",
+      "title": "The rate matcher's simulation bench catches seeded bugs"
      },
      {
       "basis": null,
@@ -3726,7 +3782,7 @@
       "functional": 12,
       "interface": 1,
       "performance": 9,
-      "safety": 6
+      "safety": 7
      },
      "by_method": {
       "assertion": {
@@ -3754,7 +3810,7 @@
        "fail": 0,
        "not_in_run": 0,
        "not_run": 1,
-       "pass": 0,
+       "pass": 1,
        "skipped": 0,
        "stale": 0,
        "unapproved": 0
@@ -3834,7 +3890,7 @@
       "fail": 2,
       "not_run": 2,
       "stale": 1,
-      "verified": 23
+      "verified": 24
      },
      "external": 3,
      "external_hardware_done": 0,
@@ -3845,7 +3901,7 @@
       "stale_evidence": 15
      },
      "human_reviews": 0,
-     "items": 58,
+     "items": 59,
      "lean": {
       "approved": 0,
       "build_sources": [
@@ -3869,11 +3925,11 @@
       "items": 4,
       "statement_not_approved": 0
      },
-     "line": "28 requirements (12 functional, 9 performance, 1 interface, 6 safety); 23 verified, of which 2 rest on delegated acceptances (the planner accepted the Lean statement on the owner's delegation; not human approvals); 1 stale; 2 failing; 2 with no passing evidence; 0 of 3 requirements that depend on an external element closed by hardware; performance verified: 5 on the board, 2 by post-route timing, 0 in simulation only; 0 of 28 requirements agreed by a human, 0 human review(s) recorded; 4 Lean proof item(s) (all widths): 0 with a human-approved statement, 4 with a statement accepted on the owner's delegation (not a human approval), 0 with statement not approved; 4 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run).",
+     "line": "29 requirements (12 functional, 9 performance, 1 interface, 7 safety); 24 verified, of which 2 rest on delegated acceptances (the planner accepted the Lean statement on the owner's delegation; not human approvals); 1 stale; 2 failing; 2 with no passing evidence; 0 of 3 requirements that depend on an external element closed by hardware; performance verified: 5 on the board, 2 by post-route timing, 0 in simulation only; 0 of 29 requirements agreed by a human, 0 human review(s) recorded; 4 Lean proof item(s) (all widths): 0 with a human-approved statement, 4 with a statement accepted on the owner's delegation (not a human approval), 0 with statement not approved; 4 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run).",
      "performance_board": 5,
      "performance_sim_only": 0,
      "performance_timing": 2,
-     "requirements": 28,
+     "requirements": 29,
      "spec_agreed": 0,
      "verified_on_delegated": 2
     }
@@ -11895,8 +11951,8 @@
   "schema": "fda-traceability/1",
   "total": {
    "designs": 10,
-   "requirements": 145,
-   "verified": 105
+   "requirements": 146,
+   "verified": 106
   }
  },
  "content": {
@@ -13836,6 +13892,38 @@
       "value": "4 of 4 tests passed"
      },
      {
+      "detail": "mutation score 100.0% (floor 90%): 29 killed, 0 real survivors, 1 equivalent dropped, 0 undecided; worst case 100.0%; seed 2",
+      "evidence": {
+       "exists": true,
+       "file": "results/152_b96_mutation/b96_rate_match_gp_seed2.json"
+      },
+      "id": "V-RM-MUTATION",
+      "instrument": null,
+      "method": "coverage_bin",
+      "mutation": {
+       "bench_timed_out": 0,
+       "equivalent": 1,
+       "invalid": 0,
+       "killed": 29,
+       "killed_by_formal_bench": 0,
+       "killed_by_simulation": 29,
+       "real_survivors": 0,
+       "score_before_filter_pct": 96.67,
+       "score_pct": 100.0,
+       "score_worst_case_pct": 100.0,
+       "seed": 2,
+       "undecided": 0
+      },
+      "planned": null,
+      "requirements": [
+       "B96-V-RM-BENCH",
+       "B96-S-RATEMATCH"
+      ],
+      "status": "pass",
+      "title": "Mutation score of the rate matcher's bench (brief 152; seed 2, 30 blind mutants, all nine cases of test_rate_match_gp_cocotb; the formal miter decides survivors); seed 1 and the as-found counts are in results/152_b96_mutation",
+      "value": 100.0
+     },
+     {
       "detail": "1 test(s) passed in the recorded run",
       "evidence": {
        "exists": true,
@@ -15015,6 +15103,7 @@
       "items": [
        "V-SIM-CORE-RM",
        "V-SIM-RM",
+       "V-RM-MUTATION",
        "V-FORMAL-SVA-PLANNED",
        "V-SVA-PLANNED",
        "V-SIMM-PPM",
@@ -15024,6 +15113,7 @@
       "kind": "safety",
       "lean_transcription_only": false,
       "passing_methods": [
+       "coverage_bin",
        "formal",
        "sim_test"
       ],
@@ -15034,6 +15124,28 @@
       "state": "verified",
       "text": "The elastic buffer inserts and deletes idles only between frames, never under- or overflows silently, and every order sent is fired and passes its content check.",
       "title": "Rate matching never corrupts a frame"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "B96-V-RM-BENCH",
+      "items": [
+       "V-RM-MUTATION"
+      ],
+      "kind": "safety",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "coverage_bin"
+      ],
+      "rests_on_delegated": false,
+      "source": "results/152_b96_mutation/README.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "A blind sample of at least 30 one-line changes to rate_match_gp.sv (flow/mutation_blind.py, 23 operator classes), with survivors decided by a formal miter, scores a worst case of at least 90 percent (every undecided mutant and bench timeout counted as a survivor). The floor is the planner's, delegated by the owner (decision 23, brief 152); whether it is high enough is the human's check.",
+      "title": "The rate matcher's simulation bench catches seeded bugs"
      },
      {
       "basis": null,
@@ -15626,7 +15738,7 @@
       "functional": 12,
       "interface": 1,
       "performance": 9,
-      "safety": 6
+      "safety": 7
      },
      "by_method": {
       "assertion": {
@@ -15654,7 +15766,7 @@
        "fail": 0,
        "not_in_run": 0,
        "not_run": 1,
-       "pass": 0,
+       "pass": 1,
        "skipped": 0,
        "stale": 0,
        "unapproved": 0
@@ -15734,7 +15846,7 @@
       "fail": 2,
       "not_run": 2,
       "stale": 1,
-      "verified": 23
+      "verified": 24
      },
      "external": 3,
      "external_hardware_done": 0,
@@ -15745,7 +15857,7 @@
       "stale_evidence": 15
      },
      "human_reviews": 0,
-     "items": 58,
+     "items": 59,
      "lean": {
       "approved": 0,
       "build_sources": [
@@ -15769,11 +15881,11 @@
       "items": 4,
       "statement_not_approved": 0
      },
-     "line": "28 requirements (12 functional, 9 performance, 1 interface, 6 safety); 23 verified, of which 2 rest on delegated acceptances (the planner accepted the Lean statement on the owner's delegation; not human approvals); 1 stale; 2 failing; 2 with no passing evidence; 0 of 3 requirements that depend on an external element closed by hardware; performance verified: 5 on the board, 2 by post-route timing, 0 in simulation only; 0 of 28 requirements agreed by a human, 0 human review(s) recorded; 4 Lean proof item(s) (all widths): 0 with a human-approved statement, 4 with a statement accepted on the owner's delegation (not a human approval), 0 with statement not approved; 4 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run).",
+     "line": "29 requirements (12 functional, 9 performance, 1 interface, 7 safety); 24 verified, of which 2 rest on delegated acceptances (the planner accepted the Lean statement on the owner's delegation; not human approvals); 1 stale; 2 failing; 2 with no passing evidence; 0 of 3 requirements that depend on an external element closed by hardware; performance verified: 5 on the board, 2 by post-route timing, 0 in simulation only; 0 of 29 requirements agreed by a human, 0 human review(s) recorded; 4 Lean proof item(s) (all widths): 0 with a human-approved statement, 4 with a statement accepted on the owner's delegation (not a human approval), 0 with statement not approved; 4 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run).",
      "performance_board": 5,
      "performance_sim_only": 0,
      "performance_timing": 2,
-     "requirements": 28,
+     "requirements": 29,
      "spec_agreed": 0,
      "verified_on_delegated": 2
     }
@@ -23795,8 +23907,8 @@
   "schema": "fda-traceability/1",
   "total": {
    "designs": 10,
-   "requirements": 145,
-   "verified": 105
+   "requirements": 146,
+   "verified": 106
   }
  }
 }

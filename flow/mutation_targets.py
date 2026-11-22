@@ -87,7 +87,7 @@ B96_LONG_TESTS = ["partner_slower", "minimum_gap_partner_faster"]
 #: the cases brief 152 added after the survivors of its first run: a pause right after a frame-start block (the buffer is empty when the reader must stall inside a frame), and a write side
 #: that outruns a reader held in reset (the buffer fills and the full flag must work)
 B96_DIRECTED_TESTS = ["pause_right_after_a_frame_start", "writer_outruns_a_reader_held_in_reset"]
-#: $FDA_B96_CASES picks the cases one run of the bench executes: ``reduced`` (143b's five), ``long`` (the two left out), ``directed`` (brief 152's), ``full`` (all eight =
+#: $FDA_B96_CASES picks the cases one run of the bench executes: ``reduced`` (143b's five), ``long`` (the two left out), ``directed`` (brief 152's), ``full`` (all nine =
 #: test_rate_match_gp_cocotb), or a comma list of case names
 B96_CASE_SETS = {"reduced": B96_TESTS, "long": B96_LONG_TESTS, "directed": B96_DIRECTED_TESTS, "full": B96_TESTS + B96_LONG_TESTS + B96_DIRECTED_TESTS}
 
@@ -113,8 +113,8 @@ def _b96_swap(d: Path) -> dict:
 
 def _b96_staged() -> tuple["callable", "callable", dict]:
     """Brief 152: the whole of test_rate_match_gp_cocotb as three runs. Stage ``reduced`` runs 143b's five cases; a mutant that survives them is then run on the two long cases
-    (partner_slower, minimum_gap_partner_faster) and on brief 152's directed case, each in its own run. A mutant is killed when any case fails, so this is the same verdict as
-    the eight cases in one run, at the cost of the long cases only for the survivors; and it records which cases killed it. Returns (bench, stage_of, stage_benches): stage_of(dir) is
+    (partner_slower, minimum_gap_partner_faster) and on brief 152's two directed cases, each set in its own run. A mutant is killed when any case fails, so this is the same verdict as
+    the nine cases in one run, at the cost of the long cases only for the survivors; and it records which cases killed it. Returns (bench, stage_of, stage_benches): stage_of(dir) is
     ``reduced``, ``long``, ``directed``, ``long+directed``, or ``none`` (survived every case)."""
     stages: dict[str, str] = {}
     one = {k: pytest_bench([python(), "-m", "flow.mutation_targets", "b96-bench"], "b96_rate_match_gp/results.xml", lambda d, k=k: _b96_swap(d) | {"FDA_B96_CASES": k})
