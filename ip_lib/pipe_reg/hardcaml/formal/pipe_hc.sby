@@ -1,0 +1,65 @@
+# SymbiYosys on the Hardcaml-generated pipe_reg (brief 171): the existing formal/formal_pipe.sv wrapper and its assertions,
+# unchanged, on the generated Verilog of build/pipe_reg_formal.sv (made by ../run_hc.sh with `gen.exe ... -formal`, which adds
+# the ghost counters f_in_o and f_out_o the SV carries under `ifdef FORMAL). The SV slices' internal invariants are not in
+# the generated Verilog, so k-induction may not close: each task therefore has a `_prove` (k-induction, depth 14) and a
+# `_bmc` (bounded, depth 24) form; a BMC pass is a bounded check, not a proof.
+[tasks]
+fwd1_prove prove fwd1
+fwd3_prove prove fwd3
+skid1_prove prove skid1
+skid2_prove prove skid2
+skid3_prove prove skid3
+full1_prove prove full1
+full2_prove prove full2
+full3_prove prove full3
+half1_prove prove half1
+half2_prove prove half2
+comb1_prove prove comb1
+comb2_prove prove comb2
+comb3_prove prove comb3
+wire0_prove prove wire0
+fwd1_bmc bmc fwd1
+fwd3_bmc bmc fwd3
+skid1_bmc bmc skid1
+skid2_bmc bmc skid2
+skid3_bmc bmc skid3
+full1_bmc bmc full1
+full2_bmc bmc full2
+full3_bmc bmc full3
+half1_bmc bmc half1
+half2_bmc bmc half2
+comb1_bmc bmc comb1
+comb2_bmc bmc comb2
+comb3_bmc bmc comb3
+wire0_bmc bmc wire0
+
+[options]
+prove: mode prove
+prove: depth 14
+bmc: mode bmc
+bmc: depth 24
+
+[engines]
+smtbmc boolector
+
+[script]
+read_verilog -formal -sv pipe_reg_formal.sv formal_pipe.sv
+fwd1: chparam -set MODE 0 -set N 1 formal_pipe
+fwd3: chparam -set MODE 0 -set N 3 formal_pipe
+skid1: chparam -set MODE 1 -set N 1 formal_pipe
+skid2: chparam -set MODE 1 -set N 2 formal_pipe
+skid3: chparam -set MODE 1 -set N 3 formal_pipe
+full1: chparam -set MODE 2 -set N 1 formal_pipe
+full2: chparam -set MODE 2 -set N 2 formal_pipe
+full3: chparam -set MODE 2 -set N 3 formal_pipe
+half1: chparam -set MODE 3 -set N 1 formal_pipe
+half2: chparam -set MODE 3 -set N 2 formal_pipe
+comb1: chparam -set MODE 4 -set N 1 formal_pipe
+comb2: chparam -set MODE 4 -set N 2 formal_pipe
+comb3: chparam -set MODE 4 -set N 3 formal_pipe
+wire0: chparam -set MODE 1 -set N 0 formal_pipe
+prep -top formal_pipe
+
+[files]
+../build/pipe_reg_formal.sv
+../../formal/formal_pipe.sv
