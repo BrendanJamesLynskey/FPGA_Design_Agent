@@ -1,0 +1,31 @@
+# SymbiYosys: the two mac64_tx interframe-gap conditions that no simulation reaches (brief 158); properties bound from mac64_tx_ifg_props.sv.
+#   unreach_cover : cover of the two conditions; sby must report both as unreached (a reachable one would print a trace)
+#   unreach_prove : the same two conditions as assertions, proved by k-induction (and n in 1..8)
+#   reach_cover   : control; the neighbouring arms and each n are reachable, so the unreached ones are not unreached for a wrong reason
+# Run: sby -f mac64_tx_ifg.sby <task>      (OSS CAD Suite 2026-11-12, the version the repo's CI pins; see run_ifg_formal.sh)
+[tasks]
+unreach_cover cover unreachc
+unreach_prove prove unreachp
+reach_cover cover reach
+
+[options]
+cover: mode cover
+cover: depth 12
+prove: mode prove
+prove: depth 8
+
+[engines]
+smtbmc boolector
+
+[script]
+unreachc: read_slang --top mac64_tx_fv_top -D FV_UNREACH b96_pkg.sv mac64_tx.sv mac64_tx_ifg_props.sv mac64_tx_ifg_bind.sv mac64_tx_fv_top.sv
+unreachp: read_slang --top mac64_tx_fv_top -D FV_PROVE b96_pkg.sv mac64_tx.sv mac64_tx_ifg_props.sv mac64_tx_ifg_bind.sv mac64_tx_fv_top.sv
+reach: read_slang --top mac64_tx_fv_top -D FV_REACH b96_pkg.sv mac64_tx.sv mac64_tx_ifg_props.sv mac64_tx_ifg_bind.sv mac64_tx_fv_top.sv
+prep -top mac64_tx_fv_top
+
+[files]
+../../rtl/b96_pkg.sv
+../../rtl/mac64_tx.sv
+mac64_tx_ifg_props.sv
+mac64_tx_ifg_bind.sv
+mac64_tx_fv_top.sv

@@ -6,7 +6,7 @@ Evidence files that exist so that a requirement can point at them. The matrices 
 
 | File | What | Made by |
 |---|---|---|
-| `b96_kr260_10g/pytest_junit.xml` | JUnit record of every pytest test under `designs/b96_kr260_10g/tests`: the cocotb benches run through their pytest entry points (Icarus Verilog, cocotb 2.0.1) and the board-driver tests on a fake board | simulation only, no board, no Vivado, 2026-11-20 |
+| `b96_kr260_10g/pytest_junit.xml` | JUnit record of every pytest test under `designs/b96_kr260_10g/tests`: the cocotb benches run through their pytest entry points (Icarus Verilog, cocotb 2.0.1) and the board-driver tests on a fake board; a second suite holds brief 131's tests and a third brief 158's (`test_b158_ifg_formal`, SymbiYosys from the OSS CAD Suite 2026-11-12, and `test_b96_pyuvm`, 15 tests, 2026-11-22) | simulation only, no board, no Vivado, 2026-11-20 (third suite 2026-11-22) |
 | `b119_tcp_fast/pytest_junit.xml` | JUnit record of every pytest test under `designs/b119_tcp_fast/tests`: the Python-side model tests, the cocotb bench and the bench behind brief 110's risk logic (Icarus Verilog, cocotb 2.0.1), and the Verilator lint | simulation only, no board, no Vivado, 2026-11-21 (brief 133) |
 
 ## Reproduce

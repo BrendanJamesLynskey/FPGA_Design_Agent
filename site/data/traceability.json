@@ -2130,7 +2130,7 @@
       "value": "19 of 19 tests passed"
      },
      {
-      "detail": "7 test(s) passed in the recorded run",
+      "detail": "11 test(s) passed in the recorded run",
       "evidence": {
        "exists": true,
        "file": "results/116_traceability/b96_kr260_10g/pytest_junit.xml"
@@ -2146,13 +2146,13 @@
       ],
       "status": "pass",
       "title": "pyuvm-on-cocotb twin of the UVM bench of the PCS and MAC (brief 123; designs/b96_kr260_10g/verif/pyuvm/); the recorded run is the reference-model checks, one smoke run in Icarus and one seeded-bug kill; the full regression is run by hand",
-      "value": "7 of 7 tests passed"
+      "value": "11 of 11 tests passed"
      },
      {
       "detail": "value = 217",
       "evidence": {
        "exists": true,
-       "file": "results/146_verilator_cov/summary.txt"
+       "file": "results/158_cov_closure/summary.txt"
       },
       "id": "V-COV-FUNC",
       "instrument": null,
@@ -2163,14 +2163,14 @@
        "B96-F-MAC"
       ],
       "status": "pass",
-      "title": "Functional coverage of the pyuvm bench of the PCS and MAC (brief 123 bench, brief 146 regression on Verilator 5.048; 42 runs, every one of the 217 bins hit; the Icarus run of brief 123 hit the same 217)",
+      "title": "Functional coverage of the pyuvm bench of the PCS and MAC (brief 123 bench, brief 158 regression on Verilator 5.048; 44 runs, every one of the 217 bins hit; the Icarus run of brief 123 hit the same 217)",
       "value": 217.0
      },
      {
-      "detail": "design.line.percent = 81.25; design.branch.percent = 85.34; design.expr.percent = 92.47; design.toggle.percent = 96.33",
+      "detail": "design.line.percent = 82.5; design.branch.percent = 85.34; design.expr.percent = 92.47; design.toggle.percent = 96.37",
       "evidence": {
        "exists": true,
-       "file": "results/146_verilator_cov/coverage_summary.json"
+       "file": "results/158_cov_closure/coverage_summary.json"
       },
       "id": "V-COV-CODE",
       "instrument": null,
@@ -2181,8 +2181,42 @@
        "B96-F-MAC"
       ],
       "status": "pass",
-      "title": "RTL code coverage of pcs_tx, pcs_rx, mac64_tx, mac64_rx and b96_pkg by the same 42-run regression (Verilator 5.048 --coverage, merged; brief 146). Floors are the measured design-wide percentages rounded down (line 81.25, branch 85.34, expression 92.47, toggle 96.33); every open point is explained in results/146_verilator_cov/README.md (unreachable by design, one deliberately not driven, or a Verilator reporting artefact reproduced in a 15-line test)",
+      "title": "RTL code coverage of pcs_tx, pcs_rx, mac64_tx, mac64_rx and b96_pkg by the same 44-run regression (Verilator 5.048 --coverage, merged; brief 146, raised by brief 158's underrun test). Floors are the measured design-wide percentages rounded down to a whole number (82, 85, 92, 96; measured 82.5, 85.34, 92.47, 96.37; the line floor rose from 81 in brief 158); every open point is explained in results/146_verilator_cov/README.md and results/158_cov_closure/README.md (unreachable by design, proved so by formal covers in brief 158, or a Verilator reporting artefact reproduced in a 15-line test)",
       "value": true
+     },
+     {
+      "detail": "value = 24",
+      "evidence": {
+       "exists": true,
+       "file": "results/158_cov_closure/protocol_cover.tsv"
+      },
+      "id": "V-TX-UNDERRUN",
+      "instrument": null,
+      "method": "uvm_test",
+      "planned": null,
+      "requirements": [
+       "B96-F-MAC"
+      ],
+      "status": "pass",
+      "title": "Transmit underrun of mac64_tx under the protocol checker's fault-injection mode (brief 158; test t_underrun, 12 underruns per seed). The source stalls inside a frame; expected on the output are the start word, the data words taken, one word of eight error characters (no FCS, no terminate, no eop), one idle word, then any new start; the receiver aborts exactly those frames. The recorded run is the 44-run regression; the count is the underruns the checker saw in injection mode",
+      "value": 24.0
+     },
+     {
+      "detail": "4 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "results/116_traceability/b96_kr260_10g/pytest_junit.xml"
+      },
+      "id": "V-FORMAL-MAC-IFG",
+      "instrument": null,
+      "method": "formal",
+      "planned": null,
+      "requirements": [
+       "B96-F-MAC"
+      ],
+      "status": "pass",
+      "title": "SymbiYosys covers and proofs of the two mac64_tx interframe-gap conditions code coverage found unreachable (brief 158, verif/formal/mac64_tx_ifg.sby). Both unreached, both proved unreachable by induction, the neighbouring arms reachable, and a planted wider n finds the first reachable",
+      "value": "4 of 4 tests passed"
      },
      {
       "detail": "measured 13 clocks; bound at most 14 clocks",
@@ -3042,12 +3076,15 @@
        "V-PYUVM",
        "V-COV-FUNC",
        "V-COV-CODE",
+       "V-TX-UNDERRUN",
+       "V-FORMAL-MAC-IFG",
        "V-REVIEW-96"
       ],
       "kind": "functional",
       "lean_transcription_only": false,
       "passing_methods": [
        "coverage_bin",
+       "formal",
        "sim_test",
        "uvm_test"
       ],
@@ -3789,7 +3826,7 @@
        "fail": 0,
        "not_in_run": 0,
        "not_run": 0,
-       "pass": 1,
+       "pass": 2,
        "skipped": 0,
        "stale": 1,
        "unapproved": 0
@@ -3849,7 +3886,7 @@
        "fail": 0,
        "not_in_run": 0,
        "not_run": 0,
-       "pass": 2,
+       "pass": 3,
        "skipped": 0,
        "stale": 0,
        "unapproved": 0
@@ -3870,7 +3907,7 @@
       "stale_evidence": 15
      },
      "human_reviews": 0,
-     "items": 59,
+     "items": 61,
      "lean": {
       "approved": 0,
       "build_sources": [
@@ -12184,7 +12221,7 @@
       "value": "19 of 19 tests passed"
      },
      {
-      "detail": "7 test(s) passed in the recorded run",
+      "detail": "11 test(s) passed in the recorded run",
       "evidence": {
        "exists": true,
        "file": "results/116_traceability/b96_kr260_10g/pytest_junit.xml"
@@ -12200,13 +12237,13 @@
       ],
       "status": "pass",
       "title": "pyuvm-on-cocotb twin of the UVM bench of the PCS and MAC (brief 123; designs/b96_kr260_10g/verif/pyuvm/); the recorded run is the reference-model checks, one smoke run in Icarus and one seeded-bug kill; the full regression is run by hand",
-      "value": "7 of 7 tests passed"
+      "value": "11 of 11 tests passed"
      },
      {
       "detail": "value = 217",
       "evidence": {
        "exists": true,
-       "file": "results/146_verilator_cov/summary.txt"
+       "file": "results/158_cov_closure/summary.txt"
       },
       "id": "V-COV-FUNC",
       "instrument": null,
@@ -12217,14 +12254,14 @@
        "B96-F-MAC"
       ],
       "status": "pass",
-      "title": "Functional coverage of the pyuvm bench of the PCS and MAC (brief 123 bench, brief 146 regression on Verilator 5.048; 42 runs, every one of the 217 bins hit; the Icarus run of brief 123 hit the same 217)",
+      "title": "Functional coverage of the pyuvm bench of the PCS and MAC (brief 123 bench, brief 158 regression on Verilator 5.048; 44 runs, every one of the 217 bins hit; the Icarus run of brief 123 hit the same 217)",
       "value": 217.0
      },
      {
-      "detail": "design.line.percent = 81.25; design.branch.percent = 85.34; design.expr.percent = 92.47; design.toggle.percent = 96.33",
+      "detail": "design.line.percent = 82.5; design.branch.percent = 85.34; design.expr.percent = 92.47; design.toggle.percent = 96.37",
       "evidence": {
        "exists": true,
-       "file": "results/146_verilator_cov/coverage_summary.json"
+       "file": "results/158_cov_closure/coverage_summary.json"
       },
       "id": "V-COV-CODE",
       "instrument": null,
@@ -12235,8 +12272,42 @@
        "B96-F-MAC"
       ],
       "status": "pass",
-      "title": "RTL code coverage of pcs_tx, pcs_rx, mac64_tx, mac64_rx and b96_pkg by the same 42-run regression (Verilator 5.048 --coverage, merged; brief 146). Floors are the measured design-wide percentages rounded down (line 81.25, branch 85.34, expression 92.47, toggle 96.33); every open point is explained in results/146_verilator_cov/README.md (unreachable by design, one deliberately not driven, or a Verilator reporting artefact reproduced in a 15-line test)",
+      "title": "RTL code coverage of pcs_tx, pcs_rx, mac64_tx, mac64_rx and b96_pkg by the same 44-run regression (Verilator 5.048 --coverage, merged; brief 146, raised by brief 158's underrun test). Floors are the measured design-wide percentages rounded down to a whole number (82, 85, 92, 96; measured 82.5, 85.34, 92.47, 96.37; the line floor rose from 81 in brief 158); every open point is explained in results/146_verilator_cov/README.md and results/158_cov_closure/README.md (unreachable by design, proved so by formal covers in brief 158, or a Verilator reporting artefact reproduced in a 15-line test)",
       "value": true
+     },
+     {
+      "detail": "value = 24",
+      "evidence": {
+       "exists": true,
+       "file": "results/158_cov_closure/protocol_cover.tsv"
+      },
+      "id": "V-TX-UNDERRUN",
+      "instrument": null,
+      "method": "uvm_test",
+      "planned": null,
+      "requirements": [
+       "B96-F-MAC"
+      ],
+      "status": "pass",
+      "title": "Transmit underrun of mac64_tx under the protocol checker's fault-injection mode (brief 158; test t_underrun, 12 underruns per seed). The source stalls inside a frame; expected on the output are the start word, the data words taken, one word of eight error characters (no FCS, no terminate, no eop), one idle word, then any new start; the receiver aborts exactly those frames. The recorded run is the 44-run regression; the count is the underruns the checker saw in injection mode",
+      "value": 24.0
+     },
+     {
+      "detail": "4 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "results/116_traceability/b96_kr260_10g/pytest_junit.xml"
+      },
+      "id": "V-FORMAL-MAC-IFG",
+      "instrument": null,
+      "method": "formal",
+      "planned": null,
+      "requirements": [
+       "B96-F-MAC"
+      ],
+      "status": "pass",
+      "title": "SymbiYosys covers and proofs of the two mac64_tx interframe-gap conditions code coverage found unreachable (brief 158, verif/formal/mac64_tx_ifg.sby). Both unreached, both proved unreachable by induction, the neighbouring arms reachable, and a planted wider n finds the first reachable",
+      "value": "4 of 4 tests passed"
      },
      {
       "detail": "measured 13 clocks; bound at most 14 clocks",
@@ -13096,12 +13167,15 @@
        "V-PYUVM",
        "V-COV-FUNC",
        "V-COV-CODE",
+       "V-TX-UNDERRUN",
+       "V-FORMAL-MAC-IFG",
        "V-REVIEW-96"
       ],
       "kind": "functional",
       "lean_transcription_only": false,
       "passing_methods": [
        "coverage_bin",
+       "formal",
        "sim_test",
        "uvm_test"
       ],
@@ -13843,7 +13917,7 @@
        "fail": 0,
        "not_in_run": 0,
        "not_run": 0,
-       "pass": 1,
+       "pass": 2,
        "skipped": 0,
        "stale": 1,
        "unapproved": 0
@@ -13903,7 +13977,7 @@
        "fail": 0,
        "not_in_run": 0,
        "not_run": 0,
-       "pass": 2,
+       "pass": 3,
        "skipped": 0,
        "stale": 0,
        "unapproved": 0
@@ -13924,7 +13998,7 @@
       "stale_evidence": 15
      },
      "human_reviews": 0,
-     "items": 59,
+     "items": 61,
      "lean": {
       "approved": 0,
       "build_sources": [

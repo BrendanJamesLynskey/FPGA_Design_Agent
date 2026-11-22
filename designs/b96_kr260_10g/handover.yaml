@@ -133,7 +133,7 @@ files:
 - path: designs/b96_kr260_10g/verif/pyuvm/README.md
   what: how the pyuvm (Python UVM on cocotb, Icarus or Verilator) bench for the PCS and MAC is built, run and limited, with
     its code coverage on Verilator; the same job as the SystemVerilog UVM bench (briefs 123 and 146)
-  sha256: 3ba3fe7b62d5e5d9eb7555274589907aaf124dc0172c3bfe5b9e1563d3bc7d6c
+  sha256: 69062ecb8e760e56ea11441b47e45d603ad18d0bbc1ada57891739882e3ce251
 - path: designs/b96_kr260_10g/verif/pyuvm/COMPARISON.md
   what: the measured comparison of the pyuvm and the SystemVerilog UVM bench, where each fits the project, and a section
     for the verification course (brief 123)
@@ -227,6 +227,14 @@ files:
 - path: designs/b96_kr260_10g/rtl/pcs_rx.sv
   what: receive PCS (gearbox with slip, block lock, descramble, decode)
   sha256: 161c35209b39e014a62c3f4624ea52b99ef3316abc7250a7f5b132e19a651c0a
+- path: designs/b96_kr260_10g/verif/formal/mac64_tx_ifg.sby
+  what: SymbiYosys tasks for the two mac64_tx interframe-gap conditions code coverage found unreachable - covers unreached,
+    proofs by induction, reachable neighbours as a control (brief 158)
+  sha256: 2f42d23a7fc2500a0d150ad7e8d75b214d6a0c0dcf5b8ebd89c8d78fa5329bfc
+- path: results/158_cov_closure/README.md
+  what: the brief 158 record - the underrun test and its scoreboard rule, coverage after it, the formal results and the
+    17 seeded bugs on Verilator
+  sha256: fe344b147fda29c94290799ebec20c4264b730d8e6d1e475ad75bcf0ad447fc5
 - path: designs/b96_kr260_10g/rtl/mac64_tx.sv
   what: 64-bit MAC transmitter
   sha256: 0cbc07b0268f1c0d3e4c916808bb87930fc6c17d3c60eba2cc90e17ad945246a
@@ -388,6 +396,20 @@ commands:
   needs: Verilator 5.048 (source ~/.local/opt/verilator-5048/env.sh), cocotb 2.0.1, pyuvm 5.0.0, cocotb-coverage; the Verilator
     build takes a heavy slot (systemd-run MemoryMax=8G), the runs are simulation only; then verilator_coverage --write and
     scripts/cov_report.py (results/146_verilator_cov/README.md)
+- what: the pyuvm regression of brief 158 (44 runs with the transmit-underrun test) on Verilator with coverage, then the
+    17 seeded bugs on Verilator; same build and rules as the brief 146 command
+  cmd: SIM=verilator PYUVM_COV=1 PYTHONPATH=. python designs/b96_kr260_10g/verif/pyuvm/scripts/run_regress.py --out /tmp/v158
+    --record results/158_cov_closure
+  heavy: true
+  minutes: 4
+  needs: Verilator 5.048 (source ~/.local/opt/verilator-5048/env.sh), cocotb 2.0.1, pyuvm 5.0.0, cocotb-coverage; heavy
+    slot for the build; the mutant run is the same command with --mutants-only and no PYUVM_COV (about 7 minutes)
+- what: the SymbiYosys covers and proofs of the two mac64_tx interframe-gap conditions (brief 158)
+  cmd: bash designs/b96_kr260_10g/verif/formal/run_ifg_formal.sh /tmp/mac64_tx_ifg
+  heavy: false
+  minutes: 1
+  needs: the OSS CAD Suite release the repository's CI pins (found through FDA_OSS_CAD or ~/.local/opt/oss-cad-suite); a
+    few seconds of solver time, no heavy slot
 evidence:
 - id: E1
   activity: simulation
@@ -781,6 +803,12 @@ open_questions:
 - Does the PL load over JTAG with the PS idle on the KR260 (flow/program.py has no KR260 board entry yet)?
 history:
 - date: '2026-11-22'
+  note: 'brief 158: the transmit underrun of mac64_tx driven under a fault-injection mode of the protocol checker (test
+    t_underrun, scoreboard rule: the data taken, one error word, no FCS or terminate, the gap; the receiver aborts exactly
+    those frames), line coverage 81.25 % to 82.5 %, toggle 96.33 % to 96.37 %; SymbiYosys covers and proofs that the two
+    interframe-gap conditions of mac64_tx that no simulation reaches are unreachable; the 17 seeded bugs run on Verilator
+    with the same verdicts as Icarus; no RTL change'
+- date: '2026-11-22'
   note: 'brief 146: RTL code coverage of the PCS and MAC from the pyuvm bench on Verilator 5.048 (81.25 % line, 85.34 %
     branch, 92.47 % expression, 96.33 % toggle design-wide, every open point explained; same results as Icarus, 2.9 times
     faster to run); three additions of stimulus; testplan items V-COV-FUNC and V-COV-CODE; no RTL change'
@@ -823,6 +851,12 @@ history:
 - date: '2026-11-17'
   note: 'brief 96 stages 0 to 2: board facts, design note, PCS, MAC, trading path, host code, builds; one review round'
 numbers_allow:
+- token: '82.5'
+  reason: brief 158 design-wide line coverage of the PCS and MAC on Verilator, results/158_cov_closure/coverage_summary.json
+- token: '96.37'
+  reason: brief 158 design-wide toggle coverage of the PCS and MAC on Verilator, results/158_cov_closure/coverage_summary.json
+- token: '5048'
+  reason: the directory name of the Verilator 5.048 installation under ~/.local/opt
 - token: '81.25'
   reason: brief 146 design-wide line coverage of the PCS and MAC on Verilator, results/146_verilator_cov/coverage_summary.json
 - token: '85.34'

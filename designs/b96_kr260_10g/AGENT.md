@@ -41,7 +41,7 @@ designs/b96_kr260_10g/dbg_xvc/board/xvc_board_session.sh bb8534601a: the board-s
 designs/b96_kr260_10g/dbg_xvc/board/xvc_capture.tcl c43a40ce6f: Vivado hardware-manager side of the dbg_xvc board test: XVC connection and ILA captures; not run (brief 131)
 designs/b96_kr260_10g/dbg_xvc/model/xvc_verdict.py 6e5f94a169: the pre-registered verdict of the dbg_xvc board test (brief 131)
 designs/b96_kr260_10g/dbg_xvc/scripts/dump_netlist_timing.tcl d2746b1b03: dumps a routed build's core cells and slacks so the debug build can be compared with its parent (brief 131)
-designs/b96_kr260_10g/verif/pyuvm/README.md 3ba3fe7b62: how the pyuvm (Python UVM on cocotb, Icarus or Verilator) bench for the PCS and MAC is built, run and limited, with its code coverage on Verilator; the same job as the SystemVerilog UVM bench (briefs 123 and 146)
+designs/b96_kr260_10g/verif/pyuvm/README.md 69062ecb8e: how the pyuvm (Python UVM on cocotb, Icarus or Verilator) bench for the PCS and MAC is built, run and limited, with its code coverage on Verilator; the same job as the SystemVerilog UVM bench (briefs 123 and 146)
 designs/b96_kr260_10g/verif/pyuvm/COMPARISON.md 0f9578afff: the measured comparison of the pyuvm and the SystemVerilog UVM bench, where each fits the project, and a section for the verification course (brief 123)
 designs/b96_kr260_10g/verif/uvm/README.md 28bc0ecbd5: how the UVM 1.2 bench for the PCS and MAC is built, what each part checks, the coverage and the seeded bugs (brief 112)
 designs/b96_kr260_10g/rm_gp_bypass/rtl/b96_core.sv 82d6c44238: copy of rtl/b96_core.sv for build rm_gp_bypass with the GT buffer-bypass controllers connected, run gates and (brief 96F1b) the alignment timeout and retry status in GT_BUF
@@ -71,6 +71,8 @@ designs/b96_kr260_10g/tests/eyescan_cocotb.py b6da9be062: cocotb bench of the se
 designs/b96_kr260_10g/rtl/b96_pkg.sv ac2ee00c42: block codes, scrambler, CRC-32 functions
 designs/b96_kr260_10g/rtl/pcs_tx.sv e0e68141d9: transmit PCS (encode, scramble, gearbox)
 designs/b96_kr260_10g/rtl/pcs_rx.sv 161c35209b: receive PCS (gearbox with slip, block lock, descramble, decode)
+designs/b96_kr260_10g/verif/formal/mac64_tx_ifg.sby 2f42d23a7f: SymbiYosys tasks for the two mac64_tx interframe-gap conditions code coverage found unreachable - covers unreached, proofs by induction, reachable neighbours as a control (brief 158)
+results/158_cov_closure/README.md fe344b147f: the brief 158 record - the underrun test and its scoreboard rule, coverage after it, the formal results and the 17 seeded bugs on Verilator
 designs/b96_kr260_10g/rtl/mac64_tx.sv 0cbc07b026: 64-bit MAC transmitter
 designs/b96_kr260_10g/rtl/mac64_rx.sv 35a0ed74f5: 64-bit MAC receiver
 designs/b96_kr260_10g/rtl/frame_src.sv a745598f6a: frame builder for orders, feed, probe and test frames
@@ -118,6 +120,8 @@ simulate the PCS, MAC and core against the Python reference (~2min): python -m p
 the UVM 1.2 regression of the PCS and MAC in xsim (every test over its seeds, coverage merge, seeded bugs) (~40min): designs/b96_kr260_10g/verif/uvm/scripts/run_regress.sh --mutants --record results/112_uvm_pcs_mac
 the pyuvm regression of the PCS and MAC in Icarus (every test over its seeds, coverage merge, seeded bugs); needs pyuvm 5.0.0 and cocotb-coverage in a venv that sees cocotb 2.0.1 (~15min): PYTHONPATH=. python designs/b96_kr260_10g/verif/pyuvm/scripts/run_regress.py --mutants --record results/123_pyuvm_pcs_mac
 [heavy] the pyuvm regression of the PCS and MAC on Verilator with line, branch, expression and toggle coverage, merged and reported per module (brief 146); needs Verilator 5.036 or newer (cocotb 2.0.1 refuses the 5.020 of Ubuntu), so it is not in CI (~6min): SIM=verilator PYUVM_COV=1 PYTHONPATH=. python designs/b96_kr260_10g/verif/pyuvm/scripts/run_regress.py --out /tmp/v146 --record results/146_verilator_cov
+[heavy] the pyuvm regression of brief 158 (44 runs with the transmit-underrun test) on Verilator with coverage, then the 17 seeded bugs on Verilator; same build and rules as the brief 146 command (~4min): SIM=verilator PYUVM_COV=1 PYTHONPATH=. python designs/b96_kr260_10g/verif/pyuvm/scripts/run_regress.py --out /tmp/v158 --record results/158_cov_closure
+the SymbiYosys covers and proofs of the two mac64_tx interframe-gap conditions (brief 158) (~1min): bash designs/b96_kr260_10g/verif/formal/run_ifg_formal.sh /tmp/mac64_tx_ifg
 
 ## records (path sha256-prefix; claims below cite R<n>)
 R1 designs/b96_kr260_10g/tests/test_b96_pcs_rtl.py b26b6317ae
@@ -208,6 +212,7 @@ M20 latency itch_t2t_verdict_clocks=21.63 clocks R16#itch_to_order.at_verdict.ti
 - Does the PL load over JTAG with the PS idle on the KR260 (flow/program.py has no KR260 board entry yet)?
 
 ## history
+2026-11-22 - pr=-: brief 158: the transmit underrun of mac64_tx driven under a fault-injection mode of the protocol checker (test t_underrun, scoreboard rule: the data taken, one error word, no FCS or terminate, the gap; the receiver aborts exactly those frames), line coverage 81.25 % to 82.5 %, toggle 96.33 % to 96.37 %; SymbiYosys covers and proofs that the two interframe-gap conditions of mac64_tx that no simulation reaches are unreachable; the 17 seeded bugs run on Verilator with the same verdicts as Icarus; no RTL change
 2026-11-22 - pr=-: brief 146: RTL code coverage of the PCS and MAC from the pyuvm bench on Verilator 5.048 (81.25 % line, 85.34 % branch, 92.47 % expression, 96.33 % toggle design-wide, every open point explained; same results as Icarus, 2.9 times faster to run); three additions of stimulus; testplan items V-COV-FUNC and V-COV-CODE; no RTL change
 2026-11-21 - pr=-: brief 127: build rm_gp_itch, brief 110's MoldUDP64/ITCH/book/risk/OUCH path inside the 10G design (udp_strip adapter with a late FCS verdict, transmit multiplexer, replay memory and capture ring, stand-in for tcp_fast with a hook); bit-exact against 110's model in xsim and Icarus; built with timing met; board test pre-registered and script written, nothing run on a board
 2026-11-21 - pr=-: brief 126: build lat_all3_bypass (the default receive path, the 97C latency cuts and the GT buffer bypass together), all 29 gates, WNS +0.066 ns, report_cdc no critical; simulated in xsim; board test pre-registered from the two measured runs (E 16.0, L 38.0, D 6.0, tick-to-trade 22 clocks) and script written; nothing run on a board
