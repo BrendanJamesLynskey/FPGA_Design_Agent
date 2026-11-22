@@ -158,7 +158,7 @@ class ContinuousResult(dict):
 class ContinuousOwner:
     """ONE continuous session across several stages (brief 172): the board runs smoke, counters, latency, rate, risk on one programmed design with no reset between them, so counters that no clear
     touches (rp.frames) carry from stage to stage. `SimOwner` runs one stage per simulation from reset and cannot show that. Here every plan executed so far is replayed in one simulation from reset
-    (deterministic, so the state at the end of plan k is the state a longer session had at that point); a result is looked up when a stage first reads it, which runs plans 0..k, and returns the reads of plan k only.
+    (deterministic, so the state at the end of plan k is the state a longer session had at that point); a result is looked up when a stage first reads it, which runs every plan executed so far, and returns the reads of the plan asked for.
     A later stage therefore costs a longer simulation: the dry run takes the sum of the prefixes."""
 
     def __init__(self, work: Path, phase_ps: int = 0):
@@ -176,6 +176,7 @@ class ContinuousOwner:
         n = index + 1
         best = min((k for k in self.cache if k >= n), default=None)
         if best is None:
+            n = len(self.plans)                  # every plan executed so far (a stage reads its first plan's result after it has built the later ones)
             merged = B.Plan()
             seen_link = False
             for p in self.plans[:n]:
