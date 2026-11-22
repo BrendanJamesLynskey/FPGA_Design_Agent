@@ -1,0 +1,59 @@
+# Machine-readable specification of the integer square root (brief 139b). Human-readable form: spec.md. spec_status is set by a human only.
+function: isqrt
+spec_version: 1
+spec_status: draft
+summary: Floor square root of an unsigned W-bit integer, with the remainder.
+parameters:
+  W: {meaning: radicand width in bits, range: "3 or more", derived: "RW = ceil(W/2), the root width"}
+  PIPE: {meaning: "unrolled variants only: result bits per register stage", range: "1 to RW"}
+interface:
+  clock: "clk (rising edge)"
+  reset: "rst (synchronous, active high; clears only the valid flags and the iterative variant's busy state)"
+  in: {in_valid: 1, in_ready: "1 for the unrolled variants; low while the iterative variant is busy", in_data: "x, W bits, unsigned"}
+  out: {out_valid: 1, out_data: "{root, rem}: root RW bits, rem RW + 1 bits, both unsigned; meaningful only while out_valid is high"}
+function_definition: "root = floor(sqrt(x)), rem = x - root**2, so 0 <= rem <= 2 * root; x = 0 gives (0, 0)"
+error_bound: exact
+latency_definition: "clock edges from the accepting edge to the edge that samples out_valid high"
+variants:
+  - id: restoring_iter
+    module: isqrt_restoring_iter
+    selector: {VARIANT: 0}
+    protocol: "valid/ready on the input (a transfer is in_valid and in_ready on a rising edge; in_ready is low while a result is being computed and and is high again in the cycle out_valid is high), out_valid one clock wide, no back-pressure on the output, results in input order"
+    reset_clock_assumptions: "one clock, rising edge; rst is synchronous and must be held for at least one clock before the first in_valid (the formal harness assumes reset in the first cycle only); outputs and in_ready are defined from the first clock after reset; data-path registers are not reset"
+    latency: "RW + 1"
+    throughput: "one root per RW + 1 clocks"
+    expected_primitives: {carry4: "ceil((RW+3)/4)", dsp48: 0, bram: 0, ff: "3*RW + 1 + ceil(log2(RW+1)) + 2"}
+    trade_off: smallest; one subtractor of half the radicand's width reused RW times
+    points: [{W: 16}, {W: 32}]
+  - id: restoring_pipe
+    module: isqrt_restoring_pipe
+    selector: {VARIANT: 1}
+    protocol: "valid only: in_ready is constant 1, fixed latency, one result per clock, no stall or enable (a free-running pipeline); out_valid is in_valid delayed by the latency, results in input order"
+    reset_clock_assumptions: "one clock, rising edge; rst is synchronous and must be held for at least one clock before the first in_valid (the formal harness assumes reset in the first cycle only); outputs and in_ready are defined from the first clock after reset; data-path registers are not reset"
+    latency: "ceil(RW / PIPE)"
+    throughput: one root per clock
+    expected_primitives: {carry4: "RW * ceil((RW+3)/4)", dsp48: 0, bram: 0, ff: "ceil(RW/PIPE) * (RW + 1 + RW) + (ceil(RW/PIPE) - 1) * 2*RW + ceil(RW/PIPE)"}
+    trade_off: PIPE sets the register spacing; restore multiplexer per step
+    points: [{W: 16, PIPE: 1}, {W: 16, PIPE: 4}, {W: 32, PIPE: 1}, {W: 32, PIPE: 4}, {W: 32, PIPE: 16}]
+  - id: nonrestoring_pipe
+    module: isqrt_nonrestoring_pipe
+    selector: {VARIANT: 2}
+    protocol: "valid only: in_ready is constant 1, fixed latency, one result per clock, no stall or enable (a free-running pipeline); out_valid is in_valid delayed by the latency, results in input order"
+    reset_clock_assumptions: "one clock, rising edge; rst is synchronous and must be held for at least one clock before the first in_valid (the formal harness assumes reset in the first cycle only); outputs and in_ready are defined from the first clock after reset; data-path registers are not reset"
+    latency: "ceil(RW / PIPE)"
+    throughput: one root per clock
+    expected_primitives: {carry4: "RW * ceil((RW+3)/4) + ceil((RW+2)/4)", dsp48: 0, bram: 0, ff: "ceil(RW/PIPE) * (RW + 2 + RW) + (ceil(RW/PIPE) - 1) * 2*RW + ceil(RW/PIPE)"}
+    trade_off: no restore mux; add or subtract by the previous sign; the correction adder is in the last stage's path
+    points: [{W: 16, PIPE: 1}, {W: 16, PIPE: 4}, {W: 32, PIPE: 1}, {W: 32, PIPE: 4}, {W: 32, PIPE: 16}]
+integration:
+  port_timing: "All inputs are sampled on the rising edge and all outputs change after it; there is no combinational path from in_data or in_valid to out_data or out_valid in any variant except that the unrolled pipelines' first stage logic is between the input pins and the first register, so register the inputs (the out-of-context wrapper does) when the source is slow. in_ready of an iterative variant is a registered state and may drive a source's enable directly."
+  constraints_to_carry: "One clock constraint on clk. No multicycle or false-path exceptions are needed or valid: every path is single-cycle register to register. rst is synchronous: do not give it an asynchronous or set_false_path treatment. Do not retime across the valid pipeline of a multi-stage variant without re-running the harness (latency is part of the contract). Out-of-context numbers (Fmax, area, power) for the variants are not yet measured: see build/<variant>/<fabric>/build.yaml, prepared and not run."
+  after_integration: "Rerun the packaged harness against your instance (harness/README.md): it checks values, order and the measured latency of every result and reports coverage of the target bins."
+what_a_user_could_guess_wrong:
+  - "The result is the floor: sqrt(15) gives 3 with remainder 6, not 4 and not a fraction. The remainder is returned because the digit recurrence produces it free; it is at most 2 * root."
+  - "An odd W is allowed: the radicand is zero-extended to 2 * RW bits, so a 9-bit radicand has a 5-bit root."
+  - "The root is RW bits and the remainder RW + 1 bits; out_data packs them as {root, rem}, root in the high bits."
+  - "W = 2 is not supported (RW = 1 leaves no bits for the shifted terms in this coding); use 3 or more."
+  - "The iterative variant accepts an input only while in_ready is high; out_valid is one clock wide and out_data is overwritten by the next accepted input on the edge that samples it."
+  - "Reset drops results in flight; the data registers are not cleared (never read without a valid)."
+requirements: [SQRT-F-MODEL, SQRT-F-RTL-EXH, SQRT-F-RTL-RAND, SQRT-F-LAT, SQRT-F-LINT, SQRT-F-MUTANT, SQRT-F-FORMAL-REF, SQRT-F-FORMAL-PAIR, SQRT-F-LEAN-RESTORING, SQRT-F-BUILD]

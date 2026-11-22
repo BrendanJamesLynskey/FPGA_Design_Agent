@@ -80,6 +80,7 @@ Each failure names the XDC file and line. Measured on Vivado 2026.1 (`results/20
 | IO-CLOCK | the delay is relative to the wrong clock, or the clock's period is not the interface's (a 12 ns virtual clock for a 10 ns device gave a 2 ns requirement) | reference the clock the external device uses: the board clock, a virtual clock at the capturing clock's period (non-integer ratio), or the generated clock on a forwarded-clock port |
 | IO-ASYNC-CLOCK | the device has its own oscillator; a virtual clock "times" it but there is no fixed phase | a synchroniser or FIFO, and a clock-group or false-path decision instead of a delay |
 | IO-IOB | an interface register was not packed into the I/O block | `(* IOB = "TRUE" *)` (or `set_property IOB TRUE`) on a register that the pad alone drives (input) or that drives only the pad (output) |
+| IOB-NOT-PACKED (HDL-IO-01) | a register marked `IOB TRUE`, or in an interface declared `iob: true`, is not in the I/O block; the finding names the cell and Vivado's reason (its critical warning, else what the netlist shows) | remove the gate between the pad and the input register, or between the output register and the pad (register the pad value first and apply the gate after it), then re-run; unmarked registers beside a synchronous interface are advice (IOB-UNMARKED) |
 | EXC-XDC-MSG (12-4739) on a delay | a virtual clock used before its `create_clock` (FDA-CON-13): the delay was dropped | define every virtual clock before the delays that use it |
 
 ## Methodology checks (`methodology.rpt`)

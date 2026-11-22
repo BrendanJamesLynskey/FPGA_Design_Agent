@@ -1,0 +1,10 @@
+# Coverage targets of the packaged harness (brief 139b): each bin is a Python expression over one input vector; every bin must be hit at least once.
+bins:
+  divide_by_zero: "d == 0"
+  divisor_one: "d == 1"
+  dividend_zero: "n == 0"
+  n_less_than_d: "n < d and d != 0"
+  n_equals_d: "n == d and d != 0"
+  max_over_one: "n == m and d == 1"
+  max_over_max: "n == m and d == m"
+  exact_multiple: "d > 1 and n % d == 0 and n != 0"

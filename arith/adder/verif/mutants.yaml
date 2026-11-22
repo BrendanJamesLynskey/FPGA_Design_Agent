@@ -1,0 +1,19 @@
+# Mutation set for the adder variants (arith brief 139a; tools/run_mutants.py): each mutant replaces `old` (exactly once) by `new` in a copy of the variant's file.
+# class: operator | constant | condition | connection. Nothing here is ever applied to the real RTL.
+mutants:
+- {name: rip_cin_not_inverted, variant: ripple, class: operator, old: "assign ce = cin ^ sub;", new: "assign ce = cin;", why: "the borrow in is used as a carry in when subtracting"}
+- {name: rip_sub_ignored, variant: ripple, class: operator, old: "assign be = b ^ {WIDTH{sub}};", new: "assign be = b;", why: "the subtract input does nothing"}
+- {name: rip_ovf_sign_test, variant: ripple, class: condition, old: "(a[WIDTH-1] == be[WIDTH-1]) && (s[WIDTH-1] != a[WIDTH-1])", new: "(a[WIDTH-1] != be[WIDTH-1]) && (s[WIDTH-1] != a[WIDTH-1])", why: "the overflow flag tests operands of opposite sign"}
+- {name: rip_ovf_or, variant: ripple, class: operator, old: "(a[WIDTH-1] == be[WIDTH-1]) && (s[WIDTH-1] != a[WIDTH-1])", new: "(a[WIDTH-1] == be[WIDTH-1]) || (s[WIDTH-1] != a[WIDTH-1])", why: "the overflow flag is set when either condition holds"}
+- {name: rip_cin_dropped, variant: ripple, class: connection, old: "+ {{WIDTH{1'b0}}, ce};", new: "+ {{WIDTH{1'b0}}, 1'b0};", why: "the carry or borrow in is ignored"}
+- {name: cs_select_swapped, variant: carry_select, class: condition, old: "assign c[i+1]      = c[i] ? c1 : c0;", new: "assign c[i+1]      = c[i] ? c0 : c1;", why: "the block carry out is selected with the wrong polarity"}
+- {name: cs_sum_select_swapped, variant: carry_select, class: condition, old: "assign s[LO +: BW] = c[i] ? s1 : s0;", new: "assign s[LO +: BW] = c[i] ? s0 : s1;", why: "the block sum is selected with the wrong polarity"}
+- {name: cs_carry1_is_carry0, variant: carry_select, class: constant, old: "+ {{BW{1'b0}}, 1'b1};", new: "+ {{BW{1'b0}}, 1'b0};", why: "the carry-in-1 chain is really a carry-in-0 chain"}
+- {name: cs_cin_unused, variant: carry_select, class: connection, old: "assign c[0] = ce;", new: "assign c[0] = cin;", why: "the subtract's inverted carry in is not used"}
+- {name: cs_first_block_cin, variant: carry_select, class: constant, old: "+ {{BW{1'b0}}, c[0]};", new: "+ {{BW{1'b0}}, 1'b0};", why: "the first block ignores the carry in"}
+- {name: pl_carry_dropped, variant: pipelined, class: connection, old: "c_q <= sum[CW];", new: "c_q <= 1'b0;", why: "the chunk carry is not passed on"}
+- {name: pl_b_not_skewed, variant: pipelined, class: connection, old: "b_q <= b_in;", new: "b_q <= '0;", why: "the second operand's higher chunks are lost on the way"}
+- {name: pl_a_not_skewed, variant: pipelined, class: connection, old: "a_q <= a_in;", new: "a_q <= a;", why: "the first operand's higher chunks are not delayed with the carry"}
+- {name: pl_sum_not_kept, variant: pipelined, class: connection, old: "s_q <= s_nxt;", new: "s_q <= s_in;", why: "a finished chunk is not stored"}
+- {name: pl_ovf_sign_test, variant: pipelined, class: condition, old: "ovf_q <= (a_in[WIDTH-1] == b_in[WIDTH-1])", new: "ovf_q <= (a_in[WIDTH-1] != b_in[WIDTH-1])", why: "the overflow flag tests operands of opposite sign"}
+- {name: pl_cin_unused, variant: pipelined, class: connection, old: "assign c_in = ce;", new: "assign c_in = cin;", why: "the subtract's inverted carry in is not used"}
