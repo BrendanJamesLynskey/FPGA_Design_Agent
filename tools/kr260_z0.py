@@ -81,7 +81,7 @@ def main(argv=None) -> int:
     # file's text), 4.0 + 4.77 mil of dielectric (+0.6 mil copper for the other bound): the Dk that gives 50 ohm at 4 mil wide
     chart_b = {}
     for b in (4.0 + 4.77, 4.0 + 4.77 + 0.6):
-        e = solve(lambda x: 50.0 - cohn_stripline((w_s + dw) * MIL, b * MIL, x), 2.0, 8.0)
+        e = solve(lambda x: cohn_stripline((w_s + dw) * MIL, b * MIL, x) - 50.0, 2.0, 8.0)   # Z0 falls as Dk rises
         chart_b[f"b_{b:.2f}_mil"] = {"dk": e, "delay_ps_per_in": 25.4e-3 / C0 * math.sqrt(e) * 1e12}
     res = {"stripline_from_chart_gaps": chart_b, "calibrated_laminate_dk": er,
            "microstrip_top": {"w_mil": W_TOP, "h_mil": H_TOP, "t_mil": T_TOP, "z0_analytic_ohm": z_an, "er_eff_analytic": ee_an,

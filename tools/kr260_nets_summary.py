@@ -18,8 +18,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 GROUPS = [
-    ("rgmii_phy2_hpa", re.compile(r"^HPA(0\d)[NP_].*$|^HPA0[0-9]_CC[NP]$")),
-    ("rgmii_phy3_hpb", re.compile(r"^HPB(0\d)[NP_].*$|^HPB0[0-9]_CC[NP]$")),
+    ("rgmii_phy2_hpa", re.compile(r"^HPA0\d(?:[NP]|_CC[NP]|P_CLK)$")),       # the PHY2 (port A) page's HPA0x nets; unconnected (_NC) pins excluded
+    ("rgmii_phy3_hpb", re.compile(r"^HPB0\d(?:[NP]|_CC[NP]|P_CLK)$")),
     ("pmod_connector_side", re.compile(r"^PMOD[1-4]_IO[1-8]_HD[AB]\d+(_CC)?$")),
     ("pmod_som_side", re.compile(r"^HD[AB]\d+(_CC)?$")),
     ("phy_misc", re.compile(r"^(PL_)?GEM[23]_(RESET_B|GPIO[01]|INT_PWDN|XTAL_IN|XTAL_IN_R|RBIAS|JTAG|LED[012]_CA)$")),
