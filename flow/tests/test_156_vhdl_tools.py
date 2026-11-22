@@ -4,6 +4,7 @@ every design's files exist, every hand-written fault applies exactly once, the b
 from __future__ import annotations
 
 import importlib.util
+import os
 import py_compile
 import shutil
 import sys
@@ -57,7 +58,7 @@ def test_psl_probes_are_unique_and_have_an_expected_verdict():
 @pytest.mark.skipif(shutil.which("ghdl") is None, reason="GHDL is not installed")
 def test_one_bench_passes_and_its_fault_is_caught(tmp_path):
     pytest.importorskip("cocotb")
-    sim = next(s for s in R.sims(["ghdl-mcode"]) if Path(s.exe).is_file())
+    sim = R.Sim("ghdl-on-path", shutil.which("ghdl"), dict(os.environ), "ghdl-mcode")
     d = R.DESIGNS["sync_fifo_regs"]
     ok = R.one(sim, "sync_fifo_regs", d, 300, tmp_path)
     assert ok["build_ok"] and ok["work_xml"]["fail"] == 0 and ok["work_xml"]["tests"] == 1
