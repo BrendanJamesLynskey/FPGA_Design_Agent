@@ -82,12 +82,23 @@ source). Two changes show:
 - Tests: [flow/tests/test_153_vhdl_parity.py](../../flow/tests/test_153_vhdl_parity.py) (70 tests; each port on a VHDL fixture, the
   SystemVerilog behaviour beside it, and the whole labelled set).
 
-## Not done
+## Known gaps and limits
 
 - A VHDL injector for the CDC run, a VHDL FSM-coverage reader (GHDL's VCD form of an enumeration is unmeasured), a VHDL front end for
   the schematics, a VHDL register-map generator, VHDL in the managed import: each is stated in `python -m flow.sources --help`.
 - NVC, GHDL code coverage and library blocks in VHDL (briefs F10 and F11).
 - Sites in `inventory.md` under "not changed".
+
+## Records
+
+| File | What it is |
+|---|---|
+| [prereg.md](prereg.md) | the question, the labelled set, the nulls, written before the change |
+| [inventory.md](inventory.md) | the 17 readers (where, before, after) and the sites that are not readers |
+| [before.json](before.json) | the first run of the probe on the unchanged code |
+| [before_final_probe.json](before_final_probe.json) | the final probe on the unchanged code (a scratch checkout of the pre-change commit) |
+| [after.json](after.json) | the final probe on this branch |
+| [checks_before.json](checks_before.json), [checks_after.json](checks_after.json) | every source-reading registered check on the five brief 55 translations and their references, with what `constants` read |
 
 ## Reproduce
 

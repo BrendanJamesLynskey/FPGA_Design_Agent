@@ -440,8 +440,8 @@ def test_inspect_schematic_sources_name_the_unread_vhdl() -> None:
 
 # ---- the whole labelled set ---------------------------------------------------------------------------------------------
 def _tools_present() -> bool:
-    return bool(HAVE_GHDL and shutil.which("yosys") or (Path.home() / ".local/opt/oss-cad-suite/bin/yosys").is_file()) and bool(
-        shutil.which("verilator") or (Path.home() / ".local/opt/oss-cad-suite/bin/verilator").is_file()) and bool(shutil.which("iverilog"))
+    from flow.checks import elab
+    return bool(HAVE_GHDL and elab.find_tool() and shutil.which("verilator") and shutil.which("iverilog"))
 
 
 @pytest.mark.skipif(not _tools_present(), reason="needs GHDL, Yosys (OSS CAD Suite), Verilator and Icarus")
