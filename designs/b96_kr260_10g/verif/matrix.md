@@ -4,7 +4,7 @@
 
 The human specifies the requirements and checks that the verification is thorough enough. The agent holds the knowledge to implement and to verify. You can open any of the implementation or the evidence, and you do not have to. Hardware on the board, with attached instruments, is a verification layer of its own: where a requirement depends on something outside the design (an optical link, a network card, a data source) it may be the only way to close it.
 
-**Summary.** 28 requirements (12 functional, 9 performance, 1 interface, 6 safety); 23 verified, of which 2 rest on delegated acceptances (the planner accepted the Lean statement on the owner's delegation; not human approvals); 1 stale; 2 failing; 2 with no passing evidence; 0 of 3 requirements that depend on an external element closed by hardware; performance verified: 5 on the board, 2 by post-route timing, 0 in simulation only; 0 of 28 requirements agreed by a human, 0 human review(s) recorded; 4 Lean proof item(s) (all widths): 0 with a human-approved statement, 4 with a statement accepted on the owner's delegation (not a human approval), 0 with statement not approved; 4 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run).
+**Summary.** 28 requirements (12 functional, 9 performance, 1 interface, 6 safety); 21 verified; 3 stale; 2 failing; 2 with no passing evidence; 0 of 3 requirements that depend on an external element closed by hardware; performance verified: 5 on the board, 2 by post-route timing, 0 in simulation only; 0 of 28 requirements agreed by a human, 0 human review(s) recorded; 4 Lean proof item(s) (all widths): 0 with a human-approved statement, 4 with a statement accepted on the owner's delegation (not a human approval), 0 with statement not approved; 4 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run).
 
 Variants. Unless a requirement says otherwise, "the default build" is RATE_MATCH = 0 (the board-proven 97C receive path) and "the rate-matched build" is rm_gp (RATE_MATCH = 1, RM_OWN = 1). Board evidence is one KR260 on a short optical loopback; nothing has run against a network card. Briefs 112 (UVM bench), 115 (formal proofs of the rate matcher) and 123 (pyuvm bench) are merged and their tests are in the recorded run; the bound SVA checkers in simulation and the coverage run have no evidence and are shown as not run.
 
@@ -40,8 +40,8 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 | **B96-P-BYPASS** GT buffer bypass shortens the echo path (pre-registered) | performance | verified (board-measured); 1 item(s) stale |  |  |  |  |  |  |  | stale: [V-SIMM-BYPASS-SEQ](../../../results/b96f1/bypass_seq/result.txt) | pass [latency_loop]: [V-HW-BYPASS](../../../results/b96f1/hw/20261120_215255/rm_gp_bypass/stage3.json) |  |
 | **B96-P-THROUGHPUT** Line-rate throughput without loss Depends on: a 10G network card or a line-rate traffic generator; hardware verification open. | performance | not run |  |  |  |  |  |  |  |  | not run [external_equipment]: V-HW-THROUGHPUT-PLANNED |  |
 | **B96-F-DBGXVC** A debug build reaches an ILA over the network and leaves the trading path alone | functional | FAILS | pass: [V-XVC-VERDICT](../../../results/116_traceability/b96_kr260_10g/pytest_junit.xml) |  |  |  |  |  | pass: [V-XVC-TIM-SETUP](../../../results/b131/builds/dbg_xvc/digest.json)<br>pass: [V-XVC-TIM-HOLD](../../../results/b131/builds/dbg_xvc/digest.json)<br>pass: [V-XVC-CDC](../../../results/b131/builds/dbg_xvc/digest.json)<br>FAIL: [V-XVC-CDC-STRUCT](../../../results/b131/builds/dbg_xvc/digest.json)<br>pass: [V-XVC-TRADING-PATH](../../../results/b131/compare/summary.json) |  | not run [ila_capture]: V-HW-XVC-PLANNED |  |
-| **B96-F-LEAN-GRAY-STEP** A pointer's gray code changes in exactly one bit per count, at every width | functional | verified; the Lean proof is of a transcription of the RTL, not of the RTL itself; rests on a delegated acceptance of the Lean statement, not a human approval |  |  |  |  | pass [statement accepted on delegation, not a human approval; kernel only; transcription tested; recorded build]: [V-LEAN-GRAY-STEP](../../../formal/lean/records/build_record.json) |  |  |  |  |  |
-| **B96-F-LEAN-GRAY-DECODE** Gray decoding inverts gray encoding, at every width | functional | verified; the Lean proof is of a transcription of the RTL, not of the RTL itself; rests on a delegated acceptance of the Lean statement, not a human approval |  |  |  |  | pass [statement accepted on delegation, not a human approval; kernel only; transcription tested; recorded build]: [V-LEAN-GRAY-DECODE](../../../formal/lean/records/build_record.json)<br>pass [statement accepted on delegation, not a human approval; kernel only; transcription tested; recorded build]: [V-LEAN-GRAY-ENCODE](../../../formal/lean/records/build_record.json)<br>pass [statement accepted on delegation, not a human approval; kernel only; transcription tested; recorded build]: [V-LEAN-GRAY-SAMPLE](../../../formal/lean/records/build_record.json) |  |  |  |  |  |
+| **B96-F-LEAN-GRAY-STEP** A pointer's gray code changes in exactly one bit per count, at every width | functional | stale |  |  |  |  | stale [kernel only; transcription tested; recorded build]: [V-LEAN-GRAY-STEP](../../../formal/lean/records/build_record.json) |  |  |  |  |  |
+| **B96-F-LEAN-GRAY-DECODE** Gray decoding inverts gray encoding, at every width | functional | stale |  |  |  |  | stale [kernel only; transcription tested; recorded build]: [V-LEAN-GRAY-DECODE](../../../formal/lean/records/build_record.json)<br>stale [kernel only; transcription tested; recorded build]: [V-LEAN-GRAY-ENCODE](../../../formal/lean/records/build_record.json)<br>stale [kernel only; transcription tested; recorded build]: [V-LEAN-GRAY-SAMPLE](../../../formal/lean/records/build_record.json) |  |  |  |  |  |
 
 ## Gaps
 
@@ -62,6 +62,8 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 - `B96-P-T2T-DIGITAL`: its evidence is stale
 - `B96-P-THROUGHPUT`: no passing evidence
 - `B96-F-DBGXVC`: an item fails
+- `B96-F-LEAN-GRAY-STEP`: its evidence is stale
+- `B96-F-LEAN-GRAY-DECODE`: its evidence is stale
 
 ### Stale evidence
 
@@ -79,6 +81,10 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 - `V-HW-RATEMATCH-96C`: changed since the evidence was recorded: designs/b96_kr260_10g/rtl/rate_match.sv, designs/b96_kr260_10g/rtl/rate_match_gp.sv, designs/b96_kr260_10g/rtl/rx_path.sv
 - `V-HW-LAT-E-97C`: changed since the evidence was recorded: designs/b96_kr260_10g/rtl/b96_core.sv, designs/b96_kr260_10g/rtl/b96_pkg.sv, designs/b96_kr260_10g/rtl/hs_vec.sv, designs/b96_kr260_10g/rtl/pcs_rx.sv (+5 more)
 - `V-HW-LAT-L-97C`: changed since the evidence was recorded: designs/b96_kr260_10g/rtl/b96_core.sv, designs/b96_kr260_10g/rtl/b96_pkg.sv, designs/b96_kr260_10g/rtl/hs_vec.sv, designs/b96_kr260_10g/rtl/pcs_rx.sv (+5 more)
+- `V-LEAN-GRAY-STEP`: Lean files changed since the recorded build: Arith.lean, Arith/Adder.lean, Arith/Booth.lean, Arith/Float.lean (+1 more)
+- `V-LEAN-GRAY-DECODE`: Lean files changed since the recorded build: Arith.lean, Arith/Adder.lean, Arith/Booth.lean, Arith/Float.lean (+1 more)
+- `V-LEAN-GRAY-ENCODE`: Lean files changed since the recorded build: Arith.lean, Arith/Adder.lean, Arith/Booth.lean, Arith/Float.lean (+1 more)
+- `V-LEAN-GRAY-SAMPLE`: Lean files changed since the recorded build: Arith.lean, Arith/Adder.lean, Arith/Booth.lean, Arith/Float.lean (+1 more)
 - `V-REVIEW-96`: changed since the evidence was recorded: designs/b96_kr260_10g/rtl/b96_core.sv, designs/b96_kr260_10g/rtl/b96_pkg.sv, designs/b96_kr260_10g/rtl/frame_src.sv, designs/b96_kr260_10g/rtl/hs_vec.sv (+7 more)
 
 ## Requirements in full
@@ -334,16 +340,16 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### B96-F-LEAN-GRAY-STEP: A pointer's gray code changes in exactly one bit per count, at every width
 
-- Kind: functional; state: verified; the Lean proof is of a transcription of the RTL, not of the RTL itself; rests on a delegated acceptance of the Lean statement, not a human approval; specification status: draft.
+- Kind: functional; state: stale; specification status: draft.
 - Source: `designs/b96_kr260_10g/rtl/rate_match_gp.sv (pointer crossings u_wp and u_rp, xpm_cdc_gray)`
 - The write and read pointers of rate_match_gp count modulo 2^CW and cross by gray code. For every width CW > 0 and every value, the gray codes of b and b + 1 (including the wrap from 2^CW - 1 to 0) differ in exactly one bit, so a sample taken while the pointer moves is the old or the new code.
-  - Lean proof (all widths): **pass**, One bit changes per count, wrap included, every width: proved; statement accepted by planner (Session A) on the owner's delegation (owner decision 23), 2026-11-21; not a human approval; Gray.gray_step: kernel only; proof of the transcription, transcription tested; recorded build (not re-run). [evidence](../../../formal/lean/records/build_record.json)
+  - Lean proof (all widths): **stale**, One bit changes per count, wrap included, every width: Gray.gray_step: kernel only; proof of the transcription, transcription tested; recorded build (not re-run) (Lean files changed since the recorded build: Arith.lean, Arith/Adder.lean, Arith/Booth.lean, Arith/Float.lean (+1 more)). [evidence](../../../formal/lean/records/build_record.json)
 
 ### B96-F-LEAN-GRAY-DECODE: Gray decoding inverts gray encoding, at every width
 
-- Kind: functional; state: verified; the Lean proof is of a transcription of the RTL, not of the RTL itself; rests on a delegated acceptance of the Lean statement, not a human approval; specification status: draft.
+- Kind: functional; state: stale; specification status: draft.
 - Source: `designs/b96_kr260_10g/rtl/rate_match_gp.sv (pointer crossings u_wp and u_rp, xpm_cdc_gray)`
 - For every width and value, the decoder of the pointer crossing returns the count the encoder was given; and a sampled code that is the old or the new code decodes to the old or the new count.
-  - Lean proof (all widths): **pass**, Decode after encode is the identity, every width: proved; statement accepted by planner (Session A) on the owner's delegation (owner decision 23), 2026-11-21; not a human approval; Gray.gray2bin_bin2gray: kernel only; proof of the transcription, transcription tested; recorded build (not re-run). [evidence](../../../formal/lean/records/build_record.json)
-  - Lean proof (all widths): **pass**, Encode after decode is the identity, every width: proved; statement accepted by planner (Session A) on the owner's delegation (owner decision 23), 2026-11-21; not a human approval; Gray.bin2gray_gray2bin: kernel only; proof of the transcription, transcription tested; recorded build (not re-run). [evidence](../../../formal/lean/records/build_record.json)
-  - Lean proof (all widths): **pass**, A code sampled mid-step decodes to the old or the new count: proved; statement accepted by planner (Session A) on the owner's delegation (owner decision 23), 2026-11-21; not a human approval; Gray.gray_sample: kernel only; proof of the transcription, transcription tested; recorded build (not re-run). [evidence](../../../formal/lean/records/build_record.json)
+  - Lean proof (all widths): **stale**, Decode after encode is the identity, every width: Gray.gray2bin_bin2gray: kernel only; proof of the transcription, transcription tested; recorded build (not re-run) (Lean files changed since the recorded build: Arith.lean, Arith/Adder.lean, Arith/Booth.lean, Arith/Float.lean (+1 more)). [evidence](../../../formal/lean/records/build_record.json)
+  - Lean proof (all widths): **stale**, Encode after decode is the identity, every width: Gray.bin2gray_gray2bin: kernel only; proof of the transcription, transcription tested; recorded build (not re-run) (Lean files changed since the recorded build: Arith.lean, Arith/Adder.lean, Arith/Booth.lean, Arith/Float.lean (+1 more)). [evidence](../../../formal/lean/records/build_record.json)
+  - Lean proof (all widths): **stale**, A code sampled mid-step decodes to the old or the new count: Gray.gray_sample: kernel only; proof of the transcription, transcription tested; recorded build (not re-run) (Lean files changed since the recorded build: Arith.lean, Arith/Adder.lean, Arith/Booth.lean, Arith/Float.lean (+1 more)). [evidence](../../../formal/lean/records/build_record.json)

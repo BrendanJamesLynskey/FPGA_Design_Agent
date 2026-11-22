@@ -97,7 +97,7 @@ def v1_designs() -> list[Path]:
     out = []
     for p in sorted((ROOT / "designs").glob("*/verif/testplan.yaml")):
         out.append(p.parent.parent)
-    for p in sorted((ROOT / "arith").glob("*/verif/testplan.yaml")):       # brief 139a: the arithmetic library's functions
+    for p in sorted((ROOT / "arith").glob("*/verif/testplan.yaml")):          # brief 139b: the arithmetic library's functions
         out.append(p.parent.parent)
     return out
 

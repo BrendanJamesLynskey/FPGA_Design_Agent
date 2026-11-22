@@ -17,12 +17,15 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 | **FREAL-F-MODEL** The bit-exact model is right | functional | verified | pass: [V-FREAL-MODEL](results/pytest_junit.xml) |  |  |  |  |  |  |  |  |  |
 | **FREAL-F-EXACT** Every variant is bit-exact against the model | functional | verified | pass: [V-FREAL-DIRECTED](results/pytest_junit.xml)<br>pass: [V-FREAL-RANDOM](results/pytest_junit.xml) |  |  |  |  |  |  |  |  |  |
 | **FREAL-F-LAT** Latency is as specified and the bench would notice if it were not | functional | verified | pass: [V-FREAL-LATENCY](results/pytest_junit.xml) |  |  |  |  |  |  |  |  |  |
-| **FREAL-F-BENCH** The bench catches seeded faults | functional | verified | pass: [V-FREAL-MUTANT-TEST](results/pytest_junit.xml) |  |  |  |  |  |  | pass: [V-FREAL-MUTANT-SCORE](results/mutation.json) |  |  |
+| **FREAL-F-BENCH** The bench catches seeded faults | functional | verified; 1 item(s) stale | pass: [V-FREAL-MUTANT-TEST](results/pytest_junit.xml) |  |  |  |  |  |  | stale: [V-FREAL-MUTANT-SCORE](results/mutation.json) |  |  |
 | **FREAL-F-PACKAGE** The RTL is lint-clean, and its files agree with the specification and with the Vivado build files | functional | verified | pass: [V-FREAL-PACKAGE](results/pytest_junit.xml) |  |  |  |  |  |  |  |  |  |
 
 ## Gaps
 
-None.
+### Stale evidence
+
+- `V-FREAL-MUTANT-SCORE`: changed since the evidence was recorded: arith/fft/rtl/fft_sdf_r22.sv, arith/fft_common/fft_sdf_twmul.sv
+
 ## Requirements in full
 
 ### FREAL-F-MODEL: The bit-exact model is right
@@ -49,11 +52,11 @@ None.
 
 ### FREAL-F-BENCH: The bench catches seeded faults
 
-- Kind: functional; state: verified; specification status: draft.
+- Kind: functional; state: verified; 1 item(s) stale; specification status: draft.
 - Source: `arith/fft_real/verif/mutants.yaml`
 - Every one of the mutants in verif/mutants.yaml (one exact text change each: an inverted condition, a wrong constant, a dropped connection, a wrong width) makes the cocotb bench fail, or is argued equivalent in the file's header; mutants that survive or do not build are reported, never hidden.
   - simulation test: **pass**, The mutation run as a test: no mutant survives, none fails to build: 1 test(s) passed in the recorded run. [evidence](results/pytest_junit.xml)
-  - simulation measurement: **pass**, Mutants killed of valid mutants (the record of the last full run): survived = []; invalid = []; valid = 13; score_pct = 100. [evidence](results/mutation.json)
+  - simulation measurement: **stale**, Mutants killed of valid mutants (the record of the last full run): survived = []; invalid = []; valid = 13; score_pct = 100 (changed since the evidence was recorded: arith/fft/rtl/fft_sdf_r22.sv, arith/fft_common/fft_sdf_twmul.sv). [evidence](results/mutation.json)
 
 ### FREAL-F-PACKAGE: The RTL is lint-clean, and its files agree with the specification and with the Vivado build files
 

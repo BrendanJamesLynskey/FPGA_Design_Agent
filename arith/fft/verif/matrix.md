@@ -18,7 +18,7 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 | **FFT-F-EXACT** Every variant is bit-exact against the model | functional | verified | pass: [V-FFT-DIRECTED](results/pytest_junit.xml)<br>pass: [V-FFT-RANDOM](results/pytest_junit.xml) |  |  |  |  |  |  |  |  |  |
 | **FFT-F-LAT** Latency is as specified and the bench would notice if it were not | functional | verified | pass: [V-FFT-LATENCY](results/pytest_junit.xml) |  |  |  |  |  |  |  |  |  |
 | **FFT-F-EQUIV** The properties named in formal/jobs.yaml hold, by proof where the tools allow | functional | verified |  |  |  | bounded: [V-FFT-FORMAL-BOUNDED](results/pytest_junit.xml)<br>pass: [V-FFT-FORMAL-REFUTE](results/pytest_junit.xml) |  |  |  |  |  |  |
-| **FFT-F-BENCH** The bench catches seeded faults | functional | verified | pass: [V-FFT-MUTANT-TEST](results/pytest_junit.xml) |  |  |  |  |  |  | pass: [V-FFT-MUTANT-SCORE](results/mutation.json) |  |  |
+| **FFT-F-BENCH** The bench catches seeded faults | functional | verified; 1 item(s) stale | pass: [V-FFT-MUTANT-TEST](results/pytest_junit.xml) |  |  |  |  |  |  | stale: [V-FFT-MUTANT-SCORE](results/mutation.json) |  |  |
 | **FFT-F-PACKAGE** The RTL is lint-clean, and its files agree with the specification and with the Vivado build files | functional | verified | pass: [V-FFT-PACKAGE](results/pytest_junit.xml) |  |  |  |  |  |  |  |  |  |
 | **FFT-F-BACKPRESSURE** The burst variant honours out_ready: stalling the sink changes nothing but the timing | functional | verified | pass: [V-FFT-BACKPRESSURE](results/pytest_junit.xml) |  |  |  |  |  |  |  |  |  |
 | **FFT-F-ACCURACY** Accuracy against NumPy's FFT is measured and stated, per scaling mode | functional | verified |  |  |  |  |  |  |  | pass: [V-FFT-ACCURACY](results/accuracy.json) |  |  |
@@ -27,7 +27,10 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ## Gaps
 
-None.
+### Stale evidence
+
+- `V-FFT-MUTANT-SCORE`: changed since the evidence was recorded: arith/fft/rtl/fft_burst_r2.sv, arith/fft/rtl/fft_sdf_r22.sv, arith/fft/verif/mutants.yaml, arith/fft_common/fft_sdf_twmul.sv
+
 ## Requirements in full
 
 ### FFT-F-MODEL: The bit-exact model is right
@@ -62,11 +65,11 @@ None.
 
 ### FFT-F-BENCH: The bench catches seeded faults
 
-- Kind: functional; state: verified; specification status: draft.
+- Kind: functional; state: verified; 1 item(s) stale; specification status: draft.
 - Source: `arith/fft/verif/mutants.yaml`
 - Every one of the mutants in verif/mutants.yaml (one exact text change each: an inverted condition, a wrong constant, a dropped connection, a wrong width) makes the cocotb bench fail, or is argued equivalent in the file's header; mutants that survive or do not build are reported, never hidden.
   - simulation test: **pass**, The mutation run as a test: no mutant survives, none fails to build: 1 test(s) passed in the recorded run. [evidence](results/pytest_junit.xml)
-  - simulation measurement: **pass**, Mutants killed of valid mutants (the record of the last full run): survived = []; invalid = []; valid = 40; score_pct = 100. [evidence](results/mutation.json)
+  - simulation measurement: **stale**, Mutants killed of valid mutants (the record of the last full run): survived = []; invalid = []; valid = 40; score_pct = 100 (changed since the evidence was recorded: arith/fft/rtl/fft_burst_r2.sv, arith/fft/rtl/fft_sdf_r22.sv, arith/fft/verif/mutants.yaml, arith/fft_common/fft_sdf_twmul.sv). [evidence](results/mutation.json)
 
 ### FFT-F-PACKAGE: The RTL is lint-clean, and its files agree with the specification and with the Vivado build files
 
