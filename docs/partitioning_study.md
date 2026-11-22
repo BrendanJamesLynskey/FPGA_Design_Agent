@@ -15,7 +15,7 @@ re-read against the 2026.1 text it is marked "guide, to check".
 
 **Module boundaries.** AMD's methodology guide (UG949, design creation with RTL) advises registering the outputs of hierarchical
 blocks, keeping a combinational cone inside one block, and avoiding logic between a block's output port and the next block's first
-register (KB: `techniques/integration/rtl-hierarchy-and-register-boundaries`, citing UG949 v2025.2 chapter 3). The reasoning is that
+register (KB: `techniques/integration/rtl-hierarchy-and-register-boundaries`, citing UG949 chapter 3, as read in the knowledge bank). The reasoning is that
 a path then starts at a flip-flop and a consumer cannot lengthen the producer's path. Registering inputs as well is worth it when
 the incoming path is long or its source is unknown. The reuse literature (Keating and Bricaud, *Reuse Methodology Manual*) says the
 same for IP that is dropped into unknown surroundings.
