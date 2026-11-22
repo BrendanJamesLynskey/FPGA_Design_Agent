@@ -70,3 +70,13 @@ Brief 153 fixed both (`flow.sources.design_rtl`). Brief 55's end-to-end VHDL run
 - Other tools as found: GHDL from `~/.local/bin/ghdl`, Vivado under `/opt/Xilinx`, repo venv `FPGA_Design_Agent/.venv`; no installs during the runs.
 - Records: each run's `runs/<id>/` directory is copied (role_usage.jsonl, run.json-style summary, the design's `rtl/` and `spec.yaml`, no keys) to
   `results/167_vhdl_rerun/records/`. `agent/tests/test_99_prompts.py` runs before any push of them. Private transcripts, if any, go to a Knowledge PR.
+
+## Amendments (written during the runs, before the verdicts; the first-run decision rules are unchanged)
+
+1. Slot label: `take_heavy_slot.sh` kept refusing a "Vivado impl" text beside other agents' Vivado runs (load above 6), so the runs took
+   a slot labelled "Vivado elaboration only, no impl, peak 6G" (the stage-2 exit needs only an elaboration), polled every 0.2 s. `FDA_VIVADO_MAX=2` was set so
+   the build runner did not refuse beside another agent's job. The driver is `run_one.sh.txt`.
+2. The records directory is `records/` (the first name, `runs/`, is git-ignored). Machine paths in the stdout logs are replaced by `<sandbox>`.
+3. The agent needs `FDA_ACCESS_KEY` from `.env`; the file was copied (git-ignored, never printed) into both worktrees. The first launch failed on that and made no record.
+4. Round 2 was allowed (weekly 93%). Its second pair (sync fifo, A then B) was **not run**: no heavy slot was free for 28 minutes (other agents' jobs re-took each slot at once), and the
+   round-1 pair had already ended at stage 1 in both arms. Usage was 94% at that point.

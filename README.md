@@ -75,6 +75,7 @@ do not, apart from `project spec`. "Read-only" means nothing in the design direc
 | You want to | Command | Know first |
 |---|---|---|
 | know which checks read a VHDL design | `python -m flow.sources <design-dir>` (`--help` lists the traps) | plain Python, read-only; a check that cannot read VHDL is PARTIAL or NOT RUN with "no reader for .vhd", never a clean pass; the CDC injection run fails closed on a VHDL crossing ([docs/vhdl.md](docs/vhdl.md); measured in [results/153_vhdl_parity](results/153_vhdl_parity/README.md)) |
+| see whether the VHDL stage-2 fix changed the end-to-end agent | [results/167_vhdl_rerun](results/167_vhdl_rerun/README.md) | 6 Haiku runs, none passed; 5 stopped at stage 1 on a VHDL `build.yaml` glob before the fix could act (inconclusive) |
 
 ## The flow
 
