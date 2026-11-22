@@ -68,7 +68,7 @@ Each variant is one SystemVerilog file under `rtl/`, with the same ports. Parame
 
 ## Interface contract
 
-Written without knowing the design the block will sit in (brief 139a, owner decision 24): this is what a user can rely on and must provide.
+Written without knowing the design the block will sit in (brief 148, owner decision 24): this is what a user can rely on and must provide.
 
 - Protocol: AMBA AXI4-Stream on both interfaces, with the back-pressure stated per variant: sdf none (a pure streaming interface), burst full. tlast marks the last beat of each frame; tuser[0] on the first beat selects the direction; there is no AXI4-Lite interface because there are no run-time configuration registers
 - Throughput: sdf: one beat per clock in and out, frames back to back or after N/4 idle beats; burst: one frame per N + LOGN * (N/2 + MULSTAGES + 3) + N clocks (no overlap) when neither side stalls

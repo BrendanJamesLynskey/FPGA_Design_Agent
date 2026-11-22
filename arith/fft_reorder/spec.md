@@ -52,7 +52,7 @@ Each variant is one SystemVerilog file under `rtl/`, with the same ports. Parame
 
 ## Interface contract
 
-Written without knowing the design the block will sit in (brief 139a, owner decision 24): this is what a user can rely on and must provide.
+Written without knowing the design the block will sit in (brief 148, owner decision 24): this is what a user can rely on and must provide.
 
 - Protocol: streaming, no back-pressure: in_valid is high for exactly N consecutive clocks per frame with in_sof on the first; frames may be back to back or separated by any number of idle clocks; there is no ready
 - Throughput: one word per clock in and out, continuously (initiation interval 1, frames back to back)

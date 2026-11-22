@@ -52,7 +52,7 @@ Each variant is one SystemVerilog file under `rtl/`, with the same ports. Parame
 
 ## Interface contract
 
-Written without knowing the design the block will sit in (brief 139a, owner decision 24): this is what a user can rely on and must provide.
+Written without knowing the design the block will sit in (brief 148, owner decision 24): this is what a user can rely on and must provide.
 
 - Protocol: plain ports, no handshake: a sample and its coefficient are sampled every clock; the caller delays its own valid by STAGES and presents the coefficient with its sample (a counter-addressed ROM of the caller, one clock ahead if the ROM is synchronous)
 - Throughput: one sample per clock (initiation interval 1)

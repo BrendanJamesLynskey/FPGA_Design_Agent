@@ -55,7 +55,7 @@ Each variant is one SystemVerilog file under `rtl/`, with the same ports. Parame
 
 ## Interface contract
 
-Written without knowing the design the block will sit in (brief 139a, owner decision 24): this is what a user can rely on and must provide.
+Written without knowing the design the block will sit in (brief 148, owner decision 24): this is what a user can rely on and must provide.
 
 - Protocol: plain registered-or-combinational ports, no handshake: operands are sampled every clock and one product leaves, with no valid, ready or backpressure. A caller that needs a valid bit delays its own valid by STAGES
 - Throughput: one product per clock in both variants (initiation interval 1)

@@ -50,7 +50,7 @@ Each variant is one SystemVerilog file under `rtl/`, with the same ports. Parame
 
 ## Interface contract
 
-Written without knowing the design the block will sit in (brief 139a, owner decision 24): this is what a user can rely on and must provide.
+Written without knowing the design the block will sit in (brief 148, owner decision 24): this is what a user can rely on and must provide.
 
 - Protocol: plain ports, no handshake: an index is sampled every clock and one pair leaves STAGES clocks later
 - Throughput: one pair per clock (initiation interval 1)
