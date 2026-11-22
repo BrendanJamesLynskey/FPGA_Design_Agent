@@ -178,3 +178,37 @@ def test_a_variant_with_an_unmeasured_fmax_is_unknown_not_rejected() -> None:
     assert h["block"] == "crc32_step" and st["word"] == "unknown"
     f = il.lookup("FIR filter", budget={"dsp": 0})["hits"][0]
     assert {v["variant"]: v["status"] for v in f["variants"]}["dsp_bram"] == "does not fit"
+
+
+# --- not in scored runs (planner decision 2026-11-22) -------------------------------------------------------------------
+
+def _cfg(tmp_path, **kw):
+    from agent.graph.run import Config
+    return Config(spec_md=kw.pop("spec_md", tmp_path / "spec.md"), name="x", **kw)
+
+
+def test_ip_lookup_is_withheld_from_scored_runs_and_fails_closed(tmp_path, monkeypatch) -> None:
+    from agent.graph.run import ip_lookup_allowed
+    monkeypatch.delenv("FDA_SCORED_RUN", raising=False)
+    assert ip_lookup_allowed(_cfg(tmp_path)) is True
+    assert ip_lookup_allowed(_cfg(tmp_path, hidden_spec=tmp_path / "full.md")) is False
+    assert ip_lookup_allowed(_cfg(tmp_path, spec_tests=True)) is False
+    assert ip_lookup_allowed(_cfg(tmp_path, interview="oracle")) is False
+    assert ip_lookup_allowed(_cfg(tmp_path, spec_md=ROOT / "benchmark" / "pool" / "t" / "spec.md")) is False
+    assert ip_lookup_allowed(object()) is False                      # unreadable config: withheld
+    monkeypatch.setenv("FDA_SCORED_RUN", "1")
+    assert ip_lookup_allowed(_cfg(tmp_path)) is False
+
+
+def test_the_plan_offers_ip_lookup_only_when_allowed(tmp_path, monkeypatch) -> None:
+    from types import SimpleNamespace
+    from agent.graph import run as gr
+    tool_list()
+    monkeypatch.delenv("FDA_SCORED_RUN", raising=False)
+    def core(cfg):
+        rt = SimpleNamespace(cfg=cfg, session=SimpleNamespace(stage="x"), meter=SimpleNamespace(stage_limits={}, turns_left=lambda: 1))
+        monkeypatch.setattr(gr, "role_inputs", lambda *a, **k: {})
+        monkeypatch.setattr(gr, "_p", lambda *a, **k: "")
+        return gr.subagent_plan(rt, "rtl", "p", gr.role_allowed("rtl", 1))["core_tools"]
+    assert "ip_lookup" in core(_cfg(tmp_path))
+    assert "ip_lookup" not in core(_cfg(tmp_path, hidden_spec=tmp_path / "h.md"))

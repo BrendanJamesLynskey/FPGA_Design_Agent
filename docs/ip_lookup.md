@@ -33,6 +33,11 @@ python3 -m flow.iplookup search ...                                  # the same 
   exceptions `flow/xpm_cdc.tcl` applies in this flow. The lookup says so when a request names a FIFO or a crossing.
 - **The "verified" label is read, never made.** It comes from `ip_lib/<entry>/verified.json` (brief 144, the record behind
   `VERIFIED.md`). On a checkout without that record it is `unknown`. The entry's own `declared_status` is its author's text and is not a verification.
+- **Not offered in a scored run.** A scored run measures the agent, not the library, so `ip_lookup` is withheld whenever the run is
+  not known to be unscored (fail closed): a `--hidden-spec`, `--interview oracle`, `--spec-tests`, a spec or data directory under
+  `benchmark/`, `FDA_SCORED_RUN` set in the environment, or a configuration that cannot be read (`ip_lookup_allowed` in
+  `agent/graph/run.py`). The stage-1 bullet is withheld with it. `python -m agent ip` is unaffected: it is the owner's command, not a run.
+  If your run is scored and you expected the tool, this is why.
 - **The tool never copies files.** `ip_lookup` is read-only (it appends one line per call to `build/ip_lookup.jsonl` in the design: which
   entries were considered). `python -m agent ip use` copies an entry's `rtl/` to `<design>/ip/<entry>/` and adds a **frozen**
   component to the design's existing `project.yaml`; it never creates a managed project and never edits `build.yaml` (it prints
