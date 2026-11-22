@@ -170,6 +170,8 @@ def main() -> int:
     bad = 0
     for sp in sorted(ARITH.glob("*/spec.yaml")):
         fn = sp.parent.name
+        if isinstance(yaml.safe_load(sp.read_text())["variants"], dict):      # brief 139a's functions: rendered by gen_spec_md
+            continue
         p, t = sp.parent / "spec.md", render(fn)
         if a.check:
             if not p.exists() or p.read_text() != t:

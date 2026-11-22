@@ -1,0 +1,1367 @@
+{
+ "schema": "fda.b136.what_if/1",
+ "date": "2026-11-21",
+ "delegated_by": "owner decision 23 (2026-11-21 14:34): the planner decides, recorded as the planner's, not a human approval",
+ "scenarios": [
+  {
+   "id": 1,
+   "requirement": "B96-F-OFFSET",
+   "recommendation": "test +-100 and +-300 ppm",
+   "alternative": "keep only +-100 ppm (802.3 per end)",
+   "measured": {
+    "frames_per_point": 500,
+    "mutants": [
+     {
+      "name": "unmutated",
+      "why": "the RTL as it is (control)",
+      "status": "ran",
+      "caught_functional": {
+       "ppm+0": false,
+       "ppm+100": false,
+       "ppm-100": false,
+       "ppm+300": false,
+       "ppm-300": false
+      },
+      "differs_from_twin": {
+       "ppm+0": false,
+       "ppm+100": false,
+       "ppm-100": false,
+       "ppm+300": false,
+       "ppm-300": false
+      },
+      "caught_by_narrow_set_plus_100": false,
+      "caught_by_full_set": false,
+      "caught_at_zero_ppm": false,
+      "escapes_narrow_set": false,
+      "caught_strict": {
+       "ppm+0": false,
+       "ppm+100": false,
+       "ppm-100": false,
+       "ppm+300": false,
+       "ppm-300": false
+      },
+      "strict_caught_by_narrow_set": false,
+      "strict_caught_by_full_set": false,
+      "strict_caught_at_zero_ppm": false,
+      "strict_escapes_narrow_set": false
+     },
+     {
+      "name": "mut_overflow",
+      "why": "brief 115: the writer may write one block too many: it overwrites the oldest unread block",
+      "status": "ran",
+      "caught_functional": {
+       "ppm+0": false,
+       "ppm+100": false,
+       "ppm-100": false,
+       "ppm+300": false,
+       "ppm-300": false
+      },
+      "differs_from_twin": {
+       "ppm+0": false,
+       "ppm+100": false,
+       "ppm-100": false,
+       "ppm+300": false,
+       "ppm-300": false
+      },
+      "caught_by_narrow_set_plus_100": false,
+      "caught_by_full_set": false,
+      "caught_at_zero_ppm": false,
+      "escapes_narrow_set": false,
+      "caught_strict": {
+       "ppm+0": false,
+       "ppm+100": false,
+       "ppm-100": false,
+       "ppm+300": false,
+       "ppm-300": false
+      },
+      "strict_caught_by_narrow_set": false,
+      "strict_caught_by_full_set": false,
+      "strict_caught_at_zero_ppm": false,
+      "strict_escapes_narrow_set": false
+     },
+     {
+      "name": "mut_underflow",
+      "why": "brief 115: the reader reads when nothing has crossed",
+      "status": "x on output in every test (read from sim.log)",
+      "caught_functional": {
+       "ppm+0": true,
+       "ppm+100": true,
+       "ppm-100": true,
+       "ppm+300": true,
+       "ppm-300": true
+      },
+      "differs_from_twin": {
+       "ppm+0": true,
+       "ppm+100": true,
+       "ppm-100": true,
+       "ppm+300": true,
+       "ppm-300": true
+      },
+      "caught_by_narrow_set_plus_100": true,
+      "caught_by_full_set": true,
+      "caught_at_zero_ppm": true,
+      "escapes_narrow_set": false,
+      "caught_strict": {
+       "ppm+0": true,
+       "ppm+100": true,
+       "ppm-100": true,
+       "ppm+300": true,
+       "ppm-300": true
+      },
+      "strict_caught_by_narrow_set": true,
+      "strict_caught_by_full_set": true,
+      "strict_caught_at_zero_ppm": true,
+      "strict_escapes_narrow_set": false
+     },
+     {
+      "name": "mut_gray_step",
+      "why": "brief 115: the write pointer steps by two: a gray pointer changes two bits",
+      "status": "x on output in every test (read from sim.log)",
+      "caught_functional": {
+       "ppm+0": true,
+       "ppm+100": true,
+       "ppm-100": true,
+       "ppm+300": true,
+       "ppm-300": true
+      },
+      "differs_from_twin": {
+       "ppm+0": true,
+       "ppm+100": true,
+       "ppm-100": true,
+       "ppm+300": true,
+       "ppm-300": true
+      },
+      "caught_by_narrow_set_plus_100": true,
+      "caught_by_full_set": true,
+      "caught_at_zero_ppm": true,
+      "escapes_narrow_set": false,
+      "caught_strict": {
+       "ppm+0": true,
+       "ppm+100": true,
+       "ppm-100": true,
+       "ppm+300": true,
+       "ppm-300": true
+      },
+      "strict_caught_by_narrow_set": true,
+      "strict_caught_by_full_set": true,
+      "strict_caught_at_zero_ppm": true,
+      "strict_escapes_narrow_set": false
+     },
+     {
+      "name": "mut_unsynced_pointer",
+      "why": "brief 115: the reader uses the write pointer straight from the write clock instead of the synchronised copy: it can read an entry whose data copy has not arrived (the classic crossing bug)",
+      "status": "x on output in every test (read from sim.log)",
+      "caught_functional": {
+       "ppm+0": true,
+       "ppm+100": true,
+       "ppm-100": true,
+       "ppm+300": true,
+       "ppm-300": true
+      },
+      "differs_from_twin": {
+       "ppm+0": true,
+       "ppm+100": true,
+       "ppm-100": true,
+       "ppm+300": true,
+       "ppm-300": true
+      },
+      "caught_by_narrow_set_plus_100": true,
+      "caught_by_full_set": true,
+      "caught_at_zero_ppm": true,
+      "escapes_narrow_set": false,
+      "caught_strict": {
+       "ppm+0": true,
+       "ppm+100": true,
+       "ppm-100": true,
+       "ppm+300": true,
+       "ppm-300": true
+      },
+      "strict_caught_by_narrow_set": true,
+      "strict_caught_by_full_set": true,
+      "strict_caught_at_zero_ppm": true,
+      "strict_escapes_narrow_set": false
+     },
+     {
+      "name": "mut_wrong_entry",
+      "why": "brief 115: the reader selects the neighbouring entry: data comes out in the wrong order",
+      "status": "ran",
+      "caught_functional": {
+       "ppm+0": true,
+       "ppm+100": true,
+       "ppm-100": true,
+       "ppm+300": true,
+       "ppm-300": true
+      },
+      "differs_from_twin": {
+       "ppm+0": true,
+       "ppm+100": true,
+       "ppm-100": true,
+       "ppm+300": true,
+       "ppm-300": true
+      },
+      "caught_by_narrow_set_plus_100": true,
+      "caught_by_full_set": true,
+      "caught_at_zero_ppm": true,
+      "escapes_narrow_set": false,
+      "caught_strict": {
+       "ppm+0": true,
+       "ppm+100": true,
+       "ppm-100": true,
+       "ppm+300": true,
+       "ppm-300": true
+      },
+      "strict_caught_by_narrow_set": true,
+      "strict_caught_by_full_set": true,
+      "strict_caught_at_zero_ppm": true,
+      "strict_escapes_narrow_set": false
+     },
+     {
+      "name": "mut_insert_in_frame",
+      "why": "brief 115: an idle is inserted inside a frame instead of the reader stalling",
+      "status": "ran",
+      "caught_functional": {
+       "ppm+0": false,
+       "ppm+100": false,
+       "ppm-100": false,
+       "ppm+300": false,
+       "ppm-300": false
+      },
+      "differs_from_twin": {
+       "ppm+0": false,
+       "ppm+100": false,
+       "ppm-100": true,
+       "ppm+300": false,
+       "ppm-300": true
+      },
+      "caught_by_narrow_set_plus_100": false,
+      "caught_by_full_set": false,
+      "caught_at_zero_ppm": false,
+      "escapes_narrow_set": false,
+      "caught_strict": {
+       "ppm+0": false,
+       "ppm+100": false,
+       "ppm-100": true,
+       "ppm+300": false,
+       "ppm-300": true
+      },
+      "strict_caught_by_narrow_set": true,
+      "strict_caught_by_full_set": true,
+      "strict_caught_at_zero_ppm": false,
+      "strict_escapes_narrow_set": false
+     },
+     {
+      "name": "mut_delete_in_frame",
+      "why": "brief 115: an idle is deleted inside a frame",
+      "status": "ran",
+      "caught_functional": {
+       "ppm+0": false,
+       "ppm+100": false,
+       "ppm-100": false,
+       "ppm+300": false,
+       "ppm-300": false
+      },
+      "differs_from_twin": {
+       "ppm+0": false,
+       "ppm+100": false,
+       "ppm-100": false,
+       "ppm+300": false,
+       "ppm-300": false
+      },
+      "caught_by_narrow_set_plus_100": false,
+      "caught_by_full_set": false,
+      "caught_at_zero_ppm": false,
+      "escapes_narrow_set": false,
+      "caught_strict": {
+       "ppm+0": false,
+       "ppm+100": false,
+       "ppm-100": false,
+       "ppm+300": false,
+       "ppm-300": false
+      },
+      "strict_caught_by_narrow_set": false,
+      "strict_caught_by_full_set": false,
+      "strict_caught_at_zero_ppm": false,
+      "strict_escapes_narrow_set": false
+     },
+     {
+      "name": "mut_delete_any",
+      "why": "brief 115: any block is deleted, not only a pure idle (checked on the idle flag of the tracked entry, slice 73)",
+      "status": "ran",
+      "caught_functional": {
+       "ppm+0": false,
+       "ppm+100": false,
+       "ppm-100": false,
+       "ppm+300": true,
+       "ppm-300": false
+      },
+      "differs_from_twin": {
+       "ppm+0": false,
+       "ppm+100": false,
+       "ppm-100": false,
+       "ppm+300": true,
+       "ppm-300": false
+      },
+      "caught_by_narrow_set_plus_100": false,
+      "caught_by_full_set": true,
+      "caught_at_zero_ppm": false,
+      "escapes_narrow_set": true,
+      "caught_strict": {
+       "ppm+0": false,
+       "ppm+100": false,
+       "ppm-100": false,
+       "ppm+300": true,
+       "ppm-300": false
+      },
+      "strict_caught_by_narrow_set": false,
+      "strict_caught_by_full_set": true,
+      "strict_caught_at_zero_ppm": false,
+      "strict_escapes_narrow_set": true
+     },
+     {
+      "name": "mut_no_pop",
+      "why": "brief 115: the reader never has a slot: nothing is ever popped, a written block waits for ever",
+      "status": "ran",
+      "caught_functional": {
+       "ppm+0": true,
+       "ppm+100": true,
+       "ppm-100": true,
+       "ppm+300": true,
+       "ppm-300": true
+      },
+      "differs_from_twin": {
+       "ppm+0": true,
+       "ppm+100": true,
+       "ppm-100": true,
+       "ppm+300": true,
+       "ppm-300": true
+      },
+      "caught_by_narrow_set_plus_100": true,
+      "caught_by_full_set": true,
+      "caught_at_zero_ppm": true,
+      "escapes_narrow_set": false,
+      "caught_strict": {
+       "ppm+0": true,
+       "ppm+100": true,
+       "ppm-100": true,
+       "ppm+300": true,
+       "ppm-300": true
+      },
+      "strict_caught_by_narrow_set": true,
+      "strict_caught_by_full_set": true,
+      "strict_caught_at_zero_ppm": true,
+      "strict_escapes_narrow_set": false
+     },
+     {
+      "name": "mut_no_delete",
+      "why": "brief 136 (added): idles are never deleted: a faster partner fills the buffer until it overflows",
+      "status": "ran",
+      "caught_functional": {
+       "ppm+0": false,
+       "ppm+100": false,
+       "ppm-100": false,
+       "ppm+300": false,
+       "ppm-300": false
+      },
+      "differs_from_twin": {
+       "ppm+0": false,
+       "ppm+100": true,
+       "ppm-100": false,
+       "ppm+300": true,
+       "ppm-300": false
+      },
+      "caught_by_narrow_set_plus_100": false,
+      "caught_by_full_set": false,
+      "caught_at_zero_ppm": false,
+      "escapes_narrow_set": false,
+      "caught_strict": {
+       "ppm+0": false,
+       "ppm+100": true,
+       "ppm-100": false,
+       "ppm+300": true,
+       "ppm-300": false
+      },
+      "strict_caught_by_narrow_set": true,
+      "strict_caught_by_full_set": true,
+      "strict_caught_at_zero_ppm": false,
+      "strict_escapes_narrow_set": false
+     },
+     {
+      "name": "mut_delete_late",
+      "why": "brief 136 (added): idles are deleted only when 14 blocks are waiting (a wrong threshold): little margin before the 16-block buffer is full",
+      "status": "ran",
+      "caught_functional": {
+       "ppm+0": false,
+       "ppm+100": false,
+       "ppm-100": false,
+       "ppm+300": false,
+       "ppm-300": false
+      },
+      "differs_from_twin": {
+       "ppm+0": false,
+       "ppm+100": true,
+       "ppm-100": false,
+       "ppm+300": true,
+       "ppm-300": false
+      },
+      "caught_by_narrow_set_plus_100": false,
+      "caught_by_full_set": false,
+      "caught_at_zero_ppm": false,
+      "escapes_narrow_set": false,
+      "caught_strict": {
+       "ppm+0": false,
+       "ppm+100": true,
+       "ppm-100": false,
+       "ppm+300": true,
+       "ppm-300": false
+      },
+      "strict_caught_by_narrow_set": true,
+      "strict_caught_by_full_set": true,
+      "strict_caught_at_zero_ppm": false,
+      "strict_escapes_narrow_set": false
+     },
+     {
+      "name": "mut_no_stall",
+      "why": "brief 136 (added): when the buffer is empty inside a frame the reader outputs an idle block instead of waiting (a slower partner then cuts frames)",
+      "status": "ran",
+      "caught_functional": {
+       "ppm+0": false,
+       "ppm+100": false,
+       "ppm-100": false,
+       "ppm+300": false,
+       "ppm-300": false
+      },
+      "differs_from_twin": {
+       "ppm+0": false,
+       "ppm+100": false,
+       "ppm-100": true,
+       "ppm+300": false,
+       "ppm-300": true
+      },
+      "caught_by_narrow_set_plus_100": false,
+      "caught_by_full_set": false,
+      "caught_at_zero_ppm": false,
+      "escapes_narrow_set": false,
+      "caught_strict": {
+       "ppm+0": false,
+       "ppm+100": false,
+       "ppm-100": true,
+       "ppm+300": false,
+       "ppm-300": true
+      },
+      "strict_caught_by_narrow_set": true,
+      "strict_caught_by_full_set": true,
+      "strict_caught_at_zero_ppm": false,
+      "strict_escapes_narrow_set": false
+     }
+    ],
+    "escapes_narrow_set": [
+     "mut_delete_any"
+    ],
+    "caught_by_both": [
+     "mut_underflow",
+     "mut_gray_step",
+     "mut_unsynced_pointer",
+     "mut_wrong_entry",
+     "mut_no_pop"
+    ],
+    "caught_by_neither": [
+     "mut_overflow",
+     "mut_insert_in_frame",
+     "mut_delete_in_frame",
+     "mut_no_delete",
+     "mut_delete_late",
+     "mut_no_stall"
+    ],
+    "strict_escapes_narrow_set": [
+     "mut_delete_any"
+    ],
+    "strict_caught_by_neither": [
+     "mut_overflow",
+     "mut_delete_in_frame"
+    ],
+    "control_unmutated_clean": true
+   },
+   "agent_response": "keep +-300 ppm in the plan unless the narrow set also catches every seeded bug; name the bugs that escape; ask for the long run before accepting"
+  },
+  {
+   "id": 2,
+   "requirement": "127 late-verdict policy",
+   "recommendation": "STRICT",
+   "alternative": "cut-through default",
+   "measured": {
+    "schema": "fda.b136.cut_through/1",
+    "source": {
+     "branch": "b127-itch-phase2",
+     "commit": "6f603bb3",
+     "records": [
+      "results/b127/fcs_window_share.json",
+      "results/b127/fcs_window_unit_sim.json",
+      "results/b127/latency_sim.json",
+      "results/b127/core_lat_sim.json (whole-core numbers quoted from the 127 report)"
+     ],
+     "copied_to": "results/b136/inputs_b127/"
+    },
+    "window_bytes": {
+     "speculative": {
+      "largest_poisoned_tail": 126,
+      "smallest_escaping_tail": 128
+     },
+     "at_verdict": {
+      "largest_poisoned_tail": 166,
+      "smallest_escaping_tail": 168
+     }
+    },
+    "per_messages_per_packet": [
+     {
+      "messages_per_packet": 1,
+      "candidates": 984,
+      "cut_through_speculative": {
+       "orders_unverified_share": 0.0,
+       "orders_leaving_on_a_bad_frame_per_million_orders_if_p_bad": {
+        "1e-09": 0.0,
+        "1e-06": 0.0,
+        "0.001": 0.0,
+        "0.01": 0.0
+       }
+      },
+      "start_at_verdict": {
+       "orders_unverified_share": 0.0,
+       "orders_leaving_on_a_bad_frame_per_million_orders_if_p_bad": {
+        "1e-09": 0.0,
+        "1e-06": 0.0,
+        "0.001": 0.0,
+        "0.01": 0.0
+       }
+      },
+      "strict_with_speculative_start": {
+       "good_orders_poisoned_share": 0.0,
+       "orders_leaving_on_a_bad_frame": 0,
+       "note": "STRICT (IT_CTRL bit 5) poisons every order whose packet's verdict is not yet known and good: nothing unverified leaves; the share lost is the same share"
+      },
+      "mean_tail_bytes_after_the_message": 0.0
+     },
+     {
+      "messages_per_packet": 3,
+      "candidates": 1015,
+      "cut_through_speculative": {
+       "orders_unverified_share": 0.0,
+       "orders_leaving_on_a_bad_frame_per_million_orders_if_p_bad": {
+        "1e-09": 0.0,
+        "1e-06": 0.0,
+        "0.001": 0.0,
+        "0.01": 0.0
+       }
+      },
+      "start_at_verdict": {
+       "orders_unverified_share": 0.0,
+       "orders_leaving_on_a_bad_frame_per_million_orders_if_p_bad": {
+        "1e-09": 0.0,
+        "1e-06": 0.0,
+        "0.001": 0.0,
+        "0.01": 0.0
+       }
+      },
+      "strict_with_speculative_start": {
+       "good_orders_poisoned_share": 0.0,
+       "orders_leaving_on_a_bad_frame": 0,
+       "note": "STRICT (IT_CTRL bit 5) poisons every order whose packet's verdict is not yet known and good: nothing unverified leaves; the share lost is the same share"
+      },
+      "mean_tail_bytes_after_the_message": 20.4
+     },
+     {
+      "messages_per_packet": 6,
+      "candidates": 988,
+      "cut_through_speculative": {
+       "orders_unverified_share": 0.085,
+       "orders_leaving_on_a_bad_frame_per_million_orders_if_p_bad": {
+        "1e-09": 0.0001,
+        "1e-06": 0.085,
+        "0.001": 85.0,
+        "0.01": 850.0
+       }
+      },
+      "start_at_verdict": {
+       "orders_unverified_share": 0.01,
+       "orders_leaving_on_a_bad_frame_per_million_orders_if_p_bad": {
+        "1e-09": 0.0,
+        "1e-06": 0.01,
+        "0.001": 10.0,
+        "0.01": 100.0
+       }
+      },
+      "strict_with_speculative_start": {
+       "good_orders_poisoned_share": 0.085,
+       "orders_leaving_on_a_bad_frame": 0,
+       "note": "STRICT (IT_CTRL bit 5) poisons every order whose packet's verdict is not yet known and good: nothing unverified leaves; the share lost is the same share"
+      },
+      "mean_tail_bytes_after_the_message": 51.9
+     }
+    ],
+    "latency": {
+     "unit_sim_T_to_start_strobe_clocks": {
+      "speculative": [
+       5,
+       6
+      ],
+      "at_verdict": [
+       10,
+       11
+      ]
+     },
+     "unit_sim_X_to_start_strobe_clocks": {
+      "speculative": [
+       6,
+       8
+      ],
+      "at_verdict": [
+       11,
+       13
+      ]
+     },
+     "gained_by_speculative_start_clocks_range": [
+      4,
+      6
+     ],
+     "gained_ns_range": [
+      24.8,
+      37.2
+     ],
+     "whole_core_gt_port_to_gt_port_mean_clocks": {
+      "speculative": 16.8,
+      "at_verdict": 21.6,
+      "gained": 4.8,
+      "gained_ns": 29.8,
+      "source": "report 127 item 6 (xsim 2026.1, four phases, 32 orders a mode)"
+     }
+    },
+    "p_bad_grid_is_assumed": [
+     1e-09,
+     1e-06,
+     0.001,
+     0.01
+    ],
+    "not_measured": [
+     "the rate of frames that fail their check on a real link (P(frame bad)); the grid is assumed",
+     "the real feed's packet lengths (the generator's distribution is used)",
+     "any risk-logic behaviour after an unverified order: that is design reasoning, nothing was built or simulated in brief 136",
+     "board: nothing here ran on hardware"
+    ]
+   },
+   "agent_response": "accept; risk counts unverified orders as live exposure, caps them in flight, offers start-at-verdict; report the share with the assumed frame-error grid labelled assumed"
+  },
+  {
+   "id": 3,
+   "requirement": "B96-F-LEAN-CKSUM-TCP",
+   "recommendation": "30 words (the build's payload)",
+   "alternative": "32 words (the RTL registers' capacity)",
+   "measured": {
+    "builds_at_32": true,
+    "proof_text_changed": false,
+    "axioms_unchanged": true,
+    "rtl_equations_correct_for_all_ones_payload": {
+     "words_0_to_32": true,
+     "words_33_to_39": false
+    },
+    "first_counterexample": {
+     "words": 33,
+     "rtl_checksum": "0xafb2",
+     "internet_checksum": "0xaf92"
+    },
+    "rtl_has_a_length_input": false,
+    "record": "results/b136/lean/run_lean.log"
+   },
+   "agent_response": "take 32, record that the bound is two registers' capacity, new approval needed, formal/lean unchanged by this brief"
+  },
+  {
+   "id": 4,
+   "requirement": "latency targets E <= 16, tick-to-trade <= 20 clocks",
+   "recommendation": "regression bounds",
+   "alternative": "targets",
+   "measured": {
+    "schema": "fda.b136.latency_targets/1",
+    "targets": {
+     "E_clocks": 16.0,
+     "tick_to_trade_clocks": 20.0,
+     "clock_ns": 6.2061
+    },
+    "board_runs": [
+     {
+      "name": "control (default, RATE_MATCH 0), 96 first run",
+      "record": "results/b96/hw/20261117_101326/stage3.json",
+      "restarts": 100,
+      "E_median_of_minima": 20.0,
+      "E_best": 19,
+      "E_worst_of_maxima": 21,
+      "L_median_of_minima": 50.0,
+      "D": 10.0,
+      "T2T_board_L_minus_E": 30.0,
+      "restarts_with_E_min_le_16": 0,
+      "E_target_pass_median": false,
+      "T2T_target_pass_board_reading": false,
+      "E_over_target_clocks": 4.0,
+      "T2T_over_target_clocks": 10.0
+     },
+     {
+      "name": "control (default), 97C",
+      "record": "results/b97c/hw/20261118_194221/control/stage3.json",
+      "restarts": 100,
+      "E_median_of_minima": 20.0,
+      "E_best": 19,
+      "E_worst_of_maxima": 21,
+      "L_median_of_minima": 50.0,
+      "D": 10.0,
+      "T2T_board_L_minus_E": 30.0,
+      "restarts_with_E_min_le_16": 0,
+      "E_target_pass_median": false,
+      "T2T_target_pass_board_reading": false,
+      "E_over_target_clocks": 4.0,
+      "T2T_over_target_clocks": 10.0
+     },
+     {
+      "name": "lat_agent_both (97C)",
+      "record": "results/b97c/hw/20261118_194221/agent_both/stage3.json",
+      "restarts": 100,
+      "E_median_of_minima": 20.0,
+      "E_best": 19,
+      "E_worst_of_maxima": 21,
+      "L_median_of_minima": 48.0,
+      "D": 8.0,
+      "T2T_board_L_minus_E": 28.0,
+      "restarts_with_E_min_le_16": 0,
+      "E_target_pass_median": false,
+      "T2T_target_pass_board_reading": false,
+      "E_over_target_clocks": 4.0,
+      "T2T_over_target_clocks": 8.0
+     },
+     {
+      "name": "lat_all3 (97C)",
+      "record": "results/b97c/hw/20261118_194221/all3/stage3.json",
+      "restarts": 100,
+      "E_median_of_minima": 20.0,
+      "E_best": 19,
+      "E_worst_of_maxima": 20,
+      "L_median_of_minima": 46.0,
+      "D": 6.0,
+      "T2T_board_L_minus_E": 26.0,
+      "restarts_with_E_min_le_16": 0,
+      "E_target_pass_median": false,
+      "T2T_target_pass_board_reading": false,
+      "E_over_target_clocks": 4.0,
+      "T2T_over_target_clocks": 6.0
+     },
+     {
+      "name": "96C rate matcher, macro FIFO (control)",
+      "record": "results/b96c/hw/20261119_080724/control/stage3.json",
+      "restarts": 100,
+      "E_median_of_minima": 24.5,
+      "E_best": 24,
+      "E_worst_of_maxima": 25,
+      "L_median_of_minima": 61.0,
+      "D": 12.0,
+      "T2T_board_L_minus_E": 36.5,
+      "restarts_with_E_min_le_16": 0,
+      "E_target_pass_median": false,
+      "T2T_target_pass_board_reading": false,
+      "E_over_target_clocks": 8.5,
+      "T2T_over_target_clocks": 16.5
+     },
+     {
+      "name": "96C all3 + rate matcher",
+      "record": "results/b96c/hw/20261119_080724/all3/stage3.json",
+      "restarts": 100,
+      "E_median_of_minima": 24.0,
+      "E_best": 23,
+      "E_worst_of_maxima": 25,
+      "L_median_of_minima": 57.0,
+      "D": 9.0,
+      "T2T_board_L_minus_E": 33.0,
+      "restarts_with_E_min_le_16": 0,
+      "E_target_pass_median": false,
+      "T2T_target_pass_board_reading": false,
+      "E_over_target_clocks": 8.0,
+      "T2T_over_target_clocks": 13.0
+     },
+     {
+      "name": "rm_gp (96E, own buffer)",
+      "record": "results/b96e/hw/20261119_231251/rm_gp/stage3.json",
+      "restarts": 100,
+      "E_median_of_minima": 21.0,
+      "E_best": 21,
+      "E_worst_of_maxima": 22,
+      "L_median_of_minima": 54.0,
+      "D": 12.0,
+      "T2T_board_L_minus_E": 33.0,
+      "restarts_with_E_min_le_16": 0,
+      "E_target_pass_median": false,
+      "T2T_target_pass_board_reading": false,
+      "E_over_target_clocks": 5.0,
+      "T2T_over_target_clocks": 13.0
+     },
+     {
+      "name": "rm_gp_bypass (96F1b, GT buffers bypassed)",
+      "record": "results/b96f1/hw/20261120_215255/rm_gp_bypass/stage3.json",
+      "restarts": 100,
+      "E_median_of_minima": 17.0,
+      "E_best": 17,
+      "E_worst_of_maxima": 18,
+      "L_median_of_minima": 46.0,
+      "D": 12.0,
+      "T2T_board_L_minus_E": 29.0,
+      "restarts_with_E_min_le_16": 0,
+      "E_target_pass_median": false,
+      "T2T_target_pass_board_reading": false,
+      "E_over_target_clocks": 1.0,
+      "T2T_over_target_clocks": 9.0
+     },
+     {
+      "name": "rm_gp_ml (113)",
+      "record": "results/b113/hw/20261120_220813/rm_gp_ml/stage3.json",
+      "restarts": 100,
+      "E_median_of_minima": 21.0,
+      "E_best": 20,
+      "E_worst_of_maxima": 22,
+      "L_median_of_minima": 53.0,
+      "D": 11.0,
+      "T2T_board_L_minus_E": 32.0,
+      "restarts_with_E_min_le_16": 0,
+      "E_target_pass_median": false,
+      "T2T_target_pass_board_reading": false,
+      "E_over_target_clocks": 5.0,
+      "T2T_over_target_clocks": 12.0
+     }
+    ],
+    "simulation": [
+     {
+      "name": "control",
+      "sim_tick_to_trade_clocks": 10.7,
+      "record": "results/b126/README.md (core_sim)",
+      "target_pass": true
+     },
+     {
+      "name": "lat_all3",
+      "sim_tick_to_trade_clocks": 7.7,
+      "record": "results/b126/README.md (core_sim)",
+      "target_pass": true
+     },
+     {
+      "name": "lat_all3_bypass",
+      "sim_tick_to_trade_clocks": 7.6,
+      "record": "results/b126/README.md (core_sim)",
+      "target_pass": true
+     },
+     {
+      "name": "rm_gp_bypass",
+      "sim_tick_to_trade_clocks": 12.9,
+      "record": "results/b126/README.md (core_sim)",
+      "target_pass": true
+     },
+     {
+      "name": "rm_gp_itch, GT port to GT port, speculative start (brief 127, PR 253, not merged)",
+      "sim_tick_to_trade_clocks": 16.8,
+      "record": "b127-itch-phase2: results/b127/latency_sim.json (report 127)",
+      "target_pass": true
+     },
+     {
+      "name": "rm_gp_itch, start at the verdict (brief 127)",
+      "sim_tick_to_trade_clocks": 21.6,
+      "record": "b127-itch-phase2: results/b127/latency_sim.json (report 127)",
+      "target_pass": false
+     }
+    ],
+    "preregistered": {
+     "name": "lat_all3_bypass (brief 126, pre-registered, NOT run on a board)",
+     "record": "results/b126/preregistration.md",
+     "E": 16.0,
+     "E_band": [
+      15.6,
+      16.6
+     ],
+     "T2T_board_L_minus_E": 22.0,
+     "T2T_band": [
+      21.6,
+      22.6
+     ],
+     "E_target_verdict": "at the target: the band straddles it, a pass is not predicted with confidence",
+     "T2T_target_verdict": "fails by 2 clocks (band 21.6 to 22.6)"
+    },
+    "arithmetic_only": {
+     "name": "lat_all3_bypass + loop-timed transmit (96F V1'/V2; prediction on a GTY figure, UNCONFIRMED for this GTH; not built)",
+     "record": "results/b96f/latency_prediction.json, reports/96F2",
+     "note": "96F predicted loop timing saves 3 to 4 clocks of the receive-to-transmit fabric crossing; applied to the 126 prediction (22 clocks) by arithmetic: 18 to 19 clocks, inside 20; E unchanged by loop timing (15.5 to 17.1 in 96F's table).",
+     "T2T_arithmetic": [
+      18.0,
+      19.0
+     ]
+    },
+    "not_measured": [
+     "no board run of lat_all3_bypass",
+     "no board run of loop timing",
+     "the optical module's own delay is inside E and L - E and is not separable",
+     "counter resolution is 1 clock (6.2 ns)"
+    ]
+   },
+   "agent_response": "ask which definition; mark current builds failing the board target; keep old bounds; run lat_all3_bypass first; loop timing is the one item that can reach 20 (prediction)"
+  },
+  {
+   "id": 5,
+   "requirement": "B96-F-LEAN-GRAY-DECODE",
+   "recommendation": "gray_sample accepted by the planner",
+   "alternative": "human rejects it as too weak (mid-glitch samples)",
+   "measured": {
+    "statement": "gray_sample_bitwise: every bit of g is the old or the new bit of the code => decode is the old or the new count",
+    "builds": true,
+    "axioms": [
+     "propext",
+     "Classical.choice",
+     "Quot.sound"
+    ],
+    "two_step_counterexample": {
+     "width": 3,
+     "counts": [
+      3,
+      5
+     ],
+     "mixed_value": "0b011",
+     "decodes_to": 2
+    },
+    "record": "results/b136/lean/Stronger.lean, run_lean.log"
+   },
+   "agent_response": "offer the bitwise statement; ask the RTL model for a per-bit skew bound below one source clock; do not claim safety from the proof alone"
+  },
+  {
+   "id": 6,
+   "requirement": "B96-P-EYE",
+   "recommendation": "bound 0.5 UI",
+   "alternative": "0.75 UI",
+   "measured": {
+    "schema": "fda.b136.eye_target/1",
+    "target_ui": 0.75,
+    "depth": 1e-09,
+    "current_bound_ui": 0.5,
+    "current_bound_source": "designs/b96_kr260_10g/verif/testplan.yaml V-HW-EYESCAN performance bound",
+    "scans": [
+     {
+      "scan": "lpm_1",
+      "record": "results/b96d/hw/20261120_105134/lpm_1.json",
+      "equaliser": "LPM",
+      "tx": {
+       "diff": 24,
+       "pre": 0,
+       "post": 0,
+       "before": {
+        "diff": 24,
+        "pre": 0,
+        "post": 0
+       }
+      },
+      "depth": 1e-09,
+      "width_ui": 0.71875,
+      "width_ui_lo": 0.6875,
+      "width_ui_hi": 0.75,
+      "height_mv": 360.0,
+      "hstep_counts": 2,
+      "ui_per_count": 0.015625,
+      "grid_step_ui": 0.03125,
+      "at_bound_0_5_ui_pass": true,
+      "target_0_75_ui_pass_as_measured": false,
+      "comparable_to_target": true,
+      "bathtub_interpolation": {
+       "open_run_counts": [
+        -22,
+        24
+       ],
+       "right_edge_counts": 24.169295907070264,
+       "left_edge_counts": -22.11849940938098,
+       "width_ui_interpolated": 0.7232468018195507,
+       "neighbours": {
+        "closed_right": {
+         "h": 26,
+         "ber": 4.842951285572595e-08
+        },
+        "closed_left": {
+         "h": -24,
+         "ber": 2.98027771419852e-07
+        },
+        "last_open_right": {
+         "h": 24,
+         "ber_ub": 6.985025892652781e-10,
+         "ber": 0.0
+        },
+        "last_open_left": {
+         "h": -22,
+         "ber_ub": 6.985025892652781e-10,
+         "ber": 0.0
+        }
+       }
+      }
+     },
+     {
+      "scan": "lpm_2",
+      "record": "results/b96d/hw/20261120_105134/lpm_2.json",
+      "equaliser": "LPM",
+      "tx": {
+       "diff": 24,
+       "pre": 0,
+       "post": 0,
+       "before": {
+        "diff": 24,
+        "pre": 0,
+        "post": 0
+       }
+      },
+      "depth": 1e-09,
+      "width_ui": 0.71875,
+      "width_ui_lo": 0.6875,
+      "width_ui_hi": 0.75,
+      "height_mv": 360.0,
+      "hstep_counts": 2,
+      "ui_per_count": 0.015625,
+      "grid_step_ui": 0.03125,
+      "at_bound_0_5_ui_pass": true,
+      "target_0_75_ui_pass_as_measured": false,
+      "comparable_to_target": true,
+      "bathtub_interpolation": {
+       "open_run_counts": [
+        -22,
+        24
+       ],
+       "right_edge_counts": 24.17007500327969,
+       "left_edge_counts": -22.113578832791344,
+       "width_ui_interpolated": 0.7231820911886099,
+       "neighbours": {
+        "closed_right": {
+         "h": 26,
+         "ber": 4.7498176070038914e-08
+        },
+        "closed_left": {
+         "h": -24,
+         "ber": 3.874361028458076e-07
+        },
+        "last_open_right": {
+         "h": 24,
+         "ber_ub": 6.985025892652781e-10,
+         "ber": 0.0
+        },
+        "last_open_left": {
+         "h": -22,
+         "ber_ub": 6.985025892652781e-10,
+         "ber": 0.0
+        }
+       }
+      }
+     },
+     {
+      "scan": "lpm_3",
+      "record": "results/b96d/hw/20261120_105134/lpm_3.json",
+      "equaliser": "LPM",
+      "tx": {
+       "diff": 24,
+       "pre": 0,
+       "post": 0,
+       "before": {
+        "diff": 24,
+        "pre": 0,
+        "post": 0
+       }
+      },
+      "depth": 1e-09,
+      "width_ui": 0.71875,
+      "width_ui_lo": 0.6875,
+      "width_ui_hi": 0.75,
+      "height_mv": 360.0,
+      "hstep_counts": 2,
+      "ui_per_count": 0.015625,
+      "grid_step_ui": 0.03125,
+      "at_bound_0_5_ui_pass": true,
+      "target_0_75_ui_pass_as_measured": false,
+      "comparable_to_target": true,
+      "bathtub_interpolation": {
+       "open_run_counts": [
+        -22,
+        24
+       ],
+       "right_edge_counts": 24.166733720623697,
+       "left_edge_counts": -22.11849940938098,
+       "width_ui_interpolated": 0.7232067676563231,
+       "neighbours": {
+        "closed_right": {
+         "h": 26,
+         "ber": 5.168919160563058e-08
+        },
+        "closed_left": {
+         "h": -24,
+         "ber": 2.98027771419852e-07
+        },
+        "last_open_right": {
+         "h": 24,
+         "ber_ub": 6.985025892652781e-10,
+         "ber": 0.0
+        },
+        "last_open_left": {
+         "h": -22,
+         "ber_ub": 6.985025892652781e-10,
+         "ber": 0.0
+        }
+       }
+      }
+     },
+     {
+      "scan": "lpm_4",
+      "record": "results/b96d/hw/20261120_105134/lpm_4.json",
+      "equaliser": "LPM",
+      "tx": {
+       "diff": 24,
+       "pre": 0,
+       "post": 0,
+       "before": {
+        "diff": 24,
+        "pre": 0,
+        "post": 0
+       }
+      },
+      "depth": 1e-09,
+      "width_ui": 0.71875,
+      "width_ui_lo": 0.6875,
+      "width_ui_hi": 0.75,
+      "height_mv": 360.0,
+      "hstep_counts": 2,
+      "ui_per_count": 0.015625,
+      "grid_step_ui": 0.03125,
+      "at_bound_0_5_ui_pass": true,
+      "target_0_75_ui_pass_as_measured": false,
+      "comparable_to_target": true,
+      "bathtub_interpolation": {
+       "open_run_counts": [
+        -22,
+        24
+       ],
+       "right_edge_counts": 24.16139036799193,
+       "left_edge_counts": -22.111063425093192,
+       "width_ui_interpolated": 0.723007090516955,
+       "neighbours": {
+        "closed_right": {
+         "h": 26,
+         "ber": 5.96055542839704e-08
+        },
+        "closed_left": {
+         "h": -24,
+         "ber": 4.47041657129778e-07
+        },
+        "last_open_right": {
+         "h": 24,
+         "ber_ub": 6.985025892652781e-10,
+         "ber": 0.0
+        },
+        "last_open_left": {
+         "h": -22,
+         "ber_ub": 6.985025892652781e-10,
+         "ber": 0.0
+        }
+       }
+      }
+     },
+     {
+      "scan": "dfe_1",
+      "record": "results/b96d/hw/20261120_105134/dfe_1.json",
+      "equaliser": "DFE",
+      "tx": {
+       "diff": 24,
+       "pre": 0,
+       "post": 0,
+       "before": {
+        "diff": 24,
+        "pre": 0,
+        "post": 0
+       }
+      },
+      "depth": 1e-09,
+      "width_ui": 0.75,
+      "width_ui_lo": 0.71875,
+      "width_ui_hi": 0.78125,
+      "height_mv": 288.0,
+      "hstep_counts": 2,
+      "ui_per_count": 0.015625,
+      "grid_step_ui": 0.03125,
+      "at_bound_0_5_ui_pass": true,
+      "target_0_75_ui_pass_as_measured": true,
+      "comparable_to_target": true,
+      "bathtub_interpolation": {
+       "open_run_counts": [
+        -24,
+        24
+       ],
+       "right_edge_counts": 24.124230572863627,
+       "left_edge_counts": -24.40918485646738,
+       "width_ui_interpolated": 0.758334616083297,
+       "neighbours": {
+        "closed_right": {
+         "h": 26,
+         "ber": 2.2538350213626306e-07
+        },
+        "closed_left": {
+         "h": -26,
+         "ber": 4.276698519874876e-06
+        },
+        "last_open_right": {
+         "h": 24,
+         "ber_ub": 6.985025892652781e-10,
+         "ber": 0.0
+        },
+        "last_open_left": {
+         "h": -24,
+         "ber_ub": null,
+         "ber": 1.1641709821087968e-10
+        }
+       }
+      }
+     },
+     {
+      "scan": "tx_d16",
+      "record": "results/b96d/hw/20261120_105134/tx_d16.json",
+      "equaliser": "LPM",
+      "tx": {
+       "diff": 16,
+       "pre": 0,
+       "post": 0,
+       "before": {
+        "diff": 16,
+        "pre": 0,
+        "post": 0
+       }
+      },
+      "depth": 1e-07,
+      "width_ui": 0.71875,
+      "width_ui_lo": 0.6875,
+      "width_ui_hi": 0.75,
+      "height_mv": 360.0,
+      "hstep_counts": 2,
+      "ui_per_count": 0.015625,
+      "grid_step_ui": 0.03125,
+      "at_bound_0_5_ui_pass": true,
+      "target_0_75_ui_pass_as_measured": false,
+      "comparable_to_target": false
+     },
+     {
+      "scan": "tx_d8",
+      "record": "results/b96d/hw/20261120_105134/tx_d8.json",
+      "equaliser": "LPM",
+      "tx": {
+       "diff": 8,
+       "pre": 0,
+       "post": 0,
+       "before": {
+        "diff": 8,
+        "pre": 0,
+        "post": 0
+       }
+      },
+      "depth": 1e-07,
+      "width_ui": 0.71875,
+      "width_ui_lo": 0.6875,
+      "width_ui_hi": 0.75,
+      "height_mv": 360.0,
+      "hstep_counts": 2,
+      "ui_per_count": 0.015625,
+      "grid_step_ui": 0.03125,
+      "at_bound_0_5_ui_pass": true,
+      "target_0_75_ui_pass_as_measured": false,
+      "comparable_to_target": false
+     },
+     {
+      "scan": "tx_post4",
+      "record": "results/b96d/hw/20261120_105134/tx_post4.json",
+      "equaliser": "LPM",
+      "tx": {
+       "diff": 24,
+       "pre": 0,
+       "post": 4,
+       "before": {
+        "diff": 24,
+        "pre": 0,
+        "post": 4
+       }
+      },
+      "depth": 1e-07,
+      "width_ui": 0.71875,
+      "width_ui_lo": 0.6875,
+      "width_ui_hi": 0.75,
+      "height_mv": 360.0,
+      "hstep_counts": 2,
+      "ui_per_count": 0.015625,
+      "grid_step_ui": 0.03125,
+      "at_bound_0_5_ui_pass": true,
+      "target_0_75_ui_pass_as_measured": false,
+      "comparable_to_target": false
+     },
+     {
+      "scan": "tx_post8",
+      "record": "results/b96d/hw/20261120_105134/tx_post8.json",
+      "equaliser": "LPM",
+      "tx": {
+       "diff": 24,
+       "pre": 0,
+       "post": 8,
+       "before": {
+        "diff": 24,
+        "pre": 0,
+        "post": 8
+       }
+      },
+      "depth": 1e-07,
+      "width_ui": 0.71875,
+      "width_ui_lo": 0.6875,
+      "width_ui_hi": 0.75,
+      "height_mv": 360.0,
+      "hstep_counts": 2,
+      "ui_per_count": 0.015625,
+      "grid_step_ui": 0.03125,
+      "at_bound_0_5_ui_pass": true,
+      "target_0_75_ui_pass_as_measured": false,
+      "comparable_to_target": false
+     },
+     {
+      "scan": "tx_pre4",
+      "record": "results/b96d/hw/20261120_105134/tx_pre4.json",
+      "equaliser": "LPM",
+      "tx": {
+       "diff": 24,
+       "pre": 4,
+       "post": 0,
+       "before": {
+        "diff": 24,
+        "pre": 4,
+        "post": 0
+       }
+      },
+      "depth": 1e-07,
+      "width_ui": 0.71875,
+      "width_ui_lo": 0.6875,
+      "width_ui_hi": 0.75,
+      "height_mv": 360.0,
+      "hstep_counts": 2,
+      "ui_per_count": 0.015625,
+      "grid_step_ui": 0.03125,
+      "at_bound_0_5_ui_pass": true,
+      "target_0_75_ui_pass_as_measured": false,
+      "comparable_to_target": false
+     }
+    ],
+    "not_measured": [
+     "no equaliser or TX setting was scanned at BER 1e-9 other than LPM (default) and DFE depth 1",
+     "the tx_* scans ran to BER 1e-7 only, so they cannot show a 1e-9 width",
+     "no finer grid (hstep 1) and no repeat on a second module, temperature or fibre",
+     "no board run in brief 136"
+    ]
+   },
+   "agent_response": "do not call 0.75 passed or failed on this grid; rescan the edges finer and repeated at 1e-9 (owner's board session)"
+  }
+ ],
+ "not_measured": [
+  "no board",
+  "no Vivado",
+  "frame-error rate and packet lengths of a real feed",
+  "the RTL at 33 words",
+  "the circuit's bit skew",
+  "scenario 1 runs one bench length (see mutants_ppm.json frames_per_point)"
+ ]
+}

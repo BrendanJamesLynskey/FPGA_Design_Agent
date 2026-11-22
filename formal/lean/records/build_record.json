@@ -1,13 +1,16 @@
 {
- "build_log_sha256": "24cfac63f5581fc1571cf4dd4d35878493867be175ce2f35992c98a5773678c5",
+ "build_log_sha256": "1e2c46bafe2372bc91062592d6bb03db870b7af4497bf10078fa841253771741",
  "build_ok": true,
  "files": {
-  "Arith.lean": "828277337826d0b3a887fb8c1093e02bab8bf9b442d01d078e51d5287d5c77ba",
+  "Arith.lean": "3dfe2c15fba11109866571fc0cefcc0c73a043bdc690a9866f1386e185d55dce",
+  "Arith/Adder.lean": "843fecb41430d6029bb632f7aa6ab731ef9400db774c70ed5c84f8f36aab25ce",
+  "Arith/Booth.lean": "e0f4e895e69a2678c580a12d3477a664aa80649fd39a4b951f57d9f3acae2303",
   "Arith/CrossCheck.lean": "4488790c33bccf8308b483f967277ffc70db8fa2534f507866b40e0a8419badb",
   "Arith/Divide.lean": "5544ff0e1742fd7733b7284583bba21cb78f20c7eda8099374d209920682de3f",
   "Arith/DividerHr.lean": "fd2e6bb1a628fc0ae1a45874a9f7d17008a00fdcc2058b8f4c32cfef0b6fea1b",
   "Arith/Isqrt.lean": "63b3a8ef084d36e7bb605d2782c3ffbad2d51f0a40b75f67a2b683b223629ae8",
   "Arith/Lzc.lean": "24660877fcf28bd7a6bc6700ac0959cd5c89bd39d9d92fe3d85f8d3c279f6d53",
+  "Arith/Mac.lean": "b6b6def9b20250bceb2da2da2780663d324b9522023dc6d629ba03668e41bfc7",
   "Arith/Newton.lean": "8dd060851610a514cb755a1709eac8dc3002a81ff00c03f378a6c4ab490dc282",
   "Arith/Rounding.lean": "b5a22dc15c253f758d21a2889c0887e074bcc23210c82431a8db7e3269f93429",
   "Arith/SqrtR4.lean": "8b9a2d9c23d7f1719c98f5d96420260ad013d14c75ac610624fd436e92d422c5",
@@ -25,6 +28,8 @@
  "lean_version": "Lean (version 4.36.0, x86_64-unknown-linux-gnu, commit 611c117bfaf7b7ae1cfcf246ce6fba31e8f509e9, Release)",
  "note": "A record is evidence that a build succeeded at these file hashes. CI without Lean reads it and shows the status as a recorded build, never as a re-run.",
  "rtl_sources": {
+  "arith/adder/rtl/adder_carry_select.sv:39-47": "edfd0c914d857f445269613384bb5ee196f7bf86b780373086e8230e65800e88",
+  "arith/adder/rtl/adder_ripple.sv:26-28": "dce2678218b049ad133281b015e24d473f6bb2108de61241c71f292b1eb92db7",
   "arith/divider/rtl/div_nonrestoring_iter.sv:32-33": "a489abf4ec6f7f65d3a98cac3521d40b4fe37b5ecccbdb0eb507aa638317f1df",
   "arith/divider/rtl/div_nonrestoring_iter.sv:63-67": "3b2ecd110a95b9a1c160644daec5548c53c1cb4f342310d2a35237604d11ba7a",
   "arith/divider/rtl/div_restoring_iter.sv:30-31": "f732d38a11456f1226b3962158f1439d25d15392c87d77779516d29f5ab6516b",
@@ -33,6 +38,8 @@
   "arith/isqrt/rtl/isqrt_restoring_iter.sv:33-35": "995ae9135f40c1b68b796fe46d26423162ea475a010f7efa1c94fff5c9a8c167",
   "arith/isqrt/rtl/isqrt_restoring_iter.sv:67-68": "b3d59a9b790f4e197bd36036d3f1c16e668b510766b1585f7b21a460f480280e",
   "arith/lzc_norm/rtl/lzc_tree.sv:12-23": "f292359796ab33cb4a03d3acf34b00830aba1284fe6fe03b54c691ab0ab8fab2",
+  "arith/mac/rtl/mac_dsp.sv:108-109": "cc78a75c3fee29679b946eb44847730e92d99154de9b3e46a82b1dc65aba697e",
+  "arith/multiplier/rtl/mult_booth_r4.sv:26-39": "bf32ab1b15df0714032d18afe3b34a368391178f74b0262f2f2e6cb897d4ea8e",
   "arith/sqrt_r4/rtl/sqrt_r4_iter.sv:41-57": "e2d3f157df6037839fd9dbefb23dd68dc9d0a2499bb3b99a1d23256be2406f73",
   "designs/b119_tcp_fast/rtl/tcp_fast.sv:256-260": "9a9272bbf1eab0aa07f2b150d662fe0f98f075cd2c162e116cd941e181e726bc",
   "designs/b119_tcp_fast/rtl/tcp_fast.sv:326-336": "ddeb015f9e9c7a7c0f837e7c2e89dd40803dfb629fbd96ba5d2e2fb52fea19ad",
@@ -279,6 +286,71 @@
    "definitions_sha256": "f80c384b399ec05cac5305ae822f0d2c2eda3919202a03c54ed6d80c31545584",
    "module": "Arith.SqrtR4",
    "statement_sha256": "96e4f8d0542d08c793998c20e9d27443c1f85b7ac243dd4b7175b227db71996e",
+   "tier": "kernel_only"
+  },
+  "ArithAdder.cs_correct": {
+   "axioms": [
+    "Classical.choice",
+    "Quot.sound",
+    "propext"
+   ],
+   "build_ok": true,
+   "definitions_sha256": "79e7e05ab8bdde92cb3f60ee9bd9dfc80b560ff1a7d958df25fbc99699bfd74e",
+   "module": "Arith.Adder",
+   "statement_sha256": "063a6d5ec124444f7d707ec36ee851752babc718799a218d4c5913b16f7f1a56",
+   "tier": "kernel_only"
+  },
+  "ArithAdder.sub_is_add_complement": {
+   "axioms": [
+    "Quot.sound",
+    "propext"
+   ],
+   "build_ok": true,
+   "definitions_sha256": "79e7e05ab8bdde92cb3f60ee9bd9dfc80b560ff1a7d958df25fbc99699bfd74e",
+   "module": "Arith.Adder",
+   "statement_sha256": "0f66958fead188e20c02a5038836847da0cc5e2ff2254c82eb8341a048a3c4af",
+   "tier": "kernel_only"
+  },
+  "ArithBooth.booth_correct": {
+   "axioms": [
+    "Quot.sound",
+    "propext"
+   ],
+   "build_ok": true,
+   "definitions_sha256": "6b13de0c6c5211e9ec165985a522c12bedcede0331c651aba164cb10e0f88e87",
+   "module": "Arith.Booth",
+   "statement_sha256": "dc3b43561b8457640c5569525235758b0c0a098560e84ed0d3ddc13da134a264",
+   "tier": "kernel_only"
+  },
+  "ArithBooth.booth_unsigned": {
+   "axioms": [
+    "Quot.sound",
+    "propext"
+   ],
+   "build_ok": true,
+   "definitions_sha256": "6b13de0c6c5211e9ec165985a522c12bedcede0331c651aba164cb10e0f88e87",
+   "module": "Arith.Booth",
+   "statement_sha256": "96db3186959b8cf4c2f3cb10f06c81573c0ac1fd8d923d08c2c76547e438448b",
+   "tier": "kernel_only"
+  },
+  "ArithMac.run_after_clr": {
+   "axioms": [
+    "propext"
+   ],
+   "build_ok": true,
+   "definitions_sha256": "728a209082942fc3b4737ef182713748557c5b5f42ac37707dfc2170599ebe98",
+   "module": "Arith.Mac",
+   "statement_sha256": "e21b081be2d5a2b40ed4e636776c90c66b5c2bc1560e4f0b88d00b044e64c3da",
+   "tier": "kernel_only"
+  },
+  "ArithMac.run_noclr": {
+   "axioms": [
+    "propext"
+   ],
+   "build_ok": true,
+   "definitions_sha256": "728a209082942fc3b4737ef182713748557c5b5f42ac37707dfc2170599ebe98",
+   "module": "Arith.Mac",
+   "statement_sha256": "26ba95f62b5f4c0a32eb9e90a5c5de1b93e58ae6f98457ecd0e512aeee467a29",
    "tier": "kernel_only"
   },
   "Cksum.incUpdate_correct": {
