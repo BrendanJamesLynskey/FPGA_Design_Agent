@@ -29,7 +29,7 @@ class itch_cov extends uvm_component;
     add("cmd_clr_cnt cmd_clr_flags cmd_clr_book cmd_clr_pos cmd_clr_ref cmd_tcp_load reset");
     add("in_bubbles out_pause_in_frame obs_good obs_poisoned obs_must_present obs_mustnot_absent obs_may_present obs_may_absent");
     for (int k = 0; k < 8; k++) begin add($sformatf("align_%0d_l0", k)); add($sformatf("align_%0d_l4", k)); end
-    add("order_lane0_only xtalk_strict_bad_none seq_consumed_by_poison");
+    add("order_lane0_only xtalk_strict_bad_none seq_after_poison");
   endfunction
   function void hit(string b);
     if (!hits.exists(b)) begin plan.push_back(b); hits[b] = 0; end

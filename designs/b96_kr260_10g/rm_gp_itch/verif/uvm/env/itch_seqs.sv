@@ -484,7 +484,7 @@ class vseq_seq_poison extends vseq_base;
     one(mA(0, nref++, "S", 100, 990000));                    // order 1: leaves, TCP sequence number 1000
     one(mA(0, nref++, "S", 100, 990100), 1);                 // order 2: in a frame with a bad FCS, STRICT: poisoned, must consume no sequence number
     cmd(2); idle(10); seq = 5000;                            // clr_flags: the bad frame set `untrusted`
-    one(mA(0, nref++, "S", 100, 990200));                    // order 3: datasheet says sequence number 1059, the design sends 1118
+    one(mA(0, nref++, "S", 100, 990200));                    // order 3: sequence number 1059 (a poisoned frame consumes none; before brief 176 the design sent 1118)
     checkpoint();
   endtask
 endclass
