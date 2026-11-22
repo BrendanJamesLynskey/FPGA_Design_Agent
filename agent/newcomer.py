@@ -162,6 +162,15 @@ def _missing_modules() -> dict[str, list[str]]:
     return {ex: [d for m, d in mods.items() if not _have(m)] for ex, mods in EXTRAS.items()}
 
 
+FIRST_PARTY = ("agent", "flow", "project", "hwsw", "shell", "debug_core", "tools", "navigator", "cloud", "benchmark", "designs", "formal", "site")
+
+
+def is_missing_package(err: BaseException) -> bool:
+    """True for a third-party package that is not installed; a first-party import error is a bug and keeps its traceback."""
+    name = getattr(err, "name", None) or ""
+    return isinstance(err, ModuleNotFoundError) and bool(name) and name.split(".")[0] not in FIRST_PARTY
+
+
 def without_extras(args: list[str], err: ImportError) -> int:
     """The full command line could not be built because a package of an extra is missing. ``--help`` still answers (exit 0) with the
     command table and what to install; any other use is gated first (the key decides, as always), then says what is missing."""

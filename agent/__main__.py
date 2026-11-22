@@ -627,6 +627,8 @@ def main(argv: list[str] | None = None) -> int:
         ap = build_parser()
         a = ap.parse_args(args)                      # --help and usage errors end here, before the gate: they print text only
     except ImportError as e:                         # an extra is not installed: help still answers; anything else is gated first
+        if not newcomer.is_missing_package(e):
+            raise                                    # a first-party import error is a bug: keep its traceback
         return newcomer.without_extras(args, e)
     from agent.access import require_or_exit      # brief 94: run, resume and document all start here
     why = newcomer.ungated(a)                        # brief 157: the only commands that run without a key, each with its reason
@@ -635,6 +637,8 @@ def main(argv: list[str] | None = None) -> int:
     try:
         return _run_main(a, args, ap)
     except ImportError as e:
+        if not newcomer.is_missing_package(e):
+            raise
         return newcomer.missing_extra(a, e)
 
 

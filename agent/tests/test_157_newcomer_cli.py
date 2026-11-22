@@ -244,3 +244,9 @@ def test_doctor_agrees_with_the_agents_own_rules(monkeypatch, tmp_path):
 def test_readme_has_a_start_here_row_for_each_newcomer_command():
     text = (ROOT / "README.md").read_text()
     assert "python -m agent doctor" in text and "models show" in text and "--dry-run" in text
+
+
+def test_only_a_missing_third_party_package_is_reported_as_an_extra():
+    assert newcomer.is_missing_package(ModuleNotFoundError("x", name="langgraph.graph"))
+    assert not newcomer.is_missing_package(ModuleNotFoundError("x", name="agent.core.nothing"))     # a first-party bug keeps its traceback
+    assert not newcomer.is_missing_package(ImportError("cannot import name"))
