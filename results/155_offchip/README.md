@@ -33,7 +33,7 @@ python3 -m pytest -q flow/tests/test_155_offchip.py
 
 ## Known gaps and limits
 
-The receiver is not clamped (overshoot is the conservative reading). Package parasitics, loss, crosstalk, multi-drop stubs and simultaneous switching noise are not modelled. The switching ramp is a smooth step calibrated to the IBIS 20-80 % time; against the IBIS waveform it matches the final level within 1 % and the shape within 2 to 8 % rms of the swing for the FAST models and about 15 % for the 7-series SLOW models (see `ibis_fixture_check.json`). IBIS is AMD's own preliminary data, not measured on our boards; no scope trace has been compared with any number here. The board loads in `boards/*.spec.yaml` are assumptions where marked.
+The receiver is not clamped (overshoot is the conservative reading). Package parasitics, loss, crosstalk, multi-drop stubs and simultaneous switching noise are not modelled. The switching ramp is a smooth step calibrated to the IBIS 20-80 % time; against the IBIS waveform it matches the final level within 1 % and the shape within 0.6 to 8.8 % rms of the swing for the FAST models and 15 to 17 % for the 7-series SLOW models (peak 31 to 36 %) (see `ibis_fixture_check.json`). IBIS is AMD's own preliminary data, not measured on our boards; no scope trace has been compared with any number here. The board loads in `boards/*.spec.yaml` are assumptions where marked.
 
 ## 1. Effective output resistance of an LVCMOS driver
 
