@@ -17,8 +17,10 @@ rebuild, same stamp `1d8ac802`.**
 
 `rp_baseline` reads `rp.frames` after the configure step and before the replay starts; the stages that check "frames played" (smoke and rate) compare the rise over their own replay (`frames_played`) with the number they sent. **The pass criterion is unchanged:**
 "every frame sent and forwarded (`rp.frames` = `us.fwd` = 1900)" is read, as it always meant, over the stage's own replay. The rate stage's numbers now also record `rp_frames_before` and `rp_frames_after`.
-Tests: `tests/test_b127_stages_order.py` (no simulator: a stand-in register file with the cumulative counter; fails on the old stage, passes on the new) and `test_full_session_in_board_order` in `tests/test_b127_stages_sim.py` (the five stages in the board's
-order on one continuous simulation from reset).
+Tests: `tests/test_b127_stages_order.py` (no simulator: a stand-in register file with the cumulative counter; fails on the old stage, passes on the new) and `test_full_session_in_board_order` in `tests/test_b127_stages_sim.py` (smoke, counters, latency (off, on) and rate in the board's
+order on one continuous simulation from reset; risk is left out). Its attempt 1 (`stages_continuous_sim_attempt1.json`, 2 h 19 min, all six stages incl. risk) passed every stage except smoke, which was undersized (20 messages, no order: the stage's own guard); in it `rate` passed
+with `rp_frames_before` 87 (29 + 38 + 2 x 10 frames of the earlier stages) and `rp_frames_after` 125 for its own 38 frames: the old absolute check would have read "125 of 38", the same failure as the board's. Attempt 2 (smoke at 30 messages, the size of the passing single-stage dry run) was NOT run: no heavy slot was free.
+Run it with `B127_RECORD=results/b127 python3 -m pytest designs/b96_kr260_10g/rm_gp_itch/tests/test_b127_stages_sim.py -k full_session` (about 1.5 hours, one heavy slot, peak 3 GB).
 
 ## The re-run
 
