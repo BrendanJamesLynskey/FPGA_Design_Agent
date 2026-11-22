@@ -32,7 +32,7 @@ needs_pyuvm = pytest.mark.skipif(importlib.util.find_spec("pyuvm") is None or im
 def test_bench_files_present() -> None:
     for rel in ("README.md", "tb/tb_pyuvm_top.sv", "pcs_mac_pyuvm/refmodels.py", "pcs_mac_pyuvm/channel.py", "pcs_mac_pyuvm/items.py", "pcs_mac_pyuvm/agents.py",
                 "pcs_mac_pyuvm/scoreboard.py", "pcs_mac_pyuvm/cov.py", "pcs_mac_pyuvm/seqs.py", "pcs_mac_pyuvm/env.py", "pcs_mac_pyuvm/checker.py",
-                "tests/pcs_mac_pyuvm_cocotb.py", "scripts/pyuvm_run.py", "scripts/run_regress.py"):
+                "tests/pcs_mac_pyuvm_cocotb.py", "scripts/pyuvm_run.py", "scripts/run_regress.py", "scripts/cov_report.py"):
         assert (PY / rel).is_file(), rel
     assert (UVM / "mutants" / "mutants.tsv").is_file(), "the bench reuses brief 112's mutant list"
 
@@ -106,6 +106,40 @@ def test_mutant_list_applies(tmp_path: Path) -> None:
     for m in ids:
         r = subprocess.run([sys.executable, str(UVM / "scripts" / "mutate.py"), "make", m, str(RTL), str(tmp_path / m)], capture_output=True, text=True)
         assert r.returncode == 0, r.stdout + r.stderr
+
+
+def test_verilator_coverage_record_is_consistent() -> None:
+    """Brief 146: the committed Verilator coverage record (results/146_verilator_cov) is self-consistent and `cov_report.py` still computes it from a coverage.dat."""
+    rec = ROOT / "results" / "146_verilator_cov"
+    d = json.loads((rec / "coverage_summary.json").read_text())
+    for kind in ("line", "branch", "expr", "toggle"):
+        tot = sum(m[kind]["total"] for k, m in d["modules"].items() if k != "tb_pyuvm_top")
+        cov = sum(m[kind]["covered"] for k, m in d["modules"].items() if k != "tb_pyuvm_top")
+        assert (cov, tot) == (d["design"][kind]["covered"], d["design"][kind]["total"]), kind
+        assert d["design"][kind]["percent"] == round(100.0 * cov / tot, 2)
+    # every open point of the record is listed in uncovered.tsv: line, branch and expression points one row each, toggles grouped by signal
+    rows = [r.split("\t") for r in (rec / "uncovered.tsv").read_text().splitlines()[1:]]
+    for kind in ("line", "branch", "expr"):
+        open_pts = sum(m[kind]["total"] - m[kind]["covered"] for k, m in d["modules"].items() if k != "tb_pyuvm_top")
+        assert sum(1 for r in rows if r[0] == kind and r[1] != "tb_pyuvm_top") == open_pts, kind
+    assert "217/217 bins hit" in (rec / "summary.txt").read_text()
+
+
+def test_cov_report_reads_a_verilator_coverage_file(tmp_path: Path) -> None:
+    """A two-point coverage.dat in Verilator's format: one covered line, one uncovered branch, one toggle bit that moved and one that did not."""
+    dat = tmp_path / "coverage.dat"
+    def rec(kind, mod, o, n, cnt):
+        return "C '\x01f\x02/x/rtl/m.sv\x01l\x02" + str(n) + "\x01n\x021\x01t\x02" + kind + "\x01page\x02v_" + kind + "/" + mod + "\x01o\x02" + o + "\x01h\x02" + mod + "' " + str(cnt)
+    dat.write_text("# SystemC::Coverage-3\n" + "\n".join([rec("line", "m", "block", 3, 5), rec("branch", "m", "if", 4, 0), rec("toggle", "m", "q[0]:0->1", 1, 2), rec("toggle", "m", "q[0]:1->0", 1, 0)]) + "\n")
+    spec = importlib.util.spec_from_file_location("cov_report", PY / "scripts" / "cov_report.py")
+    cr = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(cr)
+    cr.main(["cov_report.py", str(dat), str(tmp_path / "out")])
+    d = json.loads((tmp_path / "out" / "coverage_summary.json").read_text())
+    assert d["modules"]["m"]["line"] == {"covered": 1, "total": 1, "percent": 100.0}
+    assert d["modules"]["m"]["branch"]["covered"] == 0 and d["modules"]["m"]["toggle"]["covered"] == 1 and d["modules"]["m"]["toggle"]["total"] == 2
+    unc = (tmp_path / "out" / "uncovered.tsv").read_text()
+    assert "branch\tm\tm.sv\t4" in unc and "q[0]:1->0" in unc
 
 
 @needs_pyuvm

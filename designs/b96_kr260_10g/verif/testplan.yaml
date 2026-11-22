@@ -14,7 +14,7 @@ design: b96_kr260_10g
 notes: >-
   Variants. Unless a requirement says otherwise, "the default build" is RATE_MATCH = 0 (the board-proven 97C receive path) and "the rate-matched
   build" is rm_gp (RATE_MATCH = 1, RM_OWN = 1). Board evidence is one KR260 on a short optical loopback; nothing has run against a network card.
-  Briefs 112 (UVM bench), 115 (formal proofs of the rate matcher) and 123 (pyuvm bench) are merged and their tests are in the recorded run; the bound SVA checkers in simulation and the coverage run have no evidence and are shown as not run.
+  Briefs 112 (UVM bench), 115 (formal proofs of the rate matcher) and 123 (pyuvm bench) are merged and their tests are in the recorded run; the bound SVA checkers in simulation have no evidence and are shown as not run; the functional and code coverage of the pyuvm bench on Verilator (brief 146) is recorded.
 
 discover:
   - {glob: designs/b96_kr260_10g/tests/test_*.py, pattern: '^def (test_\w+)'}
@@ -327,11 +327,24 @@ verification:
     method: uvm_test
     title: pyuvm-on-cocotb twin of the UVM bench of the PCS and MAC (brief 123; designs/b96_kr260_10g/verif/pyuvm/); the recorded run is the reference-model checks, one smoke run in Icarus and one seeded-bug kill; the full regression is run by hand
     evidence: {file: results/116_traceability/b96_kr260_10g/pytest_junit.xml, reader: junit, tests: ["test_b96_pyuvm::*"]}
-  - id: V-COV-PLANNED
+  - id: V-COV-FUNC
     requirements: [B96-F-PCS, B96-F-MAC]
     method: coverage_bin
-    title: Functional coverage bins and code coverage of the PCS and MAC bench (no coverage run recorded)
-    planned: not planned in a brief yet
+    title: Functional coverage of the pyuvm bench of the PCS and MAC (brief 123 bench, brief 146 regression on Verilator 5.048; 42 runs, every one of the 217 bins hit; the Icarus run of brief 123 hit the same 217)
+    evidence: {file: results/146_verilator_cov/summary.txt, reader: text, regex: 'merged 42 runs: (\d+)/217 bins hit'}
+    pass_when: [{op: ge, value: 217}]
+    checks: [designs/b96_kr260_10g/verif/pyuvm/pcs_mac_pyuvm/cov.py]
+  - id: V-COV-CODE
+    requirements: [B96-F-PCS, B96-F-MAC]
+    method: coverage_bin
+    title: RTL code coverage of pcs_tx, pcs_rx, mac64_tx, mac64_rx and b96_pkg by the same 42-run regression (Verilator 5.048 --coverage, merged; brief 146). Floors are the measured design-wide percentages rounded down (line 81.25, branch 85.34, expression 92.47, toggle 96.33); every open point is explained in results/146_verilator_cov/README.md (unreachable by design, one deliberately not driven, or a Verilator reporting artefact reproduced in a 15-line test)
+    evidence: {file: results/146_verilator_cov/coverage_summary.json, reader: json}
+    pass_when:
+      - {field: design.line.percent, op: ge, value: 81}
+      - {field: design.branch.percent, op: ge, value: 85}
+      - {field: design.expr.percent, op: ge, value: 92}
+      - {field: design.toggle.percent, op: ge, value: 96}
+    checks: [designs/b96_kr260_10g/rtl/pcs_tx.sv, designs/b96_kr260_10g/rtl/pcs_rx.sv, designs/b96_kr260_10g/rtl/mac64_tx.sv, designs/b96_kr260_10g/rtl/mac64_rx.sv, designs/b96_kr260_10g/rtl/b96_pkg.sv]
   # ---- simulation measurements ---------------------------------------------------------------------------------------
   - id: V-SIMM-T2T
     requirements: [B96-P-T2T-DIGITAL]
