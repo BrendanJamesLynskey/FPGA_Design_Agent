@@ -5,6 +5,7 @@ lat_cuts169/rtl/b96_core.sv carries); its behaviour with the bypass is covered b
 
 from __future__ import annotations
 
+import os
 import re
 from pathlib import Path
 
@@ -54,7 +55,8 @@ def test_core_cocotb_default_with_cuts(combo: str, tmp_path: Path) -> None:
     srcs = [tmp_path / "b96_core.sv" if s.name == "b96_core.sv" else s for s in srcs]
     srcs += [DESIGN / "sim" / "gth_wiz_model96.sv", _tb(tmp_path / "tb_core.sv")]
     cocotb_run.run(f"b169_core_{combo}", "tb_core", srcs, "core_cocotb_default", HERE,
-                   parameters={"RATE_MATCH": 0, "EARLY_MAC": e, "FAST_PRE": f}, extra_env={"PYTHONPATH": str(ROOT), "B169_WI_SHIFT": str(e)})     # with EARLY_MAC the word index runs one clock ahead: the poison tests inject by index
+                   parameters={"RATE_MATCH": 0, "EARLY_MAC": e, "FAST_PRE": f}, testcase=os.environ.get("B169_ONLY") or None,
+                   extra_env={"PYTHONPATH": str(ROOT), "B169_WI_SHIFT": str(e)})     # tick_to_trade_digital looks for word 7 by trade64's word index, one clock ahead with EARLY_MAC
 
 
 def test_defaults_are_off_and_files_are_copies() -> None:

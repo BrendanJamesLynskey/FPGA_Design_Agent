@@ -13,7 +13,7 @@ n=0
 while true; do
   out="$("$H/take_heavy_slot.sh" --env "$TEXT" 2>/dev/null)" && [ -n "$out" ] && { eval "$out"; break; }
   n=$((n+1)); [ "$n" -ge "$WAIT" ] && { echo "no heavy slot within $WAIT minutes"; exit 1; }
-  sleep 60
+  sleep 5
 done
 release() { case "$(cat "$HEAVY_LOCK" 2>/dev/null)" in "169:"*) rm -f "$HEAVY_LOCK";; esac; }
 trap release EXIT

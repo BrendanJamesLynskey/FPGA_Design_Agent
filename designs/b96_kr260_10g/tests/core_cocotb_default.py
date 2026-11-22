@@ -187,8 +187,6 @@ async def trade_decisions(dut):
 
 
 async def poison_case(dut, trigger_wi, expect_err):
-    # brief 169: with EARLY_MAC trade64's word index runs one clock ahead of the registered MAC word; the same wire position needs the next index (B169_WI_SHIFT=1)
-    trigger_wi += int(os.environ.get("B169_WI_SHIFT", "0"))
     h = await bring_up(dut)
     await h.w(0x018, 1)
     await h.w(0x060, 9975); await h.w(0x064, 100)
@@ -199,14 +197,17 @@ async def poison_case(dut, trigger_wi, expect_err):
     capture(dut, words)
     await h.w(0x018, 2)
     hit = False
+    wi_m = 0       # brief 169: trade64's word index, rebuilt from the registered MAC word (m_v, m_sof) so the injection point does not move when EARLY_MAC runs trade64 a clock ahead
     for _ in range(4000):
         await RisingEdge(dut.refclk)
-        if int(dut.u.g_old.u_rx.u_td.wi.value) == trigger_wi:
+        if wi_m == trigger_wi:
             dut.u.u_gt.corrupt_xor.value = 1 << 20
             await RisingEdge(dut.refclk)
             dut.u.u_gt.corrupt_xor.value = 0
             hit = True
             break
+        if int(dut.u.g_old.u_rx.m_v.value):
+            wi_m = min((0 if int(dut.u.g_old.u_rx.m_sof.value) else wi_m) + 1, 15)
     assert hit
     await Timer(6000, unit="ns")
     await h.snap()

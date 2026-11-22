@@ -41,8 +41,6 @@ for i, (n, a, b, c) in enumerate(stages):
     svg.append(f'<text x="{x:.1f}" y="{98 + 12 * (i % 4)}" font-size="10">{i + 1}</text>')
     x += c * S
 svg.append(f'<text x="{x + 6:.1f}" y="73">{tot:.2f} clocks = {tot * T:.0f} ns</text>')
-for i, (n, a, b, c) in enumerate(stages):
-    svg.append(f'<text x="40" y="{160 + 0}" font-size="0"></text>')
 y = 150
 svg.append(f'<text x="40" y="{y}">Board: L - E (first bit in to first bit out, optics included, FPGA stamps), mean of 100 links = {brd["E_mean"] + brd["D_register_mean"]:.2f} clocks</text>')
 x = X0
