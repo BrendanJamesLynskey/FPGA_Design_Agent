@@ -88,9 +88,9 @@ module fft_sdf_r22 #(
     always_comb begin
         x0r = inv_eff ? in_im : in_re;
         x0i = inv_eff ? in_re : in_im;
-        bus_r[0] = WOUT'(x0r);
-        bus_i[0] = WOUT'(x0i);
     end
+    assign bus_r[0] = WOUT'(x0r);          // continuous assignments for every word: the array is driven only by assigns (older Icarus rejects mixing)
+    assign bus_i[0] = WOUT'(x0i);
     generate
         for (genvar s = 0; s < LOGN; s++) begin : g_st
             localparam int WI    = wd(s);

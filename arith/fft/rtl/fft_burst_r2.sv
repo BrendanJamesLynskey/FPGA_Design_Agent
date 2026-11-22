@@ -120,27 +120,25 @@ module fft_burst_r2 #(
         wi2 = (TWSTAGES == 1) ? wi1 : wi0;
     end
 
-    // control pipeline t0 .. t0 + LP
-    logic            en_p [LP+1];
-    logic            pa_p [LP+1];
-    logic [LOGN-2:0] ia_p [LP+1];
-    logic [LOGN-2:0] ib_p [LP+1];
-    always_comb begin
-        en_p[0] = issue;
-        pa_p[0] = pa;
-        ia_p[0] = ia;
-        ib_p[0] = ib;
-    end
+    // control pipeline: word k is the control k + 1 clocks after the issue clock t0 (registers only; word LP-1 is the write-back clock t0 + LP)
+    logic            en_q [LP];
+    logic            pa_q [LP];
+    logic [LOGN-2:0] ia_q [LP];
+    logic [LOGN-2:0] ib_q [LP];
     always_ff @(posedge clk) begin
         if (rst) begin
-            for (int k = 1; k <= LP; k++) en_p[k] <= 1'b0;
+            for (int k = 0; k < LP; k++) en_q[k] <= 1'b0;
         end else begin
-            for (int k = 1; k <= LP; k++) en_p[k] <= en_p[k-1];
+            en_q[0] <= issue;
+            for (int k = 1; k < LP; k++) en_q[k] <= en_q[k-1];
         end
-        for (int k = 1; k <= LP; k++) begin
-            pa_p[k] <= pa_p[k-1];
-            ia_p[k] <= ia_p[k-1];
-            ib_p[k] <= ib_p[k-1];
+        pa_q[0] <= pa;
+        ia_q[0] <= ia;
+        ib_q[0] <= ib;
+        for (int k = 1; k < LP; k++) begin
+            pa_q[k] <= pa_q[k-1];
+            ia_q[k] <= ia_q[k-1];
+            ib_q[k] <= ib_q[k-1];
         end
     end
 
@@ -165,8 +163,8 @@ module fft_burst_r2 #(
     // verilator lint_on UNUSEDSIGNAL
     logic signed [WM-1:0] ts_r, ts_i, td_r, td_i;
     always_comb begin
-        {a_r, a_i} = pa_p[1] ? rd1 : rd0;
-        {b_r, b_i} = pa_p[1] ? rd0 : rd1;
+        {a_r, a_i} = pa_q[0] ? rd1 : rd0;
+        {b_r, b_i} = pa_q[0] ? rd0 : rd1;
         s_r = (WM + 1)'(a_r) + (WM + 1)'(b_r);
         s_i = (WM + 1)'(a_i) + (WM + 1)'(b_i);
         d_r = (WM + 1)'(a_r) - (WM + 1)'(b_r);
@@ -221,12 +219,12 @@ module fft_burst_r2 #(
         sw = {sd_r[MULSTAGES+1], sd_i[MULSTAGES+1]};
         pw = {pr_q, pi_q};
         ld_bank0 = ~ld_par;
-        we0 = ld_we ? ld_bank0 : en_p[LP];
-        we1 = ld_we ? ~ld_bank0 : en_p[LP];
-        wa0 = ld_we ? ld_pos[LOGN-1:1] : (pa_p[LP] ? ib_p[LP] : ia_p[LP]);
-        wa1 = ld_we ? ld_pos[LOGN-1:1] : (pa_p[LP] ? ia_p[LP] : ib_p[LP]);
-        wd0 = ld_we ? ld_d : (pa_p[LP] ? pw : sw);
-        wd1 = ld_we ? ld_d : (pa_p[LP] ? sw : pw);
+        we0 = ld_we ? ld_bank0 : en_q[LP-1];
+        we1 = ld_we ? ~ld_bank0 : en_q[LP-1];
+        wa0 = ld_we ? ld_pos[LOGN-1:1] : (pa_q[LP-1] ? ib_q[LP-1] : ia_q[LP-1]);
+        wa1 = ld_we ? ld_pos[LOGN-1:1] : (pa_q[LP-1] ? ia_q[LP-1] : ib_q[LP-1]);
+        wd0 = ld_we ? ld_d : (pa_q[LP-1] ? pw : sw);
+        wd1 = ld_we ? ld_d : (pa_q[LP-1] ? sw : pw);
     end
 
     // ---- control ----------------------------------------------------------------------------------------------------------------------

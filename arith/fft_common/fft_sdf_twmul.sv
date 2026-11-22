@@ -43,24 +43,22 @@ module fft_sdf_twmul #(
     end
     logic [TW-1:0] wr, wi;
     fft_twiddle_quarter #(.LOGC(LM), .TW(TW), .STAGES(TWSTAGES)) u_tw (.clk(clk), .m(e), .wr(wr), .wi(wi));
-    logic [W-1:0] dr [TWSTAGES+1];
-    logic [W-1:0] di [TWSTAGES+1];
-    always_comb begin
-        dr[0] = xr;
-        di[0] = xi;
-    end
+    logic [W-1:0] dr [TWSTAGES];                 // the data delayed to meet the twiddle: registers only, word k is k + 1 clocks old
+    logic [W-1:0] di [TWSTAGES];
     always_ff @(posedge clk) begin
-        for (int s = 0; s < TWSTAGES; s++) begin
-            dr[s+1] <= dr[s];
-            di[s+1] <= di[s];
+        dr[0] <= xr;
+        di[0] <= xi;
+        for (int s = 1; s < TWSTAGES; s++) begin
+            dr[s] <= dr[s-1];
+            di[s] <= di[s-1];
         end
     end
     logic [WP-1:0] pr, pi;
     generate
         if (CMUL == 3) begin : g_m3
-            fft_cmul_m3 #(.WA(W), .WB(TW), .STAGES(MULSTAGES)) u_m (.clk(clk), .ar(dr[TWSTAGES]), .ai(di[TWSTAGES]), .br(wr), .bi(wi), .pr(pr), .pi(pi));
+            fft_cmul_m3 #(.WA(W), .WB(TW), .STAGES(MULSTAGES)) u_m (.clk(clk), .ar(dr[TWSTAGES-1]), .ai(di[TWSTAGES-1]), .br(wr), .bi(wi), .pr(pr), .pi(pi));
         end else begin : g_m4
-            fft_cmul_m4 #(.WA(W), .WB(TW), .STAGES(MULSTAGES)) u_m (.clk(clk), .ar(dr[TWSTAGES]), .ai(di[TWSTAGES]), .br(wr), .bi(wi), .pr(pr), .pi(pi));
+            fft_cmul_m4 #(.WA(W), .WB(TW), .STAGES(MULSTAGES)) u_m (.clk(clk), .ar(dr[TWSTAGES-1]), .ai(di[TWSTAGES-1]), .br(wr), .bi(wi), .pr(pr), .pi(pi));
         end
     endgenerate
     // verilator lint_off UNUSEDSIGNAL
