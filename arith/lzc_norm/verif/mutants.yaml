@@ -1,0 +1,40 @@
+# Seeded mutants of the leading-zero / normaliser RTL (brief 139b): one text change each, run under `config` with every input of that width.
+mutants:
+  - {id: M01, file: lzc_tree.sv, what: "tree prefers the lower half", config: {variant: 0, w: 10, pipe: 1},
+     find: "assign cnt = nz_hi ? {1'b0, c_hi} : {1'b1, c_lo};", replace: "assign cnt = nz_lo ? {1'b1, c_lo} : {1'b0, c_hi};"}
+  - {id: M02, file: lzc_tree.sv, what: "leaf counts the wrong bit", config: {variant: 0, w: 10, pipe: 1},
+     find: "assign cnt = ~x[1];", replace: "assign cnt = x[1];"}
+  - {id: M03, file: lzc_tree.sv, what: "non-zero flag ignores the lower half", config: {variant: 0, w: 10, pipe: 1},
+     find: "assign nz  = nz_hi | nz_lo;", replace: "assign nz  = nz_hi;"}
+  - {id: M04, file: lznorm_tree_barrel.sv, what: "zero input does not report W (reports the tree's count)", config: {variant: 0, w: 10, pipe: 1},
+     find: "assign lz_c = nz ? LW'(cnt) : LW'(W);", replace: "assign lz_c = LW'(cnt);"}
+  - {id: M05, file: lznorm_tree_barrel.sv, what: "padding for a non-power-of-two width placed at the top, not the bottom", config: {variant: 0, w: 10, pipe: 1},
+     find: "assign xp = {x, {(P - W){1'b0}}};", replace: "assign xp = {{(P - W){1'b0}}, x};"}
+  - {id: M06, file: lznorm_tree_barrel.sv, what: "shift by the count minus one", config: {variant: 0, w: 10, pipe: 1},
+     find: "y  <= x << lz_c;", replace: "y  <= x << (lz_c - 1'b1);"}
+  - {id: M07, file: lznorm_loop_barrel.sv, what: "priority loop prefers the lowest set bit", config: {variant: 1, w: 10, pipe: 1},
+     find: "for (int i = W - 1; i >= 0; i--) begin", replace: "for (int i = 0; i < W; i++) begin"}
+  - {id: M08, file: lznorm_loop_barrel.sv, what: "count off by one", config: {variant: 1, w: 10, pipe: 1},
+     find: "lz_c  = LW'(W - 1 - i);", replace: "lz_c  = LW'(W - i);"}
+  - {id: M09, file: lznorm_stagewise_pipe.sv, what: "stage tests the wrong number of top bits (2**(k)-1 bits)", config: {variant: 2, w: 10, pipe: 2},
+     find: "if ((v_v >> (P - (1 << (HI - j)))) == '0) begin", replace: "if ((v_v >> (P - (1 << (HI - j)) + 1)) == '0) begin"}
+  - {id: M10, file: lznorm_stagewise_pipe.sv, what: "stage shifts by half its step", config: {variant: 2, w: 10, pipe: 2},
+     find: "v_v = v_v << (1 << (HI - j));", replace: "v_v = v_v << ((1 << (HI - j)) >> 1);"}
+  - {id: M11, file: lznorm_stagewise_pipe.sv, what: "count bits not carried between register groups", config: {variant: 2, w: 10, pipe: 1},
+     find: "c_q[s] <= c_c;", replace: "c_q[s] <= c_c & {K{(s == S - 1)}};"}
+  - {id: M12, file: lznorm_stagewise_pipe.sv, what: "zero input not mapped to W", config: {variant: 2, w: 10, pipe: 2},
+     find: "assign lz        = v_q[S-1][P-1] ? LW'(c_q[S-1]) : LW'(W);", replace: "assign lz        = LW'(c_q[S-1]);"}
+  - {id: M13, file: lznorm_stagewise_pipe.sv, what: "output word taken from the bottom of the padded word", config: {variant: 2, w: 10, pipe: 2},
+     find: "assign y         = v_q[S-1][P-1:P-W];", replace: "assign y         = v_q[S-1][W-1:0];"}
+  - {id: M14, file: lznorm_tree_barrel_2st.sv, what: "shifter uses the unregistered count (counts of consecutive words mixed)", config: {variant: 3, w: 10, pipe: 1},
+     find: "y    <= x_q << lz_q;", replace: "y    <= x_q << lz_c;"}
+  - {id: M15, file: lznorm_tree_barrel_2st.sv, what: "valid pipeline one stage short", config: {variant: 3, w: 10, pipe: 1},
+     find: "out_valid <= v1;", replace: "out_valid <= in_valid;"}
+  - {id: M16, file: lznorm_sel.sv, what: "variant 3 wired to the stagewise implementation (a different latency)", config: {variant: 3, w: 10, pipe: 1},
+     find: "lznorm_tree_barrel_2st #(.W(W)) u (.clk, .rst, .in_valid, .in_ready, .x(in_data), .out_valid, .lz, .y);", replace: "lznorm_stagewise_pipe #(.W(W), .PIPE(1)) u (.clk, .rst, .in_valid, .in_ready, .x(in_data), .out_valid, .lz, .y);"}
+
+# Mutants that survive by construction: simulation sees function and latency, not structure.
+equivalent:
+  - {id: E01, file: lznorm_sel.sv, what: "variant 1 (priority loop) wired to the tree implementation", config: {variant: 1, w: 10, pipe: 1},
+     find: "lznorm_loop_barrel #(.W(W)) u", replace: "lznorm_tree_barrel #(.W(W)) u",
+     why: "variants 0 and 1 have the same function and the same latency and differ only in how the count is written; a simulation cannot tell them apart. Their difference is a synthesis question (the Vivado runs), and the formal equivalence check shows they are the same function"}

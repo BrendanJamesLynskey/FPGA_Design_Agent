@@ -169,6 +169,46 @@ jobs:
         run: |
           python -m pytest -q ip_lib/pipe_reg/tb/test_pipe_reg_formal.py ip_lib/credit_chan/tb/test_credit_chan_formal.py
 
+  arith-library:
+    name: Arithmetic library (brief 139b) - models, RTL against models (Icarus), Verilator lint, seeded mutants, SymbiYosys proofs, traceability gate - OSS CAD Suite 20261112
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    env:
+      FDA_OSS_CAD: ${{ github.workspace }}/oss-cad-suite
+      FDA_REQUIRE_FORMAL: "1"      # a test that needs a tool and does not find it fails instead of skipping (the same rule as brief 81)
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Cache the OSS CAD Suite
+        id: oss
+        uses: actions/cache@v4
+        with:
+          path: oss-cad-suite
+          key: oss-cad-suite-20261112
+      - name: Download the pinned OSS CAD Suite (release 2026-11-12, build 20261112)
+        if: steps.oss.outputs.cache-hit != 'true'
+        run: |
+          curl -fsSL -o oss.tgz https://github.com/YosysHQ/oss-cad-suite-build/releases/download/2026-11-12/oss-cad-suite-linux-x64-20261112.tgz
+          echo "346499255e3e5e6e9bf67e1d378a4e6bc249abd3de3b0caf5b57604bc8ba1752  oss.tgz" | sha256sum -c -
+          tar -xzf oss.tgz
+          rm oss.tgz
+      - name: Install
+        run: pip install pyyaml pytest
+      - name: Generated files are current (spec.md from spec.yaml; out-of-context build descriptions and wrappers)
+        run: |
+          python -m arith.tools.gen_spec --check
+          python -m arith.tools.gen_build --check
+      - name: Divider, rounding, square root, leading-zero/normaliser - model tests, RTL against the models, lint, mutants, formal proofs, build descriptions
+        run: |
+          $FDA_OSS_CAD/bin/yosys -V
+          $FDA_OSS_CAD/bin/iverilog -V | head -1
+          $FDA_OSS_CAD/bin/verilator --version
+          python -m pytest -q arith
+      - name: Traceability gate (testplan schema v1, the orphan gate) for the four functions
+        run: python -m flow.trace_v1 check arith/divider arith/fxp_round arith/isqrt arith/lzc_norm
+
   rtl-sim:
     name: RTL tests (cocotb + Icarus) and mutants
     runs-on: ubuntu-24.04
