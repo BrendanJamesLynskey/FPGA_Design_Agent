@@ -11,17 +11,17 @@ The human specifies the requirements and checks that the verification is thoroug
 | `t1_dimmer_counter` | 21 requirements (21 functional); 0 verified; 21 stale; 0 of 21 requirements agreed by a human, 0 human review(s) recorded. | [matrix](../designs/t1_dimmer_counter/verif/matrix.md) ([html](../designs/t1_dimmer_counter/verif/matrix.html)) |
 | `arith_adder` | 9 requirements (9 functional); 7 verified; 0 of 9 requirements agreed by a human, 0 human review(s) recorded; 2 Lean proof item(s) (all widths): 0 with a human-approved statement, 0 with a statement accepted on the owner's delegation (not a human approval), 2 with statement not approved; 2 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run). | [matrix](../arith/adder/verif/matrix.md) ([html](../arith/adder/verif/matrix.html)) |
 | `divider` | 11 requirements (11 functional); 9 verified; 0 of 11 requirements agreed by a human, 0 human review(s) recorded; 3 Lean proof item(s) (all widths): 0 with a human-approved statement, 0 with a statement accepted on the owner's delegation (not a human approval), 3 with statement not approved; 3 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run). | [matrix](../arith/divider/verif/matrix.md) ([html](../arith/divider/verif/matrix.html)) |
-| `arith_fft` | 10 requirements (10 functional); 2 verified; 8 stale; 0 of 10 requirements agreed by a human, 0 human review(s) recorded. | [matrix](../arith/fft/verif/matrix.md) ([html](../arith/fft/verif/matrix.html)) |
-| `arith_fft_axis` | 6 requirements (5 functional, 1 interface); 1 verified; 5 stale; 0 of 6 requirements agreed by a human, 0 human review(s) recorded. | [matrix](../arith/fft_axis/verif/matrix.md) ([html](../arith/fft_axis/verif/matrix.html)) |
+| `arith_fft` | 10 requirements (10 functional); 10 verified; 0 of 10 requirements agreed by a human, 0 human review(s) recorded. | [matrix](../arith/fft/verif/matrix.md) ([html](../arith/fft/verif/matrix.html)) |
+| `arith_fft_axis` | 6 requirements (5 functional, 1 interface); 6 verified; 0 of 6 requirements agreed by a human, 0 human review(s) recorded. | [matrix](../arith/fft_axis/verif/matrix.md) ([html](../arith/fft_axis/verif/matrix.html)) |
 | `arith_fft_bfp` | 9 requirements (9 functional); 9 verified; 0 of 9 requirements agreed by a human, 0 human review(s) recorded. | [matrix](../arith/fft_bfp/verif/matrix.md) ([html](../arith/fft_bfp/verif/matrix.html)) |
-| `arith_fft_cmul` | 6 requirements (6 functional); 5 verified; 1 stale; 0 of 6 requirements agreed by a human, 0 human review(s) recorded. | [matrix](../arith/fft_cmul/verif/matrix.md) ([html](../arith/fft_cmul/verif/matrix.html)) |
+| `arith_fft_cmul` | 6 requirements (6 functional); 6 verified; 0 of 6 requirements agreed by a human, 0 human review(s) recorded. | [matrix](../arith/fft_cmul/verif/matrix.md) ([html](../arith/fft_cmul/verif/matrix.html)) |
 | `arith_fft_fastconv` | 11 requirements (9 functional, 2 interface); 11 verified; 0 of 11 requirements agreed by a human, 0 human review(s) recorded. | [matrix](../arith/fft_fastconv/verif/matrix.md) ([html](../arith/fft_fastconv/verif/matrix.html)) |
 | `arith_fft_mdc2` | 7 requirements (7 functional); 7 verified; 0 of 7 requirements agreed by a human, 0 human review(s) recorded. | [matrix](../arith/fft_mdc2/verif/matrix.md) ([html](../arith/fft_mdc2/verif/matrix.html)) |
-| `arith_fft_real` | 5 requirements (5 functional); 1 verified; 4 stale; 0 of 5 requirements agreed by a human, 0 human review(s) recorded. | [matrix](../arith/fft_real/verif/matrix.md) ([html](../arith/fft_real/verif/matrix.html)) |
+| `arith_fft_real` | 5 requirements (5 functional); 5 verified; 0 of 5 requirements agreed by a human, 0 human review(s) recorded. | [matrix](../arith/fft_real/verif/matrix.md) ([html](../arith/fft_real/verif/matrix.html)) |
 | `arith_fft_real_axis` | 8 requirements (6 functional, 2 interface); 8 verified; 0 of 8 requirements agreed by a human, 0 human review(s) recorded. | [matrix](../arith/fft_real_axis/verif/matrix.md) ([html](../arith/fft_real_axis/verif/matrix.html)) |
-| `arith_fft_reorder` | 6 requirements (6 functional); 2 verified; 4 stale; 0 of 6 requirements agreed by a human, 0 human review(s) recorded. | [matrix](../arith/fft_reorder/verif/matrix.md) ([html](../arith/fft_reorder/verif/matrix.html)) |
-| `arith_fft_twiddle` | 6 requirements (6 functional); 5 verified; 1 stale; 0 of 6 requirements agreed by a human, 0 human review(s) recorded. | [matrix](../arith/fft_twiddle/verif/matrix.md) ([html](../arith/fft_twiddle/verif/matrix.html)) |
-| `arith_fft_window` | 6 requirements (6 functional); 5 verified; 1 stale; 0 of 6 requirements agreed by a human, 0 human review(s) recorded. | [matrix](../arith/fft_window/verif/matrix.md) ([html](../arith/fft_window/verif/matrix.html)) |
+| `arith_fft_reorder` | 6 requirements (6 functional); 6 verified; 0 of 6 requirements agreed by a human, 0 human review(s) recorded. | [matrix](../arith/fft_reorder/verif/matrix.md) ([html](../arith/fft_reorder/verif/matrix.html)) |
+| `arith_fft_twiddle` | 6 requirements (6 functional); 6 verified; 0 of 6 requirements agreed by a human, 0 human review(s) recorded. | [matrix](../arith/fft_twiddle/verif/matrix.md) ([html](../arith/fft_twiddle/verif/matrix.html)) |
+| `arith_fft_window` | 6 requirements (6 functional); 6 verified; 0 of 6 requirements agreed by a human, 0 human review(s) recorded. | [matrix](../arith/fft_window/verif/matrix.md) ([html](../arith/fft_window/verif/matrix.html)) |
 | `arith_fp_add` | 10 requirements (10 functional); 7 verified; 0 of 10 requirements agreed by a human, 0 human review(s) recorded; 3 Lean proof item(s) (all widths): 0 with a human-approved statement, 0 with a statement accepted on the owner's delegation (not a human approval), 3 with statement not approved; 3 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run). | [matrix](../arith/fp_add/verif/matrix.md) ([html](../arith/fp_add/verif/matrix.html)) |
 | `arith_fp_fma` | 10 requirements (10 functional); 7 verified; 0 of 10 requirements agreed by a human, 0 human review(s) recorded; 3 Lean proof item(s) (all widths): 0 with a human-approved statement, 0 with a statement accepted on the owner's delegation (not a human approval), 3 with statement not approved; 3 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run). | [matrix](../arith/fp_fma/verif/matrix.md) ([html](../arith/fp_fma/verif/matrix.html)) |
 | `arith_fp_mul` | 10 requirements (10 functional); 7 verified; 0 of 10 requirements agreed by a human, 0 human review(s) recorded; 3 Lean proof item(s) (all widths): 0 with a human-approved statement, 0 with a statement accepted on the owner's delegation (not a human approval), 3 with statement not approved; 3 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run). | [matrix](../arith/fp_mul/verif/matrix.md) ([html](../arith/fp_mul/verif/matrix.html)) |
@@ -38,17 +38,17 @@ The human specifies the requirements and checks that the verification is thoroug
 - `t1_dimmer_counter`: 21 no passing evidence, 96 stale evidence
 - `arith_adder`: 2 lean statement unapproved
 - `divider`: 3 lean statement unapproved
-- `arith_fft`: 8 no passing evidence, 10 stale evidence
-- `arith_fft_axis`: 5 no passing evidence, 7 stale evidence
+- `arith_fft`: 1 stale evidence
+- `arith_fft_axis`: 1 stale evidence
 - `arith_fft_bfp`: none
-- `arith_fft_cmul`: 1 no passing evidence, 1 stale evidence
+- `arith_fft_cmul`: none
 - `arith_fft_fastconv`: none
 - `arith_fft_mdc2`: none
-- `arith_fft_real`: 4 no passing evidence, 6 stale evidence
+- `arith_fft_real`: 1 stale evidence
 - `arith_fft_real_axis`: none
-- `arith_fft_reorder`: 4 no passing evidence, 6 stale evidence
-- `arith_fft_twiddle`: 1 no passing evidence, 1 stale evidence
-- `arith_fft_window`: 1 no passing evidence, 1 stale evidence
+- `arith_fft_reorder`: 1 stale evidence
+- `arith_fft_twiddle`: none
+- `arith_fft_window`: none
 - `arith_fp_add`: 3 lean statement unapproved
 - `arith_fp_fma`: 3 lean statement unapproved
 - `arith_fp_mul`: 3 lean statement unapproved
