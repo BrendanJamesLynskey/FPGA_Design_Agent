@@ -5,6 +5,17 @@
 `PREREGISTRATION.md` (written before any goal code, with the null result), `labelled_changes.json` (ten changes, labels fixed
 beforehand), `measure.py`, `measure.json`. No model call, no Vivado, no simulation, nothing for the spend ledger.
 
+## Records
+
+- `PREREGISTRATION.md`: the set, the arms, the measures and the null result, committed before any goal code.
+- `labelled_changes.json`: the ten changes and their labels (`met`, or the stage the change needs).
+- `measure.json`: every change's entry stage, stages re-run and builds for the three arms, plus F5's verdicts and the measurement ids it used.
+
+## Reproduce
+
+`python3 results/159_typed_goals/measure.py` from the repository root rewrites `measure.json` and prints the totals. It needs no access key, no model and no Vivado. The designs it reads are the committed
+`designs/t1_dimmer_counter`, `designs/b58a_trigger` and `designs/b96_kr260_10g` and their handover measurements.
+
 ## Result (ten scripted changes on `t1_dimmer_counter` 5, `b58a_trigger` 3, `b96_kr260_10g` 2)
 
 | Arm | stages re-run (of 100) | builds (of 10) | plans that keep stale evidence | plans equal to the label |
@@ -20,7 +31,7 @@ beforehand), `measure.py`, `measure.json`. No model call, no Vivado, no simulati
   8 clocks against 10, 1.087 W against 1.5 W): F5 re-runs nothing, F1 and the full re-run have no way to say so. The other seven are
   the same stage in F1 and F5 except C05 (same-family retarget, stage 3 against F1's stage 1).
 
-## What this does not show
+## Known gaps and limits
 - **The hidden-bench pass rate of the resulting designs is not measured.** The brief's "same pass rate" needs model runs and Vivado. The
   stand-in is soundness against labels, and it is weak: the "met" labels were written from the same committed measurement lists the planner
   reads (a label for an unmet change is the stage table of brief 149), so 10 of 10 exact is partly by construction. What the table does
