@@ -8,7 +8,7 @@ ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 H=/home/brendan/Claude_sandbox/_handoff
 cd "$ROOT"
 D=designs/b96_kr260_10g/$V
-TEXT="176: Vivado impl $V peak 6G, $(date +%H:%M), expected end $(date -d '+50 min' +%H:%M)"
+TEXT="176: Vivado impl $V peak 8G, $(date +%H:%M), expected end $(date -d '+50 min' +%H:%M)"
 n=0
 while true; do
   out="$("$H/take_heavy_slot.sh" --env "$TEXT" 2>/dev/null)" && [ -n "$out" ] && { eval "$out"; break; }
@@ -17,7 +17,7 @@ while true; do
 done
 release() { case "$(cat "$HEAVY_LOCK" 2>/dev/null)" in "176:"*) rm -f "$HEAVY_LOCK";; esac; }
 trap release EXIT
-export FDA_VIVADO_THREADS=1 FDA_VIVADO_MAX=3
+export FDA_VIVADO_THREADS=1 FDA_VIVADO_MAX=3 MEM_MAX=8G     # the first run hit the 6G cap (OOM in technology mapping, 2026-11-22 18:52); owner 2026-11-21: two at once each at most 8G
 OUT="$ROOT/results/176_seq_poison/build_$V"; mkdir -p "$OUT"
 echo "slot $HEAVY_LOCK taken: $(cat "$HEAVY_LOCK"); threads $FDA_VIVADO_THREADS"
 T0=$(date +%s); date -Is > "$OUT/started.txt"; git rev-parse HEAD > "$OUT/commit.txt"; git status --porcelain -- designs flow ip > "$OUT/dirty.txt"
