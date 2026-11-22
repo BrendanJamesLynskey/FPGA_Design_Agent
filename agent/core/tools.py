@@ -94,6 +94,21 @@ BUILD_YAML_KEYS = frozenset({"top", "part", "board", "sources", "constraints", "
                              "hdl", "ip_tcl", "netlists"})
 
 
+#: stages that run before the RTL is written (agent/graph/stages.py): a `sources` glob over the design's own rtl/ may match nothing yet
+PRE_RTL_STAGES = frozenset({"clarify", "board-and-device-planning"})
+_RTL_SUFFIXES = (".vhd", ".vhdl", ".sv", ".v")
+
+
+def rtl_pending(s: Session, pat: str) -> bool:
+    """Brief 167b: True when ``pat`` is a glob over the design's own ``rtl/`` directory with an HDL suffix and the session is still
+    before the RTL stage. The agent writes build.yaml at stage 1 (brief 167: 5 of 6 VHDL runs stopped there, SystemVerilog shares the path);
+    from stage 2 on the glob must match, so a pending source is a state stage 2 has to satisfy."""
+    if getattr(s, "stage", "") not in PRE_RTL_STAGES:
+        return False
+    p = Path(pat)
+    return p.suffix in _RTL_SUFFIXES and (s.root / p).parent.resolve() == (s.design / "rtl").resolve()
+
+
 def load_build_cfg(s: Session) -> dict[str, Any]:
     """build.yaml with every value that reaches Tcl or a command line validated. Raises SecurityError."""
     f = s.design / "build.yaml"
@@ -132,6 +147,8 @@ def load_build_cfg(s: Session) -> dict[str, Any]:
             if not isinstance(pat, str) or pat.startswith("/") or ".." in Path(pat).parts or "\x00" in pat:
                 raise SecurityError("build-yaml", f"{key} entry {pat!r} must be a repo-relative path without '..'")
             hits = glob.glob(str(s.root / pat))
+            if not hits and key == "sources" and rtl_pending(s, pat):
+                continue                       # brief 167b: stage 1 plans the build before the RTL exists; stage 2 and later refuse it
             if not hits:
                 raise SecurityError("build-yaml", f"{key} entry {pat!r} matches no file")
             for h in hits:
