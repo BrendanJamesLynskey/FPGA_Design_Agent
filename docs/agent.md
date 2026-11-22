@@ -37,7 +37,8 @@ Vivado builds are reused when the sources are unchanged and the earlier build we
 - `python -m agent resume <design-dir> ["<change request>"]` picks up older work from its handover
   (`agent/graph/pickup.py`). It reads `AGENT.md`, runs `flow.handover.freshness(deep=True)` and refuses a handover with
   errors. It then enters the graph at the earliest of: the change request's stage (keyword classes, earliest match;
-  `--kind` overrides), the stage of every changed file and stale record, stage 3 when the recorded builds used another
+  `--kind` overrides; goal classes area, latency, retarget, fmax, power, language and mapping since brief 149; a request that
+  matches none is a question, `resume` exits 2 and stage 0 is no longer a silent default), the stage of every changed file and stale record, stage 3 when the recorded builds used another
   Vivado release or the build ID changed, and the first stage not yet passed (`--from-stage N` overrides the rule;
   `--dry-run` only reports). Every later stage runs again, so stale evidence is re-run, never trusted. The design is
   copied into a new run (renderings and `build/` left out, its old path rewritten in `build.yaml` and the test plan), the
