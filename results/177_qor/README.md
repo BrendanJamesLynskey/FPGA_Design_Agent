@@ -39,3 +39,22 @@ Features: log LUT, FF, SRL, carry cells; DSP, BRAM; target frequency; is-K26. Ta
 At p >= 0.8 the logistic model calls 39 builds "go": 7 of them fail (false-go rate 17.9 %), and it correctly holds back 96 of the 103 failing builds (93 %) while holding back 29 of 61 passing ones. At p >= 0.5 the false-go rate is 39.7 %. Within one function the ranking is good (per-function AUC 0.85 to 1.0) but the probability scale does not carry across functions (the 0.6 to 0.8 bin passes 29 %): calibration is the weak point. 13 of 13 sweep rows are predicted below 0.5 (mean pass probability 0.22).
 
 What this is not: a gate. The model sees no timing from the synthesis run (the data has none), so it learns "big and fast target fails". The cheap generator of more rows is a synthesis-only run that writes `report_timing_summary` and the worst path's logic levels for every one of the 164 points plus about 30 full designs with a route, rows queued in `vivado_later_queue.md`.
+
+## Records
+
+- `dataset.csv`: the 227 rows (columns in `tools/qor/build_dataset.py`, `COLS`).
+- `evaluation.json`: every number quoted above (AUC, Brier, reliability bins, go statistics, per-function AUC, the gates-row counts).
+
+## Reproduce
+
+```
+python3 tools/qor/build_dataset.py      # reads the brief-160 and 166 worktrees and the committed gates.json files; no Vivado
+python3 tools/qor/evaluate.py           # numpy only
+python3 -m pytest -q flow/tests/test_177_predict.py flow/tests/test_177_qor_model.py
+```
+
+## Known gaps and limits
+
+- No post-synthesis timing for the arith rows, so the model cannot see the one feature that matters most; full designs have one routed failure in 50 rows; the AMD score cannot be run on 2026.1 (Basic licence) and its 18 committed rows have no failure. The synthesis-only re-run and the failing full-design variants are queued in `_handoff/fpga_agent/vivado_later_queue.md`.
+- `dataset.csv` was built from local worktrees of briefs 160 and 166 (PRs #292 and #299, unmerged at the time); re-run the builder against main after they merge.
+- The shadow predict stage (`flow/predict.py`) uses an unfitted prior; it logs and scores, it never gates.
