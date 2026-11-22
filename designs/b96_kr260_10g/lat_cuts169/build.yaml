@@ -1,0 +1,38 @@
+# lat_cuts169 (brief 169): lat_all3_bypass with the two prototype cuts ON (EARLY_MAC, FAST_PRE; copies under lat_cuts169/rtl, each behind a parameter whose default 0 is lat_all3_bypass). Parent comment: lat_all3_bypass (brief 126): the default build (RATE_MATCH = 0, the 97C receive path) with brief 97C's three latency cuts (lat_all3: trade64.sv and tx_path.sv from lat_all3/rtl, GO_REG = 0) AND brief 96F1/96F1b's GT buffer bypass
+# (both elastic buffers bypassed: ip/amd_ip_bypass.tcl, rm_gp_bypass/rtl/b96_core.sv, gt_bp_gate.sv, gt_bp_ctl.sv). No source is copied: each file is the one the two parent builds already use (tests/test_126_all3_bypass.py checks that).
+# Why the default path accepts the bypass: its receive logic (PCS, MAC, decision) runs in RXUSRCLK2 and hands the decision to TXUSRCLK2 through xpm_cdc_pulse and a quasi-static bus (no assumption about the clocks' phase or frequency beyond
+# "about equal", the same as the build without bypass, where RXUSRCLK2 is already the recovered clock); results/b126/README.md section "Why this build".
+top: kr260_10g_top
+part: xck26-sfvc784-2LV-c
+board: kr260           # boards/kr260/board.yaml
+sources:
+  - designs/b58a_trigger/rtl/jtag_bus.sv
+  - designs/b96_kr260_10g/rtl/b96_pkg.sv
+  - designs/b96_kr260_10g/lat_cuts169/rtl/pcs_tx.sv
+  - designs/b96_kr260_10g/rtl/pcs_rx.sv
+  - designs/b96_kr260_10g/lat_cuts169/rtl/mac64_tx.sv
+  - designs/b96_kr260_10g/lat_cuts169/rtl/mac64_rx.sv
+  - designs/b96_kr260_10g/rtl/hs_vec.sv
+  - designs/b96_kr260_10g/lat_cuts169/rtl/frame_src.sv
+  - designs/b96_kr260_10g/lat_cuts169/rtl/trade64.sv
+  - designs/b96_kr260_10g/rtl/rate_match.sv
+  - designs/b96_kr260_10g/rtl/rate_match_gp.sv
+  - designs/b96_kr260_10g/lat_cuts169/rtl/tx_path.sv
+  - designs/b96_kr260_10g/rtl/rx_path.sv
+  - designs/b96_kr260_10g/lat_cuts169/rtl/rx_path_legacy.sv
+  - designs/b96_kr260_10g/rtl/es_ctrl.sv
+  - designs/b96_kr260_10g/rm_gp_bypass/rtl/gt_bp_gate.sv
+  - designs/b96_kr260_10g/rm_gp_bypass/rtl/gt_bp_ctl.sv
+  - designs/b96_kr260_10g/lat_cuts169/rtl/b96_core.sv
+  - designs/b96_kr260_10g/rtl/kr260_10g_top.sv
+constraints:
+  - designs/b96_kr260_10g/design.xdc
+ip_tcl:                 # brief 56A's GT Wizard with both buffers bypassed (brief 96F1)
+  - designs/b96_kr260_10g/ip/amd_ip_bypass.tcl
+generics:
+  NEAR_END: "1'b0"
+  TRADE: "1'b1"         # BUILD_STAMP is added by the flow
+  RATE_MATCH: "1'b0"    # the default receive path (no rate matcher)
+  EARLY_MAC: "1'b1"     # brief 169: decision on the MAC's pre-register word
+  FAST_PRE: "1'b1"       # brief 169: order start block in the go clock
+  GO_REG: "1'b0"        # brief 97's all3 edit: the go-pulse crossing's output register removed
