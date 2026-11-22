@@ -98,7 +98,7 @@ A failure is a `UVM_ERROR` with tag `SVA` and fails the test.
 
 Bins are named counters (`env/itch_cov.sv`), hit by what the model and the monitors **saw** (never by what a sequence meant to send), and merged over all runs by `scripts/cov_merge.py`: message types, messages
 a packet (1, 3, 6, other), the Mold events, every header drop, book edge cases, every risk refusal, the order outcomes, bad FCS crossed with order and with STRICT, the tail window bins, every frame length remainder (mod 8)
-by start lane (16 bins), backpressure (bubbles in a frame, a transmit pause inside a frame), and every command. `COVERAGE_PLACEHOLDER`
+by start lane (16 bins), backpressure (bubbles in a frame, a transmit pause inside a frame), and every command. Result of the recorded regression: **97 of 97 bins hit, 0 holes** (`results/170_itch_uvm/coverage_report.md`). The first full regression had the same 97 bins hit; one sequence-dependent bin (`tail_*`) was split in two after a formatting bug made it print wrongly, so closure is shown on the final run.
 
 ## Running it
 
@@ -110,7 +110,14 @@ The regression waits while the machine's load is 6 or more or less than 12 GB ar
 
 ## Results
 
-`RESULTS_PLACEHOLDER`
+Recorded regression (`results/170_itch_uvm/`, xsim 2026.1, `run_regress.sh --seeds 2 --rand 8 --rounds 40`): **34 runs, 0 failed** (8 directed tests x 2 seeds, `t_bp` again on the never-paused snapshot x 2, `t_mix` x 8, `t_rand` x 8 seeds,
+every third random seed on the never-paused snapshot), plus `t_seq_poison`, which fails as designed.
+Scoreboard (comparisons, mismatches): COUNTERS 8,897 / 0, FLAGS 1,736 / 0, US 2,604 / 0, ORDERS 3,112 / 0, ORDERCNT 434 / 0, 217 checkpoints; SEQ 454 / 1 (the one is `t_seq_poison`); `SEQ_WAIVED` 11 sequence numbers accepted under the waiver of the finding.
+SVA: 0 failures in any run (cover counts in `sva_cover.tsv`). The two RTL snapshots are the same RTL; only `itch_unit`'s `PAUSE` parameter differs.
+What the first runs taught (kept, because they show what the bench catches and where the model was wrong): the first `t_tail` run disagreed on `cand` (the ladder-overflow reading, shared assumption 4); the first `t_bp` run failed on the ClOrdID digits
+(the model printed lower-case hex, the datasheet says upper case: a model bug, fixed); the first full regression failed two random runs, both stimulus/model issues (a candidate in the last message of a bad frame, finding 2; and bubbles that stretch
+a frame so its verdict arrives later than the byte count suggests, now a MAY class). No other disagreement with the design was found.
+MUTATION_PLACEHOLDER
 
 ## Finding: a poisoned order frame still advances the TCP sequence number
 
@@ -119,6 +126,12 @@ Observed: when the multiplexer poisons a frame because its trigger frame was bad
 unresolved speculative frame). The next order then carries a number 59 higher than the datasheet says, leaving a gap in the TCP byte stream a real peer would wait on. `t_seq_poison` (with `+SEQ_STRICT`):
 good order 1 sends 1000, order 2 in a bad frame is poisoned, order 3 sends 1118 where the datasheet says 1059. The other sequences run with a counted waiver (`SEQ_WAIVED`) so they still check everything else.
 Severity: the stand-in `order_seg` is not a valid TCP segment (checksum 0) and brief 119's `tcp_fast` replaces it; whether `tcp_fast` has the same behaviour is not checked here.
+
+## Finding 2 (counters only): a candidate in the last message of a bad frame
+
+Datasheet (`itch_integration.md` section 4): such a candidate "is not blocked by its own packet's flag", and the order is poisoned. Observed: whether the Add is counted `fire` or `rej_gap` depends on the frame's start lane
+(one clock): the late verdict can reach the risk check before the message is decoded. In both outcomes no order leaves with a good FCS (STRICT poisons it). It changes `fire`, `rej_gap`, the position and the order number. The bench
+therefore sends no candidate in the last message of a bad frame in the random stream; `t_badfcs` and `t_tail` do, at fixed alignments, where the design and the model agree. The datasheet should say "depends on alignment".
 
 ## Known gaps
 
