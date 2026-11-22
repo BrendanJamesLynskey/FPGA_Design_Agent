@@ -1,4 +1,8 @@
-# Arithmetic library: adders, multipliers, multiply-accumulate (brief 139a)
+# Arithmetic library
+
+Two briefs built the first functions side by side, each with its own layout and tools; both are on main and both are checked by the 116 gate. Part A (139a) covers the adder, multiplier and MAC; the second (139b) the divider, rounding and saturation, integer square root and leading-zero count. The generators are shared where they could be: `python -m arith.tools.gen_build` writes the build descriptions of both (139a's under `<fn>/ooc/` and `<fn>/build/<variant>/build.yaml`, 139b's under `<fn>/build/<variant>/{a7,k26}/`).
+
+## Adders, multipliers, multiply-accumulate (brief 139a)
 
 The first functions of a library of FPGA arithmetic, taken as far as they can go before Vivado: each has a specification, a bit-exact model, 2 to 3 RTL variants
 that differ in a real PPA trade-off, simulation against the model (exhaustive at small widths, edge-value and random at large ones, with seeded faults to show the
@@ -8,7 +12,7 @@ is an expectation written down before measuring (marked "intended primitive use"
 testplans until the runs exist. The plan this sits in is [docs/arithmetic_pareto_plan.md](../docs/arithmetic_pareto_plan.md) (brief 137; at the time of writing it is a draft in that brief's
 worktree, not yet merged, so this layout follows the brief's own and is mapped to the plan's library format under "Layout" below).
 
-## Functions
+### Functions
 
 | Function | Variants | Specification | Testplan and evidence |
 |---|---|---|---|
@@ -16,7 +20,7 @@ worktree, not yet merged, so this layout follows the brief's own and is mapped t
 | Multiplier, exact WA + WB bit product, signed or unsigned | `dsp` (DSP blocks, 0 to 3 registers), `lut_array` (shifted partial products in LUTs), `booth_r4` (radix-4 Booth array in LUTs) | [multiplier/spec.md](multiplier/spec.md) | [multiplier/verif/testplan.yaml](multiplier/verif/testplan.yaml), [matrix](multiplier/verif/matrix.md) |
 | Multiply-accumulate, LANES products per clock into one wrapping accumulator | `dsp` (DSP-mapped, 1 to 3 registers), `dsp_cascade` (lanes chained like a DSP cascade), `fabric` (no DSP) | [mac/spec.md](mac/spec.md) | [mac/verif/testplan.yaml](mac/verif/testplan.yaml), [matrix](mac/verif/matrix.md) |
 
-## Layout (one folder per function)
+### Layout (one folder per function)
 
 | Path | What |
 |---|---|
@@ -35,7 +39,7 @@ The plan of brief 137 describes `library/<function>/` with `spec`, `model/`, `le
 is `impl/<variant>/` (flat, one file per variant), the Lean files are in the repository's one Lean project, and `surface/<fabric>/` does not exist yet: it is where the Vivado
 runs will write their records. Moving to the plan's exact layout is a mechanical rename.
 
-## What is checked, and how far
+### What is checked, and how far
 
 | Evidence | adder | multiplier | MAC |
 |---|---|---|---|
@@ -52,7 +56,7 @@ Exact numbers and their dates are in each `verif/results/` and in the function's
 - The Lean proofs use Lean 4.36 core only (no Mathlib) and are checked by `lake build` in `formal/lean`.
 - Simulation uses Icarus; Verilator is used for lint only.
 
-## Running it
+### Running it
 
 ```
 pip install pyyaml pytest cocotb==2.0.1          # Icarus (iverilog), Verilator and the OSS CAD Suite (yosys, sby, boolector) are on PATH or in ~/.local/opt/oss-cad-suite
@@ -63,7 +67,7 @@ python -m arith.tools.gen_build; python -m arith.tools.gen_spec_md; python -m ar
 python -m flow.trace_v1 check                     # the 116 gate: every test named by an item, every requirement traced
 ```
 
-## Running the Vivado characterisation (not done yet)
+### Running the Vivado characterisation (not done yet)
 
 Each `<fn>/build/<variant>/build.yaml` is in the format of `flow/prepare.py` (`top`, `part`, `sources`, `generics`) with the out-of-context keys of `flow/ipchar.tcl`: the wrapper
 top (every input and output registered, clock on port `clk`), the two parts and a target clock for each, the points to run (`points`) and the primitive use expected at each part.
@@ -71,3 +75,46 @@ A run is `synth_design -mode out_of_context`, `opt_design`, `place_design`, `rou
 `_handoff/fpga_agent/resources/vivado_peak.py`). A tight target clock matters: at an easy clock the tool stops optimising and Fmax is hidden (the FPGA course's Part 8), so the
 clocks in the build files are starting points and the characterisation should sweep them. The results go to `<fn>/surface/<part>/`, one row per variant and point with the Vivado
 release, the target clock, utilisation, WNS and WHS, vectorless power and the latency from `spec.yaml`.
+
+## Fixed-point, divide, square root, leading-zero count (brief 139b)
+
+The first functions of the owner's FPGA arithmetic library (plan: [docs/arithmetic_pareto_plan.md](../docs/arithmetic_pareto_plan.md) on brief 137's branch `b137-arith-pareto`, not yet on main when this was written; the layout below is the brief's own, one folder per function, and is to be aligned with brief 137's library format when that merges). Each function is specified, modelled bit-exactly, implemented in several variants that differ in a real power/performance/area trade-off, verified in simulation, checked formally, given a Lean statement where one is tractable, and **prepared for Vivado but not built**: there is no Fmax, area or power figure anywhere in this folder.
+
+| Function | Variants | Spec | Lean (all widths, statements not approved) |
+|---|---|---|---|
+| [divider](divider/spec.md): unsigned quotient and remainder | restoring and non-restoring, each iterative or unrolled with PIPE bits per stage | [spec.md](divider/spec.md), [spec.yaml](divider/spec.yaml) | restoring and non-restoring recurrences equal `Nat.div`/`Nat.mod`: proved |
+| [fxp_round](fxp_round/spec.md): truncate, round half up, convergent, then wrap or saturate | fold-add (one adder with carry-in), shift-then-increment, two-stage | [spec.md](fxp_round/spec.md), [spec.yaml](fxp_round/spec.yaml) | carry-in form equals the definition, error bounds, tie to even: proved |
+| [isqrt](isqrt/spec.md): floor square root and remainder | restoring iterative, restoring pipelined, non-restoring pipelined | [spec.md](isqrt/spec.md), [spec.yaml](isqrt/spec.yaml) | restoring recurrence is a floor square root: proved (non-restoring: statement only, unproved) |
+| [lzc_norm](lzc_norm/spec.md): leading-zero count and normaliser | tree + barrel, loop + barrel, stagewise (pipelined), two-clock tree + barrel | [spec.md](lzc_norm/spec.md), [spec.yaml](lzc_norm/spec.yaml) | recursive-halving count is correct for every width 2^k: proved |
+
+### Layout (one folder per function)
+
+```
+spec.md, spec.yaml      the specification (spec.md is generated from spec.yaml by arith/tools/gen_spec.py)
+model.py                the bit-exact Python model (the specification in code) and the vector generators
+rtl/                    one module per variant, <function>_sel.sv (one selector the testbench, the proofs and the wrapper share), <function>_ooc.sv (generated out-of-context wrapper)
+tb/                     tb_<function>.sv, connects the selector to arith/common/tb_stream.sv (the generic stream harness: order, value, measured latency of every result)
+tests/                  test_<f>_model.py (no simulator), test_<f>_rtl.py (Icarus, Verilator, mutants), test_<f>_formal_rtl.py (SymbiYosys), test_<f>_build_rtl.py
+harness/                the packaged verification harness a user reruns against their own instance (run.py, coverage.yaml, README.md; owner decision 24)
+formal/                 <function>_fv.sv, the SymbiYosys harness (reference or characterisation, variant against variant)
+verif/                  testplan.yaml (schema v1, the 116 gate), mutants.yaml, lean_approvals.yaml (the owner's, empty), generated matrix.md and matrix.html
+build/<variant>/{a7,k26}/   build.yaml and ooc.xdc for an out-of-context Vivado run (generated by arith/tools/gen_build.py; not run)
+```
+
+The Lean files are in [formal/lean/Arith](../formal/lean/Arith/Divide.lean) (`Divide`, `Rounding`, `Isqrt`, `Lzc`, and the generated `CrossCheck.lean`).
+
+Every spec states, per variant, the interface contract (protocol, latency, throughput, reset and clock assumptions), what a user could guess wrong, and an integration section (port timing, constraints to carry); the entry is meant to be retrieved without knowledge of the larger design.
+
+### Run it
+
+```
+python -m pytest -q arith                    # model tests, RTL against the models, lint, mutants, formal proofs, build descriptions (about 8 minutes)
+python -m arith.tools.gen_build --check      # the out-of-context descriptions are current
+python -m flow.trace_v1 check arith/divider arith/fxp_round arith/isqrt arith/lzc_norm
+```
+
+Tools: Icarus Verilog, Verilator and SymbiYosys with the slang front end, from the pinned OSS CAD Suite (`FDA_OSS_CAD`, or `~/.local/opt/oss-cad-suite`); a test that needs one and cannot find it skips (fails with `FDA_REQUIRE_FORMAL=1`, as CI sets). The measured results, with the evidence files, are in [results/139b_arith](../results/139b_arith/README.md).
+
+### What is not done
+
+Vivado out-of-context runs (the prepared `build.yaml` files are for a free heavy slot), post-implementation simulation, a structural netlist, Lean proofs of the non-restoring square root and of the stagewise normaliser, and the human approval of any specification or Lean statement. Every requirement is `spec_status: draft`.

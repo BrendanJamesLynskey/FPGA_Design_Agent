@@ -8,9 +8,9 @@ from story_page import REPO
 E = html.escape
 METHODS = [("sim_test", "Simulation test"), ("uvm_test", "UVM"), ("assertion", "SVA"), ("formal", "Formal"), ("formal_lean", "Lean (all widths)"), ("coverage_bin", "Coverage"),
            ("timing", "Timing"), ("sim_measurement", "Sim measure"), ("board_measurement", "Board"), ("review", "Review")]
-STATE = {"verified": "verified", "fail": "fails", "not_run": "not run", "stale": "stale", "bounded": "bounded only", "no_measurement": "no measurement",
-         "unapproved": "proved, statement not approved"}
-MARK = {"pass": "pass", "fail": "FAIL", "not_run": "not run", "stale": "stale", "bounded": "bounded", "unapproved": "statement not approved"}
+STATE = {"verified": "verified", "fail": "fails", "not_run": "not run", "not_in_run": "not in the recorded run", "skipped": "skipped in the recorded run", "stale": "stale", "bounded": "bounded only",
+         "no_measurement": "no measurement", "unapproved": "proved, statement not approved"}
+MARK = {"pass": "pass", "fail": "FAIL", "not_run": "not run", "not_in_run": "not in the recorded run", "skipped": "skipped", "stale": "stale", "bounded": "bounded", "unapproved": "statement not approved"}
 TIER = {"kernel_only": "kernel only", "compiled_decision_procedure": "kernel plus a compiled decision procedure", "unsound": "unsound"}
 RTL_LINK = {"rtl_generated": "RTL-generated model", "transcription_tested": "transcription tested", "transcription_untested": "transcription untested", "model_only": "no RTL link"}
 GAP = {"lean_frozen_statement_changed": "Lean: an approved statement changed", "lean_approval": "Lean: approval file problems", "lean_failing": "Lean proofs that fail",
@@ -32,6 +32,8 @@ def state_text(r: dict) -> str:
         t += f"; {r['stale_items']} item(s) stale"
     if r["state"] == "verified" and r.get("lean_transcription_only"):
         t += "; the Lean proof is of a transcription of the RTL, not of the RTL itself"
+    if r["state"] == "verified" and r.get("rests_on_delegated"):
+        t += "; rests on a delegated acceptance of the Lean statement, not a human approval"
     return t
 
 
@@ -39,7 +41,7 @@ def lean_note(i: dict) -> str:
     L = i.get("lean")
     if i["method"] != "formal_lean" or not L:
         return ""
-    bits = [TIER.get(L.get("tier") or "", "no build"), RTL_LINK.get(L.get("rtl_link") or "", "no RTL link"), (L.get("build_source") or "").replace(" (not re-run)", "")]
+    bits = (["statement accepted on delegation, not a human approval" if L.get("approver_kind") == "agent_delegated" else "statement approved by a human"] if i["status"] == "pass" else []) + [TIER.get(L.get("tier") or "", "no build"), RTL_LINK.get(L.get("rtl_link") or "", "no RTL link"), (L.get("build_source") or "").replace(" (not re-run)", "")]
     return ' <span class="muted small">' + E("; ".join(b for b in bits if b)) + "</span>"
 
 

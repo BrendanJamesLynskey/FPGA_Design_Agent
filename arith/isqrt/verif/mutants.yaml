@@ -1,0 +1,34 @@
+# Seeded mutants of the square-root RTL (brief 139b): one text change each, run under `config` with every radicand of that width.
+mutants:
+  - {id: M01, file: isqrt_restoring_iter.sv, what: "trial value is 4*root (the +1 dropped)", config: {variant: 0, w: 10, pipe: 1},
+     find: "assign trial = {rt[RW-2:0], 2'b01};", replace: "assign trial = {rt[RW-2:0], 2'b00};"}
+  - {id: M02, file: isqrt_restoring_iter.sv, what: "restore mux select inverted", config: {variant: 0, w: 10, pipe: 1},
+     find: "rm <= t[RW+2] ? sh[RW:0] : t[RW:0];", replace: "rm <= t[RW+2] ? t[RW:0] : sh[RW:0];"}
+  - {id: M03, file: isqrt_restoring_iter.sv, what: "root bit not inverted", config: {variant: 0, w: 10, pipe: 1},
+     find: "rt <= {rt[RW-2:0], ~t[RW+2]};", replace: "rt <= {rt[RW-2:0], t[RW+2]};"}
+  - {id: M04, file: isqrt_restoring_iter.sv, what: "pair taken from the wrong bits of the radicand", config: {variant: 0, w: 10, pipe: 1},
+     find: "assign sh    = {rm[RW-1:0], xs[2*RW-1:2*RW-2]};", replace: "assign sh    = {rm[RW-1:0], xs[2*RW-2:2*RW-3]};"}
+  - {id: M05, file: isqrt_restoring_iter.sv, what: "radicand register shifts by one bit, not two", config: {variant: 0, w: 10, pipe: 1},
+     find: "xs <= {xs[2*RW-3:0], 2'b00};", replace: "xs <= {xs[2*RW-2:0], 1'b0};"}
+  - {id: M06, file: isqrt_restoring_iter.sv, what: "one step too few", config: {variant: 0, w: 10, pipe: 1},
+     find: "if (cnt == CW'(RW - 1)) begin", replace: "if (cnt == CW'(RW - 2)) begin"}
+  - {id: M07, file: isqrt_restoring_iter.sv, what: "odd radicand width not zero-extended (loaded x placed at the top)", config: {variant: 0, w: 9, pipe: 1},
+     find: "xs <= (2*RW)'(x);", replace: "xs <= {x, 1'b0};"}
+  - {id: M08, file: isqrt_restoring_pipe.sv, what: "stage result registered from the stage input (a stage's iterations skipped)", config: {variant: 1, w: 10, pipe: 2},
+     find: "rm_q[s] <= rm_c;", replace: "rm_q[s] <= rm_i;"}
+  - {id: M09, file: isqrt_restoring_pipe.sv, what: "last stage runs PIPE iterations even when fewer remain", config: {variant: 1, w: 9, pipe: 2},
+     find: "localparam int IT = (RW - s * PIPE < PIPE) ? (RW - s * PIPE) : PIPE;", replace: "localparam int IT = PIPE;"}
+  - {id: M10, file: isqrt_restoring_pipe.sv, what: "radicand not passed between stages", config: {variant: 1, w: 10, pipe: 2},
+     find: "always_ff @(posedge clk) xs_q <= xs_c;", replace: "always_ff @(posedge clk) xs_q <= '0;"}
+  - {id: M11, file: isqrt_restoring_pipe.sv, what: "valid taken from the pipeline input (latency 1)", config: {variant: 1, w: 10, pipe: 2},
+     find: "else     v_q[s] <= v_i;", replace: "else     v_q[s] <= in_valid;"}
+  - {id: M12, file: isqrt_nonrestoring_pipe.sv, what: "add/subtract chosen by the wrong sign", config: {variant: 2, w: 10, pipe: 2},
+     find: "t_v  = rm_v[RW+1] ? sh_v + {2'b00, tr_v} : sh_v - {2'b00, tr_v};", replace: "t_v  = rm_v[RW+1] ? sh_v - {2'b00, tr_v} : sh_v + {2'b00, tr_v};"}
+  - {id: M13, file: isqrt_nonrestoring_pipe.sv, what: "trial low bits {1,1} when negative replaced by {0,1}", config: {variant: 2, w: 10, pipe: 2},
+     find: "tr_v = {rt_v[RW-2:0], rm_v[RW+1], 1'b1};", replace: "tr_v = {rt_v[RW-2:0], 1'b0, 1'b1};"}
+  - {id: M14, file: isqrt_nonrestoring_pipe.sv, what: "final correction adds 2*root instead of 2*root + 1", config: {variant: 2, w: 10, pipe: 2},
+     find: "rm_v = rm_v + {1'b0, rt_v, 1'b1};", replace: "rm_v = rm_v + {1'b0, rt_v, 1'b0};"}
+  - {id: M15, file: isqrt_nonrestoring_pipe.sv, what: "correction omitted", config: {variant: 2, w: 10, pipe: 2},
+     find: "if (LAST && rm_v[RW+1]) rm_v = rm_v + {1'b0, rt_v, 1'b1};", replace: "if (LAST && rm_v[RW+1]) rm_v = rm_v;"}
+  - {id: M16, file: isqrt_sel.sv, what: "root and remainder swapped at the selector output", config: {variant: 2, w: 10, pipe: 2},
+     find: "assign out_data = {root, rem};", replace: "assign out_data = {rem[RW-1:0], root, rem[RW]};"}
