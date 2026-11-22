@@ -22,8 +22,8 @@ pl_ethernet:                      # TI DP83867 PHYs (DP83867CSRGZT, refs U36, U7
   # timing notes citing the 88E1111 datasheet do not apply to a DP83867 (its delays are in RGMIICTL/RGMIIDCTL); the design was never run on the board.
   # Sources: packages/kr260/board_facts.yaml (chip.phy.DP83867). The 5 pF input figure of brief 162 is the DP83867's (SNLS504G).
   phy_part: DP83867
-  port_a: {connector: J10B, name: Ethernet 2, phy: PHY2, rx_clk: D4, tx_clk: A2, reset_n: B1, mdio: F3, mdc: G3}
-  port_b: {connector: J10A, name: Ethernet 3, phy: PHY3, rx_clk: K4, tx_clk: J1, reset_n: K1, mdio: T8, mdc: R8}
+  port_a: {connector: J10B, name: Ethernet 2, phy: PHY2, phy_ref: U79, mdio_addr: 2, rx_clk: D4, tx_clk: A2, reset_n: B1, mdio: F3, mdc: G3}
+  port_b: {connector: J10A, name: Ethernet 3, phy: PHY3, phy_ref: U80, mdio_addr: 3, rx_clk: K4, tx_clk: J1, reset_n: K1, mdio: T8, mdc: R8}
 gt:                               # GTH transceivers on the PL (brief 56A; flow/gt_plan.py, flow/gt_gates.py)
   sfp:                            # SFP+ cage J24 (UG1092); pins and sites resolved on Vivado 2026.1 (results/56a_serdes/gt_sites.txt)
     lanes: 1

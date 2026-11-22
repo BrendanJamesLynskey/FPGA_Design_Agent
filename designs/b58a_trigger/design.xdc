@@ -110,8 +110,8 @@ set_input_delay -clock b_rxc_v -clock_fall -min 1.200 -add_delay [get_ports {b_r
 # (data_sheet skew_before_ns 0.85, skew_after_ns 0.75, board_skew_ns 0.05 / 0.09) and flow/io_check.py derives -max/-min
 # from them (IO-VALUE). (A TXC from a 90-degree MMCM output on a second global buffer, PHY TX delay off, was built and
 # routed as well and did not close: results/b58a/build_tx_centred_trial.)
-create_generated_clock -name a_txc -source [get_pins u_atx/u_txc/C] -multiply_by 1 [get_ports a_txc]
-create_generated_clock -name b_txc -source [get_pins u_btx/u_txc/C] -multiply_by 1 [get_ports b_txc]
+create_generated_clock -name a_txc -source [get_pins -hierarchical -filter {NAME =~ u_atx/*u_txc/CLK || NAME =~ u_atx/*u_txc/C}] -multiply_by 1 [get_ports a_txc]
+create_generated_clock -name b_txc -source [get_pins -hierarchical -filter {NAME =~ u_btx/*u_txc/CLK || NAME =~ u_btx/*u_txc/C}] -multiply_by 1 [get_ports b_txc]
 # port A, both edges: max = T/2 - skew_after = 3.30 ns, min = +skew_before = +0.80 ns
 set_output_delay -clock a_txc -max 3.300 [get_ports {a_txd[*] a_tx_ctl}]
 set_output_delay -clock a_txc -min 0.800 [get_ports {a_txd[*] a_tx_ctl}]
