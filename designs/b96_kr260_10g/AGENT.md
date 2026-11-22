@@ -9,7 +9,7 @@ A Kria KR260 design that carries our own 10GBASE-R PCS (64B/66B, scrambler, gear
 not: an interoperability proof: a PCS talking to itself accepts its own symmetric mistakes, only a network card proves it; the full 58A trading core (book, rule table, interlocks, ARP) at 64 bits: trade64 is a small stand-in with one rule; the reconciliation sublayer link-fault state machine, the BER monitor, an ARP or ICMP responder
 
 ## state
-stage=built vivado=2026.1 kb_pin=5e2eab8 build_id=f387f9e5
+stage=built vivado=2026.1 kb_pin=5e2eab8 build_id=ae9764f8
 gates: build_2026_1=pass
 
 ## interface
@@ -33,7 +33,7 @@ designs/b96_kr260_10g/dbg_xvc/rtl/b96_core.sv f97848c5f7: copy of rtl/b96_core.s
 designs/b96_kr260_10g/dbg_xvc/rtl/kr260_10g_top.sv ca47f11df2: copy of rtl/kr260_10g_top.sv for build dbg_xvc with the debug path instantiated (brief 131)
 designs/b96_kr260_10g/dbg_xvc/build.yaml 241abf02aa: how flow/run_vivado.sh builds dbg_xvc (the eyescan build plus the debug path, brief 131)
 designs/b96_kr260_10g/ip/amd_ip_xvc.tcl 322bd679d3: the AMD IP of build dbg_xvc: Zynq UltraScale+ PS, AXI Protocol Converter, Debug Bridge, ILA (brief 131)
-designs/b96_kr260_10g/dbg_xvc/docs/dbg_xvc.md afd7cf480e: what build dbg_xvc is, what the ILA watches and why, what the debug logic changes, measured against the parent build (brief 131)
+designs/b96_kr260_10g/dbg_xvc/docs/dbg_xvc.md 8c015b2a81: what build dbg_xvc is, what the ILA watches and why, what the debug logic changes, measured against the parent build (brief 131)
 designs/b96_kr260_10g/dbg_xvc/docs/xvc_board_side.md b5fcf54a03: how XVC would run on the KR260's Ubuntu: which variant fits, the overlay, the Vivado connection; written, not run (brief 131)
 designs/b96_kr260_10g/dbg_xvc/docs/xvc_board_test.md 1c31caf208: the pre-registered board test for build dbg_xvc: criteria written before any board time (brief 131)
 designs/b96_kr260_10g/dbg_xvc/board/pl-dbg-xvc.dtsi 6b0dd3f24b: device-tree overlay fragment for the debug bridge on the KR260; not loaded on a board (brief 131)

@@ -1721,13 +1721,6 @@
      },
      {
       "gate": false,
-      "id": "B96-S-CDC",
-      "state": "fail",
-      "text": "an item fails",
-      "type": "no_passing_evidence"
-     },
-     {
-      "gate": false,
       "id": "B96-P-T2T-DIGITAL",
       "state": "stale",
       "text": "its evidence is stale",
@@ -1745,13 +1738,6 @@
       "id": "B96-P-THROUGHPUT",
       "text": "depends on a 10G network card or a line-rate traffic generator; only hardware verification can close it, and it has not been done",
       "type": "hardware_open"
-     },
-     {
-      "gate": false,
-      "id": "B96-F-DBGXVC",
-      "state": "fail",
-      "text": "an item fails",
-      "type": "no_passing_evidence"
      },
      {
       "gate": false,
@@ -2727,10 +2713,10 @@
       "value": true
      },
      {
-      "detail": "gates.post_synth_cdc_structure_clean = False",
+      "detail": "gates.post_synth_cdc_structure_clean = True",
       "evidence": {
        "exists": true,
-       "file": "results/b131/builds/dbg_xvc/digest.json"
+       "file": "results/b140/builds/dbg_xvc/digest.json"
       },
       "id": "V-XVC-CDC-STRUCT",
       "instrument": null,
@@ -2740,8 +2726,25 @@
        "B96-S-CDC",
        "B96-F-DBGXVC"
       ],
-      "status": "fail",
-      "title": "The flow's post-synthesis CDC structure gate on dbg_xvc (open: 2203 crossings of the core's own hs_vec buses are not matched to their max-delay exceptions in this build; the exceptions exist in the routed design)",
+      "status": "pass",
+      "title": "The flow's post-synthesis CDC structure gate on dbg_xvc (brief 140: AMD's CDC-15 waiver for the XPM handshake left report_cdc no row for the 2203 hs_vec crossings; the flow now reads their exception from the timing exceptions)",
+      "value": true
+     },
+     {
+      "detail": "pass = True",
+      "evidence": {
+       "exists": true,
+       "file": "results/b140/builds/dbg_xvc/gates.json"
+      },
+      "id": "V-XVC-FLOW-GATES",
+      "instrument": null,
+      "method": "timing",
+      "planned": null,
+      "requirements": [
+       "B96-F-DBGXVC"
+      ],
+      "status": "pass",
+      "title": "Every flow gate of build dbg_xvc, synthesis to bitstream (brief 140: six that failed in brief 131 now pass, by flow fixes and no waiver; the eyescan and default builds are unchanged)",
       "value": true
      },
      {
@@ -3299,7 +3302,7 @@
       "source": "designs/b96_kr260_10g/docs/design.md#26-where-the-decision-lives-and-how-it-crosses-clocks-as-built-for-brief-96-superseded-by-section-9-brief-96c",
       "spec_status": "draft",
       "stale_items": 2,
-      "state": "fail",
+      "state": "verified",
       "text": "report_cdc shows no Critical item and every crossing has the documented synchroniser structure.",
       "title": "No critical clock-domain crossing"
      },
@@ -3655,6 +3658,7 @@
        "V-XVC-TIM-HOLD",
        "V-XVC-CDC",
        "V-XVC-CDC-STRUCT",
+       "V-XVC-FLOW-GATES",
        "V-XVC-VERDICT",
        "V-XVC-TRADING-PATH",
        "V-HW-XVC-PLANNED"
@@ -3669,7 +3673,7 @@
       "source": "designs/b96_kr260_10g/dbg_xvc/docs/dbg_xvc.md",
       "spec_status": "draft",
       "stale_items": 0,
-      "state": "fail",
+      "state": "verified",
       "text": "Build dbg_xvc (the eyescan build plus a PS-AXI Debug Bridge and one ILA) closes timing and report_cdc, adds no cell to and removes no cell from the core's hierarchy except the read-only taps, and, on the board, Vivado finds and captures from the ILA over XVC while Linux keeps running. Never part of a build whose latency is measured.",
       "title": "A debug build reaches an ILA over the network and leaves the trading path alone"
      },
@@ -3811,10 +3815,10 @@
       },
       "timing": {
        "bounded": 0,
-       "fail": 1,
+       "fail": 0,
        "not_in_run": 0,
        "not_run": 0,
-       "pass": 7,
+       "pass": 9,
        "skipped": 0,
        "stale": 6,
        "unapproved": 0
@@ -3831,21 +3835,20 @@
       }
      },
      "by_state": {
-      "fail": 2,
       "not_run": 2,
       "stale": 1,
-      "verified": 23
+      "verified": 25
      },
      "external": 3,
      "external_hardware_done": 0,
      "gap_counts": {
       "external_not_hardware_verified": 1,
       "hardware_open": 3,
-      "no_passing_evidence": 5,
+      "no_passing_evidence": 3,
       "stale_evidence": 15
      },
      "human_reviews": 0,
-     "items": 58,
+     "items": 59,
      "lean": {
       "approved": 0,
       "build_sources": [
@@ -3869,7 +3872,7 @@
       "items": 4,
       "statement_not_approved": 0
      },
-     "line": "28 requirements (12 functional, 9 performance, 1 interface, 6 safety); 23 verified, of which 2 rest on delegated acceptances (the planner accepted the Lean statement on the owner's delegation; not human approvals); 1 stale; 2 failing; 2 with no passing evidence; 0 of 3 requirements that depend on an external element closed by hardware; performance verified: 5 on the board, 2 by post-route timing, 0 in simulation only; 0 of 28 requirements agreed by a human, 0 human review(s) recorded; 4 Lean proof item(s) (all widths): 0 with a human-approved statement, 4 with a statement accepted on the owner's delegation (not a human approval), 0 with statement not approved; 4 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run).",
+     "line": "28 requirements (12 functional, 9 performance, 1 interface, 6 safety); 25 verified, of which 2 rest on delegated acceptances (the planner accepted the Lean statement on the owner's delegation; not human approvals); 1 stale; 2 with no passing evidence; 0 of 3 requirements that depend on an external element closed by hardware; performance verified: 5 on the board, 2 by post-route timing, 0 in simulation only; 0 of 28 requirements agreed by a human, 0 human review(s) recorded; 4 Lean proof item(s) (all widths): 0 with a human-approved statement, 4 with a statement accepted on the owner's delegation (not a human approval), 0 with statement not approved; 4 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run).",
      "performance_board": 5,
      "performance_sim_only": 0,
      "performance_timing": 2,
@@ -25781,7 +25784,7 @@
   "total": {
    "designs": 33,
    "requirements": 346,
-   "verified": 267
+   "verified": 269
   }
  },
  "content": {
@@ -27506,13 +27509,6 @@
      },
      {
       "gate": false,
-      "id": "B96-S-CDC",
-      "state": "fail",
-      "text": "an item fails",
-      "type": "no_passing_evidence"
-     },
-     {
-      "gate": false,
       "id": "B96-P-T2T-DIGITAL",
       "state": "stale",
       "text": "its evidence is stale",
@@ -27530,13 +27526,6 @@
       "id": "B96-P-THROUGHPUT",
       "text": "depends on a 10G network card or a line-rate traffic generator; only hardware verification can close it, and it has not been done",
       "type": "hardware_open"
-     },
-     {
-      "gate": false,
-      "id": "B96-F-DBGXVC",
-      "state": "fail",
-      "text": "an item fails",
-      "type": "no_passing_evidence"
      },
      {
       "gate": false,
@@ -28512,10 +28501,10 @@
       "value": true
      },
      {
-      "detail": "gates.post_synth_cdc_structure_clean = False",
+      "detail": "gates.post_synth_cdc_structure_clean = True",
       "evidence": {
        "exists": true,
-       "file": "results/b131/builds/dbg_xvc/digest.json"
+       "file": "results/b140/builds/dbg_xvc/digest.json"
       },
       "id": "V-XVC-CDC-STRUCT",
       "instrument": null,
@@ -28525,8 +28514,25 @@
        "B96-S-CDC",
        "B96-F-DBGXVC"
       ],
-      "status": "fail",
-      "title": "The flow's post-synthesis CDC structure gate on dbg_xvc (open: 2203 crossings of the core's own hs_vec buses are not matched to their max-delay exceptions in this build; the exceptions exist in the routed design)",
+      "status": "pass",
+      "title": "The flow's post-synthesis CDC structure gate on dbg_xvc (brief 140: AMD's CDC-15 waiver for the XPM handshake left report_cdc no row for the 2203 hs_vec crossings; the flow now reads their exception from the timing exceptions)",
+      "value": true
+     },
+     {
+      "detail": "pass = True",
+      "evidence": {
+       "exists": true,
+       "file": "results/b140/builds/dbg_xvc/gates.json"
+      },
+      "id": "V-XVC-FLOW-GATES",
+      "instrument": null,
+      "method": "timing",
+      "planned": null,
+      "requirements": [
+       "B96-F-DBGXVC"
+      ],
+      "status": "pass",
+      "title": "Every flow gate of build dbg_xvc, synthesis to bitstream (brief 140: six that failed in brief 131 now pass, by flow fixes and no waiver; the eyescan and default builds are unchanged)",
       "value": true
      },
      {
@@ -29084,7 +29090,7 @@
       "source": "designs/b96_kr260_10g/docs/design.md#26-where-the-decision-lives-and-how-it-crosses-clocks-as-built-for-brief-96-superseded-by-section-9-brief-96c",
       "spec_status": "draft",
       "stale_items": 2,
-      "state": "fail",
+      "state": "verified",
       "text": "report_cdc shows no Critical item and every crossing has the documented synchroniser structure.",
       "title": "No critical clock-domain crossing"
      },
@@ -29440,6 +29446,7 @@
        "V-XVC-TIM-HOLD",
        "V-XVC-CDC",
        "V-XVC-CDC-STRUCT",
+       "V-XVC-FLOW-GATES",
        "V-XVC-VERDICT",
        "V-XVC-TRADING-PATH",
        "V-HW-XVC-PLANNED"
@@ -29454,7 +29461,7 @@
       "source": "designs/b96_kr260_10g/dbg_xvc/docs/dbg_xvc.md",
       "spec_status": "draft",
       "stale_items": 0,
-      "state": "fail",
+      "state": "verified",
       "text": "Build dbg_xvc (the eyescan build plus a PS-AXI Debug Bridge and one ILA) closes timing and report_cdc, adds no cell to and removes no cell from the core's hierarchy except the read-only taps, and, on the board, Vivado finds and captures from the ILA over XVC while Linux keeps running. Never part of a build whose latency is measured.",
       "title": "A debug build reaches an ILA over the network and leaves the trading path alone"
      },
@@ -29596,10 +29603,10 @@
       },
       "timing": {
        "bounded": 0,
-       "fail": 1,
+       "fail": 0,
        "not_in_run": 0,
        "not_run": 0,
-       "pass": 7,
+       "pass": 9,
        "skipped": 0,
        "stale": 6,
        "unapproved": 0
@@ -29616,21 +29623,20 @@
       }
      },
      "by_state": {
-      "fail": 2,
       "not_run": 2,
       "stale": 1,
-      "verified": 23
+      "verified": 25
      },
      "external": 3,
      "external_hardware_done": 0,
      "gap_counts": {
       "external_not_hardware_verified": 1,
       "hardware_open": 3,
-      "no_passing_evidence": 5,
+      "no_passing_evidence": 3,
       "stale_evidence": 15
      },
      "human_reviews": 0,
-     "items": 58,
+     "items": 59,
      "lean": {
       "approved": 0,
       "build_sources": [
@@ -29654,7 +29660,7 @@
       "items": 4,
       "statement_not_approved": 0
      },
-     "line": "28 requirements (12 functional, 9 performance, 1 interface, 6 safety); 23 verified, of which 2 rest on delegated acceptances (the planner accepted the Lean statement on the owner's delegation; not human approvals); 1 stale; 2 failing; 2 with no passing evidence; 0 of 3 requirements that depend on an external element closed by hardware; performance verified: 5 on the board, 2 by post-route timing, 0 in simulation only; 0 of 28 requirements agreed by a human, 0 human review(s) recorded; 4 Lean proof item(s) (all widths): 0 with a human-approved statement, 4 with a statement accepted on the owner's delegation (not a human approval), 0 with statement not approved; 4 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run).",
+     "line": "28 requirements (12 functional, 9 performance, 1 interface, 6 safety); 25 verified, of which 2 rest on delegated acceptances (the planner accepted the Lean statement on the owner's delegation; not human approvals); 1 stale; 2 with no passing evidence; 0 of 3 requirements that depend on an external element closed by hardware; performance verified: 5 on the board, 2 by post-route timing, 0 in simulation only; 0 of 28 requirements agreed by a human, 0 human review(s) recorded; 4 Lean proof item(s) (all widths): 0 with a human-approved statement, 4 with a statement accepted on the owner's delegation (not a human approval), 0 with statement not approved; 4 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run).",
      "performance_board": 5,
      "performance_sim_only": 0,
      "performance_timing": 2,
@@ -51566,7 +51572,7 @@
   "total": {
    "designs": 33,
    "requirements": 346,
-   "verified": 267
+   "verified": 269
   }
  }
 }

@@ -567,10 +567,17 @@ verification:
   - id: V-XVC-CDC-STRUCT
     requirements: [B96-S-CDC, B96-F-DBGXVC]
     method: timing
-    title: "The flow's post-synthesis CDC structure gate on dbg_xvc (open: 2203 crossings of the core's own hs_vec buses are not matched to their max-delay exceptions in this build; the exceptions exist in the routed design)"
-    evidence: {file: results/b131/builds/dbg_xvc/digest.json, reader: json}
+    title: "The flow's post-synthesis CDC structure gate on dbg_xvc (brief 140: AMD's CDC-15 waiver for the XPM handshake left report_cdc no row for the 2203 hs_vec crossings; the flow now reads their exception from the timing exceptions)"
+    evidence: {file: results/b140/builds/dbg_xvc/digest.json, reader: json}
     pass_when: [{field: gates.post_synth_cdc_structure_clean, op: "true"}]
     checks: [designs/b96_kr260_10g/dbg_xvc/rtl/xvc_debug.sv, designs/b96_kr260_10g/dbg_xvc/rtl/b96_core.sv]
+  - id: V-XVC-FLOW-GATES
+    requirements: [B96-F-DBGXVC]
+    method: timing
+    title: "Every flow gate of build dbg_xvc, synthesis to bitstream (brief 140: six that failed in brief 131 now pass, by flow fixes and no waiver; the eyescan and default builds are unchanged)"
+    evidence: {file: results/b140/builds/dbg_xvc/gates.json, reader: json}
+    pass_when: [{field: pass, op: "true"}]
+    checks: [designs/b96_kr260_10g/dbg_xvc/rtl/xvc_debug.sv, designs/b96_kr260_10g/dbg_xvc/rtl/b96_core.sv, designs/b96_kr260_10g/dbg_xvc/rtl/kr260_10g_top.sv]
   - id: V-XVC-VERDICT
     requirements: [B96-F-DBGXVC]
     method: sim_test
