@@ -1,0 +1,65 @@
+# Machine-readable specification of the fixed-point rounding and saturation function (brief 139b). Human-readable form: spec.md. spec_status is set by a human only.
+function: fxp_round
+spec_version: 1
+spec_status: draft
+summary: Drop S fractional bits from a signed W_IN-bit value with a rounding mode, then wrap or saturate to W_OUT bits.
+parameters:
+  W_IN: {meaning: input width, signed two's complement, range: "2 or more"}
+  S: {meaning: fractional bits dropped, range: "0 to W_IN - 1"}
+  W_OUT: {meaning: output width, signed, range: "2 or more (any relation to W_IN - S + 1)"}
+  MODE: {meaning: "0 truncate (toward minus infinity), 1 round half up (ties toward plus infinity), 2 convergent (ties to the even result)"}
+  SAT: {meaning: "0 wrap (keep the low W_OUT bits of the rounded value), 1 saturate (clamp to the W_OUT range)"}
+interface:
+  clock: "clk (rising edge)"
+  reset: "rst (synchronous, active high; clears only the valid flags)"
+  in: {in_valid: 1, in_ready: "always 1", in_data: "x, W_IN bits, signed"}
+  out: {out_valid: 1, out_data: "y, W_OUT bits, signed; meaningful only while out_valid is high"}
+function_definition:
+  rounded: "r = trunc: floor(x / 2**S); half up: floor(x / 2**S + 1/2); convergent: nearest, a tie to the even integer. r needs W_IN - S + 1 bits (the largest x rounds up one past its truncated range)"
+  fit: "SAT = 1: y = min(max(r, -2**(W_OUT-1)), 2**(W_OUT-1) - 1); SAT = 0: y = r modulo 2**W_OUT as a signed value"
+error_bound: "before saturation: truncate 0 <= x/2**S - r < 1; half up and convergent |r - x/2**S| <= 1/2 (output LSBs); proved in Lean for all S (Arith.Rounding)"
+latency_definition: "clock edges from the accepting edge to the edge that samples out_valid high"
+variants:
+  - id: fold_add
+    module: fxp_round_fold
+    selector: {VARIANT: 0}
+    protocol: "valid only: in_ready is constant 1, fixed latency, one result per clock, no stall or enable (a free-running pipeline); out_valid is in_valid delayed by the latency, results in input order"
+    reset_clock_assumptions: "one clock, rising edge; rst is synchronous and must be held for at least one clock before the first in_valid (the formal harness assumes reset in the first cycle only); outputs and in_ready are defined from the first clock after reset; data-path registers are not reset"
+    latency: "1"
+    throughput: one per clock
+    expected_primitives: {carry4: "ceil((W_IN+1)/4)", dsp48: 0, bram: 0, ff: "W_OUT + 1"}
+    trade_off: one carry chain of full width (constant and carry-in folded into the adder); saturation after the chain in the same clock
+    points: [{W_IN: 24, S: 8, W_OUT: 16, MODE: 2, SAT: 1}, {W_IN: 32, S: 12, W_OUT: 18, MODE: 2, SAT: 1}, {W_IN: 32, S: 12, W_OUT: 18, MODE: 0, SAT: 0}, {W_IN: 48, S: 16, W_OUT: 24, MODE: 2, SAT: 1}]
+  - id: inc_after
+    module: fxp_round_inc
+    selector: {VARIANT: 1}
+    protocol: "valid only: in_ready is constant 1, fixed latency, one result per clock, no stall or enable (a free-running pipeline); out_valid is in_valid delayed by the latency, results in input order"
+    reset_clock_assumptions: "one clock, rising edge; rst is synchronous and must be held for at least one clock before the first in_valid (the formal harness assumes reset in the first cycle only); outputs and in_ready are defined from the first clock after reset; data-path registers are not reset"
+    latency: "1"
+    throughput: one per clock
+    expected_primitives: {carry4: "ceil((W_IN-S+1)/4)", dsp48: 0, bram: 0, ff: "W_OUT + 1"}
+    trade_off: shorter carry chain (only the kept bits) plus an increment-decision LUT tree over the dropped bits
+    points: [{W_IN: 24, S: 8, W_OUT: 16, MODE: 2, SAT: 1}, {W_IN: 32, S: 12, W_OUT: 18, MODE: 2, SAT: 1}, {W_IN: 32, S: 12, W_OUT: 18, MODE: 0, SAT: 0}, {W_IN: 48, S: 16, W_OUT: 24, MODE: 2, SAT: 1}]
+  - id: two_stage
+    module: fxp_round_2st
+    selector: {VARIANT: 2}
+    protocol: "valid only: in_ready is constant 1, fixed latency, one result per clock, no stall or enable (a free-running pipeline); out_valid is in_valid delayed by the latency, results in input order"
+    reset_clock_assumptions: "one clock, rising edge; rst is synchronous and must be held for at least one clock before the first in_valid (the formal harness assumes reset in the first cycle only); outputs and in_ready are defined from the first clock after reset; data-path registers are not reset"
+    latency: "2"
+    throughput: one per clock
+    expected_primitives: {carry4: "ceil((W_IN+1)/4)", dsp48: 0, bram: 0, ff: "W_OUT + (W_IN-S+1) + 2"}
+    trade_off: "the fold adder and the saturation in separate clocks (more flip-flops, one more clock, shorter path)"
+    points: [{W_IN: 24, S: 8, W_OUT: 16, MODE: 2, SAT: 1}, {W_IN: 32, S: 12, W_OUT: 18, MODE: 2, SAT: 1}, {W_IN: 32, S: 12, W_OUT: 18, MODE: 0, SAT: 0}, {W_IN: 48, S: 16, W_OUT: 24, MODE: 2, SAT: 1}]
+integration:
+  port_timing: "All inputs are sampled on the rising edge and all outputs change after it; there is no combinational path from in_data or in_valid to out_data or out_valid in any variant except that the unrolled pipelines' first stage logic is between the input pins and the first register, so register the inputs (the out-of-context wrapper does) when the source is slow. in_ready of an iterative variant is a registered state and may drive a source's enable directly."
+  constraints_to_carry: "One clock constraint on clk. No multicycle or false-path exceptions are needed or valid: every path is single-cycle register to register. rst is synchronous: do not give it an asynchronous or set_false_path treatment. Do not retime across the valid pipeline of a multi-stage variant without re-running the harness (latency is part of the contract). Out-of-context numbers (Fmax, area, power) for the variants are not yet measured: see build/<variant>/<fabric>/build.yaml, prepared and not run."
+  after_integration: "Rerun the packaged harness against your instance (harness/README.md): it checks values, order and the measured latency of every result and reports coverage of the target bins."
+what_a_user_could_guess_wrong:
+  - "Truncate is a floor (toward minus infinity), not toward zero: -1 >> 1 is -1, not 0. Round half up sends -2.5 to -2 and 2.5 to 3. Convergent sends 0.5 to 0, 1.5 to 2, 2.5 to 2, -0.5 to 0, -1.5 to -2."
+  - "Rounding happens before saturation and can itself overflow: the largest input rounds up to 2**(W_IN-S-1), one past the truncated range, so SAT matters even when W_OUT = W_IN - S."
+  - "Wrap (SAT = 0) takes the low W_OUT bits of the rounded value, not of the input: a rounding carry can change the wrapped result."
+  - "W_OUT may be wider than W_IN - S + 1: the value is sign-extended and neither wrap nor saturate has an effect."
+  - "S = 0 is the identity for every mode (only the fit to W_OUT acts)."
+  - "A convergent tie is judged on the value after dropping S bits: the 'even' test is on the floor's least significant bit, which is bit S of x."
+  - "W_OUT = 1 is not supported (a signed 1-bit value cannot saturate to two distinct non-zero values in this coding); use 2 or more."
+requirements: [FXR-F-MODEL, FXR-F-RTL-EXH, FXR-F-RTL-RAND, FXR-F-LAT, FXR-F-LINT, FXR-F-MUTANT, FXR-F-FORMAL-REF, FXR-F-FORMAL-PAIR, FXR-F-LEAN-HALFUP, FXR-F-LEAN-CONV, FXR-F-BUILD]

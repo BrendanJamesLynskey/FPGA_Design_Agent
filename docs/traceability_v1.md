@@ -147,11 +147,11 @@ that the hashes still match.
 
 ## Status rules (computed, never typed)
 
-Per item: `fail` if a condition does not hold or a measured value is outside the bound; `not_run` if the evidence file or field is missing (a `planned:` hook
+Per item: `fail` if a condition does not hold, a measured value is outside the bound, or a named test is present in the recorded JUnit run and failed; `not_in_run` (shown "not in the recorded run") if a named test is absent from the recorded JUnit or a `stem::*` matches nothing, i.e. the evidence predates the test, with the missing names listed; `skipped` if a named test was skipped in the recorded run; `not_run` if the evidence file or field is missing (a `planned:` hook
 says why); `stale` if it passes but a file in `checks` differs from its pinned hash, the evidence file differs from its pin, or there is no pin; `bounded` if it
 passes and `bounded:` is set; `unapproved` for a `formal_lean` item that builds while its statement is not accepted (neither a human approval nor a delegated acceptance); otherwise `pass`.
 
-Per requirement: `fail` if any item fails. Where `flow/method_mix_policy.yaml` has an entry for the kind, `verified` also needs the method mix (above), else `partially verified` or `waived`. A **performance** requirement is `verified` only when a measuring item (`timing`, `sim_measurement`,
+Per requirement: `fail` if any item fails. `not_in_run`, `skipped` and `not_run` are all "no passing evidence" and are counted together in the summary line (with the first two broken out), never as failing; the gap list names the missing or skipped tests. Where `flow/method_mix_policy.yaml` has an entry for the kind, `verified` also needs the method mix (above), else `partially verified` or `waived`. A **performance** requirement is `verified` only when a measuring item (`timing`, `sim_measurement`,
 `board_measurement`, judged against the bound) passes; the basis is recorded as board, post-route timing or simulation only; a passing test alone gives
 `no_measurement`. Without a policy entry a requirement is `verified` with one passing item; otherwise `bounded` with only bounded formal, `stale`, `unapproved` (only Lean items whose statement is not approved), or `not_run`.
 
@@ -160,13 +160,39 @@ matrix says "passes without hardware; hardware verification open".
 
 ## Gaps and the gate
 
-Reported: requirements with no passing evidence, stale evidence, performance verified in simulation only, external requirements not closed by hardware.
+Reported: requirements with no passing evidence (not run, not in the recorded run, skipped), stale evidence, performance verified in simulation only, external requirements not closed by hardware.
 **Fail CI** (`python -m flow.trace_v1 check`, and the tests in `flow/tests/test_116_traceability.py`, which also compare the committed matrices with what the code
 writes today): a requirement no item traces to, an orphan check (an item tracing to no or an unknown requirement, or a bench test no item names), an approved Lean statement that changed, a malformed `formal_lean` item or approvals file, a malformed agreements, reviews or waivers file, `spec_status: agreed` in a testplan, a waiver of a safety requirement that is not a human's, an unknown `written_by`, an unknown
 method or kind, a `board_measurement` without a valid instrument, a performance requirement without quantity, unit, op, bound and condition, a `checks` file that does
 not exist. Staleness is reported, not failed.
 
+## Fresh evidence (brief 143d)
+
+The matrices read committed records, and a record that was true when it was made can be wrong for today's tree without the pins noticing (evidence generated from an older
+tree and committed later looks fresh). [flow/fresh_evidence.py](../flow/fresh_evidence.py) re-runs the evidence from the current tree and compares:
+
+- `python -m flow.fresh_evidence run JOB --out DIR` writes fresh records into DIR at the same repository paths as the committed ones (`DIR/results/b119/bench_sim.json` is the fresh
+  copy of `results/b119/bench_sim.json`) and a manifest per job (command, exit code, seconds, commit, tool versions, output hashes). Nothing in the tree is overwritten.
+  `python -m flow.fresh_evidence list` shows the jobs. Tier `github` fits a free runner; tier `local` needs xsim, the full formal set or Vivado.
+- The nightly workflow [fresh-evidence.yml](../.github/workflows/fresh-evidence.yml) runs the `github` jobs in parallel (b119 tests and benches, the 73 b119 seeded faults, the b96 cocotb
+  benches in two shards, the reduced formal set and the pyuvm bench, the Lean build), keeps the fresh records as an artefact for 30 days, and compares. A difference fails the scheduled run and opens or
+  updates an issue labelled `fresh-evidence` in this repository; the next agreeing run closes it. A pull request that touches the workflow runs it and only warns.
+- [tools/fresh_evidence_local.sh](../tools/fresh_evidence_local.sh) runs the `local` jobs on the owner's PC (xsim UVM with the whole b96 test directory, the full SymbiYosys set, the b119
+  out-of-context Vivado build) under a heavy slot and a memory cap and writes the same records and report. The systemd user timer for it, [tools/systemd/](../tools/systemd/), is a
+  proposal: it is not enabled.
+- `python -m flow.trace_v1 show --fresh DIR` and `write --fresh DIR` read the fresh records. An item whose committed record disagrees with the fresh run gets the distinct mark
+  **committed record differs from fresh run** (its verdict is still the committed record's; the mark is a second signal, not a fifth status), and its requirement's state cell counts the marked items.
+  `write --fresh` puts the marked matrices in `DIR/matrices`, never in the tree. `python -m flow.trace_v1 fresh --fresh DIR` prints the comparison and exits 1 on a difference.
+
+What counts as a difference: for a JUnit record, a test present in both with a different outcome, or a test in the fresh run that the committed record lacks (the record is out of date);
+for a JSON record, any value that differs once seconds, the tool banner and time stamps are removed; for the Lean record, build success, axioms and tier per theorem, statement and definition
+hashes, file hashes and the toolchain. A test the fresh run skipped or did not run (an xsim test on a runner) is *not re-run here*, never a difference. Board records, post-route digests and
+anything else a runner cannot regenerate show *not re-run* and keep their committed verdict.
+
 ## Limits
+
+A fresh run shows that the committed record is what the current tree produces; it does not show the tests are the right tests. Records that need xsim, the full formal set or Vivado are only
+re-run by the local script, when the owner or planner runs it.
 
 Staleness is a lower bound: the pin records the checked files as of the evidence's commit, so evidence generated from an older tree and committed later looks fresh.
 A requirement is only as good as its text; the matrix shows that checks exist and pass, not that the requirement is the right one, which is the human's check.

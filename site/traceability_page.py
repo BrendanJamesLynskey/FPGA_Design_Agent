@@ -8,9 +8,9 @@ from story_page import REPO
 E = html.escape
 METHODS = [("sim_test", "Simulation test"), ("uvm_test", "UVM"), ("assertion", "SVA"), ("formal", "Formal"), ("formal_lean", "Lean (all widths)"), ("coverage_bin", "Coverage"),
            ("timing", "Timing"), ("sim_measurement", "Sim measure"), ("board_measurement", "Board"), ("review", "Review")]
-STATE = {"verified": "verified", "partially_verified": "partially verified", "waived": "verified under a waiver", "fail": "fails", "not_run": "not run", "stale": "stale", "bounded": "bounded only", "no_measurement": "no measurement",
+STATE = {"verified": "verified", "partially_verified": "partially verified", "waived": "verified under a waiver", "fail": "fails", "not_run": "not run", "not_in_run": "not in the recorded run", "skipped": "skipped in the recorded run", "stale": "stale", "bounded": "bounded only", "no_measurement": "no measurement",
          "unapproved": "proved, statement not approved"}
-MARK = {"pass": "pass", "fail": "FAIL", "not_run": "not run", "stale": "stale", "bounded": "bounded", "unapproved": "statement not approved"}
+MARK = {"pass": "pass", "fail": "FAIL", "not_run": "not run", "not_in_run": "not in the recorded run", "skipped": "skipped", "stale": "stale", "bounded": "bounded", "unapproved": "statement not approved"}
 TIER = {"kernel_only": "kernel only", "compiled_decision_procedure": "kernel plus a compiled decision procedure", "unsound": "unsound"}
 RTL_LINK = {"rtl_generated": "RTL-generated model", "transcription_tested": "transcription tested", "transcription_untested": "transcription untested", "model_only": "no RTL link"}
 GAP = {"record_problem": "Agreement, review or waiver record problems", "method_mix_missing": "Required method mix not met", "own_tests_only": "Resting only on the implementing agent's own tests", "waiver_in_effect": "Waivers in effect", "waiver_expired": "Expired waivers", "agreement_dropped": "Agreements dropped (text changed)", "lean_frozen_statement_changed": "Lean: an approved statement changed", "lean_approval": "Lean: approval file problems", "lean_failing": "Lean proofs that fail",

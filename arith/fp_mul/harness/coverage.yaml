@@ -1,0 +1,23 @@
+# Coverage targets of the fp_mul harness (arith brief 139e). Each bin is a Python expression over v (the inputs of one vector), r (the model's outputs) and p (the parameters); a bin is hit
+# when it is true for at least `min` vectors. run_harness.py fails if a target is not met. EM below is the exponent-and-fraction mask (everything but the sign); a class of operand is read
+# from its exponent field (all ones: infinity or NaN; zero: zero or subnormal).
+bins:
+  - {name: a_zero, expr: "(v['a'] & ((1 << (p['EXP'] + p['MAN'])) - 1)) == 0", min: 3}
+  - {name: a_subnormal, expr: "((v['a'] >> p['MAN']) & ((1 << p['EXP']) - 1)) == 0 and (v['a'] & ((1 << p['MAN']) - 1)) != 0", min: 3, min_if: "p['SUBNORM'] == 1"}
+  - {name: a_infinity, expr: "((v['a'] >> p['MAN']) & ((1 << p['EXP']) - 1)) == ((1 << p['EXP']) - 1) and (v['a'] & ((1 << p['MAN']) - 1)) == 0", min: 2}
+  - {name: a_nan, expr: "((v['a'] >> p['MAN']) & ((1 << p['EXP']) - 1)) == ((1 << p['EXP']) - 1) and (v['a'] & ((1 << p['MAN']) - 1)) != 0", min: 2}
+  - {name: a_negative, expr: "v['a'] >> (p['EXP'] + p['MAN']) == 1", min: 10}
+  - {name: b_zero, expr: "(v['b'] & ((1 << (p['EXP'] + p['MAN'])) - 1)) == 0", min: 3}
+  - {name: b_subnormal, expr: "((v['b'] >> p['MAN']) & ((1 << p['EXP']) - 1)) == 0 and (v['b'] & ((1 << p['MAN']) - 1)) != 0", min: 3, min_if: "p['SUBNORM'] == 1"}
+  - {name: b_infinity, expr: "((v['b'] >> p['MAN']) & ((1 << p['EXP']) - 1)) == ((1 << p['EXP']) - 1) and (v['b'] & ((1 << p['MAN']) - 1)) == 0", min: 2}
+  - {name: b_nan, expr: "((v['b'] >> p['MAN']) & ((1 << p['EXP']) - 1)) == ((1 << p['EXP']) - 1) and (v['b'] & ((1 << p['MAN']) - 1)) != 0", min: 2}
+  - {name: b_negative, expr: "v['b'] >> (p['EXP'] + p['MAN']) == 1", min: 10}
+  - {name: result_infinity, expr: "((r['y'] >> p['MAN']) & ((1 << p['EXP']) - 1)) == ((1 << p['EXP']) - 1) and (r['y'] & ((1 << p['MAN']) - 1)) == 0", min: 3}
+  - {name: result_nan, expr: "((r['y'] >> p['MAN']) & ((1 << p['EXP']) - 1)) == ((1 << p['EXP']) - 1) and (r['y'] & ((1 << p['MAN']) - 1)) != 0", min: 3}
+  - {name: result_subnormal, expr: "((r['y'] >> p['MAN']) & ((1 << p['EXP']) - 1)) == 0 and (r['y'] & ((1 << p['MAN']) - 1)) != 0", min: 3, min_if: "p['SUBNORM'] == 1"}
+  - {name: result_zero, expr: "(r['y'] & ((1 << (p['EXP'] + p['MAN'])) - 1)) == 0", min: 5}
+  - {name: result_negative, expr: "r['y'] >> (p['EXP'] + p['MAN']) == 1", min: 10}
+  - {name: result_smallest_normal, expr: "((r['y'] >> p['MAN']) & ((1 << p['EXP']) - 1)) == 1 and (r['y'] & ((1 << p['MAN']) - 1)) == 0", min: 1}
+  - {name: result_largest_finite, expr: "((r['y'] >> p['MAN']) & ((1 << p['EXP']) - 1)) == ((1 << p['EXP']) - 1) - 1 and (r['y'] & ((1 << p['MAN']) - 1)) == (1 << p['MAN']) - 1", min: 1}
+  - {name: zero_times_infinity, expr: "((v['a'] & ((1 << (p['EXP'] + p['MAN'])) - 1)) == 0 and ((v['b'] >> p['MAN']) & ((1 << p['EXP']) - 1)) == (1 << p['EXP']) - 1 and (v['b'] & ((1 << p['MAN']) - 1)) == 0) or ((v['b'] & ((1 << (p['EXP'] + p['MAN'])) - 1)) == 0 and ((v['a'] >> p['MAN']) & ((1 << p['EXP']) - 1)) == (1 << p['EXP']) - 1 and (v['a'] & ((1 << p['MAN']) - 1)) == 0)", min: 1}
+  - {name: underflow_to_zero, expr: "(r['y'] & ((1 << (p['EXP'] + p['MAN'])) - 1)) == 0 and (v['a'] & ((1 << (p['EXP'] + p['MAN'])) - 1)) != 0 and (v['b'] & ((1 << (p['EXP'] + p['MAN'])) - 1)) != 0 and ((v['a'] >> p['MAN']) & ((1 << p['EXP']) - 1)) != (1 << p['EXP']) - 1 and ((v['b'] >> p['MAN']) & ((1 << p['EXP']) - 1)) != (1 << p['EXP']) - 1", min: 1}
