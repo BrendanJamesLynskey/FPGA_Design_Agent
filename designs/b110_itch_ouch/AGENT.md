@@ -9,7 +9,7 @@ A trading path in the formats a real venue speaks, in simulation. UDP payload wo
 not: real market data or a real exchange; every message comes from our own seeded generator and no order is ever sent anywhere; TCP, SoupBinTCP login, heartbeats or order responses; the frame goes to a stub port (docs/tcp_plan.md is a plan); Ethernet, IP or UDP handling and the FCS check; the path starts at the UDP payload (docs/phase2_integration.md is a plan); a full-depth book or every instrument; a few instruments with a bounded number of price levels, and a stated way to fail; a board run, power, or timing inside the 10G core; the numbers are simulation and an out-of-context Vivado 2026.1 build
 
 ## state
-stage=built vivado=2026.1 kb_pin=93d158c build_id=None
+stage=built vivado=2026.1 kb_pin=5e2eab8 build_id=None
 gates: rtl_equals_model=pass lint=pass seeded_faults=pass ooc_build_2026_1=pass board_run=not-run
 
 ## interface
@@ -36,7 +36,7 @@ designs/b110_itch_ouch/model/gen.py 7a5ed6f04b: seeded synthetic ITCH over MoldU
 designs/b110_itch_ouch/tests/b110_cocotb.py e8b7915b02: cocotb bench
 designs/b110_itch_ouch/tests/run_mutants.py d7d017acd5: seeded-fault runner
 designs/b110_itch_ouch/ooc/ooc.py 13550cc38a: out-of-context build driver
-designs/b110_itch_ouch/docs/itch_ouch.md 21f329f7ca: datasheet
+designs/b110_itch_ouch/docs/itch_ouch.md 1213229009: datasheet
 designs/b110_itch_ouch/docs/spec_notes.md 5ce86ae4a2: field layouts and where each comes from
 designs/b110_itch_ouch/docs/tcp_plan.md 95463d9cfc: TCP options and the phase 2 recommendation
 designs/b110_itch_ouch/docs/phase2_integration.md a15fee8877: integration plan for the KR260 design, the host bench and the board test
