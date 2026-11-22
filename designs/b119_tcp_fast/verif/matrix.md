@@ -4,7 +4,7 @@
 
 The human specifies the requirements and checks that the verification is thorough enough. The agent holds the knowledge to implement and to verify. You can open any of the implementation or the evidence, and you do not have to. Hardware on the board, with attached instruments, is a verification layer of its own: where a requirement depends on something outside the design (an optical link, a network card, a data source) it may be the only way to close it.
 
-**Summary.** 27 requirements (10 functional, 10 performance, 2 interface, 5 safety); 25 verified, of which 3 rest on delegated acceptances (the planner accepted the Lean statement on the owner's delegation; not human approvals); 2 with no passing evidence; 0 of 2 requirements that depend on an external element closed by hardware; performance verified: 0 on the board, 3 by post-route timing, 7 in simulation only; 0 of 27 requirements agreed by a human, 0 human review(s) recorded; 6 Lean proof item(s) (all widths): 0 with a human-approved statement, 6 with a statement accepted on the owner's delegation (not a human approval), 0 with statement not approved; 3 kernel only, 3 using a compiled decision procedure; build status from: recorded build (not re-run).
+**Summary.** 27 requirements (10 functional, 10 performance, 2 interface, 5 safety); 7 verified, of which 1 rest on delegated acceptances (the planner accepted the Lean statement on the owner's delegation; not human approvals); 18 stale; 2 with no passing evidence; 0 of 2 requirements that depend on an external element closed by hardware; 0 of 27 requirements agreed by a human, 0 human review(s) recorded; 6 Lean proof item(s) (all widths): 0 with a human-approved statement, 6 with a statement accepted on the owner's delegation (not a human approval), 0 with statement not approved; 3 kernel only, 3 using a compiled decision procedure; build status from: recorded build (not re-run).
 
 Simulation (cocotb on Icarus Verilog 12, one recorded pytest run) and out-of-context Vivado 2026.1 results only. No board run, no MAC of the 96 design in the simulation, no real TCP peer, no real exchange; every order is synthetic. Requirements that need those are hooks and show as not run.
 
@@ -14,32 +14,32 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 | Requirement | Kind | State | sim test | UVM | SVA | formal | Lean | coverage | timing | sim measure | board | review |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| **B119-F-SEGMENT** Each order leaves as one complete 113-byte Ethernet, IPv4 and TCP frame, byte exact against the reference | functional | verified | pass: [V-MODEL-SEGMENT](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml)<br>pass: [V-SIM-BENCH](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml) |  |  |  |  |  |  | pass: [V-SIMM-RANDOM](../../../results/b119/bench_sim.json)<br>pass: [V-SIMM-MIX](../../../results/b119/bench_sim.json)<br>pass: [V-MUT](../../../results/b119/mutation.json) |  |  |
-| **B119-F-CKSUM-RTL** Both checksums on the wire are the RFC 1071 checksums, at the corner cases | functional | verified | pass: [V-MODEL-CKSUM](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml)<br>pass: [V-SIM-BENCH](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml) |  |  |  |  |  |  | pass: [V-SIMM-RANDOM](../../../results/b119/bench_sim.json)<br>pass: [V-MUT](../../../results/b119/mutation.json) |  |  |
-| **B119-F-HANDBACK** Every segment that left is handed back to software, and none that was poisoned | functional | verified | pass: [V-MODEL-SEQSPACE](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml)<br>pass: [V-SIM-BENCH](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml) |  |  |  |  |  |  | pass: [V-SIMM-E2E](../../../results/b119/bench_sim.json) |  |  |
-| **B119-F-E2E** A Python TCP owner and a software OUCH exchange run a whole session through the block | functional | verified | pass: [V-MODEL-ENDPOINT](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml)<br>pass: [V-SIM-BENCH](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml) |  |  |  |  |  |  | pass: [V-SIMM-E2E](../../../results/b119/bench_sim.json) |  |  |
-| **B119-F-LINT** The RTL lints clean | functional | verified | pass: [V-LINT](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml) |  |  |  |  |  |  |  |  |  |
-| **B119-I-ORDERPORT** The block replaces the order port of brief 110 and works behind its risk logic | interface | verified | pass: [V-SIM-TOP](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml) |  |  |  |  |  |  | pass: [V-SIMM-TOP-POISON](../../../results/b119/top_sim.json) |  |  |
-| **B119-I-REGBUS** The register bus and counters behave as the datasheet states | interface | verified | pass: [V-SIM-BENCH](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml) |  |  |  |  |  |  | pass: [V-MUT](../../../results/b119/mutation.json) |  |  |
-| **B119-S-ABORT** An aborted or unverdicted segment is poisoned and consumes no sequence space | safety | verified | pass: [V-SIM-BENCH](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml) |  |  |  |  |  |  | pass: [V-SIMM-ABORT](../../../results/b119/bench_sim.json)<br>pass: [V-SIMM-MIX](../../../results/b119/bench_sim.json)<br>pass: [V-SIMM-TOP-POISON](../../../results/b119/top_sim.json)<br>pass: [V-MUT](../../../results/b119/mutation.json) |  |  |
-| **B119-S-REFUSE** The block refuses to send when it is not armed, stale, window-closed, too small or busy | safety | verified | pass: [V-MODEL-REFUSE](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml)<br>pass: [V-SIM-BENCH](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml) |  |  |  |  |  |  | pass: [V-SIMM-REFUSE](../../../results/b119/bench_sim.json)<br>pass: [V-MUT](../../../results/b119/mutation.json) |  |  |
-| **B119-S-SEQSPACE** The peer sees no gap and no duplicate in the sequence space | safety | verified | pass: [V-MODEL-SEQSPACE](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml)<br>pass: [V-SIM-BENCH](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml) |  |  |  |  |  |  | pass: [V-SIMM-E2E](../../../results/b119/bench_sim.json) |  |  |
-| **B119-S-SUMGUARD** A segment whose payload disagrees with the checksum that was sent is poisoned | safety | verified | pass: [V-SIM-BENCH](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml) |  |  |  |  |  |  | pass: [V-SIMM-MIX](../../../results/b119/bench_sim.json) |  |  |
-| **B119-S-FAULTS** A seeded fault anywhere in the checksum, segment, verdict, refusal or register logic is caught | safety | verified |  |  |  |  |  |  |  | pass: [V-MUT](../../../results/b119/mutation.json) |  |  |
+| **B119-F-SEGMENT** Each order leaves as one complete 113-byte Ethernet, IPv4 and TCP frame, byte exact against the reference | functional | verified; 4 item(s) stale | pass: [V-MODEL-SEGMENT](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml)<br>stale: [V-SIM-BENCH](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml) |  |  |  |  |  |  | stale: [V-SIMM-RANDOM](../../../results/b119/bench_sim.json)<br>stale: [V-SIMM-MIX](../../../results/b119/bench_sim.json)<br>stale: [V-MUT](../../../results/b119/mutation.json) |  |  |
+| **B119-F-CKSUM-RTL** Both checksums on the wire are the RFC 1071 checksums, at the corner cases | functional | verified; 3 item(s) stale | pass: [V-MODEL-CKSUM](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml)<br>stale: [V-SIM-BENCH](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml) |  |  |  |  |  |  | stale: [V-SIMM-RANDOM](../../../results/b119/bench_sim.json)<br>stale: [V-MUT](../../../results/b119/mutation.json) |  |  |
+| **B119-F-HANDBACK** Every segment that left is handed back to software, and none that was poisoned | functional | verified; 2 item(s) stale | pass: [V-MODEL-SEQSPACE](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml)<br>stale: [V-SIM-BENCH](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml) |  |  |  |  |  |  | stale: [V-SIMM-E2E](../../../results/b119/bench_sim.json) |  |  |
+| **B119-F-E2E** A Python TCP owner and a software OUCH exchange run a whole session through the block | functional | verified; 2 item(s) stale | pass: [V-MODEL-ENDPOINT](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml)<br>stale: [V-SIM-BENCH](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml) |  |  |  |  |  |  | stale: [V-SIMM-E2E](../../../results/b119/bench_sim.json) |  |  |
+| **B119-F-LINT** The RTL lints clean | functional | stale | stale: [V-LINT](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml) |  |  |  |  |  |  |  |  |  |
+| **B119-I-ORDERPORT** The block replaces the order port of brief 110 and works behind its risk logic | interface | stale | stale: [V-SIM-TOP](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml) |  |  |  |  |  |  | stale: [V-SIMM-TOP-POISON](../../../results/b119/top_sim.json) |  |  |
+| **B119-I-REGBUS** The register bus and counters behave as the datasheet states | interface | stale | stale: [V-SIM-BENCH](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml) |  |  |  |  |  |  | stale: [V-MUT](../../../results/b119/mutation.json) |  |  |
+| **B119-S-ABORT** An aborted or unverdicted segment is poisoned and consumes no sequence space | safety | stale | stale: [V-SIM-BENCH](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml) |  |  |  |  |  |  | stale: [V-SIMM-ABORT](../../../results/b119/bench_sim.json)<br>stale: [V-SIMM-MIX](../../../results/b119/bench_sim.json)<br>stale: [V-SIMM-TOP-POISON](../../../results/b119/top_sim.json)<br>stale: [V-MUT](../../../results/b119/mutation.json) |  |  |
+| **B119-S-REFUSE** The block refuses to send when it is not armed, stale, window-closed, too small or busy | safety | verified; 3 item(s) stale | pass: [V-MODEL-REFUSE](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml)<br>stale: [V-SIM-BENCH](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml) |  |  |  |  |  |  | stale: [V-SIMM-REFUSE](../../../results/b119/bench_sim.json)<br>stale: [V-MUT](../../../results/b119/mutation.json) |  |  |
+| **B119-S-SEQSPACE** The peer sees no gap and no duplicate in the sequence space | safety | verified; 2 item(s) stale | pass: [V-MODEL-SEQSPACE](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml)<br>stale: [V-SIM-BENCH](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml) |  |  |  |  |  |  | stale: [V-SIMM-E2E](../../../results/b119/bench_sim.json) |  |  |
+| **B119-S-SUMGUARD** A segment whose payload disagrees with the checksum that was sent is poisoned | safety | stale | stale: [V-SIM-BENCH](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml) |  |  |  |  |  |  | stale: [V-SIMM-MIX](../../../results/b119/bench_sim.json) |  |  |
+| **B119-S-FAULTS** A seeded fault anywhere in the checksum, segment, verdict, refusal or register logic is caught | safety | stale |  |  |  |  |  |  |  | stale: [V-MUT](../../../results/b119/mutation.json) |  |  |
 | **B119-F-MACPAIR** The 96 design's MAC accepts the block's words every clock and corrupts the frame check sequence on o_poison Depends on: the 96 design's MAC (mac64_tx) and, for the board, the KR260; hardware verification open. | functional | not run | not run: V-SIM-MACPAIR |  |  |  |  |  |  |  |  |  |
 | **B119-F-REALPEER** The owner completes a session with a real TCP peer and the frames match the bench's Depends on: a real TCP peer on a second machine or namespace; hardware verification open. | functional | not run |  |  |  |  |  |  |  |  | not run [external_equipment]: V-EXT-REALPEER |  |
-| **B119-P-FIRSTBYTE** First byte of the frame, clocks after go | performance | verified (simulation only) |  |  |  |  |  |  |  | pass: [V-SIMM-FIRSTBYTE](../../../results/b119/bench_sim.json) |  |  |
-| **B119-P-IPCKSUM** IPv4 checksum field complete, clocks after go | performance | verified (simulation only) |  |  |  |  |  |  |  | pass: [V-SIMM-IPCKSUM](../../../results/b119/bench_sim.json) |  |  |
-| **B119-P-TCPCKSUM** TCP checksum field complete, clocks after go | performance | verified (simulation only) |  |  |  |  |  |  |  | pass: [V-SIMM-TCPCKSUM](../../../results/b119/bench_sim.json) |  |  |
-| **B119-P-SEGMENT** Whole segment out, clocks after go | performance | verified (simulation only) |  |  |  |  |  |  |  | pass: [V-SIMM-SEGMENT](../../../results/b119/bench_sim.json) |  |  |
-| **B119-P-RATE** Segment rate, clocks between starts | performance | verified (simulation only) |  |  |  |  |  |  |  | pass: [V-SIMM-RATE](../../../results/b119/bench_sim.json) |  |  |
-| **B119-P-TOP-SPEC** Speculative start behind brief 110's risk logic, clocks from the last ITCH byte | performance | verified (simulation only) |  |  |  |  |  |  |  | pass: [V-SIMM-TOP-SPEC](../../../results/b119/top_sim.json) |  |  |
-| **B119-P-TOP-VERDICT** Start at the verdict behind brief 110's risk logic, clocks from the last ITCH byte | performance | verified (simulation only) |  |  |  |  |  |  |  | pass: [V-SIMM-TOP-VERDICT](../../../results/b119/top_sim.json) |  |  |
-| **B119-P-TIMING** Post-route setup slack at the 10G core clock, out of context | performance | verified (post-route timing) |  |  |  |  |  |  | pass: [V-TIM-SETUP](../../../results/b119/ooc/tcp_fast.json)<br>pass: [V-TIM-PULSE](../../../results/b119/ooc/tcp_fast.json) |  |  |  |
-| **B119-P-HOLD** Post-route hold slack at the 10G core clock, out of context | performance | verified (post-route timing) |  |  |  |  |  |  | pass: [V-TIM-HOLD](../../../results/b119/ooc/tcp_fast.json) |  |  |  |
-| **B119-P-AREA** LUTs of tcp_fast at the required clock | performance | verified (post-route timing) |  |  |  |  |  |  | pass: [V-RES-LUT](../../../results/b119/ooc/tcp_fast.json)<br>pass: [V-RES-OTHER](../../../results/b119/ooc/tcp_fast.json) |  |  |  |
-| **B119-F-CKSUM-IP** The IPv4 header checksum of the TCP fast path equals the Internet checksum, for all inputs | functional | verified; the Lean proof is of a transcription of the RTL, not of the RTL itself; rests on a delegated acceptance of the Lean statement, not a human approval |  |  |  |  | pass [statement accepted on delegation, not a human approval; kernel plus a compiled decision procedure; transcription tested; recorded build]: [V-LEAN-CKSUM-IP](../../../formal/lean/records/build_record.json)<br>pass [statement accepted on delegation, not a human approval; kernel plus a compiled decision procedure; transcription tested; recorded build]: [V-LEAN-CKSUM-IP-RX](../../../formal/lean/records/build_record.json) |  |  |  |  |  |
-| **B119-F-CKSUM-TCP** The TCP checksum of the TCP fast path equals the Internet checksum, for all inputs and payloads up to 30 words | functional | verified; the Lean proof is of a transcription of the RTL, not of the RTL itself; rests on a delegated acceptance of the Lean statement, not a human approval |  |  |  |  | pass [statement accepted on delegation, not a human approval; kernel plus a compiled decision procedure; transcription tested; recorded build]: [V-LEAN-CKSUM-TCP](../../../formal/lean/records/build_record.json) |  |  |  |  |  |
+| **B119-P-FIRSTBYTE** First byte of the frame, clocks after go | performance | stale |  |  |  |  |  |  |  | stale: [V-SIMM-FIRSTBYTE](../../../results/b119/bench_sim.json) |  |  |
+| **B119-P-IPCKSUM** IPv4 checksum field complete, clocks after go | performance | stale |  |  |  |  |  |  |  | stale: [V-SIMM-IPCKSUM](../../../results/b119/bench_sim.json) |  |  |
+| **B119-P-TCPCKSUM** TCP checksum field complete, clocks after go | performance | stale |  |  |  |  |  |  |  | stale: [V-SIMM-TCPCKSUM](../../../results/b119/bench_sim.json) |  |  |
+| **B119-P-SEGMENT** Whole segment out, clocks after go | performance | stale |  |  |  |  |  |  |  | stale: [V-SIMM-SEGMENT](../../../results/b119/bench_sim.json) |  |  |
+| **B119-P-RATE** Segment rate, clocks between starts | performance | stale |  |  |  |  |  |  |  | stale: [V-SIMM-RATE](../../../results/b119/bench_sim.json) |  |  |
+| **B119-P-TOP-SPEC** Speculative start behind brief 110's risk logic, clocks from the last ITCH byte | performance | stale |  |  |  |  |  |  |  | stale: [V-SIMM-TOP-SPEC](../../../results/b119/top_sim.json) |  |  |
+| **B119-P-TOP-VERDICT** Start at the verdict behind brief 110's risk logic, clocks from the last ITCH byte | performance | stale |  |  |  |  |  |  |  | stale: [V-SIMM-TOP-VERDICT](../../../results/b119/top_sim.json) |  |  |
+| **B119-P-TIMING** Post-route setup slack at the 10G core clock, out of context | performance | stale |  |  |  |  |  |  | stale: [V-TIM-SETUP](../../../results/b119/ooc/tcp_fast.json)<br>stale: [V-TIM-PULSE](../../../results/b119/ooc/tcp_fast.json) |  |  |  |
+| **B119-P-HOLD** Post-route hold slack at the 10G core clock, out of context | performance | stale |  |  |  |  |  |  | stale: [V-TIM-HOLD](../../../results/b119/ooc/tcp_fast.json) |  |  |  |
+| **B119-P-AREA** LUTs of tcp_fast at the required clock | performance | stale |  |  |  |  |  |  | stale: [V-RES-LUT](../../../results/b119/ooc/tcp_fast.json)<br>stale: [V-RES-OTHER](../../../results/b119/ooc/tcp_fast.json) |  |  |  |
+| **B119-F-CKSUM-IP** The IPv4 header checksum of the TCP fast path equals the Internet checksum, for all inputs | functional | stale |  |  |  |  | stale [kernel plus a compiled decision procedure; transcription tested; recorded build]: [V-LEAN-CKSUM-IP](../../../formal/lean/records/build_record.json)<br>stale [kernel plus a compiled decision procedure; transcription tested; recorded build]: [V-LEAN-CKSUM-IP-RX](../../../formal/lean/records/build_record.json) |  |  |  |  |  |
+| **B119-F-CKSUM-TCP** The TCP checksum of the TCP fast path equals the Internet checksum, for all inputs and payloads up to 30 words | functional | stale |  |  |  |  | stale [kernel plus a compiled decision procedure; transcription tested; recorded build]: [V-LEAN-CKSUM-TCP](../../../formal/lean/records/build_record.json) |  |  |  |  |  |
 | **B119-F-CKSUM-MODEL** The ones' complement arithmetic the checksum equations rest on is correct, for lists of any length | functional | verified; the Lean proof is of a transcription of the RTL, not of the RTL itself; rests on a delegated acceptance of the Lean statement, not a human approval |  |  |  |  | pass [statement accepted on delegation, not a human approval; kernel only; no RTL link; recorded build]: [V-LEAN-CKSUM-SUM](../../../formal/lean/records/build_record.json)<br>pass [statement accepted on delegation, not a human approval; kernel only; no RTL link; recorded build]: [V-LEAN-CKSUM-INC](../../../formal/lean/records/build_record.json)<br>pass [statement accepted on delegation, not a human approval; kernel only; no RTL link; recorded build]: [V-LEAN-CKSUM-INC-ZERO](../../../formal/lean/records/build_record.json) |  |  |  |  |  |
 
 ## Gaps
@@ -49,129 +49,165 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 - `B119-F-MACPAIR`: depends on the 96 design's MAC (mac64_tx) and, for the board, the KR260; only hardware verification can close it, and it has not been done
 - `B119-F-REALPEER`: depends on a real TCP peer on a second machine or namespace; only hardware verification can close it, and it has not been done
 
-### Performance requirements verified in simulation only
-
-- `B119-P-FIRSTBYTE`: verified in simulation only, not measured on the board
-- `B119-P-IPCKSUM`: verified in simulation only, not measured on the board
-- `B119-P-TCPCKSUM`: verified in simulation only, not measured on the board
-- `B119-P-SEGMENT`: verified in simulation only, not measured on the board
-- `B119-P-RATE`: verified in simulation only, not measured on the board
-- `B119-P-TOP-SPEC`: verified in simulation only, not measured on the board
-- `B119-P-TOP-VERDICT`: verified in simulation only, not measured on the board
-
 ### Requirements with no passing evidence
 
+- `B119-F-LINT`: its evidence is stale
+- `B119-I-ORDERPORT`: its evidence is stale
+- `B119-I-REGBUS`: its evidence is stale
+- `B119-S-ABORT`: its evidence is stale
+- `B119-S-SUMGUARD`: its evidence is stale
+- `B119-S-FAULTS`: its evidence is stale
 - `B119-F-MACPAIR`: no passing evidence
 - `B119-F-REALPEER`: no passing evidence
+- `B119-P-FIRSTBYTE`: its evidence is stale
+- `B119-P-IPCKSUM`: its evidence is stale
+- `B119-P-TCPCKSUM`: its evidence is stale
+- `B119-P-SEGMENT`: its evidence is stale
+- `B119-P-RATE`: its evidence is stale
+- `B119-P-TOP-SPEC`: its evidence is stale
+- `B119-P-TOP-VERDICT`: its evidence is stale
+- `B119-P-TIMING`: its evidence is stale
+- `B119-P-HOLD`: its evidence is stale
+- `B119-P-AREA`: its evidence is stale
+- `B119-F-CKSUM-IP`: its evidence is stale
+- `B119-F-CKSUM-TCP`: its evidence is stale
+
+### Stale evidence
+
+- `V-SIM-BENCH`: changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv, designs/b119_tcp_fast/tests/b119_cocotb.py
+- `V-SIM-TOP`: changed since the evidence was recorded: designs/b119_tcp_fast/rtl/itch_ouch_tcp_top.sv, designs/b119_tcp_fast/rtl/tcp_fast.sv
+- `V-LINT`: changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv
+- `V-SIMM-RANDOM`: changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv
+- `V-SIMM-ABORT`: changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv
+- `V-SIMM-REFUSE`: changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv
+- `V-SIMM-MIX`: changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv
+- `V-SIMM-E2E`: changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv
+- `V-SIMM-TOP-POISON`: changed since the evidence was recorded: designs/b119_tcp_fast/rtl/itch_ouch_tcp_top.sv, designs/b119_tcp_fast/rtl/tcp_fast.sv
+- `V-SIMM-FIRSTBYTE`: changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv
+- `V-SIMM-IPCKSUM`: changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv
+- `V-SIMM-TCPCKSUM`: changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv
+- `V-SIMM-SEGMENT`: changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv
+- `V-SIMM-RATE`: changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv
+- `V-SIMM-TOP-SPEC`: changed since the evidence was recorded: designs/b119_tcp_fast/rtl/itch_ouch_tcp_top.sv, designs/b119_tcp_fast/rtl/tcp_fast.sv
+- `V-SIMM-TOP-VERDICT`: changed since the evidence was recorded: designs/b119_tcp_fast/rtl/itch_ouch_tcp_top.sv, designs/b119_tcp_fast/rtl/tcp_fast.sv
+- `V-MUT`: changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv
+- `V-TIM-SETUP`: changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv
+- `V-TIM-PULSE`: changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv
+- `V-TIM-HOLD`: changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv
+- `V-RES-LUT`: changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv
+- `V-RES-OTHER`: changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv
+- `V-LEAN-CKSUM-IP`: transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:256-260; transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:326-336
+- `V-LEAN-CKSUM-IP-RX`: transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:256-260; transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:326-336
+- `V-LEAN-CKSUM-TCP`: transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:256-260; transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:326-336
 
 ## Requirements in full
 
 ### B119-F-SEGMENT: Each order leaves as one complete 113-byte Ethernet, IPv4 and TCP frame, byte exact against the reference
 
-- Kind: functional; state: verified; specification status: draft.
+- Kind: functional; state: verified; 4 item(s) stale; specification status: draft.
 - Source: `designs/b119_tcp_fast/docs/tcp_fast.md#21-the-segment`
 - For any connection state and order, the block sends 15 words (113 bytes without the frame check sequence) whose bytes equal the Python reference, with sequence number, acknowledgement number, window and IP identification captured at the go edge, the SoupBinTCP Unsequenced Data packet of brief 110 as payload, no TCP options and the PSH and ACK flags, including sequence numbers at the 32-bit wrap.
   - simulation test: **pass**, The reference frame is 113 bytes for an order; SoupBinTCP and OUCH packers: 2 test(s) passed in the recorded run. [evidence](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml)
-  - simulation test: **pass**, The block against the reference in cocotb, 19 tests in one simulation (smoke, random segments, checksum corners, fold carries, timing, abort at every offset and without a gap, speculative verdicts, refusals, register semantics, configuration change, continuity with software, random mix, end-to-end session, dropped segment, heartbeats, aborted orders, small window, rejected login): 1 test(s) passed in the recorded run. [evidence](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml)
-  - simulation measurement: **pass**, 450 random segments (random connections, orders and states, sequence numbers at the wrap) compared byte for byte: value = 450. [evidence](../../../results/b119/bench_sim.json)
-  - simulation measurement: **pass**, A long random mix reaches every outcome (sent, aborted, no verdict, cancelled in the go clock): random_mix_outcomes.sent = 248; random_mix_outcomes.aborted = 76; random_mix_outcomes.noverdict = 38; random_mix_outcomes.cancel0 = 19. [evidence](../../../results/b119/bench_sim.json)
-  - simulation measurement: **pass**, 73 seeded faults (constants, operators and conditions across the checksum, the segment, the verdict, the refusals and the registers), the whole bench per fault: valid = 73; killed = 73; score_pct = 100. [evidence](../../../results/b119/mutation.json)
+  - simulation test: **stale**, The block against the reference in cocotb, 19 tests in one simulation (smoke, random segments, checksum corners, fold carries, timing, abort at every offset and without a gap, speculative verdicts, refusals, register semantics, configuration change, continuity with software, random mix, end-to-end session, dropped segment, heartbeats, aborted orders, small window, rejected login): 1 test(s) passed in the recorded run (changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv, designs/b119_tcp_fast/tests/b119_cocotb.py). [evidence](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml)
+  - simulation measurement: **stale**, 450 random segments (random connections, orders and states, sequence numbers at the wrap) compared byte for byte: value = 450 (changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv). [evidence](../../../results/b119/bench_sim.json)
+  - simulation measurement: **stale**, A long random mix reaches every outcome (sent, aborted, no verdict, cancelled in the go clock): random_mix_outcomes.sent = 248; random_mix_outcomes.aborted = 76; random_mix_outcomes.noverdict = 38; random_mix_outcomes.cancel0 = 19 (changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv). [evidence](../../../results/b119/bench_sim.json)
+  - simulation measurement: **stale**, 73 seeded faults (constants, operators and conditions across the checksum, the segment, the verdict, the refusals and the registers), the whole bench per fault: valid = 73; killed = 73; score_pct = 100 (changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv). [evidence](../../../results/b119/mutation.json)
 
 ### B119-F-CKSUM-RTL: Both checksums on the wire are the RFC 1071 checksums, at the corner cases
 
-- Kind: functional; state: verified; specification status: draft.
+- Kind: functional; state: verified; 3 item(s) stale; specification status: draft.
 - Source: `designs/b119_tcp_fast/docs/tcp_fast.md#22-checksums-incremental-not-recomputed`
 - The IPv4 header checksum and the TCP checksum of every segment sent equal the reference's, which is itself checked against outside vectors (RFC 1071, a published IPv4 header), including carries in the fold, sums that wrap, a TCP checksum that comes out 0 and a segment whose headers sum to all ones. This is checked by simulation of chosen and random cases; the all-inputs statements are B119-F-CKSUM-IP, -TCP and -MODEL.
   - simulation test: **pass**, Checksum reference against outside vectors (RFC 1071 example, a published IPv4 header, odd lengths, in-place sum, TCP pseudo-header): 5 test(s) passed in the recorded run. [evidence](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml)
-  - simulation test: **pass**, The block against the reference in cocotb, 19 tests in one simulation (smoke, random segments, checksum corners, fold carries, timing, abort at every offset and without a gap, speculative verdicts, refusals, register semantics, configuration change, continuity with software, random mix, end-to-end session, dropped segment, heartbeats, aborted orders, small window, rejected login): 1 test(s) passed in the recorded run. [evidence](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml)
-  - simulation measurement: **pass**, 450 random segments (random connections, orders and states, sequence numbers at the wrap) compared byte for byte: value = 450. [evidence](../../../results/b119/bench_sim.json)
-  - simulation measurement: **pass**, 73 seeded faults (constants, operators and conditions across the checksum, the segment, the verdict, the refusals and the registers), the whole bench per fault: valid = 73; killed = 73; score_pct = 100. [evidence](../../../results/b119/mutation.json)
+  - simulation test: **stale**, The block against the reference in cocotb, 19 tests in one simulation (smoke, random segments, checksum corners, fold carries, timing, abort at every offset and without a gap, speculative verdicts, refusals, register semantics, configuration change, continuity with software, random mix, end-to-end session, dropped segment, heartbeats, aborted orders, small window, rejected login): 1 test(s) passed in the recorded run (changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv, designs/b119_tcp_fast/tests/b119_cocotb.py). [evidence](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml)
+  - simulation measurement: **stale**, 450 random segments (random connections, orders and states, sequence numbers at the wrap) compared byte for byte: value = 450 (changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv). [evidence](../../../results/b119/bench_sim.json)
+  - simulation measurement: **stale**, 73 seeded faults (constants, operators and conditions across the checksum, the segment, the verdict, the refusals and the registers), the whole bench per fault: valid = 73; killed = 73; score_pct = 100 (changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv). [evidence](../../../results/b119/mutation.json)
 
 ### B119-F-HANDBACK: Every segment that left is handed back to software, and none that was poisoned
 
-- Kind: functional; state: verified; specification status: draft.
+- Kind: functional; state: verified; 2 item(s) stale; specification status: draft.
 - Source: `designs/b119_tcp_fast/docs/tcp_fast.md#13-hand-back-to-software-rec_`
 - One record (rec_v, rec_seq, rec_len, rec_id, rec_pay) for each unpoisoned segment in the clock of its last word, and none for a poisoned one, so software can retransmit from the records; a segment dropped on the wire is retransmitted by software with the same bytes.
   - simulation test: **pass**, A dropped fast-path segment is retransmitted by software; a heartbeat takes the sequence space and gives it back; software sends nothing while the block is armed and idle: 3 test(s) passed in the recorded run. [evidence](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml)
-  - simulation test: **pass**, The block against the reference in cocotb, 19 tests in one simulation (smoke, random segments, checksum corners, fold carries, timing, abort at every offset and without a gap, speculative verdicts, refusals, register semantics, configuration change, continuity with software, random mix, end-to-end session, dropped segment, heartbeats, aborted orders, small window, rejected login): 1 test(s) passed in the recorded run. [evidence](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml)
-  - simulation measurement: **pass**, End-to-end session, dropped segment, heartbeats, aborted orders and small window, with the software exchange: e2e_session.orders = 12; e2e_session.exchange_replies = 12; e2e_drop.retransmits = 1; e2e_heartbeat.takeovers = 9; e2e_heartbeat.client_heartbeats_at_exchange = 9; e2e_abort.exchange_out_of_order = 0; e2e_window.sent = 12. [evidence](../../../results/b119/bench_sim.json)
+  - simulation test: **stale**, The block against the reference in cocotb, 19 tests in one simulation (smoke, random segments, checksum corners, fold carries, timing, abort at every offset and without a gap, speculative verdicts, refusals, register semantics, configuration change, continuity with software, random mix, end-to-end session, dropped segment, heartbeats, aborted orders, small window, rejected login): 1 test(s) passed in the recorded run (changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv, designs/b119_tcp_fast/tests/b119_cocotb.py). [evidence](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml)
+  - simulation measurement: **stale**, End-to-end session, dropped segment, heartbeats, aborted orders and small window, with the software exchange: e2e_session.orders = 12; e2e_session.exchange_replies = 12; e2e_drop.retransmits = 1; e2e_heartbeat.takeovers = 9; e2e_heartbeat.client_heartbeats_at_exchange = 9; e2e_abort.exchange_out_of_order = 0; e2e_window.sent = 12 (changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv). [evidence](../../../results/b119/bench_sim.json)
 
 ### B119-F-E2E: A Python TCP owner and a software OUCH exchange run a whole session through the block
 
-- Kind: functional; state: verified; specification status: draft.
+- Kind: functional; state: verified; 2 item(s) stale; specification status: draft.
 - Source: `designs/b119_tcp_fast/docs/software_side.md#what-the-tests-show`
 - Handshake, SoupBinTCP login, orders, acknowledgements, a dropped segment, heartbeats, a small window and a rejected login all behave as the software side documents, with the exchange seeing every order exactly once and in order.
   - simulation test: **pass**, TCP endpoint (handshake, acknowledgements, out-of-order, bad checksum, foreign frames, pure ACKs) and the exchange (login, orders, replies, rejections): 6 test(s) passed in the recorded run. [evidence](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml)
-  - simulation test: **pass**, The block against the reference in cocotb, 19 tests in one simulation (smoke, random segments, checksum corners, fold carries, timing, abort at every offset and without a gap, speculative verdicts, refusals, register semantics, configuration change, continuity with software, random mix, end-to-end session, dropped segment, heartbeats, aborted orders, small window, rejected login): 1 test(s) passed in the recorded run. [evidence](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml)
-  - simulation measurement: **pass**, End-to-end session, dropped segment, heartbeats, aborted orders and small window, with the software exchange: e2e_session.orders = 12; e2e_session.exchange_replies = 12; e2e_drop.retransmits = 1; e2e_heartbeat.takeovers = 9; e2e_heartbeat.client_heartbeats_at_exchange = 9; e2e_abort.exchange_out_of_order = 0; e2e_window.sent = 12. [evidence](../../../results/b119/bench_sim.json)
+  - simulation test: **stale**, The block against the reference in cocotb, 19 tests in one simulation (smoke, random segments, checksum corners, fold carries, timing, abort at every offset and without a gap, speculative verdicts, refusals, register semantics, configuration change, continuity with software, random mix, end-to-end session, dropped segment, heartbeats, aborted orders, small window, rejected login): 1 test(s) passed in the recorded run (changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv, designs/b119_tcp_fast/tests/b119_cocotb.py). [evidence](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml)
+  - simulation measurement: **stale**, End-to-end session, dropped segment, heartbeats, aborted orders and small window, with the software exchange: e2e_session.orders = 12; e2e_session.exchange_replies = 12; e2e_drop.retransmits = 1; e2e_heartbeat.takeovers = 9; e2e_heartbeat.client_heartbeats_at_exchange = 9; e2e_abort.exchange_out_of_order = 0; e2e_window.sent = 12 (changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv). [evidence](../../../results/b119/bench_sim.json)
 
 ### B119-F-LINT: The RTL lints clean
 
-- Kind: functional; state: verified; specification status: draft.
+- Kind: functional; state: stale; specification status: draft.
 - Source: `designs/b119_tcp_fast/README.md#verified`
 - Verilator -Wall over tcp_fast.sv and the frame builder inside it reports no warnings, with the waivers in lint/lint_waivers.vlt.
-  - simulation test: **pass**, Verilator -Wall lint of tcp_fast.sv and the frame builder inside it: 1 test(s) passed in the recorded run. [evidence](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml)
+  - simulation test: **stale**, Verilator -Wall lint of tcp_fast.sv and the frame builder inside it: 1 test(s) passed in the recorded run (changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv). [evidence](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml)
 
 ### B119-I-ORDERPORT: The block replaces the order port of brief 110 and works behind its risk logic
 
-- Kind: interface; state: verified; specification status: draft.
+- Kind: interface; state: stale; specification status: draft.
 - Source: `designs/b119_tcp_fast/README.md#verified`
 - With tcp_fast in place of ouch_enter, brief 110's path against brief 110's reference model sends the same orders, with the same payload bytes, valid checksums and gapless sequence numbers; speculative orders that the risk logic refuses leave poisoned.
-  - simulation test: **pass**, Brief 110's path with tcp_fast in place of its stub port, against brief 110's reference model: 1 test(s) passed in the recorded run. [evidence](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml)
-  - simulation measurement: **pass**, Behind the risk logic, refused speculative orders leave poisoned and non-speculative ones are never poisoned: behind_risk_logic.speculative.poisoned_segments = 5; behind_risk_logic.non_speculative.poisoned_segments = 0. [evidence](../../../results/b119/top_sim.json)
+  - simulation test: **stale**, Brief 110's path with tcp_fast in place of its stub port, against brief 110's reference model: 1 test(s) passed in the recorded run (changed since the evidence was recorded: designs/b119_tcp_fast/rtl/itch_ouch_tcp_top.sv, designs/b119_tcp_fast/rtl/tcp_fast.sv). [evidence](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml)
+  - simulation measurement: **stale**, Behind the risk logic, refused speculative orders leave poisoned and non-speculative ones are never poisoned: behind_risk_logic.speculative.poisoned_segments = 5; behind_risk_logic.non_speculative.poisoned_segments = 0 (changed since the evidence was recorded: designs/b119_tcp_fast/rtl/itch_ouch_tcp_top.sv, designs/b119_tcp_fast/rtl/tcp_fast.sv). [evidence](../../../results/b119/top_sim.json)
 
 ### B119-I-REGBUS: The register bus and counters behave as the datasheet states
 
-- Kind: interface; state: verified; specification status: draft.
+- Kind: interface; state: stale; specification status: draft.
 - Source: `designs/b119_tcp_fast/docs/tcp_fast.md#14-register-bus-sw_`
 - Writes to static fields invalidate the template and are ignored and counted while a segment is in flight; live fields are accepted at any time and restart the staleness age; reads show the registers before the next edge; unmapped addresses read 0; the 14 counters count what the datasheet says and clear on CLR_CNT.
-  - simulation test: **pass**, The block against the reference in cocotb, 19 tests in one simulation (smoke, random segments, checksum corners, fold carries, timing, abort at every offset and without a gap, speculative verdicts, refusals, register semantics, configuration change, continuity with software, random mix, end-to-end session, dropped segment, heartbeats, aborted orders, small window, rejected login): 1 test(s) passed in the recorded run. [evidence](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml)
-  - simulation measurement: **pass**, 73 seeded faults (constants, operators and conditions across the checksum, the segment, the verdict, the refusals and the registers), the whole bench per fault: valid = 73; killed = 73; score_pct = 100. [evidence](../../../results/b119/mutation.json)
+  - simulation test: **stale**, The block against the reference in cocotb, 19 tests in one simulation (smoke, random segments, checksum corners, fold carries, timing, abort at every offset and without a gap, speculative verdicts, refusals, register semantics, configuration change, continuity with software, random mix, end-to-end session, dropped segment, heartbeats, aborted orders, small window, rejected login): 1 test(s) passed in the recorded run (changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv, designs/b119_tcp_fast/tests/b119_cocotb.py). [evidence](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml)
+  - simulation measurement: **stale**, 73 seeded faults (constants, operators and conditions across the checksum, the segment, the verdict, the refusals and the registers), the whole bench per fault: valid = 73; killed = 73; score_pct = 100 (changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv). [evidence](../../../results/b119/mutation.json)
 
 ### B119-S-ABORT: An aborted or unverdicted segment is poisoned and consumes no sequence space
 
-- Kind: safety; state: verified; specification status: draft.
+- Kind: safety; state: stale; specification status: draft.
 - Source: `designs/b119_tcp_fast/docs/tcp_fast.md#24-speculative-start-abort-verdict`
 - An abort at any of edges 1 to 14 ends the frame with o_poison, leaves SND_NXT and IP_ID as before and produces no record; an abort at edge 0 cancels the go; a speculative segment with no verdict by edge 14 is poisoned; an abort wins over a commit; an abort after the frame left is late, counted and ignored.
-  - simulation test: **pass**, The block against the reference in cocotb, 19 tests in one simulation (smoke, random segments, checksum corners, fold carries, timing, abort at every offset and without a gap, speculative verdicts, refusals, register semantics, configuration change, continuity with software, random mix, end-to-end session, dropped segment, heartbeats, aborted orders, small window, rejected login): 1 test(s) passed in the recorded run. [evidence](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml)
-  - simulation measurement: **pass**, Outcome at every abort offset (0 cancels, 1 to 14 abort, 15 and later are late and the segment is sent): abort_offsets.0 = cancel0; abort_offsets.1 = aborted; abort_offsets.7 = aborted; abort_offsets.14 = aborted; abort_offsets.15 = sent; abort_offsets.17 = sent; e2e_abort.exchange_out_of_order = 0. [evidence](../../../results/b119/bench_sim.json)
-  - simulation measurement: **pass**, A long random mix reaches every outcome (sent, aborted, no verdict, cancelled in the go clock): random_mix_outcomes.sent = 248; random_mix_outcomes.aborted = 76; random_mix_outcomes.noverdict = 38; random_mix_outcomes.cancel0 = 19. [evidence](../../../results/b119/bench_sim.json)
-  - simulation measurement: **pass**, Behind the risk logic, refused speculative orders leave poisoned and non-speculative ones are never poisoned: behind_risk_logic.speculative.poisoned_segments = 5; behind_risk_logic.non_speculative.poisoned_segments = 0. [evidence](../../../results/b119/top_sim.json)
-  - simulation measurement: **pass**, 73 seeded faults (constants, operators and conditions across the checksum, the segment, the verdict, the refusals and the registers), the whole bench per fault: valid = 73; killed = 73; score_pct = 100. [evidence](../../../results/b119/mutation.json)
+  - simulation test: **stale**, The block against the reference in cocotb, 19 tests in one simulation (smoke, random segments, checksum corners, fold carries, timing, abort at every offset and without a gap, speculative verdicts, refusals, register semantics, configuration change, continuity with software, random mix, end-to-end session, dropped segment, heartbeats, aborted orders, small window, rejected login): 1 test(s) passed in the recorded run (changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv, designs/b119_tcp_fast/tests/b119_cocotb.py). [evidence](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml)
+  - simulation measurement: **stale**, Outcome at every abort offset (0 cancels, 1 to 14 abort, 15 and later are late and the segment is sent): abort_offsets.0 = cancel0; abort_offsets.1 = aborted; abort_offsets.7 = aborted; abort_offsets.14 = aborted; abort_offsets.15 = sent; abort_offsets.17 = sent; e2e_abort.exchange_out_of_order = 0 (changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv). [evidence](../../../results/b119/bench_sim.json)
+  - simulation measurement: **stale**, A long random mix reaches every outcome (sent, aborted, no verdict, cancelled in the go clock): random_mix_outcomes.sent = 248; random_mix_outcomes.aborted = 76; random_mix_outcomes.noverdict = 38; random_mix_outcomes.cancel0 = 19 (changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv). [evidence](../../../results/b119/bench_sim.json)
+  - simulation measurement: **stale**, Behind the risk logic, refused speculative orders leave poisoned and non-speculative ones are never poisoned: behind_risk_logic.speculative.poisoned_segments = 5; behind_risk_logic.non_speculative.poisoned_segments = 0 (changed since the evidence was recorded: designs/b119_tcp_fast/rtl/itch_ouch_tcp_top.sv, designs/b119_tcp_fast/rtl/tcp_fast.sv). [evidence](../../../results/b119/top_sim.json)
+  - simulation measurement: **stale**, 73 seeded faults (constants, operators and conditions across the checksum, the segment, the verdict, the refusals and the registers), the whole bench per fault: valid = 73; killed = 73; score_pct = 100 (changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv). [evidence](../../../results/b119/mutation.json)
 
 ### B119-S-REFUSE: The block refuses to send when it is not armed, stale, window-closed, too small or busy
 
-- Kind: safety; state: verified; specification status: draft.
+- Kind: safety; state: verified; 3 item(s) stale; specification status: draft.
 - Source: `designs/b119_tcp_fast/docs/tcp_fast.md#25-refusals`
 - Checked in the order busy, not armed, template not valid or state stale, window closed, MSS below 59, an order is refused with the matching code and counter, nothing leaves and no state changes; a window of exactly 59 bytes admits one segment and one byte less admits none.
   - simulation test: **pass**, The untimed stand-in refuses as the datasheet says (every code, window of exactly one segment, stale, disarmed): 4 test(s) passed in the recorded run. [evidence](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml)
-  - simulation test: **pass**, The block against the reference in cocotb, 19 tests in one simulation (smoke, random segments, checksum corners, fold carries, timing, abort at every offset and without a gap, speculative verdicts, refusals, register semantics, configuration change, continuity with software, random mix, end-to-end session, dropped segment, heartbeats, aborted orders, small window, rejected login): 1 test(s) passed in the recorded run. [evidence](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml)
-  - simulation measurement: **pass**, The five refusal codes and the random mix's outcomes (refused, aborted, no verdict, sent): refusal_codes.1 = not armed; refusal_codes.2 = stale or not valid; refusal_codes.3 = window closed; refusal_codes.4 = MSS below one segment; refusal_codes.5 = busy; random_mix_outcomes.refused3 = 119; e2e_window.refused_window = 12. [evidence](../../../results/b119/bench_sim.json)
-  - simulation measurement: **pass**, 73 seeded faults (constants, operators and conditions across the checksum, the segment, the verdict, the refusals and the registers), the whole bench per fault: valid = 73; killed = 73; score_pct = 100. [evidence](../../../results/b119/mutation.json)
+  - simulation test: **stale**, The block against the reference in cocotb, 19 tests in one simulation (smoke, random segments, checksum corners, fold carries, timing, abort at every offset and without a gap, speculative verdicts, refusals, register semantics, configuration change, continuity with software, random mix, end-to-end session, dropped segment, heartbeats, aborted orders, small window, rejected login): 1 test(s) passed in the recorded run (changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv, designs/b119_tcp_fast/tests/b119_cocotb.py). [evidence](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml)
+  - simulation measurement: **stale**, The five refusal codes and the random mix's outcomes (refused, aborted, no verdict, sent): refusal_codes.1 = not armed; refusal_codes.2 = stale or not valid; refusal_codes.3 = window closed; refusal_codes.4 = MSS below one segment; refusal_codes.5 = busy; random_mix_outcomes.refused3 = 119; e2e_window.refused_window = 12 (changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv). [evidence](../../../results/b119/bench_sim.json)
+  - simulation measurement: **stale**, 73 seeded faults (constants, operators and conditions across the checksum, the segment, the verdict, the refusals and the registers), the whole bench per fault: valid = 73; killed = 73; score_pct = 100 (changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv). [evidence](../../../results/b119/mutation.json)
 
 ### B119-S-SEQSPACE: The peer sees no gap and no duplicate in the sequence space
 
-- Kind: safety; state: verified; specification status: draft.
+- Kind: safety; state: verified; 2 item(s) stale; specification status: draft.
 - Source: `designs/b119_tcp_fast/docs/tcp_fast.md#3-what-software-must-do-and-when`
 - Hardware and software share one sequence space. After a heartbeat takes it and gives it back, after an abort, after a refusal and after a retransmission, the peer's received stream has no gap and no duplicate, and nothing is sent by software while the block is armed and idle.
   - simulation test: **pass**, A dropped fast-path segment is retransmitted by software; a heartbeat takes the sequence space and gives it back; software sends nothing while the block is armed and idle: 3 test(s) passed in the recorded run. [evidence](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml)
-  - simulation test: **pass**, The block against the reference in cocotb, 19 tests in one simulation (smoke, random segments, checksum corners, fold carries, timing, abort at every offset and without a gap, speculative verdicts, refusals, register semantics, configuration change, continuity with software, random mix, end-to-end session, dropped segment, heartbeats, aborted orders, small window, rejected login): 1 test(s) passed in the recorded run. [evidence](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml)
-  - simulation measurement: **pass**, End-to-end session, dropped segment, heartbeats, aborted orders and small window, with the software exchange: e2e_session.orders = 12; e2e_session.exchange_replies = 12; e2e_drop.retransmits = 1; e2e_heartbeat.takeovers = 9; e2e_heartbeat.client_heartbeats_at_exchange = 9; e2e_abort.exchange_out_of_order = 0; e2e_window.sent = 12. [evidence](../../../results/b119/bench_sim.json)
+  - simulation test: **stale**, The block against the reference in cocotb, 19 tests in one simulation (smoke, random segments, checksum corners, fold carries, timing, abort at every offset and without a gap, speculative verdicts, refusals, register semantics, configuration change, continuity with software, random mix, end-to-end session, dropped segment, heartbeats, aborted orders, small window, rejected login): 1 test(s) passed in the recorded run (changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv, designs/b119_tcp_fast/tests/b119_cocotb.py). [evidence](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml)
+  - simulation measurement: **stale**, End-to-end session, dropped segment, heartbeats, aborted orders and small window, with the software exchange: e2e_session.orders = 12; e2e_session.exchange_replies = 12; e2e_drop.retransmits = 1; e2e_heartbeat.takeovers = 9; e2e_heartbeat.client_heartbeats_at_exchange = 9; e2e_abort.exchange_out_of_order = 0; e2e_window.sent = 12 (changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv). [evidence](../../../results/b119/bench_sim.json)
 
 ### B119-S-SUMGUARD: A segment whose payload disagrees with the checksum that was sent is poisoned
 
-- Kind: safety; state: verified; specification status: draft.
+- Kind: safety; state: stale; specification status: draft.
 - Source: `designs/b119_tcp_fast/docs/tcp_fast.md#22-checksums-incremental-not-recomputed`
 - The block sums the payload words ouch_enter actually emits and compares the total with the early one the checksum used; a difference (for example a configuration change in flight) poisons the segment and counts sumerr, so a wrong checksum is never sent as valid.
-  - simulation test: **pass**, The block against the reference in cocotb, 19 tests in one simulation (smoke, random segments, checksum corners, fold carries, timing, abort at every offset and without a gap, speculative verdicts, refusals, register semantics, configuration change, continuity with software, random mix, end-to-end session, dropped segment, heartbeats, aborted orders, small window, rejected login): 1 test(s) passed in the recorded run. [evidence](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml)
-  - simulation measurement: **pass**, A long random mix reaches every outcome (sent, aborted, no verdict, cancelled in the go clock): random_mix_outcomes.sent = 248; random_mix_outcomes.aborted = 76; random_mix_outcomes.noverdict = 38; random_mix_outcomes.cancel0 = 19. [evidence](../../../results/b119/bench_sim.json)
+  - simulation test: **stale**, The block against the reference in cocotb, 19 tests in one simulation (smoke, random segments, checksum corners, fold carries, timing, abort at every offset and without a gap, speculative verdicts, refusals, register semantics, configuration change, continuity with software, random mix, end-to-end session, dropped segment, heartbeats, aborted orders, small window, rejected login): 1 test(s) passed in the recorded run (changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv, designs/b119_tcp_fast/tests/b119_cocotb.py). [evidence](../../../results/116_traceability/b119_tcp_fast/pytest_junit.xml)
+  - simulation measurement: **stale**, A long random mix reaches every outcome (sent, aborted, no verdict, cancelled in the go clock): random_mix_outcomes.sent = 248; random_mix_outcomes.aborted = 76; random_mix_outcomes.noverdict = 38; random_mix_outcomes.cancel0 = 19 (changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv). [evidence](../../../results/b119/bench_sim.json)
 
 ### B119-S-FAULTS: A seeded fault anywhere in the checksum, segment, verdict, refusal or register logic is caught
 
-- Kind: safety; state: verified; specification status: draft.
+- Kind: safety; state: stale; specification status: draft.
 - Source: `designs/b119_tcp_fast/verif/mutants.yaml`
 - Every one of the seeded faults of verif/mutants.yaml that builds fails the bench (mutation score 100 percent, 73 of 73). The set is the agent's own; whether it is wide enough is the human's check.
-  - simulation measurement: **pass**, 73 seeded faults (constants, operators and conditions across the checksum, the segment, the verdict, the refusals and the registers), the whole bench per fault: valid = 73; killed = 73; score_pct = 100. [evidence](../../../results/b119/mutation.json)
+  - simulation measurement: **stale**, 73 seeded faults (constants, operators and conditions across the checksum, the segment, the verdict, the refusals and the registers), the whole bench per fault: valid = 73; killed = 73; score_pct = 100 (changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv). [evidence](../../../results/b119/mutation.json)
 
 ### B119-F-MACPAIR: The 96 design's MAC accepts the block's words every clock and corrupts the frame check sequence on o_poison
 
@@ -191,100 +227,100 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### B119-P-FIRSTBYTE: First byte of the frame, clocks after go
 
-- Kind: performance; state: verified (simulation only); specification status: draft.
+- Kind: performance; state: stale; specification status: draft.
 - Source: `designs/b119_tcp_fast/docs/tcp_fast.md#4-latency-and-rate`
 - Regression bound drawn from the bench record; the owner sets the target. The same clock in which brief 110's stub port shows its first word.
 - Bound: clocks from go to the first byte of the frame at most 1 clocks; condition: simulation, one clock, block alone.
-  - simulation measurement: **pass**, First byte, clocks after go: measured 1 clocks; bound at most 1 clocks. [evidence](../../../results/b119/bench_sim.json)
+  - simulation measurement: **stale**, First byte, clocks after go: measured 1 clocks; bound at most 1 clocks (changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv). [evidence](../../../results/b119/bench_sim.json)
 
 ### B119-P-IPCKSUM: IPv4 checksum field complete, clocks after go
 
-- Kind: performance; state: verified (simulation only); specification status: draft.
+- Kind: performance; state: stale; specification status: draft.
 - Source: `designs/b119_tcp_fast/docs/tcp_fast.md#23-timing-of-a-segment`
 - Regression bound drawn from the bench record; the owner sets the target.
 - Bound: clocks from go to the last byte of the IPv4 checksum field at most 4 clocks; condition: simulation, one clock, block alone.
-  - simulation measurement: **pass**, IPv4 checksum field, clocks after go: measured 4 clocks; bound at most 4 clocks. [evidence](../../../results/b119/bench_sim.json)
+  - simulation measurement: **stale**, IPv4 checksum field, clocks after go: measured 4 clocks; bound at most 4 clocks (changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv). [evidence](../../../results/b119/bench_sim.json)
 
 ### B119-P-TCPCKSUM: TCP checksum field complete, clocks after go
 
-- Kind: performance; state: verified (simulation only); specification status: draft.
+- Kind: performance; state: stale; specification status: draft.
 - Source: `designs/b119_tcp_fast/docs/tcp_fast.md#23-timing-of-a-segment`
 - Regression bound drawn from the bench record; the owner sets the target. It is inside the header's own transmission time.
 - Bound: clocks from go to the last byte of the TCP checksum field at most 7 clocks; condition: simulation, one clock, block alone.
-  - simulation measurement: **pass**, TCP checksum field, clocks after go: measured 7 clocks; bound at most 7 clocks. [evidence](../../../results/b119/bench_sim.json)
+  - simulation measurement: **stale**, TCP checksum field, clocks after go: measured 7 clocks; bound at most 7 clocks (changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv). [evidence](../../../results/b119/bench_sim.json)
 
 ### B119-P-SEGMENT: Whole segment out, clocks after go
 
-- Kind: performance; state: verified (simulation only); specification status: draft.
+- Kind: performance; state: stale; specification status: draft.
 - Source: `designs/b119_tcp_fast/docs/tcp_fast.md#4-latency-and-rate`
 - Regression bound drawn from the bench record; the owner sets the target.
 - Bound: clocks from go to the last byte of the segment at most 15 clocks; condition: simulation, one clock, block alone.
-  - simulation measurement: **pass**, Last byte of the segment, clocks after go: measured 15 clocks; bound at most 15 clocks. [evidence](../../../results/b119/bench_sim.json)
+  - simulation measurement: **stale**, Last byte of the segment, clocks after go: measured 15 clocks; bound at most 15 clocks (changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv). [evidence](../../../results/b119/bench_sim.json)
 
 ### B119-P-RATE: Segment rate, clocks between starts
 
-- Kind: performance; state: verified (simulation only); specification status: draft.
+- Kind: performance; state: stale; specification status: draft.
 - Source: `designs/b119_tcp_fast/docs/tcp_fast.md#4-latency-and-rate`
 - Regression bound drawn from the bench record; the owner sets the target. The block is busy for the whole segment and drops a go meanwhile.
 - Bound: clocks between the starts of two segments sent back to back at most 15 clocks; condition: simulation, one clock, block alone.
-  - simulation measurement: **pass**, Clocks between the starts of two segments sent back to back: measured 15 clocks; bound at most 15 clocks. [evidence](../../../results/b119/bench_sim.json)
+  - simulation measurement: **stale**, Clocks between the starts of two segments sent back to back: measured 15 clocks; bound at most 15 clocks (changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv). [evidence](../../../results/b119/bench_sim.json)
 
 ### B119-P-TOP-SPEC: Speculative start behind brief 110's risk logic, clocks from the last ITCH byte
 
-- Kind: performance; state: verified (simulation only); specification status: draft.
+- Kind: performance; state: stale; specification status: draft.
 - Source: `designs/b119_tcp_fast/docs/tcp_fast.md#4-latency-and-rate`
 - Regression bound drawn from the top-level record; the owner sets the target. Only when the frame is idle and no earlier candidate is in flight.
 - Bound: clocks from the last byte of a triggering ITCH message to the first byte of the Ethernet frame at most 3 clocks; condition: simulation of brief 110's path with the block behind it, one clock, frame idle.
-  - simulation measurement: **pass**, Speculative start behind brief 110's risk logic: measured 3 clocks; bound at most 3 clocks. [evidence](../../../results/b119/top_sim.json)
+  - simulation measurement: **stale**, Speculative start behind brief 110's risk logic: measured 3 clocks; bound at most 3 clocks (changed since the evidence was recorded: designs/b119_tcp_fast/rtl/itch_ouch_tcp_top.sv, designs/b119_tcp_fast/rtl/tcp_fast.sv). [evidence](../../../results/b119/top_sim.json)
 
 ### B119-P-TOP-VERDICT: Start at the verdict behind brief 110's risk logic, clocks from the last ITCH byte
 
-- Kind: performance; state: verified (simulation only); specification status: draft.
+- Kind: performance; state: stale; specification status: draft.
 - Source: `designs/b119_tcp_fast/docs/tcp_fast.md#4-latency-and-rate`
 - Regression bound drawn from the top-level record; the owner sets the target.
 - Bound: clocks from the last byte of a triggering ITCH message to the first byte of the Ethernet frame at most 8 clocks; condition: simulation of brief 110's path with the block behind it, one clock, frame idle.
-  - simulation measurement: **pass**, Start at the verdict behind brief 110's risk logic: measured 8 clocks; bound at most 8 clocks. [evidence](../../../results/b119/top_sim.json)
+  - simulation measurement: **stale**, Start at the verdict behind brief 110's risk logic: measured 8 clocks; bound at most 8 clocks (changed since the evidence was recorded: designs/b119_tcp_fast/rtl/itch_ouch_tcp_top.sv, designs/b119_tcp_fast/rtl/tcp_fast.sv). [evidence](../../../results/b119/top_sim.json)
 
 ### B119-P-TIMING: Post-route setup slack at the 10G core clock, out of context
 
-- Kind: performance; state: verified (post-route timing); specification status: draft.
+- Kind: performance; state: stale; specification status: draft.
 - Source: `designs/b119_tcp_fast/README.md#technical-parameters`
 - The required clock is 6.2061 ns, the 4-decimal rounding of 161.1328125 MHz. Out of context there is no clock buffer or jitter and the inputs are registered in the wrapper; inside the 10G core the clock and placement can differ.
 - Bound: worst setup slack at least 0 ns; condition: Vivado 2026.1, xck26-sfvc784-2LV-c, out of context, post-route, period 6.2061 ns.
-  - post-route timing: **pass**, Worst setup slack at 6.2061 ns, post-route: measured 1.77 ns; bound at least 0 ns. [evidence](../../../results/b119/ooc/tcp_fast.json)
-  - post-route timing: **pass**, Pulse width slack at 6.2061 ns, and a faster clock (5 ns) also closed: at_required.wpws_ns = 2.828; at_required.closed = True; required_closed = True; closed_at_ns = 5. [evidence](../../../results/b119/ooc/tcp_fast.json)
+  - post-route timing: **stale**, Worst setup slack at 6.2061 ns, post-route: measured 1.77 ns; bound at least 0 ns (changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv). [evidence](../../../results/b119/ooc/tcp_fast.json)
+  - post-route timing: **stale**, Pulse width slack at 6.2061 ns, and a faster clock (5 ns) also closed: at_required.wpws_ns = 2.828; at_required.closed = True; required_closed = True; closed_at_ns = 5 (changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv). [evidence](../../../results/b119/ooc/tcp_fast.json)
 
 ### B119-P-HOLD: Post-route hold slack at the 10G core clock, out of context
 
-- Kind: performance; state: verified (post-route timing); specification status: draft.
+- Kind: performance; state: stale; specification status: draft.
 - Source: `designs/b119_tcp_fast/README.md#technical-parameters`
 - As B119-P-TIMING.
 - Bound: worst hold slack at least 0 ns; condition: Vivado 2026.1, xck26-sfvc784-2LV-c, out of context, post-route, period 6.2061 ns.
-  - post-route timing: **pass**, Worst hold slack at 6.2061 ns, post-route: measured 0.055 ns; bound at least 0 ns. [evidence](../../../results/b119/ooc/tcp_fast.json)
+  - post-route timing: **stale**, Worst hold slack at 6.2061 ns, post-route: measured 0.055 ns; bound at least 0 ns (changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv). [evidence](../../../results/b119/ooc/tcp_fast.json)
 
 ### B119-P-AREA: LUTs of tcp_fast at the required clock
 
-- Kind: performance; state: verified (post-route timing); specification status: draft.
+- Kind: performance; state: stale; specification status: draft.
 - Source: `designs/b119_tcp_fast/README.md#technical-parameters`
 - Regression bound drawn from the out-of-context build, frame builder included; the owner sets the target. Registers, block RAM and DSP are checked in the same record.
 - Bound: LUTs of tcp_fast including the frame builder inside it at most 1546 LUT; condition: Vivado 2026.1, xck26-sfvc784-2LV-c, out of context, period 6.2061 ns.
-  - post-route timing: **pass**, LUTs of tcp_fast (frame builder included), post-route: measured 1546 LUT; bound at most 1546 LUT. [evidence](../../../results/b119/ooc/tcp_fast.json)
-  - post-route timing: **pass**, Registers, block RAM and DSP of tcp_fast (2907 FF, 0 tiles, 0 DSP): at_required.core_ff = 2907; at_required.bram_tiles = 0; at_required.dsp = 0. [evidence](../../../results/b119/ooc/tcp_fast.json)
+  - post-route timing: **stale**, LUTs of tcp_fast (frame builder included), post-route: measured 1546 LUT; bound at most 1546 LUT (changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv). [evidence](../../../results/b119/ooc/tcp_fast.json)
+  - post-route timing: **stale**, Registers, block RAM and DSP of tcp_fast (2907 FF, 0 tiles, 0 DSP): at_required.core_ff = 2907; at_required.bram_tiles = 0; at_required.dsp = 0 (changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv). [evidence](../../../results/b119/ooc/tcp_fast.json)
 
 ### B119-F-CKSUM-IP: The IPv4 header checksum of the TCP fast path equals the Internet checksum, for all inputs
 
-- Kind: functional; state: verified; the Lean proof is of a transcription of the RTL, not of the RTL itself; rests on a delegated acceptance of the Lean statement, not a human approval; specification status: draft.
+- Kind: functional; state: stale; specification status: draft.
 - Source: `brief 119 (PR 245), designs/b119_tcp_fast/rtl/tcp_fast.sv; results/124_lean/README.md`
 - Brief 119's tcp_fast.sv builds the IPv4 header checksum from a precomputed template plus the changing fields. For all TTL, address and identification values it equals the complement of the ones' complement sum of the header, and the filled-in header sums to 0xFFFF.
-  - Lean proof (all widths): **pass**, IPv4 header checksum equals the Internet checksum: proved; statement accepted by planner (Session A) on the owner's delegation (owner decision 23), 2026-11-21; not a human approval; Cksum.rtl_ip_correct: kernel plus a compiled decision procedure; proof of the transcription, transcription tested; recorded build (not re-run). [evidence](../../../formal/lean/records/build_record.json)
-  - Lean proof (all widths): **pass**, The filled-in header sums to 0xFFFF (receiver check): proved; statement accepted by planner (Session A) on the owner's delegation (owner decision 23), 2026-11-21; not a human approval; Cksum.rtl_ip_receiver: kernel plus a compiled decision procedure; proof of the transcription, transcription tested; recorded build (not re-run). [evidence](../../../formal/lean/records/build_record.json)
+  - Lean proof (all widths): **stale**, IPv4 header checksum equals the Internet checksum: Cksum.rtl_ip_correct: kernel plus a compiled decision procedure; proof of the transcription, transcription tested; recorded build (not re-run) (transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:256-260; transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:326-336). [evidence](../../../formal/lean/records/build_record.json)
+  - Lean proof (all widths): **stale**, The filled-in header sums to 0xFFFF (receiver check): Cksum.rtl_ip_receiver: kernel plus a compiled decision procedure; proof of the transcription, transcription tested; recorded build (not re-run) (transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:256-260; transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:326-336). [evidence](../../../formal/lean/records/build_record.json)
 
 ### B119-F-CKSUM-TCP: The TCP checksum of the TCP fast path equals the Internet checksum, for all inputs and payloads up to 30 words
 
-- Kind: functional; state: verified; the Lean proof is of a transcription of the RTL, not of the RTL itself; rests on a delegated acceptance of the Lean statement, not a human approval; specification status: draft.
+- Kind: functional; state: stale; specification status: draft.
 - Source: `brief 119 (PR 245), designs/b119_tcp_fast/rtl/tcp_fast.sv; results/124_lean/README.md`
 - For all addresses, ports, sequence and acknowledgement numbers, windows and payloads of up to 30 sixteen-bit words, the checksum the RTL equations produce equals the complement of the ones' complement sum over pseudo-header, header and payload. The byte-pair swapping, the streaming receive check and the timing are not modelled.
-  - Lean proof (all widths): **pass**, TCP checksum equals the Internet checksum, payloads up to 30 words: proved; statement accepted by planner (Session A) on the owner's delegation (owner decision 23), 2026-11-21; not a human approval; Cksum.rtl_tcp_correct: kernel plus a compiled decision procedure; proof of the transcription, transcription tested; recorded build (not re-run). [evidence](../../../formal/lean/records/build_record.json)
+  - Lean proof (all widths): **stale**, TCP checksum equals the Internet checksum, payloads up to 30 words: Cksum.rtl_tcp_correct: kernel plus a compiled decision procedure; proof of the transcription, transcription tested; recorded build (not re-run) (transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:256-260; transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:326-336). [evidence](../../../formal/lean/records/build_record.json)
 
 ### B119-F-CKSUM-MODEL: The ones' complement arithmetic the checksum equations rest on is correct, for lists of any length
 

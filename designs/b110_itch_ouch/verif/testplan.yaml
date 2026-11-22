@@ -10,13 +10,13 @@
 schema: fpga-design-agent/testplan/v1
 design: b110_itch_ouch
 notes: >-
-  Simulation only (xsim 2026.1, UVM 1.2; Icarus is not used by this bench). One recorded regression (results/170_itch_uvm/summary.json) and one mutation record
+  Simulation only (xsim 2026.1, UVM 1.2; Icarus is not used by this bench). One recorded regression (results/176_seq_poison/summary.json) and one mutation record
   (results/170_itch_uvm/mutation_seed*.json). No board, no real feed, every message synthetic.
 
 x-rtl: &rtl [designs/b110_itch_ouch/rtl/mold_rx.sv, designs/b110_itch_ouch/rtl/itch_dec.sv, designs/b110_itch_ouch/rtl/book_core.sv, designs/b110_itch_ouch/rtl/risk_glue.sv,
   designs/b110_itch_ouch/rtl/ouch_enter.sv, designs/b96_kr260_10g/rm_gp_itch/rtl/udp_strip.sv, designs/b96_kr260_10g/rm_gp_itch/rtl/order_seg.sv, designs/b96_kr260_10g/rm_gp_itch/rtl/itch_top.sv,
   designs/b96_kr260_10g/rm_gp_itch/rtl/itch_path.sv, designs/b96_kr260_10g/rm_gp_itch/rtl/tx_mux.sv]
-x-rec: &rec {file: results/170_itch_uvm/summary.json, reader: json}
+x-rec: &rec {file: results/176_seq_poison/summary.json, reader: json}
 
 requirements:
   - id: B110-F-ORDER-BYTES

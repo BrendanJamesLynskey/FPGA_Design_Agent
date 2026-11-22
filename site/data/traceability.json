@@ -21,10 +21,10 @@
     ],
     "items": [
      {
-      "detail": "checks.ORDERS.mismatches = 0; checks.ORDERS.compared = 3112; failed = 0",
+      "detail": "checks.ORDERS.mismatches = 0; checks.ORDERS.compared = 3128; failed = 0",
       "evidence": {
        "exists": true,
-       "file": "results/170_itch_uvm/summary.json"
+       "file": "results/176_seq_poison/summary.json"
       },
       "id": "V-UVM-ORDERS",
       "instrument": null,
@@ -38,10 +38,10 @@
       "value": true
      },
      {
-      "detail": "checks.COUNTERS.mismatches = 0; checks.FLAGS.mismatches = 0; checks.COUNTERS.compared = 8897",
+      "detail": "checks.COUNTERS.mismatches = 0; checks.FLAGS.mismatches = 0; checks.COUNTERS.compared = 8938",
       "evidence": {
        "exists": true,
-       "file": "results/170_itch_uvm/summary.json"
+       "file": "results/176_seq_poison/summary.json"
       },
       "id": "V-UVM-MOLD",
       "instrument": null,
@@ -58,7 +58,7 @@
       "detail": "checks.COUNTERS.mismatches = 0; checks.FLAGS.mismatches = 0; failed = 0",
       "evidence": {
        "exists": true,
-       "file": "results/170_itch_uvm/summary.json"
+       "file": "results/176_seq_poison/summary.json"
       },
       "id": "V-UVM-BOOK",
       "instrument": null,
@@ -75,7 +75,7 @@
       "detail": "checks.COUNTERS.mismatches = 0; checks.ORDERS.mismatches = 0; failed = 0",
       "evidence": {
        "exists": true,
-       "file": "results/170_itch_uvm/summary.json"
+       "file": "results/176_seq_poison/summary.json"
       },
       "id": "V-UVM-RISK",
       "instrument": null,
@@ -89,10 +89,10 @@
       "value": true
      },
      {
-      "detail": "checks.US.mismatches = 0; checks.US.compared = 2604",
+      "detail": "checks.US.mismatches = 0; checks.US.compared = 2616",
       "evidence": {
        "exists": true,
-       "file": "results/170_itch_uvm/summary.json"
+       "file": "results/176_seq_poison/summary.json"
       },
       "id": "V-UVM-UDP",
       "instrument": null,
@@ -109,7 +109,7 @@
       "detail": "checks.ORDERS.mismatches = 0; checks.ORDERCNT.mismatches = 0; failed = 0",
       "evidence": {
        "exists": true,
-       "file": "results/170_itch_uvm/summary.json"
+       "file": "results/176_seq_poison/summary.json"
       },
       "id": "V-UVM-STRICT",
       "instrument": null,
@@ -123,10 +123,10 @@
       "value": true
      },
      {
-      "detail": "seq_waived = 11; finding_seq_poison.failed unreadable",
+      "detail": "seq_waived unreadable; finding_seq_poison.failed unreadable",
       "evidence": {
        "exists": true,
-       "file": "results/170_itch_uvm/summary.json"
+       "file": "results/176_seq_poison/summary.json"
       },
       "id": "V-UVM-SEQ",
       "instrument": null,
@@ -143,7 +143,7 @@
       "detail": "sva_failures = 0",
       "evidence": {
        "exists": true,
-       "file": "results/170_itch_uvm/summary.json"
+       "file": "results/176_seq_poison/summary.json"
       },
       "id": "V-UVM-SVA",
       "instrument": null,
@@ -161,7 +161,7 @@
       "detail": "coverage.holes = []",
       "evidence": {
        "exists": true,
-       "file": "results/170_itch_uvm/summary.json"
+       "file": "results/176_seq_poison/summary.json"
       },
       "id": "V-UVM-COV",
       "instrument": null,
@@ -192,7 +192,7 @@
       "value": null
      }
     ],
-    "notes": "Simulation only (xsim 2026.1, UVM 1.2; Icarus is not used by this bench). One recorded regression (results/170_itch_uvm/summary.json) and one mutation record (results/170_itch_uvm/mutation_seed*.json). No board, no real feed, every message synthetic.",
+    "notes": "Simulation only (xsim 2026.1, UVM 1.2; Icarus is not used by this bench). One recorded regression (results/176_seq_poison/summary.json) and one mutation record (results/170_itch_uvm/mutation_seed*.json). No board, no real feed, every message synthetic.",
     "path": "designs/b110_itch_ouch",
     "requirements": [
      {
@@ -549,6 +549,48 @@
     "gaps": [
      {
       "gate": false,
+      "id": "B119-F-LINT",
+      "state": "stale",
+      "text": "its evidence is stale",
+      "type": "no_passing_evidence"
+     },
+     {
+      "gate": false,
+      "id": "B119-I-ORDERPORT",
+      "state": "stale",
+      "text": "its evidence is stale",
+      "type": "no_passing_evidence"
+     },
+     {
+      "gate": false,
+      "id": "B119-I-REGBUS",
+      "state": "stale",
+      "text": "its evidence is stale",
+      "type": "no_passing_evidence"
+     },
+     {
+      "gate": false,
+      "id": "B119-S-ABORT",
+      "state": "stale",
+      "text": "its evidence is stale",
+      "type": "no_passing_evidence"
+     },
+     {
+      "gate": false,
+      "id": "B119-S-SUMGUARD",
+      "state": "stale",
+      "text": "its evidence is stale",
+      "type": "no_passing_evidence"
+     },
+     {
+      "gate": false,
+      "id": "B119-S-FAULTS",
+      "state": "stale",
+      "text": "its evidence is stale",
+      "type": "no_passing_evidence"
+     },
+     {
+      "gate": false,
       "id": "B119-F-MACPAIR",
       "state": "not_run",
       "text": "no passing evidence",
@@ -576,44 +618,236 @@
      {
       "gate": false,
       "id": "B119-P-FIRSTBYTE",
-      "text": "verified in simulation only, not measured on the board",
-      "type": "performance_sim_only"
+      "state": "stale",
+      "text": "its evidence is stale",
+      "type": "no_passing_evidence"
      },
      {
       "gate": false,
       "id": "B119-P-IPCKSUM",
-      "text": "verified in simulation only, not measured on the board",
-      "type": "performance_sim_only"
+      "state": "stale",
+      "text": "its evidence is stale",
+      "type": "no_passing_evidence"
      },
      {
       "gate": false,
       "id": "B119-P-TCPCKSUM",
-      "text": "verified in simulation only, not measured on the board",
-      "type": "performance_sim_only"
+      "state": "stale",
+      "text": "its evidence is stale",
+      "type": "no_passing_evidence"
      },
      {
       "gate": false,
       "id": "B119-P-SEGMENT",
-      "text": "verified in simulation only, not measured on the board",
-      "type": "performance_sim_only"
+      "state": "stale",
+      "text": "its evidence is stale",
+      "type": "no_passing_evidence"
      },
      {
       "gate": false,
       "id": "B119-P-RATE",
-      "text": "verified in simulation only, not measured on the board",
-      "type": "performance_sim_only"
+      "state": "stale",
+      "text": "its evidence is stale",
+      "type": "no_passing_evidence"
      },
      {
       "gate": false,
       "id": "B119-P-TOP-SPEC",
-      "text": "verified in simulation only, not measured on the board",
-      "type": "performance_sim_only"
+      "state": "stale",
+      "text": "its evidence is stale",
+      "type": "no_passing_evidence"
      },
      {
       "gate": false,
       "id": "B119-P-TOP-VERDICT",
-      "text": "verified in simulation only, not measured on the board",
-      "type": "performance_sim_only"
+      "state": "stale",
+      "text": "its evidence is stale",
+      "type": "no_passing_evidence"
+     },
+     {
+      "gate": false,
+      "id": "B119-P-TIMING",
+      "state": "stale",
+      "text": "its evidence is stale",
+      "type": "no_passing_evidence"
+     },
+     {
+      "gate": false,
+      "id": "B119-P-HOLD",
+      "state": "stale",
+      "text": "its evidence is stale",
+      "type": "no_passing_evidence"
+     },
+     {
+      "gate": false,
+      "id": "B119-P-AREA",
+      "state": "stale",
+      "text": "its evidence is stale",
+      "type": "no_passing_evidence"
+     },
+     {
+      "gate": false,
+      "id": "B119-F-CKSUM-IP",
+      "state": "stale",
+      "text": "its evidence is stale",
+      "type": "no_passing_evidence"
+     },
+     {
+      "gate": false,
+      "id": "B119-F-CKSUM-TCP",
+      "state": "stale",
+      "text": "its evidence is stale",
+      "type": "no_passing_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-SIM-BENCH",
+      "text": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv, designs/b119_tcp_fast/tests/b119_cocotb.py",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-SIM-TOP",
+      "text": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/itch_ouch_tcp_top.sv, designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-LINT",
+      "text": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-SIMM-RANDOM",
+      "text": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-SIMM-ABORT",
+      "text": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-SIMM-REFUSE",
+      "text": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-SIMM-MIX",
+      "text": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-SIMM-E2E",
+      "text": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-SIMM-TOP-POISON",
+      "text": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/itch_ouch_tcp_top.sv, designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-SIMM-FIRSTBYTE",
+      "text": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-SIMM-IPCKSUM",
+      "text": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-SIMM-TCPCKSUM",
+      "text": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-SIMM-SEGMENT",
+      "text": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-SIMM-RATE",
+      "text": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-SIMM-TOP-SPEC",
+      "text": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/itch_ouch_tcp_top.sv, designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-SIMM-TOP-VERDICT",
+      "text": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/itch_ouch_tcp_top.sv, designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-MUT",
+      "text": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-TIM-SETUP",
+      "text": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-TIM-PULSE",
+      "text": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-TIM-HOLD",
+      "text": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-RES-LUT",
+      "text": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-RES-OTHER",
+      "text": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-LEAN-CKSUM-IP",
+      "text": "transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:256-260; transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:326-336",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-LEAN-CKSUM-IP-RX",
+      "text": "transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:256-260; transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:326-336",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-LEAN-CKSUM-TCP",
+      "text": "transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:256-260; transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:326-336",
+      "type": "stale_evidence"
      }
     ],
     "items": [
@@ -724,7 +958,8 @@
        "B119-F-HANDBACK",
        "B119-F-E2E"
       ],
-      "status": "pass",
+      "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv, designs/b119_tcp_fast/tests/b119_cocotb.py",
+      "status": "stale",
       "title": "The block against the reference in cocotb, 19 tests in one simulation (smoke, random segments, checksum corners, fold carries, timing, abort at every offset and without a gap, speculative verdicts, refusals, register semantics, configuration change, continuity with software, random mix, end-to-end session, dropped segment, heartbeats, aborted orders, small window, rejected login)",
       "value": "1 of 1 tests passed"
      },
@@ -741,7 +976,8 @@
       "requirements": [
        "B119-I-ORDERPORT"
       ],
-      "status": "pass",
+      "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/itch_ouch_tcp_top.sv, designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "status": "stale",
       "title": "Brief 110's path with tcp_fast in place of its stub port, against brief 110's reference model",
       "value": "1 of 1 tests passed"
      },
@@ -758,7 +994,8 @@
       "requirements": [
        "B119-F-LINT"
       ],
-      "status": "pass",
+      "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "status": "stale",
       "title": "Verilator -Wall lint of tcp_fast.sv and the frame builder inside it",
       "value": "1 of 1 tests passed"
      },
@@ -776,7 +1013,8 @@
        "B119-F-SEGMENT",
        "B119-F-CKSUM-RTL"
       ],
-      "status": "pass",
+      "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "status": "stale",
       "title": "450 random segments (random connections, orders and states, sequence numbers at the wrap) compared byte for byte",
       "value": 450
      },
@@ -793,7 +1031,8 @@
       "requirements": [
        "B119-S-ABORT"
       ],
-      "status": "pass",
+      "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "status": "stale",
       "title": "Outcome at every abort offset (0 cancels, 1 to 14 abort, 15 and later are late and the segment is sent)",
       "value": true
      },
@@ -810,7 +1049,8 @@
       "requirements": [
        "B119-S-REFUSE"
       ],
-      "status": "pass",
+      "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "status": "stale",
       "title": "The five refusal codes and the random mix's outcomes (refused, aborted, no verdict, sent)",
       "value": true
      },
@@ -829,7 +1069,8 @@
        "B119-S-SUMGUARD",
        "B119-F-SEGMENT"
       ],
-      "status": "pass",
+      "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "status": "stale",
       "title": "A long random mix reaches every outcome (sent, aborted, no verdict, cancelled in the go clock)",
       "value": true
      },
@@ -848,7 +1089,8 @@
        "B119-S-SEQSPACE",
        "B119-F-HANDBACK"
       ],
-      "status": "pass",
+      "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "status": "stale",
       "title": "End-to-end session, dropped segment, heartbeats, aborted orders and small window, with the software exchange",
       "value": true
      },
@@ -866,7 +1108,8 @@
        "B119-I-ORDERPORT",
        "B119-S-ABORT"
       ],
-      "status": "pass",
+      "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/itch_ouch_tcp_top.sv, designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "status": "stale",
       "title": "Behind the risk logic, refused speculative orders leave poisoned and non-speculative ones are never poisoned",
       "value": true
      },
@@ -884,7 +1127,8 @@
       "requirements": [
        "B119-P-FIRSTBYTE"
       ],
-      "status": "pass",
+      "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "status": "stale",
       "title": "First byte, clocks after go",
       "value": 1
      },
@@ -902,7 +1146,8 @@
       "requirements": [
        "B119-P-IPCKSUM"
       ],
-      "status": "pass",
+      "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "status": "stale",
       "title": "IPv4 checksum field, clocks after go",
       "value": 4
      },
@@ -920,7 +1165,8 @@
       "requirements": [
        "B119-P-TCPCKSUM"
       ],
-      "status": "pass",
+      "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "status": "stale",
       "title": "TCP checksum field, clocks after go",
       "value": 7
      },
@@ -938,7 +1184,8 @@
       "requirements": [
        "B119-P-SEGMENT"
       ],
-      "status": "pass",
+      "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "status": "stale",
       "title": "Last byte of the segment, clocks after go",
       "value": 15
      },
@@ -956,7 +1203,8 @@
       "requirements": [
        "B119-P-RATE"
       ],
-      "status": "pass",
+      "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "status": "stale",
       "title": "Clocks between the starts of two segments sent back to back",
       "value": 15
      },
@@ -974,7 +1222,8 @@
       "requirements": [
        "B119-P-TOP-SPEC"
       ],
-      "status": "pass",
+      "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/itch_ouch_tcp_top.sv, designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "status": "stale",
       "title": "Speculative start behind brief 110's risk logic",
       "value": 3
      },
@@ -992,7 +1241,8 @@
       "requirements": [
        "B119-P-TOP-VERDICT"
       ],
-      "status": "pass",
+      "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/itch_ouch_tcp_top.sv, designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "status": "stale",
       "title": "Start at the verdict behind brief 110's risk logic",
       "value": 8
      },
@@ -1014,7 +1264,8 @@
        "B119-I-REGBUS",
        "B119-F-SEGMENT"
       ],
-      "status": "pass",
+      "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "status": "stale",
       "title": "73 seeded faults (constants, operators and conditions across the checksum, the segment, the verdict, the refusals and the registers), the whole bench per fault",
       "value": true
      },
@@ -1032,7 +1283,8 @@
       "requirements": [
        "B119-P-TIMING"
       ],
-      "status": "pass",
+      "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "status": "stale",
       "title": "Worst setup slack at 6.2061 ns, post-route",
       "value": 1.77
      },
@@ -1049,7 +1301,8 @@
       "requirements": [
        "B119-P-TIMING"
       ],
-      "status": "pass",
+      "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "status": "stale",
       "title": "Pulse width slack at 6.2061 ns, and a faster clock (5 ns) also closed",
       "value": true
      },
@@ -1067,7 +1320,8 @@
       "requirements": [
        "B119-P-HOLD"
       ],
-      "status": "pass",
+      "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "status": "stale",
       "title": "Worst hold slack at 6.2061 ns, post-route",
       "value": 0.055
      },
@@ -1085,7 +1339,8 @@
       "requirements": [
        "B119-P-AREA"
       ],
-      "status": "pass",
+      "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "status": "stale",
       "title": "LUTs of tcp_fast (frame builder included), post-route",
       "value": 1546
      },
@@ -1102,7 +1357,8 @@
       "requirements": [
        "B119-P-AREA"
       ],
-      "status": "pass",
+      "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "status": "stale",
       "title": "Registers, block RAM and DSP of tcp_fast (2907 FF, 0 tiles, 0 DSP)",
       "value": true
      },
@@ -1141,7 +1397,7 @@
       "value": null
      },
      {
-      "detail": "proved; statement accepted by planner (Session A) on the owner's delegation (owner decision 23), 2026-11-21; not a human approval; Cksum.rtl_ip_correct: kernel plus a compiled decision procedure; proof of the transcription, transcription tested; recorded build (not re-run)",
+      "detail": "Cksum.rtl_ip_correct: kernel plus a compiled decision procedure; proof of the transcription, transcription tested; recorded build (not re-run)",
       "evidence": {
        "exists": true,
        "file": "formal/lean/records/build_record.json"
@@ -1176,12 +1432,13 @@
       "requirements": [
        "B119-F-CKSUM-IP"
       ],
-      "status": "pass",
+      "stale_because": "transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:256-260; transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:326-336",
+      "status": "stale",
       "title": "IPv4 header checksum equals the Internet checksum",
       "value": null
      },
      {
-      "detail": "proved; statement accepted by planner (Session A) on the owner's delegation (owner decision 23), 2026-11-21; not a human approval; Cksum.rtl_ip_receiver: kernel plus a compiled decision procedure; proof of the transcription, transcription tested; recorded build (not re-run)",
+      "detail": "Cksum.rtl_ip_receiver: kernel plus a compiled decision procedure; proof of the transcription, transcription tested; recorded build (not re-run)",
       "evidence": {
        "exists": true,
        "file": "formal/lean/records/build_record.json"
@@ -1216,12 +1473,13 @@
       "requirements": [
        "B119-F-CKSUM-IP"
       ],
-      "status": "pass",
+      "stale_because": "transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:256-260; transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:326-336",
+      "status": "stale",
       "title": "The filled-in header sums to 0xFFFF (receiver check)",
       "value": null
      },
      {
-      "detail": "proved; statement accepted by planner (Session A) on the owner's delegation (owner decision 23), 2026-11-21; not a human approval; Cksum.rtl_tcp_correct: kernel plus a compiled decision procedure; proof of the transcription, transcription tested; recorded build (not re-run)",
+      "detail": "Cksum.rtl_tcp_correct: kernel plus a compiled decision procedure; proof of the transcription, transcription tested; recorded build (not re-run)",
       "evidence": {
        "exists": true,
        "file": "formal/lean/records/build_record.json"
@@ -1256,7 +1514,8 @@
       "requirements": [
        "B119-F-CKSUM-TCP"
       ],
-      "status": "pass",
+      "stale_because": "transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:256-260; transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:326-336",
+      "status": "stale",
       "title": "TCP checksum equals the Internet checksum, payloads up to 30 words",
       "value": null
      },
@@ -1392,13 +1651,12 @@
       "kind": "functional",
       "lean_transcription_only": false,
       "passing_methods": [
-       "sim_measurement",
        "sim_test"
       ],
       "rests_on_delegated": false,
       "source": "designs/b119_tcp_fast/docs/tcp_fast.md#21-the-segment",
       "spec_status": "draft",
-      "stale_items": 0,
+      "stale_items": 4,
       "state": "verified",
       "text": "For any connection state and order, the block sends 15 words (113 bytes without the frame check sequence) whose bytes equal the Python reference, with sequence number, acknowledgement number, window and IP identification captured at the go edge, the SoupBinTCP Unsequenced Data packet of brief 110 as payload, no TCP options and the PSH and ACK flags, including sequence numbers at the 32-bit wrap.",
       "title": "Each order leaves as one complete 113-byte Ethernet, IPv4 and TCP frame, byte exact against the reference"
@@ -1418,13 +1676,12 @@
       "kind": "functional",
       "lean_transcription_only": false,
       "passing_methods": [
-       "sim_measurement",
        "sim_test"
       ],
       "rests_on_delegated": false,
       "source": "designs/b119_tcp_fast/docs/tcp_fast.md#22-checksums-incremental-not-recomputed",
       "spec_status": "draft",
-      "stale_items": 0,
+      "stale_items": 3,
       "state": "verified",
       "text": "The IPv4 header checksum and the TCP checksum of every segment sent equal the reference's, which is itself checked against outside vectors (RFC 1071, a published IPv4 header), including carries in the fold, sums that wrap, a TCP checksum that comes out 0 and a segment whose headers sum to all ones. This is checked by simulation of chosen and random cases; the all-inputs statements are B119-F-CKSUM-IP, -TCP and -MODEL.",
       "title": "Both checksums on the wire are the RFC 1071 checksums, at the corner cases"
@@ -1443,13 +1700,12 @@
       "kind": "functional",
       "lean_transcription_only": false,
       "passing_methods": [
-       "sim_measurement",
        "sim_test"
       ],
       "rests_on_delegated": false,
       "source": "designs/b119_tcp_fast/docs/tcp_fast.md#13-hand-back-to-software-rec_",
       "spec_status": "draft",
-      "stale_items": 0,
+      "stale_items": 2,
       "state": "verified",
       "text": "One record (rec_v, rec_seq, rec_len, rec_id, rec_pay) for each unpoisoned segment in the clock of its last word, and none for a poisoned one, so software can retransmit from the records; a segment dropped on the wire is retransmitted by software with the same bytes.",
       "title": "Every segment that left is handed back to software, and none that was poisoned"
@@ -1468,13 +1724,12 @@
       "kind": "functional",
       "lean_transcription_only": false,
       "passing_methods": [
-       "sim_measurement",
        "sim_test"
       ],
       "rests_on_delegated": false,
       "source": "designs/b119_tcp_fast/docs/software_side.md#what-the-tests-show",
       "spec_status": "draft",
-      "stale_items": 0,
+      "stale_items": 2,
       "state": "verified",
       "text": "Handshake, SoupBinTCP login, orders, acknowledgements, a dropped segment, heartbeats, a small window and a rejected login all behave as the software side documents, with the exchange seeing every order exactly once and in order.",
       "title": "A Python TCP owner and a software OUCH exchange run a whole session through the block"
@@ -1490,14 +1745,12 @@
       ],
       "kind": "functional",
       "lean_transcription_only": false,
-      "passing_methods": [
-       "sim_test"
-      ],
+      "passing_methods": [],
       "rests_on_delegated": false,
       "source": "designs/b119_tcp_fast/README.md#verified",
       "spec_status": "draft",
-      "stale_items": 0,
-      "state": "verified",
+      "stale_items": 1,
+      "state": "stale",
       "text": "Verilator -Wall over tcp_fast.sv and the frame builder inside it reports no warnings, with the waivers in lint/lint_waivers.vlt.",
       "title": "The RTL lints clean"
      },
@@ -1513,15 +1766,12 @@
       ],
       "kind": "interface",
       "lean_transcription_only": false,
-      "passing_methods": [
-       "sim_measurement",
-       "sim_test"
-      ],
+      "passing_methods": [],
       "rests_on_delegated": false,
       "source": "designs/b119_tcp_fast/README.md#verified",
       "spec_status": "draft",
-      "stale_items": 0,
-      "state": "verified",
+      "stale_items": 2,
+      "state": "stale",
       "text": "With tcp_fast in place of ouch_enter, brief 110's path against brief 110's reference model sends the same orders, with the same payload bytes, valid checksums and gapless sequence numbers; speculative orders that the risk logic refuses leave poisoned.",
       "title": "The block replaces the order port of brief 110 and works behind its risk logic"
      },
@@ -1537,15 +1787,12 @@
       ],
       "kind": "interface",
       "lean_transcription_only": false,
-      "passing_methods": [
-       "sim_measurement",
-       "sim_test"
-      ],
+      "passing_methods": [],
       "rests_on_delegated": false,
       "source": "designs/b119_tcp_fast/docs/tcp_fast.md#14-register-bus-sw_",
       "spec_status": "draft",
-      "stale_items": 0,
-      "state": "verified",
+      "stale_items": 2,
+      "state": "stale",
       "text": "Writes to static fields invalidate the template and are ignored and counted while a segment is in flight; live fields are accepted at any time and restart the staleness age; reads show the registers before the next edge; unmapped addresses read 0; the 14 counters count what the datasheet says and clear on CLR_CNT.",
       "title": "The register bus and counters behave as the datasheet states"
      },
@@ -1564,15 +1811,12 @@
       ],
       "kind": "safety",
       "lean_transcription_only": false,
-      "passing_methods": [
-       "sim_measurement",
-       "sim_test"
-      ],
+      "passing_methods": [],
       "rests_on_delegated": false,
       "source": "designs/b119_tcp_fast/docs/tcp_fast.md#24-speculative-start-abort-verdict",
       "spec_status": "draft",
-      "stale_items": 0,
-      "state": "verified",
+      "stale_items": 5,
+      "state": "stale",
       "text": "An abort at any of edges 1 to 14 ends the frame with o_poison, leaves SND_NXT and IP_ID as before and produces no record; an abort at edge 0 cancels the go; a speculative segment with no verdict by edge 14 is poisoned; an abort wins over a commit; an abort after the frame left is late, counted and ignored.",
       "title": "An aborted or unverdicted segment is poisoned and consumes no sequence space"
      },
@@ -1591,13 +1835,12 @@
       "kind": "safety",
       "lean_transcription_only": false,
       "passing_methods": [
-       "sim_measurement",
        "sim_test"
       ],
       "rests_on_delegated": false,
       "source": "designs/b119_tcp_fast/docs/tcp_fast.md#25-refusals",
       "spec_status": "draft",
-      "stale_items": 0,
+      "stale_items": 3,
       "state": "verified",
       "text": "Checked in the order busy, not armed, template not valid or state stale, window closed, MSS below 59, an order is refused with the matching code and counter, nothing leaves and no state changes; a window of exactly 59 bytes admits one segment and one byte less admits none.",
       "title": "The block refuses to send when it is not armed, stale, window-closed, too small or busy"
@@ -1616,13 +1859,12 @@
       "kind": "safety",
       "lean_transcription_only": false,
       "passing_methods": [
-       "sim_measurement",
        "sim_test"
       ],
       "rests_on_delegated": false,
       "source": "designs/b119_tcp_fast/docs/tcp_fast.md#3-what-software-must-do-and-when",
       "spec_status": "draft",
-      "stale_items": 0,
+      "stale_items": 2,
       "state": "verified",
       "text": "Hardware and software share one sequence space. After a heartbeat takes it and gives it back, after an abort, after a refusal and after a retransmission, the peer's received stream has no gap and no duplicate, and nothing is sent by software while the block is armed and idle.",
       "title": "The peer sees no gap and no duplicate in the sequence space"
@@ -1639,15 +1881,12 @@
       ],
       "kind": "safety",
       "lean_transcription_only": false,
-      "passing_methods": [
-       "sim_measurement",
-       "sim_test"
-      ],
+      "passing_methods": [],
       "rests_on_delegated": false,
       "source": "designs/b119_tcp_fast/docs/tcp_fast.md#22-checksums-incremental-not-recomputed",
       "spec_status": "draft",
-      "stale_items": 0,
-      "state": "verified",
+      "stale_items": 2,
+      "state": "stale",
       "text": "The block sums the payload words ouch_enter actually emits and compares the total with the early one the checksum used; a difference (for example a configuration change in flight) poisons the segment and counts sumerr, so a wrong checksum is never sent as valid.",
       "title": "A segment whose payload disagrees with the checksum that was sent is poisoned"
      },
@@ -1662,14 +1901,12 @@
       ],
       "kind": "safety",
       "lean_transcription_only": false,
-      "passing_methods": [
-       "sim_measurement"
-      ],
+      "passing_methods": [],
       "rests_on_delegated": false,
       "source": "designs/b119_tcp_fast/verif/mutants.yaml",
       "spec_status": "draft",
-      "stale_items": 0,
-      "state": "verified",
+      "stale_items": 1,
+      "state": "stale",
       "text": "Every one of the seeded faults of verif/mutants.yaml that builds fails the bench (mutation score 100 percent, 73 of 73). The set is the agent's own; whether it is wide enough is the human's check.",
       "title": "A seeded fault anywhere in the checksum, segment, verdict, refusal or register logic is caught"
      },
@@ -1716,7 +1953,7 @@
       "title": "The owner completes a session with a real TCP peer and the frames match the bench's"
      },
      {
-      "basis": "simulation",
+      "basis": null,
       "hardware_closure": null,
       "hardware_only": false,
       "hardware_verified": false,
@@ -1726,9 +1963,7 @@
       ],
       "kind": "performance",
       "lean_transcription_only": false,
-      "passing_methods": [
-       "sim_measurement"
-      ],
+      "passing_methods": [],
       "performance": {
        "bound": 1,
        "condition": "simulation, one clock, block alone",
@@ -1739,13 +1974,13 @@
       "rests_on_delegated": false,
       "source": "designs/b119_tcp_fast/docs/tcp_fast.md#4-latency-and-rate",
       "spec_status": "draft",
-      "stale_items": 0,
-      "state": "verified",
+      "stale_items": 1,
+      "state": "stale",
       "text": "Regression bound drawn from the bench record; the owner sets the target. The same clock in which brief 110's stub port shows its first word.",
       "title": "First byte of the frame, clocks after go"
      },
      {
-      "basis": "simulation",
+      "basis": null,
       "hardware_closure": null,
       "hardware_only": false,
       "hardware_verified": false,
@@ -1755,9 +1990,7 @@
       ],
       "kind": "performance",
       "lean_transcription_only": false,
-      "passing_methods": [
-       "sim_measurement"
-      ],
+      "passing_methods": [],
       "performance": {
        "bound": 4,
        "condition": "simulation, one clock, block alone",
@@ -1768,13 +2001,13 @@
       "rests_on_delegated": false,
       "source": "designs/b119_tcp_fast/docs/tcp_fast.md#23-timing-of-a-segment",
       "spec_status": "draft",
-      "stale_items": 0,
-      "state": "verified",
+      "stale_items": 1,
+      "state": "stale",
       "text": "Regression bound drawn from the bench record; the owner sets the target.",
       "title": "IPv4 checksum field complete, clocks after go"
      },
      {
-      "basis": "simulation",
+      "basis": null,
       "hardware_closure": null,
       "hardware_only": false,
       "hardware_verified": false,
@@ -1784,9 +2017,7 @@
       ],
       "kind": "performance",
       "lean_transcription_only": false,
-      "passing_methods": [
-       "sim_measurement"
-      ],
+      "passing_methods": [],
       "performance": {
        "bound": 7,
        "condition": "simulation, one clock, block alone",
@@ -1797,13 +2028,13 @@
       "rests_on_delegated": false,
       "source": "designs/b119_tcp_fast/docs/tcp_fast.md#23-timing-of-a-segment",
       "spec_status": "draft",
-      "stale_items": 0,
-      "state": "verified",
+      "stale_items": 1,
+      "state": "stale",
       "text": "Regression bound drawn from the bench record; the owner sets the target. It is inside the header's own transmission time.",
       "title": "TCP checksum field complete, clocks after go"
      },
      {
-      "basis": "simulation",
+      "basis": null,
       "hardware_closure": null,
       "hardware_only": false,
       "hardware_verified": false,
@@ -1813,9 +2044,7 @@
       ],
       "kind": "performance",
       "lean_transcription_only": false,
-      "passing_methods": [
-       "sim_measurement"
-      ],
+      "passing_methods": [],
       "performance": {
        "bound": 15,
        "condition": "simulation, one clock, block alone",
@@ -1826,13 +2055,13 @@
       "rests_on_delegated": false,
       "source": "designs/b119_tcp_fast/docs/tcp_fast.md#4-latency-and-rate",
       "spec_status": "draft",
-      "stale_items": 0,
-      "state": "verified",
+      "stale_items": 1,
+      "state": "stale",
       "text": "Regression bound drawn from the bench record; the owner sets the target.",
       "title": "Whole segment out, clocks after go"
      },
      {
-      "basis": "simulation",
+      "basis": null,
       "hardware_closure": null,
       "hardware_only": false,
       "hardware_verified": false,
@@ -1842,9 +2071,7 @@
       ],
       "kind": "performance",
       "lean_transcription_only": false,
-      "passing_methods": [
-       "sim_measurement"
-      ],
+      "passing_methods": [],
       "performance": {
        "bound": 15,
        "condition": "simulation, one clock, block alone",
@@ -1855,13 +2082,13 @@
       "rests_on_delegated": false,
       "source": "designs/b119_tcp_fast/docs/tcp_fast.md#4-latency-and-rate",
       "spec_status": "draft",
-      "stale_items": 0,
-      "state": "verified",
+      "stale_items": 1,
+      "state": "stale",
       "text": "Regression bound drawn from the bench record; the owner sets the target. The block is busy for the whole segment and drops a go meanwhile.",
       "title": "Segment rate, clocks between starts"
      },
      {
-      "basis": "simulation",
+      "basis": null,
       "hardware_closure": null,
       "hardware_only": false,
       "hardware_verified": false,
@@ -1871,9 +2098,7 @@
       ],
       "kind": "performance",
       "lean_transcription_only": false,
-      "passing_methods": [
-       "sim_measurement"
-      ],
+      "passing_methods": [],
       "performance": {
        "bound": 3,
        "condition": "simulation of brief 110's path with the block behind it, one clock, frame idle",
@@ -1885,13 +2110,13 @@
       "rests_on_delegated": false,
       "source": "designs/b119_tcp_fast/docs/tcp_fast.md#4-latency-and-rate",
       "spec_status": "draft",
-      "stale_items": 0,
-      "state": "verified",
+      "stale_items": 1,
+      "state": "stale",
       "text": "Regression bound drawn from the top-level record; the owner sets the target. Only when the frame is idle and no earlier candidate is in flight.",
       "title": "Speculative start behind brief 110's risk logic, clocks from the last ITCH byte"
      },
      {
-      "basis": "simulation",
+      "basis": null,
       "hardware_closure": null,
       "hardware_only": false,
       "hardware_verified": false,
@@ -1901,9 +2126,7 @@
       ],
       "kind": "performance",
       "lean_transcription_only": false,
-      "passing_methods": [
-       "sim_measurement"
-      ],
+      "passing_methods": [],
       "performance": {
        "bound": 8,
        "condition": "simulation of brief 110's path with the block behind it, one clock, frame idle",
@@ -1915,13 +2138,13 @@
       "rests_on_delegated": false,
       "source": "designs/b119_tcp_fast/docs/tcp_fast.md#4-latency-and-rate",
       "spec_status": "draft",
-      "stale_items": 0,
-      "state": "verified",
+      "stale_items": 1,
+      "state": "stale",
       "text": "Regression bound drawn from the top-level record; the owner sets the target.",
       "title": "Start at the verdict behind brief 110's risk logic, clocks from the last ITCH byte"
      },
      {
-      "basis": "timing",
+      "basis": null,
       "hardware_closure": null,
       "hardware_only": false,
       "hardware_verified": false,
@@ -1932,9 +2155,7 @@
       ],
       "kind": "performance",
       "lean_transcription_only": false,
-      "passing_methods": [
-       "timing"
-      ],
+      "passing_methods": [],
       "performance": {
        "bound": 0,
        "condition": "Vivado 2026.1, xck26-sfvc784-2LV-c, out of context, post-route, period 6.2061 ns",
@@ -1945,13 +2166,13 @@
       "rests_on_delegated": false,
       "source": "designs/b119_tcp_fast/README.md#technical-parameters",
       "spec_status": "draft",
-      "stale_items": 0,
-      "state": "verified",
+      "stale_items": 2,
+      "state": "stale",
       "text": "The required clock is 6.2061 ns, the 4-decimal rounding of 161.1328125 MHz. Out of context there is no clock buffer or jitter and the inputs are registered in the wrapper; inside the 10G core the clock and placement can differ.",
       "title": "Post-route setup slack at the 10G core clock, out of context"
      },
      {
-      "basis": "timing",
+      "basis": null,
       "hardware_closure": null,
       "hardware_only": false,
       "hardware_verified": false,
@@ -1961,9 +2182,7 @@
       ],
       "kind": "performance",
       "lean_transcription_only": false,
-      "passing_methods": [
-       "timing"
-      ],
+      "passing_methods": [],
       "performance": {
        "bound": 0,
        "condition": "Vivado 2026.1, xck26-sfvc784-2LV-c, out of context, post-route, period 6.2061 ns",
@@ -1974,13 +2193,13 @@
       "rests_on_delegated": false,
       "source": "designs/b119_tcp_fast/README.md#technical-parameters",
       "spec_status": "draft",
-      "stale_items": 0,
-      "state": "verified",
+      "stale_items": 1,
+      "state": "stale",
       "text": "As B119-P-TIMING.",
       "title": "Post-route hold slack at the 10G core clock, out of context"
      },
      {
-      "basis": "timing",
+      "basis": null,
       "hardware_closure": null,
       "hardware_only": false,
       "hardware_verified": false,
@@ -1991,9 +2210,7 @@
       ],
       "kind": "performance",
       "lean_transcription_only": false,
-      "passing_methods": [
-       "timing"
-      ],
+      "passing_methods": [],
       "performance": {
        "bound": 1546,
        "condition": "Vivado 2026.1, xck26-sfvc784-2LV-c, out of context, period 6.2061 ns",
@@ -2004,8 +2221,8 @@
       "rests_on_delegated": false,
       "source": "designs/b119_tcp_fast/README.md#technical-parameters",
       "spec_status": "draft",
-      "stale_items": 0,
-      "state": "verified",
+      "stale_items": 2,
+      "state": "stale",
       "text": "Regression bound drawn from the out-of-context build, frame builder included; the owner sets the target. Registers, block RAM and DSP are checked in the same record.",
       "title": "LUTs of tcp_fast at the required clock"
      },
@@ -2020,15 +2237,13 @@
        "V-LEAN-CKSUM-IP-RX"
       ],
       "kind": "functional",
-      "lean_transcription_only": true,
-      "passing_methods": [
-       "formal_lean"
-      ],
-      "rests_on_delegated": true,
+      "lean_transcription_only": false,
+      "passing_methods": [],
+      "rests_on_delegated": false,
       "source": "brief 119 (PR 245), designs/b119_tcp_fast/rtl/tcp_fast.sv; results/124_lean/README.md",
       "spec_status": "draft",
-      "stale_items": 0,
-      "state": "verified",
+      "stale_items": 2,
+      "state": "stale",
       "text": "Brief 119's tcp_fast.sv builds the IPv4 header checksum from a precomputed template plus the changing fields. For all TTL, address and identification values it equals the complement of the ones' complement sum of the header, and the filled-in header sums to 0xFFFF.",
       "title": "The IPv4 header checksum of the TCP fast path equals the Internet checksum, for all inputs"
      },
@@ -2042,15 +2257,13 @@
        "V-LEAN-CKSUM-TCP"
       ],
       "kind": "functional",
-      "lean_transcription_only": true,
-      "passing_methods": [
-       "formal_lean"
-      ],
-      "rests_on_delegated": true,
+      "lean_transcription_only": false,
+      "passing_methods": [],
+      "rests_on_delegated": false,
       "source": "brief 119 (PR 245), designs/b119_tcp_fast/rtl/tcp_fast.sv; results/124_lean/README.md",
       "spec_status": "draft",
-      "stale_items": 0,
-      "state": "verified",
+      "stale_items": 1,
+      "state": "stale",
       "text": "For all addresses, ports, sequence and acknowledgement numbers, windows and payloads of up to 30 sixteen-bit words, the checksum the RTL equations produce equals the complement of the ones' complement sum over pseudo-header, header and payload. The byte-pair swapping, the streaming receive check and the timing are not modelled.",
       "title": "The TCP checksum of the TCP fast path equals the Internet checksum, for all inputs and payloads up to 30 words"
      },
@@ -2133,9 +2346,9 @@
        "fail": 0,
        "not_in_run": 0,
        "not_run": 0,
-       "pass": 6,
+       "pass": 3,
        "skipped": 0,
-       "stale": 0,
+       "stale": 3,
        "unapproved": 0
       },
       "review": {
@@ -2153,9 +2366,9 @@
        "fail": 0,
        "not_in_run": 0,
        "not_run": 0,
-       "pass": 14,
+       "pass": 0,
        "skipped": 0,
-       "stale": 0,
+       "stale": 14,
        "unapproved": 0
       },
       "sim_test": {
@@ -2163,9 +2376,9 @@
        "fail": 0,
        "not_in_run": 0,
        "not_run": 1,
-       "pass": 8,
+       "pass": 5,
        "skipped": 0,
-       "stale": 0,
+       "stale": 3,
        "unapproved": 0
       },
       "timing": {
@@ -2173,9 +2386,9 @@
        "fail": 0,
        "not_in_run": 0,
        "not_run": 0,
-       "pass": 5,
+       "pass": 0,
        "skipped": 0,
-       "stale": 0,
+       "stale": 5,
        "unapproved": 0
       },
       "uvm_test": {
@@ -2191,14 +2404,15 @@
      },
      "by_state": {
       "not_run": 2,
-      "verified": 25
+      "stale": 18,
+      "verified": 7
      },
      "external": 2,
      "external_hardware_done": 0,
      "gap_counts": {
       "hardware_open": 2,
-      "no_passing_evidence": 2,
-      "performance_sim_only": 7
+      "no_passing_evidence": 20,
+      "stale_evidence": 25
      },
      "human_reviews": 0,
      "items": 35,
@@ -2214,7 +2428,8 @@
        "transcription_untested": 0
       },
       "by_status": {
-       "pass": 6
+       "pass": 3,
+       "stale": 3
       },
       "by_tier": {
        "compiled_decision_procedure": 3,
@@ -2225,13 +2440,13 @@
       "items": 6,
       "statement_not_approved": 0
      },
-     "line": "27 requirements (10 functional, 10 performance, 2 interface, 5 safety); 25 verified, of which 3 rest on delegated acceptances (the planner accepted the Lean statement on the owner's delegation; not human approvals); 2 with no passing evidence; 0 of 2 requirements that depend on an external element closed by hardware; performance verified: 0 on the board, 3 by post-route timing, 7 in simulation only; 0 of 27 requirements agreed by a human, 0 human review(s) recorded; 6 Lean proof item(s) (all widths): 0 with a human-approved statement, 6 with a statement accepted on the owner's delegation (not a human approval), 0 with statement not approved; 3 kernel only, 3 using a compiled decision procedure; build status from: recorded build (not re-run).",
+     "line": "27 requirements (10 functional, 10 performance, 2 interface, 5 safety); 7 verified, of which 1 rest on delegated acceptances (the planner accepted the Lean statement on the owner's delegation; not human approvals); 18 stale; 2 with no passing evidence; 0 of 2 requirements that depend on an external element closed by hardware; 0 of 27 requirements agreed by a human, 0 human review(s) recorded; 6 Lean proof item(s) (all widths): 0 with a human-approved statement, 6 with a statement accepted on the owner's delegation (not a human approval), 0 with statement not approved; 3 kernel only, 3 using a compiled decision procedure; build status from: recorded build (not re-run).",
      "performance_board": 0,
-     "performance_sim_only": 7,
-     "performance_timing": 3,
+     "performance_sim_only": 0,
+     "performance_timing": 0,
      "requirements": 27,
      "spec_agreed": 0,
-     "verified_on_delegated": 3
+     "verified_on_delegated": 1
     }
    },
    {
@@ -26324,7 +26539,7 @@
   "total": {
    "designs": 34,
    "requirements": 355,
-   "verified": 274
+   "verified": 256
   }
  },
  "content": {
@@ -26349,10 +26564,10 @@
     ],
     "items": [
      {
-      "detail": "checks.ORDERS.mismatches = 0; checks.ORDERS.compared = 3112; failed = 0",
+      "detail": "checks.ORDERS.mismatches = 0; checks.ORDERS.compared = 3128; failed = 0",
       "evidence": {
        "exists": true,
-       "file": "results/170_itch_uvm/summary.json"
+       "file": "results/176_seq_poison/summary.json"
       },
       "id": "V-UVM-ORDERS",
       "instrument": null,
@@ -26366,10 +26581,10 @@
       "value": true
      },
      {
-      "detail": "checks.COUNTERS.mismatches = 0; checks.FLAGS.mismatches = 0; checks.COUNTERS.compared = 8897",
+      "detail": "checks.COUNTERS.mismatches = 0; checks.FLAGS.mismatches = 0; checks.COUNTERS.compared = 8938",
       "evidence": {
        "exists": true,
-       "file": "results/170_itch_uvm/summary.json"
+       "file": "results/176_seq_poison/summary.json"
       },
       "id": "V-UVM-MOLD",
       "instrument": null,
@@ -26386,7 +26601,7 @@
       "detail": "checks.COUNTERS.mismatches = 0; checks.FLAGS.mismatches = 0; failed = 0",
       "evidence": {
        "exists": true,
-       "file": "results/170_itch_uvm/summary.json"
+       "file": "results/176_seq_poison/summary.json"
       },
       "id": "V-UVM-BOOK",
       "instrument": null,
@@ -26403,7 +26618,7 @@
       "detail": "checks.COUNTERS.mismatches = 0; checks.ORDERS.mismatches = 0; failed = 0",
       "evidence": {
        "exists": true,
-       "file": "results/170_itch_uvm/summary.json"
+       "file": "results/176_seq_poison/summary.json"
       },
       "id": "V-UVM-RISK",
       "instrument": null,
@@ -26417,10 +26632,10 @@
       "value": true
      },
      {
-      "detail": "checks.US.mismatches = 0; checks.US.compared = 2604",
+      "detail": "checks.US.mismatches = 0; checks.US.compared = 2616",
       "evidence": {
        "exists": true,
-       "file": "results/170_itch_uvm/summary.json"
+       "file": "results/176_seq_poison/summary.json"
       },
       "id": "V-UVM-UDP",
       "instrument": null,
@@ -26437,7 +26652,7 @@
       "detail": "checks.ORDERS.mismatches = 0; checks.ORDERCNT.mismatches = 0; failed = 0",
       "evidence": {
        "exists": true,
-       "file": "results/170_itch_uvm/summary.json"
+       "file": "results/176_seq_poison/summary.json"
       },
       "id": "V-UVM-STRICT",
       "instrument": null,
@@ -26451,10 +26666,10 @@
       "value": true
      },
      {
-      "detail": "seq_waived = 11; finding_seq_poison.failed unreadable",
+      "detail": "seq_waived unreadable; finding_seq_poison.failed unreadable",
       "evidence": {
        "exists": true,
-       "file": "results/170_itch_uvm/summary.json"
+       "file": "results/176_seq_poison/summary.json"
       },
       "id": "V-UVM-SEQ",
       "instrument": null,
@@ -26471,7 +26686,7 @@
       "detail": "sva_failures = 0",
       "evidence": {
        "exists": true,
-       "file": "results/170_itch_uvm/summary.json"
+       "file": "results/176_seq_poison/summary.json"
       },
       "id": "V-UVM-SVA",
       "instrument": null,
@@ -26489,7 +26704,7 @@
       "detail": "coverage.holes = []",
       "evidence": {
        "exists": true,
-       "file": "results/170_itch_uvm/summary.json"
+       "file": "results/176_seq_poison/summary.json"
       },
       "id": "V-UVM-COV",
       "instrument": null,
@@ -26520,7 +26735,7 @@
       "value": null
      }
     ],
-    "notes": "Simulation only (xsim 2026.1, UVM 1.2; Icarus is not used by this bench). One recorded regression (results/170_itch_uvm/summary.json) and one mutation record (results/170_itch_uvm/mutation_seed*.json). No board, no real feed, every message synthetic.",
+    "notes": "Simulation only (xsim 2026.1, UVM 1.2; Icarus is not used by this bench). One recorded regression (results/176_seq_poison/summary.json) and one mutation record (results/170_itch_uvm/mutation_seed*.json). No board, no real feed, every message synthetic.",
     "path": "designs/b110_itch_ouch",
     "requirements": [
      {
@@ -26877,6 +27092,48 @@
     "gaps": [
      {
       "gate": false,
+      "id": "B119-F-LINT",
+      "state": "stale",
+      "text": "its evidence is stale",
+      "type": "no_passing_evidence"
+     },
+     {
+      "gate": false,
+      "id": "B119-I-ORDERPORT",
+      "state": "stale",
+      "text": "its evidence is stale",
+      "type": "no_passing_evidence"
+     },
+     {
+      "gate": false,
+      "id": "B119-I-REGBUS",
+      "state": "stale",
+      "text": "its evidence is stale",
+      "type": "no_passing_evidence"
+     },
+     {
+      "gate": false,
+      "id": "B119-S-ABORT",
+      "state": "stale",
+      "text": "its evidence is stale",
+      "type": "no_passing_evidence"
+     },
+     {
+      "gate": false,
+      "id": "B119-S-SUMGUARD",
+      "state": "stale",
+      "text": "its evidence is stale",
+      "type": "no_passing_evidence"
+     },
+     {
+      "gate": false,
+      "id": "B119-S-FAULTS",
+      "state": "stale",
+      "text": "its evidence is stale",
+      "type": "no_passing_evidence"
+     },
+     {
+      "gate": false,
       "id": "B119-F-MACPAIR",
       "state": "not_run",
       "text": "no passing evidence",
@@ -26904,44 +27161,236 @@
      {
       "gate": false,
       "id": "B119-P-FIRSTBYTE",
-      "text": "verified in simulation only, not measured on the board",
-      "type": "performance_sim_only"
+      "state": "stale",
+      "text": "its evidence is stale",
+      "type": "no_passing_evidence"
      },
      {
       "gate": false,
       "id": "B119-P-IPCKSUM",
-      "text": "verified in simulation only, not measured on the board",
-      "type": "performance_sim_only"
+      "state": "stale",
+      "text": "its evidence is stale",
+      "type": "no_passing_evidence"
      },
      {
       "gate": false,
       "id": "B119-P-TCPCKSUM",
-      "text": "verified in simulation only, not measured on the board",
-      "type": "performance_sim_only"
+      "state": "stale",
+      "text": "its evidence is stale",
+      "type": "no_passing_evidence"
      },
      {
       "gate": false,
       "id": "B119-P-SEGMENT",
-      "text": "verified in simulation only, not measured on the board",
-      "type": "performance_sim_only"
+      "state": "stale",
+      "text": "its evidence is stale",
+      "type": "no_passing_evidence"
      },
      {
       "gate": false,
       "id": "B119-P-RATE",
-      "text": "verified in simulation only, not measured on the board",
-      "type": "performance_sim_only"
+      "state": "stale",
+      "text": "its evidence is stale",
+      "type": "no_passing_evidence"
      },
      {
       "gate": false,
       "id": "B119-P-TOP-SPEC",
-      "text": "verified in simulation only, not measured on the board",
-      "type": "performance_sim_only"
+      "state": "stale",
+      "text": "its evidence is stale",
+      "type": "no_passing_evidence"
      },
      {
       "gate": false,
       "id": "B119-P-TOP-VERDICT",
-      "text": "verified in simulation only, not measured on the board",
-      "type": "performance_sim_only"
+      "state": "stale",
+      "text": "its evidence is stale",
+      "type": "no_passing_evidence"
+     },
+     {
+      "gate": false,
+      "id": "B119-P-TIMING",
+      "state": "stale",
+      "text": "its evidence is stale",
+      "type": "no_passing_evidence"
+     },
+     {
+      "gate": false,
+      "id": "B119-P-HOLD",
+      "state": "stale",
+      "text": "its evidence is stale",
+      "type": "no_passing_evidence"
+     },
+     {
+      "gate": false,
+      "id": "B119-P-AREA",
+      "state": "stale",
+      "text": "its evidence is stale",
+      "type": "no_passing_evidence"
+     },
+     {
+      "gate": false,
+      "id": "B119-F-CKSUM-IP",
+      "state": "stale",
+      "text": "its evidence is stale",
+      "type": "no_passing_evidence"
+     },
+     {
+      "gate": false,
+      "id": "B119-F-CKSUM-TCP",
+      "state": "stale",
+      "text": "its evidence is stale",
+      "type": "no_passing_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-SIM-BENCH",
+      "text": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv, designs/b119_tcp_fast/tests/b119_cocotb.py",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-SIM-TOP",
+      "text": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/itch_ouch_tcp_top.sv, designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-LINT",
+      "text": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-SIMM-RANDOM",
+      "text": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-SIMM-ABORT",
+      "text": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-SIMM-REFUSE",
+      "text": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-SIMM-MIX",
+      "text": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-SIMM-E2E",
+      "text": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-SIMM-TOP-POISON",
+      "text": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/itch_ouch_tcp_top.sv, designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-SIMM-FIRSTBYTE",
+      "text": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-SIMM-IPCKSUM",
+      "text": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-SIMM-TCPCKSUM",
+      "text": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-SIMM-SEGMENT",
+      "text": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-SIMM-RATE",
+      "text": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-SIMM-TOP-SPEC",
+      "text": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/itch_ouch_tcp_top.sv, designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-SIMM-TOP-VERDICT",
+      "text": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/itch_ouch_tcp_top.sv, designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-MUT",
+      "text": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-TIM-SETUP",
+      "text": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-TIM-PULSE",
+      "text": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-TIM-HOLD",
+      "text": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-RES-LUT",
+      "text": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-RES-OTHER",
+      "text": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-LEAN-CKSUM-IP",
+      "text": "transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:256-260; transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:326-336",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-LEAN-CKSUM-IP-RX",
+      "text": "transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:256-260; transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:326-336",
+      "type": "stale_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-LEAN-CKSUM-TCP",
+      "text": "transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:256-260; transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:326-336",
+      "type": "stale_evidence"
      }
     ],
     "items": [
@@ -27052,7 +27501,8 @@
        "B119-F-HANDBACK",
        "B119-F-E2E"
       ],
-      "status": "pass",
+      "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv, designs/b119_tcp_fast/tests/b119_cocotb.py",
+      "status": "stale",
       "title": "The block against the reference in cocotb, 19 tests in one simulation (smoke, random segments, checksum corners, fold carries, timing, abort at every offset and without a gap, speculative verdicts, refusals, register semantics, configuration change, continuity with software, random mix, end-to-end session, dropped segment, heartbeats, aborted orders, small window, rejected login)",
       "value": "1 of 1 tests passed"
      },
@@ -27069,7 +27519,8 @@
       "requirements": [
        "B119-I-ORDERPORT"
       ],
-      "status": "pass",
+      "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/itch_ouch_tcp_top.sv, designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "status": "stale",
       "title": "Brief 110's path with tcp_fast in place of its stub port, against brief 110's reference model",
       "value": "1 of 1 tests passed"
      },
@@ -27086,7 +27537,8 @@
       "requirements": [
        "B119-F-LINT"
       ],
-      "status": "pass",
+      "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "status": "stale",
       "title": "Verilator -Wall lint of tcp_fast.sv and the frame builder inside it",
       "value": "1 of 1 tests passed"
      },
@@ -27104,7 +27556,8 @@
        "B119-F-SEGMENT",
        "B119-F-CKSUM-RTL"
       ],
-      "status": "pass",
+      "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "status": "stale",
       "title": "450 random segments (random connections, orders and states, sequence numbers at the wrap) compared byte for byte",
       "value": 450
      },
@@ -27121,7 +27574,8 @@
       "requirements": [
        "B119-S-ABORT"
       ],
-      "status": "pass",
+      "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "status": "stale",
       "title": "Outcome at every abort offset (0 cancels, 1 to 14 abort, 15 and later are late and the segment is sent)",
       "value": true
      },
@@ -27138,7 +27592,8 @@
       "requirements": [
        "B119-S-REFUSE"
       ],
-      "status": "pass",
+      "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "status": "stale",
       "title": "The five refusal codes and the random mix's outcomes (refused, aborted, no verdict, sent)",
       "value": true
      },
@@ -27157,7 +27612,8 @@
        "B119-S-SUMGUARD",
        "B119-F-SEGMENT"
       ],
-      "status": "pass",
+      "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "status": "stale",
       "title": "A long random mix reaches every outcome (sent, aborted, no verdict, cancelled in the go clock)",
       "value": true
      },
@@ -27176,7 +27632,8 @@
        "B119-S-SEQSPACE",
        "B119-F-HANDBACK"
       ],
-      "status": "pass",
+      "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "status": "stale",
       "title": "End-to-end session, dropped segment, heartbeats, aborted orders and small window, with the software exchange",
       "value": true
      },
@@ -27194,7 +27651,8 @@
        "B119-I-ORDERPORT",
        "B119-S-ABORT"
       ],
-      "status": "pass",
+      "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/itch_ouch_tcp_top.sv, designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "status": "stale",
       "title": "Behind the risk logic, refused speculative orders leave poisoned and non-speculative ones are never poisoned",
       "value": true
      },
@@ -27212,7 +27670,8 @@
       "requirements": [
        "B119-P-FIRSTBYTE"
       ],
-      "status": "pass",
+      "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "status": "stale",
       "title": "First byte, clocks after go",
       "value": 1
      },
@@ -27230,7 +27689,8 @@
       "requirements": [
        "B119-P-IPCKSUM"
       ],
-      "status": "pass",
+      "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "status": "stale",
       "title": "IPv4 checksum field, clocks after go",
       "value": 4
      },
@@ -27248,7 +27708,8 @@
       "requirements": [
        "B119-P-TCPCKSUM"
       ],
-      "status": "pass",
+      "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "status": "stale",
       "title": "TCP checksum field, clocks after go",
       "value": 7
      },
@@ -27266,7 +27727,8 @@
       "requirements": [
        "B119-P-SEGMENT"
       ],
-      "status": "pass",
+      "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "status": "stale",
       "title": "Last byte of the segment, clocks after go",
       "value": 15
      },
@@ -27284,7 +27746,8 @@
       "requirements": [
        "B119-P-RATE"
       ],
-      "status": "pass",
+      "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "status": "stale",
       "title": "Clocks between the starts of two segments sent back to back",
       "value": 15
      },
@@ -27302,7 +27765,8 @@
       "requirements": [
        "B119-P-TOP-SPEC"
       ],
-      "status": "pass",
+      "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/itch_ouch_tcp_top.sv, designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "status": "stale",
       "title": "Speculative start behind brief 110's risk logic",
       "value": 3
      },
@@ -27320,7 +27784,8 @@
       "requirements": [
        "B119-P-TOP-VERDICT"
       ],
-      "status": "pass",
+      "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/itch_ouch_tcp_top.sv, designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "status": "stale",
       "title": "Start at the verdict behind brief 110's risk logic",
       "value": 8
      },
@@ -27342,7 +27807,8 @@
        "B119-I-REGBUS",
        "B119-F-SEGMENT"
       ],
-      "status": "pass",
+      "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "status": "stale",
       "title": "73 seeded faults (constants, operators and conditions across the checksum, the segment, the verdict, the refusals and the registers), the whole bench per fault",
       "value": true
      },
@@ -27360,7 +27826,8 @@
       "requirements": [
        "B119-P-TIMING"
       ],
-      "status": "pass",
+      "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "status": "stale",
       "title": "Worst setup slack at 6.2061 ns, post-route",
       "value": 1.77
      },
@@ -27377,7 +27844,8 @@
       "requirements": [
        "B119-P-TIMING"
       ],
-      "status": "pass",
+      "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "status": "stale",
       "title": "Pulse width slack at 6.2061 ns, and a faster clock (5 ns) also closed",
       "value": true
      },
@@ -27395,7 +27863,8 @@
       "requirements": [
        "B119-P-HOLD"
       ],
-      "status": "pass",
+      "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "status": "stale",
       "title": "Worst hold slack at 6.2061 ns, post-route",
       "value": 0.055
      },
@@ -27413,7 +27882,8 @@
       "requirements": [
        "B119-P-AREA"
       ],
-      "status": "pass",
+      "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "status": "stale",
       "title": "LUTs of tcp_fast (frame builder included), post-route",
       "value": 1546
      },
@@ -27430,7 +27900,8 @@
       "requirements": [
        "B119-P-AREA"
       ],
-      "status": "pass",
+      "stale_because": "changed since the evidence was recorded: designs/b119_tcp_fast/rtl/tcp_fast.sv",
+      "status": "stale",
       "title": "Registers, block RAM and DSP of tcp_fast (2907 FF, 0 tiles, 0 DSP)",
       "value": true
      },
@@ -27469,7 +27940,7 @@
       "value": null
      },
      {
-      "detail": "proved; statement accepted by planner (Session A) on the owner's delegation (owner decision 23), 2026-11-21; not a human approval; Cksum.rtl_ip_correct: kernel plus a compiled decision procedure; proof of the transcription, transcription tested; recorded build (not re-run)",
+      "detail": "Cksum.rtl_ip_correct: kernel plus a compiled decision procedure; proof of the transcription, transcription tested; recorded build (not re-run)",
       "evidence": {
        "exists": true,
        "file": "formal/lean/records/build_record.json"
@@ -27504,12 +27975,13 @@
       "requirements": [
        "B119-F-CKSUM-IP"
       ],
-      "status": "pass",
+      "stale_because": "transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:256-260; transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:326-336",
+      "status": "stale",
       "title": "IPv4 header checksum equals the Internet checksum",
       "value": null
      },
      {
-      "detail": "proved; statement accepted by planner (Session A) on the owner's delegation (owner decision 23), 2026-11-21; not a human approval; Cksum.rtl_ip_receiver: kernel plus a compiled decision procedure; proof of the transcription, transcription tested; recorded build (not re-run)",
+      "detail": "Cksum.rtl_ip_receiver: kernel plus a compiled decision procedure; proof of the transcription, transcription tested; recorded build (not re-run)",
       "evidence": {
        "exists": true,
        "file": "formal/lean/records/build_record.json"
@@ -27544,12 +28016,13 @@
       "requirements": [
        "B119-F-CKSUM-IP"
       ],
-      "status": "pass",
+      "stale_because": "transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:256-260; transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:326-336",
+      "status": "stale",
       "title": "The filled-in header sums to 0xFFFF (receiver check)",
       "value": null
      },
      {
-      "detail": "proved; statement accepted by planner (Session A) on the owner's delegation (owner decision 23), 2026-11-21; not a human approval; Cksum.rtl_tcp_correct: kernel plus a compiled decision procedure; proof of the transcription, transcription tested; recorded build (not re-run)",
+      "detail": "Cksum.rtl_tcp_correct: kernel plus a compiled decision procedure; proof of the transcription, transcription tested; recorded build (not re-run)",
       "evidence": {
        "exists": true,
        "file": "formal/lean/records/build_record.json"
@@ -27584,7 +28057,8 @@
       "requirements": [
        "B119-F-CKSUM-TCP"
       ],
-      "status": "pass",
+      "stale_because": "transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:256-260; transcribed RTL lines changed since the record: designs/b119_tcp_fast/rtl/tcp_fast.sv:326-336",
+      "status": "stale",
       "title": "TCP checksum equals the Internet checksum, payloads up to 30 words",
       "value": null
      },
@@ -27720,13 +28194,12 @@
       "kind": "functional",
       "lean_transcription_only": false,
       "passing_methods": [
-       "sim_measurement",
        "sim_test"
       ],
       "rests_on_delegated": false,
       "source": "designs/b119_tcp_fast/docs/tcp_fast.md#21-the-segment",
       "spec_status": "draft",
-      "stale_items": 0,
+      "stale_items": 4,
       "state": "verified",
       "text": "For any connection state and order, the block sends 15 words (113 bytes without the frame check sequence) whose bytes equal the Python reference, with sequence number, acknowledgement number, window and IP identification captured at the go edge, the SoupBinTCP Unsequenced Data packet of brief 110 as payload, no TCP options and the PSH and ACK flags, including sequence numbers at the 32-bit wrap.",
       "title": "Each order leaves as one complete 113-byte Ethernet, IPv4 and TCP frame, byte exact against the reference"
@@ -27746,13 +28219,12 @@
       "kind": "functional",
       "lean_transcription_only": false,
       "passing_methods": [
-       "sim_measurement",
        "sim_test"
       ],
       "rests_on_delegated": false,
       "source": "designs/b119_tcp_fast/docs/tcp_fast.md#22-checksums-incremental-not-recomputed",
       "spec_status": "draft",
-      "stale_items": 0,
+      "stale_items": 3,
       "state": "verified",
       "text": "The IPv4 header checksum and the TCP checksum of every segment sent equal the reference's, which is itself checked against outside vectors (RFC 1071, a published IPv4 header), including carries in the fold, sums that wrap, a TCP checksum that comes out 0 and a segment whose headers sum to all ones. This is checked by simulation of chosen and random cases; the all-inputs statements are B119-F-CKSUM-IP, -TCP and -MODEL.",
       "title": "Both checksums on the wire are the RFC 1071 checksums, at the corner cases"
@@ -27771,13 +28243,12 @@
       "kind": "functional",
       "lean_transcription_only": false,
       "passing_methods": [
-       "sim_measurement",
        "sim_test"
       ],
       "rests_on_delegated": false,
       "source": "designs/b119_tcp_fast/docs/tcp_fast.md#13-hand-back-to-software-rec_",
       "spec_status": "draft",
-      "stale_items": 0,
+      "stale_items": 2,
       "state": "verified",
       "text": "One record (rec_v, rec_seq, rec_len, rec_id, rec_pay) for each unpoisoned segment in the clock of its last word, and none for a poisoned one, so software can retransmit from the records; a segment dropped on the wire is retransmitted by software with the same bytes.",
       "title": "Every segment that left is handed back to software, and none that was poisoned"
@@ -27796,13 +28267,12 @@
       "kind": "functional",
       "lean_transcription_only": false,
       "passing_methods": [
-       "sim_measurement",
        "sim_test"
       ],
       "rests_on_delegated": false,
       "source": "designs/b119_tcp_fast/docs/software_side.md#what-the-tests-show",
       "spec_status": "draft",
-      "stale_items": 0,
+      "stale_items": 2,
       "state": "verified",
       "text": "Handshake, SoupBinTCP login, orders, acknowledgements, a dropped segment, heartbeats, a small window and a rejected login all behave as the software side documents, with the exchange seeing every order exactly once and in order.",
       "title": "A Python TCP owner and a software OUCH exchange run a whole session through the block"
@@ -27818,14 +28288,12 @@
       ],
       "kind": "functional",
       "lean_transcription_only": false,
-      "passing_methods": [
-       "sim_test"
-      ],
+      "passing_methods": [],
       "rests_on_delegated": false,
       "source": "designs/b119_tcp_fast/README.md#verified",
       "spec_status": "draft",
-      "stale_items": 0,
-      "state": "verified",
+      "stale_items": 1,
+      "state": "stale",
       "text": "Verilator -Wall over tcp_fast.sv and the frame builder inside it reports no warnings, with the waivers in lint/lint_waivers.vlt.",
       "title": "The RTL lints clean"
      },
@@ -27841,15 +28309,12 @@
       ],
       "kind": "interface",
       "lean_transcription_only": false,
-      "passing_methods": [
-       "sim_measurement",
-       "sim_test"
-      ],
+      "passing_methods": [],
       "rests_on_delegated": false,
       "source": "designs/b119_tcp_fast/README.md#verified",
       "spec_status": "draft",
-      "stale_items": 0,
-      "state": "verified",
+      "stale_items": 2,
+      "state": "stale",
       "text": "With tcp_fast in place of ouch_enter, brief 110's path against brief 110's reference model sends the same orders, with the same payload bytes, valid checksums and gapless sequence numbers; speculative orders that the risk logic refuses leave poisoned.",
       "title": "The block replaces the order port of brief 110 and works behind its risk logic"
      },
@@ -27865,15 +28330,12 @@
       ],
       "kind": "interface",
       "lean_transcription_only": false,
-      "passing_methods": [
-       "sim_measurement",
-       "sim_test"
-      ],
+      "passing_methods": [],
       "rests_on_delegated": false,
       "source": "designs/b119_tcp_fast/docs/tcp_fast.md#14-register-bus-sw_",
       "spec_status": "draft",
-      "stale_items": 0,
-      "state": "verified",
+      "stale_items": 2,
+      "state": "stale",
       "text": "Writes to static fields invalidate the template and are ignored and counted while a segment is in flight; live fields are accepted at any time and restart the staleness age; reads show the registers before the next edge; unmapped addresses read 0; the 14 counters count what the datasheet says and clear on CLR_CNT.",
       "title": "The register bus and counters behave as the datasheet states"
      },
@@ -27892,15 +28354,12 @@
       ],
       "kind": "safety",
       "lean_transcription_only": false,
-      "passing_methods": [
-       "sim_measurement",
-       "sim_test"
-      ],
+      "passing_methods": [],
       "rests_on_delegated": false,
       "source": "designs/b119_tcp_fast/docs/tcp_fast.md#24-speculative-start-abort-verdict",
       "spec_status": "draft",
-      "stale_items": 0,
-      "state": "verified",
+      "stale_items": 5,
+      "state": "stale",
       "text": "An abort at any of edges 1 to 14 ends the frame with o_poison, leaves SND_NXT and IP_ID as before and produces no record; an abort at edge 0 cancels the go; a speculative segment with no verdict by edge 14 is poisoned; an abort wins over a commit; an abort after the frame left is late, counted and ignored.",
       "title": "An aborted or unverdicted segment is poisoned and consumes no sequence space"
      },
@@ -27919,13 +28378,12 @@
       "kind": "safety",
       "lean_transcription_only": false,
       "passing_methods": [
-       "sim_measurement",
        "sim_test"
       ],
       "rests_on_delegated": false,
       "source": "designs/b119_tcp_fast/docs/tcp_fast.md#25-refusals",
       "spec_status": "draft",
-      "stale_items": 0,
+      "stale_items": 3,
       "state": "verified",
       "text": "Checked in the order busy, not armed, template not valid or state stale, window closed, MSS below 59, an order is refused with the matching code and counter, nothing leaves and no state changes; a window of exactly 59 bytes admits one segment and one byte less admits none.",
       "title": "The block refuses to send when it is not armed, stale, window-closed, too small or busy"
@@ -27944,13 +28402,12 @@
       "kind": "safety",
       "lean_transcription_only": false,
       "passing_methods": [
-       "sim_measurement",
        "sim_test"
       ],
       "rests_on_delegated": false,
       "source": "designs/b119_tcp_fast/docs/tcp_fast.md#3-what-software-must-do-and-when",
       "spec_status": "draft",
-      "stale_items": 0,
+      "stale_items": 2,
       "state": "verified",
       "text": "Hardware and software share one sequence space. After a heartbeat takes it and gives it back, after an abort, after a refusal and after a retransmission, the peer's received stream has no gap and no duplicate, and nothing is sent by software while the block is armed and idle.",
       "title": "The peer sees no gap and no duplicate in the sequence space"
@@ -27967,15 +28424,12 @@
       ],
       "kind": "safety",
       "lean_transcription_only": false,
-      "passing_methods": [
-       "sim_measurement",
-       "sim_test"
-      ],
+      "passing_methods": [],
       "rests_on_delegated": false,
       "source": "designs/b119_tcp_fast/docs/tcp_fast.md#22-checksums-incremental-not-recomputed",
       "spec_status": "draft",
-      "stale_items": 0,
-      "state": "verified",
+      "stale_items": 2,
+      "state": "stale",
       "text": "The block sums the payload words ouch_enter actually emits and compares the total with the early one the checksum used; a difference (for example a configuration change in flight) poisons the segment and counts sumerr, so a wrong checksum is never sent as valid.",
       "title": "A segment whose payload disagrees with the checksum that was sent is poisoned"
      },
@@ -27990,14 +28444,12 @@
       ],
       "kind": "safety",
       "lean_transcription_only": false,
-      "passing_methods": [
-       "sim_measurement"
-      ],
+      "passing_methods": [],
       "rests_on_delegated": false,
       "source": "designs/b119_tcp_fast/verif/mutants.yaml",
       "spec_status": "draft",
-      "stale_items": 0,
-      "state": "verified",
+      "stale_items": 1,
+      "state": "stale",
       "text": "Every one of the seeded faults of verif/mutants.yaml that builds fails the bench (mutation score 100 percent, 73 of 73). The set is the agent's own; whether it is wide enough is the human's check.",
       "title": "A seeded fault anywhere in the checksum, segment, verdict, refusal or register logic is caught"
      },
@@ -28044,7 +28496,7 @@
       "title": "The owner completes a session with a real TCP peer and the frames match the bench's"
      },
      {
-      "basis": "simulation",
+      "basis": null,
       "hardware_closure": null,
       "hardware_only": false,
       "hardware_verified": false,
@@ -28054,9 +28506,7 @@
       ],
       "kind": "performance",
       "lean_transcription_only": false,
-      "passing_methods": [
-       "sim_measurement"
-      ],
+      "passing_methods": [],
       "performance": {
        "bound": 1,
        "condition": "simulation, one clock, block alone",
@@ -28067,13 +28517,13 @@
       "rests_on_delegated": false,
       "source": "designs/b119_tcp_fast/docs/tcp_fast.md#4-latency-and-rate",
       "spec_status": "draft",
-      "stale_items": 0,
-      "state": "verified",
+      "stale_items": 1,
+      "state": "stale",
       "text": "Regression bound drawn from the bench record; the owner sets the target. The same clock in which brief 110's stub port shows its first word.",
       "title": "First byte of the frame, clocks after go"
      },
      {
-      "basis": "simulation",
+      "basis": null,
       "hardware_closure": null,
       "hardware_only": false,
       "hardware_verified": false,
@@ -28083,9 +28533,7 @@
       ],
       "kind": "performance",
       "lean_transcription_only": false,
-      "passing_methods": [
-       "sim_measurement"
-      ],
+      "passing_methods": [],
       "performance": {
        "bound": 4,
        "condition": "simulation, one clock, block alone",
@@ -28096,13 +28544,13 @@
       "rests_on_delegated": false,
       "source": "designs/b119_tcp_fast/docs/tcp_fast.md#23-timing-of-a-segment",
       "spec_status": "draft",
-      "stale_items": 0,
-      "state": "verified",
+      "stale_items": 1,
+      "state": "stale",
       "text": "Regression bound drawn from the bench record; the owner sets the target.",
       "title": "IPv4 checksum field complete, clocks after go"
      },
      {
-      "basis": "simulation",
+      "basis": null,
       "hardware_closure": null,
       "hardware_only": false,
       "hardware_verified": false,
@@ -28112,9 +28560,7 @@
       ],
       "kind": "performance",
       "lean_transcription_only": false,
-      "passing_methods": [
-       "sim_measurement"
-      ],
+      "passing_methods": [],
       "performance": {
        "bound": 7,
        "condition": "simulation, one clock, block alone",
@@ -28125,13 +28571,13 @@
       "rests_on_delegated": false,
       "source": "designs/b119_tcp_fast/docs/tcp_fast.md#23-timing-of-a-segment",
       "spec_status": "draft",
-      "stale_items": 0,
-      "state": "verified",
+      "stale_items": 1,
+      "state": "stale",
       "text": "Regression bound drawn from the bench record; the owner sets the target. It is inside the header's own transmission time.",
       "title": "TCP checksum field complete, clocks after go"
      },
      {
-      "basis": "simulation",
+      "basis": null,
       "hardware_closure": null,
       "hardware_only": false,
       "hardware_verified": false,
@@ -28141,9 +28587,7 @@
       ],
       "kind": "performance",
       "lean_transcription_only": false,
-      "passing_methods": [
-       "sim_measurement"
-      ],
+      "passing_methods": [],
       "performance": {
        "bound": 15,
        "condition": "simulation, one clock, block alone",
@@ -28154,13 +28598,13 @@
       "rests_on_delegated": false,
       "source": "designs/b119_tcp_fast/docs/tcp_fast.md#4-latency-and-rate",
       "spec_status": "draft",
-      "stale_items": 0,
-      "state": "verified",
+      "stale_items": 1,
+      "state": "stale",
       "text": "Regression bound drawn from the bench record; the owner sets the target.",
       "title": "Whole segment out, clocks after go"
      },
      {
-      "basis": "simulation",
+      "basis": null,
       "hardware_closure": null,
       "hardware_only": false,
       "hardware_verified": false,
@@ -28170,9 +28614,7 @@
       ],
       "kind": "performance",
       "lean_transcription_only": false,
-      "passing_methods": [
-       "sim_measurement"
-      ],
+      "passing_methods": [],
       "performance": {
        "bound": 15,
        "condition": "simulation, one clock, block alone",
@@ -28183,13 +28625,13 @@
       "rests_on_delegated": false,
       "source": "designs/b119_tcp_fast/docs/tcp_fast.md#4-latency-and-rate",
       "spec_status": "draft",
-      "stale_items": 0,
-      "state": "verified",
+      "stale_items": 1,
+      "state": "stale",
       "text": "Regression bound drawn from the bench record; the owner sets the target. The block is busy for the whole segment and drops a go meanwhile.",
       "title": "Segment rate, clocks between starts"
      },
      {
-      "basis": "simulation",
+      "basis": null,
       "hardware_closure": null,
       "hardware_only": false,
       "hardware_verified": false,
@@ -28199,9 +28641,7 @@
       ],
       "kind": "performance",
       "lean_transcription_only": false,
-      "passing_methods": [
-       "sim_measurement"
-      ],
+      "passing_methods": [],
       "performance": {
        "bound": 3,
        "condition": "simulation of brief 110's path with the block behind it, one clock, frame idle",
@@ -28213,13 +28653,13 @@
       "rests_on_delegated": false,
       "source": "designs/b119_tcp_fast/docs/tcp_fast.md#4-latency-and-rate",
       "spec_status": "draft",
-      "stale_items": 0,
-      "state": "verified",
+      "stale_items": 1,
+      "state": "stale",
       "text": "Regression bound drawn from the top-level record; the owner sets the target. Only when the frame is idle and no earlier candidate is in flight.",
       "title": "Speculative start behind brief 110's risk logic, clocks from the last ITCH byte"
      },
      {
-      "basis": "simulation",
+      "basis": null,
       "hardware_closure": null,
       "hardware_only": false,
       "hardware_verified": false,
@@ -28229,9 +28669,7 @@
       ],
       "kind": "performance",
       "lean_transcription_only": false,
-      "passing_methods": [
-       "sim_measurement"
-      ],
+      "passing_methods": [],
       "performance": {
        "bound": 8,
        "condition": "simulation of brief 110's path with the block behind it, one clock, frame idle",
@@ -28243,13 +28681,13 @@
       "rests_on_delegated": false,
       "source": "designs/b119_tcp_fast/docs/tcp_fast.md#4-latency-and-rate",
       "spec_status": "draft",
-      "stale_items": 0,
-      "state": "verified",
+      "stale_items": 1,
+      "state": "stale",
       "text": "Regression bound drawn from the top-level record; the owner sets the target.",
       "title": "Start at the verdict behind brief 110's risk logic, clocks from the last ITCH byte"
      },
      {
-      "basis": "timing",
+      "basis": null,
       "hardware_closure": null,
       "hardware_only": false,
       "hardware_verified": false,
@@ -28260,9 +28698,7 @@
       ],
       "kind": "performance",
       "lean_transcription_only": false,
-      "passing_methods": [
-       "timing"
-      ],
+      "passing_methods": [],
       "performance": {
        "bound": 0,
        "condition": "Vivado 2026.1, xck26-sfvc784-2LV-c, out of context, post-route, period 6.2061 ns",
@@ -28273,13 +28709,13 @@
       "rests_on_delegated": false,
       "source": "designs/b119_tcp_fast/README.md#technical-parameters",
       "spec_status": "draft",
-      "stale_items": 0,
-      "state": "verified",
+      "stale_items": 2,
+      "state": "stale",
       "text": "The required clock is 6.2061 ns, the 4-decimal rounding of 161.1328125 MHz. Out of context there is no clock buffer or jitter and the inputs are registered in the wrapper; inside the 10G core the clock and placement can differ.",
       "title": "Post-route setup slack at the 10G core clock, out of context"
      },
      {
-      "basis": "timing",
+      "basis": null,
       "hardware_closure": null,
       "hardware_only": false,
       "hardware_verified": false,
@@ -28289,9 +28725,7 @@
       ],
       "kind": "performance",
       "lean_transcription_only": false,
-      "passing_methods": [
-       "timing"
-      ],
+      "passing_methods": [],
       "performance": {
        "bound": 0,
        "condition": "Vivado 2026.1, xck26-sfvc784-2LV-c, out of context, post-route, period 6.2061 ns",
@@ -28302,13 +28736,13 @@
       "rests_on_delegated": false,
       "source": "designs/b119_tcp_fast/README.md#technical-parameters",
       "spec_status": "draft",
-      "stale_items": 0,
-      "state": "verified",
+      "stale_items": 1,
+      "state": "stale",
       "text": "As B119-P-TIMING.",
       "title": "Post-route hold slack at the 10G core clock, out of context"
      },
      {
-      "basis": "timing",
+      "basis": null,
       "hardware_closure": null,
       "hardware_only": false,
       "hardware_verified": false,
@@ -28319,9 +28753,7 @@
       ],
       "kind": "performance",
       "lean_transcription_only": false,
-      "passing_methods": [
-       "timing"
-      ],
+      "passing_methods": [],
       "performance": {
        "bound": 1546,
        "condition": "Vivado 2026.1, xck26-sfvc784-2LV-c, out of context, period 6.2061 ns",
@@ -28332,8 +28764,8 @@
       "rests_on_delegated": false,
       "source": "designs/b119_tcp_fast/README.md#technical-parameters",
       "spec_status": "draft",
-      "stale_items": 0,
-      "state": "verified",
+      "stale_items": 2,
+      "state": "stale",
       "text": "Regression bound drawn from the out-of-context build, frame builder included; the owner sets the target. Registers, block RAM and DSP are checked in the same record.",
       "title": "LUTs of tcp_fast at the required clock"
      },
@@ -28348,15 +28780,13 @@
        "V-LEAN-CKSUM-IP-RX"
       ],
       "kind": "functional",
-      "lean_transcription_only": true,
-      "passing_methods": [
-       "formal_lean"
-      ],
-      "rests_on_delegated": true,
+      "lean_transcription_only": false,
+      "passing_methods": [],
+      "rests_on_delegated": false,
       "source": "brief 119 (PR 245), designs/b119_tcp_fast/rtl/tcp_fast.sv; results/124_lean/README.md",
       "spec_status": "draft",
-      "stale_items": 0,
-      "state": "verified",
+      "stale_items": 2,
+      "state": "stale",
       "text": "Brief 119's tcp_fast.sv builds the IPv4 header checksum from a precomputed template plus the changing fields. For all TTL, address and identification values it equals the complement of the ones' complement sum of the header, and the filled-in header sums to 0xFFFF.",
       "title": "The IPv4 header checksum of the TCP fast path equals the Internet checksum, for all inputs"
      },
@@ -28370,15 +28800,13 @@
        "V-LEAN-CKSUM-TCP"
       ],
       "kind": "functional",
-      "lean_transcription_only": true,
-      "passing_methods": [
-       "formal_lean"
-      ],
-      "rests_on_delegated": true,
+      "lean_transcription_only": false,
+      "passing_methods": [],
+      "rests_on_delegated": false,
       "source": "brief 119 (PR 245), designs/b119_tcp_fast/rtl/tcp_fast.sv; results/124_lean/README.md",
       "spec_status": "draft",
-      "stale_items": 0,
-      "state": "verified",
+      "stale_items": 1,
+      "state": "stale",
       "text": "For all addresses, ports, sequence and acknowledgement numbers, windows and payloads of up to 30 sixteen-bit words, the checksum the RTL equations produce equals the complement of the ones' complement sum over pseudo-header, header and payload. The byte-pair swapping, the streaming receive check and the timing are not modelled.",
       "title": "The TCP checksum of the TCP fast path equals the Internet checksum, for all inputs and payloads up to 30 words"
      },
@@ -28461,9 +28889,9 @@
        "fail": 0,
        "not_in_run": 0,
        "not_run": 0,
-       "pass": 6,
+       "pass": 3,
        "skipped": 0,
-       "stale": 0,
+       "stale": 3,
        "unapproved": 0
       },
       "review": {
@@ -28481,9 +28909,9 @@
        "fail": 0,
        "not_in_run": 0,
        "not_run": 0,
-       "pass": 14,
+       "pass": 0,
        "skipped": 0,
-       "stale": 0,
+       "stale": 14,
        "unapproved": 0
       },
       "sim_test": {
@@ -28491,9 +28919,9 @@
        "fail": 0,
        "not_in_run": 0,
        "not_run": 1,
-       "pass": 8,
+       "pass": 5,
        "skipped": 0,
-       "stale": 0,
+       "stale": 3,
        "unapproved": 0
       },
       "timing": {
@@ -28501,9 +28929,9 @@
        "fail": 0,
        "not_in_run": 0,
        "not_run": 0,
-       "pass": 5,
+       "pass": 0,
        "skipped": 0,
-       "stale": 0,
+       "stale": 5,
        "unapproved": 0
       },
       "uvm_test": {
@@ -28519,14 +28947,15 @@
      },
      "by_state": {
       "not_run": 2,
-      "verified": 25
+      "stale": 18,
+      "verified": 7
      },
      "external": 2,
      "external_hardware_done": 0,
      "gap_counts": {
       "hardware_open": 2,
-      "no_passing_evidence": 2,
-      "performance_sim_only": 7
+      "no_passing_evidence": 20,
+      "stale_evidence": 25
      },
      "human_reviews": 0,
      "items": 35,
@@ -28542,7 +28971,8 @@
        "transcription_untested": 0
       },
       "by_status": {
-       "pass": 6
+       "pass": 3,
+       "stale": 3
       },
       "by_tier": {
        "compiled_decision_procedure": 3,
@@ -28553,13 +28983,13 @@
       "items": 6,
       "statement_not_approved": 0
      },
-     "line": "27 requirements (10 functional, 10 performance, 2 interface, 5 safety); 25 verified, of which 3 rest on delegated acceptances (the planner accepted the Lean statement on the owner's delegation; not human approvals); 2 with no passing evidence; 0 of 2 requirements that depend on an external element closed by hardware; performance verified: 0 on the board, 3 by post-route timing, 7 in simulation only; 0 of 27 requirements agreed by a human, 0 human review(s) recorded; 6 Lean proof item(s) (all widths): 0 with a human-approved statement, 6 with a statement accepted on the owner's delegation (not a human approval), 0 with statement not approved; 3 kernel only, 3 using a compiled decision procedure; build status from: recorded build (not re-run).",
+     "line": "27 requirements (10 functional, 10 performance, 2 interface, 5 safety); 7 verified, of which 1 rest on delegated acceptances (the planner accepted the Lean statement on the owner's delegation; not human approvals); 18 stale; 2 with no passing evidence; 0 of 2 requirements that depend on an external element closed by hardware; 0 of 27 requirements agreed by a human, 0 human review(s) recorded; 6 Lean proof item(s) (all widths): 0 with a human-approved statement, 6 with a statement accepted on the owner's delegation (not a human approval), 0 with statement not approved; 3 kernel only, 3 using a compiled decision procedure; build status from: recorded build (not re-run).",
      "performance_board": 0,
-     "performance_sim_only": 7,
-     "performance_timing": 3,
+     "performance_sim_only": 0,
+     "performance_timing": 0,
      "requirements": 27,
      "spec_agreed": 0,
-     "verified_on_delegated": 3
+     "verified_on_delegated": 1
     }
    },
    {
@@ -52652,7 +53082,7 @@
   "total": {
    "designs": 34,
    "requirements": 355,
-   "verified": 274
+   "verified": 256
   }
  }
 }
