@@ -853,7 +853,8 @@ def _spec(rt: Runtime) -> dict:
 
 def _interview(rt: Runtime, spec: dict, state: State) -> tuple[dict, dict]:
     from langgraph.types import interrupt
-    iv = Interview()
+    from agent.graph.package_facts import load_facts
+    iv = Interview(facts=load_facts(rt.design))                    # brief 174: a design package's sourced facts are not asked again
     who = None
     if rt.cfg.interview == "oracle":
         who = SpecOracle(rt.cfg.hidden_spec, rt.oracle_llm or rt.resolver.oracle())
@@ -870,7 +871,7 @@ def _interview(rt: Runtime, spec: dict, state: State) -> tuple[dict, dict]:
         asks.append((_p("graph/run/interview_3").format(r['id'], r.get('text'), ', '.join(PROOF_METHODS)), ",".join(methods), why))
     for i, (qt, qd, qr) in enumerate(asks):
         q = Question(id=f"q{i + 1}", text=qt, default=qd, reason=qr)
-        if rt.cfg.interview == "on":                                  # one question at a time, to the human
+        if rt.cfg.interview == "on" and iv.lookup(q) is None:         # one question at a time, to the human (not a package fact)
             ans = interrupt({"kind": "question", "id": q.id, "question": q.text, "default": q.default,
                              "reason": q.reason})
 
@@ -1244,7 +1245,7 @@ ARCH_FILES = ("architecture.yaml", "ARCHITECTURE.md")
 
 def _who(by: str) -> str:
     """owner (a person), auto (the run's own default or an oracle)."""
-    return "auto" if by in ("auto", "oracle", "default", "limit") else "owner"
+    return "auto" if by in ("auto", "oracle", "default", "limit", "package") else "owner"
 
 
 def node_review(state: State) -> dict:

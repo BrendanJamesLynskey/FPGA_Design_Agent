@@ -47,6 +47,11 @@ disk, a smoke design generated from the board's own pins, and a request that nam
 [docs/board_catalogue.md](docs/board_catalogue.md) (the table), [boards/SCHEMA.md](boards/SCHEMA.md) (the file format and how to add a board),
 [docs/demo_intake.md](docs/demo_intake.md) (what to ask someone who wants a demo), [results/95_boards](results/95_boards/README.md).
 
+Design package (brief 174): one folder with `spec.md`, every board material (schematic, BOM, board file, XDC) and, optionally, an existing design to change in part;
+`python -m flow.package ingest` writes `board_facts.yaml` (each fact with its source, hash and confidence) and lists conflicts with the board file. It found that the
+KR260's PL Ethernet PHYs are TI DP83867, not Marvell M88E1111: [docs/design_package.md](docs/design_package.md), pilots [packages/kr260](packages/kr260/board_facts.yaml),
+[packages/nexys_a7_100t](packages/nexys_a7_100t/board_facts.yaml) and [packages/b58a_change](packages/b58a_change/spec.md), [results/174_design_package](results/174_design_package/README.md).
+
 Showcase pages for projects built with the agent follow one template: [docs/showcase_pages.md](docs/showcase_pages.md).
 Every design, `ip_lib` entry and results folder is documented for the next engineer to
 [docs/documentation_standard.md](docs/documentation_standard.md) (brief 68): each design has one `handover.yaml` (the facts,
@@ -450,6 +455,7 @@ docs/        methodology.md (UG949 -> flow stages, gates, deviations, the agent'
              agent_core.md (tools, MCP server, security rules, traces); agent.md (the 05b agent graph; benchmark tasks as agent runs, 07a2-prep); claude_code_arm.md (the 05c Claude Code arm); role_models.md (the 05f per-role model routing); doc_crossread.md (brief 114: the blind document cross-read); model_config.md (brief 108: one table of endpoint, model and options for every model call, `python -m agent models show`); deterministic_mode.md (brief 107: the model-call tape, `--deterministic`, levels 1 to 3); test_writer.md (the 05g Verifier diagnosis, turn trace, formal re-plan, QoR gate);
              project_mode_parity.md (what project mode and the wizards give that non-project mode does not, measured; cross-probing);
              ipgen.md (the ipgen pipeline, the adapter interface, candidate IPs); ipgen_tradeoffs.md (design only: the drop-down trade-off view);
+             design_package.md (brief 174: the package folder, ingest of board files into sourced facts, an existing design to change in part, the frozen-file gates);
              design_environment.md (design only, brief 27: projects of many modules, contracts, re-entry by input hash, the engineer's own edits);
              fsm.md (brief 24: the reference controller, the FSM coverage check, the drills);
              vhdl.md (VHDL-2008 designs: how to ask for one, the language boundary with the SystemVerilog shell, what runs where);
