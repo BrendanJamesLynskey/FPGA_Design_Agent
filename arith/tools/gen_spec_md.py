@@ -46,7 +46,7 @@ def render(fn: str) -> str:
           "", "| Variant | Latency (clocks) | Throughput |", "|---|---|---|"]
     L += [f"| `{v}` | `{vd['latency']}` | {vd['throughput']} |" for v, vd in s["variants"].items()]
     L += ["", "## Integration", "", f"- Port timing: {s['integration']['port_timing']}", f"- Constraints to carry: {s['integration']['constraints']}",
-          ("- Verification after integration: this function has no packaged harness (brief 148 left it out; see the report): rerun its bench (tests/) against your instance, which needs the repository's arith/tools and fft_common helpers." if fn in ac.FFT_FUNCTIONS
+          ("- Verification after integration: this function has no packaged harness (brief 148 left it out; see the report): rerun its bench (tests/) against your instance, which needs the repository's arith/tools and fft_common helpers." if fn in ac.FFT_FUNCTIONS and fn not in ac.HARNESS_FFT_FUNCTIONS
            else "- Verification after integration: rerun the packaged harness against your instance ([harness/README.md](harness/README.md)); it needs no other file of this repository."),
           "", "## What a user could guess wrong", ""]
     L += [f"- {g}" for g in s["guess_wrong"]]
@@ -54,7 +54,7 @@ def render(fn: str) -> str:
         L += ["", "## Lean, and what is research", "", s["lean_note"]]
     L += ["", "## Files", "",
           "- [model.py](model.py): the bit-exact model; tests/test_*_model.py check it against independent formulations",
-          *([] if fn in ac.FFT_FUNCTIONS else ["- [harness/](harness/): the packaged verification harness a user reruns against their own instance (model, bench, SystemVerilog checker, coverage targets, standalone runner)"]),
+          *([] if fn in ac.FFT_FUNCTIONS and fn not in ac.HARNESS_FFT_FUNCTIONS else ["- [harness/](harness/): the packaged verification harness a user reruns against their own instance (model, bench, SystemVerilog checker, coverage targets, standalone runner)"]),
           "- [tests/](tests/): the cocotb bench, exhaustive and random points, mutation and formal tests; [verif/testplan.yaml](verif/testplan.yaml) names each",
           "- [verif/mutants.yaml](verif/mutants.yaml), [formal/jobs.yaml](formal/jobs.yaml): the seeded faults and the formal jobs; results in [verif/results/](verif/results/)",
           "- [build/](build/): one `build.yaml` per variant for an out-of-context Vivado run on Artix-7 and K26 (prepared, not run); [ooc/](ooc/): the generated register wrappers",

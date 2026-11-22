@@ -273,3 +273,69 @@ def check_generated_rtl_is_current(fn: str) -> None:
     for p, t in gen_rtl.outputs().items():
         if p.parent.parent.name == fn:
             assert p.exists() and p.read_text() == t, f"{p.relative_to(ac.ROOT)} is out of date: run python -m arith.tools.gen_rtl"
+
+
+# ---- the packaged harness of the frequency-domain suite's phase 1 functions (brief 161) ---------------------------------
+def run_harness_fft(fn: str, rtl: "list[Path]", top: str, variant: str, params: dict, lat: int, mode: str = "all", extra: list[str] | None = None, n: int = 600) -> subprocess.CompletedProcess:
+    h = ac.ARITH / fn / "harness"
+    cmd = [sys.executable, str(h / "run_harness.py"), "--rtl", *[str(x) for x in rtl], "--top", top, "--variant", variant, "--params", json.dumps(params), "--latency", str(lat), "--mode", mode,
+           "--n", str(n)] + (extra or [])
+    return subprocess.run(cmd, capture_output=True, text=True, cwd=h, env={**__import__("os").environ, "PYTHONHASHSEED": "0"})
+
+
+def _dut_files(fn: str, vd: dict) -> "list[Path]":
+    """The variant's files as a user's instance would have them: without the repository's simulation checkers, which the harness's assertions.sv supplies."""
+    return [x for x in ac.rtl_files(fn, vd) if x.name not in ("axis_checker.sv", "axil_checker.sv")]
+
+
+def check_harness_fft_passes(fn: str, variant: str) -> None:
+    """The harness, run standalone against the repository's own variant with the SystemVerilog checkers beside it, in every mode: it passes and meets every coverage target."""
+    spec = ac.load_spec(fn)
+    vd = spec["variants"][variant]
+    p = ac.merged_params(spec, variant, vd["exhaustive_points"][1])
+    r = run_harness_fft(fn, _dut_files(fn, vd), vd["module"], variant, p, ac.latency_of(spec, variant, p), "all", ["--checker"])
+    assert r.returncode == 0 and "PASS" in r.stdout and "NOT met" not in r.stdout, r.stdout[-900:] + r.stderr[-300:]
+    assert "bins met" in r.stdout
+
+
+def check_harness_fft_catches(fn: str, mutant: str) -> None:
+    """A planted fault (a mutant of verif/mutants.yaml) makes the standalone harness fail, with the checkers beside the instance, and a wrong latency fails it on the unmutated RTL."""
+    d = ac.ARITH / fn
+    spec = ac.load_spec(fn)
+    m = next(x for x in yaml.safe_load((d / "verif" / "mutants.yaml").read_text())["mutants"] if x["name"] == mutant)
+    vd = spec["variants"][m["variant"]]
+    p = ac.merged_params(spec, m["variant"], vd["mutant_run"][0]["params"])
+    lat = ac.latency_of(spec, m["variant"], p)
+    mode = vd["mutant_run"][0]["mode"]
+    with tempfile.TemporaryDirectory() as t:
+        files = _dut_files(fn, vd)
+        target = (d / m["file"]).resolve() if m.get("file") else files[0].resolve()
+        new = []
+        for x in files:
+            if x.resolve() == target:
+                src = x.read_text()
+                assert src.count(m["old"]) == 1
+                x = Path(t) / x.name
+                x.write_text(src.replace(m["old"], m["new"]))
+            new.append(x)
+        r = run_harness_fft(fn, new, vd["module"], m["variant"], p, lat, mode, ["--checker"])
+        assert r.returncode == 1 and "FAIL" in r.stdout, r.stdout[-500:]
+    r = run_harness_fft(fn, _dut_files(fn, vd), vd["module"], m["variant"], p, lat + 2, mode, ["--checker"])
+    assert r.returncode == 1 and "FAIL" in r.stdout, "a wrong latency must fail the harness: " + r.stdout[-400:]
+
+
+def check_harness_fft_files(fn: str) -> None:
+    from arith.tools import gen_harness_fft
+    for p, t in gen_harness_fft.outputs(fn).items():
+        assert p.exists() and p.read_text() == t, f"{p.relative_to(ac.ROOT)} is out of date: run python -m arith.tools.gen_harness_fft"
+    h = ac.ARITH / fn / "harness"
+    for f in ("assertions.sv", "chk_top.sv", "coverage.yaml", "README.md", "run_harness.py"):
+        assert (h / f).is_file()
+    # chk_top elaborates with a variant of the function (its checkers and the instance): Verilator -Wall is not demanded of the simulation checkers, only that they elaborate
+    spec = ac.load_spec(fn)
+    v, vd = next(iter(spec["variants"].items()))
+    with tempfile.TemporaryDirectory() as t:
+        (Path(t) / "dut_defs.svh").write_text(f"`define DUT_MODULE {vd['module']}\n`define DUT_PARAMS #(" + ", ".join(f".{k}({k})" for k in vd["params"]) + ")\n")
+        r = subprocess.run([ac.tool("verilator"), "--lint-only", "-Wno-fatal", "-Wno-lint", "-Wno-style", f"-I{t}", "--top-module", "chk_top", *[f"-G{k}={x}" for k, x in vd["params"].items()],
+                            str(h / "chk_top.sv"), str(h / "assertions.sv"), *[str(x) for x in _dut_files(fn, vd)]], capture_output=True, text=True)
+    assert r.returncode == 0 and "%Error" not in r.stderr, r.stderr[-800:]

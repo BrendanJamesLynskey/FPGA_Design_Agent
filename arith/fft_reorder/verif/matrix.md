@@ -18,7 +18,7 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 | **FRO-F-EXACT** Every variant is bit-exact against the model | functional | verified | pass: [V-FRO-DIRECTED](results/pytest_junit.xml)<br>pass: [V-FRO-RANDOM](results/pytest_junit.xml) |  |  |  |  |  |  |  |  |  |
 | **FRO-F-LAT** Latency is as specified and the bench would notice if it were not | functional | verified | pass: [V-FRO-LATENCY](results/pytest_junit.xml) |  |  |  |  |  |  |  |  |  |
 | **FRO-F-EQUIV** The properties named in formal/jobs.yaml hold, by proof where the tools allow | functional | verified |  |  |  | pass: [V-FRO-FORMAL-PROOF](results/pytest_junit.xml)<br>pass: [V-FRO-FORMAL-REFUTE](results/pytest_junit.xml) |  |  |  |  |  |  |
-| **FRO-F-BENCH** The bench catches seeded faults | functional | verified | pass: [V-FRO-MUTANT-TEST](results/pytest_junit.xml) |  |  |  |  |  |  | pass: [V-FRO-MUTANT-SCORE](results/mutation.json) |  |  |
+| **FRO-F-BENCH** The bench catches seeded faults | functional | verified; 1 item(s) stale | pass: [V-FRO-MUTANT-TEST](results/pytest_junit.xml) |  |  |  |  |  |  | stale: [V-FRO-MUTANT-SCORE](results/mutation.json) |  |  |
 | **FRO-F-PACKAGE** The RTL is lint-clean, and its files agree with the specification and with the Vivado build files | functional | stale | stale: [V-FRO-PACKAGE](results/pytest_junit.xml) |  |  |  |  |  |  |  |  |  |
 
 ## Gaps
@@ -29,6 +29,7 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### Stale evidence
 
+- `V-FRO-MUTANT-SCORE`: changed since the evidence was recorded: arith/fft_common/fft_ref.py
 - `V-FRO-PACKAGE`: changed since the evidence was recorded: arith/fft_reorder/build/pingpong/build.yaml, arith/fft_reorder/spec.md
 
 ## Requirements in full
@@ -65,11 +66,11 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### FRO-F-BENCH: The bench catches seeded faults
 
-- Kind: functional; state: verified; specification status: draft.
+- Kind: functional; state: verified; 1 item(s) stale; specification status: draft.
 - Source: `arith/fft_reorder/verif/mutants.yaml`
 - Every one of the mutants in verif/mutants.yaml (one exact text change each: an inverted condition, a wrong constant, a dropped connection, a wrong width) makes the cocotb bench fail, or is argued equivalent in the file's header; mutants that survive or do not build are reported, never hidden.
   - simulation test: **pass**, The mutation run as a test: no mutant survives, none fails to build: 1 test(s) passed in the recorded run. [evidence](results/pytest_junit.xml)
-  - simulation measurement: **pass**, Mutants killed of valid mutants (the record of the last full run): survived = []; invalid = []; valid = 9; score_pct = 100. [evidence](results/mutation.json)
+  - simulation measurement: **stale**, Mutants killed of valid mutants (the record of the last full run): survived = []; invalid = []; valid = 9; score_pct = 100 (changed since the evidence was recorded: arith/fft_common/fft_ref.py). [evidence](results/mutation.json)
 
 ### FRO-F-PACKAGE: The RTL is lint-clean, and its files agree with the specification and with the Vivado build files
 

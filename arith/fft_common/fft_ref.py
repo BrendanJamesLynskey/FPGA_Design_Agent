@@ -205,3 +205,49 @@ def to_signed(v: int, w: int) -> int:
 
 def to_unsigned(v: int, w: int) -> int:
     return v & ((1 << w) - 1)
+
+
+# ---- block floating point (brief 161) ---------------------------------------------------------------------------------------
+def bfp_exponent(words: list[tuple[int, int]], wo: int) -> int:
+    """The frame exponent s: the smallest right shift (negative: a left shift) after which every part of every word fits wo signed bits.
+    The OR of the ones-complement magnitudes (x for x >= 0, -x - 1 for x < 0) of all parts has bit length BL, so the largest part needs BL + 1 bits including the sign: s = BL + 1 - wo."""
+    acc = 0
+    for a, b in words:
+        acc |= (a if a >= 0 else ~a) | (b if b >= 0 else ~b)
+    return acc.bit_length() + 1 - wo
+
+
+def bfp_normalise(words: list[tuple[int, int]], wo: int, rnd: int) -> tuple[list[tuple[int, int]], int]:
+    """(output words, exponent s): every part shifted right by s (rounded half up when rnd = 1, floor otherwise; a negative s shifts left, exactly) and, when the rounding carries a
+    positive part to 2**(wo-1), saturated to 2**(wo-1) - 1. The true (unscaled) value of a part is its output times 2**s, to within the stated error."""
+    s = bfp_exponent(words, wo)
+    hi = (1 << (wo - 1)) - 1
+
+    def one(x: int) -> int:
+        return x << -s if s <= 0 else min(hi, rshift_round(x, s, rnd))
+
+    return [(one(a), one(b)) for a, b in words], s
+
+
+# ---- 2-parallel transform (brief 161) -----------------------------------------------------------------------------------------
+def mdc2_frame(x: list[tuple[int, int]], tw: int, scale: int, rnd: int, inverse: int = 0, natural: int = 1) -> list[tuple[int, int, int, int]]:
+    """The 2-parallel transform as the RTL outputs it: the N-point frame x (natural order) is split into its even and odd samples, each goes through an N/2-point radix-2^2 streaming
+    transform (sdf_frame, natural order here), and one more radix-2 stage combines them: X[k] = E[k] + W_N^k O[k] and X[k + N/2] = E[k] - W_N^k O[k] for k = 0 .. N/2 - 1, the
+    product rounded once by a shift of tw - 2, the sum and difference halved (rounded) when scale = 1. Returns N/2 output words (re0, im0, re1, im1) = (X[k], X[k + N/2]) for output position k
+    (natural = 1) or k = bitrev(position, LOGN - 1) (natural = 0); the inverse swaps real and imaginary parts at the input and at every output part."""
+    nn = len(x)
+    n = nn.bit_length() - 1
+    xs = [(b, a) for a, b in x] if inverse else list(x)
+    ev = fft_frame("sdf", xs[0::2], tw, scale, rnd, 0, 1)
+    od = fft_frame("sdf", xs[1::2], tw, scale, rnd, 0, 1)
+    pairs = []
+    for k in range(nn // 2):
+        wr, wi = tw_for(k, nn, tw)
+        p = cmul_round(od[k][0], od[k][1], wr, wi, tw, rnd)
+        s, d = _bf(ev[k], p, scale, rnd)
+        pairs.append((s, d))
+    if not natural:
+        pairs = [pairs[bitrev(p, n - 1)] for p in range(nn // 2)]
+    if inverse:
+        pairs = [((s[1], s[0]), (d[1], d[0])) for s, d in pairs]
+    return [(s[0], s[1], d[0], d[1]) for s, d in pairs]

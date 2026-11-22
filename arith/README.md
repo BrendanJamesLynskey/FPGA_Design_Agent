@@ -64,6 +64,24 @@ is a basis of stimuli (impulses, tones, corner values), not every input; the FFT
 packaged harness** and **no Lean statement** for any of them (not built in this phase; stated in each `spec.md`); the formal jobs are properties of the parts (the reorder address map, the complex
 multiplier, the twiddle symmetry, the window rounding, the delay-feedback stage) and not of the whole FFT. The fast-convolution model is `fft_common/fastconv.py` (Python only, with an interface proposal in the plan: its RTL is the next phase); the real-input transform is built (`fft_real`).
 
+### Phase 1 (brief 161): block floating point, 2-parallel, real-input AXI4-Stream, fast convolution
+
+Four more entries, in the same form and with a packaged harness each (owner decision 24; the phase 0 entries above have none). The two data-path entries have plain ports; the two system-facing ones
+have AMBA AXI interfaces (owner decision 28). Study and measured results: [../docs/fft_suite_plan.md](../docs/fft_suite_plan.md) section 9. **Nothing here has been run through Vivado**; the prepared builds
+are queued in `_handoff/fpga_agent/vivado_later_queue.md`.
+
+| Function | Variants | Specification | Testplan and evidence | Harness |
+|---|---|---|---|---|
+| Block-floating-point FFT: the unscaled transform, one exponent per frame, W-bit output words, the exponent on a side channel (`out_exp`) | `sdf`, `burst` | [fft_bfp/spec.md](fft_bfp/spec.md) | [fft_bfp/verif/testplan.yaml](fft_bfp/verif/testplan.yaml), [matrix](fft_bfp/verif/matrix.md), [accuracy](fft_bfp/verif/results/accuracy.json) | [fft_bfp/harness/README.md](fft_bfp/harness/README.md) |
+| 2-parallel FFT: two samples per clock, N/2-clock frames of pairs, built as two N/2-point `sdf` pipelines and a combining stage | `par2` | [fft_mdc2/spec.md](fft_mdc2/spec.md) | [fft_mdc2/verif/testplan.yaml](fft_mdc2/verif/testplan.yaml), [matrix](fft_mdc2/verif/matrix.md) | [fft_mdc2/harness/README.md](fft_mdc2/harness/README.md) |
+| AXI4-Stream real-input FFT: the wrapper of `fft_real`, the N/8 frame gap enforced by back-pressure | `post` | [fft_real_axis/spec.md](fft_real_axis/spec.md) | [fft_real_axis/verif/testplan.yaml](fft_real_axis/verif/testplan.yaml), [matrix](fft_real_axis/verif/matrix.md) | [fft_real_axis/harness/README.md](fft_real_axis/harness/README.md) |
+| Fast convolution FIR (overlap-save): AXI4-Stream samples in and out, the filter spectrum loaded over AXI4-Lite | `os` | [fft_fastconv/spec.md](fft_fastconv/spec.md) | [fft_fastconv/verif/testplan.yaml](fft_fastconv/verif/testplan.yaml), [matrix](fft_fastconv/verif/matrix.md), [accuracy](fft_fastconv/verif/results/accuracy.json) | [fft_fastconv/harness/README.md](fft_fastconv/harness/README.md) |
+
+New shared files in [fft_common/](fft_common/): `fft_bfp_out.sv` (the exponent and normalisation stage), `frame_checker.sv`, `axil_checker.sv` (simulation checkers), `fcover.py` (event coverage). The build
+generator is `tools/gen_build.py` (one generator for every function here); the harness generator is `tools/gen_harness_fft.py`; mutants of the phase 1 functions are in `tools/mutants_p1.py`.
+`python -m flow.verified` records (PR #271) are not produced: #271 was not on main when this phase ran. No Lean statement. The AXI4-Lite register file of `fft_fastconv` has bounded model checks
+([fft_fastconv/formal/jobs.yaml](fft_fastconv/formal/jobs.yaml)); the datapaths are checked by simulation only.
+
 ### Layout (one folder per function)
 
 | Path | What |

@@ -19,12 +19,13 @@ ARITH = ROOT / "arith"
 FUNCTIONS = ("adder", "multiplier", "mac", "exp2", "log2", "sincos", "atan2_mag", "fp_add", "fp_mul", "fp_fma")
 ELEMENTARY = ("exp2", "log2", "sincos", "atan2_mag")        # brief 139d; the first three functions are brief 139a
 FLOAT = ("fp_add", "fp_mul", "fp_fma")                     # brief 139e
-FFT_FUNCTIONS = ("fft_cmul", "fft_twiddle", "fft_reorder", "fft_window", "fft", "fft_real", "fft_axis")      # the frequency-domain suite (brief 148): no packaged harness, see arith/README.md
+FFT_FUNCTIONS = ("fft_cmul", "fft_twiddle", "fft_reorder", "fft_window", "fft", "fft_real", "fft_axis", "fft_bfp", "fft_mdc2", "fft_real_axis", "fft_fastconv")      # the frequency-domain suite (brief 148): no packaged harness, see arith/README.md
+HARNESS_FFT_FUNCTIONS = ("fft_bfp", "fft_mdc2", "fft_real_axis", "fft_fastconv")      # the phase 1 functions of the suite (brief 161) have a packaged harness; the phase 0 ones do not
 ALL_FUNCTIONS = FUNCTIONS + FFT_FUNCTIONS
 
 
 def brief_of(fn: str) -> str:
-    return "139d" if fn in ELEMENTARY else "139e" if fn in FLOAT else "148" if fn in FFT_FUNCTIONS else "139a"
+    return "139d" if fn in ELEMENTARY else "139e" if fn in FLOAT else "161" if fn in HARNESS_FFT_FUNCTIONS else "148" if fn in FFT_FUNCTIONS else "139a"
 
 
 PARTS = {"a7": "xc7a100tcsg324-1", "k26": "xck26-sfvc784-2LV-c"}      # the two parts of the brief: Artix-7 (xc7a100t) and Kria K26 (xck26)

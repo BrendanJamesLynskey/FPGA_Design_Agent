@@ -29,7 +29,7 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### Stale evidence
 
-- `V-FAXIS-MUTANT-SCORE`: changed since the evidence was recorded: arith/fft/rtl/fft_burst_r2.sv, arith/fft/rtl/fft_sdf_r22.sv, arith/fft_common/fft_sdf_twmul.sv
+- `V-FAXIS-MUTANT-SCORE`: changed since the evidence was recorded: arith/fft/rtl/fft_burst_r2.sv, arith/fft/rtl/fft_sdf_r22.sv, arith/fft_common/fft_ref.py, arith/fft_common/fft_sdf_twmul.sv
 - `V-FAXIS-PACKAGE`: changed since the evidence was recorded: arith/fft_axis/build/burst/build.yaml, arith/fft_axis/build/sdf/build.yaml, arith/fft_axis/spec.md
 
 ## Requirements in full
@@ -62,7 +62,7 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 - Source: `arith/fft_axis/verif/mutants.yaml`
 - Every one of the mutants in verif/mutants.yaml (one exact text change each: an inverted condition, a wrong constant, a dropped connection, a wrong width) makes the cocotb bench fail, or is argued equivalent in the file's header; mutants that survive or do not build are reported, never hidden.
   - simulation test: **pass**, The mutation run as a test: no mutant survives, none fails to build: 1 test(s) passed in the recorded run. [evidence](results/pytest_junit.xml)
-  - simulation measurement: **stale**, Mutants killed of valid mutants (the record of the last full run): survived = []; invalid = []; valid = 13; score_pct = 100 (changed since the evidence was recorded: arith/fft/rtl/fft_burst_r2.sv, arith/fft/rtl/fft_sdf_r22.sv, arith/fft_common/fft_sdf_twmul.sv). [evidence](results/mutation.json)
+  - simulation measurement: **stale**, Mutants killed of valid mutants (the record of the last full run): survived = []; invalid = []; valid = 13; score_pct = 100 (changed since the evidence was recorded: arith/fft/rtl/fft_burst_r2.sv, arith/fft/rtl/fft_sdf_r22.sv, arith/fft_common/fft_ref.py, arith/fft_common/fft_sdf_twmul.sv). [evidence](results/mutation.json)
 
 ### FAXIS-F-PACKAGE: The RTL is lint-clean, and its files agree with the specification and with the Vivado build files
 

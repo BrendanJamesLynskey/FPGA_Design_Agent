@@ -17,8 +17,12 @@ The human specifies the requirements and checks that the verification is thoroug
 | `arith_exp2` | 11 requirements (11 functional); 8 verified; 0 of 11 requirements agreed by a human, 0 human review(s) recorded; 3 Lean proof item(s) (all widths): 0 with a human-approved statement, 0 with a statement accepted on the owner's delegation (not a human approval), 3 with statement not approved; 3 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run). | [matrix](../arith/exp2/verif/matrix.md) ([html](../arith/exp2/verif/matrix.html)) |
 | `arith_fft` | 10 requirements (10 functional); 9 verified; 1 stale; 0 of 10 requirements agreed by a human, 0 human review(s) recorded. | [matrix](../arith/fft/verif/matrix.md) ([html](../arith/fft/verif/matrix.html)) |
 | `arith_fft_axis` | 6 requirements (5 functional, 1 interface); 5 verified; 1 stale; 0 of 6 requirements agreed by a human, 0 human review(s) recorded. | [matrix](../arith/fft_axis/verif/matrix.md) ([html](../arith/fft_axis/verif/matrix.html)) |
+| `arith_fft_bfp` | 9 requirements (9 functional); 8 verified; 1 stale; 0 of 9 requirements agreed by a human, 0 human review(s) recorded. | [matrix](../arith/fft_bfp/verif/matrix.md) ([html](../arith/fft_bfp/verif/matrix.html)) |
 | `arith_fft_cmul` | 6 requirements (6 functional); 5 verified; 1 stale; 0 of 6 requirements agreed by a human, 0 human review(s) recorded. | [matrix](../arith/fft_cmul/verif/matrix.md) ([html](../arith/fft_cmul/verif/matrix.html)) |
+| `arith_fft_fastconv` | 11 requirements (9 functional, 2 interface); 10 verified; 1 stale; 0 of 11 requirements agreed by a human, 0 human review(s) recorded. | [matrix](../arith/fft_fastconv/verif/matrix.md) ([html](../arith/fft_fastconv/verif/matrix.html)) |
+| `arith_fft_mdc2` | 7 requirements (7 functional); 6 verified; 1 stale; 0 of 7 requirements agreed by a human, 0 human review(s) recorded. | [matrix](../arith/fft_mdc2/verif/matrix.md) ([html](../arith/fft_mdc2/verif/matrix.html)) |
 | `arith_fft_real` | 5 requirements (5 functional); 4 verified; 1 stale; 0 of 5 requirements agreed by a human, 0 human review(s) recorded. | [matrix](../arith/fft_real/verif/matrix.md) ([html](../arith/fft_real/verif/matrix.html)) |
+| `arith_fft_real_axis` | 8 requirements (6 functional, 2 interface); 7 verified; 1 stale; 0 of 8 requirements agreed by a human, 0 human review(s) recorded. | [matrix](../arith/fft_real_axis/verif/matrix.md) ([html](../arith/fft_real_axis/verif/matrix.html)) |
 | `arith_fft_reorder` | 6 requirements (6 functional); 5 verified; 1 stale; 0 of 6 requirements agreed by a human, 0 human review(s) recorded. | [matrix](../arith/fft_reorder/verif/matrix.md) ([html](../arith/fft_reorder/verif/matrix.html)) |
 | `arith_fft_twiddle` | 6 requirements (6 functional); 5 verified; 1 stale; 0 of 6 requirements agreed by a human, 0 human review(s) recorded. | [matrix](../arith/fft_twiddle/verif/matrix.md) ([html](../arith/fft_twiddle/verif/matrix.html)) |
 | `arith_fft_window` | 6 requirements (6 functional); 5 verified; 1 stale; 0 of 6 requirements agreed by a human, 0 human review(s) recorded. | [matrix](../arith/fft_window/verif/matrix.md) ([html](../arith/fft_window/verif/matrix.html)) |
@@ -49,9 +53,13 @@ The human specifies the requirements and checks that the verification is thoroug
 - `arith_exp2`: 3 lean statement unapproved
 - `arith_fft`: 1 no passing evidence, 2 stale evidence
 - `arith_fft_axis`: 1 no passing evidence, 2 stale evidence
+- `arith_fft_bfp`: 1 no passing evidence, 1 stale evidence
 - `arith_fft_cmul`: 1 no passing evidence, 1 stale evidence
+- `arith_fft_fastconv`: 1 no passing evidence, 1 stale evidence
+- `arith_fft_mdc2`: 1 no passing evidence, 1 stale evidence
 - `arith_fft_real`: 1 no passing evidence, 2 stale evidence
-- `arith_fft_reorder`: 1 no passing evidence, 1 stale evidence
+- `arith_fft_real_axis`: 1 no passing evidence, 1 stale evidence
+- `arith_fft_reorder`: 1 no passing evidence, 2 stale evidence
 - `arith_fft_twiddle`: 1 no passing evidence, 1 stale evidence
 - `arith_fft_window`: 1 no passing evidence, 1 stale evidence
 - `arith_fp_add`: 3 lean statement unapproved, 1 no passing evidence, 1 stale evidence

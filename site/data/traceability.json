@@ -11234,7 +11234,7 @@
      {
       "gate": false,
       "id": "V-FFT-MUTANT-SCORE",
-      "text": "changed since the evidence was recorded: arith/fft/rtl/fft_burst_r2.sv, arith/fft/rtl/fft_sdf_r22.sv, arith/fft/verif/mutants.yaml, arith/fft_common/fft_sdf_twmul.sv",
+      "text": "changed since the evidence was recorded: arith/fft/rtl/fft_burst_r2.sv, arith/fft/rtl/fft_sdf_r22.sv, arith/fft/verif/mutants.yaml, arith/fft_common/fft_ref.py (+1 more)",
       "type": "stale_evidence"
      },
      {
@@ -11380,7 +11380,7 @@
       "requirements": [
        "FFT-F-BENCH"
       ],
-      "stale_because": "changed since the evidence was recorded: arith/fft/rtl/fft_burst_r2.sv, arith/fft/rtl/fft_sdf_r22.sv, arith/fft/verif/mutants.yaml, arith/fft_common/fft_sdf_twmul.sv",
+      "stale_because": "changed since the evidence was recorded: arith/fft/rtl/fft_burst_r2.sv, arith/fft/rtl/fft_sdf_r22.sv, arith/fft/verif/mutants.yaml, arith/fft_common/fft_ref.py (+1 more)",
       "status": "stale",
       "title": "Mutants killed of valid mutants (the record of the last full run)",
       "value": true
@@ -11860,7 +11860,7 @@
      {
       "gate": false,
       "id": "V-FAXIS-MUTANT-SCORE",
-      "text": "changed since the evidence was recorded: arith/fft/rtl/fft_burst_r2.sv, arith/fft/rtl/fft_sdf_r22.sv, arith/fft_common/fft_sdf_twmul.sv",
+      "text": "changed since the evidence was recorded: arith/fft/rtl/fft_burst_r2.sv, arith/fft/rtl/fft_sdf_r22.sv, arith/fft_common/fft_ref.py, arith/fft_common/fft_sdf_twmul.sv",
       "type": "stale_evidence"
      },
      {
@@ -11970,7 +11970,7 @@
       "requirements": [
        "FAXIS-F-BENCH"
       ],
-      "stale_because": "changed since the evidence was recorded: arith/fft/rtl/fft_burst_r2.sv, arith/fft/rtl/fft_sdf_r22.sv, arith/fft_common/fft_sdf_twmul.sv",
+      "stale_because": "changed since the evidence was recorded: arith/fft/rtl/fft_burst_r2.sv, arith/fft/rtl/fft_sdf_r22.sv, arith/fft_common/fft_ref.py, arith/fft_common/fft_sdf_twmul.sv",
       "status": "stale",
       "title": "Mutants killed of valid mutants (the record of the last full run)",
       "value": true
@@ -12294,6 +12294,566 @@
      "performance_sim_only": 0,
      "performance_timing": 0,
      "requirements": 6,
+     "spec_agreed": 0,
+     "verified_on_delegated": 0
+    }
+   },
+   {
+    "design": "arith_fft_bfp",
+    "gaps": [
+     {
+      "gate": false,
+      "id": "FBFP-F-PACKAGE",
+      "state": "stale",
+      "text": "its evidence is stale",
+      "type": "no_passing_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-FBFP-PACKAGE",
+      "text": "changed since the evidence was recorded: arith/fft_bfp/build/burst/build.yaml, arith/fft_bfp/build/sdf/build.yaml, arith/fft_bfp/spec.md",
+      "type": "stale_evidence"
+     }
+    ],
+    "items": [
+     {
+      "detail": "71 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_bfp/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FBFP-MODEL",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FBFP-F-MODEL"
+      ],
+      "status": "pass",
+      "title": "The model against independent formulations and the pinned conventions",
+      "value": "71 of 71 tests passed"
+     },
+     {
+      "detail": "10 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_bfp/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FBFP-DIRECTED",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FBFP-F-EXACT"
+      ],
+      "status": "pass",
+      "title": "Every variant against the model at the small points (Icarus + cocotb): directed or exhaustive stimuli",
+      "value": "10 of 10 tests passed"
+     },
+     {
+      "detail": "6 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_bfp/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FBFP-RANDOM",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FBFP-F-EXACT"
+      ],
+      "status": "pass",
+      "title": "Every variant against the model at the large points: random stimuli (Icarus + cocotb)",
+      "value": "6 of 6 tests passed"
+     },
+     {
+      "detail": "2 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_bfp/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FBFP-LATENCY",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FBFP-F-LAT"
+      ],
+      "status": "pass",
+      "title": "The bench passes at the stated latency and fails two clocks off, for every variant",
+      "value": "2 of 2 tests passed"
+     },
+     {
+      "detail": "1 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_bfp/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FBFP-MUTANT-TEST",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FBFP-F-BENCH"
+      ],
+      "status": "pass",
+      "title": "The mutation run as a test: no mutant survives, none fails to build",
+      "value": "1 of 1 tests passed"
+     },
+     {
+      "detail": "survived = []; invalid = []; valid = 23; score_pct = 100",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_bfp/verif/results/mutation.json"
+      },
+      "id": "V-FBFP-MUTANT-SCORE",
+      "instrument": null,
+      "method": "sim_measurement",
+      "planned": null,
+      "requirements": [
+       "FBFP-F-BENCH"
+      ],
+      "status": "pass",
+      "title": "Mutants killed of valid mutants (the record of the last full run)",
+      "value": true
+     },
+     {
+      "detail": "5 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_bfp/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FBFP-PACKAGE",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FBFP-F-PACKAGE"
+      ],
+      "stale_because": "changed since the evidence was recorded: arith/fft_bfp/build/burst/build.yaml, arith/fft_bfp/build/sdf/build.yaml, arith/fft_bfp/spec.md",
+      "status": "stale",
+      "title": "spec.yaml against the RTL headers, spec.md against spec.yaml, Verilator -Wall at every point, wrappers and build.yaml current and lint-clean",
+      "value": "5 of 5 tests passed"
+     },
+     {
+      "detail": "all_within_bound = True; bfp_sqnr_db_min_full_level = 85.8; bfp_worst_lsb_max_full_level = 1.173; bfp_sqnr_db_min_minus60 = 35.4; scaled_sqnr_db_min_minus60 = -11; points = 80",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_bfp/verif/results/accuracy.json"
+      },
+      "id": "V-FBFP-ACCURACY",
+      "instrument": null,
+      "method": "sim_measurement",
+      "planned": null,
+      "requirements": [
+       "FBFP-F-ACCURACY"
+      ],
+      "status": "pass",
+      "title": "Error against NumPy at every recorded point, three modes (the record of the last run)",
+      "value": true
+     },
+     {
+      "detail": "10 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_bfp/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FBFP-LEVELS",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FBFP-F-LEVELS"
+      ],
+      "status": "pass",
+      "title": "Frames of every level through the RTL, exponent included",
+      "value": "10 of 10 tests passed"
+     },
+     {
+      "detail": "4 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_bfp/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FBFP-BACKPRESSURE",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FBFP-F-BACKPRESSURE"
+      ],
+      "status": "pass",
+      "title": "The burst variant under a stalled sink, including one that fills both frame banks",
+      "value": "4 of 4 tests passed"
+     },
+     {
+      "detail": "4 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_bfp/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FBFP-HARNESS",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FBFP-F-HARNESS"
+      ],
+      "status": "pass",
+      "title": "The harness against the repository's variants, a planted fault and a wrong latency",
+      "value": "4 of 4 tests passed"
+     }
+    ],
+    "notes": "Frequency-domain suite, function fft_bfp (brief 148). Everything here is before Vivado: the model, the RTL variants, simulation, formal properties and the prepared out-of-context build files. No performance requirement on LUTs, DSPs, Fmax or power exists because none has been measured; the Vivado runs (build/<variant>/build.yaml, queued in _handoff/fpga_agent/vivado_later_queue.md) will add them. Every requirement is a draft written by the agent; none is agreed by a human. There are no Lean statements (the packaged harness of this function, in harness/, is evidenced by the harness item). Generated by arith/tools/gen_testplan_fft.py.",
+    "path": "arith/fft_bfp",
+    "requirements": [
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FBFP-F-MODEL",
+      "items": [
+       "V-FBFP-MODEL"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_bfp/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "arith/fft_bfp/model.py gives, for every input, the result that spec.md defines. It agrees with an independent formulation (NumPy's FFT (the value of every word times 2**exponent against the transform, within the stated bound, both variants, N = 8 to 1024, three input levels), a brute-force search for the smallest shift after which every part fits, and the identities of the order and of the inverse), and the conventions that a user could guess wrong (spec.md, last section) are pinned by examples.",
+      "title": "The bit-exact model is right"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FBFP-F-EXACT",
+      "items": [
+       "V-FBFP-DIRECTED",
+       "V-FBFP-RANDOM"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_bfp/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "At every parameter point listed in spec.yaml (10 directed or exhaustive points, 6 random ones, across 2 variants), each variant's outputs equal the model's: the directed points drive impulses at every position and tones at every bin (small N), DC, Nyquist, a chirp and corner values, forward and inverse, back to back and after the shortest legal gap; the random points drive random frames with random direction and legal gaps up to N = 4096 (sdf) and 1024 (burst); the level frames drive all-zero, one-LSB, quiet and loud noise, loud and quiet tones, the most negative value and a frame whose rounding carries and saturates, so that every exponent range is visited. Each output frame, its exponent word included, equals the model bit for bit, the latency from in_sof to out_sof equals the formula, out_valid is N consecutive clocks and the exponent is the same on every word of a frame.",
+      "title": "Every variant is bit-exact against the model"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FBFP-F-LAT",
+      "items": [
+       "V-FBFP-LATENCY"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_bfp/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "Each variant's latency in clocks is the expression in spec.yaml (sdf: (1<<LOGN)-1+LOGN+((LOGN-1)//2)*(TWSTAGES+MULSTAGES+1)+(1<<LOGN)+2; burst: (1<<LOGN)+LOGN*((1<<LOGN)//2+MULSTAGES+3)+1+(1<<LOGN)+2), and the bench, run with a latency two clocks off, fails for every variant, so the passing runs prove the latency rather than assume it.",
+      "title": "Latency is as specified and the bench would notice if it were not"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FBFP-F-BENCH",
+      "items": [
+       "V-FBFP-MUTANT-TEST",
+       "V-FBFP-MUTANT-SCORE"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_measurement",
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_bfp/verif/mutants.yaml",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "Every one of the mutants in verif/mutants.yaml (one exact text change each: an inverted condition, a wrong constant, a dropped connection, a wrong width) makes the cocotb bench fail, or is argued equivalent in the file's header; mutants that survive or do not build are reported, never hidden.",
+      "title": "The bench catches seeded faults"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FBFP-F-PACKAGE",
+      "items": [
+       "V-FBFP-PACKAGE"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [],
+      "rests_on_delegated": false,
+      "source": "arith/fft_bfp/spec.yaml",
+      "spec_status": "draft",
+      "stale_items": 1,
+      "state": "stale",
+      "text": "spec.yaml states an interface contract (protocol, throughput, latency, reset, clock, stalls) and integration guidance (port timing, constraints to carry). Every variant passes Verilator -Wall at every point of spec.yaml; its ports and default parameters are the ones spec.yaml states; its header states the intended primitive use before any Vivado run; spec.md is the rendering of spec.yaml; the out-of-context wrapper and the build.yaml for each variant (Artix-7 xc7a100t and K26 xck26, prepared and not run) are current and lint-clean at every point they list, so a Vivado run can start from the repository alone.",
+      "title": "The RTL is lint-clean, and its files agree with the specification and with the Vivado build files"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FBFP-F-ACCURACY",
+      "items": [
+       "V-FBFP-ACCURACY"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_measurement"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_bfp/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "For both architectures, every N from 8 to 4096 and four input levels (0, -20, -40 and -60 dB of a full-scale noise-like frame), the error of the bit-exact model (which the RTL equals) against numpy.fft is recorded in verif/results/accuracy.json for the block-floating-point mode, the scaled mode and the unscaled mode (worst and rms error in the mode's own output LSB, and the SQNR). The bound is: the error of every part is at most the unscaled core's own worst error plus 2**exponent (the final rounding at the frame's exponent); it holds at every recorded point. The recorded SQNR of the block-floating-point mode at full level is at least 80 dB, its worst error at full level at most 2 output LSB, and at -60 dB its SQNR is at least 30 dB where the scaled mode's is negative.",
+      "title": "Accuracy against NumPy is measured beside the scaled and unscaled modes, and the stated bound holds"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FBFP-F-LEVELS",
+      "items": [
+       "V-FBFP-LEVELS"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_bfp/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "Frames of very different level (all zero, one LSB, noise at six amplitudes, a loud and a quiet tone, the most negative value, a frame whose bin 0 is 2**W - 1 so that the rounding carries and the word saturates) are sent through both architectures; each output frame and its exponent equal the model, the frames reach at least six different exponents, and the exponent is the same on every word of its frame and travels with the data when frames follow each other at different levels.",
+      "title": "Every exponent range is visited and the exponent word is bit exact"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FBFP-F-BACKPRESSURE",
+      "items": [
+       "V-FBFP-BACKPRESSURE"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_bfp/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "With out_ready low in 40 per cent of the clocks, and again in 92 per cent (reading a frame then takes longer than the core needs for the next, so both banks fill and the core must wait), the burst variant's frames, exponents and order equal the model, and out_valid, out_sof, the data and the exponent stay unchanged in every clock in which out_valid is high and out_ready low. The sdf variant ignores out_ready (stated).",
+      "title": "The burst variant honours out_ready, even when both frame banks fill"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FBFP-F-HARNESS",
+      "items": [
+       "V-FBFP-HARNESS"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_bfp/harness/README.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "arith/fft_bfp/harness/ (model, bench, SystemVerilog checkers, coverage targets, standalone runner: owner decision 24) needs no other file of the repository. Run against each variant of this function with the checkers beside it, in every mode, it passes and meets every coverage target; against one planted fault (a mutant of verif/mutants.yaml), or with a latency two clocks off, it fails; its model, bench and checker files are the repository's own, generated by arith/tools/gen_harness_fft.py, so they cannot drift.",
+      "title": "The packaged harness runs standalone, passes on the repository's variants and catches faults"
+     }
+    ],
+    "source_schema": "fpga-design-agent/testplan/v1",
+    "summary": {
+     "by_kind": {
+      "functional": 9,
+      "interface": 0,
+      "performance": 0,
+      "safety": 0
+     },
+     "by_method": {
+      "assertion": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "board_measurement": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "coverage_bin": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "formal": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "formal_lean": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "review": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "sim_measurement": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 2,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "sim_test": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 8,
+       "skipped": 0,
+       "stale": 1,
+       "unapproved": 0
+      },
+      "timing": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "uvm_test": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      }
+     },
+     "by_state": {
+      "stale": 1,
+      "verified": 8
+     },
+     "external": 0,
+     "external_hardware_done": 0,
+     "gap_counts": {
+      "no_passing_evidence": 1,
+      "stale_evidence": 1
+     },
+     "human_reviews": 0,
+     "items": 11,
+     "lean": {
+      "approved": 0,
+      "build_sources": [],
+      "by_rtl_link": {
+       "model_only": 0,
+       "rtl_generated": 0,
+       "transcription_tested": 0,
+       "transcription_untested": 0
+      },
+      "by_status": {},
+      "by_tier": {
+       "compiled_decision_procedure": 0,
+       "kernel_only": 0,
+       "unsound": 0
+      },
+      "delegated": 0,
+      "items": 0,
+      "statement_not_approved": 0
+     },
+     "line": "9 requirements (9 functional); 8 verified; 1 stale; 0 of 9 requirements agreed by a human, 0 human review(s) recorded.",
+     "performance_board": 0,
+     "performance_sim_only": 0,
+     "performance_timing": 0,
+     "requirements": 9,
      "spec_agreed": 0,
      "verified_on_delegated": 0
     }
@@ -12760,6 +13320,1147 @@
     }
    },
    {
+    "design": "arith_fft_fastconv",
+    "gaps": [
+     {
+      "gate": false,
+      "id": "FFC-F-PACKAGE",
+      "state": "stale",
+      "text": "its evidence is stale",
+      "type": "no_passing_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-FFC-PACKAGE",
+      "text": "changed since the evidence was recorded: arith/fft_fastconv/build/os/build.yaml, arith/fft_fastconv/spec.md",
+      "type": "stale_evidence"
+     }
+    ],
+    "items": [
+     {
+      "detail": "14 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_fastconv/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FFC-MODEL",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FFC-F-MODEL"
+      ],
+      "status": "pass",
+      "title": "The model against independent formulations and the pinned conventions",
+      "value": "14 of 14 tests passed"
+     },
+     {
+      "detail": "5 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_fastconv/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FFC-DIRECTED",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FFC-F-EXACT"
+      ],
+      "status": "pass",
+      "title": "Every variant against the model at the small points (Icarus + cocotb): directed or exhaustive stimuli",
+      "value": "5 of 5 tests passed"
+     },
+     {
+      "detail": "3 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_fastconv/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FFC-RANDOM",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FFC-F-EXACT"
+      ],
+      "status": "pass",
+      "title": "Every variant against the model at the large points: random stimuli (Icarus + cocotb)",
+      "value": "3 of 3 tests passed"
+     },
+     {
+      "detail": "1 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_fastconv/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FFC-LATENCY",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FFC-F-LAT"
+      ],
+      "status": "pass",
+      "title": "The bench passes at the stated latency and fails two clocks off, for every variant",
+      "value": "1 of 1 tests passed"
+     },
+     {
+      "bounded": {
+       "depth": 26
+      },
+      "detail": "2 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_fastconv/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FFC-FORMAL-BOUNDED",
+      "instrument": null,
+      "method": "formal",
+      "planned": null,
+      "requirements": [
+       "FFC-F-EQUIV"
+      ],
+      "status": "bounded",
+      "title": "Bounded model checks from an arbitrary state (2 jobs; depths in formal/jobs.yaml)",
+      "value": "2 of 2 tests passed"
+     },
+     {
+      "detail": "6 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_fastconv/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FFC-FORMAL-REFUTE",
+      "instrument": null,
+      "method": "formal",
+      "planned": null,
+      "requirements": [
+       "FFC-F-EQUIV"
+      ],
+      "status": "pass",
+      "title": "Each formal check refutes a planted fault (the check can fail)",
+      "value": "6 of 6 tests passed"
+     },
+     {
+      "detail": "1 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_fastconv/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FFC-MUTANT-TEST",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FFC-F-BENCH"
+      ],
+      "status": "pass",
+      "title": "The mutation run as a test: no mutant survives, none fails to build",
+      "value": "1 of 1 tests passed"
+     },
+     {
+      "detail": "survived = []; invalid = []; valid = 37; score_pct = 100",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_fastconv/verif/results/mutation.json"
+      },
+      "id": "V-FFC-MUTANT-SCORE",
+      "instrument": null,
+      "method": "sim_measurement",
+      "planned": null,
+      "requirements": [
+       "FFC-F-BENCH"
+      ],
+      "status": "pass",
+      "title": "Mutants killed of valid mutants (the record of the last full run)",
+      "value": true
+     },
+     {
+      "detail": "5 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_fastconv/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FFC-PACKAGE",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FFC-F-PACKAGE"
+      ],
+      "stale_because": "changed since the evidence was recorded: arith/fft_fastconv/build/os/build.yaml, arith/fft_fastconv/spec.md",
+      "status": "stale",
+      "title": "spec.yaml against the RTL headers, spec.md against spec.yaml, Verilator -Wall at every point, wrappers and build.yaml current and lint-clean",
+      "value": "5 of 5 tests passed"
+     },
+     {
+      "detail": "3 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_fastconv/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FFC-AXIL",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FFC-F-AXIL"
+      ],
+      "status": "pass",
+      "title": "The register contract, every access type, with the AXI4-Lite checker",
+      "value": "3 of 3 tests passed"
+     },
+     {
+      "detail": "2 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_fastconv/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FFC-SATURATE",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FFC-F-SAT"
+      ],
+      "status": "pass",
+      "title": "A loud input through a filter of gain 2**GB saturates as the model says",
+      "value": "2 of 2 tests passed"
+     },
+     {
+      "detail": "3 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_fastconv/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FFC-STREAMS",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FFC-F-AXIS"
+      ],
+      "status": "pass",
+      "title": "Both streams under random stalls, with the protocol checkers (the random points)",
+      "value": "3 of 3 tests passed"
+     },
+     {
+      "detail": "worst_lsb_max = 3.566; sqnr_db_min = 44.5; points = 16",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_fastconv/verif/results/accuracy.json"
+      },
+      "id": "V-FFC-ACCURACY",
+      "instrument": null,
+      "method": "sim_measurement",
+      "planned": null,
+      "requirements": [
+       "FFC-F-ACCURACY"
+      ],
+      "status": "pass",
+      "title": "Error against numpy.convolve at every recorded point (the record of the last run)",
+      "value": true
+     },
+     {
+      "detail": "3 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_fastconv/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FFC-HARNESS",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FFC-F-HARNESS"
+      ],
+      "status": "pass",
+      "title": "The harness against the repository's variants, a planted fault and a wrong latency",
+      "value": "3 of 3 tests passed"
+     }
+    ],
+    "notes": "Frequency-domain suite, function fft_fastconv (brief 148). Everything here is before Vivado: the model, the RTL variants, simulation, formal properties and the prepared out-of-context build files. No performance requirement on LUTs, DSPs, Fmax or power exists because none has been measured; the Vivado runs (build/<variant>/build.yaml, queued in _handoff/fpga_agent/vivado_later_queue.md) will add them. Every requirement is a draft written by the agent; none is agreed by a human. There are no Lean statements (the packaged harness of this function, in harness/, is evidenced by the harness item). Generated by arith/tools/gen_testplan_fft.py.",
+    "path": "arith/fft_fastconv",
+    "requirements": [
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FFC-F-MODEL",
+      "items": [
+       "V-FFC-MODEL"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_fastconv/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "arith/fft_fastconv/model.py gives, for every input, the result that spec.md defines. It agrees with an independent formulation (numpy.convolve of the same samples and the unquantised taps (the overlap-save identity, within the stated bound), the bit-exact FFT models it is built from, and the overlap-save and overlap-add models of arith/fft_common/fastconv.py), and the conventions that a user could guess wrong (spec.md, last section) are pinned by examples.",
+      "title": "The bit-exact model is right"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FFC-F-EXACT",
+      "items": [
+       "V-FFC-DIRECTED",
+       "V-FFC-RANDOM"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_fastconv/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "At every parameter point listed in spec.yaml (5 directed or exhaustive points, 3 random ones, across 1 variants), each variant's outputs equal the model's: the directed points drive the register defaults, a zero filter (zero output), a filter loaded through the registers and a random stream through it with random stalls on both streams; the random points use random taps, random streams with random stalls, register traffic while the stream runs and a new filter after the stream drains. The whole output stream equals the model bit for bit (no sample lost, added or reordered), the latency from the last input beat of the first block to its first output beat equals the formula, and the three protocol checkers count no error.",
+      "title": "Every variant is bit-exact against the model"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FFC-F-LAT",
+      "items": [
+       "V-FFC-LATENCY"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_fastconv/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "Each variant's latency in clocks is the expression in spec.yaml (os: 2*(2*(1<<LOGN)+LOGN+((LOGN-1)//2)*(TWSTAGES+MULSTAGES+1))+MULSTAGES+L+7), and the bench, run with a latency two clocks off, fails for every variant, so the passing runs prove the latency rather than assume it.",
+      "title": "Latency is as specified and the bench would notice if it were not"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FFC-F-EQUIV",
+      "items": [
+       "V-FFC-FORMAL-BOUNDED",
+       "V-FFC-FORMAL-REFUTE"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "formal"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_fastconv/formal/jobs.yaml",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "SymbiYosys with the slang front end checks the properties of formal/jobs.yaml: a proof is by k-induction (for all inputs, any run length) at the parameters listed there, a bounded check holds only to its stated depth. What the jobs say is in each job's `claim`; parameters beyond the listed ones are covered by simulation, not by proof.",
+      "title": "The properties named in formal/jobs.yaml hold, by proof where the tools allow"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FFC-F-BENCH",
+      "items": [
+       "V-FFC-MUTANT-TEST",
+       "V-FFC-MUTANT-SCORE"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_measurement",
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_fastconv/verif/mutants.yaml",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "Every one of the mutants in verif/mutants.yaml (one exact text change each: an inverted condition, a wrong constant, a dropped connection, a wrong width) makes the cocotb bench fail, or is argued equivalent in the file's header; mutants that survive or do not build are reported, never hidden.",
+      "title": "The bench catches seeded faults"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FFC-F-PACKAGE",
+      "items": [
+       "V-FFC-PACKAGE"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [],
+      "rests_on_delegated": false,
+      "source": "arith/fft_fastconv/spec.yaml",
+      "spec_status": "draft",
+      "stale_items": 1,
+      "state": "stale",
+      "text": "spec.yaml states an interface contract (protocol, throughput, latency, reset, clock, stalls) and integration guidance (port timing, constraints to carry). Every variant passes Verilator -Wall at every point of spec.yaml; its ports and default parameters are the ones spec.yaml states; its header states the intended primitive use before any Vivado run; spec.md is the rendering of spec.yaml; the out-of-context wrapper and the build.yaml for each variant (Artix-7 xc7a100t and K26 xck26, prepared and not run) are current and lint-clean at every point they list, so a Vivado run can start from the repository alone.",
+      "title": "The RTL is lint-clean, and its files agree with the specification and with the Vivado build files"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FFC-F-AXIL",
+      "items": [
+       "V-FFC-AXIL"
+      ],
+      "kind": "interface",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_fastconv/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "The ID, CFG0 and CFG1 registers read their documented values; read-only and unmapped addresses answer SLVERR and change nothing; byte address bits [1:0] are ignored; writes with partial strobes are refused with SLVERR and no effect; COEF_ADDR masks its upper bits and wraps; the staging registers read back sign-extended; a commit auto-increments COEF_ADDR and wraps at the last bin; a commit while BUSY (during the clear after reset, and while a block is in flight) is refused with SLVERR, sets DROPPED, does not advance COEF_ADDR and changes nothing; DROPPED and SAT are cleared by writing 1; reads have no side effects; address and data may arrive in either order and the response channels may wait. The AXI4-Lite protocol checker (fft_common/axil_checker.sv) counts no violation. The handshake rules and the response of every executed write are also checked by bounded model checks (formal/jobs.yaml) against shadow state.",
+      "title": "The AXI4-Lite register file follows the contract's register map and response rules"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FFC-F-SAT",
+      "items": [
+       "V-FFC-SATURATE"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_fastconv/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "With a filter of gain 2**GB and a loud input the output parts that leave the W-bit range are clamped to the nearest end exactly as the model says, STATUS.SAT is set, and it is cleared by writing 1 to it.",
+      "title": "Output saturation is exact and reported"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FFC-F-AXIS",
+      "items": [
+       "V-FFC-STREAMS"
+      ],
+      "kind": "interface",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_fastconv/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "The checkers on s_axis and m_axis (valid stays high until accepted, tdata stable while stalled, no unknowns after reset) count no violation while both streams stall at random, including a sink so slow that the block controller must wait for output room: no sample is lost, added or reordered. A mutant that makes tvalid depend on tready is killed.",
+      "title": "The AXI4-Stream rules hold on both streams under random stalls"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FFC-F-ACCURACY",
+      "items": [
+       "V-FFC-ACCURACY"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_measurement"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_fastconv/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "For N = 64 to 4096, L from N/8 + 1 to 3N/4 + 1 taps (low-pass, random and delta filters of absolute gain at most 2**GB) and a random complex stream, the output of the model (which the RTL equals bit for bit) differs from numpy.convolve of the same samples and the unquantised taps by at most the recorded error (verif/results/accuracy.json: worst and rms error in output LSB, SQNR) at W = 16, TW = 18, WH = 24, FH = 14; the test enforces a worst error of at most 8 LSB.",
+      "title": "The filter output equals numpy.convolve within a stated error"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FFC-F-HARNESS",
+      "items": [
+       "V-FFC-HARNESS"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_fastconv/harness/README.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "arith/fft_fastconv/harness/ (model, bench, SystemVerilog checkers, coverage targets, standalone runner: owner decision 24) needs no other file of the repository. Run against each variant of this function with the checkers beside it, in every mode, it passes and meets every coverage target; against one planted fault (a mutant of verif/mutants.yaml), or with a latency two clocks off, it fails; its model, bench and checker files are the repository's own, generated by arith/tools/gen_harness_fft.py, so they cannot drift.",
+      "title": "The packaged harness runs standalone, passes on the repository's variants and catches faults"
+     }
+    ],
+    "source_schema": "fpga-design-agent/testplan/v1",
+    "summary": {
+     "by_kind": {
+      "functional": 9,
+      "interface": 2,
+      "performance": 0,
+      "safety": 0
+     },
+     "by_method": {
+      "assertion": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "board_measurement": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "coverage_bin": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "formal": {
+       "bounded": 1,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 1,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "formal_lean": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "review": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "sim_measurement": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 2,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "sim_test": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 9,
+       "skipped": 0,
+       "stale": 1,
+       "unapproved": 0
+      },
+      "timing": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "uvm_test": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      }
+     },
+     "by_state": {
+      "stale": 1,
+      "verified": 10
+     },
+     "external": 0,
+     "external_hardware_done": 0,
+     "gap_counts": {
+      "no_passing_evidence": 1,
+      "stale_evidence": 1
+     },
+     "human_reviews": 0,
+     "items": 14,
+     "lean": {
+      "approved": 0,
+      "build_sources": [],
+      "by_rtl_link": {
+       "model_only": 0,
+       "rtl_generated": 0,
+       "transcription_tested": 0,
+       "transcription_untested": 0
+      },
+      "by_status": {},
+      "by_tier": {
+       "compiled_decision_procedure": 0,
+       "kernel_only": 0,
+       "unsound": 0
+      },
+      "delegated": 0,
+      "items": 0,
+      "statement_not_approved": 0
+     },
+     "line": "11 requirements (9 functional, 2 interface); 10 verified; 1 stale; 0 of 11 requirements agreed by a human, 0 human review(s) recorded.",
+     "performance_board": 0,
+     "performance_sim_only": 0,
+     "performance_timing": 0,
+     "requirements": 11,
+     "spec_agreed": 0,
+     "verified_on_delegated": 0
+    }
+   },
+   {
+    "design": "arith_fft_mdc2",
+    "gaps": [
+     {
+      "gate": false,
+      "id": "FMDC-F-PACKAGE",
+      "state": "stale",
+      "text": "its evidence is stale",
+      "type": "no_passing_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-FMDC-PACKAGE",
+      "text": "changed since the evidence was recorded: arith/fft_mdc2/build/par2/build.yaml, arith/fft_mdc2/spec.md",
+      "type": "stale_evidence"
+     }
+    ],
+    "items": [
+     {
+      "detail": "11 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_mdc2/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FMDC-MODEL",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FMDC-F-MODEL"
+      ],
+      "status": "pass",
+      "title": "The model against independent formulations and the pinned conventions",
+      "value": "11 of 11 tests passed"
+     },
+     {
+      "detail": "6 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_mdc2/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FMDC-DIRECTED",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FMDC-F-EXACT"
+      ],
+      "status": "pass",
+      "title": "Every variant against the model at the small points (Icarus + cocotb): directed or exhaustive stimuli",
+      "value": "6 of 6 tests passed"
+     },
+     {
+      "detail": "4 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_mdc2/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FMDC-RANDOM",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FMDC-F-EXACT"
+      ],
+      "status": "pass",
+      "title": "Every variant against the model at the large points: random stimuli (Icarus + cocotb)",
+      "value": "4 of 4 tests passed"
+     },
+     {
+      "detail": "1 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_mdc2/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FMDC-LATENCY",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FMDC-F-LAT"
+      ],
+      "status": "pass",
+      "title": "The bench passes at the stated latency and fails two clocks off, for every variant",
+      "value": "1 of 1 tests passed"
+     },
+     {
+      "detail": "1 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_mdc2/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FMDC-MUTANT-TEST",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FMDC-F-BENCH"
+      ],
+      "status": "pass",
+      "title": "The mutation run as a test: no mutant survives, none fails to build",
+      "value": "1 of 1 tests passed"
+     },
+     {
+      "detail": "survived = []; invalid = []; valid = 18; score_pct = 100",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_mdc2/verif/results/mutation.json"
+      },
+      "id": "V-FMDC-MUTANT-SCORE",
+      "instrument": null,
+      "method": "sim_measurement",
+      "planned": null,
+      "requirements": [
+       "FMDC-F-BENCH"
+      ],
+      "status": "pass",
+      "title": "Mutants killed of valid mutants (the record of the last full run)",
+      "value": true
+     },
+     {
+      "detail": "5 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_mdc2/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FMDC-PACKAGE",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FMDC-F-PACKAGE"
+      ],
+      "stale_because": "changed since the evidence was recorded: arith/fft_mdc2/build/par2/build.yaml, arith/fft_mdc2/spec.md",
+      "status": "stale",
+      "title": "spec.yaml against the RTL headers, spec.md against spec.yaml, Verilator -Wall at every point, wrappers and build.yaml current and lint-clean",
+      "value": "5 of 5 tests passed"
+     },
+     {
+      "detail": "4 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_mdc2/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FMDC-GAPS",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FMDC-F-GAPS"
+      ],
+      "status": "pass",
+      "title": "N/8 idle clocks work and N/8 - 1 do not",
+      "value": "4 of 4 tests passed"
+     },
+     {
+      "detail": "3 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_mdc2/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FMDC-HARNESS",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FMDC-F-HARNESS"
+      ],
+      "status": "pass",
+      "title": "The harness against the repository's variants, a planted fault and a wrong latency",
+      "value": "3 of 3 tests passed"
+     }
+    ],
+    "notes": "Frequency-domain suite, function fft_mdc2 (brief 148). Everything here is before Vivado: the model, the RTL variants, simulation, formal properties and the prepared out-of-context build files. No performance requirement on LUTs, DSPs, Fmax or power exists because none has been measured; the Vivado runs (build/<variant>/build.yaml, queued in _handoff/fpga_agent/vivado_later_queue.md) will add them. Every requirement is a draft written by the agent; none is agreed by a human. There are no Lean statements (the packaged harness of this function, in harness/, is evidenced by the harness item). Generated by arith/tools/gen_testplan_fft.py.",
+    "path": "arith/fft_mdc2",
+    "requirements": [
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FMDC-F-MODEL",
+      "items": [
+       "V-FMDC-MODEL"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_mdc2/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "arith/fft_mdc2/model.py gives, for every input, the result that spec.md defines. It agrees with an independent formulation (NumPy's FFT (forward and inverse, both scaling modes, N = 16 to 1024, the pairs put back into natural order) and the identities of the pair order, the swap and the even/odd split), and the conventions that a user could guess wrong (spec.md, last section) are pinned by examples.",
+      "title": "The bit-exact model is right"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FMDC-F-EXACT",
+      "items": [
+       "V-FMDC-DIRECTED",
+       "V-FMDC-RANDOM"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_mdc2/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "At every parameter point listed in spec.yaml (6 directed or exhaustive points, 4 random ones, across 1 variants), each variant's outputs equal the model's: the directed points drive impulses, tones, DC, Nyquist, a chirp and corner values as pairs (x[2m], x[2m+1]), forward and inverse, back to back and after the shortest legal gap (N/8); the random points drive random frames with random direction and legal gaps up to N = 4096. Each output frame of N/2 pairs equals the model bit for bit, the latency from in_sof to out_sof equals the formula and out_valid is N/2 consecutive clocks.",
+      "title": "Every variant is bit-exact against the model"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FMDC-F-LAT",
+      "items": [
+       "V-FMDC-LATENCY"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_mdc2/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "Each variant's latency in clocks is the expression in spec.yaml (par2: (1<<LOGN)//2-1+(LOGN-1)+((LOGN-2)//2)*(TWSTAGES+MULSTAGES+1)+(0 if ORDER else (1<<LOGN)//2+1)+TWSTAGES+MULSTAGES+2), and the bench, run with a latency two clocks off, fails for every variant, so the passing runs prove the latency rather than assume it.",
+      "title": "Latency is as specified and the bench would notice if it were not"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FMDC-F-BENCH",
+      "items": [
+       "V-FMDC-MUTANT-TEST",
+       "V-FMDC-MUTANT-SCORE"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_measurement",
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_mdc2/verif/mutants.yaml",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "Every one of the mutants in verif/mutants.yaml (one exact text change each: an inverted condition, a wrong constant, a dropped connection, a wrong width) makes the cocotb bench fail, or is argued equivalent in the file's header; mutants that survive or do not build are reported, never hidden.",
+      "title": "The bench catches seeded faults"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FMDC-F-PACKAGE",
+      "items": [
+       "V-FMDC-PACKAGE"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [],
+      "rests_on_delegated": false,
+      "source": "arith/fft_mdc2/spec.yaml",
+      "spec_status": "draft",
+      "stale_items": 1,
+      "state": "stale",
+      "text": "spec.yaml states an interface contract (protocol, throughput, latency, reset, clock, stalls) and integration guidance (port timing, constraints to carry). Every variant passes Verilator -Wall at every point of spec.yaml; its ports and default parameters are the ones spec.yaml states; its header states the intended primitive use before any Vivado run; spec.md is the rendering of spec.yaml; the out-of-context wrapper and the build.yaml for each variant (Artix-7 xc7a100t and K26 xck26, prepared and not run) are current and lint-clean at every point they list, so a Vivado run can start from the repository alone.",
+      "title": "The RTL is lint-clean, and its files agree with the specification and with the Vivado build files"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FMDC-F-GAPS",
+      "items": [
+       "V-FMDC-GAPS"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_mdc2/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "At N = 32, 64, 128 and 256 a source that leaves exactly N/8 idle clocks between frames gets every frame right, and one that leaves N/8 - 1 clocks corrupts at least one frame, so the stated rule is the real minimum, not a guess.",
+      "title": "The frame-gap rule (0 or at least N/8 clocks) is measured, not assumed"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FMDC-F-HARNESS",
+      "items": [
+       "V-FMDC-HARNESS"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_mdc2/harness/README.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "arith/fft_mdc2/harness/ (model, bench, SystemVerilog checkers, coverage targets, standalone runner: owner decision 24) needs no other file of the repository. Run against each variant of this function with the checkers beside it, in every mode, it passes and meets every coverage target; against one planted fault (a mutant of verif/mutants.yaml), or with a latency two clocks off, it fails; its model, bench and checker files are the repository's own, generated by arith/tools/gen_harness_fft.py, so they cannot drift.",
+      "title": "The packaged harness runs standalone, passes on the repository's variants and catches faults"
+     }
+    ],
+    "source_schema": "fpga-design-agent/testplan/v1",
+    "summary": {
+     "by_kind": {
+      "functional": 7,
+      "interface": 0,
+      "performance": 0,
+      "safety": 0
+     },
+     "by_method": {
+      "assertion": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "board_measurement": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "coverage_bin": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "formal": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "formal_lean": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "review": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "sim_measurement": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 1,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "sim_test": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 7,
+       "skipped": 0,
+       "stale": 1,
+       "unapproved": 0
+      },
+      "timing": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "uvm_test": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      }
+     },
+     "by_state": {
+      "stale": 1,
+      "verified": 6
+     },
+     "external": 0,
+     "external_hardware_done": 0,
+     "gap_counts": {
+      "no_passing_evidence": 1,
+      "stale_evidence": 1
+     },
+     "human_reviews": 0,
+     "items": 9,
+     "lean": {
+      "approved": 0,
+      "build_sources": [],
+      "by_rtl_link": {
+       "model_only": 0,
+       "rtl_generated": 0,
+       "transcription_tested": 0,
+       "transcription_untested": 0
+      },
+      "by_status": {},
+      "by_tier": {
+       "compiled_decision_procedure": 0,
+       "kernel_only": 0,
+       "unsound": 0
+      },
+      "delegated": 0,
+      "items": 0,
+      "statement_not_approved": 0
+     },
+     "line": "7 requirements (7 functional); 6 verified; 1 stale; 0 of 7 requirements agreed by a human, 0 human review(s) recorded.",
+     "performance_board": 0,
+     "performance_sim_only": 0,
+     "performance_timing": 0,
+     "requirements": 7,
+     "spec_agreed": 0,
+     "verified_on_delegated": 0
+    }
+   },
+   {
     "design": "arith_fft_real",
     "gaps": [
      {
@@ -12772,7 +14473,7 @@
      {
       "gate": false,
       "id": "V-FREAL-MUTANT-SCORE",
-      "text": "changed since the evidence was recorded: arith/fft/rtl/fft_sdf_r22.sv, arith/fft_common/fft_sdf_twmul.sv",
+      "text": "changed since the evidence was recorded: arith/fft/rtl/fft_sdf_r22.sv, arith/fft_common/fft_ref.py, arith/fft_common/fft_sdf_twmul.sv",
       "type": "stale_evidence"
      },
      {
@@ -12881,7 +14582,7 @@
       "requirements": [
        "FREAL-F-BENCH"
       ],
-      "stale_because": "changed since the evidence was recorded: arith/fft/rtl/fft_sdf_r22.sv, arith/fft_common/fft_sdf_twmul.sv",
+      "stale_because": "changed since the evidence was recorded: arith/fft/rtl/fft_sdf_r22.sv, arith/fft_common/fft_ref.py, arith/fft_common/fft_sdf_twmul.sv",
       "status": "stale",
       "title": "Mutants killed of valid mutants (the record of the last full run)",
       "value": true
@@ -13170,6 +14871,527 @@
     }
    },
    {
+    "design": "arith_fft_real_axis",
+    "gaps": [
+     {
+      "gate": false,
+      "id": "FRAXIS-F-PACKAGE",
+      "state": "stale",
+      "text": "its evidence is stale",
+      "type": "no_passing_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-FRAXIS-PACKAGE",
+      "text": "changed since the evidence was recorded: arith/fft_real_axis/build/post/build.yaml, arith/fft_real_axis/spec.md",
+      "type": "stale_evidence"
+     }
+    ],
+    "items": [
+     {
+      "detail": "4 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_real_axis/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FRAXIS-MODEL",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FRAXIS-F-MODEL"
+      ],
+      "status": "pass",
+      "title": "The model against independent formulations and the pinned conventions",
+      "value": "4 of 4 tests passed"
+     },
+     {
+      "detail": "4 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_real_axis/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FRAXIS-DIRECTED",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FRAXIS-F-EXACT"
+      ],
+      "status": "pass",
+      "title": "Every variant against the model at the small points (Icarus + cocotb): directed or exhaustive stimuli",
+      "value": "4 of 4 tests passed"
+     },
+     {
+      "detail": "3 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_real_axis/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FRAXIS-RANDOM",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FRAXIS-F-EXACT"
+      ],
+      "status": "pass",
+      "title": "Every variant against the model at the large points: random stimuli (Icarus + cocotb)",
+      "value": "3 of 3 tests passed"
+     },
+     {
+      "detail": "1 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_real_axis/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FRAXIS-LATENCY",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FRAXIS-F-LAT"
+      ],
+      "status": "pass",
+      "title": "The bench passes at the stated latency and fails two clocks off, for every variant",
+      "value": "1 of 1 tests passed"
+     },
+     {
+      "detail": "1 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_real_axis/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FRAXIS-MUTANT-TEST",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FRAXIS-F-BENCH"
+      ],
+      "status": "pass",
+      "title": "The mutation run as a test: no mutant survives, none fails to build",
+      "value": "1 of 1 tests passed"
+     },
+     {
+      "detail": "survived = []; invalid = []; valid = 11; score_pct = 100",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_real_axis/verif/results/mutation.json"
+      },
+      "id": "V-FRAXIS-MUTANT-SCORE",
+      "instrument": null,
+      "method": "sim_measurement",
+      "planned": null,
+      "requirements": [
+       "FRAXIS-F-BENCH"
+      ],
+      "status": "pass",
+      "title": "Mutants killed of valid mutants (the record of the last full run)",
+      "value": true
+     },
+     {
+      "detail": "5 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_real_axis/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FRAXIS-PACKAGE",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FRAXIS-F-PACKAGE"
+      ],
+      "stale_because": "changed since the evidence was recorded: arith/fft_real_axis/build/post/build.yaml, arith/fft_real_axis/spec.md",
+      "status": "stale",
+      "title": "spec.yaml against the RTL headers, spec.md against spec.yaml, Verilator -Wall at every point, wrappers and build.yaml current and lint-clean",
+      "value": "5 of 5 tests passed"
+     },
+     {
+      "detail": "1 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_real_axis/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FRAXIS-CHECKER",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FRAXIS-F-AXIS"
+      ],
+      "status": "pass",
+      "title": "The protocol checkers can fail (a pause inside a frame, a stalled sink)",
+      "value": "1 of 1 tests passed"
+     },
+     {
+      "detail": "4 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_real_axis/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FRAXIS-GAP",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FRAXIS-F-GAP"
+      ],
+      "status": "pass",
+      "title": "A source that never pauses sees exactly N/8 idle clocks between frames; every frame is right",
+      "value": "4 of 4 tests passed"
+     },
+     {
+      "detail": "3 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_real_axis/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FRAXIS-HARNESS",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FRAXIS-F-HARNESS"
+      ],
+      "status": "pass",
+      "title": "The harness against the repository's variants, a planted fault and a wrong latency",
+      "value": "3 of 3 tests passed"
+     }
+    ],
+    "notes": "Frequency-domain suite, function fft_real_axis (brief 148). Everything here is before Vivado: the model, the RTL variants, simulation, formal properties and the prepared out-of-context build files. No performance requirement on LUTs, DSPs, Fmax or power exists because none has been measured; the Vivado runs (build/<variant>/build.yaml, queued in _handoff/fpga_agent/vivado_later_queue.md) will add them. Every requirement is a draft written by the agent; none is agreed by a human. There are no Lean statements (the packaged harness of this function, in harness/, is evidenced by the harness item). Generated by arith/tools/gen_testplan_fft.py.",
+    "path": "arith/fft_real_axis",
+    "requirements": [
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FRAXIS-F-MODEL",
+      "items": [
+       "V-FRAXIS-MODEL"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_real_axis/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "arith/fft_real_axis/model.py gives, for every input, the result that spec.md defines. It agrees with an independent formulation (the wrapped core's own model (arith/fft_real/model.py) and the packing of the AXI words (the even sample in the low half of the input word, the real part in the low half of the output word)), and the conventions that a user could guess wrong (spec.md, last section) are pinned by examples.",
+      "title": "The bit-exact model is right"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FRAXIS-F-EXACT",
+      "items": [
+       "V-FRAXIS-DIRECTED",
+       "V-FRAXIS-RANDOM"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_real_axis/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "At every parameter point listed in spec.yaml (4 directed or exhaustive points, 3 random ones, across 1 variants), each variant's outputs equal the model's: the directed points send the real-FFT bench's frames as AXI4-Stream beats from a source that never pauses: the wrapper itself opens the gap, which the bench measures and requires to equal N/8 exactly, and the first-beat latency equals the formula; the random points send random real frames with random idle times up to N = 2048. Every output frame of N/2 + 1 bins equals the model bit for bit, tlast is on the right beat and the protocol checkers count no error.",
+      "title": "Every variant is bit-exact against the model"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FRAXIS-F-LAT",
+      "items": [
+       "V-FRAXIS-LATENCY"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_real_axis/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "Each variant's latency in clocks is the expression in spec.yaml (post: (1<<(LOGN-1))-1+(LOGN-1)+((LOGN-2)//2)*(TWSTAGES+MULSTAGES+1)+(1<<(LOGN-1))+MULSTAGES+3), and the bench, run with a latency two clocks off, fails for every variant, so the passing runs prove the latency rather than assume it.",
+      "title": "Latency is as specified and the bench would notice if it were not"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FRAXIS-F-BENCH",
+      "items": [
+       "V-FRAXIS-MUTANT-TEST",
+       "V-FRAXIS-MUTANT-SCORE"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_measurement",
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_real_axis/verif/mutants.yaml",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "Every one of the mutants in verif/mutants.yaml (one exact text change each: an inverted condition, a wrong constant, a dropped connection, a wrong width) makes the cocotb bench fail, or is argued equivalent in the file's header; mutants that survive or do not build are reported, never hidden.",
+      "title": "The bench catches seeded faults"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FRAXIS-F-PACKAGE",
+      "items": [
+       "V-FRAXIS-PACKAGE"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [],
+      "rests_on_delegated": false,
+      "source": "arith/fft_real_axis/spec.yaml",
+      "spec_status": "draft",
+      "stale_items": 1,
+      "state": "stale",
+      "text": "spec.yaml states an interface contract (protocol, throughput, latency, reset, clock, stalls) and integration guidance (port timing, constraints to carry). Every variant passes Verilator -Wall at every point of spec.yaml; its ports and default parameters are the ones spec.yaml states; its header states the intended primitive use before any Vivado run; spec.md is the rendering of spec.yaml; the out-of-context wrapper and the build.yaml for each variant (Artix-7 xc7a100t and K26 xck26, prepared and not run) are current and lint-clean at every point they list, so a Vivado run can start from the repository alone.",
+      "title": "The RTL is lint-clean, and its files agree with the specification and with the Vivado build files"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FRAXIS-F-AXIS",
+      "items": [
+       "V-FRAXIS-CHECKER"
+      ],
+      "kind": "interface",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_real_axis/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "On both streams the wrapper's SystemVerilog protocol checkers (fft_common/axis_checker.sv: valid stays high until accepted, tdata and tlast stable while stalled, no unknowns after reset, tlast on every (N/2)-th beat of the input and every (N/2 + 1)-th beat of the output, no stall on the output, no pause inside an input frame) count zero violations in every run of the directed and random benches, the source of which presents the next frame at once and waits on tready. A deliberate-violation test shows each checker can fail (a pause inside a frame, a stalled sink). tvalid is registered and independent of tready by construction.",
+      "title": "The AXI4-Stream rules hold on both streams, and the checkers can fail"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FRAXIS-F-GAP",
+      "items": [
+       "V-FRAXIS-GAP"
+      ],
+      "kind": "interface",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_real_axis/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "After every beat with tlast on the input stream s_axis_tready is low for N/8 clocks (the measured gap rule of the real-input core), and a source that never pauses sees exactly N/8 idle clocks between its frames; every such frame is correct. Mutants that remove the gap, shorten it or lengthen it are killed.",
+      "title": "The wrapper enforces the transform's frame gap by back-pressure"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FRAXIS-F-HARNESS",
+      "items": [
+       "V-FRAXIS-HARNESS"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_real_axis/harness/README.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "arith/fft_real_axis/harness/ (model, bench, SystemVerilog checkers, coverage targets, standalone runner: owner decision 24) needs no other file of the repository. Run against each variant of this function with the checkers beside it, in every mode, it passes and meets every coverage target; against one planted fault (a mutant of verif/mutants.yaml), or with a latency two clocks off, it fails; its model, bench and checker files are the repository's own, generated by arith/tools/gen_harness_fft.py, so they cannot drift.",
+      "title": "The packaged harness runs standalone, passes on the repository's variants and catches faults"
+     }
+    ],
+    "source_schema": "fpga-design-agent/testplan/v1",
+    "summary": {
+     "by_kind": {
+      "functional": 6,
+      "interface": 2,
+      "performance": 0,
+      "safety": 0
+     },
+     "by_method": {
+      "assertion": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "board_measurement": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "coverage_bin": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "formal": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "formal_lean": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "review": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "sim_measurement": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 1,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "sim_test": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 8,
+       "skipped": 0,
+       "stale": 1,
+       "unapproved": 0
+      },
+      "timing": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "uvm_test": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      }
+     },
+     "by_state": {
+      "stale": 1,
+      "verified": 7
+     },
+     "external": 0,
+     "external_hardware_done": 0,
+     "gap_counts": {
+      "no_passing_evidence": 1,
+      "stale_evidence": 1
+     },
+     "human_reviews": 0,
+     "items": 10,
+     "lean": {
+      "approved": 0,
+      "build_sources": [],
+      "by_rtl_link": {
+       "model_only": 0,
+       "rtl_generated": 0,
+       "transcription_tested": 0,
+       "transcription_untested": 0
+      },
+      "by_status": {},
+      "by_tier": {
+       "compiled_decision_procedure": 0,
+       "kernel_only": 0,
+       "unsound": 0
+      },
+      "delegated": 0,
+      "items": 0,
+      "statement_not_approved": 0
+     },
+     "line": "8 requirements (6 functional, 2 interface); 7 verified; 1 stale; 0 of 8 requirements agreed by a human, 0 human review(s) recorded.",
+     "performance_board": 0,
+     "performance_sim_only": 0,
+     "performance_timing": 0,
+     "requirements": 8,
+     "spec_agreed": 0,
+     "verified_on_delegated": 0
+    }
+   },
+   {
     "design": "arith_fft_reorder",
     "gaps": [
      {
@@ -13178,6 +15400,12 @@
       "state": "stale",
       "text": "its evidence is stale",
       "type": "no_passing_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-FRO-MUTANT-SCORE",
+      "text": "changed since the evidence was recorded: arith/fft_common/fft_ref.py",
+      "type": "stale_evidence"
      },
      {
       "gate": false,
@@ -13319,7 +15547,8 @@
       "requirements": [
        "FRO-F-BENCH"
       ],
-      "status": "pass",
+      "stale_because": "changed since the evidence was recorded: arith/fft_common/fft_ref.py",
+      "status": "stale",
       "title": "Mutants killed of valid mutants (the record of the last full run)",
       "value": true
      },
@@ -13448,13 +15677,12 @@
       "kind": "functional",
       "lean_transcription_only": false,
       "passing_methods": [
-       "sim_measurement",
        "sim_test"
       ],
       "rests_on_delegated": false,
       "source": "arith/fft_reorder/verif/mutants.yaml",
       "spec_status": "draft",
-      "stale_items": 0,
+      "stale_items": 1,
       "state": "verified",
       "text": "Every one of the mutants in verif/mutants.yaml (one exact text change each: an inverted condition, a wrong constant, a dropped connection, a wrong width) makes the cocotb bench fail, or is argued equivalent in the file's header; mutants that survive or do not build are reported, never hidden.",
       "title": "The bench catches seeded faults"
@@ -13554,9 +15782,9 @@
        "fail": 0,
        "not_in_run": 0,
        "not_run": 0,
-       "pass": 1,
+       "pass": 0,
        "skipped": 0,
-       "stale": 0,
+       "stale": 1,
        "unapproved": 0
       },
       "sim_test": {
@@ -13598,7 +15826,7 @@
      "external_hardware_done": 0,
      "gap_counts": {
       "no_passing_evidence": 1,
-      "stale_evidence": 1
+      "stale_evidence": 2
      },
      "human_reviews": 0,
      "items": 9,
@@ -23551,9 +25779,9 @@
   "framing": "The human specifies the requirements and checks that the verification is thorough enough. The agent holds the knowledge to implement and to verify. You can open any of the implementation or the evidence, and you do not have to. Hardware on the board, with attached instruments, is a verification layer of its own: where a requirement depends on something outside the design (an optical link, a network card, a data source) it may be the only way to close it.",
   "schema": "fda-traceability/1",
   "total": {
-   "designs": 29,
-   "requirements": 311,
-   "verified": 236
+   "designs": 33,
+   "requirements": 346,
+   "verified": 267
   }
  },
  "content": {
@@ -34791,7 +37019,7 @@
      {
       "gate": false,
       "id": "V-FFT-MUTANT-SCORE",
-      "text": "changed since the evidence was recorded: arith/fft/rtl/fft_burst_r2.sv, arith/fft/rtl/fft_sdf_r22.sv, arith/fft/verif/mutants.yaml, arith/fft_common/fft_sdf_twmul.sv",
+      "text": "changed since the evidence was recorded: arith/fft/rtl/fft_burst_r2.sv, arith/fft/rtl/fft_sdf_r22.sv, arith/fft/verif/mutants.yaml, arith/fft_common/fft_ref.py (+1 more)",
       "type": "stale_evidence"
      },
      {
@@ -34937,7 +37165,7 @@
       "requirements": [
        "FFT-F-BENCH"
       ],
-      "stale_because": "changed since the evidence was recorded: arith/fft/rtl/fft_burst_r2.sv, arith/fft/rtl/fft_sdf_r22.sv, arith/fft/verif/mutants.yaml, arith/fft_common/fft_sdf_twmul.sv",
+      "stale_because": "changed since the evidence was recorded: arith/fft/rtl/fft_burst_r2.sv, arith/fft/rtl/fft_sdf_r22.sv, arith/fft/verif/mutants.yaml, arith/fft_common/fft_ref.py (+1 more)",
       "status": "stale",
       "title": "Mutants killed of valid mutants (the record of the last full run)",
       "value": true
@@ -35417,7 +37645,7 @@
      {
       "gate": false,
       "id": "V-FAXIS-MUTANT-SCORE",
-      "text": "changed since the evidence was recorded: arith/fft/rtl/fft_burst_r2.sv, arith/fft/rtl/fft_sdf_r22.sv, arith/fft_common/fft_sdf_twmul.sv",
+      "text": "changed since the evidence was recorded: arith/fft/rtl/fft_burst_r2.sv, arith/fft/rtl/fft_sdf_r22.sv, arith/fft_common/fft_ref.py, arith/fft_common/fft_sdf_twmul.sv",
       "type": "stale_evidence"
      },
      {
@@ -35527,7 +37755,7 @@
       "requirements": [
        "FAXIS-F-BENCH"
       ],
-      "stale_because": "changed since the evidence was recorded: arith/fft/rtl/fft_burst_r2.sv, arith/fft/rtl/fft_sdf_r22.sv, arith/fft_common/fft_sdf_twmul.sv",
+      "stale_because": "changed since the evidence was recorded: arith/fft/rtl/fft_burst_r2.sv, arith/fft/rtl/fft_sdf_r22.sv, arith/fft_common/fft_ref.py, arith/fft_common/fft_sdf_twmul.sv",
       "status": "stale",
       "title": "Mutants killed of valid mutants (the record of the last full run)",
       "value": true
@@ -35851,6 +38079,566 @@
      "performance_sim_only": 0,
      "performance_timing": 0,
      "requirements": 6,
+     "spec_agreed": 0,
+     "verified_on_delegated": 0
+    }
+   },
+   {
+    "design": "arith_fft_bfp",
+    "gaps": [
+     {
+      "gate": false,
+      "id": "FBFP-F-PACKAGE",
+      "state": "stale",
+      "text": "its evidence is stale",
+      "type": "no_passing_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-FBFP-PACKAGE",
+      "text": "changed since the evidence was recorded: arith/fft_bfp/build/burst/build.yaml, arith/fft_bfp/build/sdf/build.yaml, arith/fft_bfp/spec.md",
+      "type": "stale_evidence"
+     }
+    ],
+    "items": [
+     {
+      "detail": "71 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_bfp/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FBFP-MODEL",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FBFP-F-MODEL"
+      ],
+      "status": "pass",
+      "title": "The model against independent formulations and the pinned conventions",
+      "value": "71 of 71 tests passed"
+     },
+     {
+      "detail": "10 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_bfp/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FBFP-DIRECTED",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FBFP-F-EXACT"
+      ],
+      "status": "pass",
+      "title": "Every variant against the model at the small points (Icarus + cocotb): directed or exhaustive stimuli",
+      "value": "10 of 10 tests passed"
+     },
+     {
+      "detail": "6 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_bfp/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FBFP-RANDOM",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FBFP-F-EXACT"
+      ],
+      "status": "pass",
+      "title": "Every variant against the model at the large points: random stimuli (Icarus + cocotb)",
+      "value": "6 of 6 tests passed"
+     },
+     {
+      "detail": "2 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_bfp/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FBFP-LATENCY",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FBFP-F-LAT"
+      ],
+      "status": "pass",
+      "title": "The bench passes at the stated latency and fails two clocks off, for every variant",
+      "value": "2 of 2 tests passed"
+     },
+     {
+      "detail": "1 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_bfp/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FBFP-MUTANT-TEST",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FBFP-F-BENCH"
+      ],
+      "status": "pass",
+      "title": "The mutation run as a test: no mutant survives, none fails to build",
+      "value": "1 of 1 tests passed"
+     },
+     {
+      "detail": "survived = []; invalid = []; valid = 23; score_pct = 100",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_bfp/verif/results/mutation.json"
+      },
+      "id": "V-FBFP-MUTANT-SCORE",
+      "instrument": null,
+      "method": "sim_measurement",
+      "planned": null,
+      "requirements": [
+       "FBFP-F-BENCH"
+      ],
+      "status": "pass",
+      "title": "Mutants killed of valid mutants (the record of the last full run)",
+      "value": true
+     },
+     {
+      "detail": "5 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_bfp/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FBFP-PACKAGE",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FBFP-F-PACKAGE"
+      ],
+      "stale_because": "changed since the evidence was recorded: arith/fft_bfp/build/burst/build.yaml, arith/fft_bfp/build/sdf/build.yaml, arith/fft_bfp/spec.md",
+      "status": "stale",
+      "title": "spec.yaml against the RTL headers, spec.md against spec.yaml, Verilator -Wall at every point, wrappers and build.yaml current and lint-clean",
+      "value": "5 of 5 tests passed"
+     },
+     {
+      "detail": "all_within_bound = True; bfp_sqnr_db_min_full_level = 85.8; bfp_worst_lsb_max_full_level = 1.173; bfp_sqnr_db_min_minus60 = 35.4; scaled_sqnr_db_min_minus60 = -11; points = 80",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_bfp/verif/results/accuracy.json"
+      },
+      "id": "V-FBFP-ACCURACY",
+      "instrument": null,
+      "method": "sim_measurement",
+      "planned": null,
+      "requirements": [
+       "FBFP-F-ACCURACY"
+      ],
+      "status": "pass",
+      "title": "Error against NumPy at every recorded point, three modes (the record of the last run)",
+      "value": true
+     },
+     {
+      "detail": "10 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_bfp/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FBFP-LEVELS",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FBFP-F-LEVELS"
+      ],
+      "status": "pass",
+      "title": "Frames of every level through the RTL, exponent included",
+      "value": "10 of 10 tests passed"
+     },
+     {
+      "detail": "4 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_bfp/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FBFP-BACKPRESSURE",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FBFP-F-BACKPRESSURE"
+      ],
+      "status": "pass",
+      "title": "The burst variant under a stalled sink, including one that fills both frame banks",
+      "value": "4 of 4 tests passed"
+     },
+     {
+      "detail": "4 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_bfp/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FBFP-HARNESS",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FBFP-F-HARNESS"
+      ],
+      "status": "pass",
+      "title": "The harness against the repository's variants, a planted fault and a wrong latency",
+      "value": "4 of 4 tests passed"
+     }
+    ],
+    "notes": "Frequency-domain suite, function fft_bfp (brief 148). Everything here is before Vivado: the model, the RTL variants, simulation, formal properties and the prepared out-of-context build files. No performance requirement on LUTs, DSPs, Fmax or power exists because none has been measured; the Vivado runs (build/<variant>/build.yaml, queued in _handoff/fpga_agent/vivado_later_queue.md) will add them. Every requirement is a draft written by the agent; none is agreed by a human. There are no Lean statements (the packaged harness of this function, in harness/, is evidenced by the harness item). Generated by arith/tools/gen_testplan_fft.py.",
+    "path": "arith/fft_bfp",
+    "requirements": [
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FBFP-F-MODEL",
+      "items": [
+       "V-FBFP-MODEL"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_bfp/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "arith/fft_bfp/model.py gives, for every input, the result that spec.md defines. It agrees with an independent formulation (NumPy's FFT (the value of every word times 2**exponent against the transform, within the stated bound, both variants, N = 8 to 1024, three input levels), a brute-force search for the smallest shift after which every part fits, and the identities of the order and of the inverse), and the conventions that a user could guess wrong (spec.md, last section) are pinned by examples.",
+      "title": "The bit-exact model is right"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FBFP-F-EXACT",
+      "items": [
+       "V-FBFP-DIRECTED",
+       "V-FBFP-RANDOM"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_bfp/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "At every parameter point listed in spec.yaml (10 directed or exhaustive points, 6 random ones, across 2 variants), each variant's outputs equal the model's: the directed points drive impulses at every position and tones at every bin (small N), DC, Nyquist, a chirp and corner values, forward and inverse, back to back and after the shortest legal gap; the random points drive random frames with random direction and legal gaps up to N = 4096 (sdf) and 1024 (burst); the level frames drive all-zero, one-LSB, quiet and loud noise, loud and quiet tones, the most negative value and a frame whose rounding carries and saturates, so that every exponent range is visited. Each output frame, its exponent word included, equals the model bit for bit, the latency from in_sof to out_sof equals the formula, out_valid is N consecutive clocks and the exponent is the same on every word of a frame.",
+      "title": "Every variant is bit-exact against the model"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FBFP-F-LAT",
+      "items": [
+       "V-FBFP-LATENCY"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_bfp/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "Each variant's latency in clocks is the expression in spec.yaml (sdf: (1<<LOGN)-1+LOGN+((LOGN-1)//2)*(TWSTAGES+MULSTAGES+1)+(1<<LOGN)+2; burst: (1<<LOGN)+LOGN*((1<<LOGN)//2+MULSTAGES+3)+1+(1<<LOGN)+2), and the bench, run with a latency two clocks off, fails for every variant, so the passing runs prove the latency rather than assume it.",
+      "title": "Latency is as specified and the bench would notice if it were not"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FBFP-F-BENCH",
+      "items": [
+       "V-FBFP-MUTANT-TEST",
+       "V-FBFP-MUTANT-SCORE"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_measurement",
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_bfp/verif/mutants.yaml",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "Every one of the mutants in verif/mutants.yaml (one exact text change each: an inverted condition, a wrong constant, a dropped connection, a wrong width) makes the cocotb bench fail, or is argued equivalent in the file's header; mutants that survive or do not build are reported, never hidden.",
+      "title": "The bench catches seeded faults"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FBFP-F-PACKAGE",
+      "items": [
+       "V-FBFP-PACKAGE"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [],
+      "rests_on_delegated": false,
+      "source": "arith/fft_bfp/spec.yaml",
+      "spec_status": "draft",
+      "stale_items": 1,
+      "state": "stale",
+      "text": "spec.yaml states an interface contract (protocol, throughput, latency, reset, clock, stalls) and integration guidance (port timing, constraints to carry). Every variant passes Verilator -Wall at every point of spec.yaml; its ports and default parameters are the ones spec.yaml states; its header states the intended primitive use before any Vivado run; spec.md is the rendering of spec.yaml; the out-of-context wrapper and the build.yaml for each variant (Artix-7 xc7a100t and K26 xck26, prepared and not run) are current and lint-clean at every point they list, so a Vivado run can start from the repository alone.",
+      "title": "The RTL is lint-clean, and its files agree with the specification and with the Vivado build files"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FBFP-F-ACCURACY",
+      "items": [
+       "V-FBFP-ACCURACY"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_measurement"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_bfp/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "For both architectures, every N from 8 to 4096 and four input levels (0, -20, -40 and -60 dB of a full-scale noise-like frame), the error of the bit-exact model (which the RTL equals) against numpy.fft is recorded in verif/results/accuracy.json for the block-floating-point mode, the scaled mode and the unscaled mode (worst and rms error in the mode's own output LSB, and the SQNR). The bound is: the error of every part is at most the unscaled core's own worst error plus 2**exponent (the final rounding at the frame's exponent); it holds at every recorded point. The recorded SQNR of the block-floating-point mode at full level is at least 80 dB, its worst error at full level at most 2 output LSB, and at -60 dB its SQNR is at least 30 dB where the scaled mode's is negative.",
+      "title": "Accuracy against NumPy is measured beside the scaled and unscaled modes, and the stated bound holds"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FBFP-F-LEVELS",
+      "items": [
+       "V-FBFP-LEVELS"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_bfp/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "Frames of very different level (all zero, one LSB, noise at six amplitudes, a loud and a quiet tone, the most negative value, a frame whose bin 0 is 2**W - 1 so that the rounding carries and the word saturates) are sent through both architectures; each output frame and its exponent equal the model, the frames reach at least six different exponents, and the exponent is the same on every word of its frame and travels with the data when frames follow each other at different levels.",
+      "title": "Every exponent range is visited and the exponent word is bit exact"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FBFP-F-BACKPRESSURE",
+      "items": [
+       "V-FBFP-BACKPRESSURE"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_bfp/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "With out_ready low in 40 per cent of the clocks, and again in 92 per cent (reading a frame then takes longer than the core needs for the next, so both banks fill and the core must wait), the burst variant's frames, exponents and order equal the model, and out_valid, out_sof, the data and the exponent stay unchanged in every clock in which out_valid is high and out_ready low. The sdf variant ignores out_ready (stated).",
+      "title": "The burst variant honours out_ready, even when both frame banks fill"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FBFP-F-HARNESS",
+      "items": [
+       "V-FBFP-HARNESS"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_bfp/harness/README.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "arith/fft_bfp/harness/ (model, bench, SystemVerilog checkers, coverage targets, standalone runner: owner decision 24) needs no other file of the repository. Run against each variant of this function with the checkers beside it, in every mode, it passes and meets every coverage target; against one planted fault (a mutant of verif/mutants.yaml), or with a latency two clocks off, it fails; its model, bench and checker files are the repository's own, generated by arith/tools/gen_harness_fft.py, so they cannot drift.",
+      "title": "The packaged harness runs standalone, passes on the repository's variants and catches faults"
+     }
+    ],
+    "source_schema": "fpga-design-agent/testplan/v1",
+    "summary": {
+     "by_kind": {
+      "functional": 9,
+      "interface": 0,
+      "performance": 0,
+      "safety": 0
+     },
+     "by_method": {
+      "assertion": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "board_measurement": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "coverage_bin": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "formal": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "formal_lean": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "review": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "sim_measurement": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 2,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "sim_test": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 8,
+       "skipped": 0,
+       "stale": 1,
+       "unapproved": 0
+      },
+      "timing": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "uvm_test": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      }
+     },
+     "by_state": {
+      "stale": 1,
+      "verified": 8
+     },
+     "external": 0,
+     "external_hardware_done": 0,
+     "gap_counts": {
+      "no_passing_evidence": 1,
+      "stale_evidence": 1
+     },
+     "human_reviews": 0,
+     "items": 11,
+     "lean": {
+      "approved": 0,
+      "build_sources": [],
+      "by_rtl_link": {
+       "model_only": 0,
+       "rtl_generated": 0,
+       "transcription_tested": 0,
+       "transcription_untested": 0
+      },
+      "by_status": {},
+      "by_tier": {
+       "compiled_decision_procedure": 0,
+       "kernel_only": 0,
+       "unsound": 0
+      },
+      "delegated": 0,
+      "items": 0,
+      "statement_not_approved": 0
+     },
+     "line": "9 requirements (9 functional); 8 verified; 1 stale; 0 of 9 requirements agreed by a human, 0 human review(s) recorded.",
+     "performance_board": 0,
+     "performance_sim_only": 0,
+     "performance_timing": 0,
+     "requirements": 9,
      "spec_agreed": 0,
      "verified_on_delegated": 0
     }
@@ -36317,6 +39105,1147 @@
     }
    },
    {
+    "design": "arith_fft_fastconv",
+    "gaps": [
+     {
+      "gate": false,
+      "id": "FFC-F-PACKAGE",
+      "state": "stale",
+      "text": "its evidence is stale",
+      "type": "no_passing_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-FFC-PACKAGE",
+      "text": "changed since the evidence was recorded: arith/fft_fastconv/build/os/build.yaml, arith/fft_fastconv/spec.md",
+      "type": "stale_evidence"
+     }
+    ],
+    "items": [
+     {
+      "detail": "14 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_fastconv/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FFC-MODEL",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FFC-F-MODEL"
+      ],
+      "status": "pass",
+      "title": "The model against independent formulations and the pinned conventions",
+      "value": "14 of 14 tests passed"
+     },
+     {
+      "detail": "5 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_fastconv/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FFC-DIRECTED",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FFC-F-EXACT"
+      ],
+      "status": "pass",
+      "title": "Every variant against the model at the small points (Icarus + cocotb): directed or exhaustive stimuli",
+      "value": "5 of 5 tests passed"
+     },
+     {
+      "detail": "3 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_fastconv/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FFC-RANDOM",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FFC-F-EXACT"
+      ],
+      "status": "pass",
+      "title": "Every variant against the model at the large points: random stimuli (Icarus + cocotb)",
+      "value": "3 of 3 tests passed"
+     },
+     {
+      "detail": "1 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_fastconv/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FFC-LATENCY",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FFC-F-LAT"
+      ],
+      "status": "pass",
+      "title": "The bench passes at the stated latency and fails two clocks off, for every variant",
+      "value": "1 of 1 tests passed"
+     },
+     {
+      "bounded": {
+       "depth": 26
+      },
+      "detail": "2 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_fastconv/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FFC-FORMAL-BOUNDED",
+      "instrument": null,
+      "method": "formal",
+      "planned": null,
+      "requirements": [
+       "FFC-F-EQUIV"
+      ],
+      "status": "bounded",
+      "title": "Bounded model checks from an arbitrary state (2 jobs; depths in formal/jobs.yaml)",
+      "value": "2 of 2 tests passed"
+     },
+     {
+      "detail": "6 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_fastconv/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FFC-FORMAL-REFUTE",
+      "instrument": null,
+      "method": "formal",
+      "planned": null,
+      "requirements": [
+       "FFC-F-EQUIV"
+      ],
+      "status": "pass",
+      "title": "Each formal check refutes a planted fault (the check can fail)",
+      "value": "6 of 6 tests passed"
+     },
+     {
+      "detail": "1 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_fastconv/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FFC-MUTANT-TEST",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FFC-F-BENCH"
+      ],
+      "status": "pass",
+      "title": "The mutation run as a test: no mutant survives, none fails to build",
+      "value": "1 of 1 tests passed"
+     },
+     {
+      "detail": "survived = []; invalid = []; valid = 37; score_pct = 100",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_fastconv/verif/results/mutation.json"
+      },
+      "id": "V-FFC-MUTANT-SCORE",
+      "instrument": null,
+      "method": "sim_measurement",
+      "planned": null,
+      "requirements": [
+       "FFC-F-BENCH"
+      ],
+      "status": "pass",
+      "title": "Mutants killed of valid mutants (the record of the last full run)",
+      "value": true
+     },
+     {
+      "detail": "5 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_fastconv/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FFC-PACKAGE",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FFC-F-PACKAGE"
+      ],
+      "stale_because": "changed since the evidence was recorded: arith/fft_fastconv/build/os/build.yaml, arith/fft_fastconv/spec.md",
+      "status": "stale",
+      "title": "spec.yaml against the RTL headers, spec.md against spec.yaml, Verilator -Wall at every point, wrappers and build.yaml current and lint-clean",
+      "value": "5 of 5 tests passed"
+     },
+     {
+      "detail": "3 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_fastconv/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FFC-AXIL",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FFC-F-AXIL"
+      ],
+      "status": "pass",
+      "title": "The register contract, every access type, with the AXI4-Lite checker",
+      "value": "3 of 3 tests passed"
+     },
+     {
+      "detail": "2 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_fastconv/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FFC-SATURATE",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FFC-F-SAT"
+      ],
+      "status": "pass",
+      "title": "A loud input through a filter of gain 2**GB saturates as the model says",
+      "value": "2 of 2 tests passed"
+     },
+     {
+      "detail": "3 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_fastconv/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FFC-STREAMS",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FFC-F-AXIS"
+      ],
+      "status": "pass",
+      "title": "Both streams under random stalls, with the protocol checkers (the random points)",
+      "value": "3 of 3 tests passed"
+     },
+     {
+      "detail": "worst_lsb_max = 3.566; sqnr_db_min = 44.5; points = 16",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_fastconv/verif/results/accuracy.json"
+      },
+      "id": "V-FFC-ACCURACY",
+      "instrument": null,
+      "method": "sim_measurement",
+      "planned": null,
+      "requirements": [
+       "FFC-F-ACCURACY"
+      ],
+      "status": "pass",
+      "title": "Error against numpy.convolve at every recorded point (the record of the last run)",
+      "value": true
+     },
+     {
+      "detail": "3 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_fastconv/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FFC-HARNESS",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FFC-F-HARNESS"
+      ],
+      "status": "pass",
+      "title": "The harness against the repository's variants, a planted fault and a wrong latency",
+      "value": "3 of 3 tests passed"
+     }
+    ],
+    "notes": "Frequency-domain suite, function fft_fastconv (brief 148). Everything here is before Vivado: the model, the RTL variants, simulation, formal properties and the prepared out-of-context build files. No performance requirement on LUTs, DSPs, Fmax or power exists because none has been measured; the Vivado runs (build/<variant>/build.yaml, queued in _handoff/fpga_agent/vivado_later_queue.md) will add them. Every requirement is a draft written by the agent; none is agreed by a human. There are no Lean statements (the packaged harness of this function, in harness/, is evidenced by the harness item). Generated by arith/tools/gen_testplan_fft.py.",
+    "path": "arith/fft_fastconv",
+    "requirements": [
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FFC-F-MODEL",
+      "items": [
+       "V-FFC-MODEL"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_fastconv/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "arith/fft_fastconv/model.py gives, for every input, the result that spec.md defines. It agrees with an independent formulation (numpy.convolve of the same samples and the unquantised taps (the overlap-save identity, within the stated bound), the bit-exact FFT models it is built from, and the overlap-save and overlap-add models of arith/fft_common/fastconv.py), and the conventions that a user could guess wrong (spec.md, last section) are pinned by examples.",
+      "title": "The bit-exact model is right"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FFC-F-EXACT",
+      "items": [
+       "V-FFC-DIRECTED",
+       "V-FFC-RANDOM"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_fastconv/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "At every parameter point listed in spec.yaml (5 directed or exhaustive points, 3 random ones, across 1 variants), each variant's outputs equal the model's: the directed points drive the register defaults, a zero filter (zero output), a filter loaded through the registers and a random stream through it with random stalls on both streams; the random points use random taps, random streams with random stalls, register traffic while the stream runs and a new filter after the stream drains. The whole output stream equals the model bit for bit (no sample lost, added or reordered), the latency from the last input beat of the first block to its first output beat equals the formula, and the three protocol checkers count no error.",
+      "title": "Every variant is bit-exact against the model"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FFC-F-LAT",
+      "items": [
+       "V-FFC-LATENCY"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_fastconv/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "Each variant's latency in clocks is the expression in spec.yaml (os: 2*(2*(1<<LOGN)+LOGN+((LOGN-1)//2)*(TWSTAGES+MULSTAGES+1))+MULSTAGES+L+7), and the bench, run with a latency two clocks off, fails for every variant, so the passing runs prove the latency rather than assume it.",
+      "title": "Latency is as specified and the bench would notice if it were not"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FFC-F-EQUIV",
+      "items": [
+       "V-FFC-FORMAL-BOUNDED",
+       "V-FFC-FORMAL-REFUTE"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "formal"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_fastconv/formal/jobs.yaml",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "SymbiYosys with the slang front end checks the properties of formal/jobs.yaml: a proof is by k-induction (for all inputs, any run length) at the parameters listed there, a bounded check holds only to its stated depth. What the jobs say is in each job's `claim`; parameters beyond the listed ones are covered by simulation, not by proof.",
+      "title": "The properties named in formal/jobs.yaml hold, by proof where the tools allow"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FFC-F-BENCH",
+      "items": [
+       "V-FFC-MUTANT-TEST",
+       "V-FFC-MUTANT-SCORE"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_measurement",
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_fastconv/verif/mutants.yaml",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "Every one of the mutants in verif/mutants.yaml (one exact text change each: an inverted condition, a wrong constant, a dropped connection, a wrong width) makes the cocotb bench fail, or is argued equivalent in the file's header; mutants that survive or do not build are reported, never hidden.",
+      "title": "The bench catches seeded faults"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FFC-F-PACKAGE",
+      "items": [
+       "V-FFC-PACKAGE"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [],
+      "rests_on_delegated": false,
+      "source": "arith/fft_fastconv/spec.yaml",
+      "spec_status": "draft",
+      "stale_items": 1,
+      "state": "stale",
+      "text": "spec.yaml states an interface contract (protocol, throughput, latency, reset, clock, stalls) and integration guidance (port timing, constraints to carry). Every variant passes Verilator -Wall at every point of spec.yaml; its ports and default parameters are the ones spec.yaml states; its header states the intended primitive use before any Vivado run; spec.md is the rendering of spec.yaml; the out-of-context wrapper and the build.yaml for each variant (Artix-7 xc7a100t and K26 xck26, prepared and not run) are current and lint-clean at every point they list, so a Vivado run can start from the repository alone.",
+      "title": "The RTL is lint-clean, and its files agree with the specification and with the Vivado build files"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FFC-F-AXIL",
+      "items": [
+       "V-FFC-AXIL"
+      ],
+      "kind": "interface",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_fastconv/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "The ID, CFG0 and CFG1 registers read their documented values; read-only and unmapped addresses answer SLVERR and change nothing; byte address bits [1:0] are ignored; writes with partial strobes are refused with SLVERR and no effect; COEF_ADDR masks its upper bits and wraps; the staging registers read back sign-extended; a commit auto-increments COEF_ADDR and wraps at the last bin; a commit while BUSY (during the clear after reset, and while a block is in flight) is refused with SLVERR, sets DROPPED, does not advance COEF_ADDR and changes nothing; DROPPED and SAT are cleared by writing 1; reads have no side effects; address and data may arrive in either order and the response channels may wait. The AXI4-Lite protocol checker (fft_common/axil_checker.sv) counts no violation. The handshake rules and the response of every executed write are also checked by bounded model checks (formal/jobs.yaml) against shadow state.",
+      "title": "The AXI4-Lite register file follows the contract's register map and response rules"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FFC-F-SAT",
+      "items": [
+       "V-FFC-SATURATE"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_fastconv/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "With a filter of gain 2**GB and a loud input the output parts that leave the W-bit range are clamped to the nearest end exactly as the model says, STATUS.SAT is set, and it is cleared by writing 1 to it.",
+      "title": "Output saturation is exact and reported"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FFC-F-AXIS",
+      "items": [
+       "V-FFC-STREAMS"
+      ],
+      "kind": "interface",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_fastconv/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "The checkers on s_axis and m_axis (valid stays high until accepted, tdata stable while stalled, no unknowns after reset) count no violation while both streams stall at random, including a sink so slow that the block controller must wait for output room: no sample is lost, added or reordered. A mutant that makes tvalid depend on tready is killed.",
+      "title": "The AXI4-Stream rules hold on both streams under random stalls"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FFC-F-ACCURACY",
+      "items": [
+       "V-FFC-ACCURACY"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_measurement"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_fastconv/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "For N = 64 to 4096, L from N/8 + 1 to 3N/4 + 1 taps (low-pass, random and delta filters of absolute gain at most 2**GB) and a random complex stream, the output of the model (which the RTL equals bit for bit) differs from numpy.convolve of the same samples and the unquantised taps by at most the recorded error (verif/results/accuracy.json: worst and rms error in output LSB, SQNR) at W = 16, TW = 18, WH = 24, FH = 14; the test enforces a worst error of at most 8 LSB.",
+      "title": "The filter output equals numpy.convolve within a stated error"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FFC-F-HARNESS",
+      "items": [
+       "V-FFC-HARNESS"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_fastconv/harness/README.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "arith/fft_fastconv/harness/ (model, bench, SystemVerilog checkers, coverage targets, standalone runner: owner decision 24) needs no other file of the repository. Run against each variant of this function with the checkers beside it, in every mode, it passes and meets every coverage target; against one planted fault (a mutant of verif/mutants.yaml), or with a latency two clocks off, it fails; its model, bench and checker files are the repository's own, generated by arith/tools/gen_harness_fft.py, so they cannot drift.",
+      "title": "The packaged harness runs standalone, passes on the repository's variants and catches faults"
+     }
+    ],
+    "source_schema": "fpga-design-agent/testplan/v1",
+    "summary": {
+     "by_kind": {
+      "functional": 9,
+      "interface": 2,
+      "performance": 0,
+      "safety": 0
+     },
+     "by_method": {
+      "assertion": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "board_measurement": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "coverage_bin": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "formal": {
+       "bounded": 1,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 1,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "formal_lean": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "review": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "sim_measurement": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 2,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "sim_test": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 9,
+       "skipped": 0,
+       "stale": 1,
+       "unapproved": 0
+      },
+      "timing": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "uvm_test": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      }
+     },
+     "by_state": {
+      "stale": 1,
+      "verified": 10
+     },
+     "external": 0,
+     "external_hardware_done": 0,
+     "gap_counts": {
+      "no_passing_evidence": 1,
+      "stale_evidence": 1
+     },
+     "human_reviews": 0,
+     "items": 14,
+     "lean": {
+      "approved": 0,
+      "build_sources": [],
+      "by_rtl_link": {
+       "model_only": 0,
+       "rtl_generated": 0,
+       "transcription_tested": 0,
+       "transcription_untested": 0
+      },
+      "by_status": {},
+      "by_tier": {
+       "compiled_decision_procedure": 0,
+       "kernel_only": 0,
+       "unsound": 0
+      },
+      "delegated": 0,
+      "items": 0,
+      "statement_not_approved": 0
+     },
+     "line": "11 requirements (9 functional, 2 interface); 10 verified; 1 stale; 0 of 11 requirements agreed by a human, 0 human review(s) recorded.",
+     "performance_board": 0,
+     "performance_sim_only": 0,
+     "performance_timing": 0,
+     "requirements": 11,
+     "spec_agreed": 0,
+     "verified_on_delegated": 0
+    }
+   },
+   {
+    "design": "arith_fft_mdc2",
+    "gaps": [
+     {
+      "gate": false,
+      "id": "FMDC-F-PACKAGE",
+      "state": "stale",
+      "text": "its evidence is stale",
+      "type": "no_passing_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-FMDC-PACKAGE",
+      "text": "changed since the evidence was recorded: arith/fft_mdc2/build/par2/build.yaml, arith/fft_mdc2/spec.md",
+      "type": "stale_evidence"
+     }
+    ],
+    "items": [
+     {
+      "detail": "11 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_mdc2/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FMDC-MODEL",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FMDC-F-MODEL"
+      ],
+      "status": "pass",
+      "title": "The model against independent formulations and the pinned conventions",
+      "value": "11 of 11 tests passed"
+     },
+     {
+      "detail": "6 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_mdc2/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FMDC-DIRECTED",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FMDC-F-EXACT"
+      ],
+      "status": "pass",
+      "title": "Every variant against the model at the small points (Icarus + cocotb): directed or exhaustive stimuli",
+      "value": "6 of 6 tests passed"
+     },
+     {
+      "detail": "4 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_mdc2/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FMDC-RANDOM",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FMDC-F-EXACT"
+      ],
+      "status": "pass",
+      "title": "Every variant against the model at the large points: random stimuli (Icarus + cocotb)",
+      "value": "4 of 4 tests passed"
+     },
+     {
+      "detail": "1 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_mdc2/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FMDC-LATENCY",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FMDC-F-LAT"
+      ],
+      "status": "pass",
+      "title": "The bench passes at the stated latency and fails two clocks off, for every variant",
+      "value": "1 of 1 tests passed"
+     },
+     {
+      "detail": "1 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_mdc2/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FMDC-MUTANT-TEST",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FMDC-F-BENCH"
+      ],
+      "status": "pass",
+      "title": "The mutation run as a test: no mutant survives, none fails to build",
+      "value": "1 of 1 tests passed"
+     },
+     {
+      "detail": "survived = []; invalid = []; valid = 18; score_pct = 100",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_mdc2/verif/results/mutation.json"
+      },
+      "id": "V-FMDC-MUTANT-SCORE",
+      "instrument": null,
+      "method": "sim_measurement",
+      "planned": null,
+      "requirements": [
+       "FMDC-F-BENCH"
+      ],
+      "status": "pass",
+      "title": "Mutants killed of valid mutants (the record of the last full run)",
+      "value": true
+     },
+     {
+      "detail": "5 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_mdc2/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FMDC-PACKAGE",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FMDC-F-PACKAGE"
+      ],
+      "stale_because": "changed since the evidence was recorded: arith/fft_mdc2/build/par2/build.yaml, arith/fft_mdc2/spec.md",
+      "status": "stale",
+      "title": "spec.yaml against the RTL headers, spec.md against spec.yaml, Verilator -Wall at every point, wrappers and build.yaml current and lint-clean",
+      "value": "5 of 5 tests passed"
+     },
+     {
+      "detail": "4 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_mdc2/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FMDC-GAPS",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FMDC-F-GAPS"
+      ],
+      "status": "pass",
+      "title": "N/8 idle clocks work and N/8 - 1 do not",
+      "value": "4 of 4 tests passed"
+     },
+     {
+      "detail": "3 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_mdc2/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FMDC-HARNESS",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FMDC-F-HARNESS"
+      ],
+      "status": "pass",
+      "title": "The harness against the repository's variants, a planted fault and a wrong latency",
+      "value": "3 of 3 tests passed"
+     }
+    ],
+    "notes": "Frequency-domain suite, function fft_mdc2 (brief 148). Everything here is before Vivado: the model, the RTL variants, simulation, formal properties and the prepared out-of-context build files. No performance requirement on LUTs, DSPs, Fmax or power exists because none has been measured; the Vivado runs (build/<variant>/build.yaml, queued in _handoff/fpga_agent/vivado_later_queue.md) will add them. Every requirement is a draft written by the agent; none is agreed by a human. There are no Lean statements (the packaged harness of this function, in harness/, is evidenced by the harness item). Generated by arith/tools/gen_testplan_fft.py.",
+    "path": "arith/fft_mdc2",
+    "requirements": [
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FMDC-F-MODEL",
+      "items": [
+       "V-FMDC-MODEL"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_mdc2/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "arith/fft_mdc2/model.py gives, for every input, the result that spec.md defines. It agrees with an independent formulation (NumPy's FFT (forward and inverse, both scaling modes, N = 16 to 1024, the pairs put back into natural order) and the identities of the pair order, the swap and the even/odd split), and the conventions that a user could guess wrong (spec.md, last section) are pinned by examples.",
+      "title": "The bit-exact model is right"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FMDC-F-EXACT",
+      "items": [
+       "V-FMDC-DIRECTED",
+       "V-FMDC-RANDOM"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_mdc2/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "At every parameter point listed in spec.yaml (6 directed or exhaustive points, 4 random ones, across 1 variants), each variant's outputs equal the model's: the directed points drive impulses, tones, DC, Nyquist, a chirp and corner values as pairs (x[2m], x[2m+1]), forward and inverse, back to back and after the shortest legal gap (N/8); the random points drive random frames with random direction and legal gaps up to N = 4096. Each output frame of N/2 pairs equals the model bit for bit, the latency from in_sof to out_sof equals the formula and out_valid is N/2 consecutive clocks.",
+      "title": "Every variant is bit-exact against the model"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FMDC-F-LAT",
+      "items": [
+       "V-FMDC-LATENCY"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_mdc2/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "Each variant's latency in clocks is the expression in spec.yaml (par2: (1<<LOGN)//2-1+(LOGN-1)+((LOGN-2)//2)*(TWSTAGES+MULSTAGES+1)+(0 if ORDER else (1<<LOGN)//2+1)+TWSTAGES+MULSTAGES+2), and the bench, run with a latency two clocks off, fails for every variant, so the passing runs prove the latency rather than assume it.",
+      "title": "Latency is as specified and the bench would notice if it were not"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FMDC-F-BENCH",
+      "items": [
+       "V-FMDC-MUTANT-TEST",
+       "V-FMDC-MUTANT-SCORE"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_measurement",
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_mdc2/verif/mutants.yaml",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "Every one of the mutants in verif/mutants.yaml (one exact text change each: an inverted condition, a wrong constant, a dropped connection, a wrong width) makes the cocotb bench fail, or is argued equivalent in the file's header; mutants that survive or do not build are reported, never hidden.",
+      "title": "The bench catches seeded faults"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FMDC-F-PACKAGE",
+      "items": [
+       "V-FMDC-PACKAGE"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [],
+      "rests_on_delegated": false,
+      "source": "arith/fft_mdc2/spec.yaml",
+      "spec_status": "draft",
+      "stale_items": 1,
+      "state": "stale",
+      "text": "spec.yaml states an interface contract (protocol, throughput, latency, reset, clock, stalls) and integration guidance (port timing, constraints to carry). Every variant passes Verilator -Wall at every point of spec.yaml; its ports and default parameters are the ones spec.yaml states; its header states the intended primitive use before any Vivado run; spec.md is the rendering of spec.yaml; the out-of-context wrapper and the build.yaml for each variant (Artix-7 xc7a100t and K26 xck26, prepared and not run) are current and lint-clean at every point they list, so a Vivado run can start from the repository alone.",
+      "title": "The RTL is lint-clean, and its files agree with the specification and with the Vivado build files"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FMDC-F-GAPS",
+      "items": [
+       "V-FMDC-GAPS"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_mdc2/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "At N = 32, 64, 128 and 256 a source that leaves exactly N/8 idle clocks between frames gets every frame right, and one that leaves N/8 - 1 clocks corrupts at least one frame, so the stated rule is the real minimum, not a guess.",
+      "title": "The frame-gap rule (0 or at least N/8 clocks) is measured, not assumed"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FMDC-F-HARNESS",
+      "items": [
+       "V-FMDC-HARNESS"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_mdc2/harness/README.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "arith/fft_mdc2/harness/ (model, bench, SystemVerilog checkers, coverage targets, standalone runner: owner decision 24) needs no other file of the repository. Run against each variant of this function with the checkers beside it, in every mode, it passes and meets every coverage target; against one planted fault (a mutant of verif/mutants.yaml), or with a latency two clocks off, it fails; its model, bench and checker files are the repository's own, generated by arith/tools/gen_harness_fft.py, so they cannot drift.",
+      "title": "The packaged harness runs standalone, passes on the repository's variants and catches faults"
+     }
+    ],
+    "source_schema": "fpga-design-agent/testplan/v1",
+    "summary": {
+     "by_kind": {
+      "functional": 7,
+      "interface": 0,
+      "performance": 0,
+      "safety": 0
+     },
+     "by_method": {
+      "assertion": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "board_measurement": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "coverage_bin": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "formal": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "formal_lean": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "review": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "sim_measurement": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 1,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "sim_test": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 7,
+       "skipped": 0,
+       "stale": 1,
+       "unapproved": 0
+      },
+      "timing": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "uvm_test": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      }
+     },
+     "by_state": {
+      "stale": 1,
+      "verified": 6
+     },
+     "external": 0,
+     "external_hardware_done": 0,
+     "gap_counts": {
+      "no_passing_evidence": 1,
+      "stale_evidence": 1
+     },
+     "human_reviews": 0,
+     "items": 9,
+     "lean": {
+      "approved": 0,
+      "build_sources": [],
+      "by_rtl_link": {
+       "model_only": 0,
+       "rtl_generated": 0,
+       "transcription_tested": 0,
+       "transcription_untested": 0
+      },
+      "by_status": {},
+      "by_tier": {
+       "compiled_decision_procedure": 0,
+       "kernel_only": 0,
+       "unsound": 0
+      },
+      "delegated": 0,
+      "items": 0,
+      "statement_not_approved": 0
+     },
+     "line": "7 requirements (7 functional); 6 verified; 1 stale; 0 of 7 requirements agreed by a human, 0 human review(s) recorded.",
+     "performance_board": 0,
+     "performance_sim_only": 0,
+     "performance_timing": 0,
+     "requirements": 7,
+     "spec_agreed": 0,
+     "verified_on_delegated": 0
+    }
+   },
+   {
     "design": "arith_fft_real",
     "gaps": [
      {
@@ -36329,7 +40258,7 @@
      {
       "gate": false,
       "id": "V-FREAL-MUTANT-SCORE",
-      "text": "changed since the evidence was recorded: arith/fft/rtl/fft_sdf_r22.sv, arith/fft_common/fft_sdf_twmul.sv",
+      "text": "changed since the evidence was recorded: arith/fft/rtl/fft_sdf_r22.sv, arith/fft_common/fft_ref.py, arith/fft_common/fft_sdf_twmul.sv",
       "type": "stale_evidence"
      },
      {
@@ -36438,7 +40367,7 @@
       "requirements": [
        "FREAL-F-BENCH"
       ],
-      "stale_because": "changed since the evidence was recorded: arith/fft/rtl/fft_sdf_r22.sv, arith/fft_common/fft_sdf_twmul.sv",
+      "stale_because": "changed since the evidence was recorded: arith/fft/rtl/fft_sdf_r22.sv, arith/fft_common/fft_ref.py, arith/fft_common/fft_sdf_twmul.sv",
       "status": "stale",
       "title": "Mutants killed of valid mutants (the record of the last full run)",
       "value": true
@@ -36727,6 +40656,527 @@
     }
    },
    {
+    "design": "arith_fft_real_axis",
+    "gaps": [
+     {
+      "gate": false,
+      "id": "FRAXIS-F-PACKAGE",
+      "state": "stale",
+      "text": "its evidence is stale",
+      "type": "no_passing_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-FRAXIS-PACKAGE",
+      "text": "changed since the evidence was recorded: arith/fft_real_axis/build/post/build.yaml, arith/fft_real_axis/spec.md",
+      "type": "stale_evidence"
+     }
+    ],
+    "items": [
+     {
+      "detail": "4 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_real_axis/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FRAXIS-MODEL",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FRAXIS-F-MODEL"
+      ],
+      "status": "pass",
+      "title": "The model against independent formulations and the pinned conventions",
+      "value": "4 of 4 tests passed"
+     },
+     {
+      "detail": "4 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_real_axis/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FRAXIS-DIRECTED",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FRAXIS-F-EXACT"
+      ],
+      "status": "pass",
+      "title": "Every variant against the model at the small points (Icarus + cocotb): directed or exhaustive stimuli",
+      "value": "4 of 4 tests passed"
+     },
+     {
+      "detail": "3 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_real_axis/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FRAXIS-RANDOM",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FRAXIS-F-EXACT"
+      ],
+      "status": "pass",
+      "title": "Every variant against the model at the large points: random stimuli (Icarus + cocotb)",
+      "value": "3 of 3 tests passed"
+     },
+     {
+      "detail": "1 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_real_axis/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FRAXIS-LATENCY",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FRAXIS-F-LAT"
+      ],
+      "status": "pass",
+      "title": "The bench passes at the stated latency and fails two clocks off, for every variant",
+      "value": "1 of 1 tests passed"
+     },
+     {
+      "detail": "1 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_real_axis/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FRAXIS-MUTANT-TEST",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FRAXIS-F-BENCH"
+      ],
+      "status": "pass",
+      "title": "The mutation run as a test: no mutant survives, none fails to build",
+      "value": "1 of 1 tests passed"
+     },
+     {
+      "detail": "survived = []; invalid = []; valid = 11; score_pct = 100",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_real_axis/verif/results/mutation.json"
+      },
+      "id": "V-FRAXIS-MUTANT-SCORE",
+      "instrument": null,
+      "method": "sim_measurement",
+      "planned": null,
+      "requirements": [
+       "FRAXIS-F-BENCH"
+      ],
+      "status": "pass",
+      "title": "Mutants killed of valid mutants (the record of the last full run)",
+      "value": true
+     },
+     {
+      "detail": "5 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_real_axis/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FRAXIS-PACKAGE",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FRAXIS-F-PACKAGE"
+      ],
+      "stale_because": "changed since the evidence was recorded: arith/fft_real_axis/build/post/build.yaml, arith/fft_real_axis/spec.md",
+      "status": "stale",
+      "title": "spec.yaml against the RTL headers, spec.md against spec.yaml, Verilator -Wall at every point, wrappers and build.yaml current and lint-clean",
+      "value": "5 of 5 tests passed"
+     },
+     {
+      "detail": "1 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_real_axis/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FRAXIS-CHECKER",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FRAXIS-F-AXIS"
+      ],
+      "status": "pass",
+      "title": "The protocol checkers can fail (a pause inside a frame, a stalled sink)",
+      "value": "1 of 1 tests passed"
+     },
+     {
+      "detail": "4 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_real_axis/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FRAXIS-GAP",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FRAXIS-F-GAP"
+      ],
+      "status": "pass",
+      "title": "A source that never pauses sees exactly N/8 idle clocks between frames; every frame is right",
+      "value": "4 of 4 tests passed"
+     },
+     {
+      "detail": "3 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "arith/fft_real_axis/verif/results/pytest_junit.xml"
+      },
+      "id": "V-FRAXIS-HARNESS",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "FRAXIS-F-HARNESS"
+      ],
+      "status": "pass",
+      "title": "The harness against the repository's variants, a planted fault and a wrong latency",
+      "value": "3 of 3 tests passed"
+     }
+    ],
+    "notes": "Frequency-domain suite, function fft_real_axis (brief 148). Everything here is before Vivado: the model, the RTL variants, simulation, formal properties and the prepared out-of-context build files. No performance requirement on LUTs, DSPs, Fmax or power exists because none has been measured; the Vivado runs (build/<variant>/build.yaml, queued in _handoff/fpga_agent/vivado_later_queue.md) will add them. Every requirement is a draft written by the agent; none is agreed by a human. There are no Lean statements (the packaged harness of this function, in harness/, is evidenced by the harness item). Generated by arith/tools/gen_testplan_fft.py.",
+    "path": "arith/fft_real_axis",
+    "requirements": [
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FRAXIS-F-MODEL",
+      "items": [
+       "V-FRAXIS-MODEL"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_real_axis/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "arith/fft_real_axis/model.py gives, for every input, the result that spec.md defines. It agrees with an independent formulation (the wrapped core's own model (arith/fft_real/model.py) and the packing of the AXI words (the even sample in the low half of the input word, the real part in the low half of the output word)), and the conventions that a user could guess wrong (spec.md, last section) are pinned by examples.",
+      "title": "The bit-exact model is right"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FRAXIS-F-EXACT",
+      "items": [
+       "V-FRAXIS-DIRECTED",
+       "V-FRAXIS-RANDOM"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_real_axis/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "At every parameter point listed in spec.yaml (4 directed or exhaustive points, 3 random ones, across 1 variants), each variant's outputs equal the model's: the directed points send the real-FFT bench's frames as AXI4-Stream beats from a source that never pauses: the wrapper itself opens the gap, which the bench measures and requires to equal N/8 exactly, and the first-beat latency equals the formula; the random points send random real frames with random idle times up to N = 2048. Every output frame of N/2 + 1 bins equals the model bit for bit, tlast is on the right beat and the protocol checkers count no error.",
+      "title": "Every variant is bit-exact against the model"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FRAXIS-F-LAT",
+      "items": [
+       "V-FRAXIS-LATENCY"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_real_axis/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "Each variant's latency in clocks is the expression in spec.yaml (post: (1<<(LOGN-1))-1+(LOGN-1)+((LOGN-2)//2)*(TWSTAGES+MULSTAGES+1)+(1<<(LOGN-1))+MULSTAGES+3), and the bench, run with a latency two clocks off, fails for every variant, so the passing runs prove the latency rather than assume it.",
+      "title": "Latency is as specified and the bench would notice if it were not"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FRAXIS-F-BENCH",
+      "items": [
+       "V-FRAXIS-MUTANT-TEST",
+       "V-FRAXIS-MUTANT-SCORE"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_measurement",
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_real_axis/verif/mutants.yaml",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "Every one of the mutants in verif/mutants.yaml (one exact text change each: an inverted condition, a wrong constant, a dropped connection, a wrong width) makes the cocotb bench fail, or is argued equivalent in the file's header; mutants that survive or do not build are reported, never hidden.",
+      "title": "The bench catches seeded faults"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FRAXIS-F-PACKAGE",
+      "items": [
+       "V-FRAXIS-PACKAGE"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [],
+      "rests_on_delegated": false,
+      "source": "arith/fft_real_axis/spec.yaml",
+      "spec_status": "draft",
+      "stale_items": 1,
+      "state": "stale",
+      "text": "spec.yaml states an interface contract (protocol, throughput, latency, reset, clock, stalls) and integration guidance (port timing, constraints to carry). Every variant passes Verilator -Wall at every point of spec.yaml; its ports and default parameters are the ones spec.yaml states; its header states the intended primitive use before any Vivado run; spec.md is the rendering of spec.yaml; the out-of-context wrapper and the build.yaml for each variant (Artix-7 xc7a100t and K26 xck26, prepared and not run) are current and lint-clean at every point they list, so a Vivado run can start from the repository alone.",
+      "title": "The RTL is lint-clean, and its files agree with the specification and with the Vivado build files"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FRAXIS-F-AXIS",
+      "items": [
+       "V-FRAXIS-CHECKER"
+      ],
+      "kind": "interface",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_real_axis/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "On both streams the wrapper's SystemVerilog protocol checkers (fft_common/axis_checker.sv: valid stays high until accepted, tdata and tlast stable while stalled, no unknowns after reset, tlast on every (N/2)-th beat of the input and every (N/2 + 1)-th beat of the output, no stall on the output, no pause inside an input frame) count zero violations in every run of the directed and random benches, the source of which presents the next frame at once and waits on tready. A deliberate-violation test shows each checker can fail (a pause inside a frame, a stalled sink). tvalid is registered and independent of tready by construction.",
+      "title": "The AXI4-Stream rules hold on both streams, and the checkers can fail"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FRAXIS-F-GAP",
+      "items": [
+       "V-FRAXIS-GAP"
+      ],
+      "kind": "interface",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_real_axis/spec.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "After every beat with tlast on the input stream s_axis_tready is low for N/8 clocks (the measured gap rule of the real-input core), and a source that never pauses sees exactly N/8 idle clocks between its frames; every such frame is correct. Mutants that remove the gap, shorten it or lengthen it are killed.",
+      "title": "The wrapper enforces the transform's frame gap by back-pressure"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "FRAXIS-F-HARNESS",
+      "items": [
+       "V-FRAXIS-HARNESS"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "arith/fft_real_axis/harness/README.md",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "arith/fft_real_axis/harness/ (model, bench, SystemVerilog checkers, coverage targets, standalone runner: owner decision 24) needs no other file of the repository. Run against each variant of this function with the checkers beside it, in every mode, it passes and meets every coverage target; against one planted fault (a mutant of verif/mutants.yaml), or with a latency two clocks off, it fails; its model, bench and checker files are the repository's own, generated by arith/tools/gen_harness_fft.py, so they cannot drift.",
+      "title": "The packaged harness runs standalone, passes on the repository's variants and catches faults"
+     }
+    ],
+    "source_schema": "fpga-design-agent/testplan/v1",
+    "summary": {
+     "by_kind": {
+      "functional": 6,
+      "interface": 2,
+      "performance": 0,
+      "safety": 0
+     },
+     "by_method": {
+      "assertion": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "board_measurement": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "coverage_bin": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "formal": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "formal_lean": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "review": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "sim_measurement": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 1,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "sim_test": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 8,
+       "skipped": 0,
+       "stale": 1,
+       "unapproved": 0
+      },
+      "timing": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      },
+      "uvm_test": {
+       "bounded": 0,
+       "fail": 0,
+       "not_in_run": 0,
+       "not_run": 0,
+       "pass": 0,
+       "skipped": 0,
+       "stale": 0,
+       "unapproved": 0
+      }
+     },
+     "by_state": {
+      "stale": 1,
+      "verified": 7
+     },
+     "external": 0,
+     "external_hardware_done": 0,
+     "gap_counts": {
+      "no_passing_evidence": 1,
+      "stale_evidence": 1
+     },
+     "human_reviews": 0,
+     "items": 10,
+     "lean": {
+      "approved": 0,
+      "build_sources": [],
+      "by_rtl_link": {
+       "model_only": 0,
+       "rtl_generated": 0,
+       "transcription_tested": 0,
+       "transcription_untested": 0
+      },
+      "by_status": {},
+      "by_tier": {
+       "compiled_decision_procedure": 0,
+       "kernel_only": 0,
+       "unsound": 0
+      },
+      "delegated": 0,
+      "items": 0,
+      "statement_not_approved": 0
+     },
+     "line": "8 requirements (6 functional, 2 interface); 7 verified; 1 stale; 0 of 8 requirements agreed by a human, 0 human review(s) recorded.",
+     "performance_board": 0,
+     "performance_sim_only": 0,
+     "performance_timing": 0,
+     "requirements": 8,
+     "spec_agreed": 0,
+     "verified_on_delegated": 0
+    }
+   },
+   {
     "design": "arith_fft_reorder",
     "gaps": [
      {
@@ -36735,6 +41185,12 @@
       "state": "stale",
       "text": "its evidence is stale",
       "type": "no_passing_evidence"
+     },
+     {
+      "gate": false,
+      "id": "V-FRO-MUTANT-SCORE",
+      "text": "changed since the evidence was recorded: arith/fft_common/fft_ref.py",
+      "type": "stale_evidence"
      },
      {
       "gate": false,
@@ -36876,7 +41332,8 @@
       "requirements": [
        "FRO-F-BENCH"
       ],
-      "status": "pass",
+      "stale_because": "changed since the evidence was recorded: arith/fft_common/fft_ref.py",
+      "status": "stale",
       "title": "Mutants killed of valid mutants (the record of the last full run)",
       "value": true
      },
@@ -37005,13 +41462,12 @@
       "kind": "functional",
       "lean_transcription_only": false,
       "passing_methods": [
-       "sim_measurement",
        "sim_test"
       ],
       "rests_on_delegated": false,
       "source": "arith/fft_reorder/verif/mutants.yaml",
       "spec_status": "draft",
-      "stale_items": 0,
+      "stale_items": 1,
       "state": "verified",
       "text": "Every one of the mutants in verif/mutants.yaml (one exact text change each: an inverted condition, a wrong constant, a dropped connection, a wrong width) makes the cocotb bench fail, or is argued equivalent in the file's header; mutants that survive or do not build are reported, never hidden.",
       "title": "The bench catches seeded faults"
@@ -37111,9 +41567,9 @@
        "fail": 0,
        "not_in_run": 0,
        "not_run": 0,
-       "pass": 1,
+       "pass": 0,
        "skipped": 0,
-       "stale": 0,
+       "stale": 1,
        "unapproved": 0
       },
       "sim_test": {
@@ -37155,7 +41611,7 @@
      "external_hardware_done": 0,
      "gap_counts": {
       "no_passing_evidence": 1,
-      "stale_evidence": 1
+      "stale_evidence": 2
      },
      "human_reviews": 0,
      "items": 9,
@@ -47108,9 +51564,9 @@
   "framing": "The human specifies the requirements and checks that the verification is thorough enough. The agent holds the knowledge to implement and to verify. You can open any of the implementation or the evidence, and you do not have to. Hardware on the board, with attached instruments, is a verification layer of its own: where a requirement depends on something outside the design (an optical link, a network card, a data source) it may be the only way to close it.",
   "schema": "fda-traceability/1",
   "total": {
-   "designs": 29,
-   "requirements": 311,
-   "verified": 236
+   "designs": 33,
+   "requirements": 346,
+   "verified": 267
   }
  }
 }
