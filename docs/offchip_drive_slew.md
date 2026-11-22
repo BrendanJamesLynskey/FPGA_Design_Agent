@@ -93,7 +93,7 @@ owner ran it. It produced one row per net and layer (straight-segment plus arc c
 per-net numbers: `results/162_kr260_si/kr260_net_lengths.csv` (`tools/kr260_nets_summary.py`). The parser and the dump are not in the repository (GPL code in an MIT repository, AMD data).
 
 **Sanity checks.** 933 nets parsed; units mils, divisor 10000; the 14-layer stack-up in the board file matches the chart (signal layers TOP, L03, L05, L10, L12, BOTTOM). The RGMII nets of one PHY agree with
-each other to about 3 %: that clustering is what a length-matched routing looks like and is unlikely if the parse were wrong.
+each other to within 4 %: that clustering is what a length-matched routing looks like and is unlikely if the parse were wrong.
 
 **Stack-up (from the board file's own text).** 14 layers, 64.02 mil total; TOP 1.9 mil copper plated; prepreg 1080 3.21 mil between TOP and the first plane (an assumed placement: the file lists the
 dielectrics out of order); 2113 / 2116 prepregs and cores 4.0, 4.77, 3.72, 2.5 mil; laminate EM-828G. The fab drawing's table 2 asks for **50 ohm single-ended: 5.2 mil on TOP, 4 mil on layers 3, 5 and 12 (tolerance
@@ -113,7 +113,7 @@ on the 26 MHz clock sheet, page 16), 49.9 (2). No 22, 27, 33 or 47 ohm part appe
 
 | group | nets | length | layers |
 |---|---|---|---|
-| PHY2 / port A, HPA0x nets (RGMII) | 18 | 7.07 to 7.34 in for the 14 RGMII-length nets (HPA04 6.6 to 7.1, HPA05 2.8 to 5.3) | L03 + L12, 3 vias (4 on HPA04) |
+| PHY2 / port A, HPA0x nets (RGMII) | 18 | 7.07 to 7.34 in for 15 nets (HPA04P 6.57 in; HPA05 2.8 and 5.3 in) | L03 + L12, 3 vias (4 on HPA04) |
 | PHY3 / port B, HPB0x nets | 18 | 2.34 to 2.87 in for 14 nets (HPB04 5.9 to 6.1, HPB05 0.5 to 3.9) | TOP, L03, L10, 3 vias |
 | Pmod IO, SOM side (HDA / HDB) | 45 | median 0.23 in | to the series resistor |
 | Pmod IO, connector side | 32 | 2.64 to 3.96 in, median 2.89 | L05 and TOP |
