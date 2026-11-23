@@ -10,7 +10,7 @@ Not in scope:
 - the full 58A trading core (book, rule table, interlocks, ARP) at 64 bits: trade64 is a small stand-in with one rule
 - the reconciliation sublayer link-fault state machine, the BER monitor, an ARP or ICMP responder
 
-Kind: example; written by hand. State: built. For an agent: [AGENT.md](AGENT.md).
+Kind: example; written by a Claude Code session. State: built. For an agent: [AGENT.md](AGENT.md).
 
 ![Block diagram: the design's blocks and the links between them](docs/handover/architecture.svg)
 

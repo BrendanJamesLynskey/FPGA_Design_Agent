@@ -2,14 +2,14 @@
 source: designs/m141_ddr2_sched/handover.yaml; human view: README.md; refresh: python -m flow.handover fresh designs/m141_ddr2_sched
 
 ## identity
-kind=showcase produced_by=human part=xc7a100tcsg324-1 board=Digilent Nexys A7-100T (one Micron MT47H64M16HR-25 DDR2 part, x16, single rank) top=ddr2_sched tool=Vivado 2026.1
+kind=showcase produced_by=session part=xc7a100tcsg324-1 board=Digilent Nexys A7-100T (one Micron MT47H64M16HR-25 DDR2 part, x16, single rank) top=ddr2_sched tool=Vivado 2026.1
 
 ## summary
 A request queue in front of a DDR2 command bus for the Micron MT47H64M16 on the Nexys A7, with two policies chosen by a parameter, latency-first for few random reads and bandwidth-first for streams, an abstract command interface that maps to AMD's PHY-only interface or to the MIG native interface, and the JEDEC timing rules enforced by per-bank counters. The rules are proved on the command stream by SymbiYosys against an independent monitor, and the scheduler is measured against a behavioural DDR2 model written from the data sheet.
 not: a data path, a PHY, a MIG core, DDR2 initialisation or calibration, ZQ, on-die termination, power-down or self-refresh; the scheduler issues commands and the data bursts follow them at fixed latencies; any Vivado build or board run; both heavy slots were taken by other sessions during the work, and the build plan and the pre-registered board test are written but not run; the four-wide command packing a controller clock slower than the memory clock needs; the scheduler decides one command per memory clock
 
 ## state
-stage=simulated vivado=2026.1 kb_pin=93d158c build_id=None
+stage=simulated vivado=2026.1 kb_pin=5e2eab8 build_id=None
 gates: sim_vs_model=pass formal_rules=pass board_run=not-run
 
 ## interface
