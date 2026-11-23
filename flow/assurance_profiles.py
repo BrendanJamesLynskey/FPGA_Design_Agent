@@ -152,6 +152,7 @@ def rtl_methods(seeds: int, depth: int) -> dict:
             res["mutants"][mid] = row
             print(mid, {k: (v["caught"] if isinstance(v, dict) else v) for k, v in row.items() if k != "what"}, flush=True)
         # method wall times on the unmutated design (what a passing run costs)
+        res["mutation_sweep_s"] = round(sum(r["directed_seed1"]["s"] for r in res["mutants"].values()), 2)
         res["methods"] = {"lint_s": round(lint(base)[1], 2), "directed_one_seed_s": round(sim(base, 1)[1], 2),
                           "seed_sweep_s": round(sum(sim(base, s)[1] for s in range(1, seeds + 1)), 2),
                           "formal_1x_s": round(formal(base, depth)[1], 2), "formal_4x_s": round(formal(base, depth * 4)[1], 2)}
@@ -240,6 +241,52 @@ def netlist_methods(cost_dir: Path, seeds: int) -> dict:
     return res
 
 
+def profile_times() -> dict:
+    """results/b194/profile_times.json: each profile's checks and their summed wall time, from the measurement records. A method that no record
+    measured is left out of the sum and listed under ``not_measured`` for the profile."""
+    R = ROOT / "results" / "b194"
+    rtl = json.loads((R / "methods_rtl.json").read_text())
+    nl = json.loads((R / "methods_netlist.json").read_text()) if (R / "methods_netlist.json").exists() else {}
+    cost = json.loads((R / "costs.json").read_text()) if (R / "costs.json").exists() else {}
+    fl = json.loads((R / "faults.json").read_text()) if (R / "faults.json").exists() else {}
+    m = rtl["methods"]
+    per_seed = m["seed_sweep_s"] / rtl["seeds"]
+    u = (cost.get("variants") or {}).get("u", {})
+    n_u = (nl.get("netlists") or {}).get("u", {})
+    eqy = ((nl.get("netlists") or {}).get("ctrl_u") or {}).get("eqy", {})
+    methods = {
+        "lint": (m["lint_s"], "methods_rtl.json: Verilator lint of the RTL"),
+        "directed tests, 1 seed": (m["directed_one_seed_s"], "methods_rtl.json: tb_func, 40 bursts, Icarus"),
+        "random tests, 3 seeds": (3 * per_seed, "methods_rtl.json: 3 x the per-seed time"),
+        "random tests, 8 seeds": (8 * per_seed, "methods_rtl.json: 8 seeds"),
+        "bounded formal, design's own depth": (m["formal_1x_s"], "methods_rtl.json: SymbiYosys, depth 20, z3"),
+        "bounded formal, depth x4": (m["formal_4x_s"], "methods_rtl.json: depth 80"),
+        "mutation sweep (7 mutants, 1 seed each)": (rtl.get("mutation_sweep_s") or round(sum(r["directed_seed1"]["s"] for r in rtl["mutants"].values()), 2), "methods_rtl.json: stand-in for the agent's mutation run"),
+    }
+    if u and n_u:
+        methods["post-synthesis netlist: synthesis"] = (float(u["synth_s"]), "costs.json: Vivado out-of-context synthesis, u")
+        methods["post-synthesis netlist: simulation"] = (n_u["funcsim_s"], "methods_netlist.json: tb_func on the funcsim netlist, xsim")
+    if eqy:
+        methods["equivalence (eqy, control module)"] = (eqy["s"], "methods_netlist.json: eqy_gate auto, " + eqy["status"])
+    if fl:
+        tot = sum(t["wall_s"] for t in fl["variants"]["all"]["targets"].values())
+        methods["fault injection (variant all, 6 targets x %d trials)" % fl["trials"]] = (tot, "faults.json: xsim")
+    if nl.get("timesim_u") and u:
+        methods["timing simulation (opt-in)"] = (float(u["impl_s"]) + nl["timesim_u"]["s"], "costs.json impl_s + methods_netlist.json timesim_u (10 bursts)")
+    def prof(names):
+        got = [n for n in names if n in methods]
+        return {"checks": got, "not_measured": [n for n in names if n not in methods], "seconds": round(sum(methods[n][0] for n in got), 1)}
+    net = ["post-synthesis netlist: synthesis", "post-synthesis netlist: simulation", "equivalence (eqy, control module)"]
+    std = ["lint", "directed tests, 1 seed", "random tests, 3 seeds", "bounded formal, design's own depth", "mutation sweep (7 mutants, 1 seed each)"]
+    thorough = ["lint", "directed tests, 1 seed", "random tests, 8 seeds", "bounded formal, depth x4", "mutation sweep (7 mutants, 1 seed each)", *net]
+    fi = [k for k in methods if k.startswith("fault injection")]
+    profiles = {"prototype": prof(["lint", "directed tests, 1 seed"]), "standard": prof(std), "thorough": prof(thorough), "ip_release": prof(thorough),
+                "high_reliability": prof([*thorough, *fi]), "low_latency": prof(std)}
+    profiles["ip_release"]["note"] = "the independent spec bench, k-induction, PDR and the pyuvm bench are not measured on this design (model time or no tool), so ip_release shows the thorough figure"
+    profiles["low_latency"]["note"] = "the latency budget checks are not run by the flow yet, so low_latency shows the standard figure"
+    return {"methods": {k: {"s": round(v[0], 2), "source": v[1]} for k, v in methods.items()}, "profiles": profiles}
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -251,7 +298,11 @@ def main(argv=None) -> int:
     n.add_argument("--cost-dir", type=Path, default=ROOT / "build" / "b194" / "cost")
     n.add_argument("--seeds", type=int, default=8)
     n.add_argument("--out", type=Path, default=ROOT / "results" / "b194" / "methods_netlist.json")
+    sub.add_parser("times", help="write results/b194/profile_times.json from the measurement records")
     a = ap.parse_args(argv)
+    if a.cmd == "times":
+        (ROOT / "results" / "b194" / "profile_times.json").write_text(json.dumps(profile_times(), indent=1) + "\n")
+        return 0
     if a.cmd == "netlist":
         res = netlist_methods(a.cost_dir, a.seeds)
         a.out.parent.mkdir(parents=True, exist_ok=True)

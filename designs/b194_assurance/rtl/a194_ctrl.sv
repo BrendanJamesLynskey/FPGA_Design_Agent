@@ -9,7 +9,7 @@
 //             detection and recovery logic; the RTL is unchanged.
 //   TMR  = 1  the remaining counter is three registers with a bitwise majority voter; the voted value is fed back to all three each clock,
 //             so a flipped copy is repaired on the next clock. The copies carry DONT_TOUCH so synthesis does not merge them (UG901).
-//   WD   = 1  watchdog: WD_LIMIT clocks without progress while busy forces the FSM to IDLE and sets wd_fault (sticky).
+//   WD   = 1  watchdog: WD_LIMIT (256: set per design to the longest legitimate stall plus margin) clocks without progress while busy forces the FSM to IDLE and sets wd_fault (sticky).
 // Behaviour a user could guess wrong: the voter and the state register are not protected by TMR; fsm_fault is set only where the RTL's own
 // default arc is taken (the SAFE logic of the tool is not visible to it); a start while busy is ignored.
 // Fault-injection hooks (simulation only): with A194_FI defined, fi_* are nets the testbench forces for one clock; each is XORed into the D
@@ -24,7 +24,7 @@ module a194_ctrl #(
     parameter int SAFE     = 0,
     parameter int TMR      = 0,
     parameter int WD       = 0,
-    parameter int WD_LIMIT = 4096
+    parameter int WD_LIMIT = 256
 ) (
     input  logic        clk,
     input  logic        rst,          // synchronous, active high
