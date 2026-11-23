@@ -447,6 +447,25 @@ def _xpm_sim(ctx: Ctx) -> dict[str, Any]:
     return _result(fs, records=srcs)
 
 
+def _fastpath(ctx: Ctx) -> dict[str, Any]:
+    """Brief 190, advisory: a data-dependent shift or index of a wide vector in a module declared fast-path (flow/checks/wide_index.py).
+    Modules are declared in architecture.yaml ``fast_path: [module, ...]`` or by a ``// fda:fast_path`` comment inside the module."""
+    from flow.checks import wide_index as WI
+    try:
+        declared = {str(x) for x in ((yaml.safe_load((ctx.design / "architecture.yaml").read_text()) or {}).get("fast_path") or [])}
+    except (OSError, yaml.YAMLError, AttributeError):
+        declared = set()
+    srcs = [f for f in build_sources(ctx.design, ctx.root) if f.suffix in (".sv", ".v")]
+    r = WI.run(srcs, declared, ctx.root)
+    fs = [{"tool": "fastpath", "code": x["code"], "severity": "advisory", "where": x["where"], "key": f"fastpath:{x['code']} {x['where']} {x['vector']}",
+           "message": x["message"], "blocking": False} for x in r["findings"]]
+    parts = {"modules": f"{r['modules']} fast-path module(s) examined" if r["modules"] else
+             "no module declared fast-path (architecture.yaml fast_path: [...] or a // fda:fast_path comment)"}
+    if r["unjudged"]:
+        parts["unjudged"] = f"{r['unjudged']} shift(s) or index(es) on vectors whose width could not be evaluated were not judged"
+    return _result(fs, parts, srcs)
+
+
 def _owned(code: str, by: str) -> str | None:
     """The dedicated check that reads this AMD rule id (resets, cdc, clocking, ...), other than the pass-through ``by``."""
     import fnmatch
@@ -792,6 +811,9 @@ register(Check("clocking", "vivado", POST, {"vivado": ("CLKC-*",), "clocking": (
 register(Check("xpm_sim", "source", ALL, {"xpm_sim": ("XPM-SIM-01",)},
                "advisory: an xpm_cdc instance whose SIM_ASSERT_CHK is not 1, which turns off the macro's own simulation warnings "
                "(flow/constraint_gates.py, brief 105A)", _xpm_sim))
+register(Check("fastpath", "source", ALL, {"fastpath": ("FAST-SHIFT-01", "FAST-INDEX-01")},
+               "advisory (brief 190): a data-dependent shift or index of a wide vector (a barrel shifter) in a module declared fast-path "
+               "(flow/checks/wide_index.py)", _fastpath))
 register(Check("constraint_scope", "records", ("route",), {"constraint_scope": ("XDC-ASYNC-PATHS", "XDC-ASYNC-ALL")},
                "advisory flag for owner review: set_clock_groups -asynchronous over clock pairs with paths between them, or over every clock "
                "(flow/constraint_gates.py, brief 105A); never blocks", _async_groups, reports=("clock_interaction",)))
