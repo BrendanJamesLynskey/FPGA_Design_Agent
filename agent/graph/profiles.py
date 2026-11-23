@@ -204,3 +204,84 @@ def describe(name: str) -> dict[str, Any]:
     """One profile for the pickers: summary, switches, and what each is wired to."""
     r = resolve(name)
     return {"name": name, "summary": SUMMARY[name], "switches": r["effective"], "not_wired": r["not_wired"]}
+
+
+# ---- the command line, the config and the run record --------------------------------------------------------------------------
+
+def from_cli(profile: str | None, sets: list[str] | None, verif_level: str | None = None, spec_tests: bool = False) -> dict[str, Any]:
+    """The run's verification settings from the command line. ``verif_level`` is the value of ``--verif-level`` only when it was given
+    explicitly (None when it was defaulted), ``spec_tests`` the ``--spec-tests`` flag. Each of the two old flags is an override of its
+    switch and is recorded as one. Returns ``resolve``'s record plus the Config fields the harness reads today."""
+    ov = parse_sets(sets)
+    if verif_level is not None:
+        ov["verif_level"] = verif_level
+    if spec_tests:
+        ov["indep_spec_test"] = True
+    rec = resolve(profile, ov)
+    return {**rec, "cfg": cfg_fields(rec["effective"])}
+
+
+def cfg_fields(eff: dict[str, Any]) -> dict[str, Any]:
+    """The Config fields the harness reads from the switches today: ``verif_level`` and ``spec_tests``. Every other switch is read through
+    the record (flow/assurance.py reads the netlist switches; the rest are recorded and listed as not wired)."""
+    return {"verif_level": eff["verif_level"], "spec_tests": bool(eff["indep_spec_test"])}
+
+
+def record_of(profile: str | None, overrides: dict[str, Any] | None) -> dict[str, Any]:
+    """The run-summary entry: the profile, every override (profile value and the value used), and the switches that are only recorded."""
+    r = resolve(profile, overrides)
+    r["ip_release_gaps"] = ip_release_ok(r["effective"])
+    r["method_mix_gaps"] = method_mix_gap(r["effective"])
+    return r
+
+
+# ---- the pin: the switches are variables the model cannot change (brief 194, docs/agent_levers.md) ----------------------------------
+
+PIN = "policy.json"
+
+
+def _digest(profile: str | None, sets: dict[str, Any] | None) -> str:
+    import hashlib
+    import json
+    eff = resolve(profile, sets)["effective"]
+    return hashlib.sha256(json.dumps(eff, sort_keys=True).encode()).hexdigest()
+
+
+def write_pin(run_dir, profile: str | None, sets: dict[str, Any] | None, replace: bool = False, set_by: str = "command line") -> dict[str, Any]:
+    """Pin the run's effective switches in ``<run dir>/policy.json``. The run directory is outside the design directory, so no role's
+    file tool reaches it. Written by the harness at the start of the run; the interview replaces it once, with ``replace=True``, when it
+    chooses the profile (the user's answer, or the default they accepted). A resume keeps the pin it finds."""
+    import json
+    import time
+    from pathlib import Path
+    f = Path(run_dir) / PIN
+    if f.is_file() and not replace:
+        return {**json.loads(f.read_text()), "new": False}
+    rec = {"profile": profile or DEFAULT_PROFILE, "overrides": dict(sets or {}), "effective_sha256": _digest(profile, sets), "set_by": set_by,
+           "time": time.strftime("%Y-%m-%d %H:%M:%S")}
+    f.write_text(json.dumps(rec, indent=1) + "\n")
+    return {**rec, "new": True}
+
+
+def check_pin(run_dir, profile: str | None, sets: dict[str, Any] | None, design=None) -> list[str]:
+    """Policy breaches: the live settings differ from the pin, or ``spec.yaml`` (which a role may write) names another profile. Empty when
+    they agree or the run has no pin (a run from before brief 194)."""
+    import json
+    from pathlib import Path
+    f = Path(run_dir) / PIN
+    if not f.is_file():
+        return []
+    pin = json.loads(f.read_text())
+    out = []
+    if _digest(profile, sets) != pin["effective_sha256"]:
+        out.append(f"the effective verification switches differ from the pin made by {pin['set_by']} ({pin['profile']})")
+    if design is not None:
+        import yaml
+        try:
+            sp = yaml.safe_load((Path(design) / "spec.yaml").read_text()) or {}
+        except (OSError, yaml.YAMLError):
+            sp = {}
+        named = sp.get("verif_profile") if isinstance(sp, dict) else None
+        if named is not None and named != pin["profile"]:
+            out.append(f"spec.yaml names profile {named!r} but the run is pinned to {pin['profile']!r} (set by {pin['set_by']}): the pin wins")
+    return out

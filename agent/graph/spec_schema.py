@@ -91,6 +91,13 @@ def shape_errors(spec: dict[str, Any]) -> list[str]:
             errs.append("'timing' must be a mapping (for example clock_constraint, latency: {name: text})")
         elif t.get("latency") is not None and not isinstance(t["latency"], dict):
             errs.append("'timing.latency' must be a mapping of name -> text")
+    vp = spec.get("verif_profile")
+    if vp is not None:
+        from agent.graph import profiles
+        if vp not in profiles.PROFILES:
+            errs.append(f"'verif_profile' must be one of {', '.join(profiles.PROFILES)} (got {vp!r})")
+    if spec.get("timing_sim") is not None and not isinstance(spec["timing_sim"], bool):
+        errs.append("'timing_sim' must be true or false (true asks the thorough profiles for a post-route timing simulation)")
     return errs
 
 

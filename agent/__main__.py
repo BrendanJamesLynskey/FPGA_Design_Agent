@@ -152,6 +152,14 @@ def project_models_file(spec: Path) -> Path | None:
     return f if f.is_file() else None
 
 
+def _literal(v):
+    """brief 194: config.json stores every field with str(); a dict field comes back through literal_eval (None for absent or 'None')."""
+    import ast
+    if v in (None, "None", ""):
+        return None
+    return v if isinstance(v, dict) else ast.literal_eval(v)
+
+
 def config_from_json(c: dict):
     """The Config of a run from its config.json (``resume``); runs from before 05f have no profile: ``single``."""
     from agent.graph.run import Config
@@ -163,6 +171,7 @@ def config_from_json(c: dict):
                   stop_after=None if c.get("stop_after") in (None, "None") else int(c["stop_after"]),
                   harness=c.get("harness", "deepagents"), cc_model=c.get("cc_model", "claude-haiku-5-5"),
                   cc_effort=c.get("cc_effort", "medium"), verif_level=c.get("verif_level", "V3"),
+                  verif_profile=c.get("verif_profile", "standard"), verif_sets=_literal(c.get("verif_sets")),
                   profile=c.get("profile", "single"), roles=c.get("roles") or None,
                   no_shell=flag("no_shell"),
                   data_dir=Path(c["data_dir"]) if c.get("data_dir") not in (None, "None") else None,
@@ -378,6 +387,13 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("--verif-level", choices=["V1", "V2", "V3"], default="V3",
                    help="verification stage stage 2 must reach (default V3, the methodology; V1/V2 only for a cheaper run: "
                         "V3 needs multi-seed runs; the graph itself runs the Verilator coverage run and the mutation run)")
+    r.add_argument("--verif-profile", choices=["prototype", "standard", "thorough", "ip_release", "high_reliability", "low_latency"],
+                   help="brief 194: the verification profile, a preset of per-method switches (docs/assurance.md). Not --profile, which is the "
+                        "model routing of brief 05f. Default: standard (today's behaviour); with --interview on or oracle and no profile given, "
+                        "the interview proposes one")
+    r.add_argument("--set", dest="verif_set", action="append", default=[], metavar="SWITCH=VALUE",
+                   help="brief 194: override one switch of the profile, e.g. --set seeds=5 --set timing_sim=on (repeatable); --verif-level and "
+                        "--spec-tests are overrides of their switches and are recorded as such")
     r.add_argument("--skill-routing", choices=["off", "router"], default="off",
                    help="brief 36: router = a skill shortlist before each stage, skill_index/skill_excerpt, ranked load_skill")
     r.add_argument("--router-model", help="brief 36: OpenRouter model of the router's section classifier (default: rules only)")
@@ -490,12 +506,19 @@ def main(argv: list[str] | None = None) -> int:
         if a.interview == "oracle" and not a.hidden_spec:
             ap.error("--interview oracle needs --hidden-spec")
         name = a.name or a.spec.resolve().parent.name
+        from agent.graph import profiles as _prof
+        try:                                                  # brief 194: a bad profile or switch fails before anything runs
+            vp = _prof.from_cli(a.verif_profile, a.verif_set, a.verif_level if any(x.startswith("--verif-level") for x in args) else None, a.spec_tests)
+        except _prof.ProfileError as e:
+            ap.error(str(e))
         cfg = Config(spec_md=a.spec, name=name, board=a.board, interview=a.interview, review=a.review,
+                     verif_profile=vp["profile"], verif_sets={k: v["value"] for k, v in vp["overrides"].items()},
+                     verif_ask=a.verif_profile is None and a.interview in ("on", "oracle"),
                      model=a.model, hidden_spec=a.hidden_spec, stop_after=a.stop_after,
                      harness=a.harness, cc_model=a.cc_model, cc_effort=a.cc_effort,
-                     verif_level=a.verif_level, profile=a.profile, roles=parse_roles(a.roles),
+                     verif_level=vp['cfg']['verif_level'], profile=a.profile, roles=parse_roles(a.roles),
                      no_shell=a.no_shell or task_no_shell(a.hidden_spec), data_dir=a.data_dir or task_data_dir(a.spec),
-                     oracle=a.oracle, oracle_cc_model=a.oracle_cc_model, spec_tests=a.spec_tests,
+                     oracle=a.oracle, oracle_cc_model=a.oracle_cc_model, spec_tests=vp['cfg']['spec_tests'],
                      spectest_model=a.spectest_model, spectest_max_loops=a.spectest_max_loops,
                      skill_routing=a.skill_routing, router_model=a.router_model, router_k=a.router_k,
                      harness_arms=a.harness_arm, hdl=a.hdl,
