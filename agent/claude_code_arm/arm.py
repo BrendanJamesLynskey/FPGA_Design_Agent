@@ -79,6 +79,8 @@ def mcp_config(rt, plan: dict[str, Any]) -> dict[str, Any]:
     """The strict MCP config: our server only, jailed to this role and stage, exposing only the stage's tools."""
     names = list(dict.fromkeys([*plan["file_tools"], *plan["core_tools"]]))
     env = {"PYTHONPATH": str(ROOT), "PATH": os.environ.get("PATH", ""), "HOME": os.environ.get("HOME", "")}
+    if getattr(rt, "run_dir", None):
+        env["FDA_RUN_DIR"] = str(rt.run_dir)                      # brief 182: the live console: the server's tool runs leave console/<step>.log
     for k in ("FDA_TOOLS_FILE", "FDA_BOARDS_FILE", "FDA_KNOWLEDGE", "FDA_SKILL_INDEX_URL"):
         if os.environ.get(k):
             env[k] = os.environ[k]

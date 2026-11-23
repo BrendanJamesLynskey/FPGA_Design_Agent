@@ -76,8 +76,10 @@ def summarise(runs_dir: Path, run_id: str, now: float | None = None) -> dict[str
     ends = [e for e in ev if e.get("event") == "stage_end"]
     reqs = _requests(rd)
     pend = _pending(rd)
-    cur = p["stage"]
-    n = p["stage_n"]
+    cur, n, visit, role = p["stage"], p["stage_n"], p["visit"], p["role"]
+    if starts and isinstance(starts[-1].get("stage"), str) and starts[-1]["stage"] in STAGES:       # the newest stage_start is the truth: role_usage rows are written when a role's call ends
+        cur, n, visit = starts[-1]["stage"], STAGES.index(starts[-1]["stage"]), starts[-1].get("visit")
+        role = p["role"] if p["stage"] == cur else None
     # what has been done: the last outcome of each stage from the stage_end events, else the snapshots
     outcome: dict[str, bool | None] = {}
     for e in ends:
@@ -124,7 +126,6 @@ def summarise(runs_dir: Path, run_id: str, now: float | None = None) -> dict[str
     if p["status"] == "idle" and pend is None and p["last_write_age_s"] is not None:
         blocked.append(f"no record written for {_mins(p['last_write_age_s'])}: the run has stopped, crashed or is in one long step")
     # doing / next
-    visit = p["visit"]
     if p["status"] == "finished":
         doing = f"finished: {p['stop'] or 'stop reason not recorded'}"
         nxt = "nothing: the run has ended"
@@ -135,9 +136,10 @@ def summarise(runs_dir: Path, run_id: str, now: float | None = None) -> dict[str
         doing = "starting"
         nxt = "stage 0 (clarify)"
     else:
-        bits = [f"stage {n} ({cur})" + (f", visit {visit}" if visit else "")]
-        if p["role"]:
-            bits.append(f"role {p['role']}")
+        between = bool(ends) and ends[-1].get("stage") == cur and float(ends[-1].get("t") or 0) >= float(starts[-1].get("t") or 0) and not step and build_open is None
+        bits = [f"stage {n} ({cur})" + (f", visit {visit}" if visit else "") + (" has just ended; the run is at its safe point (requests are applied here) and choosing the next stage" if between else "")]
+        if role:
+            bits.append(f"role {role}")
         if step:
             bits.append(f"{step['label']} for {_mins(step['since_s'])}")
         elif build_open is not None:

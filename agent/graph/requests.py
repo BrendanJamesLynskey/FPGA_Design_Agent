@@ -2,7 +2,7 @@
 
 A request is one of two kinds:
 
-- **control**: ``pause`` (wait at the next safe point; resume with ``python -m agent resume <run_id>``), ``stop_after N`` (end the run once stage N has
+- **control**: ``pause`` (wait at the next safe point; resume with ``python -m agent resume <run_id> --reply '{"resume": true}'``), ``stop_after N`` (end the run once stage N has
   passed), ``abort`` (end the run at the next safe point);
 - **design**: free text, such as "use block RAM for the FIFO". It reaches the next stage's writer as the owner's note; when its words name an earlier
   stage (the pickup classifier, ``agent.graph.pickup.classify_change``) the run is rewound to that stage through the snapshot rewind and the note goes there.
@@ -196,10 +196,10 @@ def safe_point(rt: Any, state: dict, advance: Any) -> dict[str, Any]:
         r = waiting[0]
         if r["status"] == "queued":
             _intervene(rt, r, f"paused at the end of stage {n} ({names[n]})")
-            _append(run_dir, {"event": "applied", "id": r["id"], "reason": f"paused at the end of stage {n} ({names[n]}); resume with: python -m agent resume {rt.run_id}"})
+            _append(run_dir, {"event": "applied", "id": r["id"], "reason": f"paused at the end of stage {n} ({names[n]}); resume with: python -m agent resume {rt.run_id} --reply '{{\"resume\": true}}'"})
             _event(rt, "request", names[n], request=r["id"], what="pause", outcome="applied")
         from langgraph.types import interrupt
-        interrupt({"kind": "paused", "reason": "user request", "id": r["id"], "stage": n, "stage_name": names[n], "resume": f"python -m agent resume {rt.run_id}"})
+        interrupt({"kind": "paused", "reason": "user request", "id": r["id"], "stage": n, "stage_name": names[n], "resume": f"python -m agent resume {rt.run_id} --reply '{{\"resume\": true}}'"})
         _append(run_dir, {"event": "done", "id": r["id"], "reason": "resumed"})
         _event(rt, "request", names[n], request=r["id"], what="pause", outcome="done")
         rs = load(run_dir)

@@ -20,7 +20,7 @@ each time the service starts.
 | The `Host` header must be the loopback address and the port in use (DNS rebinding) | `App.host_ok` |
 | Every request needs the session token (HttpOnly, SameSite=Strict cookie) | `App.token_ok` |
 | Every request calls the access gate (`agent.access.require`), so a revoked or expired key stops it answering; the entry point calls `require_or_exit` | `server._common`, `__main__` |
-| An action (POST) needs the token in the header (the cookie alone is refused), `Content-Type: application/json`, the service's own `Origin`, and one of the fixed routes: the three health actions, `/api/run/start`, `/api/run/stop`, `/api/board/run`; each of the last three also needs a confirmation field the page sends | `do_POST`, `App.post` |
+| An action (POST) needs the token in the header (the cookie alone is refused), `Content-Type: application/json`, the service's own `Origin`, and one of the fixed routes: the three health actions, `/api/run/start`, `/api/run/stop`, `/api/board/run`, and (Stage 3) `/api/run/ask`, `/api/run/request`, `/api/run/answer`; each of the last six also needs a confirmation field the page sends (and a key the route does not take is refused) | `do_POST`, `App.post` |
 | No external font, script or image: the Content-Security-Policy names no host, and the shipped files contain no URL | `server.CSP_APP`, tests |
 | No endpoint returns a key, token or prompt text: readers copy named fields only, and every response passes `redact.scrub`; a run's prompts appear as names and SHA-256 hashes | `sources.py`, `redact.py` |
 | The request never names a file to open: capture ids and record paths are looked up in lists the service built, and records are limited to `results/`, a design's `project.yaml` and `latency_stages.yaml` | `measure.resolve`, `sources.read_record` |
@@ -163,7 +163,7 @@ counts against a **separate cap** of $0.50 and 20 questions per run (`FDA_QA_USD
 
 ### Mid-run requests
 
-Two kinds. **Control**: `pause` (stop at the next safe point and wait; resume with `python -m agent resume <run_id>`), `stop-after N` (end the run when stage N has passed) and
+Two kinds. **Control**: `pause` (stop at the next safe point and wait; resume with `python -m agent resume <run_id> --reply '{"resume": true}'`), `stop-after N` (end the run when stage N has passed) and
 `abort` (end the run at the next safe point; the Stage 2 Stop button still signals the process at once). **Design**: free text, for example "use block RAM for the FIFO". A request is queued
 in `<run_dir>/requests.jsonl` (append-only: one row per event) and applied **only at a safe point: a stage boundary, which includes the moment after a review interrupt is answered, never in the middle of a tool call or a model turn**.
 At a safe point the agent acknowledges it (`accepted`, saying when and which stage it affects) and then records `done` or `declined` with a reason; the page shows the history. A design
@@ -192,7 +192,7 @@ stored as data and never reaches a command line, and text that starts with `-` i
 ### What a user could guess wrong
 
 - **A request is not instant.** It waits for the next safe point, which can be minutes away (a Vivado step must finish first). The page says "queued" until then.
-- **A pause stops the process.** The run is resumed from its checkpoint with `python -m agent resume <run_id>`; the page does not hold it open.
+- **A pause stops the process.** The run is resumed from its checkpoint with `python -m agent resume <run_id> --reply '{"resume": true}'` (the reply is what lets it past the pause); the page does not hold it open.
 - **A design request can rewind.** If it names an earlier stage, work after that stage's snapshot is discarded (it stays in the git history of the snapshots).
 - **Stop-after N is "after the gate passes".** If stage N fails and loops, the run continues until N passes.
 - **The answer to a question is a model's reading of the records, not a record.** It can be wrong; the cited record ids say where to check. It cannot see prompts, source files or logs, only the status records.
@@ -200,3 +200,9 @@ stored as data and never reaches a command line, and text that starts with `-` i
 - **The console can be empty** for a step whose tool writes nothing until it ends, and Vivado's own log appears as it is written to the tool's captured output.
 - **Costs differ.** The run's cost is the provider-reported figure; Claude Code on the subscription reports none, so the plan estimate is shown, labelled.
 - **Phone access is not provided**: the page stays on 127.0.0.1 (options for the owner are in the report).
+
+### Tests and screenshots (Stage 3)
+
+`python -m pytest navigator/tests/test_182_navigator_s3.py agent/tests/test_182_requests.py agent/tests/test_182_console.py` (a scripted model and fake runner stand in for the agent's tools; a fake stands in for the
+question's model call). `NODE_PATH=<node_modules> node navigator/shoot_stage3.js <url with token> <dir> <run id>` shoots the Live page at 1280 and 390 px with the console drawer shut and then open, and
+fails if the drawer polled while shut. Results: [results/182_navigator_s3](../results/182_navigator_s3/README.md).

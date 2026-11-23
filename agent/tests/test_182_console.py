@@ -110,3 +110,25 @@ def test_the_status_ask_and_request_commands(run_dir, capsys, monkeypatch):
     with pytest.raises(SystemExit):                                                                              # a flag-looking question is not accepted as text either
         main(["ask", str(run_dir), "-x"])
     assert main(["ask", str(run_dir), "- x"]) == 2
+
+
+def test_the_claude_code_arm_tools_run_in_the_mcp_server_and_leave_console_files_too(tmp_path, monkeypatch):
+    """The Claude Code arm runs the agent's tools in a separate MCP server process: the arm names the run in FDA_RUN_DIR and the server installs the console on its runner."""
+    from types import SimpleNamespace
+
+    from agent.claude_code_arm import arm
+    from agent.mcp_server import server
+    rt = SimpleNamespace(run_dir=tmp_path / "run", design=tmp_path / "run" / "d", cfg=SimpleNamespace(board="nexys_a7_100t", skill_routing="off"))
+    cfg = arm.mcp_config(rt, {"role": "rtl", "stage": "synthesis", "file_tools": [], "core_tools": []})
+    assert cfg["mcpServers"]["fda"]["env"]["FDA_RUN_DIR"] == str(rt.run_dir)
+    (tmp_path / "run").mkdir()
+    (tmp_path / "run" / "d").mkdir()
+    got = []
+    monkeypatch.setenv("FDA_RUN_DIR", str(tmp_path / "run"))
+    monkeypatch.setattr(server.anyio, "run", lambda f, s, t: got.append(s))
+    assert server.main(["--design", str(tmp_path / "run" / "d"), "--stage", "synthesis"]) == 0
+    s = got[0]
+    assert s.runner._console_installed == str(tmp_path / "run")
+    s.runner.run("simulate", [sys.executable, "-c", "print('PASS')"], tmp_path)
+    assert (tmp_path / "run" / "console" / "001_simulate.log").read_text() == "PASS\n"
+    assert [e["stage"] for e in rows(tmp_path / "run") if e.get("event") == "console"] == ["synthesis"]
