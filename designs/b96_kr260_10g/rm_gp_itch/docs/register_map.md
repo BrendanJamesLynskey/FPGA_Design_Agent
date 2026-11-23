@@ -161,7 +161,7 @@ The two windows follow the same rules as the base map: **unmapped addresses** (0
 | 0x370 | TCPF_WDATA | RW | 0 | Writing it commits {data} to the tcp_fast register at TCPF_ADDR[4:0] (once). Stand-in build: no effect. |
 | 0x374 | RP_CFG | RW | 0 | bits 15:0 passes over the replay memory per IT_CMD RP_START (0 or 1: one pass). At the end of a pass the replay waits the `gap` field of the end-marker header word, then starts again from word 0; bits 31:16 reserved (read 0). |
 | 0x378 | IT_REF_PX | RW | 0 | Brief 188: the band reference price software writes (Price(4)); used when IT_CTRL REF_SW is 1. STAGED like the limits: it takes effect, and its age restarts at 0, with the next IT_CMD COMMIT. A read returns the held value. A reference never committed since reset is never fresh. |
-| 0x37C | IT_REF_AGE | RW | 0 | Brief 188: the largest age, in core clocks (6.2061 ns), a committed reference may have when a verdict is taken (fresh when age <= this value; 0 means fresh only in the clock of the commit and the one after, so a reference that is never refreshed is refused). STAGED. An older reference refuses every candidate as rej_band. |
+| 0x37C | IT_REF_AGE | RW | 0 | Brief 188: the largest age, in core clocks (6.2061 ns), a committed reference may have when a verdict is taken (fresh when age <= this value; 0 means fresh only in the one clock after the commit, so a reference that is not refreshed is refused). STAGED. An older reference refuses every candidate as rej_band. |
 | 0x400 to 0x57C | ISTAT0 to ISTAT95 | RO | 0 | Counter and status snapshot of the ITCH path, 96 words (table below), taken together with the base snapshot by CMD bit 2. All counters are 32 bit and clear with IT_CMD CLR_CNT. |
 
 ## ISTAT words (core clock domain, TXUSRCLK2)
