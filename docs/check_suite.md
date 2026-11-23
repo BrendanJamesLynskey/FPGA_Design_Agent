@@ -44,6 +44,7 @@ python3 -m flow.checks designs/<d> [--names all|resets,cdc,...] [--scope auto|rt
 | `xpm_sim` | ours | rtl, synth, route | advisory (brief 105A): an `xpm_cdc_*` instance with `SIM_ASSERT_CHK` not 1 (`XPM-SIM-01`); the build's own source list; `xpm_cdc_async_rst` has no such parameter |
 | `clocking` | AMD reports and ours | synth, route | CLKC methodology rows; MMCM/PLL VCO and PFD ranges (`flow/cmt_check.tcl`) |
 | `dsp_ram_mapping` | AMD | synth, route | DPIP/DPOP/SYNTH/RBOR/DPIR/DPOR/RMIR/RMOR/RROR rows; DSP and RAM utilisation |
+| `dsp_regs` | ours (advisory) | synth, route | brief 185: a DSP slice with no multiplier or output register at a period the measured limits (`flow/dsp_regs_limits.json`) say it cannot meet; a period below the slice's own minimum; AMD's DPIP/DPOP rows. Reads `dsp_cells*.txt` written by `flow/build.tcl` |
 | `control_sets` | AMD | synth, route | report_control_sets (count of unique control sets); ULMTCS rows |
 | `fsm` | ours | rtl, synth, route | `flow/fsm_coverage.py` on the VCDs under `build/verif` |
 | `axi` | ours | rtl, synth, route | `flow/amd_ip_notes.py` (brief 69): AMD AXI4-Lite IP next to our register blocks; advice only |

@@ -59,6 +59,7 @@ BUILD_FILES = {
     # written by flow/build.tcl after synthesis since brief 71; the route scope reads the same post-synthesis scan
     "reset_scan": {"synth": "reset_scan_synth.tsv", "route": "reset_scan_synth.tsv"},
     "control_sets": {"synth": "control_sets_synth.rpt"},
+    "dsp_cells": {"synth": "dsp_cells_synth.txt", "route": "dsp_cells.txt"},      # brief 185: written by flow/build.tcl (flow/dsp_cells.tcl)
 }
 DCP = {"synth": "post_synth.dcp", "route": "post_route.dcp"}
 GATE_STAGE = {"rtl": "rtl", "synth": "post_synth", "route": "post_route"}
@@ -603,6 +604,33 @@ def _dsp_ram(ctx: Ctx) -> dict[str, Any]:
     return _result(fs, parts, recs)
 
 
+def _dsp_regs(ctx: Ctx) -> dict[str, Any]:
+    """Advisory (brief 185): a DSP slice without the multiplier or output register at a period the measurements say it cannot meet, and Vivado's own
+    DPIP/DPOP rows. The limits are flow/dsp_regs_limits.json (regenerated from results/185_dsp_slices by tools/dsp_regs_limits.py)."""
+    if ctx.scope == "rtl":
+        return _not_run("needs a synthesised design (scope synth or route)")
+    import re
+    from flow import dsp_regs_check as D
+    cells = ctx.report("dsp_cells")
+    if cells is None:
+        return _not_run(ctx.not_run_reason("dsp_cells"))
+    ts = ctx.report("timing_summary")
+    period = None
+    if ts is not None:
+        rows = re.findall(r"^\s*\S+\s+\{[^}]*\}\s+([\d.]+)\s+[\d.]+", ts.read_text(errors="replace"), re.M)
+        period = min(float(x) for x in rows) if rows else None
+    drc = ctx.report("drc")
+    fs = []
+    if period is None:
+        parts = {"registers": "not run: no clock period in the timing summary"}
+    else:
+        parts = {"registers": "ran"}
+    for f in D.check(D.parse_cells(cells.read_text(errors="replace")) if period is not None else [], period or 0.0, drc.read_text(errors="replace") if drc else None):
+        fs.append({"tool": "dsp_regs", "code": f["code"], "severity": "advisory", "where": f["where"], "key": f"dsp_regs:{f['code']} {f['where']}",
+                   "message": f["message"], "blocking": False})
+    return _result(fs, parts, [cells])
+
+
 def _control_sets(ctx: Ctx) -> dict[str, Any]:
     """report_control_sets (AMD): the number of unique control sets, and AMD's ULMTCS rows from report_methodology."""
     if ctx.scope == "rtl":
@@ -799,6 +827,9 @@ register(Check("dsp_ram_mapping", "records", POST, {"vivado": ("DPIP-*", "DPOP-*
                                                               "RMIR-*", "RMOR-*", "RROR-*")},
                "DSP and block-RAM mapping advice (AMD DPIP/DPOP/SYNTH/RBOR rows) and their utilisation", _dsp_ram,
                reports=("methodology", "drc", "utilization"), amd=True))
+register(Check("dsp_regs", "records", POST, {"dsp_regs": ("DSPREG-01", "DSPREG-02", "DSPREG-03", "DSPREG-04")},
+               "advisory (brief 185): a DSP slice with no multiplier or output register at a period the measured limits say it cannot meet, a period "
+               "below the slice's own minimum, and AMD's DPIP/DPOP rows (flow/dsp_regs_check.py)", _dsp_regs, reports=("dsp_cells", "timing_summary", "drc")))
 register(Check("control_sets", "vivado", POST, {"vivado": ("ULMTCS-*",)},
                "report_control_sets (count of unique control sets) and AMD's ULMTCS rows", _control_sets,
                reports=("control_sets", "methodology"), amd=True))

@@ -62,6 +62,7 @@ source $flow_dir/mcp_paths.tcl
 source $flow_dir/io_paths.tcl
 source $flow_dir/iob_paths.tcl
 source $flow_dir/result_hash.tcl
+source $flow_dir/dsp_cells.tcl
 # brief 140: check_timing's no_clock list at the synthesis stage names output pins of a hard block that drive nothing (measured in dbg_xvc: the
 # PS8's EMIO clock outputs, nets with no load; opt_design removes the nets and the routed check_timing lists none). A pin with no load is
 # no endpoint and nothing can be timed from it. This writes the pins of that list that are outputs with no loads, one per line, to
@@ -223,6 +224,7 @@ if {$resume_from eq ""} {
     }
     report_control_sets -verbose -file $out/control_sets_synth.rpt
     report_drc            -file $out/drc_synth.rpt
+    catch {fda_dsp_cells $out/dsp_cells_synth.txt}      ;# brief 185: register properties of every DSP48 (flow/dsp_regs_check.py)
     fda_qor $out synth
     report_utilization    -file $out/utilization_synth.rpt
     report_clock_networks -file $out/clock_networks_synth.rpt
@@ -308,6 +310,7 @@ if {$resume_from ne "route"} {
     report_methodology    -file $out/methodology.rpt
     report_cdc -details   -file $out/cdc.rpt
     report_drc            -file $out/drc.rpt
+    catch {fda_dsp_cells $out/dsp_cells.txt}
     fda_qor $out route
     exception_reports $out route
     io_dump_paths $out/io_paths_route.txt

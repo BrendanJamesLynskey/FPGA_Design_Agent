@@ -240,7 +240,8 @@ def parse(pk: str, group: str | None = None) -> None:
                 r["fmax_min_period_mhz"] = round(1000.0 / r["min_period_required_ns"], 1) if r["min_period_required_ns"] else None
                 cand = [x for x in (r.get("fmax_setup_mhz"), r["fmax_min_period_mhz"]) if x]
                 r["fmax_mhz"] = round(min(cand), 1) if cand else None
-                r["fmax_bound"] = "slice minimum period" if r["fmax_min_period_mhz"] and r["fmax_mhz"] == r["fmax_min_period_mhz"] else "setup slack at the target clock"
+                r["fmax_bound"] = (f"minimum period of {r['min_period_cell']}" if r["fmax_min_period_mhz"] and r["fmax_mhz"] == r["fmax_min_period_mhz"]
+                                   else "setup slack at the target clock")
                 r["dsp_cells"] = dsp_cells(wd)
                 r["methodology_dsp"] = methodology_dsp(wd)
                 for k in ("power_w",):
