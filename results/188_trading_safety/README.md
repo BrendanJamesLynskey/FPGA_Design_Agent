@@ -8,7 +8,7 @@ Records of brief 188: level sizes saturate, risk limits are staged and committed
 - `staged_limits_sim.json`: whole core in xsim 2026.1: a limit lowered but not committed stays out of force, COMMIT applies it.
 - `mutation_new.json`, `mutation_rerun.json`: the 14 new or changed seeded faults; 13 killed first time, the survivor (`risk_nt_tbl_idx`) was killed after a test was added (rerun file).
 - `nt0/`, `nt1/`, `nt2/`: `latency_sim.json` of the builds with NOTIONAL_MODE 0, 1, 2.
-- `ooc/`: out-of-context Vivado 2026.1 builds of itch_ouch_top for NOTIONAL_MODE 0, 1, 2 (see `notional_measurement.md`).
+- `ooc/`: out-of-context Vivado 2026.1 builds of itch_ouch_top for NOTIONAL_MODE 0, 1, 2, with the check computed in the verdict clock (`same_clock_nt*.json`) and pipelined (`pipelined_nt*.json`); `notional_measurement.md` reads them.
 - `build_rm_gp_itch/`: the rebuild of rm_gp_itch with the new registers (`build_one.sh` runs it).
 
 ## Measured
