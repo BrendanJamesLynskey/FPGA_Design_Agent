@@ -31,7 +31,7 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
     const startBtn = () => page.evaluate(() => { const b = [...document.querySelectorAll('button')].find((e) => e.textContent.includes('Start the run')); return b ? b.disabled : null; });
     await shot('start_picker');
     await page.evaluate(() => { document.querySelector('details.drawer summary').click(); }); await sleep(300);
-    await page.evaluate(() => { const s = [...document.querySelectorAll('fieldset select')].find((e) => [...e.options].some((o) => o.value === 'high_reliability')); s.value = 'high_reliability'; s.dispatchEvent(new Event('change')); }); await sleep(600);
+    await page.evaluate(() => { const s = [...document.querySelectorAll('fieldset select')].find((e) => [...e.options].some((o) => o.value === 'high_dependability')); s.value = 'high_dependability'; s.dispatchEvent(new Event('change')); }); await sleep(600);
     await page.evaluate(() => { document.querySelector('details.drawer summary').click(); }); await sleep(300);
     await shot('start_profile_drawer');
     report.checks[tag + '_start_enabled'] = !(await startBtn());
