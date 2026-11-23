@@ -53,8 +53,15 @@ Arithmetic on the published numbers (derived, not measured here): at 1.5515 ns p
 5. **Target the VU2P in out-of-context studies of the order path.** Refused on this PC (section 1). Cost: a licence tier that covers the device (owner decision) or a cloud image that has one; the gain is timing at -3 speed on UltraScale+ fabric, a different fabric from the K26's -2 part, so results would be an upper-end comparison, not our board. Lowest rank until the licence question is decided.
 6. **FINN_Latency as the RTL + ML reference.** AMD's page reports 115.748 ns, which the page converts to 37 clocks at 320 MHz (3.125 ns), measured in simulation from the first TVALID in to the next TVALID out for the FINN cybersecurity MLP (60-bit words, a 10-word input), with the design intentionally run at about half the GTF clock. Our brief 113 (report 113) put a 1-clock boosted-tree block (4.3 ns out of context on the K26, 6.206 ns core clock) in the order path with zero added tick-to-trade clocks in simulation, and measured the MLP alternative at 13 clocks in an earlier brief. The comparison is not like for like (different task, data, width and clock; theirs is stimulus to response of the block alone, ours a class available before the message ends) and I would not publish a ratio; what is worth borrowing is the presentation: latency of the block stated as first-valid-in to first-valid-out in simulation, with the clock named. Cost: reporting only. Our own trading-path ML claims should say, next to AMD's 37 clocks, that the block's latency and the path's latency are different things.
 
-## 5. Gaps and next steps
+## Known gaps and limits
 - Task 2 is not done (licence-tier cap, section 2); the simulated latency distribution and the 2.34 / 5.44 ns check are open. Next step: owner decision on (a) or the planner's decision on (b).
 - UG576 was searched with `pdftotext` for latency, bypass and gearbox text; the Chapter and table names above are as printed there, but page numbers were not re-checked and the AR 64309 and AR 68177 latency tables themselves are not available locally (only their titles in UG576's references).
 - Nothing in this study is a measurement of our design; no board was touched, no board command written.
 - KB note proposal: `kb_note_proposal.md` (not opened as a KB PR: task 2 measured nothing).
+
+## Records
+`licence.md`, `licence_check.log` (Basic licence, VU2P refused), `licence_check_nolicence.log` (no-licence variant, does not start), `licence_run.txt`; `sim_attempt/` (xsim refusal log, edited-setup diff, TCL, stubs, the two library-model probe tops); `kb_note_proposal.md`.
+
+## Reproduce
+- Licence check: `results/186_ul3524/run_licence.sh` (waits for a "186:" heavy slot; needs no clone, uses brief 33's `licence_check.tcl`).
+- Simulation refusal: copy `GTF_Latency/Synchronized/GTFRAW_Latency_10G_Sync` from the clone at commit 5e124a2, apply `sim_attempt/setup.tcl.diff` (part swap, stubs) and the 2026.1 version-gate edit in `ip/*.tcl`, add `stubs_dbg.v`, and run `sim_attempt/runsim.sh raw` (paths inside are this machine's worktree paths) with `run_raw.tcl`. The two-line probe: `xvlog t3.v glbl.v; xelab -L unisims_ver -L secureip t3 glbl; xsim t3 -R`.
