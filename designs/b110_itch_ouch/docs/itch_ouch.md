@@ -53,8 +53,11 @@ Order frame byte map and field values: [spec_notes.md](spec_notes.md) section 3.
 | `cfg_thr` | candidate rule: a new **sell** order at or below this Price(4) (and not zero) | the unit is Price(4): 1000000 is 100.0000 |
 | `cfg_qty` | order quantity | 1 to 999999 and at most `cfg_max_qty`, else every candidate is refused (`rej_size`) |
 | `cfg_max_qty`, `cfg_max_pos` | risk limits | position is the quantity **sent**, not filled |
-| `cfg_band` | a buy price may be at most this far above the best bid | Price(4) units |
-| `cfg_px_off` | added to the triggering order's price to give the order price | 32 bit, wraps |
+| `cfg_band` | a buy price may be at most this far above the band reference (next four rows) | Price(4) units |
+| `cfg_ref_sw`, `cfg_ref_px`, `cfg_ref_age`, `ref_load` | **band reference (brief 188, idea from Edwards 2026, ch 9).** `cfg_ref_sw` 0: the reference is this path's own best bid, as before (a strategy that mis-reads its own feed also mis-sets its own limit, so this is the weaker choice). 1: the reference is `cfg_ref_px`, a price software wrote from another source; it counts only while it is fresh: `ref_load` (one clock, strobed when software wrote `cfg_ref_px`) restarts an age counter, and a verdict taken when the age is above `cfg_ref_age` clocks, or before any `ref_load` since reset, is refused as `rej_band` | with `cfg_ref_sw` 1 the book's bid is not consulted at all, so a candidate is judged even when the book has no bid. The age is in core clocks and counted to within one clock; `cfg_ref_age` 0 means fresh only in the load clock and the next; the reference is a **price, not a limit**: only the upper side is checked (a buy far below it is allowed) |
+| `cfg_px_off` | added to the triggering order's price to give the order price | 32 bit; **if the sum passes 2^32 - 1 the candidate is refused as `rej_band`** (it used to wrap and be judged as a small price) |
+| `cfg_holdoff` | **hold-off (brief 188; b58a's rule hold-off).** After an order is accepted for an instrument, further candidates of that instrument are refused for this many clocks, counted as `rej_busy`; speculation is not started while any instrument is in hold-off | 0 = off; 16 bit, at most 65535 clocks (406.7 microseconds at 161.13 MHz); per instrument, others are unaffected; the refusal is checked last, after every other check, so a candidate that would fail another check is counted under that one; timing dependent |
+| `cfg_max_notional`, `cfg_nt_shift`, `cfg_nt_tbl` | **notional check (brief 188), only when built with `NOTIONAL_MODE` 1 or 2** (section 4; ignored in mode 0). Mode 1: order price times `cfg_qty` must be at most `cfg_max_notional` (64 bit). Mode 2: `cfg_qty` must be at most `cfg_nt_tbl[i]` with bucket i = min(order price >> `cfg_nt_shift`, 15); software fills entry i with the limit divided by the **highest** price of bucket i, rounded down (the last bucket: the largest price, 2^32 - 1), so the table never admits an order the multiply would refuse but can refuse some the multiply admits (a price below the top of its bucket) | a refusal is counted as `rej_size`; in mode 1 a limit of 0 refuses every order; both modes check the order price (candidate price plus `cfg_px_off`) |
 | `cfg_tif`, `cfg_display`, `cfg_capacity`, `cfg_ise`, `cfg_cross`, `cfg_custtype`, `cfg_minqty` | OUCH Enter Order fields | ASCII codes; see spec_notes |
 | `cfg_arm` | orders allowed | not armed: candidates are refused and counted (`rej_arm`) |
 | `cfg_kill` | **kill switch**: no order starts while set | the next candidate after the change is refused (`rej_kill`); a frame already started is not recalled, except a speculative one whose verdict has not come |
@@ -88,15 +91,16 @@ the index list is `rtl/itch_pkg.sv`, generated from the model's list, and every 
 | `unwatch` | order messages whose stock locate is not a watched instrument |
 | `omiss` | an Execute, Cancel, Delete or Replace of a watched instrument whose order reference is not in the table |
 | `odup` | an Add whose reference is already live (ignored) |
-| `oovf` | an Add (or the new half of a Replace) whose table index holds a different live order: **not stored**, the instrument becomes inexact |
+| `oovf` | an Add (or the new half of a Replace) whose table index holds a different live order: **not stored**, the instrument becomes inexact. Also (brief 188) an Add of zero shares, which would be a live entry of no size: not stored, instrument inexact (the decoder already refuses zero shares as `m_bad`, so this is a second line of defence) |
 | `oover` | an execution of more shares than remain (the order is removed) |
 | `lvovf` | an Add whose price has no level and the ladder is full: **the ladder is not updated, but the order is still stored in the order table** (a later removal at that price finds no level and counts `lvmiss`); the instrument becomes inexact, and a candidate Add is counted in `cand` and refused as stale |
 | `lvmiss` | a removal at a price that has no level |
+| (`lvovf`, continued) | **Level sizes saturate (brief 188).** An Add whose quantity would take a level past 2^32 - 1 leaves the level at 2^32 - 1 (it used to wrap to a small number), counts `lvovf` and makes the instrument inexact; a later removal from that level subtracts from the saturated value, which is no longer the true size, so the instrument stays inexact until `clr_book` |
 | `evdrop` | events dropped during a sweep, or because the two-entry queue was full |
 | `cand` | candidates reaching the verdict (the Add was stored in the order table; this includes an Add that the full ladder could not hold, `lvovf`) |
 | `fire` | orders accepted and started or queued |
 | `rej_arm rej_kill rej_gap rej_stale rej_size rej_pos rej_band` | candidates refused, the first failing check in that order |
-| `rej_busy` | a passing candidate with the frame busy and the queue full: **timing dependent** |
+| `rej_busy` | a passing candidate with the frame busy and the queue full, **or refused in hold-off (brief 188)**: timing dependent |
 | `abort` | speculative frames cancelled (risk reject, or no book update) |
 | `late_abort` | a cancel that found no frame in flight (never seen) |
 | `spec` | speculative starts |
@@ -186,6 +190,7 @@ in the stress tests). The sustained rate with back-to-back D messages is in [res
 | `N_INST` | 4 | 2 to 8 | instruments watched |
 | `LEVELS` | 8 | 4 or 8 | price levels per side and instrument (the best-level tree reduces them in two steps) |
 | `ORD_AW` | 8 | 4 to 16 (tested at 5, 6, 8 and 10) | order table index bits: 2^ORD_AW live orders |
+| `NOTIONAL_MODE` | 0 | 0, 1, 2 | brief 188: pre-trade notional check: 0 none, 1 price times quantity, 2 price-band table written by software (section 1.3; measured cost in [results/b188/notional_measurement.md](../../../results/b188/notional_measurement.md)) |
 
 The bench also runs 2/4/5, 3/8/6 and 8/8/10 (N_INST/LEVELS/ORD_AW) and lints clean at several points (`tests/test_b110_rtl.py`, `tests/test_b110_lint.py`).
 Resources and timing are in [README.md](../README.md) (measured, out of context).

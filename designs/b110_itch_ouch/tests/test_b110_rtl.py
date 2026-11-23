@@ -42,6 +42,21 @@ def test_notional_modes() -> None:
         run(f"b110_nt{mode}", testcase="notional", params={"NOTIONAL_MODE": mode}, extra={"B110_NOTIONAL": str(mode)})
 
 
+def test_notional_latency() -> None:
+    """Brief 188: the same latency test (book update and first order word, in clocks from the last byte of the message) for each NOTIONAL_MODE; the records go to B110_RECORD/nt<mode>/ when it is set."""
+    top = os.environ.get("B110_RECORD")
+    try:
+        for mode in (0, 1, 2):
+            if top:
+                d = Path(top) / f"nt{mode}"
+                d.mkdir(parents=True, exist_ok=True)
+                os.environ["B110_RECORD"] = str(d)
+            run(f"b110_ntlat{mode}", testcase="latency", params={"NOTIONAL_MODE": mode}, extra={"B110_NOTIONAL": str(mode)})
+    finally:
+        if top:
+            os.environ["B110_RECORD"] = top
+
+
 def test_book_core_queue() -> None:
     """book_core alone, events on consecutive clocks (tests/b110_book_cocotb.py): the queue and the Replace's second slot."""
     srcs = [RTL / "itch_pkg.sv", RTL / "book_core.sv"]

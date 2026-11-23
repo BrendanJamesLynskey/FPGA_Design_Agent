@@ -22,6 +22,7 @@ PERIOD_PS = 6206
 KIND = {"A": 0, "F": 0, "E": 1, "C": 1, "X": 2, "D": 3, "U": 4, "R": 5, "S": 6}
 TIMING_DEPENDENT = ("spec", "abort", "late_abort", "rej_busy")
 REC: dict = {}
+NOTIONAL = int(os.environ.get("B110_NOTIONAL", "0"))
 COVER: dict = {"start_off": set(), "end_off": set(), "keep": set(), "counters": set(), "lengths": set(), "tests": []}
 
 
@@ -657,7 +658,7 @@ async def latency(dut):
     px = MID
     out = {}
     for spec in (False, True):
-        cfg = small_cfg()
+        cfg = small_cfg(**nt_pass())
         b, m = await fresh(dut, cfg, spec=spec)
         d = Day(b, m)
         await d.open()
@@ -912,7 +913,11 @@ async def zz_coverage(dut):
 
 
 # ============================================================================== brief 188: software band reference, hold-off, price wrap, notional check
-NOTIONAL = int(os.environ.get("B110_NOTIONAL", "0"))
+
+
+def nt_pass() -> dict:
+    """The configuration of a build with a notional check that lets the bench's orders through (brief 188; empty for mode 0, which has no check)."""
+    return dict(notional_mode=NOTIONAL, max_notional=1 << 62, nt_shift=0, nt_tbl=(1_000_000,) * 16) if NOTIONAL else {}
 
 
 def nt_table(max_notional: int, shift: int) -> tuple:
@@ -1026,9 +1031,10 @@ async def notional(dut):
     qty = 100
     limit = (px + 100) * qty                         # exactly the notional of a candidate at px + 100
     shift = 17                                       # prices of 100.0000 fall in bucket 7 (1,000,000 >> 17)
-    for name, kw in (("at_limit", dict(qty=qty)), ("qty_over", dict(qty=qty + 1)), ("limit_minus_1", dict(qty=qty, max_notional=limit - 1)), ("zero_limit", dict(qty=qty, max_notional=0))):
+    for name, kw in (("at_limit", dict(qty=qty)), ("qty_over", dict(qty=qty + 1)), ("limit_minus_1", dict(qty=qty, max_notional=limit - 1)), ("zero_limit", dict(qty=qty, max_notional=0)),
+                     ("last_bucket", dict(qty=qty, nt_shift=15))):         # prices of 100.0000 are in bucket 30 >> 15 = the last one (index 15), whose entry is the limit divided by 2^32 - 1: refuses in mode 2
         k = {**dict(notional_mode=NOTIONAL, max_notional=limit, nt_shift=shift), **kw}
-        k["nt_tbl"] = nt_table(k["max_notional"], shift)
+        k["nt_tbl"] = nt_table(k["max_notional"], k["nt_shift"])
         cfg = small_cfg(max_qty=500, **k)
         b, m, d = await day_with_bid(dut, cfg)
         await d.send([d.A(0, 1, "B", 100, px - 100)])
