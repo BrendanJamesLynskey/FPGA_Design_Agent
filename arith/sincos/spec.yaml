@@ -1,0 +1,103 @@
+# Machine-readable specification of sine and cosine of a phase (arith brief 139d). The prose is spec.md; the two agree (tests/test_sincos_package.py).
+schema: fda-arith/spec/1
+function: sincos
+title: Sine and cosine of a phase
+model: arith/sincos/model.py
+summary: "s = sin(2 pi p / 2**PH) and c = cos(2 pi p / 2**PH) for an unsigned PH-bit phase p (a fraction of a turn), as signed OW-bit numbers scaled by 2**(OW-1). Three implementations trade DSP, table memory, latency and accuracy: a quarter-wave table with linear interpolation (two DSPs, about 3 last places), a quarter-wave table with a quadratic (four DSPs, 1 last place) and CORDIC rotation, one stage per iteration (no DSP, no table beyond the angle constants, about 1.7 last places). They are the alternatives to brief 137's CORDIC sin/cos design (branch b137-arith-pareto, PR #264; its results/137_arith_pareto/README.md reports, for the pipelined CORDIC points on an xc7a35t out of context, hundreds of LUTs and as many flip-flops at one result per clock): the table variants here would trade those LUTs for DSP blocks and a small ROM at the same throughput, which is an expectation to be measured, not a result; this entry's cordic variant is the same architecture family with the table variants' interface (phase in turns, outputs scaled by 2**(OW-1)) so the three can be compared in one place."
+semantics:
+  - "p is read as p / 2**PH turns (so 2**PH is a full circle); s and c are two's complement OW-bit numbers, sin and cos scaled by 2**(OW-1), rounded to nearest (ties upward) and limited to +-(2**(OW-1) - 1): +1.0 is represented as 2**(OW-1) - 1, one place below its exact scaled value (so the worst case error is at least 1 last place at the peaks), and -1.0 as -(2**(OW-1) - 1) (the value -2**(OW-1) never occurs)"
+  - "the top two bits of p are the quadrant q and the other K = PH - 2 bits o the angle inside it; every variant evaluates the non-negative first-quadrant values S = sin and C = cos of (o / 2**K) quarter turns, rounded and clamped to [0, 2**(OW-1) - 1], then maps them: q = 0: (s, c) = (S, C); q = 1: (C, -S); q = 2: (-S, -C); q = 3: (-C, S)"
+  - "lerp: the top SB bits of o pick a segment; with the sine and cosine tables' values c0 and slopes s1 (20 fractional bits, exact at the segment ends) and the position d (DB = K - SB bits), S = round((c0 * 2**DB + s1 * d) / 2**(20 + DB - (OW - 1)))"
+  - "poly2: a quadratic a0 + a1 t + a2 t**2 per segment (t = d / 2**DB), fitted at the three Chebyshev nodes; Horner in integers p1 = (a2 d) >> DB, q = a1 + p1, S = round((q d + a0 * 2**DB) / 2**(20 + DB - (OW - 1)))"
+  - "cordic: the angle o / 2**PH turns in units of 2**-(PH + G); NIT rotations by atan(2**-i) / 2 pi (i = 0 to NIT - 1, sign by the sign of the remaining angle) from (x, y) = (1 / gain, 0); C = round(x / 2**G) and S = round(y / 2**G), both clamped at 0 and 2**(OW-1) - 1"
+  - "the three models differ in their rounding steps, so the variants are NOT bit-identical to each other; each is bit-exact against its own model and within the stated error of the exact functions"
+ports:
+  - {name: clk, dir: in, width: 1, text: "clock"}
+  - {name: phase, dir: in, width: PH, text: "the phase, an unsigned fraction of a turn: p / 2**PH turns"}
+  - {name: s, dir: out, width: OW, text: "sine, two's complement, scaled by 2**(OW-1)"}
+  - {name: c, dir: out, width: OW, text: "cosine, two's complement, scaled by 2**(OW-1)"}
+parameters:
+  PH: {min: 6, max: 18, text: "bits of the phase; lerp and poly2: PH - 2 > SB; cordic: PH + G <= 24"}
+  OW: {min: 4, max: 16, text: "bits of s and c"}
+  SB: {min: 3, max: 6, text: "lerp (3 to 6) and poly2 (3 to 5): bits of the in-quadrant angle that select the segment, 2**SB segments per quarter wave"}
+  NIT: {min: 4, max: 24, text: "cordic: iterations (stages)"}
+  G: {min: 1, max: 8, text: "cordic: guard bits below the last place of s and c; OW - 1 + G <= 24"}
+signedness: "phase is unsigned; s and c are signed (two's complement)"
+exactness: "not exact: every variant is within the error stated in 'Accuracy' of the exact sin and cos, which includes the rounding of the outputs and the one-place limit at +-1.0; the three variants are bit-exact against their own models but not against each other"
+latency_definition: "clocks from phase being presented to s and c being valid: lerp 2, poly2 3, cordic NIT; the quadrant map is combinational after the last register; throughput is one pair per clock in every variant"
+accuracy: "Error is the larger of |s - sin ideal| and |c - cos ideal| in units of the last place of the outputs (2**-(OW-1)), the ideal taken in real arithmetic at the exact phase and not rounded, so a perfectly rounded result has error 0.5 (and at least 1 where the exact value is +-1.0, the limit). The bound of each listed point is a measured maximum over every phase of that point (python -m pytest arith/sincos/tests/test_sincos_accuracy.py), rounded up to 0.01. lerp is about 2.9 last places at all three listed points (its error falls 4x per extra SB and doubles per extra output bit, and the listed points add one SB per two output bits); poly2 reaches the 1-place floor; cordic is about 1.7. A point not listed has no stated bound: measure it with model.max_error."
+contract:
+  protocol: "plain registered-or-combinational ports, no handshake: phase is sampled every clock and one (s, c) pair leaves, with no valid, ready or backpressure. A caller that needs a valid bit delays its own valid by the variant's latency"
+  throughput: "one pair per clock in every variant (initiation interval 1); a phase accumulator in front of it gives an NCO or a DDS of PH-bit resolution"
+  latency: "per variant, in clocks: lerp 2, poly2 3, cordic NIT"
+  reset: "none: no control state; the pipelines hold data only and their outputs are meaningless for latency clocks after power-up"
+  clock: "one clock, rising edge, no clock-enable and no gating"
+  stall: "none: the pipeline cannot be frozen (no enable)"
+integration:
+  port_timing: "phase goes to ROM addresses (lerp, poly2) or to the CORDIC's first stage: register it in the caller if it comes from logic (a phase accumulator's register is enough). s and c leave through the combinational quadrant map (a conditional negation, about one adder delay) after the last register: if the next block needs a registered output, add one register after s and c. lerp and poly2 register the ROM outputs before the multipliers"
+  constraints: "no multicycle or false paths, one clock. DSP variants: keep the register stages un-merged so the DSP's registers can absorb them. The same phase gives sin and cos together, a quadrature pair (for a mixer or a complex rotation); for an angle in radians multiply by 2**PH / (2 pi) first, which this core does not do. The phase wraps by itself: the top bits are the quadrant, so adding two phases modulo 2**PH needs no extra logic"
+guess_wrong:
+  - "the phase is a fraction of a turn, not radians and not a half turn: p = 2**(PH - 2) is 90 degrees; p = 2**(PH - 1) is 180 degrees (s = 0, c = -(2**(OW-1) - 1))"
+  - "full scale is 2**(OW-1) - 1, not 2**(OW-1): +1.0 is never represented exactly, the peaks are one last place low, and -2**(OW-1) never occurs, so s and c are symmetric about zero"
+  - "s and c are two's complement patterns: read them as signed"
+  - "the error is not 0.5 ulp: lerp is about 2.9 last places at its listed points, cordic 1.7, poly2 1.0 (the floor from the peak limit); read the accuracy table of the variant before choosing"
+  - "the variants are not bit-identical to each other (different rounding steps): switching variant changes the low bits of s and c"
+  - "brief 137's CORDIC design has its own interface; this core's cordic variant uses the contract of the table variants (phase in turns, outputs scaled by 2**(OW-1)) so the three can be swapped in one place"
+  - "the parameter ranges (PH - 2 > SB, SB inside 3 to 6 for lerp and 3 to 5 for poly2, NIT 4 to 24, PH + G <= 24 and OW - 1 + G <= 24 for cordic) are documented, not enforced by assertions: a value outside them gives wrong results without a message"
+  - "no reset and no valid: for latency clocks after power-up the outputs are not meaningful; there is no clock-enable"
+
+variants:
+  lerp:
+    file: rtl/sincos_lerp.sv
+    module: sincos_lerp
+    params: {PH: 14, OW: 14, SB: 5}
+    throughput: "1 pair per clock"
+    latency: "2"
+    tradeoff: "two DSPs (one for sine, one for cosine) and a small ROM (2**SB entries, four words): the cheapest tabular variant; error about 2.9 last places at the listed points; it falls 4x per extra SB and doubles per extra output bit"
+    exhaustive_points: [{PH: 6, OW: 6, SB: 3}, {PH: 8, OW: 8, SB: 3}, {PH: 9, OW: 9, SB: 4}, {PH: 10, OW: 10, SB: 5}, {PH: 12, OW: 12, SB: 6}, {PH: 12, OW: 14, SB: 4}]
+    random_points: [{PH: 16, OW: 16, SB: 6}, {PH: 16, OW: 14, SB: 4}, {PH: 18, OW: 16, SB: 6}]
+    accuracy_points:
+      - {params: {PH: 14, OW: 14, SB: 5}, bound_ulp: {sc: 2.95}}
+      - {params: {PH: 16, OW: 16, SB: 6}, bound_ulp: {sc: 2.95}}
+      - {params: {PH: 12, OW: 12, SB: 4}, bound_ulp: {sc: 2.91}}
+    expected_primitives:
+      a7: "2 DSP48E1 (22 x (PH - 2 - SB + 1) signed); the 2**SB x 88-bit coefficient ROM in distributed RAM (SB <= 5) or one dual-port BRAM (SB = 6); about 4 x 22 + 2 FFs of ROM-output registers; a conditional negation after the last register (about 2 x OW LUTs)"
+      k26: "2 DSP48E2; as a7"
+    ooc_points: [{PH: 14, OW: 14, SB: 5}, {PH: 16, OW: 16, SB: 6}, {PH: 12, OW: 12, SB: 4}]
+    mutant_run: [{mode: exhaustive, params: {PH: 10, OW: 10, SB: 5}}, {mode: exhaustive, params: {PH: 12, OW: 12, SB: 6}}, {mode: randomised, params: {PH: 16, OW: 16, SB: 6}, n: 400}]
+  poly2:
+    file: rtl/sincos_poly2.sv
+    module: sincos_poly2
+    params: {PH: 14, OW: 14, SB: 4}
+    throughput: "1 pair per clock"
+    latency: "3"
+    tradeoff: "four DSPs (two Horner chains) and the fewest segments for the best accuracy (1 last place, the floor set by the peak limit, with 16 segments per quarter wave at 14 bits); one more clock than lerp"
+    exhaustive_points: [{PH: 6, OW: 6, SB: 3}, {PH: 8, OW: 8, SB: 3}, {PH: 10, OW: 10, SB: 4}, {PH: 12, OW: 12, SB: 5}, {PH: 12, OW: 14, SB: 3}]
+    random_points: [{PH: 16, OW: 16, SB: 5}, {PH: 16, OW: 14, SB: 3}, {PH: 18, OW: 16, SB: 4}]
+    accuracy_points:
+      - {params: {PH: 14, OW: 14, SB: 4}, bound_ulp: {sc: 1.0}}
+      - {params: {PH: 16, OW: 16, SB: 5}, bound_ulp: {sc: 1.0}}
+      - {params: {PH: 12, OW: 12, SB: 3}, bound_ulp: {sc: 1.0}}
+    expected_primitives:
+      a7: "4 DSP48E1 (22 x DB and 24 x DB signed, for each of sine and cosine); the 2**SB x 132-bit coefficient ROM in distributed RAM (SB <= 5); about 3 x 24 FFs per lane of stage registers (some absorbed by the DSPs); the output negation after the last register"
+      k26: "4 DSP48E2; as a7"
+    ooc_points: [{PH: 14, OW: 14, SB: 4}, {PH: 16, OW: 16, SB: 5}, {PH: 12, OW: 12, SB: 3}]
+    mutant_run: [{mode: exhaustive, params: {PH: 10, OW: 10, SB: 4}}, {mode: exhaustive, params: {PH: 12, OW: 12, SB: 3}}, {mode: randomised, params: {PH: 16, OW: 16, SB: 5}, n: 400}]
+  cordic:
+    file: rtl/sincos_cordic.sv
+    module: sincos_cordic
+    params: {PH: 14, OW: 14, NIT: 14, G: 4}
+    throughput: "1 pair per clock"
+    latency: "NIT"
+    tradeoff: "no DSP and no table memory, carry chains only: the only variant whose cost scales with the accuracy wanted, at the price of NIT clocks of latency and about 3 adders and 2 x (OW + G + 2) + PH + G + 2 FFs per stage"
+    exhaustive_points: [{PH: 6, OW: 6, NIT: 6, G: 2}, {PH: 8, OW: 8, NIT: 8, G: 3}, {PH: 10, OW: 10, NIT: 10, G: 3}, {PH: 12, OW: 12, NIT: 12, G: 4}, {PH: 12, OW: 14, NIT: 14, G: 4}]
+    random_points: [{PH: 16, OW: 16, NIT: 16, G: 5}, {PH: 18, OW: 16, NIT: 18, G: 6}, {PH: 14, OW: 12, NIT: 12, G: 4}]
+    accuracy_points:
+      - {params: {PH: 14, OW: 14, NIT: 14, G: 4}, bound_ulp: {sc: 1.71}}
+      - {params: {PH: 16, OW: 16, NIT: 16, G: 5}, bound_ulp: {sc: 1.7}}
+      - {params: {PH: 12, OW: 12, NIT: 12, G: 4}, bound_ulp: {sc: 1.63}}
+    expected_primitives:
+      a7: "0 DSP and 0 BRAM; per stage 3 add/subtract in carry chains (OW + G + 2, OW + G + 2 and PH + G + 1 bits) and the same number of registers plus 2 for the quadrant; about 3 x NIT x (OW + G + 2) LUTs; the angle constants and the gain are constant LUT logic; the output negation after the last register"
+      k26: "as a7 with CARRY8 chains"
+    ooc_points: [{PH: 14, OW: 14, NIT: 14, G: 4}, {PH: 16, OW: 16, NIT: 16, G: 5}, {PH: 18, OW: 16, NIT: 18, G: 6}]
+    mutant_run: [{mode: exhaustive, params: {PH: 10, OW: 10, NIT: 10, G: 3}}, {mode: exhaustive, params: {PH: 12, OW: 12, NIT: 12, G: 4}}, {mode: randomised, params: {PH: 16, OW: 16, NIT: 16, G: 5}, n: 400}]

@@ -1,0 +1,29 @@
+# Mutation set for the atan2_mag variants (arith brief 139d; tools/run_mutants.py): each mutant replaces `old` (exactly once) by `new` in a copy of the variant's file.
+mutants:
+- {name: "ac_neg_from_y", variant: "cordic", class: "connection", old: "assign neg = x[W-1];", new: "assign neg = y[W-1];", why: "the reflection is decided by the sign of y"}
+- {name: "ac_y_not_reflected", variant: "cordic", class: "operator", old: "assign ya  = neg ? -ye : ye;", new: "assign ya  = ye;", why: "y is not negated with x in the reflection"}
+- {name: "ac_zero_sign", variant: "cordic", class: "operator", old: "if (yt >= 0) begin", new: "if (yt > 0) begin", why: "y = 0 rotates the other way"}
+- {name: "ac_x_sign", variant: "cordic", class: "operator", old: "xn = xt + (yt >>> (s * GR + j));", new: "xn = xt - (yt >>> (s * GR + j));", why: "x grows the wrong way"}
+- {name: "ac_y_sign", variant: "cordic", class: "operator", old: "yn = yt + (xt >>> (s * GR + j));", new: "yn = yt - (xt >>> (s * GR + j));", why: "y is driven the wrong way when negative"}
+- {name: "ac_z_sign", variant: "cordic", class: "operator", old: "zn = zn + ZW'((atan_q(5'(s * GR + j))", new: "zn = zn - ZW'((atan_q(5'(s * GR + j))", why: "the angle accumulates with the wrong sign"}
+- {name: "ac_half_turn", variant: "cordic", class: "constant", old: "PH'(1) << (PH - 1) : '0", new: "PH'(1) << (PH - 2) : '0", why: "the reflection adds a quarter turn, not a half"}
+- {name: "ac_no_round_ang", variant: "cordic", class: "operator", old: "assign zrnd  = PH'((zo + (ZW'(1) <<< (G - 1))) >>> G);", new: "assign zrnd  = PH'(zo >>> G);", why: "the angle is truncated, not rounded"}
+- {name: "ac_no_round_mag", variant: "cordic", class: "operator", old: "(mp + ((DW+KC+1)'(1) <<< (KC - 2 + G)))", new: "(mp)", why: "the magnitude is truncated, not rounded"}
+- {name: "ac_gain", variant: "cordic", class: "constant", old: "localparam logic [KC-1:0] KINV = KC'(kinv(5'(NIT)));", new: "localparam logic [KC-1:0] KINV = KC'(kinv(5'(NIT)) - 2000);", why: "the gain compensation constant is wrong"}
+- {name: "ac_neg_dropped", variant: "cordic", class: "connection", old: "neg_0 <= neg;", new: "neg_0 <= 1'b0;", why: "the reflection flag is lost"}
+- {name: "ac_neg_misaligned", variant: "cordic", class: "connection", old: "nr <= ni;", new: "nr <= neg_0;", why: "the reflection flag is not delayed with the data"}
+- {name: "ac_z_halved", variant: "cordic", class: "operator", old: "zr <= zn;", new: "zr <= zn >>> 1;", why: "the accumulated angle is halved at each stage register"}
+- {name: "ag_neg_from_y", variant: "cordic_g2", class: "connection", old: "assign neg = x[W-1];", new: "assign neg = y[W-1];", why: "the reflection is decided by the sign of y"}
+- {name: "ag_y_not_reflected", variant: "cordic_g2", class: "operator", old: "assign ya  = neg ? -ye : ye;", new: "assign ya  = ye;", why: "y is not negated with x in the reflection"}
+- {name: "ag_zero_sign", variant: "cordic_g2", class: "operator", old: "if (yt >= 0) begin", new: "if (yt > 0) begin", why: "y = 0 rotates the other way"}
+- {name: "ag_x_sign", variant: "cordic_g2", class: "operator", old: "xn = xt + (yt >>> (s * GR + j));", new: "xn = xt - (yt >>> (s * GR + j));", why: "x grows the wrong way"}
+- {name: "ag_y_sign", variant: "cordic_g2", class: "operator", old: "yn = yt + (xt >>> (s * GR + j));", new: "yn = yt - (xt >>> (s * GR + j));", why: "y is driven the wrong way when negative"}
+- {name: "ag_z_sign", variant: "cordic_g2", class: "operator", old: "zn = zn + ZW'((atan_q(5'(s * GR + j))", new: "zn = zn - ZW'((atan_q(5'(s * GR + j))", why: "the angle accumulates with the wrong sign"}
+- {name: "ag_half_turn", variant: "cordic_g2", class: "constant", old: "PH'(1) << (PH - 1) : '0", new: "PH'(1) << (PH - 2) : '0", why: "the reflection adds a quarter turn, not a half"}
+- {name: "ag_no_round_ang", variant: "cordic_g2", class: "operator", old: "assign zrnd  = PH'((zo + (ZW'(1) <<< (G - 1))) >>> G);", new: "assign zrnd  = PH'(zo >>> G);", why: "the angle is truncated, not rounded"}
+- {name: "ag_no_round_mag", variant: "cordic_g2", class: "operator", old: "(mp + ((DW+KC+1)'(1) <<< (KC - 2 + G)))", new: "(mp)", why: "the magnitude is truncated, not rounded"}
+- {name: "ag_gain", variant: "cordic_g2", class: "constant", old: "localparam logic [KC-1:0] KINV = KC'(kinv(5'(NIT)));", new: "localparam logic [KC-1:0] KINV = KC'(kinv(5'(NIT)) - 2000);", why: "the gain compensation constant is wrong"}
+- {name: "ag_neg_dropped", variant: "cordic_g2", class: "connection", old: "neg_0 <= neg;", new: "neg_0 <= 1'b0;", why: "the reflection flag is lost"}
+- {name: "ag_neg_misaligned", variant: "cordic_g2", class: "connection", old: "nr <= ni;", new: "nr <= neg_0;", why: "the reflection flag is not delayed with the data"}
+- {name: "ag_z_halved", variant: "cordic_g2", class: "operator", old: "zr <= zn;", new: "zr <= zn >>> 1;", why: "the accumulated angle is halved at each stage register"}
+- {name: "ag_extra_iteration", variant: "cordic_g2", class: "condition", old: "if (s * GR + j < NIT) begin", new: "if (s * GR + j <= NIT) begin", why: "an extra iteration runs when NIT is not a multiple of GRP"}

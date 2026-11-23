@@ -44,26 +44,38 @@ module formal_mac_tx (
             if (!tx_en && f_k != 0) f_seen <= 1'b1;
         end
     end
+    // Every assertion is labelled (a_*) and paired with a cover of its own antecedent (a_*__ante, below; brief 143c).
     always_ff @(posedge clk) if (f_past && !rst) begin
-        if (tx_en && f_k < 11'd7)  assert (txd == 8'h55);
-        if (tx_en && f_k == 11'd7) assert (txd == 8'hD5);
-        if (tx_en && f_k == 11'd0) assert (first_pulse);
-        if (first_pulse) assert (tx_en && f_k == 11'd0);
-        if (sof_pulse)   assert (tx_en && f_k == 11'd7);
+        if (tx_en && f_k < 11'd7)  a_preamble: assert (txd == 8'h55);
+        if (tx_en && f_k == 11'd7) a_sfd: assert (txd == 8'hD5);
+        if (tx_en && f_k == 11'd0) a_first_pulse: assert (first_pulse);
+        if (first_pulse) a_first_only: assert (tx_en && f_k == 11'd0);
+        if (sof_pulse)   a_sof_only: assert (tx_en && f_k == 11'd7);
         // a frame ends after preamble, SFD, the padded data and the FCS, exactly when the last byte was flagged
         if (!tx_en && f_k != 0) begin
-            assert (f_k == 11'd8 + f_len + 11'd4);
-            assert ($past(last_pulse));
+            a_frame_len: assert (f_k == 11'd8 + f_len + 11'd4);
+            a_frame_end_after_last: assert ($past(last_pulse));
         end
-        if (last_pulse) assert (tx_en && f_k == 11'd8 + f_len + 11'd3);
+        if (last_pulse) a_last_position: assert (tx_en && f_k == 11'd8 + f_len + 11'd3);
         // the gap before the next frame is at least IFG idle clocks
-        if (tx_en && f_k == 11'd0 && f_seen) assert (f_gap >= 11'(IFG));
+        if (tx_en && f_k == 11'd0 && f_seen) a_ifg: assert (f_gap >= 11'(IFG));
         // the data provider is only asked for real data bytes
-        if (req_valid) assert (req_idx < f_len);
-        if (ready) assert (!tx_en || f_k == 11'd0 || last_pulse || 1'b1);
+        if (req_valid) a_req_in_range: assert (req_idx < f_len);
+    end
+    // antecedents (same guard): the condition of each `if`
+    always_ff @(posedge clk) if (f_past && !rst) begin
+        a_preamble__ante: cover (tx_en && f_k < 11'd7);
+        a_sfd__ante: cover (tx_en && f_k == 11'd7);
+        a_first_pulse__ante: cover (tx_en && f_k == 11'd0);
+        a_first_only__ante: cover (first_pulse);
+        a_sof_only__ante: cover (sof_pulse);
+        a_frame_end__ante: cover (!tx_en && f_k != 0);
+        a_last_position__ante: cover (last_pulse);
+        a_ifg__ante: cover (tx_en && f_k == 11'd0 && f_seen);
+        a_req_in_range__ante: cover (req_valid);
     end
     always_ff @(posedge clk) if (f_past && !rst) begin
-        cover (last_pulse && last_poisoned);
-        cover (tx_en && f_k == 11'd0 && f_seen && f_gap == 11'(IFG) + 11'd1);
+        c_poisoned: cover (last_pulse && last_poisoned);
+        c_ifg_exact: cover (tx_en && f_k == 11'd0 && f_seen && f_gap == 11'(IFG) + 11'd1);
     end
 endmodule

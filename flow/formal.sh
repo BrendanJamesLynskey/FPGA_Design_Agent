@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# formal.sh: run every SymbiYosys job of a design (bmc + cover) into build/verif/formal/<job>_<task>/.
+# formal.sh: run every task of every SymbiYosys job of a design (bmc, cover and, from brief 143c, prove where a job lists it) into build/verif/formal/<job>_<task>/.
 #   flow/formal.sh designs/t1_dimmer_counter
 # Needs sby, yosys 0.33+ and z3 on PATH (CI: apt; locally: source ~/.local/opt/formal-deb/env.sh).
 set -euo pipefail
@@ -18,7 +18,9 @@ for f in *.sby; do
     run=".${job}_local.sby"
     sed "s#^plugin -i ghdl\$#plugin -i ${FDA_GHDL_PLUGIN}#" "$f" > "$run"
   fi
-  for task in bmc cover; do
+  # the tasks the job lists (`sby --dumptasks`); bmc and cover where it lists none
+  tasks="$(sby --dumptasks "$run" 2>/dev/null | tr '\n' ' ')"
+  for task in ${tasks:-bmc cover}; do
     sby -f -d "$OUT/${job}_${task}" "$run" "$task" >"$OUT/${job}_${task}.log" 2>&1 || true
     echo "formal ${job}_${task}: $(head -1 "$OUT/${job}_${task}/status" 2>/dev/null || echo ABSENT)"
   done

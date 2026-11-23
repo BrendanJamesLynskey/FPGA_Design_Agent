@@ -63,29 +63,40 @@ module formal_interlocks (
         else if (approved) f_pos <= p_side ? f_pos - $signed({2'b00, p_qty}) : f_pos + $signed({2'b00, p_qty});
     end
 
+    // Every assertion is labelled (a_*) and paired with a cover of its own antecedent (a_*__ante, below; brief 143c): an
+    // assertion whose antecedent cannot be reached has nothing to check. The invariants hold at every clock; their
+    // antecedent is the state in which they could be broken (a request granted, a position away from 0, tokens spent).
     always_ff @(posedge clk) if (f_past && !rst && !$past(rst)) begin
         if (grant) begin
-            assert (!(kill_reg | kill_in));                       // kill wins even in the grant clock
-            assert (!p_kill && !p_halt);                          // not killed or halted when asked
-            assert (p_qty != 0 && p_qty <= {1'b0, max_qty[30:0]});        // size
-            assert (p_d <= {2'b00, band[30:0]} && !p_noref);      // price band, against a real reference
-            assert (p_tok != 0);                                  // a token was there
+            a_grant_kill_wins: assert (!(kill_reg | kill_in));    // kill wins even in the grant clock
+            a_grant_not_stopped: assert (!p_kill && !p_halt);     // not killed or halted when asked
+            a_grant_size: assert (p_qty != 0 && p_qty <= {1'b0, max_qty[30:0]});        // size
+            a_grant_price_band: assert (p_d <= {2'b00, band[30:0]} && !p_noref);        // price band, against a real reference
+            a_grant_token: assert (p_tok != 0);                   // a token was there
         end
         // the position never leaves the limit, whatever the requests (it starts at 0 and only grants move it)
         // pos = the sum of approved requests (an approval the kill input then blocks in the grant clock still
         // counts: the worst case); grant only ever follows an approval
-        assert (pos == (approved ? (p_side ? f_pos - $signed({2'b00, p_qty}) : f_pos + $signed({2'b00, p_qty})) : f_pos));
-        assert (!grant || approved);
-        assert ((pos[33] ? -pos : pos) <= $signed({3'b000, max_pos[30:0]}));
-        assert (tokens <= bucket);
-        assert ({8'd0, g_win} <= bucket);                     // no more than a bucketful between two refill ticks
-        assert (!(grant && rej_v));
+        a_pos_sum: assert (pos == (approved ? (p_side ? f_pos - $signed({2'b00, p_qty}) : f_pos + $signed({2'b00, p_qty})) : f_pos));
+        a_grant_implies_approved: assert (!grant || approved);
+        a_pos_limit: assert ((pos[33] ? -pos : pos) <= $signed({3'b000, max_pos[30:0]}));
+        a_tokens_cap: assert (tokens <= bucket);
+        a_window_cap: assert ({8'd0, g_win} <= bucket);       // no more than a bucketful between two refill ticks
+        a_grant_xor_reject: assert (!(grant && rej_v));
     end
-    // reachability: an order can be granted, and each refusal can happen
+    // antecedents: the same guard as the assertions, then the condition under which each could fail
+    always_ff @(posedge clk) if (f_past && !rst && !$past(rst)) begin
+        a_grant__ante: cover (grant);                         // all a_grant_*
+        a_pos__ante: cover (approved && pos != 0);            // a_pos_sum, a_pos_limit: the position has moved
+        a_tokens_cap__ante: cover (tokens != 0 && tokens == bucket);   // the bucket is full: the cap is touched
+        a_window_cap__ante: cover (g_win != 0 && {8'd0, g_win} == bucket);   // a bucketful granted between two ticks
+    end
+    // reachability: an order can be granted, and each refusal can happen (also the assumption-sanity covers: the
+    // assumptions on the configuration leave the design able to grant and to refuse)
     always_ff @(posedge clk) if (f_past && !rst) begin
-        cover (grant);
-        cover (rej_v && rej_why == 3'd5);
-        cover (rej_v && rej_why == 3'd6);
-        cover (rej_v && rej_why == 3'd4);
+        c_grant: cover (grant);
+        c_reject_qty: cover (rej_v && rej_why == 3'd5);
+        c_reject_band: cover (rej_v && rej_why == 3'd6);
+        c_reject_token: cover (rej_v && rej_why == 3'd4);
     end
 endmodule
