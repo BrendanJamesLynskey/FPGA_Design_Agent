@@ -137,7 +137,14 @@ def make_rc(env, pct=40, spawner=None, **kw):
     return rc, runner, sp
 
 
-TASK = {"kind": "task", "task": "c10_dds_sine", "board": "nexys_a7_100t", "harness": "claude_code", "model": "claude-haiku-5-5", "effort": "medium", "arms": ["H1"], "max_usd": 2, "confirm": "start"}
+def _confirmed(task="c10_dds_sine", board="nexys_a7_100t"):
+    """Brief 194: the confirm-settings step. What the page sends after the user has checked every proposed value (an empty one filled in)."""
+    from agent.graph import settings as VS
+    prop = VS.propose(ROOT / "benchmark" / "course" / "tasks" / task, board)["settings"]
+    return {k: {"value": e["value"] if e["value"] not in (None, "", []) else ["none"], "confirmed": True} for k, e in prop.items()}
+
+
+TASK = {"settings": _confirmed(), "kind": "task", "task": "c10_dds_sine", "board": "nexys_a7_100t", "harness": "claude_code", "model": "claude-haiku-5-5", "effort": "medium", "arms": ["H1"], "max_usd": 2, "confirm": "start"}
 PROJ = {"kind": "project", "project": "b102_managed_fcs", "components": ["ctrl"], "request": "shorten the verdict latency", "harness": "claude_code", "model": "claude-sonnet-5-5", "max_usd": 1.5, "confirm": "start"}
 
 

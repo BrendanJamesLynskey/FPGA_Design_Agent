@@ -29,6 +29,8 @@ import time
 from pathlib import Path
 from typing import Any, Callable
 
+from agent.graph import profiles as VP
+from agent.graph import settings as VS
 from navigator import guards, redact
 from navigator import progress as P
 from navigator import sources as S
@@ -263,8 +265,81 @@ class RunControl:
                 comps[p["name"]] = [{"name": c.name, "ownership": c.ownership} for c in pr.components if c.ownership == "owned"]
         return {"tasks": sorted(self.tasks()), "projects": proj, "owned_components": comps, "boards": self.boards(), "arms": list(ARMS), "arm_note": "H1 is the CLI default; A0 (no arm) is chosen by ticking none; an arm applies to a task run (the resume command has no arm option)",
                 "efforts": list(EFFORTS), "models": self.allowed_models(), "model_table": mv, "max_usd": MAX_USD, "default_usd": DEFAULT_USD,
+                "profiles": self.profiles(), "switches": self.switches(), "settings_keys": list(VS.KEYS),
                 "usage_stop_pct": guards.USAGE_STOP_PCT, "active_limit": MAX_ACTIVE, "never": "Fable, Opus, or an Anthropic model through OpenRouter; the owner's --allow-fable flag is never passed",
                 "guards": ["access gate", "usage check at or above the stop refuses", "one navigator run at a time", "a heavy slot through take_heavy_slot.sh, released when the run ends"]}
+
+    # -- verification profiles and confirmed settings (brief 194) ----------------------------------------------------------------------
+    def profiles(self) -> list[dict[str, Any]]:
+        """The picker's list, built here from agent.graph.profiles: a one-line summary, the switches, the extra time measured on the development design."""
+        from agent.graph import assurance as AS
+        return [{"name": n, "summary": VP.SUMMARY[n], "extra_time": AS.extra_time_text(n), "switches": VP.PROFILES[n], "not_wired": VP.resolve(n)["not_wired"]} for n in VP.PROFILES]
+
+    def switches(self) -> list[dict[str, Any]]:
+        """The drawer's controls: one per switch, with the allowed values (a range or a list), so the page invents none."""
+        return [{"name": s.name, "kind": s.kind, "doc": s.doc, "choices": list(s.choices), "lo": s.lo, "hi": s.hi, "wired": s.wired, "consumer": s.consumer} for s in VP.SWITCHES]
+
+    def propose(self, task: str, board: str | None) -> dict[str, Any]:
+        """The agent's proposed settings for a task's folder. Read only: nothing is confirmed, nothing is written."""
+        specs = self.tasks()
+        if task not in specs:
+            raise Refused("pick a task from the list")
+        if board is not None and board not in self.boards():
+            raise Refused("pick a board the agent can target")
+        out = VS.propose(specs[task].parent, board)
+        return {"folder": specs[task].parent.relative_to(self.root).as_posix(), "settings": out["settings"], "note": out["note"]}
+
+    def verification(self, p: dict[str, Any], summary: dict[str, Any]) -> list[str]:
+        """The validated ``--verif-profile`` and ``--set`` arguments from the request; raises Refused. Values come from the schema, never from free text."""
+        name = p.get("profile", VP.DEFAULT_PROFILE)
+        if name not in VP.PROFILES:
+            raise Refused("pick a profile from the list")
+        sw = p.get("switches", {})
+        if not isinstance(sw, dict) or any(k not in VP.BY_NAME for k in sw):
+            raise Refused("switches must be an object of switch names from the list")
+        args = ["--verif-profile", name]
+        sets: dict[str, Any] = {}
+        try:
+            for k, v in sw.items():
+                if isinstance(v, bool):
+                    v = "on" if v else "off"
+                sets[k] = VP.parse_value(VP.BY_NAME[k], str(v))
+            rec = VP.resolve(name, sets)
+        except VP.ProfileError as e:
+            raise Refused(str(e))
+        for k in sw:
+            if rec["effective"][k] != VP.PROFILES[name][k]:       # only a real change is passed
+                v = rec["effective"][k]
+                args += ["--set", f"{k}={'on' if v is True else 'off' if v is False else v}"]
+        summary.update(profile=name, overrides=rec["overrides"])
+        return args
+
+    def confirmed_settings(self, p: dict[str, Any], task: str, board: str, summary: dict[str, Any]) -> dict[str, Any]:
+        """The 'confirm settings' step: every setting the agent proposes for the task folder must come back confirmed (a value the user edited
+        or accepted). The proposal is rebuilt here from the folder, so the page cannot invent a key. Returns the settings document the run reads."""
+        got = p.get("settings")
+        if not isinstance(got, dict):
+            raise Refused("confirm the settings first: use Propose settings, check each value, and confirm it")
+        prop = self.propose(task, board)["settings"]
+        bad = [k for k in VS.KEYS if not (isinstance(got.get(k), dict) and got[k].get("confirmed") is True)]
+        if bad:
+            raise Refused("settings not confirmed: " + ", ".join(bad))
+        doc: dict[str, Any] = {"schema": "fpga-design-agent/settings/v1", "folder": self.propose(task, board)["folder"], "settings": {}}
+        for k in VS.KEYS:
+            v = got[k].get("value")
+            if v in (None, "", []) or len(json.dumps(v)) > 600:
+                raise Refused(f"setting {k} is empty or too long: give it a value")
+            e = dict(prop[k])
+            e.update(value=v, status="confirmed", conflicts=[])
+            if v != prop[k]["value"]:
+                e["sources"] = [*prop[k]["sources"], "edited by the user in the navigator"]
+            doc["settings"][k] = e
+        if doc["settings"]["board"]["value"] != board or doc["settings"]["board"]["value"] not in self.boards():
+            raise Refused("the confirmed board must be the board chosen above and one the agent can target")
+        if doc["settings"]["profile"]["value"] != p.get("profile", VP.DEFAULT_PROFILE):
+            raise Refused("the confirmed profile must be the profile chosen above")
+        summary["settings"] = {k: ("edited" if doc["settings"][k]["value"] != prop[k]["value"] else "accepted") for k in VS.KEYS}
+        return doc
 
     # -- validation -----------------------------------------------------------------------------------------------------------------
     def build(self, p: dict[str, Any]) -> tuple[list[str], dict[str, Any]]:
@@ -309,7 +384,9 @@ class RunControl:
                 raise Refused(f"arms must be a list of {', '.join(ARMS)} (empty for the A0 baseline)")
             arg_arms = ",".join(arms) if arms else "A0"
             rel = specs[t].relative_to(self.root).as_posix()
+            summary["settings_doc"] = self.confirmed_settings(p, t, board, summary)      # brief 194: the confirm-settings step gates Start
             argv += ["run", rel, "--board", board, "--harness", harness, *mflag, "--harness-arm", arg_arms, "--max-usd", f"{usd:g}", "--stop-after", str(NAV_STOP_AFTER)]
+            argv += self.verification(p, summary)
             summary.update(target=t, board=board, arm=arg_arms, spec=rel)
         elif kind == "project":
             name = p.get("project")
@@ -331,7 +408,7 @@ class RunControl:
                 raise Refused("no such managed project")
             if view.get("ask") or not view.get("will_touch"):
                 raise Refused("the agent would ask first: " + str(view.get("ask") or "the request names no component"))
-            argv += ["resume", f"designs/{name}", req]
+            argv += ["resume", f"designs/{name}", req]       # a resume reads the design's own pinned settings; no profile flags here
             if comps:
                 argv += ["--scope", ",".join(comps)]
             argv += ["--harness", harness, *mflag, "--max-usd", f"{usd:g}", "--stop-after", str(NAV_STOP_AFTER)]
@@ -398,6 +475,13 @@ class RunControl:
             if not ok:
                 raise Refused(why)
             sid = f"n-{time.strftime('%Y%m%d-%H%M%S')}-{secrets.token_hex(2)}"
+            doc = summary.pop("settings_doc", None)
+            if doc is not None:                                  # brief 194: the run reads the confirmed settings from a file it will re-check
+                import yaml
+                sf = self.runs_dir / "_navigator" / f"{sid}.settings.yaml"
+                sf.parent.mkdir(parents=True, exist_ok=True)
+                sf.write_text(yaml.safe_dump(doc, sort_keys=False))
+                argv = [*argv, "--settings", str(sf)]
             text = guards.lock_text(f"agent run {summary.get('target', '')[:40]} (Vivado impl, peak 6G)", RUN_HOURS)
             slot = guards.HeavySlot(self.handoff, self.runner, text)
             try:

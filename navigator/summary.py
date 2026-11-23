@@ -166,9 +166,19 @@ def summarise(runs_dir: Path, run_id: str, now: float | None = None) -> dict[str
             _memo.clear()
         _memo[run_id] = (ev_key, built, text)
     return {"id": run_id, "status": p["status"], "sentence": text, "built_at": built, "refresh_min": REFRESH_MIN, "done": done_txt, "doing": doing, "next": nxt, "blocked": blocked,
-            "cost_line": cost, "step": step, "stage": cur, "requests": reqs, "pending": pend, "mode": _mode(rd), "qa_count": _qa_count(rd),
+            "cost_line": cost, "step": step, "stage": cur, "requests": reqs, "pending": pend, "mode": _mode(rd), "profile": _profile(rd), "qa_count": _qa_count(rd),
             "note": "Built from the run's records by code, with no model call; the page asks again every 5 s and the sentence changes when a stage ends, a request changes or every "
                     f"{REFRESH_MIN:g} min."}
+
+
+def _profile(rd: Path) -> dict[str, Any] | None:
+    """Brief 194: the verification profile and every override of the run, from the pin the harness wrote (policy.json). Names, values and who set
+    them only: no free text."""
+    try:
+        d = json.loads((rd / "policy.json").read_text())
+        return {"profile": str(d["profile"]), "overrides": {str(k): v for k, v in (d.get("overrides") or {}).items()}, "set_by": str(d.get("set_by", ""))[:60]}
+    except (OSError, ValueError, KeyError):
+        return None
 
 
 def _mode(rd: Path) -> dict[str, Any]:

@@ -144,6 +144,11 @@ class App:
             off = one("offset")
             v = NC.read(self.runs_dir, one("id"), one("step"), int(off) if off.isdigit() else None) if self.known_run(one("id")) else None
             return self.json(200, v) if v else self.json(404, {"error": "no such step"})
+        if path == "/api/start/propose":
+            try:
+                return self.json(200, self.runctl.propose(one("task"), one("board") or None))
+            except runctl.Refused as e:
+                return self.json(400, {"error": str(e)})
         if path == "/api/start/options":
             return self.json(200, {**self.runctl.options(), "usage": self.health.usage(), "slots": self.health.locks(), "started": self.runctl.records()})
         if path == "/api/board":
