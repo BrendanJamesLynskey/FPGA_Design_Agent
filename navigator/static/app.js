@@ -639,31 +639,14 @@
             else ctl = h("select", { on: { change: function () { setSw(w.name, this.value, base); } } }, w.choices.map(function (c) { return h("option", { value: c, selected: c === val }, c); }));
             return h("label", { class: "inl", title: w.doc }, w.name + " ", ctl, h("span", { class: "mute" }, (val !== base ? "  (profile: " + base + ")" : "") + (w.wired ? "" : "  recorded only")));
           }));
-        return h("fieldset", null, h("legend", null, "Verification profile"),
-          sel("Profile", o.profiles.map(function (p) { return p.name; }), f.profile, function (v) { f.profile = v; f.switches = {}; f.settings = null; render(); }),
-          h("p", null, cur.summary), h("p", { class: "mute" }, "Expected extra time: " + cur.extra_time), drawer);
+        return h("fieldset", { class: "fullrow" }, h("legend", null, "Verification profile"),
+          sel("Profile", o.profiles.map(function (p) { return p.name; }), f.profile, function (v) { f.profile = v; f.switches = {}; render(); }),
+          h("p", null, cur.summary), h("p", { class: "mute" }, "Expected " + cur.extra_time), drawer);
       }
-      function setSw(name, v, base) { if (v === base) delete f.switches[name]; else f.switches[name] = v; f.settings = f.settings; render(); }
-      function settingsBlock() {
-        var box = h("fieldset", null, h("legend", null, "Confirm settings (required before Start)"));
-        add(box, h("p", { class: "mute" }, "The agent reads the task folder and proposes the values it can read, each with its source. A value it could not read is empty: give it. Check each value, edit it if needed, tick Confirm."));
-        add(box, h("button", { type: "button", on: { click: function () {
-          api("/api/start/propose?task=" + encodeURIComponent(f.task) + "&board=" + encodeURIComponent(f.board)).then(function (d) {
-            f.settings = {}; o.settings_keys.forEach(function (k) { var e = d.settings[k]; f.settings[k] = { value: k === "profile" ? f.profile : e.value, text: JSON.stringify(k === "profile" ? f.profile : e.value), sources: e.sources, conflicts: e.conflicts, status: e.status, confirmed: false }; });
-            f.settings.board.value = f.board; f.settings.board.text = JSON.stringify(f.board); render();
-          }, function (e) { add(box, fail(e)); }); } } }, f.settings ? "Propose again" : "Propose settings"));
-        if (f.settings) {
-          add(box, table(["setting", "value (edit)", "source", "confirm"], o.settings_keys.map(function (k) {
-            var e = f.settings[k];
-            var inp = h("input", { type: "text", class: "fullw", value: e.text || "", "aria-label": k, on: { input: function () { e.text = this.value; try { e.value = JSON.parse(this.value); } catch (x) { e.value = this.value; } e.confirmed = false; chk.checked = false; } } });
-            var chk = h("input", { type: "checkbox", checked: e.confirmed, "aria-label": "confirm " + k, on: { change: function () { e.confirmed = this.checked && !(e.value === null || e.value === "" || (Array.isArray(e.value) && !e.value.length)); this.checked = e.confirmed; sync(); } } });
-            return { cells: [k, inp, (e.status === "ask" ? "nothing readable: please give it" : (e.sources || []).join("; ")) + (e.conflicts && e.conflicts.length ? "  CONFLICT: " + e.conflicts.map(function (c) { return JSON.stringify(c.value) + " from " + c.source; }).join("; ") : ""), chk] };
-          })));
-        }
-        return box;
+      function setSw(name, v, base) { if (v === base) delete f.switches[name]; else f.switches[name] = v; render(); }
+      function settingsNote() {
+        return h("p", { class: "mute fullrow" }, "Settings (board, part, speed grade, reference clocks, I/O standards, PHYs, interfaces, profile) are proposed by the agent from the task folder and asked as the first questions of the run: each with the proposed value as the default and its source as the reason. Answer them on the Live page; a setting with no value must be given.");
       }
-      function sync() { if (go) go.disabled = !allConfirmed(); }
-      function allConfirmed() { return f.kind !== "task" || (f.settings && o.settings_keys.every(function (k) { return f.settings[k].confirmed; })); }
       var go = null;
       function render() {
         var models = o.models[f.harness] || [];
@@ -672,7 +655,7 @@
         if (f.kind === "task") {
           if (!f.task) f.task = o.tasks[0];
           if (!f.board) f.board = o.boards.indexOf("nexys_a7_100t") >= 0 ? "nexys_a7_100t" : o.boards[0];
-          fields.push(sel("Task", o.tasks, f.task, function (v) { f.task = v; f.settings = null; render(); }), sel("Board", o.boards, f.board, function (v) { f.board = v; f.settings = null; render(); }),
+          fields.push(sel("Task", o.tasks, f.task, function (v) { f.task = v; render(); }), sel("Board", o.boards, f.board, function (v) { f.board = v; render(); }),
             h("fieldset", null, h("legend", null, "Harness arms (none ticked = the A0 baseline)"), o.arms.map(function (a) { return h("label", { class: "inl" }, h("input", { type: "checkbox", checked: f.arms.indexOf(a) >= 0, on: { change: function () { var i = f.arms.indexOf(a); if (this.checked && i < 0) f.arms.push(a); if (!this.checked && i >= 0) f.arms.splice(i, 1); } } }), a); }), h("p", { class: "mute" }, o.arm_note)));
         } else {
           var names = o.projects.map(function (p) { return p.name; });
@@ -682,13 +665,13 @@
             h("fieldset", null, h("legend", null, "Components the request may touch (none ticked: the agent resolves the scope from the request)"), cl.map(function (c) { return h("label", { class: "inl" }, h("input", { type: "checkbox", checked: f.components.indexOf(c.name) >= 0, on: { change: function () { var i = f.components.indexOf(c.name); if (this.checked && i < 0) f.components.push(c.name); if (!this.checked && i >= 0) f.components.splice(i, 1); } } }), c.name); })),
             h("label", null, "Change request ", h("input", { type: "text", class: "fullw", value: f.request, maxlength: 400, on: { input: function () { f.request = this.value; } } })));
         }
-        if (f.kind === "task") { fields.push(profileBlock(), settingsBlock()); }
+        if (f.kind === "task") { fields.push(profileBlock(), settingsNote()); }
         fields.push(sel("Harness", ["claude_code", "deepagents"], f.harness, function (v) { f.harness = v; render(); }), sel("Model (from the resolved table)", models, f.model, function (v) { f.model = v; }),
           sel("Effort", o.efforts, f.effort, function (v) { f.effort = v; }),
           h("label", null, "Budget (USD, at most " + o.max_usd + ") ", h("input", { type: "number", min: "0.1", max: String(o.max_usd), step: "0.1", value: String(f.usd), on: { input: function () { f.usd = parseFloat(this.value); } } })));
-        go = h("button", { type: "button", disabled: !allConfirmed(), on: { click: function () {
+        go = h("button", { type: "button", on: { click: function () {
           var body = { kind: f.kind, harness: f.harness, model: f.model, effort: f.effort, max_usd: f.usd, confirm: "start" };
-          if (f.kind === "task") { body.task = f.task; body.board = f.board; body.arms = f.arms; body.profile = f.profile; body.switches = f.switches; body.settings = {}; o.settings_keys.forEach(function (k) { body.settings[k] = { value: f.settings[k].value, confirmed: true }; }); } else { body.project = f.project; body.components = f.components; body.request = f.request; }
+          if (f.kind === "task") { body.task = f.task; body.board = f.board; body.arms = f.arms; body.profile = f.profile; body.switches = f.switches; } else { body.project = f.project; body.components = f.components; body.request = f.request; }
           if (!confirm("Start this run? It spends up to $" + f.usd + " (provider-reported), takes a heavy slot, and runs until it ends or you stop it.")) return;
           go.disabled = true; out.textContent = "Starting";
           post("/api/run/start", body).then(function (j) { out.textContent = ""; go.disabled = false;
