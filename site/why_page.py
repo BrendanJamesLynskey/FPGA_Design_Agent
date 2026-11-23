@@ -7,11 +7,11 @@ import html
 e = html.escape
 
 # (id, label, sub-label, who): who is "you" for the two boxes the person owns
-STEPS = [("spec", "You specify", "ports, clocks, rules, limits", "you"),
-         ("agent", "The agent implements", "model, tests, RTL, constraints", "agent"),
-         ("gates", "Gates decide", "Vivado 2026.1, simulators, formal", "agent"),
-         ("board", "The board measures", "instruments attached", "agent"),
-         ("judge", "You judge", "the evidence against each requirement", "you")]
+STEPS = [("spec", "You specify", "ports, clocks, rules", "you"),
+         ("agent", "Agent implements", "model, tests, RTL", "agent"),
+         ("gates", "Gates decide", "Vivado, sims, formal", "agent"),
+         ("board", "Board measures", "instruments attached", "agent"),
+         ("judge", "You judge", "evidence vs. spec", "you")]
 
 
 def _arrow(x1, y1, x2, y2):
@@ -31,7 +31,7 @@ def _box(x, y, w, h, label, sub, who):
 
 
 def diagram_wide() -> str:
-    w, h, gap, y = 160, 58, 45, 38
+    w, h, gap, y = 170, 58, 32, 38
     xs = [10 + i * (w + gap) for i in range(len(STEPS))]
     out = []
     for i, (_, lab, sub, who) in enumerate(STEPS):
@@ -47,8 +47,8 @@ def diagram_wide() -> str:
     by = y + h
     out.append(f'<path class="ink" d="M{jx} {by} C{jx} {by + 40}, {sx} {by + 40}, {sx} {by + 4}" fill="none" stroke-dasharray="5 4"/>')
     out.append(_arrow(sx, by + 10, sx, by + 1))
-    out.append(f'<text x="{(jx + sx) / 2}" y="{by + 38}" text-anchor="middle">a gap in the evidence, or a wrong specification, goes back to you</text>')
-    return (f'<svg viewBox="0 0 1000 {y + h + 52}" role="img" aria-labelledby="whyw1 whyw2"><title id="whyw1">Who does what</title>'
+    out.append(f'<text x="{(jx + sx) / 2}" y="{by + 50}" text-anchor="middle">a gap in the evidence, or a wrong specification, goes back to you</text>')
+    return (f'<svg viewBox="0 0 1000 {y + h + 62}" role="img" aria-labelledby="whyw1 whyw2"><title id="whyw1">Who does what</title>'
             f'<desc id="whyw2">You specify; the agent implements; gates decide; the board measures; you judge the evidence. A failed gate goes back to the agent. '
             f'A gap in the evidence or a wrong specification goes back to you.</desc>{"".join(out)}</svg>')
 
@@ -84,6 +84,6 @@ def drawer(d: dict) -> str:
 def body(W: dict) -> str:
     ctl = ('<div class="areactl" id="areactl" hidden><button type="button" id="expand-all">Expand all</button>'
            '<button type="button" id="collapse-all">Collapse all</button></div>')
-    hero = (f'<section class="hero"><p class="eyebrow">Why this agent: the one-page summary</p><h1>{e(W["intro"]["answer"])}</h1>'
+    hero = (f'<section class="hero whyhero"><p class="eyebrow">Why this agent: the one-page summary</p><h1>{e(W["intro"]["answer"])}</h1>'
             f'<p class="lede">{e(W["intro"]["note"])}</p></section>')
     return hero + figure(W["caption"]) + '<h2 id="drawers">What makes it different</h2>' + ctl + "".join(drawer(d) for d in W["drawers"])
