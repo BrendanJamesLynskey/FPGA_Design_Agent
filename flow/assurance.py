@@ -26,6 +26,11 @@ sys.path.insert(0, str(DESIGN / "tests"))
 from run_faults import VARIANTS  # noqa: E402
 
 
+def xsim_settings() -> str:
+    """The Vivado settings script that puts xvlog, xelab and xsim on the path: $XSIM_SETTINGS, else beside the pinned Vivado binary (flow/version_pin.py)."""
+    return os.environ.get("XSIM_SETTINGS") or str(Path(vivado()).parents[1] / "settings64.sh")
+
+
 def sources() -> list[str]:
     return [str(DESIGN / "rtl" / f) for f in ("a194_secded.sv", "a194_fifo.sv", "a194_ctrl.sv", "a194_core.sv")]
 
@@ -61,7 +66,7 @@ def latency(name: str) -> int:
     src = [str(DESIGN / "rtl" / f) for f in ("a194_secded.sv", "a194_fifo.sv", "a194_ctrl.sv", "a194_core.sv")] + [str(DESIGN / "tb" / "tb_lat.sv")]
     with tempfile.TemporaryDirectory() as td:
         if v[0] == 2:
-            sh = (f"source /opt/Xilinx/2026.1/Vivado/settings64.sh >/dev/null 2>&1; cd {td}; xvlog -sv {' '.join(src)} -d 'DUT_PARAMS={params}' >/dev/null && "
+            sh = (f"source {xsim_settings()} >/dev/null 2>&1; cd {td}; xvlog -sv {' '.join(src)} -d 'DUT_PARAMS={params}' >/dev/null && "
                   "xvlog $XILINX_VIVADO/data/verilog/src/glbl.v >/dev/null && xelab -L unisims_ver tb_lat glbl -s s >/dev/null 2>&1 && xsim s -R")
             out = subprocess.run(["bash", "-c", sh], capture_output=True, text=True).stdout
         else:

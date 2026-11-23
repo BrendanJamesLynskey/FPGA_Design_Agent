@@ -159,7 +159,9 @@ def rtl_methods(seeds: int, depth: int) -> dict:
     return res
 
 
-XSET = os.environ.get("XSIM_SETTINGS", "/opt/Xilinx/2026.1/Vivado/settings64.sh")
+from flow.assurance import xsim_settings  # noqa: E402
+
+XSET = xsim_settings()
 
 
 def netsim(netlist: Path, seed: int, workdir: Path, timesim: bool = False, sdf: Path | None = None, bursts: int = 40) -> tuple[bool, float, str]:

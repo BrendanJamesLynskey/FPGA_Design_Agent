@@ -28,7 +28,10 @@ VARIANTS = {   # name: (ECC, PAR, SAFE, TMR, WD)
 }
 TARGETS = ["none", "state", "ram", "ram2", "cnt", "cnt2", "bus"]
 RESULT = re.compile(r"RESULT target=(\S+) ecc=\d+ tmr=\d+ trials=(\d+) seed=(\d+) masked=(\d+) corrected=(\d+) detected=(\d+) silent=(\d+) hang=(\d+)")
-XSETTINGS = os.environ.get("XSIM_SETTINGS", "/opt/Xilinx/2026.1/Vivado/settings64.sh")
+sys.path.insert(0, str(D.parents[1]))
+from flow.ipchar import vivado  # noqa: E402
+
+XSETTINGS = os.environ.get("XSIM_SETTINGS") or str(Path(vivado()).parents[1] / "settings64.sh")   # beside the pinned Vivado (flow/version_pin.py)
 
 
 def params(v: tuple) -> str:
