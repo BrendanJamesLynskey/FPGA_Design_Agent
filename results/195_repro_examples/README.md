@@ -64,6 +64,18 @@ does not pass them. Wall time and cost are per run (two runs were often in progr
   another directory is a different netlist constant and a slightly different build. So the comparison judges Vivado numbers only against a reference with the same RTL hash **and** the same
   stamp, which a re-run in a new run directory never has: for a re-run the deterministic part is the bench verdicts, and `python -m agent example tools <name> --vivado` shows the Vivado repeat.
 
+## Reproduce
+
+```
+python results/195_repro_examples/summarise.py                   # the tables above, from the records (no tool, no model)
+python results/195_repro_examples/bench_recheck.py              # re-score every stored RTL with its hidden bench (Icarus + cocotb, no model, no Vivado)
+python -m agent example tools <example> --ref N --vivado        # rebuild one stored RTL at its original path (a heavy job: takes a slot)
+python results/195_repro_examples/vivado_rebuild.py gray_stepper 2 same gray_stepper 2 other   # the rows of the rebuild table
+python -m agent example run <example>                           # a new run with the pinned setup, compared with these references
+```
+
+The runs themselves cannot be regenerated exactly: the model's output differs from run to run (that is what this folder measures). Re-running needs the pinned CLI copy, the knowledge-bank checkout at the pinned commit, Vivado 2026.1 and a heavy slot.
+
 ## Files
 
 | Path | What |
