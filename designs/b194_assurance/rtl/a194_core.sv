@@ -85,5 +85,5 @@ module a194_core #(
 
     a194_ctrl #(.SAFE(SAFE), .TMR(TMR), .WD(WD)) u_ctrl (
         .clk(aclk), .rst(rst), .start(start), .len(len), .progress(accept || consume), .accept(accept), .drained(drained),
-        .run(run), .busy(busy), .done(done), .fsm_fault(fsm_fault), .wd_fault(wd_fault), .tmr_fault(tmr_fault));
+        .run(run), .busy(busy), .done(done), .fsm_fault(fsm_fault), .wd_fault(wd_fault), .tmr_fault(tmr_fault), .state_o());
 endmodule

@@ -17,42 +17,106 @@ This page is the design note, written before the code. Measured results are adde
 | Reliability structures | none: no ECC, TMR, safe-state FSM, parity or soft-error-mitigation support in the flow or the interview |
 | Config | `spec.yaml` has no assurance field; `agent run` has no flag for it |
 
-## The switch
+## Verification profiles (the switch, widened by the owner on 2026-11-23)
 
-One setting, three levels. It lives in `spec.yaml` as `assurance: standard | thorough | high_reliability` (the field the interview
-fills) and in the run config as `agent run ... --assurance <level>` (the command line overrides the spec for that run; the level that
-was used is recorded in the run summary). Levels are cumulative: each level contains the one before it. The default is `standard`, so
-nothing changes for a run that does not mention it.
+Owner: "We could more generally enable a level of verification, switching on formal when the agent is configured to use it. We could offer
+'profiles': for IP development, we might suggest that full verification is used. We could offer other profiles (which enable X, disable Y) for
+other trade-offs between speed and confidence."
 
-| Level | Adds | Cost | Changes the design? |
+A **profile** is a named preset of **switches**; each switch is one verification method or reliability structure with a typed value. Any switch can
+be overridden on top of a profile; the run record names the profile and every override (what the profile had, what was used). The registry is
+[agent/graph/profiles.py](../agent/graph/profiles.py); the three assurance levels of the first version of this note (`standard`, `thorough`,
+`high_reliability`) are now three of the six profiles.
+
+**Command line.** `agent run ... --verif-profile <name> --set <switch>=<value> ...` (repeatable). The existing `--profile` flag is per-role model
+routing (brief 05f) and is unchanged, so the verification profile is `--verif-profile` (the brief wrote `--profile`; a clash would have changed
+every existing run). **Spec.** `verif_profile:` and `timing_sim: true|false` in `spec.yaml`. **Interview.** With `--interview on|oracle` and no
+profile given, one question proposes a profile with a reason and its measured extra time (the default follows words in the spec: "library" or
+"reusable IP" gives `ip_release`, "single-event" or "must recover" gives `high_reliability`, "latency budget" gives `low_latency`, "prototype" gives
+`prototype`, else `standard`). **Run record.** `summary.json` carries `verification_profile` (profile, overrides, effective switches, switches that
+are only recorded, gaps against the method mix and the IP label, an advisory line, policy breaches); `runs/<id>/policy.json` is the pin.
+
+### Switches
+
+`wired` says whether the harness or flow runs the switch today. A switch that is only recorded is listed in the run summary as not run, so a
+profile never claims a check that nothing executes.
+
+| Switch | Values | Wired to | Wired |
 |---|---|---|---|
-| `standard` | RTL verification as today (V0 to V3, mutation, the independent spec bench) | the baseline | no |
-| `thorough` | (1) **post-synthesis functional simulation**: the design's own functional bench re-run on Vivado's `write_verilog -mode funcsim` netlist; (2) **formal equivalence** RTL against the synthesised netlist with `eqy`, as a gate where the netlist's primitives are modelled, and a recorded `unsupported` where they are not; (3) **seed sweep**: the randomised benches repeated over a set of seeds (default 8); (4) **longer formal depths** (bounded depth multiplied by 4 where the design has a formal bench); (5) **post-route timing simulation** (`write_verilog -mode timesim` plus SDF) only when the design is marked `timing_sim: true` in the spec (asynchronous or multi-clock behaviour) | minutes to tens of minutes of wall time, one or two extra Vivado runs, no extra area | no |
-| `high_reliability` | everything in `thorough`, plus **structures chosen with the user**: ECC on memories, parity on internal buses, safe-state FSM encoding, TMR on chosen registers, watchdog, and a fault-injection simulation that shows what each structure catches | area, Fmax and latency, each measured (table in Results); extra verification time | yes, only where the user accepted the stated cost |
+| `lint`, `directed_sim`, `random_sim` | on / off | stage 2 lint and simulate gates | yes |
+| `verif_level` | V1, V2, V3 | `cfg.verif_level` (was `--verif-level`, now an override of this switch) | yes |
+| `coverage_target` | 0-100 | `flow/verif_floors.yaml` (floor 100 at V3) | yes (floor) |
+| `mutation_floor` | 0-100 | `flow/verif_floors.yaml` (floor 70 at V3) | yes (floor) |
+| `seeds` | 1-64 | `seeds_min` (floor 3 at V3); `flow/assurance.py` seed sweeps | yes |
+| `indep_spec_test` | on / off | `cfg.spec_tests` (was `--spec-tests`) | yes |
+| `post_synth_sim`, `equivalence`, `timing_sim` (off / auto / on), `fault_injection` | | `flow/assurance.py`, `flow/assurance_profiles.py` | measured here on the development design; not yet a stage of the run |
+| `reliability` | none / interview | the interview chooses blocks and structures (`spec.yaml` `reliability`) | interview yes, RTL generation needs a KB prompt (known gap) |
+| `board_hil` | off / smoke / full | stage 9 | yes |
+| `formal_depth_scale`, `formal_induction`, `formal_pdr`, `lean_proof`, `uvm`, `latency_checks`, `repeats` | | `flow/formal.sh`, `flow/lean_tier.py`, bench briefs 112/123, `flow/latency` | recorded only |
+
+### Profiles
+
+| Profile | Purpose | What it sets (differences from the one above it in the list) |
+|---|---|---|
+| `prototype` | fastest look at an idea | lint + directed tests, stops at V1; no random tests, coverage, formal, netlist checks |
+| `standard` | today's default; nothing changes for a run that names no profile | V3, constrained-random, floors (100 % bins, 70 % mutation, 3 seeds), bounded formal at the design's own depth, board smoke run |
+| `thorough` | standard plus the netlist checks | 8 seeds, formal depth x4, functional simulation of the synthesised netlist, `eqy` equivalence, timing simulation where the spec says `timing_sim: true` |
+| `ip_release` | what a library IP block needs for its "verified" label (decisions 24, 26) | thorough plus an independent spec bench, mutation floor 85, k-induction and PDR, a pyuvm bench |
+| `high_reliability` | designs that must survive single-event upsets | thorough plus the reliability structures the interview chose and fault-injection simulation |
+| `low_latency` | designs with a latency budget | standard plus the latency budget checks and the latency-path documentation rule (briefs 84, 189) |
+
+### How profiles relate to what exists (nothing is duplicated; nothing is removed)
+
+- **`--verif-level V1|V2|V3`** stays. It is the switch `verif_level`: a profile sets it, and giving the flag is an override that is recorded as one.
+  Default behaviour with no profile and no flag is exactly today's (`standard`, V3).
+- **`--spec-tests`** likewise is the switch `indep_spec_test`.
+- **V3 floors** (`flow/verif_floors.yaml`): a profile may raise `mutation_floor`, `seeds` and `coverage_target`, and `resolve` refuses a value below the
+  floor at V3. The floors stay the minimum; the agent never writes that file.
+- **Required method mix** (`flow/method_mix_policy.yaml`, brief 143a, decision 25): decides when a requirement is `verified`. Profiles do not change
+  it. `method_mix_gap` lists methods a profile leaves off that the policy names, so the planner can see that `prototype` cannot produce `verified`
+  for a safety requirement (it has neither formal nor a board run).
+- **IP library label** (VERIFIED.md, decisions 24 and 26, briefs 137-144): the label needs `ip_release` or stronger; `ip_release_ok` returns what a
+  profile lacks. The label's own record is written by the library briefs, not here.
+- **Brief 189's advisory checks** are `latency_checks` and the netlist-level methods; they stay advisory (`enforced: false`) in every profile.
+  *Planner and owner decide before anything is removed:* a later step could retire `--verif-level` in favour of profiles; this brief keeps both.
+
+### The variables, and what the model may decide
+
+[docs/agent_levers.md](agent_levers.md) classifies every input that changes the agent's behaviour as a variable (fixed by the user, pinned for the run,
+never changed by the model), LLM judgement, or hybrid (the model proposes, the user pins). The profile and its switches are variables: they are
+written to `policy.json` outside the design directory at the start of the run, and any disagreement (a `spec.yaml` naming another profile, a
+changed setting) is logged as a policy breach in the run summary while the pin wins.
+
+### Proposed settings, confirmed before the run (owner, 2026-11-23)
+
+Before a run the agent reads the input folder and proposes the variable levers it can read, each with its source and any conflict:
+`agent propose <folder>` writes `proposed_settings.yaml` (board, part, speed grade, reference clocks, I/O standards, PHYs, interfaces, suggested
+profile). The sources, in order: `board_facts.yaml` (the design-package ingest of brief 174, `flow.package ingest`; **not merged yet, so this reads
+the file when it exists and its format is assumed to be a mapping of facts, each plain or `{value, source}`**), the catalogue board named by the
+folder, and the spec for the profile. A value nothing in the folder gives is empty with status `ask`; nothing is guessed. The user confirms or edits
+every value (`agent settings confirm <file>`, or edit the file and set `status: confirmed`); `agent run --settings <file>` refuses a file with an
+unconfirmed or empty value, and refuses a `--board` or `--verif-profile` that disagrees with it. The Navigator's Start page has the same step.
+
+## What the first version of this note proposed for the netlist checks
+
+- **`post_synth_sim`:** the design's own functional bench re-run on Vivado's `write_verilog -mode funcsim` netlist (zero delay, unisims).
+- **`equivalence`:** `eqy` RTL against the synthesised netlist, as a gate where the netlist's primitives are modelled; `unsupported` is recorded where they are not.
+- **`timing_sim`:** post-route `write_verilog -mode timesim` plus SDF, opt-in per design (asynchronous or multi-clock behaviour); the free simulator refuses more than 50,000 instances.
+- **seed sweep and formal depth** as switches of the same profiles.
 
 ### What a user could guess wrong
 
-- **`thorough` is not "more RTL tests".** It checks the tool's output (the netlist), not the RTL. A pass says synthesis did not change
-  the function; it says nothing new about the spec.
-- **The funcsim netlist has no timing.** `-mode funcsim` is zero delay. Timing faults appear only in the optional `timesim` run.
-- **eqy proves the netlist text it is given.** A netlist containing a block RAM, a DSP48 or a clocking primitive is `unsupported`
-  (reported as such, never as a pass). Equivalence is therefore run on the logic without the memory, and the memory is covered by the
-  netlist simulation instead. This split is stated in every result.
-- **`timesim` on the free Vivado tier.** The Basic simulator refuses designs above 50,000 instances; a design over the cap gets
-  `timing_sim: skipped (instance cap)`, not a pass.
-- **ECC does not fix a stuck-at or a wrong write.** It corrects one flipped bit per word and detects two. Inputs that are wrong before
-  the write are stored faithfully with a correct code.
-- **Built-in block RAM ECC corrects the output, not the array** (UG473 ch. 3 "Built-in Error Correction": the corrected value is on
-  `DO`; the stored word keeps its error). A word read twice is corrected twice; a second flip in the same word before a rewrite makes it
-  a double error. A design that wants scrubbing must write the corrected value back.
-- **TMR only helps if the copies survive.** Vivado merges registers with identical inputs unless told not to; the copies carry
-  `DONT_TOUCH` (UG901 ch. 2 "DONT_TOUCH", forwarded to place and route), and the flow checks the post-implementation netlist for all
-  three copies (a result of "3 copies found" is a measurement, not an assumption).
-- **TMR does not protect the voter, the clock or the inputs.** A fault in the voter output register shows as one wrong cycle.
-- **`fsm_safe_state` only acts on an FSM that synthesis extracted** (UG901 ch. 3 "FSM_SAFE_STATE"). `fsm_encoding = none` removes it.
+- **The netlist checks are not "more RTL tests".** They check the tool's output. A pass says synthesis did not change the function; nothing new about the spec.
+- **The funcsim netlist has no timing.** Timing faults appear only in the optional `timesim` run.
+- **eqy proves the netlist text it is given.** A netlist with a block RAM, a DSP48 or a clocking primitive is `ERROR` (reported as unsupported, never as a pass). Equivalence is therefore run on the logic without the memory, and the memory is covered by the netlist simulation instead; every result states the split.
+- **ECC does not fix a stuck-at or a wrong write.** It corrects one flipped bit per word and detects two. A word written wrong is stored faithfully with a correct code.
+- **Built-in block RAM ECC corrects the output, not the array** (UG473 ch. 3): the stored word keeps its error until it is rewritten, so a second flip makes a double error.
+- **TMR only helps if the copies survive**, and it does not protect the voter, the inputs or the clock. Two copies flipped together outvote the good one (measured below).
+- **`fsm_safe_state` acts only on an FSM synthesis extracted** (UG901). It is invisible to RTL simulation: the RTL's own default arc is what RTL simulation sees. The netlist is where it shows.
+- **The watchdog only watches while the sequencer is busy.** A fault that lands the FSM in idle before the burst is a hang it does not see (measured below).
+- **Single-event faults in simulation are modelled bit flips**, not a failure rate.
 - **Configuration-memory upsets** (LUT contents, routing) are not fixed by any of these; the soft-error-mitigation core does that (below).
-- **Single-event faults in simulation are modelled bit flips**, not particle physics. The fault-injection table says what the structures
-  catch against that model; it is not a failure-rate figure.
+- **A profile's extra time is the time of its checks on the development design, without model time.** It scales with the design and the machine.
 
 ## What `high_reliability` can add, and what we checked first
 
@@ -68,27 +132,34 @@ nothing changes for a run that does not mention it.
 The interview asks which blocks need each structure, and the agent states the measured cost (area, Fmax, latency, from the table in
 Results for that structure on the same family) before applying it. A block the user does not name is not changed.
 
-## How the agent reads the switch
+## How the agent reads the profile
 
-1. **Clarify (stage 0).** If the level is not set, one question with a proposed default (`standard`) and its reason. At `thorough`: one
-   question only if the spec has more than one clock (asks whether to run `timesim`). At `high_reliability`: one question per candidate
-   block class found in the spec (memories, state machines, counters and registers that must not corrupt, internal buses), each with
-   the measured cost as its reason and a default of "protect" for memories and FSMs and "do not protect" otherwise.
-2. **Plan.** `agent/graph/assurance.py` turns the level and the answers into a plan: the flow checks enabled and the structures to add.
-3. **Flow.** `flow/assurance.py` runs the enabled checks (funcsim netlist, bench re-run, eqy, seed sweep, timesim) and writes
-   `assurance.json` in the build directory.
-4. **Run summary.** The summary carries `assurance`: the level, the plan, each check's status and wall time, and an advisory line
-   ("thorough adds N minutes; high_reliability costs X % area ..."), so the user sees what the switch bought.
+1. **Start.** `agent run` resolves `--verif-profile` and `--set` (an unknown switch, a bad value or a value below a floor stops the command before anything
+   runs), pins the result in `policy.json` and records who set it in `build/who_did_what.json`.
+2. **Clarify (stage 0).** If no profile was given and the interview is on, one question proposes one (default from the spec's words, reason, expected extra
+   time). If the profile asks for structures (`reliability: interview`), one question per block class found in the spec (memories, state machines,
+   counters, internal buses) states the measured cost of the structure and proposes "protect" for memories and state machines and "do not protect" for the
+   rest. The answers go into `spec.yaml` (`verif_profile`, `reliability`); a block the user does not name is not changed.
+3. **Flow.** `flow/assurance.py` and `flow/assurance_profiles.py` run the netlist checks and the cost and fault measurements. They run on the
+   development design here; wiring them in as a run stage is the follow-up (a stage needs a gate and a heavy slot).
+4. **Run summary.** `verification_profile` in `summary.json`: the profile, every override, the effective switches, the switches that are only recorded,
+   the gaps against the method mix and the IP label, an advisory line and any policy breach.
 
 ## Development design and method
 
-`designs/b194_assurance/` (a development design, not a held-out task): a burst sequencer (a five-state FSM with three unused codes),
-a 512 x 64 FIFO on block RAM, a pipeline register with an accumulating checksum, and a 16-bit remaining-words counter. Variants by
-parameter: `u` (none), `ecc`, `par`, `safe`, `tmr`, `all`. Cost is measured OOC on Vivado 2026.1, one run each, `xc7a100tcsg324-1`
-(the run's own clock search is not used: a fixed 5.0 ns constraint, then Fmax estimated from WNS at that constraint, stated as such).
-Fault injection: seeded single bit flips at random cycles in the state register, the RAM words, the protected counter copies and the
-bus register, over a fixed workload, classified per trial as masked, corrected, detected, silent corruption or hang.
+`designs/b194_assurance/` (a development design, not a held-out task): `a194_ctrl` (a four-state burst sequencer in a 3-bit state register, with the
+remaining-words counter and an optional watchdog), `a194_fifo` (512 x 64 on block RAM), and `a194_core` (output register with optional parity, running
+checksum, AXI4-Stream handshakes). Variants by parameter: `u` (none), `ecc_fabric` (Hamming(72,64) in LUTs), `ecc_prim` (RAMB36E1 built-in ECC),
+`par`, `safe` (`fsm_safe_state = auto_safe_state`), `tmr` (three `DONT_TOUCH` copies of the counter, bitwise voter, voted value fed back), `wd`, `all`
+(`ecc_prim` + `par` + `safe` + `tmr` + `wd`). Benches: `tb/tb_func.sv` (ports only: runs on RTL and on netlists), `tb/tb_fault.sv` (RTL, fault
+hooks compiled in with `-DA194_FI`; the hooks are constant zero otherwise), `tb/tb_lat.sv` (latency). Cost is measured out of context on Vivado 2026.1,
+`xc7a100tcsg324-1`, one run per variant at a fixed 5.0 ns constraint; Fmax is estimated from the routed slack at that constraint, which is an estimate and
+not a closure search. Fault injection: seeded single-event upsets at one random clock of each trial's burst; the injection point for a stored word is
+the write of that word (the block RAM primitive's own injection inputs act on a write, so the other variants are made to do the same).
 
 ## Results
 
-(filled in as the runs complete)
+Generated by `python3 -m flow.assurance_report --write` from the JSON records in [results/b194](../results/b194/).
+
+<!-- b194-results:start -->
+<!-- b194-results:end -->

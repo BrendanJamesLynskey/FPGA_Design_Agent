@@ -16,7 +16,7 @@ package a194_secded_pkg;
         for (int p = 0; p < 7; p++) begin
             logic par;
             par = 1'b0;
-            for (int i = 1; i <= 71; i++) if ((i >> p) & 1) par ^= cw[i];
+            for (int i = 1; i <= 71; i++) if (((i >> p) & 1) != 0) par ^= cw[i];
             cw[1 << p] = par;
         end
         cw[0] = ^cw[71:1];

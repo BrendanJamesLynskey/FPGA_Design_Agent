@@ -38,7 +38,8 @@ module a194_ctrl #(
     output logic        done,         // one clock
     output logic        fsm_fault,    // sticky
     output logic        wd_fault,     // sticky
-    output logic        tmr_fault     // sticky: a copy disagreed with the vote
+    output logic        tmr_fault,    // sticky: a copy disagreed with the vote
+    output logic [2:0]  state_o       // the state register (the formal bench reads it; unconnected in the core)
 );
     typedef enum logic [2:0] {IDLE = 3'd0, RUN = 3'd1, DRAIN = 3'd2, DONE = 3'd3} state_t;
 
@@ -131,6 +132,7 @@ module a194_ctrl #(
     end
 
     // ---- outputs ----
+    assign state_o = state_q;
     assign busy = (state_q != IDLE);
     assign run  = (state_q == RUN) && (rem_v != 16'd0);
     assign done = (state_q == DONE);
