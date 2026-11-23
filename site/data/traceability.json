@@ -6,13 +6,6 @@
     "gaps": [
      {
       "gate": false,
-      "id": "B110-F-SEQ-POISON",
-      "state": "fail",
-      "text": "an item fails",
-      "type": "no_passing_evidence"
-     },
-     {
-      "gate": false,
       "id": "B110-V-MUTATION",
       "state": "fail",
       "text": "an item fails",
@@ -21,10 +14,10 @@
     ],
     "items": [
      {
-      "detail": "checks.ORDERS.mismatches = 0; checks.ORDERS.compared = 3128; failed = 0",
+      "detail": "checks.ORDERS.mismatches = 0; checks.ORDERS.compared = 3603; failed = 0",
       "evidence": {
        "exists": true,
-       "file": "results/176_seq_poison/summary.json"
+       "file": "results/188_trading_safety/uvm/summary.json"
       },
       "id": "V-UVM-ORDERS",
       "instrument": null,
@@ -38,10 +31,10 @@
       "value": true
      },
      {
-      "detail": "checks.COUNTERS.mismatches = 0; checks.FLAGS.mismatches = 0; checks.COUNTERS.compared = 8938",
+      "detail": "checks.COUNTERS.mismatches = 0; checks.FLAGS.mismatches = 0; checks.COUNTERS.compared = 10332",
       "evidence": {
        "exists": true,
-       "file": "results/176_seq_poison/summary.json"
+       "file": "results/188_trading_safety/uvm/summary.json"
       },
       "id": "V-UVM-MOLD",
       "instrument": null,
@@ -58,7 +51,7 @@
       "detail": "checks.COUNTERS.mismatches = 0; checks.FLAGS.mismatches = 0; failed = 0",
       "evidence": {
        "exists": true,
-       "file": "results/176_seq_poison/summary.json"
+       "file": "results/188_trading_safety/uvm/summary.json"
       },
       "id": "V-UVM-BOOK",
       "instrument": null,
@@ -75,7 +68,7 @@
       "detail": "checks.COUNTERS.mismatches = 0; checks.ORDERS.mismatches = 0; failed = 0",
       "evidence": {
        "exists": true,
-       "file": "results/176_seq_poison/summary.json"
+       "file": "results/188_trading_safety/uvm/summary.json"
       },
       "id": "V-UVM-RISK",
       "instrument": null,
@@ -89,10 +82,10 @@
       "value": true
      },
      {
-      "detail": "checks.US.mismatches = 0; checks.US.compared = 2616",
+      "detail": "checks.US.mismatches = 0; checks.US.compared = 3024",
       "evidence": {
        "exists": true,
-       "file": "results/176_seq_poison/summary.json"
+       "file": "results/188_trading_safety/uvm/summary.json"
       },
       "id": "V-UVM-UDP",
       "instrument": null,
@@ -109,7 +102,7 @@
       "detail": "checks.ORDERS.mismatches = 0; checks.ORDERCNT.mismatches = 0; failed = 0",
       "evidence": {
        "exists": true,
-       "file": "results/176_seq_poison/summary.json"
+       "file": "results/188_trading_safety/uvm/summary.json"
       },
       "id": "V-UVM-STRICT",
       "instrument": null,
@@ -123,10 +116,10 @@
       "value": true
      },
      {
-      "detail": "seq_waived unreadable; finding_seq_poison.failed unreadable",
+      "detail": "checks.SEQ.mismatches = 0; checks.SEQ.compared = 538; failed = 0",
       "evidence": {
        "exists": true,
-       "file": "results/176_seq_poison/summary.json"
+       "file": "results/188_trading_safety/uvm/summary.json"
       },
       "id": "V-UVM-SEQ",
       "instrument": null,
@@ -135,15 +128,15 @@
       "requirements": [
        "B110-F-SEQ-POISON"
       ],
-      "status": "fail",
-      "title": "UVM sequence-number check on the datasheet's rule; t_seq_poison (run with +SEQ_STRICT) is the minimal failing test, the other sequences run under a counted waiver",
+      "status": "pass",
+      "title": "UVM sequence-number check on the datasheet's rule, exact and without a waiver in every run (brief 176 fixed the finding t_seq_poison made; the item still read the pre-fix fields until brief 188)",
       "value": true
      },
      {
       "detail": "sva_failures = 0",
       "evidence": {
        "exists": true,
-       "file": "results/176_seq_poison/summary.json"
+       "file": "results/188_trading_safety/uvm/summary.json"
       },
       "id": "V-UVM-SVA",
       "instrument": null,
@@ -161,7 +154,7 @@
       "detail": "coverage.holes = []",
       "evidence": {
        "exists": true,
-       "file": "results/176_seq_poison/summary.json"
+       "file": "results/188_trading_safety/uvm/summary.json"
       },
       "id": "V-UVM-COV",
       "instrument": null,
@@ -204,9 +197,98 @@
       "status": "fail",
       "title": "Blind mutation sweep with the fixed tool (flow/mutation_score.py): score, worst case and undecided against the floor",
       "value": 100.0
+     },
+     {
+      "bounded": {
+       "depth": 12
+      },
+      "detail": "2 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "results/188_trading_safety/pytest_junit.xml"
+      },
+      "id": "V-FORMAL-BOOK-QTY",
+      "instrument": null,
+      "method": "formal",
+      "planned": null,
+      "requirements": [
+       "B110-S-QTY"
+      ],
+      "status": "bounded",
+      "title": "SymbiYosys bounded proof (BMC from reset, depth 12) of the book's quantity invariants Q1-Q6 and the cover that saturation is reachable; no k-induction",
+      "value": "2 of 2 tests passed"
+     },
+     {
+      "detail": "2 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "results/188_trading_safety/pytest_junit.xml"
+      },
+      "id": "V-SIM-QTY",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "B110-S-QTY"
+      ],
+      "status": "pass",
+      "title": "Saturating level size, zero-share Add and wrapping order price, against the model (the saturation test fails on the RTL before brief 188)",
+      "value": "2 of 2 tests passed"
+     },
+     {
+      "detail": "1 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "results/188_trading_safety/pytest_junit.xml"
+      },
+      "id": "V-SIM-BANDREF",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "B110-S-BANDREF",
+       "B110-F-HOLDOFF"
+      ],
+      "status": "pass",
+      "title": "Software band reference, its age limit and the hold-off (cocotb bench soft_reference, soft_reference_age, holdoff)",
+      "value": "1 of 1 tests passed"
+     },
+     {
+      "detail": "3 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "results/188_trading_safety/pytest_junit.xml"
+      },
+      "id": "V-SIM-NOTIONAL",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "B110-F-NOTIONAL"
+      ],
+      "status": "pass",
+      "title": "Notional check in both builds against the model, the table-versus-multiply property, and equal latency in the three NOTIONAL_MODE builds",
+      "value": "3 of 3 tests passed"
+     },
+     {
+      "detail": "orders_b_uncommitted = 4; orders_c_committed = 1; rej_pos_b = 0; rej_pos_c = 3",
+      "evidence": {
+       "exists": true,
+       "file": "results/188_trading_safety/staged_limits_sim.json"
+      },
+      "id": "V-XSIM-LIMITS",
+      "instrument": null,
+      "method": "sim_measurement",
+      "planned": null,
+      "requirements": [
+       "B110-S-LIMITS-ATOMIC"
+      ],
+      "status": "pass",
+      "title": "Whole core in xsim 2026.1; limit lowered but not committed leaves the old limits in force, COMMIT applies it",
+      "value": true
      }
     ],
-    "notes": "Simulation only (xsim 2026.1, UVM 1.2; Icarus is not used by this bench). One recorded regression (results/176_seq_poison/summary.json) and one mutation record (results/170_itch_uvm/mutation_seed*.json). No board, no real feed, every message synthetic.",
+    "notes": "Simulation only (xsim 2026.1, UVM 1.2; Icarus is not used by this bench). One recorded regression (results/188_trading_safety/uvm/summary.json) and one mutation record (results/170_itch_uvm/mutation_seed*.json). No board, no real feed, every message synthetic.",
     "path": "designs/b110_itch_ouch",
     "requirements": [
      {
@@ -356,12 +438,14 @@
       ],
       "kind": "functional",
       "lean_transcription_only": false,
-      "passing_methods": [],
+      "passing_methods": [
+       "uvm_test"
+      ],
       "rests_on_delegated": false,
       "source": "designs/b96_kr260_10g/rm_gp_itch/docs/itch_integration.md#5-registers-and-what-a-user-could-guess-wrong",
       "spec_status": "draft",
       "stale_items": 0,
-      "state": "fail",
+      "state": "verified",
       "text": "The TCP sequence number of an order is the loaded number plus 59 for every segment that left with a good FCS; a frame poisoned (wrong FCS) by the multiplexer, because its trigger frame was bad or unverified, does not advance it.",
       "title": "A poisoned order frame consumes no TCP sequence number"
      },
@@ -406,15 +490,126 @@
       "state": "fail",
       "text": "A blind mutation sweep (mutants made from the RTL text and a seed only, equivalent mutants decided by a formal miter) scores at least 90 % even if every undecided mutant counted as a survivor.",
       "title": "The bench kills at least 90 % of blind mutants of the path (worst case, over at least 30)"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "B110-S-QTY",
+      "items": [
+       "V-FORMAL-BOOK-QTY",
+       "V-SIM-QTY"
+      ],
+      "kind": "safety",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "designs/b110_itch_ouch/docs/itch_ouch.md#14-observation-and-counters",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "A level size that would pass 2^32 - 1 saturates and makes the instrument inexact (counted as lvovf); an Add of zero shares is never entered; an order price (candidate price plus offset) that passes 2^32 - 1 is refused as band; no ladder level or order-table entry is ever written live with zero size (brief 188, bounded proof from reset).",
+      "title": "No quantity or price accumulator wraps, and no live book entry has zero size"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "B110-S-BANDREF",
+      "items": [
+       "V-SIM-BANDREF"
+      ],
+      "kind": "safety",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "designs/b110_itch_ouch/docs/itch_ouch.md#13-configuration-static",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "With the software reference selected, the band is measured from the price software wrote and the book's bid is not consulted; a reference never loaded, or older than the age limit in core clocks, refuses every candidate as rej_band (brief 188).",
+      "title": "The price-band reference can come from software, independent of the strategy's own book, and is refused when too old"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "B110-F-HOLDOFF",
+      "items": [
+       "V-SIM-BANDREF"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "designs/b110_itch_ouch/docs/itch_ouch.md#13-configuration-static",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "With a hold-off of N clocks, the next candidate of the same instrument inside N clocks is refused and counted as rej_busy, one after it is accepted, another instrument is unaffected, and speculation is not started during a hold-off (brief 188).",
+      "title": "After an accepted order an instrument is refused for the hold-off, other instruments are not"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "B110-F-NOTIONAL",
+      "items": [
+       "V-SIM-NOTIONAL"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "designs/b110_itch_ouch/docs/itch_ouch.md#13-configuration-static",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "With NOTIONAL_MODE 1 an order whose price times quantity passes the limit is refused as rej_size; with mode 2 a table filled by software from the limit gives verdicts equal to the model's, never admits an order the multiply would refuse, and both add no clock between the book update and the first order word (brief 188).",
+      "title": "The notional check (multiply or software price-band table) refuses as the model says, at no extra clock, and the table is never weaker than the multiply"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "B110-S-LIMITS-ATOMIC",
+      "items": [
+       "V-XSIM-LIMITS"
+      ],
+      "kind": "safety",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_measurement"
+      ],
+      "rests_on_delegated": false,
+      "source": "designs/b96_kr260_10g/rm_gp_itch/docs/itch_integration.md#5-registers-and-what-a-user-could-guess-wrong",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "The risk limits are staged; a write fills a holding register and the live set changes only on COMMIT, in one clock, so the core never runs on a mix of old and new limits (brief 188, whole core in xsim).",
+      "title": "A half-written set of risk limits never takes effect (rm_gp_itch registers)"
      }
     ],
     "source_schema": "fpga-design-agent/testplan/v1",
     "summary": {
      "by_kind": {
-      "functional": 7,
+      "functional": 9,
       "interface": 0,
       "performance": 0,
-      "safety": 2
+      "safety": 5
      },
      "by_method": {
       "assertion": {
@@ -448,7 +643,7 @@
        "unapproved": 0
       },
       "formal": {
-       "bounded": 0,
+       "bounded": 1,
        "fail": 0,
        "not_in_run": 0,
        "not_run": 0,
@@ -482,7 +677,7 @@
        "fail": 1,
        "not_in_run": 0,
        "not_run": 0,
-       "pass": 0,
+       "pass": 1,
        "skipped": 0,
        "stale": 0,
        "unapproved": 0
@@ -492,7 +687,7 @@
        "fail": 0,
        "not_in_run": 0,
        "not_run": 0,
-       "pass": 0,
+       "pass": 3,
        "skipped": 0,
        "stale": 0,
        "unapproved": 0
@@ -509,26 +704,26 @@
       },
       "uvm_test": {
        "bounded": 0,
-       "fail": 1,
+       "fail": 0,
        "not_in_run": 0,
        "not_run": 0,
-       "pass": 6,
+       "pass": 7,
        "skipped": 0,
        "stale": 0,
        "unapproved": 0
       }
      },
      "by_state": {
-      "fail": 2,
-      "verified": 7
+      "fail": 1,
+      "verified": 13
      },
      "external": 0,
      "external_hardware_done": 0,
      "gap_counts": {
-      "no_passing_evidence": 2
+      "no_passing_evidence": 1
      },
      "human_reviews": 0,
-     "items": 10,
+     "items": 15,
      "lean": {
       "approved": 0,
       "build_sources": [],
@@ -548,11 +743,11 @@
       "items": 0,
       "statement_not_approved": 0
      },
-     "line": "9 requirements (7 functional, 2 safety); 7 verified; 2 failing; 0 of 9 requirements agreed by a human, 0 human review(s) recorded.",
+     "line": "14 requirements (9 functional, 5 safety); 13 verified; 1 failing; 0 of 14 requirements agreed by a human, 0 human review(s) recorded.",
      "performance_board": 0,
      "performance_sim_only": 0,
      "performance_timing": 0,
-     "requirements": 9,
+     "requirements": 14,
      "spec_agreed": 0,
      "verified_on_delegated": 0
     }
@@ -26519,8 +26714,8 @@
   "schema": "fda-traceability/1",
   "total": {
    "designs": 34,
-   "requirements": 355,
-   "verified": 258
+   "requirements": 360,
+   "verified": 264
   }
  },
  "content": {
@@ -26530,13 +26725,6 @@
     "gaps": [
      {
       "gate": false,
-      "id": "B110-F-SEQ-POISON",
-      "state": "fail",
-      "text": "an item fails",
-      "type": "no_passing_evidence"
-     },
-     {
-      "gate": false,
       "id": "B110-V-MUTATION",
       "state": "fail",
       "text": "an item fails",
@@ -26545,10 +26733,10 @@
     ],
     "items": [
      {
-      "detail": "checks.ORDERS.mismatches = 0; checks.ORDERS.compared = 3128; failed = 0",
+      "detail": "checks.ORDERS.mismatches = 0; checks.ORDERS.compared = 3603; failed = 0",
       "evidence": {
        "exists": true,
-       "file": "results/176_seq_poison/summary.json"
+       "file": "results/188_trading_safety/uvm/summary.json"
       },
       "id": "V-UVM-ORDERS",
       "instrument": null,
@@ -26562,10 +26750,10 @@
       "value": true
      },
      {
-      "detail": "checks.COUNTERS.mismatches = 0; checks.FLAGS.mismatches = 0; checks.COUNTERS.compared = 8938",
+      "detail": "checks.COUNTERS.mismatches = 0; checks.FLAGS.mismatches = 0; checks.COUNTERS.compared = 10332",
       "evidence": {
        "exists": true,
-       "file": "results/176_seq_poison/summary.json"
+       "file": "results/188_trading_safety/uvm/summary.json"
       },
       "id": "V-UVM-MOLD",
       "instrument": null,
@@ -26582,7 +26770,7 @@
       "detail": "checks.COUNTERS.mismatches = 0; checks.FLAGS.mismatches = 0; failed = 0",
       "evidence": {
        "exists": true,
-       "file": "results/176_seq_poison/summary.json"
+       "file": "results/188_trading_safety/uvm/summary.json"
       },
       "id": "V-UVM-BOOK",
       "instrument": null,
@@ -26599,7 +26787,7 @@
       "detail": "checks.COUNTERS.mismatches = 0; checks.ORDERS.mismatches = 0; failed = 0",
       "evidence": {
        "exists": true,
-       "file": "results/176_seq_poison/summary.json"
+       "file": "results/188_trading_safety/uvm/summary.json"
       },
       "id": "V-UVM-RISK",
       "instrument": null,
@@ -26613,10 +26801,10 @@
       "value": true
      },
      {
-      "detail": "checks.US.mismatches = 0; checks.US.compared = 2616",
+      "detail": "checks.US.mismatches = 0; checks.US.compared = 3024",
       "evidence": {
        "exists": true,
-       "file": "results/176_seq_poison/summary.json"
+       "file": "results/188_trading_safety/uvm/summary.json"
       },
       "id": "V-UVM-UDP",
       "instrument": null,
@@ -26633,7 +26821,7 @@
       "detail": "checks.ORDERS.mismatches = 0; checks.ORDERCNT.mismatches = 0; failed = 0",
       "evidence": {
        "exists": true,
-       "file": "results/176_seq_poison/summary.json"
+       "file": "results/188_trading_safety/uvm/summary.json"
       },
       "id": "V-UVM-STRICT",
       "instrument": null,
@@ -26647,10 +26835,10 @@
       "value": true
      },
      {
-      "detail": "seq_waived unreadable; finding_seq_poison.failed unreadable",
+      "detail": "checks.SEQ.mismatches = 0; checks.SEQ.compared = 538; failed = 0",
       "evidence": {
        "exists": true,
-       "file": "results/176_seq_poison/summary.json"
+       "file": "results/188_trading_safety/uvm/summary.json"
       },
       "id": "V-UVM-SEQ",
       "instrument": null,
@@ -26659,15 +26847,15 @@
       "requirements": [
        "B110-F-SEQ-POISON"
       ],
-      "status": "fail",
-      "title": "UVM sequence-number check on the datasheet's rule; t_seq_poison (run with +SEQ_STRICT) is the minimal failing test, the other sequences run under a counted waiver",
+      "status": "pass",
+      "title": "UVM sequence-number check on the datasheet's rule, exact and without a waiver in every run (brief 176 fixed the finding t_seq_poison made; the item still read the pre-fix fields until brief 188)",
       "value": true
      },
      {
       "detail": "sva_failures = 0",
       "evidence": {
        "exists": true,
-       "file": "results/176_seq_poison/summary.json"
+       "file": "results/188_trading_safety/uvm/summary.json"
       },
       "id": "V-UVM-SVA",
       "instrument": null,
@@ -26685,7 +26873,7 @@
       "detail": "coverage.holes = []",
       "evidence": {
        "exists": true,
-       "file": "results/176_seq_poison/summary.json"
+       "file": "results/188_trading_safety/uvm/summary.json"
       },
       "id": "V-UVM-COV",
       "instrument": null,
@@ -26728,9 +26916,98 @@
       "status": "fail",
       "title": "Blind mutation sweep with the fixed tool (flow/mutation_score.py): score, worst case and undecided against the floor",
       "value": 100.0
+     },
+     {
+      "bounded": {
+       "depth": 12
+      },
+      "detail": "2 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "results/188_trading_safety/pytest_junit.xml"
+      },
+      "id": "V-FORMAL-BOOK-QTY",
+      "instrument": null,
+      "method": "formal",
+      "planned": null,
+      "requirements": [
+       "B110-S-QTY"
+      ],
+      "status": "bounded",
+      "title": "SymbiYosys bounded proof (BMC from reset, depth 12) of the book's quantity invariants Q1-Q6 and the cover that saturation is reachable; no k-induction",
+      "value": "2 of 2 tests passed"
+     },
+     {
+      "detail": "2 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "results/188_trading_safety/pytest_junit.xml"
+      },
+      "id": "V-SIM-QTY",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "B110-S-QTY"
+      ],
+      "status": "pass",
+      "title": "Saturating level size, zero-share Add and wrapping order price, against the model (the saturation test fails on the RTL before brief 188)",
+      "value": "2 of 2 tests passed"
+     },
+     {
+      "detail": "1 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "results/188_trading_safety/pytest_junit.xml"
+      },
+      "id": "V-SIM-BANDREF",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "B110-S-BANDREF",
+       "B110-F-HOLDOFF"
+      ],
+      "status": "pass",
+      "title": "Software band reference, its age limit and the hold-off (cocotb bench soft_reference, soft_reference_age, holdoff)",
+      "value": "1 of 1 tests passed"
+     },
+     {
+      "detail": "3 test(s) passed in the recorded run",
+      "evidence": {
+       "exists": true,
+       "file": "results/188_trading_safety/pytest_junit.xml"
+      },
+      "id": "V-SIM-NOTIONAL",
+      "instrument": null,
+      "method": "sim_test",
+      "planned": null,
+      "requirements": [
+       "B110-F-NOTIONAL"
+      ],
+      "status": "pass",
+      "title": "Notional check in both builds against the model, the table-versus-multiply property, and equal latency in the three NOTIONAL_MODE builds",
+      "value": "3 of 3 tests passed"
+     },
+     {
+      "detail": "orders_b_uncommitted = 4; orders_c_committed = 1; rej_pos_b = 0; rej_pos_c = 3",
+      "evidence": {
+       "exists": true,
+       "file": "results/188_trading_safety/staged_limits_sim.json"
+      },
+      "id": "V-XSIM-LIMITS",
+      "instrument": null,
+      "method": "sim_measurement",
+      "planned": null,
+      "requirements": [
+       "B110-S-LIMITS-ATOMIC"
+      ],
+      "status": "pass",
+      "title": "Whole core in xsim 2026.1; limit lowered but not committed leaves the old limits in force, COMMIT applies it",
+      "value": true
      }
     ],
-    "notes": "Simulation only (xsim 2026.1, UVM 1.2; Icarus is not used by this bench). One recorded regression (results/176_seq_poison/summary.json) and one mutation record (results/170_itch_uvm/mutation_seed*.json). No board, no real feed, every message synthetic.",
+    "notes": "Simulation only (xsim 2026.1, UVM 1.2; Icarus is not used by this bench). One recorded regression (results/188_trading_safety/uvm/summary.json) and one mutation record (results/170_itch_uvm/mutation_seed*.json). No board, no real feed, every message synthetic.",
     "path": "designs/b110_itch_ouch",
     "requirements": [
      {
@@ -26880,12 +27157,14 @@
       ],
       "kind": "functional",
       "lean_transcription_only": false,
-      "passing_methods": [],
+      "passing_methods": [
+       "uvm_test"
+      ],
       "rests_on_delegated": false,
       "source": "designs/b96_kr260_10g/rm_gp_itch/docs/itch_integration.md#5-registers-and-what-a-user-could-guess-wrong",
       "spec_status": "draft",
       "stale_items": 0,
-      "state": "fail",
+      "state": "verified",
       "text": "The TCP sequence number of an order is the loaded number plus 59 for every segment that left with a good FCS; a frame poisoned (wrong FCS) by the multiplexer, because its trigger frame was bad or unverified, does not advance it.",
       "title": "A poisoned order frame consumes no TCP sequence number"
      },
@@ -26930,15 +27209,126 @@
       "state": "fail",
       "text": "A blind mutation sweep (mutants made from the RTL text and a seed only, equivalent mutants decided by a formal miter) scores at least 90 % even if every undecided mutant counted as a survivor.",
       "title": "The bench kills at least 90 % of blind mutants of the path (worst case, over at least 30)"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "B110-S-QTY",
+      "items": [
+       "V-FORMAL-BOOK-QTY",
+       "V-SIM-QTY"
+      ],
+      "kind": "safety",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "designs/b110_itch_ouch/docs/itch_ouch.md#14-observation-and-counters",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "A level size that would pass 2^32 - 1 saturates and makes the instrument inexact (counted as lvovf); an Add of zero shares is never entered; an order price (candidate price plus offset) that passes 2^32 - 1 is refused as band; no ladder level or order-table entry is ever written live with zero size (brief 188, bounded proof from reset).",
+      "title": "No quantity or price accumulator wraps, and no live book entry has zero size"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "B110-S-BANDREF",
+      "items": [
+       "V-SIM-BANDREF"
+      ],
+      "kind": "safety",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "designs/b110_itch_ouch/docs/itch_ouch.md#13-configuration-static",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "With the software reference selected, the band is measured from the price software wrote and the book's bid is not consulted; a reference never loaded, or older than the age limit in core clocks, refuses every candidate as rej_band (brief 188).",
+      "title": "The price-band reference can come from software, independent of the strategy's own book, and is refused when too old"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "B110-F-HOLDOFF",
+      "items": [
+       "V-SIM-BANDREF"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "designs/b110_itch_ouch/docs/itch_ouch.md#13-configuration-static",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "With a hold-off of N clocks, the next candidate of the same instrument inside N clocks is refused and counted as rej_busy, one after it is accepted, another instrument is unaffected, and speculation is not started during a hold-off (brief 188).",
+      "title": "After an accepted order an instrument is refused for the hold-off, other instruments are not"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "B110-F-NOTIONAL",
+      "items": [
+       "V-SIM-NOTIONAL"
+      ],
+      "kind": "functional",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_test"
+      ],
+      "rests_on_delegated": false,
+      "source": "designs/b110_itch_ouch/docs/itch_ouch.md#13-configuration-static",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "With NOTIONAL_MODE 1 an order whose price times quantity passes the limit is refused as rej_size; with mode 2 a table filled by software from the limit gives verdicts equal to the model's, never admits an order the multiply would refuse, and both add no clock between the book update and the first order word (brief 188).",
+      "title": "The notional check (multiply or software price-band table) refuses as the model says, at no extra clock, and the table is never weaker than the multiply"
+     },
+     {
+      "basis": null,
+      "hardware_closure": null,
+      "hardware_only": false,
+      "hardware_verified": false,
+      "id": "B110-S-LIMITS-ATOMIC",
+      "items": [
+       "V-XSIM-LIMITS"
+      ],
+      "kind": "safety",
+      "lean_transcription_only": false,
+      "passing_methods": [
+       "sim_measurement"
+      ],
+      "rests_on_delegated": false,
+      "source": "designs/b96_kr260_10g/rm_gp_itch/docs/itch_integration.md#5-registers-and-what-a-user-could-guess-wrong",
+      "spec_status": "draft",
+      "stale_items": 0,
+      "state": "verified",
+      "text": "The risk limits are staged; a write fills a holding register and the live set changes only on COMMIT, in one clock, so the core never runs on a mix of old and new limits (brief 188, whole core in xsim).",
+      "title": "A half-written set of risk limits never takes effect (rm_gp_itch registers)"
      }
     ],
     "source_schema": "fpga-design-agent/testplan/v1",
     "summary": {
      "by_kind": {
-      "functional": 7,
+      "functional": 9,
       "interface": 0,
       "performance": 0,
-      "safety": 2
+      "safety": 5
      },
      "by_method": {
       "assertion": {
@@ -26972,7 +27362,7 @@
        "unapproved": 0
       },
       "formal": {
-       "bounded": 0,
+       "bounded": 1,
        "fail": 0,
        "not_in_run": 0,
        "not_run": 0,
@@ -27006,7 +27396,7 @@
        "fail": 1,
        "not_in_run": 0,
        "not_run": 0,
-       "pass": 0,
+       "pass": 1,
        "skipped": 0,
        "stale": 0,
        "unapproved": 0
@@ -27016,7 +27406,7 @@
        "fail": 0,
        "not_in_run": 0,
        "not_run": 0,
-       "pass": 0,
+       "pass": 3,
        "skipped": 0,
        "stale": 0,
        "unapproved": 0
@@ -27033,26 +27423,26 @@
       },
       "uvm_test": {
        "bounded": 0,
-       "fail": 1,
+       "fail": 0,
        "not_in_run": 0,
        "not_run": 0,
-       "pass": 6,
+       "pass": 7,
        "skipped": 0,
        "stale": 0,
        "unapproved": 0
       }
      },
      "by_state": {
-      "fail": 2,
-      "verified": 7
+      "fail": 1,
+      "verified": 13
      },
      "external": 0,
      "external_hardware_done": 0,
      "gap_counts": {
-      "no_passing_evidence": 2
+      "no_passing_evidence": 1
      },
      "human_reviews": 0,
-     "items": 10,
+     "items": 15,
      "lean": {
       "approved": 0,
       "build_sources": [],
@@ -27072,11 +27462,11 @@
       "items": 0,
       "statement_not_approved": 0
      },
-     "line": "9 requirements (7 functional, 2 safety); 7 verified; 2 failing; 0 of 9 requirements agreed by a human, 0 human review(s) recorded.",
+     "line": "14 requirements (9 functional, 5 safety); 13 verified; 1 failing; 0 of 14 requirements agreed by a human, 0 human review(s) recorded.",
      "performance_board": 0,
      "performance_sim_only": 0,
      "performance_timing": 0,
-     "requirements": 9,
+     "requirements": 14,
      "spec_agreed": 0,
      "verified_on_delegated": 0
     }
@@ -53043,8 +53433,8 @@
   "schema": "fda-traceability/1",
   "total": {
    "designs": 34,
-   "requirements": 355,
-   "verified": 258
+   "requirements": 360,
+   "verified": 264
   }
  }
 }

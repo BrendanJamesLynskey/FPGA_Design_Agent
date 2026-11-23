@@ -190,7 +190,7 @@ in the stress tests). The sustained rate with back-to-back D messages is in [res
 | `N_INST` | 4 | 2 to 8 | instruments watched |
 | `LEVELS` | 8 | 4 or 8 | price levels per side and instrument (the best-level tree reduces them in two steps) |
 | `ORD_AW` | 8 | 4 to 16 (tested at 5, 6, 8 and 10) | order table index bits: 2^ORD_AW live orders |
-| `NOTIONAL_MODE` | 0 | 0, 1, 2 | brief 188: pre-trade notional check: 0 none, 1 price times quantity, 2 price-band table written by software (section 1.3; measured cost in [results/b188/notional_measurement.md](../../../results/b188/notional_measurement.md)) |
+| `NOTIONAL_MODE` | 0 | 0, 1, 2 | brief 188: pre-trade notional check: 0 none, 1 price times quantity, 2 price-band table written by software (section 1.3; measured cost in [results/188_trading_safety/notional_measurement.md](../../../results/188_trading_safety/notional_measurement.md)) |
 
 The bench also runs 2/4/5, 3/8/6 and 8/8/10 (N_INST/LEVELS/ORD_AW) and lints clean at several points (`tests/test_b110_rtl.py`, `tests/test_b110_lint.py`).
 Resources and timing are in [README.md](../README.md) (measured, out of context).
