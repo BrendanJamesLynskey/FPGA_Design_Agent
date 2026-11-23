@@ -95,7 +95,7 @@ scale); the largest message and packet; how sequence numbers behave; what happen
 checkable choice (one established session, a length prefix, big-endian unsigned fields listed in a byte map, per-packet numbering from 1, drop duplicates
 and stop and flag on a gap). The byte map and a golden model come before any RTL. The interview's limit of twelve questions still applies, so on a request
 that already has many open questions the later intake questions are defaulted and the record says "limit". The question text is in
-`agent/graph/interview.py` (public, like the register-map question's code); it names no protocol by brand. The idea of asking these six first is
+`agent/graph/interview.py`, in public code and not in the pinned private prompts (the register-map question's text is a private prompt); it names no protocol by brand. Moving it to the private prompt set is a planner decision (it needs a pin change). The idea of asking these six first is
 from Edwards 2026, ch 7; the wording, defaults and reasons are ours.
 
 ## Review and rewind (`agent/graph/review.py`, `snapshot.py`)

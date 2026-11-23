@@ -183,7 +183,7 @@ def ensure_register_question(request: str, spec: dict[str, Any]) -> tuple[dict[s
 # the largest message, how sequence numbers behave and how a gap is recovered. Each carries a default and the reason for it, so an interview
 # that is off or an oracle that does not know still produces a documented choice. The list is ours, written for this agent; the idea of asking
 # for these six things first, and building the golden model and byte map before any RTL, is from Edwards 2026, ch 7. The question text is
-# public here (like the register-map question); it names no protocol by brand.
+# in this public file, not in the pinned private prompts (the register-map question is a private prompt); it names no protocol by brand.
 REQUEST_PROTOCOL = re.compile(
     r"(?i:\b(?:wire[- ]format|message[- ](?:format|feed|types?|set)|binary[- ](?:feed|protocol|messages?)|market[- ]data|feed[- ]handler|"
     r"order[- ]entry|(?:stock|trading|exchange)[- ](?:feed|protocol|messages?|venue)|datagrams?|MoldUDP\w*|SoupBinTCP|sequence[- ]numbers?)\b)"
