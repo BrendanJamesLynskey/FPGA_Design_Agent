@@ -5,7 +5,6 @@ lint_off -rule PINCONNECTEMPTY
 lint_off -rule UNUSEDSIGNAL
 // The generated package lists every SYSMONE4 INIT value; the wrapper uses a subset in synthesis only (SYSMONE4 is an `ifdef SYNTHESIS instance).
 lint_off -rule UNUSEDPARAM
-// The power-on counter, the burst timer and the LEDs start from the configuration's initial register values (FPGA initial values), written once at declaration.
-lint_off -rule PROCASSINIT
+// (Verilator 5.05 also warns PROCASSINIT for the initial register values of the power-on counter, burst timer and LEDs; the CI's Verilator 5.020 has no such rule, so it is not waived here.)
 // a194_secded.sv holds the package a194_secded_pkg (brief 194's file name).
 lint_off -rule DECLFILENAME
