@@ -1,0 +1,2336 @@
+{
+ "enforced": false,
+ "rule": "a tail percentile (>= p90) needs at least 100 observations beyond it",
+ "files_scanned": 2590,
+ "findings": [
+  {
+   "code": "TAIL-N-02",
+   "where": "docs/memory_controller_plan.md:237",
+   "percentile": 99.0,
+   "samples": null,
+   "required": 10000,
+   "message": "p99 quoted with no sample count; it needs at least 10,000 observations",
+   "text": "- Latency-first: median 12 clocks (37 ns), p99 31, p99.9 53, maximum 59 (182 ns)."
+  },
+  {
+   "code": "TAIL-N-02",
+   "where": "docs/memory_controller_plan.md:237",
+   "percentile": 99.9,
+   "samples": null,
+   "required": 100000,
+   "message": "p99.9 quoted with no sample count; it needs at least 100,000 observations",
+   "text": "- Latency-first: median 12 clocks (37 ns), p99 31, p99.9 53, maximum 59 (182 ns)."
+  },
+  {
+   "code": "TAIL-N-02",
+   "where": "docs/memory_controller_plan.md:238",
+   "percentile": 99.0,
+   "samples": null,
+   "required": 10000,
+   "message": "p99 quoted with no sample count; it needs at least 10,000 observations",
+   "text": "- Bandwidth-first: median 17 clocks (52 ns), p99 47, p99.9 78, maximum 82 (252 ns)."
+  },
+  {
+   "code": "TAIL-N-02",
+   "where": "docs/memory_controller_plan.md:238",
+   "percentile": 99.9,
+   "samples": null,
+   "required": 100000,
+   "message": "p99.9 quoted with no sample count; it needs at least 100,000 observations",
+   "text": "- Bandwidth-first: median 17 clocks (52 ns), p99 47, p99.9 78, maximum 82 (252 ns)."
+  },
+  {
+   "code": "TAIL-N-02",
+   "where": "docs/memory_controller_plan.md:242",
+   "percentile": 99.9,
+   "samples": null,
+   "required": 100000,
+   "message": "p99.9 quoted with no sample count; it needs at least 100,000 observations",
+   "text": "- Under heavier random load (a request every 8 clocks on average) the medians stay at 12 and 17 and the tails grow (69 and 95 clocks at p99.9)."
+  },
+  {
+   "code": "TAIL-N-02",
+   "where": "docs/memory_controller_plan.md:243",
+   "percentile": 99.9,
+   "samples": null,
+   "required": 100000,
+   "message": "p99.9 quoted with no sample count; it needs at least 100,000 observations",
+   "text": "- **Refresh in a latency-critical window.** `ref_defer` high for 5000 of every 12000 clocks (a window of about two refresh intervals), latency-first. With `REF_"
+  },
+  {
+   "code": "TAIL-N-02",
+   "where": "docs/memory_controller_plan.md:296",
+   "percentile": 99.9,
+   "samples": null,
+   "required": 100000,
+   "message": "p99.9 quoted with no sample count; it needs at least 100,000 observations",
+   "text": "- **H2 (tail)**: on P0 with `ref_defer` held for a window, no read in the window has a latency above the window's own p99.9 outside the window plus one bin (ref"
+  },
+  {
+   "code": "TAIL-N-02",
+   "where": "docs/memory_controller_plan.md:299",
+   "percentile": 99.9,
+   "samples": null,
+   "required": 100000,
+   "message": "p99.9 quoted with no sample count; it needs at least 100,000 observations",
+   "text": "- **H5 (predictability)**: on P0, p99.9 minus median is smaller for B0 than for R; falsified otherwise. This is the figure of merit the trading direction cares "
+  },
+  {
+   "code": "TAIL-N-02",
+   "where": "docs/memory_controller_plan.md:301",
+   "percentile": 99.0,
+   "samples": null,
+   "required": 10000,
+   "message": "p99 quoted with no sample count; it needs at least 10,000 observations",
+   "text": "**Stop and abort rules**: calibration not complete within a stated time, a read-back mismatch on any arm (stop, do not average), XADC temperature above 70 C (th"
+  },
+  {
+   "code": "TAIL-N-02",
+   "where": "docs/memory_controller_plan.md:301",
+   "percentile": 99.9,
+   "samples": null,
+   "required": 100000,
+   "message": "p99.9 quoted with no sample count; it needs at least 100,000 observations",
+   "text": "**Stop and abort rules**: calibration not complete within a stated time, a read-back mismatch on any arm (stop, do not average), XADC temperature above 70 C (th"
+  },
+  {
+   "code": "TAIL-N-02",
+   "where": "results/64b_zedboard/README.md:15",
+   "percentile": 95.0,
+   "samples": null,
+   "required": 2000,
+   "message": "p95 quoted with no sample count; it needs at least 2,000 observations",
+   "text": "| `sweeps/crc32_sweep.log`, `sweeps/fir16_sweep.log` | one line per path and size: min, median, 95th percentile, max, mean in ns and a 16-bin histogram; `sweeps"
+  },
+  {
+   "code": "TAIL-N-02",
+   "where": "results/64b_zedboard/README.md:29",
+   "percentile": 95.0,
+   "samples": null,
+   "required": 2000,
+   "message": "p95 quoted with no sample count; it needs at least 2,000 observations",
+   "text": "recommended range with no latched alarm in every log, but the XADC cannot see fast supply droop. Medians come with the min, 95th percentile"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.lat_rand_read_p0.lat_clk.p99",
+   "percentile": 99.0,
+   "samples": 3000,
+   "required": 10000,
+   "beyond": 30.0,
+   "message": "p99 quoted from 3,000 observations: 30.0 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.lat_rand_read_p0.lat_clk.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.lat_rand_read_p0.lat_clk.p999",
+   "percentile": 99.9,
+   "samples": 3000,
+   "required": 100000,
+   "beyond": 3.0,
+   "message": "p99.9 quoted from 3,000 observations: 3.0 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.lat_rand_read_p0.lat_clk.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.lat_rand_read_p0.lat_ns.p99",
+   "percentile": 99.0,
+   "samples": 3000,
+   "required": 10000,
+   "beyond": 30.0,
+   "message": "p99 quoted from 3,000 observations: 30.0 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.lat_rand_read_p0.lat_ns.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.lat_rand_read_p0.lat_ns.p999",
+   "percentile": 99.9,
+   "samples": 3000,
+   "required": 100000,
+   "beyond": 3.0,
+   "message": "p99.9 quoted from 3,000 observations: 3.0 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.lat_rand_read_p0.lat_ns.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.lat_rand_mix_p0.lat_clk.p99",
+   "percentile": 99.0,
+   "samples": 2115,
+   "required": 10000,
+   "beyond": 21.15,
+   "message": "p99 quoted from 2,115 observations: 21.2 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.lat_rand_mix_p0.lat_clk.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.lat_rand_mix_p0.lat_clk.p999",
+   "percentile": 99.9,
+   "samples": 2115,
+   "required": 100000,
+   "beyond": 2.11,
+   "message": "p99.9 quoted from 2,115 observations: 2.1 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.lat_rand_mix_p0.lat_clk.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.lat_rand_mix_p0.lat_ns.p99",
+   "percentile": 99.0,
+   "samples": 2115,
+   "required": 10000,
+   "beyond": 21.15,
+   "message": "p99 quoted from 2,115 observations: 21.2 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.lat_rand_mix_p0.lat_ns.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.lat_rand_mix_p0.lat_ns.p999",
+   "percentile": 99.9,
+   "samples": 2115,
+   "required": 100000,
+   "beyond": 2.11,
+   "message": "p99.9 quoted from 2,115 observations: 2.1 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.lat_rand_mix_p0.lat_ns.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.lat_bursts_p0.lat_clk.p99",
+   "percentile": 99.0,
+   "samples": 3000,
+   "required": 10000,
+   "beyond": 30.0,
+   "message": "p99 quoted from 3,000 observations: 30.0 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.lat_bursts_p0.lat_clk.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.lat_bursts_p0.lat_clk.p999",
+   "percentile": 99.9,
+   "samples": 3000,
+   "required": 100000,
+   "beyond": 3.0,
+   "message": "p99.9 quoted from 3,000 observations: 3.0 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.lat_bursts_p0.lat_clk.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.lat_bursts_p0.lat_ns.p99",
+   "percentile": 99.0,
+   "samples": 3000,
+   "required": 10000,
+   "beyond": 30.0,
+   "message": "p99 quoted from 3,000 observations: 30.0 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.lat_bursts_p0.lat_ns.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.lat_bursts_p0.lat_ns.p999",
+   "percentile": 99.9,
+   "samples": 3000,
+   "required": 100000,
+   "beyond": 3.0,
+   "message": "p99.9 quoted from 3,000 observations: 3.0 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.lat_bursts_p0.lat_ns.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.lat_rand_loaded_p0.lat_clk.p99",
+   "percentile": 99.0,
+   "samples": 3000,
+   "required": 10000,
+   "beyond": 30.0,
+   "message": "p99 quoted from 3,000 observations: 30.0 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.lat_rand_loaded_p0.lat_clk.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.lat_rand_loaded_p0.lat_clk.p999",
+   "percentile": 99.9,
+   "samples": 3000,
+   "required": 100000,
+   "beyond": 3.0,
+   "message": "p99.9 quoted from 3,000 observations: 3.0 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.lat_rand_loaded_p0.lat_clk.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.lat_rand_loaded_p0.lat_ns.p99",
+   "percentile": 99.0,
+   "samples": 3000,
+   "required": 10000,
+   "beyond": 30.0,
+   "message": "p99 quoted from 3,000 observations: 30.0 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.lat_rand_loaded_p0.lat_ns.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.lat_rand_loaded_p0.lat_ns.p999",
+   "percentile": 99.9,
+   "samples": 3000,
+   "required": 100000,
+   "beyond": 3.0,
+   "message": "p99.9 quoted from 3,000 observations: 3.0 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.lat_rand_loaded_p0.lat_ns.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_seq_read_map0_p0.lat_clk.p99",
+   "percentile": 99.0,
+   "samples": 4000,
+   "required": 10000,
+   "beyond": 40.0,
+   "message": "p99 quoted from 4,000 observations: 40.0 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.bw_seq_read_map0_p0.lat_clk.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_seq_read_map0_p0.lat_clk.p999",
+   "percentile": 99.9,
+   "samples": 4000,
+   "required": 100000,
+   "beyond": 4.0,
+   "message": "p99.9 quoted from 4,000 observations: 4.0 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.bw_seq_read_map0_p0.lat_clk.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_seq_read_map0_p0.lat_ns.p99",
+   "percentile": 99.0,
+   "samples": 4000,
+   "required": 10000,
+   "beyond": 40.0,
+   "message": "p99 quoted from 4,000 observations: 40.0 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.bw_seq_read_map0_p0.lat_ns.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_seq_read_map0_p0.lat_ns.p999",
+   "percentile": 99.9,
+   "samples": 4000,
+   "required": 100000,
+   "beyond": 4.0,
+   "message": "p99.9 quoted from 4,000 observations: 4.0 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.bw_seq_read_map0_p0.lat_ns.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_copy_map0_p0.lat_clk.p99",
+   "percentile": 99.0,
+   "samples": 2000,
+   "required": 10000,
+   "beyond": 20.0,
+   "message": "p99 quoted from 2,000 observations: 20.0 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.bw_copy_map0_p0.lat_clk.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_copy_map0_p0.lat_clk.p999",
+   "percentile": 99.9,
+   "samples": 2000,
+   "required": 100000,
+   "beyond": 2.0,
+   "message": "p99.9 quoted from 2,000 observations: 2.0 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.bw_copy_map0_p0.lat_clk.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_copy_map0_p0.lat_ns.p99",
+   "percentile": 99.0,
+   "samples": 2000,
+   "required": 10000,
+   "beyond": 20.0,
+   "message": "p99 quoted from 2,000 observations: 20.0 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.bw_copy_map0_p0.lat_ns.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_copy_map0_p0.lat_ns.p999",
+   "percentile": 99.9,
+   "samples": 2000,
+   "required": 100000,
+   "beyond": 2.0,
+   "message": "p99.9 quoted from 2,000 observations: 2.0 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.bw_copy_map0_p0.lat_ns.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_seq_read_map1_p0.lat_clk.p99",
+   "percentile": 99.0,
+   "samples": 4000,
+   "required": 10000,
+   "beyond": 40.0,
+   "message": "p99 quoted from 4,000 observations: 40.0 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.bw_seq_read_map1_p0.lat_clk.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_seq_read_map1_p0.lat_clk.p999",
+   "percentile": 99.9,
+   "samples": 4000,
+   "required": 100000,
+   "beyond": 4.0,
+   "message": "p99.9 quoted from 4,000 observations: 4.0 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.bw_seq_read_map1_p0.lat_clk.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_seq_read_map1_p0.lat_ns.p99",
+   "percentile": 99.0,
+   "samples": 4000,
+   "required": 10000,
+   "beyond": 40.0,
+   "message": "p99 quoted from 4,000 observations: 40.0 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.bw_seq_read_map1_p0.lat_ns.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_seq_read_map1_p0.lat_ns.p999",
+   "percentile": 99.9,
+   "samples": 4000,
+   "required": 100000,
+   "beyond": 4.0,
+   "message": "p99.9 quoted from 4,000 observations: 4.0 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.bw_seq_read_map1_p0.lat_ns.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_copy_map1_p0.lat_clk.p99",
+   "percentile": 99.0,
+   "samples": 2000,
+   "required": 10000,
+   "beyond": 20.0,
+   "message": "p99 quoted from 2,000 observations: 20.0 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.bw_copy_map1_p0.lat_clk.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_copy_map1_p0.lat_clk.p999",
+   "percentile": 99.9,
+   "samples": 2000,
+   "required": 100000,
+   "beyond": 2.0,
+   "message": "p99.9 quoted from 2,000 observations: 2.0 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.bw_copy_map1_p0.lat_clk.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_copy_map1_p0.lat_ns.p99",
+   "percentile": 99.0,
+   "samples": 2000,
+   "required": 10000,
+   "beyond": 20.0,
+   "message": "p99 quoted from 2,000 observations: 20.0 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.bw_copy_map1_p0.lat_ns.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_copy_map1_p0.lat_ns.p999",
+   "percentile": 99.9,
+   "samples": 2000,
+   "required": 100000,
+   "beyond": 2.0,
+   "message": "p99.9 quoted from 2,000 observations: 2.0 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.bw_copy_map1_p0.lat_ns.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_seq_read_map2_p0.lat_clk.p99",
+   "percentile": 99.0,
+   "samples": 4000,
+   "required": 10000,
+   "beyond": 40.0,
+   "message": "p99 quoted from 4,000 observations: 40.0 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.bw_seq_read_map2_p0.lat_clk.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_seq_read_map2_p0.lat_clk.p999",
+   "percentile": 99.9,
+   "samples": 4000,
+   "required": 100000,
+   "beyond": 4.0,
+   "message": "p99.9 quoted from 4,000 observations: 4.0 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.bw_seq_read_map2_p0.lat_clk.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_seq_read_map2_p0.lat_ns.p99",
+   "percentile": 99.0,
+   "samples": 4000,
+   "required": 10000,
+   "beyond": 40.0,
+   "message": "p99 quoted from 4,000 observations: 40.0 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.bw_seq_read_map2_p0.lat_ns.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_seq_read_map2_p0.lat_ns.p999",
+   "percentile": 99.9,
+   "samples": 4000,
+   "required": 100000,
+   "beyond": 4.0,
+   "message": "p99.9 quoted from 4,000 observations: 4.0 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.bw_seq_read_map2_p0.lat_ns.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_copy_map2_p0.lat_clk.p99",
+   "percentile": 99.0,
+   "samples": 2000,
+   "required": 10000,
+   "beyond": 20.0,
+   "message": "p99 quoted from 2,000 observations: 20.0 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.bw_copy_map2_p0.lat_clk.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_copy_map2_p0.lat_clk.p999",
+   "percentile": 99.9,
+   "samples": 2000,
+   "required": 100000,
+   "beyond": 2.0,
+   "message": "p99.9 quoted from 2,000 observations: 2.0 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.bw_copy_map2_p0.lat_clk.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_copy_map2_p0.lat_ns.p99",
+   "percentile": 99.0,
+   "samples": 2000,
+   "required": 10000,
+   "beyond": 20.0,
+   "message": "p99 quoted from 2,000 observations: 20.0 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.bw_copy_map2_p0.lat_ns.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_copy_map2_p0.lat_ns.p999",
+   "percentile": 99.9,
+   "samples": 2000,
+   "required": 100000,
+   "beyond": 2.0,
+   "message": "p99.9 quoted from 2,000 observations: 2.0 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.bw_copy_map2_p0.lat_ns.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_rand_read_sat_p0.lat_clk.p99",
+   "percentile": 99.0,
+   "samples": 4000,
+   "required": 10000,
+   "beyond": 40.0,
+   "message": "p99 quoted from 4,000 observations: 40.0 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.bw_rand_read_sat_p0.lat_clk.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_rand_read_sat_p0.lat_clk.p999",
+   "percentile": 99.9,
+   "samples": 4000,
+   "required": 100000,
+   "beyond": 4.0,
+   "message": "p99.9 quoted from 4,000 observations: 4.0 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.bw_rand_read_sat_p0.lat_clk.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_rand_read_sat_p0.lat_ns.p99",
+   "percentile": 99.0,
+   "samples": 4000,
+   "required": 10000,
+   "beyond": 40.0,
+   "message": "p99 quoted from 4,000 observations: 40.0 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.bw_rand_read_sat_p0.lat_ns.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_rand_read_sat_p0.lat_ns.p999",
+   "percentile": 99.9,
+   "samples": 4000,
+   "required": 100000,
+   "beyond": 4.0,
+   "message": "p99.9 quoted from 4,000 observations: 4.0 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.bw_rand_read_sat_p0.lat_ns.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_rand_mix_sat_p0.lat_clk.p99",
+   "percentile": 99.0,
+   "samples": 2777,
+   "required": 10000,
+   "beyond": 27.77,
+   "message": "p99 quoted from 2,777 observations: 27.8 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.bw_rand_mix_sat_p0.lat_clk.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_rand_mix_sat_p0.lat_clk.p999",
+   "percentile": 99.9,
+   "samples": 2777,
+   "required": 100000,
+   "beyond": 2.78,
+   "message": "p99.9 quoted from 2,777 observations: 2.8 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.bw_rand_mix_sat_p0.lat_clk.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_rand_mix_sat_p0.lat_ns.p99",
+   "percentile": 99.0,
+   "samples": 2777,
+   "required": 10000,
+   "beyond": 27.77,
+   "message": "p99 quoted from 2,777 observations: 27.8 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.bw_rand_mix_sat_p0.lat_ns.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_rand_mix_sat_p0.lat_ns.p999",
+   "percentile": 99.9,
+   "samples": 2777,
+   "required": 100000,
+   "beyond": 2.78,
+   "message": "p99.9 quoted from 2,777 observations: 2.8 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.bw_rand_mix_sat_p0.lat_ns.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.hazard_stress_p0.lat_clk.p99",
+   "percentile": 99.0,
+   "samples": 2037,
+   "required": 10000,
+   "beyond": 20.37,
+   "message": "p99 quoted from 2,037 observations: 20.4 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.hazard_stress_p0.lat_clk.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.hazard_stress_p0.lat_clk.p999",
+   "percentile": 99.9,
+   "samples": 2037,
+   "required": 100000,
+   "beyond": 2.04,
+   "message": "p99.9 quoted from 2,037 observations: 2.0 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.hazard_stress_p0.lat_clk.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.hazard_stress_p0.lat_ns.p99",
+   "percentile": 99.0,
+   "samples": 2037,
+   "required": 10000,
+   "beyond": 20.37,
+   "message": "p99 quoted from 2,037 observations: 20.4 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.hazard_stress_p0.lat_ns.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.hazard_stress_p0.lat_ns.p999",
+   "percentile": 99.9,
+   "samples": 2037,
+   "required": 100000,
+   "beyond": 2.04,
+   "message": "p99.9 quoted from 2,037 observations: 2.0 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.hazard_stress_p0.lat_ns.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.xcheck_ddr2_800_p0.lat_clk.p99",
+   "percentile": 99.0,
+   "samples": 2115,
+   "required": 10000,
+   "beyond": 21.15,
+   "message": "p99 quoted from 2,115 observations: 21.2 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.xcheck_ddr2_800_p0.lat_clk.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.xcheck_ddr2_800_p0.lat_clk.p999",
+   "percentile": 99.9,
+   "samples": 2115,
+   "required": 100000,
+   "beyond": 2.11,
+   "message": "p99.9 quoted from 2,115 observations: 2.1 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.xcheck_ddr2_800_p0.lat_clk.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.xcheck_ddr2_800_p0.lat_ns.p99",
+   "percentile": 99.0,
+   "samples": 2115,
+   "required": 10000,
+   "beyond": 21.15,
+   "message": "p99 quoted from 2,115 observations: 21.2 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.xcheck_ddr2_800_p0.lat_ns.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.xcheck_ddr2_800_p0.lat_ns.p999",
+   "percentile": 99.9,
+   "samples": 2115,
+   "required": 100000,
+   "beyond": 2.11,
+   "message": "p99.9 quoted from 2,115 observations: 2.1 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.xcheck_ddr2_800_p0.lat_ns.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.lat_rand_read_p1.lat_clk.p99",
+   "percentile": 99.0,
+   "samples": 3000,
+   "required": 10000,
+   "beyond": 30.0,
+   "message": "p99 quoted from 3,000 observations: 30.0 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.lat_rand_read_p1.lat_clk.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.lat_rand_read_p1.lat_clk.p999",
+   "percentile": 99.9,
+   "samples": 3000,
+   "required": 100000,
+   "beyond": 3.0,
+   "message": "p99.9 quoted from 3,000 observations: 3.0 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.lat_rand_read_p1.lat_clk.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.lat_rand_read_p1.lat_ns.p99",
+   "percentile": 99.0,
+   "samples": 3000,
+   "required": 10000,
+   "beyond": 30.0,
+   "message": "p99 quoted from 3,000 observations: 30.0 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.lat_rand_read_p1.lat_ns.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.lat_rand_read_p1.lat_ns.p999",
+   "percentile": 99.9,
+   "samples": 3000,
+   "required": 100000,
+   "beyond": 3.0,
+   "message": "p99.9 quoted from 3,000 observations: 3.0 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.lat_rand_read_p1.lat_ns.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.lat_rand_mix_p1.lat_clk.p99",
+   "percentile": 99.0,
+   "samples": 2115,
+   "required": 10000,
+   "beyond": 21.15,
+   "message": "p99 quoted from 2,115 observations: 21.2 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.lat_rand_mix_p1.lat_clk.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.lat_rand_mix_p1.lat_clk.p999",
+   "percentile": 99.9,
+   "samples": 2115,
+   "required": 100000,
+   "beyond": 2.11,
+   "message": "p99.9 quoted from 2,115 observations: 2.1 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.lat_rand_mix_p1.lat_clk.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.lat_rand_mix_p1.lat_ns.p99",
+   "percentile": 99.0,
+   "samples": 2115,
+   "required": 10000,
+   "beyond": 21.15,
+   "message": "p99 quoted from 2,115 observations: 21.2 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.lat_rand_mix_p1.lat_ns.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.lat_rand_mix_p1.lat_ns.p999",
+   "percentile": 99.9,
+   "samples": 2115,
+   "required": 100000,
+   "beyond": 2.11,
+   "message": "p99.9 quoted from 2,115 observations: 2.1 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.lat_rand_mix_p1.lat_ns.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.lat_bursts_p1.lat_clk.p99",
+   "percentile": 99.0,
+   "samples": 3000,
+   "required": 10000,
+   "beyond": 30.0,
+   "message": "p99 quoted from 3,000 observations: 30.0 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.lat_bursts_p1.lat_clk.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.lat_bursts_p1.lat_clk.p999",
+   "percentile": 99.9,
+   "samples": 3000,
+   "required": 100000,
+   "beyond": 3.0,
+   "message": "p99.9 quoted from 3,000 observations: 3.0 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.lat_bursts_p1.lat_clk.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.lat_bursts_p1.lat_ns.p99",
+   "percentile": 99.0,
+   "samples": 3000,
+   "required": 10000,
+   "beyond": 30.0,
+   "message": "p99 quoted from 3,000 observations: 30.0 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.lat_bursts_p1.lat_ns.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.lat_bursts_p1.lat_ns.p999",
+   "percentile": 99.9,
+   "samples": 3000,
+   "required": 100000,
+   "beyond": 3.0,
+   "message": "p99.9 quoted from 3,000 observations: 3.0 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.lat_bursts_p1.lat_ns.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.lat_rand_loaded_p1.lat_clk.p99",
+   "percentile": 99.0,
+   "samples": 3000,
+   "required": 10000,
+   "beyond": 30.0,
+   "message": "p99 quoted from 3,000 observations: 30.0 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.lat_rand_loaded_p1.lat_clk.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.lat_rand_loaded_p1.lat_clk.p999",
+   "percentile": 99.9,
+   "samples": 3000,
+   "required": 100000,
+   "beyond": 3.0,
+   "message": "p99.9 quoted from 3,000 observations: 3.0 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.lat_rand_loaded_p1.lat_clk.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.lat_rand_loaded_p1.lat_ns.p99",
+   "percentile": 99.0,
+   "samples": 3000,
+   "required": 10000,
+   "beyond": 30.0,
+   "message": "p99 quoted from 3,000 observations: 30.0 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.lat_rand_loaded_p1.lat_ns.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.lat_rand_loaded_p1.lat_ns.p999",
+   "percentile": 99.9,
+   "samples": 3000,
+   "required": 100000,
+   "beyond": 3.0,
+   "message": "p99.9 quoted from 3,000 observations: 3.0 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.lat_rand_loaded_p1.lat_ns.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_seq_read_map0_p1.lat_clk.p99",
+   "percentile": 99.0,
+   "samples": 4000,
+   "required": 10000,
+   "beyond": 40.0,
+   "message": "p99 quoted from 4,000 observations: 40.0 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.bw_seq_read_map0_p1.lat_clk.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_seq_read_map0_p1.lat_clk.p999",
+   "percentile": 99.9,
+   "samples": 4000,
+   "required": 100000,
+   "beyond": 4.0,
+   "message": "p99.9 quoted from 4,000 observations: 4.0 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.bw_seq_read_map0_p1.lat_clk.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_seq_read_map0_p1.lat_ns.p99",
+   "percentile": 99.0,
+   "samples": 4000,
+   "required": 10000,
+   "beyond": 40.0,
+   "message": "p99 quoted from 4,000 observations: 40.0 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.bw_seq_read_map0_p1.lat_ns.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_seq_read_map0_p1.lat_ns.p999",
+   "percentile": 99.9,
+   "samples": 4000,
+   "required": 100000,
+   "beyond": 4.0,
+   "message": "p99.9 quoted from 4,000 observations: 4.0 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.bw_seq_read_map0_p1.lat_ns.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_copy_map0_p1.lat_clk.p99",
+   "percentile": 99.0,
+   "samples": 2000,
+   "required": 10000,
+   "beyond": 20.0,
+   "message": "p99 quoted from 2,000 observations: 20.0 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.bw_copy_map0_p1.lat_clk.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_copy_map0_p1.lat_clk.p999",
+   "percentile": 99.9,
+   "samples": 2000,
+   "required": 100000,
+   "beyond": 2.0,
+   "message": "p99.9 quoted from 2,000 observations: 2.0 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.bw_copy_map0_p1.lat_clk.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_copy_map0_p1.lat_ns.p99",
+   "percentile": 99.0,
+   "samples": 2000,
+   "required": 10000,
+   "beyond": 20.0,
+   "message": "p99 quoted from 2,000 observations: 20.0 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.bw_copy_map0_p1.lat_ns.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_copy_map0_p1.lat_ns.p999",
+   "percentile": 99.9,
+   "samples": 2000,
+   "required": 100000,
+   "beyond": 2.0,
+   "message": "p99.9 quoted from 2,000 observations: 2.0 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.bw_copy_map0_p1.lat_ns.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_seq_read_map1_p1.lat_clk.p99",
+   "percentile": 99.0,
+   "samples": 4000,
+   "required": 10000,
+   "beyond": 40.0,
+   "message": "p99 quoted from 4,000 observations: 40.0 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.bw_seq_read_map1_p1.lat_clk.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_seq_read_map1_p1.lat_clk.p999",
+   "percentile": 99.9,
+   "samples": 4000,
+   "required": 100000,
+   "beyond": 4.0,
+   "message": "p99.9 quoted from 4,000 observations: 4.0 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.bw_seq_read_map1_p1.lat_clk.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_seq_read_map1_p1.lat_ns.p99",
+   "percentile": 99.0,
+   "samples": 4000,
+   "required": 10000,
+   "beyond": 40.0,
+   "message": "p99 quoted from 4,000 observations: 40.0 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.bw_seq_read_map1_p1.lat_ns.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_seq_read_map1_p1.lat_ns.p999",
+   "percentile": 99.9,
+   "samples": 4000,
+   "required": 100000,
+   "beyond": 4.0,
+   "message": "p99.9 quoted from 4,000 observations: 4.0 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.bw_seq_read_map1_p1.lat_ns.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_copy_map1_p1.lat_clk.p99",
+   "percentile": 99.0,
+   "samples": 2000,
+   "required": 10000,
+   "beyond": 20.0,
+   "message": "p99 quoted from 2,000 observations: 20.0 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.bw_copy_map1_p1.lat_clk.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_copy_map1_p1.lat_clk.p999",
+   "percentile": 99.9,
+   "samples": 2000,
+   "required": 100000,
+   "beyond": 2.0,
+   "message": "p99.9 quoted from 2,000 observations: 2.0 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.bw_copy_map1_p1.lat_clk.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_copy_map1_p1.lat_ns.p99",
+   "percentile": 99.0,
+   "samples": 2000,
+   "required": 10000,
+   "beyond": 20.0,
+   "message": "p99 quoted from 2,000 observations: 20.0 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.bw_copy_map1_p1.lat_ns.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_copy_map1_p1.lat_ns.p999",
+   "percentile": 99.9,
+   "samples": 2000,
+   "required": 100000,
+   "beyond": 2.0,
+   "message": "p99.9 quoted from 2,000 observations: 2.0 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.bw_copy_map1_p1.lat_ns.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_seq_read_map2_p1.lat_clk.p99",
+   "percentile": 99.0,
+   "samples": 4000,
+   "required": 10000,
+   "beyond": 40.0,
+   "message": "p99 quoted from 4,000 observations: 40.0 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.bw_seq_read_map2_p1.lat_clk.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_seq_read_map2_p1.lat_clk.p999",
+   "percentile": 99.9,
+   "samples": 4000,
+   "required": 100000,
+   "beyond": 4.0,
+   "message": "p99.9 quoted from 4,000 observations: 4.0 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.bw_seq_read_map2_p1.lat_clk.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_seq_read_map2_p1.lat_ns.p99",
+   "percentile": 99.0,
+   "samples": 4000,
+   "required": 10000,
+   "beyond": 40.0,
+   "message": "p99 quoted from 4,000 observations: 40.0 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.bw_seq_read_map2_p1.lat_ns.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_seq_read_map2_p1.lat_ns.p999",
+   "percentile": 99.9,
+   "samples": 4000,
+   "required": 100000,
+   "beyond": 4.0,
+   "message": "p99.9 quoted from 4,000 observations: 4.0 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.bw_seq_read_map2_p1.lat_ns.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_copy_map2_p1.lat_clk.p99",
+   "percentile": 99.0,
+   "samples": 2000,
+   "required": 10000,
+   "beyond": 20.0,
+   "message": "p99 quoted from 2,000 observations: 20.0 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.bw_copy_map2_p1.lat_clk.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_copy_map2_p1.lat_clk.p999",
+   "percentile": 99.9,
+   "samples": 2000,
+   "required": 100000,
+   "beyond": 2.0,
+   "message": "p99.9 quoted from 2,000 observations: 2.0 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.bw_copy_map2_p1.lat_clk.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_copy_map2_p1.lat_ns.p99",
+   "percentile": 99.0,
+   "samples": 2000,
+   "required": 10000,
+   "beyond": 20.0,
+   "message": "p99 quoted from 2,000 observations: 20.0 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.bw_copy_map2_p1.lat_ns.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_copy_map2_p1.lat_ns.p999",
+   "percentile": 99.9,
+   "samples": 2000,
+   "required": 100000,
+   "beyond": 2.0,
+   "message": "p99.9 quoted from 2,000 observations: 2.0 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.bw_copy_map2_p1.lat_ns.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_rand_read_sat_p1.lat_clk.p99",
+   "percentile": 99.0,
+   "samples": 4000,
+   "required": 10000,
+   "beyond": 40.0,
+   "message": "p99 quoted from 4,000 observations: 40.0 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.bw_rand_read_sat_p1.lat_clk.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_rand_read_sat_p1.lat_clk.p999",
+   "percentile": 99.9,
+   "samples": 4000,
+   "required": 100000,
+   "beyond": 4.0,
+   "message": "p99.9 quoted from 4,000 observations: 4.0 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.bw_rand_read_sat_p1.lat_clk.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_rand_read_sat_p1.lat_ns.p99",
+   "percentile": 99.0,
+   "samples": 4000,
+   "required": 10000,
+   "beyond": 40.0,
+   "message": "p99 quoted from 4,000 observations: 40.0 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.bw_rand_read_sat_p1.lat_ns.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_rand_read_sat_p1.lat_ns.p999",
+   "percentile": 99.9,
+   "samples": 4000,
+   "required": 100000,
+   "beyond": 4.0,
+   "message": "p99.9 quoted from 4,000 observations: 4.0 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.bw_rand_read_sat_p1.lat_ns.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_rand_mix_sat_p1.lat_clk.p99",
+   "percentile": 99.0,
+   "samples": 2777,
+   "required": 10000,
+   "beyond": 27.77,
+   "message": "p99 quoted from 2,777 observations: 27.8 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.bw_rand_mix_sat_p1.lat_clk.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_rand_mix_sat_p1.lat_clk.p999",
+   "percentile": 99.9,
+   "samples": 2777,
+   "required": 100000,
+   "beyond": 2.78,
+   "message": "p99.9 quoted from 2,777 observations: 2.8 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.bw_rand_mix_sat_p1.lat_clk.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_rand_mix_sat_p1.lat_ns.p99",
+   "percentile": 99.0,
+   "samples": 2777,
+   "required": 10000,
+   "beyond": 27.77,
+   "message": "p99 quoted from 2,777 observations: 27.8 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.bw_rand_mix_sat_p1.lat_ns.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.bw_rand_mix_sat_p1.lat_ns.p999",
+   "percentile": 99.9,
+   "samples": 2777,
+   "required": 100000,
+   "beyond": 2.78,
+   "message": "p99.9 quoted from 2,777 observations: 2.8 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.bw_rand_mix_sat_p1.lat_ns.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.hazard_stress_p1.lat_clk.p99",
+   "percentile": 99.0,
+   "samples": 2037,
+   "required": 10000,
+   "beyond": 20.37,
+   "message": "p99 quoted from 2,037 observations: 20.4 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.hazard_stress_p1.lat_clk.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.hazard_stress_p1.lat_clk.p999",
+   "percentile": 99.9,
+   "samples": 2037,
+   "required": 100000,
+   "beyond": 2.04,
+   "message": "p99.9 quoted from 2,037 observations: 2.0 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.hazard_stress_p1.lat_clk.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.hazard_stress_p1.lat_ns.p99",
+   "percentile": 99.0,
+   "samples": 2037,
+   "required": 10000,
+   "beyond": 20.37,
+   "message": "p99 quoted from 2,037 observations: 20.4 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.hazard_stress_p1.lat_ns.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.hazard_stress_p1.lat_ns.p999",
+   "percentile": 99.9,
+   "samples": 2037,
+   "required": 100000,
+   "beyond": 2.04,
+   "message": "p99.9 quoted from 2,037 observations: 2.0 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.hazard_stress_p1.lat_ns.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.xcheck_ddr2_800_p1.lat_clk.p99",
+   "percentile": 99.0,
+   "samples": 2115,
+   "required": 10000,
+   "beyond": 21.15,
+   "message": "p99 quoted from 2,115 observations: 21.2 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.xcheck_ddr2_800_p1.lat_clk.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.xcheck_ddr2_800_p1.lat_clk.p999",
+   "percentile": 99.9,
+   "samples": 2115,
+   "required": 100000,
+   "beyond": 2.11,
+   "message": "p99.9 quoted from 2,115 observations: 2.1 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.xcheck_ddr2_800_p1.lat_clk.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.xcheck_ddr2_800_p1.lat_ns.p99",
+   "percentile": 99.0,
+   "samples": 2115,
+   "required": 10000,
+   "beyond": 21.15,
+   "message": "p99 quoted from 2,115 observations: 21.2 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.xcheck_ddr2_800_p1.lat_ns.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.xcheck_ddr2_800_p1.lat_ns.p999",
+   "percentile": 99.9,
+   "samples": 2115,
+   "required": 100000,
+   "beyond": 2.11,
+   "message": "p99.9 quoted from 2,115 observations: 2.1 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.xcheck_ddr2_800_p1.lat_ns.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.qd_sweep_copy_p0_qd8.lat_clk.p99",
+   "percentile": 99.0,
+   "samples": 1250,
+   "required": 10000,
+   "beyond": 12.5,
+   "message": "p99 quoted from 1,250 observations: 12.5 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.qd_sweep_copy_p0_qd8.lat_clk.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.qd_sweep_copy_p0_qd8.lat_clk.p999",
+   "percentile": 99.9,
+   "samples": 1250,
+   "required": 100000,
+   "beyond": 1.25,
+   "message": "p99.9 quoted from 1,250 observations: 1.2 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.qd_sweep_copy_p0_qd8.lat_clk.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.qd_sweep_copy_p0_qd8.lat_ns.p99",
+   "percentile": 99.0,
+   "samples": 1250,
+   "required": 10000,
+   "beyond": 12.5,
+   "message": "p99 quoted from 1,250 observations: 12.5 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.qd_sweep_copy_p0_qd8.lat_ns.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.qd_sweep_copy_p0_qd8.lat_ns.p999",
+   "percentile": 99.9,
+   "samples": 1250,
+   "required": 100000,
+   "beyond": 1.25,
+   "message": "p99.9 quoted from 1,250 observations: 1.2 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.qd_sweep_copy_p0_qd8.lat_ns.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.qd_sweep_copy_p0_qd16.lat_clk.p99",
+   "percentile": 99.0,
+   "samples": 1250,
+   "required": 10000,
+   "beyond": 12.5,
+   "message": "p99 quoted from 1,250 observations: 12.5 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.qd_sweep_copy_p0_qd16.lat_clk.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.qd_sweep_copy_p0_qd16.lat_clk.p999",
+   "percentile": 99.9,
+   "samples": 1250,
+   "required": 100000,
+   "beyond": 1.25,
+   "message": "p99.9 quoted from 1,250 observations: 1.2 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.qd_sweep_copy_p0_qd16.lat_clk.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.qd_sweep_copy_p0_qd16.lat_ns.p99",
+   "percentile": 99.0,
+   "samples": 1250,
+   "required": 10000,
+   "beyond": 12.5,
+   "message": "p99 quoted from 1,250 observations: 12.5 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.qd_sweep_copy_p0_qd16.lat_ns.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.qd_sweep_copy_p0_qd16.lat_ns.p999",
+   "percentile": 99.9,
+   "samples": 1250,
+   "required": 100000,
+   "beyond": 1.25,
+   "message": "p99.9 quoted from 1,250 observations: 1.2 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.qd_sweep_copy_p0_qd16.lat_ns.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.qd_sweep_copy_p0_qd32.lat_clk.p99",
+   "percentile": 99.0,
+   "samples": 1250,
+   "required": 10000,
+   "beyond": 12.5,
+   "message": "p99 quoted from 1,250 observations: 12.5 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.qd_sweep_copy_p0_qd32.lat_clk.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.qd_sweep_copy_p0_qd32.lat_clk.p999",
+   "percentile": 99.9,
+   "samples": 1250,
+   "required": 100000,
+   "beyond": 1.25,
+   "message": "p99.9 quoted from 1,250 observations: 1.2 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.qd_sweep_copy_p0_qd32.lat_clk.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.qd_sweep_copy_p0_qd32.lat_ns.p99",
+   "percentile": 99.0,
+   "samples": 1250,
+   "required": 10000,
+   "beyond": 12.5,
+   "message": "p99 quoted from 1,250 observations: 12.5 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.qd_sweep_copy_p0_qd32.lat_ns.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.qd_sweep_copy_p0_qd32.lat_ns.p999",
+   "percentile": 99.9,
+   "samples": 1250,
+   "required": 100000,
+   "beyond": 1.25,
+   "message": "p99.9 quoted from 1,250 observations: 1.2 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.qd_sweep_copy_p0_qd32.lat_ns.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.qd_sweep_copy_p1_qd8.lat_clk.p99",
+   "percentile": 99.0,
+   "samples": 1250,
+   "required": 10000,
+   "beyond": 12.5,
+   "message": "p99 quoted from 1,250 observations: 12.5 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.qd_sweep_copy_p1_qd8.lat_clk.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.qd_sweep_copy_p1_qd8.lat_clk.p999",
+   "percentile": 99.9,
+   "samples": 1250,
+   "required": 100000,
+   "beyond": 1.25,
+   "message": "p99.9 quoted from 1,250 observations: 1.2 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.qd_sweep_copy_p1_qd8.lat_clk.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.qd_sweep_copy_p1_qd8.lat_ns.p99",
+   "percentile": 99.0,
+   "samples": 1250,
+   "required": 10000,
+   "beyond": 12.5,
+   "message": "p99 quoted from 1,250 observations: 12.5 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.qd_sweep_copy_p1_qd8.lat_ns.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.qd_sweep_copy_p1_qd8.lat_ns.p999",
+   "percentile": 99.9,
+   "samples": 1250,
+   "required": 100000,
+   "beyond": 1.25,
+   "message": "p99.9 quoted from 1,250 observations: 1.2 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.qd_sweep_copy_p1_qd8.lat_ns.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.qd_sweep_copy_p1_qd16.lat_clk.p99",
+   "percentile": 99.0,
+   "samples": 1250,
+   "required": 10000,
+   "beyond": 12.5,
+   "message": "p99 quoted from 1,250 observations: 12.5 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.qd_sweep_copy_p1_qd16.lat_clk.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.qd_sweep_copy_p1_qd16.lat_clk.p999",
+   "percentile": 99.9,
+   "samples": 1250,
+   "required": 100000,
+   "beyond": 1.25,
+   "message": "p99.9 quoted from 1,250 observations: 1.2 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.qd_sweep_copy_p1_qd16.lat_clk.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.qd_sweep_copy_p1_qd16.lat_ns.p99",
+   "percentile": 99.0,
+   "samples": 1250,
+   "required": 10000,
+   "beyond": 12.5,
+   "message": "p99 quoted from 1,250 observations: 12.5 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.qd_sweep_copy_p1_qd16.lat_ns.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.qd_sweep_copy_p1_qd16.lat_ns.p999",
+   "percentile": 99.9,
+   "samples": 1250,
+   "required": 100000,
+   "beyond": 1.25,
+   "message": "p99.9 quoted from 1,250 observations: 1.2 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.qd_sweep_copy_p1_qd16.lat_ns.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.qd_sweep_copy_p1_qd32.lat_clk.p99",
+   "percentile": 99.0,
+   "samples": 1250,
+   "required": 10000,
+   "beyond": 12.5,
+   "message": "p99 quoted from 1,250 observations: 12.5 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.qd_sweep_copy_p1_qd32.lat_clk.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.qd_sweep_copy_p1_qd32.lat_clk.p999",
+   "percentile": 99.9,
+   "samples": 1250,
+   "required": 100000,
+   "beyond": 1.25,
+   "message": "p99.9 quoted from 1,250 observations: 1.2 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.qd_sweep_copy_p1_qd32.lat_clk.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.qd_sweep_copy_p1_qd32.lat_ns.p99",
+   "percentile": 99.0,
+   "samples": 1250,
+   "required": 10000,
+   "beyond": 12.5,
+   "message": "p99 quoted from 1,250 observations: 12.5 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.qd_sweep_copy_p1_qd32.lat_ns.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.qd_sweep_copy_p1_qd32.lat_ns.p999",
+   "percentile": 99.9,
+   "samples": 1250,
+   "required": 100000,
+   "beyond": 1.25,
+   "message": "p99.9 quoted from 1,250 observations: 1.2 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.qd_sweep_copy_p1_qd32.lat_ns.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.age_sweep_copy_p1_age64.lat_clk.p99",
+   "percentile": 99.0,
+   "samples": 1250,
+   "required": 10000,
+   "beyond": 12.5,
+   "message": "p99 quoted from 1,250 observations: 12.5 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.age_sweep_copy_p1_age64.lat_clk.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.age_sweep_copy_p1_age64.lat_clk.p999",
+   "percentile": 99.9,
+   "samples": 1250,
+   "required": 100000,
+   "beyond": 1.25,
+   "message": "p99.9 quoted from 1,250 observations: 1.2 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.age_sweep_copy_p1_age64.lat_clk.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.age_sweep_copy_p1_age64.lat_ns.p99",
+   "percentile": 99.0,
+   "samples": 1250,
+   "required": 10000,
+   "beyond": 12.5,
+   "message": "p99 quoted from 1,250 observations: 12.5 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.age_sweep_copy_p1_age64.lat_ns.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.age_sweep_copy_p1_age64.lat_ns.p999",
+   "percentile": 99.9,
+   "samples": 1250,
+   "required": 100000,
+   "beyond": 1.25,
+   "message": "p99.9 quoted from 1,250 observations: 1.2 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.age_sweep_copy_p1_age64.lat_ns.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.age_sweep_copy_p1_age256.lat_clk.p99",
+   "percentile": 99.0,
+   "samples": 1250,
+   "required": 10000,
+   "beyond": 12.5,
+   "message": "p99 quoted from 1,250 observations: 12.5 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.age_sweep_copy_p1_age256.lat_clk.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.age_sweep_copy_p1_age256.lat_clk.p999",
+   "percentile": 99.9,
+   "samples": 1250,
+   "required": 100000,
+   "beyond": 1.25,
+   "message": "p99.9 quoted from 1,250 observations: 1.2 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.age_sweep_copy_p1_age256.lat_clk.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.age_sweep_copy_p1_age256.lat_ns.p99",
+   "percentile": 99.0,
+   "samples": 1250,
+   "required": 10000,
+   "beyond": 12.5,
+   "message": "p99 quoted from 1,250 observations: 12.5 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.age_sweep_copy_p1_age256.lat_ns.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.age_sweep_copy_p1_age256.lat_ns.p999",
+   "percentile": 99.9,
+   "samples": 1250,
+   "required": 100000,
+   "beyond": 1.25,
+   "message": "p99.9 quoted from 1,250 observations: 1.2 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.age_sweep_copy_p1_age256.lat_ns.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.age_sweep_copy_p1_age1024.lat_clk.p99",
+   "percentile": 99.0,
+   "samples": 1250,
+   "required": 10000,
+   "beyond": 12.5,
+   "message": "p99 quoted from 1,250 observations: 12.5 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.age_sweep_copy_p1_age1024.lat_clk.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.age_sweep_copy_p1_age1024.lat_clk.p999",
+   "percentile": 99.9,
+   "samples": 1250,
+   "required": 100000,
+   "beyond": 1.25,
+   "message": "p99.9 quoted from 1,250 observations: 1.2 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.age_sweep_copy_p1_age1024.lat_clk.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.age_sweep_copy_p1_age1024.lat_ns.p99",
+   "percentile": 99.0,
+   "samples": 1250,
+   "required": 10000,
+   "beyond": 12.5,
+   "message": "p99 quoted from 1,250 observations: 12.5 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.age_sweep_copy_p1_age1024.lat_ns.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.age_sweep_copy_p1_age1024.lat_ns.p999",
+   "percentile": 99.9,
+   "samples": 1250,
+   "required": 100000,
+   "beyond": 1.25,
+   "message": "p99.9 quoted from 1,250 observations: 1.2 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.age_sweep_copy_p1_age1024.lat_ns.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.refresh_rand_read_p0_post0_defer0.lat_clk.p99",
+   "percentile": 99.0,
+   "samples": 6000,
+   "required": 10000,
+   "beyond": 60.0,
+   "message": "p99 quoted from 6,000 observations: 60.0 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.refresh_rand_read_p0_post0_defer0.lat_clk.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.refresh_rand_read_p0_post0_defer0.lat_clk.p999",
+   "percentile": 99.9,
+   "samples": 6000,
+   "required": 100000,
+   "beyond": 6.0,
+   "message": "p99.9 quoted from 6,000 observations: 6.0 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.refresh_rand_read_p0_post0_defer0.lat_clk.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.refresh_rand_read_p0_post0_defer0.lat_ns.p99",
+   "percentile": 99.0,
+   "samples": 6000,
+   "required": 10000,
+   "beyond": 60.0,
+   "message": "p99 quoted from 6,000 observations: 60.0 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.refresh_rand_read_p0_post0_defer0.lat_ns.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.refresh_rand_read_p0_post0_defer0.lat_ns.p999",
+   "percentile": 99.9,
+   "samples": 6000,
+   "required": 100000,
+   "beyond": 6.0,
+   "message": "p99.9 quoted from 6,000 observations: 6.0 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.refresh_rand_read_p0_post0_defer0.lat_ns.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.refresh_rand_read_p0_post4_defer0.lat_clk.p99",
+   "percentile": 99.0,
+   "samples": 6000,
+   "required": 10000,
+   "beyond": 60.0,
+   "message": "p99 quoted from 6,000 observations: 60.0 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.refresh_rand_read_p0_post4_defer0.lat_clk.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.refresh_rand_read_p0_post4_defer0.lat_clk.p999",
+   "percentile": 99.9,
+   "samples": 6000,
+   "required": 100000,
+   "beyond": 6.0,
+   "message": "p99.9 quoted from 6,000 observations: 6.0 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.refresh_rand_read_p0_post4_defer0.lat_clk.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.refresh_rand_read_p0_post4_defer0.lat_ns.p99",
+   "percentile": 99.0,
+   "samples": 6000,
+   "required": 10000,
+   "beyond": 60.0,
+   "message": "p99 quoted from 6,000 observations: 60.0 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.refresh_rand_read_p0_post4_defer0.lat_ns.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.refresh_rand_read_p0_post4_defer0.lat_ns.p999",
+   "percentile": 99.9,
+   "samples": 6000,
+   "required": 100000,
+   "beyond": 6.0,
+   "message": "p99.9 quoted from 6,000 observations: 6.0 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.refresh_rand_read_p0_post4_defer0.lat_ns.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.refresh_rand_read_p0_post4_defer1.lat_clk.p99",
+   "percentile": 99.0,
+   "samples": 6000,
+   "required": 10000,
+   "beyond": 60.0,
+   "message": "p99 quoted from 6,000 observations: 60.0 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.refresh_rand_read_p0_post4_defer1.lat_clk.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.refresh_rand_read_p0_post4_defer1.lat_clk.p999",
+   "percentile": 99.9,
+   "samples": 6000,
+   "required": 100000,
+   "beyond": 6.0,
+   "message": "p99.9 quoted from 6,000 observations: 6.0 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.refresh_rand_read_p0_post4_defer1.lat_clk.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.refresh_rand_read_p0_post4_defer1.lat_ns.p99",
+   "percentile": 99.0,
+   "samples": 6000,
+   "required": 10000,
+   "beyond": 60.0,
+   "message": "p99 quoted from 6,000 observations: 60.0 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.refresh_rand_read_p0_post4_defer1.lat_ns.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.refresh_rand_read_p0_post4_defer1.lat_ns.p999",
+   "percentile": 99.9,
+   "samples": 6000,
+   "required": 100000,
+   "beyond": 6.0,
+   "message": "p99.9 quoted from 6,000 observations: 6.0 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.refresh_rand_read_p0_post4_defer1.lat_ns.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.refresh_window_p0_post0.lat_clk_win.p99",
+   "percentile": 99.0,
+   "samples": 2557,
+   "required": 10000,
+   "beyond": 25.57,
+   "message": "p99 quoted from 2,557 observations: 25.6 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.refresh_window_p0_post0.lat_clk_win.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.refresh_window_p0_post0.lat_clk_win.p999",
+   "percentile": 99.9,
+   "samples": 2557,
+   "required": 100000,
+   "beyond": 2.56,
+   "message": "p99.9 quoted from 2,557 observations: 2.6 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.refresh_window_p0_post0.lat_clk_win.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.refresh_window_p0_post0.lat_ns_win.p99",
+   "percentile": 99.0,
+   "samples": 2557,
+   "required": 10000,
+   "beyond": 25.57,
+   "message": "p99 quoted from 2,557 observations: 25.6 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.refresh_window_p0_post0.lat_ns_win.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.refresh_window_p0_post0.lat_ns_win.p999",
+   "percentile": 99.9,
+   "samples": 2557,
+   "required": 100000,
+   "beyond": 2.56,
+   "message": "p99.9 quoted from 2,557 observations: 2.6 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.refresh_window_p0_post0.lat_ns_win.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.refresh_window_p0_post0.lat_clk_out.p99",
+   "percentile": 99.0,
+   "samples": 3443,
+   "required": 10000,
+   "beyond": 34.43,
+   "message": "p99 quoted from 3,443 observations: 34.4 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.refresh_window_p0_post0.lat_clk_out.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.refresh_window_p0_post0.lat_clk_out.p999",
+   "percentile": 99.9,
+   "samples": 3443,
+   "required": 100000,
+   "beyond": 3.44,
+   "message": "p99.9 quoted from 3,443 observations: 3.4 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.refresh_window_p0_post0.lat_clk_out.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.refresh_window_p0_post0.lat_ns_out.p99",
+   "percentile": 99.0,
+   "samples": 2557,
+   "required": 10000,
+   "beyond": 25.57,
+   "message": "p99 quoted from 2,557 observations: 25.6 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.refresh_window_p0_post0.lat_ns_out.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.refresh_window_p0_post0.lat_ns_out.p999",
+   "percentile": 99.9,
+   "samples": 2557,
+   "required": 100000,
+   "beyond": 2.56,
+   "message": "p99.9 quoted from 2,557 observations: 2.6 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.refresh_window_p0_post0.lat_ns_out.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.refresh_window_p0_post0.lat_clk.p99",
+   "percentile": 99.0,
+   "samples": 6000,
+   "required": 10000,
+   "beyond": 60.0,
+   "message": "p99 quoted from 6,000 observations: 60.0 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.refresh_window_p0_post0.lat_clk.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.refresh_window_p0_post0.lat_clk.p999",
+   "percentile": 99.9,
+   "samples": 6000,
+   "required": 100000,
+   "beyond": 6.0,
+   "message": "p99.9 quoted from 6,000 observations: 6.0 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.refresh_window_p0_post0.lat_clk.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.refresh_window_p0_post0.lat_ns.p99",
+   "percentile": 99.0,
+   "samples": 2557,
+   "required": 10000,
+   "beyond": 25.57,
+   "message": "p99 quoted from 2,557 observations: 25.6 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.refresh_window_p0_post0.lat_ns.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.refresh_window_p0_post0.lat_ns.p999",
+   "percentile": 99.9,
+   "samples": 2557,
+   "required": 100000,
+   "beyond": 2.56,
+   "message": "p99.9 quoted from 2,557 observations: 2.6 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.refresh_window_p0_post0.lat_ns.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.refresh_window_p0_post4.lat_clk_win.p99",
+   "percentile": 99.0,
+   "samples": 2557,
+   "required": 10000,
+   "beyond": 25.57,
+   "message": "p99 quoted from 2,557 observations: 25.6 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.refresh_window_p0_post4.lat_clk_win.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.refresh_window_p0_post4.lat_clk_win.p999",
+   "percentile": 99.9,
+   "samples": 2557,
+   "required": 100000,
+   "beyond": 2.56,
+   "message": "p99.9 quoted from 2,557 observations: 2.6 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.refresh_window_p0_post4.lat_clk_win.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.refresh_window_p0_post4.lat_ns_win.p99",
+   "percentile": 99.0,
+   "samples": 2557,
+   "required": 10000,
+   "beyond": 25.57,
+   "message": "p99 quoted from 2,557 observations: 25.6 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.refresh_window_p0_post4.lat_ns_win.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.refresh_window_p0_post4.lat_ns_win.p999",
+   "percentile": 99.9,
+   "samples": 2557,
+   "required": 100000,
+   "beyond": 2.56,
+   "message": "p99.9 quoted from 2,557 observations: 2.6 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.refresh_window_p0_post4.lat_ns_win.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.refresh_window_p0_post4.lat_clk_out.p99",
+   "percentile": 99.0,
+   "samples": 3443,
+   "required": 10000,
+   "beyond": 34.43,
+   "message": "p99 quoted from 3,443 observations: 34.4 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.refresh_window_p0_post4.lat_clk_out.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.refresh_window_p0_post4.lat_clk_out.p999",
+   "percentile": 99.9,
+   "samples": 3443,
+   "required": 100000,
+   "beyond": 3.44,
+   "message": "p99.9 quoted from 3,443 observations: 3.4 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.refresh_window_p0_post4.lat_clk_out.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.refresh_window_p0_post4.lat_ns_out.p99",
+   "percentile": 99.0,
+   "samples": 2557,
+   "required": 10000,
+   "beyond": 25.57,
+   "message": "p99 quoted from 2,557 observations: 25.6 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.refresh_window_p0_post4.lat_ns_out.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.refresh_window_p0_post4.lat_ns_out.p999",
+   "percentile": 99.9,
+   "samples": 2557,
+   "required": 100000,
+   "beyond": 2.56,
+   "message": "p99.9 quoted from 2,557 observations: 2.6 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.refresh_window_p0_post4.lat_ns_out.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.refresh_window_p0_post4.lat_clk.p99",
+   "percentile": 99.0,
+   "samples": 6000,
+   "required": 10000,
+   "beyond": 60.0,
+   "message": "p99 quoted from 6,000 observations: 60.0 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.refresh_window_p0_post4.lat_clk.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.refresh_window_p0_post4.lat_clk.p999",
+   "percentile": 99.9,
+   "samples": 6000,
+   "required": 100000,
+   "beyond": 6.0,
+   "message": "p99.9 quoted from 6,000 observations: 6.0 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.refresh_window_p0_post4.lat_clk.p999"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.refresh_window_p0_post4.lat_ns.p99",
+   "percentile": 99.0,
+   "samples": 2557,
+   "required": 10000,
+   "beyond": 25.57,
+   "message": "p99 quoted from 2,557 observations: 25.6 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "runs.refresh_window_p0_post4.lat_ns.p99"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "results/b141/sim_summary.json:runs.refresh_window_p0_post4.lat_ns.p999",
+   "percentile": 99.9,
+   "samples": 2557,
+   "required": 100000,
+   "beyond": 2.56,
+   "message": "p99.9 quoted from 2,557 observations: 2.6 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "runs.refresh_window_p0_post4.lat_ns.p999"
+  },
+  {
+   "code": "TAIL-N-02",
+   "where": "designs/b64b_zedboard/README.md:133",
+   "percentile": 95.0,
+   "samples": null,
+   "required": 2000,
+   "message": "p95 quoted with no sample count; it needs at least 2,000 observations",
+   "text": "- **statistics**: Each timing is a median with min, 95th percentile and max over the repetitions in the log (hundreds at small sizes, a dozen at 1 MB); no confi"
+  },
+  {
+   "code": "TAIL-N-02",
+   "where": "designs/m141_ddr2_sched/README.md:72",
+   "percentile": 99.9,
+   "samples": null,
+   "required": 100000,
+   "message": "p99.9 quoted with no sample count; it needs at least 100,000 observations",
+   "text": "| Latency | median read latency, latency-first, light random reads: 12 clocks; 99.9th percentile read latency, latency-first, light random reads: 53 clocks; med"
+  },
+  {
+   "code": "TAIL-N-02",
+   "where": "designs/m141_ddr2_sched/README.md:126",
+   "percentile": 99.9,
+   "samples": null,
+   "required": 100000,
+   "message": "p99.9 quoted with no sample count; it needs at least 100,000 observations",
+   "text": "| M2 | 99.9th percentile read latency, latency-first, light random reads | 53 clocks | 1 | [`results/b141/sim_summary.json`](../../results/b141/sim_summary.json"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "designs/b92_history_attention/docs/design.md:87",
+   "percentile": 99.9,
+   "samples": 64,
+   "required": 100000,
+   "beyond": 0.06,
+   "message": "p99.9 quoted from 64 observations: 0.1 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "unsigned columns by a fixed shift `sh` per column (the smallest with the training 99.9th percentile of |s >> sh| at most 127) plus 128,"
+  },
+  {
+   "code": "TAIL-N-02",
+   "where": "designs/m141_ddr2_sched/docs/results.md:4",
+   "percentile": 99.0,
+   "samples": null,
+   "required": 10000,
+   "message": "p99 quoted with no sample count; it needs at least 10,000 observations",
+   "text": "Median / p99 / p99.9 / max are over the reads of one run (fixed seed). Utilisation = data-bus clocks / elapsed clocks. ACT per column = ACTIVATE commands / colu"
+  },
+  {
+   "code": "TAIL-N-02",
+   "where": "designs/m141_ddr2_sched/docs/results.md:4",
+   "percentile": 99.9,
+   "samples": null,
+   "required": 100000,
+   "message": "p99.9 quoted with no sample count; it needs at least 100,000 observations",
+   "text": "Median / p99 / p99.9 / max are over the reads of one run (fixed seed). Utilisation = data-bus clocks / elapsed clocks. ACT per column = ACTIVATE commands / colu"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "designs/m141_ddr2_sched/docs/results.md:10",
+   "percentile": 99.0,
+   "samples": 3000,
+   "required": 10000,
+   "beyond": 30.0,
+   "message": "p99 quoted from 3,000 observations: 30.0 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "| lat_rand_read_p0 | 0 | 3000 | 12 / 31 / 53 / 59 clk (37 / 95 / 163 / 182 ns) | 1.000 | 0 |"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "designs/m141_ddr2_sched/docs/results.md:10",
+   "percentile": 99.9,
+   "samples": 3000,
+   "required": 100000,
+   "beyond": 3.0,
+   "message": "p99.9 quoted from 3,000 observations: 3.0 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "| lat_rand_read_p0 | 0 | 3000 | 12 / 31 / 53 / 59 clk (37 / 95 / 163 / 182 ns) | 1.000 | 0 |"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "designs/m141_ddr2_sched/docs/results.md:11",
+   "percentile": 99.0,
+   "samples": 2115,
+   "required": 10000,
+   "beyond": 21.15,
+   "message": "p99 quoted from 2,115 observations: 21.2 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "| lat_rand_mix_p0 | 0 | 2115 | 12 / 36 / 55 / 59 clk (37 / 111 / 169 / 182 ns) | 1.003 | 0 |"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "designs/m141_ddr2_sched/docs/results.md:11",
+   "percentile": 99.9,
+   "samples": 2115,
+   "required": 100000,
+   "beyond": 2.11,
+   "message": "p99.9 quoted from 2,115 observations: 2.1 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "| lat_rand_mix_p0 | 0 | 2115 | 12 / 36 / 55 / 59 clk (37 / 111 / 169 / 182 ns) | 1.003 | 0 |"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "designs/m141_ddr2_sched/docs/results.md:12",
+   "percentile": 99.0,
+   "samples": 3000,
+   "required": 10000,
+   "beyond": 30.0,
+   "message": "p99 quoted from 3,000 observations: 30.0 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "| lat_bursts_p0 | 0 | 3000 | 12 / 25 / 51 / 59 clk (37 / 77 / 157 / 182 ns) | 0.883 | 0 |"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "designs/m141_ddr2_sched/docs/results.md:12",
+   "percentile": 99.9,
+   "samples": 3000,
+   "required": 100000,
+   "beyond": 3.0,
+   "message": "p99.9 quoted from 3,000 observations: 3.0 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "| lat_bursts_p0 | 0 | 3000 | 12 / 25 / 51 / 59 clk (37 / 77 / 157 / 182 ns) | 0.883 | 0 |"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "designs/m141_ddr2_sched/docs/results.md:13",
+   "percentile": 99.0,
+   "samples": 3000,
+   "required": 10000,
+   "beyond": 30.0,
+   "message": "p99 quoted from 3,000 observations: 30.0 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "| lat_rand_loaded_p0 | 0 | 3000 | 12 / 49 / 69 / 75 clk (37 / 151 / 212 / 231 ns) | 1.000 | 0 |"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "designs/m141_ddr2_sched/docs/results.md:13",
+   "percentile": 99.9,
+   "samples": 3000,
+   "required": 100000,
+   "beyond": 3.0,
+   "message": "p99.9 quoted from 3,000 observations: 3.0 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "| lat_rand_loaded_p0 | 0 | 3000 | 12 / 49 / 69 / 75 clk (37 / 151 / 212 / 231 ns) | 1.000 | 0 |"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "designs/m141_ddr2_sched/docs/results.md:14",
+   "percentile": 99.0,
+   "samples": 2115,
+   "required": 10000,
+   "beyond": 21.15,
+   "message": "p99 quoted from 2,115 observations: 21.2 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "| xcheck_ddr2_800_p0 | 0 | 2115 | 14 / 50 / 79 / 87 clk (35 / 125 / 198 / 218 ns) | 1.008 | 0 |"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "designs/m141_ddr2_sched/docs/results.md:14",
+   "percentile": 99.9,
+   "samples": 2115,
+   "required": 100000,
+   "beyond": 2.11,
+   "message": "p99.9 quoted from 2,115 observations: 2.1 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "| xcheck_ddr2_800_p0 | 0 | 2115 | 14 / 50 / 79 / 87 clk (35 / 125 / 198 / 218 ns) | 1.008 | 0 |"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "designs/m141_ddr2_sched/docs/results.md:15",
+   "percentile": 99.0,
+   "samples": 3000,
+   "required": 10000,
+   "beyond": 30.0,
+   "message": "p99 quoted from 3,000 observations: 30.0 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "| lat_rand_read_p1 | 1 | 3000 | 17 / 47 / 78 / 82 clk (52 / 145 / 240 / 252 ns) | 1.003 | 0 |"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "designs/m141_ddr2_sched/docs/results.md:15",
+   "percentile": 99.9,
+   "samples": 3000,
+   "required": 100000,
+   "beyond": 3.0,
+   "message": "p99.9 quoted from 3,000 observations: 3.0 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "| lat_rand_read_p1 | 1 | 3000 | 17 / 47 / 78 / 82 clk (52 / 145 / 240 / 252 ns) | 1.003 | 0 |"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "designs/m141_ddr2_sched/docs/results.md:16",
+   "percentile": 99.0,
+   "samples": 2115,
+   "required": 10000,
+   "beyond": 21.15,
+   "message": "p99 quoted from 2,115 observations: 21.2 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "| lat_rand_mix_p1 | 1 | 2115 | 17 / 48 / 78 / 82 clk (52 / 148 / 240 / 252 ns) | 1.003 | 0 |"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "designs/m141_ddr2_sched/docs/results.md:16",
+   "percentile": 99.9,
+   "samples": 2115,
+   "required": 100000,
+   "beyond": 2.11,
+   "message": "p99.9 quoted from 2,115 observations: 2.1 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "| lat_rand_mix_p1 | 1 | 2115 | 17 / 48 / 78 / 82 clk (52 / 148 / 240 / 252 ns) | 1.003 | 0 |"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "designs/m141_ddr2_sched/docs/results.md:17",
+   "percentile": 99.0,
+   "samples": 3000,
+   "required": 10000,
+   "beyond": 30.0,
+   "message": "p99 quoted from 3,000 observations: 30.0 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "| lat_bursts_p1 | 1 | 3000 | 7 / 31 / 58 / 64 clk (22 / 95 / 178 / 197 ns) | 0.178 | 0 |"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "designs/m141_ddr2_sched/docs/results.md:17",
+   "percentile": 99.9,
+   "samples": 3000,
+   "required": 100000,
+   "beyond": 3.0,
+   "message": "p99.9 quoted from 3,000 observations: 3.0 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "| lat_bursts_p1 | 1 | 3000 | 7 / 31 / 58 / 64 clk (22 / 95 / 178 / 197 ns) | 0.178 | 0 |"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "designs/m141_ddr2_sched/docs/results.md:18",
+   "percentile": 99.0,
+   "samples": 3000,
+   "required": 10000,
+   "beyond": 30.0,
+   "message": "p99 quoted from 3,000 observations: 30.0 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "| lat_rand_loaded_p1 | 1 | 3000 | 17 / 73 / 95 / 105 clk (52 / 225 / 292 / 323 ns) | 1.003 | 0 |"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "designs/m141_ddr2_sched/docs/results.md:18",
+   "percentile": 99.9,
+   "samples": 3000,
+   "required": 100000,
+   "beyond": 3.0,
+   "message": "p99.9 quoted from 3,000 observations: 3.0 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "| lat_rand_loaded_p1 | 1 | 3000 | 17 / 73 / 95 / 105 clk (52 / 225 / 292 / 323 ns) | 1.003 | 0 |"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "designs/m141_ddr2_sched/docs/results.md:19",
+   "percentile": 99.0,
+   "samples": 2115,
+   "required": 10000,
+   "beyond": 21.15,
+   "message": "p99 quoted from 2,115 observations: 21.2 lie beyond it (need 100, i.e. 10,000 observations)",
+   "text": "| xcheck_ddr2_800_p1 | 1 | 2115 | 20 / 74 / 103 / 110 clk (50 / 185 / 258 / 275 ns) | 1.003 | 0 |"
+  },
+  {
+   "code": "TAIL-N-01",
+   "where": "designs/m141_ddr2_sched/docs/results.md:19",
+   "percentile": 99.9,
+   "samples": 2115,
+   "required": 100000,
+   "beyond": 2.11,
+   "message": "p99.9 quoted from 2,115 observations: 2.1 lie beyond it (need 100, i.e. 100,000 observations)",
+   "text": "| xcheck_ddr2_800_p1 | 1 | 2115 | 20 / 74 / 103 / 110 clk (50 / 185 / 258 / 275 ns) | 1.003 | 0 |"
+  },
+  {
+   "code": "TAIL-N-02",
+   "where": "designs/m141_ddr2_sched/docs/results.md:57",
+   "percentile": 99.0,
+   "samples": null,
+   "required": 10000,
+   "message": "p99 quoted with no sample count; it needs at least 10,000 observations",
+   "text": "| refresh_rand_read_p0_post0_defer0 | 0 | 0 | 12 / 35 / 68 / 73 clk (37 / 108 / 209 / 225 ns) | 97 | 2551 |"
+  },
+  {
+   "code": "TAIL-N-02",
+   "where": "designs/m141_ddr2_sched/docs/results.md:57",
+   "percentile": 99.9,
+   "samples": null,
+   "required": 100000,
+   "message": "p99.9 quoted with no sample count; it needs at least 100,000 observations",
+   "text": "| refresh_rand_read_p0_post0_defer0 | 0 | 0 | 12 / 35 / 68 / 73 clk (37 / 108 / 209 / 225 ns) | 97 | 2551 |"
+  },
+  {
+   "code": "TAIL-N-02",
+   "where": "designs/m141_ddr2_sched/docs/results.md:58",
+   "percentile": 99.0,
+   "samples": null,
+   "required": 10000,
+   "message": "p99 quoted with no sample count; it needs at least 10,000 observations",
+   "text": "| refresh_rand_read_p0_post4_defer0 | 4 | 0 | 12 / 33 / 53 / 59 clk (37 / 102 / 163 / 182 ns) | 97 | 2556 |"
+  },
+  {
+   "code": "TAIL-N-02",
+   "where": "designs/m141_ddr2_sched/docs/results.md:58",
+   "percentile": 99.9,
+   "samples": null,
+   "required": 100000,
+   "message": "p99.9 quoted with no sample count; it needs at least 100,000 observations",
+   "text": "| refresh_rand_read_p0_post4_defer0 | 4 | 0 | 12 / 33 / 53 / 59 clk (37 / 102 / 163 / 182 ns) | 97 | 2556 |"
+  },
+  {
+   "code": "TAIL-N-02",
+   "where": "designs/m141_ddr2_sched/docs/results.md:59",
+   "percentile": 99.0,
+   "samples": null,
+   "required": 10000,
+   "message": "p99 quoted with no sample count; it needs at least 10,000 observations",
+   "text": "| refresh_rand_read_p0_post4_defer1 | 4 | 1 | 12 / 34 / 68 / 73 clk (37 / 105 / 209 / 225 ns) | 93 | 2551 |"
+  },
+  {
+   "code": "TAIL-N-02",
+   "where": "designs/m141_ddr2_sched/docs/results.md:59",
+   "percentile": 99.9,
+   "samples": null,
+   "required": 100000,
+   "message": "p99.9 quoted with no sample count; it needs at least 100,000 observations",
+   "text": "| refresh_rand_read_p0_post4_defer1 | 4 | 1 | 12 / 34 / 68 / 73 clk (37 / 105 / 209 / 225 ns) | 93 | 2551 |"
+  },
+  {
+   "code": "TAIL-N-02",
+   "where": "designs/m141_ddr2_sched/docs/results.md:60",
+   "percentile": 99.0,
+   "samples": null,
+   "required": 10000,
+   "message": "p99 quoted with no sample count; it needs at least 10,000 observations",
+   "text": "| refresh_window_p0_post0 | 0 | 0 | 12 / 35 / 68 / 73 clk (37 / 108 / 209 / 225 ns) | 97 | 2551 |"
+  },
+  {
+   "code": "TAIL-N-02",
+   "where": "designs/m141_ddr2_sched/docs/results.md:60",
+   "percentile": 99.9,
+   "samples": null,
+   "required": 100000,
+   "message": "p99.9 quoted with no sample count; it needs at least 100,000 observations",
+   "text": "| refresh_window_p0_post0 | 0 | 0 | 12 / 35 / 68 / 73 clk (37 / 108 / 209 / 225 ns) | 97 | 2551 |"
+  },
+  {
+   "code": "TAIL-N-02",
+   "where": "designs/m141_ddr2_sched/docs/results.md:61",
+   "percentile": 99.0,
+   "samples": null,
+   "required": 10000,
+   "message": "p99 quoted with no sample count; it needs at least 10,000 observations",
+   "text": "| refresh_window_p0_post4 | 4 | 0 | 12 / 39 / 82 / 91 clk (37 / 120 / 252 / 280 ns) | 97 | 7483 |"
+  },
+  {
+   "code": "TAIL-N-02",
+   "where": "designs/m141_ddr2_sched/docs/results.md:61",
+   "percentile": 99.9,
+   "samples": null,
+   "required": 100000,
+   "message": "p99.9 quoted with no sample count; it needs at least 100,000 observations",
+   "text": "| refresh_window_p0_post4 | 4 | 0 | 12 / 39 / 82 / 91 clk (37 / 120 / 252 / 280 ns) | 97 | 7483 |"
+  },
+  {
+   "code": "TAIL-N-02",
+   "where": "designs/m141_ddr2_sched/docs/results.md:69",
+   "percentile": 99.0,
+   "samples": null,
+   "required": 10000,
+   "message": "p99 quoted with no sample count; it needs at least 10,000 observations",
+   "text": "| refresh_window_p0_post0 | 0 | 12 / 32 / 72 / 73 clk (37 / 98 / 222 / 225 ns) | 12 / 37 / 53 / 73 clk (37 / 114 / 163 / 225 ns) | 97 |"
+  },
+  {
+   "code": "TAIL-N-02",
+   "where": "designs/m141_ddr2_sched/docs/results.md:69",
+   "percentile": 99.9,
+   "samples": null,
+   "required": 100000,
+   "message": "p99.9 quoted with no sample count; it needs at least 100,000 observations",
+   "text": "| refresh_window_p0_post0 | 0 | 12 / 32 / 72 / 73 clk (37 / 98 / 222 / 225 ns) | 12 / 37 / 53 / 73 clk (37 / 114 / 163 / 225 ns) | 97 |"
+  },
+  {
+   "code": "TAIL-N-02",
+   "where": "designs/m141_ddr2_sched/docs/results.md:70",
+   "percentile": 99.0,
+   "samples": null,
+   "required": 10000,
+   "message": "p99 quoted with no sample count; it needs at least 10,000 observations",
+   "text": "| refresh_window_p0_post4 | 4 | 12 / 23 / 26 / 28 clk (37 / 71 / 80 / 86 ns) | 12 / 48 / 85 / 91 clk (37 / 148 / 262 / 280 ns) | 97 |"
+  },
+  {
+   "code": "TAIL-N-02",
+   "where": "designs/m141_ddr2_sched/docs/results.md:70",
+   "percentile": 99.9,
+   "samples": null,
+   "required": 100000,
+   "message": "p99.9 quoted with no sample count; it needs at least 100,000 observations",
+   "text": "| refresh_window_p0_post4 | 4 | 12 / 23 / 26 / 28 clk (37 / 71 / 80 / 86 ns) | 12 / 48 / 85 / 91 clk (37 / 148 / 262 / 280 ns) | 97 |"
+  }
+ ]
+}
