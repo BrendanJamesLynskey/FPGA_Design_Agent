@@ -10,7 +10,7 @@ Not in scope:
 - a gamma-corrected or auto-repeating dimmer; brightness is linear in the duty and one press is one step
 - a claim of compliance with any standard; the traceability record is DO-254-style evidence only
 
-Kind: example; written by hand. State: board-verified. For an agent: [AGENT.md](AGENT.md).
+Kind: example; written by a Claude Code session. State: board-verified. For an agent: [AGENT.md](AGENT.md).
 
 ![Block diagram: the design's blocks and the links between them](docs/handover/architecture.svg)
 
@@ -73,7 +73,7 @@ Interfaces:
 | build the base and the ILA bitstreams; needs local Vivado 2026.1 and a heavy slot (take_heavy_slot.sh) | `flow/run_vivado.sh designs/t1_dimmer_counter both` | yes | about 10 min |
 | board bring-up, UART tests and ILA captures against the model; needs the Nexys A7-100T on wall power, both builds present and the board lock | `python3 flow/bringup.py designs/t1_dimmer_counter` | no | about 3 min |
 
-Tool: Vivado 2026.1. Build ID of the inputs at handover: `10ff0ef6` (`python flow/manifest.py show designs/t1_dimmer_counter`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `5e2eab8`.
+Tool: Vivado 2026.1. Build ID of the inputs at handover: `10a1806a` (`python flow/manifest.py show designs/t1_dimmer_counter`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `5e2eab8`.
 
 | File | What |
 |---|---|
@@ -111,7 +111,7 @@ The ILA build uses the IP route (one ILA IP, the probes packed into two ports) b
 |---|---|---|---|---|---|
 | E1 | simulation | pass | cocotb tests of the RTL against the golden model (registers, debounce, PWM on-time, display) | [`designs/t1_dimmer_counter/tests/test_t1_rtl.py`](tests/test_t1_rtl.py) (run in CI) | - |
 | E2 | simulation | pass | verification bench with 23 bound assertions on seeds 1, 2 and 3 under Verilator 5.048 and under Icarus 12 | [`designs/t1_dimmer_counter/tests/test_t1_verif_rtl.py`](tests/test_t1_verif_rtl.py) (run in CI) | - |
-| E3 | formal | pass | SymbiYosys bounded check, k-induction proof (brief 143c) and cover of the debouncer and display scanner, rerun in CI by flow/formal.sh | [`results/04f/README.md`](../../results/04f/README.md) | - |
+| E3 | formal | pass | SymbiYosys bounded proof and cover of the debouncer and display scanner, rerun in CI by flow/formal.sh | [`results/04f/README.md`](../../results/04f/README.md) | - |
 | E4 | faults | pass | 21 mutants; the bench kills all 21 in the final run, 19 of 21 in the first (see gap E4) | [`results/04f/mutation_t1.json`](../../results/04f/mutation_t1.json) | - |
 | E5 | review | pass | traceability matrix, all 11 requirements evidenced and every coverage hole justified; FDA-HDL lint passes with one waiver | [`results/53_traceability/t1_dimmer_counter_trace.json`](../../results/53_traceability/t1_dimmer_counter_trace.json) | - |
 | E6 | build | pass | base build on Vivado 2026.1; every gate passes through bitstream | [`results/f0a_2026_1/t1_dimmer_counter_base.json`](../../results/f0a_2026_1/t1_dimmer_counter_base.json) | - |

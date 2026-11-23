@@ -1,0 +1,407 @@
+{
+ "check": {
+  "values": {
+   "all3_E": 20.0,
+   "all3_L": 46.0,
+   "all3_ttt": 160.5,
+   "areas": 17,
+   "b96_gaps": 43,
+   "b96_part": 13,
+   "b96_req": 28,
+   "b96_ver": 12,
+   "c_false": 0,
+   "c_gate": 10,
+   "c_mut": 10,
+   "c_ok": 12,
+   "c_tool": 5,
+   "causes_n": 9,
+   "direct_cdc1": 38,
+   "direct_wns": 0.079,
+   "drawer_n": 10,
+   "exp_n": 13,
+   "fibre_ns": 0.83,
+   "findings_n": 19,
+   "fm_fam": 4,
+   "fm_rows": 99,
+   "fm_tool": 45,
+   "fn_jobs": 14,
+   "fn_pass": 14,
+   "gp_gates": 29,
+   "gp_wns": 0.164,
+   "ip_n": 24,
+   "lv_agent": 8,
+   "lv_checked": 5,
+   "lv_knowledge": 1,
+   "lv_measured": 3,
+   "m_final": 100.0,
+   "m_first": 90.48,
+   "m_n": 21,
+   "max_questions": 12,
+   "miss96c_hi": 9,
+   "miss96c_lo": 7,
+   "pred96c_hi": 54,
+   "pred96c_lo": 52,
+   "pred97_all3": 47,
+   "prereg": 10,
+   "refused": 7,
+   "sections": 61,
+   "skills": 284,
+   "skills_used": 210,
+   "stages": 10,
+   "t_cocotb": "cocotb 2.0.1",
+   "t_verilator": "5.048",
+   "tr_agreed": 0,
+   "tr_designs": 34,
+   "tr_draft": 357,
+   "tr_reqs": 357,
+   "u_tool": "Yosys 0.70",
+   "uf_stages": 9,
+   "v_inconclusive": 1,
+   "v_mixed": 6,
+   "v_negative": 1,
+   "v_null": 1,
+   "v_stopped": 1,
+   "v_win": 3
+  }
+ },
+ "content": {
+  "caption": "Who does what. The two solid boxes are yours. A failed gate sends the work back to the agent; a gap in the evidence, or a wrong specification, sends it back to you.",
+  "drawers": [
+   {
+    "claim": "It carries the working knowledge of the craft, not only the syntax of the language, and its flow follows AMD's own method stage by stage.",
+    "example": {
+     "sources": [
+      {
+       "path": "site/data/expertise.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/site/data/expertise.json"
+      },
+      {
+       "path": "site/data/packs.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/site/data/packs.json"
+      },
+      {
+       "path": "site/data/agent_graph.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/site/data/agent_graph.json"
+      },
+      {
+       "path": "site/data/family_diffs.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/site/data/family_diffs.json"
+      }
+     ],
+     "text": "The bank holds 284 skills in 61 sections, pinned to one commit. The flow has 10 stages, 9 of them marked as UltraFast stages, each with its own exit gate. The family matrix records 99 differences between 4 device families, 45 of them confirmed by running the tool."
+    },
+    "id": "practice",
+    "link": {
+     "href": "expertise.html",
+     "label": "Areas of expertise, with the skills behind each"
+    },
+    "means": [
+     "Writing HDL that simulates is the easy part of FPGA work. What takes years is knowing what the tools will not tell you: which clock crossings need a synchroniser, why a reset style costs timing, what differs between a 7-series part and an UltraScale+ part, and in what order to close timing, power and design-rule problems.",
+     "The agent has that knowledge as a knowledge bank of short skills it loads when a task needs them, written in our own words from AMD's documentation and from measurements we made. AMD's published recommendations are the default: generated RTL follows them unless that is impossible, and a departure is named with its reason. The stages of the flow follow AMD's UltraFast methodology (UG949), and each stage ends in a gate that code checks.",
+     "Where advice differs by device family, the bank records the difference with its source and says whether a tool run confirmed it or only the guides do, so the agent does not apply a rule from one family to another."
+    ],
+    "not_yet": "Depth follows what we own and have measured: Artix-7, Zynq-7000 and the Zynq UltraScale+ K26 are covered in depth; most other boards have a one-skill entry. The bank is private, so the page cites it by pin and does not show its text.",
+    "title": "An FPGA engineer's practice, built in"
+   },
+   {
+    "claim": "A design is checked by several independent kinds of evidence, because each kind misses what another catches.",
+    "example": {
+     "sources": [
+      {
+       "path": "results/16_cdc_gate_2026_1/mutant_table.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/16_cdc_gate_2026_1/mutant_table.json"
+      },
+      {
+       "path": "site/data/verification.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/site/data/verification.json"
+      }
+     ],
+     "text": "10 faulty clock-crossing designs were built, with 12 correct ones for contrast. AMD's report_cdc on its own flagged 5 of the 10 faults. The flow's gate, which adds a structural check and an injected simulation, flagged 10, with 0 false alarms on the 12 correct designs. Separately, 14 of 14 formal jobs on the network blocks pass (Yosys 0.70)."
+    },
+    "id": "verification",
+    "link": {
+     "href": "verification.html",
+     "label": "How the designs are verified, method by method"
+    },
+    "means": [
+     "A test the same model wrote shares that model's misreading of the specification, so the agent's own tests never count as a pass. The methods used are directed and self-checking simulation, constrained-random stimulus with functional and code coverage, UVM and pyuvm benches, cocotb tests, assertions and protocol checkers, formal proof (bounded model checking, k-induction and property-directed reachability, run with SymbiYosys and Yosys), Lean for selected proofs, mutation testing of the tests themselves, static and clock-crossing checks, and hardware in the loop on the board with instruments attached.",
+     "Each method is used where it can find something the others cannot. The verification page says, method by method, what it catches, what it cannot, and the measured evidence."
+    ],
+    "not_yet": "Each method has been shown on some designs, not every method on every design. The formal runs are bounded for some blocks, and the verification page says which; the mutation figures come from hand-written faults on one reference design.",
+    "title": "Every verification method that fits, in simulation and on the board"
+   },
+   {
+    "claim": "Every requirement names how it will be shown to hold, and a table lists the evidence for each, with the gaps left visible.",
+    "example": {
+     "sources": [
+      {
+       "path": "site/data/traceability.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/site/data/traceability.json"
+      }
+     ],
+     "text": "For the 10G trading path on the KR260 the matrix lists 28 requirements: 12 verified and 13 partially verified, with 43 gaps listed, each saying what is missing or stale. Across all 34 designs in the repository the matrix covers 357 requirements."
+    },
+    "id": "traceability",
+    "link": {
+     "href": "traceability.html",
+     "label": "Every requirement against its checks"
+    },
+    "means": [
+     "Each requirement in a specification carries an identifier and the kind of proof it needs. A traceability matrix then lists every check that covers it, computed from the recorded evidence files, not typed. A requirement with no passing evidence, evidence from the agent's own tests only, a missing method, or a result that is out of date shows as such.",
+     "Only a human agrees a requirement. The agent can propose requirements and draft the plan, but a requirement counts as agreed only when a person says so; the matrix records who agreed, and marks an agreement a person delegated to a named reviewer as delegated."
+    ],
+    "not_yet": "Of those 357 requirements, 0 have been agreed by a human so far: 357 are drafts. The matrix therefore shows what the evidence covers, not yet that a person has accepted the specification.",
+    "title": "Traceable from your specification to the evidence"
+   },
+   {
+    "claim": "You can leave the agent to work from a specification, or steer it at every stage, and the agent keeps a record of who did what.",
+    "example": {
+     "sources": [
+      {
+       "path": "agent/graph/interview.py",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/agent/graph/interview.py"
+      },
+      {
+       "path": "site/data/agent_graph.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/site/data/agent_graph.json"
+      },
+      {
+       "path": "docs/agent.md",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/docs/agent.md"
+      }
+     ],
+     "text": "The interview asks at most 12 questions. Review can pause the run after each of the 10 stages. In every recorded development run review was off and the spec counted as signed off once no question was open; that is the hands-off end of the range."
+    },
+    "id": "handover",
+    "link": {
+     "href": "agent.html",
+     "label": "The agent, its roles and a replayed run"
+    },
+    "means": [
+     "The interview is the first control. The agent asks about what the request leaves out, one question at a time, each with a proposed default and the reason for it, so a question you ignore has a recorded answer. Review is the second: when it is switched on, each stage ends with a page of its gates, files, timing and diagrams, and you can approve, edit with a prompt to one role, rewind to an earlier stage, or supply the architecture yourself.",
+     "A rewind restores the files and checkpoints of that stage after checking their hashes. A change you make by hand while the run is paused is found, committed under your name and gated again. The run always stops for a person before anything is programmed onto the board.",
+     "The Navigator, a local web page over the same command line, starts and stops a run, shows its live stage, cost and gates, and runs locked read-only board actions."
+    ],
+    "not_yet": "Answering interview questions and sending a request to a running agent from the Navigator is not built; today those go through the command line.",
+    "title": "You choose how much to hand over"
+   },
+   {
+    "claim": "Code reads the tools' reports and decides every stage exit; a model cannot argue a failed gate into a pass.",
+    "example": {
+     "sources": [
+      {
+       "path": "site/data/kr260.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/site/data/kr260.json"
+      },
+      {
+       "path": "site/worked/worked.yaml",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/site/worked/worked.yaml"
+      }
+     ],
+     "text": "Two builds of the project's own elastic buffer for the KR260 differ in how its pointers cross between clock domains. The one that reads them directly met timing (worst setup slack +0.079 ns) and was faster in simulation, but report_cdc listed 38 critical rows, its clock-crossing gates failed and it was rejected. The build that was kept has every one of its 29 flow gates true, worst setup slack +0.164 ns, and no waiver."
+    },
+    "id": "referee",
+    "link": {
+     "href": "how.html",
+     "label": "The stages, the gates and the tools"
+    },
+    "means": [
+     "A language model writes and repairs designs, but it never judges them. Each stage ends in a gate that reads Vivado 2026.1's reports, the simulators' results or a checker's output, and the controller moves on only when the gate says so. A failure goes back to the role that owns the fix, with a limit on visits so a run cannot loop for ever.",
+     "A failed gate stays a failed gate in the record. A variant that fails is reported as failed, not repaired in the write-up."
+    ],
+    "not_yet": "Gates judge what they are built to check. A property no gate covers is not judged, which is why the verification and traceability drawers matter as well. Vivado cannot run in the public continuous integration, so the Vivado results are committed records from the owner's machine.",
+    "title": "Vivado is the referee"
+   },
+   {
+    "claim": "Each area states how far its evidence goes, computed from committed files, and never claims more than they show.",
+    "example": {
+     "sources": [
+      {
+       "path": "site/data/expertise.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/site/data/expertise.json"
+      }
+     ],
+     "text": "Of 17 areas, 8 are shown in agent runs, 5 are checked by the flow, 3 are measured in Vivado and 1 is knowledge only. The bank's 284 skills include 210 that the areas use."
+    },
+    "id": "expertise",
+    "link": {
+     "href": "expertise.html",
+     "label": "Every area with its level and gaps"
+    },
+    "means": [
+     "The agent's knowledge is grouped into areas such as clock crossings, constraints and timing closure, memory, AXI and the Zynq processing system, arithmetic and hardware in the loop. For each area the expertise page gives a level, computed from the items it holds: knowledge only, measured in Vivado, checked by the flow, or shown in agent runs. An area can be capped below its evidence, with the reason shown.",
+     "The level is a statement about evidence, not about quality. An area at the top level has been exercised in recorded agent runs; one at the bottom has skills in the bank and nothing measured yet."
+    ],
+    "not_yet": "The area with knowledge only has no measured result behind it yet. Several areas at a higher level still list what has not been shown.",
+    "title": "Many areas of expertise, each with its evidence"
+   },
+   {
+    "claim": "Every number on the site names its record, nulls and negative results are published, and held-out evaluation is kept separate from development.",
+    "example": {
+     "sources": [
+      {
+       "path": "site/data/story.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/site/data/story.json"
+      }
+     ],
+     "text": "The how-it-was-built page records 13 experiments: 3 wins, 6 mixed, 1 with no detectable effect, 1 negative, 1 inconclusive and 1 stopped before any score was analysed. 10 results folders hold a pre-registration file."
+    },
+    "id": "measured",
+    "link": {
+     "href": "story.html",
+     "label": "How the agent was built, with every experiment"
+    },
+    "means": [
+     "A figure appears only if the build can read it from a committed result file; the site build fails when a number is not in the data. Experiments are written up with their nulls, their negative results and their stopped runs, because a result that is only reported when it is good teaches nothing.",
+     "Development tasks are used to find and fix the agent's faults, so their results are a record of the work. A separate held-out set is scored by hidden tests, with the method fixed before the first scored run. Board runs state their prediction before they run."
+    ],
+    "not_yet": "There is no held-out score yet: the first attempt was stopped before any result was analysed. The development results are not a score.",
+    "title": "Measured, not claimed"
+   },
+   {
+    "claim": "A latency figure states its start and end events, what lies on the path and how it was measured, so it can be compared only with like.",
+    "example": {
+     "sources": [
+      {
+       "path": "site/data/kr260.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/site/data/kr260.json"
+      },
+      {
+       "path": "docs/latency_definitions.md",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/docs/latency_definitions.md"
+      }
+     ],
+     "text": "Before the board run the loop time of the build with every latency cut was predicted at 47 clocks, and the board measured 46, with an echo time of 20. That gives a board tick-to-trade of 160.5 ns, with 0.83 ns of fibre subtracted and the optical module's own delay not subtracted. An earlier prediction of 52 to 54 clocks for the base build was missed by 7 to 9, and the miss is in the record."
+    },
+    "id": "latency",
+    "link": {
+     "href": "worked-example.html",
+     "label": "The worked example: one design from specification to board"
+    },
+    "means": [
+     "The trading path on the KR260 has a latency budget, stage by stage, from the first bit of a frame arriving at the transceiver pins to the first bit of an order leaving them. The board figure is the loop time L minus the echo time E minus the fibre's own delay, counted in clocks of the transmit user clock from timestamps inside the FPGA.",
+     "Predictions are written down before the board run, and the misses are recorded with the hits."
+    ],
+    "not_yet": "The counter resolves one clock and sits inside the FPGA, so the figure is not comparable with a wire-level benchmark. One board, one module and a fibre loopback were used.",
+    "title": "Latency you can account for, clock by clock"
+   },
+   {
+    "claim": "An existing design can be handed over with parts the agent may not touch, and the tool refuses the edits that would cross that line.",
+    "example": {
+     "sources": [
+      {
+       "path": "results/102_managed/demo_session.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/102_managed/demo_session.json"
+      },
+      {
+       "path": "docs/managed_projects.md",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/docs/managed_projects.md"
+      }
+     ],
+     "text": "In a scripted session on the managed example, the request to make the CRC faster was answered with a question, because the CRC is frozen. A scoped request edited only the owned controller, and 7 attempts to write the frozen netlist, an excluded block, the out-of-scope top, a port, a build source or the manifest were all refused."
+    },
+    "id": "package",
+    "link": {
+     "href": "inspect.html",
+     "label": "Where the implementation is and how to open it"
+    },
+    "means": [
+     "A project is described by a manifest: which components are owned and open to change, which are frozen (a delivered netlist, say) and which are excluded. A request is resolved to the components it concerns, and the agent can write only inside that scope. A request that names a frozen part gets a question instead of an edit.",
+     "Imported blocks are checked against the supplier's own source, by simulation and by equivalence proof, so a change inside the delivered boundary is detected."
+    ],
+    "not_yet": "The session is a script calling the agent's real tool surface; no model drove it, so it tests the rules and not a model's behaviour under them. The delivered block is narrow, and wider ones were not proved in the time allowed.",
+    "title": "Works on your design, not only from scratch"
+   },
+   {
+    "claim": "Each showcase ends with a review of where the agent fell short, a fix and a re-run, and what is learnt is written into the knowledge bank and the checks.",
+    "example": {
+     "sources": [
+      {
+       "path": "site/data/story.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/site/data/story.json"
+      }
+     ],
+     "text": "The how-it-was-built page lists 19 faults found in the agent and its checks, classed into 9 causes and each fixed by a recorded pull request. The project's own IP library holds 24 blocks."
+    },
+    "id": "improves",
+    "link": {
+     "href": "story.html",
+     "label": "The findings, their causes and their fixes"
+    },
+    "means": [
+     "Building a real design shows what the agent lacks: a tool it missed, a check that came too late, knowledge it did not have. After each showcase the shortfalls are listed and classed by cause. Each fix goes in as a change with a pull request, and the failed tasks are re-run to show the effect.",
+     "Measured results become knowledge-bank claims, so a later run can use them. The project's own library of reusable blocks grows the same way, each block with a declared parameter space and tests at several points."
+    ],
+    "not_yet": "The library's implementation variants are measured out of context on Artix-7 only, and none has run on a board yet. The effect of the retrospectives on a held-out score is not measured.",
+    "title": "It gets better with each project"
+   }
+  ],
+  "intro": {
+   "answer": "An FPGA engineer's flow, run by an agent and judged by evidence.",
+   "note": "It does the implementation work of an FPGA engineer and shows each result against your specification, with the simulators, Vivado and, where one is attached, a board, so your time goes to what the design must do and to whether the evidence is enough. This is the one-page summary: 10 drawers, each a claim that opens to what it means, an example from this project with its numbers, what it does not do yet, and where to read more. These are development results; no held-out score exists yet."
+  },
+  "values": {
+   "all3_E": 20.0,
+   "all3_L": 46.0,
+   "all3_ttt": 160.5,
+   "areas": 17,
+   "b96_gaps": 43,
+   "b96_part": 13,
+   "b96_req": 28,
+   "b96_ver": 12,
+   "c_false": 0,
+   "c_gate": 10,
+   "c_mut": 10,
+   "c_ok": 12,
+   "c_tool": 5,
+   "causes_n": 9,
+   "direct_cdc1": 38,
+   "direct_wns": 0.079,
+   "drawer_n": 10,
+   "exp_n": 13,
+   "fibre_ns": 0.83,
+   "findings_n": 19,
+   "fm_fam": 4,
+   "fm_rows": 99,
+   "fm_tool": 45,
+   "fn_jobs": 14,
+   "fn_pass": 14,
+   "gp_gates": 29,
+   "gp_wns": 0.164,
+   "ip_n": 24,
+   "lv_agent": 8,
+   "lv_checked": 5,
+   "lv_knowledge": 1,
+   "lv_measured": 3,
+   "m_final": 100.0,
+   "m_first": 90.48,
+   "m_n": 21,
+   "max_questions": 12,
+   "miss96c_hi": 9,
+   "miss96c_lo": 7,
+   "pred96c_hi": 54,
+   "pred96c_lo": 52,
+   "pred97_all3": 47,
+   "prereg": 10,
+   "refused": 7,
+   "sections": 61,
+   "skills": 284,
+   "skills_used": 210,
+   "stages": 10,
+   "t_cocotb": "cocotb 2.0.1",
+   "t_verilator": "5.048",
+   "tr_agreed": 0,
+   "tr_designs": 34,
+   "tr_draft": 357,
+   "tr_reqs": 357,
+   "u_tool": "Yosys 0.70",
+   "uf_stages": 9,
+   "v_inconclusive": 1,
+   "v_mixed": 6,
+   "v_negative": 1,
+   "v_null": 1,
+   "v_stopped": 1,
+   "v_win": 3
+  }
+ }
+}

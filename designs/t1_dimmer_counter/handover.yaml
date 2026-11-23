@@ -5,7 +5,7 @@ schema: fda-handover/1
 id: t1_dimmer_counter
 title: T1, LED dimmer and push-button counter
 kind: example
-produced_by: human
+produced_by: session
 summary: A 16-bit up/down/clear counter on the Nexys A7-100T. Debounced buttons step it, the LEDs show it under PWM brightness
   (register or switches), the 7-segment display shows count and brightness in hex, and every register is reachable over
   the USB-UART through the test shell. The hand-written reference design for task T1.
@@ -173,8 +173,7 @@ evidence:
 - id: E3
   activity: formal
   result: pass
-  what: SymbiYosys bounded check, k-induction proof (brief 143c) and cover of the debouncer and display scanner, rerun in
-    CI by flow/formal.sh
+  what: SymbiYosys bounded proof and cover of the debouncer and display scanner, rerun in CI by flow/formal.sh
   record: results/04f/README.md
   sha256: d7cc186f734850b0e9d3fa1e9b099ba37b7c5e6bc02e90a2ba423346f4f9a0d2
 - id: E4
@@ -344,4 +343,4 @@ state:
     board_bringup: pass
   vivado: '2026.1'
   kb_pin: 5e2eab8
-  build_id: 10ff0ef6
+  build_id: 10a1806a

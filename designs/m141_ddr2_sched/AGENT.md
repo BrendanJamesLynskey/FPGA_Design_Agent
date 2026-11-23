@@ -2,7 +2,7 @@
 source: designs/m141_ddr2_sched/handover.yaml; human view: README.md; refresh: python -m flow.handover fresh designs/m141_ddr2_sched
 
 ## identity
-kind=showcase produced_by=human part=xc7a100tcsg324-1 board=Digilent Nexys A7-100T (one Micron MT47H64M16HR-25 DDR2 part, x16, single rank) top=ddr2_sched tool=Vivado 2026.1
+kind=showcase produced_by=session part=xc7a100tcsg324-1 board=Digilent Nexys A7-100T (one Micron MT47H64M16HR-25 DDR2 part, x16, single rank) top=ddr2_sched tool=Vivado 2026.1
 
 ## summary
 A request queue in front of a DDR2 command bus for the Micron MT47H64M16 on the Nexys A7, with two policies chosen by a parameter, latency-first for few random reads and bandwidth-first for streams, an abstract command interface that maps to AMD's PHY-only interface or to the MIG native interface, and the JEDEC timing rules enforced by per-bank counters. The rules are proved on the command stream by SymbiYosys against an independent monitor, and the scheduler is measured against a behavioural DDR2 model written from the data sheet.

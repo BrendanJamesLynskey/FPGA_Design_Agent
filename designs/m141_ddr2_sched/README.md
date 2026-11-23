@@ -10,7 +10,7 @@ Not in scope:
 - any Vivado build or board run; both heavy slots were taken by other sessions during the work, and the build plan and the pre-registered board test are written but not run
 - the four-wide command packing a controller clock slower than the memory clock needs; the scheduler decides one command per memory clock
 
-Kind: showcase; written by hand. State: simulated. For an agent: [AGENT.md](AGENT.md).
+Kind: showcase; written by a Claude Code session. State: simulated. For an agent: [AGENT.md](AGENT.md).
 
 <!-- prose:what -->
 **Purpose:** answer "can we build memory controllers optimised for an application?" for the Nexys A7's DDR2, with a scheduler whose
