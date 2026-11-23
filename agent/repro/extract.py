@@ -64,6 +64,7 @@ def build_of(design: Path | None) -> dict[str, Any]:
             continue
         t, u = g.get("timing") or {}, g.get("utilization") or {}
         run = _json(b / "run.json") or {}
+        # build_id is recorded but never compared: it covers the input file paths, which differ between run directories
         man = _json(b / "manifest.json") or {}
         out = {"variant": b.name, "build_pass": g.get("pass"), "first_failed_stage": g.get("first_failed_stage"), "lut": u.get("lut"), "ff": u.get("ff"), "dsp": u.get("dsp"),
                "bram36": u.get("bram_tile"), "wns_ns": t.get("wns_ns"), "whs_ns": t.get("whs_ns"), "timing_met": t.get("timing_met"),

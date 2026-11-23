@@ -2,7 +2,7 @@
 
 Three groups, kept apart because they promise different things:
 
-``deterministic``  tool results for identical RTL (the simulator's per-test verdicts, the Vivado build's resources, slack and ID). Compared field by field
+``deterministic``  tool results for identical RTL (the bench's per-test verdicts, the Vivado build's resources, slack and build stamp; not the build ID, which covers the design's path and so differs between run directories). Compared field by field
                    **only against a reference whose RTL hash is the same**; a match is shown with the hash. A mismatch with the same RTL is a finding about the
                    tools or the setup, never about the model. When no reference has the same RTL the group says so and lists no verdict.
 ``varies``         what depends on the model's own sampling: the RTL, the number of repair loops, tokens, cost, wall time. Shown as the reference
@@ -20,7 +20,7 @@ SCHEMA = "fda-example-result/1"
 
 #: field -> (label, unit). Tool results that must repeat for identical RTL.
 DETERMINISTIC = {
-    "build_id": ("Vivado build ID", ""), "lut": ("LUTs", ""), "ff": ("flip-flops", ""), "dsp": ("DSP slices", ""), "bram36": ("block RAM (36 Kb)", ""),
+    "build_stamp": ("build stamp (hash of the sources and constraints)", ""), "lut": ("LUTs", ""), "ff": ("flip-flops", ""), "dsp": ("DSP slices", ""), "bram36": ("block RAM (36 Kb)", ""),
     "wns_ns": ("worst setup slack", "ns"), "whs_ns": ("worst hold slack", "ns"), "vivado_version": ("Vivado version", ""),
 }
 #: field -> (label, unit, how many digits). What varies with the model.
@@ -79,7 +79,7 @@ def compare(run: dict[str, Any], refs: list[dict[str, Any]]) -> dict[str, Any]:
         det["note"] = "this run has no RTL hash (it did not produce RTL), so no tool result can be compared"
     elif not same:
         det["note"] = ("no reference run wrote the same RTL, so the tool results are not comparable and none is judged: the RTL text varies with the model (the group below), "
-                       "and different RTL builds to different numbers. To see the tools repeat, run `python -m agent example tools <name>` (it re-runs the benches and, with --vivado, the build on a stored reference RTL).")
+                       "and different RTL builds to different numbers. To see the tools repeat, run `python -m agent example tools <name>` (it re-runs the hidden bench on a stored reference RTL, with no model call).")
     for k, (label, unit) in DETERMINISTIC.items():
         row: dict[str, Any] = {"field": k, "label": label, "unit": unit, "run": tr.get(k)}
         if same:

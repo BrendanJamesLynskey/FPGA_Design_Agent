@@ -97,6 +97,33 @@ def main(a) -> int:
         c = C.compare(rec, RN.references(rec["example"]))
         print(json.dumps(c, indent=1) if a.json else render(c))
         return 0
+    if a.example_cmd == "finish":
+        reg = R.load()
+        try:
+            R.get(a.name, reg)
+            rd = Path(a.run_dir).resolve()
+            diff = RN.config_differences(rd, reg["pins"])
+            if diff:
+                print("refused: that run was not started with the pinned setup (config differs in: " + ", ".join(diff) + ")", file=sys.stderr)
+                return 2
+            pre = R.check(reg["pins"], a.allow_unpinned)
+            if not pre["ok"]:
+                print("refused: pre-flight: " + "; ".join(f"{c['name']}: {c['detail']}" for c in pre["checks"] if not c["ok"] and c["name"] not in pre["unpinned_waived"]), file=sys.stderr)
+                return 2
+            out = RN.finish_run(a.name, rd, pre, sys.executable)
+        except R.ExampleError as e:
+            print(f"refused: {e}", file=sys.stderr)
+            return 2
+        print(render(out["comparison"]))
+        return 0 if out["result"]["outcome"]["hidden_pass"] else 1
+    if a.example_cmd == "record":
+        from agent.repro import record as RC
+        try:
+            print(RC.record(a.name, a.run_dir, allow_unpinned=a.allow_unpinned))
+        except (R.ExampleError, OSError, ValueError) as e:
+            print(f"refused: {e}", file=sys.stderr)
+            return 2
+        return 0
     if a.example_cmd == "tools":
         from agent.repro import tools as T
         return T.main(a)
@@ -117,7 +144,16 @@ def add_parser(sub) -> None:
     c = es.add_parser("compare", help="compare a finished example run directory with the reference runs")
     c.add_argument("run_dir", type=Path)
     c.add_argument("--json", action="store_true")
+    fn = es.add_parser("finish", help="score and record a run that was started with the example's pinned command (for example one the navigator started and that ended without the result step)")
+    fn.add_argument("name")
+    fn.add_argument("run_dir", type=Path)
+    fn.add_argument("--allow-unpinned", action="store_true")
+    rc = es.add_parser("record", help="keep a finished example run as a reference run (results/195_repro_examples)")
+    rc.add_argument("name")
+    rc.add_argument("run_dir", type=Path)
+    rc.add_argument("--allow-unpinned", action="store_true")
     t = es.add_parser("tools", help="re-run the deterministic part on a stored reference RTL: no model call")
     t.add_argument("name")
     t.add_argument("--ref", type=int, default=1, help="which reference run's RTL (1..N)")
-    t.add_argument("--vivado", action="store_true", help="also re-run the Vivado build (a heavy job: take a slot first)")
+    t.add_argument("--vivado", action="store_true", help="also rebuild that RTL with Vivado (no cache, to post-route) and compare build stamp, resources and slack (a heavy job: takes a slot)")
+    t.add_argument("--no-slot", action="store_true", help="the caller already holds a heavy slot")

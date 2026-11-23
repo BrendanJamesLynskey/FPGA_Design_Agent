@@ -24,7 +24,7 @@ def rec(run_id, rtl="aaa", lut=100, wns=1.5, passed=True, tests=None, **varies):
     return {"schema": C.SCHEMA, "example": "x", "run_id": run_id,
             "setup": {"claude_cli_version": "2.1.321", "cc_model": "claude-sonnet-5-5", "vivado_version": "2026.1", "kb_commit": "k1", "stop_after": 6},
             "outcome": {"hidden_pass": passed, "tests_passed": sum(t.values()), "tests_total": len(t), "internal_pass": True},
-            "tool_results": {"rtl_sha256": rtl, "lut": lut, "ff": 50, "dsp": 0, "bram36": 0, "wns_ns": wns, "whs_ns": 0.1, "build_id": "b" + str(rtl), "vivado_version": "2026.1", "bench_tests": t},
+            "tool_results": {"rtl_sha256": rtl, "lut": lut, "ff": 50, "dsp": 0, "bram36": 0, "wns_ns": wns, "whs_ns": 0.1, "build_stamp": "s" + str(rtl), "vivado_version": "2026.1", "bench_tests": t},
             "varies": {"rtl_lines": 100, "repair_visits": 2, "agent_turns": 50, "tokens": 1000, "cost_usd": 1.0, "wall_s": 600, **varies}}
 
 
@@ -40,7 +40,7 @@ def row(c, field):
 def test_same_rtl_hash_and_same_tool_results_is_a_match():
     c = C.compare(rec("new", "bbb", 120, 1.0), REFS)
     assert c["deterministic"]["matching_references"] == ["r2"]
-    assert row(c, "lut")["verdict"].startswith("match") and row(c, "wns_ns")["verdict"].startswith("match") and row(c, "build_id")["verdict"].startswith("match")
+    assert row(c, "lut")["verdict"].startswith("match") and row(c, "wns_ns")["verdict"].startswith("match") and row(c, "build_stamp")["verdict"].startswith("match")
     assert row(c, "bench_tests")["verdict"].startswith("match")
 
 
@@ -268,3 +268,40 @@ def test_committed_reference_records_hold_numbers_names_and_hashes_only():
         assert r["example"] == f.parent.name
         raw = f.read_text()
         assert not re.search(r"sk-[A-Za-z0-9_-]{12,}|FDA_ACCESS_KEY|OPENROUTER|prompt", raw), f
+
+
+# --- finishing a run started by the pinned command --------------------------------------------------------------------------------
+
+def pinned_config(pins):
+    return {"harness": pins["harness"], "cc_model": pins["cc_model"], "cc_effort": pins["cc_effort"], "oracle": pins["oracle"], "oracle_cc_model": pins["oracle_cc_model"], "interview": pins["interview"],
+            "review": pins["review"], "verif_level": pins["verif_level"], "harness_arms": pins["harness_arm"], "docs": pins["docs"], "profile": pins["profile"], "board": pins["board"],
+            "hdl": pins["hdl"], "stop_after": str(pins["stop_after"])}
+
+
+def test_a_run_started_with_other_flags_is_not_an_example_run(tmp_path):
+    pins = R.load()["pins"]
+    (tmp_path / "config.json").write_text(json.dumps(pinned_config(pins)))
+    assert RN.config_differences(tmp_path, pins) == []
+    other = pinned_config(pins)
+    other["cc_model"], other["stop_after"] = "claude-haiku-5-5", "8"
+    (tmp_path / "config.json").write_text(json.dumps(other))
+    assert RN.config_differences(tmp_path, pins) == ["cc_model", "stop_after"]
+    (tmp_path / "config.json").unlink()
+    assert RN.config_differences(tmp_path, pins) == ["config.json"]
+
+
+def test_the_command_a_run_uses_is_exactly_what_config_differences_accepts(tmp_path):
+    """The flags `argv` builds and the keys `config_differences` checks must name the same settings, so a run from `example run` always passes `example finish`."""
+    reg = R.load()
+    cmd = R.argv(R.get("gray_stepper", reg), reg["pins"], "python")
+    flag = {"harness": "--harness", "cc_model": "--cc-model", "cc_effort": "--cc-effort", "oracle": "--oracle", "oracle_cc_model": "--oracle-cc-model", "interview": "--interview", "review": "--review",
+            "verif_level": "--verif-level", "harness_arm": "--harness-arm", "docs": "--docs", "profile": "--profile", "board": "--board", "hdl": "--hdl", "stop_after": "--stop-after"}
+    assert set(flag) == set(RN.CONFIG_KEYS)
+    for k, f in flag.items():
+        assert cmd[cmd.index(f) + 1] == str(reg["pins"][k])
+
+
+def test_wall_time_is_the_runs_own_span(tmp_path):
+    (tmp_path / "trace.jsonl").write_text("\n".join(json.dumps({"t": t}) for t in (100.0, 160.5, 400.25)) + "\nnot json\n")
+    assert RN.wall_of(tmp_path) == 300.2 or RN.wall_of(tmp_path) == 300.3
+    assert RN.wall_of(tmp_path / "none") is None

@@ -87,6 +87,45 @@ def release_slot(lock: Path | None, text: str | None) -> None:
             pass
 
 
+CONFIG_KEYS = {"harness": "harness", "cc_model": "cc_model", "cc_effort": "cc_effort", "oracle": "oracle", "oracle_cc_model": "oracle_cc_model", "interview": "interview", "review": "review",
+               "verif_level": "verif_level", "harness_arm": "harness_arms", "docs": "docs", "profile": "profile", "board": "board", "hdl": "hdl", "stop_after": "stop_after"}
+
+
+def config_differences(run_dir: Path, pins: dict[str, Any]) -> list[str]:
+    """Which pinned settings the run's own config.json does not carry (a run started by hand with other flags is not an example run)."""
+    try:
+        cfg = json.loads((Path(run_dir) / "config.json").read_text())
+    except (OSError, ValueError):
+        return ["config.json"]
+    return [k for k, c in CONFIG_KEYS.items() if str(cfg.get(c)) != str(pins[k])]
+
+
+def wall_of(run_dir: Path) -> float | None:
+    """The run's own span: first to last trace event (the run's clock, not the caller's)."""
+    ts = []
+    try:
+        for line in (Path(run_dir) / "trace.jsonl").read_text().splitlines():
+            try:
+                t = json.loads(line).get("t")
+            except ValueError:
+                continue
+            if isinstance(t, (int, float)):
+                ts.append(t)
+    except OSError:
+        return None
+    return round(max(ts) - min(ts), 1) if len(ts) > 1 else None
+
+
+def finish_run(name: str, run_dir: Path, pre: dict[str, Any], python: str, wall_s: float | None = None, results: Path | None = None) -> dict[str, Any]:
+    """Score the run's RTL with the task's bench, extract the result record, write ``example_result.json`` and compare it with the references."""
+    reg = R.load()
+    e = R.get(name, reg)
+    sc = score(e, run_dir, python)
+    rec = X.extract(run_dir, name, sc, setup_of(reg["pins"], pre), wall_s=wall_s if wall_s is not None else wall_of(run_dir))
+    (run_dir / RESULT_FILE).write_text(json.dumps(rec, indent=1) + "\n")
+    return {"result": rec, "comparison": C.compare(rec, references(name, results))}
+
+
 def find_run(name: str, since: float) -> Path | None:
     cands = []
     for p in RUNS.glob("*/config.json"):
@@ -125,9 +164,5 @@ def run_example(name: str, *, max_usd: float | None = None, slot: bool = True, a
     if run_dir is None:
         info["refused"] = "the run left no run directory"
         return info
-    sc = score(e, run_dir, py)
-    rec = X.extract(run_dir, name, sc, setup_of(pins, pre), wall_s=round(wall, 1))
-    (run_dir / RESULT_FILE).write_text(json.dumps(rec, indent=1) + "\n")
-    info["result"] = rec
-    info["comparison"] = C.compare(rec, references(name, results))
+    info.update(finish_run(name, run_dir, pre, py, wall_s=round(wall, 1), results=results))
     return info

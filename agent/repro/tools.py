@@ -1,9 +1,7 @@
 """``python -m agent example tools <name>``: show that the tools repeat for the same RTL, without a model call (brief 195).
 
 The reference runs' RTL is stored beside their records (``results/195_repro_examples/<name>/ref_<n>_rtl/``). This re-runs the task's hidden bench on that RTL and
-compares the per-test verdicts with the record; the result is the same RTL hash, the same verdicts, or a named difference. ``--vivado`` also re-runs the post-route
-build (a heavy job: the caller takes a slot) and compares resources, slack and build stamp with the record.
-"""
+compares the per-test verdicts with the record; the result is the same RTL hash, the same verdicts, or a named difference."""
 
 from __future__ import annotations
 
@@ -50,6 +48,41 @@ def bench_check(name: str, n: int, python: str | None = None, results: Path | No
             "tests_now": tests, "tests_recorded": want, "differences": diffs}
 
 
+def vivado_check(name: str, n: int, slot: bool = True, results: Path | None = None) -> dict[str, Any]:
+    import os
+    import shutil
+    import subprocess
+    import yaml
+    d = (results or R.RESULTS) / name
+    rtl, meta, xdc, ref_f = stored_rtl(name, n, results), d / f"ref_{n}_design.json", d / f"ref_{n}_design.xdc", d / f"ref_{n}.json"
+    if rtl is None or not (meta.is_file() and xdc.is_file() and ref_f.is_file()):
+        return {"ok": False, "error": f"reference {n} of {name} has no stored design files (record it again with `example record`)"}
+    ref, m = json.loads(ref_f.read_text()), json.loads(meta.read_text())
+    scratch = (R.ROOT / "runs" / "_tools" / f"{name}_ref{n}").resolve()
+    if not str(scratch).startswith(str(R.ROOT / "runs" / "_tools")):
+        return {"ok": False, "error": "bad scratch path"}
+    if scratch.exists():
+        shutil.rmtree(scratch)                                         # a directory this command made under runs/_tools, named above
+    (scratch / "rtl").mkdir(parents=True)
+    for f in rtl.rglob("*"):
+        if f.is_file():
+            shutil.copyfile(f, scratch / "rtl" / f.relative_to(rtl))
+    shutil.copyfile(xdc, scratch / "design.xdc")
+    rel = scratch.relative_to(R.ROOT).as_posix()
+    (scratch / "build.yaml").write_text(yaml.safe_dump({"top": m["top"], "part": m["part"], "sources": ["shell/rtl/*.sv", f"{rel}/rtl/*.sv"], "constraints": [f"{rel}/design.xdc"], "generics": m.get("generics") or {}}))
+    lock, text = (RN.take_slot("195", f"example tools {name} ref {n}") if slot else (None, None))
+    try:
+        env = {**os.environ, "FDA_STOP_AFTER": "route", "FDA_BUILD_CACHE": "0"}
+        p = subprocess.run([str(R.ROOT / "flow" / "run_vivado.sh"), str(scratch), "base"], cwd=R.ROOT, env=env, capture_output=True, text=True, timeout=3600)
+    finally:
+        RN.release_slot(lock, text)
+    b = X.build_of(scratch)
+    want = ref.get("tool_results") or {}
+    keys = ("build_stamp", "sources_sha256", "lut", "ff", "dsp", "bram36", "wns_ns", "whs_ns", "vivado_version")
+    diffs = {k: {"now": b.get(k), "record": want.get(k)} for k in keys if b.get(k) != want.get(k)}
+    return {"ok": bool(b) and not diffs, "exit_code": p.returncode, "now": {k: b.get(k) for k in keys}, "record": {k: want.get(k) for k in keys}, "differences": diffs, "vivado_wall_s": b.get("vivado_wall_s")}
+
+
 def main(a) -> int:
     r = bench_check(a.name, a.ref)
     if "error" in r:
@@ -59,6 +92,14 @@ def main(a) -> int:
     for t, ok in sorted(r["tests_now"].items()):
         print(f"  {'PASS' if ok else 'FAIL'}  {t}  (record: {'PASS' if r['tests_recorded'].get(t) else 'FAIL'})")
     print("bench verdicts " + ("match the record" if not r["differences"] else "DIFFER in " + ", ".join(r["differences"])))
-    if a.vivado:
-        print("the --vivado re-build is not wired to this command yet: see docs/reproducible_examples.md", file=sys.stderr)
-    return 0 if r["ok"] else 1
+    code = 0 if r["ok"] else 1
+    if getattr(a, "vivado", False):
+        v = vivado_check(a.name, a.ref, slot=not a.no_slot)
+        if "error" in v:
+            print(v["error"], file=sys.stderr)
+            return 2
+        print(f"Vivado rebuild (no cache, post-route, {v['vivado_wall_s']} s): " + ("every compared field equals the record" if v["ok"] else "DIFFERS: " + json.dumps(v["differences"])))
+        for k, x in v["now"].items():
+            print(f"  {k}: {x}  (record {v['record'][k]})")
+        code = code or (0 if v["ok"] else 1)
+    return code

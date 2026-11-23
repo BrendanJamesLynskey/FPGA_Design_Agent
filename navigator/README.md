@@ -38,6 +38,7 @@ It is not a defence against someone who can edit the code or read your terminal 
 | Health | live checks (see below) | local files, version queries, `/proc`, `/sys/bus/usb` |
 | Live | every run directory (started from this page or the command line): stage, visit, the stage track, provider-reported cost against the run's budget and the plan's estimate, gate results, the tail of the audit log; refreshes every 5 s | `runs/<id>/config.json`, `role_usage.jsonl`, `trace.jsonl`, `snapshots.json`, `<design>/build/audit.jsonl`, `summary.json` (`progress.py`) |
 | Start | start an agent run: a course task (`benchmark/course/tasks`) or a managed project change request, with arm, board, harness, model (from the resolved table), effort and a budget cap; shows the guards | `runctl.py` |
+| Examples | (brief 195) a few development tasks with reference runs; re-run one with the pinned setup and compare it: what should match (tool results for the same RTL), what varies with the model (RTL, loops, tokens, cost, time), and the hidden-test verdict | `agent/repro/examples.yaml`, `results/195_repro_examples`, a run's `example_result.json` |
 | Board | locked, read-only actions on a board in `boards.yaml`: list JTAG targets, read the build ID and FEATURES, SYSMON, link status | `boardops.py` |
 | Models | brief 108's resolved model table, which layer set each value, and whether each endpoint's key is present | `python -m agent models show` |
 
@@ -113,6 +114,25 @@ holder, if it is held; takes a heavy slot (it starts `hw_server` and Vivado's ha
 - a syntax-tree test of every navigator module: no import of the programming flow, the bench drivers, the debug core or the eye-scan board driver, and
   `boardops` uses only `HwServer`, `preflight`, `vivado_cmd` and `HwError` from `flow.hw`;
 - the real transport (hw_server and `vivado -mode batch`, each in its own process group, memory-capped by `flow.hw`) is replaced by a fake in every test.
+
+## Examples: re-run one and see what reproduces (brief 195)
+
+Owner, 2026-11-23: the navigator should offer a few examples a user can re-run to see for themselves that the results reproduce, within the limits of the chosen model's
+reproducibility. The command line comes first; the **Examples** page calls the same code (`agent/repro`). The full description, the pinned setup, the measured results and what a user
+could guess wrong are in [docs/reproducible_examples.md](../docs/reproducible_examples.md).
+
+| Feature | CLI | Page | Reads | Writes |
+|---|---|---|---|---|
+| The examples and their reference runs | `python -m agent example list` | Examples: one panel per example (what it covers, reference runs, wall time and cost as min / median / max) | `agent/repro/examples.yaml`, `results/195_repro_examples/<example>/ref_<n>.json` | nothing |
+| Re-run with the pinned setup | `python -m agent example run <name> [--max-usd N]` | Examples: "Re-run with the pinned setup" (a confirmation first) | the pins, the installed tools | a run directory, `example_result.json` in it |
+| Compare a finished run | `python -m agent example compare <run_dir>` | Examples: "Compare a finished run" | `example_result.json`, the reference records | nothing |
+| Tools repeat on the same RTL | `python -m agent example tools <name> --ref N` | (command line) | a stored reference RTL | nothing outside a scratch build |
+
+The page adds **no new POST route**: a re-run goes through `/api/run/start` with `kind: "example"` and the Stage 2 guards (confirmation, access gate, usage stop, one run at a time,
+heavy slot). The browser sends the example's name and, optionally, a lower cost cap; the model, effort, harness, arm, verification level and stop stage are the pins and cannot be
+changed from the page (that is the point of the example). The child command (`python -m agent example run <name> --no-slot`) runs the **pre-flight** again and refuses, naming the
+check, when a pin does not hold: the pinned copy of the Claude Code CLI (version and SHA-256), Vivado 2026.1, the knowledge-bank checkout at the commit the prompt pin names, and a
+model that is not Fable or Opus. The two read routes are `GET /api/examples` and `GET /api/examples/compare?id=<run id>` (a run from the list the service built, never a path).
 
 ## Tests and screenshots
 
