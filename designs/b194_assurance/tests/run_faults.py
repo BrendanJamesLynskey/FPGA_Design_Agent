@@ -4,7 +4,7 @@
     python3 designs/b194_assurance/tests/run_faults.py [--trials 400] [--seed 1] [--out results/b194/faults.json]
 
 Icarus Verilog runs the variants without the block RAM primitive; xsim (Vivado 2026.1, unisims) runs the variants that instantiate
-RAMB36E1 (ECC = 2). Both read the same tb/tb_fault.sv and the same $random(seed) stream, so the trials are the same draws.
+RAMB36E1 (ECC = 2). Both read the same tb/tb_fault.sv and the same $random(seed) stream (the draws are the same; the two simulators schedule a few events differently, so a cell can differ by a few trials).
 """
 from __future__ import annotations
 
@@ -75,7 +75,12 @@ def main() -> int:
     ap.add_argument("--variants", nargs="*", default=list(VARIANTS))
     ap.add_argument("--out", type=Path, default=D.parents[1] / "results" / "b194" / "faults.json")
     a = ap.parse_args()
-    res = {"seed": a.seed, "trials": a.trials, "simulators": {"icarus": subprocess.run(["iverilog", "-V"], capture_output=True, text=True).stdout.splitlines()[0],
+    old = json.loads(a.out.read_text()) if a.out.is_file() else None
+    if old and (old["seed"], old["trials"]) == (a.seed, a.trials) and set(a.variants) != set(VARIANTS):
+        res = old                 # a partial re-run (some variants) updates its own rows; the seed and the trial count must match
+    else:
+        res = None
+    res = res or {"seed": a.seed, "trials": a.trials, "simulators": {"icarus": subprocess.run(["iverilog", "-V"], capture_output=True, text=True).stdout.splitlines()[0],
                                                               "xsim": "Vivado 2026.1 xsim"}, "variants": {}}
     for n in a.variants:
         res["variants"][n] = {"params": dict(zip(("ECC", "PAR", "SAFE", "TMR", "WD"), VARIANTS[n])), "sim": "xsim" if VARIANTS[n][0] == 2 else "icarus",

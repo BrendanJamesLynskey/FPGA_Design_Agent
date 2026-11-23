@@ -175,6 +175,7 @@ def config_from_json(c: dict):
                   harness=c.get("harness", "deepagents"), cc_model=c.get("cc_model", "claude-haiku-5-5"),
                   cc_effort=c.get("cc_effort", "medium"), verif_level=c.get("verif_level", "V3"),
                   verif_profile=c.get("verif_profile", "standard"), verif_sets=_literal(c.get("verif_sets")),
+                  settings_file=Path(c["settings_file"]) if c.get("settings_file") not in (None, "None", "") else None, settings_flags=_literal(c.get("settings_flags")),
                   profile=c.get("profile", "single"), roles=c.get("roles") or None,
                   no_shell=flag("no_shell"),
                   data_dir=Path(c["data_dir"]) if c.get("data_dir") not in (None, "None") else None,
@@ -468,8 +469,9 @@ def main(argv: list[str] | None = None) -> int:
                         "model routing of brief 05f. Default: standard (today's behaviour); with --interview on or oracle and no profile given, "
                         "the interview proposes one")
     r.add_argument("--settings", type=Path, metavar="FILE",
-                   help="brief 194: a proposed_settings.yaml whose every value is confirmed (agent propose, agent settings confirm); an unconfirmed or "
-                        "empty value refuses the run, and a --board or --verif-profile that disagrees with it is refused")
+                   help="brief 194: a proposed_settings.yaml (agent propose <folder>). Each setting becomes a question of the spec interview, whose default "
+                        "is the proposed value and whose reason names its source; the run cannot leave the interview with an unconfirmed setting. An "
+                        "explicit --board or --verif-profile becomes the proposed value")
     r.add_argument("--set", dest="verif_set", action="append", default=[], metavar="SWITCH=VALUE",
                    help="brief 194: override one switch of the profile, e.g. --set seeds=5 --set timing_sim=on (repeatable); --verif-level and "
                         "--spec-tests are overrides of their switches and are recorded as such")
@@ -537,14 +539,11 @@ def main(argv: list[str] | None = None) -> int:
     rs.add_argument("--allow-fable", action="store_true", help="the owner's flag: permits Fable on a claude_code endpoint")
     rs.add_argument("--allow-model-change", action="store_true", help="resume a run although its model table hash has changed")
     pp = sub.add_parser("propose", help="brief 194: read an input folder and write proposed_settings.yaml (board, part, clocks, I/O standards, PHYs, interfaces, "
-                                        "profile), each value with its source; nothing is confirmed")
+                                        "profile), each value with its source. It is the interview's input (agent run --settings FILE); nothing is confirmed here")
     pp.add_argument("folder", type=Path)
     pp.add_argument("--board", help="a catalogue board to use when the folder does not name one")
     pp.add_argument("--out", type=Path, help="default: <folder>/proposed_settings.yaml")
-    st = sub.add_parser("settings", help="brief 194: confirm the values of a proposed_settings.yaml (or edit the file by hand and set status: confirmed)")
-    st.add_argument("action", choices=["confirm", "show"])
-    st.add_argument("file", type=Path)
-    st.add_argument("keys", nargs="*", help="confirm only these settings (default: every setting that has a value and no conflict)")
+    
     dc = sub.add_parser("document", help="brief 68 C: the DOC step on a finished run directory")
     dc.add_argument("run_dir", type=Path)
     dc.add_argument("--board", default="nexys_a7_100t", type=board_name)
@@ -606,17 +605,6 @@ def main(argv: list[str] | None = None) -> int:
         dest = _st.write(a.folder, out, a.out)
         print(f"wrote {dest}: " + ", ".join(f"{k}={e['status']}" for k, e in out["settings"].items()))
         return 0
-    if a.cmd == "settings":
-        from agent.graph import settings as _st
-        if a.action == "confirm":
-            print("confirmed: " + ", ".join(_st.confirm(a.file, a.keys or None)))
-        try:
-            _st.load_confirmed(a.file)
-            print("every setting is confirmed")
-        except _st.SettingsError as e:
-            print(str(e))
-            return 0 if a.action == "show" else 1
-        return 0
     if a.cmd == "review":
         return review_cmd(a)
     if a.cmd == "document":
@@ -631,21 +619,24 @@ def main(argv: list[str] | None = None) -> int:
             ap.error("--interview oracle needs --hidden-spec")
         name = a.name or a.spec.resolve().parent.name
         from agent.graph import profiles as _prof
-        if a.settings:                                        # brief 194: the confirmed settings gate the run
+        settings_doc = None
+        if a.settings:                                        # brief 194: the proposals are the interview's input
             from agent.graph import settings as _st
             try:
-                sv = _st.load_confirmed(a.settings)
-                sb, sp = _st.apply_to_args(sv, a.board if any(x.startswith("--board") for x in args) else None, a.verif_profile)
+                settings_doc = _st.apply_flags(_st.load_proposals(a.settings), a.board if any(x.startswith("--board") for x in args) else None, a.verif_profile)
             except (_st.SettingsError, OSError) as e:
                 ap.error(str(e))
-            a.board, a.verif_profile = sb or a.board, sp or a.verif_profile
+            sb = settings_doc["settings"]["board"]["value"]
+            if sb and not any(x.startswith("--board") for x in args):
+                a.board = sb
         try:                                                  # brief 194: a bad profile or switch fails before anything runs
             vp = _prof.from_cli(a.verif_profile, a.verif_set, a.verif_level if any(x.startswith("--verif-level") for x in args) else None, a.spec_tests)
         except _prof.ProfileError as e:
             ap.error(str(e))
         cfg = Config(spec_md=a.spec, name=name, board=a.board, interview=a.interview, review=a.review,
                      verif_profile=vp["profile"], verif_sets={k: v["value"] for k, v in vp["overrides"].items()},
-                     verif_ask=a.verif_profile is None and a.interview in ("on", "oracle"),
+                     verif_ask=a.verif_profile is None and a.interview in ("on", "oracle"), settings_file=a.settings,
+                     settings_flags=({k: v for k, v in (('board', a.board if any(x.startswith('--board') for x in args) else None), ('profile', a.verif_profile)) if v} or None),
                      model=a.model, hidden_spec=a.hidden_spec, stop_after=a.stop_after,
                      harness=a.harness, cc_model=a.cc_model, cc_effort=a.cc_effort,
                      verif_level=vp['cfg']['verif_level'], profile=a.profile, roles=parse_roles(a.roles),

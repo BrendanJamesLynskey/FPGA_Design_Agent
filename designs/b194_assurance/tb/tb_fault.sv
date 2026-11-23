@@ -53,7 +53,9 @@ module tb_fault;
             if (tcode == 3) inj_d = 1'b1;
         end
     end
+    logic acc_q = 0;
     always @(posedge aclk) begin
+        acc_q <= s_tvalid && s_tready;
         if (s_tvalid && s_tready) n_acc <= n_acc + 1;
         if (m_tvalid && m_tready) begin
             if (n_out >= exp_q.size() || m_tdata !== exp_q[n_out]) bad_out <= 1;
@@ -122,14 +124,13 @@ module tb_fault;
             t++;
             clear_forces();
             if (inject && t == t_inj && (tcode < 2 || tcode > 3)) apply(t, L);
-            if (s_tvalid && s_tready) sent++;       // sampled at negedge: valid/ready held since the posedge
-            if (sent < L && (!s_tvalid || s_tready)) begin
-                if (rr(3, 0) != 0) begin
-                    s_tdata = {rnd(), rnd()}; s_tvalid = 1;
+            if (!s_tvalid || acc_q) begin                  // the word on the bus was taken (or there is none): present the next
+                if (sent < L && rr(3, 0) != 0) begin
+                    s_tdata = {rnd(), rnd()}; s_tvalid = 1; sent++;
                     exp_q.push_back(s_tdata); expsum += s_tdata;
                 end else s_tvalid = 0;
-            end else if (sent >= L) s_tvalid = 0;
-            if (inject && (tcode == 2 || tcode == 3) && s_tvalid && s_tready && sent == wr_arm) apply(t, L);   // at the write of word wr_arm
+            end
+            if (inject && (tcode == 2 || tcode == 3) && s_tvalid && s_tready && n_acc == wr_arm) apply(t, L);   // at the write of word wr_arm (n_acc = words accepted so far)
         end
         s_tvalid = 0;
         repeat (4) @(negedge aclk);

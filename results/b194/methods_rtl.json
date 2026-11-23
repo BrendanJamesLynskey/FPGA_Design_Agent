@@ -1,0 +1,262 @@
+{
+ "seeds": 8,
+ "formal_depth": 20,
+ "methods": {
+  "lint_s": 0.07,
+  "directed_one_seed_s": 0.18,
+  "seed_sweep_s": 1.77,
+  "formal_1x_s": 0.58,
+  "formal_4x_s": 3.72
+ },
+ "mutants": {
+  "m1_last_word": {
+   "what": "the sequencer stops accepting one word early: the last word of every burst is never taken",
+   "lint": {
+    "caught": false,
+    "s": 0.07
+   },
+   "directed_seed1": {
+    "caught": true,
+    "s": 4.0,
+    "why": "TB FAIL: burst of 1 did not finish"
+   },
+   "seed_sweep": {
+    "caught": true,
+    "seeds_that_catch": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8
+    ],
+    "s": 27.68
+   },
+   "formal_1x": {
+    "caught": true,
+    "s": 0.33,
+    "why": "SBY 13:09:40 [/tmp/tmpobdza9e7/w] engine_0: ##   0:00:00  Assert failed in f_ctrl: f_ctrl.sv:22.98-22.110 (_witness_.check_f_ctrl_sv_22_assert_68)"
+   },
+   "formal_4x": {
+    "caught": true,
+    "s": 0.33,
+    "why": "SBY 13:09:40 [/tmp/tmp2a1_21v4/w] engine_0: ##   0:00:00  Assert failed in f_ctrl: f_ctrl.sv:22.98-22.110 (_witness_.check_f_ctrl_sv_22_assert_68)"
+   }
+  },
+  "m2_checksum_clear": {
+   "what": "the checksum is not cleared by start: the second burst adds to the first",
+   "lint": {
+    "caught": false,
+    "s": 0.06
+   },
+   "directed_seed1": {
+    "caught": true,
+    "s": 0.17,
+    "why": "TB FAIL: checksum 909d0820c23e6282 expected 9033c91fd994cdb1"
+   },
+   "seed_sweep": {
+    "caught": true,
+    "seeds_that_catch": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8
+    ],
+    "s": 1.7
+   },
+   "formal_1x": {
+    "caught": false,
+    "s": 0.52,
+    "why": ""
+   },
+   "formal_4x": {
+    "caught": false,
+    "s": 3.21,
+    "why": ""
+   }
+  },
+  "m3_early_done": {
+   "what": "done is signalled without waiting for the FIFO and the output stage to drain",
+   "lint": {
+    "caught": false,
+    "s": 0.07
+   },
+   "directed_seed1": {
+    "caught": true,
+    "s": 0.24,
+    "why": "TB FAIL: 23 words out, expected 37"
+   },
+   "seed_sweep": {
+    "caught": true,
+    "seeds_that_catch": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8
+    ],
+    "s": 1.77
+   },
+   "formal_1x": {
+    "caught": true,
+    "s": 0.35,
+    "why": "SBY 13:09:48 [/tmp/tmp7cv50pqy/w] engine_0: ##   0:00:00  Assert failed in f_ctrl: f_ctrl.sv:23.80-23.99 (_witness_.check_f_ctrl_sv_23_assert_77)"
+   },
+   "formal_4x": {
+    "caught": true,
+    "s": 0.37,
+    "why": "SBY 13:09:49 [/tmp/tmpxscaz6az/w] engine_0: ##   0:00:00  Assert failed in f_ctrl: f_ctrl.sv:23.80-23.99 (_witness_.check_f_ctrl_sv_23_assert_77)"
+   }
+  },
+  "m4_count_low_byte": {
+   "what": "the remaining count is decremented in its low byte only: wrong across a multiple of 256 (bursts above 256 words)",
+   "lint": {
+    "caught": false,
+    "s": 0.07
+   },
+   "directed_seed1": {
+    "caught": true,
+    "s": 2.57,
+    "why": "TB FAIL: burst of 567 did not finish"
+   },
+   "seed_sweep": {
+    "caught": true,
+    "seeds_that_catch": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8
+    ],
+    "s": 28.78
+   },
+   "formal_1x": {
+    "caught": false,
+    "s": 0.55,
+    "why": ""
+   },
+   "formal_4x": {
+    "caught": false,
+    "s": 6.09,
+    "why": ""
+   }
+  },
+  "m5_len_zero": {
+   "what": "a burst of length 0 is not special-cased: the sequencer waits for words that never come",
+   "lint": {
+    "caught": false,
+    "s": 0.07
+   },
+   "directed_seed1": {
+    "caught": false,
+    "s": 0.19,
+    "why": ""
+   },
+   "seed_sweep": {
+    "caught": false,
+    "seeds_that_catch": [],
+    "s": 1.68
+   },
+   "formal_1x": {
+    "caught": true,
+    "s": 0.37,
+    "why": "SBY 13:10:29 [/tmp/tmp3tyvicmb/w] engine_0: ##   0:00:00  Assert failed in f_ctrl: f_ctrl.sv:20.98-20.117 (_witness_.check_f_ctrl_sv_20_assert_45)"
+   },
+   "formal_4x": {
+    "caught": true,
+    "s": 0.33,
+    "why": "SBY 13:10:29 [/tmp/tmpl2geqid7/w] engine_0: ##   0:00:00  Assert failed in f_ctrl: f_ctrl.sv:20.98-20.117 (_witness_.check_f_ctrl_sv_20_assert_45)"
+   }
+  },
+  "m6_double_pop": {
+   "what": "the FIFO is read again while a read is in flight: a word is overwritten in the output register under back-pressure",
+   "lint": {
+    "caught": false,
+    "s": 0.07
+   },
+   "directed_seed1": {
+    "caught": true,
+    "s": 0.2,
+    "why": "TB FAIL: word 1 is ee5520dc4bfe2d97, expected 88e812117c4fa7f8"
+   },
+   "seed_sweep": {
+    "caught": true,
+    "seeds_that_catch": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8
+    ],
+    "s": 1.37
+   },
+   "formal_1x": {
+    "caught": false,
+    "s": 0.47,
+    "why": ""
+   },
+   "formal_4x": {
+    "caught": false,
+    "s": 3.19,
+    "why": ""
+   }
+  },
+  "m7_wrap_pointer": {
+   "what": "the write pointer wraps at 500 instead of 512: wrong only when the FIFO holds more than 500 words",
+   "lint": {
+    "caught": false,
+    "s": 0.06
+   },
+   "directed_seed1": {
+    "caught": true,
+    "s": 0.26,
+    "why": "TB FAIL: word 209 is xxxxxxxxxxxxxxxx, expected ac596a58f76c8eee"
+   },
+   "seed_sweep": {
+    "caught": true,
+    "seeds_that_catch": [
+     1,
+     2,
+     3,
+     4,
+     5,
+     6,
+     7,
+     8
+    ],
+    "s": 2.75
+   },
+   "formal_1x": {
+    "caught": false,
+    "s": 0.62,
+    "why": ""
+   },
+   "formal_4x": {
+    "caught": false,
+    "s": 3.26,
+    "why": ""
+   }
+  }
+ },
+ "baseline": {
+  "lint": true,
+  "directed": true,
+  "seed_sweep": true,
+  "formal": true
+ }
+}

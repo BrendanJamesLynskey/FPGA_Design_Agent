@@ -1,6 +1,6 @@
 # assurance_ooc.tcl (brief 194): one out-of-context Vivado run for the assurance checks and cost measurements.
 #   vivado -mode batch -source flow/assurance_ooc.tcl -tclargs <jobs.tcl>
-# <jobs.tcl> sets aj(part), aj(top), aj(period), aj(jobs) = list of {name outdir generics sources impl}; impl is 0 (synthesis only) or 1
+# <jobs.tcl> sets aj(part), aj(top), aj(period), aj(jobs) = list of {name outdir generics sources impl [top]}; impl is 0 (synthesis only) or 1
 # (opt, place, route as well). Per job it writes into outdir:
 #   synth_funcsim.v   post-synthesis functional netlist (zero delay; flow/assurance.py simulates it and gives it to eqy)
 #   util_synth.rpt, timing_synth.rpt, fsm.txt (the synthesis log lines about FSM extraction), util_route.rpt, timing_route.rpt,
@@ -12,7 +12,7 @@ set_param synth.maxThreads 1
 source [lindex $argv 0]
 proc kv {f k v} { puts $f "$k $v" }
 foreach job $aj(jobs) {
-    lassign $job name wd generics sources impl
+    lassign $job name wd generics sources impl top
     file mkdir $wd
     set f [open $wd/done.txt w]
     kv $f vivado [version -short]
@@ -20,12 +20,13 @@ foreach job $aj(jobs) {
     if {[catch {
         create_project -in_memory -part $aj(part)
         foreach s $sources { if {[string match *.v $s]} { read_verilog $s } else { read_verilog -sv $s } }
-        set args [list -top $aj(top) -part $aj(part) -mode out_of_context]
+        if {$top eq ""} { set top $aj(top) }
+        set args [list -top $top -part $aj(part) -mode out_of_context]
         foreach g $generics { lappend args -generic $g }
         synth_design {*}$args
         set t1 [clock seconds]
         kv $f synth_s [expr {$t1 - $t0}]
-        create_clock -period $aj(period) -name aclk [get_ports aclk]
+        if {[llength [get_ports -quiet aclk]]} { create_clock -period $aj(period) -name aclk [get_ports aclk] } else { create_clock -period $aj(period) -name aclk [get_ports clk] }
         write_verilog -mode funcsim -force $wd/synth_funcsim.v
         report_utilization -file $wd/util_synth.rpt
         report_timing_summary -file $wd/timing_synth.rpt -max_paths 1

@@ -132,6 +132,8 @@ class Config:
     replay_run: bool = False        # brief 108: the chat calls are served from a recorded fixture (--replay): nothing live on an endpoint host
     verif_profile: str = "standard"  # brief 194: the verification profile (agent.graph.profiles); the switches below it are overridable
     verif_sets: dict | None = None  # brief 194: the overrides on top of the profile, switch -> value (--set), incl. --verif-level and --spec-tests when given
+    settings_flags: dict | None = None  # brief 194: the explicit --board and --verif-profile, which become the proposed values
+    settings_file: Path | None = None  # brief 194: proposed_settings.yaml, the interview's input; each setting becomes a question (agent.graph.settings)
     verif_ask: bool = False         # brief 194: the interview proposes a profile (only when none was given on the command line)
     level1_seed: int | None = None  # brief 107: --deterministic at level 1: temperature 0 (and this seed) on every purpose that can take it
 
@@ -893,7 +895,14 @@ def _interview(rt: Runtime, spec: dict, state: State) -> tuple[dict, dict]:
         methods, why = propose_proof(str(r.get("text", "")))
         asks.append((_p("graph/run/interview_3").format(r['id'], r.get('text'), ', '.join(PROOF_METHODS)), ",".join(methods), why))
     from agent.graph import assurance as _assur, profiles as _prof
-    profile_ask = getattr(rt.cfg, "verif_ask", False) and not any(o.get("question", "").startswith("Which verification profile") for o in spec.get("resolved_questions") or [])
+    sdoc = None
+    if getattr(rt.cfg, "settings_file", None) and not (rt.design / "confirmed_settings.yaml").is_file():
+        from agent.graph import settings as _set
+        fl = rt.cfg.settings_flags or {}
+        sdoc = _set.apply_flags(_set.load_proposals(rt.cfg.settings_file), fl.get("board"), fl.get("profile"))
+        for k, qt, qd, qr in _set.questions(sdoc):                # brief 194: every proposed setting is an interview question
+            asks.append((qt + f" [{k}]", qd, qr))
+    profile_ask = sdoc is None and getattr(rt.cfg, "verif_ask", False) and not any(o.get("question", "").startswith("Which verification profile") for o in spec.get("resolved_questions") or [])
     if profile_ask:                                               # brief 194: the verification profile, with a default and a reason
         asks.append(_assur.profile_question(spec))
     def ask_one(q: Question) -> None:
@@ -923,6 +932,27 @@ def _interview(rt: Runtime, spec: dict, state: State) -> tuple[dict, dict]:
         got = next((q for q in iv.questions if q.text.startswith(_p("graph/run/interview_4").format(r['id']))), None)
         found = [m for m in PROOF_METHODS if got and got.answer and m in got.answer.lower()]
         r["proof"] = found or propose_proof(str(r.get("text", "")))[0]
+    unconfirmed: list[str] = []
+    if sdoc is not None:                                          # the interview's output: the confirmed settings
+        from agent.graph import settings as _set
+        ans = {}
+        for k, *_ in _set.questions(sdoc):
+            got = next((q for q in iv.questions if q.text.endswith(f"[{k}]")), None)
+            ans[k] = (got.answer if got else None, got.status if got else "defaulted")
+        values, unconfirmed = _set.resolve(sdoc, ans)
+        if values.get("board") and values["board"] != rt.cfg.board:
+            unconfirmed.append(f"board: the confirmed board {values['board']} is not the run's board {rt.cfg.board}; start the run with --board {values['board']}")
+        prof = values.get("profile")
+        if prof in _prof.PROFILES:
+            rt.cfg.verif_profile, rt.cfg.verif_ask = prof, False
+            rt.cfg.__dict__.update(_prof.cfg_fields(_prof.resolve(prof, rt.cfg.verif_sets)["effective"]))
+            spec["verif_profile"] = prof
+            _prof.write_pin(rt.run_dir, prof, rt.cfg.verif_sets, replace=True, set_by="the interview (settings question)")
+        elif prof is not None:
+            unconfirmed.append(f"profile: {prof!r} is not a profile")
+        if not unconfirmed:
+            (rt.design / "confirmed_settings.yaml").write_text(yaml.safe_dump(_set.confirmed_document(sdoc, values, ans), sort_keys=False))
+        spec["settings"] = values
     if profile_ask:                                               # the answered (or defaulted) profile replaces the command line's default
         got = next((q for q in iv.questions if q.text.startswith("Which verification profile")), None)
         name = _assur.profile_from_answer(got.answer if got else None, _assur.propose_profile(spec)[0])
@@ -936,7 +966,10 @@ def _interview(rt: Runtime, spec: dict, state: State) -> tuple[dict, dict]:
             ask_one(Question(id=f"s{i + 1}", text=qt, default=qd, reason=qr))
         spec["reliability"] = [{"question": q.text, "answer": q.answer, "status": q.status} for q in iv.questions if q.id.startswith("s")]
     (rt.design / "spec.yaml").write_text(yaml.safe_dump(spec, sort_keys=False))
-    return spec, merge_summaries(state.get("interview"), iv.summary())
+    summ = merge_summaries(state.get("interview"), iv.summary())
+    if unconfirmed:
+        summ["unconfirmed"] = unconfirmed
+    return spec, summ
 
 
 _ORDER = ["synth", "place", "route", "bitstream"]
@@ -1177,6 +1210,7 @@ def node_gate(state: State) -> dict:
                 spec, summary = _interview(rt, spec, state)
                 out["interview"] = summary
                 errs = validate(spec) + requirement_quality_errors(spec) + register_map_errors(req, spec)   # brief 53
+                errs += ["[interview] unconfirmed variable: " + u for u in summary.get("unconfirmed") or []]      # brief 194: no run leaves the interview with one
                 ev["spec"], ev["signed_off"], ev["spec_errors"] = spec, not spec.get("open_questions"), errs
                 if errs:
                     detail.append("[spec.yaml] " + "; ".join(errs))

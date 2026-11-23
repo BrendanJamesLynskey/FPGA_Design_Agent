@@ -53,33 +53,34 @@ module tb_func;
     end
     always @(negedge aclk) m_tready <= (rr(3, 0) != 0);
 
+    // accepted-handshake monitor: values sampled before the edge's updates, so s_tready is the one the design saw
+    logic acc_q = 0;
+    int   n_acc;
+    always @(posedge aclk) begin
+        acc_q <= s_tvalid && s_tready;
+        if (s_tvalid && s_tready) n_acc <= n_acc + 1;
+    end
+
     task automatic burst(input int n);
-        int sent;
-        expsum = 0; exp_q = {}; n_in = 0; n_out = 0; ndone = 0;
+        int pres, guard;
+        expsum = 0; exp_q = {}; n_in = 0; n_out = 0; ndone = 0; n_acc = 0; pres = 0; guard = 0;
         @(negedge aclk); len = n[15:0]; start = 1;
         @(negedge aclk); start = 0;
-        sent = 0;
-        begin : feed
-            int guard;
-            guard = 0;
-            while ((sent < n || !(ndone > 0)) && guard < 4000 + 40 * n) begin
-                @(negedge aclk);
-                guard++;
-                if (sent < n && s_tvalid && s_tready) begin end
-                if (s_tvalid && s_tready) begin
-                    sent++;
-                end
-                if (sent < n && (!s_tvalid || s_tready)) begin
-                    if (rr(3, 0) != 0) begin
-                        s_tdata = {rnd(), rnd()};
-                        s_tvalid = 1;
-                        exp_q.push_back(s_tdata); expsum += s_tdata;
-                    end else s_tvalid = 0;
-                end else if (sent >= n) s_tvalid = 0;
+        while (!(n_acc >= n && ndone > 0) && guard < 4000 + 40 * n) begin
+            @(negedge aclk);
+            guard++;
+            if (!s_tvalid || acc_q) begin                       // the word on the bus was taken (or there is none): present the next
+                if (pres < n && rr(3, 0) != 0) begin
+                    s_tdata = {rnd(), rnd()};
+                    s_tvalid = 1;
+                    pres++;
+                    exp_q.push_back(s_tdata); expsum += s_tdata;
+                end else s_tvalid = 0;
             end
         end
         s_tvalid = 0;
-        repeat (4) @(negedge aclk);
+        repeat (6) @(negedge aclk);
+        if (guard >= 4000 + 40 * n) begin errors++; $display("TB FAIL: burst of %0d did not finish", n); end
         if (ndone != 1) begin errors++; $display("TB FAIL: done pulsed %0d times (burst of %0d)", ndone, n); end
         if (n_out != n) begin errors++; $display("TB FAIL: %0d words out, expected %0d", n_out, n); end
         if (checksum !== expsum) begin errors++; $display("TB FAIL: checksum %h expected %h", checksum, expsum); end

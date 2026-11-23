@@ -9,7 +9,7 @@
 //             detection and recovery logic; the RTL is unchanged.
 //   TMR  = 1  the remaining counter is three registers with a bitwise majority voter; the voted value is fed back to all three each clock,
 //             so a flipped copy is repaired on the next clock. The copies carry DONT_TOUCH so synthesis does not merge them (UG901).
-//   WD   = 1  watchdog: WD_LIMIT clocks without progress while busy forces the FSM to IDLE and sets wd_fault (sticky).
+//   WD   = 1  watchdog: WD_LIMIT (256: set per design to the longest legitimate stall plus margin) clocks without progress while busy forces the FSM to IDLE and sets wd_fault (sticky).
 // Behaviour a user could guess wrong: the voter and the state register are not protected by TMR; fsm_fault is set only where the RTL's own
 // default arc is taken (the SAFE logic of the tool is not visible to it); a start while busy is ignored.
 // Fault-injection hooks (simulation only): with A194_FI defined, fi_* are nets the testbench forces for one clock; each is XORed into the D
@@ -24,7 +24,7 @@ module a194_ctrl #(
     parameter int SAFE     = 0,
     parameter int TMR      = 0,
     parameter int WD       = 0,
-    parameter int WD_LIMIT = 4096
+    parameter int WD_LIMIT = 256
 ) (
     input  logic        clk,
     input  logic        rst,          // synchronous, active high
@@ -38,7 +38,8 @@ module a194_ctrl #(
     output logic        done,         // one clock
     output logic        fsm_fault,    // sticky
     output logic        wd_fault,     // sticky
-    output logic        tmr_fault     // sticky: a copy disagreed with the vote
+    output logic        tmr_fault,    // sticky: a copy disagreed with the vote
+    output logic [2:0]  state_o       // the state register (the formal bench reads it; unconnected in the core)
 );
     typedef enum logic [2:0] {IDLE = 3'd0, RUN = 3'd1, DRAIN = 3'd2, DONE = 3'd3} state_t;
 
@@ -131,6 +132,7 @@ module a194_ctrl #(
     end
 
     // ---- outputs ----
+    assign state_o = state_q;
     assign busy = (state_q != IDLE);
     assign run  = (state_q == RUN) && (rem_v != 16'd0);
     assign done = (state_q == DONE);
