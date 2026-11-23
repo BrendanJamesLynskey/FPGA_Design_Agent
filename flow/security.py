@@ -187,25 +187,36 @@ def sysmon_header(board: str) -> str:
 
 # ---- the Vivado side -------------------------------------------------------------------------------------------------------------------
 
+#: Per family: the settings Vivado takes for write_bitstream, and the switches it cannot act on (``owner``: why). Measured on Vivado 2026.1 for xck26
+#: (results/b196/probe_xck26_properties.txt): BITSTREAM.ENCRYPTION.* and BITSTREAM.AUTHENTICATION.* are read-only properties of a Zynq UltraScale+ MPSoC design
+#: (settable on Kintex and Virtex UltraScale+ per UG908 table 40, not measured here); BITSTREAM.READBACK.SECURITY, GENERAL.JTAG_SYSMON and GENERAL.DISABLE_JTAG are
+#: settable (UG908 table 43). On an MPSoC the PL bitstream is encrypted and authenticated in the boot image (UG1085 ch. 12): the PS secure-boot chain, the owner's.
+FAMILY = {
+    "zynq_ultrascale_plus": {
+        "readback_off": [("BITSTREAM.READBACK.SECURITY", "LEVEL1"), ("BITSTREAM.GENERAL.JTAG_SYSMON", "DISABLE"), ("BITSTREAM.GENERAL.DISABLE_JTAG", "YES")],
+        "owner": {"encrypt": "on a Zynq UltraScale+ MPSoC the PL bitstream is encrypted by the boot image (bootgen, UG1085 ch. 12): the PS secure-boot chain and the key are "
+                             "the owner's; BITSTREAM.ENCRYPTION.* is read-only in Vivado 2026.1 for this part",
+                  "authenticate": "likewise: RSA authentication of the PL partition belongs to the boot image; BITSTREAM.AUTHENTICATION.* is read-only in Vivado 2026.1 for this part"},
+    },
+}
+
+
 def family_of(part: str) -> str:
     """The family name the flow uses for a part (the same split as agent/core/session.py PART_FAMILY); only Zynq UltraScale+ is measured."""
     return "zynq_ultrascale_plus" if re.match(r"^(xck2[46]|xczu)", part.strip().lower()) else "other"
 
 
 def tcl_assignments(sw: dict[str, bool], family: str) -> list[tuple[str, str]]:
-    """The design properties the switches set before ``write_bitstream`` (``flow/build.tcl`` applies them; the check reads them back).
-    ``family`` is ``zynq_ultrascale_plus`` (the only one measured). The key is never given: Vivado writes a fresh random one into a ``.nky``
-    beside the bitstream, which this flow never programs anywhere."""
-    if family != "zynq_ultrascale_plus":
-        raise SecurityError(f"production_secure has been measured on UltraScale+ only, not {family}")
-    out: list[tuple[str, str]] = []
-    if sw["encrypt"]:
-        out += [("BITSTREAM.ENCRYPTION.ENCRYPT", "YES"), ("BITSTREAM.ENCRYPTION.ENCRYPTKEYSELECT", "BBRAM")]
-    if sw["authenticate"]:
-        pass            # filled in by the measured Vivado behaviour, see docs/security.md
-    if sw["readback_off"]:
-        out += [("BITSTREAM.CONFIG.SECURITY", "LEVEL1"), ("BITSTREAM.GENERAL.JTAG_SYSMON", "DISABLE")]
-    return out
+    """The design properties the switches set before ``write_bitstream`` (``flow/build.tcl`` applies them; the check reads them back). The key is
+    never given: nothing here sets one."""
+    if family not in FAMILY:
+        raise SecurityError(f"production_secure has been measured on UltraScale+ (Zynq MPSoC) only, not {family}")
+    return list(FAMILY[family]["readback_off"]) if sw["readback_off"] else []
+
+
+def owner_items(sw: dict[str, bool], family: str) -> dict[str, str]:
+    """Switches that are on but that Vivado cannot act on for this family: handed to the owner, listed in the record, never counted as met."""
+    return {k: why for k, why in FAMILY[family]["owner"].items() if sw.get(k)}
 
 
 # ---- the check ------------------------------------------------------------------------------------------------------------------------
@@ -343,6 +354,8 @@ def evaluate(build_dir: Path, board: str | None = None) -> dict[str, Any] | None
     if not req["request"]["production_secure"]:
         return out
     sw = req["switches"]
+    fam = family_of(req.get("part", ""))
+    out["handed_to_owner"] = owner_items(sw, fam) if fam in FAMILY else {}
     prep = json.loads((d / "prepare.json").read_text()) if (d / "prepare.json").is_file() else {}
     top = prep.get("top") or next((p.stem for p in d.glob("*.bit")), "")
     ap, du = d / APPLY_FILE, d / DUMP_FILE
@@ -353,12 +366,12 @@ def evaluate(build_dir: Path, board: str | None = None) -> dict[str, Any] | None
     if not du.is_file():
         out["findings"].append({"rule": "evidence", "what": "security_design.txt is missing: the build did not reach write_bitstream"})
         for k in SUBSWITCHES:
-            if sw[k]:
+            if sw[k] and k not in out["handed_to_owner"]:
                 gates[f"security_{k}"] = False
         gates["security_profile_met"] = False
         return out
     dump = parse_dump(du.read_text())
-    out["evidence"]["properties"] = {k: v for k, v in dump["props"].items() if re.match(r"BITSTREAM\.(ENCRYPTION|AUTHENTICATION|CONFIG\.SECURITY|GENERAL\.JTAG)", k)}
+    out["evidence"]["properties"] = {k: v for k, v in dump["props"].items() if re.match(r"BITSTREAM\.(ENCRYPTION|AUTHENTICATION|READBACK\.SECURITY|GENERAL\.(JTAG|DISABLE_JTAG))", k)}
     pr = dump["props"]
     log = d / "vivado.log"
     wb = ""
@@ -370,13 +383,15 @@ def evaluate(build_dir: Path, board: str | None = None) -> dict[str, Any] | None
     bit = d / f"{top}.bit"
     out["evidence"]["bit_bytes"] = bit.stat().st_size if bit.is_file() else 0
     out["evidence"]["key_file_present"] = (d / f"{top}.nky").is_file()          # existence only: the file is never read
-    if sw["encrypt"]:
+    if sw["encrypt"] and "encrypt" not in out["handed_to_owner"]:
         gates["security_encrypt"] = (pr.get("BITSTREAM.ENCRYPTION.ENCRYPT") == "YES" and pr.get("BITSTREAM.ENCRYPTION.ENCRYPTKEYSELECT") in ("BBRAM", "EFUSE")
                                      and bit.is_file() and any(re.search(r"(?i)encrypt", ln) for ln in out["evidence"]["write_bitstream_log_lines"]))
-    if sw["authenticate"]:
+    if sw["authenticate"] and "authenticate" not in out["handed_to_owner"]:
         gates["security_authenticate"] = pr.get("BITSTREAM.AUTHENTICATION.AUTHENTICATE") == "YES"
     if sw["readback_off"]:
-        gates["security_readback_off"] = (pr.get("BITSTREAM.CONFIG.SECURITY") in ("LEVEL1", "LEVEL2") and pr.get("BITSTREAM.GENERAL.JTAG_SYSMON") == "DISABLE")
+        gates["security_readback_off"] = (str(pr.get("BITSTREAM.READBACK.SECURITY")).upper() in ("LEVEL1", "LEVEL2")
+                                          and str(pr.get("BITSTREAM.GENERAL.JTAG_SYSMON")).upper() == "DISABLE"
+                                          and str(pr.get("BITSTREAM.GENERAL.DISABLE_JTAG")).upper() == "YES")
     if sw["strip_debug"]:
         fl = debug_findings(dump, req["request"].get("waive", []), [p.name for p in d.glob("*.ltx")])
         gates["security_strip_debug"] = not fl

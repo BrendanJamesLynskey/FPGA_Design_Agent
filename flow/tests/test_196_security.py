@@ -57,7 +57,7 @@ def test_prepare_writes_the_request_into_inputs_tcl_only_when_there_is_one(tmp_p
     assert prepare.security_tcl(cfg, cfg["part"], tmp_path) == []                             # the pin says off and nothing disagrees
     monkeypatch.setenv(S.ENV, json.dumps({"production_secure": True}))
     lines = prepare.security_tcl(cfg, cfg["part"], tmp_path)
-    assert lines[0] == "set security_on 1" and "BITSTREAM.ENCRYPTION.ENCRYPT" in lines[1]
+    assert lines[0] == "set security_on 1" and "BITSTREAM.READBACK.SECURITY" in lines[1]
     assert json.loads((tmp_path / "security_request.json").read_text())["switches"]["strip_debug"] is True
     with pytest.raises(SystemExit, match="measured on UltraScale"):
         prepare.security_tcl({"part": "xc7a100tcsg324-1"}, "xc7a100tcsg324-1", tmp_path)
@@ -86,8 +86,7 @@ def test_the_generated_package_is_in_the_design():
 
 def _dump(init, ot_loads=1, extra=""):
     lines = ["PART xck26-sfvc784-2LV-c",
-             "PROP BITSTREAM.ENCRYPTION.ENCRYPT YES", "PROP BITSTREAM.ENCRYPTION.ENCRYPTKEYSELECT BBRAM", "PROP BITSTREAM.AUTHENTICATION.AUTHENTICATE YES",
-             "PROP BITSTREAM.CONFIG.SECURITY LEVEL1", "PROP BITSTREAM.GENERAL.JTAG_SYSMON DISABLE",
+             "PROP BITSTREAM.READBACK.SECURITY LEVEL1", "PROP BITSTREAM.GENERAL.JTAG_SYSMON DISABLE", "PROP BITSTREAM.GENERAL.DISABLE_JTAG YES",
              "DEBUG_CORES 0", "DEBUG_CELL_COUNT 0", "BSCAN_COUNT 0", "MARK_DEBUG_NETS 0", "PORT IN clk_25", "PORT OUT led[0]",
              "SYSMON_CELL u_guard/u_sysmon"]
     lines += [f"SYSMON_ATTR {k} 16'h{v:04X}" for k, v in init.items()]
@@ -101,17 +100,16 @@ def _build(tmp, dump, props, conflict=(), bit=True, request=None):
     (tmp / "prepare.json").write_text(json.dumps({"top": "b196_top", "board": "kr260"}))
     req = {"source": "pin", "request": request or {"production_secure": True, "encrypt": True, "authenticate": True, "readback_off": True,
                                                     "strip_debug": True, "sysmon_shutdown": True, "waive": []},
-           "switches": {k: True for k in S.SUBSWITCHES}, "policy_conflict": list(conflict), "properties": [list(p) for p in props]}
+           "switches": {k: True for k in S.SUBSWITCHES}, "policy_conflict": list(conflict), "properties": [list(p) for p in props], "part": "xck26-sfvc784-2LV-c"}
     (tmp / "security_request.json").write_text(json.dumps(req))
     (tmp / "security_apply.txt").write_text("".join(f"APPLY ok {p} {v}\n" for p, v in props))
     (tmp / "security_design.txt").write_text(dump)
-    (tmp / "vivado.log").write_text("Command: write_bitstream -force -verbose x.bit\nBitstream encryption enabled, key source BBRAM\n")
+    (tmp / "vivado.log").write_text("Command: write_bitstream -force -verbose x.bit\n")
     if bit:
         (tmp / "b196_top.bit").write_bytes(b"\x00\x09" + b"x" * 40)
 
 
-PROPS = [("BITSTREAM.ENCRYPTION.ENCRYPT", "YES"), ("BITSTREAM.ENCRYPTION.ENCRYPTKEYSELECT", "BBRAM"), ("BITSTREAM.AUTHENTICATION.AUTHENTICATE", "YES"),
-         ("BITSTREAM.CONFIG.SECURITY", "LEVEL1"), ("BITSTREAM.GENERAL.JTAG_SYSMON", "DISABLE")]
+PROPS = [("BITSTREAM.READBACK.SECURITY", "LEVEL1"), ("BITSTREAM.GENERAL.JTAG_SYSMON", "DISABLE"), ("BITSTREAM.GENERAL.DISABLE_JTAG", "YES")]
 
 
 def test_a_clean_build_meets_the_profile(tmp_path):
@@ -158,24 +156,29 @@ def test_sysmon_thresholds_and_wiring_are_checked(tmp_path):
     assert "no SYSMONE4 cell" in " ".join(f["what"] for f in S.evaluate(tmp_path)["findings"])
 
 
-def test_a_setting_vivado_refused_or_never_applied_fails(tmp_path):
+def test_a_setting_vivado_refused_or_never_read_back_fails(tmp_path):
     init = S.sysmon_init(S.limits_of("kr260"))
     _build(tmp_path, _dump(init), PROPS)
-    (tmp_path / "security_apply.txt").write_text("APPLY ERROR BITSTREAM.AUTHENTICATION.AUTHENTICATE YES :: no key\n")
+    (tmp_path / "security_apply.txt").write_text("APPLY ERROR BITSTREAM.READBACK.SECURITY LEVEL1 :: no such property\n")
     r = S.evaluate(tmp_path)
     assert r["gates"]["security_settings_applied"] is False and r["gates"]["security_profile_met"] is False
-    _build(tmp_path, _dump(init).replace("PROP BITSTREAM.ENCRYPTION.ENCRYPT YES", "PROP BITSTREAM.ENCRYPTION.ENCRYPT NO"), PROPS)
-    assert S.evaluate(tmp_path)["gates"]["security_encrypt"] is False                       # the request is not the evidence: the read-back is
-    _build(tmp_path, _dump(init), PROPS, bit=False)
-    (tmp_path / "b196_top.bit").unlink()
-    assert S.evaluate(tmp_path)["gates"]["security_encrypt"] is False
+    _build(tmp_path, _dump(init).replace("PROP BITSTREAM.READBACK.SECURITY LEVEL1", "PROP BITSTREAM.READBACK.SECURITY NONE"), PROPS)
+    assert S.evaluate(tmp_path)["gates"]["security_readback_off"] is False            # the request is not the evidence: the read-back is
+
+
+def test_encryption_and_authentication_are_handed_to_the_owner_on_a_zynq_mpsoc(tmp_path):
+    _build(tmp_path, _dump(S.sysmon_init(S.limits_of("kr260"))), PROPS)
+    r = S.evaluate(tmp_path)
+    assert set(r["handed_to_owner"]) == {"encrypt", "authenticate"} and "bootgen" in r["handed_to_owner"]["encrypt"]
+    assert "security_encrypt" not in r["gates"] and "security_authenticate" not in r["gates"]    # never reported as a pass
+    assert r["gates"]["security_profile_met"] is True
 
 
 def test_a_missing_dump_fails_every_gate_it_would_prove(tmp_path):
     _build(tmp_path, "", PROPS)
     (tmp_path / "security_design.txt").unlink()
     r = S.evaluate(tmp_path)
-    assert r["gates"]["security_profile_met"] is False and r["gates"]["security_encrypt"] is False
+    assert r["gates"]["security_profile_met"] is False and r["gates"]["security_readback_off"] is False
 
 
 def test_a_policy_conflict_is_a_gate_of_its_own(tmp_path):

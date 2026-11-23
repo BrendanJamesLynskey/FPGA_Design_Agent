@@ -8,7 +8,9 @@
 // unisim model needs a stimulus file); `sim_alarm` stands in for the alarm bits so the latch can be tested.
 module b196_sysmon_guard
     import b196_sysmon_pkg::*;
-(
+#(
+    parameter string SIM_FILE = "none"       // the analog stimulus file of the unisim model (tb_sysmon.sv); "none" in the build
+) (
     input  logic       clk,            // DCLK; ADCCLK = DCLK / 8 (INIT_42), 3.125 MHz at 25 MHz
     input  logic       rst,            // synchronous, active high
     input  logic [4:0] sim_alarm,      // simulation only: {OT, ALM3, ALM2, ALM1, ALM0}; ignored in synthesis
@@ -20,7 +22,7 @@ module b196_sysmon_guard
     logic [15:0] alm;
     logic        ot;
     SYSMONE4 #(
-        .SIM_MONITOR_FILE("none"), .SIM_DEVICE("ZYNQ_ULTRASCALE"),
+        .SIM_MONITOR_FILE(SIM_FILE), .SIM_DEVICE("ZYNQ_ULTRASCALE"),
         .INIT_41(SM_INIT_41), .INIT_42(SM_INIT_42), .INIT_43(SM_INIT_43), .INIT_48(SM_INIT_48),
         .INIT_50(SM_INIT_50), .INIT_51(SM_INIT_51), .INIT_52(SM_INIT_52), .INIT_54(SM_INIT_54), .INIT_55(SM_INIT_55),
         .INIT_56(SM_INIT_56), .INIT_58(SM_INIT_58), .INIT_5C(SM_INIT_5C)
