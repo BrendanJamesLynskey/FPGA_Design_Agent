@@ -388,7 +388,7 @@ def agent_run_dir(h: dict, ddir: Path) -> Path | None:
     """The run directory of an agent-produced handover (brief 68 C): the directory of ``agent_run.record``, and only when
     the design directory is inside it (the design is that run's own). None otherwise."""
     ar = h.get("agent_run") or {}
-    if h.get("produced_by") == "human" or not ar.get("record"):
+    if h.get("produced_by") in ("human", "session") or not ar.get("record"):
         return None
     rd = (ROOT / ar["record"]).resolve().parent
     return rd if rd != ROOT and rd in ddir.resolve().parents else None
@@ -429,7 +429,7 @@ def problems(ddir: Path, h: dict | None = None, readme: str | None = None) -> tu
         errs.append(f"target.tool must be 'Vivado {VIVADO}' or 'none' (published text names only {VIVADO})")
     if h["target"]["tool"] != "none" and not h["clocks"]:
         errs.append("clocks: a design built with Vivado has at least one clock")
-    if h["produced_by"] != "human" and not h.get("agent_run"):
+    if h["produced_by"] not in ("human", "session") and not h.get("agent_run"):
         errs.append(f"produced_by {h['produced_by']} needs agent_run (the run record)")
     # placeholders and minimum lengths (meaningful words: distinct, not filler)
     for path, s in _strings(h):
@@ -641,7 +641,8 @@ def render_readme(h: dict, ddir: Path, prose: dict, svgs: dict) -> str:
          f"prose markers, then run: python -m flow.handover write {rid} -->", "", h["summary"].strip(), "",
          "Not in scope:", ""]
     L += [f"- {s}" for s in h["scope_not"]]
-    who = {"human": "written by hand", "agent": "produced by the agent", "human+agent": "written by hand with agent runs"}
+    who = {"human": "written by hand", "agent": "produced by the agent", "human+agent": "written by hand with agent runs",
+           "session": "written by a Claude Code session"}
     L += ["", f"Kind: {h['kind']}; {who[h['produced_by']]}"
           + (f" (agent run `{h['agent_run']['run_id']}`, [record]({_link(h['agent_run']['record'], ddir)}))"
              if h.get("agent_run") else "") + f". State: {h['state']['stage']}. For an agent: [AGENT.md](AGENT.md)."]
