@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import subprocess
 import sys
 import time
@@ -144,7 +145,8 @@ def run_example(name: str, *, max_usd: float | None = None, slot: bool = True, a
     pins = reg["pins"]
     pre = R.check(pins, allow_unpinned)
     py = python or sys.executable
-    cmd = R.argv(e, pins, py, max_usd)
+    run_name = f"ex_{name}" + (f"_{os.environ['FDA_EXAMPLE_TAG']}" if re.fullmatch(r"[A-Za-z0-9]{1,12}", os.environ.get("FDA_EXAMPLE_TAG", "")) else "")   # a tag keeps two simultaneous runs of one example apart
+    cmd = R.argv(e, pins, py, max_usd, name=run_name)
     info: dict[str, Any] = {"example": name, "command": cmd[1:], "preflight": pre, "refused": None}
     if not pre["ok"]:
         info["refused"] = "pre-flight: " + "; ".join(f"{c['name']}: {c['detail']}" for c in pre["checks"] if not c["ok"] and c["name"] not in pre["unpinned_waived"])
@@ -159,7 +161,7 @@ def run_example(name: str, *, max_usd: float | None = None, slot: bool = True, a
     finally:
         release_slot(lock, text)
     wall = time.time() - started
-    run_dir = find_run(f"ex_{name}", started)
+    run_dir = find_run(run_name, started)
     info.update(exit_code=rc, run_dir=str(run_dir) if run_dir else None, wall_s=round(wall, 1))
     if run_dir is None:
         info["refused"] = "the run left no run directory"
