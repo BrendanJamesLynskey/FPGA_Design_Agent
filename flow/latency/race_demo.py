@@ -15,7 +15,7 @@ sys.path.insert(0, str(ROOT / "flow" / "tests"))
 
 
 def main() -> int:
-    import test_189_latency_crosscheck as T
+    import test_189_latency_crosscheck_rtl as T
     from flow.latency import crosscheck as X
     rows = []
     with tempfile.TemporaryDirectory() as d:

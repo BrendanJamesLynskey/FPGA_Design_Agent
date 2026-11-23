@@ -21,7 +21,7 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--seeds", type=int, default=8)
     a = ap.parse_args()
-    import test_189_cdc_skew as T
+    import test_189_cdc_skew_rtl as T
     rows = []
     with tempfile.TemporaryDirectory() as d:
         for name in ("cdcfx_m12", "cdcfx_c10"):

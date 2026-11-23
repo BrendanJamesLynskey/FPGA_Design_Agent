@@ -297,6 +297,8 @@ jobs:
         run: CDC_SIM_QUICK=1 python -m pytest -q hil/cdc_soak/tests
       - name: CDC gate fixtures - the rig's mutants and correct variants, plain and with synchroniser-delay injection (brief 16)
         run: python -m pytest -q flow/tests/test_16_cdc_inject_rtl.py
+      - name: Verification and measurement rules - per-bit skew, conservation, second latency method, X-blind compares (brief 189, advisory)
+        run: python -m pytest -q flow/tests/test_189_cdc_skew_rtl.py flow/tests/test_189_conservation_rtl.py flow/tests/test_189_latency_crosscheck_rtl.py flow/tests/test_189_tb_xcheck_rtl.py
       - name: Timing-exception drill - the multicycle registers change on one phase of the enable (brief 20)
         run: python -m pytest -q flow/tests/test_20_drill_sim_rtl.py
       - name: FSM discipline - reference controller variants, FSM coverage on real designs and the test-removal mutants (brief 24)

@@ -6,7 +6,7 @@ the stage gates or the check registry. Making one a gate is the planner's decisi
 Edwards, *FPGA Design for Low-Latency Trading* (2026), chapter numbers below; the wording and all code are ours.
 
 Records are in [`results/189_verification_rules/`](../results/189_verification_rules/README.md); each command below reproduces its record.
-Tests are `flow/tests/test_189_*.py`; they need Icarus Verilog where they simulate and nothing else (no Vivado, no board).
+Tests are `flow/tests/test_189_*.py`; the four that simulate are `*_rtl.py` (CI's rtl-sim job, Icarus Verilog), the others run in the Python job. No Vivado, no board.
 
 | # | Rule | Tool | Record |
 |---|---|---|---|
