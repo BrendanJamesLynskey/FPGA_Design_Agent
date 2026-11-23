@@ -66,9 +66,10 @@ def steps(runs_dir: Path, run_id: str, now: float | None = None) -> dict[str, An
             out.append({"id": e["step"], "label": str(e.get("label"))[:60], "kind": str(e.get("stream"))[:20], "stage": e.get("stage"), "started": e.get("started"),
                         "seconds": end.get("seconds") if end else None, "active": end is None and not finished and bool(f.stat().st_size >= 0) and now - f.stat().st_mtime < 3600,
                         "size": f.stat().st_size, "source": str(e.get("source"))})
+    have = {Path(str(x["source"])).stem for x in out}                    # a stream already listed from console/ is not listed twice
     for f in sorted((rd / "claude_code").glob("*.jsonl")) if (rd / "claude_code").is_dir() else []:      # runs from before the live console: the finished stream of each model call
         sid = "cc-" + f.stem
-        if sid not in seen and STEP_ID.match(sid) and _safe_file(rd, f"claude_code/{f.name}") is not None:
+        if sid not in seen and f.stem not in have and STEP_ID.match(sid) and _safe_file(rd, f"claude_code/{f.name}") is not None:
             out.append({"id": sid, "label": "model: " + f.stem.split("_", 2)[1] if "_" in f.stem else "model", "kind": "claude_stream", "stage": None, "started": f.stat().st_mtime, "seconds": None,
                         "active": False, "size": f.stat().st_size, "source": f"claude_code/{f.name}"})
     return {"id": run_id, "steps": out[-200:], "restricted": mode["scored"], "held_out": mode["held_out"],

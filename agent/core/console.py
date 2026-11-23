@@ -62,18 +62,21 @@ def install(runner: Any, run_dir: Path, stage_of: Any = None) -> Any:
     def run(kind, argv, cwd, env=None, timeout=600):
         step = next_step(run_dir, kind)
         f = begin(run_dir, kind, step, "tool_output", stage_of() if callable(stage_of) else None)
-        try:
-            runner._tee_to = f
-        except Exception:                                  # a runner that refuses attributes just writes at the end
-            pass
+        targets = [runner] + ([runner.inner] if getattr(runner, "inner", None) is not None else [])     # the container runner hands the run to its inner local runner
+        for t in targets:
+            try:
+                t._tee_to = f
+            except Exception:                              # a runner that refuses attributes just writes at the end
+                pass
         t0 = time.time()
         try:
             res = inner(kind, argv, cwd, env, timeout)
         finally:
-            try:
-                runner._tee_to = None
-            except Exception:
-                pass
+            for t in targets:
+                try:
+                    t._tee_to = None
+                except Exception:
+                    pass
         try:
             if not f.is_file() or f.stat().st_size == 0:      # a runner that did not stream: the output as it ended
                 out = str(getattr(res, "stdout", "") or "")

@@ -132,3 +132,16 @@ def test_the_claude_code_arm_tools_run_in_the_mcp_server_and_leave_console_files
     s.runner.run("simulate", [sys.executable, "-c", "print('PASS')"], tmp_path)
     assert (tmp_path / "run" / "console" / "001_simulate.log").read_text() == "PASS\n"
     assert [e["stage"] for e in rows(tmp_path / "run") if e.get("event") == "console"] == ["synthesis"]
+
+
+def test_a_container_runner_streams_through_its_inner_local_runner(tmp_path):
+    class Outer:                                                    # what ContainerRunner does: hand the run, re-argv'd, to ``inner``
+        def __init__(self):
+            self.inner = LocalRunner()
+
+        def run(self, kind, argv, cwd, env=None, timeout=600):
+            return self.inner.run(kind, argv, cwd, env, timeout)
+    o = Outer()
+    console.install(o, tmp_path)
+    res = o.run("simulate", [sys.executable, "-c", "print('4 passed')"], tmp_path)
+    assert res.stdout == "4 passed\n" and (tmp_path / "console" / "001_simulate.log").read_text() == "4 passed\n" and o.inner._tee_to is None
