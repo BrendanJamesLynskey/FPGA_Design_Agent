@@ -131,11 +131,11 @@ create_generated_clock -name tck_out -source [get_pins u_jtag/u_bscan/INTERNAL_T
 
 # Clock-domain crossings (each RX_CLK, TCK and the core clock) are all inside XPM macros, which carry their own
 # constraints; there is no set_clock_groups, so any other crossing would show as a timing failure.
-# The one path XPM leaves timed as synchronous: each xpm_fifo_async (distributed RAM) is written on RX_CLK and read
-# into its output register on the core clock. The read address only reaches an entry after the write pointer has
-# crossed (two synchroniser stages), so the data path needs only to settle within one core clock period: 8 ns.
-set_max_delay -datapath_only 8.000 -from [get_clocks a_rxc] -to [get_cells -hierarchical -filter {NAME =~ u_acdc/u_fifo/*doutb_reg_reg*}]
-set_max_delay -datapath_only 8.000 -from [get_clocks b_rxc] -to [get_cells -hierarchical -filter {NAME =~ u_bcdc/u_fifo/*doutb_reg_reg*}]
+# The one path XPM leaves timed as synchronous (each xpm_fifo_async, distributed RAM, is written on RX_CLK and read into its
+# output register on the core clock) needs no line here: Vivado 2026.1 reports our former set_max_delay -datapath_only 8.000 to the
+# doutb_reg_reg cells as "Totally overridden" by the XPM memory's own max_dpo=8 (exceptions positions 53/54, brief 175 build a8e8660a),
+# so it was removed (gate exceptions_clean, rule EXC-IGNORED). The read address only reaches an entry after the write pointer has
+# crossed (two synchroniser stages), so 8 ns, one core clock period, is the right bound.
 
 # ---- slow pins: PHY resets (held 16.8 ms), MDIO (1.95 MHz, the input synchronised by xpm_cdc_single), LEDs ----
 # No timing relationship to any clock: 0 ns placeholder delays and false paths (flow/io_check.py rules).
