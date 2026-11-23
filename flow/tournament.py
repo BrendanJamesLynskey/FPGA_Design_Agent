@@ -283,27 +283,49 @@ def release_slot(lock: Path, prefix: str) -> None:
         pass
 
 
+def synth_peak_g(spec: dict[str, Any]) -> float:
+    """Declared peak of one synthesis child. Measured 2026-11-23 (brief 178b): the 2 GiB cap held for the 7-series adder but killed every UltraScale+ (K26)
+    child during cross-boundary optimisation (Vivado reported ~3.07 GB), which is why four of the five 178 tournaments recorded no result. A spec may set
+    ``synth_peak_g``; otherwise 2 GiB (light class) for xc7 parts and 4 GiB for the rest. Above 2 GiB the run is not light class: one child at a time."""
+    if spec.get("synth_peak_g"):
+        return float(spec["synth_peak_g"])
+    return CHILD_PEAK_G if str(spec.get("part", "")).startswith("xc7") else 4.0
+
+
 def _child_cmd(tcl: Path, log: Path, peak_g: float) -> list[str]:
     return ["systemd-run", "--user", "--scope", "-q", "-p", f"MemoryMax={int(peak_g)}G", "nice", "-n", "15",
             vivado(), "-mode", "batch", "-nojournal", "-log", str(log), "-source", str(tcl)]
 
 
+FALLBACK_AFTER_S = 120.0   # idle this long with the gate refusing: run one child alone (the slot we hold already admits one Vivado)
+FALLBACK_FLOOR_G = 1.0     # ... provided MemAvailable still covers the child's peak plus this much
+
+
 def run_children(jobs: list[dict[str, Any]], peak_g: float, max_children: int = MAX_CHILDREN, poll_s: float = 5.0,
-                 launch=subprocess.Popen, avail=mem_available_g) -> None:
-    """Fan ``jobs`` (each {tcl, log}) out inside the slot we hold; the admission rule is ``may_launch`` before every launch."""
-    pending, running, t_wait = list(jobs), [], time.time()
+                 launch=subprocess.Popen, avail=mem_available_g, fallback_after_s: float = FALLBACK_AFTER_S, log=print) -> None:
+    """Fan ``jobs`` (each {tcl, log}) out inside the slot we hold; the admission rule is ``may_launch`` before every launch.
+
+    Fallback (brief 178b): when nothing is running and the gate has refused for ``fallback_after_s``, start ONE child anyway, one at a time, as long as
+    MemAvailable covers its peak plus 1 GiB. The held slot is the normal one-Vivado admission, so a single child inside it is within the rules; the
+    8 GiB reserve is only what lets several children share the slot. If even that is not free the wait goes on (an hour, then an error)."""
+    pending, running, t_wait, t_idle = list(jobs), [], time.time(), time.time()
     while pending or running:
         if not running and time.time() - t_wait > 3600:
             raise SystemExit("tournament: memory never allowed a child to start within an hour")
         running = [(p, j) for p, j in running if p.poll() is None]
         while pending:
             ok, why = may_launch([peak_g] * len(running), peak_g, avail(), max_children)
+            if not ok and not running and time.time() - t_idle >= fallback_after_s and avail() >= peak_g + FALLBACK_FLOOR_G:
+                ok = True
+                log(f"tournament: gate refused ({why}); running one child alone inside the slot (MemAvailable {avail():.1f} G)")
             if not ok:
                 break
-            t_wait = time.time()
+            t_wait = t_idle = time.time()
             j = pending.pop(0)
             j["started"] = time.time()
             running.append((launch(_child_cmd(j["tcl"], j["log"], peak_g), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL), j))
+        if running:
+            t_idle = time.time()
         time.sleep(poll_s)
 
 
@@ -318,10 +340,11 @@ def run(spec: dict[str, Any], stage: str, menu: list[str] | None, k: int, jobs: 
     prefix = "178"
     t_wall = time.time()
     if stage == "synth":
-        peak = CHILD_PEAK_G
-        n = max(1, min(jobs, MAX_CHILDREN))
+        peak = synth_peak_g(spec)
+        n = max(1, min(jobs, MAX_CHILDREN)) if peak <= CHILD_PEAK_G else 1
         text = (f"178: tournament {spec['name']} synth, {len(cands)} candidates, up to {n} at once under this slot, total peak "
-                f"{peak * n:g}G, {datetime.datetime.now():%H:%M}, expected end {(datetime.datetime.now() + datetime.timedelta(minutes=20)):%H:%M}")
+                f"{peak * n:g}G, {datetime.datetime.now():%H:%M}, expected end "
+                f"{(datetime.datetime.now() + datetime.timedelta(minutes=max(20, int(2.5 * len(cands) / n)))):%H:%M}")
         lock = take_slot(text) if take else None
         try:
             js = []
@@ -357,6 +380,9 @@ def run(spec: dict[str, Any], stage: str, menu: list[str] | None, k: int, jobs: 
     for c in cands:
         c.update(parse(Path(c["wd"])))
         c["p_pass"] = p_pass(c.get("wns_ns"), stage) if c.get("status") == "ok" else None
+    if not any(c.get("status") == "ok" for c in cands):    # brief 178b: a tournament in which nothing ran is a failure, never a "null winner" record
+        (out / "tournament_failed.txt").write_text("no candidate completed: " + "; ".join(sorted({str(c.get("status")) for c in cands})) + "\n")
+        raise SystemExit(f"tournament: no candidate completed for {spec['name']} {stage} (see {out}/*/vivado.log)")
     ranked = rank(cands, k)
     ref = next((c for c in ranked if c["id"] == "default"), None)
     rec = {"schema": "fda-tournament/1", "date": datetime.date.today().isoformat(), "design": spec["name"], "stage": stage, "part": spec["part"],
@@ -385,6 +411,10 @@ foreach {{kind run}} [list synth $synth impl $impl] {{
             if {{$kind eq "synth"}} {{ set r [create_run probe_s_[regsub -all {{[^A-Za-z0-9]}} $s _] -flow [get_property FLOW $synth] -strategy $s] }} else {{
                 set r [create_run probe_i_[regsub -all {{[^A-Za-z0-9]}} $s _] -flow [get_property FLOW $impl] -parent_run synth_1 -strategy $s] }}
             foreach p [list_property $r -regexp {{^STEPS\\..*(ARGS|IS_ENABLED)}}] {{ puts $out "$kind\t$s\t$p\t[get_property $p $r]" }}
+            foreach st {{OPT_DESIGN PLACE_DESIGN PHYS_OPT_DESIGN ROUTE_DESIGN POST_ROUTE_PHYS_OPT_DESIGN}} {{
+                if {{[catch {{set d [get_property STEPS.$st.ARGS.DIRECTIVE $r]}}]}} {{ continue }}
+                puts $out "$kind\t$s\tSTEPS.$st.ARGS.DIRECTIVE\t$d"
+            }}
         }} e]}} {{ puts $out "$kind\t$s\tERROR\t$e" }}
     }}
 }}

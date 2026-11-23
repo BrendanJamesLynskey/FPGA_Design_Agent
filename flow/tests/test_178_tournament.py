@@ -121,3 +121,31 @@ def test_triage_pre_uses_nearest_rows(tmp_path):
     assert t.triage_pre({"part": "xck26", "clock_ns": 1.5, "function": "f"}, ds)["class"] == "hard"       # 667 MHz target
     assert t.triage_pre({"part": "xck26", "clock_ns": 2.6, "function": "f"}, ds)["class"] == "easy"       # 385 MHz
     assert t.triage_pre({"part": "xck26", "clock_ns": 2.0, "function": "f"}, ds)["class"] == "hard"       # exactly at Fmax
+
+
+def test_run_children_falls_back_to_one_child_when_the_gate_never_admits():
+    """Brief 178b: with MemAvailable below peak + 8 GiB the gate refuses for ever; after the grace period one child runs alone, one at a time."""
+    live, peak, msgs = [], [0], []
+
+    class P:
+        def __init__(self, cmd, **k):
+            self.n = 0
+            live.append(self)
+            peak[0] = max(peak[0], len([p for p in live if p.poll() is None]))
+
+        def poll(self):
+            self.n += 1
+            return None if self.n < 2 else 0
+
+    jobs = [{"tcl": Path(f"/z{i}.tcl"), "log": Path(f"/z{i}.log")} for i in range(3)]
+    t.run_children(jobs, 2.0, 4, poll_s=0, launch=P, avail=lambda: 5.0, fallback_after_s=0.0, log=msgs.append)
+    assert len(live) == 3 and peak[0] == 1 and msgs
+    live.clear()
+    t.run_children(jobs[:1], 4.0, 1, poll_s=0, launch=P, avail=lambda: 5.5, fallback_after_s=0.0, log=msgs.append)   # 4 + 1 <= 5.5: runs
+    assert len(live) == 1
+
+
+def test_synth_peak_by_part():
+    assert t.synth_peak_g({"part": "xc7a100tcsg324-1"}) == 2.0
+    assert t.synth_peak_g({"part": "xck26-sfvc784-2LV-c"}) == 4.0
+    assert t.synth_peak_g({"part": "xck26-sfvc784-2LV-c", "synth_peak_g": 3}) == 3.0
