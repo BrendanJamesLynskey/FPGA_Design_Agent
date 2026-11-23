@@ -224,7 +224,7 @@ def make_run(tmp_path, rtl="module a; endmodule\n", lut=10):
     (b / "run.json").write_text(json.dumps({"vivado_version": "2026.1", "wall_s": 61.5}))
     (b / "manifest.json").write_text(json.dumps({"build_id": "0123abcd"}))
     (rd / "config.json").write_text(json.dumps({"name": "ex_x"}))
-    (rd / "summary.json").write_text(json.dumps({"stages_visited": [0, 0, 1, 2, 2, 3, 4, 5, 6], "turns": 70, "tokens": 12345, "loops": 3}))
+    (rd / "summary.json").write_text(json.dumps({"stages_visited": [0, 0, 1, 2, 2, 3, 4, 5, 6], "turns": 70, "tokens": 12345, "loops": 3, "clean_stop": True, "stop": "done"}))
     (rd / "role_usage.jsonl").write_text(json.dumps({"tokens": 1000, "plan_cost_estimate_usd": 0.5, "wall_s": 20.0}) + "\n" + json.dumps({"tokens": 500, "plan_cost_estimate_usd": 0.25, "wall_s": 10.0}) + "\n")
     return rd
 

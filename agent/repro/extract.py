@@ -122,7 +122,7 @@ def extract(run_dir: Path, example: str, score: dict[str, Any] | None, setup: di
     rec: dict[str, Any] = {
         "schema": SCHEMA, "example": example, "run_id": run_dir.name, "date": re.sub(r"^(\d{4})(\d{2})(\d{2}).*", r"\1-\2-\3", run_dir.name) if re.match(r"\d{8}-", run_dir.name) else None, "setup": {**setup, "models_served": u["models_served"]},
         "outcome": {"hidden_pass": (score or {}).get("pass"), "tests_passed": (score or {}).get("tests_passed"), "tests_total": (score or {}).get("tests_total"),
-                    "internal_pass": gates_ok and bool(stages) and max(stages) >= int(setup.get("stop_after") or 0) if b else False, "build_gates": f"{b.get('gates_passed')}/{b.get('gates_total')}" if b else None,
+                    "internal_pass": bool(summ.get("clean_stop")) and gates_ok and bool(stages) and max(stages) >= int(setup.get("stop_after") or 0), "clean_stop": summ.get("clean_stop"), "build_gates": f"{b.get('gates_passed')}/{b.get('gates_total')}" if b else None,
                     "last_stage": max(stages) if stages else None, "stop": stop if isinstance(stop, (str, int, float)) else (json.dumps(stop)[:200] if stop else None)},
         "tool_results": {"rtl_sha256": rtl_hash(files, design / "rtl" if design else None), "rtl_files": [p.name for p in files], **{k: b.get(k) for k in
                          ("lut", "ff", "dsp", "bram36", "wns_ns", "whs_ns", "timing_met", "build_stamp", "sources_sha256", "build_id", "vivado_version", "build_pass")},
