@@ -1,0 +1,28 @@
+# SymbiYosys: book_core quantity invariants (brief 188), properties bound from book_props.sv.
+#   bmc   : Q1..Q6 from reset, bounded (depth 12)
+#   cover : the saturation and a live level are reachable (the properties are not vacuous)
+# Not done: k-induction. Q5 is an invariant over the ladder memories, which induction cannot assume without a strengthening over every entry; BMC from reset only.
+# Run: sby -f book.sby <task>      (OSS CAD Suite 2026-11-12, as designs/b96_kr260_10g/verif/formal/rm_gp.sby)
+[tasks]
+bmc
+cover
+
+[options]
+bmc: mode bmc
+bmc: depth 12
+cover: mode cover
+cover: depth 14
+
+[engines]
+smtbmc yices
+
+[script]
+plugin -i slang
+read_slang --top book_core -G N_INST=2 -G LEVELS=4 -G ORD_AW=2 itch_pkg.sv book_core.sv book_props.sv book_bind.sv
+prep -top book_core
+
+[files]
+../../rtl/itch_pkg.sv
+../../rtl/book_core.sv
+book_props.sv
+book_bind.sv

@@ -30,6 +30,10 @@ module itch_top
     input  logic [31:0]          cfg_thr, cfg_qty, cfg_max_qty, cfg_max_pos, cfg_band, cfg_px_off, cfg_minqty,
     input  logic [7:0]           cfg_tif, cfg_display, cfg_capacity, cfg_ise, cfg_cross, cfg_custtype,
     input  logic                 cfg_arm, cfg_kill, cfg_halt_on_gap, cfg_spec,
+    input  logic [15:0]          cfg_holdoff,            // brief 188: see risk_glue
+    input  logic                 cfg_ref_sw,
+    input  logic [31:0]          cfg_ref_px, cfg_ref_age,
+    input  logic                 ref_load,
     input  logic [47:0]          tpl_my_mac, tpl_venue_mac,
     input  logic [31:0]          tpl_my_ip, tpl_venue_ip,
     input  logic [15:0]          tpl_sport, tpl_dport,
@@ -100,6 +104,7 @@ module itch_top
     assign b_busy = seg_busy || tx_busy;
     risk_glue #(.N_INST(N_INST)) u_risk (
         .clk, .rst, .clr_cnt, .clr_pos, .clr_ref, .cfg_watch, .cfg_arm, .cfg_kill, .cfg_spec, .cfg_qty, .cfg_max_qty, .cfg_max_pos, .cfg_band, .cfg_px_off,
+        .cfg_holdoff, .cfg_ref_sw, .cfg_ref_px, .cfg_ref_age, .ref_load, .cfg_max_notional(64'd0), .cfg_nt_shift(5'd0), .cfg_nt_tbl('0),       // NOTIONAL_MODE 0 in this build: the register window has no room for a table
         .spec_start, .spec_inst, .spec_px, .spec_fail, .tu_v, .tu_inst, .tu_cpx, .tu_cand, .tu_spec, .tu_gapblk, .tu_inx, .tob_px, .tob_ok, .book_ready,
         .spec_allow, .go, .go_spec, .f_sym, .f_px, .f_qty, .f_ref, .commit, .abort, .b_busy, .b_late, .cnt(cnt_r));
     order_seg u_seg (.clk, .rst, .go, .go_spec, .f_sym, .f_px, .f_qty, .f_ref, .commit, .abort, .tx_unsent, .tx_drop, .cfg_tif, .cfg_display, .cfg_capacity, .cfg_ise, .cfg_cross,

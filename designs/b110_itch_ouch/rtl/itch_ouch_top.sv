@@ -9,7 +9,8 @@ module itch_ouch_top
 #(
     parameter int N_INST = 4,          // instruments watched (2 to 8)
     parameter int LEVELS = 8,          // price levels per side and instrument (4 or 8)
-    parameter int ORD_AW = 8           // order table index bits: 2^ORD_AW live orders
+    parameter int ORD_AW = 8,          // order table index bits: 2^ORD_AW live orders
+    parameter int NOTIONAL_MODE = 0    // pre-trade notional check (brief 188): 0 none, 1 price times quantity, 2 price-band table written by software
 ) (
     input  logic                 clk,
     input  logic                 rst,
@@ -25,6 +26,13 @@ module itch_ouch_top
     input  logic [31:0]          cfg_thr, cfg_qty, cfg_max_qty, cfg_max_pos, cfg_band, cfg_px_off, cfg_minqty,
     input  logic [7:0]           cfg_tif, cfg_display, cfg_capacity, cfg_ise, cfg_cross, cfg_custtype,
     input  logic                 cfg_arm, cfg_kill, cfg_halt_on_gap, cfg_spec,
+    input  logic [15:0]          cfg_holdoff,                   // brief 188: clocks an instrument is refused after an accepted order (0 = off)
+    input  logic                 cfg_ref_sw,                    // brief 188: band reference 0 = own best bid, 1 = the software reference
+    input  logic [31:0]          cfg_ref_px, cfg_ref_age,       // the software reference, and its largest age in clocks
+    input  logic                 ref_load,                      // one clock: cfg_ref_px was written (the age restarts)
+    input  logic [63:0]          cfg_max_notional,              // NOTIONAL_MODE 1
+    input  logic [4:0]           cfg_nt_shift,                  // NOTIONAL_MODE 2
+    input  logic [16*32-1:0]     cfg_nt_tbl,
     // clears (one clock)
     input  logic                 clr_cnt, clr_flags, clr_book, clr_pos, clr_ref,
     // order frame out (stub port)
@@ -78,8 +86,9 @@ module itch_ouch_top
     logic go, go_spec, commit, abort, b_busy, b_late, spec_pend;
     logic [63:0] f_sym; logic [31:0] f_px, f_qty, f_ref;
     logic [13*32-1:0] cnt_r;
-    risk_glue #(.N_INST(N_INST)) u_risk (
+    risk_glue #(.N_INST(N_INST), .NOTIONAL_MODE(NOTIONAL_MODE)) u_risk (
         .clk, .rst, .clr_cnt, .clr_pos, .clr_ref, .cfg_watch, .cfg_arm, .cfg_kill, .cfg_spec, .cfg_qty, .cfg_max_qty, .cfg_max_pos, .cfg_band, .cfg_px_off,
+        .cfg_holdoff, .cfg_ref_sw, .cfg_ref_px, .cfg_ref_age, .ref_load, .cfg_max_notional, .cfg_nt_shift, .cfg_nt_tbl,
         .spec_start, .spec_inst, .spec_px, .spec_fail, .tu_v, .tu_inst, .tu_cpx, .tu_cand, .tu_spec, .tu_gapblk, .tu_inx, .tob_px, .tob_ok, .book_ready,
         .spec_allow, .go, .go_spec, .f_sym, .f_px, .f_qty, .f_ref, .commit, .abort, .b_busy, .b_late, .cnt(cnt_r));
     ouch_enter u_ouch (.clk, .rst, .go, .go_spec, .f_sym, .f_px, .f_qty, .f_ref, .commit, .abort, .cfg_tif, .cfg_display, .cfg_capacity, .cfg_ise, .cfg_cross,

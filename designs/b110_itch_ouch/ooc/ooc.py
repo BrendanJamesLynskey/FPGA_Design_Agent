@@ -31,7 +31,7 @@ OUT = ROOT / "results" / "b110" / "ooc"
 FILES = ["itch_pkg.sv", "mold_rx.sv", "itch_dec.sv", "book_core.sv", "ouch_enter.sv", "risk_glue.sv", "itch_ouch_top.sv"]
 
 
-def wrap_text(n_inst: int) -> str:
+def wrap_text(n_inst: int, notional: int = 0) -> str:
     return f"""// ooc_wrap: registers on every input of itch_ouch_top (the payload stream from the MAC side, the configuration from a register file).
 module ooc_wrap import itch_pkg::*; (
     input  logic clk, input logic rst,
@@ -40,6 +40,8 @@ module ooc_wrap import itch_pkg::*; (
     input  logic [31:0] cfg_thr_i, cfg_qty_i, cfg_max_qty_i, cfg_max_pos_i, cfg_band_i, cfg_px_off_i, cfg_minqty_i,
     input  logic [7:0] cfg_tif_i, cfg_display_i, cfg_capacity_i, cfg_ise_i, cfg_cross_i, cfg_custtype_i,
     input  logic cfg_arm_i, cfg_kill_i, cfg_halt_on_gap_i, cfg_spec_i,
+    input  logic [15:0] cfg_holdoff_i, input logic cfg_ref_sw_i, input logic [31:0] cfg_ref_px_i, cfg_ref_age_i, input logic ref_load_i,
+    input  logic [63:0] cfg_max_notional_i, input logic [4:0] cfg_nt_shift_i, input logic [16*32-1:0] cfg_nt_tbl_i,
     input  logic clr_cnt_i, clr_flags_i, clr_book_i, clr_pos_i, clr_ref_i,
     output logic o_v, output logic [63:0] o_d, output logic o_sof, output logic o_eof, output logic [7:0] o_keep, output logic o_abort,
     output logic tu_v, output logic [15:0] flags, output logic [NC*32-1:0] cnt
@@ -48,6 +50,7 @@ module ooc_wrap import itch_pkg::*; (
     logic [63:0] s_d; logic [7:0] s_keep;
     logic [{n_inst}*64-1:0] cfg_watch;
     logic [31:0] cfg_thr, cfg_qty, cfg_max_qty, cfg_max_pos, cfg_band, cfg_px_off, cfg_minqty;
+    logic [15:0] cfg_holdoff; logic cfg_ref_sw, ref_load; logic [31:0] cfg_ref_px, cfg_ref_age; logic [63:0] cfg_max_notional; logic [4:0] cfg_nt_shift; logic [16*32-1:0] cfg_nt_tbl;
     logic [7:0] cfg_tif, cfg_display, cfg_capacity, cfg_ise, cfg_cross, cfg_custtype;
     always_ff @(posedge clk) begin
         s_v <= s_v_i; s_d <= s_d_i; s_sof <= s_sof_i; s_eof <= s_eof_i; s_keep <= s_keep_i; s_err <= s_err_i;
@@ -55,11 +58,13 @@ module ooc_wrap import itch_pkg::*; (
         cfg_band <= cfg_band_i; cfg_px_off <= cfg_px_off_i; cfg_minqty <= cfg_minqty_i; cfg_tif <= cfg_tif_i; cfg_display <= cfg_display_i;
         cfg_capacity <= cfg_capacity_i; cfg_ise <= cfg_ise_i; cfg_cross <= cfg_cross_i; cfg_custtype <= cfg_custtype_i;
         cfg_arm <= cfg_arm_i; cfg_kill <= cfg_kill_i; cfg_halt_on_gap <= cfg_halt_on_gap_i; cfg_spec <= cfg_spec_i;
+        cfg_holdoff <= cfg_holdoff_i; cfg_ref_sw <= cfg_ref_sw_i; cfg_ref_px <= cfg_ref_px_i; cfg_ref_age <= cfg_ref_age_i; ref_load <= ref_load_i;
+        cfg_max_notional <= cfg_max_notional_i; cfg_nt_shift <= cfg_nt_shift_i; cfg_nt_tbl <= cfg_nt_tbl_i;
         clr_cnt <= clr_cnt_i; clr_flags <= clr_flags_i; clr_book <= clr_book_i; clr_pos <= clr_pos_i; clr_ref <= clr_ref_i;
     end
-    itch_ouch_top #(.N_INST({n_inst})) u_dut (.clk, .rst, .s_v, .s_d, .s_sof, .s_eof, .s_keep, .s_err, .cfg_watch, .cfg_thr, .cfg_qty, .cfg_max_qty,
+    itch_ouch_top #(.N_INST({n_inst}), .NOTIONAL_MODE({notional})) u_dut (.clk, .rst, .s_v, .s_d, .s_sof, .s_eof, .s_keep, .s_err, .cfg_watch, .cfg_thr, .cfg_qty, .cfg_max_qty,
         .cfg_max_pos, .cfg_band, .cfg_px_off, .cfg_minqty, .cfg_tif, .cfg_display, .cfg_capacity, .cfg_ise, .cfg_cross, .cfg_custtype, .cfg_arm, .cfg_kill,
-        .cfg_halt_on_gap, .cfg_spec, .clr_cnt, .clr_flags, .clr_book, .clr_pos, .clr_ref, .o_v, .o_d, .o_sof, .o_eof, .o_keep, .o_abort,
+        .cfg_halt_on_gap, .cfg_spec, .cfg_holdoff, .cfg_ref_sw, .cfg_ref_px, .cfg_ref_age, .ref_load, .cfg_max_notional, .cfg_nt_shift, .cfg_nt_tbl, .clr_cnt, .clr_flags, .clr_book, .clr_pos, .clr_ref, .o_v, .o_d, .o_sof, .o_eof, .o_keep, .o_abort,
         .m_v(), .m_len(), .e_v(), .e_k(), .tu_v, .tu_inst(), .tu_side(), .tu_px(), .tu_sz(), .tu_ok(), .tob_px(), .tob_sz(), .tob_ok(), .flags, .sys_code(), .cnt);
 endmodule
 """
@@ -96,7 +101,7 @@ def run(jobs: list[tuple[float, Path]], tag: str, n_inst: int, generics: dict, d
     batch = BUILD / tag
     batch.mkdir(parents=True, exist_ok=True)
     wrap = batch / "ooc_wrap.sv"
-    wrap.write_text(wrap_text(n_inst))
+    wrap.write_text(wrap_text(n_inst, int(generics.get("NOTIONAL_MODE", 0))))
     srcs = [str(D / "rtl" / f) for f in FILES] + [str(wrap)]
     lines = [f"set ooc(part) {PART}", "set ooc(top) ooc_wrap", "set ooc(jobs) {}"]
     wds = {}

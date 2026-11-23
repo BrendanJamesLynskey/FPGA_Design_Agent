@@ -72,6 +72,7 @@ module itch_ouch_tcp_top
     logic [13*32-1:0] cnt_r;
     risk_glue #(.N_INST(N_INST)) u_risk (
         .clk, .rst, .clr_cnt, .clr_pos, .clr_ref, .cfg_watch, .cfg_arm, .cfg_kill, .cfg_spec, .cfg_qty, .cfg_max_qty, .cfg_max_pos, .cfg_band, .cfg_px_off,
+        .cfg_holdoff(16'd0), .cfg_ref_sw(1'b0), .cfg_ref_px(32'd0), .cfg_ref_age(32'd0), .ref_load(1'b0), .cfg_max_notional(64'd0), .cfg_nt_shift(5'd0), .cfg_nt_tbl('0),
         .spec_start, .spec_inst, .spec_px, .spec_fail, .tu_v, .tu_inst, .tu_cpx, .tu_cand, .tu_spec, .tu_gapblk, .tu_inx, .tob_px, .tob_ok, .book_ready,
         .spec_allow, .go, .go_spec, .f_sym, .f_px, .f_qty, .f_ref, .commit, .abort, .b_busy, .b_late, .cnt(cnt_r));
     logic [15:0] rec_len, rec_id;
