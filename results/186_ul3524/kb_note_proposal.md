@@ -1,7 +1,8 @@
 # KB note proposal (brief 186): how AMD defines GTF latency, for comparison with our numbers
 
-Proposal only; no KB PR opened (task 2 measured nothing). Suggested claims, each with its source, for the family matrix (UltraScale+ GTF versus GTH) and the latency skill:
+Proposal only; no KB PR opened (the RAW simulation used our own stand-in block and no hardware, so it is a model check, not a measurement of the device). Suggested claims, each with its source, for the family matrix (UltraScale+ GTF versus GTH) and the latency skill:
 1. AMD's GTF base latency on the UL3524 (RAW 2.34 ns, MAC 5.44 ns) is the one-way transceiver block only: start = TX data latched by the GTF on TXUSRCLK, stop = the RXUSRCLK edge where the GTF launches RX data into fabric; near-end loopback; clocks about 644 MHz 180 degrees apart; excludes framing, PL and package. Source: Alveo-Cards `ul3524` branch, `GTF_Latency/README.md`, commit 5e124a2.
 2. It is a minimum over repeated runs and varies with the TX/RX clock phase after each reset, and (MAC mode) with the 33-cycle gearbox position. Same source.
 3. It must never be compared with a link-trip figure (ours: E, L - E) without stating the different paths. Our `docs/latency_definitions.md`.
 4. Vivado 2026.1 Basic licence: `xcvu2p-fsvj2104-3-e` is refused for project creation and synthesis, and xsim Basic refuses any design above 50,000 instances: `GTF_CHANNEL` plus `GTF_COMMON` alone is 61,854. Source: results/186_ul3524/licence.md and sim_attempt/.
+5. Simulated with a stand-in common block (our own model, UG576 Equation 2-3): AMD's RAW benchmark gives 1.50 clocks = 2.33 ns in xsim, with zero spread over reset timing, reference offsets and TX/RX MMCM phase (results/186_ul3524/raw_sweep, raw_phase_scan). Matches AMD's hardware 2.34 ns; says nothing about hardware phase variation. The MAC benchmark did not reach block lock with the stand-in.
