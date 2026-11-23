@@ -1,4 +1,4 @@
-# The assurance switch: optional post-synthesis verification and reliability structures (brief 194)
+# The assurance switch: optional post-synthesis verification and dependability structures (brief 194)
 
 Owner, 2026-11-23: "Are we including (optionally) post-synthesis verification? Things like this could be enabled via a switch, read
 by the agent. The switch might cover other time-expensive items, which enhance (for example) reliability. This might lead to
@@ -23,16 +23,16 @@ Owner: "We could more generally enable a level of verification, switching on for
 'profiles': for IP development, we might suggest that full verification is used. We could offer other profiles (which enable X, disable Y) for
 other trade-offs between speed and confidence."
 
-A **profile** is a named preset of **switches**; each switch is one verification method or reliability structure with a typed value. Any switch can
+A **profile** is a named preset of **switches**; each switch is one verification method or dependability structure with a typed value. Any switch can
 be overridden on top of a profile; the run record names the profile and every override (what the profile had, what was used). The registry is
 [agent/graph/profiles.py](../agent/graph/profiles.py); the three assurance levels of the first version of this note (`standard`, `thorough`,
-`high_reliability`) are now three of the six profiles.
+`high_dependability`) are now three of the six profiles.
 
 **Command line.** `agent run ... --verif-profile <name> --set <switch>=<value> ...` (repeatable). The existing `--profile` flag is per-role model
 routing (brief 05f) and is unchanged, so the verification profile is `--verif-profile` (the brief wrote `--profile`; a clash would have changed
 every existing run). **Spec.** `verif_profile:` and `timing_sim: true|false` in `spec.yaml`. **Interview.** With `--interview on|oracle` and no
 profile given, one question proposes a profile with a reason and its measured extra time (the default follows words in the spec: "library" or
-"reusable IP" gives `ip_release`, "single-event" or "must recover" gives `high_reliability`, "latency budget" gives `low_latency`, "prototype" gives
+"reusable IP" gives `ip_release`, "single-event" or "must recover" gives `high_dependability`, "latency budget" gives `low_latency`, "prototype" gives
 `prototype`, else `standard`). **Run record.** `summary.json` carries `verification_profile` (profile, overrides, effective switches, switches that
 are only recorded, gaps against the method mix and the IP label, an advisory line, policy breaches); `runs/<id>/policy.json` is the pin.
 
@@ -50,7 +50,7 @@ profile never claims a check that nothing executes.
 | `seeds` | 1-64 | `seeds_min` (floor 3 at V3); `flow/assurance.py` seed sweeps | yes |
 | `indep_spec_test` | on / off | `cfg.spec_tests` (was `--spec-tests`) | yes |
 | `post_synth_sim`, `equivalence`, `timing_sim` (off / auto / on), `fault_injection` | | `flow/assurance.py`, `flow/assurance_profiles.py` | measured here on the development design; not yet a stage of the run |
-| `reliability` | none / interview | the interview chooses blocks and structures (`spec.yaml` `reliability`) | interview yes, RTL generation needs a KB prompt (known gap) |
+| `dependability` | none / interview | the interview chooses blocks and structures (`spec.yaml` `dependability`) | interview yes, RTL generation needs a KB prompt (known gap) |
 | `board_hil` | off / smoke / full | stage 9 | yes |
 | `formal_depth_scale`, `formal_induction`, `formal_pdr`, `lean_proof`, `uvm`, `latency_checks`, `repeats` | | `flow/formal.sh`, `flow/lean_tier.py`, bench briefs 112/123, `flow/latency` | recorded only |
 
@@ -62,7 +62,7 @@ profile never claims a check that nothing executes.
 | `standard` | today's default; nothing changes for a run that names no profile | V3, constrained-random, floors (100 % bins, 70 % mutation, 3 seeds), bounded formal at the design's own depth, board smoke run |
 | `thorough` | standard plus the netlist checks | 8 seeds, formal depth x4, functional simulation of the synthesised netlist, `eqy` equivalence, timing simulation where the spec says `timing_sim: true` |
 | `ip_release` | what a library IP block needs for its "verified" label (decisions 24, 26) | thorough plus an independent spec bench, mutation floor 85, k-induction and PDR, a pyuvm bench |
-| `high_reliability` | designs that must survive single-event upsets | thorough plus the reliability structures the interview chose and fault-injection simulation |
+| `high_dependability` | designs that must survive single-event upsets | thorough plus the dependability structures the interview chose and fault-injection simulation |
 | `low_latency` | designs with a latency budget | standard plus the latency budget checks and the latency-path documentation rule (briefs 84, 189) |
 
 ### How profiles relate to what exists (nothing is duplicated; nothing is removed)
@@ -123,7 +123,36 @@ same proposals file and starts the run with `--interview on`; the questions appe
 - **Configuration-memory upsets** (LUT contents, routing) are not fixed by any of these; the soft-error-mitigation core does that (below).
 - **A profile's extra time is the time of its checks on the development design, without model time.** It scales with the design and the machine.
 
-## What `high_reliability` can add, and what we checked first
+## Dependability: the expertise area and why the profile is `high_dependability`
+
+Owner, 2026-11-23 (resolved question): the area is **dependability**, not only reliability, organised by the attributes and means of Avizienis, Laprie,
+Randell and Landwehr, "Basic Concepts and Taxonomy of Dependable and Secure Computing", IEEE Transactions on Dependable and Secure Computing 1(1), 2004.
+In that taxonomy dependability is the umbrella: the ability to deliver service that can justifiably be trusted. Reliability is one attribute of it, so a
+profile called `high_reliability` would have promised ECC and TMR only. The structures this brief adds serve five attributes, so the profile is named
+`high_dependability` (and its switch `dependability`). No safety-standard claim is made anywhere: this is a vocabulary for choosing and describing
+structures, not a certification.
+
+| Attribute (Avizienis et al.) | What it asks | Structures and checks in this brief | Evidence here |
+|---|---|---|---|
+| **Reliability** (continuity of correct service) | the design keeps producing correct output despite a fault | block RAM ECC (correction), TMR with a voter | fault injection: ECC corrected 300/300 single flips, TMR 300/300 single-copy flips |
+| **Availability** (readiness for correct service) | the design comes back, quickly, after a fault | watchdog (forces the sequencer to idle and flags), safe-state recovery, scrubbing and the soft-error core for configuration memory (SEM) | watchdog turned 171/300 counter-fault hangs into flagged aborts; SEM IP generates on the Basic tier, not run; recovery time not measured |
+| **Integrity** (absence of improper alteration) | a wrong value is not used silently | parity or CRC on buses, the detection half of ECC (double-bit detection) | parity flagged every effective flip; ECC detected 300/300 double flips |
+| **Safety** (absence of catastrophic consequences) | a fault leads to a defined safe state | `fsm_safe_state`, fail-safe defaults, and for the trading designs the kill switch and the risk gate | `fsm_safe_state` costs +7 LUT; its effect is a netlist property and was not injected (gap); the trading kill switch and risk gate are brief 188's, not measured here |
+| **Maintainability** (ability to undergo repairs and modifications) | a fault can be found and the design changed | build identity (`BUILD_STAMP`, build ID in every record), partial reconfiguration | not measured in this brief; listed so the profile does not claim it |
+
+The four **means** map onto the rest of the profile switches:
+
+| Means | Meaning | Where it is in the profiles |
+|---|---|---|
+| Fault prevention | avoid introducing faults | house rules, lint, the AMD recommendations followed by generated RTL (every profile) |
+| Fault tolerance | keep service despite faults | the structures above (`dependability` switch) |
+| Fault removal | find and remove faults: this is **verification** | lint, simulation, formal, mutation, `eqy`, netlist simulation (the `thorough` checks) |
+| Fault forecasting | estimate the presence and effect of faults | fault-injection simulation (`fault_injection` switch) |
+
+The honest limit of the forecasting row: the injection is modelled single bit flips at one clock of a short burst, so it shows what a structure catches
+against that model, not a failure rate.
+
+### The structures, AMD guidance first, and how each was checked
 
 | Structure | Approach (AMD guidance first) | Where it is checked |
 |---|---|---|
@@ -142,9 +171,9 @@ Results for that structure on the same family) before applying it. A block the u
 1. **Start.** `agent run` resolves `--verif-profile` and `--set` (an unknown switch, a bad value or a value below a floor stops the command before anything
    runs), pins the result in `policy.json` and records who set it in `build/who_did_what.json`.
 2. **Clarify (stage 0).** If no profile was given and the interview is on, one question proposes one (default from the spec's words, reason, expected extra
-   time). If the profile asks for structures (`reliability: interview`), one question per block class found in the spec (memories, state machines,
+   time). If the profile asks for structures (`dependability: interview`), one question per block class found in the spec (memories, state machines,
    counters, internal buses) states the measured cost of the structure and proposes "protect" for memories and state machines and "do not protect" for the
-   rest. The answers go into `spec.yaml` (`verif_profile`, `reliability`); a block the user does not name is not changed.
+   rest. The answers go into `spec.yaml` (`verif_profile`, `dependability`); a block the user does not name is not changed.
 3. **Flow.** `flow/assurance.py` and `flow/assurance_profiles.py` run the netlist checks and the cost and fault measurements. They run on the
    development design here; wiring them in as a run stage is the follow-up (a stage needs a gate and a heavy slot).
 4. **Run summary.** `verification_profile` in `summary.json`: the profile, every override, the effective switches, the switches that are only recorded,
@@ -182,7 +211,7 @@ the write of that word (the block RAM primitive's own injection inputs act on a 
   core netlist caught them), could not read the netlist of the whole core (block RAM: `ERROR`, never a pass), and **returned FAIL on the control module with
   the watchdog** (a counterexample at step 17 in which the netlist's watchdog flag is set and the RTL's is not); the cause was not established, so do not read
   it as either a netlist defect or an eqy limit. `eqy` passed SAFE-only and TMR-only netlists.
-- **Time.** On this design the checks of `standard` take about 9 s, `thorough` about 131 s (14 x), `high_reliability` about 177 s (19 x), plus a
+- **Time.** On this design the checks of `standard` take about 9 s, `thorough` about 131 s (14 x), `high_dependability` about 177 s (19 x), plus a
   separate 72 s for the opt-in timing simulation. These are the checks only (no model time, no independent spec bench, no board), on a design of
   about 100 LUTs: the ratios say where the time goes (synthesis and `eqy` dominate), not what a large design would cost.
 - **SEM.** The SEM IP (`sem` 4.1, `tmr_sem` 1.0) generates on the free Basic tier for the 7-series part; it was not synthesised or run on a board.
@@ -281,7 +310,7 @@ Wall time of each profile's checks on the development design, summed from the pe
 | standard | lint, directed tests, 1 seed, random tests, 3 seeds, bounded formal, design's own depth, mutation sweep (7 mutants, 1 seed each) | 9.1 | 1.0x |
 | thorough | lint, directed tests, 1 seed, random tests, 8 seeds, bounded formal, depth x4, mutation sweep (7 mutants, 1 seed each), post-synthesis netlist: synthesis, post-synthesis netlist: simulation, equivalence (eqy, control module) | 130.8 | 14.4x |
 | ip_release | lint, directed tests, 1 seed, random tests, 8 seeds, bounded formal, depth x4, mutation sweep (7 mutants, 1 seed each), post-synthesis netlist: synthesis, post-synthesis netlist: simulation, equivalence (eqy, control module) | 130.8 | 14.4x |
-| high_reliability | lint, directed tests, 1 seed, random tests, 8 seeds, bounded formal, depth x4, mutation sweep (7 mutants, 1 seed each), post-synthesis netlist: synthesis, post-synthesis netlist: simulation, equivalence (eqy, control module), fault injection (variant all, 6 targets x 300 trials) | 176.9 | 19.4x |
+| high_dependability | lint, directed tests, 1 seed, random tests, 8 seeds, bounded formal, depth x4, mutation sweep (7 mutants, 1 seed each), post-synthesis netlist: synthesis, post-synthesis netlist: simulation, equivalence (eqy, control module), fault injection (variant all, 6 targets x 300 trials) | 176.9 | 19.4x |
 | low_latency | lint, directed tests, 1 seed, random tests, 3 seeds, bounded formal, design's own depth, mutation sweep (7 mutants, 1 seed each) | 9.1 | 1.0x |
 
 | method | seconds | source |

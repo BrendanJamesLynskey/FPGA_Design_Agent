@@ -281,7 +281,7 @@ def profile_times() -> dict:
     thorough = ["lint", "directed tests, 1 seed", "random tests, 8 seeds", "bounded formal, depth x4", "mutation sweep (7 mutants, 1 seed each)", *net]
     fi = [k for k in methods if k.startswith("fault injection")]
     profiles = {"prototype": prof(["lint", "directed tests, 1 seed"]), "standard": prof(std), "thorough": prof(thorough), "ip_release": prof(thorough),
-                "high_reliability": prof([*thorough, *fi]), "low_latency": prof(std)}
+                "high_dependability": prof([*thorough, *fi]), "low_latency": prof(std)}
     profiles["ip_release"]["note"] = "the independent spec bench, k-induction, PDR and the pyuvm bench are not measured on this design (model time or no tool), so ip_release shows the thorough figure"
     profiles["low_latency"]["note"] = "the latency budget checks are not run by the flow yet, so low_latency shows the standard figure"
     return {"methods": {k: {"s": round(v[0], 2), "source": v[1]} for k, v in methods.items()}, "profiles": profiles}

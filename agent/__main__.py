@@ -388,7 +388,7 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("--verif-level", choices=["V1", "V2", "V3"], default="V3",
                    help="verification stage stage 2 must reach (default V3, the methodology; V1/V2 only for a cheaper run: "
                         "V3 needs multi-seed runs; the graph itself runs the Verilator coverage run and the mutation run)")
-    r.add_argument("--verif-profile", choices=["prototype", "standard", "thorough", "ip_release", "high_reliability", "low_latency"],
+    r.add_argument("--verif-profile", choices=["prototype", "standard", "thorough", "ip_release", "high_dependability", "low_latency"],
                    help="brief 194: the verification profile, a preset of per-method switches (docs/assurance.md). Not --profile, which is the "
                         "model routing of brief 05f. Default: standard (today's behaviour); with --interview on or oracle and no profile given, "
                         "the interview proposes one")

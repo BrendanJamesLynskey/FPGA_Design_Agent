@@ -1,6 +1,6 @@
 """Verification profiles: named presets of per-method switches, with overrides (brief 194).
 
-A *profile* is a preset of *switches*. Each switch is one verification method or reliability structure with a typed value
+A *profile* is a preset of *switches*. Each switch is one verification method or dependability structure with a typed value
 (on/off, a number, or a name from a list). ``resolve(profile, overrides)`` returns the effective switches and a record that
 names the profile and every override (what it was, what it became), which goes into the run summary.
 
@@ -68,7 +68,7 @@ SWITCHES: tuple[Switch, ...] = (
            "flow/assurance.py", True, choices=("off", "auto", "on")),
     Switch("fault_injection", BOOL, "seeded single-bit-flip simulation against the protected and the plain design", "flow/assurance.py",
            True),
-    Switch("reliability", CHOICE, "structures added to the design: none, or the set the interview chose (ecc, parity, safe_fsm, tmr, watchdog)",
+    Switch("dependability", CHOICE, "structures added to the design: none, or the set the interview chose (ecc, parity, safe_fsm, tmr, watchdog)",
            "agent.graph.assurance (interview + RTL generation)", True, choices=("none", "interview")),
     Switch("latency_checks", BOOL, "latency budget check and the latency-path documentation rule (brief 84, 189)", "flow/latency", False),
     Switch("board_hil", CHOICE, "board or hardware-in-the-loop run: off, smoke or full", "agent.graph.run (stage 9)", True,
@@ -83,7 +83,7 @@ FLOORS = {"coverage_target": 100, "mutation_floor": 70, "seeds": 3}
 _OFF = {"lint": False, "directed_sim": False, "verif_level": "V1", "random_sim": False, "coverage_target": 0, "mutation_floor": 0,
         "seeds": 1, "indep_spec_test": False, "formal_depth_scale": 0, "formal_induction": False, "formal_pdr": False, "lean_proof": False,
         "uvm": "none", "post_synth_sim": False, "equivalence": False, "timing_sim": "off", "fault_injection": False,
-        "reliability": "none", "latency_checks": False, "board_hil": "off", "repeats": 1}
+        "dependability": "none", "latency_checks": False, "board_hil": "off", "repeats": 1}
 
 
 def _p(**kw: Any) -> dict[str, Any]:
@@ -100,7 +100,7 @@ PROFILES: dict[str, dict[str, Any]] = {
     "thorough": _THOROUGH,
     "ip_release": {**_THOROUGH, "mutation_floor": 85, "seeds": 8, "indep_spec_test": True, "formal_induction": True, "formal_pdr": True,
                    "uvm": "pyuvm", "formal_depth_scale": 4},
-    "high_reliability": {**_THOROUGH, "fault_injection": True, "reliability": "interview"},
+    "high_dependability": {**_THOROUGH, "fault_injection": True, "reliability": "interview"},
     "low_latency": {**_STANDARD, "latency_checks": True},
 }
 SUMMARY = {
@@ -108,7 +108,7 @@ SUMMARY = {
     "standard": "today's default: V3 with the floors, constrained-random, bounded formal on the control logic, board smoke run",
     "thorough": "standard plus the netlist checks (functional simulation of the synthesised netlist, equivalence), 8 seeds, deeper formal",
     "ip_release": "thorough plus an independent spec bench, mutation floor 85, induction and PDR proofs, pyuvm bench: what a library 'verified' label needs",
-    "high_reliability": "thorough plus the structures the interview chose (ECC, parity, safe FSM, TMR, watchdog) and fault-injection simulation",
+    "high_dependability": "thorough plus the structures the interview chose (ECC, parity, safe FSM, TMR, watchdog) and fault-injection simulation",
     "low_latency": "standard plus the latency budget checks and the latency-path documentation rule",
 }
 DEFAULT_PROFILE = "standard"

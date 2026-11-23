@@ -125,7 +125,7 @@ Wall time of each profile's checks on the development design, summed from the pe
 | standard | lint, directed tests, 1 seed, random tests, 3 seeds, bounded formal, design's own depth, mutation sweep (7 mutants, 1 seed each) | 9.1 | 1.0x |
 | thorough | lint, directed tests, 1 seed, random tests, 8 seeds, bounded formal, depth x4, mutation sweep (7 mutants, 1 seed each), post-synthesis netlist: synthesis, post-synthesis netlist: simulation, equivalence (eqy, control module) | 130.8 | 14.4x |
 | ip_release | lint, directed tests, 1 seed, random tests, 8 seeds, bounded formal, depth x4, mutation sweep (7 mutants, 1 seed each), post-synthesis netlist: synthesis, post-synthesis netlist: simulation, equivalence (eqy, control module) | 130.8 | 14.4x |
-| high_reliability | lint, directed tests, 1 seed, random tests, 8 seeds, bounded formal, depth x4, mutation sweep (7 mutants, 1 seed each), post-synthesis netlist: synthesis, post-synthesis netlist: simulation, equivalence (eqy, control module), fault injection (variant all, 6 targets x 300 trials) | 176.9 | 19.4x |
+| high_dependability | lint, directed tests, 1 seed, random tests, 8 seeds, bounded formal, depth x4, mutation sweep (7 mutants, 1 seed each), post-synthesis netlist: synthesis, post-synthesis netlist: simulation, equivalence (eqy, control module), fault injection (variant all, 6 targets x 300 trials) | 176.9 | 19.4x |
 | low_latency | lint, directed tests, 1 seed, random tests, 3 seeds, bounded formal, design's own depth, mutation sweep (7 mutants, 1 seed each) | 9.1 | 1.0x |
 
 | method | seconds | source |

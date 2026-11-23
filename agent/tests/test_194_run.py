@@ -32,12 +32,12 @@ def test_the_interview_proposes_a_profile_and_applies_it(rt):
     spec, summary = gr._interview(rt, spec, {})
     qs = summary["questions"]
     prof = [q for q in qs if q["text"].startswith("Which verification profile")]
-    assert len(prof) == 1 and prof[0]["default"] == "high_reliability" and prof[0]["status"] == "defaulted" and prof[0]["reason"]
-    assert rt.cfg.verif_profile == "high_reliability" and rt.cfg.verif_ask is False and spec["verif_profile"] == "high_reliability"
+    assert len(prof) == 1 and prof[0]["default"] == "high_dependability" and prof[0]["status"] == "defaulted" and prof[0]["reason"]
+    assert rt.cfg.verif_profile == "high_dependability" and rt.cfg.verif_ask is False and spec["verif_profile"] == "high_dependability"
     assert any(q["id"].startswith("s") for q in qs)                  # the structure question for the counter
-    assert spec["reliability"] and yaml.safe_load((rt.design / "spec.yaml").read_text())["verif_profile"] == "high_reliability"
+    assert spec["dependability"] and yaml.safe_load((rt.design / "spec.yaml").read_text())["verif_profile"] == "high_dependability"
     rec = gr._profile_record(rt.cfg)
-    assert rec["profile"] == "high_reliability" and rec["effective"]["fault_injection"] is True and "advisory" in rec
+    assert rec["profile"] == "high_dependability" and rec["effective"]["fault_injection"] is True and "advisory" in rec
 
 
 def test_no_question_without_ask(rt):

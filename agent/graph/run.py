@@ -963,7 +963,7 @@ def _interview(rt: Runtime, spec: dict, state: State) -> tuple[dict, dict]:
         _prof.write_pin(rt.run_dir, name, sets, replace=True, set_by="the interview (the user's answer or the default they accepted)")
         for i, (qt, qd, qr) in enumerate(_assur.structure_questions(spec, rec["effective"])):
             ask_one(Question(id=f"s{i + 1}", text=qt, default=qd, reason=qr))
-        spec["reliability"] = [{"question": q.text, "answer": q.answer, "status": q.status} for q in iv.questions if q.id.startswith("s")]
+        spec["dependability"] = [{"question": q.text, "answer": q.answer, "status": q.status} for q in iv.questions if q.id.startswith("s")]
     (rt.design / "spec.yaml").write_text(yaml.safe_dump(spec, sort_keys=False))
     summ = merge_summaries(state.get("interview"), iv.summary())
     if unconfirmed:
