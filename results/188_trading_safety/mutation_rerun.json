@@ -1,7 +1,7 @@
 {
-  "mutants": 2,
-  "valid": 2,
-  "killed": 2,
+  "mutants": 3,
+  "valid": 3,
+  "killed": 3,
   "survived": [],
   "invalid": [],
   "score_pct": 100.0,
@@ -15,6 +15,16 @@
       "class": "operator",
       "file": "risk_glue.sv",
       "why": "brief 188 - a notional exactly at the limit is refused"
+    },
+    {
+      "name": "risk_nt_early_px",
+      "status": "killed",
+      "killed_by": [
+        "notional"
+      ],
+      "class": "condition",
+      "file": "book_core.sv",
+      "why": "brief 188 - the notional check reads the price one clock late, so it judges the previous update's price"
     },
     {
       "name": "risk_nt_tbl_idx",

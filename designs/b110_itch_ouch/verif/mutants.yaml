@@ -405,13 +405,19 @@ mutants:
   why: "brief 188 - an accepted order does not start the hold-off"
 - name: risk_nt_le
   file: risk_glue.sv
-  old: if (NOTIONAL_MODE == 1) nt_bad = ({32'd0, v_price} * {32'd0, cfg_qty}) > cfg_max_notional;
-  new: if (NOTIONAL_MODE == 1) nt_bad = ({32'd0, v_price} * {32'd0, cfg_qty}) >= cfg_max_notional;
+  old: if (NOTIONAL_MODE == 1) nt_bad_w = nt_pb > cfg_max_notional;
+  new: if (NOTIONAL_MODE == 1) nt_bad_w = nt_pb >= cfg_max_notional;
   class: operator
   why: "brief 188 - a notional exactly at the limit is refused"
+- name: risk_nt_early_px
+  file: book_core.sv
+  old: assign nt_px = d3_px;
+  new: assign nt_px = t1_cpx;
+  class: condition
+  why: "brief 188 - the notional check reads the price one clock late, so it judges the previous update's price"
 - name: risk_nt_tbl_idx
   file: risk_glue.sv
-  old: "nt_i = (nt_q > 32'd15) ? 4'd15 : nt_q[3:0];"
-  new: nt_i = nt_q[3:0];
+  old: "nt2_i <= (nt1_px >> cfg_nt_shift > 32'd15) ? 4'd15 : 4'((nt1_px >> cfg_nt_shift) & 32'd15);"
+  new: "nt2_i <= 4'((nt1_px >> cfg_nt_shift) & 32'd15);"
   class: condition
   why: "brief 188 - a price above the last bucket wraps into the table instead of using the last entry"

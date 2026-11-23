@@ -72,6 +72,7 @@ module itch_ouch_top
     itch_dec u_dec (.clk, .rst, .clr_cnt, .m_v, .m_w, .m_off, .m_len, .m_seq, .e_v, .e_k, .e_loc, .e_ref, .e_nref, .e_sell, .e_sh, .e_px, .e_stock, .e_code,
                     .e_seq, .cnt(cnt_d));
     // book
+    logic [31:0] nt_px;                       // brief 188: early copy of the ladder-update price, book_core to risk_glue
     logic spec_allow, spec_start, spec_fail, tu_cand, tu_spec, tu_gapblk, tu_inx, book_ready, gapblk_now;
     logic [IW-1:0] spec_inst; logic [31:0] spec_px, tu_cpx; logic [N_INST-1:0] inexact;
     logic [8*32-1:0] cnt_b;
@@ -80,7 +81,7 @@ module itch_ouch_top
         .clk, .rst, .clr_book, .clr_cnt, .cfg_watch, .cfg_thr, .spec_allow, .gapblk_now,
         .e_v, .e_k, .e_loc, .e_ref, .e_nref, .e_sell, .e_sh, .e_px, .e_stock, .e_code,
         .spec_start, .spec_inst, .spec_px, .spec_fail,
-        .tu_v, .tu_inst, .tu_side, .tu_px, .tu_sz, .tu_ok, .tu_cpx, .tu_cand, .tu_spec, .tu_gapblk, .tu_inx,
+        .tu_v, .tu_inst, .tu_side, .tu_px, .tu_sz, .tu_ok, .tu_cpx, .tu_cand, .tu_spec, .tu_gapblk, .tu_inx, .nt_px,
         .tob_px, .tob_sz, .tob_ok, .inexact, .book_ready, .sys_code, .cnt(cnt_b));
     // decision and order
     logic go, go_spec, commit, abort, b_busy, b_late, spec_pend;
@@ -89,7 +90,7 @@ module itch_ouch_top
     risk_glue #(.N_INST(N_INST), .NOTIONAL_MODE(NOTIONAL_MODE)) u_risk (
         .clk, .rst, .clr_cnt, .clr_pos, .clr_ref, .cfg_watch, .cfg_arm, .cfg_kill, .cfg_spec, .cfg_qty, .cfg_max_qty, .cfg_max_pos, .cfg_band, .cfg_px_off,
         .cfg_holdoff, .cfg_ref_sw, .cfg_ref_px, .cfg_ref_age, .ref_load, .cfg_max_notional, .cfg_nt_shift, .cfg_nt_tbl,
-        .spec_start, .spec_inst, .spec_px, .spec_fail, .tu_v, .tu_inst, .tu_cpx, .tu_cand, .tu_spec, .tu_gapblk, .tu_inx, .tob_px, .tob_ok, .book_ready,
+        .spec_start, .spec_inst, .spec_px, .spec_fail, .tu_v, .tu_inst, .tu_cpx, .tu_cand, .tu_spec, .tu_gapblk, .tu_inx, .nt_px, .tob_px, .tob_ok, .book_ready,
         .spec_allow, .go, .go_spec, .f_sym, .f_px, .f_qty, .f_ref, .commit, .abort, .b_busy, .b_late, .cnt(cnt_r));
     ouch_enter u_ouch (.clk, .rst, .go, .go_spec, .f_sym, .f_px, .f_qty, .f_ref, .commit, .abort, .cfg_tif, .cfg_display, .cfg_capacity, .cfg_ise, .cfg_cross,
                        .cfg_custtype, .cfg_minqty, .busy(b_busy), .late(b_late), .spec_pend, .o_v, .o_d, .o_sof, .o_eof, .o_keep, .o_abort);

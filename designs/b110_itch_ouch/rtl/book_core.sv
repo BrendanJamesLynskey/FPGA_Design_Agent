@@ -58,6 +58,7 @@ module book_core #(
     output logic                 tu_spec,         // ... whose frame was started speculatively
     output logic                 tu_gapblk,
     output logic                 tu_inx,          // the instrument was inexact when this update was made (this update included)
+    output logic [31:0]          nt_px,           // brief 188: the price of the ladder update in stage B3, three clocks before tu_* (an early copy of tu_cpx, for risk_glue's pipelined notional check)
     // top of book registers, all instruments
     output logic [N_INST*2*32-1:0] tob_px,        // index inst*2 + side
     output logic [N_INST*2*32-1:0] tob_sz,
@@ -197,6 +198,7 @@ module book_core #(
     logic              t2a_v, t2b_v;
     logic [31:0]       t2a_px, t2a_sz, t2b_px, t2b_sz;
 
+    assign nt_px = d3_px;
     assign cand_ahead = (b2_v && b2_cand) || (d3_v && d3_cand) || (t1_v && t1_cand) || (t2_v && t2_cand) || (tu_v && tu_cand);
 
     // forwarded table entry

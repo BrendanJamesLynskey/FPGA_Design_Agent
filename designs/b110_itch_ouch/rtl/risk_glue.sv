@@ -55,6 +55,7 @@ module risk_glue #(
     input  logic [$clog2(N_INST > 1 ? N_INST : 2)-1:0] tu_inst,
     input  logic [31:0]          tu_cpx,
     input  logic                 tu_cand, tu_spec, tu_gapblk, tu_inx,
+    input  logic [31:0]          nt_px,                    // brief 188: book_core's ladder-update price three clocks before tu_cpx (the notional check is computed on it, so it costs no clock)
     input  logic [N_INST*2*32-1:0] tob_px,
     input  logic [N_INST*2-1:0]    tob_ok,
     input  logic                 book_ready,
@@ -112,8 +113,26 @@ module risk_glue #(
     logic [31:0] ref_px;
     logic [32:0] pos_sum, band_lim, price33;
     logic        nt_bad, held;
-    logic [31:0] nt_q;
-    logic [3:0]  nt_i;
+    // notional check, pipelined over the three clocks the book takes from ladder update (B3) to top-of-book record (T+4 to T+7), so it costs no clock and its result is
+    // in hand with tu_*: stage 1 order price (nt_px plus the offset, as v_price), stage 2 multiply or table index, stage 3 compare or table read. (Computed in the verdict
+    // clock itself the multiply missed 6.2061 ns by 2.27 ns and the table by 0.63 ns: results/188_trading_safety/notional_measurement.md.)
+    logic [31:0] nt1_px;
+    logic        nt_bad_w;
+    logic [63:0] nt_pa, nt_pb;
+    logic [3:0]  nt2_i;
+    logic        nt3_bad;
+    always_ff @(posedge clk) begin
+        nt1_px <= nt_px + cfg_px_off;                 // a carry out is not kept: the verdict's own price33 carry refuses a wrapped price as band
+        nt_pa <= {32'd0, nt1_px} * {32'd0, cfg_qty};
+        nt_pb <= nt_pa;
+        nt2_i <= (nt1_px >> cfg_nt_shift > 32'd15) ? 4'd15 : 4'((nt1_px >> cfg_nt_shift) & 32'd15);
+        nt3_bad <= cfg_qty > cfg_nt_tbl[32 * nt2_i +: 32];
+    end
+    always_comb begin
+        nt_bad_w = 1'b0;
+        if (NOTIONAL_MODE == 1) nt_bad_w = nt_pb > cfg_max_notional;           // wraps of the price cannot matter: a carry is refused as band
+        else if (NOTIONAL_MODE == 2) nt_bad_w = nt3_bad;
+    end
     logic [2:0]  reason;                 // 0 pass, 1 arm, 2 kill, 3 gap, 4 stale, 5 size, 6 pos, 7 band
     logic        pass;
     always_comb begin
@@ -127,10 +146,7 @@ module risk_glue #(
         band_lim = {1'b0, ref_px} + {1'b0, cfg_band};
         held     = ho_act[tu_inst];
         nt_bad   = 1'b0;
-        nt_q = v_price >> cfg_nt_shift;
-        nt_i = (nt_q > 32'd15) ? 4'd15 : nt_q[3:0];
-        if (NOTIONAL_MODE == 1) nt_bad = ({32'd0, v_price} * {32'd0, cfg_qty}) > cfg_max_notional;
-        else if (NOTIONAL_MODE == 2) nt_bad = cfg_qty > cfg_nt_tbl[32 * nt_i +: 32];
+        nt_bad   = nt_bad_w;
         reason = 3'd0;
         if (!cfg_arm) reason = 3'd1;
         else if (cfg_kill) reason = 3'd2;
