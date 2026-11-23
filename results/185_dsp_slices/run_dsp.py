@@ -34,9 +34,9 @@ HANDOFF = Path("/home/brendan/Claude_sandbox/_handoff")
 WORK = ROOT / "build" / "185_dsp"
 RTL = HERE / "rtl"
 PARTS = {  # key: (part, target clock ns, wide-port limb width LB, native A x B of one slice)
-    "a7": ("xc7a100tcsg324-1", 2.2, 24, (25, 18)),
-    "k26": ("xck26-sfvc784-2LV-c", 1.3, 26, (27, 18)),
-    "vu2p": ("xcvu2p-fsvj2104-3-e", 1.1, 26, (27, 18)),
+    "a7": ("xc7a100tcsg324-1", 1.8, 24, (25, 18)),
+    "k26": ("xck26-sfvc784-2LV-c", 1.0, 26, (27, 18)),
+    "vu2p": ("xcvu2p-fsvj2104-3-e", 0.9, 26, (27, 18)),
 }
 PEAK_G = int(os.environ.get("DSP185_PEAK_G", "4"))
 PREFIX = "185"
@@ -210,6 +210,8 @@ def parse(pk: str, group: str | None = None) -> None:
             wd = j["wd"]
             if not ((wd / "done.txt").exists() or (wd / "error.txt").exists()):
                 continue
+            if not (wd / "power.rpt").exists() and (wd / "done.txt").exists():
+                (wd / "power.rpt").write_text("")      # power is not measured here; flow.ipchar.parse expects the file
             r = ipchar.parse(wd, PARTS[pk][1])
             r.update({"id": j["id"], "kind": j["kind"], "params": j["generics"], "latency_clocks": j["latency"]})
             if r["status"] == "ok":
