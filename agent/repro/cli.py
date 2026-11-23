@@ -156,4 +156,5 @@ def add_parser(sub) -> None:
     t.add_argument("name")
     t.add_argument("--ref", type=int, default=1, help="which reference run's RTL (1..N)")
     t.add_argument("--vivado", action="store_true", help="also rebuild that RTL with Vivado (no cache, to post-route) and compare build stamp, resources and slack (a heavy job: takes a slot)")
+    t.add_argument("--other-path", action="store_true", help="with --vivado: build the same RTL at a different path (the build stamp hashes paths, so the numbers move a little; measures how much)")
     t.add_argument("--no-slot", action="store_true", help="the caller already holds a heavy slot")

@@ -48,6 +48,6 @@ def record(name: str, run_dir: Path, results: Path | None = None, allow_unpinned
         if by.is_file() and (design / "design.xdc").is_file():          # what `example tools --vivado` needs to rebuild this RTL: the top, the part, the generics and the constraints
             import yaml
             cfg = yaml.safe_load(by.read_text()) or {}
-            (d / f"ref_{n}_design.json").write_text(json.dumps({"top": cfg.get("top"), "part": cfg.get("part"), "generics": cfg.get("generics") or {}}, indent=1) + "\n")
+            (d / f"ref_{n}_design.json").write_text(json.dumps({"top": cfg.get("top"), "part": cfg.get("part"), "generics": cfg.get("generics") or {}, "sources": cfg.get("sources"), "constraints": cfg.get("constraints")}, indent=1) + "\n")
             shutil.copyfile(design / "design.xdc", d / f"ref_{n}_design.xdc")
     return out

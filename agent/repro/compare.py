@@ -2,8 +2,8 @@
 
 Three groups, kept apart because they promise different things:
 
-``deterministic``  tool results for identical RTL (the bench's per-test verdicts, the Vivado build's resources, slack and build stamp; not the build ID, which covers the design's path and so differs between run directories). Compared field by field
-                   **only against a reference whose RTL hash is the same**; a match is shown with the hash. A mismatch with the same RTL is a finding about the
+``deterministic``  tool results for identical RTL: the bench's per-test verdicts (against a reference with the same RTL hash), and the Vivado build's resources and slack
+                   (only against a reference with the same RTL hash **and** the same build stamp, because the stamp hashes the file paths and is built into the design). A mismatch with the same RTL is a finding about the
                    tools or the setup, never about the model. When no reference has the same RTL the group says so and lists no verdict.
 ``varies``         what depends on the model's own sampling: the RTL, the number of repair loops, tokens, cost, wall time. Shown as the reference
                    minimum, median and maximum with the new value marked inside or outside; with few references "outside" means "not seen before", not "wrong".
@@ -34,8 +34,8 @@ SPREAD = {"lut": ("LUTs", ""), "ff": ("flip-flops", ""), "dsp": ("DSP slices", "
 LIMITS = (
     "Claude Code on a subscription takes no temperature and no seed, so the model's output cannot be pinned: the RTL, the number of repair loops, tokens, cost and wall time differ from run to run, and this page does not hide that.",
     "The model name is pinned (claude-sonnet-5-5) but the provider can update what that name serves; each result records the model id the calls reported, and a reference older than a provider update may be out of date.",
-    "The cost is the plan's estimate (Claude Code reports a figure for the subscription), not a bill. Wall time includes waiting for a heavy slot only if the run waited inside it; it is recorded from the run's own start.",
-    "Tool results repeat only for the same RTL: the same Vivado version and sources give the same build stamp, resources and slack (docs/reproducibility.md); a different RTL gives different numbers and that is not a failure.",
+    "The cost is the plan's estimate (Claude Code reports a figure for the subscription), not a bill. Wall time is the run's own span, first to last event; the wait for a heavy slot before it starts is not counted.",
+    "Tool results repeat only for the same RTL: the bench's verdicts always, and the Vivado numbers when the sources are also at the same path (the build stamp hashes the paths and is built into the design, so the same RTL in another directory differs slightly, measured in results/195_repro_examples); a different RTL gives different numbers and that is not a failure.",
 )
 
 
@@ -80,17 +80,27 @@ def compare(run: dict[str, Any], refs: list[dict[str, Any]]) -> dict[str, Any]:
     elif not same:
         det["note"] = ("no reference run wrote the same RTL, so the tool results are not comparable and none is judged: the RTL text varies with the model (the group below), "
                        "and different RTL builds to different numbers. To see the tools repeat, run `python -m agent example tools <name>` (it re-runs the hidden bench on a stored reference RTL, with no model call).")
+    # The Vivado numbers repeat only for the same sources AT THE SAME PATH: the build stamp hashes the file paths, is compiled into the design as a constant, and so a run in
+    # another directory builds a slightly different netlist (measured: results/195_repro_examples/README.md). They are judged only against a reference with the same stamp.
+    same_stamp = [r for r in same if tr.get("build_stamp") and (r.get("tool_results") or {}).get("build_stamp") == tr.get("build_stamp")]
+    if same and not same_stamp:
+        det["stamp_note"] = ("a reference wrote the same RTL, but its build stamp differs (the stamp hashes the file paths, so another run directory is another netlist constant): "
+                             "the bench verdicts are compared, the Vivado numbers are shown and not judged")
     for k, (label, unit) in DETERMINISTIC.items():
         row: dict[str, Any] = {"field": k, "label": label, "unit": unit, "run": tr.get(k)}
+        pool = same if k in ("build_stamp", "vivado_version") else same_stamp
         if same:
             vals = [(r.get("run_id"), (r.get("tool_results") or {}).get(k)) for r in same]
             row["references"] = vals
-            known = [v for _, v in vals if v is not None]
-            row["verdict"] = ("no value" if tr.get(k) is None or not known else "match (same RTL hash)" if all(v == tr.get(k) for v in known)
-                              else "MISMATCH with the same RTL: a finding about the tools or the setup, not the model")
-        out_row_ok = True
+            known = [v for r, v in ((r.get("run_id"), (r.get("tool_results") or {}).get(k)) for r in pool) if v is not None]
+            if k == "build_stamp":
+                row["verdict"] = "equal" if known and all(v == tr.get(k) for v in known) else "differs (expected across run directories: it hashes the paths)"
+            elif not pool:
+                row["verdict"] = "not judged (different build stamp)"
+            else:
+                row["verdict"] = ("no value" if tr.get(k) is None or not known else "match (same RTL hash and build stamp)" if all(v == tr.get(k) for v in known)
+                                  else "MISMATCH with the same RTL and stamp: a finding about the tools or the setup, not the model")
         det["rows"].append(row)
-        del out_row_ok
     tests = tr.get("bench_tests") or {}
     if same and tests:
         diffs = [t for t in tests if any(((r.get("tool_results") or {}).get("bench_tests") or {}).get(t) not in (None, tests[t]) for r in same)]

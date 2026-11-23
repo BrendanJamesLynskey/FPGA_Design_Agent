@@ -38,16 +38,28 @@ def row(c, field):
 
 
 def test_same_rtl_hash_and_same_tool_results_is_a_match():
-    c = C.compare(rec("new", "bbb", 120, 1.0), REFS)
+    new = rec("new", "bbb", 120, 1.0)
+    new["tool_results"]["build_stamp"] = "sbbb"                      # the same stamp as reference r2 (same sources at the same path)
+    c = C.compare(new, REFS)
     assert c["deterministic"]["matching_references"] == ["r2"]
-    assert row(c, "lut")["verdict"].startswith("match") and row(c, "wns_ns")["verdict"].startswith("match") and row(c, "build_stamp")["verdict"].startswith("match")
+    assert row(c, "lut")["verdict"].startswith("match") and row(c, "wns_ns")["verdict"].startswith("match") and row(c, "build_stamp")["verdict"] == "equal"
     assert row(c, "bench_tests")["verdict"].startswith("match")
 
 
 def test_same_rtl_but_a_different_tool_result_is_flagged_as_a_tool_finding_not_a_model_one():
-    c = C.compare(rec("new", "bbb", lut=121), REFS)
+    new = rec("new", "bbb", lut=121)
+    new["tool_results"]["build_stamp"] = "sbbb"
+    c = C.compare(new, REFS)
     v = row(c, "lut")["verdict"]
     assert v.startswith("MISMATCH") and "not the model" in v
+
+
+def test_same_rtl_at_another_path_has_another_stamp_so_vivado_numbers_are_shown_and_not_judged():
+    new = rec("new", "bbb", lut=999, wns=-1.0)
+    new["tool_results"]["build_stamp"] = "other"
+    c = C.compare(new, REFS)
+    assert row(c, "lut")["verdict"].startswith("not judged") and row(c, "build_stamp")["verdict"].startswith("differs") and "stamp" in c["deterministic"]["stamp_note"]
+    assert row(c, "bench_tests")["verdict"].startswith("match")        # the bench verdicts are still compared
 
 
 def test_a_different_bench_verdict_for_the_same_rtl_is_a_mismatch():

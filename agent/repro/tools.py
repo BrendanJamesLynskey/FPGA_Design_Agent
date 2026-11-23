@@ -6,6 +6,7 @@ compares the per-test verdicts with the record; the result is the same RTL hash,
 from __future__ import annotations
 
 import json
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -48,7 +49,7 @@ def bench_check(name: str, n: int, python: str | None = None, results: Path | No
             "tests_now": tests, "tests_recorded": want, "differences": diffs}
 
 
-def vivado_check(name: str, n: int, slot: bool = True, results: Path | None = None) -> dict[str, Any]:
+def vivado_check(name: str, n: int, slot: bool = True, results: Path | None = None, same_path: bool = True) -> dict[str, Any]:
     import os
     import shutil
     import subprocess
@@ -58,21 +59,33 @@ def vivado_check(name: str, n: int, slot: bool = True, results: Path | None = No
     if rtl is None or not (meta.is_file() and xdc.is_file() and ref_f.is_file()):
         return {"ok": False, "error": f"reference {n} of {name} has no stored design files (record it again with `example record`)"}
     ref, m = json.loads(ref_f.read_text()), json.loads(meta.read_text())
-    scratch = (R.ROOT / "runs" / "_tools" / f"{name}_ref{n}").resolve()
-    if not str(scratch).startswith(str(R.ROOT / "runs" / "_tools")):
+    # The build stamp (compiled into the design as BUILD_STAMP) hashes the sources' paths relative to the repository root, so the same RTL in another directory is another
+    # netlist constant and, measured, a slightly different build. To rebuild "the same inputs" the design goes back to the relative path it was built at.
+    srcs = m.get("sources") or []
+    mm = next((re.fullmatch(r"(runs/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+)/rtl/\*\.sv", x) for x in srcs if x.startswith("runs/")), None)
+    if mm is None:
+        return {"ok": False, "error": f"reference {n} of {name} does not record the path it was built at (record it again with `example record`)"}
+    scratch = (R.ROOT / (mm.group(1) if same_path else f"runs/_tools/{name}_ref{n}")).resolve()
+    if not same_path:                                                  # the same RTL at another path: measures what the path-dependent build stamp does
+        srcs = ["shell/rtl/*.sv", f"runs/_tools/{name}_ref{n}/rtl/*.sv"]
+        m = {**m, "constraints": [f"runs/_tools/{name}_ref{n}/design.xdc"]}
+    if not str(scratch).startswith(str(R.ROOT / "runs")) or ".." in mm.group(1):
         return {"ok": False, "error": "bad scratch path"}
+    marker = scratch / ".example_tools"
+    if scratch.exists() and not marker.is_file():
+        return {"ok": False, "error": f"{mm.group(1)} already exists here and was not made by this command (it is probably the original run directory): nothing was touched; use another reference"}
     if scratch.exists():
-        shutil.rmtree(scratch)                                         # a directory this command made under runs/_tools, named above
+        shutil.rmtree(scratch)                                         # made by this command earlier (it carries the marker), under runs/
     (scratch / "rtl").mkdir(parents=True)
+    marker.write_text("made by python -m agent example tools\n")
     for f in rtl.rglob("*"):
         if f.is_file():
             shutil.copyfile(f, scratch / "rtl" / f.relative_to(rtl))
     shutil.copyfile(xdc, scratch / "design.xdc")
-    rel = scratch.relative_to(R.ROOT).as_posix()
-    (scratch / "build.yaml").write_text(yaml.safe_dump({"top": m["top"], "part": m["part"], "sources": ["shell/rtl/*.sv", f"{rel}/rtl/*.sv"], "constraints": [f"{rel}/design.xdc"], "generics": m.get("generics") or {}}))
+    (scratch / "build.yaml").write_text(yaml.safe_dump({"top": m["top"], "part": m["part"], "sources": srcs, "constraints": m.get("constraints") or [], "generics": m.get("generics") or {}}))
     lock, text = (RN.take_slot("195", f"example tools {name} ref {n}") if slot else (None, None))
     try:
-        env = {**os.environ, "FDA_STOP_AFTER": "route", "FDA_BUILD_CACHE": "0"}
+        env = {**os.environ, "FDA_STOP_AFTER": "route", "FDA_BUILD_CACHE": "0", **({"FDA_VIVADO_MAX": "2", "FDA_VIVADO_THREADS": "2"} if lock is not None else {})}   # a second Vivado only because take_heavy_slot.sh admitted this job
         p = subprocess.run([str(R.ROOT / "flow" / "run_vivado.sh"), str(scratch), "base"], cwd=R.ROOT, env=env, capture_output=True, text=True, timeout=3600)
     finally:
         RN.release_slot(lock, text)
@@ -80,7 +93,8 @@ def vivado_check(name: str, n: int, slot: bool = True, results: Path | None = No
     want = ref.get("tool_results") or {}
     keys = ("build_stamp", "sources_sha256", "lut", "ff", "dsp", "bram36", "wns_ns", "whs_ns", "vivado_version")
     diffs = {k: {"now": b.get(k), "record": want.get(k)} for k in keys if b.get(k) != want.get(k)}
-    return {"ok": bool(b) and not diffs, "exit_code": p.returncode, "now": {k: b.get(k) for k in keys}, "record": {k: want.get(k) for k in keys}, "differences": diffs, "vivado_wall_s": b.get("vivado_wall_s")}
+    return {"same_path": same_path, "path": scratch.relative_to(R.ROOT).as_posix(), "ok": bool(b) and not diffs, "exit_code": p.returncode, "now": {k: b.get(k) for k in keys}, "record": {k: want.get(k) for k in keys}, "differences": diffs, "vivado_wall_s": b.get("vivado_wall_s"),
+            "refused_or_failed": (p.stderr.strip().splitlines() or p.stdout.strip().splitlines() or [""])[-1][:200] if not b else None}
 
 
 def main(a) -> int:
@@ -94,9 +108,12 @@ def main(a) -> int:
     print("bench verdicts " + ("match the record" if not r["differences"] else "DIFFER in " + ", ".join(r["differences"])))
     code = 0 if r["ok"] else 1
     if getattr(a, "vivado", False):
-        v = vivado_check(a.name, a.ref, slot=not a.no_slot)
+        v = vivado_check(a.name, a.ref, slot=not a.no_slot, same_path=not getattr(a, "other_path", False))
         if "error" in v:
             print(v["error"], file=sys.stderr)
+            return 2
+        if v.get("refused_or_failed") is not None:
+            print("Vivado rebuild did not produce a build: " + v["refused_or_failed"], file=sys.stderr)
             return 2
         print(f"Vivado rebuild (no cache, post-route, {v['vivado_wall_s']} s): " + ("every compared field equals the record" if v["ok"] else "DIFFERS: " + json.dumps(v["differences"])))
         for k, x in v["now"].items():

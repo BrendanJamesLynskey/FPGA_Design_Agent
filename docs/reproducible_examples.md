@@ -1,6 +1,6 @@
 # Reproducible examples (brief 195)
 
-Three small development tasks that a user can re-run to see, for themselves, which results reproduce and which do not. Each has **reference runs** made with a pinned setup
+Four small development tasks that a user can re-run to see, for themselves, which results reproduce and which do not. Each has **reference runs** made with a pinned setup
 and committed (`results/195_repro_examples/`). A re-run uses the same pinned setup and is compared with the references, with **what should match** and **what should vary** kept
 apart. Code: `agent/repro/` (the registry and pins `examples.yaml`, `registry.py`, `extract.py`, `compare.py`, `runner.py`, `record.py`, `tools.py`, `cli.py`) and the navigator's
 Examples page (`navigator/examples.py`, `navigator/static/app.js`). Tests: `agent/tests/test_195_repro_examples.py`, `navigator/tests/test_195_navigator_examples.py`.
@@ -22,6 +22,7 @@ python -m agent example record <name> <run dir>    # keep a finished run as a re
 | `gray_stepper` | `benchmark/tasks/t1_gray_stepper` | a counter with a debounced button, an automatic mode and a Gray-coded output; every step of the count checked |
 | `elevator_fsm` | `benchmark/tasks/t1_elevator_fsm` | a finite-state machine: call latching, direction rules, timed states |
 | `median3x3` | `benchmark/course/tasks/c9_median3x3` | a streaming datapath with a fixed one-clock latency, a window sorted in pure logic, gaps between windows |
+| `pattern_sequencer` | `benchmark/tasks/t1_pattern_sequencer` | a programmable sequence of timed steps, loop or one shot, a pause button, live changes |
 
 Each is a development task: never a held-out task (a test checks the split files) and never wavelet material. Each task is a plain-language request (`spec.md`), a hidden acceptance
 bench that scores the result (the agent never sees it), and the test shell on the board's USB-UART. There is **no AXI-Stream example**: no development task in the benchmark asks for
@@ -54,13 +55,17 @@ The comparison has three groups. They promise different things, which is why the
 
 | Group | What | Compared against | A difference means |
 |---|---|---|---|
-| **Deterministic given the same inputs** | the hidden bench's verdict per test; the Vivado build's LUT, FF, DSP and block RAM counts, worst setup and hold slack, build stamp and Vivado version (the build *ID* is recorded but not compared: it covers the input file paths, which differ between run directories) | only a reference run whose **RTL hash is the same**; a match is shown with the hash | a mismatch with the same RTL is a finding about the tools or the setup, never about the model |
+| **Deterministic given the same inputs** | the hidden bench's verdict per test (against a reference with the same **RTL hash**); the Vivado build's LUT, FF, DSP and block RAM counts, worst setup and hold slack (only against a reference with the same RTL hash **and the same build stamp**, see below) | a match is shown with the hash | a mismatch with the same RTL is a finding about the tools or the setup, never about the model |
 | **Varies with the model** | the RTL itself, lines of RTL, repair loops, agent turns, tokens, cost, wall time | the reference minimum, median and maximum, the new value marked inside or outside | "outside" means "not seen in the references", with few references it is weak evidence |
 | **Outcome** | do the hidden tests pass; do the agent's own gates pass; resources and slack against the spread of all references, whatever their RTL | all references | a hidden-test failure is the result that matters most |
 
 The RTL hash is SHA-256 over the sorted (file name, bytes) pairs of `rtl/` with line endings normalised. When no reference wrote the same RTL, the deterministic group says so and
 judges nothing, because different RTL builds to different numbers and that is not a failure. To see the tools repeat without a model, `example tools` re-runs the hidden bench on a
-stored reference RTL and compares the per-test verdicts with the record.
+stored reference RTL and compares the per-test verdicts with the record; with `--vivado` it also rebuilds the RTL.
+
+**The Vivado numbers depend on the path.** The build stamp hashes the source file *paths* and is compiled into the design as a constant, so the same RTL in another run directory is a slightly different netlist: measured, LUT 431 to 425 and setup slack 3.275 to 3.835 ns for one design. Rebuilt at its original relative path the same RTL gave identical stamp, resources and slack in 4 of 4 rebuilds. A re-run always has a new run directory, so for a re-run only the bench verdicts are judged, and the Vivado numbers are shown against the reference spread. See [the measurements](../results/195_repro_examples/README.md).
+
+**Measured (12 reference runs, 2026-11-23):** the outcome repeated for three of four examples (gray stepper 3/3 pass, elevator 0/3, pattern sequencer 0/3, each failing the same tests every time) and varied for the median filter (1/3); the RTL never repeated (12 runs, 12 hashes); the bench re-scored every stored RTL to the same verdicts (12/12).
 
 ## What a user could guess wrong
 
@@ -75,6 +80,7 @@ stored reference RTL and compares the per-test verdicts with the record.
   slot wait before the run starts is not counted.
 - **The agent's own gates are not the verdict.** "Hidden tests pass" is the scored result; the agent's own gates passing with the hidden bench failing is an *escape* (`tools/run_record.py`),
   and an example can show one.
+- **Two examples fail their hidden tests every time.** The elevator and pattern sequencer requests leave cycle-exact behaviour open and the agent's reading differs from the hidden bench's; they show a reproducible failure, and an escape (own gates pass, hidden bench fails). They are not a capability claim.
 - **A first re-run can be refused.** The pinned CLI copy and the knowledge-bank checkout are set up by hand once; the pre-flight says exactly what is missing.
 - **Stopping at stage 6 is a choice.** The examples do not run power, DRC or the hardware stage, so they say nothing about those.
 
