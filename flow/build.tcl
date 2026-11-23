@@ -62,6 +62,7 @@ source $flow_dir/mcp_paths.tcl
 source $flow_dir/io_paths.tcl
 source $flow_dir/iob_paths.tcl
 source $flow_dir/result_hash.tcl
+source $flow_dir/security.tcl     ;# brief 196: production_secure settings and the evidence dump (definitions only)
 # brief 140: check_timing's no_clock list at the synthesis stage names output pins of a hard block that drive nothing (measured in dbg_xvc: the
 # PS8's EMIO clock outputs, nets with no load; opt_design removes the nets and the routed check_timing lists none). A pin with no load is
 # no endpoint and nothing can be timed from it. This writes the pins of that list that are outputs with no loads, one per line, to
@@ -350,7 +351,11 @@ if {[info exists build_id] && $build_id ne ""} {
     set_property BITSTREAM.CONFIG.USR_ACCESS 0x$build_id [current_design]
     puts "FLOW-BUILD-ID $build_id"
 }
+# brief 196: production_secure. The settings (flow/security.py via prepare.py) go on the design just before write_bitstream; the properties are read back
+# after it, with the debug inventory and the system monitor, for the gates of flow/security.py. Off: nothing here runs and the build is unchanged.
+if {[info exists security_on] && $security_on} { fda_security_apply $out $security_props }
 write_bitstream -force $out/$top.bit
+if {[info exists security_on] && $security_on} { fda_security_dump $out }
 if {$ila} {
     write_debug_probes -force $out/$top.ltx
     # brief 48: an ILA that is an IP can get a .ltx the hardware manager calls inconsistent; repair what is safe, fail the build on

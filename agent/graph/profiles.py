@@ -74,6 +74,16 @@ SWITCHES: tuple[Switch, ...] = (
     Switch("board_hil", CHOICE, "board or hardware-in-the-loop run: off, smoke or full", "agent.graph.run (stage 9)", True,
            choices=("off", "smoke", "full")),
     Switch("repeats", INT, "whole-flow repeats for the QoR spread", "agent.graph.run", False, lo=1, hi=20),
+    # brief 196: design security of a production build (flow/security.py). The master switch and its five sub-switches are orthogonal to the
+    # verification level, so no profile turns the master on: it is the user's own request (the interview asks, with a reason).
+    Switch("production_secure", BOOL, "design security of a production build: the sub-switches below act when this is on, and the build fails a gate "
+           "for any that Vivado's own outputs do not show", "flow/security.py (FDA_SECURITY, flow/build.tcl, gate security_profile_met)", True),
+    Switch("sec_encrypt", BOOL, "bitstream encryption (AES-256, key in BBRAM or eFUSE; no key is made or programmed here)", "flow/security.py", True),
+    Switch("sec_authenticate", BOOL, "bitstream authentication", "flow/security.py", True),
+    Switch("sec_readback_off", BOOL, "readback security level and JTAG access to the system monitor disabled", "flow/security.py", True),
+    Switch("sec_strip_debug", BOOL, "no ILA, VIO, debug bridge or other debug core, no debug port, in the built design", "flow/security.py", True),
+    Switch("sec_sysmon_shutdown", BOOL, "system-monitor alarm thresholds set from the board's operating limits and wired to a latched safe shutdown",
+           "flow/security.py", True),
 )
 BY_NAME = {s.name: s for s in SWITCHES}
 
@@ -83,7 +93,11 @@ FLOORS = {"coverage_target": 100, "mutation_floor": 70, "seeds": 3}
 _OFF = {"lint": False, "directed_sim": False, "verif_level": "V1", "random_sim": False, "coverage_target": 0, "mutation_floor": 0,
         "seeds": 1, "indep_spec_test": False, "formal_depth_scale": 0, "formal_induction": False, "formal_pdr": False, "lean_proof": False,
         "uvm": "none", "post_synth_sim": False, "equivalence": False, "timing_sim": "off", "fault_injection": False,
-        "dependability": "none", "latency_checks": False, "board_hil": "off", "repeats": 1}
+        "dependability": "none", "latency_checks": False, "board_hil": "off", "repeats": 1,
+        "production_secure": False, "sec_encrypt": True, "sec_authenticate": True, "sec_readback_off": True, "sec_strip_debug": True,
+        "sec_sysmon_shutdown": True}
+#: brief 196: switches that are orthogonal to the verification level; the IP "verified" label does not ask for them
+SECURITY = ("production_secure", "sec_encrypt", "sec_authenticate", "sec_readback_off", "sec_strip_debug", "sec_sysmon_shutdown")
 
 
 def _p(**kw: Any) -> dict[str, Any]:
@@ -192,6 +206,8 @@ def ip_release_ok(eff: dict[str, Any]) -> list[str]:
     ref = PROFILES["ip_release"]
     out = []
     for k, v in ref.items():
+        if k in SECURITY:
+            continue
         cur = eff[k]
         weaker = (cur < v) if isinstance(v, (int, float)) and not isinstance(v, bool) else (v and not cur) if isinstance(v, bool) else \
             (k == "verif_level" and cur < v) or (k == "uvm" and cur == "none") or (k == "timing_sim" and cur == "off")
@@ -285,3 +301,25 @@ def check_pin(run_dir, profile: str | None, sets: dict[str, Any] | None, design=
         if named is not None and named != pin["profile"]:
             out.append(f"spec.yaml names profile {named!r} but the run is pinned to {pin['profile']!r} (set by {pin['set_by']}): the pin wins")
     return out
+
+
+# ---- design security (brief 196) ---------------------------------------------------------------------------------------------------
+
+def security_request(eff: dict[str, Any]) -> dict[str, Any]:
+    """The request the flow reads (``FDA_SECURITY``, flow/security.py): the master switch and the five sub-switches."""
+    return {"production_secure": bool(eff["production_secure"]), "encrypt": bool(eff["sec_encrypt"]), "authenticate": bool(eff["sec_authenticate"]),
+            "readback_off": bool(eff["sec_readback_off"]), "strip_debug": bool(eff["sec_strip_debug"]),
+            "sysmon_shutdown": bool(eff["sec_sysmon_shutdown"])}
+
+
+def security_env(run_dir) -> dict[str, str]:
+    """The environment the harness gives every build: the pinned security request as JSON in ``FDA_SECURITY``. Read from ``<run dir>/policy.json``
+    at each call, so the interview's replacement of the pin is seen. A run with no pin gives nothing (the build.yaml request, if any, stands)."""
+    import json
+    from pathlib import Path
+    f = Path(run_dir) / PIN
+    if not f.is_file():
+        return {}
+    pin = json.loads(f.read_text())
+    eff = resolve(pin["profile"], pin.get("overrides"))["effective"]
+    return {"FDA_SECURITY": json.dumps(security_request(eff), sort_keys=True)}

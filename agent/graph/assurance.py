@@ -85,6 +85,48 @@ def profile_from_answer(answer: str | None, default: str) -> str:
     return found[0] if found else default
 
 
+_SECURITY_WORDS = r"\b(production|deployed|deployment|in the field|customer|customers|ship|shipping|secure|security|tamper|copy[- ]protect|ip protection|encrypt\w*|confidential|proprietary|trade secret)\b"
+SECURITY_QUESTION = "Is this a production build that must be hard to copy, read back or debug?"
+
+
+def security_cost_text() -> str:
+    return _load_b196() or "cost: not measured yet"
+
+
+def _load_b196() -> str | None:
+    f = RESULTS.parent / "b196" / "costs.json"
+    try:
+        d = json.loads(f.read_text()) if f.is_file() else None
+    except (OSError, ValueError):
+        return None
+    if not d:
+        return None
+    return (f"measured on the development design (Vivado 2026.1, xck26): {d['d_lut']:+d} LUT, {d['d_ff']:+d} FF, build time {d['d_build_s']:+.0f} s "
+            f"(the encryption itself costs no fabric)")
+
+
+def security_question(spec: dict[str, Any]) -> tuple[str, str, str]:
+    """The interview question for the production_secure switch (brief 196): (text, default, reason). Yes only when the spec's own words point
+    to a production or protected design; otherwise no. The reason says what a yes does, what it costs (the measured record) and what stays with the owner."""
+    m = re.search(_SECURITY_WORDS, spec_text(spec))
+    default = "yes" if m else "no"
+    why = (f"the spec mentions '{m.group(0)}'" if m else "nothing in the spec asks for a protected or production build")
+    text = (SECURITY_QUESTION + " A yes turns on: bitstream encryption and authentication, readback and JTAG access to the system monitor off, "
+            "no debug core or debug port in the built design, and system-monitor alarms wired to a latched safe shutdown; the build then fails a gate "
+            "for each of these that Vivado's own outputs do not show. You keep the key: the agent never makes, stores or programs one (eFUSE and "
+            "BBRAM are yours). Answer yes or no.")
+    return text, default, f"{why}. {security_cost_text()}"
+
+
+def security_from_answer(answer: str | None, default: str) -> bool:
+    a = (answer or "").strip().lower()
+    if re.match(r"^(yes|y|true|on)\b", a):
+        return True
+    if re.match(r"^(no|n|false|off)\b", a):
+        return False
+    return default == "yes"
+
+
 def candidate_classes(spec: dict[str, Any]) -> list[str]:
     txt = spec_text(spec)
     return [c for c, (rx, _d, _o) in CLASSES.items() if re.search(rx, txt)]
@@ -122,6 +164,8 @@ def advisory(rec: dict[str, Any]) -> str:
         bits.append("netlist checks on")
     if eff["fault_injection"]:
         bits.append("fault injection on")
+    if eff.get("production_secure"):
+        bits.append("production_secure on (" + ", ".join(k[4:] for k in P.SECURITY[1:] if eff[k]) + ")")
     if rec["method_mix_gaps"]:
         bits.append("cannot reach 'verified' for every kind: lacks " + "; ".join(g.split(" (")[0] for g in rec["method_mix_gaps"]))
     if rec["not_wired"]:

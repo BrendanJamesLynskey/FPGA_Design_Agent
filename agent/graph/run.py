@@ -904,6 +904,10 @@ def _interview(rt: Runtime, spec: dict, state: State) -> tuple[dict, dict]:
     profile_ask = sdoc is None and getattr(rt.cfg, "verif_ask", False) and not any(o.get("question", "").startswith("Which verification profile") for o in spec.get("resolved_questions") or [])
     if profile_ask:                                               # brief 194: the verification profile, with a default and a reason
         asks.append(_assur.profile_question(spec))
+    sec_ask = rt.cfg.interview in ("on", "oracle") and "production_secure" not in (rt.cfg.verif_sets or {}) and not any(
+        o.get("question", "").startswith(_assur.SECURITY_QUESTION) for o in spec.get("resolved_questions") or [])
+    if sec_ask:                                                   # brief 196: production_secure, with a default and a reason
+        asks.append(_assur.security_question(spec))
     def ask_one(q: Question) -> None:
         if rt.cfg.interview == "on":                                  # one question at a time, to the human
             ans = interrupt({"kind": "question", "id": q.id, "question": q.text, "default": q.default,
@@ -931,6 +935,12 @@ def _interview(rt: Runtime, spec: dict, state: State) -> tuple[dict, dict]:
         got = next((q for q in iv.questions if q.text.startswith(_p("graph/run/interview_4").format(r['id']))), None)
         found = [m for m in PROOF_METHODS if got and got.answer and m in got.answer.lower()]
         r["proof"] = found or propose_proof(str(r.get("text", "")))[0]
+    if sec_ask:                                                   # the answer is a variable: it joins the overrides and the pin
+        got = next((q for q in iv.questions if q.text.startswith(_assur.SECURITY_QUESTION)), None)
+        yes = _assur.security_from_answer(got.answer if got else None, _assur.security_question(spec)[1])
+        rt.cfg.verif_sets = {**(rt.cfg.verif_sets or {}), "production_secure": yes}
+        spec["production_secure"] = {"answer": got.answer if got else None, "status": got.status if got else "defaulted", "value": yes}
+        _prof.write_pin(rt.run_dir, rt.cfg.verif_profile, rt.cfg.verif_sets, replace=True, set_by="the interview (security question)")
     unconfirmed: list[str] = []
     if sdoc is not None:                                          # the interview's output: the confirmed settings
         from agent.graph import settings as _set
@@ -1678,7 +1688,7 @@ def new_runtime(cfg: Config, client: Callable | None = None, run_id: str | None 
     except Exception:                                      # CI: no private knowledge bank
         bank = None
     sess = Session(design=design, board=cfg.board, runner=runner, bank=bank, skill_routing=cfg.skill_routing,
-                   harness_arms=cfg.arms)
+                   harness_arms=cfg.arms, policy_run_dir=run_dir)
     from agent.models.resolver import Resolver
     table = cfg.model_table()
     tape, det = None, None

@@ -704,8 +704,11 @@ def build(s: Session, until: str = "bitstream", variant: str = "base") -> dict:
         raise SecurityError("tcl-allow-list", "refused: the XDC has commands outside the allow-list: " +
                             ", ".join(f.name for f in bad) + " (run check_constraints)")
     _refuse_on_scan(s, python=False, hdl=True)
-    r = s.runner.run("build", [str(s.root / "flow" / "run_vivado.sh"), str(s.design), variant], s.root,
-                     {"FDA_STOP_AFTER": until}, timeout=3600)
+    env = {"FDA_STOP_AFTER": until}
+    if getattr(s, "policy_run_dir", None):             # brief 196: the run's pinned security request, which the design's build.yaml cannot override
+        from agent.graph import profiles as _profiles
+        env.update(_profiles.security_env(s.policy_run_dir))
+    r = s.runner.run("build", [str(s.root / "flow" / "run_vivado.sh"), str(s.design), variant], s.root, env, timeout=3600)
     bdir = s.design / "build" / variant
     try:                                               # brief 106: inputs as they were before the run, stamped only if it succeeded
         from flow import stale_check
