@@ -10,7 +10,7 @@ Not in scope:
 - a board design; it was not programmed, and the 250 MHz constraint is on the 25 MHz oscillator pin for a timing study
 - a claim that relocation preserves a block's timing everywhere; the results say where it does and where it does not
 
-Kind: demonstration; written by hand. State: built. For an agent: [AGENT.md](AGENT.md).
+Kind: demonstration; written by a Claude Code session. State: built. For an agent: [AGENT.md](AGENT.md).
 
 <!-- prose:what -->
 <!-- /prose:what -->
@@ -63,7 +63,7 @@ Interfaces:
 | the scripted agent session; needs Python with PyYAML and jsonschema (the argument checks only; --rapidwright adds the real tools) | `python3 designs/b102_managed_pr/scripts/demo_managed_session.py` | no | about 1 min |
 | build and run the gates; needs local Vivado 2026.1 and a heavy slot (take_heavy_slot.sh) | `flow/run_vivado.sh designs/b102_managed_pr base` | yes | about 15 min |
 
-Tool: Vivado 2026.1. Build ID of the inputs at handover: `7874befe` (`python flow/manifest.py show designs/b102_managed_pr`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `93d158c`.
+Tool: Vivado 2026.1. Build ID of the inputs at handover: `38b9f4e0` (`python flow/manifest.py show designs/b102_managed_pr`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `5e2eab8`.
 
 | File | What |
 |---|---|

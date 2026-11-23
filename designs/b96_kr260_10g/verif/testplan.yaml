@@ -312,6 +312,7 @@ verification:
     method: formal
     title: SVA properties of the gray-pointer rate matcher with SymbiYosys (brief 115; designs/b96_kr260_10g/verif/formal/, results/b115); safety by k-induction, progress by BMC only; the recorded run re-proves every CI job, mutants included
     evidence: {file: results/116_traceability/b96_kr260_10g/pytest_junit.xml, reader: junit, tests: ["test_b115_formal::*"]}
+    rigour: [designs/b96_kr260_10g/verif/formal/rm_gp.sby]        # brief 143c: every assertion's antecedent reached, the assumptions' sanity covers reached, bounded results justified (flow/formal_rigour.py)
   - id: V-SVA-PLANNED
     requirements: [B96-F-PCS, B96-F-MAC, B96-S-RATEMATCH]
     method: assertion
@@ -428,6 +429,7 @@ verification:
     instrument: jtag_registers
     title: 100 receive restarts on build rm_gp, counters read over JTAG
     evidence: {file: results/b96e/hw/20261119_231251/rm_gp/stage3.json, reader: json}
+    build: designs/b96_kr260_10g/rm_gp/build.yaml     # the build that ran (brief 143a: its sources join the staleness check)
     pass_when:
       - {field: restarts.restarts, op: ge, value: 100}
       - {field: restarts.failed_to_lock, op: eq, value: 0}
@@ -458,6 +460,7 @@ verification:
     instrument: jtag_registers
     title: Laser polarity read back before the laser was enabled
     evidence: {file: results/b96e/hw/20261119_231251/rm_gp/stage3.json, reader: json}
+    build: designs/b96_kr260_10g/rm_gp/build.yaml     # the build that ran (brief 143a: its sources join the staleness check)
     pass_when: [{field: polarity_ok, op: "true"}, {field: polarity.off.tx_fault, op: eq, value: 0}]
     checks: [designs/b96_kr260_10g/rtl/kr260_10g_top.sv, designs/b96_kr260_10g/rtl/b96_core.sv]
   - id: V-HW-SYSMON-96E
@@ -466,6 +469,7 @@ verification:
     instrument: sysmon
     title: SYSMON at the start and end of the 96E run
     evidence: {file: results/b96e/hw/20261119_231251/rm_gp/session.json, reader: json}
+    build: designs/b96_kr260_10g/rm_gp/build.yaml     # the build that ran (brief 143a: its sources join the staleness check)
     pass_when: [{field: conditions_start.inside_roc, op: "true"}, {field: conditions_end.inside_roc, op: "true"}, {field: roc_ok, op: "true"}]
   - id: V-HW-SYSMON-EYE
     requirements: [B96-S-ROC]
@@ -480,6 +484,7 @@ verification:
     instrument: latency_loop
     title: Build rm_gp, 100 restarts, median of per-link minima
     evidence: {file: results/b96e/hw/20261119_231251/rm_gp/stage3.json, reader: json, field: restarts.E_min_per_link.median}
+    build: designs/b96_kr260_10g/rm_gp/build.yaml     # the build that ran (brief 143a: its sources join the staleness check)
     checks: *rtl_core
   - id: V-HW-LAT-E-97C
     requirements: [B96-P-LAT-E]
@@ -494,6 +499,7 @@ verification:
     instrument: latency_loop
     title: Build rm_gp, 100 restarts
     evidence: {file: results/b96e/hw/20261119_231251/rm_gp/stage3.json, reader: json, field: restarts.L_min_per_link.median}
+    build: designs/b96_kr260_10g/rm_gp/build.yaml     # the build that ran (brief 143a: its sources join the staleness check)
     checks: *rtl_core
   - id: V-HW-LAT-L-97C
     requirements: [B96-P-LAT-L]
@@ -508,6 +514,7 @@ verification:
     instrument: latency_loop
     title: Build rm_gp, D = L - 2E from the medians of minima
     evidence: {file: results/b96e/hw/20261119_231251/rm_gp/stage3.json, reader: json, field: D_clocks_from_medians_of_minima}
+    build: designs/b96_kr260_10g/rm_gp/build.yaml     # the build that ran (brief 143a: its sources join the staleness check)
     checks: *rtl_core
   - id: V-HW-EYE
     requirements: [B96-P-EYE]
@@ -523,6 +530,7 @@ verification:
     title: Build rm_gp_bypass on the KR260, 100 receive restarts (pre-registered, board run 2026-11-21, stamp 86037ce1)
     evidence: {file: results/b96f1/hw/20261120_215255/rm_gp_bypass/stage3.json, reader: json, field: restarts.E_min_per_link.median}
     checks: *rtl_core
+    build: designs/b96_kr260_10g/rm_gp_bypass/build.yaml     # the build that ran: its own b96_core.sv, gt_bp_*.sv, constraints and IP script
   - id: V-HW-OFFSET-PLANNED
     requirements: [B96-F-OFFSET]
     method: board_measurement
@@ -567,10 +575,17 @@ verification:
   - id: V-XVC-CDC-STRUCT
     requirements: [B96-S-CDC, B96-F-DBGXVC]
     method: timing
-    title: "The flow's post-synthesis CDC structure gate on dbg_xvc (open: 2203 crossings of the core's own hs_vec buses are not matched to their max-delay exceptions in this build; the exceptions exist in the routed design)"
-    evidence: {file: results/b131/builds/dbg_xvc/digest.json, reader: json}
+    title: "The flow's post-synthesis CDC structure gate on dbg_xvc (brief 140: AMD's CDC-15 waiver for the XPM handshake left report_cdc no row for the 2203 hs_vec crossings; the flow now reads their exception from the timing exceptions)"
+    evidence: {file: results/b140/builds/dbg_xvc/digest.json, reader: json}
     pass_when: [{field: gates.post_synth_cdc_structure_clean, op: "true"}]
     checks: [designs/b96_kr260_10g/dbg_xvc/rtl/xvc_debug.sv, designs/b96_kr260_10g/dbg_xvc/rtl/b96_core.sv]
+  - id: V-XVC-FLOW-GATES
+    requirements: [B96-F-DBGXVC]
+    method: timing
+    title: "Every flow gate of build dbg_xvc, synthesis to bitstream (brief 140: six that failed in brief 131 now pass, by flow fixes and no waiver; the eyescan and default builds are unchanged)"
+    evidence: {file: results/b140/builds/dbg_xvc/gates.json, reader: json}
+    pass_when: [{field: pass, op: "true"}]
+    checks: [designs/b96_kr260_10g/dbg_xvc/rtl/xvc_debug.sv, designs/b96_kr260_10g/dbg_xvc/rtl/b96_core.sv, designs/b96_kr260_10g/dbg_xvc/rtl/kr260_10g_top.sv]
   - id: V-XVC-VERDICT
     requirements: [B96-F-DBGXVC]
     method: sim_test

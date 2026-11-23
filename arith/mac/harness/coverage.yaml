@@ -1,0 +1,11 @@
+# Coverage targets of the MAC harness (arith brief 139a). Each bin is a Python expression over v (the inputs of one vector: rst, en, clr, a, b packed), r (the
+# model's accumulator after it) and p (the parameters); a bin is hit when it is true for at least `min` vectors. run_harness.py fails if a target is not met.
+bins:
+  - {name: sample_enabled, expr: "v['en'] and not v['rst']", min: 50}
+  - {name: bubble_en_low, expr: "not v['en'] and not v['rst']", min: 5}
+  - {name: clear_with_sample, expr: "v['clr'] and v['en'] and not v['rst']", min: 5}
+  - {name: clear_without_sample, expr: "v['clr'] and not v['en'] and not v['rst']", min: 1}
+  - {name: reset_applied, expr: "v['rst']", min: 2}
+  - {name: operands_zero, expr: "v['a'] == 0 or v['b'] == 0", min: 1}
+  - {name: accumulator_nonzero, expr: "r['acc'] != 0", min: 20}
+  - {name: accumulator_msb_set, expr: "r['acc'] >> (p['ACCW'] - 1) == 1", min: 3}

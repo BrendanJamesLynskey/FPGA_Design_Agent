@@ -1,0 +1,150 @@
+{
+ "function": "multiplier",
+ "tool": "Yosys 0.70+385 (git sha1 098e46a36, Release, Clang /usr/bin/clang++ 21.1.8)",
+ "jobs": 6,
+ "ok": 6,
+ "results": [
+  {
+   "name": "eq_8x8_signed",
+   "top": "mult_fv",
+   "params": {
+    "WA": 8,
+    "WB": 8,
+    "SIGNED": 1,
+    "STAGES_D": 3,
+    "REG_L": 1,
+    "REG_B": 1
+   },
+   "mode": "prove",
+   "depth": 5,
+   "engine": "boolector",
+   "claim": "dsp (3 stages), lut_array and booth_r4 (1 register each) == a plain signed `*`, 8 x 8: proved for all inputs (k-induction)",
+   "mutant": null,
+   "expected": "PASS",
+   "status": "PASS",
+   "ok": true,
+   "seconds": 59.1,
+   "failed_assertions": [],
+   "tail": ""
+  },
+  {
+   "name": "eq_8x8_unsigned",
+   "top": "mult_fv",
+   "params": {
+    "WA": 8,
+    "WB": 8,
+    "SIGNED": 0,
+    "STAGES_D": 2,
+    "REG_L": 0,
+    "REG_B": 0
+   },
+   "mode": "prove",
+   "depth": 5,
+   "engine": "boolector",
+   "claim": "dsp (2 stages), lut_array and booth_r4 (combinational) == a plain unsigned `*`, 8 x 8: proved for all inputs",
+   "mutant": null,
+   "expected": "PASS",
+   "status": "PASS",
+   "ok": true,
+   "seconds": 61.5,
+   "failed_assertions": [],
+   "tail": ""
+  },
+  {
+   "name": "eq_9x6_signed",
+   "top": "mult_fv",
+   "params": {
+    "WA": 9,
+    "WB": 6,
+    "SIGNED": 1,
+    "STAGES_D": 1,
+    "REG_L": 1,
+    "REG_B": 0
+   },
+   "mode": "prove",
+   "depth": 5,
+   "engine": "boolector",
+   "claim": "the same signed, 9 x 6 (a multiplier with an odd digit count): proved for all inputs",
+   "mutant": null,
+   "expected": "PASS",
+   "status": "PASS",
+   "ok": true,
+   "seconds": 19.4,
+   "failed_assertions": [],
+   "tail": ""
+  },
+  {
+   "name": "eq_6x9_unsigned",
+   "top": "mult_fv",
+   "params": {
+    "WA": 6,
+    "WB": 9,
+    "SIGNED": 0,
+    "STAGES_D": 0,
+    "REG_L": 1,
+    "REG_B": 1
+   },
+   "mode": "prove",
+   "depth": 5,
+   "engine": "boolector",
+   "claim": "the same unsigned, 6 x 9: proved for all inputs",
+   "mutant": null,
+   "expected": "PASS",
+   "status": "PASS",
+   "ok": true,
+   "seconds": 8.0,
+   "failed_assertions": [],
+   "tail": ""
+  },
+  {
+   "name": "mutant_booth_digit",
+   "top": "mult_fv",
+   "params": {
+    "WA": 6,
+    "WB": 6,
+    "SIGNED": 1,
+    "STAGES_D": 1,
+    "REG_L": 0,
+    "REG_B": 0
+   },
+   "mode": "bmc",
+   "depth": 4,
+   "engine": "boolector",
+   "claim": "a Booth multiplier whose +2 digit adds a is refuted",
+   "mutant": "bo_double_is_single",
+   "expected": "FAIL",
+   "status": "FAIL",
+   "ok": true,
+   "seconds": 0.5,
+   "failed_assertions": [
+    "P_BOOTH"
+   ],
+   "tail": ""
+  },
+  {
+   "name": "mutant_lut_sign_row",
+   "top": "mult_fv",
+   "params": {
+    "WA": 6,
+    "WB": 6,
+    "SIGNED": 1,
+    "STAGES_D": 1,
+    "REG_L": 0,
+    "REG_B": 0
+   },
+   "mode": "bmc",
+   "depth": 4,
+   "engine": "boolector",
+   "claim": "a LUT array that subtracts the wrong row is refuted",
+   "mutant": "la_sign_row",
+   "expected": "FAIL",
+   "status": "FAIL",
+   "ok": true,
+   "seconds": 0.5,
+   "failed_assertions": [
+    "P_LUT"
+   ],
+   "tail": ""
+  }
+ ]
+}

@@ -1,0 +1,13 @@
+schema: fpga-design-agent/formal_rigour/v1
+scope: "interlocks.sv with the configuration held stable after reset, bucket <= 4, refill 3..6, reload off (the assumptions in formal_interlocks.sv); every request field free"
+antecedents:
+  "a_grant_*": a_grant__ante
+  "a_pos_*": a_pos__ante
+sanity: [c_grant, c_reject_qty, c_reject_band, c_reject_token]
+depth:
+  bmc:
+    enough: true
+    why: >-
+      Cross-check only: the `prove` task (k-induction, depth 30) proves every assertion for every depth. The bounded run reaches past several
+      refill periods (the refill tick comes every 3..6 clocks, a request is answered in two), so each of the grant, reject and refill paths
+      is visited more than once.

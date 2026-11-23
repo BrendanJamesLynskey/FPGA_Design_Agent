@@ -1,0 +1,122 @@
+# Machine-readable specification of the log2 function on a mantissa (arith brief 139d). The prose is spec.md; the two agree (tests/test_log2_package.py).
+schema: fda-arith/spec/1
+function: log2
+title: Base-2 logarithm of a mantissa in [1, 2)
+model: arith/log2/model.py
+summary: "y = log2(m) for the mantissa m = 1 + x / 2**IW in [1, 2), the result an unsigned OW-bit fraction in [0, 1). Four implementations trade BRAM, DSP, LUTs, latency and accuracy: a direct table (correctly rounded, at most 8 input bits), a segment table with linear interpolation (one DSP), a segment table with a quadratic (two DSPs) and a hyperbolic CORDIC in vectoring mode (no DSP in the iterations, a stage per iteration). The general logarithm of a positive number is this core plus a normalisation that the caller owns (a leading-zero count and shift, as in brief 139b's lzc_norm; see Integration)."
+semantics:
+  - "x is the fraction x / 2**IW in [0, 1), the mantissa is m = 1 + x / 2**IW; y is read as the fraction y / 2**OW in [0, 1): y / 2**OW = log2(m)"
+  - "y is the variant's own arithmetic result rounded to nearest, ties upward, and clamped to [0, 2**OW - 1]; it is never wrapped"
+  - "table: y = round(T[x] / 2**(20 - OW)) where T is a 256-entry table of log2(1 + u) with 20 fractional bits, read at x * 2**(8 - IW) (so IW <= 8)"
+  - "lerp: the top SB bits of x pick a segment; with the table's value c0 and slope s1 (both 20 fractional bits, exact at the segment ends) and the position d in the segment (DB = IW - SB bits), y = round((c0 * 2**DB + s1 * d) / 2**(20 + DB - OW))"
+  - "poly2: the same segments with a quadratic a0 + a1 t + a2 t**2 (t = d / 2**DB) fitted at the three Chebyshev nodes of the segment; Horner in integers: p1 = (a2 d) >> DB (floor), q = a1 + p1, y = round((q d + a0 * 2**DB) / 2**(20 + DB - OW))"
+  - "cordic: hyperbolic vectoring from (X, Y) = (m + 1, m - 1) in units of 2**-(OW + G): NIT iterations (shifts 1, 2, 3, 4, 4, 5, ..., 13, 13, 14, ...; 4 and 13 are repeated) drive Y to 0 while the angle z accumulates atanh((m - 1) / (m + 1)); ln m = 2 z, so y = round(z * 2 / ln 2 / 2**G), with the constant 2 / ln 2 held to 20 fractional bits"
+  - "the four models differ in their rounding steps, so the variants are NOT bit-identical to each other; each variant is bit-exact against its own model (model.py) and within the stated error of the exact function"
+ports:
+  - {name: clk, dir: in, width: 1, text: "clock; unused by the combinational table configuration (REG = 0)"}
+  - {name: x, dir: in, width: IW, text: "the mantissa's fraction: m = 1 + x / 2**IW, an unsigned fraction x / 2**IW in [0, 1)"}
+  - {name: y, dir: out, width: OW, text: "log2(m) as an unsigned fraction y / 2**OW in [0, 1)"}
+parameters:
+  IW: {min: 4, max: 16, text: "bits of x; table: at most 8; lerp and poly2: more than SB; cordic: at most OW + G"}
+  OW: {min: 4, max: 16, text: "bits of y (the result's fractional bits)"}
+  REG: {values: [0, 1], text: "table only: 1 registers the output (latency 1), 0 is combinational"}
+  SB: {min: 3, max: 6, text: "lerp (3 to 6) and poly2 (3 to 5): bits of x that select the segment, 2**SB segments"}
+  NIT: {min: 4, max: 24, text: "cordic: iterations (stages), counting the two repeated ones"}
+  G: {min: 1, max: 8, text: "cordic: guard bits below the last place of y; OW + G <= 24"}
+signedness: "x and y are unsigned"
+exactness: "not exact: every variant is within the error stated in 'Accuracy' of the exact log2(m), which includes the rounding of y; the table variant is within half a last place plus the table's own rounding of 2**-21 of the function (0.03 last places at OW = 16, 0.0005 at OW = 8); the others are bit-exact against their own model but not against each other"
+latency_definition: "clocks from x being presented to y being valid: table REG, lerp 2, poly2 3, cordic NIT + 1; throughput is one result per clock in every variant"
+accuracy: "Error is |y - log2 ideal| in units of the last place of y (2**-OW), with the ideal log2(1 + x / 2**IW) taken in real arithmetic and not rounded, so a perfectly rounded result has error 0.5. The bound of each listed point is a measured maximum over every input of that point (python -m pytest arith/log2/tests/test_log2_accuracy.py), rounded up to 0.01. log2 has a large second derivative near m = 1, so lerp is worse here than for exp2 (about 3.4 last places at 16 bits and SB = 6); poly2 and the table sit near 0.5 to 0.65; cordic falls with NIT and G down to about 0.55 at OW = 14. A point not listed has no stated bound: measure it with model.max_error."
+contract:
+  protocol: "plain registered-or-combinational ports, no handshake: x is sampled every clock and one result leaves, with no valid, ready or backpressure. A caller that needs a valid bit delays its own valid by the variant's latency"
+  throughput: "one result per clock in every variant (initiation interval 1)"
+  latency: "per variant, in clocks: table REG (0 or 1), lerp 2, poly2 3, cordic NIT + 1"
+  reset: "none: no control state; the pipelines hold data only and their outputs are meaningless for latency clocks after power-up"
+  clock: "one clock, rising edge, no clock-enable and no gating; clk is present but unused when the latency is 0"
+  stall: "none: the pipeline cannot be frozen (no enable)"
+integration:
+  port_timing: "x goes straight to a ROM address (table, lerp, poly2) or to the CORDIC's first adder (cordic): register x in the caller if it comes from logic. y leaves a register in every variant but the table with REG = 0; cordic's output is a registered constant multiplier. table with REG = 1 is a BRAM-friendly read: the ROM output register is the output register. lerp and poly2 put the ROM output in a register before the multiplier, so the DSP is fed by flip-flops"
+  constraints: "no multicycle or false paths, one clock. DSP variants: keep the register stages un-merged so the DSP's registers can absorb them. For a general positive number v: normalise v = m * 2**e with m in [1, 2) (a leading-zero count and a left shift: arith/lzc_norm of brief 139b), take the mantissa's fraction as x, and log2(v) = e + y / 2**OW (the integer e is the exponent and y the fraction here, so the result is the fixed-point number e.y); ln v = log2(v) * ln 2 and log10 likewise by a constant multiply. Zero and negative inputs are the caller's to catch: this core's contract is the mantissa in [1, 2)"
+guess_wrong:
+  - "the input is the mantissa's fraction: x = 0 means m = 1 (log 0, y = 0) and x = 2**IW - 1 means m just below 2 (y just below 1); the leading one is not an input bit"
+  - "the output is a fraction of one: log2(m) for m in [1, 2) is in [0, 1), so y has no integer bit; the integer part of the logarithm of a general number is the exponent from the normalisation, outside this core"
+  - "the error is not 0.5 ulp for every variant: only the table variant (and poly2 at a good SB) is near it; lerp is several last places at 16 bits and cordic about 1.3; read the accuracy table of the variant before choosing"
+  - "the variants are not bit-identical to each other (different rounding steps): switching variant changes the low bits of y"
+  - "near m = 1 the function is steepest (slope 1.44 against 0.72 at m = 2), so the lerp and CORDIC errors are larger than for exp2 at the same widths"
+  - "table reads a 256-entry table whatever IW is (a narrower IW uses every 2**(8 - IW)-th entry), and IW above 8 is not supported by it; REG other than 0 or 1 behaves as 1"
+  - "the parameter ranges (SB inside 3 to 6 for lerp and 3 to 5 for poly2, SB < IW, NIT 4 to 24, OW + G <= 24, IW <= OW + G for cordic) are documented, not enforced by assertions: a value outside them gives wrong results without a message"
+  - "no reset and no valid: for latency clocks after power-up the output is not meaningful; there is no clock-enable"
+
+variants:
+  table:
+    file: rtl/log2_table.sv
+    module: log2_table
+    params: {IW: 8, OW: 12, REG: 1}
+    throughput: "1 per clock"
+    latency: "REG"
+    tradeoff: "no DSP and no multiplier: a 256-entry ROM and one rounding adder; correctly rounded to within 2**-21 of half a last place; limited to 8 input bits, and the table does not shrink with a narrower IW (it only reads every k-th entry)"
+    exhaustive_points: [{IW: 4, OW: 4, REG: 0}, {IW: 6, OW: 8, REG: 1}, {IW: 8, OW: 8, REG: 0}, {IW: 8, OW: 12, REG: 1}, {IW: 5, OW: 16, REG: 1}, {IW: 7, OW: 10, REG: 0}]
+    random_points: [{IW: 8, OW: 16, REG: 1}, {IW: 8, OW: 12, REG: 0}, {IW: 7, OW: 15, REG: 1}]
+    accuracy_points:
+      - {params: {IW: 8, OW: 12, REG: 1}, bound_ulp: {y: 0.5}}
+      - {params: {IW: 8, OW: 16, REG: 1}, bound_ulp: {y: 0.52}}
+      - {params: {IW: 6, OW: 8, REG: 0}, bound_ulp: {y: 0.5}}
+    expected_primitives:
+      a7: "0 DSP; one 256 x 20 ROM: a 36 Kb BRAM (RAMB36E1 in 18 Kb mode, output register absorbed when REG = 1) or about 100 to 150 LUT6 as distributed ROM; one 21-bit rounding adder; OW FFs when REG = 1"
+      k26: "0 DSP; as a7 with RAMB36E2 or LUT ROM; CARRY8 for the adder"
+    ooc_points: [{IW: 8, OW: 12, REG: 1}, {IW: 8, OW: 16, REG: 1}, {IW: 8, OW: 10, REG: 0}]
+    mutant_run: [{mode: exhaustive, params: {IW: 6, OW: 8, REG: 1}}, {mode: exhaustive, params: {IW: 8, OW: 12, REG: 0}}, {mode: randomised, params: {IW: 8, OW: 16, REG: 1}, n: 400}]
+  lerp:
+    file: rtl/log2_lerp.sv
+    module: log2_lerp
+    params: {IW: 12, OW: 12, SB: 5}
+    throughput: "1 per clock"
+    latency: "2"
+    tradeoff: "one DSP for slope times position and a small coefficient ROM (2**SB entries): the cheapest of the interpolating variants; error falls 4x per extra SB (about 3.4 last places at IW = OW = 16 and SB = 6)"
+    exhaustive_points: [{IW: 7, OW: 7, SB: 3}, {IW: 8, OW: 8, SB: 6}, {IW: 9, OW: 10, SB: 4}, {IW: 10, OW: 12, SB: 5}, {IW: 12, OW: 12, SB: 6}, {IW: 12, OW: 16, SB: 3}, {IW: 5, OW: 8, SB: 4}]
+    random_points: [{IW: 16, OW: 16, SB: 6}, {IW: 16, OW: 16, SB: 3}, {IW: 14, OW: 13, SB: 5}]
+    accuracy_points:
+      - {params: {IW: 12, OW: 12, SB: 5}, bound_ulp: {y: 1.2}}
+      - {params: {IW: 16, OW: 16, SB: 6}, bound_ulp: {y: 3.34}}
+      - {params: {IW: 14, OW: 13, SB: 5}, bound_ulp: {y: 1.89}}
+    expected_primitives:
+      a7: "1 DSP48E1 (22 x (IW - SB + 1) signed multiply-add); the 2**SB x 44-bit coefficient ROM in distributed RAM (a few dozen LUTs for SB <= 5; possibly a BRAM at SB = 6); about 3 x 22 FFs for the two stages (some absorbed by the DSP)"
+      k26: "1 DSP48E2; as a7"
+    ooc_points: [{IW: 12, OW: 12, SB: 5}, {IW: 16, OW: 16, SB: 6}, {IW: 16, OW: 14, SB: 4}]
+    mutant_run: [{mode: exhaustive, params: {IW: 9, OW: 10, SB: 4}}, {mode: exhaustive, params: {IW: 12, OW: 12, SB: 6}}, {mode: randomised, params: {IW: 16, OW: 16, SB: 5}, n: 400}]
+  poly2:
+    file: rtl/log2_poly2.sv
+    module: log2_poly2
+    params: {IW: 12, OW: 12, SB: 4}
+    throughput: "1 per clock"
+    latency: "3"
+    tradeoff: "two DSPs in a Horner chain and the smallest segment count for one accuracy: about 0.5 last places already at 16 segments, but one more DSP and one more clock than lerp, and a larger coefficient word per segment"
+    exhaustive_points: [{IW: 7, OW: 7, SB: 3}, {IW: 8, OW: 8, SB: 5}, {IW: 9, OW: 10, SB: 4}, {IW: 12, OW: 12, SB: 3}, {IW: 12, OW: 16, SB: 5}, {IW: 5, OW: 8, SB: 4}]
+    random_points: [{IW: 16, OW: 16, SB: 5}, {IW: 16, OW: 16, SB: 3}, {IW: 14, OW: 13, SB: 4}]
+    accuracy_points:
+      - {params: {IW: 12, OW: 12, SB: 4}, bound_ulp: {y: 0.52}}
+      - {params: {IW: 16, OW: 16, SB: 5}, bound_ulp: {y: 0.63}}
+      - {params: {IW: 14, OW: 13, SB: 4}, bound_ulp: {y: 0.64}}
+    expected_primitives:
+      a7: "2 DSP48E1 (22 x DB then 24 x DB signed multiplies); a 2**SB x 66-bit coefficient ROM in distributed RAM (SB <= 5); about 3 x 24 FFs of stage registers (some absorbed by the DSPs)"
+      k26: "2 DSP48E2; as a7"
+    ooc_points: [{IW: 12, OW: 12, SB: 4}, {IW: 16, OW: 16, SB: 5}, {IW: 16, OW: 14, SB: 3}]
+    mutant_run: [{mode: exhaustive, params: {IW: 9, OW: 10, SB: 4}}, {mode: exhaustive, params: {IW: 12, OW: 12, SB: 3}}, {mode: randomised, params: {IW: 16, OW: 16, SB: 5}, n: 400}]
+  cordic:
+    file: rtl/log2_cordic.sv
+    module: log2_cordic
+    params: {IW: 12, OW: 12, NIT: 16, G: 5}
+    throughput: "1 per clock"
+    latency: "NIT + 1"
+    tradeoff: "no DSP and no BRAM beyond a constant multiplier, in carry chains only: the only variant whose cost scales with the accuracy wanted (one stage per bit), at the price of a latency of NIT + 1 clocks and about 3 adders and 2 x (OW + G + 3) FFs per stage"
+    exhaustive_points: [{IW: 6, OW: 8, NIT: 10, G: 3}, {IW: 8, OW: 10, NIT: 12, G: 4}, {IW: 4, OW: 6, NIT: 5, G: 2}, {IW: 12, OW: 12, NIT: 14, G: 5}, {IW: 10, OW: 12, NIT: 16, G: 5}]
+    random_points: [{IW: 16, OW: 16, NIT: 20, G: 6}, {IW: 16, OW: 12, NIT: 16, G: 5}, {IW: 14, OW: 14, NIT: 24, G: 8}]
+    accuracy_points:
+      - {params: {IW: 12, OW: 12, NIT: 16, G: 5}, bound_ulp: {y: 1.4}}
+      - {params: {IW: 16, OW: 16, NIT: 20, G: 6}, bound_ulp: {y: 1.3}}
+      - {params: {IW: 14, OW: 14, NIT: 24, G: 8}, bound_ulp: {y: 0.56}}
+    expected_primitives:
+      a7: "0 BRAM; the z * 2 / ln 2 constant multiplier (about 24 x 22 bits: LUT adders or 1 to 2 DSP48E1), registered; per stage 3 add/subtract (about OW + G + 3 LUTs each in carry chains) and 3 registers of OW + G + 3, OW + G + 3 and OW + G + 2 bits; about 3 x NIT x (OW + G + 3) LUTs in total"
+      k26: "as a7 with CARRY8 chains"
+    ooc_points: [{IW: 12, OW: 12, NIT: 16, G: 5}, {IW: 16, OW: 16, NIT: 20, G: 6}, {IW: 16, OW: 16, NIT: 24, G: 8}]
+    mutant_run: [{mode: exhaustive, params: {IW: 8, OW: 10, NIT: 12, G: 4}}, {mode: exhaustive, params: {IW: 12, OW: 12, NIT: 14, G: 5}}, {mode: randomised, params: {IW: 16, OW: 16, NIT: 20, G: 6}, n: 400}]
