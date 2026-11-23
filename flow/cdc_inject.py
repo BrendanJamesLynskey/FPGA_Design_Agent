@@ -199,8 +199,10 @@ def defines(text: str) -> set[str]:
     return set(re.findall(r"^\s*module\s+(\w+)", strip_comments(text), re.M))
 
 
-def prepare(sources: list[Path], work_dir: Path, seed: int | None) -> tuple[list[Path], list[str], dict[str, Any]]:
-    """Sources to build, plusargs, report. ``seed`` None: no injection, only the stand-ins an XPM-using build needs."""
+def prepare(sources: list[Path], work_dir: Path, seed: int | None, skew: int | None = None) -> tuple[list[Path], list[str], dict[str, Any]]:
+    """Sources to build, plusargs, report. ``seed`` None: no injection, only the stand-ins an XPM-using build needs.
+    ``skew`` (brief 189): the most destination cycles one bit may be held in a row (default 1: the bits of a bus arrive at most one
+    cycle apart); 2 or more models a larger per-bit skew."""
     sources = [Path(s) for s in sources]
     info: dict[str, Any] = {"seed": seed, "sites": 0, "xpm": [], "regs": [], "unhandled": [], "files": []}
     texts = {s: s.read_text(errors="replace") for s in sources}
@@ -228,7 +230,11 @@ def prepare(sources: list[Path], work_dir: Path, seed: int | None) -> tuple[list
                 continue
         new.append(s)
     extra = [PKG] + ([XPM_MODELS] if used_xpm else [])
-    return extra + new, ([f"+CDC_INJ_SEED={seed}"] if seed is not None else []), info
+    plus = [f"+CDC_INJ_SEED={seed}"] if seed is not None else []
+    if seed is not None and skew and skew > 1:
+        plus.append(f"+CDC_INJ_SKEW={skew}")
+        info["skew"] = skew
+    return extra + new, plus, info
 
 
 def design_crosses(design: Path) -> bool:
