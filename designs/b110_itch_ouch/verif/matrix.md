@@ -4,7 +4,7 @@
 
 The human specifies the requirements and checks that the verification is thorough enough. The agent holds the knowledge to implement and to verify. You can open any of the implementation or the evidence, and you do not have to. Hardware on the board, with attached instruments, is a verification layer of its own: where a requirement depends on something outside the design (an optical link, a network card, a data source) it may be the only way to close it.
 
-**Summary.** 14 requirements (9 functional, 5 safety); 5 verified; 8 stale; 1 failing; 0 of 14 requirements agreed by a human, 0 human review(s) recorded.
+**Summary.** 14 requirements (9 functional, 5 safety); 13 verified; 1 failing; 0 of 14 requirements agreed by a human, 0 human review(s) recorded.
 
 Simulation only (xsim 2026.1, UVM 1.2; Icarus is not used by this bench). One recorded regression (results/188_trading_safety/uvm/summary.json) and one mutation record (results/170_itch_uvm/mutation_seed*.json). No board, no real feed, every message synthetic.
 
@@ -14,14 +14,14 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 | Requirement | Kind | State | sim test | UVM | SVA | formal | Lean | coverage | timing | sim measure | board | review |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| **B110-F-ORDER-BYTES** Every order that leaves with a good frame check sequence is byte exact | functional | stale |  | stale: [V-UVM-ORDERS](../../../results/188_trading_safety/uvm/summary.json) | stale: [V-UVM-SVA](../../../results/188_trading_safety/uvm/summary.json) |  |  |  |  |  |  |  |
-| **B110-F-MOLD** MoldUDP64 sessions, sequence gaps, duplicates, overlaps, heartbeats and broken packets are counted and delivered as the reference says | functional | stale |  | stale: [V-UVM-MOLD](../../../results/188_trading_safety/uvm/summary.json) |  |  |  |  |  |  |  |  |
-| **B110-F-BOOK** The ITCH decoder and the book keep the counters, the inexact flags and the candidates the reference model computes | functional | stale |  | stale: [V-UVM-BOOK](../../../results/188_trading_safety/uvm/summary.json) |  |  |  |  |  |  |  |  |
-| **B110-F-RISK** Every risk refusal is the first failing check, counted once, and no order starts on a refused candidate | safety | stale |  | stale: [V-UVM-RISK](../../../results/188_trading_safety/uvm/summary.json) |  |  |  |  |  |  |  |  |
-| **B110-F-UDP** Frames are forwarded or dropped by the first failing header check, and each drop is counted | functional | stale |  | stale: [V-UVM-UDP](../../../results/188_trading_safety/uvm/summary.json) |  |  |  |  |  |  |  |  |
-| **B110-S-STRICT** Under STRICT an order is never sent on an unverified or bad frame | safety | stale |  | stale: [V-UVM-STRICT](../../../results/188_trading_safety/uvm/summary.json) | stale: [V-UVM-SVA](../../../results/188_trading_safety/uvm/summary.json) |  |  |  |  |  |  |  |
-| **B110-F-SEQ-POISON** A poisoned order frame consumes no TCP sequence number | functional | stale |  | stale: [V-UVM-SEQ](../../../results/188_trading_safety/uvm/summary.json) |  |  |  |  |  |  |  |  |
-| **B110-V-COVERAGE** The bench's functional coverage plan is closed | functional | stale |  |  |  |  |  | stale: [V-UVM-COV](../../../results/188_trading_safety/uvm/summary.json) |  |  |  |  |
+| **B110-F-ORDER-BYTES** Every order that leaves with a good frame check sequence is byte exact | functional | verified |  | pass: [V-UVM-ORDERS](../../../results/188_trading_safety/uvm/summary.json) | pass: [V-UVM-SVA](../../../results/188_trading_safety/uvm/summary.json) |  |  |  |  |  |  |  |
+| **B110-F-MOLD** MoldUDP64 sessions, sequence gaps, duplicates, overlaps, heartbeats and broken packets are counted and delivered as the reference says | functional | verified |  | pass: [V-UVM-MOLD](../../../results/188_trading_safety/uvm/summary.json) |  |  |  |  |  |  |  |  |
+| **B110-F-BOOK** The ITCH decoder and the book keep the counters, the inexact flags and the candidates the reference model computes | functional | verified |  | pass: [V-UVM-BOOK](../../../results/188_trading_safety/uvm/summary.json) |  |  |  |  |  |  |  |  |
+| **B110-F-RISK** Every risk refusal is the first failing check, counted once, and no order starts on a refused candidate | safety | verified |  | pass: [V-UVM-RISK](../../../results/188_trading_safety/uvm/summary.json) |  |  |  |  |  |  |  |  |
+| **B110-F-UDP** Frames are forwarded or dropped by the first failing header check, and each drop is counted | functional | verified |  | pass: [V-UVM-UDP](../../../results/188_trading_safety/uvm/summary.json) |  |  |  |  |  |  |  |  |
+| **B110-S-STRICT** Under STRICT an order is never sent on an unverified or bad frame | safety | verified |  | pass: [V-UVM-STRICT](../../../results/188_trading_safety/uvm/summary.json) | pass: [V-UVM-SVA](../../../results/188_trading_safety/uvm/summary.json) |  |  |  |  |  |  |  |
+| **B110-F-SEQ-POISON** A poisoned order frame consumes no TCP sequence number | functional | verified |  | pass: [V-UVM-SEQ](../../../results/188_trading_safety/uvm/summary.json) |  |  |  |  |  |  |  |  |
+| **B110-V-COVERAGE** The bench's functional coverage plan is closed | functional | verified |  |  |  |  |  | pass: [V-UVM-COV](../../../results/188_trading_safety/uvm/summary.json) |  |  |  |  |
 | **B110-V-MUTATION** The bench kills at least 90 % of blind mutants of the path (worst case, over at least 30) | functional | FAILS |  |  |  |  |  |  |  | FAIL: [V-UVM-MUT](../../../results/170_itch_uvm/mutation_seed1.json) |  |  |
 | **B110-S-QTY** No quantity or price accumulator wraps, and no live book entry has zero size | safety | verified | pass: [V-SIM-QTY](../../../results/188_trading_safety/pytest_junit.xml) |  |  | bounded: [V-FORMAL-BOOK-QTY](../../../results/188_trading_safety/pytest_junit.xml) |  |  |  |  |  |  |
 | **B110-S-BANDREF** The price-band reference can come from software, independent of the strategy's own book, and is refused when too old | safety | verified | pass: [V-SIM-BANDREF](../../../results/188_trading_safety/pytest_junit.xml) |  |  |  |  |  |  |  |  |  |
@@ -33,87 +33,67 @@ Rows are requirements, columns are verification methods. A cell lists each item 
 
 ### Requirements with no passing evidence
 
-- `B110-F-ORDER-BYTES`: its evidence is stale
-- `B110-F-MOLD`: its evidence is stale
-- `B110-F-BOOK`: its evidence is stale
-- `B110-F-RISK`: its evidence is stale
-- `B110-F-UDP`: its evidence is stale
-- `B110-S-STRICT`: its evidence is stale
-- `B110-F-SEQ-POISON`: its evidence is stale
-- `B110-V-COVERAGE`: its evidence is stale
 - `B110-V-MUTATION`: an item fails
-
-### Stale evidence
-
-- `V-UVM-ORDERS`: changed since the evidence was recorded: designs/b110_itch_ouch/rtl/book_core.sv, designs/b110_itch_ouch/rtl/risk_glue.sv, designs/b96_kr260_10g/rm_gp_itch/rtl/itch_top.sv
-- `V-UVM-MOLD`: changed since the evidence was recorded: designs/b110_itch_ouch/rtl/book_core.sv, designs/b110_itch_ouch/rtl/risk_glue.sv, designs/b96_kr260_10g/rm_gp_itch/rtl/itch_top.sv
-- `V-UVM-BOOK`: changed since the evidence was recorded: designs/b110_itch_ouch/rtl/book_core.sv, designs/b110_itch_ouch/rtl/risk_glue.sv, designs/b96_kr260_10g/rm_gp_itch/rtl/itch_top.sv
-- `V-UVM-RISK`: changed since the evidence was recorded: designs/b110_itch_ouch/rtl/book_core.sv, designs/b110_itch_ouch/rtl/risk_glue.sv, designs/b96_kr260_10g/rm_gp_itch/rtl/itch_top.sv
-- `V-UVM-UDP`: changed since the evidence was recorded: designs/b110_itch_ouch/rtl/book_core.sv, designs/b110_itch_ouch/rtl/risk_glue.sv, designs/b96_kr260_10g/rm_gp_itch/rtl/itch_top.sv
-- `V-UVM-STRICT`: changed since the evidence was recorded: designs/b110_itch_ouch/rtl/book_core.sv, designs/b110_itch_ouch/rtl/risk_glue.sv, designs/b96_kr260_10g/rm_gp_itch/rtl/itch_top.sv
-- `V-UVM-SEQ`: changed since the evidence was recorded: designs/b110_itch_ouch/rtl/book_core.sv, designs/b110_itch_ouch/rtl/risk_glue.sv, designs/b96_kr260_10g/rm_gp_itch/rtl/itch_top.sv
-- `V-UVM-SVA`: changed since the evidence was recorded: designs/b110_itch_ouch/rtl/book_core.sv, designs/b110_itch_ouch/rtl/risk_glue.sv, designs/b96_kr260_10g/rm_gp_itch/rtl/itch_top.sv
-- `V-UVM-COV`: changed since the evidence was recorded: designs/b110_itch_ouch/rtl/book_core.sv, designs/b110_itch_ouch/rtl/risk_glue.sv, designs/b96_kr260_10g/rm_gp_itch/rtl/itch_top.sv
 
 ## Requirements in full
 
 ### B110-F-ORDER-BYTES: Every order that leaves with a good frame check sequence is byte exact
 
-- Kind: functional; state: stale; specification status: draft.
+- Kind: functional; state: verified; specification status: draft.
 - Source: `designs/b110_itch_ouch/docs/spec_notes.md#3-ouch-50-hardware-rtlouch_entersv-section-21-type-o-enter-order`
 - Each order frame with a good FCS equals the reference frame byte for byte (Ethernet, IPv4, TCP headers, SoupBinTCP 3.00 length and type, OUCH 5.0 Enter Order fields, ClOrdID, appendage), the orders come in order with UserRefNum rising by one per accepted candidate, and a frame with a wrong FCS is never an order.
-  - UVM test: **stale**, UVM scoreboard ORDERS check, every order frame byte for byte against the SV reference model (all sequences, all seeds): checks.ORDERS.mismatches = 0; checks.ORDERS.compared = 3603; failed = 0 (changed since the evidence was recorded: designs/b110_itch_ouch/rtl/book_core.sv, designs/b110_itch_ouch/rtl/risk_glue.sv, designs/b96_kr260_10g/rm_gp_itch/rtl/itch_top.sv). [evidence](../../../results/188_trading_safety/uvm/summary.json)
-  - assertion (SVA): **stale**, SVAs on the transmit words, the order-frame stream and the status vector, zero failures in every run: sva_failures = 0 (changed since the evidence was recorded: designs/b110_itch_ouch/rtl/book_core.sv, designs/b110_itch_ouch/rtl/risk_glue.sv, designs/b96_kr260_10g/rm_gp_itch/rtl/itch_top.sv). [evidence](../../../results/188_trading_safety/uvm/summary.json)
+  - UVM test: **pass**, UVM scoreboard ORDERS check, every order frame byte for byte against the SV reference model (all sequences, all seeds): checks.ORDERS.mismatches = 0; checks.ORDERS.compared = 3603; failed = 0. [evidence](../../../results/188_trading_safety/uvm/summary.json)
+  - assertion (SVA): **pass**, SVAs on the transmit words, the order-frame stream and the status vector, zero failures in every run: sva_failures = 0. [evidence](../../../results/188_trading_safety/uvm/summary.json)
 
 ### B110-F-MOLD: MoldUDP64 sessions, sequence gaps, duplicates, overlaps, heartbeats and broken packets are counted and delivered as the reference says
 
-- Kind: functional; state: stale; specification status: draft.
+- Kind: functional; state: verified; specification status: draft.
 - Source: `designs/b110_itch_ouch/docs/itch_ouch.md#2-behaviour-in-detail`
 - For every packet the packet, message, gap, missing, duplicate, overlap, session, heartbeat, end-of-session, short, truncated and bad-length counters and the gap, session-lock and end-of-session flags equal the reference model's at every checkpoint, with 1, 3 and 6 messages a packet and at every frame alignment.
-  - UVM test: **stale**, UVM scoreboard COUNTERS and FLAGS at every checkpoint (Mold counters and flags, gaps, duplicates, overlaps, heartbeats, truncation): checks.COUNTERS.mismatches = 0; checks.FLAGS.mismatches = 0; checks.COUNTERS.compared = 10332 (changed since the evidence was recorded: designs/b110_itch_ouch/rtl/book_core.sv, designs/b110_itch_ouch/rtl/risk_glue.sv, designs/b96_kr260_10g/rm_gp_itch/rtl/itch_top.sv). [evidence](../../../results/188_trading_safety/uvm/summary.json)
+  - UVM test: **pass**, UVM scoreboard COUNTERS and FLAGS at every checkpoint (Mold counters and flags, gaps, duplicates, overlaps, heartbeats, truncation): checks.COUNTERS.mismatches = 0; checks.FLAGS.mismatches = 0; checks.COUNTERS.compared = 10332. [evidence](../../../results/188_trading_safety/uvm/summary.json)
 
 ### B110-F-BOOK: The ITCH decoder and the book keep the counters, the inexact flags and the candidates the reference model computes
 
-- Kind: functional; state: stale; specification status: draft.
+- Kind: functional; state: verified; specification status: draft.
 - Source: `designs/b110_itch_ouch/docs/itch_ouch.md#2-behaviour-in-detail`
 - Message-type counters, malformed and skipped messages, unwatched locates, missing/duplicate/overflowing orders, ladder overflow and over-execution counters, the candidate count and the per-instrument inexact flags equal the reference model's, including the edge cases of an empty book, a full ladder, a table-index collision and a replace.
-  - UVM test: **stale**, UVM book edge-case sequence and random mix, counters and inexact flags against the reference model: checks.COUNTERS.mismatches = 0; checks.FLAGS.mismatches = 0; failed = 0 (changed since the evidence was recorded: designs/b110_itch_ouch/rtl/book_core.sv, designs/b110_itch_ouch/rtl/risk_glue.sv, designs/b96_kr260_10g/rm_gp_itch/rtl/itch_top.sv). [evidence](../../../results/188_trading_safety/uvm/summary.json)
+  - UVM test: **pass**, UVM book edge-case sequence and random mix, counters and inexact flags against the reference model: checks.COUNTERS.mismatches = 0; checks.FLAGS.mismatches = 0; failed = 0. [evidence](../../../results/188_trading_safety/uvm/summary.json)
 
 ### B110-F-RISK: Every risk refusal is the first failing check, counted once, and no order starts on a refused candidate
 
-- Kind: safety; state: stale; specification status: draft.
+- Kind: safety; state: verified; specification status: draft.
 - Source: `designs/b110_itch_ouch/docs/itch_ouch.md#2-behaviour-in-detail`
 - Not armed, kill switch, untrusted or gap-halted, inexact book, quantity, position limit per instrument, price band and missing bid refuse a candidate exactly as the reference does; the position and the order number advance only for an accepted candidate.
-  - UVM test: **stale**, UVM risk sequence, every refusal counter and the orders that follow: checks.COUNTERS.mismatches = 0; checks.ORDERS.mismatches = 0; failed = 0 (changed since the evidence was recorded: designs/b110_itch_ouch/rtl/book_core.sv, designs/b110_itch_ouch/rtl/risk_glue.sv, designs/b96_kr260_10g/rm_gp_itch/rtl/itch_top.sv). [evidence](../../../results/188_trading_safety/uvm/summary.json)
+  - UVM test: **pass**, UVM risk sequence, every refusal counter and the orders that follow: checks.COUNTERS.mismatches = 0; checks.ORDERS.mismatches = 0; failed = 0. [evidence](../../../results/188_trading_safety/uvm/summary.json)
 
 ### B110-F-UDP: Frames are forwarded or dropped by the first failing header check, and each drop is counted
 
-- Kind: functional; state: stale; specification status: draft.
+- Kind: functional; state: verified; specification status: draft.
 - Source: `designs/b96_kr260_10g/rm_gp_itch/docs/itch_integration.md#2-the-path-block-by-block`
 - Destination MAC (unicast or the group's multicast address), EtherType, IPv4 version and header length, fragments, protocol, destination address and port, UDP length against the IP length, and the IPv4 header checksum; EN = 0 drops everything.
-  - UVM test: **stale**, UVM header sequence, every drop reason, the multicast address and EN = 0, udp_strip counters against the reference model: checks.US.mismatches = 0; checks.US.compared = 3024 (changed since the evidence was recorded: designs/b110_itch_ouch/rtl/book_core.sv, designs/b110_itch_ouch/rtl/risk_glue.sv, designs/b96_kr260_10g/rm_gp_itch/rtl/itch_top.sv). [evidence](../../../results/188_trading_safety/uvm/summary.json)
+  - UVM test: **pass**, UVM header sequence, every drop reason, the multicast address and EN = 0, udp_strip counters against the reference model: checks.US.mismatches = 0; checks.US.compared = 3024. [evidence](../../../results/188_trading_safety/uvm/summary.json)
 
 ### B110-S-STRICT: Under STRICT an order is never sent on an unverified or bad frame
 
-- Kind: safety; state: stale; specification status: draft.
+- Kind: safety; state: verified; specification status: draft.
 - Source: `designs/b96_kr260_10g/rm_gp_itch/docs/itch_integration.md#4-the-late-frame-check-and-what-happens-to-an-order-on-a-bad-frame`
 - With STRICT set (the default, owner decision 31) no order leaves with a good FCS when the frame that carried its message has a bad FCS, or when that frame's verdict is not yet known at the order's last word; such an order leaves with a wrong FCS. Cut-through is a documented option with a measured window.
-  - UVM test: **stale**, UVM bad-FCS and tail-distance sequences, STRICT and cut-through, orders classed must, may and must-not against the measured window: checks.ORDERS.mismatches = 0; checks.ORDERCNT.mismatches = 0; failed = 0 (changed since the evidence was recorded: designs/b110_itch_ouch/rtl/book_core.sv, designs/b110_itch_ouch/rtl/risk_glue.sv, designs/b96_kr260_10g/rm_gp_itch/rtl/itch_top.sv). [evidence](../../../results/188_trading_safety/uvm/summary.json)
-  - assertion (SVA): **stale**, SVAs on the transmit words, the order-frame stream and the status vector, zero failures in every run: sva_failures = 0 (changed since the evidence was recorded: designs/b110_itch_ouch/rtl/book_core.sv, designs/b110_itch_ouch/rtl/risk_glue.sv, designs/b96_kr260_10g/rm_gp_itch/rtl/itch_top.sv). [evidence](../../../results/188_trading_safety/uvm/summary.json)
+  - UVM test: **pass**, UVM bad-FCS and tail-distance sequences, STRICT and cut-through, orders classed must, may and must-not against the measured window: checks.ORDERS.mismatches = 0; checks.ORDERCNT.mismatches = 0; failed = 0. [evidence](../../../results/188_trading_safety/uvm/summary.json)
+  - assertion (SVA): **pass**, SVAs on the transmit words, the order-frame stream and the status vector, zero failures in every run: sva_failures = 0. [evidence](../../../results/188_trading_safety/uvm/summary.json)
 
 ### B110-F-SEQ-POISON: A poisoned order frame consumes no TCP sequence number
 
-- Kind: functional; state: stale; specification status: draft.
+- Kind: functional; state: verified; specification status: draft.
 - Source: `designs/b96_kr260_10g/rm_gp_itch/docs/itch_integration.md#5-registers-and-what-a-user-could-guess-wrong`
 - The TCP sequence number of an order is the loaded number plus 59 for every segment that left with a good FCS; a frame poisoned (wrong FCS) by the multiplexer, because its trigger frame was bad or unverified, does not advance it.
-  - UVM test: **stale**, UVM sequence-number check on the datasheet's rule, exact and without a waiver in every run (brief 176 fixed the finding t_seq_poison made; the item still read the pre-fix fields until brief 188): checks.SEQ.mismatches = 0; checks.SEQ.compared = 538; failed = 0 (changed since the evidence was recorded: designs/b110_itch_ouch/rtl/book_core.sv, designs/b110_itch_ouch/rtl/risk_glue.sv, designs/b96_kr260_10g/rm_gp_itch/rtl/itch_top.sv). [evidence](../../../results/188_trading_safety/uvm/summary.json)
+  - UVM test: **pass**, UVM sequence-number check on the datasheet's rule, exact and without a waiver in every run (brief 176 fixed the finding t_seq_poison made; the item still read the pre-fix fields until brief 188): checks.SEQ.mismatches = 0; checks.SEQ.compared = 538; failed = 0. [evidence](../../../results/188_trading_safety/uvm/summary.json)
 
 ### B110-V-COVERAGE: The bench's functional coverage plan is closed
 
-- Kind: functional; state: stale; specification status: draft.
+- Kind: functional; state: verified; specification status: draft.
 - Source: `designs/b96_kr260_10g/rm_gp_itch/verif/uvm/README.md#functional-coverage`
 - Every bin of the bench's coverage plan (message types, messages a packet, Mold events, header drops, book edge cases, risk refusals, order outcomes, bad-FCS crosses, frame alignments, backpressure) is hit by the recorded regression.
-  - coverage: **stale**, Closure of the bench's functional coverage plan over the recorded regression: coverage.holes = [] (changed since the evidence was recorded: designs/b110_itch_ouch/rtl/book_core.sv, designs/b110_itch_ouch/rtl/risk_glue.sv, designs/b96_kr260_10g/rm_gp_itch/rtl/itch_top.sv). [evidence](../../../results/188_trading_safety/uvm/summary.json)
+  - coverage: **pass**, Closure of the bench's functional coverage plan over the recorded regression: coverage.holes = []. [evidence](../../../results/188_trading_safety/uvm/summary.json)
 
 ### B110-V-MUTATION: The bench kills at least 90 % of blind mutants of the path (worst case, over at least 30)
 
