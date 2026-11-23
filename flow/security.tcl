@@ -21,6 +21,30 @@ proc fda_security_apply {out props switches} {      ;# switches: kept for the ca
     close $f
 }
 
+# From an output pin, follow the nets through combinational cells (up to 3 levels) to the first register (FD*/LD*): {register-cell Q-net-load-count}, or {}.
+proc fda_reach_reg {pin depth} {
+    set net [get_nets -quiet -of_objects $pin]
+    if {$net eq ""} { return {} }
+    foreach ld [get_pins -quiet -leaf -of_objects $net -filter {DIRECTION == IN}] {
+        set c [get_cells -of_objects $ld]
+        set ref [get_property REF_NAME $c]
+        if {[regexp {^(FD|LD)} $ref]} {
+            set q [get_pins -quiet -of_objects $c -filter {DIRECTION == OUT}]
+            set qn [get_nets -quiet -of_objects [lindex $q 0]]
+            set n 0
+            if {$qn ne ""} { set n [llength [get_pins -quiet -leaf -of_objects $qn -filter {DIRECTION == IN}]] }
+            return [list $c $n]
+        }
+        if {$depth > 1} {
+            foreach o [get_pins -quiet -of_objects $c -filter {DIRECTION == OUT}] {
+                set r [fda_reach_reg $o [expr {$depth - 1}]]
+                if {$r ne ""} { return $r }
+            }
+        }
+    }
+    return {}
+}
+
 proc fda_security_dump {out} {
     set f [open $out/security_design.txt w]
     set d [current_design]
@@ -66,7 +90,9 @@ proc fda_security_dump {out} {
             if {$net ne ""} { set loads [get_pins -quiet -leaf -of_objects $net -filter {DIRECTION == IN}] }
             set l {}
             foreach ld [lrange $loads 0 5] { lappend l "[get_property REF_NAME [get_cells -of_objects $ld]]:$ld" }
-            puts $f "SYSMON_PIN $pn [llength $loads] $l"
+            set r [expr {[llength $loads] ? [fda_reach_reg $pin 3] : {}}]
+            if {$r eq ""} { set rs "reg none" } else { set rs "reg [lindex $r 0] qloads [lindex $r 1]" }
+            puts $f "SYSMON_PIN $pn [llength $loads] $rs :: $l"
         }
     }
     close $f

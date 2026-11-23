@@ -8,7 +8,7 @@
 **What is in scope** (owner, 2026-11-23): bitstream encryption and authentication settings, readback and JTAG-to-SYSMON settings,
 production hygiene (no debug cores or debug ports), SYSMON alarm thresholds wired to a latched safe shutdown, and the build's proof of
 each. **What is out** (human): key generation, storage and provisioning, **any eFUSE or BBRAM programming** (no code here writes or runs
-one; the only key material this module touches is the throw-away ``.nky`` Vivado writes next to a build that is never programmed), the PS
+one; no key file, key path or key value is read or recorded; the ``.nky`` Vivado writes beside an encrypted bitstream on a family that has that setting is git-ignored), the PS
 secure-boot chain, side-channel or certification claims.
 
 The request has five sub-switches, ``encrypt``, ``authenticate``, ``readback_off``, ``strip_debug`` and ``sysmon_shutdown``, under the master
@@ -264,8 +264,12 @@ def parse_dump(text: str) -> dict[str, Any]:
             d["sysmon"][cur]["attrs"][name] = val.strip()
         elif k == "SYSMON_PIN" and cur:
             pn, _, r = rest.partition(" ")
-            toks = r.split()
-            d["sysmon"][cur]["pins"][pn] = {"loads": (int(toks[0]) if toks and toks[0].isdigit() else 0), "load_cells": toks[1:]}
+            head, _, tail = r.partition(" :: ")
+            toks = head.split()
+            pin = {"loads": (int(toks[0]) if toks and toks[0].isdigit() else 0), "load_cells": tail.split(), "reg": None, "reg_qloads": 0}
+            if len(toks) >= 4 and toks[1] == "reg" and toks[2] != "none":
+                pin["reg"], pin["reg_qloads"] = toks[2], (int(toks[4]) if len(toks) > 4 and toks[3] == "qloads" and toks[4].isdigit() else 0)
+            d["sysmon"][cur]["pins"][pn] = pin
     return d
 
 
@@ -333,8 +337,10 @@ def sysmon_findings(dump: dict[str, Any], expected: dict[str, int]) -> list[str]
             pin = got["pins"].get(pn)
             if not pin or pin["loads"] < 1:
                 out.append(f"{c}: output {pn} drives nothing")
-            elif not any(re.match(r"^(FD|LD)", lc.split(":", 1)[0]) for lc in pin["load_cells"]):
-                out.append(f"{c}: output {pn} reaches no register in the first loads ({' '.join(pin['load_cells'][:3])})")
+            elif not pin.get("reg"):
+                out.append(f"{c}: output {pn} reaches no register within three cells ({' '.join(pin['load_cells'][:3])})")
+            elif pin.get("reg_qloads", 0) < 1:
+                out.append(f"{c}: output {pn} reaches register {pin['reg']}, whose output drives nothing")
     return out
 
 

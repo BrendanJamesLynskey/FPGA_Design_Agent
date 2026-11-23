@@ -3,6 +3,7 @@
 // led[0] toggles with the checksum of the words the core handed out, led[1] lights when any of the core's fault flags is set. On a SYSMON
 // alarm the design latches `shutdown`, holds the core in reset and drives both LEDs low (the safe state: no activity, outputs inactive).
 // Nothing here is a debug port: no ILA, no VIO, no JTAG-to-AXI, no BSCAN, no mark_debug. Not a held-out task; not run on a board.
+// (dbg/rtl/b196_top.sv is this file plus one ILA: the debug build that the production_secure check must fail.)
 module b196_top (
     input  logic       clk_25,
     output logic [1:0] led

@@ -23,9 +23,9 @@ The area is the *Security* attribute of Dependability (the taxonomy of Avizienis
 
 | Switch | What the build sets | What proves it (all read from files Vivado or the flow wrote in the build directory) |
 |---|---|---|
-| `sec_encrypt` | see "What the family allows" | the property read back from the design after `write_bitstream`, the `write_bitstream -verbose` log, the bitstream file |
-| `sec_authenticate` | likewise | likewise |
-| `sec_readback_off` | `BITSTREAM.READBACK.SECURITY`, `BITSTREAM.GENERAL.JTAG_SYSMON`, `BITSTREAM.GENERAL.DISABLE_JTAG` | the three properties read back after `write_bitstream` |
+| `sec_encrypt` | nothing on a Zynq MPSoC (see "What the family allows") | handed to the owner: listed in the record, no gate |
+| `sec_authenticate` | nothing on a Zynq MPSoC | likewise |
+| `sec_readback_off` | `BITSTREAM.READBACK.SECURITY` Level1, `BITSTREAM.GENERAL.JTAG_SYSMON` Disable, `BITSTREAM.GENERAL.DISABLE_JTAG` Yes | the three properties read back after `write_bitstream`, and the `write_bitstream -verbose` log that prints them |
 | `sec_strip_debug` | nothing: it is a property of the design | `get_debug_cores`, the cells of a debug hub, ILA, VIO or bridge, the BSCAN primitives, `MARK_DEBUG` nets, debug-class port names, and the absence of a `.ltx` probe file, all from the implemented design |
 | `sec_sysmon_shutdown` | nothing: the thresholds are the SYSMONE4 `INIT_xx` attributes in the RTL, generated from the board file | the `INIT_xx` attributes of the SYSMONE4 cell in the implemented design against the values recomputed from `boards/<board>/board.yaml` `operating_limits`, and that each alarm output drives a register |
 
@@ -35,10 +35,9 @@ The area is the *Security* attribute of Dependability (the taxonomy of Avizienis
 build as `FDA_SECURITY`; a `security:` key in `build.yaml` that disagrees with the pin does not change the build and fails the gate
 `security_policy_pin`. With `--interview off` nothing asks and the switch stays off unless set.
 
-**Keys.** The flow never makes, reads, stores or programs a key. Vivado writes an `.nky` beside an encrypted bitstream: that file is a secret, it is
-git-ignored (`*.nky`), it is never copied into a record, and a test fails if a key-like file is tracked. Key files the owner supplies are named by
-environment variables (`FDA_SECURITY_KEYFILE`, `FDA_SECURITY_RSAKEYFILE`), never recorded by path. The harness's scrubbed environment forwards only what the
-owner lists in `~/.config/fpga_design_agent/tools.yaml`. A test key is acceptable only as a throw-away file for a build that is never programmed.
+**Keys.** The flow never makes, reads, names, stores or programs a key; there is no key variable or key option in it. On a family where Vivado encrypts the
+bitstream it writes an `.nky` beside it: that file is a secret, it is git-ignored (`*.nky`), it is never copied into a record, and a test fails if a key-like file is tracked. The result collector refuses
+any file with a 64-digit hex string. A test key would be acceptable only as a throw-away file for a build that is never programmed; this demonstration needed none.
 
 ## The system monitor and the safe shutdown
 
@@ -56,7 +55,7 @@ and the build check recomputes them from the same file and compares them with th
 
 How the codes are made (our reading of the vendor model `unisims/SYSMONE4.v` of Vivado 2026.1 and of the transfer functions the repository already used
 on the owner's board in `designs/b96_kr260_10g/host/b96c_ppm.py`): temperature = code x 501.3743 / 1024 - 273.6777 C, a supply = code / 1024 x 3 V; the upper
-thresholds are rounded up and the lower ones down, so a reading inside the limits never fires. Alarms used: temperature (ALM0), VCCINT (ALM1), VCCAUX (ALM2),
+thresholds are rounded up and the lower ones down, so a reading inside the limits never fires. The vendor simulation model uses a slightly different temperature function (about 0.9 C higher at 85 C), so the simulation feeds it the matching code. Alarms used: temperature (ALM0), VCCINT (ALM1), VCCAUX (ALM2),
 VCCBRAM (ALM3) and the device's over-temperature output. **The user over-temperature limit is not set**: the model, and the data sheet's register, ignore it
 unless its low four bits are 0011, which also enables the automatic device shutdown (the part de-configures itself); this design keeps the device's own
 default limit as the last backstop and makes the shutdown a latch in the fabric.
@@ -67,4 +66,54 @@ sets the continuous sequence mode (bits 15:12 of `INIT_41`) and lists the channe
 JTAG access to the system monitor could change its thresholds, so `sec_readback_off` also sets `BITSTREAM.GENERAL.JTAG_SYSMON` to `Disable` (UG1085 ch. 9 and
 UG908 table of Zynq UltraScale+ MPSoC bitstream settings). With it set, nothing outside the bitstream can lower the alarm limits after configuration.
 
-RESULTS_PLACEHOLDER
+## What the family allows (measured on Vivado 2026.1, xck26)
+
+The K26 is a **Zynq UltraScale+ MPSoC** part. On a design for it `BITSTREAM.ENCRYPTION.*` and `BITSTREAM.AUTHENTICATION.*` are **read-only**: `set_property` gives
+`Cannot change read-only property` ([results/b196/probe_xck26_properties.txt](../results/b196/probe_xck26_properties.txt)); the same session accepted
+`BITSTREAM.READBACK.SECURITY`, `BITSTREAM.GENERAL.JTAG_SYSMON` and `BITSTREAM.GENERAL.DISABLE_JTAG`. This agrees with the documents: the settings table for
+the MPSoC (UG908 table 43) has no encryption or authentication row, whereas the Kintex and Virtex UltraScale+ table (UG908 table 40) has them, and UG1085 ch. 12
+puts the encryption and authentication of the PL partition in the boot image and the CSU. So for this family:
+
+- `sec_encrypt` and `sec_authenticate` are **handed to the owner**: the build record lists them under `handed_to_owner` with the reason, no gate calls them met, and
+  `security_profile_met` means "every gate that applies passed", not "encrypted". The boot image (bootgen), its key and the eFUSE or BBRAM choice are the PS
+  secure-boot chain and the key, which are the owner's.
+- `BITSTREAM.CONFIG.SECURITY` is not a property (a wrong name; the right one is `BITSTREAM.READBACK.SECURITY`).
+- Kintex and Virtex UltraScale+ would set encryption and RSA authentication with `write_bitstream` (UG908 table 40, XAPP1267 as UG908 cites it, not read here); a part
+  of another family is refused by `prepare.py` (`production_secure has been measured on UltraScale+ (Zynq MPSoC) only`) until it is measured.
+
+## Results
+
+Records in [results/b196](../results/b196/README.md). Three builds of the same part, Vivado 2026.1, one run each:
+
+| build | security gates | what the check found |
+|---|---|---|
+| plain (no request) | none | no `security_*` gate exists for a build with no request |
+| `production_secure` | all that apply pass; encryption and authentication handed to the owner | the three properties read back (`LEVEL1`, `DISABLE`, `YES`); no debug core, cell, BSCAN, marked net or probe file; SYSMONE4 attributes equal the board-file values; every alarm output reaches the shutdown register |
+| `production_secure`, debug variant (one ILA) | `security_strip_debug` and `security_profile_met` FAIL | two debug cores (the hub and the ILA), a BSCAN primitive, sixteen marked nets |
+
+Cost: the production build has the same LUT, FF, block RAM and slack as the plain build (the switch sets bitstream properties and the checks read the design) and the
+same build time to the tenth of a second (one run each). The debug build adds 1023 LUT and 1832 FF, and needs about 8 GB to build (the debug hub generation hit a
+4 GB and then a 6 GB cap).
+
+The system-monitor thresholds were also run through the vendor's simulation model, sixteen readings (inside and outside each limit): see
+[results/b196/sysmon_sim.json](../results/b196/sysmon_sim.json).
+
+## What a user could get wrong
+
+- **A passed gate is a statement about Vivado's output, not about an attacker.** Nothing here was measured against one. No certification (FIPS, Common Criteria) and no side-channel resistance is claimed.
+- **`security_profile_met` is not "encrypted".** On a Zynq MPSoC encryption and authentication are not done by this build; the record says so under `handed_to_owner`.
+- **The request is not the evidence.** The gates read the property back after `write_bitstream`, and the debug inventory from the implemented design; a setting that was asked for and not applied fails.
+- **`security:` in `build.yaml` does not beat the pin.** A disagreement fails `security_policy_pin`; with `--interview off` the switch is off unless `--set` turned it on.
+- **Disabling JTAG access to the system monitor and the BSCAN block has a price.** The hardware manager cannot read the monitor or reach a BSCAN user register after configuration; a power cycle restores it before the next configuration.
+- **The shutdown is a latch.** After one alarm the design stays in reset until power or a new configuration clears it. A noisy supply at the edge of a limit will stop it; the thresholds sit exactly at the data-sheet limits with no margin for the monitor's own error (about 3 C on the temperature, DS925 note 16).
+- **The limits are an assumption for this grade.** The K26 `-2LV-c` grade is not named in DS925's table; the board file marks them `assumption`.
+- **An unmodelled primitive stays unproved.** The check follows each alarm output through up to three combinational cells to a register and to that register's fanout; it does not prove that the register's output resets everything that matters (the simulation bench of the top does that for this design).
+- **A debug core inside a block the agent did not write** (an AMD IP with its own debug option, a vendor netlist) is found only if it appears as a debug core, hub, BSCAN primitive or marked net in the implemented design.
+- **Keys.** Nothing here makes or programs one. Vivado's `.nky` (on a family where encryption is a Vivado setting) is a secret and git-ignored. Key files the owner supplies are theirs.
+
+## What the owner does (the agent writes no command for any of it)
+
+1. Decide the boot-image secure-boot approach for the K26 (UG1085 ch. 12, bootgen) and who holds the keys.
+2. Generate and store the keys; program eFUSE or BBRAM, if at all, with the AMD tools and the board's rules. These steps are irreversible.
+3. Review the boot image's encryption and authentication settings, since this build only lists them as handed over.
+

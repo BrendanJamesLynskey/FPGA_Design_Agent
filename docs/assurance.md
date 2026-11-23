@@ -175,7 +175,7 @@ Results for that structure on the same family) before applying it. A block the u
 2. **Clarify (stage 0).** If no profile was given and the interview is on, one question proposes one (default from the spec's words, reason, expected extra
    time). If the profile asks for structures (`dependability: interview`), one question per block class found in the spec (memories, state machines,
    counters, internal buses) states the measured cost of the structure and proposes "protect" for memories and state machines and "do not protect" for the
-   rest. The answers go into `spec.yaml` (`verif_profile`, `dependability`); a block the user does not name is not changed.
+   rest. The answers go into `spec.yaml` (`verif_profile`, `dependability`); a block the user does not name is not changed. With the interview on, one more question asks whether this is a production build (`production_secure`, brief 196: default from the spec's words, reason with the measured cost); the answer joins the pin and every later build gets it as `FDA_SECURITY`.
 3. **Flow.** `flow/assurance.py` and `flow/assurance_profiles.py` run the netlist checks and the cost and fault measurements. They run on the
    development design here; wiring them in as a run stage is the follow-up (a stage needs a gate and a heavy slot).
 4. **Run summary.** `verification_profile` in `summary.json`: the profile, every override, the effective switches, the switches that are only recorded,

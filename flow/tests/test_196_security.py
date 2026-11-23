@@ -92,7 +92,7 @@ def _dump(init, ot_loads=1, extra=""):
     lines += [f"SYSMON_ATTR {k} 16'h{v:04X}" for k, v in init.items()]
     for pn in ("OT", "ALM[0]", "ALM[1]", "ALM[2]", "ALM[3]", "ALM[4]", "ALM[5]", "ALM[6]"):
         n = ot_loads if pn == "OT" else 1
-        lines.append(f"SYSMON_PIN {pn} {n} FDRE:u_guard/u_shutdown/cause_reg[0]/D" if n else f"SYSMON_PIN {pn} 0")
+        lines.append(f"SYSMON_PIN {pn} {n} reg u_guard/u_shutdown/shutdown_reg qloads 7 :: LUT6:u_guard/u_shutdown/x/I0" if n else f"SYSMON_PIN {pn} 0 reg none :: ")
     return "\n".join(lines) + "\n" + extra
 
 
@@ -152,6 +152,8 @@ def test_sysmon_thresholds_and_wiring_are_checked(tmp_path):
     _build(tmp_path, _dump(init, ot_loads=0), PROPS)
     r = S.evaluate(tmp_path)
     assert r["gates"]["security_sysmon_shutdown"] is False and any("OT drives nothing" in f["what"] for f in r["findings"])
+    _build(tmp_path, _dump(init).replace("qloads 7", "qloads 0"), PROPS)
+    assert any("drives nothing" in f["what"] for f in S.evaluate(tmp_path)["findings"])
     _build(tmp_path, _dump(init).replace("SYSMON_CELL u_guard/u_sysmon", "SYSMON_CELL_X").replace("SYSMON_ATTR", "X").replace("SYSMON_PIN", "Y"), PROPS)
     assert "no SYSMONE4 cell" in " ".join(f["what"] for f in S.evaluate(tmp_path)["findings"])
 

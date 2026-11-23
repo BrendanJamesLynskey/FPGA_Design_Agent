@@ -111,10 +111,11 @@ def security_question(spec: dict[str, Any]) -> tuple[str, str, str]:
     m = re.search(_SECURITY_WORDS, spec_text(spec))
     default = "yes" if m else "no"
     why = (f"the spec mentions '{m.group(0)}'" if m else "nothing in the spec asks for a protected or production build")
-    text = (SECURITY_QUESTION + " A yes turns on: bitstream encryption and authentication, readback and JTAG access to the system monitor off, "
-            "no debug core or debug port in the built design, and system-monitor alarms wired to a latched safe shutdown; the build then fails a gate "
-            "for each of these that Vivado's own outputs do not show. You keep the key: the agent never makes, stores or programs one (eFUSE and "
-            "BBRAM are yours). Answer yes or no.")
+    text = (SECURITY_QUESTION + " A yes turns on: readback security and JTAG access to the system monitor and the BSCAN block off, no debug core or debug "
+            "port in the built design, and system-monitor alarms wired to a latched safe shutdown; the build then fails a gate for each of these that "
+            "Vivado's own outputs do not show. Bitstream encryption and authentication are requested too, but on a Zynq MPSoC (the KR260) they are "
+            "boot-image steps that are yours: the record lists them as handed over, never as done. You keep the key: the agent never makes, stores or "
+            "programs one (eFUSE and BBRAM are yours). Answer yes or no.")
     return text, default, f"{why}. {security_cost_text()}"
 
 

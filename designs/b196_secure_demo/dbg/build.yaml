@@ -1,0 +1,16 @@
+# The debug build of the production_secure demonstration (brief 196): rtl/b196_top.sv plus one ILA (AMD IP, ip/amd_ip_ila.tcl). Never a production build.
+#   FDA_SECURITY='{"production_secure": true}' flow/run_vivado.sh designs/b196_secure_demo/dbg base      (the security gate fails: a debug core is in the design)
+top: b196_top
+part: xck26-sfvc784-2LV-c
+board: kr260
+sources:
+  - designs/b194_assurance/rtl/*.sv
+  - designs/b196_secure_demo/rtl/b196_shutdown.sv
+  - designs/b196_secure_demo/rtl/b196_sysmon_guard.sv
+  - designs/b196_secure_demo/rtl/b196_sysmon_pkg.sv
+  - designs/b196_secure_demo/dbg/rtl/b196_top.sv
+constraints:
+  - designs/b196_secure_demo/design.xdc
+ip_tcl:
+  - designs/b196_secure_demo/dbg/ip/amd_ip_ila.tcl
+generics: {}

@@ -78,8 +78,8 @@ SWITCHES: tuple[Switch, ...] = (
     # verification level, so no profile turns the master on: it is the user's own request (the interview asks, with a reason).
     Switch("production_secure", BOOL, "design security of a production build: the sub-switches below act when this is on, and the build fails a gate "
            "for any that Vivado's own outputs do not show", "flow/security.py (FDA_SECURITY, flow/build.tcl, gate security_profile_met)", True),
-    Switch("sec_encrypt", BOOL, "bitstream encryption (AES-256, key in BBRAM or eFUSE; no key is made or programmed here)", "flow/security.py", True),
-    Switch("sec_authenticate", BOOL, "bitstream authentication", "flow/security.py", True),
+    Switch("sec_encrypt", BOOL, "bitstream encryption (no key is made or programmed here; on a Zynq MPSoC it is a boot-image step the owner does, listed in the record, never counted as met)", "flow/security.py", True),
+    Switch("sec_authenticate", BOOL, "bitstream authentication (as encryption: the owner's boot-image step on a Zynq MPSoC)", "flow/security.py", True),
     Switch("sec_readback_off", BOOL, "readback security level and JTAG access to the system monitor disabled", "flow/security.py", True),
     Switch("sec_strip_debug", BOOL, "no ILA, VIO, debug bridge or other debug core, no debug port, in the built design", "flow/security.py", True),
     Switch("sec_sysmon_shutdown", BOOL, "system-monitor alarm thresholds set from the board's operating limits and wired to a latched safe shutdown",

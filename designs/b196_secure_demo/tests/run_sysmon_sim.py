@@ -36,12 +36,11 @@ SCENARIOS = [("nominal", "temp", 60.0, False),
 
 def model_temp(c: float) -> float:
     """The temperature to give the vendor model so that it digitises the code the data sheet's transfer function gives for ``c`` degrees.
-    The model (unisims/SYSMONE4.v, adc_temp_result) uses code16 = (T + 273.15) x 0.0020358 x 65535, i.e. a 10-bit code of (T + 273.15) x 2.0846; the
-    function this repository read back on the owner's board (flow/security.py: code x 501.3743 / 1024 - 273.6777) gives a different code for the same
-    temperature (13 codes apart at 85 C, about 6 C). The thresholds follow the second; the model is fed the matching code. results/b196/sysmon_sim.json
-    records both."""
+    For SIM_DEVICE ZYNQ_ULTRASCALE the model (unisims/SYSMONE4.v, adc_temp_result) uses code16 = (T + 280.2308787) x 0.00196343 x 65535, i.e. a 10-bit
+    code of (T + 280.23) x 2.0105; the function this repository read back on the owner's board (flow/security.py: code x 501.3743 / 1024 - 273.6777) gives
+    a code about 1.8 lower at 85 C (0.9 C). The thresholds follow the second; the model is fed the matching code. results/b196/sysmon_sim.json records both."""
     code = (c + security.TEMP_OFFSET) * 1024.0 / security.TEMP_SCALE
-    return code / ((0.0020358 * 65535.0) / 64.0) - 273.15
+    return code * 64.0 / (0.00196343 * 65535.0) - 280.2308787
 
 
 def stim(field, value, at_ns):
@@ -89,7 +88,7 @@ def main() -> int:
     res = {"tool": "xsim, UNISIM model SYSMONE4 (Vivado 2026.1)", "limits_from": "boards/kr260/board.yaml operating_limits", "sim_ns": a.ns,
            "step_at_ns": a.at_ns, "nominal": NOMINAL, "init": {k: f"16'h{v:04X}" for k, v in security.sysmon_init(security.limits_of("kr260")).items()},
            "scenarios": rows, "all_ok": all(r["ok"] for r in rows), "wall_s": round(time.time() - t0, 1),
-           "temperature_scale_note": "the model's own temperature transfer function differs from the one the thresholds use (13 codes, about 6 C, at 85 C); readings are given on the data-sheet scale and converted for the model (model_temp)", "limits_of_the_method": "the vendor simulation model, not silicon; no ADC error; one reading step per run"}
+           "temperature_scale_note": "the model's own temperature transfer function differs from the one the thresholds use (about 1.8 codes, 0.9 C, at 85 C); readings are given on the data-sheet scale and converted for the model (model_temp)", "limits_of_the_method": "the vendor simulation model, not silicon; no ADC error; one reading step per run"}
     if a.out:
         Path(a.out).parent.mkdir(parents=True, exist_ok=True)
         Path(a.out).write_text(json.dumps(res, indent=1) + "\n")
