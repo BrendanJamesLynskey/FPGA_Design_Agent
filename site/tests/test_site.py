@@ -128,6 +128,7 @@ import pytest  # noqa: E402
 import yaml  # noqa: E402
 
 import expertise  # noqa: E402
+ROOT_ = Path(__file__).resolve().parents[2]
 
 
 def _yaml():
@@ -254,8 +255,9 @@ from html import escape as html_escape  # noqa: E402
 def test_every_drawer_lists_the_matrix_rows_for_its_area():
     fd = json.loads((SITE / "data" / "family_diffs.json").read_text())
     x = json.loads((SITE / "data" / "expertise.json").read_text())
+    y = {a["id"]: a for a in _yaml()["areas"]}
     for a in x["areas"]:
-        want = fd["areas"][a["id"]]
+        want = expertise.family_of(y[a["id"]], fd)          # an area with family_from (brief 185) shows named rows of another matrix area
         assert a["family"]["rows"] == want["rows"] and a["family"]["rows"], a["id"]
         assert a["family"]["docs"] == want["docs"], a["id"]
         for r in a["family"]["rows"]:
@@ -599,3 +601,28 @@ def test_readmes_and_docs_name_only_vivado_2026_1():
     found = {rel: sorted(release_tokens(checked_text(rel, p))) for rel, p in published_files()
              if not rel.startswith("site/") and release_tokens(checked_text(rel, p))}
     assert not found, f"README/docs name another Vivado release: {found}"
+
+
+# ---- brief 185: the DSP-slice drawer -------------------------------------------------------------------------------------
+def test_dsp_slices_drawer_has_three_plots_and_is_measured_not_checked():
+    x = json.loads((SITE / "data" / "expertise.json").read_text())
+    a = next(a for a in x["areas"] if a["id"] == "dsp_slices")
+    assert a["level"] == "measured" if "level" in a else a["level_label"] == "Measured in Vivado"
+    assert [f["kind"] for f in a["figures"]] == ["mul_depth", "dot_pareto", "dsp_width"]
+    html = (SITE / "public" / "expertise.html").read_text()
+    seg = html[html.index('id="dsp_slices"'):]
+    assert seg.count('class="dspfig"') >= 3 and seg.count("<svg") >= 6        # a wide and a narrow drawing of each
+    assert "Checked by the flow" not in seg.split("</details>")[0]          # the advisory check does not raise the level
+
+
+def test_dsp_figure_numbers_are_the_committed_measurements():
+    import dsp_figures
+    d = dsp_figures.data("mul_depth")
+    for p in d["data"]["panels"]:
+        pts = json.loads((ROOT_ / "results" / "185_dsp_slices" / "data" / f'{p["key"]}.json').read_text())["points"]
+        ids = {(q["latency_clocks"], round(q["fmax_mhz"])) for q in pts if q["kind"] == "mul" and q["params"]["WA"] == 18 and q["params"]["RSTP"] == 0}
+        assert {(x["latency"], x["fmax"]) for x in p["dots"]} == ids
+    for kind in ("mul_depth", "dot_pareto", "dsp_width"):
+        for lay in ("wide", "narrow"):
+            svg = dsp_figures.render(kind, {"title": "t", "data": dsp_figures.data(kind)["data"]}, lay)
+            assert svg.startswith("<svg") and "NaN" not in svg and svg.count("<text") > 8

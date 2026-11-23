@@ -102,14 +102,16 @@ def _scatter(panel: dict, x0: float, y0: float, w: float, h: float, xlab: str, l
     if panel.get("line"):
         pts = " ".join(f'{X(p["latency"]):.1f},{Y(p["fmax"]):.1f}' for p in panel["line"])
         o.append(f'<polyline points="{pts}" fill="none" {INK} stroke-width="1.5"/>')
-    for d in panel["dots"]:
+    placed: list[tuple[float, float]] = []
+    for d in sorted(panel["dots"], key=lambda d: -d["fmax"]):
         cx, cy = X(d["latency"]), Y(d["fmax"])
         shape = d.get("name", "")
         if shape.startswith("tree"):
             o.append(f'<rect x="{cx - 4:.1f}" y="{cy - 4:.1f}" width="8" height="8" fill="var(--bg)" {INK} stroke-width="1.5"/>')
         else:
             o.append(f'<circle cx="{cx:.1f}" cy="{cy:.1f}" r="4" fill="var(--ink)"/>')
-        if labels:
+        if labels and not any(abs(cx - px) < 34 and abs(cy - py) < 12 for px, py in placed):      # no two labels on top of each other
+            placed.append((cx, cy))
             o.append(f'<text x="{cx + 7:.1f}" y="{cy + 4:.1f}" {TXT}>{g(d["fmax"])}</text>')
     return "".join(o)
 
@@ -136,11 +138,11 @@ def _bars(panel: dict, x0: float, y0: float, w: float, h: float) -> str:
 def render(kind: str, fig: dict, layout: str) -> str:
     panels = fig["data"]["panels"]
     if layout == "wide":
-        W, pw, ph = 640, 300, 240
+        W, pw, ph = 640, 300, 240 if kind != "dsp_width" else 330
         place = [(10 + i * (pw + 20), 6) for i in range(len(panels))]
         H = ph + 22
     else:
-        W, pw, ph = 360, 340, 220
+        W, pw, ph = 360, 340, 220 if kind != "dsp_width" else 330
         place = [(10, 6 + i * (ph + 20)) for i in range(len(panels))]
         H = len(panels) * (ph + 20) + 8
     body = []
@@ -150,8 +152,9 @@ def render(kind: str, fig: dict, layout: str) -> str:
         else:
             body.append(_scatter(pn, x0, y0, pw, ph, "latency, register stages from inputs to output", kind == "dot_pareto" or layout == "wide"))
     if kind == "dsp_width":
-        key = ('<text x="10" y="{y}" {t}>bars in each group, top to bottom: inferred by the tool; hand-written cascade; partial products summed in the fabric</text>')
-        H += 14
-        body.append(key.format(y=H - 4, t=TXT))
+        H += 44
+        body.append(f'<text x="10" y="{H - 34}" {TXT}>bars in each group, top to bottom: open = inferred by the tool;</text>'
+                    f'<text x="10" y="{H - 21}" {TXT}>black = hand-written cascade;</text>'
+                    f'<text x="10" y="{H - 8}" {TXT}>grey = partial products summed in the fabric</text>')
     return (f'<svg viewBox="0 0 {W} {H:g}" role="img" aria-label="{e(fig["title"])}" class="dspfig" style="width:100%;height:auto;max-width:{W}px">'
             f'<title>{e(fig["title"])}</title>{"".join(body)}</svg>')
