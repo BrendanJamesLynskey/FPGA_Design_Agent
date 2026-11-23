@@ -61,6 +61,8 @@ Interfaces:
 - `payload input` (s_v, s_d[63:0], s_sof, s_eof, s_keep[7:0], s_err (UDP payload words)) ([datasheet](docs/itch_ouch.md)): byte 0 in bits 7:0; keep is low-contiguous on the last word; the messages of a packet are delivered before its frame check is known
 - `order frame output` (o_v, o_d[63:0], o_sof, o_eof, o_keep[7:0], o_abort (stub port)) ([datasheet](docs/itch_ouch.md)): eight words, never paused; o_abort cancels the frame in flight (speculative start only)
 - `configuration and clears` (cfg_* static inputs and one-clock clr_* pulses) ([datasheet](docs/itch_ouch.md)): configuration is static while traffic runs; clr_book starts a table sweep during which events are dropped and counted
+- `B feed (brief 191)` (sb_v, sb_d[63:0], sb_sof, sb_eof, sb_keep[7:0], sb_err (the second UDP payload stream)) ([datasheet](docs/feed_arb.md)): used only with DUAL_FEED 1 (tie to 0 otherwise); first copy of each packet wins, the other feed fills a gap if its header is in before the first feed's next packet; adds 4 clocks
+- `reject bits (brief 191)` (vd_v, vd_pass, vd_rej[7:0], rej_seen[7:0], cnt_ab (feed arbiter counters)) ([datasheet](docs/itch_ouch.md)): vd_v is one clock after the verdict, the same number of clocks for every outcome; vd_rej has one bit per check and shows all that failed
 - `observation` (flags, cnt (45 counters of 32 bits), tu_* top-of-book update record, tob_* registers) ([datasheet](docs/itch_ouch.md)): counters wrap, never saturate; every counter is defined in the datasheet
 
 | Parameter | Value | Legal range | Note |
@@ -68,6 +70,9 @@ Interfaces:
 | `N_INST` | 4 | 2 to 8 | instruments watched, found through Stock Directory messages |
 | `LEVELS` | 8 | 4 or 8 | price levels per side and instrument; more distinct prices makes the instrument inexact |
 | `ORD_AW` | 8 | 4 to 16 (tested at 5, 6, 8 and 10) | order table index bits, so 2^ORD_AW live orders; two live orders with one index make the instrument inexact |
+| `PARSE_INPLACE` | 0 | 0 or 1 | brief 191, 1 decodes a message where it lies (eight copies of the decoder with the start byte fixed) instead of shifting it to byte 0 first; same output |
+| `DUAL_FEED` | 0 | 0 or 1 | brief 191, 1 puts the A/B feed arbiter in front of mold_rx and uses the sb_* inputs; adds 4 clocks |
+| `ARB_AW` | 5 | 4 to 10 | brief 191, feed arbiter FIFO depth per feed, 2^ARB_AW words |
 
 | Quantity | Value | Source |
 |---|---|---|
@@ -97,6 +102,11 @@ Tool: Vivado 2026.1. Build ID of the inputs at handover: none (no Vivado build o
 
 | File | What |
 |---|---|
+| [`designs/b110_itch_ouch/rtl/feed_arb.sv`](rtl/feed_arb.sv) | A/B feed arbiter (brief 191) |
+| [`designs/b110_itch_ouch/rtl/feed_arb_in.sv`](rtl/feed_arb_in.sv) | one feed's input stage of the arbiter |
+| [`designs/b110_itch_ouch/tests/b110_ab_cocotb.py`](tests/b110_ab_cocotb.py) | cocotb bench of the A/B feed arbiter |
+| [`designs/b110_itch_ouch/docs/feed_arb.md`](docs/feed_arb.md) | datasheet of the A/B feed arbiter |
+| [`designs/b110_itch_ouch/verif/formal/run_book_formal.py`](verif/formal/run_book_formal.py) | k-induction record runner for the book's quantity invariants, with ablations and seeded faults |
 | [`designs/b110_itch_ouch/rtl/mold_rx.sv`](rtl/mold_rx.sv) | MoldUDP64 receiver |
 | [`designs/b110_itch_ouch/rtl/itch_dec.sv`](rtl/itch_dec.sv) | ITCH 5.0 decoder |
 | [`designs/b110_itch_ouch/rtl/book_core.sv`](rtl/book_core.sv) | order table, ladders, top of book |

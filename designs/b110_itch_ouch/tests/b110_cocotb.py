@@ -1126,6 +1126,12 @@ async def lane_by_type(dut):
 CHK_NAMES = ("arm", "kill", "gap", "stale", "size", "pos", "band", "hold")
 
 
+async def fresh_ab_free(dut, cfg):
+    b = Bench(dut, cfg, spec=False)
+    await b.start()
+    return b, Model(cfg)
+
+
 @cocotb.test()
 async def reject_bits(dut):
     """Brief 191: a candidate that fails one check, several checks, or none shows every failing check as its own bit of vd_rej (against the model's independent evaluation:
@@ -1174,6 +1180,22 @@ async def reject_bits(dut):
                           "first_order_word_clocks_after_last_byte": (b.frames[-1]["cyc"] - T) if len(b.frames) > nf else None}
         assert len(lat) == 1, f"verdict latency differs between outcomes (spec={spec}): {lat}"
         out["speculative" if spec else "non_speculative"] = {"latency_clocks_all_outcomes": lat.pop(), "scenarios": rows}
+    # the history: a size reject, then a passing candidate: vd_rej is for the last candidate only, rej_seen keeps the first one's bit and clr_cnt clears it
+    cfg = small_cfg(qty=600)
+    b, m = await fresh_ab_free(dut, cfg)
+    d = Day(b, m)
+    await d.open()
+    await d.send([d.A(0, 1, "B", 100, px - 100)])
+    await d.send([d.A(0, 2, "S", 100, px + 100)], idle=20)
+    await settle(b, 30)
+    b.configure(qty=100)
+    await d.send([d.A(0, 3, "S", 100, px + 100)], idle=20)
+    await settle(b, 40)
+    assert b.vds[-1]["rej"] == 0 and b.vds[-1]["pass"] == 1 and (b.vds[-2]["rej"] & 0x10), b.vds[-2:]
+    assert int(b.dut.rej_seen.value) & 0x7F == 0x10, hex(int(b.dut.rej_seen.value))
+    await b.pulse("clr_cnt")
+    await settle(b, 4)
+    assert int(b.dut.rej_seen.value) == 0
     rec = os.environ.get("B110_RECORD")
     if rec:
         Path(rec).mkdir(parents=True, exist_ok=True)

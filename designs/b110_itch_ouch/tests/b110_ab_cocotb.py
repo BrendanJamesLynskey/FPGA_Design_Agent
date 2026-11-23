@@ -56,6 +56,12 @@ async def play(b: Bench, sa: Sched, sb: Sched, extra: int = 80) -> int:
             getattr(d, f"{pre}_keep").value = keep
             getattr(d, f"{pre}_err").value = err
         await b.tick()
+        if int(d.r_v.value):                                                   # the stream the parser sees: remember where packets start and end
+            if int(d.r_sof.value):
+                if b.last_eof is not None:
+                    b.min_gap = min(b.min_gap, b.cyc - b.last_eof - 1)
+            if int(d.r_eof.value):
+                b.last_eof = b.cyc
     for pre in ("s", "sb"):
         getattr(d, f"{pre}_v").value = 0
         getattr(d, f"{pre}_sof").value = 0
@@ -66,6 +72,7 @@ async def play(b: Bench, sa: Sched, sb: Sched, extra: int = 80) -> int:
 async def fresh_ab(dut, cfg=None):
     b = Bench(dut, cfg or small_cfg(), spec=False)
     await b.start()
+    b.last_eof, b.min_gap = None, 1 << 30            # idle clocks between packets at the parser's input (smallest seen)
     return b, Model(b.cfg)
 
 
@@ -262,6 +269,89 @@ async def ab_burst(dut):
         cc = ab_counters(b)
         assert cc["ovf"] == 0 and b.counters()["gap"] == 0 and b.counters()["dup"] == 0, (lag, cc, b.counters())
         assert cc["fwd_a"] + cc["fwd_b"] == 31 and cc["old_a"] + cc["old_b"] == 31, (lag, cc)
+
+
+@cocotb.test()
+async def ab_interleave(dut):
+    """Each feed carries every other packet (the other feed lost the rest): packets from the two feeds can start at the very clock after the other feed's previous packet ended (gap 0 to 5 clocks
+    between them at the arbiter's inputs, where the parser needs 4 idle clocks): the arbiter inserts the idle clocks, and the parser sees the clean sequence of the model."""
+    for g in range(6):
+        b, m = await fresh_ab(dut)
+        d = Day(b, m)
+        c = b.cfg
+        sa, sb = Sched(), Sched()
+        p0 = pk(d.seq, [proto.itch_S(0, d.t(), "O")] + [proto.itch_R(d.loc0 + i, d.t(), c.watch[i]) for i in range(c.n_inst)])
+        d.seq += 1 + c.n_inst
+        sa.add(10, p0); sb.add(10, p0); m.feed(p0)
+        t = 200
+        for i in range(20):
+            p = pk(d.seq, [d.A(i % 2, 100 + i, "B" if i % 3 else "S", 100, MID + (i % 5 - 2) * TK)])
+            assert len(proto.words(p)) == 8
+            d.seq += 1
+            (sa if i % 2 == 0 else sb).add(t, p)
+            m.feed(p)
+            t += 8 + g if i % 2 == 0 else 8 + 12
+        await play(b, sa, sb, extra=200)
+        compare_all(b, m)
+        cc = ab_counters(b)
+        assert cc["gap"] == 0 and b.counters()["gap"] == 0 and b.counters()["dup"] == 0 and cc["ovf"] == 0, (g, cc)
+        assert b.min_gap >= 4, f"packets reach the parser {b.min_gap} idle clocks apart (it needs 4)"
+
+
+@cocotb.test()
+async def ab_runts(dut):
+    """Runt packets (they end before their third word: no sequence number to judge) are forwarded unchanged from each feed that has them, and counted by the parser as short."""
+    b, m = await fresh_ab(dut)
+    d = Day(b, m)
+    c = b.cfg
+    sa, sb = Sched(), Sched()
+    p0 = pk(d.seq, [proto.itch_S(0, d.t(), "O")] + [proto.itch_R(d.loc0 + i, d.t(), c.watch[i]) for i in range(c.n_inst)])
+    d.seq += 1 + c.n_inst
+    sa.add(10, p0); sb.add(12, p0); m.feed(p0)
+    for k, n in enumerate((5, 8, 15, 16, 20)):                                   # 1, 2 and 3 word runts (and a packet with a 4-byte third word)
+        r = (b"\x11\x22\x33\x44\x55\x66\x77\x88" * 3)[:n]
+        sa.add(60 + 30 * k, r); sb.add(63 + 30 * k, r); m.feed(r); m.feed(r)
+    p1 = pk(d.seq, [d.A(0, 9, "B", 100, MID - 100)]); d.seq += 1
+    sa.add(300, p1); sb.add(303, p1); m.feed(p1)
+    await play(b, sa, sb)
+    dut._log.info("runts: arb %s parser %s", ab_counters(b), {k: v for k, v in b.counters().items() if v and k in ("pkt", "msg", "short", "sess", "trunc", "badlen", "pkt_err")})
+    compare_all(b, m)
+    assert b.counters()["short"] == 8 and ab_counters(b)["sess"] == 2, (b.counters(), ab_counters(b))      # 1 and 2 word runts, from both feeds; the 20 byte one is another session
+
+
+@cocotb.test()
+async def ab_deep_skew(dut):
+    """B lost packet n; A's copy of n is a long packet being forwarded while B's next packet (a real, new one) has its header in: B's packet waits in its FIFO for the whole of A's. With a FIFO
+    that holds the skew (ARB_AW 8) the stream is clean and equals the model; with the default 2^5 words the words that do not fit are dropped, `ovf` counts them and the packet's last word
+    carries s_err, so the parser marks the path untrusted (it never passes a corrupt packet as good)."""
+    aw = int(os.environ.get("B110_ARB_AW", "5"))
+    b, m = await fresh_ab(dut)
+    d = Day(b, m)
+    c = b.cfg
+    sa, sb = Sched(), Sched()
+    p0 = pk(d.seq, [proto.itch_S(0, d.t(), "O")] + [proto.itch_R(d.loc0 + i, d.t(), c.watch[i]) for i in range(c.n_inst)])
+    d.seq += 1 + c.n_inst
+    sa.add(10, p0); sb.add(10, p0); m.feed(p0)
+    big = pk(d.seq, [d.A(0, 100 + k, "B" if k % 2 else "S", 100, MID - 1000 - 10 * k) for k in range(24)])      # 20 + 24 x 38 = 932 bytes: 117 words
+    d.seq += 24
+    nxt = pk(d.seq, [d.A(0, 200 + k, "B", 100, MID - 5000 - 10 * k) for k in range(10)])                         # 20 + 10 x 38 = 400 bytes: 50 words
+    d.seq += 10
+    sa.add(200, big); m.feed(big)                                                # A only: B lost it
+    sb.add(240, nxt)                                                             # B's next packet starts while A's is still being forwarded
+    sa.add(200 + 117 + 4 + 40, nxt)                                              # A's copy comes after (old by then if the first was forwarded)
+    m.feed(nxt, err=(aw == 5))
+    await play(b, sa, sb, extra=400)
+    cc = ab_counters(b)
+    if aw >= 8:
+        compare_all(b, m)
+        assert cc["ovf"] == 0 and b.counters()["pkt_err"] == 0, cc
+    else:
+        assert cc["ovf"] > 0 and b.counters()["pkt_err"] == 1 and int(b.dut.flags.value) & 2, (cc, b.counters())
+    rec = os.environ.get("B110_RECORD")
+    if rec:
+        Path(rec).mkdir(parents=True, exist_ok=True)
+        (Path(rec) / f"feed_arb_deep_skew_aw{aw}.json").write_text(json.dumps({"arb_aw": aw, "fifo_words": 1 << aw, "ab_counters": cc, "parser_pkt_err": b.counters()["pkt_err"],
+                                                                                "untrusted": bool(int(b.dut.flags.value) & 2)}, indent=2) + "\n")
 
 
 @cocotb.test()

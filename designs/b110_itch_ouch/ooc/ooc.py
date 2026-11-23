@@ -28,7 +28,7 @@ PART = "xck26-sfvc784-2LV-c"
 REQUIRED_NS = 6.2061
 BUILD = ROOT / "build" / "b110" / "ooc"
 OUT = ROOT / "results" / "b110" / "ooc"
-FILES = ["itch_pkg.sv", "feed_arb.sv", "mold_rx.sv", "itch_dec.sv", "book_core.sv", "ouch_enter.sv", "risk_glue.sv", "itch_ouch_top.sv"]
+FILES = ["itch_pkg.sv", "feed_arb_in.sv", "feed_arb.sv", "mold_rx.sv", "itch_dec.sv", "book_core.sv", "ouch_enter.sv", "risk_glue.sv", "itch_ouch_top.sv"]
 
 
 def wrap_text(n_inst: int, notional: int = 0, parse_inplace: int = 0, dual_feed: int = 0) -> str:

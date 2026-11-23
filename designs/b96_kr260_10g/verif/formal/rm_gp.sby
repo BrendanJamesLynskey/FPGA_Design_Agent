@@ -1,6 +1,7 @@
 # SymbiYosys: rate_match_gp (brief 115), two free clocks (multiclock on), properties bound from rm_gp_props.sv.
 #   safety_bmc / safety_prove : P1..P9 (overflow, underflow, pointer views, gray, idle policy, integrity of the symbolic entry); prove = k-induction
 #   progress_bmc / progress_prove : P10, bounded response, lock high and no reset
+#   progress_pdr / safety_pdr : the same properties by IC3/PDR (abc pdr, brief 191): it finds its own strengthening invariants, so it can close what k-induction cannot (the progress ranking function)
 #   cover : the proofs are not vacuous
 # Run: sby -f rm_gp.sby <task>      (OSS CAD Suite 2026-11-12; see run_formal.py, which also runs the mutants)
 [tasks]
@@ -8,6 +9,8 @@ safety_bmc safety bmc
 safety_prove safety prove
 progress_bmc progress bmc
 progress_prove progress prove
+progress_pdr progress prove
+safety_pdr safety prove
 cover safety cover
 
 [options]
@@ -16,11 +19,19 @@ bmc: mode bmc
 bmc: depth 40
 prove: mode prove
 prove: depth 24
+progress_pdr: mode prove
+safety_pdr: mode prove
 cover: mode cover
 cover: depth 60
 
 [engines]
-smtbmc boolector
+safety_bmc: smtbmc boolector
+safety_prove: smtbmc boolector
+progress_bmc: smtbmc boolector
+progress_prove: smtbmc boolector
+cover: smtbmc boolector
+progress_pdr: abc pdr
+safety_pdr: abc pdr
 
 [script]
 plugin -i slang

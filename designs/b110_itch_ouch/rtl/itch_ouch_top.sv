@@ -12,6 +12,7 @@ module itch_ouch_top
     parameter int ORD_AW = 8,          // order table index bits: 2^ORD_AW live orders
     parameter int NOTIONAL_MODE = 0,   // pre-trade notional check (brief 188): 0 none, 1 price times quantity, 2 price-band table written by software
     parameter int PARSE_INPLACE = 0,   // brief 191: 0 shift the message to byte 0 then decode, 1 decode it where it lies (eight fixed-lane decoders)
+    parameter int ARB_AW = 5,          // brief 191: feed_arb's FIFO depth per feed, 2^ARB_AW words (it must hold the skew between the feeds when one is a packet ahead)
     parameter int DUAL_FEED = 0        // brief 191: 1 = a second payload stream (sb_*, the B feed) is arbitrated with the first (the A feed) by feed_arb before mold_rx
 ) (
     input  logic                 clk,
@@ -79,8 +80,8 @@ module itch_ouch_top
     logic gap_flag, untrusted, eos_seen, sess_lock;
     logic [13*32-1:0] cnt_m;
     logic r_v, r_sof, r_eof, r_err; logic [63:0] r_d; logic [7:0] r_keep;          // the stream the parser sees
-    if (DUAL_FEED) begin : g_arb
-        feed_arb u_arb (.clk, .rst, .clr_cnt, .a_v(s_v), .a_sof(s_sof), .a_eof(s_eof), .a_err(s_err), .a_d(s_d), .a_keep(s_keep),
+    if (DUAL_FEED != 0) begin : g_arb
+        feed_arb #(.AW(ARB_AW)) u_arb (.clk, .rst, .clr_cnt, .a_v(s_v), .a_sof(s_sof), .a_eof(s_eof), .a_err(s_err), .a_d(s_d), .a_keep(s_keep),
                         .b_v(sb_v), .b_sof(sb_sof), .b_eof(sb_eof), .b_err(sb_err), .b_d(sb_d), .b_keep(sb_keep),
                         .o_v(r_v), .o_sof(r_sof), .o_eof(r_eof), .o_err(r_err), .o_d(r_d), .o_keep(r_keep), .cnt(cnt_ab));
     end else begin : g_direct
@@ -125,5 +126,5 @@ module itch_ouch_top
         for (int i = 0; i < N_INST; i++) flags[8 + i] = inexact[i];
     end
     logic unused;
-    assign unused = &{1'b0, pk_end, e_seq, m_seq, spec_pend, DUAL_FEED ? 1'b0 : (sb_v ^ sb_sof ^ sb_eof ^ sb_err ^ (^sb_d) ^ (^sb_keep))};
+    assign unused = &{1'b0, pk_end, e_seq, m_seq, spec_pend, (DUAL_FEED != 0) ? 1'b0 : (sb_v ^ sb_sof ^ sb_eof ^ sb_err ^ (^sb_d) ^ (^sb_keep))};
 endmodule

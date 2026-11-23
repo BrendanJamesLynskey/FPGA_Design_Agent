@@ -26,9 +26,21 @@ ROOT = D.parents[1]
 WORK = ROOT / "build" / "b110_mut"
 
 
-def run_one(name: str, rtl: Path, root: Path, env_extra: dict | None = None) -> dict:
+def run_one(name: str, rtl: Path, root: Path, env_extra: dict | None = None, dual: bool = False) -> dict:
     env = dict(os.environ, B110_RTL_DIR=str(rtl), FDA_SIM_BUILD_ROOT=str(root), PYTHONPATH=str(ROOT)) | {k: str(v) for k, v in (env_extra or {}).items()}
     env.pop("B110_RECORD", None)
+    if dual:                        # a mutant of feed_arb.sv: the dual-feed bench (every build of it) is the test that can see it
+        r = subprocess.run([sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", str(D / "tests" / "test_b110_rtl.py::test_dual_feed")], cwd=ROOT, env=env, capture_output=True, text=True)
+        xmls = [root / n / "results.xml" for n in ("b110_ab", "b110_ab_inplace", "b110_ab_aw8")]
+        failed = []
+        for x in xmls:
+            if x.is_file():
+                failed += [tc.get("name") for tc in ET.parse(x).getroot().iter("testcase") if tc.find("failure") is not None]
+        if r.returncode == 0:
+            return {"name": name, "status": "survived", "killed_by": []}
+        if not any(x.is_file() for x in xmls):
+            return {"name": name, "status": "invalid", "killed_by": [], "note": (r.stdout + r.stderr)[-300:]}
+        return {"name": name, "status": "killed", "killed_by": failed}
     r = subprocess.run([sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", str(D / "tests" / "test_b110_rtl.py::test_all_benches"),
                         str(D / "tests" / "test_b110_rtl.py::test_book_core_queue"), str(D / "tests" / "test_b110_rtl.py::test_notional_modes")]
                        + ([str(D / "tests" / "test_b110_rtl.py::test_lane_by_type")] if (env_extra or {}).get("B110_PARSE_INPLACE") else []), cwd=ROOT, env=env, capture_output=True, text=True)
@@ -58,8 +70,9 @@ def main() -> int:
     WORK.mkdir(parents=True)
     # the unmutated RTL first
     base = run_one("baseline", D / "rtl", WORK / "baseline")
-    if base["status"] != "survived":
-        print("the unmutated RTL does not pass:", base)
+    base_ab = run_one("baseline_ab", D / "rtl", WORK / "baseline_ab", dual=True) if any(m["file"].startswith("feed_arb") for m in muts) else base
+    if base["status"] != "survived" or base_ab["status"] != "survived":
+        print("the unmutated RTL does not pass:", base, base_ab)
         return 2
     jobs = []
     for m in muts:
@@ -72,7 +85,7 @@ def main() -> int:
         (d / m["file"]).write_text(src.replace(m["old"], m["new"]))
         jobs.append((m, d))
     with ThreadPoolExecutor(max_workers=a.jobs) as ex:
-        res = list(ex.map(lambda j: {**run_one(j[0]["name"], j[1], WORK / j[0]["name"] / "sim", j[0].get("env")), "class": j[0]["class"], "file": j[0]["file"], "why": j[0]["why"]}, jobs))
+        res = list(ex.map(lambda j: {**run_one(j[0]["name"], j[1], WORK / j[0]["name"] / "sim", j[0].get("env"), j[0]["file"].startswith("feed_arb")), "class": j[0]["class"], "file": j[0]["file"], "why": j[0]["why"]}, jobs))
     for r in res:
         print(f"{r['status']:9s} {r['name']:22s} {', '.join(r['killed_by'][:3])}")
     valid = [r for r in res if r["status"] != "invalid"]

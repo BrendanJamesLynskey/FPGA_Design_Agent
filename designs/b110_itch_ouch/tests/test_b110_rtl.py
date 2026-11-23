@@ -13,7 +13,7 @@ HERE = Path(__file__).parent
 DESIGN = HERE.parent
 ROOT = DESIGN.parents[1]
 RTL = Path(os.environ.get("B110_RTL_DIR") or DESIGN / "rtl")
-FILES = ["itch_pkg.sv", "feed_arb.sv", "mold_rx.sv", "itch_dec.sv", "book_core.sv", "ouch_enter.sv", "risk_glue.sv", "itch_ouch_top.sv"]
+FILES = ["itch_pkg.sv", "feed_arb_in.sv", "feed_arb.sv", "mold_rx.sv", "itch_dec.sv", "book_core.sv", "ouch_enter.sv", "risk_glue.sv", "itch_ouch_top.sv"]
 
 
 def run(name: str, testcase=None, params=None, extra=None, module="b110_cocotb") -> None:
@@ -88,3 +88,4 @@ def test_dual_feed() -> None:
     """Brief 191: the A/B feed arbiter (DUAL_FEED 1) against the model: both feeds complete with skews, single-feed losses filled, a loss on both feeds, the fill window, heartbeats, a bad frame on the first copy, another session, overlap, bursts, random sessions, and the latency."""
     run("b110_ab", params={"DUAL_FEED": 1}, module="b110_ab_cocotb")
     run("b110_ab_inplace", params={"DUAL_FEED": 1, "PARSE_INPLACE": 1}, module="b110_ab_cocotb", testcase="ab_random")
+    run("b110_ab_aw8", params={"DUAL_FEED": 1, "ARB_AW": 8}, module="b110_ab_cocotb", testcase="ab_deep_skew", extra={"B110_ARB_AW": "8"})

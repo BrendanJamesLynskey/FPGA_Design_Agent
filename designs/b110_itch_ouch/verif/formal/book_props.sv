@@ -8,6 +8,13 @@
 //   Q4  an order-table entry is never written live with zero remaining    SVA: @(posedge clk) (we2 && !sweep) |-> !(wd2[EW-1] && wd2[31:0] == 0)
 //   Q5  a live level read from either ladder port never has zero size     SVA: @(posedge clk) !sweep |-> no read level has valid set and size 0  (the state invariant: reachable states only, so BMC from reset)
 //   Q6  a reduce never raises an order's remaining size                   SVA: @(posedge clk) (b2_v && b2_op == OP_RED && hit2 && we2 && wd2[EW-1]) |-> (wd2[31:0] <= e2_rem)
+//
+// Brief 191: k-induction. The six properties alone are not inductive: Q1 reads a level's size and an order's remaining size out of memory, and an arbitrary starting state
+// may hold a live entry of no size. Two strengthening invariants say what the reachable states look like; with them the induction step closes at depth 1 (record:
+// results/191_trading_variants/formal_book.json, with an ablation of each invariant, which fails without it). A first draft had seven; five of them (the sweep counter's range, the pipeline being empty during the sweep, a
+// non-zero add quantity, the entry read for B2 and the entry written back) proved to be unnecessary when removed one at a time (formal_book_draft_with_seven_invariants.json and the ablation record), so they were dropped.
+//   N1  what the sweep has passed is zero (every ladder group below the sweep counter, every table entry below it)
+//   N2  outside the sweep no live ladder level and no live order has zero size (the Q5 invariant over EVERY entry, not only the ones read this clock)
 module book_props #(
     parameter int N_INST = 2,
     parameter int LEVELS = 4,
@@ -31,18 +38,21 @@ module book_props #(
     input logic hit2,
     input logic [31:0] e2_rem,
     input logic [64:0] rda [0:LEVELS-1],
-    input logic [64:0] rdb [0:LEVELS-1]
+    input logic [64:0] rdb [0:LEVELS-1],
+    // state for the invariants
+    input logic [ORD_AW:0] sw_cnt,
+    input logic [LEVELS-1:0] fv_lv_zero_live, fv_lv_unswept,
+    input logic fv_ord_zero_live, fv_ord_unswept
 );
     // A1: the first clock is a reset (every register of book_core is defined by it; the table and ladders are cleared by the sweep that follows, 2^ORD_AW + 1 clocks).
-    // `started`: a reset has been seen and the sweep has finished; every property is stated from then on (before it the registers and memories hold power-up values).
-    logic init_q, started;
-    initial begin init_q = 1'b1; started = 1'b0; end
-    always_ff @(posedge clk) begin
-        init_q <= 1'b0;
-        if (rst) started <= 1'b0;
-        else if (!sweep && !init_q) started <= 1'b1;
-    end
+    // `live` = a reset has taken effect (not the first clock) and the sweep is not running; Q1 to Q6 and N2 are stated from then on. N1 describes the sweep itself.
+    logic init_q;
+    initial init_q = 1'b1;
+    always_ff @(posedge clk) init_q <= 1'b0;
     always_comb a1_reset_first: assume (!init_q || rst);
+    logic live, defined;
+    assign defined = !init_q;
+    assign live = !init_q && !sweep;
     logic rd_ok;
     always_comb begin
         rd_ok = 1'b1;
@@ -52,17 +62,21 @@ module book_props #(
         end
     end
     always_comb begin
-        q1_no_zero_level:      assert (!started || !(|lv_we) || !(lv_wd[64] && lv_wd[31:0] == 32'd0));
-        q2_no_wrap:            assert (!started || !(d3_v && d3_add && any_hit) || (lv_wd[31:0] >= sz_hit && lv_wd[31:0] >= d3_amt));
-        q3_saturation_flagged: assert (!started || !(d3_v && d3_add && any_hit && sz_sum[32]) || inx_set[d3_inst]);
-        q4_no_zero_entry:      assert (!started || !we2 || !(wd2[EW-1] && wd2[31:0] == 32'd0));
-        q6_reduce_lowers:      assert (!started || !(b2_v && b2_op == 3'd1 && hit2 && we2 && wd2[EW-1]) || (wd2[31:0] <= e2_rem));
+        q1_no_zero_level:      assert (!live || !(|lv_we) || !(lv_wd[64] && lv_wd[31:0] == 32'd0));
+        q2_no_wrap:            assert (!live || !(d3_v && d3_add && any_hit) || (lv_wd[31:0] >= sz_hit && lv_wd[31:0] >= d3_amt));
+        q3_saturation_flagged: assert (!live || !(d3_v && d3_add && any_hit && sz_sum[32]) || inx_set[d3_inst]);
+        q4_no_zero_entry:      assert (!live || !we2 || !(wd2[EW-1] && wd2[31:0] == 32'd0));
+        q6_reduce_lowers:      assert (!live || !(b2_v && b2_op == 3'd1 && hit2 && we2 && wd2[EW-1]) || (wd2[31:0] <= e2_rem));
+        q5_levels_never_zero_live: assert (!live || rd_ok);
     end
-    // Q5 is a state invariant over memory contents: only reachable states count, so it is asserted from the first clock after the sweep has finished (the memories hold power-up values before it).
-    always_comb q5_levels_never_zero_live: assert (!started || rd_ok);
+    // the strengthening invariants
+    always_comb begin
+        n1_swept_is_zero:   assert (!defined || !sweep || (fv_lv_unswept == '0 && !fv_ord_unswept));
+        n2_no_zero_live:    assert (!live || (fv_lv_zero_live == '0 && !fv_ord_zero_live));
+    end
     // not vacuous: a saturation and a level that is live both happen
     always_comb begin
-        c_saturates:  cover (started && d3_v && d3_add && any_hit && sz_sum[32]);
-        c_live_level: cover (started && rdb[0][64]);
+        c_saturates:  cover (live && d3_v && d3_add && any_hit && sz_sum[32]);
+        c_live_level: cover (live && rdb[0][64]);
     end
 endmodule

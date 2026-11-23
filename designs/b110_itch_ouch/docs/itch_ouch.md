@@ -109,6 +109,15 @@ the index list is `rtl/itch_pkg.sv`, generated from the model's list, and every 
 side's best price and size after the change; `tob_*` are the registers of all instruments and sides (index `inst*2 + side`, side 0 bid, 1 ask).
 An empty side reads price 0, size 0, `ok` 0. `sys_code` holds the last System Event code.
 
+### 1.5 Per-check reject bits (brief 191)
+
+Each pre-trade check is evaluated side by side with the others and sets its own bit, so a rejected candidate says every check it failed, not only the first (the counters still count the first failing reason in the order arm,
+kill, gap, stale, size, position, band, as before). Outputs of `itch_ouch_top` (and of `risk_glue`): `vd_v` is high for one clock, **one clock after the verdict was formed** (clock 8 after the last byte of the candidate, the clock the first
+order word leaves when the order is accepted without speculation), for every candidate whatever the outcome: accept, one reject or several; `vd_pass`; `vd_rej[7:0]` bit 0 arm, 1 kill, 2 gap, 3 stale, 4 size, 5 position, 6 band, 7 hold-off
+(all that failed; 0 when accepted); `rej_seen[7:0]` the OR of `vd_rej` over every candidate since reset or `clr_cnt`. **Accept and reject take the same number of clocks**: the verdict does not wait for any single check
+(tested for the accept, each single reject, several rejects, with and without speculation: `vd_v` is 8 clocks after the last byte in all of them; [results/191_trading_variants/sim/reject_bits_latency.json](../../../results/191_trading_variants/sim/reject_bits_latency.json)).
+Bit 7 (hold-off) is clock based, so the untimed Python model leaves it 0 and the bench compares bits 0 to 6. A candidate refused by the hold-off while every other check passes is counted `rej_busy` as before.
+
 ## 2. Behaviour in detail
 
 **Packet level (mold_rx).** The first accepted packet locks the session. The expected sequence number is set by the first packet after reset or
@@ -121,7 +130,7 @@ refused only if the mark had been set before its message was decoded, which depe
 with `s_err` free of candidates, and the decision there is not specified. A block shorter than 12 bytes drops the rest of
 its packet. A packet may carry up to 65534 messages.
 
-**Decoder (itch_dec).** See spec_notes section 2. A malformed message (`m_bad`) is dropped whole; it does not reach the book.
+**Decoder (itch_dec).** See spec_notes section 2. A malformed message (`m_bad`) is dropped whole; it does not reach the book. *Parse in place (section 2.2, `PARSE_INPLACE`).* With 1, the decoder reads the message where it lies: eight copies of the same decode function, each with the start byte fixed, run at once and `m_off` selects one result. Measured out of context (K26, Vivado 2026.1, [results/191_trading_variants/ooc](../../../results/191_trading_variants/ooc/)): `itch_dec` alone is 570 LUTs with the shifter and closes 3.0 ns, 1782 LUTs in place and fails 3.0 ns by 0.084 ns (6 LUT levels both): the 384-bit shifter is already only 5 to 6 LUT levels once Vivado prunes it to the 36 bytes used, so the in-place decoder is **not faster and three times larger**; it is kept as an option, default 0. Both are tested to give the same events for every message type in every start lane (72 bins).
 
 **Book (book_core).** Instruments are found through Stock Directory messages: the stock field is compared with `cfg_watch` and the locate
 is remembered (the lowest instrument index wins if two entries match). A Stock Directory seen before `clr_book` is forgotten by it. Order
@@ -191,6 +200,9 @@ in the stress tests). The sustained rate with back-to-back D messages is in [res
 | `LEVELS` | 8 | 4 or 8 | price levels per side and instrument (the best-level tree reduces them in two steps) |
 | `ORD_AW` | 8 | 4 to 16 (tested at 5, 6, 8 and 10) | order table index bits: 2^ORD_AW live orders |
 | `NOTIONAL_MODE` | 0 | 0, 1, 2 | brief 188: pre-trade notional check: 0 none, 1 price times quantity, 2 price-band table written by software (section 1.3; measured cost in [results/188_trading_safety/notional_measurement.md](../../../results/188_trading_safety/notional_measurement.md)) |
+| `PARSE_INPLACE` | 0 | 0, 1 | brief 191: how `itch_dec` finds the fields of a message that starts at byte `m_off` of its first word: 0 shifts the 384-bit slot down to byte 0 and decodes; 1 decodes it where it lies (eight copies of the decoder, each with its start byte fixed, `m_off` selects the result). Same events, counters and latency; different depth and area (section 2.2) |
+| `DUAL_FEED` | 0 | 0, 1 | brief 191: 1 arbitrates a second payload stream (`sb_*`, the B feed) with the first (`s_*`, the A feed) in front of `mold_rx`: [feed_arb.md](feed_arb.md). Adds 4 clocks to every latency in section 3 |
+| `ARB_AW` | 5 | 4 to 10 | brief 191: `feed_arb`'s FIFO depth per feed, 2^ARB_AW words |
 
 The bench also runs 2/4/5, 3/8/6 and 8/8/10 (N_INST/LEVELS/ORD_AW) and lints clean at several points (`tests/test_b110_rtl.py`, `tests/test_b110_lint.py`).
 Resources and timing are in [README.md](../README.md) (measured, out of context).
