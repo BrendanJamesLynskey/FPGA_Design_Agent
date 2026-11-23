@@ -76,11 +76,14 @@ def _drive(graph, rt, cfg_lg, first_input, replies: list) -> dict:
         snap = graph.get_state(cfg_lg)
         pending = [i.value for t in snap.tasks for i in (t.interrupts or [])]
         if not pending:
+            (rt.run_dir / "pending.json").unlink(missing_ok=True)
             break
         if not replies:
+            (rt.run_dir / "pending.json").write_text(json.dumps({"paused": pending[0], "run_id": rt.run_id}, indent=1))     # brief 182: the navigator shows a pending question
             print(json.dumps({"paused": pending[0], "run_id": rt.run_id}, indent=1))
             return {"paused": pending[0]}
         reply = replies.pop(0)
+        (rt.run_dir / "pending.json").unlink(missing_ok=True)
         print(json.dumps({"interrupt": pending[0].get("kind"), "stage": pending[0].get("stage"), "reply": reply}))
         inp = Command(resume=reply)
     if snap.values.get("doc") and (rt.run_dir / "summary.json").is_file():    # brief 68 C: frozen by the document node
