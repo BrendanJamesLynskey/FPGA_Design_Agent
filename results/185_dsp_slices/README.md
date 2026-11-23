@@ -38,6 +38,36 @@ Resets on the lone / full output register (RSTP 1 = synchronous, 2 = asynchronou
 | 1,1,1 | sync | 1,1,1 | 464 | 1,1,1 | 837 |
 | 1,1,1 | async | 1,1,1 | 464 | 1,1,1 | 837 |
 
+### 1b. Fmax against the number of registers (house rule 1)
+
+One 18 x 18 signed multiply in one slice, no reset; the best result at each register count is in bold, and the variants NA,NM,NP (operand stages, multiplier register, output register) that reached each value are in brackets. Register count = latency. **a7** = `xc7a100tcsg324-1` (-1); **k26** = `xck26-sfvc784-2LV-c` (-2LV, the only grade measured; there is no -1 K26 run). One routed out-of-context run per point, Vivado 2026.1; an estimate, no repeats. Plot: [fmax_vs_registers.svg](fmax_vs_registers.svg).
+
+| registers | a7 Fmax MHz (RTL regs NA,NM,NP) | k26 Fmax MHz (RTL regs NA,NM,NP) |
+| --- | --- | --- |
+| 0 | **175** (0,0,0) | **354** (0,0,0) |
+| 1 | **319** (0,0,1 0,1,0 1,0,0) | **571** (0,0,1 0,1,0); 394 (1,0,0) |
+| 2 | **327** (1,0,1 1,1,0 2,0,0); 325 (0,1,1) | **678** (0,1,1); 596 (1,0,1 1,1,0); 394 (2,0,0) |
+| 3 | **464** (1,1,1); 317 (2,0,1 2,1,0) | **837** (1,1,1); 596 (2,0,1 2,1,0) |
+| 4 | **464** (2,1,1) | **837** (2,1,1) |
+
+Steps, as a share of the three-register result: a7 38 percent with none, 69 with one, 70 with two, 100 with three and with four; k26 42, 68, 81, 100, 100. Which three matters: operand, multiplier and output registers (1,1,1) reach the slice's limit, while two operand stages plus the multiplier register with no output register (2,1,0) reach only 317 on a7 and 596 on k26; a fourth register (a second operand stage) adds nothing on either part.
+
+The native widths (25 x 18 on a7, 27 x 18 on k26) were run at three registers and at four: a7 464 and 464 MHz, k26 837 and 837 MHz, the same as 18 x 18; no native-width run exists at fewer registers. A lone operand register differs between the parts: on a7 Vivado packs it into MREG (319), on k26 it stays in AREG and the product is unregistered (394). A pre-adder multiply `(d + a) * b` (24 x 18): with the AD register a7 464 / k26 837 MHz (4 registers); without it a7 290 / k26 500 MHz (3 registers).
+
+Our numbers beside the data sheet (public figures: DS181 v1.27.1 Table 31, -1, 1.0 V; DS925 v1.30 Table 83, -2 at 0.85 V / 0.72 V):
+
+| configuration | DS181 -1 MHz | a7 measured MHz | DS925 -2 MHz (0.85 V / 0.72 V) | k26 measured MHz |
+| --- | --- | --- | --- | --- |
+| all registers used | 464.25 | 464 | 775 / 644 | 837 |
+| two-register multiply without MREG | 257.47 | not reproduced: Vivado packs the lone register into MREG | 544 / 440 | not reproduced (as a7) |
+| without ADREG (pre-adder) | 290.44 | 290 | 565 / 453 | 500 |
+| without pipeline registers (MREG, ADREG) | 190.69 | 175 | 410 / 323 | 354 |
+
+On a7 the fully registered and the no-ADREG slices match the data sheet (the slice's own Min Period); with no pipeline registers ours is lower (reason not investigated). On k26 the fully registered 837 MHz is **above** the data sheet's 775 MHz (-2, 0.85 V) and 644 MHz (-2, 0.72 V): it is a setup estimate at a 1.0 ns target, and the Min Period Vivado reports for the slice (0.85 ns) is looser than the data sheet's. Use the data-sheet figure, not 837, as the K26 slice ceiling at sign-off; the table shows the shape (the steps between register counts), which is what rule 1 rests on. Which supply voltage the -2LV run assumed was not recorded.
+
+![Fmax against the number of registers around one multiply](fmax_vs_registers.svg)
+
+
 ## 2. Wide multiplies (slices, latency, MHz)
 
 Style 0 = the `*` operator with the same operand, multiplier and output registers (the tool's own split); 1 = hand-written cascade (PCOUT to PCIN with the 17-bit shift, operands skewed one clock per stage, chains added in the fabric); 2 = partial products each in a slice, summed in a registered fabric adder tree. Style-0 results with a second operand register (NA 2) are in the data and equal or lower.
@@ -112,7 +142,22 @@ A logic level here is a LUT or a CARRY cell, so one adder is several levels; the
 | accumulator with constant compare | a7 | 1 | 0 | 3 | 393 | ADREG=1, USE_SIMD=ONE48, USE_PATTERN_DETECT=PATDET |
 | accumulator with constant compare | k26 | 1 | 0 | 3 | 743 | ADREG=1, USE_SIMD=ONE48, USE_PATTERN_DETECT=PATDET |
 
-The SIMD coding was **not** mapped to a slice on either part (fabric adders instead); the pattern-detect compare was. Why was not investigated.
+The SIMD coding was **not** mapped to a slice on either part (fabric adders instead); the pattern-detect compare was. What AMD documents (brief 197): UG901 v2025.2 p. 73 gives `use_dsp = "simd"` as a value that puts SIMD structures into DSP blocks and refers to the templates, without a device list or conditions; UG479 v1.10 (ch. 3 notes, pdf p. 52) recommends the SIMD mode for a large number of small adds with their input registers folded into the slice, and UG479 and UG579 give four 12-bit lanes as the narrowest mode. Vivado 2025.2's SIMD language template (Verilog) puts the attribute on the **module**, takes four 10-bit operands as unpacked arrays and registers both the inputs and the outputs around the adds. Our test put the attribute on one 48-bit signal, sliced a packed vector into four 12-bit lanes, and had one instance. It is not known whether the coding, the signal-level attribute, the single instance or Vivado 2026.1 is why it did not map; the template coding was not run (the heavy-slot queue was full; the four variants and a Tcl driver are in the planner's research folder, `_handoff/fpga_agent/research/197_simd_probe/`).
+
+## House rules (owner-confirmed 2026-11-23, brief 197)
+
+Rules 1, 2, 4, 5, 7 and 8 as drafted in brief 185's report; rules 3 and 6 are reworded after checking AMD's documents (citations below; page numbers are PDF pages of the copies in `~/Claude_sandbox/_amd_docs`).
+
+1. **A DSP multiply that must run at a high clock gets all three registers written in the RTL: operand, multiplier, output (latency 3).** Fmax by register count 0 to 4 (best of each): a7 175, 319, 327, 464, 464 MHz; k26 354, 571, 678, 837, 837 MHz (table 1b). Which three matters. The data-sheet figure is the ceiling at sign-off.
+2. **A single register after a multiply is the multiplier register; do not count on the output register** unless all three are written or the slice accumulates.
+3. **No asynchronous reset or set on any register meant to go into a slice.** AMD: the slice's registers have synchronous resets only and no sets (UG479 v1.10 Table 2-4 and UG579 v1.11 Table 3-4, each register "reset synchronously by RSTx"; UG949 v2025.2 ch. 3, pp. 51, 53-54 and 69; UG901 v2025.2 p. 85, "sequential functionality in ... DSP blocks can be set or reset synchronously only"). An asynchronous reset on a register keeps it out of the slice register or is rebuilt in fabric: UG949's example (p. 53) gives AREG/BREG = 0, MREG = 0, PREG = 1 plus extra flip-flops and LUT2s. Measured here the same way: a lone register with an asynchronous reset went to PREG with MREG = 0 at 199 MHz on a7 (440 on k26) against 319 (614) with a synchronous reset; with all three registers written and the reset only on the output, A, M and P stayed in the slice but the reset was rebuilt in 36 LUTs on a7 (35 on k26) at the output, with no loss of speed in this test. So: it either breaks the packing or costs LUTs.
+4. **A multiply wider than one slice:** let the tool split it only when speed does not matter; when it does, write the cascade (17-bit shift on the narrow port) or accept the slower fabric sum; say which in the datasheet.
+5. **A dot product or filter sum:** choose by what the user needs and state it: registered adder tree (fewer clocks; fabric adders limit speed on Artix-7) or cascade (slice limit, one stage per term); on UltraScale+ check that the skew registers did not become SRL cells.
+6. **The pre-adder gets its own AD register at speed**: a7 464 against 290 MHz without it (the data sheet's no-ADREG figure at -1 is 290.44, DS181 Table 31), k26 837 against 500. **Do not rely on `use_dsp = "simd"` for small adds.** UG901 v2025.2 (p. 73) names the value but gives no device list or conditions (it points to the Vivado templates); UG479 recommends SIMD for many small adds with their input registers in the slice. Our test of four 12-bit adds did not map on either part under Vivado 2026.1 (coding differs from AMD's template: attribute on a signal, packed vector, one instance; the template coding was not run). When four lanes are needed, instantiate the DSP48E1 / DSP48E2 with USE_SIMD = FOUR12, or check the synthesis report for the slice.
+7. **Every datasheet states for a DSP block** latency (register stages from input to output), slices, and MHz with the part, speed grade, Vivado version and target clock; "464 MHz" alone is the slice, not the design.
+8. **The advisory `dsp_regs` check is run before sign-off;** a deliberately slow datapath waives it with a reason.
+
+Sources for 3 and 6: UG479 v1.10 (Table 2-4 register descriptions; ch. 3 "Miscellaneous Notes and Suggestions", pdf p. 52, SIMD for many small adds); UG579 v1.11 (Table 3-4); UG901 v2025.2 (USE_DSP, p. 73; "Pre-Adders in the DSP Block", p. 103; flip-flop "Coding Guidelines", p. 85); UG949 v2025.2 (ch. 3 reset section, pp. 51-54; "Coding for Optimal DSP and Arithmetic Inference", pp. 68-69); Vivado 2025.2 Language Templates (Verilog, "SIMD"). UG901 and UG949 are the 2025.2 documents; the runs were made with Vivado 2026.1, for which no newer copy of those guides is held here.
 
 ## Records
 
@@ -143,13 +188,13 @@ python3 -m pytest -q flow/tests/test_185_dsp_regs.py site/tests
 - **VU2P not licensed here**: the Alveo UL3524 part `xcvu2p-fsvj2104-3-e` is refused by the installed Basic licence (source: `results/186_ul3524/licence.md` on branch `b186-ul3524`, brief 186), so there is no third part and nothing on what its -3 grade buys.
 - One run per point; no repeats. Targets (1.8 ns, 1.0 ns) were chosen to be tighter than the parts meet; achieved slack depends on tool effort at that target.
 - Narrow operands for the register study (18 x 18; 25 x 18 and 27 x 18 native widths are in the data at full depth only); no accumulate, no C-port or carry-in use, no 96-bit accumulate, no time multiplexing.
-- Why an asynchronous reset on a lone register moved it into PREG (multiplier left unregistered) on a7 was not investigated.
+- An asynchronous reset on a lone register moved it into PREG (multiplier left unregistered): this is what AMD's UG949 (v2025.2, p. 53) describes for an asynchronous reset on slice registers, so it is not an oddity of this flow; the rebuilt reset (LUTs at the output when all three registers are written) is measured at one point only.
 - The cascade, dot and wide styles are one coding each; a different coding could change slice counts (for example the cascade used more slices than the tool's split at 44 x 35 on k26).
 - Methodology DRC rows (DPIP-1, DPOP-1, DPOP-2) are recorded per point in `raw/`; they flag unregistered slices but not how fast the slice then runs.
 - Slice limits are best cases of few runs: `flow/dsp_regs_limits.json` is advisory, not a guarantee.
 
 ## Next steps
 
-- Repeat points to get a spread; add accumulate and wide-accumulator points; investigate the asynchronous-reset and SIMD results; measure the UltraScale+ cascade with the skew lines forced into the slices' input registers.
+- Repeat points to get a spread; add accumulate and wide-accumulator points; run the SIMD variants in `_handoff/fpga_agent/research/197_simd_probe/` (AMD's template coding against ours); measure the UltraScale+ cascade with the skew lines forced into the slices' input registers.
 - Run the agent on a task that needs slice usage and see whether the advisory check changes its design (no agent run uses it yet).
 

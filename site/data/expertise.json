@@ -2900,11 +2900,31 @@
    "counts": {
     "checks": 1,
     "enforced": 0,
-    "evidence": 7,
+    "evidence": 9,
     "sections": 6,
     "skills": 8
    },
    "evidence": [
+    {
+     "kind": "measured",
+     "sources": [
+      {
+       "path": "results/185_dsp_slices/data/a7.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/185_dsp_slices/data/a7.json"
+      }
+     ],
+     "text": "Best clock speed against the number of registers around one multiply on the Artix-7 part, none to four registers: 175.2, 318.7, 326.6, 464.3 and 464.3 MHz. The step from two to three registers (the output register) is the large one; a fourth adds nothing (the register-count table in the results README; one routed run per point)."
+    },
+    {
+     "kind": "measured",
+     "sources": [
+      {
+       "path": "results/185_dsp_slices/data/k26.json",
+       "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/185_dsp_slices/data/k26.json"
+      }
+     ],
+     "text": "The same on the UltraScale+ part: 354.2, 571.4, 678, 836.8 and 836.8 MHz. The three-register figure is a setup estimate at the target clock; the data sheet's own limit for the part is lower and is the ceiling at sign-off."
+    },
     {
      "kind": "measured",
      "sources": [
@@ -2933,7 +2953,7 @@
        "url": "https://github.com/BrendanJamesLynskey/FPGA_Design_Agent/blob/main/results/185_dsp_slices/data/a7.json"
       }
      ],
-     "text": "A single register after the multiply was packed into the slice's multiplier register (MREG 1, output register PREG 0) rather than its output register. With an asynchronous reset on that register it was packed into the output register instead, the multiplier stayed unregistered, and the slice ran at 198.9 MHz instead of 318.7 with a synchronous reset (Artix-7)."
+     "text": "A single register after the multiply was packed into the slice's multiplier register (MREG 1, output register PREG 0) rather than its output register. With an asynchronous reset on that register it was packed into the output register instead, the multiplier stayed unregistered, and the slice ran at 198.9 MHz instead of 318.7 with a synchronous reset (Artix-7). AMD's methodology guide (UG949) describes this packing: the slice registers have synchronous resets only, so a register with an asynchronous reset is built in the fabric."
     },
     {
      "kind": "measured",
@@ -3659,8 +3679,8 @@
     "Two parts only (Artix-7 and the Kria K26); the part on the Alveo trading card is refused by the installed licence tier (Brief 186's licence check), so nothing is measured on it.",
     "Each point is one routed run at one clock, an estimate of the speed; no repeats, no spread.",
     "The multiply tests use narrow operands and no carry-in or accumulate except the dot product; wide accumulators and time multiplexing are not measured.",
-    "The pre-adder, SIMD and pattern-detect modes have one point each; why the SIMD coding was not mapped to a slice was not investigated, and the pre-adder is on one width.",
-    "Why an asynchronous reset moved a lone register out of the multiplier register on Artix-7 was not investigated.",
+    "The pre-adder, SIMD and pattern-detect modes have one point each; why the SIMD coding was not mapped to a slice is open (AMD's own template codes it differently from our test, and that coding was not run) and the pre-adder is on one width.",
+    "The rebuilt asynchronous reset (fabric logic at the output when all three registers are written) is measured at one point per part; its cost in speed was not seen in this test.",
     "The advisory check's limits are best cases from these few runs; no agent run has used the check yet.",
     "No development task of the agent targets slice usage, so nothing here is shown in agent runs."
    ],
