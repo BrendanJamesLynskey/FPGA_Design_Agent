@@ -8,7 +8,7 @@ module tb_strict;
             d = i[7:0]; @(posedge clk); #1;
             if (i > 0 && p !== ^d) begin errors++; $error("mismatch at %0d", i); end
         end
-        $display(errors == 0 ? "XCMP_PASS" : "XCMP_FAIL");
+        if (errors == 0) $display("XCMP_PASS"); else $display("XCMP_FAIL");
         $finish;
     end
 endmodule
