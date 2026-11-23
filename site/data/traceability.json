@@ -2195,6 +2195,18 @@
     "gaps": [
      {
       "gate": false,
+      "id": "B96-F-PCS",
+      "text": "functional requirement: passes, but the required mix of methods is not met; lacks a simulation check from a bench the implementing agent did not write",
+      "type": "method_mix_missing"
+     },
+     {
+      "gate": false,
+      "id": "B96-F-PCS",
+      "text": "everything that passes is a test the implementing agent wrote (or whose author is not recorded); the house rule is that these never count alone",
+      "type": "own_tests_only"
+     },
+     {
+      "gate": false,
       "id": "B96-F-MAC",
       "text": "functional requirement: passes, but the required mix of methods is not met; lacks a simulation check from a bench the implementing agent did not write",
       "type": "method_mix_missing"
@@ -2226,6 +2238,18 @@
      {
       "gate": false,
       "id": "B96-F-DEFAULT",
+      "text": "everything that passes is a test the implementing agent wrote (or whose author is not recorded); the house rule is that these never count alone",
+      "type": "own_tests_only"
+     },
+     {
+      "gate": false,
+      "id": "B96-S-RATEMATCH",
+      "text": "safety requirement: passes, but the required mix of methods is not met; lacks a formal proof (SymbiYosys or Lean)",
+      "type": "method_mix_missing"
+     },
+     {
+      "gate": false,
+      "id": "B96-S-RATEMATCH",
       "text": "everything that passes is a test the implementing agent wrote (or whose author is not recorded); the house rule is that these never count alone",
       "type": "own_tests_only"
      },
@@ -2677,7 +2701,7 @@
       "written_by": null
      },
      {
-      "detail": "23 test(s) passed in the recorded run",
+      "detail": "23 test(s) passed in the recorded run; formal rigour: some assertions bounded with a written depth justification",
       "evidence": {
        "exists": true,
        "file": "results/116_traceability/b96_kr260_10g/pytest_junit.xml"
@@ -2690,7 +2714,24 @@
        "B96-F-PCS",
        "B96-S-RATEMATCH"
       ],
-      "status": "pass",
+      "rigour": [
+       {
+        "reasons": [],
+        "sby": "designs/b96_kr260_10g/verif/formal/rm_gp.sby",
+        "summary": {
+         "assertions": 31,
+         "bounded": 5,
+         "bounded_unjustified": 0,
+         "failed": 0,
+         "not-run": 0,
+         "proved": 26,
+         "unreachable-cover": 0,
+         "vacuous": 0
+        },
+        "verdict": "bounded"
+       }
+      ],
+      "status": "bounded",
       "title": "SVA properties of the gray-pointer rate matcher with SymbiYosys (brief 115; designs/b96_kr260_10g/verif/formal/, results/b115); safety by k-induction, progress by BMC only; the recorded run re-proves every CI job, mutants included",
       "value": "23 of 23 tests passed",
       "written_by": null
@@ -3656,11 +3697,12 @@
       ],
       "kind": "functional",
       "lean_transcription_only": false,
-      "missing_methods": [],
-      "mix_satisfied": true,
-      "own_tests_only": false,
+      "missing_methods": [
+       "a simulation check from a bench the implementing agent did not write"
+      ],
+      "mix_satisfied": false,
+      "own_tests_only": true,
       "passing_methods": [
-       "formal",
        "sim_test",
        "uvm_test"
       ],
@@ -3668,7 +3710,7 @@
       "source": "designs/b96_kr260_10g/docs/design.md#7-verification-plan",
       "spec_status": "draft",
       "stale_items": 0,
-      "state": "verified",
+      "state": "partially_verified",
       "text": "Scrambler, block encode and decode, gearbox and block lock produce the same bits as the bit-serial Python reference, at every bit offset, with idles, ordered sets and bit-error runs.",
       "title": "PCS encodes and decodes 64B/66B bit-exactly against an independent model",
       "waivers": []
@@ -3838,18 +3880,19 @@
       ],
       "kind": "safety",
       "lean_transcription_only": false,
-      "missing_methods": [],
-      "mix_satisfied": true,
-      "own_tests_only": false,
+      "missing_methods": [
+       "a formal proof (SymbiYosys or Lean)"
+      ],
+      "mix_satisfied": false,
+      "own_tests_only": true,
       "passing_methods": [
-       "formal",
        "sim_test"
       ],
       "rests_on_delegated": false,
       "source": "designs/b96_kr260_10g/docs/design.md#9-rate-matching-and-the-receive-to-core-crossing-brief-96c",
       "spec_status": "draft",
       "stale_items": 3,
-      "state": "verified",
+      "state": "partially_verified",
       "text": "The elastic buffer inserts and deletes idles only between frames, never under- or overflows silently, and every order sent is fired and passes its content check.",
       "title": "Rate matching never corrupts a frame",
       "waivers": []
@@ -4700,11 +4743,11 @@
        "unapproved": 0
       },
       "formal": {
-       "bounded": 0,
+       "bounded": 1,
        "fail": 0,
        "not_in_run": 0,
        "not_run": 0,
-       "pass": 1,
+       "pass": 0,
        "skipped": 0,
        "stale": 1,
        "unapproved": 0
@@ -4772,18 +4815,18 @@
      },
      "by_state": {
       "not_run": 2,
-      "partially_verified": 11,
+      "partially_verified": 13,
       "stale": 1,
-      "verified": 14
+      "verified": 12
      },
      "delegated_reviews": 0,
      "external": 3,
      "external_hardware_done": 0,
      "gap_counts": {
       "hardware_open": 3,
-      "method_mix_missing": 11,
+      "method_mix_missing": 13,
       "no_passing_evidence": 3,
-      "own_tests_only": 8,
+      "own_tests_only": 10,
       "stale_evidence": 14
      },
      "human_reviews": 0,
@@ -4811,8 +4854,8 @@
       "items": 4,
       "statement_not_approved": 0
      },
-     "line": "28 requirements (12 functional, 9 performance, 1 interface, 6 safety); 14 verified, of which 2 rest on delegated acceptances (the planner accepted the Lean statement on the owner's delegation; not human approvals); 11 partially verified (the required mix of methods is not met); 1 stale; 2 with no passing evidence; 2 with no passing evidence; 0 of 3 requirements that depend on an external element closed by hardware; performance verified: 5 on the board, 2 by post-route timing, 0 in simulation only; 0 of 28 requirements agreed by a human, 0 agreed on the owner's delegation (not human), 28 draft; 8 resting only on the implementing agent's own tests; 0 human and 0 delegated review(s) recorded; 4 Lean proof item(s) (all widths): 0 with a human-approved statement, 4 with a statement accepted on the owner's delegation (not a human approval), 0 with statement not approved; 4 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run).",
-     "own_tests_only": 8,
+     "line": "28 requirements (12 functional, 9 performance, 1 interface, 6 safety); 12 verified, of which 2 rest on delegated acceptances (the planner accepted the Lean statement on the owner's delegation; not human approvals); 13 partially verified (the required mix of methods is not met); 1 stale; 2 with no passing evidence; 2 with no passing evidence; 0 of 3 requirements that depend on an external element closed by hardware; performance verified: 5 on the board, 2 by post-route timing, 0 in simulation only; 0 of 28 requirements agreed by a human, 0 agreed on the owner's delegation (not human), 28 draft; 10 resting only on the implementing agent's own tests; 0 human and 0 delegated review(s) recorded; 4 Lean proof item(s) (all widths): 0 with a human-approved statement, 4 with a statement accepted on the owner's delegation (not a human approval), 0 with statement not approved; 4 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run).",
+     "own_tests_only": 10,
      "performance_board": 5,
      "performance_sim_only": 0,
      "performance_timing": 2,
@@ -33620,7 +33663,7 @@
   "total": {
    "designs": 34,
    "requirements": 357,
-   "verified": 66
+   "verified": 64
   }
  },
  "content": {
@@ -35819,6 +35862,18 @@
     "gaps": [
      {
       "gate": false,
+      "id": "B96-F-PCS",
+      "text": "functional requirement: passes, but the required mix of methods is not met; lacks a simulation check from a bench the implementing agent did not write",
+      "type": "method_mix_missing"
+     },
+     {
+      "gate": false,
+      "id": "B96-F-PCS",
+      "text": "everything that passes is a test the implementing agent wrote (or whose author is not recorded); the house rule is that these never count alone",
+      "type": "own_tests_only"
+     },
+     {
+      "gate": false,
       "id": "B96-F-MAC",
       "text": "functional requirement: passes, but the required mix of methods is not met; lacks a simulation check from a bench the implementing agent did not write",
       "type": "method_mix_missing"
@@ -35850,6 +35905,18 @@
      {
       "gate": false,
       "id": "B96-F-DEFAULT",
+      "text": "everything that passes is a test the implementing agent wrote (or whose author is not recorded); the house rule is that these never count alone",
+      "type": "own_tests_only"
+     },
+     {
+      "gate": false,
+      "id": "B96-S-RATEMATCH",
+      "text": "safety requirement: passes, but the required mix of methods is not met; lacks a formal proof (SymbiYosys or Lean)",
+      "type": "method_mix_missing"
+     },
+     {
+      "gate": false,
+      "id": "B96-S-RATEMATCH",
       "text": "everything that passes is a test the implementing agent wrote (or whose author is not recorded); the house rule is that these never count alone",
       "type": "own_tests_only"
      },
@@ -36301,7 +36368,7 @@
       "written_by": null
      },
      {
-      "detail": "23 test(s) passed in the recorded run",
+      "detail": "23 test(s) passed in the recorded run; formal rigour: some assertions bounded with a written depth justification",
       "evidence": {
        "exists": true,
        "file": "results/116_traceability/b96_kr260_10g/pytest_junit.xml"
@@ -36314,7 +36381,24 @@
        "B96-F-PCS",
        "B96-S-RATEMATCH"
       ],
-      "status": "pass",
+      "rigour": [
+       {
+        "reasons": [],
+        "sby": "designs/b96_kr260_10g/verif/formal/rm_gp.sby",
+        "summary": {
+         "assertions": 31,
+         "bounded": 5,
+         "bounded_unjustified": 0,
+         "failed": 0,
+         "not-run": 0,
+         "proved": 26,
+         "unreachable-cover": 0,
+         "vacuous": 0
+        },
+        "verdict": "bounded"
+       }
+      ],
+      "status": "bounded",
       "title": "SVA properties of the gray-pointer rate matcher with SymbiYosys (brief 115; designs/b96_kr260_10g/verif/formal/, results/b115); safety by k-induction, progress by BMC only; the recorded run re-proves every CI job, mutants included",
       "value": "23 of 23 tests passed",
       "written_by": null
@@ -37280,11 +37364,12 @@
       ],
       "kind": "functional",
       "lean_transcription_only": false,
-      "missing_methods": [],
-      "mix_satisfied": true,
-      "own_tests_only": false,
+      "missing_methods": [
+       "a simulation check from a bench the implementing agent did not write"
+      ],
+      "mix_satisfied": false,
+      "own_tests_only": true,
       "passing_methods": [
-       "formal",
        "sim_test",
        "uvm_test"
       ],
@@ -37292,7 +37377,7 @@
       "source": "designs/b96_kr260_10g/docs/design.md#7-verification-plan",
       "spec_status": "draft",
       "stale_items": 0,
-      "state": "verified",
+      "state": "partially_verified",
       "text": "Scrambler, block encode and decode, gearbox and block lock produce the same bits as the bit-serial Python reference, at every bit offset, with idles, ordered sets and bit-error runs.",
       "title": "PCS encodes and decodes 64B/66B bit-exactly against an independent model",
       "waivers": []
@@ -37462,18 +37547,19 @@
       ],
       "kind": "safety",
       "lean_transcription_only": false,
-      "missing_methods": [],
-      "mix_satisfied": true,
-      "own_tests_only": false,
+      "missing_methods": [
+       "a formal proof (SymbiYosys or Lean)"
+      ],
+      "mix_satisfied": false,
+      "own_tests_only": true,
       "passing_methods": [
-       "formal",
        "sim_test"
       ],
       "rests_on_delegated": false,
       "source": "designs/b96_kr260_10g/docs/design.md#9-rate-matching-and-the-receive-to-core-crossing-brief-96c",
       "spec_status": "draft",
       "stale_items": 3,
-      "state": "verified",
+      "state": "partially_verified",
       "text": "The elastic buffer inserts and deletes idles only between frames, never under- or overflows silently, and every order sent is fired and passes its content check.",
       "title": "Rate matching never corrupts a frame",
       "waivers": []
@@ -38324,11 +38410,11 @@
        "unapproved": 0
       },
       "formal": {
-       "bounded": 0,
+       "bounded": 1,
        "fail": 0,
        "not_in_run": 0,
        "not_run": 0,
-       "pass": 1,
+       "pass": 0,
        "skipped": 0,
        "stale": 1,
        "unapproved": 0
@@ -38396,18 +38482,18 @@
      },
      "by_state": {
       "not_run": 2,
-      "partially_verified": 11,
+      "partially_verified": 13,
       "stale": 1,
-      "verified": 14
+      "verified": 12
      },
      "delegated_reviews": 0,
      "external": 3,
      "external_hardware_done": 0,
      "gap_counts": {
       "hardware_open": 3,
-      "method_mix_missing": 11,
+      "method_mix_missing": 13,
       "no_passing_evidence": 3,
-      "own_tests_only": 8,
+      "own_tests_only": 10,
       "stale_evidence": 14
      },
      "human_reviews": 0,
@@ -38435,8 +38521,8 @@
       "items": 4,
       "statement_not_approved": 0
      },
-     "line": "28 requirements (12 functional, 9 performance, 1 interface, 6 safety); 14 verified, of which 2 rest on delegated acceptances (the planner accepted the Lean statement on the owner's delegation; not human approvals); 11 partially verified (the required mix of methods is not met); 1 stale; 2 with no passing evidence; 2 with no passing evidence; 0 of 3 requirements that depend on an external element closed by hardware; performance verified: 5 on the board, 2 by post-route timing, 0 in simulation only; 0 of 28 requirements agreed by a human, 0 agreed on the owner's delegation (not human), 28 draft; 8 resting only on the implementing agent's own tests; 0 human and 0 delegated review(s) recorded; 4 Lean proof item(s) (all widths): 0 with a human-approved statement, 4 with a statement accepted on the owner's delegation (not a human approval), 0 with statement not approved; 4 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run).",
-     "own_tests_only": 8,
+     "line": "28 requirements (12 functional, 9 performance, 1 interface, 6 safety); 12 verified, of which 2 rest on delegated acceptances (the planner accepted the Lean statement on the owner's delegation; not human approvals); 13 partially verified (the required mix of methods is not met); 1 stale; 2 with no passing evidence; 2 with no passing evidence; 0 of 3 requirements that depend on an external element closed by hardware; performance verified: 5 on the board, 2 by post-route timing, 0 in simulation only; 0 of 28 requirements agreed by a human, 0 agreed on the owner's delegation (not human), 28 draft; 10 resting only on the implementing agent's own tests; 0 human and 0 delegated review(s) recorded; 4 Lean proof item(s) (all widths): 0 with a human-approved statement, 4 with a statement accepted on the owner's delegation (not a human approval), 0 with statement not approved; 4 kernel only, 0 using a compiled decision procedure; build status from: recorded build (not re-run).",
+     "own_tests_only": 10,
      "performance_board": 5,
      "performance_sim_only": 0,
      "performance_timing": 2,
@@ -67244,7 +67330,7 @@
   "total": {
    "designs": 34,
    "requirements": 357,
-   "verified": 66
+   "verified": 64
   }
  }
 }

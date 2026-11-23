@@ -26,11 +26,18 @@ module formal_igmp (
         if (rst) beats <= '0;
         else if (m_axis_tvalid && m_axis_tready) beats <= m_axis_tlast ? 7'd0 : beats + 7'd1;
     end
+    // Every assertion is labelled (a_*) and paired with a cover of its own antecedent (a_*__ante; brief 143c, flow/formal_rigour.py).
     always_ff @(posedge clk) if (f_past && !rst) begin
-        assert (viol[3:0] == 4'b0000);
-        if (m_axis_tvalid && m_axis_tlast) assert (beats == 7'd45);
-        if (m_axis_tvalid && !m_axis_tlast) assert (beats < 7'd45);
-        cover (ev_report);
-        cover (ev_leave);
+        a_axis_rules: assert (viol[3:0] == 4'b0000);
+        if (m_axis_tvalid && m_axis_tlast) a_frame_last_beat: assert (beats == 7'd45);
+        if (m_axis_tvalid && !m_axis_tlast) a_frame_mid_beat: assert (beats < 7'd45);
+    end
+    // antecedents (same guard)
+    always_ff @(posedge clk) if (f_past && !rst) begin
+        a_axis_rules__ante: cover (m_axis_tvalid && m_axis_tready);
+        a_frame_last_beat__ante: cover (m_axis_tvalid && m_axis_tlast);
+        a_frame_mid_beat__ante: cover (m_axis_tvalid && !m_axis_tlast);
+        c_report: cover (ev_report);
+        c_leave: cover (ev_leave);
     end
 endmodule

@@ -44,7 +44,7 @@ designs/t1_dimmer_counter/tests/test_t1_hw.py 45ade63537: on-board UART tests
 designs/t1_dimmer_counter/tests/run_mutants.sh 578c194e3d: sed mutants the tests must fail
 designs/t1_dimmer_counter/verif/testplan.yaml 0a5bd04595: requirements traced to checks
 designs/t1_dimmer_counter/verif/checkers/t1_bind.sv 817eaeab2b: bound assertion checkers
-designs/t1_dimmer_counter/verif/formal/debounce.sby f866b08ab4: SymbiYosys proof of the debouncer (scan.sby does the display scanner)
+designs/t1_dimmer_counter/verif/formal/debounce.sby b4a4738ebe: SymbiYosys proof of the debouncer (scan.sby does the display scanner)
 
 ## commands
 simulate the RTL against the model (~2min): python3 -m pytest -q shell/tests/test_shell_rtl.py designs/t1_dimmer_counter/tests/test_t1_rtl.py
