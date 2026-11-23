@@ -9,7 +9,7 @@ Not in scope:
 - a gigabit design; the RGMII MAC in ip_lib cannot run on this board, whose PHY is RMII
 - a board-verified design; no board run exists
 
-Kind: demonstration; written by hand. State: built. For an agent: [AGENT.md](AGENT.md).
+Kind: demonstration; written by a Claude Code session. State: built. For an agent: [AGENT.md](AGENT.md).
 
 <!-- prose:what -->
 ### What is in it
@@ -84,7 +84,7 @@ Interfaces:
 | build the design; needs local Vivado 2026.1 and a heavy slot (take_heavy_slot.sh) | `flow/run_vivado.sh designs/b63d_nexys_net base` | yes | about 5 min |
 | board run phase 1, PHY loopback, no cable; needs the board programmed with flow/run_vivado.sh designs/b63d_nexys_net program, and no cable in J4; not yet run | `python3 designs/b63d_nexys_net/host/board_run.py --port <shell UART> --phase loopback --out board_loopback.json` | no | - |
 
-Tool: Vivado 2026.1. Build ID of the inputs at handover: `5d855695` (`python flow/manifest.py show designs/b63d_nexys_net`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `1fc7ed8`.
+Tool: Vivado 2026.1. Build ID of the inputs at handover: `616ca3f8` (`python flow/manifest.py show designs/b63d_nexys_net`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `5e2eab8`.
 
 | File | What |
 |---|---|
