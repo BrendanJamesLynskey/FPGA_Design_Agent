@@ -35,7 +35,7 @@ designs/b119_tcp_fast/tests/b119_top_cocotb.py cb47428981: cocotb bench behind b
 designs/b119_tcp_fast/tests/netsim.py 3632074a28: the pure-Python network of owner, exchange and stand-in
 designs/b119_tcp_fast/tests/run_mutants.py c4a57bf19d: seeded-fault runner
 designs/b119_tcp_fast/ooc/ooc.py 48962fa558: out-of-context build driver
-designs/b119_tcp_fast/docs/tcp_fast.md 5c1937bbba: datasheet
+designs/b119_tcp_fast/docs/tcp_fast.md b03e87b558: datasheet
 designs/b119_tcp_fast/docs/software_side.md 340d510d39: the Python TCP owner and exchange
 designs/b119_tcp_fast/docs/phase2_integration.md e58721f2a6: integration notes for the 10G MAC and open points
 

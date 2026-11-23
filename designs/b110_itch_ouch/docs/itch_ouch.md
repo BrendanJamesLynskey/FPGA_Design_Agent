@@ -158,6 +158,23 @@ The frame is eight words, so a speculative frame ends 10 clocks after T; its ver
 One clock is 6.2061 ns, so 7 clocks are 43.4 ns and 3 clocks 18.6 ns. These are clocks inside this block only; they do not include the PCS,
 the MAC, the UDP/IP header (the payload starts 42 bytes into the frame), nor the TCP stack that would take the order frame.
 
+
+**Cycle cost (per block).** Generated from `cycle_cost.yaml` by `flow/cycle_cost.py`; do not edit between the markers.
+
+<!-- cycle_cost:begin -->
+Cycle cost of each block on the path (clocks of 6.2061 ns, simulation, counted from T, the clock in which the last byte of the message is presented on s_*). Each figure is the difference of two fields of the record named; a row of 0 says why.
+
+| Block | Adds (clocks) | From event | To event | Record | Why |
+|---|---|---|---|---|---|
+| mold_rx | 1 | T (last byte of the message presented) | message delivered raw (m_v) | `results/b110/latency_sim.json` | - |
+| itch_dec | 1 | m_v | decoded event (e_v) | `results/b110/latency_sim.json` | - |
+| book_core | 5 | e_v | top-of-book update visible (an Add) | `results/b110/latency_sim.json` | - |
+| risk_glue + ouch_enter, frame started at the verdict | 1 | top-of-book update visible | first word of the order frame | `results/b110/latency_sim.json` | - |
+| risk_glue + ouch_enter, frame started speculatively | 1 | e_v | first word of the order frame | `results/b110/latency_sim.json` | when the frame is idle, the order queue is empty and no earlier candidate is in flight, the frame starts from the candidate flag at decode, in parallel with the book, so the book's cycle cost is off this path; the verdict (clock 7) can still abort the frame, whose last word is at clock 10 |
+| **T to first order word, frame started at the verdict** | **8** | | | `results/b110/latency_sim.json` | sum of mold, dec, book, order_v; equals the record's own figure |
+| **T to first order word, frame started speculatively** | **3** | | | `results/b110/latency_sim.json` | sum of mold, dec, order_s; equals the record's own figure |
+<!-- cycle_cost:end -->
+
 **Speculation.** With `cfg_spec` set, the frame starts when the candidate is decoded, **if** the frame is idle, the order queue is empty and
 no earlier candidate is still in flight (otherwise it starts at the verdict, as without `cfg_spec`). The verdict then arrives while the frame is
 still being emitted: pass = commit, the frame continues; refuse, or the Add turned out a duplicate or an overflow = `o_abort`. The orders that

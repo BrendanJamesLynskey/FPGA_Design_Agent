@@ -41,7 +41,7 @@ from agent.core.runner import ContainerRunner, LocalRunner, container_available
 from agent.core.session import ROOT
 from agent.graph import review as rv
 from agent.graph.contract import contract_argv, parse_result
-from agent.graph.interview import (Interview, Question, SpecOracle, apply_register_answer, ensure_register_question, merge_summaries,
+from agent.graph.interview import (Interview, Question, SpecOracle, apply_register_answer, ensure_protocol_questions, ensure_register_question, merge_summaries,
                                    register_map_errors)
 from agent.graph.llm import BudgetExceeded, Meter, chat_model
 from agent.graph.roles import ROLES, RoleJail, role_inputs, role_session
@@ -1123,6 +1123,7 @@ def node_gate(state: State) -> dict:
         else:
             req = (rt.design / "spec.md").read_text() if (rt.design / "spec.md").is_file() else ""
             spec, _asked = ensure_register_question(req, spec)       # 07a2 fix 7: the harness asks for the register map itself
+            spec, _proto = ensure_protocol_questions(req, spec)      # brief 190: the six new-protocol intake questions, with defaults and reasons
             errs = register_map_errors(req, spec)           # 07a2 fix 1: ask for the register map before the interview
             if errs:
                 ev["spec"], ev["signed_off"], ev["spec_errors"] = spec, False, errs

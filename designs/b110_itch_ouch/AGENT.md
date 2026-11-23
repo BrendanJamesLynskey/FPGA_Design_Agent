@@ -36,7 +36,7 @@ designs/b110_itch_ouch/model/gen.py 7a5ed6f04b: seeded synthetic ITCH over MoldU
 designs/b110_itch_ouch/tests/b110_cocotb.py e8b7915b02: cocotb bench
 designs/b110_itch_ouch/tests/run_mutants.py d7d017acd5: seeded-fault runner
 designs/b110_itch_ouch/ooc/ooc.py 13550cc38a: out-of-context build driver
-designs/b110_itch_ouch/docs/itch_ouch.md 21f329f7ca: datasheet
+designs/b110_itch_ouch/docs/itch_ouch.md 2c2d912ac3: datasheet
 designs/b110_itch_ouch/docs/spec_notes.md 5ce86ae4a2: field layouts and where each comes from
 designs/b110_itch_ouch/docs/tcp_plan.md 95463d9cfc: TCP options and the phase 2 recommendation
 designs/b110_itch_ouch/docs/phase2_integration.md a15fee8877: integration plan for the KR260 design, the host bench and the board test
