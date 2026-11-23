@@ -27,7 +27,10 @@ from pathlib import Path
 from typing import Any, Callable
 from urllib.parse import parse_qs, urlparse
 
+from navigator import ask as NA
 from navigator import boardops, guards, measure, redact, runctl
+from navigator import console as NC
+from navigator import summary as NS
 from navigator import health as H
 from navigator import progress as PG
 from navigator import sources as S
@@ -52,6 +55,7 @@ class App:
                  extra_captures: list[Path] | None = None, token: str | None = None, state_dir: Path | None = None, config_dir: Path | None = None,
                  spawner: runctl.Spawner | None = None, transport: boardops.Transport | None = None, killpg: Any = None):
         self.root, self.handoff = Path(root), Path(handoff)
+        self.ask_llm: Callable[[str, str], Any] | None = None       # tests inject a fake model call; None = the model table's review purpose
         self.runs_dir = Path(runs_dir) if runs_dir else self.root / "runs"
         self.gate = gate or _default_gate
         self.health = health or H.Health(self.root, self.handoff)
@@ -122,6 +126,23 @@ class App:
         if path == "/api/live/run":
             v = PG.run_progress(self.runs_dir, one("id"), tail=int(one("tail", "40")) if one("tail", "40").isdigit() else 40)
             return self.json(200, v) if v else self.json(404, {"error": "no such run"})
+        if path == "/api/live/summary":
+            v = NS.summarise(self.runs_dir, one("id")) if self.known_run(one("id")) else None
+            return self.json(200, v) if v else self.json(404, {"error": "no such run"})
+        if path == "/api/live/requests":
+            v = NS.summarise(self.runs_dir, one("id")) if self.known_run(one("id")) else None
+            if not v:
+                return self.json(404, {"error": "no such run"})
+            return self.json(200, {"id": v["id"], "requests": v["requests"], "pending": v["pending"], "mode": v["mode"], "qa": [
+                {k: r.get(k) for k in ("when", "q", "a", "cited", "records_read", "model", "cost_usd", "plan_estimate_usd")} for r in NA.history(self.runs_dir / v["id"])[-20:]],
+                "qa_spent_usd": round(NA.spent(self.runs_dir / v["id"])[0], 4), "qa_cap_usd": NA.QA_USD, "qa_max": NA.QA_MAX})
+        if path == "/api/console/steps":
+            v = NC.steps(self.runs_dir, one("id")) if self.known_run(one("id")) else None
+            return self.json(200, v) if v else self.json(404, {"error": "no such run"})
+        if path == "/api/console/read":
+            off = one("offset")
+            v = NC.read(self.runs_dir, one("id"), one("step"), int(off) if off.isdigit() else None) if self.known_run(one("id")) else None
+            return self.json(200, v) if v else self.json(404, {"error": "no such step"})
         if path == "/api/start/options":
             return self.json(200, {**self.runctl.options(), "usage": self.health.usage(), "slots": self.health.locks(), "started": self.runctl.records()})
         if path == "/api/board":
@@ -152,6 +173,8 @@ class App:
             return self.json(200, self.runctl.start(body))
         if path == "/api/run/stop":
             return self.json(200, self.runctl.stop(body.get("id")))
+        if path in ("/api/run/ask", "/api/run/request", "/api/run/answer"):
+            return self.live_post(path, body)
         if path == "/api/board/run":
             try:
                 self.gate("python -m navigator (board action)")
@@ -161,6 +184,55 @@ class App:
                 return self.json(200, {"ok": False, "refused": "a board action needs the confirmation the page sends"})
             return self.json(200, self.board.run(body.get("board"), body.get("action")))
         return self.json(404, {"error": "no such endpoint"})
+
+    def known_run(self, rid: str) -> bool:
+        """The run is one of the directories this service lists: a request never names a path."""
+        return isinstance(rid, str) and rid in PG.run_ids(self.runs_dir, 200)
+
+    def live_post(self, path: str, body: dict[str, Any]) -> tuple[int, str, bytes, dict[str, str]]:
+        """Stage 3 actions on a run: ask a question, queue a request, answer a pending question. Fixed keys only; a key the route does not know is refused."""
+        try:
+            self.gate("python -m navigator (run request)")
+        except Exception as e:
+            return self.json(403, {"ok": False, "refused": "access gate: " + redact.text(str(e))[:160]})
+        spec = {"/api/run/ask": ("ask", {"id", "question", "confirm"}), "/api/run/request": ("request", {"id", "kind", "action", "stage", "text", "confirm"}),
+                "/api/run/answer": ("answer", {"id", "answer", "confirm"})}[path]
+        extra = sorted(set(body) - spec[1])
+        if extra:
+            return self.json(200, {"ok": False, "refused": "the request has fields this action does not take: " + ", ".join(redact.text(str(k))[:20] for k in extra[:5])})
+        if body.get("confirm") != spec[0]:
+            return self.json(200, {"ok": False, "refused": f"this needs the confirmation the page sends ({spec[0]})"})
+        rid = body.get("id")
+        if not self.known_run(rid):
+            return self.json(200, {"ok": False, "refused": "pick a run from the list"})
+        try:
+            if path == "/api/run/ask":
+                r = NA.ask(self.runs_dir, rid, body.get("question"), llm=self.ask_llm)
+                return self.json(200, {"ok": True, **r})
+            if path == "/api/run/request":
+                from agent.core.session import STAGES
+                from agent.graph import requests as rq
+                kind = body.get("kind")
+                if kind == "control":
+                    if body.get("text") is not None:
+                        raise rq.RequestError("a control request takes no text")
+                    act = body.get("action")
+                    if not isinstance(act, str) or act not in rq.CONTROL:
+                        raise rq.RequestError("action must be one of " + ", ".join(rq.CONTROL))
+                    r = rq.submit(self.runs_dir / rid, control=act, stage=body.get("stage"), source="navigator", stages=tuple(STAGES))
+                elif kind == "design":
+                    if body.get("action") is not None or body.get("stage") is not None:
+                        raise rq.RequestError("a design request takes only text")
+                    if not isinstance(body.get("text"), str):
+                        raise rq.RequestError("the request text must be a string")
+                    r = rq.submit(self.runs_dir / rid, design=body["text"], source="navigator", stages=tuple(STAGES))
+                else:
+                    raise rq.RequestError("kind must be control or design")
+                return self.json(200, {"ok": True, "request": {k: r.get(k) for k in ("id", "kind", "action", "stage", "status", "applies", "affects")}, "what": r.get("text")})
+            r = self.runctl.start({"kind": "answer", "run": rid, "answer": body.get("answer"), "confirm": "start"})
+            return self.json(200, {**r, "ok": bool(r.get("started"))})
+        except (NA.AskError, ValueError) as e:                    # AskError and RequestError (both ValueError): the reason, nothing was done
+            return self.json(200, {"ok": False, "refused": redact.text(str(e))[:300]})
 
     def action(self, name: str) -> tuple[int, str, bytes, dict[str, str]]:
         if name not in H.Health.ACTIONS:

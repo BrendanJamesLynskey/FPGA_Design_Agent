@@ -497,11 +497,108 @@
       p.audit_tail.length ? table(["tool", "stage", "ok", "result"], p.audit_tail.slice().reverse().map(function (a) { return [a.tool, a.stage || "", a.refused ? "refused" : a.ok === null ? "" : a.ok ? "ok" : "failed", a.line]; })) : h("p", { class: "mute" }, "The audit log has no rows yet."),
       h("p", { class: "src" }, "read from " + p.source.dir + " (" + p.source.files.join(", ") + "); nothing is written"));
   }
+  /* ---------- stage 3: plain-words status, requests, questions, console (brief 182) ---------- */
+  function statusPanel(box, s) {
+    box.textContent = "";
+    var rows = [["Done", s.done], ["Doing now", s.doing], ["Next", s.next], ["Blocked or waiting", s.blocked.length ? s.blocked.join("; ") : "nothing"], ["Cost", s.cost_line]];
+    add(box, [h("h3", null, "What is happening"),
+      h("dl", null, rows.map(function (r) { return [h("dt", null, r[0]), h("dd", null, r[1])]; })),
+      h("p", { class: "src" }, "Written from the run's records by code, not by a model. Sentence built " + age(Math.max(0, Date.now() / 1000 - s.built_at)) + "; it changes when a stage ends or a request changes, and at least every " + s.refresh_min + " min.")]);
+    if (s.pending && s.pending.kind === "question") {
+      var inp = h("input", { type: "text", value: s.pending.default || "", "aria-label": "Your answer", class: "fullw" }), out = h("div", { "aria-live": "polite" });
+      add(box, h("div", { class: "banner" }, h("strong", null, "The agent asks: "), s.pending.ask, h("p", { class: "mute" }, "Default: " + (s.pending.default || "(none)") + (s.pending.why ? ". Why it asks: " + s.pending.why : "")), inp,
+        h("button", { type: "button", class: "mt", on: { click: function () {
+          if (!confirm("Answer and resume run " + s.id + "? It resumes with the usual guards (usage check and a heavy slot).")) return;
+          post("/api/run/answer", { id: s.id, answer: inp.value, confirm: "answer" }).then(function (j) { out.textContent = j.ok ? "Resumed: " + j.id : "Not resumed: " + (j.refused || "refused"); });
+        } } }, "Answer and resume"), out));
+    }
+  }
+  function requestsPanel(runId) {
+    var kind = h("select", { "aria-label": "Kind of request" }, h("option", { value: "design" }, "Design change (free text)"), h("option", { value: "pause" }, "Pause at the next safe point"),
+      h("option", { value: "stop_after" }, "Stop after a stage"), h("option", { value: "abort" }, "Abort at the next safe point"));
+    var stage = h("select", { "aria-label": "Stage to stop after", hidden: true }), txt = h("textarea", { rows: 2, maxlength: 500, class: "fullw", "aria-label": "Design request", placeholder: "for example: use block RAM for the FIFO" }), out = h("div", { "aria-live": "polite" }), list = h("div", null);
+    function sync() { stage.hidden = kind.value !== "stop_after"; txt.hidden = kind.value !== "design"; }
+    kind.addEventListener("change", sync);
+    api("/api/live/run?id=" + encodeURIComponent(runId)).then(function (p) { p.stages.forEach(function (n, i) { stage.appendChild(h("option", { value: i }, i + " " + n)); }); });
+    sync();
+    var box = h("div", { class: "panel mt2" }, h("h3", null, "Ask the agent to change something"),
+      h("p", { class: "mute" }, "A request waits for the next safe point (the end of the stage that is running, after its gate and review); it is never applied in the middle of a tool call. A design change can rewind the run to an earlier stage if its words name one. Not available for design changes on scored runs."),
+      h("div", { class: "toolbar" }, kind, stage), txt,
+      h("button", { type: "button", class: "mt", on: { click: function () {
+        var k = kind.value, body = { id: runId, confirm: "request" };
+        if (k === "design") { body.kind = "design"; body.text = txt.value; } else { body.kind = "control"; body.action = k; if (k === "stop_after") body.stage = parseInt(stage.value, 10); }
+        var what = k === "design" ? "send this design request: " + txt.value : k === "stop_after" ? "stop after stage " + stage.value : k === "pause" ? "pause the run at the next safe point" : "abort the run at the next safe point";
+        if (!confirm("Queue a request to " + what + "?")) return;
+        post("/api/run/request", body).then(function (j) { out.textContent = j.ok ? "Queued " + j.request.id + ". Applies: " + j.request.applies + ". Affects: " + j.request.affects : "Not queued: " + (j.refused || j.error); if (j.ok) txt.value = ""; refresh(); });
+      } } }, "Queue request"), out, h("h3", { class: "mt2" }, "Requests"), list);
+    function refresh() {
+      api("/api/live/requests?id=" + encodeURIComponent(runId)).then(function (d) {
+        list.textContent = "";
+        add(list, d.requests.length ? table(["id", "request", "status", "applies at / outcome", "affects"], d.requests.slice().reverse().map(function (r) {
+          return [r.id, r.label, r.status, r.reason || r.applies, r.affects]; })) : h("p", { class: "mute" }, "No requests yet."));
+        if (d.mode.scored) add(list, h("p", { class: "banner" }, "Scored run: " + d.mode.why + ". Design requests and questions are refused; pause, stop-after and abort are allowed."));
+      });
+    }
+    refresh();
+    return { el: box, refresh: refresh };
+  }
+  function askPanel(runId) {
+    var q = h("textarea", { rows: 2, maxlength: 500, class: "fullw", "aria-label": "Your question", placeholder: "for example: why did stage 2 run twice?" }), out = h("div", { "aria-live": "polite" }), hist = h("div", null);
+    var box = h("div", { class: "panel mt2" }, h("h3", null, "Ask about this run"),
+      h("p", { class: "mute" }, "A separate read-only model call answers from this run's records only (the same redacted records as this page); it cannot change the design or the run. Each answer lists the records it read and cited. Questions have their own small cap, apart from the run's budget. An answer is a model's reading, not a record: check the cited records."),
+      q, h("button", { type: "button", class: "mt", on: { click: function () {
+        if (!confirm("Ask this question? It makes one model call (Claude Code on the subscription by default).")) return;
+        out.textContent = "Asking..."; post("/api/run/ask", { id: runId, question: q.value, confirm: "ask" }).then(function (j) {
+          out.textContent = j.ok ? "" : "Not asked: " + (j.refused || j.error); if (j.ok) q.value = ""; load();
+        }, function (e) { out.textContent = "Failed: " + e.message; });
+      } } }, "Ask"), out, hist);
+    function load() {
+      api("/api/live/requests?id=" + encodeURIComponent(runId)).then(function (d) {
+        hist.textContent = "";
+        add(hist, d.qa.slice().reverse().map(function (r) {
+          return h("div", { class: "qa" }, h("p", null, h("strong", null, "Q: "), r.q), h("p", null, h("strong", null, "A: "), r.a),
+            h("p", { class: "src" }, "records read: " + (r.records_read || []).join(", ") + "; cited: " + ((r.cited || []).join(", ") || "none") + "; " + (r.model || "") + "; cost " + (r.cost_usd !== null && r.cost_usd !== undefined ? "$" + Number(r.cost_usd).toFixed(3) + " (provider-reported)" : r.plan_estimate_usd ? "$" + Number(r.plan_estimate_usd).toFixed(3) + " (plan estimate)" : "not reported") + "; " + r.when));
+        }));
+        add(hist, h("p", { class: "src" }, "questions: $" + d.qa_spent_usd.toFixed(2) + " of $" + d.qa_cap_usd.toFixed(2) + " cap, " + d.qa.length + " of " + d.qa_max + " asked"));
+      });
+    }
+    load();
+    return { el: box, refresh: load };
+  }
+  function consolePanel(runId) {
+    var det = h("details", { class: "console mt2" }), sum = h("summary", null, "Console (closed by default; reads the run's output files only while open)"), pick = h("select", { "aria-label": "Step" }), lab = h("p", { class: "src" }), pre = h("pre", { class: "cmd console-out", tabindex: 0, "aria-label": "Console output" });
+    var offset = null, cur = null, timer = null, started = false;
+    add(det, [sum, h("p", { class: "mute" }, "The model's streamed output and tool calls (arguments summarised), Vivado's log, the simulator's and the formal tool's output, test runs. Prompts are never shown. Secrets are redacted. Scored or held-out runs show tool names and progress lines only."), h("div", { class: "toolbar" }, pick), lab, pre]);
+    function poll() {
+      if (!det.open) return;
+      api("/api/console/steps?id=" + encodeURIComponent(runId)).then(function (d) {
+        var keep = pick.value; pick.textContent = "";
+        d.steps.slice().reverse().forEach(function (x) { pick.appendChild(h("option", { value: x.id }, (x.active ? "running: " : "") + x.label + "  [" + x.id + "]")); });
+        if (!d.steps.length) { lab.textContent = "No console output yet."; return; }
+        if (!started) { pick.value = (d.steps.filter(function (x) { return x.active; })[0] || d.steps[d.steps.length - 1]).id; started = true; }
+        else if (keep) pick.value = keep;
+        if (pick.value !== cur) { cur = pick.value; offset = null; pre.textContent = ""; }
+        var q = "/api/console/read?id=" + encodeURIComponent(runId) + "&step=" + encodeURIComponent(cur) + (offset === null ? "" : "&offset=" + offset);
+        return api(q).then(function (r) {
+          lab.textContent = r.label + " | " + (r.active ? "running since " + new Date(r.started * 1000).toLocaleTimeString() : "ended") + " | source " + r.source + (r.restricted ? " | restricted: tool names and progress lines only" + (r.withheld ? " (" + r.withheld + " lines withheld)" : "") : "") + (r.tail_only && offset === null ? " | showing the last 256 KB" : "");
+          if (r.lines.length) { var atEnd = pre.scrollTop + pre.clientHeight >= pre.scrollHeight - 20; pre.textContent += r.lines.join("\n") + "\n"; if (pre.textContent.length > 400000) pre.textContent = pre.textContent.slice(-300000); if (atEnd) pre.scrollTop = pre.scrollHeight; }
+          offset = r.next_offset;
+        });
+      }).catch(function () {});
+    }
+    pick.addEventListener("change", poll);
+    det.addEventListener("toggle", function () { if (det.open) poll(); });
+    every(2000, function () { if (det.open && !document.hidden) poll(); });
+    return { el: det, refresh: function () {} };
+  }
   function pageLive() {
-    var root = h("div", null, h("h1", null, "Live"), loading()), sel = state.liveRun || null, detail = h("div", { "aria-live": "polite" });
+    var root = h("div", null, h("h1", null, "Live"), loading()), sel = state.liveRun || null, detail = h("div", { "aria-live": "polite" }), statusBox = h("div", { class: "panel mt2" }), panels = h("div", null), shown = null, parts = [];
     main.textContent = ""; main.appendChild(root);
     function loadDetail() {
-      if (!sel) { detail.textContent = ""; return; }
+      if (!sel) { detail.textContent = ""; statusBox.textContent = ""; panels.textContent = ""; shown = null; return; }
+      if (shown !== sel) { shown = sel; parts = [requestsPanel(sel), askPanel(sel), consolePanel(sel)]; panels.textContent = ""; add(panels, parts.map(function (x) { return x.el; })); }
+      else parts.forEach(function (x) { x.refresh(); });
+      api("/api/live/summary?id=" + encodeURIComponent(sel)).then(function (s) { statusPanel(statusBox, s); }, function () {});
       api("/api/live/run?id=" + encodeURIComponent(sel)).then(function (p) { detail.textContent = ""; add(detail, [h("h2", null, p.id + (p.name ? "  " + p.name : "")), runDetail(p)]); }, function (e) { detail.textContent = ""; add(detail, fail(e)); });
     }
     function load() {
@@ -516,7 +613,7 @@
           d.runs.length ? table(["run", "design", "status", "stage", "visit", "cost", "budget", "last write"], d.runs.map(function (r) {
             return { cells: [r.id, r.name || "", stat(r.status === "active" ? "ok" : r.status === "finished" ? "unknown" : "warn"), r.stage || "", r.visit === null ? "" : String(r.visit), usd(r.cost.reported_usd), usd(r.cost.budget_usd), age(r.last_write_age_s)], onclick: function () { sel = state.liveRun = r.id; loadDetail(); } };
           }), { num: [4] }) : h("p", null, "No run directories yet."), h("p", { class: "mute" }, "Click a run for its stages, gates and audit log.")]);
-        root.textContent = ""; add(root, [h("h1", null, "Live"), list, detail]); loadDetail();
+        root.textContent = ""; add(root, [h("h1", null, "Live"), list, statusBox, detail, panels]); loadDetail();
       }, function (e) { root.textContent = ""; add(root, [h("h1", null, "Live"), fail(e)]); });
     }
     load();

@@ -318,6 +318,79 @@ def pickup_cmd(a) -> int:
     return 0
 
 
+def live_cmd(a) -> int:
+    """Brief 182: status, ask and request. The navigator's Live page calls the same code (navigator/summary.py, console.py, ask.py; agent/graph/requests.py)."""
+    import time as _t
+    from navigator import ask as nask
+    from navigator import console as ncon
+    from navigator import summary as nsum
+    rd = Path(a.run_dir).resolve()
+    runs, rid = rd.parent, rd.name
+    if a.cmd == "status":
+        def show() -> dict | None:
+            s = nsum.summarise(runs, rid)
+            if s is None:
+                print("no such run directory", file=sys.stderr)
+                return None
+            print(json.dumps(s, indent=1, default=str) if a.json else s["sentence"] + "\n" + "".join(f"  request {r['id']} ({r['label']}): {r['status']}" + (f", {r['reason']}" if r["reason"] else "") + "\n" for r in s["requests"]), end="")
+            return s
+        if a.console:
+            lst = ncon.steps(runs, rid)
+            if lst is None:
+                print("no such run directory", file=sys.stderr)
+                return 2
+            for x in lst["steps"]:
+                print(f"{x['id']:<34} {x['label']:<26} {'running' if x['active'] else 'ended  '} {x['size']:>9} bytes  {x['source']}")
+            if lst["restriction"]:
+                print("(" + lst["restriction"] + ")")
+            pick = a.step or next((x["id"] for x in reversed(lst["steps"]) if x["active"]), (lst["steps"][-1]["id"] if lst["steps"] else None))
+            out = ncon.read(runs, rid, pick) if pick else None
+            if out:
+                print(f"--- {out['label']} ({out['source']}), last {len(out['lines'])} lines ---")
+                print("\n".join(out["lines"][-60:]))
+            return 0
+        s = show()
+        if s is None:
+            return 2
+        while a.follow and s and s["status"] != "finished":
+            last = s["sentence"]
+            _t.sleep(5)
+            s = nsum.summarise(runs, rid)
+            if s and s["sentence"] != last:
+                show()
+        return 0
+    if a.cmd == "ask":
+        try:
+            r = nask.ask(runs, rid, a.question)
+        except nask.AskError as e:
+            print("ask refused: " + str(e), file=sys.stderr)
+            return 2
+        print(r["a"])
+        print(f"\nrecords given: {', '.join(r['records_read'])}; cited: {', '.join(r['cited']) or 'none'}" + (f"; cites records it was not given: {', '.join(r['cites_unknown'])}" if r["cites_unknown"] else ""))
+        print(f"model {r['model']}; cost {r['plan_estimate_usd'] if r['cost_usd'] is None else r['cost_usd']} ({r['cost_note']}); this run's questions: {r['qa_spent_usd']} of {r['qa_cap_usd']} USD, {r['qa_count']} of {r['qa_max']}")
+        return 0
+    from agent.core.session import STAGES
+    from agent.graph import requests as rq
+    ctl, stage = (None, None)
+    if a.control:
+        ctl = a.control[0]
+        if len(a.control) > 2 or (ctl.replace("-", "_") == "stop_after") != (len(a.control) == 2):
+            print("request refused: use --control pause | abort | stop-after N", file=sys.stderr)
+            return 2
+        try:
+            stage = int(a.control[1]) if len(a.control) == 2 else None
+        except ValueError:
+            print("request refused: N must be a stage number", file=sys.stderr)
+            return 2
+    try:
+        r = rq.submit(rd, control=ctl, stage=stage, design=a.design, stages=tuple(STAGES))
+    except rq.RequestError as e:
+        print("request refused: " + str(e), file=sys.stderr)
+        return 2
+    print(f"request {r['id']} queued: {rq.describe(r)}\n  applies: {r['applies']}\n  affects: {r['affects']}")
+    return 0
+
+
 def review_cmd(a) -> int:
     from flow.review import review
     from flow.review.judge import UNSET as J_UNSET
@@ -467,11 +540,27 @@ def main(argv: list[str] | None = None) -> int:
     md.add_argument("--allow-fable", action="store_true")
     md.add_argument("--json", action="store_true", help="show: the resolved table as JSON (the run-record form)")
     md.add_argument("--probe", action="store_true", help="check: also make one minimal call per endpoint in use (spends tokens)")
+    st = sub.add_parser("status", help="brief 182: a run's status in plain words (no model call); --console for the live console")
+    st.add_argument("run_dir", type=Path)
+    st.add_argument("--follow", action="store_true", help="print the status again whenever it changes, until the run ends")
+    st.add_argument("--console", action="store_true", help="list the console steps and show the tail of one (--step ID, default the running or latest)")
+    st.add_argument("--step")
+    st.add_argument("--json", action="store_true")
+    ak = sub.add_parser("ask", help="brief 182: ask a read-only model a question about a run, answered from that run's records only (logged in qa.jsonl)")
+    ak.add_argument("run_dir", type=Path)
+    ak.add_argument("question")
+    rq_ = sub.add_parser("request", help="brief 182: queue a mid-run request, applied at the run's next safe point (a stage boundary)")
+    rq_.add_argument("run_dir", type=Path)
+    g_ = rq_.add_mutually_exclusive_group(required=True)
+    g_.add_argument("--control", nargs="+", metavar=("ACTION", "N"), help="pause | abort | stop-after N")
+    g_.add_argument("--design", help="free text: a change for the design, e.g. 'use block RAM for the FIFO' (refused for a scored run)")
     from agent.graph.latency_loop import add_parser as _latency_parser    # brief 97
     _latency_parser(sub)
     from flow.options.cli import add_parser as _improve_parser           # brief 104
     _improve_parser(sub)
     a = ap.parse_args(argv)
+    if a.cmd in ("status", "ask", "request"):
+        return live_cmd(a)
     if a.cmd == "models":
         return models_cmd(a, args)
     if a.cmd == "latency":

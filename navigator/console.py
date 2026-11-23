@@ -63,7 +63,7 @@ def steps(runs_dir: Path, run_id: str, now: float | None = None) -> dict[str, An
                 continue
             seen.add(e["step"])
             end = ends.get(e["step"])
-            out.append({"id": e["step"], "label": str(e.get("label"))[:60], "kind": str(e.get("kind"))[:20], "stage": e.get("stage"), "started": e.get("started"),
+            out.append({"id": e["step"], "label": str(e.get("label"))[:60], "kind": str(e.get("stream"))[:20], "stage": e.get("stage"), "started": e.get("started"),
                         "seconds": end.get("seconds") if end else None, "active": end is None and not finished and bool(f.stat().st_size >= 0) and now - f.stat().st_mtime < 3600,
                         "size": f.stat().st_size, "source": str(e.get("source"))})
     for f in sorted((rd / "claude_code").glob("*.jsonl")) if (rd / "claude_code").is_dir() else []:      # runs from before the live console: the finished stream of each model call

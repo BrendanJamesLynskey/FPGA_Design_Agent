@@ -1,7 +1,7 @@
 """The live console's files (brief 182): where each step's output goes while it runs, and the trace rows that point at them.
 
 A step is one model call (the Claude Code stream) or one external tool run (Vivado, the simulator, the formal tool, a test run). Its output is written to
-``<run_dir>/console/<step>.log`` while it runs, and the run's own ``trace.jsonl`` gets a ``console`` event naming it (label, kind, source, start) and, when it
+``<run_dir>/console/<step>.log`` while it runs, and the run's own ``trace.jsonl`` gets a ``console`` event naming it (label, stream, source, start) and, when it
 ends, a ``console_end`` event (seconds, exit code). The navigator reads the files; it is given step ids, never paths. A prompt is never written here: the Claude
 Code stream holds the model's output and tool calls, not the prompt text.
 
@@ -34,7 +34,7 @@ def begin(run_dir: Path, label: str, step: str, kind: str = "tool_output", stage
     d = Path(run_dir) / DIR
     d.mkdir(parents=True, exist_ok=True)
     f = d / f"{step}.log"
-    _trace(run_dir).event("console", stage, step=step, label=label[:60], kind=kind, source=f"{DIR}/{step}.log", started=round(time.time(), 1))
+    _trace(run_dir).event("console", stage, step=step, label=label[:60], stream=kind, source=f"{DIR}/{step}.log", started=round(time.time(), 1))
     return f
 
 
