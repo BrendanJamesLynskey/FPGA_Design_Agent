@@ -290,7 +290,7 @@ areas:
   - kind: measured
     source: results/185_dsp_slices/data/k26.json
     values: ["max@points:fmax_mhz|kind=mul,params.WA=18,params.RSTP=0,latency_clocks=0", "max@points:fmax_mhz|kind=mul,params.WA=18,params.RSTP=0,latency_clocks=1", "max@points:fmax_mhz|kind=mul,params.WA=18,params.RSTP=0,latency_clocks=2", "max@points:fmax_mhz|kind=mul,params.WA=18,params.RSTP=0,latency_clocks=3", "max@points:fmax_mhz|kind=mul,params.WA=18,params.RSTP=0,latency_clocks=4"]
-    text: "The same on the UltraScale+ part: {0}, {1}, {2}, {3} and {4} MHz. The three-register figure is a setup estimate at the target clock; the data sheet's own limit for the part is lower and is the ceiling at sign-off."
+    text: "The same on the UltraScale+ part: {0}, {1}, {2}, {3} and {4} MHz. The three-register figure is the clock-buffer limit of the part (the setup estimate at the target clock is higher); the data sheet's own DSP limit for the part is lower still and is the ceiling at sign-off."
   - kind: measured
     source: results/185_dsp_slices/data/a7.json
     values: ["pick@points:fmax_mhz|id=mul_WA18_WB18_NA1_NM1_NP1_RSTP0", "pick@points:fmax_mhz|id=mul_WA18_WB18_NA1_NM1_NP0_RSTP0", "pick@points:fmax_mhz|id=mul_WA18_WB18_NA0_NM0_NP0_RSTP0"]
@@ -298,7 +298,7 @@ areas:
   - kind: measured
     source: results/185_dsp_slices/data/k26.json
     values: ["pick@points:fmax_mhz|id=mul_WA18_WB18_NA1_NM1_NP1_RSTP0", "pick@points:fmax_mhz|id=mul_WA18_WB18_NA1_NM1_NP0_RSTP0", "pick@points:fmax_mhz|id=mul_WA18_WB18_NA0_NM0_NP0_RSTP0"]
-    text: "On the UltraScale+ part the same three cases reached {0}, {1} and {2} MHz; with every register the result is limited by the clock period asked for, not by the slice."
+    text: "On the UltraScale+ part the same three cases reached {0}, {1} and {2} MHz; with every register the result is limited by the clock buffer (and the clock period asked for), not by the slice."
   - kind: measured
     source: results/185_dsp_slices/data/a7.json
     values: ["pick@points:dsp_cells.0.MREG|id=mul_WA18_WB18_NA0_NM0_NP1_RSTP0", "pick@points:dsp_cells.0.PREG|id=mul_WA18_WB18_NA0_NM0_NP1_RSTP0", "pick@points:fmax_mhz|id=mul_WA18_WB18_NA0_NM0_NP1_RSTP2", "pick@points:fmax_mhz|id=mul_WA18_WB18_NA0_NM0_NP1_RSTP1"]
