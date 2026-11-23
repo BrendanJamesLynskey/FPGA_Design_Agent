@@ -8,6 +8,7 @@
     python -m agent review <design-dir> [--out DIR] [--intent FILE] [--improvements FILE] [--no-judge]   (brief 84: review an existing design, read-only)
     python -m agent document <run-dir> [--cc-model M] [--replay doc_calls.jsonl]   (brief 68 C: the DOC step on a finished run)
     python -m agent project check|status|hash|gen-tests <dir> ...     (the project layer, project/cli.py)
+    python -m agent example list | run <name> | compare <run_dir> | tools <name>   (brief 195: reproducible examples with reference runs)
     python -m agent improve <design-dir> "<request>" [--more | --edit N "<change>" | --choose N]   (brief 104: analysis, then strategy options; --choose runs one)
 
 A paused run (an interview question or a stage review) prints what it waits for; answer with ``resume --reply``
@@ -558,9 +559,14 @@ def main(argv: list[str] | None = None) -> int:
     _latency_parser(sub)
     from flow.options.cli import add_parser as _improve_parser           # brief 104
     _improve_parser(sub)
+    from agent.repro.cli import add_parser as _example_parser            # brief 195
+    _example_parser(sub)
     a = ap.parse_args(argv)
     if a.cmd in ("status", "ask", "request"):
         return live_cmd(a)
+    if a.cmd == "example":
+        from agent.repro.cli import main as example_main
+        return example_main(a)
     if a.cmd == "models":
         return models_cmd(a, args)
     if a.cmd == "latency":
