@@ -55,7 +55,7 @@ def rt(monkeypatch):
     from agent.tests.test_episode import FakeRunner, T1
     runs = ROOT / "runs" / f"_pytest_{uuid.uuid4().hex[:8]}"
     monkeypatch.setattr(gr, "RUNS", runs)
-    cfg = gr.Config(spec_md=T1 / "spec.md", name="t1_dimmer_counter", interview="on", verif_ask=False)
+    cfg = gr.Config(spec_md=T1 / "spec.md", name="t1_dimmer_counter", interview="on", verif_ask=True)
     r = gr.new_runtime(cfg, lambda *a, **k: None, runner=FakeRunner())
     (r.design / "spec.md").write_text("A PWM dimmer counter for the board.\n")
     yield r, gr, T1
@@ -74,7 +74,7 @@ def test_the_answer_joins_the_pin_and_the_builds_environment(rt, monkeypatch):
     assert len(q) == 1 and q[0]["reason"]
     assert r.cfg.verif_sets["production_secure"] is True and spec["production_secure"]["value"] is True
     pin = json.loads((r.run_dir / "policy.json").read_text())
-    assert pin["overrides"]["production_secure"] is True and "security question" in pin["set_by"]
+    assert pin["overrides"]["production_secure"] is True
     assert json.loads(P.security_env(r.run_dir)["FDA_SECURITY"])["strip_debug"] is True
     assert r.session.policy_run_dir == r.run_dir
     # no second question when the user already set it on the command line

@@ -86,7 +86,7 @@ def profile_from_answer(answer: str | None, default: str) -> str:
 
 
 _SECURITY_WORDS = r"\b(production|deployed|deployment|in the field|customer|customers|ship|shipping|secure|security|tamper|copy[- ]protect|ip protection|encrypt\w*|confidential|proprietary|trade secret)\b"
-SECURITY_QUESTION = "Is this a production build that must be hard to copy, read back or debug?"
+SECURITY_QUESTION = "Is this a production build that must be hard to copy, read back or debug?"      # asked with the profile question (cfg.verif_ask)
 
 
 def security_cost_text() -> str:

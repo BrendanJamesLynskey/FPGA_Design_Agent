@@ -83,7 +83,7 @@ V = variable, J = LLM judgement, H = hybrid.
 | whether a failure is the design or the test | J | needs the evidence | the triage record of the spec-test role |
 | interpreting an ambiguous spec | H | never silent: an interview question with a default | `resolved_questions` in `spec.yaml` and the run summary |
 | which blocks get TMR or ECC when the spec does not say | H | the profile decides *whether* the structures are offered (V); the interview decides *where* | `spec.yaml` `dependability`, the interview record |
-| whether this is a production build (`production_secure`) | H | the interview asks, with a default from the spec's words ("production", "secure", "tamper", ...) and the measured cost; once answered it is a variable in the pin. With `--interview off` it stays off unless set with `--set` | the interview record, `spec.yaml` `production_secure`, `policy.json` |
+| whether this is a production build (`production_secure`) | H | the interview asks, with a default from the spec's words ("production", "secure", "tamper", ...) and the measured cost; once answered it is a variable in the pin. It is asked together with the profile question (interview on or oracle, no `--verif-profile` given); otherwise it stays off unless set with `--set` | the interview record, `spec.yaml` `production_secure`, `policy.json` |
 | profile choice for a new block | H | the interview proposes one from the spec's words, with its measured extra time | the interview record and `policy.json` |
 | request a change to an LLM-judgement value | *proposal* | a Navigator control that files a change request for the next visit of the stage | not built |
 

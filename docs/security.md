@@ -33,7 +33,7 @@ The area is the *Security* attribute of Dependability (the taxonomy of Avizienis
 ("Is this a production build that must be hard to copy, read back or debug?", default from the spec's words, with the measured cost). By hand, a
 `security:` mapping in `build.yaml` or `FDA_SECURITY='{"production_secure": true}'` in the environment. The agent's harness passes the pin to every
 build as `FDA_SECURITY`; a `security:` key in `build.yaml` that disagrees with the pin does not change the build and fails the gate
-`security_policy_pin`. With `--interview off` nothing asks and the switch stays off unless set.
+`security_policy_pin`. The question is asked with the interview on (or the oracle) when no `--verif-profile` was given, like the profile question; with `--interview off`, or with a profile given on the command line, nothing asks and the switch stays off unless `--set` turned it on.
 
 **Keys.** The flow never makes, reads, names, stores or programs a key; there is no key variable or key option in it. On a family where Vivado encrypts the
 bitstream it writes an `.nky` beside it: that file is a secret, it is git-ignored (`*.nky`), it is never copied into a record, and a test fails if a key-like file is tracked. The result collector refuses

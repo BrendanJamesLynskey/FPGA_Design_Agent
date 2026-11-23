@@ -904,7 +904,7 @@ def _interview(rt: Runtime, spec: dict, state: State) -> tuple[dict, dict]:
     profile_ask = sdoc is None and getattr(rt.cfg, "verif_ask", False) and not any(o.get("question", "").startswith("Which verification profile") for o in spec.get("resolved_questions") or [])
     if profile_ask:                                               # brief 194: the verification profile, with a default and a reason
         asks.append(_assur.profile_question(spec))
-    sec_ask = rt.cfg.interview in ("on", "oracle") and "production_secure" not in (rt.cfg.verif_sets or {}) and not any(
+    sec_ask = rt.cfg.interview in ("on", "oracle") and getattr(rt.cfg, "verif_ask", False) and "production_secure" not in (rt.cfg.verif_sets or {}) and not any(
         o.get("question", "").startswith(_assur.SECURITY_QUESTION) for o in spec.get("resolved_questions") or [])
     if sec_ask:                                                   # brief 196: production_secure, with a default and a reason
         asks.append(_assur.security_question(spec))
