@@ -16,8 +16,8 @@
 // HOLD-OFF (brief 188, the idea of b58a's rule hold-off): after an order is accepted for an instrument, the next candidate of that instrument is refused
 //   for cfg_holdoff clocks (0 = off); the refusal is counted as rej_busy (timing dependent, so not part of the untimed model's counters), and speculation
 //   is not started while any instrument is in hold-off.
-// NOTIONAL (brief 188): NOTIONAL_MODE 0 = no check; 1 = order price times quantity against cfg_max_notional (a 32 by 32 bit multiply in the verdict
-//   clock); 2 = a table written by software: price bucket (order price >> cfg_nt_shift, at most 15) -> largest quantity, so the check is one table read and a
+// NOTIONAL (brief 188): NOTIONAL_MODE 0 = no check; 1 = order price times quantity against cfg_max_notional (a 32 by 32 bit multiply, pipelined over the
+//   three clocks the book needs between the ladder update and the verdict, so it adds no clock); 2 = a table written by software: price bucket (order price >> cfg_nt_shift, at most 15) -> largest quantity, so the check is one table read and a
 //   compare. Software fills entry i with the notional limit divided by the highest price of bucket i, rounded down, so the table never admits an order the
 //   multiply would refuse; it can refuse an order the multiply would admit (a price below the top of its bucket).
 // The position is the quantity SENT for the instrument since clr_pos, not a filled position: no OUCH response is processed in phase 1.
