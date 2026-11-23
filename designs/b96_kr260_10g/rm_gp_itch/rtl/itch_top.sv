@@ -107,7 +107,7 @@ module itch_top
         .clk, .rst, .clr_cnt, .clr_pos, .clr_ref, .cfg_watch, .cfg_arm, .cfg_kill, .cfg_spec, .cfg_qty, .cfg_max_qty, .cfg_max_pos, .cfg_band, .cfg_px_off,
         .cfg_holdoff, .cfg_ref_sw, .cfg_ref_px, .cfg_ref_age, .ref_load, .cfg_max_notional(64'd0), .cfg_nt_shift(5'd0), .cfg_nt_tbl('0),       // NOTIONAL_MODE 0 in this build: the register window has no room for a table
         .spec_start, .spec_inst, .spec_px, .spec_fail, .tu_v, .tu_inst, .tu_cpx, .tu_cand, .tu_spec, .tu_gapblk, .tu_inx, .nt_px, .tob_px, .tob_ok, .book_ready,
-        .spec_allow, .go, .go_spec, .f_sym, .f_px, .f_qty, .f_ref, .commit, .abort, .b_busy, .b_late, .cnt(cnt_r));
+        .spec_allow, .go, .go_spec, .f_sym, .f_px, .f_qty, .f_ref, .commit, .abort, .b_busy, .b_late, .vd_v(), .vd_pass(), .vd_rej(), .rej_seen(), .cnt(cnt_r));
     order_seg u_seg (.clk, .rst, .go, .go_spec, .f_sym, .f_px, .f_qty, .f_ref, .commit, .abort, .tx_unsent, .tx_drop, .cfg_tif, .cfg_display, .cfg_capacity, .cfg_ise, .cfg_cross,
                      .cfg_custtype, .cfg_minqty, .tpl_my_mac, .tpl_venue_mac, .tpl_my_ip, .tpl_venue_ip, .tpl_sport, .tpl_dport, .tpl_seq0, .tpl_ack, .tpl_load,
                      .sw_we, .sw_waddr, .sw_wdata, .sw_raddr, .sw_rdata, .busy(seg_busy), .late(b_late), .spec_pend, .refuse_v,

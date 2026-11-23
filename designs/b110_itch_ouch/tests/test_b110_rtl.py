@@ -13,15 +13,17 @@ HERE = Path(__file__).parent
 DESIGN = HERE.parent
 ROOT = DESIGN.parents[1]
 RTL = Path(os.environ.get("B110_RTL_DIR") or DESIGN / "rtl")
-FILES = ["itch_pkg.sv", "mold_rx.sv", "itch_dec.sv", "book_core.sv", "ouch_enter.sv", "risk_glue.sv", "itch_ouch_top.sv"]
+FILES = ["itch_pkg.sv", "feed_arb.sv", "mold_rx.sv", "itch_dec.sv", "book_core.sv", "ouch_enter.sv", "risk_glue.sv", "itch_ouch_top.sv"]
 
 
-def run(name: str, testcase=None, params=None, extra=None) -> None:
+def run(name: str, testcase=None, params=None, extra=None, module="b110_cocotb") -> None:
     env = {"PYTHONPATH": str(ROOT)}
     if os.environ.get("B110_RECORD"):
         env["B110_RECORD"] = os.environ["B110_RECORD"]
     env |= extra or {}
-    cocotb_run.run(name, "itch_ouch_top", [RTL / f for f in FILES], "b110_cocotb", HERE, parameters=params, testcase=testcase, extra_env=env)
+    if int(os.environ.get("B110_PARSE_INPLACE", "0")):          # brief 191: every bench run of a mutant or a session can use the in-place decoder
+        params = {"PARSE_INPLACE": 1} | (params or {})
+    cocotb_run.run(name, "itch_ouch_top", [RTL / f for f in FILES], module, HERE, parameters=params, testcase=testcase, extra_env=env)
 
 
 def test_all_benches() -> None:
@@ -61,3 +63,28 @@ def test_book_core_queue() -> None:
     """book_core alone, events on consecutive clocks (tests/b110_book_cocotb.py): the queue and the Replace's second slot."""
     srcs = [RTL / "itch_pkg.sv", RTL / "book_core.sv"]
     cocotb_run.run("b110_book", "book_core", srcs, "b110_book_cocotb", HERE, extra_env={"PYTHONPATH": str(ROOT)})
+
+
+def test_lane_by_type() -> None:
+    """Brief 191: every message type starting in each of the eight byte lanes, with the shift decoder and with the in-place decoder."""
+    for ip in (0, 1):
+        run(f"b110_lane{ip}", testcase="lane_by_type", params={"PARSE_INPLACE": ip})
+
+
+def test_parse_inplace() -> None:
+    """Brief 191: the whole bench (every cocotb test, against the same model) with the decoder that parses in place (PARSE_INPLACE 1), then the start-lane by type test at another size."""
+    run("b110_inplace", params={"PARSE_INPLACE": 1})
+    run("b110_inplace_p2", testcase="main_stream_params", params={"PARSE_INPLACE": 1, "N_INST": 2, "LEVELS": 4, "ORD_AW": 5},
+        extra={"B110_NINST": "2", "B110_LEVELS": "4", "B110_ORDAW": "5"})
+
+
+def test_reject_bits() -> None:
+    """Brief 191: the reject-bit and equal-latency test alone, with and without the in-place decoder (it also runs inside test_all_benches)."""
+    for ip in (0, 1):
+        run(f"b110_rb{ip}", testcase="reject_bits", params={"PARSE_INPLACE": ip})
+
+
+def test_dual_feed() -> None:
+    """Brief 191: the A/B feed arbiter (DUAL_FEED 1) against the model: both feeds complete with skews, single-feed losses filled, a loss on both feeds, the fill window, heartbeats, a bad frame on the first copy, another session, overlap, bursts, random sessions, and the latency."""
+    run("b110_ab", params={"DUAL_FEED": 1}, module="b110_ab_cocotb")
+    run("b110_ab_inplace", params={"DUAL_FEED": 1, "PARSE_INPLACE": 1}, module="b110_ab_cocotb", testcase="ab_random")

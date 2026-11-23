@@ -28,14 +28,15 @@ PART = "xck26-sfvc784-2LV-c"
 REQUIRED_NS = 6.2061
 BUILD = ROOT / "build" / "b110" / "ooc"
 OUT = ROOT / "results" / "b110" / "ooc"
-FILES = ["itch_pkg.sv", "mold_rx.sv", "itch_dec.sv", "book_core.sv", "ouch_enter.sv", "risk_glue.sv", "itch_ouch_top.sv"]
+FILES = ["itch_pkg.sv", "feed_arb.sv", "mold_rx.sv", "itch_dec.sv", "book_core.sv", "ouch_enter.sv", "risk_glue.sv", "itch_ouch_top.sv"]
 
 
-def wrap_text(n_inst: int, notional: int = 0) -> str:
+def wrap_text(n_inst: int, notional: int = 0, parse_inplace: int = 0, dual_feed: int = 0) -> str:
     return f"""// ooc_wrap: registers on every input of itch_ouch_top (the payload stream from the MAC side, the configuration from a register file).
 module ooc_wrap import itch_pkg::*; (
     input  logic clk, input logic rst,
     input  logic s_v_i, input logic [63:0] s_d_i, input logic s_sof_i, input logic s_eof_i, input logic [7:0] s_keep_i, input logic s_err_i,
+    input  logic sb_v_i, input logic [63:0] sb_d_i, input logic sb_sof_i, input logic sb_eof_i, input logic [7:0] sb_keep_i, input logic sb_err_i,
     input  logic [{n_inst}*64-1:0] cfg_watch_i,
     input  logic [31:0] cfg_thr_i, cfg_qty_i, cfg_max_qty_i, cfg_max_pos_i, cfg_band_i, cfg_px_off_i, cfg_minqty_i,
     input  logic [7:0] cfg_tif_i, cfg_display_i, cfg_capacity_i, cfg_ise_i, cfg_cross_i, cfg_custtype_i,
@@ -48,12 +49,14 @@ module ooc_wrap import itch_pkg::*; (
 );
     logic s_v, s_sof, s_eof, s_err, cfg_arm, cfg_kill, cfg_halt_on_gap, cfg_spec, clr_cnt, clr_flags, clr_book, clr_pos, clr_ref;
     logic [63:0] s_d; logic [7:0] s_keep;
+    logic sb_v, sb_sof, sb_eof, sb_err; logic [63:0] sb_d; logic [7:0] sb_keep;
     logic [{n_inst}*64-1:0] cfg_watch;
     logic [31:0] cfg_thr, cfg_qty, cfg_max_qty, cfg_max_pos, cfg_band, cfg_px_off, cfg_minqty;
     logic [15:0] cfg_holdoff; logic cfg_ref_sw, ref_load; logic [31:0] cfg_ref_px, cfg_ref_age; logic [63:0] cfg_max_notional; logic [4:0] cfg_nt_shift; logic [16*32-1:0] cfg_nt_tbl;
     logic [7:0] cfg_tif, cfg_display, cfg_capacity, cfg_ise, cfg_cross, cfg_custtype;
     always_ff @(posedge clk) begin
         s_v <= s_v_i; s_d <= s_d_i; s_sof <= s_sof_i; s_eof <= s_eof_i; s_keep <= s_keep_i; s_err <= s_err_i;
+        sb_v <= sb_v_i; sb_d <= sb_d_i; sb_sof <= sb_sof_i; sb_eof <= sb_eof_i; sb_keep <= sb_keep_i; sb_err <= sb_err_i;
         cfg_watch <= cfg_watch_i; cfg_thr <= cfg_thr_i; cfg_qty <= cfg_qty_i; cfg_max_qty <= cfg_max_qty_i; cfg_max_pos <= cfg_max_pos_i;
         cfg_band <= cfg_band_i; cfg_px_off <= cfg_px_off_i; cfg_minqty <= cfg_minqty_i; cfg_tif <= cfg_tif_i; cfg_display <= cfg_display_i;
         cfg_capacity <= cfg_capacity_i; cfg_ise <= cfg_ise_i; cfg_cross <= cfg_cross_i; cfg_custtype <= cfg_custtype_i;
@@ -62,10 +65,27 @@ module ooc_wrap import itch_pkg::*; (
         cfg_max_notional <= cfg_max_notional_i; cfg_nt_shift <= cfg_nt_shift_i; cfg_nt_tbl <= cfg_nt_tbl_i;
         clr_cnt <= clr_cnt_i; clr_flags <= clr_flags_i; clr_book <= clr_book_i; clr_pos <= clr_pos_i; clr_ref <= clr_ref_i;
     end
-    itch_ouch_top #(.N_INST({n_inst}), .NOTIONAL_MODE({notional})) u_dut (.clk, .rst, .s_v, .s_d, .s_sof, .s_eof, .s_keep, .s_err, .cfg_watch, .cfg_thr, .cfg_qty, .cfg_max_qty,
+    itch_ouch_top #(.N_INST({n_inst}), .NOTIONAL_MODE({notional}), .PARSE_INPLACE({parse_inplace}), .DUAL_FEED({dual_feed})) u_dut (.clk, .rst, .s_v, .s_d, .s_sof, .s_eof, .s_keep, .s_err, .sb_v, .sb_d, .sb_sof, .sb_eof, .sb_keep, .sb_err, .cfg_watch, .cfg_thr, .cfg_qty, .cfg_max_qty,
         .cfg_max_pos, .cfg_band, .cfg_px_off, .cfg_minqty, .cfg_tif, .cfg_display, .cfg_capacity, .cfg_ise, .cfg_cross, .cfg_custtype, .cfg_arm, .cfg_kill,
         .cfg_halt_on_gap, .cfg_spec, .cfg_holdoff, .cfg_ref_sw, .cfg_ref_px, .cfg_ref_age, .ref_load, .cfg_max_notional, .cfg_nt_shift, .cfg_nt_tbl, .clr_cnt, .clr_flags, .clr_book, .clr_pos, .clr_ref, .o_v, .o_d, .o_sof, .o_eof, .o_keep, .o_abort,
-        .m_v(), .m_len(), .e_v(), .e_k(), .tu_v, .tu_inst(), .tu_side(), .tu_px(), .tu_sz(), .tu_ok(), .tob_px(), .tob_sz(), .tob_ok(), .flags, .sys_code(), .cnt);
+        .m_v(), .m_len(), .e_v(), .e_k(), .tu_v, .tu_inst(), .tu_side(), .tu_px(), .tu_sz(), .tu_ok(), .tob_px(), .tob_sz(), .tob_ok(), .flags, .sys_code(), .vd_v(), .vd_pass(), .vd_rej(), .rej_seen(), .cnt_ab(), .cnt);
+endmodule
+"""
+
+
+def wrap_dec_text() -> str:
+    """Brief 191: itch_dec alone, inputs registered (as mold_rx's output register would hold them); the decoder's own registers are its outputs."""
+    return """// ooc_dec_wrap: registers on every input of itch_dec (the message as mold_rx's output register holds it).
+module ooc_dec_wrap #(parameter int PARSE_INPLACE = 0) (
+    input  logic clk, input logic rst, input logic clr_cnt_i,
+    input  logic m_v_i, input logic [383:0] m_w_i, input logic [2:0] m_off_i, input logic [15:0] m_len_i, input logic [31:0] m_seq_i,
+    output logic e_v, output logic [2:0] e_k, output logic [15:0] e_loc, output logic [63:0] e_ref, e_nref, output logic e_sell, output logic [31:0] e_sh, e_px,
+    output logic [63:0] e_stock, output logic [7:0] e_code, output logic [31:0] e_seq, output logic [11*32-1:0] cnt
+);
+    logic clr_cnt, m_v; logic [383:0] m_w; logic [2:0] m_off; logic [15:0] m_len; logic [31:0] m_seq;
+    always_ff @(posedge clk) begin clr_cnt <= clr_cnt_i; m_v <= m_v_i; m_w <= m_w_i; m_off <= m_off_i; m_len <= m_len_i; m_seq <= m_seq_i; end
+    itch_dec #(.PARSE_INPLACE(PARSE_INPLACE)) u_dut (.clk, .rst, .clr_cnt, .m_v, .m_w, .m_off, .m_len, .m_seq, .e_v, .e_k, .e_loc, .e_ref, .e_nref, .e_sell, .e_sh, .e_px,
+                                                   .e_stock, .e_code, .e_seq, .cnt);
 endmodule
 """
 
@@ -84,6 +104,13 @@ def parse(wd: Path, clock_ns: float) -> dict:
          "wns_ns": float(m.group(1)) if m else None, "whs_ns": float(m.group(3)) if m else None, "wpws_ns": float(m.group(5)) if m else None,
          "build_seconds": int((wd / "done.txt").read_text().strip())}
     r["closed"] = r["wns_ns"] is not None and r["wns_ns"] >= 0 and r["whs_ns"] >= 0 and r["wpws_ns"] >= 0
+    wp = wd / "worst_paths.rpt"
+    if wp.is_file():
+        lv = re.search(r"Logic Levels:\s+(\d+)", wp.read_text())
+        dl = re.search(r"Data Path Delay:\s+([\d.]+)ns\s+\(logic ([\d.]+)ns.*?route ([\d.]+)ns", wp.read_text())
+        r["worst_path_logic_levels"] = int(lv.group(1)) if lv else None
+        if dl:
+            r["worst_path_delay_ns"], r["worst_path_logic_ns"], r["worst_path_route_ns"] = float(dl.group(1)), float(dl.group(2)), float(dl.group(3))
     h = wd / "utilization_hier.rpt"
     if h.is_file():
         blocks = {}
@@ -97,13 +124,13 @@ def parse(wd: Path, clock_ns: float) -> dict:
     return r
 
 
-def run(jobs: list[tuple[float, Path]], tag: str, n_inst: int, generics: dict, dry: bool) -> dict:
+def run(jobs: list[tuple[float, Path]], tag: str, n_inst: int, generics: dict, dry: bool, dec: bool = False) -> dict:
     batch = BUILD / tag
     batch.mkdir(parents=True, exist_ok=True)
     wrap = batch / "ooc_wrap.sv"
-    wrap.write_text(wrap_text(n_inst, int(generics.get("NOTIONAL_MODE", 0))))
-    srcs = [str(D / "rtl" / f) for f in FILES] + [str(wrap)]
-    lines = [f"set ooc(part) {PART}", "set ooc(top) ooc_wrap", "set ooc(jobs) {}"]
+    wrap.write_text(wrap_dec_text() if dec else wrap_text(n_inst, int(generics.get("NOTIONAL_MODE", 0)), int(generics.get("PARSE_INPLACE", 0)), int(generics.get("DUAL_FEED", 0))))
+    srcs = ([str(D / "rtl" / "itch_dec.sv")] if dec else [str(D / "rtl" / f) for f in FILES]) + [str(wrap)]
+    lines = [f"set ooc(part) {PART}", "set ooc(top) " + ("ooc_dec_wrap" if dec else "ooc_wrap"), "set ooc(jobs) {}"]
     wds = {}
     for ck, wd in jobs:
         wd.mkdir(parents=True, exist_ok=True)
@@ -128,6 +155,8 @@ def main(argv=None) -> int:
     ap.add_argument("--clocks", nargs="*", type=float, default=[REQUIRED_NS, 5.0, 4.4])
     ap.add_argument("--tag", default="itch_ouch_top")
     ap.add_argument("--param", nargs="*", default=[])
+    ap.add_argument("--dut", choices=["top", "dec"], default="top", help="dec (brief 191): itch_dec alone, to compare its two parse variants")
+    ap.add_argument("--out", default="", help="directory for the JSON (default results/b110/ooc)")
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--parse-only", action="store_true", help="rebuild the JSON from the reports of an earlier run (no Vivado)")
     a = ap.parse_args(argv)
@@ -137,18 +166,19 @@ def main(argv=None) -> int:
     if a.parse_only:
         res = {c: parse(batch / f"c{c}", c) for c in a.clocks}
     else:
-        res = run([(c, batch / f"c{c}") for c in a.clocks], a.tag, n_inst, generics, a.dry_run)
+        res = run([(c, batch / f"c{c}") for c in a.clocks], a.tag, n_inst, generics, a.dry_run, a.dut == "dec")
     if a.dry_run:
         return 0
     runs = [res[c] for c in a.clocks]
     ok = [r for r in runs if r.get("closed")]
     at_req = next((r for r in runs if abs(r["clock_ns"] - REQUIRED_NS) < 1e-9), None)
-    out = {"design": "itch_ouch_top", "part": PART, "vivado": "2026.1", "parameters": generics or {"N_INST": 4, "LEVELS": 8, "ORD_AW": 8},
+    out = {"design": "itch_dec" if a.dut == "dec" else "itch_ouch_top", "part": PART, "vivado": "2026.1", "parameters": generics or {"N_INST": 4, "LEVELS": 8, "ORD_AW": 8},
            "required_clock_ns": REQUIRED_NS, "required_clock_mhz": round(1000.0 / REQUIRED_NS, 3), "required_closed": bool(at_req and at_req.get("closed")), "at_required": at_req,
            "closed_at_ns": min((r["clock_ns"] for r in ok), default=None), "runs": runs,
            "note": "out of context: no clock buffer, no I/O, no jitter; inputs registered in ooc_wrap; one thread; closed means setup, hold and pulse width met"}
-    OUT.mkdir(parents=True, exist_ok=True)
-    (OUT / f"{a.tag}.json").write_text(json.dumps(out, indent=2) + "\n")
+    dest = Path(a.out) if a.out else OUT
+    dest.mkdir(parents=True, exist_ok=True)
+    (dest / f"{a.tag}.json").write_text(json.dumps(out, indent=2) + "\n")
     print(json.dumps({k: out[k] for k in ("required_closed", "closed_at_ns")}), [(r["clock_ns"], r.get("wns_ns"), r.get("lut")) for r in runs])
     return 0
 

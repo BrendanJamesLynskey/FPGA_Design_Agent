@@ -23,7 +23,7 @@ KIND = {"A": 0, "F": 0, "E": 1, "C": 1, "X": 2, "D": 3, "U": 4, "R": 5, "S": 6}
 TIMING_DEPENDENT = ("spec", "abort", "late_abort", "rej_busy")
 REC: dict = {}
 NOTIONAL = int(os.environ.get("B110_NOTIONAL", "0"))
-COVER: dict = {"start_off": set(), "end_off": set(), "keep": set(), "counters": set(), "lengths": set(), "tests": []}
+COVER: dict = {"lane_type": set(), "start_off": set(), "end_off": set(), "keep": set(), "counters": set(), "lengths": set(), "tests": []}
 
 
 class Bench:
@@ -31,6 +31,7 @@ class Bench:
         self.dut, self.cfg, self.spec = dut, cfg, spec
         self.cyc = 0
         self.msgs, self.evs, self.tus, self.frames, self.aborts, self.late = [], [], [], [], [], 0
+        self.vds = []                              # brief 191: the verdict records (vd_v) the risk block shows
         self._cur = None
         self.last_word_cycle = {}
 
@@ -42,6 +43,8 @@ class Bench:
             getattr(d, n).value = 0
         d.s_d.value = 0
         d.s_keep.value = 0
+        for n in ("sb_v", "sb_sof", "sb_eof", "sb_err", "sb_d", "sb_keep"):                 # the B feed (brief 191), unused unless DUAL_FEED
+            getattr(d, n).value = 0
         self.configure()
         d.rst.value = 1
         for _ in range(4):
@@ -49,7 +52,7 @@ class Bench:
         d.rst.value = 0
         await self.tick(sample=False)
         await self.wait_ready()
-        self.msgs, self.evs, self.tus, self.frames, self.aborts = [], [], [], [], []
+        self.msgs, self.evs, self.tus, self.frames, self.aborts, self.vds = [], [], [], [], [], []
 
     def configure(self, **kw):
         c, d = self.cfg, self.dut
@@ -97,11 +100,14 @@ class Bench:
             COVER["start_off"].add(so)
             COVER["end_off"].add((so + int(d.m_len.value)) % 8)
             COVER["lengths"].add(int(d.m_len.value))
+            COVER["lane_type"].add((chr(int(d.u_mold.m_w.value) >> (8 * so) & 0xFF), so))       # message type byte read where the message lies, by start lane
         if int(d.e_v.value):
             u = d.u_dec
             self.evs.append({"cyc": c, "k": int(d.e_k.value), "loc": int(u.e_loc.value), "ref": int(u.e_ref.value), "nref": int(u.e_nref.value),
                              "sell": int(u.e_sell.value), "sh": int(u.e_sh.value), "px": int(u.e_px.value),
                              "stock": int(u.e_stock.value).to_bytes(8, "big"), "code": int(u.e_code.value), "seq": int(u.e_seq.value)})
+        if int(d.vd_v.value):
+            self.vds.append({"cyc": c, "pass": int(d.vd_pass.value), "rej": int(d.vd_rej.value), "seen": int(d.rej_seen.value)})
         if int(d.tu_v.value):
             b = d.u_book
             self.tus.append({"cyc": c, "inst": int(d.tu_inst.value), "side": int(d.tu_side.value), "px": int(d.tu_px.value), "sz": int(d.tu_sz.value),
@@ -1047,3 +1053,128 @@ async def notional(dut):
             assert m.cnt["rej_size"] == 0 and m.cnt["fire"] == 3
         elif name == "at_limit" and NOTIONAL == 1:
             assert m.cnt["fire"] == 1 and m.cnt["rej_size"] == 2
+
+
+# ============================================================================== brief 191: every message type in every start lane (the parse-in-place decoder's bins)
+LANE_TYPES = "AFECXDUSR"
+
+
+def pad_for_lane(lane: int) -> bytes:
+    """A skipped-type message whose length puts the next block's data at byte `lane` of its word: header 20 bytes, then (length 2, pad L, length 2) puts the data at 24 + L."""
+    return proto.itch_other("P", 16 + lane, 10, 0)
+
+
+@cocotb.test()
+async def lane_by_type(dut):
+    """Brief 191: each of the nine decoded message types, plus a skipped type, a wrong length, an Add with a bad side and an Add of zero shares, starting in each of the
+    eight byte lanes of a word (a packet of its own per message: a padding message puts the next one in the lane), against the model; every field is made of
+    distinct bytes so that a crossed lane wire shows. Bins (type, lane) are read where the message lies (m_w and m_off of mold_rx), and all 8 x 9 must be hit."""
+    cfg = small_cfg()
+    b, m = await fresh(dut, cfg)
+    d = Day(b, m)
+    await d.open()
+    r = __import__("random").Random(191)
+    w = cfg.watch
+    for lane in range(8):
+        pad = pad_for_lane(lane)
+        seqbase = (lane + 1) << 36                                 # high reference bytes differ per lane (the low bits stay within the order table's window)
+        ref_a, ref_f, ref_u = seqbase + 7 * lane + 1, seqbase + 7 * lane + 2, seqbase + 7 * lane + 3
+        inst = lane % cfg.n_inst
+        loc = d.loc0 + inst
+        px = MID - TK * (1 + lane)
+
+        def sh() -> int:
+            return r.randrange(1, 1 << 14) | (r.randrange(0, 4) << 16) | 1
+
+        sends = [
+            proto.itch_F(loc, d.t(), ref_f, "B", sh(), w[inst], px - TK, "MPID"),
+            proto.itch_A(loc, d.t(), ref_a, r.choice("BS"), sh(), w[inst], px),
+            proto.itch_E(loc, d.t(), ref_a, 1 + r.randrange(40), match=r.getrandbits(40) | 1),
+            proto.itch_C(loc, d.t(), ref_a, 1 + r.randrange(40), px, match=r.getrandbits(40) | 1),
+            proto.itch_X(loc, d.t(), ref_a, 1 + r.randrange(40)),
+            proto.itch_U(loc, d.t(), ref_f, ref_u, sh(), px + TK),
+            proto.itch_D(loc, d.t(), ref_u),
+            proto.itch_S(0, d.t(), "Q"),
+            proto.itch_R(d.loc0 + inst, d.t(), w[inst]),
+            proto.itch_other("P", 30 + lane, 10, d.t()),                 # a skipped type
+            proto.itch_other("E", 30, 10, d.t()),                        # a known type of the wrong length
+            proto.itch_A(loc, d.t(), ref_a + 100, "Z", 5, w[inst], px),   # side neither B nor S
+            proto.itch_A(loc, d.t(), ref_a + 101, "B", 0, w[inst], px),   # zero shares
+            proto.itch_E(loc, d.t(), ref_a + 102, 0),                    # zero shares
+            proto.itch_U(loc, d.t(), ref_a + 103, ref_a + 104, 0, px),
+        ]
+        for msg in sends:
+            await d.send([pad, msg], idle=r.choice([4, 6, 9]))
+    await settle(b)
+    compare_all(b, m)
+    want = {(t, lane) for t in LANE_TYPES for lane in range(8)}
+    missing = want - COVER["lane_type"]
+    dut._log.info("lane x type bins hit: %d of %d", len(want & COVER["lane_type"]), len(want))
+    assert not missing, f"bins never hit: {sorted(missing)}"
+    c = b.counters()
+    assert c["m_bad"] >= 8 * 5 and c["m_skip"] >= 8, c
+    out = os.environ.get("B110_RECORD")
+    if out:
+        Path(out).mkdir(parents=True, exist_ok=True)
+        (Path(out) / "lane_by_type.json").write_text(json.dumps({
+            "bins_wanted": len(want), "bins_hit": len(want & COVER["lane_type"]), "types": LANE_TYPES, "lanes": 8,
+            "bad_or_malformed_counted": c["m_bad"], "skipped_counted": c["m_skip"], "messages_delivered": c["msg"],
+            "parse_inplace": os.environ.get("B110_PARSE_INPLACE", "0")}, indent=2) + "\n")
+
+
+# ============================================================================== brief 191: every check sets its own bit; accept and reject take the same time
+CHK_NAMES = ("arm", "kill", "gap", "stale", "size", "pos", "band", "hold")
+
+
+@cocotb.test()
+async def reject_bits(dut):
+    """Brief 191: a candidate that fails one check, several checks, or none shows every failing check as its own bit of vd_rej (against the model's independent evaluation:
+    the old priority chain showed only the first), and the verdict record (vd_v) comes the same number of clocks after the last byte of the candidate whatever the outcome:
+    accept, each single reject, several rejects, with and without speculation. The first order word of an accepted candidate is at the same clock as vd_v (no speculation)."""
+    px = MID
+    scenarios = [
+        ("accept", {}, None), ("arm", dict(arm=False), None), ("kill", dict(kill=True), None), ("gap", {}, "gap"), ("stale", {}, "stale"),
+        ("size", dict(qty=600), None), ("pos", dict(max_pos=50), None), ("band", dict(band=100), None),
+        ("arm_kill_size_pos_band", dict(arm=False, kill=True, qty=600, max_pos=50, band=100), None),
+        ("gap_stale_size", dict(qty=0), "gap_stale"), ("size_band", dict(qty=1_000_000, max_qty=2_000_000, band=10), None),
+    ]
+    out = {}
+    for spec in (False, True):
+        lat, rows = set(), {}
+        for name, kw, extra in scenarios:
+            cfg = small_cfg(**kw)
+            b, m = await fresh(dut, cfg, spec=spec)
+            d = Day(b, m)
+            await d.open()
+            await d.send([d.A(0, 1, "B", 100, px - 100)])
+            if extra in ("stale", "gap_stale"):                  # nine distinct ask levels: the ninth overflows the ladder, instrument 0 is inexact from then on
+                for k in range(9):
+                    await d.send([d.A(0, 10 + k, "S", 100, px + 10 + k)], idle=20)
+            await settle(b, 30)
+            if extra in ("gap", "gap_stale"):
+                d.seq += 3                                         # a sequence gap: the next packet is accepted but the path is not trusted
+            n_before, nv, nf = len(m.verdicts), len(b.vds), len(b.frames)
+            msg = d.A(0, 99, "S", 100, px + 100)
+            p = pk(d.seq, [msg])
+            m.feed(p)
+            d.seq += 1
+            T = await b.send(p, idle=20)
+            await settle(b, 40)
+            assert len(m.verdicts) == n_before + 1 and len(b.vds) == nv + 1, (name, len(m.verdicts) - n_before, len(b.vds) - nv)
+            v, want = b.vds[-1], m.verdicts[-1]["chk"]
+            assert (v["rej"] & 0x7F) == want, f"{name}: vd_rej {v['rej']:#x} model {want:#x}"
+            assert v["pass"] == int(want == 0 and v["rej"] == 0) and (v["pass"] == 0 or v["rej"] == 0), (name, v)
+            lat.add(v["cyc"] - T)
+            assert b.tus[-1]["cyc"] + 1 == v["cyc"], (name, b.tus[-1]["cyc"], v["cyc"])
+            if v["pass"] and not spec:
+                assert len(b.frames) == nf + 1 and b.frames[-1]["cyc"] == v["cyc"], f"{name}: first order word {b.frames[-1]['cyc'] - T} clocks after the last byte, verdict {v['cyc'] - T}"
+            compare_all(b, m)
+            assert int(b.dut.rej_seen.value) & 0x7F == m.rej_seen, name
+            rows[name] = {"vd_rej_bits": [CHK_NAMES[i] for i in range(7) if (v["rej"] >> i) & 1], "passed": bool(v["pass"]), "vd_clocks_after_last_byte": v["cyc"] - T,
+                          "first_order_word_clocks_after_last_byte": (b.frames[-1]["cyc"] - T) if len(b.frames) > nf else None}
+        assert len(lat) == 1, f"verdict latency differs between outcomes (spec={spec}): {lat}"
+        out["speculative" if spec else "non_speculative"] = {"latency_clocks_all_outcomes": lat.pop(), "scenarios": rows}
+    rec = os.environ.get("B110_RECORD")
+    if rec:
+        Path(rec).mkdir(parents=True, exist_ok=True)
+        (Path(rec) / "reject_bits_latency.json").write_text(json.dumps({"unit": "clocks from the clock the last byte of the candidate message is presented (T) to the clock vd_v is high", **out}, indent=2) + "\n")

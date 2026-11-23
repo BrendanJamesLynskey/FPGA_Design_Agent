@@ -6,7 +6,11 @@
 // trade64 widened to the OUCH fields: fire (here `go`), instrument, price, quantity, order number.
 // Not reused: trade64's own receive path (it parses Bench Feed Ethernet frames).
 //
-// RISK (a stub: each check is a comparison against a register, every rejection counted, the first failing check is the reason; order of checks):
+// RISK (a stub: each check is a comparison against a register, every rejection counted, the first failing check is the reason; order of checks).
+//   Brief 191 (idea from Edwards 2026, ch 9): the checks are evaluated side by side, each setting its own bit of `chk` (one wire per check, no check
+//   waits for another), the order is passed when no bit is set, and the counters still take the first set bit in the order below; so an accepted and a
+//   rejected candidate take the same number of clocks (the verdict is formed in the clock tu_v arrives and `vd_v` shows it one clock later, whatever the
+//   outcome), and `vd_rej` says which of the checks failed, all of them, not only the first. Order of the counters' reasons:
 //   arm (not armed) -> kill (kill switch register) -> gap (untrusted packet, or a sequence gap while halt_on_gap) -> stale (the instrument's book is
 //   inexact) -> size (quantity zero, above max_qty, or at least 1,000,000 as OUCH requires; with NOTIONAL_MODE not 0 also: price times quantity above the
 //   notional limit, counted as rej_size) -> position (sent quantity of the instrument plus this order above max_pos) -> band (the order price must be
@@ -71,6 +75,10 @@ module risk_glue #(
     output logic                 abort,
     input  logic                 b_busy,
     input  logic                 b_late,
+    output logic                 vd_v,                     // brief 191: a candidate's verdict was formed in the previous clock (one clock, whatever the outcome)
+    output logic                 vd_pass,                  // ... and it passed every check
+    output logic [7:0]           vd_rej,                   // ... and these checks failed: 0 arm, 1 kill, 2 gap, 3 stale, 4 size, 5 position, 6 band, 7 hold-off (all of them, not only the first)
+    output logic [7:0]           rej_seen,                 // the OR of vd_rej over every candidate since reset or clr_cnt
     output logic [13*32-1:0]     cnt          // cand fire rej_arm rej_kill rej_gap rej_stale rej_size rej_pos rej_band rej_busy abort late_abort spec
 );
     localparam int IW = $clog2(N_INST > 1 ? N_INST : 2);
@@ -133,7 +141,8 @@ module risk_glue #(
         if (NOTIONAL_MODE == 1) nt_bad_w = nt_pb > cfg_max_notional;           // wraps of the price cannot matter: a carry is refused as band
         else if (NOTIONAL_MODE == 2) nt_bad_w = nt3_bad;
     end
-    logic [2:0]  reason;                 // 0 pass, 1 arm, 2 kill, 3 gap, 4 stale, 5 size, 6 pos, 7 band
+    logic [7:0]  chk;                    // one bit per check, side by side: 0 arm, 1 kill, 2 gap, 3 stale, 4 size, 5 position, 6 band, 7 hold-off
+    logic [2:0]  reason;                 // the counters' reason, the first set bit of chk[6:0]: 0 pass, 1 arm, 2 kill, 3 gap, 4 stale, 5 size, 6 pos, 7 band
     logic        pass;
     always_comb begin
         v_cand   = tu_v && tu_cand;
@@ -147,15 +156,23 @@ module risk_glue #(
         held     = ho_act[tu_inst];
         nt_bad   = 1'b0;
         nt_bad   = nt_bad_w;
+        chk[0] = !cfg_arm;
+        chk[1] = cfg_kill;
+        chk[2] = tu_gapblk;
+        chk[3] = tu_inx;
+        chk[4] = (cfg_qty == 32'd0 || cfg_qty > cfg_max_qty || cfg_qty >= 32'd1000000 || nt_bad);
+        chk[5] = (pos_sum > {1'b0, cfg_max_pos});
+        chk[6] = !(ref_ok && !px_carry && ({1'b0, v_price} <= band_lim));
+        chk[7] = held;
         reason = 3'd0;
-        if (!cfg_arm) reason = 3'd1;
-        else if (cfg_kill) reason = 3'd2;
-        else if (tu_gapblk) reason = 3'd3;
-        else if (tu_inx) reason = 3'd4;
-        else if (cfg_qty == 32'd0 || cfg_qty > cfg_max_qty || cfg_qty >= 32'd1000000 || nt_bad) reason = 3'd5;
-        else if (pos_sum > {1'b0, cfg_max_pos}) reason = 3'd6;
-        else if (!(ref_ok && !px_carry && ({1'b0, v_price} <= band_lim))) reason = 3'd7;
-        pass = v_cand && (reason == 3'd0) && !held;
+        if (chk[0]) reason = 3'd1;
+        else if (chk[1]) reason = 3'd2;
+        else if (chk[2]) reason = 3'd3;
+        else if (chk[3]) reason = 3'd4;
+        else if (chk[4]) reason = 3'd5;
+        else if (chk[5]) reason = 3'd6;
+        else if (chk[6]) reason = 3'd7;
+        pass = v_cand && (chk == 8'd0);
     end
     logic [IW+96-1:0] v_rec;
     assign v_rec = {tu_inst, v_price, cfg_qty, next_ref};
@@ -192,7 +209,10 @@ module risk_glue #(
             for (int i = 0; i < 4; i++) dq[i] <= '0;
             c_cand <= '0; c_fire <= '0; c_rarm <= '0; c_rkill <= '0; c_rgap <= '0; c_rstale <= '0; c_rsize <= '0; c_rpos <= '0; c_rband <= '0;
             c_rbusy <= '0; c_abort <= '0; c_late <= '0; c_spec <= '0;
+            vd_v <= 1'b0; vd_pass <= 1'b0; vd_rej <= '0; rej_seen <= '0;
         end else begin
+            vd_v <= v_cand; vd_pass <= pass; vd_rej <= v_cand ? chk : 8'd0;
+            if (v_cand) rej_seen <= rej_seen | chk;
             if (spec_start) c_spec <= c_spec + 32'd1;
             if (b_late) c_late <= c_late + 32'd1;
             if (abort) c_abort <= c_abort + 32'd1;
@@ -228,6 +248,7 @@ module risk_glue #(
                 end else c_rbusy <= c_rbusy + 32'd1;
             end
             if (clr_cnt) begin
+                rej_seen <= '0;
                 c_cand <= '0; c_fire <= '0; c_rarm <= '0; c_rkill <= '0; c_rgap <= '0; c_rstale <= '0; c_rsize <= '0; c_rpos <= '0; c_rband <= '0;
                 c_rbusy <= '0; c_abort <= '0; c_late <= '0; c_spec <= '0;
             end

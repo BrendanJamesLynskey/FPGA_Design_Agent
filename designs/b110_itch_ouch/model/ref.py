@@ -18,6 +18,7 @@ COUNTERS = (
     "cand", "fire", "rej_arm", "rej_kill", "rej_gap", "rej_stale", "rej_size", "rej_pos", "rej_band", "rej_busy", "abort", "late_abort", "spec",
 )
 M32 = 0xFFFFFFFF
+CHECKS = ("arm", "kill", "gap", "stale", "size", "pos", "band", "hold")   # bit k of the verdict's reject word (brief 191)
 BID, ASK = 0, 1
 
 
@@ -77,6 +78,8 @@ class Model:
         self.pos = [0] * c.n_inst
         self.next_ref = 1
         self.msgs, self.events, self.tus, self.orders = [], [], [], []
+        self.verdicts = []                               # brief 191: per candidate, every failing check as a bit (CHECKS order); hold-off (bit 7) is clock based and not modelled
+        self.rej_seen = 0
 
     def clear_book(self):
         c = self.cfg
@@ -326,6 +329,11 @@ class Model:
             nt_bad = c.qty > c.nt_tbl[min(price >> c.nt_shift, 15)]
         else:
             nt_bad = False
+        chk = (int(not c.arm) | int(c.kill) << 1 | int(self.untrusted or (c.halt_on_gap and self.gap)) << 2 | int(self.inexact[inst]) << 3
+               | int(c.qty == 0 or c.qty > c.max_qty or c.qty >= 1_000_000 or nt_bad) << 4 | int(self.pos[inst] + c.qty > c.max_pos) << 5
+               | int(not (ref_ok and not carry and price <= ref_px + c.band)) << 6)
+        self.verdicts.append({"inst": inst, "chk": chk})
+        self.rej_seen |= chk
         if not c.arm:
             cnt["rej_arm"] += 1
         elif c.kill:

@@ -26,12 +26,13 @@ ROOT = D.parents[1]
 WORK = ROOT / "build" / "b110_mut"
 
 
-def run_one(name: str, rtl: Path, root: Path) -> dict:
-    env = dict(os.environ, B110_RTL_DIR=str(rtl), FDA_SIM_BUILD_ROOT=str(root), PYTHONPATH=str(ROOT))
+def run_one(name: str, rtl: Path, root: Path, env_extra: dict | None = None) -> dict:
+    env = dict(os.environ, B110_RTL_DIR=str(rtl), FDA_SIM_BUILD_ROOT=str(root), PYTHONPATH=str(ROOT)) | {k: str(v) for k, v in (env_extra or {}).items()}
     env.pop("B110_RECORD", None)
     r = subprocess.run([sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", str(D / "tests" / "test_b110_rtl.py::test_all_benches"),
-                        str(D / "tests" / "test_b110_rtl.py::test_book_core_queue"), str(D / "tests" / "test_b110_rtl.py::test_notional_modes")], cwd=ROOT, env=env, capture_output=True, text=True)
-    xmls = [root / "b110_all" / "results.xml", root / "b110_book" / "results.xml", root / "b110_nt1" / "results.xml", root / "b110_nt2" / "results.xml"]
+                        str(D / "tests" / "test_b110_rtl.py::test_book_core_queue"), str(D / "tests" / "test_b110_rtl.py::test_notional_modes")]
+                       + ([str(D / "tests" / "test_b110_rtl.py::test_lane_by_type")] if (env_extra or {}).get("B110_PARSE_INPLACE") else []), cwd=ROOT, env=env, capture_output=True, text=True)
+    xmls = [root / "b110_all" / "results.xml", root / "b110_lane0" / "results.xml", root / "b110_lane1" / "results.xml", root / "b110_book" / "results.xml", root / "b110_nt1" / "results.xml", root / "b110_nt2" / "results.xml"]
     failed = []
     for x in xmls:
         if x.is_file():
@@ -71,7 +72,7 @@ def main() -> int:
         (d / m["file"]).write_text(src.replace(m["old"], m["new"]))
         jobs.append((m, d))
     with ThreadPoolExecutor(max_workers=a.jobs) as ex:
-        res = list(ex.map(lambda j: {**run_one(j[0]["name"], j[1], WORK / j[0]["name"] / "sim"), "class": j[0]["class"], "file": j[0]["file"], "why": j[0]["why"]}, jobs))
+        res = list(ex.map(lambda j: {**run_one(j[0]["name"], j[1], WORK / j[0]["name"] / "sim", j[0].get("env")), "class": j[0]["class"], "file": j[0]["file"], "why": j[0]["why"]}, jobs))
     for r in res:
         print(f"{r['status']:9s} {r['name']:22s} {', '.join(r['killed_by'][:3])}")
     valid = [r for r in res if r["status"] != "invalid"]
