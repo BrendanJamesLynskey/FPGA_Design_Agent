@@ -1,0 +1,129 @@
+{
+ "methods": {
+  "lint": {
+   "s": 0.07,
+   "source": "methods_rtl.json: Verilator lint of the RTL"
+  },
+  "directed tests, 1 seed": {
+   "s": 0.18,
+   "source": "methods_rtl.json: tb_func, 40 bursts, Icarus"
+  },
+  "random tests, 3 seeds": {
+   "s": 0.66,
+   "source": "methods_rtl.json: 3 x the per-seed time"
+  },
+  "random tests, 8 seeds": {
+   "s": 1.77,
+   "source": "methods_rtl.json: 8 seeds"
+  },
+  "bounded formal, design's own depth": {
+   "s": 0.58,
+   "source": "methods_rtl.json: SymbiYosys, depth 20, z3"
+  },
+  "bounded formal, depth x4": {
+   "s": 3.72,
+   "source": "methods_rtl.json: depth 80"
+  },
+  "mutation sweep (7 mutants, 1 seed each)": {
+   "s": 7.63,
+   "source": "methods_rtl.json: stand-in for the agent's mutation run"
+  },
+  "post-synthesis netlist: synthesis": {
+   "s": 38.0,
+   "source": "costs.json: Vivado out-of-context synthesis, u"
+  },
+  "post-synthesis netlist: simulation": {
+   "s": 17.0,
+   "source": "methods_netlist.json: tb_func on the funcsim netlist, xsim"
+  },
+  "equivalence (eqy, control module)": {
+   "s": 62.4,
+   "source": "methods_netlist.json: eqy_gate auto, PASS"
+  },
+  "fault injection (variant all, 6 targets x 300 trials)": {
+   "s": 46.1,
+   "source": "faults.json: xsim"
+  },
+  "timing simulation (opt-in)": {
+   "s": 71.9,
+   "source": "costs.json impl_s + methods_netlist.json timesim_u (10 bursts)"
+  }
+ },
+ "profiles": {
+  "prototype": {
+   "checks": [
+    "lint",
+    "directed tests, 1 seed"
+   ],
+   "not_measured": [],
+   "seconds": 0.2
+  },
+  "standard": {
+   "checks": [
+    "lint",
+    "directed tests, 1 seed",
+    "random tests, 3 seeds",
+    "bounded formal, design's own depth",
+    "mutation sweep (7 mutants, 1 seed each)"
+   ],
+   "not_measured": [],
+   "seconds": 9.1
+  },
+  "thorough": {
+   "checks": [
+    "lint",
+    "directed tests, 1 seed",
+    "random tests, 8 seeds",
+    "bounded formal, depth x4",
+    "mutation sweep (7 mutants, 1 seed each)",
+    "post-synthesis netlist: synthesis",
+    "post-synthesis netlist: simulation",
+    "equivalence (eqy, control module)"
+   ],
+   "not_measured": [],
+   "seconds": 130.8
+  },
+  "ip_release": {
+   "checks": [
+    "lint",
+    "directed tests, 1 seed",
+    "random tests, 8 seeds",
+    "bounded formal, depth x4",
+    "mutation sweep (7 mutants, 1 seed each)",
+    "post-synthesis netlist: synthesis",
+    "post-synthesis netlist: simulation",
+    "equivalence (eqy, control module)"
+   ],
+   "not_measured": [],
+   "seconds": 130.8,
+   "note": "the independent spec bench, k-induction, PDR and the pyuvm bench are not measured on this design (model time or no tool), so ip_release shows the thorough figure"
+  },
+  "high_reliability": {
+   "checks": [
+    "lint",
+    "directed tests, 1 seed",
+    "random tests, 8 seeds",
+    "bounded formal, depth x4",
+    "mutation sweep (7 mutants, 1 seed each)",
+    "post-synthesis netlist: synthesis",
+    "post-synthesis netlist: simulation",
+    "equivalence (eqy, control module)",
+    "fault injection (variant all, 6 targets x 300 trials)"
+   ],
+   "not_measured": [],
+   "seconds": 176.9
+  },
+  "low_latency": {
+   "checks": [
+    "lint",
+    "directed tests, 1 seed",
+    "random tests, 3 seeds",
+    "bounded formal, design's own depth",
+    "mutation sweep (7 mutants, 1 seed each)"
+   ],
+   "not_measured": [],
+   "seconds": 9.1,
+   "note": "the latency budget checks are not run by the flow yet, so low_latency shows the standard figure"
+  }
+ }
+}
