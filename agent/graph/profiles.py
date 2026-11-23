@@ -100,7 +100,7 @@ PROFILES: dict[str, dict[str, Any]] = {
     "thorough": _THOROUGH,
     "ip_release": {**_THOROUGH, "mutation_floor": 85, "seeds": 8, "indep_spec_test": True, "formal_induction": True, "formal_pdr": True,
                    "uvm": "pyuvm", "formal_depth_scale": 4},
-    "high_dependability": {**_THOROUGH, "fault_injection": True, "reliability": "interview"},
+    "high_dependability": {**_THOROUGH, "fault_injection": True, "dependability": "interview"},
     "low_latency": {**_STANDARD, "latency_checks": True},
 }
 SUMMARY = {
