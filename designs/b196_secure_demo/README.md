@@ -63,7 +63,7 @@ Interfaces:
 | sixteen readings through the SYSMONE4 simulation model; needs Vivado 2026.1 xsim | `python3 designs/b196_secure_demo/tests/run_sysmon_sim.py --out results/b196/sysmon_sim.json` | no | about 5 min |
 | the production build and the debug build; needs Vivado 2026.1 and a heavy slot (take_heavy_slot.sh); the debug build needs about 8 GB | `FDA_SECURITY='{"production_secure": true}' flow/run_vivado.sh designs/b196_secure_demo base; FDA_SECURITY='{"production_secure": true}' flow/run_vivado.sh designs/b196_secure_demo/dbg base` | yes | about 15 min |
 
-Tool: Vivado 2026.1. Build ID of the inputs at handover: `495f8c04` (`python flow/manifest.py show designs/b196_secure_demo`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `5e2eab8`.
+Tool: Vivado 2026.1. Build ID of the inputs at handover: `32f26e59` (`python flow/manifest.py show designs/b196_secure_demo`: what a rebuild of today's sources and flow would carry; it changes when any build input or the flow changes, so it can differ from the build ID in an older evidence record). Knowledge-bank pin: `5e2eab8`.
 
 | File | What |
 |---|---|

@@ -9,7 +9,7 @@ A 25 MHz design for the Kria KR260 part that runs the brief-194 stream core and 
 not: a held-out or benchmark task; it was written to demonstrate and measure the production_secure check; a statement that the part is secure against an attacker; nothing was measured against one and no certification or side-channel claim is made; a board design; it was never programmed and no hardware measurement exists; bitstream encryption or authentication, which on a Zynq MPSoC are boot-image steps that belong to the owner
 
 ## state
-stage=built vivado=2026.1 kb_pin=5e2eab8 build_id=495f8c04
+stage=built vivado=2026.1 kb_pin=5e2eab8 build_id=32f26e59
 gates: security_profile_met=pass
 
 ## interface
@@ -25,8 +25,8 @@ designs/b196_secure_demo/rtl/b196_sysmon_guard.sv 66c9b9c679: SYSMONE4 with its 
 designs/b196_secure_demo/rtl/b196_shutdown.sv 255676dc36: the latch that holds the design in reset after any alarm
 designs/b196_secure_demo/rtl/b196_sysmon_pkg.sv 2188c6edcf: the SYSMONE4 INIT values, generated from the board file by flow.security
 designs/b196_secure_demo/design.xdc 9286232be0: pins, clock and LED output delays
-designs/b196_secure_demo/build.yaml 9e8566c3aa: the production build (the security request comes from the run's pin)
-designs/b196_secure_demo/dbg/build.yaml f272004392: the debug build, the same design plus one ILA
+designs/b196_secure_demo/build.yaml 32fbdd54d4: the production build (the security request comes from the run's pin)
+designs/b196_secure_demo/dbg/build.yaml da7bab7cf0: the debug build, the same design plus one ILA
 designs/b196_secure_demo/tb/tb_shutdown.sv aacde628c5: bench of the safe shutdown in the top
 designs/b196_secure_demo/tests/run_sysmon_sim.py 0c549936ec: the SYSMONE4 simulation model driven with readings inside and outside the limits
 

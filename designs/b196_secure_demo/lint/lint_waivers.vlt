@@ -1,0 +1,11 @@
+`verilator_config
+// flow/lint.sh, designs/b196_secure_demo: lint-only configuration.
+// Open outputs of the block RAM primitive and of the brief-194 core are left open on purpose; flags and status bits are read in part.
+lint_off -rule PINCONNECTEMPTY
+lint_off -rule UNUSEDSIGNAL
+// The generated package lists every SYSMONE4 INIT value; the wrapper uses a subset in synthesis only (SYSMONE4 is an `ifdef SYNTHESIS instance).
+lint_off -rule UNUSEDPARAM
+// The power-on counter, the burst timer and the LEDs start from the configuration's initial register values (FPGA initial values), written once at declaration.
+lint_off -rule PROCASSINIT
+// a194_secded.sv holds the package a194_secded_pkg (brief 194's file name).
+lint_off -rule DECLFILENAME
