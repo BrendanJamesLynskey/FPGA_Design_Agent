@@ -28,7 +28,7 @@ RESULT_FILE = "example_result.json"
 def references(name: str, results: Path | None = None) -> list[dict[str, Any]]:
     d = (results or R.RESULTS) / name
     out = []
-    for p in sorted(d.glob("ref_*.json")) if d.is_dir() else []:
+    for p in sorted((q for q in d.glob("ref_*.json") if re.fullmatch(r"ref_\d+\.json", q.name)), key=lambda q: int(q.stem.split("_")[1])) if d.is_dir() else []:
         try:
             out.append(json.loads(p.read_text()))
         except ValueError:

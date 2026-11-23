@@ -120,7 +120,7 @@ def extract(run_dir: Path, example: str, score: dict[str, Any] | None, setup: di
     gates_ok = bool(b.get("build_pass")) if b else False
     stop = summ.get("stop") or summ.get("stop_reason") or summ.get("outcome")
     rec: dict[str, Any] = {
-        "schema": SCHEMA, "example": example, "run_id": run_dir.name, "date": summ.get("date"), "setup": {**setup, "models_served": u["models_served"]},
+        "schema": SCHEMA, "example": example, "run_id": run_dir.name, "date": re.sub(r"^(\d{4})(\d{2})(\d{2}).*", r"\1-\2-\3", run_dir.name) if re.match(r"\d{8}-", run_dir.name) else None, "setup": {**setup, "models_served": u["models_served"]},
         "outcome": {"hidden_pass": (score or {}).get("pass"), "tests_passed": (score or {}).get("tests_passed"), "tests_total": (score or {}).get("tests_total"),
                     "internal_pass": gates_ok and bool(stages) and max(stages) >= int(setup.get("stop_after") or 0) if b else False, "build_gates": f"{b.get('gates_passed')}/{b.get('gates_total')}" if b else None,
                     "last_stage": max(stages) if stages else None, "stop": stop if isinstance(stop, (str, int, float)) else (json.dumps(stop)[:200] if stop else None)},

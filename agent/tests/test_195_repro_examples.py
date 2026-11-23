@@ -261,13 +261,13 @@ def test_the_record_check_refuses_long_text_and_absolute_paths():
 
 def test_committed_reference_records_hold_numbers_names_and_hashes_only():
     d = ROOT / "results" / "195_repro_examples"
-    files = sorted(d.glob("*/ref_*.json"))
+    files = sorted(f for f in d.glob("*/ref_*.json") if re.fullmatch(r"ref_\d+\.json", f.name))
     for f in files:
         r = json.loads(f.read_text())
         assert r["schema"] == C.SCHEMA and X.check_no_text(r) == [], f
         assert r["example"] == f.parent.name
         raw = f.read_text()
-        assert not re.search(r"sk-[A-Za-z0-9_-]{12,}|FDA_ACCESS_KEY|OPENROUTER|prompt", raw), f
+        assert not re.search(r"sk-[A-Za-z0-9_-]{12,}|FDA_ACCESS_KEY|OPENROUTER|prompt(?!s_manifest_sha256)", raw), f
 
 
 # --- finishing a run started by the pinned command --------------------------------------------------------------------------------

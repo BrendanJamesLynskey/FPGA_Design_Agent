@@ -35,7 +35,7 @@ def record(name: str, run_dir: Path, results: Path | None = None, allow_unpinned
         raise R.ExampleError("the record holds text or a path: " + "; ".join(bad[:3]))
     d = (results or R.RESULTS) / name
     d.mkdir(parents=True, exist_ok=True)
-    n = 1 + max([int(p.stem.split("_")[1]) for p in d.glob("ref_*.json")] or [0])
+    n = 1 + max([int(p.stem.split("_")[1]) for p in d.glob("ref_*.json") if p.stem.split("_")[1].isdigit() and p.stem.count("_") == 1] or [0])
     design = X.design_dir(run_dir)
     rec["run_id"] = run_dir.name
     rec["reference"] = n
